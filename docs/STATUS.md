@@ -25,4 +25,4 @@
 
 ## 本轮写入边界
 
-新仓库初始 main：`76e3dbdb283769e5c94fcef2de35f6b21cf7e49c`，tree：`d8eea4e04bf6549684e0dea268b1b17556ee9116`。读取时只有初始 README，无开放 PR。只在独立分支提交 Markdown 文档，main 不改、不自动合并；PR 的最终实际 head 和状态以 GitHub 为准。
+新仓库初始 main：`76e3dbdb283769e5c94fcef2de35f6b21cf7e49c`，tree：`d8eea4e04bf6549684e0dea268b1b17556ee9116`。读取时只有初始 README，无开放 PR。沿用独立分支的 Draft PR #1；仅提交设计、计划、治理及纯文本研究档案，main 不改、不自动合并。既有提案与唯一 R0 任务保留，新增原始正文、来源和验证档案，格式含 Markdown、JSON 与日志；不是运行代码。PR 的最终实际 head 和状态以 GitHub 为准。

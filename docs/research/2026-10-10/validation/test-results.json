@@ -1,0 +1,135 @@
+{
+  "scope": "Research UI prototype only; in-memory generated HTML, no live ChatGPT, model, real account, native API or persistence certification.",
+  "browser": "Chromium 144.0.7559.96",
+  "tested_date": "2026-10-10",
+  "cases": [
+    {
+      "case": "跨三个原生来源聚合",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "分面筛选",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "原生来源与覆盖说明",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "显示改名与人工锁",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "原名/别名/已知输入检索",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "归属纠错/负向排除/撤销",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "拖入工作区保留多重归属",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "切换显示保留当前草稿",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "工作现场保存恢复及去重",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "原生模拟改名需授权且可取消",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "原生模拟改名回执",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "原生模拟冲突拒绝覆盖",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "示例账户展示隔离与返回",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "拒绝跨示例账户导入",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "导入去重及未知来源",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "适配故障回退保留当前对话草稿",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "键盘搜索和关闭",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "动态标题按纯文本渲染",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "新建目的地与派生归属分离",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    },
+    {
+      "case": "390px 窄屏导航与布局",
+      "status": "PASS",
+      "script_errors": [],
+      "requests": []
+    }
+  ],
+  "pass": 20,
+  "fail": 0,
+  "not_tested": [
+    "LocalStorage durability across reload (opaque in-memory origin)",
+    "Real extension lifecycle and native page functionality",
+    "Physical-device IME and screen-reader",
+    "Live account binding and native title writes"
+  ]
+}
