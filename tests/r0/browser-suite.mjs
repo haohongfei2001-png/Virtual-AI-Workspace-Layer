@@ -5,19 +5,27 @@ import { witness, observation, SCOPE_B } from './samples.mjs';
 const byId = id => document.getElementById(id);
 const assert = (value, message) => { if (!value) throw new Error(message); };
 const results = [];
+const trackedGates = new Set();
 function record(id, run) {
   try { const detail = run() ?? {}; results.push({ id, status: 'PASS', evidence: 'BROWSER_FIXTURE', ...detail }); }
   catch (error) { results.push({ id, status: 'FAIL', evidence: 'BROWSER_FIXTURE', error: error.message }); }
 }
+async function recordAsync(id, run) {
+  try { const detail = await run() ?? {}; results.push({ id, status: 'PASS', evidence: 'BROWSER_FIXTURE', ...detail }); }
+  catch (error) { results.push({ id, status: 'FAIL', evidence: 'BROWSER_FIXTURE', error: error.message }); }
+}
 function binding(overrides = {}) {
   const gate = new FixtureScopeGate(() => 1000);
+  trackedGates.add(gate);
   assert(gate.bindFixture(witness(overrides)).ok, 'Fixture binding must succeed');
   const token = gate.token();
   const ref = validateFixtureObservation(gate, token, observation(token)).reference;
   return { gate, token, ref };
 }
-function run() {
+async function run() {
+  byId('run-suite').disabled = true; byId('summary').textContent = 'Running fixture assertions…'; byId('report').textContent = 'Running';
   results.length = 0;
+  try {
   const composer = byId('native-composer');
   const transcript = byId('native-transcript');
   const model = byId('native-model');
@@ -161,6 +169,22 @@ function run() {
     assert(!broken.gate.invalidate('test-cleanup-error').ok, 'Cleanup failure reported');
     assert(currentSlot.children.length === 0, 'Later shell cleanup still executed');
   });
+  await recordAsync('BF-18-live-js-timer-expires-without-api-polling', async () => {
+    const timedGate = new FixtureScopeGate();
+    trackedGates.add(timedGate);
+    assert(timedGate.bindFixture(witness({ expiresAt: Date.now() + 100 })).ok, 'Short synthetic deadline binds');
+    const timedToken = timedGate.token();
+    const timedRef = validateFixtureObservation(timedGate, timedToken, observation(timedToken)).reference;
+    const currentSlot = byId('r0-slot');
+    const timedShell = mountFixtureNavigation(currentSlot, timedGate, timedToken, [timedRef]);
+    assert(timedShell.ok, 'Timed mount succeeds');
+    let expiryEvent = false; timedGate.onInvalidate(reason => { if (reason === 'scheduled-expiry') expiryEvent = true; });
+    await new Promise(resolve => setTimeout(resolve, 150));
+    assert(expiryEvent && currentSlot.children.length === 0, 'A running event loop removes mount without API polling');
+    assert(composer === byId('native-composer'), 'Native composer preserved');
+    timedGate.invalidate('test-end');
+    return { limitation: 'Active JavaScript timer only; not freeze/disable/worker-termination evidence' };
+  });
   tools.removeEventListener('click', clicked);
   state.gate.invalidate('suite-end');
   const report = { schema: 'vawl-r0-browser-fixture-v1', evidence: 'BROWSER_FIXTURE', fixtureOnly: true,
@@ -170,5 +194,10 @@ function run() {
       'Physical IME and screen reader', 'Actual browser freeze/background throttling', 'Extension-origin persistence/export import', 'Native send/attachment/Canvas/voice'] };
   byId('report').textContent = JSON.stringify(report, null, 2);
   byId('summary').textContent = `${report.pass}/${results.length} fixture assertions passed; ${report.fail} failed. LIVE_HOST/MV3/PAIA remain BLOCKED.`;
+  } finally {
+    for (const gate of trackedGates) gate.invalidate('suite-finally');
+    trackedGates.clear();
+    byId('run-suite').disabled = false;
+  }
 }
 byId('run-suite').addEventListener('click', run);

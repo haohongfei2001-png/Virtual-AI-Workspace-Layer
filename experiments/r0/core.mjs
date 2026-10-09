@@ -25,13 +25,32 @@ export class FixtureScopeGate {
   #binding = null;
   #tokens = new WeakSet();
   #listeners = new Set();
-  constructor(now = () => Date.now()) { this.now = now; }
+  #expiryHandle = null;
+  constructor(now = () => Date.now(), scheduler = {
+    schedule(callback, delay) { const handle = setTimeout(callback, delay); handle.unref?.(); return handle; },
+    cancel(handle) { clearTimeout(handle); }
+  }) { this.now = now; this.scheduler = scheduler; }
+  #scheduleExpiry(epoch) {
+    if (!this.#binding || epoch !== this.#epoch) return;
+    const remaining = this.#binding.expiresAt - this.now();
+    if (remaining <= 0) { this.invalidate('scheduled-expiry'); return; }
+    this.#expiryHandle = this.scheduler.schedule(() => {
+      if (!this.#binding || epoch !== this.#epoch) return; // A late cancelled callback cannot revoke a new epoch.
+      this.#expiryHandle = null;
+      try { this.#scheduleExpiry(epoch); } catch { this.invalidate('scheduler-failed'); }
+      // Recheck the deadline if a timer fires early; scheduling failure revokes the binding.
+    }, Math.min(remaining, 60000));
+  }
   onInvalidate(callback) { this.#listeners.add(callback); return () => this.#listeners.delete(callback); }
   invalidate(reason = 'transition') {
     this.#epoch += 1;
     this.#binding = null;
     // Clear projection before accepting any subsequent scope or response.
     let cleanupErrors = 0;
+    const expiryHandle = this.#expiryHandle; this.#expiryHandle = null;
+    if (expiryHandle !== null) {
+      try { this.scheduler.cancel(expiryHandle); } catch { cleanupErrors += 1; }
+    }
     for (const callback of [...this.#listeners]) {
       try { callback(reason); } catch { cleanupErrors += 1; }
     }
@@ -48,6 +67,8 @@ export class FixtureScopeGate {
     this.#binding = Object.freeze({ scope: key, epoch: this.#epoch, document: witness.document, tab: witness.tab,
       frame: 0, route: route.url, routeRevision: witness.routeRevision, conversation: route.conversation,
       project: route.project, branch: witness.branch, expiresAt: witness.expiresAt });
+    try { this.#scheduleExpiry(this.#epoch); } catch { this.invalidate('scheduler-failed'); return fail('scheduler-failed'); }
+    if (!this.#binding) return fail('expired-before-bind');
     return { ok: true, evidence: 'SYNTHETIC_WITNESS' };
   }
   token() {

@@ -129,9 +129,54 @@ test('shell refuses forged, shared, credentials and malformed references before 
   }
 });
 
-test('expiry is checked at API boundaries, not an autonomous cleanup lease', () => {
-  let now = 1000; const gate = new FixtureScopeGate(() => now); gate.bindFixture(witness());
-  const token = gate.token(); let removed = false; gate.onInvalidate(() => { removed = true; });
-  now = 20001; assert.equal(removed, false, 'No background timer is implemented or claimed');
-  assert.equal(gate.check(token).reason, 'expired'); assert.equal(removed, true);
+function fakeClock() {
+  let now = 1000, id = 0; const jobs = new Map(); const cancelled = [];
+  return { now: () => now, scheduler: { schedule(fn, delay) { jobs.set(++id, { fn, at: now + delay }); return id; },
+    cancel(key) { cancelled.push(key); jobs.delete(key); } }, jobs, cancelled,
+    advance(next) { now = next; for (const [key, job] of [...jobs]) if (job.at <= now) { jobs.delete(key); job.fn(); } } };
+}
+test('scheduled expiry clears state without token/check/view calls', () => {
+  const clock = fakeClock(); const gate = new FixtureScopeGate(clock.now, clock.scheduler); gate.bindFixture(witness());
+  const token = gate.token(); const store = new FixtureProjection(gate); store.add(token, accept(gate, token).reference);
+  let removed = false; gate.onInvalidate(() => { removed = true; });
+  clock.advance(20000); assert.equal(removed, true); assert.equal(clock.jobs.size, 0);
+  assert.equal(gate.token(), null); assert.deepEqual(store.view(token), []);
+});
+test('rebinding cancels old expiry and late callback cannot revoke new epoch', () => {
+  const clock = fakeClock(); const gate = new FixtureScopeGate(clock.now, clock.scheduler); gate.bindFixture(witness());
+  const oldCallback = [...clock.jobs.values()][0].fn;
+  gate.bindFixture(witness({ scope: SCOPE_B, expiresAt: 30000 })); const token = gate.token();
+  assert.equal(clock.cancelled.length, 1); oldCallback(); assert.equal(gate.check(token).ok, true);
+  clock.advance(20000); assert.equal(gate.check(token).ok, true);
+  clock.advance(30000); assert.equal(gate.token(), null);
+});
+test('early expiry callbacks rearm; scheduled cleanup still attempts every callback', () => {
+  const clock = fakeClock(); const gate = new FixtureScopeGate(clock.now, clock.scheduler); gate.bindFixture(witness());
+  const [key, job] = [...clock.jobs.entries()][0]; clock.jobs.delete(key); job.fn();
+  assert.equal(gate.token() !== null, true); assert.equal(clock.jobs.size, 1);
+  let cleaned = false; gate.onInvalidate(() => { throw new Error('synthetic cleanup fault'); }); gate.onInvalidate(() => { cleaned = true; });
+  clock.advance(20000); assert.equal(cleaned, true); assert.equal(gate.token(), null);
+});
+test('scheduler failure leaves no active binding', () => {
+  const gate = new FixtureScopeGate(() => 1000, { schedule() { throw new Error('synthetic timer failure'); }, cancel() {} });
+  assert.equal(gate.bindFixture(witness()).reason, 'scheduler-failed'); assert.equal(gate.token(), null);
+});
+
+test('a rearm scheduler failure also revokes the binding', () => {
+  let callback, calls = 0;
+  const gate = new FixtureScopeGate(() => 1000, { schedule(fn) { if (++calls > 1) throw new Error('synthetic rearm failure'); callback = fn; return 1; }, cancel() {} });
+  assert.equal(gate.bindFixture(witness()).ok, true); callback(); assert.equal(gate.token(), null);
+});
+
+test('deadline crossing during bind never reports success without an active binding', () => {
+  let reads = 0; const gate = new FixtureScopeGate(() => ++reads === 1 ? 1000 : 20000);
+  assert.equal(gate.bindFixture(witness()).reason, 'expired-before-bind'); assert.equal(gate.token(), null);
+});
+test('default Node event-loop timer emits expiry without API polling', async () => {
+  const gate = new FixtureScopeGate(); let expired = false;
+  gate.onInvalidate(reason => { if (reason === 'scheduled-expiry') expired = true; });
+  assert.equal(gate.bindFixture(witness({ expiresAt: Date.now() + 80 })).ok, true);
+  await new Promise(resolve => setTimeout(resolve, 150));
+  assert.equal(expired, true, 'Active JavaScript must revoke without token/check/view');
+  assert.equal(gate.token(), null);
 });
