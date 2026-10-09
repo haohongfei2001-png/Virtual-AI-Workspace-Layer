@@ -1,0 +1,54 @@
+{
+  "schema": "vawl-r0-environment-attempts-v1",
+  "dateUtc": "2026-10-09",
+  "evidence": "ENVIRONMENT_DIAGNOSTIC",
+  "scope": "Synthetic-only, no live host, account, extensions or paid resources",
+  "attempts": [
+    {
+      "id": "ENV-01",
+      "atUtc": "2026-10-09T19:39:25Z",
+      "operation": "One fresh headless Chromium launch using installed Python Playwright and /usr/bin/chromium",
+      "status": "BLOCKED",
+      "errorType": "TargetClosedError",
+      "rawErrorExcerpts": [
+        "chrome_crashpad_handler: --database is required",
+        "FATAL:chrome/browser/process_singleton_posix.cc:297] Check failed: . socket() failed: Operation not permitted (1)",
+        "BrowserType.launch: Target page, context or browser has been closed"
+      ],
+      "interpretation": "Process launch failed before any fixture page or browser assertion executed. Excerpts retained from returned browser log; not a complete log or a fixture failure.",
+      "retry": "No same-environment Chromium retry and no security-setting change"
+    },
+    {
+      "id": "ENV-02",
+      "atUtc": "2026-10-09T19:39:46Z",
+      "operation": "Open minimal synthetic data: page through the dedicated cloud browser",
+      "status": "BLOCKED",
+      "rawErrorExcerpts": [
+        "The browser URL policy blocks this action.",
+        "The requested URL protocol is not allowed. Allowed protocols: \"http:\", \"https:\"."
+      ],
+      "interpretation": "Protocol policy denial; no attempt to bypass or modify it"
+    },
+    {
+      "id": "ENV-03",
+      "atUtc": "2026-10-09T19:41:55Z",
+      "operation": "Bind a temporary loopback-only HTTP socket in the cloud execution workspace",
+      "status": "PASS",
+      "rawErrorExcerpts": [],
+      "rawResult": "LOCAL_HTTP_AVAILABLE ('127.0.0.1', 43525)",
+      "interpretation": "TCP loopback was available; this does not establish browser routing"
+    },
+    {
+      "id": "ENV-04",
+      "atUtc": "2026-10-09T19:43:25Z",
+      "operation": "Open the temporary loopback fixture URL through the dedicated cloud browser",
+      "status": "BLOCKED",
+      "rawErrorExcerpts": [
+        "Browser Use cannot open http://127.0.0.1:43525/experiments/r0/generated/fixture.html in tab 4. Browser reported: net::ERR_CONNECTION_REFUSED"
+      ],
+      "interpretation": "The browser could not reach the execution workspace's localhost listener. No fixture JavaScript ran. Do not infer live site or browser-wide unavailability."
+    }
+  ],
+  "browserAssertionsExecuted": 0,
+  "notPerformed": ["new hosted resource", "deployment", "GitHub Actions workflow", "permission changes", "profile copying", "account login", "extension install", "live ChatGPT interaction"]
+}
