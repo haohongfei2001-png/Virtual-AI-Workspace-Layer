@@ -1,0 +1,47 @@
+✔ B1: sender identity is independent of page-supplied scope and exact envelope (1.254125ms)
+✔ B1: new browser-confirmed document supersedes old lease without waiting (0.403125ms)
+✔ B1: route invalidation revokes even same-document tokens (0.135583ms)
+✔ B1: wrong browser document and unknown scope fail closed (0.085791ms)
+✔ B1: worker restart invalidates transient lease, not persisted reference (1.830875ms)
+✔ B1: scope change makes old records unreachable even if same native ID (0.159459ms)
+✔ B1: lease expiry/replay and browser-confirmed same-document SPA route (0.171666ms)
+✔ B1: delayed scope resolver cannot commit after navigation invalidates (0.184833ms)
+✔ B1: stale pending write is rejected at repository commit fence (1.625958ms)
+✔ B1: an asynchronous stale read never returns a stored reference (1.769792ms)
+✔ B1: a same-document SPA route change never exposes old async reads (1.484ms)
+✔ B1 rejects account changed during GET_REF without URL change (2.525ms)
+✔ B1 rejects account changed during LIST_REFS without URL change (0.15375ms)
+✔ MV3 build deterministic, scoped and CSP-safe (5.721959ms)
+✔ opaque browser bundle compiles the same actual navigation and broker modules (1.378417ms)
+✔ actual Node HTTP host serves app and rejects unsafe/unrelated paths (17.519292ms)
+✔ 120 contiguous 30-local-day segments Asia/Shanghai (15.248208ms)
+✔ 120 contiguous 30-local-day segments America/New_York (5.290958ms)
+✔ 120 contiguous 30-local-day segments Europe/Berlin (5.303125ms)
+✔ 120 contiguous 30-local-day segments Pacific/Kiritimati (5.390416ms)
+✔ 120 contiguous 30-local-day segments Pacific/Honolulu (5.298083ms)
+✔ current segment includes exactly today and preceding 29 local days (0.44475ms)
+✔ DST is calendar-based, not 720 hours (0.133625ms)
+✔ leap day included (0.082375ms)
+✔ invalid zone and negative segment rejected (0.143834ms)
+✔ future and naive times remain unknown (0.07125ms)
+✔ single latest theme segment; old children stay parent (2.142958ms)
+✔ current positive observation does not require full old coverage (4.200958ms)
+✔ old snapshot cannot assert no recent input (1.576625ms)
+✔ old child with a coverage gap is unknown, not forcibly historical (1.557042ms)
+✔ visit/update/assistant/edit timestamps never activate (0.067ms)
+✔ duplicate events idempotent, conflicting times quarantined (0.040541ms)
+✔ scope collision rejected even for same native ID/title (0.163625ms)
+✔ theme scope mismatch rejected (0.060792ms)
+✔ time-zone projection does not mutate source (4.936042ms)
+✔ 120 themes and all 604 references accounted for (25.050958ms)
+✔ cross-Project references aggregate without native mutation (2.346417ms)
+✔ only explicit synthetic origins and paths accepted (0.194125ms)
+✔ impossible calendar instants are unknown rather than normalized into a different day (0.042375ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 131.231417

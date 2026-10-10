@@ -1,0 +1,127 @@
+{
+  "level": "B_REAL_BROWSER_MV3",
+  "mode": "mv3",
+  "startedAt": "2026-10-10T22:33:39Z",
+  "environment": {
+    "python": "3.14.7",
+    "os": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "chrome": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/154.0.8037.99",
+      "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+      "jsVersion": "15.4.80.20"
+    }
+  },
+  "results": [
+    {
+      "id": "M01-load-real-MV3",
+      "status": "PASS",
+      "actual": {
+        "id": "chcdfadfgjdcpgckmicbpheiokegolno"
+      }
+    },
+    {
+      "id": "N01-loopback-browser-navigation",
+      "status": "PASS",
+      "actual": {
+        "url": "http://127.0.0.1:49769/hf/A/c/T0?mode=mv3"
+      }
+    },
+    {
+      "id": "N02-native-node-workspace-roundtrip",
+      "status": "PASS",
+      "actual": {
+        "realDOM": true
+      }
+    },
+    {
+      "id": "N03-real-browser-back-forward",
+      "status": "PASS",
+      "actual": {
+        "url": "http://127.0.0.1:49769/hf/A/c/T1?mode=mv3"
+      }
+    },
+    {
+      "id": "M02-worker-stop-restart-and-IDB-rebind",
+      "status": "PASS",
+      "actual": {
+        "workerEvents": [
+          {
+            "runningStatus": "running",
+            "versionId": "0"
+          },
+          {
+            "runningStatus": "stopping",
+            "versionId": "0"
+          },
+          {
+            "runningStatus": "stopped",
+            "versionId": "0"
+          },
+          {
+            "runningStatus": "starting",
+            "versionId": "0"
+          },
+          {
+            "runningStatus": "starting",
+            "versionId": "0"
+          },
+          {
+            "runningStatus": "starting",
+            "versionId": "0"
+          },
+          {
+            "runningStatus": "running",
+            "versionId": "0"
+          }
+        ],
+        "workerBootChanged": true,
+        "realExtensionOriginIDBReused": true,
+        "syntheticRecordRevision": 1
+      }
+    },
+    {
+      "id": "M03-real-SPA-A-B-A-scope-rebinding",
+      "status": "PASS",
+      "actual": {
+        "scopeRoundTrip": true,
+        "crossScopeThemeIsolation": true,
+        "realHistoryEvents": true
+      }
+    },
+    {
+      "id": "M04-real-MV3-unsafe-native-boundary-fallback",
+      "status": "PASS",
+      "actual": {
+        "nativeInputRetained": true
+      }
+    },
+    {
+      "id": "M05-unknown-account-fails-closed",
+      "status": "PASS",
+      "actual": {
+        "visibleProjection": false,
+        "realAccountWitness": false
+      }
+    }
+  ],
+  "notRun": [
+    "real ChatGPT login",
+    "physical IME",
+    "freeze/resume",
+    "extension disable/re-enable in graphical manager"
+  ],
+  "buildSha256": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "75fa8d988b63dfd3fa37b6b661aa9f6e272b28653656c048d6a3535dd899a69e",
+    "src/b1/document-binding-broker.mjs": "4b4314b56526e185bb69f523bff9d8ee3fabf76a6d745cae1a1d9bcdc953a2aa",
+    "simulator/service.mjs": "4ccceedc758995c52125353755d9d42ec77b394e01ba9ec7383338addbe3f14f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/worker.mjs": "8ffd7539aeef853fb0fb5f61cef3599e7b0a190d7abe03ba9a12f71bb2bce56e",
+    "content.js": "1d5975236c7ad1698a1de7f14763699c4f2901b417a19db7c75b0e28f94c98fa",
+    "manifest.json": "d8c3160d4f7d55f35b5633928759bb8c223b341770edade54c4e9ab78d8e91e6"
+  },
+  "status": "PASS",
+  "endedAt": "2026-10-10T22:33:42Z"
+}

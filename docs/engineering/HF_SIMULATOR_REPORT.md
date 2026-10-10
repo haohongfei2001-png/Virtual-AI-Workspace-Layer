@@ -1,5 +1,7 @@
 # 高仿真宿主测试平台：工程交付与裁决
 
+> **后续实测（2026-10-11）：** 本报告正文记录的是PR #6交付时云端环境的限制。用户后来单独授权在Mac隔离Chrome中验收，新增[真实MV3证据](hf-results/mac-mv3-2026-10-11/REPORT.md)：Node39/39、正常URL页面4/4、真实MV3 8/8通过，修正SPA sender.url滞后及worker恢复竞态。云端BLOCKED历史保留；真实ChatGPT/PAIA/物理IME/禁用与冻结仍未通过。
+
 2026-10-11，版本 0.1.0。**平台已建立；云端逻辑与实际 DOM 回归通过，正常 URL/IndexedDB/MV3 验收受管理员策略阻塞。整体 LIMITED。**
 
 ## 基线、授权与范围

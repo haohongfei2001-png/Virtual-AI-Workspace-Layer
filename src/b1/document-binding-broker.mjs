@@ -74,7 +74,12 @@ export function createDocumentBindingBroker({
       if(!isRecord(f)||!tokenOK(f.documentId)||!allowedURL(f.url)||
         f.errorOccurred===true||(f.documentLifecycle&&f.documentLifecycle!=='active'))return null;
       const actual={tabId:doc.tabId,frameId:doc.frameId,documentId:f.documentId,url:f.url};
-      return sameDoc(actual,doc)?actual:null;
+      // Chrome MessageSender.url can remain the document's initial URL after
+      // history.pushState. The browser's current frame URL is authoritative
+      // for route/scope; sender's documentId + exact origin must still match.
+      if(actual.documentId!==doc.documentId||
+         new URL(actual.url).origin!==new URL(doc.url).origin)return null;
+      return actual;
     }catch{return null;}
   }
   async function scopeFor(doc,sender){
@@ -87,22 +92,26 @@ export function createDocumentBindingBroker({
   // Recheck scope after asynchronous repository work, even when the URL has
   // not changed. This is a response fence, not a transactional account oracle.
   async function currentAuthority(st,slot,doc,sender){
-    if(!fresh(st,slot)||!(await currentDocument(doc)))return false;
+    if(!fresh(st,slot)||!sameDoc(await currentDocument(doc),doc))return false;
     const currentScope=await scopeFor(doc,sender);
-    return fresh(st,slot)&&currentScope?.key===slot.scope.key;
+    return fresh(st,slot)&&currentScope?.key===slot.scope.key&&
+      sameDoc(await currentDocument(doc),doc);
   }
   const copyRecord=r=>r?{conversationId:r.conversationId,nativeUrl:r.nativeUrl,
     projectId:r.projectId,revision:r.revision}:null;
   async function handle(message,sender){
     if(!requestOK(message))return deny('invalid-request');
-    const doc=isSender(sender,extensionId,allowedURL);
-    if(!doc)return deny('invalid-sender');
-    const key=tabKey(doc),st=stateFor(key),startEpoch=st.epoch;
-    if(!(await currentDocument(doc)))return deny('not-current-document');
+    const senderDoc=isSender(sender,extensionId,allowedURL);
+    if(!senderDoc)return deny('invalid-sender');
+    const key=tabKey(senderDoc),st=stateFor(key),startEpoch=st.epoch;
+    const doc=await currentDocument(senderDoc);
+    if(!doc)return deny('not-current-document');
     if(st.epoch!==startEpoch)return deny('invalidated-during-check');
+    // Resolve authority only from the current browser-confirmed frame, never
+    // from a client-supplied account or possibly stale sender.url.
     const scope=await scopeFor(doc,sender);
     if(!scope)return deny('unverified-scope');
-    if(st.epoch!==startEpoch||!(await currentDocument(doc)))return deny('stale-document');
+    if(st.epoch!==startEpoch||!sameDoc(await currentDocument(senderDoc),doc))return deny('stale-document');
     if(st.epoch!==startEpoch)return deny('invalidated-during-check');
     if(message.type==='BIND'){
       if(st.slot&&sameDoc(st.slot.doc,doc)&&st.slot.clientId===message.clientId&&

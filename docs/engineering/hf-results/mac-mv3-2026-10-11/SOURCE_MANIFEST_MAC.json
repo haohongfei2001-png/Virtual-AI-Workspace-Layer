@@ -1,0 +1,55 @@
+{
+  "schema": "VAIWL_HF_MAC_MV3_DELIVERY_V1",
+  "baseline_pr6_head": "2867fe3190f07d410593a6e588255f3ed5047116",
+  "evidenceLevel": "REAL_CHROME_MV3_SYNTHETIC_HOST",
+  "host": "macOS 27.0 arm64",
+  "chrome": "154.0.8037.99",
+  "python": "3.14.7",
+  "node": "26.8.2",
+  "playwright": "1.57.0",
+  "results": {
+    "node": {
+      "pass": 39,
+      "fail": 0
+    },
+    "page": {
+      "pass": 4,
+      "fail": 0
+    },
+    "mv3": {
+      "pass": 8,
+      "fail": 0
+    },
+    "realChatGPT": "NOT_RUN"
+  },
+  "modifiedSourceSHA256": {
+    "src/b1/document-binding-broker.mjs": "4b4314b56526e185bb69f523bff9d8ee3fabf76a6d745cae1a1d9bcdc953a2aa",
+    "tests/b1/broker.test.mjs": "5704b2e33f0513205ae09f7cbbe03d06cbdcd95636a991a74a0717ba42577e63",
+    "simulator/client.mjs": "493a8ba851aedcfdef39a44550a75fd4f9ee5b7e45897afe3c0aeedd917720eb",
+    "simulator/worker.mjs": "8ffd7539aeef853fb0fb5f61cef3599e7b0a190d7abe03ba9a12f71bb2bce56e",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "tests/hf/real-browser.py": "ef3ea26b9d9055035b4f95f0ec765f02988b719d7cbb53fc80430bb375331125",
+    "simulator/README.md": "a767b2f4e0d7cd99d4c19b473f9de0300cd2ae20457def03cde26fc3a1b3b645",
+    "docs/engineering/HF_SIMULATOR_REPORT.md": "0cbd8aa168d67cbe051c4f3e9dea2615b47f2f210ebf94a05b9456acbcd90e30",
+    "docs/engineering/HF_COVERAGE_MATRIX.md": "12625ccba0cfa3c3c0783f3a5d8c031b168c11b0cefc9cad419d6518cec122e5"
+  },
+  "evidenceSHA256": {
+    "node-39.tap": "2f131917197c7796681be8d93ee9597b008f98c0d6116d47e24168fe15c672a5",
+    "page-final.json": "a233d5e21d4c97bf19e7d845d9091459034bd05aaa1f6712f89002d77821a466",
+    "mv3-final.json": "f9c621ede3c66568eafb3940f3bb484daed0507fcb1020a43bc73f0998a05e21",
+    "page-csp-original-failure.json": "d459c75a54bba0609651bff2d3c85b26c4bf88023e63c52ba56e61d750245617",
+    "mv3-extension-injection-failure.json": "71ff414bf69d6a42dd46343e256663d885bd67818aae80bef2f225b621fd63f1",
+    "mv3-worker-rebind-failure.json": "036986d615f6ef3a8b405d1eda02a3657b88425ed375dc51f5cfc643ae40edc7",
+    "mv3-stale-worker-handle-failure.json": "8ddcce71bb7a01babf7266cb913b92f128d66f2ccbb73d5a54bbda0550170acb",
+    "mv3-spa-stale-sender-url-failure.json": "a8cd42ac20c1dc04b3220d16abeba043d702bff16116223e0ecab04e5020c6c3",
+    "FIXES.patch": "429d7386b9b03b4d526b64ef571c468ccb72a99568130ae47d1e9233bc52c1f3",
+    "REPORT.md": "b289f1af5e0139c5eb7ea09c5130a56e788cfb572f9f0782c4e1ab98845e4d42"
+  },
+  "excluded": [
+    "private Chrome data",
+    "real ChatGPT login",
+    "PAIA real extension",
+    "physical IME",
+    "disable/re-enable/freeze"
+  ]
+}

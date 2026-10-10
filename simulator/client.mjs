@@ -6,6 +6,21 @@ import { dataset, routeInfo, FIXTURE_NOW } from './data.mjs';
 export function startClient({send,invalidateRemote=()=>{},readControls=()=>({size:Number(document.documentElement.dataset.hfSize)||8,now:document.documentElement.dataset.hfNow||FIXTURE_NOW,timeZone:document.documentElement.dataset.hfTimeZone||'Asia/Shanghai'}),subscribe=()=>()=>{}}) {
   const adapter=createAdapter(),clientId=crypto.randomUUID?.()??Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');let seq=0,generation=0,lease=null,expiry=null,pending=null,stopped=false,lastURL=env.location.href;
   const controlKey=()=>{const c=readControls();return JSON.stringify([c.size,c.now,c.timeZone]);};let lastControls=controlKey();
+  // Browser navigation invalidation can race a fresh document's first BIND.
+  // Retry only explicitly transient, fail-closed denials; never retry an
+  // unverified scope, a permission failure, or a missing trusted witness.
+  let transientRetries=0;
+  function retryTransient(reason,ticket,url){
+    fail(reason);
+    if(!['invalidated-during-check','stale-document','not-current-document'].includes(reason))return;
+    if(transientRetries>=3)return;
+    const delay=[90,180,360][transientRetries++];
+    clearTimeout(pending);
+    pending=setTimeout(()=>{
+      pending=null;
+      if(!stopped&&ticket===generation&&url===env.location.href)void load();
+    },delay);
+  }
   let navigation=createNavigation({document,adapter,onExit:()=>stop()});
   const fail=reason=>{navigation.invalidate(reason);};
   async function load(){
@@ -13,13 +28,13 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     try{
       const bound=await send({v:1,type:'BIND',clientId,seq:++seq});
       if(stopped||ticket!==generation||url!==env.location.href)return;
-      if(!bound?.ok){fail(bound?.reason??'bind-failed');return;}
+      if(!bound?.ok){retryTransient(bound?.reason??'bind-failed',ticket,url);return;}
       lease=bound;const reply=await send({v:1,type:'LIST_REFS',clientId,seq:++seq,leaseId:lease.leaseId});
       if(stopped||ticket!==generation||url!==env.location.href)return;
-      if(!reply?.ok){fail(reply?.reason??'read-failed');return;}
+      if(!reply?.ok){retryTransient(reply?.reason??'read-failed',ticket,url);return;}
       const info=routeInfo(url),controls=readControls(),data=dataset(info.account,info.origin,controls.size??8),allowed=new Map(reply.records.map(r=>[r.conversationId,r]));
       data.refs=data.refs.filter(r=>{const actual=allowed.get(r.id);return actual?.nativeUrl===r.nativeUrl&&actual.projectId===r.projectId;});
-      navigation.update(data,controls.now??FIXTURE_NOW,controls.timeZone??'Asia/Shanghai');const host=adapter.inspect();if(host.ok){resize.observe(host.reading);resize.observe(host.header);}
+      transientRetries=0;navigation.update(data,controls.now??FIXTURE_NOW,controls.timeZone??'Asia/Shanghai');const host=adapter.inspect();if(host.ok){resize.observe(host.reading);resize.observe(host.header);}
       expiry=setTimeout(()=>{generation++;lease=null;fail('lease-expired-active-js');},Math.max(0,lease.expiresAt-Date.now()));
     }catch(e){if(ticket===generation)fail('transport-failure');}
   }

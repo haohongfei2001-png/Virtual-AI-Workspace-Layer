@@ -95,14 +95,21 @@ test('B1: scope change makes old records unreachable even if same native ID',asy
  const readB=await h.broker.handle(h.request('GET_REF',4,leaseB.leaseId,{conversationId:'same'}),b);
  assert.equal(readB.record,null);
 });
-test('B1: lease timeout, sequence replay, changed browser URL all deny',async()=>{
+test('B1: lease expiry/replay and browser-confirmed same-document SPA route',async()=>{
  const h=mk(),a=fixture();
  const v=await h.broker.handle(h.request('BIND',1),a);
  assert.equal((await h.broker.handle(h.request('CHECK',1,v.leaseId),a)).reason,'stale-binding');
  h.tick(20001);
  assert.equal((await h.broker.handle(h.request('CHECK',2,v.leaseId),a)).reason,'stale-binding');
- h.current.set(17,{url:urls.B,documentId:'doc_A'});
- assert.equal((await h.broker.handle(h.request('BIND',3),a)).reason,'not-current-document');
+ // Chrome reports B even when MessageSender.url retains A for the same documentId.
+ h.current.set(17,{url:urls.B,documentId:'doc_A',documentLifecycle:'active'});
+ const next=await h.broker.handle(h.request('BIND',3),a);
+ assert(next.ok,'same-document SPA B must bind from browser-confirmed route');
+ assert.equal((await h.broker.handle(h.request('CHECK',4,v.leaseId),a)).reason,'stale-binding');
+ assert.equal((await h.broker.handle(h.request('LIST_REFS',5,next.leaseId),a)).ok,true);
+ h.current.set(17,{url:'http://127.0.0.1:40000/b1-fixture/B.html',documentId:'doc_A',documentLifecycle:'active'});
+ assert.equal((await h.broker.handle(h.request('BIND',6),a)).reason,'not-current-document',
+  'different port is a different security origin, even with matching documentId');
 });
 test('B1: delayed scope resolver cannot commit after navigation invalidates',async()=>{
  let release;
@@ -152,4 +159,27 @@ test('B1: an asynchronous stale read never returns a stored reference',async()=>
  const outcome=await op;
  assert.equal(outcome.reason,'stale-after-read');
  assert.equal(Object.hasOwn(outcome,'record'),false);
+});
+
+test('B1: a same-document SPA route change never exposes old async reads',async()=>{
+ let release;const pending=new Promise(resolve=>release=resolve);
+ const current={url:urls.A,documentId:'doc_A',documentLifecycle:'active'};
+ const broker=createDocumentBindingBroker({
+  extensionId:'extension_fixture_id',getFrame:async()=>({...current}),
+  resolveScope:fixtureScopeResolver,
+  repository:{get:async()=>{await pending;return {conversationId:'A_only',
+    nativeUrl:urls.A,projectId:null,revision:1}},list:async()=>[],upsert:async()=>({ok:true})}
+ });
+ const sender=fixture();
+ const bound=await broker.handle({v:1,type:'BIND',clientId:'client_A',seq:1},sender);
+ assert(bound.ok);
+ const delayed=broker.handle({v:1,type:'GET_REF',clientId:'client_A',seq:2,
+   leaseId:bound.leaseId,conversationId:'A_only'},sender);
+ await new Promise(resolve=>setTimeout(resolve,0));
+ current.url=urls.B;release();
+ const result=await delayed;
+ assert.equal(result.reason,'stale-after-read');
+ assert.equal(Object.hasOwn(result,'record'),false);
+ const switched=await broker.handle({v:1,type:'BIND',clientId:'client_A',seq:3},sender);
+ assert(switched.ok,'browser-confirmed SPA B must accept stale sender.url A');
 });

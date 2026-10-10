@@ -1,5 +1,7 @@
 # VAIWL High-Fidelity ChatGPT Host Simulator
 
+> **2026-10-11 Mac隔离环境追补：** 已在macOS27 / Chrome154真正加载MV3并验证：页面模式4/4、MV3模式8/8、Node39/39通过。云端环境原先的管理员阻塞仍是该环境下的历史事实；不是登录态ChatGPT通过。完整变更及原始证据见 [Mac MV3验证报告](../docs/engineering/hf-results/mac-mv3-2026-10-11/REPORT.md)。实际启动需从Playwright默认参数中移除`--disable-extensions`，并使用CSP兼容的locator等待。
+
 可交互、纯合成、离线本机测试宿主。不是 OpenAI 服务、登录页或替代聊天产品。当前实现版本 `0.1.0`；设计仍以仓库 v2.7 为准，不另建产品 Canonical。
 
 ## 启动

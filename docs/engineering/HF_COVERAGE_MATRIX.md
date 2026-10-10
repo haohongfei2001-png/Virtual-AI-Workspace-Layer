@@ -1,5 +1,7 @@
 # 高仿真宿主覆盖矩阵
 
+> **证据增量：** 下表原本只反映云端Chromium144 opaque DOM和blocked MV3。现已在隔离Mac Chrome154真实执行[Mac MV3追补](hf-results/mac-mv3-2026-10-11/REPORT.md)：正常URL页面4/4、真实MV3 8/8、Node39/39。真实Chrome验证包括SPA A→B→A不串线、Unknown拒绝、无安全边界安全退让、worker停止重启和扩展IDB保留。表内云端BLOCKED措辞仍按其原环境成立，不能作为本轮全局最新结论。真实ChatGPT仍未执行。
+
 所有 `Dxx` 为 Chromium 144 opaque DOM 执行，不是 MV3 或真实 ChatGPT。测试实例的预期、实际和源码 hash 见 `hf-results/browser-final.json`。界面保真不能从此表推算百分比。
 
 | 功能/风险 | 已执行证据 | 裁决及限制 |
