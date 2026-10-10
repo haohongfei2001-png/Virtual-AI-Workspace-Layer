@@ -1,0 +1,200 @@
+TAP version 13
+# Subtest: positive handshake mounts one synthetic mark; stop/dispose are idempotent
+ok 1 - positive handshake mounts one synthetic mark; stop/dispose are idempotent
+  ---
+  duration_ms: 5.553791
+  type: 'test'
+  ...
+# Subtest: connect timeout settles even if transport never replies; late response cannot mount
+ok 2 - connect timeout settles even if transport never replies; late response cannot mount
+  ---
+  duration_ms: 8.350342
+  type: 'test'
+  ...
+# Subtest: stop settles pending connect and late success/rejection cannot resurrect content
+ok 3 - stop settles pending connect and late success/rejection cannot resurrect content
+  ---
+  duration_ms: 1.176746
+  type: 'test'
+  ...
+# Subtest: out-of-order reply to prior local generation cannot remove the newer mount
+ok 4 - out-of-order reply to prior local generation cannot remove the newer mount
+  ---
+  duration_ms: 1.174795
+  type: 'test'
+  ...
+# Subtest: A-to-B-to-A route race rejects old reply even when URL returns to A
+ok 5 - A-to-B-to-A route race rejects old reply even when URL returns to A
+  ---
+  duration_ms: 1.723418
+  type: 'test'
+  ...
+# Subtest: route mismatch at reply delivery, malformed response and wrong request are refused
+ok 6 - route mismatch at reply delivery, malformed response and wrong request are refused
+  ---
+  duration_ms: 1.742083
+  type: 'test'
+  ...
+# Subtest: send throw/reject and context reader failure settle false with no mount
+ok 7 - send throw/reject and context reader failure settle false with no mount
+  ---
+  duration_ms: 0.735673
+  type: 'test'
+  ...
+# Subtest: active fake timer expiry removes only owned mark; stale cancelled expiry cannot clear new generation
+ok 8 - active fake timer expiry removes only owned mark; stale cancelled expiry cannot clear new generation
+  ---
+  duration_ms: 0.787473
+  type: 'test'
+  ...
+# Subtest: early timer reschedules to original deadline rather than extending the lease
+ok 9 - early timer reschedules to original deadline rather than extending the lease
+  ---
+  duration_ms: 0.725238
+  type: 'test'
+  ...
+# Subtest: scheduler failure and cancel failure refuse binding and latch cleanup failures
+ok 10 - scheduler failure and cancel failure refuse binding and latch cleanup failures
+  ---
+  duration_ms: 0.523877
+  type: 'test'
+  ...
+# Subtest: expiry scheduler failure removes a mounted marker
+ok 11 - expiry scheduler failure removes a mounted marker
+  ---
+  duration_ms: 2.090817
+  type: 'test'
+  ...
+# Subtest: mount crossing expiry removes own node and refuses bound state
+ok 12 - mount crossing expiry removes own node and refuses bound state
+  ---
+  duration_ms: 0.231561
+  type: 'test'
+  ...
+# Subtest: mount reentry cannot clear newer pending connection or leak the obsolete own node
+ok 13 - mount reentry cannot clear newer pending connection or leak the obsolete own node
+  ---
+  duration_ms: 0.195684
+  type: 'test'
+  ...
+# Subtest: throwing own cleanup still cancels timers and prevents later mounts
+ok 14 - throwing own cleanup still cancels timers and prevents later mounts
+  ---
+  duration_ms: 0.225443
+  type: 'test'
+  ...
+# Subtest: synchronous timeout callback does not send or leave timer handles
+ok 15 - synchronous timeout callback does not send or leave timer handles
+  ---
+  duration_ms: 0.118518
+  type: 'test'
+  ...
+# Subtest: canonical loopback fixture only; normalized paths/credentials/external hosts are refused
+not ok 16 - canonical loopback fixture only; normalized paths/credentials/external hosts are refused
+  ---
+  duration_ms: 2.03993
+  type: 'test'
+  location: '/workspace/scratch/24e34dc252d3/vawl-r0-mv3/tests/r0/mv3/protocol.test.mjs:14:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    http://127.0.0.1:38407/r0-mv3-fixture/A.html?
+    + actual - expected
+    
+    + 'http://127.0.0.1:38407/r0-mv3-fixture/A.html?'
+    - null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual: 'http://127.0.0.1:38407/r0-mv3-fixture/A.html?'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/24e34dc252d3/vawl-r0-mv3/tests/r0/mv3/protocol.test.mjs:19:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.start (node:internal/test_runner/test:1242:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: MessageSender identity excludes frames, foreign extension, inactive/missing docs and unsafe tabs
+ok 17 - MessageSender identity excludes frames, foreign extension, inactive/missing docs and unsafe tabs
+  ---
+  duration_ms: 0.500265
+  type: 'test'
+  ...
+# Subtest: exact bounded schema rejects payload authority, extras, malformed IDs and operations
+not ok 18 - exact bounded schema rejects payload authority, extras, malformed IDs and operations
+  ---
+  duration_ms: 0.606462
+  type: 'test'
+  location: '/workspace/scratch/24e34dc252d3/vawl-r0-mv3/tests/r0/mv3/protocol.test.mjs:27:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    null !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: ~
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/24e34dc252d3/vawl-r0-mv3/tests/r0/mv3/protocol.test.mjs:31:81)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: positive bound reply survives structured clone; no object-identity token claim
+ok 19 - positive bound reply survives structured clone; no object-identity token claim
+  ---
+  duration_ms: 0.883167
+  type: 'test'
+  ...
+# Subtest: duplicate or reordered binds cannot renew a lease; explicit later request can bind again
+ok 20 - duplicate or reordered binds cannot renew a lease; explicit later request can bind again
+  ---
+  duration_ms: 0.5146
+  type: 'test'
+  ...
+# Subtest: same-tab new document/client/url cannot evict an unexpired owner
+ok 21 - same-tab new document/client/url cannot evict an unexpired owner
+  ---
+  duration_ms: 0.360441
+  type: 'test'
+  ...
+# Subtest: tab isolation; CHECK must match complete sender, client, worker, lease and monotonic request
+ok 22 - tab isolation; CHECK must match complete sender, client, worker, lease and monotonic request
+  ---
+  duration_ms: 0.374579
+  type: 'test'
+  ...
+# Subtest: simulated new broker boot loses leases; old CHECK is denied, new bind gets fresh boot identity
+ok 23 - simulated new broker boot loses leases; old CHECK is denied, new bind gets fresh boot identity
+  ---
+  duration_ms: 0.170468
+  type: 'test'
+  ...
+# Subtest: expiry rejects CHECK and frees bounded capacity; old commands never release a new owner
+ok 24 - expiry rejects CHECK and frees bounded capacity; old commands never release a new owner
+  ---
+  duration_ms: 0.294352
+  type: 'test'
+  ...
+# Subtest: invalid clock/id factory or thrown field accessor fails closed without leaking exception
+ok 25 - invalid clock/id factory or thrown field accessor fails closed without leaking exception
+  ---
+  duration_ms: 0.577232
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 23
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 250.163381
