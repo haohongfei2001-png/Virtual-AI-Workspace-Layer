@@ -84,6 +84,13 @@ export function createDocumentBindingBroker({
     }catch{return null;}
   }
   const fresh=(st,slot)=>st.slot===slot&&st.epoch===slot.epoch&&now()<slot.expiresAt;
+  // Recheck scope after asynchronous repository work, even when the URL has
+  // not changed. This is a response fence, not a transactional account oracle.
+  async function currentAuthority(st,slot,doc,sender){
+    if(!fresh(st,slot)||!(await currentDocument(doc)))return false;
+    const currentScope=await scopeFor(doc,sender);
+    return fresh(st,slot)&&currentScope?.key===slot.scope.key;
+  }
   const copyRecord=r=>r?{conversationId:r.conversationId,nativeUrl:r.nativeUrl,
     projectId:r.projectId,revision:r.revision}:null;
   async function handle(message,sender){
@@ -121,12 +128,12 @@ export function createDocumentBindingBroker({
     try{
       if(message.type==='GET_REF'){
         const record=await repository.get(scope,message.conversationId);
-        if(!fresh(st,slot)||!(await currentDocument(doc)))return deny('stale-after-read');
+        if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-read');
         return {ok:true,type:'REF',record:copyRecord(record)};
       }
       if(message.type==='LIST_REFS'){
         const records=await repository.list(scope);
-        if(!fresh(st,slot)||!(await currentDocument(doc)))return deny('stale-after-read');
+        if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-read');
         return {ok:true,type:'REFS',records:records.map(copyRecord)};
       }
       if(message.type==='UPSERT_REF'){
@@ -136,7 +143,7 @@ export function createDocumentBindingBroker({
           expectedRevision:message.expectedRevision,
           ref:{conversationId:message.conversationId,nativeUrl:doc.url,projectId:null},
           beforeCommit:()=>fresh(st,slot)});
-        if(!fresh(st,slot)||!(await currentDocument(doc)))return deny('stale-after-write');
+        if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-write');
         return result.ok?{...result,record:copyRecord(result.record)}:result;
       }
     }catch(e){return deny(e?.message||'repository-failure');}

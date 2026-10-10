@@ -1,0 +1,151 @@
+{
+  "scope": "Extracted failure ledger; full raw runs in delivery archive. Counts never added together.",
+  "initialInterruptedRun": {
+    "rawPathInArchive": "raw/browser-attempt1.log",
+    "rawSha256": "d16b07af1c8c2354238601827396d23ee04d9199679ad0ee4b29a440996659f4",
+    "outcome": "Harness used wrong diagnostic attribute; startup waits timed out; process interrupted. Not a completed test run."
+  },
+  "runs": [
+    {
+      "run": "browser-attempt2",
+      "rawPathInArchive": "raw/browser-attempt2/results.json",
+      "rawSha256": "6beb395577ffce7bc7385d800b8cf6066f0440b38a379f6dc3cae60529610b93",
+      "counts": {
+        "PASS": 31,
+        "FAIL": 4
+      },
+      "bundleSha256": "328694af15480880ac61236bc573e5fe73a53a1033caf7f556d6815cd89197b6",
+      "failures": [
+        {
+          "id": "D16-workspace-restores-history-and-scroll",
+          "expected": "Return restores history segment, scroll and disclosure state without resetting native view",
+          "actual": null,
+          "status": "FAIL",
+          "error": {
+            "name": "AssertionError",
+            "message": "scroll not restored"
+          },
+          "durationMs": 739,
+          "pageErrors": [],
+          "pageRequests": []
+        },
+        {
+          "id": "D17-account-A-B-A-and-unknown",
+          "expected": "Scope change clears stale projection and unknown identity renders no derived content",
+          "actual": null,
+          "status": "FAIL",
+          "error": {
+            "name": "AssertionError",
+            "message": "B content absent"
+          },
+          "durationMs": 341,
+          "pageErrors": [],
+          "pageRequests": []
+        },
+        {
+          "id": "D18-late-response-after-account-change",
+          "expected": "Delayed old-account read cannot display after B navigation",
+          "actual": null,
+          "status": "FAIL",
+          "error": {
+            "name": "AssertionError",
+            "message": "wrong account result"
+          },
+          "durationMs": 869,
+          "pageErrors": [],
+          "pageRequests": []
+        },
+        {
+          "id": "D23-packed-header-no-convenient-slot",
+          "expected": "New native features occupy header; extension yields instead of overlaying tools",
+          "actual": null,
+          "status": "FAIL",
+          "error": {
+            "name": "AssertionError",
+            "message": "header collision not refused"
+          },
+          "durationMs": 292,
+          "pageErrors": [],
+          "pageRequests": []
+        }
+      ]
+    },
+    {
+      "run": "browser-attempt3",
+      "rawPathInArchive": "raw/browser-attempt3/results.json",
+      "rawSha256": "37d5d7575b01407e464a01c48c9b129639acfd9d3342d9f7fdfbc2a4ab729ac8",
+      "counts": {
+        "PASS": 34,
+        "FAIL": 1
+      },
+      "bundleSha256": "8d9a0d54f4d6fc960a3fe20e522735021835011813cff31195ed3e4cc2de1a6f",
+      "failures": [
+        {
+          "id": "D16-workspace-restores-history-and-scroll",
+          "expected": "Return restores history segment, scroll and disclosure state without resetting native view",
+          "actual": null,
+          "status": "FAIL",
+          "error": {
+            "name": "AssertionError",
+            "message": "scroll not restored"
+          },
+          "durationMs": 752,
+          "pageErrors": [],
+          "pageRequests": []
+        }
+      ]
+    },
+    {
+      "run": "scroll-retest",
+      "rawPathInArchive": "raw/scroll-retest/results.json",
+      "rawSha256": "07f0c9fbb7c1190ae76e29e1f9b4875349867254af98e135659057b79a79d11c",
+      "counts": {
+        "PASS": 1,
+        "FAIL": 0
+      },
+      "bundleSha256": "fde037588de8f329fa0f1fe133336eb108da6289717c9824af0738436b68d457",
+      "failures": []
+    },
+    {
+      "run": "browser-final",
+      "rawPathInArchive": "raw/browser-final/results.json",
+      "rawSha256": "06eae2b619252c7efed16915fd5e9ab8aacc86f6282a7effda0e5de71b4b8b68",
+      "counts": {
+        "PASS": 37,
+        "FAIL": 0
+      },
+      "bundleSha256": "dfff67dd2a1b0fef97e3cf305d1fe7aaa0cde1eed18dc131755cbf00c6997cf7",
+      "failures": []
+    },
+    {
+      "run": "browser-final-v2",
+      "rawPathInArchive": "raw/browser-final-v2/results.json",
+      "rawSha256": "29b99f6998499f7647f211582275b1aaf65fe91f8ef14884b8dc7f682bf0cf68",
+      "counts": {
+        "PASS": 38,
+        "FAIL": 0
+      },
+      "bundleSha256": "dfcf982f948e60fd7968df297f8df2e571f04a098e192b0391bfc9b76319ccfc",
+      "failures": []
+    }
+  ],
+  "b1Regression": {
+    "before": "b1-before-fix.tap",
+    "beforeSha256": "0f5b26ba63f05339b995e10a6c69aa1379831e86e966b40726f9fed7d9a5130e",
+    "after": "b1-after-fix.tap",
+    "afterSha256": "754157f376660ab48c67180bcee6444f7eec497cf285dd2cfaabde086e1d118e",
+    "beforeCounts": {
+      "PASS": 0,
+      "FAIL": 2
+    },
+    "afterCounts": {
+      "PASS": 2,
+      "FAIL": 0
+    }
+  },
+  "interpretation": {
+    "D16": "Navigation defect: restore scroll only on visible owned scroller. Same assertion retained.",
+    "D17_D18": "Harness defect: wrong B-account expected text; actual synthetic names used after correction.",
+    "D23": "Adapter defect: native growing header content takes priority; NATIVE_ONLY is safe fallback, not full enhancement."
+  }
+}

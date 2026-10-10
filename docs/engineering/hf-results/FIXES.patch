@@ -1,0 +1,100 @@
+--- before/src/b1/document-binding-broker.mjs
++++ after/src/b1/document-binding-broker.mjs
+@@ -84,6 +84,13 @@
+     }catch{return null;}
+   }
+   const fresh=(st,slot)=>st.slot===slot&&st.epoch===slot.epoch&&now()<slot.expiresAt;
++  // Recheck scope after asynchronous repository work, even when the URL has
++  // not changed. This is a response fence, not a transactional account oracle.
++  async function currentAuthority(st,slot,doc,sender){
++    if(!fresh(st,slot)||!(await currentDocument(doc)))return false;
++    const currentScope=await scopeFor(doc,sender);
++    return fresh(st,slot)&&currentScope?.key===slot.scope.key;
++  }
+   const copyRecord=r=>r?{conversationId:r.conversationId,nativeUrl:r.nativeUrl,
+     projectId:r.projectId,revision:r.revision}:null;
+   async function handle(message,sender){
+@@ -121,12 +128,12 @@
+     try{
+       if(message.type==='GET_REF'){
+         const record=await repository.get(scope,message.conversationId);
+-        if(!fresh(st,slot)||!(await currentDocument(doc)))return deny('stale-after-read');
++        if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-read');
+         return {ok:true,type:'REF',record:copyRecord(record)};
+       }
+       if(message.type==='LIST_REFS'){
+         const records=await repository.list(scope);
+-        if(!fresh(st,slot)||!(await currentDocument(doc)))return deny('stale-after-read');
++        if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-read');
+         return {ok:true,type:'REFS',records:records.map(copyRecord)};
+       }
+       if(message.type==='UPSERT_REF'){
+@@ -136,7 +143,7 @@
+           expectedRevision:message.expectedRevision,
+           ref:{conversationId:message.conversationId,nativeUrl:doc.url,projectId:null},
+           beforeCommit:()=>fresh(st,slot)});
+-        if(!fresh(st,slot)||!(await currentDocument(doc)))return deny('stale-after-write');
++        if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-write');
+         return result.ok?{...result,record:copyRecord(result.record)}:result;
+       }
+     }catch(e){return deny(e?.message||'repository-failure');}
+--- before/src/navigation/navigation.mjs
++++ after/src/navigation/navigation.mjs
+@@ -31,14 +31,16 @@
+     const show=view.mode==='workspace'&&!suspended;
+     const r=host.reading.getBoundingClientRect();
+     const style=`position:fixed;z-index:10;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;display:${show?'block':'none'}`;
++    const wasVisible=roots.workspace.n.style.display==='block';
+     if(roots.workspace.n.style.cssText!==style)roots.workspace.n.style.cssText=style;
++    if(show&&!wasVisible&&roots.workspace.scroller)roots.workspace.scroller.scrollTop=view.scroll;
+     roots.sidebar.n.style.visibility=suspended?'hidden':'';
+     roots.back.hidden=view.mode==='workspace'||suspended;
+     // The original conversation tree remains attached; only this reversible view mask changes.
+     setMask(host.reading,show);
+     status={state:suspended?'NATIVE_LAYER':'ACTIVE',mode:view.mode,scope:snapshot.scope};adapter.status(status);
+   }
+-  function remember(){if(roots?.workspace.scroller)view.scroll=roots.workspace.scroller.scrollTop;}
++  function remember(){if(view?.mode==='workspace'&&roots?.workspace.scroller&&roots.workspace.n.style.display!=='none')view.scroll=roots.workspace.scroller.scrollTop;}
+   function showWorkspace(){captureFocus();remember();view.mode='workspace';searchQuery=null;render();layout();}
+   function openRef(ref,event){if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;remember();view.mode='reading';searchQuery=null;layout();const same=adapter.isCurrent(ref.nativeUrl);adapter.openNative(ref.nativeUrl,event);if(same)restoreFocus();}
+   function row(ref){const a=node(doc,'a',{class:'row',href:ref.nativeUrl,'data-ref-id':ref.id,title:ref.displayTitle},ref.displayTitle??ref.nativeTitle);if(adapter.isCurrent(ref.nativeUrl))a.setAttribute('aria-current','page');if(ref.available===false)a.setAttribute('aria-disabled','true');a.addEventListener('click',e=>openRef(ref,e));return a;}
+@@ -57,7 +59,7 @@
+     for(const g of sideGroups){const block=node(doc,'section',{class:'group'});const toggle=button('侧栏主题 '+g.name,()=>{view.sidebarOpen.has(g.id)?view.sidebarOpen.delete(g.id):view.sidebarOpen.add(g.id);render();},'','theme-toggle');toggle.append(node(doc,'span',{class:'theme-glyph'},'◇'),node(doc,'span',{},g.name));toggle.setAttribute('aria-expanded',String(view.sidebarOpen.has(g.id)));block.append(toggle);
+       if(view.sidebarOpen.has(g.id)){const children=node(doc,'div',{class:'children'});members(g,children,true);const exceptional=g.unknown.find(r=>adapter.isCurrent(r.nativeUrl));if(exceptional)children.append(row(exceptional));block.append(children);}list.append(block);}
+     panel.append(list);side.append(panel);
+-    const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace','data-segment':String(view.segment)});roots.workspace.scroller=page;page.addEventListener('scroll',()=>view.scroll=page.scrollTop,{passive:true});
++    const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace','data-segment':String(view.segment)});roots.workspace.scroller=page;page.addEventListener('scroll',()=>{if(roots?.workspace.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none')view.scroll=page.scrollTop;},{passive:true});
+     if(searchQuery!==null){const search=node(doc,'section',{class:'search'}),input=node(doc,'input',{'aria-label':'派生查找输入',placeholder:'查找主题、派生名称与已知窗口'});input.value=searchQuery;search.append(input,node(doc,'p',{},'只搜索已知合成引用；未知时间和历史窗口仍可查找。原生搜索独立保留。'));
+       const results=node(doc,'div');const update=()=>{searchQuery=input.value;results.replaceChildren();for(const r of snapshot.refs.filter(r=>(r.nativeTitle+r.displayTitle+r.id).includes(searchQuery)))results.append(row(r));};input.oninput=update;update();search.append(results,button('关闭派生查找',()=>{searchQuery=null;render();},'关闭','more'));page.append(search);
+     }else{const arrows=node(doc,'div',{class:'arrows'});if(view.segment>0)arrows.append(button('较近的30日',()=>{view.segment--;view.scroll=0;render();},'↑'));const down=button('较早的30日',()=>{view.segment++;view.scroll=0;render();},'↓');down.disabled=view.segment>=Math.max(0,...groups.map(g=>g.segment??0));arrows.append(down);page.append(arrows);
+--- before/simulator/adapter.mjs
++++ after/simulator/adapter.mjs
+@@ -8,6 +8,11 @@
+       if(!syntheticURL(env.location.href))return {ok:false,reason:'not-synthetic-origin'};
+       const history=one('aside[aria-label="Sidebar"] nav[aria-label="Chat history"]'),header=one('main header[aria-label="Chat actions"]'),reading=one('main section[aria-label="Conversation"]');
+       if(!history||!header||!reading)return {ok:false,reason:'missing-or-ambiguous-native-boundary'};
++      // Growing native content has priority over an extra control. Do not shrink it
++      // to create an apparently free slot around an already mounted return button.
++      if([...header.children].some(n=>!n.hasAttribute('data-vaiwl-owned')&&
++        getComputedStyle(n).display!=='none'&&parseFloat(getComputedStyle(n).flexGrow)>0&&n.textContent.trim()))
++        return {ok:false,reason:'native-content-occupies-header'};
+       const box=header.getBoundingClientRect();
+       const occupied=[...header.children].filter(n=>!n.hasAttribute('data-vaiwl-owned')&&!n.classList.contains('header-space')).reduce((n,e)=>n+e.getBoundingClientRect().width,0);
+       const style=getComputedStyle(header),count=[...header.children].filter(n=>!n.hasAttribute('data-vaiwl-owned')&&!n.classList.contains('header-space')).length;
+--- before/tests/hf/real-browser.py
++++ after/tests/hf/real-browser.py
+@@ -21,12 +21,12 @@
+             assert server.stdout.readline().startswith('Synthetic host only:'),'server did not start'
+             with sync_playwright() as pw:
+                 context=pw.chromium.launch_persistent_context(str(tmp/'profile'),executable_path=args.browser,headless=True,viewport={'width':1440,'height':1000},args=['--enable-unsafe-extension-debugging'])
+-                context.set_default_timeout(10000);page=context.new_page();cdp=context.new_cdp_session(page);report['environment']['chrome']=cdp.send('Browser.getVersion')
++                context.set_default_timeout(10000);page=context.new_page();cdp=context.new_cdp_session(page);browser_cdp=context.browser.new_browser_cdp_session();report['environment']['chrome']=cdp.send('Browser.getVersion')
+                 report['buildSha256']=json.loads((build/'build-hashes.json').read_text())
+                 loaded=False;navigation=False
+                 if args.mode=='mv3':
+                     try:
+-                        result=cdp.send('Extensions.loadUnpacked',{'path':str(build)});loaded=True;record('M01-load-real-MV3','PASS',result)
++                        result=browser_cdp.send('Extensions.loadUnpacked',{'path':str(build)});loaded=True;record('M01-load-real-MV3','PASS',result)
+                     except Exception as e:
+                         text=str(e);status='BLOCKED' if any(x in text.lower() for x in ['administrator','not found','not supported','unknown method']) else 'FAIL';record('M01-load-real-MV3',status,text)
+                 try:
