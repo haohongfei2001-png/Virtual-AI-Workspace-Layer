@@ -1,0 +1,518 @@
+{
+  "schema": "vawl-r0-local-browser-v1",
+  "startedAt": "2026-10-10T09:11:03.490069+00:00",
+  "evidence": "BROWSER_FIXTURE",
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "runs": [
+    {
+      "schema": "vawl-r0-browser-fixture-v1",
+      "evidence": "BROWSER_FIXTURE",
+      "fixtureOnly": true,
+      "runAt": "2026-10-10T09:11:04.443Z",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pass": 18,
+      "fail": 0,
+      "results": [
+        {
+          "id": "BF-01-baseline-native-interaction",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE",
+          "nativeHandlerCount": 1
+        },
+        {
+          "id": "BF-02-mount-preserves-dom-focus-selection",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-03-duplicate-mount-refused",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-04-host-style-update-and-controlled-exit",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-05-remount-native-handlers-survive",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-06-unknown-scope-clears-shell-synchronously",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-07-A-B-A-old-response-refused",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-08-route-new-body-old-refused",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-09-cross-project-source-invariant",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-10-text-only-rendering",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-11-probe-css-loss-does-not-hide-native",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-12-no-cleanup-simulated-residue-recorded",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE",
+          "cleanLayout": false,
+          "nativeOperable": true,
+          "limitation": "Simulated loss of cleanup, not MV3 disable. Residue persists until explicit disposal."
+        },
+        {
+          "id": "BF-13-explicit-disposal-cleans-owned-layout",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-14-synthetic-host-SPA-slot-replacement",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-15-forged-reference-refused-without-dom-mutation",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-16-source-document-switch-clears-mounted-reference",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-17-cleanup-error-does-not-skip-shell-removal",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-18-live-js-timer-expires-without-api-polling",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE",
+          "limitation": "Active JavaScript timer only; not freeze/disable/worker-termination evidence"
+        }
+      ],
+      "notRun": [
+        "LIVE_HOST identity/route/project/history",
+        "Real MV3 worker/reload/disable/re-enable",
+        "PAIA four-arm coexistence",
+        "Physical IME and screen reader",
+        "Actual browser freeze/background throttling",
+        "Extension-origin persistence/export import",
+        "Native send/attachment/Canvas/voice"
+      ],
+      "repeat": 1,
+      "scriptErrors": [],
+      "horizontalOverflow": false
+    },
+    {
+      "schema": "vawl-r0-browser-fixture-v1",
+      "evidence": "BROWSER_FIXTURE",
+      "fixtureOnly": true,
+      "runAt": "2026-10-10T09:11:04.667Z",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pass": 18,
+      "fail": 0,
+      "results": [
+        {
+          "id": "BF-01-baseline-native-interaction",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE",
+          "nativeHandlerCount": 1
+        },
+        {
+          "id": "BF-02-mount-preserves-dom-focus-selection",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-03-duplicate-mount-refused",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-04-host-style-update-and-controlled-exit",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-05-remount-native-handlers-survive",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-06-unknown-scope-clears-shell-synchronously",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-07-A-B-A-old-response-refused",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-08-route-new-body-old-refused",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-09-cross-project-source-invariant",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-10-text-only-rendering",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-11-probe-css-loss-does-not-hide-native",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-12-no-cleanup-simulated-residue-recorded",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE",
+          "cleanLayout": false,
+          "nativeOperable": true,
+          "limitation": "Simulated loss of cleanup, not MV3 disable. Residue persists until explicit disposal."
+        },
+        {
+          "id": "BF-13-explicit-disposal-cleans-owned-layout",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-14-synthetic-host-SPA-slot-replacement",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-15-forged-reference-refused-without-dom-mutation",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-16-source-document-switch-clears-mounted-reference",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-17-cleanup-error-does-not-skip-shell-removal",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-18-live-js-timer-expires-without-api-polling",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE",
+          "limitation": "Active JavaScript timer only; not freeze/disable/worker-termination evidence"
+        }
+      ],
+      "notRun": [
+        "LIVE_HOST identity/route/project/history",
+        "Real MV3 worker/reload/disable/re-enable",
+        "PAIA four-arm coexistence",
+        "Physical IME and screen reader",
+        "Actual browser freeze/background throttling",
+        "Extension-origin persistence/export import",
+        "Native send/attachment/Canvas/voice"
+      ],
+      "repeat": 2,
+      "scriptErrors": [],
+      "horizontalOverflow": false
+    },
+    {
+      "schema": "vawl-r0-browser-fixture-v1",
+      "evidence": "BROWSER_FIXTURE",
+      "fixtureOnly": true,
+      "runAt": "2026-10-10T09:11:05.023Z",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "pass": 18,
+      "fail": 0,
+      "results": [
+        {
+          "id": "BF-01-baseline-native-interaction",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE",
+          "nativeHandlerCount": 1
+        },
+        {
+          "id": "BF-02-mount-preserves-dom-focus-selection",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-03-duplicate-mount-refused",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-04-host-style-update-and-controlled-exit",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-05-remount-native-handlers-survive",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-06-unknown-scope-clears-shell-synchronously",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-07-A-B-A-old-response-refused",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-08-route-new-body-old-refused",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-09-cross-project-source-invariant",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-10-text-only-rendering",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-11-probe-css-loss-does-not-hide-native",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-12-no-cleanup-simulated-residue-recorded",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE",
+          "cleanLayout": false,
+          "nativeOperable": true,
+          "limitation": "Simulated loss of cleanup, not MV3 disable. Residue persists until explicit disposal."
+        },
+        {
+          "id": "BF-13-explicit-disposal-cleans-owned-layout",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-14-synthetic-host-SPA-slot-replacement",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-15-forged-reference-refused-without-dom-mutation",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-16-source-document-switch-clears-mounted-reference",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-17-cleanup-error-does-not-skip-shell-removal",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-18-live-js-timer-expires-without-api-polling",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE",
+          "limitation": "Active JavaScript timer only; not freeze/disable/worker-termination evidence"
+        }
+      ],
+      "notRun": [
+        "LIVE_HOST identity/route/project/history",
+        "Real MV3 worker/reload/disable/re-enable",
+        "PAIA four-arm coexistence",
+        "Physical IME and screen reader",
+        "Actual browser freeze/background throttling",
+        "Extension-origin persistence/export import",
+        "Native send/attachment/Canvas/voice"
+      ],
+      "repeat": 1,
+      "scriptErrors": [],
+      "horizontalOverflow": false
+    },
+    {
+      "schema": "vawl-r0-browser-fixture-v1",
+      "evidence": "BROWSER_FIXTURE",
+      "fixtureOnly": true,
+      "runAt": "2026-10-10T09:11:05.233Z",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "pass": 18,
+      "fail": 0,
+      "results": [
+        {
+          "id": "BF-01-baseline-native-interaction",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE",
+          "nativeHandlerCount": 1
+        },
+        {
+          "id": "BF-02-mount-preserves-dom-focus-selection",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-03-duplicate-mount-refused",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-04-host-style-update-and-controlled-exit",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-05-remount-native-handlers-survive",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-06-unknown-scope-clears-shell-synchronously",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-07-A-B-A-old-response-refused",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-08-route-new-body-old-refused",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-09-cross-project-source-invariant",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-10-text-only-rendering",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-11-probe-css-loss-does-not-hide-native",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-12-no-cleanup-simulated-residue-recorded",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE",
+          "cleanLayout": false,
+          "nativeOperable": true,
+          "limitation": "Simulated loss of cleanup, not MV3 disable. Residue persists until explicit disposal."
+        },
+        {
+          "id": "BF-13-explicit-disposal-cleans-owned-layout",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-14-synthetic-host-SPA-slot-replacement",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-15-forged-reference-refused-without-dom-mutation",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-16-source-document-switch-clears-mounted-reference",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-17-cleanup-error-does-not-skip-shell-removal",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE"
+        },
+        {
+          "id": "BF-18-live-js-timer-expires-without-api-polling",
+          "status": "PASS",
+          "evidence": "BROWSER_FIXTURE",
+          "limitation": "Active JavaScript timer only; not freeze/disable/worker-termination evidence"
+        }
+      ],
+      "notRun": [
+        "LIVE_HOST identity/route/project/history",
+        "Real MV3 worker/reload/disable/re-enable",
+        "PAIA four-arm coexistence",
+        "Physical IME and screen reader",
+        "Actual browser freeze/background throttling",
+        "Extension-origin persistence/export import",
+        "Native send/attachment/Canvas/voice"
+      ],
+      "repeat": 2,
+      "scriptErrors": [],
+      "horizontalOverflow": false
+    }
+  ],
+  "externalRequests": [],
+  "errors": [],
+  "scriptErrors": [],
+  "chromiumVersion": "140.0.7339.16",
+  "status": "PASS",
+  "lastPhase": "FIXTURE_EXECUTION",
+  "finishedAt": "2026-10-10T09:11:05.802766+00:00",
+  "sourceSha256": {
+    "experiments/r0/.gitignore": "f5c10da83055c0c3e72f3167971d1916e443dc90390e32b42844552cc37b81e0",
+    "experiments/r0/README.md": "dd14a1cd935bf348f56f4f5e1ee98b240dcfee1aeae6e1557f45a568575c682a",
+    "experiments/r0/build-fixture.mjs": "9c1230db9d38f028f5b33010ba6cc69bf9d6dfda99efb234c23a7116208ceead",
+    "experiments/r0/core.mjs": "eb27f6707dedfb0f6ddfef813baaeb350e591ae7f489887a8bc290f76a4f90da",
+    "experiments/r0/fixture.html": "80aba7bfa7c41c6f740831ed99d6e46af9f63b1284773790916d7caaf4aad83a",
+    "experiments/r0/shell.mjs": "04b8e4ade85b70182c0bd21bb713b887ca023583cc55b0e9411925ba15ddbeb6",
+    "tests/r0/.gitignore": "32dae3052f331ee34d628ef535709b301259a45df7c7522c4d35dcf49873f00b",
+    "tests/r0/browser-suite.mjs": "2a2e5358646552d950f69a5355fefc66849c64386e271aa555c889d2ec451538",
+    "tests/r0/core.test.mjs": "06c8e50fc10e2dafad5a8d82d7dd9b6521b65701253be3c51505d8ca45a4b5a2",
+    "tests/r0/run-browser.py": "90ef1d3331b645105d52d62665a59d5cdb36770d54898fbaef337a43aeaa871f",
+    "tests/r0/run-checks.mjs": "6aa3f867812cf0611dd7f426d1fdbac6f977ef231b9c64a8203746df6fa23737",
+    "tests/r0/runner.test.py": "63b1c47a228c278b50b7c15ea64b60cad6c51d65873e9425f7c295891f32e696",
+    "tests/r0/samples.mjs": "046cbc5f68434fd1d18e2e3e2689dec43e3ca56e18845ad9c1d55fe375933e8e"
+  }
+}
