@@ -1,0 +1,122 @@
+TAP version 13
+# Subtest: positive handshake mounts one synthetic mark; stop/dispose are idempotent
+ok 1 - positive handshake mounts one synthetic mark; stop/dispose are idempotent
+  ---
+  duration_ms: 3.067551
+  type: 'test'
+  ...
+# Subtest: connect timeout settles even if transport never replies; late response cannot mount
+ok 2 - connect timeout settles even if transport never replies; late response cannot mount
+  ---
+  duration_ms: 11.442471
+  type: 'test'
+  ...
+# Subtest: stop settles pending connect and late success/rejection cannot resurrect content
+ok 3 - stop settles pending connect and late success/rejection cannot resurrect content
+  ---
+  duration_ms: 1.34269
+  type: 'test'
+  ...
+# Subtest: out-of-order reply to prior local generation cannot remove the newer mount
+ok 4 - out-of-order reply to prior local generation cannot remove the newer mount
+  ---
+  duration_ms: 0.811687
+  type: 'test'
+  ...
+# Subtest: A-to-B-to-A route race rejects old reply even when URL returns to A
+ok 5 - A-to-B-to-A route race rejects old reply even when URL returns to A
+  ---
+  duration_ms: 1.098022
+  type: 'test'
+  ...
+# Subtest: route mismatch at reply delivery, malformed response and wrong request are refused
+ok 6 - route mismatch at reply delivery, malformed response and wrong request are refused
+  ---
+  duration_ms: 1.226349
+  type: 'test'
+  ...
+# Subtest: send throw/reject and context reader failure settle false with no mount
+ok 7 - send throw/reject and context reader failure settle false with no mount
+  ---
+  duration_ms: 1.301292
+  type: 'test'
+  ...
+# Subtest: active fake timer expiry removes only owned mark; stale cancelled expiry cannot clear new generation
+ok 8 - active fake timer expiry removes only owned mark; stale cancelled expiry cannot clear new generation
+  ---
+  duration_ms: 0.596367
+  type: 'test'
+  ...
+# Subtest: early timer reschedules to original deadline rather than extending the lease
+ok 9 - early timer reschedules to original deadline rather than extending the lease
+  ---
+  duration_ms: 0.536048
+  type: 'test'
+  ...
+# Subtest: scheduler failure and cancel failure refuse binding and latch cleanup failures
+ok 10 - scheduler failure and cancel failure refuse binding and latch cleanup failures
+  ---
+  duration_ms: 0.536874
+  type: 'test'
+  ...
+# Subtest: expiry scheduler failure removes a mounted marker
+ok 11 - expiry scheduler failure removes a mounted marker
+  ---
+  duration_ms: 1.236281
+  type: 'test'
+  ...
+# Subtest: mount crossing expiry removes own node and refuses bound state
+ok 12 - mount crossing expiry removes own node and refuses bound state
+  ---
+  duration_ms: 0.288388
+  type: 'test'
+  ...
+# Subtest: mount reentry cannot clear newer pending connection or leak the obsolete own node
+ok 13 - mount reentry cannot clear newer pending connection or leak the obsolete own node
+  ---
+  duration_ms: 0.385946
+  type: 'test'
+  ...
+# Subtest: throwing own cleanup still cancels timers and prevents later mounts
+ok 14 - throwing own cleanup still cancels timers and prevents later mounts
+  ---
+  duration_ms: 0.169167
+  type: 'test'
+  ...
+# Subtest: synchronous timeout callback does not send or leave timer handles
+ok 15 - synchronous timeout callback does not send or leave timer handles
+  ---
+  duration_ms: 0.117158
+  type: 'test'
+  ...
+# Subtest: cleanup reentry owns a distinct generation; superseded outer connect cannot leak markers or timers
+not ok 16 - cleanup reentry owns a distinct generation; superseded outer connect cannot leak markers or timers
+  ---
+  duration_ms: 1.690897
+  type: 'test'
+  location: '/workspace/scratch/24e34dc252d3/vawl-r0-mv3/tests/r0/mv3/client.test.mjs:104:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/24e34dc252d3/vawl-r0-mv3/tests/r0/mv3/client.test.mjs:108:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 15
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 159.932169
