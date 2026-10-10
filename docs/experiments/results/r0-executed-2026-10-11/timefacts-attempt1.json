@@ -1,0 +1,168 @@
+{
+  "python": "3.14.7 (main, Aug  5 2026, 10:29:49) [Clang 21.0.0 (clang-2100.3.34.2)]",
+  "data": "synthetic only",
+  "tests": [
+    {
+      "id": "__main__.ArchiveTests.test_compression_bomb_rejected",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.99
+    },
+    {
+      "id": "__main__.ArchiveTests.test_invalid_utf8_rejected",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.12
+    },
+    {
+      "id": "__main__.ArchiveTests.test_malformed_zip_rejected",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.02
+    },
+    {
+      "id": "__main__.ArchiveTests.test_normalized_fixture_only",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.1
+    },
+    {
+      "id": "__main__.ArchiveTests.test_traversal_absolute_and_backslash_rejected",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.12
+    },
+    {
+      "id": "__main__.ArchiveTests.test_unknown_real_format_not_pretended_supported",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.12
+    },
+    {
+      "id": "__main__.CalendarTests.test_120_continuous_exclusive_windows",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.19
+    },
+    {
+      "id": "__main__.CalendarTests.test_current_boundary",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.57
+    },
+    {
+      "id": "__main__.CalendarTests.test_dst_is_not_720_hours",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.46
+    },
+    {
+      "id": "__main__.CalendarTests.test_future_and_naive_rejected",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.02
+    },
+    {
+      "id": "__main__.CalendarTests.test_leap_day",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.01
+    },
+    {
+      "id": "__main__.CalendarTests.test_midnight_reprojects",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.01
+    },
+    {
+      "id": "__main__.CalendarTests.test_reference_windows",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.01
+    },
+    {
+      "id": "__main__.CalendarTests.test_timezone_reprojects_not_mutates",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.01
+    },
+    {
+      "id": "__main__.EvidenceTests.test_all_member_coverage_needed_for_old_theme",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.03
+    },
+    {
+      "id": "__main__.EvidenceTests.test_conflicting_original_times_quarantined",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.02
+    },
+    {
+      "id": "__main__.EvidenceTests.test_coverage_gap_rejects_old",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.02
+    },
+    {
+      "id": "__main__.EvidenceTests.test_cross_project_reference_and_native_title_immutable",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.04
+    },
+    {
+      "id": "__main__.EvidenceTests.test_current_positive_event_suffices_for_theme",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.01
+    },
+    {
+      "id": "__main__.EvidenceTests.test_explicit_branch_identity",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.02
+    },
+    {
+      "id": "__main__.EvidenceTests.test_message_duplicate_is_idempotent",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.02
+    },
+    {
+      "id": "__main__.EvidenceTests.test_old_child_without_coverage_remains_unknown",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.01
+    },
+    {
+      "id": "__main__.EvidenceTests.test_old_snapshot_cannot_prove_current_absence",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.01
+    },
+    {
+      "id": "__main__.EvidenceTests.test_only_original_committed_new_user_send",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.02
+    },
+    {
+      "id": "__main__.EvidenceTests.test_same_title_different_scope_rejected",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.03
+    },
+    {
+      "id": "__main__.EvidenceTests.test_theme_unique_latest_and_old_stays_parent",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.02
+    },
+    {
+      "id": "__main__.EvidenceTests.test_updated_visited_imported_never_fallback",
+      "status": "PASS",
+      "level": "OFFLINE_LOGIC",
+      "ms": 0.01
+    }
+  ]
+}

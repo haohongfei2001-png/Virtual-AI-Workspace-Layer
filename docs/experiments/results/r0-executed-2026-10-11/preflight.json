@@ -1,0 +1,32 @@
+{
+  "startedAt": "2026-10-10T18:00:03.597Z",
+  "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+  "steps": [
+    {
+      "name": "Extensions.loadUnpacked",
+      "result": {
+        "id": "lhbbdaoimngacdaohfhgajhhlnpdppln"
+      }
+    },
+    {
+      "name": "static content script with Shadow DOM",
+      "result": {
+        "text": "R0 synthetic MV3 lease; no host/account attestation",
+        "shadow": true
+      }
+    }
+  ],
+  "browser": "154.0.8037.99",
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/154.0.8037.99",
+    "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "jsVersion": "15.4.80.20"
+  },
+  "workers": [
+    "chrome-extension://lhbbdaoimngacdaohfhgajhhlnpdppln/worker.mjs"
+  ],
+  "status": "PASS",
+  "endedAt": "2026-10-10T18:00:04.995Z"
+}

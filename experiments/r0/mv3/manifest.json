@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "VAWL R0 synthetic lifecycle probe",
+  "version": "0.0.1",
+  "description": "Uninstalled R0 preparation. Synthetic loopback fixture only; no ChatGPT access.",
+  "minimum_chrome_version": "120",
+  "background": {
+    "service_worker": "worker.mjs",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://127.0.0.1/r0-mv3-fixture/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'"
+  }
+}
+

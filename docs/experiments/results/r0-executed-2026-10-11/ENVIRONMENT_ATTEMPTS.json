@@ -1,0 +1,66 @@
+{
+  "scope": "R0 isolated execution only",
+  "attempts": [
+    {
+      "environment": "Connected Mac",
+      "initial": "Online; first compound terminal request rejected before execution",
+      "resolution": "Narrow read-only checks and scoped temporary commands worked; actual experiments continued",
+      "versions": {
+        "macOS": "27.0",
+        "build": "26A428",
+        "arch": "arm64",
+        "Chrome": "154.0.8037.99",
+        "Node": "26.8.2",
+        "npm": "11.19.1",
+        "Python": "3.14.7",
+        "Playwright": "1.64.0"
+      }
+    },
+    {
+      "environment": "ChatGPT independent container fallback",
+      "versions": {
+        "OS": "Debian 13.3 x86_64",
+        "Node": "22.16.0",
+        "Python": "3.13.5",
+        "Chromium": "144.0.7559.96",
+        "PythonPlaywright": "1.57.0"
+      },
+      "observations": [
+        "GitHub clone DNS failure",
+        "loopback navigation net::ERR_BLOCKED_BY_ADMINISTRATOR",
+        "minimal-extension worker not observed within bounded wait"
+      ],
+      "resolution": "No policy bypass or global modification; Mac became the actual execution environment",
+      "verdict": "BLOCKED environment, not product NO_GO"
+    },
+    {
+      "environment": "Fresh Mac Chrome public ChatGPT navigation",
+      "httpStatus": 403,
+      "applicationReached": false,
+      "loginAttempted": false,
+      "messagesSent": 0,
+      "verdict": "BLOCKED"
+    },
+    {
+      "environment": "Headless page freeze",
+      "CDPCommandAccepted": true,
+      "trustedFreezeResumeObserved": false,
+      "verdict": "BLOCKED"
+    },
+    {
+      "environment": "Chrome extension reload",
+      "withoutTemporaryProfileDeveloperMode": "extension became disabled",
+      "withTemporaryProfileDeveloperMode": "extension stayed enabled and explicit fixture reload reconnected",
+      "remainingLimitation": "old additive DOM still present; not instant clean layout"
+    }
+  ],
+  "privacyBoundary": {
+    "dailyProfileUsed": false,
+    "privateChatDataRead": false,
+    "PAIAInstallationUsed": false,
+    "systemPermissionsChanged": false,
+    "globalSoftwareInstalled": false,
+    "newTemporaryChromeDeveloperModeChanged": true,
+    "fullProcessNetworkCapturePerformed": false
+  }
+}

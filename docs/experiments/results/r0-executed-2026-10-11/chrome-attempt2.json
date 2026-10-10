@@ -1,0 +1,486 @@
+{
+  "schema": "R0_MAC_CHROME_EXECUTION_V1",
+  "startedAt": "2026-10-10T18:14:31.437Z",
+  "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+  "browserMode": "headless, dedicated fresh profiles, remote-debugging-pipe",
+  "data": "synthetic only; no ChatGPT requests",
+  "environment": {
+    "os": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+    "arch": "arm64",
+    "node": "v26.8.2",
+    "playwright": "1.64.0",
+    "browser": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/154.0.8037.99",
+      "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+      "jsVersion": "15.4.80.20"
+    }
+  },
+  "sourceHashes": {
+    "host": "d0cb85f5648ac409820241d8b40545205ba0e72fbf2c03011cae022914d3bfbd",
+    "runner": "5388252027e8070137fef7a923be27a4e85fe7458fd0a75316b47a87b3c8a22e"
+  },
+  "tests": [
+    {
+      "id": "C00-native-fixture-no-extension-baseline",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "fiveGrid": "entry, action, local result, unchanged permission, native composer return",
+      "notLiveChatGPT": true,
+      "status": "PASS",
+      "ms": 179
+    },
+    {
+      "id": "C01-static-content-shadow-real-worker",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "shadow": true,
+      "label": "R0 synthetic MV3 lease; no host/account attestation",
+      "status": "PASS",
+      "ms": 115
+    },
+    {
+      "id": "C02-native-composer-input-selection-and-local-send",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "physicalIME": false,
+      "trustedTypingAutomation": true,
+      "draftPreserved": true,
+      "status": "PASS",
+      "ms": 150
+    },
+    {
+      "id": "C03-native-attachment-fixture",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "uploadToServer": false,
+      "localFileInput": true,
+      "status": "PASS",
+      "ms": 83
+    },
+    {
+      "id": "C04-native-model-tools-interactive-state",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "nativeHandlersPreserved": true,
+      "realModelCall": false,
+      "status": "PASS",
+      "ms": 166
+    },
+    {
+      "id": "C05-native-stream-stop-fixture",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "streamTicks": 4,
+      "actualLLM": false,
+      "status": "PASS",
+      "ms": 350
+    },
+    {
+      "id": "C06-native-search-unindexed-and-permission-unknown-entry",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "nativeSearchNotReplaced": true,
+      "permissionUnchanged": true,
+      "status": "PASS",
+      "ms": 247
+    },
+    {
+      "id": "C07-real-lease-expiry-preserves-native-draft-style-focus",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "controlledActiveTimerCleanup": true,
+      "status": "PASS",
+      "ms": 4411
+    },
+    {
+      "id": "C08-original-silent-pushState-must-invalidate",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "status": "FAIL",
+      "error": {
+        "name": "Error",
+        "message": "Original PR3 has no pushState observer: stale marker remains at 500ms"
+      },
+      "detail": {
+        "markerCount": 1,
+        "url": "http://127.0.0.1:64952/r0-mv3-fixture/B.html",
+        "state": {
+          "hostOnly": 1
+        }
+      },
+      "ms": 607
+    },
+    {
+      "id": "C09-original-fast-document-navigation-rebind",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "status": "FAIL",
+      "error": {
+        "name": "Error",
+        "message": "Original broker refuses a different unexpired document and has no retry"
+      },
+      "detail": {
+        "markerCount": 0,
+        "nativeOperable": true
+      },
+      "ms": 831
+    },
+    {
+      "id": "C10-browser-back-forward-keeps-host-history-and-draft",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "hostHistoryUnchanged": true,
+      "status": "PASS",
+      "ms": 98
+    },
+    {
+      "id": "C11-real-worker-stop-and-restart",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "beforeTarget": "42DA812B6956C5A7D506D3A9498EA6E2",
+      "restartedTarget": "42DA812B6956C5A7D506D3A9498EA6E2",
+      "workerEvents": [
+        {
+          "running": "running",
+          "version": "0",
+          "target": "42DA812B6956C5A7D506D3A9498EA6E2"
+        },
+        {
+          "running": "stopping",
+          "version": "0",
+          "target": "42DA812B6956C5A7D506D3A9498EA6E2"
+        },
+        {
+          "running": "stopped",
+          "version": "0",
+          "target": null
+        },
+        {
+          "running": "starting",
+          "version": "0",
+          "target": null
+        },
+        {
+          "running": "starting",
+          "version": "0",
+          "target": "42DA812B6956C5A7D506D3A9498EA6E2"
+        },
+        {
+          "running": "starting",
+          "version": "0",
+          "target": "42DA812B6956C5A7D506D3A9498EA6E2"
+        },
+        {
+          "running": "running",
+          "version": "0",
+          "target": "42DA812B6956C5A7D506D3A9498EA6E2"
+        }
+      ],
+      "volatileSentinelAfterRestart": null,
+      "markerAt200msAfterStop": 1,
+      "naturalIdleTest": false,
+      "targetIdIsNotABootId": true,
+      "status": "PASS",
+      "ms": 462
+    },
+    {
+      "id": "C12-extension-origin-IDB-survives-real-worker-stop",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "persisted": {
+        "label": "SYNTHETIC",
+        "revision": 1
+      },
+      "volatileSentinelAfterRestart": null,
+      "hostOriginCannotEnumerateExtensionDB": true,
+      "productionRepositoryImplemented": false,
+      "status": "PASS",
+      "ms": 468
+    },
+    {
+      "id": "C13-actual-CDP-freeze-resume-native-state",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "status": "BLOCKED",
+      "reason": "CDP accepted commands but no effectful trusted freeze/resume observed in this headless context",
+      "visibilityBefore": "visible",
+      "events": [
+        {
+          "name": "pageshow",
+          "trusted": true
+        }
+      ],
+      "native": {
+        "identity": true,
+        "draft": "SYNTHETIC frozen draft",
+        "focus": "native-composer",
+        "selection": [
+          22,
+          22
+        ],
+        "visible": true,
+        "permission": false
+      },
+      "freezeAcceptedAsProof": false,
+      "ms": 1391
+    },
+    {
+      "id": "C14-real-disable-clean-layout-chain",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "status": "FAIL",
+      "error": {
+        "name": "Error",
+        "message": "Actual extension disable did not guarantee clean layout without page reload"
+      },
+      "detail": {
+        "visibleBeforeDisable": "visible",
+        "markerAt250ms": 1,
+        "markerAfterDeadline": 0,
+        "native": {
+          "identity": true,
+          "draft": "SYNTHETIC disable draft",
+          "focus": "native-unknown",
+          "selection": [
+            23,
+            23
+          ],
+          "visible": true,
+          "permission": false
+        },
+        "reinjectWithoutReload": 0,
+        "reloadedFixtureReconnect": true,
+        "forcedUserPageReload": false
+      },
+      "ms": 4886
+    },
+    {
+      "id": "C15-real-extension-reload-without-page-reload",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "status": "FAIL",
+      "error": {
+        "name": "Error",
+        "message": "Runtime reload recovery remains limited in this precise CDP-loaded setup"
+      },
+      "detail": {
+        "markerAt500ms": 1,
+        "native": {
+          "identity": true,
+          "draft": "SYNTHETIC runtime reload draft",
+          "focus": "native-composer",
+          "selection": [
+            30,
+            30
+          ],
+          "visible": true,
+          "permission": false
+        },
+        "evalError": null,
+        "extensions": {
+          "extensions": [
+            {
+              "id": "lhbbdaoimngacdaohfhgajhhlnpdppln",
+              "name": "VAWL R0 synthetic lifecycle probe",
+              "version": "0.0.1",
+              "path": "/private/tmp/vaiwl-r0-20261011.IFxVsZ/built-original",
+              "enabled": false
+            }
+          ]
+        },
+        "explicitFixtureReloadReconnect": false
+      },
+      "ms": 2138
+    },
+    {
+      "id": "C16-host-replaces-slot-native-nodes-retained",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "automaticRemount": false,
+      "additiveFailOpenToNative": true,
+      "status": "PASS",
+      "ms": 123
+    },
+    {
+      "id": "C17-occupied-slot-refused-native-still-operable",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "occupiedSlotPreserved": true,
+      "status": "PASS",
+      "ms": 272
+    },
+    {
+      "id": "C18-inherited-scope-reference-browser-suite",
+      "level": "CHROME_PAGE_FIXTURE_NOT_MV3_SCOPE",
+      "distinctInheritedAssertions": 18,
+      "historicalNotRunTextIsLocalToInheritedSuite": true,
+      "status": "PASS",
+      "ms": 267
+    },
+    {
+      "id": "C19-browser-webNavigation-invalidates-silent-pushState",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "invalidationMs": 25,
+      "accountAuthentication": false,
+      "addsPermission": "webNavigation",
+      "noAutomaticSensitiveRebind": true,
+      "status": "PASS",
+      "ms": 140
+    },
+    {
+      "id": "C20-single-owned-return-hook-no-native-overlap",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "oneHook": true,
+      "syntheticReservedSlotOnly": true,
+      "liveReadingSlot": "BLOCKED",
+      "status": "PASS",
+      "ms": 102
+    },
+    {
+      "id": "C21-placeholder-PAIA-load-after-VAIWL-independent-exits",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "registrationOrder": [
+        "VAIWL",
+        "PAIA_PLACEHOLDER"
+      ],
+      "dummyId": "abjhegfildpofaifhngmhlfhpnhgamfb",
+      "actualPAIA": false,
+      "independentExit": true,
+      "status": "PASS",
+      "ms": 4405
+    },
+    {
+      "id": "C22-placeholder-PAIA-alone",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "actualPAIA": false,
+      "status": "PASS",
+      "ms": 109
+    },
+    {
+      "id": "C23-placeholder-reverse-registration-independent-exit",
+      "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+      "registrationOrder": [
+        "PAIA_PLACEHOLDER",
+        "VAIWL"
+      ],
+      "actualPAIA": false,
+      "overlap": false,
+      "focus": "native-composer",
+      "status": "PASS",
+      "ms": 123
+    }
+  ],
+  "legacy": {
+    "schema": "vawl-r0-browser-fixture-v1",
+    "evidence": "BROWSER_FIXTURE",
+    "fixtureOnly": true,
+    "runAt": "2026-10-10T18:14:50.015Z",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "pass": 18,
+    "fail": 0,
+    "results": [
+      {
+        "id": "BF-01-baseline-native-interaction",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE",
+        "nativeHandlerCount": 1
+      },
+      {
+        "id": "BF-02-mount-preserves-dom-focus-selection",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-03-duplicate-mount-refused",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-04-host-style-update-and-controlled-exit",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-05-remount-native-handlers-survive",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-06-unknown-scope-clears-shell-synchronously",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-07-A-B-A-old-response-refused",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-08-route-new-body-old-refused",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-09-cross-project-source-invariant",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-10-text-only-rendering",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-11-probe-css-loss-does-not-hide-native",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-12-no-cleanup-simulated-residue-recorded",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE",
+        "cleanLayout": false,
+        "nativeOperable": true,
+        "limitation": "Simulated loss of cleanup, not MV3 disable. Residue persists until explicit disposal."
+      },
+      {
+        "id": "BF-13-explicit-disposal-cleans-owned-layout",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-14-synthetic-host-SPA-slot-replacement",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-15-forged-reference-refused-without-dom-mutation",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-16-source-document-switch-clears-mounted-reference",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-17-cleanup-error-does-not-skip-shell-removal",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE"
+      },
+      {
+        "id": "BF-18-live-js-timer-expires-without-api-polling",
+        "status": "PASS",
+        "evidence": "BROWSER_FIXTURE",
+        "limitation": "Active JavaScript timer only; not freeze/disable/worker-termination evidence"
+      }
+    ],
+    "notRun": [
+      "LIVE_HOST identity/route/project/history",
+      "Real MV3 worker/reload/disable/re-enable",
+      "PAIA four-arm coexistence",
+      "Physical IME and screen reader",
+      "Actual browser freeze/background throttling",
+      "Extension-origin persistence/export import",
+      "Native send/attachment/Canvas/voice"
+    ]
+  },
+  "externalPageRequests": [],
+  "pageErrors": [],
+  "originalExtensionId": "lhbbdaoimngacdaohfhgajhhlnpdppln",
+  "routeExtensionId": "jkidhplinneicgjncebbhhmfdjbkpmng",
+  "endedAt": "2026-10-10T18:14:56.150Z",
+  "counts": {
+    "PASS": 19,
+    "FAIL": 4,
+    "BLOCKED": 1
+  }
+}
