@@ -1,0 +1,116 @@
+name: R0 synthetic browser fixture
+
+# Scope exception approved 2026-10-10: one free standard-runner workflow.
+# No live ChatGPT account, extension installation, secrets, cache or artifact storage.
+on:
+  push:
+    branches: [experiments/vawl-r0-synthetic-20261009]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r0-fixture-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  synthetic-browser:
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.ref == 'refs/heads/experiments/vawl-r0-synthetic-20261009'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPYCACHEPREFIX: /tmp/vawl-r0-pycache-${{ github.run_id }}
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      PIP_NO_CACHE_DIR: '1'
+      PLAYWRIGHT_BROWSERS_PATH: /tmp/vawl-r0-browser-${{ github.run_id }}
+      R0_EVIDENCE_DIR: /tmp/vawl-r0-evidence-${{ github.run_id }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout exact triggering commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up fixed Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.16.0'
+      - name: Set up fixed Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12.11'
+      - name: Verify source identity and run source contracts
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          node tests/r0/run-checks.mjs "$R0_EVIDENCE_DIR"
+      - name: Install fixed test dependencies in ephemeral runner only
+        run: |
+          python -m pip install --only-binary=:all: --no-cache-dir \
+            playwright==1.55.0 greenlet==3.2.4 pyee==13.0.0 typing-extensions==4.15.0
+          python -m playwright install --with-deps chromium
+          python -m pip freeze > "$R0_EVIDENCE_DIR/dependencies.txt"
+      - name: Run existing isolated browser fixture
+        run: |
+          CHROMIUM="$(python - <<'PY'
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as pw:
+              print(pw.chromium.executable_path)
+          PY
+          )"
+          python tests/r0/run-browser.py --chromium "$CHROMIUM" --output "$R0_EVIDENCE_DIR/browser-results.json"
+      - name: Require all 18 assertions in each of four runs
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          report = json.loads((pathlib.Path(os.environ['R0_EVIDENCE_DIR']) / 'browser-results.json').read_text())
+          assert report['status'] == 'PASS', report['status']
+          assert report['evidence'] == 'BROWSER_FIXTURE'
+          assert report['externalRequests'] == [] and report['errors'] == [] and report['scriptErrors'] == []
+          expected = {(1440, 1000, 1), (1440, 1000, 2), (390, 844, 1), (390, 844, 2)}
+          actual = {(r['viewport']['width'], r['viewport']['height'], r['repeat']) for r in report['runs']}
+          assert len(report['runs']) == 4 and actual == expected, actual
+          for run in report['runs']:
+              assert run['fixtureOnly'] is True and run['pass'] == 18 and run['fail'] == 0
+              assert len(run['results']) == 18 and all(r['status'] == 'PASS' for r in run['results'])
+              assert {r['id'].split('-')[1] for r in run['results']} == {f'{n:02}' for n in range(1, 19)}
+              assert run['horizontalOverflow'] is False and run['scriptErrors'] == []
+              residue = next(r for r in run['results'] if r['id'].startswith('BF-12-'))
+              assert residue['cleanLayout'] is False and residue['nativeOperable'] is True
+          print('VERIFIED: 18 assertions x 4 executions = 72 BROWSER_FIXTURE checks; no LIVE_HOST/MV3/PAIA claim.')
+          PY
+      - name: Preserve bounded synthetic evidence in free workflow logs
+        if: always()
+        run: |
+          python - <<'PY'
+          import base64, gzip, hashlib, json, os, pathlib, platform, subprocess
+          root = pathlib.Path(os.environ['R0_EVIDENCE_DIR']); root.mkdir(parents=True, exist_ok=True)
+          metadata = {
+              'schema': 'vawl-r0-ci-environment-v1', 'evidence': 'BROWSER_FIXTURE',
+              'repository': os.environ['GITHUB_REPOSITORY'], 'headSha': os.environ['GITHUB_SHA'],
+              'runId': os.environ['GITHUB_RUN_ID'], 'runAttempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'runnerOs': os.environ['RUNNER_OS'], 'runnerArch': os.environ['RUNNER_ARCH'],
+              'imageOs': os.environ.get('ImageOS'), 'imageVersion': os.environ.get('ImageVersion'),
+              'platform': platform.platform(), 'python': platform.python_version(),
+              'node': subprocess.check_output(['node', '--version'], text=True).strip(),
+              'workflowSha256': hashlib.sha256(pathlib.Path('.github/workflows/r0-fixture.yml').read_bytes()).hexdigest(),
+              'scope': 'Synthetic localhost fixture only; no account, extension, live host or durable service',
+              'storage': 'Workflow logs only; no artifact/cache upload'
+          }
+          (root / 'environment.json').write_text(json.dumps(metadata, indent=2) + '\n')
+          for name in ['environment.json', 'source-checks.json', 'browser-results.json', 'dependencies.txt']:
+              path = root / name
+              if not path.is_file():
+                  print(f'R0_EVIDENCE_MISSING {name}'); continue
+              data = path.read_bytes()
+              if len(data) > 262144: raise ValueError(f'Unexpected evidence size: {name}')
+              encoded = base64.b64encode(gzip.compress(data, mtime=0)).decode('ascii')
+              print(f'R0_EVIDENCE_BEGIN {name} {len(data)} {hashlib.sha256(data).hexdigest()}')
+              for i in range(0, len(encoded), 1600):
+                  print(f'R0_EVIDENCE_CHUNK {name} {i // 1600} {encoded[i:i+1600]}')
+              print(f'R0_EVIDENCE_END {name}')
+          PY

@@ -1,0 +1,25 @@
+{
+  "verified": [
+    {
+      "file": "environment.json",
+      "bytes": 710,
+      "sha256": "88bb1e4a1e4dbd6b409a376859f6c203abb8e257575c90823017ef8656e7f47b"
+    },
+    {
+      "file": "source-checks.json",
+      "bytes": 10769,
+      "sha256": "9a91cb178fce275f016732ef8307483e45949442e828c821488f20f62c625387"
+    },
+    {
+      "file": "browser-results.json",
+      "bytes": 17251,
+      "sha256": "5516b6dc2e618e42e857af111ca269861beb4a394e93f614c9c6d6251c8b680b"
+    },
+    {
+      "file": "dependencies.txt",
+      "bytes": 74,
+      "sha256": "9fc708b6859fe21c3a27c5ddb0c8ecd571c3ca6a025ce8a0cc110974276e04ec"
+    }
+  ],
+  "missing": []
+}

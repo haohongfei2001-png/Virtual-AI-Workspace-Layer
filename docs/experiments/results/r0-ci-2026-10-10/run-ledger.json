@@ -1,0 +1,120 @@
+{
+  "schema": "vawl-r0-ci-run-ledger-v1",
+  "dateUtc": "2026-10-10",
+  "repository": "haohongfei2001-png/Virtual-AI-Workspace-Layer",
+  "runs": [
+    {
+      "runId": 38040381950,
+      "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/38040381950",
+      "headSha": "39352eb48a0d16a78db17084d2f30ea791edc146",
+      "conclusion": "failure",
+      "jobs": 0,
+      "browserExecuted": 0,
+      "classification": "WORKFLOW_VALIDATION_FAILURE",
+      "diagnosis": "Job-level env used the runner context, which GitHub's documented context table excludes. No job or browser ran. Replaced with /tmp paths scoped by allowed github.run_id; no blind rerun.",
+      "source": "https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#context-availability"
+    },
+    {
+      "runId": 38040447893,
+      "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/38040447893",
+      "headSha": "4d04a4bbf025c83435c7122065bc326fc72b09ba",
+      "createdAt": "2026-10-10T09:10:24Z",
+      "updatedAt": "2026-10-10T09:11:09Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 114179458354,
+          "name": "synthetic-browser",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 38040447893,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Checkout exact triggering commit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Set up fixed Node",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Set up fixed Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Verify source identity and run source contracts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Install fixed test dependencies in ephemeral runner only",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Run existing isolated browser fixture",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Require all 18 assertions in each of four runs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Preserve bounded synthetic evidence in free workflow logs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Post Set up fixed Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Post Set up fixed Node",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            },
+            {
+              "name": "Post Checkout exact triggering commit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            }
+          ]
+        }
+      ],
+      "browserExecuted": 72,
+      "uniqueAssertions": 18,
+      "classification": "BROWSER_FIXTURE"
+    }
+  ]
+}

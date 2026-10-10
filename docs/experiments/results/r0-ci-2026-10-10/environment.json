@@ -1,0 +1,18 @@
+{
+  "schema": "vawl-r0-ci-environment-v1",
+  "evidence": "BROWSER_FIXTURE",
+  "repository": "haohongfei2001-png/Virtual-AI-Workspace-Layer",
+  "headSha": "4d04a4bbf025c83435c7122065bc326fc72b09ba",
+  "runId": "38040447893",
+  "runAttempt": "1",
+  "runnerOs": "Linux",
+  "runnerArch": "X64",
+  "imageOs": "ubuntu24",
+  "imageVersion": "20261004.327.1",
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "python": "3.12.11",
+  "node": "v22.16.0",
+  "workflowSha256": "1a8e03fc044a6d4cc35fc9ba85ac67171b65cc7ca1f234116a5ce99c9bf00c45",
+  "scope": "Synthetic localhost fixture only; no account, extension, live host or durable service",
+  "storage": "Workflow logs only; no artifact/cache upload"
+}
