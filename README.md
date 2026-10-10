@@ -2,30 +2,34 @@
 
 在 ChatGPT 原位工作的、可逆的语义工作空间层。
 
-**当前交付：正式产品设计提案与完整旗舰开发计划，等待评审；不是正式扩展、已批准全部交互或真实 ChatGPT 验收。** 本仓库暂不提供安装包。
+**当前交付：旗舰产品设计提案、完整开发计划与 v2 高保真交互原型；不是正式扩展，也不是已完成真实 ChatGPT 验收。** 本仓库不提供扩展安装包。
 
-## 产品边界
+## 最新核心体验
 
-原生聊天、消息、链接和 Project 归属不改变。VAIWL 单独保存稳定工作区、对话系列、当前工作集及显示标题，重构导航外壳，保留 ChatGPT 自己的聊天、输入框、模型及工具能力。跨 Project 显示不合并上下文或权限。原生改名属于另一条默认关闭、须另行授权的真实写入通道。
+用户于 2026-10-10 明确增加三项核心要求：[CORE_EXPERIENCE_V2](docs/CORE_EXPERIENCE_V2.md)。
 
-PAIA 管理用户输入、思想和 AI Context；VAIWL 管理 ChatGPT 工作环境。双方不共享可写数据库，不互相继承权限。
+- 原生一致性：字体、字号、圆角、间距、配色、交互、菜单和动画跟随真实 ChatGPT；保留第三方身份，不迁入 PAIA 品牌视觉。
+- 主题级卡片：一个稳定 Workspace/主题一张聚合卡片，内部紧凑对话列表；跨原生 Project 引用，不做对话大卡片或复杂文件夹。
+- 用户发送时间：默认最近一个月，支持 3 个月、1 年、全部与逐段回看；可靠用户发送事件驱动卡片及内部列表，历史折叠、时间未知单列，固定与当前访问不伪造活跃性。
 
-## 阅读顺序
+这些是核心设计约束，不再等待“是否采用”投票；精确像素、默认展开数量和固定区具体样式仍待评审。原生数据/Project、派生标题隔离、保留原生聊天/输入/模型/工具的边界不变。
 
-1. [当前状态与唯一下一任务](docs/STATUS.md)、[文档效力](docs/AUTHORITY.md)、[执行约束](AGENTS.md)。
-2. [产品提案](docs/PRODUCT_PROPOSAL.md)、[关键待确认决策](docs/DECISIONS.md)、[完整交互规格](docs/INTERACTION_SPEC.md)。
-3. [数据模型](docs/DATA_MODEL.md)、[技术架构](docs/TECHNICAL_ARCHITECTURE.md)、[隐私、安全与恢复](docs/PRIVACY_SAFETY_RECOVERY.md)、[AI 与命名评估](docs/AI_NAMING_EVALUATION.md)。
-4. [旧项目继承与 PAIA 共存](docs/INTEGRATION_BOUNDARIES.md)、[完整开发计划](docs/DEVELOPMENT_PLAN.md)、[R0 能力验证任务书](docs/experiments/R0_CAPABILITY_SPIKE.md)。
-5. [原始材料、41 项来源及章节映射](docs/research/SOURCE_REGISTER.md)、[原型证据逐项核对](docs/research/PROTOTYPE_EVIDENCE.md)。
+## 阅读与体验
 
-## 研究来源及原型
+1. [状态](docs/STATUS.md)、[效力](docs/AUTHORITY.md)、[执行约束](AGENTS.md)、[v2 核心体验](docs/CORE_EXPERIENCE_V2.md)。
+2. [产品提案](docs/PRODUCT_PROPOSAL.md)、[交互规格](docs/INTERACTION_SPEC.md)、[决策登记](docs/DECISIONS.md)。v2 增量优先于旧文档的冲突描述，旧研究不被抹去。
+3. [数据模型](docs/DATA_MODEL.md)及 v2 §8 时间数据增量、[技术架构](docs/TECHNICAL_ARCHITECTURE.md)、[隐私安全恢复](docs/PRIVACY_SAFETY_RECOVERY.md)、[AI 命名](docs/AI_NAMING_EVALUATION.md)。
+4. [完整路线](docs/DEVELOPMENT_PLAN.md)、[R0 任务书](docs/experiments/R0_CAPABILITY_SPIKE.md)、[旧项目与 PAIA](docs/INTEGRATION_BOUNDARIES.md)。
+5. [可交互原型 v2](docs/prototypes/v2/prototype-v2.html)、[本轮验证](docs/prototypes/v2/VALIDATION.md)。将 HTML 保存后在桌面浏览器打开；本轮实际测试为 Chromium 内存页面，未验证所有本地文件策略。
 
-本提案整理自上一轮完整交付：`research.html`、`prototype.html`、`research.md`、`sources.json`、验证脚本、结果、日志和四张截图。原始 ZIP 为 `ChatGPT_Workspace_Research_2026-10-10.zip`。全部 13 个包内文件已读取；ZIP CRC 通过；两个独立 HTML 与包内文件逐字节相同。完整 SHA-256 见来源登记。
+v2 使用 88 个主题、339 条对话，PAIA 有 60 条；演示日期/时区可切换。只含合成材料，不联网、不发送、不读取私人数据；状态在页面内存。浅/深色是近似宿主样本，不是已经完成登录态像素匹配。37 项模拟测试不等于真实账户、时间来源、原生恢复、PAIA 共存或性能认证。
 
-本次提交设计、计划、治理与纯文本研究证据，不生成新原型，不提交产品运行代码。专题文档为便于开发的整理版；另在 [原始研究档案](docs/research/2026-10-10/README.md) 原样保存完整 research.md、来源表和验证文本，六份原件均逐字节校验。HTML、Python 测试源码、PNG 和 ZIP 本体仍是原对话附件，没有上传或部署到 GitHub Pages。后续需要原型原件时按清单核对 SHA，不能凭文字重建后声称一致。
+## 原始研究保留
 
-原记录为 **20/20 模拟交互 PASS**：Chromium 中的内存示例页面，未连接真实 ChatGPT。它不证明真实账户隔离、历史获取、原生恢复、原生改名、Chrome 标签页恢复、跨刷新持久化或 PAIA 共存。本次没有重跑该测试并制造新的通过记录。
+原件来源：[SOURCE_REGISTER](docs/research/SOURCE_REGISTER.md)、[原研究档案](docs/research/2026-10-10/README.md)、[v1 模拟证据](docs/research/PROTOTYPE_EVIDENCE.md)。原始 ZIP 的 13 项、两个 HTML 与校验记录保持不变；六份原始文本在研究目录中逐字节保存。v1 的 20/20 是历史模拟结果，不与 v2 相加冒称正式验收。
+
+原始 HTML/PNG/Python 与 ZIP 本体仍是原对话附件；v2 是本次获准的设计衍生原型，不覆盖原件。历史 SOURCE_REGISTER 关于“仅提交 Markdown”的描述属于前轮范围，由本次明确原型修订授权扩展，不改变其原件事实。
 
 ## 下一步
 
-完成文档评审后，单独授权 **R0：影响架构的能力验证**。先查清宿主账户/原生空间绑定、路由与渲染归属、历史发现边界、跨 Project 引用、原生 DOM 与生命周期恢复、PAIA 共存，再决定哪些正式能力可以实施。R0 不是完整产品开发；当前文档入库也不自动授权执行 R0。
+R0 尚需单独授权。第一轮同时验证宿主 scope、消息级用户发送时间及覆盖、路由/Project 引用、原生视觉角色和完整恢复、实际 PAIA 构建共存。缺证据不能用 updated_at 或访问时间替代，也不能把这些核心要求挪到后期美化。
