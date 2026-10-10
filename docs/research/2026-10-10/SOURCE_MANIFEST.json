@@ -1,0 +1,120 @@
+{
+  "scope": "Original research package; read and verified, not product/runtime certification",
+  "research_date": "2026-10-10",
+  "zip": {
+    "filename": "ChatGPT_Workspace_Research_2026-10-10.zip",
+    "size": 812522,
+    "sha256": "401f3788e017daf24a4cda64f74e23a6154678ee346e413e2916bf7310a2e100",
+    "crc_check": "PASS",
+    "member_count": 13
+  },
+  "independent_html_byte_equal_to_zip": true,
+  "report_html_markdown_normalized_text_equal": true,
+  "prototype_tests_rerun_this_round": false,
+  "files": [
+    {
+      "path": "ChatGPT_Workspace_Research/README.md",
+      "size": 1803,
+      "sha256": "6802e31785e1249d1e38e71fb3bb1e96d901b682150a28dfb200d5ce8c9f98e2",
+      "git_blob_sha1": "51e38e4653bb1ede2e947dfd90d62da7ebaf7cde",
+      "read_this_round": true,
+      "repository_copy": "original-README.md"
+    },
+    {
+      "path": "ChatGPT_Workspace_Research/prototype.html",
+      "size": 57018,
+      "sha256": "543f5adf428125d86d6e00a01f054114f9cbc7e548f75a3fd2faf54ffc9f0375",
+      "git_blob_sha1": "29d40eac8e5f1d95f6e4c9e01703a0916efcb60c",
+      "read_this_round": true,
+      "repository_copy": null
+    },
+    {
+      "path": "ChatGPT_Workspace_Research/research.html",
+      "size": 83201,
+      "sha256": "47a918bceed7f1417ded337d67c55c1ddb2a424260dfbd15976d704c8566e604",
+      "git_blob_sha1": "0c6c47bf1ec76519a5f4a584f01c9b310b10bb42",
+      "read_this_round": true,
+      "repository_copy": null
+    },
+    {
+      "path": "ChatGPT_Workspace_Research/research.md",
+      "size": 68270,
+      "sha256": "89af00ec83c471f7526a9b27781c1728abfb23a61669d8db20f74b6f9a156c9b",
+      "git_blob_sha1": "db4c3ce406d6f1dc4d6591aa7421dd40bceba028",
+      "read_this_round": true,
+      "repository_copy": "research.md"
+    },
+    {
+      "path": "ChatGPT_Workspace_Research/sources.json",
+      "size": 7052,
+      "sha256": "a426bd476b1ca12613249b8f03cc3b964c5ff178d6fc0da507f041df9a5630fa",
+      "git_blob_sha1": "e8d22ca136cd2b36db7afce8ee556b4463f1550e",
+      "read_this_round": true,
+      "repository_copy": "sources.json"
+    },
+    {
+      "path": "ChatGPT_Workspace_Research/validation/VALIDATION.md",
+      "size": 2961,
+      "sha256": "62564026ea7f0afffbf04853f4bea202ad8031ec9d69bcddd2bae0cd8a5a1c9d",
+      "git_blob_sha1": "d3acd44e071856385eda321be235c906ae7dd74e",
+      "read_this_round": true,
+      "repository_copy": "validation/VALIDATION.md"
+    },
+    {
+      "path": "ChatGPT_Workspace_Research/validation/conversation-desktop.png",
+      "size": 193609,
+      "sha256": "7b2f18096bb29e53d44d88c13f742b3e8b555a02b48938b5b551478e7a15af07",
+      "git_blob_sha1": "373f32c420a37e367e6d315964daaf3d6c88e0e6",
+      "read_this_round": true,
+      "repository_copy": null
+    },
+    {
+      "path": "ChatGPT_Workspace_Research/validation/conversation-mobile.png",
+      "size": 93426,
+      "sha256": "a6ef5d19df6b8a8981e8bd593afaf59ee580e7b01b5ed8b564376e7ddfe287c8",
+      "git_blob_sha1": "b8b5e546b45aba97af1a60b5be736b95201ea22a",
+      "read_this_round": true,
+      "repository_copy": null
+    },
+    {
+      "path": "ChatGPT_Workspace_Research/validation/last-run.log",
+      "size": 3162,
+      "sha256": "2062ef137aa8a580102794056fe05074fe78095e9f2b7e92ff97baca9fe10888",
+      "git_blob_sha1": "d19f8f2de706b0adc8c91a06332a9d7479665ad5",
+      "read_this_round": true,
+      "repository_copy": "validation/last-run.log"
+    },
+    {
+      "path": "ChatGPT_Workspace_Research/validation/report-desktop.png",
+      "size": 263644,
+      "sha256": "426ecd958e86b90c05b9ab9285b687a610f5a316f61f7faf1bf4d1d1e00e3e94",
+      "git_blob_sha1": "dab613720a1941648cd908876c3945c31f21d617",
+      "read_this_round": true,
+      "repository_copy": null
+    },
+    {
+      "path": "ChatGPT_Workspace_Research/validation/test-results.json",
+      "size": 3161,
+      "sha256": "e12c9c5ad932f857a916cf9c3e13fd694e167c9b1402d11d15a3ac81aeab3282",
+      "git_blob_sha1": "b9e8a84dea5f10d72a49b0abee095d6e7b8696d3",
+      "read_this_round": true,
+      "repository_copy": "validation/test-results.json"
+    },
+    {
+      "path": "ChatGPT_Workspace_Research/validation/test_prototype.py",
+      "size": 10419,
+      "sha256": "df8e1f7316be0b4edf6e87b66a26d2bbcb7a6e7408e7bafa275c665a9d0dc0d3",
+      "git_blob_sha1": "6c10a3e88cb9e14de75a4db7182224386263e774",
+      "read_this_round": true,
+      "repository_copy": null
+    },
+    {
+      "path": "ChatGPT_Workspace_Research/validation/workspace-desktop.png",
+      "size": 194253,
+      "sha256": "fe600e39e0c963158d9bd4b88bfefd48d9ae26653988620b33d61546011e4622",
+      "git_blob_sha1": "9f38a0788a12b41088f099e5d63cb38d0667c8b2",
+      "read_this_round": true,
+      "repository_copy": null
+    }
+  ]
+}

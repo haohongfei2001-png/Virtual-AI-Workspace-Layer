@@ -1,0 +1,269 @@
+{
+  "prototype_sha256": "b26a4631c879e74789ae3c61d0decf07837cf04afee3cbfa58ab69c34f523ba1",
+  "browser": "144.0.7559.96",
+  "evidence": "PROTOTYPE_SIMULATION",
+  "method": "in-memory page.set_content",
+  "tests": [
+    {
+      "name": "initial",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.408
+    },
+    {
+      "name": "date_example",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.134
+    },
+    {
+      "name": "month_end",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.123
+    },
+    {
+      "name": "leap",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.11
+    },
+    {
+      "name": "years",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.126
+    },
+    {
+      "name": "continuity",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.142
+    },
+    {
+      "name": "timezones",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.127
+    },
+    {
+      "name": "historical_existence",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.366
+    },
+    {
+      "name": "rejected_signals",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.191
+    },
+    {
+      "name": "unknown",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.324
+    },
+    {
+      "name": "active_partial",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.105
+    },
+    {
+      "name": "range_ui",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 1.138
+    },
+    {
+      "name": "history_ui",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.798
+    },
+    {
+      "name": "many_inside",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.539
+    },
+    {
+      "name": "sources",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.537
+    },
+    {
+      "name": "fold",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.522
+    },
+    {
+      "name": "pins",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.842
+    },
+    {
+      "name": "chatpin",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.358
+    },
+    {
+      "name": "preserve_host",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.659
+    },
+    {
+      "name": "disable_board",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.341
+    },
+    {
+      "name": "rename",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.813
+    },
+    {
+      "name": "correction",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 1.173
+    },
+    {
+      "name": "search",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.518
+    },
+    {
+      "name": "menus",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.395
+    },
+    {
+      "name": "accounts",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.732
+    },
+    {
+      "name": "imports",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.536
+    },
+    {
+      "name": "write_gate",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.511
+    },
+    {
+      "name": "write_conflict",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.44
+    },
+    {
+      "name": "failure",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.43
+    },
+    {
+      "name": "clock_ui",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.418
+    },
+    {
+      "name": "allhistory",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.467
+    },
+    {
+      "name": "dark",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.757
+    },
+    {
+      "name": "narrow",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.453
+    },
+    {
+      "name": "screenshots",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.83
+    },
+    {
+      "name": "workset",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.8
+    },
+    {
+      "name": "reduced_motion",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.348
+    },
+    {
+      "name": "browser_zoom_equivalent",
+      "status": "PASS",
+      "page_errors": [],
+      "page_requests": [],
+      "seconds": 0.232
+    }
+  ],
+  "passed": 37,
+  "failed": 0
+}

@@ -1,0 +1,166 @@
+{
+  "G1": {
+    "title": "ACS · 当前能力试验状态",
+    "url": "https://github.com/haohongfei2001-png/adaptive-contextual-sidebar/blob/7495158e9d3e3b383feafe00cea810e8954cac82/status/ACS_STATUS.yaml"
+  },
+  "G2": {
+    "title": "ACS · Frozen Design v0.1",
+    "url": "https://github.com/haohongfei2001-png/adaptive-contextual-sidebar/blob/7495158e9d3e3b383feafe00cea810e8954cac82/docs/FROZEN_DESIGN_v0.1.md"
+  },
+  "G3": {
+    "title": "ACS · 原生列表投影与恢复试验代码",
+    "url": "https://github.com/haohongfei2001-png/adaptive-contextual-sidebar/blob/7495158e9d3e3b383feafe00cea810e8954cac82/src/content.js"
+  },
+  "G4": {
+    "title": "Context Tabs · 当前状态",
+    "url": "https://github.com/haohongfei2001-png/context-tabs/blob/8ccdd75255e37bb4a2ff92da427a7be86c6192f7/status/CONTEXT_TABS_STATUS.yaml"
+  },
+  "G5": {
+    "title": "Context Tabs · 浏览器标签页事件与视图",
+    "url": "https://github.com/haohongfei2001-png/context-tabs/blob/8ccdd75255e37bb4a2ff92da427a7be86c6192f7/src/sidepanel.js"
+  },
+  "G6": {
+    "title": "Chat Title Manager · Draft PR #1 与未完成的真实改名验收",
+    "url": "https://github.com/haohongfei2001-png/chat-title-manager/pull/1"
+  },
+  "G7": {
+    "title": "Chat Title Manager · 固定候选的命名与序号代码",
+    "url": "https://github.com/haohongfei2001-png/chat-title-manager/blob/3222066812e08aa75119247de5ec5968e3bfbaeb/src/naming.js"
+  },
+  "G8": {
+    "title": "PAIA · 实际 manifest 0.43.4",
+    "url": "https://github.com/haohongfei2001-png/paia/blob/6b4f96199e4f2de4040b1ed505a3610186b6815e/extension/manifest.json"
+  },
+  "G9": {
+    "title": "PAIA · 当前 STATUS（与旧版本叙述区别）",
+    "url": "https://github.com/haohongfei2001-png/paia/blob/6b4f96199e4f2de4040b1ed505a3610186b6815e/extension/docs/consumer-product-v1/STATUS.md"
+  },
+  "G10": {
+    "title": "PAIA · 产品与用户输入数据边界",
+    "url": "https://github.com/haohongfei2001-png/paia/blob/6b4f96199e4f2de4040b1ed505a3610186b6815e/extension/README.md"
+  },
+  "G11": {
+    "title": "PAIA · 既有请求的被动 response observer",
+    "url": "https://github.com/haohongfei2001-png/paia/blob/6b4f96199e4f2de4040b1ed505a3610186b6815e/extension/content/response-observer.js"
+  },
+  "G12": {
+    "title": "HCL · 当前产品队列与能力边界",
+    "url": "https://github.com/haohongfei2001-png/hcl-assistant/blob/b083ac25e22176a58eb048068b90ceb485800c8c/README.md"
+  },
+  "G13": {
+    "title": "HCL · Assistant-first UX / Continuum 原则",
+    "url": "https://github.com/haohongfei2001-png/hcl-assistant/blob/b083ac25e22176a58eb048068b90ceb485800c8c/docs/UX_SPEC.md"
+  },
+  "S1": {
+    "title": "OpenAI · Projects in ChatGPT",
+    "url": "https://help.openai.com/en/articles/10169521-projects-in-chatgpt"
+  },
+  "S2": {
+    "title": "OpenAI · Finding your chats, projects, and files",
+    "url": "https://help.openai.com/en/articles/10056348-finding-your-chats-projects-and-files-in-chatgpt"
+  },
+  "S3": {
+    "title": "OpenAI · Getting started with Space",
+    "url": "https://help.openai.com/en/articles/20001549-getting-started-with-space-in-chatgpt"
+  },
+  "S4": {
+    "title": "OpenAI · Exporting your history and data",
+    "url": "https://help.openai.com/en/articles/7260999-exporting-your-chatgpt-history-and-data"
+  },
+  "S5": {
+    "title": "OpenAI · Temporary Chat",
+    "url": "https://help.openai.com/en/articles/8914046-temporary-chat-in-chatgpt"
+  },
+  "S6": {
+    "title": "OpenAI · Sharing conversations and scheduled tasks",
+    "url": "https://help.openai.com/en/articles/7925741-sharing-conversations-and-scheduled-tasks-in-chatgpt"
+  },
+  "S7": {
+    "title": "Chrome Web Store · AI Toolbox",
+    "url": "https://chromewebstore.google.com/detail/ai-toolbox-folders-prompt/jlalnhjkfiogoeonamcnngdndjbneina"
+  },
+  "S8": {
+    "title": "AI Toolbox · 开发者产品与同步说明",
+    "url": "https://www.ai-toolbox.co/"
+  },
+  "S9": {
+    "title": "Chrome Web Store · Superpower for ChatGPT",
+    "url": "https://chromewebstore.google.com/detail/superpower-for-chatgpt/amhmeenmapldpjdedekalnfifgnpfnkc"
+  },
+  "S10": {
+    "title": "Chrome Web Store · ChatGPT Organizer / Smart Auto Folders",
+    "url": "https://chromewebstore.google.com/detail/chatgpt-organizer-smart-a/fifjakginaannmjjejmfagoglkiocbco"
+  },
+  "S11": {
+    "title": "Chrome Web Store · ChatGPT Organizer & Workspace",
+    "url": "https://chromewebstore.google.com/detail/chatgpt-organizer-workspa/mngeddjcngpcdakdhfcbaefeonmmeomg"
+  },
+  "S12": {
+    "title": "Sortbase · 开发者产品声明",
+    "url": "https://sortbase.ai/"
+  },
+  "S13": {
+    "title": "Chrome · Content scripts 与隔离环境",
+    "url": "https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts"
+  },
+  "S14": {
+    "title": "Chrome · Extension service worker lifecycle",
+    "url": "https://developer.chrome.com/docs/extensions/develop/concepts/service-workers/lifecycle"
+  },
+  "S15": {
+    "title": "Chrome · Storage and cookies / origin 边界",
+    "url": "https://developer.chrome.com/docs/extensions/develop/concepts/storage-and-cookies"
+  },
+  "S16": {
+    "title": "Chrome · Storage API",
+    "url": "https://developer.chrome.com/docs/extensions/reference/api/storage"
+  },
+  "S17": {
+    "title": "Chrome Web Store · User data policy FAQ",
+    "url": "https://developer.chrome.com/docs/webstore/program-policies/user-data-faq"
+  },
+  "S18": {
+    "title": "Chrome · Prompt API / 支持语言与设备条件",
+    "url": "https://developer.chrome.com/docs/ai/prompt-api"
+  },
+  "S19": {
+    "title": "ONNX Runtime · Web / WASM / WebGPU",
+    "url": "https://onnxruntime.ai/docs/tutorials/web/"
+  },
+  "S20": {
+    "title": "OpenAI · Sign in with ChatGPT / OSS 与计划用量",
+    "url": "https://developers.openai.com/siwc/token-sharing-open-source"
+  },
+  "S21": {
+    "title": "OpenAI · Sign in with ChatGPT on your website",
+    "url": "https://developers.openai.com/siwc/website"
+  },
+  "S22": {
+    "title": "OpenAI · Multiple accounts / account switching",
+    "url": "https://help.openai.com/en/articles/20001068-use-multiple-accounts-with-account-switching"
+  },
+  "S23": {
+    "title": "OpenAI · API conversation state",
+    "url": "https://developers.openai.com/api/docs/guides/conversation-state"
+  },
+  "S24": {
+    "title": "OpenAI · Terms of Use",
+    "url": "https://openai.com/policies/terms-of-use/"
+  },
+  "S25": {
+    "title": "Chrome · Debugger API",
+    "url": "https://developer.chrome.com/docs/extensions/reference/api/debugger"
+  },
+  "S26": {
+    "title": "Chrome · Offscreen documents",
+    "url": "https://developer.chrome.com/docs/extensions/reference/api/offscreen"
+  },
+  "S27": {
+    "title": "Chrome · Remote hosted code policy",
+    "url": "https://developer.chrome.com/docs/extensions/develop/migrate/remote-hosted-code"
+  },
+  "S28": {
+    "title": "Chrome · Declare permissions",
+    "url": "https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions"
+  }
+}

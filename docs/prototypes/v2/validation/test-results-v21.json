@@ -1,0 +1,290 @@
+{
+  "prototype_sha256": "ad738a05e0be0074af7640a639784a739e24b71d3ad17b9e630c893ef44ecbba",
+  "browser": "144.0.7559.96",
+  "evidence": "PROTOTYPE_SIMULATION",
+  "method": "page.set_content, fixed synthetic date; no real ChatGPT",
+  "tests": [
+    {
+      "name": "retained_date_example",
+      "status": "PASS",
+      "seconds": 0.247,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "retained_month_end",
+      "status": "PASS",
+      "seconds": 0.151,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "retained_leap",
+      "status": "PASS",
+      "seconds": 0.141,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "retained_years",
+      "status": "PASS",
+      "seconds": 0.145,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "retained_continuity",
+      "status": "PASS",
+      "seconds": 0.171,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "retained_timezones",
+      "status": "PASS",
+      "seconds": 0.128,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "retained_rename",
+      "status": "PASS",
+      "seconds": 0.848,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "retained_correction",
+      "status": "PASS",
+      "seconds": 0.815,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "retained_accounts",
+      "status": "PASS",
+      "seconds": 0.618,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "retained_write_gate",
+      "status": "PASS",
+      "seconds": 0.512,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "retained_write_conflict",
+      "status": "PASS",
+      "seconds": 0.5,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "retained_failure",
+      "status": "PASS",
+      "seconds": 0.498,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "retained_reduced_motion",
+      "status": "PASS",
+      "seconds": 0.352,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "retained_browser_zoom_equivalent",
+      "status": "PASS",
+      "seconds": 0.254,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "initial",
+      "status": "PASS",
+      "seconds": 0.211,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "quiet_chrome",
+      "status": "PASS",
+      "seconds": 0.134,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "topic_exclusivity",
+      "status": "PASS",
+      "seconds": 0.414,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "paia_not_in_previous",
+      "status": "PASS",
+      "seconds": 0.349,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "earlier_segments",
+      "status": "PASS",
+      "seconds": 0.397,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "no_child_escape",
+      "status": "PASS",
+      "seconds": 0.786,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "previous_parent_children",
+      "status": "PASS",
+      "seconds": 0.247,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "old_chat_kept",
+      "status": "PASS",
+      "seconds": 0.729,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "topic_pin_not_promotion",
+      "status": "PASS",
+      "seconds": 0.562,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "child_pin_not_promotion",
+      "status": "PASS",
+      "seconds": 0.5,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "unknown_no_false_history",
+      "status": "PASS",
+      "seconds": 0.452,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "incomplete_latest",
+      "status": "PASS",
+      "seconds": 0.115,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "malformed_time",
+      "status": "PASS",
+      "seconds": 0.131,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "non_send_no_move",
+      "status": "PASS",
+      "seconds": 0.33,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "send_moves_whole_topic",
+      "status": "PASS",
+      "seconds": 0.689,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "range_no_source_writes",
+      "status": "PASS",
+      "seconds": 1.208,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "all_once",
+      "status": "PASS",
+      "seconds": 0.364,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "three_month_unique",
+      "status": "PASS",
+      "seconds": 0.424,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "preserved_host",
+      "status": "PASS",
+      "seconds": 0.608,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "native_unfiltered",
+      "status": "PASS",
+      "seconds": 0.669,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "source_kept_not_displayed",
+      "status": "PASS",
+      "seconds": 0.472,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "search_old",
+      "status": "PASS",
+      "seconds": 0.574,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "menu_keyboard",
+      "status": "PASS",
+      "seconds": 0.213,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "updated_clock",
+      "status": "PASS",
+      "seconds": 0.392,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "rendering",
+      "status": "PASS",
+      "seconds": 0.68,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "name": "dark_narrow",
+      "status": "PASS",
+      "seconds": 0.469,
+      "page_errors": [],
+      "page_requests": []
+    }
+  ],
+  "passed": 40,
+  "failed": 0
+}
