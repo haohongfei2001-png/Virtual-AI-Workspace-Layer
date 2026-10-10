@@ -2,7 +2,7 @@
 
 ## 范围与读取顺序
 
-仅设计、计划、治理和离线原型/合成测试。正式扩展、R0宿主探针、安装部署、私人聊天、模型调用、真实原生写入或其他仓库修改均未授权。沿用Draft PR #1，不改main、不自动合并。
+原设计提案 PR #1 限于设计、计划、治理和离线原型。本分支另获用户 2026-10-11 明确授权执行**受限 B1 工程**，允许新增 `src/b1/`、`tests/b1/`、`experiments/b1/fixture/` 与 `docs/engineering/`，并以独立 Draft PR 交付。该授权不包括真实 ChatGPT 账号探针/私人聊天、原生写入、安装部署、完整页面接管、修改PAIA/其他仓库或自动合并。main和PR #1 不改。任何生产宿主账户 resolver 在真实隔离环境未验证前必须保持不可用。
 
 先读 docs/STATUS.md、docs/AUTHORITY.md、docs/INTERACTION_SPEC.md、docs/CORE_FLOW_V2_7.md，再读原生保留矩阵和相关任务。核对远端main、提案分支及开放PR，不从旧README猜状态。最新固定30日覆盖旧日历月；旧原件不回写。
 

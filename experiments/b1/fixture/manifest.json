@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "VAIWL B1 Synthetic Binding Fixture (NOT product)",
+  "version": "0.0.1",
+  "background": {"service_worker":"worker.mjs","type":"module"},
+  "permissions": ["webNavigation"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "content_scripts": [
+    {"matches":["http://127.0.0.1/*"],"js":["client.js"],"run_at":"document_idle"}
+  ]
+}

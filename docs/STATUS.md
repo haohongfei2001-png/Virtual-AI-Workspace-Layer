@@ -14,9 +14,9 @@
 | 样本 | 原日常6主题17活跃窗口；压力91主题345窗口完整保留。PAIA因30日边界变为27近期/29旧/4未知，未删除原事件 |
 | 尚待验证 | 真人图形辨识、真实dot头像/字体、消息时间/覆盖、宿主插槽/交互状态/权限/动画、原生路由返回、MV3和实际PAIA共存 |
 | 计划一致性 | DEVELOPMENT_PLAN、DECISIONS、唯一R0任务书与v2.7对齐；保留原A–G任务ID；正式实现未授权 |
-| 正式代码 / R0 | NOT_STARTED / NOT_STARTED；执行授权false / false |
+| 正式代码 / R0 | B1受限底座已在独立分支实施（真实Chrome合成fixture 11/11）；R0独立Draft PR #4总体LIMITED；真实登录ChatGPT依旧BLOCKED，未进入C2完整接管 |
 | 私人聊天 / 付费模型 / 真实原生写入 / 安装部署 | NONE / NONE / NONE / NONE |
-| 唯一下一任务 | 获得独立R0授权和清洁Chrome/合成ChatGPT账户后测试宿主身份、时间覆盖、真实聊天/唯一返回及PAIA共存；不再重新设计原型 |
+| 下一必要条件 | B1的可信真实ChatGPT身份resolver、原生文档和生命周期验证仍需单独批准的清洁测试账户；后续B2规则/B3派生资产可独立推进，不重启整套R0 |
 
 当前交互以INTERACTION_SPEC及CORE_FLOW_V2_7为准；DEVELOPMENT_PLAN、DECISIONS与R0任务书已同步替换旧冲突，原A–G与R0唯一队列不变。仅文档收敛，R0/正式产品尚未启动。
 

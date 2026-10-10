@@ -1,0 +1,115 @@
+{
+  "schema": "VAIWL_B1_CHROME_FIXTURE_V1",
+  "level": "REAL_CHROME_SYNTHETIC_ONLY",
+  "environment": {
+    "browser": "Chrome/154.0.8037.99",
+    "chromeVersion": "Chrome/154.0.8037.99",
+    "node": "v26.8.2"
+  },
+  "results": [
+    {
+      "id": "B01-real-MV3-content-and-service-worker",
+      "level": "REAL_CHROME_SYNTHETIC_ONLY",
+      "documentIdPresent": true,
+      "hasLease": true,
+      "realWorker": true,
+      "status": "PASS",
+      "elapsedMs": 197
+    },
+    {
+      "id": "B02-real-IDB-upsert-get-CAS-and-idempotency",
+      "level": "REAL_CHROME_SYNTHETIC_ONLY",
+      "recordRevision": 2,
+      "replayDetected": true,
+      "conflictingOperationRejected": true,
+      "status": "PASS",
+      "elapsedMs": 365
+    },
+    {
+      "id": "B03-C09-document-handoff-before-old-lease-expires",
+      "level": "REAL_CHROME_SYNTHETIC_ONLY",
+      "elapsedMs": 84,
+      "oldLeaseExpiryMs": 20000,
+      "isolatedScope": true,
+      "status": "PASS"
+    },
+    {
+      "id": "B04-switch-back-A-persistent-scoped-reference",
+      "level": "REAL_CHROME_SYNTHETIC_ONLY",
+      "scopeRestoredWithoutLeakingB": true,
+      "persistedRevision": 2,
+      "status": "PASS",
+      "elapsedMs": 52
+    },
+    {
+      "id": "B05-second-tab-CAS-conflict-and-scope-isolation",
+      "level": "REAL_CHROME_SYNTHETIC_ONLY",
+      "secondTabGetsSameScopeRecord": true,
+      "staleRevisionRejected": true,
+      "status": "PASS",
+      "elapsedMs": 133
+    },
+    {
+      "id": "B05B-real-two-tab-atomic-create-CAS",
+      "level": "REAL_CHROME_SYNTHETIC_ONLY",
+      "atomicWinners": 1,
+      "conflicts": 1,
+      "status": "PASS",
+      "elapsedMs": 104
+    },
+    {
+      "id": "B06-SPA-history-update-revokes-lease",
+      "level": "REAL_CHROME_SYNTHETIC_ONLY",
+      "revoked": true,
+      "hostHistory": {
+        "synthetic": true
+      },
+      "status": "PASS",
+      "elapsedMs": 29
+    },
+    {
+      "id": "B07-native-fixture-nodes-and-events-unchanged",
+      "level": "REAL_CHROME_SYNTHETIC_ONLY",
+      "same": true,
+      "draft": "未发送的合成文字",
+      "result": "tool-used",
+      "status": "PASS",
+      "elapsedMs": 1
+    },
+    {
+      "id": "B08-real-worker-stop-rebind-and-IDB-recovery",
+      "level": "REAL_CHROME_SYNTHETIC_ONLY",
+      "persisted": true,
+      "revision": 2,
+      "workerRebound": true,
+      "operationReplaySurvivedRestart": true,
+      "status": "PASS",
+      "elapsedMs": 415
+    },
+    {
+      "id": "B09-page-origin-cannot-enumerate-extension-DB",
+      "level": "REAL_CHROME_SYNTHETIC_ONLY",
+      "pageDBCount": 0,
+      "extensionDBVisibleToPage": false,
+      "status": "PASS",
+      "elapsedMs": 20
+    },
+    {
+      "id": "B10-synthetic-only-permission-and-requests",
+      "level": "REAL_CHROME_SYNTHETIC_ONLY",
+      "realChatGPTRequests": 0,
+      "pageErrors": 0,
+      "status": "PASS",
+      "elapsedMs": 1
+    }
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "startedAt": "2026-10-10T19:07:06.248Z",
+  "extensionIdLength": 32,
+  "endedAt": "2026-10-10T19:07:08.659Z",
+  "counts": {
+    "pass": 11,
+    "fail": 0
+  }
+}

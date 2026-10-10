@@ -1,0 +1,18 @@
+✔ B1: sender identity is independent of page-supplied scope and exact envelope (1.063208ms)
+✔ B1: new browser-confirmed document supersedes old lease without waiting (0.308125ms)
+✔ B1: route invalidation revokes even same-document tokens (0.140917ms)
+✔ B1: wrong browser document and unknown scope fail closed (0.087334ms)
+✔ B1: worker restart invalidates transient lease, not persisted reference (1.46075ms)
+✔ B1: scope change makes old records unreachable even if same native ID (0.166458ms)
+✔ B1: lease timeout, sequence replay, changed browser URL all deny (0.096583ms)
+✔ B1: delayed scope resolver cannot commit after navigation invalidates (0.071375ms)
+✔ B1: stale pending write is rejected at repository commit fence (1.305875ms)
+✔ B1: an asynchronous stale read never returns a stored reference (1.562166ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 47.028
