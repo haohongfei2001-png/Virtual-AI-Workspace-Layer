@@ -1,0 +1,156 @@
+{
+  "scope": "Actual loopback/MV3 attempts. Initial wrong CDP session is a harness failure; corrected session returned explicit administrator block.",
+  "codeVersionNote": "Gates ran before final scale/date-validator changes; each gate retains its exact build hashes. Final build has NOT loaded successfully.",
+  "attempts": [
+    {
+      "run": "real-mv3-attempt",
+      "rawSha256": "cfe35b96cfe136aa959237735fe995783a64fc95208fb7a784bcfa2639a42620",
+      "raw": {
+        "level": "B_REAL_BROWSER_MV3",
+        "mode": "mv3",
+        "startedAt": "2026-10-10T21:42:16Z",
+        "environment": {
+          "python": "3.13.5",
+          "os": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "chrome": {
+            "protocolVersion": "1.3",
+            "product": "Chrome/144.0.7559.96",
+            "revision": "@d7b80622cfab91c265741194e7942eefd2d21811",
+            "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/144.0.0.0 Safari/537.36",
+            "jsVersion": "14.4.258.22"
+          }
+        },
+        "results": [
+          {
+            "id": "M01-load-real-MV3",
+            "status": "FAIL",
+            "actual": "CDPSession.send: Protocol error (Extensions.loadUnpacked): Method not available."
+          },
+          {
+            "id": "N01-loopback-browser-navigation",
+            "status": "BLOCKED",
+            "actual": "Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:49553/hf/A/c/T0?mode=mv3\nCall log:\n  - navigating to \"http://127.0.0.1:49553/hf/A/c/T0?mode=mv3\", waiting until \"domcontentloaded\"\n"
+          }
+        ],
+        "notRun": [
+          "real ChatGPT login",
+          "physical IME",
+          "freeze/resume",
+          "extension disable/re-enable in graphical manager"
+        ],
+        "buildSha256": {
+          "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+          "src/b1/scope-repository.mjs": "75fa8d988b63dfd3fa37b6b661aa9f6e272b28653656c048d6a3535dd899a69e",
+          "src/b1/document-binding-broker.mjs": "98b5befb8bb8db124df61b7d9fbc48b5d363623470037e1c15a9a77997bf764f",
+          "simulator/service.mjs": "4ccceedc758995c52125353755d9d42ec77b394e01ba9ec7383338addbe3f14f",
+          "simulator/data.mjs": "ae410f7f28d808f959ac4ac5700a74675489ff2778f4e9f43063a4f2d8ad6ac7",
+          "simulator/worker.mjs": "9eb5e62fe99499aa8e6cf196480ed8e5e294f435cdd8427aafb90368a5aa0b90",
+          "content.js": "63429fc797b14026f8ac023065c8bf5999008a7ab9786db6b3d54d84c1fbdd99",
+          "manifest.json": "d8c3160d4f7d55f35b5633928759bb8c223b341770edade54c4e9ab78d8e91e6"
+        },
+        "status": "FAIL",
+        "endedAt": "2026-10-10T21:42:17Z"
+      }
+    },
+    {
+      "run": "real-mv3-final",
+      "rawSha256": "fc6b2032fc7833092a2caa6be5df659fd563e30bec1238b1f2439918a36a49b8",
+      "raw": {
+        "level": "B_REAL_BROWSER_MV3",
+        "mode": "mv3",
+        "startedAt": "2026-10-10T21:42:42Z",
+        "environment": {
+          "python": "3.13.5",
+          "os": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "chrome": {
+            "protocolVersion": "1.3",
+            "product": "Chrome/144.0.7559.96",
+            "revision": "@d7b80622cfab91c265741194e7942eefd2d21811",
+            "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/144.0.0.0 Safari/537.36",
+            "jsVersion": "14.4.258.22"
+          }
+        },
+        "results": [
+          {
+            "id": "M01-load-real-MV3",
+            "status": "BLOCKED",
+            "actual": "CDPSession.send: Protocol error (Extensions.loadUnpacked): Loading of unpacked extensions is disabled by the administrator."
+          },
+          {
+            "id": "N01-loopback-browser-navigation",
+            "status": "BLOCKED",
+            "actual": "Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:36333/hf/A/c/T0?mode=mv3\nCall log:\n  - navigating to \"http://127.0.0.1:36333/hf/A/c/T0?mode=mv3\", waiting until \"domcontentloaded\"\n"
+          }
+        ],
+        "notRun": [
+          "real ChatGPT login",
+          "physical IME",
+          "freeze/resume",
+          "extension disable/re-enable in graphical manager"
+        ],
+        "buildSha256": {
+          "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+          "src/b1/scope-repository.mjs": "75fa8d988b63dfd3fa37b6b661aa9f6e272b28653656c048d6a3535dd899a69e",
+          "src/b1/document-binding-broker.mjs": "98b5befb8bb8db124df61b7d9fbc48b5d363623470037e1c15a9a77997bf764f",
+          "simulator/service.mjs": "4ccceedc758995c52125353755d9d42ec77b394e01ba9ec7383338addbe3f14f",
+          "simulator/data.mjs": "ae410f7f28d808f959ac4ac5700a74675489ff2778f4e9f43063a4f2d8ad6ac7",
+          "simulator/worker.mjs": "9eb5e62fe99499aa8e6cf196480ed8e5e294f435cdd8427aafb90368a5aa0b90",
+          "content.js": "63429fc797b14026f8ac023065c8bf5999008a7ab9786db6b3d54d84c1fbdd99",
+          "manifest.json": "d8c3160d4f7d55f35b5633928759bb8c223b341770edade54c4e9ab78d8e91e6"
+        },
+        "status": "BLOCKED",
+        "endedAt": "2026-10-10T21:42:43Z"
+      }
+    },
+    {
+      "run": "real-page-final",
+      "rawSha256": "050f43808d19cebcc143ceebaa0b2aa39e859c781011fa1c2efee90182075ce5",
+      "raw": {
+        "level": "B_REAL_BROWSER_PAGE",
+        "mode": "page",
+        "startedAt": "2026-10-10T21:42:44Z",
+        "environment": {
+          "python": "3.13.5",
+          "os": "Linux-6.18.44-x86_64-with-glibc2.41",
+          "chrome": {
+            "protocolVersion": "1.3",
+            "product": "Chrome/144.0.7559.96",
+            "revision": "@d7b80622cfab91c265741194e7942eefd2d21811",
+            "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/144.0.0.0 Safari/537.36",
+            "jsVersion": "14.4.258.22"
+          }
+        },
+        "results": [
+          {
+            "id": "N01-loopback-browser-navigation",
+            "status": "BLOCKED",
+            "actual": "Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:56571/hf/A/c/T0?mode=page\nCall log:\n  - navigating to \"http://127.0.0.1:56571/hf/A/c/T0?mode=page\", waiting until \"domcontentloaded\"\n"
+          }
+        ],
+        "notRun": [
+          "real ChatGPT login",
+          "physical IME",
+          "freeze/resume",
+          "extension disable/re-enable in graphical manager"
+        ],
+        "buildSha256": {
+          "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+          "src/b1/scope-repository.mjs": "75fa8d988b63dfd3fa37b6b661aa9f6e272b28653656c048d6a3535dd899a69e",
+          "src/b1/document-binding-broker.mjs": "98b5befb8bb8db124df61b7d9fbc48b5d363623470037e1c15a9a77997bf764f",
+          "simulator/service.mjs": "4ccceedc758995c52125353755d9d42ec77b394e01ba9ec7383338addbe3f14f",
+          "simulator/data.mjs": "ae410f7f28d808f959ac4ac5700a74675489ff2778f4e9f43063a4f2d8ad6ac7",
+          "simulator/worker.mjs": "9eb5e62fe99499aa8e6cf196480ed8e5e294f435cdd8427aafb90368a5aa0b90",
+          "content.js": "63429fc797b14026f8ac023065c8bf5999008a7ab9786db6b3d54d84c1fbdd99",
+          "manifest.json": "d8c3160d4f7d55f35b5633928759bb8c223b341770edade54c4e9ab78d8e91e6"
+        },
+        "status": "BLOCKED",
+        "endedAt": "2026-10-10T21:42:45Z"
+      }
+    }
+  ],
+  "physicalIME": "NOT_RUN",
+  "freeze": "NOT_RUN",
+  "realChatGPT": "NOT_RUN",
+  "macConnected": false,
+  "policiesChanged": false
+}

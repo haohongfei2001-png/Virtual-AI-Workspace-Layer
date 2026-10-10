@@ -1,0 +1,315 @@
+--- a/src/b1/document-binding-broker.mjs
++++ b/src/b1/document-binding-broker.mjs
+@@ -74,7 +74,12 @@
+       if(!isRecord(f)||!tokenOK(f.documentId)||!allowedURL(f.url)||
+         f.errorOccurred===true||(f.documentLifecycle&&f.documentLifecycle!=='active'))return null;
+       const actual={tabId:doc.tabId,frameId:doc.frameId,documentId:f.documentId,url:f.url};
+-      return sameDoc(actual,doc)?actual:null;
++      // Chrome MessageSender.url can remain the document's initial URL after
++      // history.pushState. The browser's current frame URL is authoritative
++      // for route/scope; sender's documentId + exact origin must still match.
++      if(actual.documentId!==doc.documentId||
++         new URL(actual.url).origin!==new URL(doc.url).origin)return null;
++      return actual;
+     }catch{return null;}
+   }
+   async function scopeFor(doc,sender){
+@@ -87,22 +92,26 @@
+   // Recheck scope after asynchronous repository work, even when the URL has
+   // not changed. This is a response fence, not a transactional account oracle.
+   async function currentAuthority(st,slot,doc,sender){
+-    if(!fresh(st,slot)||!(await currentDocument(doc)))return false;
++    if(!fresh(st,slot)||!sameDoc(await currentDocument(doc),doc))return false;
+     const currentScope=await scopeFor(doc,sender);
+-    return fresh(st,slot)&&currentScope?.key===slot.scope.key;
++    return fresh(st,slot)&&currentScope?.key===slot.scope.key&&
++      sameDoc(await currentDocument(doc),doc);
+   }
+   const copyRecord=r=>r?{conversationId:r.conversationId,nativeUrl:r.nativeUrl,
+     projectId:r.projectId,revision:r.revision}:null;
+   async function handle(message,sender){
+     if(!requestOK(message))return deny('invalid-request');
+-    const doc=isSender(sender,extensionId,allowedURL);
+-    if(!doc)return deny('invalid-sender');
+-    const key=tabKey(doc),st=stateFor(key),startEpoch=st.epoch;
+-    if(!(await currentDocument(doc)))return deny('not-current-document');
++    const senderDoc=isSender(sender,extensionId,allowedURL);
++    if(!senderDoc)return deny('invalid-sender');
++    const key=tabKey(senderDoc),st=stateFor(key),startEpoch=st.epoch;
++    const doc=await currentDocument(senderDoc);
++    if(!doc)return deny('not-current-document');
+     if(st.epoch!==startEpoch)return deny('invalidated-during-check');
++    // Resolve authority only from the current browser-confirmed frame, never
++    // from a client-supplied account or possibly stale sender.url.
+     const scope=await scopeFor(doc,sender);
+     if(!scope)return deny('unverified-scope');
+-    if(st.epoch!==startEpoch||!(await currentDocument(doc)))return deny('stale-document');
++    if(st.epoch!==startEpoch||!sameDoc(await currentDocument(senderDoc),doc))return deny('stale-document');
+     if(st.epoch!==startEpoch)return deny('invalidated-during-check');
+     if(message.type==='BIND'){
+       if(st.slot&&sameDoc(st.slot.doc,doc)&&st.slot.clientId===message.clientId&&
+--- a/tests/b1/broker.test.mjs
++++ b/tests/b1/broker.test.mjs
+@@ -95,14 +95,21 @@
+  const readB=await h.broker.handle(h.request('GET_REF',4,leaseB.leaseId,{conversationId:'same'}),b);
+  assert.equal(readB.record,null);
+ });
+-test('B1: lease timeout, sequence replay, changed browser URL all deny',async()=>{
++test('B1: lease expiry/replay and browser-confirmed same-document SPA route',async()=>{
+  const h=mk(),a=fixture();
+  const v=await h.broker.handle(h.request('BIND',1),a);
+  assert.equal((await h.broker.handle(h.request('CHECK',1,v.leaseId),a)).reason,'stale-binding');
+  h.tick(20001);
+  assert.equal((await h.broker.handle(h.request('CHECK',2,v.leaseId),a)).reason,'stale-binding');
+- h.current.set(17,{url:urls.B,documentId:'doc_A'});
+- assert.equal((await h.broker.handle(h.request('BIND',3),a)).reason,'not-current-document');
++ // Chrome reports B even when MessageSender.url retains A for the same documentId.
++ h.current.set(17,{url:urls.B,documentId:'doc_A',documentLifecycle:'active'});
++ const next=await h.broker.handle(h.request('BIND',3),a);
++ assert(next.ok,'same-document SPA B must bind from browser-confirmed route');
++ assert.equal((await h.broker.handle(h.request('CHECK',4,v.leaseId),a)).reason,'stale-binding');
++ assert.equal((await h.broker.handle(h.request('LIST_REFS',5,next.leaseId),a)).ok,true);
++ h.current.set(17,{url:'http://127.0.0.1:40000/b1-fixture/B.html',documentId:'doc_A',documentLifecycle:'active'});
++ assert.equal((await h.broker.handle(h.request('BIND',6),a)).reason,'not-current-document',
++  'different port is a different security origin, even with matching documentId');
+ });
+ test('B1: delayed scope resolver cannot commit after navigation invalidates',async()=>{
+  let release;
+@@ -153,3 +160,26 @@
+  assert.equal(outcome.reason,'stale-after-read');
+  assert.equal(Object.hasOwn(outcome,'record'),false);
+ });
++
++test('B1: a same-document SPA route change never exposes old async reads',async()=>{
++ let release;const pending=new Promise(resolve=>release=resolve);
++ const current={url:urls.A,documentId:'doc_A',documentLifecycle:'active'};
++ const broker=createDocumentBindingBroker({
++  extensionId:'extension_fixture_id',getFrame:async()=>({...current}),
++  resolveScope:fixtureScopeResolver,
++  repository:{get:async()=>{await pending;return {conversationId:'A_only',
++    nativeUrl:urls.A,projectId:null,revision:1}},list:async()=>[],upsert:async()=>({ok:true})}
++ });
++ const sender=fixture();
++ const bound=await broker.handle({v:1,type:'BIND',clientId:'client_A',seq:1},sender);
++ assert(bound.ok);
++ const delayed=broker.handle({v:1,type:'GET_REF',clientId:'client_A',seq:2,
++   leaseId:bound.leaseId,conversationId:'A_only'},sender);
++ await new Promise(resolve=>setTimeout(resolve,0));
++ current.url=urls.B;release();
++ const result=await delayed;
++ assert.equal(result.reason,'stale-after-read');
++ assert.equal(Object.hasOwn(result,'record'),false);
++ const switched=await broker.handle({v:1,type:'BIND',clientId:'client_A',seq:3},sender);
++ assert(switched.ok,'browser-confirmed SPA B must accept stale sender.url A');
++});
+--- a/simulator/client.mjs
++++ b/simulator/client.mjs
+@@ -6,6 +6,21 @@
+ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({size:Number(document.documentElement.dataset.hfSize)||8,now:document.documentElement.dataset.hfNow||FIXTURE_NOW,timeZone:document.documentElement.dataset.hfTimeZone||'Asia/Shanghai'}),subscribe=()=>()=>{}}) {
+   const adapter=createAdapter(),clientId=crypto.randomUUID?.()??Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');let seq=0,generation=0,lease=null,expiry=null,pending=null,stopped=false,lastURL=env.location.href;
+   const controlKey=()=>{const c=readControls();return JSON.stringify([c.size,c.now,c.timeZone]);};let lastControls=controlKey();
++  // Browser navigation invalidation can race a fresh document's first BIND.
++  // Retry only explicitly transient, fail-closed denials; never retry an
++  // unverified scope, a permission failure, or a missing trusted witness.
++  let transientRetries=0;
++  function retryTransient(reason,ticket,url){
++    fail(reason);
++    if(!['invalidated-during-check','stale-document','not-current-document'].includes(reason))return;
++    if(transientRetries>=3)return;
++    const delay=[90,180,360][transientRetries++];
++    clearTimeout(pending);
++    pending=setTimeout(()=>{
++      pending=null;
++      if(!stopped&&ticket===generation&&url===env.location.href)void load();
++    },delay);
++  }
+   let navigation=createNavigation({document,adapter,onExit:()=>stop()});
+   const fail=reason=>{navigation.invalidate(reason);};
+   async function load(){
+@@ -13,13 +28,13 @@
+     try{
+       const bound=await send({v:1,type:'BIND',clientId,seq:++seq});
+       if(stopped||ticket!==generation||url!==env.location.href)return;
+-      if(!bound?.ok){fail(bound?.reason??'bind-failed');return;}
++      if(!bound?.ok){retryTransient(bound?.reason??'bind-failed',ticket,url);return;}
+       lease=bound;const reply=await send({v:1,type:'LIST_REFS',clientId,seq:++seq,leaseId:lease.leaseId});
+       if(stopped||ticket!==generation||url!==env.location.href)return;
+-      if(!reply?.ok){fail(reply?.reason??'read-failed');return;}
++      if(!reply?.ok){retryTransient(reply?.reason??'read-failed',ticket,url);return;}
+       const info=routeInfo(url),controls=readControls(),data=dataset(info.account,info.origin,controls.size??8),allowed=new Map(reply.records.map(r=>[r.conversationId,r]));
+       data.refs=data.refs.filter(r=>{const actual=allowed.get(r.id);return actual?.nativeUrl===r.nativeUrl&&actual.projectId===r.projectId;});
+-      navigation.update(data,controls.now??FIXTURE_NOW,controls.timeZone??'Asia/Shanghai');const host=adapter.inspect();if(host.ok){resize.observe(host.reading);resize.observe(host.header);}
++      transientRetries=0;navigation.update(data,controls.now??FIXTURE_NOW,controls.timeZone??'Asia/Shanghai');const host=adapter.inspect();if(host.ok){resize.observe(host.reading);resize.observe(host.header);}
+       expiry=setTimeout(()=>{generation++;lease=null;fail('lease-expired-active-js');},Math.max(0,lease.expiresAt-Date.now()));
+     }catch(e){if(ticket===generation)fail('transport-failure');}
+   }
+--- a/simulator/worker.mjs
++++ b/simulator/worker.mjs
+@@ -1,8 +1,22 @@
+ import { createFixtureService } from './service.mjs';
+-import { syntheticURL } from './data.mjs';
++import { syntheticURL, routeInfo, scopeOf } from './data.mjs';
+ const service=createFixtureService({indexedDB,extensionId:chrome.runtime.id,getFrame:x=>chrome.webNavigation.getFrame(x)});
+ globalThis.hfWorkerBoot=crypto.randomUUID();
+ chrome.runtime.onMessage.addListener((message,sender,reply)=>{
++  // A read-only diagnostic available ONLY to the synthetic host test origin.
++  // Never forward this bridge into a real ChatGPT adapter.
++  if(message?.type==='HF_TEST_WORKER_PROBE' && sender?.id===chrome.runtime.id &&
++     sender?.frameId===0 && sender?.documentLifecycle==='active' && syntheticURL(sender?.url)){
++    const info=routeInfo(sender.url);
++    if(!info || !['A','B'].includes(info.account)){reply({ok:false});return false;}
++    Promise.all([service.repository.get(scopeOf(info.account),'T0'),
++      chrome.webNavigation.getFrame({tabId:sender.tab.id,frameId:0})])
++      .then(([record,frame])=>reply({ok:true,boot:hfWorkerBoot,persistedRef:!!record,revision:record?.revision??null,
++        syntheticSenderUrl:sender.url,syntheticSenderDoc:sender.documentId,
++        syntheticFrameUrl:frame?.url,syntheticFrameDoc:frame?.documentId}))
++      .catch(()=>reply({ok:false}));
++    return true;
++  }
+   service.broker.handle(message,sender).then(reply,()=>reply({ok:false,reason:'service-failed'}));return true;
+ });
+ function invalidate(details){if(details.frameId!==0)return;service.broker.invalidate(details);if(syntheticURL(details.url))chrome.tabs.sendMessage(details.tabId,{type:'HF_DOCUMENT_INVALIDATED'},{documentId:details.documentId}).catch(()=>{});}
+--- a/simulator/content-entry.mjs
++++ b/simulator/content-entry.mjs
+@@ -7,4 +7,11 @@
+     const fn=m=>{if(m?.type==='HF_DOCUMENT_INVALIDATED')callback();};chrome.runtime.onMessage.addListener(fn);return()=>chrome.runtime.onMessage.removeListener(fn);
+   }});
+   active=start();chrome.runtime.onMessage.addListener(m=>{if(m?.type==='HF_TOGGLE'){if(active){active.stop();active=null;}else active=start();}});
++  // Test-only DOM event bridge; always obtains evidence from the real MV3 worker.
++  document.addEventListener('hf:test-worker-probe',async()=>{
++    let result;
++    try{result=await chrome.runtime.sendMessage({type:'HF_TEST_WORKER_PROBE'});}
++    catch{result={ok:false};}
++    document.documentElement.dataset.hfWorkerProbe=JSON.stringify(result);
++  });
+ }
+--- a/tests/hf/real-browser.py
++++ b/tests/hf/real-browser.py
+@@ -20,7 +20,7 @@
+         try:
+             assert server.stdout.readline().startswith('Synthetic host only:'),'server did not start'
+             with sync_playwright() as pw:
+-                context=pw.chromium.launch_persistent_context(str(tmp/'profile'),executable_path=args.browser,headless=True,viewport={'width':1440,'height':1000},args=['--enable-unsafe-extension-debugging'])
++                context=pw.chromium.launch_persistent_context(str(tmp/'profile'),executable_path=args.browser,headless=True,ignore_default_args=['--disable-extensions'],viewport={'width':1440,'height':1000},args=['--enable-unsafe-extension-debugging'])
+                 context.set_default_timeout(10000);page=context.new_page();cdp=context.new_cdp_session(page);browser_cdp=context.browser.new_browser_cdp_session();report['environment']['chrome']=cdp.send('Browser.getVersion')
+                 report['buildSha256']=json.loads((build/'build-hashes.json').read_text())
+                 loaded=False;navigation=False
+@@ -34,7 +34,7 @@
+                 except Exception as e:
+                     text=str(e);record('N01-loopback-browser-navigation','BLOCKED' if 'ERR_BLOCKED_BY_ADMINISTRATOR' in text else 'FAIL',text)
+                 if navigation and (args.mode=='page' or loaded):
+-                    page.wait_for_function("document.documentElement.dataset.vaiwlHfState==='ACTIVE'",timeout=20000)
++                    page.locator('html[data-vaiwl-hf-state="ACTIVE"]').wait_for(state="attached",timeout=20000)
+                     page.evaluate("globalThis.nativeBefore={input:HF.getView().input,transcript:HF.getView().transcript}")
+                     page.get_by_label('消息输入',exact=True).fill('SYNTHETIC REAL BROWSER DRAFT')
+                     page.locator('[data-vaiwl-return]').click();page.locator('.workspace [data-ref-id=T0]').click()
+@@ -45,19 +45,74 @@
+                     record('N03-real-browser-back-forward','PASS',{'url':page.url})
+                     if args.mode=='page':
+                         retained=page.evaluate('async()=>{HFextension.stop();HFextension.start();return true}')
+-                        page.wait_for_function("document.documentElement.dataset.vaiwlHfState==='ACTIVE'")
++                        page.locator('html[data-vaiwl-hf-state="ACTIVE"]').wait_for(state="attached")
+                         record('N04-page-origin-B1-reopen','PASS',{'rebound':retained,'extensionOrigin':False})
+                     else:
++                        def worker_probe():
++                            page.evaluate("document.documentElement.removeAttribute('data-hf-worker-probe');document.dispatchEvent(new Event('hf:test-worker-probe'))")
++                            for _ in range(30):
++                                raw=page.locator('html').get_attribute('data-hf-worker-probe')
++                                if raw:
++                                    result=json.loads(raw)
++                                    assert result.get('ok') is True and isinstance(result.get('boot'),str),result
++                                    return result
++                                time.sleep(.1)
++                            raise AssertionError('Real MV3 worker did not reply to synthetic read-only probe')
++                        before=worker_probe()
++                        assert before['persistedRef'] and before['revision']>=1, before
+                         worker=next((w for w in context.service_workers if w.url.endswith('/simulator/worker.mjs')),None) or context.wait_for_event('serviceworker')
+-                        boot=worker.evaluate('hfWorkerBoot');versions=[]
+-                        cdp.on('ServiceWorker.workerVersionUpdated',lambda e:versions.extend(e['versions']));cdp.send('ServiceWorker.enable');page.wait_for_timeout(150)
++                        versions=[]
++                        cdp.on('ServiceWorker.workerVersionUpdated',lambda e:versions.extend(e['versions']))
++                        cdp.send('ServiceWorker.enable');page.wait_for_timeout(150)
+                         version=next(v for v in reversed(versions) if v.get('scriptURL')==worker.url and v.get('runningStatus')=='running')
+                         cdp.send('ServiceWorker.stopWorker',{'versionId':version['versionId']});page.wait_for_timeout(400)
+-                        assert any(v.get('runningStatus')=='stopped' for v in versions),'no actual worker stop observed'
+-                        page.reload();page.wait_for_function("document.documentElement.dataset.vaiwlHfState==='ACTIVE'",timeout=20000)
+-                        restarted=next(w for w in reversed(context.service_workers) if w.url.endswith('/simulator/worker.mjs'))
+-                        assert restarted.evaluate('hfWorkerBoot')!=boot,'worker boot did not change'
+-                        record('M02-worker-stop-restart-and-IDB-rebind','PASS',{'workerEvents':[{k:v.get(k) for k in ['runningStatus','versionId']} for v in versions], 'committedSyntheticRefsReused':True})
++                        assert any(v.get('runningStatus')=='stopped' for v in versions),'no real service worker stop event'
++                        page.reload()
++                        page.locator('html[data-vaiwl-hf-state="ACTIVE"]').wait_for(state="attached",timeout=20000)
++                        after=worker_probe()
++                        assert before['boot']!=after['boot'], 'Worker boot witness unchanged after real stop'
++                        assert after['persistedRef'] and after['revision']==before['revision'], 'Extension-origin IDB lost after real worker stop'
++                        lastStop=max(i for i,v in enumerate(versions) if v.get('runningStatus')=='stopped')
++                        assert any(v.get('runningStatus')=='running' for v in versions[lastStop+1:]),'no worker restart event'
++                        record('M02-worker-stop-restart-and-IDB-rebind','PASS',{
++                            'workerEvents':[{k:v.get(k) for k in ['runningStatus','versionId']} for v in versions],
++                            'workerBootChanged':True,'realExtensionOriginIDBReused':True,
++                            'syntheticRecordRevision':after['revision']})
++                    if args.mode=='mv3':
++                        # Real browser route notifications, not opaque test-double navigation.
++                        page.evaluate("HF.control('account','B')")
++                        page.wait_for_url('**/hf/B/c/T0*')
++                        try:
++                            page.locator('html[data-vaiwl-hf-state="ACTIVE"]').wait_for(state="attached",timeout=3500)
++                        except Exception as error:
++                            record('M03-B-diagnostic','FAIL',{'error':str(error),
++                                'dom':page.evaluate('({url:location.href,state:document.documentElement.dataset.vaiwlHfState,reason:document.documentElement.dataset.vaiwlHfReason,scope:document.documentElement.dataset.vaiwlHfScope,account:HF.state.account,rootCount:document.querySelectorAll("[data-vaiwl-owned]").length})'),
++                                'probe':worker_probe()})
++                            raise
++                        assert page.evaluate('document.documentElement.dataset.vaiwlHfScope')=='B'
++                        bthemes=page.locator('.workspace').text_content()
++                        assert '另一账户的工作' in bthemes and '独立出版计划' not in bthemes, 'A-owned theme leaked into B workspace'
++                        page.evaluate("HF.control('account','A')")
++                        page.wait_for_url('**/hf/A/c/T0*')
++                        page.locator('html[data-vaiwl-hf-state="ACTIVE"]').wait_for(state="attached",timeout=10000)
++                        assert page.evaluate('document.documentElement.dataset.vaiwlHfScope')=='A'
++                        athemes=page.locator('.workspace').text_content()
++                        assert '独立出版计划' in athemes and '另一账户的工作' not in athemes, 'B-owned theme leaked into A workspace'
++                        record('M03-real-SPA-A-B-A-scope-rebinding','PASS',{'scopeRoundTrip':True,'crossScopeThemeIsolation':True,'realHistoryEvents':True})
++                        page.evaluate("HF.control('variant','no-safe-boundary')")
++                        page.locator('html[data-vaiwl-hf-state="NATIVE_ONLY"]').wait_for(state="attached",timeout=6000)
++                        assert page.get_by_label('消息输入',exact=True).count()==1
++                        record('M04-real-MV3-unsafe-native-boundary-fallback','PASS',{'nativeInputRetained':True})
++                        page.evaluate("HF.control('variant','baseline')")
++                        page.locator('html[data-vaiwl-hf-state="ACTIVE"]').wait_for(state="attached",timeout=10000)
++                        page.evaluate("HF.control('account','unknown')")
++                        page.wait_for_url('**/hf/unknown/c/T0*')
++                        page.locator('html[data-vaiwl-hf-state="WAITING"]').wait_for(state="attached",timeout=10000)
++                        assert page.locator('[data-vaiwl-owned]').count()==0
++                        record('M05-unknown-account-fails-closed','PASS',{'visibleProjection':False,'realAccountWitness':False})
++                        page.evaluate("HF.control('account','A')")
++                        page.wait_for_url('**/hf/A/c/T0*')
++                        page.locator('html[data-vaiwl-hf-state="ACTIVE"]').wait_for(state="attached",timeout=10000)
+                     page.screenshot(path=str(out/'real-browser.png'))
+                 context.close()
+         except Exception as e:record('EXECUTION','FAIL',str(e))
+--- a/simulator/README.md
++++ b/simulator/README.md
+@@ -1,4 +1,6 @@
+ # VAIWL High-Fidelity ChatGPT Host Simulator
++
++> **2026-10-11 Mac隔离环境追补：** 已在macOS27 / Chrome154真正加载MV3并验证：页面模式4/4、MV3模式8/8、Node39/39通过。云端环境原先的管理员阻塞仍是该环境下的历史事实；不是登录态ChatGPT通过。完整变更及原始证据见 [Mac MV3验证报告](../docs/engineering/hf-results/mac-mv3-2026-10-11/REPORT.md)。实际启动需从Playwright默认参数中移除`--disable-extensions`，并使用CSP兼容的locator等待。
+ 
+ 可交互、纯合成、离线本机测试宿主。不是 OpenAI 服务、登录页或替代聊天产品。当前实现版本 `0.1.0`；设计仍以仓库 v2.7 为准，不另建产品 Canonical。
+ 
+--- a/docs/engineering/HF_SIMULATOR_REPORT.md
++++ b/docs/engineering/HF_SIMULATOR_REPORT.md
+@@ -1,4 +1,6 @@
+ # 高仿真宿主测试平台：工程交付与裁决
++
++> **后续实测（2026-10-11）：** 本报告正文记录的是PR #6交付时云端环境的限制。用户后来单独授权在Mac隔离Chrome中验收，新增[真实MV3证据](hf-results/mac-mv3-2026-10-11/REPORT.md)：Node39/39、正常URL页面4/4、真实MV3 8/8通过，修正SPA sender.url滞后及worker恢复竞态。云端BLOCKED历史保留；真实ChatGPT/PAIA/物理IME/禁用与冻结仍未通过。
+ 
+ 2026-10-11，版本 0.1.0。**平台已建立；云端逻辑与实际 DOM 回归通过，正常 URL/IndexedDB/MV3 验收受管理员策略阻塞。整体 LIMITED。**
+ 
+--- a/docs/engineering/HF_COVERAGE_MATRIX.md
++++ b/docs/engineering/HF_COVERAGE_MATRIX.md
+@@ -1,4 +1,6 @@
+ # 高仿真宿主覆盖矩阵
++
++> **证据增量：** 下表原本只反映云端Chromium144 opaque DOM和blocked MV3。现已在隔离Mac Chrome154真实执行[Mac MV3追补](hf-results/mac-mv3-2026-10-11/REPORT.md)：正常URL页面4/4、真实MV3 8/8、Node39/39。真实Chrome验证包括SPA A→B→A不串线、Unknown拒绝、无安全边界安全退让、worker停止重启和扩展IDB保留。表内云端BLOCKED措辞仍按其原环境成立，不能作为本轮全局最新结论。真实ChatGPT仍未执行。
+ 
+ 所有 `Dxx` 为 Chromium 144 opaque DOM 执行，不是 MV3 或真实 ChatGPT。测试实例的预期、实际和源码 hash 见 `hf-results/browser-final.json`。界面保真不能从此表推算百分比。
+ 

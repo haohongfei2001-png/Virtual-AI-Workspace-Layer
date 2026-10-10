@@ -1,0 +1,13 @@
+{
+  "status": "BUILT_NOT_ACCEPTED_AS_MV3",
+  "files": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "75fa8d988b63dfd3fa37b6b661aa9f6e272b28653656c048d6a3535dd899a69e",
+    "src/b1/document-binding-broker.mjs": "98b5befb8bb8db124df61b7d9fbc48b5d363623470037e1c15a9a77997bf764f",
+    "simulator/service.mjs": "4ccceedc758995c52125353755d9d42ec77b394e01ba9ec7383338addbe3f14f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/worker.mjs": "9eb5e62fe99499aa8e6cf196480ed8e5e294f435cdd8427aafb90368a5aa0b90",
+    "content.js": "83fba691e4374380eaa94875d752e0bed480f039f8d43f019a94230538bce7c7",
+    "manifest.json": "d8c3160d4f7d55f35b5633928759bb8c223b341770edade54c4e9ab78d8e91e6"
+  }
+}

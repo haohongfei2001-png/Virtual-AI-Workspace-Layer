@@ -1,0 +1,54 @@
+TAP version 13
+# Subtest: B1 rejects account changed during GET_REF without URL change
+not ok 1 - B1 rejects account changed during GET_REF without URL change
+  ---
+  duration_ms: 8.20625
+  type: 'test'
+  location: '/mnt/data/vaiwl-work/repo/tests/hf/b1-race.test.mjs:6:44'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/vaiwl-work/repo/tests/hf/b1-race.test.mjs:17:37)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: B1 rejects account changed during LIST_REFS without URL change
+not ok 2 - B1 rejects account changed during LIST_REFS without URL change
+  ---
+  duration_ms: 0.737833
+  type: 'test'
+  location: '/mnt/data/vaiwl-work/repo/tests/hf/b1-race.test.mjs:6:44'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/vaiwl-work/repo/tests/hf/b1-race.test.mjs:17:37)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 86.682806

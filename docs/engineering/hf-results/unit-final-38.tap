@@ -1,0 +1,238 @@
+TAP version 13
+# Subtest: B1: sender identity is independent of page-supplied scope and exact envelope
+ok 1 - B1: sender identity is independent of page-supplied scope and exact envelope
+  ---
+  duration_ms: 2.192392
+  type: 'test'
+  ...
+# Subtest: B1: new browser-confirmed document supersedes old lease without waiting
+ok 2 - B1: new browser-confirmed document supersedes old lease without waiting
+  ---
+  duration_ms: 1.236172
+  type: 'test'
+  ...
+# Subtest: B1: route invalidation revokes even same-document tokens
+ok 3 - B1: route invalidation revokes even same-document tokens
+  ---
+  duration_ms: 0.369237
+  type: 'test'
+  ...
+# Subtest: B1: wrong browser document and unknown scope fail closed
+ok 4 - B1: wrong browser document and unknown scope fail closed
+  ---
+  duration_ms: 0.257758
+  type: 'test'
+  ...
+# Subtest: B1: worker restart invalidates transient lease, not persisted reference
+ok 5 - B1: worker restart invalidates transient lease, not persisted reference
+  ---
+  duration_ms: 3.298467
+  type: 'test'
+  ...
+# Subtest: B1: scope change makes old records unreachable even if same native ID
+ok 6 - B1: scope change makes old records unreachable even if same native ID
+  ---
+  duration_ms: 0.439433
+  type: 'test'
+  ...
+# Subtest: B1: lease timeout, sequence replay, changed browser URL all deny
+ok 7 - B1: lease timeout, sequence replay, changed browser URL all deny
+  ---
+  duration_ms: 0.431801
+  type: 'test'
+  ...
+# Subtest: B1: delayed scope resolver cannot commit after navigation invalidates
+ok 8 - B1: delayed scope resolver cannot commit after navigation invalidates
+  ---
+  duration_ms: 0.235205
+  type: 'test'
+  ...
+# Subtest: B1: stale pending write is rejected at repository commit fence
+ok 9 - B1: stale pending write is rejected at repository commit fence
+  ---
+  duration_ms: 6.273217
+  type: 'test'
+  ...
+# Subtest: B1: an asynchronous stale read never returns a stored reference
+ok 10 - B1: an asynchronous stale read never returns a stored reference
+  ---
+  duration_ms: 2.320088
+  type: 'test'
+  ...
+# Subtest: B1 rejects account changed during GET_REF without URL change
+ok 11 - B1 rejects account changed during GET_REF without URL change
+  ---
+  duration_ms: 9.390615
+  type: 'test'
+  ...
+# Subtest: B1 rejects account changed during LIST_REFS without URL change
+ok 12 - B1 rejects account changed during LIST_REFS without URL change
+  ---
+  duration_ms: 0.866829
+  type: 'test'
+  ...
+# Subtest: MV3 build deterministic, scoped and CSP-safe
+ok 13 - MV3 build deterministic, scoped and CSP-safe
+  ---
+  duration_ms: 10.711398
+  type: 'test'
+  ...
+# Subtest: opaque browser bundle compiles the same actual navigation and broker modules
+ok 14 - opaque browser bundle compiles the same actual navigation and broker modules
+  ---
+  duration_ms: 2.649772
+  type: 'test'
+  ...
+# Subtest: actual Node HTTP host serves app and rejects unsafe/unrelated paths
+ok 15 - actual Node HTTP host serves app and rejects unsafe/unrelated paths
+  ---
+  duration_ms: 48.660577
+  type: 'test'
+  ...
+# Subtest: 120 contiguous 30-local-day segments Asia/Shanghai
+ok 16 - 120 contiguous 30-local-day segments Asia/Shanghai
+  ---
+  duration_ms: 33.970289
+  type: 'test'
+  ...
+# Subtest: 120 contiguous 30-local-day segments America/New_York
+ok 17 - 120 contiguous 30-local-day segments America/New_York
+  ---
+  duration_ms: 17.485678
+  type: 'test'
+  ...
+# Subtest: 120 contiguous 30-local-day segments Europe/Berlin
+ok 18 - 120 contiguous 30-local-day segments Europe/Berlin
+  ---
+  duration_ms: 16.85896
+  type: 'test'
+  ...
+# Subtest: 120 contiguous 30-local-day segments Pacific/Kiritimati
+ok 19 - 120 contiguous 30-local-day segments Pacific/Kiritimati
+  ---
+  duration_ms: 12.852125
+  type: 'test'
+  ...
+# Subtest: 120 contiguous 30-local-day segments Pacific/Honolulu
+ok 20 - 120 contiguous 30-local-day segments Pacific/Honolulu
+  ---
+  duration_ms: 17.774133
+  type: 'test'
+  ...
+# Subtest: current segment includes exactly today and preceding 29 local days
+ok 21 - current segment includes exactly today and preceding 29 local days
+  ---
+  duration_ms: 1.410236
+  type: 'test'
+  ...
+# Subtest: DST is calendar-based, not 720 hours
+ok 22 - DST is calendar-based, not 720 hours
+  ---
+  duration_ms: 0.855827
+  type: 'test'
+  ...
+# Subtest: leap day included
+ok 23 - leap day included
+  ---
+  duration_ms: 0.269099
+  type: 'test'
+  ...
+# Subtest: invalid zone and negative segment rejected
+ok 24 - invalid zone and negative segment rejected
+  ---
+  duration_ms: 0.700533
+  type: 'test'
+  ...
+# Subtest: future and naive times remain unknown
+ok 25 - future and naive times remain unknown
+  ---
+  duration_ms: 0.391101
+  type: 'test'
+  ...
+# Subtest: single latest theme segment; old children stay parent
+ok 26 - single latest theme segment; old children stay parent
+  ---
+  duration_ms: 9.525219
+  type: 'test'
+  ...
+# Subtest: current positive observation does not require full old coverage
+ok 27 - current positive observation does not require full old coverage
+  ---
+  duration_ms: 4.398018
+  type: 'test'
+  ...
+# Subtest: old snapshot cannot assert no recent input
+ok 28 - old snapshot cannot assert no recent input
+  ---
+  duration_ms: 4.673524
+  type: 'test'
+  ...
+# Subtest: old child with a coverage gap is unknown, not forcibly historical
+ok 29 - old child with a coverage gap is unknown, not forcibly historical
+  ---
+  duration_ms: 4.931484
+  type: 'test'
+  ...
+# Subtest: visit/update/assistant/edit timestamps never activate
+ok 30 - visit/update/assistant/edit timestamps never activate
+  ---
+  duration_ms: 0.210811
+  type: 'test'
+  ...
+# Subtest: duplicate events idempotent, conflicting times quarantined
+ok 31 - duplicate events idempotent, conflicting times quarantined
+  ---
+  duration_ms: 0.137783
+  type: 'test'
+  ...
+# Subtest: scope collision rejected even for same native ID/title
+ok 32 - scope collision rejected even for same native ID/title
+  ---
+  duration_ms: 5.584524
+  type: 'test'
+  ...
+# Subtest: theme scope mismatch rejected
+ok 33 - theme scope mismatch rejected
+  ---
+  duration_ms: 0.875
+  type: 'test'
+  ...
+# Subtest: time-zone projection does not mutate source
+ok 34 - time-zone projection does not mutate source
+  ---
+  duration_ms: 10.587502
+  type: 'test'
+  ...
+# Subtest: 120 themes and all 604 references accounted for
+ok 35 - 120 themes and all 604 references accounted for
+  ---
+  duration_ms: 101.528507
+  type: 'test'
+  ...
+# Subtest: cross-Project references aggregate without native mutation
+ok 36 - cross-Project references aggregate without native mutation
+  ---
+  duration_ms: 4.609066
+  type: 'test'
+  ...
+# Subtest: only explicit synthetic origins and paths accepted
+ok 37 - only explicit synthetic origins and paths accepted
+  ---
+  duration_ms: 0.523329
+  type: 'test'
+  ...
+# Subtest: impossible calendar instants are unknown rather than normalized into a different day
+ok 38 - impossible calendar instants are unknown rather than normalized into a different day
+  ---
+  duration_ms: 0.216555
+  type: 'test'
+  ...
+1..38
+# tests 38
+# suites 0
+# pass 38
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 410.438948
