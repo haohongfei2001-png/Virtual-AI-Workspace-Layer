@@ -1,0 +1,355 @@
+{
+  "schema": "vawl-r0-mv3-preparation-checks-v1",
+  "evidence": "SYNTHETIC_CONTRACT_TEST",
+  "runAt": "2026-10-10T18:01:31.828Z",
+  "node": "v26.8.2",
+  "platform": "darwin/arm64",
+  "results": [
+    {
+      "command": [
+        "node",
+        "--check",
+        "experiments/r0/mv3/protocol.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "experiments/r0/mv3/client.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "experiments/r0/mv3/worker.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "experiments/r0/mv3/content-entry.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "experiments/r0/mv3/build-probe.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "tests/r0/mv3/protocol.test.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "tests/r0/mv3/client.test.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "tests/r0/mv3/runtime.test.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "tests/r0/mv3/entry.test.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "tests/r0/mv3/run-checks.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--test",
+        "--test-reporter=tap",
+        "tests/r0/mv3/protocol.test.mjs",
+        "tests/r0/mv3/client.test.mjs",
+        "tests/r0/mv3/runtime.test.mjs",
+        "tests/r0/mv3/entry.test.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "TAP version 13\n# Subtest: positive handshake mounts one synthetic mark; stop/dispose are idempotent\nok 1 - positive handshake mounts one synthetic mark; stop/dispose are idempotent\n  ---\n  duration_ms: 0.820583\n  type: 'test'\n  ...\n# Subtest: connect timeout settles even if transport never replies; late response cannot mount\nok 2 - connect timeout settles even if transport never replies; late response cannot mount\n  ---\n  duration_ms: 1.757708\n  type: 'test'\n  ...\n# Subtest: stop settles pending connect and late success/rejection cannot resurrect content\nok 3 - stop settles pending connect and late success/rejection cannot resurrect content\n  ---\n  duration_ms: 0.390333\n  type: 'test'\n  ...\n# Subtest: out-of-order reply to prior local generation cannot remove the newer mount\nok 4 - out-of-order reply to prior local generation cannot remove the newer mount\n  ---\n  duration_ms: 0.442708\n  type: 'test'\n  ...\n# Subtest: A-to-B-to-A route race rejects old reply even when URL returns to A\nok 5 - A-to-B-to-A route race rejects old reply even when URL returns to A\n  ---\n  duration_ms: 0.5135\n  type: 'test'\n  ...\n# Subtest: route mismatch at reply delivery, malformed response and wrong request are refused\nok 6 - route mismatch at reply delivery, malformed response and wrong request are refused\n  ---\n  duration_ms: 0.477334\n  type: 'test'\n  ...\n# Subtest: send throw/reject and context reader failure settle false with no mount\nok 7 - send throw/reject and context reader failure settle false with no mount\n  ---\n  duration_ms: 0.144875\n  type: 'test'\n  ...\n# Subtest: active fake timer expiry removes only owned mark; stale cancelled expiry cannot clear new generation\nok 8 - active fake timer expiry removes only owned mark; stale cancelled expiry cannot clear new generation\n  ---\n  duration_ms: 0.088667\n  type: 'test'\n  ...\n# Subtest: early timer reschedules to original deadline rather than extending the lease\nok 9 - early timer reschedules to original deadline rather than extending the lease\n  ---\n  duration_ms: 0.0615\n  type: 'test'\n  ...\n# Subtest: scheduler failure and cancel failure refuse binding and latch cleanup failures\nok 10 - scheduler failure and cancel failure refuse binding and latch cleanup failures\n  ---\n  duration_ms: 0.107666\n  type: 'test'\n  ...\n# Subtest: expiry scheduler failure removes a mounted marker\nok 11 - expiry scheduler failure removes a mounted marker\n  ---\n  duration_ms: 0.306084\n  type: 'test'\n  ...\n# Subtest: mount crossing expiry removes own node and refuses bound state\nok 12 - mount crossing expiry removes own node and refuses bound state\n  ---\n  duration_ms: 0.0575\n  type: 'test'\n  ...\n# Subtest: mount reentry cannot clear newer pending connection or leak the obsolete own node\nok 13 - mount reentry cannot clear newer pending connection or leak the obsolete own node\n  ---\n  duration_ms: 0.064042\n  type: 'test'\n  ...\n# Subtest: throwing own cleanup still cancels timers and prevents later mounts\nok 14 - throwing own cleanup still cancels timers and prevents later mounts\n  ---\n  duration_ms: 0.044791\n  type: 'test'\n  ...\n# Subtest: synchronous timeout callback does not send or leave timer handles\nok 15 - synchronous timeout callback does not send or leave timer handles\n  ---\n  duration_ms: 0.039375\n  type: 'test'\n  ...\n# Subtest: cleanup reentry owns a distinct generation; superseded outer connect cannot leak markers or timers\nok 16 - cleanup reentry owns a distinct generation; superseded outer connect cannot leak markers or timers\n  ---\n  duration_ms: 0.08025\n  type: 'test'\n  ...\n# Subtest: assembled content entry source mounts only its slot and ignores forged lifecycle events\nok 17 - assembled content entry source mounts only its slot and ignores forged lifecycle events\n  ---\n  duration_ms: 2.222291\n  type: 'test'\n  ...\n# Subtest: entry source wires trusted stop/resume/popstate and initial-hidden refusal without native access\nok 18 - entry source wires trusted stop/resume/popstate and initial-hidden refusal without native access\n  ---\n  duration_ms: 1.138\n  type: 'test'\n  ...\n# Subtest: entry source refuses wrong host/path, missing fixture switch and subframes before messaging\nok 19 - entry source refuses wrong host/path, missing fixture switch and subframes before messaging\n  ---\n  duration_ms: 1.406959\n  type: 'test'\n  ...\n# Subtest: canonical loopback fixture only; normalized paths/credentials/external hosts are refused\nok 20 - canonical loopback fixture only; normalized paths/credentials/external hosts are refused\n  ---\n  duration_ms: 0.432542\n  type: 'test'\n  ...\n# Subtest: MessageSender identity excludes frames, foreign extension, inactive/missing docs and unsafe tabs\nok 21 - MessageSender identity excludes frames, foreign extension, inactive/missing docs and unsafe tabs\n  ---\n  duration_ms: 0.455333\n  type: 'test'\n  ...\n# Subtest: exact bounded schema rejects payload authority, extras, malformed IDs and operations\nok 22 - exact bounded schema rejects payload authority, extras, malformed IDs and operations\n  ---\n  duration_ms: 0.131375\n  type: 'test'\n  ...\n# Subtest: positive bound reply survives structured clone; no object-identity token claim\nok 23 - positive bound reply survives structured clone; no object-identity token claim\n  ---\n  duration_ms: 0.202292\n  type: 'test'\n  ...\n# Subtest: duplicate or reordered binds cannot renew a lease; explicit later request can bind again\nok 24 - duplicate or reordered binds cannot renew a lease; explicit later request can bind again\n  ---\n  duration_ms: 0.111583\n  type: 'test'\n  ...\n# Subtest: same-tab new document/client/url cannot evict an unexpired owner\nok 25 - same-tab new document/client/url cannot evict an unexpired owner\n  ---\n  duration_ms: 0.090792\n  type: 'test'\n  ...\n# Subtest: tab isolation; CHECK must match complete sender, client, worker, lease and monotonic request\nok 26 - tab isolation; CHECK must match complete sender, client, worker, lease and monotonic request\n  ---\n  duration_ms: 0.084167\n  type: 'test'\n  ...\n# Subtest: simulated new broker boot loses leases; old CHECK is denied, new bind gets fresh boot identity\nok 27 - simulated new broker boot loses leases; old CHECK is denied, new bind gets fresh boot identity\n  ---\n  duration_ms: 0.046667\n  type: 'test'\n  ...\n# Subtest: expiry rejects CHECK and frees bounded capacity; old commands never release a new owner\nok 28 - expiry rejects CHECK and frees bounded capacity; old commands never release a new owner\n  ---\n  duration_ms: 0.088209\n  type: 'test'\n  ...\n# Subtest: invalid clock/id factory or thrown field accessor fails closed without leaking exception\nok 29 - invalid clock/id factory or thrown field accessor fails closed without leaking exception\n  ---\n  duration_ms: 0.119917\n  type: 'test'\n  ...\n# Subtest: mocked runtime uses actual sender, synchronously responds, and fresh module boot changes generation\nok 30 - mocked runtime uses actual sender, synchronously responds, and fresh module boot changes generation\n  ---\n  duration_ms: 3.150625\n  type: 'test'\n  ...\n1..30\n# tests 30\n# suites 0\n# pass 30\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 90.2445\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tests/r0/mv3/package.test.py"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.307s\n\nOK\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/r0/run-checks.mjs",
+        "/tmp/vaiwl-r0-20261011.IFxVsZ/inherited-checks/original-contracts"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "{\"output\":\"/tmp/vaiwl-r0-20261011.IFxVsZ/inherited-checks/original-contracts\",\"pass\":11,\"fail\":0}\n",
+      "stderr": ""
+    }
+  ],
+  "files": [
+    {
+      "path": "experiments/r0/mv3/README.md",
+      "bytes": 6867,
+      "sha256": "ea5d0e75115103931f9046df9150907947db493c310fd845c699b00b2c7d9f99"
+    },
+    {
+      "path": "experiments/r0/mv3/build-probe.mjs",
+      "bytes": 1298,
+      "sha256": "0e58b083def92bb40146b0aa8c4352836a68d3577fa526b0c17f7dc5cc5d5a0e"
+    },
+    {
+      "path": "experiments/r0/mv3/client.mjs",
+      "bytes": 4119,
+      "sha256": "65504be5f2d42779eb2c549458aa50aba0b40d40cfc85c014bcdb107eced876e"
+    },
+    {
+      "path": "experiments/r0/mv3/content-entry.mjs",
+      "bytes": 1968,
+      "sha256": "f34dcb71c0a3ddfedc404ea66b5022c5c86398bccb9e02821ddd333f0ef145f0"
+    },
+    {
+      "path": "experiments/r0/mv3/host-fixture.html",
+      "bytes": 1423,
+      "sha256": "ebbc3b765ba04e85a0d07aeffde55db16e9412cc5fe7ddb5e161ff09592c08af"
+    },
+    {
+      "path": "experiments/r0/mv3/manifest.json",
+      "bytes": 626,
+      "sha256": "7403bfd6d343839300b0385e4dee3c2fc8739572e0909fe5078d6252a137043f"
+    },
+    {
+      "path": "experiments/r0/mv3/protocol.mjs",
+      "bytes": 4881,
+      "sha256": "9212f981d65f95a16891ec5cdf94f6ec1343297cfb6f340deb7f683caa205cf7"
+    },
+    {
+      "path": "experiments/r0/mv3/worker.mjs",
+      "bytes": 471,
+      "sha256": "2a09dec0cbf338ddd115696d3300dff2554c07a597ec0ee8e9423ad1724c3af0"
+    },
+    {
+      "path": "tests/r0/mv3/client.test.mjs",
+      "bytes": 7979,
+      "sha256": "eaae0f49d1416a97850111389eb6fb342534bdd187d6cf67d5059ded76d9094e"
+    },
+    {
+      "path": "tests/r0/mv3/entry.test.mjs",
+      "bytes": 5088,
+      "sha256": "87fff88321270011cb844ed8cefa9abebb93fee0123f24856c7851cb13b9dc00"
+    },
+    {
+      "path": "tests/r0/mv3/package.test.py",
+      "bytes": 3532,
+      "sha256": "6db300ab61e8d38be756a9c684c255b153483acd789672556bfe11ec1c179e68"
+    },
+    {
+      "path": "tests/r0/mv3/protocol.test.mjs",
+      "bytes": 6117,
+      "sha256": "8de3447441cb703547c536301bc56e3b82a7fb48cf2c747a5b5608ec3c50b319"
+    },
+    {
+      "path": "tests/r0/mv3/run-checks.mjs",
+      "bytes": 2943,
+      "sha256": "ad7e13fec8c8ab41e75a0532963c4795d57f905a89edc0557f044ea87d928811"
+    },
+    {
+      "path": "tests/r0/mv3/runtime.test.mjs",
+      "bytes": 1424,
+      "sha256": "9ae589ff81066423d978197b05c17e1d4fea02062b3986fd1ffbac5bd38068b6"
+    }
+  ],
+  "originalContractResults": [
+    {
+      "command": [
+        "node",
+        "--check",
+        "experiments/r0/core.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "experiments/r0/shell.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "experiments/r0/build-fixture.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "tests/r0/core.test.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "tests/r0/samples.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "tests/r0/browser-suite.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "tests/r0/run-checks.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--test",
+        "--test-reporter=tap",
+        "tests/r0/core.test.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "TAP version 13\n# Subtest: same-scope positive reference; metadata only, no body or assistant extraction\nok 1 - same-scope positive reference; metadata only, no body or assistant extraction\n  ---\n  duration_ms: 0.679459\n  type: 'test'\n  ...\n# Subtest: unknown, malformed and non-fixture identity never issue tokens\nok 2 - unknown, malformed and non-fixture identity never issue tokens\n  ---\n  duration_ms: 0.135208\n  type: 'test'\n  ...\n# Subtest: token copy, forgery and other gate tokens rejected\nok 3 - token copy, forgery and other gate tokens rejected\n  ---\n  duration_ms: 0.0815\n  type: 'test'\n  ...\n# Subtest: A → B → A rejects both stale epochs and clears projection synchronously\nok 4 - A → B → A rejects both stale epochs and clears projection synchronously\n  ---\n  duration_ms: 0.419084\n  type: 'test'\n  ...\n# Subtest: same account, other native organization is a distinct scope\nok 5 - same account, other native organization is a distinct scope\n  ---\n  duration_ms: 0.064917\n  type: 'test'\n  ...\n# Subtest: route, document, tab, history and resume rebinding revoke stale work\nok 6 - route, document, tab, history and resume rebinding revoke stale work\n  ---\n  duration_ms: 0.117583\n  type: 'test'\n  ...\n# Subtest: expiry closes scope and clears cached projection\nok 7 - expiry closes scope and clears cached projection\n  ---\n  duration_ms: 0.069458\n  type: 'test'\n  ...\n# Subtest: all route/body ownership fields independently reject mismatches\nok 8 - all route/body ownership fields independently reject mismatches\n  ---\n  duration_ms: 0.351583\n  type: 'test'\n  ...\n# Subtest: mixed conversation, branch, duplicate ID, draft and role ambiguity rejected\nok 9 - mixed conversation, branch, duplicate ID, draft and role ambiguity rejected\n  ---\n  duration_ms: 0.110334\n  type: 'test'\n  ...\n# Subtest: incomplete or huge observation fails closed; no invented history denominator\nok 10 - incomplete or huge observation fails closed; no invented history denominator\n  ---\n  duration_ms: 0.11025\n  type: 'test'\n  ...\n# Subtest: canonical synthetic references reject external/shared/traversal/query routes\nok 11 - canonical synthetic references reject external/shared/traversal/query routes\n  ---\n  duration_ms: 0.060083\n  type: 'test'\n  ...\n# Subtest: same verified scope aggregates ordinary/P1/P2 without mutating native refs\nok 12 - same verified scope aggregates ordinary/P1/P2 without mutating native refs\n  ---\n  duration_ms: 0.183958\n  type: 'test'\n  ...\n# Subtest: cross-account/org and unvalidated references refused; native unknown never forged\nok 13 - cross-account/org and unvalidated references refused; native unknown never forged\n  ---\n  duration_ms: 0.056667\n  type: 'test'\n  ...\n# Subtest: old candidate cannot overwrite manual revision or lock\nok 14 - old candidate cannot overwrite manual revision or lock\n  ---\n  duration_ms: 0.03925\n  type: 'test'\n  ...\n# Subtest: late asynchronous result rechecks epoch immediately before commit\nok 15 - late asynchronous result rechecks epoch immediately before commit\n  ---\n  duration_ms: 0.05575\n  type: 'test'\n  ...\n# Subtest: scope serialization cannot collide using delimiter characters\nok 16 - scope serialization cannot collide using delimiter characters\n  ---\n  duration_ms: 0.026\n  type: 'test'\n  ...\n# Subtest: fresh token cannot revive an old source reference after A-B-A\nok 17 - fresh token cannot revive an old source reference after A-B-A\n  ---\n  duration_ms: 0.043834\n  type: 'test'\n  ...\n# Subtest: independent synthetic document scope change revokes its reference in another projection\nok 18 - independent synthetic document scope change revokes its reference in another projection\n  ---\n  duration_ms: 0.056291\n  type: 'test'\n  ...\n# Subtest: a failing invalidation listener cannot skip later cleanup or admit a new binding\nok 19 - a failing invalidation listener cannot skip later cleanup or admit a new binding\n  ---\n  duration_ms: 0.068\n  type: 'test'\n  ...\n# Subtest: shell refuses forged, shared, credentials and malformed references before touching DOM\nok 20 - shell refuses forged, shared, credentials and malformed references before touching DOM\n  ---\n  duration_ms: 0.077208\n  type: 'test'\n  ...\n# Subtest: scheduled expiry clears state without token/check/view calls\nok 21 - scheduled expiry clears state without token/check/view calls\n  ---\n  duration_ms: 0.078\n  type: 'test'\n  ...\n# Subtest: rebinding cancels old expiry and late callback cannot revoke new epoch\nok 22 - rebinding cancels old expiry and late callback cannot revoke new epoch\n  ---\n  duration_ms: 0.039833\n  type: 'test'\n  ...\n# Subtest: early expiry callbacks rearm; scheduled cleanup still attempts every callback\nok 23 - early expiry callbacks rearm; scheduled cleanup still attempts every callback\n  ---\n  duration_ms: 0.042584\n  type: 'test'\n  ...\n# Subtest: scheduler failure leaves no active binding\nok 24 - scheduler failure leaves no active binding\n  ---\n  duration_ms: 0.031041\n  type: 'test'\n  ...\n# Subtest: a rearm scheduler failure also revokes the binding\nok 25 - a rearm scheduler failure also revokes the binding\n  ---\n  duration_ms: 0.032084\n  type: 'test'\n  ...\n# Subtest: deadline crossing during bind never reports success without an active binding\nok 26 - deadline crossing during bind never reports success without an active binding\n  ---\n  duration_ms: 0.022708\n  type: 'test'\n  ...\n# Subtest: default Node event-loop timer emits expiry without API polling\nok 27 - default Node event-loop timer emits expiry without API polling\n  ---\n  duration_ms: 151.189708\n  type: 'test'\n  ...\n1..27\n# tests 27\n# suites 0\n# pass 27\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 204.373375\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tests/r0/runner.test.py"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "test_launch_failure_is_blocked (__main__.FailureClassification.test_launch_failure_is_blocked) ... ok\ntest_post_launch_fixture_failure_is_fail (__main__.FailureClassification.test_post_launch_fixture_failure_is_fail) ... ok\n\n----------------------------------------------------------------------\nRan 2 tests in 0.117s\n\nOK\n"
+    },
+    {
+      "command": [
+        "python3",
+        "-m",
+        "py_compile",
+        "tests/r0/run-browser.py"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "experiments/r0/build-fixture.mjs",
+        "/tmp/vaiwl-r0-20261011.IFxVsZ/inherited-checks/original-contracts/fixture.html"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "/tmp/vaiwl-r0-20261011.IFxVsZ/inherited-checks/original-contracts/fixture.html\n",
+      "stderr": ""
+    }
+  ],
+  "extensionLoaded": false,
+  "browserStarted": false,
+  "liveHost": "NOT_RUN",
+  "actualMv3Lifecycle": "NOT_RUN"
+}

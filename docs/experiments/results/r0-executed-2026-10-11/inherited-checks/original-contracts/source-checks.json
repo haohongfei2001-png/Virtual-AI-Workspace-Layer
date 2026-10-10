@@ -1,0 +1,269 @@
+{
+  "schema": "vawl-r0-source-checks-v1",
+  "evidence": "SYNTHETIC_CONTRACT_TEST",
+  "runAt": "2026-10-10T18:01:31.824Z",
+  "node": "v26.8.2",
+  "platform": "darwin/arm64",
+  "results": [
+    {
+      "command": [
+        "node",
+        "--check",
+        "experiments/r0/core.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "experiments/r0/shell.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "experiments/r0/build-fixture.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "tests/r0/core.test.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "tests/r0/samples.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "tests/r0/browser-suite.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "tests/r0/run-checks.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--test",
+        "--test-reporter=tap",
+        "tests/r0/core.test.mjs"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "TAP version 13\n# Subtest: same-scope positive reference; metadata only, no body or assistant extraction\nok 1 - same-scope positive reference; metadata only, no body or assistant extraction\n  ---\n  duration_ms: 0.679459\n  type: 'test'\n  ...\n# Subtest: unknown, malformed and non-fixture identity never issue tokens\nok 2 - unknown, malformed and non-fixture identity never issue tokens\n  ---\n  duration_ms: 0.135208\n  type: 'test'\n  ...\n# Subtest: token copy, forgery and other gate tokens rejected\nok 3 - token copy, forgery and other gate tokens rejected\n  ---\n  duration_ms: 0.0815\n  type: 'test'\n  ...\n# Subtest: A → B → A rejects both stale epochs and clears projection synchronously\nok 4 - A → B → A rejects both stale epochs and clears projection synchronously\n  ---\n  duration_ms: 0.419084\n  type: 'test'\n  ...\n# Subtest: same account, other native organization is a distinct scope\nok 5 - same account, other native organization is a distinct scope\n  ---\n  duration_ms: 0.064917\n  type: 'test'\n  ...\n# Subtest: route, document, tab, history and resume rebinding revoke stale work\nok 6 - route, document, tab, history and resume rebinding revoke stale work\n  ---\n  duration_ms: 0.117583\n  type: 'test'\n  ...\n# Subtest: expiry closes scope and clears cached projection\nok 7 - expiry closes scope and clears cached projection\n  ---\n  duration_ms: 0.069458\n  type: 'test'\n  ...\n# Subtest: all route/body ownership fields independently reject mismatches\nok 8 - all route/body ownership fields independently reject mismatches\n  ---\n  duration_ms: 0.351583\n  type: 'test'\n  ...\n# Subtest: mixed conversation, branch, duplicate ID, draft and role ambiguity rejected\nok 9 - mixed conversation, branch, duplicate ID, draft and role ambiguity rejected\n  ---\n  duration_ms: 0.110334\n  type: 'test'\n  ...\n# Subtest: incomplete or huge observation fails closed; no invented history denominator\nok 10 - incomplete or huge observation fails closed; no invented history denominator\n  ---\n  duration_ms: 0.11025\n  type: 'test'\n  ...\n# Subtest: canonical synthetic references reject external/shared/traversal/query routes\nok 11 - canonical synthetic references reject external/shared/traversal/query routes\n  ---\n  duration_ms: 0.060083\n  type: 'test'\n  ...\n# Subtest: same verified scope aggregates ordinary/P1/P2 without mutating native refs\nok 12 - same verified scope aggregates ordinary/P1/P2 without mutating native refs\n  ---\n  duration_ms: 0.183958\n  type: 'test'\n  ...\n# Subtest: cross-account/org and unvalidated references refused; native unknown never forged\nok 13 - cross-account/org and unvalidated references refused; native unknown never forged\n  ---\n  duration_ms: 0.056667\n  type: 'test'\n  ...\n# Subtest: old candidate cannot overwrite manual revision or lock\nok 14 - old candidate cannot overwrite manual revision or lock\n  ---\n  duration_ms: 0.03925\n  type: 'test'\n  ...\n# Subtest: late asynchronous result rechecks epoch immediately before commit\nok 15 - late asynchronous result rechecks epoch immediately before commit\n  ---\n  duration_ms: 0.05575\n  type: 'test'\n  ...\n# Subtest: scope serialization cannot collide using delimiter characters\nok 16 - scope serialization cannot collide using delimiter characters\n  ---\n  duration_ms: 0.026\n  type: 'test'\n  ...\n# Subtest: fresh token cannot revive an old source reference after A-B-A\nok 17 - fresh token cannot revive an old source reference after A-B-A\n  ---\n  duration_ms: 0.043834\n  type: 'test'\n  ...\n# Subtest: independent synthetic document scope change revokes its reference in another projection\nok 18 - independent synthetic document scope change revokes its reference in another projection\n  ---\n  duration_ms: 0.056291\n  type: 'test'\n  ...\n# Subtest: a failing invalidation listener cannot skip later cleanup or admit a new binding\nok 19 - a failing invalidation listener cannot skip later cleanup or admit a new binding\n  ---\n  duration_ms: 0.068\n  type: 'test'\n  ...\n# Subtest: shell refuses forged, shared, credentials and malformed references before touching DOM\nok 20 - shell refuses forged, shared, credentials and malformed references before touching DOM\n  ---\n  duration_ms: 0.077208\n  type: 'test'\n  ...\n# Subtest: scheduled expiry clears state without token/check/view calls\nok 21 - scheduled expiry clears state without token/check/view calls\n  ---\n  duration_ms: 0.078\n  type: 'test'\n  ...\n# Subtest: rebinding cancels old expiry and late callback cannot revoke new epoch\nok 22 - rebinding cancels old expiry and late callback cannot revoke new epoch\n  ---\n  duration_ms: 0.039833\n  type: 'test'\n  ...\n# Subtest: early expiry callbacks rearm; scheduled cleanup still attempts every callback\nok 23 - early expiry callbacks rearm; scheduled cleanup still attempts every callback\n  ---\n  duration_ms: 0.042584\n  type: 'test'\n  ...\n# Subtest: scheduler failure leaves no active binding\nok 24 - scheduler failure leaves no active binding\n  ---\n  duration_ms: 0.031041\n  type: 'test'\n  ...\n# Subtest: a rearm scheduler failure also revokes the binding\nok 25 - a rearm scheduler failure also revokes the binding\n  ---\n  duration_ms: 0.032084\n  type: 'test'\n  ...\n# Subtest: deadline crossing during bind never reports success without an active binding\nok 26 - deadline crossing during bind never reports success without an active binding\n  ---\n  duration_ms: 0.022708\n  type: 'test'\n  ...\n# Subtest: default Node event-loop timer emits expiry without API polling\nok 27 - default Node event-loop timer emits expiry without API polling\n  ---\n  duration_ms: 151.189708\n  type: 'test'\n  ...\n1..27\n# tests 27\n# suites 0\n# pass 27\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 204.373375\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tests/r0/runner.test.py"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "test_launch_failure_is_blocked (__main__.FailureClassification.test_launch_failure_is_blocked) ... ok\ntest_post_launch_fixture_failure_is_fail (__main__.FailureClassification.test_post_launch_fixture_failure_is_fail) ... ok\n\n----------------------------------------------------------------------\nRan 2 tests in 0.117s\n\nOK\n"
+    },
+    {
+      "command": [
+        "python3",
+        "-m",
+        "py_compile",
+        "tests/r0/run-browser.py"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "experiments/r0/build-fixture.mjs",
+        "/tmp/vaiwl-r0-20261011.IFxVsZ/inherited-checks/original-contracts/fixture.html"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "stdout": "/tmp/vaiwl-r0-20261011.IFxVsZ/inherited-checks/original-contracts/fixture.html\n",
+      "stderr": ""
+    }
+  ],
+  "files": [
+    {
+      "path": "experiments/r0/.gitignore",
+      "bytes": 11,
+      "sha256": "f5c10da83055c0c3e72f3167971d1916e443dc90390e32b42844552cc37b81e0"
+    },
+    {
+      "path": "experiments/r0/README.md",
+      "bytes": 4555,
+      "sha256": "dd14a1cd935bf348f56f4f5e1ee98b240dcfee1aeae6e1557f45a568575c682a"
+    },
+    {
+      "path": "experiments/r0/build-fixture.mjs",
+      "bytes": 1088,
+      "sha256": "9c1230db9d38f028f5b33010ba6cc69bf9d6dfda99efb234c23a7116208ceead"
+    },
+    {
+      "path": "experiments/r0/core.mjs",
+      "bytes": 9365,
+      "sha256": "eb27f6707dedfb0f6ddfef813baaeb350e591ae7f489887a8bc290f76a4f90da"
+    },
+    {
+      "path": "experiments/r0/fixture.html",
+      "bytes": 2310,
+      "sha256": "80aba7bfa7c41c6f740831ed99d6e46af9f63b1284773790916d7caaf4aad83a"
+    },
+    {
+      "path": "experiments/r0/shell.mjs",
+      "bytes": 2245,
+      "sha256": "04b8e4ade85b70182c0bd21bb713b887ca023583cc55b0e9411925ba15ddbeb6"
+    },
+    {
+      "path": "experiments/r0/mv3/README.md",
+      "bytes": 6867,
+      "sha256": "ea5d0e75115103931f9046df9150907947db493c310fd845c699b00b2c7d9f99"
+    },
+    {
+      "path": "experiments/r0/mv3/build-probe.mjs",
+      "bytes": 1298,
+      "sha256": "0e58b083def92bb40146b0aa8c4352836a68d3577fa526b0c17f7dc5cc5d5a0e"
+    },
+    {
+      "path": "experiments/r0/mv3/client.mjs",
+      "bytes": 4119,
+      "sha256": "65504be5f2d42779eb2c549458aa50aba0b40d40cfc85c014bcdb107eced876e"
+    },
+    {
+      "path": "experiments/r0/mv3/content-entry.mjs",
+      "bytes": 1968,
+      "sha256": "f34dcb71c0a3ddfedc404ea66b5022c5c86398bccb9e02821ddd333f0ef145f0"
+    },
+    {
+      "path": "experiments/r0/mv3/host-fixture.html",
+      "bytes": 1423,
+      "sha256": "ebbc3b765ba04e85a0d07aeffde55db16e9412cc5fe7ddb5e161ff09592c08af"
+    },
+    {
+      "path": "experiments/r0/mv3/manifest.json",
+      "bytes": 626,
+      "sha256": "7403bfd6d343839300b0385e4dee3c2fc8739572e0909fe5078d6252a137043f"
+    },
+    {
+      "path": "experiments/r0/mv3/protocol.mjs",
+      "bytes": 4881,
+      "sha256": "9212f981d65f95a16891ec5cdf94f6ec1343297cfb6f340deb7f683caa205cf7"
+    },
+    {
+      "path": "experiments/r0/mv3/worker.mjs",
+      "bytes": 471,
+      "sha256": "2a09dec0cbf338ddd115696d3300dff2554c07a597ec0ee8e9423ad1724c3af0"
+    },
+    {
+      "path": "tests/r0/.gitignore",
+      "bytes": 13,
+      "sha256": "32dae3052f331ee34d628ef535709b301259a45df7c7522c4d35dcf49873f00b"
+    },
+    {
+      "path": "tests/r0/browser-suite.mjs",
+      "bytes": 13490,
+      "sha256": "2a2e5358646552d950f69a5355fefc66849c64386e271aa555c889d2ec451538"
+    },
+    {
+      "path": "tests/r0/core.test.mjs",
+      "bytes": 13808,
+      "sha256": "06c8e50fc10e2dafad5a8d82d7dd9b6521b65701253be3c51505d8ca45a4b5a2"
+    },
+    {
+      "path": "tests/r0/run-browser.py",
+      "bytes": 4573,
+      "sha256": "90ef1d3331b645105d52d62665a59d5cdb36770d54898fbaef337a43aeaa871f"
+    },
+    {
+      "path": "tests/r0/run-checks.mjs",
+      "bytes": 2557,
+      "sha256": "6aa3f867812cf0611dd7f426d1fdbac6f977ef231b9c64a8203746df6fa23737"
+    },
+    {
+      "path": "tests/r0/runner.test.py",
+      "bytes": 2688,
+      "sha256": "63b1c47a228c278b50b7c15ea64b60cad6c51d65873e9425f7c295891f32e696"
+    },
+    {
+      "path": "tests/r0/samples.mjs",
+      "bytes": 994,
+      "sha256": "046cbc5f68434fd1d18e2e3e2689dec43e3ca56e18845ad9c1d55fe375933e8e"
+    },
+    {
+      "path": "tests/r0/mv3/client.test.mjs",
+      "bytes": 7979,
+      "sha256": "eaae0f49d1416a97850111389eb6fb342534bdd187d6cf67d5059ded76d9094e"
+    },
+    {
+      "path": "tests/r0/mv3/entry.test.mjs",
+      "bytes": 5088,
+      "sha256": "87fff88321270011cb844ed8cefa9abebb93fee0123f24856c7851cb13b9dc00"
+    },
+    {
+      "path": "tests/r0/mv3/package.test.py",
+      "bytes": 3532,
+      "sha256": "6db300ab61e8d38be756a9c684c255b153483acd789672556bfe11ec1c179e68"
+    },
+    {
+      "path": "tests/r0/mv3/protocol.test.mjs",
+      "bytes": 6117,
+      "sha256": "8de3447441cb703547c536301bc56e3b82a7fb48cf2c747a5b5608ec3c50b319"
+    },
+    {
+      "path": "tests/r0/mv3/run-checks.mjs",
+      "bytes": 2943,
+      "sha256": "ad7e13fec8c8ab41e75a0532963c4795d57f905a89edc0557f044ea87d928811"
+    },
+    {
+      "path": "tests/r0/mv3/runtime.test.mjs",
+      "bytes": 1424,
+      "sha256": "9ae589ff81066423d978197b05c17e1d4fea02062b3986fd1ffbac5bd38068b6"
+    }
+  ],
+  "browser": "NOT_RUN_BY_THIS_COMMAND"
+}

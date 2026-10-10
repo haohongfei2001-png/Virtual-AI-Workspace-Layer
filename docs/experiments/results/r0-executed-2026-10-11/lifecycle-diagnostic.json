@@ -1,0 +1,129 @@
+{
+  "steps": [
+    {
+      "stage": "developer-mode",
+      "controls": []
+    },
+    {
+      "stage": "worker-stopped",
+      "targets": []
+    },
+    {
+      "stage": "worker-restarted",
+      "sentinel": null,
+      "workerEvents": [
+        {
+          "versions": [
+            {
+              "versionId": "0",
+              "registrationId": "0",
+              "scriptURL": "chrome-extension://lhbbdaoimngacdaohfhgajhhlnpdppln/worker.mjs",
+              "runningStatus": "stopping",
+              "status": "activated",
+              "scriptLastModified": 1791655203,
+              "scriptResponseTime": 0,
+              "controlledClients": [],
+              "targetId": "7C933259FE977AD40248ABDF522D289D"
+            }
+          ]
+        },
+        {
+          "versions": [
+            {
+              "versionId": "0",
+              "registrationId": "0",
+              "scriptURL": "chrome-extension://lhbbdaoimngacdaohfhgajhhlnpdppln/worker.mjs",
+              "runningStatus": "stopped",
+              "status": "activated",
+              "scriptLastModified": 1791655203,
+              "scriptResponseTime": 0,
+              "controlledClients": []
+            }
+          ]
+        },
+        {
+          "versions": [
+            {
+              "versionId": "0",
+              "registrationId": "0",
+              "scriptURL": "chrome-extension://lhbbdaoimngacdaohfhgajhhlnpdppln/worker.mjs",
+              "runningStatus": "starting",
+              "status": "activated",
+              "scriptLastModified": 1791655203,
+              "scriptResponseTime": 0,
+              "controlledClients": []
+            }
+          ]
+        },
+        {
+          "versions": [
+            {
+              "versionId": "0",
+              "registrationId": "0",
+              "scriptURL": "chrome-extension://lhbbdaoimngacdaohfhgajhhlnpdppln/worker.mjs",
+              "runningStatus": "starting",
+              "status": "activated",
+              "scriptLastModified": 1791655203,
+              "scriptResponseTime": 0,
+              "controlledClients": [],
+              "targetId": "7C933259FE977AD40248ABDF522D289D"
+            }
+          ]
+        },
+        {
+          "versions": [
+            {
+              "versionId": "0",
+              "registrationId": "0",
+              "scriptURL": "chrome-extension://lhbbdaoimngacdaohfhgajhhlnpdppln/worker.mjs",
+              "runningStatus": "starting",
+              "status": "activated",
+              "scriptLastModified": 1791655203,
+              "scriptResponseTime": 0,
+              "controlledClients": [],
+              "targetId": "7C933259FE977AD40248ABDF522D289D"
+            }
+          ]
+        },
+        {
+          "versions": [
+            {
+              "versionId": "0",
+              "registrationId": "0",
+              "scriptURL": "chrome-extension://lhbbdaoimngacdaohfhgajhhlnpdppln/worker.mjs",
+              "runningStatus": "running",
+              "status": "activated",
+              "scriptLastModified": 1791655203,
+              "scriptResponseTime": 0,
+              "controlledClients": [],
+              "targetId": "7C933259FE977AD40248ABDF522D289D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "hidden-freeze-resume",
+      "before": {
+        "visible": "visible",
+        "ticks": 2
+      },
+      "after": {
+        "visible": "visible",
+        "ticks": 13,
+        "events": [
+          {
+            "name": "pageshow",
+            "trusted": true
+          }
+        ]
+      }
+    }
+  ],
+  "startedAt": "2026-10-10T18:12:31.731Z",
+  "error": {
+    "name": "TimeoutError",
+    "message": "locator.evaluate: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('Developer mode')\u001b[22m\n"
+  },
+  "endedAt": "2026-10-10T18:13:05.028Z"
+}

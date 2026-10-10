@@ -1,0 +1,22 @@
+{
+  "level": "REAL_CHATGPT_LOGGED_OUT_PUBLIC_SHELL_ONLY",
+  "startedAt": "2026-10-10T18:16:22.896Z",
+  "profile": "fresh dedicated, never copied",
+  "extensionLoaded": false,
+  "loginAttempted": false,
+  "messagesSent": 0,
+  "historyRead": false,
+  "browser": "154.0.8037.99",
+  "finalLocation": "https://chatgpt.com/",
+  "httpStatus": 403,
+  "title": "请稍候…",
+  "publicControls": {
+    "loginButtons": 0,
+    "textareaCount": 0,
+    "contenteditableCount": 0,
+    "challenge": false
+  },
+  "status": "LIMITED",
+  "reason": "Public shell only; no account, original send times, native feature operations or extension integration validated",
+  "endedAt": "2026-10-10T18:16:25.994Z"
+}

@@ -1,0 +1,48 @@
+{
+  "scope": "Artifact integrity only; not product acceptance",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "new-source-syntax",
+      "status": "PASS"
+    },
+    {
+      "id": "inherited-source-byte-equality",
+      "status": "PASS",
+      "files": 27
+    },
+    {
+      "id": "loaded-package-reproducibility",
+      "status": "PASS",
+      "packages": {
+        "original": {
+          "worker.mjs": "2a09dec0cbf338ddd115696d3300dff2554c07a597ec0ee8e9423ad1724c3af0",
+          "protocol.mjs": "9212f981d65f95a16891ec5cdf94f6ec1343297cfb6f340deb7f683caa205cf7",
+          "manifest.json": "7403bfd6d343839300b0385e4dee3c2fc8739572e0909fe5078d6252a137043f",
+          "content.js": "ffda306fedf21b1de18810cd1be6f0574e3e7205c93406112cbbc1462e350705"
+        },
+        "route": {
+          "worker.mjs": "198e2e85229785bc5713a18d295cf43f751b5447a3fe49f813b99f7c48594b2e",
+          "protocol.mjs": "9212f981d65f95a16891ec5cdf94f6ec1343297cfb6f340deb7f683caa205cf7",
+          "manifest.json": "013a1e81a268e70981ab128090edcd4c2bfc349aaba408011df3a9279c3719d2",
+          "content.js": "cd411ba1f19d846615feb43f8d48ddf3e6ab6213c534eb94aa0fcf538cab77b7"
+        }
+      },
+      "rebuildWasNotAnotherBrowserRun": true
+    },
+    {
+      "id": "executed-runner-versions-reconstructable",
+      "status": "PASS"
+    },
+    {
+      "id": "honest-result-classification",
+      "status": "PASS",
+      "featureFailuresRetained": 4,
+      "freezeBlocked": true,
+      "publicHostBlocked": true
+    }
+  ],
+  "manifestSha256": "5fa30e092080d70e32bdd3b153f02c8f3db63fe21cd6600aa9cf335b981f8e64",
+  "featureVerdict": "LIMITED",
+  "liveAuthenticatedChatGPT": "BLOCKED"
+}

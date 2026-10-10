@@ -1,0 +1,35 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="vawl-r0-synthetic" content="mv3-preparation-v1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'">
+<title>R0 ONLY — synthetic host, not ChatGPT</title>
+<style>body{font:16px system-ui;margin:24px;max-width:1000px}textarea{box-sizing:border-box;width:100%;min-height:100px}button,select,input{font:inherit}nav,header,article,section{margin:12px 0}dialog{max-width:80vw}#probe-slot{min-height:32px}#paia-slot{min-height:28px}#native-transcript{min-height:40px}#native-main{max-width:760px}.stream{white-space:pre-wrap}</style></head><body>
+<h1>R0 synthetic native island</h1><p>No account, model, private chat, or actual PAIA is present.</p>
+<nav id="native-nav"><a id="native-new" href="/r0-mv3-fixture/B.html">Synthetic new chat</a> <button id="native-search">Synthetic native search</button> <button id="native-account">Synthetic account and permission</button> <button id="native-unknown">Unknown new native entry</button></nav>
+<div id="probe-slot" data-vawl-r0-mv3-slot="exclusive"></div>
+<main id="native-main"><header><select id="native-model" aria-label="Synthetic native model"><option>Fixture model A</option><option>Fixture model B</option></select> <button id="native-tools">Native tools</button></header>
+<article id="native-transcript">Synthetic original reply. <input id="native-interactive" aria-label="Interactive reply value" value="7"></article>
+<div class="stream" id="native-stream"></div><button id="native-generate">Synthetic start stream</button> <button id="native-stop">Synthetic stop</button>
+<p><label for="native-composer">Native composer</label><textarea id="native-composer"></textarea></p>
+<input id="native-attachment" type="file" aria-label="Synthetic attachment"><output id="attachment-result"></output>
+<button id="native-send">Synthetic send (local only)</button><output id="send-result"></output>
+</main><div id="paia-slot"></div>
+<dialog id="tool-dialog"><p>Native fixture tools</p><button id="tool-apply">Apply local option</button><button id="tool-close">Close</button></dialog>
+<dialog id="search-dialog"><p>Native fixture search; T5 is NOT in the derived index.</p><input id="native-query" aria-label="Native search query"><output id="native-results"></output><button id="search-close">Close</button></dialog>
+<dialog id="account-dialog"><p id="native-permission">Permission: not granted</p><button id="permission-cancel">Cancel</button></dialog>
+<script>
+window.fixture={tool:false,unknown:0,sends:0,ticks:0,stopped:false,permission:false,events:[]};
+const el=id=>document.getElementById(id);
+window.nativeRefs=Object.fromEntries(['native-composer','native-transcript','native-model','native-tools','native-nav','native-interactive','native-attachment'].map(id=>[id,el(id)]));
+for(const name of ['pagehide','pageshow','popstate','hashchange'])addEventListener(name,e=>fixture.events.push({name,trusted:e.isTrusted}));
+for(const name of ['freeze','resume','visibilitychange'])document.addEventListener(name,e=>fixture.events.push({name,trusted:e.isTrusted,visibility:document.visibilityState}));
+el('native-tools').onclick=()=>el('tool-dialog').showModal();el('tool-close').onclick=()=>el('tool-dialog').close();
+el('tool-apply').onclick=()=>{fixture.tool=true;el('tool-dialog').close();el('native-tools').textContent='Native tools: applied';};
+el('native-search').onclick=()=>el('search-dialog').showModal();el('search-close').onclick=()=>el('search-dialog').close();
+el('native-query').oninput=()=>el('native-results').textContent=el('native-query').value==='T5'?'T5 unopened native-only synthetic result':'No fixture result';
+el('native-account').onclick=()=>el('account-dialog').showModal();el('permission-cancel').onclick=()=>el('account-dialog').close();
+el('native-unknown').onclick=()=>{fixture.unknown++;};
+el('native-send').onclick=()=>{fixture.sends++;el('send-result').textContent=el('native-composer').value;};
+el('native-attachment').onchange=()=>el('attachment-result').textContent=el('native-attachment').files[0]?.name||'';
+let timer;el('native-generate').onclick=()=>{clearInterval(timer);fixture.ticks=0;fixture.stopped=false;timer=setInterval(()=>{fixture.ticks++;el('native-stream').textContent+='synthetic ';if(fixture.ticks>=30)clearInterval(timer);},30);};
+el('native-stop').onclick=()=>{clearInterval(timer);fixture.stopped=true;};
+</script></body></html>

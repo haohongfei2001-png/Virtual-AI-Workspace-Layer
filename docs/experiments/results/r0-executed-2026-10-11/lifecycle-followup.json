@@ -1,0 +1,46 @@
+{
+  "startedAt": "2026-10-10T18:18:20.357Z",
+  "level": "REAL_CHROME_SYNTHETIC_FIXTURE",
+  "tests": [
+    {
+      "id": "L01-reload-with-explicit-isolated-profile-developer-mode",
+      "status": "LIMITED",
+      "before": {
+        "inDeveloperMode": false
+      },
+      "after": {
+        "inDeveloperMode": true
+      },
+      "onlyFreshTemporaryProfileChanged": true,
+      "extensionEnabledAfterReload": true,
+      "markerBeforeFixtureReload": 1,
+      "nativeDraftBeforeFixtureReload": "SYNTHETIC reload",
+      "explicitSyntheticPageReloadReconnect": true,
+      "instantCleanLayout": false
+    },
+    {
+      "id": "L02-observed-VAIWL-then-placeholder",
+      "status": "PASS",
+      "observedMountOrder": [
+        "VAIWL",
+        "PAIA_PLACEHOLDER"
+      ],
+      "placeholderDelayMs": 600,
+      "actualPAIA": false,
+      "independentVAIWLExpiry": true
+    },
+    {
+      "id": "L03-observed-placeholder-then-VAIWL",
+      "status": "PASS",
+      "observedMountOrder": [
+        "PAIA_PLACEHOLDER",
+        "VAIWL"
+      ],
+      "placeholderDelayMs": 0,
+      "actualPAIA": false,
+      "independentPlaceholderExit": true
+    }
+  ],
+  "browser": "154.0.8037.99",
+  "endedAt": "2026-10-10T18:18:27.868Z"
+}
