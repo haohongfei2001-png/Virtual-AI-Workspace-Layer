@@ -21,11 +21,11 @@ jobs:
     timeout-minutes: 15
     env:
       PYTHONDONTWRITEBYTECODE: '1'
-      PYTHONPYCACHEPREFIX: ${{ runner.temp }}/r0-pycache
+      PYTHONPYCACHEPREFIX: /tmp/vawl-r0-pycache-${{ github.run_id }}
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
       PIP_NO_CACHE_DIR: '1'
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/r0-browser
-      R0_EVIDENCE_DIR: ${{ runner.temp }}/r0-evidence
+      PLAYWRIGHT_BROWSERS_PATH: /tmp/vawl-r0-browser-${{ github.run_id }}
+      R0_EVIDENCE_DIR: /tmp/vawl-r0-evidence-${{ github.run_id }}
     defaults:
       run:
         shell: bash
@@ -94,6 +94,7 @@ jobs:
               'repository': os.environ['GITHUB_REPOSITORY'], 'headSha': os.environ['GITHUB_SHA'],
               'runId': os.environ['GITHUB_RUN_ID'], 'runAttempt': os.environ['GITHUB_RUN_ATTEMPT'],
               'runnerOs': os.environ['RUNNER_OS'], 'runnerArch': os.environ['RUNNER_ARCH'],
+              'imageOs': os.environ.get('ImageOS'), 'imageVersion': os.environ.get('ImageVersion'),
               'platform': platform.platform(), 'python': platform.python_version(),
               'node': subprocess.check_output(['node', '--version'], text=True).strip(),
               'workflowSha256': hashlib.sha256(pathlib.Path('.github/workflows/r0-fixture.yml').read_bytes()).hexdigest(),
