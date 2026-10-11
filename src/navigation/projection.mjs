@@ -1,5 +1,6 @@
 /** Pure v2.7 projection. No storage, host authentication, text capture or native writes. */
 const DAY = 86400000;
+const dayFormatters=new Map();
 export function instant(value) {
   if (typeof value !== 'string') return null;
   const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?(Z|[+-]\d{2}:\d{2})$/.exec(value);
@@ -13,7 +14,9 @@ export function instant(value) {
 export function localDay(value, timeZone) {
   const n = typeof value === 'number' ? value : instant(value);
   if (n === null || !Number.isFinite(n)) throw Error('invalid-instant');
-  const parts = new Intl.DateTimeFormat('en-CA', {timeZone, year:'numeric', month:'2-digit', day:'2-digit'}).formatToParts(n);
+  let formatter=typeof timeZone==='string'?dayFormatters.get(timeZone):null;
+  if(!formatter){formatter=new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'});if(typeof timeZone==='string'){if(dayFormatters.size>=16)dayFormatters.delete(dayFormatters.keys().next().value);dayFormatters.set(timeZone,formatter);}}
+  const parts=formatter.formatToParts(n);
   const get = key => Number(parts.find(p => p.type === key).value);
   return Date.UTC(get('year'), get('month')-1, get('day')) / DAY;
 }
