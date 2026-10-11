@@ -1,0 +1,3 @@
+# Original failures retained
+
+baseline/: confined execution could not start Chrome (SIGABRT/EPERM), no product verdict. Authorized unconfined fresh-profile headless execution in baseline-native/ observed stable product failures: keyboard focus lost after old disclosure render; current L127 outside sidebar capacity missing; no theme-local action/search menu. Baseline actual screenshots retained. Visual driver initially used unsupported theme control and assumed earlier history expansion survived the resize sequence; final driver will use the host's real variant action and explicitly report list counts/expansion state. Do not misclassify that driver failure as a proven product defect.
