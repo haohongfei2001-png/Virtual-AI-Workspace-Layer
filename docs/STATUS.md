@@ -17,7 +17,7 @@
 | D3 | 可选，尚未启用 | 依赖D1/D2与PD-09质量/资源证据，不强开模型 |
 | D4/D5 | WAITING | 费用/外传授权与C6真人收益验证 |
 | E1–E3 | WAITING_AUTHORIZATION | 真实原生写入完全未授权 |
-| F1 | NOT_RUN；可执行合成压力 | 1k/10k/100k实际容量/性能目标仍TARGET |
+| F1 | LIMITED；1k/10k 实际 MV3 PASS，100k容量 BLOCKED | [F1验收](engineering/f1-mac-2026-10-12/ACCEPTANCE.md)：修复10k快照约7.09s→458ms，导航p95 50ms、搜索首屏p95 32ms；100k未通过，多tab大规模/弱设备待补；不冒充真实host |
 | F2 | WAITING_AUTHORIZATION | 跨设备服务/密钥与同步 |
 | F3/F4 | WAITING_DEPENDENCIES | C6/F1/渠道批准及长期实测；未部署/发布 |
 | G1 | WAITING_AUTHORIZATION | PAIA双方协议/共存，不修改PAIA |

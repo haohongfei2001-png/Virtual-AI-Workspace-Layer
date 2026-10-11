@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "runtimeAndEvidenceFiles": 468,
+  "node": 135,
+  "nativeIDB": 54,
+  "domMockLayer": 49,
+  "page": 17,
+  "mv3": 19,
+  "realUI": {
+    "C1": 10,
+    "B5": 3,
+    "C34": 3,
+    "C5": 2,
+    "B4core": 5,
+    "B4lifecycle": 1
+  },
+  "performance": {
+    "1000": "PASS",
+    "10000": "PASS",
+    "100000": "BLOCKED"
+  },
+  "productionHost": "NOT_RUN"
+}

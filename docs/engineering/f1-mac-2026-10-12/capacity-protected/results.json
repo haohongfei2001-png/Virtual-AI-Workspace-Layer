@@ -1,0 +1,112 @@
+{
+  "argv": [
+    "tests/f1/real-performance.py",
+    "docs/engineering/f1-mac-2026-10-12/capacity-protected",
+    "100000"
+  ],
+  "head": "801595e239d1fbacf7f243f7ab46862612be75a7",
+  "tests": [
+    {
+      "id": "F1-real-100000",
+      "status": "BLOCKED",
+      "actual": {
+        "status": "BLOCKED",
+        "reason": "invalid-state-table",
+        "attempted": {
+          "refs": 100000,
+          "themes": 120
+        },
+        "initialCounts": {
+          "refs": 604,
+          "themes": 120
+        },
+        "phase": "100k refused before writes; preexisting 604 refs and latest human sentinel verified in actual extension IndexedDB",
+        "existingHumanAssetsIntact": true,
+        "configuredTableLimit": 20000,
+        "configuredStateBytes": 16777216
+      },
+      "buildHashes": {
+        "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+        "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+        "src/b1/document-binding-broker.mjs": "ccde4b99eaa91fdc84ea71f9bd620def20312ebfde31a55b37dfd16352981c1b",
+        "simulator/service.mjs": "c6b9ea2bae4a071b6cad4cb185bccb6e79b7db9118f23f024f6fa62949678e99",
+        "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+        "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+        "simulator/worker.mjs": "6bd636487f3426d92e7c10b2180e818b526ef83716f858f9b904bc0b58069b93",
+        "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+        "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+        "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+        "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+        "src/data/evidence.mjs": "dc7a0e94d35882fa2bdc18634c4f0e314d79e1835180bad0a15239325a4dae55",
+        "src/data/repository.mjs": "c30817cb47fe16517a5061b3eb81cd3b1fee8650881aef9495017961af54f0a9",
+        "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+        "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+        "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+        "content.js": "b1fc183425e7a35429fc22a1628b5ff058b436dbde3e5ab2444847245f11467c",
+        "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+      }
+    }
+  ],
+  "scope": "fresh isolated Chrome MV3 / actual extension IDB / synthetic appended fixture; no real user data",
+  "startedAt": 1791741422.507135,
+  "instrumentation": "Temporary build-only static imports for privileged synthetic fixture seeding; same modules/service/IDB, no mock. Dynamic import was a driver defect. Production worker source unchanged.",
+  "chrome": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/154.0.8037.99",
+    "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "jsVersion": "15.4.80.20"
+  },
+  "server": {
+    "stdout": "",
+    "stderr": "",
+    "exit": -15
+  },
+  "endedAt": 1791741424.774249,
+  "sourceHashes": {
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/navigation/navigation.mjs": "1b3d4c127e1441dc63bc8ff027025e6197515d13d5b18fe67b9ef172c3c6f250",
+    "src/navigation/search.mjs": "0046527fb8bfbaf97ad7eb6036db7233087805e55ec2d9ac3f348a632af89efe",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/README.md": "929a0a31cfd638694fc85ce871c339c730f6dc6728f8b7c6832bcd9281a29c94",
+    "src/b1/document-binding-broker.mjs": "ccde4b99eaa91fdc84ea71f9bd620def20312ebfde31a55b37dfd16352981c1b",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/data/evidence.mjs": "dc7a0e94d35882fa2bdc18634c4f0e314d79e1835180bad0a15239325a4dae55",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "c30817cb47fe16517a5061b3eb81cd3b1fee8650881aef9495017961af54f0a9",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "simulator/editor-style.mjs": "18197a2a89d8e83986b56e464c506c9bb8e08005d07f97c46959f5e9cfabf2ce",
+    "simulator/index.html": "52737486a2ad0b296a8e212ab0607cb89f99b94d3f6b193793817babde01b7d4",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "simulator/control.html": "1e0eeb74c8fc277232b2edfac95787dbd62d6ae7470af982f4ca268579ffbd7f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/adapter.mjs": "2f79f5d974d4a7f9118be75e5ca7fc81f5e4d995a5b383036dc07d8753eedc08",
+    "simulator/client.mjs": "ac47864d5a9c5df9c0e3ade2940d9e071978558f4265f0b53b85e2df877d4372",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.css": "0627ff2b3ab6d9797850caca1da4cdb91ddfdfea32318dd8e1a15f9bac23d153",
+    "simulator/README.md": "a767b2f4e0d7cd99d4c19b473f9de0300cd2ae20457def03cde26fc3a1b3b645",
+    "simulator/.gitignore": "25a6288333a6cb399eb26bccdcecbce38f84b06fb5ee6f4afbafbae414d12244",
+    "simulator/package.json": "564c422503961ce803bbcac5bd89d531c5cc64e7b643f68dd194576830687c99",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/build.mjs": "969be95e6fe13dd0c7de37238c25e6b95ce1b2282a77fdb2ab68419f85bd8a93",
+    "simulator/host.mjs": "df9138c6ef495fec780c804a9d1ecbda84e2c9f02365283bc6540466afdac89f",
+    "simulator/main.mjs": "7a6788fefe2eaf5c8abcd46cfe024c76511c422888073472bbb3b8caacf9092c",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/service.mjs": "c6b9ea2bae4a071b6cad4cb185bccb6e79b7db9118f23f024f6fa62949678e99",
+    "simulator/editor.mjs": "ea9b5f30ea903573e79e60b545df23e88ef69a01197b6fff9ce46884a8408ecc",
+    "tests/f1/equivalence.test.mjs": "13bf0afdad6ff16c95812ac3c348287dfa7517673a5ca215481c1219bceccb96",
+    "tests/f1/real-performance.py": "a31746b915ecd2d730a1583444b00a7a53394d4d9791289a76ba87299c1e3ffa"
+  },
+  "counts": {
+    "PASS": 0,
+    "FAIL": 0,
+    "BLOCKED": 1
+  }
+}

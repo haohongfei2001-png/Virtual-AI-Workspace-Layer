@@ -1,0 +1,12 @@
+01:53:54.834061 exec-cmd.c:145          trace: resolved executable path from Darwin stack: /Library/Developer/CommandLineTools/usr/bin/git
+01:53:54.834282 exec-cmd.c:267          trace: resolved executable dir: /Library/Developer/CommandLineTools/usr/bin
+01:53:54.834907 git.c:502               trace: built-in: git push -u origin codex/vaiwl-c3-c4-context-20261012
+01:53:54.837263 run-command.c:672       trace: run_command: GIT_DIR=.git git remote-https origin https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer.git
+01:53:54.837280 run-command.c:764       trace: start_command: /Library/Developer/CommandLineTools/usr/libexec/git-core/git remote-https origin https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer.git
+01:53:54.839801 exec-cmd.c:145          trace: resolved executable path from Darwin stack: /Library/Developer/CommandLineTools/usr/libexec/git-core/git
+01:53:54.840002 exec-cmd.c:267          trace: resolved executable dir: /Library/Developer/CommandLineTools/usr/libexec/git-core
+01:53:54.840222 git.c:809               trace: exec: git-remote-https origin https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer.git
+01:53:54.840229 run-command.c:672       trace: run_command: git-remote-https origin https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer.git
+01:53:54.840802 run-command.c:764       trace: start_command: /Library/Developer/CommandLineTools/usr/libexec/git-core/git-remote-https origin https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer.git
+01:53:54.845534 exec-cmd.c:145          trace: resolved executable path from Darwin stack: /Library/Developer/CommandLineTools/usr/libexec/git-core/git-remote-https
+01:53:54.846378 exec-cmd.c:267          trace: resolved executable dir: /Library/Developer/CommandLineTools/usr/libexec/git-core

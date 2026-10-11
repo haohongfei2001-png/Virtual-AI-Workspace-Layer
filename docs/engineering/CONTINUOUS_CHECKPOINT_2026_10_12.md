@@ -15,3 +15,13 @@ B5在Draft PR #10完成隔离合成验收：Node130、真实IDB50、B5实际MV3 
 C3/C4 + 当前可独立C5验收已完成：Node134/DOM49/真实IDB54/页面17/MV319/C1UI10/B5UI3/C34UI3/C5实际200%2/B4核心5与实际隐藏冻结1，证据c34-mac-2026-10-12。分支codex/vaiwl-c3-c4-context-20261012；Git普通HTTPS端点不稳定，新分支push暂失败（日志保留），没有新PR。既有PR #9 head a055246、#10 head8d19020已同步。下一从C34本地head建立D1/D2离线实验模块，同时完成F1容量/性能基线与可安全最小优化；不能等待生产账户，也不能宣称后台运行。网络恢复后先查远端ref，非强制push C34再创建base为B5的Draft PR，随后同步后续模块。
 
 D1/D2离线模块分支codex/vaiwl-d1-d2-offline-20261012，父C34 head38ea47d。1200条合成困难标注与稳定/人工/非空既有发送证据保护断言通过；覆盖16.67%，holdout仅40预览，不是98%产品认证。未接入MV3、没有AI自动分类。Git端点阻塞持续，先本地提交/bundle。下一原F1：实际1k/10k/100k容量/性能，保留不达标基线，安全最小优化后相关回归。
+
+F1 已在分支 `codex/vaiwl-f1-performance-20261012` 完成实际规模基线、10k 性能最小修复与完整回归。运行时提交 `801595e239d1fbacf7f243f7ab46862612be75a7`；最终证据/文档提交通过该分支 HEAD 读取。1k/10k PASS；100k BLOCKED（单表20000行、整状态16777216 JSON UTF-16码元上限），实际拒绝写入保留604原引用及最新人工标题。不能仅放大常量或把checkpoint当无损备份。原 before/基线/after/容量拒绝和所有回归在 f1-mac-2026-10-12。
+
+当前任务未全部完成：100k是未解决代码容量缺口，F1多tab大规模/弱设备尚未覆盖；D1/D2只有模板合成离线证据，生产质量目标未认证。真实账户/C6、原生写入E、PAIA、付费云/同步/发布仍不在授权范围。不是把这些任务标为完成，也不声称后台持续运行。
+
+普通GitHTTPS推送多次有界失败（HTTP2/连接超时/Empty reply），GitHub API只读仍工作。已远端交付：#9 a0552467f732e40adb7852c04f3e4343ff0431fe、#10 8d19020978c6ce79e23862dc9cd22d88848bdfe9，均Draft；未交付：C34 38ea47dbd85a51951c3b5dbd283d2b088288b3f4、D12 3afaf33f99de45a793c0acf3c953d5255c66b4e5、F1当前HEAD。没有 #11，也没有force push/API逐文件开发。
+
+恢复：`cd /Users/hhf/Documents/Codex/VAIWL-Development/c1`；`git status`；`git switch codex/vaiwl-f1-performance-20261012`；阅读 `docs/STATUS.md` 和 `docs/engineering/CONTINUOUS_FINAL_2026_10_12.md`；运行 `python3 tests/f1/verify-evidence.py`（无浏览器/无依赖）。专用 .venv/bin/python 已就位。完整历史bundle在 `/Users/hhf/Documents/Codex/VAIWL-Development/recovery/`。
+
+下一可自主实施的原任务仍是 F1：在既有 CAS/幂等/撤销/绑定/备份安全不退化前提下解决100k容量和大规模多tab/长聊天/弱设备证据。远端Git恢复时先检查实时ref和父PR head；如有他人提交先正常整合，不覆盖。依次非强推 C34并创建以B5为base的Draft PR、D12以C34为base、F1以D12为base，创建后attach到任务。各模块差异以对应父分支审阅，不把所有内容塞一个PR。生产授权缺口只阻止相应路径，不阻止上述F1。
