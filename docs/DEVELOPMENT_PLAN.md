@@ -1,6 +1,6 @@
 # 完整旗舰开发计划
 
-2026-10-11 v2.7计划收敛；完整A–G路线和任务ID不变。当前只授权设计/治理/离线原型，R0真实宿主实验与正式开发未授权。现行时间和核心交互为[CORE_FLOW_V2_7](CORE_FLOW_V2_7.md)，原生能力要求见[NATIVE_FEATURE_PRESERVATION_V2_6](NATIVE_FEATURE_PRESERVATION_V2_6.md)；旧日历月、1/3/12月筛选、时钟回转、主页整卡折叠和多处返回已撤回。
+2026-10-11 v2.7计划收敛；完整A–G路线和任务ID不变。2026-10-12 用户已正式授权按原 A–G 路线在本地持续实施、测试与 Draft PR 交付。真实 ChatGPT/私人数据、PAIA、付费服务、原生写入、同步服务、系统策略、部署与合并仍需独立授权。现行时间和核心交互为[CORE_FLOW_V2_7](CORE_FLOW_V2_7.md)，原生能力要求见[NATIVE_FEATURE_PRESERVATION_V2_6](NATIVE_FEATURE_PRESERVATION_V2_6.md)；旧日历月、1/3/12月筛选、时钟回转、主页整卡折叠和多处返回已撤回。
 
 ## 1. 执行原则
 

@@ -1,0 +1,175 @@
+--- prototype-v2.6.html
++++ prototype-v2.7.html
+@@ -1,5 +1,5 @@
+ <!doctype html>
+-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VAIWL · 原生完整性与图形回看原型 v2.6</title>
++<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VAIWL · 工作区原型 v2.7</title>
+ <style>
+ :root{color-scheme:light;--bg:#fff;--side:#f9f9f9;--text:#171717;--muted:#646464;--line:#e5e5e5;--hover:#f3f3f3;--selected:#ececec;--bubble:#f4f4f4;--menu:#fff;--focus:#444;--accent:#171717;--contrast:#fff;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+ [data-theme=dark]{color-scheme:dark;--bg:#212121;--side:#171717;--text:#ececec;--muted:#b4b4b4;--line:#444;--hover:#303030;--selected:#3b3b3b;--bubble:#303030;--menu:#2f2f2f;--focus:#ddd;--accent:#ececec;--contrast:#171717}
+@@ -191,6 +191,37 @@
+ 
+ #native-urgent{flex:none;margin-bottom:4px}#native-urgent:empty{display:none}
+ 
++
++/* v2.7 CORE VIEW ONLY. .mock-* rules below position a fictional host, not live ChatGPT. */
++.topichead{min-height:48px;padding:10px 11px 10px 15px;gap:10px}
++.topic-heading{display:flex;align-items:center;gap:11px;min-width:0}
++.topic-heading .topic-symbol{width:25px;height:25px;display:grid;place-items:center;border-radius:7px;background:var(--topic-icon);flex:none}
++.topic-heading .topic-symbol svg{width:17px;height:17px}
++.topic-heading .topic-name{font-size:15px;font-weight:600;line-height:22px;min-width:0;overflow-wrap:anywhere}
++.topic-contents{padding-top:8px}.topichead .topic-menu{margin-left:auto}
++.card-tail{padding:3px 0 0}.history-disclosure{display:inline-flex;align-items:center;justify-content:center;width:30px;min-height:30px;margin:1px 0 0 29px;padding:5px;border-radius:7px;background:transparent;border:0}
++.history-disclosure svg{width:15px;height:15px;transition:transform 120ms ease}
++.history-disclosure[aria-expanded=true] svg{transform:rotate(90deg)}
++.history-disclosure:hover{background:var(--hover)}
++.side-children>.history-disclosure{margin:2px 0 0 4px;width:30px;min-height:30px}
++.history-panel{margin-top:3px;padding-top:6px;border-top:1px solid var(--line)}
++.workspace-layout27{display:grid;grid-template-columns:minmax(0,1fr) 32px;gap:14px;align-items:start}
++.workspace-core27{min-width:0}.period-pager27{display:flex;flex-direction:column;gap:6px;position:sticky;top:18px;align-items:center;margin-top:3px}
++.period-pager27 button{display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:7px;border-radius:8px;color:var(--muted);background:transparent}
++.period-pager27 button:hover{background:var(--hover);color:var(--text)}.period-pager27 svg{width:18px;height:18px}
++.period-pager27 button:disabled{opacity:.28}
++#workspace-return27{position:absolute;z-index:6;top:14px;left:12px;display:flex;width:32px;height:32px;padding:7px;align-items:center;justify-content:center;border-radius:8px;color:var(--muted);background:transparent}
++#workspace-return27:hover{background:var(--hover);color:var(--text)}#workspace-return27 svg{width:18px;height:18px}
++/* The fixture reserves this slot. Production must verify a free host-adjacent slot, never overlay a native control. */
++.page[data-reader27=true] .mock-native-head{padding-left:56px}
++.page[data-reader27=true] #native-surface{padding-top:62px}
++#board .quiet-tools27{display:flex;align-items:center;gap:4px;margin:14px 0 0}
++#board .quiet-tools27 .icon{color:var(--muted);width:30px;height:30px}
++.fixture-interactive27{padding:14px;border:1px solid var(--line);border-radius:12px;margin:20px 0}
++.fixture-interactive27 label{display:block;font-size:13px}.fixture-interactive27 input{width:100%}
++@media(max-width:760px){.workspace-layout27{grid-template-columns:minmax(0,1fr) 30px;gap:7px}.board{padding:15px 9px}.period-pager27{top:12px}.period-pager27 button{width:30px;height:36px}.topichead{padding-left:11px}.topic-heading{gap:8px}.topic-contents{padding-left:8px;padding-right:6px}.history-disclosure{margin-left:27px}#workspace-return27{top:10px;left:8px}.page[data-reader27=true] .mock-native-head{padding-left:48px}}
++@media(pointer:coarse){.history-disclosure,.side-children>.history-disclosure{min-height:40px;width:36px}.period-pager27 button{height:44px}#workspace-return27{width:36px;height:36px}}
++
+ </style></head><body>
+ <div id="shell" class="shell"><aside id="sidebar" class="sidebar" aria-label="导航"></aside><aside id="navrail" class="navrail" aria-label="折叠导航"></aside><button id="nav-backdrop" class="nav-backdrop" data-action="nav" aria-label="关闭导航" hidden></button><main class="page"><div id="fault" class="fault" hidden>模拟适配故障，已恢复原生结构示意。<button data-action="recover">恢复演示</button></div><div id="toolbar" class="toolbar"></div><div id="workset" class="workset" hidden></div><section id="board-scroll" class="scroll"><div id="board" class="board"></div></section><section id="host" class="host" hidden></section></main></div>
+ <dialog id="modal" aria-labelledby="modal-title"></dialog><div id="popover" class="popover" hidden></div><div id="toast" class="toast" role="status" hidden></div>
+@@ -209,7 +240,7 @@
+ function dateParts(d){return d.split('-').map(Number)}
+ function addDays(d,n){let [y,m,v]=dateParts(d);let t=new Date(Date.UTC(y,m-1,v+n));return `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(t.getUTCDate())}`}
+ function subMonths(d,n){let [y,m,day]=dateParts(d),t=new Date(Date.UTC(y,m-1-n,1));let last=new Date(Date.UTC(t.getUTCFullYear(),t.getUTCMonth()+1,0)).getUTCDate();return `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(Math.min(day,last))}`}
+-function windowOf(today,months,offset){if(months==='all')return {start:null,end:null,upper:null};let start=subMonths(today,Number(months)*(offset+1)),upper=offset===0?addDays(today,1):subMonths(today,Number(months)*offset);return {start,end:addDays(upper,-1),upper}}
++function windowOf(today,legacy,offset){if(legacy==='all')return {start:null,end:null,upper:null};const k=Math.max(0,Math.trunc(offset));const upper=addDays(today,1-30*k),start=addDays(today,1-30*(k+1));return {start,end:addDays(upper,-1),upper,days:30}}
+ const dayCache=new Map(),formatters=new Map();function localDay(instant,zone){const key=zone+'|'+instant;if(dayCache.has(key))return dayCache.get(key);if(!formatters.has(zone))formatters.set(zone,new Intl.DateTimeFormat('en-US',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}));const parts=formatters.get(zone).formatToParts(new Date(instant));let o=Object.fromEntries(parts.map(p=>[p.type,p.value]));const d=`${o.year}-${o.month}-${o.day}`;dayCache.set(key,d);return d}
+ const stamp=d=>d+'T12:00:00Z';
+ function event(d,extra={}){return {id:'msg-'+d,sentAt:stamp(d),role:'user',state:'sent',quality:'verified_fixture',...extra}}
+@@ -297,7 +328,7 @@
+ // Membership is persistent; these functions only compute visibility.
+ function latest(c){return eligible(c).reduce((best,e)=>!best||Date.parse(e.sentAt)>Date.parse(best.sentAt)?e:best,null)}
+ function latestComplete(c){return c.complete===true&&(c.completeThrough||'2026-10-10')>=state.today&&!c.events.some(e=>e.role==='user'&&e.state==='sent'&&(!e.kind||e.kind==='new_send')&&(e.quality!=='verified_fixture'||!validTime(e)))}
+-function bucketForDay(day,months=state.months){if(months==='all')return 0;if(!day||day>state.today)return null;const [y,m]=dateParts(day),[ty,tm]=dateParts(state.today);let k=Math.max(0,Math.floor(((ty-y)*12+tm-m)/Number(months))-1);while(day<windowOf(state.today,months,k).start)k++;while(k>0&&day>=windowOf(state.today,months,k).upper)k--;return k}
++function bucketForDay(day,legacy=state.months){if(legacy==='all')return 0;if(!day||day>state.today)return null;const [y,m,d]=dateParts(day),[ty,tm,td]=dateParts(state.today);const delta=Math.round((Date.UTC(ty,tm-1,td)-Date.UTC(y,m-1,d))/86400000);return delta<0?null:Math.floor(delta/30)}
+ function conversationBucket(c){const e=latest(c);if(!e)return null;const k=bucketForDay(localDay(e.sentAt,state.zone));return k===0||latestComplete(c)?k:null}
+ function topicBucket(id){const list=items(id);if(!list.length)return null;const evidence=list.map(latest).filter(Boolean).sort((a,b)=>Date.parse(b.sentAt)-Date.parse(a.sentAt));if(!evidence.length)return null;const k=bucketForDay(localDay(evidence[0].sentAt,state.zone));if(k===0)return 0;return list.every(latestComplete)?k:null}
+ function childClass(c,topicId){if(state.months==='all')return 'all';const parent=topicId?topicBucket(topicId):state.offset;if(parent===null)return 'unknown';const k=conversationBucket(c);return k===null?'unknown':k===parent?'active':'older'}
+@@ -384,8 +415,8 @@
+  if(derived){const list=sidebarTopicList();body=(inChat&&accessTopic&&navigationTopicBucket(accessTopic)!==0?'<div class="current-exception">正在查看</div>':'')+list.map(topicSidebar).join('');if(inChat&&!accessTopic&&chat(state.current))body='<div class="current-exception">正在查看</div>'+row(chat(state.current),true)+body;
+  }else{body=[...new Set(all().map(c=>c.project))].map(p=>`<div class="navcaption">${esc(p)}</div>${all().filter(c=>c.project===p).map(c=>`<button class="nav ${state.current===c.id?'selected':''}" data-open="${c.id}">${esc(native(c.id))}</button>`).join('')}`).join('')}
+  const fixed=spaces().filter(t=>db().pins.includes(t.id)),fixedChats=all().filter(c=>db().pinnedChats.includes(c.id));
+- $('sidebar').innerHTML=`<div class="sidehead"><span>ChatGPT</span><div class="sidehead-tools"><button class="workspace-home" data-action="workspaceHome" aria-label="${inChat?'返回工作空间':'工作空间'}" aria-current="${!inChat&&derived&&state.offset===0?'page':'false'}">${svg('layout')}<span>工作空间</span></button><button class="icon" data-action="nav" aria-label="收起导航">${svg('panel')}</button></div></div><div class="nav-top"><button class="nav" data-action="new">${svg('plus')}新聊天</button><button class="nav" data-action="search">${svg('search')}搜索聊天</button>${dotAvailable?`<button class="nav dot-entry" data-action="dot" aria-label="dot 原生入口示意">${svg('dot')}dot</button>`:''}</div><nav id="nav-scroll" class="nav-scroll" aria-label="${derived?'主题与对话':'原生导航示意'}">${body}<div id="current" class="current" hidden></div></nav><div class="sidefoot">${derived?`<div class="navpair"><button class="nav" data-action="periodStart">${svg('history')}看看以前</button><button class="icon view-options" data-action="boardMenu" aria-label="工作空间选项" aria-haspopup="menu">${svg('more')}</button></div>`:''}<button class="nav" data-action="workset">${svg('chat')}当前工作集</button>${fixed.length||fixedChats.length?'<button class="nav" data-action="fixedShortcuts">'+svg('pin')+'固定入口</button>':''}<button class="nav" data-mode="${derived?'native':'derived'}">${svg('return')}${derived?'回到原生':'启用主题视图'}</button><div class="extensionline"><span>VAIWL · 第三方扩展</span><button class="icon" data-action="settings" aria-label="VAIWL 设置">${svg('gear')}</button></div><p>原型 · 示例数据</p></div>`;
+- $('navrail').innerHTML=`<button class="icon" data-action="nav" aria-label="展开导航">${svg('panel')}</button><button class="icon" data-action="workspaceHome" aria-label="${inChat?'返回工作空间':'工作空间'}" title="工作空间">${svg('layout')}</button><button class="icon" data-action="search" aria-label="搜索聊天">${svg('search')}</button>${dotAvailable?`<button class="icon" data-action="dot" aria-label="dot 原生入口示意">${svg('dot')}</button>`:''}<button class="icon" data-action="periodStart" aria-label="看看以前">${svg('history')}</button><div class="railfoot"><button class="icon" data-action="boardMenu" aria-label="主题视图选项">${svg('more')}</button><button class="icon" data-mode="${derived?'native':'derived'}" aria-label="${derived?'回到原生':'启用主题视图'}">${svg('return')}</button><button class="icon" data-action="settings" aria-label="VAIWL 设置">${svg('gear')}</button><span class="rail-id">VAIWL<br>扩展原型</span></div>`;
++ $('sidebar').innerHTML=`<div class="sidehead"><span>ChatGPT</span><div class="sidehead-tools"><button class="icon" data-action="nav" aria-label="收起导航">${svg('panel')}</button></div></div><div class="nav-top"><button class="nav" data-action="new">${svg('plus')}新聊天</button><button class="nav" data-action="search">${svg('search')}搜索聊天</button>${dotAvailable?`<button class="nav dot-entry" data-action="dot" aria-label="dot 原生入口示意">${svg('dot')}dot</button>`:''}</div><nav id="nav-scroll" class="nav-scroll" aria-label="${derived?'主题与对话':'原生导航示意'}">${body}<div id="current" class="current" hidden></div></nav><div class="sidefoot">${derived?`<div class="navpair"><button class="nav" data-action="periodStart">${svg('history')}看看以前</button><button class="icon view-options" data-action="boardMenu" aria-label="工作空间选项" aria-haspopup="menu">${svg('more')}</button></div>`:''}<button class="nav" data-action="workset">${svg('chat')}当前工作集</button>${fixed.length||fixedChats.length?'<button class="nav" data-action="fixedShortcuts">'+svg('pin')+'固定入口</button>':''}<button class="nav" data-mode="${derived?'native':'derived'}">${svg('return')}${derived?'回到原生':'启用主题视图'}</button><div class="extensionline"><span>VAIWL · 第三方扩展</span><button class="icon" data-action="settings" aria-label="VAIWL 设置">${svg('gear')}</button></div><p>原型 · 示例数据</p></div>`;
++ $('navrail').innerHTML=`<button class="icon" data-action="nav" aria-label="展开导航">${svg('panel')}</button><button class="icon" data-action="search" aria-label="搜索聊天">${svg('search')}</button>${dotAvailable?`<button class="icon" data-action="dot" aria-label="dot 原生入口示意">${svg('dot')}</button>`:''}<button class="icon" data-action="periodStart" aria-label="看看以前">${svg('history')}</button><div class="railfoot"><button class="icon" data-action="boardMenu" aria-label="主题视图选项">${svg('more')}</button><button class="icon" data-mode="${derived?'native':'derived'}" aria-label="${derived?'回到原生':'启用主题视图'}">${svg('return')}</button><button class="icon" data-action="settings" aria-label="VAIWL 设置">${svg('gear')}</button><span class="rail-id">VAIWL<br>扩展原型</span></div>`;
+  $('nav-scroll').scrollTop=oldScroll;
+  if(oldData){const keys=Object.keys(oldData),match=[...$('sidebar').querySelectorAll('button')].find(b=>keys.length&&keys.every(k=>b.dataset[k]===oldData[k]));match?.focus({preventScroll:true})}
+ }
+@@ -547,7 +578,7 @@
+ function ensureNativeSidebar(){
+  if(nativeShellScope===state.account&&$('native-primary'))return;
+  nativeShellScope=state.account;nativePreservedNodes=new Map();
+- $('sidebar').innerHTML=`<div class="sidehead"><button data-native-action="brand" class="native-brand" data-native-owned="fixture">ChatGPT</button><div class="sidehead-tools"><button class="workspace-home" data-action="workspaceHome" aria-label="工作空间" data-tip="工作空间">${svg('grid')}</button><button class="icon" data-action="nav" aria-label="收起导航" data-tip="收起导航">${svg('panel')}</button></div></div>
++ $('sidebar').innerHTML=`<div class="sidehead"><button data-native-action="brand" class="native-brand" data-native-owned="fixture">ChatGPT</button><div class="sidehead-tools"><button class="icon" data-action="nav" aria-label="收起导航" data-tip="收起导航">${svg('panel')}</button></div></div>
+  <div class="nav-top native-primary" id="native-primary" data-native-owned="fixture"><button class="nav" data-native-action="new">${svg('plus')}新聊天</button><button class="nav" data-native-action="search">${svg('search')}搜索聊天</button><button class="nav dot-entry" data-native-action="dot" aria-label="dot，原生入口占位"><span class="native-identity-avatar" data-avatar-status="placeholder" title="未读取真实头像，此处仅为占位">d</span><span class="native-dot-name">dot</span><span class="native-attention-label" id="dot-attention" hidden>待处理</span></button></div>
+  <div id="native-urgent" data-native-owned="fixture"></div><nav id="nav-scroll" class="nav-scroll" aria-label="主题与原生导航"><div id="topic-tree"></div><div id="current" class="current" hidden></div><section class="native-resource-zone" aria-label="ChatGPT 原生功能示意"><div id="native-direct"></div><button class="native-more-control" data-native-action="more" aria-expanded="false" aria-controls="native-more-items">${svg('more')}更多<span class="disclosure">${svg('down')}</span></button><div id="native-more-items" hidden></div></section></nav>
+  <div class="sidefoot"><div id="v26-extensionbar" class="v26-extensionbar"><span>VAIWL · 扩展原型</span><span class="spacer"></span><button class="icon" data-action="workset" aria-label="当前工作集" data-tip="当前工作集">${svg('collection')}</button><button class="icon" data-action="boardMenu" aria-label="工作空间选项" data-tip="工作空间选项">${svg('more')}</button><button class="icon" id="v26-native-toggle" data-mode="native" aria-label="回到原生" data-tip="回到原生">${svg('return')}</button><button class="icon" data-action="settings" aria-label="VAIWL 设置" data-tip="VAIWL 设置">${svg('gear')}</button></div><div id="native-account-slot" data-native-owned="fixture"><button class="native-account-entry" data-native-action="account"><span class="native-identity-avatar">U</span><span>示例账户<small>原生账户菜单占位</small></span>${svg('more')}</button></div></div>`;
+@@ -576,11 +607,11 @@
+  else body=[...new Set(all().map(c=>c.project))].map(p=>`<div class="navcaption">${esc(p)}</div>${all().filter(c=>c.project===p).map(c=>`<button class="nav" data-open="${c.id}">${esc(native(c.id))}</button>`).join('')}`).join('');
+  $('topic-tree').innerHTML=body;updateNativeEntries();
+  const nativeToggle=$('v26-native-toggle');nativeToggle.dataset.mode=derived?'native':'derived';nativeToggle.setAttribute('aria-label',derived?'回到原生':'启用主题视图');nativeToggle.dataset.tip=derived?'回到原生':'启用主题视图';
+- const home=$('sidebar').querySelector('[data-action=workspaceHome]');home.setAttribute('aria-label',inChat||state.view==='nativeSurface'?'返回工作空间':'工作空间');
++ // Workspace return lives in the reading-area slot, not the sidebar.
+  const fixed=spaces().filter(t=>db().pins.includes(t.id));
+  if((fixed.length||db().pinnedChats.length)&&!$('fixed-shortcut-26')){$('v26-extensionbar').insertAdjacentHTML('afterbegin',`<button id="fixed-shortcut-26" class="icon" data-action="fixedShortcuts" aria-label="固定入口">${svg('pin')}</button>`)}
+  if(!fixed.length&&!db().pinnedChats.length)$('fixed-shortcut-26')?.remove();
+- $('navrail').innerHTML=`<button class="icon" data-action="nav" aria-label="展开导航" data-tip="展开导航">${svg('panel')}</button><button class="icon" data-action="workspaceHome" aria-label="返回工作空间" data-tip="工作空间">${svg('grid')}</button><button class="icon" data-native-action="search" aria-label="搜索聊天" data-tip="搜索聊天">${svg('search')}</button>${dotAvailable?`<button class="icon" data-native-action="dot" aria-label="dot 原生入口占位" data-tip="dot"><span class="native-identity-avatar">d</span></button>`:''}<button class="icon" data-native-action="features" aria-label="${nativeFeatures.some(f=>f.available&&f.attention)?'原生功能，有待处理操作':'原生功能'}" data-tip="${nativeFeatures.some(f=>f.available&&f.attention)?'原生功能 · 待处理':'原生功能'}">${svg('more')}</button><div class="railfoot"><button class="icon" data-native-action="account" aria-label="原生账户菜单" data-tip="原生账户菜单">${svg('account')}</button><button class="icon" data-mode="${derived?'native':'derived'}" aria-label="${derived?'回到原生':'启用主题视图'}" data-tip="${derived?'回到原生':'启用主题视图'}">${svg('return')}</button><button class="icon" data-action="settings" aria-label="VAIWL 设置" data-tip="VAIWL 设置">${svg('gear')}</button><span class="rail-id">VAIWL<br>扩展原型</span></div>`;
++ $('navrail').innerHTML=`<button class="icon" data-action="nav" aria-label="展开导航" data-tip="展开导航">${svg('panel')}</button><button class="icon" data-native-action="search" aria-label="搜索聊天" data-tip="搜索聊天">${svg('search')}</button>${dotAvailable?`<button class="icon" data-native-action="dot" aria-label="dot 原生入口占位" data-tip="dot"><span class="native-identity-avatar">d</span></button>`:''}<button class="icon" data-native-action="features" aria-label="${nativeFeatures.some(f=>f.available&&f.attention)?'原生功能，有待处理操作':'原生功能'}" data-tip="${nativeFeatures.some(f=>f.available&&f.attention)?'原生功能 · 待处理':'原生功能'}">${svg('more')}</button><div class="railfoot"><button class="icon" data-native-action="account" aria-label="原生账户菜单" data-tip="原生账户菜单">${svg('account')}</button><button class="icon" data-mode="${derived?'native':'derived'}" aria-label="${derived?'回到原生':'启用主题视图'}" data-tip="${derived?'回到原生':'启用主题视图'}">${svg('return')}</button><button class="icon" data-action="settings" aria-label="VAIWL 设置" data-tip="VAIWL 设置">${svg('gear')}</button><span class="rail-id">VAIWL<br>扩展原型</span></div>`;
+  $('nav-scroll').scrollTop=oldScroll;
+  if(oldData&&!old?.isConnected){const keys=Object.keys(oldData);[...$('sidebar').querySelectorAll('button')].find(b=>keys.length&&keys.every(k=>b.dataset[k]===oldData[k]))?.focus({preventScroll:true})}
+  document.querySelectorAll('.history-disclosure,.past-step,.past-context button').forEach(b=>b.dataset.tip=b.getAttribute('aria-label')||'查看');
+@@ -629,7 +660,7 @@
+  const key=currentHostKey;baseRenderHost26();if(key===currentHostKey||!currentHostKey)return;
+  const host=$('host');host.querySelector('.mock-model')?.setAttribute('data-native-action','model');
+  const share=host.querySelector('.mock-native-controls button');if(share){share.dataset.nativeAction='conversation';share.setAttribute('aria-label','原生分享与会话菜单示意')}
+- host.querySelector('.mock-native-controls')?.insertAdjacentHTML('afterbegin','<button class="native-toolchip" data-native-action="temporary">临时聊天</button>');
++ // Temporary controls belong to the actual new-chat/temporary host state.
+  const attach=host.querySelector('.composeractions .icon');if(attach){attach.dataset.nativeAction='tools';attach.setAttribute('aria-label','原生附件与工具菜单示意')}
+  host.querySelector('.composeractions .send')?.insertAdjacentHTML('beforebegin',`<button class="icon" data-native-action="voice" aria-label="原生语音示意">${svg('mic')}</button>`);
+  host.querySelector('.answer')?.insertAdjacentHTML('beforeend',`<button class="icon" data-native-action="message" aria-label="原生消息操作示意">${svg('more')}</button>`);
+@@ -676,5 +707,66 @@
+ const baseBoard26=renderBoard;
+ renderBoard=function(){baseBoard26();document.querySelectorAll('.history-disclosure,.past-step,.past-context button').forEach(b=>b.dataset.tip=b.getAttribute('aria-label')||'查看');};
+ 
++
++// v2.7 incremental interaction layer. Not an extension, no host APIs or network access.
++Object.assign(paths,{chevronUp27:'M6 15l6-6 6 6',chevronDown27:'M6 9l6 6 6-6',workspace27:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z'});
++state.periodDays=30;
++function periodPager27(){return `<nav class="period-pager27" aria-label="主题时间段">${state.offset>0?`<button data-action="periodUp27" aria-label="查看较近一段主题" data-tip="较近的主题">${svg('chevronUp27')}</button>`:''}<button data-action="periodDown27" aria-label="查看较早一段主题" data-tip="较早的主题" ${hasOlderTopics()?'':'disabled'}>${svg('chevronDown27')}</button></nav>`}
++function topicCard(t,full=false){
++ const list=items(t.id),k=topicBucket(t.id),unknownParent=k===null&&state.months!=='all';
++ const primary=unknownParent?sorted(list):sorted(list.filter(c=>['active','all'].includes(childClass(c,t.id))));
++ const limit=state.limits[t.id]||(full?12:5),past=unknownParent||state.months==='all'?[]:sorted(list.filter(c=>childClass(c,t.id)==='older'));
++ const pastOpen=!!boardFull[t.id],pastLimit=boardRestLimits[t.id]||12;
++ const more=primary.length>limit?`<button class="current-more" data-active-more="${t.id}" aria-label="显示更多当前对话">显示更多</button>`:'';
++ const tail=past.length?`<div class="card-tail"><button class="history-disclosure" data-board-all="${t.id}" aria-expanded="${pastOpen}" aria-controls="past-${t.id}" aria-label="${pastOpen?'收起':'展开'}${esc(t.name)}的较早对话">${svg('right')}</button><section class="history-panel" id="past-${t.id}" ${pastOpen?'':'hidden'}>${pastOpen?`<div class="window-list" role="list">${past.slice(0,pastLimit).map(c=>row(c,false,t.id)).join('')}</div>${past.length>pastLimit?`<button class="current-more" data-board-rest-more="${t.id}">继续显示</button>`:''}`:''}</section></div>`:'';
++ return `<article class="topic ${state.current&&members(state.current).includes(t.id)?'is-current':''}" data-topic="${t.id}" data-bucket="${k===null?'unknown':k}" data-drop="${t.id}" aria-labelledby="topic-heading-${t.id}"><header class="topichead"><h2 class="topic-heading" id="topic-heading-${t.id}"><span class="topic-symbol" data-icon="${topicIcon(t)}" aria-hidden="true">${svg(topicIcon(t))}</span><span class="topic-name">${esc(t.name)}</span></h2><button class="icon topic-menu" data-topic-menu="${t.id}" aria-label="${esc(t.name)}主题菜单" aria-haspopup="menu">${svg('more')}</button></header><div class="topic-contents" id="body-${t.id}"><div class="window-list" role="list" aria-label="${esc(t.name)}的${unknownParent?'已保存':'近期'}对话">${primary.slice(0,limit).map(c=>row(c,false,t.id)).join('')}${more}${!list.length?'<div class="empty">还没有对话</div>':''}</div>${tail}</div></article>`;
++}
++const oldBoardContent27=renderBoardContent;
++renderBoardContent=function(){
++ if(state.mode==='native'||['library','workset'].includes(state.view)){oldBoardContent27();return}
++ if(state.view==='focus'&&ws(state.topic)){$('board').innerHTML=`<div class="focuscard"><button class="icon" data-action="periodReturn" aria-label="返回主题总览">${svg('back')}</button>${topicCard(ws(state.topic),true)}</div>`;return}
++ const listed=currentBucketTopics();
++ $('board').innerHTML=`<h1 class="sr-only">${state.offset?'较早的主题':'工作区'}</h1><div class="workspace-layout27"><div class="workspace-core27"><div class="cards" id="active-cards">${listed.map(t=>topicCard(t)).join('')||'<div class="empty">这一段没有已确认的主题。</div>'}</div></div>${state.months==='all'?'':periodPager27()}</div>`;
++};
++const oldTopicSidebar27=topicSidebar;
++topicSidebar=function(t){return oldTopicSidebar27(t).replace(/(<button class="history-disclosure"[^>]*>)[\s\S]*?(<\/button>)/g,(_,a,b)=>a+svg('right')+b)};
++const oldNav27=renderNav;
++renderNav=function(){oldNav27();document.querySelectorAll('#sidebar [data-action="workspaceHome"],#navrail [data-action="workspaceHome"]').forEach(e=>e.remove());document.querySelectorAll('.history-disclosure').forEach(e=>e.dataset.tip=e.getAttribute('aria-label'));};
++const returnButton27=document.createElement('button');returnButton27.id='workspace-return27';returnButton27.dataset.action='readerReturn27';returnButton27.className='icon';returnButton27.setAttribute('aria-label','返回工作区');returnButton27.dataset.tip='返回工作区';returnButton27.innerHTML=svg('workspace27');returnButton27.hidden=true;document.querySelector('.page').prepend(returnButton27);
++const oldRender27=render;
++render=function(){oldRender27();const reading=state.mode==='derived'&&['chat','nativeSurface'].includes(state.view);returnButton27.hidden=!reading;document.querySelector('.page').dataset.reader27=String(reading);document.querySelectorAll('#native-surface [data-action="workspaceHome"]').forEach(e=>e.remove());document.querySelectorAll('.history-disclosure,.period-pager27 button').forEach(e=>e.dataset.tip=e.getAttribute('aria-label'));};
++const oldRenderBoard27=renderBoard;
++renderBoard=function(){oldRenderBoard27();document.querySelectorAll('.history-disclosure,.period-pager27 button').forEach(e=>e.dataset.tip=e.getAttribute('aria-label'));};
++// This reference helper is deprecated in v2.7; the UI has no 1/3/12-month switch.
++setRange=function(v){const keepChat=state.view==='chat';state.months=v==='all'?'all':1;state.periodDays=30;state.offset=0;state.limits={};closeMenu(false);if(!keepChat)state.view='topics';render()};
++const oldSettings27=settings;
++settings=function(){oldSettings27();$('modal').querySelector('.dialogbody').insertAdjacentHTML('beforeend','<div class="notice">v2.7：主题按30个当地日历日分段；旧样本日期固定为2026-10-10。最新一段不提供向上按钮。当前页面仍是离线原型。</div><button class="nav" data-action="interactiveTest27">添加原生交互组件测试样本</button>')};
++function mountInteractiveFixture27(){
++ if(!state.current){openChat(all().find(c=>members(c.id).length)?.id)}
++ if(!$('transcript')||$('interactive-fixture27'))return;
++ const box=document.createElement('div');box.id='interactive-fixture27';box.className='fixture-interactive27';box.dataset.owner='native-fixture';box.innerHTML='<label for="native-slider27">交互组件状态样本（仅模拟）</label><input type="range" id="native-slider27" min="0" max="100" value="35"><output id="native-output27">35</output>';box.querySelector('input').addEventListener('input',e=>box.querySelector('output').textContent=e.target.value);$('transcript').append(box);
++}
++// Update mock menu coverage, not a claim these controls exist in every host account.
++const oldNativeMenu27=nativeMenu;
++nativeMenu=function(kind){
++ if(kind==='temporary'){dialog('临时聊天 · 原生状态示意','<p class="status-explanation">保留原生个性化选择、临时状态与保存按钮。保存不是新的用户发送；此示例不修改聊天状态。</p><button class="nav" data-native-subaction="选择个性化">个性化选项</button><button class="nav" data-native-subaction="保存临时聊天">保存为普通聊天</button>');return}
++ oldNativeMenu27(kind);
++ const additions={tools:['上传音频'],conversation:['固定聊天'],account:['存储','参考照片'],message:['朗读','保存到项目']};
++ (additions[kind]||[]).forEach(l=>$('modal').querySelector('.dialogbody').insertAdjacentHTML('beforeend',`<button class="nav" data-native-subaction="${l}">${l}</button>`));
++};
++// Handle only extension-owned mock controls; never bind these to real ChatGPT DOM.
++document.addEventListener('click',e=>{
++ const b=e.target.closest('button');if(!b||b.disabled)return;const a=b.dataset.action;
++ if(!['periodUp27','periodDown27','readerReturn27','boardMenu','collapseAll','interactiveTest27'].includes(a)&&!b.dataset.fold)return;
++ e.stopImmediatePropagation();
++ if(b.dataset.fold||a==='collapseAll')return;
++ if(a==='periodUp27'){if(state.offset>0)showPeriod(state.offset-1);$('board').querySelector('[data-action="periodUp27"],[data-action="periodDown27"]')?.focus({preventScroll:true});return}
++ if(a==='periodDown27'){if(hasOlderTopics())showPeriod(state.offset+1);$('board').querySelector('[data-action="periodDown27"]')?.focus({preventScroll:true});return}
++ if(a==='readerReturn27'){returnToThemes();return}
++ if(a==='interactiveTest27'){closeDialog();mountInteractiveFixture27();return}
++ if(a==='boardMenu'){return menu(b,`<button role="menuitem" data-find-topic="__global__">查找主题与派生名称</button><button role="menuitem" data-action="showAllRecords">查看所有记录</button>`)}
++},true);
++window.__v27={...window.__v26,windowOf,bucketForDay,periodDays:30,mountInteractiveFixture27,inspect:()=>({period:range(),offset:state.offset,returnVisible:!returnButton27.hidden,sourceView:originView})};
+ render();
++
+ </script></body></html>

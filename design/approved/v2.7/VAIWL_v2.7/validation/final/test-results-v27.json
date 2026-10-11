@@ -1,0 +1,360 @@
+{
+  "evidence": "PROTOTYPE_SIMULATION",
+  "source_sha256": "81fa9779e4bc98b6b67c348f72a32ee1fd99519833994af9ed95716126f7da4e",
+  "browser": "144.0.7559.96",
+  "method": "Playwright page.set_content; independent synthetic contexts; no real ChatGPT",
+  "tests": [
+    {
+      "test": "distinct_monochrome_consistent_icons",
+      "status": "PASS",
+      "seconds": 0.267,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "icon_edit_undo_and_facts",
+      "status": "PASS",
+      "seconds": 0.336,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "icon_stability_on_rename",
+      "status": "PASS",
+      "seconds": 0.116,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "no_empty_expansion",
+      "status": "PASS",
+      "seconds": 0.104,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "initial_side_only_recent_heads",
+      "status": "PASS",
+      "seconds": 0.124,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "auto_context_switch_vs_manual_expansion",
+      "status": "PASS",
+      "seconds": 0.279,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "manual_collapse_survives_rerender",
+      "status": "PASS",
+      "seconds": 0.227,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "sidebar_disclosure_does_not_navigate",
+      "status": "PASS",
+      "seconds": 0.254,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "old_child_retains_current_parent",
+      "status": "PASS",
+      "seconds": 0.324,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "desktop_sidebar_choice_retained",
+      "status": "PASS",
+      "seconds": 0.431,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "narrow_user_can_keep_drawer",
+      "status": "PASS",
+      "seconds": 0.434,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "narrow_default_closes_overlay_only",
+      "status": "PASS",
+      "seconds": 0.353,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "native_mode_same_editor_and_selection",
+      "status": "PASS",
+      "seconds": 0.331,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "multiparent_follows_clicked_reference",
+      "status": "PASS",
+      "seconds": 0.295,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "ambiguous_global_reference_no_false_parent",
+      "status": "PASS",
+      "seconds": 0.161,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "unknown_coverage_not_false_history",
+      "status": "PASS",
+      "seconds": 0.348,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "twenty_time_partitions_disjoint",
+      "status": "PASS",
+      "seconds": 0.305,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "only_new_user_send_reactivates",
+      "status": "PASS",
+      "seconds": 0.235,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "title_lock_alias_and_exclusion",
+      "status": "PASS",
+      "seconds": 0.317,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "account_switch_clears_context",
+      "status": "PASS",
+      "seconds": 0.375,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "native_write_separate_consent_conflict",
+      "status": "PASS",
+      "seconds": 0.34,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "old_pin_not_active",
+      "status": "PASS",
+      "seconds": 0.192,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "keyboard_and_aria",
+      "status": "PASS",
+      "seconds": 0.242,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "multiple_widths_no_overflow",
+      "status": "PASS",
+      "seconds": 0.413,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "native_new_and_search_not_replaced_by_local_search",
+      "status": "PASS",
+      "seconds": 0.294,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "separate_derived_search_keeps_unknown_access",
+      "status": "PASS",
+      "seconds": 0.278,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "keyboard_search_routes_are_distinct",
+      "status": "PASS",
+      "seconds": 0.197,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "retained_mock_native_nodes_survive_projection",
+      "status": "PASS",
+      "seconds": 0.19,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "native_entries_one_level_and_identity_retained",
+      "status": "PASS",
+      "seconds": 0.199,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "native_pins_do_not_follow_time_filters",
+      "status": "PASS",
+      "seconds": 0.248,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "native_availability_and_new_unknown_entry",
+      "status": "PASS",
+      "seconds": 0.184,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "attention_not_hidden_by_recency_or_fold",
+      "status": "PASS",
+      "seconds": 0.219,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "dot_is_unchanged_placeholder_not_topic_icon",
+      "status": "PASS",
+      "seconds": 0.238,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "native_account_separate_from_extension_settings",
+      "status": "PASS",
+      "seconds": 0.267,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "host_tool_and_action_menus_remain_separate",
+      "status": "PASS",
+      "seconds": 0.374,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "focus_preserved_on_native_disclosure",
+      "status": "PASS",
+      "seconds": 0.231,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "fixed30_boundaries_and_no_calendar_drift",
+      "status": "PASS",
+      "seconds": 0.097,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "actual30_changes_sample_visibility_without_deleting",
+      "status": "PASS",
+      "seconds": 0.329,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "vertical_period_buttons_latest_has_no_up",
+      "status": "PASS",
+      "seconds": 0.42,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "no_main_card_collapsing_but_sidebar_remains",
+      "status": "PASS",
+      "seconds": 0.314,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "old_disclosure_left_and_only_older",
+      "status": "PASS",
+      "seconds": 0.296,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "all_paia_members_can_still_be_reached",
+      "status": "PASS",
+      "seconds": 1.197,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "only_one_reading_return_and_no_sidebar_copy",
+      "status": "PASS",
+      "seconds": 0.329,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "return_restores_history_and_draft",
+      "status": "PASS",
+      "seconds": 0.506,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "native_surface_has_same_single_return",
+      "status": "PASS",
+      "seconds": 0.355,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "interactive_native_fixture_keeps_state",
+      "status": "PASS",
+      "seconds": 0.429,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "native_new_flags_not_in_saved_chat",
+      "status": "PASS",
+      "seconds": 0.317,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "day_math_dst_is_local_date_not_hours",
+      "status": "PASS",
+      "seconds": 0.08,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "unknown_native_entries_and_model_relayout_not_owned",
+      "status": "PASS",
+      "seconds": 0.246,
+      "page_errors": [],
+      "page_requests": []
+    },
+    {
+      "test": "visual_regression_views",
+      "status": "PASS",
+      "seconds": 1.301,
+      "page_errors": [],
+      "page_requests": []
+    }
+  ],
+  "passed": 50,
+  "failed": 0
+}
