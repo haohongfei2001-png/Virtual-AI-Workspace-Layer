@@ -1,0 +1,20 @@
+{
+  "repository": "haohongfei2001-png/Virtual-AI-Workspace-Layer",
+  "pr": 1,
+  "draft": true,
+  "merged": false,
+  "parent": "7ff85d2fdf3abf9035404c8642c209cce2af1051",
+  "head": "968bb45351c2e341be4f66d6ccacb1a83311b393",
+  "tree": "1517b4e492eecb646d7a3fcd8e009d2290774cea",
+  "changed_files": [
+    "AGENTS.md",
+    "docs/AUTHORITY.md",
+    "docs/STATUS.md",
+    "docs/INTERACTION_SPEC.md",
+    "docs/CORE_FLOW_V2_7.md",
+    "docs/research/NATIVE_WEB_DELTA_2026_10_11.md"
+  ],
+  "only_markdown_in_repository": true,
+  "production_implementation": false,
+  "live_host_testing": false
+}

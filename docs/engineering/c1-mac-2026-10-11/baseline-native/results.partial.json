@@ -1,0 +1,111 @@
+{
+  "argv": [
+    "tests/c1/real-ui.py",
+    "--baseline",
+    "--out",
+    "docs/engineering/c1-mac-2026-10-11/baseline-native"
+  ],
+  "head": "3177752fbe7329a2f0b1a8987982694c4b3cf32b",
+  "tests": [
+    {
+      "id": "C1-real-screenshots-and-canonical-stress",
+      "status": "FAIL",
+      "error": "",
+      "trace": "Traceback (most recent call last):\n  File \"/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/tests/c1/real-ui.py\", line 30, in case\n    try:report['tests'].append({'id':name,'status':'PASS','actual':fn(p)})\n                                                                   ~~^^^\n  File \"/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/tests/c1/real-ui.py\", line 38, in visuals\n    assert c.locator('.row').count()==127;shot(p,'long-list');p.get_by_label('较早的30日',exact=True).click();shot(p,'empty-segment');assert p.locator('.workspace').get_attribute('data-segment')=='1';p.get_by_label('较早的30日',exact=True).click();shot(p,'older-segment');assert p.locator('.workspace [data-theme-id=W0]').count()==0\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+    },
+    {
+      "id": "C1-keyboard-local-disclosure-focus",
+      "status": "FAIL",
+      "error": "local disclosure lost keyboard focus after render",
+      "trace": "Traceback (most recent call last):\n  File \"/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/tests/c1/real-ui.py\", line 30, in case\n    try:report['tests'].append({'id':name,'status':'PASS','actual':fn(p)})\n                                                                   ~~^^^\n  File \"/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/tests/c1/real-ui.py\", line 43, in focus\n    home(p);b=p.get_by_label('展开旧窗口 城市声音档案',exact=True).first;b.focus();p.keyboard.press('Enter');assert p.evaluate(\"()=>{const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.workspace'));return root.shadowRoot.activeElement?.getAttribute('aria-label')==='展开旧窗口 城市声音档案'}\"),'local disclosure lost keyboard focus after render'\n                                                                                                                    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: local disclosure lost keyboard focus after render\n"
+    },
+    {
+      "id": "C1-current-reference-outside-preview",
+      "status": "FAIL",
+      "error": "current member beyond preview is missing",
+      "trace": "Traceback (most recent call last):\n  File \"/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/tests/c1/real-ui.py\", line 30, in case\n    try:report['tests'].append({'id':name,'status':'PASS','actual':fn(p)})\n                                                                   ~~^^^\n  File \"/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/tests/c1/real-ui.py\", line 47, in selected\n    p.goto('http://127.0.0.1:48176/hf/A/c/L127?mode=mv3');active(p);assert p.locator('.themes [data-ref-id=L127][aria-current=page]').count()==1,'current member beyond preview is missing';return {'currentBeyondCapacity':True}\n                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: current member beyond preview is missing\n"
+    },
+    {
+      "id": "C1-contextual-theme-search",
+      "status": "FAIL",
+      "error": "Locator.click: Timeout 5000ms exceeded.\nCall log:\n  - waiting for get_by_label(\"主题操作 城市声音档案\", exact=True)\n",
+      "trace": "Traceback (most recent call last):\n  File \"/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/tests/c1/real-ui.py\", line 30, in case\n    try:report['tests'].append({'id':name,'status':'PASS','actual':fn(p)})\n                                                                   ~~^^^\n  File \"/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/tests/c1/real-ui.py\", line 50, in context\n    home(p);p.get_by_label('主题操作 城市声音档案',exact=True).click();p.get_by_role('menuitem',name='查找此主题',exact=True).click();p.get_by_label('派生查找输入',exact=True).fill('T3');assert p.locator('.workspace [data-ref-id=T3]').count()==1;assert p.locator('.workspace [data-ref-id=T103]').count()==0;assert '旧窗口' not in p.locator('.search').inner_text();return {'unknownViaThemeSearch':True}\n            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py\", line 18032, in click\n    self._sync(\n    ~~~~~~~~~~^\n        self._impl_obj.click(\n        ^^^^^^^^^^^^^^^^^^^^^\n    ...<11 lines>...\n        )\n        ^\n    )\n    ^\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/lib/python3.14/site-packages/playwright/_impl/_sync_base.py\", line 115, in _sync\n    return task.result()\n           ~~~~~~~~~~~^^\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/lib/python3.14/site-packages/playwright/_impl/_locator.py\", line 165, in click\n    return await self._frame._click(self._selector, strict=True, **params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/lib/python3.14/site-packages/playwright/_impl/_frame.py\", line 594, in _click\n    await self._channel.send(\"click\", self._timeout, locals_to_params(locals()))\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 76, in send\n    return await self._connection.wrap_api_call(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 632, in wrap_api_call\n    raise rewrite_error(error, f\"{parsed_st['apiName']}: {error}\") from None\nplaywright._impl._errors.TimeoutError: Locator.click: Timeout 5000ms exceeded.\nCall log:\n  - waiting for get_by_label(\"主题操作 城市声音档案\", exact=True)\n\n"
+    }
+  ],
+  "screenshots": [
+    "desktop.png",
+    "history-expanded.png",
+    "dark.png",
+    "narrow.png",
+    "C1-real-screenshots-and-canonical-stress-failure.png",
+    "C1-keyboard-local-disclosure-focus-failure.png",
+    "C1-current-reference-outside-preview-failure.png",
+    "C1-contextual-theme-search-failure.png"
+  ],
+  "errors": [],
+  "environment": {
+    "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+    "node": "v26.8.2",
+    "python": "3.14.7",
+    "chrome": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/154.0.8037.99",
+      "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+      "jsVersion": "15.4.80.20"
+    },
+    "playwright": "1.63.0"
+  },
+  "scope": "synthetic-only actual MV3 / actual extension IndexedDB",
+  "startedAt": 1791731102.7697978,
+  "buildHashes": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/document-binding-broker.mjs": "5f5aecffdcd5bd4e39493565b814956c048a6ee9fb28fec559f33269424ee851",
+    "simulator/service.mjs": "cd493e0a914b719f59f70147023e9acfcc58431c105e8b0f79e0bd430d29d5d1",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "b7bc056239309217aa3acb067c11ae9e503a88322454e3f57aae74a1eee4e970",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/state.mjs": "16022c55160719f6e7c86de5b3ca71e3f594a2df8373b96525f852435c1d745c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/repository.mjs": "542d418165b5414a92015291b31c62a02e8b35413539a17ddb0c1557c5905615",
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "content.js": "03a9e7d42a27dc12d66691a0b0ac791ec9106809f99267104ae8d4f64ab7f736",
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+  },
+  "sourceHashes": {
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "src/navigation/navigation.mjs": "b1bf2d9bec8be6931a802a1608d2ebf545b89930d94d1b66ba47520045ff6804",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/document-binding-broker.mjs": "5f5aecffdcd5bd4e39493565b814956c048a6ee9fb28fec559f33269424ee851",
+    "src/data/state.mjs": "16022c55160719f6e7c86de5b3ca71e3f594a2df8373b96525f852435c1d745c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "542d418165b5414a92015291b31c62a02e8b35413539a17ddb0c1557c5905615",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "simulator/index.html": "52737486a2ad0b296a8e212ab0607cb89f99b94d3f6b193793817babde01b7d4",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "simulator/control.html": "1e0eeb74c8fc277232b2edfac95787dbd62d6ae7470af982f4ca268579ffbd7f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/adapter.mjs": "701aa0ab7246707d5d26b3d03a01dd9e3c8bb5cce0a755896808899add6deacb",
+    "simulator/client.mjs": "dfede40405bacdd70d7e6d69c107d33809f7766482965dec41930266c313dab5",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.css": "0627ff2b3ab6d9797850caca1da4cdb91ddfdfea32318dd8e1a15f9bac23d153",
+    "simulator/persistent-seed.mjs": "b7bc056239309217aa3acb067c11ae9e503a88322454e3f57aae74a1eee4e970",
+    "simulator/build.mjs": "e95ff5f4ec632a9702ccec75d8e6596078499a3332b4daf036e479980de731cd",
+    "simulator/host.mjs": "9d4d7b9b5e847537ad4b01d31117d3d2d553a34e041f0d2c2cb8e57631ec0bca",
+    "simulator/main.mjs": "7a6788fefe2eaf5c8abcd46cfe024c76511c422888073472bbb3b8caacf9092c",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/service.mjs": "cd493e0a914b719f59f70147023e9acfcc58431c105e8b0f79e0bd430d29d5d1",
+    "simulator/editor.mjs": "0f5cd1026315dad830881060c109b8a10cdc82212a5e937803ee1ca92ee991b1",
+    "tests/c1/real-ui.py": "04ce27b1eb19af0beafa1c40cb0d3d853565e7e7dd3c5787f6c62e8e20ca902a"
+  },
+  "extension": {
+    "id": "dndalmoecigckehokkgdaiaeibmaiick"
+  }
+}

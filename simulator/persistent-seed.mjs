@@ -1,3 +1,4 @@
+import { defaultIcon } from '../src/navigation/icons.mjs';
 import { dataset, FIXTURE_NOW } from './data.mjs';
 import { emptyState, validateState, placementId } from '../src/data/state.mjs';
 /** This is a privileged SYNTHETIC fixture provider, not a ChatGPT importer. */
@@ -14,7 +15,7 @@ export function persistentSeed(scope,origin){
     s.coverage[cid]={id:cid,sourceId:'fixture_v1',conversationId:r.id,from:c.from,through:c.through,observedAt:FIXTURE_NOW,completeness:c.gaps?'partial':'complete',branches:'all',gaps:[],revoked:false};
   }
   data.themes.forEach((w,index)=>{
-    s.workspaces[w.id]={id:w.id,name:w.name,icon:'◇',order:index,locked:false,owner:'bootstrap',revision:1,seedIndex:index};
+    s.workspaces[w.id]={id:w.id,name:w.name,icon:defaultIcon(w.name),order:index,locked:false,owner:'bootstrap',revision:1,seedIndex:index};
     w.members.forEach((refId,order)=>{const pid=placementId(w.id,refId);s.placements[pid]={id:pid,workspaceId:w.id,refId,excluded:false,order,locked:false,owner:'bootstrap',revision:1};});
   });
   return validateState(s,s.scopeKey);

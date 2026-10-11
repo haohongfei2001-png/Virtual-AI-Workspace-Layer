@@ -1,0 +1,5 @@
+# Navigation closure counterexamples
+
+Final-layout DOM run dom-product/ retained D16 FAIL: absolute card measurement temporarily collapses content before its height is assigned, clearing scrollTop. Layout now preserves the scroller offset around measurement; same original D16 has PASS in scroll-fixed/.
+
+New real far-route-before/ adds the previously untested T11903 normal-click / Meta new-tab journey:8/9 PASS, far navigation FAIL because its stored native URL lacks the synthetic harness mode, and a new host starts the small fixture. This is a synthetic adapter/host test-scale defect, not a database/CAS or production resolver defect. Correct only adapter-generated href activation/scale, guarded to the same approved synthetic origin; persisted native URL unchanged. Host honors explicit synthetic size=120 at startup. Current L127 test now also requires the actual native conversation and input, not just the sidebar link. Full9 native journeys plus all regressions follow. No source changes to data/broker/worker/projection engines or native controls.

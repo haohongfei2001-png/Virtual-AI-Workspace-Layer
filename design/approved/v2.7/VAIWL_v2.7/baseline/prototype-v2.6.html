@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VAIWL · 原生完整性与图形回看原型 v2.6</title>
+<style>
+:root{color-scheme:light;--bg:#fff;--side:#f9f9f9;--text:#171717;--muted:#646464;--line:#e5e5e5;--hover:#f3f3f3;--selected:#ececec;--bubble:#f4f4f4;--menu:#fff;--focus:#444;--accent:#171717;--contrast:#fff;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+[data-theme=dark]{color-scheme:dark;--bg:#212121;--side:#171717;--text:#ececec;--muted:#b4b4b4;--line:#444;--hover:#303030;--selected:#3b3b3b;--bubble:#303030;--menu:#2f2f2f;--focus:#ddd;--accent:#ececec;--contrast:#171717}
+*{box-sizing:border-box}body{margin:0;color:var(--text);background:var(--bg)}button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer;background:none;border:0}button:disabled{opacity:.4;cursor:default}button:hover{background:var(--hover)}button,input,select,textarea{outline-offset:3px}button:focus-visible,a:focus-visible{outline:2px solid var(--focus)}svg{width:18px;height:18px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;flex:none}h1,h2,h3,p{margin:0}h1{font-size:26px;line-height:1.4;font-weight:600;letter-spacing:-.5px}h2{font-size:16px;font-weight:600}small,.small{font-size:12px}.muted{color:var(--muted)}.hidden,[hidden]{display:none!important}.shell{height:100dvh;display:grid;grid-template-columns:260px minmax(0,1fr)}.sidebar{background:var(--side);padding:18px 12px;display:flex;flex-direction:column;border-right:1px solid var(--line);overflow:auto}.sidehead{display:flex;align-items:center;justify-content:space-between;margin:0 10px 22px;font-weight:600}.icon{padding:7px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}.nav{width:100%;display:flex;align-items:center;gap:10px;text-align:left;padding:10px;border-radius:8px}.nav.selected{background:var(--selected)}.navcaption{color:var(--muted);font-size:12px;padding:22px 10px 8px}.sidefoot{margin-top:auto;padding-top:24px}.thirdparty{border:1px solid var(--line);border-radius:7px;padding:3px 7px;font-size:11px;white-space:nowrap}.sidefoot p{font-size:11px;color:var(--muted);padding:8px 10px}.page{min-width:0;display:flex;flex-direction:column;overflow:hidden}.top{height:60px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:10px}.top .model{font-size:18px;font-weight:550;padding:8px;border-radius:8px}.topright{display:flex;align-items:center;gap:10px}.toggle{display:flex;padding:3px;background:var(--hover);border-radius:9px;font-size:12px}.toggle button{padding:6px 10px;border-radius:6px}.toggle [aria-pressed=true]{background:var(--bg);box-shadow:0 1px 3px #0001}.mobile{display:none}.toolbar{padding:12px 32px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.range{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.button{padding:7px 11px;border:1px solid var(--line);border-radius:8px;display:inline-flex;gap:7px;align-items:center;justify-content:center;background:var(--bg)}.current{padding:9px 32px;background:var(--side);font-size:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.current button{text-align:left;border-radius:5px;text-decoration:underline;text-underline-offset:3px}.scroll{overflow:auto;flex:1;min-height:0}.board{padding:28px 32px 50px;max-width:1300px;margin:auto}.intro{display:flex;align-items:center;justify-content:space-between;margin-bottom:23px;gap:14px}.boardactions{display:flex;align-items:center;gap:5px}.intro p{color:var(--muted);font-size:13px;margin-top:5px}.sectiontitle{display:flex;align-items:center;justify-content:space-between;margin:25px 0 12px;color:var(--muted);font-size:12px}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}.topic{border:1px solid var(--line);border-radius:14px;background:var(--bg);min-width:0;overflow:hidden;scroll-margin:18px}.topic.is-current{border-color:var(--muted)}.topichead{display:flex;align-items:center;padding:12px 14px;gap:7px}.topiclabel{display:flex;flex:1;align-items:center;gap:9px;text-align:left;min-width:0;padding:4px 0;border-radius:5px}.topiclabel strong{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.topiclabel svg{width:15px;height:15px}.rows{padding:0 7px 7px}.row{display:flex;align-items:center;gap:5px;border-radius:7px;min-height:34px;padding:1px 4px}.row:hover{background:var(--hover)}.row.is-current{background:var(--selected)}.rowmain{padding:7px 6px;min-width:0;flex:1;text-align:left}.rowmain span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rowmain .title{font-size:13px}.row .more{opacity:0;padding:5px}.row:hover .more,.row:focus-within .more{opacity:1}.expand{color:var(--muted);font-size:12px;text-align:left;border-radius:6px;padding:8px 9px;width:100%}.group-toggle{padding:13px 0;border-top:1px solid var(--line);display:flex;align-items:center;gap:8px;text-align:left;width:100%;color:var(--muted);margin-top:23px}.group-toggle span{margin-left:auto;font-size:12px}.empty{padding:28px 12px;color:var(--muted);font-size:13px}.focuscard{max-width:850px;margin:auto}.back{margin-bottom:16px;padding:7px 0;font-size:13px;color:var(--muted)}.subgroup{border-top:1px solid var(--line);padding-top:3px}.host{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto}.chathead{padding:18px 32px 12px;display:flex;justify-content:space-between;align-items:center;gap:12px}.chathead h2{font-size:17px}.chatbody{width:100%;max-width:790px;margin:22px auto;padding:0 30px;flex:1;line-height:1.85;font-size:16px}.userbubble{margin-left:14%;background:var(--bubble);padding:14px 20px;border-radius:22px;white-space:pre-wrap}.answer{padding:30px 0 12px}.answer h3{font-size:17px;margin-bottom:10px}.answer p{margin:10px 0}.composerwrap{width:100%;max-width:790px;margin:auto;padding:16px 30px 18px}.composer{border:1px solid var(--line);border-radius:26px;padding:15px 18px;background:var(--bg)}textarea{border:0;resize:vertical;min-height:56px;max-height:220px;width:100%;background:none;outline:none;line-height:1.6;font-size:16px}.composeractions{display:flex;justify-content:space-between;align-items:center}.send{border-radius:50%;background:var(--accent);color:var(--contrast);width:33px;height:33px}.hint{font-size:11px;color:var(--muted);text-align:center;margin-top:9px}.fault{background:var(--side);border:1px solid var(--line);padding:10px 24px;font-size:12px}.popover{position:fixed;z-index:20;min-width:180px;padding:6px;background:var(--menu);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px #0002}.popover button{display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;width:100%;padding:9px 10px;border-radius:7px}.popover [aria-checked=true]{font-weight:600}.popover .separator{height:1px;background:var(--line);margin:5px}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:50;max-width:90vw;background:var(--text);color:var(--bg);border-radius:10px;padding:11px 15px;font-size:12px;box-shadow:0 4px 18px #0002}.toast button{color:inherit;text-decoration:underline;margin-left:12px}dialog{width:min(560px,calc(100vw - 28px));max-height:85dvh;overflow:auto;border:1px solid var(--line);border-radius:16px;background:var(--bg);color:var(--text);padding:24px;box-shadow:0 12px 40px #0002}dialog::backdrop{background:#0005}.dialoghead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.dialogbody p{margin:12px 0}.dialogbody input[type=text],.dialogbody input[type=date],.dialogbody select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);margin:6px 0 12px}.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.field,.notice{padding:12px;border:1px solid var(--line);border-radius:9px;margin:12px 0;font-size:13px}.field strong{display:block;margin-top:5px;overflow-wrap:anywhere}.checkrow{display:flex;align-items:center;gap:10px;margin:8px 0}.assignment{max-height:260px;overflow:auto}.searchresults{max-height:45dvh;overflow:auto}.error{color:#b42318;font-size:12px}.primary{background:var(--accent);color:var(--contrast)}.primary:hover{opacity:.85;background:var(--accent)}.native-list{max-width:850px;margin:auto}.workset{display:flex;gap:7px;overflow:auto;padding:8px 32px;border-bottom:1px solid var(--line)}.workset button{border-radius:7px;padding:5px 9px;white-space:nowrap;font-size:12px}.workset [aria-current=true]{background:var(--selected)}@media(min-width:1550px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:1090px){.cards{grid-template-columns:1fr}.shell{grid-template-columns:238px minmax(0,1fr)}.board{padding:22px}.toolbar{padding:10px 22px}}@media(max-width:760px){.shell{grid-template-columns:1fr}.sidebar{display:none}.nav-open .sidebar{display:flex;position:fixed;inset:60px auto 0 0;z-index:10;width:250px;box-shadow:8px 0 24px #0002}.mobile{display:inline-flex}.top{padding:0 10px}.topright{gap:5px}.top .model{font-size:16px}.thirdparty{font-size:10px}.top .thirdparty{display:inline-block;max-width:65px;white-space:normal;line-height:1.2;font-size:10px}.board{padding:20px 16px}.toolbar{padding:10px 16px}.toolbar .small{width:100%}.intro{align-items:start}.intro h1{font-size:24px}.row .more{opacity:1}.chathead{padding:16px}.chatbody{padding:0 18px}.composerwrap{padding:12px 16px}.current,.workset{padding-left:16px;padding-right:16px}.cards{gap:12px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* v2.2: content-proportioned navigation cards; all native pixels remain illustrative. */
+.shell{grid-template-columns:220px minmax(0,1fr)}
+.sidebar{padding:16px 10px 10px;border-right:0}
+.sidehead{margin:0 6px 16px;height:32px;font-size:15px}.nav{min-height:36px;padding:8px 10px;font-size:14px}.nav svg{width:17px;height:17px}.navpair{display:flex;align-items:center;border-radius:8px}.navpair.selected{background:var(--selected)}.navpair .nav{flex:1;min-width:0}.navpair .view-options{margin-right:5px}.sidefoot{padding-top:22px}.sidefoot p{padding:0 10px 4px;font-size:10px;line-height:16px}.extensionline{display:flex;justify-content:space-between;align-items:center;padding:2px 5px 2px 10px;font-size:11px;color:var(--muted)}.extensionline .icon svg{width:14px;height:14px}
+.page{position:relative}.board{padding:24px 28px 36px;max-width:1460px;width:100%;margin:0 auto}.cards{gap:14px;align-items:start;max-width:100%}.topic-column{display:flex;flex-direction:column;gap:14px;min-width:0}.topic{border-radius:12px;min-height:0;box-shadow:none}.topichead{padding:8px 10px 5px 14px;gap:4px;min-height:43px}.topiclabel{gap:8px;padding:3px 0;min-height:28px;flex:1}.topiclabel strong{font-size:15px;line-height:22px;font-weight:600}.topiclabel svg{width:12px;height:12px;color:var(--muted);opacity:.65}.topic-menu{width:28px;height:28px;padding:5px;opacity:0}.topic:hover .topic-menu,.topic:focus-within .topic-menu{opacity:1}.rows{padding:0 8px 8px}.row{min-height:32px;padding:0 2px;gap:0}.rowmain{padding:6px 5px;line-height:20px}.rowmain .title{font-size:14px;line-height:20px}.row .more{width:27px;height:28px}.row .more svg{width:16px}.card-tail{display:flex;align-items:center;flex-wrap:wrap;column-gap:8px;row-gap:1px;margin-top:3px;padding:0 5px}.expand{width:auto;min-height:28px;padding:4px 0;font-size:12px;line-height:20px;border-radius:5px;color:var(--muted)}.expand svg{height:10px;width:10px;margin-left:1px}.subgroup{display:contents;border:0;padding:0}.subgroup.is-expanded{display:block;flex:0 0 100%;border-top:1px solid var(--line);padding-top:3px;margin-top:3px}.subgroup.is-expanded>.expand{width:100%}.subrows{margin:0 -5px 2px}.subrows .expand{margin-left:5px}.group-toggle{border-top:0;width:auto;padding:7px 0;margin-top:15px;font-size:13px;min-height:32px}.group-toggle svg{width:12px;height:12px}.history-context{height:36px;display:flex;align-items:center;gap:14px;margin-bottom:16px;font-size:13px;color:var(--muted);max-width:1032px}.history-context>div{margin-left:auto}.history-context .back{margin:0;padding:6px 0;font-size:13px}.history-context .icon{font-size:20px;line-height:20px}.focuscard{max-width:560px;margin:0}.focuscard .back{margin:0 0 14px;font-size:13px}.focuscard .intro{margin:0 0 16px}.focuscard h1{font-size:17px;letter-spacing:0}.current{display:block;padding:0;background:none}.current .navcaption{padding-top:18px}.current .nav{text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.navrail{display:none;background:var(--side);padding:16px 5px 8px;flex-direction:column;align-items:center;gap:10px}.navrail .icon{width:34px;height:34px}.railfoot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:8px}.rail-id{text-align:center;font-size:8px;line-height:14px;color:var(--muted)}.sidebar-collapsed{grid-template-columns:50px minmax(0,1fr)}.sidebar-collapsed .sidebar{display:none}.sidebar-collapsed .navrail{display:flex}.nav-backdrop{position:fixed;inset:0;z-index:9;background:#0004}.native-list{margin:0;max-width:720px}.native-list h1{font-size:18px}.native-list .intro{margin:0 0 14px}.chathead{padding-top:22px}.workset{padding-top:12px;padding-bottom:8px}
+@media(pointer:coarse){.topic-menu,.row .more{opacity:1}.row{min-height:40px}.topichead{min-height:44px}.expand{min-height:36px}.navrail .icon{height:40px}.topic-menu,.row .more{width:32px;height:36px}}
+@media(max-width:760px){.shell,.sidebar-collapsed{grid-template-columns:46px minmax(0,1fr)}.sidebar{display:none}.navrail{display:flex;padding:12px 4px 8px;gap:8px}.nav-open .sidebar,.nav-open.sidebar-collapsed .sidebar{display:flex;position:fixed;inset:0 auto 0 0;width:248px;z-index:10;box-shadow:6px 0 30px #0002}.nav-open .navrail{display:flex}#nav-backdrop{left:248px}.board{padding:16px 12px 28px}.history-context{gap:8px;font-size:12px}.history-context .back{font-size:12px}.topichead{padding-left:12px}.chatbody{padding:0 14px}.composerwrap{padding:12px}.workset{padding-left:14px}.chathead{padding:16px 14px}.topic-menu{opacity:1}}
+
+
+/* v2.3: container header / nested destinations / original chat. Candidate, not host pixels. */
+:root{--topic-head:#f4f4f4;--topic-icon:#e8e8e8;--branch:#d8d8d8}
+[data-theme=dark]{--topic-head:#2b2b2b;--topic-icon:#3b3b3b;--branch:#4b4b4b}
+.board{padding:24px;max-width:1240px;margin:0}
+.topic{border-radius:13px;border:1px solid var(--line);background:var(--bg)}
+.topichead{min-height:50px;padding:0 9px 0 15px;background:var(--topic-head);border-bottom:1px solid var(--line);gap:5px}
+.topic.folded .topichead{border-bottom-color:transparent}
+.topic-heading{flex:1;min-width:0;margin:0}
+.topiclabel{display:flex;width:100%;min-height:50px;padding:8px 0;gap:11px;text-align:left}
+.topiclabel:hover{background:transparent}
+.topiclabel .topic-symbol{height:26px;width:26px;display:grid;place-items:center;border-radius:8px;background:var(--topic-icon);flex:none}
+.topiclabel .topic-symbol svg{width:17px;height:17px;color:var(--text);opacity:1}
+.topiclabel .topic-name{font-size:15px;line-height:22px;font-weight:600;overflow-wrap:anywhere;flex:1;min-width:0}
+.topiclabel .disclosure{margin-left:auto;display:flex;flex:none}
+.topiclabel .disclosure svg{width:14px;height:14px;opacity:1}
+.topic-menu{opacity:0;width:28px;flex:none}
+.topic-contents{padding:10px 10px 9px 14px}
+.window-list{border-left:1px solid var(--branch);margin:0 0 0 14px;padding:0 0 0 9px}
+.window-list .row{min-height:36px;position:relative;padding:0 0 0 3px}
+.window-list .row::before{content:"";position:absolute;left:-10px;top:18px;width:7px;border-top:1px solid var(--branch);pointer-events:none}
+.rowmain{display:flex;align-items:center;gap:8px;min-height:36px;padding:7px 3px 7px 6px;line-height:22px}
+.rowmain .window-symbol{display:flex;flex:none;color:var(--muted)}
+.rowmain .window-symbol svg{width:14px;height:14px}
+.rowmain .title{font-size:14px;line-height:22px;min-width:0;flex:1}
+.rowmain .enter{color:var(--muted);display:flex;flex:none;opacity:0}
+.rowmain .enter svg{width:13px;height:13px}
+.rowmain:hover .enter,.rowmain:focus-visible .enter{opacity:1}
+.row:hover .rowmain{background:transparent}
+.card-tail{padding:3px 4px 0 29px;gap:4px 13px;margin-top:1px}
+.card-tail .expand{font-size:12px;min-height:28px;line-height:20px}
+.subgroup.is-expanded{padding-top:5px;margin-top:5px}
+.subrows{margin:3px 0 3px -15px}
+.subrows .window-list{margin-left:14px}
+.focuscard{max-width:640px}
+#workset{display:none!important}
+.scene-option{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:9px;text-align:left;margin:8px 0;display:block}
+.scene-option small{display:block;color:var(--muted);margin-top:4px}
+.scene-option[aria-pressed=true]{background:var(--selected)}
+[data-equal-type=true] .topic-name,[data-equal-type=true] .rowmain .title{font-size:14px!important;font-weight:400!important}
+@media(pointer:coarse){.window-list .row,.rowmain{min-height:44px}.window-list .row::before{top:22px}.topic-menu{opacity:1}.row .more{width:36px;height:40px}.topiclabel{min-height:60px}.card-tail .expand{min-height:40px}.enter{display:none!important}}
+@media(max-width:760px){.board{padding:16px 12px}.topichead{padding-left:12px}.topiclabel{gap:9px}.topic-menu{opacity:1}.topic-contents{padding-left:10px}.card-tail{padding-left:25px}.rowmain{gap:6px}.rowmain .enter{display:none}}
+
+
+/* v2.4 candidate: the same topic identities in overview and contextual sidebar. */
+.shell{grid-template-columns:272px minmax(0,1fr)}
+.sidebar{overflow:hidden;padding:14px 9px 9px;min-height:0}
+.sidebar-collapsed{grid-template-columns:50px minmax(0,1fr)}
+.sidehead{flex:none;margin-bottom:13px}.sidehead button{min-width:30px}
+.nav-top{flex:none;padding-bottom:8px}
+.nav-top .nav{min-height:36px}
+.nav-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:7px 2px 10px;scrollbar-width:thin}
+.sidefoot{flex:none;padding-top:8px;border-top:1px solid var(--line);margin-top:0}
+.sidefoot .nav{min-height:31px;font-size:12px;padding:6px 9px}
+.side-group{margin:2px 0 5px;min-width:0}
+.side-topic{display:flex;align-items:center;gap:7px;width:100%;min-height:39px;padding:8px;border-radius:8px;text-align:left;font-weight:550}
+.side-topic .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side-topic svg{width:16px;height:16px;color:var(--muted)}
+.side-topic .chevron{display:flex}.side-topic .chevron svg{width:12px;height:12px}
+.side-group.is-context>.side-topic{background:var(--selected)}
+.side-children{border-left:1px solid var(--branch);margin:3px 3px 7px 16px;padding-left:6px;min-width:0}
+.side-children .row{min-width:0;min-height:34px;padding:0}
+.side-children .rowmain{min-height:34px;gap:6px;padding:5px 5px}
+.side-children .rowmain .title{font-size:13px;line-height:23px}
+.side-children .window-symbol svg{width:12px;height:12px}
+.side-children .rowmain .enter{display:none}
+.side-children .row.is-current{background:var(--selected);box-shadow:none}
+.side-children .more{width:22px;flex:none}
+.side-children .more svg{width:13px}
+.side-complete{margin-top:4px;border-top:1px solid var(--line);padding-top:4px}
+.side-more,.side-all{display:flex;align-items:center;gap:5px;min-height:30px;padding:5px 7px;width:100%;font-size:12px;text-align:left;color:var(--muted);border-radius:6px}
+.side-all svg{width:11px;height:11px}
+.side-all:hover,.side-more:hover{background:var(--hover)}
+.side-children .rest-rule{margin:8px 5px;border-top:1px solid var(--line)}
+.card-tail{display:block;padding:4px 0 0 28px}
+.card-tail .expand{padding:5px 2px;display:inline-flex;gap:6px;align-items:center}
+.card-tail .expand svg{width:11px;height:11px}
+.complete-list{border-top:1px solid var(--line);margin:9px 0 0 -28px;padding:9px 0 0 0}
+.complete-list .window-list{margin-left:14px}.complete-list .empty{padding:8px}
+.complete-list .expand{margin-left:30px}
+.icon-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}
+.icon-choice{border:1px solid var(--line);border-radius:10px;min-height:65px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:11px}
+.icon-choice svg{width:19px;height:19px}.icon-choice[aria-pressed=true]{border-color:var(--text);background:var(--selected)}
+.library-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 17px;font-size:13px}
+.library-head h1{font-size:17px;font-weight:550;letter-spacing:0}
+.library-section{margin-bottom:22px}
+.library-toggle{min-height:36px;display:flex;align-items:center;gap:9px;padding:7px 1px;font-size:13px;margin-bottom:9px;border-radius:6px}
+.library-toggle svg{width:12px;height:12px}
+.period-nav{display:flex;align-items:center;gap:13px;color:var(--muted);font-size:12px;margin:0 0 13px}
+.period-nav button{border-radius:6px;padding:6px 8px}
+.library-note{font-size:12px;line-height:1.6;color:var(--muted);margin:0 0 12px}
+.board-footer{display:flex;align-items:center;justify-content:flex-start;max-width:100%;margin-top:16px}
+.board-footer .group-toggle{margin-top:0}
+#library-unknown-cards .topic{margin-bottom:0}
+#host .chathead{padding-top:22px}
+.dot-entry{font-weight:500}.dot-entry svg{width:17px;height:17px}
+.current-exception{padding:1px 9px 5px;font-size:11px;color:var(--muted)}
+@media(pointer:coarse){.side-topic{min-height:44px}.side-children .rowmain{min-height:44px}.side-all,.side-more{min-height:40px}.nav-top .nav{min-height:44px}}
+@media(max-width:760px){.shell,.sidebar-collapsed{grid-template-columns:46px minmax(0,1fr)}.nav-open .sidebar,.nav-open.sidebar-collapsed .sidebar{width:min(288px,calc(100vw - 54px));padding:14px 9px 9px}#nav-backdrop{left:min(288px,calc(100vw - 54px))}.board{padding:16px 12px}.library-head{margin-bottom:12px}.sidebar{display:none}.sidefoot .nav{min-height:34px}.side-topic{min-height:42px}.side-children .rowmain{min-height:40px}}
+
+
+/* v2.5: selected fill only; focus-visible is retained. These styles are demo-only. */
+.side-children .row.is-current{box-shadow:none;border-left:0;background:var(--selected)}
+.sidehead{gap:8px}.sidehead-tools{display:flex;align-items:center;gap:4px}
+.workspace-home{display:inline-flex;align-items:center;gap:5px;border-radius:7px;padding:6px 8px;font-size:12px;font-weight:400;white-space:nowrap;min-height:32px;color:var(--muted)}
+.workspace-home svg{width:15px;height:15px}.workspace-home:hover{color:var(--text)}
+.workspace-home[aria-current=page]{color:var(--text)}
+.history-disclosure{display:flex;align-items:center;gap:6px;min-height:30px;padding:5px 6px;border-radius:6px;font-size:12px;line-height:20px;color:var(--muted);background:transparent}
+.history-disclosure svg{width:12px;height:12px;transition:transform .14s ease}
+.history-disclosure[aria-expanded=true] svg{transform:rotate(180deg)}
+.history-panel{border-top:1px solid var(--line);margin:6px 0 0 -28px;padding-top:7px}
+.history-panel .window-list{margin-left:14px}
+.current-more{display:inline-flex;align-items:center;gap:5px;color:var(--muted);min-height:30px;padding:5px 6px;font-size:12px;border-radius:6px}
+.current-more svg{height:12px;width:12px}.window-list>.current-more{margin-left:3px}
+.side-children>.history-disclosure{margin-top:3px}
+.side-past-panel{border-top:1px solid var(--line);margin-top:4px;padding-top:4px}
+.side-children .active-exception{color:var(--muted);font-size:11px;margin:6px 5px 2px}
+.board-footer{justify-content:center;max-width:1104px;margin-top:23px;padding:3px 0}
+.past-step{display:inline-flex;gap:7px;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:18px;padding:7px 17px;font-size:13px;min-height:36px;color:var(--muted);background:var(--bg)}
+.past-step svg{width:14px;height:14px}.past-step:hover{color:var(--text);background:var(--hover)}
+.past-context{display:flex;align-items:center;gap:14px;min-height:32px;margin-bottom:15px;color:var(--muted);font-size:13px;max-width:1104px}
+.past-context .past-label{margin-left:auto}.past-context .back{margin:0;padding:6px}
+.archive-empty{max-width:650px;padding:30px 10px;color:var(--muted);font-size:13px}
+.end-note{font-size:12px;color:var(--muted);margin:0}
+.mock-native-head{display:flex;align-items:center;justify-content:space-between;padding:12px 22px;min-height:60px;flex:none}
+.mock-model{font-size:18px;font-weight:550;display:flex;align-items:center;gap:7px;border-radius:8px;padding:5px 9px}
+.mock-model svg{width:12px;height:12px}.mock-native-controls{display:flex;gap:5px;color:var(--muted)}
+#host .chatbody{margin-top:30px}#host .answer{padding-top:30px}#host .answer p{margin:14px 0}
+#host .composer{background:var(--bubble);border-color:transparent;box-shadow:none}
+#host textarea{resize:none;background:transparent}
+#host .composerhint{font-size:11px;color:var(--muted);text-align:center;margin-top:10px}
+@media(max-width:760px){.workspace-home{font-size:12px;padding:6px}.mock-native-head{padding:10px 10px}.mock-model{font-size:16px}.past-context{gap:6px;font-size:12px}.past-step{font-size:12px}.board-footer{margin-top:18px}}
+@media(pointer:coarse){.history-disclosure,.current-more{min-height:40px}.workspace-home{min-height:36px}.past-step{min-height:44px}}
+
+
+/* v2.6 design prototype only. In production these rules must be scoped to owned UI. */
+.card-tail{padding:4px 0 0}.history-panel{margin:6px 0 0;padding:7px 0 0}
+.history-disclosure{justify-content:center;width:70px;min-height:30px;margin:2px auto 0;border-radius:8px;background:var(--side)}
+.history-disclosure svg{width:16px;height:16px}.history-disclosure:hover{background:var(--selected)}
+.history-disclosure[aria-expanded=true]{margin-bottom:5px}.side-children>.history-disclosure{width:54px;min-height:28px;margin-top:4px}
+.past-step{width:44px;height:36px;padding:7px;border-radius:11px;background:var(--side);border-color:transparent}
+.past-step svg{width:19px;height:19px}.past-context .back{display:inline-flex;align-items:center;justify-content:center;width:34px;height:32px;border-radius:8px}.past-context .back svg{width:17px;height:17px}
+.past-context{gap:6px}.past-context .past-label{display:none}
+.workspace-home{width:31px;padding:5px}.workspace-home svg{width:17px;height:17px}
+.native-primary .nav{min-height:36px}.native-primary{padding-bottom:7px}
+.native-resource-zone{margin-top:16px;padding-top:9px;border-top:1px solid var(--line)}
+.native-feature-row{display:flex;align-items:center;border-radius:8px;min-width:0}
+.native-feature-row .nav{flex:1;min-width:0;overflow:hidden}.native-feature-row .nav>.native-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.native-feature-pin{opacity:0;display:flex;padding:6px;flex:none;color:var(--muted);border-radius:6px}
+.native-feature-row:hover .native-feature-pin,.native-feature-row:focus-within .native-feature-pin{opacity:1}
+.native-feature-pin svg{width:13px;height:13px}.native-feature-row.native-pinned .native-feature-pin{opacity:.55}
+.native-more-control{width:100%;display:flex;align-items:center;gap:10px;min-height:35px;padding:8px 10px;color:var(--muted);border-radius:8px;text-align:left}
+.native-more-control .disclosure{margin-left:auto;display:flex}.native-more-control .disclosure svg{width:12px;height:12px}
+.native-identity-avatar{width:23px;height:23px;border-radius:7px;display:grid;place-items:center;background:#e0e0e0;color:#525252;font:500 12px/1 system-ui;flex:none}
+.native-dot-name{font:inherit}.native-account-entry{display:flex;align-items:center;width:100%;gap:10px;text-align:left;padding:9px 8px;border-radius:8px;min-height:45px}
+.native-account-entry>span:nth-child(2){flex:1}.native-account-entry small{display:block;font-size:10px;color:var(--muted)}
+.native-account-entry>svg{width:14px;color:var(--muted)}.native-attention-label{margin-left:auto;font-size:10px;white-space:nowrap;color:var(--muted)}
+.native-feature-row.has-attention{background:var(--hover)}
+#native-account-slot{border-top:1px solid var(--line);margin-top:5px;padding-top:3px}.v26-extensionbar{display:flex;align-items:center;gap:3px;padding:3px 5px 2px 9px;font-size:10px;color:var(--muted)}
+.v26-extensionbar .spacer{flex:1}.v26-extensionbar .icon{padding:6px}.v26-extensionbar svg{width:15px;height:15px}
+#native-surface{flex:1;min-height:0;overflow:auto;padding:26px 32px}
+.native-surface-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;gap:16px}.native-surface-head h1{font-size:22px;font-weight:550;letter-spacing:0}
+.native-surface-head .small{font-size:11px;color:var(--muted)}.native-surface-inner{max-width:1000px;margin:auto}
+.native-surface-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:15px 0 20px}
+.native-item-list{display:flex;flex-direction:column;gap:6px}.native-item{display:flex;align-items:center;gap:14px;text-align:left;padding:16px;border:1px solid var(--line);border-radius:12px;min-height:70px;width:100%}
+.native-item>span{flex:1}.native-item small{display:block;font-size:12px;color:var(--muted);margin-top:4px}.native-item svg{width:21px;height:21px;color:var(--muted)}
+.native-owner-note{font-size:12px;color:var(--muted);line-height:1.8;margin:22px 0}
+.native-toolbar-sep{width:1px;height:18px;background:var(--line);margin:0 3px}.native-toolchip{padding:5px 9px;border-radius:7px;font-size:12px;color:var(--muted)}
+.native-modal-label{font-size:11px;color:var(--muted);margin-bottom:12px}.native-search-hit{display:flex;gap:10px;align-items:center;text-align:left;width:100%;padding:10px;border-radius:8px}.native-search-hit small{margin-left:auto;font-size:11px;color:var(--muted)}
+.native-category{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 15px}.native-category button{font-size:12px;padding:5px 9px;border-radius:7px;background:var(--side)}
+#v26-tooltip{position:fixed;z-index:100;max-width:240px;padding:6px 10px;pointer-events:none;background:var(--text);color:var(--bg);font-size:11px;border-radius:7px;box-shadow:0 3px 14px #0002}
+.status-explanation{font-size:12px;line-height:1.8;color:var(--muted)}
+@media(pointer:coarse){.history-disclosure{min-height:40px;max-width:90px}.side-children>.history-disclosure{min-height:40px}.past-step{width:44px;height:44px}.native-feature-pin{opacity:1;min-height:36px}.native-feature-row .nav{min-height:44px}.native-more-control{min-height:44px}}
+@media(max-width:760px){#native-surface{padding:18px 16px}.native-surface-head{align-items:flex-start;flex-direction:column;gap:5px}.native-resource-zone{margin-top:10px}.native-feature-pin{opacity:1}.native-account-entry{min-height:44px}.v26-extensionbar{font-size:9px}}
+
+#native-urgent{flex:none;margin-bottom:4px}#native-urgent:empty{display:none}
+
+</style></head><body>
+<div id="shell" class="shell"><aside id="sidebar" class="sidebar" aria-label="导航"></aside><aside id="navrail" class="navrail" aria-label="折叠导航"></aside><button id="nav-backdrop" class="nav-backdrop" data-action="nav" aria-label="关闭导航" hidden></button><main class="page"><div id="fault" class="fault" hidden>模拟适配故障，已恢复原生结构示意。<button data-action="recover">恢复演示</button></div><div id="toolbar" class="toolbar"></div><div id="workset" class="workset" hidden></div><section id="board-scroll" class="scroll"><div id="board" class="board"></div></section><section id="host" class="host" hidden></section></main></div>
+<dialog id="modal" aria-labelledby="modal-title"></dialog><div id="popover" class="popover" hidden></div><div id="toast" class="toast" role="status" hidden></div>
+<script>
+'use strict';
+// Incremental correction of prototype-v2.html (b26a4631…). Fictional data only.
+// v2.1: exclusive topic-age buckets; conversations never migrate independently; quiet UI.
+// Retains c1–c10 identities, source separation, human title lock, placement correction,
+// undo, workset, account and native-write simulations. No extension or network APIs.
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const paths={chat:'M4 4h16v12H9l-5 4z',search:'M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',plus:'M12 5v14M5 12h14',down:'M6 9l6 6 6-6',right:'M9 5l7 7-7 7',more:'M5 12h.01M12 12h.01M19 12h.01',pin:'M8 3h8l-1 6 4 4H5l4-4zM12 13v8',folder:'M3 6h7l2 3h9v11H3z',up:'M12 19V5M6 11l6-6 6 6'};
+paths.collection='M12 3 3 8 12 13 21 8 12 3M3 12l9 5 9-5M3 16l9 5 9-5';paths.enter='M5 12h14M13 6l6 6-6 6';
+paths.panel='M4 4h16v16H4zM9 4v16';paths.return='M10 5l-6 6 6 6M4 11h10a5 5 0 0 1 5 5v4';paths.gear='M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1z';
+const svg=n=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[n]||paths.chat}"/></svg>`;
+const $=id=>document.getElementById(id),pad=n=>String(n).padStart(2,'0');
+function dateParts(d){return d.split('-').map(Number)}
+function addDays(d,n){let [y,m,v]=dateParts(d);let t=new Date(Date.UTC(y,m-1,v+n));return `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(t.getUTCDate())}`}
+function subMonths(d,n){let [y,m,day]=dateParts(d),t=new Date(Date.UTC(y,m-1-n,1));let last=new Date(Date.UTC(t.getUTCFullYear(),t.getUTCMonth()+1,0)).getUTCDate();return `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(Math.min(day,last))}`}
+function windowOf(today,months,offset){if(months==='all')return {start:null,end:null,upper:null};let start=subMonths(today,Number(months)*(offset+1)),upper=offset===0?addDays(today,1):subMonths(today,Number(months)*offset);return {start,end:addDays(upper,-1),upper}}
+const dayCache=new Map(),formatters=new Map();function localDay(instant,zone){const key=zone+'|'+instant;if(dayCache.has(key))return dayCache.get(key);if(!formatters.has(zone))formatters.set(zone,new Intl.DateTimeFormat('en-US',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}));const parts=formatters.get(zone).formatToParts(new Date(instant));let o=Object.fromEntries(parts.map(p=>[p.type,p.value]));const d=`${o.year}-${o.month}-${o.day}`;dayCache.set(key,d);return d}
+const stamp=d=>d+'T12:00:00Z';
+function event(d,extra={}){return {id:'msg-'+d,sentAt:stamp(d),role:'user',state:'sent',quality:'verified_fixture',...extra}}
+const topics=[{id:'paia',name:'PAIA'},{id:'bk',name:'硕士论文'},{id:'jobs',name:'秋招'},{id:'hcl',name:'HCL'}];
+const chats=[
+{id:'c1',raw:'PAIA 开发 1.0',title:'PAIA 开发 1.0',project:'普通聊天',ws:'paia',events:[event('2026-08-20'),event('2026-10-05')],complete:true},
+{id:'c2',raw:'接续 PAIA 开发并完成下一阶段',title:'PAIA 开发 1.1',project:'paia 开发',ws:'paia',events:[event('2026-09-10')],complete:true},
+{id:'c3',raw:'继续完成当前功能与验收',title:'PAIA 开发 1.2',project:'paia 开发',ws:'paia',events:[event('2026-10-10')],complete:true},
+{id:'c4',raw:'优化扩展卡片设计',title:'PAIA 输入板交互',project:'paia 开发',ws:'paia',events:[event('2026-10-08')],complete:true,body:'输入板应该窄而纵向可伸缩，搜索时不要加宽。候选主要是一行短句，不遮挡原生聊天输入框。'},
+{id:'c5',raw:'PAIA 的产品想法和未来方向',title:'PAIA 产品构想',project:'产品想法',ws:'paia',events:[event('2026-09-25')],complete:true},
+{id:'c6',raw:'思想库消费级阅读设计',title:'PAIA 思想库设计',project:'paia 开发',ws:'paia',events:[event('2026-08-20'),event('2026-10-09',{role:'assistant'})],complete:true},
+{id:'c7',raw:'理论计算阶段二阶分析',title:'论文 二阶审计',project:'硕士论文',ws:'bk',events:[event('2026-09-22')],complete:true},
+{id:'c8',raw:'秋招岗位的比较与选择',title:'秋招 岗位选择',project:'普通聊天',ws:'jobs',events:[event('2026-10-04')],complete:true},
+{id:'c9',raw:'Assistant-first 交互评审',title:'HCL 交互设计',project:'产品想法',ws:'hcl',events:[event('2026-09-18')],complete:true},
+{id:'c10',raw:'整理思路',title:'整理思路',project:'普通聊天',ws:null,events:[],complete:false}];
+for(let i=1;i<=54;i++)chats.push({id:'p'+i,raw:'PAIA 阶段讨论 '+i,title:'PAIA '+['导航设计','原生适配','命名规则','历史导入','用户反馈','权限边界'][i%6]+' '+i,project:['普通聊天','paia 开发','产品想法'][i%3],ws:'paia',events:i<=24?[event('2026-09-'+pad(10+i%20))]:i<=50?[event('2026-06-'+pad(1+i%27))]:[],complete:i<=50});
+const names=['输入法','工作空间扩展','作品集','阅读计划','产品实验','写作','英语练习','数值计算','交互评审','面试准备','个人网站','资料整理','论文选题','求职复盘','算法学习','读书笔记','应用研究','数据分析','演讲准备','课程练习','科研记录','界面设计','长期计划','内容创作','工具实验','知识检索'];
+for(let i=0;i<26;i++){topics.push({id:'a'+i,name:names[i]});for(let j=0;j<4;j++)chats.push({id:`a${i}c${j}`,raw:names[i]+' · 讨论 '+(j+1),title:names[i]+' '+['方案比较','细节验证','阶段总结','早期构想'][j],project:['普通聊天','产品想法','个人研究'][j%3],ws:'a'+i,events:[event(j<3?`2026-09-${pad(10+i%20)}`:'2026-05-12')],complete:true})}
+for(let i=0;i<55;i++){topics.push({id:'h'+i,name:['旧项目','往期研究','早期构想','课程归档','已结束事项'][i%5]+' '+(i+1)});for(let j=0;j<3;j++)chats.push({id:`h${i}c${j}`,raw:'往期讨论 '+i+'-'+j,title:'阶段 '+(j+1)+' · '+['方案','核对','总结'][j],project:j%2?'归档研究':'普通聊天',ws:'h'+i,events:[event(`${i%2?2025:2026}-0${1+i%6}-${pad(10+j)}`)],complete:true})}
+for(let i=0;i<3;i++){topics.push({id:'u'+i,name:['未标时的讨论','旧导出待核验','部分读取的研究'][i]});for(let j=0;j<2;j++)chats.push({id:`u${i}c${j}`,raw:'待核验讨论 '+i+'-'+j,title:'已知对话 '+(j+1),project:'未核验来源',ws:'u'+i,events:j?[event('2026-01-03')]:[event('2026-10-08',{quality:'unverified'})],complete:false})}
+const extras=[{id:'c11',raw:'PAIA 最初的输入档案构想',title:'PAIA 早期构想',project:'未核验来源',ws:'paia',events:[],complete:false},{id:'c12',raw:'论文形状因子的早期核对',title:'论文 一阶核对',project:'未核验来源',ws:'bk',events:[],complete:false}];
+topics.push({id:'previous-theme',name:'旧版界面方案'},{id:'older-theme',name:'夏季阅读'},{id:'uncertain-theme',name:'待补全的主题'});
+chats.push(
+ {id:'previous-new',raw:'旧版方案收尾',title:'最终确认',project:'产品想法',ws:'previous-theme',events:[event('2026-07-12'),event('2026-09-05')],complete:true},
+ {id:'previous-old',raw:'旧版方案草图',title:'最初的草图',project:'普通聊天',ws:'previous-theme',events:[event('2026-05-10')],complete:true},
+ {id:'older-new',raw:'夏季阅读总结',title:'阅读总结',project:'个人研究',ws:'older-theme',events:[event('2026-07-05'),event('2026-08-05')],complete:true},
+ {id:'older-old',raw:'阅读书单',title:'书单',project:'普通聊天',ws:'older-theme',events:[event('2026-02-12')],complete:true},
+ {id:'uncertain-old',raw:'只看到旧消息',title:'已有讨论',project:'普通聊天',ws:'uncertain-theme',events:[event('2026-09-01')],complete:true},
+ {id:'uncertain-gap',raw:'尚未确认覆盖',title:'另一段讨论',project:'产品想法',ws:'uncertain-theme',events:[],complete:false}
+);
+const teamTopics=[{id:'team',name:'团队任务'}],teamChats=[{id:'b1',raw:'团队资料整理（示例）',title:'团队 资料整理',project:'团队项目',ws:'team',events:[event('2026-10-01')],complete:true}];
+// Fictional display labels for layout review only; no AI output or native rename.
+const sampleLabels={"a0c0":"本地词库与纠错","a0c1":"候选栏交互","a0c2":"个人词汇复用","a1c0":"主题导航","a1c1":"原生界面保留","a1c2":"窗口接续","a2c0":"项目叙事","a2c1":"首页结构","a2c2":"案例打磨","a3c0":"最近在读","a3c1":"笔记组织","a3c2":"书单取舍","a4c0":"需求验证","a4c1":"方案取舍","a4c2":"试用反馈","a5c0":"短篇改稿","a5c1":"叙述视角","a5c2":"结尾与节奏","a6c0":"口语表达","a6c1":"听力复盘","a6c2":"面试自述","a7c0":"积分精度","a7c1":"误差估计","a7c2":"结果对照","a8c0":"输入流程","a8c1":"菜单行为","a8c2":"异常状态","a9c0":"项目介绍","a9c1":"追问演练","a9c2":"复盘修改","a10c0":"首页文案","a10c1":"移动端布局","a10c2":"产品演示","a11c0":"资料取舍","a11c1":"检索入口","a11c2":"原文核对","a12c0":"问题范围","a12c1":"文献线索","a12c2":"论证结构","a13c0":"岗位比较","a13c1":"面试记录","a13c2":"投递策略","a14c0":"检索算法","a14c1":"评估方法","a14c2":"错误分析","a15c0":"章节摘记","a15c1":"观点比较","a15c2":"延伸阅读","a16c0":"真实使用场景","a16c1":"功能取舍","a16c2":"交互路径","a17c0":"清洗与口径","a17c1":"结果解释","a17c2":"图表表达","a18c0":"开场与结构","a18c1":"例子选择","a18c2":"讲稿练习","a19c0":"习题讨论","a19c1":"概念辨析","a19c2":"错题回看","a20c0":"推导记录","a20c1":"计算检查","a20c2":"阶段结论","a21c0":"导航与布局","a21c1":"排版细节","a21c2":"输入状态","a22c0":"阶段目标","a22c1":"优先级调整","a22c2":"执行复盘","a23c0":"选题讨论","a23c1":"素材整理","a23c2":"草稿修改","a24c0":"工作流比较","a24c1":"兼容性测试","a24c2":"使用反馈","a25c0":"索引结构","a25c1":"搜索结果","a25c2":"长期维护"};
+
+// Scenario sizes are design assumptions, not estimates from user telemetry.
+function makeScenario(key,names,counts,historyCount){
+ const ts=[],cs=[];const labels=[['开发接续','输入板交互','官网文案','命名规则','同步边界'],['二阶推导','数值核对','论文结构'],['岗位比较','面试复盘','简历表述'],['词库与纠错','候选栏交互','个人词汇','兼容测试'],['章节讨论','延伸阅读'],['短篇改稿','叙述视角']];
+ names.forEach((name,i)=>{const tid=key+'-t'+i;ts.push({id:tid,name});
+  for(let j=0;j<counts[i];j++)cs.push({id:tid+'-c'+j,raw:name+'：'+(labels[i%6][j]||'专项讨论 '+(j+1)),title:labels[i%6][j]||'专项讨论 '+(j+1),project:['普通聊天','产品研究','个人学习'][j%3],ws:tid,events:[{...event('2026-10-'+pad(10-Math.min(8,j))),id:tid+'-send'+j}],complete:true});
+  for(let j=0;j<2;j++)cs.push({id:tid+'-old'+j,raw:name+'早期讨论',title:['最初的想法','早期方案'][j],project:'归档研究',ws:tid,events:[{...event('2026-06-05'),id:tid+'-oldsend'+j}],complete:true});
+  if(i===0)cs.push({id:tid+'-unknown',raw:'旧材料整理',title:'待续的讨论',project:'未核验来源',ws:tid,events:[],complete:false});
+ });
+ for(let i=0;i<historyCount;i++){const tid=key+'-h'+i;ts.push({id:tid,name:['旧版界面','暑期课程','旅行准备','阅读专题','阶段复盘'][i%5]+(i<5?'':' '+(i+1))});for(let j=0;j<2;j++)cs.push({id:tid+'-c'+j,raw:'历史讨论 '+i+'-'+j,title:j?'最初方案':'阶段结论',project:'普通聊天',ws:tid,events:[{...event(j?'2026-04-02':i===0?'2026-09-05':'2026-08-05'),id:tid+'-send'+j}],complete:true})}
+ for(let i=0;i<2;i++){const tid=key+'-u'+i;ts.push({id:tid,name:['旧材料','尚未整理的讨论'][i]});cs.push({id:tid+'-c0',raw:'旧材料',title:'已有对话',project:'未核验来源',ws:tid,events:[],complete:false})}
+ return {topics:ts,chats:cs};
+}
+const scenarios={
+ small:makeScenario('small',['阅读','写作'],[2,1],4),
+ daily:makeScenario('daily',['PAIA','硕士论文','秋招','输入法','阅读','写作'],[5,3,2,4,2,1],10),
+ heavy:makeScenario('heavy',['产品开发','研究论文','秋招','输入法','阅读','写作','英语练习','课程学习','项目协作','旅行','设计研究','数值计算','作品集','个人网站'],[10,8,6,5,4,4,3,3,3,2,2,2,1,1],24),
+ stress:{topics,chats}
+};
+scenarios.daily.chats.find(c=>c.id==='daily-t0-c0').title='PAIA 开发 1.0';
+function scenarioData(key){return scenarios[key]||scenarios.daily}
+function empty(account,scenario='daily'){const c=account==='A'?scenarioData(scenario).chats:teamChats;const active=c.filter(x=>x.events.some(e=>e.role==='user'&&e.sentAt>='2026-09-10'));return {topicIcons:{},titles:{},aliases:{},locks:{},placements:Object.fromEntries(c.map(x=>[x.id,x.ws?[x.ws]:[]])),excludes:{},pins:[],pinnedChats:[],tabs:active.slice(0,3).map(x=>x.id),snapshot:[],undo:[],native:{},audit:[],imported:false}}
+
+let stores={A:empty('A'),B:empty('B')};let state={scenario:'daily',account:'A',mode:'derived',view:'topics',topic:null,current:null,months:1,offset:0,today:'2026-10-10',zone:Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC',theme:'light',sidebarCollapsed:false,history:false,unknown:false,collapsed:{},limits:{},expanded:{},nav:false,fault:false};
+let originView=null;
+let accessTopic=null,navManual={},navFull={},navLimits={},navRestLimits={},boardFull={},boardRestLimits={};
+let libraryRecent=false,libraryUnknown=false,libraryPeriod=1;
+let dotAvailable=true,narrowCloseOnSelect=true;
+let currentHostKey=null,menuReturn=null,modalReturn=null,plan=null,searchAll=false;const drafts={};
+const db=()=>stores[state.account],all=()=>state.account==='A'?[...scenarioData(state.scenario).chats,...(db().imported?extras:[])]:teamChats,spaces=()=>state.account==='A'?scenarioData(state.scenario).topics:teamTopics,chat=id=>all().find(c=>c.id===id),ws=id=>spaces().find(t=>t.id===id),display=id=>db().titles[id]||sampleLabels[id]||chat(id)?.title||'不可用引用',native=id=>db().native[id]||chat(id)?.raw||'未知',members=id=>db().placements[id]||[],items=id=>all().filter(c=>members(c.id).includes(id));
+
+// Small monochrome vocabulary. Stable by topic ID after first assignment; never a random color.
+Object.assign(paths,{
+ book:'M4 4h6l2 2 2-2h6v15h-6l-2 2-2-2H4zM12 6v15',
+ research:'M9 3h6M10 3v6l-6 10a1 1 0 0 0 1 2h14a1 1 0 0 0 1-2L14 9V3M8 14h8',
+ briefcase:'M3 7h18v13H3zM8 7V4h8v3M3 12c5 3 13 3 18 0M10 13h4v3h-4z',
+ keyboard:'M3 6h18v13H3zM6 10h1M10 10h1M14 10h1M18 10h.1M6 14h1M10 14h8',
+ pen:'M5 16 16 5l3 3L8 19H5zM14 7l3 3M4 22h16',
+ globe:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18',
+ code:'M8 6 2 12l6 6M16 6l6 6-6 6M14 3l-4 18',
+ dot:'M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0',
+ layout:'M3 4h18v16H3zM3 9h18M9 9v11'
+});
+const iconVocabulary={collection:'集合',research:'研究',briefcase:'工作',keyboard:'输入',book:'阅读',pen:'写作',globe:'探索',code:'开发',layout:'界面'};
+const defaultIconCache=new Map();
+function defaultTopicIcon(t){const key=state.scenario+':'+state.account+':'+t.id;if(defaultIconCache.has(key))return defaultIconCache.get(key);const n=t.name;const k=/PAIA|产品开发/.test(n)?'collection':/论文|研究|数值|科研/.test(n)?'research':/秋招|面试|岗位|工作|协作/.test(n)?'briefcase':/输入法/.test(n)?'keyboard':/阅读|书|课程/.test(n)?'book':/写作|创作/.test(n)?'pen':/旅行|英语/.test(n)?'globe':/界面|网站|作品|设计/.test(n)?'layout':/算法|编程/.test(n)?'code':'collection';defaultIconCache.set(key,k);return k}
+function topicIcon(t){return db().topicIcons?.[t.id]||defaultTopicIcon(t)}
+function chooseTopicIcon(id){if(!ws(id))return;const t=ws(id);dialog('主题图标',`<p>${esc(t.name)}</p><div class="icon-grid">${Object.entries(iconVocabulary).map(([key,label])=>`<button class="icon-choice" data-icon-topic="${id}" data-icon-value="${key}" aria-pressed="${topicIcon(t)===key}">${svg(key)}<span>${label}</span></button>`).join('')}</div><p class="small muted">只改变图标。图标在首页和侧栏保持一致。</p>`)}
+
+const range=()=>windowOf(state.today,state.months,state.offset);
+function validTime(e){return typeof e.sentAt==='string'&&/T.*(?:Z|[+-]\d\d:\d\d)$/.test(e.sentAt)&&Number.isFinite(Date.parse(e.sentAt))&&addDays(e.sentAt.slice(0,10),0)===e.sentAt.slice(0,10)&&localDay(e.sentAt,state.zone)<=state.today}function eligible(c){return c.events.filter(e=>e.role==='user'&&e.state==='sent'&&(!e.kind||e.kind==='new_send')&&e.quality==='verified_fixture'&&validTime(e))}
+// Membership is persistent; these functions only compute visibility.
+function latest(c){return eligible(c).reduce((best,e)=>!best||Date.parse(e.sentAt)>Date.parse(best.sentAt)?e:best,null)}
+function latestComplete(c){return c.complete===true&&(c.completeThrough||'2026-10-10')>=state.today&&!c.events.some(e=>e.role==='user'&&e.state==='sent'&&(!e.kind||e.kind==='new_send')&&(e.quality!=='verified_fixture'||!validTime(e)))}
+function bucketForDay(day,months=state.months){if(months==='all')return 0;if(!day||day>state.today)return null;const [y,m]=dateParts(day),[ty,tm]=dateParts(state.today);let k=Math.max(0,Math.floor(((ty-y)*12+tm-m)/Number(months))-1);while(day<windowOf(state.today,months,k).start)k++;while(k>0&&day>=windowOf(state.today,months,k).upper)k--;return k}
+function conversationBucket(c){const e=latest(c);if(!e)return null;const k=bucketForDay(localDay(e.sentAt,state.zone));return k===0||latestComplete(c)?k:null}
+function topicBucket(id){const list=items(id);if(!list.length)return null;const evidence=list.map(latest).filter(Boolean).sort((a,b)=>Date.parse(b.sentAt)-Date.parse(a.sentAt));if(!evidence.length)return null;const k=bucketForDay(localDay(evidence[0].sentAt,state.zone));if(k===0)return 0;return list.every(latestComplete)?k:null}
+function childClass(c,topicId){if(state.months==='all')return 'all';const parent=topicId?topicBucket(topicId):state.offset;if(parent===null)return 'unknown';const k=conversationBucket(c);return k===null?'unknown':k===parent?'active':'older'}
+function classify(c){if(state.months==='all')return 'all';const k=conversationBucket(c);return k===null?'unknown':k===state.offset?'active':'outside'}
+function lastIn(c){return latest(c)?.sentAt||null}
+function topicState(id){if(state.months==='all')return 'all';const k=topicBucket(id);return k===null?'unknown':k===state.offset?'active':'outside'}
+function pinned(id){return db().pins.includes(id)||items(id).some(c=>db().pinnedChats.includes(c.id))}
+function labelStatus(s){return {active:state.offset?'此区间有输入':'区间内有输入',outside:'区间外',unknown:'时间待确认',all:'全部已知'}[s]}
+
+function row(c,global=false,topicId=null){let title=display(c.id),parent=topicId||state.topic;if(!global&&ws(parent)){const prefix=ws(parent).name+' ';if(title.startsWith(prefix))title=title.slice(prefix.length)}return `<div class="row ${state.current===c.id?'is-current':''}" role="listitem" draggable="${state.mode==='derived'}" data-drag="${c.id}"><button class="rowmain" data-open="${c.id}" aria-current="${state.current===c.id?'page':'false'}" data-parent-topic="${esc(parent||'')}" title="${esc(display(c.id))}" aria-label="打开对话：${esc(display(c.id))}"><span class="window-symbol" aria-hidden="true">${svg('chat')}</span><span class="title">${esc(title)}</span><span class="enter" aria-hidden="true">${svg('enter')}</span></button><button class="icon more" data-detail="${c.id}" aria-label="${esc(display(c.id))} 的操作">${svg('more')}</button></div>`}
+function sorted(list){return [...list].sort((a,b)=>(Date.parse(lastIn(b)||'')||0)-(Date.parse(lastIn(a)||'')||0)||a.id.localeCompare(b.id))}
+
+
+
+function topicCard(t,full=false){
+ const list=items(t.id),k=topicBucket(t.id),folded=state.collapsed[t.id]===true;
+ const unknownParent=k===null&&state.months!=='all';
+ const primary=unknownParent?sorted(list):sorted(list.filter(c=>['active','all'].includes(childClass(c,t.id))));
+ const limit=state.limits[t.id]||(full?12:5),past=unknownParent||state.months==='all'?[]:sorted(list.filter(c=>childClass(c,t.id)==='older'));
+ const pastOpen=!!boardFull[t.id],pastLimit=boardRestLimits[t.id]||12;
+ const more=primary.length>limit?`<button class="current-more" data-active-more="${t.id}" aria-label="显示更多${unknownParent?'已保存':'当前'}对话">${svg('down')}显示更多</button>`:'';
+ const pastControl=past.length?`<div class="card-tail"><button class="history-disclosure" data-board-all="${t.id}" aria-expanded="${pastOpen}" aria-controls="past-${t.id}" aria-label="${pastOpen?'收起':'展开'}${esc(t.name)}以前的对话">${svg('down')}</button><section class="history-panel" id="past-${t.id}" ${pastOpen?'':'hidden'}>${pastOpen?`<div class="window-list" role="list" aria-label="${esc(t.name)}以前的对话">${past.slice(0,pastLimit).map(c=>row(c,false,t.id)).join('')}</div>${past.length>pastLimit?`<button class="current-more" data-board-rest-more="${t.id}">继续显示</button>`:''}`:''}</section></div>`:'';
+ return `<article class="topic ${folded?'folded':''} ${state.current&&members(state.current).includes(t.id)?'is-current':''}" data-topic="${t.id}" data-bucket="${k===null?'unknown':k}" data-drop="${t.id}" aria-labelledby="topic-heading-${t.id}"><header class="topichead"><h2 class="topic-heading" id="topic-heading-${t.id}"><button class="topiclabel" data-fold="${t.id}" aria-expanded="${!folded}" aria-controls="body-${t.id}"><span class="topic-symbol" data-icon="${topicIcon(t)}" aria-hidden="true">${svg(topicIcon(t))}</span><span class="topic-name">${esc(t.name)}</span><span class="disclosure" aria-hidden="true">${svg(folded?'right':'down')}</span></button></h2><button class="icon topic-menu" data-topic-menu="${t.id}" aria-label="${esc(t.name)} 主题菜单" aria-haspopup="menu">${svg('more')}</button></header><div id="body-${t.id}" class="topic-contents" ${folded?'hidden':''}><div class="window-list" role="list" aria-label="${esc(t.name)} 的${unknownParent?'已保存':'当前'}对话">${primary.slice(0,limit).map(c=>row(c,false,t.id)).join('')}${more}${!list.length?'<div class="empty">还没有对话</div>':''}</div>${pastControl}</div></article>`;
+}
+function currentBucketTopics(){return spaces().filter(t=>state.months==='all'||topicBucket(t.id)===state.offset)}
+
+function libraryView(){
+ const recent=spaces().filter(t=>topicBucket(t.id)===0),unknown=spaces().filter(t=>topicBucket(t.id)===null);
+ const dated=spaces().filter(t=>topicBucket(t.id)===libraryPeriod);
+ const olderExists=spaces().some(t=>topicBucket(t.id)!==null&&topicBucket(t.id)>libraryPeriod);
+ return `<div class="library-head"><button class="back" data-action="topics">‹ 返回最近</button><h1>全部主题</h1></div>
+ <section class="library-section"><button class="library-toggle" data-action="libraryRecent" aria-expanded="${libraryRecent}">${svg(libraryRecent?'down':'right')}最近</button>${libraryRecent?`<div class="cards" id="library-recent-cards">${recent.map(t=>topicCard(t)).join('')}</div>`:''}</section>
+ <section class="library-section"><div class="period-nav"><button data-action="libraryNear" ${libraryPeriod<=1?'disabled':''}>较近</button><button data-action="libraryEarlier" ${!olderExists?'disabled':''}>更早</button></div><div class="cards" id="library-history-cards">${dated.map(t=>topicCard(t)).join('')||'<p class="library-note">这一段没有主题。可以继续向前查看。</p>'}</div></section>
+ ${unknown.length||all().some(c=>!members(c.id).length)?`<section class="library-section"><button class="library-toggle" data-action="libraryUnknown" aria-expanded="${libraryUnknown}">${svg(libraryUnknown?'down':'right')}未分期</button>${libraryUnknown?`<p class="library-note">这些记录暂时没有足够的时间信息，仍可打开使用。</p><div class="cards" id="library-unknown-cards">${unknown.map(t=>topicCard(t)).join('')}</div>${all().filter(c=>!members(c.id).length).map(c=>row(c,true)).join('')}`:''}</section>`:''}`;
+}
+
+function hasOlderTopics(){return spaces().some(t=>{const k=topicBucket(t.id);return k!==null&&k>state.offset})}
+function renderBoardContent(){
+ if(state.mode==='native'){$('board').innerHTML=`<div class="native-list"><div class="intro"><h1>原生结构示意</h1></div>${[...new Set(all().map(c=>c.project))].map(p=>`<h2 style="margin:22px 0 8px">${esc(p)}</h2>${all().filter(c=>c.project===p).map(c=>`<div class="row"><button class="rowmain" data-open="${c.id}"><span class="title">${esc(native(c.id))}</span></button></div>`).join('')}`).join('')}</div>`;return;}
+ if(state.view==='library'){$('board').innerHTML=libraryView().replace('<h1>全部主题</h1>','<h1>所有记录</h1>');return;}
+ if(state.view==='focus'&&ws(state.topic)){$('board').innerHTML=`<div class="focuscard"><button class="back" data-action="periodReturn">‹ 返回工作空间</button>${topicCard(ws(state.topic),true)}</div>`;return;}
+ if(state.view==='workset'){$('board').innerHTML=`<div class="focuscard"><div class="intro"><h1>当前工作集</h1><button class="button" data-action="saveSession">保存现场</button></div>${db().tabs.map(id=>chat(id)?row(chat(id),true):'<p>不可用引用</p>').join('')}<button class="button" data-action="restore">恢复上次现场</button></div>`;return;}
+ const history=state.offset>0,listed=currentBucketTopics(),older=state.months!=='all'&&hasOlderTopics();
+ $('board').innerHTML=`<h1 class="sr-only">${state.months==='all'?'所有主题':history?'以前的主题':'工作空间'}</h1>${history?`<div class="past-context"><button class="back" data-action="periodNear" aria-label="返回较近一段">${svg('back')}</button><button class="back" data-action="latest" aria-label="回到当前主题">${svg('home')}</button></div>`:state.months==='all'?'<div class="past-context"><button class="back" data-range="1">返回最近</button><span>所有主题</span></div>':''}<div class="cards" id="active-cards">${listed.map(t=>topicCard(t)).join('')||`<p class="archive-empty">${history?'这一段暂时没有可确认的主题。':'近期还没有可确认的主题，可通过搜索找回已保存的对话。'}</p>`}</div>${older?`<div class="board-footer"><button class="past-step" data-action="periodEarlier" aria-label="查看${history?'再早一段':'之前一段'}的主题">${svg('history')}</button></div>`:history?'<div class="board-footer"><p class="end-note">已到已知记录的最早一段</p></div>':''}`;
+}
+let layoutColumns=0;
+
+function layoutCards(){for(const g of document.querySelectorAll('.cards')){const st=getComputedStyle(g.parentElement),available=g.parentElement.getBoundingClientRect().width-parseFloat(st.paddingLeft)-parseFloat(st.paddingRight);const cards=[...g.querySelectorAll('article.topic')];if(!cards.length)continue;const n=Math.max(1,Math.min(3,cards.length,Math.floor((available+18)/346)));cards.forEach((c,i)=>{if(c.dataset.layoutOrder===undefined)c.dataset.layoutOrder=String(i)});cards.sort((a,b)=>Number(a.dataset.layoutOrder)-Number(b.dataset.layoutOrder));g.style.gridTemplateColumns=`repeat(${n},minmax(0,1fr))`;g.style.gap='18px';g.style.width=`min(100%,${n*356+(n-1)*18}px)`;const footer=g.nextElementSibling;if(footer?.classList.contains('board-footer'))footer.style.width=g.style.width;if(Number(g.dataset.columns)===n)continue;const focus=document.activeElement;const cols=Array.from({length:n},()=>{const d=document.createElement('div');d.className='topic-column';d.style.gap='18px';return d});cards.forEach((c,i)=>cols[i%n].append(c));g.replaceChildren(...cols);g.dataset.columns=String(n);if(focus&&g.contains(focus))focus.focus({preventScroll:true});layoutColumns=n}}
+function renderBoard(){const old=document.activeElement;const within=old&&$('board').contains(old);const d=within?Object.fromEntries(Object.entries(old.dataset).filter(([k])=>k!=='tip')):null;const parent=within?old.closest('[data-topic]')?.dataset.topic:null;renderBoardContent();layoutCards();if(d){const match=[...$('board').querySelectorAll('button')].find(b=>Object.keys(d).length&&Object.keys(d).every(k=>b.dataset[k]===d[k]));const fallback=parent?$('board').querySelector(`[data-fold="${parent}"]`):null;(match||fallback)?.focus({preventScroll:true})}}
+let resizeFrame=0;const layoutObserver=new ResizeObserver(()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(layoutCards)});layoutObserver.observe($('board'));
+
+
+
+// Sidebar stays in the latest period even when the overview is browsing all history.
+function navigationMonths(){return state.months==='all'?1:state.months}
+function navigationTopicBucket(id){const list=items(id),latestEvents=list.map(latest).filter(Boolean).sort((a,b)=>Date.parse(b.sentAt)-Date.parse(a.sentAt));if(!latestEvents.length)return null;const k=bucketForDay(localDay(latestEvents[0].sentAt,state.zone),navigationMonths());return k===0||list.every(latestComplete)?k:null}
+function navigationChildClass(c,tid){const e=latest(c),p=navigationTopicBucket(tid);if(!e||p===null)return 'unknown';const k=bucketForDay(localDay(e.sentAt,state.zone),navigationMonths());if(k!==0&&!latestComplete(c))return 'unknown';return k===p?'active':'older'}
+
+
+function topicSidebar(t){
+ const isContext=state.view==='chat'&&accessTopic===t.id;
+ const expanded=Object.hasOwn(navManual,t.id)?navManual[t.id]:isContext;
+ const list=items(t.id),primary=sorted(list.filter(c=>navigationChildClass(c,t.id)==='active'));
+ const limit=navLimits[t.id]||8,pastOpen=!!navFull[t.id],pastLimit=navRestLimits[t.id]||12;
+ let base=primary.slice(0,limit);
+ if(isContext&&base.every(c=>c.id!==state.current)&&primary.some(c=>c.id===state.current))base=[...base,chat(state.current)];
+ const past=sorted(list.filter(c=>navigationChildClass(c,t.id)==='older'));
+ let tail=past.slice(0,pastLimit);
+ if(isContext&&pastOpen&&past.some(c=>c.id===state.current)&&tail.every(c=>c.id!==state.current))tail=[...tail,chat(state.current)];
+ const unknownCurrent=isContext&&chat(state.current)&&navigationChildClass(chat(state.current),t.id)==='unknown';
+ const body=`<div class="side-children" id="nav-children-${t.id}" ${expanded?'':'hidden'} role="list" aria-label="${esc(t.name)} 的对话">${base.map(c=>row(c,false,t.id)).join('')}${base.length<primary.length?`<button class="side-more" data-nav-more="${t.id}">显示更多</button>`:''}${unknownCurrent?`<p class="active-exception">正在查看</p>${row(chat(state.current),false,t.id)}`:''}${past.length?`<button class="history-disclosure" data-nav-all="${t.id}" aria-expanded="${pastOpen}" aria-controls="nav-past-${t.id}" aria-label="${pastOpen?'收起':'展开'}${esc(t.name)}以前的对话">${svg('down')}</button><div class="side-past-panel" id="nav-past-${t.id}" ${pastOpen?'':'hidden'}>${pastOpen?tail.map(c=>row(c,false,t.id)).join('')+(tail.length<past.length?`<button class="side-more" data-nav-rest-more="${t.id}">继续显示</button>`:''):''}</div>`:''}</div>`;
+ return `<section class="side-group ${isContext?'is-context':''}" data-side-topic="${t.id}" data-drop="${t.id}"><button class="side-topic" data-nav-topic="${t.id}" aria-expanded="${expanded}" aria-controls="nav-children-${t.id}"><span class="side-glyph" data-icon="${topicIcon(t)}" aria-hidden="true">${svg(topicIcon(t))}</span><span class="name">${esc(t.name)}</span><span class="chevron" aria-hidden="true">${svg(expanded?'down':'right')}</span></button>${body}</section>`;
+}
+function sidebarTopicList(){
+ const active=spaces().filter(t=>navigationTopicBucket(t.id)===0);
+ const current=state.view==='chat'?ws(accessTopic):null;
+ return current?[current,...active.filter(t=>t.id!==current.id)]:active;
+}
+function renderNav(){
+ const oldScroll=$('nav-scroll')?.scrollTop||0,old=document.activeElement;
+ const oldData=old&&$('sidebar').contains(old)?{...old.dataset}:null;
+ const derived=state.mode==='derived',inChat=state.view==='chat';
+ let body;
+ if(derived){const list=sidebarTopicList();body=(inChat&&accessTopic&&navigationTopicBucket(accessTopic)!==0?'<div class="current-exception">正在查看</div>':'')+list.map(topicSidebar).join('');if(inChat&&!accessTopic&&chat(state.current))body='<div class="current-exception">正在查看</div>'+row(chat(state.current),true)+body;
+ }else{body=[...new Set(all().map(c=>c.project))].map(p=>`<div class="navcaption">${esc(p)}</div>${all().filter(c=>c.project===p).map(c=>`<button class="nav ${state.current===c.id?'selected':''}" data-open="${c.id}">${esc(native(c.id))}</button>`).join('')}`).join('')}
+ const fixed=spaces().filter(t=>db().pins.includes(t.id)),fixedChats=all().filter(c=>db().pinnedChats.includes(c.id));
+ $('sidebar').innerHTML=`<div class="sidehead"><span>ChatGPT</span><div class="sidehead-tools"><button class="workspace-home" data-action="workspaceHome" aria-label="${inChat?'返回工作空间':'工作空间'}" aria-current="${!inChat&&derived&&state.offset===0?'page':'false'}">${svg('layout')}<span>工作空间</span></button><button class="icon" data-action="nav" aria-label="收起导航">${svg('panel')}</button></div></div><div class="nav-top"><button class="nav" data-action="new">${svg('plus')}新聊天</button><button class="nav" data-action="search">${svg('search')}搜索聊天</button>${dotAvailable?`<button class="nav dot-entry" data-action="dot" aria-label="dot 原生入口示意">${svg('dot')}dot</button>`:''}</div><nav id="nav-scroll" class="nav-scroll" aria-label="${derived?'主题与对话':'原生导航示意'}">${body}<div id="current" class="current" hidden></div></nav><div class="sidefoot">${derived?`<div class="navpair"><button class="nav" data-action="periodStart">${svg('history')}看看以前</button><button class="icon view-options" data-action="boardMenu" aria-label="工作空间选项" aria-haspopup="menu">${svg('more')}</button></div>`:''}<button class="nav" data-action="workset">${svg('chat')}当前工作集</button>${fixed.length||fixedChats.length?'<button class="nav" data-action="fixedShortcuts">'+svg('pin')+'固定入口</button>':''}<button class="nav" data-mode="${derived?'native':'derived'}">${svg('return')}${derived?'回到原生':'启用主题视图'}</button><div class="extensionline"><span>VAIWL · 第三方扩展</span><button class="icon" data-action="settings" aria-label="VAIWL 设置">${svg('gear')}</button></div><p>原型 · 示例数据</p></div>`;
+ $('navrail').innerHTML=`<button class="icon" data-action="nav" aria-label="展开导航">${svg('panel')}</button><button class="icon" data-action="workspaceHome" aria-label="${inChat?'返回工作空间':'工作空间'}" title="工作空间">${svg('layout')}</button><button class="icon" data-action="search" aria-label="搜索聊天">${svg('search')}</button>${dotAvailable?`<button class="icon" data-action="dot" aria-label="dot 原生入口示意">${svg('dot')}</button>`:''}<button class="icon" data-action="periodStart" aria-label="看看以前">${svg('history')}</button><div class="railfoot"><button class="icon" data-action="boardMenu" aria-label="主题视图选项">${svg('more')}</button><button class="icon" data-mode="${derived?'native':'derived'}" aria-label="${derived?'回到原生':'启用主题视图'}">${svg('return')}</button><button class="icon" data-action="settings" aria-label="VAIWL 设置">${svg('gear')}</button><span class="rail-id">VAIWL<br>扩展原型</span></div>`;
+ $('nav-scroll').scrollTop=oldScroll;
+ if(oldData){const keys=Object.keys(oldData),match=[...$('sidebar').querySelectorAll('button')].find(b=>keys.length&&keys.every(k=>b.dataset[k]===oldData[k]));match?.focus({preventScroll:true})}
+}
+function renderToolbar(){$('toolbar').hidden=true;$('toolbar').replaceChildren()}
+
+// DEMO HOST ONLY: production must navigate the actual ChatGPT conversation,
+// not ship this fixture, clone its transcript, or recreate a composer.
+function renderHost(){
+ if(!state.current||!chat(state.current))return;
+ const c=chat(state.current),key=state.account+':'+c.id;
+ if(currentHostKey===key)return;
+ currentHostKey=key;
+ $('host').innerHTML=`<div class="mock-native-head" data-owner="native-fixture"><button class="mock-model" data-action="nativeHelp" aria-label="模型菜单示意">ChatGPT ${svg('down')}</button><div class="mock-native-controls"><button class="icon" data-action="nativeHelp" aria-label="分享功能示意">${svg('share')}</button></div></div><div class="chatbody" id="transcript" data-owner="native-fixture"><div class="userbubble">${esc(c.body||'继续这个主题的工作，保留已经确认的方向。')}</div><div class="answer"><p>先继续上次尚未完成的部分，已经确认的方案保持不变。</p><p>这次只处理当前问题；相关的旧讨论仍保留在原来的主题中，需要时再打开。</p><p class="muted small">预写示例回答 · 未连接模型</p></div></div><div class="composerwrap" data-owner="native-fixture"><div class="composer"><textarea id="composer" aria-label="演示输入框" placeholder="询问任何问题（仅演示，不发送）"></textarea><div class="composeractions"><button class="icon" data-action="nativeHelp" aria-label="附件功能示意">${svg('plus')}</button><button class="send" data-action="demoSend" aria-label="发送功能示意">${svg('up')}</button></div></div><p class="composerhint">离线交互原型 · 聊天区是静态示意，并非真实 ChatGPT</p></div>`;
+ $('composer').value=drafts[key]||'';
+ $('composer').addEventListener('input',()=>drafts[key]=$('composer').value);
+}
+function render(){renderNav();renderToolbar();renderBoard();renderHost();$('shell').classList.toggle('nav-open',state.nav);$('shell').classList.toggle('sidebar-collapsed',!!state.sidebarCollapsed);$('nav-backdrop').hidden=!(state.nav&&innerWidth<=760);layoutCards();document.documentElement.dataset.theme=state.theme;document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===state.mode)));$('fault').hidden=!state.fault;$('host').hidden=state.view!=='chat';$('board-scroll').hidden=state.view==='chat';$('current').hidden=!state.current||state.mode==='native'||state.view==='chat';if(state.current&&chat(state.current)&&state.view!=='chat'&&state.mode==='derived')$('current').innerHTML=`<div class="navcaption">继续</div><button class="nav" data-open="${state.current}">${esc(display(state.current))}</button>`;else $('current').replaceChildren();$('workset').hidden=true;$('workset').replaceChildren()}
+
+
+function resolveParent(id,parent){const ms=members(id).filter(x=>ws(x));if(parent&&ms.includes(parent))return parent;if(accessTopic&&ms.includes(accessTopic))return accessTopic;if(state.topic&&ms.includes(state.topic))return state.topic;return ms.length===1?ms[0]:null}
+function openChat(id,parent=null){
+ if(!chat(id))return;
+ if(state.view!=='chat')originView={view:state.view,topic:state.topic,offset:state.offset,months:state.months,scroll:$('board-scroll').scrollTop,focusRef:id,parentRef:parent,libraryPeriod,libraryRecent,libraryUnknown};
+ accessTopic=resolveParent(id,parent);state.current=id;state.view='chat';
+ if(accessTopic){if(navManual[accessTopic]===false)delete navManual[accessTopic];if(navigationChildClass(chat(id),accessTopic)==='older')navFull[accessTopic]=true;}
+ if(innerWidth<=760&&narrowCloseOnSelect)state.nav=false;
+ if(!db().tabs.includes(id))db().tabs.push(id);
+ render();
+ $('nav-scroll').scrollTop=0;
+}
+function returnToThemes(){if(!originView){state.view='topics';state.topic=null;state.offset=0}else{Object.assign(state,{view:originView.view,topic:originView.topic,offset:originView.offset,months:originView.months})}if(originView){libraryPeriod=originView.libraryPeriod||1;libraryRecent=!!originView.libraryRecent;libraryUnknown=!!originView.libraryUnknown;}state.mode='derived';state.nav=false;render();$('board-scroll').scrollTop=originView?.scroll||0;const target=originView?.focusRef||state.current;$('board').querySelector(`[data-open="${target}"]`)?.focus({preventScroll:true})}
+function toast(text,undo=false){$('toast').hidden=false;$('toast').innerHTML=esc(text)+(undo?'<button data-action="undo">撤销</button>':'');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('toast').hidden=true,4500)}
+function mutate(label,fn){db().undo.push(JSON.stringify({topicIcons:db().topicIcons,titles:db().titles,aliases:db().aliases,locks:db().locks,placements:db().placements,excludes:db().excludes,pins:db().pins,pinnedChats:db().pinnedChats}));fn();render();toast(label,true)}
+function dialog(title,html){closeMenu(false);modalReturn=document.activeElement;$('modal').innerHTML=`<div class="dialoghead"><h2 id="modal-title">${esc(title)}</h2><button class="icon" data-action="close" aria-label="关闭">×</button></div><div class="dialogbody">${html}</div>`;if(!$('modal').open)$('modal').showModal();$('modal').querySelector('[autofocus]')?.focus()}
+function closeDialog(){$('modal').close();plan=null;if(modalReturn?.isConnected)modalReturn.focus()}
+function closeMenu(focus=true){$('popover').hidden=true;if(focus&&menuReturn?.isConnected)menuReturn.focus()}
+function menu(b,html){menuReturn=b;const r=b.getBoundingClientRect();$('popover').innerHTML=html;$('popover').hidden=false;$('popover').setAttribute('role','menu');$('popover').style.left=Math.max(8,Math.min(r.left,innerWidth-215))+'px';$('popover').style.top=Math.min(r.bottom+6,innerHeight-$('popover').offsetHeight-10)+'px';$('popover').querySelector('button')?.focus()}
+function detail(id){const c=chat(id);dialog('对话操作',`<button class="nav" data-edit="${id}">修改显示名</button><button class="nav" data-assign="${id}">调整主题</button><button class="nav" data-pin-chat="${id}">${db().pinnedChats.includes(id)?'取消固定':'固定对话'}</button><button class="nav" data-rename="${id}" ${c.project==='未核验来源'?'disabled':''}>原生改名（仅模拟）</button>`)}
+function assign(id,target){dialog('只调整显示位置',`<p>不移动原生 Project，也不改变消息时间。</p><div class="assignment">${spaces().map(t=>`<label class="checkrow"><input type="checkbox" name="placement" value="${t.id}" ${members(id).includes(t.id)||target===t.id?'checked':''}>${esc(t.name)}</label>`).join('')}</div><div class="actions"><button class="button" data-action="close">取消</button><button class="button primary" data-save-placement="${id}">保存归属</button></div>`)}
+
+let searchTopic=null;
+function searchDialog(topicId=null){
+ searchTopic=topicId&&ws(topicId)?topicId:null;searchAll=true;
+ dialog(searchTopic?`查找 · ${ws(searchTopic).name}`:'搜索聊天',`<input type="text" id="searchInput" placeholder="搜索对话" aria-label="搜索聊天" autofocus><label class="checkrow"><input type="checkbox" id="searchAll" checked>包含所有已保存的对话</label><div class="searchresults" id="results"></div>`);
+ $('searchInput').oninput=renderSearch;$('searchAll').onchange=()=>{searchAll=$('searchAll').checked;renderSearch()};renderSearch();
+}
+function renderSearch(){
+ const q=$('searchInput').value.toLowerCase();
+ const hits=all().filter(c=>(!searchTopic||members(c.id).includes(searchTopic))&&(searchAll||state.months==='all'||members(c.id).some(t=>topicBucket(t)===state.offset&&childClass(c,t)==='active'))&&[display(c.id),native(c.id),...(db().aliases[c.id]||[]),c.body||''].some(s=>s.toLowerCase().includes(q)));
+ $('results').innerHTML=hits.slice(0,100).map(c=>row(c,true,searchTopic)).join('')+(hits.length>100?'<p>请补充搜索词，缩小范围。</p>':'');
+}
+function setRange(v){const wasChat=state.view==='chat';state.months=v==='all'?'all':Number(v);state.offset=0;state.history=false;state.unknown=false;state.limits={};state.expanded={};closeMenu(false);if(!wasChat)state.view='topics';if(originView){originView.months=state.months;originView.offset=0;originView.view='topics';}render();}
+function settings(){dialog('原型设置与证据',`<p>此次仅更新设计演示；真实 ChatGPT 字体、菜单和动画仍需登录态测量。浅色/深色为近似宿主样本，不是另一套品牌主题。</p><button class="nav" data-action="scenarios">切换使用规模样本</button><button class="nav" data-action="narrowChoice">窄屏选中对话后收起导航：${narrowCloseOnSelect?'开':'关'}</button><button class="nav" data-action="equalType">等字号／等字重检查层级</button><button class="nav" data-action="theme">切换模拟宿主浅色／深色</button><button class="nav" data-action="clock">调整示例日期／时区</button><button class="nav" data-action="saveSession">保存工作现场</button><button class="nav" data-action="restore">恢复工作现场</button><button class="nav" data-action="import">载入原版历史样本</button><button class="nav" data-action="account">切换示例账户</button><button class="nav" data-action="replayAI">重放模拟 AI（验证人工保护）</button><button class="nav" data-action="audit">查看模拟改名回执</button><button class="nav" data-action="fault">模拟适配故障</button><p class="small muted">只在内存中运行；不写 localStorage，不调用模型，无真实发送事件。</p>`)}
+
+
+Object.assign(paths,{back:'M15 5l-7 7 7 7',history:'M3 11a9 9 0 1 1 2 7M3 4v7h7M12 7v5l3 2',share:'M12 16V3M8 7l4-4 4 4M5 12v8h14v-8'});
+function showPeriod(k){
+ if(state.months==='all')state.months=1;
+ state.mode='derived';state.offset=Math.max(0,k);state.view=state.offset?'history':'topics';state.topic=null;state.nav=false;
+ closeMenu(false);render();$('board-scroll').scrollTop=0;
+ const next=$('board').querySelector('[data-action="periodNear"]')||$('board').querySelector('[data-fold]');next?.focus({preventScroll:true});
+}
+document.addEventListener('click',ev=>{
+ const b=ev.target.closest('button');if(!b||b.disabled)return;
+ const handled=b.dataset.activeMore||b.dataset.findTopic||['workspaceHome','periodStart','periodEarlier','periodNear','periodReturn','showAllRecords'].includes(b.dataset.action);
+ if(!handled)return;ev.stopImmediatePropagation();
+ if(b.dataset.activeMore){const id=b.dataset.activeMore;state.limits[id]=(state.limits[id]||(state.view==='focus'?12:5))+12;renderBoard();return;}
+ if(b.dataset.findTopic){closeMenu(false);searchDialog(b.dataset.findTopic);return;}
+ switch(b.dataset.action){
+  case'workspaceHome':if(state.view==='chat')return returnToThemes();showPeriod(0);return;
+  case'periodStart':showPeriod(1);return;
+  case'periodEarlier':if(hasOlderTopics())showPeriod(state.offset+1);return;
+  case'periodNear':showPeriod(state.offset-1);return;
+  case'periodReturn':showPeriod(state.offset);return;
+  case'showAllRecords':state.mode='derived';state.view='library';state.topic=null;state.nav=false;if(state.months==='all')state.months=1;closeMenu(false);render();$('board-scroll').scrollTop=0;return;
+ }
+});
+
+document.addEventListener('click',ev=>{
+ const b=ev.target.closest('button');if(!b||b.disabled)return;
+ const handled=['navTopic','navAll','navMore','navRestMore','boardAll','boardRestMore','iconTopic','pickIcon'].some(k=>b.dataset[k])||['library','libraryRecent','libraryUnknown','libraryEarlier','libraryNear','dot','fixedShortcuts','narrowChoice'].includes(b.dataset.action);
+ if(!handled)return;ev.stopImmediatePropagation();closeMenu(false);
+ if(b.dataset.navTopic){const id=b.dataset.navTopic,current=Object.hasOwn(navManual,id)?navManual[id]:state.view==='chat'&&accessTopic===id;navManual[id]=!current;renderNav();return;}
+ if(b.dataset.navAll){const id=b.dataset.navAll;navFull[id]=!navFull[id];renderNav();return;}
+ if(b.dataset.navMore){navLimits[b.dataset.navMore]=(navLimits[b.dataset.navMore]||8)+12;renderNav();return;}
+ if(b.dataset.navRestMore){navRestLimits[b.dataset.navRestMore]=(navRestLimits[b.dataset.navRestMore]||12)+12;renderNav();return;}
+ if(b.dataset.boardAll){const id=b.dataset.boardAll;boardFull[id]=!boardFull[id];renderBoard();return;}
+ if(b.dataset.boardRestMore){boardRestLimits[b.dataset.boardRestMore]=(boardRestLimits[b.dataset.boardRestMore]||12)+12;renderBoard();return;}
+ if(b.dataset.pickIcon)return chooseTopicIcon(b.dataset.pickIcon);
+ if(b.dataset.iconTopic){const id=b.dataset.iconTopic,value=b.dataset.iconValue;if(!ws(id)||!Object.hasOwn(iconVocabulary,value))return;closeDialog();mutate('已更新主题图标',()=>db().topicIcons[id]=value);return;}
+ switch(b.dataset.action){
+ case'library':state.mode='derived';state.view='library';state.topic=null;state.nav=false;if(state.months==='all')state.months=1;libraryPeriod=Math.max(1,libraryPeriod);render();$('board-scroll').scrollTop=0;return;
+ case'libraryRecent':libraryRecent=!libraryRecent;renderBoard();return;
+ case'libraryUnknown':libraryUnknown=!libraryUnknown;renderBoard();return;
+ case'libraryEarlier':libraryPeriod++;renderBoard();return;
+ case'libraryNear':libraryPeriod=Math.max(1,libraryPeriod-1);renderBoard();return;
+ case'dot':return dialog('dot · 原生入口示意','<p>此位置保留你已有的 dot 入口。原型未连接 dot，也不会发送消息。</p><p class="small muted">正式扩展只保留当前账户真实存在、已验证的原生入口；不存在时不伪造。</p>');
+ case'fixedShortcuts':return dialog('固定入口',spaces().filter(t=>db().pins.includes(t.id)).map(t=>`<button class="nav" data-focus="${t.id}">${svg(topicIcon(t))}${esc(t.name)}</button>`).join('')+all().filter(c=>db().pinnedChats.includes(c.id)).map(c=>row(c,true)).join(''));
+ case'narrowChoice':narrowCloseOnSelect=!narrowCloseOnSelect;return settings();
+ }
+});
+
+document.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b||b.disabled)return;if(b.dataset.scenario)return setScenario(b.dataset.scenario);if(b.dataset.open){if($('modal').open)closeDialog();return openChat(b.dataset.open,b.dataset.parentTopic||null)}if(b.dataset.mode){state.mode=b.dataset.mode;if(state.mode==='derived')state.fault=false;return render()}if(b.dataset.focus){if($('modal').open)closeDialog();closeMenu(false);state.topic=b.dataset.focus;state.view='focus';state.nav=false;return render()}if(b.dataset.fold){state.collapsed[b.dataset.fold]=!state.collapsed[b.dataset.fold];renderBoard();return}if(b.dataset.expand){state.expanded[b.dataset.expand]=!state.expanded[b.dataset.expand];renderBoard();return}if(b.dataset.more){let k=b.dataset.more;state.limits[k]=(state.limits[k]||(k.includes(':')||state.view==='focus'?12:3))+12;renderBoard();return}if(b.dataset.topicMenu){const id=b.dataset.topicMenu;return menu(b,`<button role="menuitem" data-pin-topic="${id}">${db().pins.includes(id)?'取消固定':'固定主题'}</button><button role="menuitem" data-focus="${id}">单独查看主题</button><button role="menuitem" data-find-topic="${id}">查找此主题的对话</button><button role="menuitem" data-pick-icon="${id}">更换图标</button>`)}if(b.dataset.pinTopic){const id=b.dataset.pinTopic;closeMenu(false);mutate('已更新固定入口',()=>{db().pins=db().pins.includes(id)?db().pins.filter(x=>x!==id):[...db().pins,id]});return}if(b.dataset.detail)return detail(b.dataset.detail);if(b.dataset.pinChat){const id=b.dataset.pinChat;closeDialog();return mutate('已更新对话固定',()=>db().pinnedChats=db().pinnedChats.includes(id)?db().pinnedChats.filter(x=>x!==id):[...db().pinnedChats,id])}if(b.dataset.edit){const id=b.dataset.edit;return dialog('只修改显示标题',`<p>原生名称和发送时间不变；人工标题受保护。</p><input type="text" id="titleInput" value="${esc(display(id))}" autofocus><p class="error" id="error"></p><div class="actions"><button class="button" data-action="close">取消</button><button class="button primary" data-save-title="${id}">保存显示名</button></div>`)}if(b.dataset.saveTitle){let id=b.dataset.saveTitle,v=$('titleInput').value.trim();if(!v){$('error').textContent='名称不能为空';return}closeDialog();return mutate('已保存并保护显示名称',()=>{db().aliases[id]=[...new Set([...(db().aliases[id]||[]),display(id)])];db().titles[id]=v;db().locks[id]=true})}if(b.dataset.assign)return assign(b.dataset.assign);if(b.dataset.savePlacement){let id=b.dataset.savePlacement,v=[...$('modal').querySelectorAll('[name=placement]:checked')].map(x=>x.value),old=members(id);closeDialog();return mutate('已修改派生归属，时间和原生来源不变',()=>{db().placements[id]=v;db().excludes[id]=[...new Set([...(db().excludes[id]||[]),...old.filter(x=>!v.includes(x))])].filter(x=>!v.includes(x))})}if(b.dataset.range)return setRange(b.dataset.range);if(b.dataset.rename){let id=b.dataset.rename;plan={id,account:state.account,old:native(id),next:display(id)};return dialog('原生改名 · 仅模拟',`<p>此操作与显示改名完全分离。</p><div class="field">${esc(state.account)} / ${esc(chat(id).project)} / example:${esc(id)}<br>${esc(plan.old)} → ${esc(plan.next)}</div><label class="checkrow"><input id="consent" type="checkbox">仅允许这一次模拟修改</label><p id="writeError" class="error"></p><div class="actions"><button class="button" data-action="conflict">模拟外部冲突</button><button class="button primary" id="execute" data-action="execute" disabled>确认模拟修改</button></div>`)}
+let a=b.dataset.action;switch(a){case'returnThemes':return returnToThemes();case'scenarios':return scenarioDialog();case'equalType':document.documentElement.dataset.equalType=document.documentElement.dataset.equalType==='true'?'false':'true';closeDialog();return;case'close':return closeDialog();case'nav':if(innerWidth<=760)state.nav=!state.nav;else state.sidebarCollapsed=!state.sidebarCollapsed;return render();case'topics':state.view='topics';state.topic=null;state.offset=0;state.nav=false;closeMenu(false);return render();case'historyStart':state.offset=1;state.months=state.months==='all'?1:state.months;state.view='history';state.topic=null;state.nav=false;state.unknown=false;render();$('board-scroll').scrollTop=0;return;case'historyReturn':state.view='history';state.topic=null;return render();case'boardMenu':return menu(b,`<button role="menuitem" data-find-topic="__global__">查找主题与派生名称</button><button role="menuitem" data-action="collapseAll">${currentBucketTopics().every(t=>state.collapsed[t.id])?'展开窗口':'只看主题'}</button><button role="menuitem" data-action="showAllRecords">查找所有记录</button><div class="separator"></div>`+[['1','一个月'],['3','三个月'],['12','一年'],['all','全部历史']].map(([v,l])=>`<button role="menuitemradio" aria-checked="${String(state.months)===v}" data-range="${v}">${l}</button>`).join(''));case'workset':state.view='workset';return render();case'rangeMenu':return menu(b,[['1','最近一个月'],['3','最近三个月'],['12','最近一年'],['all','全部历史']].map(([v,l])=>`<button role="menuitemradio" aria-checked="${String(state.months)===v}" data-range="${v}">${l}${String(state.months)===v?' ✓':''}</button>`).join(''));case'prev':state.offset++;state.view='history';state.topic=null;state.unknown=false;break;case'next':state.offset=Math.max(0,state.offset-1);state.view=state.offset?'history':'topics';state.topic=null;state.unknown=false;break;case'latest':state.offset=0;state.view='topics';state.topic=null;state.unknown=false;break;case'history':state.offset++;state.view='history';state.topic=null;state.unknown=false;state.limits={};state.expanded={};render();$('board-scroll').scrollTop=0;return;case'unknown':state.unknown=!state.unknown;return renderBoard();case'collapseAll':{const list=currentBucketTopics(),allCollapsed=list.length&&list.every(t=>state.collapsed[t.id]);list.forEach(t=>state.collapsed[t.id]=!allCollapsed);closeMenu(false);return renderBoard()}case'settings':return settings();case'search':return searchDialog();case'clock':return dialog('示例时间控制',`<p>原型固定示例今天，便于复验。正式产品以用户当地今天为锚点。</p><label>示例今天<input id="today" type="date" value="${state.today}"></label><label>时区<select id="zone">${[...new Set([state.zone,'Asia/Tokyo','Asia/Shanghai','America/Chicago','America/New_York','UTC'])].map(z=>`<option ${z===state.zone?'selected':''}>${z}</option>`).join('')}</select></label><div class="actions"><button class="button primary" data-action="saveClock">应用</button></div>`);case'saveClock':if(!$('today').value)return;state.today=$('today').value;state.zone=$('zone').value;state.offset=0;closeDialog();break;case'theme':state.theme=state.theme==='light'?'dark':'light';closeDialog();return render();case'saveSession':db().snapshot=[...db().tabs];closeDialog();return toast('已保存示例引用与顺序，不保存原生草稿');case'restore':db().tabs=[...new Set(db().snapshot)];state.view='workset';closeDialog();return render();case'account':return dialog('示例账户',`<p>仅两个内存集合，不证明真实账户绑定。</p><button class="nav" data-action="accountA">个人示例账户</button><button class="nav" data-action="accountB">团队示例账户</button>`);case'accountA':case'accountB':resetNavigationState();originView=null;state.account=a==='accountA'?'A':'B';state.current=null;state.view='topics';state.topic=null;state.collapsed={};state.history=false;state.unknown=false;state.mode='derived';$('host').innerHTML='';currentHostKey=null;closeDialog();return render();case'import':if(state.scenario!=='stress')return dialog('原版历史样本','<p>原版导入反例保留在压力样本中。切换样本只改变本地演示，不读取你的文件。</p><button class="button" data-action="scenarios">切换使用规模样本</button>');return dialog('原版历史样本',`<p>${state.account==='B'?'这份样本不属于此账户，拒绝导入。':db().imported?'样本已导入，重复引用不会再次添加。':'载入原型自带的两个历史引用。时间和 Project 未核验，不假定活跃。'}</p>${state.account==='A'&&!db().imported?'<button class="button" data-action="confirmImport">载入示例</button>':''}`);case'confirmImport':db().imported=true;extras.forEach(c=>db().placements[c.id]=[c.ws]);closeDialog();return render();case'replayAI':closeDialog();return toast('模拟 AI 重放：人工标题、负向约束与发送时间保持不变');case'undo':{let u=db().undo.pop();if(u)Object.assign(db(),JSON.parse(u));return render()}case'fault':state.mode='native';state.fault=true;closeDialog();return render();case'recover':state.mode='derived';state.fault=false;return render();case'conflict':if(plan){db().native[plan.id]='外部修改（模拟）';$('writeError').textContent='已模拟外部旧名变化，执行必须拒绝。'}return;case'execute':if(!plan||!$('consent').checked)return;if(plan.account!==state.account||native(plan.id)!==plan.old){db().audit.push({...plan,status:'CONFLICT'});$('writeError').textContent='未执行：原生标题或账户变化。不会覆盖或重试。';$('execute').disabled=true;return}db().native[plan.id]=plan.next;db().audit.push({...plan,status:'VERIFIED_SIMULATION'});closeDialog();render();return toast('仅模拟改名已记录，真实数据未变化');case'audit':return dialog('模拟回执',`<pre style="white-space:pre-wrap">${esc(JSON.stringify(db().audit,null,2))}</pre>`);case'new':return dialog('实际原生目的地',`<p>主题不合并原生项目上下文。</p><select id="destination">${[...new Set(all().map(c=>c.project))].filter(p=>p!=='未核验来源').map(p=>`<option>${esc(p)}</option>`).join('')}</select><button class="button" data-action="newPreview">查看目的地示意</button>`);case'newPreview':return toast('目的地示意：'+$('destination').value+'。原型不创建真实对话。');case'nativeHelp':return dialog('保留原生 ChatGPT',`<p>原生模型、工具、输入、菜单、Project 和权限仍由 ChatGPT 持有。本页面是模拟，不连接真实功能。</p><p>VAIWL 明确是第三方扩展。当前字体与色值是近似示例，不能当作真实登录态视觉测量。</p>`);case'demoSend':return toast('不发送、不产生用户发送时间；这是交互示意。');default:return}state.limits={};state.expanded={};render()});
+document.addEventListener('change',ev=>{if(ev.target.id==='consent')$('execute').disabled=!ev.target.checked});
+document.addEventListener('pointerdown',ev=>{if(!$('popover').hidden&&!$('popover').contains(ev.target)&&ev.target!==menuReturn)closeMenu(false)});
+document.addEventListener('keydown',ev=>{if(ev.isComposing)return;if(ev.altKey&&ev.key.toLowerCase()==='k'){ev.preventDefault();searchDialog()}if(!$('popover').hidden){let b=[...$('popover').querySelectorAll('button')],i=b.indexOf(document.activeElement);if(['ArrowDown','ArrowUp','Home','End'].includes(ev.key)){ev.preventDefault();b[ev.key==='Home'?0:ev.key==='End'?b.length-1:(i+(ev.key==='ArrowDown'?1:-1)+b.length)%b.length].focus()}if(ev.key==='Escape'){ev.preventDefault();closeMenu()}}});
+$('modal').addEventListener('close',()=>{plan=null;if(modalReturn?.isConnected)modalReturn.focus()});
+document.addEventListener('dragstart',ev=>{let r=ev.target.closest('[data-drag]');if(r&&state.mode==='derived')ev.dataTransfer.setData('text/plain',r.dataset.drag)});document.addEventListener('dragover',ev=>{if(ev.target.closest('[data-drop]'))ev.preventDefault()});document.addEventListener('drop',ev=>{let t=ev.target.closest('[data-drop]');if(!t)return;ev.preventDefault();let id=ev.dataTransfer.getData('text/plain');if(chat(id))assign(id,t.dataset.drop)});
+window.__v2={windowOf,subMonths,localDay,bucketForDay,conversationBucket,topicBucket,childClass,snapshot:()=>JSON.parse(JSON.stringify({state,stores,topics:spaces().map(t=>({...t,status:topicState(t.id),bucket:topicBucket(t.id),pinned:pinned(t.id),count:items(t.id).length})),chats:all().map(c=>({...c,status:classify(c),bucket:conversationBucket(c),display:display(c.id),native:native(c.id),placements:members(c.id)}))})),evaluate:(c)=>classify(c)};
+
+function setScenario(key){if(!Object.hasOwn(scenarios,key))return;resetNavigationState();state.scenario=key;stores={A:empty('A',key),B:empty('B',key)};Object.assign(state,{account:'A',mode:'derived',view:'topics',topic:null,current:null,months:1,offset:0,collapsed:{},limits:{},expanded:{},unknown:false,nav:false,fault:false});originView=null;currentHostKey=null;$('host').replaceChildren();for(const k of Object.keys(drafts))delete drafts[k];if($('modal').open)closeDialog();closeMenu(false);render();$('board-scroll').scrollTop=0}
+function scenarioDialog(){const desc={small:['少量工作','2 个活跃主题 · 3 个活跃窗口'],daily:['日常并行','6 个活跃主题 · 17 个活跃窗口'],heavy:['多线工作','14 个活跃主题 · 54 个活跃窗口'],stress:['原版压力样本','30 个活跃主题 · 单个主题 60 个总窗口']};dialog('使用规模 · 仅模拟',`<p>这些是用于比较布局的场景假设，不是用户统计。切换会重置当前演示修改；不会接触真实 ChatGPT。</p>${Object.entries(desc).map(([key,[name,note]])=>`<button class="scene-option" data-scenario="${key}" aria-pressed="${state.scenario===key}">${name}<small>${note}</small></button>`).join('')}`)}
+
+window.__v21=window.__v2;window.__v22=window.__v2;window.__v23={...window.__v2,setScenario};
+
+function resetNavigationState(){accessTopic=null;navManual={};navFull={};navLimits={};navRestLimits={};boardFull={};boardRestLimits={};libraryRecent=false;libraryUnknown=false;libraryPeriod=1;}
+window.__v24={...window.__v23,topicIcon,sidebarTopicList,debug:()=>JSON.parse(JSON.stringify({accessTopic,navManual,navFull,navLimits,boardFull,libraryPeriod,libraryRecent,libraryUnknown,narrowCloseOnSelect,dotAvailable})),setDotAvailable:(v)=>{dotAvailable=!!v;renderNav();}};
+
+window.__v25={...window.__v24,showPeriod};
+/* v2.6 is an OFFLINE UI study: native-* below is a synthetic host harness,
+   not an adapter, browser extension, or implementation of ChatGPT services. */
+Object.assign(paths,{
+ image:'M3 4h18v16H3zM3 16l6-6 5 5 3-3 4 4M16 7h.01',
+ grid:'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
+ plug:'M9 3v5M15 3v5M7 8h10v4a5 5 0 0 1-10 0zM12 17v4',
+ check:'M5 12l4 4L19 6', account:'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0M3 21a9 9 0 0 1 18 0',
+ mic:'M9 4a3 3 0 0 1 6 0v8a3 3 0 0 1-6 0zM5 10v2a7 7 0 0 0 14 0v-2M12 19v3',
+ library:'M4 4h5v16H4zM11 4h4v16h-4zM17 5l3-1 4 15-3 1z',
+ shield:'M12 3l8 3v6c0 4-4 7-8 9-4-2-8-5-8-9V6z',
+ home:'M3 11 12 3 21 11M6 9v12h12V9M10 21v-7h4v7',
+ bell:'M5 17h14l-2-3V9a5 5 0 0 0-10 0v5zM10 21h4'
+});
+let nativeMoreOpen=false,nativeCurrent=null,nativeShellScope=null,nativeSearchKind='all';
+let nativePinsByAccount={A:['library'],B:[]};
+let nativeFeatures=[
+ {id:'projects',name:'Projects',icon:'folder',direct:true,available:true},
+ {id:'library',name:'Library',icon:'book',hostPinned:true,available:true},
+ {id:'images',name:'Images',icon:'image',available:true},
+ {id:'gpts',name:'GPTs',icon:'grid',available:true},
+ {id:'plugins',name:'Plugins',icon:'plug',available:true},
+ {id:'work',name:'Work',icon:'briefcase',available:true},
+ {id:'codex',name:'Codex',icon:'code',available:true},
+ {id:'tasks',name:'Tasks',icon:'check',available:true,attention:false}
+];
+let nativePreservedNodes=new Map();
+const nativeAudit=[];
+function fixtureEntry(feature){
+ let wrapper=nativePreservedNodes.get(feature.id);
+ if(!wrapper){
+  wrapper=document.createElement('div');wrapper.className='native-feature-row';wrapper.dataset.nativeOwned='fixture';
+  wrapper.innerHTML=`<button class="nav" data-native-feature="${esc(feature.id)}">${svg(feature.icon)}<span class="native-name">${esc(feature.name)}</span><span class="native-attention-label" hidden>待处理</span></button><button class="native-feature-pin" data-native-pin="${esc(feature.id)}" aria-label="将 ${esc(feature.name)} 保留为常用入口" aria-pressed="false">${svg('pin')}</button>`;
+  nativePreservedNodes.set(feature.id,wrapper);
+ }
+ return wrapper;
+}
+function availableNativeFeatures(){return nativeFeatures.filter(f=>f.available)}
+function isNativeDirect(f){return !!(f.direct||f.hostPinned||f.unknown||f.attention||(nativePinsByAccount[state.account]||[]).includes(f.id))}
+function ensureNativeSidebar(){
+ if(nativeShellScope===state.account&&$('native-primary'))return;
+ nativeShellScope=state.account;nativePreservedNodes=new Map();
+ $('sidebar').innerHTML=`<div class="sidehead"><button data-native-action="brand" class="native-brand" data-native-owned="fixture">ChatGPT</button><div class="sidehead-tools"><button class="workspace-home" data-action="workspaceHome" aria-label="工作空间" data-tip="工作空间">${svg('grid')}</button><button class="icon" data-action="nav" aria-label="收起导航" data-tip="收起导航">${svg('panel')}</button></div></div>
+ <div class="nav-top native-primary" id="native-primary" data-native-owned="fixture"><button class="nav" data-native-action="new">${svg('plus')}新聊天</button><button class="nav" data-native-action="search">${svg('search')}搜索聊天</button><button class="nav dot-entry" data-native-action="dot" aria-label="dot，原生入口占位"><span class="native-identity-avatar" data-avatar-status="placeholder" title="未读取真实头像，此处仅为占位">d</span><span class="native-dot-name">dot</span><span class="native-attention-label" id="dot-attention" hidden>待处理</span></button></div>
+ <div id="native-urgent" data-native-owned="fixture"></div><nav id="nav-scroll" class="nav-scroll" aria-label="主题与原生导航"><div id="topic-tree"></div><div id="current" class="current" hidden></div><section class="native-resource-zone" aria-label="ChatGPT 原生功能示意"><div id="native-direct"></div><button class="native-more-control" data-native-action="more" aria-expanded="false" aria-controls="native-more-items">${svg('more')}更多<span class="disclosure">${svg('down')}</span></button><div id="native-more-items" hidden></div></section></nav>
+ <div class="sidefoot"><div id="v26-extensionbar" class="v26-extensionbar"><span>VAIWL · 扩展原型</span><span class="spacer"></span><button class="icon" data-action="workset" aria-label="当前工作集" data-tip="当前工作集">${svg('collection')}</button><button class="icon" data-action="boardMenu" aria-label="工作空间选项" data-tip="工作空间选项">${svg('more')}</button><button class="icon" id="v26-native-toggle" data-mode="native" aria-label="回到原生" data-tip="回到原生">${svg('return')}</button><button class="icon" data-action="settings" aria-label="VAIWL 设置" data-tip="VAIWL 设置">${svg('gear')}</button></div><div id="native-account-slot" data-native-owned="fixture"><button class="native-account-entry" data-native-action="account"><span class="native-identity-avatar">U</span><span>示例账户<small>原生账户菜单占位</small></span>${svg('more')}</button></div></div>`;
+}
+function updateNativeEntries(){
+ const direct=$('native-direct'),rest=$('native-more-items'),urgent=$('native-urgent');
+ for(const f of nativeFeatures){const el=fixtureEntry(f);if(!f.available){el.remove();continue}
+  const target=f.attention?urgent:isNativeDirect(f)?direct:rest;if(el.parentElement!==target)target.append(el);
+  const btn=el.querySelector('[data-native-feature]');btn.querySelector('.native-name').textContent=f.name;
+  el.classList.toggle('native-pinned',!!f.hostPinned||(nativePinsByAccount[state.account]||[]).includes(f.id));
+  el.classList.toggle('has-attention',!!f.attention);btn.querySelector('.native-attention-label').hidden=!f.attention;
+  const pin=el.querySelector('[data-native-pin]');pin.hidden=!!(f.direct||f.hostPinned||f.unknown);pin.setAttribute('aria-pressed',String((nativePinsByAccount[state.account]||[]).includes(f.id)));
+  pin.setAttribute('aria-label',((nativePinsByAccount[state.account]||[]).includes(f.id)?'取消常驻 ':'常驻 ')+f.name);
+ }
+ rest.hidden=!nativeMoreOpen;
+ const more=$('sidebar').querySelector('[data-native-action=more]');more.hidden=rest.children.length===0;more.setAttribute('aria-expanded',String(nativeMoreOpen));
+ more.querySelector('.disclosure').innerHTML=svg(nativeMoreOpen?'up':'down');
+ $('sidebar').querySelector('[data-native-action=dot]').hidden=!dotAvailable;
+}
+const baseRenderNav26=renderNav;
+renderNav=function(){
+ const oldScroll=$('nav-scroll')?.scrollTop||0,old=document.activeElement;
+ const oldData=old&&$('sidebar').contains(old)?Object.fromEntries(Object.entries(old.dataset).filter(([k])=>k!=='tip')):null;
+ ensureNativeSidebar();const derived=state.mode==='derived',inChat=state.view==='chat';let body='';
+ if(derived){body=(inChat&&accessTopic&&navigationTopicBucket(accessTopic)!==0?'<div class="current-exception">正在查看</div>':'')+sidebarTopicList().map(topicSidebar).join('');if(inChat&&!accessTopic&&chat(state.current))body='<div class="current-exception">正在查看</div>'+row(chat(state.current),true)+body;}
+ else body=[...new Set(all().map(c=>c.project))].map(p=>`<div class="navcaption">${esc(p)}</div>${all().filter(c=>c.project===p).map(c=>`<button class="nav" data-open="${c.id}">${esc(native(c.id))}</button>`).join('')}`).join('');
+ $('topic-tree').innerHTML=body;updateNativeEntries();
+ const nativeToggle=$('v26-native-toggle');nativeToggle.dataset.mode=derived?'native':'derived';nativeToggle.setAttribute('aria-label',derived?'回到原生':'启用主题视图');nativeToggle.dataset.tip=derived?'回到原生':'启用主题视图';
+ const home=$('sidebar').querySelector('[data-action=workspaceHome]');home.setAttribute('aria-label',inChat||state.view==='nativeSurface'?'返回工作空间':'工作空间');
+ const fixed=spaces().filter(t=>db().pins.includes(t.id));
+ if((fixed.length||db().pinnedChats.length)&&!$('fixed-shortcut-26')){$('v26-extensionbar').insertAdjacentHTML('afterbegin',`<button id="fixed-shortcut-26" class="icon" data-action="fixedShortcuts" aria-label="固定入口">${svg('pin')}</button>`)}
+ if(!fixed.length&&!db().pinnedChats.length)$('fixed-shortcut-26')?.remove();
+ $('navrail').innerHTML=`<button class="icon" data-action="nav" aria-label="展开导航" data-tip="展开导航">${svg('panel')}</button><button class="icon" data-action="workspaceHome" aria-label="返回工作空间" data-tip="工作空间">${svg('grid')}</button><button class="icon" data-native-action="search" aria-label="搜索聊天" data-tip="搜索聊天">${svg('search')}</button>${dotAvailable?`<button class="icon" data-native-action="dot" aria-label="dot 原生入口占位" data-tip="dot"><span class="native-identity-avatar">d</span></button>`:''}<button class="icon" data-native-action="features" aria-label="${nativeFeatures.some(f=>f.available&&f.attention)?'原生功能，有待处理操作':'原生功能'}" data-tip="${nativeFeatures.some(f=>f.available&&f.attention)?'原生功能 · 待处理':'原生功能'}">${svg('more')}</button><div class="railfoot"><button class="icon" data-native-action="account" aria-label="原生账户菜单" data-tip="原生账户菜单">${svg('account')}</button><button class="icon" data-mode="${derived?'native':'derived'}" aria-label="${derived?'回到原生':'启用主题视图'}" data-tip="${derived?'回到原生':'启用主题视图'}">${svg('return')}</button><button class="icon" data-action="settings" aria-label="VAIWL 设置" data-tip="VAIWL 设置">${svg('gear')}</button><span class="rail-id">VAIWL<br>扩展原型</span></div>`;
+ $('nav-scroll').scrollTop=oldScroll;
+ if(oldData&&!old?.isConnected){const keys=Object.keys(oldData);[...$('sidebar').querySelectorAll('button')].find(b=>keys.length&&keys.every(k=>b.dataset[k]===oldData[k]))?.focus({preventScroll:true})}
+ document.querySelectorAll('.history-disclosure,.past-step,.past-context button').forEach(b=>b.dataset.tip=b.getAttribute('aria-label')||'查看');
+};
+const nativeSurface=document.createElement('section');nativeSurface.id='native-surface';nativeSurface.hidden=true;nativeSurface.dataset.owner='native-fixture';$('host').after(nativeSurface);
+function keepWorkspaceOrigin(){if(!['chat','nativeSurface'].includes(state.view))originView={view:state.view,topic:state.topic,offset:state.offset,months:state.months,scroll:$('board-scroll').scrollTop,libraryPeriod,libraryRecent,libraryUnknown}}
+function openNativeSurface(id){
+ const f=nativeFeatures.find(f=>f.id===id&&f.available);if(!f)return;
+ keepWorkspaceOrigin();nativeCurrent=id;state.view='nativeSurface';if(innerWidth<=760&&narrowCloseOnSelect)state.nav=false;
+ const rows={projects:[['paia 开发','原生项目 · 文件、指令与成员'],['产品想法','原生项目 · 独立上下文']],library:[['项目研究笔记.md','文件示例'],['设计草稿.pdf','文件示例']],images:[['图像草稿','原生图片示例'],['编辑中的图像','原生编辑器示例']],gpts:[['我的 GPT','原生配置与会话'],['探索 GPTs','原生目录']],plugins:[['已连接的应用','连接与权限由原生处理'],['探索 Plugins','原生目录']],tasks:[['研究跟进','任务详情与状态'],['等待确认的操作','原生批准、拒绝入口']],work:[['当前工作','继续、暂停和结果'],['历史工作','原生工作记录']],codex:[['开发任务','原生任务与审阅'],['工作环境','原生环境设置']]};
+ nativeSurface.innerHTML=`<div class="native-surface-inner"><header class="native-surface-head"><h1>${esc(f.name)}</h1><span class="small">原生页面占位 · 未连接</span></header><div class="native-surface-actions"><button class="button" data-native-action="surfaceNew">${svg('plus')}新建</button>${id==='projects'?'<button class="button" data-native-action="projectSettings">项目设置</button>':''}</div><div class="native-item-list">${(rows[id]||[['宿主新增功能','不因扩展未识别而删除入口']]).map(([title,note])=>`<button class="native-item" data-native-item="${esc(title)}">${svg(f.icon)}<span>${esc(title)}<small>${esc(note)}</small></span>${svg('right')}</button>`).join('')}</div><p class="native-owner-note">此区域只示意原生页面的位置和进入路径。正式产品在这里保留真实页面、菜单、状态和权限流程，不加载 VAIWL 的替代实现。</p></div>`;
+ nativeAudit.push({action:'open-native-surface-fixture',id});render();
+}
+const nativeMockResults=()=>[
+ ...all().map(c=>({id:c.id,title:native(c.id),kind:'chat'})),
+ {id:'native-only-history',title:'仅原生搜索可见的归档聊天',kind:'archived'},
+ {id:'native-only-file',title:'项目研究笔记.md',kind:'file'},
+ {id:'native-only-project',title:'未进入派生索引的原生项目',kind:'project'}
+];
+function openNativeSearch(){
+ nativeSearchKind='all';dialog('搜索聊天',`<div class="native-modal-label">原生搜索占位 · 示例结果，不读取你的账户</div><input id="nativeSearchInput" type="text" aria-label="原生搜索" placeholder="搜索聊天、项目和文件" autofocus><div class="native-category"><button data-native-kind="all">全部</button><button data-native-kind="chat">聊天</button><button data-native-kind="project">项目</button><button data-native-kind="file">文件</button></div><div class="searchresults" id="nativeResults"></div>`);
+ $('nativeSearchInput').oninput=renderNativeResults;renderNativeResults();nativeAudit.push({action:'native-search-fixture'});
+}
+function renderNativeResults(){
+ const q=$('nativeSearchInput').value.toLowerCase();const hits=nativeMockResults().filter(x=>(nativeSearchKind==='all'||x.kind===nativeSearchKind||nativeSearchKind==='chat'&&x.kind==='archived')&&x.title.toLowerCase().includes(q));
+ $('nativeResults').innerHTML=hits.slice(0,70).map(x=>`<button class="native-search-hit" data-native-result="${esc(x.id)}" data-native-result-kind="${x.kind}">${svg(x.kind==='file'?'book':x.kind==='project'?'folder':'chat')}<span>${esc(x.title)}</span><small>${{chat:'聊天',archived:'归档',file:'文件',project:'项目'}[x.kind]}</small></button>`).join('')||'<div class="empty">示例结果中没有匹配项</div>';
+}
+const baseSearch26=searchDialog;
+searchDialog=function(topicId=null){baseSearch26(topicId);$('modal-title').textContent=topicId&&ws(topicId)?'查找 · '+ws(topicId).name:'查找主题与派生名称';if(!topicId)$('modal').querySelector('.dialogbody').insertAdjacentHTML('beforeend','<p class="native-modal-label">VAIWL 仅搜索已知记录，不替代原生搜索。</p>');};
+function nativeMenu(kind){
+ const items={model:['Chat','Work','Codex','模型与思考选项'],tools:['添加文件','联网搜索','深度研究','学习模式','创建图片','Canvas','连接应用'],conversation:['分享','重命名','归档','移入 Project','删除'],account:['切换账户','切换组织','设置','个性化与记忆','数据控制','归档聊天','订阅与用量','帮助'],message:['复制','重新生成','编辑','分支','反馈'],dot:['打开 dot','任务与计划','头像与名称','需要确认的操作']};
+ dialog({model:'模型与模式',tools:'工具',conversation:'会话操作',account:'账户',message:'消息操作',dot:'dot'}[kind]||'原生操作',`<div class="native-modal-label">原生菜单占位 · 无真实操作</div>${(items[kind]||[]).map(label=>`<button class="nav" data-native-subaction="${esc(label)}">${esc(label)}</button>`).join('')}`);
+ nativeAudit.push({action:'native-menu-fixture',kind});
+}
+function nativeAction(action){
+ if(action==='more'){nativeMoreOpen=!nativeMoreOpen;updateNativeEntries();return}
+ if(action==='search')return openNativeSearch();
+ if(action==='features')return dialog('原生功能',`<div class="native-modal-label">当前示例宿主提供的入口</div>${availableNativeFeatures().map(f=>`<button class="nav" data-native-feature="${esc(f.id)}">${svg(f.icon)}${esc(f.name)}</button>`).join('')}`);
+ if(['account','model','tools','conversation','message','dot'].includes(action))return nativeMenu(action);
+ if(action==='brand')return dialog('原生标志入口','<p class="status-explanation">正式产品保留宿主已有的标志及目的地，不改绑成 VAIWL 工作空间。</p>');
+ if(action==='new')return dialog('新聊天 · 原生入口占位','<p class="status-explanation">正式产品在原生上下文中执行此入口。不会先弹出 VAIWL 的目的地选择，也不会将派生主题当作原生 Project。</p><button class="button" data-action="close">返回演示</button>');
+ return dialog('原生操作占位',`<p class="status-explanation">保留真实原生页面处理此操作。此离线示例没有执行 ${esc(action)}，没有授权、发送或修改真实内容。</p><button class="button" data-action="close">返回演示</button>`);
+}
+const baseRenderHost26=renderHost;
+renderHost=function(){
+ const key=currentHostKey;baseRenderHost26();if(key===currentHostKey||!currentHostKey)return;
+ const host=$('host');host.querySelector('.mock-model')?.setAttribute('data-native-action','model');
+ const share=host.querySelector('.mock-native-controls button');if(share){share.dataset.nativeAction='conversation';share.setAttribute('aria-label','原生分享与会话菜单示意')}
+ host.querySelector('.mock-native-controls')?.insertAdjacentHTML('afterbegin','<button class="native-toolchip" data-native-action="temporary">临时聊天</button>');
+ const attach=host.querySelector('.composeractions .icon');if(attach){attach.dataset.nativeAction='tools';attach.setAttribute('aria-label','原生附件与工具菜单示意')}
+ host.querySelector('.composeractions .send')?.insertAdjacentHTML('beforebegin',`<button class="icon" data-native-action="voice" aria-label="原生语音示意">${svg('mic')}</button>`);
+ host.querySelector('.answer')?.insertAdjacentHTML('beforeend',`<button class="icon" data-native-action="message" aria-label="原生消息操作示意">${svg('more')}</button>`);
+};
+const baseRender26=render;
+render=function(){
+ baseRender26();const on=state.view==='nativeSurface';nativeSurface.hidden=!on;if(on){$('host').hidden=true;$('board-scroll').hidden=true}
+ document.querySelectorAll('.history-disclosure,.past-step,.past-context button').forEach(b=>b.dataset.tip=b.getAttribute('aria-label')||'查看');
+};
+const baseOpenChat26=openChat;
+openChat=function(id,parent=null){const fromNative=state.view==='nativeSurface',saved=originView;baseOpenChat26(id,parent);if(fromNative&&saved)originView=saved};
+const baseReturn26=returnToThemes;
+returnToThemes=function(){baseReturn26();nativeCurrent=null;nativeSurface.hidden=true};
+const baseResetNav26=resetNavigationState;
+resetNavigationState=function(){baseResetNav26();nativeCurrent=null;nativeMoreOpen=false;nativeShellScope=null;nativeSurface.replaceChildren();nativeSurface.hidden=true;};
+const baseSettings26=settings;
+settings=function(){baseSettings26();$('modal').querySelector('.dialogbody').insertAdjacentHTML('beforeend',`<div class="notice">dot 的真实头像与字体未被读取；字母 d 只是离线占位，不是建议换掉用户头像。</div><button class="nav" data-native-config="features">模拟宿主功能变化</button><button class="nav" data-native-config="alert">模拟待处理任务</button><button class="nav" data-native-config="extra">模拟新增原生入口</button><button class="nav" data-native-config="pins">查看原生入口常驻设置</button>`)};
+// Capture ONLY fixture actions; production must not intercept the host's own controls.
+document.addEventListener('click',ev=>{
+ const b=ev.target.closest('button');if(!b||b.disabled)return;
+ if(b.dataset.action==='workspaceHome'&&state.view==='nativeSurface'){ev.stopImmediatePropagation();return returnToThemes()}
+ if(!Object.keys(b.dataset).some(k=>k.startsWith('native')))return;
+ ev.stopImmediatePropagation();closeMenu(false);
+ if(b.dataset.nativeFeature){if($('modal').open)closeDialog();return openNativeSurface(b.dataset.nativeFeature)}
+ if(b.dataset.nativePin){const id=b.dataset.nativePin,pins=nativePinsByAccount[state.account]||[];nativePinsByAccount[state.account]=pins.includes(id)?pins.filter(x=>x!==id):[...pins,id];updateNativeEntries();return}
+ if(b.dataset.nativeAction)return nativeAction(b.dataset.nativeAction);
+ if(b.dataset.nativeKind){nativeSearchKind=b.dataset.nativeKind;return renderNativeResults()}
+ if(b.dataset.nativeResult){const id=b.dataset.nativeResult,kind=b.dataset.nativeResultKind;closeDialog();if(chat(id))return openChat(id);if(kind==='file')return openNativeSurface('library');if(kind==='project')return openNativeSurface('projects');return nativeAction('原生归档聊天')}
+ if(b.dataset.nativeItem||b.dataset.nativeSubaction){const label=b.dataset.nativeItem||b.dataset.nativeSubaction;return dialog(label,`<p class="status-explanation">这是 ${esc(label)} 的原生流程占位。真实产品必须使用宿主现有界面及确认流程，此处不执行真实动作。</p><button class="button" data-action="close">返回演示</button>`)}
+ if(b.dataset.nativeConfig){const key=b.dataset.nativeConfig;
+  if(key==='alert'){nativeFeatures.find(x=>x.id==='tasks').attention=!nativeFeatures.find(x=>x.id==='tasks').attention;closeDialog();render();return}
+  if(key==='extra'){if(!nativeFeatures.some(x=>x.id==='new-host-feature'))nativeFeatures.push({id:'new-host-feature',name:'新增原生入口',icon:'grid',available:true,unknown:true});closeDialog();render();return}
+  if(key==='features'){const f=nativeFeatures.find(x=>x.id==='images');f.available=!f.available;dotAvailable=!dotAvailable;closeDialog();render();return}
+  if(key==='pins')return dialog('常驻的原生入口',`<p class="status-explanation">用户原先固定的入口优先保留。折叠只改变入口位置，不删除功能，不自动按频次重排。</p>${availableNativeFeatures().map(f=>`<button class="nav" data-native-pin="${f.id}" ${f.hostPinned||f.direct?'disabled':''}>${svg(f.icon)}${esc(f.name)}${f.hostPinned?' · 宿主已固定':f.direct?' · 直接入口':''}</button>`).join('')}`);
+ }
+},true);
+const tip=document.createElement('div');tip.id='v26-tooltip';tip.hidden=true;tip.setAttribute('role','tooltip');document.body.append(tip);
+function showTip(el){const label=el?.dataset.tip;if(!label)return;tip.textContent=label;tip.hidden=false;const r=el.getBoundingClientRect();tip.style.left=Math.max(8,Math.min(r.left,innerWidth-tip.offsetWidth-8))+'px';tip.style.top=Math.min(r.bottom+5,innerHeight-tip.offsetHeight-8)+'px';}
+document.addEventListener('pointerover',e=>showTip(e.target.closest('[data-tip]')));document.addEventListener('pointerout',e=>{if(e.target.closest('[data-tip]'))tip.hidden=true});document.addEventListener('focusin',e=>showTip(e.target.closest('[data-tip]')));document.addEventListener('focusout',()=>tip.hidden=true);document.addEventListener('pointerdown',()=>tip.hidden=true);
+document.addEventListener('keydown',e=>{if(e.isComposing)return;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openNativeSearch()}});
+window.__v26={...window.__v25,nativeAudit,features:()=>JSON.parse(JSON.stringify(nativeFeatures)),nativePins:()=>JSON.parse(JSON.stringify(nativePinsByAccount)),setNativeFeature:(id,patch)=>{const f=nativeFeatures.find(f=>f.id===id);if(f)Object.assign(f,patch);else nativeFeatures.push({id,unknown:true,available:true,icon:'grid',name:id,...patch});render();},openNativeSurface,openNativeSearch};
+
+// Wire auxiliary descriptions after local disclosure renders as well as whole-view renders.
+const baseBoard26=renderBoard;
+renderBoard=function(){baseBoard26();document.querySelectorAll('.history-disclosure,.past-step,.past-context button').forEach(b=>b.dataset.tip=b.getAttribute('aria-label')||'查看');};
+
+render();
+</script></body></html>

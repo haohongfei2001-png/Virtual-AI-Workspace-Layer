@@ -1,0 +1,3 @@
+# Current-window visible positioning
+
+current-position-before: real T11903 normal/new-tab path retained FAIL because the current row was rendered below the owned sidebar viewport. Existing shared navigation now scrolls only its own theme list after explicit route selection; manual scroll is retained across owned rerenders/rebinds in per-scope transient view memory. No native content scroll or focus move. ui-complete9/9 PASS including actual current-row rectangle fully inside sidebar viewport. Sidebar manual folding remains independent. Source freeze here, final full regressions below; no additional scope development.

@@ -1,0 +1,32 @@
+{
+  "AGENTS.md": {
+    "bytes": 2593,
+    "git_blob": "91074ebc18db2f8eb073fdad073a23d1ef5f73e4",
+    "sha256": "5ee4b2987fb7c18ecbdc2d838f6162b6df78a979d93db28f4a5b9b1bd260feba"
+  },
+  "docs/AUTHORITY.md": {
+    "bytes": 2725,
+    "git_blob": "1b5980248943519e0053ae29dd591223a6966078",
+    "sha256": "b8ef962149881ef15f12cc14ae8f0c62faa78db2881f65e4ef5ae36af6e3702a"
+  },
+  "docs/STATUS.md": {
+    "bytes": 2491,
+    "git_blob": "6966d5b9d4773345d9b759ca2c11ab1afb637dfd",
+    "sha256": "42ab5f178a8bc1c40f7c9a258c1cd8087e2189f7f36d9aa5958eaa45e4ce5c63"
+  },
+  "docs/INTERACTION_SPEC.md": {
+    "bytes": 10394,
+    "git_blob": "56c6af5e028638333f9e5c8dba98b1adb42c98bd",
+    "sha256": "ccf5cee1013d183130615c12f4878ea2bcb0fe3474b278b7bf834f693740a059"
+  },
+  "docs/CORE_FLOW_V2_7.md": {
+    "bytes": 8964,
+    "git_blob": "50ffafb08e373681579310c57a8c6b2341463ce4",
+    "sha256": "80ded0d8227687ac80896e2451ef309dbf1fabef16fba7b5494db67e8d203164"
+  },
+  "docs/research/NATIVE_WEB_DELTA_2026_10_11.md": {
+    "bytes": 5415,
+    "git_blob": "921f862fd48eac5d3b03f1d73270f52395b0d68b",
+    "sha256": "4c16dca7174354dd328d8cfb32d66f7590aadc94da47b31363c891a6d62520be"
+  }
+}

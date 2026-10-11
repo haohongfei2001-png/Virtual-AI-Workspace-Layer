@@ -1,0 +1,736 @@
+TAP version 13
+# Subtest: B1: sender identity is independent of page-supplied scope and exact envelope
+ok 1 - B1: sender identity is independent of page-supplied scope and exact envelope
+  ---
+  duration_ms: 2.077958
+  type: 'test'
+  ...
+# Subtest: B1: new browser-confirmed document supersedes old lease without waiting
+ok 2 - B1: new browser-confirmed document supersedes old lease without waiting
+  ---
+  duration_ms: 1.281875
+  type: 'test'
+  ...
+# Subtest: B1: route invalidation revokes even same-document tokens
+ok 3 - B1: route invalidation revokes even same-document tokens
+  ---
+  duration_ms: 0.421625
+  type: 'test'
+  ...
+# Subtest: B1: wrong browser document and unknown scope fail closed
+ok 4 - B1: wrong browser document and unknown scope fail closed
+  ---
+  duration_ms: 0.141625
+  type: 'test'
+  ...
+# Subtest: B1: worker restart invalidates transient lease, not persisted reference
+ok 5 - B1: worker restart invalidates transient lease, not persisted reference
+  ---
+  duration_ms: 5.942375
+  type: 'test'
+  ...
+# Subtest: B1: scope change makes old records unreachable even if same native ID
+ok 6 - B1: scope change makes old records unreachable even if same native ID
+  ---
+  duration_ms: 0.533375
+  type: 'test'
+  ...
+# Subtest: B1: lease expiry/replay and browser-confirmed same-document SPA route
+ok 7 - B1: lease expiry/replay and browser-confirmed same-document SPA route
+  ---
+  duration_ms: 0.2295
+  type: 'test'
+  ...
+# Subtest: B1: delayed scope resolver cannot commit after navigation invalidates
+ok 8 - B1: delayed scope resolver cannot commit after navigation invalidates
+  ---
+  duration_ms: 0.104875
+  type: 'test'
+  ...
+# Subtest: B1: stale pending write is rejected at repository commit fence
+ok 9 - B1: stale pending write is rejected at repository commit fence
+  ---
+  duration_ms: 3.913209
+  type: 'test'
+  ...
+# Subtest: B1: an asynchronous stale read never returns a stored reference
+ok 10 - B1: an asynchronous stale read never returns a stored reference
+  ---
+  duration_ms: 1.452375
+  type: 'test'
+  ...
+# Subtest: B1: a same-document SPA route change never exposes old async reads
+ok 11 - B1: a same-document SPA route change never exposes old async reads
+  ---
+  duration_ms: 4.016916
+  type: 'test'
+  ...
+# Subtest: AUDIT01 final awaited frame cannot outlive explicit broker revocation
+ok 12 - AUDIT01 final awaited frame cannot outlive explicit broker revocation
+  ---
+  duration_ms: 8.1585
+  type: 'test'
+  ...
+# Subtest: AUDIT02 view transaction aborts on revocation after put is queued
+ok 13 - AUDIT02 view transaction aborts on revocation after put is queued
+  ---
+  duration_ms: 289.131084
+  type: 'test'
+  ...
+# Subtest: AUDIT03 recovery never resurrects revoked source or activity evidence
+ok 14 - AUDIT03 recovery never resurrects revoked source or activity evidence
+  ---
+  duration_ms: 505.452167
+  type: 'test'
+  ...
+# Subtest: AUDIT04 recovery makes discarded operation receipts non-replayable
+ok 15 - AUDIT04 recovery makes discarded operation receipts non-replayable
+  ---
+  duration_ms: 276.225208
+  type: 'test'
+  ...
+# Subtest: AUDIT05 recovery revision exceeds trusted operation high-water
+ok 16 - AUDIT05 recovery revision exceeds trusted operation high-water
+  ---
+  duration_ms: 367.43375
+  type: 'test'
+  ...
+# Subtest: AUDIT06 reserved inherited foreign keys cannot impersonate evidence sources
+ok 17 - AUDIT06 reserved inherited foreign keys cannot impersonate evidence sources
+  ---
+  duration_ms: 20.103709
+  type: 'test'
+  ...
+# Subtest: AUDIT07 recovery itself observes an abort after put is queued
+ok 18 - AUDIT07 recovery itself observes an abort after put is queued
+  ---
+  duration_ms: 240.931583
+  type: 'test'
+  ...
+# Subtest: B23 broker rejects scope/actor and evidence injection in page commands
+ok 19 - B23 broker rejects scope/actor and evidence injection in page commands
+  ---
+  duration_ms: 6.863083
+  type: 'test'
+  ...
+# Subtest: B23 delayed snapshot never returns previous account data at unchanged URL
+ok 20 - B23 delayed snapshot never returns previous account data at unchanged URL
+  ---
+  duration_ms: 0.754834
+  type: 'test'
+  ...
+# Subtest: B23 browser invalidation aborts pending mutation and rejects result
+ok 21 - B23 browser invalidation aborts pending mutation and rejects result
+  ---
+  duration_ms: 0.183666
+  type: 'test'
+  ...
+# Subtest: B23 new document supersession aborts old mutation fence
+ok 22 - B23 new document supersession aborts old mutation fence
+  ---
+  duration_ms: 0.164458
+  type: 'test'
+  ...
+# Subtest: B23 command envelope passes human operation and abort signal but not mutable scope from page
+ok 23 - B23 command envelope passes human operation and abort signal but not mutable scope from page
+  ---
+  duration_ms: 0.168834
+  type: 'test'
+  ...
+# Subtest: B23 packed worker graph resolves all local dependencies and has no test database fallback
+ok 24 - B23 packed worker graph resolves all local dependencies and has no test database fallback
+  ---
+  duration_ms: 19.780292
+  type: 'test'
+  ...
+# Subtest: legacy B1 fixture build preserves its entry ABI and resolves new shared dependencies
+ok 25 - legacy B1 fixture build preserves its entry ABI and resolves new shared dependencies
+  ---
+  duration_ms: 107.408
+  type: 'test'
+  ...
+# Subtest: TIME_AUDIT01 reliable current positive survives another undated send in same conversation
+ok 26 - TIME_AUDIT01 reliable current positive survives another undated send in same conversation
+  ---
+  duration_ms: 453.850583
+  type: 'test'
+  ...
+# Subtest: TIME_AUDIT02 complete coverage alone cannot date an existing undated send
+ok 27 - TIME_AUDIT02 complete coverage alone cannot date an existing undated send
+  ---
+  duration_ms: 144.482625
+  type: 'test'
+  ...
+# Subtest: TIME_AUDIT03 contradictory timestamps on the same message cannot invent current activity
+ok 28 - TIME_AUDIT03 contradictory timestamps on the same message cannot invent current activity
+  ---
+  duration_ms: 97.023875
+  type: 'test'
+  ...
+# Subtest: TIME_AUDIT04 revoked sources cannot provide even positive current evidence
+ok 29 - TIME_AUDIT04 revoked sources cannot provide even positive current evidence
+  ---
+  duration_ms: 50.631375
+  type: 'test'
+  ...
+# Subtest: TIME_AUDIT05 fresh complete absence coverage differs from an existing undated event
+ok 30 - TIME_AUDIT05 fresh complete absence coverage differs from an existing undated event
+  ---
+  duration_ms: 93.904666
+  type: 'test'
+  ...
+# Subtest: SHA256 known-or-independent vector 0
+ok 31 - SHA256 known-or-independent vector 0
+  ---
+  duration_ms: 1.994125
+  type: 'test'
+  ...
+# Subtest: SHA256 known-or-independent vector 3
+ok 32 - SHA256 known-or-independent vector 3
+  ---
+  duration_ms: 0.207709
+  type: 'test'
+  ...
+# Subtest: SHA256 known-or-independent vector 10
+ok 33 - SHA256 known-or-independent vector 10
+  ---
+  duration_ms: 0.121583
+  type: 'test'
+  ...
+# Subtest: SHA256 known-or-independent vector 10000
+ok 34 - SHA256 known-or-independent vector 10000
+  ---
+  duration_ms: 7.251458
+  type: 'test'
+  ...
+# Subtest: canonical JSON ordering and invalid numbers
+ok 35 - canonical JSON ordering and invalid numbers
+  ---
+  duration_ms: 0.374833
+  type: 'test'
+  ...
+# Subtest: B2 no fallback from updated, visited, assistant or imported times
+ok 36 - B2 no fallback from updated, visited, assistant or imported times
+  ---
+  duration_ms: 44.310625
+  type: 'test'
+  ...
+# Subtest: B2 conflicting same-message sources quarantined not max-picked
+ok 37 - B2 conflicting same-message sources quarantined not max-picked
+  ---
+  duration_ms: 59.478
+  type: 'test'
+  ...
+# Subtest: B2 same event identity and time does not change latest
+ok 38 - B2 same event identity and time does not change latest
+  ---
+  duration_ms: 45.835458
+  type: 'test'
+  ...
+# Subtest: B2 branch identities remain independent
+ok 39 - B2 branch identities remain independent
+  ---
+  duration_ms: 42.679334
+  type: 'test'
+  ...
+# Subtest: B2 imprecise timestamp is UNKNOWN
+ok 40 - B2 imprecise timestamp is UNKNOWN
+  ---
+  duration_ms: 13.762792
+  type: 'test'
+  ...
+# Subtest: B2 coverage unions adjacent intervals and preserves gaps
+ok 41 - B2 coverage unions adjacent intervals and preserves gaps
+  ---
+  duration_ms: 12.933917
+  type: 'test'
+  ...
+# Subtest: B2 explicit holes are not treated as full coverage
+ok 42 - B2 explicit holes are not treated as full coverage
+  ---
+  duration_ms: 64.558417
+  type: 'test'
+  ...
+# Subtest: B2 revoked witness invalidates coverage not stored human assets
+ok 43 - B2 revoked witness invalidates coverage not stored human assets
+  ---
+  duration_ms: 33.634209
+  type: 'test'
+  ...
+# Subtest: B2 partial and known-branches-only coverage never proves absence
+ok 44 - B2 partial and known-branches-only coverage never proves absence
+  ---
+  duration_ms: 45.119958
+  type: 'test'
+  ...
+# Subtest: B2 current positive event proves theme; other unknown members retained
+ok 45 - B2 current positive event proves theme; other unknown members retained
+  ---
+  duration_ms: 141.499042
+  type: 'test'
+  ...
+# Subtest: B2 old theme requires every member coverage
+ok 46 - B2 old theme requires every member coverage
+  ---
+  duration_ms: 107.210959
+  type: 'test'
+  ...
+# Subtest: B2 timezone and midnight reproject without mutating UTC facts
+ok 47 - B2 timezone and midnight reproject without mutating UTC facts
+  ---
+  duration_ms: 190.104208
+  type: 'test'
+  ...
+# Subtest: B2 invalid calendar and invalid timezone rejected
+ok 48 - B2 invalid calendar and invalid timezone rejected
+  ---
+  duration_ms: 30.51925
+  type: 'test'
+  ...
+# Subtest: B3 stable workspace IDs and prototype keys forbidden
+ok 49 - B3 stable workspace IDs and prototype keys forbidden
+  ---
+  duration_ms: 0.472833
+  type: 'test'
+  ...
+# Subtest: B3 unknown command fields cannot request native mutation
+ok 50 - B3 unknown command fields cannot request native mutation
+  ---
+  duration_ms: 26.365
+  type: 'test'
+  ...
+# Subtest: B3 reduction never mutates supplied state
+ok 51 - B3 reduction never mutates supplied state
+  ---
+  duration_ms: 41.385959
+  type: 'test'
+  ...
+# Subtest: B3 cannot place nonexistent or cross-scope reference
+ok 52 - B3 cannot place nonexistent or cross-scope reference
+  ---
+  duration_ms: 32.463167
+  type: 'test'
+  ...
+# Subtest: B3 evidence provenance cannot be supplied as human command
+ok 53 - B3 evidence provenance cannot be supplied as human command
+  ---
+  duration_ms: 28.043083
+  type: 'test'
+  ...
+# Subtest: B2 malformed timestamp, assistant/edit events are not accepted
+ok 54 - B2 malformed timestamp, assistant/edit events are not accepted
+  ---
+  duration_ms: 58.536
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB migration v1 to v2 preserves old records
+ok 55 - MOCK_IDB migration v1 to v2 preserves old records
+  ---
+  duration_ms: 1.735041
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB malformed v1 schema rolls back atomic upgrade
+ok 56 - MOCK_IDB malformed v1 schema rolls back atomic upgrade
+  ---
+  duration_ms: 0.31675
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB blocked upgrade closes eventual abandoned connection
+ok 57 - MOCK_IDB blocked upgrade closes eventual abandoned connection
+  ---
+  duration_ms: 5.512084
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB injected quota error rolls back state and receipt
+ok 58 - MOCK_IDB injected quota error rolls back state and receipt
+  ---
+  duration_ms: 441.955958
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB fresh B1 connection shares upgraded DB with B23
+ok 59 - MOCK_IDB fresh B1 connection shares upgraded DB with B23
+  ---
+  duration_ms: 112.570125
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB01-same-B1-database-and-canonical-refs
+ok 60 - MOCK_IDB_NOT_NATIVE: DB01-same-B1-database-and-canonical-refs
+  ---
+  duration_ms: 282.435584
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB02-create-update-stable-id-and-reopen
+ok 61 - MOCK_IDB_NOT_NATIVE: DB02-create-update-stable-id-and-reopen
+  ---
+  duration_ms: 351.470541
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB03-derived-title-alias-and-native-immutable
+ok 62 - MOCK_IDB_NOT_NATIVE: DB03-derived-title-alias-and-native-immutable
+  ---
+  duration_ms: 286.56925
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB04-place-move-exclusion-and-targeted-undo
+ok 63 - MOCK_IDB_NOT_NATIVE: DB04-place-move-exclusion-and-targeted-undo
+  ---
+  duration_ms: 268.365542
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB05-undo-refuses-overwriting-later-human-edit
+ok 64 - MOCK_IDB_NOT_NATIVE: DB05-undo-refuses-overwriting-later-human-edit
+  ---
+  duration_ms: 285.0385
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB06-undo-does-not-restore-whole-snapshot
+ok 65 - MOCK_IDB_NOT_NATIVE: DB06-undo-does-not-restore-whole-snapshot
+  ---
+  duration_ms: 291.079666
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB07-two-connections-CAS-one-winner
+ok 66 - MOCK_IDB_NOT_NATIVE: DB07-two-connections-CAS-one-winner
+  ---
+  duration_ms: 111.269083
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB08-operation-idempotence-does-not-return-stale-snapshot
+ok 67 - MOCK_IDB_NOT_NATIVE: DB08-operation-idempotence-does-not-return-stale-snapshot
+  ---
+  duration_ms: 192.795875
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB09-scope-A-B-same-native-id-isolation
+ok 68 - MOCK_IDB_NOT_NATIVE: DB09-scope-A-B-same-native-id-isolation
+  ---
+  duration_ms: 179.108875
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB10-unknown-scope-never-opens-workspace
+ok 69 - MOCK_IDB_NOT_NATIVE: DB10-unknown-scope-never-opens-workspace
+  ---
+  duration_ms: 36.167084
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB11-human-lock-and-exclusion-protect-against-candidate
+ok 70 - MOCK_IDB_NOT_NATIVE: DB11-human-lock-and-exclusion-protect-against-candidate
+  ---
+  duration_ms: 270.637875
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB12-stale-candidate-global-revision-rejected
+ok 71 - MOCK_IDB_NOT_NATIVE: DB12-stale-candidate-global-revision-rejected
+  ---
+  duration_ms: 129.383125
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB13-revoke-source-reprojects-without-erasing-intent
+ok 72 - MOCK_IDB_NOT_NATIVE: DB13-revoke-source-reprojects-without-erasing-intent
+  ---
+  duration_ms: 309.333667
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB14-coverage-stales-and-does-not-fabricate-activity
+ok 73 - MOCK_IDB_NOT_NATIVE: DB14-coverage-stales-and-does-not-fabricate-activity
+  ---
+  duration_ms: 174.99125
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB15-old-window-stays-parent-not-duplicated
+ok 74 - MOCK_IDB_NOT_NATIVE: DB15-old-window-stays-parent-not-duplicated
+  ---
+  duration_ms: 97.103167
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB16-label-is-not-evidence-authority
+ok 75 - MOCK_IDB_NOT_NATIVE: DB16-label-is-not-evidence-authority
+  ---
+  duration_ms: 66.576083
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB17-guard-denial-and-aborted-write
+ok 76 - MOCK_IDB_NOT_NATIVE: DB17-guard-denial-and-aborted-write
+  ---
+  duration_ms: 55.587833
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB18-view-preferences-reopen-and-CAS
+ok 77 - MOCK_IDB_NOT_NATIVE: DB18-view-preferences-reopen-and-CAS
+  ---
+  duration_ms: 74.923917
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB19-corruption-refused-with-explicit-checkpoint-recovery
+ok 78 - MOCK_IDB_NOT_NATIVE: DB19-corruption-refused-with-explicit-checkpoint-recovery
+  ---
+  duration_ms: 316.279958
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB20-corrupt-state-cannot-be-overwritten-by-normal-command
+ok 79 - MOCK_IDB_NOT_NATIVE: DB20-corrupt-state-cannot-be-overwritten-by-normal-command
+  ---
+  duration_ms: 67.1945
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB21-bootstrap-replay-never-resets-human-data
+ok 80 - MOCK_IDB_NOT_NATIVE: DB21-bootstrap-replay-never-resets-human-data
+  ---
+  duration_ms: 148.325417
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB22-unsupported-official-format-not-guessed
+ok 81 - MOCK_IDB_NOT_NATIVE: DB22-unsupported-official-format-not-guessed
+  ---
+  duration_ms: 76.647292
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB23-hash-valid-but-schema-invalid-refused
+ok 82 - MOCK_IDB_NOT_NATIVE: DB23-hash-valid-but-schema-invalid-refused
+  ---
+  duration_ms: 71.232917
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB24-pressure-120-themes-604-refs-128-members
+ok 83 - MOCK_IDB_NOT_NATIVE: DB24-pressure-120-themes-604-refs-128-members
+  ---
+  duration_ms: 185.222667
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB25-ingest-new-send-activates-old-theme-and-retains-old-children
+ok 84 - MOCK_IDB_NOT_NATIVE: DB25-ingest-new-send-activates-old-theme-and-retains-old-children
+  ---
+  duration_ms: 397.766583
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB26-conflicting-provenance-and-revocation-recomputes
+ok 85 - MOCK_IDB_NOT_NATIVE: DB26-conflicting-provenance-and-revocation-recomputes
+  ---
+  duration_ms: 293.041459
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB27-native-source-conflict-is-atomic
+ok 86 - MOCK_IDB_NOT_NATIVE: DB27-native-source-conflict-is-atomic
+  ---
+  duration_ms: 98.683958
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB28-workspace-history-aliases-persist
+ok 87 - MOCK_IDB_NOT_NATIVE: DB28-workspace-history-aliases-persist
+  ---
+  duration_ms: 129.0855
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB29-corrupt-B-operation-does-not-poison-A-history
+ok 88 - MOCK_IDB_NOT_NATIVE: DB29-corrupt-B-operation-does-not-poison-A-history
+  ---
+  duration_ms: 97.579041
+  type: 'test'
+  ...
+# Subtest: VIEW_ISOLATION invalid-checksum preserves intact assets and reports view corruption
+ok 89 - VIEW_ISOLATION invalid-checksum preserves intact assets and reports view corruption
+  ---
+  duration_ms: 682.876583
+  type: 'test'
+  ...
+# Subtest: VIEW_ISOLATION invalid-schema preserves intact assets and reports view corruption
+ok 90 - VIEW_ISOLATION invalid-schema preserves intact assets and reports view corruption
+  ---
+  duration_ms: 360.877083
+  type: 'test'
+  ...
+# Subtest: B4 CHECK returns only current fenced version metadata
+ok 91 - B4 CHECK returns only current fenced version metadata
+  ---
+  duration_ms: 5.856958
+  type: 'test'
+  ...
+# Subtest: B4 delayed CHECK rejects scope-switch without old revision metadata
+ok 92 - B4 delayed CHECK rejects scope-switch without old revision metadata
+  ---
+  duration_ms: 1.022666
+  type: 'test'
+  ...
+# Subtest: B4 delayed CHECK rejects explicit-invalidation without old revision metadata
+ok 93 - B4 delayed CHECK rejects explicit-invalidation without old revision metadata
+  ---
+  duration_ms: 0.185959
+  type: 'test'
+  ...
+# Subtest: B1 rejects account changed during GET_REF without URL change
+ok 94 - B1 rejects account changed during GET_REF without URL change
+  ---
+  duration_ms: 5.009333
+  type: 'test'
+  ...
+# Subtest: B1 rejects account changed during LIST_REFS without URL change
+ok 95 - B1 rejects account changed during LIST_REFS without URL change
+  ---
+  duration_ms: 0.460875
+  type: 'test'
+  ...
+# Subtest: MV3 build deterministic, scoped and CSP-safe
+ok 96 - MV3 build deterministic, scoped and CSP-safe
+  ---
+  duration_ms: 15.671709
+  type: 'test'
+  ...
+# Subtest: opaque browser bundle compiles the same actual navigation and broker modules
+ok 97 - opaque browser bundle compiles the same actual navigation and broker modules
+  ---
+  duration_ms: 2.537208
+  type: 'test'
+  ...
+# Subtest: actual Node HTTP host serves app and rejects unsafe/unrelated paths
+ok 98 - actual Node HTTP host serves app and rejects unsafe/unrelated paths
+  ---
+  duration_ms: 62.057416
+  type: 'test'
+  ...
+# Subtest: 120 contiguous 30-local-day segments Asia/Shanghai
+ok 99 - 120 contiguous 30-local-day segments Asia/Shanghai
+  ---
+  duration_ms: 22.932708
+  type: 'test'
+  ...
+# Subtest: 120 contiguous 30-local-day segments America/New_York
+ok 100 - 120 contiguous 30-local-day segments America/New_York
+  ---
+  duration_ms: 9.2035
+  type: 'test'
+  ...
+# Subtest: 120 contiguous 30-local-day segments Europe/Berlin
+ok 101 - 120 contiguous 30-local-day segments Europe/Berlin
+  ---
+  duration_ms: 8.952833
+  type: 'test'
+  ...
+# Subtest: 120 contiguous 30-local-day segments Pacific/Kiritimati
+ok 102 - 120 contiguous 30-local-day segments Pacific/Kiritimati
+  ---
+  duration_ms: 26.390583
+  type: 'test'
+  ...
+# Subtest: 120 contiguous 30-local-day segments Pacific/Honolulu
+ok 103 - 120 contiguous 30-local-day segments Pacific/Honolulu
+  ---
+  duration_ms: 16.659958
+  type: 'test'
+  ...
+# Subtest: current segment includes exactly today and preceding 29 local days
+ok 104 - current segment includes exactly today and preceding 29 local days
+  ---
+  duration_ms: 0.568583
+  type: 'test'
+  ...
+# Subtest: DST is calendar-based, not 720 hours
+ok 105 - DST is calendar-based, not 720 hours
+  ---
+  duration_ms: 0.154041
+  type: 'test'
+  ...
+# Subtest: leap day included
+ok 106 - leap day included
+  ---
+  duration_ms: 0.088167
+  type: 'test'
+  ...
+# Subtest: invalid zone and negative segment rejected
+ok 107 - invalid zone and negative segment rejected
+  ---
+  duration_ms: 0.780583
+  type: 'test'
+  ...
+# Subtest: future and naive times remain unknown
+ok 108 - future and naive times remain unknown
+  ---
+  duration_ms: 0.190542
+  type: 'test'
+  ...
+# Subtest: single latest theme segment; old children stay parent
+ok 109 - single latest theme segment; old children stay parent
+  ---
+  duration_ms: 2.975667
+  type: 'test'
+  ...
+# Subtest: current positive observation does not require full old coverage
+ok 110 - current positive observation does not require full old coverage
+  ---
+  duration_ms: 5.42075
+  type: 'test'
+  ...
+# Subtest: old snapshot cannot assert no recent input
+ok 111 - old snapshot cannot assert no recent input
+  ---
+  duration_ms: 3.449125
+  type: 'test'
+  ...
+# Subtest: old child with a coverage gap is unknown, not forcibly historical
+ok 112 - old child with a coverage gap is unknown, not forcibly historical
+  ---
+  duration_ms: 1.822833
+  type: 'test'
+  ...
+# Subtest: visit/update/assistant/edit timestamps never activate
+ok 113 - visit/update/assistant/edit timestamps never activate
+  ---
+  duration_ms: 0.085208
+  type: 'test'
+  ...
+# Subtest: duplicate events idempotent, conflicting times quarantined
+ok 114 - duplicate events idempotent, conflicting times quarantined
+  ---
+  duration_ms: 0.054875
+  type: 'test'
+  ...
+# Subtest: scope collision rejected even for same native ID/title
+ok 115 - scope collision rejected even for same native ID/title
+  ---
+  duration_ms: 0.175125
+  type: 'test'
+  ...
+# Subtest: theme scope mismatch rejected
+ok 116 - theme scope mismatch rejected
+  ---
+  duration_ms: 0.076916
+  type: 'test'
+  ...
+# Subtest: time-zone projection does not mutate source
+ok 117 - time-zone projection does not mutate source
+  ---
+  duration_ms: 9.128208
+  type: 'test'
+  ...
+# Subtest: 120 themes and all 604 references accounted for
+ok 118 - 120 themes and all 604 references accounted for
+  ---
+  duration_ms: 67.633542
+  type: 'test'
+  ...
+# Subtest: cross-Project references aggregate without native mutation
+ok 119 - cross-Project references aggregate without native mutation
+  ---
+  duration_ms: 4.906625
+  type: 'test'
+  ...
+# Subtest: only explicit synthetic origins and paths accepted
+ok 120 - only explicit synthetic origins and paths accepted
+  ---
+  duration_ms: 0.879708
+  type: 'test'
+  ...
+# Subtest: impossible calendar instants are unknown rather than normalized into a different day
+ok 121 - impossible calendar instants are unknown rather than normalized into a different day
+  ---
+  duration_ms: 0.108083
+  type: 'test'
+  ...
+1..121
+# tests 121
+# suites 0
+# pass 121
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5464.544125

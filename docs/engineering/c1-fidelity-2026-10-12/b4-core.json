@@ -1,0 +1,892 @@
+{
+  "startedAt": 1791736975.708386,
+  "baseline": false,
+  "argv": [
+    "tests/b4/real-mv3.py",
+    "--suite",
+    "core",
+    "--out",
+    "docs/engineering/c1-fidelity-2026-10-12/b4-core.json"
+  ],
+  "tests": [
+    {
+      "id": "B4-actual-20-second-lease-auto-reconnect",
+      "status": "PASS",
+      "actual": {
+        "elapsed": 65.43269419670105,
+        "actualRenewals": [
+          {
+            "at": 1791736996570,
+            "seq": 15,
+            "lease": "16e5e649-1658-4799-a89c-f81d653c6490",
+            "ok": true
+          },
+          {
+            "at": 1791737016573,
+            "seq": 28,
+            "lease": "9ef8f313-010f-42f8-82b2-4ec1424556a8",
+            "ok": true
+          },
+          {
+            "at": 1791737036577,
+            "seq": 39,
+            "lease": "06d344d2-7e49-46ff-802b-88588ecaffc1",
+            "ok": true
+          }
+        ],
+        "before": {
+          "ok": true,
+          "boot": "f0e32af5-76e1-4d41-b513-48181fc7c24c",
+          "persistedRef": true,
+          "revision": 1,
+          "workspaceRevision": 1,
+          "workspaceCount": 120,
+          "syntheticSenderUrl": "http://127.0.0.1:48175/hf/A/c/T0?mode=mv3",
+          "syntheticSenderDoc": "67A790135C3581151C6F133A7FA49C25",
+          "syntheticFrameUrl": "http://127.0.0.1:48175/hf/A/c/T0?mode=mv3",
+          "syntheticFrameDoc": "67A790135C3581151C6F133A7FA49C25"
+        },
+        "after": {
+          "ok": true,
+          "boot": "f0e32af5-76e1-4d41-b513-48181fc7c24c",
+          "persistedRef": true,
+          "revision": 1,
+          "workspaceRevision": 2,
+          "workspaceCount": 120,
+          "syntheticSenderUrl": "http://127.0.0.1:48175/hf/A/c/T0?mode=mv3",
+          "syntheticSenderDoc": "67A790135C3581151C6F133A7FA49C25",
+          "syntheticFrameUrl": "http://127.0.0.1:48175/hf/A/c/T0?mode=mv3",
+          "syntheticFrameDoc": "67A790135C3581151C6F133A7FA49C25"
+        },
+        "native": {
+          "input": true,
+          "draft": true,
+          "transcript": true,
+          "messages": true
+        },
+        "state": {
+          "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "revision": 2,
+          "bootstrapCount": 120,
+          "workspaceCount": 120,
+          "refCount": 604,
+          "humanWorkspaces": [],
+          "identities": {
+            "T0": {
+              "id": "T0",
+              "title": "B4 after actual lease expiry",
+              "aliases": [
+                "研究问题与边界"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 2
+            },
+            "T1": {
+              "id": "T1",
+              "title": "整理观察材料",
+              "aliases": [],
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          },
+          "placements": [
+            {
+              "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+              "workspaceId": "W0",
+              "refId": "T0",
+              "excluded": false,
+              "order": 0,
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          ],
+          "nativeT0": {
+            "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "conversationId": "T0",
+            "nativeUrl": "http://127.0.0.1:48175/hf/A/c/T0",
+            "projectId": null,
+            "revision": 1
+          },
+          "source": {
+            "id": "fixture_v1",
+            "channel": "hf-controlled-fixture-v1",
+            "observedAt": "2026-10-11T04:00:00Z",
+            "description": "Invented test evidence. Not a production source or account witness.",
+            "trustLevel": "synthetic",
+            "revoked": false
+          }
+        }
+      }
+    },
+    {
+      "id": "B4-observed-worker-stop-auto-cold-reconnect-no-reload",
+      "status": "PASS",
+      "actual": {
+        "before": {
+          "ok": true,
+          "boot": "f0e32af5-76e1-4d41-b513-48181fc7c24c",
+          "persistedRef": true,
+          "revision": 1,
+          "workspaceRevision": 2,
+          "workspaceCount": 120,
+          "syntheticSenderUrl": "http://127.0.0.1:48175/hf/A/c/T0?mode=mv3",
+          "syntheticSenderDoc": "0EE2553FA8E52670EDD17B79A7836A52",
+          "syntheticFrameUrl": "http://127.0.0.1:48175/hf/A/c/T0?mode=mv3",
+          "syntheticFrameDoc": "0EE2553FA8E52670EDD17B79A7836A52"
+        },
+        "after": {
+          "ok": true,
+          "boot": "65deb3dd-7169-4c6d-a1d5-ec99a1d626b2",
+          "persistedRef": true,
+          "revision": 1,
+          "workspaceRevision": 2,
+          "workspaceCount": 120,
+          "syntheticSenderUrl": "http://127.0.0.1:48175/hf/A/c/T0?mode=mv3",
+          "syntheticSenderDoc": "0EE2553FA8E52670EDD17B79A7836A52",
+          "syntheticFrameUrl": "http://127.0.0.1:48175/hf/A/c/T0?mode=mv3",
+          "syntheticFrameDoc": "0EE2553FA8E52670EDD17B79A7836A52"
+        },
+        "events": [
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "running",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "A3653F2B0420904ECED94B19DC1EC809"
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "stopping",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "A3653F2B0420904ECED94B19DC1EC809"
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "stopped",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": []
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "starting",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": []
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "starting",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "A3653F2B0420904ECED94B19DC1EC809"
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "starting",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "A3653F2B0420904ECED94B19DC1EC809"
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "running",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "A3653F2B0420904ECED94B19DC1EC809"
+          }
+        ],
+        "native": {
+          "input": true,
+          "draft": true,
+          "transcript": true,
+          "messages": true
+        },
+        "state": {
+          "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "revision": 3,
+          "bootstrapCount": 120,
+          "workspaceCount": 120,
+          "refCount": 604,
+          "humanWorkspaces": [],
+          "identities": {
+            "T0": {
+              "id": "T0",
+              "title": "B4 after automatic cold reconnect",
+              "aliases": [
+                "研究问题与边界",
+                "B4 after actual lease expiry"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 3
+            },
+            "T1": {
+              "id": "T1",
+              "title": "整理观察材料",
+              "aliases": [],
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          },
+          "placements": [
+            {
+              "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+              "workspaceId": "W0",
+              "refId": "T0",
+              "excluded": false,
+              "order": 0,
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          ],
+          "nativeT0": {
+            "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "conversationId": "T0",
+            "nativeUrl": "http://127.0.0.1:48175/hf/A/c/T0",
+            "projectId": null,
+            "revision": 1
+          },
+          "source": {
+            "id": "fixture_v1",
+            "channel": "hf-controlled-fixture-v1",
+            "observedAt": "2026-10-11T04:00:00Z",
+            "description": "Invented test evidence. Not a production source or account witness.",
+            "trustLevel": "synthetic",
+            "revoked": false
+          }
+        }
+      }
+    },
+    {
+      "id": "B4-cross-tab-update-draft-CAS-conflict-and-explicit-retry",
+      "status": "PASS",
+      "actual": {
+        "conflict": "另一标签页已修改；草稿已保留。最新保存标题：B4 remote manual intent；最新主题名称：城市声音档案。核对后再次点击保存。",
+        "draftPreserved": "B4 local unsaved intent",
+        "native": {
+          "input": true,
+          "draft": true,
+          "transcript": true,
+          "messages": true
+        },
+        "state": {
+          "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "revision": 5,
+          "bootstrapCount": 120,
+          "workspaceCount": 120,
+          "refCount": 604,
+          "humanWorkspaces": [],
+          "identities": {
+            "T0": {
+              "id": "T0",
+              "title": "B4 local unsaved intent",
+              "aliases": [
+                "研究问题与边界",
+                "B4 after actual lease expiry",
+                "B4 after automatic cold reconnect",
+                "B4 remote manual intent"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 5
+            },
+            "T1": {
+              "id": "T1",
+              "title": "整理观察材料",
+              "aliases": [],
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          },
+          "placements": [
+            {
+              "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+              "workspaceId": "W0",
+              "refId": "T0",
+              "excluded": false,
+              "order": 0,
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          ],
+          "nativeT0": {
+            "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "conversationId": "T0",
+            "nativeUrl": "http://127.0.0.1:48175/hf/A/c/T0",
+            "projectId": null,
+            "revision": 1
+          },
+          "source": {
+            "id": "fixture_v1",
+            "channel": "hf-controlled-fixture-v1",
+            "observedAt": "2026-10-11T04:00:00Z",
+            "description": "Invented test evidence. Not a production source or account witness.",
+            "trustLevel": "synthetic",
+            "revoked": false
+          }
+        }
+      }
+    },
+    {
+      "id": "B4-real-held-reply-timeout-rebind-and-late-response-fence",
+      "status": "PASS",
+      "actual": {
+        "actualHeldReplyTrace": {
+          "held": true,
+          "binds": [
+            {
+              "lease": "ec345d3b-1ab9-4f80-9412-b3573b69bf21",
+              "ok": true
+            }
+          ]
+        },
+        "lateReplyCannotOverwrite": true,
+        "native": {
+          "input": true,
+          "draft": true,
+          "transcript": true,
+          "messages": true
+        },
+        "state": {
+          "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "revision": 6,
+          "bootstrapCount": 120,
+          "workspaceCount": 120,
+          "refCount": 604,
+          "humanWorkspaces": [],
+          "identities": {
+            "T0": {
+              "id": "T0",
+              "title": "B4 later manual after timeout",
+              "aliases": [
+                "研究问题与边界",
+                "B4 after actual lease expiry",
+                "B4 after automatic cold reconnect",
+                "B4 remote manual intent",
+                "B4 local unsaved intent"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 6
+            },
+            "T1": {
+              "id": "T1",
+              "title": "整理观察材料",
+              "aliases": [],
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          },
+          "placements": [
+            {
+              "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+              "workspaceId": "W0",
+              "refId": "T0",
+              "excluded": false,
+              "order": 0,
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          ],
+          "nativeT0": {
+            "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "conversationId": "T0",
+            "nativeUrl": "http://127.0.0.1:48175/hf/A/c/T0",
+            "projectId": null,
+            "revision": 1
+          },
+          "source": {
+            "id": "fixture_v1",
+            "channel": "hf-controlled-fixture-v1",
+            "observedAt": "2026-10-11T04:00:00Z",
+            "description": "Invented test evidence. Not a production source or account witness.",
+            "trustLevel": "synthetic",
+            "revoked": false
+          }
+        }
+      }
+    },
+    {
+      "id": "B4-bounded-failure-feedback-and-committed-lost-reply-no-replay",
+      "status": "PASS",
+      "actual": {
+        "boundedAttempts": 6,
+        "failureFeedback": "派生工作空间暂时无法连接，原生聊天仍可使用。重新连接派生工作空间",
+        "unknownWriteFeedback": "保存结果未确认；草稿已保留，重新连接后请核对最新数据。",
+        "undoUnknownFeedback": "保存结果未确认；草稿已保留，重新连接后请核对最新数据。",
+        "commandAndUndoSentOnce": true,
+        "native": {
+          "input": true,
+          "draft": true,
+          "transcript": true,
+          "messages": true
+        },
+        "state": {
+          "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "revision": 8,
+          "bootstrapCount": 120,
+          "workspaceCount": 120,
+          "refCount": 604,
+          "humanWorkspaces": [],
+          "identities": {
+            "T0": {
+              "id": "T0",
+              "title": "B4 later manual after timeout",
+              "aliases": [
+                "研究问题与边界",
+                "B4 after actual lease expiry",
+                "B4 after automatic cold reconnect",
+                "B4 remote manual intent",
+                "B4 local unsaved intent"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 8
+            },
+            "T1": {
+              "id": "T1",
+              "title": "整理观察材料",
+              "aliases": [],
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          },
+          "placements": [
+            {
+              "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+              "workspaceId": "W0",
+              "refId": "T0",
+              "excluded": false,
+              "order": 0,
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          ],
+          "nativeT0": {
+            "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "conversationId": "T0",
+            "nativeUrl": "http://127.0.0.1:48175/hf/A/c/T0",
+            "projectId": null,
+            "revision": 1
+          },
+          "source": {
+            "id": "fixture_v1",
+            "channel": "hf-controlled-fixture-v1",
+            "observedAt": "2026-10-11T04:00:00Z",
+            "description": "Invented test evidence. Not a production source or account witness.",
+            "trustLevel": "synthetic",
+            "revoked": false
+          }
+        }
+      }
+    }
+  ],
+  "workerEvents": [
+    {
+      "at": 1791737042.602583,
+      "data": {
+        "versions": [
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "running",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "A3653F2B0420904ECED94B19DC1EC809"
+          }
+        ]
+      }
+    },
+    {
+      "at": 1791737042.806758,
+      "data": {
+        "versions": [
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "stopping",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "A3653F2B0420904ECED94B19DC1EC809"
+          }
+        ]
+      }
+    },
+    {
+      "at": 1791737042.830657,
+      "data": {
+        "versions": [
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "stopped",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": []
+          }
+        ]
+      }
+    },
+    {
+      "at": 1791737044.5138292,
+      "data": {
+        "versions": [
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "starting",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": []
+          }
+        ]
+      }
+    },
+    {
+      "at": 1791737044.513977,
+      "data": {
+        "versions": [
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "starting",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "A3653F2B0420904ECED94B19DC1EC809"
+          }
+        ]
+      }
+    },
+    {
+      "at": 1791737044.5144541,
+      "data": {
+        "versions": [
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "starting",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "A3653F2B0420904ECED94B19DC1EC809"
+          }
+        ]
+      }
+    },
+    {
+      "at": 1791737044.578079,
+      "data": {
+        "versions": [
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa/simulator/worker.mjs",
+            "runningStatus": "running",
+            "status": "activated",
+            "scriptLastModified": 1791736975,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "A3653F2B0420904ECED94B19DC1EC809"
+          }
+        ]
+      }
+    }
+  ],
+  "console": [],
+  "realChatGPT": "NOT_RUN",
+  "fallback": false,
+  "buildHashes": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/document-binding-broker.mjs": "5f5aecffdcd5bd4e39493565b814956c048a6ee9fb28fec559f33269424ee851",
+    "simulator/service.mjs": "cd493e0a914b719f59f70147023e9acfcc58431c105e8b0f79e0bd430d29d5d1",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/state.mjs": "16022c55160719f6e7c86de5b3ca71e3f594a2df8373b96525f852435c1d745c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/repository.mjs": "542d418165b5414a92015291b31c62a02e8b35413539a17ddb0c1557c5905615",
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "content.js": "4ea59c7f907f21fe1cca9c26ffd189b39071384041916c07da5f71ef2b277d20",
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+  },
+  "sourceHashes": {
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "src/navigation/navigation.mjs": "6159be1a29a5785861a473ccd511902a1a25a0baf198436e3f8bdff7ce4aeb1e",
+    "src/navigation/styles.mjs": "0f81caec582b4eb62d0742874a8a305901ac89e348938a31325f0c7765b637ff",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/document-binding-broker.mjs": "5f5aecffdcd5bd4e39493565b814956c048a6ee9fb28fec559f33269424ee851",
+    "src/data/state.mjs": "16022c55160719f6e7c86de5b3ca71e3f594a2df8373b96525f852435c1d745c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "542d418165b5414a92015291b31c62a02e8b35413539a17ddb0c1557c5905615",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "simulator/editor-style.mjs": "18197a2a89d8e83986b56e464c506c9bb8e08005d07f97c46959f5e9cfabf2ce",
+    "simulator/index.html": "52737486a2ad0b296a8e212ab0607cb89f99b94d3f6b193793817babde01b7d4",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "simulator/control.html": "1e0eeb74c8fc277232b2edfac95787dbd62d6ae7470af982f4ca268579ffbd7f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/adapter.mjs": "c5b25b038aebbed78225a7bb4bd8865de90737892d276f855eb5447450eb7d47",
+    "simulator/client.mjs": "1a2c50e5273631c11e86e03a4aea70777eec400a177d07fb3a054396b483b966",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.css": "0627ff2b3ab6d9797850caca1da4cdb91ddfdfea32318dd8e1a15f9bac23d153",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/build.mjs": "0657ef7cf9a2e8640ba2fbf19ff62b08d7f19ca6f9e91f89ee181fb18be39cdc",
+    "simulator/host.mjs": "8f9400cac582008723515c29ccb60e5c4fabdfae4703533e1a4c409469028e0f",
+    "simulator/main.mjs": "7a6788fefe2eaf5c8abcd46cfe024c76511c422888073472bbb3b8caacf9092c",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/service.mjs": "cd493e0a914b719f59f70147023e9acfcc58431c105e8b0f79e0bd430d29d5d1",
+    "simulator/editor.mjs": "89036452fb0891d0b7acf274257cb35c8aa0b7f1bb7d224872c3629cff5311e1",
+    "tests/b4/real-mv3.py": "1e679e0c63f35f2419d17611702549730081b2a3574ec3b401fb4893cd108f96",
+    "tests/b4/version-fence.test.mjs": "3a0f47012dcd099cd48bdd87a56d5424d89052813145f4637de93ffd4dd5589c"
+  },
+  "head": "e19b6da393eeadbab5eb598c4c05c358fdae8395",
+  "environment": {
+    "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+    "node": "v26.8.2",
+    "python": "3.14.7",
+    "playwright": "1.63.0",
+    "chrome": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/154.0.8037.99",
+      "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+      "jsVersion": "15.4.80.20"
+    }
+  },
+  "extension": {
+    "id": "nbmjfeimpidfabcjelbagmnfmegjokoa"
+  },
+  "contentContexts": [
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "4066851014972179774.-1935295303280569398",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "D872D58C83AF8411F75B87F309ED4303"
+      }
+    },
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "4066851014972179774.-1935295303280569398",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "D872D58C83AF8411F75B87F309ED4303"
+      }
+    },
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "837484572634663131.-7156096829864780614",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "9EC48DAD3CBA96AFE3987D4740043AD4"
+      }
+    },
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "837484572634663131.-7156096829864780614",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "9EC48DAD3CBA96AFE3987D4740043AD4"
+      }
+    },
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "837484572634663131.-7156096829864780614",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "9EC48DAD3CBA96AFE3987D4740043AD4"
+      }
+    },
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "-8258330760870516766.-6816323650067648945",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "62EF3AF3590A2B87C424C580B5815FF7"
+      }
+    },
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "-8258330760870516766.-6816323650067648945",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "62EF3AF3590A2B87C424C580B5815FF7"
+      }
+    },
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "-8258330760870516766.-6816323650067648945",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "62EF3AF3590A2B87C424C580B5815FF7"
+      }
+    },
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "-8258330760870516766.-6816323650067648945",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "62EF3AF3590A2B87C424C580B5815FF7"
+      }
+    },
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "-8258330760870516766.-6816323650067648945",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "62EF3AF3590A2B87C424C580B5815FF7"
+      }
+    },
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "-8258330760870516766.-6816323650067648945",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "62EF3AF3590A2B87C424C580B5815FF7"
+      }
+    },
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "-8258330760870516766.-6816323650067648945",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "62EF3AF3590A2B87C424C580B5815FF7"
+      }
+    },
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "-8258330760870516766.-6816323650067648945",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "62EF3AF3590A2B87C424C580B5815FF7"
+      }
+    },
+    {
+      "id": 5,
+      "origin": "chrome-extension://nbmjfeimpidfabcjelbagmnfmegjokoa",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "-8258330760870516766.-6816323650067648945",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "62EF3AF3590A2B87C424C580B5815FF7"
+      }
+    }
+  ],
+  "server": {
+    "exit": -15,
+    "stderr": ""
+  },
+  "endedAt": 1791737082.71976,
+  "counts": {
+    "PASS": 5,
+    "FAIL": 0,
+    "BLOCKED": 0
+  }
+}
