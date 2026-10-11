@@ -37,7 +37,7 @@ export function openWorkspaceEditor({snapshot,command,undo,assets=null,context={
   group('证据管理',true,false);section.append(node('p','撤销来源会重新计算可见记录，不会删除人工修改。')); 
   const sources=field('证据来源','select');action('撤销证据来源',()=>command({type:'REVOKE_SOURCE',sourceId:sources.value}));
   if(assets){group('备份与恢复',true,false);section.append(node('p','备份仅包含工作空间、人工名称、归属和引用；不含聊天正文、草稿、执行授权或发送证据。恢复保留当前人工修改，先预览再应用。检查点仅用于损坏恢复，不能代替文件备份。'));
-    let bundle=null,preview=null;const info=node('p');info.setAttribute('role','status');info.dataset.backupPreview='';section.append(info);
+    let bundle=null,preview=null;const info=node('p');info.dataset.backupPreview='';section.append(info);
     action('导出工作空间备份',async()=>{const b=await assets.export(),url=URL.createObjectURL(new Blob([JSON.stringify(b,null,2)],{type:'application/json'})),a=node('a');a.href=url;a.download='vaiwl-workspace-backup.json';dialog.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);},'备份文件已交给浏览器下载。');
     const file=field('选择工作空间备份');file.type='file';file.accept='.json,application/json';file.onchange=()=>{bundle=null;preview=null;info.textContent='';};
     action('预览备份恢复',async()=>{const f=file.files?.[0];if(!f||f.size>17*1024*1024)throw Error('请选择有效备份文件（最大17MiB）');bundle=JSON.parse(await f.text());preview=await assets.preview(bundle);info.textContent='新增 '+preview.summary.added+' 项；更新 '+preview.summary.updated+' 项；保留当前人工修改 '+preview.summary.keptHuman+' 项。不会导入发送证据或执行授权。';},'只读预览完成，尚未修改数据。');
