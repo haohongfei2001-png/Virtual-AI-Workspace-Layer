@@ -1,0 +1,79 @@
+[
+  {
+    "command": [
+      "node",
+      "--test",
+      "--test-reporter=tap",
+      "tests/b1/broker.test.mjs",
+      "tests/hf/b1-race.test.mjs",
+      "tests/hf/build-server.test.mjs",
+      "tests/hf/projection.test.mjs",
+      "tests/b23/logic.test.mjs",
+      "tests/b23/repository.test.mjs",
+      "tests/b23/broker.test.mjs",
+      "tests/b23/view-isolation.test.mjs",
+      "tests/b23/audit-regressions.test.mjs",
+      "tests/b23/migration.test.mjs",
+      "tests/b23/build.test.mjs",
+      "tests/b23/evidence-audit.test.mjs",
+      "tests/b4/version-fence.test.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python",
+      "tests/b23/view-browser.py",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "docs/engineering/c1-fidelity-2026-10-12/regression/dom"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python",
+      "tests/b23/real-browser.py",
+      "--mode",
+      "db",
+      "--port",
+      "48172",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "docs/engineering/c1-fidelity-2026-10-12/regression/db.json"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python",
+      "tests/b23/real-browser.py",
+      "--mode",
+      "page",
+      "--port",
+      "48173",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "docs/engineering/c1-fidelity-2026-10-12/regression/page.json"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python",
+      "tests/b23/real-browser.py",
+      "--mode",
+      "mv3",
+      "--port",
+      "48174",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "docs/engineering/c1-fidelity-2026-10-12/regression/mv3.json"
+    ],
+    "exit": 0
+  }
+]

@@ -7,3 +7,5 @@
 下一任务：原设计/真实 MV3 同尺寸截图差异与修复；随后 B5 保全最新人工资产的安全恢复，再 C2–C5 与离线 D/F。继续遵循原 DEVELOPMENT_PLAN，生产宿主/PAIA/费用/部署/同步/原生写入仍未授权。
 
 Python/Playwright 已有隔离 venv `/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv`；应移入或重新建立专用持久 .venv，不能修改系统 Python。Chrome 仅全新 headless Profile；任何 CDP 只连接本次创建实例。测试前先阅读各 driver，现有 driver resources 已经在前次验收审查。
+
+C1 原设计修复完成：10真实UI旅程+深色细节反例；Node121、DOM49、真实IDB39、页面17、MV319、B4核心5/生命周期1通过。证据 `c1-fidelity-2026-10-12`。专用持久 `.venv` 已建立 Python3.14.7/Playwright1.63.0，后续使用 `.venv/bin/python`。下一任务 B5：首先保留最新人工修改丢失反例，复用现有检查点/日志/CAS实现保全恢复及文件资产备份、dry-run与安全回滚。不得将检查点当文件备份。

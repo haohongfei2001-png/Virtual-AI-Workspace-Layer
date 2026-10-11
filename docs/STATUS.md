@@ -1,3 +1,5 @@
+> C1 原始设计一致性修复与真实 Chrome 增量回归完成；差异、失败原件、截图及命令见 [增量验收](engineering/c1-fidelity-2026-10-12/ACCEPTANCE.md)。下一项直接实施原计划 B5。
+
 > 2026-10-12 持续实施已获明确授权。实时 PR #9 基线 `b11b7690125a2f42af93d855c3aa617b250d767e`，原始 v2.7 包及 HTML 已按 SHA256 核验并保存至 `design/approved/v2.7/`。现有 C1 尚需原设计一致性修复；完成后按原 A–G 依赖连续推进。下列历史阶段停止/未授权描述不覆盖本轮授权。恢复入口见工程检查点。
 
 > 2026-10-11 最新 C1：在已验收PR #8上，新stacked Draft PR #9完成主题工作区/现有v2.7导航剩余界面工程；真实Chrome MV3截图及9条界面旅程、Node121、DOM49、真实页面17、MV319、B4核心5与生命周期1的最终证据见 [C1报告](engineering/C1_ACCEPTANCE_2026_10_11.md) 与 [实际界面画廊](engineering/C1_INTERFACE_GALLERY_2026_10_11.md)。完成C1后停止，不合并，不进入B5/C2/AI分类或真实ChatGPT。下文是历史状态，旧“未授权/不进入C1”不覆盖用户本轮明确C1授权。
