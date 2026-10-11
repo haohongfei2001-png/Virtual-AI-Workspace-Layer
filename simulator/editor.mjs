@@ -5,6 +5,7 @@ export function openWorkspaceEditor({snapshot,command,undo,onClose=()=>{}}){
   dialog.style.cssText='width:min(580px,92vw);max-height:85vh;overflow:auto;border:1px solid #aaa;border-radius:16px;padding:24px;font:14px/1.6 system-ui;color:var(--ink,#222);background:var(--surface,#fff)';
   const node=(tag,label)=>{const n=document.createElement(tag);if(label)n.textContent=label;return n;};
   const heading=node('h2','工作空间管理');dialog.append(heading,node('p','只修改 VAIWL 派生数据。原生聊天、Project 和权限不变。'));
+  const warning=node('p');warning.dataset.vaiwlDiagnostic='view';dialog.append(warning);
   const status=node('p');status.setAttribute('role','status');dialog.append(status);
   const field=(label,tag='input')=>{const wrap=node('label',label+' '),input=node(tag);input.setAttribute('aria-label',label);input.style.cssText='font:inherit;margin:6px 0;padding:7px;max-width:100%';wrap.append(input);dialog.append(wrap,node('br'));return input;};
   const action=(label,run)=>{const b=node('button',label);b.type='button';b.style.cssText='font:inherit;padding:7px 11px;margin:4px;border:1px solid #aaa;border-radius:8px';b.onclick=async()=>{b.disabled=true;try{await run();status.textContent='已保存到派生工作空间。';}catch(e){status.textContent=e.message==='revision-conflict'?'另一标签页已修改；已保留该修改，请核对后重试。':('未完成：'+e.message);}finally{b.disabled=false;}};dialog.append(b);return b;};
@@ -28,7 +29,7 @@ export function openWorkspaceEditor({snapshot,command,undo,onClose=()=>{}}){
   const close=action('关闭管理',async()=>dialog.close());
   function options(select,rows,key,label){const chosen=select.value;select.replaceChildren();for(const row of rows){const o=node('option',label(row));o.value=key(row);select.append(o);}if([...select.options].some(o=>o.value===chosen))select.value=chosen;}
   function populate(){const w=snapshot.objects.workspaces[theme.value];name.value=w?.name??'';icon.value=w?.icon??'◇';order.value=w?.order??0;lock.checked=w?.locked??true;const r=snapshot.refs.find(r=>r.id===ref.value);title.value=r?.displayTitle??'';windowOrder.value=Object.values(snapshot.objects.placements).find(p=>p.workspaceId===theme.value&&p.refId===ref.value)?.order??0;compact.checked=snapshot.preferences?.compactRows?.value!==false;}
-  function update(value){snapshot=value;options(theme,Object.values(value.objects.workspaces),w=>w.id,w=>w.name);options(target,Object.values(value.objects.workspaces),w=>w.id,w=>w.name);options(ref,value.refs,r=>r.id,r=>r.displayTitle+' · '+r.id);options(sources,Object.values(value.objects.sources),s=>s.id,s=>s.channel+(s.revoked?'（已撤销）':''));populate();}
+  function update(value){snapshot=value;warning.textContent=value.diagnostics?.view==='CORRUPT_VIEW'?'视图偏好记录损坏：已忽略损坏的视图，主题与窗口仍保留；损坏记录未被覆盖。':'';options(theme,Object.values(value.objects.workspaces),w=>w.id,w=>w.name);options(target,Object.values(value.objects.workspaces),w=>w.id,w=>w.name);options(ref,value.refs,r=>r.id,r=>r.displayTitle+' · '+r.id);options(sources,Object.values(value.objects.sources),s=>s.id,s=>s.channel+(s.revoked?'（已撤销）':''));populate();}
   theme.onchange=populate;ref.onchange=populate;dialog.addEventListener('close',()=>{dialog.remove();onClose();});
   document.body.append(dialog);update(snapshot);dialog.showModal();close.focus();return {update,close:()=>{dialog.close();dialog.remove();}};
 }

@@ -20,13 +20,14 @@ export class WorkspaceRepository {
   async read(scope,{guard=()=>true,signal=null}={}){
     const s=scopeChecked(scope),db=await this.connection();fence(guard,signal);
     return new Promise((resolve,reject)=>{
-      const tx=db.transaction(['b23_states','b23_views'],'readonly');let state,view=null,error=null;
+      const tx=db.transaction(['b23_states','b23_views'],'readonly');let state,view=null,error=null,viewError=null;
       const r=tx.objectStore('b23_states').get(s.key);r.onsuccess=()=>{try{state=r.result?validateState(unpack(r.result),s.key):emptyState(s);}catch(e){error=e;tx.abort();}};
-      const v=tx.objectStore('b23_views').get(s.key);v.onsuccess=()=>{try{view=v.result?unpack(v.result):null;if(view)validateView(view.value);}catch(e){error=e;tx.abort();}};
-      tx.oncomplete=()=>{try{fence(guard,signal);resolve({state,view});}catch(e){reject(e);}};tx.onabort=()=>reject(error??tx.error??Error('read-aborted'));
+      // A corrupt view is not authority to discard intact Workspace assets. Preserve its bytes; report diagnostics.
+      const v=tx.objectStore('b23_views').get(s.key);v.onsuccess=()=>{try{view=v.result?unpack(v.result):null;if(view)validateView(view.value);}catch{view=null;viewError='CORRUPT_VIEW';}};
+      tx.oncomplete=()=>{try{fence(guard,signal);resolve({state,view,diagnostics:{view:viewError}});}catch(e){reject(e);}};tx.onabort=()=>reject(error??tx.error??Error('read-aborted'));
     });
   }
-  async snapshot(scope,now,timeZone,options){const {state,view}=await this.read(scope,options);return {...dataProjection(state,now,timeZone),view:view?.value??null,viewRevision:view?.revision??0,objects:{workspaces:state.workspaces,placements:state.placements,identities:state.identities,sources:state.sources},preferences:state.preferences};}
+  async snapshot(scope,now,timeZone,options){const {state,view,diagnostics}=await this.read(scope,options);return {diagnostics,...dataProjection(state,now,timeZone),view:view?.value??null,viewRevision:view?.revision??0,objects:{workspaces:state.workspaces,placements:state.placements,identities:state.identities,sources:state.sources},preferences:state.preferences};}
   async command(scope,{operationId,expectedRevision,command},{actor='human',guard=()=>true,signal=null}={}){
     if(!['human','candidate'].includes(actor))throw Error('invalid-command-authority');
     return this.mutate(scope,{operationId,expectedRevision,fingerprint:{actor,command,expectedRevision},type:command.type,actor,guard,signal,apply:current=>reduceCommand(current,command,actor)});
