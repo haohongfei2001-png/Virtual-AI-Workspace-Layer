@@ -8,10 +8,10 @@ sys.path.insert(0,str(ROOT/'tests/b23'))
 from native_ui_checks import NativeChecks
 
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--browser',default='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');ap.add_argument('--out',required=True);ap.add_argument('--baseline',action='store_true');ap.add_argument('--headed',action='store_true');a=ap.parse_args()
+ ap=argparse.ArgumentParser();ap.add_argument('--browser',default='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');ap.add_argument('--out',required=True);ap.add_argument('--baseline',action='store_true');ap.add_argument('--headed',action='store_true');ap.add_argument('--suite',choices=['all','core','lifecycle'],default='all');a=ap.parse_args()
  report={'startedAt':time.time(),'baseline':a.baseline,'argv':sys.argv,'tests':[],'workerEvents':[],'console':[],'realChatGPT':'NOT_RUN','fallback':False}
  def record(name,status,actual):report['tests'].append({'id':name,'status':status,'actual':actual})
- def active(pg,timeout=15000):pg.locator('html[data-vaiwl-hf-state="ACTIVE"]').wait_for(state='attached',timeout=timeout)
+ def active(pg,timeout=15000):pg.locator('html[data-vaiwl-hf-state="ACTIVE"],html[data-vaiwl-hf-state="NATIVE_LAYER"]').wait_for(state='attached',timeout=timeout)
  def manage(pg):active(pg);pg.get_by_label('管理工作空间',exact=True).click();pg.get_by_role('dialog',name='工作空间管理',exact=True).wait_for()
  def close(pg):pg.get_by_role('button',name='关闭管理',exact=True).click()
  def saved(pg):pg.locator('[data-vaiwl-owned="workspace-editor"] [role=status]').filter(has_text='已保存').wait_for()
@@ -42,15 +42,18 @@ def main():
      pg.evaluate("()=>{document.documentElement.removeAttribute('data-hf-worker-probe');document.dispatchEvent(new Event('hf:test-worker-probe'));}")
      pg.locator('html[data-hf-worker-probe]').wait_for(state='attached');v=json.loads(pg.locator('html').get_attribute('data-hf-worker-probe'));assert v['ok'],v;return v
     def case(name,fn):
+     if a.suite=='lifecycle' and 'hidden-visible' not in name:return
+     if a.suite=='core' and 'hidden-visible' in name:return
      try:record(name,'PASS',fn())
      except Exception as e:record(name,'FAIL',{'error':str(e),'stack':traceback.format_exc()})
      finally:
       for pg in list(ctx.pages):
        if pg.url!='about:blank':pg.close()
     def lease():
-     pg=newpage();identity(pg);before=probe(pg);start=time.time();pg.wait_for_timeout(22500)
+     pg=newpage();identity(pg);before=probe(pg);c=checks(pg);c.content_eval(pg,"""(()=>{const original=chrome.runtime.sendMessage.bind(chrome.runtime);globalThis.b4LeaseTrace=[];chrome.runtime.sendMessage=async m=>{const r=await original(m);if(m.type==='BIND')b4LeaseTrace.push({at:Date.now(),seq:m.seq,lease:r.leaseId,ok:r.ok});return r;};return true;})()""");start=time.time();pg.wait_for_timeout(22500)
      state=pg.locator('html').get_attribute('data-vaiwl-hf-state');assert state=='ACTIVE',{'elapsed':time.time()-start,'state':state,'reason':pg.locator('html').get_attribute('data-vaiwl-hf-reason')}
-     write(pg,'B4 after actual lease expiry');after=probe(pg);return {'elapsed':time.time()-start,'before':before,'after':after,'native':unchanged(pg),'state':checks(pg).state(pg)}
+     write(pg,'B4 after actual lease expiry');pg.wait_for_timeout(42500);active(pg);leases=c.content_eval(pg,'b4LeaseTrace');assert len(leases)>=3 and all(r['ok'] for r in leases) and len({r['lease'] for r in leases})==len(leases),leases
+     after=probe(pg);return {'elapsed':time.time()-start,'actualRenewals':leases,'before':before,'after':after,'native':unchanged(pg),'state':checks(pg).state(pg)}
     def cold():
      pg=newpage();identity(pg);before=probe(pg);session=ctx.new_cdp_session(pg);events=[]
      session.on('ServiceWorker.workerVersionUpdated',lambda e:(events.extend(e['versions']),report['workerEvents'].append({'at':time.time(),'data':e})));session.send('ServiceWorker.enable');pg.wait_for_timeout(200)
@@ -80,11 +83,11 @@ def main():
     case('B4-cross-tab-update-draft-CAS-conflict-and-explicit-retry',tabs)
     if not a.baseline:
      def lifecycle():
-      pg=newpage();identity(pg);other=ctx.new_page();other.goto('http://127.0.0.1:48175/control.html');other.bring_to_front();pg.wait_for_timeout(300)
+      pg=newpage();identity(pg);manage(pg);pg.get_by_label('窗口选择',exact=True).select_option('T0');pg.get_by_label('派生标题',exact=True).fill('B4 hidden draft intent');other=ctx.new_page();other.goto('http://127.0.0.1:48175/control.html');other.bring_to_front();pg.wait_for_timeout(300)
       visibility=pg.evaluate('document.visibilityState');assert visibility=='hidden',{'actualVisibility':visibility,'note':'must test actual browser visibility, no JS property override'}
       assert pg.locator('[data-vaiwl-return]').count()==0
-      pg.wait_for_timeout(21500);pg.bring_to_front();active(pg);assert pg.evaluate('document.visibilityState')=='visible';same=unchanged(pg)
-      session=ctx.new_cdp_session(pg);session.send('Page.setWebLifecycleState',{'state':'frozen'});other.wait_for_timeout(21000);session.send('Page.setWebLifecycleState',{'state':'active'});active(pg);write(pg,'B4 after real freeze resume');same2=unchanged(pg)
+      pg.wait_for_timeout(21500);pg.bring_to_front();active(pg);assert pg.evaluate('document.visibilityState')=='visible';same=unchanged(pg);assert pg.get_by_label('派生标题',exact=True).input_value()=='B4 hidden draft intent';pg.get_by_role('button',name='保存派生标题',exact=True).click();saved(pg);close(pg)
+      manage(pg);pg.get_by_label('窗口选择',exact=True).select_option('T1');pg.get_by_label('派生标题',exact=True).fill('B4 frozen draft intent');session=ctx.new_cdp_session(pg);session.send('Page.setWebLifecycleState',{'state':'frozen'});other.wait_for_timeout(21000);session.send('Page.setWebLifecycleState',{'state':'active'});active(pg);assert pg.get_by_label('派生标题',exact=True).input_value()=='B4 frozen draft intent';pg.get_by_role('button',name='保存派生标题',exact=True).click();saved(pg);close(pg);write(pg,'B4 after real freeze resume');same2=unchanged(pg)
       for account in ['B','unknown','A','B','A']:
        pg.evaluate('a=>HF.control("account",a)',account)
        if account=='unknown':pg.wait_for_timeout(500);assert pg.locator('[data-vaiwl-return]').count()==0 and 'B4 after real freeze resume' not in pg.locator('body').inner_text()
