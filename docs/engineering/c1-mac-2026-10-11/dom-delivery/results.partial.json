@@ -1,0 +1,591 @@
+{
+  "schema": "vaiwl-b23-browser-v1",
+  "level": "B_BROWSER_DOM_OPAQUE",
+  "transport": "FAKE_ROUTER_FAKE_SENDER_MOCK_IDB_NOT_DURABLE",
+  "startedAt": "2026-10-11T15:22:05Z",
+  "environment": {
+    "os": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
+    "node": "v26.8.2",
+    "chromium": "154.0.8037.99"
+  },
+  "sourceSha256": "09f2be5948bbbc4da145a9bf9c2ccd26e1ede4f9ebbb2c2fcb9d18d510587df1",
+  "results": [
+    {
+      "id": "D01-native-baseline-without-VAIWL",
+      "expected": "Native send, stop, model and interactive widget work with no extension roots",
+      "actual": {
+        "nativeHandlers": true
+      },
+      "status": "PASS",
+      "durationMs": 3974,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D02-mount-preserves-native-nodes",
+      "expected": "Mount/controlled unmount/remount never replaces composer, transcript or model",
+      "actual": {
+        "nodeIdentity": true
+      },
+      "status": "PASS",
+      "durationMs": 996,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D03-workspace-focus-selection-widget",
+      "expected": "Workspace roundtrip preserves native draft, selection, focus and interactive value",
+      "actual": {
+        "nativeDraftAndState": true
+      },
+      "status": "PASS",
+      "durationMs": 1284,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D04-v27-home-semantics",
+      "expected": "Current page has no up arrow or collapsible theme head; exactly one reading return",
+      "actual": {
+        "staticThemeHeads": true
+      },
+      "status": "PASS",
+      "durationMs": 1049,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D05-old-window-versus-recent-overflow",
+      "expected": "Old members stay under parent and left disclosure does not reveal unknown rows",
+      "actual": {
+        "oldChildParentPreserved": true
+      },
+      "status": "PASS",
+      "durationMs": 1323,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D06-history-empty-segment-not-skipped",
+      "expected": "Arrows choose adjacent exclusive 30-day segments including an empty segment",
+      "actual": {
+        "adjacentSegments": [
+          0,
+          1,
+          2
+        ]
+      },
+      "status": "PASS",
+      "durationMs": 1737,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D07-unknown-search-native-search",
+      "expected": "Unknown records remain reachable; native search independently includes archive",
+      "actual": {
+        "twoSeparateSearches": true
+      },
+      "status": "PASS",
+      "durationMs": 1348,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D08-sidebar-single-owner-and-fold-state",
+      "expected": "Repeated renders create one sidebar panel; manual group folds survive local updates",
+      "actual": {
+        "rebuilds": 4
+      },
+      "status": "PASS",
+      "durationMs": 1147,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D09-native-model-tool-popover",
+      "expected": "Real top-layer menus remain usable and their native selection is not copied",
+      "actual": {
+        "localNativeResults": true
+      },
+      "status": "PASS",
+      "durationMs": 5748,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D10-modal-priority-and-return",
+      "expected": "Permission dialog takes priority over workspace and returns without native replacement",
+      "actual": {
+        "nativeLayerPriority": true
+      },
+      "status": "PASS",
+      "durationMs": 1325,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D11-local-file-attachment-and-preview",
+      "expected": "Browser file input change and local preview work without upload or user files",
+      "actual": {
+        "networkUpload": false
+      },
+      "status": "PASS",
+      "durationMs": 1147,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D12-stream-survives-workspace-switch",
+      "expected": "Native stream continues while browsing themes and can be stopped normally",
+      "actual": {
+        "streamIsLocalTimer": true
+      },
+      "status": "PASS",
+      "durationMs": 1357,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D13-native-edit-and-regenerate",
+      "expected": "Editing is a native revision, not a new send; regenerate starts a native local stream",
+      "actual": {
+        "editRevision": true
+      },
+      "status": "PASS",
+      "durationMs": 972,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D14-native-share-state",
+      "expected": "Native share dialog produces explicitly local synthetic result and closes",
+      "actual": {
+        "publicLinkCreated": false
+      },
+      "status": "PASS",
+      "durationMs": 1681,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D15-cross-project-native-route",
+      "expected": "Derived links enter existing native project chats without mutating project ownership",
+      "actual": {
+        "logicalRoute": "P1/T1",
+        "actualBrowserURL": "about:blank",
+        "actualBrowserNavigation": false
+      },
+      "status": "PASS",
+      "durationMs": 1364,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D16-workspace-restores-history-and-scroll",
+      "expected": "Return restores history segment, scroll and disclosure state without resetting native view",
+      "actual": {
+        "restoredScroll": 300
+      },
+      "status": "PASS",
+      "durationMs": 1697,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D17-account-A-B-A-and-unknown",
+      "expected": "Scope change clears stale projection and unknown identity renders no derived content",
+      "actual": {
+        "scopeWitness": "SYNTHETIC_FAKE_SENDER"
+      },
+      "status": "PASS",
+      "durationMs": 2481,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D18-late-response-after-account-change",
+      "expected": "Delayed old-account read cannot display after B navigation",
+      "actual": {
+        "lateReadDelayMs": 180
+      },
+      "status": "PASS",
+      "durationMs": 2424,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D19-fast-native-route-out-of-order",
+      "expected": "Host discards stale delayed renders during rapid logical navigation",
+      "actual": {
+        "browserHistory": "NOT_TESTED",
+        "logicalRouter": true
+      },
+      "status": "PASS",
+      "durationMs": 1387,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D20-network-failure-retry",
+      "expected": "Host request failure and native retry are operable",
+      "actual": {
+        "failureIsSynthetic": true
+      },
+      "status": "PASS",
+      "durationMs": 1356,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D21-nested-sidebar-and-recreation",
+      "expected": "Changed native hierarchy still mounts once and does not move native transcript",
+      "actual": {
+        "hierarchyChanges": true
+      },
+      "status": "PASS",
+      "durationMs": 1011,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D22-no-safe-boundary-native-first",
+      "expected": "Unknown mixed navigation boundary removes enhancement; native remains usable",
+      "actual": {
+        "enhancement": "NATIVE_ONLY"
+      },
+      "status": "PASS",
+      "durationMs": 1166,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D23-packed-header-no-convenient-slot",
+      "expected": "New native features occupy header; extension yields instead of overlaying tools",
+      "actual": {
+        "enhancement": "NATIVE_ONLY"
+      },
+      "status": "PASS",
+      "durationMs": 2243,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D24-unknown-and-pending-entries",
+      "expected": "Unknown resources and approval state survive active enhancement",
+      "actual": {
+        "unknownPreserved": true
+      },
+      "status": "PASS",
+      "durationMs": 2138,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D25-long-composer-resize",
+      "expected": "Increasing native composer height shrinks workspace without covering it",
+      "actual": {
+        "workspaceBottom": 667.0,
+        "composerTop": 675
+      },
+      "status": "PASS",
+      "durationMs": 2199,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D26-narrow-native-controls",
+      "expected": "390px viewport has no horizontal overflow and no overlapped native controls",
+      "actual": {
+        "viewport": [
+          390,
+          844
+        ],
+        "enhancement": "ACTIVE"
+      },
+      "status": "PASS",
+      "durationMs": 1712,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D27-dark-and-reduced-motion",
+      "expected": "Theme inherits host variables and native controls remain operable",
+      "actual": {
+        "background": "rgb(33, 33, 33)"
+      },
+      "status": "PASS",
+      "durationMs": 3474,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D28-stress-reachability",
+      "expected": "All 604 synthetic references remain findable beyond visible recent capacity",
+      "actual": {
+        "themes": 120,
+        "refs": 604,
+        "persistentRepositoryTest": false,
+        "searchExpansionClicks": 25
+      },
+      "status": "PASS",
+      "durationMs": 6799,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D29-host-rebuild-versus-extension-rebuild",
+      "expected": "Host intentionally recreates transcript, then extension reattaches without duplicates",
+      "actual": {
+        "ownerOfRecreation": "host"
+      },
+      "status": "PASS",
+      "durationMs": 668,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D30-controlled-exit-cleans-view-mask",
+      "expected": "Controlled exit removes roots and only owned mask, preserving newer native style",
+      "actual": {
+        "actualExtensionDisable": false
+      },
+      "status": "PASS",
+      "durationMs": 698,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D31-transport-failure-clears-projection",
+      "expected": "Injected transport failure removes derived UI; explicit restart recovers",
+      "actual": {
+        "injectionNotWorkerDeath": true
+      },
+      "status": "PASS",
+      "durationMs": 1154,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D32-scope-view-state-isolation",
+      "expected": "Account B does not inherit A history-segment view state",
+      "actual": {
+        "perScopeTransientView": true
+      },
+      "status": "PASS",
+      "durationMs": 1573,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D33-project-resource-permissions",
+      "expected": "Native project files/instructions stay separate from derived workspace",
+      "actual": {
+        "logicalProjectRoute": true,
+        "projectContextMerged": false
+      },
+      "status": "PASS",
+      "durationMs": 1082,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D34-timezone-control-reprojects",
+      "expected": "Timezone and clock controls recompute navigation without replacing current native nodes",
+      "actual": {
+        "timeZone": "America/New_York"
+      },
+      "status": "PASS",
+      "durationMs": 1033,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D35-native-branch",
+      "expected": "Native branch creates a distinct logical conversation while preserving original data",
+      "actual": {
+        "logicalBranch": true,
+        "originalMessageCount": 2
+      },
+      "status": "PASS",
+      "durationMs": 543,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D36-native-pin-archive-state",
+      "expected": "Native pin/archive actions affect native lists without creating a new user send",
+      "actual": {
+        "nativeStateChanged": true
+      },
+      "status": "PASS",
+      "durationMs": 829,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D37-native-new-chat",
+      "expected": "Native new-chat entry creates a functional composer, not a VAIWL destination dialog",
+      "actual": {
+        "nativeNewChat": true
+      },
+      "status": "PASS",
+      "durationMs": 1687,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "D38-long-single-theme-complete-expansion",
+      "expected": "A 128-window theme expands all known recent members without mixing old/unknown",
+      "actual": {
+        "singleThemeMembers": 128,
+        "recent": 126,
+        "old": 1,
+        "unknown": 1,
+        "expansionClicks": 10
+      },
+      "status": "PASS",
+      "durationMs": 1740,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "P01-create-rename-icon-and-place-through-UI",
+      "expected": "B3 editor creates durable-command state, joins T0, preserves native nodes; IDB backend is mock here",
+      "actual": {
+        "uiCommands": true,
+        "nativeDBDurability": false
+      },
+      "status": "PASS",
+      "durationMs": 2745,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "P02-title-alias-and-native-local-state",
+      "expected": "Derived rename never changes native transcript/composer or interactive state",
+      "actual": {
+        "nativeIdentityPreserved": true
+      },
+      "status": "PASS",
+      "durationMs": 1188,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "P03-move-and-targeted-undo-UI",
+      "expected": "Human move and undo preserve original Project and other native state",
+      "actual": {
+        "targetedUndo": true
+      },
+      "status": "PASS",
+      "durationMs": 1589,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "P04-reconstruct-service-without-reseed",
+      "expected": "Recreating JS service retains mock-backed edits and view; not worker or page persistence evidence",
+      "actual": {
+        "serviceReconstruction": true,
+        "actualWorkerRestart": false,
+        "actualPageReload": false
+      },
+      "status": "PASS",
+      "durationMs": 1985,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "P05-persistent-A-B-A-isolation",
+      "expected": "Stored human title is absent in B and restored in A",
+      "actual": {
+        "scopeIsolation": "synthetic-test-provider"
+      },
+      "status": "PASS",
+      "durationMs": 1833,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "P06-revoke-evidence-keeps-human-title-unknown-reachable",
+      "expected": "Revocation removes activity not placements or human edits",
+      "actual": {
+        "unknownStillReachable": true
+      },
+      "status": "PASS",
+      "durationMs": 1478,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "P07-B2-B3-update-keeps-stream-and-widget",
+      "expected": "Data changes do not rebuild native streaming output or widget",
+      "actual": {
+        "streamOwner": "host"
+      },
+      "status": "PASS",
+      "durationMs": 2181,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "P08-stale-candidate-after-human-edit-denied",
+      "expected": "Old candidate operation cannot overwrite new manual revision",
+      "actual": {
+        "candidateExecuted": false,
+        "simulatorInternalAuthority": true
+      },
+      "status": "PASS",
+      "durationMs": 1341,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "P09-new-evidence-reprojects-old-theme",
+      "expected": "Privileged synthetic ingestion changes time segment without rewriting native nodes",
+      "actual": {
+        "syntheticEvidenceAuthority": true,
+        "originalProjectUntouched": true
+      },
+      "status": "PASS",
+      "durationMs": 2062,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "P10-display-preference-and-alias-find",
+      "expected": "Persisted display preference affects owned UI; historic names remain searchable",
+      "actual": {
+        "historicAliasSearch": true,
+        "compactPreference": false
+      },
+      "status": "PASS",
+      "durationMs": 2131,
+      "pageErrors": [],
+      "pageRequests": []
+    },
+    {
+      "id": "P11-corrupt-view-does-not-hide-intact-workspace",
+      "expected": "Corrupt view is disclosed without blocking human assets or recreating native controls",
+      "actual": {
+        "viewFailureIsolated": true,
+        "damagedRecordPreserved": true,
+        "backend": "MOCK_IDB"
+      },
+      "status": "PASS",
+      "durationMs": 960,
+      "pageErrors": [],
+      "pageRequests": []
+    }
+  ],
+  "blocked": [
+    "real browser Back/Forward and SPA URL changes",
+    "extension-origin IndexedDB",
+    "MV3 load/disable/re-enable/worker restart",
+    "actual freeze/resume",
+    "physical IME",
+    "real ChatGPT login/identity/feature acceptance"
+  ]
+}

@@ -1,0 +1,116 @@
+[
+  {
+    "name": "node-delivery",
+    "argv": [
+      "node",
+      "--test",
+      "--test-reporter=tap",
+      "tests/b1/broker.test.mjs",
+      "tests/hf/b1-race.test.mjs",
+      "tests/hf/build-server.test.mjs",
+      "tests/hf/projection.test.mjs",
+      "tests/b23/audit-regressions.test.mjs",
+      "tests/b23/broker.test.mjs",
+      "tests/b23/build.test.mjs",
+      "tests/b23/evidence-audit.test.mjs",
+      "tests/b23/logic.test.mjs",
+      "tests/b23/migration.test.mjs",
+      "tests/b23/repository.test.mjs",
+      "tests/b23/view-isolation.test.mjs",
+      "tests/b4/version-fence.test.mjs"
+    ],
+    "exitCode": 0,
+    "started": 1791732117.079267,
+    "ended": 1791732125.299606
+  },
+  {
+    "name": "b23-page-delivery",
+    "argv": [
+      "/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python",
+      "tests/b23/real-browser.py",
+      "--mode",
+      "page",
+      "--port",
+      "48173",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/docs/engineering/c1-mac-2026-10-11/b23-page-delivery.json"
+    ],
+    "exitCode": 0,
+    "started": 1791732125.3038201,
+    "ended": 1791732166.009176
+  },
+  {
+    "name": "ui-delivery",
+    "argv": [
+      "/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python",
+      "tests/c1/real-ui.py",
+      "--out",
+      "/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/docs/engineering/c1-mac-2026-10-11/ui-delivery"
+    ],
+    "exitCode": 1,
+    "started": 1791732125.3039281,
+    "ended": 1791732208.847606
+  },
+  {
+    "name": "b23-mv3-delivery",
+    "argv": [
+      "/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python",
+      "tests/b23/real-browser.py",
+      "--mode",
+      "mv3",
+      "--port",
+      "48174",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/docs/engineering/c1-mac-2026-10-11/b23-mv3-delivery.json"
+    ],
+    "exitCode": 0,
+    "started": 1791732166.009744,
+    "ended": 1791732226.4133592
+  },
+  {
+    "name": "b4-core-delivery",
+    "argv": [
+      "/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python",
+      "tests/b4/real-mv3.py",
+      "--suite",
+      "core",
+      "--out",
+      "/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/docs/engineering/c1-mac-2026-10-11/b4-core-delivery.json"
+    ],
+    "exitCode": 0,
+    "started": 1791732125.3037188,
+    "ended": 1791732275.073015
+  },
+  {
+    "name": "dom-delivery",
+    "argv": [
+      "/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python",
+      "tests/b23/view-browser.py",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/docs/engineering/c1-mac-2026-10-11/dom-delivery"
+    ],
+    "exitCode": 0,
+    "started": 1791732125.307138,
+    "ended": 1791732275.720918
+  },
+  {
+    "name": "b4-lifecycle-delivery",
+    "argv": [
+      "/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python",
+      "tests/b4/real-mv3.py",
+      "--suite",
+      "lifecycle",
+      "--out",
+      "/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/docs/engineering/c1-mac-2026-10-11/b4-lifecycle-delivery.json"
+    ],
+    "exitCode": 0,
+    "started": 1791732275.0737128,
+    "ended": 1791732328.4807339
+  }
+]
