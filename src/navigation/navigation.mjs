@@ -4,7 +4,7 @@ import { css } from './styles.mjs';
 function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);n.textContent=text;return n;}
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
 export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{}}) {
-  const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,lastSelected=null,menu=null;
+  const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,lastSelected=null,menu=null,selectionPending=false;
   let status={state:'WAITING',reason:'no-verified-snapshot'},lastNativeFocus=null;
   const trackFocus=e=>{const n=e.composedPath()[0];if((n?.tagName==='TEXTAREA'||n?.tagName==='INPUT')&&!e.composedPath().some(x=>x?.hasAttribute?.('data-vaiwl-owned')))lastNativeFocus={node:n,start:n.selectionStart,end:n.selectionEnd};};
   doc.addEventListener('focusin',trackFocus);
@@ -35,12 +35,20 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const wasVisible=roots.workspace.n.style.display==='block';
     if(roots.workspace.n.style.cssText!==style)roots.workspace.n.style.cssText=style;
     if(show&&!wasVisible&&roots.workspace.scroller)roots.workspace.scroller.scrollTop=view.scroll;
-    roots.sidebar.n.style.visibility=suspended?'hidden':'';
+    roots.sidebar.n.style.visibility=suspended?'hidden':'';if(!suspended)locateCurrent();
     roots.back.hidden=view.mode==='workspace'||suspended;
     // The original conversation tree remains attached; only this reversible view mask changes.
     setMask(host.reading,show);
     if(show)layoutCards();
     status={state:suspended?'NATIVE_LAYER':'ACTIVE',mode:view.mode,scope:snapshot.scope};adapter.status(status);
+  }
+  function locateCurrent(){
+    const list=roots?.sidebar.shadow.querySelector('.themes');
+    if(!selectionPending||!list?.clientHeight||roots.sidebar.n.style.visibility==='hidden')return;
+    const link=list.querySelector('[aria-current="page"]');if(!link)return;
+    const box=link.getBoundingClientRect(),nav=list.getBoundingClientRect();
+    if(box.top<nav.top||box.bottom>nav.bottom)list.scrollTop+=box.top-nav.top-(nav.height-box.height)/2;
+    view.sidebarScroll=list.scrollTop;selectionPending=false;
   }
   // Keep DOM/keyboard order from the repository; expanding one card grows its
   // own column only. Native layout and nodes are untouched.
@@ -55,7 +63,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     container.style.position='relative';container.style.display='block';container.style.height=Math.max(...tops)+'px';scroller.scrollTop=scroll;
   }
   function emitView(){if(view&&snapshot)onViewChange({segment:view.segment,oldOpen:[...view.oldOpen],sidebarOpen:[...view.sidebarOpen],capacities:[...view.capacities],scroll:view.scroll,sidebarVisible:view.sidebarVisible},snapshot.scope);}
-  function remember(){if(view?.mode==='workspace'&&roots?.workspace.scroller&&roots.workspace.n.style.display!=='none')view.scroll=roots.workspace.scroller.scrollTop;}
+  function remember(){if(view&&roots)view.sidebarScroll=roots.sidebar.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;if(view?.mode==='workspace'&&roots?.workspace.scroller&&roots.workspace.n.style.display!=='none')view.scroll=roots.workspace.scroller.scrollTop;}
   function showWorkspace(){captureFocus();remember();view.mode='workspace';searchQuery=null;searchTheme=null;render();layout();queueMicrotask(()=>roots?.workspace.shadow.querySelector('.workspace')?.focus({preventScroll:true}));}
   function openRef(ref,event){if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;remember();view.mode='reading';searchQuery=null;searchTheme=null;layout();const same=adapter.isCurrent(ref.nativeUrl);adapter.openNative(ref.nativeUrl,event);if(same)restoreFocus();}
   function row(ref,context=''){const a=node(doc,'a',{class:'row',href:adapter.nativeHref?.(ref.nativeUrl)??ref.nativeUrl,'data-ref-id':ref.id,title:ref.displayTitle},ref.displayTitle??ref.nativeTitle);a.dataset.focusKey='ref:'+context+':'+ref.id;if(adapter.isCurrent(ref.nativeUrl))a.setAttribute('aria-current','page');if(ref.available===false)a.setAttribute('aria-disabled','true');a.addEventListener('click',e=>openRef(ref,e));return a;}
@@ -86,15 +94,15 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     },'','square card-actions'),'more');trigger.dataset.focusKey='actions:'+g.id;trigger.setAttribute('aria-haspopup','menu');trigger.setAttribute('aria-expanded','false');head.append(trigger);}
   function focusState(){for(const root of [roots?.sidebar,roots?.workspace]){const n=root?.shadow.activeElement;if(n?.dataset.focusKey)return {root,key:n.dataset.focusKey,start:n.selectionStart,end:n.selectionEnd};}return null;}
   function restoreOwnedFocus(f){if(!f)return;const n=[...f.root.shadow.querySelectorAll('[data-focus-key]')].find(n=>n.dataset.focusKey===f.key);if(n){n.focus({preventScroll:true});if(n.setSelectionRange&&typeof f.start==='number')n.setSelectionRange(f.start,f.end);}else{(f.root.shadow.querySelector('[aria-label="较早的30日"]')??f.root.shadow.querySelector('.workspace'))?.focus({preventScroll:true});}}
-  function render(){if(!roots||!view)return;const focused=focusState();closeMenu(false);
+  function render(){if(!roots||!view)return;const focused=focusState();view.sidebarScroll=roots.sidebar.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;closeMenu(false);
     const side=roots.sidebar.shadow;side.querySelector('section')?.remove();const panel=node(doc,'section');const tools=node(doc,'div',{class:'toolbar'});tools.append(node(doc,'strong',{},'主题'),graphic(button('查找主题与派生名称',()=>findKnown()),'search'),graphic(button('折叠主题导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;render();}),view.sidebarVisible?'minus':'plus'),graphic(button('退出测试增强',()=>{stop();onExit();}),'close'));if(onManage)tools.append(graphic(button('管理工作空间',()=>onManage()),'more'));panel.append(tools);
     const list=node(doc,'nav',{class:'themes','aria-label':'VAIWL 主题导航'});list.hidden=!view.sidebarVisible;
     const selected=groups.find(g=>[...g.current,...g.old,...g.unknown].some(r=>adapter.isCurrent(r.nativeUrl)));
-    if(selected&&lastSelected!==adapter.currentURL()){view.sidebarOpen.add(selected.id);lastSelected=adapter.currentURL();}
+    if(selected&&lastSelected!==adapter.currentURL()){view.sidebarOpen.add(selected.id);lastSelected=adapter.currentURL();selectionPending=true;}
     const sideGroups=groups.filter(g=>g.segment===0||g===selected);
     for(const g of sideGroups){const block=node(doc,'section',{class:'group'});const toggle=button('侧栏主题 '+g.name,()=>{view.sidebarOpen.has(g.id)?view.sidebarOpen.delete(g.id):view.sidebarOpen.add(g.id);render();},'','theme-toggle');toggle.dataset.focusKey='theme:'+g.id;toggle.append(node(doc,'span',{class:'theme-glyph'},g.icon??'◇'),node(doc,'span',{class:'theme-name',title:g.name},g.name));toggle.setAttribute('aria-expanded',String(view.sidebarOpen.has(g.id)));block.append(toggle);
       if(view.sidebarOpen.has(g.id)){const children=node(doc,'div',{class:'children'});members(g,children,true);block.append(children);}list.append(block);}
-    const independent=snapshot.refs.find(r=>adapter.isCurrent(r.nativeUrl)&&!groups.some(g=>g.members.includes(r.id)));if(independent){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}panel.append(list);side.append(panel);
+    const independent=snapshot.refs.find(r=>adapter.isCurrent(r.nativeUrl)&&!groups.some(g=>g.members.includes(r.id)));if(independent){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}panel.append(list);side.append(panel);list.scrollTop=view.sidebarScroll??0;locateCurrent();
     const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-segment':String(view.segment)});roots.workspace.scroller=page;page.addEventListener('scroll',()=>{if(roots?.workspace.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){view.scroll=page.scrollTop;emitView();}},{passive:true});
     if(searchQuery!==null){
       const search=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
