@@ -39,3 +39,9 @@
 环境macOS27.0 26A428、Chrome154.0.8037.99、Node26.8.2、Python3.14.7、Playwright1.63.0；仅全新headless Profile与owned CDP/loopback，未抢日常浏览器焦点、读取私人聊天、操作PAIA或付费调用。原生输入/草稿/消息/工具所有权仍通过既有旅程。
 
 F1还需：安全处理100k容量，补大规模多tab、长中文/长聊天交互与弱设备覆盖；不能用此增量宣布F1/F3/F4或整个A–G完成。GitHTTPS发布阻塞另见git-explicit-helper.log及git-process-trace.log，本地提交和bundle保存；不伪称新PR已经创建。
+
+## 100k进一步真实诊断（不是正式PASS）
+
+随后以`--capacity-probe`仅在临时实验build把每表护栏改为100k、JSON码元改为128Mi，正常源码不改；所有不同的state/worker构建SHA256如实记录。`experimental-100k-capacity`实际持久化100000 refs/120主题，写入11995.2ms、快照5323.9ms，页面15秒内无法ACTIVE，FAIL。`experimental-100k-traced`补充真实broker响应时序：写11166.5ms、快照5601.4ms、BIND约4819.7ms、B23_SNAPSHOT约5234ms返回ok，界面仍WAITING并再次绑定，另有invalidated-during-check。该症状与现有6秒客户端请求窗口和大包传输/主线程工作有关，但worker返回ok不证明客户端收到/应用；没有将推断当作已分解完成的客户端逐项耗时。
+
+这证实100k并非只缺数字上限：整状态读取/校验/复制与同一全量snapshot传输尚不能支撑当前生命周期窗口；同样需覆盖人工CAS写入、备份17Mi码元解析、quota/撤权与多tab，不可仅提高常量或延长超时宣布通过。正式护栏保留；`capacity-production-guard-final`重验默认诊断关闭且超限拒绝保全既有人工资产。现有1k/10k PASS与完整回归不受影响，runtime仍801595e。下一原F1继续解决该重大容量/启动缺口，不开始生产接管。

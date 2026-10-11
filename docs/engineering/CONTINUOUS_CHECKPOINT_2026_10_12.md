@@ -25,3 +25,7 @@ F1 已在分支 `codex/vaiwl-f1-performance-20261012` 完成实际规模基线�
 恢复：`cd /Users/hhf/Documents/Codex/VAIWL-Development/c1`；`git status`；`git switch codex/vaiwl-f1-performance-20261012`；阅读 `docs/STATUS.md` 和 `docs/engineering/CONTINUOUS_FINAL_2026_10_12.md`；运行 `python3 tests/f1/verify-evidence.py`（无浏览器/无依赖）。专用 .venv/bin/python 已就位。完整历史bundle在 `/Users/hhf/Documents/Codex/VAIWL-Development/recovery/`。
 
 下一可自主实施的原任务仍是 F1：在既有 CAS/幂等/撤销/绑定/备份安全不退化前提下解决100k容量和大规模多tab/长聊天/弱设备证据。远端Git恢复时先检查实时ref和父PR head；如有他人提交先正常整合，不覆盖。依次非强推 C34并创建以B5为base的Draft PR、D12以C34为base、F1以D12为base，创建后attach到任务。各模块差异以对应父分支审阅，不把所有内容塞一个PR。生产授权缺口只阻止相应路径，不阻止上述F1。
+
+100k后续根因诊断：`tests/f1/real-performance.py ... 100000 --capacity-probe`只在临时测试build放宽表/JSON护栏及加入小型broker时序，不修改正式runtime。两个实验目录experimental-100k-capacity/traced均FAIL：实际100000引用写约12秒、快照5.3–5.6秒，但网页WAITING；trace含BIND~4.82s/SNAPSHOT~5.23s returned ok，客户端仍再次绑定。不能把worker返回ok当客户端应用成功，不能仅改护栏/延长deadline伪造通过。正常诊断关闭下`capacity-production-guard-final`超限仍拒绝，实际原604引用和最新人工sentinel保留。
+
+下一具体原F1断点：分解全状态校验/复制/消息传输/客户端应用及6秒窗口的耗时；在同一数据库与旧CAS/操作收据/资产恢复语义内做可验证增量，所有分页/增量消息须有scope/epoch/revision一致性，不先接收半份混合revision。备份当前17Mi码元parse限额与quota/手工日志也必须一同覆盖；正式cap仍保留。先保留本100k反例，不能为快速PASS缩规模。当前没有获准生产resolver，也未打开日常Chrome或付费模型。

@@ -4,6 +4,7 @@ import sys,subprocess,os,json,tempfile,time,traceback,hashlib
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[2];out=Path(sys.argv[1]);out.mkdir(parents=True,exist_ok=False)
+CAPACITY_PROBE='--capacity-probe' in sys.argv[3:]
 r={'argv':sys.argv,'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'tests':[],'scope':'fresh isolated Chrome MV3 / actual extension IDB / synthetic appended fixture; no real user data','startedAt':time.time()}
 SEED='''async size=>{
  const {ScopeRepository,WorkspaceRepository,persistentSeed,syntheticEvidenceGate,scopeOf,FIXTURE_NOW,placementId,validateState,dataProjection}=globalThis.__F1;
@@ -22,7 +23,13 @@ try:
    with tempfile.TemporaryDirectory(prefix='vaiwl-f1-') as tmp:
     build=Path(tmp)/'extension';subprocess.run(['node','simulator/build.mjs',str(build)],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
     instrument="\nimport { ScopeRepository } from '../src/b1/scope-repository.mjs';\nimport { WorkspaceRepository } from '../src/data/repository.mjs';\nimport { persistentSeed, syntheticEvidenceGate } from './persistent-seed.mjs';\nimport { FIXTURE_NOW } from './data.mjs';\nimport { placementId, validateState } from '../src/data/state.mjs';\nimport { dataProjection } from '../src/data/evidence.mjs';\nglobalThis.__F1={ScopeRepository,WorkspaceRepository,persistentSeed,syntheticEvidenceGate,scopeOf,FIXTURE_NOW,placementId,validateState,dataProjection};\n"
-    workerFile=build/'simulator/worker.mjs';workerFile.write_text(workerFile.read_text()+instrument);hashes=json.loads((build/'build-hashes.json').read_text());hashes['simulator/worker.mjs']=hashlib.sha256(workerFile.read_bytes()).hexdigest();(build/'build-hashes.json').write_text(json.dumps(hashes));r['instrumentation']='Temporary build-only static imports for privileged synthetic fixture seeding; same modules/service/IDB, no mock. Dynamic import was a driver defect. Production worker source unchanged.'
+    workerFile=build/'simulator/worker.mjs';workerFile.write_text(workerFile.read_text()+instrument);hashes=json.loads((build/'build-hashes.json').read_text());hashes['simulator/worker.mjs']=hashlib.sha256(workerFile.read_bytes()).hexdigest()
+    if CAPACITY_PROBE:
+     stateFile=build/'src/data/state.mjs';text=stateFile.read_text();assert 'Object.keys(s[table]).length>20000' in text and 'stable(s).length>16*1024*1024' in text;text=text.replace('Object.keys(s[table]).length>20000','Object.keys(s[table]).length>100000',1).replace('stable(s).length>16*1024*1024','stable(s).length>128*1024*1024',1);stateFile.write_text(text);hashes['src/data/state.mjs']=hashlib.sha256(stateFile.read_bytes()).hexdigest()
+     hook="service.broker.handle(message,sender).then(reply,()=>reply({ok:false,reason:'service-failed'}));"
+     instrumented=workerFile.read_text();assert hook in instrumented;instrumented=instrumented.replace(hook,"const started=performance.now();service.broker.handle(message,sender).then(value=>{globalThis.__F1RequestTrace.push({type:message.type,ms:performance.now()-started,ok:value?.ok,reason:value?.reason});reply(value)},()=>{globalThis.__F1RequestTrace.push({type:message.type,ms:performance.now()-started,ok:false,reason:'service-failed'});reply({ok:false,reason:'service-failed'})});",1);workerFile.write_text(instrumented+"\nglobalThis.__F1RequestTrace=[];\n");hashes['simulator/worker.mjs']=hashlib.sha256(workerFile.read_bytes()).hexdigest()
+     r['experimentalCapacityProbe']={'testBuildOnly':True,'tableRows':100000,'stateJsonCodeUnits':128*1024*1024,'productionLimitsUnchanged':True,'notAcceptance':'Exploratory feasibility of whole-state engine under larger guard; does not certify quota, backup, lease or production safety.'}
+    (build/'build-hashes.json').write_text(json.dumps(hashes));r['instrumentation']='Temporary build-only static imports for privileged synthetic fixture seeding; same modules/service/IDB, no mock. Dynamic import was a driver defect. Production worker source unchanged.'
     ctx=pw.chromium.launch_persistent_context(str(Path(tmp)/'profile'),executable_path='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless=True,chromium_sandbox=True,ignore_default_args=['--disable-extensions'],args=['--enable-unsafe-extension-debugging'],viewport={'width':1440,'height':1000});ctx.set_default_timeout(8000)
     cdp=ctx.browser.new_browser_cdp_session();r['chrome']=cdp.send('Browser.getVersion');extension=cdp.send('Extensions.loadUnpacked',{'path':str(build)});p=ctx.new_page()
     try:
@@ -43,6 +50,9 @@ try:
     except Exception as e:
      if r['tests'] and r['tests'][-1]['id']=='F1-real-'+str(size):r['tests'][-1].update({'status':'FAIL','error':str(e),'trace':traceback.format_exc()})
      else:r['tests'].append({'id':'F1-real-'+str(size),'status':'FAIL','error':str(e),'trace':traceback.format_exc()})
+     if CAPACITY_PROBE:
+      try:r['tests'][-1]['transportTrace']=worker.evaluate('globalThis.__F1RequestTrace??[]');r['tests'][-1]['pageState']=p.locator('html').get_attribute('data-vaiwl-hf-state')
+      except Exception as diag:r['tests'][-1]['diagnosticError']=str(diag)
      try:p.screenshot(path=str(out/('failure-'+str(size)+'.png')))
      except:pass
     finally:ctx.close();(out/'partial.json').write_text(json.dumps(r,ensure_ascii=False,indent=2));print(size,r['tests'][-1]['status'],flush=True)

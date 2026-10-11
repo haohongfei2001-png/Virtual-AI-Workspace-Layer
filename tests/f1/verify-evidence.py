@@ -27,6 +27,10 @@ r=read('after-index/results.json');need(r['counts']=={'PASS':2,'FAIL':0,'BLOCKED
 for case in r['tests'][:2]:
  n=int(case['id'].split('-')[-1]);actual=case['actual'];need(actual['counts']=={'refs':n,'themes':120} and actual['initialCounts']=={'refs':604,'themes':120},'Stress sample reduced');need(actual['navigationP95']<150 and actual['searchP95']<300 and actual['nativeNodesAndDraftIntact'],'Performance assertions weakened')
 r=read('capacity-final-units/results.json');a=r['tests'][0]['actual'];need(r['counts']=={'PASS':0,'FAIL':0,'BLOCKED':1} and a['attempted']['refs']==100000 and a['existingHumanAssetsIntact'],'Capacity refusal/human preservation evidence missing');need(a['configuredStateJsonCodeUnits']==16777216,'Capacity units misstated');check_runtime(r)
+r=read('capacity-production-guard-final/results.json');need(r['counts']=={'PASS':0,'FAIL':0,'BLOCKED':1} and not r.get('experimentalCapacityProbe') and r['tests'][0]['actual']['existingHumanAssetsIntact'],'Production guard must stay enabled');check_runtime(r)
+for path in ['experimental-100k-capacity/results.json','experimental-100k-traced/results.json']:
+ r=read(path);need(r['counts']=={'PASS':0,'FAIL':1,'BLOCKED':0} and r['experimentalCapacityProbe']['testBuildOnly'] and r['experimentalCapacityProbe']['productionLimitsUnchanged'],'Do not hide failed experimental capacity')
+ a=r['tests'][0]['actual'];need(a['counts']=={'refs':100000,'themes':120} and a['initialCounts']=={'refs':604,'themes':120},'100k exploratory fixture reduced');need(r['tests'][0]['buildHashes']['src/data/state.mjs']!=sha(ROOT/'src/data/state.mjs'),'Exploratory limit change must be recorded as different test build')
 original=ROOT/'design/approved/v2.7/VAIWL_v2.7/prototype-v2.7.html';need(sha(original)=='81fa9779e4bc98b6b67c348f72a32ee1fd99519833994af9ed95716126f7da4e','Approved prototype changed')
 manifest=json.loads((E/'SHA256.json').read_text());need(len(manifest['files'])>200,'Evidence manifest incomplete')
 for path,expected in manifest['files'].items():
