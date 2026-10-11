@@ -9,3 +9,9 @@
 - ui-delivery (parallel heavy final batch): long-history setup stopped because its requested saved feedback was absent; actual screenshot reports write-result-unknown, no success and no automatic replay. This is a retained observed run FAIL, not erased or relabeled PASS. Exact same source and same assertions are rerun alone after the other Chrome jobs. Do not claim heavy parallel writes always acknowledge successfully or that an unknown acknowledgement itself proves lost data.
 
 Runtime repair scope is navigation/editor only. Existing data, broker, lease renewal, worker and projection engines are unchanged. Final ledger selects final executions individually and does not add intermediate successes.
+
+- dom-product/D16: column measurement cleared preserved scroll; original targeted scroll-fixed assertion passes after retaining scroll around measurement.
+- ui-layout-final: assumed W7 is in another column, but native desktop sidebar collapse creates four columns. Corrected geometry compares a later card with the actual second card x-column; original failure is retained.
+- far-route-before: 8/9, actual Meta tab T11903 fails MV3 activation; synthetic adapter omitted mode and scale on fallback URLs. Guarded same-origin href retains test-only mode/size, stored URL and production adapter untouched; host initializes explicit size120. Final normal/new-tab path requires native conversation/input and return.
+
+- current-position-before: current T11903 exists but is outside the owned sidebar viewport. Final route-only owned-list positioning preserves manual scroll and passes the same actual rectangle assertion; it does not scroll native content or take focus.
