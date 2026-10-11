@@ -1,14 +1,12 @@
-# B2/B3 当前恢复点
+# B2/B3 最新恢复点
 
-2026-10-11：先前“代码已写、日志未交付”的状态已由本轮云端验收推进。
+2026-10-11：PR #7 Mac 隔离 Chrome 增量完成，保持 Draft，base仍为PR #6，不合并、不开始B4/C1/C2。
 
-- 唯一PR：#7，保持Draft，base仍为PR #6。
-- 唯一分支：feat/vaiwl-b2-b3-persistent-20261011。
-- 最终已测试运行时代码：8041f1dbfd3350b2cbead0651b04f9da6574a5ed。
-- Node118/118、Chromium DOM49/49已执行。数据库为显式mock；原生db/page/mv3实测被管理员策略阻止。
-- 正式报告：B23_ACCEPTANCE_2026_10_11.md。
-- 原始日志：b23-final-2026-10-11/raw-parts/，用同目录decode-evidence.py恢复/校验。
-- 原始scope恢复点ea034db和cbcde63、后续5997ec0的修复仍可经Git历史追溯；不要重新实现B2/B3。
-- 最新证据/文档提交以PR实时head为准，代码提交后的变更仅为归档。
+- 初始head cd9066b；环境检查点1473af8；原生修复与39项IDB检查点36a5934；页面17项及最终驱动4b69501；MV3 19项检查点80feb36。最终文档提交以PR实时head为准。
+- 真实Chrome154、macOS27、Node26.8.2、Python3.14.7、Playwright1.63；全部新Profile/headless/loopback/合成数据。正常URL和unpacked MV3实际可用，云端阻塞解除。
+- 原生恢复缺陷已修复：index cursor.primaryKey使全部旧receipt失效；保留撤权首个失败原因。mock游标语义亦纠正。相关Node38/38通过，无skipped。
+- 最终报告：B23_MAC_ACCEPTANCE_2026_10_11.md；逐项JSON、raw Chrome/CDP worker日志、失败原件、差异、截图、命令及SHA256在b23-mac-2026-10-11/。
+- 最终3份原生报告源码哈希与当前最终源一致，构建哈希相同。恢复仍有损；不承诺自动UI重连或跨tab推送。真实ChatGPT身份/数据/权限接管仍有独立前置条件。
+- 裁决：隔离合成宿主范围内工程验收通过；生产ChatGPT未运行/未放行。未读取日常Chrome、私人聊天、PAIA；main与其他PR未改，无付费服务或Actions。
 
-整体LIMITED；下一缺口为另获准隔离Chrome环境的真实持久化/刷新/多tab/worker增量验收。不是要求重新运行R0或重建模拟器。没有Mac授权，不自动连接、不合并、不开始后续产品模块。
+之前云端历史原件仍在b23-final-2026-10-11/，不要把历史118/49与本轮39/17/19/38累加。

@@ -1,3 +1,7 @@
+> 最新 Mac 增量已通过：原生 IndexedDB 39/39、正常页面17/17、真正MV3 19/19。最终报告见 `docs/engineering/B23_MAC_ACCEPTANCE_2026_10_11.md`，原始证据见 `docs/engineering/b23-mac-2026-10-11/`。下面云端段落保留历史边界。
+>
+> Mac 使用 Google Chrome 154 与隔离 Playwright1.63.0；`real-browser.py`仍只启动新临时Profile和合成loopback，不连接已有Chrome。`native-incremental-cases.mjs`补8项真实事务/损坏/恢复；`native_ui_checks.py`补人工资产持久化、真实两tab CAS、旧真实响应、损坏view UI与MV3冷启动旧租约拒绝。`DEBUG=pw:browser`可保留原始Chrome启动日志。所有轮询兼容严格CSP，不放宽策略。
+
 # B2/B3 — 运行与验收
 
 基于PR #6，继续使用同一个B1数据库。完整结论见 `docs/engineering/B23_ACCEPTANCE_2026_10_11.md`：Node 118/118、Chromium DOM 49/49；真实IndexedDB/正常URL/MV3 BLOCKED。没有生产ChatGPT数据渠道。
