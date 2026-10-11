@@ -45,8 +45,9 @@
       "postRunDriverChanges": {
         "tests/b4/real-mv3.py": {
           "atRun": "db5fe290c508c07c790410a063025bbc290a6fc948a6fe25e5470c193a128b11",
-          "finalLifecycleDriver": "99c86aeb0a57f44e8df174b91980fa56b45fb7766da1ce59ed6b34b04c5efb0f",
-          "coreCaseASTUnchanged": true
+          "finalDriver": "1e679e0c63f35f2419d17611702549730081b2a3574ec3b401fb4893cd108f96",
+          "coreCaseASTUnchanged": true,
+          "note": "lifecycle launcher and CLI only; executed core case bodies unchanged"
         }
       },
       "buildHashes": {
@@ -106,7 +107,14 @@
         "tests/b4/version-fence.test.mjs": "3a0f47012dcd099cd48bdd87a56d5424d89052813145f4637de93ffd4dd5589c"
       },
       "runtimeMatchesFinal": true,
-      "postRunDriverChanges": {},
+      "postRunDriverChanges": {
+        "tests/b4/real-mv3.py": {
+          "atRun": "99c86aeb0a57f44e8df174b91980fa56b45fb7766da1ce59ed6b34b04c5efb0f",
+          "finalDriver": "1e679e0c63f35f2419d17611702549730081b2a3574ec3b401fb4893cd108f96",
+          "coreCaseASTUnchanged": true,
+          "note": "lifecycle launcher and CLI only; executed core case bodies unchanged"
+        }
+      },
       "buildHashes": {
         "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
         "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
@@ -326,7 +334,7 @@
     "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
     "simulator/service.mjs": "cd493e0a914b719f59f70147023e9acfcc58431c105e8b0f79e0bd430d29d5d1",
     "simulator/editor.mjs": "0f5cd1026315dad830881060c109b8a10cdc82212a5e937803ee1ca92ee991b1",
-    "tests/b4/real-mv3.py": "99c86aeb0a57f44e8df174b91980fa56b45fb7766da1ce59ed6b34b04c5efb0f",
+    "tests/b4/real-mv3.py": "1e679e0c63f35f2419d17611702549730081b2a3574ec3b401fb4893cd108f96",
     "tests/b4/version-fence.test.mjs": "3a0f47012dcd099cd48bdd87a56d5424d89052813145f4637de93ffd4dd5589c"
   }
 }

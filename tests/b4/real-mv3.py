@@ -8,7 +8,7 @@ sys.path.insert(0,str(ROOT/'tests/b23'))
 from native_ui_checks import NativeChecks
 
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--browser',default='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');ap.add_argument('--out',required=True);ap.add_argument('--baseline',action='store_true');ap.add_argument('--headed',action='store_true');ap.add_argument('--suite',choices=['all','core','lifecycle','timeout'],default='all');a=ap.parse_args()
+ ap=argparse.ArgumentParser();ap.add_argument('--browser',default='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');ap.add_argument('--out',required=True);ap.add_argument('--baseline',action='store_true');ap.add_argument('--suite',choices=['core','lifecycle','timeout'],default='core');a=ap.parse_args()
  report={'startedAt':time.time(),'baseline':a.baseline,'argv':sys.argv,'tests':[],'workerEvents':[],'console':[],'realChatGPT':'NOT_RUN','fallback':False}
  def record(name,status,actual):report['tests'].append({'id':name,'status':status,'actual':actual})
  def active(pg,timeout=15000):pg.locator('html[data-vaiwl-hf-state="ACTIVE"],html[data-vaiwl-hf-state="NATIVE_LAYER"]').wait_for(state='attached',timeout=timeout)
@@ -42,7 +42,7 @@ def main():
      owned_browser=p.chromium.connect_over_cdp(endpoint,no_defaults=True);ctx=owned_browser.contexts[0]
      report['ownedNativeConnection']={'pid':chrome_process.pid,'newProfile':str(profile),'newPort':int(port),'noDefaults':True,'headless':True}
     else:
-     ctx=p.chromium.launch_persistent_context(str(Path(tmp)/'profile'),executable_path=a.browser,headless=not a.headed,ignore_default_args=['--disable-extensions'],args=['--enable-unsafe-extension-debugging'],viewport={'width':1440,'height':1000})
+     ctx=p.chromium.launch_persistent_context(str(Path(tmp)/'profile'),executable_path=a.browser,headless=True,ignore_default_args=['--disable-extensions'],args=['--enable-unsafe-extension-debugging'],viewport={'width':1440,'height':1000})
     ctx.set_default_timeout(10000);ctx.on('page',lambda pg:pg.on('pageerror',lambda e:report['console'].append({'url':pg.url,'error':str(e)})))
     browser=ctx.browser.new_browser_cdp_session();report['environment']['chrome']=browser.send('Browser.getVersion');ext=browser.send('Extensions.loadUnpacked',{'path':str(build)});report['extension']=ext
     url='http://127.0.0.1:48175/hf/A/c/T0?mode=mv3'
