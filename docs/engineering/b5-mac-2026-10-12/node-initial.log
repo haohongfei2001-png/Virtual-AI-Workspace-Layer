@@ -1,0 +1,44 @@
+✔ MOCK_IDB_NOT_NATIVE: B5-01-last-human-edit-survives-checkpoint-recovery (370.718125ms)
+✔ MOCK_IDB_NOT_NATIVE: B5-02-portable-backup-assets-not-evidence (142.621709ms)
+✔ MOCK_IDB_NOT_NATIVE: B5-03-dry-run-readonly-and-current-human-protected (333.109584ms)
+✔ MOCK_IDB_NOT_NATIVE: B5-04-restore-into-empty-DB-no-old-authority (224.748125ms)
+✔ MOCK_IDB_NOT_NATIVE: B5-05-preview-CAS-does-not-overwrite-later-edit (228.045208ms)
+✔ MOCK_IDB_NOT_NATIVE: B5-06-corruption-scope-version-auth-fields-rejected (200.713542ms)
+✔ MOCK_IDB_NOT_NATIVE: B5-07-recovery-dryrun-and-operation-receipts-stay-invalid (288.139625ms)
+✔ MOCK_IDB_NOT_NATIVE: DB01-same-B1-database-and-canonical-refs (55.220042ms)
+✔ MOCK_IDB_NOT_NATIVE: DB02-create-update-stable-id-and-reopen (200.515333ms)
+✔ MOCK_IDB_NOT_NATIVE: DB03-derived-title-alias-and-native-immutable (203.15075ms)
+✔ MOCK_IDB_NOT_NATIVE: DB04-place-move-exclusion-and-targeted-undo (193.478459ms)
+✔ MOCK_IDB_NOT_NATIVE: DB05-undo-refuses-overwriting-later-human-edit (233.489041ms)
+✔ MOCK_IDB_NOT_NATIVE: DB06-undo-does-not-restore-whole-snapshot (265.434792ms)
+✔ MOCK_IDB_NOT_NATIVE: DB07-two-connections-CAS-one-winner (108.146667ms)
+✔ MOCK_IDB_NOT_NATIVE: DB08-operation-idempotence-does-not-return-stale-snapshot (189.092916ms)
+✔ MOCK_IDB_NOT_NATIVE: DB09-scope-A-B-same-native-id-isolation (171.192458ms)
+✔ MOCK_IDB_NOT_NATIVE: DB10-unknown-scope-never-opens-workspace (34.9845ms)
+✔ MOCK_IDB_NOT_NATIVE: DB11-human-lock-and-exclusion-protect-against-candidate (266.547959ms)
+✔ MOCK_IDB_NOT_NATIVE: DB12-stale-candidate-global-revision-rejected (122.276667ms)
+✔ MOCK_IDB_NOT_NATIVE: DB13-revoke-source-reprojects-without-erasing-intent (279.236667ms)
+✔ MOCK_IDB_NOT_NATIVE: DB14-coverage-stales-and-does-not-fabricate-activity (170.35075ms)
+✔ MOCK_IDB_NOT_NATIVE: DB15-old-window-stays-parent-not-duplicated (93.27825ms)
+✔ MOCK_IDB_NOT_NATIVE: DB16-label-is-not-evidence-authority (61.816083ms)
+✔ MOCK_IDB_NOT_NATIVE: DB17-guard-denial-and-aborted-write (55.214208ms)
+✔ MOCK_IDB_NOT_NATIVE: DB18-view-preferences-reopen-and-CAS (70.291542ms)
+✔ MOCK_IDB_NOT_NATIVE: DB19-corruption-refused-with-explicit-checkpoint-recovery (354.240958ms)
+✔ MOCK_IDB_NOT_NATIVE: DB20-corrupt-state-cannot-be-overwritten-by-normal-command (63.703958ms)
+✔ MOCK_IDB_NOT_NATIVE: DB21-bootstrap-replay-never-resets-human-data (142.344083ms)
+✔ MOCK_IDB_NOT_NATIVE: DB22-unsupported-official-format-not-guessed (74.671ms)
+✔ MOCK_IDB_NOT_NATIVE: DB23-hash-valid-but-schema-invalid-refused (68.976875ms)
+✔ MOCK_IDB_NOT_NATIVE: DB24-pressure-120-themes-604-refs-128-members (174.268166ms)
+✔ MOCK_IDB_NOT_NATIVE: DB25-ingest-new-send-activates-old-theme-and-retains-old-children (389.518125ms)
+✔ MOCK_IDB_NOT_NATIVE: DB26-conflicting-provenance-and-revocation-recomputes (283.258084ms)
+✔ MOCK_IDB_NOT_NATIVE: DB27-native-source-conflict-is-atomic (96.007792ms)
+✔ MOCK_IDB_NOT_NATIVE: DB28-workspace-history-aliases-persist (126.368375ms)
+✔ MOCK_IDB_NOT_NATIVE: DB29-corrupt-B-operation-does-not-poison-A-history (94.786708ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6484.68975

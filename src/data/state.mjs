@@ -90,7 +90,7 @@ export function reduceCommand(current,command,actor='human'){
 }
 export function changes(before,after){const result=[];for(const table of TABLES)for(const key of new Set([...Object.keys(before[table]),...Object.keys(after[table])])){const a=before[table][key]??null,b=after[table][key]??null;if(stable(a)!==stable(b))result.push({table,key,before:a,after:b});}return result;}
 export function undoChanges(current,operation){
-  if(operation.invalidatedBy||operation.actor!=='human'||!['CREATE_WORKSPACE','UPDATE_WORKSPACE','SET_TITLE','PLACE','MOVE','SET_PREFERENCE'].includes(operation.type)||operation.undoneBy)throw Error('not-undoable');
+  if(operation.invalidatedBy||operation.actor!=='human'||!['CREATE_WORKSPACE','UPDATE_WORKSPACE','SET_TITLE','PLACE','MOVE','SET_PREFERENCE','RESTORE_BACKUP'].includes(operation.type)||operation.undoneBy)throw Error('not-undoable');
   const next=structuredClone(current);
   for(const p of operation.patch){if(!TABLES.includes(p.table)||stable(next[p.table][p.key]??null)!==stable(p.after))throw Error('undo-conflict');if(p.before===null)delete next[p.table][p.key];else next[p.table][p.key]={...p.before,revision:current.revision+1};}
   next.revision=current.revision+1;return validateState(next,current.scopeKey);

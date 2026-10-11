@@ -2,7 +2,7 @@ import { iconNames, svgIcon } from '../src/navigation/icons.mjs';
 import { editorCSS } from './editor-style.mjs';
 const randomId=()=>crypto.randomUUID?.()??Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
 /** C1 manual editor reusing B3 commands and B4 draft/CAS protection. Own dialog, never a native title editor. */
-export function openWorkspaceEditor({snapshot,command,undo,context={},onClose=()=>{}}){
+export function openWorkspaceEditor({snapshot,command,undo,assets=null,context={},onClose=()=>{}}){
   let suspended=false,disposed=false,ignoredCloses=0,priorFocus=null;const scope=snapshot.scope,dirty=new Map();
   const read=input=>input.type==='checkbox'?input.checked:input.value;
   const dialog=document.createElement('dialog');dialog.dataset.vaiwlOwned='workspace-editor';dialog.setAttribute('aria-label','工作空间管理');
@@ -12,7 +12,7 @@ export function openWorkspaceEditor({snapshot,command,undo,context={},onClose=()
   const status=node('p');status.setAttribute('role','status');dialog.append(status);
   let section=dialog;function group(title,details=false,open=true){section=node(details?'details':'section');section.className='edit-section';if(details)section.open=open;section.append(node(details?'summary':'h3',title));dialog.append(section);return section;}
   const field=(label,tag='input')=>{const wrap=node('label',label+' '),input=node(tag);input.setAttribute('aria-label',label);if(tag!=='select'){const edited=()=>dirty.set(input,{revision:dirty.get(input)?.revision??snapshot.revision,value:read(input)});input.addEventListener('input',edited);input.addEventListener('change',edited);}wrap.append(input);section.append(wrap);return input;};
-  const action=(label,run)=>{const b=node('button',label);b.type='button';if(['保存主题','保存派生标题','创建主题'].includes(label))b.className='primary';b.onclick=async()=>{b.disabled=true;status.textContent='正在保存…';try{await run();populate();status.textContent='已保存到派生工作空间。';}catch(e){status.textContent=e.message==='revision-conflict'?('另一标签页已修改；草稿已保留。最新保存标题：'+(snapshot.refs.find(r=>r.id===ref.value)?.displayTitle??'')+'；最新主题名称：'+(snapshot.objects.workspaces[theme.value]?.name??'')+'。核对后再次点击保存。'):e.message==='write-result-unknown'?'保存结果未确认；草稿已保留，重新连接后请核对最新数据。':('未完成：'+e.message);}finally{b.disabled=false;}};section.append(b);return b;};
+  const action=(label,run,success='已保存到派生工作空间。')=>{const b=node('button',label);b.type='button';if(['保存主题','保存派生标题','创建主题'].includes(label))b.className='primary';b.onclick=async()=>{b.disabled=true;status.textContent='正在保存…';try{await run();populate();status.textContent=success;}catch(e){status.textContent=e.message==='revision-conflict'?('另一标签页已修改；草稿已保留。最新保存标题：'+(snapshot.refs.find(r=>r.id===ref.value)?.displayTitle??'')+'；最新主题名称：'+(snapshot.objects.workspaces[theme.value]?.name??'')+'。核对后再次点击保存。'):e.message==='write-result-unknown'?'保存结果未确认；草稿已保留，重新连接后请核对最新数据。':('未完成：'+e.message);}finally{b.disabled=false;}};section.append(b);return b;};
   async function editCommand(value,fields){
     const chosen=fields.filter(f=>dirty.has(f)),expectedRevision=chosen.length?Math.min(...chosen.map(f=>dirty.get(f).revision)):snapshot.revision;const captured=new Map(fields.map(f=>[f,read(f)]));
     try{const result=await command(value,expectedRevision);for(const f of fields)if(read(f)===captured.get(f))dirty.delete(f);return result;}
@@ -36,6 +36,14 @@ export function openWorkspaceEditor({snapshot,command,undo,context={},onClose=()
   group('显示偏好',true);const compact=field('紧凑窗口');compact.type='checkbox';action('保存显示偏好',()=>editCommand({type:'SET_PREFERENCE',id:'compactRows',value:compact.checked},[compact]));
   group('证据管理',true,false);section.append(node('p','撤销来源会重新计算可见记录，不会删除人工修改。')); 
   const sources=field('证据来源','select');action('撤销证据来源',()=>command({type:'REVOKE_SOURCE',sourceId:sources.value}));
+  if(assets){group('备份与恢复',true,false);section.append(node('p','备份仅包含工作空间、人工名称、归属和引用；不含聊天正文、草稿、执行授权或发送证据。恢复保留当前人工修改，先预览再应用。检查点仅用于损坏恢复，不能代替文件备份。'));
+    let bundle=null,preview=null;const info=node('p');info.setAttribute('role','status');info.dataset.backupPreview='';section.append(info);
+    action('导出工作空间备份',async()=>{const b=await assets.export(),url=URL.createObjectURL(new Blob([JSON.stringify(b,null,2)],{type:'application/json'})),a=node('a');a.href=url;a.download='vaiwl-workspace-backup.json';dialog.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);},'备份文件已交给浏览器下载。');
+    const file=field('选择工作空间备份');file.type='file';file.accept='.json,application/json';file.onchange=()=>{bundle=null;preview=null;info.textContent='';};
+    action('预览备份恢复',async()=>{const f=file.files?.[0];if(!f||f.size>17*1024*1024)throw Error('请选择有效备份文件（最大17MiB）');bundle=JSON.parse(await f.text());preview=await assets.preview(bundle);info.textContent='新增 '+preview.summary.added+' 项；更新 '+preview.summary.updated+' 项；保留当前人工修改 '+preview.summary.keptHuman+' 项。不会导入发送证据或执行授权。';},'只读预览完成，尚未修改数据。');
+    action('应用预览恢复',async()=>{if(!bundle||!preview)throw Error('请先预览备份');await assets.restore(bundle,preview);preview=null;info.textContent='恢复已提交，可通过撤销上次修改安全回滚。';});
+    action('检查存储容量',async()=>{const v=await assets.storage();info.textContent=v.quota===null?'浏览器未提供容量信息。':'此隔离扩展已用 '+Math.round(v.usage/1024)+' KiB，可用配额 '+Math.round(v.quota/1024/1024)+' MiB；本地保护 '+(v.persisted?'已启用':'未保证，仍需文件备份')+'。';},'容量检查完成。');
+  }
   section=node('div');section.className='edit-footer';dialog.append(section);action('撤销上次修改',()=>undo());const close=action('关闭管理',async()=>dispose());
   function options(select,rows,key,label){const chosen=select.value;select.replaceChildren();for(const row of rows){const o=node('option',label(row));o.value=key(row);select.append(o);}if([...select.options].some(o=>o.value===chosen))select.value=chosen;}
   function populate(){const set=(f,v)=>{if(!dirty.has(f)){if(f.type==='checkbox')f.checked=v;else f.value=v;}};const w=snapshot.objects.workspaces[theme.value];set(name,w?.name??'');set(icon,w?.icon??'◇');set(order,w?.order??0);set(lock,w?.locked??true);const r=snapshot.refs.find(r=>r.id===ref.value);set(title,r?.displayTitle??'');set(windowOrder,Object.values(snapshot.objects.placements).find(p=>p.workspaceId===theme.value&&p.refId===ref.value)?.order??0);set(compact,snapshot.preferences?.compactRows?.value!==false);}
