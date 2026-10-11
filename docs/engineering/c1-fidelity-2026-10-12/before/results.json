@@ -1,0 +1,102 @@
+{
+  "argv": [
+    "tests/c1/real-ui.py",
+    "--only",
+    "approved-design",
+    "--out",
+    "docs/engineering/c1-fidelity-2026-10-12/before"
+  ],
+  "head": "bbd801ff1d421f074b622bd2acf1da3eb5ba8d57",
+  "tests": [
+    {
+      "id": "C1-approved-design-fidelity",
+      "status": "FAIL",
+      "error": "{'headerBackground': 'rgba(0, 0, 0, 0)', 'headerHeight': 43, 'radius': '18px', 'messageIcons': 0, 'rows': 6}",
+      "trace": "Traceback (most recent call last):\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/c1/real-ui.py\", line 38, in case\n    try:report['tests'].append({'id':name,'status':'PASS','actual':fn(p)})\n                                                                   ~~^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/c1/real-ui.py\", line 57, in approved\n    assert actual['headerBackground']=='rgb(244, 244, 244)',actual\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: {'headerBackground': 'rgba(0, 0, 0, 0)', 'headerHeight': 43, 'radius': '18px', 'messageIcons': 0, 'rows': 6}\n"
+    }
+  ],
+  "screenshots": [
+    "approved-implementation-before-check.png",
+    "approved-original-light.png",
+    "approved-original-dark.png",
+    "C1-approved-design-fidelity-failure.png"
+  ],
+  "errors": [],
+  "environment": {
+    "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+    "node": "v26.8.2",
+    "python": "3.14.7",
+    "chrome": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/154.0.8037.99",
+      "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+      "jsVersion": "15.4.80.20"
+    },
+    "playwright": "1.63.0"
+  },
+  "scope": "synthetic-only actual MV3 / actual extension IndexedDB",
+  "startedAt": 1791736656.4573472,
+  "buildHashes": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/document-binding-broker.mjs": "5f5aecffdcd5bd4e39493565b814956c048a6ee9fb28fec559f33269424ee851",
+    "simulator/service.mjs": "cd493e0a914b719f59f70147023e9acfcc58431c105e8b0f79e0bd430d29d5d1",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "b7bc056239309217aa3acb067c11ae9e503a88322454e3f57aae74a1eee4e970",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/state.mjs": "16022c55160719f6e7c86de5b3ca71e3f594a2df8373b96525f852435c1d745c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/repository.mjs": "542d418165b5414a92015291b31c62a02e8b35413539a17ddb0c1557c5905615",
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "content.js": "2eeb9ae04f664712c0d9512878326fa590d9ee682689c6c57db2201e7410e8e1",
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+  },
+  "sourceHashes": {
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "src/navigation/navigation.mjs": "660ef7dcebf886546b3f37a4b8fae64d878c00e9a1583b1985bdee23a682a5a4",
+    "src/navigation/styles.mjs": "71a2d8a0d59225cbc862a53d558af3c0ffaf18c4a7e2d2d786ddfdab92b7e1cd",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/document-binding-broker.mjs": "5f5aecffdcd5bd4e39493565b814956c048a6ee9fb28fec559f33269424ee851",
+    "src/data/state.mjs": "16022c55160719f6e7c86de5b3ca71e3f594a2df8373b96525f852435c1d745c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "542d418165b5414a92015291b31c62a02e8b35413539a17ddb0c1557c5905615",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "simulator/editor-style.mjs": "b9b4a21d57ae402a1d55edbf6beb067a1ca729fdda0373474a221c00fd0e478b",
+    "simulator/index.html": "52737486a2ad0b296a8e212ab0607cb89f99b94d3f6b193793817babde01b7d4",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "simulator/control.html": "1e0eeb74c8fc277232b2edfac95787dbd62d6ae7470af982f4ca268579ffbd7f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/adapter.mjs": "76082a84b9185889f0d2745336ab77e8297586e7709401176c964a48d978e42a",
+    "simulator/client.mjs": "1a2c50e5273631c11e86e03a4aea70777eec400a177d07fb3a054396b483b966",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.css": "0627ff2b3ab6d9797850caca1da4cdb91ddfdfea32318dd8e1a15f9bac23d153",
+    "simulator/persistent-seed.mjs": "b7bc056239309217aa3acb067c11ae9e503a88322454e3f57aae74a1eee4e970",
+    "simulator/build.mjs": "e95ff5f4ec632a9702ccec75d8e6596078499a3332b4daf036e479980de731cd",
+    "simulator/host.mjs": "8f9400cac582008723515c29ccb60e5c4fabdfae4703533e1a4c409469028e0f",
+    "simulator/main.mjs": "7a6788fefe2eaf5c8abcd46cfe024c76511c422888073472bbb3b8caacf9092c",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/service.mjs": "cd493e0a914b719f59f70147023e9acfcc58431c105e8b0f79e0bd430d29d5d1",
+    "simulator/editor.mjs": "6980173cecaa5ad2a11d93903a1aae4ad356dc0747e789666abf5bdb9c2fa7a9",
+    "tests/c1/real-ui.py": "d40ce16eb7be681590be705dd5382526c813d7aeb8d654a57bfdbafb0ea303d3"
+  },
+  "extension": {
+    "id": "llikjibmbfifpmdhdanbiifemclfgmoo"
+  },
+  "server": {
+    "stdout": "",
+    "stderr": "",
+    "exit": -15
+  },
+  "counts": {
+    "PASS": 0,
+    "FAIL": 1
+  },
+  "endedAt": 1791736659.413142
+}

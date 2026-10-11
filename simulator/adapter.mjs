@@ -18,7 +18,8 @@ export function createAdapter(doc=document) {
       const style=getComputedStyle(header),count=[...header.children].filter(n=>!n.hasAttribute('data-vaiwl-owned')&&!n.classList.contains('header-space')).length;
       const free=box.width-occupied-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight)-(parseFloat(style.columnGap)||0)*count;
       if(free<34)return {ok:false,reason:'no-safe-single-return-space'};
-      return {ok:true,history,header,reading};
+      const navigationSlot=doc.querySelector('aside[aria-label="Sidebar"] .nav-scroll > h3.nav-caption');
+      return {ok:true,history,header,reading,navigationSlot};
     },
     hasNativeLayer(){return !!doc.querySelector('dialog[open], [popover]:popover-open');},
     isCurrent(raw){const a=new URL(raw),b=new URL(env.location.href);return a.origin===b.origin&&a.pathname===b.pathname;},

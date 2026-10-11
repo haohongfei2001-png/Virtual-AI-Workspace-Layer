@@ -1,3 +1,4 @@
+import { iconNames, svgIcon } from '../src/navigation/icons.mjs';
 import { editorCSS } from './editor-style.mjs';
 const randomId=()=>crypto.randomUUID?.()??Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
 /** C1 manual editor reusing B3 commands and B4 draft/CAS protection. Own dialog, never a native title editor. */
@@ -21,6 +22,7 @@ export function openWorkspaceEditor({snapshot,command,undo,context={},onClose=()
   action('创建主题',async()=>{const id='W_'+randomId().replaceAll('-','');await editCommand({type:'CREATE_WORKSPACE',id,name:newName.value},[newName]);theme.value=id;populate();});
   group('主题');const theme=field('主题选择','select');
   const name=field('主题名称'),icon=field('主题图标'),order=field('主题顺序'),lock=field('锁定主题');order.type='number';lock.type='checkbox';
+  const choices=node('div');choices.className='icon-choices';choices.setAttribute('aria-label','主题图标选项');for(const [kind,label] of Object.entries(iconNames)){const b=node('button');b.type='button';b.setAttribute('aria-label','图标 '+label);b.title=label;b.innerHTML=svgIcon(kind);b.onclick=()=>{icon.value=kind;icon.dispatchEvent(new Event('input'));for(const c of choices.children)c.setAttribute('aria-pressed',String(c===b));};choices.append(b);}section.append(choices);
   action('保存主题',()=>editCommand({type:'UPDATE_WORKSPACE',id:theme.value,name:name.value,icon:icon.value,order:Number(order.value),locked:lock.checked},[name,icon,order,lock]));
   group('窗口');
   const ref=field('窗口选择','select'),title=field('派生标题');

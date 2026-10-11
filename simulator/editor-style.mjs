@@ -20,4 +20,5 @@ export const editorCSS=`
 [data-vaiwl-owned="workspace-editor"] br,[data-vaiwl-owned="workspace-editor"] hr{display:none}
 [data-vaiwl-owned="workspace-editor"] .edit-footer{display:flex;justify-content:space-between;margin-top:20px;padding-top:16px;border-top:1px solid var(--line,#e8e8e8)}
 @media(max-width:600px){[data-vaiwl-owned="workspace-editor"]{padding:20px;border-radius:16px}}
+.icon-choices{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.icon-choices button{display:grid;place-items:center;width:36px;height:36px;padding:6px}.icon-choices [aria-pressed=true]{background:var(--hover,#ececec)}
 `;

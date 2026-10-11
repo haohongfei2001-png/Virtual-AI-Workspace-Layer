@@ -39,6 +39,17 @@ def main():
      except Exception as e:
       report['tests'].append({'id':name,'status':'FAIL','error':str(e),'trace':traceback.format_exc()});shot(p,name+'-failure')
      finally:p.close();(out/'results.partial.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+    def approved(p):
+     home(p);shot(p,'approved-implementation-before-check')
+     ref=ctx.new_page();ref.goto('http://127.0.0.1:48176/__b23tests__/approved.html');ref.wait_for_timeout(100);shot(ref,'approved-original-light');ref.evaluate("state.theme='dark';render()");shot(ref,'approved-original-dark');ref.close()
+     card=p.locator('.workspace .card').first
+     actual=card.evaluate("n=>{const h=n.querySelector('.card-head'),r=n.querySelector('.row');return {headerBackground:getComputedStyle(h).backgroundColor,headerHeight:h.getBoundingClientRect().height,radius:getComputedStyle(n).borderRadius,messageIcons:n.querySelectorAll('.window-glyph').length,rows:n.querySelectorAll('.members > .row').length};}")
+     assert actual['headerBackground']=='rgb(244, 244, 244)',actual
+     assert actual['radius']=='13px' and actual['messageIcons']>=5 and actual['rows']==5,actual
+     assert card.locator('.theme-glyph svg').count()==1,'stable approved semantic theme icon missing'
+     p.evaluate("HF.control('variant','dark')");p.wait_for_timeout(100);shot(p,'approved-implementation-dark');p.set_viewport_size({'width':430,'height':932});p.get_by_label('切换原生侧栏',exact=True).click();p.wait_for_timeout(100);shot(p,'approved-implementation-narrow')
+     return actual
+    case('C1-approved-design-fidelity',approved)
     def visuals(p):
      home(p);shot(p,'desktop');p.locator('.workspace').get_by_label('展开旧窗口 城市声音档案',exact=True).click();shot(p,'history-expanded');p.evaluate("HF.control('variant','dark')");p.wait_for_timeout(200);shot(p,'dark');p.evaluate("HF.control('variant','baseline')");p.set_viewport_size({'width':430,'height':932});p.wait_for_timeout(200);shot(p,'narrow-drawer');p.get_by_label('切换原生侧栏',exact=True).click();p.wait_for_timeout(200);shot(p,'narrow');p.set_viewport_size({'width':1440,'height':1000});p.wait_for_timeout(200)
      c=p.locator('.workspace [data-theme-id=W0]');clicks=0
