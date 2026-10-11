@@ -1,0 +1,39 @@
+{
+  "schema": "vaiwl-b23-browser-v1",
+  "level": "B_BROWSER_DOM_OPAQUE",
+  "transport": "FAKE_ROUTER_FAKE_SENDER_MOCK_IDB_NOT_DURABLE",
+  "startedAt": "2026-10-11T15:38:12Z",
+  "environment": {
+    "os": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
+    "node": "v26.8.2",
+    "chromium": "154.0.8037.99"
+  },
+  "sourceSha256": "5419155a6cbea4abd81136e9b6d7c820397ec90b816e30acfc192e6770eda899",
+  "results": [
+    {
+      "id": "D16-workspace-restores-history-and-scroll",
+      "expected": "Return restores history segment, scroll and disclosure state without resetting native view",
+      "actual": {
+        "restoredScroll": 300
+      },
+      "status": "PASS",
+      "durationMs": 728,
+      "pageErrors": [],
+      "pageRequests": []
+    }
+  ],
+  "blocked": [
+    "real browser Back/Forward and SPA URL changes",
+    "extension-origin IndexedDB",
+    "MV3 load/disable/re-enable/worker restart",
+    "actual freeze/resume",
+    "physical IME",
+    "real ChatGPT login/identity/feature acceptance"
+  ],
+  "counts": {
+    "PASS": 1,
+    "FAIL": 0
+  },
+  "endedAt": "2026-10-11T15:38:13Z"
+}

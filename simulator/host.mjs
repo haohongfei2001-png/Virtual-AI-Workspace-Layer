@@ -7,7 +7,7 @@ function button(label, onClick, symbol, cls='icon-button'){const b=el('button',{
 export function createHost() {
   const parsed=routeInfo(env.location.href);
   if(!parsed)throw Error('synthetic-route-required');
-  const state={account:parsed.account,variant:'baseline',size:8,timeZone:'Asia/Shanghai',now:FIXTURE_NOW,delay:0,failNext:false,
+  const state={account:parsed.account,variant:'baseline',size:new URL(env.location.href).searchParams.get('size')==='120'?120:8,timeZone:'Asia/Shanghai',now:FIXTURE_NOW,delay:0,failNext:false,
     routeVersion:0,navVersion:0,streamTicks:0,errors:[],stale:0,theme:'light',pending:false};
   const views=new Map(), custom=new Map(); let currentView=null, controlWindow=opener;
   const ribbon=el('div',{class:'test-ribbon'},'VAIWL TEST HOST · 全部内容均为合成');

@@ -53,7 +53,7 @@ def main():
      assert b.get_attribute('aria-expanded')!=initial;p.keyboard.press('Enter');assert b.get_attribute('aria-expanded')==initial;return {'keyboardToggleTwice':True,'originalExpanded':initial}
     case('C1-keyboard-local-disclosure-focus',focus)
     def selected(p):
-     p.goto('http://127.0.0.1:48176/hf/A/c/L127?mode=mv3');active(p);assert p.locator('.themes [data-ref-id=L127][aria-current=page]').count()==1,'current member beyond preview is missing';return {'currentBeyondCapacity':True}
+     p.goto('http://127.0.0.1:48176/hf/A/c/L127?mode=mv3&size=120');active(p);assert p.evaluate('HF.getView()?.ref.id')=='L127';assert p.get_by_label('消息输入',exact=True).is_visible();assert p.locator('.themes [data-ref-id=L127][aria-current=page]').count()==1,'current member beyond preview is missing';return {'currentBeyondCapacity':True}
     case('C1-current-reference-outside-preview',selected)
     def context(p):
      home(p);p.get_by_label('主题操作 城市声音档案',exact=True).click();p.get_by_role('menuitem',name='查找此主题',exact=True).click();p.get_by_label('派生查找输入',exact=True).fill('T3');assert p.locator('.workspace [data-ref-id=T3]').count()==1;assert p.locator('.workspace [data-ref-id=T103]').count()==0;assert '旧窗口' not in p.locator('.search').inner_text();return {'unknownViaThemeSearch':True}
@@ -77,6 +77,12 @@ def main():
       if b.get_attribute('aria-expanded')=='false':b.click()
       assert card.locator('.old-list .row').count()==12;card.get_by_label('显示更多旧窗口 C1 人工研究',exact=True).click();assert card.locator('.old-list .row').count()==17;assert card.locator('[data-ref-id=T3]').count()==0;shot(p,'long-history');return {'actualHumanCommands':result,'oldPreview':12,'expandedOld':17,'unknownStillSeparate':True,'state':c.state(p)}
      case('C1-real-old-list-incremental-expansion',long_history)
+     def far_route(p):
+      home(p);p.get_by_label('查找主题与派生名称',exact=True).click();p.get_by_label('派生查找输入',exact=True).fill('T11903');link=p.locator('.workspace [data-ref-id=T11903]');original=p.url
+      with ctx.expect_page() as opened:link.click(modifiers=['Meta'])
+      tab=opened.value;tab.on('pageerror',lambda e:report['errors'].append(str(e)));active(tab);assert tab.evaluate('HF.getView()?.ref.id')=='T11903';assert tab.get_by_label('消息输入',exact=True).is_visible();assert tab.get_by_label('返回工作区',exact=True).count()==1;assert p.url==original;new_url=tab.url;tab.close()
+      link.click();p.wait_for_url('**/c/T11903?*');active(p);assert p.evaluate('HF.getView()?.ref.id')=='T11903';assert p.get_by_label('消息输入',exact=True).is_visible();assert p.locator('.themes [data-ref-id=T11903][aria-current=page]').count()==1;shot(p,'far-reference-reading');p.get_by_label('返回工作区',exact=True).click();assert p.locator('.workspace').is_visible();return {'normalURL':p.url,'newTabURL':new_url,'nativeRef':'T11903','newTabAndNormalNavigation':True}
+     case('C1-real-far-reference-native-route-and-new-tab',far_route)
      def privacy(p):
       for a in ['B','unknown','A']:
        p.evaluate('a=>HF.control("account",a)',a)
