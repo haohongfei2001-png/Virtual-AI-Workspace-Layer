@@ -1,0 +1,433 @@
+{
+  "level": "REAL_BROWSER_DB_SYNTHETIC_ONLY",
+  "startedAt": "2026-10-11T17:22:25Z",
+  "tests": [
+    {
+      "id": "native-IDB-contracts",
+      "status": "PASS",
+      "actual": {
+        "level": "NATIVE_BROWSER_INDEXEDDB_SYNTHETIC",
+        "origin": "http://127.0.0.1:48172",
+        "startedAt": "2026-10-11T17:22:28.251Z",
+        "results": [
+          {
+            "name": "B5-01-last-human-edit-survives-checkpoint-recovery",
+            "status": "PASS"
+          },
+          {
+            "name": "B5-02-portable-backup-assets-not-evidence",
+            "status": "PASS"
+          },
+          {
+            "name": "B5-03-dry-run-readonly-and-current-human-protected",
+            "status": "PASS"
+          },
+          {
+            "name": "B5-04-restore-into-empty-DB-no-old-authority",
+            "status": "PASS"
+          },
+          {
+            "name": "B5-05-preview-CAS-does-not-overwrite-later-edit",
+            "status": "PASS"
+          },
+          {
+            "name": "B5-06-corruption-scope-version-auth-fields-rejected",
+            "status": "PASS"
+          },
+          {
+            "name": "B5-07-recovery-dryrun-and-operation-receipts-stay-invalid",
+            "status": "PASS"
+          },
+          {
+            "name": "B5-08-backup-rollback-preserves-unrelated-later-intent",
+            "status": "PASS"
+          },
+          {
+            "name": "B5-09-changed-preview-hash-rejected",
+            "status": "PASS"
+          },
+          {
+            "name": "C3-01-working-set-order-reopen-and-CAS",
+            "status": "PASS"
+          },
+          {
+            "name": "C4-01-manual-snippet-backup-isolated-without-authority",
+            "status": "PASS"
+          },
+          {
+            "name": "C34-02-invalid-refs-and-executable-fields-rejected",
+            "status": "PASS"
+          },
+          {
+            "name": "C34-03-recovery-retains-last-working-set-and-snippet-intent",
+            "status": "PASS"
+          },
+          {
+            "name": "DB01-same-B1-database-and-canonical-refs",
+            "status": "PASS"
+          },
+          {
+            "name": "DB02-create-update-stable-id-and-reopen",
+            "status": "PASS"
+          },
+          {
+            "name": "DB03-derived-title-alias-and-native-immutable",
+            "status": "PASS"
+          },
+          {
+            "name": "DB04-place-move-exclusion-and-targeted-undo",
+            "status": "PASS"
+          },
+          {
+            "name": "DB05-undo-refuses-overwriting-later-human-edit",
+            "status": "PASS"
+          },
+          {
+            "name": "DB06-undo-does-not-restore-whole-snapshot",
+            "status": "PASS"
+          },
+          {
+            "name": "DB07-two-connections-CAS-one-winner",
+            "status": "PASS"
+          },
+          {
+            "name": "DB08-operation-idempotence-does-not-return-stale-snapshot",
+            "status": "PASS"
+          },
+          {
+            "name": "DB09-scope-A-B-same-native-id-isolation",
+            "status": "PASS"
+          },
+          {
+            "name": "DB10-unknown-scope-never-opens-workspace",
+            "status": "PASS"
+          },
+          {
+            "name": "DB11-human-lock-and-exclusion-protect-against-candidate",
+            "status": "PASS"
+          },
+          {
+            "name": "DB12-stale-candidate-global-revision-rejected",
+            "status": "PASS"
+          },
+          {
+            "name": "DB13-revoke-source-reprojects-without-erasing-intent",
+            "status": "PASS"
+          },
+          {
+            "name": "DB14-coverage-stales-and-does-not-fabricate-activity",
+            "status": "PASS"
+          },
+          {
+            "name": "DB15-old-window-stays-parent-not-duplicated",
+            "status": "PASS"
+          },
+          {
+            "name": "DB16-label-is-not-evidence-authority",
+            "status": "PASS"
+          },
+          {
+            "name": "DB17-guard-denial-and-aborted-write",
+            "status": "PASS"
+          },
+          {
+            "name": "DB18-view-preferences-reopen-and-CAS",
+            "status": "PASS"
+          },
+          {
+            "name": "DB19-corruption-refused-with-explicit-checkpoint-recovery",
+            "status": "PASS"
+          },
+          {
+            "name": "DB20-corrupt-state-cannot-be-overwritten-by-normal-command",
+            "status": "PASS"
+          },
+          {
+            "name": "DB21-bootstrap-replay-never-resets-human-data",
+            "status": "PASS"
+          },
+          {
+            "name": "DB22-unsupported-official-format-not-guessed",
+            "status": "PASS"
+          },
+          {
+            "name": "DB23-hash-valid-but-schema-invalid-refused",
+            "status": "PASS"
+          },
+          {
+            "name": "DB24-pressure-120-themes-604-refs-128-members",
+            "status": "PASS"
+          },
+          {
+            "name": "DB25-ingest-new-send-activates-old-theme-and-retains-old-children",
+            "status": "PASS"
+          },
+          {
+            "name": "DB26-conflicting-provenance-and-revocation-recomputes",
+            "status": "PASS"
+          },
+          {
+            "name": "DB27-native-source-conflict-is-atomic",
+            "status": "PASS"
+          },
+          {
+            "name": "DB28-workspace-history-aliases-persist",
+            "status": "PASS"
+          },
+          {
+            "name": "DB29-corrupt-B-operation-does-not-poison-A-history",
+            "status": "PASS"
+          },
+          {
+            "name": "NATIVE-B5-quota-error-rolls-back-all-asset-writes",
+            "status": "PASS",
+            "actual": {
+              "result": {
+                "ok": false,
+                "reason": "B5 injected quota boundary on actual native IDB"
+              },
+              "nativeIndexedDB": true,
+              "faultInjection": "QuotaExceededError at native store.put; OS disk not exhausted",
+              "noReceiptOrStateCommit": true
+            }
+          },
+          {
+            "name": "NATIVE-B5-corrupt-journal-refuses-recovery",
+            "status": "PASS",
+            "actual": {
+              "result": {
+                "ok": false,
+                "reason": "corrupt-record"
+              },
+              "damagedBytesPreserved": true
+            }
+          },
+          {
+            "name": "NATIVE-command-revoke-after-put-rolls-back",
+            "status": "PASS",
+            "actual": {
+              "ok": false,
+              "reason": "stale-binding"
+            }
+          },
+          {
+            "name": "NATIVE-command-revoke-after-commit-does-not-report-success",
+            "status": "PASS",
+            "actual": {
+              "ok": false,
+              "reason": "stale-after-commit",
+              "committed": true
+            }
+          },
+          {
+            "name": "NATIVE-view-revoke-after-put-rolls-back",
+            "status": "PASS",
+            "actual": {
+              "ok": false,
+              "reason": "stale-binding"
+            }
+          },
+          {
+            "name": "NATIVE-actual-transaction-abort-never-reports-success",
+            "status": "PASS",
+            "actual": {
+              "ok": false,
+              "reason": "write-aborted"
+            }
+          },
+          {
+            "name": "NATIVE-corrupt-view-checksum-isolated",
+            "status": "PASS",
+            "actual": {
+              "diagnostic": {
+                "view": "CORRUPT_VIEW"
+              },
+              "refs": 604,
+              "groups": 120,
+              "damagedRecordPreserved": true
+            }
+          },
+          {
+            "name": "NATIVE-corrupt-view-schema-isolated",
+            "status": "PASS",
+            "actual": {
+              "diagnostic": {
+                "view": "CORRUPT_VIEW"
+              },
+              "refs": 604,
+              "groups": 120,
+              "damagedRecordPreserved": true
+            }
+          },
+          {
+            "name": "NATIVE-recovery-does-not-resurrect-evidence-or-receipts",
+            "status": "PASS",
+            "actual": {
+              "recovery": {
+                "ok": true,
+                "replayed": false,
+                "revision": 5,
+                "operationId": "native_recovery",
+                "checkpointRevision": 3,
+                "restoredHumanChanges": 1,
+                "evidenceInvalidated": true
+              },
+              "replay": {
+                "ok": false,
+                "reason": "operation-invalidated-by-recovery"
+              },
+              "highWater": 4,
+              "allEvidenceInactive": true
+            }
+          },
+          {
+            "name": "NATIVE-recovery-revoke-after-put-remains-corrupt",
+            "status": "PASS",
+            "actual": {
+              "ok": false,
+              "reason": "Failed to execute 'objectStore' on 'IDBTransaction': The transaction has finished."
+            }
+          },
+          {
+            "name": "NATIVE-v1-upgrade-preserves-ref",
+            "status": "PASS"
+          },
+          {
+            "name": "NATIVE-invalid-v1-upgrade-rollback",
+            "status": "PASS"
+          }
+        ],
+        "endedAt": "2026-10-11T17:22:50.072Z",
+        "pass": 54,
+        "fail": 0
+      }
+    }
+  ],
+  "fallback": false,
+  "realChatGPT": "NOT_RUN",
+  "console": [
+    {
+      "url": "http://127.0.0.1:48172/__b23tests__/native.html",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    }
+  ],
+  "workerEvents": [],
+  "commands": [],
+  "argv": [
+    "tests/b23/real-browser.py",
+    "--mode",
+    "db",
+    "--port",
+    "48172",
+    "--browser",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "--out",
+    "docs/engineering/c34-mac-2026-10-12/regression/db.json"
+  ],
+  "testedGitHead": "66530b312b58943797c733894587e8b9bdea6572",
+  "sourceHashes": {
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "src/navigation/navigation.mjs": "1b3d4c127e1441dc63bc8ff027025e6197515d13d5b18fe67b9ef172c3c6f250",
+    "src/navigation/search.mjs": "0046527fb8bfbaf97ad7eb6036db7233087805e55ec2d9ac3f348a632af89efe",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/README.md": "929a0a31cfd638694fc85ce871c339c730f6dc6728f8b7c6832bcd9281a29c94",
+    "src/b1/document-binding-broker.mjs": "ccde4b99eaa91fdc84ea71f9bd620def20312ebfde31a55b37dfd16352981c1b",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "c30817cb47fe16517a5061b3eb81cd3b1fee8650881aef9495017961af54f0a9",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "simulator/editor-style.mjs": "18197a2a89d8e83986b56e464c506c9bb8e08005d07f97c46959f5e9cfabf2ce",
+    "simulator/index.html": "52737486a2ad0b296a8e212ab0607cb89f99b94d3f6b193793817babde01b7d4",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "simulator/control.html": "1e0eeb74c8fc277232b2edfac95787dbd62d6ae7470af982f4ca268579ffbd7f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/adapter.mjs": "2f79f5d974d4a7f9118be75e5ca7fc81f5e4d995a5b383036dc07d8753eedc08",
+    "simulator/client.mjs": "ac47864d5a9c5df9c0e3ade2940d9e071978558f4265f0b53b85e2df877d4372",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.css": "0627ff2b3ab6d9797850caca1da4cdb91ddfdfea32318dd8e1a15f9bac23d153",
+    "simulator/README.md": "a767b2f4e0d7cd99d4c19b473f9de0300cd2ae20457def03cde26fc3a1b3b645",
+    "simulator/.gitignore": "25a6288333a6cb399eb26bccdcecbce38f84b06fb5ee6f4afbafbae414d12244",
+    "simulator/package.json": "564c422503961ce803bbcac5bd89d531c5cc64e7b643f68dd194576830687c99",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/build.mjs": "969be95e6fe13dd0c7de37238c25e6b95ce1b2282a77fdb2ab68419f85bd8a93",
+    "simulator/host.mjs": "df9138c6ef495fec780c804a9d1ecbda84e2c9f02365283bc6540466afdac89f",
+    "simulator/main.mjs": "7a6788fefe2eaf5c8abcd46cfe024c76511c422888073472bbb3b8caacf9092c",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/service.mjs": "c6b9ea2bae4a071b6cad4cb185bccb6e79b7db9118f23f024f6fa62949678e99",
+    "simulator/editor.mjs": "ea9b5f30ea903573e79e60b545df23e88ef69a01197b6fff9ce46884a8408ecc",
+    "tests/b23/native-db-entry.mjs": "23cf8baac578fc11c7a1b25ac32138c83db5f4a9bd74592f4a1bc4ca1cc2ec71",
+    "tests/b23/logic.test.mjs": "da3ffcbbba0b14b3ec858f4b769d1c3d3a91e7a1edaf569e02d53cbfe2aeb3ac",
+    "tests/b23/b5-cases.mjs": "c51a495d6bfc7d5f31879a55c1136039b430725c71885a5179bc2a34fcba93f9",
+    "tests/b23/real-browser.py": "766564f8b925b6c0275eba66332456a82525b50c66c9b1a4f6670774ffcc66c6",
+    "tests/b23/repository.test.mjs": "77204ff0a747e9ff6742c3ce449960a1b7ce89a2b436a3ac96eddfb5b4d95518",
+    "tests/b23/opaque-entry.mjs": "1538dc2d912bdb79d04557f2b615a1c8c9f88204afc196ab976d12d005f4c74d",
+    "tests/b23/broker.test.mjs": "1591be572f1cb3524144ed289ca6b968fe874688b14b93f6b30e66d1776a36a2",
+    "tests/b23/view-isolation.test.mjs": "e4051028059104aabab6e20e6288a3b4ac982dd973d02365c7dbdbfcf4cdd0f8",
+    "tests/b23/contracts.mjs": "b29bf452182afc0d3c929a49732dbd431740f96ca29cae119966575cc035bca3",
+    "tests/b23/README.md": "199a9765a1580a61ed24a92949b82bd7c42aea711da030f0acfbb302cc304002",
+    "tests/b23/browser.py": "6e760380512f842f79806e4887dc5b2f1c9be59a773f2ed6b48a5585b3f6d7e0",
+    "tests/b23/mock-idb.mjs": "6c72609a80793de5098759be9c234b52c0b317590d0ba02a9d6f195b649625ae",
+    "tests/b23/c34-cases.mjs": "bb1ed8425b27d401a3991cc5ba89637dc6a802504721fbfc34e05d6da0d73bda",
+    "tests/b23/native_ui_checks.py": "a6e683231af2f7be25fa9b08f9e5445b4d7c0a5bf5a9245b736544595de3a790",
+    "tests/b23/view-browser.py": "58db75a53ea0aab976ee65bdd33856af0528840975a371696e0b9b28cd09c408",
+    "tests/b23/audit-regressions.test.mjs": "25837e7ee3f3d22f71688ea89e673818f0da7cfd7cdbf98e0e1b443b283231ea",
+    "tests/b23/native-server.mjs": "8efcb0cb1b8e4e706f4aa1b8af86ab8dcfcc60782ed22f7f248b3b181d758c0c",
+    "tests/b23/migration.test.mjs": "20c0c5442f7871d42b9dd5d040c6a622c5432419c803270d078a1461a1a60b89",
+    "tests/b23/native-incremental-cases.mjs": "2b876959ad380e1560629a582b070ba43f8f9db09ad7a91a9554fe8b4b971d40",
+    "tests/b23/build.test.mjs": "52c781df9a49e4d9b5a786d996c176ed7b5584b6ff0e78e2275f17ae6e142e42",
+    "tests/b23/evidence-audit.test.mjs": "a9c1a90886569ba093bc2f93cc25dcdcbefad50b7a9561cd0409666e8922c97c"
+  },
+  "buildHashes": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/document-binding-broker.mjs": "ccde4b99eaa91fdc84ea71f9bd620def20312ebfde31a55b37dfd16352981c1b",
+    "simulator/service.mjs": "c6b9ea2bae4a071b6cad4cb185bccb6e79b7db9118f23f024f6fa62949678e99",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/repository.mjs": "c30817cb47fe16517a5061b3eb81cd3b1fee8650881aef9495017961af54f0a9",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "content.js": "fc4d0a347ce97906411879d6f7b4110d0d969e332e79e6e3370a4020b4f4a292",
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+  },
+  "isolation": {
+    "profile": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-b23-native-nr8njdnz/profile",
+    "headless": true,
+    "temporaryBuild": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-b23-native-nr8njdnz/extension",
+    "origin": "http://127.0.0.1:48172"
+  },
+  "environment": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/154.0.8037.99",
+    "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "jsVersion": "15.4.80.20"
+  },
+  "server": {
+    "exitCode": -15,
+    "stdout": "",
+    "stderr": ""
+  },
+  "endedAt": "2026-10-11T17:22:50Z",
+  "counts": {
+    "PASS": 1,
+    "FAIL": 0,
+    "BLOCKED": 0
+  }
+}
