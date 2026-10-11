@@ -24,7 +24,7 @@ macOS 27.0 / build 26A428，Node v26.8.2，Python 3.14.7，隔离 venv 的 Playw
 
 原件均在 `docs/engineering/b23-mac-2026-10-11/`。cloud 118/118、DOM 49/49 仍是上一轮历史证据，本轮未重做全面云端审计、不把通过数累加。页面层使用标明 PAGE_HARNESS_NOT_MV3 的真实宿主 origin IDB 与合成 page transport；只有 MV3 层证明真实 extension sender、worker 和 extension origin IDB。没有 mock-IDB 代替原生检查。
 
-最终 3 份原生结果中的所有 source SHA256 已逐项与最终源码核对一致，所有 runtime buildHashes 完全相同。实际产品修复 commit `36a5934d76c03ad2ddbe27eb0a0cc07e052a4803`；最终驱动 commit `4b695017d27f58e1888ca78a406d382082969a00`；MV3 阶段证据 commit `80feb3622ad8ec7828a856fd90d909a6d7f117cd`。测试运行时 HEAD 与文件哈希各自记录，页面/MV3 运行时驱动尚未提交，其字节与之后最终驱动提交一致；后续只提交证据和文档。`SOURCE_AND_RUNS.json` 是绑定账本，`SHA256SUMS.txt` 校验所有本目录原始证据。
+最终 3 份原生结果中的所有运行时代码与可执行测试源码 SHA256 已逐项与最终源码核对一致（之后仅更新 tests/b23/README.md 文档；运行时与最终文档哈希在账本单列），所有 runtime buildHashes 完全相同。实际产品修复 commit `36a5934d76c03ad2ddbe27eb0a0cc07e052a4803`；最终驱动 commit `4b695017d27f58e1888ca78a406d382082969a00`；MV3 阶段证据 commit `80feb3622ad8ec7828a856fd90d909a6d7f117cd`。测试运行时 HEAD 与文件哈希各自记录，页面/MV3 运行时驱动尚未提交，其字节与之后最终驱动提交一致；后续只提交证据和文档。`SOURCE_AND_RUNS.json` 是绑定账本，`SHA256SUMS.txt` 校验所有本目录原始证据。
 
 ## 功能覆盖矩阵
 
