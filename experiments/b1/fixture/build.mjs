@@ -9,7 +9,7 @@ for(const name of ['manifest.json','worker.mjs','client.js']){
 }
 // Preserve the old fixture entry imports while shipping the actual shared graph.
 // B1 now depends on the SAME database migration and command schema as B2/B3.
-for(const path of ['src/b1/identity.mjs','src/b1/scope-repository.mjs','src/b1/document-binding-broker.mjs','src/data/schema.mjs','src/data/state.mjs','src/data/hash.mjs','src/navigation/projection.mjs']){
+for(const path of ['src/b1/identity.mjs','src/b1/scope-repository.mjs','src/b1/document-binding-broker.mjs','src/data/schema.mjs','src/data/state.mjs','src/data/preferences.mjs','src/data/hash.mjs','src/navigation/projection.mjs']){
   mkdirSync(dirname(join(dest,path)),{recursive:true});cpSync(join(root,path),join(dest,path));
 }
 for(const name of ['identity.mjs','scope-repository.mjs','document-binding-broker.mjs']){

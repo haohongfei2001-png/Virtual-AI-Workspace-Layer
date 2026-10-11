@@ -1,3 +1,4 @@
+import { preferenceIds, validatePreference } from './preferences.mjs';
 import { normalizedScope, canonicalRef, tokenOK, isRecord } from '../b1/identity.mjs';
 import { instant } from '../navigation/projection.mjs';
 import { stable, digest } from './hash.mjs';
@@ -23,7 +24,7 @@ export function validateState(s,scopeKey){
   for(const w of Object.values(s.workspaces)){text(w.name);if(w.aliases!==undefined&&(!Array.isArray(w.aliases)||w.aliases.length>100||w.aliases.some(a=>typeof a!=='string'||a.length>200)))throw Error('invalid-alias');text(w.icon,16);order(w.order);bool(w.locked);if(!['human','candidate','bootstrap'].includes(w.owner))throw Error('invalid-owner');}
   for(const p of Object.values(s.placements)){if(!Object.hasOwn(s.refs,id(p.refId))||!Object.hasOwn(s.workspaces,id(p.workspaceId))||p.id!==placementId(p.workspaceId,p.refId))throw Error('orphan-placement');order(p.order);bool(p.excluded);bool(p.locked);if(!['human','candidate','bootstrap'].includes(p.owner))throw Error('invalid-owner');}
   for(const n of Object.values(s.identities)){if(!Object.hasOwn(s.refs,n.id))throw Error('orphan-title');text(n.title);bool(n.locked);if(!Array.isArray(n.aliases)||n.aliases.length>100||n.aliases.some(a=>typeof a!=='string'||a.length>200)||!['human','candidate','bootstrap'].includes(n.owner))throw Error('invalid-alias');}
-  for(const p of Object.values(s.preferences)){if(!['sidebarVisible','compactRows'].includes(p.id))throw Error('invalid-preference');bool(p.value);}
+  for(const p of Object.values(s.preferences))validatePreference(p,s,{exact,id,text});
   if(stable(s).length>16*1024*1024)throw Error('state-too-large');return s;
 }
 function validateCoverage(c){time(c.from);time(c.through);time(c.observedAt);if(instant(c.from)>instant(c.through)||instant(c.through)>instant(c.observedAt)||!['complete','partial'].includes(c.completeness)||!['all','known'].includes(c.branches)||!Array.isArray(c.gaps)||c.gaps.length>1000)throw Error('invalid-coverage');for(const g of c.gaps){exact(g,['from','through']);time(g.from);time(g.through);if(instant(g.from)>instant(g.through)||instant(g.from)<instant(c.from)||instant(g.through)>instant(c.through))throw Error('invalid-gap');}}
@@ -60,8 +61,8 @@ export function reduceCommand(current,command,actor='human'){
       s.placements[target]={id:target,workspaceId:c.to,refId:c.refId,excluded:false,locked:true,order:prior.order,...own};break;
     }
     case 'SET_PREFERENCE':{
-      exact(c,['type','id','value']);id(c.id);if(!['sidebarVisible','compactRows'].includes(c.id))throw Error('unknown-preference');
-      s.preferences[c.id]={id:c.id,value:bool(c.value),...own};break;
+      exact(c,['type','id','value']);id(c.id);if(!preferenceIds.includes(c.id))throw Error('unknown-preference');
+      s.preferences[c.id]={id:c.id,value:structuredClone(c.value),...own};break;
     }
     case 'INGEST':{
       if(!['evidence','bootstrap'].includes(actor))throw Error('untrusted-evidence-channel');

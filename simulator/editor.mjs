@@ -33,10 +33,19 @@ export function openWorkspaceEditor({snapshot,command,undo,assets=null,context={
   action('加入窗口',()=>command({type:'PLACE',workspaceId:theme.value,refId:ref.value}));
   action('移动窗口',()=>command({type:'MOVE',refId:ref.value,from:theme.value,to:target.value}));
   action('排除窗口',()=>command({type:'PLACE',workspaceId:theme.value,refId:ref.value,excluded:true}));
+  group('工作集与片段',true,false);
+  const working=node('div');working.className='working-set-editor';section.append(working);
+  action('加入当前工作集',async()=>{const v=snapshot.preferences.workingSet?.value??{refs:[],current:null},refs=[...v.refs];if(!refs.includes(ref.value))refs.push(ref.value);await command({type:'SET_PREFERENCE',id:'workingSet',value:{refs,current:ref.value}});});
+  action('从工作集移除所选窗口',async()=>{const v=snapshot.preferences.workingSet?.value??{refs:[],current:null},refs=v.refs.filter(id=>id!==ref.value);await command({type:'SET_PREFERENCE',id:'workingSet',value:{refs,current:refs.includes(v.current)?v.current:refs[0]??null}});});
+  action('将所选窗口前移',async()=>{const v=snapshot.preferences.workingSet?.value??{refs:[],current:null},refs=[...v.refs],i=refs.indexOf(ref.value);if(i<=0)throw Error('所选窗口无法前移');[refs[i-1],refs[i]]=[refs[i],refs[i-1]];await command({type:'SET_PREFERENCE',id:'workingSet',value:{...v,refs}});});
+  section.append(node('p','工作集只保存引用与顺序，按点击惰性打开；不保存草稿或运行中的任务。可移除失败项，原生修饰键和浏览器返回保持原义。'));
+  const snippetNote=node('p',context.snippet?'已取得所选片段的唯一消息与分支锚点。':'在原生消息正文中选择文字，再打开管理；只保存你明确选择的片段。');section.append(snippetNote);
+  action('保存所选片段',async()=>{if(!context.snippet)throw Error('请选择一个可唯一定位的消息片段');const v=snapshot.preferences.savedSnippets?.value??[],snippet={...context.snippet,id:'s_'+randomId().replaceAll('-','')};await command({type:'SET_PREFERENCE',id:'savedSnippets',value:[...v,snippet]});context.snippet=null;snippetNote.textContent='片段已保存，可在派生查找中搜索；原生搜索仍独立保留。';});
+  action('移除所选窗口片段',()=>command({type:'SET_PREFERENCE',id:'savedSnippets',value:(snapshot.preferences.savedSnippets?.value??[]).filter(s=>s.refId!==ref.value)}));
   group('显示偏好',true);const compact=field('紧凑窗口');compact.type='checkbox';action('保存显示偏好',()=>editCommand({type:'SET_PREFERENCE',id:'compactRows',value:compact.checked},[compact]));
   group('证据管理',true,false);section.append(node('p','撤销来源会重新计算可见记录，不会删除人工修改。')); 
   const sources=field('证据来源','select');action('撤销证据来源',()=>command({type:'REVOKE_SOURCE',sourceId:sources.value}));
-  if(assets){group('备份与恢复',true,false);section.append(node('p','备份仅包含工作空间、人工名称、归属和引用；不含聊天正文、草稿、执行授权或发送证据。恢复保留当前人工修改，先预览再应用。检查点仅用于损坏恢复，不能代替文件备份。'));
+  if(assets){group('备份与恢复',true,false);section.append(node('p','备份仅包含工作空间、人工名称、归属和引用；可包含你手工保存的片段，不收集聊天全文、草稿、执行授权或发送证据。恢复保留当前人工修改，先预览再应用。检查点仅用于损坏恢复，不能代替文件备份。'));
     let bundle=null,preview=null;const info=node('p');info.dataset.backupPreview='';section.append(info);
     action('导出工作空间备份',async()=>{const b=await assets.export(),url=URL.createObjectURL(new Blob([JSON.stringify(b,null,2)],{type:'application/json'})),a=node('a');a.href=url;a.download='vaiwl-workspace-backup.json';dialog.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);},'备份文件已交给浏览器下载。');
     const file=field('选择工作空间备份');file.type='file';file.accept='.json,application/json';file.onchange=()=>{bundle=null;preview=null;info.textContent='';};
@@ -46,12 +55,12 @@ export function openWorkspaceEditor({snapshot,command,undo,assets=null,context={
   }
   section=node('div');section.className='edit-footer';dialog.append(section);action('撤销上次修改',()=>undo());const close=action('关闭管理',async()=>dispose());
   function options(select,rows,key,label){const chosen=select.value;select.replaceChildren();for(const row of rows){const o=node('option',label(row));o.value=key(row);select.append(o);}if([...select.options].some(o=>o.value===chosen))select.value=chosen;}
-  function populate(){const set=(f,v)=>{if(!dirty.has(f)){if(f.type==='checkbox')f.checked=v;else f.value=v;}};const w=snapshot.objects.workspaces[theme.value];set(name,w?.name??'');set(icon,w?.icon??'◇');set(order,w?.order??0);set(lock,w?.locked??true);const r=snapshot.refs.find(r=>r.id===ref.value);set(title,r?.displayTitle??'');set(windowOrder,Object.values(snapshot.objects.placements).find(p=>p.workspaceId===theme.value&&p.refId===ref.value)?.order??0);set(compact,snapshot.preferences?.compactRows?.value!==false);}
+  function populate(){const set=(f,v)=>{if(!dirty.has(f)){if(f.type==='checkbox')f.checked=v;else f.value=v;}};const w=snapshot.objects.workspaces[theme.value];set(name,w?.name??'');set(icon,w?.icon??'◇');set(order,w?.order??0);set(lock,w?.locked??true);const r=snapshot.refs.find(r=>r.id===ref.value);set(title,r?.displayTitle??'');set(windowOrder,Object.values(snapshot.objects.placements).find(p=>p.workspaceId===theme.value&&p.refId===ref.value)?.order??0);set(compact,snapshot.preferences?.compactRows?.value!==false);working.replaceChildren();const v=snapshot.preferences.workingSet?.value;for(const id of v?.refs??[])working.append(node('p',snapshot.refs.find(r=>r.id===id)?.displayTitle??'无法打开的引用 '+id));}
   function update(value){if(value.scope!==scope||value.revision<snapshot.revision)return;snapshot=value;warning.textContent=value.diagnostics?.view==='CORRUPT_VIEW'?'视图偏好记录损坏：已忽略损坏的视图，主题与窗口仍保留；损坏记录未被覆盖。':'';options(theme,Object.values(value.objects.workspaces),w=>w.id,w=>w.name);options(target,Object.values(value.objects.workspaces),w=>w.id,w=>w.name);options(ref,value.refs,r=>r.id,r=>r.displayTitle);options(sources,Object.values(value.objects.sources),s=>s.id,s=>s.channel+(s.revoked?'（已撤销）':''));populate();}
   theme.onchange=()=>{for(const f of [name,icon,order,lock,windowOrder])dirty.delete(f);populate();};ref.onchange=()=>{for(const f of [title,windowOrder])dirty.delete(f);populate();};
   function dispose(){if(disposed)return;disposed=true;if(dialog.open)dialog.close();dialog.remove();dirty.clear();onClose();}
   function suspend(){if(disposed||suspended)return;suspended=true;priorFocus=dialog.contains(document.activeElement)?document.activeElement:null;if(dialog.open){ignoredCloses++;dialog.close();}dialog.remove();}
   function resume(value){if(disposed)return false;if(value.scope!==scope){dispose();return false;}update(value);if(suspended){suspended=false;document.body.append(dialog);dialog.showModal();if(priorFocus?.isConnected)priorFocus.focus();}return true;}
   dialog.addEventListener('close',()=>{if(ignoredCloses){ignoredCloses--;return;}if(!disposed)dispose();});
-  document.body.append(dialog);update(snapshot);if(context.workspaceId&&snapshot.objects.workspaces[context.workspaceId]){theme.value=context.workspaceId;populate();}dialog.showModal();(context.workspaceId?name:close).focus();return {update,suspend,resume,close:dispose};
+  document.body.append(dialog);update(snapshot);if(context.refId&&snapshot.refs.some(r=>r.id===context.refId)){ref.value=context.refId;populate();}if(context.workspaceId&&snapshot.objects.workspaces[context.workspaceId]){theme.value=context.workspaceId;populate();}dialog.showModal();(context.workspaceId?name:close).focus();return {update,suspend,resume,close:dispose};
 }

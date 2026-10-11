@@ -1,3 +1,4 @@
+import { digest } from '../src/data/hash.mjs';
 import { env } from './environment.mjs';
 import { syntheticURL } from './data.mjs';
 /** Semantic/geometry mapping for the SYNTHETIC host only. No production ChatGPT selectors. */
@@ -39,6 +40,23 @@ export function createAdapter(doc=document) {
       if(this.isCurrent(raw)){event.preventDefault();return;}
       const link=[...doc.querySelectorAll('aside a[href]')].find(a=>new URL(a.href).pathname===new URL(raw).pathname);
       if(link){event.preventDefault();link.click();} // Real host link/handler; otherwise retain ordinary anchor navigation.
+    },
+    selectedSnippet(ref){
+      if(!syntheticURL(env.location.href)||!ref||!this.isCurrent(ref.nativeUrl))return null;
+      const selection=doc.getSelection();if(!selection||selection.rangeCount!==1||selection.isCollapsed)return null;
+      const range=selection.getRangeAt(0),element=n=>n.nodeType===1?n:n.parentElement,start=element(range.startContainer)?.closest('.message-body'),end=element(range.endContainer)?.closest('.message-body');
+      if(!start||start!==end)return null;const message=start.closest('[data-message-id][data-branch-id]'),text=selection.toString(),body=start.textContent;
+      if(!message||!text.trim()||text.length>2000||body.indexOf(text)<0||body.indexOf(text)!==body.lastIndexOf(text))return null;
+      const messages=[...doc.querySelectorAll('main section[aria-label="Conversation"] [data-message-id][data-branch-id]')].filter(n=>n.dataset.messageId===message.dataset.messageId&&n.dataset.branchId===message.dataset.branchId);
+      if(messages.length!==1)return null;
+      return {refId:ref.id,messageId:message.dataset.messageId,branchId:message.dataset.branchId,text,bodyHash:digest(body)};
+    },
+    restoreSnippet(ref,anchor){
+      if(!syntheticURL(env.location.href)||!this.isCurrent(ref.nativeUrl)||anchor.refId!==ref.id)return {ok:false,reason:'wrong-native-target'};
+      const messages=[...doc.querySelectorAll('main section[aria-label="Conversation"] [data-message-id][data-branch-id]')].filter(n=>n.dataset.messageId===anchor.messageId&&n.dataset.branchId===anchor.branchId);
+      const body=messages.length===1?messages[0].querySelector('.message-body'):null;
+      if(!body||digest(body.textContent)!==anchor.bodyHash||body.textContent.indexOf(anchor.text)<0||body.textContent.indexOf(anchor.text)!==body.textContent.lastIndexOf(anchor.text))return {ok:false,reason:'non-unique-or-changed-anchor'};
+      messages[0].scrollIntoView({block:'center',behavior:'auto'});return {ok:true};
     },
     status(value){doc.documentElement.dataset.vaiwlHfState=value.state;doc.documentElement.dataset.vaiwlHfReason=value.reason??'';doc.documentElement.dataset.vaiwlHfScope=value.scope??'';}
   };

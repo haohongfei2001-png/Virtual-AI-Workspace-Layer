@@ -20,4 +20,5 @@ export const css=`
 .themes{max-height:340px}.theme-toggle{font-size:14px;min-height:39px;padding:8px}.theme-glyph{width:17px;min-height:17px}.theme-name{flex:1}.theme-disclosure{margin-left:auto}.theme-disclosure svg{width:12px;height:12px}.theme-toggle[aria-expanded=true] .theme-disclosure svg{transform:rotate(90deg)}.children .row{font-size:13px;min-height:34px;padding:5px;gap:6px}.children .window-glyph svg{width:12px;height:12px}
 @media(max-width:760px){.workspace{padding:15px 46px 24px 9px}.arrows{margin-right:-37px}.card-head{padding-left:11px}.card h2{gap:8px}.card-actions{opacity:1}.card{border-radius:13px}}
 @media(pointer:coarse){.card-actions{opacity:1}.card .row{min-height:44px}.old,.arrows button{min-height:40px}}
+.snippet-preview{display:block;font-size:12px;color:var(--muted,#646464);white-space:normal;max-height:3em;overflow:hidden;margin-left:8px;flex:1}.anchor-feedback{font-size:12px;color:var(--muted,#646464);padding:8px}.working-set .row{margin:3px 0}.toolbar .square{width:30px;height:32px}
 `;
