@@ -1,5 +1,6 @@
 /** Executed ONLY at a real loopback URL. No set_content, mock DB or fake origin. */
 import { runRepositoryCases } from './contracts.mjs';
+import { runNativeIncrementalCases } from './native-incremental-cases.mjs';
 import { ScopeRepository } from '../../src/b1/scope-repository.mjs';
 const report={level:'NATIVE_BROWSER_INDEXEDDB_SYNTHETIC',origin:location.origin,startedAt:new Date().toISOString(),results:[]};
 async function migration(malformed){
@@ -12,6 +13,7 @@ async function migration(malformed){
 try{
  if(location.protocol!=='http:'||location.hostname!=='127.0.0.1')throw Error('real-loopback-origin-required');
  report.results=await runRepositoryCases(indexedDB);
+ report.results.push(...await runNativeIncrementalCases(indexedDB));
  for(const malformed of [false,true]){const name=malformed?'NATIVE-invalid-v1-upgrade-rollback':'NATIVE-v1-upgrade-preserves-ref';try{await migration(malformed);report.results.push({name,status:'PASS'});}catch(e){report.results.push({name,status:'FAIL',error:e.message});}}
 }catch(e){report.error=e.message;}
 report.endedAt=new Date().toISOString();report.pass=report.results.filter(r=>r.status==='PASS').length;report.fail=report.results.filter(r=>r.status==='FAIL').length+(report.error?1:0);

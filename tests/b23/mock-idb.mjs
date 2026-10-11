@@ -36,9 +36,9 @@ class Store {
     const k=v[this.keyPath];if(k===undefined)throw error('DataError');if(unique&&this.data.rows.has(String(k)))throw error('ConstraintError');this.data.rows.set(String(k),v);return k;});}
   delete(key){return this.tx.enqueue(()=>this.data.rows.delete(String(key)));}
   count(){return this.tx.enqueue(()=>this.data.rows.size);}
-  index(name){const field=this.data.indexes.get(name);if(!field)throw error('NotFoundError');return {openCursor:range=>this.cursor(row=>field.split('.').reduce((v,k)=>v?.[k],row)===(range?.value??range))};}
+  index(name){const field=this.data.indexes.get(name);if(!field)throw error('NotFoundError');const indexKey=row=>field.split('.').reduce((v,k)=>v?.[k],row);return {openCursor:range=>this.cursor(row=>indexKey(row)===(range?.value??range),indexKey)};}
   openCursor(){return this.cursor(()=>true);}
-  cursor(filter){let rows,position=0,req;const next=()=>{rows??=[...this.data.rows.values()].filter(filter).sort((a,b)=>String(a[this.keyPath]).localeCompare(String(b[this.keyPath])));if(position>=rows.length)return null;const row=rows[position++];return {key:row[this.keyPath],value:copy(row),continue:()=>{if(this.tx.done)throw error('TransactionInactiveError');this.tx.tasks.push({req,action:next});}};};req=this.tx.enqueue(next);return req;}
+  cursor(filter,keyOf=row=>row[this.keyPath]){let rows,position=0,req;const next=()=>{rows??=[...this.data.rows.values()].filter(filter).sort((a,b)=>String(a[this.keyPath]).localeCompare(String(b[this.keyPath])));if(position>=rows.length)return null;const row=rows[position++];return {key:keyOf(row),primaryKey:row[this.keyPath],value:copy(row),continue:()=>{if(this.tx.done)throw error('TransactionInactiveError');this.tx.tasks.push({req,action:next});}};};req=this.tx.enqueue(next);return req;}
 }
 class Database {
   constructor(factory,meta){this.factory=factory;this.meta=meta;this.closed=false;meta.handles.add(this);}

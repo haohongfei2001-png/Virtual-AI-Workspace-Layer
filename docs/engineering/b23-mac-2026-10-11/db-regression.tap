@@ -1,0 +1,46 @@
+✔ AUDIT01 final awaited frame cannot outlive explicit broker revocation (2.222708ms)
+✔ AUDIT02 view transaction aborts on revocation after put is queued (118.756625ms)
+✔ AUDIT03 recovery never resurrects revoked source or activity evidence (401.111083ms)
+✔ AUDIT04 recovery makes discarded operation receipts non-replayable (217.772084ms)
+✔ AUDIT05 recovery revision exceeds trusted operation high-water (314.758625ms)
+✔ AUDIT06 reserved inherited foreign keys cannot impersonate evidence sources (19.512667ms)
+✔ AUDIT07 recovery itself observes an abort after put is queued (238.64ms)
+✔ MOCK_IDB_NOT_NATIVE: DB01-same-B1-database-and-canonical-refs (122.425791ms)
+✔ MOCK_IDB_NOT_NATIVE: DB02-create-update-stable-id-and-reopen (314.409542ms)
+✔ MOCK_IDB_NOT_NATIVE: DB03-derived-title-alias-and-native-immutable (232.713167ms)
+✔ MOCK_IDB_NOT_NATIVE: DB04-place-move-exclusion-and-targeted-undo (209.0335ms)
+✔ MOCK_IDB_NOT_NATIVE: DB05-undo-refuses-overwriting-later-human-edit (256.393958ms)
+✔ MOCK_IDB_NOT_NATIVE: DB06-undo-does-not-restore-whole-snapshot (280.671416ms)
+✔ MOCK_IDB_NOT_NATIVE: DB07-two-connections-CAS-one-winner (109.925042ms)
+✔ MOCK_IDB_NOT_NATIVE: DB08-operation-idempotence-does-not-return-stale-snapshot (189.272917ms)
+✔ MOCK_IDB_NOT_NATIVE: DB09-scope-A-B-same-native-id-isolation (174.61575ms)
+✔ MOCK_IDB_NOT_NATIVE: DB10-unknown-scope-never-opens-workspace (35.531417ms)
+✔ MOCK_IDB_NOT_NATIVE: DB11-human-lock-and-exclusion-protect-against-candidate (267.67175ms)
+✔ MOCK_IDB_NOT_NATIVE: DB12-stale-candidate-global-revision-rejected (125.125708ms)
+✔ MOCK_IDB_NOT_NATIVE: DB13-revoke-source-reprojects-without-erasing-intent (285.0925ms)
+✔ MOCK_IDB_NOT_NATIVE: DB14-coverage-stales-and-does-not-fabricate-activity (171.110375ms)
+✔ MOCK_IDB_NOT_NATIVE: DB15-old-window-stays-parent-not-duplicated (90.034375ms)
+✔ MOCK_IDB_NOT_NATIVE: DB16-label-is-not-evidence-authority (60.234584ms)
+✔ MOCK_IDB_NOT_NATIVE: DB17-guard-denial-and-aborted-write (52.847292ms)
+✔ MOCK_IDB_NOT_NATIVE: DB18-view-preferences-reopen-and-CAS (68.932375ms)
+✔ MOCK_IDB_NOT_NATIVE: DB19-corruption-refused-with-explicit-checkpoint-recovery (306.416958ms)
+✔ MOCK_IDB_NOT_NATIVE: DB20-corrupt-state-cannot-be-overwritten-by-normal-command (66.694209ms)
+✔ MOCK_IDB_NOT_NATIVE: DB21-bootstrap-replay-never-resets-human-data (143.880166ms)
+✔ MOCK_IDB_NOT_NATIVE: DB22-unsupported-official-format-not-guessed (75.869416ms)
+✔ MOCK_IDB_NOT_NATIVE: DB23-hash-valid-but-schema-invalid-refused (69.562208ms)
+✔ MOCK_IDB_NOT_NATIVE: DB24-pressure-120-themes-604-refs-128-members (178.739084ms)
+✔ MOCK_IDB_NOT_NATIVE: DB25-ingest-new-send-activates-old-theme-and-retains-old-children (397.197208ms)
+✔ MOCK_IDB_NOT_NATIVE: DB26-conflicting-provenance-and-revocation-recomputes (288.438375ms)
+✔ MOCK_IDB_NOT_NATIVE: DB27-native-source-conflict-is-atomic (96.75225ms)
+✔ MOCK_IDB_NOT_NATIVE: DB28-workspace-history-aliases-persist (123.990041ms)
+✔ MOCK_IDB_NOT_NATIVE: DB29-corrupt-B-operation-does-not-poison-A-history (97.186167ms)
+✔ VIEW_ISOLATION invalid-checksum preserves intact assets and reports view corruption (429.402166ms)
+✔ VIEW_ISOLATION invalid-schema preserves intact assets and reports view corruption (284.705375ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4939.534541

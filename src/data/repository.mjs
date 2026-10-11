@@ -51,7 +51,7 @@ export class WorkspaceRepository {
     const hash=digest(params.fingerprint),db=await this.connection();fence(guard,signal);
     return new Promise(resolve=>{
       const tx=db.transaction(['b23_states','b23_operations','b23_checkpoints','refs'],'readwrite');let outcome=null;
-      const abort=reason=>{outcome={ok:false,reason};try{tx.abort();}catch{}};
+      const abort=reason=>{if(outcome?.ok!==false)outcome={ok:false,reason};try{tx.abort();}catch{}};
       const check=()=>{try{fence(guard,signal);return true;}catch(e){abort(e.message);return false;}};
       const onRevoke=()=>abort('stale-binding');signal?.addEventListener('abort',onRevoke,{once:true});
       const states=tx.objectStore('b23_states'),ops=tx.objectStore('b23_operations'),opKey=JSON.stringify([s.key,operationId]);
@@ -170,7 +170,7 @@ export class WorkspaceRepository {
               if(c){
                 const log=unpack(c.value);
                 if(log.scopeKey!==s.key||!Number.isSafeInteger(log.resultRevision)||log.resultRevision<1)throw Error('corrupt-operation-history');
-                highWater=Math.max(highWater,log.resultRevision);logs.push({key:c.key,log});c.continue();return;
+                highWater=Math.max(highWater,log.resultRevision);logs.push({key:c.primaryKey,log});c.continue();return;
               }
               if(highWater>=Number.MAX_SAFE_INTEGER)throw Error('revision-exhausted');
               for(const source of Object.values(state.sources))source.revoked=true;
