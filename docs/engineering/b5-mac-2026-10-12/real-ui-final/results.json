@@ -1,0 +1,235 @@
+{
+  "argv": [
+    "tests/b5/real-ui.py",
+    "docs/engineering/b5-mac-2026-10-12/real-ui-final"
+  ],
+  "head": "2d42117b2368f165635384933edd5f6bd4e69471",
+  "tests": [
+    {
+      "id": "B5-real-MV3-file-backup-preview-restore-undo",
+      "status": "PASS",
+      "actual": {
+        "actualFileBytes": 479744,
+        "newestHumanProtected": true,
+        "dryRunReadonly": true,
+        "nativeNodesAndDraftIntact": true,
+        "state": {
+          "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "revision": 5,
+          "bootstrapCount": 120,
+          "workspaceCount": 120,
+          "refCount": 604,
+          "humanWorkspaces": [],
+          "identities": {
+            "T0": {
+              "id": "T0",
+              "title": "B5 newest must survive",
+              "aliases": [
+                "研究问题与边界",
+                "B5 portable human"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 3
+            },
+            "T1": {
+              "id": "T1",
+              "title": "整理观察材料",
+              "aliases": [],
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          },
+          "placements": [
+            {
+              "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+              "workspaceId": "W0",
+              "refId": "T0",
+              "excluded": false,
+              "order": 0,
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          ],
+          "nativeT0": {
+            "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "conversationId": "T0",
+            "nativeUrl": "http://127.0.0.1:48177/hf/A/c/T0",
+            "projectId": null,
+            "revision": 1
+          },
+          "source": {
+            "id": "fixture_v1",
+            "channel": "hf-controlled-fixture-v1",
+            "observedAt": "2026-10-11T04:00:00Z",
+            "description": "Invented test evidence. Not a production source or account witness.",
+            "trustLevel": "synthetic",
+            "revoked": false
+          }
+        }
+      }
+    },
+    {
+      "id": "B5-real-reload-and-backup-binding-A-B-unknown-A",
+      "status": "FAIL",
+      "error": "'NativeChecks' object has no attribute 'bind'",
+      "trace": "Traceback (most recent call last):\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/b5/real-ui.py\", line 25, in case\n    try:r['tests'].append({'id':name,'status':'PASS','actual':fn()})\n                                                              ~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/b5/real-ui.py\", line 41, in scoped\n    lease=checks.bind(p);assert lease['ok'];request={'v':1,'type':'B23_EXPORT_BACKUP','clientId':'native_acceptance_binding','seq':2,'leaseId':lease['leaseId']};ok=checks.content_eval(p,'chrome.runtime.sendMessage('+json.dumps(request)+')');assert ok['ok'] and ok['bundle']['payload']['identities']['T0']['title']=='B5 newest must survive'\n          ^^^^^^^^^^^\nAttributeError: 'NativeChecks' object has no attribute 'bind'\n"
+    },
+    {
+      "id": "B5-real-corrupt-worker-cold-start-explicit-recovery",
+      "status": "PASS",
+      "actual": {
+        "state": {
+          "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "revision": 6,
+          "bootstrapCount": 120,
+          "workspaceCount": 120,
+          "refCount": 604,
+          "humanWorkspaces": [],
+          "identities": {
+            "T0": {
+              "id": "T0",
+              "title": "B5 newest must survive",
+              "aliases": [
+                "研究问题与边界",
+                "B5 portable human"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 3
+            },
+            "T1": {
+              "id": "T1",
+              "title": "整理观察材料",
+              "aliases": [],
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          },
+          "placements": [
+            {
+              "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+              "workspaceId": "W0",
+              "refId": "T0",
+              "excluded": false,
+              "order": 0,
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          ],
+          "nativeT0": {
+            "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "conversationId": "T0",
+            "nativeUrl": "http://127.0.0.1:48177/hf/A/c/T0",
+            "projectId": null,
+            "revision": 1
+          },
+          "source": {
+            "id": "fixture_v1",
+            "channel": "hf-controlled-fixture-v1",
+            "observedAt": "2026-10-11T04:00:00Z",
+            "description": "Invented test evidence. Not a production source or account witness.",
+            "trustLevel": "synthetic",
+            "revoked": true
+          }
+        },
+        "realStoppedEvents": [
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nnjbmcjppdkgnnbeceffdfhmjblonbah/simulator/worker.mjs",
+            "runningStatus": "stopped",
+            "status": "activated",
+            "scriptLastModified": 1791737805,
+            "scriptResponseTime": 0,
+            "controlledClients": []
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [],
+  "scope": "new isolated real Chrome MV3 / extension IndexedDB, synthetic host only",
+  "buildHashes": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/document-binding-broker.mjs": "18c797c35bff98615c67aa2f7d4ffe5f61b246abe8c59efed058e9d6d5c35d8b",
+    "simulator/service.mjs": "c6b9ea2bae4a071b6cad4cb185bccb6e79b7db9118f23f024f6fa62949678e99",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/state.mjs": "0ad1dace000771e153c0815ae0ecdc2a66835067a40b6a7fc09a455ec702461c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/repository.mjs": "c30817cb47fe16517a5061b3eb81cd3b1fee8650881aef9495017961af54f0a9",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "content.js": "2a1bf6f9b2aca600fd79449e28d581f2c84d26a47f827ec1b9d857f15c25a9fc",
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+  },
+  "sourceHashes": {
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "src/navigation/navigation.mjs": "6159be1a29a5785861a473ccd511902a1a25a0baf198436e3f8bdff7ce4aeb1e",
+    "src/navigation/styles.mjs": "0f81caec582b4eb62d0742874a8a305901ac89e348938a31325f0c7765b637ff",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/README.md": "929a0a31cfd638694fc85ce871c339c730f6dc6728f8b7c6832bcd9281a29c94",
+    "src/b1/document-binding-broker.mjs": "18c797c35bff98615c67aa2f7d4ffe5f61b246abe8c59efed058e9d6d5c35d8b",
+    "src/data/state.mjs": "0ad1dace000771e153c0815ae0ecdc2a66835067a40b6a7fc09a455ec702461c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "c30817cb47fe16517a5061b3eb81cd3b1fee8650881aef9495017961af54f0a9",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "simulator/editor-style.mjs": "18197a2a89d8e83986b56e464c506c9bb8e08005d07f97c46959f5e9cfabf2ce",
+    "simulator/index.html": "52737486a2ad0b296a8e212ab0607cb89f99b94d3f6b193793817babde01b7d4",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "simulator/control.html": "1e0eeb74c8fc277232b2edfac95787dbd62d6ae7470af982f4ca268579ffbd7f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/adapter.mjs": "c5b25b038aebbed78225a7bb4bd8865de90737892d276f855eb5447450eb7d47",
+    "simulator/client.mjs": "94c728ee013a5163116393874632ec74a20a8ecbc1c37d2e7aa5a8b06e42b79e",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.css": "0627ff2b3ab6d9797850caca1da4cdb91ddfdfea32318dd8e1a15f9bac23d153",
+    "simulator/README.md": "a767b2f4e0d7cd99d4c19b473f9de0300cd2ae20457def03cde26fc3a1b3b645",
+    "simulator/.gitignore": "25a6288333a6cb399eb26bccdcecbce38f84b06fb5ee6f4afbafbae414d12244",
+    "simulator/package.json": "564c422503961ce803bbcac5bd89d531c5cc64e7b643f68dd194576830687c99",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/build.mjs": "6be2b8595a334ae69a9f42bc39cc4bd0b1fb2e434c0665ee12098f453cebf534",
+    "simulator/host.mjs": "8f9400cac582008723515c29ccb60e5c4fabdfae4703533e1a4c409469028e0f",
+    "simulator/main.mjs": "7a6788fefe2eaf5c8abcd46cfe024c76511c422888073472bbb3b8caacf9092c",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/service.mjs": "c6b9ea2bae4a071b6cad4cb185bccb6e79b7db9118f23f024f6fa62949678e99",
+    "simulator/editor.mjs": "6c1a8aeb5932fd24b8ebdd3299c16b32bc4747b128d3c2d27db4b7859de90dfb",
+    "tests/b5/real-ui.py": "8861fd6502a8b9e94fcf7762c0c4a1cb81e06c89fc7ce86e0afc8c326495e4de"
+  },
+  "chrome": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/154.0.8037.99",
+    "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "jsVersion": "15.4.80.20"
+  },
+  "extension": {
+    "id": "nnjbmcjppdkgnnbeceffdfhmjblonbah"
+  },
+  "server": {
+    "stdout": "",
+    "stderr": "",
+    "exit": -15
+  },
+  "counts": {
+    "PASS": 2,
+    "FAIL": 1
+  }
+}

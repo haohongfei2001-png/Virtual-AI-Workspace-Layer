@@ -13,7 +13,7 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId}){
   async function seed(scope,origin){
     // This map only coalesces in-flight work. The durable marker is an IDB receipt.
     const key=scope.accountId+':'+origin;if(initialized.has(key))return;
-    if(!pending.has(key))pending.set(key,(async()=>{const existing=await workspaces.read(scope);if(existing.state.revision){initialized.add(key);return;}
+    if(!pending.has(key))pending.set(key,(async()=>{let existing;try{existing=await workspaces.read(scope);}catch(e){if(['corrupt-record','invalid-state','invalid-schema','invalid-user-event'].includes(e.message)){initialized.add(key);return;}throw e;}if(existing.state.revision){initialized.add(key);return;}
       const result=await workspaces.initialize(scope,persistentSeed(scope,origin));if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);initialized.add(key);
     })().finally(()=>pending.delete(key)));return pending.get(key);
   }
@@ -27,7 +27,7 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId}){
         // Visibility scale is a fixture control, never a deletion or truncated DB write.
         const visible=w=>w.owner!=='bootstrap'||w.seedIndex<size;
         value.themes=value.themes.filter(visible);value.groups=value.groups.filter(visible);return value;},
-      command:(...args)=>workspaces.command(...args),undo:(...args)=>workspaces.undo(...args),history:(...args)=>workspaces.history(...args),saveView:(...args)=>workspaces.saveView(...args)
+      command:(...args)=>workspaces.command(...args),undo:(...args)=>workspaces.undo(...args),history:(...args)=>workspaces.history(...args),saveView:(...args)=>workspaces.saveView(...args),exportBackup:(...args)=>workspaces.exportBackup(...args),previewRestore:(...args)=>workspaces.previewRestore(...args),restoreBackup:(...args)=>workspaces.restoreBackup(...args),recoveryStatus:(...args)=>workspaces.recoveryStatus(...args),recover:(...args)=>workspaces.recover(...args),storage:async()=>{try{const value=await navigator.storage.estimate();return {usage:value.usage??null,quota:value.quota??null,persisted:await navigator.storage.persisted()};}catch{return {usage:null,quota:null,persisted:null};}}
     }
   });
   return {broker,repository,workspaces,setDelay:ms=>readDelay=Math.min(3000,Math.max(0,Number(ms)||0)),close:()=>repository.close()};

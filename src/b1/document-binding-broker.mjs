@@ -21,6 +21,10 @@ const requestOK=m=>{
     case 'B23_SNAPSHOT':return exact(m,[...base,'leaseId','now','timeZone','size'])&&tokenOK(m.leaseId)&&typeof m.now==='string'&&typeof m.timeZone==='string'&&m.timeZone.length<100&&Number.isInteger(m.size)&&m.size>=1&&m.size<=120;
     case 'B23_COMMAND':return exact(m,[...base,'leaseId','operationId','expectedRevision','command'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0&&isRecord(m.command)&&HUMAN_COMMANDS.includes(m.command.type)&&JSON.stringify(m.command).length<10000;
     case 'B23_UNDO':return exact(m,[...base,'leaseId','operationId','expectedRevision','targetOperationId'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&tokenOK(m.targetOperationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0;
+    case 'B23_EXPORT_BACKUP':case 'B23_STORAGE':case 'B23_RECOVERY_STATUS':return exact(m,[...base,'leaseId'])&&tokenOK(m.leaseId);
+    case 'B23_PREVIEW_RESTORE':return exact(m,[...base,'leaseId','bundle'])&&tokenOK(m.leaseId)&&isRecord(m.bundle)&&JSON.stringify(m.bundle).length<18000000;
+    case 'B23_RESTORE_BACKUP':return exact(m,[...base,'leaseId','operationId','expectedRevision','bundle','planHash'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0&&isRecord(m.bundle)&&JSON.stringify(m.bundle).length<18000000&&typeof m.planHash==='string'&&m.planHash.length===64;
+    case 'B23_RECOVER_ASSETS':return exact(m,[...base,'leaseId','operationId','damagedHash'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&typeof m.damagedHash==='string'&&m.damagedHash.length===64;
     case 'B23_HISTORY':return exact(m,[...base,'leaseId'])&&tokenOK(m.leaseId);
     case 'B23_SAVE_VIEW':return exact(m,[...base,'leaseId','value','expectedRevision'])&&tokenOK(m.leaseId)&&isRecord(m.value)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0&&JSON.stringify(m.value).length<1000000;
     case 'UPSERT_REF':return exact(m,[...base,'leaseId','conversationId','operationId','expectedRevision'])&&
@@ -154,6 +158,12 @@ export function createDocumentBindingBroker({
         if(message.type==='B23_SNAPSHOT')result={ok:true,snapshot:await workspaceRepository.snapshot(scope,message.now,message.timeZone,options,message.size)};
         else if(message.type==='B23_COMMAND')result=await workspaceRepository.command(scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,command:message.command},options);
         else if(message.type==='B23_UNDO')result=await workspaceRepository.undo(scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,targetOperationId:message.targetOperationId},options);
+        else if(message.type==='B23_EXPORT_BACKUP')result={ok:true,bundle:await workspaceRepository.exportBackup(scope,options)};
+        else if(message.type==='B23_PREVIEW_RESTORE')result={ok:true,preview:await workspaceRepository.previewRestore(scope,message.bundle,options)};
+        else if(message.type==='B23_RESTORE_BACKUP')result=await workspaceRepository.restoreBackup(scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,bundle:message.bundle,planHash:message.planHash},options);
+        else if(message.type==='B23_STORAGE')result={ok:true,storage:await workspaceRepository.storage()};
+        else if(message.type==='B23_RECOVERY_STATUS')result={ok:true,recovery:await workspaceRepository.recoveryStatus(scope,options)};
+        else if(message.type==='B23_RECOVER_ASSETS')result=await workspaceRepository.recover(scope,{operationId:message.operationId,damagedHash:message.damagedHash},options);
         else if(message.type==='B23_HISTORY')result={ok:true,history:await workspaceRepository.history(scope)};
         else if(message.type==='B23_SAVE_VIEW')result=await workspaceRepository.saveView(scope,message.value,message.expectedRevision,options);
         else return deny('unsupported');

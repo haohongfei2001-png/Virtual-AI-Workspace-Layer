@@ -1,0 +1,52 @@
+[
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/b23/view-browser.py",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "docs/engineering/b5-mac-2026-10-12/regression/dom"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/b23/real-browser.py",
+      "--mode",
+      "page",
+      "--port",
+      "48173",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "docs/engineering/b5-mac-2026-10-12/regression/page.json"
+    ],
+    "exit": 1
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/b23/real-browser.py",
+      "--mode",
+      "mv3",
+      "--port",
+      "48174",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "docs/engineering/b5-mac-2026-10-12/regression/mv3.json"
+    ],
+    "exit": 1
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/c1/real-ui.py",
+      "--out",
+      "docs/engineering/b5-mac-2026-10-12/regression/c1-ui"
+    ],
+    "exit": 0
+  }
+]

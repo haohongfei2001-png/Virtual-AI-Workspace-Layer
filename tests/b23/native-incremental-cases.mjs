@@ -18,6 +18,19 @@ function intercept(db,store,action,onComplete=false){
  return ()=>{db.transaction=original;};
 }
 const cases=[
+ ['NATIVE-B5-quota-error-rolls-back-all-asset-writes',async h=>{
+  const backup=await h.repo.exportBackup(A),preview=await h.repo.previewRestore(A,backup),db=await h.base.open(),transaction=db.transaction.bind(db);
+  db.transaction=(names,mode)=>{const tx=transaction(names,mode),objectStore=tx.objectStore.bind(tx);tx.objectStore=name=>{const store=objectStore(name);if(name==='b23_states'&&mode==='readwrite')store.put=()=>{throw new DOMException('B5 injected quota boundary on actual native IDB','QuotaExceededError')};return store;};return tx;};
+  let r;try{r=await h.repo.restoreBackup(A,{operationId:'quota_restore',expectedRevision:preview.expectedRevision,bundle:backup,planHash:preview.planHash});}finally{db.transaction=transaction;}
+  assert(!r.ok&&r.reason==='B5 injected quota boundary on actual native IDB',JSON.stringify(r));assert((await h.repo.read(A)).state.revision===1);assert((await h.repo.history(A)).length===1);return {result:r,nativeIndexedDB:true,faultInjection:'QuotaExceededError at native store.put; OS disk not exhausted',noReceiptOrStateCommit:true};
+ }],
+ ['NATIVE-B5-corrupt-journal-refuses-recovery',async h=>{
+  await h.command({type:'SET_TITLE',refId:'T0',title:'newest'});const key=h.base.scopeOrThrow(A).key,db=await h.base.open();await row(h,'b23_states',r=>({...r,checksum:'damaged'}));
+  await new Promise((resolve,reject)=>{const tx=db.transaction('b23_operations','readwrite'),s=tx.objectStore('b23_operations'),q=s.get(JSON.stringify([key,'op_1']));q.onsuccess=()=>s.put({...q.result,checksum:'damaged-human-journal'});tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+  let refused=false;try{await h.repo.recoveryStatus(A);}catch{refused=true;}assert(refused,'damaged journal advertised as safe');
+  const damaged=await row(h,'b23_states');const r=await h.repo.recover(A,{operationId:'bad_history',damagedHash:digest(damaged)});assert(!r.ok);assert(JSON.stringify(await row(h,'b23_states'))===JSON.stringify(damaged));return {result:r,damagedBytesPreserved:true};
+ }],
+
  ['NATIVE-command-revoke-after-put-rolls-back',async h=>{
   const abort=new AbortController(),restore=intercept(await h.base.open(),'b23_states',()=>abort.abort());let result;
   try{result=await h.command({type:'SET_TITLE',refId:'T0',title:'must-not-commit'},{signal:abort.signal});}finally{restore();}

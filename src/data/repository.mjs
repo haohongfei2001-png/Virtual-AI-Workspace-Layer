@@ -1,3 +1,4 @@
+import { createBackup, previewBackup, recoverAssets } from './backup.mjs';
 import { normalizedScope } from '../b1/identity.mjs';
 import { B23_STORES } from './schema.mjs';
 import { digest, stable } from './hash.mjs';
@@ -125,12 +126,22 @@ export class WorkspaceRepository {
       tx.onerror=()=>{};
     });
   }
-  async recoveryStatus(scope){const s=scopeChecked(scope),db=await this.connection();return new Promise((resolve,reject)=>{
-    const tx=db.transaction(['b23_states','b23_checkpoints'],'readonly');let stateRow,checkpoint;
+  async exportBackup(scope,options={}){const {state}=await this.read(scope,options);return createBackup(state);}
+  async previewRestore(scope,bundle,options={}){const s=scopeChecked(scope),{state}=await this.read(s,options),plan=previewBackup(state,bundle,s);return {summary:plan.summary,planHash:plan.planHash,expectedRevision:plan.expectedRevision,evidenceImported:false};}
+  async restoreBackup(scope,{operationId,expectedRevision,bundle,planHash},options={}){
+    const s=scopeChecked(scope);
+    return this.mutate(s,{operationId,expectedRevision,fingerprint:{backup:bundle,planHash,expectedRevision},type:'RESTORE_BACKUP',actor:'human',...options,apply:current=>{const plan=previewBackup(current,bundle,s);if(plan.planHash!==planHash)throw Error('restore-preview-changed');return plan.next;}});
+  }
+  async recoveryStatus(scope,{guard=()=>true,signal=null}={}){const s=scopeChecked(scope),db=await this.connection();fence(guard,signal);return new Promise((resolve,reject)=>{
+    const tx=db.transaction(['b23_states','b23_checkpoints','b23_operations'],'readonly');let stateRow,checkpoint,error;const logs=[];
     const a=tx.objectStore('b23_states').get(s.key),b=tx.objectStore('b23_checkpoints').get(s.key);a.onsuccess=()=>{stateRow=a.result};b.onsuccess=()=>{checkpoint=b.result};
-    tx.oncomplete=()=>{try{validateState(unpack(stateRow),s.key);resolve({corrupt:false});}catch{try{const prior=validateState(unpack(checkpoint),s.key);resolve({corrupt:true,recoverable:true,damagedHash:digest(stateRow??null),checkpointRevision:prior.revision});}catch{resolve({corrupt:true,recoverable:false});}}};tx.onabort=()=>reject(tx.error);
+    const c=tx.objectStore('b23_operations').index('scopeKey').openCursor(s.key);c.onsuccess=()=>{try{const row=c.result;if(row){logs.push(unpack(row.value));row.continue();}}catch(e){error=e;tx.abort();}};
+    tx.oncomplete=()=>{try{fence(guard,signal);let intact=true;try{validateState(unpack(stateRow),s.key);}catch{intact=false;}if(intact){resolve({corrupt:false});return;}
+      try{const prior=validateState(unpack(checkpoint),s.key),plan=recoverAssets(prior,logs,s.key);resolve({corrupt:true,recoverable:true,damagedHash:digest(stateRow??null),checkpointRevision:prior.revision,restoredHumanChanges:plan.restoredHumanChanges,recoveryRevision:plan.state.revision,evidenceInvalidated:true});}catch(e){resolve({corrupt:true,recoverable:false,reason:e.message});}
+    }catch(e){reject(e);}};tx.onabort=()=>reject(error??tx.error);
   });}
-  /** Explicit lossy recovery. A checkpoint is NOT authority to reactivate evidence
+  /** Explicit asset recovery from a checkpoint plus validated human patches.
+   * Missing/corrupt/conflicting journal entries fail closed. A checkpoint is NOT authority to reactivate evidence
    * or replay old commands. All prior receipts become historical; sources are
    * revoked until separately ingested new evidence supplies fresh authority.
    */
@@ -159,7 +170,7 @@ export class WorkspaceRepository {
           if(!corrupt)throw Error('intact-state-not-replaced');
           const p=tx.objectStore('b23_checkpoints').get(s.key);
           p.onsuccess=()=>{try{
-            check();const state=structuredClone(validateState(unpack(p.result),s.key));
+            check();let state=structuredClone(validateState(unpack(p.result),s.key));
             const checkpointRevision=state.revision,logs=[];let highWater=checkpointRevision;
             // Never trust the corrupted state revision for CAS monotonicity.
             // Validate the scoped journal before recovering; damaged journals
@@ -173,15 +184,14 @@ export class WorkspaceRepository {
                 highWater=Math.max(highWater,log.resultRevision);logs.push({key:c.primaryKey,log});c.continue();return;
               }
               if(highWater>=Number.MAX_SAFE_INTEGER)throw Error('revision-exhausted');
-              for(const source of Object.values(state.sources))source.revoked=true;
-              state.revision=highWater+1;validateState(state,s.key);
+              const recovered=recoverAssets(state,logs.map(x=>x.log),s.key);state=recovered.state;
               for(const old of logs){old.log.invalidatedBy=operationId;ops.put(record(old.key,old.log));}
-              check();states.put(record(s.key,state));check();
+              check();states.put(record(s.key,state));tx.objectStore('b23_checkpoints').put(record(s.key,state));check();
               const log={id:operationId,scopeKey:s.key,type:'RECOVER',actor:'human',fingerprint:damagedHash,
                 baseRevision:highWater,resultRevision:state.revision,recordedAt:this.clock(),patch:[],changedObjects:0,undoneBy:null,
-                checkpointRevision,evidenceInvalidated:true};
+                checkpointRevision,restoredHumanChanges:recovered.restoredHumanChanges,evidenceInvalidated:true};
               ops.add(record(opKey,log));check();
-              outcome={ok:true,replayed:false,revision:state.revision,operationId,checkpointRevision,evidenceInvalidated:true};
+              outcome={ok:true,replayed:false,revision:state.revision,operationId,checkpointRevision,restoredHumanChanges:recovered.restoredHumanChanges,evidenceInvalidated:true};
             }catch(e){abort(e.message);}};
           }catch(e){abort(e.message);}};
         }catch(e){abort(e.message);}};

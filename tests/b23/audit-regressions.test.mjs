@@ -59,7 +59,7 @@ test('AUDIT04 recovery makes discarded operation receipts non-replayable',async(
   try{const request={operationId:'lost_edit',expectedRevision:1,command:{type:'SET_TITLE',refId:'T0',title:'lost-by-explicit-recovery'}};
     assert((await h.repo.command(A,request)).ok);await corrupt(h);
     const status=await h.repo.recoveryStatus(A);assert((await h.repo.recover(A,{operationId:'recover_receipts',damagedHash:status.damagedHash})).ok);
-    assert.notEqual((await h.repo.read(A)).state.identities.T0.title,request.command.title);
+    assert.equal((await h.repo.read(A)).state.identities.T0.title,request.command.title,'latest committed human title must survive recovery');
     const replay=await h.repo.command(A,request);
     assert.equal(replay.ok,false,'a discarded operation cannot be reported successful again');
   }finally{h.close();}

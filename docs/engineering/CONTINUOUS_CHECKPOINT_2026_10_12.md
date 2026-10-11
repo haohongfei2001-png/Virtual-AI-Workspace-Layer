@@ -9,3 +9,5 @@
 Python/Playwright 已有隔离 venv `/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv`；应移入或重新建立专用持久 .venv，不能修改系统 Python。Chrome 仅全新 headless Profile；任何 CDP 只连接本次创建实例。测试前先阅读各 driver，现有 driver resources 已经在前次验收审查。
 
 C1 原设计修复完成：10真实UI旅程+深色细节反例；Node121、DOM49、真实IDB39、页面17、MV319、B4核心5/生命周期1通过。证据 `c1-fidelity-2026-10-12`。专用持久 `.venv` 已建立 Python3.14.7/Playwright1.63.0，后续使用 `.venv/bin/python`。下一任务 B5：首先保留最新人工修改丢失反例，复用现有检查点/日志/CAS实现保全恢复及文件资产备份、dry-run与安全回滚。不得将检查点当文件备份。
+
+B5在Draft PR #10完成隔离合成验收：Node130、真实IDB50、B5实际MV3 3、C1 UI10、DOM49、页面17、MV319、B4核心5/生命周期1通过；源/日志/失败/下载文件在b5-mac-2026-10-12。下一：从PR #10 head新建C3/C4模块分支，复用既有SET_PREFERENCE/CAS/导航补手工工作集和已选片段，不自动采集、无真实ChatGPT。工作树保持专用持久目录，测试用.venv/bin/python。
