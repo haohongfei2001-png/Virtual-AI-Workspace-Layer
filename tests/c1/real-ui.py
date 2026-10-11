@@ -43,6 +43,7 @@ def main():
      c=p.locator('.workspace [data-theme-id=W0]');clicks=0
      while c.get_by_label('显示更多近期窗口',exact=True).count():c.get_by_label('显示更多近期窗口',exact=True).click();clicks+=1;assert clicks<20
      if c.locator('.old').get_attribute('aria-expanded')=='false':c.locator('.old').click()
+     positions=p.locator('.workspace .card').evaluate_all('(ns)=>ns.map(n=>{const r=n.getBoundingClientRect();return {id:n.dataset.themeId,x:r.x,y:r.y,height:r.height};})');first=positions[0];second=positions[1];following=next(r for r in positions[2:] if abs(r['x']-second['x'])<2);assert following['y']<first['y']+first['height'],'long card pushed another column below its full height'
      assert c.locator('.row').count()==127,{'count':c.locator('.row').count(),'expanded':c.locator('.old').get_attribute('aria-expanded')};shot(p,'long-list');p.get_by_label('较早的30日',exact=True).click();shot(p,'empty-segment');assert p.locator('.workspace').get_attribute('data-segment')=='1';p.get_by_label('较早的30日',exact=True).click();shot(p,'older-segment');assert p.locator('.workspace [data-theme-id=W0]').count()==0
      c=NativeChecks(ctx,'mv3',ext,None,None,None,None,report);s=c.state(p);assert s['workspaceCount']==120 and s['refCount']==604;assert p.evaluate('HF.data().themes.length')==120 and p.evaluate('HF.data().refs.length')==604
      return {'stress':{'themes':120,'refs':604,'W0recent':126,'W0old':1,'W0unknown':1},'expansionClicks':clicks,'state':s}

@@ -1,0 +1,5 @@
+# Visual long-list closure
+
+Final standalone ui-standalone-delivery passed8/8 with identical saved-feedback assertions. Parallel unknown-write FAIL remains preserved. Visual review then found the ordinary row grid leaves other columns empty until the long first card ends. Existing cards now use independent fixed columns, assigned in repository order with DOM/keyboard order unchanged; no second navigation, card collapse or data engine. The layout recomputes on the existing safe native reading resize and owned render.
+
+ui-layout-final has7/8 due a driver geometry mistake: W7 is actually in the first card's own column after the native sidebar collapsed at desktop width (four columns). Actual screenshots/other7journeys preserved. Correct final geometry chooses a later card in the *second* card's actual x-column; it requires that column continue before the first long card's bottom. Runtime source unchanged after this checkpoint; final sequential UI followed by full related regression binds these bytes.

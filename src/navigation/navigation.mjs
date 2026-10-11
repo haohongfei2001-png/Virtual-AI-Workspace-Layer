@@ -39,7 +39,19 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     roots.back.hidden=view.mode==='workspace'||suspended;
     // The original conversation tree remains attached; only this reversible view mask changes.
     setMask(host.reading,show);
+    if(show)layoutCards();
     status={state:suspended?'NATIVE_LAYER':'ACTIVE',mode:view.mode,scope:snapshot.scope};adapter.status(status);
+  }
+  // Keep DOM/keyboard order from the repository; expanding one card grows its
+  // own column only. Native layout and nodes are untouched.
+  function layoutCards(){
+    const container=roots?.workspace.scroller?.querySelector('.cards'),cards=container?[...container.querySelectorAll(':scope > .card')]:[];
+    if(!cards.length||container.clientWidth<100)return;
+    const gap=20,columns=Math.max(1,Math.min(4,Math.floor((container.clientWidth+gap)/300))),width=(container.clientWidth-gap*(columns-1))/columns;
+    for(const card of cards){card.style.position='absolute';card.style.width=width+'px';}
+    const heights=cards.map(card=>card.getBoundingClientRect().height),tops=Array(columns).fill(0);
+    cards.forEach((card,i)=>{const column=i%columns;card.style.left=column*(width+gap)+'px';card.style.top=tops[column]+'px';tops[column]+=heights[i]+gap;});
+    container.style.position='relative';container.style.display='block';container.style.height=Math.max(...tops)+'px';
   }
   function emitView(){if(view&&snapshot)onViewChange({segment:view.segment,oldOpen:[...view.oldOpen],sidebarOpen:[...view.sidebarOpen],capacities:[...view.capacities],scroll:view.scroll,sidebarVisible:view.sidebarVisible},snapshot.scope);}
   function remember(){if(view?.mode==='workspace'&&roots?.workspace.scroller&&roots.workspace.n.style.display!=='none')view.scroll=roots.workspace.scroller.scrollTop;}
@@ -105,7 +117,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       }
       if(!cards.children.length){const empty=node(doc,'div',{class:'empty'});empty.innerHTML=gridIcon;empty.append(node(doc,'strong',{},'这里还没有活跃主题'),node(doc,'p',{},'可切换区间，或查找已有窗口。'),button('查找已知主题与窗口',()=>findKnown(),'查找窗口','more'));cards.append(empty);}page.append(cards);
     }
-    shadow.append(page);page.scrollTop=view.scroll;restoreOwnedFocus(focused);emitView();
+    shadow.append(page);layoutCards();page.scrollTop=view.scroll;restoreOwnedFocus(focused);emitView();
   }
   function update(value,now,timeZone){
     if(stopped)return;remember();snapshot=value;
