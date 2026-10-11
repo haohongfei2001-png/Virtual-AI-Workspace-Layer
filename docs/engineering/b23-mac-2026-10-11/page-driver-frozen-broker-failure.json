@@ -1,0 +1,809 @@
+{
+  "level": "REAL_BROWSER_PAGE_SYNTHETIC_ONLY",
+  "startedAt": "2026-10-11T13:35:04Z",
+  "tests": [
+    {
+      "id": "native-components-after-write",
+      "status": "PASS",
+      "actual": "Original input/transcript identity and draft retained; actual IndexedDB service"
+    },
+    {
+      "id": "native-create-rename-icon-place-move-undo",
+      "status": "PASS",
+      "actual": {
+        "joined": {
+          "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "revision": 5,
+          "bootstrapCount": 120,
+          "workspaceCount": 121,
+          "refCount": 604,
+          "humanWorkspaces": [
+            {
+              "id": "W_30b21465b30449ae9abf9ee8642565fb",
+              "name": "Mac durable workspace",
+              "aliases": [
+                "Mac isolated workspace"
+              ],
+              "icon": "◆",
+              "order": 120,
+              "locked": true,
+              "owner": "human",
+              "revision": 4
+            }
+          ],
+          "identities": {
+            "T0": {
+              "id": "T0",
+              "title": "B23 durable title",
+              "aliases": [
+                "研究问题与边界"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 2
+            },
+            "T1": {
+              "id": "T1",
+              "title": "整理观察材料",
+              "aliases": [],
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          },
+          "placements": [
+            {
+              "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+              "workspaceId": "W0",
+              "refId": "T0",
+              "excluded": false,
+              "order": 0,
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            },
+            {
+              "id": "p_b159683c61677f130cacefd63ee0212c94433bbb250726d828136cb3f8fa8b47",
+              "workspaceId": "W_30b21465b30449ae9abf9ee8642565fb",
+              "refId": "T0",
+              "excluded": false,
+              "locked": true,
+              "order": 0,
+              "owner": "human",
+              "revision": 5
+            }
+          ],
+          "nativeT0": {
+            "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "conversationId": "T0",
+            "nativeUrl": "http://127.0.0.1:48173/hf/A/c/T0",
+            "projectId": null,
+            "revision": 1
+          },
+          "source": {
+            "id": "fixture_v1",
+            "channel": "hf-controlled-fixture-v1",
+            "observedAt": "2026-10-11T04:00:00Z",
+            "description": "Invented test evidence. Not a production source or account witness.",
+            "trustLevel": "synthetic",
+            "revoked": false
+          }
+        },
+        "moved": {
+          "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "revision": 6,
+          "bootstrapCount": 120,
+          "workspaceCount": 121,
+          "refCount": 604,
+          "humanWorkspaces": [
+            {
+              "id": "W_30b21465b30449ae9abf9ee8642565fb",
+              "name": "Mac durable workspace",
+              "aliases": [
+                "Mac isolated workspace"
+              ],
+              "icon": "◆",
+              "order": 120,
+              "locked": true,
+              "owner": "human",
+              "revision": 4
+            }
+          ],
+          "identities": {
+            "T0": {
+              "id": "T0",
+              "title": "B23 durable title",
+              "aliases": [
+                "研究问题与边界"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 2
+            },
+            "T1": {
+              "id": "T1",
+              "title": "整理观察材料",
+              "aliases": [],
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          },
+          "placements": [
+            {
+              "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+              "workspaceId": "W0",
+              "refId": "T0",
+              "excluded": false,
+              "order": 0,
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            },
+            {
+              "id": "p_b159683c61677f130cacefd63ee0212c94433bbb250726d828136cb3f8fa8b47",
+              "workspaceId": "W_30b21465b30449ae9abf9ee8642565fb",
+              "refId": "T0",
+              "excluded": true,
+              "locked": true,
+              "order": 0,
+              "owner": "human",
+              "revision": 6
+            },
+            {
+              "id": "p_60a6254cd3667a47ae5e674abf9e2a29c756578e638f24fc9c5f92eb97f56073",
+              "workspaceId": "W1",
+              "refId": "T0",
+              "excluded": false,
+              "locked": true,
+              "order": 0,
+              "owner": "human",
+              "revision": 6
+            }
+          ],
+          "nativeT0": {
+            "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "conversationId": "T0",
+            "nativeUrl": "http://127.0.0.1:48173/hf/A/c/T0",
+            "projectId": null,
+            "revision": 1
+          },
+          "source": {
+            "id": "fixture_v1",
+            "channel": "hf-controlled-fixture-v1",
+            "observedAt": "2026-10-11T04:00:00Z",
+            "description": "Invented test evidence. Not a production source or account witness.",
+            "trustLevel": "synthetic",
+            "revoked": false
+          }
+        },
+        "restored": {
+          "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "revision": 7,
+          "bootstrapCount": 120,
+          "workspaceCount": 121,
+          "refCount": 604,
+          "humanWorkspaces": [
+            {
+              "id": "W_30b21465b30449ae9abf9ee8642565fb",
+              "name": "Mac durable workspace",
+              "aliases": [
+                "Mac isolated workspace"
+              ],
+              "icon": "◆",
+              "order": 120,
+              "locked": true,
+              "owner": "human",
+              "revision": 4
+            }
+          ],
+          "identities": {
+            "T0": {
+              "id": "T0",
+              "title": "B23 durable title",
+              "aliases": [
+                "研究问题与边界"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 2
+            },
+            "T1": {
+              "id": "T1",
+              "title": "整理观察材料",
+              "aliases": [],
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          },
+          "placements": [
+            {
+              "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+              "workspaceId": "W0",
+              "refId": "T0",
+              "excluded": false,
+              "order": 0,
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            },
+            {
+              "id": "p_b159683c61677f130cacefd63ee0212c94433bbb250726d828136cb3f8fa8b47",
+              "workspaceId": "W_30b21465b30449ae9abf9ee8642565fb",
+              "refId": "T0",
+              "excluded": false,
+              "locked": true,
+              "order": 0,
+              "owner": "human",
+              "revision": 7
+            }
+          ],
+          "nativeT0": {
+            "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "conversationId": "T0",
+            "nativeUrl": "http://127.0.0.1:48173/hf/A/c/T0",
+            "projectId": null,
+            "revision": 1
+          },
+          "source": {
+            "id": "fixture_v1",
+            "channel": "hf-controlled-fixture-v1",
+            "observedAt": "2026-10-11T04:00:00Z",
+            "description": "Invented test evidence. Not a production source or account witness.",
+            "trustLevel": "synthetic",
+            "revoked": false
+          }
+        }
+      }
+    },
+    {
+      "id": "native-input-messages-tool-interaction-identity",
+      "status": "PASS",
+      "actual": {
+        "input": true,
+        "form": true,
+        "transcript": true,
+        "messageNodes": true,
+        "reading": true,
+        "header": true,
+        "draft": true,
+        "range": true,
+        "tool": true,
+        "messages": true,
+        "nativeTitlesAndProjects": true,
+        "projects": true,
+        "model": true
+      }
+    },
+    {
+      "id": "native-assets-after-manual-edits",
+      "status": "PASS",
+      "actual": {
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+        "revision": 7,
+        "bootstrapCount": 120,
+        "workspaceCount": 121,
+        "refCount": 604,
+        "humanWorkspaces": [
+          {
+            "id": "W_30b21465b30449ae9abf9ee8642565fb",
+            "name": "Mac durable workspace",
+            "aliases": [
+              "Mac isolated workspace"
+            ],
+            "icon": "◆",
+            "order": 120,
+            "locked": true,
+            "owner": "human",
+            "revision": 4
+          }
+        ],
+        "identities": {
+          "T0": {
+            "id": "T0",
+            "title": "B23 durable title",
+            "aliases": [
+              "研究问题与边界"
+            ],
+            "locked": true,
+            "owner": "human",
+            "revision": 2
+          },
+          "T1": {
+            "id": "T1",
+            "title": "整理观察材料",
+            "aliases": [],
+            "locked": false,
+            "owner": "bootstrap",
+            "revision": 1
+          }
+        },
+        "placements": [
+          {
+            "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+            "workspaceId": "W0",
+            "refId": "T0",
+            "excluded": false,
+            "order": 0,
+            "locked": false,
+            "owner": "bootstrap",
+            "revision": 1
+          },
+          {
+            "id": "p_b159683c61677f130cacefd63ee0212c94433bbb250726d828136cb3f8fa8b47",
+            "workspaceId": "W_30b21465b30449ae9abf9ee8642565fb",
+            "refId": "T0",
+            "excluded": false,
+            "locked": true,
+            "order": 0,
+            "owner": "human",
+            "revision": 7
+          }
+        ],
+        "nativeT0": {
+          "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+          "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "conversationId": "T0",
+          "nativeUrl": "http://127.0.0.1:48173/hf/A/c/T0",
+          "projectId": null,
+          "revision": 1
+        },
+        "source": {
+          "id": "fixture_v1",
+          "channel": "hf-controlled-fixture-v1",
+          "observedAt": "2026-10-11T04:00:00Z",
+          "description": "Invented test evidence. Not a production source or account witness.",
+          "trustLevel": "synthetic",
+          "revoked": false
+        }
+      }
+    },
+    {
+      "id": "actual-page-reload-persistence",
+      "status": "PASS",
+      "actual": "T0 human title retained"
+    },
+    {
+      "id": "native-assets-reload",
+      "status": "PASS",
+      "actual": {
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+        "revision": 7,
+        "bootstrapCount": 120,
+        "workspaceCount": 121,
+        "refCount": 604,
+        "humanWorkspaces": [
+          {
+            "id": "W_30b21465b30449ae9abf9ee8642565fb",
+            "name": "Mac durable workspace",
+            "aliases": [
+              "Mac isolated workspace"
+            ],
+            "icon": "◆",
+            "order": 120,
+            "locked": true,
+            "owner": "human",
+            "revision": 4
+          }
+        ],
+        "identities": {
+          "T0": {
+            "id": "T0",
+            "title": "B23 durable title",
+            "aliases": [
+              "研究问题与边界"
+            ],
+            "locked": true,
+            "owner": "human",
+            "revision": 2
+          },
+          "T1": {
+            "id": "T1",
+            "title": "整理观察材料",
+            "aliases": [],
+            "locked": false,
+            "owner": "bootstrap",
+            "revision": 1
+          }
+        },
+        "placements": [
+          {
+            "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+            "workspaceId": "W0",
+            "refId": "T0",
+            "excluded": false,
+            "order": 0,
+            "locked": false,
+            "owner": "bootstrap",
+            "revision": 1
+          },
+          {
+            "id": "p_b159683c61677f130cacefd63ee0212c94433bbb250726d828136cb3f8fa8b47",
+            "workspaceId": "W_30b21465b30449ae9abf9ee8642565fb",
+            "refId": "T0",
+            "excluded": false,
+            "locked": true,
+            "order": 0,
+            "owner": "human",
+            "revision": 7
+          }
+        ],
+        "nativeT0": {
+          "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+          "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "conversationId": "T0",
+          "nativeUrl": "http://127.0.0.1:48173/hf/A/c/T0",
+          "projectId": null,
+          "revision": 1
+        },
+        "source": {
+          "id": "fixture_v1",
+          "channel": "hf-controlled-fixture-v1",
+          "observedAt": "2026-10-11T04:00:00Z",
+          "description": "Invented test evidence. Not a production source or account witness.",
+          "trustLevel": "synthetic",
+          "revoked": false
+        }
+      }
+    },
+    {
+      "id": "new-tab-persistence",
+      "status": "PASS",
+      "actual": "Same profile/origin database, new tab"
+    },
+    {
+      "id": "native-assets-new-tab",
+      "status": "PASS",
+      "actual": {
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+        "revision": 7,
+        "bootstrapCount": 120,
+        "workspaceCount": 121,
+        "refCount": 604,
+        "humanWorkspaces": [
+          {
+            "id": "W_30b21465b30449ae9abf9ee8642565fb",
+            "name": "Mac durable workspace",
+            "aliases": [
+              "Mac isolated workspace"
+            ],
+            "icon": "◆",
+            "order": 120,
+            "locked": true,
+            "owner": "human",
+            "revision": 4
+          }
+        ],
+        "identities": {
+          "T0": {
+            "id": "T0",
+            "title": "B23 durable title",
+            "aliases": [
+              "研究问题与边界"
+            ],
+            "locked": true,
+            "owner": "human",
+            "revision": 2
+          },
+          "T1": {
+            "id": "T1",
+            "title": "整理观察材料",
+            "aliases": [],
+            "locked": false,
+            "owner": "bootstrap",
+            "revision": 1
+          }
+        },
+        "placements": [
+          {
+            "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+            "workspaceId": "W0",
+            "refId": "T0",
+            "excluded": false,
+            "order": 0,
+            "locked": false,
+            "owner": "bootstrap",
+            "revision": 1
+          },
+          {
+            "id": "p_b159683c61677f130cacefd63ee0212c94433bbb250726d828136cb3f8fa8b47",
+            "workspaceId": "W_30b21465b30449ae9abf9ee8642565fb",
+            "refId": "T0",
+            "excluded": false,
+            "locked": true,
+            "order": 0,
+            "owner": "human",
+            "revision": 7
+          }
+        ],
+        "nativeT0": {
+          "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+          "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "conversationId": "T0",
+          "nativeUrl": "http://127.0.0.1:48173/hf/A/c/T0",
+          "projectId": null,
+          "revision": 1
+        },
+        "source": {
+          "id": "fixture_v1",
+          "channel": "hf-controlled-fixture-v1",
+          "observedAt": "2026-10-11T04:00:00Z",
+          "description": "Invented test evidence. Not a production source or account witness.",
+          "trustLevel": "synthetic",
+          "revoked": false
+        }
+      }
+    },
+    {
+      "id": "native-workspace-placement-B-isolation",
+      "status": "PASS",
+      "actual": {
+        "scope": "[\"hf_synthetic_only\",\"B\",\"fixture_org\"]",
+        "revision": 1,
+        "bootstrapCount": 120,
+        "workspaceCount": 120,
+        "refCount": 604,
+        "humanWorkspaces": [],
+        "identities": {
+          "T0": {
+            "id": "T0",
+            "title": "研究问题与边界",
+            "aliases": [],
+            "locked": false,
+            "owner": "bootstrap",
+            "revision": 1
+          },
+          "T1": {
+            "id": "T1",
+            "title": "整理观察材料",
+            "aliases": [],
+            "locked": false,
+            "owner": "bootstrap",
+            "revision": 1
+          }
+        },
+        "placements": [
+          {
+            "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+            "workspaceId": "W0",
+            "refId": "T0",
+            "excluded": false,
+            "order": 0,
+            "locked": false,
+            "owner": "bootstrap",
+            "revision": 1
+          }
+        ],
+        "nativeT0": {
+          "key": "[\"[\\\"hf_synthetic_only\\\",\\\"B\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+          "scopeKey": "[\"hf_synthetic_only\",\"B\",\"fixture_org\"]",
+          "conversationId": "T0",
+          "nativeUrl": "http://127.0.0.1:48173/hf/B/c/T0",
+          "projectId": null,
+          "revision": 1
+        },
+        "source": {
+          "id": "fixture_v1",
+          "channel": "hf-controlled-fixture-v1",
+          "observedAt": "2026-10-11T04:00:00Z",
+          "description": "Invented test evidence. Not a production source or account witness.",
+          "trustLevel": "synthetic",
+          "revoked": false
+        }
+      }
+    },
+    {
+      "id": "actual-A-B-A-isolation",
+      "status": "PASS",
+      "actual": "B cannot see A derived title"
+    },
+    {
+      "id": "native-two-tabs-UI-CAS-and-failure-status",
+      "status": "PASS",
+      "actual": {
+        "baseRevision": 7,
+        "statuses": [
+          "另一标签页已修改；已保留该修改，请核对后重试。",
+          "已保存到派生工作空间。"
+        ],
+        "startTimes": [
+          "1791725709442",
+          "1791725709434"
+        ],
+        "winner": "Native concurrent second",
+        "persisted": {
+          "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "revision": 8,
+          "bootstrapCount": 120,
+          "workspaceCount": 121,
+          "refCount": 604,
+          "humanWorkspaces": [
+            {
+              "id": "W_30b21465b30449ae9abf9ee8642565fb",
+              "name": "Mac durable workspace",
+              "aliases": [
+                "Mac isolated workspace"
+              ],
+              "icon": "◆",
+              "order": 120,
+              "locked": true,
+              "owner": "human",
+              "revision": 4
+            }
+          ],
+          "identities": {
+            "T0": {
+              "id": "T0",
+              "title": "B23 durable title",
+              "aliases": [
+                "研究问题与边界"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 2
+            },
+            "T1": {
+              "id": "T1",
+              "title": "Native concurrent second",
+              "aliases": [
+                "整理观察材料"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 8
+            }
+          },
+          "placements": [
+            {
+              "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+              "workspaceId": "W0",
+              "refId": "T0",
+              "excluded": false,
+              "order": 0,
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            },
+            {
+              "id": "p_b159683c61677f130cacefd63ee0212c94433bbb250726d828136cb3f8fa8b47",
+              "workspaceId": "W_30b21465b30449ae9abf9ee8642565fb",
+              "refId": "T0",
+              "excluded": false,
+              "locked": true,
+              "order": 0,
+              "owner": "human",
+              "revision": 7
+            }
+          ],
+          "nativeT0": {
+            "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "conversationId": "T0",
+            "nativeUrl": "http://127.0.0.1:48173/hf/A/c/T0",
+            "projectId": null,
+            "revision": 1
+          },
+          "source": {
+            "id": "fixture_v1",
+            "channel": "hf-controlled-fixture-v1",
+            "observedAt": "2026-10-11T04:00:00Z",
+            "description": "Invented test evidence. Not a production source or account witness.",
+            "trustLevel": "synthetic",
+            "revoked": false
+          }
+        }
+      }
+    },
+    {
+      "id": "execution",
+      "status": "FAIL",
+      "actual": {
+        "error": "Page.wait_for_function: Timeout 15000ms exceeded.",
+        "traceback": "Traceback (most recent call last):\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/checkout/tests/b23/real-browser.py\", line 56, in main\n    checks.queued_human_after_real_delayed_read(second)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/checkout/tests/b23/native_ui_checks.py\", line 122, in queued_human_after_real_delayed_read\n    page.wait_for_function('()=>globalThis.nativeHold?.held===true')\n    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py\", line 12809, in wait_for_function\n    self._sync(\n    ~~~~~~~~~~^\n        self._impl_obj.wait_for_function(\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<4 lines>...\n        )\n        ^\n    )\n    ^\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/lib/python3.14/site-packages/playwright/_impl/_sync_base.py\", line 115, in _sync\n    return task.result()\n           ~~~~~~~~~~~^^\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/lib/python3.14/site-packages/playwright/_impl/_page.py\", line 1153, in wait_for_function\n    return await self._main_frame.wait_for_function(**locals_to_params(locals()))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/lib/python3.14/site-packages/playwright/_impl/_frame.py\", line 941, in wait_for_function\n    await self._channel.send(\"waitForFunction\", self._timeout, params)\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 76, in send\n    return await self._connection.wrap_api_call(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 632, in wrap_api_call\n    raise rewrite_error(error, f\"{parsed_st['apiName']}: {error}\") from None\nplaywright._impl._errors.TimeoutError: Page.wait_for_function: Timeout 15000ms exceeded.\n"
+      }
+    }
+  ],
+  "fallback": false,
+  "realChatGPT": "NOT_RUN",
+  "console": [
+    {
+      "url": "http://127.0.0.1:48173/hf/A/c/T0?mode=page",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    }
+  ],
+  "workerEvents": [],
+  "commands": [],
+  "testedGitHead": "36a5934d76c03ad2ddbe27eb0a0cc07e052a4803",
+  "sourceHashes": {
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "src/navigation/navigation.mjs": "b1bf2d9bec8be6931a802a1608d2ebf545b89930d94d1b66ba47520045ff6804",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/README.md": "929a0a31cfd638694fc85ce871c339c730f6dc6728f8b7c6832bcd9281a29c94",
+    "src/b1/document-binding-broker.mjs": "430b490a401c6561d913c6af727c2bbc296e35cc59947efce16d96975a40269d",
+    "src/data/state.mjs": "16022c55160719f6e7c86de5b3ca71e3f594a2df8373b96525f852435c1d745c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "542d418165b5414a92015291b31c62a02e8b35413539a17ddb0c1557c5905615",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "simulator/index.html": "52737486a2ad0b296a8e212ab0607cb89f99b94d3f6b193793817babde01b7d4",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "simulator/control.html": "1e0eeb74c8fc277232b2edfac95787dbd62d6ae7470af982f4ca268579ffbd7f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/adapter.mjs": "701aa0ab7246707d5d26b3d03a01dd9e3c8bb5cce0a755896808899add6deacb",
+    "simulator/client.mjs": "6061dd215979671ba0ce7e5003d8c1a2cfe61a8b0110c87062052515fc21b794",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.css": "0627ff2b3ab6d9797850caca1da4cdb91ddfdfea32318dd8e1a15f9bac23d153",
+    "simulator/README.md": "a767b2f4e0d7cd99d4c19b473f9de0300cd2ae20457def03cde26fc3a1b3b645",
+    "simulator/.gitignore": "25a6288333a6cb399eb26bccdcecbce38f84b06fb5ee6f4afbafbae414d12244",
+    "simulator/package.json": "564c422503961ce803bbcac5bd89d531c5cc64e7b643f68dd194576830687c99",
+    "simulator/persistent-seed.mjs": "b7bc056239309217aa3acb067c11ae9e503a88322454e3f57aae74a1eee4e970",
+    "simulator/build.mjs": "e95ff5f4ec632a9702ccec75d8e6596078499a3332b4daf036e479980de731cd",
+    "simulator/host.mjs": "9d4d7b9b5e847537ad4b01d31117d3d2d553a34e041f0d2c2cb8e57631ec0bca",
+    "simulator/main.mjs": "7a6788fefe2eaf5c8abcd46cfe024c76511c422888073472bbb3b8caacf9092c",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/service.mjs": "9f0fa02e926b151a5335114ef37fb67c0487ab405a3d586eda31be638b37c2d7",
+    "simulator/editor.mjs": "f8475d37ca613acd7c1ec38a12ac3682fb0d8ea907596a306dcfafb8337630f4",
+    "tests/b23/native-db-entry.mjs": "23cf8baac578fc11c7a1b25ac32138c83db5f4a9bd74592f4a1bc4ca1cc2ec71",
+    "tests/b23/logic.test.mjs": "da3ffcbbba0b14b3ec858f4b769d1c3d3a91e7a1edaf569e02d53cbfe2aeb3ac",
+    "tests/b23/real-browser.py": "272ab784f5a810dd470c9530b392db988fbf825db0c1275543a63520a63eecb7",
+    "tests/b23/repository.test.mjs": "77204ff0a747e9ff6742c3ce449960a1b7ce89a2b436a3ac96eddfb5b4d95518",
+    "tests/b23/opaque-entry.mjs": "1538dc2d912bdb79d04557f2b615a1c8c9f88204afc196ab976d12d005f4c74d",
+    "tests/b23/broker.test.mjs": "1591be572f1cb3524144ed289ca6b968fe874688b14b93f6b30e66d1776a36a2",
+    "tests/b23/view-isolation.test.mjs": "e4051028059104aabab6e20e6288a3b4ac982dd973d02365c7dbdbfcf4cdd0f8",
+    "tests/b23/contracts.mjs": "62e5af26ace08a8c1218a535d53c342fd5ccc5d6aa04c0b94df94467c11fc8ba",
+    "tests/b23/README.md": "48303439ee6ca663830ce2e7f0eee3909ac02a2da60ab88dc5de95ec8ab2c077",
+    "tests/b23/browser.py": "42d7c1a1c3d5792ec992d4ab0d1c6f9e89c2642494e8143bb9644e73aacc2443",
+    "tests/b23/mock-idb.mjs": "6c72609a80793de5098759be9c234b52c0b317590d0ba02a9d6f195b649625ae",
+    "tests/b23/native_ui_checks.py": "821e0882871517c4d22668b68690a143684a6faef1b3e3840d56b7448e122ca8",
+    "tests/b23/view-browser.py": "58db75a53ea0aab976ee65bdd33856af0528840975a371696e0b9b28cd09c408",
+    "tests/b23/audit-regressions.test.mjs": "229ba2fb5065387fae9153f95b7ddc7e956f92b3db0f8f2300e9e33e06904d88",
+    "tests/b23/native-server.mjs": "cc424ce7a8a4049a537328fbeaf7b24a5394f7eaea2b87dd95481c9152b9d30c",
+    "tests/b23/migration.test.mjs": "20c0c5442f7871d42b9dd5d040c6a622c5432419c803270d078a1461a1a60b89",
+    "tests/b23/native-incremental-cases.mjs": "c3edaa439abb3539471fde8feae7f88c1e3697438f6ab94b656d8989f8ff744a",
+    "tests/b23/build.test.mjs": "52c781df9a49e4d9b5a786d996c176ed7b5584b6ff0e78e2275f17ae6e142e42",
+    "tests/b23/evidence-audit.test.mjs": "a9c1a90886569ba093bc2f93cc25dcdcbefad50b7a9561cd0409666e8922c97c"
+  },
+  "buildHashes": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/document-binding-broker.mjs": "430b490a401c6561d913c6af727c2bbc296e35cc59947efce16d96975a40269d",
+    "simulator/service.mjs": "9f0fa02e926b151a5335114ef37fb67c0487ab405a3d586eda31be638b37c2d7",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "b7bc056239309217aa3acb067c11ae9e503a88322454e3f57aae74a1eee4e970",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/state.mjs": "16022c55160719f6e7c86de5b3ca71e3f594a2df8373b96525f852435c1d745c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/repository.mjs": "542d418165b5414a92015291b31c62a02e8b35413539a17ddb0c1557c5905615",
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "content.js": "8a6033790164fff6030e7c31692cdbf55fff228721cc9652a1dfcdd25da1f9a2",
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+  },
+  "environment": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/154.0.8037.99",
+    "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "jsVersion": "15.4.80.20"
+  },
+  "server": {
+    "exitCode": -15,
+    "stdout": "",
+    "stderr": ""
+  },
+  "endedAt": "2026-10-11T13:35:25Z",
+  "counts": {
+    "PASS": 11,
+    "FAIL": 1,
+    "BLOCKED": 0
+  }
+}
