@@ -1,0 +1,129 @@
+{
+  "startedAt": "2026-10-11T11:27:24.351Z",
+  "endedAt": "2026-10-11T11:27:41.893Z",
+  "level": "NODE_MOCK_IDB",
+  "sourceHead": "5997ec072f2f97c8127f41f05b9f375a786b6f10",
+  "node": "v22.16.0",
+  "results": [
+    {
+      "name": "DB01-same-B1-database-and-canonical-refs",
+      "status": "PASS"
+    },
+    {
+      "name": "DB02-create-update-stable-id-and-reopen",
+      "status": "PASS"
+    },
+    {
+      "name": "DB03-derived-title-alias-and-native-immutable",
+      "status": "PASS"
+    },
+    {
+      "name": "DB04-place-move-exclusion-and-targeted-undo",
+      "status": "PASS"
+    },
+    {
+      "name": "DB05-undo-refuses-overwriting-later-human-edit",
+      "status": "PASS"
+    },
+    {
+      "name": "DB06-undo-does-not-restore-whole-snapshot",
+      "status": "PASS"
+    },
+    {
+      "name": "DB07-two-connections-CAS-one-winner",
+      "status": "PASS"
+    },
+    {
+      "name": "DB08-operation-idempotence-does-not-return-stale-snapshot",
+      "status": "PASS"
+    },
+    {
+      "name": "DB09-scope-A-B-same-native-id-isolation",
+      "status": "PASS"
+    },
+    {
+      "name": "DB10-unknown-scope-never-opens-workspace",
+      "status": "PASS"
+    },
+    {
+      "name": "DB11-human-lock-and-exclusion-protect-against-candidate",
+      "status": "PASS"
+    },
+    {
+      "name": "DB12-stale-candidate-global-revision-rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "DB13-revoke-source-reprojects-without-erasing-intent",
+      "status": "PASS"
+    },
+    {
+      "name": "DB14-coverage-stales-and-does-not-fabricate-activity",
+      "status": "PASS"
+    },
+    {
+      "name": "DB15-old-window-stays-parent-not-duplicated",
+      "status": "PASS"
+    },
+    {
+      "name": "DB16-label-is-not-evidence-authority",
+      "status": "PASS"
+    },
+    {
+      "name": "DB17-guard-denial-and-aborted-write",
+      "status": "PASS"
+    },
+    {
+      "name": "DB18-view-preferences-reopen-and-CAS",
+      "status": "PASS"
+    },
+    {
+      "name": "DB19-corruption-refused-with-explicit-checkpoint-recovery",
+      "status": "PASS"
+    },
+    {
+      "name": "DB20-corrupt-state-cannot-be-overwritten-by-normal-command",
+      "status": "PASS"
+    },
+    {
+      "name": "DB21-bootstrap-replay-never-resets-human-data",
+      "status": "PASS"
+    },
+    {
+      "name": "DB22-unsupported-official-format-not-guessed",
+      "status": "PASS"
+    },
+    {
+      "name": "DB23-hash-valid-but-schema-invalid-refused",
+      "status": "PASS"
+    },
+    {
+      "name": "DB24-pressure-120-themes-604-refs-128-members",
+      "status": "PASS"
+    },
+    {
+      "name": "DB25-ingest-new-send-activates-old-theme-and-retains-old-children",
+      "status": "PASS"
+    },
+    {
+      "name": "DB26-conflicting-provenance-and-revocation-recomputes",
+      "status": "PASS"
+    },
+    {
+      "name": "DB27-native-source-conflict-is-atomic",
+      "status": "PASS"
+    },
+    {
+      "name": "DB28-workspace-history-aliases-persist",
+      "status": "PASS"
+    },
+    {
+      "name": "DB29-corrupt-B-operation-does-not-poison-A-history",
+      "status": "PASS"
+    }
+  ],
+  "counts": {
+    "pass": 29,
+    "fail": 0
+  }
+}
