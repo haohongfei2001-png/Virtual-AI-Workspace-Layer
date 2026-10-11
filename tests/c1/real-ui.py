@@ -11,7 +11,14 @@ def main():
  ap=argparse.ArgumentParser();ap.add_argument('--out',required=True);ap.add_argument('--baseline',action='store_true');a=ap.parse_args();out=Path(a.out);out.mkdir(parents=True,exist_ok=False)
  report={'argv':sys.argv,'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'tests':[],'screenshots':[],'errors':[],'environment':{'macOS':subprocess.check_output(['sw_vers'],text=True),'node':subprocess.check_output(['node','-v'],text=True).strip(),'python':platform.python_version()},'scope':'synthetic-only actual MV3 / actual extension IndexedDB','startedAt':time.time()}
  def active(p):p.locator('html[data-vaiwl-hf-state="ACTIVE"]').wait_for(timeout=15000)
- def home(p):active(p);p.get_by_label('返回工作区',exact=True).click()
+ def home(p):
+  active(p);p.get_by_label('返回工作区',exact=True).click()
+  # Same real profile preserves the previous journey's segment. Set the explicit
+  # test starting point through adjacent native UI controls, never rewrite view DB.
+  for _ in range(8):
+   if p.locator('.workspace').get_attribute('data-segment')=='0':break
+   p.get_by_label('较近的30日',exact=True).click()
+  assert p.locator('.workspace').get_attribute('data-segment')=='0'
  def shot(p,name):p.screenshot(path=str(out/(name+'.png')));report['screenshots'].append(name+'.png')
  with tempfile.TemporaryDirectory(prefix='vaiwl-c1-native-') as tmp:
   build=Path(tmp)/'extension';subprocess.run(['node','simulator/build.mjs',str(build)],cwd=ROOT,check=True,stdout=subprocess.DEVNULL);report['buildHashes']=json.loads((build/'build-hashes.json').read_text());report['sourceHashes']={str(f.relative_to(ROOT)):hashlib.sha256(f.read_bytes()).hexdigest() for d in ['src','simulator','tests/c1'] for f in (ROOT/d).rglob('*') if f.is_file() and f.suffix in ['.mjs','.css','.py','.html']}
@@ -41,7 +48,7 @@ def main():
      return {'stress':{'themes':120,'refs':604,'W0recent':126,'W0old':1,'W0unknown':1},'expansionClicks':clicks,'state':s}
     case('C1-real-screenshots-and-canonical-stress',visuals)
     def focus(p):
-     home(p);b=p.locator('.workspace').get_by_label('展开旧窗口 城市声音档案',exact=True);initial=b.get_attribute('aria-expanded');b.focus();p.keyboard.press('Enter');assert p.evaluate("()=>{const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.workspace'));return root.shadowRoot.activeElement?.getAttribute('aria-label')==='展开旧窗口 城市声音档案'}"),'local disclosure lost keyboard focus after render'
+     home(p);b=p.locator('.workspace').get_by_label('展开旧窗口 城市声音档案',exact=True);initial=b.get_attribute('aria-expanded');assert b.evaluate('(n)=>!!n.getRootNode().getElementById(n.getAttribute("aria-controls"))');b.focus();p.keyboard.press('Enter');assert p.evaluate("()=>{const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.workspace'));return root.shadowRoot.activeElement?.getAttribute('aria-label')==='展开旧窗口 城市声音档案'}"),'local disclosure lost keyboard focus after render'
      assert b.get_attribute('aria-expanded')!=initial;p.keyboard.press('Enter');assert b.get_attribute('aria-expanded')==initial;return {'keyboardToggleTwice':True,'originalExpanded':initial}
     case('C1-keyboard-local-disclosure-focus',focus)
     def selected(p):

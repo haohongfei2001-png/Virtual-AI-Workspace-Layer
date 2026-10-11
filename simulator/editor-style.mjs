@@ -9,7 +9,7 @@ export const editorCSS=`
 [data-vaiwl-owned="workspace-editor"] h3,[data-vaiwl-owned="workspace-editor"] summary{font-size:14px;font-weight:550;margin:0 0 12px}
 [data-vaiwl-owned="workspace-editor"] summary{cursor:pointer;min-height:32px}
 [data-vaiwl-owned="workspace-editor"] label{display:flex;flex-direction:column;gap:6px;margin:12px 0;font-size:12px;color:var(--muted,#6e6e76)}
-[data-vaiwl-owned="workspace-editor"] input,[data-vaiwl-owned="workspace-editor"] select{font:14px/1.5 inherit;color:var(--ink,#202123);background:var(--bubble,#f4f4f4);width:100%;min-height:40px;padding:8px 11px;border:1px solid var(--line,#e8e8e8);border-radius:9px;max-width:100%}
+[data-vaiwl-owned="workspace-editor"] input,[data-vaiwl-owned="workspace-editor"] select{font:inherit;font-size:14px;color:var(--ink,#202123);background:var(--bubble,#f4f4f4);width:100%;min-height:40px;padding:8px 11px;border:1px solid var(--line,#e8e8e8);border-radius:9px;max-width:100%}
 [data-vaiwl-owned="workspace-editor"] label:has(input[type=checkbox]){flex-direction:row;align-items:center;gap:10px}
 [data-vaiwl-owned="workspace-editor"] input[type=checkbox]{width:18px;min-height:18px;order:-1;accent-color:var(--ink,#202123)}
 [data-vaiwl-owned="workspace-editor"] button{font:inherit;color:inherit;background:var(--bubble,#f4f4f4);padding:8px 13px;margin:4px 5px 4px 0;border:1px solid var(--line,#e8e8e8);border-radius:9px;min-height:38px;cursor:pointer}
