@@ -25,3 +25,7 @@ test('TIME_AUDIT04 revoked sources cannot provide even positive current evidence
  const s=seed();s.events.event_T400.sentAt='2026-10-11T03:00:00Z';s.sources.fixture_v1.revoked=true;
  assert.equal(group(s).segment,null);
 });
+test('TIME_AUDIT05 fresh complete absence coverage differs from an existing undated event',()=>{
+ const s=seed(),g=dataProjection(s,now,'Asia/Shanghai').groups.find(w=>w.id==='W3');
+ assert.equal(g.segment,2);assert(g.unknown.some(r=>r.id==='T303'));
+});

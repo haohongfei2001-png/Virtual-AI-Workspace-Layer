@@ -56,19 +56,22 @@ def main():
                             raw=pg.locator('html').get_attribute('data-hf-worker-probe')
                             if raw:
                                 value=json.loads(raw);assert value.get('ok'),value;return value
-                            time.sleep(.1)
+                            pg.wait_for_timeout(100)
                         raise AssertionError('real worker did not reply')
                     before=probe(second);cdp=ctx.new_cdp_session(second);versions=[]
-                    cdp.on('ServiceWorker.workerVersionUpdated',lambda e:versions.extend(e.get('versions',[])));cdp.send('ServiceWorker.enable');time.sleep(.3)
-                    current=[v for v in versions if v.get('scriptURL','').startswith('chrome-extension://') and v.get('runningStatus')=='running']
-                    assert current,'No real worker version observed';cdp.send('ServiceWorker.stopWorker',{'versionId':current[-1]['versionId']})
+                    cdp.on('ServiceWorker.workerVersionUpdated',lambda e:versions.extend(e.get('versions',[])));cdp.send('ServiceWorker.enable');second.wait_for_timeout(300)
+                    prefix=f"chrome-extension://{report['extension']['id']}/"
+                    current=[v for v in versions if v.get('scriptURL','').startswith(prefix) and v.get('runningStatus')=='running']
+                    assert current,'No real worker version observed';version_id=current[-1]['versionId'];start_index=len(versions)
+                    cdp.send('ServiceWorker.stopWorker',{'versionId':version_id})
+                    # Pump the sync Playwright event loop; Python sleep starves CDP callbacks.
                     for _ in range(50):
-                        if any(v.get('runningStatus')=='stopped' for v in versions):break
-                        time.sleep(.1)
-                    assert any(v.get('runningStatus')=='stopped' for v in versions),'Stop command alone is not termination proof'
+                        if any(v.get('versionId')==version_id and v.get('runningStatus')=='stopped' for v in versions[start_index:]):break
+                        second.wait_for_timeout(100)
+                    assert any(v.get('versionId')==version_id and v.get('runningStatus')=='stopped' for v in versions[start_index:]),'Stop command alone is not termination proof'
                     second.reload();assert title(second)=='B23 durable title';after=probe(second);assert before['boot']!=after['boot'];assert after['workspaceCount']==120
                     record('actual-worker-stop-restart-persistence','PASS',{'before':before,'after':after,'trigger':'explicit synthetic page reload; NOT automatic recovery'})
-                second.goto(origin+f'/hf/unknown/c/T0?mode={args.mode}');time.sleep(.7);assert second.locator('[data-vaiwl-return]').count()==0;record('unknown-scope-fail-closed','PASS','No derived workspace rendered')
+                second.goto(origin+f'/hf/unknown/c/T0?mode={args.mode}');second.wait_for_timeout(700);assert second.locator('[data-vaiwl-return]').count()==0;record('unknown-scope-fail-closed','PASS','No derived workspace rendered')
                 ctx.close()
         except Exception as e:record('execution','BLOCKED' if blocked(e) else 'FAIL',{'error':str(e),'traceback':traceback.format_exc()})
         finally:
