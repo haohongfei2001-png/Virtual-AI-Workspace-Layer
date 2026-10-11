@@ -1,0 +1,6 @@
+DEBUG=pw:browser /private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python tests/b4/real-mv3.py --suite core --out docs/engineering/b4-mac-2026-10-11/core-final.json
+DEBUG=pw:browser /private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python tests/b4/real-mv3.py --suite lifecycle --out docs/engineering/b4-mac-2026-10-11/lifecycle-final.json
+DEBUG=pw:browser /private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python tests/b23/real-browser.py --mode page --port 48173 --browser /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --out docs/engineering/b4-mac-2026-10-11/b23-page-final.json
+DEBUG=pw:browser /private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python tests/b23/real-browser.py --mode mv3 --port 48174 --browser /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --out docs/engineering/b4-mac-2026-10-11/b23-mv3-final.json
+node --test --test-reporter=tap tests/b1/broker.test.mjs tests/hf/*.test.mjs tests/b23/*.test.mjs tests/b4/*.test.mjs
+DEBUG=pw:browser /private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv/bin/python tests/b23/view-browser.py --browser '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --out /private/tmp/vaiwl-b4-mac-mFsVCnkE/dom-final

@@ -141,7 +141,12 @@ export function createDocumentBindingBroker({
        slot.scope.key!==scope.key||message.seq<=slot.seq)return deny('stale-binding');
     // Every request observes a strictly increasing sequence.
     slot.seq=message.seq;
-    if(message.type==='CHECK')return {ok:true,type:'CURRENT',v:VERSION,seq:message.seq};
+    if(message.type==='CHECK'){
+      try{const version=workspaceRepository?.version?await workspaceRepository.version(scope,{guard:()=>fresh(st,slot),signal:slot.abort.signal}):{};
+        if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-workspace');
+        return {ok:true,type:'CURRENT',v:VERSION,seq:message.seq,...version};
+      }catch(e){return deny(e?.message??'version-read-failed');}
+    }
     try{
       if(message.type.startsWith('B23_')){
         if(!workspaceRepository)return deny('workspace-unavailable');

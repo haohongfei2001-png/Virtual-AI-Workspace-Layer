@@ -22,6 +22,7 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId}){
     resolveScope:async({currentFrame})=>{const info=routeInfo(currentFrame.url);if(!info||info.account==='unknown')return null;const scope=scopeOf(info.account);await seed(scope,info.origin);return scope;},
     repository:{get:(...a)=>repository.get(...a),upsert:x=>repository.upsert(x),list:async scope=>{await wait();const {state}=await workspaces.read(scope);return Object.values(state.refs).map(r=>({conversationId:r.id,nativeUrl:r.nativeUrl,projectId:r.projectId,revision:1}));}},
     workspaceRepository:{
+      version:async(scope,options)=>{const {state,view,diagnostics}=await workspaces.read(scope,options);return {revision:state.revision,viewRevision:view?.revision??0,viewDiagnostic:diagnostics.view};},
       snapshot:async(scope,now,timeZone,options,size=8)=>{await wait();const value=await workspaces.snapshot(scope,now,timeZone,options);
         // Visibility scale is a fixture control, never a deletion or truncated DB write.
         const visible=w=>w.owner!=='bootstrap'||w.seedIndex<size;

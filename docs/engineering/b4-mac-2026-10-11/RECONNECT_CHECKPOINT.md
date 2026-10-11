@@ -1,0 +1,7 @@
+# B4 implementation checkpoint
+
+Initial actual MV3 increment: lease auto reconnect PASS, observed stop -> automatic cold wake/new boot/same document/no reload PASS, cross-tab update + draft CAS conflict + explicit retry PASS. Initial Node existing118/118 + new CHECK response fences3/3 PASS.
+
+Two remaining execution failures archived in incremental-first: headless Chrome keeps pages visible even after another target activated; cannot claim actual hidden coverage. A single final isolated headed batch will perform true visibility/freeze/SPA cases after headless independent work is complete. Lost-reply test waited ACTIVE despite its owned modal using NATIVE_LAYER; driver now accepts both legitimate bound presentation states, while all persistence/no-replay assertions remain.
+
+Implementation: CHECK responds with broker-fenced revision/view metadata; content polls every2s, reads only changed snapshots, renews actual20s lease, reconnects stale worker/binding with at most5 retries and visible safe failure/retry control. Writes retain original operation/CAS rules and are never auto-replayed. Editor tracks per-field draft base revisions, does not overwrite dirty fields, conflict retains draft and displays latest saved value before explicit second click; transient editor DOM is detached and restored only to same verified scope. Route/unknown clears it. No data/repository/IDB/undo implementation replaced.
