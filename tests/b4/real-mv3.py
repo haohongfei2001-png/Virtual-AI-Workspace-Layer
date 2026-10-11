@@ -8,7 +8,7 @@ sys.path.insert(0,str(ROOT/'tests/b23'))
 from native_ui_checks import NativeChecks
 
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--browser',default='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');ap.add_argument('--out',required=True);ap.add_argument('--baseline',action='store_true');ap.add_argument('--headed',action='store_true');ap.add_argument('--suite',choices=['all','core','lifecycle'],default='all');a=ap.parse_args()
+ ap=argparse.ArgumentParser();ap.add_argument('--browser',default='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');ap.add_argument('--out',required=True);ap.add_argument('--baseline',action='store_true');ap.add_argument('--headed',action='store_true');ap.add_argument('--suite',choices=['all','core','lifecycle','timeout'],default='all');a=ap.parse_args()
  report={'startedAt':time.time(),'baseline':a.baseline,'argv':sys.argv,'tests':[],'workerEvents':[],'console':[],'realChatGPT':'NOT_RUN','fallback':False}
  def record(name,status,actual):report['tests'].append({'id':name,'status':status,'actual':actual})
  def active(pg,timeout=15000):pg.locator('html[data-vaiwl-hf-state="ACTIVE"],html[data-vaiwl-hf-state="NATIVE_LAYER"]').wait_for(state='attached',timeout=timeout)
@@ -42,6 +42,7 @@ def main():
      pg.evaluate("()=>{document.documentElement.removeAttribute('data-hf-worker-probe');document.dispatchEvent(new Event('hf:test-worker-probe'));}")
      pg.locator('html[data-hf-worker-probe]').wait_for(state='attached');v=json.loads(pg.locator('html').get_attribute('data-hf-worker-probe'));assert v['ok'],v;return v
     def case(name,fn):
+     if a.suite=='timeout' and 'held-reply' not in name:return
      if a.suite=='lifecycle' and 'hidden-visible' not in name:return
      if a.suite=='core' and 'hidden-visible' in name:return
      try:record(name,'PASS',fn())
@@ -83,7 +84,7 @@ def main():
     case('B4-cross-tab-update-draft-CAS-conflict-and-explicit-retry',tabs)
     if not a.baseline:
      def lifecycle():
-      pg=newpage();identity(pg);manage(pg);pg.get_by_label('窗口选择',exact=True).select_option('T0');pg.get_by_label('派生标题',exact=True).fill('B4 hidden draft intent');other=ctx.new_page();other.goto('http://127.0.0.1:48175/control.html');other.bring_to_front();pg.wait_for_timeout(300)
+      pg=newpage();pg.evaluate("HF.control('stress',true)");active(pg);identity(pg);manage(pg);pg.get_by_label('窗口选择',exact=True).select_option('T0');pg.get_by_label('派生标题',exact=True).fill('B4 hidden draft intent');other=ctx.new_page();other.goto('http://127.0.0.1:48175/control.html');other.bring_to_front();pg.wait_for_timeout(300)
       visibility=pg.evaluate('document.visibilityState');assert visibility=='hidden',{'actualVisibility':visibility,'note':'must test actual browser visibility, no JS property override'}
       assert pg.locator('[data-vaiwl-return]').count()==0
       pg.wait_for_timeout(21500);pg.bring_to_front();active(pg);assert pg.evaluate('document.visibilityState')=='visible';same=unchanged(pg);assert pg.get_by_label('派生标题',exact=True).input_value()=='B4 hidden draft intent';pg.get_by_role('button',name='保存派生标题',exact=True).click();saved(pg);close(pg)
@@ -93,8 +94,9 @@ def main():
        if account=='unknown':pg.wait_for_timeout(500);assert pg.locator('[data-vaiwl-return]').count()==0 and 'B4 after real freeze resume' not in pg.locator('body').inner_text()
        else:
         active(pg);manage(pg);pg.get_by_label('窗口选择',exact=True).select_option('T0');v=pg.get_by_label('派生标题',exact=True).input_value();close(pg);assert (v=='B4 after real freeze resume')==(account=='A')
+      pg.evaluate("HF.navigate('/hf/A/c/T1?mode=mv3')");active(pg);assert pg.evaluate('HF.getView().messages.length')==160;pg.evaluate("HF.navigate('/hf/A/c/T0?mode=mv3')");active(pg);assert pg.evaluate('HF.data().refs.length')==604 and pg.evaluate('HF.data().themes.length')==120
       state=checks(pg).state(pg);assert state['workspaceCount']==120 and state['refCount']==604
-      return {'actualHidden':visibility,'hiddenForSeconds':21.5,'frozenForSeconds':21,'nativeAfterVisibility':same,'nativeAfterFreeze':same2,'state':state}
+      return {'actualHidden':visibility,'hiddenForSeconds':21.5,'frozenForSeconds':21,'nativeAfterVisibility':same,'nativeAfterFreeze':same2,'actualHostThemes':120,'actualHostRefs':604,'longChatMessages':160,'state':state}
      def failure():
       pg=newpage();c=checks(pg);identity(pg)
       c.content_eval(pg,"""(()=>{const original=chrome.runtime.sendMessage.bind(chrome.runtime);globalThis.b4Failure={original,count:0};chrome.runtime.sendMessage=async m=>{if(m.type==='CHECK'||m.type==='BIND'){b4Failure.count++;throw Error('B4 injected transport disconnect');}return original(m);};return true;})()""")
@@ -105,7 +107,18 @@ def main():
       c.content_eval(pg,"""(()=>{const original=chrome.runtime.sendMessage.bind(chrome.runtime);globalThis.b4Lost={original,count:0};chrome.runtime.sendMessage=async m=>{const result=await original(m);if(m.type==='B23_COMMAND'){b4Lost.count++;throw Error('B4 injected loss AFTER actual commit');}return result;};return true;})()""")
       pg.get_by_role('button',name='保存派生标题',exact=True).click();pg.wait_for_timeout(3500);active(pg);unknown=pg.locator('[data-vaiwl-owned="workspace-editor"] [role=status]').inner_text();assert '未确认' in unknown and '已保存' not in unknown,unknown
       assert c.content_eval(pg,'b4Lost.count')==1;assert c.state(pg)['identities']['T0']['title']=='B4 committed reply lost';c.content_eval(pg,'chrome.runtime.sendMessage=b4Lost.original;true');close(pg)
-      return {'boundedAttempts':count,'failureFeedback':feedback,'unknownWriteFeedback':unknown,'commandSentOnce':True,'native':unchanged(pg),'state':c.state(pg)}
+      manage(pg);c.content_eval(pg,"""(()=>{const original=chrome.runtime.sendMessage.bind(chrome.runtime);globalThis.b4UndoLost={original,count:0};chrome.runtime.sendMessage=async m=>{const result=await original(m);if(m.type==='B23_UNDO'){b4UndoLost.count++;throw Error('B4 injected undo reply loss AFTER commit');}return result;};return true;})()""")
+      pg.get_by_role('button',name='撤销上次修改',exact=True).click();pg.wait_for_timeout(3500);active(pg);undo_unknown=pg.locator('[data-vaiwl-owned="workspace-editor"] [role=status]').inner_text();assert '未确认' in undo_unknown and '已保存' not in undo_unknown,undo_unknown
+      assert c.content_eval(pg,'b4UndoLost.count')==1;assert c.state(pg)['identities']['T0']['title']!='B4 committed reply lost';c.content_eval(pg,'chrome.runtime.sendMessage=b4UndoLost.original;true');close(pg)
+      return {'boundedAttempts':count,'failureFeedback':feedback,'unknownWriteFeedback':unknown,'undoUnknownFeedback':undo_unknown,'commandAndUndoSentOnce':True,'native':unchanged(pg),'state':c.state(pg)}
+     def held_reply():
+      pg=newpage();identity(pg);c=checks(pg)
+      c.content_eval(pg,"""(()=>{const original=chrome.runtime.sendMessage.bind(chrome.runtime);globalThis.b4Held={held:false,release:null,binds:[]};chrome.runtime.sendMessage=async m=>{const r=await original(m);if(m.type==='BIND')b4Held.binds.push({lease:r.leaseId,ok:r.ok});if(m.type==='CHECK'&&!b4Held.held){b4Held.held=true;return new Promise(resolve=>b4Held.release=()=>resolve(r));}return r;};return true;})()""")
+      pg.wait_for_timeout(9500);trace=c.content_eval(pg,'({held:b4Held.held,binds:b4Held.binds})');assert trace['held'] and trace['binds'] and all(b['ok'] for b in trace['binds']),'held real CHECK reply did not time out/rebind: '+json.dumps(trace)
+      active(pg);write(pg,'B4 later manual after timeout');c.content_eval(pg,'b4Held.release();true');pg.wait_for_timeout(500)
+      assert c.state(pg)['identities']['T0']['title']=='B4 later manual after timeout'
+      return {'actualHeldReplyTrace':trace,'lateReplyCannotOverwrite':True,'native':unchanged(pg),'state':c.state(pg)}
+     case('B4-real-held-reply-timeout-rebind-and-late-response-fence',held_reply)
      case('B4-actual-hidden-visible-freeze-resume-and-SPA-scope',lifecycle)
      case('B4-bounded-failure-feedback-and-committed-lost-reply-no-replay',failure)
     ctx.close()

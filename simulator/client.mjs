@@ -11,12 +11,12 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   const visible=()=>document.visibilityState!=='hidden';
   const controlsKey=()=>{const c=readControls();return JSON.stringify([c.size,c.now,c.timeZone]);};let lastControls=controlsKey();
   const queue=fn=>{const task=chain.then(fn);chain=task.catch(()=>{});return task;};
-  const request=async(type,extra={})=>{try{return await send({v:1,type,clientId,seq:++seq,...(type==='BIND'?{}:{leaseId:lease?.leaseId}),...extra});}catch{throw Error('transport-unavailable');}};
+  const request=async(type,extra={})=>{let deadline;try{return await Promise.race([send({v:1,type,clientId,seq:++seq,...(type==='BIND'?{}:{leaseId:lease?.leaseId}),...extra}),new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error('request-timeout')),6000);})]);}catch{throw Error('transport-unavailable');}finally{clearTimeout(deadline);}};
   const navigation=createNavigation({document,adapter,onExit:()=>stop(),onManage:()=>void manage(),onViewChange:(value,scope)=>saveViewSoon(value,scope)});
   const clearTimers=()=>{clearTimeout(expiry);clearTimeout(pending);clearTimeout(heartbeat);clearTimeout(viewTimer);};
   const clearFeedback=()=>{feedback?.remove();feedback=null;};
   function showFeedback(reason){
-    clearFeedback();if(!visible()||stopped)return;
+    clearFeedback();if(!visible()||stopped||reason==='unverified-scope'||retries<5)return;
     feedback=document.createElement('div');feedback.dataset.vaiwlOwned='connection-status';feedback.setAttribute('role','status');feedback.style.cssText='font:12px/1.5 system-ui;padding:6px 12px';
     const text=document.createElement('span');text.textContent=reason==='unverified-scope'?'身份尚未确认，派生内容已隐藏。':retries>=5?'派生工作空间暂时无法连接，原生聊天仍可使用。':'派生工作空间正在重新连接，原生聊天仍可使用。';feedback.append(text);
     const button=document.createElement('button');button.type='button';button.textContent='重新连接派生工作空间';button.onclick=()=>{retries=0;void load();};feedback.append(button);document.body.prepend(feedback);
@@ -70,12 +70,12 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     });
   }
   async function undo(){return queue(async()=>{
-    requireBinding();const ticket=generation,url=env.location.href;
+    requireBinding();const ticket=generation,url=env.location.href;let sent=false;
     try{const log=await request('B23_HISTORY');if(!current(ticket,url))throw Error('stale-client-response');if(!log.ok)throw Error(log.reason);
       const prior=log.history.find(x=>x.actor==='human'&&!x.undoneBy&&!x.invalidatedBy&&['CREATE_WORKSPACE','UPDATE_WORKSPACE','SET_TITLE','PLACE','MOVE','SET_PREFERENCE'].includes(x.type));if(!prior)throw Error('nothing-to-undo');
-      const result=await request('B23_UNDO',{operationId:'undo_'+randomId().replaceAll('-',''),expectedRevision:data.revision,targetOperationId:prior.id});
+      sent=true;const result=await request('B23_UNDO',{operationId:'undo_'+randomId().replaceAll('-',''),expectedRevision:data.revision,targetOperationId:prior.id});
       if(!current(ticket,url))throw Error('write-result-unknown');await readSnapshot(ticket,url);if(!result.ok)throw Error(result.reason);return result;
-    }catch(e){if(current(ticket,url)&&retryable(e.message))recover(e.message);throw e;}
+    }catch(e){if(current(ticket,url)&&retryable(e.message))recover(e.message);if(sent&&retryable(e.message))throw Error('write-result-unknown');throw e;}
   });}
   async function manage(){if(!data)await load();if(!data||stopped||!visible())return;editor?.close();editor=openWorkspaceEditor({snapshot:data,command,undo,onClose:()=>{editor=null;navigation.layout();}});}
   function saveViewSoon(value,scope){
