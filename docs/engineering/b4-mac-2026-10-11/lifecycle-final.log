@@ -1,0 +1,5 @@
+2026-10-11T14:44:36.389Z pw:browser <ws connecting> ws://127.0.0.1:50728/devtools/browser/0f56028b-27d4-473c-9601-946a731cac8a
+2026-10-11T14:44:36.564Z pw:browser <ws connected> ws://127.0.0.1:50728/devtools/browser/0f56028b-27d4-473c-9601-946a731cac8a
+2026-10-11T14:45:24.506Z pw:browser <ws disconnecting> ws://127.0.0.1:50728/devtools/browser/0f56028b-27d4-473c-9601-946a731cac8a
+2026-10-11T14:45:24.508Z pw:browser <ws disconnected> ws://127.0.0.1:50728/devtools/browser/0f56028b-27d4-473c-9601-946a731cac8a code=1000 reason=
+{"PASS": 1, "FAIL": 0, "BLOCKED": 0}

@@ -23,11 +23,26 @@ def main():
   report['head']=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip();report['environment']={'macOS':subprocess.check_output(['sw_vers'],text=True),'node':subprocess.check_output(['node','--version'],text=True).strip(),'python':platform.python_version()}
   import importlib.metadata
   report['environment']['playwright']=importlib.metadata.version('playwright')
+  chrome_process=None;chrome_log=None
   server=subprocess.Popen(['node','tests/b23/native-server.mjs'],cwd=ROOT,env={**os.environ,'PORT':'48175'},stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True);ctx=None
   try:
    assert server.stdout.readline().startswith('B23 native test server ready')
    with sync_playwright() as p:
-    ctx=p.chromium.launch_persistent_context(str(Path(tmp)/'profile'),executable_path=a.browser,headless=not a.headed,ignore_default_args=['--disable-extensions'],args=['--enable-unsafe-extension-debugging'],viewport={'width':1440,'height':1000})
+    if a.suite=='lifecycle':
+     # Start OUR new process, then connect only to its newly created port.
+     # no_defaults avoids Playwright's per-session forced-visible focus emulation.
+     profile=Path(tmp)/'profile';profile.mkdir();chrome_log=open(Path(tmp)/'chrome.log','w+')
+     chrome_process=subprocess.Popen([a.browser,'--headless=new','--remote-debugging-address=127.0.0.1','--remote-debugging-port=0','--enable-unsafe-extension-debugging','--no-first-run','--no-default-browser-check','--disable-sync','--disable-background-networking','--disable-component-update','--use-mock-keychain','--window-size=1440,1000','--user-data-dir='+str(profile),'about:blank'],stdout=chrome_log,stderr=chrome_log)
+     port_file=profile/'DevToolsActivePort'
+     for _ in range(100):
+      if port_file.exists():break
+      if chrome_process.poll() is not None:raise RuntimeError('owned Chrome exited before CDP')
+      time.sleep(.1)
+     port,path=port_file.read_text().splitlines();endpoint='ws://127.0.0.1:'+port+path
+     owned_browser=p.chromium.connect_over_cdp(endpoint,no_defaults=True);ctx=owned_browser.contexts[0]
+     report['ownedNativeConnection']={'pid':chrome_process.pid,'newProfile':str(profile),'newPort':int(port),'noDefaults':True,'headless':True}
+    else:
+     ctx=p.chromium.launch_persistent_context(str(Path(tmp)/'profile'),executable_path=a.browser,headless=not a.headed,ignore_default_args=['--disable-extensions'],args=['--enable-unsafe-extension-debugging'],viewport={'width':1440,'height':1000})
     ctx.set_default_timeout(10000);ctx.on('page',lambda pg:pg.on('pageerror',lambda e:report['console'].append({'url':pg.url,'error':str(e)})))
     browser=ctx.browser.new_browser_cdp_session();report['environment']['chrome']=browser.send('Browser.getVersion');ext=browser.send('Extensions.loadUnpacked',{'path':str(build)});report['extension']=ext
     url='http://127.0.0.1:48175/hf/A/c/T0?mode=mv3'
@@ -84,19 +99,28 @@ def main():
     case('B4-cross-tab-update-draft-CAS-conflict-and-explicit-retry',tabs)
     if not a.baseline:
      def lifecycle():
-      pg=newpage();pg.evaluate("HF.control('stress',true)");active(pg);identity(pg);manage(pg);pg.get_by_label('窗口选择',exact=True).select_option('T0');pg.get_by_label('派生标题',exact=True).fill('B4 hidden draft intent');other=ctx.new_page();other.goto('http://127.0.0.1:48175/control.html');other.bring_to_front();pg.wait_for_timeout(300)
+      pg=newpage();pg.evaluate("HF.control('stress',true)");active(pg);identity(pg);manage(pg);pg.get_by_label('窗口选择',exact=True).select_option('T0');pg.get_by_label('派生标题',exact=True).fill('B4 hidden draft intent');other=ctx.new_page();other.goto('http://127.0.0.1:48175/control.html')
+      session=ctx.new_cdp_session(pg);session.send('Emulation.setFocusEmulationEnabled',{'enabled':False})
+      pg.evaluate("()=>{globalThis.b4LifecycleEvents=[];for(const name of ['visibilitychange','freeze','resume'])document.addEventListener(name,e=>b4LifecycleEvents.push({event:name,at:Date.now(),visibility:document.visibilityState,trusted:e.isTrusted}));}")
+      # Activate an actual tab in the SAME owned test window; bringToFront alone
+      # can leave two visible windows. No page visibility property override.
+      c=checks(pg);tabs=c.worker().evaluate("""async()=>{const tabs=await chrome.tabs.query({}),rows=[];for(const tab of tabs){const f=await chrome.webNavigation.getFrame({tabId:tab.id,frameId:0}).catch(()=>null);rows.push({id:tab.id,windowId:tab.windowId,active:tab.active,url:f?.url});}return rows;}""")
+      source=next(t for t in tabs if t.get('url')==pg.url);control=next(t for t in tabs if t.get('url')==other.url)
+      c.worker().evaluate("""async({source,control})=>{if(source.windowId!==control.windowId)await chrome.tabs.move(control.id,{windowId:source.windowId,index:-1});await chrome.tabs.update(control.id,{active:true});}""",{'source':source,'control':control});pg.wait_for_timeout(300)
+      report['actualTabActivation']={'before':tabs,'sourceTab':source,'controlTab':control}
       visibility=pg.evaluate('document.visibilityState');assert visibility=='hidden',{'actualVisibility':visibility,'note':'must test actual browser visibility, no JS property override'}
       assert pg.locator('[data-vaiwl-return]').count()==0
-      pg.wait_for_timeout(21500);pg.bring_to_front();active(pg);assert pg.evaluate('document.visibilityState')=='visible';same=unchanged(pg);assert pg.get_by_label('派生标题',exact=True).input_value()=='B4 hidden draft intent';pg.get_by_role('button',name='保存派生标题',exact=True).click();saved(pg);close(pg)
-      manage(pg);pg.get_by_label('窗口选择',exact=True).select_option('T1');pg.get_by_label('派生标题',exact=True).fill('B4 frozen draft intent');session=ctx.new_cdp_session(pg);session.send('Page.setWebLifecycleState',{'state':'frozen'});other.wait_for_timeout(21000);session.send('Page.setWebLifecycleState',{'state':'active'});active(pg);assert pg.get_by_label('派生标题',exact=True).input_value()=='B4 frozen draft intent';pg.get_by_role('button',name='保存派生标题',exact=True).click();saved(pg);close(pg);write(pg,'B4 after real freeze resume');same2=unchanged(pg)
+      pg.wait_for_timeout(21500);c.worker().evaluate('id=>chrome.tabs.update(id,{active:true})',source['id']);active(pg);assert pg.evaluate('document.visibilityState')=='visible';same=unchanged(pg);assert pg.get_by_label('派生标题',exact=True).input_value()=='B4 hidden draft intent';pg.get_by_role('button',name='保存派生标题',exact=True).click();saved(pg);close(pg)
+      manage(pg);pg.get_by_label('窗口选择',exact=True).select_option('T1');pg.get_by_label('派生标题',exact=True).fill('B4 frozen draft intent');session=ctx.new_cdp_session(pg);c.worker().evaluate('id=>chrome.tabs.update(id,{active:true})',control['id']);pg.wait_for_timeout(200);assert pg.evaluate('document.visibilityState')=='hidden';session.send('Page.setWebLifecycleState',{'state':'frozen'});other.wait_for_timeout(21000);session.send('Page.setWebLifecycleState',{'state':'active'});c.worker().evaluate('id=>chrome.tabs.update(id,{active:true})',source['id']);active(pg);assert pg.get_by_label('派生标题',exact=True).input_value()=='B4 frozen draft intent';pg.get_by_role('button',name='保存派生标题',exact=True).click();saved(pg);close(pg);write(pg,'B4 after real freeze resume');same2=unchanged(pg)
       for account in ['B','unknown','A','B','A']:
        pg.evaluate('a=>HF.control("account",a)',account)
        if account=='unknown':pg.wait_for_timeout(500);assert pg.locator('[data-vaiwl-return]').count()==0 and 'B4 after real freeze resume' not in pg.locator('body').inner_text()
        else:
         active(pg);manage(pg);pg.get_by_label('窗口选择',exact=True).select_option('T0');v=pg.get_by_label('派生标题',exact=True).input_value();close(pg);assert (v=='B4 after real freeze resume')==(account=='A')
       pg.evaluate("HF.navigate('/hf/A/c/T1?mode=mv3')");active(pg);assert pg.evaluate('HF.getView().messages.length')==160;pg.evaluate("HF.navigate('/hf/A/c/T0?mode=mv3')");active(pg);assert pg.evaluate('HF.data().refs.length')==604 and pg.evaluate('HF.data().themes.length')==120
+      events=pg.evaluate('b4LifecycleEvents');assert any(e['event']=='freeze' and e['trusted'] for e in events) and any(e['event']=='resume' and e['trusted'] for e in events),events
       state=checks(pg).state(pg);assert state['workspaceCount']==120 and state['refCount']==604
-      return {'actualHidden':visibility,'hiddenForSeconds':21.5,'frozenForSeconds':21,'nativeAfterVisibility':same,'nativeAfterFreeze':same2,'actualHostThemes':120,'actualHostRefs':604,'longChatMessages':160,'state':state}
+      return {'actualHidden':visibility,'focusEmulationDisabled':True,'actualEvents':pg.evaluate('b4LifecycleEvents'),'hiddenForSeconds':21.5,'frozenForSeconds':21,'nativeAfterVisibility':same,'nativeAfterFreeze':same2,'actualHostThemes':120,'actualHostRefs':604,'longChatMessages':160,'state':state}
      def failure():
       pg=newpage();c=checks(pg);identity(pg)
       c.content_eval(pg,"""(()=>{const original=chrome.runtime.sendMessage.bind(chrome.runtime);globalThis.b4Failure={original,count:0};chrome.runtime.sendMessage=async m=>{if(m.type==='CHECK'||m.type==='BIND'){b4Failure.count++;throw Error('B4 injected transport disconnect');}return original(m);};return true;})()""")
@@ -130,6 +154,12 @@ def main():
    server.terminate()
    try:server.wait(timeout=5)
    except subprocess.TimeoutExpired:server.kill();server.wait()
+   if chrome_process:
+    if chrome_process.poll() is None:
+     chrome_process.terminate()
+     try:chrome_process.wait(timeout=5)
+     except subprocess.TimeoutExpired:chrome_process.kill();chrome_process.wait()
+    chrome_log.flush();chrome_log.seek(0);report['ownedChromeLog']=chrome_log.read();chrome_log.close()
    report['server']={'exit':server.returncode,'stderr':server.stderr.read()};report['endedAt']=time.time();report['counts']={s:sum(t['status']==s for t in report['tests']) for s in ['PASS','FAIL','BLOCKED']};out=Path(a.out);out.parent.mkdir(parents=True,exist_ok=True);out.write_text(json.dumps(report,ensure_ascii=False,indent=2));print(json.dumps(report['counts']))
  return 1 if report['counts']['FAIL'] else 0
 if __name__=='__main__':raise SystemExit(main())
