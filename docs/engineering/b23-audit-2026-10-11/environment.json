@@ -1,0 +1,15 @@
+{
+  "sourceHead": "cbcde633777ec7c463ddce3f6f1b888fa61f0cfe",
+  "at": "2026-10-11T04:34:38.878658+00:00",
+  "node": "v22.16.0",
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "playwright": "1.57.0",
+  "tests": [
+    {"name":"normal-loopback","status":"BLOCKED","error":"Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:36157/index.html\nCall log:\n  - navigating to \"http://127.0.0.1:36157/index.html\", waiting until \"load\"\n"},
+    {"name":"MV3-load","status":"BLOCKED","error":"CDPSession.send: Protocol error (Extensions.loadUnpacked): Loading of unpacked extensions is disabled by the administrator."}
+  ],
+  "scope": "isolated cloud, synthetic, no Mac, no live ChatGPT",
+  "chrome": {"protocolVersion":"1.3","product":"Chrome/144.0.7559.96","revision":"@d7b80622cfab91c265741194e7942eefd2d21811","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/144.0.0.0 Safari/537.36","jsVersion":"14.4.258.22"},
+  "notes": ["One loopback navigation attempt and one browser-session Extensions.loadUnpacked attempt. No policy changes.", "No native IndexedDB test ran because normal-origin navigation was blocked.", "Git HTTPS clone failed DNS; source reconstruction uses GitHub connector blobs with byte hashes, not a different code baseline."]
+}
