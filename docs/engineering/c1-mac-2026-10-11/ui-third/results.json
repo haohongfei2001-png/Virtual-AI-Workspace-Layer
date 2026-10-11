@@ -1,0 +1,230 @@
+{
+  "argv": [
+    "tests/c1/real-ui.py",
+    "--out",
+    "docs/engineering/c1-mac-2026-10-11/ui-third"
+  ],
+  "head": "b3da5f2818311ff5c6a9ebf7a51dbee6d0e5571b",
+  "tests": [
+    {
+      "id": "C1-real-screenshots-and-canonical-stress",
+      "status": "PASS",
+      "actual": {
+        "stress": {
+          "themes": 120,
+          "refs": 604,
+          "W0recent": 126,
+          "W0old": 1,
+          "W0unknown": 1
+        },
+        "expansionClicks": 10,
+        "state": {
+          "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "revision": 1,
+          "bootstrapCount": 120,
+          "workspaceCount": 120,
+          "refCount": 604,
+          "humanWorkspaces": [],
+          "identities": {
+            "T0": {
+              "id": "T0",
+              "title": "研究问题与边界",
+              "aliases": [],
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            },
+            "T1": {
+              "id": "T1",
+              "title": "整理观察材料",
+              "aliases": [],
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          },
+          "placements": [
+            {
+              "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+              "workspaceId": "W0",
+              "refId": "T0",
+              "excluded": false,
+              "order": 0,
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          ],
+          "nativeT0": {
+            "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "conversationId": "T0",
+            "nativeUrl": "http://127.0.0.1:48176/hf/A/c/T0",
+            "projectId": null,
+            "revision": 1
+          },
+          "source": {
+            "id": "fixture_v1",
+            "channel": "hf-controlled-fixture-v1",
+            "observedAt": "2026-10-11T04:00:00Z",
+            "description": "Invented test evidence. Not a production source or account witness.",
+            "trustLevel": "synthetic",
+            "revoked": false
+          }
+        }
+      }
+    },
+    {
+      "id": "C1-keyboard-local-disclosure-focus",
+      "status": "PASS",
+      "actual": {
+        "keyboardToggleTwice": true,
+        "originalExpanded": "true"
+      }
+    },
+    {
+      "id": "C1-current-reference-outside-preview",
+      "status": "PASS",
+      "actual": {
+        "currentBeyondCapacity": true
+      }
+    },
+    {
+      "id": "C1-contextual-theme-search",
+      "status": "PASS",
+      "actual": {
+        "unknownViaThemeSearch": true
+      }
+    },
+    {
+      "id": "C1-contextual-human-assets-durable",
+      "status": "PASS",
+      "actual": {
+        "reloadManualTitleIconOrder": true
+      }
+    },
+    {
+      "id": "C1-menu-keyboard-and-Escape-focus",
+      "status": "PASS",
+      "actual": {
+        "menuArrowAndEscapeFocus": true
+      }
+    },
+    {
+      "id": "C1-real-old-list-incremental-expansion",
+      "status": "FAIL",
+      "error": "{'result': {'type': 'object', 'value': {}}, 'exceptionDetails': {'exceptionId': 1, 'text': 'Uncaught (in promise) Error: {\"ok\":false,\"reason\":\"stale-after-workspace\"}', 'lineNumber': 1, 'columnNumber': 645, 'scriptId': '51', 'stackTrace': {'callFrames': [{'functionName': '', 'scriptId': '51', 'url': '', 'lineNumber': 0, 'columnNumber': 644}]}, 'exception': {'type': 'object', 'subtype': 'error', 'className': 'Error', 'description': 'Error: {\"ok\":false,\"reason\":\"stale-after-workspace\"}\\n    at <anonymous>:1:645', 'objectId': '-1485955200768293401.5.1'}}}",
+      "trace": "Traceback (most recent call last):\n  File \"/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/tests/c1/real-ui.py\", line 30, in case\n    try:report['tests'].append({'id':name,'status':'PASS','actual':fn(p)})\n                                                                   ~~^^^\n  File \"/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/tests/c1/real-ui.py\", line 63, in long_history\n    result=c.content_eval(p,\"\"\"(async()=>{const id='c1_history_'+crypto.randomUUID(),b=await chrome.runtime.sendMessage({v:1,type:'BIND',clientId:id,seq:1});if(!b.ok)throw Error(b.reason);let seq=1;const snap=await chrome.runtime.sendMessage({v:1,type:'B23_SNAPSHOT',clientId:id,seq:++seq,leaseId:b.leaseId,now:'2026-10-11T04:00:00Z',timeZone:'Asia/Shanghai',size:120});let revision=snap.snapshot.revision;const results=[];for(let t=1;t<=16;t++){const r=await chrome.runtime.sendMessage({v:1,type:'B23_COMMAND',clientId:id,seq:++seq,leaseId:b.leaseId,operationId:id+'_'+t,expectedRevision:revision,command:{type:'PLACE',workspaceId:'W0',refId:'T'+(t*100+2)}});if(!r.ok)throw Error(JSON.stringify(r));revision=r.revision;results.push(r);}return {results,revision};})()\"\"\")\n  File \"/private/tmp/vaiwl-c1-mac-F5jpDJkq/repo/tests/b23/native_ui_checks.py\", line 172, in content_eval\n    assert 'exceptionDetails' not in result, result\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: {'result': {'type': 'object', 'value': {}}, 'exceptionDetails': {'exceptionId': 1, 'text': 'Uncaught (in promise) Error: {\"ok\":false,\"reason\":\"stale-after-workspace\"}', 'lineNumber': 1, 'columnNumber': 645, 'scriptId': '51', 'stackTrace': {'callFrames': [{'functionName': '', 'scriptId': '51', 'url': '', 'lineNumber': 0, 'columnNumber': 644}]}, 'exception': {'type': 'object', 'subtype': 'error', 'className': 'Error', 'description': 'Error: {\"ok\":false,\"reason\":\"stale-after-workspace\"}\\n    at <anonymous>:1:645', 'objectId': '-1485955200768293401.5.1'}}}\n"
+    },
+    {
+      "id": "C1-scope-isolation",
+      "status": "PASS",
+      "actual": {
+        "A_B_unknown_A": true
+      }
+    }
+  ],
+  "screenshots": [
+    "desktop.png",
+    "history-expanded.png",
+    "dark.png",
+    "narrow-drawer.png",
+    "narrow.png",
+    "long-list.png",
+    "empty-segment.png",
+    "older-segment.png",
+    "manual-editor.png",
+    "C1-real-old-list-incremental-expansion-failure.png"
+  ],
+  "errors": [],
+  "environment": {
+    "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+    "node": "v26.8.2",
+    "python": "3.14.7",
+    "chrome": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/154.0.8037.99",
+      "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+      "jsVersion": "15.4.80.20"
+    },
+    "playwright": "1.63.0"
+  },
+  "scope": "synthetic-only actual MV3 / actual extension IndexedDB",
+  "startedAt": 1791731647.9698539,
+  "buildHashes": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/document-binding-broker.mjs": "5f5aecffdcd5bd4e39493565b814956c048a6ee9fb28fec559f33269424ee851",
+    "simulator/service.mjs": "cd493e0a914b719f59f70147023e9acfcc58431c105e8b0f79e0bd430d29d5d1",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "b7bc056239309217aa3acb067c11ae9e503a88322454e3f57aae74a1eee4e970",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/state.mjs": "16022c55160719f6e7c86de5b3ca71e3f594a2df8373b96525f852435c1d745c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/repository.mjs": "542d418165b5414a92015291b31c62a02e8b35413539a17ddb0c1557c5905615",
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "content.js": "c40fe41926cfcc85ef4d2454ceba2d63769699b19afa58e3b95d2050f8e04063",
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+  },
+  "sourceHashes": {
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "src/navigation/navigation.mjs": "e455bc355080e6eff7767329d1ffe76ebf3ddb023bb48aa7e418d8601192e9c6",
+    "src/navigation/styles.mjs": "70437c744b619a3138c4520f705611be436cdca8780e414e1fccfc6c1057b50a",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/document-binding-broker.mjs": "5f5aecffdcd5bd4e39493565b814956c048a6ee9fb28fec559f33269424ee851",
+    "src/data/state.mjs": "16022c55160719f6e7c86de5b3ca71e3f594a2df8373b96525f852435c1d745c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "542d418165b5414a92015291b31c62a02e8b35413539a17ddb0c1557c5905615",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "simulator/editor-style.mjs": "484b0b42047fc7a5ec940a1169bb969afa50aec750f16767899b57ea8b06cd05",
+    "simulator/index.html": "52737486a2ad0b296a8e212ab0607cb89f99b94d3f6b193793817babde01b7d4",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "simulator/control.html": "1e0eeb74c8fc277232b2edfac95787dbd62d6ae7470af982f4ca268579ffbd7f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/adapter.mjs": "701aa0ab7246707d5d26b3d03a01dd9e3c8bb5cce0a755896808899add6deacb",
+    "simulator/client.mjs": "1a2c50e5273631c11e86e03a4aea70777eec400a177d07fb3a054396b483b966",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.css": "0627ff2b3ab6d9797850caca1da4cdb91ddfdfea32318dd8e1a15f9bac23d153",
+    "simulator/persistent-seed.mjs": "b7bc056239309217aa3acb067c11ae9e503a88322454e3f57aae74a1eee4e970",
+    "simulator/build.mjs": "e95ff5f4ec632a9702ccec75d8e6596078499a3332b4daf036e479980de731cd",
+    "simulator/host.mjs": "9d4d7b9b5e847537ad4b01d31117d3d2d553a34e041f0d2c2cb8e57631ec0bca",
+    "simulator/main.mjs": "7a6788fefe2eaf5c8abcd46cfe024c76511c422888073472bbb3b8caacf9092c",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/service.mjs": "cd493e0a914b719f59f70147023e9acfcc58431c105e8b0f79e0bd430d29d5d1",
+    "simulator/editor.mjs": "6980173cecaa5ad2a11d93903a1aae4ad356dc0747e789666abf5bdb9c2fa7a9",
+    "tests/c1/real-ui.py": "a5387c5260f69c961c60200117cfc0e2b6d71d179288932a412ce13e51c3b75f"
+  },
+  "extension": {
+    "id": "jcoocjlknagkfkohkkjccgcoklmfddje"
+  },
+  "contentContexts": [
+    {
+      "id": 5,
+      "origin": "chrome-extension://jcoocjlknagkfkohkkjccgcoklmfddje",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "-3454808657647804147.2586007339910419050",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "B96FEE11379E9F6E39AF453F137CAC00"
+      }
+    }
+  ],
+  "server": {
+    "stdout": "",
+    "stderr": "",
+    "exit": -15
+  },
+  "counts": {
+    "PASS": 7,
+    "FAIL": 1
+  },
+  "endedAt": 1791731690.1628559
+}

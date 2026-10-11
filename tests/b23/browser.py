@@ -108,7 +108,10 @@ def _(p):
     p.emulate_media(reduced_motion='reduce');control(p,'variant','dark');home(p);check(p.locator('html').get_attribute('data-theme')=='dark','theme absent');check(p.locator('.workspace').is_visible(),'dark workspace missing');return {'background':p.locator('.workspace').evaluate('(n)=>getComputedStyle(n).backgroundColor')}
 @case('D28-stress-reachability','All 604 synthetic references remain findable beyond visible recent capacity')
 def _(p):
-    control(p,'stress',True);p.wait_for_timeout(120);active(p);p.get_by_label('查找主题与派生名称',exact=True).click();check(refs(p).count()==604,'stress references lost');p.get_by_label('派生查找输入',exact=True).fill('T11903');check(refs(p).count()==1,'last reference not reachable');return {'themes':120,'refs':604,'persistentRepositoryTest':False}
+    control(p,'stress',True);p.wait_for_timeout(120);active(p);p.get_by_label('查找主题与派生名称',exact=True).click();clicks=0
+    while p.get_by_label('显示更多查找结果',exact=True).count():
+        p.get_by_label('显示更多查找结果',exact=True).click();clicks+=1;check(clicks<30,'search expansion never ends')
+    check(refs(p).count()==604,'stress references lost');p.get_by_label('派生查找输入',exact=True).fill('T11903');check(refs(p).count()==1,'last reference not reachable');return {'themes':120,'refs':604,'persistentRepositoryTest':False,'searchExpansionClicks':clicks}
 @case('D29-host-rebuild-versus-extension-rebuild','Host intentionally recreates transcript, then extension reattaches without duplicates')
 def _(p):
     snapshot(p);control(p,'rebuild-main');active(p);check(not same(p),'host rebuild did not execute');check(p.locator('[data-vaiwl-return]').count()==1,'return duplicated after host rebuild');check(p.get_by_label('消息输入',exact=True).is_visible(),'new composer unavailable');return {'ownerOfRecreation':'host'}

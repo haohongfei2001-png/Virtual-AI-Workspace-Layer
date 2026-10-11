@@ -32,16 +32,17 @@ def main():
       report['tests'].append({'id':name,'status':'FAIL','error':str(e),'trace':traceback.format_exc()});shot(p,name+'-failure')
      finally:p.close();(out/'results.partial.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
     def visuals(p):
-     home(p);shot(p,'desktop');p.get_by_label('展开旧窗口 城市声音档案',exact=True).first.click();shot(p,'history-expanded');p.evaluate("HF.control('theme','dark')");p.wait_for_timeout(200);shot(p,'dark');p.evaluate("HF.control('theme','light')");p.set_viewport_size({'width':430,'height':932});p.wait_for_timeout(200);shot(p,'narrow');p.set_viewport_size({'width':1440,'height':1000});p.wait_for_timeout(200)
+     home(p);shot(p,'desktop');p.locator('.workspace').get_by_label('展开旧窗口 城市声音档案',exact=True).click();shot(p,'history-expanded');p.evaluate("HF.control('variant','dark')");p.wait_for_timeout(200);shot(p,'dark');p.evaluate("HF.control('variant','baseline')");p.set_viewport_size({'width':430,'height':932});p.wait_for_timeout(200);shot(p,'narrow-drawer');p.get_by_label('切换原生侧栏',exact=True).click();p.wait_for_timeout(200);shot(p,'narrow');p.set_viewport_size({'width':1440,'height':1000});p.wait_for_timeout(200)
      c=p.locator('.workspace [data-theme-id=W0]');clicks=0
      while c.get_by_label('显示更多近期窗口',exact=True).count():c.get_by_label('显示更多近期窗口',exact=True).click();clicks+=1;assert clicks<20
-     assert c.locator('.row').count()==127;shot(p,'long-list');p.get_by_label('较早的30日',exact=True).click();shot(p,'empty-segment');assert p.locator('.workspace').get_attribute('data-segment')=='1';p.get_by_label('较早的30日',exact=True).click();shot(p,'older-segment');assert p.locator('.workspace [data-theme-id=W0]').count()==0
+     if c.locator('.old').get_attribute('aria-expanded')=='false':c.locator('.old').click()
+     assert c.locator('.row').count()==127,{'count':c.locator('.row').count(),'expanded':c.locator('.old').get_attribute('aria-expanded')};shot(p,'long-list');p.get_by_label('较早的30日',exact=True).click();shot(p,'empty-segment');assert p.locator('.workspace').get_attribute('data-segment')=='1';p.get_by_label('较早的30日',exact=True).click();shot(p,'older-segment');assert p.locator('.workspace [data-theme-id=W0]').count()==0
      c=NativeChecks(ctx,'mv3',ext,None,None,None,None,report);s=c.state(p);assert s['workspaceCount']==120 and s['refCount']==604;assert p.evaluate('HF.data().themes.length')==120 and p.evaluate('HF.data().refs.length')==604
      return {'stress':{'themes':120,'refs':604,'W0recent':126,'W0old':1,'W0unknown':1},'expansionClicks':clicks,'state':s}
     case('C1-real-screenshots-and-canonical-stress',visuals)
     def focus(p):
-     home(p);b=p.get_by_label('展开旧窗口 城市声音档案',exact=True).first;b.focus();p.keyboard.press('Enter');assert p.evaluate("()=>{const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.workspace'));return root.shadowRoot.activeElement?.getAttribute('aria-label')==='展开旧窗口 城市声音档案'}"),'local disclosure lost keyboard focus after render'
-     p.keyboard.press('Enter');assert b.get_attribute('aria-expanded')=='false';return {'keyboardToggleTwice':True}
+     home(p);b=p.locator('.workspace').get_by_label('展开旧窗口 城市声音档案',exact=True);initial=b.get_attribute('aria-expanded');b.focus();p.keyboard.press('Enter');assert p.evaluate("()=>{const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.workspace'));return root.shadowRoot.activeElement?.getAttribute('aria-label')==='展开旧窗口 城市声音档案'}"),'local disclosure lost keyboard focus after render'
+     assert b.get_attribute('aria-expanded')!=initial;p.keyboard.press('Enter');assert b.get_attribute('aria-expanded')==initial;return {'keyboardToggleTwice':True,'originalExpanded':initial}
     case('C1-keyboard-local-disclosure-focus',focus)
     def selected(p):
      p.goto('http://127.0.0.1:48176/hf/A/c/L127?mode=mv3');active(p);assert p.locator('.themes [data-ref-id=L127][aria-current=page]').count()==1,'current member beyond preview is missing';return {'currentBeyondCapacity':True}
@@ -53,6 +54,21 @@ def main():
      def manual(p):
       home(p);p.get_by_label('主题操作 城市声音档案',exact=True).click();p.get_by_role('menuitem',name='编辑主题',exact=True).click();assert p.get_by_label('主题选择',exact=True).input_value()=='W0';p.get_by_label('主题名称',exact=True).fill('C1 人工研究');p.get_by_label('主题图标',exact=True).fill('◆');p.get_by_label('主题顺序',exact=True).fill('-1');p.get_by_role('button',name='保存主题',exact=True).click();p.locator('[data-vaiwl-owned="workspace-editor"] [role=status]').filter(has_text='已保存').wait_for();shot(p,'manual-editor');p.get_by_label('窗口选择',exact=True).select_option('T0');p.get_by_label('派生标题',exact=True).fill('C1 人工标题');p.get_by_role('button',name='保存派生标题',exact=True).click();p.locator('[data-vaiwl-owned="workspace-editor"] [role=status]').filter(has_text='已保存').wait_for();p.get_by_role('button',name='关闭管理',exact=True).click();assert p.locator('.workspace .card').first.get_attribute('data-theme-id')=='W0';assert p.locator('.workspace [data-ref-id=T0]').inner_text()=='C1 人工标题';p.reload();active(p);home(p);assert p.locator('.workspace .card').first.locator('h2').inner_text().endswith('C1 人工研究');assert p.locator('.workspace [data-ref-id=T0]').inner_text()=='C1 人工标题';return {'reloadManualTitleIconOrder':True}
      case('C1-contextual-human-assets-durable',manual)
+     def menu_focus(p):
+      home(p);trigger=p.locator('.workspace .card').first.get_by_role('button',name='主题操作 C1 人工研究',exact=True);trigger.focus();p.keyboard.press('Enter');assert p.get_by_role('menuitem',name='编辑主题',exact=True).is_visible();p.keyboard.press('ArrowDown');assert p.evaluate("()=>[...document.querySelectorAll('[data-vaiwl-owned]')].some(n=>n.shadowRoot?.activeElement?.getAttribute('role')==='menuitem'&&n.shadowRoot.activeElement.textContent==='查找此主题')");p.keyboard.press('Escape');assert p.get_by_role('menu').count()==0;assert p.evaluate("()=>[...document.querySelectorAll('[data-vaiwl-owned]')].some(n=>n.shadowRoot?.activeElement?.dataset.focusKey==='actions:W0')");return {'menuArrowAndEscapeFocus':True}
+     case('C1-menu-keyboard-and-Escape-focus',menu_focus)
+     def long_history(p):
+      c=NativeChecks(ctx,'mv3',ext,None,None,None,None,report)
+      # Real human PLACE commands, existing old evidence only. No fake IDB or events.
+      p.get_by_label('管理工作空间',exact=True).click();p.get_by_label('主题选择',exact=True).select_option('W0');placed=[]
+      for t in range(1,19):
+       if t in [5,6]:continue
+       ref='T'+str(t*100+2);p.get_by_label('窗口选择',exact=True).select_option(ref);p.get_by_role('button',name='加入窗口',exact=True).click();p.locator('[data-vaiwl-owned="workspace-editor"] [role=status]').filter(has_text='已保存').wait_for();placed.append(ref)
+      p.get_by_role('button',name='关闭管理',exact=True).click();result={'actualUIPlacements':placed}
+      p.wait_for_timeout(2500);home(p);card=p.locator('.workspace [data-theme-id=W0]');b=card.locator('.old');
+      if b.get_attribute('aria-expanded')=='false':b.click()
+      assert card.locator('.old-list .row').count()==12;card.get_by_label('显示更多旧窗口 C1 人工研究',exact=True).click();assert card.locator('.old-list .row').count()==17;assert card.locator('[data-ref-id=T3]').count()==0;shot(p,'long-history');return {'actualHumanCommands':result,'oldPreview':12,'expandedOld':17,'unknownStillSeparate':True,'state':c.state(p)}
+     case('C1-real-old-list-incremental-expansion',long_history)
      def privacy(p):
       for a in ['B','unknown','A']:
        p.evaluate('a=>HF.control("account",a)',a)
