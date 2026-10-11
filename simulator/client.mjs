@@ -44,7 +44,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   async function undo(){return queue(async()=>{
     if(!lease||!data)throw Error('binding-not-ready');const ticket=generation,url=env.location.href;
     const log=await request('B23_HISTORY');if(!current(ticket,url))throw Error('stale-client-response');if(!log.ok)throw Error(log.reason);
-    const prior=log.history.find(x=>x.actor==='human'&&!x.undoneBy&&['CREATE_WORKSPACE','UPDATE_WORKSPACE','SET_TITLE','PLACE','MOVE','SET_PREFERENCE'].includes(x.type));if(!prior)throw Error('nothing-to-undo');
+    const prior=log.history.find(x=>x.actor==='human'&&!x.undoneBy&&!x.invalidatedBy&&['CREATE_WORKSPACE','UPDATE_WORKSPACE','SET_TITLE','PLACE','MOVE','SET_PREFERENCE'].includes(x.type));if(!prior)throw Error('nothing-to-undo');
     const result=await request('B23_UNDO',{operationId:'undo_'+randomId().replaceAll('-',''),expectedRevision:data.revision,targetOperationId:prior.id});
     if(!current(ticket,url))throw Error('stale-client-response');await readSnapshot(ticket,url);if(!result.ok)throw Error(result.reason);return result;
   });}

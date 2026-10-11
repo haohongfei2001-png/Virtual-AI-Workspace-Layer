@@ -58,7 +58,7 @@ export class WorkspaceRepository {
       req.onsuccess=()=>{
         if(!check())return;
         try{
-          if(req.result){const prior=unpack(req.result);outcome=prior.fingerprint===hash?{ok:true,replayed:true,revision:prior.resultRevision,operationId}:{ok:false,reason:'operation-replay-conflict'};return;}
+          if(req.result){const prior=unpack(req.result);if(prior.invalidatedBy){outcome={ok:false,reason:'operation-invalidated-by-recovery'};return;}outcome=prior.fingerprint===hash?{ok:true,replayed:true,revision:prior.resultRevision,operationId}:{ok:false,reason:'operation-replay-conflict'};return;}
           const sr=states.get(s.key);sr.onsuccess=()=>{
             if(!check())return;
             try{
@@ -99,15 +99,29 @@ export class WorkspaceRepository {
   async history(scope){
     const s=scopeChecked(scope),db=await this.connection();return new Promise((resolve,reject)=>{
       const tx=db.transaction('b23_operations','readonly'),req=tx.objectStore('b23_operations').index('scopeKey').openCursor(s.key),logs=[];let error;
-      req.onsuccess=()=>{try{const c=req.result;if(!c)return;const p=unpack(c.value);if(p.scopeKey===s.key)logs.push({id:p.id,type:p.type,actor:p.actor,revision:p.resultRevision,undoneBy:p.undoneBy});c.continue();}catch(e){error=e;tx.abort();}};
+      req.onsuccess=()=>{try{const c=req.result;if(!c)return;const p=unpack(c.value);if(p.scopeKey===s.key)logs.push({id:p.id,type:p.type,actor:p.actor,revision:p.resultRevision,undoneBy:p.undoneBy,invalidatedBy:p.invalidatedBy??null});c.continue();}catch(e){error=e;tx.abort();}};
       tx.oncomplete=()=>resolve(logs.sort((a,b)=>b.revision-a.revision));tx.onabort=()=>reject(error??tx.error??Error('history-abort'));
     });
   }
   async saveView(scope,value,expectedRevision,{guard=()=>true,signal=null}={}){
-    const s=scopeChecked(scope);validateView(value);if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)throw Error('invalid-revision');const db=await this.connection();fence(guard,signal);
-    return new Promise(resolve=>{const tx=db.transaction('b23_views','readwrite'),store=tx.objectStore('b23_views'),r=store.get(s.key);let result;
-      r.onsuccess=()=>{try{fence(guard,signal);const old=r.result?unpack(r.result):null;if((old?.revision??0)!==expectedRevision)throw Error('view-conflict');const revision=expectedRevision+1;store.put(record(s.key,{revision,value:structuredClone(value)}));result={ok:true,revision};}catch(e){result={ok:false,reason:e.message};tx.abort();}};
-      tx.oncomplete=()=>resolve(result);tx.onabort=()=>resolve(result??{ok:false,reason:'view-write-aborted'});
+    const s=scopeChecked(scope);validateView(value);
+    if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)throw Error('invalid-revision');
+    const db=await this.connection();fence(guard,signal);
+    return new Promise(resolve=>{
+      const tx=db.transaction('b23_views','readwrite'),store=tx.objectStore('b23_views');let result;
+      const abort=reason=>{result={ok:false,reason};try{tx.abort();}catch{}};
+      const revoked=()=>abort('stale-binding');signal?.addEventListener('abort',revoked,{once:true});
+      const r=store.get(s.key);
+      r.onsuccess=()=>{try{
+        fence(guard,signal);const old=r.result?unpack(r.result):null;
+        if((old?.revision??0)!==expectedRevision)throw Error('view-conflict');
+        const revision=expectedRevision+1;
+        store.put(record(s.key,{revision,value:structuredClone(value)}));
+        fence(guard,signal);result={ok:true,revision};
+      }catch(e){abort(e.message);}};
+      tx.oncomplete=()=>{signal?.removeEventListener('abort',revoked);try{fence(guard,signal);resolve(result);}catch{resolve({ok:false,reason:'stale-after-commit',committed:true});}};
+      tx.onabort=()=>{signal?.removeEventListener('abort',revoked);resolve(result?.ok===false?result:{ok:false,reason:tx.error?.name??'view-write-aborted'});};
+      tx.onerror=()=>{};
     });
   }
   async recoveryStatus(scope){const s=scopeChecked(scope),db=await this.connection();return new Promise((resolve,reject)=>{
@@ -115,14 +129,65 @@ export class WorkspaceRepository {
     const a=tx.objectStore('b23_states').get(s.key),b=tx.objectStore('b23_checkpoints').get(s.key);a.onsuccess=()=>{stateRow=a.result};b.onsuccess=()=>{checkpoint=b.result};
     tx.oncomplete=()=>{try{validateState(unpack(stateRow),s.key);resolve({corrupt:false});}catch{try{const prior=validateState(unpack(checkpoint),s.key);resolve({corrupt:true,recoverable:true,damagedHash:digest(stateRow??null),checkpointRevision:prior.revision});}catch{resolve({corrupt:true,recoverable:false});}}};tx.onabort=()=>reject(tx.error);
   });}
-  /** Explicit corruption recovery only; never silently replaces an intact workspace. */
-  async recover(scope,{damagedHash,operationId},{guard=()=>true}={}){
-    const s=scopeChecked(scope);id(operationId);const db=await this.connection();fence(guard);
-    return new Promise(resolve=>{const tx=db.transaction(['b23_states','b23_checkpoints','b23_operations'],'readwrite'),store=tx.objectStore('b23_states'),r=store.get(s.key);let outcome;
-      const fail=e=>{outcome={ok:false,reason:e.message};tx.abort();};
-      r.onsuccess=()=>{try{fence(guard);if(digest(r.result??null)!==damagedHash)throw Error('recovery-conflict');let corrupt=false;try{validateState(unpack(r.result),s.key);}catch{corrupt=true;}if(!corrupt)throw Error('intact-state-not-replaced');
-        const p=tx.objectStore('b23_checkpoints').get(s.key);p.onsuccess=()=>{try{fence(guard);const state=structuredClone(validateState(unpack(p.result),s.key));const raw=r.result?.payload?.revision;state.revision=Math.max(state.revision,Number.isSafeInteger(raw)&&raw<1e9?raw:0)+1;store.put(record(s.key,state));const log={id:operationId,scopeKey:s.key,type:'RECOVER',actor:'human',fingerprint:damagedHash,baseRevision:state.revision-1,resultRevision:state.revision,recordedAt:this.clock(),patch:[],changedObjects:0,undoneBy:null};tx.objectStore('b23_operations').add(record(JSON.stringify([s.key,operationId]),log));outcome={ok:true,revision:state.revision};}catch(e){fail(e);}};
-      }catch(e){fail(e);}};tx.oncomplete=()=>resolve(outcome);tx.onabort=()=>resolve(outcome??{ok:false,reason:'recovery-aborted'});
+  /** Explicit lossy recovery. A checkpoint is NOT authority to reactivate evidence
+   * or replay old commands. All prior receipts become historical; sources are
+   * revoked until separately ingested new evidence supplies fresh authority.
+   */
+  async recover(scope,{damagedHash,operationId},{guard=()=>true,signal=null}={}){
+    const s=scopeChecked(scope);id(operationId);
+    const db=await this.connection();fence(guard,signal);
+    return new Promise(resolve=>{
+      const tx=db.transaction(['b23_states','b23_checkpoints','b23_operations'],'readwrite');
+      const states=tx.objectStore('b23_states'),ops=tx.objectStore('b23_operations');let outcome;
+      const abort=reason=>{outcome={ok:false,reason};try{tx.abort();}catch{}};
+      const revoked=()=>abort('stale-binding');signal?.addEventListener('abort',revoked,{once:true});
+      const check=()=>fence(guard,signal),opKey=JSON.stringify([s.key,operationId]);
+      const duplicate=ops.get(opKey);
+      duplicate.onsuccess=()=>{try{
+        check();
+        if(duplicate.result){
+          const prior=unpack(duplicate.result);
+          outcome=prior.type==='RECOVER'&&prior.fingerprint===damagedHash&&!prior.invalidatedBy
+            ?{ok:true,replayed:true,revision:prior.resultRevision,operationId}
+            :{ok:false,reason:'operation-replay-conflict'};return;
+        }
+        const r=states.get(s.key);
+        r.onsuccess=()=>{try{
+          check();if(digest(r.result??null)!==damagedHash)throw Error('recovery-conflict');
+          let corrupt=false;try{validateState(unpack(r.result),s.key);}catch{corrupt=true;}
+          if(!corrupt)throw Error('intact-state-not-replaced');
+          const p=tx.objectStore('b23_checkpoints').get(s.key);
+          p.onsuccess=()=>{try{
+            check();const state=structuredClone(validateState(unpack(p.result),s.key));
+            const checkpointRevision=state.revision,logs=[];let highWater=checkpointRevision;
+            // Never trust the corrupted state revision for CAS monotonicity.
+            // Validate the scoped journal before recovering; damaged journals
+            // require separate maintenance instead of inventing a revision.
+            const cursor=ops.index('scopeKey').openCursor(s.key);
+            cursor.onsuccess=()=>{try{
+              check();const c=cursor.result;
+              if(c){
+                const log=unpack(c.value);
+                if(log.scopeKey!==s.key||!Number.isSafeInteger(log.resultRevision)||log.resultRevision<1)throw Error('corrupt-operation-history');
+                highWater=Math.max(highWater,log.resultRevision);logs.push({key:c.key,log});c.continue();return;
+              }
+              if(highWater>=Number.MAX_SAFE_INTEGER)throw Error('revision-exhausted');
+              for(const source of Object.values(state.sources))source.revoked=true;
+              state.revision=highWater+1;validateState(state,s.key);
+              for(const old of logs){old.log.invalidatedBy=operationId;ops.put(record(old.key,old.log));}
+              check();states.put(record(s.key,state));check();
+              const log={id:operationId,scopeKey:s.key,type:'RECOVER',actor:'human',fingerprint:damagedHash,
+                baseRevision:highWater,resultRevision:state.revision,recordedAt:this.clock(),patch:[],changedObjects:0,undoneBy:null,
+                checkpointRevision,evidenceInvalidated:true};
+              ops.add(record(opKey,log));check();
+              outcome={ok:true,replayed:false,revision:state.revision,operationId,checkpointRevision,evidenceInvalidated:true};
+            }catch(e){abort(e.message);}};
+          }catch(e){abort(e.message);}};
+        }catch(e){abort(e.message);}};
+      }catch(e){abort(e.message);}};
+      tx.oncomplete=()=>{signal?.removeEventListener('abort',revoked);try{check();resolve(outcome);}catch{resolve({ok:false,reason:'stale-after-commit',committed:true});}};
+      tx.onabort=()=>{signal?.removeEventListener('abort',revoked);resolve(outcome?.ok===false?outcome:{ok:false,reason:tx.error?.name??'recovery-aborted'});};
+      tx.onerror=()=>{};
     });
   }
 }

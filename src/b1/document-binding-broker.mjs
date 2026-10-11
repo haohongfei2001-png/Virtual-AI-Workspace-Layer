@@ -100,8 +100,10 @@ export function createDocumentBindingBroker({
   async function currentAuthority(st,slot,doc,sender){
     if(!fresh(st,slot)||!sameDoc(await currentDocument(doc),doc))return false;
     const currentScope=await scopeFor(doc,sender);
-    return fresh(st,slot)&&currentScope?.key===slot.scope.key&&
-      sameDoc(await currentDocument(doc),doc);
+    const finalDocument=await currentDocument(doc);
+    // The final frame lookup also yields. Revocation during that await must win.
+    return fresh(st,slot)&&!slot.abort.signal.aborted&&currentScope?.key===slot.scope.key&&
+      sameDoc(finalDocument,doc);
   }
   const copyRecord=r=>r?{conversationId:r.conversationId,nativeUrl:r.nativeUrl,
     projectId:r.projectId,revision:r.revision}:null;
