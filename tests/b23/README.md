@@ -1,31 +1,29 @@
-# B2/B3 — 执行与证据
+# B2/B3 — 运行与验收
 
-基于 PR6 a02d653，使用同一个 B1 数据库。当前代码没有真实 ChatGPT 数据源；只在高仿真合成宿主上运行。
+基于PR #6，继续使用同一个B1数据库。完整结论见 `docs/engineering/B23_ACCEPTANCE_2026_10_11.md`：Node 118/118、Chromium DOM 49/49；真实IndexedDB/正常URL/MV3 BLOCKED。没有生产ChatGPT数据渠道。
 
-## 启动与操作
+## 启动
 
 ```sh
 node simulator/server.mjs
-# 打开 http://127.0.0.1:48173/control.html ，选择 page 或 MV3 模式。
-# 派生主题侧栏“管理工作空间”：创建、改名、图标、窗口归属、标题、顺序、撤销。
+# 浏览器打开 http://127.0.0.1:48173/control.html
 node simulator/build.mjs /tmp/vaiwl-b23-extension-new
 ```
 
-Node 22 或以上。宿主/扩展运行时代码没有外部 npm 依赖。只在另获授权的隔离 Profile 加载打包目录；不要在日常浏览器安装。MV3 包只匹配 127.0.0.1/hf，不匹配 chatgpt.com。
+Node22+。管理入口支持创建、改名、图标、派生标题、归属、排序、撤销。MV3只用于获准隔离Profile的合成宿主，不安装到日常浏览器。
 
-## 当前可执行测试
+## 云端回归
 
 ```sh
 node --test tests/b1/broker.test.mjs tests/hf/*.test.mjs tests/b23/*.test.mjs
-# Python Playwright 使用已授权的项目局部环境；本次实际版本见 ACCEPTANCE。
-python tests/b23/browser.py --browser /usr/bin/chromium --out /tmp/vaiwl-b23-dom-new
+python tests/b23/view-browser.py --browser /usr/bin/chromium --out /tmp/vaiwl-b23-dom-new
 ```
 
-第一条包含 39 项继承检查与 65 项新增检查。29 个 repository case、5 个迁移/故障 case 明确使用 `mock-idb.mjs`；其余为算法/消息/构建/服务器合同。这是一个小型测试替身，不实现完整 IDB 标准、磁盘、跨进程调度或浏览器权限，不能当作真实数据库证据。
+`view-browser.py`导入原`browser.py`的全部48项，再增加P11视图损坏场景；原套件仍可单独运行。输出目录必须新建。Python Playwright1.57.0，实际Chromium144.0.7559.96；不使用--only作为最终验收。
 
-第二条实际运行 Chromium DOM，共 38 项继承场景和 10 项新增 B2/B3 场景。opaque 测试环境明确注入 fake router、fake sender、mock IDB。业务模块与扩展共用，但保存/重建 JS service 不证明刷新或 worker 持久化。out 目录必须尚未存在。--only 可定向诊断，完整最终验收不使用过滤。
+Node仓库/迁移/故障测试使用明确的mock-IDB。DOM驱动在真实Chromium执行，但opaque页面中fake router、fake sender、mock-IDB不证明磁盘、真实浏览器历史或worker持久化。
 
-## 必须在允许的隔离浏览器补验（当前 BLOCKED）
+## 补验原生环境（本轮已尝试，BLOCKED）
 
 ```sh
 python tests/b23/real-browser.py --mode db --browser /path/to/approved/chromium --out /tmp/b23-native-db.json
@@ -33,16 +31,18 @@ python tests/b23/real-browser.py --mode page --browser /path/to/approved/chromiu
 python tests/b23/real-browser.py --mode mv3 --browser /path/to/approved/chromium --out /tmp/b23-native-mv3.json
 ```
 
-驱动创建临时 Profile/目录和仅 loopback 测试服务器，结束后关闭自己启动的进程。不会使用原 Profile，不访问 ChatGPT。测试 helper 服务器额外开放两个本地测试模块，正常 simulator/server 不开放该路径。
+驱动使用新的临时Profile及loopback服务器，不访问ChatGPT。db运行29仓库合同及2迁移检查；page验证真实刷新、新tab、账户隔离、两连接CAS；mv3检查真实worker停止事件、boot变化和持久记录。worker恢复触发为显式刷新合成页，不等于自动重连。策略拒绝exit2，断言失败exit1，无fallback或绕过策略。
 
-db 在真实 IndexedDB 运行相同 29 个仓库 case 与两项 native migration 检查；page 验证组件保留、真实刷新、新 tab、A/B、两连接 CAS；mv3 验证真实扩展、同类持久化、实际 worker stopped 事件和新 boot 标识，不能以 CDP 调用成功代替终止。worker 恢复触发是显式刷新合成页，不是自动重连认证。
+## 原始证据
 
-环境拒绝写入 BLOCKED 并退出 2，不启用 fallback、不改变管理员策略；断言失败退出 1。此驱动在当前云端只做语法检查，native 运行没有 PASS 结果。环境拒绝原始记录在 docs/engineering/b23-results/environment.json。
+先前文档引用的 `docs/engineering/b23-results/RAW_RESULTS.tar.gz` 未随旧提交交付，该引用已撤回。现在真实归档位于 `docs/engineering/b23-final-2026-10-11/raw-parts/`，是完整原始字节的gzip/base64分片，不是摘要。
 
-## 数据安全和恢复
+```sh
+python docs/engineering/b23-final-2026-10-11/decode-evidence.py --out /tmp/b23-evidence-new
+```
 
-`WorkspaceRepository` 接收 baseRepository，不能创建自己的数据库。原生数据没有写入命令。普通消息不接受 INGEST、actor 或 scope。合成来源只在内部隔离 provider 注册，不是“trusted:true”标签。
+自动核验并恢复完整Node TAP、49项DOM JSON、两项失败反例前后记录、测试helper错误、三份原生阻塞原件及命令/退出码。SOURCE_AND_RUNS.json绑定代码与bundle。已有checkpoint和旧audit保留，不累加测试数量。
 
-新数据库 version2 与旧 v1-only 代码不可假定向后打开兼容。损坏时正常写入被拒绝；维护端可调用 recoveryStatus/recover，必须检查 damagedHash，并接受可能回到上一个 checkpoint 的数据损失。不要删库或重播 bootstrap 代替恢复。详见 docs/engineering/B23_IMPLEMENTATION.md。
+## 恢复边界
 
-原始测试结果（包含失败）见 `docs/engineering/b23-results/RAW_RESULTS.tar.gz`，最终 DOM JSON 另有同目录明文副本。解压后文件名与失败账本一一对应；全部哈希见 SOURCE_MANIFEST。
+v1→v2不可假定向后兼容。恢复需damagedHash与有效checkpoint/journal，可能损失最新修改；恢复撤销来源并使旧receipt失效。视图偏好损坏只隔离/提示，不删或覆盖记录。不得用seed重播或删库假装恢复，不得将合成provider当真实认证。

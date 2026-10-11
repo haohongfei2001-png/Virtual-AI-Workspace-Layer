@@ -1,0 +1,18 @@
+{
+  "testedCodeCommit": "8041f1dbfd3350b2cbead0651b04f9da6574a5ed",
+  "restoredBaseCommit": "5997ec072f2f97c8127f41f05b9f375a786b6f10",
+  "baseMethod": "50 runtime/build/test files restored through GitHub connector; each matched the expected Git blob before the view-isolation change. Not a local git clone.",
+  "baseVerificationFileSha256": "ad8f293a71b70e63777f884d5ede62f3b690262039f9d9d0aae8ee5541bc2bec",
+  "finalChanges": {
+    "src/data/repository.mjs": {"gitBlob":"a78549901f3e71196e76d783e7ba3f26e01af1d3","sha256":"410d1764f717c11ab66868f01f5944f9bb1427ef1203ea6d9e069a520ad6f2ab"},
+    "simulator/editor.mjs": {"gitBlob":"092fa43c0e4479fd2fcb753fd51467a339455b04","sha256":"f8475d37ca613acd7c1ec38a12ac3682fb0d8ea907596a306dcfafb8337630f4"},
+    "tests/b23/view-isolation.test.mjs": {"gitBlob":"ab30b66f236204a84de33328f376980e5948e8a5","sha256":"e4051028059104aabab6e20e6288a3b4ac982dd973d02365c7dbdbfcf4cdd0f8"},
+    "tests/b23/view-browser.py": {"gitBlob":"2e81e2ebf50371c857581c35d5e09ce663320c93","sha256":"58db75a53ea0aab976ee65bdd33856af0528840975a371696e0b9b28cd09c408"}
+  },
+  "node": {"version":"22.16.0","pass":118,"fail":0,"exitCode":0,"rawBytes":23149,"rawSha256":"a14f4d60bb4875517f9cd6cb24b3ac3d40de4eb9775999ba3f3c709928fe357c","command":"node --test tests/b1/broker.test.mjs tests/hf/*.test.mjs tests/b23/*.test.mjs","evidence":"NODE_AND_MOCK_IDB"},
+  "browser": {"version":"144.0.7559.96","python":"3.13.5","playwright":"1.57.0","os":"Linux-6.18.44-x86_64-with-glibc2.41","pass":49,"fail":0,"exitCode":0,"startedAt":"2026-10-11T11:55:47Z","endedAt":"2026-10-11T11:56:49Z","bundleSha256":"3ab2baf18e7e7cf170233e3a7b204a70e41b6a5d1dc5b1a0e2d4e892e09b4c32","rawSha256":"c8d434f49170d6425eb4b911abe72e9b169bb2067235badaa016cf785df09a95","command":"python tests/b23/view-browser.py --browser /usr/bin/chromium --out /mnt/data/vaiwl-final/dom-postfix","evidence":"B_BROWSER_DOM_OPAQUE_FAKE_ROUTER_FAKE_SENDER_MOCK_IDB"},
+  "nativeAttempts": {"source":"5997ec072f2f97c8127f41f05b9f375a786b6f10","eachAttemptedOnce":true,"db":"BLOCKED_BEFORE_APP_LOAD","page":"BLOCKED_BEFORE_APP_LOAD","mv3":"BLOCKED_BEFORE_EXTENSION_LOAD","postFixNativePassClaim":false},
+  "rawPartsVerification": "All eleven final base64 part blobs match the local raw encoding; assembled raw payload SHA256 checked by decode-evidence.py. Transfer mismatches were corrected before the tree was committed.",
+  "realChatGPT":"NOT_RUN",
+  "verdict":"LIMITED"
+}
