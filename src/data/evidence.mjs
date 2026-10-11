@@ -2,17 +2,21 @@ import { instant, segmentFor, localDay } from '../navigation/projection.mjs';
 /** All evidence here has passed the repository's privileged ingestion boundary. */
 export function evidenceTime(refId, state, now) {
   const clock=instant(now);if(clock===null)throw Error('invalid-clock');
-  const times=new Map(), conflicts=new Set();let unknown=false;
+  const times=new Map(), conflicts=new Set(), uncertain=new Set();let unknown=false;
   for(const e of Object.values(state.events)){
     const source=state.sources[e.sourceId];
     if(e.conversationId!==refId||e.revoked||!source||source.revoked)continue;
     const key=JSON.stringify([e.branchId,e.messageId]),time=instant(e.sentAt);
-    if(e.role!=='user'||e.kind!=='new-send'||e.sendState!=='committed'||!['millisecond','second'].includes(e.precision)||time===null||time>clock){unknown=true;continue;}
+    if(e.role!=='user'||e.kind!=='new-send'||e.sendState!=='committed'||!['millisecond','second'].includes(e.precision)||time===null||time>clock){unknown=true;uncertain.add(key);continue;}
     if(times.has(key)&&times.get(key)!==time)conflicts.add(key);else times.set(key,time);
   }
-  // A conflicting or imprecise committed send might be newer. Do not pick a convenient winner.
-  if(conflicts.size||unknown)return {sentAt:null,status:conflicts.size?'CONFLICT':'UNKNOWN',conflicts:[...conflicts]};
-  return times.size?{sentAt:new Date(Math.max(...times.values())).toISOString(),status:'KNOWN',conflicts:[]}:{sentAt:null,status:'UNKNOWN',conflicts:[]};
+  // Exact latest time and a lower-bound positive proof are distinct. An
+  // unrelated undated event cannot erase an uncontested current-period send;
+  // contradictory observations of the SAME message are never cherry-picked.
+  const positives=[...times].filter(([key])=>!conflicts.has(key)&&!uncertain.has(key)).map(([,time])=>time);
+  const positiveSentAt=positives.length?new Date(Math.max(...positives)).toISOString():null;
+  if(conflicts.size||unknown)return {sentAt:null,status:conflicts.size?'CONFLICT':'UNKNOWN',conflicts:[...conflicts],positiveSentAt};
+  return {sentAt:positiveSentAt,status:positiveSentAt?'KNOWN':'UNKNOWN',conflicts:[],positiveSentAt};
 }
 export function coverageThrough(refId,state,from,now){
   const start=instant(from),end=instant(now);if(start===null||end===null||start>end)return false;
@@ -41,10 +45,11 @@ export function dataProjection(state,now,timeZone){
   const themes=Object.values(state.workspaces).sort((a,b)=>a.order-b.order||a.id.localeCompare(b.id)).map(w=>{
     const members=Object.values(state.placements).filter(p=>p.workspaceId===w.id&&!p.excluded).sort((a,b)=>a.order-b.order||a.refId.localeCompare(b.refId)).map(p=>byId.get(p.refId)).filter(Boolean);
     const known=members.map(r=>r.time.sentAt).filter(Boolean).sort(),latest=known.at(-1)??null;
-    let segment=latest?segmentFor(latest,now,timeZone):null;
-    if(segment!==0&&(!latest||!members.every(r=>r.time.status!=='CONFLICT'&&coverageThrough(r.id,state,latest,now))))segment=null;
+    const positiveCurrent=members.some(r=>r.time.positiveSentAt&&segmentFor(r.time.positiveSentAt,now,timeZone)===0);
+    let segment=positiveCurrent?0:latest?segmentFor(latest,now,timeZone):null;
+    if(segment!==0&&(!latest||!members.every(r=>r.time.status==='KNOWN'&&coverageThrough(r.id,state,latest,now))))segment=null;
     const current=[],old=[],unknown=[];
-    for(const r of members){const own=r.time.sentAt?segmentFor(r.time.sentAt,now,timeZone):null;
+    for(const r of members){const own=r.time.positiveSentAt&&segmentFor(r.time.positiveSentAt,now,timeZone)===0?0:r.time.sentAt?segmentFor(r.time.sentAt,now,timeZone):null;
       if(segment===null||own===null)unknown.push(r);
       else if(own===segment)current.push(r);
       else if(own>segment&&coverageThrough(r.id,state,r.time.sentAt,now))old.push(r);
