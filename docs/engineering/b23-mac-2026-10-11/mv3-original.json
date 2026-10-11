@@ -1,0 +1,97 @@
+{
+  "level": "REAL_BROWSER_MV3_SYNTHETIC_ONLY",
+  "startedAt": "2026-10-11T13:26:13Z",
+  "tests": [
+    {
+      "id": "native-components-after-write",
+      "status": "PASS",
+      "actual": "Original input/transcript identity and draft retained; actual IndexedDB service"
+    },
+    {
+      "id": "actual-page-reload-persistence",
+      "status": "PASS",
+      "actual": "T0 human title retained"
+    },
+    {
+      "id": "new-tab-persistence",
+      "status": "PASS",
+      "actual": "Same profile/origin database, new tab"
+    },
+    {
+      "id": "actual-A-B-A-isolation",
+      "status": "PASS",
+      "actual": "B cannot see A derived title"
+    },
+    {
+      "id": "actual-worker-stop-restart-persistence",
+      "status": "PASS",
+      "actual": {
+        "before": {
+          "ok": true,
+          "boot": "46fec186-dbbb-4bdc-b521-2501b26b7ca9",
+          "persistedRef": true,
+          "revision": 1,
+          "workspaceRevision": 2,
+          "workspaceCount": 120,
+          "syntheticSenderUrl": "http://127.0.0.1:48174/hf/A/c/T0?mode=mv3",
+          "syntheticSenderDoc": "EACEC19BF0F55DC9AC22EE12C37458C3",
+          "syntheticFrameUrl": "http://127.0.0.1:48174/hf/A/c/T0?mode=mv3",
+          "syntheticFrameDoc": "EACEC19BF0F55DC9AC22EE12C37458C3"
+        },
+        "after": {
+          "ok": true,
+          "boot": "91aaee5a-a142-4a90-848a-a2116c491ca7",
+          "persistedRef": true,
+          "revision": 1,
+          "workspaceRevision": 2,
+          "workspaceCount": 120,
+          "syntheticSenderUrl": "http://127.0.0.1:48174/hf/A/c/T0?mode=mv3",
+          "syntheticSenderDoc": "5CB389E4D272F77A140208B426F69B44",
+          "syntheticFrameUrl": "http://127.0.0.1:48174/hf/A/c/T0?mode=mv3",
+          "syntheticFrameDoc": "5CB389E4D272F77A140208B426F69B44"
+        },
+        "trigger": "explicit synthetic page reload; NOT automatic recovery"
+      }
+    },
+    {
+      "id": "unknown-scope-fail-closed",
+      "status": "PASS",
+      "actual": "No derived workspace rendered"
+    }
+  ],
+  "fallback": false,
+  "realChatGPT": "NOT_RUN",
+  "buildHashes": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/document-binding-broker.mjs": "430b490a401c6561d913c6af727c2bbc296e35cc59947efce16d96975a40269d",
+    "simulator/service.mjs": "9f0fa02e926b151a5335114ef37fb67c0487ab405a3d586eda31be638b37c2d7",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "b7bc056239309217aa3acb067c11ae9e503a88322454e3f57aae74a1eee4e970",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/state.mjs": "16022c55160719f6e7c86de5b3ca71e3f594a2df8373b96525f852435c1d745c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/repository.mjs": "410d1764f717c11ab66868f01f5944f9bb1427ef1203ea6d9e069a520ad6f2ab",
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "content.js": "8a6033790164fff6030e7c31692cdbf55fff228721cc9652a1dfcdd25da1f9a2",
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+  },
+  "environment": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/154.0.8037.99",
+    "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "jsVersion": "15.4.80.20"
+  },
+  "extension": {
+    "id": "aaaipkapljifnpeboebgblkimgifgbml"
+  },
+  "endedAt": "2026-10-11T13:26:17Z",
+  "counts": {
+    "PASS": 6,
+    "FAIL": 0,
+    "BLOCKED": 0
+  }
+}

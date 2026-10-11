@@ -1,0 +1,261 @@
+{
+  "level": "REAL_BROWSER_DB_SYNTHETIC_ONLY",
+  "startedAt": "2026-10-11T13:29:22Z",
+  "tests": [
+    {
+      "id": "native-IDB-contracts",
+      "status": "PASS",
+      "actual": {
+        "level": "NATIVE_BROWSER_INDEXEDDB_SYNTHETIC",
+        "origin": "http://127.0.0.1:48173",
+        "startedAt": "2026-10-11T13:29:23.220Z",
+        "results": [
+          {
+            "name": "DB01-same-B1-database-and-canonical-refs",
+            "status": "PASS"
+          },
+          {
+            "name": "DB02-create-update-stable-id-and-reopen",
+            "status": "PASS"
+          },
+          {
+            "name": "DB03-derived-title-alias-and-native-immutable",
+            "status": "PASS"
+          },
+          {
+            "name": "DB04-place-move-exclusion-and-targeted-undo",
+            "status": "PASS"
+          },
+          {
+            "name": "DB05-undo-refuses-overwriting-later-human-edit",
+            "status": "PASS"
+          },
+          {
+            "name": "DB06-undo-does-not-restore-whole-snapshot",
+            "status": "PASS"
+          },
+          {
+            "name": "DB07-two-connections-CAS-one-winner",
+            "status": "PASS"
+          },
+          {
+            "name": "DB08-operation-idempotence-does-not-return-stale-snapshot",
+            "status": "PASS"
+          },
+          {
+            "name": "DB09-scope-A-B-same-native-id-isolation",
+            "status": "PASS"
+          },
+          {
+            "name": "DB10-unknown-scope-never-opens-workspace",
+            "status": "PASS"
+          },
+          {
+            "name": "DB11-human-lock-and-exclusion-protect-against-candidate",
+            "status": "PASS"
+          },
+          {
+            "name": "DB12-stale-candidate-global-revision-rejected",
+            "status": "PASS"
+          },
+          {
+            "name": "DB13-revoke-source-reprojects-without-erasing-intent",
+            "status": "PASS"
+          },
+          {
+            "name": "DB14-coverage-stales-and-does-not-fabricate-activity",
+            "status": "PASS"
+          },
+          {
+            "name": "DB15-old-window-stays-parent-not-duplicated",
+            "status": "PASS"
+          },
+          {
+            "name": "DB16-label-is-not-evidence-authority",
+            "status": "PASS"
+          },
+          {
+            "name": "DB17-guard-denial-and-aborted-write",
+            "status": "PASS"
+          },
+          {
+            "name": "DB18-view-preferences-reopen-and-CAS",
+            "status": "PASS"
+          },
+          {
+            "name": "DB19-corruption-refused-with-explicit-checkpoint-recovery",
+            "status": "PASS"
+          },
+          {
+            "name": "DB20-corrupt-state-cannot-be-overwritten-by-normal-command",
+            "status": "PASS"
+          },
+          {
+            "name": "DB21-bootstrap-replay-never-resets-human-data",
+            "status": "PASS"
+          },
+          {
+            "name": "DB22-unsupported-official-format-not-guessed",
+            "status": "PASS"
+          },
+          {
+            "name": "DB23-hash-valid-but-schema-invalid-refused",
+            "status": "PASS"
+          },
+          {
+            "name": "DB24-pressure-120-themes-604-refs-128-members",
+            "status": "PASS"
+          },
+          {
+            "name": "DB25-ingest-new-send-activates-old-theme-and-retains-old-children",
+            "status": "PASS"
+          },
+          {
+            "name": "DB26-conflicting-provenance-and-revocation-recomputes",
+            "status": "PASS"
+          },
+          {
+            "name": "DB27-native-source-conflict-is-atomic",
+            "status": "PASS"
+          },
+          {
+            "name": "DB28-workspace-history-aliases-persist",
+            "status": "PASS"
+          },
+          {
+            "name": "DB29-corrupt-B-operation-does-not-poison-A-history",
+            "status": "PASS"
+          },
+          {
+            "name": "NATIVE-command-revoke-after-put-rolls-back",
+            "status": "PASS",
+            "actual": {
+              "ok": false,
+              "reason": "stale-binding"
+            }
+          },
+          {
+            "name": "NATIVE-command-revoke-after-commit-does-not-report-success",
+            "status": "PASS",
+            "actual": {
+              "ok": false,
+              "reason": "stale-after-commit",
+              "committed": true
+            }
+          },
+          {
+            "name": "NATIVE-view-revoke-after-put-rolls-back",
+            "status": "PASS",
+            "actual": {
+              "ok": false,
+              "reason": "stale-binding"
+            }
+          },
+          {
+            "name": "NATIVE-actual-transaction-abort-never-reports-success",
+            "status": "PASS",
+            "actual": {
+              "ok": false,
+              "reason": "write-aborted"
+            }
+          },
+          {
+            "name": "NATIVE-corrupt-view-checksum-isolated",
+            "status": "PASS",
+            "actual": {
+              "diagnostic": {
+                "view": "CORRUPT_VIEW"
+              },
+              "refs": 604,
+              "groups": 120,
+              "damagedRecordPreserved": true
+            }
+          },
+          {
+            "name": "NATIVE-corrupt-view-schema-isolated",
+            "status": "PASS",
+            "actual": {
+              "diagnostic": {
+                "view": "CORRUPT_VIEW"
+              },
+              "refs": 604,
+              "groups": 120,
+              "damagedRecordPreserved": true
+            }
+          },
+          {
+            "name": "NATIVE-recovery-does-not-resurrect-evidence-or-receipts",
+            "status": "PASS",
+            "actual": {
+              "recovery": {
+                "ok": true,
+                "replayed": false,
+                "revision": 5,
+                "operationId": "native_recovery",
+                "checkpointRevision": 3,
+                "evidenceInvalidated": true
+              },
+              "replay": {
+                "ok": false,
+                "reason": "operation-invalidated-by-recovery"
+              },
+              "highWater": 4,
+              "allEvidenceInactive": true
+            }
+          },
+          {
+            "name": "NATIVE-recovery-revoke-after-put-remains-corrupt",
+            "status": "PASS",
+            "actual": {
+              "ok": false,
+              "reason": "stale-binding"
+            }
+          },
+          {
+            "name": "NATIVE-v1-upgrade-preserves-ref",
+            "status": "PASS"
+          },
+          {
+            "name": "NATIVE-invalid-v1-upgrade-rollback",
+            "status": "PASS"
+          }
+        ],
+        "endedAt": "2026-10-11T13:29:32.168Z",
+        "pass": 39,
+        "fail": 0
+      }
+    }
+  ],
+  "fallback": false,
+  "realChatGPT": "NOT_RUN",
+  "buildHashes": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/document-binding-broker.mjs": "430b490a401c6561d913c6af727c2bbc296e35cc59947efce16d96975a40269d",
+    "simulator/service.mjs": "9f0fa02e926b151a5335114ef37fb67c0487ab405a3d586eda31be638b37c2d7",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "b7bc056239309217aa3acb067c11ae9e503a88322454e3f57aae74a1eee4e970",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/state.mjs": "16022c55160719f6e7c86de5b3ca71e3f594a2df8373b96525f852435c1d745c",
+    "src/data/evidence.mjs": "decb440df2664165ac041ab09ca320f1e25d6695cd83d20c3bfacbc8f2fc1ffc",
+    "src/data/repository.mjs": "542d418165b5414a92015291b31c62a02e8b35413539a17ddb0c1557c5905615",
+    "src/navigation/projection.mjs": "ccc6f4be45197b685cda056c76c2d0ef4356b7320dde43260216666b6fb1d0ac",
+    "content.js": "8a6033790164fff6030e7c31692cdbf55fff228721cc9652a1dfcdd25da1f9a2",
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+  },
+  "environment": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/154.0.8037.99",
+    "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "jsVersion": "15.4.80.20"
+  },
+  "endedAt": "2026-10-11T13:29:32Z",
+  "counts": {
+    "PASS": 1,
+    "FAIL": 0,
+    "BLOCKED": 0
+  }
+}

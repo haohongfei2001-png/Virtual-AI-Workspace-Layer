@@ -7,14 +7,20 @@ chrome.runtime.onMessage.addListener((message,sender,reply)=>{
   // Never forward this bridge into a real ChatGPT adapter.
   if(message?.type==='HF_TEST_WORKER_PROBE' && sender?.id===chrome.runtime.id &&
      sender?.frameId===0 && sender?.documentLifecycle==='active' && syntheticURL(sender?.url)){
-    const info=routeInfo(sender.url);
-    if(!info || !['A','B'].includes(info.account)){reply({ok:false});return false;}
-    Promise.all([service.repository.get(scopeOf(info.account),'T0'),
-      chrome.webNavigation.getFrame({tabId:sender.tab.id,frameId:0})])
-      .then(([record,frame])=>reply({ok:true,boot:hfWorkerBoot,persistedRef:!!record,revision:record?.revision??null,
+    (async()=>{
+      const frame=await chrome.webNavigation.getFrame({tabId:sender.tab.id,frameId:0});
+      if(!frame||frame.documentId!==sender.documentId||!syntheticURL(frame.url)||
+         new URL(frame.url).origin!==new URL(sender.url).origin)throw Error('stale-probe');
+      const info=routeInfo(frame.url);if(!info||!['A','B'].includes(info.account))throw Error('unknown-scope');
+      const scope=scopeOf(info.account),record=await service.repository.get(scope,'T0');
+      const workspace=await service.workspaces.read(scope);
+      const current=await chrome.webNavigation.getFrame({tabId:sender.tab.id,frameId:0});
+      if(current?.documentId!==frame.documentId||current?.url!==frame.url)throw Error('stale-probe');
+      reply({ok:true,boot:hfWorkerBoot,persistedRef:!!record,revision:record?.revision??null,
+        workspaceRevision:workspace.state.revision,workspaceCount:Object.keys(workspace.state.workspaces).length,
         syntheticSenderUrl:sender.url,syntheticSenderDoc:sender.documentId,
-        syntheticFrameUrl:frame?.url,syntheticFrameDoc:frame?.documentId}))
-      .catch(()=>reply({ok:false}));
+        syntheticFrameUrl:frame.url,syntheticFrameDoc:frame.documentId});
+    })().catch(()=>reply({ok:false}));
     return true;
   }
   service.broker.handle(message,sender).then(reply,()=>reply({ok:false,reason:'service-failed'}));return true;

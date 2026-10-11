@@ -1,23 +1,33 @@
 import { ScopeRepository } from '../src/b1/scope-repository.mjs';
 import { createDocumentBindingBroker } from '../src/b1/document-binding-broker.mjs';
-import { dataset, routeInfo, syntheticURL, scopeOf } from './data.mjs';
-/** Privileged test service. Real MV3 injects real Chrome getFrame; page harness labels its fake sender. */
-export function createFixtureService({indexedDB,extensionId,getFrame}) {
-  const repository=new ScopeRepository({indexedDB,databaseName:'vaiwl-hf-synthetic-v1'}),seeds=new Map(),origins=new Map();
-  let readDelay=0;
+import { WorkspaceRepository } from '../src/data/repository.mjs';
+import { routeInfo, syntheticURL, scopeOf } from './data.mjs';
+import { persistentSeed, syntheticEvidenceGate } from './persistent-seed.mjs';
+/** Same B1 database in v2. Only extension origin is durable product storage.
+ * Page-mode uses the same code in its labelled host-origin test harness.
+ */
+export function createFixtureService({indexedDB,extensionId,getFrame,makeId}){
+  const repository=new ScopeRepository({indexedDB,databaseName:'vaiwl-hf-synthetic-v1'});
+  const workspaces=new WorkspaceRepository({baseRepository:repository,evidenceGate:syntheticEvidenceGate});
+  let readDelay=0;const pending=new Map(),initialized=new Set();
   async function seed(scope,origin){
-    const key=scope.accountId+':'+origin;origins.set(scope.accountId,origin);
-    if(!seeds.has(key))seeds.set(key,(async()=>{
-      for(const r of dataset(scope.accountId,origin,120).refs){const result=await repository.upsert({scope,operationId:'seed-'+scope.accountId+'-'+r.id,expectedRevision:0,ref:{conversationId:r.id,nativeUrl:r.nativeUrl,projectId:r.projectId}});if(!result.ok)throw Error(result.reason);}
-    })().catch(e=>{seeds.delete(key);throw e;}));return seeds.get(key);
+    // This map only coalesces in-flight work. The durable marker is an IDB receipt.
+    const key=scope.accountId+':'+origin;if(initialized.has(key))return;
+    if(!pending.has(key))pending.set(key,(async()=>{const existing=await workspaces.read(scope);if(existing.state.revision){initialized.add(key);return;}
+      const result=await workspaces.initialize(scope,persistentSeed(scope,origin));if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);initialized.add(key);
+    })().finally(()=>pending.delete(key)));return pending.get(key);
   }
-  const broker=createDocumentBindingBroker({extensionId,getFrame,allowedURL:syntheticURL,leaseMs:20000,
+  const wait=async()=>{if(readDelay)await new Promise(r=>setTimeout(r,readDelay));};
+  const broker=createDocumentBindingBroker({extensionId,getFrame,makeId,allowedURL:syntheticURL,leaseMs:20000,
     resolveScope:async({currentFrame})=>{const info=routeInfo(currentFrame.url);if(!info||info.account==='unknown')return null;const scope=scopeOf(info.account);await seed(scope,info.origin);return scope;},
-    repository:{get:(...a)=>repository.get(...a),upsert:x=>repository.upsert(x),list:async scope=>{
-      if(readDelay)await new Promise(r=>setTimeout(r,readDelay));
-      // Enumerate the fixed synthetic manifest through B1 get(); no second data store or truncated 50-item list.
-      return (await Promise.all(dataset(scope.accountId,origins.get(scope.accountId),120).refs.map(r=>repository.get(scope,r.id)))).filter(Boolean);
-    }}
+    repository:{get:(...a)=>repository.get(...a),upsert:x=>repository.upsert(x),list:async scope=>{await wait();const {state}=await workspaces.read(scope);return Object.values(state.refs).map(r=>({conversationId:r.id,nativeUrl:r.nativeUrl,projectId:r.projectId,revision:1}));}},
+    workspaceRepository:{
+      snapshot:async(scope,now,timeZone,options,size=8)=>{await wait();const value=await workspaces.snapshot(scope,now,timeZone,options);
+        // Visibility scale is a fixture control, never a deletion or truncated DB write.
+        const visible=w=>w.owner!=='bootstrap'||w.seedIndex<size;
+        value.themes=value.themes.filter(visible);value.groups=value.groups.filter(visible);return value;},
+      command:(...args)=>workspaces.command(...args),undo:(...args)=>workspaces.undo(...args),history:(...args)=>workspaces.history(...args),saveView:(...args)=>workspaces.saveView(...args)
+    }
   });
-  return {broker,repository,setDelay:ms=>readDelay=Math.min(3000,Math.max(0,Number(ms)||0)),close:()=>repository.close()};
+  return {broker,repository,workspaces,setDelay:ms=>readDelay=Math.min(3000,Math.max(0,Number(ms)||0)),close:()=>repository.close()};
 }

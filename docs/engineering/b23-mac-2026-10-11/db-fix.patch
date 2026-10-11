@@ -1,0 +1,38 @@
+diff --git a/src/data/repository.mjs b/src/data/repository.mjs
+index a785499..698f395 100644
+--- a/src/data/repository.mjs
++++ b/src/data/repository.mjs
+@@ -51,7 +51,7 @@ export class WorkspaceRepository {
+     const hash=digest(params.fingerprint),db=await this.connection();fence(guard,signal);
+     return new Promise(resolve=>{
+       const tx=db.transaction(['b23_states','b23_operations','b23_checkpoints','refs'],'readwrite');let outcome=null;
+-      const abort=reason=>{outcome={ok:false,reason};try{tx.abort();}catch{}};
++      const abort=reason=>{if(outcome?.ok!==false)outcome={ok:false,reason};try{tx.abort();}catch{}};
+       const check=()=>{try{fence(guard,signal);return true;}catch(e){abort(e.message);return false;}};
+       const onRevoke=()=>abort('stale-binding');signal?.addEventListener('abort',onRevoke,{once:true});
+       const states=tx.objectStore('b23_states'),ops=tx.objectStore('b23_operations'),opKey=JSON.stringify([s.key,operationId]);
+@@ -170,7 +170,7 @@ export class WorkspaceRepository {
+               if(c){
+                 const log=unpack(c.value);
+                 if(log.scopeKey!==s.key||!Number.isSafeInteger(log.resultRevision)||log.resultRevision<1)throw Error('corrupt-operation-history');
+-                highWater=Math.max(highWater,log.resultRevision);logs.push({key:c.key,log});c.continue();return;
++                highWater=Math.max(highWater,log.resultRevision);logs.push({key:c.primaryKey,log});c.continue();return;
+               }
+               if(highWater>=Number.MAX_SAFE_INTEGER)throw Error('revision-exhausted');
+               for(const source of Object.values(state.sources))source.revoked=true;
+diff --git a/tests/b23/mock-idb.mjs b/tests/b23/mock-idb.mjs
+index acae0b0..6abe438 100644
+--- a/tests/b23/mock-idb.mjs
++++ b/tests/b23/mock-idb.mjs
+@@ -36,9 +36,9 @@ class Store {
+     const k=v[this.keyPath];if(k===undefined)throw error('DataError');if(unique&&this.data.rows.has(String(k)))throw error('ConstraintError');this.data.rows.set(String(k),v);return k;});}
+   delete(key){return this.tx.enqueue(()=>this.data.rows.delete(String(key)));}
+   count(){return this.tx.enqueue(()=>this.data.rows.size);}
+-  index(name){const field=this.data.indexes.get(name);if(!field)throw error('NotFoundError');return {openCursor:range=>this.cursor(row=>field.split('.').reduce((v,k)=>v?.[k],row)===(range?.value??range))};}
++  index(name){const field=this.data.indexes.get(name);if(!field)throw error('NotFoundError');const indexKey=row=>field.split('.').reduce((v,k)=>v?.[k],row);return {openCursor:range=>this.cursor(row=>indexKey(row)===(range?.value??range),indexKey)};}
+   openCursor(){return this.cursor(()=>true);}
+-  cursor(filter){let rows,position=0,req;const next=()=>{rows??=[...this.data.rows.values()].filter(filter).sort((a,b)=>String(a[this.keyPath]).localeCompare(String(b[this.keyPath])));if(position>=rows.length)return null;const row=rows[position++];return {key:row[this.keyPath],value:copy(row),continue:()=>{if(this.tx.done)throw error('TransactionInactiveError');this.tx.tasks.push({req,action:next});}};};req=this.tx.enqueue(next);return req;}
++  cursor(filter,keyOf=row=>row[this.keyPath]){let rows,position=0,req;const next=()=>{rows??=[...this.data.rows.values()].filter(filter).sort((a,b)=>String(a[this.keyPath]).localeCompare(String(b[this.keyPath])));if(position>=rows.length)return null;const row=rows[position++];return {key:keyOf(row),primaryKey:row[this.keyPath],value:copy(row),continue:()=>{if(this.tx.done)throw error('TransactionInactiveError');this.tx.tasks.push({req,action:next});}};};req=this.tx.enqueue(next);return req;}
+ }
+ class Database {
+   constructor(factory,meta){this.factory=factory;this.meta=meta;this.closed=false;meta.handles.add(this);}

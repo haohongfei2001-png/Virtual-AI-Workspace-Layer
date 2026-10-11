@@ -1,0 +1,14 @@
+{
+  "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428",
+  "node": "v26.8.2",
+  "python": "Python 3.14.7",
+  "playwright": "1.63.0",
+  "chrome": "Google Chrome 154.0.8037.99",
+  "chromePath": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "initialHead": "cd9066b16cd76618b639779c7096cb514f015dd8",
+  "base": "a02d65388f0a5d09833ac8a7091a45dea1720f82",
+  "checkout": "/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/checkout",
+  "sourceArchiveSHA256": "8f53fbd36e345bbc7fe340485bb4367df0601936e4fb074730fbcfd50493c2f3",
+  "isolation": "Fresh mktemp profile per run, headless only, owned loopback server, no daily profile / real account / paid service / Actions",
+  "review": "Driver builds only project sources in temp directory, serves allowed synthetic paths, reads only synthetic IDB, closes context, terminates owned server and removes its temp directory. Sandbox launch SIGABRT retained; authorized host execution succeeds."
+}

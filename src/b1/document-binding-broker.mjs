@@ -1,3 +1,4 @@
+import { HUMAN_COMMANDS } from '../data/state.mjs';
 import { isRecord, tokenOK, normalizedScope } from './identity.mjs';
 
 /** Trust Chrome's sender+current frame for document identity, and a separately
@@ -17,6 +18,11 @@ const requestOK=m=>{
     case 'CHECK':case 'LIST_REFS':return exact(m,[...base,'leaseId'])&&tokenOK(m.leaseId);
     case 'GET_REF':return exact(m,[...base,'leaseId','conversationId'])&&
       tokenOK(m.leaseId)&&tokenOK(m.conversationId);
+    case 'B23_SNAPSHOT':return exact(m,[...base,'leaseId','now','timeZone','size'])&&tokenOK(m.leaseId)&&typeof m.now==='string'&&typeof m.timeZone==='string'&&m.timeZone.length<100&&Number.isInteger(m.size)&&m.size>=1&&m.size<=120;
+    case 'B23_COMMAND':return exact(m,[...base,'leaseId','operationId','expectedRevision','command'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0&&isRecord(m.command)&&HUMAN_COMMANDS.includes(m.command.type)&&JSON.stringify(m.command).length<10000;
+    case 'B23_UNDO':return exact(m,[...base,'leaseId','operationId','expectedRevision','targetOperationId'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&tokenOK(m.targetOperationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0;
+    case 'B23_HISTORY':return exact(m,[...base,'leaseId'])&&tokenOK(m.leaseId);
+    case 'B23_SAVE_VIEW':return exact(m,[...base,'leaseId','value','expectedRevision'])&&tokenOK(m.leaseId)&&isRecord(m.value)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0&&JSON.stringify(m.value).length<1000000;
     case 'UPSERT_REF':return exact(m,[...base,'leaseId','conversationId','operationId','expectedRevision'])&&
       tokenOK(m.leaseId)&&tokenOK(m.conversationId)&&tokenOK(m.operationId)&&
       Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0;
@@ -50,7 +56,7 @@ export const fixtureScopeResolver=async ({currentFrame})=>{
 
 export function createDocumentBindingBroker({
  extensionId,getFrame,resolveScope,repository,now=Date.now,
- makeId=()=>crypto.randomUUID(),leaseMs=20000,maxTabs=128,allowedURL=fixtureURL
+ makeId=()=>crypto.randomUUID(),leaseMs=20000,maxTabs=128,allowedURL=fixtureURL,workspaceRepository=null
 }={}){
   if(!tokenOK(extensionId)||typeof getFrame!=='function'||typeof resolveScope!=='function'||
     !repository||typeof now!=='function'||typeof makeId!=='function'||
@@ -65,9 +71,9 @@ export function createDocumentBindingBroker({
   function invalidate({tabId,frameId=0}={}){
     if(!Number.isSafeInteger(tabId)||frameId!==0)return false;
     const k=tabId+':0',s=states.get(k);if(!s)return false;
-    s.epoch++;s.slot=null;return true;
+    s.slot?.abort?.abort();s.epoch++;s.slot=null;return true;
   }
-  function tabClosed(tabId){states.delete(tabId+':0');}
+  function tabClosed(tabId){states.get(tabId+':0')?.slot?.abort?.abort();states.delete(tabId+':0');}
   async function currentDocument(doc){
     try{
       const f=await getFrame({tabId:doc.tabId,frameId:doc.frameId});
@@ -94,8 +100,10 @@ export function createDocumentBindingBroker({
   async function currentAuthority(st,slot,doc,sender){
     if(!fresh(st,slot)||!sameDoc(await currentDocument(doc),doc))return false;
     const currentScope=await scopeFor(doc,sender);
-    return fresh(st,slot)&&currentScope?.key===slot.scope.key&&
-      sameDoc(await currentDocument(doc),doc);
+    const finalDocument=await currentDocument(doc);
+    // The final frame lookup also yields. Revocation during that await must win.
+    return fresh(st,slot)&&!slot.abort.signal.aborted&&currentScope?.key===slot.scope.key&&
+      sameDoc(finalDocument,doc);
   }
   const copyRecord=r=>r?{conversationId:r.conversationId,nativeUrl:r.nativeUrl,
     projectId:r.projectId,revision:r.revision}:null;
@@ -120,9 +128,9 @@ export function createDocumentBindingBroker({
         return deny('capacity');
       const leaseId=makeId();
       if(!tokenOK(leaseId))return deny('bad-lease');
-      st.epoch++;
+      st.slot?.abort?.abort();st.epoch++;
       const slot={doc,scope,clientId:message.clientId,seq:message.seq,
-        leaseId,expiresAt:now()+leaseMs,epoch:st.epoch};
+        leaseId,expiresAt:now()+leaseMs,epoch:st.epoch,abort:new AbortController()};
       st.slot=slot;
       return {ok:true,type:'BOUND',v:VERSION,leaseId,expiresAt:slot.expiresAt,
         documentId:doc.documentId,clientId:message.clientId,seq:message.seq};
@@ -135,6 +143,18 @@ export function createDocumentBindingBroker({
     slot.seq=message.seq;
     if(message.type==='CHECK')return {ok:true,type:'CURRENT',v:VERSION,seq:message.seq};
     try{
+      if(message.type.startsWith('B23_')){
+        if(!workspaceRepository)return deny('workspace-unavailable');
+        const options={guard:()=>fresh(st,slot),signal:slot.abort.signal};let result;
+        if(message.type==='B23_SNAPSHOT')result={ok:true,snapshot:await workspaceRepository.snapshot(scope,message.now,message.timeZone,options,message.size)};
+        else if(message.type==='B23_COMMAND')result=await workspaceRepository.command(scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,command:message.command},options);
+        else if(message.type==='B23_UNDO')result=await workspaceRepository.undo(scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,targetOperationId:message.targetOperationId},options);
+        else if(message.type==='B23_HISTORY')result={ok:true,history:await workspaceRepository.history(scope)};
+        else if(message.type==='B23_SAVE_VIEW')result=await workspaceRepository.saveView(scope,message.value,message.expectedRevision,options);
+        else return deny('unsupported');
+        if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-workspace');
+        return result;
+      }
       if(message.type==='GET_REF'){
         const record=await repository.get(scope,message.conversationId);
         if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-read');

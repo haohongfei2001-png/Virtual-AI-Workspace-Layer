@@ -1,3 +1,4 @@
+import { DATABASE_VERSION, upgradeDatabase } from '../data/schema.mjs';
 import { canonicalRef, normalizedScope, tokenOK } from './identity.mjs';
 
 /** Real extension-origin IndexedDB; no page-origin storage or synthetic in-memory fallback.
@@ -13,19 +14,17 @@ export class ScopeRepository {
     if(this.connection)return this.connection;
     if(this.opening)return this.opening;
     this.opening=new Promise((resolve,reject)=>{
-      const req=this.idb.open(this.name,1);
-      req.onupgradeneeded=()=>{
-        const db=req.result;
-        if(!db.objectStoreNames.contains('refs')){
-          const store=db.createObjectStore('refs',{keyPath:'key'});
-          store.createIndex('scopeKey','scopeKey',{unique:false});
-        }
-        if(!db.objectStoreNames.contains('operations'))db.createObjectStore('operations',{keyPath:'key'});
+      const req=this.idb.open(this.name,DATABASE_VERSION);
+      let cancelled=false;
+      req.onupgradeneeded=event=>{
+        try{upgradeDatabase(req.result,req.transaction,event.oldVersion);}
+        catch{req.transaction.abort();}
       };
       req.onerror=()=>reject(req.error||Error('idb-open-error'));
-      req.onblocked=()=>reject(Error('idb-open-blocked'));
+      req.onblocked=()=>{cancelled=true;reject(Error('idb-open-blocked'));};
       req.onsuccess=()=>{
         const db=req.result;
+        if(cancelled){db.close();return;}
         db.onversionchange=()=>{db.close();if(this.connection===db)this.connection=null;};
         this.connection=db;resolve(db);
       };

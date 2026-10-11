@@ -1,0 +1,238 @@
+TAP version 13
+# Subtest: AUDIT01 final awaited frame cannot outlive explicit broker revocation
+ok 1 - AUDIT01 final awaited frame cannot outlive explicit broker revocation
+  ---
+  duration_ms: 2.565708
+  type: 'test'
+  ...
+# Subtest: AUDIT02 view transaction aborts on revocation after put is queued
+ok 2 - AUDIT02 view transaction aborts on revocation after put is queued
+  ---
+  duration_ms: 130.866542
+  type: 'test'
+  ...
+# Subtest: AUDIT03 recovery never resurrects revoked source or activity evidence
+ok 3 - AUDIT03 recovery never resurrects revoked source or activity evidence
+  ---
+  duration_ms: 403.700458
+  type: 'test'
+  ...
+# Subtest: AUDIT04 recovery makes discarded operation receipts non-replayable
+ok 4 - AUDIT04 recovery makes discarded operation receipts non-replayable
+  ---
+  duration_ms: 234.462875
+  type: 'test'
+  ...
+# Subtest: AUDIT05 recovery revision exceeds trusted operation high-water
+ok 5 - AUDIT05 recovery revision exceeds trusted operation high-water
+  ---
+  duration_ms: 346.499125
+  type: 'test'
+  ...
+# Subtest: AUDIT06 reserved inherited foreign keys cannot impersonate evidence sources
+ok 6 - AUDIT06 reserved inherited foreign keys cannot impersonate evidence sources
+  ---
+  duration_ms: 20.675166
+  type: 'test'
+  ...
+# Subtest: AUDIT07 recovery itself observes an abort after put is queued
+ok 7 - AUDIT07 recovery itself observes an abort after put is queued
+  ---
+  duration_ms: 246.451625
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB01-same-B1-database-and-canonical-refs
+ok 8 - MOCK_IDB_NOT_NATIVE: DB01-same-B1-database-and-canonical-refs
+  ---
+  duration_ms: 141.041
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB02-create-update-stable-id-and-reopen
+ok 9 - MOCK_IDB_NOT_NATIVE: DB02-create-update-stable-id-and-reopen
+  ---
+  duration_ms: 281.555708
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB03-derived-title-alias-and-native-immutable
+ok 10 - MOCK_IDB_NOT_NATIVE: DB03-derived-title-alias-and-native-immutable
+  ---
+  duration_ms: 259.673459
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB04-place-move-exclusion-and-targeted-undo
+ok 11 - MOCK_IDB_NOT_NATIVE: DB04-place-move-exclusion-and-targeted-undo
+  ---
+  duration_ms: 227.196208
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB05-undo-refuses-overwriting-later-human-edit
+ok 12 - MOCK_IDB_NOT_NATIVE: DB05-undo-refuses-overwriting-later-human-edit
+  ---
+  duration_ms: 277.357333
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB06-undo-does-not-restore-whole-snapshot
+ok 13 - MOCK_IDB_NOT_NATIVE: DB06-undo-does-not-restore-whole-snapshot
+  ---
+  duration_ms: 296.638417
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB07-two-connections-CAS-one-winner
+ok 14 - MOCK_IDB_NOT_NATIVE: DB07-two-connections-CAS-one-winner
+  ---
+  duration_ms: 117.311834
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB08-operation-idempotence-does-not-return-stale-snapshot
+ok 15 - MOCK_IDB_NOT_NATIVE: DB08-operation-idempotence-does-not-return-stale-snapshot
+  ---
+  duration_ms: 198.616708
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB09-scope-A-B-same-native-id-isolation
+ok 16 - MOCK_IDB_NOT_NATIVE: DB09-scope-A-B-same-native-id-isolation
+  ---
+  duration_ms: 192.320292
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB10-unknown-scope-never-opens-workspace
+ok 17 - MOCK_IDB_NOT_NATIVE: DB10-unknown-scope-never-opens-workspace
+  ---
+  duration_ms: 36.974375
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB11-human-lock-and-exclusion-protect-against-candidate
+ok 18 - MOCK_IDB_NOT_NATIVE: DB11-human-lock-and-exclusion-protect-against-candidate
+  ---
+  duration_ms: 281.009625
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB12-stale-candidate-global-revision-rejected
+ok 19 - MOCK_IDB_NOT_NATIVE: DB12-stale-candidate-global-revision-rejected
+  ---
+  duration_ms: 138.718458
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB13-revoke-source-reprojects-without-erasing-intent
+ok 20 - MOCK_IDB_NOT_NATIVE: DB13-revoke-source-reprojects-without-erasing-intent
+  ---
+  duration_ms: 311.225833
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB14-coverage-stales-and-does-not-fabricate-activity
+ok 21 - MOCK_IDB_NOT_NATIVE: DB14-coverage-stales-and-does-not-fabricate-activity
+  ---
+  duration_ms: 176.126333
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB15-old-window-stays-parent-not-duplicated
+ok 22 - MOCK_IDB_NOT_NATIVE: DB15-old-window-stays-parent-not-duplicated
+  ---
+  duration_ms: 96.110042
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB16-label-is-not-evidence-authority
+ok 23 - MOCK_IDB_NOT_NATIVE: DB16-label-is-not-evidence-authority
+  ---
+  duration_ms: 77.40325
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB17-guard-denial-and-aborted-write
+ok 24 - MOCK_IDB_NOT_NATIVE: DB17-guard-denial-and-aborted-write
+  ---
+  duration_ms: 71.639417
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB18-view-preferences-reopen-and-CAS
+ok 25 - MOCK_IDB_NOT_NATIVE: DB18-view-preferences-reopen-and-CAS
+  ---
+  duration_ms: 86.76125
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB19-corruption-refused-with-explicit-checkpoint-recovery
+ok 26 - MOCK_IDB_NOT_NATIVE: DB19-corruption-refused-with-explicit-checkpoint-recovery
+  ---
+  duration_ms: 490.810958
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB20-corrupt-state-cannot-be-overwritten-by-normal-command
+ok 27 - MOCK_IDB_NOT_NATIVE: DB20-corrupt-state-cannot-be-overwritten-by-normal-command
+  ---
+  duration_ms: 254.93175
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB21-bootstrap-replay-never-resets-human-data
+ok 28 - MOCK_IDB_NOT_NATIVE: DB21-bootstrap-replay-never-resets-human-data
+  ---
+  duration_ms: 448.761667
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB22-unsupported-official-format-not-guessed
+ok 29 - MOCK_IDB_NOT_NATIVE: DB22-unsupported-official-format-not-guessed
+  ---
+  duration_ms: 109.862958
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB23-hash-valid-but-schema-invalid-refused
+ok 30 - MOCK_IDB_NOT_NATIVE: DB23-hash-valid-but-schema-invalid-refused
+  ---
+  duration_ms: 75.887917
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB24-pressure-120-themes-604-refs-128-members
+ok 31 - MOCK_IDB_NOT_NATIVE: DB24-pressure-120-themes-604-refs-128-members
+  ---
+  duration_ms: 196.961292
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB25-ingest-new-send-activates-old-theme-and-retains-old-children
+ok 32 - MOCK_IDB_NOT_NATIVE: DB25-ingest-new-send-activates-old-theme-and-retains-old-children
+  ---
+  duration_ms: 454.555042
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB26-conflicting-provenance-and-revocation-recomputes
+ok 33 - MOCK_IDB_NOT_NATIVE: DB26-conflicting-provenance-and-revocation-recomputes
+  ---
+  duration_ms: 320.32325
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB27-native-source-conflict-is-atomic
+ok 34 - MOCK_IDB_NOT_NATIVE: DB27-native-source-conflict-is-atomic
+  ---
+  duration_ms: 104.624291
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB28-workspace-history-aliases-persist
+ok 35 - MOCK_IDB_NOT_NATIVE: DB28-workspace-history-aliases-persist
+  ---
+  duration_ms: 134.745125
+  type: 'test'
+  ...
+# Subtest: MOCK_IDB_NOT_NATIVE: DB29-corrupt-B-operation-does-not-poison-A-history
+ok 36 - MOCK_IDB_NOT_NATIVE: DB29-corrupt-B-operation-does-not-poison-A-history
+  ---
+  duration_ms: 102.978375
+  type: 'test'
+  ...
+# Subtest: VIEW_ISOLATION invalid-checksum preserves intact assets and reports view corruption
+ok 37 - VIEW_ISOLATION invalid-checksum preserves intact assets and reports view corruption
+  ---
+  duration_ms: 438.680834
+  type: 'test'
+  ...
+# Subtest: VIEW_ISOLATION invalid-schema preserves intact assets and reports view corruption
+ok 38 - VIEW_ISOLATION invalid-schema preserves intact assets and reports view corruption
+  ---
+  duration_ms: 324.758375
+  type: 'test'
+  ...
+1..38
+# tests 38
+# suites 0
+# pass 38
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6026.42725
