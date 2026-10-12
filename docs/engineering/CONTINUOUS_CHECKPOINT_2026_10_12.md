@@ -11,3 +11,5 @@ Python/Playwright 已有隔离 venv `/private/tmp/vaiwl-pr7-mac-hTNRJ6Mq/venv`�
 C1 原设计修复完成：10真实UI旅程+深色细节反例；Node121、DOM49、真实IDB39、页面17、MV319、B4核心5/生命周期1通过。证据 `c1-fidelity-2026-10-12`。专用持久 `.venv` 已建立 Python3.14.7/Playwright1.63.0，后续使用 `.venv/bin/python`。下一任务 B5：首先保留最新人工修改丢失反例，复用现有检查点/日志/CAS实现保全恢复及文件资产备份、dry-run与安全回滚。不得将检查点当文件备份。
 
 B5在Draft PR #10完成隔离合成验收：Node130、真实IDB50、B5实际MV3 3、C1 UI10、DOM49、页面17、MV319、B4核心5/生命周期1通过；源/日志/失败/下载文件在b5-mac-2026-10-12。下一：从PR #10 head新建C3/C4模块分支，复用既有SET_PREFERENCE/CAS/导航补手工工作集和已选片段，不自动采集、无真实ChatGPT。工作树保持专用持久目录，测试用.venv/bin/python。
+
+C3/C4 + 当前可独立C5验收已完成：Node134/DOM49/真实IDB54/页面17/MV319/C1UI10/B5UI3/C34UI3/C5实际200%2/B4核心5与实际隐藏冻结1，证据c34-mac-2026-10-12。分支codex/vaiwl-c3-c4-context-20261012；Git普通HTTPS端点不稳定，新分支push暂失败（日志保留），没有新PR。既有PR #9 head a055246、#10 head8d19020已同步。下一从C34本地head建立D1/D2离线实验模块，同时完成F1容量/性能基线与可安全最小优化；不能等待生产账户，也不能宣称后台运行。网络恢复后先查远端ref，非强制push C34再创建base为B5的Draft PR，随后同步后续模块。

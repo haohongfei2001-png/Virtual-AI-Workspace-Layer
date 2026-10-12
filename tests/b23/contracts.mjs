@@ -1,3 +1,4 @@
+import { c34Cases } from './c34-cases.mjs';
 import { b5Cases } from './b5-cases.mjs';
 import { ScopeRepository } from '../../src/b1/scope-repository.mjs';
 import { WorkspaceRepository } from '../../src/data/repository.mjs';
@@ -16,7 +17,7 @@ export async function harness(factory,{seed=true,name='b23_'+crypto.randomUUID()
 }
 async function rowWrite(base,store,key,transform){const db=await base.open();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite'),s=tx.objectStore(store),r=s.get(key);r.onsuccess=()=>{s.put(transform(r.result))};tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});}
 export const repositoryCases=[
- ...b5Cases,
+ ...b5Cases, ...c34Cases,
  ['DB01-same-B1-database-and-canonical-refs',async h=>{const db=await h.base.open();equal(db.version,2);assert(db.objectStoreNames.contains('refs')&&db.objectStoreNames.contains('b23_states'));const r=await h.base.get(A,'T1');equal(r.projectId,'P1');equal(Object.keys((await h.repo.read(A)).state.refs).length,604);} ],
  ['DB02-create-update-stable-id-and-reopen',async h=>{assert((await h.command({type:'CREATE_WORKSPACE',id:'manual',name:'合成主题'})).ok);assert((await h.command({type:'UPDATE_WORKSPACE',id:'manual',name:'改名',icon:'◆',order:2})).ok);h.base.close();const state=(await h.repo.read(A)).state;equal(state.workspaces.manual.name,'改名');equal(state.workspaces.manual.icon,'◆');} ],
  ['DB03-derived-title-alias-and-native-immutable',async h=>{const before=await h.base.get(A,'T0');await h.command({type:'SET_TITLE',refId:'T0',title:'人工标题甲'});await h.command({type:'SET_TITLE',refId:'T0',title:'人工标题乙'});const s=(await h.repo.read(A)).state;assert(s.identities.T0.aliases.includes('人工标题甲'));assert(s.identities.T0.locked);equal(await h.base.get(A,'T0'),before);} ],

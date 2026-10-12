@@ -1,0 +1,57 @@
+[
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/c1/real-ui.py",
+      "--out",
+      "docs/engineering/c34-mac-2026-10-12/final-journeys/c1"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/b5/real-ui.py",
+      "docs/engineering/c34-mac-2026-10-12/final-journeys/b5"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/c34/real-ui.py",
+      "docs/engineering/c34-mac-2026-10-12/final-journeys/c34"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/c34/compatibility.py",
+      "docs/engineering/c34-mac-2026-10-12/final-journeys/c5"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/b4/real-mv3.py",
+      "--suite",
+      "core",
+      "--out",
+      "docs/engineering/c34-mac-2026-10-12/final-journeys/b4-core.json"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/b4/real-mv3.py",
+      "--suite",
+      "lifecycle",
+      "--out",
+      "docs/engineering/c34-mac-2026-10-12/final-journeys/b4-lifecycle.json"
+    ],
+    "exit": 0
+  }
+]

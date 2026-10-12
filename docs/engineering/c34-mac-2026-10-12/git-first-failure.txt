@@ -1,0 +1,5 @@
+Captured tool stderr from initial ordinary Git ls-remote / push and PR creation:
+error: RPC failed; curl 16 Error in the HTTP2 framing layer
+fatal: expected flush after ref listing
+fatal: unable to access repository HTTPS URL: Failed to connect to github.com port 443 after 75026 ms: Could not connect to server
+PR creation refused missing remote head; no PR was created and no API file writing fallback used.
