@@ -12,7 +12,7 @@ from association import identifier_association
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[3];PYROOT=ROOT/'experiments/r0/time-source'
 arg=argparse.ArgumentParser();arg.add_argument('--session-dir',required=True);arg.add_argument('--output-dir',required=True);arg.add_argument('--total-authorized-native-sends',type=int,default=6);arg.add_argument('--conditions',default='no-extension,probe-loaded,probe-uninstalled');arg.add_argument('--skip-refresh-sample',action='store_true');arg.add_argument('--allow-six-native-synthetic-sends',action='store_true');a=arg.parse_args();assert a.allow_six_native_synthetic_sends
-S=Path(a.session_dir).resolve();O=Path(a.output_dir).resolve();assert not S.exists() and not O.exists() and ROOT not in S.parents and O.is_relative_to(ROOT/'docs/experiments/results')
+S=Path(a.session_dir).resolve();O=Path(a.output_dir).resolve();assert not S.exists() and not O.exists() and ROOT not in S.parents and O.parent==(ROOT/'docs/experiments/results/r0-time-source-2026-10-12').resolve()
 # Task-wide budget precedes any new Profile/browser or send. Budget increases
 # require new explicit authorization; a CLI argument alone does not grant it.
 prior=0
