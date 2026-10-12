@@ -7,3 +7,5 @@
 探针原有broker拒绝未知scope，未打开数据库、未访问派生内容、未创建第二导航。实验只读代码与测试独立于正式src/simulator。工具观察器旧100ms等待不足、model为role=button SPAN、旧消息选择器漏匹配均属于驱动缺口；已最小修复并保留精确执行版本。未来重跑发送型测试必须使用另一个新专用profile，不能复用任意日常调试端口。当前guest窗口最终关闭由拥有者控制，后续最终记录在REPORT.md。
 
 剩余裁决：原始发送时间/覆盖UNKNOWN，可信账户identity、持久历史、Project、A/B和官方clean导出需要未来统一清洁账户范围；PAIA NOT_RUN/WAITING_AUTHORIZATION。本轮继续完成报告、完整哈希和远端核对，不进入正式C2/真实派生导航。
+
+2026-10-12最终匿名阶段：补测6/6，真实hidden/visible与freeze/resume、草稿焦点保留；probe已停止卸载，专用Chrome已由拥有者关闭。R0获准匿名范围完成；正式C2缺口见REPORT.md。下一步只有统一clean账户/样本范围后验证对应未执行项目，不重复本次三条发送或合成验收。

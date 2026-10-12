@@ -1,0 +1,7 @@
+{
+  "ownerCommand": "close",
+  "actualControllerState": "CLOSED_OWN_GUEST_CHROME",
+  "controllerExitCode": 0,
+  "finalProbeStoppedAndUninstalled": true,
+  "noBackgroundRuns": true
+}

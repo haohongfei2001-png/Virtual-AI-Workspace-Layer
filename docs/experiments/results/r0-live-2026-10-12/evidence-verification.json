@@ -1,0 +1,1 @@
+{"status":"PASS","actualGuestMessages":3,"initialRawFailuresPreserved":2,"initialRawPassCount":8,"supplementalPassCount":6,"actualWorkerStopAndBootChange":true,"executedProbeAndArchivedDriverHashesMatch":true,"productionCoreUnchanged":true,"credentialAndLiveIdentifierPatternScan":true,"scanLimit":"pattern scan plus manually reviewed screenshots; not universal secrecy proof"}

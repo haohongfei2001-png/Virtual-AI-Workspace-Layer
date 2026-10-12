@@ -1,0 +1,40 @@
+{
+  "workingDirectory": "/Users/hhf/Documents/Codex/VAIWL-Development/r0-live-20261012",
+  "python": "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python",
+  "executed": [
+    {
+      "command": "python experiments/r0/guest-session.py --session-dir /Users/hhf/Documents/Codex/VAIWL-Development/r0-guest-session-20261012-c73e --use-configured-loopback-proxy",
+      "result": "real official HTTP200; fresh owned Profile; no login required; controller later closed"
+    },
+    {
+      "command": "python tests/r0/guest-first-message.py",
+      "result": "one native synthetic send; reply5 observed"
+    },
+    {
+      "command": "node experiments/r0/build.mjs /Users/hhf/Documents/Codex/VAIWL-Development/r0-guest-session-20261012-c73e/extension",
+      "result": "exact actual probe-build.json graph"
+    },
+    {
+      "command": "node --test tests/r0/policy.test.mjs",
+      "result": "7 PASS"
+    },
+    {
+      "command": "python tests/r0/live-guest-journey.py",
+      "executedSource": "guest-journey-first/driver.executed.py",
+      "result": "8 PASS / 2 FAIL; 2 additional actual sends; guest refresh/back limits"
+    },
+    {
+      "command": "python tests/r0/guest-lifecycle-supplement.py",
+      "result": "6 PASS; zero additional sends"
+    },
+    {
+      "command": "node tests/r0/verify-evidence.mjs",
+      "result": "PASS"
+    },
+    {
+      "command": "git -c http.version=HTTP/1.1 -c http.lowSpeedLimit=1024 -c http.lowSpeedTime=12 push origin HEAD:refs/heads/codex/vaiwl-r0-live-readonly-20261012",
+      "result": "normal nonforcedHTTPS stages40f547a/dfa3c96; current later head verified separately"
+    }
+  ],
+  "doNotRerunBlindly": "Existing evidence directories prevent overwrites. Sending tests need a newly owned fresh guest session and current explicit send grant; never substitute a daily Chrome port. No protected internal endpoints/HAR/auth material."
+}
