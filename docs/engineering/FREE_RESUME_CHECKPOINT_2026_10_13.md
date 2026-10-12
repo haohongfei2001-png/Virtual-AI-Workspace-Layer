@@ -45,3 +45,11 @@ PLAYWRIGHT_BROWSERS_PATH=/private/tmp/vaiwl-free-playwright node tests/free/part
 已补后台校准通知、账户/文档/lease校验与循环抑制，完整Node301/0、实际MV3 9/9；另外Chrome生命周期5/5、共享资产与通知阅读8/8、校准200.1ms且来源1次。结果与各自源码来源见STATUS第四轮。新合成包路径 `/private/tmp/vaiwl-free-delivery-round4-20261013/vaiwl-free-synthetic-only.zip`，SHA256 a63b1aa6928dc6d047a7450ca18adf2483839ae47360e3c1b6176e75ae605fb3。
 
 仍有可本地推进的F1问题：配置source后每次提交FreeRuntime.read仍全量snapshot+evidence投影；需要增量发布/过期调度来避免100k更新全库读取，同时保持既有runtime独立调用合同。不要重写已通过模块，也不要把此项标外部权限阻塞。真实账户及其他BLOCKED_LIVE条件保持不变。Git端点短检查仍超时，本轮不重复推送；远端b2a262b，当前HEAD以git核对。
+
+## 第五轮恢复增量（接1210407）
+
+前一节的runtime提交后全量read缺口已完成：服务invalidation模式零fullread，独立snapshot模式不改；多TTL和冷启动已读缓存调度、无source纯显示过期均补齐。315条完整Node后timer接收者最终修复23条针对性、MV3 9/9、可见性167.1ms、真IDB 10k/100k两组通过，证据边界见STATUS第五轮，不相加。
+
+当前可继续的性能条件：100k原生+活动单ref双提交仍1340.2ms，主要根manifest校验/写入成本；已消除fullread不是全端到端达标。10k121.9ms。不要重写已通过通知/生命周期/资产旅程；下一轮直接定位剩余manifest成本和完整UI链路，不重新规划。外部真实账户/PAIA/物理IME/弱设备及日常验收条件不变。
+
+最新包 `/private/tmp/vaiwl-free-delivery-invalidation-20261013/vaiwl-free-synthetic-only.zip`；SHA256 9fc158e8cba4ada662ec825cb671347d5e8b9fa045769c848f78d82fa77e0a65。当前HEAD用git核对；7ac2e28、25e2ab2、1210407及本检查点尚未正常同步到远端b2a262b。未强推/更换remote/部署；网络恢复后正常快进推送原分支。完整Free尚未交付。

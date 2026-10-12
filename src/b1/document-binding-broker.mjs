@@ -188,6 +188,8 @@ export function createDocumentBindingBroker({
         else if(message.type==='B23_SAVE_VIEW')result=await workspaceRepository.saveView(scope,message.value,message.expectedRevision,options);
         else return deny('unsupported');
         if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-workspace');
+        // Deadlines come from owner repository pages, never from a page payload.
+        const payload=result.header??result.page;if(payload?.calibrationDeadlines){freeRuntime?.observeDeadlines?.(slot.leaseId,payload.calibrationDeadlines);delete payload.calibrationDeadlines;}
         return result;
       }
       if(message.type==='GET_REF'){

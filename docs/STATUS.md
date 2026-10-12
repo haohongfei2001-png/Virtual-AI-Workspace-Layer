@@ -132,3 +132,17 @@ PLAN_TEXT_READY；REMOTE_WRITE_BLOCKED（当前工具未提供写入动作，也
 新可复现合成包：`/private/tmp/vaiwl-free-delivery-round4-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `a63b1aa6928dc6d047a7450ca18adf2483839ae47360e3c1b6176e75ae605fb3`。旧包与证据不覆盖。实际ChatGPT/跨端/PAIA/物理IME和弱设备、真人F4仍未验收；完整Free未交付。配置source后runtime提交仍做全量活动投影，100k端到端持续更新优化未完成，不能当外部阻塞忽略。
 
 本轮Git端点5秒连通性检查仍超时，API核对Draft PR #16仍b2a262b；没有循环重试，没有更换remote或部署。本轮提交继续仅本地检查点。
+
+## 第五轮：提交后增量失效与期限调度（接1210407）
+
+`1210407`已保存第四轮本地检查点，未推送。第五轮针对已记录的runtime全量投影缺口：独立FreeRuntime默认snapshot合同保持；服务owner明确选择invalidation，成功批次提交后仅发布lease/scope绑定的更新。部分native已提交而evidence失败时仍通知，取消/旧scope不发布。HEADER/PAGE仍承担已有增量读取；不会因为通知再次启动上游校准。
+
+多期限调度保留成功批次中的所有有效期；冷启动复用原生/证据实际分页及source header的期限，经broker最终authority核验后传给registry并剥离内部元数据，页面不能伪造。无source也可只让缓存显示过期，不新增来源请求/事实。先安排下一个期限再触发校准，unsupported不丢后续期限。独立审查关闭了CHECK误插入和无source期限遗漏；真实浏览器关闭默认timer接收者Illegal invocation问题。
+
+新证据：
+- 完整Node315通过/0失败；随后timer绑定最后修复有23条针对性通过，次数不相加。`free-invalidation-source-receipt-2026-10-13.json`保留说明与最终源hash。
+- 真实headless MV3 9/9；`free-invalidation-mv3-2026-10-13.json`。
+- 实际页面+真实IDB可见167.1ms，source只调用1次；`free-invalidation-visibility-2026-10-13.json`，不代替真实源MV3验收。
+- 真实IDB registry校准10k/100k两组通过；native/evidence均各header1/apply1，full read/snapshot为0。10k双提交121.9ms；100k双提交1340.2ms，末次提交到通知0.2ms。事后各page只验证1ref。`free-invalidation-scale-2026-10-13.json`明确不含完整UI/broker/真实源，这不是100k端到端性能认证，仍有根manifest O(N)成本。
+
+新合成安装包 `/private/tmp/vaiwl-free-delivery-invalidation-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `9fc158e8cba4ada662ec825cb671347d5e8b9fa045769c848f78d82fa77e0a65`。真实账户/R0/C6、跨端、PAIA、物理IME/弱设备及真人F4未通过；FREE_ACCEPTED/RELEASE_READY/PUBLISHED仍否。没有访问私人账户或PAIA、付费调用、部署、merge、force push。Git端点阻塞本轮未循环重试，现有Draft PR #16远端仍b2a262b。

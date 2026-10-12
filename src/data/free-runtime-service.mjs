@@ -4,10 +4,10 @@ import {FreeRuntime} from './free-runtime.mjs';
 const kinds=new Set(['foreground','current','send','source','expiry','history']);
 /** Service-owner registry. Never accept scope, sourceFor, guard or binding lifetime from a page payload. */
 export class FreeRuntimeService {
- constructor({nativeRepository,evidenceRepository,sourceFor=null,clock=()=>new Date().toISOString(),timeZone='UTC',onSnapshot=()=>{},onStatus=()=>{},timers={setTimeout,clearTimeout},calibrationOptions={},maxBindings=128}){
+ constructor({nativeRepository,evidenceRepository,sourceFor=null,clock=()=>new Date().toISOString(),timeZone='UTC',onSnapshot=()=>{},onChange=()=>{},publication='snapshot',onStatus=()=>{},timers={setTimeout:(...args)=>globalThis.setTimeout(...args),clearTimeout:id=>globalThis.clearTimeout(id)},calibrationOptions={},maxBindings=128}){
   if(sourceFor!==null&&typeof sourceFor!=='function')throw Error('invalid-free-source-factory');
   if(!Number.isSafeInteger(maxBindings)||maxBindings<1||maxBindings>1024)throw Error('invalid-free-binding-capacity');
-  Object.assign(this,{nativeRepository,evidenceRepository,sourceFor,clock,timeZone,onSnapshot,onStatus,timers,calibrationOptions,maxBindings});this.bindings=new Map();
+  Object.assign(this,{nativeRepository,evidenceRepository,sourceFor,clock,timeZone,onSnapshot,onChange,publication,onStatus,timers,calibrationOptions,maxBindings});this.bindings=new Map();
  }
  active(entry){try{return this.bindings.get(entry.id)===entry&&!entry.controller.signal.aborted&&entry.guard()===true;}catch{return false;}}
  async authority(entry){
@@ -34,7 +34,7 @@ export class FreeRuntimeService {
   // Rebinding a document, including the same account, ends every old lifetime.
   if(this.bindings.has(bindingId))this.stop(bindingId,'binding-replaced');
   if(this.bindings.size>=this.maxBindings)throw Error('free-runtime-binding-capacity');
-  const entry={id:bindingId,scope:normalized,guard,authorityCheck,controller:new AbortController(),session,runtime:null,timer:null,expiry:null,source:null};
+  const entry={id:bindingId,scope:normalized,guard,authorityCheck,controller:new AbortController(),session,runtime:null,timer:null,expiry:null,source:null,deadlines:new Set()};
   this.bindings.set(bindingId,entry);
   entry.externalSignal=signal;entry.externalAbort=()=>this.stop(bindingId,'binding-aborted');signal?.addEventListener('abort',entry.externalAbort,{once:true});
   try{
@@ -47,7 +47,8 @@ export class FreeRuntimeService {
      const value=await source.read({...request,signal:AbortSignal.any([entry.controller.signal,request.signal])});
      if(request.signal.aborted||!(await this.authority(entry)))throw Error('stale-binding');return value;
     }};
-    entry.runtime=new FreeRuntime({nativeRepository:this.wrap(this.nativeRepository,entry),evidenceRepository:this.wrap(this.evidenceRepository,entry),source:protectedSource,clock:this.clock,timeZone:this.timeZone,calibrationOptions:this.calibrationOptions,
+    entry.runtime=new FreeRuntime({nativeRepository:this.wrap(this.nativeRepository,entry),evidenceRepository:this.wrap(this.evidenceRepository,entry),source:protectedSource,clock:this.clock,timeZone:this.timeZone,calibrationOptions:this.calibrationOptions,publication:this.publication,
+     onChange:value=>{if(!this.active(entry))return;this.observeDeadlines(entry.id,value.deadlines);this.onChange({bindingId:entry.id,...value});},
      onSnapshot:(snapshot,details)=>{if(!this.active(entry))return;this.onSnapshot({bindingId:entry.id,scope:entry.scope.key,snapshot,...details});if(snapshot)this.observeExpiry(entry,snapshot);},
      onStatus:value=>this.status(entry,value)});
    }
@@ -80,7 +81,8 @@ export class FreeRuntimeService {
  async notify(bindingId,kind,options={}){
   if(!kinds.has(kind))throw Error('invalid-free-runtime-trigger');
   const entry=this.get(bindingId);if(!entry)return {status:'cancelled',reason:'stale-binding'};
-  if(!entry.runtime)return this.status(entry,{status:'unsupported',reason:'no-authorized-source',requests:0});
+  if(!(await this.authority(entry)))return {status:'cancelled',reason:'stale-binding'};
+  if(!entry.runtime){if(kind==='expiry'&&this.publication==='invalidation')this.onChange({bindingId:entry.id,scope:entry.scope.key,reason:kind,deadlines:[]});return this.status(entry,{status:'unsupported',reason:'no-authorized-source',requests:0});}
   if(!entry.runtime.scope)entry.runtime.setScope(entry.scope);
   try{const result=await entry.runtime.trigger(kind,options);return this.active(entry)?result:{status:'cancelled',reason:'stale-binding'};}
   catch(error){if(!this.active(entry))return {status:'cancelled',reason:'stale-binding'};throw error;}
@@ -94,8 +96,15 @@ export class FreeRuntimeService {
   // Once an expired hint falls back, do not schedule its old expiry again.
   if(earliest!==null)this.scheduleExpiry(entry.id,new Date(earliest).toISOString());
  }
+ observeDeadlines(bindingId,values=[]){
+  const entry=this.get(bindingId);if(!entry||(!entry.runtime&&this.publication!=='invalidation'))return;
+  const now=instant(this.clock());
+  for(const value of values){const time=instant(value);if(time!==null&&time>now)entry.deadlines.add(time);}
+  let next=null;for(const time of entry.deadlines){if(time<=now)entry.deadlines.delete(time);else if(next===null||time<next)next=time;}
+  if(next!==null)this.scheduleExpiry(bindingId,new Date(next).toISOString());
+ }
  scheduleExpiry(bindingId,at){
-  const entry=this.get(bindingId);if(!entry?.runtime)return false;
+  const entry=this.get(bindingId);if(!entry||(!entry.runtime&&this.publication!=='invalidation'))return false;
   const clock=instant(this.clock()),deadline=instant(at);if(clock===null||deadline===null)throw Error('invalid-free-expiry-time');
   if(deadline<=clock)return false;
   if(entry.timer!==null&&entry.expiry<=deadline)return true;
@@ -104,6 +113,7 @@ export class FreeRuntimeService {
   entry.timer=this.timers.setTimeout(()=>{
    entry.timer=null;entry.expiry=null;if(!this.active(entry))return;
    if(instant(this.clock())<deadline){this.scheduleExpiry(entry.id,at);return;}
+   this.observeDeadlines(entry.id);
    this.notify(entry.id,'expiry').catch(error=>{if(this.active(entry))this.status(entry,{status:'degraded',reason:error.message,nextTrigger:'foreground-or-source-revision'});});
   },Math.min(2147483647,Math.max(1,deadline-clock)));
   return true;

@@ -195,3 +195,9 @@ test('worker notification target revalidates document, lease lifetime and accoun
  const second=await h.broker.handle(h.request('BIND',2),fixture('doc_A','B'));
  h.tick(20001);assert.equal(await h.broker.notificationTarget(second.leaseId),null);
 });
+
+test('ordinary heartbeat remains usable after notification deadline integration',async()=>{
+ const h=mk(),sender=fixture(),bound=await h.broker.handle(h.request('BIND',1),sender);
+ const current=await h.broker.handle(h.request('CHECK',2,bound.leaseId),sender);
+ assert.equal(current.ok,true);assert.equal(current.type,'CURRENT');
+});

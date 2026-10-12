@@ -7,10 +7,11 @@ const priorities={foreground:'recent',scope:'scope',current:'current',send:'send
 function failure(message,code){const e=Error(message);e.retryable=false;e.code=code;return e;}
 /** Owner-created read source only. A page message can request refresh but cannot install a source or authenticate production. */
 export class FreeRuntime {
- constructor({nativeRepository,evidenceRepository,source=null,clock=()=>new Date().toISOString(),timeZone='UTC',onSnapshot=()=>{},onStatus=()=>{},calibrationOptions={}}){
+ constructor({nativeRepository,evidenceRepository,source=null,clock=()=>new Date().toISOString(),timeZone='UTC',onSnapshot=()=>{},onChange=()=>{},publication='snapshot',onStatus=()=>{},calibrationOptions={}}){
   if(!nativeRepository?.read||!nativeRepository?.snapshot||!nativeRepository?.apply||!evidenceRepository?.read||!evidenceRepository?.apply)throw Error('free-runtime-repositories-required');
   if(source!==null&&(source.channel!=='synthetic'||typeof source.read!=='function'))throw Error('untrusted-free-runtime-source');
-  Object.assign(this,{nativeRepository,evidenceRepository,source,clock,timeZone,onSnapshot,onStatus});
+  if(!['snapshot','invalidation'].includes(publication))throw Error('invalid-free-publication');
+  Object.assign(this,{nativeRepository,evidenceRepository,source,clock,timeZone,onSnapshot,onChange,publication,onStatus});
   this.scope=null;this.epoch=0;this.session=null;this.sourceRevision=null;this.applied=new Set();
   this.operationPrefix='free_runtime_'+crypto.randomUUID().replaceAll('-','');this.sequence=0;
   this.calibration=new FreeCalibration({...calibrationOptions,request:request=>this.request(request),apply:(value,context)=>this.apply(value,context)});
@@ -38,7 +39,7 @@ export class FreeRuntime {
  status(value){this.onStatus(value);return value;}
  async trigger(kind,{objectIds=['inventory'],sourceRevision=null}={}){
   if(!Object.hasOwn(priorities,kind))return Promise.reject(Error('invalid-free-runtime-trigger'));
-  if(this.scope&&['foreground','source','expiry'].includes(kind))await this.read();
+  if(this.scope&&['foreground','source','expiry'].includes(kind)){if(this.publication==='snapshot')await this.read();else this.onChange({scope:this.scope.key,reason:kind,deadlines:[]});}
   if(!this.scope||!this.source)return Promise.resolve(this.status({status:'unsupported',reason:this.scope?'no-authorized-source':'unverified-scope',scope:this.scope?.key??null,requests:0}));
   if(!Array.isArray(objectIds)||objectIds.length>100000||objectIds.some(id=>typeof id!=='string'||!id))return Promise.reject(Error('invalid-free-calibration-targets'));
   if(kind==='source'&&sourceRevision!==null){
@@ -78,13 +79,14 @@ export class FreeRuntime {
  }
  async apply(result,context){
   if(!context.isCurrent()||context.scope!==this.scope?.key)throw failure('stale-binding');
-  let changed=false;
+  let changed=false;const deadlines=[];
+  const remember=batch=>{for(const row of [batch,...Object.values(batch).flatMap(value=>Array.isArray(value)?value:[])])if(row?.validUntil)deadlines.push(row.validUntil);};
   try{
-   if(result.nativeBatch)changed=(await this.write(this.nativeRepository,result.nativeBatch,context,'native'))||changed;
-   if(result.evidenceBatch)changed=(await this.write(this.evidenceRepository,result.evidenceBatch,context,'evidence'))||changed;
+   if(result.nativeBatch&&await this.write(this.nativeRepository,result.nativeBatch,context,'native')){changed=true;remember(result.nativeBatch);}
+   if(result.evidenceBatch&&await this.write(this.evidenceRepository,result.evidenceBatch,context,'evidence')){changed=true;remember(result.evidenceBatch);}
   }finally{
    // Independent committed native discovery remains visible even if activity ingestion degrades.
-   if(changed&&context.isCurrent())await this.read({context});
+   if(changed&&context.isCurrent()&&context.scope===this.scope?.key){if(this.publication==='snapshot')await this.read({context});else this.onChange({scope:this.scope.key,reason:'committed',deadlines:[...new Set(deadlines)]});}
   }
  }
 }
