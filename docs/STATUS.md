@@ -160,3 +160,5 @@ PLAN_TEXT_READY；REMOTE_WRITE_BLOCKED（当前工具未提供写入动作，也
 100k完整UI尝试保留失败诊断：初始1000页规格在15秒只读约24k；改5000和续租后初始约21.3秒完成，但增量测量的测试source提前超过6秒并取消，不是成功的更新验收。期间源变更已标记，不能当固定源码认证。修正测试源生命周期后只复验10k，100k真实增量DOM仍NOT_RUN；不隐去失败、不把registry数据替代UI。
 
 新合成包 `/private/tmp/vaiwl-free-delivery-round6-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `d5f2a3d3c01ac2d43fcee1c9d0ed3e22d7aacea9b4cd126e0894f5be5863fbe4`。当前仍SYNTHETIC_ONLY；真实ChatGPT/R0/C6、跨设备、PAIA、物理IME/弱设备/真人F4及100k端到端尚未通过，完整Free未交付。
+
+第六轮最终同步结果：本地实现bf9bcd4。GitHub API确认PR #16仍Draft、远端03ef76a；默认HTTPS推送报HTTP/2 framing error，一次命令级HTTP/1.1补救20秒超时后停止重试。没有改remote/config；bf9bcd4及本同步记录仅在本地，不能把PR远端描述成已含第六轮代码。

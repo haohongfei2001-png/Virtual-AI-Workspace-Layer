@@ -61,3 +61,5 @@ Git连接恢复，03ef76a已正常推送原分支；本轮末再同步新检查�
 下一可执行：修正后的calibration-ui-scale-browser支持加载后才触发真实source更新，10k已327.1ms通过；100k完整增量尚未执行。100k首次加载约21.3秒诊断、registry双提交1177.5ms仍需优化，不能以提高请求/lease边界掩盖问题。5000条页遇很长别名的16Mi边界可考虑有界拆页，不删数据或放宽记录限制。已测模块不要重写。外部真实账户/PAIA/物理环境条件保持未授权，仍不能验收完整Free。
 
 本轮新合成包 `/private/tmp/vaiwl-free-delivery-round6-20261013/vaiwl-free-synthetic-only.zip`，SHA256 d5f2a3d3c01ac2d43fcee1c9d0ed3e22d7aacea9b4cd126e0894f5be5863fbe4。HEAD用git核对；持续沿当前分支及Draft PR #16，未merge/部署/付费。
+
+第六轮最终同步结果：本地实现bf9bcd4。GitHub API确认PR #16仍Draft、远端03ef76a；默认HTTPS推送报HTTP/2 framing error，一次命令级HTTP/1.1补救20秒超时后停止重试。没有改remote/config；bf9bcd4及本同步记录仅在本地，不能把PR远端描述成已含第六轮代码。
