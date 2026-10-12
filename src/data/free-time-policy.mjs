@@ -66,7 +66,19 @@ export function freeProjectDensity(snapshot,session,{inventoryComplete=false,mem
   for(const p of projects){
     const d=p.activityDecision??p.activity;
     if(!d||!['exact','interval'].includes(d.basis)||!Number.isSafeInteger(d.candidateDay)||d.candidateDay>session.T){activityComplete=false;continue;}
-    for(const H of FREE_HORIZONS)if(session.T-d.candidateDay<H)counts[H]++;
+    let firstDay=d.candidateDay,lastDay=d.candidateDay;
+    if(d.basis==='interval'){
+      const from=instant(d.sentInterval?.from),through=instant(d.sentInterval?.through);
+      if(from===null||through===null||from>through){activityComplete=false;continue;}
+      firstDay=localDay(from,session.Z);lastDay=localDay(through,session.Z);
+      if(lastDay>session.T||lastDay!==d.candidateDay){activityComplete=false;continue;}
+    }
+    for(const H of FREE_HORIZONS){
+      const earliestInside=session.T-firstDay<H,latestInside=session.T-lastDay<H;
+      if(earliestInside!==latestInside)activityComplete=false;
+      // Count only guaranteed positives; uncertain ranges cannot certify N(H).
+      if(earliestInside)counts[H]++;
+    }
   }
   const projectMembers=new Set(projects.flatMap(p=>p.members.map(r=>typeof r==='string'?r:r.id)));
   return {counts,inventoryComplete,activityComplete,noProjectDominant:snapshot.noProject.length>projectMembers.size};

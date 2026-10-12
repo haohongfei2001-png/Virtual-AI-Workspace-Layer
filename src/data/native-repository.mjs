@@ -14,9 +14,11 @@ function fence({guard = () => true, signal} = {}) {
 }
 
 export class NativeRepository {
-  constructor({baseRepository, observationGate = null, clock = () => new Date().toISOString()}) {
+  constructor({baseRepository, workspaceRepository = null, observationGate = null, clock = () => new Date().toISOString()}) {
     if (!baseRepository?.open || !baseRepository?.scopeOrThrow) throw Error('b1-repository-required');
     this.base = baseRepository;
+    if(workspaceRepository&&workspaceRepository.base!==baseRepository)throw Error('shared-native-database-required');
+    this.shared=workspaceRepository;
     this.observationGate = observationGate;
     this.clock = clock;
   }
@@ -55,17 +57,18 @@ export class NativeRepository {
     });
   }
 
-  async version(scope, options = {}) {
+  async header(scope, options = {}) {
     const normalized = this.base.scopeOrThrow(scope), db = await this.base.open();
     fence(options);
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(['native_states', 'native_operations']); let revision = 0, error;
+      const tx = db.transaction(['native_states', 'native_operations']); let revision = 0, manifest = null, error;
       const request = tx.objectStore('native_states').get(normalized.key);
       request.onsuccess = () => {
         try {
           if (request.result) {
             const value = unpack(request.result);
-            revision = (isNativePartitioned(value) ? validateNativeManifest(value, normalized) : validateNativeFacts(value, normalized)).revision;
+            if (isNativePartitioned(value)) manifest = validateNativeManifest(value, normalized);
+            revision = (manifest ?? validateNativeFacts(value, normalized)).revision;
           }
           const marker = tx.objectStore('native_operations').get(normalized.key);
           marker.onsuccess = () => {
@@ -74,13 +77,19 @@ export class NativeRepository {
           };
         } catch (failure) {error = failure;tx.abort();}
       };
-      tx.oncomplete = () => {try {fence(options);resolve(revision);} catch (failure) {reject(failure);}};
+      tx.oncomplete = () => {try {fence(options);resolve({revision,manifest});} catch (failure) {reject(failure);}};
       tx.onabort = () => reject(error ?? tx.error ?? Error('native-read-aborted'));
     });
   }
 
-  async page(scope, {revision = null, offset = 0, limit = 500} = {}, options = {}) {
+  async version(scope, options = {}) { return (await this.header(scope, options)).revision; }
+
+  async page(scope, {revision = null, offset = 0, limit = 500, ids = null} = {}, options = {}) {
     if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 5000) throw Error('invalid-native-page');
+    if (ids !== null) {
+      if (!ids || Object.keys(ids).some(key => !['projects','refs'].includes(key)) || !Array.isArray(ids.projects) || !Array.isArray(ids.refs) || ids.projects.length + ids.refs.length > 5000) throw Error('invalid-native-page');
+      [...ids.projects,...ids.refs].forEach(id);
+    }
     const normalized = this.base.scopeOrThrow(scope), db = await this.base.open();
     fence(options);
     return new Promise((resolve, reject) => {
@@ -90,11 +99,27 @@ export class NativeRepository {
       const request = store.get(normalized.key);
       request.onsuccess = () => {
         try {
-          const payload = unpack(request.result), manifest = validateNativeManifest(payload, normalized);
+          const payload = request.result ? unpack(request.result) : emptyNativeFacts(normalized);
+          if (!isNativePartitioned(payload)) {
+            const all = validateNativeFacts(payload, normalized);
+            if (revision !== null && revision !== all.revision) throw Error('snapshot-revision-changed');
+            const projects = Object.keys(all.projects), refs = Object.keys(all.refs), total = projects.length + refs.length;
+            const selectedProjects = ids?.projects ?? projects.slice(offset, offset + limit);
+            const selectedRefs = ids?.refs ?? refs.slice(Math.max(0, offset-projects.length), Math.max(0, offset+limit-projects.length));
+            const facts = {...emptyNativeFacts(normalized),revision:all.revision,sources:all.sources};
+            for (const key of selectedRefs) if (all.refs[key]) {facts.refs[key]=all.refs[key];if(all.membership[key])facts.membership[key]=all.membership[key];}
+            const dependencies = Object.values(facts.membership).filter(row=>row.state==='PROJECT').map(row=>row.projectId);
+            for (const key of [...selectedProjects,...dependencies]) if (all.projects[key]) facts.projects[key]=all.projects[key];
+            const marker = tx.objectStore('native_operations').get(normalized.key);
+            marker.onsuccess = () => {try {if(marker.result ? unpack(marker.result).revision!==all.revision||!request.result : all.revision!==0)throw Error('native-root-revision-conflict');}catch(failure){fail(failure);}};
+            result={revision:all.revision,offset,total,nextOffset:Math.min(total,offset+limit),facts,selectedProjects,selectedRefs};
+            return;
+          }
+          const manifest = validateNativeManifest(payload, normalized);
           if (revision !== null && revision !== manifest.revision) throw Error('snapshot-revision-changed');
           const projects = Object.keys(manifest.projects), refs = Object.keys(manifest.refs), total = projects.length + refs.length;
-          const projectSlice = projects.slice(offset, offset + limit);
-          const refSlice = refs.slice(Math.max(0, offset - projects.length), Math.max(0, offset + limit - projects.length));
+          const projectSlice = ids?.projects ?? projects.slice(offset, offset + limit);
+          const refSlice = ids?.refs ?? refs.slice(Math.max(0, offset - projects.length), Math.max(0, offset + limit - projects.length));
           const marker = tx.objectStore('native_operations').get(normalized.key);
           marker.onsuccess = () => {
             try { if (unpack(marker.result).revision !== manifest.revision) throw Error('native-root-revision-conflict'); }
@@ -178,6 +203,10 @@ export class NativeRepository {
     const witness = {channel: authority.channel, sourceId: authority.sourceId, generation: authority.generation};
     id(witness.sourceId);
     id(witness.generation);
+    if(this.shared&&!await this.shared.partitioned.manifest(normalized,options)){
+      const {state}=await this.shared.read(normalized,options);
+      if(Object.keys(state.refs).length+(request.batch?.refs?.length??0)>15000){const migrated=await this.shared.migratePartitioned(normalized,options);if(!migrated.ok)throw Error(migrated.reason);}
+    }
     return this.mutate(normalized, request, {kind: 'APPLY_NATIVE_OBSERVATIONS', ...witness, batch: request.batch},
       current => applyNativeObservations(current, request.batch, {scope: normalized, ...witness, now: this.clock()}), options);
   }
@@ -195,7 +224,7 @@ export class NativeRepository {
     const fingerprint = digest({command, expectedRevision}), db = await this.base.open();
     fence(options);
     return new Promise(resolve => {
-      const transaction = db.transaction(['native_states', 'native_operations'], 'readwrite');
+      const transaction = db.transaction(['native_states', 'native_operations', ...(this.shared?['b23_states','b23_operations','b23_checkpoints','refs']:[])], 'readwrite');
       const states = transaction.objectStore('native_states'), operations = transaction.objectStore('native_operations');
       const operationKey = JSON.stringify([normalized.key, operationId]);
       let result;
@@ -233,11 +262,17 @@ export class NativeRepository {
                       check();
                       const next = reduce(partial);
                       check();
-                      saveNativePieces(states, normalized, partial, next, storage, command);
-                      operations.put(record(normalized.key, {revision: next.revision}));
-                      operations.put(record(operationKey, {fingerprint, revision: next.revision, operationId}));
-                      check();
-                      result = {ok: true, replayed: false, revision: next.revision, operationId};
+                      const publish=()=>{
+                        try {check();saveNativePieces(states, normalized, partial, next, storage, command);
+                          operations.put(record(normalized.key, {revision: next.revision}));
+                          operations.put(record(operationKey, {fingerprint, revision: next.revision, operationId}));
+                          check();result = {ok: true, replayed: false, revision: next.revision, operationId};
+                        }catch(failure){abort(failure.message);}
+                      };
+                      if(this.shared&&command.batch){
+                        const refs=command.batch.refs.map(row=>({...row,projectId:next.membership[row.id]?.state==='PROJECT'?next.membership[row.id].projectId:null}));
+                        this.shared.registerNativeReferences(transaction,normalized,refs,'native_refs_'+digest(operationId),check,publish,failure=>abort(failure.message));
+                      }else publish();
                     } catch (failure) { abort(failure.message); }
                   };
                   if (manifest) {

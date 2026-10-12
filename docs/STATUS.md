@@ -22,6 +22,20 @@ B2.F2/F3新增严格本人发送与ObservationHint分层、旧锚点暂定下沉
 
 UI、活动/时间策略与测试由互不冲突的writer并行推进，最终集成仍由主代理执行。真实ChatGPT来源/授权账户、跨端真值、实际PAIA共存、物理IME/真人日常验证仍NOT_RUN / BLOCKED_LIVE，未访问私人账户或PAIA。**FREE_ACCEPTED、RELEASE_READY、PUBLISHED均未达到；持续执行剩余可行任务。**
 
+## 第二轮持续集成（接627696e）
+
+`627696e` 已正常快进推送到现有Draft PR #16。继续完成：
+
+- Free HEADER/PAGE有界RPC、scope/native/workspace/evidence末次版本校验、不可用对象显式tombstone；客户端按native/活动引用版本增量拉取，单条活动仅重取1ref。来源撤权/generation/TTL变化、会话和评估时刻改变均使相关缓存重验。
+- 原生新增ref与B1/B23共享工作集/片段引用在同一个IDB事务登记，支持旧root和F1分片；发布故障注入证明两边均回滚，不覆盖Pro identity/placement等人工资产。
+- 持久独立活动提示接入模拟发送，原始event与hint不混写；同message重观察不续TTL、不新增发送。新增FreeRuntime控制器的缓存优先/无来源unsupported/预算/CAS/撤权/前台重查模块测试；**worker持续上游校准接线仍未完成**。
+- 历史ViewSession在重载及跨午夜保持H/T/Z，安全回当前段才采纳新日期/策略；证据足够时auto安全进入评估，短暂撤销恢复fixed旧H及冷却。无Project占主体/证据不足不自适应。
+- 100k客户端纯计算排序优化：NONE-heavy聚合约485→108ms、活动增量聚合462→103ms；单活动网络计划1ref/1page。仅LOGIC_ONLY_SYNTHETIC，不代替IDB写入、浏览器端到端或弱设备指标。
+
+实际验证：一次完整Node组合253通过/0失败；随后排序局部回归25通过/0失败（不相加）。真实MV3分页版本9/9，历史session4项，auto变化/撤销旅程分别通过，新增JSON报告保留各自源码/构建来源。最终代码比先前报告变化时，只声明对应已执行局部验证。
+
+仍可本地继续：独立活动证据从20k/16Mi单根迁至分片；native/evidence损坏交互恢复；worker/service持续校准接线；可信原生旧名称aliases与Project成员完整性证明合同。以上不是外部权限阻塞，继续实施。真实ChatGPT/跨端/PAIA/物理IME/完整F1与发布关口仍未通过。
+
 ## 以下为恢复前81ff0ec检查点历史，不代表当前暂停
 
 ## 当前实施检查点（2026-10-13）

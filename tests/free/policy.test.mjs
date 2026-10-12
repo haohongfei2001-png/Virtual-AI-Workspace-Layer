@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createFreeViewSession,freeWindowFor,freeSegmentFor,initialFreeTimePolicy,setFreeHorizon,evaluateFreeTimePolicy,validateFreeTimePolicy,coolFreeTimePolicy,relocateFreeSegment} from '../../src/data/free-time-policy.mjs';
+import {createFreeViewSession,freeWindowFor,freeSegmentFor,initialFreeTimePolicy,setFreeHorizon,evaluateFreeTimePolicy,validateFreeTimePolicy,coolFreeTimePolicy,relocateFreeSegment,freeProjectDensity} from '../../src/data/free-time-policy.mjs';
 test('H uses local calendar through DST and consecutive windows share boundary',()=>{
  const s=createFreeViewSession({now:'2026-03-10T08:00:00Z',timeZone:'America/New_York',H:7});assert.deepEqual(freeWindowFor(0,s),{start:'2026-03-04',endExclusive:'2026-03-11'});assert.equal(freeWindowFor(1,s).endExclusive,freeWindowFor(0,s).start);
  assert.equal(freeSegmentFor('2026-03-04T04:59:00Z',s),1);assert.equal(freeSegmentFor('2026-03-04T05:00:00Z',s),0);assert.ok(Object.isFrozen(s));
@@ -31,4 +31,11 @@ test('pending recommendation applies at next safe entry without waiting another 
 });
 test('two recommendations in the same direction confirm even if optimal target changes',()=>{
  let p=evaluateFreeTimePolicy(initialFreeTimePolicy(),{...density,day:7});p=evaluateFreeTimePolicy(p,{...density,counts:{7:7,14:12,30:18,60:20,90:25},day:14});assert.equal(p.H,7);
+});
+
+test('adaptive density rejects intervals crossing any candidate H boundary',()=>{
+ const session=createFreeViewSession({now:'2026-10-13T12:00:00Z',timeZone:'UTC'});
+ const p={id:'native',members:[{id:'chat'}],activity:{basis:'interval',candidateDay:session.T-5,sentInterval:{from:'2026-10-03T12:00:00Z',through:'2026-10-08T12:00:00Z'}}};
+ const d=freeProjectDensity({projects:[p,p],noProject:[]},session,{inventoryComplete:true,membershipComplete:true});assert.equal(d.counts[7],0);assert.equal(d.counts[14],1);assert.equal(d.activityComplete,false);
+ p.activity.sentInterval.from='2026-10-07T12:00:00Z';const enough=freeProjectDensity({projects:[p],noProject:[]},session,{inventoryComplete:true,membershipComplete:true});assert.equal(enough.counts[7],1);assert.equal(enough.activityComplete,true);
 });

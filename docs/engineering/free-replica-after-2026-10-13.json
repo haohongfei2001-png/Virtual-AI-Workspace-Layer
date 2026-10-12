@@ -1,0 +1,381 @@
+{
+  "evidence": "LOGIC_ONLY_SYNTHETIC",
+  "measuredAt": "2026-10-12T19:59:33.918Z",
+  "environment": {
+    "node": "v26.8.2",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M5"
+  },
+  "sourceHashes": {
+    "src/data/free-replica.mjs": "99ab3a0cf0ed3237167b11394d0a341588d23407b40838f25a028eabfbba7614",
+    "src/data/free-activity.mjs": "96a4a46dd7a56777827574f06c851f96b07e5d3f864fd9301bcfe7b231b2ef14",
+    "src/data/free-time-policy.mjs": "08192e4f8b809a3bb7ad759bc30a644bbc11a8b36bfe5cd3f412751f0c7ef64b",
+    "src/navigation/free-view.mjs": "efbab4a9b2a56d707f0307c5b3a958866ea03bdfeb24f43cd8dd3744c4404010",
+    "src/navigation/current-index.mjs": "909a8c2b6e9fae5db659efe82341788e37240f58d43bff7e94e85c8ac4864a89",
+    "src/navigation/search.mjs": "85df12d5ae55f800d60d426479171e1e526772b2e4960bd692e8442f6ddd04a8",
+    "tests/free/replica-performance.mjs": "f3573b614635819ca9216bdab8de8191d7535240e70c9235dedc84f6f2b101ec"
+  },
+  "results": [
+    {
+      "size": 1000,
+      "distribution": "project-heavy",
+      "evidence": "LOGIC_ONLY_SYNTHETIC",
+      "projectCount": 10,
+      "noProjectCount": 0,
+      "tailReachable": true,
+      "initial": {
+        "planMs": 0.133,
+        "pagePreparationMs": 0.08,
+        "pageCount": 2,
+        "assembleMs": 1.955,
+        "navigationSnapshotMs": 0.344,
+        "currentIndexBuildMs": 1.09
+      },
+      "unchangedPlan": {
+        "samples": 11,
+        "p50Ms": 0.05,
+        "p95Ms": 0.11,
+        "maxMs": 0.11
+      },
+      "cachedNavigation": {
+        "samples": 1001,
+        "p50Ms": 0,
+        "p95Ms": 0.001,
+        "maxMs": 0.115
+      },
+      "knownTailSearch": {
+        "samples": 11,
+        "p50Ms": 0.336,
+        "p95Ms": 0.507,
+        "maxMs": 0.507
+      },
+      "nativeSingleRefDelta": {
+        "requestedRefs": 1,
+        "requestedProjects": 0,
+        "planMs": 0.17,
+        "assembleMs": 0.855,
+        "navigationSnapshotMs": 0.135,
+        "currentIndexBuildMs": 0.506,
+        "totalMs": 1.666
+      },
+      "singleRefActivityDelta": {
+        "requestedRefs": 1,
+        "requestedProjects": 0,
+        "pageCount": 1,
+        "planMs": 0.166,
+        "pagePreparationMs": 0.007,
+        "assembleMs": 0.813,
+        "fullRefetch": false
+      },
+      "targets": {
+        "cachedNavigationP95Under150ms": true,
+        "knownSearchP95Under300ms": true
+      },
+      "limitations": [
+        "No browser DOM rendering, extension messaging, IndexedDB, throttling or physical weak device measured.",
+        "Logic timing cannot certify F1 S or real-user navigation."
+      ]
+    },
+    {
+      "size": 1000,
+      "distribution": "none-heavy",
+      "evidence": "LOGIC_ONLY_SYNTHETIC",
+      "projectCount": 10,
+      "noProjectCount": 900,
+      "tailReachable": true,
+      "initial": {
+        "planMs": 0.022,
+        "pagePreparationMs": 0.041,
+        "pageCount": 2,
+        "assembleMs": 0.876,
+        "navigationSnapshotMs": 0.117,
+        "currentIndexBuildMs": 0.58
+      },
+      "unchangedPlan": {
+        "samples": 11,
+        "p50Ms": 0.179,
+        "p95Ms": 0.275,
+        "maxMs": 0.275
+      },
+      "cachedNavigation": {
+        "samples": 1001,
+        "p50Ms": 0,
+        "p95Ms": 0,
+        "maxMs": 0.005
+      },
+      "knownTailSearch": {
+        "samples": 11,
+        "p50Ms": 0.267,
+        "p95Ms": 0.381,
+        "maxMs": 0.381
+      },
+      "nativeSingleRefDelta": {
+        "requestedRefs": 1,
+        "requestedProjects": 0,
+        "planMs": 0.277,
+        "assembleMs": 0.728,
+        "navigationSnapshotMs": 0.104,
+        "currentIndexBuildMs": 0.41,
+        "totalMs": 1.519
+      },
+      "singleRefActivityDelta": {
+        "requestedRefs": 1,
+        "requestedProjects": 0,
+        "pageCount": 1,
+        "planMs": 0.252,
+        "pagePreparationMs": 0.005,
+        "assembleMs": 0.771,
+        "fullRefetch": false
+      },
+      "targets": {
+        "cachedNavigationP95Under150ms": true,
+        "knownSearchP95Under300ms": true
+      },
+      "limitations": [
+        "No browser DOM rendering, extension messaging, IndexedDB, throttling or physical weak device measured.",
+        "Logic timing cannot certify F1 S or real-user navigation."
+      ]
+    },
+    {
+      "size": 10000,
+      "distribution": "project-heavy",
+      "evidence": "LOGIC_ONLY_SYNTHETIC",
+      "projectCount": 100,
+      "noProjectCount": 0,
+      "tailReachable": true,
+      "initial": {
+        "planMs": 0.622,
+        "pagePreparationMs": 0.229,
+        "pageCount": 11,
+        "assembleMs": 9.741,
+        "navigationSnapshotMs": 2.241,
+        "currentIndexBuildMs": 6.888
+      },
+      "unchangedPlan": {
+        "samples": 11,
+        "p50Ms": 0.747,
+        "p95Ms": 1.134,
+        "maxMs": 1.134
+      },
+      "cachedNavigation": {
+        "samples": 1001,
+        "p50Ms": 0.001,
+        "p95Ms": 0.001,
+        "maxMs": 0.01
+      },
+      "knownTailSearch": {
+        "samples": 11,
+        "p50Ms": 3.216,
+        "p95Ms": 4.085,
+        "maxMs": 4.085
+      },
+      "nativeSingleRefDelta": {
+        "requestedRefs": 1,
+        "requestedProjects": 0,
+        "planMs": 0.893,
+        "assembleMs": 8.815,
+        "navigationSnapshotMs": 1.647,
+        "currentIndexBuildMs": 5.09,
+        "totalMs": 16.445
+      },
+      "singleRefActivityDelta": {
+        "requestedRefs": 1,
+        "requestedProjects": 0,
+        "pageCount": 1,
+        "planMs": 0.825,
+        "pagePreparationMs": 0.013,
+        "assembleMs": 10.959,
+        "fullRefetch": false
+      },
+      "targets": {
+        "cachedNavigationP95Under150ms": true,
+        "knownSearchP95Under300ms": true
+      },
+      "limitations": [
+        "No browser DOM rendering, extension messaging, IndexedDB, throttling or physical weak device measured.",
+        "Logic timing cannot certify F1 S or real-user navigation."
+      ]
+    },
+    {
+      "size": 10000,
+      "distribution": "none-heavy",
+      "evidence": "LOGIC_ONLY_SYNTHETIC",
+      "projectCount": 100,
+      "noProjectCount": 9000,
+      "tailReachable": true,
+      "initial": {
+        "planMs": 0.588,
+        "pagePreparationMs": 0.281,
+        "pageCount": 11,
+        "assembleMs": 9.82,
+        "navigationSnapshotMs": 1.052,
+        "currentIndexBuildMs": 4.055
+      },
+      "unchangedPlan": {
+        "samples": 11,
+        "p50Ms": 0.67,
+        "p95Ms": 0.865,
+        "maxMs": 0.865
+      },
+      "cachedNavigation": {
+        "samples": 1001,
+        "p50Ms": 0.001,
+        "p95Ms": 0.001,
+        "maxMs": 0.006
+      },
+      "knownTailSearch": {
+        "samples": 11,
+        "p50Ms": 2.649,
+        "p95Ms": 3.623,
+        "maxMs": 3.623
+      },
+      "nativeSingleRefDelta": {
+        "requestedRefs": 1,
+        "requestedProjects": 0,
+        "planMs": 0.845,
+        "assembleMs": 7.96,
+        "navigationSnapshotMs": 1.171,
+        "currentIndexBuildMs": 3.031,
+        "totalMs": 13.007
+      },
+      "singleRefActivityDelta": {
+        "requestedRefs": 1,
+        "requestedProjects": 0,
+        "pageCount": 1,
+        "planMs": 0.829,
+        "pagePreparationMs": 0.004,
+        "assembleMs": 8.047,
+        "fullRefetch": false
+      },
+      "targets": {
+        "cachedNavigationP95Under150ms": true,
+        "knownSearchP95Under300ms": true
+      },
+      "limitations": [
+        "No browser DOM rendering, extension messaging, IndexedDB, throttling or physical weak device measured.",
+        "Logic timing cannot certify F1 S or real-user navigation."
+      ]
+    },
+    {
+      "size": 100000,
+      "distribution": "project-heavy",
+      "evidence": "LOGIC_ONLY_SYNTHETIC",
+      "projectCount": 1000,
+      "noProjectCount": 0,
+      "tailReachable": true,
+      "initial": {
+        "planMs": 11.814,
+        "pagePreparationMs": 2.697,
+        "pageCount": 101,
+        "assembleMs": 113.891,
+        "navigationSnapshotMs": 16.901,
+        "currentIndexBuildMs": 95.671
+      },
+      "unchangedPlan": {
+        "samples": 11,
+        "p50Ms": 13.13,
+        "p95Ms": 31.731,
+        "maxMs": 31.731
+      },
+      "cachedNavigation": {
+        "samples": 1001,
+        "p50Ms": 0.001,
+        "p95Ms": 0.002,
+        "maxMs": 0.01
+      },
+      "knownTailSearch": {
+        "samples": 11,
+        "p50Ms": 33.532,
+        "p95Ms": 34.862,
+        "maxMs": 34.862
+      },
+      "nativeSingleRefDelta": {
+        "requestedRefs": 1,
+        "requestedProjects": 0,
+        "planMs": 15.404,
+        "assembleMs": 104.631,
+        "navigationSnapshotMs": 15.014,
+        "currentIndexBuildMs": 63.151,
+        "totalMs": 198.2
+      },
+      "singleRefActivityDelta": {
+        "requestedRefs": 1,
+        "requestedProjects": 0,
+        "pageCount": 1,
+        "planMs": 15.486,
+        "pagePreparationMs": 0.012,
+        "assembleMs": 94.202,
+        "fullRefetch": false
+      },
+      "targets": {
+        "cachedNavigationP95Under150ms": true,
+        "knownSearchP95Under300ms": true
+      },
+      "limitations": [
+        "No browser DOM rendering, extension messaging, IndexedDB, throttling or physical weak device measured.",
+        "Logic timing cannot certify F1 S or real-user navigation."
+      ]
+    },
+    {
+      "size": 100000,
+      "distribution": "none-heavy",
+      "evidence": "LOGIC_ONLY_SYNTHETIC",
+      "projectCount": 1000,
+      "noProjectCount": 90000,
+      "tailReachable": true,
+      "initial": {
+        "planMs": 7.802,
+        "pagePreparationMs": 3.936,
+        "pageCount": 101,
+        "assembleMs": 107.88,
+        "navigationSnapshotMs": 14.759,
+        "currentIndexBuildMs": 68.957
+      },
+      "unchangedPlan": {
+        "samples": 11,
+        "p50Ms": 12.982,
+        "p95Ms": 14.431,
+        "maxMs": 14.431
+      },
+      "cachedNavigation": {
+        "samples": 1001,
+        "p50Ms": 0.001,
+        "p95Ms": 0.002,
+        "maxMs": 0.012
+      },
+      "knownTailSearch": {
+        "samples": 11,
+        "p50Ms": 34.128,
+        "p95Ms": 36.196,
+        "maxMs": 36.196
+      },
+      "nativeSingleRefDelta": {
+        "requestedRefs": 1,
+        "requestedProjects": 0,
+        "planMs": 16.115,
+        "assembleMs": 105.234,
+        "navigationSnapshotMs": 15.878,
+        "currentIndexBuildMs": 47.598,
+        "totalMs": 184.825
+      },
+      "singleRefActivityDelta": {
+        "requestedRefs": 1,
+        "requestedProjects": 0,
+        "pageCount": 1,
+        "planMs": 16.095,
+        "pagePreparationMs": 0.007,
+        "assembleMs": 102.603,
+        "fullRefetch": false
+      },
+      "targets": {
+        "cachedNavigationP95Under150ms": true,
+        "knownSearchP95Under300ms": true
+      },
+      "limitations": [
+        "No browser DOM rendering, extension messaging, IndexedDB, throttling or physical weak device measured.",
+        "Logic timing cannot certify F1 S or real-user navigation."
+      ]
+    }
+  ]
+}

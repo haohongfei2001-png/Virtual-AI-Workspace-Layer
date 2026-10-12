@@ -14,12 +14,13 @@ const origin=`http://127.0.0.1:${server.address().port}`;
 const report={evidence:'REAL_CHROME_MV3_SYNTHETIC_ONLY',realChatGPT:'NOT_RUN',headless:true,hashes,results:[],pageErrors:[]};
 let context,cdp,a,b;
 const save=()=>process.argv[2]?writeFile(process.argv[2],JSON.stringify(report,null,2)+'\n'):Promise.resolve();
-const run=async(name,fn)=>{try{const data=await fn();report.results.push({name,status:'PASS',...data});}catch(error){report.results.push({name,status:'FAIL',error:error.stack});}console.log(JSON.stringify(report.results.at(-1)));await save();};
+const run=async(name,fn)=>{try{const data=await fn();report.results.push({name,status:'PASS',...data});}catch(error){report.results.push({name,status:'FAIL',error:error.stack,diagnostic:a?await a.evaluate(()=>({url:location.href,state:document.documentElement.dataset.vaiwlHfState,reason:document.documentElement.dataset.vaiwlHfReason,status:[...document.querySelectorAll('[role=\"status\"]')].map(n=>n.textContent),route:globalThis.HF?.getView?.()?.ref})):null});}console.log(JSON.stringify(report.results.at(-1)));await save();};
 const ready=page=>page.waitForFunction(()=>document.documentElement.dataset.vaiwlHfState==='ACTIVE',null,{timeout:15000});
 const probe=async page=>{await page.evaluate(()=>{delete document.documentElement.dataset.hfWorkerProbe;document.dispatchEvent(new Event('hf:test-worker-probe'));});await page.waitForFunction(()=>document.documentElement.dataset.hfWorkerProbe);return JSON.parse(await page.locator('html').getAttribute('data-hf-worker-probe'));};
 const open=async account=>{const page=await context.newPage();page.on('pageerror',error=>report.pageErrors.push(error.message));await page.goto(`${origin}/hf/${account}/c/T0?mode=mv3`);await ready(page);if(await page.locator('[data-vaiwl-return]').isVisible())await page.locator('[data-vaiwl-return]').click();return page;};
 try{
  context=await chromium.launchPersistentContext(join(directory,'profile'),{executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging'],timezoneId:'Asia/Shanghai'});
+ context.setDefaultTimeout(10000);
  await context.route('**/*',route=>route.request().url().startsWith(origin+'/')?route.continue():route.abort());
  cdp=await context.browser().newBrowserCDPSession();report.browser=(await cdp.send('Browser.getVersion')).product;
  const extensionId=(await cdp.send('Extensions.loadUnpacked',{path:extension})).id;
@@ -60,8 +61,17 @@ try{
   assert.equal(await a.getByRole('textbox',{name:'消息输入',exact:true}).inputValue(),'未发送的本地合成草稿');
   assert((await a.locator('.theme-name').allTextContents()).includes('城市观察'));return {workerBootChanged:true};
  });
+ await run('Existing native conversation send persists observation through the MV3 queue',async()=>{
+  const before=await probe(a);await a.locator('[data-ref-id="T0"]').first().click();
+  const input=a.getByRole('textbox',{name:'消息输入',exact:true});await input.fill('已保存聊天的合成发送');await a.getByRole('button',{name:'发送消息',exact:true}).click();
+  let after;for(let attempt=0;attempt<20;attempt++){after=await probe(a);if(after.workspaceRevision>before.workspaceRevision)break;await a.waitForTimeout(100);}
+  assert(after.workspaceRevision>before.workspaceRevision,'existing-send-metadata-not-persisted');assert.equal(await input.inputValue(),'');
+  await a.locator('[data-vaiwl-return]').click();return {workspaceRevision:after.workspaceRevision};
+ });
  await run('Native synthetic new chat becomes a persisted NONE row and accepts shared working-set metadata',async()=>{
   await a.getByRole('link',{name:'新聊天',exact:true}).click();
+  await a.locator('[data-vaiwl-return]').waitFor({state:'visible'});
+  assert.equal(await a.locator('section[aria-label="Conversation"][data-vaiwl-mask]').count(),0);
   const input=a.getByRole('textbox',{name:'消息输入',exact:true});await input.fill('MV3 新聊天原生标题');await a.getByRole('button',{name:'发送消息',exact:true}).click();
   await ready(a);await a.locator('[data-vaiwl-return]').click();
   await a.locator('[data-free-list="noProject"] [data-ref-id]').filter({hasText:'MV3 新聊天原生标题'}).first().waitFor({timeout:8000});

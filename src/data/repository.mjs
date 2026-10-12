@@ -142,6 +142,36 @@ export class WorkspaceRepository {
       tx.onerror=()=>{};
     });
   }
+  /** Enlist newly discovered native references in the caller's existing IDB transaction.
+   * This adds shared reference anchors only; Pro identities and placements are never rewritten.
+   */
+  registerNativeReferences(tx, scope, nativeRefs, operationId, check, done, fail) {
+    const s=scopeChecked(scope),store=tx.objectStore('b23_states');
+    const request=store.get(s.key);
+    request.onsuccess=()=>{try{
+      check();const payload=request.result?unpack(request.result):null;
+      const apply=(current,storage=null)=>{try{
+        check();const added=nativeRefs.filter(ref=>!Object.hasOwn(current.refs,ref.id));
+        if(!added.length){done();return;}
+        const next=structuredClone(current);
+        for(const ref of added)next.refs[ref.id]={id:ref.id,nativeUrl:ref.nativeUrl,projectId:ref.projectId,nativeTitle:ref.nativeTitle??'名称暂不可用',available:ref.availability==='available'};
+        next.revision++;validateState(next,s.key);
+        const patch=changes(current,next),key=JSON.stringify([s.key,operationId]);
+        const duplicate=tx.objectStore('b23_operations').get(key);
+        duplicate.onsuccess=()=>{try{
+          check();if(duplicate.result)throw Error('native-shared-operation-conflict');
+          for(const ref of added){const key=this.base.key(s,ref.id),r=tx.objectStore('refs').get(key);r.onsuccess=()=>{try{check();if(r.result&&(r.result.nativeUrl!==ref.nativeUrl||r.result.projectId!==ref.projectId))throw Error('native-reference-conflict');if(!r.result)tx.objectStore('refs').put({key,scopeKey:s.key,conversationId:ref.id,nativeUrl:ref.nativeUrl,projectId:ref.projectId,revision:1});}catch(error){fail(error);}};}
+          if(storage)this.partitioned.saveMutation(tx,storage,current,next,patch,'evidence');
+          else{if(current.revision)tx.objectStore('b23_checkpoints').put(record(s.key,current));store.put(record(s.key,next));}
+          tx.objectStore('b23_operations').put(record(key,{id:operationId,scopeKey:s.key,type:'NATIVE_REFERENCES',actor:'evidence',fingerprint:digest(added),baseRevision:current.revision,resultRevision:next.revision,recordedAt:this.clock(),patch:[],changedObjects:added.length,undoneBy:null}));
+          check();done();
+        }catch(error){fail(error);}};
+      }catch(error){fail(error);}};
+      if(isPartitioned(payload)){checkManifest(payload,s.key);this.partitioned.loadMutation(tx,payload,{fingerprint:{batch:{refs:nativeRefs}}},null,apply,fail);}
+      else apply(payload?validateState(payload,s.key):emptyState(s));
+    }catch(error){fail(error);}};
+  }
+
   async exportBackup(scope,options={}){if(await this.partitioned.manifest(scope,options))return this.partitioned.exportBackup(scope,options);const {state}=await this.read(scope,options);return createBackup(state);}
   async previewRestore(scope,bundle,options={}){const s=scopeChecked(scope),large=await this.partitioned.manifest(s,options),{state}=large?{state:await this.partitioned.partial(s,Object.keys(bundle?.payload?.refs??{}),options)}:await this.read(s,options),plan=previewBackup(state,bundle,s);return {summary:plan.summary,planHash:plan.planHash,expectedRevision:plan.expectedRevision,evidenceImported:false};}
   async restoreBackup(scope,{operationId,expectedRevision,bundle,planHash},options={}){
@@ -220,7 +250,12 @@ export class WorkspaceRepository {
   }
 }
 export function validateView(v){
-  exact(v,['segment','oldOpen','sidebarOpen','capacities','scroll','sidebarVisible']);
+  exact(v,['segment','oldOpen','sidebarOpen','capacities','scroll','sidebarVisible'],['freeSession']);
+  if(v.freeSession!==undefined){
+    const s=v.freeSession;exact(s,['H','T','Z','policyRevision']);
+    if(![7,14,30,60,90].includes(s.H)||!Number.isSafeInteger(s.T)||Math.abs(s.T)>=1000000||typeof s.Z!=='string'||s.Z.length>=100||!Number.isSafeInteger(s.policyRevision)||s.policyRevision<0)throw Error('invalid-free-session');
+    try{new Intl.DateTimeFormat('en',{timeZone:s.Z}).format(0);}catch{throw Error('invalid-free-session');}
+  }
   if(!Number.isSafeInteger(v.segment)||v.segment<0||v.segment>10000||!Number.isFinite(v.scroll)||v.scroll<0||v.scroll>1e9||typeof v.sidebarVisible!=='boolean')throw Error('invalid-view');
   for(const k of ['oldOpen','sidebarOpen'])if(!Array.isArray(v[k])||v[k].length>20000||v[k].some(x=>typeof x!=='string'||x.length>260))throw Error('invalid-view');
   if(!Array.isArray(v.capacities)||v.capacities.length>20000||v.capacities.some(x=>!Array.isArray(x)||x.length!==2||typeof x[0]!=='string'||x[0].length>260||!Number.isSafeInteger(x[1])||x[1]<0||x[1]>20000))throw Error('invalid-view');return v;

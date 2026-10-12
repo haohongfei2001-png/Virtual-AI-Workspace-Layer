@@ -1,3 +1,7 @@
+import {planFreeReplica,freeReplicaRequests,assembleFreeReplicaAsync} from '../src/data/free-replica.mjs';
+import {createFreeViewSession,initialFreeTimePolicy,freeProjectDensity,evaluateFreeTimePolicy,coolFreeTimePolicy,setFreeHorizon} from '../src/data/free-time-policy.mjs';
+import {freeNavigationSnapshot} from '../src/navigation/free-view.mjs';
+import { localDay } from '../src/navigation/projection.mjs';
 import {currentIndexAsync} from '../src/navigation/current-index.mjs';
 import { replicaDelta, assembleReplicaAsync } from '../src/data/replica.mjs';
 const randomId=()=>crypto.randomUUID?.()??Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
@@ -10,13 +14,15 @@ import { openWorkspaceEditor } from './editor.mjs';
 /** B4 observes versions and renews authority; it never automatically replays a write. */
 export function startClient({send,invalidateRemote=()=>{},readControls=()=>({size:Number(document.documentElement.dataset.hfSize)||8,now:document.documentElement.dataset.hfNow||FIXTURE_NOW,timeZone:document.documentElement.dataset.hfTimeZone||'Asia/Shanghai'}),subscribe=()=>()=>{}}){
   const adapter=createAdapter(),clientId=randomId();let seq=0,generation=0,lease=null,expiry=null,pending=null,heartbeat=null,stopped=false,lastURL=env.location.href;
+  let autoNotice=null,autoNoticeTimer=null;
+  let syntheticFlush=false;const pendingSynthetic=new Map();
   let freeSession=null,freeSessionRoute=new URL(env.location.href).pathname.split('/')[2];
-  let partitionReplica=null,partitionIndex=null;let recoveryPanel=null;let data=null,editor=null,retries=0,viewTimer=null,viewRevision=0,lastView='',chain=Promise.resolve(),feedback=null;
+  let freeReplica=null,freeIndex=null,partitionReplica=null,partitionIndex=null;let recoveryPanel=null;let data=null,editor=null,retries=0,viewTimer=null,viewRevision=0,lastView='',chain=Promise.resolve(),feedback=null;
   const visible=()=>document.visibilityState!=='hidden';
   const controlsKey=()=>{const c=readControls();return JSON.stringify([c.size,c.now,c.timeZone]);};let lastControls=controlsKey();
   const queue=fn=>{const task=chain.then(fn);chain=task.catch(()=>{});return task;};
   const request=async(type,extra={})=>{let deadline;try{return await Promise.race([send({v:1,type,clientId,seq:++seq,...(type==='BIND'?{}:{leaseId:lease?.leaseId}),...extra}),new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error('request-timeout')),6000);})]);}catch{throw Error('transport-unavailable');}finally{clearTimeout(deadline);}};
-  const navigation=createNavigation({document,adapter,onExit:()=>stop(),onManage:context=>void manage(context),onViewChange:(value,scope)=>saveViewSoon(value,scope)});
+  const navigation=createNavigation({document,adapter,onExit:()=>stop(),onManage:context=>void manage(context),onViewChange:(value,scope)=>saveViewSoon(value,scope),onCurrentWorkspaceEntry:()=>safeCurrentEntry()});
   const clearTimers=()=>{clearTimeout(expiry);clearTimeout(pending);clearTimeout(heartbeat);clearTimeout(viewTimer);};
   const clearFeedback=()=>{feedback?.remove();feedback=null;};
   const clearRecovery=()=>{recoveryPanel?.remove();recoveryPanel=null;};
@@ -26,7 +32,30 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     const text=document.createElement('span');text.textContent=reason==='unverified-scope'?'身份尚未确认，派生内容已隐藏。':(retries>=5||!retryable(reason))?'派生工作空间暂时无法连接，原生聊天仍可使用。':'派生工作空间正在重新连接，原生聊天仍可使用。';feedback.append(text);
     const button=document.createElement('button');button.type='button';button.textContent='重新连接派生工作空间';button.onclick=()=>{retries=0;void load();};feedback.append(button);const host=adapter.inspect();if(host.ok)(host.navigationSlot??host.history).before(feedback);
   }
-  function fail(reason,preserve=false){if(editor){if(preserve)editor.suspend();else{editor.close();editor=null;}}navigation.invalidate(reason);}
+  function clearAutoNotice(){clearTimeout(autoNoticeTimer);autoNotice?.remove();autoNotice=null;}
+  function showAutoNotice(previous,next,day){
+    clearAutoNotice();const scope=data.scope,revision=data.workspaceRevision,notice=document.createElement('div');notice.dataset.vaiwlOwned='auto-range-notice';notice.setAttribute('role','status');
+    notice.style.cssText='font:12px/1.5 system-ui;padding:6px 12px';notice.append(document.createTextNode('已根据已核验项目调整时间范围。 '));
+    const undoButton=document.createElement('button');undoButton.type='button';undoButton.textContent='撤销';undoButton.onclick=async()=>{undoButton.disabled=true;try{if(data?.scope!==scope)throw Error('stale-binding');await command({type:'SET_PREFERENCE',id:'freeTimePolicy',value:coolFreeTimePolicy(setFreeHorizon(next,previous.H,day),day)},revision);clearAutoNotice();}catch(e){notice.textContent='未撤销：'+e.message+'。可在设置中手选范围。';}};notice.append(undoButton);
+    const host=adapter.inspect();if(host.ok){autoNotice=notice;(host.navigationSlot??host.history).before(notice);autoNoticeTimer=setTimeout(clearAutoNotice,15000);}
+  }
+  function safeCurrentEntry(){
+    const ticket=generation,url=env.location.href;void queue(async()=>{
+      if(!current(ticket,url)||!data||data.viewMode!=='free'||navigation.view()?.segment!==0)return;
+      const c=readControls(),now=c.now??FIXTURE_NOW,timeZone=c.timeZone??'Asia/Shanghai',day=localDay(now,timeZone),policy=data.preferences?.freeTimePolicy?.value??initialFreeTimePolicy({day});
+      const session=createFreeViewSession({now,timeZone,H:policy.H,policyRevision:policy.revision});
+      if(JSON.stringify(freeSession)!==JSON.stringify(session)){freeSession=session;await readSnapshot(ticket,url);}
+      if(data.preferences?.freeTimePolicy?.value&&JSON.stringify(data.preferences.freeTimePolicy.value)!==JSON.stringify(policy))return;
+      const policyFingerprint=JSON.stringify(data.preferences?.freeTimePolicy?.value??null),decisionRevision=data.revision,decisionEvidenceRevision=data.evidenceRevision;
+      const density=freeProjectDensity(data,session,{inventoryComplete:data.inventoryComplete===true,membershipComplete:data.inventoryComplete===true&&!data.unknown?.length});
+      const next=evaluateFreeTimePolicy(policy,{...density,day,safeEntry:true,historyBrowsing:false});if(JSON.stringify(next)===JSON.stringify(policy))return;
+      await prepareWriteBinding();if(!current(ticket,url)||navigation.view()?.segment!==0||data.revision!==decisionRevision||data.evidenceRevision!==decisionEvidenceRevision||JSON.stringify(data.preferences?.freeTimePolicy?.value??null)!==policyFingerprint)return;
+      const result=await request('B23_COMMAND',{operationId:'auto_range_'+randomId().replaceAll('-',''),expectedRevision:data.workspaceRevision??data.revision,command:{type:'SET_PREFERENCE',id:'freeTimePolicy',value:next}});
+      if(!current(ticket,url))return;if(!result?.ok)throw Error(result?.reason??'auto-policy-unconfirmed');
+      freeSession=createFreeViewSession({now,timeZone,H:next.H,policyRevision:next.revision});await readSnapshot(ticket,url);if(next.H!==policy.H)showAutoNotice(policy,next,day);
+    }).catch(e=>{if(current(ticket,url)&&retryable(e.message))recover(e.message);});
+  }
+  function fail(reason,preserve=false){clearAutoNotice();if(editor){if(preserve)editor.suspend();else{editor.close();editor=null;}}navigation.invalidate(reason);}
   function current(ticket,url){return !stopped&&visible()&&ticket===generation&&url===env.location.href;}
   const retryable=reason=>['invalidated-during-check','stale-document','not-current-document','stale-binding','stale-after-workspace','stale-client-response','transport-unavailable','binding-not-ready','lease-expired-active-js','snapshot-revision-changed'].includes(reason);
   function recover(reason,{preserve=true,immediate=false}={}){
@@ -36,9 +65,25 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     pending=setTimeout(()=>{if(current(ticket,url))void load();},delay);
   }
   async function readSnapshot(ticket,url){
-    const c=readControls(),freeMode=new URL(env.location.href).searchParams.get('view')!=='pro',reply=await request(freeMode?'B23_FREE_SNAPSHOT':'B23_SNAPSHOT',{now:c.now??FIXTURE_NOW,timeZone:c.timeZone??'Asia/Shanghai',size:c.size??8,...(freeMode&&freeSession?{viewSession:freeSession}:{})});
+    const c=readControls(),freeMode=new URL(env.location.href).searchParams.get('view')!=='pro',reply=await request(freeMode?'B23_FREE_HEADER':'B23_SNAPSHOT',{now:c.now??FIXTURE_NOW,timeZone:c.timeZone??'Asia/Shanghai',size:c.size??8,...(freeMode&&freeSession?{viewSession:freeSession}:{})});
     if(!current(ticket,url))throw Error('stale-client-response');if(!reply?.ok)throw Error(reply?.reason??'read-failed');
     let next=reply.snapshot,nextIndex=null;
+    if(freeMode){
+      const header=reply.header,plan=planFreeReplica(freeReplica,header),pages=[];
+      for(const ids of freeReplicaRequests(plan,1000)){
+        const r=await request('B23_FREE_PAGE',{revision:header.revision,offset:0,limit:1000,ids,viewSession:header.viewSession,now:c.now??FIXTURE_NOW});
+        if(!current(ticket,url))throw Error('stale-client-response');if(!r?.ok)throw Error(r?.reason??'read-failed');pages.push(r.page);
+      }
+      const verify=async()=>{const r=await request('CHECK');if(!current(ticket,url))throw Error('stale-client-response');if(!r?.ok)throw Error(r?.reason??'read-failed');if(r.nativeRevision!==header.revision||r.revision!==header.workspaceRevision||r.evidenceRevision!==header.evidenceRevision)throw Error('snapshot-revision-changed');};
+      await verify();
+      if(!plan.full&&!plan.rebuild&&!plan.projects.length&&!plan.refs.length&&freeReplica){
+        next={...freeReplica.snapshot,...header,viewMode:'free'};nextIndex=freeIndex;
+      }else{
+        const assembled=await assembleFreeReplicaAsync(freeReplica,header,pages,plan,()=>current(ticket,url));
+        next=freeNavigationSnapshot(assembled.snapshot);nextIndex=await currentIndexAsync(next,next.groups,()=>current(ticket,url));
+        await verify();freeReplica=assembled;freeIndex=nextIndex;
+      }
+    }
     if(reply.partition){const root=reply.partition,m=root.manifest,delta=replicaDelta(partitionReplica,m),incoming=[];
       if(delta===null){const total=Object.keys(m.refVersions).length;for(let offset=0;offset<total;offset+=5000){const r=await request('B23_PARTITION_PAGE',{revision:m.revision,offset,ids:null});if(!current(ticket,url))throw Error('stale-client-response');if(!r.ok)throw Error(r.reason);if(r.page.scope!==m.scopeKey||r.page.revision!==m.revision||r.page.total!==total)throw Error('incomplete-partition-snapshot');incoming.push(...r.page.pieces);}}
       else for(let offset=0;offset<delta.length;offset+=5000){const r=await request('B23_PARTITION_PAGE',{revision:m.revision,offset:0,ids:delta.slice(offset,offset+5000)});if(!current(ticket,url))throw Error('stale-client-response');if(!r.ok)throw Error(r.reason);if(r.page.scope!==m.scopeKey||r.page.revision!==m.revision)throw Error('incomplete-partition-snapshot');incoming.push(...r.page.pieces);}
@@ -52,7 +97,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     }else{partitionReplica=null;partitionIndex=null;}
 
     if(data?.scope===next.scope&&next.revision<data.revision)return data;
-    const changed=!data||data.revision!==next.revision||data.workspaceRevision!==next.workspaceRevision||data.viewRevision!==next.viewRevision||data.diagnostics?.view!==next.diagnostics?.view;
+    const changed=!data||data.revision!==next.revision||data.workspaceRevision!==next.workspaceRevision||data.evidenceRevision!==next.evidenceRevision||JSON.stringify(data.viewSession)!==JSON.stringify(next.viewSession)||data.viewRevision!==next.viewRevision||data.diagnostics?.view!==next.diagnostics?.view;
     if(next.viewMode==='free'&&!freeSession)freeSession=next.viewSession;data=next;viewRevision=data.viewRevision;
     if(lastView===''&&data.view)lastView=JSON.stringify(data.view);
     if(changed){navigation.update(data,c.now??FIXTURE_NOW,c.timeZone??'Asia/Shanghai',nextIndex);if(editor&&!editor.resume(data))editor=null;}
@@ -62,7 +107,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     heartbeat=setTimeout(()=>void queue(async()=>{
       if(!current(ticket,url)||!lease)return;
       try{const reply=await request('CHECK');if(!current(ticket,url))return;if(!reply?.ok)throw Error(reply?.reason??'check-failed');
-        if(reply.revision!==undefined&&(reply.revision!==(data?.workspaceRevision??data?.revision)||(data?.viewMode==='free'&&reply.nativeRevision!==data?.revision)||reply.viewRevision!==viewRevision||reply.viewDiagnostic!==data?.diagnostics?.view))await readSnapshot(ticket,url);
+        if(reply.revision!==undefined&&(reply.revision!==(data?.workspaceRevision??data?.revision)||(data?.viewMode==='free'&&(reply.nativeRevision!==data?.revision||reply.evidenceRevision!==data?.evidenceRevision))||reply.viewRevision!==viewRevision||reply.viewDiagnostic!==data?.diagnostics?.view))await readSnapshot(ticket,url);
         if(current(ticket,url))scheduleHeartbeat();
       }catch(e){if(current(ticket,url)){if(lease&&e.message==='corrupt-record')await showAssetRecovery(ticket,url,e.message);else recover(e.message);}}
     }),2000);
@@ -71,7 +116,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     clearRecovery();if(stopped||!visible())return;const ticket=++generation,url=env.location.href;clearTimers();fail('validating-binding',true);lease=null;data=null;lastView='';
     try{const bound=await request('BIND');if(!current(ticket,url))return;if(!bound?.ok)throw Error(bound?.reason??'bind-failed');
       lease=bound;await queue(()=>readSnapshot(ticket,url));if(!current(ticket,url))return;retries=0;
-      expiry=setTimeout(()=>recover('lease-expired-active-js',{immediate:true}),Math.max(0,lease.expiresAt-Date.now()));scheduleHeartbeat();
+      expiry=setTimeout(()=>recover('lease-expired-active-js',{immediate:true}),Math.max(0,lease.expiresAt-Date.now()));scheduleHeartbeat();flushSynthetic();
     }catch(e){if(current(ticket,url)){if(lease&&['corrupt-record','invalid-state','invalid-schema','invalid-user-event','invalid-text','orphan-placement','orphan-title','invalid-state-row','invalid-state-table'].includes(e.message)){await showAssetRecovery(ticket,url,e.message);}else recover(e.message);}}
   }
   async function showAssetRecovery(ticket,url,reason){
@@ -98,7 +143,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
       catch(e){if(current(ticket,url))recover(e.message);throw Error('write-result-unknown');}
       if(!current(ticket,url))throw Error('write-result-unknown');
       // A known result remains known even if the following read loses its binding.
-      try{if(result?.ok&&value.type==='SET_PREFERENCE'&&value.id==='freeTimePolicy')freeSession=null;await readSnapshot(ticket,url);}catch(e){if(current(ticket,url))recover(e.message);if(result?.ok)throw Error('write-result-unknown');}
+      try{if(result?.ok&&value.type==='SET_PREFERENCE'&&value.id==='freeTimePolicy'){const c=readControls();freeSession=createFreeViewSession({now:c.now??FIXTURE_NOW,timeZone:c.timeZone??'Asia/Shanghai',H:value.value.H,policyRevision:value.value.revision});}await readSnapshot(ticket,url);}catch(e){if(current(ticket,url))recover(e.message);if(result?.ok)throw Error('write-result-unknown');}
       if(!result?.ok){if(retryable(result?.reason))recover(result.reason);throw Error(result?.reason??'write-result-unknown');}return result;
     });
   }
@@ -121,11 +166,33 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     }),180);
   }
   function changed(){if(stopped)return;if(lastURL!==env.location.href||lastControls!==controlsKey()){
-      clearRecovery();const accountRoute=new URL(env.location.href).pathname.split('/')[2];if(accountRoute!==freeSessionRoute){freeSession=null;freeSessionRoute=accountRoute;}partitionReplica=null;partitionIndex=null;lastURL=env.location.href;lastControls=controlsKey();generation++;invalidateRemote();clearTimers();fail('route-changed');lease=null;data=null;retries=0;clearFeedback();pending=setTimeout(load,0);
+      clearRecovery();if(lastURL!==env.location.href)navigation.enterReading();const accountRoute=new URL(env.location.href).pathname.split('/')[2];if(accountRoute!==freeSessionRoute){freeSession=null;freeReplica=null;freeIndex=null;freeSessionRoute=accountRoute;pendingSynthetic.clear();}partitionReplica=null;partitionIndex=null;lastURL=env.location.href;lastControls=controlsKey();generation++;invalidateRemote();clearTimers();fail('route-changed');lease=null;data=null;retries=0;clearFeedback();pending=setTimeout(load,0);
     }else navigation.layout();}
-  // Synthetic host metadata only. A native production page has no such authorized channel.
-  const syntheticSend=event=>{const detail=event.detail;if(!detail||stopped)return;const url=env.location.href;clearTimeout(pending);
-    void (async()=>{await load();if(stopped||url!==env.location.href||!lease||!data)return;await queue(async()=>{const ticket=generation;try{const r=await request('B23_SYNTHETIC_SEND',{...detail});if(!current(ticket,url))return;if(!r?.ok)throw Error(r?.reason??'synthetic-send-failed');await readSnapshot(ticket,url);}catch(e){if(current(ticket,url))recover(e.message);}});})();
+  // Re-observe only bounded synthetic metadata; never replay a native send or body.
+  function flushSynthetic(){
+    if(syntheticFlush||!lease||!data||stopped||!visible())return;syntheticFlush=true;
+    void queue(async()=>{try{
+      for(const [key,item] of pendingSynthetic){
+        if(Date.now()-item.createdAt>600000){pendingSynthetic.delete(key);continue;}
+        const url=env.location.href;if(new URL(url).pathname!==item.pathname)continue;
+        if(!lease||!data||stopped||!visible())break;
+        const ticket=generation;item.attempts++;
+        try{const reply=await request('B23_SYNTHETIC_SEND',item.metadata);
+          if(!current(ticket,url)){if(item.attempts>=2)pendingSynthetic.delete(key);break;}
+          if(!reply?.ok)throw Error(reply?.reason??'synthetic-send-failed');
+          pendingSynthetic.delete(key);await readSnapshot(ticket,url);
+        }catch(e){if(item.attempts>=2||!retryable(e.message)&&e.message!=='revision-conflict')pendingSynthetic.delete(key);
+          if(current(ticket,url))recover(retryable(e.message)?e.message:'stale-binding',{immediate:true});break;}
+      }
+    }finally{syntheticFlush=false;}});
+  }
+  const syntheticSend=event=>{const detail=event.detail;if(!detail||stopped)return;
+    const metadata={conversationId:detail.conversationId,messageId:detail.messageId,projectId:detail.projectId,nativeTitle:detail.nativeTitle};
+    const pathname=new URL(env.location.href).pathname,key=pathname+':'+metadata.messageId;
+    if(!pendingSynthetic.has(key)){if(pendingSynthetic.size>=128)pendingSynthetic.delete(pendingSynthetic.keys().next().value);pendingSynthetic.set(key,{metadata,pathname,createdAt:Date.now(),attempts:0});}
+    // Route invalidation may arrive asynchronously from MV3 webNavigation. The next
+    // successful binding drains the same event key, including a stale in-flight observation.
+    flushSynthetic();
   };document.addEventListener('hf:synthetic-send',syntheticSend);
   const observer=new MutationObserver(records=>{if(records.some(r=>!r.target.closest?.('[data-vaiwl-owned]')&&!(r.type==='attributes'&&r.attributeName?.startsWith('data-vaiwl'))))changed();});
   observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','open','data-collapsed','inert']});
@@ -137,6 +204,6 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   const resume=()=>{if(!stopped&&visible()){retries=0;void load();}};
   document.addEventListener('visibilitychange',hide);document.addEventListener('freeze',pageHide);document.addEventListener('resume',resume);addEventListener('pagehide',pageHide);addEventListener('pageshow',resume);
   const refresh=()=>{generation++;invalidateRemote();retries=0;return load();};
-  function stop(){clearRecovery();if(stopped)return;stopped=true;generation++;clearTimers();clearFeedback();editor?.close();observer.disconnect();resize.disconnect();unsub();document.removeEventListener('hf:change',nativeChange);document.removeEventListener('hf:synthetic-send',syntheticSend);document.removeEventListener('toggle',nativeChange,true);document.removeEventListener('visibilitychange',hide);document.removeEventListener('freeze',pageHide);document.removeEventListener('resume',resume);removeEventListener('pagehide',pageHide);removeEventListener('pageshow',resume);removeEventListener('popstate',nativeChange);removeEventListener('resize',nativeChange);navigation.stop();}
+  function stop(){clearRecovery();if(stopped)return;stopped=true;pendingSynthetic.clear();freeReplica=null;freeIndex=null;generation++;clearTimers();clearFeedback();editor?.close();observer.disconnect();resize.disconnect();unsub();document.removeEventListener('hf:change',nativeChange);document.removeEventListener('hf:synthetic-send',syntheticSend);document.removeEventListener('toggle',nativeChange,true);document.removeEventListener('visibilitychange',hide);document.removeEventListener('freeze',pageHide);document.removeEventListener('resume',resume);removeEventListener('pagehide',pageHide);removeEventListener('pageshow',resume);removeEventListener('popstate',nativeChange);removeEventListener('resize',nativeChange);navigation.stop();}
   void load();return {stop,refresh,command,undo,manage,showWorkspace:()=>navigation.showWorkspace(),status:()=>navigation.status(),navigation};
 }

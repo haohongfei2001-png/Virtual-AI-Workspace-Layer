@@ -28,7 +28,7 @@ export class FreeCalibration {
           await Promise.race([Promise.resolve().then(()=>this.apply(value,{scope,objectId:item.objectId,generation,signal:controller.signal,isCurrent:()=>generation===this.generation&&scope===this.scope&&!controller.signal.aborted})),boundary]);
           if(generation!==this.generation||controller.signal.aborted)break;
           completed=true;outcomes.push({...item,status:'updated',attempts:attempt+1});break;
-        }catch(error){if(generation!==this.generation)break;if(attempt===this.maxRetries)outcomes.push({...item,status:'degraded',reason:error.message,attempts:attempt+1,nextTrigger:'foreground-or-source-revision'});}
+        }catch(error){if(generation!==this.generation)break;if(error.retryable===false||attempt===this.maxRetries){outcomes.push({...item,status:error.code==='unsupported'?'unsupported':'degraded',reason:error.message,attempts:attempt+1,nextTrigger:'foreground-or-source-revision'});if(error.retryable===false)break;}}
         finally{clearTimeout(timer);if(this.controller===controller)this.controller=null;}
       }
       this.inFlight=null;

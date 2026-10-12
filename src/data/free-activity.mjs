@@ -65,23 +65,37 @@ export function projectFreeActivity(snapshot,evidence,session,now) {
     return result;
   };
   const refs=snapshot.refs.map(r=>{if(r.scope!==snapshot.scope)throw Error('cross-scope-free-ref');const activityDecision=decision(r.id);return {...r,activityDecision,activity:activityDecision};});
+  return aggregateFreeActivity({...snapshot,refs,viewSession:session});
+}
+/** Aggregate already verified row decisions without trusting page-level send labels. */
+export function aggregateFreeActivity(snapshot) {
+  const refs=snapshot.refs;
+  for(const row of refs)if(row.scope!==snapshot.scope||!row.activityDecision)throw Error('invalid-free-row-decision');
+  const emptyDecision=id=>({objectKey:id,evidenceRevision:snapshot.evidenceRevision??refs[0]?.activityDecision.evidenceRevision??0,basis:'undated',candidateDay:null,candidateTime:null,segment:null,reason:'no-valid-activity',nextCheck:null,validUntil:null});
   const byId=new Map(refs.map(r=>[r.id,r]));
-  const order=(a,b)=>(a.activityDecision.candidateDay===null)-(b.activityDecision.candidateDay===null)||(instant(b.activityDecision.candidateTime)??0)-(instant(a.activityDecision.candidateTime)??0);
+  // ISO validation/parsing is O(rows), not O(sort comparisons). This cache lives
+  // for exactly one projection, so expiry, scope and evidence changes cannot reuse it.
+  const sortKeys=new Map();
+  const rememberKey=row=>{const d=row.activityDecision;sortKeys.set(row,[Number(d.candidateDay===null),instant(d.candidateTime)??0]);};
+  for(const row of refs)rememberKey(row);
+  // Returning zero preserves the native input order for equal or undated activity.
+  const order=(a,b)=>{const x=sortKeys.get(a),y=sortKeys.get(b);return x[0]-y[0]||y[1]-x[1];};
   const resolve=rows=>rows.map(r=>byId.get(typeof r==='string'?r:r.id)).filter(Boolean).sort(order);
   const projects=snapshot.projects.map(p=>{
     if(p.scope!==snapshot.scope)throw Error('cross-scope-free-project');
     const members=resolve(p.members),dated=members.filter(r=>r.activityDecision.candidateDay!==null),latest=dated[0]?.activityDecision;
-    let activityDecision=latest?{...latest,objectKey:p.key??p.id}:{...decision(p.id),objectKey:p.key??p.id};
+    let activityDecision=latest?{...latest,objectKey:p.key??p.id}:{...emptyDecision(p.id),objectKey:p.key??p.id};
     // Empty Projects and inventory discovery do not constitute sends. Unknown members cannot erase a positive recent send.
     if(!latest)activityDecision={...activityDecision,basis:'undated',candidateDay:null,candidateTime:null,segment:null,reason:'no-member-activity'};
     else if(latest.segment!==0&&(p.membershipComplete!==true||members.some(r=>!['exact','interval'].includes(r.activityDecision.basis))))activityDecision={...activityDecision,basis:'provisional',reason:'incomplete-member-activity'};
     const segment=activityDecision.segment;
-    return {...p,members,activityDecision,activity:activityDecision,segment,
+    const card={...p,members,activityDecision,activity:activityDecision,segment,
       current:members.filter(r=>r.activityDecision.segment===segment&&segment!==null),
       old:members.filter(r=>segment!==null&&r.activityDecision.segment!==null&&r.activityDecision.segment>segment),
       unknown:members.filter(r=>r.activityDecision.segment===null)};
+    rememberKey(card);return card;
   }).sort(order);
-  return {...snapshot,refs,projects,noProject:resolve(snapshot.noProject),unknown:resolve(snapshot.unknown),viewSession:session};
+  return {...snapshot,refs,projects,noProject:resolve(snapshot.noProject),unknown:resolve(snapshot.unknown)};
 }
 /** A duplicate poll of an event cannot renew its observation anchor or expiration. */
 export function mergeFreeObservationHints(existing,incoming) {

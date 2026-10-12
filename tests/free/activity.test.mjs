@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {projectFreeActivity,mergeFreeObservationHints} from '../../src/data/free-activity.mjs';
+import {projectFreeActivity,mergeFreeObservationHints,aggregateFreeActivity} from '../../src/data/free-activity.mjs';
 import {createFreeViewSession} from '../../src/data/free-time-policy.mjs';
 const now='2026-10-13T12:00:00Z',scope='synthetic-scope',session=createFreeViewSession({now,timeZone:'UTC'});
 const snapshot={scope,refs:['a','b','n','u'].map(id=>({id,scope})),projects:[{id:'p',scope,members:['a','b']}],noProject:[{id:'n'}],unknown:[{id:'u'}]};
@@ -40,4 +40,13 @@ test('interval precision preserved and crossing boundary remains provisional',()
 test('coverage gaps cannot certify historical inactivity',()=>{
  const e=evidence();e.events.a=send('a','2026-08-14T10:00:00Z');e.coverage.a={sourceId:'s',conversationId:'a',observedAt:now,from:'2026-08-14T10:00:00Z',through:now,completeness:'complete',branches:'all',gaps:[]};
  assert.equal(project(e).refs[0].activity.basis,'exact');e.coverage.a.gaps=[{from:'2026-09-01T00:00:00Z',through:'2026-09-02T00:00:00Z'}];assert.equal(project(e).refs[0].activity.basis,'provisional');
+});
+
+test('numeric sort preserves native stable ties and does not mutate row order or reuse expired keys',()=>{
+ const activityDecision={basis:'exact',candidateDay:session.T,candidateTime:now,segment:0};
+ const refs=['z','a','m'].map(id=>({id,scope,activityDecision:{...activityDecision}}));
+ const value={scope,refs,projects:[{id:'second',scope,members:['z']},{id:'first',scope,members:['a']}],noProject:[refs[2],refs[0],refs[1]],unknown:[]};
+ const first=aggregateFreeActivity(value);assert.deepEqual(first.noProject.map(r=>r.id),['m','z','a']);assert.deepEqual(first.projects.map(p=>p.id),['second','first']);assert.deepEqual(value.refs.map(r=>r.id),['z','a','m']);
+ refs[0].activityDecision={basis:'undated',candidateDay:null,candidateTime:null,segment:null};
+ const changed=aggregateFreeActivity(value);assert.deepEqual(changed.noProject.map(r=>r.id),['m','a','z']);assert.deepEqual(changed.projects.map(p=>p.id),['first','second']);
 });
