@@ -327,3 +327,5 @@ GitHub短只读连接仍8秒超时，未重复push；本地检查点保留，最
 完整Node658/0/0skip；补强BOUND来源断言后broker13/13。实际headless client+broker小型合成owner归属合同7/7，包含document切换、隐藏、过期及NONE/Project元数据正例；此小型owner不冒称真实IDB。实际MV3另9/9通过，含worker重启/草稿、新NONE持久化与未知账户隔离。100k本轮NOT_RUN；上一轮1546.2/1896.8/1812.3ms的1秒FAIL不变。
 
 固定包SHA256 `569ba075a0b29bc18785338b481e2032a905af4c120fab5857976db5264cd180`，仅SYNTHETIC_ONLY。F3同目录包替换/回退测试另行记录；当前scope修复不改变schema3。下一明确缺陷已有独立失败合同：restore→undo移除B23 refs但保留B1锚，Free库存遗漏已知引用。需保留UNKNOWN身份可达且不恢复任何标题/成员/来源授权；不能把人工撤销当原生删除，旧B1-only锚需要有界补录。真实外部条件未解除，完整Free未交付。
+
+第二十四轮F3补充：实际Chrome154包替换/回退4/4通过，Round23→Round24→实际Round23 reader，固定目录extensionId不变，Pro title/workingSet及共享/native/evidence摘要一致，604原生refs、原textarea/草稿document不刷新。两包manifest均0.2.0/schema3，这是同schema包替换与真实旧包回退，不冒称实际schema升级；独立模拟future schema4旧reader拒绝且marker保留。测试最初因独立profile未启developer mode在reload后被Chrome停用，harness开启开发者模式后通过，未改产品权限/版本；报告free-round24-upgrade。

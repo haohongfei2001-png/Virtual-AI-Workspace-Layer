@@ -27,3 +27,5 @@ node simulator/package.mjs /private/tmp/vaiwl-free-package-candidate
 ## 隐私与限制
 
 包仅有 `webNavigation` 权限和 loopback 内容脚本匹配；真实宿主权限、网络模型及生产来源认证均未加入。工作集与选定片段属于本地人工数据。备份不携带有效发送证据、来源授权或原生草稿；无法安全修复时保留原记录；可修复时先核验检查点和分片，并撤销旧来源有效性。性能、恢复、scope 隔离等合成结果不能代替真实产品验收。
+
+2026-10-13新增本地实测：同一路径Round23→Round24→Round23实际包重载/回退保留extension ID、人工资产、原生/活动事实与宿主草稿；两包均manifest0.2.0/schema3，不代表跨schema升级已认证。独立模拟schema4数据库使旧schema3 reader拒绝且数据保留。证据见`free-round24-upgrade-2026-10-13.json`，仅隔离合成Chrome环境。
