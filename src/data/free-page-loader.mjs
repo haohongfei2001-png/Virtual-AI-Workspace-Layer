@@ -7,7 +7,7 @@ export async function loadFreePages({requests,load,guard=()=>true}){
   check();const result=await load(ids);check();
   if(result?.ok){pages.push(result.page);return;}
   const reason=result?.reason??'read-failed';
-  if(!['native-page-too-large','free-evidence-page-too-large'].includes(reason))throw Error(reason);
+  if(!['native-page-too-large','free-evidence-page-too-large','free-page-too-large'].includes(reason))throw Error(reason);
   const count=ids.projects.length+ids.refs.length;
   if(count<=1)throw Error('free-single-item-too-large');
   if(depth>=13||splits>=64)throw Error('free-page-split-budget');splits++;

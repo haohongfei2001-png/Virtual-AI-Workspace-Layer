@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第十六轮（接本地 `4822a0f`）。上一普通push遇连接超时，最新远端须以本轮最终push/API核对；继续原正式目录和分支。
+当前已推进至第十七轮（接已普通推送、GitHub确认Draft的 `87fa2ff`）。当前批次修复增量依赖与最终IPC页边界，继续原正式目录及PR #16。旧结果只代表各自来源。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -253,3 +253,13 @@ F1/shared组合57/0，随后补精确16Mi/+1和共享合法数组，新编码合
 最终native/encoding/counts/recovery组合92/0，含38项新合同；真实headless恢复旅程7/7，新增refs=true重签根反例并保留先前原生/活动损坏流程。未重跑完整Node/MV3或100k，不替换此前性能未达标记录。包仍SYNTHETIC_ONLY，SHA256 `15313c923ebd178a91dec1ac008b997794d6650fb03340b77c54d45d5725fbb9`，报告free-round16-*。
 
 上一4822a0f推送连接75秒失败后停止，短只读检查恢复200，本轮完成后合并普通推送两项提交；实际同步以最终输出为准。不改remote或部署。真实来源/账户/跨端/PAIA/物理与真人验收仍缺条件，Free未完成。
+
+## 第十七轮：Project增量依赖与最终IPC页大小（接87fa2ff）
+
+Project版本变化会重新投影其已知成员及失去父项目身份的UNKNOWN聊天；项目不可用/恢复时聊天正确PROJECT→UNKNOWN→PROJECT，不丢可达性，不重拉无关NONE/其他项目成员。修复原先仅移除卡片却保留旧PROJECT引用导致missing-free-project-dependency的实际问题。
+
+Free PAGE在broker末次权威校验/owner deadline处理后按完整响应UTF-8大小执行保留F1的16Mi IPC页限制；超限typed free-page-too-large进入既有有界二分，不放宽容量/预算。ASCII/UTF8反例证明输入页均合规但投影可超限；5000→2500+2500后全部引用原序完整。不是声称Chrome通道自身只有16Mi限制。
+
+最终完整Node582/0/0skip，实际MV3 9/9，真实页面Chrome/IDB双向Project恢复与草稿/阅读保留通过。新逻辑2项、wire边界2项均包含Node总数。最大长ID HEADER另做真实MV3：100k共享refs+100k原生Projects、128字符ID，40,400,691bytes/941ms通过；小对照54,073bytes/116.5ms；未复现传输失败，不据此新增HEADER限额。该构建hash及限定覆盖见独立报告。
+
+本轮修改前87fa2ff固定55源hash100k完整更新1178.1ms/首屏12189.7ms，功能PASS/1秒性能仍FAIL；此结果不冒称覆盖后来的依赖/IPC修复。新包SHA256 `568b281f26967ac2a10f1e532d0b5b23fe50ec3d75a1bbc98af664f1ef9b8d75`，仍SYNTHETIC_ONLY。下一具体位置：fixtureObserve的本地确认发送仍先workspaces.read/native.read全量，需复用单ref读取保留严格重复事件/路由/CAS门控；不把该本地缺口记成权限阻塞。真实来源/账户/跨端/PAIA/物理/真人验收仍缺原条件，完整Free未完成。

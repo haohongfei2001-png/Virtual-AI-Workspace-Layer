@@ -127,3 +127,9 @@ Git连接恢复，03ef76a已正常推送原分支；本轮末再同步新检查�
 原生manifest map类型漏洞已修，枚举合并；native-partition-capacity现在进入明确手动恢复。92项Node和真实headless恢复7/7通过，包含重签refs=true、来源撤销/草稿/不发送。旧性能100k1377.8ms仍未达1秒。包及证据见STATUS本轮。
 
 4822a0f push网络超时；已独立继续本轮并用短请求确认GitHub恢复，最终两提交普通push后核对。下一本地工作应合并近期原生/活动验证优化做一次100k更新关键路径测量，基于实测确定剩余热点，避免无证据改DOM。所有真实外部验收条件仍有效，完整Goal未达成。
+
+## 第十七轮恢复增量（接87fa2ff）
+
+Project增量双向依赖修复及Free PAGE最终16Mi UTF8/有界拆页完成，完整Node582/0、MV3 9/9、真实页面Project恢复通过。HEADER真实MV340.4MB/941ms通过，未复现传输失败；勿凭“超过16Mi”臆造Chrome通道上限。各报告独立source/buildhash，不合并旧成绩。
+
+本轮代码前100k1178.1ms仍未达1秒；下一可执行为fixtureObserve当前workspaces.read+native.read全量，应用workspaceContext单ref及native.page，保持本地严格发送/重复事件/授权/来源/CAS。源review代理只读，无未提交源码。包和准确状态见STATUS第十七轮；真实Free未验收，继续原分支PR16。

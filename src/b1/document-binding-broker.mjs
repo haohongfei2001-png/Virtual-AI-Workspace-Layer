@@ -200,6 +200,8 @@ export function createDocumentBindingBroker({
         if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-workspace');
         // Deadlines come from owner repository pages, never from a page payload.
         const payload=result.header??result.page;if(payload?.calibrationDeadlines){freeRuntime?.observeDeadlines?.(slot.leaseId,payload.calibrationDeadlines);delete payload.calibrationDeadlines;}
+        // Bound the final projected IPC page, including UTF-8 expansion and envelope.
+        if(message.type==='B23_FREE_PAGE'&&result.ok&&new TextEncoder().encode(JSON.stringify(result)).length>16*1024*1024)return deny('free-page-too-large');
         return result;
       }
       if(message.type==='GET_REF'){
