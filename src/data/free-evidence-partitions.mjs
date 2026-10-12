@@ -14,17 +14,20 @@ export function evidenceHeader(manifest,scope){return {...emptyFreeEvidence(scop
 function checkEvidenceManifestStructure(value,scope){
  if(!isEvidencePartitioned(value)||value.scopeKey!==scope.key||!Number.isSafeInteger(value.revision)||value.revision<1)throw Error('invalid-free-evidence-manifest');
  validateFreeEvidence(evidenceHeader(value,scope),scope);
+ const tableKeys={};let aggregateSize=0;
  for(const table of ['refVersions','sizes']){
-  const rows=value[table];if(!rows||typeof rows!=='object'||Array.isArray(rows)||Object.keys(rows).length>100000)throw Error('free-evidence-capacity');
-  for(const [key,v] of Object.entries(rows)){
-   id(key);if(!Number.isSafeInteger(v)||v<1||(table==='refVersions'&&v>value.revision))throw Error('invalid-free-evidence-piece-version');
+  const rows=value[table];if(!rows||typeof rows!=='object'||Array.isArray(rows))throw Error('free-evidence-capacity');
+  const keys=Object.keys(rows);if(keys.length>100000)throw Error('free-evidence-capacity');tableKeys[table]=keys;
+  for(const key of keys){
+   const v=rows[key];id(key);if(!Number.isSafeInteger(v)||v<1||(table==='refVersions'&&v>value.revision))throw Error('invalid-free-evidence-piece-version');
+   if(table==='sizes')aggregateSize+=v;
   }
  }
  if(!value.indexVersions||typeof value.indexVersions!=='object'||Array.isArray(value.indexVersions)||Object.keys(value.indexVersions).length>1024)throw Error('invalid-free-evidence-index-manifest');
  for(const [key,v] of Object.entries(value.indexVersions))if(!/^(events|hints|coverage|hintEvents)_[0-9a-f]{2}$/.test(key)||!Number.isSafeInteger(v)||v<1||v>value.revision)throw Error('invalid-free-evidence-index-manifest');
  for(const table of tables)if(!Number.isSafeInteger(value.counts?.[table])||value.counts[table]<0||value.counts[table]>100000)throw Error('free-evidence-capacity');
- if(Object.keys(value.sizes).length!==Object.keys(value.refVersions).length||Object.keys(value.refVersions).some(k=>!Object.hasOwn(value.sizes,k)))throw Error('invalid-free-evidence-sizes');
- if(Object.values(value.sizes).reduce((a,b)=>a+b,0)>128*1024*1024)throw Error('free-evidence-too-large');
+ if(tableKeys.sizes.length!==tableKeys.refVersions.length||tableKeys.refVersions.some(k=>!Object.hasOwn(value.sizes,k)))throw Error('invalid-free-evidence-sizes');
+ if(aggregateSize>128*1024*1024)throw Error('free-evidence-too-large');
  return value;
 }
 export function validateEvidenceManifest(value,scope){

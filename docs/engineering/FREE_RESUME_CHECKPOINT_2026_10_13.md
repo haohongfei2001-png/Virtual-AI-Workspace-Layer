@@ -109,3 +109,9 @@ Git连接恢复，03ef76a已正常推送原分支；本轮末再同步新检查�
 显式ID页计数已在严格完整内容编码中取得，无额外全量键数组、无计数缓存。原校验错误优先级已修复并有反例。最终Node462/0、MV3 9/9、10k真IDB通过；普通固定源码100k1377.8ms仍1秒FAIL，首屏20577.5ms更慢。包及各自source receipts见STATUS第十三轮。
 
 下一执行活动manifest重复枚举合并：checkEvidenceManifestStructure对refVersions/sizes重复8次以上keys/entries/values，可保留各表keys数组并累计size，保持原错误优先级/同键集合/100k/128Mi限制。代理只写独立测试，root负责源码。182e96b已正常同步PR16 Draft，本轮实现随后普通提交推送；无新工作树/部署。真实Free未验收，继续可执行本地工作。
+
+## 第十四轮恢复增量（接5f18bc1）
+
+活动manifest重复枚举已合并，59条原约束/错误顺序基线，最终相关110/0和10k真IDB通过；独立审查通过。没有重跑完整Node/MV3/100k。包与hash见STATUS及free-round14-*。5f18bc1已正常推送PR16，本节提交继续普通同步。
+
+直接继续共享partitioned.saveMutation新根size/stable重复编码和旧检查点重复hash问题；仅内部可信事务路径可复用，缺envelope时保留原恢复回退。不要削弱checksum/CAS/marker/guard或丢Pro人工资产。当前性能仍100k1377.8ms/1秒FAIL，真实Free验收仍未完成。

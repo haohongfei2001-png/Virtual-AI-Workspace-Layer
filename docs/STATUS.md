@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第十三轮（接 `182e96b`，已确认推送PR #16 Draft）。本轮合并验证计数与元数据读取优化，继续沿原分支正常同步。以下旧轮次保留当时证据，不代表当前远端。
+当前已推进至第十四轮（接已正常推送的 `5f18bc1`）。当前实现持续沿原分支及PR #16提交同步；旧轮次证据保留各自来源。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -229,3 +229,11 @@ FreeEvidenceRepository.header在完整root校验后只读取revision/manifest/so
 最终完整Node462/0/0skip（含14项新计数合同），headless MV3 9/9、10k真IDB校准PASS。固定55源hash普通100k完整更新1377.8ms，功能PASS/1秒性能FAIL；首屏20577.5ms，比上一15762.7ms更慢，不能宣称整体达标。无fullread、单ref分页、原生节点/草稿/阅读保留。各自报告见free-round13-*，不合并旧结果。
 
 合成包 `/private/tmp/vaiwl-free-delivery-round13-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `14fb2eab262a8804eebe48787e96f2cb6e982ca44111df5e8e8e99f405652f16`。下一实际位置：活动manifest的refVersions/sizes重复keys/entries/values遍历可合并，保持原字段/容量/错误顺序；不是外部权限阻塞。真实账户/来源/跨端/PAIA/物理与真人验收条件不变，Free尚未交付。
+
+## 第十四轮：活动manifest结构校验减少重复枚举（接5f18bc1）
+
+refVersions/sizes各自只生成一份keys并复用，字段校验过程中累计容量；去掉Object.entries二元数组及后续重复keys/values。原100k/128Mi、同键集合、版本、scope和错误优先级保留，16Mi公开校验及内部规范编码不改。独立审查通过。
+
+新增59项在修改前基线通过；修改后evidence/manifest/counts组合110/0/0skip，10k真实IDB校准PASS。没有重复全套Node/MV3或100k；上一100k1377.8ms/1秒FAIL不可替换为本轮结果。包仍SYNTHETIC_ONLY，archive SHA256 `9c331c4e41361ed9990600000f2e85f21f249dc75bb4821b6263baf95f9c8061`，本轮报告free-round14-*。
+
+下一局部位置为共享partitioned.saveMutation：新manifest先完整size编码再stable/hash，旧检查点再次编码已验证根；内部合并必须保留恢复回退、共享人工资产、同事务和故障回滚。真实账户/来源/PAIA/物理/日常验收条件未解除，完整Free未交付。
