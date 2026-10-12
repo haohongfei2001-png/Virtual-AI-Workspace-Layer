@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-第三轮本地实现为 `7ac2e28`，第四轮在 `25e2ab2` 上继续，结果见末节；远端PR #16仍为已推送的 `b2a262b`。正常Git传输分别出现HTTP/2错误和443连接超时，第三轮实现及最终检查点尚未推送；见恢复检查点的“最后同步检查点”。未修改远端设置。
+当前已推进至第八轮（接本地 `98d6e17`），最新结果见末节与恢复检查点。最后确认远端PR #16为Draft、头 `03ef76a`；后续本地提交待网络恢复后正常同步。以下各轮保留其当时证据与同步状态，不代表当前头。未修改远端设置。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -177,3 +177,11 @@ PLAN_TEXT_READY；REMOTE_WRITE_BLOCKED（当前工具未提供写入动作，也
 验证：最终完整Node360/0/0skip；真实Chrome MV39/9报告为数组遍历最后小修之前的独立哈希；最终严格缓存16合同、完整Node及拆页浏览器3项覆盖最后修复。浏览器拆页采用模拟30KB返回预算+真实IDB/DOM，两类size error均604refs/2projects、63calls/32成功页，603有效聊天与原有T401 tombstone全部可达，单项error10calls后停止；这是错误路径测试，不能冒称真实16Mi边界认证。各次数不相加。
 
 合成包 `/private/tmp/vaiwl-free-delivery-round7-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `f84712d88cfdc9a2c2817370f0eb43f6632c650aff941bd68a725d58e4d0ce9c`。本轮一次20秒HTTP/1.1正常推送仍超时，未循环重试、改配置或remote。上一确认远端03ef76a；本轮代码仍本地待同步。完整Free/真实ChatGPT/PAIA/物理与日常验收未通过；不标FREE_ACCEPTED或RELEASE_READY。
+
+## 第八轮：共享根验证与一致的读取上下文（接98d6e17）
+
+共享分片manifest复用严格全字节/checksum/scope/key缓存，普通人工事务和原生引用注册仍逐次核验新读记录；损坏或跨scope不命中。HEADER直接使用已验manifest元数据，不再为偏好引用加载pieces；PAGE在单个只读事务内取得state及manifest，保留旧格式回退、Pro人工资产及最终版本检查。活动/引用版本表减少临时数组，不改语义。
+
+完整Node366/0/0skip；其后新增共享上下文4/4针对性通过，不能与旧轮结果累加。固定源码真实Chrome MV3 9/9；100k source→IDB→broker→DOM功能PASS，首屏12913.5ms，更新1625.2ms（上轮2149.9ms）。1ref分页、零全量snapshot/read、原生阅读/输入/消息节点和草稿保留。1秒更新性能仍FAIL，未以减弱权限或完整性检查换性能。各源hash、日志摘要及独立报告为free-round8-*。
+
+新合成包 `/private/tmp/vaiwl-free-delivery-round8-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `7893cbf04248f0db55ccff9e215b19a7c0ae0ea6fc8fb02051ad606704c8c21c`。仍仅loopback SYNTHETIC_ONLY，真实ChatGPT/跨端/PAIA/物理设备和真人日常条件不变；完整Free、RELEASE_READY和PUBLISHED均未达到。下一本地工作为客户端重复全量导航转换/索引成本，保留末次CHECK。

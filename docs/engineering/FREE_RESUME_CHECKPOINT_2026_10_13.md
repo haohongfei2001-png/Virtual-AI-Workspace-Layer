@@ -71,3 +71,9 @@ Git连接恢复，03ef76a已正常推送原分支；本轮末再同步新检查�
 下一可执行性能位置：共享WorkspaceRepository.registerNativeReferences/partitioned root验证、freeHeader重复100k映射及CHECK中共享manifest验证；saveView自身只写b23_views小记录，不应假定它单独重写整个manifest，其观测延迟可能是并行JS/事务排队。不能省略scope、marker、checksum/CAS或最终版本校验。现有100k完整UI脚本能固定源码做前后测，无需重建环境/计划。
 
 最新包 `/private/tmp/vaiwl-free-delivery-round7-20261013/vaiwl-free-synthetic-only.zip`，SHA256 f84712d88cfdc9a2c2817370f0eb43f6632c650aff941bd68a725d58e4d0ce9c。本轮唯一20秒正常推送超时后停止；远端上一确认03ef76a，当前实现及检查点仍本地待同步。真实账户/PAIA/物理环境条件保持未授权且阻塞对应验收；整个Free尚未交付，继续本地可执行优化。
+
+## 第八轮恢复增量（接98d6e17）
+
+共享manifest严格缓存及HEADER元数据/PAGE同事务上下文已经完成，不需重写。Node366/0和新增context4/4分别记录；真实MV3 9/9；固定55源hash100k初始12913.5ms、完整更新1625.2ms，功能PASS/1秒性能FAIL。包及hash见STATUS第八轮。当前真实账户等权限条件保持不变，完整Free未验收。
+
+下一可执行：client已执行freeNavigationSnapshot后navigation.update再次转换100k引用；消除该重复转换并验证原名/历史/原生节点和安全更新门控，继续保留scope与末次CHECK。当前分支不变，无额外工作树。最新head以git核对，远端上一确认03ef76a，正常同步待网络可用。

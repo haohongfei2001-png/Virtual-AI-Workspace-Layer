@@ -1,3 +1,4 @@
+import {headerState} from '../src/data/partitioned.mjs';
 import {FreeRuntimeService} from '../src/data/free-runtime-service.mjs';
 import {freeRecoveryStatus} from '../src/data/free-recovery-status.mjs';
 import { FreeEvidenceRepository } from '../src/data/free-evidence-repository.mjs';
@@ -31,7 +32,11 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
     const add=(table,row)=>{if(!rows.has(row.conversationId))rows.set(row.conversationId,[]);rows.get(row.conversationId).push([table,row]);};
     if(!refVersions)for(const table of ['events','coverage'])for(const row of Object.values(state[table]))add('shared-'+table,row);
     for(const table of ['events','hints','coverage'])for(const row of Object.values(stored[table]??{}))add(table,row);
-    const value=Object.fromEntries([...new Set([...Object.keys(refVersions??state.refs),...rows.keys(),...Object.keys(stored.manifest?.refVersions??{})])].map(id=>[id,`${refVersions?.[id]??0}:${stored.manifest?.refVersions[id]??0}:${rows.has(id)?digest(rows.get(id)):''}`]));
+    const value={};
+    const addVersion=id=>{if(!Object.hasOwn(value,id))value[id]=`${refVersions?.[id]??0}:${stored.manifest?.refVersions[id]??0}:${rows.has(id)?digest(rows.get(id)):''}`;};
+    for(const id of Object.keys(refVersions??state.refs))addVersion(id);
+    for(const id of rows.keys())addVersion(id);
+    for(const id of Object.keys(stored.manifest?.refVersions??{}))addVersion(id);
     if(activityVersionCache.size>=8&&!activityVersionCache.has(key))activityVersionCache.delete(activityVersionCache.keys().next().value);
     activityVersionCache.set(key,{revision,value});return value;
   }
@@ -39,10 +44,13 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
     return digest(Object.entries({...state.sources,...stored.sources}).map(([id,s])=>({id,revoked:s.revoked,generation:s.generation??null,channel:s.channel,validUntil:s.validUntil??null,trustLevel:s.trustLevel??null})));
   }
   async function workspaceContext(scope,options,ids=null){
+    if(ids!==null){
+      const context=await workspaces.partitioned.partialContext(scope,ids,options);
+      return context?{state:context.state,refVersions:context.manifest.refVersions}:workspaces.read(scope,options);
+    }
     const large=await workspaces.partitionHeader(scope,options);
     if(!large)return workspaces.read(scope,options);
-    const state=await workspaces.partitioned.partial(scope,ids??[],options);
-    return {state,view:large.view,diagnostics:large.diagnostics,refVersions:large.manifest.refVersions};
+    return {state:headerState(large.manifest),view:large.view,diagnostics:large.diagnostics,refVersions:large.manifest.refVersions};
   }
   async function ensureNative(scope,options,origin){
     let root=await native.header(scope,options);
@@ -72,9 +80,10 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
         const root=await ensureNative(scope,options,new URL(url).origin),context=await workspaceContext(scope,options),stored=await evidence.header(scope,options);
         const {state,view,diagnostics}=context,policy=state.preferences.freeTimePolicy?.value;
         const activeSources=Object.values(root.manifest?.sources??{}).filter(source=>!source.revoked&&Date.parse(source.validUntil)>Date.parse(FIXTURE_NOW));
-        const refs=Object.fromEntries(Object.keys(context.refVersions??state.refs).map(key=>[key,0]));
+        const refs={};for(const key of Object.keys(context.refVersions??state.refs))refs[key]=0;
+        for(const [key,version] of Object.entries(root.manifest?.refs??{}))refs[key]=version;
         const session=viewSession??(view?.value?.segment>0?view.value.freeSession:null)??createFreeViewSession({now,timeZone,H:policy?.H??30,policyRevision:policy?.revision??0});
-        return {calibrationDeadlines:deadlines(root.manifest?.sources,state.sources,stored.sources),scope:state.scopeKey,revision:root.revision,membershipWitnessRevision:digest(Object.values(root.manifest?.sources??{}).map(({id,sourceRevision})=>({id,sourceRevision}))),visibilityRevision:digest(Object.values(root.manifest?.sources??{}).map(({id,revoked,generation,channel,validUntil})=>({id,revoked,generation,channel,validUntil}))),evaluatedAt:now,inventoryComplete:activeSources.length>0&&activeSources.every(source=>source.inventory.projects==='complete'&&source.inventory.conversations==='complete'),activitySourceRevision:activitySourceRevision(state,stored),manifest:{projectVersions:root.manifest?.projects??{},refVersions:{...refs,...root.manifest?.refs},activityVersions:activityVersions(context,stored)},
+        return {calibrationDeadlines:deadlines(root.manifest?.sources,state.sources,stored.sources),scope:state.scopeKey,revision:root.revision,membershipWitnessRevision:digest(Object.values(root.manifest?.sources??{}).map(({id,sourceRevision})=>({id,sourceRevision}))),visibilityRevision:digest(Object.values(root.manifest?.sources??{}).map(({id,revoked,generation,channel,validUntil})=>({id,revoked,generation,channel,validUntil}))),evaluatedAt:now,inventoryComplete:activeSources.length>0&&activeSources.every(source=>source.inventory.projects==='complete'&&source.inventory.conversations==='complete'),activitySourceRevision:activitySourceRevision(state,stored),manifest:{projectVersions:root.manifest?.projects??{},refVersions:refs,activityVersions:activityVersions(context,stored)},
           preferences:state.preferences,view:view?.value??null,viewRevision:view?.revision??0,workspaceRevision:state.revision,diagnostics,viewSession:session,evidenceRevision:`${state.revision}:${stored.revision}`};
       },
       freePage:async(scope,query,options)=>{

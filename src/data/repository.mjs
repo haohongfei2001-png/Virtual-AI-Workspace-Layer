@@ -1,4 +1,4 @@
-import { PartitionedState, isPartitioned, checkManifest } from './partitioned.mjs';
+import { PartitionedState, isPartitioned } from './partitioned.mjs';
 import { createBackup, previewBackup, recoverAssets } from './backup.mjs';
 import { normalizedScope } from '../b1/identity.mjs';
 import { B23_STORES } from './schema.mjs';
@@ -75,7 +75,7 @@ export class WorkspaceRepository {
           const sr=states.get(s.key);sr.onsuccess=()=>{
             if(!check())return;
             try{
-              const payload=sr.result?unpack(sr.result):null;
+              const payload=sr.result?(isPartitioned(sr.result.payload)?this.partitioned.verifiedManifest(sr.result,s.key):unpack(sr.result)):null;
               const enter=(current,storage=null,loadedPrior=null)=>{
               if(current.revision!==expectedRevision){abort('revision-conflict');return;}
               const finish=prior=>{
@@ -103,7 +103,7 @@ export class WorkspaceRepository {
               };
               if(storage)finish(loadedPrior);else if(targetOperationId){const ur=ops.get(JSON.stringify([s.key,targetOperationId]));ur.onsuccess=()=>{try{if(!ur.result)throw Error('missing-operation');finish(unpack(ur.result));}catch(e){abort(e.message);}};}else finish(null);
               };
-              if(isPartitioned(payload)){checkManifest(payload,s.key);const load=prior=>this.partitioned.loadMutation(tx,payload,params,prior,(current,storage)=>{if(check())enter(current,storage,prior);},e=>abort(e.message));if(targetOperationId){const q=ops.get(JSON.stringify([s.key,targetOperationId]));q.onsuccess=()=>{try{if(!q.result)throw Error('missing-operation');load(unpack(q.result));}catch(e){abort(e.message);}};}else load(null);}
+              if(isPartitioned(payload)){const load=prior=>this.partitioned.loadMutation(tx,payload,params,prior,(current,storage)=>{if(check())enter(current,storage,prior);},e=>abort(e.message));if(targetOperationId){const q=ops.get(JSON.stringify([s.key,targetOperationId]));q.onsuccess=()=>{try{if(!q.result)throw Error('missing-operation');load(unpack(q.result));}catch(e){abort(e.message);}};}else load(null);}
               else enter(payload?validateState(payload,s.key):emptyState(s));
             }catch(e){abort(e.message);}
           };
@@ -149,7 +149,7 @@ export class WorkspaceRepository {
     const s=scopeChecked(scope),store=tx.objectStore('b23_states');
     const request=store.get(s.key);
     request.onsuccess=()=>{try{
-      check();const payload=request.result?unpack(request.result):null;
+      check();const payload=request.result?(isPartitioned(request.result.payload)?this.partitioned.verifiedManifest(request.result,s.key):unpack(request.result)):null;
       const apply=(current,storage=null)=>{try{
         check();const added=nativeRefs.filter(ref=>!Object.hasOwn(current.refs,ref.id));
         if(!added.length){done();return;}
@@ -167,7 +167,7 @@ export class WorkspaceRepository {
           check();done();
         }catch(error){fail(error);}};
       }catch(error){fail(error);}};
-      if(isPartitioned(payload)){checkManifest(payload,s.key);this.partitioned.loadMutation(tx,payload,{fingerprint:{batch:{refs:nativeRefs}}},null,apply,fail);}
+      if(isPartitioned(payload)){this.partitioned.loadMutation(tx,payload,{fingerprint:{batch:{refs:nativeRefs}}},null,apply,fail);}
       else apply(payload?validateState(payload,s.key):emptyState(s));
     }catch(error){fail(error);}};
   }
