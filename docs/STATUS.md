@@ -329,3 +329,11 @@ GitHub短只读连接仍8秒超时，未重复push；本地检查点保留，最
 固定包SHA256 `569ba075a0b29bc18785338b481e2032a905af4c120fab5857976db5264cd180`，仅SYNTHETIC_ONLY。F3同目录包替换/回退测试另行记录；当前scope修复不改变schema3。下一明确缺陷已有独立失败合同：restore→undo移除B23 refs但保留B1锚，Free库存遗漏已知引用。需保留UNKNOWN身份可达且不恢复任何标题/成员/来源授权；不能把人工撤销当原生删除，旧B1-only锚需要有界补录。真实外部条件未解除，完整Free未交付。
 
 第二十四轮F3补充：实际Chrome154包替换/回退4/4通过，Round23→Round24→实际Round23 reader，固定目录extensionId不变，Pro title/workingSet及共享/native/evidence摘要一致，604原生refs、原textarea/草稿document不刷新。两包manifest均0.2.0/schema3，这是同schema包替换与真实旧包回退，不冒称实际schema升级；独立模拟future schema4旧reader拒绝且marker保留。测试最初因独立profile未启developer mode在reload后被Chrome停用，harness开启开发者模式后通过，未改产品权限/版本；报告free-round24-upgrade。
+
+## 第二十五轮：撤销人工恢复保留已知UNKNOWN入口
+
+RESTORE_BACKUP撤销现在保留新增引用身份，完整冲突检查不变；人工title/workspace/placement/preferences仍按真实inverse撤销，后续无关人工资产保持。不把人工撤销当原生删除，也不从备份恢复source/event/grant；Free无原生事实仍只显示UNKNOWN与“名称暂不可用”。
+
+新增4项合同覆盖普通/分片、真实broker预览恢复撤销、幂等、跨scope、冲突与授权剥离；B23/B4/replica组合100通过。完整Node663/0/0skip。真实headless IDB界面1/1，暖投影0页更新后UNKNOWN入口仍可达、原阅读/textarea/未发草稿保持。旧Round21报告保留当时来源；其owner/client一致并不证明旧“撤销后隐藏引用”满足产品可达性，本轮纠正owner语义，通用仅删除manifest的rebuild反例仍保留。
+
+包SHA256 `d7219140ab43b41522d32e987543ae3ba5c3aa7f1afbca32035abc547ee7f6c3`，仍SYNTHETIC_ONLY。旧代码已形成的B1-only孤儿尚未自动补录，下一任务用同库有界游标+共享UNKNOWN锚修复；新增B1引用、恢复旧检查点须失效游标，缺根损坏/坏行/撤权不可推进。MV3/100k本轮NOT_RUN，不覆盖旧性能FAIL。外部真实验收条件保持，Free未完成。

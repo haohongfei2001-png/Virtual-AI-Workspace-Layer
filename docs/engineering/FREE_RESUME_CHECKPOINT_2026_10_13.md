@@ -177,3 +177,7 @@ ee7bc03正常push连接443超时，最后确认远端dab61e7 Draft，后续本�
 pendingSynthetic已绑定捕获时验证过的scope/document/route/有效期；BOUND输出scope，最终CHECK交叉核验，冷无来源/隐藏/expired不追认。完整Node658/0、补强broker13、实际归属browser7/7、MV3 9/9。固定包/private/tmp/vaiwl-free-delivery-round24-20261013/extension及zip，hash见STATUS。未重跑100k，不改变1秒FAIL。
 
 下一实现known-anchor-contract.mjs当前失败：恢复撤销后B1仍有锚但Free导航缺UNKNOWN入口。先修未来RESTORE_BACKUP undo保留必要身份并撤销人工作品（保留冲突检查与真实inverse日志），历史B1-only用有界迁移补录，绝不从旧锚重放授权/标题真值。旧removal UI测试以前只证明owner/client一致，不能作为已知引用可达性的产品正确性证据；历史报告保持原样，新增证据分开。531c146 push45秒超时且短只读连接仍8秒超时，最后远端c2f92e0；勿循环重试，继续本地。
+
+## 第二十五轮恢复增量（接05292d0）
+
+未来RESTORE_BACKUP undo不再删除必要refs身份，人工其他patch正常逆转且全部冲突检查保留。新合同4/4、完整Node663/0、真IDB界面1/1；UNKNOWN占位可达且不显示备份标题，草稿/阅读保持。包和报告free-round25-*，hash见STATUS。下一立即做历史B1-only有界补录：同tx refs游标+registerNativeReferences+durable marker，B1新增/共享恢复同tx失效marker；不每次HEADER全量list，不恢复原生事实或授权，缺根有history/checkpoint拒绝。正常远端同步仍待GitHub恢复，最后确认c2f92e0，已本地保存531c146/8e4bc86/05292d0。Free未完成。

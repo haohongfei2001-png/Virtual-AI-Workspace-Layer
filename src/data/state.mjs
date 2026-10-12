@@ -93,6 +93,13 @@ export function changes(before,after){const result=[];for(const table of TABLES)
 export function undoChanges(current,operation){
   if(operation.invalidatedBy||operation.actor!=='human'||!['CREATE_WORKSPACE','UPDATE_WORKSPACE','SET_TITLE','PLACE','MOVE','SET_PREFERENCE','RESTORE_BACKUP'].includes(operation.type)||operation.undoneBy)throw Error('not-undoable');
   const next=structuredClone(current);
-  for(const p of operation.patch){if(!TABLES.includes(p.table)||stable(next[p.table][p.key]??null)!==stable(p.after))throw Error('undo-conflict');if(p.before===null)delete next[p.table][p.key];else next[p.table][p.key]={...p.before,revision:current.revision+1};}
+  for(const p of operation.patch){
+    if(!TABLES.includes(p.table)||stable(next[p.table][p.key]??null)!==stable(p.after))throw Error('undo-conflict');
+    // Restoring a human backup teaches us a scoped reference identity. Undo
+    // withdraws the human assets, not that knowledge or a native conversation.
+    // Free still requires independent evidence for its title and membership.
+    if(operation.type==='RESTORE_BACKUP'&&p.table==='refs'&&p.before===null)continue;
+    if(p.before===null)delete next[p.table][p.key];else next[p.table][p.key]={...p.before,revision:current.revision+1};
+  }
   next.revision=current.revision+1;return validateState(next,current.scopeKey);
 }
