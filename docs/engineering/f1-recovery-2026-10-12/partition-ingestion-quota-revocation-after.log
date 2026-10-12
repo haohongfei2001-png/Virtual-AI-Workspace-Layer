@@ -1,0 +1,25 @@
+✔ native route index preserves first match, group priority, independent refs and query semantics (0.380792ms)
+✔ 100k current-ref lookup does not rescan reference getters after snapshot indexing (141.21175ms)
+✔ PART01 bounded storage preserves all original 120/604 projections and canonical refs (176.372292ms)
+✔ PART02 the original CAS/idempotence transaction has one winner across connections (103.757958ms)
+✔ PART03 far-reference move and targeted undo use original human patches (140.065584ms)
+✔ PART04 repeated initialization cannot overwrite immutable live human pieces (128.372708ms)
+✔ PART05 mixed revisions and incomplete view replicas are rejected (104.15225ms)
+✔ PART06 revocation updates all evidence projections without rewriting reference pieces (116.624917ms)
+✔ PART07 damaged view leaves intact assets and unknown scope is rejected (94.740833ms)
+✔ PART08 A/B same ref IDs remain distinct (207.703208ms)
+✔ PART09 checkpoint retains previous immutable pieces and latest manual assets recover (169.968625ms)
+✔ PART10 v2 storage migration preserves latest human revision and revoked sources (334.265ms)
+✔ PART11 asset backup includes latest manual references and preferences, dry-run is read-only (245.511708ms)
+✔ PART12 checkpoint plus latest workset preference restores reference dependencies safely (150.136ms)
+✔ PART13 ingestion cannot reuse a global evidence ID in another reference partition (85.731084ms)
+✔ PART14 native quota failure cannot publish a manifest or success receipt (100.261041ms)
+✔ PART15 revocation after native put aborts pieces, checkpoint and receipt together (95.132875ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2308.866125

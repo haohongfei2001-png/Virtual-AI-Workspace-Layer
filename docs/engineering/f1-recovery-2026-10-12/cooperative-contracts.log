@@ -1,0 +1,10 @@
+✔ yielded projection matches synchronous accepted semantics across scopes and revocation (782.533583ms)
+✔ yielded computation rejects authority changes before publishing a partial result (34.368708ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 864.000166

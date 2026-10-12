@@ -1,0 +1,31 @@
+✔ PART01 bounded storage preserves all original 120/604 projections and canonical refs (192.326375ms)
+✔ PART02 the original CAS/idempotence transaction has one winner across connections (151.545291ms)
+✔ PART03 far-reference move and targeted undo use original human patches (196.994708ms)
+✔ PART04 repeated initialization cannot overwrite immutable live human pieces (157.373833ms)
+✔ PART05 mixed revisions and incomplete view replicas are rejected (129.553666ms)
+✔ PART06 revocation updates all evidence projections without rewriting reference pieces (155.198584ms)
+✔ PART07 damaged view leaves intact assets and unknown scope is rejected (115.887667ms)
+✔ PART08 A/B same ref IDs remain distinct (256.528334ms)
+✔ PART09 checkpoint retains previous immutable pieces and latest manual assets recover (221.380167ms)
+✔ PART10 v2 storage migration preserves latest human revision and revoked sources (431.184208ms)
+✔ PART11 asset backup includes latest manual references and preferences, dry-run is read-only (311.85025ms)
+✔ PART12 checkpoint plus latest workset preference restores reference dependencies safely (637.937542ms)
+✖ PART13 ingestion cannot reuse a global evidence ID in another reference partition (178.895167ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 12
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3272.595792
+
+✖ failing tests:
+
+test at tests/f1/partitioned.test.mjs:4:55
+✖ PART13 ingestion cannot reuse a global evidence ID in another reference partition (178.895167ms)
+  Error: not-equal: true / false
+      at Function.equal (file:///Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/native-partition-cases.mjs:3:31)
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/native-partition-cases.mjs:35:411)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

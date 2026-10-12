@@ -1,0 +1,340 @@
+{
+  "argv": [
+    "tests/f1/real-large-journeys.py",
+    "docs/engineering/f1-recovery-2026-10-12/large-journeys-after-driver"
+  ],
+  "startedAt": 1791768697.323616,
+  "head": "10975643709a5cf3aea94da68c3a89f9f1a55c1c",
+  "tests": [
+    {
+      "id": "F1-native-partition-migration-backup-recovery-contracts",
+      "status": "PASS",
+      "actual": {
+        "actualExtensionIDB": true,
+        "cases": [
+          {
+            "name": "PART01 bounded storage preserves all original 120/604 projections and canonical refs",
+            "status": "PASS"
+          },
+          {
+            "name": "PART02 the original CAS/idempotence transaction has one winner across connections",
+            "status": "PASS"
+          },
+          {
+            "name": "PART03 far-reference move and targeted undo use original human patches",
+            "status": "PASS"
+          },
+          {
+            "name": "PART04 repeated initialization cannot overwrite immutable live human pieces",
+            "status": "PASS"
+          },
+          {
+            "name": "PART05 mixed revisions and incomplete view replicas are rejected",
+            "status": "PASS"
+          },
+          {
+            "name": "PART06 revocation updates all evidence projections without rewriting reference pieces",
+            "status": "PASS"
+          },
+          {
+            "name": "PART07 damaged view leaves intact assets and unknown scope is rejected",
+            "status": "PASS"
+          },
+          {
+            "name": "PART08 A/B same ref IDs remain distinct",
+            "status": "PASS"
+          },
+          {
+            "name": "PART09 checkpoint retains previous immutable pieces and latest manual assets recover",
+            "status": "PASS"
+          },
+          {
+            "name": "PART10 v2 storage migration preserves latest human revision and revoked sources",
+            "status": "PASS"
+          },
+          {
+            "name": "PART11 asset backup includes latest manual references and preferences, dry-run is read-only",
+            "status": "PASS"
+          },
+          {
+            "name": "PART12 checkpoint plus latest workset preference restores reference dependencies safely",
+            "status": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F1-100k-far-native-navigation-manual-refresh-new-tab",
+      "status": "PASS",
+      "actual": {
+        "actualNativeRef": "F99999",
+        "messagesVisible": true,
+        "nativeCatalogue": 100000,
+        "initialEditorOptions": 201,
+        "reloadAndNewTabPreserved": true,
+        "data": {
+          "meta": {
+            "revision": 2,
+            "count": 100000,
+            "humanRefs": [
+              "F99999"
+            ],
+            "preferences": {}
+          },
+          "piece": {
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "refId": "F99999",
+            "revision": 2,
+            "ref": {
+              "id": "F99999",
+              "nativeUrl": "http://127.0.0.1:48178/hf/A/c/F99999",
+              "projectId": null,
+              "nativeTitle": "合成规模引用 99999 · 长中文压力边界",
+              "available": true
+            },
+            "identity": {
+              "id": "F99999",
+              "title": "F1 far manual intent",
+              "aliases": [
+                "合成规模引用 99999 · 长中文压力边界"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 2
+            },
+            "events": [
+              {
+                "id": "e_F99999",
+                "sourceId": "fixture_v1",
+                "conversationId": "F99999",
+                "messageId": "F99999-u1",
+                "branchId": "root",
+                "role": "user",
+                "kind": "new-send",
+                "sendState": "committed",
+                "sentAt": "2026-10-10T08:00:00Z",
+                "precision": "second",
+                "observedAt": "2026-10-11T04:00:00Z",
+                "revoked": false
+              }
+            ],
+            "coverage": [
+              {
+                "id": "c_F99999",
+                "sourceId": "fixture_v1",
+                "conversationId": "F99999",
+                "from": "2020-01-01T00:00:00Z",
+                "through": "2026-10-11T04:00:00Z",
+                "observedAt": "2026-10-11T04:00:00Z",
+                "completeness": "complete",
+                "branches": "all",
+                "gaps": [],
+                "revoked": false
+              }
+            ],
+            "placements": [
+              {
+                "id": "p_59b2c12c4c6268812f57b5d1629a0864677086205b83152759b819d1d8aa4145",
+                "workspaceId": "W84",
+                "refId": "F99999",
+                "excluded": false,
+                "order": 99999,
+                "locked": false,
+                "owner": "bootstrap",
+                "revision": 1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "F1-100k-multi-tab-human-conflict-native-CAS",
+      "status": "PASS",
+      "actual": {
+        "unsavedIntentPreserved": true,
+        "explicitRetryRequired": true,
+        "feedback": "另一标签页已修改；草稿已保留。最新保存标题：F1 remote saved 100k；最新主题名称：城市声音档案。核对后再次点击保存。",
+        "independentNativeConnections": [
+          {
+            "ok": true,
+            "replayed": false,
+            "revision": 5,
+            "operationId": "native_race_1"
+          },
+          {
+            "ok": false,
+            "reason": "revision-conflict"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F1-100k-far-move-undo-manual-backup-dry-run-restore",
+      "status": "FAIL",
+      "error": "Locator.wait_for: Timeout 12000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-vaiwl-owned=workspace-editor] > [role=status]\").filter(has_text=\"已保存\") to be visible\n",
+      "trace": "Traceback (most recent call last):\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 46, in case\n    try:r['tests'].append({'id':name,'status':'PASS','actual':fn()})\n                                                              ~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 72, in move_backup\n    manage(p);p.get_by_label('主题选择',exact=True).select_option(piece()['piece']['placements'][0]['workspaceId']);p.get_by_label('目标主题',exact=True).select_option('W119');action(p,'移动窗口');assert any(x['workspaceId']=='W119' and not x['excluded'] for x in piece()['piece']['placements']);action(p,'撤销上次修改');assert not any(x['workspaceId']=='W119' and not x['excluded'] for x in piece()['piece']['placements']);p.get_by_text('工作集与片段',exact=True).click();action(p,'加入当前工作集');p.get_by_text('备份与恢复',exact=True).click()\n                                                                                                                                                                                ~~~~~~^^^^^^^^^^^^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 40, in action\n    p.locator('[data-vaiwl-owned=workspace-editor] > [role=status]').evaluate('(n)=>n.textContent=\"\"');p.get_by_role('button',name=label,exact=True).click();saved(p)\n                                                                                                                                                             ~~~~~^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 38, in saved\n    def saved(p):p.locator('[data-vaiwl-owned=workspace-editor] > [role=status]').filter(has_text='已保存').wait_for()\n                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py\", line 20696, in wait_for\n    self._sync(\n    ~~~~~~~~~~^\n        self._impl_obj.wait_for(timeout=to_milliseconds(timeout), state=state)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_sync_base.py\", line 115, in _sync\n    return task.result()\n           ~~~~~~~~~~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py\", line 752, in wait_for\n    await self._frame.wait_for_selector(\n        self._selector, strict=True, timeout=timeout, state=state\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py\", line 395, in wait_for_selector\n    await self._channel.send(\n        \"waitForSelector\", self._timeout, locals_to_params(locals())\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 76, in send\n    return await self._connection.wrap_api_call(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 632, in wrap_api_call\n    raise rewrite_error(error, f\"{parsed_st['apiName']}: {error}\") from None\nplaywright._impl._errors.TimeoutError: Locator.wait_for: Timeout 12000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-vaiwl-owned=workspace-editor] > [role=status]\").filter(has_text=\"已保存\") to be visible\n\n"
+    },
+    {
+      "id": "F1-100k-observed-worker-stop-auto-wake-no-refresh",
+      "status": "FAIL",
+      "error": "Locator.wait_for: Timeout 25000ms exceeded.\nCall log:\n  - waiting for locator(\"html[data-vaiwl-hf-state=ACTIVE]\") to be visible\n",
+      "trace": "Traceback (most recent call last):\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 46, in case\n    try:r['tests'].append({'id':name,'status':'PASS','actual':fn()})\n                                                              ~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 89, in cold\n    assert any(v['runningStatus']=='running' for v in events[stop_index:]),'no auto-wake (no manual probe/reload sent)';active(p);after=probe();assert before['boot']!=after['boot'] and before['syntheticFrameDoc']==after['syntheticFrameDoc'];assert p.evaluate('f1Nodes.input===HF.getView().input&&f1Nodes.transcript===HF.getView().transcript&&f1Nodes.input.value===\"100k cold native draft\"');assert piece()['piece']['identity']['title']=='F1 local unsaved 100k';r['workerEvents']+=events;return {'before':before,'after':after,'events':events,'nativeNodesDraftIntact':True,'manualTitleRestored':True}\n                                                                                                                        ~~~~~~^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 33, in active\n    def active(p,timeout=25000):p.locator('html[data-vaiwl-hf-state=ACTIVE]').wait_for(timeout=timeout)\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py\", line 20696, in wait_for\n    self._sync(\n    ~~~~~~~~~~^\n        self._impl_obj.wait_for(timeout=to_milliseconds(timeout), state=state)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_sync_base.py\", line 115, in _sync\n    return task.result()\n           ~~~~~~~~~~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py\", line 752, in wait_for\n    await self._frame.wait_for_selector(\n        self._selector, strict=True, timeout=timeout, state=state\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py\", line 395, in wait_for_selector\n    await self._channel.send(\n        \"waitForSelector\", self._timeout, locals_to_params(locals())\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 76, in send\n    return await self._connection.wrap_api_call(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 632, in wrap_api_call\n    raise rewrite_error(error, f\"{parsed_st['apiName']}: {error}\") from None\nplaywright._impl._errors.TimeoutError: Locator.wait_for: Timeout 25000ms exceeded.\nCall log:\n  - waiting for locator(\"html[data-vaiwl-hf-state=ACTIVE]\") to be visible\n\n"
+    },
+    {
+      "id": "F1-100k-actual-20-second-lease-auto-rebind",
+      "status": "FAIL",
+      "error": "Locator.wait_for: Timeout 25000ms exceeded.\nCall log:\n  - waiting for locator(\"html[data-vaiwl-hf-state=ACTIVE]\") to be visible\n",
+      "trace": "Traceback (most recent call last):\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 46, in case\n    try:r['tests'].append({'id':name,'status':'PASS','actual':fn()})\n                                                              ~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 93, in lease\n    p.wait_for_timeout(23000);active(p);trace=checks.content_eval(p,'f1Lease');assert trace and all(x['ok'] for x in trace) and len({x['lease'] for x in trace})==len(trace);assert piece()['meta']['count']==100000;return {'actualLeaseRenewals':trace,'allRefsRetained':100000}\n                              ~~~~~~^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 33, in active\n    def active(p,timeout=25000):p.locator('html[data-vaiwl-hf-state=ACTIVE]').wait_for(timeout=timeout)\n                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py\", line 20696, in wait_for\n    self._sync(\n    ~~~~~~~~~~^\n        self._impl_obj.wait_for(timeout=to_milliseconds(timeout), state=state)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_sync_base.py\", line 115, in _sync\n    return task.result()\n           ~~~~~~~~~~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py\", line 752, in wait_for\n    await self._frame.wait_for_selector(\n        self._selector, strict=True, timeout=timeout, state=state\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py\", line 395, in wait_for_selector\n    await self._channel.send(\n        \"waitForSelector\", self._timeout, locals_to_params(locals())\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 76, in send\n    return await self._connection.wrap_api_call(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 632, in wrap_api_call\n    raise rewrite_error(error, f\"{parsed_st['apiName']}: {error}\") from None\nplaywright._impl._errors.TimeoutError: Locator.wait_for: Timeout 25000ms exceeded.\nCall log:\n  - waiting for locator(\"html[data-vaiwl-hf-state=ACTIVE]\") to be visible\n\n"
+    },
+    {
+      "id": "F1-100k-account-A-B-unknown-A",
+      "status": "PASS",
+      "actual": {
+        "A_B_unknown_A": true,
+        "eachVerifiedAccount": 100000,
+        "unknownNoSensitiveRoots": true,
+        "BSeed": {
+          "status": "PERSISTED",
+          "writeMs": 21305.39999985695,
+          "snapshotMs": 9102.400000095367,
+          "counts": {
+            "refs": 100000,
+            "themes": 120
+          },
+          "protectedCount": 100000,
+          "initialCounts": {
+            "refs": 604,
+            "themes": 120
+          }
+        }
+      }
+    },
+    {
+      "id": "F1-100k-native-corruption-checkpoint-plus-latest-human-recovery",
+      "status": "FAIL",
+      "error": "Worker.evaluate: InvalidStateError: Failed to execute 'transaction' on 'IDBDatabase': The database connection is closing.\n    at chrome-extension://ljbiigbljadkmlccpcakcnjcmnenjdde/src/data/repository.mjs:61:19\n    at new Promise (<anonymous>)\n    at WorkspaceRepository.mutate (chrome-extension://ljbiigbljadkmlccpcakcnjcmnenjdde/src/data/repository.mjs:60:12)\n    at async <anonymous>:337:30",
+      "trace": "Traceback (most recent call last):\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 46, in case\n    try:r['tests'].append({'id':name,'status':'PASS','actual':fn()})\n                                                              ~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 100, in recovery\n    latest=repository(\"const rev=(await repo.partitionHeader(scope)).manifest.revision;return repo.command(scope,{operationId:'latest_before_native_damage',expectedRevision:rev,command:{type:'SET_TITLE',refId:'F99999',title:'100k latest human must survive recovery'}});\");assert latest['ok']\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 42, in repository\n    return current_worker().evaluate(\"async arg=>{const {ScopeRepository,WorkspaceRepository,syntheticEvidenceGate,scopeOf}=__F1;const base=new ScopeRepository({indexedDB,databaseName:'vaiwl-hf-synthetic-v1'}),repo=new WorkspaceRepository({baseRepository:base,evidenceGate:syntheticEvidenceGate}),scope=scopeOf(arg?.account??'A');try{\"+script+\"}finally{base.close();}}\",arg)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py\", line 7107, in evaluate\n    self._sync(\n    ~~~~~~~~~~^\n        self._impl_obj.evaluate(expression=expression, arg=mapping.to_impl(arg))\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_sync_base.py\", line 115, in _sync\n    return task.result()\n           ~~~~~~~~~~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_page.py\", line 1551, in evaluate\n    await self._channel.send(\n    ...<6 lines>...\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 76, in send\n    return await self._connection.wrap_api_call(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 632, in wrap_api_call\n    raise rewrite_error(error, f\"{parsed_st['apiName']}: {error}\") from None\nplaywright._impl._errors.Error: Worker.evaluate: InvalidStateError: Failed to execute 'transaction' on 'IDBDatabase': The database connection is closing.\n    at chrome-extension://ljbiigbljadkmlccpcakcnjcmnenjdde/src/data/repository.mjs:61:19\n    at new Promise (<anonymous>)\n    at WorkspaceRepository.mutate (chrome-extension://ljbiigbljadkmlccpcakcnjcmnenjdde/src/data/repository.mjs:60:12)\n    at async <anonymous>:337:30\n"
+    }
+  ],
+  "workerEvents": [],
+  "errors": [],
+  "scope": "actual extension IndexedDB / fresh headless Chrome / 100000 accessible synthetic refs / no real ChatGPT",
+  "sourceHashes": {
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/navigation/current-index.mjs": "26f7eb0c2113f9402880b0be91682a31645b18a79173870c2e4907a41be3f495",
+    "src/navigation/navigation.mjs": "5f5574b97b7dbfb88e3cc643649e6d7656d29b7171a3fd1b30e9a531b4d5971d",
+    "src/navigation/search.mjs": "0046527fb8bfbaf97ad7eb6036db7233087805e55ec2d9ac3f348a632af89efe",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/README.md": "929a0a31cfd638694fc85ce871c339c730f6dc6728f8b7c6832bcd9281a29c94",
+    "src/b1/document-binding-broker.mjs": "18f75d2f839ca52f2417241bd678748a4a554e90a14eeb004de9cbcde7c91ca3",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/data/evidence.mjs": "dc7a0e94d35882fa2bdc18634c4f0e314d79e1835180bad0a15239325a4dae55",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "43578c9f63cab55eb1c5a19cdb945a38827cfaafece0ec6d4052c52907b45ed9",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/partitioned.mjs": "95b9a10b9a5ccebd0eac6b677f0cb46830db228c1397074fd40424e399e1d1f0",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/replica.mjs": "3f594499d1984e2c26a803bbfbd29102bb44a46f58256614b2b563d642164072",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "simulator/editor-style.mjs": "18197a2a89d8e83986b56e464c506c9bb8e08005d07f97c46959f5e9cfabf2ce",
+    "simulator/index.html": "52737486a2ad0b296a8e212ab0607cb89f99b94d3f6b193793817babde01b7d4",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "simulator/control.html": "1e0eeb74c8fc277232b2edfac95787dbd62d6ae7470af982f4ca268579ffbd7f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/adapter.mjs": "456021f9adbd13a751aad049d1b46a0c5afd752a23f36bce20808bee4fb29306",
+    "simulator/client.mjs": "72a0d9b4a94c85f6cf9720aeb3bc900f3c6e3418ed86a26f8812169baba59421",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.css": "0627ff2b3ab6d9797850caca1da4cdb91ddfdfea32318dd8e1a15f9bac23d153",
+    "simulator/README.md": "a767b2f4e0d7cd99d4c19b473f9de0300cd2ae20457def03cde26fc3a1b3b645",
+    "simulator/.gitignore": "25a6288333a6cb399eb26bccdcecbce38f84b06fb5ee6f4afbafbae414d12244",
+    "simulator/package.json": "564c422503961ce803bbcac5bd89d531c5cc64e7b643f68dd194576830687c99",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/build.mjs": "ea30d9d5a13dfa86669f042b8f1de109f22f23fbc017b0c6f1c04c673d0dce3a",
+    "simulator/host.mjs": "dad2550aeee3507e048b6794a3c9029f228aeb269653e9b5de5881e0bd9e8282",
+    "simulator/main.mjs": "7a6788fefe2eaf5c8abcd46cfe024c76511c422888073472bbb3b8caacf9092c",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/service.mjs": "03cad5aabac17b9f0fe846923099ea66f62c55ebe1022aa62f173bb4269b6400",
+    "simulator/editor.mjs": "3b4a1239781cf2574973132752e2c46140be36f885d9e180422d965d00e650e2",
+    "tests/f1/current-index.test.mjs": "2052d846c8d8a14ef31ff35e0de341aa8113b0c781da2587188d4c46c4b1f252",
+    "tests/f1/equivalence.test.mjs": "13bf0afdad6ff16c95812ac3c348287dfa7517673a5ca215481c1219bceccb96",
+    "tests/f1/real-large-journeys.py": "e6a3bdba02b5eaeacf2431233a53bb51b4f5c44e8e8c581a0d71e968c627b1e1",
+    "tests/f1/native-partition-cases.mjs": "b922223cb10ffc0143a44ee12323d5449fd7778e07a463e6ec2b9b725a487f86",
+    "tests/f1/verify-evidence.py": "3e9ff0c6335932d6325534552358a3e1bd93d0bee960e73813ea7dd47fa81a7a",
+    "tests/f1/real-performance.py": "c77e718e710a94662d60c73f500baab9c17ded5e8f29c9b14262fda670e80d43",
+    "tests/f1/partitioned.test.mjs": "4e1eabd9c01666f56c9880360208cd2db7b917c36945f605f2ebe62402728317"
+  },
+  "environment": {
+    "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+    "node": "v26.8.2",
+    "python": "3.14.7",
+    "playwright": "1.63.0",
+    "chrome": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/154.0.8037.99",
+      "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+      "jsVersion": "15.4.80.20"
+    }
+  },
+  "buildHashes": {
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5",
+    "build-hashes.json": "a0f37415097d63e31633fdb3254b7237b4dc027d9866ee12122f924508b125f5",
+    "content.js": "68f3b73e63a20f0f7bd85d87ee6a753dd977c75149e6af27dfa7cdde224df9ed",
+    "simulator/worker.mjs": "14e8c51314eb4d42c302bb5eb3f22753755500e90c82661b2e6cf7591868e4b4",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/service.mjs": "03cad5aabac17b9f0fe846923099ea66f62c55ebe1022aa62f173bb4269b6400",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/document-binding-broker.mjs": "18f75d2f839ca52f2417241bd678748a4a554e90a14eeb004de9cbcde7c91ca3",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/data/evidence.mjs": "dc7a0e94d35882fa2bdc18634c4f0e314d79e1835180bad0a15239325a4dae55",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "43578c9f63cab55eb1c5a19cdb945a38827cfaafece0ec6d4052c52907b45ed9",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/partitioned.mjs": "95b9a10b9a5ccebd0eac6b677f0cb46830db228c1397074fd40424e399e1d1f0",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/replica.mjs": "3f594499d1984e2c26a803bbfbd29102bb44a46f58256614b2b563d642164072",
+    "tests/f1/native-partition-cases.mjs": "b922223cb10ffc0143a44ee12323d5449fd7778e07a463e6ec2b9b725a487f86"
+  },
+  "instrumentation": "temporary build static fixture imports, original native contracts, privileged test corruption and RPC timings only; no production guard/deadline/lease edits",
+  "extension": {
+    "id": "ljbiigbljadkmlccpcakcnjcmnenjdde"
+  },
+  "seed": {
+    "status": "PERSISTED",
+    "writeMs": 26413.200000047684,
+    "snapshotMs": 9937.899999856949,
+    "counts": {
+      "refs": 100000,
+      "themes": 120
+    },
+    "protectedCount": 100000,
+    "initialCounts": {
+      "refs": 604,
+      "themes": 120
+    }
+  },
+  "contentContexts": [
+    {
+      "id": 11,
+      "origin": "chrome-extension://ljbiigbljadkmlccpcakcnjcmnenjdde",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "2525549679680463816.-5836351167416230783",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "011492170FE4F651F4400B4D2F7A1E94"
+      }
+    }
+  ]
+}

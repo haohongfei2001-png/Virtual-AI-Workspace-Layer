@@ -1,4 +1,5 @@
-import { replicaDelta, assembleReplica } from '../src/data/replica.mjs';
+import {currentIndexAsync} from '../src/navigation/current-index.mjs';
+import { replicaDelta, assembleReplicaAsync } from '../src/data/replica.mjs';
 const randomId=()=>crypto.randomUUID?.()??Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
 import { env } from './environment.mjs';
 import { createNavigation } from '../src/navigation/navigation.mjs';
@@ -35,19 +36,24 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   async function readSnapshot(ticket,url){
     const c=readControls(),reply=await request('B23_SNAPSHOT',{now:c.now??FIXTURE_NOW,timeZone:c.timeZone??'Asia/Shanghai',size:c.size??8});
     if(!current(ticket,url))throw Error('stale-client-response');if(!reply?.ok)throw Error(reply?.reason??'read-failed');
-    let next=reply.snapshot;
+    let next=reply.snapshot,nextIndex=null;
     if(reply.partition){const root=reply.partition,m=root.manifest,delta=replicaDelta(partitionReplica,m),incoming=[];
       if(delta===null){const total=Object.keys(m.refVersions).length;for(let offset=0;offset<total;offset+=5000){const r=await request('B23_PARTITION_PAGE',{revision:m.revision,offset,ids:null});if(!current(ticket,url))throw Error('stale-client-response');if(!r.ok)throw Error(r.reason);if(r.page.scope!==m.scopeKey||r.page.revision!==m.revision||r.page.total!==total)throw Error('incomplete-partition-snapshot');incoming.push(...r.page.pieces);}}
       else for(let offset=0;offset<delta.length;offset+=5000){const r=await request('B23_PARTITION_PAGE',{revision:m.revision,offset:0,ids:delta.slice(offset,offset+5000)});if(!current(ticket,url))throw Error('stale-client-response');if(!r.ok)throw Error(r.reason);if(r.page.scope!==m.scopeKey||r.page.revision!==m.revision)throw Error('incomplete-partition-snapshot');incoming.push(...r.page.pieces);}
       const verified=await request('CHECK');if(!current(ticket,url))throw Error('stale-client-response');if(!verified.ok)throw Error(verified.reason);if(verified.revision!==m.revision)throw Error('snapshot-revision-changed');
-      partitionReplica=assembleReplica(partitionReplica,m,incoming,delta,root,c.now??FIXTURE_NOW,c.timeZone??'Asia/Shanghai',c.size??8);next=partitionReplica.snapshot;
+      const assembled=await assembleReplicaAsync(partitionReplica,m,incoming,delta,root,c.now??FIXTURE_NOW,c.timeZone??'Asia/Shanghai',c.size??8,()=>current(ticket,url));
+      nextIndex=await currentIndexAsync(assembled.snapshot,assembled.snapshot.groups,()=>current(ticket,url));
+      // Yielding lets routes and external human commits progress. Check again before
+      // replacing either the private replica or any owned DOM; never expose half a revision.
+      const final=await request('CHECK');if(!current(ticket,url))throw Error('stale-client-response');if(!final.ok)throw Error(final.reason);if(final.revision!==m.revision)throw Error('snapshot-revision-changed');
+      partitionReplica=assembled;next=assembled.snapshot;
     }else partitionReplica=null;
 
     if(data?.scope===next.scope&&next.revision<data.revision)return data;
     const changed=!data||data.revision!==next.revision||data.viewRevision!==next.viewRevision||data.diagnostics?.view!==next.diagnostics?.view;
     data=next;viewRevision=data.viewRevision;
     if(lastView===''&&data.view)lastView=JSON.stringify(data.view);
-    if(changed){navigation.update(data,c.now??FIXTURE_NOW,c.timeZone??'Asia/Shanghai');if(editor&&!editor.resume(data))editor=null;}
+    if(changed){navigation.update(data,c.now??FIXTURE_NOW,c.timeZone??'Asia/Shanghai',nextIndex);if(editor&&!editor.resume(data))editor=null;}
     clearFeedback();const host=adapter.inspect();if(host.ok){resize.observe(host.reading);resize.observe(host.header);}return data;
   }
   function scheduleHeartbeat(){clearTimeout(heartbeat);if(!visible()||!lease||stopped)return;const ticket=generation,url=env.location.href;

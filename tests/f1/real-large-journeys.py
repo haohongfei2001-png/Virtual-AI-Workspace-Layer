@@ -39,19 +39,25 @@ try:
   def action(p,label):
    p.locator('[data-vaiwl-owned=workspace-editor] > [role=status]').evaluate('(n)=>n.textContent=""');p.get_by_role('button',name=label,exact=True).click();saved(p)
   def repository(script,arg=None):
-   return current_worker().evaluate("async arg=>{const {ScopeRepository,WorkspaceRepository,syntheticEvidenceGate,scopeOf}=__F1;const base=new ScopeRepository({indexedDB,databaseName:'vaiwl-hf-synthetic-v1'}),repo=new WorkspaceRepository({baseRepository:base,evidenceGate:syntheticEvidenceGate}),scope=scopeOf(arg?.account??'A');try{"+script+"}finally{base.close();}}",arg)
+   return current_worker().evaluate("async arg=>{const {ScopeRepository,WorkspaceRepository,syntheticEvidenceGate,scopeOf}=__F1;const base=new ScopeRepository({indexedDB,databaseName:'vaiwl-hf-synthetic-v1'}),repo=new WorkspaceRepository({baseRepository:base,evidenceGate:syntheticEvidenceGate}),scope=scopeOf(arg?.account??'A');try{return await (async()=>{"+script+"})();}finally{base.close();}}",arg)
   def piece(ref='F99999',account='A'):
    return repository("const header=await repo.partitionHeader(scope),p=await repo.partitionPage(scope,{revision:header.manifest.revision,offset:0,ids:[arg.ref]});return {meta:{revision:header.manifest.revision,count:Object.keys(header.manifest.refVersions).length,humanRefs:header.manifest.humanRefs,preferences:header.manifest.preferences},piece:p.pieces[0]};",{'ref':ref,'account':account})
   def case(name,fn):
    try:r['tests'].append({'id':name,'status':'PASS','actual':fn()})
    except Exception as e:
-    r['tests'].append({'id':name,'status':'FAIL','error':str(e),'trace':traceback.format_exc()})
+    r['tests'].append({'id':name,'status':'FAIL','error':str(e),'trace':traceback.format_exc(),'feedback':[pg.locator('[data-vaiwl-owned=workspace-editor] > [role=status]').all_text_contents() for pg in ctx.pages]})
     for i,p in enumerate(ctx.pages):
      try:p.screenshot(path=str(OUT/(name+'-failure-'+str(i)+'.png')))
      except:pass
+   for pg in ctx.pages:
+    if pg.locator('[data-vaiwl-owned=workspace-editor]').count():
+     try:close(pg)
+     except:pass
+   for pg in list(ctx.pages):
+    if pg is not globals().get('p') and pg.url!='about:blank':pg.close()
    (OUT/'partial.json').write_text(json.dumps(r,ensure_ascii=False,indent=2));print(name,r['tests'][-1]['status'],flush=True)
   def contracts():
-   rows=worker.evaluate("async()=>{const out=[];for(const c of __F1.partitionedCases(indexedDB)){try{await c.run();out.push({name:c.name,status:'PASS'})}catch(e){out.push({name:c.name,status:'FAIL',error:e.message,stack:e.stack})}}return out;}");assert len(rows)==12 and all(x['status']=='PASS' for x in rows),rows;return {'actualExtensionIDB':True,'cases':rows}
+   rows=worker.evaluate("async()=>{const out=[];for(const c of __F1.partitionedCases(indexedDB)){try{await c.run();out.push({name:c.name,status:'PASS'})}catch(e){out.push({name:c.name,status:'FAIL',error:e.message,stack:e.stack})}}return out;}");assert len(rows)==15 and all(x['status']=='PASS' for x in rows),rows;return {'actualExtensionIDB':True,'cases':rows}
   case('F1-native-partition-migration-backup-recovery-contracts',contracts)
   seed=worker.evaluate(SEED,{'size':100000,'partitioned':True});assert seed['counts']=={'refs':100000,'themes':120} and seed['protectedCount']==100000 and seed['initialCounts']=={'refs':604,'themes':120};r['seed']=seed
   p=page();checks=NativeChecks(ctx,'mv3',ext,None,None,None,None,r)
@@ -66,7 +72,15 @@ try:
   def tabs():
    q=page(ref='F99999');manage(p);p.get_by_label('派生标题',exact=True).fill('F1 local unsaved 100k');manage(q);q.get_by_label('派生标题',exact=True).fill('F1 remote saved 100k');action(q,'保存派生标题');close(q)
    p.wait_for_timeout(3500);assert p.get_by_label('派生标题',exact=True).input_value()=='F1 local unsaved 100k';action_button=p.get_by_role('button',name='保存派生标题',exact=True);action_button.click();status=p.locator('[data-vaiwl-owned=workspace-editor] > [role=status]');status.filter(has_text='另一标签页').wait_for();conflict=status.inner_text();assert piece()['piece']['identity']['title']=='F1 remote saved 100k';action(p,'保存派生标题');close(p);assert piece()['piece']['identity']['title']=='F1 local unsaved 100k';q.close()
-   race=repository("const rev=(await repo.partitionHeader(scope)).manifest.revision,b2=new ScopeRepository({indexedDB,databaseName:'vaiwl-hf-synthetic-v1'}),r2=new WorkspaceRepository({baseRepository:b2,evidenceGate:syntheticEvidenceGate});try{return await Promise.all([repo.command(scope,{operationId:'native_race_1',expectedRevision:rev,command:{type:'SET_TITLE',refId:'F99998',title:'race one'}}),r2.command(scope,{operationId:'native_race_2',expectedRevision:rev,command:{type:'SET_TITLE',refId:'F99998',title:'race two'}})]);}finally{b2.close();}");assert sum(x['ok'] for x in race)==1 and next(x for x in race if not x['ok'])['reason']=='revision-conflict';return {'unsavedIntentPreserved':True,'explicitRetryRequired':True,'feedback':conflict,'independentNativeConnections':race}
+   race=repository("const rev=(await repo.partitionHeader(scope)).manifest.revision,b2=new ScopeRepository({indexedDB,databaseName:'vaiwl-hf-synthetic-v1'}),r2=new WorkspaceRepository({baseRepository:b2,evidenceGate:syntheticEvidenceGate});try{return await Promise.all([repo.command(scope,{operationId:'native_race_1',expectedRevision:rev,command:{type:'SET_TITLE',refId:'F99998',title:'race one'}}),r2.command(scope,{operationId:'native_race_2',expectedRevision:rev,command:{type:'SET_TITLE',refId:'F99998',title:'race two'}})]);}finally{b2.close();}");assert sum(x['ok'] for x in race)==1 and next(x for x in race if not x['ok'])['reason']=='revision-conflict'
+   # Wait until the actual client has observed this deliberately external CAS write,
+   # before starting an unrelated human move at the next test stage.
+   manage(p);p.get_by_label('查找已知窗口',exact=True).fill('F99998');p.get_by_label('窗口选择',exact=True).select_option('F99998');winner='race one' if race[0]['ok'] else 'race two'
+   for _ in range(40):
+    if p.get_by_label('派生标题',exact=True).input_value()==winner:break
+    p.wait_for_timeout(100)
+   assert p.get_by_label('派生标题',exact=True).input_value()==winner;close(p)
+   return {'unsavedIntentPreserved':True,'explicitRetryRequired':True,'feedback':conflict,'independentNativeConnections':race}
   case('F1-100k-multi-tab-human-conflict-native-CAS',tabs)
   def move_backup():
    manage(p);p.get_by_label('主题选择',exact=True).select_option(piece()['piece']['placements'][0]['workspaceId']);p.get_by_label('目标主题',exact=True).select_option('W119');action(p,'移动窗口');assert any(x['workspaceId']=='W119' and not x['excluded'] for x in piece()['piece']['placements']);action(p,'撤销上次修改');assert not any(x['workspaceId']=='W119' and not x['excluded'] for x in piece()['piece']['placements']);p.get_by_text('工作集与片段',exact=True).click();action(p,'加入当前工作集');p.get_by_text('备份与恢复',exact=True).click()
@@ -95,6 +109,22 @@ try:
   def isolation():
    result=current_worker().evaluate(SEED,{'size':100000,'partitioned':True,'account':'B'});assert result['counts']['refs']==100000;p.evaluate("HF.control('account','B')");active(p);manage(p);p.get_by_label('查找已知窗口',exact=True).fill('F99999');p.get_by_label('窗口选择',exact=True).select_option('F99999');assert p.get_by_label('派生标题',exact=True).input_value()!='F1 local unsaved 100k';close(p);assert piece(account='B')['piece']['identity']['title']!='F1 local unsaved 100k';p.evaluate("HF.control('account','unknown')");p.wait_for_timeout(700);assert p.locator('.workspace').count()==0 and p.locator('[data-vaiwl-return]').count()==0;assert not p.locator('[data-vaiwl-owned]').count();assert p.evaluate('HF.data().refs.length')==0;p.evaluate("HF.control('account','A')");active(p);assert piece()['piece']['identity']['title']=='F1 local unsaved 100k';return {'A_B_unknown_A':True,'eachVerifiedAccount':100000,'unknownNoSensitiveRoots':True,'BSeed':result}
   case('F1-100k-account-A-B-unknown-A',isolation)
+  def slow_input():
+   # Renderer throttling is a controlled stress model, not a physical low-end Mac claim.
+   q=page(ref='T1');assert q.locator('[data-message-id]').count()==160
+   session=ctx.new_cdp_session(q);session.send('Emulation.setCPUThrottlingRate',{'rate':4})
+   q.get_by_label('消息输入',exact=True).fill('100k long native draft');q.get_by_label('调整交互值',exact=True).fill('73')
+   q.evaluate('globalThis.f1Long={input:HF.getView().input,transcript:HF.getView().transcript,range:HF.getView().transcript.querySelector("input[type=range]"),messages:[...document.querySelectorAll("[data-message-id]")]};globalThis.f1InputGaps=[];globalThis.f1LastTick=performance.now();globalThis.f1Timer=setInterval(()=>{const t=performance.now();f1InputGaps.push(t-f1LastTick);f1LastTick=t;},16)')
+   manage(p);p.get_by_label('派生标题',exact=True).fill('100k latest concurrent input probe');action(p,'保存派生标题');close(p);q.wait_for_timeout(3500)
+   observed=q.evaluate('(()=>{clearInterval(f1Timer);const v=HF.getView();return {gaps:f1InputGaps,input:f1Long.input===v.input,draft:v.input.value==="100k long native draft",transcript:f1Long.transcript===v.transcript,range:f1Long.range===v.transcript.querySelector("input[type=range]")&&f1Long.range.value==="73",messages:f1Long.messages.every((n,i)=>n===document.querySelectorAll("[data-message-id]")[i])};})()');r['nativeInputMeasurements']=observed;assert all(observed[k] for k in ['input','draft','transcript','range','messages']);assert max(observed['gaps'])<150,{'maxGapMs':max(observed['gaps']),'rate':4}
+   q.get_by_label('返回工作区',exact=True).click();nav=[]
+   for i in range(20):
+    nav.append(q.evaluate('''async i=>{const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.workspace')).shadowRoot,b=root.querySelector(i%2?'[aria-label="较近的30日"]':'[aria-label="较早的30日"]'),t=performance.now();if(!b||b.disabled)throw Error('no adjacent interval');b.click();await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);return performance.now()-t;}''',i))
+   q.get_by_label('查找主题与派生名称',exact=True).click();search=[]
+   for i in range(10):
+    search.append(q.evaluate('''async()=>{const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.search')).shadowRoot,input=root.querySelector('input'),t=performance.now();input.value='合成规模引用';input.dispatchEvent(new Event('input',{bubbles:true}));if(root.querySelectorAll('.search-results .row').length!==24)throw Error('unbounded search DOM');await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);return performance.now()-t;}'''))
+   p95=lambda rows:sorted(rows)[int(.95*(len(rows)-1))];data={'rendererCPUThrottle':4,'nativeInput':observed,'navigationMs':nav,'navigationP95':p95(nav),'searchMs':search,'searchP95':p95(search)};assert data['navigationP95']<150 and data['searchP95']<300,data;q.screenshot(path=str(OUT/'100k-4x-long-chat.png'));session.send('Emulation.setCPUThrottlingRate',{'rate':1});q.close();return data
+  case('F1-100k-4x-renderer-long-chat-concurrent-input-and-navigation',slow_input)
   def recovery():
    # Last committed edit is newer than the saved checkpoint; corrupt the actual root row.
    latest=repository("const rev=(await repo.partitionHeader(scope)).manifest.revision;return repo.command(scope,{operationId:'latest_before_native_damage',expectedRevision:rev,command:{type:'SET_TITLE',refId:'F99999',title:'100k latest human must survive recovery'}});");assert latest['ok']

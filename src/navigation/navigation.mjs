@@ -138,14 +138,14 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     }
     shadow.append(page);layoutCards();page.scrollTop=view.scroll;restoreOwnedFocus(focused);emitView();
   }
-  function update(value,now,timeZone){
+  function update(value,now,timeZone,preparedIndex=null){
     if(stopped)return;remember();snapshot=value;
     if(!views.has(value.scope)){
       const initial=initialView(),v=value.view;
       if(v)Object.assign(initial,{segment:v.segment,oldOpen:new Set(v.oldOpen),sidebarOpen:new Set(v.sidebarOpen),capacities:new Map(v.capacities),scroll:v.scroll,sidebarVisible:v.sidebarVisible});
       views.set(value.scope,initial);
     }
-    view=views.get(value.scope);groups=value.groups??project(value,now,timeZone);index=currentIndex(value,groups);
+    view=views.get(value.scope);groups=value.groups??project(value,now,timeZone);index=preparedIndex??currentIndex(value,groups);
     if(value.preferences?.sidebarVisible)view.sidebarVisible=value.preferences.sidebarVisible.value;
     layout();render();layout();locateAnchor();
   }

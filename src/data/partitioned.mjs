@@ -11,7 +11,7 @@ const locatorKey=(scope,table,key)=>JSON.stringify([scope,'evidence-ref',table,k
 export const partitionRecord=(key,payload)=>({key,payload,checksum:digest(payload)});
 export function partitionUnpack(row){if(!row||digest(row.payload)!==row.checksum)throw Error('corrupt-record');return row.payload;}
 export const isPartitioned=p=>p?.format===PARTITION_FORMAT;
-const fence=o=>{if(o.signal?.aborted||o.guard?.()===false)throw Error('stale-binding');};
+const fence=o=>{if(o.signal?.aborted||o.guard&&o.guard()!==true)throw Error('stale-binding');};
 function headerState(m,preferences=m.preferences){return {schema:2,scopeKey:m.scopeKey,revision:m.revision,channel:m.channel,refs:{},events:{},coverage:{},identities:{},placements:{},sources:m.sources,workspaces:m.workspaces,preferences};}
 export function checkManifest(m,scopeKey){
  exact(m,['format','generation','scopeKey','revision','channel','sources','workspaces','preferences','refVersions','humanRefs','units','changes']);
@@ -19,7 +19,7 @@ export function checkManifest(m,scopeKey){
  id(m.generation);const keys=Object.keys(m.refVersions);if(!Array.isArray(m.humanRefs)||m.humanRefs.length>MAX_REFS||new Set(m.humanRefs).size!==m.humanRefs.length||m.humanRefs.some(k=>!Object.hasOwn(m.refVersions,k)))throw Error('invalid-human-ref-index');if(keys.length>MAX_REFS)throw Error('partition-capacity');
  for(const k of keys){id(k);const v=m.refVersions[k];if(!Number.isSafeInteger(v)||v<1||v>m.revision)throw Error('invalid-partition-version');}
  validateState(headerState(m,{}),scopeKey);
- for(const p of Object.values(m.preferences))validatePreference(p,{refs:m.refVersions},{exact,id,text:(v,max)=>{if(typeof v!=='string'||!v.trim()||v.length>max)throw Error('invalid-text');}});
+ for(const [key,p] of Object.entries(m.preferences)){id(key);if(p?.id!==key)throw Error('invalid-state-row');validatePreference(p,{refs:m.refVersions},{exact,id,text:(v,max)=>{if(typeof v!=='string'||!v.trim()||v.length>max)throw Error('invalid-text');}});}
  for(const c of m.changes){exact(c,['revision','refs']);if(!Number.isSafeInteger(c.revision)||c.revision<1||c.revision>m.revision||!Array.isArray(c.refs)||c.refs.length>20000)throw Error('invalid-partition-changes');c.refs.forEach(id);}
  if(stable(m).length>16*1024*1024)throw Error('state-too-large');return m;
 }
@@ -48,7 +48,13 @@ export class PartitionedState {
   const batch=params.fingerprint?.batch;for(const r of batch?.refs??[])ids.add(r.id);for(const r of [...(batch?.events??[]),...(batch?.coverage??[])])ids.add(r.conversationId);
   const bundle=params.fingerprint?.backup;for(const x of Object.keys(bundle?.payload?.refs??{}))ids.add(x);
   const finish=()=>this.loadPieces(tx,m,ids,pieces=>{try{const state=headerState(m);for(const b of pieces.values())addPiece(state,b);validateState(state,m.scopeKey);done(state,{manifest:m,pieces});}catch(e){fail(e);}},fail);
-  if(c?.type==='REVOKE_EVIDENCE'){const q=tx.objectStore('b23_states').get(locatorKey(m.scopeKey,c.table,c.id));q.onsuccess=()=>{try{const p=partitionUnpack(q.result);if(p.scopeKey!==m.scopeKey||p.table!==c.table||p.id!==c.id)throw Error('invalid-evidence-locator');ids.add(p.refId);finish();}catch(e){fail(e);}};}else finish();
+  // Resolve globally unique evidence IDs before invoking the original reducer. A batch
+  // that reuses an ID in another partition must see its old row and conflict.
+  const lookups=[...(batch?.events??[]).map(x=>({table:'events',id:x.id})),...(batch?.coverage??[]).map(x=>({table:'coverage',id:x.id}))];
+  if(c?.type==='REVOKE_EVIDENCE')lookups.push({table:c.table,id:c.id,required:true});
+  if(!lookups.length){finish();return;}let waiting=lookups.length;
+  for(const x of lookups){id(x.id);const q=tx.objectStore('b23_states').get(locatorKey(m.scopeKey,x.table,x.id));q.onsuccess=()=>{try{if(q.result||x.required){const p=partitionUnpack(q.result);if(p.scopeKey!==m.scopeKey||p.table!==x.table||p.id!==x.id)throw Error('invalid-evidence-locator');ids.add(p.refId);}if(!--waiting)finish();}catch(e){fail(e);}};}
+
  }
  saveMutation(tx,storage,current,next,patch,actor='human'){
   const m=storage.manifest,n={...m,revision:next.revision,channel:next.channel,sources:next.sources,workspaces:next.workspaces,preferences:next.preferences,refVersions:{...m.refVersions}};

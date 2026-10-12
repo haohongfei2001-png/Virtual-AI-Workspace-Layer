@@ -1,3 +1,4 @@
+import {finish,finishAsync} from './cooperate.mjs';
 import { instant, segmentFor, localDay } from '../navigation/projection.mjs';
 /** All evidence here has passed the repository's privileged ingestion boundary. */
 export function evidenceTime(refId,state,now){return evidenceRows(refId,state,now,Object.values(state.events));}
@@ -37,32 +38,35 @@ function coverageRows(refId,state,from,now,coverage){
   for(const [a,b] of intervals){if(b<reach)continue;if(a>reach)return false;reach=Math.max(reach,b);if(reach>=end)return true;}
   return false;
 }
-export function dataProjection(state,now,timeZone){
+function* projection(state,now,timeZone){
   localDay(now,timeZone);
   // Fresh per-projection indexes; never cache revoked evidence or scope data across reads.
-  const index=(rows,key)=>{const map=new Map();for(const row of Object.values(rows)){const id=row[key];if(!map.has(id))map.set(id,[]);map.get(id).push(row);}return map;};
-  const events=index(state.events,'conversationId'),coverage=index(state.coverage,'conversationId'),placements=index(state.placements,'workspaceId');
+  const index=function*(rows,key){const map=new Map();let count=0;for(const row of Object.values(rows)){const id=row[key];if(!map.has(id))map.set(id,[]);map.get(id).push(row);if(++count%512===0)yield;}return map;};
+  const events=yield*index(state.events,'conversationId'),coverage=yield*index(state.coverage,'conversationId'),placements=yield*index(state.placements,'workspaceId');
   const covered=(refId,from)=>coverageRows(refId,state,from,now,coverage.get(refId)??[]);
 
-  const refs=Object.values(state.refs).map(r=>{
+  const refs=[];let count=0;for(const r of Object.values(state.refs)){
     const name=state.identities[r.id],time=evidenceRows(r.id,state,now,events.get(r.id)??[]);
-    return {...r,scope:state.scopeKey,displayTitle:name?.title??r.nativeTitle,aliases:name?.aliases??[],time};
-  });
-  const byId=new Map(refs.map(r=>[r.id,r]));
-  const themes=Object.values(state.workspaces).sort((a,b)=>a.order-b.order||a.id.localeCompare(b.id)).map(w=>{
+    refs.push({...r,scope:state.scopeKey,displayTitle:name?.title??r.nativeTitle,aliases:name?.aliases??[],time});if(++count%512===0)yield;
+  }
+  const byId=new Map();for(const r of refs){byId.set(r.id,r);if(++count%512===0)yield;}
+  const themes=[];for(const w of Object.values(state.workspaces).sort((a,b)=>a.order-b.order||a.id.localeCompare(b.id))){
     const members=(placements.get(w.id)??[]).filter(p=>!p.excluded).sort((a,b)=>a.order-b.order||a.refId.localeCompare(b.refId)).map(p=>byId.get(p.refId)).filter(Boolean);
     const known=members.map(r=>r.time.sentAt).filter(Boolean).sort(),latest=known.at(-1)??null;
     const positiveCurrent=members.some(r=>r.time.positiveSentAt&&segmentFor(r.time.positiveSentAt,now,timeZone)===0);
     let segment=positiveCurrent?0:latest?segmentFor(latest,now,timeZone):null;
     if(segment!==0&&(!latest||!members.every(r=>!r.time.unresolved&&covered(r.id,latest))))segment=null;
     const current=[],old=[],unknown=[];
-    for(const r of members){const own=r.time.positiveSentAt&&segmentFor(r.time.positiveSentAt,now,timeZone)===0?0:r.time.sentAt?segmentFor(r.time.sentAt,now,timeZone):null;
+    for(const r of members){if(++count%512===0)yield;const own=r.time.positiveSentAt&&segmentFor(r.time.positiveSentAt,now,timeZone)===0?0:r.time.sentAt?segmentFor(r.time.sentAt,now,timeZone):null;
       if(segment===null||own===null)unknown.push(r);
       else if(own===segment)current.push(r);
       else if(own>segment&&covered(r.id,r.time.sentAt))old.push(r);
       else unknown.push(r);
     }
-    return {...w,scope:state.scopeKey,members:members.map(r=>r.id),segment,latest,current,old,unknown};
-  });
+    themes.push({...w,scope:state.scopeKey,members:members.map(r=>r.id),segment,latest,current,old,unknown});yield;
+  }
   return {scope:state.scopeKey,revision:state.revision,refs,themes,groups:themes,evidenceLevel:state.channel,ruleVersion:'local-calendar-30-v27'};
 }
+
+export function dataProjection(state,now,timeZone){return finish(projection(state,now,timeZone));}
+export async function dataProjectionAsync(state,now,timeZone,guard){return finishAsync(projection(state,now,timeZone),guard);}
