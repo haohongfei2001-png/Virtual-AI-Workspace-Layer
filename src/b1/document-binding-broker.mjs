@@ -23,7 +23,7 @@ const requestOK=m=>{
     case 'B23_PARTITION_PAGE':return exact(m,[...base,'leaseId','revision','offset','ids'])&&tokenOK(m.leaseId)&&Number.isSafeInteger(m.revision)&&m.revision>=0&&Number.isSafeInteger(m.offset)&&m.offset>=0&&m.offset<=100000&&(m.ids===null||Array.isArray(m.ids)&&m.ids.length<=5000&&m.ids.every(tokenOK));
     case 'B23_COMMAND':return exact(m,[...base,'leaseId','operationId','expectedRevision','command'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0&&isRecord(m.command)&&HUMAN_COMMANDS.includes(m.command.type)&&JSON.stringify(m.command).length<(m.command.type==='SET_PREFERENCE'?512000:10000);
     case 'B23_UNDO':return exact(m,[...base,'leaseId','operationId','expectedRevision','targetOperationId'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&tokenOK(m.targetOperationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0;
-    case 'B23_EXPORT_BACKUP':case 'B23_STORAGE':case 'B23_RECOVERY_STATUS':return exact(m,[...base,'leaseId'])&&tokenOK(m.leaseId);
+    case 'B23_FREE_SNAPSHOT':case 'B23_EXPORT_BACKUP':case 'B23_STORAGE':case 'B23_RECOVERY_STATUS':return exact(m,[...base,'leaseId'])&&tokenOK(m.leaseId);
     case 'B23_PREVIEW_RESTORE':return exact(m,[...base,'leaseId','bundle'])&&tokenOK(m.leaseId)&&isRecord(m.bundle)&&JSON.stringify(m.bundle).length<18000000;
     case 'B23_RESTORE_BACKUP':return exact(m,[...base,'leaseId','operationId','expectedRevision','bundle','planHash'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0&&isRecord(m.bundle)&&JSON.stringify(m.bundle).length<18000000&&typeof m.planHash==='string'&&m.planHash.length===64;
     case 'B23_RECOVER_ASSETS':return exact(m,[...base,'leaseId','operationId','damagedHash'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&typeof m.damagedHash==='string'&&m.damagedHash.length===64;
@@ -158,6 +158,7 @@ export function createDocumentBindingBroker({
         if(!workspaceRepository)return deny('workspace-unavailable');
         const options={guard:()=>fresh(st,slot),signal:slot.abort.signal};let result;
         if(message.type==='B23_SNAPSHOT'){const value=workspaceRepository.partitionHeader?await workspaceRepository.partitionHeader(scope,options):null;result=value?{ok:true,partition:value}:{ok:true,snapshot:await workspaceRepository.snapshot(scope,message.now,message.timeZone,options,message.size)};}
+        else if(message.type==='B23_FREE_SNAPSHOT')result=workspaceRepository.freeSnapshot?{ok:true,snapshot:await workspaceRepository.freeSnapshot(scope,options)}:deny('free-snapshot-unavailable');
         else if(message.type==='B23_PARTITION_HEADER'){const value=await workspaceRepository.partitionHeader(scope,options);result=value?{ok:true,partition:value}:{ok:true,snapshot:await workspaceRepository.snapshot(scope,message.now,message.timeZone,options,message.size)};}
         else if(message.type==='B23_PARTITION_PAGE')result={ok:true,page:await workspaceRepository.partitionPage(scope,{revision:message.revision,offset:message.offset,ids:message.ids},options)};
         else if(message.type==='B23_COMMAND')result=await workspaceRepository.command(scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,command:message.command},options);

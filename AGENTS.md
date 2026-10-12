@@ -2,7 +2,7 @@
 
 ## 本轮与后续权限
 
-当前任务是PR #15的Free-first/Pro-later文档最终整合：仅README/AGENTS和docs现行规范/计划/治理/验收说明。不得改src/tests/simulator/design/历史工程证据，不访问Mac、Remote Desktop Commander、私人ChatGPT或PAIA，不做原生写入、付费调用、merge/部署。
+2026-10-13用户已授权从PR #15的176ebc9a基线实施Free：按既有DEVELOPMENT_PLAN持续编码、测试、记录并创建独立Draft PR。允许本工作区及隔离合成本地开发；不访问私人ChatGPT、Remote Desktop Commander或PAIA，不做真实原生写入、付费调用、强推、merge或部署。design与历史工程证据保持原样；新证据与旧结果分开记录。
 
 将来用户明确授权实施Free时，依同一DEVELOPMENT_PLAN持续执行所有可执行Free任务，不逐阶段等续令；本计划不自动授予真实账号/发送/Mac/PAIA/费用/发布等新的许可。真实阻塞只拦相应路径，继续独立Free工作；不绕拒绝、不抢跑Pro。
 

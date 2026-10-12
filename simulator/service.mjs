@@ -1,7 +1,9 @@
 import { ScopeRepository } from '../src/b1/scope-repository.mjs';
 import { createDocumentBindingBroker } from '../src/b1/document-binding-broker.mjs';
 import { WorkspaceRepository } from '../src/data/repository.mjs';
-import { routeInfo, syntheticURL, scopeOf } from './data.mjs';
+import { NativeRepository } from '../src/data/native-repository.mjs';
+import { nativeSeed, syntheticNativeGate } from './native-seed.mjs';
+import { routeInfo, syntheticURL, scopeOf, FIXTURE_NOW } from './data.mjs';
 import { persistentSeed, syntheticEvidenceGate } from './persistent-seed.mjs';
 /** Same B1 database in v2. Only extension origin is durable product storage.
  * Page-mode uses the same code in its labelled host-origin test harness.
@@ -9,6 +11,7 @@ import { persistentSeed, syntheticEvidenceGate } from './persistent-seed.mjs';
 export function createFixtureService({indexedDB,extensionId,getFrame,makeId}){
   const repository=new ScopeRepository({indexedDB,databaseName:'vaiwl-hf-synthetic-v1'});
   const workspaces=new WorkspaceRepository({baseRepository:repository,evidenceGate:syntheticEvidenceGate});
+  const native=new NativeRepository({baseRepository:repository,observationGate:syntheticNativeGate,clock:()=>FIXTURE_NOW});
   let readDelay=0;const pending=new Map(),initialized=new Set();
   async function seed(scope,origin){
     // This map only coalesces in-flight work. The durable marker is an IDB receipt.
@@ -22,6 +25,16 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId}){
     resolveScope:async({currentFrame})=>{const info=routeInfo(currentFrame.url);if(!info||info.account==='unknown')return null;const scope=scopeOf(info.account);await seed(scope,info.origin);return scope;},
     repository:{get:(...a)=>repository.get(...a),upsert:x=>repository.upsert(x),list:async scope=>{await wait();const {state}=await workspaces.read(scope);return Object.values(state.refs).map(r=>({conversationId:r.id,nativeUrl:r.nativeUrl,projectId:r.projectId,revision:1}));}},
     workspaceRepository:{
+      freeSnapshot:async(scope,options)=>{
+        const facts=await native.read(scope,options);
+        const {state}=await workspaces.read(scope,options);
+        if(facts.revision===0){
+          const origin=new URL(Object.values(state.refs)[0].nativeUrl).origin;
+          const result=await native.apply(scope,{operationId:'native_fixture_bootstrap_v1',expectedRevision:0,batch:nativeSeed(scope,origin)},options);
+          if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);
+        }
+        return native.snapshot(scope,{...options,knownState:state});
+      },
       version:async(scope,options)=>{const large=await workspaces.partitionHeader(scope,options);if(large)return {revision:large.manifest.revision,viewRevision:large.view?.revision??0,viewDiagnostic:large.diagnostics.view};const {state,view,diagnostics}=await workspaces.read(scope,options);return {revision:state.revision,viewRevision:view?.revision??0,viewDiagnostic:diagnostics.view};},
       partitionHeader:(...args)=>workspaces.partitionHeader(...args),partitionPage:(...args)=>workspaces.partitionPage(...args),
       snapshot:async(scope,now,timeZone,options,size=8)=>{await wait();const value=await workspaces.snapshot(scope,now,timeZone,options);
@@ -31,5 +44,5 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId}){
       command:(...args)=>workspaces.command(...args),undo:(...args)=>workspaces.undo(...args),history:(...args)=>workspaces.history(...args),saveView:(...args)=>workspaces.saveView(...args),exportBackup:(...args)=>workspaces.exportBackup(...args),previewRestore:(...args)=>workspaces.previewRestore(...args),restoreBackup:(...args)=>workspaces.restoreBackup(...args),recoveryStatus:(...args)=>workspaces.recoveryStatus(...args),recover:(...args)=>workspaces.recover(...args),storage:async()=>{try{const value=await navigator.storage.estimate();return {usage:value.usage??null,quota:value.quota??null,persisted:await navigator.storage.persisted()};}catch{return {usage:null,quota:null,persisted:null};}}
     }
   });
-  return {broker,repository,workspaces,setDelay:ms=>readDelay=Math.min(3000,Math.max(0,Number(ms)||0)),close:()=>repository.close()};
+  return {broker,repository,workspaces,native,setDelay:ms=>readDelay=Math.min(3000,Math.max(0,Number(ms)||0)),close:()=>repository.close()};
 }

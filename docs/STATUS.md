@@ -1,4 +1,26 @@
-# VAIWL实际状态：整合计划就绪，完整Free尚未交付
+# VAIWL实际状态：Free原生事实底座已编码，按用户要求暂停交接
+
+## 当前实施检查点（2026-10-13）
+
+用户在本线程明确授权从`176ebc9a3620f6e174e542e3320ff7008cd6ebe8`实施Free，随后要求完成当前测试、提交已有代码、保存恢复检查点并暂停Goal。工作分支为`codex/vaiwl-free-first-20261013`。本地实现提交以包含本节的Git提交为准；未创建本实现的Draft PR，未推送、合并或部署。远端只读核对PR #15仍Draft，head为上述基线。
+
+| 切片 | 当前证据与状态 |
+|---|---|
+| B1.F / B2.F1原生事实基础 | 原生Project/Conversation/Membership三态合同、来源版本/期限/撤权、原生改名和移动的原子观察更新、scope隔离、CAS与幂等已实现；仅synthetic来源。完整任务仍IN_PROGRESS |
+| B3.F / C1.F1投影基础 | native-only纯投影、同名Project独立、NONE/UNKNOWN分流、旧引用UNKNOWN可达、Pro标题隔离；模拟器通过受保护的`B23_FREE_SNAPSHOT`读取。UI仍使用原有投影，尚未切换，IN_PROGRESS |
+| B5.F初步同库结构 | IDB版本3新增`native_states/native_operations`；旧B1/B23根、分片和Pro资产保留；v2升级及旧reader拒绝已有测试。新原生事实仍是20k行/16Mi有界根，尚未接入F1原生事实分片/检查点恢复，IN_PROGRESS |
+| B2.F2/F3、C1.F2/F3及后续 | 此检查点未开始新增活动决策、校准、H策略或后续UI任务；依同一DEVELOPMENT_PLAN恢复，不另立计划 |
+| R0 / C6真实条件 | 私人ChatGPT、真实原生写入、PAIA、跨设备真值均未获本轮授权且NOT_RUN；对应真实验收BLOCKED_LIVE，不影响之后继续获准本地工程 |
+
+本次实际测试（不与旧结果或中间重复运行相加）：
+
+- Node逻辑/Mock IDB/构建/B1/B23/B4/F1/HF及Free回归：**180通过，0失败，0跳过**。命令和恢复入口见[恢复检查点](engineering/FREE_RESUME_CHECKPOINT_2026_10_13.md)。
+- Chrome Headless Shell `156.0.8078.4`、隔离合成页面、真实IndexedDB：**7通过，0失败**。包括v2升级、三态持久化、双连接CAS、改名移动、写中撤权、scope隔离、模拟器broker原名投影；[原始报告及源码SHA-256](engineering/free-contract-native-idb-2026-10-13.json)。证据为REAL_BROWSER_INDEXEDDB_SYNTHETIC_ONLY，原生UI与真实账户NOT_RUN。
+- npm缓存及headless进程首次受沙箱权限限制，工具升级权限后执行成功；没有启动可见浏览器、读取私人数据或调用收费服务。
+
+**完整B2.F1+B3.F+C1.F1尚未完成，FREE-ACCEPTED/RELEASE-READY/PUBLISHED均未达到。** 用户要求本检查点后停止领取新任务，待桌面应用显式恢复。
+
+## 以下为176ebc9a文档轮历史记录，不代表当前实施状态
 
 核对日期：2026-10-13。远端PR #15读取到的head为`fd5df2be787f8eef053de65965395d7eeea1a80d`；父#14为`0b07455a09b4f2ae2d756ffca5a868305815e424`；main为初始化`76e3dbdb283769e5c94fcef2de35f6b21cf7e49c`。本轮读取到的最新PR仍为#15、Draft/未合并。
 
