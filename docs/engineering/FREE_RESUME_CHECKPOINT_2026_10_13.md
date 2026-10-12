@@ -159,3 +159,9 @@ ee7bc03正常push连接443超时，最后确认远端dab61e7 Draft，后续本�
 下一独立任务：用现有100k send脚本可选诊断计时，拆workspace.partialContext/ingest、evidence.page/apply、native.page/apply和后续HEADER成本，先证明冷新root的重复编码开销再改缓存。Round20仍1.72–2.05s/1秒FAIL；不能宣称Free完成。远端最后确认dab61e7，后续本地提交待网络恢复后正常推送原origin，不重复部署或改变远端。
 
 第二十一轮诊断已完成并保存：见free-round21-send-profile.json/.existing.cpuprofile及stack-analysis.json，CPU主要严格JSON290.8ms和sha256242.2ms，发送内部native.apply453.7ms/evidence.apply255.7ms/shared.ingest171.5ms。未修改运行时代码，包仍第二十一轮。下一试验为安全ASCII JSON字符串快捷编码的独立交替基准；无收益则不改。空validator缓存预热尚不可采用：可变getter可能让checksum与缓存看到不同值；必须保持全部字节/schema/marker/CAS约束。
+
+## 第二十二轮恢复增量（接b4958d6）
+
+采用已测Chrome有效的SHA直接状态赋值两处改动，格式/算法/所有校验不变。完整Node650/0/0skip、MV3 9/9、100k功能3/3；1642.6/2030.9/1980.3ms仍1秒FAIL。ASCII字符串快捷编码、rotate内联无收益已放弃，不要重复尝试。证据free-round22-*，包/private/tmp/vaiwl-free-delivery-round22-20261013/vaiwl-free-synthetic-only.zip，SHA256 cc79ab39958c132420a2bb3578b8d5d7281086752275102b82d7e169cd801286。
+
+下一接既有profile：主要native.apply/evidence.apply/shared.ingest及HEADER新根冷校验成本，不再重写已测UI或做无依据微优化。可评估原生GC旧checkpoint验证的多版本缓存，但每次仍须完整字节/checksum/scope/schema匹配、保留8Mi预算和marker；尚未实施。空verifier预热可变对象方案仍不安全，禁止直接采用。真实来源/账户/PAIA/物理与F4条件未解除；Free未完成。当前GitHEAD用git核对，远端最后确认dab61e7，正常同步不改变分支/remote。

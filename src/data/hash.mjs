@@ -16,9 +16,10 @@ export function sha256(text) {
   for (let p=0;p<length;p+=64) {
     for(let i=0;i<16;i++)w[i]=dv.getInt32(p+i*4);
     for(let i=16;i<64;i++){const x=w[i-15],y=w[i-2];w[i]=(r(x,7)^r(x,18)^(x>>>3))+w[i-16]+(r(y,17)^r(y,19)^(y>>>10))+w[i-7];}
-    let [a,b,c,d,e,f,g,h]=H;
+    let a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
     for(let i=0;i<64;i++){const t1=(h+(r(e,6)^r(e,11)^r(e,25))+((e&f)^(~e&g))+K[i]+w[i])|0,t2=((r(a,2)^r(a,13)^r(a,22))+((a&b)^(a&c)^(b&c)))|0;h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;}
-    [a,b,c,d,e,f,g,h].forEach((x,i)=>H[i]=(H[i]+x)|0);
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;
+    H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;
   }
   return H.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('');
 }
