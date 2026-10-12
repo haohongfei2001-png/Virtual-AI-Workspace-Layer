@@ -1,0 +1,31 @@
+{
+  "layer": "LIVE_GUEST_TIME_SOURCE_SUPPLEMENT",
+  "base": "bf6bbd7ae27fa8aa7afa9e14ba0c606daca3f4d0",
+  "maxNativeSends": 6,
+  "nativeSends": 0,
+  "directInternalAPICalls": 0,
+  "loginActions": 0,
+  "requestHeadersOrPayloadRead": false,
+  "fullResponseOrHARStored": false,
+  "conditions": [],
+  "failures": [
+    {
+      "phase": "driver",
+      "error": {
+        "type": "Error",
+        "codes": [
+          "net::ERR_CONNECTION_CLOSED"
+        ]
+      }
+    }
+  ],
+  "sourceHashes": {
+    "experiments/r0/time-source/fields.py": "b6e75e634a38df7559e58586ccb4bb314fc2c19569ce5074ef4ffcb3cd1e4cbb",
+    "experiments/r0/time-source/page-fields.js": "e8a2a392a792eabdd2c55818b6a83422538aaaa0cb94134a6fb6f03aebdce467",
+    "experiments/r0/time-source/html_fields.py": "2a65cdfd59079669f443188ff4eb54eb1b2add89158ec71fb31c9898ed389515",
+    "tests/r0/time-source/live.py": "f55d8a5373c0e0500b0a7559045b5e3cf7e67497c7dd202b3b72c77325ea9f55",
+    "tests/r0/time-source/test_fields.py": "e472b378d09c85ea9ffa492607c709d0f6bdaa832986866927c316d6245f4f57"
+  },
+  "completed": false,
+  "ownChromeClosed": true
+}

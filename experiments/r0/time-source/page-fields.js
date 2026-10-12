@@ -1,7 +1,7 @@
 ({marker})=>{
  const official=location.protocol==='https:'&&location.hostname==='chatgpt.com';if(!official)return {official:false};
  const sensitive=/cookie|token|secret|authorization|session|account|email|credential|password/i;
- const time=/time|timestamp|created|sent[_-]?at|datetime/i;
+ const time=/(?:^|[_-])(?:create(?:d)?|sent|send|update(?:d)?|server|response|received|observed|start|end)?[_-]?(?:time|timestamp|at|datetime)$|^(?:createTime|createdAt|sentAt|sendTime|serverTime|timestamp|updateTime|datetime)$/i;
  const messages=[...document.querySelectorAll('main [data-message-role],main [data-message-author-role]')];
  const dom=messages.map(n=>({role:n.getAttribute('data-message-role')??n.getAttribute('data-message-author-role'),ownSyntheticMarker:n.textContent.includes(marker),timeAttributeNames:[n,...n.querySelectorAll('*')].flatMap(x=>x.getAttributeNames().filter(k=>time.test(k))),timeElements:n.querySelectorAll('time').length}));
  const results={jsonScriptCount:0,jsonScriptParseErrors:0,jsonScriptBudgetExceeded:0,knownGlobalDescriptors:[],inlineInitializationScriptCount:0,inlineTimeKeyShapes:[],fields:[],ownMessageMetadata:[],nodeBudgetExceeded:false};

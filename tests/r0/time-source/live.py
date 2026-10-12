@@ -3,16 +3,28 @@
 No request payload/headers, cookies, authentication, full response, HAR, API fetch,
 private page state or signed-in data. URLs/IDs/times used for equality stay in RAM.
 """
-import argparse,base64,hashlib,json,re,subprocess,sys,time
+import argparse,base64,codecs,hashlib,json,re,subprocess,sys,time
 from pathlib import Path
 from urllib.parse import urlsplit
 sys.path.insert(0,str(Path(__file__).resolve().parents[3]/'experiments/r0/time-source'))
-from fields import StreamReducer
+from fields import StreamReducer,ScalarJSONReducer
+from association import identifier_association
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[3];PYROOT=ROOT/'experiments/r0/time-source'
-arg=argparse.ArgumentParser();arg.add_argument('--session-dir',required=True);arg.add_argument('--output-dir',required=True);arg.add_argument('--allow-six-native-synthetic-sends',action='store_true');a=arg.parse_args();assert a.allow_six_native_synthetic_sends
-S=Path(a.session_dir).resolve();O=Path(a.output_dir).resolve();assert not S.exists() and not O.exists() and ROOT not in S.parents and O.is_relative_to(ROOT/'docs/experiments/results');S.mkdir(mode=0o700);profile=S/'profile';profile.mkdir(mode=0o700);O.mkdir()
-r={'layer':'LIVE_GUEST_TIME_SOURCE_SUPPLEMENT','base':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'maxNativeSends':6,'nativeSends':0,'directInternalAPICalls':0,'loginActions':0,'requestHeadersOrPayloadRead':False,'fullResponseOrHARStored':False,'conditions':[],'failures':[],'sourceHashes':{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for d in ['experiments/r0/time-source','tests/r0/time-source'] for p in (ROOT/d).glob('*') if p.is_file()}}
+arg=argparse.ArgumentParser();arg.add_argument('--session-dir',required=True);arg.add_argument('--output-dir',required=True);arg.add_argument('--total-authorized-native-sends',type=int,default=6);arg.add_argument('--conditions',default='no-extension,probe-loaded,probe-uninstalled');arg.add_argument('--skip-refresh-sample',action='store_true');arg.add_argument('--allow-six-native-synthetic-sends',action='store_true');a=arg.parse_args();assert a.allow_six_native_synthetic_sends
+S=Path(a.session_dir).resolve();O=Path(a.output_dir).resolve();assert not S.exists() and not O.exists() and ROOT not in S.parents and O.is_relative_to(ROOT/'docs/experiments/results')
+# Task-wide budget precedes any new Profile/browser or send. Budget increases
+# require new explicit authorization; a CLI argument alone does not grant it.
+prior=0
+for d in O.parent.glob('run-*'):
+ receipt=d/'results.json'
+ if not receipt.exists():receipt=d/'results.partial.json'
+ if receipt.exists():prior+=json.loads(receipt.read_text()).get('nativeSends',0)
+if prior>=a.total_authorized_native_sends:raise SystemExit('TASK_WIDE_NATIVE_SEND_BUDGET_EXHAUSTED_NO_BROWSER_STARTED')
+remaining=a.total_authorized_native_sends-prior
+S.mkdir(mode=0o700);profile=S/'profile';profile.mkdir(mode=0o700);O.mkdir()
+
+r={'layer':'LIVE_GUEST_TIME_SOURCE_SUPPLEMENT','base':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'maxNativeSends':min(6,remaining),'priorTaskSendAttempts':prior,'totalAuthorizedNativeSendBudget':a.total_authorized_native_sends,'nativeSends':0,'directInternalAPICalls':0,'loginActions':0,'requestHeadersOrPayloadRead':False,'fullResponseOrHARStored':False,'conditions':[],'failures':[],'sourceHashes':{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for d in ['experiments/r0/time-source','tests/r0/time-source'] for p in (ROOT/d).glob('*') if p.is_file()}}
 def save(): (O/'results.partial.json').write_text(json.dumps(r,ensure_ascii=False,indent=2)+'\n')
 def safe_error(e):return {'type':type(e).__name__,'codes':re.findall(r'net::ERR_[A-Z_]+',str(e))}
 config=subprocess.check_output(['scutil','--proxy'],text=True)
@@ -34,19 +46,21 @@ try:
   def response(event):
    x=event['response'];u=urlsplit(x['url'])
    if u.scheme!='https' or u.hostname!='chatgpt.com':return
-   active=state['active'];mime=x.get('mimeType','');kind='event-stream' if mime=='text/event-stream' else 'json-metadata-only' if 'json' in mime else 'document-metadata-only' if 'html' in mime else 'other-metadata-only'
-   if active is not None:state['responses'].append({'kind':kind,'mimeType':mime,'status':x['status'],'phase':active['phase'],'bodyNotRead':kind!='event-stream'})
-   if active is None or kind!='event-stream':return
-   reducer=StreamReducer(active['marker'],active['observed']);entry={'phase':active['phase'],'marker':active['marker'],'reducer':reducer,'streamError':None};state['streams'][event['requestId']]=entry;all_streams.append(entry)
+   active=state['active'];mime=x.get('mimeType','');kind='event-stream' if mime in ('text/event-stream','application/vnd.openai.conversation-source+ndjson') else 'json-metadata-only' if 'json' in mime else 'document-metadata-only' if 'html' in mime else 'other-metadata-only'
+   if active is not None:state['responses'].append({'kind':kind,'mimeType':mime,'status':x['status'],'phase':active['phase'],'fullBodyNotRead':True})
+   safe_json=kind=='json-metadata-only' and bool(re.search(r'conversation|message|chat|bootstrap|init',u.path,re.I)) and not re.search(r'auth|token|cookie|session|sentinel|requirements|account|captcha',u.path,re.I)
+   if active is None or (kind!='event-stream' and not safe_json):return
+   reducer=ScalarJSONReducer(active['marker'],active['observed']) if safe_json else StreamReducer(active['marker'],active['observed']);entry={'phase':active['phase'],'marker':active['marker'],'reducer':reducer,'streamError':None,'mode':'partial-json-fields' if safe_json else 'own-native-ndjson-or-sse','bufferedJSONIgnored':False,'decoder':codecs.getincrementaldecoder('utf-8')()};state['streams'][event['requestId']]=entry;all_streams.append(entry)
    try:
     answer=session.send('Network.streamResourceContent',{'requestId':event['requestId']});initial=answer.get('bufferedData','')
-    if initial:reducer.feed(base64.b64decode(initial).decode('utf-8',errors='replace'))
+    if initial and not safe_json:reducer.feed(entry['decoder'].decode(base64.b64decode(initial)))
+    elif initial:entry['bufferedJSONIgnored']=True
    except Exception as e:entry['streamError']=safe_error(e)
   def data(event):
    entry=state['streams'].get(event['requestId']);chunk=event.get('data')
    if entry is None or not chunk:return
    if entry['reducer'].bytes>4*1024*1024:return
-   entry['reducer'].feed(base64.b64decode(chunk).decode('utf-8',errors='replace'))
+   entry['reducer'].feed(entry['decoder'].decode(base64.b64decode(chunk)))
   session.on('Network.responseReceived',response);session.on('Network.dataReceived',data)
   # Read only exact HTTP Date response header, never all headers/authentication.
   http_dates=[]
@@ -75,33 +89,40 @@ try:
    p.wait_for_timeout(int(seconds*1000));s=guest();return {'routeIsHome':p.url=='https://chatgpt.com/','ownSyntheticUserVisible':p.locator('main [data-message-role=user],main [data-message-author-role=user]').filter(has_text=marker).count()>0,'roles':s['messageRoleMarkers'],'fields':fields(marker)}
   def activate(marker,phase):state['active']={'marker':marker,'phase':phase,'observed':time.time()}
   def send(marker):
-   guest();assert r['nativeSends']<6;prompt=marker+'：请只回答 3+4 的结果，不包含其他内容。';activate(marker,'native-send');r['nativeSends']+=1;save()
+   guest();assert r['nativeSends']<r['maxNativeSends'];prompt=marker+'：请只回答 3+4 的结果，不包含其他内容。';activate(marker,'native-send');r['nativeSends']+=1;save()
    p.get_by_role('textbox',name='与 ChatGPT 聊天',exact=True).fill(prompt);p.get_by_role('button',name='发送消息',exact=True).click();p.get_by_text('7',exact=True).first.wait_for(timeout=45000);p.wait_for_timeout(600)
-   s=settle(marker,.5);assert s['ownSyntheticUserVisible'];return s
-  for mode in ['no-extension','probe-loaded','probe-uninstalled']:
+   s=settle(marker,.5);assert s['ownSyntheticUserVisible']
+   dom=p.evaluate("()=>[...document.querySelectorAll('main [data-message-role],main [data-message-author-role]')].map(n=>({role:n.getAttribute('data-message-role')??n.getAttribute('data-message-author-role'),ids:[n.id,n.getAttribute('data-message-id')].filter(Boolean)}))")
+   ids=[pair for stream in all_streams if stream['marker']==marker for pair in stream['reducer'].ids]
+   s['networkIdentifierAssociation']=identifier_association(ids,dom,urlsplit(p.url).path.split('/'))
+   return s
+  for mode in a.conditions.split(','):
+   assert mode in ('no-extension','probe-loaded','probe-uninstalled')
    record={'condition':mode,'checks':[]};r['conditions'].append(record);save();p.goto('https://chatgpt.com',wait_until='domcontentloaded');p.get_by_role('textbox',name='与 ChatGPT 聊天',exact=True).wait_for(timeout=15000);guest()
    if mode=='probe-loaded':
     ext=load();p.wait_for_timeout(500);inject();record['initialProbeHealth']=health();assert not record['initialProbeHealth']['trustedAccountScope']
    if mode=='probe-uninstalled':
+    if ext is None:ext=load();p.wait_for_timeout(500)
     inject();record['preUninstallHealth']=health();record['stopResult']=stop();cdp.send('Extensions.uninstall',{'id':ext['id']});record['actualExtensionUninstalledBeforeSends']=True;ext=None
    record['initializationBeforeOwnMessage']=fields('VAIWL_TIME_NO_MESSAGE');stream_start=len(all_streams);response_start=len(state['responses']);date_start=len(http_dates)
    marker='VAIWL_TIME_'+mode.upper().replace('-','_')+'_RETURN'
    try:
-    record['returnSampleBefore']=send(marker);old=p.url
+    record['returnStep']='native-send';record['returnSampleBefore']=send(marker);old=p.url
     # Reopen own route in an additional tab, no hidden API. Never publish this URL.
-    q=ctx.new_page();reply=q.goto(old,wait_until='domcontentloaded',timeout=30000);q.wait_for_timeout(2000);qs=q.evaluate((ROOT/'experiments/r0/structure.js').read_text());record['reopenOwnRoute']={'http':reply.status if reply else None,'roles':qs['messageRoleMarkers'],'ownMarkerVisible':q.locator('main [data-message-role=user],main [data-message-author-role=user]').filter(has_text=marker).count()>0,'fields':q.evaluate((PYROOT/'page-fields.js').read_text(),{'marker':marker})};q.close()
-    activate(marker,'native-new-chat-and-back');p.get_by_role('link',name='新聊天',exact=True).click();p.wait_for_timeout(500);record['nativeNewChatNoOwnMessage']=not settle(marker,.1)['ownSyntheticUserVisible'];p.go_back(wait_until='domcontentloaded',timeout=30000);back=settle(marker);back['sameRouteAsOwnConversation']=p.url==old;record['checks'].append({'kind':'independent-native-new-chat-and-back','status':'PASS' if back['ownSyntheticUserVisible'] else 'FAIL','actual':back})
-   except Exception as e:record['checks'].append({'kind':'return-sample','status':'FAIL','error':safe_error(e)})
-   # Independent message after resetting to home, unaffected by the return check.
-   p.goto('https://chatgpt.com',wait_until='domcontentloaded');p.get_by_role('textbox',name='与 ChatGPT 聊天',exact=True).wait_for(timeout=15000)
-   if mode=='probe-loaded':inject();record['refreshSampleProbeHealth']=health()
-   marker='VAIWL_TIME_'+mode.upper().replace('-','_')+'_REFRESH'
-   try:
-    record['refreshSampleBefore']=send(marker);old=p.url;activate(marker,'native-refresh');p.reload(wait_until='domcontentloaded',timeout=30000);after=settle(marker);after['sameRouteAsOwnConversation']=p.url==old
-    record['checks'].append({'kind':'independent-native-refresh','status':'PASS' if after['ownSyntheticUserVisible'] else 'FAIL','actual':after})
-    if mode=='probe-loaded':inject();record['afterRefreshReinjectedProbeHealth']=health();record['manualInjectionBecauseNoAutomaticContentScript']=True
-   except Exception as e:record['checks'].append({'kind':'refresh-sample','status':'FAIL','error':safe_error(e)})
-   state['active']=None;record['naturalResponses']=state['responses'][response_start:];record['httpDateOnly']=http_dates[date_start:];record['messageStreams']=[{'phase':x['phase'],'streamError':x['streamError'],**x['reducer'].public()} for x in all_streams[stream_start:]]
+    record['returnStep']='reopen-own-route';q=ctx.new_page();reply=q.goto(old,wait_until='domcontentloaded',timeout=30000);q.wait_for_timeout(2000);qs=q.evaluate((ROOT/'experiments/r0/structure.js').read_text());record['reopenOwnRoute']={'http':reply.status if reply else None,'roles':qs['messageRoleMarkers'],'ownMarkerVisible':q.locator('main [data-message-role=user],main [data-message-author-role=user]').filter(has_text=marker).count()>0,'fields':q.evaluate((PYROOT/'page-fields.js').read_text(),{'marker':marker})};q.close()
+    record['returnStep']='native-new-chat';activate(marker,'native-new-chat-and-back');p.get_by_role('link',name='新聊天',exact=True).click();p.wait_for_timeout(500);record['nativeNewChatNoOwnMessage']=not settle(marker,.1)['ownSyntheticUserVisible'];record['returnStep']='browser-back';p.go_back(wait_until='domcontentloaded',timeout=30000);back=settle(marker);back['sameRouteAsOwnConversation']=p.url==old;record['checks'].append({'kind':'independent-native-new-chat-and-back','status':'PASS' if back['ownSyntheticUserVisible'] and back['sameRouteAsOwnConversation'] else 'FAIL','actual':back})
+   except Exception as e:record['checks'].append({'kind':'return-sample','status':'FAIL','atStep':record.get('returnStep'),'error':safe_error(e)})
+   if not a.skip_refresh_sample:
+    # Independent message after resetting to home, unaffected by the return check.
+    p.goto('https://chatgpt.com',wait_until='domcontentloaded');p.get_by_role('textbox',name='与 ChatGPT 聊天',exact=True).wait_for(timeout=15000)
+    if mode=='probe-loaded':inject();record['refreshSampleProbeHealth']=health()
+    marker='VAIWL_TIME_'+mode.upper().replace('-','_')+'_REFRESH'
+    try:
+     record['refreshSampleBefore']=send(marker);old=p.url;activate(marker,'native-refresh');p.reload(wait_until='domcontentloaded',timeout=30000);after=settle(marker);after['sameRouteAsOwnConversation']=p.url==old
+     record['checks'].append({'kind':'independent-native-refresh','status':'PASS' if after['ownSyntheticUserVisible'] else 'FAIL','actual':after})
+     if mode=='probe-loaded':inject();record['afterRefreshReinjectedProbeHealth']=health();record['manualInjectionBecauseNoAutomaticContentScript']=True
+    except Exception as e:record['checks'].append({'kind':'refresh-sample','status':'FAIL','error':safe_error(e)})
+   state['active']=None;record['naturalResponses']=state['responses'][response_start:];record['httpDateOnly']=http_dates[date_start:];record['messageStreams']=[{'phase':x['phase'],'mode':x['mode'],'bufferedJSONIgnored':x['bufferedJSONIgnored'],'streamError':x['streamError'],**x['reducer'].public()} for x in all_streams[stream_start:]]
    save();print(mode,json.dumps({'sends':r['nativeSends'],'checks':[(x['kind'],x['status']) for x in record['checks']],'streams':len(record['messageStreams'])}),flush=True)
   # Local cross-observation equality only, no raw identifiers/times exported.
   known={};relations=[]
