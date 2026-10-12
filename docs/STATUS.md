@@ -2,6 +2,8 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
+最新本地实现为 `7ac2e28`；远端PR #16仍为已推送的 `b2a262b`。正常Git传输分别出现HTTP/2错误和443连接超时，第三轮实现及最终检查点尚未推送；见恢复检查点的“最后同步检查点”。未修改远端设置。
+
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
 B1/B4/B5/F1原生存储新增：同库不可变Project/Conversation分片、源版本CAS、受影响记录增量读写、版本绑定分页、保留当前与上一检查点所需分片、原子恢复影子。损坏root恢复先验证全部piece并撤销全部来源；旧source不能借恢复重放，单独门控的新source可重新核验。旧v1仍20k行/16Mi；v2仅为分片聚合，100k/128Mi边界，各落盘记录仍16Mi。Pro根/日志未改。

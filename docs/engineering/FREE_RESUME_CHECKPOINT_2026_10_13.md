@@ -31,3 +31,11 @@ PLAYWRIGHT_BROWSERS_PATH=/private/tmp/vaiwl-free-playwright node tests/free/part
 合成服务仍是synthetic限定；没有生产ChatGPT身份/库存/本人活动源适配证据，不能改hostnames就认证生产。R0/C6实际授权账户、跨设备真值、PAIA干净构建与共存、物理IME/真人日常旅程均BLOCKED_LIVE或NOT_RUN。可安装合成测试包不是完整可用ChatGPT产品；FREE_ACCEPTED/RELEASE_READY/PUBLISHED未达到。
 
 最终本地测试包：`/private/tmp/vaiwl-free-delivery-20261013/vaiwl-free-synthetic-only.zip`；同目录extension可在隔离profile加载。SHA-256 `2592ead6ebb3e8eee576e8752062ea462b0f16e9c6230dc5a9fed8e3d3d33728`。包含此第三轮记录的commit为本次恢复点，实际HEAD用git核对。未发布、未合并、未赋予私人账户许可。
+
+## 最后同步检查点
+
+本地实现提交：`7ac2e28`（第三轮源代码、测试、证据和包生成器）。工作区源码已冻结并通过所列验证；最终合成包49个源码文件哈希与该实现一致。
+
+2026-10-13 GitHub API核对PR #16仍Draft，远端头为 `b2a262b6b60c421b8ed3735f6cae524030097b5d`。正常HTTPS Git查询出现HTTP/2 framing错误；仅该次命令临时切HTTP/1.1推送又在75秒后报443连接失败。未改remote/config，未强推。**7ac2e28及包含本节的检查点提交仅在本地，尚未推送**；网络恢复后直接正常推送当前分支到原origin，不重做代码或验证。
+
+没有以同步失败冒称线上交付。真实ChatGPT来源/完整库存/本人活动、跨端、PAIA干净构建/共存、物理弱设备/IME和真人日常验收仍需要前述最小条件；Free产品并未完整验收。
