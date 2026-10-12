@@ -1,0 +1,54 @@
+{
+  "layer": "LIVE_GUEST_AFTER_NATIVE_REFRESH",
+  "structure": {
+    "schema": "r0-structure-v1",
+    "official": true,
+    "route": "HOME",
+    "scope": "UNVERIFIED",
+    "derivedEnabled": false,
+    "guestSignals": {
+      "login": true,
+      "signup": true
+    },
+    "native": {
+      "main": 1,
+      "sidebar": 2,
+      "composer": 1,
+      "model": false,
+      "tools": true,
+      "send": true,
+      "stop": false,
+      "search": false,
+      "newChat": true
+    },
+    "visibleReferenceCounts": {
+      "chat": 0,
+      "project": 0,
+      "examined": 6,
+      "fullAccountCoverage": false
+    },
+    "messageRoleMarkers": {
+      "user": 0,
+      "assistant": 0,
+      "other": 0
+    },
+    "roleAttributeFamilies": {
+      "legacy": 0,
+      "octane": 0
+    },
+    "userTimeStructure": {
+      "timeNodes": 0,
+      "timeAttributes": 0,
+      "originalSendSemantics": "NOT_ESTABLISHED",
+      "coverage": "UNKNOWN"
+    },
+    "identityAttributeCandidates": 0,
+    "uniqueReturnSlot": "NOT_VERIFIED",
+    "nativeDomWritten": false,
+    "limitedToCurrentVisibleDocument": true
+  },
+  "errorPageSignal": {
+    "networkError": false,
+    "notFound": false
+  }
+}

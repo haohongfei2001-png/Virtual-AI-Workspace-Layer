@@ -1,0 +1,288 @@
+{
+  "layer": "LIVE_HOST_GUEST",
+  "site": "https://chatgpt.com",
+  "account": "NOT_LOGGED_IN",
+  "loginRequired": false,
+  "directInternalApiCalls": 0,
+  "additionalSyntheticSendAttempts": 2,
+  "tests": [
+    {
+      "id": "R0-02-actual-guest-message-roles-and-time-fields",
+      "status": "PASS",
+      "actual": {
+        "actualOctaneRoleMarkers": {
+          "legacy": 0,
+          "octane": 2
+        },
+        "roles": {
+          "user": 1,
+          "assistant": 1,
+          "other": 0
+        },
+        "time": {
+          "users": [
+            {
+              "timeNodes": 0,
+              "timeAttributeNames": []
+            }
+          ],
+          "originalSendTime": "UNKNOWN",
+          "coverage": "UNKNOWN",
+          "browserObservationDoesNotBecomeSentAt": true
+        },
+        "nativeInspectorOnly": true
+      }
+    },
+    {
+      "id": "R0-04-real-MV3-content-worker-and-fail-closed",
+      "status": "PASS",
+      "actual": {
+        "actualExtensionLoaded": true,
+        "manualInjectionNoReload": true,
+        "health": {
+          "bindingReason": "unverified-scope",
+          "boot": "7c269c4f-bbbc-411b-9b5f-3519bda17728",
+          "dataStoreOpened": false,
+          "derivedContentEnabled": false,
+          "nativeWritesEnabled": false,
+          "schema": "vaiwl-r0-probe-v1",
+          "trustedAccountScope": false
+        },
+        "native": {
+          "main": true,
+          "input": true,
+          "priorMessages": true,
+          "ownedRoots": 0
+        }
+      }
+    },
+    {
+      "id": "R0-02-04-real-second-guest-turn-with-probe",
+      "status": "PASS",
+      "actual": {
+        "syntheticPrompt": "VAIWL R0 访客合成多轮测试（二）：请只回答 7+4 的结果，不包含其他内容。",
+        "expectedReplyVisible": true,
+        "roles": {
+          "user": 2,
+          "assistant": 2,
+          "other": 0
+        },
+        "browserObservedBeforeClickUtc": "2026-10-12T11:39:08Z",
+        "notOriginalSendTime": true,
+        "time": {
+          "users": [
+            {
+              "timeNodes": 0,
+              "timeAttributeNames": []
+            },
+            {
+              "timeNodes": 0,
+              "timeAttributeNames": []
+            }
+          ],
+          "originalSendTime": "UNKNOWN",
+          "coverage": "UNKNOWN",
+          "browserObservationDoesNotBecomeSentAt": true
+        },
+        "native": {
+          "main": true,
+          "input": true,
+          "priorMessages": true,
+          "ownedRoots": 0
+        },
+        "probeHealth": {
+          "bindingReason": "unverified-scope",
+          "boot": "7c269c4f-bbbc-411b-9b5f-3519bda17728",
+          "dataStoreOpened": false,
+          "derivedContentEnabled": false,
+          "nativeWritesEnabled": false,
+          "schema": "vaiwl-r0-probe-v1",
+          "trustedAccountScope": false
+        }
+      }
+    },
+    {
+      "id": "R0-02-04-real-third-guest-turn-and-stream-entry",
+      "status": "PASS",
+      "actual": {
+        "syntheticPrompt": "VAIWL R0 访客合成多轮测试（三）：请输出12行，每行只写“合成色彩测试”，不要包含其他内容。",
+        "roles": {
+          "user": 3,
+          "assistant": 3,
+          "other": 0
+        },
+        "nativeStopEntryObservedDuringGeneration": true,
+        "time": {
+          "users": [
+            {
+              "timeNodes": 0,
+              "timeAttributeNames": []
+            },
+            {
+              "timeNodes": 0,
+              "timeAttributeNames": []
+            },
+            {
+              "timeNodes": 0,
+              "timeAttributeNames": []
+            }
+          ],
+          "originalSendTime": "UNKNOWN",
+          "coverage": "UNKNOWN",
+          "browserObservationDoesNotBecomeSentAt": true
+        },
+        "native": {
+          "main": true,
+          "input": true,
+          "priorMessages": true,
+          "ownedRoots": 0
+        }
+      }
+    },
+    {
+      "id": "R0-04-actual-worker-stop-restart-and-native-preservation",
+      "status": "PASS",
+      "actual": {
+        "beforeBoot": "7c269c4f-bbbc-411b-9b5f-3519bda17728",
+        "afterBoot": "e8bffe36-9acc-4bc1-8e54-c35d69247ece",
+        "actualStoppedEvent": true,
+        "noPageReload": true,
+        "stillNoTrustedScope": true,
+        "native": {
+          "main": true,
+          "input": true,
+          "priorMessages": true,
+          "ownedRoots": 0
+        }
+      }
+    },
+    {
+      "id": "R0-00-04-native-tool-menu-guest-limit",
+      "status": "PASS",
+      "actual": {
+        "nativeToolsPopoverOpened": true,
+        "loginGatedTools": [],
+        "noToolInvoked": true,
+        "native": {
+          "main": true,
+          "input": true,
+          "priorMessages": true,
+          "ownedRoots": 0
+        }
+      }
+    },
+    {
+      "id": "R0-00-04-native-narrow-dark",
+      "status": "PASS",
+      "actual": {
+        "nativeGuestOnly": true,
+        "narrow": {
+          "viewport": 390,
+          "overflow": false,
+          "composerVisible": true
+        },
+        "darkMediaEmulated": true,
+        "noAccountSettingChanged": true
+      }
+    },
+    {
+      "id": "R0-04-stop-and-uninstall-owned-probe",
+      "status": "PASS",
+      "actual": {
+        "probeStopped": true,
+        "actualExtensionUninstalled": true,
+        "native": {
+          "main": true,
+          "input": true,
+          "priorMessages": true,
+          "ownedRoots": 0
+        },
+        "ownership": {
+          "composerUnchanged": true,
+          "nativeDOMWritten": false,
+          "originalNativeNodesConnected": true,
+          "ownedDOMRoots": 0,
+          "trackedCount": 4
+        }
+      }
+    },
+    {
+      "id": "R0-02-04-native-guest-refresh-stability",
+      "status": "FAIL",
+      "actual": {
+        "errorType": "TimeoutError",
+        "networkErrorCodes": []
+      }
+    },
+    {
+      "id": "R0-00-04-native-new-chat-and-browser-back",
+      "status": "FAIL",
+      "actual": {
+        "errorType": "TimeoutError",
+        "networkErrorCodes": []
+      }
+    }
+  ],
+  "sourceHashes": {
+    "experiments/r0/worker.mjs": "c7ef8ef570a1cc0129f9c7e9eff4060bd03e32aaa5806d8c15c5fae21a53a62c",
+    "experiments/r0/live-session.py": "48f5aeb7ec5f1943280f5abb39525d1fc807a80400d947a61e71f133181978ac",
+    "experiments/r0/sync-git.py": "e10ffa99dfcf323d60d600c26abd0b2848a222bd382c01f82cdce56ae50a6f56",
+    "experiments/r0/build.mjs": "e030634d84fa04a5844242b6bf5e4db56b955059623fd6003426606d0874fd5d",
+    "experiments/r0/policy.mjs": "80501db5075dcffb9d084533b8cdf1d15f0d3b8adb041d63fe87dc2a33f1abe3",
+    "experiments/r0/content.js": "454e1f4fae0b395653f378fede06d09682c0ee0e6b5af0a53d43475315e7463b",
+    "experiments/r0/structure.js": "09e2027200c8595d862b66a7d2d28b0268a80cb926ffc05848a195be758b1407",
+    "experiments/r0/guest-session.py": "77039e5377248c79785a5a907f44e84fca10cb29b210206c4cd33ac122558607",
+    "tests/r0/live-guest-journey.py": "5a5de76dd2825d49389bf90cc5805c0220f1dccf16b702502c6dfc71014c8cda",
+    "tests/r0/policy.test.mjs": "b1c9c0bf454ca5eced4ded58f11662c834588be6c88b778d5c0458081b067dc3",
+    "tests/r0/guest-first-message.py": "467aca953cdf7535b6fa568f63ff713ec6fc04e6b3f88047d40b45df63e707c3"
+  },
+  "workerEvents": [
+    {
+      "status": "running",
+      "ownExperimentalWorker": true
+    },
+    {
+      "status": "stopping",
+      "ownExperimentalWorker": true
+    },
+    {
+      "status": "stopped",
+      "ownExperimentalWorker": true
+    },
+    {
+      "status": "starting",
+      "ownExperimentalWorker": true
+    },
+    {
+      "status": "starting",
+      "ownExperimentalWorker": true
+    },
+    {
+      "status": "starting",
+      "ownExperimentalWorker": true
+    },
+    {
+      "status": "running",
+      "ownExperimentalWorker": true
+    }
+  ],
+  "realAccountHistory": "NOT_RUN",
+  "PAIA": "NOT_RUN_WAITING_AUTHORIZATION",
+  "buildHashes": {
+    "experiments/r0/worker.mjs": "c7ef8ef570a1cc0129f9c7e9eff4060bd03e32aaa5806d8c15c5fae21a53a62c",
+    "experiments/r0/policy.mjs": "80501db5075dcffb9d084533b8cdf1d15f0d3b8adb041d63fe87dc2a33f1abe3",
+    "src/b1/document-binding-broker.mjs": "18f75d2f839ca52f2417241bd678748a4a554e90a14eeb004de9cbcde7c91ca3",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "experiments/r0/content.js": "454e1f4fae0b395653f378fede06d09682c0ee0e6b5af0a53d43475315e7463b",
+    "manifest.json": "718bacdea5eb48e335155ab7d999e44681cbd0645f2cb5a6adbe92ba12e8240d"
+  },
+  "endedAt": 1791805186.7007182,
+  "counts": {
+    "PASS": 8,
+    "FAIL": 2
+  }
+}
