@@ -7,9 +7,35 @@ const gridIcon='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stro
 import { css } from './styles.mjs';
 function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);n.textContent=text;return n;}
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
-export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{}}) {
+export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{}}) {
   const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
   let index=null,sidebarDirty=true,sidebarKey=null;
+  // Keep the original event target alive until its click, drop, or composition
+  // completes. Coalesce updates instead of extending a debounce on each change.
+  const pointers=new Set(),keys=new Set(),win=doc.defaultView??globalThis;
+  let composing=false,dragging=false,pendingUpdate=null,updateTimer=null;
+  const owned=e=>e.composedPath().some(n=>n?.getAttribute?.('data-vaiwl-owned')===token);
+  const interacting=()=>pointers.size>0||keys.size>0||composing||dragging;
+  const clearUpdateTimer=()=>{if(updateTimer!==null){win.clearTimeout(updateTimer);updateTimer=null;}};
+  function flushUpdate(){clearUpdateTimer();if(!pendingUpdate||interacting()||stopped)return;const args=pendingUpdate;pendingUpdate=null;update(...args);}
+  function finishInteraction(){if(!interacting()&&pendingUpdate&&updateTimer===null)updateTimer=win.setTimeout(flushUpdate,0);}
+  function resetInteraction(discard=false){pointers.clear();keys.clear();composing=false;dragging=false;if(discard){pendingUpdate=null;clearUpdateTimer();}else finishInteraction();}
+  const interactionHandlers={
+    pointerdown:e=>{if(owned(e))pointers.add(e.pointerId);},
+    pointerup:e=>{pointers.delete(e.pointerId);finishInteraction();},
+    pointercancel:e=>{pointers.delete(e.pointerId);finishInteraction();},
+    lostpointercapture:e=>{pointers.delete(e.pointerId);finishInteraction();},
+    keydown:e=>{if(owned(e)&&[' ','Enter'].includes(e.key))keys.add(e.key);},
+    keyup:e=>{keys.delete(e.key);finishInteraction();},
+    compositionstart:e=>{if(owned(e))composing=true;},
+    compositionend:()=>{composing=false;finishInteraction();},
+    dragstart:e=>{if(owned(e))dragging=true;},
+    dragend:()=>{dragging=false;pointers.clear();finishInteraction();},
+    drop:()=>{dragging=false;pointers.clear();finishInteraction();},
+    visibilitychange:()=>{if(doc.visibilityState==='hidden')resetInteraction(true);}
+  };
+  for(const [type,handler]of Object.entries(interactionHandlers))doc.addEventListener(type,handler,true);
+  const windowBlur=()=>resetInteraction();win.addEventListener?.('blur',windowBlur);
   const free=()=>snapshot?.viewMode==='free';
   const span=()=>snapshot?.policy?.h??snapshot?.viewSession?.H??30;
   const current=()=>index?.at(adapter.currentURL())??{};
@@ -72,7 +98,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function emitView(){if(view&&snapshot)onViewChange({segment:view.segment,oldOpen:[...view.oldOpen],sidebarOpen:[...view.sidebarOpen],capacities:[...view.capacities],scroll:view.scroll,sidebarVisible:view.sidebarVisible,...(free()&&snapshot.viewSession?{freeSession:snapshot.viewSession}:{})},snapshot.scope);}
   function remember(){if(view&&roots)view.sidebarScroll=roots.sidebar.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;if(view?.mode==='workspace'&&roots?.workspace.scroller&&roots.workspace.n.style.display!=='none')view.scroll=roots.workspace.scroller.scrollTop;}
-  function showWorkspace(){captureFocus();remember();view.mode='workspace';searchQuery=null;searchTheme=null;render();layout();queueMicrotask(()=>roots?.workspace.shadow.querySelector('.workspace')?.focus({preventScroll:true}));if(view.segment===0)onCurrentWorkspaceEntry();}
+  function calibrationEntry(){if(!free()||!roots)return;const objectIds=view.segment===0?['inventory']:[...new Set([...roots.workspace.shadow.querySelectorAll('[data-ref-id]')].map(n=>n.dataset.refId))].slice(0,64);onCalibrationEntry({kind:view.segment===0?'foreground':'history',objectIds:objectIds.length?objectIds:['inventory']});}
+  function showWorkspace(){captureFocus();remember();view.mode='workspace';searchQuery=null;searchTheme=null;render();layout();queueMicrotask(()=>roots?.workspace.shadow.querySelector('.workspace')?.focus({preventScroll:true}));if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();}
   function enterReading(){if(!view)return;remember();view.mode='reading';searchQuery=null;searchTheme=null;layout();}
   function openRef(ref,event){if(ref.available===false){event.preventDefault();return;}if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;remember();if(ref.anchor)pendingAnchor={scope:snapshot.scope,ref,anchor:ref.anchor};view.mode='reading';searchQuery=null;searchTheme=null;layout();const same=adapter.isCurrent(ref.nativeUrl);adapter.openNative(ref.nativeUrl,event);if(same){restoreFocus();locateAnchor();}}
   const windowGlyph=node(doc,'span',{class:'window-glyph','aria-hidden':'true'});windowGlyph.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.65"><path d="M4 5h16v12H9l-5 4z"/></svg>';
@@ -147,8 +174,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       const workset=node(doc,'section',{class:'search working-set','aria-label':'当前工作集'}),top=node(doc,'div',{class:'search-top'});top.append(node(doc,'strong',{},'当前工作集'),button('返回主题视图',()=>{view.worksetOpen=false;render();},'返回主题','more'));workset.append(top,node(doc,'p',{},'只保存窗口引用与人工顺序，点击后打开。草稿与任务运行状态由原生页面保留。'));const saved=snapshot.preferences?.workingSet?.value??{refs:[],current:null};for(const id of saved.refs){const ref=snapshot.refs.find(r=>r.id===id);if(ref)workset.append(row(ref,'workset'));else workset.append(node(doc,'p',{class:'failed-ref'},'暂时无法打开的引用 '+id));}if(!saved.refs.length)workset.append(node(doc,'p',{},'还没有窗口。可在工作空间管理中加入窗口。'));if(onManage)workset.append(button('编辑当前工作集',()=>onManage(), '整理工作集','more'));page.append(workset);
     }else{
       const arrows=node(doc,'div',{class:'arrows','aria-label':'主题区间导航'});
-      if(view.segment>0)arrows.append(graphic(button('较近的'+span()+'日',()=>{view.segment--;view.scroll=0;render();if(view.segment===0)onCurrentWorkspaceEntry();}),'up'));
-      const down=graphic(button('较早的'+span()+'日',()=>{view.segment++;view.scroll=0;render();}),'down');down.disabled=view.segment>=Math.max(groups.reduce((max,g)=>Math.max(max,g.segment??0),0),free()?snapshot.refs.reduce((max,r)=>Math.max(max,(r.activityDecision??r.activity)?.segment??0),0):0);arrows.append(down);page.append(arrows);
+      if(view.segment>0)arrows.append(graphic(button('较近的'+span()+'日',()=>{view.segment--;view.scroll=0;render();if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();}),'up'));
+      const down=graphic(button('较早的'+span()+'日',()=>{view.segment++;view.scroll=0;render();calibrationEntry();}),'down');down.disabled=view.segment>=Math.max(groups.reduce((max,g)=>Math.max(max,g.segment??0),0),free()?snapshot.refs.reduce((max,r)=>Math.max(max,(r.activityDecision??r.activity)?.segment??0),0):0);arrows.append(down);page.append(arrows);
       const cards=node(doc,'div',{class:'cards'});
       for(const g of groups.filter(g=>g.segment===view.segment||(free()&&g.segment===null&&view.segment===0))){
         const card=node(doc,'section',{class:'card','data-theme-id':g.id}),head=node(doc,'div',{class:'card-head'}),title=node(doc,'h2'),list=node(doc,'div',{class:'members'});
@@ -159,7 +186,9 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     shadow.append(page);layoutCards();page.scrollTop=view.scroll;restoreOwnedFocus(focused);emitView();
   }
   function update(value,now,timeZone,preparedIndex=null){
-    if(stopped)return;sidebarDirty=true;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free')value=freeNavigationSnapshot(value);snapshot=value;
+    if(stopped)return;
+    if(snapshot?.scope===value.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[value,now,timeZone,preparedIndex];return;}
+    resetInteraction(true);sidebarDirty=true;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free')value=freeNavigationSnapshot(value);snapshot=value;
     if(!views.has(value.scope)){
       const initial=initialView(),v=value.view;
       if(v)Object.assign(initial,{segment:v.segment,oldOpen:new Set(v.oldOpen),sidebarOpen:new Set(v.sidebarOpen),capacities:new Map(v.capacities),scroll:v.scroll,sidebarVisible:v.sidebarVisible});
@@ -169,7 +198,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(value.preferences?.sidebarVisible)view.sidebarVisible=value.preferences.sidebarVisible.value;
     layout();render();layout();locateAnchor();
   }
-  function invalidate(reason='binding-invalidated'){remember();snapshot=null;index=null;detach();status={state:'WAITING',reason};adapter.status(status);}
-  function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);restoreFocus();status={state:'STOPPED'};adapter.status(status);}
+  function invalidate(reason='binding-invalidated'){resetInteraction(true);remember();snapshot=null;index=null;detach();status={state:'WAITING',reason};adapter.status(status);}
+  function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);for(const[type,handler]of Object.entries(interactionHandlers))doc.removeEventListener(type,handler,true);win.removeEventListener?.('blur',windowBlur);restoreFocus();status={state:'STOPPED'};adapter.status(status);}
   return Object.freeze({update,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
 }

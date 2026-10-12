@@ -53,3 +53,11 @@ PLAYWRIGHT_BROWSERS_PATH=/private/tmp/vaiwl-free-playwright node tests/free/part
 当前可继续的性能条件：100k原生+活动单ref双提交仍1340.2ms，主要根manifest校验/写入成本；已消除fullread不是全端到端达标。10k121.9ms。不要重写已通过通知/生命周期/资产旅程；下一轮直接定位剩余manifest成本和完整UI链路，不重新规划。外部真实账户/PAIA/物理IME/弱设备及日常验收条件不变。
 
 最新包 `/private/tmp/vaiwl-free-delivery-invalidation-20261013/vaiwl-free-synthetic-only.zip`；SHA256 9fc158e8cba4ada662ec825cb671347d5e8b9fa045769c848f78d82fa77e0a65。当前HEAD用git核对；7ac2e28、25e2ab2、1210407及本检查点尚未正常同步到远端b2a262b。未强推/更换remote/部署；网络恢复后正常快进推送原分支。完整Free尚未交付。
+
+## 第六轮恢复增量（接03ef76a）
+
+Git连接恢复，03ef76a已正常推送原分支；本轮末再同步新检查点，实际远端用git/PR API核对。已修导航按压点击丢失、同binding用户工作区/历史校准缺失、100k分页跨lease及0页续租同版本跨账号风险，另去掉重复root/recovery hash。最终Node321/0、MV3 9/9、交互6、续租2，证据边界见STATUS第六轮。
+
+下一可执行：修正后的calibration-ui-scale-browser支持加载后才触发真实source更新，10k已327.1ms通过；100k完整增量尚未执行。100k首次加载约21.3秒诊断、registry双提交1177.5ms仍需优化，不能以提高请求/lease边界掩盖问题。5000条页遇很长别名的16Mi边界可考虑有界拆页，不删数据或放宽记录限制。已测模块不要重写。外部真实账户/PAIA/物理环境条件保持未授权，仍不能验收完整Free。
+
+本轮新合成包 `/private/tmp/vaiwl-free-delivery-round6-20261013/vaiwl-free-synthetic-only.zip`，SHA256 d5f2a3d3c01ac2d43fcee1c9d0ed3e22d7aacea9b4cd126e0894f5be5863fbe4。HEAD用git核对；持续沿当前分支及Draft PR #16，未merge/部署/付费。

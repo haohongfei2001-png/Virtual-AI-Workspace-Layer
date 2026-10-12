@@ -23,7 +23,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   const controlsKey=()=>{const c=readControls();return JSON.stringify([c.size,c.now,c.timeZone]);};let lastControls=controlsKey();
   const queue=fn=>{const task=chain.then(fn);chain=task.catch(()=>{});return task;};
   const request=async(type,extra={})=>{let deadline;try{return await Promise.race([send({v:1,type,clientId,seq:++seq,...(type==='BIND'?{}:{leaseId:lease?.leaseId}),...extra}),new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error('request-timeout')),6000);})]);}catch{throw Error('transport-unavailable');}finally{clearTimeout(deadline);}};
-  const navigation=createNavigation({document,adapter,onExit:()=>stop(),onManage:context=>void manage(context),onViewChange:(value,scope)=>saveViewSoon(value,scope),onCurrentWorkspaceEntry:()=>safeCurrentEntry()});
+  const navigation=createNavigation({document,adapter,onExit:()=>stop(),onManage:context=>void manage(context),onViewChange:(value,scope)=>saveViewSoon(value,scope),onCurrentWorkspaceEntry:()=>safeCurrentEntry(),onCalibrationEntry:value=>calibrateEntry(value)});
   const clearTimers=()=>{clearTimeout(expiry);clearTimeout(pending);clearTimeout(heartbeat);clearTimeout(viewTimer);};
   const clearFeedback=()=>{feedback?.remove();feedback=null;};
   const clearRecovery=()=>{recoveryPanel?.remove();recoveryPanel=null;};
@@ -39,6 +39,13 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     notice.style.cssText='font:12px/1.5 system-ui;padding:6px 12px';notice.append(document.createTextNode('已根据已核验项目调整时间范围。 '));
     const undoButton=document.createElement('button');undoButton.type='button';undoButton.textContent='撤销';undoButton.onclick=async()=>{undoButton.disabled=true;try{if(data?.scope!==scope)throw Error('stale-binding');await command({type:'SET_PREFERENCE',id:'freeTimePolicy',value:coolFreeTimePolicy(setFreeHorizon(next,previous.H,day),day)},revision);clearAutoNotice();}catch(e){notice.textContent='未撤销：'+e.message+'。可在设置中手选范围。';}};notice.append(undoButton);
     const host=adapter.inspect();if(host.ok){autoNotice=notice;(host.navigationSlot??host.history).before(notice);autoNoticeTimer=setTimeout(clearAutoNotice,15000);}
+  }
+  function calibrateEntry({kind,objectIds}){
+    const ticket=generation,url=env.location.href;void queue(async()=>{
+      if(!current(ticket,url)||!lease||data?.viewMode!=='free')return;
+      const result=await request('B23_FREE_CALIBRATE',{kind,objectIds});
+      if(!result?.ok&&current(ticket,url)&&retryable(result?.reason))recover(result.reason);
+    }).catch(error=>{if(current(ticket,url)&&retryable(error.message))recover(error.message);});
   }
   function safeCurrentEntry(){
     const ticket=generation,url=env.location.href;void queue(async()=>{
@@ -65,17 +72,25 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     const ticket=generation,url=env.location.href,delay=immediate?0:[90,180,360,1000,2000][retries++];
     pending=setTimeout(()=>{if(current(ticket,url))void load();},delay);
   }
+  async function renewReadBinding(ticket,url){
+    if(!current(ticket,url)||!lease)throw Error('stale-client-response');
+    if(lease.expiresAt-Date.now()>6000)return;
+    const bound=await request('BIND');
+    if(!current(ticket,url)||!bound?.ok)throw Error(bound?.reason??'stale-client-response');
+    lease=bound;clearTimeout(expiry);expiry=setTimeout(()=>recover('lease-expired-active-js',{immediate:true}),Math.max(0,bound.expiresAt-Date.now()));
+  }
   async function readSnapshot(ticket,url){
     const c=readControls(),freeMode=new URL(env.location.href).searchParams.get('view')!=='pro',reply=await request(freeMode?'B23_FREE_HEADER':'B23_SNAPSHOT',{now:c.now??FIXTURE_NOW,timeZone:c.timeZone??'Asia/Shanghai',size:c.size??8,...(freeMode&&freeSession?{viewSession:freeSession}:{})});
     if(!current(ticket,url))throw Error('stale-client-response');if(!reply?.ok)throw Error(reply?.reason??'read-failed');
     let next=reply.snapshot,nextIndex=null;
     if(freeMode){
       const header=reply.header,plan=planFreeReplica(freeReplica,header),pages=[];
-      for(const ids of freeReplicaRequests(plan,1000)){
-        const r=await request('B23_FREE_PAGE',{revision:header.revision,offset:0,limit:1000,ids,viewSession:header.viewSession,now:c.now??FIXTURE_NOW});
-        if(!current(ticket,url))throw Error('stale-client-response');if(!r?.ok)throw Error(r?.reason??'read-failed');pages.push(r.page);
+      for(const ids of freeReplicaRequests(plan,5000)){
+        await renewReadBinding(ticket,url);
+        const r=await request('B23_FREE_PAGE',{revision:header.revision,offset:0,limit:5000,ids,viewSession:header.viewSession,now:c.now??FIXTURE_NOW});
+        if(!current(ticket,url))throw Error('stale-client-response');if(!r?.ok)throw Error(r?.reason??'read-failed');if(r.page.scope!==header.scope)throw Error('stale-client-response');pages.push(r.page);
       }
-      const verify=async()=>{const r=await request('CHECK');if(!current(ticket,url))throw Error('stale-client-response');if(!r?.ok)throw Error(r?.reason??'read-failed');if(r.nativeRevision!==header.revision||r.revision!==header.workspaceRevision||r.evidenceRevision!==header.evidenceRevision)throw Error('snapshot-revision-changed');};
+      const verify=async()=>{await renewReadBinding(ticket,url);const r=await request('CHECK');if(!current(ticket,url))throw Error('stale-client-response');if(!r?.ok)throw Error(r?.reason??'read-failed');if(r.scope!==header.scope)throw Error('stale-client-response');if(r.nativeRevision!==header.revision||r.revision!==header.workspaceRevision||r.evidenceRevision!==header.evidenceRevision)throw Error('snapshot-revision-changed');};
       await verify();
       if(!plan.full&&!plan.rebuild&&!plan.projects.length&&!plan.refs.length&&freeReplica){
         next={...freeReplica.snapshot,...header,viewMode:'free'};nextIndex=freeIndex;

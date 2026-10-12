@@ -23,6 +23,7 @@ const requestOK=m=>{
     case 'B23_PARTITION_HEADER':return exact(m,[...base,'leaseId','now','timeZone','size'])&&tokenOK(m.leaseId)&&typeof m.now==='string'&&typeof m.timeZone==='string'&&m.timeZone.length<100&&Number.isInteger(m.size)&&m.size>=1&&m.size<=120;
     case 'B23_PARTITION_PAGE':return exact(m,[...base,'leaseId','revision','offset','ids'])&&tokenOK(m.leaseId)&&Number.isSafeInteger(m.revision)&&m.revision>=0&&Number.isSafeInteger(m.offset)&&m.offset>=0&&m.offset<=100000&&(m.ids===null||Array.isArray(m.ids)&&m.ids.length<=5000&&m.ids.every(tokenOK));
     case 'B23_COMMAND':return exact(m,[...base,'leaseId','operationId','expectedRevision','command'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0&&isRecord(m.command)&&HUMAN_COMMANDS.includes(m.command.type)&&JSON.stringify(m.command).length<(m.command.type==='SET_PREFERENCE'?512000:10000);
+    case 'B23_FREE_CALIBRATE':return exact(m,[...base,'leaseId','kind','objectIds'])&&tokenOK(m.leaseId)&&['foreground','history','current'].includes(m.kind)&&Array.isArray(m.objectIds)&&m.objectIds.length>0&&m.objectIds.length<=64&&m.objectIds.every(tokenOK);
     case 'B23_SYNTHETIC_SEND':return exact(m,[...base,'leaseId','conversationId','messageId','projectId','nativeTitle'])&&tokenOK(m.leaseId)&&tokenOK(m.conversationId)&&tokenOK(m.messageId)&&(m.projectId===null||tokenOK(m.projectId))&&typeof m.nativeTitle==='string'&&m.nativeTitle.trim().length>0&&m.nativeTitle.length<=200;
     case 'B23_UNDO':return exact(m,[...base,'leaseId','operationId','expectedRevision','targetOperationId'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&tokenOK(m.targetOperationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0;
     case 'B23_FREE_HEADER':case 'B23_FREE_SNAPSHOT':return tokenOK(m.leaseId)&&(exact(m,[...base,'leaseId'])||(exact(m,[...base,'leaseId','now','timeZone','size'])||exact(m,[...base,'leaseId','now','timeZone','size','viewSession'])&&viewSessionOK(m.viewSession))&&typeof m.now==='string'&&typeof m.timeZone==='string'&&m.timeZone.length<100&&Number.isInteger(m.size)&&m.size>=1&&m.size<=120);
@@ -158,7 +159,7 @@ export function createDocumentBindingBroker({
     if(message.type==='CHECK'){
       try{const version=workspaceRepository?.version?await workspaceRepository.version(scope,{guard:()=>fresh(st,slot),signal:slot.abort.signal}):{};
         if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-workspace');
-        return {ok:true,type:'CURRENT',v:VERSION,seq:message.seq,...version};
+        return {ok:true,type:'CURRENT',v:VERSION,seq:message.seq,...version,scope:scope.key};
       }catch(e){return deny(e?.message??'version-read-failed');}
     }
     try{
@@ -168,6 +169,15 @@ export function createDocumentBindingBroker({
         if(message.type==='B23_SNAPSHOT'){const value=workspaceRepository.partitionHeader?await workspaceRepository.partitionHeader(scope,options):null;result=value?{ok:true,partition:value}:{ok:true,snapshot:await workspaceRepository.snapshot(scope,message.now,message.timeZone,options,message.size)};}
         else if(message.type==='B23_FREE_RECOVERY_STATUS')result=workspaceRepository.freeRecoveryStatus?{ok:true,recovery:await workspaceRepository.freeRecoveryStatus(scope,options)}:deny('free-recovery-unavailable');
         else if(message.type==='B23_FREE_RECOVER')result=workspaceRepository.freeRecover?await workspaceRepository.freeRecover(scope,{kind:message.kind,operationId:message.operationId,damagedHash:message.damagedHash},options):deny('free-recovery-unavailable');
+        else if(message.type==='B23_FREE_CALIBRATE'){
+          if(!freeRuntime)result=deny('free-runtime-unavailable');
+          else{
+            const time=now();slot.calibrationTriggers??=new Map();const previous=slot.calibrationTriggers.get(message.kind);
+            const ids=[...new Set(message.objectIds)],freshIds=previous&&time-previous.time<1000?ids.filter(id=>!previous.ids.includes(id)):ids;
+            if(!freshIds.length)result={ok:true,status:'coalesced'};
+            else{slot.calibrationTriggers.set(message.kind,{time,ids});freeRuntime.notify(slot.leaseId,message.kind,{objectIds:freshIds}).catch(()=>{});result={ok:true,status:'scheduled'};}
+          }
+        }
         else if(message.type==='B23_FREE_HEADER'){
           if(freeRuntime){const foreground=await freeRuntime.foreground(slot.leaseId,{session:message.viewSession??null,readCached:false});foreground.calibration.catch(()=>{});}
           result=workspaceRepository.freeHeader?{ok:true,header:await workspaceRepository.freeHeader(scope,options,message.now,message.timeZone,message.viewSession,doc.url)}:deny('free-header-unavailable');}

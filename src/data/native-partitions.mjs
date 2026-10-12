@@ -1,5 +1,5 @@
 import { emptyNativeFacts, validateNativeFacts } from './native-facts.mjs';
-import { digest } from './hash.mjs';
+import { digest, stable, sha256 } from './hash.mjs';
 import { id, exact } from './state.mjs';
 
 export const NATIVE_PARTITION_FORMAT = 'vaiwl-native-partitions-v1';
@@ -7,8 +7,9 @@ export const nativePartitionKey = (scope, kind, key, revision) => JSON.stringify
 export const nativeRecoveryKey = scope => JSON.stringify([scope, 'native-recovery']);
 export const nativeCheckpointKey = scope => JSON.stringify([scope, 'native-checkpoint']);
 export const nativeRecord = (key, payload) => {
-  if (JSON.stringify(payload).length > 16 * 1024 * 1024) throw Error('native-record-too-large');
-  return {key, payload, checksum: digest(payload)};
+  const encoded=stable(payload);
+  if (encoded.length > 16 * 1024 * 1024) throw Error('native-record-too-large');
+  return {key, payload, checksum: sha256(encoded)};
 };
 export function nativeUnpack(row) {
   if (!row || row.checksum !== digest(row.payload)) throw Error('corrupt-native-record');
@@ -120,7 +121,10 @@ export function saveNativePieces(store, scope, current, next, storage, command) 
   // Previous immutable root is retained for diagnosis; recovering it must invalidate all evidence.
   if (prior) store.put(nativeRecord(nativeCheckpointKey(next.scopeKey), prior));
   else if (current.revision) store.put(nativeRecord(nativeCheckpointKey(next.scopeKey), current));
-  store.put(nativeRecord(nativeRecoveryKey(next.scopeKey), manifest));
-  store.put(nativeRecord(next.scopeKey, manifest));
+  // Both atomic roots contain the exact same immutable payload. Hash it once;
+  // the key is outside the checksum and no payload mutation occurs between puts.
+  const rootRecord=nativeRecord(next.scopeKey,manifest);
+  store.put({...rootRecord,key:nativeRecoveryKey(next.scopeKey)});
+  store.put(rootRecord);
   return manifest;
 }

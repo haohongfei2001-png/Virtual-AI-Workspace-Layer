@@ -146,3 +146,17 @@ PLAN_TEXT_READY；REMOTE_WRITE_BLOCKED（当前工具未提供写入动作，也
 - 真实IDB registry校准10k/100k两组通过；native/evidence均各header1/apply1，full read/snapshot为0。10k双提交121.9ms；100k双提交1340.2ms，末次提交到通知0.2ms。事后各page只验证1ref。`free-invalidation-scale-2026-10-13.json`明确不含完整UI/broker/真实源，这不是100k端到端性能认证，仍有根manifest O(N)成本。
 
 新合成安装包 `/private/tmp/vaiwl-free-delivery-invalidation-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `9fc158e8cba4ada662ec825cb671347d5e8b9fa045769c848f78d82fa77e0a65`。真实账户/R0/C6、跨端、PAIA、物理IME/弱设备及真人F4未通过；FREE_ACCEPTED/RELEASE_READY/PUBLISHED仍否。没有访问私人账户或PAIA、付费调用、部署、merge、force push。Git端点阻塞本轮未循环重试，现有Draft PR #16远端仍b2a262b。
+
+## 第六轮：交互安全、入口校准与大页续租（接03ef76a）
+
+本轮正常Git快进同步已恢复，原先积压提交已推送至原PR #16分支03ef76a；未改remote/强推/merge/部署。继续补已复现的真实合成路径缺陷：
+- 按住导航项时后台更新曾替换原节点，mouseup点击丢失。现在按压/键盘激活/组合输入/拖动期间合并同scope最新snapshot，结束后的下一task应用；失效/换scope立即丢弃。持续真实交互属于安全更新点例外，不用硬超时破坏原点击；物理IME未验证。
+- 同binding重新打开工作区/切历史之前未发校准。新增仅用户导航入口触发的B23_FREE_CALIBRATE，严格kind/64个ID上限、scope/lease核验与同类重复目标短时合并；快速切不同历史目标不丢新增ID，render/update不触发循环。
+- Free首次分页从1000提升至合同允许5000，在每页及最终核验前重新BIND续租。保留6秒请求/20秒lease，不延长授权；每页及最终CHECK验证scope，版本栅栏保持。无增量页时同版本跨账户也拒绝，避免旧scope缓存重新显示。
+- 相同不可变root/recovery在同事务只计算一次checksum，native大小检查复用规范化序列，evidence仅复制修改maps；格式、完整性校验、恢复根与CAS不弱化。
+
+实际新证据：完整Node321/0（日志及源码hash见free-round6-source-receipt）；实际Chrome MV3 9/9；安全交互6项、无页续租scope/version反例2项；入口合同6项属于Node组合，不另相加。10k完整合成页面真实IDB+broker+DOM更新327.1ms，初始1210.9ms，1ref分页、无fullread、原生草稿节点保留，运行前后源码hash一致。100k存储registry双提交1177.5ms、末次提交到通知4ms，仍不满足1秒总更新目标，且不包含UI。
+
+100k完整UI尝试保留失败诊断：初始1000页规格在15秒只读约24k；改5000和续租后初始约21.3秒完成，但增量测量的测试source提前超过6秒并取消，不是成功的更新验收。期间源变更已标记，不能当固定源码认证。修正测试源生命周期后只复验10k，100k真实增量DOM仍NOT_RUN；不隐去失败、不把registry数据替代UI。
+
+新合成包 `/private/tmp/vaiwl-free-delivery-round6-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `d5f2a3d3c01ac2d43fcee1c9d0ed3e22d7aacea9b4cd126e0894f5be5863fbe4`。当前仍SYNTHETIC_ONLY；真实ChatGPT/R0/C6、跨设备、PAIA、物理IME/弱设备/真人F4及100k端到端尚未通过，完整Free未交付。

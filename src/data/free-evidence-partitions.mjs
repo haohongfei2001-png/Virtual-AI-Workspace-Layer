@@ -42,7 +42,7 @@ export function loadEvidencePieces(store,manifest,scope,ids,done,fail){
  }catch(error){fail(error);}};}
 }
 export function saveEvidencePieces(store,scope,next,previous=null,partial=null,indexes={}){
- const manifest=previous?structuredClone(previous):{format:'vaiwl-free-evidence-partitions-v1',scopeKey:scope.key,revision:0,sources:{},refVersions:{},indexVersions:{},counts:{events:0,hints:0,coverage:0},sizes:{}};
+ const manifest=previous?{...previous,refVersions:{...previous.refVersions},indexVersions:{...previous.indexVersions},counts:{...previous.counts},sizes:{...previous.sizes}}:{format:'vaiwl-free-evidence-partitions-v1',scopeKey:scope.key,revision:0,sources:{},refVersions:{},indexVersions:{},counts:{events:0,hints:0,coverage:0},sizes:{}};
  for(const table of tables)manifest.counts[table]+=Object.keys(next[table]).length-(partial?Object.keys(partial[table]).length:0);
  manifest.revision=next.revision;manifest.sources=next.sources;
  const pieces=new Map(),changedIndexes=new Set();
@@ -63,7 +63,9 @@ export function saveEvidencePieces(store,scope,next,previous=null,partial=null,i
  }
  for(const group of changedIndexes){const prior=manifest.indexVersions[group];manifest.indexVersions[group]=next.revision;const key=evidenceIndexKey(scope.key,group,next.revision);store.put(evidenceRecord(key,{scopeKey:scope.key,group,revision:next.revision,refs:indexes[group]}));if(prior)store.delete(evidenceIndexKey(scope.key,group,prior));}
  validateEvidenceManifest(manifest,scope);
- store.put(evidenceRecord(freeEvidenceKey(scope.key),manifest));store.put(evidenceRecord(evidenceRecoveryKey(scope.key),manifest));
+ const rootRecord=evidenceRecord(freeEvidenceKey(scope.key),manifest);
+ // Root and recovery are identical immutable payloads in this transaction.
+ store.put(rootRecord);store.put({...rootRecord,key:evidenceRecoveryKey(scope.key)});
  return manifest;
 }
 export function loadEvidenceIndexes(store,manifest,scope,groups,done,fail){
