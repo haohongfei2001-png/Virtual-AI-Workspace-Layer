@@ -1,0 +1,265 @@
+{
+  "startedAt": 1791776019.6095061,
+  "baseline": false,
+  "argv": [
+    "tests/b4/real-mv3.py",
+    "--suite",
+    "lifecycle",
+    "--out",
+    "docs/engineering/f1-recovery-2026-10-12/regression-final/b4-lifecycle.json"
+  ],
+  "tests": [
+    {
+      "id": "B4-actual-hidden-visible-freeze-resume-and-SPA-scope",
+      "status": "PASS",
+      "actual": {
+        "actualHidden": "hidden",
+        "focusEmulationDisabled": true,
+        "actualEvents": [
+          {
+            "event": "visibilitychange",
+            "at": 1791776042786,
+            "visibility": "visible",
+            "trusted": true
+          },
+          {
+            "event": "visibilitychange",
+            "at": 1791776043204,
+            "visibility": "hidden",
+            "trusted": true
+          },
+          {
+            "event": "freeze",
+            "at": 1791776043411,
+            "visibility": "hidden",
+            "trusted": true
+          },
+          {
+            "event": "resume",
+            "at": 1791776064417,
+            "visibility": "hidden",
+            "trusted": true
+          },
+          {
+            "event": "visibilitychange",
+            "at": 1791776064420,
+            "visibility": "visible",
+            "trusted": true
+          }
+        ],
+        "hiddenForSeconds": 21.5,
+        "frozenForSeconds": 21,
+        "nativeAfterVisibility": {
+          "input": true,
+          "draft": true,
+          "transcript": true,
+          "messages": true
+        },
+        "nativeAfterFreeze": {
+          "input": true,
+          "draft": true,
+          "transcript": true,
+          "messages": true
+        },
+        "actualHostThemes": 120,
+        "actualHostRefs": 604,
+        "longChatMessages": 160,
+        "state": {
+          "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+          "revision": 4,
+          "bootstrapCount": 120,
+          "workspaceCount": 120,
+          "refCount": 604,
+          "humanWorkspaces": [],
+          "identities": {
+            "T0": {
+              "id": "T0",
+              "title": "B4 after real freeze resume",
+              "aliases": [
+                "研究问题与边界",
+                "B4 hidden draft intent"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 4
+            },
+            "T1": {
+              "id": "T1",
+              "title": "B4 frozen draft intent",
+              "aliases": [
+                "整理观察材料"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 3
+            }
+          },
+          "placements": [
+            {
+              "id": "p_3c035b418f31db6a9388e280f190eb05f04dd2889aa06a63156242e3e026ba5a",
+              "workspaceId": "W0",
+              "refId": "T0",
+              "excluded": false,
+              "order": 0,
+              "locked": false,
+              "owner": "bootstrap",
+              "revision": 1
+            }
+          ],
+          "nativeT0": {
+            "key": "[\"[\\\"hf_synthetic_only\\\",\\\"A\\\",\\\"fixture_org\\\"]\",\"T0\"]",
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "conversationId": "T0",
+            "nativeUrl": "http://127.0.0.1:48175/hf/A/c/T0",
+            "projectId": null,
+            "revision": 1
+          },
+          "source": {
+            "id": "fixture_v1",
+            "channel": "hf-controlled-fixture-v1",
+            "observedAt": "2026-10-11T04:00:00Z",
+            "description": "Invented test evidence. Not a production source or account witness.",
+            "trustLevel": "synthetic",
+            "revoked": false
+          }
+        }
+      }
+    }
+  ],
+  "workerEvents": [],
+  "console": [],
+  "realChatGPT": "NOT_RUN",
+  "fallback": false,
+  "buildHashes": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/document-binding-broker.mjs": "18f75d2f839ca52f2417241bd678748a4a554e90a14eeb004de9cbcde7c91ca3",
+    "simulator/service.mjs": "03cad5aabac17b9f0fe846923099ea66f62c55ebe1022aa62f173bb4269b6400",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/partitioned.mjs": "25d3756bf4e3e45342541140efd6d6eac8d381380c90baf57098560ddd18d63d",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/repository.mjs": "a8f6504650db363c4092c8ac4332e3515e1d4ccc1e6b893ea4bd468b8b37a6cc",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "content.js": "30391c0827ec42966d49a4fcdbb44312ffd20f1e75d12033753685adcf3329cd",
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+  },
+  "sourceHashes": {
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/navigation/current-index.mjs": "909a8c2b6e9fae5db659efe82341788e37240f58d43bff7e94e85c8ac4864a89",
+    "src/navigation/navigation.mjs": "4cbe09636dac6e7446108e36de82aee629c91c2b3d2798895525d1dfee72de5f",
+    "src/navigation/search.mjs": "0046527fb8bfbaf97ad7eb6036db7233087805e55ec2d9ac3f348a632af89efe",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/document-binding-broker.mjs": "18f75d2f839ca52f2417241bd678748a4a554e90a14eeb004de9cbcde7c91ca3",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "a8f6504650db363c4092c8ac4332e3515e1d4ccc1e6b893ea4bd468b8b37a6cc",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/partitioned.mjs": "25d3756bf4e3e45342541140efd6d6eac8d381380c90baf57098560ddd18d63d",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/replica.mjs": "a79882d912cae17ca5777a2ac5a8f8ff0d4d4b11585cdcbe4671628de098befc",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "simulator/editor-style.mjs": "18197a2a89d8e83986b56e464c506c9bb8e08005d07f97c46959f5e9cfabf2ce",
+    "simulator/index.html": "52737486a2ad0b296a8e212ab0607cb89f99b94d3f6b193793817babde01b7d4",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "simulator/control.html": "1e0eeb74c8fc277232b2edfac95787dbd62d6ae7470af982f4ca268579ffbd7f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/adapter.mjs": "f4f8b2590915d46c10393a16c60d35805da6e10231f6bc0b7865c405417b4a44",
+    "simulator/client.mjs": "197dc8a846777eaa88d47f800bfc74a0940d6cd6affced630d672b2dc8d4cbe5",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.css": "0627ff2b3ab6d9797850caca1da4cdb91ddfdfea32318dd8e1a15f9bac23d153",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/build.mjs": "7964d3198076416a0627d6b5b8bb232bfb0a23365569d349d28a8a260795f577",
+    "simulator/host.mjs": "dad2550aeee3507e048b6794a3c9029f228aeb269653e9b5de5881e0bd9e8282",
+    "simulator/main.mjs": "7a6788fefe2eaf5c8abcd46cfe024c76511c422888073472bbb3b8caacf9092c",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/service.mjs": "03cad5aabac17b9f0fe846923099ea66f62c55ebe1022aa62f173bb4269b6400",
+    "simulator/editor.mjs": "3b4a1239781cf2574973132752e2c46140be36f885d9e180422d965d00e650e2",
+    "tests/b4/real-mv3.py": "1e679e0c63f35f2419d17611702549730081b2a3574ec3b401fb4893cd108f96",
+    "tests/b4/version-fence.test.mjs": "3a0f47012dcd099cd48bdd87a56d5424d89052813145f4637de93ffd4dd5589c"
+  },
+  "head": "b7a56817056a93add0116a2b13c2b41e9aa6d28d",
+  "environment": {
+    "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+    "node": "v26.8.2",
+    "python": "3.14.7",
+    "playwright": "1.63.0",
+    "chrome": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/154.0.8037.99",
+      "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+      "jsVersion": "15.4.80.20"
+    }
+  },
+  "ownedNativeConnection": {
+    "pid": 40338,
+    "newProfile": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-b4-native-ohjnia5j/profile",
+    "newPort": 51560,
+    "noDefaults": true,
+    "headless": true
+  },
+  "extension": {
+    "id": "opbkbnlldaniiekpkfkacinnlohojgof"
+  },
+  "actualTabActivation": {
+    "before": [
+      {
+        "id": 1850670762,
+        "windowId": 1850670761,
+        "active": false,
+        "url": "about:blank"
+      },
+      {
+        "id": 1850670763,
+        "windowId": 1850670761,
+        "active": false,
+        "url": "http://127.0.0.1:48175/hf/A/c/T0?mode=mv3"
+      },
+      {
+        "id": 1850670764,
+        "windowId": 1850670761,
+        "active": true,
+        "url": "http://127.0.0.1:48175/control.html"
+      }
+    ],
+    "sourceTab": {
+      "id": 1850670763,
+      "windowId": 1850670761,
+      "active": false,
+      "url": "http://127.0.0.1:48175/hf/A/c/T0?mode=mv3"
+    },
+    "controlTab": {
+      "id": 1850670764,
+      "windowId": 1850670761,
+      "active": true,
+      "url": "http://127.0.0.1:48175/control.html"
+    }
+  },
+  "ownedChromeLog": "\nDevTools listening on ws://127.0.0.1:51560/devtools/browser/cb919c21-b68f-40cb-87ec-8ecbf26eaaaa\nTrying to load the allocator multiple times. This is *not* supported.\n[40344:40094371:1012/113340.273276:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094440:1012/113340.273488:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094371:1012/113340.277917:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094440:1012/113340.281232:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094371:1012/113340.281374:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094440:1012/113340.281519:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094371:1012/113340.281613:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094440:1012/113340.281658:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094371:1012/113340.285350:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094440:1012/113340.285406:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094371:1012/113340.285519:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094440:1012/113340.285562:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094371:1012/113342.311366:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094440:1012/113342.311447:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094371:1012/113342.370439:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094440:1012/113342.370512:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094371:1012/113342.393136:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094440:1012/113342.393188:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094371:1012/113342.428552:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094440:1012/113342.428611:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094371:1012/113342.449564:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094440:1012/113342.449627:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094371:1012/113342.488700:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094440:1012/113342.488758:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094371:1012/113342.510600:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40344:40094440:1012/113342.510649:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670\n[40338:40094354:1012/113342.838744:ERROR:google_apis/gcm/engine/registration_request.cc:291] Registration response error message: DEPRECATED_ENDPOINT\nCreated TensorFlow Lite XNNPACK delegate for CPU.\n[40465:40095634:1012/113359.193802:VERBOSE1:chrome/updater/updater.cc:364] Version: 156.0.8067.0, opt, ARM_64, command line: /Users/hhf/Library/Application Support/Google/GoogleUpdater/156.0.8067.0/GoogleUpdater.app/Contents/MacOS/GoogleUpdater --wake-all --enable-logging --vmodule=*/components/update_client/*=2,*/chrome/enterprise_companion/*=2,*/chrome/updater/*=2\n[40465:40095634:1012/113359.194241:VERBOSE1:chrome/updater/updater.cc:367] OS version: 27.0.0, arch: arm64, System uptime (seconds): 1773923, parent pid: 40338\n[40465:40095634:1012/113359.195900:VERBOSE1:chrome/updater/updater.cc:372] Available disk space in install directory (/Users/hhf/Library/Application Support/Google/GoogleUpdater): 659954532352B (614.631GiB) / 994610155520B (926.303GiB)\n[40465:40095634:1012/113359.195924:VERBOSE1:chrome/updater/updater.cc:376] Available disk space in temporary directory (/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/): 659954532352B (614.631GiB) / 994610155520B (926.303GiB)\n[40465:40095634:1012/113359.195971:VERBOSE2:chrome/updater/event_history.cc:266] Emitted a UPDATER_PROCESS START event to the history log\n[40467:40095638:1012/113359.203019:VERBOSE1:chrome/updater/updater.cc:364] Version: 156.0.8067.0, opt, ARM_64, command line: /Users/hhf/Library/Application Support/Google/GoogleUpdater/156.0.8067.0/GoogleUpdater.app/Contents/MacOS/GoogleUpdater --crash-handler --database=/Users/hhf/Library/Application Support/Google/GoogleUpdater/156.0.8067.0/Crashpad --url=https://clients2.google.com/cr/report --annotation=prod=Update4 --annotation=ver=156.0.8067.0 --handshake-fd=6 --enable-logging --vmodule=*/components/update_client/*=2,*/chrome/enterprise_companion/*=2,*/chrome/updater/*=2\n[40467:40095638:1012/113359.203366:VERBOSE1:chrome/updater/updater.cc:367] OS version: 27.0.0, arch: arm64, System uptime (seconds): 1773923, parent pid: 1\n[40467:40095638:1012/113359.204641:VERBOSE1:chrome/updater/updater.cc:372] Available disk space in install directory (/Users/hhf/Library/Application Support/Google/GoogleUpdater): 659954524160B (614.631GiB) / 994610155520B (926.303GiB)\n[40467:40095638:1012/113359.204660:VERBOSE1:chrome/updater/updater.cc:376] Available disk space in temporary directory (/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/): 659954524160B (614.631GiB) / 994610155520B (926.303GiB)\n[40467:40095638:1012/113359.204705:VERBOSE2:chrome/updater/event_history.cc:266] Emitted a UPDATER_PROCESS START event to the history log\n[40465:40095634:1012/113359.205046:VERBOSE1:chrome/updater/crash_reporter.cc:123] Crash handler launched and ready.\n[40465:40095634:1012/113359.205500:VERBOSE1:chrome/updater/crash_client.cc:108] Found 0 completed crash reports\n[40465:40095634:1012/113359.205552:VERBOSE1:chrome/updater/crash_client.cc:132] Found 0 pending crash reports\n[40465:40095634:1012/113359.205610:ERROR:third_party/crashpad/crashpad/util/file/file_io_posix.cc:145] open /Users/hhf/Library/Application Support/Google/RLZ/Crashpad/settings.dat: No such file or directory (2)\n[40465:40095634:1012/113359.205621:ERROR:third_party/crashpad/crashpad/util/file/file_io_posix.cc:145] open /Users/hhf/Library/Application Support/Google/Measurement/Crashpad/settings.dat: No such file or directory (2)\n[40465:40095634:1012/113359.205644:ERROR:third_party/crashpad/crashpad/util/file/file_io_posix.cc:145] open /Users/hhf/Library/Application Support/Google/RemoteConfig/Crashpad/settings.dat: No such file or directory (2)\n[40465:40095634:1012/113359.205669:ERROR:third_party/crashpad/crashpad/util/file/file_io_posix.cc:145] open /Users/hhf/Library/Application Support/Google/ChromeForTesting/Crashpad/settings.dat: No such file or directory (2)\n[40465:40095634:1012/113359.205678:ERROR:third_party/crashpad/crashpad/util/file/file_io_posix.cc:145] open /Users/hhf/Library/Application Support/Google/Chrome-headless/Crashpad/settings.dat: No such file or directory (2)\n[40465:40095634:1012/113359.205688:VERBOSE1:chrome/updater/updater.cc:105] Crash reporting initialized.\n[40465:40095646:1012/113359.205895:VERBOSE1:chrome/updater/app/app_wakeall.cc:58] Launching `/Users/hhf/Library/Application Support/Google/GoogleUpdater/156.0.8067.0/GoogleUpdater.app/Contents/MacOS/GoogleUpdater --wake`\n[40468:40095650:1012/113359.211533:VERBOSE1:chrome/updater/updater.cc:364] Version: 156.0.8067.0, opt, ARM_64, command line: /Users/hhf/Library/Application Support/Google/GoogleUpdater/156.0.8067.0/GoogleUpdater.app/Contents/MacOS/GoogleUpdater --wake --enable-logging --vmodule=*/components/update_client/*=2,*/chrome/enterprise_companion/*=2,*/chrome/updater/*=2\n[40468:40095650:1012/113359.211836:VERBOSE1:chrome/updater/updater.cc:367] OS version: 27.0.0, arch: arm64, System uptime (seconds): 1773923, parent pid: 40465\n[40468:40095650:1012/113359.212984:VERBOSE1:chrome/updater/updater.cc:372] Available disk space in install directory (/Users/hhf/Library/Application Support/Google/GoogleUpdater): 659954520064B (614.631GiB) / 994610155520B (926.303GiB)\n[40468:40095650:1012/113359.213003:VERBOSE1:chrome/updater/updater.cc:376] Available disk space in temporary directory (/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/): 659954520064B (614.631GiB) / 994610155520B (926.303GiB)\n[40468:40095650:1012/113359.213040:VERBOSE2:chrome/updater/event_history.cc:266] Emitted a UPDATER_PROCESS START event to the history log\n[40470:40095654:1012/113359.219057:VERBOSE1:chrome/updater/updater.cc:364] Version: 156.0.8067.0, opt, ARM_64, command line: /Users/hhf/Library/Application Support/Google/GoogleUpdater/156.0.8067.0/GoogleUpdater.app/Contents/MacOS/GoogleUpdater --crash-handler --database=/Users/hhf/Library/Application Support/Google/GoogleUpdater/156.0.8067.0/Crashpad --url=https://clients2.google.com/cr/report --annotation=prod=Update4 --annotation=ver=156.0.8067.0 --handshake-fd=6 --enable-logging --vmodule=*/components/update_client/*=2,*/chrome/enterprise_companion/*=2,*/chrome/updater/*=2\n[40470:40095654:1012/113359.219360:VERBOSE1:chrome/updater/updater.cc:367] OS version: 27.0.0, arch: arm64, System uptime (seconds): 1773923, parent pid: 1\n[40470:40095654:1012/113359.220434:VERBOSE1:chrome/updater/updater.cc:372] Available disk space in install directory (/Users/hhf/Library/Application Support/Google/GoogleUpdater): 659954520064B (614.631GiB) / 994610155520B (926.303GiB)\n[40470:40095654:1012/113359.220451:VERBOSE1:chrome/updater/updater.cc:376] Available disk space in temporary directory (/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/): 659954520064B (614.631GiB) / 994610155520B (926.303GiB)\n[40470:40095654:1012/113359.220488:VERBOSE2:chrome/updater/event_history.cc:266] Emitted a UPDATER_PROCESS START event to the history log\n[40468:40095650:1012/113359.220784:VERBOSE1:chrome/updater/crash_reporter.cc:123] Crash handler launched and ready.\n[40468:40095650:1012/113359.221208:VERBOSE1:chrome/updater/crash_client.cc:108] Found 0 completed crash reports\n[40468:40095650:1012/113359.221254:VERBOSE1:chrome/updater/crash_client.cc:132] Found 0 pending crash reports\n[40468:40095650:1012/113359.221309:ERROR:third_party/crashpad/crashpad/util/file/file_io_posix.cc:145] open /Users/hhf/Library/Application Support/Google/RLZ/Crashpad/settings.dat: No such file or directory (2)\n[40468:40095650:1012/113359.221319:ERROR:third_party/crashpad/crashpad/util/file/file_io_posix.cc:145] open /Users/hhf/Library/Application Support/Google/Measurement/Crashpad/settings.dat: No such file or directory (2)\n[40468:40095650:1012/113359.221339:ERROR:third_party/crashpad/crashpad/util/file/file_io_posix.cc:145] open /Users/hhf/Library/Application Support/Google/RemoteConfig/Crashpad/settings.dat: No such file or directory (2)\n[40468:40095650:1012/113359.221361:ERROR:third_party/crashpad/crashpad/util/file/file_io_posix.cc:145] open /Users/hhf/Library/Application Support/Google/ChromeForTesting/Crashpad/settings.dat: No such file or directory (2)\n[40468:40095650:1012/113359.221369:ERROR:third_party/crashpad/crashpad/util/file/file_io_posix.cc:145] open /Users/hhf/Library/Application Support/Google/Chrome-headless/Crashpad/settings.dat: No such file or directory (2)\n[40468:40095650:1012/113359.221378:VERBOSE1:chrome/updater/updater.cc:105] Crash reporting initialized.\n[40468:40095650:1012/113359.221507:VERBOSE1:chrome/updater/ipc/update_service_internal_proxy_mojo.cc:61] Run\n[40338:40094354:1012/113411.536771:ERROR:google_apis/gcm/engine/registration_request.cc:291] Registration response error message: DEPRECATED_ENDPOINT\n[40468:40095650:1012/113416.108684:VERBOSE1:chrome/updater/app/app.cc:52] Shutdown: 0\n[40468:40095650:1012/113416.108935:VERBOSE2:chrome/updater/event_history.cc:266] Emitted a UPDATER_PROCESS END event to the history log\n[40468:40095650:1012/113416.108955:VERBOSE1:chrome/updater/updater.cc:409] UpdaterMain (--wake) returned 0.\n[40465:40095646:1012/113416.249746:VERBOSE1:chrome/updater/app/app_wakeall.cc:68] `/Users/hhf/Library/Application Support/Google/GoogleUpdater/156.0.8067.0/GoogleUpdater.app/Contents/MacOS/GoogleUpdater --wake` exited 0\n[40465:40095634:1012/113416.249916:VERBOSE1:chrome/updater/app/app.cc:52] Shutdown: 0\n[40465:40095634:1012/113416.250217:VERBOSE2:chrome/updater/event_history.cc:266] Emitted a UPDATER_PROCESS END event to the history log\n[40465:40095634:1012/113416.250265:VERBOSE1:chrome/updater/updater.cc:409] UpdaterMain (--wake-all) returned 0.\n[40470:40095654:1012/113426.121011:VERBOSE2:chrome/updater/event_history.cc:266] Emitted a UPDATER_PROCESS END event to the history log\n[40470:40095654:1012/113426.121036:VERBOSE1:chrome/updater/updater.cc:409] UpdaterMain (--crash-handler) returned 0.\n[40467:40095638:1012/113426.121991:VERBOSE2:chrome/updater/event_history.cc:266] Emitted a UPDATER_PROCESS END event to the history log\n[40467:40095638:1012/113426.122080:VERBOSE1:chrome/updater/updater.cc:409] UpdaterMain (--crash-handler) returned 0.\n",
+  "server": {
+    "exit": -15,
+    "stderr": ""
+  },
+  "endedAt": 1791776067.212887,
+  "counts": {
+    "PASS": 1,
+    "FAIL": 0,
+    "BLOCKED": 0
+  }
+}

@@ -1,3 +1,4 @@
+import { PartitionedState, isPartitioned, checkManifest } from './partitioned.mjs';
 import { createBackup, previewBackup, recoverAssets } from './backup.mjs';
 import { normalizedScope } from '../b1/identity.mjs';
 import { B23_STORES } from './schema.mjs';
@@ -15,19 +16,27 @@ const fence=(guard,signal)=>{if(signal?.aborted||guard()!==true)throw Error('sta
 export class WorkspaceRepository {
   constructor({baseRepository,evidenceGate=null,clock=()=>new Date().toISOString()}={}){
     if(!baseRepository?.open||!baseRepository?.scopeOrThrow)throw Error('b1-repository-required');
-    this.base=baseRepository;this.evidenceGate=evidenceGate;this.clock=clock;
+    this.base=baseRepository;this.evidenceGate=evidenceGate;this.clock=clock;this.partitioned=new PartitionedState(this);
   }
   async connection(){const db=await this.base.open();for(const name of B23_STORES)if(!db.objectStoreNames.contains(name))throw Error('b23-schema-missing');return db;}
   async read(scope,{guard=()=>true,signal=null}={}){
     const s=scopeChecked(scope),db=await this.connection();fence(guard,signal);
+    if(await this.partitioned.manifest(s,{guard,signal}))return this.partitioned.readAll(s,{guard,signal});
     return new Promise((resolve,reject)=>{
-      const tx=db.transaction(['b23_states','b23_views'],'readonly');let state,view=null,error=null,viewError=null;
-      const r=tx.objectStore('b23_states').get(s.key);r.onsuccess=()=>{try{state=r.result?validateState(unpack(r.result),s.key):emptyState(s);}catch(e){error=e;tx.abort();}};
+      const tx=db.transaction(['b23_states','b23_views','b23_checkpoints','b23_operations'],'readonly');let state,view=null,error=null,viewError=null;
+      const r=tx.objectStore('b23_states').get(s.key);r.onsuccess=()=>{try{state=r.result?validateState(unpack(r.result),s.key):emptyState(s);
+        // A missing root is fresh storage only if it has neither scoped workspace
+        // history nor a checkpoint. Never hide existing human assets as empty.
+        if(!r.result){const checkpoint=tx.objectStore('b23_checkpoints').get(s.key),history=tx.objectStore('b23_operations').index('scopeKey').openCursor(s.key);const existing=q=>{if(q.result){error=Error('corrupt-record');try{tx.abort();}catch{}}};checkpoint.onsuccess=()=>existing(checkpoint);history.onsuccess=()=>existing(history);}
+      }catch(e){error=e;tx.abort();}};
       // A corrupt view is not authority to discard intact Workspace assets. Preserve its bytes; report diagnostics.
       const v=tx.objectStore('b23_views').get(s.key);v.onsuccess=()=>{try{view=v.result?unpack(v.result):null;if(view)validateView(view.value);}catch{view=null;viewError='CORRUPT_VIEW';}};
       tx.oncomplete=()=>{try{fence(guard,signal);resolve({state,view,diagnostics:{view:viewError}});}catch(e){reject(e);}};tx.onabort=()=>reject(error??tx.error??Error('read-aborted'));
     });
   }
+  async viewOnly(scope,{guard=()=>true,signal=null}={}){const s=scopeChecked(scope),db=await this.connection();fence(guard,signal);return new Promise((resolve,reject)=>{const tx=db.transaction('b23_views'),q=tx.objectStore('b23_views').get(s.key);let view=null,diagnostic=null;q.onsuccess=()=>{try{view=q.result?unpack(q.result):null;if(view)validateView(view.value);}catch{view=null;diagnostic='CORRUPT_VIEW';}};tx.oncomplete=()=>{try{fence(guard,signal);resolve({view,diagnostics:{view:diagnostic}});}catch(e){reject(e);}};tx.onabort=()=>reject(tx.error??Error('read-aborted'));});}
+  async partitionHeader(scope,options={}){const manifest=await this.partitioned.manifest(scope,options);if(!manifest)return null;return {manifest,...await this.viewOnly(scope,options)};}
+  async partitionPage(scope,query,options={}){const {manifest,...page}=await this.partitioned.page(scope,query,options);return page;}
   async snapshot(scope,now,timeZone,options){const {state,view,diagnostics}=await this.read(scope,options);return {diagnostics,...dataProjection(state,now,timeZone),view:view?.value??null,viewRevision:view?.revision??0,objects:{workspaces:state.workspaces,placements:state.placements,identities:state.identities,sources:state.sources},preferences:state.preferences};}
   async command(scope,{operationId,expectedRevision,command},{actor='human',guard=()=>true,signal=null}={}){
     if(!['human','candidate'].includes(actor))throw Error('invalid-command-authority');
@@ -38,6 +47,8 @@ export class WorkspaceRepository {
     const s=scopeChecked(scope);this.allowEvidence(s);
     return this.mutate(s,{operationId,expectedRevision,fingerprint:{batch,expectedRevision},type:'INGEST',actor:'evidence',...options,apply:current=>reduceCommand(current,{type:'INGEST',batch},'evidence')});
   }
+  async migratePartitioned(scope,options={}){return this.partitioned.migrate(scope,options);}
+  async initializePartitioned(scope,initial,options={}){return this.partitioned.initialize(scope,initial,options);}
   async initialize(scope,initial,options={}){
     const s=scopeChecked(scope);this.allowEvidence(s);validateState(initial,s.key);if(initial.revision!==1||initial.channel!=='synthetic')throw Error('invalid-bootstrap');
     return this.mutate(s,{operationId:'synthetic_bootstrap_v1',expectedRevision:0,fingerprint:{bootstrap:'v1',scope:s.key},type:'BOOTSTRAP',actor:'bootstrap',...options,apply:()=>structuredClone(initial)});
@@ -64,7 +75,8 @@ export class WorkspaceRepository {
           const sr=states.get(s.key);sr.onsuccess=()=>{
             if(!check())return;
             try{
-              const current=sr.result?validateState(unpack(sr.result),s.key):emptyState(s);
+              const payload=sr.result?unpack(sr.result):null;
+              const enter=(current,storage=null,loadedPrior=null)=>{
               if(current.revision!==expectedRevision){abort('revision-conflict');return;}
               const finish=prior=>{
                 try{
@@ -82,13 +94,17 @@ export class WorkspaceRepository {
                     };
                   }
                   if(!check())return;
-                  if(current.revision)tx.objectStore('b23_checkpoints').put(record(s.key,current));
-                  states.put(record(s.key,next));ops.put(record(opKey,log));
+                  if(storage)this.partitioned.saveMutation(tx,storage,current,next,patch,actor);
+                  else{if(current.revision)tx.objectStore('b23_checkpoints').put(record(s.key,current));states.put(record(s.key,next));}
+                  ops.put(record(opKey,log));
                   if(prior){prior.undoneBy=operationId;ops.put(record(JSON.stringify([s.key,targetOperationId]),prior));}
                   outcome={ok:true,replayed:false,revision:next.revision,operationId};
                 }catch(e){abort(e.message);}
               };
-              if(targetOperationId){const ur=ops.get(JSON.stringify([s.key,targetOperationId]));ur.onsuccess=()=>{try{if(!ur.result)throw Error('missing-operation');finish(unpack(ur.result));}catch(e){abort(e.message);}};}else finish(null);
+              if(storage)finish(loadedPrior);else if(targetOperationId){const ur=ops.get(JSON.stringify([s.key,targetOperationId]));ur.onsuccess=()=>{try{if(!ur.result)throw Error('missing-operation');finish(unpack(ur.result));}catch(e){abort(e.message);}};}else finish(null);
+              };
+              if(isPartitioned(payload)){checkManifest(payload,s.key);const load=prior=>this.partitioned.loadMutation(tx,payload,params,prior,(current,storage)=>{if(check())enter(current,storage,prior);},e=>abort(e.message));if(targetOperationId){const q=ops.get(JSON.stringify([s.key,targetOperationId]));q.onsuccess=()=>{try{if(!q.result)throw Error('missing-operation');load(unpack(q.result));}catch(e){abort(e.message);}};}else load(null);}
+              else enter(payload?validateState(payload,s.key):emptyState(s));
             }catch(e){abort(e.message);}
           };
         }catch(e){abort(e.message);}
@@ -126,13 +142,13 @@ export class WorkspaceRepository {
       tx.onerror=()=>{};
     });
   }
-  async exportBackup(scope,options={}){const {state}=await this.read(scope,options);return createBackup(state);}
-  async previewRestore(scope,bundle,options={}){const s=scopeChecked(scope),{state}=await this.read(s,options),plan=previewBackup(state,bundle,s);return {summary:plan.summary,planHash:plan.planHash,expectedRevision:plan.expectedRevision,evidenceImported:false};}
+  async exportBackup(scope,options={}){if(await this.partitioned.manifest(scope,options))return this.partitioned.exportBackup(scope,options);const {state}=await this.read(scope,options);return createBackup(state);}
+  async previewRestore(scope,bundle,options={}){const s=scopeChecked(scope),large=await this.partitioned.manifest(s,options),{state}=large?{state:await this.partitioned.partial(s,Object.keys(bundle?.payload?.refs??{}),options)}:await this.read(s,options),plan=previewBackup(state,bundle,s);return {summary:plan.summary,planHash:plan.planHash,expectedRevision:plan.expectedRevision,evidenceImported:false};}
   async restoreBackup(scope,{operationId,expectedRevision,bundle,planHash},options={}){
     const s=scopeChecked(scope);
     return this.mutate(s,{operationId,expectedRevision,fingerprint:{backup:bundle,planHash,expectedRevision},type:'RESTORE_BACKUP',actor:'human',...options,apply:current=>{const plan=previewBackup(current,bundle,s);if(plan.planHash!==planHash)throw Error('restore-preview-changed');return plan.next;}});
   }
-  async recoveryStatus(scope,{guard=()=>true,signal=null}={}){const s=scopeChecked(scope),db=await this.connection();fence(guard,signal);return new Promise((resolve,reject)=>{
+  async recoveryStatus(scope,{guard=()=>true,signal=null}={}){if(await this.partitioned.checkpoint(scope,{guard,signal}))return this.partitioned.recovery(scope,{}, {guard,signal});const s=scopeChecked(scope),db=await this.connection();fence(guard,signal);return new Promise((resolve,reject)=>{
     const tx=db.transaction(['b23_states','b23_checkpoints','b23_operations'],'readonly');let stateRow,checkpoint,error;const logs=[];
     const a=tx.objectStore('b23_states').get(s.key),b=tx.objectStore('b23_checkpoints').get(s.key);a.onsuccess=()=>{stateRow=a.result};b.onsuccess=()=>{checkpoint=b.result};
     const c=tx.objectStore('b23_operations').index('scopeKey').openCursor(s.key);c.onsuccess=()=>{try{const row=c.result;if(row){logs.push(unpack(row.value));row.continue();}}catch(e){error=e;tx.abort();}};
@@ -147,6 +163,7 @@ export class WorkspaceRepository {
    */
   async recover(scope,{damagedHash,operationId},{guard=()=>true,signal=null}={}){
     const s=scopeChecked(scope);id(operationId);
+    if(await this.partitioned.checkpoint(s,{guard,signal}))return this.partitioned.recovery(s,{operationId,damagedHash},{guard,signal});
     const db=await this.connection();fence(guard,signal);
     return new Promise(resolve=>{
       const tx=db.transaction(['b23_states','b23_checkpoints','b23_operations'],'readwrite');

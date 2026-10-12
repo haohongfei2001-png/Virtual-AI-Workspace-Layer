@@ -1,3 +1,4 @@
+import { currentIndex } from './current-index.mjs';
 import { knownMatches } from './search.mjs';
 import { defaultIcon, iconPaths, svgIcon } from './icons.mjs';
 import { project, initialView } from './projection.mjs';
@@ -7,6 +8,8 @@ function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
 export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{}}) {
   const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
+  let index=null;
+  const current=()=>index?.at(adapter.currentURL())??{};
   let status={state:'WAITING',reason:'no-verified-snapshot'},lastNativeFocus=null;
   const trackFocus=e=>{const n=e.composedPath()[0];if((n?.tagName==='TEXTAREA'||n?.tagName==='INPUT')&&!e.composedPath().some(x=>x?.hasAttribute?.('data-vaiwl-owned')))lastNativeFocus={node:n,start:n.selectionStart,end:n.selectionEnd};};
   doc.addEventListener('focusin',trackFocus);
@@ -68,7 +71,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function remember(){if(view&&roots)view.sidebarScroll=roots.sidebar.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;if(view?.mode==='workspace'&&roots?.workspace.scroller&&roots.workspace.n.style.display!=='none')view.scroll=roots.workspace.scroller.scrollTop;}
   function showWorkspace(){captureFocus();remember();view.mode='workspace';searchQuery=null;searchTheme=null;render();layout();queueMicrotask(()=>roots?.workspace.shadow.querySelector('.workspace')?.focus({preventScroll:true}));}
   function openRef(ref,event){if(ref.available===false){event.preventDefault();return;}if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;remember();if(ref.anchor)pendingAnchor={scope:snapshot.scope,ref,anchor:ref.anchor};view.mode='reading';searchQuery=null;searchTheme=null;layout();const same=adapter.isCurrent(ref.nativeUrl);adapter.openNative(ref.nativeUrl,event);if(same){restoreFocus();locateAnchor();}}
-  function row(ref,context=''){const a=node(doc,'a',{class:'row',href:adapter.nativeHref?.(ref.nativeUrl)??ref.nativeUrl,'data-ref-id':ref.id,title:ref.displayTitle},ref.displayTitle??ref.nativeTitle);const glyph=node(doc,'span',{class:'window-glyph','aria-hidden':'true'});glyph.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.65"><path d="M4 5h16v12H9l-5 4z"/></svg>';const text=node(doc,'span',{class:'window-title'},a.textContent);a.replaceChildren(glyph,text);a.dataset.focusKey='ref:'+context+':'+ref.id;if(adapter.isCurrent(ref.nativeUrl))a.setAttribute('aria-current','page');if(ref.available===false)a.setAttribute('aria-disabled','true');a.addEventListener('click',e=>openRef(ref,e));return a;}
+  const windowGlyph=node(doc,'span',{class:'window-glyph','aria-hidden':'true'});windowGlyph.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.65"><path d="M4 5h16v12H9l-5 4z"/></svg>';
+  function row(ref,context=''){const a=node(doc,'a',{class:'row',href:adapter.nativeHref?.(ref.nativeUrl)??ref.nativeUrl,'data-ref-id':ref.id,title:ref.displayTitle});const text=node(doc,'span',{class:'window-title'},ref.displayTitle??ref.nativeTitle);a.append(windowGlyph.cloneNode(true),text);a.dataset.focusKey='ref:'+context+':'+ref.id;if(index?.matches(ref.nativeUrl,adapter.currentURL())??adapter.isCurrent(ref.nativeUrl))a.setAttribute('aria-current','page');if(ref.available===false)a.setAttribute('aria-disabled','true');a.addEventListener('click',e=>openRef(ref,e));return a;}
   const chevron='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
   const symbols={search:'M20 20l-5-5 M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0',up:'M6 15l6-6 6 6',down:'M6 9l6 6 6-6',more:'M5 12h.01 M12 12h.01 M19 12h.01',minus:'M5 12h14',plus:'M5 12h14 M12 5v14',close:'m6 6 12 12 M18 6 6 18'};
   function graphic(b,kind){if(kind==='more'){b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>';return b;}b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+symbols[kind]+'"/></svg>';return b;}
@@ -83,7 +87,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         if(oldCap<group.old.length)list.append(button('显示更多旧窗口 '+group.name,()=>{remember();view.capacities.set('old:'+key,oldCap+12);render();},'显示更多','more'));parent.append(list);
       }else parent.append(node(doc,'div',{class:'old-list',hidden:'',id:b.getAttribute('aria-controls')}));
     }
-    if(side){const current=[...group.current,...group.old,...group.unknown].find(r=>adapter.isCurrent(r.nativeUrl));if(current&&!parent.querySelector('[data-ref-id="'+current.id+'"]')){const context=node(doc,'div',{class:'current-context'});context.append(row(current,key));parent.append(context);}}
+    if(side){const active=current().inGroup?.(group);if(active&&!parent.querySelector('[data-ref-id="'+active.id+'"]')){const context=node(doc,'div',{class:'current-context'});context.append(row(active,key));parent.append(context);}}
   }
   function themeGlyph(g){const n=node(doc,'span',{class:'theme-glyph','aria-hidden':'true'}),kind=g.owner==='bootstrap'&&g.icon==='◇'?defaultIcon(g.name):g.icon;n.dataset.icon=kind??'collection';if(iconPaths[kind])n.innerHTML=svgIcon(kind);else n.textContent=kind??'◇';return n;}
   function locateAnchor(){if(!pendingAnchor||!snapshot||!roots)return;if(pendingAnchor.scope!==snapshot.scope){pendingAnchor=null;return;}if(!adapter.isCurrent(pendingAnchor.ref.nativeUrl))return;const result=adapter.restoreSnippet?.(pendingAnchor.ref,pendingAnchor.anchor);pendingAnchor=null;anchorFeedback=result?.ok?null:'无法唯一定位已保存片段。消息可能已变化，请使用原生搜索。';if(anchorFeedback){roots.sidebar.shadow.querySelector('.anchor-feedback')?.remove();roots.sidebar.shadow.append(node(doc,'p',{class:'anchor-feedback',role:'status'},anchorFeedback));}}
@@ -102,12 +106,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function render(){if(!roots||!view)return;const focused=focusState();view.sidebarScroll=roots.sidebar.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;closeMenu(false);
     const side=roots.sidebar.shadow;side.querySelector('section')?.remove();const panel=node(doc,'section');const tools=node(doc,'div',{class:'toolbar'});tools.append(node(doc,'strong',{},'主题'),graphic(button('查找主题与派生名称',()=>findKnown()),'search'),graphic(button('折叠主题导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;render();}),view.sidebarVisible?'minus':'plus'),graphic(button('退出测试增强',()=>{stop();onExit();}),'close'));if(onManage)tools.append(graphic(button('管理工作空间',()=>onManage()),'more'));const workset=button('当前工作集',()=>showWorkingSet());workset.innerHTML=svgIcon('collection');tools.append(workset);panel.append(tools);
     const list=node(doc,'nav',{class:'themes','aria-label':'VAIWL 主题导航'});list.hidden=!view.sidebarVisible;
-    const selected=groups.find(g=>[...g.current,...g.old,...g.unknown].some(r=>adapter.isCurrent(r.nativeUrl)));
+    const selected=current().selected;
     if(selected&&lastSelected!==adapter.currentURL()){view.sidebarOpen.add(selected.id);lastSelected=adapter.currentURL();selectionPending=true;}
     const sideGroups=groups.filter(g=>g.segment===0||g===selected);
     for(const g of sideGroups){const block=node(doc,'section',{class:'group'});const toggle=button('侧栏主题 '+g.name,()=>{view.sidebarOpen.has(g.id)?view.sidebarOpen.delete(g.id):view.sidebarOpen.add(g.id);render();},'','theme-toggle');toggle.dataset.focusKey='theme:'+g.id;toggle.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));const disclosure=node(doc,'span',{class:'theme-disclosure','aria-hidden':'true'});disclosure.innerHTML=chevron;toggle.append(disclosure);toggle.setAttribute('aria-expanded',String(view.sidebarOpen.has(g.id)));block.append(toggle);
       if(view.sidebarOpen.has(g.id)){const children=node(doc,'div',{class:'children'});members(g,children,true);block.append(children);}list.append(block);}
-    const independent=snapshot.refs.find(r=>adapter.isCurrent(r.nativeUrl)&&!groups.some(g=>g.members.includes(r.id)));if(independent){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}panel.append(list);side.append(panel);list.scrollTop=view.sidebarScroll??0;locateCurrent();
+    const independent=current().independent;if(independent){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}panel.append(list);side.append(panel);list.scrollTop=view.sidebarScroll??0;locateCurrent();
     const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-segment':String(view.segment)});roots.workspace.scroller=page;page.addEventListener('scroll',()=>{if(roots?.workspace.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){view.scroll=page.scrollTop;emitView();}},{passive:true});
     if(searchQuery!==null){
       const search=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
@@ -135,18 +139,18 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     }
     shadow.append(page);layoutCards();page.scrollTop=view.scroll;restoreOwnedFocus(focused);emitView();
   }
-  function update(value,now,timeZone){
+  function update(value,now,timeZone,preparedIndex=null){
     if(stopped)return;remember();snapshot=value;
     if(!views.has(value.scope)){
       const initial=initialView(),v=value.view;
       if(v)Object.assign(initial,{segment:v.segment,oldOpen:new Set(v.oldOpen),sidebarOpen:new Set(v.sidebarOpen),capacities:new Map(v.capacities),scroll:v.scroll,sidebarVisible:v.sidebarVisible});
       views.set(value.scope,initial);
     }
-    view=views.get(value.scope);groups=value.groups??project(value,now,timeZone);
+    view=views.get(value.scope);groups=value.groups??project(value,now,timeZone);index=preparedIndex??currentIndex(value,groups);
     if(value.preferences?.sidebarVisible)view.sidebarVisible=value.preferences.sidebarVisible.value;
     layout();render();layout();locateAnchor();
   }
-  function invalidate(reason='binding-invalidated'){remember();snapshot=null;detach();status={state:'WAITING',reason};adapter.status(status);}
+  function invalidate(reason='binding-invalidated'){remember();snapshot=null;index=null;detach();status={state:'WAITING',reason};adapter.status(status);}
   function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);restoreFocus();status={state:'STOPPED'};adapter.status(status);}
-  return Object.freeze({update,layout,invalidate,stop,showWorkspace,status:()=>({...status}),view:()=>view,roots:()=>roots});
+  return Object.freeze({update,layout,invalidate,stop,showWorkspace,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
 }

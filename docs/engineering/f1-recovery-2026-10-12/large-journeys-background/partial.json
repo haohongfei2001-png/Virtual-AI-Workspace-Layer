@@ -1,0 +1,608 @@
+{
+  "argv": [
+    "tests/f1/real-large-journeys.py",
+    "docs/engineering/f1-recovery-2026-10-12/large-journeys-background"
+  ],
+  "startedAt": 1791770136.504679,
+  "head": "af706ce4d442d839df71578eef77981b268f066b",
+  "tests": [
+    {
+      "id": "F1-native-partition-migration-backup-recovery-contracts",
+      "status": "PASS",
+      "actual": {
+        "actualExtensionIDB": true,
+        "cases": [
+          {
+            "name": "PART01 bounded storage preserves all original 120/604 projections and canonical refs",
+            "status": "PASS"
+          },
+          {
+            "name": "PART02 the original CAS/idempotence transaction has one winner across connections",
+            "status": "PASS"
+          },
+          {
+            "name": "PART03 far-reference move and targeted undo use original human patches",
+            "status": "PASS"
+          },
+          {
+            "name": "PART04 repeated initialization cannot overwrite immutable live human pieces",
+            "status": "PASS"
+          },
+          {
+            "name": "PART05 mixed revisions and incomplete view replicas are rejected",
+            "status": "PASS"
+          },
+          {
+            "name": "PART06 revocation updates all evidence projections without rewriting reference pieces",
+            "status": "PASS"
+          },
+          {
+            "name": "PART07 damaged view leaves intact assets and unknown scope is rejected",
+            "status": "PASS"
+          },
+          {
+            "name": "PART08 A/B same ref IDs remain distinct",
+            "status": "PASS"
+          },
+          {
+            "name": "PART09 checkpoint retains previous immutable pieces and latest manual assets recover",
+            "status": "PASS"
+          },
+          {
+            "name": "PART10 v2 storage migration preserves latest human revision and revoked sources",
+            "status": "PASS"
+          },
+          {
+            "name": "PART11 asset backup includes latest manual references and preferences, dry-run is read-only",
+            "status": "PASS"
+          },
+          {
+            "name": "PART12 checkpoint plus latest workset preference restores reference dependencies safely",
+            "status": "PASS"
+          },
+          {
+            "name": "PART13 ingestion cannot reuse a global evidence ID in another reference partition",
+            "status": "PASS"
+          },
+          {
+            "name": "PART14 native quota failure cannot publish a manifest or success receipt",
+            "status": "PASS"
+          },
+          {
+            "name": "PART15 revocation after native put aborts pieces, checkpoint and receipt together",
+            "status": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F1-100k-far-native-navigation-manual-refresh-new-tab",
+      "status": "PASS",
+      "actual": {
+        "actualNativeRef": "F99999",
+        "messagesVisible": true,
+        "nativeCatalogue": 100000,
+        "initialEditorOptions": 201,
+        "reloadAndNewTabPreserved": true,
+        "data": {
+          "meta": {
+            "revision": 2,
+            "count": 100000,
+            "humanRefs": [
+              "F99999"
+            ],
+            "preferences": {}
+          },
+          "piece": {
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "refId": "F99999",
+            "revision": 2,
+            "ref": {
+              "id": "F99999",
+              "nativeUrl": "http://127.0.0.1:48178/hf/A/c/F99999",
+              "projectId": null,
+              "nativeTitle": "合成规模引用 99999 · 长中文压力边界",
+              "available": true
+            },
+            "identity": {
+              "id": "F99999",
+              "title": "F1 far manual intent",
+              "aliases": [
+                "合成规模引用 99999 · 长中文压力边界"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 2
+            },
+            "events": [
+              {
+                "id": "e_F99999",
+                "sourceId": "fixture_v1",
+                "conversationId": "F99999",
+                "messageId": "F99999-u1",
+                "branchId": "root",
+                "role": "user",
+                "kind": "new-send",
+                "sendState": "committed",
+                "sentAt": "2026-10-10T08:00:00Z",
+                "precision": "second",
+                "observedAt": "2026-10-11T04:00:00Z",
+                "revoked": false
+              }
+            ],
+            "coverage": [
+              {
+                "id": "c_F99999",
+                "sourceId": "fixture_v1",
+                "conversationId": "F99999",
+                "from": "2020-01-01T00:00:00Z",
+                "through": "2026-10-11T04:00:00Z",
+                "observedAt": "2026-10-11T04:00:00Z",
+                "completeness": "complete",
+                "branches": "all",
+                "gaps": [],
+                "revoked": false
+              }
+            ],
+            "placements": [
+              {
+                "id": "p_59b2c12c4c6268812f57b5d1629a0864677086205b83152759b819d1d8aa4145",
+                "workspaceId": "W84",
+                "refId": "F99999",
+                "excluded": false,
+                "order": 99999,
+                "locked": false,
+                "owner": "bootstrap",
+                "revision": 1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "F1-100k-multi-tab-human-conflict-native-CAS",
+      "status": "PASS",
+      "actual": {
+        "unsavedIntentPreserved": true,
+        "explicitRetryRequired": true,
+        "feedback": "另一标签页已修改；草稿已保留。最新保存标题：F1 remote saved 100k；最新主题名称：城市声音档案。核对后再次点击保存。",
+        "independentNativeConnections": [
+          {
+            "ok": true,
+            "replayed": false,
+            "revision": 5,
+            "operationId": "native_race_1"
+          },
+          {
+            "ok": false,
+            "reason": "revision-conflict"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F1-100k-far-move-undo-manual-backup-dry-run-restore",
+      "status": "FAIL",
+      "error": "Locator.wait_for: Timeout 12000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-vaiwl-owned=workspace-editor] > [role=status]\").filter(has_text=\"已保存\") to be visible\n",
+      "trace": "Traceback (most recent call last):\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 46, in case\n    try:r['tests'].append({'id':name,'status':'PASS','actual':fn()})\n                                                              ~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 88, in move_backup\n    path=OUT/'100k-manual-backup.json';dl.value.save_as(path);bundle=json.loads(path.read_text());assert bundle['payload']['identities']['F99999']['title']=='F1 local unsaved 100k';assert not bundle['payload']['events'] and not bundle['payload']['sources'];assert 'F99999' in bundle['payload']['preferences']['workingSet']['value']['refs'];before=piece()['meta']['revision'];p.get_by_label('选择工作空间备份',exact=True).set_input_files(str(path));p.get_by_role('button',name='预览备份恢复',exact=True).click();p.locator('[data-backup-preview]').filter(has_text='保留当前人工修改').wait_for();assert piece()['meta']['revision']==before;action(p,'应用预览恢复');action(p,'撤销上次修改');close(p)\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ~~~~~~^^^^^^^^^^^^^^^^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 40, in action\n    p.locator('[data-vaiwl-owned=workspace-editor] > [role=status]').evaluate('(n)=>n.textContent=\"\"');p.get_by_role('button',name=label,exact=True).click();saved(p)\n                                                                                                                                                             ~~~~~^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 38, in saved\n    def saved(p):p.locator('[data-vaiwl-owned=workspace-editor] > [role=status]').filter(has_text='已保存').wait_for()\n                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py\", line 20696, in wait_for\n    self._sync(\n    ~~~~~~~~~~^\n        self._impl_obj.wait_for(timeout=to_milliseconds(timeout), state=state)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_sync_base.py\", line 115, in _sync\n    return task.result()\n           ~~~~~~~~~~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py\", line 752, in wait_for\n    await self._frame.wait_for_selector(\n        self._selector, strict=True, timeout=timeout, state=state\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py\", line 395, in wait_for_selector\n    await self._channel.send(\n        \"waitForSelector\", self._timeout, locals_to_params(locals())\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 76, in send\n    return await self._connection.wrap_api_call(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 632, in wrap_api_call\n    raise rewrite_error(error, f\"{parsed_st['apiName']}: {error}\") from None\nplaywright._impl._errors.TimeoutError: Locator.wait_for: Timeout 12000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-vaiwl-owned=workspace-editor] > [role=status]\").filter(has_text=\"已保存\") to be visible\n\n",
+      "feedback": [
+        [],
+        [
+          "保存结果未确认；草稿已保留，重新连接后请核对最新数据。"
+        ]
+      ]
+    },
+    {
+      "id": "F1-100k-observed-worker-stop-auto-wake-no-refresh",
+      "status": "PASS",
+      "actual": {
+        "before": {
+          "ok": true,
+          "boot": "d928326f-11bf-40b8-bee6-1d48fdaac8b0",
+          "persistedRef": true,
+          "revision": 1,
+          "workspaceRevision": 10,
+          "workspaceCount": 120,
+          "syntheticSenderUrl": "http://127.0.0.1:48178/hf/A/c/F99999?mode=mv3&size=120&f1Refs=100000",
+          "syntheticSenderDoc": "0E12BC56DA8ACA6C8665291D4CAB5DAF",
+          "syntheticFrameUrl": "http://127.0.0.1:48178/hf/A/c/F99999?mode=mv3&size=120&f1Refs=100000",
+          "syntheticFrameDoc": "0E12BC56DA8ACA6C8665291D4CAB5DAF"
+        },
+        "after": {
+          "ok": true,
+          "boot": "353ebd88-483e-4803-ae55-dcf46dc36a6f",
+          "persistedRef": true,
+          "revision": 1,
+          "workspaceRevision": 10,
+          "workspaceCount": 120,
+          "syntheticSenderUrl": "http://127.0.0.1:48178/hf/A/c/F99999?mode=mv3&size=120&f1Refs=100000",
+          "syntheticSenderDoc": "0E12BC56DA8ACA6C8665291D4CAB5DAF",
+          "syntheticFrameUrl": "http://127.0.0.1:48178/hf/A/c/F99999?mode=mv3&size=120&f1Refs=100000",
+          "syntheticFrameDoc": "0E12BC56DA8ACA6C8665291D4CAB5DAF"
+        },
+        "events": [
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+            "runningStatus": "running",
+            "status": "activated",
+            "scriptLastModified": 1791770136,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "F1B1D57CB8D8350A9757F9CA2978583D"
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+            "runningStatus": "stopping",
+            "status": "activated",
+            "scriptLastModified": 1791770136,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "F1B1D57CB8D8350A9757F9CA2978583D"
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+            "runningStatus": "stopped",
+            "status": "activated",
+            "scriptLastModified": 1791770136,
+            "scriptResponseTime": 0,
+            "controlledClients": []
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+            "runningStatus": "starting",
+            "status": "activated",
+            "scriptLastModified": 1791770136,
+            "scriptResponseTime": 0,
+            "controlledClients": []
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+            "runningStatus": "starting",
+            "status": "activated",
+            "scriptLastModified": 1791770136,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "F1B1D57CB8D8350A9757F9CA2978583D"
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+            "runningStatus": "starting",
+            "status": "activated",
+            "scriptLastModified": 1791770136,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "F1B1D57CB8D8350A9757F9CA2978583D"
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+            "runningStatus": "running",
+            "status": "activated",
+            "scriptLastModified": 1791770136,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "F1B1D57CB8D8350A9757F9CA2978583D"
+          }
+        ],
+        "nativeNodesDraftIntact": true,
+        "manualTitleRestored": true
+      }
+    },
+    {
+      "id": "F1-100k-actual-20-second-lease-auto-rebind",
+      "status": "PASS",
+      "actual": {
+        "actualLeaseRenewals": [
+          {
+            "at": 1791770308733,
+            "lease": "eb5b4a2c-ebca-49ee-bad3-5bdcec05a977",
+            "ok": true
+          }
+        ],
+        "allRefsRetained": 100000
+      }
+    },
+    {
+      "id": "F1-100k-account-A-B-unknown-A",
+      "status": "PASS",
+      "actual": {
+        "A_B_unknown_A": true,
+        "eachVerifiedAccount": 100000,
+        "unknownNoSensitiveRoots": true,
+        "BSeed": {
+          "status": "PERSISTED",
+          "writeMs": 21946.5,
+          "snapshotMs": 8989.099999904633,
+          "counts": {
+            "refs": 100000,
+            "themes": 120
+          },
+          "protectedCount": 100000,
+          "initialCounts": {
+            "refs": 604,
+            "themes": 120
+          }
+        }
+      }
+    },
+    {
+      "id": "F1-100k-4x-renderer-long-chat-concurrent-input-and-navigation",
+      "status": "FAIL",
+      "error": "Locator.wait_for: Timeout 12000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-vaiwl-owned=workspace-editor] > [role=status]\").filter(has_text=\"已保存\") to be visible\n",
+      "trace": "Traceback (most recent call last):\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 46, in case\n    try:r['tests'].append({'id':name,'status':'PASS','actual':fn()})\n                                                              ~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 118, in slow_input\n    q.evaluate('globalThis.f1Long={input:HF.getView().input,transcript:HF.getView().transcript,range:HF.getView().transcript.querySelector(\"input[type=range]\"),messages:[...document.querySelectorAll(\"[data-message-id]\")]};globalThis.f1InputGaps=[];globalThis.f1LastTick=performance.now();globalThis.f1Timer=setInterval(()=>{const t=performance.now();f1InputGaps.push(t-f1LastTick);f1LastTick=t;},16)')\n                                                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 40, in action\n    p.locator('[data-vaiwl-owned=workspace-editor] > [role=status]').evaluate('(n)=>n.textContent=\"\"');p.get_by_role('button',name=label,exact=True).click();saved(p)\n                                                                                                                                                             ~~~~~^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 38, in saved\n    def saved(p):p.locator('[data-vaiwl-owned=workspace-editor] > [role=status]').filter(has_text='已保存').wait_for()\n                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py\", line 20696, in wait_for\n    self._sync(\n    ~~~~~~~~~~^\n        self._impl_obj.wait_for(timeout=to_milliseconds(timeout), state=state)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_sync_base.py\", line 115, in _sync\n    return task.result()\n           ~~~~~~~~~~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py\", line 752, in wait_for\n    await self._frame.wait_for_selector(\n        self._selector, strict=True, timeout=timeout, state=state\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py\", line 395, in wait_for_selector\n    await self._channel.send(\n        \"waitForSelector\", self._timeout, locals_to_params(locals())\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 76, in send\n    return await self._connection.wrap_api_call(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 632, in wrap_api_call\n    raise rewrite_error(error, f\"{parsed_st['apiName']}: {error}\") from None\nplaywright._impl._errors.TimeoutError: Locator.wait_for: Timeout 12000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-vaiwl-owned=workspace-editor] > [role=status]\").filter(has_text=\"已保存\") to be visible\n\n",
+      "feedback": [
+        [],
+        [
+          "保存结果未确认；草稿已保留，重新连接后请核对最新数据。"
+        ],
+        []
+      ]
+    },
+    {
+      "id": "F1-100k-native-corruption-checkpoint-plus-latest-human-recovery",
+      "status": "PASS",
+      "actual": {
+        "status": {
+          "corrupt": true,
+          "recoverable": true,
+          "damagedHash": "7d8e63844dbab76444a6da4942549f1e28bbd91499ad1a93f193f1e4357c2a76",
+          "checkpointRevision": 11,
+          "restoredHumanChanges": 1,
+          "recoveryRevision": 13,
+          "evidenceInvalidated": true
+        },
+        "recovered": {
+          "id": "recover_95087d3ee7504c08b24ebc3d73609bcf",
+          "type": "RECOVER",
+          "actor": "human",
+          "revision": 13,
+          "undoneBy": null,
+          "invalidatedBy": null,
+          "ok": true,
+          "throughActualRecoveryUI": true
+        },
+        "latestHumanAndAllRefsPreserved": true,
+        "sourcesAndOldReceiptsInvalidated": true,
+        "noEvidence": {
+          "sourcesRevoked": true,
+          "preference": {
+            "refs": [
+              "F99999"
+            ],
+            "current": "F99999"
+          },
+          "revision": 13
+        },
+        "replay": {
+          "ok": false,
+          "reason": "operation-invalidated-by-recovery"
+        }
+      }
+    }
+  ],
+  "workerEvents": [
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+      "runningStatus": "running",
+      "status": "activated",
+      "scriptLastModified": 1791770136,
+      "scriptResponseTime": 0,
+      "controlledClients": [],
+      "targetId": "F1B1D57CB8D8350A9757F9CA2978583D"
+    },
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+      "runningStatus": "stopping",
+      "status": "activated",
+      "scriptLastModified": 1791770136,
+      "scriptResponseTime": 0,
+      "controlledClients": [],
+      "targetId": "F1B1D57CB8D8350A9757F9CA2978583D"
+    },
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+      "runningStatus": "stopped",
+      "status": "activated",
+      "scriptLastModified": 1791770136,
+      "scriptResponseTime": 0,
+      "controlledClients": []
+    },
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+      "runningStatus": "starting",
+      "status": "activated",
+      "scriptLastModified": 1791770136,
+      "scriptResponseTime": 0,
+      "controlledClients": []
+    },
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+      "runningStatus": "starting",
+      "status": "activated",
+      "scriptLastModified": 1791770136,
+      "scriptResponseTime": 0,
+      "controlledClients": [],
+      "targetId": "F1B1D57CB8D8350A9757F9CA2978583D"
+    },
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+      "runningStatus": "starting",
+      "status": "activated",
+      "scriptLastModified": 1791770136,
+      "scriptResponseTime": 0,
+      "controlledClients": [],
+      "targetId": "F1B1D57CB8D8350A9757F9CA2978583D"
+    },
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho/simulator/worker.mjs",
+      "runningStatus": "running",
+      "status": "activated",
+      "scriptLastModified": 1791770136,
+      "scriptResponseTime": 0,
+      "controlledClients": [],
+      "targetId": "F1B1D57CB8D8350A9757F9CA2978583D"
+    }
+  ],
+  "errors": [],
+  "scope": "actual extension IndexedDB / fresh headless Chrome / 100000 accessible synthetic refs / no real ChatGPT",
+  "sourceHashes": {
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/navigation/current-index.mjs": "fd510a3b135c99faf955a0f44d87b42fa71c7cfd957c6fe0611a687918ce72e5",
+    "src/navigation/navigation.mjs": "d6e7db347990fe5d2f4df0f7dda263998948fbe3252caf4c0fcae6978c1824b4",
+    "src/navigation/search.mjs": "0046527fb8bfbaf97ad7eb6036db7233087805e55ec2d9ac3f348a632af89efe",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/README.md": "929a0a31cfd638694fc85ce871c339c730f6dc6728f8b7c6832bcd9281a29c94",
+    "src/b1/document-binding-broker.mjs": "18f75d2f839ca52f2417241bd678748a4a554e90a14eeb004de9cbcde7c91ca3",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/data/cooperate.mjs": "c8c91b7b425d8e7ce5f0dd9d9e3fecc836e815aee0d870b50665ab54baf94e4d",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "43578c9f63cab55eb1c5a19cdb945a38827cfaafece0ec6d4052c52907b45ed9",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/partitioned.mjs": "a3e51ca049ccb680dac513fcb89169b1ace9069d329d61c56eb6357115f882ac",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/replica.mjs": "c0d9ec51fe7aaf95ac8c804315088e0b8c6d512b4c65d229ef7fd5720cd99d2d",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "simulator/editor-style.mjs": "18197a2a89d8e83986b56e464c506c9bb8e08005d07f97c46959f5e9cfabf2ce",
+    "simulator/index.html": "52737486a2ad0b296a8e212ab0607cb89f99b94d3f6b193793817babde01b7d4",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "simulator/control.html": "1e0eeb74c8fc277232b2edfac95787dbd62d6ae7470af982f4ca268579ffbd7f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/adapter.mjs": "456021f9adbd13a751aad049d1b46a0c5afd752a23f36bce20808bee4fb29306",
+    "simulator/client.mjs": "ac406bc992d58284394fc58559c7fb45147d8c1e09b3aa6dda29b8cc702475ff",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.css": "0627ff2b3ab6d9797850caca1da4cdb91ddfdfea32318dd8e1a15f9bac23d153",
+    "simulator/README.md": "a767b2f4e0d7cd99d4c19b473f9de0300cd2ae20457def03cde26fc3a1b3b645",
+    "simulator/.gitignore": "25a6288333a6cb399eb26bccdcecbce38f84b06fb5ee6f4afbafbae414d12244",
+    "simulator/package.json": "564c422503961ce803bbcac5bd89d531c5cc64e7b643f68dd194576830687c99",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/build.mjs": "7964d3198076416a0627d6b5b8bb232bfb0a23365569d349d28a8a260795f577",
+    "simulator/host.mjs": "dad2550aeee3507e048b6794a3c9029f228aeb269653e9b5de5881e0bd9e8282",
+    "simulator/main.mjs": "7a6788fefe2eaf5c8abcd46cfe024c76511c422888073472bbb3b8caacf9092c",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/service.mjs": "03cad5aabac17b9f0fe846923099ea66f62c55ebe1022aa62f173bb4269b6400",
+    "simulator/editor.mjs": "3b4a1239781cf2574973132752e2c46140be36f885d9e180422d965d00e650e2",
+    "tests/f1/current-index.test.mjs": "2052d846c8d8a14ef31ff35e0de341aa8113b0c781da2587188d4c46c4b1f252",
+    "tests/f1/cooperative.test.mjs": "aeb98cd7ec5f5588a91d602ab506d5105389796932b444ea0129a8eb5390d337",
+    "tests/f1/run-regressions.py": "48bb9010648d635b929969dbff8aa82b2bd7fd4e144904dcdaa803c61cb02c43",
+    "tests/f1/equivalence.test.mjs": "13bf0afdad6ff16c95812ac3c348287dfa7517673a5ca215481c1219bceccb96",
+    "tests/f1/real-large-journeys.py": "f81dd24fa54597061f2fade7ec22dd62e04ca2b6290728761b5f176a954a90c9",
+    "tests/f1/native-partition-cases.mjs": "d8bad9fa70bfc7bbb3994565afec97a284b4edadbbda1f8c41f363e0e629d4bb",
+    "tests/f1/verify-evidence.py": "3e9ff0c6335932d6325534552358a3e1bd93d0bee960e73813ea7dd47fa81a7a",
+    "tests/f1/real-performance.py": "5f62dbc0ec5fc04029d58f3a3a2b124b13308ef44c756282a962ef73b49812b1",
+    "tests/f1/partitioned.test.mjs": "4e1eabd9c01666f56c9880360208cd2db7b917c36945f605f2ebe62402728317"
+  },
+  "environment": {
+    "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+    "node": "v26.8.2",
+    "python": "3.14.7",
+    "playwright": "1.63.0",
+    "chrome": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/154.0.8037.99",
+      "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+      "jsVersion": "15.4.80.20"
+    }
+  },
+  "buildHashes": {
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5",
+    "build-hashes.json": "f27ace7e39cb53cbba2b6eb4432d3b651dd35b0bf19a4792d020d5ba257c7bb8",
+    "content.js": "38849d874af71a5e5c4b2129ea0e3e4820dffd45e3c4cc89cfa1081c5887977e",
+    "simulator/worker.mjs": "14e8c51314eb4d42c302bb5eb3f22753755500e90c82661b2e6cf7591868e4b4",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/service.mjs": "03cad5aabac17b9f0fe846923099ea66f62c55ebe1022aa62f173bb4269b6400",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/document-binding-broker.mjs": "18f75d2f839ca52f2417241bd678748a4a554e90a14eeb004de9cbcde7c91ca3",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/data/cooperate.mjs": "c8c91b7b425d8e7ce5f0dd9d9e3fecc836e815aee0d870b50665ab54baf94e4d",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "43578c9f63cab55eb1c5a19cdb945a38827cfaafece0ec6d4052c52907b45ed9",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/partitioned.mjs": "a3e51ca049ccb680dac513fcb89169b1ace9069d329d61c56eb6357115f882ac",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/replica.mjs": "c0d9ec51fe7aaf95ac8c804315088e0b8c6d512b4c65d229ef7fd5720cd99d2d",
+    "tests/f1/native-partition-cases.mjs": "d8bad9fa70bfc7bbb3994565afec97a284b4edadbbda1f8c41f363e0e629d4bb"
+  },
+  "instrumentation": "temporary build static fixture imports, original native contracts, privileged test corruption and RPC timings only; no production guard/deadline/lease edits",
+  "extension": {
+    "id": "nndgfgjmaapdmphploeidppiclkbhdho"
+  },
+  "seed": {
+    "status": "PERSISTED",
+    "writeMs": 27560.099999904633,
+    "snapshotMs": 8622.799999952316,
+    "counts": {
+      "refs": 100000,
+      "themes": 120
+    },
+    "protectedCount": 100000,
+    "initialCounts": {
+      "refs": 604,
+      "themes": 120
+    }
+  },
+  "contentContexts": [
+    {
+      "id": 11,
+      "origin": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "-1573826086383268621.2683345515788054786",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "F25461FEF9658FAAA45E368E57ADCA37"
+      }
+    },
+    {
+      "id": 11,
+      "origin": "chrome-extension://nndgfgjmaapdmphploeidppiclkbhdho",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "-1573826086383268621.2683345515788054786",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "F25461FEF9658FAAA45E368E57ADCA37"
+      }
+    }
+  ]
+}

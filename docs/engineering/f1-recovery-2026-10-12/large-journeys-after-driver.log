@@ -1,0 +1,9 @@
+F1-native-partition-migration-backup-recovery-contracts PASS
+F1-100k-far-native-navigation-manual-refresh-new-tab PASS
+F1-100k-multi-tab-human-conflict-native-CAS PASS
+F1-100k-far-move-undo-manual-backup-dry-run-restore FAIL
+F1-100k-observed-worker-stop-auto-wake-no-refresh FAIL
+F1-100k-actual-20-second-lease-auto-rebind FAIL
+F1-100k-account-A-B-unknown-A PASS
+F1-100k-native-corruption-checkpoint-plus-latest-human-recovery FAIL
+{'PASS': 4, 'FAIL': 4, 'BLOCKED': 0}

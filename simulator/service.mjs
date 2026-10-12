@@ -13,7 +13,7 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId}){
   async function seed(scope,origin){
     // This map only coalesces in-flight work. The durable marker is an IDB receipt.
     const key=scope.accountId+':'+origin;if(initialized.has(key))return;
-    if(!pending.has(key))pending.set(key,(async()=>{let existing;try{existing=await workspaces.read(scope);}catch(e){if(['corrupt-record','invalid-state','invalid-schema','invalid-user-event'].includes(e.message)){initialized.add(key);return;}throw e;}if(existing.state.revision){initialized.add(key);return;}
+    if(!pending.has(key))pending.set(key,(async()=>{let existing;try{if(await workspaces.partitioned.manifest(scope)){initialized.add(key);return;}existing=await workspaces.read(scope);}catch(e){if(['corrupt-record','invalid-state','invalid-schema','invalid-user-event'].includes(e.message)){initialized.add(key);return;}throw e;}if(existing.state.revision){initialized.add(key);return;}
       const result=await workspaces.initialize(scope,persistentSeed(scope,origin));if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);initialized.add(key);
     })().finally(()=>pending.delete(key)));return pending.get(key);
   }
@@ -22,7 +22,8 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId}){
     resolveScope:async({currentFrame})=>{const info=routeInfo(currentFrame.url);if(!info||info.account==='unknown')return null;const scope=scopeOf(info.account);await seed(scope,info.origin);return scope;},
     repository:{get:(...a)=>repository.get(...a),upsert:x=>repository.upsert(x),list:async scope=>{await wait();const {state}=await workspaces.read(scope);return Object.values(state.refs).map(r=>({conversationId:r.id,nativeUrl:r.nativeUrl,projectId:r.projectId,revision:1}));}},
     workspaceRepository:{
-      version:async(scope,options)=>{const {state,view,diagnostics}=await workspaces.read(scope,options);return {revision:state.revision,viewRevision:view?.revision??0,viewDiagnostic:diagnostics.view};},
+      version:async(scope,options)=>{const large=await workspaces.partitionHeader(scope,options);if(large)return {revision:large.manifest.revision,viewRevision:large.view?.revision??0,viewDiagnostic:large.diagnostics.view};const {state,view,diagnostics}=await workspaces.read(scope,options);return {revision:state.revision,viewRevision:view?.revision??0,viewDiagnostic:diagnostics.view};},
+      partitionHeader:(...args)=>workspaces.partitionHeader(...args),partitionPage:(...args)=>workspaces.partitionPage(...args),
       snapshot:async(scope,now,timeZone,options,size=8)=>{await wait();const value=await workspaces.snapshot(scope,now,timeZone,options);
         // Visibility scale is a fixture control, never a deletion or truncated DB write.
         const visible=w=>w.owner!=='bootstrap'||w.seedIndex<size;

@@ -2,7 +2,7 @@
 
 ## 范围与读取顺序
 
-原设计提案 PR #1 限于设计、计划、治理和离线原型。本分支另获用户 2026-10-11 明确授权执行**受限 B1 工程**，允许新增 `src/b1/`、`tests/b1/`、`experiments/b1/fixture/` 与 `docs/engineering/`，并以独立 Draft PR 交付。该授权不包括真实 ChatGPT 账号探针/私人聊天、原生写入、安装部署、完整页面接管、修改PAIA/其他仓库或自动合并。main和PR #1 不改。任何生产宿主账户 resolver 在真实隔离环境未验证前必须保持不可用。
+原设计提案 PR #1 的设计权限与 2026-10-11 受限 B1 授权属于历史阶段。用户于 2026-10-12 正式授权按原 DEVELOPMENT_PLAN A–G 在 Mac 持久工作树连续实施、修复、测试、全新隔离合成 Chrome 和 Draft PR 交付，不逐阶段等待续令。C1 修复继续 PR #9，后续按独立验收模块叠加；实际状态见 docs/STATUS.md 和 docs/AUTHORITY.md。该授权不包括日常 Chrome/私人聊天、真实 ChatGPT 登录或接管、真实原生写入、PAIA/其他仓库、付费服务、同步服务、系统策略、部署、发布或合并。main 和已验收父 PR 不改；生产宿主账户 resolver 在真实隔离环境未验证前保持不可用。
 
 先读 docs/STATUS.md、docs/AUTHORITY.md、docs/INTERACTION_SPEC.md、docs/CORE_FLOW_V2_7.md，再读原生保留矩阵和相关任务。核对远端main、提案分支及开放PR，不从旧README猜状态。最新固定30日覆盖旧日历月；旧原件不回写。
 

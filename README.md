@@ -1,26 +1,24 @@
 # VAIWL — Virtual AI Workspace Layer
 
-在ChatGPT原位工作的可逆语义工作空间层。当前为设计提案与模拟原型，Draft PR #1，尚无正式扩展/安装包。
+在原生 ChatGPT 旁工作的可逆语义工作空间层，按已批准 v2.7 设计与原 A–G 路线实施。当前工程运行范围是独立合成宿主和全新隔离 Chrome MV3；生产 ChatGPT resolver 保持关闭，尚无面向真实账户的安装/发布交付。
 
-## 当前体验
+## 正式依据与实际状态
 
-一个主题一张卡片，卡片内部紧凑显示活跃对话；旧对话留在该主题的“以前的对话”中。主题按最近可靠用户发送只属于一个滚动日历时间段，当前活跃主题不会在上个月重复。时间计算在后台，主界面不逐项显示日期、原生来源或数量。
+- [实际 A–G 状态](docs/STATUS.md)、[授权边界](docs/AUTHORITY.md)、[完整原计划](docs/DEVELOPMENT_PLAN.md)、[执行约束](AGENTS.md)。
+- [v2.7 Canonical](docs/CORE_FLOW_V2_7.md)、[交互规格](docs/INTERACTION_SPEC.md)、[原生保留](docs/NATIVE_FEATURE_PRESERVATION_V2_6.md)。
+- [原批准 v2.7 原型/效果图原件](design/approved/v2.7/VAIWL_v2.7/)、[导入与哈希](design/approved/v2.7/IMPORT.json)。历史 v1–v2.6 文件保留为档案，非当前执行基准。
+- [本轮连续实施报告](docs/engineering/CONTINUOUS_FINAL_2026_10_12.md)、[持久恢复检查点](docs/engineering/CONTINUOUS_CHECKPOINT_2026_10_12.md)、[最新真实截图](docs/engineering/f1-mac-2026-10-12/final-journeys/c1/)。
 
-原生数据和Project归属不变，显示标题独立保存。导航改变但原生聊天、输入框、模型和工具保留。真实来源仍在底层，跨Project显示不合并上下文/权限。PAIA负责输入、思想和AI Context，VAIWL负责工作环境；不共享可写数据库或授权。
+## 当前体验与工程范围
 
-## 入口
+一个主题一张主页静态卡片，活跃窗口直接可见，旧窗口在父主题左侧局部展开。按最近可靠用户新发送独占固定30个当地日历日段；当前段无向上，历史段连续相邻切换，未知不伪装历史。侧栏主题可折叠，阅读区一个无字工作区返回；原生输入/消息/模型/工具/Project与浏览器历史不被替代。
 
-- [当前状态](docs/STATUS.md)、[效力与授权](docs/AUTHORITY.md)、[执行约束](AGENTS.md)。
-- [当前核心规格v2.1](docs/CORE_EXPERIENCE_V2_1.md)、[交互规格](docs/INTERACTION_SPEC.md)、[决策登记](docs/DECISIONS.md)。
-- [交互原型v2.1](docs/prototypes/v2/prototype-v2.1.html)、[当前验证范围](docs/prototypes/v2/VALIDATION_V21.md)。
-- [产品提案](docs/PRODUCT_PROPOSAL.md)、[数据模型](docs/DATA_MODEL.md)、[技术架构](docs/TECHNICAL_ARCHITECTURE.md)、[安全恢复](docs/PRIVACY_SAFETY_RECOVERY.md)、[AI/命名](docs/AI_NAMING_EVALUATION.md)。
-- [完整A–G开发计划](docs/DEVELOPMENT_PLAN.md)、[R0任务书](docs/experiments/R0_CAPABILITY_SPIKE.md)、[PAIA与旧项目边界](docs/INTEGRATION_BOUNDARIES.md)。
-- [原研究来源登记](docs/research/SOURCE_REGISTER.md)、[原始文本档案](docs/research/2026-10-10/README.md)、[原型证据映射](docs/research/PROTOTYPE_EVIDENCE.md)。
+同一扩展IndexedDB保留人工名称/图标/顺序/归属，CAS、幂等、冲突撤销、20秒lease自动重连与多标签页保护。B5增加资产文件备份、只读dry-run、最新人工修改的安全检查点+日志恢复及损坏/配额反馈；工作集与用户选中片段复用人工资产和原生导航，不后台收集正文。
 
-## 证据与下一步
+C1设计一致性修复在Draft [PR #9](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/9)，B5在stacked Draft [PR #10](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/10)。C3–C5、D离线与F1后续增量已本地提交，普通Git端点故障导致尚未远端交付；详见检查点。没有合并main或发布。
 
-当前v2.1是在v2已有源码上做定向修改，91个合成主题/345个对话，40/40模拟用例通过。它不连接ChatGPT、模型、真实账户，不证明真实发送时间/覆盖、扩展生命周期、PAIA共存或完整可访问性。字体/菜单仍是中性近似宿主样本，非精确登录态校准。
+本轮最终135 Node、54原生IndexedDB、49 DOM（mock层单列）、页面/MV3与真实UI/worker旅程通过，120主题/604窗口不缩水。F1 1k/10k实测通过，100k容量仍BLOCKED；D的1200模板合成样本不是98%/90%产品质量认证。真实ChatGPT/PAIA/真人发现性/物理IME、原生写入/同步/付费渠道需独立授权或证据，不拿合成测试冒充。
 
-v2原HTML、37/37记录与原研究均保留；[v2规格](docs/CORE_EXPERIENCE_V2.md)的任意区间事件重复命中、常驻来源/日期/计数、固定项带出父卡片等冲突选择由v2.1明确替代，不是第二套执行标准。原v1的20/20同样只属于历史模拟。
+## 本地验证
 
-R0仍未执行。下一步在独立获准的清洁环境验证宿主scope、最近可靠用户发送与覆盖、主题隔断、原生节点/恢复以及实际PAIA构建共存。文档入库不授权正式代码、安装、付费、私人聊天或原生写入；main不改、不自动合并。
+专用隔离 Python 环境依赖见 tests/requirements-local.txt；Node测试和各驱动命令原件在最终报告所链接的commands.json。`python3 tests/f1/verify-evidence.py`只校验最新源码/结果/原件hash，不启动浏览器或改数据。实际浏览器驱动使用全新headless Profile、127.0.0.1合成宿主及仅本次实例的CDP，不能连接日常Chrome或真实ChatGPT。

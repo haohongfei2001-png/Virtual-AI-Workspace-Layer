@@ -1,0 +1,133 @@
+[
+  {
+    "suite": "DOM49",
+    "command": [
+      "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python",
+      "tests/hf/browser.py",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "docs/engineering/f1-recovery-2026-10-12/regression-final/dom"
+    ],
+    "exitCode": 1,
+    "elapsed": 160.92144918441772
+  },
+  {
+    "suite": "db",
+    "command": [
+      "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python",
+      "tests/b23/real-browser.py",
+      "--mode",
+      "db",
+      "--port",
+      "48172",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "docs/engineering/f1-recovery-2026-10-12/regression-final/db.json"
+    ],
+    "exitCode": 0,
+    "elapsed": 15.203953981399536
+  },
+  {
+    "suite": "page",
+    "command": [
+      "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python",
+      "tests/b23/real-browser.py",
+      "--mode",
+      "page",
+      "--port",
+      "48173",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "docs/engineering/f1-recovery-2026-10-12/regression-final/page.json"
+    ],
+    "exitCode": 0,
+    "elapsed": 7.876270294189453
+  },
+  {
+    "suite": "mv3",
+    "command": [
+      "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python",
+      "tests/b23/real-browser.py",
+      "--mode",
+      "mv3",
+      "--port",
+      "48174",
+      "--browser",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--out",
+      "docs/engineering/f1-recovery-2026-10-12/regression-final/mv3.json"
+    ],
+    "exitCode": 0,
+    "elapsed": 8.487366199493408
+  },
+  {
+    "suite": "C1",
+    "command": [
+      "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python",
+      "tests/c1/real-ui.py",
+      "--out",
+      "docs/engineering/f1-recovery-2026-10-12/regression-final/c1"
+    ],
+    "exitCode": 0,
+    "elapsed": 16.544952869415283
+  },
+  {
+    "suite": "B5",
+    "command": [
+      "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python",
+      "tests/b5/real-ui.py",
+      "docs/engineering/f1-recovery-2026-10-12/regression-final/b5"
+    ],
+    "exitCode": 0,
+    "elapsed": 5.794887065887451
+  },
+  {
+    "suite": "C34",
+    "command": [
+      "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python",
+      "tests/c34/real-ui.py",
+      "docs/engineering/f1-recovery-2026-10-12/regression-final/c34"
+    ],
+    "exitCode": 0,
+    "elapsed": 4.649465084075928
+  },
+  {
+    "suite": "C5",
+    "command": [
+      "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python",
+      "tests/c34/compatibility.py",
+      "docs/engineering/f1-recovery-2026-10-12/regression-final/c5"
+    ],
+    "exitCode": 0,
+    "elapsed": 2.514292001724243
+  },
+  {
+    "suite": "B4core",
+    "command": [
+      "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python",
+      "tests/b4/real-mv3.py",
+      "--suite",
+      "core",
+      "--out",
+      "docs/engineering/f1-recovery-2026-10-12/regression-final/b4-core.json"
+    ],
+    "exitCode": 0,
+    "elapsed": 106.90488910675049
+  },
+  {
+    "suite": "B4lifecycle",
+    "command": [
+      "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python",
+      "tests/b4/real-mv3.py",
+      "--suite",
+      "lifecycle",
+      "--out",
+      "docs/engineering/f1-recovery-2026-10-12/regression-final/b4-lifecycle.json"
+    ],
+    "exitCode": 0,
+    "elapsed": 47.778708934783936
+  }
+]

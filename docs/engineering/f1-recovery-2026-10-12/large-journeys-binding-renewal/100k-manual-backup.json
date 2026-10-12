@@ -1,0 +1,1291 @@
+{
+  "format": "vaiwl-assets",
+  "version": 1,
+  "payload": {
+    "schema": 2,
+    "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+    "revision": 8,
+    "channel": "none",
+    "refs": {
+      "F99999": {
+        "id": "F99999",
+        "nativeUrl": "http://127.0.0.1:48178/hf/A/c/F99999",
+        "projectId": null,
+        "nativeTitle": "合成规模引用 99999 · 长中文压力边界",
+        "available": true
+      },
+      "F99998": {
+        "id": "F99998",
+        "nativeUrl": "http://127.0.0.1:48178/hf/A/c/F99998",
+        "projectId": null,
+        "nativeTitle": "合成规模引用 99998 · 长中文压力边界",
+        "available": true
+      }
+    },
+    "events": {},
+    "coverage": {},
+    "identities": {
+      "F99999": {
+        "id": "F99999",
+        "title": "F1 local unsaved 100k",
+        "aliases": [
+          "合成规模引用 99999 · 长中文压力边界",
+          "F1 far manual intent",
+          "F1 remote saved 100k"
+        ],
+        "locked": true,
+        "owner": "human",
+        "revision": 4
+      },
+      "F99998": {
+        "id": "F99998",
+        "title": "race one",
+        "aliases": [
+          "合成规模引用 99998 · 长中文压力边界"
+        ],
+        "locked": true,
+        "owner": "human",
+        "revision": 5
+      }
+    },
+    "placements": {
+      "p_59b2c12c4c6268812f57b5d1629a0864677086205b83152759b819d1d8aa4145": {
+        "id": "p_59b2c12c4c6268812f57b5d1629a0864677086205b83152759b819d1d8aa4145",
+        "workspaceId": "W84",
+        "refId": "F99999",
+        "excluded": false,
+        "order": 99999,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 7
+      },
+      "p_b4eb1e5e9a3a82210ff1543fa75fa746f31865d6832554d91cdc2f86affdb121": {
+        "id": "p_b4eb1e5e9a3a82210ff1543fa75fa746f31865d6832554d91cdc2f86affdb121",
+        "workspaceId": "W83",
+        "refId": "F99998",
+        "excluded": false,
+        "order": 99998,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1
+      }
+    },
+    "sources": {},
+    "workspaces": {
+      "W0": {
+        "id": "W0",
+        "name": "城市声音档案",
+        "icon": "collection",
+        "order": 0,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 0
+      },
+      "W1": {
+        "id": "W1",
+        "name": "小型研究工作台",
+        "icon": "research",
+        "order": 1,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 1
+      },
+      "W2": {
+        "id": "W2",
+        "name": "独立出版计划",
+        "icon": "collection",
+        "order": 2,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 2
+      },
+      "W3": {
+        "id": "W3",
+        "name": "海岸行走笔记",
+        "icon": "collection",
+        "order": 3,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 3
+      },
+      "W4": {
+        "id": "W4",
+        "name": "旧街区图册",
+        "icon": "collection",
+        "order": 4,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 4
+      },
+      "W5": {
+        "id": "W5",
+        "name": "未定时间的想法",
+        "icon": "collection",
+        "order": 5,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 5
+      },
+      "W6": {
+        "id": "W6",
+        "name": "读书与摘录",
+        "icon": "book",
+        "order": 6,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 6
+      },
+      "W7": {
+        "id": "W7",
+        "name": "实验记录",
+        "icon": "collection",
+        "order": 7,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 7
+      },
+      "W8": {
+        "id": "W8",
+        "name": "城市声音档案 9",
+        "icon": "collection",
+        "order": 8,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 8
+      },
+      "W9": {
+        "id": "W9",
+        "name": "小型研究工作台 10",
+        "icon": "research",
+        "order": 9,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 9
+      },
+      "W10": {
+        "id": "W10",
+        "name": "独立出版计划 11",
+        "icon": "collection",
+        "order": 10,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 10
+      },
+      "W11": {
+        "id": "W11",
+        "name": "海岸行走笔记 12",
+        "icon": "collection",
+        "order": 11,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 11
+      },
+      "W12": {
+        "id": "W12",
+        "name": "旧街区图册 13",
+        "icon": "collection",
+        "order": 12,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 12
+      },
+      "W13": {
+        "id": "W13",
+        "name": "未定时间的想法 14",
+        "icon": "collection",
+        "order": 13,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 13
+      },
+      "W14": {
+        "id": "W14",
+        "name": "读书与摘录 15",
+        "icon": "book",
+        "order": 14,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 14
+      },
+      "W15": {
+        "id": "W15",
+        "name": "实验记录 16",
+        "icon": "collection",
+        "order": 15,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 15
+      },
+      "W16": {
+        "id": "W16",
+        "name": "城市声音档案 17",
+        "icon": "collection",
+        "order": 16,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 16
+      },
+      "W17": {
+        "id": "W17",
+        "name": "小型研究工作台 18",
+        "icon": "research",
+        "order": 17,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 17
+      },
+      "W18": {
+        "id": "W18",
+        "name": "独立出版计划 19",
+        "icon": "collection",
+        "order": 18,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 18
+      },
+      "W19": {
+        "id": "W19",
+        "name": "海岸行走笔记 20",
+        "icon": "collection",
+        "order": 19,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 19
+      },
+      "W20": {
+        "id": "W20",
+        "name": "旧街区图册 21",
+        "icon": "collection",
+        "order": 20,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 20
+      },
+      "W21": {
+        "id": "W21",
+        "name": "未定时间的想法 22",
+        "icon": "collection",
+        "order": 21,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 21
+      },
+      "W22": {
+        "id": "W22",
+        "name": "读书与摘录 23",
+        "icon": "book",
+        "order": 22,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 22
+      },
+      "W23": {
+        "id": "W23",
+        "name": "实验记录 24",
+        "icon": "collection",
+        "order": 23,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 23
+      },
+      "W24": {
+        "id": "W24",
+        "name": "城市声音档案 25",
+        "icon": "collection",
+        "order": 24,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 24
+      },
+      "W25": {
+        "id": "W25",
+        "name": "小型研究工作台 26",
+        "icon": "research",
+        "order": 25,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 25
+      },
+      "W26": {
+        "id": "W26",
+        "name": "独立出版计划 27",
+        "icon": "collection",
+        "order": 26,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 26
+      },
+      "W27": {
+        "id": "W27",
+        "name": "海岸行走笔记 28",
+        "icon": "collection",
+        "order": 27,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 27
+      },
+      "W28": {
+        "id": "W28",
+        "name": "旧街区图册 29",
+        "icon": "collection",
+        "order": 28,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 28
+      },
+      "W29": {
+        "id": "W29",
+        "name": "未定时间的想法 30",
+        "icon": "collection",
+        "order": 29,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 29
+      },
+      "W30": {
+        "id": "W30",
+        "name": "读书与摘录 31",
+        "icon": "book",
+        "order": 30,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 30
+      },
+      "W31": {
+        "id": "W31",
+        "name": "实验记录 32",
+        "icon": "collection",
+        "order": 31,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 31
+      },
+      "W32": {
+        "id": "W32",
+        "name": "城市声音档案 33",
+        "icon": "collection",
+        "order": 32,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 32
+      },
+      "W33": {
+        "id": "W33",
+        "name": "小型研究工作台 34",
+        "icon": "research",
+        "order": 33,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 33
+      },
+      "W34": {
+        "id": "W34",
+        "name": "独立出版计划 35",
+        "icon": "collection",
+        "order": 34,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 34
+      },
+      "W35": {
+        "id": "W35",
+        "name": "海岸行走笔记 36",
+        "icon": "collection",
+        "order": 35,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 35
+      },
+      "W36": {
+        "id": "W36",
+        "name": "旧街区图册 37",
+        "icon": "collection",
+        "order": 36,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 36
+      },
+      "W37": {
+        "id": "W37",
+        "name": "未定时间的想法 38",
+        "icon": "collection",
+        "order": 37,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 37
+      },
+      "W38": {
+        "id": "W38",
+        "name": "读书与摘录 39",
+        "icon": "book",
+        "order": 38,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 38
+      },
+      "W39": {
+        "id": "W39",
+        "name": "实验记录 40",
+        "icon": "collection",
+        "order": 39,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 39
+      },
+      "W40": {
+        "id": "W40",
+        "name": "城市声音档案 41",
+        "icon": "collection",
+        "order": 40,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 40
+      },
+      "W41": {
+        "id": "W41",
+        "name": "小型研究工作台 42",
+        "icon": "research",
+        "order": 41,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 41
+      },
+      "W42": {
+        "id": "W42",
+        "name": "独立出版计划 43",
+        "icon": "collection",
+        "order": 42,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 42
+      },
+      "W43": {
+        "id": "W43",
+        "name": "海岸行走笔记 44",
+        "icon": "collection",
+        "order": 43,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 43
+      },
+      "W44": {
+        "id": "W44",
+        "name": "旧街区图册 45",
+        "icon": "collection",
+        "order": 44,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 44
+      },
+      "W45": {
+        "id": "W45",
+        "name": "未定时间的想法 46",
+        "icon": "collection",
+        "order": 45,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 45
+      },
+      "W46": {
+        "id": "W46",
+        "name": "读书与摘录 47",
+        "icon": "book",
+        "order": 46,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 46
+      },
+      "W47": {
+        "id": "W47",
+        "name": "实验记录 48",
+        "icon": "collection",
+        "order": 47,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 47
+      },
+      "W48": {
+        "id": "W48",
+        "name": "城市声音档案 49",
+        "icon": "collection",
+        "order": 48,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 48
+      },
+      "W49": {
+        "id": "W49",
+        "name": "小型研究工作台 50",
+        "icon": "research",
+        "order": 49,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 49
+      },
+      "W50": {
+        "id": "W50",
+        "name": "独立出版计划 51",
+        "icon": "collection",
+        "order": 50,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 50
+      },
+      "W51": {
+        "id": "W51",
+        "name": "海岸行走笔记 52",
+        "icon": "collection",
+        "order": 51,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 51
+      },
+      "W52": {
+        "id": "W52",
+        "name": "旧街区图册 53",
+        "icon": "collection",
+        "order": 52,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 52
+      },
+      "W53": {
+        "id": "W53",
+        "name": "未定时间的想法 54",
+        "icon": "collection",
+        "order": 53,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 53
+      },
+      "W54": {
+        "id": "W54",
+        "name": "读书与摘录 55",
+        "icon": "book",
+        "order": 54,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 54
+      },
+      "W55": {
+        "id": "W55",
+        "name": "实验记录 56",
+        "icon": "collection",
+        "order": 55,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 55
+      },
+      "W56": {
+        "id": "W56",
+        "name": "城市声音档案 57",
+        "icon": "collection",
+        "order": 56,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 56
+      },
+      "W57": {
+        "id": "W57",
+        "name": "小型研究工作台 58",
+        "icon": "research",
+        "order": 57,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 57
+      },
+      "W58": {
+        "id": "W58",
+        "name": "独立出版计划 59",
+        "icon": "collection",
+        "order": 58,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 58
+      },
+      "W59": {
+        "id": "W59",
+        "name": "海岸行走笔记 60",
+        "icon": "collection",
+        "order": 59,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 59
+      },
+      "W60": {
+        "id": "W60",
+        "name": "旧街区图册 61",
+        "icon": "collection",
+        "order": 60,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 60
+      },
+      "W61": {
+        "id": "W61",
+        "name": "未定时间的想法 62",
+        "icon": "collection",
+        "order": 61,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 61
+      },
+      "W62": {
+        "id": "W62",
+        "name": "读书与摘录 63",
+        "icon": "book",
+        "order": 62,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 62
+      },
+      "W63": {
+        "id": "W63",
+        "name": "实验记录 64",
+        "icon": "collection",
+        "order": 63,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 63
+      },
+      "W64": {
+        "id": "W64",
+        "name": "城市声音档案 65",
+        "icon": "collection",
+        "order": 64,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 64
+      },
+      "W65": {
+        "id": "W65",
+        "name": "小型研究工作台 66",
+        "icon": "research",
+        "order": 65,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 65
+      },
+      "W66": {
+        "id": "W66",
+        "name": "独立出版计划 67",
+        "icon": "collection",
+        "order": 66,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 66
+      },
+      "W67": {
+        "id": "W67",
+        "name": "海岸行走笔记 68",
+        "icon": "collection",
+        "order": 67,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 67
+      },
+      "W68": {
+        "id": "W68",
+        "name": "旧街区图册 69",
+        "icon": "collection",
+        "order": 68,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 68
+      },
+      "W69": {
+        "id": "W69",
+        "name": "未定时间的想法 70",
+        "icon": "collection",
+        "order": 69,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 69
+      },
+      "W70": {
+        "id": "W70",
+        "name": "读书与摘录 71",
+        "icon": "book",
+        "order": 70,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 70
+      },
+      "W71": {
+        "id": "W71",
+        "name": "实验记录 72",
+        "icon": "collection",
+        "order": 71,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 71
+      },
+      "W72": {
+        "id": "W72",
+        "name": "城市声音档案 73",
+        "icon": "collection",
+        "order": 72,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 72
+      },
+      "W73": {
+        "id": "W73",
+        "name": "小型研究工作台 74",
+        "icon": "research",
+        "order": 73,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 73
+      },
+      "W74": {
+        "id": "W74",
+        "name": "独立出版计划 75",
+        "icon": "collection",
+        "order": 74,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 74
+      },
+      "W75": {
+        "id": "W75",
+        "name": "海岸行走笔记 76",
+        "icon": "collection",
+        "order": 75,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 75
+      },
+      "W76": {
+        "id": "W76",
+        "name": "旧街区图册 77",
+        "icon": "collection",
+        "order": 76,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 76
+      },
+      "W77": {
+        "id": "W77",
+        "name": "未定时间的想法 78",
+        "icon": "collection",
+        "order": 77,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 77
+      },
+      "W78": {
+        "id": "W78",
+        "name": "读书与摘录 79",
+        "icon": "book",
+        "order": 78,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 78
+      },
+      "W79": {
+        "id": "W79",
+        "name": "实验记录 80",
+        "icon": "collection",
+        "order": 79,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 79
+      },
+      "W80": {
+        "id": "W80",
+        "name": "城市声音档案 81",
+        "icon": "collection",
+        "order": 80,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 80
+      },
+      "W81": {
+        "id": "W81",
+        "name": "小型研究工作台 82",
+        "icon": "research",
+        "order": 81,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 81
+      },
+      "W82": {
+        "id": "W82",
+        "name": "独立出版计划 83",
+        "icon": "collection",
+        "order": 82,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 82
+      },
+      "W83": {
+        "id": "W83",
+        "name": "海岸行走笔记 84",
+        "icon": "collection",
+        "order": 83,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 83
+      },
+      "W84": {
+        "id": "W84",
+        "name": "旧街区图册 85",
+        "icon": "collection",
+        "order": 84,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 84
+      },
+      "W85": {
+        "id": "W85",
+        "name": "未定时间的想法 86",
+        "icon": "collection",
+        "order": 85,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 85
+      },
+      "W86": {
+        "id": "W86",
+        "name": "读书与摘录 87",
+        "icon": "book",
+        "order": 86,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 86
+      },
+      "W87": {
+        "id": "W87",
+        "name": "实验记录 88",
+        "icon": "collection",
+        "order": 87,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 87
+      },
+      "W88": {
+        "id": "W88",
+        "name": "城市声音档案 89",
+        "icon": "collection",
+        "order": 88,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 88
+      },
+      "W89": {
+        "id": "W89",
+        "name": "小型研究工作台 90",
+        "icon": "research",
+        "order": 89,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 89
+      },
+      "W90": {
+        "id": "W90",
+        "name": "独立出版计划 91",
+        "icon": "collection",
+        "order": 90,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 90
+      },
+      "W91": {
+        "id": "W91",
+        "name": "海岸行走笔记 92",
+        "icon": "collection",
+        "order": 91,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 91
+      },
+      "W92": {
+        "id": "W92",
+        "name": "旧街区图册 93",
+        "icon": "collection",
+        "order": 92,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 92
+      },
+      "W93": {
+        "id": "W93",
+        "name": "未定时间的想法 94",
+        "icon": "collection",
+        "order": 93,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 93
+      },
+      "W94": {
+        "id": "W94",
+        "name": "读书与摘录 95",
+        "icon": "book",
+        "order": 94,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 94
+      },
+      "W95": {
+        "id": "W95",
+        "name": "实验记录 96",
+        "icon": "collection",
+        "order": 95,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 95
+      },
+      "W96": {
+        "id": "W96",
+        "name": "城市声音档案 97",
+        "icon": "collection",
+        "order": 96,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 96
+      },
+      "W97": {
+        "id": "W97",
+        "name": "小型研究工作台 98",
+        "icon": "research",
+        "order": 97,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 97
+      },
+      "W98": {
+        "id": "W98",
+        "name": "独立出版计划 99",
+        "icon": "collection",
+        "order": 98,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 98
+      },
+      "W99": {
+        "id": "W99",
+        "name": "海岸行走笔记 100",
+        "icon": "collection",
+        "order": 99,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 99
+      },
+      "W100": {
+        "id": "W100",
+        "name": "旧街区图册 101",
+        "icon": "collection",
+        "order": 100,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 100
+      },
+      "W101": {
+        "id": "W101",
+        "name": "未定时间的想法 102",
+        "icon": "collection",
+        "order": 101,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 101
+      },
+      "W102": {
+        "id": "W102",
+        "name": "读书与摘录 103",
+        "icon": "book",
+        "order": 102,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 102
+      },
+      "W103": {
+        "id": "W103",
+        "name": "实验记录 104",
+        "icon": "collection",
+        "order": 103,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 103
+      },
+      "W104": {
+        "id": "W104",
+        "name": "城市声音档案 105",
+        "icon": "collection",
+        "order": 104,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 104
+      },
+      "W105": {
+        "id": "W105",
+        "name": "小型研究工作台 106",
+        "icon": "research",
+        "order": 105,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 105
+      },
+      "W106": {
+        "id": "W106",
+        "name": "独立出版计划 107",
+        "icon": "collection",
+        "order": 106,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 106
+      },
+      "W107": {
+        "id": "W107",
+        "name": "海岸行走笔记 108",
+        "icon": "collection",
+        "order": 107,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 107
+      },
+      "W108": {
+        "id": "W108",
+        "name": "旧街区图册 109",
+        "icon": "collection",
+        "order": 108,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 108
+      },
+      "W109": {
+        "id": "W109",
+        "name": "未定时间的想法 110",
+        "icon": "collection",
+        "order": 109,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 109
+      },
+      "W110": {
+        "id": "W110",
+        "name": "读书与摘录 111",
+        "icon": "book",
+        "order": 110,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 110
+      },
+      "W111": {
+        "id": "W111",
+        "name": "实验记录 112",
+        "icon": "collection",
+        "order": 111,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 111
+      },
+      "W112": {
+        "id": "W112",
+        "name": "城市声音档案 113",
+        "icon": "collection",
+        "order": 112,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 112
+      },
+      "W113": {
+        "id": "W113",
+        "name": "小型研究工作台 114",
+        "icon": "research",
+        "order": 113,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 113
+      },
+      "W114": {
+        "id": "W114",
+        "name": "独立出版计划 115",
+        "icon": "collection",
+        "order": 114,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 114
+      },
+      "W115": {
+        "id": "W115",
+        "name": "海岸行走笔记 116",
+        "icon": "collection",
+        "order": 115,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 115
+      },
+      "W116": {
+        "id": "W116",
+        "name": "旧街区图册 117",
+        "icon": "collection",
+        "order": 116,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 116
+      },
+      "W117": {
+        "id": "W117",
+        "name": "未定时间的想法 118",
+        "icon": "collection",
+        "order": 117,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 117
+      },
+      "W118": {
+        "id": "W118",
+        "name": "读书与摘录 119",
+        "icon": "book",
+        "order": 118,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 118
+      },
+      "W119": {
+        "id": "W119",
+        "name": "实验记录 120",
+        "icon": "collection",
+        "order": 119,
+        "locked": false,
+        "owner": "bootstrap",
+        "revision": 1,
+        "seedIndex": 119
+      }
+    },
+    "preferences": {
+      "workingSet": {
+        "id": "workingSet",
+        "value": {
+          "refs": [
+            "F99999"
+          ],
+          "current": "F99999"
+        },
+        "owner": "human",
+        "revision": 8
+      }
+    }
+  },
+  "checksum": "8a98b7fbd5db1a88086750557f4a28dc9ac8788f8546e6b1de559ccb56bc40d7"
+}

@@ -25,7 +25,15 @@ export function openWorkspaceEditor({snapshot,command,undo,assets=null,context={
   const choices=node('div');choices.className='icon-choices';choices.setAttribute('aria-label','主题图标选项');for(const [kind,label] of Object.entries(iconNames)){const b=node('button');b.type='button';b.setAttribute('aria-label','图标 '+label);b.title=label;b.innerHTML=svgIcon(kind);b.onclick=()=>{icon.value=kind;icon.dispatchEvent(new Event('input'));for(const c of choices.children)c.setAttribute('aria-pressed',String(c===b));};choices.append(b);}section.append(choices);
   action('保存主题',()=>editCommand({type:'UPDATE_WORKSPACE',id:theme.value,name:name.value,icon:icon.value,order:Number(order.value),locked:lock.checked},[name,icon,order,lock]));
   group('窗口');
-  const ref=field('窗口选择','select'),title=field('派生标题');
+  const ref=field('窗口选择','select');let referenceLimit=200,referenceQuery='';
+  let referenceFilter=null,referenceMore=null;
+  if(snapshot.refs.length>20000){
+    referenceFilter=field('查找已知窗口');referenceFilter.type='search';
+    // Filtering chooses a reference, never marks an asset edit or silently discards a draft.
+    referenceFilter.oninput=()=>{dirty.delete(referenceFilter);referenceQuery=referenceFilter.value;referenceLimit=200;refOptions();};
+    referenceMore=action('显示更多窗口选项',async()=>{referenceLimit+=200;refOptions();},'已展开更多已知窗口。');
+  }
+  const title=field('派生标题');
   action('保存派生标题',()=>editCommand({type:'SET_TITLE',refId:ref.value,title:title.value,locked:true},[title]));
   const windowOrder=field('窗口顺序');windowOrder.type='number';
   action('保存窗口顺序',()=>editCommand({type:'PLACE',workspaceId:theme.value,refId:ref.value,order:Number(windowOrder.value)},[windowOrder]));
@@ -55,8 +63,14 @@ export function openWorkspaceEditor({snapshot,command,undo,assets=null,context={
   }
   section=node('div');section.className='edit-footer';dialog.append(section);action('撤销上次修改',()=>undo());const close=action('关闭管理',async()=>dispose());
   function options(select,rows,key,label){const chosen=select.value;select.replaceChildren();for(const row of rows){const o=node('option',label(row));o.value=key(row);select.append(o);}if([...select.options].some(o=>o.value===chosen))select.value=chosen;}
+  function refOptions(){const chosen=ref.value||context.refId,all=referenceFilter?snapshot.refs.filter(r=>(r.id+' '+r.displayTitle).includes(referenceQuery)):snapshot.refs;
+    const rows=referenceFilter?all.slice(0,referenceLimit):all;
+    if(chosen&&!rows.some(r=>r.id===chosen)){const selected=snapshot.refs.find(r=>r.id===chosen);if(selected)rows.unshift(selected);}
+    options(ref,rows,r=>r.id,r=>r.displayTitle);if(chosen&&rows.some(r=>r.id===chosen))ref.value=chosen;
+    if(referenceMore)referenceMore.hidden=all.length<=referenceLimit;
+  }
   function populate(){const set=(f,v)=>{if(!dirty.has(f)){if(f.type==='checkbox')f.checked=v;else f.value=v;}};const w=snapshot.objects.workspaces[theme.value];set(name,w?.name??'');set(icon,w?.icon??'◇');set(order,w?.order??0);set(lock,w?.locked??true);const r=snapshot.refs.find(r=>r.id===ref.value);set(title,r?.displayTitle??'');set(windowOrder,Object.values(snapshot.objects.placements).find(p=>p.workspaceId===theme.value&&p.refId===ref.value)?.order??0);set(compact,snapshot.preferences?.compactRows?.value!==false);working.replaceChildren();const v=snapshot.preferences.workingSet?.value;for(const id of v?.refs??[])working.append(node('p',snapshot.refs.find(r=>r.id===id)?.displayTitle??'无法打开的引用 '+id));}
-  function update(value){if(value.scope!==scope||value.revision<snapshot.revision)return;snapshot=value;warning.textContent=value.diagnostics?.view==='CORRUPT_VIEW'?'视图偏好记录损坏：已忽略损坏的视图，主题与窗口仍保留；损坏记录未被覆盖。':'';options(theme,Object.values(value.objects.workspaces),w=>w.id,w=>w.name);options(target,Object.values(value.objects.workspaces),w=>w.id,w=>w.name);options(ref,value.refs,r=>r.id,r=>r.displayTitle);options(sources,Object.values(value.objects.sources),s=>s.id,s=>s.channel+(s.revoked?'（已撤销）':''));populate();}
+  function update(value){if(value.scope!==scope||value.revision<snapshot.revision)return;snapshot=value;warning.textContent=value.diagnostics?.view==='CORRUPT_VIEW'?'视图偏好记录损坏：已忽略损坏的视图，主题与窗口仍保留；损坏记录未被覆盖。':'';options(theme,Object.values(value.objects.workspaces),w=>w.id,w=>w.name);options(target,Object.values(value.objects.workspaces),w=>w.id,w=>w.name);refOptions();options(sources,Object.values(value.objects.sources),s=>s.id,s=>s.channel+(s.revoked?'（已撤销）':''));populate();}
   theme.onchange=()=>{for(const f of [name,icon,order,lock,windowOrder])dirty.delete(f);populate();};ref.onchange=()=>{for(const f of [title,windowOrder])dirty.delete(f);populate();};
   function dispose(){if(disposed)return;disposed=true;if(dialog.open)dialog.close();dialog.remove();dirty.clear();onClose();}
   function suspend(){if(disposed||suspended)return;suspended=true;priorFocus=dialog.contains(document.activeElement)?document.activeElement:null;if(dialog.open){ignoredCloses++;dialog.close();}dialog.remove();}

@@ -3,6 +3,7 @@ import { env } from './environment.mjs';
 import { syntheticURL } from './data.mjs';
 /** Semantic/geometry mapping for the SYNTHETIC host only. No production ChatGPT selectors. */
 export function createAdapter(doc=document) {
+  let hrefContext='',here=null;const hrefCache=new Map();
   const one=selector=>{const nodes=doc.querySelectorAll(selector);return nodes.length===1?nodes[0]:null;};
   return {
     inspect(){
@@ -28,12 +29,14 @@ export function createAdapter(doc=document) {
     // Keep synthetic harness activation/scale on ordinary and modifier-click
     // fallback links. Never change persisted references or a production URL.
     nativeHref(raw){
-      const u=new URL(raw),here=new URL(env.location.href);
-      if(!syntheticURL(raw)||u.origin!==here.origin)return raw;
+      const context=env.location.href+'|'+doc.documentElement.dataset.hfSize;if(context!==hrefContext){hrefContext=context;here=new URL(env.location.href);hrefCache.clear();}if(hrefCache.has(raw))return hrefCache.get(raw);
+      const u=new URL(raw);if(!syntheticURL(raw)||u.origin!==here.origin)return raw;
       const mode=here.searchParams.get('mode');
       if(['page','mv3'].includes(mode)&&!u.searchParams.has('mode'))u.searchParams.set('mode',mode);
       if(doc.documentElement.dataset.hfSize==='120'&&!u.searchParams.has('size'))u.searchParams.set('size','120');
-      return u.href;
+      const count=Number(here.searchParams.get('f1Refs'));
+      if(Number.isSafeInteger(count)&&count>=604&&count<=100000&&!u.searchParams.has('f1Refs'))u.searchParams.set('f1Refs',String(count));
+      if(hrefCache.size>=2048)hrefCache.delete(hrefCache.keys().next().value);hrefCache.set(raw,u.href);return u.href;
     },
     openNative(raw,event){
       if(!syntheticURL(raw)||new URL(raw).origin!==env.location.origin)return event.preventDefault();

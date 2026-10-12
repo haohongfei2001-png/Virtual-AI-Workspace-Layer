@@ -1,0 +1,2412 @@
+{
+  "targetedDiagnostic": false,
+  "argv": [
+    "tests/f1/real-large-journeys.py",
+    "docs/engineering/f1-recovery-2026-10-12/large-journeys-binding-renewal"
+  ],
+  "startedAt": 1791773296.592546,
+  "head": "2615b6b26014cc6365ebb8fc6a1098cf6ee23288",
+  "tests": [
+    {
+      "id": "F1-native-partition-migration-backup-recovery-contracts",
+      "status": "PASS",
+      "actual": {
+        "actualExtensionIDB": true,
+        "cases": [
+          {
+            "name": "PART01 bounded storage preserves all original 120/604 projections and canonical refs",
+            "status": "PASS"
+          },
+          {
+            "name": "PART02 the original CAS/idempotence transaction has one winner across connections",
+            "status": "PASS"
+          },
+          {
+            "name": "PART03 far-reference move and targeted undo use original human patches",
+            "status": "PASS"
+          },
+          {
+            "name": "PART04 repeated initialization cannot overwrite immutable live human pieces",
+            "status": "PASS"
+          },
+          {
+            "name": "PART05 mixed revisions and incomplete view replicas are rejected",
+            "status": "PASS"
+          },
+          {
+            "name": "PART06 revocation updates all evidence projections without rewriting reference pieces",
+            "status": "PASS"
+          },
+          {
+            "name": "PART07 damaged view leaves intact assets and unknown scope is rejected",
+            "status": "PASS"
+          },
+          {
+            "name": "PART08 A/B same ref IDs remain distinct",
+            "status": "PASS"
+          },
+          {
+            "name": "PART09 checkpoint retains previous immutable pieces and latest manual assets recover",
+            "status": "PASS"
+          },
+          {
+            "name": "PART10 v2 storage migration preserves latest human revision and revoked sources",
+            "status": "PASS"
+          },
+          {
+            "name": "PART11 asset backup includes latest manual references and preferences, dry-run is read-only",
+            "status": "PASS"
+          },
+          {
+            "name": "PART12 checkpoint plus latest workset preference restores reference dependencies safely",
+            "status": "PASS"
+          },
+          {
+            "name": "PART13 ingestion cannot reuse a global evidence ID in another reference partition",
+            "status": "PASS"
+          },
+          {
+            "name": "PART14 native quota failure cannot publish a manifest or success receipt",
+            "status": "PASS"
+          },
+          {
+            "name": "PART15 revocation after native put aborts pieces, checkpoint and receipt together",
+            "status": "PASS"
+          },
+          {
+            "name": "PART16 incremental replicas preserve canonical reference order and exact projection semantics",
+            "status": "PASS"
+          },
+          {
+            "name": "PART17 affected-theme projection matches full reads across membership, order, preferences and source revocation",
+            "status": "PASS"
+          },
+          {
+            "name": "PART18 a missing published root with trusted history is corruption, never an empty workspace",
+            "status": "PASS"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F1-100k-far-native-navigation-manual-refresh-new-tab",
+      "status": "PASS",
+      "actual": {
+        "actualNativeRef": "F99999",
+        "messagesVisible": true,
+        "nativeCatalogue": 100000,
+        "initialEditorOptions": 201,
+        "reloadAndNewTabPreserved": true,
+        "data": {
+          "meta": {
+            "revision": 2,
+            "count": 100000,
+            "humanRefs": [
+              "F99999"
+            ],
+            "preferences": {}
+          },
+          "piece": {
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "refId": "F99999",
+            "revision": 2,
+            "ref": {
+              "id": "F99999",
+              "nativeUrl": "http://127.0.0.1:48178/hf/A/c/F99999",
+              "projectId": null,
+              "nativeTitle": "合成规模引用 99999 · 长中文压力边界",
+              "available": true
+            },
+            "identity": {
+              "id": "F99999",
+              "title": "F1 far manual intent",
+              "aliases": [
+                "合成规模引用 99999 · 长中文压力边界"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 2
+            },
+            "events": [
+              {
+                "id": "e_F99999",
+                "sourceId": "fixture_v1",
+                "conversationId": "F99999",
+                "messageId": "F99999-u1",
+                "branchId": "root",
+                "role": "user",
+                "kind": "new-send",
+                "sendState": "committed",
+                "sentAt": "2026-10-10T08:00:00Z",
+                "precision": "second",
+                "observedAt": "2026-10-11T04:00:00Z",
+                "revoked": false
+              }
+            ],
+            "coverage": [
+              {
+                "id": "c_F99999",
+                "sourceId": "fixture_v1",
+                "conversationId": "F99999",
+                "from": "2020-01-01T00:00:00Z",
+                "through": "2026-10-11T04:00:00Z",
+                "observedAt": "2026-10-11T04:00:00Z",
+                "completeness": "complete",
+                "branches": "all",
+                "gaps": [],
+                "revoked": false
+              }
+            ],
+            "placements": [
+              {
+                "id": "p_59b2c12c4c6268812f57b5d1629a0864677086205b83152759b819d1d8aa4145",
+                "workspaceId": "W84",
+                "refId": "F99999",
+                "excluded": false,
+                "order": 99999,
+                "locked": false,
+                "owner": "bootstrap",
+                "revision": 1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "F1-100k-multi-tab-human-conflict-native-CAS",
+      "status": "PASS",
+      "actual": {
+        "unsavedIntentPreserved": true,
+        "explicitRetryRequired": true,
+        "feedback": "另一标签页已修改；草稿已保留。最新保存标题：F1 remote saved 100k；最新主题名称：城市声音档案。核对后再次点击保存。",
+        "independentNativeConnections": [
+          {
+            "ok": true,
+            "replayed": false,
+            "revision": 5,
+            "operationId": "native_race_1"
+          },
+          {
+            "ok": false,
+            "reason": "revision-conflict"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F1-100k-far-move-undo-manual-backup-dry-run-restore",
+      "status": "PASS",
+      "actual": {
+        "farMoveUndo": true,
+        "humanBackupBytes": 30947,
+        "backupHumanRefs": [
+          "F99999",
+          "F99998"
+        ],
+        "dryRunReadOnly": true,
+        "restoreUndo": true,
+        "data": {
+          "meta": {
+            "revision": 10,
+            "count": 100000,
+            "humanRefs": [
+              "F99999",
+              "F99998"
+            ],
+            "preferences": {
+              "workingSet": {
+                "id": "workingSet",
+                "value": {
+                  "refs": [
+                    "F99999"
+                  ],
+                  "current": "F99999"
+                },
+                "owner": "human",
+                "revision": 8
+              }
+            }
+          },
+          "piece": {
+            "scopeKey": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]",
+            "refId": "F99999",
+            "revision": 7,
+            "ref": {
+              "id": "F99999",
+              "nativeUrl": "http://127.0.0.1:48178/hf/A/c/F99999",
+              "projectId": null,
+              "nativeTitle": "合成规模引用 99999 · 长中文压力边界",
+              "available": true
+            },
+            "identity": {
+              "id": "F99999",
+              "title": "F1 local unsaved 100k",
+              "aliases": [
+                "合成规模引用 99999 · 长中文压力边界",
+                "F1 far manual intent",
+                "F1 remote saved 100k"
+              ],
+              "locked": true,
+              "owner": "human",
+              "revision": 4
+            },
+            "events": [
+              {
+                "id": "e_F99999",
+                "sourceId": "fixture_v1",
+                "conversationId": "F99999",
+                "messageId": "F99999-u1",
+                "branchId": "root",
+                "role": "user",
+                "kind": "new-send",
+                "sendState": "committed",
+                "sentAt": "2026-10-10T08:00:00Z",
+                "precision": "second",
+                "observedAt": "2026-10-11T04:00:00Z",
+                "revoked": false
+              }
+            ],
+            "coverage": [
+              {
+                "id": "c_F99999",
+                "sourceId": "fixture_v1",
+                "conversationId": "F99999",
+                "from": "2020-01-01T00:00:00Z",
+                "through": "2026-10-11T04:00:00Z",
+                "observedAt": "2026-10-11T04:00:00Z",
+                "completeness": "complete",
+                "branches": "all",
+                "gaps": [],
+                "revoked": false
+              }
+            ],
+            "placements": [
+              {
+                "id": "p_59b2c12c4c6268812f57b5d1629a0864677086205b83152759b819d1d8aa4145",
+                "workspaceId": "W84",
+                "refId": "F99999",
+                "excluded": false,
+                "order": 99999,
+                "locked": false,
+                "owner": "bootstrap",
+                "revision": 7
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "F1-100k-observed-worker-stop-auto-wake-no-refresh",
+      "status": "PASS",
+      "actual": {
+        "before": {
+          "ok": true,
+          "boot": "40ebdb6e-536b-4f00-9890-63b7755c9c11",
+          "persistedRef": true,
+          "revision": 1,
+          "workspaceRevision": 10,
+          "workspaceCount": 120,
+          "syntheticSenderUrl": "http://127.0.0.1:48178/hf/A/c/F99999?mode=mv3&size=120&f1Refs=100000",
+          "syntheticSenderDoc": "66016C554E9CDF183B744D0F33B15205",
+          "syntheticFrameUrl": "http://127.0.0.1:48178/hf/A/c/F99999?mode=mv3&size=120&f1Refs=100000",
+          "syntheticFrameDoc": "66016C554E9CDF183B744D0F33B15205"
+        },
+        "after": {
+          "ok": true,
+          "boot": "46b18d58-8a47-4e2d-a557-eb1248cc0ee2",
+          "persistedRef": true,
+          "revision": 1,
+          "workspaceRevision": 10,
+          "workspaceCount": 120,
+          "syntheticSenderUrl": "http://127.0.0.1:48178/hf/A/c/F99999?mode=mv3&size=120&f1Refs=100000",
+          "syntheticSenderDoc": "66016C554E9CDF183B744D0F33B15205",
+          "syntheticFrameUrl": "http://127.0.0.1:48178/hf/A/c/F99999?mode=mv3&size=120&f1Refs=100000",
+          "syntheticFrameDoc": "66016C554E9CDF183B744D0F33B15205"
+        },
+        "events": [
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+            "runningStatus": "running",
+            "status": "activated",
+            "scriptLastModified": 1791773296,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "D0B1ABEB3B8855760E89063DEEB2DF69"
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+            "runningStatus": "stopping",
+            "status": "activated",
+            "scriptLastModified": 1791773296,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "D0B1ABEB3B8855760E89063DEEB2DF69"
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+            "runningStatus": "stopped",
+            "status": "activated",
+            "scriptLastModified": 1791773296,
+            "scriptResponseTime": 0,
+            "controlledClients": []
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+            "runningStatus": "starting",
+            "status": "activated",
+            "scriptLastModified": 1791773296,
+            "scriptResponseTime": 0,
+            "controlledClients": []
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+            "runningStatus": "starting",
+            "status": "activated",
+            "scriptLastModified": 1791773296,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "D0B1ABEB3B8855760E89063DEEB2DF69"
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+            "runningStatus": "starting",
+            "status": "activated",
+            "scriptLastModified": 1791773296,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "D0B1ABEB3B8855760E89063DEEB2DF69"
+          },
+          {
+            "versionId": "0",
+            "registrationId": "0",
+            "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+            "runningStatus": "running",
+            "status": "activated",
+            "scriptLastModified": 1791773296,
+            "scriptResponseTime": 0,
+            "controlledClients": [],
+            "targetId": "D0B1ABEB3B8855760E89063DEEB2DF69"
+          }
+        ],
+        "nativeNodesDraftIntact": true,
+        "manualTitleRestored": true
+      }
+    },
+    {
+      "id": "F1-100k-actual-20-second-lease-auto-rebind",
+      "status": "PASS",
+      "actual": {
+        "actualLeaseRenewals": [
+          {
+            "at": 1791773441453,
+            "lease": "b9eb26e0-39b9-4aca-8142-8a0ea80e822d",
+            "ok": true
+          }
+        ],
+        "allRefsRetained": 100000
+      }
+    },
+    {
+      "id": "F1-100k-account-A-B-unknown-A",
+      "status": "PASS",
+      "actual": {
+        "A_B_unknown_A": true,
+        "eachVerifiedAccount": 100000,
+        "unknownNoSensitiveRoots": true,
+        "BSeed": {
+          "status": "PERSISTED",
+          "writeMs": 20167.900000095367,
+          "snapshotMs": 8588.199999809265,
+          "counts": {
+            "refs": 100000,
+            "themes": 120
+          },
+          "protectedCount": 100000,
+          "initialCounts": {
+            "refs": 604,
+            "themes": 120
+          }
+        }
+      }
+    },
+    {
+      "id": "F1-100k-4x-renderer-long-chat-concurrent-input-and-navigation",
+      "status": "FAIL",
+      "error": "Page.evaluate: TypeError: Cannot read properties of undefined (reading 'shadowRoot')\n    at eval (eval at evaluate (:311:30), <anonymous>:1:122)\n    at UtilityScript.evaluate (<anonymous>:318:18)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
+      "trace": "Traceback (most recent call last):\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 48, in case\n    try:r['tests'].append({'id':name,'status':'PASS','actual':fn()})\n                                                              ~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-large-journeys.py\", line 140, in slow_input\n    search.append(q.evaluate('''async()=>{const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.search')).shadowRoot,input=root.querySelector('input'),t=performance.now();input.value='合成规模引用';input.dispatchEvent(new Event('input',{bubbles:true}));if(root.querySelectorAll('.search-results .row').length!==24)throw Error('unbounded search DOM');await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);return performance.now()-t;}'''))\n                  ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py\", line 9413, in evaluate\n    self._sync(\n    ~~~~~~~~~~^\n        self._impl_obj.evaluate(expression=expression, arg=mapping.to_impl(arg))\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_sync_base.py\", line 115, in _sync\n    return task.result()\n           ~~~~~~~~~~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_page.py\", line 474, in evaluate\n    return await self._main_frame.evaluate(expression, arg)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py\", line 346, in evaluate\n    await self._channel.send(\n    ...<6 lines>...\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 76, in send\n    return await self._connection.wrap_api_call(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 632, in wrap_api_call\n    raise rewrite_error(error, f\"{parsed_st['apiName']}: {error}\") from None\nplaywright._impl._errors.Error: Page.evaluate: TypeError: Cannot read properties of undefined (reading 'shadowRoot')\n    at eval (eval at evaluate (:311:30), <anonymous>:1:122)\n    at UtilityScript.evaluate (<anonymous>:318:18)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n",
+      "feedback": [
+        [],
+        [],
+        []
+      ]
+    },
+    {
+      "id": "F1-100k-native-corruption-checkpoint-plus-latest-human-recovery",
+      "status": "PASS",
+      "actual": {
+        "status": {
+          "corrupt": true,
+          "recoverable": true,
+          "damagedHash": "33b65b350b632b9fc73fbb3e37da386be5374f872ec09fb8f6b0c30c70118520",
+          "checkpointRevision": 11,
+          "restoredHumanChanges": 1,
+          "recoveryRevision": 13,
+          "evidenceInvalidated": true
+        },
+        "recovered": {
+          "id": "recover_e2662c09990a4d5e9c0432c66f226c0c",
+          "type": "RECOVER",
+          "actor": "human",
+          "revision": 13,
+          "undoneBy": null,
+          "invalidatedBy": null,
+          "ok": true,
+          "throughActualRecoveryUI": true
+        },
+        "latestHumanAndAllRefsPreserved": true,
+        "sourcesAndOldReceiptsInvalidated": true,
+        "noEvidence": {
+          "sourcesRevoked": true,
+          "preference": {
+            "refs": [
+              "F99999"
+            ],
+            "current": "F99999"
+          },
+          "revision": 13
+        },
+        "replay": {
+          "ok": false,
+          "reason": "operation-invalidated-by-recovery"
+        }
+      }
+    }
+  ],
+  "workerEvents": [
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+      "runningStatus": "running",
+      "status": "activated",
+      "scriptLastModified": 1791773296,
+      "scriptResponseTime": 0,
+      "controlledClients": [],
+      "targetId": "D0B1ABEB3B8855760E89063DEEB2DF69"
+    },
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+      "runningStatus": "stopping",
+      "status": "activated",
+      "scriptLastModified": 1791773296,
+      "scriptResponseTime": 0,
+      "controlledClients": [],
+      "targetId": "D0B1ABEB3B8855760E89063DEEB2DF69"
+    },
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+      "runningStatus": "stopped",
+      "status": "activated",
+      "scriptLastModified": 1791773296,
+      "scriptResponseTime": 0,
+      "controlledClients": []
+    },
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+      "runningStatus": "starting",
+      "status": "activated",
+      "scriptLastModified": 1791773296,
+      "scriptResponseTime": 0,
+      "controlledClients": []
+    },
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+      "runningStatus": "starting",
+      "status": "activated",
+      "scriptLastModified": 1791773296,
+      "scriptResponseTime": 0,
+      "controlledClients": [],
+      "targetId": "D0B1ABEB3B8855760E89063DEEB2DF69"
+    },
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+      "runningStatus": "starting",
+      "status": "activated",
+      "scriptLastModified": 1791773296,
+      "scriptResponseTime": 0,
+      "controlledClients": [],
+      "targetId": "D0B1ABEB3B8855760E89063DEEB2DF69"
+    },
+    {
+      "versionId": "0",
+      "registrationId": "0",
+      "scriptURL": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp/simulator/worker.mjs",
+      "runningStatus": "running",
+      "status": "activated",
+      "scriptLastModified": 1791773296,
+      "scriptResponseTime": 0,
+      "controlledClients": [],
+      "targetId": "D0B1ABEB3B8855760E89063DEEB2DF69"
+    }
+  ],
+  "errors": [],
+  "scope": "actual extension IndexedDB / fresh headless Chrome / 100000 accessible synthetic refs / no real ChatGPT",
+  "sourceHashes": {
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/navigation/current-index.mjs": "909a8c2b6e9fae5db659efe82341788e37240f58d43bff7e94e85c8ac4864a89",
+    "src/navigation/navigation.mjs": "4cbe09636dac6e7446108e36de82aee629c91c2b3d2798895525d1dfee72de5f",
+    "src/navigation/search.mjs": "0046527fb8bfbaf97ad7eb6036db7233087805e55ec2d9ac3f348a632af89efe",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/README.md": "929a0a31cfd638694fc85ce871c339c730f6dc6728f8b7c6832bcd9281a29c94",
+    "src/b1/document-binding-broker.mjs": "18f75d2f839ca52f2417241bd678748a4a554e90a14eeb004de9cbcde7c91ca3",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "a8f6504650db363c4092c8ac4332e3515e1d4ccc1e6b893ea4bd468b8b37a6cc",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/partitioned.mjs": "25d3756bf4e3e45342541140efd6d6eac8d381380c90baf57098560ddd18d63d",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/replica.mjs": "a79882d912cae17ca5777a2ac5a8f8ff0d4d4b11585cdcbe4671628de098befc",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "simulator/editor-style.mjs": "18197a2a89d8e83986b56e464c506c9bb8e08005d07f97c46959f5e9cfabf2ce",
+    "simulator/index.html": "52737486a2ad0b296a8e212ab0607cb89f99b94d3f6b193793817babde01b7d4",
+    "simulator/content-entry.mjs": "8a6b6b50df4b60df7744c66d47dc31aaab5842c5eef3cc7719c276cbb171415d",
+    "simulator/control.html": "1e0eeb74c8fc277232b2edfac95787dbd62d6ae7470af982f4ca268579ffbd7f",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/adapter.mjs": "f4f8b2590915d46c10393a16c60d35805da6e10231f6bc0b7865c405417b4a44",
+    "simulator/client.mjs": "197dc8a846777eaa88d47f800bfc74a0940d6cd6affced630d672b2dc8d4cbe5",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.css": "0627ff2b3ab6d9797850caca1da4cdb91ddfdfea32318dd8e1a15f9bac23d153",
+    "simulator/README.md": "a767b2f4e0d7cd99d4c19b473f9de0300cd2ae20457def03cde26fc3a1b3b645",
+    "simulator/.gitignore": "25a6288333a6cb399eb26bccdcecbce38f84b06fb5ee6f4afbafbae414d12244",
+    "simulator/package.json": "564c422503961ce803bbcac5bd89d531c5cc64e7b643f68dd194576830687c99",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/build.mjs": "7964d3198076416a0627d6b5b8bb232bfb0a23365569d349d28a8a260795f577",
+    "simulator/host.mjs": "dad2550aeee3507e048b6794a3c9029f228aeb269653e9b5de5881e0bd9e8282",
+    "simulator/main.mjs": "7a6788fefe2eaf5c8abcd46cfe024c76511c422888073472bbb3b8caacf9092c",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/service.mjs": "03cad5aabac17b9f0fe846923099ea66f62c55ebe1022aa62f173bb4269b6400",
+    "simulator/editor.mjs": "3b4a1239781cf2574973132752e2c46140be36f885d9e180422d965d00e650e2",
+    "tests/f1/current-index.test.mjs": "e21b51a628f937cbdd8a268b7703e2ef08c19bada85a3211ebb760e12157a5d0",
+    "tests/f1/cooperative.test.mjs": "aeb98cd7ec5f5588a91d602ab506d5105389796932b444ea0129a8eb5390d337",
+    "tests/f1/run-regressions.py": "48bb9010648d635b929969dbff8aa82b2bd7fd4e144904dcdaa803c61cb02c43",
+    "tests/f1/equivalence.test.mjs": "13bf0afdad6ff16c95812ac3c348287dfa7517673a5ca215481c1219bceccb96",
+    "tests/f1/real-large-journeys.py": "c5ff65c1ce52e0d95bf1cfa4fd32f6480a8eba880c20456bdd3f57254d77c326",
+    "tests/f1/native-partition-cases.mjs": "48fe47ddea9dca4ff17fe3ed963346f915f945ca85f6df619646084bde0a354b",
+    "tests/f1/verify-evidence.py": "3e9ff0c6335932d6325534552358a3e1bd93d0bee960e73813ea7dd47fa81a7a",
+    "tests/f1/real-performance.py": "5f62dbc0ec5fc04029d58f3a3a2b124b13308ef44c756282a962ef73b49812b1",
+    "tests/f1/partitioned.test.mjs": "4e1eabd9c01666f56c9880360208cd2db7b917c36945f605f2ebe62402728317"
+  },
+  "environment": {
+    "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+    "node": "v26.8.2",
+    "python": "3.14.7",
+    "playwright": "1.63.0",
+    "chrome": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/154.0.8037.99",
+      "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+      "jsVersion": "15.4.80.20"
+    }
+  },
+  "buildHashes": {
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5",
+    "build-hashes.json": "e2a35b7565da2f853ca1b4d49b3dd8d8aec3c12b5ac8444cf97c6befbc109e7a",
+    "content.js": "30391c0827ec42966d49a4fcdbb44312ffd20f1e75d12033753685adcf3329cd",
+    "simulator/worker.mjs": "14e8c51314eb4d42c302bb5eb3f22753755500e90c82661b2e6cf7591868e4b4",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/service.mjs": "03cad5aabac17b9f0fe846923099ea66f62c55ebe1022aa62f173bb4269b6400",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/document-binding-broker.mjs": "18f75d2f839ca52f2417241bd678748a4a554e90a14eeb004de9cbcde7c91ca3",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/repository.mjs": "a8f6504650db363c4092c8ac4332e3515e1d4ccc1e6b893ea4bd468b8b37a6cc",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/partitioned.mjs": "25d3756bf4e3e45342541140efd6d6eac8d381380c90baf57098560ddd18d63d",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/replica.mjs": "a79882d912cae17ca5777a2ac5a8f8ff0d4d4b11585cdcbe4671628de098befc",
+    "tests/f1/native-partition-cases.mjs": "48fe47ddea9dca4ff17fe3ed963346f915f945ca85f6df619646084bde0a354b"
+  },
+  "instrumentation": "temporary build static fixture imports, original native contracts, privileged test corruption and RPC timings only; no production guard/deadline/lease edits",
+  "extension": {
+    "id": "obgnngholjnjfibnnipcneelbkkmmbjp"
+  },
+  "seed": {
+    "status": "PERSISTED",
+    "writeMs": 26181,
+    "snapshotMs": 8484,
+    "counts": {
+      "refs": 100000,
+      "themes": 120
+    },
+    "protectedCount": 100000,
+    "initialCounts": {
+      "refs": 604,
+      "themes": 120
+    }
+  },
+  "contentContexts": [
+    {
+      "id": 11,
+      "origin": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "2643108082020434752.-6004187710632074683",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "8D6D718EFA79F3701DF302DE43A4126E"
+      }
+    },
+    {
+      "id": 11,
+      "origin": "chrome-extension://obgnngholjnjfibnnipcneelbkkmmbjp",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "2643108082020434752.-6004187710632074683",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "8D6D718EFA79F3701DF302DE43A4126E"
+      }
+    }
+  ],
+  "nativeInputMeasurements": {
+    "gaps": [
+      16.299999952316284,
+      16.200000047683716,
+      15.5,
+      16.5,
+      16.299999952316284,
+      15.600000143051147,
+      16.59999990463257,
+      15.200000047683716,
+      16.299999952316284,
+      15.900000095367432,
+      15.799999952316284,
+      16.799999952316284,
+      15.200000047683716,
+      16.59999990463257,
+      15.700000047683716,
+      16.299999952316284,
+      15.400000095367432,
+      15.900000095367432,
+      16.299999952316284,
+      16.200000047683716,
+      15.699999809265137,
+      15.800000190734863,
+      16.399999856948853,
+      16.200000047683716,
+      15.400000095367432,
+      16.59999990463257,
+      16.200000047683716,
+      15.299999952316284,
+      16.799999952316284,
+      15.100000143051147,
+      16.5,
+      15.5,
+      16.299999952316284,
+      16.09999990463257,
+      16,
+      15.700000047683716,
+      16.40000009536743,
+      15.599999904632568,
+      16.90000009536743,
+      15,
+      16.799999952316284,
+      15.299999952316284,
+      16.200000047683716,
+      15.799999952316284,
+      16.40000009536743,
+      15.599999904632568,
+      16.700000047683716,
+      15.700000047683716,
+      16.09999990463257,
+      15.400000095367432,
+      16.299999952316284,
+      16.700000047683716,
+      15.599999904632568,
+      16,
+      15.599999904632568,
+      15.900000095367432,
+      16.09999990463257,
+      15.700000047683716,
+      16.700000047683716,
+      15.5,
+      16.200000047683716,
+      15.799999952316284,
+      16.200000047683716,
+      15.799999952316284,
+      16.200000047683716,
+      16.299999952316284,
+      15.700000047683716,
+      15.799999952316284,
+      16.40000009536743,
+      15.799999952316284,
+      16.700000047683716,
+      15.5,
+      15.5,
+      16,
+      16,
+      16.399999856948853,
+      16,
+      15.799999952316284,
+      15.800000190734863,
+      16,
+      16.299999952316284,
+      15.799999952316284,
+      15.900000095367432,
+      16.09999990463257,
+      16.299999952316284,
+      15.600000143051147,
+      16.799999952316284,
+      15.200000047683716,
+      17,
+      15.199999809265137,
+      16.100000143051147,
+      16,
+      16.5,
+      15.399999856948853,
+      15.800000190734863,
+      16.299999952316284,
+      16,
+      16.700000047683716,
+      15.5,
+      15.599999904632568,
+      17.299999952316284,
+      15.400000095367432,
+      15.899999856948853,
+      17.300000190734863,
+      14.5,
+      15.5,
+      16.09999990463257,
+      16.200000047683716,
+      16.5,
+      15.799999952316284,
+      15.700000047683716,
+      15.700000047683716,
+      16.59999990463257,
+      15.799999952316284,
+      15.700000047683716,
+      16.40000009536743,
+      15.699999809265137,
+      16.5,
+      15.5,
+      16,
+      16.700000047683716,
+      15.400000095367432,
+      16,
+      16.09999990463257,
+      15.700000047683716,
+      16.59999990463257,
+      15.600000143051147,
+      15.799999952316284,
+      16.5,
+      16.299999952316284,
+      15.600000143051147,
+      15.5,
+      16.59999990463257,
+      15.400000095367432,
+      16.199999809265137,
+      16.300000190734863,
+      16.299999952316284,
+      15.5,
+      15.599999904632568,
+      16.100000143051147,
+      16.59999990463257,
+      15.900000095367432,
+      16.299999952316284,
+      15.899999856948853,
+      16,
+      61.200000047683716,
+      2.200000047683716,
+      15.799999952316284,
+      16.40000009536743,
+      15.899999856948853,
+      16.100000143051147,
+      16.59999990463257,
+      15.600000143051147,
+      15.599999904632568,
+      16.59999990463257,
+      15.300000190734863,
+      16.799999952316284,
+      15.899999856948853,
+      15.600000143051147,
+      16.09999990463257,
+      15.700000047683716,
+      16.700000047683716,
+      15.399999856948853,
+      16.200000047683716,
+      41.40000009536743,
+      6.099999904632568,
+      46.40000009536743,
+      1.8999998569488525,
+      16.200000047683716,
+      15.900000095367432,
+      15.799999952316284,
+      41.40000009536743,
+      6.5,
+      20.59999990463257,
+      17.5,
+      10,
+      16.59999990463257,
+      15.300000190734863,
+      36.19999980926514,
+      12.100000143051147,
+      16.200000047683716,
+      15.899999856948853,
+      16.600000143051147,
+      31,
+      16.399999856948853,
+      15.700000047683716,
+      16.299999952316284,
+      16,
+      16,
+      66.20000004768372,
+      13.400000095367432,
+      16.399999856948853,
+      15.799999952316284,
+      15.800000190734863,
+      16.199999809265137,
+      16.800000190734863,
+      15.899999856948853,
+      15.5,
+      15.799999952316284,
+      16.100000143051147,
+      15.799999952316284,
+      16.200000047683716,
+      15.700000047683716,
+      16.199999809265137,
+      16,
+      16.100000143051147,
+      15.899999856948853,
+      16.100000143051147,
+      16.700000047683716,
+      15.399999856948853,
+      16.5,
+      15.799999952316284,
+      15.700000047683716,
+      16.100000143051147,
+      15.399999856948853,
+      16.600000143051147,
+      16.199999809265137,
+      15.5,
+      15.700000047683716,
+      16,
+      17.100000143051147,
+      15.299999952316284,
+      16.09999990463257,
+      16.600000143051147,
+      15,
+      16.59999990463257,
+      15.900000095367432,
+      16.09999990463257,
+      16,
+      15.599999904632568,
+      16,
+      16.300000190734863,
+      15.899999856948853,
+      16.100000143051147,
+      16.199999809265137,
+      15.400000095367432,
+      16.40000009536743,
+      15.5,
+      16.09999990463257,
+      16.40000009536743,
+      16.199999809265137,
+      15.400000095367432,
+      17,
+      15.299999952316284,
+      16.100000143051147,
+      16,
+      16.09999990463257,
+      15.599999904632568,
+      16.100000143051147,
+      15.700000047683716,
+      16.299999952316284,
+      15.799999952316284,
+      16.5,
+      15.700000047683716,
+      15.700000047683716,
+      16.299999952316284,
+      15.700000047683716,
+      17.09999990463257,
+      15.599999904632568,
+      15.5,
+      16.100000143051147,
+      16.399999856948853,
+      15.5,
+      15.900000095367432,
+      16.59999990463257,
+      16,
+      15.300000190734863,
+      16,
+      16.399999856948853,
+      16.5,
+      15.799999952316284,
+      16,
+      16.200000047683716,
+      15.600000143051147,
+      16,
+      16.5,
+      15,
+      16.199999809265137,
+      16.700000047683716,
+      15.700000047683716,
+      15.700000047683716,
+      16.299999952316284,
+      15.700000047683716,
+      15.899999856948853,
+      15.900000095367432,
+      16.09999990463257,
+      15.700000047683716,
+      16.299999952316284,
+      16.200000047683716,
+      15.700000047683716,
+      16.200000047683716,
+      16.200000047683716,
+      15.699999809265137,
+      15.700000047683716,
+      16.40000009536743,
+      15.799999952316284,
+      16.40000009536743,
+      16.299999952316284,
+      15.099999904632568,
+      16.40000009536743,
+      15.700000047683716,
+      16.09999990463257,
+      16,
+      16.299999952316284,
+      15.600000143051147,
+      16.09999990463257,
+      16,
+      16.799999952316284,
+      15.400000095367432,
+      16.399999856948853,
+      15.5,
+      15.900000095367432,
+      15.900000095367432,
+      16.59999990463257,
+      15.599999904632568,
+      16.600000143051147,
+      16.09999990463257,
+      15.600000143051147,
+      15.899999856948853,
+      15.900000095367432,
+      15.700000047683716,
+      16.09999990463257,
+      15.900000095367432,
+      16.899999856948853,
+      15.600000143051147,
+      15.599999904632568,
+      16.299999952316284,
+      16.200000047683716,
+      15.700000047683716,
+      15.799999952316284,
+      16.5,
+      15.400000095367432,
+      16.199999809265137,
+      16.40000009536743,
+      15.5,
+      16.700000047683716,
+      15.299999952316284,
+      15.900000095367432,
+      16.799999952316284,
+      15.200000047683716,
+      16,
+      16.199999809265137,
+      16.800000190734863,
+      15,
+      16.399999856948853,
+      16.299999952316284,
+      16.300000190734863,
+      15.5,
+      15.799999952316284,
+      15.700000047683716,
+      16.299999952316284,
+      16.59999990463257,
+      16,
+      15.100000143051147,
+      16,
+      16.5,
+      15.799999952316284,
+      15.799999952316284,
+      16,
+      16.09999990463257,
+      16.40000009536743,
+      15.400000095367432,
+      16.399999856948853,
+      15.600000143051147,
+      16.199999809265137,
+      16.700000047683716,
+      15.200000047683716,
+      16.59999990463257,
+      15.600000143051147,
+      16.299999952316284,
+      15.400000095367432,
+      16.5,
+      16.199999809265137,
+      16,
+      15.5,
+      15.800000190734863,
+      16,
+      16,
+      16.299999952316284,
+      15.799999952316284,
+      16.40000009536743,
+      15.399999856948853,
+      16.200000047683716,
+      16.299999952316284,
+      16.200000047683716,
+      16,
+      15.900000095367432,
+      15.599999904632568,
+      16.40000009536743,
+      15.5,
+      15.899999856948853,
+      16.200000047683716,
+      16,
+      16.299999952316284,
+      15.900000095367432,
+      15.899999856948853,
+      15.900000095367432,
+      16,
+      16.799999952316284,
+      15.600000143051147,
+      16.09999990463257,
+      15.799999952316284,
+      15.600000143051147,
+      16.799999952316284,
+      15.399999856948853,
+      15.800000190734863,
+      16,
+      16.299999952316284,
+      16,
+      16,
+      16.59999990463257,
+      15.400000095367432,
+      16,
+      15.700000047683716,
+      16,
+      16,
+      16.199999809265137,
+      15.800000190734863,
+      16.199999809265137,
+      16.5,
+      15.900000095367432,
+      15.599999904632568,
+      15.900000095367432,
+      16,
+      16.5,
+      15.900000095367432,
+      15.599999904632568,
+      16.700000047683716,
+      15.899999856948853,
+      15.700000047683716,
+      16.600000143051147,
+      15.399999856948853,
+      16.100000143051147
+    ],
+    "input": true,
+    "draft": true,
+    "transcript": true,
+    "range": true,
+    "messages": true,
+    "writeError": null
+  },
+  "transportTraceAfterLastBoot": [
+    {
+      "type": "BIND",
+      "ms": 82.19999980926514,
+      "bytes": 214,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 72,
+      "bytes": 1107627,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 72.79999995231628,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 68.90000009536743,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 983.6000001430511,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 987.7000000476837,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 80.29999995231628,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 98.60000014305115,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 102.39999985694885,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 105.09999990463257,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 96,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 122.29999995231628,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 1.0999999046325684,
+      "bytes": 215,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 97.30000019073486,
+      "bytes": 1107627,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 68.30000019073486,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 65,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 100.79999995231628,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 103.5,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 101.79999995231628,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 102.89999985694885,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 81.39999985694885,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 1027.7000000476837,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 849.5,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 0.3000001907348633,
+      "bytes": 215,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 668.0999999046326,
+      "bytes": 1107627,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 0.2999999523162842,
+      "bytes": 215,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 2.3999998569488525,
+      "bytes": 215,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 12720.100000143051,
+      "bytes": 37,
+      "ok": false,
+      "reason": "stale-binding"
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 6795.5,
+      "bytes": 37,
+      "ok": false,
+      "reason": "stale-binding"
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 1067,
+      "bytes": 1107627,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 784.9000000953674,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 1053.6000001430511,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 848.9000000953674,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 1019.0999999046326,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 839,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 1023.7999999523163,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 87.29999995231628,
+      "bytes": 215,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 86.60000014305115,
+      "bytes": 48,
+      "ok": false,
+      "reason": "invalidated-during-check"
+    },
+    {
+      "type": "BIND",
+      "ms": 0.2999999523162842,
+      "bytes": 215,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 78.09999990463257,
+      "bytes": 1107527,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 366.7999999523163,
+      "bytes": 5615380,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 353.2999999523163,
+      "bytes": 5685707,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 357.7000000476837,
+      "bytes": 5750708,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 361.90000009536743,
+      "bytes": 5750708,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 360.5,
+      "bytes": 5750695,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 356.7999999523163,
+      "bytes": 5750708,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 359,
+      "bytes": 5750708,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 470,
+      "bytes": 5750701,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 368,
+      "bytes": 5750702,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 357.80000019073486,
+      "bytes": 5750708,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 357.40000009536743,
+      "bytes": 5750708,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 364.59999990463257,
+      "bytes": 5750695,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 352.09999990463257,
+      "bytes": 5750708,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 356.5,
+      "bytes": 5750708,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 351.30000019073486,
+      "bytes": 5750712,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 352,
+      "bytes": 5750691,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 356.40000009536743,
+      "bytes": 5750708,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 351.40000009536743,
+      "bytes": 5750708,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 355.7000000476837,
+      "bytes": 5750711,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 352.60000014305115,
+      "bytes": 5750693,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 79.29999995231628,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 143.90000009536743,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SAVE_VIEW",
+      "ms": 3.1000001430511475,
+      "bytes": 24,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 1.7000000476837158,
+      "bytes": 40,
+      "ok": false,
+      "reason": "unverified-scope"
+    },
+    {
+      "type": "BIND",
+      "ms": 0.10000014305114746,
+      "bytes": 40,
+      "ok": false,
+      "reason": "unverified-scope"
+    },
+    {
+      "type": "BIND",
+      "ms": 0.40000009536743164,
+      "bytes": 215,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 0.19999980926513672,
+      "bytes": 215,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 73,
+      "bytes": 1107627,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 362.7999999523163,
+      "bytes": 5615381,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 361.5,
+      "bytes": 5685708,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 375.10000014305115,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 373.40000009536743,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 376.89999985694885,
+      "bytes": 5750696,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 382.60000014305115,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 364.19999980926514,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 384,
+      "bytes": 5750702,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 361.40000009536743,
+      "bytes": 5750703,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 385.2000000476837,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 402.40000009536743,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 364.2000000476837,
+      "bytes": 5750696,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 376.7000000476837,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 379.40000009536743,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 385.2000000476837,
+      "bytes": 5750713,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 371.90000009536743,
+      "bytes": 5750692,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 381.10000014305115,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 388.80000019073486,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 376.09999990463257,
+      "bytes": 5750712,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 368.10000014305115,
+      "bytes": 5750763,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 79,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 73.79999995231628,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 2.6000001430511475,
+      "bytes": 213,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 3.3999998569488525,
+      "bytes": 48,
+      "ok": false,
+      "reason": "invalidated-during-check"
+    },
+    {
+      "type": "BIND",
+      "ms": 0.40000009536743164,
+      "bytes": 213,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 76.30000019073486,
+      "bytes": 1107627,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 386.7000000476837,
+      "bytes": 5615381,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 372.09999990463257,
+      "bytes": 5685708,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 385,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 385.89999985694885,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 112.5,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 376.7000000476837,
+      "bytes": 5750696,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 387,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 400.2999999523163,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 406.90000009536743,
+      "bytes": 5750702,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 391.7000000476837,
+      "bytes": 5750703,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 81.09999990463257,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 381.2999999523163,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 378.39999985694885,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 372.40000009536743,
+      "bytes": 5750696,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 374.90000009536743,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 379.59999990463257,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 114.79999995231628,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 385.39999985694885,
+      "bytes": 5750713,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 373.2000000476837,
+      "bytes": 5750692,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 394.7999999523163,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 386.5,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 377.40000009536743,
+      "bytes": 5750712,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 425.7999999523163,
+      "bytes": 5750763,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 402.89999985694885,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 72.29999995231628,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 0.40000009536743164,
+      "bytes": 215,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 73.09999990463257,
+      "bytes": 1107627,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 80.29999995231628,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 78.70000004768372,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 68,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_COMMAND",
+      "ms": 359.2999999523163,
+      "bytes": 98,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 82.20000004768372,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 152.90000009536743,
+      "bytes": 1107663,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 179.10000014305115,
+      "bytes": 1107663,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 88.10000014305115,
+      "bytes": 1229,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 92.09999990463257,
+      "bytes": 1229,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 83.59999990463257,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 75.79999995231628,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 75.5,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 77.20000004768372,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 76.89999985694885,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 67.79999995231628,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 71.10000014305115,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 69.39999985694885,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 68.20000004768372,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SAVE_VIEW",
+      "ms": 3,
+      "bytes": 24,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 68,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SAVE_VIEW",
+      "ms": 1.2000000476837158,
+      "bytes": 24,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 0.3000001907348633,
+      "bytes": 214,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 81.10000014305115,
+      "bytes": 1107663,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 114.90000009536743,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 77,
+      "bytes": 96,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 84.29999995231628,
+      "bytes": 1107663,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 368.40000009536743,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 0.2999999523162842,
+      "bytes": 215,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 155.59999990463257,
+      "bytes": 38,
+      "ok": false,
+      "reason": "corrupt-record"
+    },
+    {
+      "type": "B23_RECOVERY_STATUS",
+      "ms": 258.59999990463257,
+      "bytes": 237,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_RECOVER_ASSETS",
+      "ms": 492.5,
+      "bytes": 175,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "BIND",
+      "ms": 0.39999985694885254,
+      "bytes": 215,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_SNAPSHOT",
+      "ms": 81.79999995231628,
+      "bytes": 1107697,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 390,
+      "bytes": 5615414,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 377.5,
+      "bytes": 5685708,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 393.2999999523163,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 359.40000009536743,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 365.2999999523163,
+      "bytes": 5750696,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 373.90000009536743,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 368.7000000476837,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 373,
+      "bytes": 5750702,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 392.2999999523163,
+      "bytes": 5750703,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 390.39999985694885,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 363.59999990463257,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 357.80000019073486,
+      "bytes": 5750696,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 382.2000000476837,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 379.09999990463257,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 396.2999999523163,
+      "bytes": 5750713,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 365.7999999523163,
+      "bytes": 5750692,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 368.10000014305115,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 360.80000019073486,
+      "bytes": 5750709,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 373.7999999523163,
+      "bytes": 5750712,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "B23_PARTITION_PAGE",
+      "ms": 406,
+      "bytes": 5750807,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 71.40000009536743,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 65.20000004768372,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "type": "CHECK",
+      "ms": 105.09999990463257,
+      "bytes": 97,
+      "ok": true,
+      "reason": null
+    }
+  ],
+  "boundedTransport": {
+    "maxPageBytes": 5750807,
+    "maxSuccessfulRpcMs": 1067,
+    "requestDeadlineMs": 6000,
+    "leaseMs": 20000,
+    "pageSize": 5000
+  },
+  "server": {
+    "stdout": "",
+    "stderr": "",
+    "exit": -15
+  },
+  "endedAt": 1791773548.4920561,
+  "counts": {
+    "PASS": 8,
+    "FAIL": 1,
+    "BLOCKED": 0
+  }
+}

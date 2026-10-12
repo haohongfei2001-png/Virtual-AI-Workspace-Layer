@@ -1,0 +1,25 @@
+✔ yielded projection matches synchronous accepted semantics across scopes and revocation (765.517292ms)
+✔ yielded computation rejects authority changes before publishing a partial result (19.157167ms)
+✔ PART01 bounded storage preserves all original 120/604 projections and canonical refs (146.671458ms)
+✔ PART02 the original CAS/idempotence transaction has one winner across connections (114.98725ms)
+✔ PART03 far-reference move and targeted undo use original human patches (142.226958ms)
+✔ PART04 repeated initialization cannot overwrite immutable live human pieces (131.184542ms)
+✔ PART05 mixed revisions and incomplete view replicas are rejected (113.357708ms)
+✔ PART06 revocation updates all evidence projections without rewriting reference pieces (118.516125ms)
+✔ PART07 damaged view leaves intact assets and unknown scope is rejected (97.758291ms)
+✔ PART08 A/B same ref IDs remain distinct (208.085208ms)
+✔ PART09 checkpoint retains previous immutable pieces and latest manual assets recover (162.352334ms)
+✔ PART10 v2 storage migration preserves latest human revision and revoked sources (408.575333ms)
+✔ PART11 asset backup includes latest manual references and preferences, dry-run is read-only (247.186416ms)
+✔ PART12 checkpoint plus latest workset preference restores reference dependencies safely (149.549917ms)
+✔ PART13 ingestion cannot reuse a global evidence ID in another reference partition (86.886167ms)
+✔ PART14 native quota failure cannot publish a manifest or success receipt (104.080458ms)
+✔ PART15 revocation after native put aborts pieces, checkpoint and receipt together (89.770791ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2381.638042

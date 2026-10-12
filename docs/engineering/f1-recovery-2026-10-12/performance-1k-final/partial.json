@@ -1,0 +1,101 @@
+{
+  "argv": [
+    "tests/f1/real-performance.py",
+    "docs/engineering/f1-recovery-2026-10-12/performance-1k-final",
+    "1000"
+  ],
+  "head": "b7a56817056a93add0116a2b13c2b41e9aa6d28d",
+  "tests": [
+    {
+      "id": "F1-real-1000",
+      "status": "PASS",
+      "actual": {
+        "status": "PERSISTED",
+        "writeMs": 180.70000004768372,
+        "snapshotMs": 46.5,
+        "counts": {
+          "refs": 1000,
+          "themes": 120
+        },
+        "protectedCount": 1000,
+        "initialCounts": {
+          "refs": 604,
+          "themes": 120
+        },
+        "navigationMs": [
+          30.09999990463257,
+          35.60000014305115,
+          27.899999856948853,
+          30.700000047683716,
+          34.200000047683716,
+          30.700000047683716,
+          33.799999952316284,
+          33,
+          30.09999990463257,
+          30.799999952316284,
+          34.09999990463257,
+          32.40000009536743,
+          32.700000047683716,
+          30.59999990463257,
+          34.09999990463257,
+          33.69999980926514,
+          30.299999952316284,
+          32.30000019073486,
+          32.39999985694885,
+          31.09999990463257
+        ],
+        "searchFirstPaintMs": [
+          17.09999990463257,
+          33.60000014305115,
+          32.299999952316284,
+          32.200000047683716,
+          32.200000047683716,
+          30.200000047683716,
+          32,
+          31.399999856948853,
+          33.299999952316284,
+          30.100000143051147
+        ],
+        "navigationP95": 34.200000047683716,
+        "searchP95": 33.299999952316284,
+        "nativeNodesAndDraftIntact": true
+      },
+      "buildHashes": {
+        "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+        "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+        "src/b1/document-binding-broker.mjs": "18f75d2f839ca52f2417241bd678748a4a554e90a14eeb004de9cbcde7c91ca3",
+        "simulator/service.mjs": "03cad5aabac17b9f0fe846923099ea66f62c55ebe1022aa62f173bb4269b6400",
+        "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+        "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+        "simulator/worker.mjs": "6bd636487f3426d92e7c10b2180e818b526ef83716f858f9b904bc0b58069b93",
+        "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+        "src/data/partitioned.mjs": "25d3756bf4e3e45342541140efd6d6eac8d381380c90baf57098560ddd18d63d",
+        "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+        "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+        "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+        "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+        "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+        "src/data/repository.mjs": "a8f6504650db363c4092c8ac4332e3515e1d4ccc1e6b893ea4bd468b8b37a6cc",
+        "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+        "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+        "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+        "content.js": "30391c0827ec42966d49a4fcdbb44312ffd20f1e75d12033753685adcf3329cd",
+        "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+      },
+      "targets": {
+        "navigationP95LessThan": 150,
+        "searchP95LessThan": 300
+      }
+    }
+  ],
+  "scope": "fresh isolated Chrome MV3 / actual extension IDB / synthetic appended fixture; no real user data",
+  "startedAt": 1791775626.066817,
+  "instrumentation": "Temporary build-only static imports for privileged synthetic fixture seeding; same modules/service/IDB, no mock. Dynamic import was a driver defect. Production worker source unchanged.",
+  "chrome": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/154.0.8037.99",
+    "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "jsVersion": "15.4.80.20"
+  }
+}

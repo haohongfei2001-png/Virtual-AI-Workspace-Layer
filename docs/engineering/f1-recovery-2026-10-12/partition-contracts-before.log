@@ -1,0 +1,36 @@
+✔ PART01 bounded storage preserves all original 120/604 projections and canonical refs (151.152208ms)
+✔ PART02 the original CAS/idempotence transaction has one winner across connections (106.275709ms)
+✔ PART03 far-reference move and targeted undo use original human patches (148.217541ms)
+✔ PART04 repeated initialization cannot overwrite immutable live human pieces (156.087708ms)
+✔ PART05 mixed revisions and incomplete view replicas are rejected (106.612917ms)
+✔ PART06 revocation updates all evidence projections without rewriting reference pieces (118.382375ms)
+✔ PART07 damaged view leaves intact assets and unknown scope is rejected (91.830041ms)
+✔ PART08 A/B same ref IDs remain distinct (202.563209ms)
+✖ PART09 checkpoint retains previous immutable pieces and latest manual assets recover (95.917542ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 8
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1231.132625
+
+✖ failing tests:
+
+test at tests/f1/partitioned.test.mjs:23:1
+✖ PART09 checkpoint retains previous immutable pieces and latest manual assets recover (95.917542ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/partitioned.test.mjs:23:473)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

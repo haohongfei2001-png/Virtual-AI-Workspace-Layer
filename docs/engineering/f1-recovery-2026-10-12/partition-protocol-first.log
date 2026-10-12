@@ -1,0 +1,26 @@
+✔ B1: sender identity is independent of page-supplied scope and exact envelope (1.631458ms)
+✔ B1: new browser-confirmed document supersedes old lease without waiting (0.958417ms)
+✔ B1: route invalidation revokes even same-document tokens (0.164958ms)
+✔ B1: wrong browser document and unknown scope fail closed (0.08925ms)
+✔ B1: worker restart invalidates transient lease, not persisted reference (2.269208ms)
+✔ B1: scope change makes old records unreachable even if same native ID (0.192292ms)
+✔ B1: lease expiry/replay and browser-confirmed same-document SPA route (0.218ms)
+✔ B1: delayed scope resolver cannot commit after navigation invalidates (0.08075ms)
+✔ B1: stale pending write is rejected at repository commit fence (1.979875ms)
+✔ B1: an asynchronous stale read never returns a stored reference (0.941667ms)
+✔ B1: a same-document SPA route change never exposes old async reads (1.801167ms)
+✔ B23 broker rejects scope/actor and evidence injection in page commands (2.802625ms)
+✔ B23 delayed snapshot never returns previous account data at unchanged URL (0.723958ms)
+✔ B23 browser invalidation aborts pending mutation and rejects result (0.197917ms)
+✔ B23 new document supersession aborts old mutation fence (0.183417ms)
+✔ B23 command envelope passes human operation and abort signal but not mutable scope from page (0.160792ms)
+✔ B23 packed worker graph resolves all local dependencies and has no test database fallback (13.640708ms)
+✔ legacy B1 fixture build preserves its entry ABI and resolves new shared dependencies (40.830833ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 110.939083
