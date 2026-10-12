@@ -1,0 +1,42 @@
+{
+  "layer": "LIVE_NETWORK_AND_BROWSER",
+  "initialPlaywrightNativeLaunch": {
+    "headful": true,
+    "freshProfile": true,
+    "http": null,
+    "errorType": "Error",
+    "extensionLoaded": false,
+    "loginGatePaused": true
+  },
+  "configuredLoopbackProxyPlaywrightRetry": {
+    "errorType": "Error",
+    "networkErrorCodes": [
+      "net::ERR_CONNECTION_CLOSED"
+    ],
+    "systemSettingsChanged": false
+  },
+  "publicHeadWithoutExplicitProxy": {
+    "exitCode": 28,
+    "http": 0,
+    "securityOverrides": false
+  },
+  "publicHeadUsingExistingConfiguredLoopbackProxy": {
+    "exitCode": 0,
+    "http": 403,
+    "tlsVerifyResult": 0,
+    "cookiesRead": false,
+    "securityOverrides": false
+  },
+  "standardNativeChromeWithSameExistingProxy": {
+    "http": 200,
+    "navigationError": null,
+    "headful": true,
+    "noPlaywrightDefaultLaunchFlags": true,
+    "newProfile": true,
+    "extensionLoaded": false,
+    "loginRequired": false
+  },
+  "underlyingSpecificFlagRootCause": "NOT_PROVEN",
+  "noStealthFlagsOrSecurityBypass": true,
+  "noFurtherBlindRetries": true
+}

@@ -1,0 +1,96 @@
+{
+  "sourceBase": "f151fb4e843f5fda7b9eab972aae11385a5d4947",
+  "worktree": "/Users/hhf/Documents/Codex/VAIWL-Development/r0-live-20261012",
+  "branch": "codex/vaiwl-r0-live-readonly-20261012",
+  "historicalC1F1WorktreeUnchanged": true,
+  "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+  "node": "v26.8.2",
+  "python": "3.14.7",
+  "playwright": "1.63.0",
+  "chrome": "154.0.8037.99",
+  "visitorGrant": "user explicitly permits a few nonprivate synthetic guest messages; no sign-in prerequisite",
+  "liveHost": "https://chatgpt.com",
+  "noCredentialsOrInternalApi": true,
+  "nativeOwner": true,
+  "publicScreenshotsReviewedNoAccountIdsConversationIdsOrPrivateContent": true,
+  "prs": [
+    {
+      "number": 13,
+      "head": "f151fb4e843f5fda7b9eab972aae11385a5d4947",
+      "base": "codex/vaiwl-d1-d2-offline-20261012",
+      "draft": true
+    },
+    {
+      "number": 12,
+      "head": "3afaf33f99de45a793c0acf3c953d5255c66b4e5",
+      "base": "codex/vaiwl-c3-c4-context-20261012",
+      "draft": true
+    },
+    {
+      "number": 11,
+      "head": "38ea47dbd85a51951c3b5dbd283d2b088288b3f4",
+      "base": "codex/vaiwl-b5-protection-20261012",
+      "draft": true
+    },
+    {
+      "number": 10,
+      "head": "8d19020978c6ce79e23862dc9cd22d88848bdfe9",
+      "base": "codex/vaiwl-c1-workspace-20261011",
+      "draft": true
+    },
+    {
+      "number": 9,
+      "head": "a0552467f732e40adb7852c04f3e4343ff0431fe",
+      "base": "codex/vaiwl-b4-lifecycle-20261011",
+      "draft": true
+    },
+    {
+      "number": 8,
+      "head": "3b1a40f9d2bedfd3180a32c3db6d12d5a28e9fd9",
+      "base": "feat/vaiwl-b2-b3-persistent-20261011",
+      "draft": true
+    },
+    {
+      "number": 7,
+      "head": "dc73231d498d244e8b7bd14dfe95ba981b977537",
+      "base": "feat/vaiwl-hf-host-simulator-20261011",
+      "draft": true
+    },
+    {
+      "number": 6,
+      "head": "a02d65388f0a5d09833ac8a7091a45dea1720f82",
+      "base": "feat/vaiwl-b1-scope-broker-20261011",
+      "draft": true
+    },
+    {
+      "number": 5,
+      "head": "67653a293abebeb57b53f6568199f0e322db1c70",
+      "base": "docs/vaiwl-research-proposal-20261010",
+      "draft": true
+    },
+    {
+      "number": 4,
+      "head": "7d47d97bc7990cec7fd1d8a2a61797bf90e1c96f",
+      "base": "docs/vaiwl-research-proposal-20261010",
+      "draft": true
+    },
+    {
+      "number": 3,
+      "head": "d5c66221f18a24145974b9696a8788a5a8b90155",
+      "base": "experiments/vawl-r0-synthetic-20261009",
+      "draft": true
+    },
+    {
+      "number": 2,
+      "head": "e2e45a897417a5a38148f14e4cad469837a29964",
+      "base": "docs/vaiwl-research-proposal-20261010",
+      "draft": true
+    },
+    {
+      "number": 1,
+      "head": "79dbfa7e6e71595bfcc543334204975000469ac9",
+      "base": "main",
+      "draft": true
+    }
+  ]
+}
