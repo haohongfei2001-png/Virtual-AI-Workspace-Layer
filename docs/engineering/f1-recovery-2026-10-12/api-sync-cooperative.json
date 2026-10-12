@@ -1,0 +1,235 @@
+{
+  "repository": "haohongfei2001-png/Virtual-AI-Workspace-Layer",
+  "base": "10975643709a5cf3aea94da68c3a89f9f1a55c1c",
+  "branches": {
+    "codex/vaiwl-f1-performance-20261012": {
+      "localHead": "af706ce4d442d839df71578eef77981b268f066b",
+      "remoteBefore": "10975643709a5cf3aea94da68c3a89f9f1a55c1c",
+      "remoteAfter": "af706ce4d442d839df71578eef77981b268f066b"
+    }
+  },
+  "objects": {
+    "3c93bfcdd6ef3f9eb1e25185bfe24561e34f4058": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "edf3d0db0c2e5560cb796f5300917f15bca1c5d5"
+    },
+    "78f9265824647fad3916d91415a92ac985203123": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "edf3d0db0c2e5560cb796f5300917f15bca1c5d5"
+    },
+    "875fb3609ad83a78679daed0c42f4228ba4e90d3": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bb52eeacb3c555b21b8bbc451058a1d569bea517"
+    },
+    "ac27e638b8edf1b004466d895c0c4432410fcdd4": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bb52eeacb3c555b21b8bbc451058a1d569bea517"
+    },
+    "dd388c460f03ece6527097baa5c77d84e31f2992": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "edf3d0db0c2e5560cb796f5300917f15bca1c5d5"
+    },
+    "b76568c22bf2a07ec81656cb98c4332f2158d2f2": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bb52eeacb3c555b21b8bbc451058a1d569bea517"
+    },
+    "b1853450962240546d8fcde8db7cd90334945b11": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bb52eeacb3c555b21b8bbc451058a1d569bea517"
+    },
+    "afbd3a56482b72595e4efd74a95347ed86d104a2": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bb52eeacb3c555b21b8bbc451058a1d569bea517"
+    },
+    "bb52eeacb3c555b21b8bbc451058a1d569bea517": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "622633c639d19136fcea24e098ec67f6566f1751": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "edf3d0db0c2e5560cb796f5300917f15bca1c5d5"
+    },
+    "cc2f35a0a0731ff55c811975c99c784de5f13b2a": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "edf3d0db0c2e5560cb796f5300917f15bca1c5d5"
+    },
+    "edf3d0db0c2e5560cb796f5300917f15bca1c5d5": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "e192eec3be7179590a55ada6b0eb356f703106ff": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bf39dd908e61aa16062b5213b2a8944c0bcc9282"
+    },
+    "a288f597039e96b248f122709101bb04d07f8e8a": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bf39dd908e61aa16062b5213b2a8944c0bcc9282"
+    },
+    "384549ea6866d4ff285ba626be93c9d81cc682fe": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bf39dd908e61aa16062b5213b2a8944c0bcc9282"
+    },
+    "9a039b737cc386bbcf6b9191b6a86022cb2b38e3": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bf39dd908e61aa16062b5213b2a8944c0bcc9282"
+    },
+    "b6c20b5bb90268f29e1be41d60c12045af1f91ba": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bf39dd908e61aa16062b5213b2a8944c0bcc9282"
+    },
+    "82e75e93cda8ffa1ab7a88405c25f097c9053e4e": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bf39dd908e61aa16062b5213b2a8944c0bcc9282"
+    },
+    "a05a9453c45e85c987ed52188e53ea0441cb5167": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bf39dd908e61aa16062b5213b2a8944c0bcc9282"
+    },
+    "e52e9ecbdef72e5e0529101396d486b5a75922c0": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bf39dd908e61aa16062b5213b2a8944c0bcc9282"
+    },
+    "286acccd759427a5ee22400b35a4b50b38a05588": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "bf39dd908e61aa16062b5213b2a8944c0bcc9282"
+    },
+    "bf39dd908e61aa16062b5213b2a8944c0bcc9282": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "f0d65606eb3fedc1ef408d3f8b3f67182648d98c": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "6d262e8b9281d5b41bb92fac9335671866fc0443"
+    },
+    "6d262e8b9281d5b41bb92fac9335671866fc0443": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "004b29cf74090e1789235ece65a00fdb2ce238ff": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "9b5f6f0d0510d262a5134dce5d2755756231a2d4": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "19912c3965ade505d058ceff3a474a3c436bff26"
+    },
+    "766b41fa5535346c31341dcd10fcc3c6748b5480": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "19912c3965ade505d058ceff3a474a3c436bff26"
+    },
+    "19912c3965ade505d058ceff3a474a3c436bff26": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "18b64048fc8013f71613989b4d99554cac713e7e": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "97bf8f3ab5ca67776d10ddfb148fe61537bce0d5"
+    },
+    "f7ed82003ce5f22ececee1dc4d6f7773456ede64": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "97bf8f3ab5ca67776d10ddfb148fe61537bce0d5"
+    },
+    "00a2dd724d1e0627b0227d5b5d18f8e75778c86d": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "97bf8f3ab5ca67776d10ddfb148fe61537bce0d5"
+    },
+    "a113bb0af26814e5e217116edfb22e73e5ceb149": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "97bf8f3ab5ca67776d10ddfb148fe61537bce0d5"
+    },
+    "97bf8f3ab5ca67776d10ddfb148fe61537bce0d5": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "0d8d48bafc335010cde0c48d19c3e8f3465bec64": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "a513cfd6996f5584010312a3fe62bd990b4f794b"
+    },
+    "d34d6b185d26ae2fd26b9f7144e0d3ae3c1f4984": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "a513cfd6996f5584010312a3fe62bd990b4f794b"
+    },
+    "a513cfd6996f5584010312a3fe62bd990b4f794b": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "947b50451a5a7c8a9ae2a26558d95d5c8de78ce4": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "9373f1187b6857a0cd51bca9e10bac2457e38155": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "f36dcd3031e7f961e8da3ad220f2e86103468efe"
+    },
+    "7f87b73f83bf006ad4ea4603cc9815824f7e0abc": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "f36dcd3031e7f961e8da3ad220f2e86103468efe"
+    },
+    "5d595a183de7f3e59329f342e4ffc53206c10e40": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "f36dcd3031e7f961e8da3ad220f2e86103468efe"
+    },
+    "914627e081c43fb8e46b644c61df57a41cf9b815": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "f36dcd3031e7f961e8da3ad220f2e86103468efe"
+    },
+    "352b7f1138937d26a6c2923a6df5bb1b32f13bf3": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "f36dcd3031e7f961e8da3ad220f2e86103468efe"
+    },
+    "f36dcd3031e7f961e8da3ad220f2e86103468efe": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "566f4b330889bccd431ed5f79cab04e2110d8664": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "7458a53cffa7d268a83c109e1c7b0e3d12639eee": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "af706ce4d442d839df71578eef77981b268f066b": {
+      "type": "commit",
+      "verifiedExactSha": true
+    }
+  },
+  "startedAt": "2026-10-12T01:48:22.698292+00:00",
+  "transport": "GIT_DATA_API_EXACT_SHA",
+  "refsForce": false,
+  "status": "PASS",
+  "endedAt": "2026-10-12T01:48:52.561681+00:00"
+}

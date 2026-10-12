@@ -13,3 +13,9 @@ large-journeys-after-driver 第一组完整旅程有驱动前置竞态：外部�
 large-journeys-after-collision：真实100k远引用/多tab/移动撤销/文件下载备份/dry-run/恢复撤销/实际worker stopped事件+新boot自动醒/20slease/A-B-unknown-A通过；4x renderer CPU下并发更新原生主线程timer最大3149.8ms，FAIL，原生160消息/input/draft/range节点不变。正在用共同生成器保持同一投影/索引语义，计算每512项yield，计算末再次CHECK绑定和revision，再一次性发布完整scope视图。未改6s请求/20slease、原legacy20k行/16MiJSON护栏。
 
 下一：等待large-journeys-cooperative真实同场景复验；若仍有停顿定位下一同步批次，不能提阈值。然后1k/10k/100k性能及顺序完整既有Node/DOM/真实IDB/页面/MV3/C1/B5/C34/C5/B4回归。新增run-regressions.py可合并执行，均headless新Profile，不占当前窗口焦点。结果完成后SHA矩阵/原A-G STATUS更新、PR #13描述同步，继续原计划依赖满足的独立工作；不是后台承诺或本任务完成。
+
+追加进度：af706ce4d442d839df71578eef77981b268f066b已同步#13。协作式全量计算保留完整读一致性，但4x timer仍3216.8ms FAIL；background postTask使定向输入profile降至184.7ms，仍FAIL。实际CPU profile热点localDay/instant/replicaState/URL/index，GC样本较少，不能把全部延迟归为GC。改为同一dataProjection仅重算变更引用关联主题，source/clock变化保留完整重算；可复用同scope且身份/事件/placement顺序不变的私有URL索引，最终再CHECK不发布过期结果。定向输入降159.9ms，仍坚持150ms阈值。profile热点剩prepare/complete两个Map构造，改为512项复制、分批yield，正在input-profile-bounded-maps复验。
+
+另保留PART16真实引用顺序反例：原delta删除再插入T0将其移到数组末尾，已修复为manifest规范顺序；affected theme增量对title、MOVE、顺序、workingSet、source撤权逐项与完整read比较，22相关Node合同全部PASS。真实扩展IDB17合同通过（当前新layout），不使用mock冒充。活跃heartbeat检测损坏现直接进入同一B5已核验资产恢复UI，暂停而不删除未提交人工草稿；large-journeys-background实际UI恢复100k与最新人工数据已PASS，旧证据/收据失效。
+
+仍不是完整F1通过；input定向诊断不代表全部旅程。完成后必须回跑原9项完整100k旅程、1k/10k/100k性能、run-regressions的既有完整工程套件。旧失败、CPU profile、所有源码/build SHA留在各独立证据目录，不能改旧报告掩盖失败。

@@ -1,0 +1,30 @@
+✔ yielded projection matches synchronous accepted semantics across scopes and revocation (752.388209ms)
+✔ yielded computation rejects authority changes before publishing a partial result (17.415417ms)
+✔ native route index preserves first match, group priority, independent refs and query semantics (0.460709ms)
+✔ 100k current-ref lookup does not rescan reference getters after snapshot indexing (166.992458ms)
+✔ scope-checked index rebind follows new derived objects without rereading native URLs (0.442959ms)
+✔ PART01 bounded storage preserves all original 120/604 projections and canonical refs (157.321792ms)
+✔ PART02 the original CAS/idempotence transaction has one winner across connections (115.225333ms)
+✔ PART03 far-reference move and targeted undo use original human patches (142.598958ms)
+✔ PART04 repeated initialization cannot overwrite immutable live human pieces (129.709167ms)
+✔ PART05 mixed revisions and incomplete view replicas are rejected (106.813875ms)
+✔ PART06 revocation updates all evidence projections without rewriting reference pieces (113.399958ms)
+✔ PART07 damaged view leaves intact assets and unknown scope is rejected (93.831917ms)
+✔ PART08 A/B same ref IDs remain distinct (206.828375ms)
+✔ PART09 checkpoint retains previous immutable pieces and latest manual assets recover (156.820375ms)
+✔ PART10 v2 storage migration preserves latest human revision and revoked sources (338.627792ms)
+✔ PART11 asset backup includes latest manual references and preferences, dry-run is read-only (246.527333ms)
+✔ PART12 checkpoint plus latest workset preference restores reference dependencies safely (146.167ms)
+✔ PART13 ingestion cannot reuse a global evidence ID in another reference partition (85.681042ms)
+✔ PART14 native quota failure cannot publish a manifest or success receipt (99.578458ms)
+✔ PART15 revocation after native put aborts pieces, checkpoint and receipt together (89.438708ms)
+✔ PART16 incremental replicas preserve canonical reference order and exact projection semantics (175.050792ms)
+✔ PART17 affected-theme projection matches full reads across membership, order, preferences and source revocation (708.145792ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3171.170292

@@ -9,7 +9,8 @@ ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT/'tests/b23')
 from native_ui_checks import NativeChecks
 OUT=Path(sys.argv[1]);OUT.mkdir(parents=True,exist_ok=False)
 SEED=next(ast.literal_eval(n.value) for n in ast.parse((ROOT/'tests/f1/real-performance.py').read_text()).body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='SEED' for t in n.targets))
-r={'argv':sys.argv,'startedAt':time.time(),'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'tests':[],'workerEvents':[],'errors':[],'scope':'actual extension IndexedDB / fresh headless Chrome / 100000 accessible synthetic refs / no real ChatGPT'}
+INPUT_ONLY='--input-only' in sys.argv[2:]
+r={'targetedDiagnostic':INPUT_ONLY,'argv':sys.argv,'startedAt':time.time(),'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'tests':[],'workerEvents':[],'errors':[],'scope':'actual extension IndexedDB / fresh headless Chrome / 100000 accessible synthetic refs / no real ChatGPT'}
 r['sourceHashes']={str(f.relative_to(ROOT)):hashlib.sha256(f.read_bytes()).hexdigest() for d in ['src','simulator','tests/f1'] for f in (ROOT/d).rglob('*') if f.is_file() and '__pycache__' not in str(f)}
 r['environment']={'macOS':subprocess.check_output(['sw_vers'],text=True),'node':subprocess.check_output(['node','--version'],text=True).strip(),'python':platform.python_version()}
 import importlib.metadata
@@ -43,6 +44,7 @@ try:
   def piece(ref='F99999',account='A'):
    return repository("const header=await repo.partitionHeader(scope),p=await repo.partitionPage(scope,{revision:header.manifest.revision,offset:0,ids:[arg.ref]});return {meta:{revision:header.manifest.revision,count:Object.keys(header.manifest.refVersions).length,humanRefs:header.manifest.humanRefs,preferences:header.manifest.preferences},piece:p.pieces[0]};",{'ref':ref,'account':account})
   def case(name,fn):
+   if INPUT_ONLY and name not in ['F1-native-partition-migration-backup-recovery-contracts','F1-100k-4x-renderer-long-chat-concurrent-input-and-navigation']:return
    try:r['tests'].append({'id':name,'status':'PASS','actual':fn()})
    except Exception as e:
     r['tests'].append({'id':name,'status':'FAIL','error':str(e),'trace':traceback.format_exc(),'feedback':[pg.locator('[data-vaiwl-owned=workspace-editor] > [role=status]').all_text_contents() for pg in ctx.pages]})
@@ -57,9 +59,10 @@ try:
     if pg is not globals().get('p') and pg.url!='about:blank':pg.close()
    (OUT/'partial.json').write_text(json.dumps(r,ensure_ascii=False,indent=2));print(name,r['tests'][-1]['status'],flush=True)
   def contracts():
-   rows=worker.evaluate("async()=>{const out=[];for(const c of __F1.partitionedCases(indexedDB)){try{await c.run();out.push({name:c.name,status:'PASS'})}catch(e){out.push({name:c.name,status:'FAIL',error:e.message,stack:e.stack})}}return out;}");assert len(rows)==15 and all(x['status']=='PASS' for x in rows),rows;return {'actualExtensionIDB':True,'cases':rows}
+   rows=worker.evaluate("async()=>{const out=[];for(const c of __F1.partitionedCases(indexedDB)){try{await c.run();out.push({name:c.name,status:'PASS'})}catch(e){out.push({name:c.name,status:'FAIL',error:e.message,stack:e.stack})}}return out;}");assert len(rows)==17 and all(x['status']=='PASS' for x in rows),rows;return {'actualExtensionIDB':True,'cases':rows}
   case('F1-native-partition-migration-backup-recovery-contracts',contracts)
   seed=worker.evaluate(SEED,{'size':100000,'partitioned':True});assert seed['counts']=={'refs':100000,'themes':120} and seed['protectedCount']==100000 and seed['initialCounts']=={'refs':604,'themes':120};r['seed']=seed
+  if INPUT_ONLY:r['BSeed']=current_worker().evaluate(SEED,{'size':100000,'partitioned':True,'account':'B'})
   p=page();checks=NativeChecks(ctx,'mv3',ext,None,None,None,None,r)
   def far_navigation():
    assert p.evaluate('HF.data().refs.length')==100000
@@ -112,11 +115,19 @@ try:
   def slow_input():
    # Renderer throttling is a controlled stress model, not a physical low-end Mac claim.
    q=page(ref='T1');assert q.locator('[data-message-id]').count()==160
-   session=ctx.new_cdp_session(q);session.send('Emulation.setCPUThrottlingRate',{'rate':4})
+   session=ctx.new_cdp_session(q);session.send('Emulation.setCPUThrottlingRate',{'rate':4});profile='--profile-input' in sys.argv[2:]
+   if profile:session.send('Profiler.enable');session.send('Profiler.start')
    q.get_by_label('消息输入',exact=True).fill('100k long native draft');q.get_by_label('调整交互值',exact=True).fill('73')
    q.evaluate('globalThis.f1Long={input:HF.getView().input,transcript:HF.getView().transcript,range:HF.getView().transcript.querySelector("input[type=range]"),messages:[...document.querySelectorAll("[data-message-id]")]};globalThis.f1InputGaps=[];globalThis.f1LastTick=performance.now();globalThis.f1Timer=setInterval(()=>{const t=performance.now();f1InputGaps.push(t-f1LastTick);f1LastTick=t;},16)')
-   manage(p);p.get_by_label('派生标题',exact=True).fill('100k latest concurrent input probe');action(p,'保存派生标题');close(p);q.wait_for_timeout(3500)
-   observed=q.evaluate('(()=>{clearInterval(f1Timer);const v=HF.getView();return {gaps:f1InputGaps,input:f1Long.input===v.input,draft:v.input.value==="100k long native draft",transcript:f1Long.transcript===v.transcript,range:f1Long.range===v.transcript.querySelector("input[type=range]")&&f1Long.range.value==="73",messages:f1Long.messages.every((n,i)=>n===document.querySelectorAll("[data-message-id]")[i])};})()');r['nativeInputMeasurements']=observed;assert all(observed[k] for k in ['input','draft','transcript','range','messages']);assert max(observed['gaps'])<150,{'maxGapMs':max(observed['gaps']),'rate':4}
+   write_error=None
+   try:manage(p);p.get_by_label('派生标题',exact=True).fill('100k latest concurrent input probe');action(p,'保存派生标题')
+   except Exception as e:write_error=str(e)
+   finally:
+    if p.locator('[data-vaiwl-owned=workspace-editor]').count():close(p)
+   q.wait_for_timeout(3500)
+   observed=q.evaluate('(()=>{clearInterval(f1Timer);const v=HF.getView();return {gaps:f1InputGaps,input:f1Long.input===v.input,draft:v.input.value==="100k long native draft",transcript:f1Long.transcript===v.transcript,range:f1Long.range===v.transcript.querySelector("input[type=range]")&&f1Long.range.value==="73",messages:f1Long.messages.every((n,i)=>n===document.querySelectorAll("[data-message-id]")[i])};})()');observed['writeError']=write_error;r['nativeInputMeasurements']=observed
+   if profile:(OUT/'native-input-cpu-profile.json').write_text(json.dumps(session.send('Profiler.stop')['profile']))
+   assert all(observed[k] for k in ['input','draft','transcript','range','messages']);assert max(observed['gaps'])<150,{'maxGapMs':max(observed['gaps']),'rate':4};assert write_error is None,write_error
    q.get_by_label('返回工作区',exact=True).click();nav=[]
    for i in range(20):
     nav.append(q.evaluate('''async i=>{const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.workspace')).shadowRoot,b=root.querySelector(i%2?'[aria-label="较近的30日"]':'[aria-label="较早的30日"]'),t=performance.now();if(!b||b.disabled)throw Error('no adjacent interval');b.click();await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);return performance.now()-t;}''',i))
@@ -129,7 +140,12 @@ try:
    # Last committed edit is newer than the saved checkpoint; corrupt the actual root row.
    latest=repository("const rev=(await repo.partitionHeader(scope)).manifest.revision;return repo.command(scope,{operationId:'latest_before_native_damage',expectedRevision:rev,command:{type:'SET_TITLE',refId:'F99999',title:'100k latest human must survive recovery'}});");assert latest['ok']
    status=repository("const key=(await repo.partitionHeader(scope)).manifest.scopeKey,db=await base.open();await new Promise((resolve,reject)=>{const tx=db.transaction('b23_states','readwrite'),store=tx.objectStore('b23_states'),q=store.get(key);q.onsuccess=()=>store.put({...q.result,checksum:'native_actual_corruption'});tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error)});return repo.recoveryStatus(scope);");assert status['recoverable'] and status['restoredHumanChanges']>0
-   result=repository("return repo.recover(scope,{operationId:'native_large_recover',damagedHash:arg.hash});",{'hash':status['damagedHash']});assert result['ok'];data=piece();assert data['meta']['count']==100000 and data['piece']['identity']['title']=='100k latest human must survive recovery';no_evidence=repository("const m=(await repo.partitionHeader(scope)).manifest;return {sourcesRevoked:Object.values(m.sources).every(s=>s.revoked),preference:m.preferences.workingSet.value,revision:m.revision};");assert no_evidence['sourcesRevoked'];assert 'F99999' in no_evidence['preference']['refs'];p.wait_for_timeout(3500);active(p);p.get_by_label('查找主题与派生名称',exact=True).click();p.get_by_label('派生查找输入',exact=True).fill('100k latest human must survive recovery');assert p.locator('.search-results [data-ref-id=F99999]').count()==1;p.screenshot(path=str(OUT/'100k-recovered-human-unknown-evidence.png'));replay=repository("return repo.command(scope,{operationId:'latest_before_native_damage',expectedRevision:arg.rev,command:{type:'SET_TITLE',refId:'F99999',title:'100k latest human must survive recovery'}});",{'rev':latest['revision']-1});assert replay['reason']=='operation-invalidated-by-recovery';return {'status':status,'recovered':result,'latestHumanAndAllRefsPreserved':True,'sourcesAndOldReceiptsInvalidated':True,'noEvidence':no_evidence,'replay':replay}
+   # Exercise the real recovery UI/protocol, not a privileged repair followed by a
+   # fixed wait for the old error screen's lease to expire.
+   p.get_by_role('region',name='工作空间数据恢复',exact=True).wait_for(timeout=12000)
+   p.get_by_role('button',name='恢复已核验人工资产',exact=True).click();active(p)
+   result=repository("const logs=await repo.history(scope);return logs.find(x=>x.type==='RECOVER');");assert result and result['revision']>latest['revision'];result={**result,'ok':True,'throughActualRecoveryUI':True}
+   assert result['ok'];data=piece();assert data['meta']['count']==100000 and data['piece']['identity']['title']=='100k latest human must survive recovery';no_evidence=repository("const m=(await repo.partitionHeader(scope)).manifest;return {sourcesRevoked:Object.values(m.sources).every(s=>s.revoked),preference:m.preferences.workingSet.value,revision:m.revision};");assert no_evidence['sourcesRevoked'];assert 'F99999' in no_evidence['preference']['refs'];p.wait_for_timeout(3500);active(p);p.get_by_label('查找主题与派生名称',exact=True).click();p.get_by_label('派生查找输入',exact=True).fill('100k latest human must survive recovery');assert p.locator('.search-results [data-ref-id=F99999]').count()==1;p.screenshot(path=str(OUT/'100k-recovered-human-unknown-evidence.png'));replay=repository("return repo.command(scope,{operationId:'latest_before_native_damage',expectedRevision:arg.rev,command:{type:'SET_TITLE',refId:'F99999',title:'100k latest human must survive recovery'}});",{'rev':latest['revision']-1});assert replay['reason']=='operation-invalidated-by-recovery';return {'status':status,'recovered':result,'latestHumanAndAllRefsPreserved':True,'sourcesAndOldReceiptsInvalidated':True,'noEvidence':no_evidence,'replay':replay}
   case('F1-100k-native-corruption-checkpoint-plus-latest-human-recovery',recovery)
   r['transportTraceAfterLastBoot']=current_worker().evaluate('__F1Trace');assert all(x['ms']<6000 for x in r['transportTraceAfterLastBoot'] if x['ok']);pages=[x for x in r['transportTraceAfterLastBoot'] if x['type']=='B23_PARTITION_PAGE'];assert pages and all(x['bytes']<=16*1024*1024 for x in pages);r['boundedTransport']={'maxPageBytes':max(x['bytes'] for x in pages),'maxSuccessfulRpcMs':max(x['ms'] for x in r['transportTraceAfterLastBoot'] if x['ok']),'requestDeadlineMs':6000,'leaseMs':20000,'pageSize':5000}
   ctx.close();ctx=None

@@ -9,7 +9,7 @@ import { openWorkspaceEditor } from './editor.mjs';
 /** B4 observes versions and renews authority; it never automatically replays a write. */
 export function startClient({send,invalidateRemote=()=>{},readControls=()=>({size:Number(document.documentElement.dataset.hfSize)||8,now:document.documentElement.dataset.hfNow||FIXTURE_NOW,timeZone:document.documentElement.dataset.hfTimeZone||'Asia/Shanghai'}),subscribe=()=>()=>{}}){
   const adapter=createAdapter(),clientId=randomId();let seq=0,generation=0,lease=null,expiry=null,pending=null,heartbeat=null,stopped=false,lastURL=env.location.href;
-  let partitionReplica=null;let recoveryPanel=null;let data=null,editor=null,retries=0,viewTimer=null,viewRevision=0,lastView='',chain=Promise.resolve(),feedback=null;
+  let partitionReplica=null,partitionIndex=null;let recoveryPanel=null;let data=null,editor=null,retries=0,viewTimer=null,viewRevision=0,lastView='',chain=Promise.resolve(),feedback=null;
   const visible=()=>document.visibilityState!=='hidden';
   const controlsKey=()=>{const c=readControls();return JSON.stringify([c.size,c.now,c.timeZone]);};let lastControls=controlsKey();
   const queue=fn=>{const task=chain.then(fn);chain=task.catch(()=>{});return task;};
@@ -42,12 +42,12 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
       else for(let offset=0;offset<delta.length;offset+=5000){const r=await request('B23_PARTITION_PAGE',{revision:m.revision,offset:0,ids:delta.slice(offset,offset+5000)});if(!current(ticket,url))throw Error('stale-client-response');if(!r.ok)throw Error(r.reason);if(r.page.scope!==m.scopeKey||r.page.revision!==m.revision)throw Error('incomplete-partition-snapshot');incoming.push(...r.page.pieces);}
       const verified=await request('CHECK');if(!current(ticket,url))throw Error('stale-client-response');if(!verified.ok)throw Error(verified.reason);if(verified.revision!==m.revision)throw Error('snapshot-revision-changed');
       const assembled=await assembleReplicaAsync(partitionReplica,m,incoming,delta,root,c.now??FIXTURE_NOW,c.timeZone??'Asia/Shanghai',c.size??8,()=>current(ticket,url));
-      nextIndex=await currentIndexAsync(assembled.snapshot,assembled.snapshot.groups,()=>current(ticket,url));
+      nextIndex=assembled.reuseIndex&&partitionIndex?partitionIndex.rebind(assembled.refsById,assembled.snapshot.groups,m.scopeKey):await currentIndexAsync(assembled.snapshot,assembled.snapshot.groups,()=>current(ticket,url));
       // Yielding lets routes and external human commits progress. Check again before
       // replacing either the private replica or any owned DOM; never expose half a revision.
       const final=await request('CHECK');if(!current(ticket,url))throw Error('stale-client-response');if(!final.ok)throw Error(final.reason);if(final.revision!==m.revision)throw Error('snapshot-revision-changed');
-      partitionReplica=assembled;next=assembled.snapshot;
-    }else partitionReplica=null;
+      partitionReplica=assembled;partitionIndex=nextIndex;next=assembled.snapshot;
+    }else{partitionReplica=null;partitionIndex=null;}
 
     if(data?.scope===next.scope&&next.revision<data.revision)return data;
     const changed=!data||data.revision!==next.revision||data.viewRevision!==next.viewRevision||data.diagnostics?.view!==next.diagnostics?.view;
@@ -62,7 +62,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
       try{const reply=await request('CHECK');if(!current(ticket,url))return;if(!reply?.ok)throw Error(reply?.reason??'check-failed');
         if(reply.revision!==undefined&&(reply.revision!==data?.revision||reply.viewRevision!==viewRevision||reply.viewDiagnostic!==data?.diagnostics?.view))await readSnapshot(ticket,url);
         if(current(ticket,url))scheduleHeartbeat();
-      }catch(e){if(current(ticket,url))recover(e.message);}
+      }catch(e){if(current(ticket,url)){if(lease&&e.message==='corrupt-record')await showAssetRecovery(ticket,url,e.message);else recover(e.message);}}
     }),2000);
   }
   async function load(){
@@ -73,7 +73,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     }catch(e){if(current(ticket,url)){if(lease&&['corrupt-record','invalid-state','invalid-schema','invalid-user-event','invalid-text','orphan-placement','orphan-title','invalid-state-row','invalid-state-table'].includes(e.message)){await showAssetRecovery(ticket,url,e.message);}else recover(e.message);}}
   }
   async function showAssetRecovery(ticket,url,reason){
-    fail(reason);clearRecovery();let plan;try{const r=await request('B23_RECOVERY_STATUS');if(!current(ticket,url)||!r.ok)throw Error(r.reason??'stale-client-response');plan=r.recovery;}catch(e){if(!current(ticket,url))return;if(retryable(e.message)){recover(e.message);return;}plan={recoverable:false,reason:e.message};}
+    fail(reason,true);clearRecovery();let plan;try{const r=await request('B23_RECOVERY_STATUS');if(!current(ticket,url)||!r.ok)throw Error(r.reason??'stale-client-response');plan=r.recovery;}catch(e){if(!current(ticket,url))return;if(retryable(e.message)){recover(e.message);return;}plan={recoverable:false,reason:e.message};}
     const panel=document.createElement('div');panel.dataset.vaiwlOwned='asset-recovery';panel.setAttribute('role','region');panel.setAttribute('aria-label','工作空间数据恢复');panel.style.cssText='font:13px/1.6 system-ui;padding:12px 18px;background:var(--surface,#fff);color:var(--ink,#171717);border-bottom:1px solid var(--line,#ddd)';
     const text=document.createElement('p');text.textContent=plan.recoverable?'工作空间记录损坏，原始记录仍保留。已核验检查点与最新人工日志，可以恢复人工资产；旧发送证据与操作收据会失效。':'工作空间或人工日志损坏，无法证明安全恢复；未覆盖原始记录。请保留备份与损坏记录。';panel.append(text);
     if(plan.recoverable){const b=document.createElement('button');b.textContent='恢复已核验人工资产';b.type='button';b.onclick=async()=>{b.disabled=true;try{const r=await request('B23_RECOVER_ASSETS',{operationId:'recover_'+randomId().replaceAll('-',''),damagedHash:plan.damagedHash});if(!current(ticket,url)||!r.ok)throw Error(r.reason??'write-result-unknown');clearRecovery();await load();}catch(e){if(current(ticket,url)){text.textContent='恢复未确认或未完成：'+e.message+'。未自动重试写入。';b.disabled=false;}}};panel.append(b);}
@@ -110,7 +110,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     }),180);
   }
   function changed(){if(stopped)return;if(lastURL!==env.location.href||lastControls!==controlsKey()){
-      clearRecovery();partitionReplica=null;lastURL=env.location.href;lastControls=controlsKey();generation++;invalidateRemote();clearTimers();fail('route-changed');lease=null;data=null;retries=0;clearFeedback();pending=setTimeout(load,0);
+      clearRecovery();partitionReplica=null;partitionIndex=null;lastURL=env.location.href;lastControls=controlsKey();generation++;invalidateRemote();clearTimers();fail('route-changed');lease=null;data=null;retries=0;clearFeedback();pending=setTimeout(load,0);
     }else navigation.layout();}
   const observer=new MutationObserver(records=>{if(records.some(r=>!r.target.closest?.('[data-vaiwl-owned]')&&!(r.type==='attributes'&&r.attributeName?.startsWith('data-vaiwl'))))changed();});
   observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','open','data-collapsed','inert']});
