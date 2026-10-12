@@ -1,0 +1,13 @@
+refs/heads/codex/vaiwl-b4-lifecycle-20261011 3b1a40f9d2bedfd3180a32c3db6d12d5a28e9fd9
+refs/heads/codex/vaiwl-b5-protection-20261012 8d19020978c6ce79e23862dc9cd22d88848bdfe9
+refs/heads/codex/vaiwl-c1-workspace-20261011 a0552467f732e40adb7852c04f3e4343ff0431fe
+refs/heads/codex/vaiwl-c3-c4-context-20261012 38ea47dbd85a51951c3b5dbd283d2b088288b3f4
+refs/heads/codex/vaiwl-d1-d2-offline-20261012 3afaf33f99de45a793c0acf3c953d5255c66b4e5
+refs/heads/codex/vaiwl-f1-performance-20261012 b7a56817056a93add0116a2b13c2b41e9aa6d28d
+refs/recovery/vaiwl-r0-pr3-20261012 d5c66221f18a24145974b9696a8788a5a8b90155
+refs/recovery/vaiwl-r0-pr4-20261012 7d47d97bc7990cec7fd1d8a2a61797bf90e1c96f
+refs/remotes/origin/HEAD 3b1a40f9d2bedfd3180a32c3db6d12d5a28e9fd9
+refs/remotes/origin/codex/vaiwl-b4-lifecycle-20261011 3b1a40f9d2bedfd3180a32c3db6d12d5a28e9fd9
+refs/remotes/origin/codex/vaiwl-b5-protection-20261012 8d19020978c6ce79e23862dc9cd22d88848bdfe9
+refs/remotes/origin/codex/vaiwl-c1-workspace-20261011 a0552467f732e40adb7852c04f3e4343ff0431fe
+refs/remotes/origin/feat/vaiwl-b2-b3-persistent-20261011 dc73231d498d244e8b7bd14dfe95ba981b977537

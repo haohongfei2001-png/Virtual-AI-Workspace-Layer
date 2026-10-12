@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "runtimeCommit": "b7a56817056a93add0116a2b13c2b41e9aa6d28d",
+  "artifactCount": 341,
+  "node": 160,
+  "nativeIDB": 54,
+  "nativePartitionIDB": 20,
+  "DOM_mockTransportAndIDB": 49,
+  "realUI": {
+    "regression-final/page.json": 17,
+    "regression-final/mv3.json": 19,
+    "regression-final/c1/results.json": 10,
+    "regression-final/b5/results.json": 3,
+    "regression-final/c34/results.json": 3,
+    "regression-final/c5/results.json": 2,
+    "regression-final/b4-core.json": 5,
+    "regression-final/b4-lifecycle.json": 1
+  },
+  "performance": {
+    "1k": {
+      "navigationP95": 34.200000047683716,
+      "searchP95": 33.299999952316284,
+      "privilegedDiagnosticSnapshotMs": 46.5
+    },
+    "10k": {
+      "navigationP95": 33.19999980926514,
+      "searchP95": 32.299999952316284,
+      "privilegedDiagnosticSnapshotMs": 497.2999999523163
+    },
+    "100k": {
+      "navigationP95": 36,
+      "searchP95": 32.5,
+      "privilegedDiagnosticSnapshotMs": 8137.099999904633
+    }
+  },
+  "full100kMV3Journeys": 9,
+  "productionHost": "NOT_RUN",
+  "physicalWeakHardware": "NOT_RUN"
+}

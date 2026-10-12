@@ -8,7 +8,7 @@ ROOT=Path(__file__).resolve().parents[2];out=Path(sys.argv[1]);out.mkdir(parents
 chrome='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 py=str(ROOT/'.venv/bin/python')
 commands=[
- ('DOM49',[py,'tests/hf/browser.py','--browser',chrome,'--out',str(out/'dom')]),
+ ('DOM49',[py,'tests/b23/view-browser.py','--browser',chrome,'--out',str(out/'dom')]),
  *[(mode,[py,'tests/b23/real-browser.py','--mode',mode,'--port',str(48172+i),'--browser',chrome,'--out',str(out/(mode+'.json'))]) for i,mode in enumerate(['db','page','mv3'])],
  ('C1',[py,'tests/c1/real-ui.py','--out',str(out/'c1')]),
  ('B5',[py,'tests/b5/real-ui.py',str(out/'b5')]),

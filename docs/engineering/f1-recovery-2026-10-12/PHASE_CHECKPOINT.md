@@ -1,6 +1,6 @@
 # 结构性优化阶段检查点
 
-F1仍LIMITED，完整当前回归与主线程压力复验尚未完成。提交后从当前branch HEAD恢复，不修改原e626/历史PR/main。
+以下为按阶段保留的历史进度；最新裁决见 [FINAL_ACCEPTANCE.md](FINAL_ACCEPTANCE.md)。当前完整合成工程验收PASS；运行时 b7a56817056a93add0116a2b13c2b41e9aa6d28d，最终文档/证据以F1分支head为准，不修改原e626/历史PR/main。
 
 已同步原C34/D12/F1真实Git对象，Draft #11/#12/#13实际存在；分区阶段10975643709a5cf3aea94da68c3a89f9f1a55c1c已同步PR #13，完整bundle在持久recovery/f1-partitions-1097564-20261012.bundle，verify完整历史，SHA256 50ae1e863594c4712568da0a34fcc79882da8e15de3a89a1bd46954ac10a003f。
 
@@ -25,3 +25,5 @@ large-journeys-after-collision：真实100k远引用/多tab/移动撤销/文件�
 保留随后完整反例：移/撤销在lease尾部发生真实commit但client被expiry清理而反馈未确认。最小修复在发送人工作业之前不足6s余量时仅BIND+读最新验证同scope，不重放或自动重试任何写入。旧6s/20s边界仍保留。元数据长同步checkManifest也被拆为共同校验生成器，16Mi JSON码元用无大字符串的严格长度计数，key排序不影响长度。新增缺root+人工历史时误判为空的反例已修复，legacy/partitioned都recover最新human；Node158通过。新增16Mi护栏+损坏共享piece安全拒绝/完整human导出合同Node22通过，待真实extension补测后整体全量回归。
 
 性能驱动原page.evaluate找DOM在actual lease卸载与重连之间有check-to-use竞态。改用实际控件locator.evaluate，并把点击后发生的重连停顿包括在样本，不重试导航业务、不减20/10样本或阈值；worker/lease仍独立实际验收。失败截图和全部原reports不改。接下来顺序真实新Profile验证新增native20、1k/10k旧布局与100k新布局性能、既有全量DOM/真实IDB/Page/MV3/C1/B5/C34/C5/B4，源码/构建SHA逐份对应。F1完整当前验收未最终完成，继续执行不阶段停止。
+
+最终补测：Node160/160，分区真实扩展IDB20/20，1k/10k/100k性能分别PASS。顺序回归真实IDB54、页面17、MV319、C1 10、B5 3、C34 3、C5 2、B4核心5、实际生命周期1均PASS。批处理选错旧只读DOM38驱动的失败原件保留，修正为当前tests/b23/view-browser.py后完整49/49 PASS，不改产品或降断言。新tests/f1/verify-current-evidence.py核对当前源码/构建与固定证据；旧verify-evidence.py仅历史801595e档案，不能作为当前运行时核验。后续依赖裁决见FINAL_ACCEPTANCE及STATUS。

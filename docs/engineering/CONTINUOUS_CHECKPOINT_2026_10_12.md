@@ -1,3 +1,5 @@
+> 当前恢复入口优先：[F1最终验收及恢复](f1-recovery-2026-10-12/FINAL_ACCEPTANCE.md)。下文保留历史，不作为最新待执行列表。
+
 # 本地持续开发检查点
 
 持久工作树 `/Users/hhf/Documents/Codex/VAIWL-Development/c1`，从完整已有临时 checkout 移入，未重新克隆。分支 `codex/vaiwl-c1-workspace-20261011`，更新现有 Draft PR #9。远端 fetch 成功；基线 b11b7690125a2f42af93d855c3aa617b250d767e，父 PR #8 3b1a40f9d2bedfd3180a32c3db6d12d5a28e9fd9。原 main checkout 干净未修改。
@@ -39,3 +41,5 @@ F1逐阶段原失败测量：profile-100k-before明确客户端request-timeout~6
 分区存储首轮实现已就位：v2同stores不可变分片/revision manifest；旧CAS/幂等/撤销/恢复reducer复用，5000引用有界IPC，混合revision拒绝、64步增量。真正100k首轮ACTIVE，导航43.2ms/搜索33.9ms；保留原FAIL（初版1000页启动超时、未建当前URL索引导航约290ms）。Node分区/迁移/备份/最新人工恢复12项与路由索引2项PASS。尚未完成真实100k全部旅程与完整当前回归，F1保持LIMITED。新增完整旅程驱动首轮缺测试依赖失败已存DRIVER_FAILURE.md；修复测试打包后使用同一断言重跑。当前源码/驱动提交后通过精确Git Data API同步PR #13；不能把阶段性能PASS冒充最终认证。
 
 F1最新阶段请优先读f1-recovery-2026-10-12/PHASE_CHECKPOINT.md。1097564分区阶段已同步#13并验证完整持久bundle；真实100k完整旅程跨页CAS/备份/worker stopped自动重启/20slease/A-B-unknown通过。新全局证据ID跨partition冲突已最小修复；主线程4x并发输入3149.8ms反例正在通过协作式同一投影/索引复验，不宣称F1完成。
+
+2026-10-12 本次恢复已完成：从e626真实断点精确同步C34/D12/F1，#11/#12/#13均Draft。F1新结构在原v2数据库内保留CAS/日志/权限，真实100k及旧604/10k通过完整工程回归。运行时代码b7a5681，最终证据提交读取当前F1 head，恢复时执行 `python3 tests/f1/verify-current-evidence.py`。备份完整历史bundle仍在持久recovery目录，所有原失败保留。当前Mac合成范围且依赖满足的原任务已完成；接下来C6/R0真实host与PAIA、真人D质量、物理弱设备、原生写入/同步/费用/发布依赖分别待授权或证据，不生成第二计划，不后台宣称执行。
