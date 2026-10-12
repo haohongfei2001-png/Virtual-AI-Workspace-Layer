@@ -139,3 +139,9 @@ Project增量双向依赖修复及Free PAGE最终16Mi UTF8/有界拆页完成，
 确认发送已去除两种全量读取，旧预加载事件冲突跳过漏洞已修。最终相关Node30/0、MV3 9/9、真实10k和容量内99,998→100,000发送三旅程通过；最大规模1.85–2.28s仍未达1秒。首次夹具来源缺失与超容量失败未伪装成通过；修正只在测试数据，细节/最终证据/包hash见STATUS本轮。
 
 下一可直接执行：client Free两次CHECK合并为统一发布前最终一次；保留构建前renewReadBinding、异步generation/URL/visibility guard、最终身份/scope/native/workspace/evidence版本验证。candidate只在检查成功后赋freeReplica/freeIndex/data/navigation；零页复用/空库同样检查，Pro不改。代理只读证明已给出，尚未改此处代码。真实外部验收条件与目标不变，完整Free未交付。
+
+## 第十九轮恢复增量（接ee7bc03）
+
+Free界面改为构建前续租、构建后统一一次最终CHECK；候选未验证不发布，Pro不变。真实headless屏障7/7、MV3 9/9、100k三发送功能通过但1824.9/2083.0/2046.8ms均超过1秒。证据free-round19-*，不重复完整Node；包路径/private/tmp/vaiwl-free-delivery-round19-20261013/vaiwl-free-synthetic-only.zip，hash见STATUS。
+
+ee7bc03正常push连接443超时，最后确认远端dab61e7 Draft，后续本地提交须正常同步，不冒称已推送。下一可执行：共享partitioned.saveMutation旧root再次hash，改同事务验证后立即写checkpoint，防止后续impure reducer改变旧记录；新root完整验证/编码、回滚/CAS/恢复保持。另发现只有删除的Free manifest可能被zero-page分支复用旧snapshot，当前native不会物理删除，记录为客户端协议边界待修，不宣称生产可达。真实Free未完成，外部条件保持。

@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第十八轮（接已推送PR #16 Draft的 `dab61e7`）。完成确认发送的分片读取与事件冲突修复；继续原正式目录、分支和PR，不改发布状态。
+当前已推进至第十九轮（接本地 `ee7bc03`，远端最后确认 `dab61e7`）。Free界面统一末次发布校验；继续原正式目录、分支和PR，不改发布状态。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -273,3 +273,11 @@ fixtureObserve复用workspaceContext单ref和native.page目标引用，不再在
 测试修正如实保留：初次10k夹具漏fixture_v1导致orphan-event，补齐正常来源后通过；首次100k已满容量时新增被partition-capacity正确拒绝，随后只调整初始数量预留2位置，未放宽限额/断言。原始失败与debug在/private/tmp/free-round18-send-scale.json及free-round18-send100k.json，最终报告free-round18-*分别保存。包SHA256 `75f394fa0286c9ea81a32a042de5752ab41d1b78f996402b44f37bce12d4f1e1`，仍SYNTHETIC_ONLY。
 
 下一已审查位置：Free readSnapshot早期CHECK只提前终止过时计算，可保留构建前续租、将唯一末次CHECK统一放在复用/重建分支之后且所有发布赋值之前；需要构建期间切账户/版本变化及零页回归，不能直接删最终检查。真实来源/账户/跨端/PAIA/物理与日常验收条件仍缺失，Free未完成。
+
+## 第十九轮：Free界面统一末次发布校验（接ee7bc03）
+
+移除构建前重复CHECK，保留构建前续租；复用及重建都在唯一末次scope/native/workspace/evidence校验通过后才发布，候选replica/index不提前赋值。Pro读取路径不变。
+
+真实headless发布屏障7/7：构建期间scope/版本变化、隐藏/取消均不发布，首次空库存、零页复用和构建前续租通过。scope/空库存是transport注入，版本变化用真实native.apply；不是生产账户证明。实际MV3 9/9。100k发送3/3功能通过，既有/新NONE/新Project分别1824.9/2083.0/2046.8ms，均1秒性能FAIL；每次投影仅1个末次CHECK，全量读取0、各1发送/event/hint、草稿保持。单次诊断不声称统计提速；报告分别保留来源，不相加。
+
+新包SHA256 `21827dbaf9a0d8ea35ae8fac232aa207c378b9e0e611681ef64fe2fdffbd37ec`，仍SYNTHETIC_ONLY。ee7bc03正常推送因GitHub 443连接失败未完成，最后确认远端仍dab61e7，不更换remote或循环重试。下一本地位置：共享分片旧checkpoint重复哈希，可在同一事务验证后立即put原envelope，依靠IDB同步克隆与事务回滚保留准确旧记录；不得接受外部可信hash。真实来源/账户/跨端/PAIA/物理与日常验收仍缺条件，Free未完成。

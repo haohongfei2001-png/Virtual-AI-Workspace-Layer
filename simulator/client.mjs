@@ -92,15 +92,20 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
         if(r?.ok&&r.page.scope!==header.scope)throw Error('stale-client-response');return r;
       }});
       const verify=async()=>{await renewReadBinding(ticket,url);const r=await request('CHECK');if(!current(ticket,url))throw Error('stale-client-response');if(!r?.ok)throw Error(r?.reason??'read-failed');if(r.scope!==header.scope)throw Error('stale-client-response');if(r.nativeRevision!==header.revision||r.revision!==header.workspaceRevision||r.evidenceRevision!==header.evidenceRevision)throw Error('snapshot-revision-changed');};
-      await verify();
+      // Renew before yielding through assembly, but publish only after the final
+      // authority/version check. Candidates remain private until that check passes.
+      await renewReadBinding(ticket,url);
+      let candidate=null;
       if(!plan.full&&!plan.rebuild&&!plan.projects.length&&!plan.refs.length&&freeReplica){
         next={...freeReplica.snapshot,...header,viewMode:'free'};nextIndex=freeIndex;
       }else{
         const assembled=await assembleFreeReplicaAsync(freeReplica,header,pages,plan,()=>current(ticket,url));
         next=freeNavigationSnapshot(assembled.snapshot);nextPrepared=true;
         nextIndex=(!plan.full&&freeIndex?await freeIndex.rebindCompatibleAsync(next,next.groups,()=>current(ticket,url)):null)??await currentIndexAsync(next,next.groups,()=>current(ticket,url));
-        await verify();freeReplica=assembled;freeIndex=nextIndex;
+        candidate=assembled;
       }
+      await verify();
+      if(candidate){freeReplica=candidate;freeIndex=nextIndex;}
     }
     if(reply.partition){const root=reply.partition,m=root.manifest,delta=replicaDelta(partitionReplica,m),incoming=[];
       if(delta===null){const total=Object.keys(m.refVersions).length;for(let offset=0;offset<total;offset+=5000){const r=await request('B23_PARTITION_PAGE',{revision:m.revision,offset,ids:null});if(!current(ticket,url))throw Error('stale-client-response');if(!r.ok)throw Error(r.reason);if(r.page.scope!==m.scopeKey||r.page.revision!==m.revision||r.page.total!==total)throw Error('incomplete-partition-snapshot');incoming.push(...r.page.pieces);}}
