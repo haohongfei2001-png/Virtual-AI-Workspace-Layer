@@ -7,7 +7,7 @@ function button(label, onClick, symbol, cls='icon-button'){const b=el('button',{
 export function createHost() {
   const parsed=routeInfo(env.location.href);
   if(!parsed)throw Error('synthetic-route-required');
-  const state={account:parsed.account,variant:'baseline',size:new URL(env.location.href).searchParams.get('size')==='120'?120:8,timeZone:'Asia/Shanghai',now:FIXTURE_NOW,delay:0,failNext:false,
+  const state={account:parsed.account,variant:'baseline',size:new URL(env.location.href).searchParams.get('size')==='120'?120:8,f1Refs:(()=>{const n=Number(new URL(env.location.href).searchParams.get('f1Refs'));return Number.isSafeInteger(n)&&n>=604&&n<=100000?n:604;})(),timeZone:'Asia/Shanghai',now:FIXTURE_NOW,delay:0,failNext:false,
     routeVersion:0,navVersion:0,streamTicks:0,errors:[],stale:0,theme:'light',pending:false};
   const views=new Map(), custom=new Map(); let currentView=null, controlWindow=opener;
   const ribbon=el('div',{class:'test-ribbon'},'VAIWL TEST HOST · 全部内容均为合成');
@@ -24,7 +24,13 @@ export function createHost() {
   const reading=el('section',{class:'reading-scroll','aria-label':'Conversation'}), composerWrap=el('footer',{class:'composer-wrap','aria-label':'Message composer'});
   main.append(header,reading,composerWrap);app.append(sidebar,main);document.body.replaceChildren(ribbon,app);
   const signal=()=>{document.documentElement.dataset.hfSize=String(state.size);document.documentElement.dataset.hfNow=state.now;document.documentElement.dataset.hfTimeZone=state.timeZone;document.dispatchEvent(new CustomEvent('hf:change',{detail:{version:state.routeVersion}}));};
-  const getData=()=>{const data=dataset(state.account,env.location.origin,state.size);
+  // Metadata only: native transcript/form objects remain lazy and owned by the host.
+  const fixtureCache=new Map();
+  const getData=()=>{const key=state.account+':'+state.size+':'+state.f1Refs;
+    if(!fixtureCache.has(key)){const data=dataset(state.account,env.location.origin,state.size);
+      if(state.account!=='unknown'&&state.size===120)for(let i=604;i<state.f1Refs;i++){const id='F'+i;data.refs.push({scope:state.account,id,nativeTitle:'合成规模引用 '+i+' · 长中文压力边界',projectId:null,pinned:false,archived:false,available:true,nativeUrl:env.location.origin+'/hf/'+state.account+'/c/'+id});}
+      fixtureCache.set(key,data);}
+    const data=fixtureCache.get(key);
     for(const ref of data.refs){const view=views.get(state.account+':'+ref.id);if(view){if(typeof view.archived==='boolean')ref.archived=view.archived;if(typeof view.pinned==='boolean')ref.pinned=view.pinned;}}return data;};
   const url=(kind,id,account=state.account)=>'/hf/'+account+'/'+kind+(id?'/'+id:'')+env.location.search;
   function link(label,kind,id,symbol){const a=el('a',{class:'nav-link',href:env.location.origin+url(kind,id)});if(symbol)a.innerHTML=icon(symbol);a.append(el('span',{},label));if(env.location.pathname===new URL(a.href).pathname)a.setAttribute('aria-current','page');return a;}

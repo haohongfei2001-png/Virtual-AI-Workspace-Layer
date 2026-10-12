@@ -1,0 +1,20 @@
+✔ PART01 bounded storage preserves all original 120/604 projections and canonical refs (177.097791ms)
+✔ PART02 the original CAS/idempotence transaction has one winner across connections (174.976916ms)
+✔ PART03 far-reference move and targeted undo use original human patches (261.300959ms)
+✔ PART04 repeated initialization cannot overwrite immutable live human pieces (215.532583ms)
+✔ PART05 mixed revisions and incomplete view replicas are rejected (158.006625ms)
+✔ PART06 revocation updates all evidence projections without rewriting reference pieces (125.313208ms)
+✔ PART07 damaged view leaves intact assets and unknown scope is rejected (106.741875ms)
+✔ PART08 A/B same ref IDs remain distinct (316.939125ms)
+✔ PART09 checkpoint retains previous immutable pieces and latest manual assets recover (176.893333ms)
+✔ PART10 v2 storage migration preserves latest human revision and revoked sources (357.002125ms)
+✔ PART11 asset backup includes latest manual references and preferences, dry-run is read-only (251.819583ms)
+✔ PART12 checkpoint plus latest workset preference restores reference dependencies safely (194.673875ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2572.435125

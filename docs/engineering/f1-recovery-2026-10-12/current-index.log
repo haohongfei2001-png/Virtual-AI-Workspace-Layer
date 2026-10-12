@@ -1,0 +1,10 @@
+✔ native route index preserves first match, group priority, independent refs and query semantics (0.361583ms)
+✔ 100k current-ref lookup does not rescan reference getters after snapshot indexing (126.399375ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 175.2585

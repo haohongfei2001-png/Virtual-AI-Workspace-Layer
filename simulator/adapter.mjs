@@ -33,6 +33,8 @@ export function createAdapter(doc=document) {
       const mode=here.searchParams.get('mode');
       if(['page','mv3'].includes(mode)&&!u.searchParams.has('mode'))u.searchParams.set('mode',mode);
       if(doc.documentElement.dataset.hfSize==='120'&&!u.searchParams.has('size'))u.searchParams.set('size','120');
+      const count=Number(here.searchParams.get('f1Refs'));
+      if(Number.isSafeInteger(count)&&count>=604&&count<=100000&&!u.searchParams.has('f1Refs'))u.searchParams.set('f1Refs',String(count));
       return u.href;
     },
     openNative(raw,event){

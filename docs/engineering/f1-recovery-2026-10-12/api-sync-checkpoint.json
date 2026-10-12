@@ -1,0 +1,129 @@
+{
+  "repository": "haohongfei2001-png/Virtual-AI-Workspace-Layer",
+  "base": "e626e3a936279cca625070509733c5178338b8ca",
+  "branches": {
+    "codex/vaiwl-f1-performance-20261012": {
+      "localHead": "6cd9094706ab3cfd722db40abbc52d3326612cd1",
+      "remoteBefore": "e626e3a936279cca625070509733c5178338b8ca",
+      "remoteAfter": "6cd9094706ab3cfd722db40abbc52d3326612cd1"
+    }
+  },
+  "objects": {
+    "7e8ace867281cabd988c51770adcf475c22d2d42": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "8384b275bcfff2d4a90695d9347dfc20e07476c0"
+    },
+    "4bf62867ad5328b71eec102a8cc43180bd908474": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "8384b275bcfff2d4a90695d9347dfc20e07476c0"
+    },
+    "8384b275bcfff2d4a90695d9347dfc20e07476c0": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "de6ffe26b76b500b8d62bd5110029363fc49e694": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "9d66211c799bb723a3ebc1fce0626616175fb44f"
+    },
+    "9ea8e6f590cf556a4c972083a607e76509bde8cf": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "9d66211c799bb723a3ebc1fce0626616175fb44f"
+    },
+    "83084fc95add7357980d05dbf4f4b94f598d8918": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "9d66211c799bb723a3ebc1fce0626616175fb44f"
+    },
+    "22d9808d15b3f2970726193c2cf742dd0cd2849b": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "9d66211c799bb723a3ebc1fce0626616175fb44f"
+    },
+    "f9a93184c31287ff4ee012dafdebcdcca5dcbfdb": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "9d66211c799bb723a3ebc1fce0626616175fb44f"
+    },
+    "809e95aecb09bade000f5be50e7a81119acf6b39": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "9d66211c799bb723a3ebc1fce0626616175fb44f"
+    },
+    "2e5ca6795113e054a76aac4ce5e5690f7f9998d9": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "9d66211c799bb723a3ebc1fce0626616175fb44f"
+    },
+    "8699d3430f5df12577283861684a7e3ae7e8b4de": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "9d66211c799bb723a3ebc1fce0626616175fb44f"
+    },
+    "f5543f1f8c192088c03ee81d8f32e6b91138bf91": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "9d66211c799bb723a3ebc1fce0626616175fb44f"
+    },
+    "9d66211c799bb723a3ebc1fce0626616175fb44f": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "acb2e9e1b522d3e55733acc5ff46a4655200b8fa": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "67e39000c3ac8876e44239f9c5936168c74a0ce4"
+    },
+    "67e39000c3ac8876e44239f9c5936168c74a0ce4": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "f6914ada617dca6f9c43978e3c1cda8c70e06958": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "c48d686e42972722f99b4ea992f759cc77223a4b"
+    },
+    "c48d686e42972722f99b4ea992f759cc77223a4b": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "2186680ffa785ec58cfc528ad2179b707b573a27": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "82619a96a0c74b9fa9fdd1f89e1869b02979c1a5"
+    },
+    "82619a96a0c74b9fa9fdd1f89e1869b02979c1a5": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "eedf1158255e9dd3cfacf24283e2be0ae3edc708": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "79836c07bb46c209fed7fe38e4d51802f592c2a7": {
+      "type": "blob",
+      "verifiedExactSha": true,
+      "viaTree": "3f345c1112531dbf6f601adcb81d622e7f86493a"
+    },
+    "3f345c1112531dbf6f601adcb81d622e7f86493a": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "cee93b2505633940c81cc66760bc6f50772f9cd7": {
+      "type": "tree",
+      "verifiedExactSha": true
+    },
+    "6cd9094706ab3cfd722db40abbc52d3326612cd1": {
+      "type": "commit",
+      "verifiedExactSha": true
+    }
+  },
+  "startedAt": "2026-10-12T00:30:36.323955+00:00",
+  "transport": "GIT_DATA_API_EXACT_SHA",
+  "refsForce": false,
+  "status": "PASS",
+  "endedAt": "2026-10-12T00:30:52.554660+00:00"
+}

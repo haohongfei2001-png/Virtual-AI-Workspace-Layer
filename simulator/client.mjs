@@ -1,3 +1,4 @@
+import { replicaDelta, assembleReplica } from '../src/data/replica.mjs';
 const randomId=()=>crypto.randomUUID?.()??Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
 import { env } from './environment.mjs';
 import { createNavigation } from '../src/navigation/navigation.mjs';
@@ -7,7 +8,7 @@ import { openWorkspaceEditor } from './editor.mjs';
 /** B4 observes versions and renews authority; it never automatically replays a write. */
 export function startClient({send,invalidateRemote=()=>{},readControls=()=>({size:Number(document.documentElement.dataset.hfSize)||8,now:document.documentElement.dataset.hfNow||FIXTURE_NOW,timeZone:document.documentElement.dataset.hfTimeZone||'Asia/Shanghai'}),subscribe=()=>()=>{}}){
   const adapter=createAdapter(),clientId=randomId();let seq=0,generation=0,lease=null,expiry=null,pending=null,heartbeat=null,stopped=false,lastURL=env.location.href;
-  let recoveryPanel=null;let data=null,editor=null,retries=0,viewTimer=null,viewRevision=0,lastView='',chain=Promise.resolve(),feedback=null;
+  let partitionReplica=null;let recoveryPanel=null;let data=null,editor=null,retries=0,viewTimer=null,viewRevision=0,lastView='',chain=Promise.resolve(),feedback=null;
   const visible=()=>document.visibilityState!=='hidden';
   const controlsKey=()=>{const c=readControls();return JSON.stringify([c.size,c.now,c.timeZone]);};let lastControls=controlsKey();
   const queue=fn=>{const task=chain.then(fn);chain=task.catch(()=>{});return task;};
@@ -17,14 +18,14 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   const clearFeedback=()=>{feedback?.remove();feedback=null;};
   const clearRecovery=()=>{recoveryPanel?.remove();recoveryPanel=null;};
   function showFeedback(reason){
-    clearFeedback();if(!visible()||stopped||reason==='unverified-scope'||retries<5)return;
+    clearFeedback();if(!visible()||stopped||reason==='unverified-scope'||retries<5&&retryable(reason))return;
     feedback=document.createElement('div');feedback.dataset.vaiwlOwned='connection-status';feedback.setAttribute('role','status');feedback.style.cssText='font:12px/1.5 system-ui;padding:6px 12px';
-    const text=document.createElement('span');text.textContent=reason==='unverified-scope'?'身份尚未确认，派生内容已隐藏。':retries>=5?'派生工作空间暂时无法连接，原生聊天仍可使用。':'派生工作空间正在重新连接，原生聊天仍可使用。';feedback.append(text);
-    const button=document.createElement('button');button.type='button';button.textContent='重新连接派生工作空间';button.onclick=()=>{retries=0;void load();};feedback.append(button);document.body.prepend(feedback);
+    const text=document.createElement('span');text.textContent=reason==='unverified-scope'?'身份尚未确认，派生内容已隐藏。':(retries>=5||!retryable(reason))?'派生工作空间暂时无法连接，原生聊天仍可使用。':'派生工作空间正在重新连接，原生聊天仍可使用。';feedback.append(text);
+    const button=document.createElement('button');button.type='button';button.textContent='重新连接派生工作空间';button.onclick=()=>{retries=0;void load();};feedback.append(button);const host=adapter.inspect();if(host.ok)(host.navigationSlot??host.history).before(feedback);
   }
   function fail(reason,preserve=false){if(editor){if(preserve)editor.suspend();else{editor.close();editor=null;}}navigation.invalidate(reason);}
   function current(ticket,url){return !stopped&&visible()&&ticket===generation&&url===env.location.href;}
-  const retryable=reason=>['invalidated-during-check','stale-document','not-current-document','stale-binding','stale-after-workspace','stale-client-response','transport-unavailable','binding-not-ready','lease-expired-active-js'].includes(reason);
+  const retryable=reason=>['invalidated-during-check','stale-document','not-current-document','stale-binding','stale-after-workspace','stale-client-response','transport-unavailable','binding-not-ready','lease-expired-active-js','snapshot-revision-changed'].includes(reason);
   function recover(reason,{preserve=true,immediate=false}={}){
     clearRecovery();if(stopped)return;generation++;lease=null;data=null;clearTimers();fail(reason,preserve&&retryable(reason));showFeedback(reason);
     if(!visible()||!retryable(reason)||retries>=5)return;
@@ -34,7 +35,14 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   async function readSnapshot(ticket,url){
     const c=readControls(),reply=await request('B23_SNAPSHOT',{now:c.now??FIXTURE_NOW,timeZone:c.timeZone??'Asia/Shanghai',size:c.size??8});
     if(!current(ticket,url))throw Error('stale-client-response');if(!reply?.ok)throw Error(reply?.reason??'read-failed');
-    const next=reply.snapshot;
+    let next=reply.snapshot;
+    if(reply.partition){const root=reply.partition,m=root.manifest,delta=replicaDelta(partitionReplica,m),incoming=[];
+      if(delta===null){const total=Object.keys(m.refVersions).length;for(let offset=0;offset<total;offset+=5000){const r=await request('B23_PARTITION_PAGE',{revision:m.revision,offset,ids:null});if(!current(ticket,url))throw Error('stale-client-response');if(!r.ok)throw Error(r.reason);if(r.page.scope!==m.scopeKey||r.page.revision!==m.revision||r.page.total!==total)throw Error('incomplete-partition-snapshot');incoming.push(...r.page.pieces);}}
+      else for(let offset=0;offset<delta.length;offset+=5000){const r=await request('B23_PARTITION_PAGE',{revision:m.revision,offset:0,ids:delta.slice(offset,offset+5000)});if(!current(ticket,url))throw Error('stale-client-response');if(!r.ok)throw Error(r.reason);if(r.page.scope!==m.scopeKey||r.page.revision!==m.revision)throw Error('incomplete-partition-snapshot');incoming.push(...r.page.pieces);}
+      const verified=await request('CHECK');if(!current(ticket,url))throw Error('stale-client-response');if(!verified.ok)throw Error(verified.reason);if(verified.revision!==m.revision)throw Error('snapshot-revision-changed');
+      partitionReplica=assembleReplica(partitionReplica,m,incoming,delta,root,c.now??FIXTURE_NOW,c.timeZone??'Asia/Shanghai',c.size??8);next=partitionReplica.snapshot;
+    }else partitionReplica=null;
+
     if(data?.scope===next.scope&&next.revision<data.revision)return data;
     const changed=!data||data.revision!==next.revision||data.viewRevision!==next.viewRevision||data.diagnostics?.view!==next.diagnostics?.view;
     data=next;viewRevision=data.viewRevision;
@@ -87,7 +95,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   });}
   async function assetRequest(type,extra={},write=false){const ticket=generation,url=env.location.href,scope=data?.scope;return queue(async()=>{requireBinding();if(!current(ticket,url)||scope!==data?.scope)throw Error('stale-client-response');let r;try{r=await request(type,extra);}catch(e){if(current(ticket,url))recover(e.message);throw Error(write?'write-result-unknown':e.message);}if(!current(ticket,url))throw Error(write?'write-result-unknown':'stale-client-response');if(!r.ok)throw Error(r.reason);if(write)await readSnapshot(ticket,url);return r;});}
   const assets={export:async()=>(await assetRequest('B23_EXPORT_BACKUP')).bundle,preview:async bundle=>(await assetRequest('B23_PREVIEW_RESTORE',{bundle})).preview,restore:(bundle,preview)=>assetRequest('B23_RESTORE_BACKUP',{bundle,planHash:preview.planHash,expectedRevision:preview.expectedRevision,operationId:'restore_'+randomId().replaceAll('-','')},true),storage:async()=>(await assetRequest('B23_STORAGE')).storage};
-  async function manage(context={}){const ref=data?.refs.find(r=>adapter.isCurrent(r.nativeUrl));context={...context,refId:ref?.id,snippet:adapter.selectedSnippet(ref)};if(!data)await load();if(!data||stopped||!visible())return;editor?.close();const ticket=generation,url=env.location.href;editor=openWorkspaceEditor({snapshot:data,command,undo,assets,context,onClose:()=>{editor=null;navigation.layout();if(current(ticket,url)){const roots=navigation.roots(),key=context.workspaceId?'actions:'+context.workspaceId:'管理工作空间';for(const root of [roots?.workspace,roots?.sidebar]){const n=[...(root?.shadow.querySelectorAll('[data-focus-key]')??[])].find(n=>n.dataset.focusKey===key);if(n){n.focus({preventScroll:true});break;}}}}});}
+  async function manage(context={}){const ref=navigation.currentRef();context={...context,refId:ref?.id,snippet:adapter.selectedSnippet(ref)};if(!data)await load();if(!data||stopped||!visible())return;editor?.close();const ticket=generation,url=env.location.href;editor=openWorkspaceEditor({snapshot:data,command,undo,assets,context,onClose:()=>{editor=null;navigation.layout();if(current(ticket,url)){const roots=navigation.roots(),key=context.workspaceId?'actions:'+context.workspaceId:'管理工作空间';for(const root of [roots?.workspace,roots?.sidebar]){const n=[...(root?.shadow.querySelectorAll('[data-focus-key]')??[])].find(n=>n.dataset.focusKey===key);if(n){n.focus({preventScroll:true});break;}}}}});}
   function saveViewSoon(value,scope){
     if(!data||scope!==data.scope||stopped)return;const encoded=JSON.stringify(value);if(encoded===lastView)return;lastView=encoded;clearTimeout(viewTimer);const ticket=generation,url=env.location.href;
     viewTimer=setTimeout(()=>void queue(async()=>{if(!current(ticket,url)||!lease||data?.scope!==scope)return;
@@ -96,7 +104,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     }),180);
   }
   function changed(){if(stopped)return;if(lastURL!==env.location.href||lastControls!==controlsKey()){
-      clearRecovery();lastURL=env.location.href;lastControls=controlsKey();generation++;invalidateRemote();clearTimers();fail('route-changed');lease=null;data=null;retries=0;clearFeedback();pending=setTimeout(load,0);
+      clearRecovery();partitionReplica=null;lastURL=env.location.href;lastControls=controlsKey();generation++;invalidateRemote();clearTimers();fail('route-changed');lease=null;data=null;retries=0;clearFeedback();pending=setTimeout(load,0);
     }else navigation.layout();}
   const observer=new MutationObserver(records=>{if(records.some(r=>!r.target.closest?.('[data-vaiwl-owned]')&&!(r.type==='attributes'&&r.attributeName?.startsWith('data-vaiwl'))))changed();});
   observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','open','data-collapsed','inert']});
