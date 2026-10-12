@@ -1,0 +1,15 @@
+✔ live experiment permits exact official HTTPS, never auth redirects, aliases or credentials (0.344833ms)
+✔ guest sender cannot be promoted from Chrome document or URL into account authority (0.832875ms)
+✔ client supplied account or label cannot bypass original strict request validation (0.097292ms)
+✔ forged origin, extension or subframe is refused before data access (0.082875ms)
+✔ native write request has no bound authority and never reaches a writer (0.07925ms)
+✔ health cannot serialize a promoted scope or arbitrary error/private payload (0.111ms)
+✔ probe has no host writer, account store, message contents or network collection (0.518042ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 60.10025

@@ -1,0 +1,210 @@
+{
+  "baselinePR14": "a68fd07aeec5ba2cc9ff4e9754c5aa294b7e287e",
+  "actualTotalSends": 9,
+  "runs": [
+    {
+      "run": "run-1",
+      "actualSends": 6,
+      "completed": true,
+      "ownChromeClosed": true,
+      "nativeResponseStreamCounts": [
+        0,
+        0,
+        0
+      ],
+      "failures": []
+    },
+    {
+      "run": "run-2",
+      "actualSends": 2,
+      "completed": true,
+      "ownChromeClosed": true,
+      "nativeResponseStreamCounts": [
+        1,
+        1
+      ],
+      "failures": []
+    },
+    {
+      "run": "run-3",
+      "actualSends": 0,
+      "completed": false,
+      "ownChromeClosed": true,
+      "nativeResponseStreamCounts": [],
+      "failures": [
+        {
+          "phase": "driver",
+          "error": {
+            "type": "Error",
+            "codes": [
+              "net::ERR_CONNECTION_CLOSED"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "run": "run-4",
+      "actualSends": 1,
+      "completed": true,
+      "ownChromeClosed": true,
+      "nativeResponseStreamCounts": [
+        1
+      ],
+      "failures": []
+    }
+  ],
+  "recoveryObservations": [
+    {
+      "run": "run-1",
+      "condition": "no-extension",
+      "kind": "independent-native-new-chat-and-back",
+      "originalRawStatus": "PASS",
+      "ownSyntheticMessageVisible": true,
+      "sameNativeConversationRoute": false,
+      "finalRecoveryVerdict": "NOT_VERIFIED_ROUTE_MISMATCH",
+      "roleCounts": {
+        "user": 1,
+        "assistant": 1,
+        "other": 0
+      }
+    },
+    {
+      "run": "run-1",
+      "condition": "no-extension",
+      "kind": "independent-native-refresh",
+      "originalRawStatus": "FAIL",
+      "ownSyntheticMessageVisible": false,
+      "sameNativeConversationRoute": false,
+      "finalRecoveryVerdict": "NOT_PRESERVED",
+      "roleCounts": {
+        "user": 0,
+        "assistant": 0,
+        "other": 0
+      }
+    },
+    {
+      "run": "run-1",
+      "condition": "probe-loaded",
+      "kind": "independent-native-new-chat-and-back",
+      "originalRawStatus": "PASS",
+      "ownSyntheticMessageVisible": true,
+      "sameNativeConversationRoute": false,
+      "finalRecoveryVerdict": "NOT_VERIFIED_ROUTE_MISMATCH",
+      "roleCounts": {
+        "user": 1,
+        "assistant": 1,
+        "other": 0
+      }
+    },
+    {
+      "run": "run-1",
+      "condition": "probe-loaded",
+      "kind": "independent-native-refresh",
+      "originalRawStatus": "FAIL",
+      "ownSyntheticMessageVisible": false,
+      "sameNativeConversationRoute": false,
+      "finalRecoveryVerdict": "NOT_PRESERVED",
+      "roleCounts": {
+        "user": 0,
+        "assistant": 0,
+        "other": 0
+      }
+    },
+    {
+      "run": "run-1",
+      "condition": "probe-uninstalled",
+      "kind": "return-sample",
+      "originalRawStatus": "FAIL",
+      "finalRecoveryVerdict": "DRIVER_TIMEOUT_NOT_HOST_NEGATIVE",
+      "error": {
+        "type": "TimeoutError",
+        "codes": []
+      }
+    },
+    {
+      "run": "run-1",
+      "condition": "probe-uninstalled",
+      "kind": "independent-native-refresh",
+      "originalRawStatus": "FAIL",
+      "ownSyntheticMessageVisible": false,
+      "sameNativeConversationRoute": false,
+      "finalRecoveryVerdict": "NOT_PRESERVED",
+      "roleCounts": {
+        "user": 0,
+        "assistant": 0,
+        "other": 0
+      }
+    },
+    {
+      "run": "run-2",
+      "condition": "no-extension",
+      "kind": "independent-native-new-chat-and-back",
+      "originalRawStatus": "PASS",
+      "ownSyntheticMessageVisible": true,
+      "sameNativeConversationRoute": false,
+      "finalRecoveryVerdict": "NOT_VERIFIED_ROUTE_MISMATCH",
+      "roleCounts": {
+        "user": 1,
+        "assistant": 1,
+        "other": 0
+      }
+    },
+    {
+      "run": "run-2",
+      "condition": "probe-uninstalled",
+      "kind": "independent-native-new-chat-and-back",
+      "originalRawStatus": "PASS",
+      "ownSyntheticMessageVisible": true,
+      "sameNativeConversationRoute": false,
+      "finalRecoveryVerdict": "NOT_VERIFIED_ROUTE_MISMATCH",
+      "roleCounts": {
+        "user": 1,
+        "assistant": 1,
+        "other": 0
+      }
+    },
+    {
+      "run": "run-4",
+      "condition": "no-extension",
+      "kind": "independent-native-new-chat-and-back",
+      "originalRawStatus": "FAIL",
+      "ownSyntheticMessageVisible": true,
+      "sameNativeConversationRoute": false,
+      "finalRecoveryVerdict": "NOT_VERIFIED_ROUTE_MISMATCH",
+      "roleCounts": {
+        "user": 1,
+        "assistant": 1,
+        "other": 0
+      }
+    }
+  ],
+  "conclusions": {
+    "originalUserSendTime": "UNKNOWN_NOT_ESTABLISHED",
+    "nonMessageTime": [
+      "HTTP Date",
+      "browser native-click observation",
+      "response receive time"
+    ],
+    "timeRevalidation": "NOT_POSSIBLE_WITH_CURRENT_EVIDENCE",
+    "historyCoverage": "UNKNOWN",
+    "threeIndependentRefreshes": "NOT_PRESERVED",
+    "newTabReopensWithOwnMessage": 0,
+    "nativeBackWithOldDOM": "OBSERVED_WITH_DIFFERENT_ROUTE; not full conversation recovery",
+    "opaqueConversationState": "type-only; no decoding",
+    "exactNativeMessageIDAssociation": "NOT_RUN_AUTO_REVIEW_REJECTED"
+  },
+  "environment": {
+    "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428",
+    "node": "v26.8.2",
+    "liveBrowser": {
+      "chrome": "Chrome/154.0.8037.99",
+      "initialHTTP": 200,
+      "freshProfile": true,
+      "existingConfiguredProxyOnly": true,
+      "noSecurityOverride": true,
+      "python": "3.14.7",
+      "playwright": "1.63.0"
+    }
+  }
+}

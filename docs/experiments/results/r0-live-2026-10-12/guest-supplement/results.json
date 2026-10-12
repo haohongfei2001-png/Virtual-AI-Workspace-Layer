@@ -1,0 +1,206 @@
+{
+  "layer": "LIVE_HOST_GUEST",
+  "additionalMessagesSent": 0,
+  "noInternalAPI": true,
+  "tests": [
+    {
+      "id": "R0-00-native-tools-real-popover-and-login-gates",
+      "status": "PASS",
+      "actual": {
+        "actualOpenPopover": true,
+        "loginGatedTools": [
+          "创建图像。登录后使用。",
+          "深度研究。登录后使用。",
+          "添加文件。登录后使用。"
+        ],
+        "escapeClosed": true,
+        "toolInvoked": false,
+        "native": {
+          "mainUnchanged": true,
+          "inputUnchanged": true,
+          "ownedDOMRoots": 0
+        },
+        "correctsFirstRunWeakMenuObservation": true
+      }
+    },
+    {
+      "id": "R0-00-native-model-menu-role-button",
+      "status": "PASS",
+      "actual": {
+        "nativeRoleButton": true,
+        "nativeModelEntry": true,
+        "actualPopoverCount": 1,
+        "openedAndClosed": true,
+        "modelSelectionOrSettingChanged": false,
+        "native": {
+          "mainUnchanged": true,
+          "inputUnchanged": true,
+          "ownedDOMRoots": 0
+        }
+      }
+    },
+    {
+      "id": "R0-02-preserved-native-guest-refresh-limitation",
+      "status": "PASS",
+      "actual": {
+        "originalRefreshAssertion": "FAIL_PRESERVED",
+        "currentVisibleRoles": {
+          "user": 0,
+          "assistant": 0,
+          "other": 0
+        },
+        "route": "HOME",
+        "durableGuestHistory": "NOT_DEMONSTRATED",
+        "extensionWasUninstalledBeforeOriginalRefresh": true,
+        "originalSendTime": "UNKNOWN"
+      }
+    },
+    {
+      "id": "R0-04-real-background-return-preserves-native-draft",
+      "status": "PASS",
+      "actual": {
+        "actualVisibilityEvents": {
+          "events": [
+            {
+              "type": "visibilitychange",
+              "visibility": "hidden"
+            },
+            {
+              "type": "visibilitychange",
+              "visibility": "visible"
+            }
+          ],
+          "draftUnchanged": true,
+          "focused": true
+        },
+        "probe": {
+          "bindingReason": "unverified-scope",
+          "boot": "54d079f9-d341-4bd2-8a80-8d9f6b077f26",
+          "dataStoreOpened": false,
+          "derivedContentEnabled": false,
+          "nativeWritesEnabled": false,
+          "schema": "vaiwl-r0-probe-v1",
+          "trustedAccountScope": false
+        },
+        "native": {
+          "mainUnchanged": true,
+          "inputUnchanged": true,
+          "ownedDOMRoots": 0
+        },
+        "newMessagesSent": 0
+      }
+    },
+    {
+      "id": "R0-04-actual-freeze-resume-unknown-scope",
+      "status": "PASS",
+      "actual": {
+        "actualLifecycleEvents": {
+          "freezeObserved": true,
+          "resumeObserved": true,
+          "draftUnchanged": true
+        },
+        "probeHealth": {
+          "bindingReason": "unverified-scope",
+          "boot": "54d079f9-d341-4bd2-8a80-8d9f6b077f26",
+          "dataStoreOpened": false,
+          "derivedContentEnabled": false,
+          "nativeWritesEnabled": false,
+          "schema": "vaiwl-r0-probe-v1",
+          "trustedAccountScope": false
+        },
+        "ownership": {
+          "composerUnchanged": true,
+          "nativeDOMWritten": false,
+          "originalNativeNodesConnected": true,
+          "ownedDOMRoots": 0,
+          "trackedCount": 2
+        },
+        "native": {
+          "mainUnchanged": true,
+          "inputUnchanged": true,
+          "ownedDOMRoots": 0
+        },
+        "noRefresh": true
+      }
+    },
+    {
+      "id": "R0-04-final-stop-uninstall-native-retained",
+      "status": "PASS",
+      "actual": {
+        "probeStopped": true,
+        "actualUninstall": true,
+        "ownUnsentSyntheticDraftRemoved": true,
+        "native": {
+          "mainUnchanged": true,
+          "inputUnchanged": true,
+          "ownedDOMRoots": 0
+        },
+        "finalStructure": {
+          "schema": "r0-structure-v1",
+          "official": true,
+          "route": "HOME",
+          "scope": "UNVERIFIED",
+          "derivedEnabled": false,
+          "guestSignals": {
+            "login": true,
+            "signup": true
+          },
+          "native": {
+            "main": 1,
+            "sidebar": 2,
+            "composer": 1,
+            "model": true,
+            "tools": true,
+            "send": true,
+            "stop": false,
+            "search": false,
+            "newChat": true
+          },
+          "visibleReferenceCounts": {
+            "chat": 0,
+            "project": 0,
+            "examined": 6,
+            "fullAccountCoverage": false
+          },
+          "messageRoleMarkers": {
+            "user": 0,
+            "assistant": 0,
+            "other": 0
+          },
+          "roleAttributeFamilies": {
+            "legacy": 0,
+            "octane": 0
+          },
+          "userTimeStructure": {
+            "timeNodes": 0,
+            "timeAttributes": 0,
+            "originalSendSemantics": "NOT_ESTABLISHED",
+            "coverage": "UNKNOWN"
+          },
+          "identityAttributeCandidates": 0,
+          "uniqueReturnSlot": "NOT_VERIFIED",
+          "nativeDomWritten": false,
+          "limitedToCurrentVisibleDocument": true
+        }
+      }
+    }
+  ],
+  "sourceHashes": {
+    "experiments/r0/worker.mjs": "c7ef8ef570a1cc0129f9c7e9eff4060bd03e32aaa5806d8c15c5fae21a53a62c",
+    "experiments/r0/live-session.py": "48f5aeb7ec5f1943280f5abb39525d1fc807a80400d947a61e71f133181978ac",
+    "experiments/r0/sync-git.py": "e10ffa99dfcf323d60d600c26abd0b2848a222bd382c01f82cdce56ae50a6f56",
+    "experiments/r0/build.mjs": "e030634d84fa04a5844242b6bf5e4db56b955059623fd6003426606d0874fd5d",
+    "experiments/r0/policy.mjs": "80501db5075dcffb9d084533b8cdf1d15f0d3b8adb041d63fe87dc2a33f1abe3",
+    "experiments/r0/content.js": "454e1f4fae0b395653f378fede06d09682c0ee0e6b5af0a53d43475315e7463b",
+    "experiments/r0/structure.js": "d695e9ce659e07e9ca64ce58850ed259b284cd25f70a9f5511e5cde75d080eca",
+    "experiments/r0/guest-session.py": "77039e5377248c79785a5a907f44e84fca10cb29b210206c4cd33ac122558607",
+    "tests/r0/live-guest-journey.py": "5a5de76dd2825d49389bf90cc5805c0220f1dccf16b702502c6dfc71014c8cda",
+    "tests/r0/guest-lifecycle-supplement.py": "a786cede574658f4b7d78679018a4fcf8b1f5ca33dcb45ef511eff242b84a873",
+    "tests/r0/policy.test.mjs": "b1c9c0bf454ca5eced4ded58f11662c834588be6c88b778d5c0458081b067dc3",
+    "tests/r0/guest-first-message.py": "467aca953cdf7535b6fa568f63ff713ec6fc04e6b3f88047d40b45df63e707c3"
+  },
+  "counts": {
+    "PASS": 6,
+    "FAIL": 0
+  }
+}

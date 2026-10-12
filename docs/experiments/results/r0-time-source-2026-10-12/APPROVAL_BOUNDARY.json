@@ -1,0 +1,16 @@
+{
+  "initialAnnouncedSendCap": 6,
+  "userOriginalGrant": "few synthetic test messages; user did not specify an integer cap",
+  "actualConfirmedSends": 9,
+  "byRun": {
+    "run-1": 6,
+    "run-2": 2,
+    "run-3": 0,
+    "run-4": 1
+  },
+  "executionLimitControlDefect": "cap was per invocation instead of per supplement",
+  "proposedTenthMessage": "NOT_RUN_AUTO_REVIEW_REJECTED",
+  "autoReviewReason": "additional send exceeds the six-message boundary treated by review as authorized; existing receipts permit remaining analysis",
+  "noWorkaroundOrFurtherBrowserLaunch": true,
+  "remainingIdentifierExactMatchLiveCheck": "WAITING_EXPLICIT_ADDITIONAL_ONE_MESSAGE_AUTHORIZATION"
+}

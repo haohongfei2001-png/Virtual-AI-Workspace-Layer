@@ -1,0 +1,88 @@
+"""Bounded event-field reducer. No full HTTP body is assembled or persisted.
+Only scalar schema paths and necessary own-test message metadata survive reduction.
+IDs, raw times and known synthetic marker matches remain RAM-only for equality tests.
+"""
+import json,re
+from html_fields import HTMLFields
+TIME=re.compile(r'(?:^|_)(?:create(?:d)?|sent|send|update(?:d)?|server|response|received|observed|start|end)?_?(?:time|timestamp|at)$|^(?:createTime|createdAt|sentAt|sendTime|serverTime|timestamp|updateTime)$',re.I)
+DENY=re.compile(r'cookie|token|secret|authorization|session|account|email|credential|password',re.I)
+IDS={'id','message_id','conversation_id','parent_id','parent_message_id','messageId','conversationId','operationId'}
+STATUS={'status','end_turn','finish_reason','type','role'}
+def reduce_event(data,marker,observation_seconds):
+ rows=[];messages=[];ids=[];schema=[];embedded=[]
+ def walk(x,path=(),ancestors=()):
+  if isinstance(x,dict):
+   # Read only known, necessary role/content metadata, never arbitrary data values.
+   author=x.get('author');role=x.get('role')
+   if isinstance(author,dict):role=author.get('role',role)
+   if role in ('user','assistant','system'):
+    body=x.get('content');own=False
+    if isinstance(body,dict) and isinstance(body.get('parts'),list):own=any(isinstance(p,str) and marker in p for p in body['parts'])
+    msg={'path':'.'.join(path),'role':role,'ownSyntheticMarker':own,'privateId':x.get('id') if isinstance(x.get('id'),str) else None,'privateTimes':{}}
+    for k,v in x.items():
+     if TIME.search(k) and isinstance(v,(int,float,str)) and not isinstance(v,bool):msg['privateTimes'][k]=v
+    messages.append(msg)
+   for k,v in x.items():
+    if not isinstance(k,str) or DENY.search(k):continue
+    safeKey=k if re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]{0,60}',k) and not re.fullmatch(r'[a-f0-9]{16,}',k) else '<map-key>'
+    p=path+(safeKey,)
+    schema.append({'field':'.'.join(p),'type':type(v).__name__})
+    if isinstance(v,str):
+     if '<' in v and re.search(r'<(?:div|li|p|main|script|template|span)\b',v):embedded.append(v)
+    if isinstance(v,(dict,list)):walk(v,p,ancestors+(x,))
+    elif TIME.search(k) or k in STATUS or k in IDS:
+     row={'field':'.'.join(p),'type':type(v).__name__,'kind':'message-or-unknown-time' if TIME.search(k) else 'identifier' if k in IDS else 'role-or-state'}
+     if TIME.search(k):
+      if isinstance(v,(int,float)) and not isinstance(v,bool):
+       row['unixSecondsPlausible']=1_500_000_000<float(v)<2_500_000_000
+       row['unixMillisecondsPlausible']=1_500_000_000_000<float(v)<2_500_000_000_000
+       row['fractionalDigits']=len(str(v).partition('.')[2]) if '.' in str(v) else 0
+       seconds=float(v)/1000 if row['unixMillisecondsPlausible'] else float(v)
+       if row['unixSecondsPlausible'] or row['unixMillisecondsPlausible']:row['offsetFromBrowserObservationMs']=round((seconds-observation_seconds)*1000)
+      elif isinstance(v,str):row['iso8601Shape']=bool(re.fullmatch(r'\d{4}-\d\d-\d\dT[0-9:.]+(?:Z|[+-]\d\d:\d\d)',v))
+     if k=='role' and v in ('user','assistant','system','tool'):row['role']=v
+     if k=='status' and v in ('in_progress','finished_successfully','finished','complete','pending','failed'):row['state']=v
+     rows.append(row)
+     if k in IDS and isinstance(v,str) and len(v)<=128:ids.append((k,v))
+  elif isinstance(x,list):
+   for value in x[:500]:walk(value,path+('[]',),ancestors)
+ walk(data)
+ return {'fields':rows[:500],'privateMessages':messages[:100],'privateIds':ids[:500],'schema':schema[:800],'privateHTMLFragments':embedded[:100]}
+class StreamReducer:
+ """SSE/NDJSON frame streaming, max64KiB incomplete frame; never full body/HAR."""
+ def __init__(self,marker,observed):self.marker=marker;self.observed=observed;self.pending='';self.fields=[];self.messages=[];self.ids=[];self.frames=0;self.discarded=0;self.bytes=0;self.schema=[];self.html=HTMLFields(marker)
+ def feed(self,text):
+  self.bytes+=len(text.encode());self.pending+=text
+  while '\n' in self.pending:
+   line,self.pending=self.pending.split('\n',1);line=line.strip()
+   if line.startswith('data:'):line=line[5:].lstrip()
+   if line=='[DONE]' or not line.startswith(('{','[')):continue
+   if len(line)>65536:self.discarded+=1;continue
+   try:data=json.loads(line)
+   except (ValueError,RecursionError):self.discarded+=1;continue
+   self.frames+=1;r=reduce_event(data,self.marker,self.observed)
+   self.schema.extend(r['schema']);self.schema=self.schema[-2000:]
+   for fragment in r['privateHTMLFragments']:self.html.bounded_feed(fragment)
+   self.fields.extend(r['fields']);self.messages.extend(r['privateMessages']);self.ids.extend(r['privateIds'])
+   self.fields=self.fields[-1500:];self.messages=self.messages[-150:];self.ids=self.ids[-1500:]
+  if len(self.pending)>65536:self.pending='';self.discarded+=1
+ def public(self):
+  unique={json.dumps(r,sort_keys=True):r for r in self.fields}
+  return {'parsedFrames':self.frames,'discardedFrames':self.discarded,'bytesStreamedNotStored':self.bytes,'fields':list(unique.values())[:500],
+   'messageMetadata':[{'path':m['path'],'role':m['role'],'ownSyntheticMarker':m['ownSyntheticMarker'],'idPresent':m['privateId'] is not None,'timeFieldNames':list(m['privateTimes'])} for m in self.messages[-30:]],'noFullResponseRetained':True,'schema':list({json.dumps(x,sort_keys=True):x for x in self.schema}.values())[:500],'embeddedHTML':self.html.public()}
+class ScalarJSONReducer:
+ """Partial, key-directed scalar extraction. Never assembles a JSON response.
+No auth values, texts or IDs are extracted; message association stays unproven.
+"""
+ def __init__(self,marker,observed):self.marker=marker;self.observed=observed;self.tail='';self.fields=[];self.bytes=0;self.markerSeen=False;self.roleSeen=set();self.frames=0;self.messages=[];self.ids=[]
+ def feed(self,text):
+  self.bytes+=len(text.encode());window=self.tail+text;self.markerSeen|=self.marker in window
+  pattern=r'"((?:create(?:d)?|sent|send|update(?:d)?|server|response|received|observed|start|end)[_-]?(?:time|timestamp|at)|timestamp|createdAt|createTime|sentAt|role|status)"\s*:\s*(null|true|false|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|"[^"\\]{0,128}")'
+  for m in re.finditer(pattern,window,re.I):
+   k,scalar=m.groups();row={'field':k,'location':'partial-json-unspecified-container','type':'str' if scalar.startswith('"') else 'null' if scalar=='null' else 'bool' if scalar in ('true','false') else 'number','messageAssociation':'NOT_ESTABLISHED'}
+   if k=='role' and scalar in ('"user"','"assistant"'):row['role']=scalar.strip('"');self.roleSeen.add(row['role'])
+   if TIME.search(k) and row['type']=='number':
+    value=float(scalar);row['unixSecondsPlausible']=1.5e9<value<2.5e9;row['unixMillisecondsPlausible']=1.5e12<value<2.5e12;row['fractionalDigits']=len(scalar.partition('.')[2].split('e')[0]) if '.' in scalar else 0
+   self.fields.append(row)
+  self.fields=self.fields[-500:];self.tail=window[-256:]
+ def public(self):return {'partialFieldExtractionOnly':True,'noFullResponseRetained':True,'bytesStreamedNotStored':self.bytes,'ownSyntheticMarkerSeen':self.markerSeen,'roleSeen':sorted(self.roleSeen),'fields':list({json.dumps(x,sort_keys=True):x for x in self.fields}.values()),'messageAssociation':'NOT_ESTABLISHED'}

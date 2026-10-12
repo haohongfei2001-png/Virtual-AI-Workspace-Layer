@@ -1,0 +1,8 @@
+{
+  "fieldReductionContracts": 8,
+  "fieldReductionContractsStatus": "PASS",
+  "syntheticExactIDComparison": "PASS_OFFLINE_ONLY",
+  "taskWideCapRejectsBeforeCreatingProfile": "PASS",
+  "liveExactIDComparison": "NOT_RUN_AUTO_REVIEW_REJECTED",
+  "additionalNativeSendsInTheseChecks": 0
+}

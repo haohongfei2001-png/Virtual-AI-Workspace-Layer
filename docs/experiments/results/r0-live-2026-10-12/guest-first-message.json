@@ -1,0 +1,181 @@
+{
+  "layer": "LIVE_HOST_GUEST",
+  "site": "https://chatgpt.com",
+  "account": "NOT_LOGGED_IN",
+  "baselineExtensionLoaded": false,
+  "syntheticPrompt": "VAIWL R0 访客合成测试：请只回答 2+3 的结果，不包含其他内容。",
+  "browserObservationTimeNotOriginalSendTime": true,
+  "directInternalApiCalls": 0,
+  "sentCount": 1,
+  "result": "OBSERVED_REPLY",
+  "before": {
+    "schema": "r0-structure-v1",
+    "official": true,
+    "route": "HOME",
+    "scope": "UNVERIFIED",
+    "derivedEnabled": false,
+    "guestSignals": {
+      "login": true,
+      "signup": false
+    },
+    "native": {
+      "main": 1,
+      "sidebar": 2,
+      "composer": 1,
+      "model": false,
+      "tools": false,
+      "send": true,
+      "stop": false,
+      "search": false,
+      "newChat": false
+    },
+    "visibleReferenceCounts": {
+      "chat": 0,
+      "project": 0,
+      "examined": 6,
+      "fullAccountCoverage": false
+    },
+    "messageRoleMarkers": {
+      "user": 0,
+      "assistant": 0,
+      "other": 0
+    },
+    "userTimeStructure": {
+      "timeNodes": 0,
+      "timeAttributes": 0,
+      "originalSendSemantics": "NOT_ESTABLISHED",
+      "coverage": "UNKNOWN"
+    },
+    "identityAttributeCandidates": 0,
+    "uniqueReturnSlot": "NOT_VERIFIED",
+    "nativeDomWritten": false,
+    "limitedToCurrentVisibleDocument": true
+  },
+  "nativeComposerStructure": {
+    "tag": "TEXTAREA",
+    "role": null,
+    "attributeNames": [
+      "class",
+      "aria-label",
+      "autocapitalize",
+      "autocomplete",
+      "autocorrect",
+      "data-mobile-composer-prompt",
+      "enterkeyhint",
+      "id",
+      "inputmode",
+      "name",
+      "placeholder",
+      "required",
+      "rows",
+      "spellcheck",
+      "data-octane-input",
+      "data-octane-bindings",
+      "data-octane-signal-control",
+      "style"
+    ]
+  },
+  "observedBeforeNativeClickUtc": "2026-10-12T11:26:45Z",
+  "expectedReplyVisible": true,
+  "nativeSendToObservationMs": 4417.4,
+  "after": {
+    "schema": "r0-structure-v1",
+    "official": true,
+    "route": "OTHER",
+    "scope": "UNVERIFIED",
+    "derivedEnabled": false,
+    "guestSignals": {
+      "login": true,
+      "signup": false
+    },
+    "native": {
+      "main": 1,
+      "sidebar": 2,
+      "composer": 1,
+      "model": false,
+      "tools": false,
+      "send": true,
+      "stop": false,
+      "search": false,
+      "newChat": false
+    },
+    "visibleReferenceCounts": {
+      "chat": 0,
+      "project": 0,
+      "examined": 6,
+      "fullAccountCoverage": false
+    },
+    "messageRoleMarkers": {
+      "user": 0,
+      "assistant": 0,
+      "other": 0
+    },
+    "userTimeStructure": {
+      "timeNodes": 0,
+      "timeAttributes": 0,
+      "originalSendSemantics": "NOT_ESTABLISHED",
+      "coverage": "UNKNOWN"
+    },
+    "identityAttributeCandidates": 0,
+    "uniqueReturnSlot": "NOT_VERIFIED",
+    "nativeDomWritten": false,
+    "limitedToCurrentVisibleDocument": true
+  },
+  "knownSyntheticUserVisible": true,
+  "syntheticMessageAncestorStructure": [
+    {
+      "tag": "P",
+      "attributeNames": [
+        "data-user-message-copy",
+        "class"
+      ],
+      "role": null
+    },
+    {
+      "tag": "DIV",
+      "attributeNames": [
+        "data-user-message-bubble",
+        "class"
+      ],
+      "role": null
+    },
+    {
+      "tag": "DIV",
+      "attributeNames": [
+        "data-octane-hydrate-id"
+      ],
+      "role": null
+    },
+    {
+      "tag": "DIV",
+      "attributeNames": [
+        "class"
+      ],
+      "role": null
+    },
+    {
+      "tag": "DIV",
+      "attributeNames": [
+        "data-submit-message-animation-target",
+        "class"
+      ],
+      "role": null
+    }
+  ],
+  "possibleNativeRoleAttributes": [
+    "data-assistant-message-actions",
+    "data-copy-message",
+    "data-message-actions",
+    "data-message-attribution",
+    "data-message-complete",
+    "data-message-intervention",
+    "data-message-role",
+    "data-mobile-turn-reserved",
+    "data-share-message",
+    "data-sidebar-return-to-chat",
+    "data-submit-message-animation-target",
+    "data-user-message-actions",
+    "data-user-message-bubble",
+    "data-user-message-copy"
+  ]
+}

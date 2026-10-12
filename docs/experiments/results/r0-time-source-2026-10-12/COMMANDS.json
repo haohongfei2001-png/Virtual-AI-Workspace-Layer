@@ -1,0 +1,38 @@
+{
+  "actualExecutions": [
+    {
+      "run": "run-1",
+      "command": "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python tests/r0/time-source/live.py --session-dir /Users/hhf/Documents/Codex/VAIWL-Development/r0-time-session-20261012-a81e --output-dir /Users/hhf/Documents/Codex/VAIWL-Development/r0-live-20261012/docs/experiments/results/r0-time-source-2026-10-12/run-1 --allow-six-native-synthetic-sends",
+      "actualSends": 6,
+      "completed": true,
+      "executedSources": "run-1/executed/"
+    },
+    {
+      "run": "run-2",
+      "command": "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python tests/r0/time-source/live.py --session-dir /Users/hhf/Documents/Codex/VAIWL-Development/r0-time-session-20261012-b92f --output-dir /Users/hhf/Documents/Codex/VAIWL-Development/r0-live-20261012/docs/experiments/results/r0-time-source-2026-10-12/run-2 --conditions no-extension,probe-uninstalled --skip-refresh-sample --allow-six-native-synthetic-sends",
+      "actualSends": 2,
+      "completed": true,
+      "executedSources": "run-2/executed/"
+    },
+    {
+      "run": "run-3",
+      "command": "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python tests/r0/time-source/live.py --session-dir /Users/hhf/Documents/Codex/VAIWL-Development/r0-time-session-20261012-c03a --output-dir /Users/hhf/Documents/Codex/VAIWL-Development/r0-live-20261012/docs/experiments/results/r0-time-source-2026-10-12/run-3 --conditions no-extension --skip-refresh-sample --allow-six-native-synthetic-sends",
+      "actualSends": 0,
+      "completed": false,
+      "executedSources": "run-3/executed/"
+    },
+    {
+      "run": "run-4",
+      "command": "/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/bin/python tests/r0/time-source/live.py --session-dir /Users/hhf/Documents/Codex/VAIWL-Development/r0-time-session-20261012-d14b --output-dir /Users/hhf/Documents/Codex/VAIWL-Development/r0-live-20261012/docs/experiments/results/r0-time-source-2026-10-12/run-4 --conditions no-extension --skip-refresh-sample --allow-six-native-synthetic-sends",
+      "actualSends": 1,
+      "completed": true,
+      "executedSources": "run-4/executed/"
+    },
+    {
+      "command": "python3 tests/r0/time-source/test_fields.py",
+      "result": "8 PASS, no native sends"
+    }
+  ],
+  "proposedExactIDLiveCheck": "NOT_RUN_AUTO_REVIEW_REJECTED; extra one-message authorization needed; current total budget guard denies before Chrome creation",
+  "doNotBlindlyReplay": "Raw runs used former per-invocation budget; current task-wide limit is exhausted. Increasing CLI budget does not grant permission."
+}
