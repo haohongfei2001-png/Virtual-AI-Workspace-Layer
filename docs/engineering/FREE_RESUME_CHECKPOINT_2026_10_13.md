@@ -145,3 +145,9 @@ Project增量双向依赖修复及Free PAGE最终16Mi UTF8/有界拆页完成，
 Free界面改为构建前续租、构建后统一一次最终CHECK；候选未验证不发布，Pro不变。真实headless屏障7/7、MV3 9/9、100k三发送功能通过但1824.9/2083.0/2046.8ms均超过1秒。证据free-round19-*，不重复完整Node；包路径/private/tmp/vaiwl-free-delivery-round19-20261013/vaiwl-free-synthetic-only.zip，hash见STATUS。
 
 ee7bc03正常push连接443超时，最后确认远端dab61e7 Draft，后续本地提交须正常同步，不冒称已推送。下一可执行：共享partitioned.saveMutation旧root再次hash，改同事务验证后立即写checkpoint，防止后续impure reducer改变旧记录；新root完整验证/编码、回滚/CAS/恢复保持。另发现只有删除的Free manifest可能被zero-page分支复用旧snapshot，当前native不会物理删除，记录为客户端协议边界待修，不宣称生产可达。真实Free未完成，外部条件保持。
+
+## 第二十轮恢复增量（接c81d84f）
+
+旧checkpoint无需再次hash：验证后同事务立即put原记录，IDB同步克隆和abort防污染；原生引用注册仅新增才写，恢复保留恢复后checkpoint。分组Node60、96、新10分别通过；真IDB20+2独立通过；100k发送1724.4/2045.6/2046.8ms均功能PASS但1秒FAIL，证据free-round20-*。包/private/tmp/vaiwl-free-delivery-round20-20261013/vaiwl-free-synthetic-only.zip，hash见STATUS。
+
+下一立即修复：真实restore→undo备份新增引用引发manifest仅删除，plan需rebuild，保持暖/冷投影一致。tests/free/replica-removal.test.mjs为待集成新反例，不属于本轮已通过数。当前GitHub短连接超时，远端最后确认dab61e7，本地ee7bc03及后续待正常推送；不改remote/force/merge/deploy，Free未完成。

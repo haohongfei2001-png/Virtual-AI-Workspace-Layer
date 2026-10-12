@@ -76,6 +76,9 @@ export class WorkspaceRepository {
             if(!check())return;
             try{
               const payload=sr.result?(isPartitioned(sr.result.payload)?this.partitioned.verifiedManifest(sr.result,s.key):unpack(sr.result)):null;
+              // IDB clones the verified envelope before reducers or guards can
+              // mutate shared header objects. Failed mutations abort this write.
+              if(isPartitioned(payload))tx.objectStore('b23_checkpoints').put(sr.result);
               const enter=(current,storage=null,loadedPrior=null)=>{
               if(current.revision!==expectedRevision){abort('revision-conflict');return;}
               const finish=prior=>{
@@ -153,6 +156,7 @@ export class WorkspaceRepository {
       const apply=(current,storage=null)=>{try{
         check();const added=nativeRefs.filter(ref=>!Object.hasOwn(current.refs,ref.id));
         if(!added.length){done();return;}
+        if(storage)tx.objectStore('b23_checkpoints').put(request.result);
         const next=structuredClone(current);
         for(const ref of added)next.refs[ref.id]={id:ref.id,nativeUrl:ref.nativeUrl,projectId:ref.projectId,nativeTitle:ref.nativeTitle??'名称暂不可用',available:ref.availability==='available'};
         next.revision++;validateState(next,s.key);

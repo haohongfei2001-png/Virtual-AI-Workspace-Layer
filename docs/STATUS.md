@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第十九轮（接本地 `ee7bc03`，远端最后确认 `dab61e7`）。Free界面统一末次发布校验；继续原正式目录、分支和PR，不改发布状态。
+当前已推进至第二十轮（接本地 `c81d84f`，远端最后确认 `dab61e7`）。共享检查点复用同事务已验证旧记录；继续原正式目录、分支和PR，不改发布状态。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -281,3 +281,11 @@ fixtureObserve复用workspaceContext单ref和native.page目标引用，不再在
 真实headless发布屏障7/7：构建期间scope/版本变化、隐藏/取消均不发布，首次空库存、零页复用和构建前续租通过。scope/空库存是transport注入，版本变化用真实native.apply；不是生产账户证明。实际MV3 9/9。100k发送3/3功能通过，既有/新NONE/新Project分别1824.9/2083.0/2046.8ms，均1秒性能FAIL；每次投影仅1个末次CHECK，全量读取0、各1发送/event/hint、草稿保持。单次诊断不声称统计提速；报告分别保留来源，不相加。
 
 新包SHA256 `21827dbaf9a0d8ea35ae8fac232aa207c378b9e0e611681ef64fe2fdffbd37ec`，仍SYNTHETIC_ONLY。ee7bc03正常推送因GitHub 443连接失败未完成，最后确认远端仍dab61e7，不更换remote或循环重试。下一本地位置：共享分片旧checkpoint重复哈希，可在同一事务验证后立即put原envelope，依靠IDB同步克隆与事务回滚保留准确旧记录；不得接受外部可信hash。真实来源/账户/跨端/PAIA/物理与日常验收仍缺条件，Free未完成。
+
+## 第二十轮：共享检查点保留已验证旧记录（接c81d84f）
+
+共享mutate在同一事务验证旧root后立即put原envelope，由IDB同步克隆隔离后续reducer/guard对嵌套对象的修改；失败事务整体回滚。registerNativeReferences仅确有新增才写checkpoint；恢复继续checkpoint新恢复root。saveMutation只编码新root，不新增外部可信hash参数，旧校验/CAS/限额及恢复授权保持。
+
+F1/发送组合60/0、共享资产/B4组合96/0、新检查点反例10/10分别通过，不相加冒称完整回归。真实headless/IDB旧20项分片合同和新增2项同步克隆/撤权回滚均通过，源码hash稳定。100k三发送功能通过，1724.4/2045.6/2046.8ms仍全部1秒FAIL；全量read0、各1发送/event/hint、草稿/阅读保持，55hash不变。新包SHA256 `7e5a4f9c8f8ec4ea9136993b7ed474a69ed188794cf7f25bce2a024b81477b49`，仅SYNTHETIC_ONLY。
+
+GitHub短只读连接仍8秒超时，未重复push；本地检查点保留，最后已确认远端dab61e7。独立审查确认restore→undo可使仅备份新增的v0引用从owner清单消失，而客户端零页分支仍复用旧snapshot。下一修复使增量与冷启动投影遵循同一清单，不把该操作称为原生删除。真实账户/来源/跨端/PAIA/物理设备及日常验收缺原条件，完整Free未完成。

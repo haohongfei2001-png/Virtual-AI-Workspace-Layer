@@ -11,15 +11,15 @@ function save(manifest=fixture(),change=()=>{}){
  const next=new PartitionedState({}).saveMutation(tx,{manifest,pieces:new Map()},null,state,[]);
  return {next,writes};
 }
-test('saveMutation publishes canonical digest root and exact prior checkpoint without mutating inputs',()=>{
+test('saveMutation publishes canonical digest root without mutating inputs; caller owns checkpoint',()=>{
  const before=fixture(),copy=structuredClone(before),{next,writes}=save(before,state=>{state.workspaces=structuredClone(state.workspaces);state.workspaces.W.name='新名字😀';});
- assert.deepEqual(before,copy);assert.equal(writes.length,2);
- const checkpoint=writes.find(x=>x.store==='b23_checkpoints').row,root=writes.find(x=>x.store==='b23_states').row;
- assert.deepEqual(checkpoint.payload,copy);assert.equal(checkpoint.checksum,digest(copy));assert.equal(root.checksum,digest(next));assert.deepEqual(root.payload,next);assert.equal(root.key,scope.key);assert.equal(root.payload.revision,2);assert.equal(checkpoint.payload.revision,1);
+ assert.deepEqual(before,copy);assert.equal(writes.length,1);
+ const root=writes.find(x=>x.store==='b23_states').row;
+ assert.equal(root.checksum,digest(next));assert.deepEqual(root.payload,next);assert.equal(root.key,scope.key);assert.equal(root.payload.revision,2);
 });
 test('Unicode/escape code units and insertion order produce identical canonical root checksums',()=>{
  const first=fixture(),second=Object.fromEntries(Object.entries(first).reverse());second.workspaces={W:Object.fromEntries(Object.entries(first.workspaces.W).reverse())};
- const a=save(first),b=save(second);assert.equal(stable(a.next).length,JSON.stringify(a.next).length);assert.equal(digest(a.next),digest(b.next));assert.equal(a.writes[1].row.checksum,b.writes[1].row.checksum);
+ const a=save(first),b=save(second);assert.equal(stable(a.next).length,JSON.stringify(a.next).length);assert.equal(digest(a.next),digest(b.next));assert.equal(a.writes[0].row.checksum,b.writes[0].row.checksum);
 });
 test('saveMutation retains exact aggregate 128Mi boundary and rejects overflow',()=>{
  const value=fixture();value.units=128*1024*1024;assert.equal(save(value).next.units,value.units);value.units++;assert.throws(()=>save(value),/invalid-partition-manifest/);

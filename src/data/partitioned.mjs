@@ -102,7 +102,9 @@ export class PartitionedState {
    for(const table of ['events','coverage'])for(const row of b[table])store.put(partitionRecord(locatorKey(n.scopeKey,table,row.id),{scopeKey:n.scopeKey,table,id:row.id,refId}));
   }
   n.humanRefs=[...new Set([...m.humanRefs,...(actor==='human'?ids:[])])].filter(k=>Object.hasOwn(n.refVersions,k));n.changes=[...m.changes,{revision:n.revision,refs:ids}].slice(-64);
-  const rootRecord=manifestRecord(n.scopeKey,n);tx.objectStore('b23_checkpoints').put(partitionRecord(n.scopeKey,m));store.put(rootRecord);return n;
+  // The transaction owner preserves its verified old envelope before mutation;
+  // recovery instead checkpoints the newly recovered root after this returns.
+  const rootRecord=manifestRecord(n.scopeKey,n);store.put(rootRecord);return n;
  }
  async page(scope,{revision=null,offset=0,ids=null},options={}){
   const s=normalizedScope(scope);if(!s)throw Error('unverified-scope');if(!Number.isSafeInteger(offset)||offset<0||offset>MAX_REFS||ids&&(!Array.isArray(ids)||ids.length>PAGE_SIZE))throw Error('invalid-partition-page');
