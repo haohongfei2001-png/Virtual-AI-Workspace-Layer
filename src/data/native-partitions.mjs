@@ -118,9 +118,6 @@ export function saveNativePieces(store, scope, current, next, storage, command) 
       }
     };
   }
-  // Previous immutable root is retained for diagnosis; recovering it must invalidate all evidence.
-  if (prior) store.put(nativeRecord(nativeCheckpointKey(next.scopeKey), prior));
-  else if (current.revision) store.put(nativeRecord(nativeCheckpointKey(next.scopeKey), current));
   // Both atomic roots contain the exact same immutable payload. Hash it once;
   // the key is outside the checksum and no payload mutation occurs between puts.
   const rootRecord=nativeRecord(next.scopeKey,manifest);

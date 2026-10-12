@@ -1,4 +1,5 @@
-import { isNativePartitioned, validateNativeManifest, loadNativePieces, saveNativePieces, nativeHeader, nativeRecoveryKey, nativeRecord } from './native-partitions.mjs';
+import {VerifiedRecordCache} from './verified-record-cache.mjs';
+import { isNativePartitioned, validateNativeManifest, loadNativePieces, saveNativePieces, nativeHeader, nativeRecoveryKey, nativeCheckpointKey, nativeRecord } from './native-partitions.mjs';
 import { emptyNativeFacts, validateNativeFacts, applyNativeObservations, invalidateNativeSource } from './native-facts.mjs';
 import { freeProjection } from './free-projection.mjs';
 import { id } from './state.mjs';
@@ -14,6 +15,9 @@ function fence({guard = () => true, signal} = {}) {
 }
 
 export class NativeRepository {
+  #rootCache=new VerifiedRecordCache();
+  verifiedRoot(row,scope){return this.#rootCache.read(row,scope.key,(payload,record)=>{unpack(record);if(isNativePartitioned(payload))validateNativeManifest(payload,scope);else validateNativeFacts(payload,scope);});}
+
   constructor({baseRepository, workspaceRepository = null, observationGate = null, clock = () => new Date().toISOString()}) {
     if (!baseRepository?.open || !baseRepository?.scopeOrThrow) throw Error('b1-repository-required');
     this.base = baseRepository;
@@ -32,14 +36,14 @@ export class NativeRepository {
       let facts, error;
       request.onsuccess = () => {
         try {
-          const payload = request.result ? unpack(request.result) : null;
+          const payload = request.result ? this.verifiedRoot(request.result, normalized) : null;
           if (isNativePartitioned(payload)) {
-            const manifest = validateNativeManifest(payload, normalized);
+            const manifest = payload;
             loadNativePieces(transaction.objectStore('native_states'), manifest, normalized,
               {projects: Object.keys(manifest.projects), refs: Object.keys(manifest.refs)}, value => { facts = value; },
               failure => { error = failure; transaction.abort(); });
             facts = nativeHeader(manifest, normalized);
-          } else facts = payload ? validateNativeFacts(payload, normalized) : emptyNativeFacts(normalized);
+          } else facts = payload ?? emptyNativeFacts(normalized);
           const marker = transaction.objectStore('native_operations').get(normalized.key);
           marker.onsuccess = () => {
             try {
@@ -66,9 +70,9 @@ export class NativeRepository {
       request.onsuccess = () => {
         try {
           if (request.result) {
-            const value = unpack(request.result);
-            if (isNativePartitioned(value)) manifest = validateNativeManifest(value, normalized);
-            revision = (manifest ?? validateNativeFacts(value, normalized)).revision;
+            const value = this.verifiedRoot(request.result, normalized);
+            if (isNativePartitioned(value)) manifest = value;
+            revision = (manifest ?? value).revision;
           }
           const marker = tx.objectStore('native_operations').get(normalized.key);
           marker.onsuccess = () => {
@@ -99,9 +103,9 @@ export class NativeRepository {
       const request = store.get(normalized.key);
       request.onsuccess = () => {
         try {
-          const payload = request.result ? unpack(request.result) : emptyNativeFacts(normalized);
+          const payload = request.result ? this.verifiedRoot(request.result, normalized) : emptyNativeFacts(normalized);
           if (!isNativePartitioned(payload)) {
-            const all = validateNativeFacts(payload, normalized);
+            const all = payload;
             if (revision !== null && revision !== all.revision) throw Error('snapshot-revision-changed');
             const projects = Object.keys(all.projects), refs = Object.keys(all.refs), total = projects.length + refs.length;
             const selectedProjects = ids?.projects ?? projects.slice(offset, offset + limit);
@@ -115,7 +119,7 @@ export class NativeRepository {
             result={revision:all.revision,offset,total,nextOffset:Math.min(total,offset+limit),facts,selectedProjects,selectedRefs};
             return;
           }
-          const manifest = validateNativeManifest(payload, normalized);
+          const manifest = payload;
           if (revision !== null && revision !== manifest.revision) throw Error('snapshot-revision-changed');
           const projects = Object.keys(manifest.projects), refs = Object.keys(manifest.refs), total = projects.length + refs.length;
           const projectSlice = ids?.projects ?? projects.slice(offset, offset + limit);
@@ -236,9 +240,9 @@ export class NativeRepository {
       request.onsuccess = () => {
         try {
           check();
-          const payload = request.result ? unpack(request.result) : null;
-          const manifest = isNativePartitioned(payload) ? validateNativeManifest(payload, normalized) : null;
-          const current = manifest ? nativeHeader(manifest, normalized) : payload ? validateNativeFacts(payload, normalized) : emptyNativeFacts(normalized);
+          const payload = request.result ? this.verifiedRoot(request.result, normalized) : null;
+          const manifest = isNativePartitioned(payload) ? payload : null;
+          const current = manifest ? nativeHeader(manifest, normalized) : payload ?? emptyNativeFacts(normalized);
           const marker = operations.get(normalized.key);
           marker.onsuccess = () => {
             try {
@@ -264,6 +268,10 @@ export class NativeRepository {
                       check();
                       const publish=()=>{
                         try {check();saveNativePieces(states, normalized, partial, next, storage, command);
+                          // This exact envelope was verified above in the same CAS transaction.
+                          // The reducer clones its input; only rekey the unchanged prior payload.
+                          // saveNativePieces queued the older checkpoint GC read before this put.
+                          if(payload?.revision)states.put({...request.result,key:nativeCheckpointKey(normalized.key)});
                           operations.put(record(normalized.key, {revision: next.revision}));
                           operations.put(record(operationKey, {fingerprint, revision: next.revision, operationId}));
                           check();result = {ok: true, replayed: false, revision: next.revision, operationId};

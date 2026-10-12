@@ -1,3 +1,4 @@
+import {loadFreePages} from '../src/data/free-page-loader.mjs';
 import {isFreeRecoveryReason,freeRecoveryPanel} from '../src/navigation/free-recovery.mjs';
 import {planFreeReplica,freeReplicaRequests,assembleFreeReplicaAsync} from '../src/data/free-replica.mjs';
 import {createFreeViewSession,initialFreeTimePolicy,freeProjectDensity,evaluateFreeTimePolicy,coolFreeTimePolicy,setFreeHorizon} from '../src/data/free-time-policy.mjs';
@@ -84,12 +85,12 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     if(!current(ticket,url))throw Error('stale-client-response');if(!reply?.ok)throw Error(reply?.reason??'read-failed');
     let next=reply.snapshot,nextIndex=null;
     if(freeMode){
-      const header=reply.header,plan=planFreeReplica(freeReplica,header),pages=[];
-      for(const ids of freeReplicaRequests(plan,5000)){
+      const header=reply.header,plan=planFreeReplica(freeReplica,header);
+      const pages=await loadFreePages({requests:freeReplicaRequests(plan,5000),guard:()=>current(ticket,url),load:async ids=>{
         await renewReadBinding(ticket,url);
         const r=await request('B23_FREE_PAGE',{revision:header.revision,offset:0,limit:5000,ids,viewSession:header.viewSession,now:c.now??FIXTURE_NOW});
-        if(!current(ticket,url))throw Error('stale-client-response');if(!r?.ok)throw Error(r?.reason??'read-failed');if(r.page.scope!==header.scope)throw Error('stale-client-response');pages.push(r.page);
-      }
+        if(r?.ok&&r.page.scope!==header.scope)throw Error('stale-client-response');return r;
+      }});
       const verify=async()=>{await renewReadBinding(ticket,url);const r=await request('CHECK');if(!current(ticket,url))throw Error('stale-client-response');if(!r?.ok)throw Error(r?.reason??'read-failed');if(r.scope!==header.scope)throw Error('stale-client-response');if(r.nativeRevision!==header.revision||r.revision!==header.workspaceRevision||r.evidenceRevision!==header.evidenceRevision)throw Error('snapshot-revision-changed');};
       await verify();
       if(!plan.full&&!plan.rebuild&&!plan.projects.length&&!plan.refs.length&&freeReplica){

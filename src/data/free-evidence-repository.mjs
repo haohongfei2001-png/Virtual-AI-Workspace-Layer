@@ -1,3 +1,4 @@
+import {VerifiedRecordCache} from './verified-record-cache.mjs';
 import {freeEvidenceKey,evidenceRecoveryKey,evidenceRecord,unpackEvidence,isEvidencePartitioned,validateEvidenceManifest,evidenceHeader,loadEvidencePieces,saveEvidencePieces,evidenceTouchedRefs,loadEvidenceIndexes} from './free-evidence-partitions.mjs';
 export {freeEvidenceKey} from './free-evidence-partitions.mjs';
 import {emptyFreeEvidence,validateFreeEvidence,applyFreeEvidence} from './free-evidence.mjs';
@@ -13,6 +14,9 @@ function markerCheck(root,marker,revision){
 }
 /** Evidence shares the B1 database but never its native or Pro record keys. No export/restore grants. */
 export class FreeEvidenceRepository {
+ #rootCache=new VerifiedRecordCache();
+ verifiedRoot(row,scope){return this.#rootCache.read(row,scope.key,(payload,record)=>{unpack(record);if(isEvidencePartitioned(payload))validateEvidenceManifest(payload,scope);else validateFreeEvidence(payload,scope);});}
+
  constructor({baseRepository,observationGate=null,clock=()=>new Date().toISOString()}){
   if(!baseRepository?.open||!baseRepository?.scopeOrThrow)throw Error('b1-repository-required');
   this.base=baseRepository;this.observationGate=observationGate;this.clock=clock;
@@ -31,9 +35,9 @@ export class FreeEvidenceRepository {
    const revoked=()=>abort(Error('stale-binding'));options.signal?.addEventListener('abort',revoked,{once:true});
    const states=tx.objectStore('native_states'),root=states.get(key);
    root.onsuccess=()=>{try{
-    fence(options);const payload=root.result?unpack(root.result):emptyFreeEvidence(normalized);
-    const manifest=isEvidencePartitioned(payload)?validateEvidenceManifest(payload,normalized):null;
-    const current=manifest?evidenceHeader(manifest,normalized):validateFreeEvidence(payload,normalized);
+    fence(options);const payload=root.result?this.verifiedRoot(root.result,normalized):emptyFreeEvidence(normalized);
+    const manifest=isEvidencePartitioned(payload)?payload:null;
+    const current=manifest?evidenceHeader(manifest,normalized):payload;
     if(query?.revision!==undefined&&query.revision!==null&&query.revision!==current.revision)throw Error('snapshot-revision-changed');
     const marker=tx.objectStore('native_operations').get(key);marker.onsuccess=()=>{try{fence(options);markerCheck(root.result,marker.result,current.revision);}catch(failure){abort(failure);}};
     const refs=manifest?Object.keys(manifest.refVersions):[...new Set(['events','hints','coverage'].flatMap(t=>Object.values(current[t]).map(r=>r.conversationId)))];
@@ -119,9 +123,9 @@ export class FreeEvidenceRepository {
    const revoked=()=>abort('stale-binding');options.signal?.addEventListener('abort',revoked,{once:true});
    const root=states.get(key);
    root.onsuccess=()=>{try{
-    fence(options);const payload=root.result?unpack(root.result):emptyFreeEvidence(normalized);
-    const manifest=isEvidencePartitioned(payload)?validateEvidenceManifest(payload,normalized):null;
-    const current=manifest?evidenceHeader(manifest,normalized):validateFreeEvidence(payload,normalized);
+    fence(options);const payload=root.result?this.verifiedRoot(root.result,normalized):emptyFreeEvidence(normalized);
+    const manifest=isEvidencePartitioned(payload)?payload:null;
+    const current=manifest?evidenceHeader(manifest,normalized):payload;
     const marker=operations.get(key);marker.onsuccess=()=>{try{
      fence(options);markerCheck(root.result,marker.result,current.revision);
      const operationKey=JSON.stringify([key,operationId]),receipt=operations.get(operationKey);

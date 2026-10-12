@@ -63,3 +63,11 @@ Git连接恢复，03ef76a已正常推送原分支；本轮末再同步新检查�
 本轮新合成包 `/private/tmp/vaiwl-free-delivery-round6-20261013/vaiwl-free-synthetic-only.zip`，SHA256 d5f2a3d3c01ac2d43fcee1c9d0ed3e22d7aacea9b4cd126e0894f5be5863fbe4。HEAD用git核对；持续沿当前分支及Draft PR #16，未merge/部署/付费。
 
 第六轮最终同步结果：本地实现bf9bcd4。GitHub API确认PR #16仍Draft、远端03ef76a；默认HTTPS推送报HTTP/2 framing error，一次命令级HTTP/1.1补救20秒超时后停止重试。没有改remote/config；bf9bcd4及本同步记录仅在本地，不能把PR远端描述成已含第六轮代码。
+
+## 第七轮恢复增量（接fe046ab）
+
+100k完整增量已执行，不再NOT_RUN：baseline3513.7ms，严格字节验证缓存后2149.9ms，均功能PASS而1秒性能FAIL。初始22188.5→17525.8ms。分片checksum与schema缓存只在每次完整字节、checksum、scope/key全部相等时复用，旧checkpoint在同事务闭包复用；自定义toJSON/iterator绕过已堵。超大页二分/单项终止/预算也已实现，勿重复实现。最终Node360/0，其他源hash与真实性范围见STATUS第七轮。
+
+下一可执行性能位置：共享WorkspaceRepository.registerNativeReferences/partitioned root验证、freeHeader重复100k映射及CHECK中共享manifest验证；saveView自身只写b23_views小记录，不应假定它单独重写整个manifest，其观测延迟可能是并行JS/事务排队。不能省略scope、marker、checksum/CAS或最终版本校验。现有100k完整UI脚本能固定源码做前后测，无需重建环境/计划。
+
+最新包 `/private/tmp/vaiwl-free-delivery-round7-20261013/vaiwl-free-synthetic-only.zip`，SHA256 f84712d88cfdc9a2c2817370f0eb43f6632c650aff941bd68a725d58e4d0ce9c。本轮唯一20秒正常推送超时后停止；远端上一确认03ef76a，当前实现及检查点仍本地待同步。真实账户/PAIA/物理环境条件保持未授权且阻塞对应验收；整个Free尚未交付，继续本地可执行优化。

@@ -162,3 +162,18 @@ PLAN_TEXT_READY；REMOTE_WRITE_BLOCKED（当前工具未提供写入动作，也
 新合成包 `/private/tmp/vaiwl-free-delivery-round6-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `d5f2a3d3c01ac2d43fcee1c9d0ed3e22d7aacea9b4cd126e0894f5be5863fbe4`。当前仍SYNTHETIC_ONLY；真实ChatGPT/R0/C6、跨设备、PAIA、物理IME/弱设备/真人F4及100k端到端尚未通过，完整Free未交付。
 
 第六轮最终同步结果：本地实现bf9bcd4。GitHub API确认PR #16仍Draft、远端03ef76a；默认HTTPS推送报HTTP/2 framing error，一次命令级HTTP/1.1补救20秒超时后停止重试。没有改remote/config；bf9bcd4及本同步记录仅在本地，不能把PR远端描述成已含第六轮代码。
+
+## 第七轮：超大页与完整字节验证缓存（接fe046ab）
+
+首次固定源码100k完整source→IDB→broker→DOM已执行：初始22188.5ms、更新3513.7ms，功能通过但1秒性能目标FAIL。此前诊断不再被误当完整增量证据。
+
+继续实现：
+- Free读取仅遇native/evidence page-too-large才二分当前页，不丢Project/ref顺序；最多64次额外拆分/深度13，单项仍超限明确失败，其他错误不重试。scope、revision和最终版本栅栏原样保留，6秒/20秒授权边界不变。
+- Native旧checkpoint envelope从已验证的同RW事务闭包复用，不额外对100k旧root重hash；不接收外部trusted参数。GC先读旧checkpoint再覆盖，root/recovery/receipt/shared ref仍原子回滚。
+- native/evidence根校验缓存每次仍比较严格JSON全内容、checksum与scope/key。仅完全相等才复用schema/hash验证；不只信checksum/revision、不缓存mutable事实对象。每repo最多2项/8Mi字符，不超预算；marker、pieces、index、恢复和GC仍独立验证。独立合同修复toJSON及自定义iterator碰撞，不调用这类hook。
+
+优化后固定源码100k完整UI：初始17525.8ms、更新2149.9ms（下降约38.8%），1ref分页、全量read/snapshot0、原生阅读/输入/消息节点及草稿保留。功能PASS，1秒性能目标仍FAIL；头读取约477ms、单页323ms、两次CHECK约193/180ms及并行view保存仍有成本，不通过省略安全栅栏来达标。before/after报告保留各自source hashes。
+
+验证：最终完整Node360/0/0skip；真实Chrome MV39/9报告为数组遍历最后小修之前的独立哈希；最终严格缓存16合同、完整Node及拆页浏览器3项覆盖最后修复。浏览器拆页采用模拟30KB返回预算+真实IDB/DOM，两类size error均604refs/2projects、63calls/32成功页，603有效聊天与原有T401 tombstone全部可达，单项error10calls后停止；这是错误路径测试，不能冒称真实16Mi边界认证。各次数不相加。
+
+合成包 `/private/tmp/vaiwl-free-delivery-round7-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `f84712d88cfdc9a2c2817370f0eb43f6632c650aff941bd68a725d58e4d0ce9c`。本轮一次20秒HTTP/1.1正常推送仍超时，未循环重试、改配置或remote。上一确认远端03ef76a；本轮代码仍本地待同步。完整Free/真实ChatGPT/PAIA/物理与日常验收未通过；不标FREE_ACCEPTED或RELEASE_READY。
