@@ -9,7 +9,7 @@ if(mode==='page'){
   const id='hf_page_transport',doc=crypto.randomUUID(),getFrame=async()=>({documentId:doc,url:env.location.href,documentLifecycle:'active'});
   service=createFixtureService({indexedDB,extensionId:id,getFrame});
   const start=()=>{active?.stop();active=startClient({send:message=>service.broker.handle(message,{id,tab:{id:1},frameId:0,documentId:doc,documentLifecycle:'active',url:env.location.href}),
-    invalidateRemote:()=>service.broker.invalidate({tabId:1}),readControls:()=>host.state});return active;};
+    subscribe:listener=>service.subscribe(listener),invalidateRemote:()=>service.broker.invalidate({tabId:1}),readControls:()=>host.state});return active;};
   start();globalThis.HFextension={start,stop:()=>active.stop(),refresh:()=>active.refresh(),showWorkspace:()=>active.showWorkspace(),status:()=>active.status(),command:c=>active.command(c),undo:()=>active.undo(),manage:()=>active.manage(),service};
   const original=host.control;globalThis.HF=Object.freeze({...host,control:(action,value)=>{original(action,value);if(['stress','timeZone','now'].includes(action))active.refresh();if(action==='read-delay')service.setDelay(value);}});
 }

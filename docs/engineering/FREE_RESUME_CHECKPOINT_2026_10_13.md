@@ -39,3 +39,9 @@ PLAYWRIGHT_BROWSERS_PATH=/private/tmp/vaiwl-free-playwright node tests/free/part
 2026-10-13 GitHub API核对PR #16仍Draft，远端头为 `b2a262b6b60c421b8ed3735f6cae524030097b5d`。正常HTTPS Git查询出现HTTP/2 framing错误；仅该次命令临时切HTTP/1.1推送又在75秒后报443连接失败。未改remote/config，未强推。**7ac2e28及包含本节的检查点提交仅在本地，尚未推送**；网络恢复后直接正常推送当前分支到原origin，不重做代码或验证。
 
 没有以同步失败冒称线上交付。真实ChatGPT来源/完整库存/本人活动、跨端、PAIA干净构建/共存、物理弱设备/IME和真人日常验收仍需要前述最小条件；Free产品并未完整验收。
+
+## 第四轮恢复增量（接25e2ab2）
+
+已补后台校准通知、账户/文档/lease校验与循环抑制，完整Node301/0、实际MV3 9/9；另外Chrome生命周期5/5、共享资产与通知阅读8/8、校准200.1ms且来源1次。结果与各自源码来源见STATUS第四轮。新合成包路径 `/private/tmp/vaiwl-free-delivery-round4-20261013/vaiwl-free-synthetic-only.zip`，SHA256 a63b1aa6928dc6d047a7450ca18adf2483839ae47360e3c1b6176e75ae605fb3。
+
+仍有可本地推进的F1问题：配置source后每次提交FreeRuntime.read仍全量snapshot+evidence投影；需要增量发布/过期调度来避免100k更新全库读取，同时保持既有runtime独立调用合同。不要重写已通过模块，也不要把此项标外部权限阻塞。真实账户及其他BLOCKED_LIVE条件保持不变。Git端点短检查仍超时，本轮不重复推送；远端b2a262b，当前HEAD以git核对。

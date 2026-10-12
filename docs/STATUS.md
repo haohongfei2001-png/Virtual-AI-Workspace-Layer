@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-最新本地实现为 `7ac2e28`；远端PR #16仍为已推送的 `b2a262b`。正常Git传输分别出现HTTP/2错误和443连接超时，第三轮实现及最终检查点尚未推送；见恢复检查点的“最后同步检查点”。未修改远端设置。
+第三轮本地实现为 `7ac2e28`，第四轮在 `25e2ab2` 上继续，结果见末节；远端PR #16仍为已推送的 `b2a262b`。正常Git传输分别出现HTTP/2错误和443连接超时，第三轮实现及最终检查点尚未推送；见恢复检查点的“最后同步检查点”。未修改远端设置。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -117,3 +117,18 @@ F3已新增固定ZIP元数据的纯Node离线打包、source/build SHA-256清单
 ## 3. 本次文档交接状态
 
 PLAN_TEXT_READY；REMOTE_WRITE_BLOCKED（当前工具未提供写入动作，也无已配置提交凭证）；RUNTIME_UNCHANGED；NEW_PRODUCT_TESTS_NOT_RUN。可提交文件包以固定head与逐文件旧blob作为保护条件，写回前必须重新读PR #15，不覆盖别人的新提交。提交成功后记录真实新head再更新本状态，禁止预造SHA。
+
+## 第四轮：后台通知与生命周期（接25e2ab2）
+
+补齐校准提交到真实客户端的通知：service owner发布仅lease标识的更新，MV3 broker重新验证当前scope/document/lease后定向发送；客户端只重读受版本保护的页面，保留阅读态和原生草稿。每binding前台校准只启动一次，避免“通知→HEADER→再次校准”循环；显式send/source/expiry/history仍可触发。独立审查已复现循环并用延迟投递回归关闭。
+
+本次实际结果独立记录，不和历史次数相加：
+- 完整Node组合301通过/0失败/0跳过；命令同第三轮，源码与日志尾见 `engineering/free-notification-source-receipt-2026-10-13.json`。
+- 实际headless Chrome MV3回归9/9；`free-notification-mv3-2026-10-13.json`。
+- 实际Chrome禁用/启用、可信freeze/resume、Back/Forward与同IDB恢复5/5，旧草稿页不刷新；`free-lifecycle-mv3-2026-10-13.json`保留通知改动前各自构建哈希。
+- Free共享工作集/片段/失效回退/Free↔Pro人工资产保留、后台通知保持阅读及草稿、旧lease拒绝8/8；`free-shared-assets-notification-ui-2026-10-13.json`。
+- 真实IDB+page transport校准可见性：旧轮询2199.7ms，新通知200.1ms，阈值1000ms，来源调用严格1次；before/after报告独立保留。此项不是MV3上游source或真实ChatGPT认证。
+
+新可复现合成包：`/private/tmp/vaiwl-free-delivery-round4-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `a63b1aa6928dc6d047a7450ca18adf2483839ae47360e3c1b6176e75ae605fb3`。旧包与证据不覆盖。实际ChatGPT/跨端/PAIA/物理IME和弱设备、真人F4仍未验收；完整Free未交付。配置source后runtime提交仍做全量活动投影，100k端到端持续更新优化未完成，不能当外部阻塞忽略。
+
+本轮Git端点5秒连通性检查仍超时，API核对Draft PR #16仍b2a262b；没有循环重试，没有更换remote或部署。本轮提交继续仅本地检查点。

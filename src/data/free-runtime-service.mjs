@@ -65,7 +65,10 @@ export class FreeRuntimeService {
     entry.runtime.setScope(entry.scope);
     entry.session=session??entry.session;
     if(entry.session)entry.runtime.session=entry.session;
-    const calibration=entry.runtime.trigger('scope',{objectIds});
+    // A refresh notification only rereads durable pages. Start this foreground
+    // cycle once per binding; explicit send/source/expiry/history triggers remain
+    // available, and a renewed lease starts a new bounded foreground cycle.
+    const calibration=entry.foregroundCalibration??=entry.runtime.trigger('scope',{objectIds});
     return {snapshot:null,calibration:calibration.then(value=>this.active(entry)?value:{status:'cancelled',reason:'stale-binding'})};
    }
    const result=await entry.runtime.enter(entry.scope,{session:session??entry.session,objectIds});

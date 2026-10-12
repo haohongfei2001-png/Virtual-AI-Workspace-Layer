@@ -183,3 +183,15 @@ test('B1: a same-document SPA route change never exposes old async reads',async(
  const switched=await broker.handle({v:1,type:'BIND',clientId:'client_A',seq:3},sender);
  assert(switched.ok,'browser-confirmed SPA B must accept stale sender.url A');
 });
+
+test('worker notification target revalidates document, lease lifetime and account',async()=>{
+ const h=mk(),sender=fixture();
+ const first=await h.broker.handle(h.request('BIND',1),sender);
+ assert.deepEqual(await h.broker.notificationTarget(first.leaseId),{tabId:17,documentId:'doc_A'});
+ assert.equal(await h.broker.notificationTarget('unknown'),null);
+ h.current.set(17,{url:urls.B,documentId:'doc_A',documentLifecycle:'active'});
+ assert.equal(await h.broker.notificationTarget(first.leaseId),null);
+ assert.equal(h.broker.debug().active,0);
+ const second=await h.broker.handle(h.request('BIND',2),fixture('doc_A','B'));
+ h.tick(20001);assert.equal(await h.broker.notificationTarget(second.leaseId),null);
+});

@@ -142,7 +142,7 @@ export function createDocumentBindingBroker({
       const leaseId=makeId();
       if(!tokenOK(leaseId))return deny('bad-lease');
       st.slot?.abort?.abort();st.epoch++;
-      const slot={doc,scope,clientId:message.clientId,seq:message.seq,
+      const slot={doc,scope,sender,clientId:message.clientId,seq:message.seq,
         leaseId,expiresAt:now()+leaseMs,epoch:st.epoch,abort:new AbortController()};
       st.slot=slot;
       try {freeRuntime?.bind({bindingId:leaseId,scope,guard:()=>fresh(st,slot),signal:slot.abort.signal,authorityCheck:()=>currentAuthority(st,slot,doc,sender)});} catch {slot.abort.abort();st.slot=null;return deny('free-runtime-bind-failed');}
@@ -213,7 +213,14 @@ export function createDocumentBindingBroker({
     }catch(e){return deny(e?.message||'repository-failure');}
     return deny('unsupported');
   }
-  return Object.freeze({handle,invalidate,tabClosed,debug:()=>({
+  async function notificationTarget(leaseId){
+    for(const st of states.values()){
+      const slot=st.slot;if(slot?.leaseId!==leaseId)continue;
+      if(await currentAuthority(st,slot,slot.doc,slot.sender))return {tabId:slot.doc.tabId,documentId:slot.doc.documentId};
+    }
+    return null;
+  }
+  return Object.freeze({handle,invalidate,tabClosed,notificationTarget,debug:()=>({
     active:[...states.values()].filter(v=>v.slot).length
   })});
 }

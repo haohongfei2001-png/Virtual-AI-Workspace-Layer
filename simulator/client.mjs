@@ -212,7 +212,16 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','open','data-collapsed','inert']});
   const resize=new ResizeObserver(()=>navigation.layout());resize.observe(document.documentElement);const nativeChange=()=>changed();document.addEventListener('hf:change',nativeChange);
   document.addEventListener('toggle',nativeChange,true);addEventListener('popstate',nativeChange);addEventListener('resize',nativeChange);
-  const unsub=subscribe(()=>recover('stale-binding',{immediate:true}));
+  let updateQueued=false;
+  const unsub=subscribe(message=>{
+    if(message?.type!=='HF_FREE_UPDATED'){recover('stale-binding',{immediate:true});return;}
+    if(stopped||!visible()||!lease||message.leaseId!==lease.leaseId||updateQueued)return;
+    updateQueued=true;const ticket=generation,url=env.location.href;
+    void queue(async()=>{
+      updateQueued=false;if(!current(ticket,url)||message.leaseId!==lease?.leaseId)return;
+      try{await readSnapshot(ticket,url);}catch(e){if(current(ticket,url))recover(e.message);}
+    });
+  });
   const hide=()=>{if(!visible()){generation++;clearTimers();lease=null;data=null;invalidateRemote();fail('hidden-document',true);clearFeedback();}else{retries=0;void load();}};
   const pageHide=()=>{generation++;clearTimers();lease=null;data=null;invalidateRemote();fail('page-hidden',true);clearFeedback();};
   const resume=()=>{if(!stopped&&visible()){retries=0;void load();}};

@@ -20,7 +20,8 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
   const workspaces=new WorkspaceRepository({baseRepository:repository,evidenceGate:syntheticEvidenceGate});
   const native=new NativeRepository({baseRepository:repository,workspaceRepository:workspaces,observationGate:syntheticNativeGate,clock:()=>FIXTURE_NOW});
   const evidence=new FreeEvidenceRepository({baseRepository:repository,clock:()=>FIXTURE_NOW,observationGate:scope=>syntheticEvidenceGate(scope)==='synthetic'?{channel:'synthetic',sourceId:'free_fixture_sends',generation:'fixture_v1'}:null});
-  const runtime=new FreeRuntimeService({nativeRepository:native,evidenceRepository:evidence,sourceFor:calibrationSourceFor,clock:()=>FIXTURE_NOW,timeZone:'Asia/Shanghai'});
+  const listeners=new Set();
+  const runtime=new FreeRuntimeService({nativeRepository:native,evidenceRepository:evidence,sourceFor:calibrationSourceFor,clock:()=>FIXTURE_NOW,timeZone:'Asia/Shanghai',onSnapshot:({bindingId,snapshot})=>{if(snapshot)for(const listener of listeners)try{listener({type:'HF_FREE_UPDATED',leaseId:bindingId});}catch{}}});
   const activityVersionCache=new Map();
   function activityVersions(context,stored){
     const {state,refVersions}=context,key=state.scopeKey,revision=`${state.revision}:${stored.revision}`;
@@ -137,5 +138,5 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
       command:(...args)=>workspaces.command(...args),undo:(...args)=>workspaces.undo(...args),history:(...args)=>workspaces.history(...args),saveView:(...args)=>workspaces.saveView(...args),exportBackup:(...args)=>workspaces.exportBackup(...args),previewRestore:(...args)=>workspaces.previewRestore(...args),restoreBackup:(...args)=>workspaces.restoreBackup(...args),recoveryStatus:(...args)=>workspaces.recoveryStatus(...args),recover:(...args)=>workspaces.recover(...args),storage:async()=>{try{const value=await navigator.storage.estimate();return {usage:value.usage??null,quota:value.quota??null,persisted:await navigator.storage.persisted()};}catch{return {usage:null,quota:null,persisted:null};}}
     }
   });
-  return {broker,repository,workspaces,native,evidence,runtime,setDelay:ms=>readDelay=Math.min(3000,Math.max(0,Number(ms)||0)),close:()=>{runtime.stopAll();repository.close();}};
+  return {broker,repository,workspaces,native,evidence,runtime,subscribe:listener=>{listeners.add(listener);return()=>listeners.delete(listener);},setDelay:ms=>readDelay=Math.min(3000,Math.max(0,Number(ms)||0)),close:()=>{runtime.stopAll();listeners.clear();repository.close();}};
 }
