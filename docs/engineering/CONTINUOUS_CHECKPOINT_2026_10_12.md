@@ -29,3 +29,9 @@ F1 已在分支 `codex/vaiwl-f1-performance-20261012` 完成实际规模基线�
 100k后续根因诊断：`tests/f1/real-performance.py ... 100000 --capacity-probe`只在临时测试build放宽表/JSON护栏及加入小型broker时序，不修改正式runtime。两个实验目录experimental-100k-capacity/traced均FAIL：实际100000引用写约12秒、快照5.3–5.6秒，但网页WAITING；trace含BIND~4.82s/SNAPSHOT~5.23s returned ok，客户端仍再次绑定。不能把worker返回ok当客户端应用成功，不能仅改护栏/延长deadline伪造通过。正常诊断关闭下`capacity-production-guard-final`超限仍拒绝，实际原604引用和最新人工sentinel保留。
 
 下一具体原F1断点：分解全状态校验/复制/消息传输/客户端应用及6秒窗口的耗时；在同一数据库与旧CAS/操作收据/资产恢复语义内做可验证增量，所有分页/增量消息须有scope/epoch/revision一致性，不先接收半份混合revision。备份当前17Mi码元parse限额与quota/手工日志也必须一同覆盖；正式cap仍保留。先保留本100k反例，不能为快速PASS缩规模。当前没有获准生产resolver，也未打开日常Chrome或付费模型。
+
+本轮用户明确授权结构性F1优化及Git Data API替代传输。恢复 e626e3a 干净工作树、5个完整bundle与三个原父子分支；有界普通HTTPS再次失败。使用tools/git-data-sync.py读取真实git cat-file对象，二进制blob base64/UTF8内联tree entries均校验返回SHA，tree/commit完全相同（261对象），保留作者/提交者时间和父提交；全部核对后才创建/非强推ref。C34 Draft PR #11(base #10)、D12 #12(base #11)、F1 #13(base #12)已经实际创建并attach，历史#9/#10不改。证据f1-recovery-2026-10-12。
+
+F1逐阶段原失败测量：profile-100k-before明确客户端request-timeout~6001ms，没有navigation.update；worker全状态digestJSON~105619112码元（stable~0.6s，SHA~2.0–2.3s）、校验~1.8s、投影~0.5s；完整snapshot~156319489 JSON码元，仍WAITING。诊断构建SHA单独记录，正常runtime未改，不能算PASS。
+
+下一实际实施：在同一v2数据库已有b23_states/operations/checkpoints/views内，为大规模使用有界不可变引用记录+小型revision manifest；仍复用reduceCommand/undoChanges、人工作品优先、全局CAS/幂等日志、事务完成fence。小规模旧布局/16Mi护栏保留，分区各记录同样校验和有界。通过带scope/lease/revision的1000项数据页完整初始化、随后只传changedRefs增量；完整数据一次核对后才交给同一个dataProjection/navigation，未接收半份混合revision。100k编辑器窗口选择按需查找，不建100k option节点。必须补migration、原始100k可达原生合成路由、manual多tab/undo/recovery/backup与完整回归，不只提高期限/lease/护栏。

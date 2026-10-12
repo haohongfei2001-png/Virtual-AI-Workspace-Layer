@@ -1,0 +1,5 @@
+Fixes the measured10k MV3 snapshot timeout by indexing evidence per projection and bounding timezone formatter caching, preserving CAS, revocation and lifecycle semantics. Real10k snapshot improves~7.09s→458ms; adjacent30-day navigationp95 is50ms and derived-search firstpaintp95 is32ms on this isolated Mac environment.
+
+Stacked on offlineD1/D2. F1 remainsLIMITED:100k is blocked by current capacity guards, and temporary test-only larger guards still leave the clientWAITING (actualwrite~12s/snapshot5.3–5.6s). Productionguards,6s request deadline and20s lease remain unchanged. Original counterexamples and worker traces are retained; this PR will carry further measured structural optimization and full100k validation.
+
+Current full regression: Node135/nativeIndexedDB54/DOM49(mock layer)/page17/MV319/C1UI10/B5UI3/C34UI3/C5UI2/B4core5/lifecycle1 PASS.120themes/604windows unchanged. Evidence: docs/engineering/f1-mac-2026-10-12/ACCEPTANCE.md. RealChatGPT/PAIA and paid/native-write/sync channels remain disabled. Draft; no merge/deploy.

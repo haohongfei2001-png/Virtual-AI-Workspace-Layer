@@ -1,0 +1,27 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "credential.helper=",
+    "-c",
+    "credential.helper=!gh auth git-credential",
+    "-c",
+    "http.version=HTTP/1.1",
+    "-c",
+    "http.connectTimeout=10",
+    "-c",
+    "http.lowSpeedLimit=1",
+    "-c",
+    "http.lowSpeedTime=15",
+    "push",
+    "--atomic",
+    "origin",
+    "codex/vaiwl-c3-c4-context-20261012",
+    "codex/vaiwl-d1-d2-offline-20261012",
+    "codex/vaiwl-f1-performance-20261012"
+  ],
+  "exit": 128,
+  "stdout": "",
+  "stderr": "fatal: unable to access 'https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer.git/': Operation too slow. Less than 1 bytes/sec transferred the last 15 seconds\n",
+  "elapsedSeconds": 15.35499906539917
+}

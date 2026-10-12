@@ -1,0 +1,312 @@
+{
+  "argv": [
+    "tests/f1/real-performance.py",
+    "docs/engineering/f1-recovery-2026-10-12/profile-100k-before",
+    "100000",
+    "--capacity-probe",
+    "--profile-phases"
+  ],
+  "head": "e626e3a936279cca625070509733c5178338b8ca",
+  "tests": [
+    {
+      "id": "F1-real-100000",
+      "status": "FAIL",
+      "actual": {
+        "status": "PERSISTED",
+        "writeMs": 17308.900000095367,
+        "snapshotMs": 5105.299999952316,
+        "counts": {
+          "refs": 100000,
+          "themes": 120
+        },
+        "protectedCount": 100000,
+        "initialCounts": {
+          "refs": 604,
+          "themes": 120
+        }
+      },
+      "buildHashes": {
+        "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+        "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+        "src/b1/document-binding-broker.mjs": "ccde4b99eaa91fdc84ea71f9bd620def20312ebfde31a55b37dfd16352981c1b",
+        "simulator/service.mjs": "c6b9ea2bae4a071b6cad4cb185bccb6e79b7db9118f23f024f6fa62949678e99",
+        "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+        "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+        "simulator/worker.mjs": "3a0e0bdb4d8a95d3766d9f6356717891c533697466ea0ad940077108c9a8b4dc",
+        "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+        "src/data/hash.mjs": "3be84b13429e7ce9fcbee91e5731c9d1e095319bcb7dd61f1fb7d2d3cb409944",
+        "src/data/state.mjs": "61d3cb1c317f4c8c7b344a6042ab2a6e49b06a04f0f868aa9633655bd152870c",
+        "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+        "src/data/evidence.mjs": "4aa1cc11c6ac3cccc479fd2490ebba6590b4181c3a9b99a7e07c50eff72dc8d8",
+        "src/data/repository.mjs": "c30817cb47fe16517a5061b3eb81cd3b1fee8650881aef9495017961af54f0a9",
+        "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+        "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+        "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+        "content.js": "8831ac7a5ca6929f35fe44cee59ebc2363bd630badb3347b9b56cd4c1510765e",
+        "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+      },
+      "error": "Locator.wait_for: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\"html[data-vaiwl-hf-state=ACTIVE]\") to be visible\n",
+      "trace": "Traceback (most recent call last):\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/real-performance.py\", line 49, in <module>\n    p.goto('http://127.0.0.1:48178/hf/A/c/T0?mode=mv3&size=120');p.locator('html[data-vaiwl-hf-state=ACTIVE]').wait_for(timeout=15000);p.evaluate('globalThis.f1Native={input:HF.getView().input,transcript:HF.getView().transcript}')\n                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py\", line 20696, in wait_for\n    self._sync(\n    ~~~~~~~~~~^\n        self._impl_obj.wait_for(timeout=to_milliseconds(timeout), state=state)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_sync_base.py\", line 115, in _sync\n    return task.result()\n           ~~~~~~~~~~~^^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py\", line 752, in wait_for\n    await self._frame.wait_for_selector(\n        self._selector, strict=True, timeout=timeout, state=state\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py\", line 395, in wait_for_selector\n    await self._channel.send(\n        \"waitForSelector\", self._timeout, locals_to_params(locals())\n    )\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 76, in send\n    return await self._connection.wrap_api_call(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/Users/hhf/Documents/Codex/VAIWL-Development/c1/.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py\", line 632, in wrap_api_call\n    raise rewrite_error(error, f\"{parsed_st['apiName']}: {error}\") from None\nplaywright._impl._errors.TimeoutError: Locator.wait_for: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\"html[data-vaiwl-hf-state=ACTIVE]\") to be visible\n\n",
+      "transportTrace": [
+        {
+          "type": "BIND",
+          "ms": 5038,
+          "ok": true,
+          "reason": null
+        },
+        {
+          "type": "BIND",
+          "ms": 5037.300000190735,
+          "ok": false,
+          "reason": "invalidated-during-check"
+        },
+        {
+          "type": "BIND",
+          "ms": 0.5,
+          "ok": true,
+          "reason": null
+        },
+        {
+          "type": "B23_SNAPSHOT",
+          "ms": 5357.899999856949,
+          "ok": true,
+          "reason": null
+        },
+        {
+          "type": "BIND",
+          "ms": 0.5,
+          "ok": true,
+          "reason": null
+        }
+      ],
+      "pageState": "WAITING",
+      "workerPhases": [
+        {
+          "phase": "validateState",
+          "refs": 604,
+          "ms": 54
+        },
+        {
+          "phase": "dataProjection",
+          "refs": 604,
+          "ms": 39.89999985694885
+        },
+        {
+          "phase": "validateState",
+          "refs": 100000,
+          "ms": 7888.799999952316
+        },
+        {
+          "phase": "validateState",
+          "refs": 100000,
+          "ms": 7538.200000047684
+        },
+        {
+          "phase": "validateState",
+          "refs": 100000,
+          "ms": 1692
+        },
+        {
+          "phase": "digest",
+          "jsonCodeUnits": 105619112,
+          "stableMs": 569,
+          "shaMs": 2064.5
+        },
+        {
+          "phase": "digest",
+          "jsonCodeUnits": 105619112,
+          "stableMs": 531.4000000953674,
+          "shaMs": 1974.8999998569489
+        },
+        {
+          "phase": "validateState",
+          "refs": 100000,
+          "ms": 1799.0999999046326
+        },
+        {
+          "phase": "dataProjection",
+          "refs": 100000,
+          "ms": 504.2000000476837
+        },
+        {
+          "phase": "digest",
+          "jsonCodeUnits": 105619112,
+          "stableMs": 568.0999999046326,
+          "shaMs": 2272
+        },
+        {
+          "phase": "validateState",
+          "refs": 100000,
+          "ms": 1836.6000001430511
+        },
+        {
+          "phase": "digest",
+          "jsonCodeUnits": 105619112,
+          "stableMs": 653.4000000953674,
+          "shaMs": 2083.7000000476837
+        },
+        {
+          "phase": "validateState",
+          "refs": 100000,
+          "ms": 1886.5
+        },
+        {
+          "phase": "digest",
+          "jsonCodeUnits": 105619112,
+          "stableMs": 627.8999998569489,
+          "shaMs": 2089.7000000476837
+        },
+        {
+          "phase": "validateState",
+          "refs": 100000,
+          "ms": 1766
+        },
+        {
+          "phase": "dataProjection",
+          "refs": 100000,
+          "ms": 515.3999998569489
+        },
+        {
+          "phase": "digest",
+          "jsonCodeUnits": 105619112,
+          "stableMs": 648.2000000476837,
+          "shaMs": 2085.9000000953674
+        },
+        {
+          "phase": "validateState",
+          "refs": 100000,
+          "ms": 1775.7999999523163
+        },
+        {
+          "phase": "dataProjection",
+          "refs": 100000,
+          "ms": 514
+        }
+      ],
+      "snapshotSerialization": {
+        "jsonCodeUnits": 156319489,
+        "ms": 693.0999999046326
+      },
+      "clientPhases": [
+        {
+          "type": "BIND",
+          "phase": "request-start",
+          "at": 107.89999985694885
+        },
+        {
+          "type": "BIND",
+          "phase": "request-start",
+          "at": 108.5
+        },
+        {
+          "type": "BIND",
+          "phase": "request-end",
+          "ms": 5040
+        },
+        {
+          "type": "BIND",
+          "phase": "request-end",
+          "ms": 5039.399999856949
+        },
+        {
+          "type": "BIND",
+          "phase": "request-start",
+          "at": 5239.200000047684
+        },
+        {
+          "type": "BIND",
+          "phase": "request-end",
+          "ms": 1
+        },
+        {
+          "type": "B23_SNAPSHOT",
+          "phase": "request-start",
+          "at": 5240.299999952316
+        },
+        {
+          "type": "B23_SNAPSHOT",
+          "phase": "request-failed",
+          "reason": "request-timeout",
+          "ms": 6001.200000047684
+        },
+        {
+          "type": "B23_SNAPSHOT",
+          "phase": "request-end",
+          "ms": 6001.200000047684
+        },
+        {
+          "type": "BIND",
+          "phase": "request-start",
+          "at": 11423.099999904633
+        },
+        {
+          "type": "BIND",
+          "phase": "request-end",
+          "ms": 1.2000000476837158
+        },
+        {
+          "type": "B23_SNAPSHOT",
+          "phase": "request-start",
+          "at": 11424.299999952316
+        },
+        {
+          "type": "B23_SNAPSHOT",
+          "phase": "request-failed",
+          "reason": "request-timeout",
+          "ms": 6001.799999952316
+        },
+        {
+          "type": "B23_SNAPSHOT",
+          "phase": "request-end",
+          "ms": 6001.799999952316
+        },
+        {
+          "type": "BIND",
+          "phase": "request-start",
+          "at": 17787.599999904633
+        },
+        {
+          "type": "BIND",
+          "phase": "request-end",
+          "ms": 515.9000000953674
+        },
+        {
+          "type": "B23_SNAPSHOT",
+          "phase": "request-start",
+          "at": 18303.5
+        }
+      ]
+    }
+  ],
+  "scope": "fresh isolated Chrome MV3 / actual extension IDB / synthetic appended fixture; no real user data",
+  "startedAt": 1791764557.5148249,
+  "experimentalCapacityProbe": {
+    "testBuildOnly": true,
+    "tableRows": 100000,
+    "stateJsonCodeUnits": 134217728,
+    "productionLimitsUnchanged": true,
+    "notAcceptance": "Exploratory feasibility of whole-state engine under larger guard; does not certify quota, backup, lease or production safety."
+  },
+  "profilePhases": "Diagnostic timing wrappers in temporary build only; full build hashes recorded; 6s deadline and 20s lease unchanged, measurement overhead applies.",
+  "instrumentation": "Temporary build-only static imports for privileged synthetic fixture seeding; same modules/service/IDB, no mock. Dynamic import was a driver defect. Production worker source unchanged.",
+  "chrome": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/154.0.8037.99",
+    "revision": "@45889d77830582727fe00dbfd614bcb7aac35caa",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "jsVersion": "15.4.80.20"
+  },
+  "contentContexts": [
+    {
+      "id": 5,
+      "origin": "chrome-extension://gfjholpkmgaldpidlbmpmfbbofnjnhib",
+      "name": "VAIWL High-Fidelity Host — synthetic only",
+      "uniqueId": "7357442065099379581.-6174002550203765017",
+      "auxData": {
+        "isDefault": false,
+        "type": "isolated",
+        "frameId": "E45A2828C200F070D3DA22E78B662EDC"
+      }
+    }
+  ]
+}
