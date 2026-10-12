@@ -16,7 +16,9 @@ function fence({guard = () => true, signal} = {}) {
 
 export class NativeRepository {
   #rootCache=new VerifiedRecordCache();
-  verifiedRoot(row,scope){return this.#rootCache.read(row,scope.key,(payload,record)=>{unpack(record);if(isNativePartitioned(payload))validateNativeManifest(payload,scope);else validateNativeFacts(payload,scope);});}
+  #validateRoot(payload,record,scope){unpack(record);if(isNativePartitioned(payload))validateNativeManifest(payload,scope);else validateNativeFacts(payload,scope);}
+  verifiedRoot(row,scope){return this.#rootCache.read(row,scope.key,(payload,record)=>this.#validateRoot(payload,record,scope));}
+  #rootWithCounts(row,scope){return this.#rootCache.readWithCounts(row,scope.key,(payload,record)=>this.#validateRoot(payload,record,scope),['projects','refs']);}
 
   constructor({baseRepository, workspaceRepository = null, observationGate = null, clock = () => new Date().toISOString()}) {
     if (!baseRepository?.open || !baseRepository?.scopeOrThrow) throw Error('b1-repository-required');
@@ -103,11 +105,12 @@ export class NativeRepository {
       const request = store.get(normalized.key);
       request.onsuccess = () => {
         try {
-          const payload = request.result ? this.verifiedRoot(request.result, normalized) : emptyNativeFacts(normalized);
+          const counted=ids&&request.result?this.#rootWithCounts(request.result,normalized):null;
+          const payload = counted?.payload ?? (request.result ? this.verifiedRoot(request.result, normalized) : emptyNativeFacts(normalized));
           if (!isNativePartitioned(payload)) {
             const all = payload;
             if (revision !== null && revision !== all.revision) throw Error('snapshot-revision-changed');
-            const projects = Object.keys(all.projects), refs = Object.keys(all.refs), total = projects.length + refs.length;
+            const projects = ids?null:Object.keys(all.projects), refs = ids?null:Object.keys(all.refs), total = counted?counted.counts.projects+counted.counts.refs:(projects?.length??0)+(refs?.length??0);
             const selectedProjects = ids?.projects ?? projects.slice(offset, offset + limit);
             const selectedRefs = ids?.refs ?? refs.slice(Math.max(0, offset-projects.length), Math.max(0, offset+limit-projects.length));
             const facts = {...emptyNativeFacts(normalized),revision:all.revision,sources:all.sources};
@@ -121,7 +124,7 @@ export class NativeRepository {
           }
           const manifest = payload;
           if (revision !== null && revision !== manifest.revision) throw Error('snapshot-revision-changed');
-          const projects = Object.keys(manifest.projects), refs = Object.keys(manifest.refs), total = projects.length + refs.length;
+          const projects = ids?null:Object.keys(manifest.projects), refs = ids?null:Object.keys(manifest.refs), total = counted?counted.counts.projects+counted.counts.refs:projects.length+refs.length;
           const projectSlice = ids?.projects ?? projects.slice(offset, offset + limit);
           const refSlice = ids?.refs ?? refs.slice(Math.max(0, offset - projects.length), Math.max(0, offset + limit - projects.length));
           const marker = tx.objectStore('native_operations').get(normalized.key);

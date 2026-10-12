@@ -15,7 +15,9 @@ function markerCheck(root,marker,revision){
 /** Evidence shares the B1 database but never its native or Pro record keys. No export/restore grants. */
 export class FreeEvidenceRepository {
  #rootCache=new VerifiedRecordCache();
- verifiedRoot(row,scope){return this.#rootCache.read(row,scope.key,(payload,record)=>{unpack(record);if(isEvidencePartitioned(payload))validateEvidenceManifest(payload,scope);else validateFreeEvidence(payload,scope);});}
+ #validateRoot(payload,record,scope){unpack(record);if(isEvidencePartitioned(payload))validateEvidenceManifest(payload,scope);else validateFreeEvidence(payload,scope);}
+ verifiedRoot(row,scope){return this.#rootCache.read(row,scope.key,(payload,record)=>this.#validateRoot(payload,record,scope));}
+ #rootWithCounts(row,scope){return this.#rootCache.readWithCounts(row,scope.key,(payload,record)=>this.#validateRoot(payload,record,scope),['refVersions']);}
 
  constructor({baseRepository,observationGate=null,clock=()=>new Date().toISOString()}){
   if(!baseRepository?.open||!baseRepository?.scopeOrThrow)throw Error('b1-repository-required');
@@ -35,7 +37,8 @@ export class FreeEvidenceRepository {
    const revoked=()=>abort(Error('stale-binding'));options.signal?.addEventListener('abort',revoked,{once:true});
    const states=tx.objectStore('native_states'),root=states.get(key);
    root.onsuccess=()=>{try{
-    fence(options);const payload=root.result?this.verifiedRoot(root.result,normalized):emptyFreeEvidence(normalized);
+    fence(options);const counted=query?.ids&&isEvidencePartitioned(root.result?.payload)?this.#rootWithCounts(root.result,normalized):null;
+    const payload=counted?.payload??(root.result?this.verifiedRoot(root.result,normalized):emptyFreeEvidence(normalized));
     const manifest=isEvidencePartitioned(payload)?payload:null;
     const current=manifest?evidenceHeader(manifest,normalized):payload;
     if(query?.revision!==undefined&&query.revision!==null&&query.revision!==current.revision)throw Error('snapshot-revision-changed');
@@ -43,9 +46,10 @@ export class FreeEvidenceRepository {
     // Header callers need authority and root metadata, not a ref inventory or pieces.
     // Keep the marker request in this transaction and resolve only after it succeeds.
     if(query?.metadataOnly){value={revision:current.revision,manifest,sources:current.sources};return;}
-    const refs=manifest?Object.keys(manifest.refVersions):[...new Set(['events','hints','coverage'].flatMap(t=>Object.values(current[t]).map(r=>r.conversationId)))];
+    const refs=counted?null:manifest?Object.keys(manifest.refVersions):[...new Set(['events','hints','coverage'].flatMap(t=>Object.values(current[t]).map(r=>r.conversationId)))];
+    const total=counted?counted.counts.refVersions:refs.length;
     const selectedRefs=query?.header?[]:query?(query.ids??refs.slice(query.offset,query.offset+query.limit)):refs;
-    const done=evidence=>{value={revision:current.revision,...(query?.header?{manifest}:{}),evidence,selectedRefs,total:refs.length,nextOffset:query?Math.min(refs.length,(query.offset??0)+(query.limit??0)):refs.length};if(query&&!query.header&&JSON.stringify(value).length>16*1024*1024)throw Error('free-evidence-page-too-large');};
+    const done=evidence=>{value={revision:current.revision,...(query?.header?{manifest}:{}),evidence,selectedRefs,total,nextOffset:query?Math.min(total,(query.offset??0)+(query.limit??0)):total};if(query&&!query.header&&JSON.stringify(value).length>16*1024*1024)throw Error('free-evidence-page-too-large');};
     if(manifest)loadEvidencePieces(states,manifest,normalized,selectedRefs,done,abort);
     else {const selected=new Set(selectedRefs),evidence={...current};for(const t of ['events','hints','coverage'])evidence[t]=Object.fromEntries(Object.entries(current[t]).filter(([,r])=>selected.has(r.conversationId)));done(evidence);}
    }catch(failure){abort(failure);}};

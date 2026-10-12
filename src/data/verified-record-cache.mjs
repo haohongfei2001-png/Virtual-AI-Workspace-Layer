@@ -1,5 +1,7 @@
 /** Cache validation, never facts: every IDB read must match all payload bytes again. */
-function strictJSON(value){
+function strictJSON(value,onKeys=null,fields=null,counts=null){
+ // Invalid count tables remain unset until the original integrity/schema check completes.
+ if(onKeys&&(value===null||typeof value!=='object'||Array.isArray(value)))onKeys=null;
  const type=typeof value;
  // NumberToString is the same finite-number representation JSON uses, including
  // negative zero. Avoid one native JSON call and one temporary array per scalar.
@@ -14,8 +16,8 @@ function strictJSON(value){
  if(![Object.prototype,null].includes(Object.getPrototypeOf(value)))throw Error('non-json-object');
  // Never invoke toJSON or iterators. Preserve every key/value in read order;
  // building the string directly avoids a 100k-element intermediate map/join.
- let encoded='{',separator='';
- for(const key of Object.keys(value)){encoded+=separator+JSON.stringify(key)+':'+strictJSON(value[key]);separator=',';}
+ let encoded='{',separator='';const keys=Object.keys(value);if(onKeys)onKeys(keys.length);
+ for(const key of keys){const capture=fields?.has(key)?size=>{counts[key]=size;}:null;encoded+=separator+JSON.stringify(key)+':'+strictJSON(value[key],capture);separator=',';}
  return encoded+'}';
 }
 export class VerifiedRecordCache{
@@ -24,9 +26,18 @@ export class VerifiedRecordCache{
   if(!Number.isSafeInteger(maxEntries)||maxEntries<0||!Number.isSafeInteger(maxChars)||maxChars<0)throw Error('invalid-validation-cache-budget');
   this.maxEntries=maxEntries;this.maxChars=maxChars;
  }
- read(row,context,verify){
+ // Count requested top-level maps during the mandatory full-byte traversal.
+ // No extra key arrays or retained metadata; each result belongs to this read.
+ readWithCounts(row,context,verify,fields){
+  if(!Array.isArray(fields)||fields.length>4||fields.some(field=>typeof field!=='string'||!field.length||field.length>64))throw Error('invalid-cache-count-fields');
+  const counts=Object.create(null),payload=this.#read(row,context,verify,new Set(fields),counts);
+  if(fields.some(field=>!Object.hasOwn(counts,field)))throw Error('invalid-cache-count-table');
+  return {payload,counts};
+ }
+ read(row,context,verify){return this.#read(row,context,verify);}
+ #read(row,context,verify,fields=null,counts=null){
   if(!row||typeof row.key!=='string'||typeof row.checksum!=='string'||typeof context!=='string'||typeof verify!=='function')throw Error('invalid-validation-cache-record');
-  const encoded=strictJSON(row.payload),key=JSON.stringify([context,row.key]),prior=this.#entries.get(key);
+  const encoded=strictJSON(row.payload,null,fields,counts),key=JSON.stringify([context,row.key]),prior=this.#entries.get(key);
   if(prior&&prior.checksum===row.checksum&&prior.encoded===encoded){this.#entries.delete(key);this.#entries.set(key,prior);return row.payload;}
   // No checksum-only or revision-only shortcut: corrupted bytes or a new schema
   // always reenter the original checksum and contextual validation functions.

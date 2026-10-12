@@ -103,3 +103,9 @@ Git连接恢复，03ef76a已正常推送原分支；本轮末再同步新检查�
 活动header专用metadata读取已完成，完整root+marker+末次guard仍保留；相关组合93/0、新合同10已包含，MV3 9/9、10k IDB功能PASS。未重复100k，上一1635.9ms性能FAIL仍有效。包和源码来源见STATUS第十二轮。
 
 网络恢复：03ef76a至10aa13f已通过原origin普通快进推送，GitHub API确认PR16 Draft。当前增量提交随后同步，实时HEAD用git/PR核对；不要再沿用此前网络阻塞结论。下一局部成本为显式ids分页仍创建100k键数组只求total；任何计数复用须绑定已核验完整内容，不能绕过root/checksum/marker或末次CHECK。核心结构/真实ChatGPT/跨端/PAIA/物理与真人验收界限不变，完整Goal仍未完成。
+
+## 第十三轮恢复增量（接182e96b）
+
+显式ID页计数已在严格完整内容编码中取得，无额外全量键数组、无计数缓存。原校验错误优先级已修复并有反例。最终Node462/0、MV3 9/9、10k真IDB通过；普通固定源码100k1377.8ms仍1秒FAIL，首屏20577.5ms更慢。包及各自source receipts见STATUS第十三轮。
+
+下一执行活动manifest重复枚举合并：checkEvidenceManifestStructure对refVersions/sizes重复8次以上keys/entries/values，可保留各表keys数组并累计size，保持原错误优先级/同键集合/100k/128Mi限制。代理只写独立测试，root负责源码。182e96b已正常同步PR16 Draft，本轮实现随后普通提交推送；无新工作树/部署。真实Free未验收，继续可执行本地工作。
