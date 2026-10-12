@@ -97,3 +97,9 @@ Git连接恢复，03ef76a已正常推送原分支；本轮末再同步新检查�
 严格JSON完整内容缓存编码已去掉大map/join临时数组，NumberToString等价；不缓存可变facts、不跳checksum/scope/key。完整Node419/0，后补budget边界的44新+16旧合同合跑60/60；MV3 9/9；普通固定源码100k更新1635.9ms、初始15762.7ms，功能PASS/1秒FAIL。最新包/hash与source receipts见STATUS第十一轮，勿把profile1590当普通baseline。
 
 下一本地位置：FreeEvidenceRepository.query在header分支仍Object.keys全量refVersions且计算外层header丢弃的total/nextOffset；可以专用元数据读取，但保留marker与完整root校验。更大的根manifest/版本表O(N)仍是实际瓶颈，须按具体代码而不是继续改DOM。头/页/双CHECK安全栅栏不削弱。最后head用git核对；当前正式分支和目录不变，PR16远端03ef76a仍Draft，后续本地待普通同步。真实外部验收条件不变；Goal未完成。
+
+## 第十二轮恢复增量（接10aa13f）
+
+活动header专用metadata读取已完成，完整root+marker+末次guard仍保留；相关组合93/0、新合同10已包含，MV3 9/9、10k IDB功能PASS。未重复100k，上一1635.9ms性能FAIL仍有效。包和源码来源见STATUS第十二轮。
+
+网络恢复：03ef76a至10aa13f已通过原origin普通快进推送，GitHub API确认PR16 Draft。当前增量提交随后同步，实时HEAD用git/PR核对；不要再沿用此前网络阻塞结论。下一局部成本为显式ids分页仍创建100k键数组只求total；任何计数复用须绑定已核验完整内容，不能绕过root/checksum/marker或末次CHECK。核心结构/真实ChatGPT/跨端/PAIA/物理与真人验收界限不变，完整Goal仍未完成。

@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第十一轮（接本地 `224724e`），最新结果见末节与恢复检查点。最后确认远端PR #16为Draft、头 `03ef76a`；后续本地提交待网络恢复后正常同步。以下各轮保留其当时证据与同步状态，不代表当前头。未修改远端设置。
+当前已推进至第十二轮（接本地 `10aa13f`）。网络恢复后已正常快进同步03ef76a→10aa13f，GitHub API确认PR #16仍Draft；本轮元数据读取改动验证后继续沿同分支同步。以下旧轮次保留当时证据及网络状态，不代表当前远端。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -213,3 +213,11 @@ client已转换的Free快照通过内部WeakMap来源登记的prepared入口发�
 完整Node419/0；其后补精确maxChars边界，新编码合同44项与旧cache16项合跑60/60，独立记录不相加。实际MV3 9/9。固定55运行时source hashes普通100k测试功能PASS，首屏15762.7ms，源响应→DOM1635.9ms；相对此前普通1790.6ms低约8.6%，只是单次观察，1秒性能目标仍FAIL。native.apply462.4ms、evidence.apply157.7ms，1ref分页、无全量read，原生阅读节点/草稿保留。
 
 最新包 `/private/tmp/vaiwl-free-delivery-round11-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `0d6e917f361301398cc13186695f4714e8eb2734d7619a993b0d92370461b195`，仍SYNTHETIC_ONLY。共享/原生/活动根读取与版本表仍有O(N)成本；活动header还遍历refVersions生成调用者不使用的total，可继续消除重复工作，不能省略marker/checksum/scope或最终CHECK。正常推送待网络恢复，远端上一确认03ef76a Draft；真实账户/跨端/PAIA/物理与真人日常验收仍缺条件，完整Free未交付。
+
+## 第十二轮：活动头专用元数据读取（接10aa13f）
+
+FreeEvidenceRepository.header在完整root校验后只读取revision/manifest/sources，避免枚举全量引用及构造调用者丢弃的分页统计。marker请求先排入同一只读事务，仍在事务成功和末次guard之后返回；原query({header:true})/page/read合同不变。
+
+新10项覆盖空库/v1/v2精确返回、验证后无ref枚举、scope/root/marker损坏、缺根、取消和guard。相关evidence/runtime/shared/broker组合93/0；实际headless MV3 9/9及10k IDB校准功能通过，零fullread；57.6ms仅诊断。没有重复完整Node或100k测试；上一普通100k1635.9ms/1秒FAIL保留。
+
+已验证包 `/private/tmp/vaiwl-free-delivery-round12-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `d8ecda06be6e1fa038a96a0b104dc7ff4d1cea25bec90a11c8a6c378a4c1dda8`。GitHub网络重新连通后一次正常HTTP/1.1推送成功，未改remote/config/分支方式、未强推；PR16已确认Draft、远端10aa13f，本节提交之后继续普通同步。真实Free尚未验收，外部数据/账户/PAIA/物理/真人条件保持不变。

@@ -22,7 +22,7 @@ export class FreeEvidenceRepository {
   this.base=baseRepository;this.observationGate=observationGate;this.clock=clock;
  }
  async read(scope,options={}) { return (await this.query(scope,null,options)).evidence; }
- async header(scope,options={}) { const result=await this.query(scope,{header:true},options);return {revision:result.revision,manifest:result.manifest,sources:result.evidence.sources}; }
+ async header(scope,options={}) { return this.query(scope,{metadataOnly:true},options); }
  async page(scope,{revision=null,offset=0,limit=500,ids=null}={},options={}) {
   if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>5000||ids!==null&&(!Array.isArray(ids)||ids.length>5000))throw Error('invalid-free-evidence-page');
   ids?.forEach(id);return this.query(scope,{revision,offset,limit,ids},options);
@@ -40,6 +40,9 @@ export class FreeEvidenceRepository {
     const current=manifest?evidenceHeader(manifest,normalized):payload;
     if(query?.revision!==undefined&&query.revision!==null&&query.revision!==current.revision)throw Error('snapshot-revision-changed');
     const marker=tx.objectStore('native_operations').get(key);marker.onsuccess=()=>{try{fence(options);markerCheck(root.result,marker.result,current.revision);}catch(failure){abort(failure);}};
+    // Header callers need authority and root metadata, not a ref inventory or pieces.
+    // Keep the marker request in this transaction and resolve only after it succeeds.
+    if(query?.metadataOnly){value={revision:current.revision,manifest,sources:current.sources};return;}
     const refs=manifest?Object.keys(manifest.refVersions):[...new Set(['events','hints','coverage'].flatMap(t=>Object.values(current[t]).map(r=>r.conversationId)))];
     const selectedRefs=query?.header?[]:query?(query.ids??refs.slice(query.offset,query.offset+query.limit)):refs;
     const done=evidence=>{value={revision:current.revision,...(query?.header?{manifest}:{}),evidence,selectedRefs,total:refs.length,nextOffset:query?Math.min(refs.length,(query.offset??0)+(query.limit??0)):refs.length};if(query&&!query.header&&JSON.stringify(value).length>16*1024*1024)throw Error('free-evidence-page-too-large');};
