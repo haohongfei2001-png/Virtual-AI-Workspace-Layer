@@ -3,7 +3,7 @@ import {FreeRuntimeService} from '../src/data/free-runtime-service.mjs';
 import {freeRecoveryStatus} from '../src/data/free-recovery-status.mjs';
 import { FreeEvidenceRepository } from '../src/data/free-evidence-repository.mjs';
 import { freeProjection } from '../src/data/free-projection.mjs';
-import { digest } from '../src/data/hash.mjs';
+import { digest, stable } from '../src/data/hash.mjs';
 import { projectFreeActivity } from '../src/data/free-activity.mjs';
 import { createFreeViewSession } from '../src/data/free-time-policy.mjs';
 import { ScopeRepository } from '../src/b1/scope-repository.mjs';
@@ -100,13 +100,17 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
         if(syntheticEvidenceGate(scope)!=='synthetic')throw Error('not-synthetic-scope');
         const route=routeInfo(url);
         if(!route||route.account!==scope.accountId||route.kind!=='c'||route.id!==message.conversationId)throw Error('synthetic-send-route-mismatch');
-        const {state}=await workspaces.read(scope,options), facts=await native.read(scope,options);
+        const {state}=await workspaceContext(scope,options,[message.conversationId]),{facts}=await native.page(scope,{ids:{projects:[],refs:[message.conversationId]}},options);
         const old=state.refs[message.conversationId], key=digest([message.conversationId,message.messageId]);
         const nativeUrl=new URL(`/hf/${scope.accountId}/c/${message.conversationId}`,url).href;
         const ref=old??{id:message.conversationId,nativeUrl,projectId:message.projectId,nativeTitle:message.nativeTitle,available:true};
-        const stored=state.events['send_'+key]?{ok:true}:await workspaces.ingest(scope,{operationId:'fixture_send_'+key,expectedRevision:state.revision,batch:{schema:'vaiwl-internal-evidence-v1',refs:old?[]:[ref],sources:[],events:[{
-          id:'send_'+key,sourceId:'fixture_v1',conversationId:ref.id,messageId:message.messageId,branchId:'fixture_main',role:'user',kind:'new-send',sendState:'committed',
-          sentAt:FIXTURE_NOW,precision:'millisecond',observedAt:FIXTURE_NOW}],coverage:[]}},options);
+        const event={id:'send_'+key,sourceId:'fixture_v1',conversationId:ref.id,messageId:message.messageId,branchId:'fixture_main',role:'user',kind:'new-send',sendState:'committed',
+          sentAt:FIXTURE_NOW,precision:'millisecond',observedAt:FIXTURE_NOW};
+        const existing=state.events[event.id];
+        // A preference may load another ref's event into this partial state.
+        // Only the same unrevoked immutable event is an idempotent replay.
+        if(existing&&stable(existing)!==stable({...event,revoked:false}))throw Error('evidence-id-conflict');
+        const stored=existing?{ok:true}:await workspaces.ingest(scope,{operationId:'fixture_send_'+key,expectedRevision:state.revision,batch:{schema:'vaiwl-internal-evidence-v1',refs:old?[]:[ref],sources:[],events:[event],coverage:[]}},options);
         if(!stored.ok)return stored;
         const activity=(await evidence.page(scope,{ids:[ref.id]},options)).evidence;
         if(!activity.hints['hint_'+key]){

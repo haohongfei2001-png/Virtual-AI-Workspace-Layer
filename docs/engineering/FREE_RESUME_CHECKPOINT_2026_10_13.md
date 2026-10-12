@@ -133,3 +133,9 @@ Git连接恢复，03ef76a已正常推送原分支；本轮末再同步新检查�
 Project增量双向依赖修复及Free PAGE最终16Mi UTF8/有界拆页完成，完整Node582/0、MV3 9/9、真实页面Project恢复通过。HEADER真实MV340.4MB/941ms通过，未复现传输失败；勿凭“超过16Mi”臆造Chrome通道上限。各报告独立source/buildhash，不合并旧成绩。
 
 本轮代码前100k1178.1ms仍未达1秒；下一可执行为fixtureObserve当前workspaces.read+native.read全量，应用workspaceContext单ref及native.page，保持本地严格发送/重复事件/授权/来源/CAS。源review代理只读，无未提交源码。包和准确状态见STATUS第十七轮；真实Free未验收，继续原分支PR16。
+
+## 第十八轮恢复增量（接dab61e7）
+
+确认发送已去除两种全量读取，旧预加载事件冲突跳过漏洞已修。最终相关Node30/0、MV3 9/9、真实10k和容量内99,998→100,000发送三旅程通过；最大规模1.85–2.28s仍未达1秒。首次夹具来源缺失与超容量失败未伪装成通过；修正只在测试数据，细节/最终证据/包hash见STATUS本轮。
+
+下一可直接执行：client Free两次CHECK合并为统一发布前最终一次；保留构建前renewReadBinding、异步generation/URL/visibility guard、最终身份/scope/native/workspace/evidence版本验证。candidate只在检查成功后赋freeReplica/freeIndex/data/navigation；零页复用/空库同样检查，Pro不改。代理只读证明已给出，尚未改此处代码。真实外部验收条件与目标不变，完整Free未交付。

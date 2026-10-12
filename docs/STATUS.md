@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第十七轮（接已普通推送、GitHub确认Draft的 `87fa2ff`）。当前批次修复增量依赖与最终IPC页边界，继续原正式目录及PR #16。旧结果只代表各自来源。
+当前已推进至第十八轮（接已推送PR #16 Draft的 `dab61e7`）。完成确认发送的分片读取与事件冲突修复；继续原正式目录、分支和PR，不改发布状态。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -263,3 +263,13 @@ Free PAGE在broker末次权威校验/owner deadline处理后按完整响应UTF-8
 最终完整Node582/0/0skip，实际MV3 9/9，真实页面Chrome/IDB双向Project恢复与草稿/阅读保留通过。新逻辑2项、wire边界2项均包含Node总数。最大长ID HEADER另做真实MV3：100k共享refs+100k原生Projects、128字符ID，40,400,691bytes/941ms通过；小对照54,073bytes/116.5ms；未复现传输失败，不据此新增HEADER限额。该构建hash及限定覆盖见独立报告。
 
 本轮修改前87fa2ff固定55源hash100k完整更新1178.1ms/首屏12189.7ms，功能PASS/1秒性能仍FAIL；此结果不冒称覆盖后来的依赖/IPC修复。新包SHA256 `568b281f26967ac2a10f1e532d0b5b23fe50ec3d75a1bbc98af664f1ef9b8d75`，仍SYNTHETIC_ONLY。下一具体位置：fixtureObserve的本地确认发送仍先workspaces.read/native.read全量，需复用单ref读取保留严格重复事件/路由/CAS门控；不把该本地缺口记成权限阻塞。真实来源/账户/跨端/PAIA/物理/真人验收仍缺原条件，完整Free未完成。
+
+## 第十八轮：确认发送改用目标引用读取（接dab61e7）
+
+fixtureObserve复用workspaceContext单ref和native.page目标引用，不再在分片模式先读全库。保留项目依赖、来源、全局版本/CAS/operationId与路由/账号guard。发现并修复旧truthy事件跳过漏洞：工作集预加载的另一ref冲突事件不再被当作幂等成功；只有与预期完全相同且未撤销的事件才能跳过，hint和native后续写入不会在冲突后发生。
+
+最终发送/服务/运行时组合30/0；包含6项分片/项目移动/账号失效与9项冲突/分阶段CAS重试反例。实际MV3 9/9。10k真实页面Chrome/IDB三发送旅程通过，约216/215/214ms；100k测试预留2新增位置，99,998→100,000三旅程功能通过，但既有/新NONE/新Project分别1847.8/2280.1/2212.9ms，均1秒性能FAIL。55运行时hash稳定、全量read/snapshot均0、每旅程1次native发送/1事件/1hint、阅读和未发草稿保持。不是生产账户或物理弱设备认证。
+
+测试修正如实保留：初次10k夹具漏fixture_v1导致orphan-event，补齐正常来源后通过；首次100k已满容量时新增被partition-capacity正确拒绝，随后只调整初始数量预留2位置，未放宽限额/断言。原始失败与debug在/private/tmp/free-round18-send-scale.json及free-round18-send100k.json，最终报告free-round18-*分别保存。包SHA256 `75f394fa0286c9ea81a32a042de5752ab41d1b78f996402b44f37bce12d4f1e1`，仍SYNTHETIC_ONLY。
+
+下一已审查位置：Free readSnapshot早期CHECK只提前终止过时计算，可保留构建前续租、将唯一末次CHECK统一放在复用/重建分支之后且所有发布赋值之前；需要构建期间切账户/版本变化及零页回归，不能直接删最终检查。真实来源/账户/跨端/PAIA/物理与日常验收条件仍缺失，Free未完成。
