@@ -26,9 +26,12 @@ function checkNativeManifestStructure(m, scope) {
       m.units < 0 || m.units > 128 * 1024 * 1024) throw Error('invalid-native-manifest');
   validateNativeFacts(nativeHeader(m, scope), scope);
   for (const table of ['projects', 'refs']) {
-    if (!m[table] || Array.isArray(m[table]) || Object.keys(m[table]).length > 100000) throw Error('native-partition-capacity');
-    for (const [key, version] of Object.entries(m[table])) {
-      id(key);
+    const rows=m[table];
+    if (!rows || typeof rows!=='object' || Array.isArray(rows)) throw Error('native-partition-capacity');
+    const keys=Object.keys(rows);
+    if (keys.length > 100000) throw Error('native-partition-capacity');
+    for (const key of keys) {
+      const version=rows[key];id(key);
       if (!Number.isSafeInteger(version) || version < 1 || version > m.revision) throw Error('invalid-native-piece-version');
     }
   }

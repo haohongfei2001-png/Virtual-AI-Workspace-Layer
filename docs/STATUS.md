@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第十五轮（接已推送PR #16 Draft的 `38726aa`）。继续沿原正式目录/分支，旧报告保留各自源码及环境。
+当前已推进至第十六轮（接本地 `4822a0f`）。上一普通push遇连接超时，最新远端须以本轮最终push/API核对；继续原正式目录和分支。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -245,3 +245,11 @@ saveMutation内部新根将同一次规范编码用于16Mi限额和SHA256；公�
 F1/shared组合57/0，随后补精确16Mi/+1和共享合法数组，新编码合同19/19单独通过（不相加）。真实隔离Chrome IndexedDB原20项分片合同20/20，记录的3源hash稳定；新增可复用tests/f1/partition-browser.mjs。没有重跑完整Node/MV3/100kUI。Node100k saveMutation交替6次采样的中位数83.9→72.2ms，仅诊断，不代表端到端；此前100k1377.8ms及1秒FAIL仍保留。
 
 包SHA256 `c2015af073e55c099531c1ac8ab43fd37f6bf74bc8d1e93f0490d99366f0084c`，报告free-round15-*；仍SYNTHETIC_ONLY。下一本地位置回到100k原生活动更新关键路径：native manifest结构重复枚举/验证成本；不要继续把主要延迟归因于DOM或弱化最终CHECK。真实来源/获准账户/跨端/PAIA/物理与真人验收条件未解除，完整Free未交付。
+
+## 第十六轮：原生manifest严格map类型及手动恢复（接4822a0f）
+
+修复projects/refs真值primitive被当作空map接受的问题；校验keys只枚举一次，容量/版本顺序保持。native-partition-capacity补入持久损坏恢复分类，合法checksum但非法map的根不会退化为通用连接失败。用户必须点击修复，来源撤销/草稿保留/不重放发送。
+
+最终native/encoding/counts/recovery组合92/0，含38项新合同；真实headless恢复旅程7/7，新增refs=true重签根反例并保留先前原生/活动损坏流程。未重跑完整Node/MV3或100k，不替换此前性能未达标记录。包仍SYNTHETIC_ONLY，SHA256 `15313c923ebd178a91dec1ac008b997794d6650fb03340b77c54d45d5725fbb9`，报告free-round16-*。
+
+上一4822a0f推送连接75秒失败后停止，短只读检查恢复200，本轮完成后合并普通推送两项提交；实际同步以最终输出为准。不改remote或部署。真实来源/账户/跨端/PAIA/物理与真人验收仍缺条件，Free未完成。
