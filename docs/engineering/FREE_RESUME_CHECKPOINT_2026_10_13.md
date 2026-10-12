@@ -85,3 +85,9 @@ Git连接恢复，03ef76a已正常推送原分支；本轮末再同步新检查�
 可继续本地定位：native.apply526ms、evidence.apply179ms，内部saveNativePieces/ saveEvidencePieces分别先JSON.stringify(manifest)限额再stable编码hash。合并编码时必须保留原结构、128Mi聚合、16Mi单记录/CAS、scope/末次CHECK，不接受外部预先算好的可信size。不要重写已测的分页/缓存/导航。
 
 1a0dcaf后的实现和检查点仍在当前正式目录/分支；唯一20秒普通推送超时后停止，GitHub API确认远端03ef76a Draft。网络恢复后正常push原分支，不换目录/远端、不强推。当前完整Free不合格；对应真实来源/账户/PAIA/物理设备验收仍缺原有授权条件。
+
+## 第十轮恢复增量（接838fb6d）
+
+内部原生/活动manifest单次规范编码用于size+checksum已完成。最终Node394/0、实际10k IDB功能与MV3 9/9通过；包/源码/报告见STATUS第十轮。普通100k性能认证未重跑。一次100k CPU采样表明verified-record-cache.strictJSON为最大self热点375.8ms/22.5%，活动根处理156.8ms；UI适配仅12.3ms。1590ms为带profiler收尾的诊断，不替换第九轮普通1790.6ms/1秒FAIL结果。
+
+下一独立Free工作：优化严格序列化的逐key编码开销，必须逐次核对完整字节、checksum、scope/key并拒绝toJSON/iterator碰撞；不能换成revision/checksum-only。旧cache反例16项及shared6项已存在，避免重写功能。运行时冻结源已验证；最后head以git核对。远端PR16上一确认仍03ef76a Draft，后续本地提交待网络恢复后普通push。完整Free及真实来源/PAIA/物理/真人验收仍未完成。

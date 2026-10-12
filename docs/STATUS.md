@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第九轮（接本地 `1a0dcaf`），最新结果见末节与恢复检查点。最后确认远端PR #16为Draft、头 `03ef76a`；后续本地提交待网络恢复后正常同步。以下各轮保留其当时证据与同步状态，不代表当前头。未修改远端设置。
+当前已推进至第十轮（接本地 `838fb6d`），最新结果见末节与恢复检查点。最后确认远端PR #16为Draft、头 `03ef76a`；后续本地提交待网络恢复后正常同步。以下各轮保留其当时证据与同步状态，不代表当前头。未修改远端设置。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -195,3 +195,13 @@ client已转换的Free快照通过内部WeakMap来源登记的prepared入口发�
 最新合成包 `/private/tmp/vaiwl-free-delivery-round9-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `cc15f0ae0743646171d1c9dddaf2d929fb2751a5c5987fcfe2397f10daf534ff`。第八轮正常快进推送20秒超时，未重试；本次GitHub API再确认PR #16 Draft、头03ef76aba14cd4d734ba15940c4f206dbe3c5cf5，本地后续代码未声称已同步。
 
 下一可执行位置：原生/活动manifest结构校验后的JSON.stringify大小检测与随后的stable/hash重复编码；需只在内部写路径合并编码、保留结构/CAS/限额与公开读取校验。真实账户/跨端/PAIA/物理和日常验收条件不变，完整Free仍未交付。
+
+## 第十轮：内部manifest单次编码（接838fb6d）
+
+原生/活动分片内部写入先做完整结构、scope、版本及128Mi聚合检查，再用同一stable字符串执行16Mi限额和SHA256；不暴露跳过校验或调用方传入可信长度的参数。公开读validator、GC、checkpoint与事务回滚边界保留。
+
+最终完整Node394/0/0skip；新7项编码合同包括合法Unicode/转义/插入顺序等长、root-shadow校验和一致、scope/schema及16Mi/128Mi拒绝。10k真实IDB校准功能PASS，fullread0；实际Chrome MV3 9/9。10k记录63.7ms/末提交到通知1ms，但与Node回归并行，仅为诊断，不声明提速或性能认证。本次没有普通100kUI复测，上一轮1790.6ms与1秒FAIL结论保留。
+
+包 `/private/tmp/vaiwl-free-delivery-round10-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `aeb751673711d26245a3d4c1a5b2c4b277969a6efd6396cc25d20e94ccf7767b`。仍SYNTHETIC_ONLY；当前正常推送网络阻塞及真实账户/PAIA/物理设备/真人日常验收条件不变，完整Free未完成。
+
+100k仅做一次CPU诊断：55个运行时源hash稳定、功能PASS；1590ms含profile收尾开销，明确不是时延认证。采样self CPU：严格JSON遍历375.8ms（22.5%），活动根处理156.8ms（9.4%），SHA256100.7ms（6.0%），GC62.4ms，Free导航适配12.3ms。下一优化应针对完整字节序列化/根遍历，不能继续把主要瓶颈归因于DOM。可选profile脚本已修正先捕获DOM完成时间再保存profile，不为计时小修重跑。

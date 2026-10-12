@@ -1,5 +1,5 @@
 import {emptyFreeEvidence,validateFreeEvidence} from './free-evidence.mjs';
-import {digest} from './hash.mjs';
+import {digest,stable,sha256} from './hash.mjs';
 import {id} from './state.mjs';
 export const freeEvidenceKey=scopeKey=>JSON.stringify([scopeKey,'free-evidence']);
 export const evidenceRecoveryKey=scopeKey=>JSON.stringify([scopeKey,'free-evidence-recovery']);
@@ -11,7 +11,7 @@ export const isEvidencePartitioned=value=>value?.format==='vaiwl-free-evidence-p
 const tables=['events','hints','coverage'];
 const indexGroup=(table,key)=>table+'_'+digest(key).slice(0,2);
 export function evidenceHeader(manifest,scope){return {...emptyFreeEvidence(scope),format:'vaiwl-free-evidence-v2',revision:manifest.revision,sources:manifest.sources};}
-export function validateEvidenceManifest(value,scope){
+function checkEvidenceManifestStructure(value,scope){
  if(!isEvidencePartitioned(value)||value.scopeKey!==scope.key||!Number.isSafeInteger(value.revision)||value.revision<1)throw Error('invalid-free-evidence-manifest');
  validateFreeEvidence(evidenceHeader(value,scope),scope);
  for(const table of ['refVersions','sizes']){
@@ -24,8 +24,19 @@ export function validateEvidenceManifest(value,scope){
  for(const [key,v] of Object.entries(value.indexVersions))if(!/^(events|hints|coverage|hintEvents)_[0-9a-f]{2}$/.test(key)||!Number.isSafeInteger(v)||v<1||v>value.revision)throw Error('invalid-free-evidence-index-manifest');
  for(const table of tables)if(!Number.isSafeInteger(value.counts?.[table])||value.counts[table]<0||value.counts[table]>100000)throw Error('free-evidence-capacity');
  if(Object.keys(value.sizes).length!==Object.keys(value.refVersions).length||Object.keys(value.refVersions).some(k=>!Object.hasOwn(value.sizes,k)))throw Error('invalid-free-evidence-sizes');
- if(Object.values(value.sizes).reduce((a,b)=>a+b,0)>128*1024*1024||JSON.stringify(value).length>16*1024*1024)throw Error('free-evidence-too-large');
+ if(Object.values(value.sizes).reduce((a,b)=>a+b,0)>128*1024*1024)throw Error('free-evidence-too-large');
  return value;
+}
+export function validateEvidenceManifest(value,scope){
+ checkEvidenceManifestStructure(value,scope);
+ if(JSON.stringify(value).length>16*1024*1024)throw Error('free-evidence-too-large');
+ return value;
+}
+function evidenceManifestRecord(key,manifest,scope){
+ checkEvidenceManifestStructure(manifest,scope);
+ const encoded=stable(manifest);
+ if(encoded.length>16*1024*1024)throw Error('free-evidence-too-large');
+ return {key,payload:manifest,checksum:sha256(encoded)};
 }
 export function loadEvidencePieces(store,manifest,scope,ids,done,fail){
  const result=evidenceHeader(manifest,scope),keys=[...new Set(ids)].filter(k=>Object.hasOwn(manifest.refVersions,k));let pending=keys.length;
@@ -62,8 +73,7 @@ export function saveEvidencePieces(store,scope,next,previous=null,partial=null,i
   if(prior)store.delete(evidencePieceKey(scope.key,ref,prior));
  }
  for(const group of changedIndexes){const prior=manifest.indexVersions[group];manifest.indexVersions[group]=next.revision;const key=evidenceIndexKey(scope.key,group,next.revision);store.put(evidenceRecord(key,{scopeKey:scope.key,group,revision:next.revision,refs:indexes[group]}));if(prior)store.delete(evidenceIndexKey(scope.key,group,prior));}
- validateEvidenceManifest(manifest,scope);
- const rootRecord=evidenceRecord(freeEvidenceKey(scope.key),manifest);
+ const rootRecord=evidenceManifestRecord(freeEvidenceKey(scope.key),manifest,scope);
  // Root and recovery are identical immutable payloads in this transaction.
  store.put(rootRecord);store.put({...rootRecord,key:evidenceRecoveryKey(scope.key)});
  return manifest;

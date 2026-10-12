@@ -19,7 +19,7 @@ export const isNativePartitioned = value => value?.format === NATIVE_PARTITION_F
 export function nativeHeader(manifest, scope) {
   return {...emptyNativeFacts(scope), format: 'vaiwl-native-facts-v2', revision: manifest.revision, sources: manifest.sources};
 }
-export function validateNativeManifest(m, scope) {
+function checkNativeManifestStructure(m, scope) {
   exact(m, ['format', 'scopeKey', 'revision', 'sources', 'projects', 'refs', 'units', 'changes']);
   if (m.format !== NATIVE_PARTITION_FORMAT || m.scopeKey !== emptyNativeFacts(scope).scopeKey ||
       !Number.isSafeInteger(m.revision) || m.revision < 1 || !Number.isSafeInteger(m.units) ||
@@ -41,8 +41,20 @@ export function validateNativeManifest(m, scope) {
       change[table].forEach(id);
     }
   }
-  if (JSON.stringify(m).length > 16 * 1024 * 1024) throw Error('native-manifest-too-large');
   return m;
+}
+export function validateNativeManifest(m, scope) {
+  checkNativeManifestStructure(m,scope);
+  if(JSON.stringify(m).length>16*1024*1024)throw Error('native-manifest-too-large');
+  return m;
+}
+// Internal write path: the same canonical encoding bounds the record and hashes it.
+// Callers cannot supply a precomputed size or opt out of structural validation.
+function nativeManifestRecord(key,manifest,scope){
+  checkNativeManifestStructure(manifest,scope);
+  const encoded=stable(manifest);
+  if(encoded.length>16*1024*1024)throw Error('native-manifest-too-large');
+  return {key,payload:manifest,checksum:sha256(encoded)};
 }
 
 /** Immutable bounded pieces share the original store and root CAS transaction.
@@ -101,7 +113,7 @@ export function saveNativePieces(store, scope, current, next, storage, command) 
     manifest[kind][key] = next.revision;
     store.put(nativeRecord(nativePartitionKey(next.scopeKey, kind, key, next.revision), piece));
   }
-  validateNativeManifest(manifest, scope);
+  const rootRecord=nativeManifestRecord(next.scopeKey,manifest,scope);
   if (prior) {
     const oldCheckpoint = store.get(nativeCheckpointKey(next.scopeKey));
     oldCheckpoint.onsuccess = () => {
@@ -120,7 +132,6 @@ export function saveNativePieces(store, scope, current, next, storage, command) 
   }
   // Both atomic roots contain the exact same immutable payload. Hash it once;
   // the key is outside the checksum and no payload mutation occurs between puts.
-  const rootRecord=nativeRecord(next.scopeKey,manifest);
   store.put({...rootRecord,key:nativeRecoveryKey(next.scopeKey)});
   store.put(rootRecord);
   return manifest;
