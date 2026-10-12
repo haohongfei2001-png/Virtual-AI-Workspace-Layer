@@ -77,3 +77,11 @@ Git连接恢复，03ef76a已正常推送原分支；本轮末再同步新检查�
 共享manifest严格缓存及HEADER元数据/PAGE同事务上下文已经完成，不需重写。Node366/0和新增context4/4分别记录；真实MV3 9/9；固定55源hash100k初始12913.5ms、完整更新1625.2ms，功能PASS/1秒性能FAIL。包及hash见STATUS第八轮。当前真实账户等权限条件保持不变，完整Free未验收。
 
 下一可执行：client已执行freeNavigationSnapshot后navigation.update再次转换100k引用；消除该重复转换并验证原名/历史/原生节点和安全更新门控，继续保留scope与末次CHECK。当前分支不变，无额外工作树。最新head以git核对，远端上一确认03ef76a，正常同步待网络可用。
+
+## 第九轮恢复增量（接1a0dcaf）
+
+单次prepared导航转换（包含按压延迟队列）及逐项证明的路由索引复用完成。Node387/0（末次队列标记修复前），最终prepared browser9、MV3 9/9分别记录；100k固定源码功能PASS、1790.6ms，较上轮1625.2ms慢，不能宣称整体提速或达1秒。源码/实际耗时/包hash均见STATUS第九轮及独立free-round9-*文件。
+
+可继续本地定位：native.apply526ms、evidence.apply179ms，内部saveNativePieces/ saveEvidencePieces分别先JSON.stringify(manifest)限额再stable编码hash。合并编码时必须保留原结构、128Mi聚合、16Mi单记录/CAS、scope/末次CHECK，不接受外部预先算好的可信size。不要重写已测的分页/缓存/导航。
+
+1a0dcaf后的实现和检查点仍在当前正式目录/分支；唯一20秒普通推送超时后停止，GitHub API确认远端03ef76a Draft。网络恢复后正常push原分支，不换目录/远端、不强推。当前完整Free不合格；对应真实来源/账户/PAIA/物理设备验收仍缺原有授权条件。

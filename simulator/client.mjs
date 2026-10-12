@@ -83,7 +83,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   async function readSnapshot(ticket,url){
     const c=readControls(),freeMode=new URL(env.location.href).searchParams.get('view')!=='pro',reply=await request(freeMode?'B23_FREE_HEADER':'B23_SNAPSHOT',{now:c.now??FIXTURE_NOW,timeZone:c.timeZone??'Asia/Shanghai',size:c.size??8,...(freeMode&&freeSession?{viewSession:freeSession}:{})});
     if(!current(ticket,url))throw Error('stale-client-response');if(!reply?.ok)throw Error(reply?.reason??'read-failed');
-    let next=reply.snapshot,nextIndex=null;
+    let next=reply.snapshot,nextIndex=null,nextPrepared=false;
     if(freeMode){
       const header=reply.header,plan=planFreeReplica(freeReplica,header);
       const pages=await loadFreePages({requests:freeReplicaRequests(plan,5000),guard:()=>current(ticket,url),load:async ids=>{
@@ -97,7 +97,8 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
         next={...freeReplica.snapshot,...header,viewMode:'free'};nextIndex=freeIndex;
       }else{
         const assembled=await assembleFreeReplicaAsync(freeReplica,header,pages,plan,()=>current(ticket,url));
-        next=freeNavigationSnapshot(assembled.snapshot);nextIndex=await currentIndexAsync(next,next.groups,()=>current(ticket,url));
+        next=freeNavigationSnapshot(assembled.snapshot);nextPrepared=true;
+        nextIndex=(!plan.full&&freeIndex?await freeIndex.rebindCompatibleAsync(next,next.groups,()=>current(ticket,url)):null)??await currentIndexAsync(next,next.groups,()=>current(ticket,url));
         await verify();freeReplica=assembled;freeIndex=nextIndex;
       }
     }
@@ -117,7 +118,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     const changed=!data||data.revision!==next.revision||data.workspaceRevision!==next.workspaceRevision||data.evidenceRevision!==next.evidenceRevision||JSON.stringify(data.viewSession)!==JSON.stringify(next.viewSession)||data.viewRevision!==next.viewRevision||data.diagnostics?.view!==next.diagnostics?.view;
     if(next.viewMode==='free'&&!freeSession)freeSession=next.viewSession;data=next;viewRevision=data.viewRevision;
     if(lastView===''&&data.view)lastView=JSON.stringify(data.view);
-    if(changed){navigation.update(data,c.now??FIXTURE_NOW,c.timeZone??'Asia/Shanghai',nextIndex);if(editor&&!editor.resume(data))editor=null;}
+    if(changed){(nextPrepared?navigation.updatePreparedFree:navigation.update)(data,c.now??FIXTURE_NOW,c.timeZone??'Asia/Shanghai',nextIndex);if(editor&&!editor.resume(data))editor=null;}
     clearFeedback();const host=adapter.inspect();if(host.ok){resize.observe(host.reading);resize.observe(host.header);}return data;
   }
   function scheduleHeartbeat(){clearTimeout(heartbeat);if(!visible()||!lease||stopped)return;const ticket=generation,url=env.location.href;

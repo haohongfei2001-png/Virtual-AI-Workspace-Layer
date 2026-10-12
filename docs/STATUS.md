@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第八轮（接本地 `98d6e17`），最新结果见末节与恢复检查点。最后确认远端PR #16为Draft、头 `03ef76a`；后续本地提交待网络恢复后正常同步。以下各轮保留其当时证据与同步状态，不代表当前头。未修改远端设置。
+当前已推进至第九轮（接本地 `1a0dcaf`），最新结果见末节与恢复检查点。最后确认远端PR #16为Draft、头 `03ef76a`；后续本地提交待网络恢复后正常同步。以下各轮保留其当时证据与同步状态，不代表当前头。未修改远端设置。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -185,3 +185,13 @@ PLAN_TEXT_READY；REMOTE_WRITE_BLOCKED（当前工具未提供写入动作，也
 完整Node366/0/0skip；其后新增共享上下文4/4针对性通过，不能与旧轮结果累加。固定源码真实Chrome MV3 9/9；100k source→IDB→broker→DOM功能PASS，首屏12913.5ms，更新1625.2ms（上轮2149.9ms）。1ref分页、零全量snapshot/read、原生阅读/输入/消息节点和草稿保留。1秒更新性能仍FAIL，未以减弱权限或完整性检查换性能。各源hash、日志摘要及独立报告为free-round8-*。
 
 新合成包 `/private/tmp/vaiwl-free-delivery-round8-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `7893cbf04248f0db55ccff9e215b19a7c0ae0ea6fc8fb02051ad606704c8c21c`。仍仅loopback SYNTHETIC_ONLY，真实ChatGPT/跨端/PAIA/物理设备和真人日常条件不变；完整Free、RELEASE_READY和PUBLISHED均未达到。下一本地工作为客户端重复全量导航转换/索引成本，保留末次CHECK。
+
+## 第九轮：导航单次转换与受证据约束的路由复用（接1a0dcaf）
+
+client已转换的Free快照通过内部WeakMap来源登记的prepared入口发布，浅拷贝/改scope不能冒充；普通raw入口继续适配。按压/输入安全门控保存prepared标记，释放后只应用最新快照，失效丢弃。路由索引复用先协作式逐项比较scope、引用ID/URL/顺序和group成员/各行顺序；任何不符完整重建，首匹配与新对象绑定保持，末次CHECK不变。
+
+完整Node387/0/0skip（最终延迟标记小修前）；最终prepared浏览器9项覆盖等价DOM、无二次clone、按压/失效、原生阅读焦点草稿，真实MV3 9/9。路由17项合同已包含在Node组合中，不重复累加。固定源码100k功能PASS，首屏14240.5ms、源响应→DOM1790.6ms；比上轮1625.2ms慢，**本轮未证明端到端提速，1秒目标仍FAIL**。新增仓库耗时显示native.apply526.3ms、evidence.apply178.6ms；仍单引用分页、无fullread，原生草稿节点保留。
+
+最新合成包 `/private/tmp/vaiwl-free-delivery-round9-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `cc15f0ae0743646171d1c9dddaf2d929fb2751a5c5987fcfe2397f10daf534ff`。第八轮正常快进推送20秒超时，未重试；本次GitHub API再确认PR #16 Draft、头03ef76aba14cd4d734ba15940c4f206dbe3c5cf5，本地后续代码未声称已同步。
+
+下一可执行位置：原生/活动manifest结构校验后的JSON.stringify大小检测与随后的stable/hash重复编码；需只在内部写路径合并编码、保留结构/CAS/限额与公开读取校验。真实账户/跨端/PAIA/物理和日常验收条件不变，完整Free仍未交付。

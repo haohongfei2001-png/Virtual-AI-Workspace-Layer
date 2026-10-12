@@ -1,4 +1,4 @@
-import { freeNavigationSnapshot, freeListRows } from './free-view.mjs';
+import { freeNavigationSnapshot, freeListRows, assertPreparedFreeSnapshot } from './free-view.mjs';
 import { currentIndex } from './current-index.mjs';
 import { knownMatches } from './search.mjs';
 import { defaultIcon, iconPaths, svgIcon } from './icons.mjs';
@@ -17,7 +17,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const owned=e=>e.composedPath().some(n=>n?.getAttribute?.('data-vaiwl-owned')===token);
   const interacting=()=>pointers.size>0||keys.size>0||composing||dragging;
   const clearUpdateTimer=()=>{if(updateTimer!==null){win.clearTimeout(updateTimer);updateTimer=null;}};
-  function flushUpdate(){clearUpdateTimer();if(!pendingUpdate||interacting()||stopped)return;const args=pendingUpdate;pendingUpdate=null;update(...args);}
+  function flushUpdate(){clearUpdateTimer();if(!pendingUpdate||interacting()||stopped)return;const args=pendingUpdate;pendingUpdate=null;const [value,now,timeZone,preparedIndex,alreadyPrepared]=args;if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
   function finishInteraction(){if(!interacting()&&pendingUpdate&&updateTimer===null)updateTimer=win.setTimeout(flushUpdate,0);}
   function resetInteraction(discard=false){pointers.clear();keys.clear();composing=false;dragging=false;if(discard){pendingUpdate=null;clearUpdateTimer();}else finishInteraction();}
   const interactionHandlers={
@@ -185,10 +185,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     }
     shadow.append(page);layoutCards();page.scrollTop=view.scroll;restoreOwnedFocus(focused);emitView();
   }
-  function update(value,now,timeZone,preparedIndex=null){
+  function applyUpdate(value,now,timeZone,preparedIndex=null,alreadyPrepared=false){
     if(stopped)return;
-    if(snapshot?.scope===value.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[value,now,timeZone,preparedIndex];return;}
-    resetInteraction(true);sidebarDirty=true;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free')value=freeNavigationSnapshot(value);snapshot=value;
+    if(snapshot?.scope===value.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[value,now,timeZone,preparedIndex,alreadyPrepared];return;}
+    resetInteraction(true);sidebarDirty=true;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free'&&!alreadyPrepared)value=freeNavigationSnapshot(value);snapshot=value;
     if(!views.has(value.scope)){
       const initial=initialView(),v=value.view;
       if(v)Object.assign(initial,{segment:v.segment,oldOpen:new Set(v.oldOpen),sidebarOpen:new Set(v.sidebarOpen),capacities:new Map(v.capacities),scroll:v.scroll,sidebarVisible:v.sidebarVisible});
@@ -198,7 +198,9 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(value.preferences?.sidebarVisible)view.sidebarVisible=value.preferences.sidebarVisible.value;
     layout();render();layout();locateAnchor();
   }
+  function update(value,now,timeZone,preparedIndex=null){return applyUpdate(value,now,timeZone,preparedIndex);}
+  function updatePreparedFree(value,now,timeZone,preparedIndex=null){assertPreparedFreeSnapshot(value);return applyUpdate(value,now,timeZone,preparedIndex,true);}
   function invalidate(reason='binding-invalidated'){resetInteraction(true);remember();snapshot=null;index=null;detach();status={state:'WAITING',reason};adapter.status(status);}
   function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);for(const[type,handler]of Object.entries(interactionHandlers))doc.removeEventListener(type,handler,true);win.removeEventListener?.('blur',windowBlur);restoreFocus();status={state:'STOPPED'};adapter.status(status);}
-  return Object.freeze({update,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
+  return Object.freeze({update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
 }
