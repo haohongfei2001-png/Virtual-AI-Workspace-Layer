@@ -68,10 +68,10 @@ export function emptyNativeFacts(scope) {
 
 export function validateNativeFacts(facts, scope) {
   shape(facts, ['format', 'scopeKey', 'revision', 'projects', 'refs', 'membership', 'sources']);
-  if (facts.format !== 'vaiwl-native-facts-v1' || facts.scopeKey !== scopeKey(scope) ||
+  if (!['vaiwl-native-facts-v1', 'vaiwl-native-facts-v2'].includes(facts.format) || facts.scopeKey !== scopeKey(scope) ||
       !Number.isSafeInteger(facts.revision) || facts.revision < 0) throw Error('invalid-native-facts');
   for (const table of ['projects', 'refs', 'membership', 'sources']) {
-    if (!isRecord(facts[table]) || Object.keys(facts[table]).length > 20000) throw Error('native-facts-capacity');
+    if (!isRecord(facts[table]) || Object.keys(facts[table]).length > (facts.format === 'vaiwl-native-facts-v2' && table !== 'sources' ? 100000 : 20000)) throw Error('native-facts-capacity');
     for (const [key, row] of Object.entries(facts[table])) {
       identifier(key);
       if (!isRecord(row) || row.id !== key) throw Error('invalid-native-row');
@@ -96,7 +96,7 @@ export function validateNativeFacts(facts, scope) {
       } else nativeObject(row, table === 'projects' ? 'nativeName' : 'nativeTitle');
     }
   }
-  if (JSON.stringify(facts).length > 16 * 1024 * 1024) throw Error('native-facts-too-large');
+  if (JSON.stringify(facts).length > (facts.format === 'vaiwl-native-facts-v2' ? 128 : 16) * 1024 * 1024) throw Error('native-facts-too-large');
   return facts;
 }
 
@@ -139,7 +139,7 @@ export function applyNativeObservations(current, batch, {scope, channel, sourceI
       if (table === 'membership') membership(row, next.projects);
       else nativeObject(row, table === 'projects' ? 'nativeName' : 'nativeTitle');
       const previous = next[table][row.id];
-      if (previous && previous.sourceId !== sourceId) throw Error('native-source-conflict');
+      if (previous && previous.sourceId !== sourceId && !current.sources[previous.sourceId]?.revoked) throw Error('native-source-conflict');
       next[table][row.id] = {...row, ...provenance};
     }
   }
@@ -163,6 +163,6 @@ export function invalidateNativeSource(current, sourceId, scope) {
 export function nativeWitnessActive(row, facts, now) {
   const clock = timestamp(now), source = facts.sources[row.sourceId];
   return !!source && !source.revoked && source.generation === row.generation &&
-    source.sourceRevision >= row.sourceRevision && timestamp(row.observedAt) <= clock &&
+    source.sourceRevision >= row.sourceRevision && timestamp(source.validUntil) > clock && timestamp(row.observedAt) <= clock &&
     timestamp(row.validUntil) > clock;
 }

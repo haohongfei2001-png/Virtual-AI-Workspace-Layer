@@ -146,3 +146,12 @@ test('FR-03 legacy references remain reachable without inferring NONE or importi
   assert.equal(projected.noProject.length, 1);
   assert.throws(() => freeProjection(facts, {scope, now, knownState: {...knownState, scopeKey: 'other'}}), /cross-scope/);
 });
+
+test('FR-12 a shorter source lease expires old rows without renewing their individual witnesses', () => {
+  const facts = applyNativeObservations(seed(), batch(2, {validUntil: '2026-10-13T01:00:00Z'}), authority);
+  const projected = view(facts, '2026-10-13T02:00:00Z');
+  assert.equal(projected.projects.length, 0);
+  assert.equal(projected.noProject.length, 0);
+  assert.equal(projected.unknown.length, 3);
+  assert(projected.unknown.every(row => row.nativeTitle === null));
+});

@@ -1,4 +1,28 @@
-# VAIWL实际状态：Free原生事实底座已编码，按用户要求暂停交接
+# VAIWL实际状态：Free持续实施，真实验收未完成
+
+## 当前持续实施（2026-10-13，正式桌面目录）
+
+用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
+
+B1/B4/B5/F1原生存储新增：同库不可变Project/Conversation分片、源版本CAS、受影响记录增量读写、版本绑定分页、保留当前与上一检查点所需分片、原子恢复影子。损坏root恢复先验证全部piece并撤销全部来源；旧source不能借恢复重放，单独门控的新source可重新核验。旧v1仍20k行/16Mi；v2仅为分片聚合，100k/128Mi边界，各落盘记录仍16Mi。Pro根/日志未改。
+
+新证据独立记录：
+
+- Node分片/恢复针对性回归通过；完整集成组合回归222通过/0失败（命令见检查点；后续变更另测，不与旧180相加）。
+- 真实Headless Chrome / IndexedDB，1k/10k/100k × mixed/single-project六组通过，见 `engineering/free-partition-scale-2026-10-13.json`。这是持久化/尾部可达/CAS测试，不是导航p95认证。100k全量投影约550–715ms，尾页约131–171ms，双连接增量约626–942ms；大规模根校验仍O(N)，须继续优化读取/缓存路径。
+- 真IDB损坏恢复单独通过，见 `engineering/free-partition-recovery-2026-10-13.json`。报告保留各自运行前源码哈希，不冒称后续源码已验证。
+
+C1/C2/C3/C4/C5新增合成路径：Free默认导航只用原生Project/原名；NONE与UNKNOWN独立紧凑列表、原名查找、原生项目空composer（发送前不保存）、用户合成发送后1秒内新增引用、手工7/14/30/60/90、scope会话H/T/Z冻结、共享工作集/片段/备份设置；旧Pro路径保留在显式 `?view=pro`。
+
+B2.F2/F3新增严格本人发送与ObservationHint分层、旧锚点暂定下沉、来源撤权/过期回退、H自适应纯算法、预算/去重/取消/最多两次重试校准器。活动持久仓库已独立实现并验证；服务接线、真实源及持续校准仍需继续，不能把模块测试算端到端完成。
+
+- 真MV3合成旅程7/7通过，`engineering/free-mv3-2026-10-13.json`：双tab、原生工具/搜索/草稿、唯一返回、历史Project、worker终止再恢复、UNKNOWN scope。
+- 独立活动仓库真IDB5/5和根损坏恢复1条通过，`engineering/free-evidence-idb-2026-10-13.json`，同库Pro资产、CAS、撤权、scope与缺根反例。
+- Headless UI合成旅程通过：原名/NONE/查找、H、真实合成用户发送后可达、重连保留、键盘入口、390px/深色/CSS200%、跨21秒lease草稿。物理IME、实际Chrome缩放与真人可用性NOT_RUN。
+
+UI、活动/时间策略与测试由互不冲突的writer并行推进，最终集成仍由主代理执行。真实ChatGPT来源/授权账户、跨端真值、实际PAIA共存、物理IME/真人日常验证仍NOT_RUN / BLOCKED_LIVE，未访问私人账户或PAIA。**FREE_ACCEPTED、RELEASE_READY、PUBLISHED均未达到；持续执行剩余可行任务。**
+
+## 以下为恢复前81ff0ec检查点历史，不代表当前暂停
 
 ## 当前实施检查点（2026-10-13）
 

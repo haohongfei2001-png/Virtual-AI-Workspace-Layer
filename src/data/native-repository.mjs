@@ -1,3 +1,4 @@
+import { isNativePartitioned, validateNativeManifest, loadNativePieces, saveNativePieces, nativeHeader, nativeRecoveryKey, nativeRecord } from './native-partitions.mjs';
 import { emptyNativeFacts, validateNativeFacts, applyNativeObservations, invalidateNativeSource } from './native-facts.mjs';
 import { freeProjection } from './free-projection.mjs';
 import { id } from './state.mjs';
@@ -29,7 +30,14 @@ export class NativeRepository {
       let facts, error;
       request.onsuccess = () => {
         try {
-          facts = request.result ? validateNativeFacts(unpack(request.result), normalized) : emptyNativeFacts(normalized);
+          const payload = request.result ? unpack(request.result) : null;
+          if (isNativePartitioned(payload)) {
+            const manifest = validateNativeManifest(payload, normalized);
+            loadNativePieces(transaction.objectStore('native_states'), manifest, normalized,
+              {projects: Object.keys(manifest.projects), refs: Object.keys(manifest.refs)}, value => { facts = value; },
+              failure => { error = failure; transaction.abort(); });
+            facts = nativeHeader(manifest, normalized);
+          } else facts = payload ? validateNativeFacts(payload, normalized) : emptyNativeFacts(normalized);
           const marker = transaction.objectStore('native_operations').get(normalized.key);
           marker.onsuccess = () => {
             try {
@@ -44,6 +52,116 @@ export class NativeRepository {
         try { fence(options); resolve(facts); } catch (failure) { reject(failure); }
       };
       transaction.onabort = () => reject(error ?? transaction.error ?? Error('native-read-aborted'));
+    });
+  }
+
+  async version(scope, options = {}) {
+    const normalized = this.base.scopeOrThrow(scope), db = await this.base.open();
+    fence(options);
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(['native_states', 'native_operations']); let revision = 0, error;
+      const request = tx.objectStore('native_states').get(normalized.key);
+      request.onsuccess = () => {
+        try {
+          if (request.result) {
+            const value = unpack(request.result);
+            revision = (isNativePartitioned(value) ? validateNativeManifest(value, normalized) : validateNativeFacts(value, normalized)).revision;
+          }
+          const marker = tx.objectStore('native_operations').get(normalized.key);
+          marker.onsuccess = () => {
+            try { if (marker.result ? unpack(marker.result).revision !== revision : revision !== 0) throw Error('native-root-revision-conflict'); }
+            catch (failure) {error = failure;tx.abort();}
+          };
+        } catch (failure) {error = failure;tx.abort();}
+      };
+      tx.oncomplete = () => {try {fence(options);resolve(revision);} catch (failure) {reject(failure);}};
+      tx.onabort = () => reject(error ?? tx.error ?? Error('native-read-aborted'));
+    });
+  }
+
+  async page(scope, {revision = null, offset = 0, limit = 500} = {}, options = {}) {
+    if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 5000) throw Error('invalid-native-page');
+    const normalized = this.base.scopeOrThrow(scope), db = await this.base.open();
+    fence(options);
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(['native_states', 'native_operations']), store = tx.objectStore('native_states');
+      let result, error;
+      const fail = failure => { error = failure; try { tx.abort(); } catch {} };
+      const request = store.get(normalized.key);
+      request.onsuccess = () => {
+        try {
+          const payload = unpack(request.result), manifest = validateNativeManifest(payload, normalized);
+          if (revision !== null && revision !== manifest.revision) throw Error('snapshot-revision-changed');
+          const projects = Object.keys(manifest.projects), refs = Object.keys(manifest.refs), total = projects.length + refs.length;
+          const projectSlice = projects.slice(offset, offset + limit);
+          const refSlice = refs.slice(Math.max(0, offset - projects.length), Math.max(0, offset + limit - projects.length));
+          const marker = tx.objectStore('native_operations').get(normalized.key);
+          marker.onsuccess = () => {
+            try { if (unpack(marker.result).revision !== manifest.revision) throw Error('native-root-revision-conflict'); }
+            catch (failure) { fail(failure); }
+          };
+          loadNativePieces(store, manifest, normalized, {projects: projectSlice, refs: refSlice}, facts => {
+            result = {revision: manifest.revision, offset, total, nextOffset: Math.min(total, offset + limit), facts,
+              selectedProjects: projectSlice, selectedRefs: refSlice};
+            if (JSON.stringify(result).length > 16 * 1024 * 1024) fail(Error('native-page-too-large'));
+          }, fail);
+        } catch (failure) { fail(failure); }
+      };
+      tx.oncomplete = () => { try { fence(options); resolve(result); } catch (failure) { reject(failure); } };
+      tx.onabort = () => reject(error ?? tx.error ?? Error('native-read-aborted'));
+    });
+  }
+
+  /** Repair a damaged root only from the current atomically saved recovery root.
+   * Sources are revoked; this never restores a grant or overwrites manual B23 assets.
+   */
+  async recover(scope, {operationId, damagedHash}, options = {}) {
+    const normalized = this.base.scopeOrThrow(scope), db = await this.base.open();
+    id(operationId);
+    if (typeof damagedHash !== 'string' || damagedHash.length !== 64) throw Error('invalid-damaged-hash');
+    fence(options);
+    return new Promise(resolve => {
+      const tx = db.transaction(['native_states', 'native_operations'], 'readwrite'), store = tx.objectStore('native_states'), ops = tx.objectStore('native_operations');
+      let result;
+      const abort = reason => { result = {ok: false, reason}; try { tx.abort(); } catch {} };
+      const revoked = () => abort('stale-binding');
+      options.signal?.addEventListener('abort', revoked, {once: true});
+      const root = store.get(normalized.key), shadow = store.get(nativeRecoveryKey(normalized.key)), marker = ops.get(normalized.key);
+      const key = JSON.stringify([normalized.key, operationId]), receipt = ops.get(key);
+      receipt.onsuccess = () => {
+        try {
+          fence(options);
+          if (receipt.result) {
+            const prior = unpack(receipt.result);
+            result = prior.kind === 'RECOVER_NATIVE' && prior.fingerprint === damagedHash ?
+              {ok: true, replayed: true, revision: prior.revision, operationId} : {ok: false, reason: 'operation-replay-conflict'};
+            return;
+          }
+          if (digest(root.result ?? null) !== damagedHash) throw Error('recovery-conflict');
+          let intact = false;
+          try { validateNativeManifest(unpack(root.result), normalized); intact = true; } catch {}
+          if (intact) throw Error('intact-state-not-replaced');
+          const manifest = validateNativeManifest(unpack(shadow.result), normalized);
+          if (unpack(marker.result).revision !== manifest.revision) throw Error('native-root-revision-conflict');
+          // Verify every referenced piece before publishing a recovered manifest.
+          loadNativePieces(store, manifest, normalized, {projects: Object.keys(manifest.projects), refs: Object.keys(manifest.refs)}, () => {
+            try {
+              fence(options);
+              const next = structuredClone(manifest); next.revision++;
+              for (const source of Object.values(next.sources)) source.revoked = true;
+              next.changes = [];
+              validateNativeManifest(next, normalized);
+              store.put(nativeRecord(normalized.key, next)); store.put(nativeRecord(nativeRecoveryKey(normalized.key), next));
+              ops.put(record(normalized.key, {revision: next.revision}));
+              ops.put(record(key, {kind: 'RECOVER_NATIVE', fingerprint: damagedHash, revision: next.revision, operationId}));
+              fence(options);
+              result = {ok: true, revision: next.revision, operationId, evidenceInvalidated: true};
+            } catch (failure) { abort(failure.message); }
+          }, failure => abort(failure.message));
+        } catch (failure) { abort(failure.message); }
+      };
+      tx.oncomplete = () => { options.signal?.removeEventListener('abort', revoked); try { fence(options); resolve(result); } catch { resolve({ok: false, reason: 'stale-after-commit', committed: true}); } };
+      tx.onabort = () => { options.signal?.removeEventListener('abort', revoked); resolve(result ?? {ok: false, reason: tx.error?.name ?? 'native-recovery-aborted'}); };
     });
   }
 
@@ -89,7 +207,9 @@ export class NativeRepository {
       request.onsuccess = () => {
         try {
           check();
-          const current = request.result ? validateNativeFacts(unpack(request.result), normalized) : emptyNativeFacts(normalized);
+          const payload = request.result ? unpack(request.result) : null;
+          const manifest = isNativePartitioned(payload) ? validateNativeManifest(payload, normalized) : null;
+          const current = manifest ? nativeHeader(manifest, normalized) : payload ? validateNativeFacts(payload, normalized) : emptyNativeFacts(normalized);
           const marker = operations.get(normalized.key);
           marker.onsuccess = () => {
             try {
@@ -108,13 +228,24 @@ export class NativeRepository {
                     return;
                   }
                   if (current.revision !== expectedRevision) throw Error('revision-conflict');
-                  const next = reduce(current);
-                  check();
-                  states.put(record(normalized.key, next));
-                  operations.put(record(normalized.key, {revision: next.revision}));
-                  operations.put(record(operationKey, {fingerprint, revision: next.revision, operationId}));
-                  check();
-                  result = {ok: true, replayed: false, revision: next.revision, operationId};
+                  const save = (partial, storage = null) => {
+                    try {
+                      check();
+                      const next = reduce(partial);
+                      check();
+                      saveNativePieces(states, normalized, partial, next, storage, command);
+                      operations.put(record(normalized.key, {revision: next.revision}));
+                      operations.put(record(operationKey, {fingerprint, revision: next.revision, operationId}));
+                      check();
+                      result = {ok: true, replayed: false, revision: next.revision, operationId};
+                    } catch (failure) { abort(failure.message); }
+                  };
+                  if (manifest) {
+                    const projects = new Set((command.batch?.projects ?? []).map(row => row.id));
+                    for (const row of command.batch?.membership ?? []) if (row.state === 'PROJECT') projects.add(row.projectId);
+                    const refs = new Set([...(command.batch?.refs ?? []).map(row => row.id), ...(command.batch?.membership ?? []).map(row => row.id)]);
+                    loadNativePieces(states, manifest, normalized, {projects, refs}, save, failure => abort(failure.message));
+                  } else save(current);
                 } catch (failure) { abort(failure.message); }
               };
             } catch (failure) { abort(failure.message); }

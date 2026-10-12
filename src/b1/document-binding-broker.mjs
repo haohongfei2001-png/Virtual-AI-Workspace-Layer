@@ -9,6 +9,7 @@ export const VERSION=1;
 const deny=reason=>({ok:false,reason});
 const exact=(v,keys)=>isRecord(v)&&Object.keys(v).length===keys.length&&
   keys.every(k=>Object.hasOwn(v,k));
+const viewSessionOK=s=>s===null||exact(s,['H','T','Z','policyRevision'])&&[7,14,30,60,90].includes(s.H)&&Number.isSafeInteger(s.T)&&Math.abs(s.T)<1000000&&typeof s.Z==='string'&&s.Z.length<100&&Number.isSafeInteger(s.policyRevision)&&s.policyRevision>=0;
 const requestOK=m=>{
   if(!isRecord(m)||m.v!==VERSION||!tokenOK(m.clientId)||
      !Number.isSafeInteger(m.seq)||m.seq<1)return false;
@@ -22,8 +23,10 @@ const requestOK=m=>{
     case 'B23_PARTITION_HEADER':return exact(m,[...base,'leaseId','now','timeZone','size'])&&tokenOK(m.leaseId)&&typeof m.now==='string'&&typeof m.timeZone==='string'&&m.timeZone.length<100&&Number.isInteger(m.size)&&m.size>=1&&m.size<=120;
     case 'B23_PARTITION_PAGE':return exact(m,[...base,'leaseId','revision','offset','ids'])&&tokenOK(m.leaseId)&&Number.isSafeInteger(m.revision)&&m.revision>=0&&Number.isSafeInteger(m.offset)&&m.offset>=0&&m.offset<=100000&&(m.ids===null||Array.isArray(m.ids)&&m.ids.length<=5000&&m.ids.every(tokenOK));
     case 'B23_COMMAND':return exact(m,[...base,'leaseId','operationId','expectedRevision','command'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0&&isRecord(m.command)&&HUMAN_COMMANDS.includes(m.command.type)&&JSON.stringify(m.command).length<(m.command.type==='SET_PREFERENCE'?512000:10000);
+    case 'B23_SYNTHETIC_SEND':return exact(m,[...base,'leaseId','conversationId','messageId','projectId','nativeTitle'])&&tokenOK(m.leaseId)&&tokenOK(m.conversationId)&&tokenOK(m.messageId)&&(m.projectId===null||tokenOK(m.projectId))&&typeof m.nativeTitle==='string'&&m.nativeTitle.trim().length>0&&m.nativeTitle.length<=200;
     case 'B23_UNDO':return exact(m,[...base,'leaseId','operationId','expectedRevision','targetOperationId'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&tokenOK(m.targetOperationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0;
-    case 'B23_FREE_SNAPSHOT':case 'B23_EXPORT_BACKUP':case 'B23_STORAGE':case 'B23_RECOVERY_STATUS':return exact(m,[...base,'leaseId'])&&tokenOK(m.leaseId);
+    case 'B23_FREE_SNAPSHOT':return tokenOK(m.leaseId)&&(exact(m,[...base,'leaseId'])||(exact(m,[...base,'leaseId','now','timeZone','size'])||exact(m,[...base,'leaseId','now','timeZone','size','viewSession'])&&viewSessionOK(m.viewSession))&&typeof m.now==='string'&&typeof m.timeZone==='string'&&m.timeZone.length<100&&Number.isInteger(m.size)&&m.size>=1&&m.size<=120);
+    case 'B23_EXPORT_BACKUP':case 'B23_STORAGE':case 'B23_RECOVERY_STATUS':return exact(m,[...base,'leaseId'])&&tokenOK(m.leaseId);
     case 'B23_PREVIEW_RESTORE':return exact(m,[...base,'leaseId','bundle'])&&tokenOK(m.leaseId)&&isRecord(m.bundle)&&JSON.stringify(m.bundle).length<18000000;
     case 'B23_RESTORE_BACKUP':return exact(m,[...base,'leaseId','operationId','expectedRevision','bundle','planHash'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0&&isRecord(m.bundle)&&JSON.stringify(m.bundle).length<18000000&&typeof m.planHash==='string'&&m.planHash.length===64;
     case 'B23_RECOVER_ASSETS':return exact(m,[...base,'leaseId','operationId','damagedHash'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&typeof m.damagedHash==='string'&&m.damagedHash.length===64;
@@ -158,10 +161,11 @@ export function createDocumentBindingBroker({
         if(!workspaceRepository)return deny('workspace-unavailable');
         const options={guard:()=>fresh(st,slot),signal:slot.abort.signal};let result;
         if(message.type==='B23_SNAPSHOT'){const value=workspaceRepository.partitionHeader?await workspaceRepository.partitionHeader(scope,options):null;result=value?{ok:true,partition:value}:{ok:true,snapshot:await workspaceRepository.snapshot(scope,message.now,message.timeZone,options,message.size)};}
-        else if(message.type==='B23_FREE_SNAPSHOT')result=workspaceRepository.freeSnapshot?{ok:true,snapshot:await workspaceRepository.freeSnapshot(scope,options)}:deny('free-snapshot-unavailable');
+        else if(message.type==='B23_FREE_SNAPSHOT')result=workspaceRepository.freeSnapshot?{ok:true,snapshot:await workspaceRepository.freeSnapshot(scope,options,message.now,message.timeZone,message.viewSession)}:deny('free-snapshot-unavailable');
         else if(message.type==='B23_PARTITION_HEADER'){const value=await workspaceRepository.partitionHeader(scope,options);result=value?{ok:true,partition:value}:{ok:true,snapshot:await workspaceRepository.snapshot(scope,message.now,message.timeZone,options,message.size)};}
         else if(message.type==='B23_PARTITION_PAGE')result={ok:true,page:await workspaceRepository.partitionPage(scope,{revision:message.revision,offset:message.offset,ids:message.ids},options)};
         else if(message.type==='B23_COMMAND')result=await workspaceRepository.command(scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,command:message.command},options);
+        else if(message.type==='B23_SYNTHETIC_SEND')result=workspaceRepository.fixtureObserve?await workspaceRepository.fixtureObserve(scope,message,options,doc.url):deny('synthetic-source-unavailable');
         else if(message.type==='B23_UNDO')result=await workspaceRepository.undo(scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,targetOperationId:message.targetOperationId},options);
         else if(message.type==='B23_EXPORT_BACKUP')result={ok:true,bundle:await workspaceRepository.exportBackup(scope,options)};
         else if(message.type==='B23_PREVIEW_RESTORE')result={ok:true,preview:await workspaceRepository.previewRestore(scope,message.bundle,options)};

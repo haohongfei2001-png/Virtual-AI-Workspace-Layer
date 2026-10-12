@@ -24,7 +24,8 @@ export function createAdapter(doc=document) {
       return {ok:true,history,header,reading,navigationSlot};
     },
     hasNativeLayer(){return !!doc.querySelector('dialog[open], [popover]:popover-open');},
-    isCurrent(raw){const a=new URL(raw),b=new URL(env.location.href);return a.origin===b.origin&&a.pathname===b.pathname;},
+    isCurrent(raw){const a=new URL(raw),b=new URL(env.location.href);return a.origin===b.origin&&a.pathname===b.pathname&&(!a.pathname.endsWith('/new')||a.searchParams.get('project')===b.searchParams.get('project'));},
+    projectCreateHref(project){const links=[...doc.querySelectorAll('a[data-native-project-new][href]')].filter(a=>a.dataset.nativeProjectNew===project.id);return links.length===1&&syntheticURL(links[0].href)&&new URL(links[0].href).origin===env.location.origin?this.nativeHref(links[0].href):null;},
     currentURL:()=>env.location.href,
     // Keep synthetic harness activation/scale on ordinary and modifier-click
     // fallback links. Never change persisted references or a production URL.
@@ -41,7 +42,7 @@ export function createAdapter(doc=document) {
     openNative(raw,event){
       if(!syntheticURL(raw)||new URL(raw).origin!==env.location.origin)return event.preventDefault();
       if(this.isCurrent(raw)){event.preventDefault();return;}
-      const link=[...doc.querySelectorAll('aside a[href]')].find(a=>new URL(a.href).pathname===new URL(raw).pathname);
+      const link=[...doc.querySelectorAll('aside a[href]')].find(a=>new URL(a.href).pathname===new URL(raw).pathname&&(!new URL(raw).pathname.endsWith('/new')||new URL(a.href).searchParams.get('project')===new URL(raw).searchParams.get('project')));
       if(link){event.preventDefault();link.click();} // Real host link/handler; otherwise retain ordinary anchor navigation.
     },
     selectedSnippet(ref){
