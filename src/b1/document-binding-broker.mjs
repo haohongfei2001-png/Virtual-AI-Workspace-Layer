@@ -222,6 +222,7 @@ export function createDocumentBindingBroker({
           ref:{conversationId:message.conversationId,nativeUrl:doc.url,projectId:null},
           beforeCommit:()=>fresh(st,slot)});
         if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-write');
+        if(result.ok)freeRuntime?.reconcileReferences?.(slot.leaseId,{restart:true}).catch(()=>{});
         return result.ok?{...result,record:copyRecord(result.record)}:result;
       }
     }catch(e){return deny(e?.message||'repository-failure');}

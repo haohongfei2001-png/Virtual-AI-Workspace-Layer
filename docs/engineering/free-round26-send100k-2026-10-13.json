@@ -1,0 +1,260 @@
+{
+  "evidence": "REAL_BROWSER_SYNTHETIC_LOCAL_SEND_PAGE_TRANSPORT",
+  "realChatGPT": "NOT_RUN",
+  "results": [
+    {
+      "kind": "existing",
+      "eventToDOMMs": 2322.89999999851,
+      "knownRef": "T0",
+      "membership": "NONE",
+      "sendEvents": 1,
+      "nativeUserMessages": 1,
+      "storedUserEvents": 1,
+      "storedHints": 1,
+      "reading": true,
+      "draftPreserved": true,
+      "counts": {
+        "native.read": 0,
+        "native.snapshot": 0,
+        "native.page": 2,
+        "native.header": 3,
+        "evidence.read": 0,
+        "evidence.page": 3,
+        "evidence.header": 2,
+        "workspace.read": 0,
+        "workspace.snapshot": 0
+      },
+      "rpc": [
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "start": 41308.39999999851,
+          "at": 42429.39999999851,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "start": 42429.39999999851,
+          "at": 43046.5,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_PAGE",
+          "start": 43066.5,
+          "at": 43290.699999999255,
+          "ok": true
+        },
+        {
+          "type": "CHECK",
+          "start": 43407.300000000745,
+          "at": 43621.39999999851,
+          "ok": true
+        },
+        {
+          "type": "B23_SAVE_VIEW",
+          "start": 43626.5,
+          "at": 43775.60000000149,
+          "ok": true
+        }
+      ]
+    },
+    {
+      "kind": "new-none",
+      "eventToDOMMs": 3101.800000000745,
+      "knownRef": "new-ec3e4b77-b783-4b03-b380-34daba9fd9aa",
+      "membership": "NONE",
+      "sendEvents": 1,
+      "nativeUserMessages": 1,
+      "storedUserEvents": 1,
+      "storedHints": 1,
+      "reading": true,
+      "draftPreserved": true,
+      "counts": {
+        "native.read": 0,
+        "native.snapshot": 0,
+        "native.page": 2,
+        "native.header": 5,
+        "evidence.read": 0,
+        "evidence.page": 3,
+        "evidence.header": 5,
+        "workspace.read": 0,
+        "workspace.snapshot": 0
+      },
+      "rpc": [
+        {
+          "type": "BIND",
+          "start": 44559.10000000149,
+          "at": 44559.199999999255,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "start": 44559.199999999255,
+          "at": 44895,
+          "ok": true
+        },
+        {
+          "type": "CHECK",
+          "start": 44915,
+          "at": 45136,
+          "ok": true
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "start": 45155.800000000745,
+          "at": 46640,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "start": 46640,
+          "at": 47044.5,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_PAGE",
+          "start": 47064.60000000149,
+          "at": 47205.5,
+          "ok": true
+        },
+        {
+          "type": "CHECK",
+          "start": 47464.300000000745,
+          "at": 47607.60000000149,
+          "ok": true
+        }
+      ]
+    },
+    {
+      "kind": "new-project",
+      "eventToDOMMs": 2462,
+      "knownRef": "new-b58fd171-8e3c-4a29-b04d-38b4bb5e8b97",
+      "membership": "PROJECT",
+      "sendEvents": 1,
+      "nativeUserMessages": 1,
+      "storedUserEvents": 1,
+      "storedHints": 1,
+      "reading": true,
+      "draftPreserved": true,
+      "counts": {
+        "native.read": 0,
+        "native.snapshot": 0,
+        "native.page": 2,
+        "native.header": 5,
+        "evidence.read": 0,
+        "evidence.page": 3,
+        "evidence.header": 5,
+        "workspace.read": 0,
+        "workspace.snapshot": 0
+      },
+      "rpc": [
+        {
+          "type": "BIND",
+          "start": 48325.699999999255,
+          "at": 48325.800000000745,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "start": 48325.800000000745,
+          "at": 48526.800000000745,
+          "ok": true
+        },
+        {
+          "type": "CHECK",
+          "start": 48544.199999999255,
+          "at": 48680.10000000149,
+          "ok": true
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "start": 48698.10000000149,
+          "at": 49775,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "start": 49775,
+          "at": 50186,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_PAGE",
+          "start": 50205,
+          "at": 50347.60000000149,
+          "ok": true
+        },
+        {
+          "type": "CHECK",
+          "start": 50599.5,
+          "at": 50735.800000000745,
+          "ok": true
+        }
+      ]
+    }
+  ],
+  "sourceHashes": {
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/free-activity.mjs": "96a4a46dd7a56777827574f06c851f96b07e5d3f864fd9301bcfe7b231b2ef14",
+    "src/data/free-calibration.mjs": "f680455d6468e1c7f60fac7826180357038cbf7f633be1236cf58900a87ed8d4",
+    "src/data/free-evidence-partitions.mjs": "5f4f4cb66130b787e8503ee3f5b1aba081f4ffb5a5b06feee382588fbbbe96de",
+    "src/data/free-evidence-repository.mjs": "e058f17b2c7c41769d4f6fd752d3464daa14dea2c70fe4096bbfa334b62dacd0",
+    "src/data/free-evidence.mjs": "cef8880f69556f8ea9c9c1333f16a3c6d7d4d7fc198430aabac99aabf0b3d624",
+    "src/data/free-page-loader.mjs": "c4339dfa76cfab89aa1f16b40129ee9f7c779233d5d03ff2134f551a8f9b0d65",
+    "src/data/free-projection.mjs": "fe912d0224c6f874843b46e30610723ed666d9e26e245068e61977bd64d80acd",
+    "src/data/free-recovery-status.mjs": "38e505e1c617977939f8b6e5a28f4689343a2100e618bcf7841f494594907c8d",
+    "src/data/free-replica.mjs": "c1a6329f3766d72bb4c511db7cc30f42eabd78a483e50ef444c9591c81176a0b",
+    "src/data/free-runtime-service.mjs": "c1ee1d64d17264c1acf449565bdbb490702de42eb6c9b1a3df3afac29a4f4679",
+    "src/data/free-runtime.mjs": "f6636970124df4f440b7e2c6b295ebbe7e12f0c6f79d993505359aea52440b97",
+    "src/data/free-time-policy.mjs": "08192e4f8b809a3bb7ad759bc30a644bbc11a8b36bfe5cd3f412751f0c7ef64b",
+    "src/data/hash.mjs": "8fcd95aca608fb4d4ef94855e0d101ce3d560e830733f96d9ec88068a81eaab3",
+    "src/data/known-anchor-backfill.mjs": "1027f07f7aa015e9ba535b0ad1a532c1a755a0e7d21668250895251f9146422b",
+    "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+    "src/data/native-facts.mjs": "af195ecccd63e2dd6730c832cb6648a8517826127d1f385e4b4ce5d5cd558dd8",
+    "src/data/native-partitions.mjs": "71145bc7150abe2f87f502517e5c7d11102b219c07ef0f7a98ca0555675cc8cc",
+    "src/data/native-repository.mjs": "662d697ffa4344ad832f2d7a35edc09cc5739ebf79b3319108c1d590690e5ea5",
+    "src/data/partitioned.mjs": "efbd6a84604da32fbe582a9823f7e8117c367610224530888de2a1fa6ec4c0f1",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/replica.mjs": "a79882d912cae17ca5777a2ac5a8f8ff0d4d4b11585cdcbe4671628de098befc",
+    "src/data/repository.mjs": "09416d34b9c92bb7518e742985ae81c2f576805fd7f1a387cd5fcccfbfb9a269",
+    "src/data/schema.mjs": "9db57336e5d79ec002ef6308100d18008140292bcf1385899524b0a6972ebad6",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+    "src/b1/document-binding-broker.mjs": "eac9e92aecab2b1c4adae28925d67ea756e6764fc7def5614127f6c7de51443b",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "2415f70ab46da554003eb1732e82dfc0764a7165476cf4ebe914ea2eeebe2c10",
+    "src/navigation/current-index.mjs": "8b38217fe4221d29019eb5287d2736fab79ce0232cfcd8347e80cc48bb42212b",
+    "src/navigation/free-editor.mjs": "189c1c0d6355ca53a18ead419d9007f75c82f9504c06955707d33647e6425b6b",
+    "src/navigation/free-recovery.mjs": "6da71d19e296066a4fcd9f56eb64b8a33127bd4733334f5d3de1e5e84bc3aaac",
+    "src/navigation/free-view.mjs": "fddb77eb09bbb889edd1630686c5dd611025a205f8d0218168cf1df0c9520399",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/navigation.mjs": "6ebfc0407210c184978a7ebf583c5ffb0dd93a86944e7647f873e4917166d707",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/navigation/search.mjs": "a93da18f3018a6267af7634986fdf7cfca4ed72eeaa6bb982340e9b0031c85d6",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc",
+    "simulator/adapter.mjs": "ac64ab9c228fa3939cb1e6f6a8a7ca902e111772ebdab07a28ef6fb7a793870d",
+    "simulator/build.mjs": "4e150a13bfb956c8eb02a7b18e3ef3cec7527d81854e6367e1fb32589ba5cef0",
+    "simulator/client.mjs": "c3aae207865270af081d7e912f7b004003f1c828b57e40ba88cb98515a44382d",
+    "simulator/content-entry.mjs": "0925da0746fdc1e6a5f831a11423ca3d6cc426dc377dc463f092894e7ab860fb",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/editor-style.mjs": "18197a2a89d8e83986b56e464c506c9bb8e08005d07f97c46959f5e9cfabf2ce",
+    "simulator/editor.mjs": "3b4a1239781cf2574973132752e2c46140be36f885d9e180422d965d00e650e2",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.mjs": "f4906fa02d94ad6c7f8d3f475a25253f3365a8405efc46cdfa90794aa1d8cd0d",
+    "simulator/main.mjs": "a3334e661a4c87c814d5e35e26edaab2849a6ea7307fc9162855ec5f3eb1afbe",
+    "simulator/native-seed.mjs": "8a1a64f9acbc2c1555049dbff8398d209d835a65723b5c349dedf6321c83f752",
+    "simulator/package.mjs": "4cce0589b4ba75fd0a4081fe152348f6f2782eca03aec6289eca02a46e484030",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/service.mjs": "f5540dfa7b337949ca2af6a66e54160d14ce5b127922f385d768e4d33607f732",
+    "simulator/worker.mjs": "a970e35d86f516b0b131bfbf3de0afc80b63e73fbd9bd4bb9dc046877c974597",
+    "tests/free/send-scale-browser.mjs": "c40ebd4f496466bf211a1c20375dc1bc66068225af61f731acb66492c02d7620"
+  },
+  "browser": "156.0.8078.4",
+  "initialRefs": 99998,
+  "requestedScale": 100000,
+  "finalRefs": 100000,
+  "sourceChangedDuringRun": false
+}

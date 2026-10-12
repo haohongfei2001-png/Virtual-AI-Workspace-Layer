@@ -4,10 +4,11 @@ import {FreeRuntime} from './free-runtime.mjs';
 const kinds=new Set(['foreground','current','send','source','expiry','history']);
 /** Service-owner registry. Never accept scope, sourceFor, guard or binding lifetime from a page payload. */
 export class FreeRuntimeService {
- constructor({nativeRepository,evidenceRepository,sourceFor=null,clock=()=>new Date().toISOString(),timeZone='UTC',onSnapshot=()=>{},onChange=()=>{},publication='snapshot',onStatus=()=>{},timers={setTimeout:(...args)=>globalThis.setTimeout(...args),clearTimeout:id=>globalThis.clearTimeout(id)},calibrationOptions={},maxBindings=128}){
+ constructor({nativeRepository,evidenceRepository,referenceRepository=null,sourceFor=null,clock=()=>new Date().toISOString(),timeZone='UTC',onSnapshot=()=>{},onChange=()=>{},publication='snapshot',onStatus=()=>{},timers={setTimeout:(...args)=>globalThis.setTimeout(...args),clearTimeout:id=>globalThis.clearTimeout(id)},calibrationOptions={},maxBindings=128}){
   if(sourceFor!==null&&typeof sourceFor!=='function')throw Error('invalid-free-source-factory');
+  if(referenceRepository!==null&&(typeof referenceRepository.reconcileKnownReferences!=='function'||typeof referenceRepository.migratePartitioned!=='function'))throw Error('invalid-reference-repository');
   if(!Number.isSafeInteger(maxBindings)||maxBindings<1||maxBindings>1024)throw Error('invalid-free-binding-capacity');
-  Object.assign(this,{nativeRepository,evidenceRepository,sourceFor,clock,timeZone,onSnapshot,onChange,publication,onStatus,timers,calibrationOptions,maxBindings});this.bindings=new Map();
+  Object.assign(this,{nativeRepository,evidenceRepository,referenceRepository,sourceFor,clock,timeZone,onSnapshot,onChange,publication,onStatus,timers,calibrationOptions,maxBindings});this.bindings=new Map();
  }
  active(entry){try{return this.bindings.get(entry.id)===entry&&!entry.controller.signal.aborted&&entry.guard()===true;}catch{return false;}}
  async authority(entry){
@@ -58,6 +59,10 @@ export class FreeRuntimeService {
  async foreground(bindingId,{session=null,objectIds=['inventory'],readCached=true}={}){
   if(typeof readCached!=='boolean')throw Error('invalid-free-cache-read-option');
   const entry=this.get(bindingId);if(!entry)return {snapshot:null,calibration:Promise.resolve({status:'cancelled',reason:'stale-binding'})};
+  // Local identity reconciliation does not need an upstream activity source.
+  // Rendering does not await the whole scan; each bounded transaction still
+  // shares IndexedDB scheduling with foreground reads.
+  this.reconcileReferences(bindingId);
   if(!entry.runtime){const status=this.status(entry,{status:'unsupported',reason:'no-authorized-source',requests:0});return {snapshot:null,calibration:Promise.resolve(status)};}
   try{
    // The broker's header/page path already renders the cached view. It may start
@@ -77,6 +82,40 @@ export class FreeRuntimeService {
    entry.session=result.snapshot?.viewSession??entry.session;
    return {snapshot:result.snapshot,calibration:result.calibration.then(value=>this.active(entry)?value:{status:'cancelled',reason:'stale-binding'})};
   }catch(error){if(!this.active(entry))return {snapshot:null,calibration:Promise.resolve({status:'cancelled',reason:'stale-binding'})};throw error;}
+ }
+ reconcileReferences(bindingId,{restart=false}={}){
+  const entry=this.get(bindingId);if(!entry||!this.referenceRepository)return Promise.resolve({status:'unsupported'});
+  if(restart)entry.referencesDirty=true;
+  if(entry.referenceTask)return entry.referenceTask;
+  if(entry.referenceFinished&&!entry.referencesDirty)return Promise.resolve(entry.referenceFinished);
+  entry.referencesDirty=false;
+  const task=(async()=>{
+   const began=Date.now();let migrated=false;
+   for(let batch=0;batch<32;batch++){
+    if(!(await this.authority(entry)))return {status:'cancelled',reason:'stale-binding'};
+    const options={limit:5000,guard:()=>this.active(entry),signal:entry.controller.signal};
+    let result=await this.referenceRepository.reconcileKnownReferences(entry.scope,options);
+    if(!(await this.authority(entry)))return {status:'cancelled',reason:'stale-binding'};
+    if(!result.ok&&result.reason==='invalid-state-table'&&!migrated){
+     // A valid legacy root can reach its 20k ceiling during repair. Reuse the
+     // existing checked migration once; corruption/capacity errors stay visible.
+     const migration=await this.referenceRepository.migratePartitioned(entry.scope,options);migrated=true;
+     if(!(await this.authority(entry)))return {status:'cancelled',reason:'stale-binding'};
+     if(!migration.ok)return this.status(entry,{status:'degraded',reason:migration.reason,task:'known-references'});
+     result=await this.referenceRepository.reconcileKnownReferences(entry.scope,options);
+    }
+    if(!(await this.authority(entry)))return {status:'cancelled',reason:'stale-binding'};
+    if(!result.ok)return this.status(entry,{status:'degraded',reason:result.reason,task:'known-references'});
+    if(result.added)this.onChange({bindingId:entry.id,scope:entry.scope.key,reason:'known-references',deadlines:[]});
+    if(result.done)return this.status(entry,{status:'ready',task:'known-references'});
+    if(Date.now()-began>=5000)break;
+    await new Promise(resolve=>globalThis.setTimeout(resolve,0));
+   }
+   return this.status(entry,{status:'partial',task:'known-references',nextTrigger:'binding-or-reference-change'});
+  })().catch(error=>this.active(entry)?this.status(entry,{status:'degraded',reason:error.message,task:'known-references'}):{status:'cancelled',reason:'stale-binding'});
+  entry.referenceTask=task;
+  void task.then(result=>{entry.referenceFinished=result;entry.referenceTask=null;if(entry.referencesDirty&&this.active(entry))this.reconcileReferences(bindingId);});
+  return task;
  }
  async notify(bindingId,kind,options={}){
   if(!kinds.has(kind))throw Error('invalid-free-runtime-trigger');

@@ -5,6 +5,8 @@ import { B23_STORES } from './schema.mjs';
 import { digest, stable } from './hash.mjs';
 import { TABLES, emptyState, validateState, reduceCommand, changes, undoChanges, id, exact } from './state.mjs';
 import { dataProjection } from './evidence.mjs';
+import {reconcileKnownReferences} from './known-anchor-backfill.mjs';
+import {knownAnchorCursorKey} from './known-anchor-key.mjs';
 const scopeChecked=s=>{const n=normalizedScope(s);if(!n)throw Error('unverified-scope');return n;};
 const record=(key,payload)=>({key,payload,checksum:digest(payload)});
 function unpack(row){if(!row||typeof row.checksum!=='string'||digest(row.payload)!==row.checksum)throw Error('corrupt-record');return row.payload;}
@@ -49,6 +51,7 @@ export class WorkspaceRepository {
   }
   async migratePartitioned(scope,options={}){return this.partitioned.migrate(scope,options);}
   async initializePartitioned(scope,initial,options={}){return this.partitioned.initialize(scope,initial,options);}
+  async reconcileKnownReferences(scope,options={}){return reconcileKnownReferences(this,scope,options);}
   async initialize(scope,initial,options={}){
     const s=scopeChecked(scope);this.allowEvidence(s);validateState(initial,s.key);if(initial.revision!==1||initial.channel!=='synthetic')throw Error('invalid-bootstrap');
     return this.mutate(s,{operationId:'synthetic_bootstrap_v1',expectedRevision:0,fingerprint:{bootstrap:'v1',scope:s.key},type:'BOOTSTRAP',actor:'bootstrap',...options,apply:()=>structuredClone(initial)});
@@ -155,7 +158,7 @@ export class WorkspaceRepository {
       check();const payload=request.result?(isPartitioned(request.result.payload)?this.partitioned.verifiedManifest(request.result,s.key):unpack(request.result)):null;
       const apply=(current,storage=null)=>{try{
         check();const added=nativeRefs.filter(ref=>!Object.hasOwn(current.refs,ref.id));
-        if(!added.length){done();return;}
+        if(!added.length){done({added:0});return;}
         if(storage)tx.objectStore('b23_checkpoints').put(request.result);
         const next=structuredClone(current);
         for(const ref of added)next.refs[ref.id]={id:ref.id,nativeUrl:ref.nativeUrl,projectId:ref.projectId,nativeTitle:ref.nativeTitle??'名称暂不可用',available:ref.availability==='available'};
@@ -168,7 +171,7 @@ export class WorkspaceRepository {
           if(storage)this.partitioned.saveMutation(tx,storage,current,next,patch,'evidence');
           else{if(current.revision)tx.objectStore('b23_checkpoints').put(record(s.key,current));store.put(record(s.key,next));}
           tx.objectStore('b23_operations').put(record(key,{id:operationId,scopeKey:s.key,type:'NATIVE_REFERENCES',actor:'evidence',fingerprint:digest(added),baseRevision:current.revision,resultRevision:next.revision,recordedAt:this.clock(),patch:[],changedObjects:added.length,undoneBy:null}));
-          check();done();
+          check();done({added:added.length});
         }catch(error){fail(error);}};
       }catch(error){fail(error);}};
       if(isPartitioned(payload)){this.partitioned.loadMutation(tx,payload,{fingerprint:{batch:{refs:nativeRefs}}},null,apply,fail);}
@@ -237,7 +240,7 @@ export class WorkspaceRepository {
               if(highWater>=Number.MAX_SAFE_INTEGER)throw Error('revision-exhausted');
               const recovered=recoverAssets(state,logs.map(x=>x.log),s.key);state=recovered.state;
               for(const old of logs){old.log.invalidatedBy=operationId;ops.put(record(old.key,old.log));}
-              check();states.put(record(s.key,state));tx.objectStore('b23_checkpoints').put(record(s.key,state));check();
+              check();states.put(record(s.key,state));states.delete(knownAnchorCursorKey(s.key));tx.objectStore('b23_checkpoints').put(record(s.key,state));check();
               const log={id:operationId,scopeKey:s.key,type:'RECOVER',actor:'human',fingerprint:damagedHash,
                 baseRevision:highWater,resultRevision:state.revision,recordedAt:this.clock(),patch:[],changedObjects:0,undoneBy:null,
                 checkpointRevision,restoredHumanChanges:recovered.restoredHumanChanges,evidenceInvalidated:true};

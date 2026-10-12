@@ -1,5 +1,6 @@
 import { DATABASE_VERSION, upgradeDatabase } from '../data/schema.mjs';
 import { canonicalRef, normalizedScope, tokenOK } from './identity.mjs';
+import {knownAnchorCursorKey} from '../data/known-anchor-key.mjs';
 
 /** Real extension-origin IndexedDB; no page-origin storage or synthetic in-memory fallback.
  * Atomic CAS and operation deduplication are scoped by the *trusted resolver's* scope.
@@ -74,7 +75,7 @@ export class ScopeRepository {
     const key=this.key(s,r.conversationId),opKey=JSON.stringify([s.key,operationId]);
     const fingerprint=JSON.stringify([r.conversationId,r.nativeUrl,r.projectId,expectedRevision]);
     return new Promise((resolve,reject)=>{
-      const tx=db.transaction(['refs','operations'],'readwrite'),
+      const tx=db.transaction(['refs','operations','b23_states'],'readwrite'),
         refs=tx.objectStore('refs'),ops=tx.objectStore('operations');
       let answer=null,finalized=false;
       const fail=reason=>{if(finalized)return;finalized=true;answer={ok:false,reason};tx.abort();};
@@ -92,6 +93,7 @@ export class ScopeRepository {
             projectId:r.projectId,revision:expectedRevision+1};
           const result={ok:true,record:{...value},replayed:false};
           refs.put(value);
+          if(!old)tx.objectStore('b23_states').delete(knownAnchorCursorKey(s.key));
           ops.put({key:opKey,scopeKey:s.key,fingerprint,result});
           answer=result;
         };

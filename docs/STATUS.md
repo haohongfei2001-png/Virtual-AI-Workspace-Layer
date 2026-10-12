@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第二十四轮：原生恢复后分片回收、严格多版本验证缓存及待处理发送元数据账户/文档归属修复。最新已确认远端为 `c2f92e0`，本地第二十三轮 `531c146` 推送45秒超时，未冒称同步；后续HEAD以Git为准。继续原正式目录、分支和PR #16 Draft，Free及发布验收未完成。
+当前已推进至第二十六轮：发送来源隔离、撤销人工恢复保留UNKNOWN、历史B1锚有界补录及后台接线已实现；100k发送性能出现退步，仍须修复。最新已确认远端为 `c2f92e0`，本地第二十三轮 `531c146` 推送45秒超时，未冒称同步；后续HEAD以Git为准。继续原正式目录、分支和PR #16 Draft，Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -337,3 +337,15 @@ RESTORE_BACKUP撤销现在保留新增引用身份，完整冲突检查不变；
 新增4项合同覆盖普通/分片、真实broker预览恢复撤销、幂等、跨scope、冲突与授权剥离；B23/B4/replica组合100通过。完整Node663/0/0skip。真实headless IDB界面1/1，暖投影0页更新后UNKNOWN入口仍可达、原阅读/textarea/未发草稿保持。旧Round21报告保留当时来源；其owner/client一致并不证明旧“撤销后隐藏引用”满足产品可达性，本轮纠正owner语义，通用仅删除manifest的rebuild反例仍保留。
 
 包SHA256 `d7219140ab43b41522d32e987543ae3ba5c3aa7f1afbca32035abc547ee7f6c3`，仍SYNTHETIC_ONLY。旧代码已形成的B1-only孤儿尚未自动补录，下一任务用同库有界游标+共享UNKNOWN锚修复；新增B1引用、恢复旧检查点须失效游标，缺根损坏/坏行/撤权不可推进。MV3/100k本轮NOT_RUN，不覆盖旧性能FAIL。外部真实验收条件保持，Free未完成。
+
+## 第二十六轮：同库有界补录历史B1锚与后台接线
+
+reconcileKnownReferences每事务最多5000行，scope索引+continuePrimaryKey恢复游标，同事务校验B1行/共享根并补UNKNOWN身份、保存进度；已有共享引用用已验证manifest免piece读取。新B1写入及两种共享恢复同事务失效游标。缺根+history/checkpoint/非空cursor都拒绝重建；坏行、篡改marker、quota/撤权回滚不推进。仅增加共享身份，不导入native fact/source/event/grant，保留Pro资产。
+
+后台即使无上游source也执行，逐批owner authority检查，最多32批/批间5秒软预算、遇错本binding停止；20k旧根容量失败只尝试现有F1迁移一次。测试发现首批失败后迁移前缺少新authority检查，已补迁移前及后各一道。cached rendering不await整个任务，但单批IDB事务仍可阻塞前台，不能称零成本。
+
+最终完整Node693/0/0skip；首次688/693的5个失败为新模块未列入两套打包清单，补齐后5/5及全回归通过。补录Node18、runtime12均包含总数。真IDB API7/7、service/client3/3、实际20,000→20,001一次自动分片迁移1/1、最终MV3 9/9分别独立通过；API报告在最后缺根见证/免piece优化前采集，后续Node/集成覆盖新增逻辑，不冒充同一hash。
+
+100k正常发送3/3功能通过、58hash稳定、无全量读取/重复事件/草稿丢失；2322.9/3101.8/2462.0ms均1秒FAIL，较Round23明显退步。当前脚本未单独测首屏，不伪造首屏数字。后台同库写扫描争用是下一诊断方向，新发送应优先，不能通过等待扫描完成再开始计时掩盖。
+
+包SHA256 `4ae4f026fa7acb03bc7e3915f83f09911f341e2c23ac173f5d74c9f771df861f`，SYNTHETIC_ONLY/NOT_RELEASE_READY。另已核实同schema旧包回退漏洞：旧writer不失效done marker，旧undo或B1新增可再次制造永久漏项。下一补marker的共享引用ID集合与B1数量witness，变化重开有界扫描；进度中的旧writer变化同样需检测。外部真实验收及100k性能未满足，Free未交付。

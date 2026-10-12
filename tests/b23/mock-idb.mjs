@@ -38,7 +38,15 @@ class Store {
   count(){return this.tx.enqueue(()=>this.data.rows.size);}
   index(name){const field=this.data.indexes.get(name);if(!field)throw error('NotFoundError');const indexKey=row=>field.split('.').reduce((v,k)=>v?.[k],row);return {openCursor:range=>this.cursor(row=>indexKey(row)===(range?.value??range),indexKey)};}
   openCursor(){return this.cursor(()=>true);}
-  cursor(filter,keyOf=row=>row[this.keyPath]){let rows,position=0,req;const next=()=>{rows??=[...this.data.rows.values()].filter(filter).sort((a,b)=>String(a[this.keyPath]).localeCompare(String(b[this.keyPath])));if(position>=rows.length)return null;const row=rows[position++];return {key:keyOf(row),primaryKey:row[this.keyPath],value:copy(row),continue:()=>{if(this.tx.done)throw error('TransactionInactiveError');this.tx.tasks.push({req,action:next});}};};req=this.tx.enqueue(next);return req;}
+  cursor(filter,keyOf=row=>row[this.keyPath]){
+    const compare=(a,b)=>a<b?-1:a>b?1:0;let rows,position=0,req;
+    const next=()=>{rows??=[...this.data.rows.values()].filter(filter).sort((a,b)=>compare(keyOf(a),keyOf(b))||compare(a[this.keyPath],b[this.keyPath]));if(position>=rows.length)return null;
+      const row=rows[position++];let advanced=false;
+      const advance=()=>{if(this.tx.done)throw error('TransactionInactiveError');if(advanced)throw error('InvalidStateError');advanced=true;this.tx.tasks.push({req,action:next});};
+      return {key:keyOf(row),primaryKey:row[this.keyPath],value:copy(row),continue:advance,
+        continuePrimaryKey:(key,primaryKey)=>{if(compare(key,keyOf(row))<0||compare(key,keyOf(row))===0&&compare(primaryKey,row[this.keyPath])<=0)throw error('DataError');while(position<rows.length&&(compare(keyOf(rows[position]),key)<0||compare(keyOf(rows[position]),key)===0&&compare(rows[position][this.keyPath],primaryKey)<0))position++;advance();}};
+    };req=this.tx.enqueue(next);return req;
+  }
 }
 class Database {
   constructor(factory,meta){this.factory=factory;this.meta=meta;this.closed=false;meta.handles.add(this);}

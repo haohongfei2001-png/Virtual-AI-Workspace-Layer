@@ -5,6 +5,7 @@ import { TABLES, emptyState, validateState, id, exact } from './state.mjs';
 import { validatePreference } from './preferences.mjs';
 import { stable, digest, sha256 } from './hash.mjs';
 import { normalizedScope } from '../b1/identity.mjs';
+import {knownAnchorCursorKey} from './known-anchor-key.mjs';
 export const PARTITION_FORMAT='vaiwl-partitioned-v1';
 export const PAGE_SIZE=5000;
 const MAX_REFS=100000,MAX_UNITS=128*1024*1024;
@@ -125,7 +126,7 @@ export class PartitionedState {
    const fingerprint=digest(stateRow??null);const prior=operationId?logs.find(x=>x.log.id===operationId)?.log:null;if(prior){result=prior.type==='RECOVER'&&prior.fingerprint===damagedHash&&!prior.invalidatedBy?{ok:true,replayed:true,revision:prior.resultRevision,operationId}:{ok:false,reason:'operation-replay-conflict'};return;}
    let corrupt=false;try{checkManifest(partitionUnpack(stateRow),s.key);}catch{corrupt=true;}if(!corrupt){if(operationId)throw Error('intact-state-not-replaced');result={corrupt:false};return;}if(operationId&&fingerprint!==damagedHash)throw Error('recovery-conflict');
    this.plan(tx,s.key,checkpoint,logs.map(x=>x.log),plan=>{try{fence(options);if(!operationId){result={corrupt:true,recoverable:true,damagedHash:fingerprint,checkpointRevision:checkpoint.revision,restoredHumanChanges:plan.restoredHumanChanges,recoveryRevision:plan.state.revision,evidenceInvalidated:true};return;}
-    const next=this.saveMutation(tx,plan.storage,null,plan.state,plan.patch,'human');tx.objectStore('b23_checkpoints').put(partitionRecord(s.key,next));for(const old of logs){old.log.invalidatedBy=operationId;tx.objectStore('b23_operations').put(partitionRecord(old.key,old.log));}
+    const next=this.saveMutation(tx,plan.storage,null,plan.state,plan.patch,'human');tx.objectStore('b23_states').delete(knownAnchorCursorKey(s.key));tx.objectStore('b23_checkpoints').put(partitionRecord(s.key,next));for(const old of logs){old.log.invalidatedBy=operationId;tx.objectStore('b23_operations').put(partitionRecord(old.key,old.log));}
     const log={id:operationId,scopeKey:s.key,type:'RECOVER',actor:'human',fingerprint:damagedHash,baseRevision:plan.highWater,resultRevision:plan.state.revision,recordedAt:this.owner.clock(),patch:[],changedObjects:0,undoneBy:null,checkpointRevision:checkpoint.revision,restoredHumanChanges:plan.restoredHumanChanges,evidenceInvalidated:true};tx.objectStore('b23_operations').add(partitionRecord(JSON.stringify([s.key,operationId]),log));fence(options);result={ok:true,replayed:false,revision:plan.state.revision,operationId,checkpointRevision:checkpoint.revision,restoredHumanChanges:plan.restoredHumanChanges,evidenceInvalidated:true};
    }catch(e){fail(e);}},e=>{if(!operationId){result={corrupt:true,recoverable:false,reason:e.message};}else fail(e);});
   }catch(e){fail(e);}};

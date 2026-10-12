@@ -22,7 +22,7 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
   const native=new NativeRepository({baseRepository:repository,workspaceRepository:workspaces,observationGate:syntheticNativeGate,clock:()=>FIXTURE_NOW});
   const evidence=new FreeEvidenceRepository({baseRepository:repository,clock:()=>FIXTURE_NOW,observationGate:scope=>syntheticEvidenceGate(scope)==='synthetic'?{channel:'synthetic',sourceId:'free_fixture_sends',generation:'fixture_v1'}:null});
   const listeners=new Set();
-  const runtime=new FreeRuntimeService({nativeRepository:native,evidenceRepository:evidence,sourceFor:calibrationSourceFor,publication:'invalidation',onChange:({bindingId})=>{for(const listener of listeners)try{listener({type:'HF_FREE_UPDATED',leaseId:bindingId});}catch{}},clock:()=>FIXTURE_NOW,timeZone:'Asia/Shanghai',onSnapshot:({bindingId,snapshot})=>{if(snapshot)for(const listener of listeners)try{listener({type:'HF_FREE_UPDATED',leaseId:bindingId});}catch{}}});
+  const runtime=new FreeRuntimeService({nativeRepository:native,evidenceRepository:evidence,referenceRepository:workspaces,sourceFor:calibrationSourceFor,publication:'invalidation',onChange:({bindingId})=>{for(const listener of listeners)try{listener({type:'HF_FREE_UPDATED',leaseId:bindingId});}catch{}},clock:()=>FIXTURE_NOW,timeZone:'Asia/Shanghai',onSnapshot:({bindingId,snapshot})=>{if(snapshot)for(const listener of listeners)try{listener({type:'HF_FREE_UPDATED',leaseId:bindingId});}catch{}}});
   const deadlines=(...tables)=>[...new Set(tables.flatMap(table=>Object.values(table??{})).filter(row=>!row.revoked&&row.validUntil).map(row=>row.validUntil))];
   const activityVersionCache=new Map();
   function activityVersions(context,stored){

@@ -181,3 +181,9 @@ pendingSynthetic已绑定捕获时验证过的scope/document/route/有效期；B
 ## 第二十五轮恢复增量（接05292d0）
 
 未来RESTORE_BACKUP undo不再删除必要refs身份，人工其他patch正常逆转且全部冲突检查保留。新合同4/4、完整Node663/0、真IDB界面1/1；UNKNOWN占位可达且不显示备份标题，草稿/阅读保持。包和报告free-round25-*，hash见STATUS。下一立即做历史B1-only有界补录：同tx refs游标+registerNativeReferences+durable marker，B1新增/共享恢复同tx失效marker；不每次HEADER全量list，不恢复原生事实或授权，缺根有history/checkpoint拒绝。正常远端同步仍待GitHub恢复，最后确认c2f92e0，已本地保存531c146/8e4bc86/05292d0。Free未完成。
+
+## 第二十六轮恢复增量（接3cec904）
+
+历史B1锚补录API/后台、游标原子性、B1新增及共享恢复失效、legacy容量自动分片已实现。完整Node693/0，真IDB API7、service3、20k+1容量1、MV3 9独立PASS，详见STATUS来源限制；打包已补两套新模块依赖。100k三功能PASS但2322.9/3101.8/2462ms退步且1秒FAIL，不能隐藏后台扫描成本。
+
+下一两项确定工作：1）done及partial marker增加共享ref-ID集合摘要+B1 scoped count以检测旧包回退writer不失效游标；旧undo/new B1合法链已查明，独立失败合同正在准备；2）新发送优先，后台补录需可取消单批/安静期再续，当前readwrite扫描阻塞SEND/HEADER。保持最终CHECK、全部字节验证和本地真实测量，不改harness等待掩盖。包/private/tmp/vaiwl-free-delivery-round26-20261013/extension，hash见STATUS。远端最后确认c2f92e0、网络未恢复，后续本地提交待正常推送。完整Free仍未完成。
