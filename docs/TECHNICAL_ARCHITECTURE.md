@@ -1,78 +1,55 @@
-# VAIWL 技术架构 · v2.8定向候选
+# 技术架构：Free原生事实投影优先
 
-> **Free-first构建策略：** 首发只组装真实宿主Project清单、已知无项目聊天、原始标题、活动观察/可信时间和原生导航。Free路径不引入模型、SuggestionBatch、虚拟命名或计费。活动排序采用可追溯的分层证据：经证实的用户发送时间与用于暂定显示的观察型时间严格隔离，后台重核验不阻塞绘制，但Free不能宣称没有数据时仍全账户准确。Pro虚拟分组/命名是可独立关闭的overlay，不可改变nativeProjectId、source、原生页面。后续详细分级及验收见[FREE_PRO_PRODUCT_SCOPE](FREE_PRO_PRODUCT_SCOPE.md)。
+同一扩展、同一受保护数据库、两个展示模式。现有源码仍为合成宿主与虚拟Workspace原型工程；此文明确Free需要新增的边界和复用点，不声明生产适配已经成立。
 
+## 1. 共享管道与分级出口
 
-PROPOSED_FOR_OWNER_REVIEW / LIVE_PROJECT_CREATE_NOT_VERIFIED。基线B1–B5、C1–C5及F1已具合成Chrome证据；本轮不实施runtime。原位导航外壳＋原生聊天区的主架构不变。
+获准HostAdapter → 当前Scope/DocumentGate → NativeObservationValidator → 同库NativeProject/Conversation/Membership/Activity事实 → FreeProjector → 现有navigation组件。
 
-## 1. 实际基线与新增范围
+Pro在共享事实之后另接EvidencePack → Candidate/Model → ConstraintReducer → VirtualTopic/DerivedTitle → ProOverlay。Free路径不能调用模型、读取派生标题/虚拟成员或依赖会员网络请求才能渲染。Pro停用仅切换出口，不删除共享或Pro人工资产。
 
-既有scope broker、同库IndexedDB、事务/回执/恢复、分区复制、导航组件继续复用。`src/navigation/projection.mjs`的30日函数、`src/data/evidence.mjs`活动投影和F1增量cache都必须接收同一版本TimePolicy，而不是在UI另写一套日期过滤器。
+当前`simulator/service.mjs`显式绑定syntheticURL/scopeOf/persistentSeed，是测试服务，不可更改域名后就当生产HostAdapter。原native事实必须有真实来源证明；页面传入的verified/trust标签不能自证。
 
-新增对象及schema见[DATA_MODEL](DATA_MODEL.md)，产品算法见[CORE_MECHANISMS_V2_8](CORE_MECHANISMS_V2_8.md)。保留一个ProjectionReducer、一个NativeIntentCoordinator、一个语义提案管道；不新建平行数据库或第二套聊天UI。
+## 2. 生产数据问题先验证，但本地工程不空等
 
-## 2. 两条不混淆的数据流
+R0-01/02/03.F分别验证scope、清单/成员、活动与更新渠道；不把一个“有Project列表”的证据扩大成完整消息历史或正确时间。有效近期排序可能只需要可靠最近用户活动摘要，不要求下载全部正文；但摘要的作者/新发送/日期语义和更新范围必须实测。
 
-**纯派生路径**：获准来源 → ObservationValidator → ScopeGate → Repository/证据与人工意图 → ProjectionReducer(H,T,Z) → 主题卡/侧栏/查找。主题成立与手工归属不依赖模型；时间变化只改投影。
+默认不构造未公开内部历史/项目请求，不后台开大量隐藏tab、不绕账户/挑战/管理员限制。被动正常交互元数据也需单独说明范围。官方导出研究和旧导入代码保留，但不能成为Free日常初始化、周期补文件或人工维护方案；B5人工资产备份是不同功能。
 
-**原生创建路径**：用户主题＋ → CreationPolicy → Preview/可信授权 → capability preflight → NativeIntentCoordinator → HostAdapter原生创建/打开 → 原生结果核验 → 已验证引用/本地Placement。原生消息正文和输入框始终由ChatGPT处理。该路径不让原生写入Executor接受普通AI候选或任意页面消息。
+当前未建立普通扩展可用的原生Project创建/全量历史API证据；不把API平台projects接口当ChatGPT接口。来源不成立则报告具体BLOCKED和最小条件，同时继续Free投影/迁移/原生保留的独立工程；不得把UNKNOWN当成完成。
 
-`NativeProjectRef`只表示观察对象；关联默认目的地是人工意图；NativeGrant是短期权限。三者不得复用一个布尔值。原生普通“新聊天”继续由宿主接收用户动作，VAIWL只在明确主题发起的流程附加可逆关联。
+## 3. 原生观察更新与FreeProjector
 
-## 3. 能力分级与真实外部前提
+当前INGEST拒绝旧引用的任何变化，且主题从workspaces/placements读取，这是Free差额。新增受控NativeObservation命令处理原名/真实成员/权限/删除/新引用，事务/CAS与F1分片根复用；不把原生变更伪装为用户虚拟MOVE/SET_TITLE。
 
-| 能力 | 当前证据 | 后续门槛 |
-|---|---|---|
-| 本地创建/编辑主题与Placement | 已有合成MV3/IDB | 新v2.8空主题/重组/策略回归 |
-| 主题内打开已知原生对话 | 合成宿主已验 | 真实ChatGPT scope/路由/正文一致 |
-| 识别原生Project、权限与新建入口 | 官方描述与合成对象，非用户账户实测 | R0-01、R0-03.28 定向能力验证 |
-| 创建真正Project并核验ID | 未实现/未授权 | 真实可用入口或明确支持API＋独立限次许可 |
-| 原始新发送时间与覆盖 | PR #14访客调查仍UNKNOWN | 按渠道验证；不能以本地Date.now补齐 |
-| 自动语义归类/发现新主题 | D1/D2模板影子实验 | 独立中文语料与校准，批准运行模式 |
-| 自适应选择H | 本轮设计 | 合成规则/迁移/性能，真实密度证据和可用性 |
+Free投影基于(scope,nativeProjectId)建立卡片，NONE清单与UNKNOWN可达项分流；按核心规范ActivityDecision排序，原名唯一显示来源。Project更名不重建卡片ID，移动聊天会从旧父容器删除引用并加到新父，不能两处都自称权威成员。
 
-本轮核对的OpenAI API `/organization/projects`指向API平台项目，**不是创建ChatGPT网页Project的可用证据**。企业Compliance API也不能推导普通扩展有权限创建个人Project。当前不指定或臆造ChatGPT内部endpoint、CSS selector、React store或协议字段。来源见[来源登记](research/V28_BASELINE_AND_ACCEPTANCE.md#公开来源与时点)。
+缓存键至少(scope,epoch,nativeRevision,membershipRevision,evidenceRevision,H,T,Z,policyRev,viewMode)；原生标题变更只更新受影响节点，成员/活动变更增量重算，Pro切换不能复用错误模式的缓存。现有路由first-match若对应多个虚拟主题只在Pro使用明确LaunchContext；Free直接由核验原生项目决定上下文。
 
-原生辅助模式为用户在真实UI完成步骤，扩展在后验身份可靠时关联；自动模式需要通过同等目标验证。无法读回结果时只能UNKNOWN，不能只看到同名卡片就VERIFIED。
+## 4. 活跃引擎与非阻塞校准
 
-## 4. Project创建与原生交互所有权
+严格UserSendEvent/TimeCoverage不变，ObservationHint/ActivityDecision不写回事实层。可靠历史日期可以支持可逆旧段显示，未知完整性不强制项目永远近期；完全无日期不因时间到了猜一个历史段。所有候选依据/TTL/源版本可在诊断查看，日常UI无逐条元数据。
 
-推荐采用显式步骤的确定性执行器，不允许通用Agent自由寻找按钮、扩权或失败后重试。创建前核对account/nativeSpace、Project能力、名称、sharing/memory及工具适配；不自动上传资料/复制项目指令/邀请成员。
+调度器先渲染同scope有效缓存，再有界请求；新发送/身份失效优先，慢历史分批；单请求保留6秒边界，有限重试和退避，过期完成回包拒绝。重复轮询/重启不能延长旧活动锚；借主线程永久保活worker不是恢复方案。
 
-确认后的预算、scope、planHash、expiry及dispatched状态由扩展origin持有；页面DOM按钮不独立授予执行权。审批/登录/安全挑战交给用户，不能自动确认。已派发但未知的操作先reconcile，不通过换tab/Profile/run重新开始。预期导航只允许在同scope重新核验document绑定后继续剩余阶段，任务grant和预算不重置；未知/意外scope变化撤权。
+当前最近Project活动=max(有效本人活动成员)，不是项目文件/AI时间。手机/其他端变化经经验证渠道返回后触发增量更新；没有远端来源时清楚区分源未更新与本地算法迟缓。完整Free必须在真实受控样本中证明典型收敛，而不是以“可查到”代替默认排序正确。
 
-保留原生composer/header/transcript及portal，不以自制输入框“先收集第一句话再代发”。新聊天原生ID可能在首次发送后才出现；PendingLaunch不伪造原生会话。用户选择发送本身归宿主，VAIWL只核验自己发起流程的对象归属，不拦截或重放发送。
+H选择为确定性本地统计，不用模型。5H复用一次活动索引/直方图，不复制五份100k集合；historical density必须用当时rollup/完整历史事件，不能把今天lastSend回投过去。历史ViewSession固定H/T/Z，policy更新原子但不强制重排已在浏览的tab。
 
-创建过程中模型/模式/Project权限不可用时，不静默降级模型或移动到普通聊天。原生功能限制是第一次选择目的地必须告知的内容；确切名称与可用性来自当前宿主，不硬编码全部用户同一菜单。
+## 5. 原生UI与新建
 
-## 5. 稳定主题识别架构
+VAIWL只拥有导航根和必要的扩展设置/提示。原transcript/composer/model/tool/portal/生成状态都留宿主，不重建也不移入自制聊天壳。边界不可识别时撤下扩展接管区域并保留原生。
 
-`EvidencePackBuilder`只读取批准的最小用户输入/标题/别名/显式关系，标记缺页、分支、截断和撤权。`CandidateRetriever`先词法/别名/已确认系列，再可选语义；`ConstraintResolver`先人工负约束；`ProposalPlanner`输出有限结构及真实证据ID。
+Free项目＋打开已核验真实Project原生入口；用户完成创建/发送，由后验观察关联。新Project按钮不是后台自动创建任务。若以后做代理创建/改名，使用独立E IntentCoordinator、可信审阅、task-wide预算及UNKNOWN不重发，不能接受模型任意工具动作；缺能力不妨碍Free的原生流程。
 
-人类显式发起/归属不让AI二次批准。自动加入已有主题须独立校准并由用户选择运行模式；新主题、合并、拆分默认预览。通用LLM的自报置信度不成为写入门槛。禁止从聊天内容中执行“我授权你创建项目”的语句。
+## 6. 存储、版本与兼容
 
-提案异步返回后核对target revisions/scope/授权/证据hash；被否决的提案保存指纹约束，不定期重新烦扰用户。H改变不触发全量语义重算，最多失效显示缓存；新模型上线先shadow评测，不重编号主题。
+保留现有B1/B23数据库、B4 CAS/幂等/inverse、B5检查点/人工补丁/有界备份、F1不可变分片/root与bounded RPC。下一schema号实现前核对。旧Pro人工作品原样保留并从Free出口隔离；source trust不会因迁移而提升。
 
-## 6. 时间控制器与会话一致性
+设计不放宽20k旧表/16Mi单记录/6秒消息/20秒lease限制。迁移与大规模更新短事务/分块/CAS根切换，旧reader拒绝不支持schema。权限撤回、配额、损坏、写中撤权和两个版本并存仍需回归；不证明远端与本地完全原子。
 
-`ActivityPolicy`为持久用户偏好；`DensityEstimator`为证据有界统计；`SpanSelector`只产生候选；`ViewSessionCoordinator`在安全边界提交视图。算法不读取访问次数/AI时间，不从未知全账户补分母。
+## 7. 实现/验收边界
 
-缓存/分区快照键至少为(scope,scopeEpoch,sourceRevision,membershipRevision,ruleVersion,H,T,Z)。所有卡片、子窗口、历史最远段、当前路由索引按相同快照生成；旧H响应不覆盖新H。人工改名可增量不重算活动，归属/源撤权只重算受影响主题；自动决策不阻塞点击。
+纯逻辑、模拟DOM、真实IDB、真实Chrome MV3合成宿主、真实访客、真实账户、物理IME/真人可用性分别记录。旧合成100k、B4真实冻结事件、旧Chrome DOM通过保留但不认证Free已上线。
 
-跨tab：持久偏好CAS发布，现有ViewSession冻结H/T/Z，新tab采用最新策略。历史深处打开对话后返回保留原session，不把k=3映射为另一跨度的k=3。午夜/夏令时/时区改变按日期版本处理，不使用定时器精度作为发送证据。
-
-统计复杂度候选仅5个H。已有最后时间索引可对**当前**候选计数优化，历史density rollup必须来自当时有效数据，不使用今天lastSend假装过去状态。100k采用有界页、一次索引/直方图与受影响主题更新；禁止5次LLM或5份完整对话副本。
-
-## 7. 生命周期、权限与兼容保持
-
-B4的20秒lease、有限重连、旧异步拒绝、view草稿保护保留；不以永久心跳使worker常驻。新native请求恢复只读，不自动派发；B5最新人工恢复/旧receipt失效、F1根和分片校验同样适用新字段。
-
-扩展禁用/冻结/卸载后的干净布局、原生可用、数据保留、停止副作用是不同验收项。PR #14真实访客Back能见旧DOM但路由不一致，禁止仅凭marker/DOM存在证明恢复。新Project流程的失败回执也必须同时绑定scope/对象/实际路径。
-
-静态内容脚本只授最小host；新Project能力不自动需要cookies/debugger/history/all_urls。测试调试权限与发布权限分开。能力不稳定只收回已接管的区域，不删原生入口，不让用户必须退出扩展才能使用原生工具。
-
-PAIA共存继续R0/C6前置，数据集成仍G1可选；不复制PAIA视觉/思想库/提示词功能，不假设双方已有通信协议。
-
-## 8. 工程入口
-
-新任务只挂到已有A–G，依赖见[DEVELOPMENT_PLAN](DEVELOPMENT_PLAN.md)。建议先校准R0-01/02/03.28的外部能力及本地合同；同时开发与这些能力无耦合的主题意图和H参数化。不能将真实Project未通过扩大成整套主题管理不可实现，也不能将合成通过扩展成生产自动化许可。
+C6/F1/F3按Free自身启用能力验收，不再等待D/E/F2。PAIA运行共存前置于完整Free验收，但PAIA数据协议后置；不共享其数据库/授权/提示词/视觉。受限账户类别明确进入支持矩阵，不用发布文案泛化。

@@ -1,31 +1,29 @@
-# VAIWL 本分支工作约束
+# VAIWL执行约束
 
-> **新的产品实施顺序（2026-10-13）：** 同一A–G路线，Free为第一完整产品，Pro为后续AI增强。Free只能使用真实Project/聊天名称和原生Project成员；必须显示全部已知无项目聊天，活跃排序尽力可靠且不因证据缺失卡死。Pro保留AI虚拟组织/派生名和既有研究，不抢Free关键路径。本分支继续仅文档；真实账号、原生操作、Mac、付费、合并与发布不因更新范围而获得新权限。依据[docs/FREE_PRO_PRODUCT_SCOPE.md](docs/FREE_PRO_PRODUCT_SCOPE.md)及[docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md)§0。
+## 本轮与后续权限
 
+当前任务是PR #15的Free-first/Pro-later文档最终整合：仅README/AGENTS和docs现行规范/计划/治理/验收说明。不得改src/tests/simulator/design/历史工程证据，不访问Mac、Remote Desktop Commander、私人ChatGPT或PAIA，不做原生写入、付费调用、merge/部署。
 
-## 本轮范围
+将来用户明确授权实施Free时，依同一DEVELOPMENT_PLAN持续执行所有可执行Free任务，不逐阶段等续令；本计划不自动授予真实账号/发送/Mac/PAIA/费用/发布等新的许可。真实阻塞只拦相应路径，继续独立Free工作；不绕拒绝、不抢跑Pro。
 
-这是2026-10-12用户明确授权的**三项机制设计与开发计划修订**分支。只允许VAIWL设计、计划、治理文档和独立Draft PR。不得修改产品源码/测试/模拟器/原型原件，不操作Mac或Remote Desktop Commander，不访问真实私人聊天，不创建真实Project、不发送消息，不改其他仓库/main，不合并/部署或调用收费服务。
+## 唯一读取顺序
 
-过去的Mac连续实现许可是历史上下文，不覆盖本轮“只文档”限制。不要求不相关已批准开发停工，不覆盖其他writer提交。提交前核对父head，独立分支提交；不得force push。
+STATUS → AUTHORITY → CORE_MECHANISMS_V2_8 → DEVELOPMENT_PLAN → 当前任务相关INTERACTION_SPEC/DATA_MODEL/TECHNICAL_ARCHITECTURE/PRIVACY_SAFETY_RECOVERY/FREE_PRO_ACCEPTANCE。AI_NAMING_EVALUATION仅Pro。FREE_PRO_PRODUCT_SCOPE是范围摘要，不是第二计划。
 
-## 阅读顺序与唯一依据
+运行时尚未满足整合后的Free；核对具体源代码和测试，不从Draft数量或旧README推断完成。v2.7原型为视觉历史，不覆盖当前Free原生对象；旧v2.8高级机制已转Pro，历史固定SHA可追溯。
 
-先读docs/STATUS.md、docs/AUTHORITY.md、docs/DECISIONS.md、docs/CORE_MECHANISMS_V2_8.md，再读INTERACTION_SPEC/DATA_MODEL/TECHNICAL_ARCHITECTURE/PRIVACY_SAFETY_RECOVERY/AI_NAMING_EVALUATION和唯一DEVELOPMENT_PLAN。当前候选待批准，运行时仍为v2.7；旧原件保持历史，不能成为相冲突的第二规范。
+## 硬边界
 
-已有A–G任务不删除，新工作只挂`.28`子任务。文档检查和算例不是产品测试。PR #2–#14的旧结果按原源码/环境/范围保留，真实访客UNKNOWN不等于所有匿名渠道NO_GO。
+- Free卡=(scope,nativeProjectId)，只读原生名和真实成员；无项目NONE与未知UNKNOWN分开，全部已知引用保持可达。
+- 不从Workspace/Placement/DisplayIdentity生成Free卡或标题，不删除旧Pro人工作品。
+- 可信UserSendEvent与ObservationHint/ActivityDecision分层；允许可逆显示估计，不造sentAt/coverage，过期不制造不活跃事实。
+- 新发送优先、旧项自动下沉、有界校准；项目不能因UNKNOWN永久置顶/消失。scope未知不显示别的账号缓存。
+- 原生输入/消息/模型/工具/搜索/新建/dot/权限/未知入口保留；不复制聊天，不全局CSS重写，不为恢复自动刷新有草稿页面。
+- 原生Project新建由用户原生操作；自动代理属于独立E，不是Free前置。
+- 共享IDB/CAS/inverse/恢复/F1分片和旧护栏保留；不得把synthetic改标签认证production，迁移不能丢人工数据或重放授权。
+- 官方导出/ZIP/人工日期维护不成为Free日常流程；基础备份不变成活动数据抓取渠道。
+- 同一模块一个writer；提交前核对head，非强制快进；不改父PR/main、不推翻别人提交。
 
-## 不变量
+## 完成表达
 
-- 普通派生不改原生消息/Project/权限；独立批准的Project创建流程才可生成真实对象。原生Project不等于主题、账户scope或API平台项目。
-- Workspace为稳定意图容器；空/单窗口可以存在，H不决定身份。跨Project聚合不合并上下文。
-- 人工include/exclude/title/icon/lock优先，模型只受控建议；数量不自动拆合，time变化不运行原生动作。
-- 既有无常驻日期/来源/计数、主题静态卡/左侧旧窗口/侧栏开合/上下区间/唯一阅读返回保留。不要重新加“自动·14天”顶栏。
-- 可信新发送和覆盖不变；候选H为7/14/30/60/90当地日历日。未知不造假，手工/固定/当前/空主题可达不记为发送。
-- Project首次确认、结果核验、跨run预算、UNKNOWN不重试是候选安全合同；主题＋不自动提交用户正文，不克隆composer。
-- B1–B5/F1的同库IDB、CAS/inverse/分区/旧护栏继续，迁移不能全库重建丢人工数据，不从备份恢复grant。
-- 原生搜索/新聊天/dot/固定/账户/工具/授权/新入口完整保留；测试合成标记不能当生产身份。
-
-## 交付
-
-只创建独立Draft PR，列真实head/基线、文档路径、待批准决策和未执行能力。公开仅来源/合成材料，无私有正文/原生ID/凭证/HAR。所有写入文件需与实际生成内容核对；不得以复制旧测试PASS给新方案背书。
+区分文档就绪、合成代码可用、真实Free验收、可发布和已经发布。没有执行的新测试标NOT_RUN；旧结果保持原来源，不相加。最终报告真实head/Draft、实际改动与未解决条件；缺写工具不能宣称已推送。

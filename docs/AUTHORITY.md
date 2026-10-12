@@ -1,48 +1,39 @@
-# 文档效力、候选规范与授权边界
+# 文档效力与执行权限：Free-first最终整合
 
-> **2026-10-13用户最新产品决定：** 开发计划分为VAIWL Free（先实现完整原生Project/无项目聊天导航、原生标题与可靠活跃）和Pro（后续保留AI虚拟归组/命名等）。最新产品范围覆盖此前v2.8虚拟Workspace作为Free默认的候选；**不等于现在有权访问真实账号、创建真实Project、付费调用、PAIA或部署**。本轮GitHub仅修文档并更新现有Draft候选，不改运行时代码。见[FREE_PRO_PRODUCT_SCOPE](FREE_PRO_PRODUCT_SCOPE.md)和[DEVELOPMENT_PLAN](DEVELOPMENT_PLAN.md)§0。
+2026-10-13。用户已明确Free-first/Pro-later，并要求将旧正文真正整合。本文件区分产品决定、待实现设计和执行权限；不再把整个Free方向标为“等待D28六项批准”。
 
+## 1. 已确定的产品规则
 
-2026-10-12。本分支是**v2.8定向产品设计与原A–G计划修订候选**，不是运行时升级。用户已要求研究三项机制并提交Draft PR，但未审批本次提出的全部默认值。过去的Mac连续开发许可不扩大本轮明确的“仅文档、不得操作Mac”范围。
+Free主题=真实原生Project；Project/聊天显示原生名称；无Project聊天必须同等显示。原生Project ID而非名称作为键，UNKNOWN不当NONE。活跃准确与可用并重、旧项自动进入较早区间、历史不失联；不虚构原始时间/覆盖。Pro保留AI虚拟主题/命名/系列/拆合/人工纠错等，当前新开发先完成Free。
 
-## 1. 三种状态必须分开
+界面沿v2.7批准视觉：静态项目卡、紧凑窗口、侧栏由用户控制、左侧旧窗口、相邻上下/默认无向上、阅读区一个无字返回；不加常驻日期/来源/计数。原生输入/消息/模型/工具/账户/搜索/dot/新入口不能消失。可用性不能越过scope安全；近似排序不等于伪造原生事实。
 
-- **OWNER_REQUIRED**：用户已明确的产品要求及安全边界。
-- **RECOMMENDED_PENDING_APPROVAL**：本轮选型、阈值和操作默认值，等用户评审。
-- **IMPLEMENTED/VERIFIED**：只能来自指定源码、真实环境与原始结果。候选规范的文件检查或合成算例不产生这类结论。
+Free普通创建入口走原生，由用户确认/操作；复杂代理创建/改名是E后续而非必须先过的Free前置。手工范围和证据足够时的自适应属于Free共享能力，Pro订阅不决定原生工具权限。
 
-v2.7仍是现有代码的已批准产品基线。v2.8是本分支唯一待审机制规范；审批后，三个升级范围以v2.8替代，未涉及部分沿用v2.7，不维护两套独立执行路线。只批准部分决策时在DECISIONS和DEVELOPMENT_PLAN同处记录，不复制一份新计划。
+## 2. 唯一权威结构
 
-## 2. 用户已确定、不得反复询问的要求
+用户最新明确要求与安全限制 → 本AUTHORITY → CORE_MECHANISMS_V2_8中的当前Free/共享/Pro分区 → 对应INTERACTION_SPEC/DATA_MODEL/TECHNICAL_ARCHITECTURE/PRIVACY_SAFETY_RECOVERY/AI_NAMING_EVALUATION → 唯一DEVELOPMENT_PLAN的任务依赖/验收 → 历史研究及原型。
 
-保留可逆投影、跨原生Project引用、稳定Workspace/系列/工作集、派生标题与原名分离、人工意图优先、scope隔离。普通派生操作不改变原生消息/Project/权限，不合并上下文。
+FREE_PRO_PRODUCT_SCOPE为当前范围摘要，不是第二Canonical；FREE_PRO_ACCEPTANCE为用例而非第二计划；STATUS为唯一实际进度。历史v2.7用于视觉/未改变的不变量，不能覆盖Free原生对象定义；旧v2.8自由Workspace规则已移入Pro，不保留“通用规则但另读页首排除Free”的双重解释。
 
-主页主题卡片、紧凑窗口、主页不整卡折叠、侧栏由用户控制、左侧旧窗口局部展开、右缘上下相邻区间、最新无向上、阅读区单一无字返回继续保留。无常驻日期/来源/计数，“自动·14天”不是已批准UI要求。本轮不重新设计视觉，不迁入PAIA风格。
+原件保留在Git历史固定提交和现有design/approved及工程证据目录。基线/文档验收页明确何为旧证据与新要求。后续批准实施后按同一计划走，不再复制一个“Codex新计划”。
 
-新要求：认真设计真正的原生Project/主题内新窗口，不以虚拟文件夹回避；允许分析空/单窗口主题、内容成立与拆合；研究根据主题密度自适应区间。7/14/30/60/90是候选；窗口数量不是主题成立或必须拆分的硬条件。
+## 3. 本轮权限与后续持续执行
 
-## 3. 本轮推荐而非已经批准
+**本轮仅文档**：目标为更新现有PR #15；不改src/tests/simulator/design/工程原始结果，不访问Mac/Remote Desktop Commander/私人ChatGPT/PAIA，不做原生动作、付费服务、merge或部署。当前连接是否能写入，以实际工具结果为准，不能因过去成功提交就宣称本轮可提交。
 
-D28-01首次确认后惰性创建同名Project并复用；D28-02原生目的地关联、变更再确认；D28-03主题生命周期与新主题建议权限；D28-04自适应选择器/舒适带/抗抖；D28-05旧版迁移与无常驻文字；D28-06拆合原子计划及冲突规则。具体记录在[DECISIONS](DECISIONS.md)。
+后续若用户明确授权按整合计划实施Free，可在许可环境持续执行所有依赖满足的Free任务，不逐阶段索要重复批准；计划本身不自动授予真实账号、原生测试发送、PAIA本体、Mac、付费、系统权限或发布。遇到真实缺条件只停止相应动作，继续独立Free任务；不能绕批准拒绝，也不转去抢跑Pro。
 
-**不能以“用户让我设计”推导“允许现在真实创建Project”；也不能以文档合并推导模型/账户/收费/部署许可。** 用户确认推荐之后仍需工程实施和能力验收。
+产品方向已批准不等于每个工程参数已验证。重试/校准/自适应默认属于待测工程参数，按既有目标校准，不要求每次微调重新做产品设计；降低质量/改变付费边界/引入额外数据采集则必须明确再批准。
 
-## 4. 文件优先关系与唯一所有者
+## 4. 证据与状态
 
-用户最新明确要求与权限限制 > 本文 > 本分支`CORE_MECHANISMS_V2_8.md`的待审定义 > 已整合INTERACTION_SPEC/DATA_MODEL/TECHNICAL_ARCHITECTURE/PRIVACY_SAFETY_RECOVERY/AI_NAMING_EVALUATION > v2.7及v2.6原生保留的非冲突部分 > 历史研究与原型。
+REPOSITORY_READ、LOGIC、MOCK_DOM、REAL_IDB、REAL_CHROME_SYNTHETIC、LIVE_GUEST_PARTIAL、LIVE_ACCOUNT、HUMAN_USABILITY分别记录。原始测试报告是对应旧源码的证据，不重复累加成产品完成度；本轮只作文档检查，不造新的产品PASS。
 
-固定30的代码/旧测试保持原状；候选中的H=30保留为兼容模式，不要求删除原历史证据。v2.6居中把手、时钟回转、多处返回以及早期“卡片只用于继续入口”等旧表述已非当前设计，不因引用历史文件重新生效。
+任务状态用READY/IN_PROGRESS/IMPLEMENTED_SYNTHETIC/LIVE_VERIFIED/BLOCKED/DEFERRED_PRO；发布状态FREE_ACCEPTED/RELEASE_READY/PUBLISHED不混淆。PR仍Draft/未合并不能说代码已经在main，文档包完成也不等于已写回PR。
 
-STATUS为唯一实际状态；DEVELOPMENT_PLAN为唯一A–G工作路线，`.28`只作为原ID下的增量子任务。基线/来源/测试用例文档是支持材料，不是第二Canonical或额外执行队列。
+## 5. 并发与交接
 
-## 5. 当前写权限与并发
+本轮只追加到PR #15当前head；提交前再次比较expected SHA，非强制快进，父PR和main不改。其他执行者推进则先核对具体差异，不能用旧整文件覆盖。未来实现保持模块单writer，不操作用户其他项目。
 
-仅VAIWL仓库内设计、计划、治理文档，独立分支及Draft PR；不得修改src/tests/simulator/design原型/工程证据原件，不操作Mac，不发送消息、不执行原生Project创建、不调用付费服务、不改其他仓库或main，不合并/部署。
-
-以核实的PR #14 head为文档基线，提交前再次核对。父分支若推进，不覆盖其状态；必要时在独立分支吸收并说明差异。不得force push或将过去截图/批准当当前任务权限。
-
-未来项目创建、语义模型、真实宿主、PAIA、同步、发布均按各自门槛批准。原连续开发的不相关已批准任务不因本次待审文档被要求停工；涉及v2.8的修改在审批/依赖满足前不实施。
-
-## 6. 证据等级
-
-ARTIFACT/REPOSITORY_VERIFIED、OFFICIAL_DOCUMENTATION、PROTOTYPE_SIMULATION、REAL_CHROME_SYNTHETIC、LIVE_HOST_GUEST_PARTIAL、LIVE_HOST_ACCOUNT、DESIGN_CALCULATION、TARGET/NOT_RUN分别记录。没有把PR #14的匿名UNKNOWN扩大为全渠道NO_GO，也没有把B/C合成PASS扩大为生产全部GO。公开仓库仅公开/合成证据，无真实账号、正文、凭证或完整HAR。
+旧D28的目的地/虚拟主题/拆合转Pro/E；Free和共享决策以DECISIONS中的最新映射生效。不能以Pro还没完成或商店尚未批准阻断Free的本地开发、真实验收与可安装交付准备。
