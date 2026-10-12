@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第十四轮（接已正常推送的 `5f18bc1`）。当前实现持续沿原分支及PR #16提交同步；旧轮次证据保留各自来源。
+当前已推进至第十五轮（接已推送PR #16 Draft的 `38726aa`）。继续沿原正式目录/分支，旧报告保留各自源码及环境。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -237,3 +237,11 @@ refVersions/sizes各自只生成一份keys并复用，字段校验过程中累�
 新增59项在修改前基线通过；修改后evidence/manifest/counts组合110/0/0skip，10k真实IDB校准PASS。没有重复全套Node/MV3或100k；上一100k1377.8ms/1秒FAIL不可替换为本轮结果。包仍SYNTHETIC_ONLY，archive SHA256 `9c331c4e41361ed9990600000f2e85f21f249dc75bb4821b6263baf95f9c8061`，本轮报告free-round14-*。
 
 下一局部位置为共享partitioned.saveMutation：新manifest先完整size编码再stable/hash，旧检查点再次编码已验证根；内部合并必须保留恢复回退、共享人工资产、同事务和故障回滚。真实账户/来源/PAIA/物理/日常验收条件未解除，完整Free未交付。
+
+## 第十五轮：共享分片写入单次有界规范编码（接38726aa）
+
+saveMutation内部新根将同一次规范编码用于16Mi限额和SHA256；公共同步/异步校验、512步yield、cycle/非JSON拒绝、128Mi聚合及事务回滚均保留。旧checkpoint完整哈希不改：当前接口缺同事务不可变envelope保证，未为性能引入可信hash旁路。
+
+F1/shared组合57/0，随后补精确16Mi/+1和共享合法数组，新编码合同19/19单独通过（不相加）。真实隔离Chrome IndexedDB原20项分片合同20/20，记录的3源hash稳定；新增可复用tests/f1/partition-browser.mjs。没有重跑完整Node/MV3/100kUI。Node100k saveMutation交替6次采样的中位数83.9→72.2ms，仅诊断，不代表端到端；此前100k1377.8ms及1秒FAIL仍保留。
+
+包SHA256 `c2015af073e55c099531c1ac8ab43fd37f6bf74bc8d1e93f0490d99366f0084c`，报告free-round15-*；仍SYNTHETIC_ONLY。下一本地位置回到100k原生活动更新关键路径：native manifest结构重复枚举/验证成本；不要继续把主要延迟归因于DOM或弱化最终CHECK。真实来源/获准账户/跨端/PAIA/物理与真人验收条件未解除，完整Free未交付。

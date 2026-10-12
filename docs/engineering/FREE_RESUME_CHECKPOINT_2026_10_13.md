@@ -115,3 +115,9 @@ Git连接恢复，03ef76a已正常推送原分支；本轮末再同步新检查�
 活动manifest重复枚举已合并，59条原约束/错误顺序基线，最终相关110/0和10k真IDB通过；独立审查通过。没有重跑完整Node/MV3/100k。包与hash见STATUS及free-round14-*。5f18bc1已正常推送PR16，本节提交继续普通同步。
 
 直接继续共享partitioned.saveMutation新根size/stable重复编码和旧检查点重复hash问题；仅内部可信事务路径可复用，缺envelope时保留原恢复回退。不要削弱checksum/CAS/marker/guard或丢Pro人工资产。当前性能仍100k1377.8ms/1秒FAIL，真实Free验收仍未完成。
+
+## 第十五轮恢复增量（接38726aa）
+
+共享分片新根单次有界规范编码已完成，公共校验/协作yield未削弱；旧根checkpoint哈希保持原样，未引入不安全复用。F1/shared57/0，后补新合同19/19，真实IDB分片20/20。Node微测仅诊断，不替换普通100k1377.8ms未达1秒结论。新包/hash见STATUS第十五轮，沿原PR16正常推送。
+
+下一依赖已满足本地工作：原生manifest验证重复枚举仍在100k更新关键路径，审查并消除重复遍历但保留scope/checksum/marker、units/CAS/完整恢复和最终版本栅栏。当前工作区/分支不变；真实账户及其余外部验收条件仍阻塞对应路径，完整Goal未达成。
