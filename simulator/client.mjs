@@ -17,7 +17,7 @@ import { openWorkspaceEditor } from './editor.mjs';
 export function startClient({send,invalidateRemote=()=>{},readControls=()=>({size:Number(document.documentElement.dataset.hfSize)||8,now:document.documentElement.dataset.hfNow||FIXTURE_NOW,timeZone:document.documentElement.dataset.hfTimeZone||'Asia/Shanghai'}),subscribe=()=>()=>{}}){
   const adapter=createAdapter(),clientId=randomId();let seq=0,generation=0,lease=null,expiry=null,pending=null,heartbeat=null,stopped=false,lastURL=env.location.href;
   let autoNotice=null,autoNoticeTimer=null;
-  let syntheticFlush=false;const pendingSynthetic=new Map();
+  let syntheticFlush=false,verifiedAuthority=null;const pendingSynthetic=new Map();
   let freeSession=null,freeSessionRoute=new URL(env.location.href).pathname.split('/')[2];
   let freeReplica=null,freeIndex=null,partitionReplica=null,partitionIndex=null;let recoveryPanel=null;let data=null,editor=null,retries=0,viewTimer=null,viewRevision=0,lastView='',chain=Promise.resolve(),feedback=null;
   const visible=()=>document.visibilityState!=='hidden';
@@ -68,17 +68,25 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   function current(ticket,url){return !stopped&&visible()&&ticket===generation&&url===env.location.href;}
   const retryable=reason=>['invalidated-during-check','stale-document','not-current-document','stale-binding','stale-after-workspace','stale-after-commit','stale-client-response','transport-unavailable','binding-not-ready','lease-expired-active-js','snapshot-revision-changed'].includes(reason);
   function recover(reason,{preserve=true,immediate=false}={}){
+    if(!retryable(reason)){verifiedAuthority=null;pendingSynthetic.clear();}
     clearRecovery();if(stopped)return;generation++;lease=null;data=null;clearTimers();fail(reason,preserve&&retryable(reason));showFeedback(reason);
     if(!visible()||!retryable(reason)||retries>=5)return;
     const ticket=generation,url=env.location.href,delay=immediate?0:[90,180,360,1000,2000][retries++];
     pending=setTimeout(()=>{if(current(ticket,url))void load();},delay);
+  }
+  function acceptBinding(bound){
+    // An observation keeps its original identity across a lease renewal. A new
+    // binding must never assign old metadata to a different account/document.
+    if(verifiedAuthority&&(verifiedAuthority.scope!==bound.scope||verifiedAuthority.documentId!==bound.documentId))verifiedAuthority=null;
+    for(const [key,item] of pendingSynthetic)if(item.authority.scope!==bound.scope||item.authority.documentId!==bound.documentId)pendingSynthetic.delete(key);
+    lease=bound;
   }
   async function renewReadBinding(ticket,url){
     if(!current(ticket,url)||!lease)throw Error('stale-client-response');
     if(lease.expiresAt-Date.now()>6000)return;
     const bound=await request('BIND');
     if(!current(ticket,url)||!bound?.ok)throw Error(bound?.reason??'stale-client-response');
-    lease=bound;clearTimeout(expiry);expiry=setTimeout(()=>recover('lease-expired-active-js',{immediate:true}),Math.max(0,bound.expiresAt-Date.now()));
+    acceptBinding(bound);clearTimeout(expiry);expiry=setTimeout(()=>recover('lease-expired-active-js',{immediate:true}),Math.max(0,bound.expiresAt-Date.now()));
   }
   async function readSnapshot(ticket,url){
     const c=readControls(),freeMode=new URL(env.location.href).searchParams.get('view')!=='pro',reply=await request(freeMode?'B23_FREE_HEADER':'B23_SNAPSHOT',{now:c.now??FIXTURE_NOW,timeZone:c.timeZone??'Asia/Shanghai',size:c.size??8,...(freeMode&&freeSession?{viewSession:freeSession}:{})});
@@ -91,7 +99,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
         const r=await request('B23_FREE_PAGE',{revision:header.revision,offset:0,limit:5000,ids,viewSession:header.viewSession,now:c.now??FIXTURE_NOW});
         if(r?.ok&&r.page.scope!==header.scope)throw Error('stale-client-response');return r;
       }});
-      const verify=async()=>{await renewReadBinding(ticket,url);const r=await request('CHECK');if(!current(ticket,url))throw Error('stale-client-response');if(!r?.ok)throw Error(r?.reason??'read-failed');if(r.scope!==header.scope)throw Error('stale-client-response');if(r.nativeRevision!==header.revision||r.revision!==header.workspaceRevision||r.evidenceRevision!==header.evidenceRevision)throw Error('snapshot-revision-changed');};
+      const verify=async()=>{await renewReadBinding(ticket,url);const r=await request('CHECK');if(!current(ticket,url))throw Error('stale-client-response');if(!r?.ok)throw Error(r?.reason??'read-failed');if(r.scope!==header.scope||r.scope!==lease?.scope)throw Error('stale-client-response');if(r.nativeRevision!==header.revision||r.revision!==header.workspaceRevision||r.evidenceRevision!==header.evidenceRevision)throw Error('snapshot-revision-changed');};
       // Renew before yielding through assembly, but publish only after the final
       // authority/version check. Candidates remain private until that check passes.
       await renewReadBinding(ticket,url);
@@ -119,6 +127,8 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
       partitionReplica=assembled;partitionIndex=nextIndex;next=assembled.snapshot;
     }else{partitionReplica=null;partitionIndex=null;}
 
+    if(!current(ticket,url)||!lease||next.scope!==lease.scope||typeof lease.documentId!=='string'||Date.now()>=lease.expiresAt)throw Error('stale-client-response');
+    verifiedAuthority={scope:next.scope,documentId:lease.documentId,expiresAt:lease.expiresAt,accountRoute:new URL(url).pathname.split('/')[2]};
     if(data?.scope===next.scope&&next.revision<data.revision)return data;
     const changed=!data||data.revision!==next.revision||data.workspaceRevision!==next.workspaceRevision||data.evidenceRevision!==next.evidenceRevision||JSON.stringify(data.viewSession)!==JSON.stringify(next.viewSession)||data.viewRevision!==next.viewRevision||data.diagnostics?.view!==next.diagnostics?.view;
     if(next.viewMode==='free'&&!freeSession)freeSession=next.viewSession;data=next;viewRevision=data.viewRevision;
@@ -138,7 +148,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   async function load(){
     clearRecovery();if(stopped||!visible())return;const ticket=++generation,url=env.location.href;clearTimers();fail('validating-binding',true);lease=null;data=null;lastView='';
     try{const bound=await request('BIND');if(!current(ticket,url))return;if(!bound?.ok)throw Error(bound?.reason??'bind-failed');
-      lease=bound;await queue(()=>readSnapshot(ticket,url));if(!current(ticket,url))return;retries=0;
+      acceptBinding(bound);await queue(()=>readSnapshot(ticket,url));if(!current(ticket,url))return;retries=0;
       expiry=setTimeout(()=>recover('lease-expired-active-js',{immediate:true}),Math.max(0,lease.expiresAt-Date.now()));scheduleHeartbeat();flushSynthetic();
     }catch(e){if(current(ticket,url)){if(lease&&isFreeRecoveryReason(e.message)){await showFreeRecovery(ticket,url,e.message);}else if(lease&&['corrupt-record','invalid-state','invalid-schema','invalid-user-event','invalid-text','orphan-placement','orphan-title','invalid-state-row','invalid-state-table'].includes(e.message)){await showAssetRecovery(ticket,url,e.message);}else recover(e.message);}}
   }
@@ -202,16 +212,16 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     }),180);
   }
   function changed(){if(stopped)return;if(lastURL!==env.location.href||lastControls!==controlsKey()){
-      clearRecovery();if(lastURL!==env.location.href)navigation.enterReading();const accountRoute=new URL(env.location.href).pathname.split('/')[2];if(accountRoute!==freeSessionRoute){freeSession=null;freeReplica=null;freeIndex=null;freeSessionRoute=accountRoute;pendingSynthetic.clear();}partitionReplica=null;partitionIndex=null;lastURL=env.location.href;lastControls=controlsKey();generation++;invalidateRemote();clearTimers();fail('route-changed');lease=null;data=null;retries=0;clearFeedback();pending=setTimeout(load,0);
+      clearRecovery();if(lastURL!==env.location.href)navigation.enterReading();const accountRoute=new URL(env.location.href).pathname.split('/')[2];if(accountRoute!==freeSessionRoute){freeSession=null;freeReplica=null;freeIndex=null;freeSessionRoute=accountRoute;verifiedAuthority=null;pendingSynthetic.clear();}partitionReplica=null;partitionIndex=null;lastURL=env.location.href;lastControls=controlsKey();generation++;invalidateRemote();clearTimers();fail('route-changed');lease=null;data=null;retries=0;clearFeedback();pending=setTimeout(load,0);
     }else navigation.layout();}
   // Re-observe only bounded synthetic metadata; never replay a native send or body.
   function flushSynthetic(){
     if(syntheticFlush||!lease||!data||stopped||!visible())return;syntheticFlush=true;
     void queue(async()=>{try{
       for(const [key,item] of pendingSynthetic){
-        if(Date.now()-item.createdAt>600000){pendingSynthetic.delete(key);continue;}
+        if(Date.now()-item.createdAt>600000||Date.now()>=item.authority.expiresAt||item.authority.scope!==lease?.scope||item.authority.scope!==data?.scope||item.authority.documentId!==lease?.documentId||item.authority.accountRoute!==new URL(env.location.href).pathname.split('/')[2]){pendingSynthetic.delete(key);continue;}
         const url=env.location.href;if(new URL(url).pathname!==item.pathname)continue;
-        if(!lease||!data||stopped||!visible())break;
+        if(!lease||!data||stopped||!visible()||Date.now()>=lease.expiresAt)break;
         const ticket=generation;item.attempts++;
         try{const reply=await request('B23_SYNTHETIC_SEND',item.metadata);
           if(!current(ticket,url)){if(item.attempts>=2)pendingSynthetic.delete(key);break;}
@@ -222,10 +232,10 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
       }
     }finally{syntheticFlush=false;}});
   }
-  const syntheticSend=event=>{const detail=event.detail;if(!detail||stopped)return;
+  const syntheticSend=event=>{const detail=event.detail,authority=verifiedAuthority;if(!detail||stopped||!visible()||!authority||Date.now()>=authority.expiresAt||authority.accountRoute!==new URL(env.location.href).pathname.split('/')[2])return;
     const metadata={conversationId:detail.conversationId,messageId:detail.messageId,projectId:detail.projectId,nativeTitle:detail.nativeTitle};
     const pathname=new URL(env.location.href).pathname,key=pathname+':'+metadata.messageId;
-    if(!pendingSynthetic.has(key)){if(pendingSynthetic.size>=128)pendingSynthetic.delete(pendingSynthetic.keys().next().value);pendingSynthetic.set(key,{metadata,pathname,createdAt:Date.now(),attempts:0});}
+    if(!pendingSynthetic.has(key)){if(pendingSynthetic.size>=128)pendingSynthetic.delete(pendingSynthetic.keys().next().value);pendingSynthetic.set(key,{metadata,pathname,authority:{...authority},createdAt:Date.now(),attempts:0});}
     // Route invalidation may arrive asynchronously from MV3 webNavigation. The next
     // successful binding drains the same event key, including a stale in-flight observation.
     flushSynthetic();
@@ -244,11 +254,11 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
       try{await readSnapshot(ticket,url);}catch(e){if(current(ticket,url))recover(e.message);}
     });
   });
-  const hide=()=>{if(!visible()){generation++;clearTimers();lease=null;data=null;invalidateRemote();fail('hidden-document',true);clearFeedback();}else{retries=0;void load();}};
-  const pageHide=()=>{generation++;clearTimers();lease=null;data=null;invalidateRemote();fail('page-hidden',true);clearFeedback();};
+  const hide=()=>{if(!visible()){verifiedAuthority=null;generation++;clearTimers();lease=null;data=null;invalidateRemote();fail('hidden-document',true);clearFeedback();}else{retries=0;void load();}};
+  const pageHide=()=>{verifiedAuthority=null;generation++;clearTimers();lease=null;data=null;invalidateRemote();fail('page-hidden',true);clearFeedback();};
   const resume=()=>{if(!stopped&&visible()){retries=0;void load();}};
   document.addEventListener('visibilitychange',hide);document.addEventListener('freeze',pageHide);document.addEventListener('resume',resume);addEventListener('pagehide',pageHide);addEventListener('pageshow',resume);
   const refresh=()=>{generation++;invalidateRemote();retries=0;return load();};
-  function stop(){clearRecovery();if(stopped)return;stopped=true;pendingSynthetic.clear();freeReplica=null;freeIndex=null;generation++;clearTimers();clearFeedback();editor?.close();observer.disconnect();resize.disconnect();unsub();document.removeEventListener('hf:change',nativeChange);document.removeEventListener('hf:synthetic-send',syntheticSend);document.removeEventListener('toggle',nativeChange,true);document.removeEventListener('visibilitychange',hide);document.removeEventListener('freeze',pageHide);document.removeEventListener('resume',resume);removeEventListener('pagehide',pageHide);removeEventListener('pageshow',resume);removeEventListener('popstate',nativeChange);removeEventListener('resize',nativeChange);navigation.stop();}
+  function stop(){clearRecovery();if(stopped)return;stopped=true;verifiedAuthority=null;pendingSynthetic.clear();freeReplica=null;freeIndex=null;generation++;clearTimers();clearFeedback();editor?.close();observer.disconnect();resize.disconnect();unsub();document.removeEventListener('hf:change',nativeChange);document.removeEventListener('hf:synthetic-send',syntheticSend);document.removeEventListener('toggle',nativeChange,true);document.removeEventListener('visibilitychange',hide);document.removeEventListener('freeze',pageHide);document.removeEventListener('resume',resume);removeEventListener('pagehide',pageHide);removeEventListener('pageshow',resume);removeEventListener('popstate',nativeChange);removeEventListener('resize',nativeChange);navigation.stop();}
   void load();return {stop,refresh,command,undo,manage,showWorkspace:()=>navigation.showWorkspace(),status:()=>navigation.status(),navigation};
 }

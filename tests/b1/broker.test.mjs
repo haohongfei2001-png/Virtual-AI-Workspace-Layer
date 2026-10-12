@@ -41,7 +41,10 @@ test('B1: sender identity is independent of page-supplied scope and exact envelo
  assert.equal((await h.broker.handle({...h.request('BIND',1),scope:'other'},a)).reason,'invalid-request');
  assert.equal((await h.broker.handle(h.request('BIND',1),{...a,frameId:1})).reason,'invalid-sender');
  assert.equal((await h.broker.handle(h.request('BIND',1),{...a,id:'bad'})).reason,'invalid-sender');
- assert.equal((await h.broker.handle(h.request('BIND',1),a)).ok,true);
+ const bound=await h.broker.handle(h.request('BIND',1),a);
+ assert.equal(bound.ok,true);
+ assert.equal(bound.scope,'["synthetic_fixture","A","test_org"]');
+ assert.equal(bound.documentId,'doc_A');
 });
 test('B1: new browser-confirmed document supersedes old lease without waiting',async()=>{
  const h=mk(),a=fixture(),b=fixture('doc_B','B');

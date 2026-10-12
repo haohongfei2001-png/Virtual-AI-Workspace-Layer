@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第二十二轮，实现 `be1289fff333f1465624a009ce6d1561d0ab42af` 已正常推送现有PR #16 Draft。SHA-256循环减少临时对象，摘要和全部校验边界保持；继续原正式目录、分支和PR，不改发布状态。
+当前已推进至第二十四轮：原生恢复后分片回收、严格多版本验证缓存及待处理发送元数据账户/文档归属修复。最新已确认远端为 `c2f92e0`，本地第二十三轮 `531c146` 推送45秒超时，未冒称同步；后续HEAD以Git为准。继续原正式目录、分支和PR #16 Draft，Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -319,3 +319,11 @@ GitHub短只读连接仍8秒超时，未重复push；本地检查点保留，最
 100k正常无采样三发送功能3/3，既有1546.2ms/新NONE1896.8ms/新Project1812.3ms，均仍1秒FAIL。56hash稳定，全量读取0，每旅程1事件/hint/原生消息，阅读/未发草稿保留；单次结果不作统计提速结论。MV3本轮NOT_RUN，沿用旧报告来源不冒充本轮覆盖。包SHA256 `314f9ce16c62cd8520b823459422dceefafc6d239734e4822c13fb1b699178d5`，仍SYNTHETIC_ONLY/NOT_RELEASE_READY。
 
 下一具体工作：客户端待处理synthetic元数据目前仅pathname归属，同URL账户切换可在新scope下重试旧事件；先补绑定scope/document来源约束，再评估已验证同scope重绑定时发送前省去一次快照。不可把冷启动无scope事件追认给新账户，也不可绕过Project初始化或最终CHECK。真实来源/账户/跨端/PAIA/物理与真人验收仍缺原条件，完整Free未交付。
+
+## 第二十四轮：待处理发送元数据绑定原scope/document
+
+真实headless旧代码复现两项误归属：A事件失败重绑B后被B接受，以及冷BIND前无来源事件被后来的B接受。BOUND现返回owner已核验scope；客户端只在成功快照验证后记录来源，事件捕获不可变scope/document/账户route/有效期；重绑定不同身份清除，隐藏/过期/无来源不捕获，不能追认给新账户。同scope SPA仍保留可用来源，不重放原生发送/正文。
+
+完整Node658/0/0skip；补强BOUND来源断言后broker13/13。实际headless client+broker小型合成owner归属合同7/7，包含document切换、隐藏、过期及NONE/Project元数据正例；此小型owner不冒称真实IDB。实际MV3另9/9通过，含worker重启/草稿、新NONE持久化与未知账户隔离。100k本轮NOT_RUN；上一轮1546.2/1896.8/1812.3ms的1秒FAIL不变。
+
+固定包SHA256 `569ba075a0b29bc18785338b481e2032a905af4c120fab5857976db5264cd180`，仅SYNTHETIC_ONLY。F3同目录包替换/回退测试另行记录；当前scope修复不改变schema3。下一明确缺陷已有独立失败合同：restore→undo移除B23 refs但保留B1锚，Free库存遗漏已知引用。需保留UNKNOWN身份可达且不恢复任何标题/成员/来源授权；不能把人工撤销当原生删除，旧B1-only锚需要有界补录。真实外部条件未解除，完整Free未交付。

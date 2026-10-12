@@ -171,3 +171,9 @@ ee7bc03正常push连接443超时，最后确认远端dab61e7 Draft，后续本�
 ## 第二十三轮恢复增量（接c2f92e0）
 
 原生3版本严格缓存及恢复后GC孤儿修复已完成。完整Node658/0/0skip、真IDB恢复GC1/1、100k功能3/3通过，1546.2/1896.8/1812.3ms仍1秒FAIL。证据free-round23-*；包/private/tmp/vaiwl-free-delivery-round23-20261013/vaiwl-free-synthetic-only.zip，hash见STATUS。下一立即修复pendingSynthetic仅pathname的同URL换scope误归属风险，owner BOUND增加已核验scope、事件捕获原scope/document并比较，不可追认无scope旧事件；安全前提满足后再减少新聊天多余快照。Git已正常同步至c2f92e0，后续提交按正常push。所有真实外部条件未解除，Free未完成。
+
+## 第二十四轮恢复增量（接531c146）
+
+pendingSynthetic已绑定捕获时验证过的scope/document/route/有效期；BOUND输出scope，最终CHECK交叉核验，冷无来源/隐藏/expired不追认。完整Node658/0、补强broker13、实际归属browser7/7、MV3 9/9。固定包/private/tmp/vaiwl-free-delivery-round24-20261013/extension及zip，hash见STATUS。未重跑100k，不改变1秒FAIL。
+
+下一实现known-anchor-contract.mjs当前失败：恢复撤销后B1仍有锚但Free导航缺UNKNOWN入口。先修未来RESTORE_BACKUP undo保留必要身份并撤销人工作品（保留冲突检查与真实inverse日志），历史B1-only用有界迁移补录，绝不从旧锚重放授权/标题真值。旧removal UI测试以前只证明owner/client一致，不能作为已知引用可达性的产品正确性证据；历史报告保持原样，新增证据分开。531c146 push45秒超时且短只读连接仍8秒超时，最后远端c2f92e0；勿循环重试，继续本地。

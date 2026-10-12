@@ -148,7 +148,7 @@ export function createDocumentBindingBroker({
       st.slot=slot;
       try {freeRuntime?.bind({bindingId:leaseId,scope,guard:()=>fresh(st,slot),signal:slot.abort.signal,authorityCheck:()=>currentAuthority(st,slot,doc,sender)});} catch {slot.abort.abort();st.slot=null;return deny('free-runtime-bind-failed');}
       return {ok:true,type:'BOUND',v:VERSION,leaseId,expiresAt:slot.expiresAt,
-        documentId:doc.documentId,clientId:message.clientId,seq:message.seq};
+        documentId:doc.documentId,scope:scope.key,clientId:message.clientId,seq:message.seq};
     }
     const slot=st.slot;
     if(!slot||!fresh(st,slot)||!sameDoc(slot.doc,doc)||
