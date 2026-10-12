@@ -1,15 +1,22 @@
 /** Cache validation, never facts: every IDB read must match all payload bytes again. */
 function strictJSON(value){
  const type=typeof value;
- if(['undefined','function','symbol','bigint'].includes(type)||type==='number'&&!Number.isFinite(value))throw Error('non-json-value');
- if(value&&type==='object'){
-  if(Array.isArray(value)){const parts=[];for(let index=0;index<value.length;index++)parts.push(strictJSON(value[index]));return '['+parts.join(',')+']';}
-  if(![Object.prototype,null].includes(Object.getPrototypeOf(value)))throw Error('non-json-object');
-  // Do not invoke toJSON. Preserve key order for a cheap exact-byte signature;
-  // reordered but equivalent objects simply take the normal verification path.
-  return '{'+Object.keys(value).map(key=>JSON.stringify(key)+':'+strictJSON(value[key])).join(',')+'}';
+ // NumberToString is the same finite-number representation JSON uses, including
+ // negative zero. Avoid one native JSON call and one temporary array per scalar.
+ if(type==='number'){if(!Number.isFinite(value))throw Error('non-json-value');return String(value);}
+ if(type==='string'||type==='boolean'||value===null)return JSON.stringify(value);
+ if(type!=='object')throw Error('non-json-value');
+ if(Array.isArray(value)){
+  let encoded='[';
+  for(let index=0;index<value.length;index++)encoded+=(index?',':'')+strictJSON(value[index]);
+  return encoded+']';
  }
- return JSON.stringify(value);
+ if(![Object.prototype,null].includes(Object.getPrototypeOf(value)))throw Error('non-json-object');
+ // Never invoke toJSON or iterators. Preserve every key/value in read order;
+ // building the string directly avoids a 100k-element intermediate map/join.
+ let encoded='{',separator='';
+ for(const key of Object.keys(value)){encoded+=separator+JSON.stringify(key)+':'+strictJSON(value[key]);separator=',';}
+ return encoded+'}';
 }
 export class VerifiedRecordCache{
  #entries=new Map();#chars=0;

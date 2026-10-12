@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第十轮（接本地 `838fb6d`），最新结果见末节与恢复检查点。最后确认远端PR #16为Draft、头 `03ef76a`；后续本地提交待网络恢复后正常同步。以下各轮保留其当时证据与同步状态，不代表当前头。未修改远端设置。
+当前已推进至第十一轮（接本地 `224724e`），最新结果见末节与恢复检查点。最后确认远端PR #16为Draft、头 `03ef76a`；后续本地提交待网络恢复后正常同步。以下各轮保留其当时证据与同步状态，不代表当前头。未修改远端设置。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -205,3 +205,11 @@ client已转换的Free快照通过内部WeakMap来源登记的prepared入口发�
 包 `/private/tmp/vaiwl-free-delivery-round10-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `aeb751673711d26245a3d4c1a5b2c4b277969a6efd6396cc25d20e94ccf7767b`。仍SYNTHETIC_ONLY；当前正常推送网络阻塞及真实账户/PAIA/物理设备/真人日常验收条件不变，完整Free未完成。
 
 100k仅做一次CPU诊断：55个运行时源hash稳定、功能PASS；1590ms含profile收尾开销，明确不是时延认证。采样self CPU：严格JSON遍历375.8ms（22.5%），活动根处理156.8ms（9.4%），SHA256100.7ms（6.0%），GC62.4ms，Free导航适配12.3ms。下一优化应针对完整字节序列化/根遍历，不能继续把主要瓶颈归因于DOM。可选profile脚本已修正先捕获DOM完成时间再保存profile，不为计时小修重跑。
+
+## 第十一轮：减少严格JSON编码的中间分配（接224724e）
+
+缓存仍逐次编码完整payload并对比checksum/context/key及所有内容；只将逐字段map/join中间数组改为字符串构造，有限number使用与JSON同义的NumberToString（含-0）。toJSON/iterator仍不调用，非JSON值仍拒绝，budget按原编码长度计算。更慢的复制对象方案只做本地微测后放弃，未进入源码。
+
+完整Node419/0；其后补精确maxChars边界，新编码合同44项与旧cache16项合跑60/60，独立记录不相加。实际MV3 9/9。固定55运行时source hashes普通100k测试功能PASS，首屏15762.7ms，源响应→DOM1635.9ms；相对此前普通1790.6ms低约8.6%，只是单次观察，1秒性能目标仍FAIL。native.apply462.4ms、evidence.apply157.7ms，1ref分页、无全量read，原生阅读节点/草稿保留。
+
+最新包 `/private/tmp/vaiwl-free-delivery-round11-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `0d6e917f361301398cc13186695f4714e8eb2734d7619a993b0d92370461b195`，仍SYNTHETIC_ONLY。共享/原生/活动根读取与版本表仍有O(N)成本；活动header还遍历refVersions生成调用者不使用的total，可继续消除重复工作，不能省略marker/checksum/scope或最终CHECK。正常推送待网络恢复，远端上一确认03ef76a Draft；真实账户/跨端/PAIA/物理与真人日常验收仍缺条件，完整Free未交付。

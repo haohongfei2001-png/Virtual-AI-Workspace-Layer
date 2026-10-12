@@ -91,3 +91,9 @@ Git连接恢复，03ef76a已正常推送原分支；本轮末再同步新检查�
 内部原生/活动manifest单次规范编码用于size+checksum已完成。最终Node394/0、实际10k IDB功能与MV3 9/9通过；包/源码/报告见STATUS第十轮。普通100k性能认证未重跑。一次100k CPU采样表明verified-record-cache.strictJSON为最大self热点375.8ms/22.5%，活动根处理156.8ms；UI适配仅12.3ms。1590ms为带profiler收尾的诊断，不替换第九轮普通1790.6ms/1秒FAIL结果。
 
 下一独立Free工作：优化严格序列化的逐key编码开销，必须逐次核对完整字节、checksum、scope/key并拒绝toJSON/iterator碰撞；不能换成revision/checksum-only。旧cache反例16项及shared6项已存在，避免重写功能。运行时冻结源已验证；最后head以git核对。远端PR16上一确认仍03ef76a Draft，后续本地提交待网络恢复后普通push。完整Free及真实来源/PAIA/物理/真人验收仍未完成。
+
+## 第十一轮恢复增量（接224724e）
+
+严格JSON完整内容缓存编码已去掉大map/join临时数组，NumberToString等价；不缓存可变facts、不跳checksum/scope/key。完整Node419/0，后补budget边界的44新+16旧合同合跑60/60；MV3 9/9；普通固定源码100k更新1635.9ms、初始15762.7ms，功能PASS/1秒FAIL。最新包/hash与source receipts见STATUS第十一轮，勿把profile1590当普通baseline。
+
+下一本地位置：FreeEvidenceRepository.query在header分支仍Object.keys全量refVersions且计算外层header丢弃的total/nextOffset；可以专用元数据读取，但保留marker与完整root校验。更大的根manifest/版本表O(N)仍是实际瓶颈，须按具体代码而不是继续改DOM。头/页/双CHECK安全栅栏不削弱。最后head用git核对；当前正式分支和目录不变，PR16远端03ef76a仍Draft，后续本地待普通同步。真实外部验收条件不变；Goal未完成。
