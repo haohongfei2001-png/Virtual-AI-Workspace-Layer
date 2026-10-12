@@ -52,13 +52,13 @@ function validateRow(table,row,state){
 export function emptyFreeEvidence(scope){return {format:'vaiwl-free-evidence-v1',scopeKey:scopeKey(scope),revision:0,sources:{},events:{},hints:{},coverage:{}};}
 export function validateFreeEvidence(state,scope){
  shape(state,['format','scopeKey','revision',...tables]);
- if(state.format!=='vaiwl-free-evidence-v1'||state.scopeKey!==scopeKey(scope)||!Number.isSafeInteger(state.revision)||state.revision<0)throw Error('invalid-free-evidence-state');
+ if(!['vaiwl-free-evidence-v1','vaiwl-free-evidence-v2'].includes(state.format)||state.scopeKey!==scopeKey(scope)||!Number.isSafeInteger(state.revision)||state.revision<0)throw Error('invalid-free-evidence-state');
  for(const table of tables){
-  if(!isRecord(state[table])||Object.keys(state[table]).length>20000)throw Error('free-evidence-capacity');
+  if(!isRecord(state[table])||Object.keys(state[table]).length>(state.format==='vaiwl-free-evidence-v2'&&table!=='sources'?100000:20000))throw Error('free-evidence-capacity');
   for(const [key,row] of Object.entries(state[table])){id(key);if(!isRecord(row)||row.id!==key)throw Error('invalid-free-evidence-row');validateRow(table,row,state);}
  }
  const hints=new Set();for(const h of Object.values(state.hints)){const key=JSON.stringify([h.sourceId,h.eventKey]);if(hints.has(key))throw Error('duplicate-free-hint-event');hints.add(key);}
- if(JSON.stringify(state).length>16*1024*1024)throw Error('free-evidence-too-large');return state;
+ if(JSON.stringify(state).length>(state.format==='vaiwl-free-evidence-v2'?128:16)*1024*1024)throw Error('free-evidence-too-large');return state;
 }
 const equal=(a,b)=>stable(a)===stable(b);
 /** Call only behind broker authorization; synthetic is not a production trust label. */
@@ -76,7 +76,7 @@ export function applyFreeEvidence(state,command,{scope,now,channel}){
    if(Object.hasOwn(input,'revoked'))throw Error('free-source-revocation-replay');
    const row={...input,revoked:false};source(row);const prior=next.sources[row.id];
    if(prior&&(prior.revoked||prior.generation!==row.generation))throw Error('revoked-free-source-replay');
-   if(prior&&(prior.sourceRevision>row.sourceRevision||(prior.sourceRevision===row.sourceRevision&&!equal(prior,row))))throw Error('stale-free-source-revision');
+   if(prior&&(time(row.observedAt)<time(prior.observedAt)||prior.sourceRevision>row.sourceRevision||(prior.sourceRevision===row.sourceRevision&&!equal(prior,row))))throw Error('stale-free-source-revision');
    next.sources[row.id]=row;
   }
   for(const table of ['events','coverage'])for(const input of command.batch[table]){

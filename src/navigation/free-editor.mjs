@@ -1,3 +1,4 @@
+import {freeRecoveryPanel} from './free-recovery.mjs';
 import {initialFreeTimePolicy,setFreeHorizon,FREE_HORIZONS} from '../data/free-time-policy.mjs';
 /** Shared human preferences only; Free never edits virtual memberships or native facts. */
 export function openFreeEditor({snapshot,command,assets,context={},onClose=()=>{}}){
@@ -15,6 +16,7 @@ export function openFreeEditor({snapshot,command,assets,context={},onClose=()=>{
  action('保存所选片段',async()=>{if(!context.snippet)throw Error('请先在原生消息中选择可唯一定位的片段');await preference('savedSnippets',[...(snapshot.preferences?.savedSnippets?.value??[]),{...context.snippet,id:'s_'+crypto.randomUUID().replaceAll('-','')}]);context.snippet=null;});
  action('移除所选窗口片段',()=>preference('savedSnippets',(snapshot.preferences?.savedSnippets?.value??[]).filter(s=>s.refId!==select.value)));
  action('切换紧凑窗口',()=>preference('compactRows',snapshot.preferences?.compactRows?.value===false));
+ if(assets?.freeRecovery){let recovery=null;action('检查本地数据',async()=>{const plans=await assets.freeRecovery();recovery?.remove();recovery=freeRecoveryPanel({document:doc,plans,onRepair:(kind,plan)=>assets.repairFree(kind,plan)});dialog.append(recovery);});}
  if(assets){action('导出工作空间备份',async()=>{const bundle=await assets.export(),url=URL.createObjectURL(new Blob([JSON.stringify(bundle)],{type:'application/json'})),a=node('a');a.href=url;a.download='vaiwl-workspace-backup.json';dialog.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);});
  const file=node('input');file.type='file';file.accept='.json,application/json';file.setAttribute('aria-label','选择工作空间备份');dialog.append(file);const previewInfo=node('p');previewInfo.setAttribute('role','status');dialog.append(previewInfo);let bundle=null,preview=null;file.onchange=()=>{bundle=null;preview=null;previewInfo.textContent='';};
  action('预览备份恢复',async()=>{const f=file.files?.[0];if(!f||f.size>17*1024*1024)throw Error('请选择有效备份文件');bundle=JSON.parse(await f.text());preview=await assets.preview(bundle);previewInfo.textContent='新增 '+preview.summary.added+' 项；更新 '+preview.summary.updated+' 项；保留当前人工修改 '+preview.summary.keptHuman+' 项。不会导入发送证据或执行授权。';});

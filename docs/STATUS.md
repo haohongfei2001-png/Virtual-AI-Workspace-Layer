@@ -36,6 +36,27 @@ UI、活动/时间策略与测试由互不冲突的writer并行推进，最终�
 
 仍可本地继续：独立活动证据从20k/16Mi单根迁至分片；native/evidence损坏交互恢复；worker/service持续校准接线；可信原生旧名称aliases与Project成员完整性证明合同。以上不是外部权限阻塞，继续实施。真实ChatGPT/跨端/PAIA/物理IME/完整F1与发布关口仍未通过。
 
+## 第三轮持续集成（接b2a262b）
+
+`b2a262b` 已正常推送原Draft PR #16。继续按同一计划完成以下本地路径：
+
+- B2/B5/F1活动证据迁入同库不可变per-ref片段及全局ID分桶索引；单片16Mi、聚合100k/128Mi、source/marker/CAS/幂等/撤权保持。跨ref事件ID及hint eventKey冲突、缺索引片、超容量和部分写入失败均拒绝且整体回滚。旧v1首次写入原子迁移。损坏root只从当前原子影子恢复，先检查所有数据/索引片，全部来源撤销；不恢复发送许可。
+- HEADER以活动ref版本生成增量计划，PAGE只读取需要的证据；源/成员证明的版本改变分别使相关缓存重验。原生可信改名自动保留最多20个旧原名；不接收页面或Pro别名作为原生事实。成员完整性需明确当前source的count及成员见证；全库存不擅自提升未知成员证据。
+- C5手动native/evidence修复入口接入设置及故障提示；用户点击才修复，原生草稿保留、不重放发送。独立headless别名4项、手动恢复4项、严格count自动范围4项通过。
+- B2.F3/B4校准registry实际接broker/service：owner才可提供source，绑定guard/signal/current-document/current-account见证；未配置来源明确unsupported且不读取大快照或轮询。发现并修复后台迟到结果在unknown或账户变化后仍落库的问题，补写前异步权威重核验。当前worker没有生产source，不构成真实ChatGPT数据渠道。
+
+验证来源分别保留：完整Node组合278通过/0失败；后续背景权威修复及索引/容量反例使用对应针对性回归，不能与旧总数相加。真MV3更新包9/9通过（实际worker依赖/重启/NONE新发送/双tab/草稿/UNKNOWN scope）；后续broker写前权威增强另有服务级反例，不冒称先前浏览器report对应后来每字节。
+
+真IDB最初1k/10k/100k+迁移恢复4/4；分桶优化后只重跑受影响100k+迁移恢复2/2：100k首灌15.56s、header219ms、50ref尾页196.5ms、全读2705ms、双连接增量814ms（前版1229ms）。首灌变慢且全量manifest仍O(N)，没有把这些数字当作真实发送1秒、导航p95或物理弱设备认证。详见独立 `free-evidence-scale-*-2026-10-13.json`，执行源码哈希保留原样。
+
+最终集成Node组合 **297/297通过、0失败/跳过**，随后恢复错误分类2项和同context三轮手动恢复5项针对性通过（不相加）；最终MV3包9/9独立报告为 `free-mv3-integrated-2026-10-13.json`。组合回归涵盖后台静默账户切换、header不等待source、不重复全快照、source时间倒退拒绝及正确重试、可信新来源在撤销旧source后重新建立库存证明。独立审查没有把拒绝后旧来源恢复成有效来源。侧栏缓存8条headless、正常UI14条、auto4条分别通过。
+
+F1新增6组真实UI/4x CPU（1k/10k/100k × Project混合/NONE密集）。10k历史导航p95约34–46ms、搜索约34ms；100k首屏/longtask成本保留，侧栏缓存后只复测100k两组：历史p95 244.3/242.1ms，搜索150.4/179.2ms，仍有longtasks。此为真实组件UI合成环境，不含IDB/上游端到端，也不代替物理弱设备；100k不是擅自新增150ms门槛。完整F1仍需真实来源/目标设备证据。
+
+F3已新增固定ZIP元数据的纯Node离线打包、source/build SHA-256清单、静态worker依赖闭合与verify，3项包测试通过；使用与回退说明见 `engineering/FREE_PACKAGE_SUPPORT.md`。最终ZIP SHA-256为 `2592ead6ebb3e8eee576e8752062ea462b0f16e9c6230dc5a9fed8e3d3d33728`，见 `engineering/free-package-2026-10-13.json`。测试包明确 **SYNTHETIC_ONLY / NOT_RELEASE_READY**，仅loopback；未加入ChatGPT权限或部署。生产渠道、获准真实账户、跨端真值、PAIA干净构建/共存、物理IME和真人F4仍BLOCKED_LIVE或NOT_RUN，FREE_ACCEPTED/RELEASE_READY/PUBLISHED未达到。
+
+本轮恢复UI测试修复：等待异步IDB谓词曾提前结束，导致测试在活动根提交前注损坏；改为显式await root与marker事务完成的有界等待。同context原生→活动→合法checksum但非法manifest恢复仍逐轮验证，不用延时或拆分上下文掩盖数据删除。
+
 ## 以下为恢复前81ff0ec检查点历史，不代表当前暂停
 
 ## 当前实施检查点（2026-10-13）

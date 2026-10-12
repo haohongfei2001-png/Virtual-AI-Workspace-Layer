@@ -27,9 +27,10 @@ const requestOK=m=>{
     case 'B23_UNDO':return exact(m,[...base,'leaseId','operationId','expectedRevision','targetOperationId'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&tokenOK(m.targetOperationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0;
     case 'B23_FREE_HEADER':case 'B23_FREE_SNAPSHOT':return tokenOK(m.leaseId)&&(exact(m,[...base,'leaseId'])||(exact(m,[...base,'leaseId','now','timeZone','size'])||exact(m,[...base,'leaseId','now','timeZone','size','viewSession'])&&viewSessionOK(m.viewSession))&&typeof m.now==='string'&&typeof m.timeZone==='string'&&m.timeZone.length<100&&Number.isInteger(m.size)&&m.size>=1&&m.size<=120);
     case 'B23_FREE_PAGE':return exact(m,[...base,'leaseId','revision','offset','limit','ids','viewSession','now'])&&tokenOK(m.leaseId)&&Number.isSafeInteger(m.revision)&&m.revision>=0&&Number.isSafeInteger(m.offset)&&m.offset>=0&&Number.isInteger(m.limit)&&m.limit>0&&m.limit<=5000&&viewSessionOK(m.viewSession)&&m.viewSession!==null&&typeof m.now==='string'&&(m.ids===null||exact(m.ids,['projects','refs'])&&Array.isArray(m.ids.projects)&&Array.isArray(m.ids.refs)&&m.ids.projects.length+m.ids.refs.length<=5000&&[...m.ids.projects,...m.ids.refs].every(tokenOK));
-    case 'B23_EXPORT_BACKUP':case 'B23_STORAGE':case 'B23_RECOVERY_STATUS':return exact(m,[...base,'leaseId'])&&tokenOK(m.leaseId);
+    case 'B23_FREE_RECOVERY_STATUS':case 'B23_EXPORT_BACKUP':case 'B23_STORAGE':case 'B23_RECOVERY_STATUS':return exact(m,[...base,'leaseId'])&&tokenOK(m.leaseId);
     case 'B23_PREVIEW_RESTORE':return exact(m,[...base,'leaseId','bundle'])&&tokenOK(m.leaseId)&&isRecord(m.bundle)&&JSON.stringify(m.bundle).length<18000000;
     case 'B23_RESTORE_BACKUP':return exact(m,[...base,'leaseId','operationId','expectedRevision','bundle','planHash'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0&&isRecord(m.bundle)&&JSON.stringify(m.bundle).length<18000000&&typeof m.planHash==='string'&&m.planHash.length===64;
+    case 'B23_FREE_RECOVER':return exact(m,[...base,'leaseId','kind','operationId','damagedHash'])&&tokenOK(m.leaseId)&&['native','evidence'].includes(m.kind)&&tokenOK(m.operationId)&&typeof m.damagedHash==='string'&&/^[0-9a-f]{64}$/.test(m.damagedHash);
     case 'B23_RECOVER_ASSETS':return exact(m,[...base,'leaseId','operationId','damagedHash'])&&tokenOK(m.leaseId)&&tokenOK(m.operationId)&&typeof m.damagedHash==='string'&&m.damagedHash.length===64;
     case 'B23_HISTORY':return exact(m,[...base,'leaseId'])&&tokenOK(m.leaseId);
     case 'B23_SAVE_VIEW':return exact(m,[...base,'leaseId','value','expectedRevision'])&&tokenOK(m.leaseId)&&isRecord(m.value)&&Number.isSafeInteger(m.expectedRevision)&&m.expectedRevision>=0&&JSON.stringify(m.value).length<1000000;
@@ -66,7 +67,7 @@ export const fixtureScopeResolver=async ({currentFrame})=>{
 
 export function createDocumentBindingBroker({
  extensionId,getFrame,resolveScope,repository,now=Date.now,
- makeId=()=>crypto.randomUUID(),leaseMs=20000,maxTabs=128,allowedURL=fixtureURL,workspaceRepository=null
+ makeId=()=>crypto.randomUUID(),leaseMs=20000,maxTabs=128,allowedURL=fixtureURL,workspaceRepository=null,freeRuntime=null
 }={}){
   if(!tokenOK(extensionId)||typeof getFrame!=='function'||typeof resolveScope!=='function'||
     !repository||typeof now!=='function'||typeof makeId!=='function'||
@@ -108,12 +109,13 @@ export function createDocumentBindingBroker({
   // Recheck scope after asynchronous repository work, even when the URL has
   // not changed. This is a response fence, not a transactional account oracle.
   async function currentAuthority(st,slot,doc,sender){
-    if(!fresh(st,slot)||!sameDoc(await currentDocument(doc),doc))return false;
+    if(!fresh(st,slot)||!sameDoc(await currentDocument(doc),doc)){if(st.slot===slot){slot.abort.abort();st.slot=null;st.epoch++;}return false;}
     const currentScope=await scopeFor(doc,sender);
     const finalDocument=await currentDocument(doc);
     // The final frame lookup also yields. Revocation during that await must win.
-    return fresh(st,slot)&&!slot.abort.signal.aborted&&currentScope?.key===slot.scope.key&&
-      sameDoc(finalDocument,doc);
+    const valid=fresh(st,slot)&&!slot.abort.signal.aborted&&currentScope?.key===slot.scope.key&&sameDoc(finalDocument,doc);
+    if(!valid&&st.slot===slot){slot.abort.abort();st.slot=null;st.epoch++;}
+    return valid;
   }
   const copyRecord=r=>r?{conversationId:r.conversationId,nativeUrl:r.nativeUrl,
     projectId:r.projectId,revision:r.revision}:null;
@@ -123,14 +125,15 @@ export function createDocumentBindingBroker({
     if(!senderDoc)return deny('invalid-sender');
     const key=tabKey(senderDoc),st=stateFor(key),startEpoch=st.epoch;
     const doc=await currentDocument(senderDoc);
-    if(!doc)return deny('not-current-document');
+    if(!doc){if(st.slot?.doc.documentId===senderDoc.documentId)invalidate(senderDoc);return deny('not-current-document');}
     if(st.epoch!==startEpoch)return deny('invalidated-during-check');
     // Resolve authority only from the current browser-confirmed frame, never
     // from a client-supplied account or possibly stale sender.url.
     const scope=await scopeFor(doc,sender);
-    if(!scope)return deny('unverified-scope');
+    if(!scope){invalidate(doc);return deny('unverified-scope');}
     if(st.epoch!==startEpoch||!sameDoc(await currentDocument(senderDoc),doc))return deny('stale-document');
     if(st.epoch!==startEpoch)return deny('invalidated-during-check');
+    if(st.slot&&(!sameDoc(st.slot.doc,doc)||st.slot.scope.key!==scope.key)){st.slot.abort.abort();st.slot=null;st.epoch++;}
     if(message.type==='BIND'){
       if(st.slot&&sameDoc(st.slot.doc,doc)&&st.slot.clientId===message.clientId&&
          message.seq<=st.slot.seq)return deny('replayed-sequence');
@@ -142,6 +145,7 @@ export function createDocumentBindingBroker({
       const slot={doc,scope,clientId:message.clientId,seq:message.seq,
         leaseId,expiresAt:now()+leaseMs,epoch:st.epoch,abort:new AbortController()};
       st.slot=slot;
+      try {freeRuntime?.bind({bindingId:leaseId,scope,guard:()=>fresh(st,slot),signal:slot.abort.signal,authorityCheck:()=>currentAuthority(st,slot,doc,sender)});} catch {slot.abort.abort();st.slot=null;return deny('free-runtime-bind-failed');}
       return {ok:true,type:'BOUND',v:VERSION,leaseId,expiresAt:slot.expiresAt,
         documentId:doc.documentId,clientId:message.clientId,seq:message.seq};
     }
@@ -162,13 +166,17 @@ export function createDocumentBindingBroker({
         if(!workspaceRepository)return deny('workspace-unavailable');
         const options={guard:()=>fresh(st,slot),signal:slot.abort.signal};let result;
         if(message.type==='B23_SNAPSHOT'){const value=workspaceRepository.partitionHeader?await workspaceRepository.partitionHeader(scope,options):null;result=value?{ok:true,partition:value}:{ok:true,snapshot:await workspaceRepository.snapshot(scope,message.now,message.timeZone,options,message.size)};}
-        else if(message.type==='B23_FREE_HEADER')result=workspaceRepository.freeHeader?{ok:true,header:await workspaceRepository.freeHeader(scope,options,message.now,message.timeZone,message.viewSession,doc.url)}:deny('free-header-unavailable');
+        else if(message.type==='B23_FREE_RECOVERY_STATUS')result=workspaceRepository.freeRecoveryStatus?{ok:true,recovery:await workspaceRepository.freeRecoveryStatus(scope,options)}:deny('free-recovery-unavailable');
+        else if(message.type==='B23_FREE_RECOVER')result=workspaceRepository.freeRecover?await workspaceRepository.freeRecover(scope,{kind:message.kind,operationId:message.operationId,damagedHash:message.damagedHash},options):deny('free-recovery-unavailable');
+        else if(message.type==='B23_FREE_HEADER'){
+          if(freeRuntime){const foreground=await freeRuntime.foreground(slot.leaseId,{session:message.viewSession??null,readCached:false});foreground.calibration.catch(()=>{});}
+          result=workspaceRepository.freeHeader?{ok:true,header:await workspaceRepository.freeHeader(scope,options,message.now,message.timeZone,message.viewSession,doc.url)}:deny('free-header-unavailable');}
         else if(message.type==='B23_FREE_PAGE')result=workspaceRepository.freePage?{ok:true,page:await workspaceRepository.freePage(scope,{revision:message.revision,offset:message.offset,limit:message.limit,ids:message.ids,viewSession:message.viewSession,now:message.now},options)}:deny('free-page-unavailable');
         else if(message.type==='B23_FREE_SNAPSHOT')result=workspaceRepository.freeSnapshot?{ok:true,snapshot:await workspaceRepository.freeSnapshot(scope,options,message.now,message.timeZone,message.viewSession)}:deny('free-snapshot-unavailable');
         else if(message.type==='B23_PARTITION_HEADER'){const value=await workspaceRepository.partitionHeader(scope,options);result=value?{ok:true,partition:value}:{ok:true,snapshot:await workspaceRepository.snapshot(scope,message.now,message.timeZone,options,message.size)};}
         else if(message.type==='B23_PARTITION_PAGE')result={ok:true,page:await workspaceRepository.partitionPage(scope,{revision:message.revision,offset:message.offset,ids:message.ids},options)};
         else if(message.type==='B23_COMMAND')result=await workspaceRepository.command(scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,command:message.command},options);
-        else if(message.type==='B23_SYNTHETIC_SEND')result=workspaceRepository.fixtureObserve?await workspaceRepository.fixtureObserve(scope,message,options,doc.url):deny('synthetic-source-unavailable');
+        else if(message.type==='B23_SYNTHETIC_SEND'){result=workspaceRepository.fixtureObserve?await workspaceRepository.fixtureObserve(scope,message,options,doc.url):deny('synthetic-source-unavailable');if(result.ok&&freeRuntime)freeRuntime.notify(slot.leaseId,'send',{objectIds:[message.conversationId]}).catch(()=>{});}
         else if(message.type==='B23_UNDO')result=await workspaceRepository.undo(scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,targetOperationId:message.targetOperationId},options);
         else if(message.type==='B23_EXPORT_BACKUP')result={ok:true,bundle:await workspaceRepository.exportBackup(scope,options)};
         else if(message.type==='B23_PREVIEW_RESTORE')result={ok:true,preview:await workspaceRepository.previewRestore(scope,message.bundle,options)};

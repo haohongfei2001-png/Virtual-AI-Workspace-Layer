@@ -9,7 +9,7 @@ function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
 export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{}}) {
   const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
-  let index=null;
+  let index=null,sidebarDirty=true,sidebarKey=null;
   const free=()=>snapshot?.viewMode==='free';
   const span=()=>snapshot?.policy?.h??snapshot?.viewSession?.H??30;
   const current=()=>index?.at(adapter.currentURL())??{};
@@ -22,7 +22,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function own(tag='div'){const n=node(doc,tag,{'data-vaiwl-owned':token});const shadow=n.attachShadow({mode:'open'});shadow.append(node(doc,'style',{},css));return {n,shadow};}
   function restoreMask(){if(!mask)return;for(const[name,prior,expected]of mask.attrs){if(mask.node.getAttribute(name)===expected){if(prior===null)mask.node.removeAttribute(name);else mask.node.setAttribute(name,prior);}}mask=null;}
   function setMask(n,enabled){if(!enabled){restoreMask();return;}if(mask?.node===n)return;restoreMask();const attrs=[['data-vaiwl-mask',n.getAttribute('data-vaiwl-mask'),token],['inert',n.getAttribute('inert'),'']];for(const[k,,v]of attrs)n.setAttribute(k,v);mask={node:n,attrs};}
-  function detach(){closeMenu(false);restoreMask();if(roots){roots.sidebar.n.remove();roots.workspace.n.remove();roots.back.remove();roots.maskStyle.remove();roots=null;}}
+  function detach(){sidebarDirty=true;sidebarKey=null;closeMenu(false);restoreMask();if(roots){roots.sidebar.n.remove();roots.workspace.n.remove();roots.back.remove();roots.maskStyle.remove();roots=null;}}
   function layout(){
     if(stopped||!snapshot)return;
     const host=adapter.inspect();
@@ -117,14 +117,20 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function focusState(){for(const root of [roots?.sidebar,roots?.workspace]){const n=root?.shadow.activeElement;if(n?.dataset.focusKey)return {root,key:n.dataset.focusKey,start:n.selectionStart,end:n.selectionEnd};}return null;}
   function restoreOwnedFocus(f){if(!f)return;const n=[...f.root.shadow.querySelectorAll('[data-focus-key]')].find(n=>n.dataset.focusKey===f.key);if(n){n.focus({preventScroll:true});if(n.setSelectionRange&&typeof f.start==='number')n.setSelectionRange(f.start,f.end);}else{(f.root.shadow.querySelector('[aria-label="较早的30日"]')??f.root.shadow.querySelector('.workspace'))?.focus({preventScroll:true});}}
   function render(){if(!roots||!view)return;const focused=focusState();view.sidebarScroll=roots.sidebar.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;closeMenu(false);
-    const side=roots.sidebar.shadow;side.querySelector('section')?.remove();const panel=node(doc,'section');const tools=node(doc,'div',{class:'toolbar'});tools.append(node(doc,'strong',{},free()?'项目':'主题'),graphic(button(free()?'查找已知项目与聊天':'查找主题与派生名称',()=>findKnown()),'search'),graphic(button('折叠主题导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;render();}),view.sidebarVisible?'minus':'plus'),graphic(button('退出测试增强',()=>{stop();onExit();}),'close'));if(onManage)tools.append(graphic(button('管理工作空间',()=>onManage()),'more'));const workset=button('当前工作集',()=>showWorkingSet());workset.innerHTML=svgIcon('collection');tools.append(workset);panel.append(tools);
-    const list=node(doc,'nav',{class:'themes','aria-label':'VAIWL 主题导航'});list.hidden=!view.sidebarVisible;
     const selected=current().selected;
     if(selected&&lastSelected!==adapter.currentURL()){view.sidebarOpen.add(selected.id);lastSelected=adapter.currentURL();selectionPending=true;}
+    // Snapshot updates always invalidate closures; local history changes keep the
+    // unchanged sidebar DOM, scroll and focus instead of rebuilding every card.
+    const nextSidebarKey=JSON.stringify([snapshot.scope,adapter.currentURL(),view.sidebarVisible,[...view.sidebarOpen],[...view.oldOpen].filter(k=>k.startsWith('side:')),[...view.capacities].filter(([k])=>k.startsWith('side:')||k.includes(':side:'))]);
+    const side=roots.sidebar.shadow;
+    if(sidebarDirty||sidebarKey!==nextSidebarKey||!side.querySelector('section')){
+    side.querySelector('section')?.remove();const panel=node(doc,'section');const tools=node(doc,'div',{class:'toolbar'});tools.append(node(doc,'strong',{},free()?'项目':'主题'),graphic(button(free()?'查找已知项目与聊天':'查找主题与派生名称',()=>findKnown()),'search'),graphic(button('折叠主题导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;render();}),view.sidebarVisible?'minus':'plus'),graphic(button('退出测试增强',()=>{stop();onExit();}),'close'));if(onManage)tools.append(graphic(button('管理工作空间',()=>onManage()),'more'));const workset=button('当前工作集',()=>showWorkingSet());workset.innerHTML=svgIcon('collection');tools.append(workset);panel.append(tools);
+    const list=node(doc,'nav',{class:'themes','aria-label':'VAIWL 主题导航'});list.hidden=!view.sidebarVisible;
     const sideGroups=groups.filter(g=>g.segment===0||(free()&&g.segment===null)||g===selected);
     for(const g of sideGroups){const block=node(doc,'section',{class:'group'});const toggle=button('侧栏主题 '+g.name,()=>{view.sidebarOpen.has(g.id)?view.sidebarOpen.delete(g.id):view.sidebarOpen.add(g.id);render();},'','theme-toggle');toggle.dataset.focusKey='theme:'+g.id;toggle.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));const disclosure=node(doc,'span',{class:'theme-disclosure','aria-hidden':'true'});disclosure.innerHTML=chevron;toggle.append(disclosure);toggle.setAttribute('aria-expanded',String(view.sidebarOpen.has(g.id)));block.append(toggle);
       if(view.sidebarOpen.has(g.id)){const children=node(doc,'div',{class:'children'});members(g,children,true);block.append(children);}list.append(block);}
-    const independent=current().independent;if(independent){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}if(free()){appendFreeList(list,'noProject',0,true);appendFreeList(list,'unknown',0,true);}panel.append(list);side.append(panel);list.scrollTop=view.sidebarScroll??0;locateCurrent();
+    const independent=current().independent;if(independent){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}if(free()){appendFreeList(list,'noProject',0,true);appendFreeList(list,'unknown',0,true);}panel.append(list);side.append(panel);list.scrollTop=view.sidebarScroll??0;sidebarKey=nextSidebarKey;sidebarDirty=false;locateCurrent();
+    }
     const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-segment':String(view.segment)});roots.workspace.scroller=page;page.addEventListener('scroll',()=>{if(roots?.workspace.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){view.scroll=page.scrollTop;emitView();}},{passive:true});
     if(searchQuery!==null){
       const search=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
@@ -153,7 +159,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     shadow.append(page);layoutCards();page.scrollTop=view.scroll;restoreOwnedFocus(focused);emitView();
   }
   function update(value,now,timeZone,preparedIndex=null){
-    if(stopped)return;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free')value=freeNavigationSnapshot(value);snapshot=value;
+    if(stopped)return;sidebarDirty=true;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free')value=freeNavigationSnapshot(value);snapshot=value;
     if(!views.has(value.scope)){
       const initial=initialView(),v=value.view;
       if(v)Object.assign(initial,{segment:v.segment,oldOpen:new Set(v.oldOpen),sidebarOpen:new Set(v.sidebarOpen),capacities:new Map(v.capacities),scroll:v.scroll,sidebarVisible:v.sidebarVisible});

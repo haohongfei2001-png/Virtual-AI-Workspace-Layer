@@ -70,3 +70,16 @@ test('MOCK_IDB source observations cannot claim another conversation route',asyn
   assert.equal(result.ok,false);assert.equal(result.reason,'synthetic-send-route-mismatch');assert.equal(Object.keys((await h.service.evidence.read(h.scope)).hints).length,0);
  }finally{h.close();}
 });
+
+test('MOCK_IDB a separately trusted fresh source can report complete inventory after old source revocation',async()=>{
+ const h=await setup();try{
+  await h.header();const facts=await h.service.native.read(h.scope);
+  assert.equal((await h.service.native.invalidate(h.scope,{operationId:'revoke_old_inventory',expectedRevision:facts.revision,sourceId:'native_fixture_v1'})).ok,true);
+  const {NativeRepository}=await import('../../src/data/native-repository.mjs');
+  const fresh=new NativeRepository({baseRepository:h.service.repository,clock:()=>FIXTURE_NOW,observationGate:()=>({channel:'synthetic',sourceId:'fresh_inventory',generation:'fresh_generation'})});
+  assert.equal((await fresh.apply(h.scope,{operationId:'fresh_inventory',expectedRevision:facts.revision+1,batch:{scopeKey:facts.scopeKey,sourceRevision:1,observedAt:FIXTURE_NOW,validUntil:'2026-10-12T04:00:00Z',projects:[],refs:[{id:'T0',nativeTitle:'重新核验的原名',nativeUrl:facts.refs.T0.nativeUrl,availability:'available'}],membership:[{id:'T0',state:'NONE',projectId:null}],inventory:{projects:'complete',conversations:'complete',cursor:null}}})).ok,true);
+  const head=await h.header();assert.equal(head.inventoryComplete,true);
+  const page=await h.page(head,{projects:[],refs:['T0']});assert.equal(page.page.refs[0].nativeTitle,'重新核验的原名');
+  assert.equal((await h.service.native.read(h.scope)).sources.native_fixture_v1.revoked,true);
+ }finally{h.close();}
+});

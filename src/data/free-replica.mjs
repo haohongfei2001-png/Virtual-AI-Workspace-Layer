@@ -11,7 +11,7 @@ export function planFreeReplica(prior,header){
  validateHeader(header);const same=prior?.header.scope===header.scope,full=!same;
  const perRefActivity=!full&&header.manifest.activityVersions&&prior.header.manifest.activityVersions;
  const refreshEvidence=full||(!perRefActivity&&prior.header.evidenceRevision!==header.evidenceRevision)||prior.header.activitySourceRevision!==header.activitySourceRevision||prior.header.visibilityRevision!==header.visibilityRevision||prior.header.evaluatedAt!==header.evaluatedAt||sessionKey(prior.header)!==sessionKey(header);
- const changed=kind=>Object.keys(versions(header,kind)).filter(id=>full||refreshEvidence||versions(prior.header,kind)[id]!==versions(header,kind)[id]||(kind==='ref'&&perRefActivity&&prior.header.manifest.activityVersions[id]!==header.manifest.activityVersions[id]));
+ const changed=kind=>Object.keys(versions(header,kind)).filter(id=>full||refreshEvidence||(kind==='project'&&prior.header.membershipWitnessRevision!==header.membershipWitnessRevision)||versions(prior.header,kind)[id]!==versions(header,kind)[id]||(kind==='ref'&&perRefActivity&&prior.header.manifest.activityVersions[id]!==header.manifest.activityVersions[id]));
  return {scope:header.scope,revision:header.revision,evidenceRevision:header.evidenceRevision,sessionKey:sessionKey(header),full,rebuild:!full&&prior.header.inventoryComplete!==header.inventoryComplete,projects:changed('project'),refs:changed('ref')};
 }
 export function freeReplicaRequests(plan,limit=1000){
@@ -47,7 +47,7 @@ function* assemble(prior,header,pages,plan){
    if(row.membership==='PROJECT'){const card=cards.get(row.projectId);if(!card)throw Error('missing-free-project-dependency');card.members.push(row);}
    else if(row.membership==='NONE')noProject.push(row);else unknown.push(row);if(++count%512===0)yield;
  }
- if(header.inventoryComplete===true&&!unknown.length)for(const p of cards.values())p.membershipComplete=true;
+ if(header.inventoryComplete===true&&!unknown.length)for(const p of cards.values())p.membershipComplete=p.memberCount==null?(!Object.hasOwn(p,'membershipComplete')&&!Object.hasOwn(p,'membershipWitnessCurrent')):p.membershipWitnessCurrent===true&&p.memberCount===p.members.length&&p.members.every(r=>p.membershipWitness&&r.membershipWitness&&['sourceId','generation','sourceRevision'].every(k=>p.membershipWitness[k]===r.membershipWitness[k]));
  const snapshot=aggregateFreeActivity({...header,viewMode:'free',refs:[...refs.values()],projects:[...cards.values()],noProject,unknown});
  return {header,projects,refs,omittedProjects,omittedRefs,snapshot};
 }

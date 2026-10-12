@@ -4,7 +4,7 @@ try{
  browser=await chromium.launch({headless:true});const page=await browser.newPage();await page.goto(`http://127.0.0.1:${server.address().port}/hf/A/c/T0?mode=page`);await page.waitForFunction(()=>HFextension.status().state==='ACTIVE');
  const setup=await page.evaluate(async()=>{
    const {scopeOf,FIXTURE_NOW}=await import('/simulator/data.mjs'),{createFreeViewSession}=await import('/src/data/free-time-policy.mjs'),scope=scopeOf('A'),service=HFextension.service,facts=await service.native.read(scope),day=createFreeViewSession({now:FIXTURE_NOW,timeZone:'Asia/Shanghai'}).T;
-   const projects=Array.from({length:10},(_,i)=>({id:'auto_project_'+i,nativeName:'范围合成项目'+i,nativeUrl:location.origin+'/hf/A/project/auto_project_'+i,availability:'available'}));
+   const projects=Array.from({length:10},(_,i)=>({id:'auto_project_'+i,nativeName:'范围合成项目'+i,memberCount:1,nativeUrl:location.origin+'/hf/A/project/auto_project_'+i,availability:'available'}));
    const refs=projects.map((p,i)=>({id:'auto_ref_'+i,nativeTitle:'范围合成聊天'+i,nativeUrl:location.origin+'/hf/A/c/auto_ref_'+i,availability:'available'}));
    const nativeResult=await service.native.apply(scope,{operationId:'auto_fixture_inventory',expectedRevision:facts.revision,batch:{scopeKey:facts.scopeKey,sourceRevision:facts.sources.native_fixture_v1.sourceRevision+1,observedAt:FIXTURE_NOW,validUntil:'2026-10-12T04:00:00Z',
      projects:[...Object.values(facts.projects).map(p=>({id:p.id,nativeName:p.nativeName,nativeUrl:p.nativeUrl,availability:'unavailable'})),...projects],

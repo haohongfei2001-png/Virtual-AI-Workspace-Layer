@@ -8,9 +8,9 @@ function identifier(value) {
   if (!tokenOK(value) || reserved.has(value)) throw Error('invalid-native-id');
   return value;
 }
-function shape(value, fields) {
+function shape(value, fields, optional = []) {
   if (!isRecord(value) || fields.some(key => !Object.hasOwn(value, key)) ||
-      Object.keys(value).some(key => !fields.includes(key))) throw Error('invalid-native-schema');
+      Object.keys(value).some(key => ![...fields,...optional].includes(key))) throw Error('invalid-native-schema');
 }
 function timestamp(value) {
   const result = instant(value);
@@ -84,7 +84,9 @@ export function validateNativeFacts(facts, scope) {
       }
       const fields = table === 'membership' ? ['state', 'projectId'] :
         [table === 'projects' ? 'nativeName' : 'nativeTitle', 'nativeUrl', 'availability'];
-      shape(row, ['id', ...fields, 'sourceId', 'generation', 'sourceRevision', 'observedAt', 'validUntil']);
+      shape(row, ['id', ...fields, 'sourceId', 'generation', 'sourceRevision', 'observedAt', 'validUntil'], table === 'membership' ? [] : ['nativeAliases', ...(table === 'projects' ? ['memberCount'] : [])]);
+      if (row.nativeAliases !== undefined && (!Array.isArray(row.nativeAliases) || row.nativeAliases.length > 20 || row.nativeAliases.some(v => typeof v !== 'string' || !v.trim() || v.length > 200))) throw Error('invalid-native-aliases');
+      if (row.memberCount !== undefined && row.memberCount !== null && (!Number.isSafeInteger(row.memberCount) || row.memberCount < 0 || row.memberCount > 100000)) throw Error('invalid-native-member-count');
       witness(row);
       const source = facts.sources[row.sourceId];
       if (!source || source.generation !== row.generation || source.sourceRevision < row.sourceRevision) {
@@ -135,12 +137,18 @@ export function applyNativeObservations(current, batch, {scope, channel, sourceI
     for (const row of batch[table]) {
       const fields = table === 'membership' ? ['id', 'state', 'projectId'] :
         ['id', table === 'projects' ? 'nativeName' : 'nativeTitle', 'nativeUrl', 'availability'];
-      shape(row, fields);
+      shape(row, fields, table === 'projects' ? ['memberCount'] : []);
       if (table === 'membership') membership(row, next.projects);
       else nativeObject(row, table === 'projects' ? 'nativeName' : 'nativeTitle');
       const previous = next[table][row.id];
       if (previous && previous.sourceId !== sourceId && !current.sources[previous.sourceId]?.revoked) throw Error('native-source-conflict');
       next[table][row.id] = {...row, ...provenance};
+      if (table !== 'membership') {
+        const field = table === 'projects' ? 'nativeName' : 'nativeTitle';
+        const retain = previous && previous.sourceId === sourceId && previous.availability === 'available' && nativeWitnessActive(previous, current, now);
+        const aliases = retain ? [...(previous.nativeAliases ?? []), previous[field]] : [];
+        next[table][row.id].nativeAliases = [...new Set(aliases.filter(v => v && v !== row[field]))].slice(-20);
+      }
     }
   }
   next.sources[sourceId] = {id: sourceId, generation, sourceRevision: batch.sourceRevision,

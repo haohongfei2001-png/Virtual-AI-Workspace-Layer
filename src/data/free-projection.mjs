@@ -8,7 +8,7 @@ export function freeProjection(facts, {scope, now, knownState = null}) {
   for (const project of Object.values(facts.projects)) {
     if (!nativeWitnessActive(project, facts, now) || project.availability !== 'available') continue;
     const card = {id: project.id, key: JSON.stringify([facts.scopeKey, project.id]),
-      scope: facts.scopeKey, nativeName: project.nativeName,
+      scope: facts.scopeKey, nativeName: project.nativeName, nativeAliases: project.nativeAliases ?? [], membershipWitness: {sourceId:project.sourceId,generation:project.generation,sourceRevision:project.sourceRevision}, membershipWitnessCurrent: project.sourceRevision === facts.sources[project.sourceId].sourceRevision, memberCount: project.memberCount ?? null, membershipComplete: false,
       name: project.nativeName ?? '名称暂不可用', nativeUrl: project.nativeUrl, members: []};
     projects.push(card);
     byProject.set(project.id, card);
@@ -21,9 +21,9 @@ export function freeProjection(facts, {scope, now, knownState = null}) {
     const confirmed = observed && nativeWitnessActive(observed, facts, now) && readable;
     const state = confirmed && (observed.state !== 'PROJECT' || byProject.has(observed.projectId)) ? observed.state : 'UNKNOWN';
     const row = {id: ref.id, scope: facts.scopeKey, nativeUrl: ref.nativeUrl,
-      nativeTitle: readable ? ref.nativeTitle : null,
+      nativeTitle: readable ? ref.nativeTitle : null, nativeAliases: readable ? ref.nativeAliases ?? [] : [],
       displayTitle: readable ? ref.nativeTitle ?? '名称暂不可用' : '名称暂不可用',
-      membership: state, projectId: state === 'PROJECT' ? observed.projectId : null};
+      membership: state, membershipWitness: state === 'PROJECT' ? {sourceId:observed.sourceId,generation:observed.generation,sourceRevision:observed.sourceRevision} : null, membershipWitnessCurrent: state === 'PROJECT' && observed.sourceId === facts.projects[observed.projectId].sourceId && observed.sourceRevision === facts.projects[observed.projectId].sourceRevision, projectId: state === 'PROJECT' ? observed.projectId : null};
     refs.push(row);
     if (state === 'PROJECT') byProject.get(observed.projectId).members.push(row);
     else if (state === 'NONE') noProject.push(row);
@@ -35,6 +35,10 @@ export function freeProjection(facts, {scope, now, knownState = null}) {
       nativeTitle: null, displayTitle: '名称暂不可用', membership: 'UNKNOWN', projectId: null};
     refs.push(row);
     unknown.push(row);
+  }
+  for (const card of projects) {
+    const project = facts.projects[card.id], source = facts.sources[project.sourceId];
+    card.membershipComplete = card.memberCount !== null && source.inventory.conversations === 'complete' && project.sourceRevision === source.sourceRevision && card.members.length === card.memberCount && card.members.every(row => { const m = facts.membership[row.id]; return m.sourceId === project.sourceId && m.sourceRevision === project.sourceRevision; });
   }
   return {scope: facts.scopeKey, revision: facts.revision, viewMode: 'free',
     evidenceLevel: Object.keys(facts.sources).length ? 'synthetic' : 'none', projects, refs, noProject, unknown};

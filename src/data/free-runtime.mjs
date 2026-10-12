@@ -68,7 +68,7 @@ export class FreeRuntime {
   if(this.applied.has(dedupe))return false;
   for(let attempt=0;attempt<3;attempt++){
    if(!options.guard())throw failure('stale-binding');
-   const current=await repository.read(scope,options);
+   const current=await (repository.header?repository.header(scope,options):repository.read(scope,options));
    const operationId=this.operationPrefix+'_'+(++this.sequence);
    const result=await repository.apply(scope,{operationId,expectedRevision:current.revision,batch},options);
    if(result.ok){if(this.applied.size>=256)this.applied.delete(this.applied.values().next().value);this.applied.add(dedupe);return true;}
