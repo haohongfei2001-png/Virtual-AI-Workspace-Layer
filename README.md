@@ -1,5 +1,8 @@
 # VAIWL — Virtual AI Workspace Layer
 
+> **2026-10-13产品优先级：Free first / Pro later。** Free=原生ChatGPT Project卡片＋全部无Project原始聊天＋可靠而不断档的活跃显示；Pro保留AI虚拟归组、智能命名和原有长期语义能力，Free完成之后再开发。唯一[开发计划](docs/DEVELOPMENT_PLAN.md)§0与[分级范围](docs/FREE_PRO_PRODUCT_SCOPE.md)，以及[分级验收](docs/research/FREE_PRO_ACCEPTANCE.md)。当前只更新了候选文档，尚未实现新Free运行时。下方旧v2.8说明需按本条范围解释。
+
+
 ChatGPT原位的可逆主题工作空间：稳定主题、跨原生Project的对话引用、手工意图和工作现场；保留真正原生聊天/输入/模型/工具。不是另一套聊天客户端或PAIA思想库。
 
 ## 本分支：v2.8机制升级候选

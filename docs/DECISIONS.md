@@ -1,5 +1,8 @@
 # VAIWL 决策登记 · v2.8待审
 
+> **新批准的产品分级（2026-10-13）优先：** Free = 原生Project卡+无Project原始窗口+可靠活跃/可逆退场；Pro = 保留原AI虚拟归组/派生标题/拆合与人工纠错。此前D28-01–06中“虚拟Workspace→默认原生Project”的设计不再是Free路径，属于Pro/高级候选；时间跨度候选与抗抖仍可在Free复用但依赖可信信息。见[FREE_PRO_PRODUCT_SCOPE](FREE_PRO_PRODUCT_SCOPE.md)与[DEVELOPMENT_PLAN](DEVELOPMENT_PLAN.md)§0。本次只调整计划和设计，不把会员计费或真实数据来源说成已完成。
+
+
 本文件是决策状态，不是另一份计划。用户要求设计的三项方向已经采纳为研究约束；下列新推荐尚未自动批准或实施。机制详见[CORE_MECHANISMS_V2_8](CORE_MECHANISMS_V2_8.md)。
 
 ## 1. 已确认要求的保留与定向替代

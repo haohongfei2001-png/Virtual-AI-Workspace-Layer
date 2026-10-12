@@ -1,5 +1,8 @@
 # 主题识别、智能命名与自适应质量评估 · v2.8候选
 
+> **按用户最新要求归入VAIWL Pro。** 现有D1/D2、长期对象关系、AI命名、自动虚拟归组、拆分/合并建议及模型/人工作品保护均保留，**先不继续开发或启用**，直到Free的Project映射、无项目聊天、活跃可用性与真实原生体验完成。Pro的优先输入是已确认无原生Project的聊天，保留原生Title供Free显示，派生Name只在Pro投影中出现。真实Project默认不由AI重组或改名。详见[FREE_PRO_PRODUCT_SCOPE](FREE_PRO_PRODUCT_SCOPE.md)。
+
+
 本轮为算法规格，不调用模型，不接入运行时分类。三项机制规范见[CORE_MECHANISMS_V2_8](CORE_MECHANISMS_V2_8.md)；原D1/D2样本与结果保持历史证据，不换标签宣称升级。
 
 ## 1. 当前事实与缺口

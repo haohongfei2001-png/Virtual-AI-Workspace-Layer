@@ -1,5 +1,8 @@
 # VAIWL 本分支工作约束
 
+> **新的产品实施顺序（2026-10-13）：** 同一A–G路线，Free为第一完整产品，Pro为后续AI增强。Free只能使用真实Project/聊天名称和原生Project成员；必须显示全部已知无项目聊天，活跃排序尽力可靠且不因证据缺失卡死。Pro保留AI虚拟组织/派生名和既有研究，不抢Free关键路径。本分支继续仅文档；真实账号、原生操作、Mac、付费、合并与发布不因更新范围而获得新权限。依据[docs/FREE_PRO_PRODUCT_SCOPE.md](docs/FREE_PRO_PRODUCT_SCOPE.md)及[docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md)§0。
+
+
 ## 本轮范围
 
 这是2026-10-12用户明确授权的**三项机制设计与开发计划修订**分支。只允许VAIWL设计、计划、治理文档和独立Draft PR。不得修改产品源码/测试/模拟器/原型原件，不操作Mac或Remote Desktop Commander，不访问真实私人聊天，不创建真实Project、不发送消息，不改其他仓库/main，不合并/部署或调用收费服务。

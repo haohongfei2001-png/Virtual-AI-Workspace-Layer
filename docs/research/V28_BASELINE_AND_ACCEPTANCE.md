@@ -1,5 +1,8 @@
 # v2.8 基线、来源与统一验收矩阵
 
+> **产品分级后续注释（2026-10-13）：** 本文原65项v2.8高阶机制用例继续保留为历史目标/Pro能力储备，不得要求Free先完成虚拟拆合、AI命名和多Project派生工作区。Free优先使用新增[FR-01–15验收](FREE_PRO_ACCEPTANCE.md)，Pro使用PR-01–07；现有真实Project和活动技术UNKNOWN仍保留，不因新的计划划分而标PASS。
+
+
 2026-10-12，证据截止本轮GitHub核对。支持[唯一机制规范](../CORE_MECHANISMS_V2_8.md)与[原A–G计划](../DEVELOPMENT_PLAN.md)，不是新计划或产品实现。以下新验收用例均 **TARGET / NOT_RUN**；末尾数值只做独立设计算术核验，没有运行产品、Chrome、模型或Mac。
 
 ## 1. 真实GitHub基线与证据边界

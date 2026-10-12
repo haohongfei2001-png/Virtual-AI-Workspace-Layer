@@ -1,5 +1,8 @@
 # 文档效力、候选规范与授权边界
 
+> **2026-10-13用户最新产品决定：** 开发计划分为VAIWL Free（先实现完整原生Project/无项目聊天导航、原生标题与可靠活跃）和Pro（后续保留AI虚拟归组/命名等）。最新产品范围覆盖此前v2.8虚拟Workspace作为Free默认的候选；**不等于现在有权访问真实账号、创建真实Project、付费调用、PAIA或部署**。本轮GitHub仅修文档并更新现有Draft候选，不改运行时代码。见[FREE_PRO_PRODUCT_SCOPE](FREE_PRO_PRODUCT_SCOPE.md)和[DEVELOPMENT_PLAN](DEVELOPMENT_PLAN.md)§0。
+
+
 2026-10-12。本分支是**v2.8定向产品设计与原A–G计划修订候选**，不是运行时升级。用户已要求研究三项机制并提交Draft PR，但未审批本次提出的全部默认值。过去的Mac连续开发许可不扩大本轮明确的“仅文档、不得操作Mac”范围。
 
 ## 1. 三种状态必须分开

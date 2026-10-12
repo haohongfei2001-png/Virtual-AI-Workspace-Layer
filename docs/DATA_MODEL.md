@@ -1,5 +1,8 @@
 # VAIWL 数据模型与迁移合同 · v2.8候选
 
+> **Free/Pro数据边界修订：** Free以(scope,nativeProjectId)的真实原生Project为卡片身份，ConversationRef的项目归属必须显式区分“已确认ID / 已确认null无项目 / 未验证UNKNOWN”。Free项目/聊天行只使用原生观察名称，不能由旧DisplayIdentity覆盖。原有Workspace/Placement/DisplayIdentity/Series/人工保护与拆合等持久对象**保留，归Pro虚拟组织层或旧用户兼容资产**，不删除或迁移覆盖。Pro只能以独立VirtualTopic命名空间映射确认无项目聊天；虚拟关系不是原生Project membership。[分级规范](FREE_PRO_PRODUCT_SCOPE.md)；现有schema/代码尚未按此更改。
+
+
 状态：PROPOSED_FOR_OWNER_REVIEW；不是DDL、不是已实施schema。基线为PR #14 `0b07455…`，实际代码仍使用B1–B5/F1的同一扩展IndexedDB及受限合成身份。机制入口：[CORE_MECHANISMS_V2_8](CORE_MECHANISMS_V2_8.md)。
 
 ## 1. 既有实现必须保留

@@ -1,5 +1,8 @@
 # VAIWL v2.8 核心机制候选：主题创建、稳定组织与自适应显示
 
+> **2026-10-13后续范围决定：Free先交付，Pro保留AI。** [FREE_PRO_PRODUCT_SCOPE](FREE_PRO_PRODUCT_SCOPE.md) 对产品分级与Free默认对象具有优先效力。下文旧“Workspace独立于Project、跨Project聚合、虚拟标题与拆合、首次建立虚拟主题时建立同名Project”不再作为Free默认；它们保留为**Pro后续候选**。Free主题直接是原生Project ID/原生标题，另外显示无项目聊天的原生标题；两版共用真实活动与安全恢复。旧30日/自适应计划仅在可靠活动证据支持时用于Free，不能用Pro聚类或时间未知挡住Free显示。当前均是文档，Free真实宿主尚未完成。详细实施仍见唯一[DEVELOPMENT_PLAN](DEVELOPMENT_PLAN.md)。
+
+
 状态：**PROPOSED_FOR_OWNER_REVIEW / NOT_IMPLEMENTED**。2026-10-12。
 基线：PR #14 `0b07455a09b4f2ae2d756ffca5a868305815e424`；main仍为初始化提交。本轮仅文档，不启动测试浏览器、模型或原生写入。
 

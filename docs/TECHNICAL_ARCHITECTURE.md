@@ -1,5 +1,8 @@
 # VAIWL 技术架构 · v2.8定向候选
 
+> **Free-first构建策略：** 首发只组装真实宿主Project清单、已知无项目聊天、原始标题、活动观察/可信时间和原生导航。Free路径不引入模型、SuggestionBatch、虚拟命名或计费。活动排序采用可追溯的分层证据：经证实的用户发送时间与用于暂定显示的观察型时间严格隔离，后台重核验不阻塞绘制，但Free不能宣称没有数据时仍全账户准确。Pro虚拟分组/命名是可独立关闭的overlay，不可改变nativeProjectId、source、原生页面。后续详细分级及验收见[FREE_PRO_PRODUCT_SCOPE](FREE_PRO_PRODUCT_SCOPE.md)。
+
+
 PROPOSED_FOR_OWNER_REVIEW / LIVE_PROJECT_CREATE_NOT_VERIFIED。基线B1–B5、C1–C5及F1已具合成Chrome证据；本轮不实施runtime。原位导航外壳＋原生聊天区的主架构不变。
 
 ## 1. 实际基线与新增范围
