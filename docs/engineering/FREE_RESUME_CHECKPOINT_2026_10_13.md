@@ -157,3 +157,5 @@ ee7bc03正常push连接443超时，最后确认远端dab61e7 Draft，后续本�
 真实restore→undo暖缓存残留已修复；plan计数含omitted删除，等量替换仍拉新页，简化prior有fallback。最终完整Node610/0/0skip、最后源码真实UI1/1；原失败及修复来源见STATUS和free-round21-removal-ui。最终包/private/tmp/vaiwl-free-delivery-round21-20261013/vaiwl-free-synthetic-only.zip。
 
 下一独立任务：用现有100k send脚本可选诊断计时，拆workspace.partialContext/ingest、evidence.page/apply、native.page/apply和后续HEADER成本，先证明冷新root的重复编码开销再改缓存。Round20仍1.72–2.05s/1秒FAIL；不能宣称Free完成。远端最后确认dab61e7，后续本地提交待网络恢复后正常推送原origin，不重复部署或改变远端。
+
+第二十一轮诊断已完成并保存：见free-round21-send-profile.json/.existing.cpuprofile及stack-analysis.json，CPU主要严格JSON290.8ms和sha256242.2ms，发送内部native.apply453.7ms/evidence.apply255.7ms/shared.ingest171.5ms。未修改运行时代码，包仍第二十一轮。下一试验为安全ASCII JSON字符串快捷编码的独立交替基准；无收益则不改。空validator缓存预热尚不可采用：可变getter可能让checksum与缓存看到不同值；必须保持全部字节/schema/marker/CAS约束。

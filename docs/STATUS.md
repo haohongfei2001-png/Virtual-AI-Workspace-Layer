@@ -297,3 +297,5 @@ GitHub短只读连接仍8秒超时，未重复push；本地检查点保留，最
 最终完整Node610/610、0失败/0跳过；首次完整607/608暴露简化prior兼容性，修复后重新运行，未跳过。新增removal合同3项包含总数。最终真实headless/IDB UI1/1：撤销后0页刷新、残留链接0、阅读/textarea/未发草稿保持。新包SHA256 `3e5f4b14adbcd7298f70fb71fbe72e9c9610c70012f8fd61587d902a25b90c89`，报告free-round21-*。未重复100k，Round20三发送1秒FAIL不改变。
 
 下一性能测量已指向发送RPC内部及随后HEADER冷根校验，准备逐阶段计时，不能先凭推测新增可信hash旁路。GitHub连接未恢复，最后确认dab61e7 Draft；本地后续检查点待正常push。真实来源/账户/跨端/PAIA/物理设备及真人日常条件未解除，Free未完成。
+
+第二十一轮后续唯一诊断：FREE_SEND_PROFILE=1可选阶段计时/CPU采样，默认路径保持；既有发送partialContext54.2ms、native.page32.6ms、共享ingest171.5ms、evidence.page45.3ms、evidence.apply255.7ms、native.apply453.7ms；随后HEADER413ms/PAGE128ms/CHECK121ms。CPU self strictJSON290.8ms、sha256242.2ms、GC108ms、stable102.2ms、导航组装20.6ms。56hash（含harness）稳定、功能3/3，采样后的1792.7/2112.1/2114.1ms仅诊断，不替换无采样性能结果。原始cpuprofile和阶段/调用栈报告已保留。不能直接用空verifier预热可变对象；下一低风险试验仅比较严格等价的ASCII字符串编码，先测后改。
