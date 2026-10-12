@@ -9,17 +9,22 @@ function validateHeader(header){
 /** A plan is tied to the exact authority, native and evidence revisions. */
 export function planFreeReplica(prior,header){
  validateHeader(header);const same=prior?.header.scope===header.scope,full=!same;
+ const projectIds=Object.keys(versions(header,'project')),refIds=Object.keys(versions(header,'ref'));
  const perRefActivity=!full&&header.manifest.activityVersions&&prior.header.manifest.activityVersions;
  const refreshEvidence=full||(!perRefActivity&&prior.header.evidenceRevision!==header.evidenceRevision)||prior.header.activitySourceRevision!==header.activitySourceRevision||prior.header.visibilityRevision!==header.visibilityRevision||prior.header.evaluatedAt!==header.evaluatedAt||sessionKey(prior.header)!==sessionKey(header);
  // Project visibility can change without changing a member's own version.
  // UNKNOWN rows deliberately hide their former parent, so any project change
  // requires rechecking those rows as well as the changed project's known members.
  const projectChanges=new Set();
- if(!full){for(const id of Object.keys(versions(header,'project')))if(versions(prior.header,'project')[id]!==versions(header,'project')[id])projectChanges.add(id);
+ if(!full){for(const id of projectIds)if(versions(prior.header,'project')[id]!==versions(header,'project')[id])projectChanges.add(id);
   for(const id of Object.keys(versions(prior.header,'project')))if(!Object.hasOwn(versions(header,'project'),id))projectChanges.add(id);}
  const dependentRef=id=>{if(!projectChanges.size)return false;const row=prior?.refs.get(id);return row?.membership==='UNKNOWN'||row?.membership==='PROJECT'&&projectChanges.has(row.projectId);};
- const changed=kind=>Object.keys(versions(header,kind)).filter(id=>full||refreshEvidence||(kind==='ref'&&dependentRef(id))||(kind==='project'&&prior.header.membershipWitnessRevision!==header.membershipWitnessRevision)||versions(prior.header,kind)[id]!==versions(header,kind)[id]||(kind==='ref'&&perRefActivity&&prior.header.manifest.activityVersions[id]!==header.manifest.activityVersions[id]));
- return {scope:header.scope,revision:header.revision,evidenceRevision:header.evidenceRevision,sessionKey:sessionKey(header),full,rebuild:!full&&prior.header.inventoryComplete!==header.inventoryComplete,projects:changed('project'),refs:changed('ref')};
+ const changed=kind=>(kind==='project'?projectIds:refIds).filter(id=>full||refreshEvidence||(kind==='ref'&&dependentRef(id))||(kind==='project'&&prior.header.membershipWitnessRevision!==header.membershipWitnessRevision)||versions(prior.header,kind)[id]!==versions(header,kind)[id]||(kind==='ref'&&perRefActivity&&prior.header.manifest.activityVersions[id]!==header.manifest.activityVersions[id]));
+ // Removed IDs need no page, but must still invalidate the zero-page fast path.
+ // Count tombstones too; equal-size replacements already appear in changed().
+ const priorCount=(kind,rows,omitted)=>rows&&omitted?rows.size+omitted.size:Object.keys(versions(prior.header,kind)).length;
+ const inventoryChanged=!full&&(projectIds.length!==priorCount('project',prior.projects,prior.omittedProjects)||refIds.length!==priorCount('ref',prior.refs,prior.omittedRefs));
+ return {scope:header.scope,revision:header.revision,evidenceRevision:header.evidenceRevision,sessionKey:sessionKey(header),full,rebuild:!full&&(prior.header.inventoryComplete!==header.inventoryComplete||inventoryChanged),projects:changed('project'),refs:changed('ref')};
 }
 export function freeReplicaRequests(plan,limit=1000){
  if(!Number.isSafeInteger(limit)||limit<1||limit>5000)throw Error('invalid-free-page-limit');

@@ -151,3 +151,9 @@ ee7bc03正常push连接443超时，最后确认远端dab61e7 Draft，后续本�
 旧checkpoint无需再次hash：验证后同事务立即put原记录，IDB同步克隆和abort防污染；原生引用注册仅新增才写，恢复保留恢复后checkpoint。分组Node60、96、新10分别通过；真IDB20+2独立通过；100k发送1724.4/2045.6/2046.8ms均功能PASS但1秒FAIL，证据free-round20-*。包/private/tmp/vaiwl-free-delivery-round20-20261013/vaiwl-free-synthetic-only.zip，hash见STATUS。
 
 下一立即修复：真实restore→undo备份新增引用引发manifest仅删除，plan需rebuild，保持暖/冷投影一致。tests/free/replica-removal.test.mjs为待集成新反例，不属于本轮已通过数。当前GitHub短连接超时，远端最后确认dab61e7，本地ee7bc03及后续待正常推送；不改remote/force/merge/deploy，Free未完成。
+
+## 第二十一轮恢复增量（接38705b8）
+
+真实restore→undo暖缓存残留已修复；plan计数含omitted删除，等量替换仍拉新页，简化prior有fallback。最终完整Node610/0/0skip、最后源码真实UI1/1；原失败及修复来源见STATUS和free-round21-removal-ui。最终包/private/tmp/vaiwl-free-delivery-round21-20261013/vaiwl-free-synthetic-only.zip。
+
+下一独立任务：用现有100k send脚本可选诊断计时，拆workspace.partialContext/ingest、evidence.page/apply、native.page/apply和后续HEADER成本，先证明冷新root的重复编码开销再改缓存。Round20仍1.72–2.05s/1秒FAIL；不能宣称Free完成。远端最后确认dab61e7，后续本地提交待网络恢复后正常推送原origin，不重复部署或改变远端。

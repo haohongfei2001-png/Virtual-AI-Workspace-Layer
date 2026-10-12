@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第二十轮（接本地 `c81d84f`，远端最后确认 `dab61e7`）。共享检查点复用同事务已验证旧记录；继续原正式目录、分支和PR，不改发布状态。
+当前已推进至第二十一轮（接本地 `38705b8`，远端最后确认 `dab61e7`）。修复清单仅移除引用时暖缓存与冷投影不一致；继续原正式目录、分支和PR，不改发布状态。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -289,3 +289,11 @@ fixtureObserve复用workspaceContext单ref和native.page目标引用，不再在
 F1/发送组合60/0、共享资产/B4组合96/0、新检查点反例10/10分别通过，不相加冒称完整回归。真实headless/IDB旧20项分片合同和新增2项同步克隆/撤权回滚均通过，源码hash稳定。100k三发送功能通过，1724.4/2045.6/2046.8ms仍全部1秒FAIL；全量read0、各1发送/event/hint、草稿/阅读保持，55hash不变。新包SHA256 `7e5a4f9c8f8ec4ea9136993b7ed474a69ed188794cf7f25bce2a024b81477b49`，仅SYNTHETIC_ONLY。
 
 GitHub短只读连接仍8秒超时，未重复push；本地检查点保留，最后已确认远端dab61e7。独立审查确认restore→undo可使仅备份新增的v0引用从owner清单消失，而客户端零页分支仍复用旧snapshot。下一修复使增量与冷启动投影遵循同一清单，不把该操作称为原生删除。真实账户/来源/跨端/PAIA/物理设备及日常验收缺原条件，完整Free未完成。
+
+## 第二十一轮：仅移除清单也重建Free投影（接38705b8）
+
+真实restore→undo备份新增引用后，owner清单不再包含该v0引用，旧零页客户端仍显示2处链接，已用真实IDB/browser复现FAIL。计划现在复用本已枚举的当前IDs并比较旧map+omitted集合数量，移除无需拉页仍rebuild；等量替换走changed页，稳定tombstone不误重建。兼容只含header/refs的既有计划调用方，完整replica计数不额外遍历100k旧keys。该修复遵循owner清单，不删除原生对象或B1锚；所有已知引用由owner一致呈现仍属库存合同。
+
+最终完整Node610/610、0失败/0跳过；首次完整607/608暴露简化prior兼容性，修复后重新运行，未跳过。新增removal合同3项包含总数。最终真实headless/IDB UI1/1：撤销后0页刷新、残留链接0、阅读/textarea/未发草稿保持。新包SHA256 `3e5f4b14adbcd7298f70fb71fbe72e9c9610c70012f8fd61587d902a25b90c89`，报告free-round21-*。未重复100k，Round20三发送1秒FAIL不改变。
+
+下一性能测量已指向发送RPC内部及随后HEADER冷根校验，准备逐阶段计时，不能先凭推测新增可信hash旁路。GitHub连接未恢复，最后确认dab61e7 Draft；本地后续检查点待正常push。真实来源/账户/跨端/PAIA/物理设备及真人日常条件未解除，Free未完成。
