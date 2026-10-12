@@ -309,3 +309,13 @@ GitHub短只读连接仍8秒超时，未重复push；本地检查点保留，最
 包SHA256 `cc79ab39958c132420a2bb3578b8d5d7281086752275102b82d7e169cd801286`，仍SYNTHETIC_ONLY。现有原生/共享/活动manifest每次更改及后续读取仍处理大根，下一工作应继续围绕已量出的持久化/根校验关键路径，避免重复无收益微优化；共享schema/最终集成仍单writer。真实账户/渠道/跨端/PAIA/物理与日常验收未获条件，Free未完成。GitHub最后确认仍dab61e7 Draft，实际同步以最终Git结果为准。
 
 第二十二轮最终同步：GitHub连接恢复后一次正常快进push成功（dab61e7→be1289f），API确认PR #16仍Draft、head=be1289fff333f1465624a009ce6d1561d0ab42af，PR正文已更新650项回归和实际1秒FAIL。无force/merge/deploy，未改变目录/remote。本同步记录为后续文档提交，最新HEAD以Git为准。
+
+## 第二十三轮：原生检查点验证复用与恢复后分片回收（接c2f92e0）
+
+原生根缓存保留至多3个已完整验证版本，总8Mi字符预算不变；scope+checksum分区，每次仍比较完整新读payload字节。检查点先核对物理key，再作为旧根别名复用验证，未预热未验证写入。缓存淘汰、超预算、同摘要篡改、错误scope/结构/key均回到完整验证或拒绝回收。
+
+另复现恢复清空changes后下一写入漏掉旧checkpoint孤儿分片；缺失当前revision变更记录时扫描已验证旧manifest，仍只删除当前和上一检查点都不引用的版本。最终完整Node658/658、0失败/0跳过；真实headless IndexedDB恢复→写入→再次写入1/1通过，当前/上一检查点分片及读取保持。首次浏览器harness未路由测试模块已在测试侧修复，未更改产品权限。
+
+100k正常无采样三发送功能3/3，既有1546.2ms/新NONE1896.8ms/新Project1812.3ms，均仍1秒FAIL。56hash稳定，全量读取0，每旅程1事件/hint/原生消息，阅读/未发草稿保留；单次结果不作统计提速结论。MV3本轮NOT_RUN，沿用旧报告来源不冒充本轮覆盖。包SHA256 `314f9ce16c62cd8520b823459422dceefafc6d239734e4822c13fb1b699178d5`，仍SYNTHETIC_ONLY/NOT_RELEASE_READY。
+
+下一具体工作：客户端待处理synthetic元数据目前仅pathname归属，同URL账户切换可在新scope下重试旧事件；先补绑定scope/document来源约束，再评估已验证同scope重绑定时发送前省去一次快照。不可把冷启动无scope事件追认给新账户，也不可绕过Project初始化或最终CHECK。真实来源/账户/跨端/PAIA/物理与真人验收仍缺原条件，完整Free未交付。

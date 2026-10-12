@@ -167,3 +167,7 @@ ee7bc03正常push连接443超时，最后确认远端dab61e7 Draft，后续本�
 下一接既有profile：主要native.apply/evidence.apply/shared.ingest及HEADER新根冷校验成本，不再重写已测UI或做无依据微优化。可评估原生GC旧checkpoint验证的多版本缓存，但每次仍须完整字节/checksum/scope/schema匹配、保留8Mi预算和marker；尚未实施。空verifier预热可变对象方案仍不安全，禁止直接采用。真实来源/账户/PAIA/物理与F4条件未解除；Free未完成。当前GitHEAD用git核对，远端最后确认dab61e7，正常同步不改变分支/remote。
 
 第二十二轮同步完成：实现be1289fff333f1465624a009ce6d1561d0ab42af已正常快进push，GitHub API核对PR #16仍Draft且head一致；先前“待同步”是当时历史，不再代表这些实现提交。PR正文已更新，后续状态记录提交不改变运行时。续接仍沿原目录/分支；下一性能位置及未满足真实条件见上节，完整Free未完成。
+
+## 第二十三轮恢复增量（接c2f92e0）
+
+原生3版本严格缓存及恢复后GC孤儿修复已完成。完整Node658/0/0skip、真IDB恢复GC1/1、100k功能3/3通过，1546.2/1896.8/1812.3ms仍1秒FAIL。证据free-round23-*；包/private/tmp/vaiwl-free-delivery-round23-20261013/vaiwl-free-synthetic-only.zip，hash见STATUS。下一立即修复pendingSynthetic仅pathname的同URL换scope误归属风险，owner BOUND增加已核验scope、事件捕获原scope/document并比较，不可追认无scope旧事件；安全前提满足后再减少新聊天多余快照。Git已正常同步至c2f92e0，后续提交按正常push。所有真实外部条件未解除，Free未完成。

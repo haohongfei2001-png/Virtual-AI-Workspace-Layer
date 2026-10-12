@@ -98,7 +98,7 @@ export function loadNativePieces(store, manifest, scope, wanted, done, fail) {
   launching = false; finish();
 }
 
-export function saveNativePieces(store, scope, current, next, storage, command) {
+export function saveNativePieces(store, scope, current, next, storage, command, verifyCheckpoint = null) {
   const prior = storage?.manifest;
   const projectIds = prior ? (command.batch?.projects ?? []).map(row => row.id) : Object.keys(next.projects);
   const refIds = prior ? [...new Set([...(command.batch?.refs ?? []).map(row => row.id),
@@ -121,11 +121,17 @@ export function saveNativePieces(store, scope, current, next, storage, command) 
     const oldCheckpoint = store.get(nativeCheckpointKey(next.scopeKey));
     oldCheckpoint.onsuccess = () => {
       // Only retire pieces superseded before the checkpoint being retained.
-      // Corrupt diagnostic checkpoints are preserved for explicit repair.
+      // An unverifiable older checkpoint must not authorize deleting its pieces.
       let old;
-      try { old = nativeUnpack(oldCheckpoint.result); if (!isNativePartitioned(old)) return; validateNativeManifest(old, scope); } catch { return; }
+      try {
+        old = verifyCheckpoint ? verifyCheckpoint(oldCheckpoint.result) : nativeUnpack(oldCheckpoint.result);
+        if (!isNativePartitioned(old)) return;
+        if (!verifyCheckpoint) validateNativeManifest(old, scope);
+      } catch { return; }
       const changed = prior.changes.find(change => change.revision === prior.revision);
-      for (const kind of ['projects', 'refs']) for (const key of changed?.[kind] ?? []) {
+      // Recovery deliberately clears change history. Reconcile the older
+      // checkpoint once in that case, so its superseded pieces cannot leak.
+      for (const kind of ['projects', 'refs']) for (const key of changed?.[kind] ?? Object.keys(old[kind])) {
         const version = old[kind][key];
         if (version && version !== prior[kind][key] && version !== manifest[kind][key]) {
           store.delete(nativePartitionKey(next.scopeKey, kind, key, version));

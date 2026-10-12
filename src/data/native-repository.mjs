@@ -15,10 +15,20 @@ function fence({guard = () => true, signal} = {}) {
 }
 
 export class NativeRepository {
-  #rootCache=new VerifiedRecordCache();
+  #rootCache=new VerifiedRecordCache({maxEntries:3});
   #validateRoot(payload,record,scope){unpack(record);if(isNativePartitioned(payload))validateNativeManifest(payload,scope);else validateNativeFacts(payload,scope);}
-  verifiedRoot(row,scope){return this.#rootCache.read(row,scope.key,(payload,record)=>this.#validateRoot(payload,record,scope));}
-  #rootWithCounts(row,scope){return this.#rootCache.readWithCounts(row,scope.key,(payload,record)=>this.#validateRoot(payload,record,scope),['projects','refs']);}
+  #rootContext(row,scope){
+    if(typeof row?.checksum!=='string'||!/^[0-9a-f]{64}$/.test(row.checksum))throw Error('corrupt-native-record');
+    return JSON.stringify([scope.key,row.checksum]);
+  }
+  verifiedRoot(row,scope){return this.#rootCache.read(row,this.#rootContext(row,scope),(payload,record)=>this.#validateRoot(payload,record,scope));}
+  #rootWithCounts(row,scope){return this.#rootCache.readWithCounts(row,this.#rootContext(row,scope),(payload,record)=>this.#validateRoot(payload,record,scope),['projects','refs']);}
+  #verifyCheckpoint(row,scope){
+    if(row?.key!==nativeCheckpointKey(scope.key))throw Error('invalid-native-checkpoint-key');
+    // A checkpoint is an alias of a formerly validated root, not a new proof.
+    // Rekey only this envelope; cache hits still compare every newly read byte.
+    return this.verifiedRoot({...row,key:scope.key},scope);
+  }
 
   constructor({baseRepository, workspaceRepository = null, observationGate = null, clock = () => new Date().toISOString()}) {
     if (!baseRepository?.open || !baseRepository?.scopeOrThrow) throw Error('b1-repository-required');
@@ -270,7 +280,7 @@ export class NativeRepository {
                       const next = reduce(partial);
                       check();
                       const publish=()=>{
-                        try {check();saveNativePieces(states, normalized, partial, next, storage, command);
+                        try {check();saveNativePieces(states, normalized, partial, next, storage, command,row=>this.#verifyCheckpoint(row,normalized));
                           // This exact envelope was verified above in the same CAS transaction.
                           // The reducer clones its input; only rekey the unchanged prior payload.
                           // saveNativePieces queued the older checkpoint GC read before this put.
