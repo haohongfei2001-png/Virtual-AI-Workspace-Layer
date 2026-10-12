@@ -23,8 +23,12 @@ export class WorkspaceRepository {
     const s=scopeChecked(scope),db=await this.connection();fence(guard,signal);
     if(await this.partitioned.manifest(s,{guard,signal}))return this.partitioned.readAll(s,{guard,signal});
     return new Promise((resolve,reject)=>{
-      const tx=db.transaction(['b23_states','b23_views'],'readonly');let state,view=null,error=null,viewError=null;
-      const r=tx.objectStore('b23_states').get(s.key);r.onsuccess=()=>{try{state=r.result?validateState(unpack(r.result),s.key):emptyState(s);}catch(e){error=e;tx.abort();}};
+      const tx=db.transaction(['b23_states','b23_views','b23_checkpoints','b23_operations'],'readonly');let state,view=null,error=null,viewError=null;
+      const r=tx.objectStore('b23_states').get(s.key);r.onsuccess=()=>{try{state=r.result?validateState(unpack(r.result),s.key):emptyState(s);
+        // A missing root is fresh storage only if it has neither scoped workspace
+        // history nor a checkpoint. Never hide existing human assets as empty.
+        if(!r.result){const checkpoint=tx.objectStore('b23_checkpoints').get(s.key),history=tx.objectStore('b23_operations').index('scopeKey').openCursor(s.key);const existing=q=>{if(q.result){error=Error('corrupt-record');try{tx.abort();}catch{}}};checkpoint.onsuccess=()=>existing(checkpoint);history.onsuccess=()=>existing(history);}
+      }catch(e){error=e;tx.abort();}};
       // A corrupt view is not authority to discard intact Workspace assets. Preserve its bytes; report diagnostics.
       const v=tx.objectStore('b23_views').get(s.key);v.onsuccess=()=>{try{view=v.result?unpack(v.result):null;if(view)validateView(view.value);}catch{view=null;viewError='CORRUPT_VIEW';}};
       tx.oncomplete=()=>{try{fence(guard,signal);resolve({state,view,diagnostics:{view:viewError}});}catch(e){reject(e);}};tx.onabort=()=>reject(error??tx.error??Error('read-aborted'));

@@ -80,8 +80,17 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     if(!current(ticket,url))return;const host=adapter.inspect();if(!host.ok)return;recoveryPanel=panel;(host.navigationSlot??host.history).before(panel);expiry=setTimeout(()=>{if(current(ticket,url))void load();},Math.max(0,lease.expiresAt-Date.now()));
   }
   function requireBinding(){if(!lease||!data||stopped||!visible()||Date.now()>=lease.expiresAt)throw Error('binding-not-ready');}
+  async function prepareWriteBinding(){
+    requireBinding();if(lease.expiresAt-Date.now()>6000)return;
+    const ticket=generation,url=env.location.href,scope=data.scope,bound=await request('BIND');
+    if(!current(ticket,url))throw Error('stale-client-response');if(!bound?.ok)throw Error(bound?.reason??'bind-failed');
+    lease=bound;clearTimeout(expiry);expiry=setTimeout(()=>recover('lease-expired-active-js',{immediate:true}),Math.max(0,bound.expiresAt-Date.now()));
+    await readSnapshot(ticket,url);if(!current(ticket,url)||data.scope!==scope)throw Error('stale-client-response');
+    // Read-only renewal before dispatch, never replay or retry a human write.
+    scheduleHeartbeat();
+  }
   async function command(value,expectedRevision){
-    return queue(async()=>{try{requireBinding();}catch(e){recover(e.message);throw e;}
+    return queue(async()=>{try{await prepareWriteBinding();}catch(e){recover(e.message);throw e;}
       const ticket=generation,url=env.location.href,revision=expectedRevision??data.revision;
       let result;try{result=await request('B23_COMMAND',{operationId:'manual_'+randomId().replaceAll('-',''),expectedRevision:revision,command:value});}
       catch(e){if(current(ticket,url))recover(e.message);throw Error('write-result-unknown');}
@@ -92,14 +101,14 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     });
   }
   async function undo(){return queue(async()=>{
-    requireBinding();const ticket=generation,url=env.location.href;let sent=false;
+    await prepareWriteBinding();const ticket=generation,url=env.location.href;let sent=false;
     try{const log=await request('B23_HISTORY');if(!current(ticket,url))throw Error('stale-client-response');if(!log.ok)throw Error(log.reason);
       const prior=log.history.find(x=>x.actor==='human'&&!x.undoneBy&&!x.invalidatedBy&&['CREATE_WORKSPACE','UPDATE_WORKSPACE','SET_TITLE','PLACE','MOVE','SET_PREFERENCE','RESTORE_BACKUP'].includes(x.type));if(!prior)throw Error('nothing-to-undo');
       sent=true;const result=await request('B23_UNDO',{operationId:'undo_'+randomId().replaceAll('-',''),expectedRevision:data.revision,targetOperationId:prior.id});
       if(!current(ticket,url))throw Error('write-result-unknown');await readSnapshot(ticket,url);if(!result.ok)throw Error(result.reason);return result;
     }catch(e){if(current(ticket,url)&&retryable(e.message))recover(e.message);if(sent&&retryable(e.message))throw Error('write-result-unknown');throw e;}
   });}
-  async function assetRequest(type,extra={},write=false){const ticket=generation,url=env.location.href,scope=data?.scope;return queue(async()=>{requireBinding();if(!current(ticket,url)||scope!==data?.scope)throw Error('stale-client-response');let r;try{r=await request(type,extra);}catch(e){if(current(ticket,url))recover(e.message);throw Error(write?'write-result-unknown':e.message);}if(!current(ticket,url))throw Error(write?'write-result-unknown':'stale-client-response');if(!r.ok)throw Error(r.reason);if(write)await readSnapshot(ticket,url);return r;});}
+  async function assetRequest(type,extra={},write=false){const ticket=generation,url=env.location.href,scope=data?.scope;return queue(async()=>{if(write)await prepareWriteBinding();else requireBinding();if(!current(ticket,url)||scope!==data?.scope)throw Error('stale-client-response');let r;try{r=await request(type,extra);}catch(e){if(current(ticket,url))recover(e.message);throw Error(write?'write-result-unknown':e.message);}if(!current(ticket,url))throw Error(write?'write-result-unknown':'stale-client-response');if(!r.ok)throw Error(r.reason);if(write)await readSnapshot(ticket,url);return r;});}
   const assets={export:async()=>(await assetRequest('B23_EXPORT_BACKUP')).bundle,preview:async bundle=>(await assetRequest('B23_PREVIEW_RESTORE',{bundle})).preview,restore:(bundle,preview)=>assetRequest('B23_RESTORE_BACKUP',{bundle,planHash:preview.planHash,expectedRevision:preview.expectedRevision,operationId:'restore_'+randomId().replaceAll('-','')},true),storage:async()=>(await assetRequest('B23_STORAGE')).storage};
   async function manage(context={}){const ref=navigation.currentRef();context={...context,refId:ref?.id,snippet:adapter.selectedSnippet(ref)};if(!data)await load();if(!data||stopped||!visible())return;editor?.close();const ticket=generation,url=env.location.href;editor=openWorkspaceEditor({snapshot:data,command,undo,assets,context,onClose:()=>{editor=null;navigation.layout();if(current(ticket,url)){const roots=navigation.roots(),key=context.workspaceId?'actions:'+context.workspaceId:'管理工作空间';for(const root of [roots?.workspace,roots?.sidebar]){const n=[...(root?.shadow.querySelectorAll('[data-focus-key]')??[])].find(n=>n.dataset.focusKey===key);if(n){n.focus({preventScroll:true});break;}}}}});}
   function saveViewSoon(value,scope){

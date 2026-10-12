@@ -1,3 +1,4 @@
+import {finish,finishAsync} from './cooperate.mjs';
 import { createBackup, recoverAssets } from './backup.mjs';
 import { TABLES, emptyState, validateState, id, exact } from './state.mjs';
 import { validatePreference } from './preferences.mjs';
@@ -13,16 +14,29 @@ export function partitionUnpack(row){if(!row||digest(row.payload)!==row.checksum
 export const isPartitioned=p=>p?.format===PARTITION_FORMAT;
 const fence=o=>{if(o.signal?.aborted||o.guard&&o.guard()!==true)throw Error('stale-binding');};
 function headerState(m,preferences=m.preferences){return {schema:2,scopeKey:m.scopeKey,revision:m.revision,channel:m.channel,refs:{},events:{},coverage:{},identities:{},placements:{},sources:m.sources,workspaces:m.workspaces,preferences};}
-export function checkManifest(m,scopeKey){
+function* manifestChecks(m,scopeKey){let checked=0;
  exact(m,['format','generation','scopeKey','revision','channel','sources','workspaces','preferences','refVersions','humanRefs','units','changes']);
  if(m.format!==PARTITION_FORMAT||m.scopeKey!==scopeKey||!Number.isSafeInteger(m.units)||m.units<0||m.units>MAX_UNITS||!Array.isArray(m.changes)||m.changes.length>64)throw Error('invalid-partition-manifest');
- id(m.generation);const keys=Object.keys(m.refVersions);if(!Array.isArray(m.humanRefs)||m.humanRefs.length>MAX_REFS||new Set(m.humanRefs).size!==m.humanRefs.length||m.humanRefs.some(k=>!Object.hasOwn(m.refVersions,k)))throw Error('invalid-human-ref-index');if(keys.length>MAX_REFS)throw Error('partition-capacity');
- for(const k of keys){id(k);const v=m.refVersions[k];if(!Number.isSafeInteger(v)||v<1||v>m.revision)throw Error('invalid-partition-version');}
+ id(m.generation);const keys=Object.keys(m.refVersions);if(!Array.isArray(m.humanRefs)||m.humanRefs.length>MAX_REFS)throw Error('invalid-human-ref-index');const humans=new Set();for(const k of m.humanRefs){if(humans.has(k)||!Object.hasOwn(m.refVersions,k))throw Error('invalid-human-ref-index');humans.add(k);if(++checked%512===0)yield;}if(keys.length>MAX_REFS)throw Error('partition-capacity');
+ for(const k of keys){id(k);const v=m.refVersions[k];if(!Number.isSafeInteger(v)||v<1||v>m.revision)throw Error('invalid-partition-version');if(++checked%512===0)yield;}
  validateState(headerState(m,{}),scopeKey);
  for(const [key,p] of Object.entries(m.preferences)){id(key);if(p?.id!==key)throw Error('invalid-state-row');validatePreference(p,{refs:m.refVersions},{exact,id,text:(v,max)=>{if(typeof v!=='string'||!v.trim()||v.length>max)throw Error('invalid-text');}});}
- for(const c of m.changes){exact(c,['revision','refs']);if(!Number.isSafeInteger(c.revision)||c.revision<1||c.revision>m.revision||!Array.isArray(c.refs)||c.refs.length>20000)throw Error('invalid-partition-changes');c.refs.forEach(id);}
- if(stable(m).length>16*1024*1024)throw Error('state-too-large');return m;
+ for(const c of m.changes){exact(c,['revision','refs']);if(!Number.isSafeInteger(c.revision)||c.revision<1||c.revision>m.revision||!Array.isArray(c.refs)||c.refs.length>20000)throw Error('invalid-partition-changes');for(const key of c.refs){id(key);if(++checked%512===0)yield;}}
+ yield* manifestSize(m);return m;
 }
+/** Count the SAME deterministic JSON code units without allocating a giant
+ * sorted intermediate string on the renderer. Key order does not change length.
+ */
+function* manifestSize(value){let units=0,visits=0;const stack=[{value}],active=new Set();
+ while(stack.length){const frame=stack.at(-1);
+  if(frame.keys){if(frame.index>=frame.keys.length){active.delete(frame.value);stack.pop();continue;}const key=frame.keys[frame.index++];if(!frame.array)units+=JSON.stringify(key).length+1;if(frame.array&&!Object.hasOwn(frame.value,key))continue;stack.push({value:frame.value[key]});}
+  else{const v=frame.value;if(['function','symbol','bigint','undefined'].includes(typeof v)||typeof v==='number'&&!Number.isFinite(v))throw Error('non-json-value');if(v&&typeof v==='object'){const array=Array.isArray(v);if(!array&&![Object.prototype,null].includes(Object.getPrototypeOf(v)))throw Error('non-json-object');if(active.has(v))throw Error('non-json-value');active.add(v);const keys=array?Array.from({length:v.length},(_,i)=>i):Object.keys(v);units+=2+Math.max(0,keys.length-1);Object.assign(frame,{keys,index:0,array});}else{units+=JSON.stringify(v).length;stack.pop();}}
+  if(units>16*1024*1024)throw Error('state-too-large');if(++visits%512===0)yield;
+ }
+ return units;
+}
+export function checkManifest(m,scopeKey){return finish(manifestChecks(m,scopeKey));}
+export async function checkManifestAsync(m,scopeKey,guard){return finishAsync(manifestChecks(m,scopeKey),guard);}
 function preferenceRefs(p){return [...(p.workingSet?.value.refs??[]),...(p.savedSnippets?.value??[]).map(x=>x.refId)];}
 function addPiece(s,b){if(b.ref)s.refs[b.refId]=b.ref;if(b.identity)s.identities[b.refId]=b.identity;for(const t of ['events','coverage','placements'])for(const row of b[t])s[t][row.id]=row;}
 function makePiece(s,refId){return {scopeKey:s.scopeKey,refId,revision:s.revision,ref:s.refs[refId],identity:s.identities[refId]??null,events:Object.values(s.events).filter(e=>e.conversationId===refId),coverage:Object.values(s.coverage).filter(c=>c.conversationId===refId),placements:Object.values(s.placements).filter(p=>p.refId===refId)};}

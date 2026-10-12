@@ -1,0 +1,36 @@
+✔ PART01 bounded storage preserves all original 120/604 projections and canonical refs (132.018459ms)
+✔ PART02 the original CAS/idempotence transaction has one winner across connections (102.981292ms)
+✔ PART03 far-reference move and targeted undo use original human patches (140.116083ms)
+✔ PART04 repeated initialization cannot overwrite immutable live human pieces (128.487709ms)
+✔ PART05 mixed revisions and incomplete view replicas are rejected (105.931333ms)
+✔ PART06 revocation updates all evidence projections without rewriting reference pieces (110.777792ms)
+✔ PART07 damaged view leaves intact assets and unknown scope is rejected (95.33075ms)
+✔ PART08 A/B same ref IDs remain distinct (205.366917ms)
+✔ PART09 checkpoint retains previous immutable pieces and latest manual assets recover (158.5355ms)
+✔ PART10 v2 storage migration preserves latest human revision and revoked sources (341.796625ms)
+✔ PART11 asset backup includes latest manual references and preferences, dry-run is read-only (248.41575ms)
+✔ PART12 checkpoint plus latest workset preference restores reference dependencies safely (152.217792ms)
+✔ PART13 ingestion cannot reuse a global evidence ID in another reference partition (86.102208ms)
+✔ PART14 native quota failure cannot publish a manifest or success receipt (130.871917ms)
+✔ PART15 revocation after native put aborts pieces, checkpoint and receipt together (100.140833ms)
+✔ PART16 incremental replicas preserve canonical reference order and exact projection semantics (175.8ms)
+✔ PART17 affected-theme projection matches full reads across membership, order, preferences and source revocation (713.548334ms)
+✖ PART18 a missing published root with trusted history is corruption, never an empty workspace (39.15475ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3220.814666
+
+✖ failing tests:
+
+test at tests/f1/partitioned.test.mjs:4:55
+✖ PART18 a missing published root with trusted history is corruption, never an empty workspace (39.15475ms)
+  TypeError: Cannot read properties of null (reading 'manifest')
+      at change (file:///Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/native-partition-cases.mjs:20:147)
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/Codex/VAIWL-Development/c1/tests/f1/native-partition-cases.mjs:40:503)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

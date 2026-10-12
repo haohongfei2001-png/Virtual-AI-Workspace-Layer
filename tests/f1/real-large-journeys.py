@@ -10,6 +10,8 @@ from native_ui_checks import NativeChecks
 OUT=Path(sys.argv[1]);OUT.mkdir(parents=True,exist_ok=False)
 SEED=next(ast.literal_eval(n.value) for n in ast.parse((ROOT/'tests/f1/real-performance.py').read_text()).body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='SEED' for t in n.targets))
 INPUT_ONLY='--input-only' in sys.argv[2:]
+NATIVE_ONLY='--native-only' in sys.argv[2:]
+class NativeOnlyDone(Exception):pass
 r={'targetedDiagnostic':INPUT_ONLY,'argv':sys.argv,'startedAt':time.time(),'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'tests':[],'workerEvents':[],'errors':[],'scope':'actual extension IndexedDB / fresh headless Chrome / 100000 accessible synthetic refs / no real ChatGPT'}
 r['sourceHashes']={str(f.relative_to(ROOT)):hashlib.sha256(f.read_bytes()).hexdigest() for d in ['src','simulator','tests/f1'] for f in (ROOT/d).rglob('*') if f.is_file() and '__pycache__' not in str(f)}
 r['environment']={'macOS':subprocess.check_output(['sw_vers'],text=True),'node':subprocess.check_output(['node','--version'],text=True).strip(),'python':platform.python_version()}
@@ -59,8 +61,9 @@ try:
     if pg is not globals().get('p') and pg.url!='about:blank':pg.close()
    (OUT/'partial.json').write_text(json.dumps(r,ensure_ascii=False,indent=2));print(name,r['tests'][-1]['status'],flush=True)
   def contracts():
-   rows=worker.evaluate("async()=>{const out=[];for(const c of __F1.partitionedCases(indexedDB)){try{await c.run();out.push({name:c.name,status:'PASS'})}catch(e){out.push({name:c.name,status:'FAIL',error:e.message,stack:e.stack})}}return out;}");assert len(rows)==17 and all(x['status']=='PASS' for x in rows),rows;return {'actualExtensionIDB':True,'cases':rows}
+   rows=worker.evaluate("async()=>{const out=[];for(const c of __F1.partitionedCases(indexedDB)){try{await c.run();out.push({name:c.name,status:'PASS'})}catch(e){out.push({name:c.name,status:'FAIL',error:e.message,stack:e.stack})}}return out;}");assert len(rows)==20 and all(x['status']=='PASS' for x in rows),rows;return {'actualExtensionIDB':True,'cases':rows}
   case('F1-native-partition-migration-backup-recovery-contracts',contracts)
+  if NATIVE_ONLY:raise NativeOnlyDone()
   seed=worker.evaluate(SEED,{'size':100000,'partitioned':True});assert seed['counts']=={'refs':100000,'themes':120} and seed['protectedCount']==100000 and seed['initialCounts']=={'refs':604,'themes':120};r['seed']=seed
   if INPUT_ONLY:r['BSeed']=current_worker().evaluate(SEED,{'size':100000,'partitioned':True,'account':'B'})
   p=page();checks=NativeChecks(ctx,'mv3',ext,None,None,None,None,r)
@@ -128,13 +131,24 @@ try:
    observed=q.evaluate('(()=>{clearInterval(f1Timer);const v=HF.getView();return {gaps:f1InputGaps,input:f1Long.input===v.input,draft:v.input.value==="100k long native draft",transcript:f1Long.transcript===v.transcript,range:f1Long.range===v.transcript.querySelector("input[type=range]")&&f1Long.range.value==="73",messages:f1Long.messages.every((n,i)=>n===document.querySelectorAll("[data-message-id]")[i])};})()');observed['writeError']=write_error;r['nativeInputMeasurements']=observed
    if profile:(OUT/'native-input-cpu-profile.json').write_text(json.dumps(session.send('Profiler.stop')['profile']))
    assert all(observed[k] for k in ['input','draft','transcript','range','messages']);assert max(observed['gaps'])<150,{'maxGapMs':max(observed['gaps']),'rate':4};assert write_error is None,write_error
+   if profile:session.send('Profiler.start')
    q.get_by_label('返回工作区',exact=True).click();nav=[]
+   renewal_stalls=[]
    for i in range(20):
-    nav.append(q.evaluate('''async i=>{const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.workspace')).shadowRoot,b=root.querySelector(i%2?'[aria-label="较近的30日"]':'[aria-label="较早的30日"]'),t=performance.now();if(!b||b.disabled)throw Error('no adjacent interval');b.click();await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);return performance.now()-t;}''',i))
+    active(q);button=q.get_by_label('较近的30日' if i%2 else '较早的30日',exact=True)
+    value=button.evaluate("""async b=>{const root=b.getRootNode(),before=Number(root.querySelector('.workspace').dataset.segment),desired=before+(b.getAttribute('aria-label')==='较近的30日'?-1:1),t=performance.now();if(b.disabled)throw Error('no adjacent interval');b.click();await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);return {ms:performance.now()-t,at:performance.timeOrigin+t,connected:root.host.isConnected,desired};}""")
+    if not value['connected']:
+     active(q);assert int(q.locator('.workspace').get_attribute('data-segment'))==value['desired'];value['ms']=q.evaluate('at=>performance.timeOrigin+performance.now()-at',value['at']);renewal_stalls.append(value)
+    nav.append(value['ms'])
    q.get_by_label('查找主题与派生名称',exact=True).click();search=[]
    for i in range(10):
-    search.append(q.evaluate('''async()=>{const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.search')).shadowRoot,input=root.querySelector('input'),t=performance.now();input.value='合成规模引用';input.dispatchEvent(new Event('input',{bubbles:true}));if(root.querySelectorAll('.search-results .row').length!==24)throw Error('unbounded search DOM');await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);return performance.now()-t;}'''))
-   p95=lambda rows:sorted(rows)[int(.95*(len(rows)-1))];data={'rendererCPUThrottle':4,'nativeInput':observed,'navigationMs':nav,'navigationP95':p95(nav),'searchMs':search,'searchP95':p95(search)};assert data['navigationP95']<150 and data['searchP95']<300,data;q.screenshot(path=str(OUT/'100k-4x-long-chat.png'));session.send('Emulation.setCPUThrottlingRate',{'rate':1});q.close();return data
+    value=q.get_by_label('派生查找输入',exact=True).evaluate("""async input=>{const root=input.getRootNode(),t=performance.now();input.value='合成规模引用';input.dispatchEvent(new Event('input',{bubbles:true}));if(root.querySelectorAll('.search-results .row').length!==24)throw Error('unbounded search DOM');await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);return {ms:performance.now()-t,at:performance.timeOrigin+t,connected:root.host.isConnected};}""")
+    if not value['connected']:
+     active(q);assert q.locator('.search-results .row').count()==24;value['ms']=q.evaluate('at=>performance.timeOrigin+performance.now()-at',value['at']);renewal_stalls.append(value)
+    search.append(value['ms'])
+   p95=lambda rows:sorted(rows)[int(.95*(len(rows)-1))];data={'renewalStallsIncludedInSamples':renewal_stalls,'rendererCPUThrottle':4,'nativeInput':observed,'navigationMs':nav,'navigationP95':p95(nav),'searchMs':search,'searchP95':p95(search)};r['navigationMeasurements']=data
+   if profile:(OUT/'navigation-cpu-profile.json').write_text(json.dumps(session.send('Profiler.stop')['profile']))
+   assert data['navigationP95']<150 and data['searchP95']<300,data;q.screenshot(path=str(OUT/'100k-4x-long-chat.png'));session.send('Emulation.setCPUThrottlingRate',{'rate':1});q.close();return data
   case('F1-100k-4x-renderer-long-chat-concurrent-input-and-navigation',slow_input)
   def recovery():
    # Last committed edit is newer than the saved checkpoint; corrupt the actual root row.
@@ -149,6 +163,7 @@ try:
   case('F1-100k-native-corruption-checkpoint-plus-latest-human-recovery',recovery)
   r['transportTraceAfterLastBoot']=current_worker().evaluate('__F1Trace');assert all(x['ms']<6000 for x in r['transportTraceAfterLastBoot'] if x['ok']);pages=[x for x in r['transportTraceAfterLastBoot'] if x['type']=='B23_PARTITION_PAGE'];assert pages and all(x['bytes']<=16*1024*1024 for x in pages);r['boundedTransport']={'maxPageBytes':max(x['bytes'] for x in pages),'maxSuccessfulRpcMs':max(x['ms'] for x in r['transportTraceAfterLastBoot'] if x['ok']),'requestDeadlineMs':6000,'leaseMs':20000,'pageSize':5000}
   ctx.close();ctx=None
+except NativeOnlyDone:pass
 except (Exception,KeyboardInterrupt) as e:r['tests'].append({'id':'execution','status':'FAIL','error':str(e),'trace':traceback.format_exc()})
 finally:
  if ctx:

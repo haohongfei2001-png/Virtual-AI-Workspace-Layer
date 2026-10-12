@@ -19,3 +19,9 @@ large-journeys-after-collision：真实100k远引用/多tab/移动撤销/文件�
 另保留PART16真实引用顺序反例：原delta删除再插入T0将其移到数组末尾，已修复为manifest规范顺序；affected theme增量对title、MOVE、顺序、workingSet、source撤权逐项与完整read比较，22相关Node合同全部PASS。真实扩展IDB17合同通过（当前新layout），不使用mock冒充。活跃heartbeat检测损坏现直接进入同一B5已核验资产恢复UI，暂停而不删除未提交人工草稿；large-journeys-background实际UI恢复100k与最新人工数据已PASS，旧证据/收据失效。
 
 仍不是完整F1通过；input定向诊断不代表全部旅程。完成后必须回跑原9项完整100k旅程、1k/10k/100k性能、run-regressions的既有完整工程套件。旧失败、CPU profile、所有源码/build SHA留在各独立证据目录，不能改旧报告掩盖失败。
+
+完整100k真实MV3增量首次9/9 PASS：large-journeys-locator-boundaries。包括原18项真实扩展IDB合同、远F99999/native阅读、刷新新tab、手工冲突/原生连接CAS、移动撤销/实际下载/readonly dryrun/restore撤销、真实stopped事件+不同boot无刷新醒、20s lease、A/B各100k/unknown、4x CPU长160消息并发输入/原导航阈值、真实损坏UI恢复最新人工title和工作集且旧证据/收据失效。4x导航137.4ms/搜索74.8ms，原生timer最大43.4ms（同一轮），最大观察到成功RPC1340.6ms/page5750807字节。6s/20s未变。不是物理弱设备/生产ChatGPT认证。
+
+保留随后完整反例：移/撤销在lease尾部发生真实commit但client被expiry清理而反馈未确认。最小修复在发送人工作业之前不足6s余量时仅BIND+读最新验证同scope，不重放或自动重试任何写入。旧6s/20s边界仍保留。元数据长同步checkManifest也被拆为共同校验生成器，16Mi JSON码元用无大字符串的严格长度计数，key排序不影响长度。新增缺root+人工历史时误判为空的反例已修复，legacy/partitioned都recover最新human；Node158通过。新增16Mi护栏+损坏共享piece安全拒绝/完整human导出合同Node22通过，待真实extension补测后整体全量回归。
+
+性能驱动原page.evaluate找DOM在actual lease卸载与重连之间有check-to-use竞态。改用实际控件locator.evaluate，并把点击后发生的重连停顿包括在样本，不重试导航业务、不减20/10样本或阈值；worker/lease仍独立实际验收。失败截图和全部原reports不改。接下来顺序真实新Profile验证新增native20、1k/10k旧布局与100k新布局性能、既有全量DOM/真实IDB/Page/MV3/C1/B5/C34/C5/B4，源码/构建SHA逐份对应。F1完整当前验收未最终完成，继续执行不阶段停止。
