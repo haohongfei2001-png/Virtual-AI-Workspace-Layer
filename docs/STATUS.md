@@ -1,28 +1,36 @@
-# VAIWL 实际执行状态
+# VAIWL实际状态：整合计划就绪，完整Free尚未交付
 
-2026-10-12；按用户授权在Mac本地连续实施原 DEVELOPMENT_PLAN。GitHub用于版本/审查，本地持久工作树为实际构建环境；不改产品目标。
+核对日期：2026-10-13。远端PR #15读取到的head为`fd5df2be787f8eef053de65965395d7eeea1a80d`；父#14为`0b07455a09b4f2ae2d756ffca5a868305815e424`；main为初始化`76e3dbdb283769e5c94fcef2de35f6b21cf7e49c`。本轮读取到的最新PR仍为#15、Draft/未合并。
 
-| 原任务ID | 实际完成状态 | 证据/剩余依赖 |
+本版是对上述文档的最终正文替换。产品方向已确定，计划文本就绪；代码仍未实现新Free原生Project投影。**本轮没有产品测试结果，是否已提交须核对实际PR head；离线文件包不能算GitHub交付。** 本轮GitHub可用操作为读取，写入受阻；没有使用Mac或其他通道绕过。
+
+## 1. 已有工程与Free差额
+
+| 阶段 | 已有证据/实现 | 当前Free剩余状态 |
 |---|---|---|
-| A/R0-00–06 | LIMITED；真实ChatGPT/PAIA待独立授权 | 历史R0及当前合成宿主工程，不能冒充生产GO |
-| B1–B4 | 隔离合成范围PASS | PR #5–8，C1/B5完整回归仍通过；生产resolver不可用 |
-| B5 | 隔离合成范围PASS | [B5验收](engineering/b5-mac-2026-10-12/ACCEPTANCE.md)，Draft PR #10；双损坏安全拒绝，文件需外部保存；新分区损坏根保全最新人工日志，损坏共享piece安全拒绝；备份是有界人工资产文件，非全部100k原证据无损镜像 |
-| C1 | 原始设计一致性修复PASS；宿主留白差异明确 | PR #9，原设计包在design/approved/v2.7，[差异](engineering/c1-fidelity-2026-10-12/DIFFERENCES.md)；实际120/604 |
-| C2 | 合成原位外壳/原生新建/搜索/返回已实现；生产兼容待授权 | 现有原生保留49条DOM及真实组件旅程；R0-03/04/05生产待验证 |
-| C3 | 隔离合成手工工作集/来路/文档tab范围PASS | [C34验收](engineering/c34-mac-2026-10-12/ACCEPTANCE.md)，Draft PR #11；本轮获授权通过Git Data API精确同步原Git对象/提交，SHA与父子关系保留 |
-| C4 | 隔离合成已知查找/手工片段/安全定位PASS | 同一导航、人工资产与原生搜索，Draft PR #11；未知格式/生产迁入仍待独立渠道证据 |
-| C5 | 当前合成可独立范围PASS；生产/真人等待 | 真正Chrome200%、键盘/边缘/焦点/响应式/深浅色/长列表/生命周期通过；真人/物理IME/真实host/PAIA未运行 |
-| C6 | WAITING_AUTHORIZATION | 真实清洁ChatGPT与PAIA |
-| D1/D2 | 合成标注/离线保守预览实验已执行；质量目标未达认证 | [1200条与限制](engineering/d12-offline-2026-10-12/REPORT.md)，覆盖16.67%，不是独立真人gold或98%产品认证；运行时未启用，Draft PR #12 |
-| D3 | 可选，尚未启用 | 依赖D1/D2与PD-09质量/资源证据，不强开模型 |
-| D4/D5 | WAITING | 费用/外传授权与C6真人收益验证 |
-| E1–E3 | WAITING_AUTHORIZATION | 真实原生写入完全未授权 |
-| F1 | 隔离合成 Chrome 1k/10k/100k 与多tab/4x压力档 PASS；物理弱设备及生产未测 | Draft PR #13；[当前F1验收](engineering/f1-recovery-2026-10-12/FINAL_ACCEPTANCE.md)：160 Node、54旧原生IDB＋20分区IDB、49 DOM、9完整100k MV3旅程；100k导航p95 36ms/搜索32.5ms，4x 137.4ms/74.8ms/输入最长43.4ms；6s请求/20slease/旧20k表和16Mi单记录护栏不变；分区读取和增量投影，同一CAS/恢复能力。物理弱设备/C6生产仍待独立环境证据 |
-| F2 | WAITING_AUTHORIZATION | 跨设备服务/密钥与同步 |
-| F3/F4 | WAITING_DEPENDENCIES | C6/F1/渠道批准及长期实测；未部署/发布 |
-| G1 | WAITING_AUTHORIZATION | PAIA双方协议/共存，不修改PAIA |
-| G2 | 未新启用可选生态 | 不重复既有研究；官方资格不等于当前用户host证明 |
+| A/R0 | 合成与Chrome合成多轮；#14真实访客部分调查 | 真实账户/原生Project库存/成员/持续活动渠道未认证，BLOCKED_LIVE |
+| B1 | scope/document broker、同库IDB和旧回包拒绝 | 原生Project/native membership三态与生产来源合同待实现/核验 |
+| B2 | 严格事件/覆盖/撤权、合成channel | 原生标题/成员更新接口、观察型提示、活动可逆决定和有界校准待实现 |
+| B3 | 人工Workspace/Placement/Identity与偏好 | Free必须改用原生事实；旧虚拟资产保留Pro，不代表Free已支持真实项目 |
+| B4 | CAS/幂等/重连/多tab/合成生命周期 | Free原生源变化/活动/策略更新和真实宿主生命周期仍需增量回归 |
+| B5 | 人工日志/恢复/备份/损坏和配额反例 | 新事实/三态/格式迁移、Free/Pro资产兼容待做，不重建旧库 |
+| C1–C5 | v2.7合成界面、工作集/片段/键盘200%等可独立部分 | 原生项目卡+无项目列表+native-only名称+活动及真实适配尚未完成 |
+| C6 | 合成闭环有记录 | 完整Free真实日常、跨设备、PAIA/物理IME仍未通过 |
+| D1/D2 | 1200模板，16.67%覆盖，影子预览 | DEFERRED_PRO；不是通用自动虚拟收录/智能命名 |
+| D3–D5 | 原计划保留 | DEFERRED_PRO；无供应商/模型/费用自动许可 |
+| E1–E3 | 原生写入设计/有限授权原则 | OPTIONAL_LOCKED；不是Free用户使用原生入口的前置 |
+| F1 | #13完整100k合成MV3、分区/增量性能记录 | 复用但要对Free真实分布/源更新/5H再验，不能原数认证新投影 |
+| F2/F3/F4 | 同步/打包/发布/长期目标保留 | F2可选后置；F3/F4 Free路径待C6/F1，不依赖D/E |
+| G1/G2 | 共存与可选协议边界保留 | 运行共存须Free验收，数据协议/官方高级生态后置 |
 
-恢复入口：[持续检查点](engineering/CONTINUOUS_CHECKPOINT_2026_10_12.md)。当前唯一路线仍DEVELOPMENT_PLAN A–G；上表是证据状态，不是第二计划。历史状态原件存[工程档案](engineering/STATUS_BEFORE_CONTINUOUS_2026_10_12.md)。PR均Draft，不合并/部署；不访问日常Chrome、私人聊天、付费服务或真实ChatGPT。
+旧结果详细证据入口见[基线表](research/V28_BASELINE_AND_ACCEPTANCE.md)，本表不累加各组数字或把旧阶段重置为未开发。PR依赖链#1→#5→#6→#7→#8→#9→#10→#11→#12→#13→#14→#15；#2–#4为独立实验支线。
 
-2026-10-12 当前断点：GitHub同步已恢复，#11/#12/#13的原始本地commit SHA与父子关系逐对象核验后非强推。F1运行时代码 b7a56817056a93add0116a2b13c2b41e9aa6d28d，最终文档/证据提交见F1分支head。当前授权、当前Mac合成环境且依赖满足的A–G任务已完成；其余清洁ChatGPT/PAIA/真实原生写入/同步服务/付费外传/发布或独立真人质量与物理弱设备证据未满足，不冒充全部产品生产完成。没有后台继续执行承诺。
+## 2. 立即可执行与真实阻塞
+
+取得后续Free实施授权后，最早可执行切片为B2.F1/B3.F/C1.F1：原生Project事实/成员三态/native-only投影/无项目清单及同库兼容，复用现有模拟器和回归。同步准备R0-01/02/03.F的最小真实条件；没有条件不启动私人数据读取，继续本地活动决策/迁移/生命周期工程。
+
+真实卡住的不是AI：是scope/原生库存和可持续活动来源、原生组件适配的证据。UNKNOWN的可达回退必须实现，但不能把回退算成真实准确性通过。完整Free未达到FREE-ACCEPTED，不能开始抢跑Pro功能或宣称可正式发布。
+
+## 3. 本次文档交接状态
+
+PLAN_TEXT_READY；REMOTE_WRITE_BLOCKED（当前工具未提供写入动作，也无已配置提交凭证）；RUNTIME_UNCHANGED；NEW_PRODUCT_TESTS_NOT_RUN。可提交文件包以固定head与逐文件旧blob作为保护条件，写回前必须重新读PR #15，不覆盖别人的新提交。提交成功后记录真实新head再更新本状态，禁止预造SHA。
