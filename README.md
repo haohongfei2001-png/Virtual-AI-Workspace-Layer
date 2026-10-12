@@ -1,24 +1,22 @@
 # VAIWL — Virtual AI Workspace Layer
 
-在原生 ChatGPT 旁工作的可逆语义工作空间层，按已批准 v2.7 设计与原 A–G 路线实施。当前工程运行范围是独立合成宿主和全新隔离 Chrome MV3；生产 ChatGPT resolver 保持关闭，尚无面向真实账户的安装/发布交付。
+ChatGPT原位的可逆主题工作空间：稳定主题、跨原生Project的对话引用、手工意图和工作现场；保留真正原生聊天/输入/模型/工具。不是另一套聊天客户端或PAIA思想库。
 
-## 正式依据与实际状态
+## 本分支：v2.8机制升级候选
 
-- [实际 A–G 状态](docs/STATUS.md)、[授权边界](docs/AUTHORITY.md)、[完整原计划](docs/DEVELOPMENT_PLAN.md)、[执行约束](AGENTS.md)。
-- [v2.7 Canonical](docs/CORE_FLOW_V2_7.md)、[交互规格](docs/INTERACTION_SPEC.md)、[原生保留](docs/NATIVE_FEATURE_PRESERVATION_V2_6.md)。
-- [原批准 v2.7 原型/效果图原件](design/approved/v2.7/VAIWL_v2.7/)、[导入与哈希](design/approved/v2.7/IMPORT.json)。历史 v1–v2.6 文件保留为档案，非当前执行基准。
-- [本轮连续实施报告](docs/engineering/CONTINUOUS_FINAL_2026_10_12.md)、[持久恢复检查点](docs/engineering/CONTINUOUS_CHECKPOINT_2026_10_12.md)、[最新真实截图](docs/engineering/f1-mac-2026-10-12/final-journeys/c1/)。
+用户要求定向设计三项机制：主题内创建真实Project/新窗口、主题成立与内容拆合、自适应活跃区间。**本分支仅文档Draft，未改源码或原型，不操作Mac，不执行真实Project/模型/合并。**
 
-## 当前体验与工程范围
+- [三项机制唯一入口](docs/CORE_MECHANISMS_V2_8.md)与[待批准决策](docs/DECISIONS.md)
+- [当前实际状态](docs/STATUS.md)、[文档效力/权限](docs/AUTHORITY.md)、[唯一A–G开发计划](docs/DEVELOPMENT_PLAN.md)
+- [交互](docs/INTERACTION_SPEC.md)、[数据与迁移](docs/DATA_MODEL.md)、[技术](docs/TECHNICAL_ARCHITECTURE.md)、[隐私/恢复](docs/PRIVACY_SAFETY_RECOVERY.md)、[语义算法与评估](docs/AI_NAMING_EVALUATION.md)
+- [最新GitHub/代码/来源与验收用例](docs/research/V28_BASELINE_AND_ACCEPTANCE.md)、[同一R0定向任务](docs/experiments/R0_CAPABILITY_SPIKE.md)、[文档检查范围](docs/research/V28_DOCUMENT_VALIDATION.md)
 
-一个主题一张主页静态卡片，活跃窗口直接可见，旧窗口在父主题左侧局部展开。按最近可靠用户新发送独占固定30个当地日历日段；当前段无向上，历史段连续相邻切换，未知不伪装历史。侧栏主题可折叠，阅读区一个无字工作区返回；原生输入/消息/模型/工具/Project与浏览器历史不被替代。
+已有运行时仍执行v2.7；v2.8推荐须用户审定及后续实施。批准的v2.7原型与效果图原件保持在[design/approved/v2.7](design/approved/v2.7/)，不把其中模拟聊天组件迁成生产UI。
 
-同一扩展IndexedDB保留人工名称/图标/顺序/归属，CAS、幂等、冲突撤销、20秒lease自动重连与多标签页保护。B5增加资产文件备份、只读dry-run、最新人工修改的安全检查点+日志恢复及损坏/配额反馈；工作集与用户选中片段复用人工资产和原生导航，不后台收集正文。
+## 核对到的工程状态
 
-C1设计一致性修复在Draft [PR #9](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/9)，B5在stacked Draft [PR #10](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/10)。C3–C5、D离线与F1后续增量已本地提交，普通Git端点故障导致尚未远端交付；详见检查点。没有合并main或发布。
+main仍初始化提交；PR #1–#14均Draft。B1–B5、C1–C5的独立部分、D1/D2影子规则与F1分区性能已有连续工程证据；#11/#12/#13已经远端交付，100k合成MV3已在PR #13验证，不能再从旧README推断缺失。
 
-本轮最终135 Node、54原生IndexedDB、49 DOM（mock层单列）、页面/MV3与真实UI/worker旅程通过，120主题/604窗口不缩水。F1 1k/10k实测通过，100k容量仍BLOCKED；D的1200模板合成样本不是98%/90%产品质量认证。真实ChatGPT/PAIA/真人发现性/物理IME、原生写入/同步/付费渠道需独立授权或证据，不拿合成测试冒充。
+PR #14是真实访客部分验证，不是登录态产品验收：原始用户发送时间和历史覆盖仍UNKNOWN，Project/账户接入和实际PAIA共存未完成。D1/D2模板质量不代表通用AI整理已可用。
 
-## 本地验证
-
-专用隔离 Python 环境依赖见 tests/requirements-local.txt；Node测试和各驱动命令原件在最终报告所链接的commands.json。`python3 tests/f1/verify-evidence.py`只校验最新源码/结果/原件hash，不启动浏览器或改数据。实际浏览器驱动使用全新headless Profile、127.0.0.1合成宿主及仅本次实例的CDP，不能连接日常Chrome或真实ChatGPT。
+详细状态和范围以STATUS为准；历史证据按各自head/环境保留，不相加为完成度。本轮推荐“首次确认后同名Project、人工主题零AI依赖、有效H自适应”仍是待审设计，不是已经可以安装使用的新增功能。
