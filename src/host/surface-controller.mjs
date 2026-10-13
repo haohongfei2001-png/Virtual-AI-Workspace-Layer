@@ -1,12 +1,13 @@
+import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Isolated content composition. Public window messages only correlate an owned
  * frame. Grants and mount registration travel exclusively over the trusted bridge. */
-export function createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin,now=Date.now,schedule=setTimeout,cancel=clearTimeout}={}){
+export function createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const origin=new URL(extensionOrigin);if(origin.protocol!=='chrome-extension:'||origin.host===''||!['','/'].includes(origin.pathname)||origin.search||origin.hash||!doc?.defaultView||!adapter||!surface||typeof bridge?.registerMount!=='function'||typeof bridge.confirmParent!=='function')throw Error('invalid-surface-controller');
  const trustedOrigin=`${origin.protocol}//${origin.host}`,win=doc.defaultView;
  let epoch=0,current=null;
  function removeReturn(state){state.button?.remove();state.button=null;}
- function dispose(state,reason){if(!state)return;cancel(state.timer);state.observer?.disconnect();win.removeEventListener('message',state.listener);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
+ function dispose(state,reason){if(!state)return;cancel(state.timer);cancel(state.renewTimer);state.observer?.disconnect();win.removeEventListener('message',state.listener);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
  function stop(reason='surface-stopped'){epoch++;const prior=current;current=null;adapter.stop();dispose(prior,reason);}
  function valid(state,requireRegistered=true){
   if(current!==state||state.epoch!==epoch||requireRegistered&&!state.registered||doc.location.href!==state.url)return false;
@@ -16,9 +17,23 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function showWorkspace(){const state=current;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}removeReturn(state);surface.showWorkspace(state.handle);state.mode='workspace';return true;}
  function showReading(){const state=current;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}surface.showReading(state.handle);state.mode='reading';if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.textContent='▦';button.addEventListener('click',showWorkspace);state.inspection.navigationSlot.append(button);state.button=button;}return true;}
  function suspend(reason='native-layer'){const state=current;if(!state?.handle)return;removeReturn(state);surface.suspend(state.handle,reason);state.mode='suspended';}
- function arm(state){cancel(state.timer);const until=Math.min(Date.parse(state.context.binding.expiresAt),...Array.from(state.grants.values(),g=>Date.parse(g.expiresAt)));state.timer=schedule(()=>{if(current===state)stop('ui-grant-expired');},Math.max(0,until-now()));}
+ function arm(state){cancel(state.timer);const until=Math.min(Date.parse(state.context.binding.expiresAt),...Array.from(state.grants.values(),g=>Date.parse(g.expiresAt)));state.timer=schedule(()=>{if(current===state)stop('ui-grant-expired');},Math.max(0,until-now()));if(typeof bridge.renewSession==='function'&&state.grants.size===2&&!state.renewing&&state.renewTimer===null)state.renewTimer=schedule(()=>{state.renewTimer=null;void renewSession(state);},10000);}
+ async function renewSession(state){
+  if(!authorized(state)){if(current===state)stop('stale-session-renewal');return;}state.renewing=true;
+  try{
+   const raw=await withRequestDeadline(()=>bridge.renewSession({handle:state.handle,binding:state.context.binding}),{timeoutMs:6000,now:elapsedNow,schedule,cancel});
+   if(current!==state)return;if(!authorized(state))throw Error('stale-session-renewal');
+   const ack=structuredClone(raw),binding=ack?.binding,keys=['documentToken','producerToken','browserDocumentId','routeEpoch','origin'];
+   const future=value=>Number.isFinite(Date.parse(value))&&Date.parse(value)>now()&&Date.parse(value)<=now()+20000;
+   if(ack?.ok!==true||!binding||Object.keys(binding).sort().join(',')!==[...keys,'expiresAt'].sort().join(',')||keys.some(k=>binding[k]!==state.context.binding[k])||!future(binding.expiresAt)||!Array.isArray(ack.grants)||ack.grants.length!==2)throw Error('invalid-session-renewal');
+   const next=new Map();for(const grant of ack.grants){const previous=state.grants.get(grant?.role);if(!previous||next.has(grant.role)||['id','mountId','role','parentDocumentId','uiDocumentId','scopeGrantId'].some(k=>grant[k]!==previous[k])||!future(grant.expiresAt))throw Error('invalid-session-renewal');next.set(grant.role,Object.freeze({...grant}));}
+   if(adapter.updateBinding(binding)!==true)throw Error('invalid-binding-renewal');
+   state.context={...state.context,binding:Object.freeze({...binding})};state.grants=next;
+  }catch{if(current===state)stop('session-renew-failed');}
+  finally{state.renewing=false;if(current===state)arm(state);}
+ }
  async function start(options){
-  stop('surface-restart');const run=epoch,state={epoch:run,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,observer:null,mode:'waiting'};current=state;
+  stop('surface-restart');const run=epoch,state={epoch:run,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,observer:null,mode:'waiting'};current=state;
   try{
    state.context=await adapter.start(options);if(current!==state)return null;
    state.inspection=adapter.inspect();if(!state.inspection?.ok||!state.inspection.navigationSlot?.isConnected)throw Error('invalid-return-slot');

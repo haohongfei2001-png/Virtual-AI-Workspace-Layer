@@ -81,6 +81,23 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
     try{check();}catch(error){revokeDocument(sender.documentId);throw error;}
     return {ok:true,grant};
    }
+   if(message.type==='HOST_UI_STATUS'){
+    if(!schema(message,[...bindingKeys,'mountId']))throw Error('invalid-ui-status');
+    await parent(message,sender);check();
+    const mount=registrations.get(message.mountId),epoch=revocationEpoch;
+    if(mount?.tabId!==sender.tab.id||mount?.documentId!==sender.documentId)throw Error('ui-mount-mismatch');
+    const records=[...uiDocuments.values()].filter(entry=>entry.grant.mountId===message.mountId);
+    if(records.length!==2||new Set(records.map(entry=>entry.grant.role)).size!==2)throw Error('incomplete-ui-pair');
+    const renewed=[];
+    for(const record of records){
+     const grant=await grants.renew({sender:record.sender,grantId:record.grant.id,mountId:message.mountId});check();
+     if(epoch!==revocationEpoch)throw Error('ui-authority-invalidated');
+     remember(record.sender,grant);renewed.push(grant);
+    }
+    await parent(message,sender);check();
+    if(epoch!==revocationEpoch||registrations.get(message.mountId)!==mount)throw Error('ui-authority-invalidated');
+    return {ok:true,grants:renewed};
+   }
    if(message.type==='HOST_UI_RELEASE'){
     if(!schema(message,[...bindingKeys,'mountId']))throw Error('invalid-ui-release');
     await parent(message,sender);check();

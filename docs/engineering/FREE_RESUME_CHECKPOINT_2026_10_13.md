@@ -775,3 +775,14 @@ Round75最终计时补充：session provider将expiry墙钟与6秒monotonic elap
 最终完整Node1532/1532，0失败/跳过；实际旧合成MV3 9/9；新UI MV3四退出路径PASS。旧MV3初次2PASS/7FAIL由本地server未开放新静态import导致host初始化失败，已精确放行单模块并补HTTP合同，原失败保留。新build缺静态模块、snapshot时钟、UiGrant子frame诊断/断连mask失败也独立保存。无重复100k测试，历史4x冷启FAIL不改标签。
 
 下一项仍为既有B1.F+B2.F1+C2：安全document及controller期限同步、共享ViewSession的有界双frame数据/导航闭环，再继续原计划其余Free。当前controller仍安全地在初始20秒文档期限退出，frame续租尚不能代表长期完整支持；scope C1/C2、发送/continuation、生产完整profile及真实G/U仍未验收。Free未完成，NOT_RELEASE_READY。
+
+
+## Round78：原位文档与双frame期限续期
+
+前置414122d已本地提交；两次正常push均GitHub443连接超时，API最后确认远端仍e2ae316，未宣称推送成功、不改变远端、不循环重试。新增严格HOST_DOCUMENT_RENEW，保持document/producer/routeEpoch，仅真实当前frame检查前后都有效时延20秒transport期限；6秒monotonic请求上限，超时迟到不复活。scope proof与活动source时间不续，过期/换路由仍拒绝。
+
+HOST_UI_STATUS通过已验证父文档与实际两role frame同步最新UiGrant；与frame自己的10秒续约按精确sender/grant singleflight，避免健康并发误判revoke。adapter.updateBinding不重启observer/discovery/producer序列/原节点动作；controller每10秒可信桥续会话，整体6秒deadline，核对相同binding与两grant身份才原位更新，保留mount/frames/阅读返回/原生草稿。无新JOIN，无未验证scope续权。
+
+最终Node1554/1554、0失败/跳过。真实隔离headless MV3同一mount及原frame超过初始20秒后仍有效，随后文档撤权/端口断连/实际disable/uninstall四路径PASS，0open popover、私有frame不可达、原生reading与同一textarea草稿保持；sourceChangedDuringRun=false。第一次长会话测试在填入原生draft后错误期待workspace仍打开，实际原生focus按设计suspend；测试显式重新打开后才量续期，保留原失败而不改生产让位规则。UiGrant wrapper先返回错误reason导致旧两合同失败已保持原expired语义修复，不弱化拒绝。
+
+这仍是固定私有标记的离线生命周期测试，不是完整Free UI数据J1；独立scope proof60秒后安全退出路径保持，需后续可检测身份刷新/重授。下一项直接接单owner共享ViewSession到现有双frame renderer的有界真实Project/Conversation显示与原生导航。所有既有真实G/U、C1/C2、发送continuation、4x100k及发布差额保持；Free未完成、NOT_RELEASE_READY。

@@ -8,7 +8,7 @@ export function createUiGrants({extensionId,uiURL=null,uiURLs=null,getFrame,getC
  const urls=uiURLs??{workspace:uiURL,sidebar:uiURL};
  if(Object.keys(urls).length!==2||!Object.hasOwn(urls,'workspace')||!Object.hasOwn(urls,'sidebar'))throw Error('invalid-ui-url');
  const roleURLs=Object.freeze({...urls});for(const value of Object.values(roleURLs)){const url=new URL(value);if(url.protocol!=='chrome-extension:'||url.hostname!==extensionId||url.search||url.hash)throw Error('invalid-ui-url');}
- const mounts=new Map(),joins=new Map(),grants=new Map();let generation=0;
+ const mounts=new Map(),joins=new Map(),grants=new Map(),renewing=new Map();let generation=0;
  const fail=reason=>{throw Error(reason);};
  const roleOK=role=>role==='workspace'||role==='sidebar';
  const currentScope=parent=>{const result=peekScope(parent);if(result?.state!=='verified'||!tokenOK(result.grant?.id)||!Number.isSafeInteger(result.grant.scopeEpoch)||!Number.isFinite(Date.parse(result.grant.expiresAt))||Date.parse(result.grant.expiresAt)<=now())fail('ui-scope-unverified');return result.grant;};
@@ -84,12 +84,23 @@ export function createUiGrants({extensionId,uiURL=null,uiURLs=null,getFrame,getC
  function revokeMount(id){mounts.delete(id);for(const [key,value]of grants)if(value.grant.mountId===id)grants.delete(key);for(const entry of joins.values())if(entry.parent?.mountId===id)discard(entry);}
  function revokeDocument(id){for(const [key,value]of mounts)if(value.parent.documentId===id)revokeMount(key);for(const [key,value]of grants)if(value.ui.documentId===id)grants.delete(key);for(const entry of joins.values())if(entry.ui?.documentId===id){entry.used=true;entry.revoked=true;}}
  function revokeAll(){for(const id of [...mounts.keys()])revokeMount(id);for(const entry of joins.values())discard(entry);grants.clear();}
- async function renew({sender,grantId,mountId}){
+ async function renewOnce({sender,grantId,mountId}){
   const entry=grants.get(grantId);const checked=await validate({sender,grantId,mountId});
   if(!entry||grants.get(grantId)!==entry)fail('ui-grant-revoked');
   const {mount,scope}=liveMount(mountId);if(mount!==entry.mount)fail('ui-grant-revoked');
   const expiresAt=new Date(Math.min(now()+20000,Date.parse(scope.expiresAt))).toISOString();
   const grant=Object.freeze({...checked,expiresAt});grants.set(grantId,{...entry,grant});return grant;
+ }
+ function renew(args){
+  // Parent status and the same frame heartbeat may renew together. Coalesce
+  // only after exact sender identity checks; a stolen id cannot join this work.
+  let sender;try{sender=structuredClone(args.sender);}catch{return Promise.reject(Error('invalid-ui-sender'));}
+  const ui=uiFrame(sender),entry=grants.get(args.grantId);
+  if(!entry||entry.grant.mountId!==args.mountId||Date.parse(entry.grant.expiresAt)<=now())return Promise.reject(Error('ui-grant-expired'));
+  if(sender.url!==roleURLs[entry.grant.role]||ui.tabId!==entry.ui.tabId||ui.frameId!==entry.ui.frameId||ui.documentId!==entry.ui.documentId)return Promise.reject(Error('ui-grant-mismatch'));
+  const prior=renewing.get(args.grantId);if(prior)return prior;
+  const task=renewOnce({...args,sender}).finally(()=>{if(renewing.get(args.grantId)===task)renewing.delete(args.grantId);});
+  renewing.set(args.grantId,task);return task;
  }
  return Object.freeze({registerMount,renew,joinUI,confirmParent,validate,revokeMount,revokeDocument,revokeAll});
 }

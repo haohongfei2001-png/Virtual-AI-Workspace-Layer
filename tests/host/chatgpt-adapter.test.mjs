@@ -28,3 +28,17 @@ test('explicit retry-after retains proposal identity and sequence then accepted 
 test('retry budget is monotonic six seconds and stop clears timer',async()=>{const c=retryClock(),f=fixture(c.options);let calls=0;await f.start(async p=>{calls++;return {state:'retry-after',localSeq:p.localSeq,delayMs:50};});await tick();await c.advance(6000);assert.equal(calls,1);assert.equal(c.timers.size,0);assert.equal(c.issues.at(-1).reason,'host-observation-retry-budget');f.trigger();await tick();assert.equal(calls,1);await f.start(async p=>({state:'retry-after',localSeq:p.localSeq,delayMs:50}));await tick();assert.equal(c.timers.size,1);f.adapter.stop();assert.equal(c.timers.size,0);});
 test('rejected or unknown ACK reports once and never mutation-replays identical proposal',async()=>{for(const mode of ['rejected','unknown','throw']){const c=retryClock(),f=fixture(c.options);let calls=0;await f.start(async p=>{calls++;if(mode==='throw')throw Error('lost');return {state:mode,localSeq:p.localSeq};});await tick();for(let i=0;i<10;i++)f.trigger();await tick();assert.equal(calls,1);assert.equal(c.timers.size,0);assert.equal(c.issues.length,1);f.adapter.stop();}});
 test('retry observes route invalidation before any second emission',async()=>{const c=retryClock(),f=fixture(c.options);let calls=0;await f.start(async p=>{calls++;return {state:'retry-after',localSeq:p.localSeq,delayMs:50};});await tick();f.document.location.href='https://chatgpt.com/';await c.advance(50);assert.equal(calls,1);assert.equal(f.rebind.length,1);assert.equal(c.timers.size,0);});
+test('binding renewal preserves observer, producer sequence and existing navigation plan',async()=>{
+ const f=fixture();await f.start();await tick();const observer=f.observer();
+ const target={kind:'resolved',entity:'conversation',nativeId:C,navigationURL:`https://chatgpt.com/c/${C}`,liveHandle:null};
+ const plan=f.adapter.planNavigation(target),key=f.adapter.planKey(plan);
+ const before=(await f.adapter.readLoaded({},new AbortController().signal))[0];f.setTime(90000);
+ assert.equal(f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()}),true);
+ f.setTime(105000);const after=(await f.adapter.readLoaded({},new AbortController().signal))[0];
+ assert.equal(after.localSeq,before.localSeq+1);assert.equal(after.producerToken,before.producerToken);assert.equal(after.routeEpoch,before.routeEpoch);assert.equal(f.observer(),observer);assert.notEqual(observer.closed,true);assert.equal(f.adapter.planKey(plan),key);
+ f.trigger();await tick();assert.equal(f.emitted.length,1);f.adapter.stop();
+});
+test('binding renewal rejects every changed identity, excess lifetime and stale owner',async()=>{
+ for(const patch of [{documentToken:'other'},{producerToken:'other'},{browserDocumentId:'other'},{routeEpoch:5},{origin:'https://other.test'},{expiresAt:new Date(20001).toISOString()},{expiresAt:new Date(0).toISOString()},{scope:'forged'}]){const f=fixture();await f.start();assert.throws(()=>f.adapter.updateBinding({...f.binding,expiresAt:new Date(20000).toISOString(),...patch}),/invalid-host-binding-renewal/);f.adapter.stop();}
+ for(const change of [f=>f.setTime(100000),f=>f.adapter.stop(),f=>{f.document.location.href='https://chatgpt.com/';}]){const f=fixture();await f.start();change(f);assert.throws(()=>f.adapter.updateBinding({...f.binding,expiresAt:new Date(120000).toISOString()}),/stale-host-binding|host-rebind-required/);}
+});

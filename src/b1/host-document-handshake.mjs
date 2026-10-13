@@ -1,7 +1,8 @@
 import {tokenOK,isRecord} from './identity.mjs';
-import {hostHelloOK} from '../host/contract.mjs';
+import {hostHelloOK,exactHostRecord} from '../host/contract.mjs';
+import {withRequestDeadline} from '../data/request-deadline.mjs';
 /** Browser-document transport only. No scope resolver, storage or source grants. */
-export function createHostDocumentHandshake({extensionId,getFrame,allowedURL,now=Date.now,makeId=()=>crypto.randomUUID(),ttlMs=20000,maxDocuments=128}={}){
+export function createHostDocumentHandshake({extensionId,getFrame,allowedURL,now=Date.now,makeId=()=>crypto.randomUUID(),ttlMs=20000,maxDocuments=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(!tokenOK(extensionId)||typeof getFrame!=='function'||typeof allowedURL!=='function'||typeof now!=='function'||typeof makeId!=='function'||!Number.isInteger(ttlMs)||ttlMs<1000||ttlMs>20000||!Number.isInteger(maxDocuments)||maxDocuments<1||maxDocuments>512)throw Error('invalid-host-handshake');
  const slots=new Map(),pending=new Map();let nextEpoch=0;
  const key=tabId=>String(tabId),deny=reason=>({ok:false,reason});
@@ -55,5 +56,22 @@ export function createHostDocumentHandshake({extensionId,getFrame,allowedURL,now
   const slot=slots.get(key(sender.tab.id));
   return actual?.documentId===slot.frame.documentId&&actual?.url===slot.frame.url&&actual?.documentLifecycle==='active'&&actual?.errorOccurred!==true;
  }
- return Object.freeze({handle,verify,isBound,matchesFrame,invalidate,tabClosed});
+ async function renew(message,sender){
+  if(!exactHostRecord(message,['v','type','clientId','seq','documentToken','producerToken','routeEpoch'])||message.v!==1||message.type!=='HOST_DOCUMENT_RENEW'||!tokenOK(message.clientId)||!Number.isSafeInteger(message.seq)||message.seq<1)return deny('invalid-host-renew');
+  try{message=structuredClone(message);sender=structuredClone(sender);}catch{return deny('invalid-host-renew');}
+  const initial=senderFrame(sender);if(!initial)return deny('invalid-sender');
+  const k=key(initial.tabId),slot=slots.get(k),started=elapsedNow();let active=true;
+  const valid=()=>active&&elapsedNow()-started<6000&&slots.get(k)===slot&&isBound(message,sender)&&slot.clientId===message.clientId&&message.seq>slot.seq;
+  if(!valid())return deny('stale-host-document');
+  try{return await withRequestDeadline(async()=>{
+   const frame=await current(sender);
+   if(!valid()||frame?.documentId!==slot.frame.documentId||frame.url!==slot.frame.url)return deny('stale-host-document');
+   // Renewal is transport authority only. Producer identity and observed fact
+   // freshness survive unchanged; scope proof is independently enforced.
+   const until=now()+ttlMs,binding=Object.freeze({...slot.binding,expiresAt:new Date(until).toISOString()});
+   slot.until=until;slot.binding=binding;slot.seq=message.seq;
+   return {ok:true,v:1,type:'HOST_BOUND',seq:message.seq,binding};
+  },{now:elapsedNow,schedule,cancel});}catch{return deny('host-renew-unavailable');}finally{active=false;}
+ }
+ return Object.freeze({handle,renew,verify,isBound,matchesFrame,invalidate,tabClosed});
 }

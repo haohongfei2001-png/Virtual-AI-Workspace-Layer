@@ -99,3 +99,33 @@ test('extension context existence alone cannot replace actual parent and parent 
  const context={contextType:'TAB',documentId:'ui',frameId:2,tabId:1,incognito:false,documentUrl:'chrome-extension://fixture/ui.html',documentOrigin:'chrome-extension://fixture'};
  const f=fixture({getContexts:async()=>[context]});assert.equal(await f.join(),null);f.frames.set(0,{...f.frames.get(0),documentId:'replaced'});await assert.rejects(f.confirm(),/stale-ui-document/);
 });
+
+test('same-frame status and heartbeat renewal share one checked result',async()=>{
+ let held=false,release,checks=0;const barrier=new Promise(resolve=>release=resolve);let f;
+ f=fixture({getFrame:async({frameId})=>{checks++;if(held)await barrier;return f.frames.get(frameId);}});
+ const grant=await f.pair();f.tick(10000);held=true;checks=0;
+ const request={sender:f.ui,grantId:grant.id,mountId:'mount'},first=f.owner.renew(request),second=f.owner.renew(request);
+ assert.equal(first,second,'exact same authenticated frame joins the in-flight renewal');
+ release();const [a,b]=await Promise.all([first,second]);assert.equal(a,b);assert.equal(Date.parse(a.expiresAt),31000);assert.equal(checks,2,'one parent and one child browser check');
+ assert.equal(await f.owner.validate(request),a);
+});
+
+test('stolen grant id cannot piggyback on a valid pending renewal',async()=>{
+ let held=false,release;const barrier=new Promise(resolve=>release=resolve);let f;
+ f=fixture({getFrame:async({frameId})=>{if(held)await barrier;return f.frames.get(frameId);}});
+ const grant=await f.pair();held=true;const request={sender:f.ui,grantId:grant.id,mountId:'mount'},pending=f.owner.renew(request);
+ for(const patch of [{id:'other'},{frameId:3},{documentId:'other'},{tab:{id:2,incognito:false}},{tab:{id:1,incognito:true}},{documentLifecycle:'cached'},{url:'chrome-extension://fixture/other.html'}])
+  await assert.rejects(async()=>f.owner.renew({...request,sender:{...f.ui,...patch}}),/invalid-ui-sender|ui-grant-mismatch/);
+ await assert.rejects(async()=>f.owner.renew({...request,mountId:'other'}),/ui-grant-expired/);
+ release();assert.equal((await pending).id,grant.id);
+});
+
+test('coalesced pending renewals cannot survive revocation or scope replacement',async()=>{
+ for(const change of [f=>f.owner.revokeMount('mount'),f=>f.owner.revokeDocument('ui'),f=>f.owner.revokeAll(),f=>f.setScope({...f.scope,scopeEpoch:2}),f=>f.tick(20000)]){
+  let held=false,release;const barrier=new Promise(resolve=>release=resolve);let f;
+  f=fixture({getFrame:async({frameId})=>{if(held)await barrier;return f.frames.get(frameId);}});
+  const grant=await f.pair();held=true;const request={sender:f.ui,grantId:grant.id,mountId:'mount'},first=f.owner.renew(request),second=f.owner.renew(request);
+  const settled=Promise.allSettled([first,second]);change(f);release();const results=await settled;
+  assert(results.every(row=>row.status==='rejected'));assert(results.every(row=>/ui-grant-revoked|ui-scope-changed/.test(row.reason.message)));
+ }
+});
