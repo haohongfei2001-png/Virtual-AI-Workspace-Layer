@@ -1,3 +1,5 @@
+import {readContinuationForEvidence} from './continuation-evidence-reader.mjs';
+import {continuationEvidenceFingerprint} from './native-observation-continuation.mjs';
 import {saveDirectoryEvidence} from './evidence-directory-writer.mjs';
 import {migrateEvidenceDirectory} from './evidence-directory-migration.mjs';
 import {auditEvidencePartitions} from './evidence-partition-audit.mjs';
@@ -141,19 +143,32 @@ export class FreeEvidenceRepository {
   const command={type:'OBSERVE_FREE_EVIDENCE',batch:request.batch};
   return this.mutate(normalized,request,command,options,host?{channel:'host-evidence',profileId:host.profileId,profileVersion:host.profileVersion,sourceId:host.sourceId,generation:host.generation}:null);
  }
+ async applyContinuation(scope,request,options={}){
+  const normalized=this.base.scopeOrThrow(scope),host=this.hostObservationGate?.(normalized,request);
+  if(!host||host.channel!=='host-evidence'||host.purpose!=='native-continuation'||host.scopeKey!==normalized.key||typeof host.guard!=='function'||host.guard()!==true)throw Error('untrusted-native-continuation');
+  const snapshot=structuredClone(request),authority={};
+  if(Object.keys(snapshot).sort().join(',')!=='expectedRevision,nativeOperationId,operationId,payloadDigest')throw Error('invalid-native-continuation-request');
+  id(snapshot.nativeOperationId);
+  if(typeof snapshot.payloadDigest!=='string'||!/^[0-9a-f]{64}$/.test(snapshot.payloadDigest)||host.nativeOperationId!==snapshot.nativeOperationId||host.payloadDigest!==snapshot.payloadDigest)throw Error('native-continuation-authority-conflict');
+  for(const key of ['scopeKey','sourceId','generation','profileId','profileVersion'])authority[key]=host[key];
+  const guard=host.guard,original=options,callerGuard=options.guard??(()=>true);
+  return this.mutate(normalized,snapshot,null,{...original,guard:()=>guard()===true&&callerGuard()===true},null,{request:snapshot,authority});
+ }
  async invalidate(scope,request,options={}){
   id(request.sourceId);return this.mutate(scope,request,{type:'REVOKE_FREE_EVIDENCE_SOURCE',sourceId:request.sourceId},options);
  }
- async mutate(scope,{operationId,expectedRevision},command,options,host=null){
-  command=structuredClone(command);host=host?structuredClone(host):null;
+ async mutate(scope,{operationId,expectedRevision},command,options,host=null,continuation=null){
+  command=structuredClone(command);host=host?structuredClone(host):null;continuation=continuation?structuredClone(continuation):null;
   const normalized=this.base.scopeOrThrow(scope);id(operationId);
   if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)throw Error('invalid-revision');
-  const fingerprint=digest({command,expectedRevision,...(host?{host}: {})}),db=await this.base.open(),key=freeEvidenceKey(normalized.key);fence(options);
+  let fingerprint=continuation?null:digest({command,expectedRevision,...(host?{host}: {})});
+  const db=await this.base.open(),key=freeEvidenceKey(normalized.key);fence(options);
   return new Promise(resolve=>{
    const tx=db.transaction(['native_states','native_operations'],'readwrite'),states=tx.objectStore('native_states'),operations=tx.objectStore('native_operations');let result;
    const abort=reason=>{if(result?.ok===false)return;result={ok:false,reason};try{tx.abort();}catch{}};
    const revoked=()=>abort('stale-binding');options.signal?.addEventListener('abort',revoked,{once:true});
-   const root=states.get(key);
+   let continuationRecord=null,validateContinuationSource=null;
+   const begin=()=>{const root=states.get(key);
    root.onsuccess=()=>{try{
     fence(options);const payload=root.result?this.verifiedRoot(root.result,normalized):emptyFreeEvidence(normalized);
     const indexed=payload?.format===EVIDENCE_DIRECTORY_FORMAT,manifest=indexed||isEvidencePartitioned(payload)?payload:null;
@@ -164,19 +179,22 @@ export class FreeEvidenceRepository {
      const operationKey=JSON.stringify([key,operationId]),receipt=operations.get(operationKey);
      receipt.onsuccess=()=>{try{
       fence(options);
-      if(receipt.result){const prior=unpack(receipt.result);result=prior.fingerprint===fingerprint?{ok:true,replayed:true,revision:prior.revision,operationId}:{ok:false,reason:'operation-replay-conflict'};return;}
+      if(receipt.result){const prior=unpack(receipt.result);result=prior.fingerprint===fingerprint&&(!continuation||(prior.kind==='OBSERVE_HOST_CONTINUATION'&&prior.operationId===operationId&&Number.isSafeInteger(prior.revision)&&prior.revision>0&&prior.revision<=current.revision&&(continuationRecord.state!=='complete'||continuationRecord.evidenceRevision===prior.revision)))?{ok:true,replayed:true,revision:prior.revision,operationId}:{ok:false,reason:'operation-replay-conflict'};return;}
+      if(continuation){if(continuationRecord.state!=='pending-evidence')throw Error('missing-continuation-evidence-receipt');validateContinuationSource();}
       if(current.revision!==expectedRevision)throw Error('revision-conflict');
       if(manifest&&!manifest.indexChecksums)throw Error('evidence-index-integrity-required');
       let indexes={};
       const save=partial=>{try{
-       const next=applyFreeEvidence(partial,command,{scope:normalized,now:this.clock(),channel:host?.channel??'synthetic'});fence(options);
-       const finish=()=>{try{fence(options);operations.put(record(key,{revision:next.revision}));operations.put(record(operationKey,{fingerprint,revision:next.revision,operationId}));fence(options);result={ok:true,replayed:false,revision:next.revision,operationId};}catch(failure){abort(failure.message);}};
+       const next=applyFreeEvidence(partial,command,{scope:normalized,now:continuationRecord?.admission.acceptedAt??this.clock(),channel:continuation?'host-evidence':host?.channel??'synthetic',historical:!!continuation});fence(options);
+       const finish=()=>{try{fence(options);operations.put(record(key,{revision:next.revision}));operations.put(record(operationKey,{fingerprint,revision:next.revision,operationId,...(continuation?{kind:'OBSERVE_HOST_CONTINUATION'}:{})}));fence(options);result={ok:true,replayed:false,revision:next.revision,operationId};}catch(failure){abort(failure.message);}};
        if(reader)saveDirectoryEvidence(states,normalized,next,manifest,partial,indexes,reader,finish,failure=>abort(failure.message));else{saveEvidencePieces(states,normalized,next,manifest,manifest?partial:null,indexes);finish();}
       }catch(failure){abort(failure.message);}};
       if(manifest)evidenceTouchedRefs(states,manifest,normalized,command,(refs,loaded)=>{indexes=loaded;loadEvidencePieces(states,manifest,normalized,refs,save,failure=>abort(failure.message),reader?.lookupMany);},failure=>abort(failure.message),reader?.lookupMany);else save(current);
      }catch(failure){abort(failure.message);}};
     }catch(failure){abort(failure.message);}};
    }catch(failure){abort(failure.message);}};
+   };
+   if(continuation)readContinuationForEvidence(tx,normalized,continuation.request,continuation.authority,()=>fence(options),(record,validateSource)=>{continuationRecord=record;validateContinuationSource=validateSource;fingerprint=continuationEvidenceFingerprint(record,normalized);command=record.state==='pending-evidence'?{type:'OBSERVE_FREE_EVIDENCE',batch:record.evidence.batch}:null;begin();},failure=>abort(failure.message));else begin();
    tx.oncomplete=()=>{options.signal?.removeEventListener('abort',revoked);try{fence(options);resolve(result);}catch{resolve({ok:false,reason:'stale-after-commit',committed:true});}};
    tx.onabort=()=>{options.signal?.removeEventListener('abort',revoked);resolve(result?.ok===false?result:{ok:false,reason:tx.error?.name??'free-evidence-write-aborted'});};
    tx.onerror=()=>{};

@@ -1,4 +1,5 @@
-import {createNativeContinuation,validateNativeContinuation,continuationDirectoryKey,emptyContinuationDirectory,validateContinuationDirectory,updateContinuationDirectory} from './native-observation-continuation.mjs';
+import {freeEvidenceKey} from './free-evidence-partitions.mjs';
+import {createNativeContinuation,validateNativeContinuation,continuationDirectoryKey,emptyContinuationDirectory,validateContinuationDirectory,updateContinuationDirectory,finishNativeContinuation,deferNativeContinuation,transitionContinuationDirectory,continuationEvidenceFingerprint} from './native-observation-continuation.mjs';
 import {migrateNativeVersionIndex} from './native-index-migration.mjs';
 import {saveIndexedNativePieces} from './native-index-writer.mjs';
 import {NATIVE_INDEX_FORMAT,validateNativeIndexRoot} from './native-version-index.mjs';
@@ -307,6 +308,54 @@ export class NativeRepository {
       }catch(failure){fail(failure);}};
       tx.oncomplete=()=>{try{fence(options);resolve(rows);}catch(failure){reject(failure);}};
       tx.onabort=()=>reject(error??tx.error??Error('native-continuation-read-aborted'));
+    });
+  }
+
+  /** Terminal bookkeeping requires fresh owner authorization and a real evidence receipt. */
+  markContinuationComplete(scope,input,options={}){return this.#markContinuation(scope,input,options,'complete');}
+  markContinuationNeedsRevalidation(scope,input,options={}){return this.#markContinuation(scope,input,options,'needs-revalidation');}
+  async #markContinuation(scope,input,options,mode){
+    options={...options};
+    if(typeof options.guard!=='function')throw Error('continuation-guard-required');
+    const normalized=this.base.scopeOrThrow(scope),request=structuredClone(input);
+    if(!request||Object.keys(request).sort().join(',')!==(mode==='complete'?'evidenceRevision,expectedPayloadDigest,operationId':'expectedPayloadDigest,operationId')||(mode==='complete'&&(!Number.isSafeInteger(request.evidenceRevision)||request.evidenceRevision<1))||typeof request.expectedPayloadDigest!=='string'||!/^[0-9a-f]{64}$/.test(request.expectedPayloadDigest))throw Error('invalid-continuation-completion');
+    id(request.operationId);fence(options);const db=await this.base.open();fence(options);
+    return new Promise(resolve=>{
+      const tx=db.transaction(['native_states','native_operations'],'readwrite'),states=tx.objectStore('native_states'),ops=tx.objectStore('native_operations');let result;
+      const abort=reason=>{result={ok:false,reason};try{tx.abort();}catch{}};
+      const check=()=>fence(options),revoked=()=>abort('stale-binding');options.signal?.addEventListener('abort',revoked,{once:true});
+      const root=states.get(normalized.key),marker=ops.get(normalized.key),directoryRow=ops.get(continuationDirectoryKey(normalized.key)),queueMarker=ops.get(continuationMarkerKey(normalized.key)),operationKey=JSON.stringify([normalized.key,request.operationId]),receipt=ops.get(operationKey);
+      receipt.onsuccess=()=>{try{
+        check();const facts=this.verifiedRoot(root.result,normalized),nativeMarker=unpack(marker.result);
+        if(nativeMarker.revision!==facts.revision)throw Error('native-root-revision-conflict');
+        const directory=continuationDirectory(directoryRow.result,queueMarker.result,normalized,marker.result);
+        if(!directory)throw Error('missing-native-continuation-directory');
+        const prior=unpack(receipt.result),pending=validateNativeContinuation(prior.continuation,normalized);
+        if(prior.operationId!==request.operationId||pending.operationId!==request.operationId||prior.revision!==pending.nativeRevision||pending.nativeRevision>facts.revision||pending.payloadDigest!==request.expectedPayloadDigest)throw Error('native-continuation-completion-conflict');
+        const persist=(next)=>{const nextDirectory=transitionContinuationDirectory(directory,pending,next,normalized),witness={revision:nextDirectory.revision,directoryDigest:digest(nextDirectory)};
+          check();ops.put(record(operationKey,{...prior,continuation:next}));ops.put(record(continuationDirectoryKey(normalized.key),nextDirectory));ops.put(record(continuationMarkerKey(normalized.key),witness));ops.put(record(normalized.key,{...nativeMarker,continuations:witness}));check();};
+        if(mode==='needs-revalidation'){
+          if(pending.state!=='pending-evidence')throw Error('native-continuation-completion-conflict');
+          const source=facts.sources[pending.admission.sourceId],a=pending.admission;
+          const reason=!source?'missing-source':source.revoked?'source-revoked':source.generation!==a.generation||source.channel!=='host-dom'?'source-changed':source.admission?.profileId!==a.profileId||source.admission?.profileVersion!==a.profileVersion?'profile-changed':null;
+          if(!reason)throw Error('native-continuation-source-still-valid');
+          persist(deferNativeContinuation(pending,{reason}));result={ok:true,replayed:false,operationId:request.operationId,state:'needs-revalidation',reason};return;
+        }
+        const replayed=pending.state==='complete';
+        if(replayed){if(pending.evidenceRevision!==request.evidenceRevision||Object.hasOwn(directory.entries,request.operationId))throw Error('native-continuation-completion-conflict');}
+        else if(pending.state!=='pending-evidence')throw Error('native-continuation-completion-conflict');
+        const evidenceOperationId=replayed?pending.evidenceOperationId:pending.evidence.operationId;
+        const evidence=ops.get(JSON.stringify([freeEvidenceKey(normalized.key),evidenceOperationId]));
+        evidence.onsuccess=()=>{try{
+          check();const proof=unpack(evidence.result);
+          if(proof.kind!=='OBSERVE_HOST_CONTINUATION'||proof.operationId!==evidenceOperationId||proof.fingerprint!==continuationEvidenceFingerprint(pending,normalized)||proof.revision!==request.evidenceRevision)throw Error('native-continuation-evidence-receipt-conflict');
+          if(replayed){result={ok:true,replayed:true,operationId:request.operationId,evidenceRevision:pending.evidenceRevision};return;}
+          persist(finishNativeContinuation(pending,{evidenceRevision:proof.revision}));
+          result={ok:true,replayed:false,operationId:request.operationId,evidenceRevision:proof.revision};
+        }catch(failure){abort(failure.message);}};
+      }catch(failure){abort(failure.message);}};
+      tx.oncomplete=()=>{options.signal?.removeEventListener('abort',revoked);try{check();resolve(result);}catch{resolve({ok:false,reason:'stale-after-commit',committed:true});}};
+      tx.onabort=()=>{options.signal?.removeEventListener('abort',revoked);resolve(result?.ok===false?result:{ok:false,reason:tx.error?.name??'native-continuation-completion-aborted'});};tx.onerror=()=>{};
     });
   }
 

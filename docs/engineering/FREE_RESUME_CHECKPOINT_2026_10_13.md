@@ -920,3 +920,14 @@ FreeEvidenceRepository新增原request身份的私有host gate；来源/ACK prof
 完整Node1866/1866、0失败/跳过；真实headless IndexedDB六项PASS：CAS全库回滚、事务内guard失效无半写、native/shared/pending同存、单次回放与close/reopen、撤源保留待办、根损坏恢复保留待办及Pro。实际构建包LEGACY八旅程PASS；各报告sourceChangedDuringRun=false。真实IDB权限仍为显式合成WeakMap替身，未声称生产ACK、worker补写或完成状态已经通过。
 
 下一项是同源未撤销且重新取得scope许可后，将pending补入现有EvidenceRepository，再原子标complete；来源变更/撤销转needs-revalidation并保留最小目标，不重发原生操作。该处理尚未实现，本轮只完成不丢窗口的原子待办，不标整体continuation完成。当前对象/body/本人ACK、恢复界面、C1/C2与J/G/U仍有差额，旧4x100k失败保持。正常push再次low-speed超时（含使用Git默认HTTP协议），不循环重试、不更改origin；远端最后API确认7122447。Free未完成、NOT_RELEASE_READY。
+
+
+## Round91：持久待办幂等补写与终态
+
+在fd79df0继续。FreeEvidenceRepository.applyContinuation只接受原request身份WeakMap的新scope许可、指定nativeOperationId/payloadDigest和当前profile；同一写事务复核原native receipt、根/目录/queue三方见证及当前source撤权/generation/profile。从持久原批次生成锚，不从调用方接收batch。专用receipt指纹绑定不可变待办身份，不改变旧CAS指纹；首次写仍CAS，竞争可更新expectedRevision重试，已成功receipt在重开后幂等重放。较新source保留，锚按原acceptedAt核验，不刷新首次时间/TTL/校准期限。
+
+markContinuationComplete同事务验证实际evidence receipt kind/operation/fingerprint/revision，将原receipt转complete并释放目录载荷；回放仍核验真实receipt。markContinuationNeedsRevalidation仅从实际source缺失/撤销/generation/profile改变生成最小targets摘要，不接受调用方reason，不将普通TTL当撤权。两者显式fresh guard且await前冻结函数引用，不增加native事实revision。审查修复native未来revision、证据receipt operation/revision错配及open期间替换guard反例；配额失败确认不能返回预排队success。
+
+完整Node1904/1904、0失败/跳过；真实headless Chrome IndexedDB五项PASS（CAS竞争历史补写、guard全库回滚、重开去重、完成释放/Pro保留、撤源后小摘要），打包MV3八旅程PASS；浏览器报告sourceChangedDuringRun=false。测试authority仍显式合成WeakMap，不认证production本人ACK或真实ChatGPT。证据见free-round91-*。
+
+下一步接入现有Host启动/续期的有界drain，不增加定时调度引擎；生产当前body/作者/ACK、C1/C2、恢复界面及J/G/U差额仍存在。原4x100k失败和远端最后确认7122447保持，未将未推送本地成果称远端交付。Free未完成、NOT_RELEASE_READY。

@@ -67,9 +67,10 @@ export function validateFreeEvidence(state,scope){
 }
 const equal=(a,b)=>stable(a)===stable(b);
 /** Call only behind broker authorization; synthetic is not a production trust label. */
-export function applyFreeEvidence(state,command,{scope,now,channel}){
+export function applyFreeEvidence(state,command,{scope,now,channel,historical=false}){
  validateFreeEvidence(state,scope);const clock=time(now);
  if(!['synthetic','host-evidence'].includes(channel))throw Error('untrusted-free-evidence-channel');
+ if(typeof historical!=='boolean'||(historical&&(channel!=='host-evidence'||command?.type!=='OBSERVE_FREE_EVIDENCE')))throw Error('unsupported-historical-free-evidence');
  const next=structuredClone(state);
  if(command?.type==='REVOKE_FREE_EVIDENCE_SOURCE'){
   shape(command,['type','sourceId']);id(command.sourceId);if(!next.sources[command.sourceId])throw Error('missing-free-evidence-source');next.sources[command.sourceId].revoked=true;
@@ -78,11 +79,14 @@ export function applyFreeEvidence(state,command,{scope,now,channel}){
   shape(command.batch,tables);
   if(channel==='host-evidence'&&(!Array.isArray(command.batch.events)||!Array.isArray(command.batch.coverage)||command.batch.events.length||command.batch.coverage.length))throw Error('unsupported-host-evidence-kind');
   for(const table of tables){if(!Array.isArray(command.batch[table])||command.batch[table].length>5000)throw Error('invalid-free-evidence-batch');const ids=new Set();for(const r of command.batch[table]){id(r?.id);if(ids.has(r.id))throw Error('duplicate-free-evidence-row');ids.add(r.id);if(time(r.observedAt)>clock)throw Error('future-free-evidence-observation');}}
+  const historicalSources={};
   for(const input of command.batch.sources){
    if(Object.hasOwn(input,'revoked'))throw Error('free-source-revocation-replay');
    const row={...input,revoked:false};source(row);if(row.channel!==channel)throw Error('free-evidence-channel-mismatch');const prior=next.sources[row.id];
    if(prior&&['channel','codecVersion','profileId','profileVersion'].some(k=>prior[k]!==row[k]))throw Error('free-evidence-source-profile-conflict');
    if(prior&&(prior.revoked||prior.generation!==row.generation))throw Error('revoked-free-source-replay');
+   if(historical)historicalSources[row.id]=row;
+   if(historical&&prior&&row.sourceRevision<prior.sourceRevision&&time(row.observedAt)<=time(prior.observedAt))continue;
    if(prior&&(time(row.observedAt)<time(prior.observedAt)||prior.sourceRevision>row.sourceRevision||(prior.sourceRevision===row.sourceRevision&&!equal(prior,row))))throw Error('stale-free-source-revision');
    next.sources[row.id]=row;
   }
@@ -94,7 +98,7 @@ export function applyFreeEvidence(state,command,{scope,now,channel}){
   }
   const hints=[];for(const input of command.batch.hints){
    if(Object.hasOwn(input,'revoked'))throw Error('free-evidence-revocation-replay');
-   const row={...input,revoked:false};if(channel==='host-evidence'&&row.hintType!=='observed-self-send')throw Error('unsupported-host-evidence-kind');validateRow('hints',row,next);const src=next.sources[row.sourceId];
+   const row={...input,revoked:false};if(channel==='host-evidence'&&row.hintType!=='observed-self-send')throw Error('unsupported-host-evidence-kind');validateRow('hints',row,historical?{...next,sources:historicalSources}:next);const src=historical?historicalSources[row.sourceId]:next.sources[row.sourceId];
    if(src.revoked||time(src.validUntil)<=clock)throw Error('inactive-free-evidence-source');
    if(src.channel!==channel)throw Error('free-evidence-channel-mismatch');
    if(row.hintType!=='observed-self-send'&&time(row.validUntil)>time(src.validUntil))throw Error('hint-exceeds-source-expiry');hints.push(row);

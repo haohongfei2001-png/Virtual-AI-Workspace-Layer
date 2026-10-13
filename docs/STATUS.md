@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第九十轮：原生变化、共享引用和有界pending-evidence待办在原事务内原子保存；根见证防止丢失目录被误判为空。完整1866项、真实IDB六项和打包八旅程通过；待办补写/完成及生产本人ACK仍待接通，Free与真实G/U未完成。
+当前已推进至第九十一轮：持久待办在新scope许可下补入既有证据仓库，真实回执确认完成并释放载荷，撤源后保留精简待核验摘要。完整1904项、真实IDB五项和打包八旅程通过；Host续期接线及生产本人ACK仍待接通，Free与真实G/U未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -982,3 +982,14 @@ context C1/C2/持续认证、可靠发送continuation、剩余原生动作与恢
 最终Node1763/1763，0失败/跳过。真实headless DOM五组PASS（含自有mask例外反例）；实际未改写构建包的PARTIAL三旅程PASS：第1000条深链、卸载history后当前标题刷新、原生search SPA到第999条直接当前入口且同输入节点/草稿保留。原LEGACY打包八旅程另PASS。两实际包sourceChangedDuringRun=false；原mask停更、页外入口、snapshot-revision-changed失败/trace报告保留，不把早期失败算通过。
 
 context C1/C2/持续认证、可信发送/observed anchor/continuation、恢复界面、完整J1–J4与真实G/U仍未齐；旧4x100k失败保持。Free未完成、NOT_RELEASE_READY，继续原计划。
+
+
+## Round91：持久待办幂等补写与终态
+
+在fd79df0继续。FreeEvidenceRepository.applyContinuation只接受原request身份WeakMap的新scope许可、指定nativeOperationId/payloadDigest和当前profile；同一写事务复核原native receipt、根/目录/queue三方见证及当前source撤权/generation/profile。从持久原批次生成锚，不从调用方接收batch。专用receipt指纹绑定不可变待办身份，不改变旧CAS指纹；首次写仍CAS，竞争可更新expectedRevision重试，已成功receipt在重开后幂等重放。较新source保留，锚按原acceptedAt核验，不刷新首次时间/TTL/校准期限。
+
+markContinuationComplete同事务验证实际evidence receipt kind/operation/fingerprint/revision，将原receipt转complete并释放目录载荷；回放仍核验真实receipt。markContinuationNeedsRevalidation仅从实际source缺失/撤销/generation/profile改变生成最小targets摘要，不接受调用方reason，不将普通TTL当撤权。两者显式fresh guard且await前冻结函数引用，不增加native事实revision。审查修复native未来revision、证据receipt operation/revision错配及open期间替换guard反例；配额失败确认不能返回预排队success。
+
+完整Node1904/1904、0失败/跳过；真实headless Chrome IndexedDB五项PASS（CAS竞争历史补写、guard全库回滚、重开去重、完成释放/Pro保留、撤源后小摘要），打包MV3八旅程PASS；浏览器报告sourceChangedDuringRun=false。测试authority仍显式合成WeakMap，不认证production本人ACK或真实ChatGPT。证据见free-round91-*。
+
+下一步接入现有Host启动/续期的有界drain，不增加定时调度引擎；生产当前body/作者/ACK、C1/C2、恢复界面及J/G/U差额仍存在。原4x100k失败和远端最后确认7122447保持，未将未推送本地成果称远端交付。Free未完成、NOT_RELEASE_READY。
