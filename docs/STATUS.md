@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第九十三轮：Free双frame接通人工工作集加入、移除和前移，完整顺序由owner维护，保留CAS/撤销与历史引用。完整1953项、原打包八旅程和工作集五旅程通过；首跑链接新标签等待失败未定位，保留C5稳定性条件。生产本人ACK、真实context与恢复界面等仍未完成。
+当前已推进至第九十四轮：修复工作集和时间范围异步重绘打断指针/键盘交互，75项针对性测试通过。打包原生链接新标签等待仍失败，继续定位；本地恢复服务与界面正在并行实施。Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1019,3 +1019,10 @@ workspace frame通过窄HOST_UI_WORKING_SET协议发送add/remove/move-up+refId�
 真实headless打包原八旅程PASS；工作集五旅程PASS：两引用加入、前移、另一原生标签读取持久顺序、原链接新标签打开、移除current和最后项后empty；全过程原textarea节点/草稿不变且fixture原生写动作为空。sourceChangedDuringRun=false。首跑前三项PASS后链接点击未观察到新page而超时；加入安全状态诊断后的重跑通过，未定位首跑根因，不宣称已修复该间歇现象；原FAIL完整保留，作为C5稳定性后续条件。
 
 下一步继续工作集交互稳定性及原计划恢复/设置通道，生产body/本人ACK、C1/C2、J/G/U与旧4x100k仍有未满足条件。无真实ChatGPT/PAIA访问、付费调用、部署或原生写入。Free未完成、NOT_RELEASE_READY。
+
+
+## Round94：交互期间延迟异步重绘
+
+在475fef7继续，该提交已正常push至原分支。修复可复现的DOM竞态：工作集/时间范围RPC开始或结束直接render会在pointer/Enter按住时替换原生链接。现与投影更新共用交互队列，合并最新投影并在release后绘制；invalidate/stop/scope切换丢弃迟到绘制。原FAIL和修后75项针对性PASS（包括9项竞态反例）分开保留。
+
+真实headless工作集打包回归前三项PASS，原生链接新标签等待再次FAIL，报告sourceChangedDuringRun=false。未宣称该浏览器问题已由DOM修复解决；保留原始报告并继续定位，完整Node未重复运行（本轮NOT_RUN）。恢复服务与界面并行实施中尚未集成。Free未完成、NOT_RELEASE_READY，既有真实验收及性能条件保持。

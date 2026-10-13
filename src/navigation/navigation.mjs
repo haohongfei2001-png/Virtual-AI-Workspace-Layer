@@ -15,13 +15,14 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   // Keep the original event target alive until its click, drop, or composition
   // completes. Coalesce updates instead of extending a debounce on each change.
   const pointers=new Set(),keys=new Set(),win=doc.defaultView??globalThis;
-  let composing=false,dragging=false,pendingUpdate=null,updateTimer=null;
+  let composing=false,dragging=false,pendingUpdate=null,pendingRender=false,updateTimer=null;
   const owned=e=>e.composedPath().some(n=>n?.getAttribute?.('data-vaiwl-owned')===token);
   const interacting=()=>pointers.size>0||keys.size>0||composing||dragging;
   const clearUpdateTimer=()=>{if(updateTimer!==null){win.clearTimeout(updateTimer);updateTimer=null;}};
-  function flushUpdate(){clearUpdateTimer();if(!pendingUpdate||interacting()||stopped)return;const args=pendingUpdate;pendingUpdate=null;const [value,now,timeZone,preparedIndex,alreadyPrepared]=args;if(alreadyPrepared==='frame')updateFrameProjection(value);else if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
-  function finishInteraction(){if(!interacting()&&pendingUpdate&&updateTimer===null)updateTimer=win.setTimeout(flushUpdate,0);}
-  function resetInteraction(discard=false){pointers.clear();keys.clear();composing=false;dragging=false;if(discard){pendingUpdate=null;clearUpdateTimer();}else finishInteraction();}
+  function flushUpdate(){clearUpdateTimer();if(interacting()||stopped)return;if(!pendingUpdate){if(pendingRender){pendingRender=false;render();}return;}const args=pendingUpdate;pendingUpdate=null;pendingRender=false;const [value,now,timeZone,preparedIndex,alreadyPrepared]=args;if(alreadyPrepared==='frame')updateFrameProjection(value);else if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
+  function requestRender(){if(stopped)return;if(interacting()||updateTimer!==null){pendingRender=true;finishInteraction();return;}render();}
+  function finishInteraction(){if(!interacting()&&(pendingUpdate||pendingRender)&&updateTimer===null)updateTimer=win.setTimeout(flushUpdate,0);}
+  function resetInteraction(discard=false){pointers.clear();keys.clear();composing=false;dragging=false;if(discard){pendingUpdate=null;pendingRender=false;clearUpdateTimer();}else finishInteraction();}
   const interactionHandlers={
     pointerdown:e=>{if(owned(e))pointers.add(e.pointerId);},
     pointerup:e=>{pointers.delete(e.pointerId);finishInteraction();},
@@ -153,10 +154,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   async function requestWorkingSet(action,refId){
     if(!frameProjection||surface.role!=='workspace'||typeof onWorkingSetRequest!=='function'||workingSetPending||stopped)return;
-    const attempt={scope:frameProjection.scope,offset:frameWorkingSetOffset};workingSetPending=attempt;workingSetError=null;if(view.worksetOpen)frameWorkingSetOffset=0;render();
+    const attempt={scope:frameProjection.scope,offset:frameWorkingSetOffset};workingSetPending=attempt;workingSetError=null;if(view.worksetOpen)frameWorkingSetOffset=0;requestRender();
     try{const result=await onWorkingSetRequest({action,refId});if(workingSetPending!==attempt||stopped||frameProjection?.scope!==attempt.scope)return;if(result?.ok!==true)throw Error('working-set-unavailable');}
     catch{if(workingSetPending===attempt&&!stopped&&frameProjection?.scope===attempt.scope){workingSetError='工作集更新失败，请重试。';if(view.worksetOpen&&frameProjection.workingSet?.offset===attempt.offset)frameWorkingSetOffset=attempt.offset;}}
-    finally{if(workingSetPending===attempt){workingSetPending=null;if(!stopped&&frameProjection?.scope===attempt.scope)render();}}
+    finally{if(workingSetPending===attempt){workingSetPending=null;if(!stopped&&frameProjection?.scope===attempt.scope)requestRender();}}
   }
   const chevron='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
   const symbols={search:'M20 20l-5-5 M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0',up:'M6 15l6-6 6 6',down:'M6 9l6 6 6-6',more:'M5 12h.01 M12 12h.01 M19 12h.01',minus:'M5 12h14',plus:'M5 12h14 M12 5v14',close:'m6 6 12 12 M18 6 6 18'};
@@ -170,10 +171,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   async function requestHorizon(value){
     const H=Number(value);if(!frameProjection||surface.role!=='workspace'||typeof onHorizonRequest!=='function'||horizonPending||![7,14,30,60,90].includes(H))return;
     const attempt={scope:frameProjection.scope};horizonPending=attempt;horizonError=null;
-    const args={H,segment:view.segment,anchorRefId:current()?.ref?.id??null};render();
+    const args={H,segment:view.segment,anchorRefId:current()?.ref?.id??null};requestRender();
     try{const result=await onHorizonRequest(args);if(horizonPending!==attempt||stopped||frameProjection?.scope!==attempt.scope)return;if(result?.ok!==true)throw Error('horizon-unavailable');}
     catch{if(horizonPending===attempt&&!stopped&&frameProjection?.scope===attempt.scope)horizonError='时间范围更新失败，请重试。';}
-    finally{if(horizonPending===attempt){horizonPending=null;if(!stopped&&frameProjection?.scope===attempt.scope)render();}}
+    finally{if(horizonPending===attempt){horizonPending=null;if(!stopped&&frameProjection?.scope===attempt.scope)requestRender();}}
   }
   function appendCurrentContext(parent){
     const ref=current().ref;if(!ref||Array.from(parent.querySelectorAll('[data-ref-id]')).some(n=>n.getAttribute('data-ref-id')===ref.id))return;
