@@ -1173,3 +1173,12 @@ Round107审查另发现隐藏current P可能压过可见sidebar，提交前已�
 针对性Host Node **1057/1057、0失败/跳过**；真实headless重建DOM八组PASS，新增两组覆盖30种隐藏／恢复状态；实际原构建包MV3十三旅程PASS、sourceChangedDuringRun=false。证据为free-round113-host.log.gz、free-round113-surface-browser.json、free-round113-package-mv3.json。DOM报告仅记录开始sourceHash，没有运行后哈希声明。这不是实际ChatGPT授权或生产验收。
 
 并行审查另复现异步present在pointerdown期间替换链接的独立竞态，三项新反例当前FAIL，尚不纳入本轮提交；下一轮修复，不能当作旧间歇浏览器问题的已证根因。真实context/ACK、新聊首发、G/U及4x100k等既有条件保持；Free未完成、NOT_RELEASE_READY。
+
+
+## Round114：异步展示保留正在激活的原生链接
+
+接bd142a7，已正常推送且Pro72ca068祖先关系保持。跨frame的present在pointer/keyboard/composition/drag交互及待刷新期间，只保留最后一条带scope的展示意图，不立即更改筛选、焦点或替换链接。释放后先应用pending DTO，再处理最后展示；scope变化、invalidate、stop丢弃旧意图。没有拦截普通原链接默认激活行为。
+
+新增八项合同包含原三项失败复现、最后意图只发一次查询、三种失效清理、DTO顺序及最终search焦点。完整Node **2425/2425、0失败/跳过**，定向78/78；真实headless原包MV3通用十三旅程及工作集五旅程PASS，两报告sourceChangedDuringRun=false，工作集buildManifestUnchanged=true。实际跨tab持久化、原链接打开和原草稿保留通过；pointer竞态本身是Node事件合同，不冒称浏览器已施加该交错。证据free-round114-node.log.gz、free-round114-navigation-final.log.gz、free-round114-package-mv3.json及free-round114-working-set-mv3.json。原三项失败复现保留free-presentation-pointer-race-final.log.gz。
+
+此独立可复现竞态不等于旧Chrome未收到pointer事件的间歇故障根因。本轮浏览器通过不能消除该历史未定条件。继续100k当前源码性能诊断及正式计划剩余可执行工作；真实context/ACK、新聊首发、G/U等尚未完成，Free未完成、NOT_RELEASE_READY。

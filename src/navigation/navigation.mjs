@@ -16,11 +16,19 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   // Keep the original event target alive until its click, drop, or composition
   // completes. Coalesce updates instead of extending a debounce on each change.
   const pointers=new Set(),keys=new Set(),win=doc.defaultView??globalThis;
-  let composing=false,dragging=false,pendingUpdate=null,pendingRender=false,updateTimer=null;
+  let composing=false,dragging=false,pendingUpdate=null,pendingRender=false,updateTimer=null,pendingPresentation=null;
   const owned=e=>e.composedPath().some(n=>n?.getAttribute?.('data-vaiwl-owned')===token);
   const interacting=()=>pointers.size>0||keys.size>0||composing||dragging;
   const clearUpdateTimer=()=>{if(updateTimer!==null){win.clearTimeout(updateTimer);updateTimer=null;}};
-  function flushUpdate(){clearUpdateTimer();if(interacting()||stopped)return;if(!pendingUpdate){if(pendingRender){pendingRender=false;render();}return;}const args=pendingUpdate;pendingUpdate=null;pendingRender=false;const [value,now,timeZone,preparedIndex,alreadyPrepared,currentEntry]=args;if(alreadyPrepared==='frame')applyFrameProjection(value,currentEntry);else if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
+  function flushUpdate(){
+    clearUpdateTimer();if(interacting()||stopped)return;
+    const presentation=pendingPresentation;pendingPresentation=null;
+    const args=pendingUpdate;pendingUpdate=null;
+    const paint=pendingRender;pendingRender=false;
+    if(args){const [value,now,timeZone,preparedIndex,alreadyPrepared,currentEntry]=args;if(alreadyPrepared==='frame')applyFrameProjection(value,currentEntry);else if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
+    if(presentation&&!stopped&&snapshot?.scope===presentation.scope)present(presentation.intent);
+    else if(!args&&paint)render();
+  }
   function requestRender(){if(stopped)return;if(interacting()||updateTimer!==null){pendingRender=true;finishInteraction();return;}render();}
   function clearTimePolicyNotice(paint=true){
     if(timePolicyNoticeTimer!==null){win.clearTimeout(timePolicyNoticeTimer);timePolicyNoticeTimer=null;}
@@ -42,8 +50,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     try{const result=await onUndoTimePolicyRequest({id:notice.id});if(timePolicyNotice!==notice||stopped)return;if(result?.ok!==true)throw Error('unconfirmed');clearTimePolicyNotice();}
     catch{if(timePolicyNotice===notice&&!stopped){notice.error=true;notice.busy=false;requestRender();}}
   }
-  function finishInteraction(){if(!interacting()&&(pendingUpdate||pendingRender)&&updateTimer===null)updateTimer=win.setTimeout(flushUpdate,0);}
-  function resetInteraction(discard=false){pointers.clear();keys.clear();composing=false;dragging=false;if(discard){pendingUpdate=null;pendingRender=false;clearUpdateTimer();}else finishInteraction();}
+  function finishInteraction(){if(!interacting()&&(pendingUpdate||pendingRender||pendingPresentation)&&updateTimer===null)updateTimer=win.setTimeout(flushUpdate,0);}
+  function resetInteraction(discard=false){pointers.clear();keys.clear();composing=false;dragging=false;if(discard){pendingUpdate=null;pendingRender=false;pendingPresentation=null;clearUpdateTimer();}else finishInteraction();}
   const interactionHandlers={
     pointerdown:e=>{if(owned(e))pointers.add(e.pointerId);},
     pointerup:e=>{pointers.delete(e.pointerId);finishInteraction();},
@@ -400,6 +408,9 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function updatePreparedFree(value,now,timeZone,preparedIndex=null){assertPreparedFreeSnapshot(value);return applyUpdate(value,now,timeZone,preparedIndex,true);}
   function invalidate(reason='binding-invalidated'){clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
   function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);for(const[type,handler]of Object.entries(interactionHandlers))doc.removeEventListener(type,handler,true);win.removeEventListener?.('blur',windowBlur);if(!framed)restoreFocus();status={state:'STOPPED'};adapter.status(status);}
-  function present(intent){if(intent?.kind==='show-workspace')showWorkspace(false);else if(intent?.kind==='enter-reading')enterReading(false);else if(intent?.kind==='search-known')findKnown(intent.themeId??null,false);else if(intent?.kind==='show-working-set')showWorkingSet(false);else return false;return true;}
+  function present(intent){
+    if(stopped||!snapshot||!['show-workspace','enter-reading','search-known','show-working-set'].includes(intent?.kind))return false;
+    if(interacting()||updateTimer!==null){pendingPresentation={scope:snapshot.scope,intent:{kind:intent.kind,...(intent.kind==='search-known'?{themeId:intent.themeId??null}:{})}};finishInteraction();return true;}
+    if(intent?.kind==='show-workspace')showWorkspace(false);else if(intent?.kind==='enter-reading')enterReading(false);else if(intent?.kind==='search-known')findKnown(intent.themeId??null,false);else if(intent?.kind==='show-working-set')showWorkingSet(false);else return false;return true;}
   return Object.freeze({showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
 }
