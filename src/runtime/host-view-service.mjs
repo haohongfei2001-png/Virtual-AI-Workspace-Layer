@@ -1,5 +1,6 @@
+import {prepareHostAutoTimePolicy,hostAutoTimePolicyFresh} from './host-auto-time-policy.mjs';
 import {localDay} from '../navigation/projection.mjs';
-import {FREE_HORIZONS,initialFreeTimePolicy,setFreeHorizon,enableFreeAutoTimePolicy,relocateFreeSegment} from '../data/free-time-policy.mjs';
+import {FREE_HORIZONS,initialFreeTimePolicy,setFreeHorizon,coolFreeTimePolicy,enableFreeAutoTimePolicy,relocateFreeSegment} from '../data/free-time-policy.mjs';
 import {projectFreeWorkingSet} from './free-working-set-projection.mjs';
 import {projectFreeSearch} from './free-search-projection.mjs';
 import {createURLPolicy} from '../host/url-policy.mjs';
@@ -43,12 +44,13 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
      owner:createFreeViewOwner({readService,scope:context.scope,guard:context.isCurrent,clock,elapsedNow,schedule,cancel})};
     views.set(message.mountId,entry);begin(entry);
    }
-   if(entry.pending)return {ok:true,state:'preparing',retryAfterMs:50};
+   if(entry.currentEntryPending&&context.role==='workspace'&&((message.query.segment??0)!==0||message.query.search!==undefined||message.query.workingSet!==undefined))entry.currentEntryEligible=false;
+   if(entry.pending||entry.autoReading)return {ok:true,state:'preparing',retryAfterMs:50};
    if(entry.error)return {ok:false,reason:entry.error};
    const current=entry.owner.current();if(!current)throw Error('stale-free-view');
    const version=await readService.version(context.scope,{guard:()=>active&&context.isCurrent()});check();
    const value=current.snapshot;
-   const elapsed=Date.parse(clock()),evaluated=Date.parse(value.evaluatedAt),freshnessChanged=(value.calibrationDeadlines??[]).some(deadline=>Date.parse(deadline)>evaluated&&Date.parse(deadline)<=elapsed);
+   const elapsed=Date.parse(clock()),evaluated=Date.parse(value.evaluatedAt),freshnessChanged=[...(value.calibrationDeadlines??[]),...(value.activityFreshness?.deadlines??[])].some(deadline=>Date.parse(deadline)>evaluated&&Date.parse(deadline)<=elapsed);
    if(freshnessChanged||version.nativeRevision!==value.revision||version.revision!==value.workspaceRevision||version.evidenceRevision!==value.evidenceRevision||version.viewRevision!==value.viewRevision){begin(entry);return {ok:true,state:'preparing',retryAfterMs:50};}
    const {search,workingSet,...frameQuery}=message.query;
    const page=projectFreeFrame(current,{...frameQuery,role:context.role});check();
@@ -87,10 +89,10 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  async function enterCurrent(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-current-entry'};}
   if(!exactHostRecord(message,['v','type','grantId','mountId','expectedRevision','viewSession'])||message.v!==1||message.type!=='HOST_UI_CURRENT_ENTRY'||!Number.isSafeInteger(message.expectedRevision)||message.expectedRevision<0||!exactHostRecord(message.viewSession,['H','T','Z','policyRevision']))return {ok:false,reason:'invalid-ui-current-entry'};
-  let active=true;const started=elapsedNow();
+  let active=true;const started=elapsedNow(),abort=new AbortController();
   try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    if(!active||elapsedNow()-started>=6000)throw Error('ui-current-entry-expired');
-   const entry=views.get(message.mountId),current=entry?.owner.current();
+   const entry=views.get(message.mountId);let current=entry?.owner.current();
    if(context.role!=='workspace'||!current||entry.pending||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId||!entry.currentEntryEligible)throw Error('free-current-entry-unavailable');
    if(entry.horizonPending||entry.workingSetPending||entry.currentEntryPending)throw Error('preference-change-in-progress');
    const old=current.snapshot.viewSession;
@@ -104,16 +106,61 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     if(shown?.ok!==true)throw Error('host-presentation-unavailable');
     const version=await readService.version(context.scope,{guard:valid});
     if(!valid())throw Error('ui-current-entry-expired');
-    const snapshot=current.snapshot;
+    let snapshot=current.snapshot;
     if(version.nativeRevision!==snapshot.revision||version.revision!==snapshot.workspaceRevision||version.evidenceRevision!==snapshot.evidenceRevision||version.viewRevision!==snapshot.viewRevision)throw Error('snapshot-revision-changed');
+    let policyCommit,autoChange;
+    if(workspaceRepository&&snapshot.preferences?.freeTimePolicy?.value?.mode==='auto'){
+     let fresh;entry.autoReading=true;try{fresh=await entry.owner.refresh({now:clock()});}finally{entry.autoReading=false;}
+     if(!active||elapsedNow()-started>=6000||!context.isCurrent()||views.get(message.mountId)!==entry||entry.pending||!entry.currentEntryEligible||entry.owner.current()!==fresh)throw Error('ui-current-entry-expired');
+     current=fresh;snapshot=fresh.snapshot;
+     if(snapshot.workspaceRevision!==message.expectedRevision)throw Error('revision-conflict');
+     const proposal=prepareHostAutoTimePolicy(snapshot,{now:clock(),timeZone:old.Z});
+     if(proposal){
+      const commitGuard=()=>valid()&&hostAutoTimePolicyFresh(proposal,{now:clock()});
+      const result=await workspaceRepository.command(context.scope,{operationId:'auto_'+globalThis.crypto.randomUUID(),expectedRevision:proposal.expectedRevision,command:{type:'SET_PREFERENCE',id:'freeTimePolicy',value:proposal.policy}},{actor:'human',guard:commitGuard,signal:abort.signal,expectedActivityVersions:proposal.expectedActivityVersions});
+      if(!result?.ok)throw Error(result?.reason??'horizon-write-unavailable');
+      if(!valid())throw Error('ui-current-entry-expired');
+      policyCommit={workspaceRevision:result.revision,policyRevision:proposal.policy.revision};
+      if(proposal.policy.H!==proposal.previousPolicy.H){
+       autoChange={id:globalThis.crypto.randomUUID(),previousH:proposal.previousPolicy.H,H:proposal.policy.H,policyRevision:proposal.policy.revision,workspaceRevision:result.revision,expiresAt:new Date(Date.parse(clock())+15000).toISOString()};
+       entry.autoUndo={...autoChange,policy:proposal.policy,deadline:elapsedNow()+15000};
+      }
+      let committed;entry.autoReading=true;try{committed=await entry.owner.refresh({now:clock()});}finally{entry.autoReading=false;}
+      if(!active||elapsedNow()-started>=6000||!context.isCurrent()||views.get(message.mountId)!==entry||entry.pending||!entry.currentEntryEligible||entry.owner.current()!==committed)throw Error('ui-current-entry-expired');
+      current=committed;snapshot=committed.snapshot;
+      if(snapshot.workspaceRevision!==result.revision)throw Error('revision-conflict');
+      ui.notifyScope?.(context.scope.key);
+     }
+    }
     const viewSession=entry.owner.enterCurrentSession();
     const presentationChanged=entry.presentation.intent.kind!=='show-workspace';
     if(presentationChanged)entry.presentation={revision:entry.presentation.revision+1,intent:{kind:'show-workspace'}};
     if(viewSession!==old)begin(entry);
     if(viewSession!==old||presentationChanged)ui.notifyMount?.(message.mountId);
-    return {ok:true,segment:0,viewSession,workspaceRevision:snapshot.workspaceRevision};
+    return {ok:true,segment:0,viewSession,workspaceRevision:snapshot.workspaceRevision,...(policyCommit?{policyCommit}:{}),...(autoChange?{autoChange}:{})};
    }finally{entry.currentEntryPending=false;}
-  }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;}
+  }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;abort.abort();}
+ }
+ async function undoAutoHorizon(input,sender){
+  let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-auto-undo'};}
+  if(!exactHostRecord(message,['v','type','grantId','mountId','operationId','expectedRevision','id'])||message.v!==1||message.type!=='HOST_UI_UNDO_AUTO_HORIZON'||typeof message.operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(message.operationId)||typeof message.id!=='string'||message.id.length<1||message.id.length>128||!Number.isSafeInteger(message.expectedRevision)||message.expectedRevision<0)return {ok:false,reason:'invalid-ui-auto-undo'};
+  let active=true;const started=elapsedNow(),abort=new AbortController();
+  try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+   const entry=views.get(message.mountId),current=entry?.owner.current(),decision=entry?.autoUndo;
+   if(!workspaceRepository||context.role!=='workspace'||!current||entry.pending||!entry.currentEntryEligible||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId||!decision||decision.id!==message.id||decision.workspaceRevision!==message.expectedRevision||current.snapshot.workspaceRevision!==message.expectedRevision)throw Error('auto-undo-unavailable');
+   if(entry.horizonPending||entry.workingSetPending||entry.currentEntryPending)throw Error('preference-change-in-progress');
+   const valid=()=>active&&elapsedNow()-started<6000&&elapsedNow()<decision.deadline&&Date.parse(clock())<Date.parse(decision.expiresAt)&&context.isCurrent()&&views.get(message.mountId)===entry&&entry.autoUndo===decision&&entry.currentEntryEligible&&!entry.pending;
+   if(!valid())throw Error('auto-undo-expired');
+   entry.horizonPending=true;
+   try{
+    const day=localDay(clock(),current.snapshot.viewSession.Z),policy=coolFreeTimePolicy(setFreeHorizon(decision.policy,decision.previousH,day),day);
+    const result=await workspaceRepository.command(context.scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,command:{type:'SET_PREFERENCE',id:'freeTimePolicy',value:policy}},{actor:'human',guard:valid,signal:abort.signal});
+    if(!result?.ok)throw Error(result?.reason??'horizon-write-unavailable');
+    if(!valid())throw Error('auto-undo-expired');
+    entry.autoUndo=null;const viewSession=entry.owner.reconfigureSession({H:policy.H,policyRevision:policy.revision});
+    begin(entry);ui.notifyScope?.(context.scope.key);return {ok:true,segment:0,viewSession,workspaceRevision:result.revision};
+   }finally{entry.horizonPending=false;}
+  }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;abort.abort();}
  }
  async function setHorizon(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-horizon'};}
@@ -126,7 +173,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    if(entry.horizonPending)throw Error('horizon-change-in-progress');
    if(entry.workingSetPending)throw Error('preference-change-in-progress');
    if(current.snapshot.workspaceRevision!==message.expectedRevision)throw Error('revision-conflict');
-   entry.horizonPending=true;
+   entry.horizonPending=true;entry.autoUndo=null;
    try{
     const old=current.snapshot.viewSession,anchor=message.anchorRefId===null?null:current.index.byId(message.anchorRefId);
     if(message.anchorRefId!==null&&!anchor)throw Error('horizon-anchor-unavailable');
@@ -199,5 +246,5 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  }
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId){for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({handle,present,enterCurrent,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({handle,present,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){for(const key of [...views.keys()])remove(key);}});
 }

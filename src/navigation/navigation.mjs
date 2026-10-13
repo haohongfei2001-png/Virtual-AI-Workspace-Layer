@@ -7,11 +7,11 @@ const gridIcon='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stro
 import { css } from './styles.mjs';
 function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);n.textContent=text;return n;}
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
-export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onProjectionRequest=null,onHorizonRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null,onBackupRequest=null}) {
+export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onProjectionRequest=null,onHorizonRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null,onBackupRequest=null,onUndoTimePolicyRequest=null}) {
   const framed=surface!==null;
   if(framed&&(!['workspace','sidebar'].includes(surface.role)||surface.root?.ownerDocument!==doc))throw Error('invalid-navigation-surface');
   const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,frameSearchOffset=0,frameSearchWaiting=false,frameWorkingSetOffset=0,frameWorkingSetWaiting=false,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
-  let settingsOpen=false;
+  let settingsOpen=false,timePolicyNotice=null,timePolicyNoticeTimer=null,lastTimePolicyNotice=null;
   let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,projectionRequest=0,horizonPending=null,horizonError=null,workingSetPending=null,workingSetError=null;
   // Keep the original event target alive until its click, drop, or composition
   // completes. Coalesce updates instead of extending a debounce on each change.
@@ -22,6 +22,26 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const clearUpdateTimer=()=>{if(updateTimer!==null){win.clearTimeout(updateTimer);updateTimer=null;}};
   function flushUpdate(){clearUpdateTimer();if(interacting()||stopped)return;if(!pendingUpdate){if(pendingRender){pendingRender=false;render();}return;}const args=pendingUpdate;pendingUpdate=null;pendingRender=false;const [value,now,timeZone,preparedIndex,alreadyPrepared,currentEntry]=args;if(alreadyPrepared==='frame')applyFrameProjection(value,currentEntry);else if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
   function requestRender(){if(stopped)return;if(interacting()||updateTimer!==null){pendingRender=true;finishInteraction();return;}render();}
+  function clearTimePolicyNotice(paint=true){
+    if(timePolicyNoticeTimer!==null){win.clearTimeout(timePolicyNoticeTimer);timePolicyNoticeTimer=null;}
+    const existed=!!timePolicyNotice;timePolicyNotice=null;if(paint&&existed&&!stopped)requestRender();
+  }
+  function showTimePolicyNotice(value){
+    if(stopped||!framed||surface.role!=='workspace'||!frameProjection||view?.mode!=='workspace'||typeof onUndoTimePolicyRequest!=='function')return false;
+    if(!value||Object.keys(value).sort().join(',')!=='expiresAt,id'||typeof value.id!=='string'||!value.id.length||value.id.length>128||typeof value.expiresAt!=='string'||!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?(?:Z|[+-]\d\d:\d\d)$/.test(value.expiresAt))return false;
+    const expires=Date.parse(value.expiresAt),remaining=expires-Date.now();if(!Number.isFinite(expires)||remaining<=0||remaining>15000)return false;
+    // A repeated delivery never resets its deadline or enables an already used button.
+    if(lastTimePolicyNotice?.id===value.id)return timePolicyNotice?.id===value.id;
+    clearTimePolicyNotice(false);lastTimePolicyNotice={id:value.id,expires};
+    timePolicyNotice={id:value.id,expires,scope:frameProjection.scope,busy:false,error:false};
+    timePolicyNoticeTimer=win.setTimeout(()=>{timePolicyNoticeTimer=null;clearTimePolicyNotice();},remaining);requestRender();return true;
+  }
+  async function undoTimePolicy(notice){
+    if(stopped||timePolicyNotice!==notice||notice.busy||notice.error||Date.now()>=notice.expires||frameProjection?.scope!==notice.scope||view?.mode!=='workspace')return;
+    notice.busy=true;requestRender();
+    try{const result=await onUndoTimePolicyRequest({id:notice.id});if(timePolicyNotice!==notice||stopped)return;if(result?.ok!==true)throw Error('unconfirmed');clearTimePolicyNotice();}
+    catch{if(timePolicyNotice===notice&&!stopped){notice.error=true;notice.busy=false;requestRender();}}
+  }
   function finishInteraction(){if(!interacting()&&(pendingUpdate||pendingRender)&&updateTimer===null)updateTimer=win.setTimeout(flushUpdate,0);}
   function resetInteraction(discard=false){pointers.clear();keys.clear();composing=false;dragging=false;if(discard){pendingUpdate=null;pendingRender=false;clearUpdateTimer();}else finishInteraction();}
   const interactionHandlers={
@@ -118,8 +138,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function remember(){if(view&&roots)view.sidebarScroll=roots.sidebar?.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;if(view?.mode==='workspace'&&roots?.workspace?.scroller&&roots.workspace.n.style.display!=='none')view.scroll=roots.workspace.scroller.scrollTop;}
   function calibrationEntry(){if(!free()||!roots)return;const objectIds=view.segment===0?['inventory']:[...new Set([...(roots.workspace?.shadow.querySelectorAll('[data-ref-id]')??[])].map(n=>n.dataset.refId))].slice(0,64);onCalibrationEntry({kind:view.segment===0?'foreground':'history',objectIds:objectIds.length?objectIds:['inventory']});}
   function showWorkspace(notify=true){if(!view)return;if(!framed)captureFocus();remember();const resetFrame=frameProjection&&(view.worksetOpen||searchQuery!==null);view.mode='workspace';view.worksetOpen=false;searchQuery=null;searchTheme=null;if(resetFrame){projectionRequest++;requestFrame();}render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();if(framed&&notify)onPresentationRequest({kind:'show-workspace'});}
-  function enterReading(notify=true){if(!view)return;remember();view.mode='reading';searchQuery=null;searchTheme=null;layout();if(framed&&notify)onPresentationRequest({kind:'enter-reading'});}
-  function openRef(ref,event){if(ref.available===false){event.preventDefault();return;}if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;remember();if(ref.anchor)pendingAnchor={scope:snapshot.scope,ref,anchor:ref.anchor};view.mode='reading';searchQuery=null;searchTheme=null;layout();const same=adapter.isCurrent(ref.nativeUrl);adapter.openNative(ref.nativeUrl,event);if(same){restoreFocus();locateAnchor();}}
+  function enterReading(notify=true){if(!view)return;remember();clearTimePolicyNotice();view.mode='reading';searchQuery=null;searchTheme=null;layout();if(framed&&notify)onPresentationRequest({kind:'enter-reading'});}
+  function openRef(ref,event){if(ref.available===false){event.preventDefault();return;}if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;remember();if(ref.anchor)pendingAnchor={scope:snapshot.scope,ref,anchor:ref.anchor};clearTimePolicyNotice();view.mode='reading';searchQuery=null;searchTheme=null;layout();const same=adapter.isCurrent(ref.nativeUrl);adapter.openNative(ref.nativeUrl,event);if(same){restoreFocus();locateAnchor();}}
   // Frame plans are supplied synchronously before activation. Never fetch a plan in a click handler.
   function bindPlannedLink(a,ref){
     let issued;try{issued=structuredClone(adapter.navigationPlan?.(ref));}catch{}
@@ -281,6 +301,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         settings.append(button('关闭设置',()=>{if(!settingsLive())return;settingsOpen=false;requestRender();}));page.append(settings);
       }
     }
+    if(timePolicyNotice&&Date.now()<timePolicyNotice.expires&&view.mode==='workspace'){const notice=timePolicyNotice,section=node(doc,'div',{class:'toolbar',role:'status','aria-label':'自动时间范围调整'});section.append(node(doc,'span',{},notice.error?'撤销结果未确认，可在设置中手动选择范围。':'已根据已核验项目调整时间范围。'));if(!notice.error){const undo=button('撤销自动时间范围调整',()=>void undoTimePolicy(notice),'撤销');undo.disabled=notice.busy;undo.dataset.focusKey='undo-time-policy';section.append(undo);}page.append(section);}
     if(frameProjection&&workingSetError)page.append(node(doc,'p',{role:'alert'},workingSetError));
     if(frameProjection&&searchQuery!==null){
       const section=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
@@ -326,7 +347,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       const cards=node(doc,'div',{class:'cards'});
       for(const g of (frameProjection?groups:groups.filter(g=>g.segment===view.segment||(free()&&g.segment===null&&view.segment===0)))){
         const card=node(doc,'section',{class:'card','data-theme-id':g.id}),head=node(doc,'div',{class:'card-head'}),title=node(doc,'h2'),list=node(doc,'div',{class:'members'});
-        title.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));appendFreshness(title,g);head.append(title);if(framed&&free())head.append(projectCreateEntry(g));if(!framed&&free()&&adapter.projectCreateHref?.(g)){const a=node(doc,'a',{href:adapter.projectCreateHref(g),class:'square','aria-label':'在项目中新建聊天 '+g.name,title:'在项目中新建聊天 '+g.name},'+');a.addEventListener('click',e=>{if(!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){view.mode='reading';layout();adapter.openNative(a.href,e);}});head.append(a);}themeActions(g,head);card.append(head);members(g,list);card.append(list);cards.append(card);
+        title.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));appendFreshness(title,g);head.append(title);if(framed&&free())head.append(projectCreateEntry(g));if(!framed&&free()&&adapter.projectCreateHref?.(g)){const a=node(doc,'a',{href:adapter.projectCreateHref(g),class:'square','aria-label':'在项目中新建聊天 '+g.name,title:'在项目中新建聊天 '+g.name},'+');a.addEventListener('click',e=>{if(!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){clearTimePolicyNotice();view.mode='reading';layout();adapter.openNative(a.href,e);}});head.append(a);}themeActions(g,head);card.append(head);members(g,list);card.append(list);cards.append(card);
       }
       if(!frameProjection&&!cards.children.length&&(!free()||!freeListRows(snapshot,'noProject',view.segment).length&&!freeListRows(snapshot,'unknown',view.segment).length)){const empty=node(doc,'div',{class:'empty'});empty.innerHTML=gridIcon;empty.append(node(doc,'strong',{},'这里还没有活跃主题'),node(doc,'p',{},'可切换区间，或查找已有窗口。'),button('查找已知主题与窗口',()=>findKnown(),'查找窗口','more'));cards.append(empty);}page.append(cards);if(frameProjection){if(frameProjection.groups.offset>0)page.append(button('返回前页项目',()=>requestFrame({offset:Math.max(0,frameProjection.groups.offset-frameProjection.groups.limit)}),'上一页项目','more'));if(frameProjection.groups.hasMore)page.append(button('显示更多项目',()=>requestFrame({offset:frameProjection.groups.offset+frameProjection.groups.limit}),'显示更多项目','more'));}if(free()){appendFreeList(page,'noProject',view.segment);appendFreeList(page,'unknown',view.segment);}
     }
@@ -365,7 +386,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame',currentEntry];return;}
     const scopeChanged=snapshot?.scope!==dto.scope;const copy=structuredClone(dto);resetInteraction(true);sidebarDirty=true;remember();
     if(snapshot?.scope!==copy.scope){horizonPending=null;horizonError=null;detach();searchQuery=null;searchTheme=null;projectionRequest++;}
-    if(scopeChanged){settingsOpen=false;workingSetPending=null;workingSetError=null;}projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
+    if(copy.segment!==0||copy.search||copy.workingSet)clearTimePolicyNotice(false);
+    if(scopeChanged){clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;workingSetPending=null;workingSetError=null;}projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
     // Presentation-only metadata. This intentionally has no complete refs/index
     // and never enters the prepared Free snapshot or full-snapshot update path.
     snapshot={scope:copy.scope,viewMode:'free',viewSession:copy.viewSession,preferences:{}};
@@ -376,8 +398,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function update(value,now,timeZone,preparedIndex=null){if(value?.protocol==='vaiwl-free-frame/1')throw Error('frame-projection-requires-explicit-consumer');return applyUpdate(value,now,timeZone,preparedIndex);}
   function updatePreparedFree(value,now,timeZone,preparedIndex=null){assertPreparedFreeSnapshot(value);return applyUpdate(value,now,timeZone,preparedIndex,true);}
-  function invalidate(reason='binding-invalidated'){settingsOpen=false;workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
+  function invalidate(reason='binding-invalidated'){clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
   function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);for(const[type,handler]of Object.entries(interactionHandlers))doc.removeEventListener(type,handler,true);win.removeEventListener?.('blur',windowBlur);if(!framed)restoreFocus();status={state:'STOPPED'};adapter.status(status);}
   function present(intent){if(intent?.kind==='show-workspace')showWorkspace(false);else if(intent?.kind==='enter-reading')enterReading(false);else if(intent?.kind==='search-known')findKnown(intent.themeId??null,false);else if(intent?.kind==='show-working-set')showWorkingSet(false);else return false;return true;}
-  return Object.freeze({present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
+  return Object.freeze({showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
 }

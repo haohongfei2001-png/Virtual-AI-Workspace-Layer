@@ -1138,3 +1138,16 @@ Round107审查另发现隐藏current P可能压过可见sidebar，提交前已�
 最终完整Node **2336/2336、0失败/跳过**。真实headless Chrome IndexedDB六项和原构建包MV3十二旅程均PASS，两报告sourceChangedDuringRun=false；分别见free-round110-activity-version-fence-reviewed.json与free-round110-package-mv3.json。首次全量2331通过/4失败为离线模拟包未包含新模块，已补清单；独立review发现版本getter重复读取，已改为只接受own data descriptor并补反例。原失败、修复中间和最终日志分开保留，不相加。
 
 生产自动评估／短暂撤销仍未接通；继续复用现有密度算法，必须有完整新鲜snapshot及提交时TTL/日期检查。真实context/ACK、新聊首发、G/U、4x100k及既有间歇条件仍未完成。Free未完成、NOT_RELEASE_READY。
+
+
+## Round111：生产Host安全入口的自动时间范围与短暂撤销
+
+接已正常推送9f97c4e；72ca068仍是本地祖先，远端自然检查点无新增分歧。仅明确保存auto模式时，Host安全回当前入口读取owner完整snapshot，沿既有密度／每周／两次确认／14天规则评估；不从缺少偏好推断新安装。完整manifest原生ID、成员、NONE/UNKNOWN及实际活动证据不足则不调整，不以可见分页代替全量。新activityFreshness仅在本次page覆盖全部manifest且期限有效时保留来源与逐项deadlines；部分增量不能自称完整，提交guard复核6秒、当地日期、时钟倒退与逐项TTL。策略写入使用workspace CAS及Round110原生／独立活动原子版本条件。
+
+仅本次实际H变化发行owner RAM内scope/mount绑定的15秒撤销凭据。iframe显示短暂提示，撤销以原决定revision写回固定旧H并冷却14天；过期、人工并发、换scope、未知数据或历史查询不覆盖。其它mount的历史H/T/Z保持冻结；普通读与续租不评估。同日重复进入不再额外写决策使撤销失效，同时保留原周采样日期。client严格核对策略提交与撤销响应；手动H和撤销的迟到成功均不能跳回覆盖用户刚选的历史／搜索／工作集。Pro人工资产及原生输入未改。
+
+最终完整Node **2392/2392、0失败/跳过**（free-round111-node-integrated.log.gz）；真实headless Chrome IndexedDB+navigation DOM四项PASS（free-round111-auto-time-policy-browser-clock-aligned.json），含受控时钟第14秒真实按钮撤销、partial全库不写、双连接最终native版本冲突及row TTL早于source TTL整库不变。这四项明确使用synthetic来源／UI授权替身，非MV3真实授权。实际未改源码的离线原构建包MV3十二旅程PASS（free-round111-package-mv3-final.json）；该包旅程只验证设置auto及原导航回归，完整自动密度旅程属于前述独立浏览器证据。两最终报告sourceChangedDuringRun=false。
+
+初次浏览器fixture处于reading导致notice拒显，已显式进入workspace并同步测试时钟，未放宽生产15秒。初次全量一次周采样日期断言失败，修复为同日保护而非改旧断言；旧current-entry history ready合同亦保持。失败、中间与最终日志分开保存，不相加。
+
+仍未完成：可靠新装／旧数据初始化标记、生产principal/context及accepted-send ACK/time、新聊首发关联、真实G/U与PAIA/真人关口、4x100k冷启动及旧间歇working-set问题。生产context默认仍unverified fail-closed，自动密度需要真实完整证据才可能运行；本轮不是实际ChatGPT验收或发布。Free未完成、NOT_RELEASE_READY，继续唯一正式计划。

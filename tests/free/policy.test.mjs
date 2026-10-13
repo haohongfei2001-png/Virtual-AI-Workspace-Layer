@@ -28,6 +28,7 @@ test('manual change relocates date anchor rather than reusing old index',()=>{
 test('pending recommendation applies at next safe entry without waiting another weekly evaluation',()=>{
  let p=evaluateFreeTimePolicy(initialFreeTimePolicy(),{...density,day:7,safeEntry:false});p=evaluateFreeTimePolicy(p,{...density,day:14,safeEntry:false});assert.equal(p.H,30);assert.equal(p.confirmations,2);
  p=evaluateFreeTimePolicy(p,{...density,day:15});assert.equal(p.H,14);assert.equal(p.lastEvaluatedDay,14);
+ assert.equal(evaluateFreeTimePolicy(p,{...density,day:15}),p,'same-day entry keeps the committed undo revision stable');
 });
 test('two recommendations in the same direction confirm even if optimal target changes',()=>{
  let p=evaluateFreeTimePolicy(initialFreeTimePolicy(),{...density,day:7});p=evaluateFreeTimePolicy(p,{...density,counts:{7:7,14:12,30:18,60:20,90:25},day:14});assert.equal(p.H,7);

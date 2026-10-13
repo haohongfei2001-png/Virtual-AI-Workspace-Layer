@@ -29,6 +29,9 @@ export function evaluateFreeTimePolicy(policy,{day,counts,inventoryComplete,acti
   if(policy.mode!=='auto'||!inventoryComplete||!activityComplete||noProjectDominant||day<policy.cooldownUntil)return policy;
   if(policy.recommendation!==null&&policy.confirmations>=2&&day-policy.lastChangedDay>=14&&safeEntry&&!historyBrowsing)
     return {...policy,H:policy.recommendation,revision:policy.revision+1,lastChangedDay:day,recommendation:null,confirmations:0,previousH:policy.H};
+  // Applying a pending recommendation is not a new weekly sample. Do not
+  // immediately write another decision and invalidate its short undo window.
+  if(policy.previousH!==undefined&&policy.lastChangedDay===day)return policy;
   if(policy.lastEvaluatedDay!==null&&day-policy.lastEvaluatedDay<7)return policy;
   if(!FREE_HORIZONS.every(H=>Number.isSafeInteger(counts?.[H])&&counts[H]>=0)||FREE_HORIZONS.some((H,i)=>i&&counts[H]<counts[FREE_HORIZONS[i-1]]))throw Error('invalid-free-density');
   const ranked=[...FREE_HORIZONS].sort((a,b)=>loss(counts[a])-loss(counts[b])||(a===policy.H?-1:b===policy.H?1:0)||Math.abs(Math.log(a/policy.H))-Math.abs(Math.log(b/policy.H))||Math.abs(a-30)-Math.abs(b-30));

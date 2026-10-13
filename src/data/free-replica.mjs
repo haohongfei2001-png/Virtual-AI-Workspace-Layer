@@ -60,7 +60,12 @@ function* assemble(prior,header,pages,plan){
    else if(row.membership==='NONE')noProject.push(row);else unknown.push(row);if(++count%512===0)yield;
  }
  if(header.inventoryComplete===true&&!unknown.length)for(const p of cards.values())p.membershipComplete=p.memberCount==null?(!Object.hasOwn(p,'membershipComplete')&&!Object.hasOwn(p,'membershipWitnessCurrent')):p.membershipWitnessCurrent===true&&p.memberCount===p.members.length&&p.members.every(r=>r.membershipWitnessCurrent!==false&&p.membershipWitness&&r.membershipWitness&&['sourceId','generation','sourceRevision'].every(k=>p.membershipWitness[k]===r.membershipWitness[k]));
- const snapshot=aggregateFreeActivity({...header,viewMode:'free',refs:[...refs.values()],projects:[...cards.values()],noProject,unknown});
+ // Only a full observation of every manifest ID certifies page-level TTLs.
+ // Partial incremental pages must not discard deadlines belonging to cached rows.
+ const deadlineArrays=[header.calibrationDeadlines,...pages.map(page=>page.calibrationDeadlines)];
+ const completeDeadlines=seenProjects.size===Object.keys(header.manifest.projectVersions).length&&seenRefs.size===Object.keys(header.manifest.refVersions).length&&deadlineArrays.every(values=>Array.isArray(values)&&values.every(value=>typeof value==='string'&&Number.isFinite(Date.parse(value))));
+ const activityFreshness=completeDeadlines?{evaluatedAt:header.evaluatedAt,deadlines:[...new Set(deadlineArrays.flat())]}:null;
+ const snapshot=aggregateFreeActivity({...header,activityFreshness,viewMode:'free',refs:[...refs.values()],projects:[...cards.values()],noProject,unknown});
  return {header,projects,refs,omittedProjects,omittedRefs,snapshot};
 }
 export function assembleFreeReplica(prior,header,pages,plan=planFreeReplica(prior,header)){return finish(assemble(prior,header,pages,plan));}

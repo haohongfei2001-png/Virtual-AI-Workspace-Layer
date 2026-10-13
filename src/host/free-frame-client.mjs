@@ -13,15 +13,16 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,onPresentationRequest=()=>{},onState=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeNonce,navigationFactory=createNavigation,recoveryFactory=createFreeFrameRecovery,backupFactory=createFreeFrameBackup}={}){
  const policy=createURLPolicy({origin:parentOrigin});
  let navigation=null,root=null,plans=new Map(),projectPlans=new Map(),grant=null,grantCurrent=()=>false,serial=0,activeRead=null,query={segment:0,offset:0,limit:8},closed=true,splits=0,dirty=false,currentNativeURL='',presentationRevision=0,presentationIntent='',workspaceRevision=null,viewSession=null,horizonPending=false;
- let recovery=null,recoveryRoot=null,backup=null,backupRoot=null;
+ let recovery=null,recoveryRoot=null,backup=null,backupRoot=null,autoChange=null;
+ function clearAutoNotice(){autoChange=null;navigation?.clearTimePolicyNotice?.();}
  const recoverable=reason=>isFreeRecoveryReason(reason)||['corrupt-record','invalid-partition-manifest','invalid-partition-piece'].includes(reason);
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function clear(){clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function fail(reason){if(closed)return;if(recoverable(reason)&&grantCurrent()&&Date.parse(grant?.expiresAt)>now()){openRecovery(true);return;}state({state:'failed',reason});lifecycle.stop(reason);}
  function openRecovery(fromFailure=false){
   if(recovery||backup||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending&&!fromFailure)return;
-  serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-recovery');
+  clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-recovery');
   recoveryRoot=doc.createElement('div');recoveryRoot.setAttribute('data-vaiwl-frame-recovery','');privateRoot.append(recoveryRoot);
   const current=grant;
   const valid=()=>!closed&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
@@ -34,7 +35,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  function openBackup(){
   if(backup||recovery||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending)return;
-  serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-backup');
+  clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-backup');
   backupRoot=doc.createElement('div');backupRoot.setAttribute('data-vaiwl-frame-backup','');privateRoot.append(backupRoot);
   const current=grant,valid=()=>!closed&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
   const panel=backupFactory({document:doc,container:backupRoot,request:async message=>{
@@ -136,21 +137,40 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(!valid())return {ok:false,reason:'current-entry-unavailable'};
    if(result?.ok!==true)return {ok:false,reason:result?.reason??'current-entry-unavailable'};
    const next=result.viewSession;
-   if(result.segment!==0||result.workspaceRevision!==expectedRevision||!next||Object.keys(next).sort().join(',')!=='H,T,Z,policyRevision'||!FREE_HORIZONS.includes(next.H)||!Number.isSafeInteger(next.T)||typeof next.Z!=='string'||!Number.isSafeInteger(next.policyRevision)||next.policyRevision<old.policyRevision)throw Error('invalid-current-entry-response');
+   const commit=result.policyCommit;
+   if(commit&&(!commit||Object.keys(commit).sort().join(',')!=='policyRevision,workspaceRevision'||commit.workspaceRevision!==expectedRevision+1||commit.workspaceRevision!==result.workspaceRevision||commit.policyRevision!==next?.policyRevision))throw Error('invalid-current-entry-response');
+   if(result.segment!==0||result.workspaceRevision!==(commit?expectedRevision+1:expectedRevision)||!next||Object.keys(next).sort().join(',')!=='H,T,Z,policyRevision'||!FREE_HORIZONS.includes(next.H)||!Number.isSafeInteger(next.T)||typeof next.Z!=='string'||!Number.isSafeInteger(next.policyRevision)||next.policyRevision<old.policyRevision)throw Error('invalid-current-entry-response');
    new Intl.DateTimeFormat('en',{timeZone:next.Z});
-   viewSession=next;query={segment:0,offset:0,limit:8};dirty=false;
-   const page=await read(query,true);return page?result:{ok:false,reason:'current-entry-refresh-unavailable'};
+   const change=result.autoChange;
+   if(change&&(!commit||Object.keys(change).sort().join(',')!=='H,expiresAt,id,policyRevision,previousH,workspaceRevision'||typeof change.id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(change.id)||!FREE_HORIZONS.includes(change.previousH)||change.previousH===change.H||change.H!==next.H||change.policyRevision!==next.policyRevision||change.workspaceRevision!==result.workspaceRevision||!Number.isFinite(Date.parse(change.expiresAt))||Date.parse(change.expiresAt)>now()+15000))throw Error('invalid-current-entry-response');
+   viewSession=next;workspaceRevision=result.workspaceRevision;query={segment:0,offset:0,limit:8};dirty=false;
+   const page=await read(query,true);
+   if(page&&change&&!closed&&navigation===renderer&&grant?.id===current.id&&grantCurrent()&&workspaceRevision===change.workspaceRevision&&(query.segment??0)===0&&!query.search&&!query.workingSet){clearAutoNotice();autoChange=change;renderer.showTimePolicyNotice?.({id:change.id,expiresAt:change.expiresAt});}
+   return page?result:{ok:false,reason:'current-entry-refresh-unavailable'};
   }catch{return {ok:false,reason:'current-entry-unavailable'};}
+  finally{horizonPending=false;if(dirty&&!closed){dirty=false;invalidate();}}
+ }
+ async function undoAutoHorizon(value){
+  const decision=autoChange;
+  if(!decision||value?.id!==decision.id||role!=='workspace'||closed||horizonPending||recovery||backup||!grantCurrent()||Date.parse(decision.expiresAt)<=now()||workspaceRevision!==decision.workspaceRevision||(query.segment??0)!==0||query.search||query.workingSet)return {ok:false,reason:'auto-undo-unavailable'};
+  horizonPending=true;const current=grant,renderer=navigation,ticket=serial;
+  try{
+   const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_UNDO_AUTO_HORIZON',grantId:current.id,mountId:current.mountId,operationId:globalThis.crypto.randomUUID(),expectedRevision:decision.workspaceRevision,id:decision.id}),{now:elapsedNow,schedule,cancel});
+   if(closed||navigation!==renderer||grant?.id!==current.id||!grantCurrent()||autoChange!==decision||serial!==ticket||(query.segment??0)!==0||query.search||query.workingSet)return {ok:false,reason:'auto-undo-unavailable'};
+   if(result?.ok!==true)return {ok:false,reason:result?.reason??'auto-undo-unavailable'};
+   if(result.segment!==0||result.workspaceRevision!==decision.workspaceRevision+1||result.viewSession?.H!==decision.previousH||result.viewSession.policyRevision!==decision.policyRevision+1||result.viewSession.T!==viewSession.T||result.viewSession.Z!==viewSession.Z)throw Error('invalid-auto-undo-response');
+   clearAutoNotice();workspaceRevision=result.workspaceRevision;viewSession=result.viewSession;query={segment:0,offset:0,limit:8};dirty=false;await read(query,true);return result;
+  }catch{return {ok:false,reason:'auto-undo-unavailable'};}
   finally{horizonPending=false;if(dirty&&!closed){dirty=false;invalidate();}}
  }
  async function setHorizon(value){
   if(closed||horizonPending||!grantCurrent()||!Number.isSafeInteger(workspaceRevision)||(value?.H!=='auto'&&!FREE_HORIZONS.includes(value?.H)))return {ok:false,reason:'horizon-change-unavailable'};
   const expectedH=value.H==='auto'?viewSession?.H:value.H;if(!FREE_HORIZONS.includes(expectedH))return {ok:false,reason:'horizon-change-unavailable'};
-  horizonPending=true;const current=grant,renderer=navigation;
+  clearAutoNotice();horizonPending=true;const current=grant,renderer=navigation,ticket=serial;
   const operationId=globalThis.crypto.randomUUID();
   try{
    const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_SET_HORIZON',grantId:current.id,mountId:current.mountId,operationId,expectedRevision:workspaceRevision,H:value.H,segment:value.segment,anchorRefId:value.anchorRefId}),{now:elapsedNow,schedule,cancel});
-   if(closed||navigation!==renderer||grant?.id!==current.id||!grantCurrent())return {ok:false,reason:'horizon-change-unavailable'};
+   if(closed||navigation!==renderer||grant?.id!==current.id||!grantCurrent()||serial!==ticket)return {ok:false,reason:'horizon-change-unavailable'};
    if(result?.ok!==true)return {ok:false,reason:result?.reason??'horizon-change-unavailable'};
    if(!Number.isSafeInteger(result.segment)||result.segment<0||result.segment>1000000||result.viewSession?.H!==expectedH||!Number.isSafeInteger(result.workspaceRevision))return {ok:false,reason:'invalid-horizon-response'};
    workspaceRevision=result.workspaceRevision;viewSession=result.viewSession;
@@ -180,7 +200,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;
   if(!navigation){root=doc.createElement('div');root.setAttribute('data-vaiwl-frame-root','');privateRoot.append(root);
-   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),projectNavigationPlan:group=>projectPlans.get(group.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onCurrentWorkspaceEntry:enterCurrent,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup});
+   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),projectNavigationPlan:group=>projectPlans.get(group.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onCurrentWorkspaceEntry:enterCurrent,onUndoTimePolicyRequest:undoAutoHorizon,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup});
   }
   if(!backup)invalidate();
  }

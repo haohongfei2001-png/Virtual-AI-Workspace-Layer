@@ -19,3 +19,12 @@ test('source membership witness revision refreshes project metadata without rere
 test("matching count does not certify a stale member source revision",()=>{const h={...header(),inventoryComplete:true},p=page(h);Object.assign(p.projects[0],{memberCount:1,membershipWitnessCurrent:true});p.refs[0].membershipWitnessCurrent=false;assert.equal(assembleFreeReplica(null,h,[p]).snapshot.projects[0].membershipComplete,false);});
 
 test('new project witness cannot confirm unchanged cached member from an older revision',()=>{const h={...header(),inventoryComplete:true,membershipWitnessRevision:'s1'},p=page(h),w={sourceId:'s',generation:1,sourceRevision:1};Object.assign(p.projects[0],{memberCount:1,membershipWitnessCurrent:true,membershipWitness:w});p.refs[0].membershipWitness=w;const prior=assembleFreeReplica(null,h,[p]);assert.equal(prior.snapshot.projects[0].membershipComplete,true);const next={...h,revision:2,membershipWitnessRevision:'s2'},plan=planFreeReplica(prior,next);assert.deepEqual(plan.refs,[]);const result=assembleFreeReplica(prior,next,[{scope:'A',revision:2,projects:[{...p.projects[0],membershipWitness:{...w,sourceRevision:2}}],refs:[]}],plan);assert.equal(result.snapshot.projects[0].membershipComplete,false);});
+
+test('full replica retains page row deadlines while partial updates cannot certify omitted deadlines',()=>{
+ const h={...header(),evaluatedAt:'2026-10-14T00:00:00Z',calibrationDeadlines:['2026-10-15T00:00:00Z']},p={...page(h),calibrationDeadlines:['2026-10-14T00:00:01Z']};
+ const prior=assembleFreeReplica(null,h,[p]);assert.deepEqual(prior.snapshot.activityFreshness,{evaluatedAt:h.evaluatedAt,deadlines:[...h.calibrationDeadlines,...p.calibrationDeadlines]});
+ const next={...h,revision:2,manifest:{...h.manifest,refVersions:{a:2,b:1}}};
+ const partial=assembleFreeReplica(prior,next,[{scope:'A',revision:2,projects:[],refs:[row('a')],calibrationDeadlines:[]}]);assert.equal(partial.snapshot.activityFreshness,null);
+ const missing=assembleFreeReplica(null,h,[page(h)]);assert.equal(missing.snapshot.activityFreshness,null);
+ const corrupt=assembleFreeReplica(null,h,[{...p,calibrationDeadlines:['not-time']}]);assert.equal(corrupt.snapshot.activityFreshness,null);
+});
