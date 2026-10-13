@@ -1,3 +1,5 @@
+import {EVIDENCE_DIRECTORY_FORMAT,validateEvidenceDirectoryRoot} from './evidence-ref-directory.mjs';
+import {createEvidenceDirectoryReader} from './evidence-directory-reader.mjs';
 import {VerifiedRecordCache} from './verified-record-cache.mjs';
 import {freeEvidenceKey,evidenceRecoveryKey,evidenceRecord,unpackEvidence,isEvidencePartitioned,validateEvidenceManifest,evidenceHeader,loadEvidencePieces,saveEvidencePieces,evidenceTouchedRefs,loadEvidenceIndexes} from './free-evidence-partitions.mjs';
 export {freeEvidenceKey} from './free-evidence-partitions.mjs';
@@ -15,7 +17,7 @@ function markerCheck(root,marker,revision){
 /** Evidence shares the B1 database but never its native or Pro record keys. No export/restore grants. */
 export class FreeEvidenceRepository {
  #rootCache=new VerifiedRecordCache();
- #validateRoot(payload,record,scope){unpack(record);if(isEvidencePartitioned(payload))validateEvidenceManifest(payload,scope);else validateFreeEvidence(payload,scope);}
+ #validateRoot(payload,record,scope){unpack(record);if(payload?.format===EVIDENCE_DIRECTORY_FORMAT)validateEvidenceDirectoryRoot(payload,scope);else if(isEvidencePartitioned(payload))validateEvidenceManifest(payload,scope);else validateFreeEvidence(payload,scope);}
  verifiedRoot(row,scope){return this.#rootCache.read(row,scope.key,(payload,record)=>this.#validateRoot(payload,record,scope));}
  #rootWithCounts(row,scope){return this.#rootCache.readWithCounts(row,scope.key,(payload,record)=>this.#validateRoot(payload,record,scope),['refVersions']);}
 
@@ -33,25 +35,34 @@ export class FreeEvidenceRepository {
   const normalized=this.base.scopeOrThrow(scope),db=await this.base.open(),key=freeEvidenceKey(normalized.key);fence(options);
   return new Promise((resolve,reject)=>{
    const tx=db.transaction(['native_states','native_operations'],'readonly');let value,error;
-   const abort=failure=>{error=failure;try{tx.abort();}catch{}};
+   const abort=failure=>{if(error)return;error=failure;try{tx.abort();}catch{}};
    const revoked=()=>abort(Error('stale-binding'));options.signal?.addEventListener('abort',revoked,{once:true});
    const states=tx.objectStore('native_states'),root=states.get(key);
    root.onsuccess=()=>{try{
     fence(options);const counted=query?.ids&&isEvidencePartitioned(root.result?.payload)?this.#rootWithCounts(root.result,normalized):null;
     const payload=counted?.payload??(root.result?this.verifiedRoot(root.result,normalized):emptyFreeEvidence(normalized));
-    const manifest=isEvidencePartitioned(payload)?payload:null;
+    const indexed=payload?.format===EVIDENCE_DIRECTORY_FORMAT,manifest=indexed||isEvidencePartitioned(payload)?payload:null;
     const current=manifest?evidenceHeader(manifest,normalized):payload;
     if(query?.revision!==undefined&&query.revision!==null&&query.revision!==current.revision)throw Error('snapshot-revision-changed');
     const marker=tx.objectStore('native_operations').get(key);marker.onsuccess=()=>{try{fence(options);markerCheck(root.result,marker.result,current.revision);}catch(failure){abort(failure);}};
-    // Header callers need authority and root metadata, not a ref inventory or pieces.
-    // Keep the marker request in this transaction and resolve only after it succeeds.
-    if(query?.metadataOnly){value={revision:current.revision,manifest,sources:current.sources};return;}
-    const refs=counted?null:manifest?Object.keys(manifest.refVersions):[...new Set(['events','hints','coverage'].flatMap(t=>Object.values(current[t]).map(r=>r.conversationId)))];
-    const total=counted?counted.counts.refVersions:refs.length;
-    const selectedRefs=query?.header?[]:query?(query.ids??refs.slice(query.offset,query.offset+query.limit)):refs;
-    const done=evidence=>{value={revision:current.revision,...(query?.header?{manifest}:{}),evidence,selectedRefs,total,nextOffset:query?Math.min(total,(query.offset??0)+(query.limit??0)):total};if(query&&!query.header&&JSON.stringify(value).length>16*1024*1024)throw Error('free-evidence-page-too-large');};
-    if(manifest)loadEvidencePieces(states,manifest,normalized,selectedRefs,done,abort);
-    else {const selected=new Set(selectedRefs),evidence={...current};for(const t of ['events','hints','coverage'])evidence[t]=Object.fromEntries(Object.entries(current[t]).filter(([,r])=>selected.has(r.conversationId)));done(evidence);}
+    // Root metadata is not an inventory-integrity certificate. Marker and final
+    // authority fences still complete in this same readonly transaction.
+    const reader=indexed?createEvidenceDirectoryReader(states,payload,normalized,abort):null;
+    if(query?.metadataOnly){
+     const done=complete=>{value={revision:current.revision,manifest:complete,sources:current.sources};};
+     // Existing HEADER consumers require refVersions; restore that contract.
+     // This verifies directory inventory, not the evidence contents themselves.
+     if(reader)reader.all(done);else done(manifest);return;
+    }
+    const select=complete=>{
+     const refs=counted||indexed&&query?.ids?null:complete?Object.keys(complete.refVersions):[...new Set(['events','hints','coverage'].flatMap(t=>Object.values(current[t]).map(r=>r.conversationId)))];
+     const total=counted?counted.counts.refVersions:refs?refs.length:Object.values(payload.directory).reduce((n,p)=>n+p.count,0);
+     const selectedRefs=query?.header?[]:query?(query.ids??refs.slice(query.offset,query.offset+query.limit)):refs;
+     const done=evidence=>{value={revision:current.revision,...(query?.header?{manifest:complete}:{}),evidence,selectedRefs,total,nextOffset:query?Math.min(total,(query.offset??0)+(query.limit??0)):total};if(query&&!query.header&&JSON.stringify(value).length>16*1024*1024)throw Error('free-evidence-page-too-large');};
+     if(manifest)loadEvidencePieces(states,complete??manifest,normalized,selectedRefs,done,abort,reader?.lookupMany);
+     else {const selected=new Set(selectedRefs),evidence={...current};for(const t of ['events','hints','coverage'])evidence[t]=Object.fromEntries(Object.entries(current[t]).filter(([,r])=>selected.has(r.conversationId)));done(evidence);}
+    };
+    if(reader&&!query?.ids)reader.all(select);else select(manifest);
    }catch(failure){abort(failure);}};
    tx.oncomplete=()=>{options.signal?.removeEventListener('abort',revoked);try{fence(options);resolve(value);}catch(failure){reject(failure);}};
    tx.onabort=()=>{options.signal?.removeEventListener('abort',revoked);reject(error??tx.error??Error('free-evidence-read-aborted'));};
@@ -80,6 +91,7 @@ export class FreeEvidenceRepository {
             return;
           }
           if (digest(root.result ?? null) !== damagedHash) throw Error('recovery-conflict');
+          if(root.result?.payload?.format===EVIDENCE_DIRECTORY_FORMAT||shadow.result?.payload?.format===EVIDENCE_DIRECTORY_FORMAT)throw Error('evidence-directory-recovery-not-enabled');
           let intact = false;
           try { validateEvidenceManifest(unpack(root.result), normalized); intact = true; } catch {}
           if (intact) throw Error('intact-state-not-replaced');
@@ -131,6 +143,7 @@ export class FreeEvidenceRepository {
    const root=states.get(key);
    root.onsuccess=()=>{try{
     fence(options);const payload=root.result?this.verifiedRoot(root.result,normalized):emptyFreeEvidence(normalized);
+    if(payload?.format===EVIDENCE_DIRECTORY_FORMAT)throw Error('evidence-directory-write-not-enabled');
     const manifest=isEvidencePartitioned(payload)?payload:null;
     const current=manifest?evidenceHeader(manifest,normalized):payload;
     const marker=operations.get(key);marker.onsuccess=()=>{try{

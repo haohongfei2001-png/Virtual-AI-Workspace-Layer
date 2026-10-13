@@ -363,3 +363,16 @@ NativeRepository的read/header/page支持新格式：完整读/header验证所�
 本模块尚未被FreeEvidenceRepository/worker/build引用，包与正常发送路径保持88ff239。MV3/正常1k/10k/100k本轮NOT_RUN；最近100k正常仍Round42 1441.6/1495.7/1361.2ms且1秒FAIL，包仍Round42 SHA2563cf13d039f0f7ece194281e402eba5c92093b56af6fc82dd57cb51b857702c20。
 
 接续时先做同事务directory reader并接query/header/page及global index归属核验；每个已加载global index group的所有ref都必须经目录验证存在，不能只查命中项。写入、迁移、回收和恢复必须在原CAS事务发布directory/native evidence pieces/global index/root+recovery/marker/receipt，恢复完整核验后撤销来源；quota/撤权/冲突/旧reader拒绝与Pro数据保持须另测。权限与真实来源/账户/跨端/PAIA/物理/真人条件不变，完整Free未完成。
+
+
+## 第四十四轮：活动目录同事务读取接线
+
+从本地21c4439继续；最后远端核验仍Draft PR16的88ff239，前次21c4439正常push超时且无遗留进程，PR说明已明确本地待同步。新增callback目录reader，单事务内同桶合并、批量lookupMany核验全部global index引用、version/size绑定、完整ordinal还原、失败一次与公开records再次使用时完整字节重验。仓库read/header/page支持新格式；旧活动piece内容校验、scope/marker/请求revision/末次guard保留。build已包含两个目录模块。
+
+独立子代理19条reader合同通过并审查接线，发现HEADER消费者仍需要refVersions；现header完整验证并还原旧manifest形状，新增服务HEADER/PAGE活动版本与决定一致合同。真实IDB发现marker冲突后AbortError覆盖首因，已保留首个错误；未弱化反例。新格式write/recovery明确拒绝，旧shadow不能降级目录根；没有自动迁移或日常新格式写入。完整恢复状态接线与writer/迁移仍待做。
+
+最终完整Node893/893、0失败/跳过；真实headless IDB6/6（实际repo读取、门控拒绝、marker/guard、缺桶、size错配、global index非命中孤立引用），最终MV3 9/9。最初浏览器夹具缺限定模块路由，补齐测试服务器路由后继续；中间HEADER形状/错误覆盖发现及修复如上，最终报告free-round44-*对应实际源码hash。服务夹具显式revision+1，只允许activity.evidenceRevision随之改变，其他完整行严格相等。
+
+包/private/tmp/vaiwl-free-delivery-round44-20261013/vaiwl-free-synthetic-only.zip，SHA256 `202791c2e49a22961934be0546a4e35685598eca813faff1689b346f99c380e2`，48文件/41worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。正常1k/10k/100k本轮NOT_RUN；最近100k仍Round42三发送1441.6/1495.7/1361.2ms、一秒FAIL，不把新读取接线算性能提速。
+
+下一步沿已有B5/F1完成目录writer、显式迁移、GC和恢复，所有片/global index/root+recovery/marker/receipt同CAS，完整恢复核验后撤权；先补quota/撤权/CAS/旧reader/Pro保持，再启用自动迁移。HEADER目前保持完整refVersions接口，后续若需根级version快速路径应单独明确，不静默丢活动版本。真实账号/来源/跨端/PAIA/物理IME/真人条件不变，Free未完成。

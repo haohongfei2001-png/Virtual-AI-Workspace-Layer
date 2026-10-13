@@ -83,3 +83,17 @@ test('MOCK_IDB a separately trusted fresh source can report complete inventory a
   assert.equal((await h.service.native.read(h.scope)).sources.native_fixture_v1.revoked,true);
  }finally{h.close();}
 });
+
+test('MOCK_IDB directory evidence retains service HEADER activity versions and PAGE decisions',async()=>{
+ const {buildEvidenceRefDirectory}=await import('../../src/data/evidence-ref-directory.mjs');
+ const {evidenceRecord,freeEvidenceKey}=await import('../../src/data/free-evidence-partitions.mjs');
+ const h=await setup();try{
+  await h.header();assert.equal((await h.call('B23_SYNTHETIC_SEND',{conversationId:'T0',messageId:'directory_message',projectId:null,nativeTitle:'从哪里开始'})).ok,true);
+  const before=await h.header(),prior=await h.page(before,{projects:[],refs:['T0']}),stored=await h.service.evidence.header(h.scope),built=buildEvidenceRefDirectory(stored.manifest,h.scope),db=await h.service.evidence.base.open();
+  built.root.revision++;
+  await new Promise((resolve,reject)=>{const tx=db.transaction(['native_states','native_operations'],'readwrite'),store=tx.objectStore('native_states');for(const record of built.records)store.put(record);store.put(evidenceRecord(freeEvidenceKey(built.root.scopeKey),built.root));tx.objectStore('native_operations').put(evidenceRecord(freeEvidenceKey(built.root.scopeKey),{revision:built.root.revision}));tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+  // Changed evidence revision forces activity version reconstruction.
+  const after=await h.header(),page=await h.page(after,{projects:[],refs:['T0']});
+  assert.deepEqual(after.manifest.activityVersions,before.manifest.activityVersions);assert.equal(page.ok,true,JSON.stringify(page));const expected=structuredClone(prior.page.refs);for(const row of expected)for(const field of ['activity','activityDecision'])row[field].evidenceRevision=page.page.evidenceRevision;assert.deepEqual(page.page.refs,expected);
+ }finally{h.close();}
+});

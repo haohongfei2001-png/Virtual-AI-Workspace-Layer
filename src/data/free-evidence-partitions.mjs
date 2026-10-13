@@ -41,19 +41,22 @@ function evidenceManifestRecord(key,manifest,scope){
  if(encoded.length>16*1024*1024)throw Error('free-evidence-too-large');
  return {key,payload:manifest,checksum:sha256(encoded)};
 }
-export function loadEvidencePieces(store,manifest,scope,ids,done,fail){
- const result=evidenceHeader(manifest,scope),keys=[...new Set(ids)].filter(k=>Object.hasOwn(manifest.refVersions,k));let pending=keys.length;
- if(!pending){done(result);return;}
- for(const ref of keys){const request=store.get(evidencePieceKey(scope.key,ref,manifest.refVersions[ref]));request.onsuccess=()=>{try{
-  const piece=unpackEvidence(request.result);
-  if(piece.scopeKey!==scope.key||piece.ref!==ref||piece.revision!==manifest.refVersions[ref]||JSON.stringify(piece).length!==manifest.sizes[ref])throw Error('invalid-free-evidence-piece');
-  for(const table of tables){if(!piece[table]||typeof piece[table]!=='object')throw Error('invalid-free-evidence-piece');for(const [key,row] of Object.entries(piece[table])){
-   if(row.conversationId!==ref||row.id!==key||Object.hasOwn(result[table],key))throw Error('invalid-free-evidence-piece-index');result[table][key]=row;
-  }}
-  if(--pending===0){
-   validateFreeEvidence(result,scope);done(result);
-  }
- }catch(error){fail(error);}};}
+export function loadEvidencePieces(store,manifest,scope,ids,done,fail,lookupMany=null){
+ const result=evidenceHeader(manifest,scope),wanted=[...new Set(ids)];let failed=false;
+ const reject=error=>{if(!failed){failed=true;fail(error);}};
+ const load=versions=>{if(failed)return;try{
+  const keys=wanted.filter(ref=>versions.has(ref));let pending=keys.length;
+  if(!pending){done(result);return;}
+  for(const ref of keys){const {version,size}=versions.get(ref),request=store.get(evidencePieceKey(scope.key,ref,version));request.onsuccess=()=>{if(failed)return;try{
+   const piece=unpackEvidence(request.result);
+   if(piece.scopeKey!==scope.key||piece.ref!==ref||piece.revision!==version||JSON.stringify(piece).length!==size)throw Error('invalid-free-evidence-piece');
+   for(const table of tables){if(!piece[table]||typeof piece[table]!=='object')throw Error('invalid-free-evidence-piece');for(const [key,row] of Object.entries(piece[table])){
+    if(row.conversationId!==ref||row.id!==key||Object.hasOwn(result[table],key))throw Error('invalid-free-evidence-piece-index');result[table][key]=row;
+   }}
+   if(--pending===0){validateFreeEvidence(result,scope);done(result);}
+  }catch(error){reject(error);}};request.onerror=()=>reject(request.error??Error('free-evidence-piece-read-failed'));}
+ }catch(error){reject(error);}};
+ try{if(lookupMany)lookupMany(wanted,load);else load(new Map(wanted.filter(ref=>Object.hasOwn(manifest.refVersions,ref)).map(ref=>[ref,{version:manifest.refVersions[ref],size:manifest.sizes[ref]}])));}catch(error){reject(error);}
 }
 export function saveEvidencePieces(store,scope,next,previous=null,partial=null,indexes={}){
  const manifest=previous?{...previous,refVersions:{...previous.refVersions},indexVersions:{...previous.indexVersions},counts:{...previous.counts},sizes:{...previous.sizes}}:{format:'vaiwl-free-evidence-partitions-v1',scopeKey:scope.key,revision:0,sources:{},refVersions:{},indexVersions:{},counts:{events:0,hints:0,coverage:0},sizes:{}};
@@ -81,18 +84,24 @@ export function saveEvidencePieces(store,scope,next,previous=null,partial=null,i
  store.put(rootRecord);store.put({...rootRecord,key:evidenceRecoveryKey(scope.key)});
  return manifest;
 }
-export function loadEvidenceIndexes(store,manifest,scope,groups,done,fail){
- const indexes={},keys=[...new Set(groups)].filter(g=>Object.hasOwn(manifest.indexVersions,g));let pending=keys.length;
+export function loadEvidenceIndexes(store,manifest,scope,groups,done,fail,lookupMany=null){
+ const indexes={},keys=[...new Set(groups)].filter(g=>Object.hasOwn(manifest.indexVersions,g));let pending=keys.length,failed=false;
+ const reject=error=>{if(!failed){failed=true;fail(error);}};
+ const finish=()=>{if(failed)return;try{
+  const refs=[...new Set(Object.values(indexes).flatMap(rows=>Object.values(rows)))];
+  const checked=versions=>{if(failed)return;try{if(refs.some(ref=>!versions.has(ref)))throw Error('orphan-free-evidence-index');done(indexes);}catch(error){reject(error);}};
+  if(lookupMany)lookupMany(refs,checked);else checked(new Map(refs.filter(ref=>Object.hasOwn(manifest.refVersions,ref)).map(ref=>[ref,true])));
+ }catch(error){reject(error);}};
  if(!pending){done(indexes);return;}
- for(const group of keys){const request=store.get(evidenceIndexKey(scope.key,group,manifest.indexVersions[group]));request.onsuccess=()=>{try{
+ try{for(const group of keys){const request=store.get(evidenceIndexKey(scope.key,group,manifest.indexVersions[group]));request.onsuccess=()=>{if(failed)return;try{
   const value=unpackEvidence(request.result);
   if(value.scopeKey!==scope.key||value.group!==group||value.revision!==manifest.indexVersions[group]||!value.refs||typeof value.refs!=='object'||Array.isArray(value.refs))throw Error('invalid-free-evidence-index');
   const table=group.slice(0,group.lastIndexOf('_'));
-  for(const [key,ref] of Object.entries(value.refs)){id(key);id(ref);if(indexGroup(table,key)!==group||!Object.hasOwn(manifest.refVersions,ref))throw Error('orphan-free-evidence-index');}
-  indexes[group]=value.refs;if(--pending===0)done(indexes);
- }catch(error){fail(error);}};}
+  for(const [key,ref] of Object.entries(value.refs)){id(key);id(ref);if(indexGroup(table,key)!==group)throw Error('orphan-free-evidence-index');}
+  indexes[group]=value.refs;if(--pending===0)finish();
+ }catch(error){reject(error);}};request.onerror=()=>reject(request.error??Error('free-evidence-index-read-failed'));}}catch(error){reject(error);}
 }
-export function evidenceTouchedRefs(store,manifest,scope,command,done,fail){
+export function evidenceTouchedRefs(store,manifest,scope,command,done,fail,lookupMany=null){
  const refs=new Set(),lookups=[];
  for(const table of tables)for(const row of command.batch?.[table]??[]){
   refs.add(row.conversationId);lookups.push([indexGroup(table,row.id),row.id]);
@@ -101,5 +110,5 @@ export function evidenceTouchedRefs(store,manifest,scope,command,done,fail){
  loadEvidenceIndexes(store,manifest,scope,lookups.map(([g])=>g),indexes=>{
   for(const [group,key] of lookups)if(indexes[group]?.[key])refs.add(indexes[group][key]);
   done(refs,indexes);
- },fail);
+ },fail,lookupMany);
 }
