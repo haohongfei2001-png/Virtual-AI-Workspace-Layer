@@ -50,8 +50,10 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
     if(previous?.bodyRegionEpoch!==undefined&&body.regionEpoch<previous.bodyRegionEpoch)return rejected('stale-body-region');
     // A DOM claim is only a current-object association, never an ACK or author proof.
     if(!await handshake.verify(proposal,sender)||!guard())return rejected('stale-host-document');
-    const prior=bodies.get(proposal.producerToken),unchanged=body.association==='explicit-body-id'&&prior?.current()&&digest(prior.claim)===digest(body);
-    const bodyEpoch=unchanged?prior.bodyEpoch:(previous?.bodyEpoch??0)+1;
+    const prior=bodies.get(proposal.producerToken),sameBody=body.association==='explicit-body-id'&&prior?.current()&&prior.claim.conversationId===body.conversationId&&prior.claim.regionEpoch===body.regionEpoch;
+    const unchanged=sameBody&&digest(prior.claim)===digest(body);
+    // Message observations replace read authority without pretending the body remounted.
+    const bodyEpoch=sameBody?prior.bodyEpoch:(previous?.bodyEpoch??0)+1;
     if(!unchanged)discardBody(proposal.producerToken);
     const proofId=unchanged?prior.proofId:body.association==='explicit-body-id'?makeId():null;
     if(proofId!==null&&!unchanged&&[...bodies.values()].some(entry=>entry.proofId===proofId))return rejected('body-proof-id-conflict');

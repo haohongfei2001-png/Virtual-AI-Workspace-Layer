@@ -1065,3 +1065,12 @@ adapter的body/surface共用producer序列与单个发送队列，分别去重�
 冻结源码完整Node2095/2095、0失败/跳过；真实headless测试组装MV3当前读回5/5、原构建包8/8 PASS，sourceChangedDuringRun=false。专项验证默认禁用零请求、实际adapter→owner proof→认证固定GET→当前ID过滤及八store逐行摘要不变、在飞route/scope/stop拒绝。专项是离线重建及test-only组装，不冒充生产ACK；首次composition夹具字段错误日志与最终通过分开保留。
 
 继续原B2.F2发送关联：同一正文新增消息与正文重挂的epoch需区分，现有correlator才能保留已建立baseline和intent；原生intent ingress与合格ACK语义仍未完成。备份设置、C1/C2、J/G/U、C5间歇点击、原4x100k失败保持。Free未完成、NOT_RELEASE_READY。
+
+
+## Round98：正文连续性与消息观察权限分离
+
+在已正常push的2aa352e继续。同root/route/C/可见性下，消息IDs变化不再伪造regionEpoch重挂；owner保留同bodyEpoch但每次claim变化换新proof并立即abort旧read。真实重挂/隐藏/C切换仍推进epoch，scope/profile/producer边界不变。因此现有correlator可以保留发送前baseline和intent，纯append只产生correlated候选；删除/编辑/分支/partial仍沿原反例拒绝，不签ACK。
+
+新增反例修前1PASS/3FAIL原样保留；修后66项针对性测试PASS，隔离真实headless正文MV37/7 PASS、源码哈希不变。浏览器实际DOM同root追加核验proof换发、epoch保留、旧proof拒绝，新IDs可读；原remount/hidden/route/scope和零native写保留。上一检查点完整2095项和原包8项只对应Round97，本轮完整回归NOT_RUN，不混算。
+
+继续原生intent与私有candidate关联；尚无本人accepted-send认证。Free未完成、NOT_RELEASE_READY，其余真实验收/备份设置/C5/性能未满足条件保持。

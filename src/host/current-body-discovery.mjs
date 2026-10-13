@@ -17,7 +17,7 @@ export function createCurrentBodyDiscovery({document:doc,urlPolicy,profile,isOwn
    const nodes=root.querySelectorAll(config.messageSelector),ids=[],seen=new Set();
    // Inspect at most 256 selected DOM nodes. This is never a coverage claim.
    for(let i=0;i<Math.min(256,nodes.length);i++){const node=nodes[i];if(!root.contains(node)||!visible(node))continue;const id=node.getAttribute(config.messageIdAttribute);if(tokenOK(id)&&!seen.has(id)){seen.add(id);ids.push(id);}}
-   return claim(root,JSON.stringify([...base,ids]),conversationId,ids);
+   return claim(root,JSON.stringify(base),conversationId,ids);
   }catch{return claim(root,'unavailable');}
  }
  function stop(){if(stopped)return;stopped=true;claim(null,'stopped');}
