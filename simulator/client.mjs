@@ -1,3 +1,4 @@
+import {withRequestDeadline} from '../src/data/request-deadline.mjs';
 import {loadFreeHeader} from '../src/data/free-header-loader.mjs';
 import {loadFreePages} from '../src/data/free-page-loader.mjs';
 import {isFreeRecoveryReason,freeRecoveryPanel} from '../src/navigation/free-recovery.mjs';
@@ -24,7 +25,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   const visible=()=>document.visibilityState!=='hidden';
   const controlsKey=()=>{const c=readControls();return JSON.stringify([c.size,c.now,c.timeZone]);};let lastControls=controlsKey();
   const queue=fn=>{const task=chain.then(fn);chain=task.catch(()=>{});return task;};
-  const request=async(type,extra={})=>{let deadline;try{return await Promise.race([send({v:1,type,clientId,seq:++seq,...(type==='BIND'?{}:{leaseId:lease?.leaseId}),...extra}),new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error('request-timeout')),6000);})]);}catch{throw Error('transport-unavailable');}finally{clearTimeout(deadline);}};
+  const request=async(type,extra={})=>{try{return await withRequestDeadline(()=>send({v:1,type,clientId,seq:++seq,...(type==='BIND'?{}:{leaseId:lease?.leaseId}),...extra}));}catch{throw Error('transport-unavailable');}};
   const navigation=createNavigation({document,adapter,onExit:()=>stop(),onManage:context=>void manage(context),onViewChange:(value,scope)=>saveViewSoon(value,scope),onCurrentWorkspaceEntry:()=>safeCurrentEntry(),onCalibrationEntry:value=>calibrateEntry(value)});
   const clearTimers=()=>{clearTimeout(expiry);clearTimeout(pending);clearTimeout(heartbeat);clearTimeout(viewTimer);};
   const clearFeedback=()=>{feedback?.remove();feedback=null;};

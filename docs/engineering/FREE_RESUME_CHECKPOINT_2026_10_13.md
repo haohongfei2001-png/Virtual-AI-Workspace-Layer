@@ -583,3 +583,17 @@ partialContext显式boundedDirectory opt-in仅对目录格式启用，读取目�
 - 下一步10k 4x/100k4x、规模多tab及失败退让；原生source/真实账号/跨端/PAIA/IME/真人仍未授权或未验证。真实Free/发布仍未完成。
 
 证据：free-round61-updates{1k,10k,100k}.json、updates1k-tombstone-failure.json/log、source-receipt.json。
+
+
+## Round62：4x压力暴露的实际deadline修复
+
+8b2a7b2普通push遇30秒低速网络超时，最后已确认远端8a35843；本次检查点提交后可一并正常push，不强推/改远端。
+
+- 4x renderer CPU测试先于生产修复：10k初载7605.8ms，发送554.2/429.3/414.6ms，六更新263.7/220.4/222.5/275.2/222/277.3ms；原草稿及textarea保持。100k初载30秒FAIL，原生草稿同节点/连接/可见性全部保持。该证据不算修复后源码。
+- 压力trace显示一个原始broker HEADER response耗时11673ms，Promise.race timer可能因主线程阻塞迟到而漏拒绝；新增withRequestDeadline在响应后按performance.now实际经过>=6000ms拒绝，timer仍保留，不延长截止、不重放work。独立10合同含exact6000、timer未触发的11673ms响应、错误/cleanup/晚reject隔离。
+- 最终生产源码完整1135/1135、0失败/跳过；实际无界面MV3 9/9。修复后100k4x单次重测仍30秒FAIL：单迁移11.3秒raw response被deadline丢弃，后续迁移stale-binding；原生输入同节点/原草稿/可见性全部true，sourceChangedDuringRun=false。raw trace.ok只代表broker完成，不代表客户端接受。
+- 100k4x后续发送/更新NOT_RUN（启动失败），绝不填PASS；此为page renderer+同进程repository减速，非物理设备或MV3worker认证。当前6秒单迁移在4x下未满足，不通过放宽边界处理。
+- 下一独立工作：same-context不同service/broker/IDB连接多tab规模，新NONE与原阅读/草稿保留、其他scope隔离；100kfixture只在多tab模式预留第三个新增名额。然后再处理超时迁移单步成本。实际账号/source/跨端/PAIA/IME/真人与完整Free仍未完成。
+- 冻结安装包仍Round60独立来源；本轮新增deadline尚不在旧ZIP，不冒称旧包包含。
+
+证据：free-round62-updates10k-4x.json、updates100k-4x.json(旧源码)、deadline100k-4x.json(最终)、full.log、mv3.json、source-receipt.json。

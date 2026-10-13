@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第六十一轮：前一8a35843已正常push。新增1k/10k/100k真实IDB+DOM的原生改名、成员PROJECT/NONE/UNKNOWN、不可用隐藏和恢复六项旅程，全部通过；100k每项399–864ms，无完整快照读取且草稿同节点保留。此为合成owner提交后的显式刷新，不含apply耗时或真实上游通知。生产源码仍Round60，1125回归/MV3 9/9及合成包按其原来源保留；真实Free/发布未完成。
+当前已推进至第六十二轮：8b2a7b2本地已提交，push遇30秒网络低速超时，最后确认远端为8a35843。修复主线程繁忙时计时器迟到可接收超6秒响应的问题，按monotonic实际耗时再检查截止；完整1135/MV3 9/9通过。100k 4x启动仍FAIL(30秒)，原生输入/草稿/可见性保持；不放宽RPC或伪称性能通过。多标签规模测试继续，真实Free/发布未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
