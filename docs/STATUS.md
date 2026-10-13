@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第八十二轮：原生让位/声明式关闭后的唯一阅读返回、当前聊天定位已接正式离线包。最终1672/1672 Node、五条打包MV3旅程及四退出生命周期通过。c4fe9c7已正常推送原PR16；完整Free/真实context与G/U尚未完成。
+当前已推进至第八十三轮：授权owner查找与双frame共享展示已进入正式离线包。完整1697/1697 Node与六条打包MV3旅程通过；c5e99da已正常推送PR16。Free、真实context和G/U仍未完成，继续既有计划。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -938,3 +938,14 @@ c4fe9c7已正常推送原PR16。owner从已核验parent actualURL及已有当前
 最终Node1672/1672、0失败/跳过。正式构建器产物实际隔离headless MV3五旅程PASS：原名显示、声明式阅读关闭→唯一返回、原生输入让位→返回且草稿保持、SPA Project重绑定、原生聊天链接及新frame aria-current。受影响UI生命周期另测同frame超20秒及invalidate/disconnect/实际disable/uninstall全部PASS，draft/reading保留、0open popover、私有frame不可达。两报告sourceChangedDuringRun=false；不冒称冻结进程瞬间清像素或真实G/U。
 
 继续C3查询/共享展示、手工范围和既有Free其余差额；context C1/C2/定期刷新、发送与continuation、完整profile及J1–J4/真实验收仍未齐。Free未完成、NOT_RELEASE_READY。
+
+
+## Round83：授权owner查找与双frame共享展示
+
+c5e99da已正常推送PR16。新增有界搜索DTO复用prepared owner完整replica及knownMatches，覆盖原生名称/别名、历史/NONE/UNKNOWN及Project过滤；同名P不合并，Pro改名不污染Free。返回去重ref及原生URL，最多24/UTF8 64KiB，显式保存片段仅命中对应ref，不泄露正文/anchor，也不冒称已支持片段定位。
+
+现有renderer查找占位换成真正owner查询，等待不显示假空结果；24条分页、超大页同预算缩页、迟到query/关闭/跨scope栅栏。UiGrant授权HOST_UI_PRESENT使两frame共享RAM展示版本，并经严格binding的隔离content显示workspace/reading；不把query/title/scope发给parent页面。仅目标mount两帧无数据通知，同scope其他mount不跟随。自回声不清用户输入、renew保留query，失效或失败不重放展示。
+
+完整Node1697/1697，0失败/跳过；构建器产物实际headless MV3六旅程PASS，新项是sidebar启动共享查找→输入Ordinary→仅对应原生聊天→关闭恢复。报告sourceChangedDuringRun=false。浏览器后仅把renderer搜索limit校验从固定24改为1..24以接client已存在缩页，新增下一offset按返回limit测试并包含最终全Node；不宣称该最后边界变化已重跑Chrome。
+
+工作集/手工范围/恢复入口的生产UI、scope C1/C2/持续认证、可靠发送continuation、完整profile及真实G/U仍未完成；旧4x100k失败保留。Free未完成、NOT_RELEASE_READY，继续同一计划。

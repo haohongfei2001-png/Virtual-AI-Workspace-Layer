@@ -4,7 +4,7 @@ import {createFreeFrameClient} from '../../src/host/free-frame-client.mjs';
 const drain=async()=>{for(let i=0;i<60;i++)await Promise.resolve();};
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
 function fixture(){
- let time=1000,id=0,navOptions,views=0;const timers=new Map(),listeners=new Set(),messageListeners=new Set(),historicalMessages=[],calls=[],pages=[],states=[];let factories=0,stops=0;
+ let time=1000,id=0,navOptions,views=0;const timers=new Map(),listeners=new Set(),messageListeners=new Set(),historicalMessages=[],calls=[],pages=[],states=[],presented=[];let factories=0,stops=0;
  const element=()=>({children:[],setAttribute(){},append(n){n.parent=this;this.children.push(n);},replaceChildren(){this.children=[];},remove(){if(this.parent)this.parent.children=this.parent.children.filter(n=>n!==this);}});
  const body=element(),privateRoot=element();body.append(privateRoot);
  const document={body,createElement:element,defaultView:{parent:{postMessage(){}}}};
@@ -12,8 +12,8 @@ function fixture(){
  const page=()=>({protocol:'vaiwl-free-frame/1',role:'workspace',scope:'A',completeSnapshot:false,groups:{items:[]},entries:{noProject:{items:[]},unknown:{items:[]}},selection:null});
  let view=async()=>({ok:true,state:'ready',page:page(),navigation:[]});
  const runtime={connect:()=>({onMessage:{addListener:fn=>{messageListeners.add(fn);historicalMessages.push(fn);},removeListener:fn=>messageListeners.delete(fn)},onDisconnect:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},disconnect(){}}),sendMessage:async m=>{calls.push(m);if(m.type==='HOST_UI_VIEW'){views++;return view(m);}return {ok:true,grant:grant()};}};
- const client=createFreeFrameClient({document,privateRoot,runtime,role:'workspace',parentOrigin:'https://chatgpt.com',onState:s=>states.push(s),now:()=>time,elapsedNow:()=>time,makeNonce:()=> 'nonce',schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),navigationFactory:options=>{factories++;navOptions=options;return {updateFrameProjection:p=>pages.push(p),stop:()=>{stops++;}};}});
- return {runtime,grant,messageListeners,historicalMessages,emit:m=>{for(const fn of [...messageListeners])fn(m);},client,calls,pages,states,body,privateRoot,page,setView:fn=>{view=fn;},get nav(){return navOptions;},get factories(){return factories;},get stops(){return stops;},get views(){return views;},disconnect:()=>{for(const fn of [...listeners])fn();},async advance(ms){time+=ms;for(const [key,t]of [...timers])if(t.at<=time&&timers.has(key)){timers.delete(key);t.fn();}await drain();}};
+ const client=createFreeFrameClient({document,privateRoot,runtime,role:'workspace',parentOrigin:'https://chatgpt.com',onState:s=>states.push(s),now:()=>time,elapsedNow:()=>time,makeNonce:()=> 'nonce',schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),navigationFactory:options=>{factories++;navOptions=options;return {present:intent=>presented.push(intent),updateFrameProjection:p=>pages.push(p),stop:()=>{stops++;}};}});
+ return {runtime,grant,presented,messageListeners,historicalMessages,emit:m=>{for(const fn of [...messageListeners])fn(m);},client,calls,pages,states,body,privateRoot,page,setView:fn=>{view=fn;},get nav(){return navOptions;},get factories(){return factories;},get stops(){return stops;},get views(){return views;},disconnect:()=>{for(const fn of [...listeners])fn();},async advance(ms){time+=ms;for(const [key,t]of [...timers])if(t.at<=time&&timers.has(key)){timers.delete(key);t.fn();}await drain();}};
 }
 test('actual lifecycle composition sends bounded VIEW without role and keeps one renderer across grant renewal',async()=>{const f=fixture();await f.client.start();await drain();assert.equal(f.pages.length,1);assert.deepEqual(f.calls.find(m=>m.type==='HOST_UI_VIEW'),{v:1,type:'HOST_UI_VIEW',grantId:'grant',mountId:'mount',query:{segment:0,offset:0,limit:8}});await f.advance(10000);assert.equal(f.factories,1);assert.equal(f.pages.length,2);assert.equal(f.stops,0);assert.equal(f.body.children[0],f.privateRoot);});
 test('preparing is not empty; bounded retry eventually publishes owner page',async()=>{const f=fixture();let n=0;f.setView(async()=>++n===1?{ok:true,state:'preparing',retryAfterMs:50}:{ok:true,state:'ready',page:f.page(),navigation:[]});await f.client.start();await drain();assert.equal(f.pages.length,0);assert.equal(f.states.at(-1).state,'preparing');await f.advance(50);assert.equal(f.pages.length,1);});
@@ -42,3 +42,30 @@ test('burst and renew during preparation retain the original thirty-second budge
 });
 test('owner current URL drives adapter matching and is erased on clear or legacy page',async()=>{const f=fixture(),id='33333333-3333-4333-8333-333333333333',nativeUrl='https://chatgpt.com/c/'+id;f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),current:{nativeUrl,refId:id,projectId:null}},navigation:[]}));await f.client.start();await drain();assert.equal(f.nav.adapter.currentURL(),nativeUrl);assert.equal(f.nav.adapter.isCurrent(nativeUrl),true);assert.equal(f.nav.adapter.isCurrent('https://chatgpt.com/'),false);f.setView(async()=>({ok:true,state:'ready',page:f.page(),navigation:[]}));await f.nav.onProjectionRequest({segment:0});assert.equal(f.nav.adapter.currentURL(),'');f.disconnect();assert.equal(f.nav.adapter.isCurrent(nativeUrl),false);});
 for(const current of [null,{nativeUrl:'https://evil.test/',refId:null,projectId:null},{nativeUrl:'https://chatgpt.com/',refId:22,projectId:null},{nativeUrl:'https://chatgpt.com/',refId:null,projectId:null,title:'private'}])test('malformed owner current fails closed '+JSON.stringify(current),async()=>{const f=fixture();f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),current},navigation:[]}));await f.client.start();await drain();assert.equal(f.pages.length,0);assert.equal(f.states.at(-1).reason,'invalid-frame-current');});
+
+test('presentation bridge sends current grant and self echo does not erase typed search',async()=>{
+ const f=fixture();await f.client.start();await drain();const send=f.runtime.sendMessage,packets=[];
+ f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_PRESENT'){packets.push(m);return Promise.resolve({ok:true,presentation:{revision:1,intent:m.intent}});}return send(m);};
+ const search={query:'typed native name',projectId:'P1',offset:24,limit:24};await f.nav.onProjectionRequest({segment:0,offset:0,limit:8,search});
+ await f.nav.onPresentationRequest({kind:'search-known',themeId:'P1'});await drain();
+ assert.deepEqual(packets,[{v:1,type:'HOST_UI_PRESENT',grantId:'grant',mountId:'mount',intent:{kind:'search-known',themeId:'P1'}}]);assert.deepEqual(f.presented,[]);assert.deepEqual(f.calls.at(-1).query.search,search);
+ await f.advance(10000);assert.deepEqual(f.calls.at(-1).query.search,search);
+ await f.nav.onProjectionRequest({segment:0,offset:0,limit:8});assert.equal(f.calls.at(-1).query.search,undefined);
+});
+test('shared presentation revisions and identical intent do not repeatedly reset search',async()=>{
+ const f=fixture();let presentation={revision:1,intent:{kind:'search-known',themeId:null}};
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),presentation},navigation:[]}));await f.client.start();await drain();assert.equal(f.presented.length,1);
+ await f.nav.onProjectionRequest({search:{query:'typed',projectId:null,offset:0,limit:24}});presentation={...presentation,revision:2};f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();assert.equal(f.presented.length,1);
+ presentation={revision:1,intent:{kind:'show-workspace'}};f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();assert.equal(f.presented.length,1);
+ presentation={revision:3,intent:{kind:'show-workspace'}};f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();assert.deepEqual(f.presented.at(-1),{kind:'show-workspace'});assert.equal(f.calls.at(-1).query.search,undefined);
+});
+test('presentation denial reports once without retry or stopping authorized frame',async()=>{
+ const f=fixture();await f.client.start();await drain();const send=f.runtime.sendMessage;let presents=0;f.runtime.sendMessage=m=>m.type==='HOST_UI_PRESENT'?(presents++,Promise.resolve({ok:false,reason:'ui-authorization-unavailable'})):send(m);
+ await f.nav.onPresentationRequest({kind:'show-workspace'});await drain();assert.equal(presents,1);assert.equal(f.states.at(-1).reason,'presentation-unavailable');assert.equal(f.stops,0);assert.deepEqual(f.presented,[]);
+});
+for(const mode of ['stop','scope-change'])test('late presentation reply after '+mode+' cannot present or refresh',async()=>{
+ const f=fixture(),held=deferred();await f.client.start();await drain();const send=f.runtime.sendMessage;
+ f.runtime.sendMessage=m=>m.type==='HOST_UI_PRESENT'?held.promise:m.type==='HOST_UI_RENEW'&&mode==='scope-change'?Promise.resolve({ok:true,grant:{...f.grant(),scopeGrantId:'other'}}):send(m);
+ const pending=f.nav.onPresentationRequest({kind:'search-known',themeId:null});if(mode==='stop')f.client.stop();else await f.advance(10000);const views=f.views;
+ held.resolve({ok:true,presentation:{revision:2,intent:{kind:'enter-reading'}}});await pending;await drain();assert.deepEqual(f.presented,[]);assert.equal(f.views,views);
+});

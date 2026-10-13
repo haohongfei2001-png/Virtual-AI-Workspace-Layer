@@ -123,12 +123,13 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
  }
  function revokeTab(tabId){for(const entry of [...registrations.values()])if(entry.tabId===tabId)revokeDocument(entry.documentId);for(const [id,entry]of [...uiDocuments])if(entry.sender.tab.id===tabId)revokeDocument(id);for(const [port,entry]of [...ports])if(entry.sender.tab.id===tabId)disconnectPort(port);}
  function revokeAll(){revocationEpoch++;grants.revokeAll();registrations.clear();uiDocuments.clear();for(const port of [...ports.keys()])disconnectPort(port);for(const key of [...pending.keys()])deliver(key,null);}
- function notifyScope(scopeKey){
+ function notifyScope(scopeKey,mountId=null){
   if(typeof scopeKey!=='string'||!scopeKey)return 0;
   let delivered=0;
   for(const [port,entry]of [...ports]){
    if(ports.get(port)!==entry)continue;
    const record=entry.binding,grant=record?.grant,mount=grant&&registrations.get(grant.mountId);
+   if(mountId!==null&&grant?.mountId!==mountId)continue;
    if(!record||uiDocuments.get(entry.sender.documentId)!==record||!mount||!sameSender(record.sender,entry.sender)||Date.parse(grant.expiresAt)<=now())continue;
    const frame={tabId:mount.tabId,frameId:0,documentId:mount.documentId,actualURL:mount.url,documentLifecycle:'active',incognito:false};
    const sender={id:extensionId,tab:{id:mount.tabId,incognito:false},frameId:0,documentId:mount.documentId,documentLifecycle:'active',url:mount.url};
@@ -142,6 +143,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   }
   return delivered;
  }
+ function notifyMount(id){const mount=registrations.get(id);if(!mount)return 0;const scope=authority.scopeFor({tabId:mount.tabId,frameId:0,documentId:mount.documentId,actualURL:mount.url,documentLifecycle:'active',incognito:false});return scope?notifyScope(scope.key,id):0;}
  async function withScope(args,work){
   const sender=structuredClone(args.sender),grant=await validate({...args,sender}),mount=registrations.get(grant.mountId);
   if(!mount||typeof work!=='function')throw Error('ui-mount-revoked');
@@ -152,5 +154,5 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   const result=await work(Object.freeze({scope,parentFrame:frame,binding:mount.binding,scopeGrantId:grant.scopeGrantId,role:grant.role,isCurrent:current}));
   await validate({...args,sender});if(!current())throw Error('ui-scope-changed');return result;
  }
- return Object.freeze({handle,validate,withScope,notifyScope,connectPort,revokeDocument,revokeMount,revokeTab,revokeAll});
+ return Object.freeze({handle,validate,withScope,notifyScope,notifyMount,connectPort,revokeDocument,revokeMount,revokeTab,revokeAll});
 }

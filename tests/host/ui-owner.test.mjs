@@ -63,3 +63,42 @@ test('MOCK actual top frame changing during STATUS rejects old sender without gr
 test('MOCK scope dirty notification only reaches paired current ports and has exact empty-data shape',async()=>{const f=fixture(),workspace=mockPort(f.ui),sidebar=mockPort(f.sidebar),unpaired=mockPort({...f.ui,documentId:'unpaired',frameId:9});for(const p of [workspace,sidebar,unpaired])f.owner.connectPort(p);await pairBoth(f);assert.equal(f.owner.notifyScope('other-scope'),0);assert.equal(f.owner.notifyScope('scope-key'),2);assert.deepEqual(workspace.messages,[{type:'VAIWL_UI_DATA_CHANGED'}]);assert.deepEqual(sidebar.messages,workspace.messages);assert.deepEqual(unpaired.messages,[]);});
 test('MOCK expired grant, stale document, revoked parent and changed scope proof get no dirty hints',async()=>{for(const invalidate of [async f=>f.advance(20000),async f=>f.setBound(false),async f=>f.owner.revokeDocument('parent'),async f=>f.setProof({state:'unverified'}),async f=>f.setProof({state:'verified',grant:{id:'new-grant',scopeKey:'scope-key',scopeEpoch:2,expiresAt:new Date(100000).toISOString()}}),async f=>f.setProof({state:'verified',grant:{id:'scope',scopeKey:'other-scope',scopeEpoch:1,expiresAt:new Date(100000).toISOString()}})]){const f=fixture(),port=mockPort(f.ui);f.owner.connectPort(port);await pairBoth(f);await invalidate(f);assert.equal(f.owner.notifyScope('scope-key'),0);assert.deepEqual(port.messages,[]);}});
 test('MOCK throwing postMessage revokes only its own UI document and other role still receives hint',async()=>{const f=fixture(),bad=mockPort(f.ui),sibling=mockPort(f.ui),good=mockPort(f.sidebar);bad.postMessage=()=>{throw Error('port closed');};for(const p of [bad,sibling,good])f.owner.connectPort(p);const grants=await pairBoth(f);assert.equal(f.owner.notifyScope('scope-key'),1);assert.equal(bad.disconnects,1);assert.equal(sibling.disconnects,1);assert.equal(good.disconnects,0);assert.deepEqual(good.messages,[{type:'VAIWL_UI_DATA_CHANGED'}]);await assert.rejects(f.owner.validate({sender:f.ui,grantId:grants[0].id,mountId:'mount'}));assert.equal((await f.owner.validate({sender:f.sidebar,grantId:grants[1].id,mountId:'mount'})).role,'sidebar');});
+
+async function mountNotificationFixture(){
+ let time=0,sequence=0;const frames=new Map(),bound=new Set(),ports={};
+ const proof={state:'verified',grant:{id:'shared_scope',scopeKey:'same-scope',scopeEpoch:1,expiresAt:new Date(100000).toISOString()}};
+ const owner=createHostUiOwner({extensionId:'ext',uiURL:'chrome-extension://ext/ui.html',now:()=>time,makeId:()=>`notification_${++sequence}`,getFrame:async({tabId,frameId})=>frames.get(`${tabId}:${frameId}`),handshake:{isBound:(_binding,sender)=>bound.has(sender.documentId),verify:async(binding,sender)=>bound.has(sender.documentId)&&binding.documentToken==='doc'&&binding.producerToken==='producer'&&binding.routeEpoch===1,matchesFrame:(_binding,sender,actual)=>actual?.documentId===sender.documentId&&actual.url===sender.url},authority:{peek:()=>proof,scopeFor:()=>({key:'same-scope'})}});
+ const binding={documentToken:'doc',producerToken:'producer',routeEpoch:1};
+ for(const [mountId,tabId,base]of [['selected',1,2],['same_tab_other',1,4],['other_tab',2,2]]){
+  const parent={id:'ext',tab:{id:tabId,incognito:false},frameId:0,documentId:`parent_${tabId}`,documentLifecycle:'active',url:'https://chatgpt.com/'};
+  bound.add(parent.documentId);frames.set(`${tabId}:0`,{documentId:parent.documentId,url:parent.url,documentLifecycle:'active',parentFrameId:-1});
+  assert.equal((await owner.handle({v:1,type:'HOST_UI_MOUNT',...binding,mountId,regionEpoch:1},parent)).ok,true);
+  ports[mountId]={};
+  for(const [i,role]of ['workspace','sidebar'].entries()){
+   const sender={...parent,frameId:base+i,documentId:mountId+'_'+role,url:'chrome-extension://ext/ui.html'};
+   frames.set(`${tabId}:${sender.frameId}`,{documentId:sender.documentId,url:sender.url,documentLifecycle:'active',parentFrameId:0});
+   const port=mockPort(sender);assert.equal(owner.connectPort(port),true);ports[mountId][role]=port;
+   const nonce=mountId+'_'+role,join=owner.handle({v:1,type:'HOST_UI_JOIN',nonce,role},sender),confirm=owner.handle({v:1,type:'HOST_UI_CONFIRM',...binding,mountId,regionEpoch:1,nonce,role},parent);
+   const replies=await Promise.all([join,confirm]);assert(replies.every(reply=>reply.ok),JSON.stringify(replies));
+  }
+ }
+ const unpaired=mockPort({...ports.selected.workspace.sender,frameId:9,documentId:'unpaired'});assert.equal(owner.connectPort(unpaired),true);
+ return {owner,ports,unpaired,elapse:ms=>time+=ms,unbind:documentId=>bound.delete(documentId)};
+}
+test('MOCK notifyMount targets both current roles and excludes valid same-scope mounts in the same and another tab',async()=>{
+ const f=await mountNotificationFixture();assert.equal(f.owner.notifyMount('selected'),2);
+ for(const role of ['workspace','sidebar'])assert.deepEqual(f.ports.selected[role].messages,[{type:'VAIWL_UI_DATA_CHANGED'}]);
+ for(const id of ['same_tab_other','other_tab'])for(const port of Object.values(f.ports[id]))assert.deepEqual(port.messages,[]);
+ assert.deepEqual(f.unpaired.messages,[]);
+ assert.equal(f.owner.notifyMount('same_tab_other'),2,'second mount is valid, not merely an unknown-id control');
+ for(const port of Object.values(f.ports.same_tab_other))assert.deepEqual(port.messages,[{type:'VAIWL_UI_DATA_CHANGED'}]);
+ for(const port of Object.values(f.ports.other_tab))assert.deepEqual(port.messages,[]);
+ f.owner.revokeAll();
+});
+test('MOCK mount notification excludes expired, revoked, unbound and unpaired ports',async()=>{
+ for(const invalidate of [f=>f.elapse(20000),f=>f.owner.revokeMount('selected'),f=>f.unbind('parent_1')]){
+  const f=await mountNotificationFixture();invalidate(f);assert.equal(f.owner.notifyMount('selected'),0);
+  for(const mount of Object.values(f.ports))for(const port of Object.values(mount))assert.deepEqual(port.messages,[]);
+  assert.deepEqual(f.unpaired.messages,[]);f.owner.revokeAll();
+ }
+});

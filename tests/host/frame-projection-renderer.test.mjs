@@ -11,6 +11,7 @@ function dom(){
   getAttribute(k){return this.attrs[k]??null;}
   hasAttribute(k){return k in this.attrs;}
   append(...nodes){for(const n of nodes){n.parentNode=this;this.children.push(n);}}
+  replaceChildren(...nodes){this.children=[];this.append(...nodes);}
   remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.isConnected=false;}
   attachShadow(){return this.shadowRoot=new Element('shadow');}
   cloneNode(){const n=new Element(this.tagName);n.attrs={...this.attrs};return n;}
@@ -62,3 +63,25 @@ test('sidebar last-known qualifier is included in the button accessible name and
 test('bounded current IDs select loaded group and row without a full index',()=>{const f=fixture('sidebar'),dto=projection('sidebar');dto.current={nativeUrl:'https://chatgpt.com/c/P1_0',refId:'P1_0',projectId:'P1'};f.nav.updateFrameProjection(dto);assert.equal(f.nav.currentRef().id,'P1_0');assert.equal(f.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'true');assert.equal(f.pane().querySelectorAll('[aria-current]').find(n=>n.getAttribute('data-ref-id')==='P1_0').getAttribute('aria-current'),'page');assert.equal(f.nav.view().segment,0);});
 test('current can locate a loaded selection page, but absent refs are never invented',()=>{const f=fixture(),dto=projection();dto.current={nativeUrl:'https://chatgpt.com/c/selected',refId:'selected',projectId:'P1'};dto.selection={groupId:'P1',list:'current',...page([row('selected')],1000,5,5)};f.nav.updateFrameProjection(dto);assert.equal(f.nav.currentRef().id,'selected');f.nav.updateFrameProjection({...dto,current:{...dto.current,refId:'unloaded',projectId:'unloaded_project'}});assert.equal(f.nav.currentRef(),undefined);f.nav.updateFrameProjection(projection());assert.equal(f.nav.currentRef(),undefined);});
 test('malformed current metadata cannot enter framed renderer',()=>{const f=fixture();for(const current of [null,{nativeUrl:'',refId:null,projectId:null},{nativeUrl:'https://chatgpt.com/',refId:[],projectId:null},{nativeUrl:'https://chatgpt.com/',refId:null,projectId:null,scope:'B'}])assert.throws(()=>f.nav.updateFrameProjection({...projection(),current}),/invalid-frame-current/);});
+
+const searchReply=(query,items,total=items.length)=>({...projection(),search:{...query,items,total,hasMore:query.offset+items.length<total}});
+test('frame search requests owner inventory, shows waiting and uses bounded 24-row pages',async()=>{
+ const calls=[],pending=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(r=>pending.push(r));});f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});
+ assert.deepEqual(calls[0].search,{query:'',projectId:null,offset:0,limit:24});assert(f.pane().querySelectorAll('[role="status"]').some(n=>n.textContent.includes('正在查找')));
+ pending.shift()(searchReply(calls[0].search,[row('remote_only')],50));await tick();assert(f.pane().querySelector('[data-ref-id="remote_only"]'));assert(!f.pane().querySelector('[data-ref-id="P2_0"]'));
+ f.button('显示更多查找结果').click();assert.equal(calls[1].search.offset,24);assert.equal(calls[1].search.limit,24);pending.shift()(searchReply(calls[1].search,[row('next')],50));await tick();assert(f.pane().querySelector('[data-ref-id="next"]'));assert(f.button('返回前页查找结果'));
+});
+test('search input bounds and late previous query never overwrite current result',async()=>{
+ const calls=[],pending=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(r=>pending.push(r));});f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known',themeId:'P1'});const input=f.pane().querySelector('input');input.value='x'.repeat(220);input.oninput();assert.equal(calls[1].search.query.length,200);assert.equal(calls[1].search.projectId,'P1');pending[1](searchReply(calls[1].search,[row('new')]));await tick();pending[0](searchReply(calls[0].search,[row('old')]));await tick();assert(f.pane().querySelector('[data-ref-id="new"]'));assert(!f.pane().querySelector('[data-ref-id="old"]'));
+});
+test('close clears owner search query and late/background search cannot reopen it',async()=>{
+ const calls=[],pending=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(r=>pending.push(r));});f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});f.button('关闭派生查找').click();assert.equal(calls[1].search,undefined);pending[0](searchReply(calls[0].search,[row('late')]));await tick();assert.equal(f.pane().querySelector('input'),null);f.nav.updateFrameProjection(searchReply(calls[0].search,[row('late')]));assert.equal(f.pane().querySelector('input'),null);assert(!f.pane().querySelector('[data-ref-id="late"]'));
+});
+test('scope replacement cancels old search and sidebar delegates without requesting inventory',async()=>{
+ let finish;const f=fixture('workspace',()=>new Promise(r=>finish=r));f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});f.nav.updateFrameProjection({...projection(),scope:'B'});finish(searchReply({query:'',projectId:null,offset:0,limit:24},[row('A')]));await tick();assert.equal(f.nav.status().scope,'B');assert.equal(f.pane().querySelector('input'),null);
+ const calls=[],side=fixture('sidebar',q=>calls.push(q));side.nav.updateFrameProjection(projection('sidebar'));side.button('查找已知项目与聊天').click();assert.deepEqual(calls,[]);assert.equal(side.intents.at(-1).kind,'search-known');
+});
+test('bounded search refinement uses the returned page limit for the next offset',async()=>{
+ const calls=[],pending=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(resolve=>pending.push(resolve));});f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});
+ pending.shift()(searchReply({...calls[0].search,limit:12},[row('bounded')],40));await tick();assert(f.pane().querySelector('[data-ref-id="bounded"]'));f.button('显示更多查找结果').click();assert.equal(calls[1].search.offset,12);
+});

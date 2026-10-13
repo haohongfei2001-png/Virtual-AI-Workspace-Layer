@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import {createHostContentSession} from '../../src/host/content-session.mjs';
 const drain=async()=>{for(let i=0;i<40;i++)await Promise.resolve();};
 function fixture(){
- let time=1000,id=0,bridge,context,adapterOptions,stops=0,planned=0;const calls=[],listeners=new Set(),events=new Map(),timers=new Map();
+ let time=1000,id=0,bridge,context,adapterOptions,stops=0,planned=0;const presentations=[];const calls=[],listeners=new Set(),events=new Map(),timers=new Map();
  const document={location:{origin:'https://chatgpt.com',href:'https://chatgpt.com/'},defaultView:{addEventListener:(n,f)=>events.set(n,f),removeEventListener:(n,f)=>{if(events.get(n)===f)events.delete(n);}}};
  const binding=()=>({documentToken:'doc',producerToken:'producer',browserDocumentId:'browser',routeEpoch:1,origin:document.location.origin,expiresAt:new Date(time+20000).toISOString()});
  let respond=m=>m.type==='HOST_HELLO'?{binding:binding()}:m.type==='HOST_REFRESH'?{state:'verified'}:m.type==='HOST_DOCUMENT_RENEW'?{ok:true,binding:binding()}:{ok:true,grants:[]};
  const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},sendMessage:async m=>{calls.push(m);return respond(m);}};
- const options={document,runtime,makeId:()=> 'client',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),adapterFactory:o=>(adapterOptions=o,{inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false}),surfaceFactory:()=>({}),plansFactory:({bindingCurrent})=>({plan:()=>{assert.ok(bindingCurrent());planned++;return ['plan'];}}),controllerFactory:o=>{bridge=o.bridge;return {start:async c=>{context=c;await bridge.registerMount({handle:{id:'mount',regionEpoch:1}});return {id:'mount'};},stop:()=>{stops++;bridge.revokeMount({mountId:'mount'});},showWorkspace:()=>true,showReading:()=>true};}};
+ const options={document,runtime,makeId:()=> 'client',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),adapterFactory:o=>(adapterOptions=o,{inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false}),surfaceFactory:()=>({}),plansFactory:({bindingCurrent})=>({plan:()=>{assert.ok(bindingCurrent());planned++;return ['plan'];}}),controllerFactory:o=>{bridge=o.bridge;return {start:async c=>{context=c;await bridge.registerMount({handle:{id:'mount',regionEpoch:1}});return {id:'mount'};},stop:()=>{stops++;bridge.revokeMount({mountId:'mount'});},showWorkspace:()=>{presentations.push('workspace');return true;},showReading:()=>{presentations.push('reading');return true;}};}};
  const client=createHostContentSession(options);
- return {get adapterOptions(){return adapterOptions;},client,options,runtime,document,binding,calls,listeners,events,setResponse:f=>{respond=f;},get bridge(){return bridge;},get context(){return context;},get stops(){return stops;},get planned(){return planned;},async advance(ms){time+=ms;for(const [key,t]of [...timers])if(t.at<=time){timers.delete(key);t.fn();}await drain();}};
+ return {presentations,get adapterOptions(){return adapterOptions;},client,options,runtime,document,binding,calls,listeners,events,setResponse:f=>{respond=f;},get bridge(){return bridge;},get context(){return context;},get stops(){return stops;},get planned(){return planned;},async advance(ms){time+=ms;for(const [key,t]of [...timers])if(t.at<=time){timers.delete(key);t.fn();}await drain();}};
 }
 test('production composition sequences HELLO REFRESH and mount with no page bridge; restart seq is monotonic',async()=>{
  const f=fixture();assert.deepEqual(await f.client.start(),{id:'mount'});assert.deepEqual(f.calls.slice(0,3).map(m=>m.type),['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT']);assert.equal(f.client.showReading(),true);assert.equal(f.client.showWorkspace(),true);assert.equal(f.context.binding.documentToken,'doc');assert.equal(f.document.defaultView.client,undefined);
@@ -50,4 +50,20 @@ test('pagehide or explicit stop during queued rebind prevents automatic revival'
 });
 test('failed replacement stops without self-retry',async()=>{
  const f=fixture();await f.client.start();f.setResponse(()=>({ok:false}));[...f.listeners][0]({type:'HOST_DOCUMENT_INVALIDATED'},{id:'extension'});await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,2);await f.advance(30000);assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,2);assert.equal(f.listeners.size,0);assert.equal(f.events.size,0);
+});
+test('trusted surface presentation dispatches only the two modes without native plans or writes',async()=>{
+ const f=fixture();await f.client.start();const listener=[...f.listeners][0],replies=[],before=f.calls.length;
+ for(const mode of ['workspace','reading'])listener({type:'HOST_PRESENT_SURFACE',documentToken:'doc',producerToken:'producer',routeEpoch:1,mode},{id:'extension'},r=>replies.push(r));
+ assert.deepEqual(replies,[{ok:true},{ok:true}]);assert.deepEqual(f.presentations,['workspace','reading']);assert.equal(f.calls.length,before);assert.equal(f.planned,0);f.client.stop();
+});
+test('presentation rejects wrong sender, extra fields, invalid mode/binding and stale route, expiry or stop',async()=>{
+ const message={type:'HOST_PRESENT_SURFACE',documentToken:'doc',producerToken:'producer',routeEpoch:1,mode:'workspace'};
+ const f=fixture();await f.client.start();const listener=[...f.listeners][0],replies=[];
+ listener(message,{id:'other'},r=>replies.push(r));
+ for(const patch of [{mode:'other'},{scope:'private'},{documentToken:'wrong'},{producerToken:'wrong'},{routeEpoch:2}])listener({...message,...patch},{id:'extension'},r=>replies.push(r));
+ assert.equal(replies.length,5);assert(replies.every(r=>r.ok===false));assert.equal(f.presentations.length,0);f.client.stop();listener(message,{id:'extension'},()=>{});assert.equal(f.presentations.length,0);
+ for(const change of [async x=>{x.document.location.href+='c/new';},async x=>x.advance(20000)]){const x=fixture();await x.client.start();const fn=[...x.listeners][0];await change(x);let response;fn(message,{id:'extension'},r=>response=r);assert.deepEqual(response,{ok:false});assert.equal(x.presentations.length,0);x.client.stop();}
+});
+test('old session presentation cannot act on replacement even with identical binding fields',async()=>{
+ const f=fixture();await f.client.start();const old=[...f.listeners][0];await f.client.start();old({type:'HOST_PRESENT_SURFACE',documentToken:'doc',producerToken:'producer',routeEpoch:1,mode:'reading'},{id:'extension'},()=>{});assert.equal(f.presentations.length,0);f.client.stop();
 });

@@ -10,7 +10,7 @@ function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const
 export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onProjectionRequest=null}) {
   const framed=surface!==null;
   if(framed&&(!['workspace','sidebar'].includes(surface.role)||surface.root?.ownerDocument!==doc))throw Error('invalid-navigation-surface');
-  const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
+  const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,frameSearchOffset=0,frameSearchWaiting=false,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
   let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,projectionRequest=0;
   // Keep the original event target alive until its click, drop, or composition
   // completes. Coalesce updates instead of extending a debounce on each change.
@@ -150,6 +150,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const query={role:surface.role,segment:view.segment,offset:frameProjection.groups.offset,limit:frameProjection.groups.limit,...partial};
     try{Promise.resolve(onProjectionRequest(query)).then(dto=>{if(dto&&run===projectionRequest&&!stopped&&frameProjection?.scope===scope&&dto.scope===scope)updateFrameProjection(dto);}).catch(()=>{});}catch{}
   }
+  function requestFrameSearch(offset=0){frameSearchOffset=offset;frameSearchWaiting=true;requestFrame({search:{query:searchQuery,projectId:searchTheme,offset,limit:24}});}
+  function closeFrameSearch(){searchQuery=null;searchTheme=null;frameSearchWaiting=false;projectionRequest++;render();requestFrame();onPresentationRequest({kind:'show-workspace'});}
   function frameRows(groupId,list){const selected=frameProjection.selection;if(selected&&selected.groupId===groupId&&selected.list===list)return selected;return groupId===null?frameProjection.entries[list]:frameProjection.groups.items.find(g=>g.id===groupId)?.lists[list];}
   function moreFrame(page,groupId,list){requestFrame({...(groupId===null?{}:{groupId}),list,rowOffset:page.limit<200?page.offset:page.offset+page.limit,rowLimit:page.limit<200?Math.min(200,page.limit+12):200});}
   function frameMembers(group,parent,side){
@@ -191,7 +193,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function themeGlyph(g){const n=node(doc,'span',{class:'theme-glyph','aria-hidden':'true'}),kind=g.owner==='bootstrap'&&g.icon==='◇'?defaultIcon(g.name):g.icon;n.dataset.icon=kind??'collection';if(iconPaths[kind])n.innerHTML=svgIcon(kind);else n.textContent=kind??'◇';return n;}
   function locateAnchor(){if(!pendingAnchor||!snapshot||!roots)return;if(pendingAnchor.scope!==snapshot.scope){pendingAnchor=null;return;}if(!adapter.isCurrent(pendingAnchor.ref.nativeUrl))return;const result=adapter.restoreSnippet?.(pendingAnchor.ref,pendingAnchor.anchor);pendingAnchor=null;anchorFeedback=result?.ok?null:'无法唯一定位已保存片段。消息可能已变化，请使用原生搜索。';if(anchorFeedback){roots.sidebar.shadow.querySelector('.anchor-feedback')?.remove();roots.sidebar.shadow.append(node(doc,'p',{class:'anchor-feedback',role:'status'},anchorFeedback));}}
   function showWorkingSet(notify=true){if(!view)return;remember();view.mode='workspace';view.worksetOpen=true;searchQuery=null;searchTheme=null;render();layout();if(framed&&notify)onPresentationRequest({kind:'show-working-set'});}
-  function findKnown(theme=null,notify=true){if(!view)return;remember();view.mode='workspace';searchQuery='';searchTheme=theme;searchCapacity=24;render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('input')?.focus());if(framed&&notify)onPresentationRequest({kind:'search-known',themeId:theme});}
+  function findKnown(theme=null,notify=true){if(!view)return;if(frameProjection&&surface.role==='sidebar'){if(notify)onPresentationRequest({kind:'search-known',themeId:theme});return;}remember();view.mode='workspace';searchQuery='';searchTheme=theme;searchCapacity=24;frameSearchOffset=0;frameSearchWaiting=!!frameProjection;render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('input')?.focus());if(frameProjection)requestFrameSearch();if(framed&&notify)onPresentationRequest({kind:'search-known',themeId:theme});}
   function closeMenu(focus=true){if(!menu)return;const prior=menu;menu=null;prior.n.remove();prior.trigger.setAttribute('aria-expanded','false');doc.removeEventListener('pointerdown',prior.outside,true);if(focus&&prior.trigger.isConnected)prior.trigger.focus({preventScroll:true});}
   function themeActions(g,head){const trigger=graphic(button('主题操作 '+g.name,()=>{
       if(menu?.trigger===trigger){closeMenu();return;}closeMenu(false);const popup=node(doc,'div',{class:'menu',role:'menu','aria-label':'主题操作 '+g.name});
@@ -220,7 +222,21 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     }
     if(!roots.workspace){restoreOwnedFocus(focused);emitView();return;}
     const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-segment':String(view.segment)});roots.workspace.scroller=page;page.addEventListener('scroll',()=>{if(roots?.workspace?.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){view.scroll=page.scrollTop;emitView();}},{passive:true});
-    if(frameProjection&&(searchQuery!==null||view.worksetOpen)){const section=node(doc,'section',{class:'search'});section.append(node(doc,'strong',{},searchQuery!==null?'查找已知项目与聊天':'当前工作集'),node(doc,'p',{},searchQuery!==null?'工作空间查找暂不可用，请使用原生搜索。':'当前工作集暂不可用，请稍后重试。'),button('返回主题视图',()=>{searchQuery=null;view.worksetOpen=false;render();},'返回主题','more'));page.append(section);
+    if(frameProjection&&searchQuery!==null){
+      const section=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
+      top.append(node(doc,'strong',{},theme?.name??'查找已知项目与聊天'),graphic(button('关闭派生查找',closeFrameSearch),'close'));section.append(top);
+      const input=node(doc,'input',{'aria-label':'已知聊天查找输入',placeholder:'输入项目或聊天名称','data-focus-key':'search-input',type:'search',maxlength:'200'});input.value=searchQuery;
+      const results=node(doc,'div',{class:'search-results'});
+      const display=()=>{results.replaceChildren();const found=frameProjection.search;
+        if(frameSearchWaiting||!found||found.query!==searchQuery||found.projectId!==searchTheme||found.offset!==frameSearchOffset){results.append(node(doc,'p',{role:'status'},'正在查找已知记录…'));return;}
+        for(const ref of found.items)results.append(row(ref,'search'));
+        if(!found.total)results.append(node(doc,'p',{role:'status'},'未找到已知记录。可以继续使用原生搜索。'));
+        if(found.hasMore)results.append(button('显示更多查找结果',()=>{requestFrameSearch(found.offset+found.limit);render();},'显示更多','more'));
+        if(found.offset>0)results.append(button('返回前页查找结果',()=>{requestFrameSearch(Math.max(0,found.offset-found.limit));render();},'上一页','more'));
+      };
+      input.oninput=()=>{searchQuery=input.value.slice(0,200);input.value=searchQuery;requestFrameSearch();display();};
+      section.append(input,node(doc,'p',{},'仅查找已知项目与聊天。原生搜索独立保留。'),results);display();page.append(section);
+    }else if(frameProjection&&view.worksetOpen){const section=node(doc,'section',{class:'search'});section.append(node(doc,'strong',{},'当前工作集'),node(doc,'p',{},'当前工作集暂不可用，请稍后重试。'),button('返回主题视图',()=>{view.worksetOpen=false;render();},'返回主题','more'));page.append(section);
     }else if(searchQuery!==null){
       const search=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
       top.append(node(doc,'strong',{},theme?.name??(free()?'查找已知项目与聊天':'查找主题与派生名称')),graphic(button('关闭派生查找',()=>{searchQuery=null;searchTheme=null;render();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));}),'close'));search.append(top);
@@ -266,10 +282,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(c!==undefined&&(!c||typeof c!=='object'||Array.isArray(c)||Object.keys(c).sort().join(',')!=='nativeUrl,projectId,refId'||typeof c.nativeUrl!=='string'||!c.nativeUrl.length||c.nativeUrl.length>2048||!['refId','projectId'].every(k=>c[k]===null||typeof c[k]==='string'&&c[k].length>0&&c[k].length<=128&&!/[\s\x00-\x1f]/.test(c[k]))))throw Error('invalid-frame-current');
     const pageOK=p=>p&&Array.isArray(p.items)&&Number.isSafeInteger(p.total)&&Number.isSafeInteger(p.offset)&&Number.isSafeInteger(p.limit)&&p.total>=0&&p.offset>=0&&p.limit>0&&p.limit<=200&&p.items.length<=p.limit&&typeof p.hasMore==='boolean'&&p.hasMore===(p.offset+p.items.length<p.total);
     if(!Number.isSafeInteger(dto.navigation.maxSegment)||dto.navigation.maxSegment<0||dto.navigation.hasNewer!==(dto.segment>0)||dto.navigation.hasOlder!==(dto.segment<dto.navigation.maxSegment)||!pageOK(dto.groups)||dto.groups.limit>24||!['noProject','unknown'].every(k=>pageOK(dto.entries?.[k]))||dto.groups.items.some(g=>!['current','old','unknown'].every(k=>pageOK(g.lists?.[k])))||dto.selection&&!pageOK(dto.selection)||new TextEncoder().encode(JSON.stringify(dto)).length>65536)throw Error('invalid-frame-projection');
+    if(dto.search!==undefined&&(!pageOK(dto.search)||dto.search.limit>24||typeof dto.search.query!=='string'||dto.search.query.length>200||!(dto.search.projectId===null||typeof dto.search.projectId==='string'&&dto.search.projectId.length>0&&dto.search.projectId.length<=128)))throw Error('invalid-frame-search');
+    if(snapshot?.scope===dto.scope&&dto.search&&(searchQuery===null||dto.search.query!==searchQuery||dto.search.projectId!==searchTheme||dto.search.offset!==frameSearchOffset))return;
     if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame'];return;}
     const copy=structuredClone(dto);resetInteraction(true);sidebarDirty=true;remember();
     if(snapshot?.scope!==copy.scope){detach();searchQuery=null;searchTheme=null;projectionRequest++;}
-    projectionRequest++;frameProjection=copy;
+    projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;
     // Presentation-only metadata. This intentionally has no complete refs/index
     // and never enters the prepared Free snapshot or full-snapshot update path.
     snapshot={scope:copy.scope,viewMode:'free',viewSession:copy.viewSession,preferences:{}};

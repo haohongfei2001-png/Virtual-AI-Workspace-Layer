@@ -8,7 +8,7 @@ import {createHostBindingService} from '../../src/runtime/host-binding-service.m
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const NOW='2026-10-14T00:00:00Z',url='https://chatgpt.com/';
 // Mock IndexedDB and explicitly authored provider response; no browser auth claim.
-async function fixture(t,{prepareNavigation=null,documentURL=url}={}){
+async function fixture(t,{prepareNavigation=null,presentSurface=null,documentURL=url}={}){
  const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'host-read-binding'});t.after(()=>base.close());
  const workspaces=new WorkspaceRepository({baseRepository:base,clock:()=>NOW});
  const evidence=new FreeEvidenceRepository({baseRepository:base,clock:()=>NOW});
@@ -17,7 +17,7 @@ async function fixture(t,{prepareNavigation=null,documentURL=url}={}){
  const profile={id:'read-binding-reconstruction',revision:1,urlPolicy:createURLPolicy({profile:{conversationId:value=>value,projectId:({container})=>container}})};
  const uiURLs={workspace:'chrome-extension://extension/workspace.html',sidebar:'chrome-extension://extension/sidebar.html'};
  const children=Object.fromEntries(Object.entries(uiURLs).map(([role,url],i)=>[role,{...sender,frameId:i+1,documentId:'ui_'+role,url}]));
- const service=createHostBindingService({extensionId:'extension',prepareNavigation,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{read:async()=>({principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'})},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
+ const service=createHostBindingService({extensionId:'extension',prepareNavigation,presentSurface,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{read:async()=>({principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'})},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
  const request=(type,extra={})=>service.handle({v:1,type,clientId:'client',seq:++seq,...extra},sender);
  let binding,bound;
  async function bind(){const hello=await request('HOST_HELLO');assert.equal(hello.ok,true);binding=hello.binding;const {documentToken,producerToken,routeEpoch}=binding;assert.equal((await request('HOST_REFRESH',{documentToken,producerToken,routeEpoch})).state,'verified');bound=await request('BIND');assert.equal(bound.ok,true,JSON.stringify(bound));return bound;}
@@ -29,7 +29,8 @@ async function fixture(t,{prepareNavigation=null,documentURL=url}={}){
  const grants={};
  async function mount(){const auth={documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch};assert.equal((await service.handle({v:1,type:'HOST_UI_MOUNT',...auth,mountId:'mount',regionEpoch:1},sender)).ok,true);for(const role of ['workspace','sidebar']){const joined=service.handle({v:1,type:'HOST_UI_JOIN',nonce:'nonce_'+role,role},children[role]);const confirmed=await service.handle({v:1,type:'HOST_UI_CONFIRM',...auth,mountId:'mount',regionEpoch:1,nonce:'nonce_'+role,role},sender);assert.equal(confirmed.ok,true,JSON.stringify(confirmed));const result=await joined;assert.equal(result.ok,true,JSON.stringify(result));grants[role]=result.grant;}}
  const view=(role='workspace',query={},patch={},as=children[role])=>service.handle({v:1,type:'HOST_UI_VIEW',grantId:grants[role].id,mountId:'mount',query,...patch},as);
- return{base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
+ const present=(role,intent,patch={},as=children[role])=>service.handle({v:1,type:'HOST_UI_PRESENT',grantId:grants[role].id,mountId:'mount',intent,...patch},as);
+ return{present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
 }
 const drain=()=>new Promise(resolve=>setImmediate(resolve));
 async function ready(h,role='workspace'){
@@ -117,4 +118,29 @@ test('MOCK_IDB current conversation comes from verified parent route and existin
  assert.equal((await h.view('workspace',{current:{nativeUrl:'https://chatgpt.com/c/forged'}})).ok,false);
  const other=await fixture(t,{documentURL:'https://chatgpt.com/c/unseen'});await other.bind();await other.observe();await other.mount();
  assert.deepEqual((await ready(other)).page.current,{nativeUrl:'https://chatgpt.com/c/unseen',refId:null,projectId:null});
+});
+test('MOCK_IDB authorized roles share presentation revision and native callback contains no search or scope',async t=>{
+ const calls=[],h=await fixture(t,{presentSurface:async x=>{calls.push(structuredClone(x));return {ok:true};}});await h.bind();await h.observe();await h.mount();await ready(h);
+ const search=await h.present('sidebar',{kind:'search-known',themeId:'p1'});assert.equal(search.ok,true,JSON.stringify(search));assert.equal(search.presentation.revision,1);
+ assert.deepEqual((await h.view()).page.presentation,search.presentation);assert.deepEqual((await h.view('sidebar')).page.presentation,search.presentation);
+ const reading=await h.present('workspace',{kind:'enter-reading'});assert.equal(reading.presentation.revision,2);assert.deepEqual((await h.view('sidebar')).page.presentation,reading.presentation);
+ const repeated=await h.present('sidebar',{kind:'enter-reading'});assert.equal(repeated.presentation.revision,2);
+ assert.deepEqual(calls.map(c=>c.mode),['workspace','reading','reading']);for(const call of calls){assert.deepEqual(Object.keys(call).sort(),['binding','mode','parentFrame']);assert.deepEqual(Object.keys(call.binding).sort(),['documentToken','producerToken','routeEpoch']);assert.equal(call.parentFrame.documentId,'document');assert.equal(call.query,undefined);assert.equal(call.scope,undefined);assert.equal(call.title,undefined);}
+});
+test('MOCK_IDB presentation rejects forged role, grant, intent fields and unknown Project before native callback',async t=>{
+ let calls=0;const h=await fixture(t,{presentSurface:async()=>{calls++;return {ok:true};}});await h.bind();await h.observe();await h.mount();await ready(h);
+ for(const [intent,patch,sender]of [[{kind:'show-workspace'},{role:'sidebar'}],[{kind:'enter-reading'},{grantId:'unknown'}],[{kind:'show-workspace'},{},h.children.sidebar],[{kind:'show-workspace',scope:'forged'},{}],[{kind:'search-known',themeId:'not-known'},{}],[{kind:'show-workspace'},{mountId:'other'}]]){const reply=await h.present('workspace',intent,patch,sender);assert.equal(reply.ok,false,JSON.stringify(reply));}
+ assert.equal(calls,0);assert.equal((await h.view()).page.presentation.revision,0);
+});
+test('MOCK_IDB scope invalidation while native presentation waits rejects late publication',async t=>{
+ let entered=false,release;const wait=new Promise(r=>release=r),h=await fixture(t,{presentSurface:async()=>{entered=true;await wait;return {ok:true};}});await h.bind();await h.observe();await h.mount();await ready(h);
+ const pending=h.present('sidebar',{kind:'search-known',themeId:null});for(let i=0;i<50&&!entered;i++)await drain();assert.equal(entered,true);h.switchPrincipal('replacement');release();const result=await pending;assert.equal(result.ok,false);assert.equal(result.presentation,undefined);assert.equal((await h.view()).ok,false);assert.equal((await h.present('workspace',{kind:'show-workspace'})).ok,false);
+});
+test('MOCK_IDB failed native presentation leaves shared intent unchanged',async t=>{
+ const h=await fixture(t,{presentSurface:async()=>({ok:false})});await h.bind();await h.observe();await h.mount();await ready(h);assert.equal((await h.present('sidebar',{kind:'enter-reading'})).ok,false);assert.deepEqual((await h.view()).page.presentation,{revision:0,intent:{kind:'show-workspace'}});
+});
+test('MOCK_IDB search result receives owner navigation plan and cannot forge current conversation',async t=>{
+ const calls=[],h=await fixture(t,{documentURL:'https://chatgpt.com/c/c1',prepareNavigation:async x=>{calls.push(x);return x.targets.map(hrefPlan);}});await h.bind();await h.observe();await h.mount();await ready(h);calls.length=0;
+ const result=await h.view('workspace',{segment:1,search:{query:'Native conversation',offset:0,limit:5}});assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(result.page.search.total,1);assert.deepEqual(result.page.search.items.map(r=>r.id),['c1']);assert(calls.at(-1).targets.some(r=>r.refId==='c1'));assert(result.navigation.some(r=>r.refId==='c1'));assert.equal(result.page.current.refId,'c1');
+ assert.equal((await h.view('workspace',{search:{query:'Native',current:{refId:'forged'}}})).ok,false);assert.equal((await h.view('workspace',{search:{query:'Native',projectId:'unknown'}})).ok,false);
 });
