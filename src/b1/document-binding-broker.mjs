@@ -69,7 +69,7 @@ export const fixtureScopeResolver=async ({currentFrame})=>{
 
 export function createDocumentBindingBroker({
  extensionId,getFrame,resolveScope,repository,now=Date.now,
- makeId=()=>crypto.randomUUID(),leaseMs=20000,maxTabs=128,allowedURL=fixtureURL,workspaceRepository=null,freeRuntime=null
+ makeId=()=>crypto.randomUUID(),leaseMs=20000,maxTabs=128,allowedURL=fixtureURL,workspaceRepository=null,freeRuntime=null,hostHandshake=null
 }={}){
   if(!tokenOK(extensionId)||typeof getFrame!=='function'||typeof resolveScope!=='function'||
     !repository||typeof now!=='function'||typeof makeId!=='function'||
@@ -82,11 +82,12 @@ export function createDocumentBindingBroker({
     return states.get(key);
   };
   function invalidate({tabId,frameId=0}={}){
+    hostHandshake?.invalidate({tabId,frameId});
     if(!Number.isSafeInteger(tabId)||frameId!==0)return false;
     const k=tabId+':0',s=states.get(k);if(!s)return false;
     s.slot?.abort?.abort();s.epoch++;s.slot=null;return true;
   }
-  function tabClosed(tabId){states.get(tabId+':0')?.slot?.abort?.abort();states.delete(tabId+':0');}
+  function tabClosed(tabId){hostHandshake?.tabClosed(tabId);states.get(tabId+':0')?.slot?.abort?.abort();states.delete(tabId+':0');}
   async function currentDocument(doc){
     try{
       const f=await getFrame({tabId:doc.tabId,frameId:doc.frameId});
@@ -122,6 +123,7 @@ export function createDocumentBindingBroker({
   const copyRecord=r=>r?{conversationId:r.conversationId,nativeUrl:r.nativeUrl,
     projectId:r.projectId,revision:r.revision}:null;
   async function handle(message,sender){
+    if(message?.type==='HOST_HELLO')return hostHandshake?hostHandshake.handle(message,sender):deny('host-handshake-unavailable');
     if(!requestOK(message))return deny('invalid-request');
     const senderDoc=isSender(sender,extensionId,allowedURL);
     if(!senderDoc)return deny('invalid-sender');

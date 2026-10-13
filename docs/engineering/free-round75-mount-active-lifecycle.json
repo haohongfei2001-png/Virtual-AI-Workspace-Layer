@@ -1,0 +1,74 @@
+{
+  "evidence": "NARROW_REAL_MV3_MOUNT_LIFECYCLE_OFFLINE_NOT_J1",
+  "uiGrant": "NOT_IMPLEMENTED",
+  "activeLifecycle": true,
+  "expiryKind": "LOCAL_TEST_TIMER_NOT_UIGRANT",
+  "sourceHash": "d8ed4ee322a55df4a8498c7065f61b6d0ebd709a8c2a2febba142fcc21900c35",
+  "results": [
+    {
+      "operation": "disable",
+      "normalLifecycle": {
+        "parent": {
+          "open": 0,
+          "reading": "visible"
+        },
+        "frames": [
+          {
+            "text": "",
+            "cleared": "local-test-expiry"
+          },
+          {
+            "text": "",
+            "cleared": "local-test-expiry"
+          }
+        ]
+      },
+      "before": {
+        "masked": true,
+        "bothOpen": true,
+        "noNativeInert": true
+      },
+      "declarativeClose": true,
+      "portalSuspend": true,
+      "nativeOperable": true,
+      "cleanLayout": true,
+      "draft": "UNSENT_DRAFT",
+      "open": 0,
+      "privateProjectionAbsent": true
+    },
+    {
+      "operation": "uninstall",
+      "normalLifecycle": {
+        "parent": {
+          "open": 0,
+          "reading": "visible"
+        },
+        "frames": [
+          {
+            "text": "",
+            "cleared": "local-test-expiry"
+          },
+          {
+            "text": "",
+            "cleared": "local-test-expiry"
+          }
+        ]
+      },
+      "before": {
+        "masked": true,
+        "bothOpen": true,
+        "noNativeInert": true
+      },
+      "declarativeClose": true,
+      "portalSuspend": true,
+      "nativeOperable": true,
+      "cleanLayout": true,
+      "draft": "UNSENT_DRAFT",
+      "open": 0,
+      "privateProjectionAbsent": true
+    }
+  ],
+  "browser": "Chrome/155.0.8059.40",
+  "workerNetworkBlocked": true,
+  "pass": true
+}

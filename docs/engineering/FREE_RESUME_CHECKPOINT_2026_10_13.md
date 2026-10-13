@@ -730,3 +730,20 @@ Round73最终安装包100k：首标签24265.4ms、第二15209.5ms，三发送816
 前置aeb850d；恢复诊断复用同一个分批双向索引审计，保持readonly事务与guard。旧shadow错误/缺失locator不再显示可恢复。新增18项中修前2合法控制PASS/16反例FAIL；修后全量1282/1282、0失败/跳过，相关恢复47/47。真实IDB10/10新增诊断断言：合法true、错误false/content-mismatch，诊断前后八表逐row保持；实际恢复撤权与错误拒绝继续通过。100k包/性能仍为Round73源码，不重跑与正常导航无关的规模验证。
 
 用户已要求在自然检查点整合Pro正式72ca068；正常fetch已成功，远端实际72ca068基于a3d8f13，已包含此前到Round71的本地提交。先保存Round72–74成果，再非强制merge该文档提交、核对四份spec原件与既有代码均保留。此后优先B1.F+B2.F1+C2生产HostAdapter离线闭环；不再将额外100k合成优化置于其前。真实权限边界与原FAIL保持，Free未完成。
+
+
+## Round75：正式Host规格整合及首批离线身份/发现基础
+
+按最新指令先保存aeb850d/e58bd3a，再正常fetch并无冲突merge Pro文档72ca068为a6624f4；代码、STATUS、工程证据与e58bd3a逐路径相同，四附件blob与72ca068完全一致。正常push成功，GitHub确认PR16 head a6624f49f6cb1ab588b45d9f4bfd5f2b6ed7bbc2，仍Draft/base176ebc9a。没有回退、强推、新工作树或新PR。
+
+直接开始B1.F+B2.F1+C2：新增严格URL policy、文档独立HELLO、scope authority本地peek/有限单飞refresh、固定session/accounts parser、zero-seed身份组装以及受限原生区域SurfaceDiscovery。HELLO不调用账户resolver或数据库；固定两GET校验MIME/URL/redirect/字节/expiry，token仅短期provider闭包。默认C3需包内personal语义且唯一personal roster，组织/多context/unknown拒绝猜测；C1/C2和隔离备provider尚未实现。6秒使用monotonic elapsed；永久provider/取消/迟到/可变frame入参反例已修复，现有BIND/lease/scope栅栏不放宽。真实loopback认证服务跑实际parser，Node cookie jar由测试端代持，不能称浏览器worker cookie验收。
+
+独立LEGACY重建夹具无HF/expected答案通道，expected仅测试进程；双同名P其中button无ID，C/NONE/UNKNOWN、真实原生handler及独立区域。Discovery只产native-dom proposal和receiptId:null，保留IDless句柄、原节点/指纹/route/region失效、明确当前成员域和已打开NONE菜单；不据普通/c或null猜NONE，不持久假ID，不自证账户或生产事实。200+标题保ID并over-limit。
+
+最终完整Node1366/1366、0失败/跳过；原合成MV3回归9/9（不是新Host认证）。新fixture端点5、host根目录79包含于全套；headless原生fixture3及discovery4各自独立DOM证据，不升级S完整旅程。
+
+提前实际Chrome155 MV3挂载探针：manual双surface/限定CSS mask/声明式关闭/native dialog让位通过；静态扩展frame在真实disable/uninstall后仍残留PRIVATE_PROBE_TITLE且mask未释放，原FAIL保留。加入正常runtime断连+2.5秒本地测试timer后，两操作三个退出指标通过；不是实际UiGrant、不是无JS hard-kill证明，尚不判UI-12/13完整通过。mount基础不写native HTML inert/hidden/display，但生产私有UI授权/失效机制未接。worker connect-src none及实际外网拒绝只证明该窄探针策略。
+
+下一原任务继续B1.F+B2.F1+C2：ChatGPTHostAdapter、owner receipt/reducer与现有FreeUI接线、预计划native动作、实际UiGrant/退出，随后原81项适用子场景和J1–J4。正常profile不能以全部UNKNOWN/NATIVE_ONLY过测。新基础是离线实施差额，不是完整Host候选；真实Free/G/U、4x100k旧FAIL及发布条件仍未满足。
+
+Round75最终计时补充：session provider将expiry墙钟与6秒monotonic elapsed分离，墙钟回拨反例通过。最终既有+Host基础1366项全通过，命令及确切模块hash见source receipt；下一未提交native-actions切片不计入本次。原1365首轮保留独立log。
