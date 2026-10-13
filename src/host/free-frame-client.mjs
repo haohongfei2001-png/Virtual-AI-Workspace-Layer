@@ -20,7 +20,8 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  function delay(ms,signal){let timer;return cancellable(()=>new Promise(resolve=>{timer=schedule(resolve,ms);}),signal).finally(()=>cancel(timer));}
  function boundedQuery(value){
-  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>!['role','segment','offset','limit','groupId','list','rowOffset','rowLimit','search'].includes(k))||value.role!==undefined&&value.role!==role)throw Error('invalid-frame-query');
+  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>!['role','segment','offset','limit','groupId','list','rowOffset','rowLimit','search','workingSet'].includes(k))||value.role!==undefined&&value.role!==role)throw Error('invalid-frame-query');
+  if(value.search!==undefined&&value.workingSet!==undefined)throw Error('invalid-frame-query');
   const {role:ignored,...rest}=value;return structuredClone(rest);
  }
  async function read(value,publish){
@@ -34,10 +35,11 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    const response=await withRequestDeadline(()=>cancellable(()=>runtime.sendMessage({v:1,type:'HOST_UI_VIEW',grantId:current.id,mountId:current.mountId,query:effective}),controller.signal),{timeoutMs:Math.min(6000,budget.remaining()),now:elapsedNow,schedule,cancel});
    if(!live(ticket))return null;budget.check();
    if(response?.ok!==true){
-    if(response?.reason==='free-frame-page-too-large'&&splits<8){
+    if(['free-frame-page-too-large','free-working-set-page-too-large'].includes(response?.reason)&&splits<8){
      const limit=effective.limit??8,rowLimit=effective.rowLimit??5;
      if(limit>1){effective={...effective,limit:Math.max(1,Math.floor(limit/2))};splits++;continue;}
      if(rowLimit>5){effective={...effective,rowLimit:5};splits++;continue;}
+     if(effective.workingSet?.limit>1){effective={...effective,workingSet:{...effective.workingSet,limit:Math.max(1,Math.floor(effective.workingSet.limit/2))}};splits++;continue;}
      if(effective.search?.limit>1){effective={...effective,search:{...effective.search,limit:Math.max(1,Math.floor(effective.search.limit/2))}};splits++;continue;}
     }
     throw Error(response?.reason==='free-frame-page-too-large'?'free-frame-page-too-large':'frame-view-unavailable');
@@ -60,11 +62,13 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   if(value===undefined)return;
   if(!value||!Number.isSafeInteger(value.revision)||value.revision<0||!value.intent||!['show-workspace','enter-reading','search-known','show-working-set'].includes(value.intent.kind))throw Error('invalid-frame-presentation');
   if(value.revision<=presentationRevision)return;presentationRevision=value.revision;
+  if(value.intent.kind!=='show-working-set'&&query.workingSet!==undefined){const {workingSet,...rest}=query;query=rest;dirty=true;}
   if(value.intent.kind!=='search-known'&&query.search!==undefined){const {search,...rest}=query;query=rest;dirty=true;}
   const key=JSON.stringify(value.intent);if(key===presentationIntent)return;presentationIntent=key;navigation.present(value.intent);
  }
  async function presentIntent(intent){
   if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;
+  if(intent.kind!=='show-working-set'&&query.workingSet!==undefined){const {workingSet,...rest}=query;query=rest;}
   if(intent.kind!=='search-known'&&query.search!==undefined){const {search,...rest}=query;query=rest;}
   presentationIntent=JSON.stringify(intent);try{onPresentationRequest(intent);}catch{}
   const current=grant,renderer=navigation;

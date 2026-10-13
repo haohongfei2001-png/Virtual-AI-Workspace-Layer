@@ -85,3 +85,18 @@ test('bounded search refinement uses the returned page limit for the next offset
  const calls=[],pending=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(resolve=>pending.push(resolve));});f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});
  pending.shift()(searchReply({...calls[0].search,limit:12},[row('bounded')],40));await tick();assert(f.pane().querySelector('[data-ref-id="bounded"]'));f.button('显示更多查找结果').click();assert.equal(calls[1].search.offset,12);
 });
+const workReply=(items,total=items.length,offset=0,limit=24)=>({...projection(),workingSet:{...page(items,total,offset,limit),currentRefId:items[0]?.id??null}});
+test('working set uses owner saved order, unavailable states and bounded refined pagination',async()=>{
+ const calls=[],pending=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(r=>pending.push(r));});f.nav.updateFrameProjection(projection());f.nav.present({kind:'show-working-set'});assert.deepEqual(calls[0].workingSet,{offset:0,limit:24});assert(f.pane().querySelectorAll('[role="status"]').some(n=>n.textContent.includes('正在读取')));
+ pending[0](workReply([row('saved_z'),{...row('saved_a'),available:false}],30,0,2));await tick();assert.deepEqual(f.pane().querySelectorAll('[data-ref-id]').map(n=>n.getAttribute('data-ref-id')),['saved_z','saved_a']);assert.equal(f.pane().querySelector('[data-ref-id="saved_a"]').getAttribute('aria-disabled'),'true');assert.equal(f.pane().querySelector('[data-ref-id="saved_z"]').getAttribute('data-working-set-current'),'true');assert.equal(f.button('编辑当前工作集'),undefined);f.button('显示更多工作集窗口').click();assert.deepEqual(calls[1].workingSet,{offset:2,limit:24});
+});
+test('working set close sends ordinary page and presentation, stale result never reopens',async()=>{
+ let finish;const calls=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(r=>finish=r);});f.nav.updateFrameProjection(projection());f.nav.present({kind:'show-working-set'});const old=finish;f.button('返回主题视图').click();assert.equal(calls.at(-1).workingSet,undefined);assert.deepEqual(f.intents.at(-1),{kind:'show-workspace'});old(workReply([row('stale')]));await tick();assert(!f.pane().querySelector('[data-ref-id="stale"]'));f.nav.updateFrameProjection(workReply([row('stale')]));assert(!f.pane().querySelector('[data-ref-id="stale"]'));
+});
+test('search and working set are mutually exclusive and old scope results are discarded',async()=>{
+ const pending=[],calls=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(r=>pending.push(r));});f.nav.updateFrameProjection(projection());f.nav.present({kind:'show-working-set'});f.nav.present({kind:'search-known'});assert.equal(calls[1].workingSet,undefined);assert(calls[1].search);pending[0](workReply([row('old_work')]));await tick();assert(f.pane().querySelector('input'));f.nav.present({kind:'show-working-set'});assert.equal(calls[2].search,undefined);assert.equal(f.pane().querySelector('input'),null);f.nav.updateFrameProjection({...projection(),scope:'B'});pending[2](workReply([row('old_scope')]));await tick();assert.equal(f.nav.status().scope,'B');assert(!f.pane().querySelector('[data-ref-id="old_scope"]'));
+});
+test('sidebar working set only delegates, and malformed working set page is rejected',()=>{
+ const calls=[],f=fixture('sidebar',q=>calls.push(q));f.nav.updateFrameProjection(projection('sidebar'));f.button('当前工作集').click();assert.deepEqual(calls,[]);assert.deepEqual(f.intents.at(-1),{kind:'show-working-set'});
+ const w=fixture();w.nav.updateFrameProjection(projection());assert.throws(()=>w.nav.updateFrameProjection({...workReply([]),workingSet:{...workReply([]).workingSet,limit:25}}),/invalid-frame-working-set/);
+});

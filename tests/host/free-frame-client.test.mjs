@@ -69,3 +69,17 @@ for(const mode of ['stop','scope-change'])test('late presentation reply after '+
  const pending=f.nav.onPresentationRequest({kind:'search-known',themeId:null});if(mode==='stop')f.client.stop();else await f.advance(10000);const views=f.views;
  held.resolve({ok:true,presentation:{revision:2,intent:{kind:'enter-reading'}}});await pending;await drain();assert.deepEqual(f.presented,[]);assert.equal(f.views,views);
 });
+
+test('working set query survives renewal and shared close clears it',async()=>{
+ const f=fixture();let presentation={revision:1,intent:{kind:'show-working-set'}};
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),presentation},navigation:[]}));await f.client.start();await drain();
+ const workingSet={offset:24,limit:24};await f.nav.onProjectionRequest({workingSet});await f.advance(10000);assert.deepEqual(f.calls.at(-1).query.workingSet,workingSet);
+ presentation={revision:2,intent:{kind:'search-known',themeId:null}};f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();assert.equal(f.calls.at(-1).query.workingSet,undefined);assert.equal(f.presented.at(-1).kind,'search-known');
+});
+test('working set oversize refines bounded rows without changing offset',async()=>{
+ const f=fixture();await f.client.start();await drain();f.setView(async m=>m.query.workingSet.limit>6?{ok:false,reason:'free-working-set-page-too-large'}:{ok:true,state:'ready',page:f.page(),navigation:[]});
+ await f.nav.onProjectionRequest({limit:1,workingSet:{offset:48,limit:24}});const queries=f.calls.filter(m=>m.query?.workingSet).map(m=>m.query.workingSet);assert.deepEqual(queries,[{offset:48,limit:24},{offset:48,limit:12},{offset:48,limit:6}]);assert.equal(f.stops,0);
+});
+test('simultaneous search and working set is rejected before privileged read',async()=>{
+ const f=fixture();await f.client.start();await drain();const views=f.views;await assert.rejects(f.nav.onProjectionRequest({search:{query:'x'},workingSet:{offset:0}}),/invalid-frame-query/);assert.equal(f.views,views);assert.equal(f.stops,0);
+});

@@ -10,7 +10,7 @@ function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const
 export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onProjectionRequest=null}) {
   const framed=surface!==null;
   if(framed&&(!['workspace','sidebar'].includes(surface.role)||surface.root?.ownerDocument!==doc))throw Error('invalid-navigation-surface');
-  const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,frameSearchOffset=0,frameSearchWaiting=false,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
+  const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,frameSearchOffset=0,frameSearchWaiting=false,frameWorkingSetOffset=0,frameWorkingSetWaiting=false,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
   let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,projectionRequest=0;
   // Keep the original event target alive until its click, drop, or composition
   // completes. Coalesce updates instead of extending a debounce on each change.
@@ -115,7 +115,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function emitView(){if(view&&snapshot)onViewChange({segment:view.segment,oldOpen:[...view.oldOpen],sidebarOpen:[...view.sidebarOpen],capacities:[...view.capacities],scroll:view.scroll,sidebarVisible:view.sidebarVisible,...(free()&&snapshot.viewSession?{freeSession:snapshot.viewSession}:{})},snapshot.scope,...(framed?[{role:surface.role}]:[]));}
   function remember(){if(view&&roots)view.sidebarScroll=roots.sidebar?.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;if(view?.mode==='workspace'&&roots?.workspace?.scroller&&roots.workspace.n.style.display!=='none')view.scroll=roots.workspace.scroller.scrollTop;}
   function calibrationEntry(){if(!free()||!roots)return;const objectIds=view.segment===0?['inventory']:[...new Set([...(roots.workspace?.shadow.querySelectorAll('[data-ref-id]')??[])].map(n=>n.dataset.refId))].slice(0,64);onCalibrationEntry({kind:view.segment===0?'foreground':'history',objectIds:objectIds.length?objectIds:['inventory']});}
-  function showWorkspace(notify=true){if(!view)return;if(!framed)captureFocus();remember();view.mode='workspace';searchQuery=null;searchTheme=null;render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();if(framed&&notify)onPresentationRequest({kind:'show-workspace'});}
+  function showWorkspace(notify=true){if(!view)return;if(!framed)captureFocus();remember();const resetFrame=frameProjection&&(view.worksetOpen||searchQuery!==null);view.mode='workspace';view.worksetOpen=false;searchQuery=null;searchTheme=null;if(resetFrame){projectionRequest++;requestFrame();}render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();if(framed&&notify)onPresentationRequest({kind:'show-workspace'});}
   function enterReading(notify=true){if(!view)return;remember();view.mode='reading';searchQuery=null;searchTheme=null;layout();if(framed&&notify)onPresentationRequest({kind:'enter-reading'});}
   function openRef(ref,event){if(ref.available===false){event.preventDefault();return;}if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;remember();if(ref.anchor)pendingAnchor={scope:snapshot.scope,ref,anchor:ref.anchor};view.mode='reading';searchQuery=null;searchTheme=null;layout();const same=adapter.isCurrent(ref.nativeUrl);adapter.openNative(ref.nativeUrl,event);if(same){restoreFocus();locateAnchor();}}
   // Frame plans are supplied synchronously before activation. Never fetch a plan in a click handler.
@@ -152,6 +152,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function requestFrameSearch(offset=0){frameSearchOffset=offset;frameSearchWaiting=true;requestFrame({search:{query:searchQuery,projectId:searchTheme,offset,limit:24}});}
   function closeFrameSearch(){searchQuery=null;searchTheme=null;frameSearchWaiting=false;projectionRequest++;render();requestFrame();onPresentationRequest({kind:'show-workspace'});}
+  function requestFrameWorkingSet(offset=0){frameWorkingSetOffset=offset;frameWorkingSetWaiting=true;requestFrame({workingSet:{offset,limit:24}});}
+  function closeFrameWorkingSet(){view.worksetOpen=false;frameWorkingSetWaiting=false;projectionRequest++;render();requestFrame();onPresentationRequest({kind:'show-workspace'});}
   function frameRows(groupId,list){const selected=frameProjection.selection;if(selected&&selected.groupId===groupId&&selected.list===list)return selected;return groupId===null?frameProjection.entries[list]:frameProjection.groups.items.find(g=>g.id===groupId)?.lists[list];}
   function moreFrame(page,groupId,list){requestFrame({...(groupId===null?{}:{groupId}),list,rowOffset:page.limit<200?page.offset:page.offset+page.limit,rowLimit:page.limit<200?Math.min(200,page.limit+12):200});}
   function frameMembers(group,parent,side){
@@ -192,8 +194,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function themeGlyph(g){const n=node(doc,'span',{class:'theme-glyph','aria-hidden':'true'}),kind=g.owner==='bootstrap'&&g.icon==='◇'?defaultIcon(g.name):g.icon;n.dataset.icon=kind??'collection';if(iconPaths[kind])n.innerHTML=svgIcon(kind);else n.textContent=kind??'◇';return n;}
   function locateAnchor(){if(!pendingAnchor||!snapshot||!roots)return;if(pendingAnchor.scope!==snapshot.scope){pendingAnchor=null;return;}if(!adapter.isCurrent(pendingAnchor.ref.nativeUrl))return;const result=adapter.restoreSnippet?.(pendingAnchor.ref,pendingAnchor.anchor);pendingAnchor=null;anchorFeedback=result?.ok?null:'无法唯一定位已保存片段。消息可能已变化，请使用原生搜索。';if(anchorFeedback){roots.sidebar.shadow.querySelector('.anchor-feedback')?.remove();roots.sidebar.shadow.append(node(doc,'p',{class:'anchor-feedback',role:'status'},anchorFeedback));}}
-  function showWorkingSet(notify=true){if(!view)return;remember();view.mode='workspace';view.worksetOpen=true;searchQuery=null;searchTheme=null;render();layout();if(framed&&notify)onPresentationRequest({kind:'show-working-set'});}
-  function findKnown(theme=null,notify=true){if(!view)return;if(frameProjection&&surface.role==='sidebar'){if(notify)onPresentationRequest({kind:'search-known',themeId:theme});return;}remember();view.mode='workspace';searchQuery='';searchTheme=theme;searchCapacity=24;frameSearchOffset=0;frameSearchWaiting=!!frameProjection;render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('input')?.focus());if(frameProjection)requestFrameSearch();if(framed&&notify)onPresentationRequest({kind:'search-known',themeId:theme});}
+  function showWorkingSet(notify=true){if(!view)return;if(frameProjection&&surface.role==='sidebar'){if(notify)onPresentationRequest({kind:'show-working-set'});return;}remember();view.mode='workspace';view.worksetOpen=true;searchQuery=null;searchTheme=null;frameWorkingSetOffset=0;frameWorkingSetWaiting=!!frameProjection;render();layout();if(frameProjection)requestFrameWorkingSet();if(framed&&notify)onPresentationRequest({kind:'show-working-set'});}
+  function findKnown(theme=null,notify=true){if(!view)return;if(frameProjection&&surface.role==='sidebar'){if(notify)onPresentationRequest({kind:'search-known',themeId:theme});return;}remember();view.mode='workspace';view.worksetOpen=false;searchQuery='';searchTheme=theme;searchCapacity=24;frameSearchOffset=0;frameSearchWaiting=!!frameProjection;render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('input')?.focus());if(frameProjection)requestFrameSearch();if(framed&&notify)onPresentationRequest({kind:'search-known',themeId:theme});}
   function closeMenu(focus=true){if(!menu)return;const prior=menu;menu=null;prior.n.remove();prior.trigger.setAttribute('aria-expanded','false');doc.removeEventListener('pointerdown',prior.outside,true);if(focus&&prior.trigger.isConnected)prior.trigger.focus({preventScroll:true});}
   function themeActions(g,head){const trigger=graphic(button('主题操作 '+g.name,()=>{
       if(menu?.trigger===trigger){closeMenu();return;}closeMenu(false);const popup=node(doc,'div',{class:'menu',role:'menu','aria-label':'主题操作 '+g.name});
@@ -236,7 +238,16 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       };
       input.oninput=()=>{searchQuery=input.value.slice(0,200);input.value=searchQuery;requestFrameSearch();display();};
       section.append(input,node(doc,'p',{},'仅查找已知项目与聊天。原生搜索独立保留。'),results);display();page.append(section);
-    }else if(frameProjection&&view.worksetOpen){const section=node(doc,'section',{class:'search'});section.append(node(doc,'strong',{},'当前工作集'),node(doc,'p',{},'当前工作集暂不可用，请稍后重试。'),button('返回主题视图',()=>{view.worksetOpen=false;render();},'返回主题','more'));page.append(section);
+    }else if(frameProjection&&view.worksetOpen){
+      const section=node(doc,'section',{class:'search working-set','aria-label':'当前工作集'}),found=frameProjection.workingSet;
+      section.append(node(doc,'strong',{},'当前工作集'),button('返回主题视图',closeFrameWorkingSet,'返回主题','more'),node(doc,'p',{},'按已保存的人工顺序显示窗口引用。草稿由原生页面保留。'));
+      if(frameWorkingSetWaiting||!found||found.offset!==frameWorkingSetOffset)section.append(node(doc,'p',{role:'status'},'正在读取当前工作集…'));
+      else{
+        for(const ref of found.items){const link=row(ref,'workset');if(ref.id===found.currentRefId)link.setAttribute('data-working-set-current','true');section.append(link);}
+        if(!found.total)section.append(node(doc,'p',{role:'status'},'当前工作集尚未保存窗口。'));
+        if(found.hasMore)section.append(button('显示更多工作集窗口',()=>{requestFrameWorkingSet(found.offset+found.limit);render();},'显示更多','more'));
+        if(found.offset>0)section.append(button('返回前页工作集窗口',()=>{requestFrameWorkingSet(Math.max(0,found.offset-found.limit));render();},'上一页','more'));
+      }page.append(section);
     }else if(searchQuery!==null){
       const search=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
       top.append(node(doc,'strong',{},theme?.name??(free()?'查找已知项目与聊天':'查找主题与派生名称')),graphic(button('关闭派生查找',()=>{searchQuery=null;searchTheme=null;render();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));}),'close'));search.append(top);
@@ -283,15 +294,18 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const pageOK=p=>p&&Array.isArray(p.items)&&Number.isSafeInteger(p.total)&&Number.isSafeInteger(p.offset)&&Number.isSafeInteger(p.limit)&&p.total>=0&&p.offset>=0&&p.limit>0&&p.limit<=200&&p.items.length<=p.limit&&typeof p.hasMore==='boolean'&&p.hasMore===(p.offset+p.items.length<p.total);
     if(!Number.isSafeInteger(dto.navigation.maxSegment)||dto.navigation.maxSegment<0||dto.navigation.hasNewer!==(dto.segment>0)||dto.navigation.hasOlder!==(dto.segment<dto.navigation.maxSegment)||!pageOK(dto.groups)||dto.groups.limit>24||!['noProject','unknown'].every(k=>pageOK(dto.entries?.[k]))||dto.groups.items.some(g=>!['current','old','unknown'].every(k=>pageOK(g.lists?.[k])))||dto.selection&&!pageOK(dto.selection)||new TextEncoder().encode(JSON.stringify(dto)).length>65536)throw Error('invalid-frame-projection');
     if(dto.search!==undefined&&(!pageOK(dto.search)||dto.search.limit>24||typeof dto.search.query!=='string'||dto.search.query.length>200||!(dto.search.projectId===null||typeof dto.search.projectId==='string'&&dto.search.projectId.length>0&&dto.search.projectId.length<=128)))throw Error('invalid-frame-search');
+    if(dto.workingSet!==undefined&&(!pageOK(dto.workingSet)||dto.workingSet.limit>24||!(dto.workingSet.currentRefId===null||typeof dto.workingSet.currentRefId==='string'&&dto.workingSet.currentRefId.length>0&&dto.workingSet.currentRefId.length<=128)))throw Error('invalid-frame-working-set');
+    if(dto.search!==undefined&&dto.workingSet!==undefined)throw Error('conflicting-frame-lists');
+    if(snapshot?.scope===dto.scope&&dto.workingSet&&(!view.worksetOpen||searchQuery!==null||dto.workingSet.offset!==frameWorkingSetOffset))return;
     if(snapshot?.scope===dto.scope&&dto.search&&(searchQuery===null||dto.search.query!==searchQuery||dto.search.projectId!==searchTheme||dto.search.offset!==frameSearchOffset))return;
     if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame'];return;}
-    const copy=structuredClone(dto);resetInteraction(true);sidebarDirty=true;remember();
+    const scopeChanged=snapshot?.scope!==dto.scope;const copy=structuredClone(dto);resetInteraction(true);sidebarDirty=true;remember();
     if(snapshot?.scope!==copy.scope){detach();searchQuery=null;searchTheme=null;projectionRequest++;}
-    projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;
+    projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
     // Presentation-only metadata. This intentionally has no complete refs/index
     // and never enters the prepared Free snapshot or full-snapshot update path.
     snapshot={scope:copy.scope,viewMode:'free',viewSession:copy.viewSession,preferences:{}};
-    if(!views.has(copy.scope))views.set(copy.scope,initialView());view=views.get(copy.scope);view.segment=copy.segment;
+    if(!views.has(copy.scope))views.set(copy.scope,initialView());view=views.get(copy.scope);view.segment=copy.segment;if(scopeChanged)view.worksetOpen=false;
     groups=copy.groups.items.map(g=>({...g,current:g.lists.current.items,old:g.lists.old.items,unknown:g.lists.unknown.items}));index=null;
     layout();render();layout();
   }

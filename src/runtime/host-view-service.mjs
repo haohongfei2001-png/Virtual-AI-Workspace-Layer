@@ -1,3 +1,4 @@
+import {projectFreeWorkingSet} from './free-working-set-projection.mjs';
 import {projectFreeSearch} from './free-search-projection.mjs';
 import {createURLPolicy} from '../host/url-policy.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
@@ -17,7 +18,8 @@ export function createHostViewService({ui,readService,prepareNavigation=null,pre
  }
  async function handle(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-view'};}
-  if(!exactHostRecord(message,['v','type','grantId','mountId','query'])||message.v!==1||message.type!=='HOST_UI_VIEW'||!message.query||Object.getPrototypeOf(message.query)!==Object.prototype||Reflect.ownKeys(message.query).some(k=>!['segment','offset','limit','groupId','list','rowOffset','rowLimit','search'].includes(k)))return {ok:false,reason:'invalid-ui-view'};
+  if(!exactHostRecord(message,['v','type','grantId','mountId','query'])||message.v!==1||message.type!=='HOST_UI_VIEW'||!message.query||Object.getPrototypeOf(message.query)!==Object.prototype||Reflect.ownKeys(message.query).some(k=>!['segment','offset','limit','groupId','list','rowOffset','rowLimit','search','workingSet'].includes(k)))return {ok:false,reason:'invalid-ui-view'};
+  if(message.query.search!==undefined&&message.query.workingSet!==undefined)return {ok:false,reason:'invalid-ui-view'};
   let active=true;const started=elapsedNow();
   const check=()=>{if(!active||elapsedNow()-started>=6000)throw Error('ui-view-expired');};
   try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
@@ -37,9 +39,10 @@ export function createHostViewService({ui,readService,prepareNavigation=null,pre
    const value=current.snapshot;
    const elapsed=Date.parse(clock()),evaluated=Date.parse(value.evaluatedAt),freshnessChanged=(value.calibrationDeadlines??[]).some(deadline=>Date.parse(deadline)>evaluated&&Date.parse(deadline)<=elapsed);
    if(freshnessChanged||version.nativeRevision!==value.revision||version.revision!==value.workspaceRevision||version.evidenceRevision!==value.evidenceRevision||version.viewRevision!==value.viewRevision){begin(entry);return {ok:true,state:'preparing',retryAfterMs:50};}
-   const {search,...frameQuery}=message.query;
+   const {search,workingSet,...frameQuery}=message.query;
    const page=projectFreeFrame(current,{...frameQuery,role:context.role});check();
    if(search!==undefined)page.search=projectFreeSearch(current,search);
+   if(workingSet!==undefined)page.workingSet=projectFreeWorkingSet(current,workingSet);
    page.presentation=structuredClone(entry.presentation);
    const nativeUrl=context.parentFrame.actualURL,route=createURLPolicy({origin:new URL(nativeUrl).origin}).parse(nativeUrl);
    const selected=current.index.at(nativeUrl),ref=selected.ref??(route.kind==='conversation'?current.index.byId(route.conversationId):null);
@@ -50,6 +53,7 @@ export function createHostViewService({ui,readService,prepareNavigation=null,pre
     for(const list of Object.values(page.entries))for(const row of list.items)rows.set(row.id,row);
     for(const row of page.selection?.items??[])rows.set(row.id,row);
     for(const row of page.search?.items??[])rows.set(row.id,row);
+    for(const row of page.workingSet?.items??[])rows.set(row.id,row);
     const targets=[...rows.values()].filter(row=>row.available!==false&&typeof row.nativeUrl==='string').map(row=>({refId:row.id,navigationURL:row.nativeUrl}));
     if(targets.length>200)throw Error('free-frame-page-too-large');
     navigation=await prepareNavigation({parentFrame:context.parentFrame,binding:context.binding,targets});check();

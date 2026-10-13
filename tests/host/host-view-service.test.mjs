@@ -5,6 +5,7 @@ import {ScopeRepository} from '../../src/b1/scope-repository.mjs';
 import {WorkspaceRepository} from '../../src/data/repository.mjs';
 import {FreeEvidenceRepository} from '../../src/data/free-evidence-repository.mjs';
 import {createHostBindingService} from '../../src/runtime/host-binding-service.mjs';
+import {reduceCommand} from '../../src/data/state.mjs';
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const NOW='2026-10-14T00:00:00Z',url='https://chatgpt.com/';
 // Mock IndexedDB and explicitly authored provider response; no browser auth claim.
@@ -143,4 +144,28 @@ test('MOCK_IDB search result receives owner navigation plan and cannot forge cur
  const calls=[],h=await fixture(t,{documentURL:'https://chatgpt.com/c/c1',prepareNavigation:async x=>{calls.push(x);return x.targets.map(hrefPlan);}});await h.bind();await h.observe();await h.mount();await ready(h);calls.length=0;
  const result=await h.view('workspace',{segment:1,search:{query:'Native conversation',offset:0,limit:5}});assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(result.page.search.total,1);assert.deepEqual(result.page.search.items.map(r=>r.id),['c1']);assert(calls.at(-1).targets.some(r=>r.refId==='c1'));assert(result.navigation.some(r=>r.refId==='c1'));assert.equal(result.page.current.refId,'c1');
  assert.equal((await h.view('workspace',{search:{query:'Native',current:{refId:'forged'}}})).ok,false);assert.equal((await h.view('workspace',{search:{query:'Native',projectId:'unknown'}})).ok,false);
+});
+
+async function seedManualWorkingSet(h){
+ // Explicit test-side manual asset seed: a saved anchor without native evidence
+ // must remain reachable, without promoting its old manual title to native fact.
+ const [provider,accountId,organizationId]=JSON.parse(h.bound.scope),scope={verified:true,provider,accountId,organizationId};
+ const {state}=await h.workspaces.read(scope);
+ const result=await h.workspaces.mutate(scope,{operationId:'manual-working-set',expectedRevision:state.revision,fingerprint:{test:'manual-assets'},type:'RESTORE_BACKUP',actor:'human',apply:current=>{
+  const next=structuredClone(current);next.refs.missing_saved={id:'missing_saved',nativeTitle:'PRIVATE_OLD_MANUAL_LABEL',nativeUrl:'https://chatgpt.com/c/missing_saved',projectId:null,available:false};
+  return reduceCommand(next,{type:'SET_PREFERENCE',id:'workingSet',value:{refs:['missing_saved','c1'],current:'c1'}});
+ }});assert.equal(result.ok,true,JSON.stringify(result));
+}
+test('MOCK_IDB working set preserves manual order and unavailable native title with reliable original links',async t=>{
+ const calls=[],h=await fixture(t,{prepareNavigation:async args=>{calls.push(args);return args.targets.map(hrefPlan);}});await h.bind();await h.observe();await seedManualWorkingSet(h);await h.mount();await ready(h);calls.length=0;
+ const result=await h.view('workspace',{workingSet:{offset:0,limit:24}});assert.equal(result.state,'ready',JSON.stringify(result));assert.deepEqual(result.page.workingSet.items.map(r=>r.id),['missing_saved','c1']);assert.equal(result.page.workingSet.currentRefId,'c1');assert.equal(result.page.workingSet.total,2);assert.equal(result.page.workingSet.items[0].nativeTitle,null);assert(!JSON.stringify(result.page.workingSet).includes('PRIVATE_OLD_MANUAL_LABEL'));assert(result.navigation.some(p=>p.refId==='c1'));assert.deepEqual(calls.at(-1).targets.find(p=>p.refId==='missing_saved'),{refId:'missing_saved',navigationURL:'https://chatgpt.com/c/missing_saved'});
+ const tail=await h.view('sidebar',{workingSet:{offset:1,limit:1}});assert.deepEqual(tail.page.workingSet.items.map(r=>r.id),['c1']);assert.equal(tail.page.workingSet.hasMore,false);assert.equal(tail.page.workingSet.total,2);
+});
+test('MOCK_IDB working set rejects search combination and forged fields',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();await ready(h);
+ for(const query of [{workingSet:{},search:{query:'Native'}},{workingSet:{scope:'forged'}},{workingSet:{refs:['forged']}},{workingSet:{limit:25}},{workingSet:{offset:-1}}])assert.equal((await h.view('workspace',query)).ok,false,JSON.stringify(query));
+});
+test('MOCK_IDB account replacement cannot reveal old saved working set',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await seedManualWorkingSet(h);await h.mount();await ready(h);assert.equal((await h.view('workspace',{workingSet:{}})).page.workingSet.total,2);
+ h.switchPrincipal('other-working-set-principal');assert.equal((await h.view('workspace',{workingSet:{}})).ok,false);await h.bind();await h.mount();await ready(h);const next=await h.view('workspace',{workingSet:{}});assert.equal(next.state,'ready',JSON.stringify(next));assert.equal(next.page.workingSet.total,0);assert.deepEqual(next.page.workingSet.items,[]);assert(!JSON.stringify(next).includes('missing_saved'));
 });

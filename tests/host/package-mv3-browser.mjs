@@ -22,6 +22,20 @@ try{
  const previous=page.frames().filter(frame=>frame.url().startsWith('chrome-extension://'+id));
  await page.locator('textarea').fill('DRAFT_SURVIVES_SPA');await page.evaluate(()=>{globalThis.testOriginalInput=document.querySelector('textarea');});
  await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0);const back=page.getByRole('button',{name:'返回工作空间',exact:true});assert.equal(await back.count(),1);await back.click();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);assert.equal(await page.locator('textarea').inputValue(),'DRAFT_SURVIVES_SPA');report.results.push({name:'native-input-surrender-retains-unique-return-without-draft-loss',status:'PASS'});
+ await sidebar.getByRole('button',{name:'当前工作集',exact:true}).click();
+ await workspace.getByText('当前工作集尚未保存窗口。',{exact:true}).waitFor({timeout:10000});
+ assert.equal(await workspace.getByText('正在读取当前工作集…',{exact:true}).count(),0);
+ assert.equal(await workspace.getByRole('button',{name:'编辑当前工作集',exact:true}).count(),0);
+ assert.equal(await page.evaluate(()=>document.querySelector('textarea')===testOriginalInput&&testOriginalInput.value==='DRAFT_SURVIVES_SPA'),true);
+ await workspace.getByRole('button',{name:'返回主题视图',exact:true}).click();
+ await workspace.getByText('Membership not loaded',{exact:true}).waitFor({timeout:10000});
+ assert.equal(await workspace.getByText('当前工作集尚未保存窗口。',{exact:true}).count(),0);
+ await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
+ const searchAfterWorkset=workspace.getByRole('searchbox',{name:'已知聊天查找输入'});await searchAfterWorkset.waitFor({timeout:10000});await searchAfterWorkset.fill('Ordinary');
+ await workspace.getByRole('link',{name:'Ordinary conversation',exact:true}).waitFor({timeout:10000});assert.equal(await searchAfterWorkset.inputValue(),'Ordinary');
+ await workspace.getByRole('button',{name:'关闭派生查找',exact:true}).click();await workspace.getByText('Membership not loaded',{exact:true}).waitFor({timeout:10000});
+ assert.equal(await page.evaluate(()=>document.querySelector('textarea')===testOriginalInput&&testOriginalInput.value==='DRAFT_SURVIVES_SPA'),true);
+ report.results.push({name:'sidebar-opens-real-empty-working-set-closes-and-retains-search-and-native-draft',status:'PASS'});
  await page.locator('.project-entry').click();await page.waitForURL('**/g/g-p-22222222222222222222222222222222/project');
  await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,{},{timeout:15000});
  for(let attempt=0;attempt<100;attempt++){workspace=page.frames().find(frame=>frame.url()===`chrome-extension://${id}/workspace.html`&&!previous.includes(frame));if(workspace)break;await new Promise(resolve=>setTimeout(resolve,20));}

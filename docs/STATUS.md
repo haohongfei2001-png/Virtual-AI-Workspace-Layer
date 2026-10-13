@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第八十三轮：授权owner查找与双frame共享展示已进入正式离线包。完整1697/1697 Node与六条打包MV3旅程通过；c5e99da已正常推送PR16。Free、真实context和G/U仍未完成，继续既有计划。
+当前已推进至第八十四轮：既有人工工作集只读导航已接入正式离线包。完整1712/1712 Node与七条打包MV3旅程通过；d8b6d94已正常推送PR16。Free、真实context和G/U仍未完成，继续既有计划。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -949,3 +949,12 @@ c5e99da已正常推送PR16。新增有界搜索DTO复用prepared owner完整repl
 完整Node1697/1697，0失败/跳过；构建器产物实际headless MV3六旅程PASS，新项是sidebar启动共享查找→输入Ordinary→仅对应原生聊天→关闭恢复。报告sourceChangedDuringRun=false。浏览器后仅把renderer搜索limit校验从固定24改为1..24以接client已存在缩页，新增下一offset按返回limit测试并包含最终全Node；不宣称该最后边界变化已重跑Chrome。
 
 工作集/手工范围/恢复入口的生产UI、scope C1/C2/持续认证、可靠发送continuation、完整profile及真实G/U仍未完成；旧4x100k失败保留。Free未完成、NOT_RELEASE_READY，继续同一计划。
+
+
+## Round84：既有人工工作集接入授权owner与原生导航
+
+d8b6d94已正常推送且PR16 API确认。工作集复用现有preferences、prepared snapshot和current index，按人工顺序返回最多24条/64KiB；完全缺失引用保留不可用占位，仍有可靠原链接的引用保持可达，不复制Pro人工旧标题或片段。两frame共享展示，workspace按需分页；查找互斥，续租保留查询，关闭/迟到/跨scope不可复活。只读本轮，不伪造编辑入口或改写人工资产。
+
+最终Node1712/1712，0失败/跳过；正式构建器产物隔离headless MV3七旅程PASS，新增真实空工作集打开→关闭→再次查找且原生输入同节点和草稿保留。sourceChangedDuringRun=false。人工非空顺序与账户隔离由MockIDB及纯投影测试覆盖，不冒称浏览器写过真实人工资产。首次owner测试误要求有可靠旧原链接的引用不得导航，依据已知引用必须可达修正测试，原失败日志保留。
+
+手动时间范围/恢复入口、scope C1/C2/持续认证、可靠发送continuation及真实G/U等仍未齐；旧4x100k失败保持。Free未完成、NOT_RELEASE_READY，继续既有计划。
