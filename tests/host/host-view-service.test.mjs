@@ -288,9 +288,12 @@ test('MOCK_IDB auto enable loses authority before delayed CAS and cannot mutate 
  const pending=h.horizon('workspace',{H:'auto',expectedRevision:initial.page.workspaceRevision});for(let i=0;i<50&&!entered;i++)await drain();assert.equal(entered,true);h.switchPrincipal('auto_revoked');release();assert.equal((await pending).ok,false);assert.deepEqual((await h.workspaces.read(scope)).state,before);
 });
 test('MOCK_IDB auto policy change records current local day across midnight while historical T/Z remain frozen',async t=>{
+ const previousTZ=process.env.TZ;process.env.TZ='UTC';
+ try{
  const h=await fixture(t);h.setTime(Date.parse(NOW)-10000);await h.bind();await h.observe();await h.mount();const initial=await ready(h);assert.equal(initial.state,'ready');h.setTime(Date.parse(NOW)+1000);
  const result=await h.horizon('workspace',{H:'auto',operationId:'auto_after_midnight',expectedRevision:initial.page.workspaceRevision,segment:2});assert.equal(result.ok,true,JSON.stringify(result));assert.equal(result.viewSession.T,initial.page.viewSession.T);assert.equal(result.viewSession.Z,initial.page.viewSession.Z);assert.equal(result.viewSession.H,initial.page.viewSession.H);assert.equal(result.segment,2);
  const policy=(await h.workspaces.read(workspaceScope(h))).state.preferences.freeTimePolicy.value;assert.equal(policy.lastChangedDay,initial.page.viewSession.T+1);assert.equal(policy.lastEvaluatedDay,null);assert.deepEqual((await ready(h)).page.viewSession,result.viewSession);
+ }finally{if(previousTZ===undefined)delete process.env.TZ;else process.env.TZ=previousTZ;}
 });
 
 for(const mode of ['entity','url','mixed-id','duplicate'])test('MOCK_IDB Project plan '+mode+' cannot replace owner-known native identity',async t=>{

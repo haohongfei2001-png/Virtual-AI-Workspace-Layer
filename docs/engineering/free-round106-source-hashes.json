@@ -1,0 +1,6 @@
+{
+  "src/runtime/free-view-owner.mjs": "871dd5679a590dd0ccfe462a2b28c45f529ec59d11be2ab7bc8b3fd23ef40634",
+  "tests/host/free-view-owner.test.mjs": "2a6d53b62437d261d20b01865e645d3933391a47a71ed0c3f1fd33e644895ef4",
+  "tests/host/host-view-service.test.mjs": "cd1c40948edec0cbac001969bde0857e931ae81eb603a9865c9549e8ba23f18f",
+  "tests/host/package-mv3-browser.mjs": "1795117c8f499f7959e7f5f1c9866a334b4390131a7864f12d12d6b6e55ef786"
+}

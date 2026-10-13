@@ -9,7 +9,7 @@ import {planFreeReplica,freeReplicaRequests,assembleFreeReplicaAsync} from '../d
 import {freeNavigationSnapshot,rebindPreparedFreeSnapshot} from '../navigation/free-view.mjs';
 import {currentIndexAsync} from '../navigation/current-index.mjs';
 /** Privileged local owner only. Never serialize this complete replica into UI frames. */
-export function createFreeViewOwner({readService,scope,guard=()=>true,clock=()=>new Date().toISOString(),timeZone='UTC',elapsedNow=()=>performance.now(),schedule=(fn,ms)=>setTimeout(fn,ms),cancel=id=>clearTimeout(id)}={}){
+export function createFreeViewOwner({readService,scope,guard=()=>true,clock=()=>new Date().toISOString(),timeZone=Intl.DateTimeFormat().resolvedOptions().timeZone,elapsedNow=()=>performance.now(),schedule=(fn,ms)=>setTimeout(fn,ms),cancel=id=>clearTimeout(id)}={}){
  const normalized=normalizedScope(scope);if(!normalized||!['freeHeader','freePage','version'].every(k=>typeof readService?.[k]==='function')||typeof guard!=='function')throw Error('invalid-free-view-owner');
  const bound=Object.freeze({...normalized});let generation=0,stopped=false,pending=null,replica=null,published=null,session=null,cachedIndex=null;
  const allowed=()=>!stopped&&guard()===true;

@@ -1149,3 +1149,12 @@ frame显式导出后需点击下载；选择JSON后上传并展示新增/更新/
 最终完整Node2269/2269（包含原SHA兼容、Unicode、padding与多MiB独立crypto用例），原构建包headless10/10 PASS，运行源码稳定。未反复重跑100k；Round103的4x冷启动FAIL仍有效，未声称解决。跨事务只检查root的分批审计方案经只读反例检查不能保持fresh-piece保证，未实施；现有原子迁移/6秒/30秒护栏保留。
 
 继续依正式计划推进生产HostAdapter界面/活动策略接线，不让100k合成优化无限前置。真实context/ACK、新聊首发、自动评估/新装默认、G/U及既列性能和间歇问题保持。Free未完成、NOT_RELEASE_READY。
+
+
+## Round106：生产Host使用当地日历时区
+
+在已正常推送eff68cf继续；72ca068仍为当前HEAD祖先，既有Pro正式文档完整保留。修复Free ViewOwner新会话默认UTC的问题，构造时从可信执行环境Intl取得IANA时区；显式测试注入仍可用，普通刷新与人工H变化继续冻结历史T/Z，不接受页面提供的账号或日期权威。
+
+最终完整Node2272/2272、0失败/跳过；实际原构建包headless MV3十一项PASS，sourceChangedDuringRun=false。实际worker与DTO均为Asia/Shanghai（未用页面时区模拟代替worker），原生节点/草稿与Project/Conversation导航保留。Node另覆盖Shanghai/Los_Angeles跨UTC日界。首次完整回归发现既有午夜测试隐含UTC假设，已显式设定测试UTC并保留原跨午夜/冻结断言，失败原日志独立保存；不是产品行为回退。
+
+生产安全回当前的日期刷新、自适应评估/短暂撤销及可靠新装初始化仍待接线，不把本次时区修复称自适应完成。下一项修复当前Project改名与侧栏滞后同ID冲突导致观察整批拒绝；真实context/ACK、新聊首发、G/U、4x100k及旧间歇问题保持。Free未完成、NOT_RELEASE_READY。

@@ -1,3 +1,4 @@
+import {createFreeViewSession} from '../../src/data/free-time-policy.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {createFreeViewOwner} from '../../src/runtime/free-view-owner.mjs';import {normalizedScope} from '../../src/b1/identity.mjs';
 const NOW='2026-10-14T00:00:00Z',scope=normalizedScope({verified:true,provider:'chatgpt',accountId:'A',organizationId:'personal'});
@@ -44,4 +45,21 @@ test('session reconfiguration rejects missing publication, revoked authority and
  h.owner.reconfigureSession({H:7,policyRevision:2});await h.owner.refresh();assert.throws(()=>h.owner.reconfigureSession({H:30,policyRevision:1}),/invalid-free-session-reconfiguration/);
  h.deny();assert.throws(()=>h.owner.reconfigureSession({H:14,policyRevision:3}),/stale-free-view/);assert.equal(h.owner.current(),null);
  const stopped=fixture();await stopped.owner.refresh();stopped.owner.stop();assert.throws(()=>stopped.owner.reconfigureSession({H:7,policyRevision:1}),/stale-free-view/);
+});
+
+// Node's TZ config supplies the real execution-environment IANA zone; no Intl hooks.
+for(const zone of ['Asia/Shanghai','America/Los_Angeles'])test('default owner uses local IANA calendar: '+zone,async()=>{
+ const priorTZ=process.env.TZ;process.env.TZ=zone;
+ try{
+  const at='2026-10-14T23:30:00Z',h=fixture({clock:()=>at});const calls=[];
+  h.read.freeHeader=async(_scope,_options,now,timeZone,requested)=>{calls.push({now,timeZone,requested});return {...h.header(),viewSession:requested??createFreeViewSession({now,timeZone})};};
+  const first=await h.owner.refresh(),expected=createFreeViewSession({now:at,timeZone:zone});assert.equal(calls[0].timeZone,zone);assert.equal(first.snapshot.viewSession.Z,zone);assert.equal(first.snapshot.viewSession.T,expected.T);
+  const old=structuredClone(first.snapshot.viewSession);h.owner.reconfigureSession({H:7,policyRevision:1});const later=await h.owner.refresh({now:'2026-10-17T10:00:00Z',timeZone:'UTC'});assert.equal(later.snapshot.viewSession.H,7);assert.equal(later.snapshot.viewSession.T,old.T);assert.equal(later.snapshot.viewSession.Z,old.Z);assert.equal(calls.at(-1).requested.Z,zone);h.owner.stop();
+ }finally{if(priorTZ===undefined)delete process.env.TZ;else process.env.TZ=priorTZ;}
+});
+test('explicit owner timezone overrides environment; explicit refresh timezone initializes first session',async()=>{
+ const priorTZ=process.env.TZ;process.env.TZ='Asia/Shanghai';
+ try{for(const [options,query,zone]of [[{timeZone:'UTC'},{},'UTC'],[{timeZone:'UTC'},{timeZone:'America/Los_Angeles'},'America/Los_Angeles']]){
+  const h=fixture(options);h.read.freeHeader=async(_s,_o,now,timeZone,requested)=>({...h.header(),viewSession:requested??createFreeViewSession({now,timeZone})});const view=await h.owner.refresh(query);assert.equal(view.snapshot.viewSession.Z,zone);assert.equal(view.snapshot.viewSession.T,createFreeViewSession({now:NOW,timeZone:zone}).T);h.owner.stop();
+ }}finally{if(priorTZ===undefined)delete process.env.TZ;else process.env.TZ=priorTZ;}
 });
