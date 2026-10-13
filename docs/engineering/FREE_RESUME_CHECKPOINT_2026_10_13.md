@@ -812,3 +812,14 @@ HOST_UI_STATUS通过已验证父文档与实际两role frame同步最新UiGrant�
 host-dom合法admission事实TTL到期仍在同已授权scope保留Project/聊天原名、原链接与已知PROJECT/NONE；标为上次确认，成员新鲜度单独表达，不再认证current/complete。撤销/不可用/未来source或row/跨scope/非法generation仍拒绝；旧synthetic过期语义不变。复用原codec及分页/replica，无schema升级、无历史资产改写；分页重新拼装不能用完整库存把过期成员变成完整覆盖。
 
 最终Node1627/1627，0失败/跳过；真实隔离headless MV3四旅程PASS：真实owner/IDB→双frame名字、原生DOM改名两帧2.5秒内更新、预计算原生href保留源草稿、撤权清私有显示；sourceChangedDuringRun=false。last-known显示及成员标识有Node/分页反例，未宣称真实账户TTL旅程。旧4x100k FAIL和G/U NOT_RUN保持。Free未完成、NOT_RELEASE_READY。下一项按原计划接正式生产入口/静态资源，并继续scope/context、发送continuation及原生动作差额。
+
+
+## Round81：正式Host入口、可复现开发包与原生SPA重绑定
+
+8707936已正常推送并由PR16 API确认，旧网络阻塞已解除。新增extension/正式worker/content/双静态UI入口和独立Host构建模式，复用既有HostBindingService、存储、adapter、surface与renderer；ZIP复用原离线确定性writer，不复制打包引擎。默认正式包context未核验即拒绝，明确NOT_RELEASE_READY；只有显式127.0.0.1离线配置启用重建C3，不含seed/固定身份/固定时钟。验证文件哈希、依赖闭包、权限/CSP/WAR与真实config一致，包不把未核验context贴成可用。
+
+worker接真实Chrome导航/SPA/tab关闭撤权及定向公共失效通知；content-session复用已有组合，HELLO→REFRESH→mount，6秒RPC和原位续期，pagehide/stop清理，原生SPA先撤旧并重建。修复停止后微任务仍执行、port异常、替换HELLO在途忽略真实撤权；不按同URL假装通知重复。实际Chrome还发现sender.url在SPA保持旧值，UiOwner现用已核验actualURL注册/确认，两role及旧document/再次改URL拒绝反例覆盖。
+
+最终Node1659/1659、0失败/跳过。实际Chrome加载构建器生成且未改写的离线包，三旅程PASS：首次原名显示；原生无ID同名Project按钮进入真实第二Project并撤旧frame/重绑且保留原编辑器草稿；原链接打开成员聊天保留源草稿。sourceChangedDuringRun=false。初次测试误把无ID按钮预期为第一同名P，独立oracle核对后修正测试；随后SPA真实MOUNT失败的trace与修复前日志均保留。该包仍仅离线实现，不是可用真实Free或完整J1–J4。
+
+下一项继续同一计划的当前聊天定位、原生让位后的唯一返回、搜索/工作集、scope C1/C2/刷新与可靠发送continuation等；旧4x100k/G/U差额保持，不访问私人账户、不发布。

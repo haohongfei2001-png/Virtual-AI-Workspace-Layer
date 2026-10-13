@@ -23,7 +23,7 @@ function closure(root,entries,{allowBuiltins=false}={}){
 const crcTable=Uint32Array.from({length:256},(_,value)=>{for(let i=0;i<8;i++)value=value&1?0xedb88320^(value>>>1):value>>>1;return value>>>0;});
 function crc32(data){let value=0xffffffff;for(const byte of data)value=crcTable[(value^byte)&255]^(value>>>8);return (value^0xffffffff)>>>0;}
 /** ZIP32, stored bytes, UTF-8 paths, DOS 1980-01-01 00:00 and fixed regular-file mode. */
-function zip(entries){
+export function zip(entries){
  const local=[],central=[];let offset=0;
  if(entries.length>65535)throw Error('zip32-entry-limit');
  for(const {name,data} of entries){const encoded=Buffer.from(name),checksum=crc32(data);if(encoded.length>65535||data.length>0xffffffff||offset>0xffffffff)throw Error('zip32-capacity');

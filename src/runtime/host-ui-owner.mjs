@@ -16,6 +16,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   if(!await handshake.verify(message,sender))throw Error('invalid-ui-parent-binding');
   const actual=await getFrame({tabId:sender.tab.id,frameId:0});
   if(!handshake.matchesFrame(message,sender,actual))throw Error('invalid-ui-parent-frame');
+  return {...sender,url:actual.url};
  }
  function waitFor(nonce,role){
   let entry=pending.get(nonce);
@@ -58,7 +59,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   try{return await withRequestDeadline(async()=>{
    if(message.type==='HOST_UI_MOUNT'){
     if(!schema(message,[...bindingKeys,'mountId','regionEpoch']))throw Error('invalid-ui-mount');
-    await parent(message,sender);check();
+    sender=await parent(message,sender);check();
     if(registrations.size>=128)throw Error('ui-mount-capacity');
     grants.registerMount({handle:{id:message.mountId,documentToken:message.documentToken,regionEpoch:message.regionEpoch},parent:sender});
     registrations.set(message.mountId,{tabId:sender.tab.id,documentId:sender.documentId,url:sender.url,binding:Object.freeze(Object.fromEntries(bindingKeys.map(key=>[key,message[key]])))});
@@ -67,7 +68,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
    if(message.type==='HOST_UI_CONFIRM'||message.type==='HOST_UI_JOIN'){
     const isParent=message.type==='HOST_UI_CONFIRM';
     if(!schema(message,isParent?[...bindingKeys,'mountId','regionEpoch','nonce','role']:['nonce','role']))throw Error('invalid-ui-pair');
-    if(isParent){await parent(message,sender);check();}
+    if(isParent){sender=await parent(message,sender);check();}
     joined=waitFor(message.nonce,isParent?'parent':'ui');
     const direct=isParent?
      await grants.confirmParent({sender,mountId:message.mountId,documentToken:message.documentToken,regionEpoch:message.regionEpoch,nonce:message.nonce,role:message.role}):
@@ -89,7 +90,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
    }
    if(message.type==='HOST_UI_STATUS'){
     if(!schema(message,[...bindingKeys,'mountId']))throw Error('invalid-ui-status');
-    await parent(message,sender);check();
+    sender=await parent(message,sender);check();
     const mount=registrations.get(message.mountId),epoch=revocationEpoch;
     if(mount?.tabId!==sender.tab.id||mount?.documentId!==sender.documentId)throw Error('ui-mount-mismatch');
     const records=[...uiDocuments.values()].filter(entry=>entry.grant.mountId===message.mountId);
@@ -100,13 +101,13 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
      if(epoch!==revocationEpoch)throw Error('ui-authority-invalidated');
      remember(record.sender,grant);renewed.push(grant);
     }
-    await parent(message,sender);check();
+    sender=await parent(message,sender);check();
     if(epoch!==revocationEpoch||registrations.get(message.mountId)!==mount)throw Error('ui-authority-invalidated');
     return {ok:true,grants:renewed};
    }
    if(message.type==='HOST_UI_RELEASE'){
     if(!schema(message,[...bindingKeys,'mountId']))throw Error('invalid-ui-release');
-    await parent(message,sender);check();
+    sender=await parent(message,sender);check();
     const mount=registrations.get(message.mountId);if(mount?.tabId!==sender.tab.id||mount?.documentId!==sender.documentId)throw Error('ui-mount-mismatch');
     revokeMount(message.mountId);return {ok:true};
    }

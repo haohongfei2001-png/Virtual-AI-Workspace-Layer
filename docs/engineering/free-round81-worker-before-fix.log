@@ -1,0 +1,73 @@
+✔ zero-seed default is unverified context and exact supported origin only (1.257125ms)
+✔ explicit packaged origin/provider and actual document-targeted navigation forwarded (0.22375ms)
+✔ runtime routing preserves sender and errors have safe bounded reply (1.295917ms)
+✔ unaccepted ports disconnect, accepted ports stay connected (0.252166ms)
+✔ top committed/history routes revoke entire tab and notify exact document without private fields (0.482ms)
+✔ stop detaches all listeners, closes views once and suppresses late service reply (0.302292ms)
+✖ stop before queued microtasks prevents late service execution and document notifications (0.740917ms)
+✖ throwing port admission fails closed and disconnects rejected port (0.340875ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 6
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 54.492792
+
+✖ failing tests:
+
+test at tests/host/host-worker-runtime.test.mjs:22:1
+✖ stop before queued microtasks prevents late service execution and document notifications (0.740917ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   [
+  +     {
+  +       type: 'HOST_HELLO'
+  +     },
+  +     {}
+  +   ]
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-worker-runtime.test.mjs:22:318)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ [ [Object], {} ] ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/host-worker-runtime.test.mjs:23:1
+✖ throwing port admission fails closed and disconnects rejected port (0.340875ms)
+  AssertionError [ERR_ASSERTION]: Got unwanted exception.
+  Actual message: "admission-failed"
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-worker-runtime.test.mjs:23:185)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: admission-failed
+        at f.service.connectPort (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-worker-runtime.test.mjs:23:150)
+        at connect (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/src/runtime/host-worker-runtime.mjs:22:44)
+        at file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-worker-runtime.test.mjs:7:175
+        at Array.map (<anonymous>)
+        at Object.emit (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-worker-runtime.test.mjs:7:168)
+        at file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-worker-runtime.test.mjs:23:214
+        at getActual (node:assert:580:5)
+        at strict.doesNotThrow (node:assert:748:32)
+        at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-worker-runtime.test.mjs:23:185)
+        at Test.runInAsyncScope (node:async_hooks:226:14),
+    expected: undefined,
+    operator: 'doesNotThrow',
+    diff: 'simple'
+  }
