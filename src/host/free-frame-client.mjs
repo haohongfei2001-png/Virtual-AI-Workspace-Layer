@@ -1,3 +1,5 @@
+import {createFreeFrameRecovery} from './free-frame-recovery.mjs';
+import {isFreeRecoveryReason} from '../navigation/free-recovery.mjs';
 import {FREE_HORIZONS,relocateFreeSegment} from '../data/free-time-policy.mjs';
 import {createUiFrameClient} from './ui-frame-client.mjs';
 import {createNavigation} from '../navigation/navigation.mjs';
@@ -7,13 +9,28 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 
 /** Bounded runtime-only projection consumer. No full workspace replica is built
  * in either frame; parent messages remain the lifecycle's public join/suspend. */
-export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,onPresentationRequest=()=>{},onState=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeNonce,navigationFactory=createNavigation}={}){
+export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,onPresentationRequest=()=>{},onState=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeNonce,navigationFactory=createNavigation,recoveryFactory=createFreeFrameRecovery}={}){
  const policy=createURLPolicy({origin:parentOrigin});
  let navigation=null,root=null,plans=new Map(),grant=null,grantCurrent=()=>false,serial=0,activeRead=null,query={segment:0,offset:0,limit:8},closed=true,splits=0,dirty=false,currentNativeURL='',presentationRevision=0,presentationIntent='',workspaceRevision=null,viewSession=null,horizonPending=false;
+ let recovery=null,recoveryRoot=null;
+ const recoverable=reason=>isFreeRecoveryReason(reason)||['corrupt-record','invalid-partition-manifest','invalid-partition-piece'].includes(reason);
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){workspaceRevision=null;viewSession=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
- function fail(reason){if(closed)return;state({state:'failed',reason});lifecycle.stop(reason);}
+ function clear(){recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function fail(reason){if(closed)return;if(recoverable(reason)&&grantCurrent()&&Date.parse(grant?.expiresAt)>now()){openRecovery(true);return;}state({state:'failed',reason});lifecycle.stop(reason);}
+ function openRecovery(fromFailure=false){
+  if(recovery||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending&&!fromFailure)return;
+  serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-recovery');
+  recoveryRoot=doc.createElement('div');recoveryRoot.setAttribute('data-vaiwl-frame-recovery','');privateRoot.append(recoveryRoot);
+  const current=grant;
+  const valid=()=>!closed&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
+  const panel=recoveryFactory({document:doc,container:recoveryRoot,request:async message=>{
+   if(recovery!==panel||!valid())throw Error('recovery-unavailable');
+   const response=await withRequestDeadline(()=>runtime.sendMessage({...message,grantId:current.id,mountId:current.mountId}),{now:elapsedNow,schedule,cancel});
+   if(recovery!==panel||!valid())throw Error('recovery-unavailable');return response;
+  },onResume:()=>{if(recovery!==panel||!valid())return;panel.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;budget.reset();void read(query,true);}});
+  recovery=panel;state({state:'recovery'});void panel.open();
+ }
  function live(ticket){return !closed&&ticket===serial&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();}
  function cancellable(work,signal){
   let onAbort;const aborted=new Promise((_,reject)=>{onAbort=()=>reject(Error('frame-read-cancelled'));signal.addEventListener('abort',onAbort,{once:true});if(signal.aborted)onAbort();});
@@ -26,6 +43,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   const {role:ignored,...rest}=value;return structuredClone(rest);
  }
  async function read(value,publish){
+  if(recovery)return null;
   const requested=boundedQuery(value);query=requested;const ticket=++serial;activeRead?.abort();const controller=new AbortController();activeRead=controller;
   if(budget.remaining()===Infinity)splits=0;
   if(!budget.begin()){fail('read-budget-exhausted');return null;}
@@ -43,7 +61,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
      if(effective.workingSet?.limit>1){effective={...effective,workingSet:{...effective.workingSet,limit:Math.max(1,Math.floor(effective.workingSet.limit/2))}};splits++;continue;}
      if(effective.search?.limit>1){effective={...effective,search:{...effective.search,limit:Math.max(1,Math.floor(effective.search.limit/2))}};splits++;continue;}
     }
-    throw Error(response?.reason==='free-frame-page-too-large'?'free-frame-page-too-large':'frame-view-unavailable');
+    throw Error(recoverable(response?.reason)?response.reason:response?.reason==='free-frame-page-too-large'?'free-frame-page-too-large':'frame-view-unavailable');
    }
    if(response.state==='preparing'){
     if(!Number.isFinite(response.retryAfterMs)||response.retryAfterMs<0)throw Error('invalid-preparation-response');
@@ -63,7 +81,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   finally{if(activeRead===controller){activeRead=null;if(dirty&&live(ticket)){dirty=false;void read(query,true);}}}
   return null;
  }
- function invalidate(){if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;if(activeRead||horizonPending)dirty=true;else void read(query,true);}
+ function invalidate(){if(recovery){recovery.invalidate?.();return;}if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;if(activeRead||horizonPending)dirty=true;else void read(query,true);}
  function applyPresentation(value){
   if(value===undefined)return;
   if(!value||!Number.isSafeInteger(value.revision)||value.revision<0||!value.intent||!['show-workspace','enter-reading','search-known','show-working-set'].includes(value.intent.kind))throw Error('invalid-frame-presentation');
@@ -119,7 +137,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;
   if(!navigation){root=doc.createElement('div');root.setAttribute('data-vaiwl-frame-root','');privateRoot.append(root);
-   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet});
+   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery});
   }
   invalidate();
  }

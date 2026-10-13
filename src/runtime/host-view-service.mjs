@@ -160,5 +160,5 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  }
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId){for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({handle,present,setHorizon,setWorkingSet,revokeDocument,revokeTab,revokeMount:remove,stop(){for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({handle,present,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){for(const key of [...views.keys()])remove(key);}});
 }

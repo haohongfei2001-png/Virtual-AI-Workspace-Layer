@@ -155,3 +155,11 @@ test('FR-12 a shorter source lease expires old rows without renewing their indiv
   assert.equal(projected.unknown.length, 3);
   assert(projected.unknown.every(row => row.nativeTitle === null));
 });
+
+test('FR-03/12 revoked native metadata retains separately known routes as UNKNOWN but never revives unavailable tombstones',()=>{
+ const stored=applyNativeObservations(seed(),batch(2,{refs:[{...ref('ordinary'),availability:'unavailable'}]}),authority),facts=invalidateNativeSource(stored,'fixture',scope);
+ const knownState={scopeKey:facts.scopeKey,refs:Object.fromEntries(['inside','ordinary'].map(id=>[id,{id,nativeUrl:ref(id).nativeUrl,nativeTitle:'PRO_PRIVATE_NAME',available:false,projectId:'PRO_VIRTUAL'}]))};
+ const result=freeProjection(facts,{scope,now,knownState});assert.equal(result.projects.length,0);assert.equal(result.noProject.length,0);assert.equal(result.refs.length,1);assert.equal(result.unknown.length,1);
+ assert.deepEqual(result.refs[0],{id:'inside',scope:facts.scopeKey,nativeUrl:ref('inside').nativeUrl,nativeTitle:null,displayTitle:'名称暂不可用',membership:'UNKNOWN',projectId:null});
+ assert.equal(facts.sources.fixture.revoked,true);assert(!JSON.stringify(result).includes('PRO_'));assert(!result.refs.some(r=>r.id==='ordinary'));assert(!result.refs.some(r=>r.id==='uncertain'),'revoked-only metadata is not independent shared authority');
+});

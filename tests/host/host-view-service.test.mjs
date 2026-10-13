@@ -247,3 +247,22 @@ test('MOCK_IDB rolling scope revalidation preserves two frame owner session and 
  for(const role of ['workspace','sidebar']){const view=await ready(h,role);assert.equal(view.state,'ready',JSON.stringify(view));assert.deepEqual(view.page.viewSession,first.page.viewSession);assert.equal(view.page.groups.items[0].freshness,'last-known','revalidation must not freshen old facts');const work=await h.view(role,{segment:2,workingSet:{}});assert.deepEqual(work.page.workingSet.items.map(r=>r.id),['missing_saved','c1']);assert.equal(work.page.segment,2);}
  assert.deepEqual(await h.service.nativeRepository.read(scope),initialNative);assert.deepEqual(await h.evidence.read(scope),initialEvidence);assert.deepEqual((await h.workspaces.read(scope)).state,initialWorkspace);
 });
+
+test('MOCK_IDB authorized recovery repairs native root and restarts failed shared view owner without losing manual assets',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();assert.equal((await ready(h)).state,'ready');
+ const scope={...workspaceScope(h),key:h.bound.scope};
+ assert(scope?.key);
+ assert((await h.workspaces.command(scope,{operationId:'manual_before_repair',expectedRevision:(await h.workspaces.read(scope)).state.revision,command:{type:'SET_PREFERENCE',id:'workingSet',value:{refs:['c1'],current:'c1'}}})).ok);
+ const rpc=(type,extra={},as=h.children.workspace)=>h.service.handle({v:1,type,grantId:h.grants.workspace.id,mountId:'mount',...extra},as);
+ const healthy=await rpc('HOST_UI_RECOVERY_STATUS');assert.equal(healthy.ok,true);assert.equal(healthy.plans.workspace.corrupt,false);assert.equal(healthy.plans.native.corrupt,false);
+ const db=await h.base.open();await new Promise((resolve,reject)=>{const tx=db.transaction('native_states','readwrite'),store=tx.objectStore('native_states'),r=store.get(scope.key);r.onsuccess=()=>store.put({...r.result,checksum:'0'.repeat(64)});tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+ h.service.views.refreshScope(scope.key);const broken=await ready(h);assert.equal(broken.ok,false);
+ const status=await rpc('HOST_UI_RECOVERY_STATUS');assert.equal(status.ok,true,JSON.stringify(status));assert.equal(status.plans.native.recoverable,true);assert(!JSON.stringify(status).includes('damagedHash'));
+ const repair={kind:'native',planId:status.plans.native.planId,operationId:'repair_native_ui'};
+ assert.equal((await rpc('HOST_UI_RECOVER',repair,h.sender)).ok,false,'top host cannot use private UI repair');
+ assert.deepEqual(await rpc('HOST_UI_RECOVER',repair),{ok:true,kind:'native'});
+ const restored=await ready(h);assert.equal(restored.ok,true,JSON.stringify(restored));assert.equal(restored.state,'ready');assert.equal(restored.page.entries.unknown.items.length,1);assert.equal(restored.page.entries.unknown.items[0].id,'c1');assert.equal(restored.page.entries.unknown.items[0].nativeTitle,null);assert.equal(restored.page.entries.unknown.items[0].nativeUrl,'https://chatgpt.com/c/c1');
+ const saved=await h.workspaces.read(scope);assert.deepEqual(saved.state.preferences.workingSet.value,{refs:['c1'],current:'c1'});
+ assert.equal((await rpc('HOST_UI_RECOVER',repair)).ok,false,'RAM plan is consumed');
+ h.service.stop();assert.equal((await rpc('HOST_UI_RECOVERY_STATUS')).ok,false);
+});

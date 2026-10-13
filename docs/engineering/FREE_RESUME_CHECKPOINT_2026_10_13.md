@@ -964,3 +964,18 @@ workspace frame通过窄HOST_UI_WORKING_SET协议发送add/remove/move-up+refId�
 在475fef7继续，该提交已正常push至原分支。修复可复现的DOM竞态：工作集/时间范围RPC开始或结束直接render会在pointer/Enter按住时替换原生链接。现与投影更新共用交互队列，合并最新投影并在release后绘制；invalidate/stop/scope切换丢弃迟到绘制。原FAIL和修后75项针对性PASS（包括9项竞态反例）分开保留。
 
 真实headless工作集打包回归前三项PASS，原生链接新标签等待再次FAIL，报告sourceChangedDuringRun=false。未宣称该浏览器问题已由DOM修复解决；保留原始报告并继续定位，完整Node未重复运行（本轮NOT_RUN）。恢复服务与界面并行实施中尚未集成。Free未完成、NOT_RELEASE_READY，既有真实验收及性能条件保持。
+
+
+## Round95：生产frame本地恢复入口与撤源后引用可达
+
+在1d60110继续。HOST_UI_RECOVERY_STATUS/HOST_UI_RECOVER接既有UiGrant/withScope，workspace/native/evidence三类独立恢复；损坏hash仅存在owner有界RAM方案，绑定scope/scopeGrant/grant/mount/kind，20秒期限、6秒RPC/elapsed/guard/abort、singleflight、失败消费方案，无自动重试或恢复授权。空共享库先read判健康，避免missing-root被误标损坏。修复只调用既有仓库CAS，不新增schema、不重放原生发送；成功刷新相同scope owner并通知双frame，保留T/Z会话。
+
+授权frame在明确存储损坏时清理旧数据视图、保留可用恢复入口；权限/协议异常仍立即清除。正常工作空间也有显式入口，用户点击才修复。续期/通知期间面板只读重查、清除陈旧方案并有界合并，晚回包和scope切换不能复活UI。恢复后从新DTO重建查找/工作集查询与分页；补齐native/evidence/shared目录实际读错误枚举。
+
+真实浏览器揭示两个不同问题并分开记录：最初测试错误地期待修复后立即显示已撤源旧原名，诊断证明事务成功、source全部revoked，改为核验撤权及UNKNOWN原始链接；该正确断言随后发现真实生产缺陷——native revoked行跳过后，shared已知引用又因native行存在而被过滤。修复仅恢复同scope独立shared引用的generic UNKNOWN与其原URL，不恢复旧原生名称/别名/成员、不放出explicit unavailable tombstone；无独立shared引用的撤源事实仍不显示。原FAIL和最终PASS完整保留。
+
+最终冻结源码完整Node2007/2007、0失败/跳过；实际headless构建包恢复5/5与原8/8旅程PASS，sourceChangedDuringRun=false。恢复旅程核验健康检查全库只读、坏root显式入口不自动写、修复后撤源/事实/Pro/草稿保留、UNKNOWN链接可达、另一frame更新健康状态、关闭父页面后旧修复请求拒绝且全库不变。浏览器最后一项是旧请求拒绝，并非在飞事务中止；晚事务回滚由现有仓库及新owner合同分别验证。首次全量和中间测试的夹具错误修正记录保留，不与最终结果相加。
+
+工作集点击另两次诊断分别FAIL/PASS：失败时目标frame没有pointer事件，成功时首次点击正常；未确证根因，最终脚本无后备点击/重试，不宣称已解决C5间歇问题。
+
+继续既有计划B2.F2：目前current-object/BodyProof与认证current conversation读回尚未接入，不能将发送correlator候选提升为本人ACK；生产默认context仍未认证，G/U及原4x100k性能失败保持。备份/设置剩余通道也未全部完成。无真实ChatGPT/PAIA访问、付费调用、部署或真实原生写入。Free未完成、NOT_RELEASE_READY。

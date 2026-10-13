@@ -7,7 +7,7 @@ const gridIcon='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stro
 import { css } from './styles.mjs';
 function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);n.textContent=text;return n;}
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
-export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onProjectionRequest=null,onHorizonRequest=null,onWorkingSetRequest=null}) {
+export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onProjectionRequest=null,onHorizonRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null}) {
   const framed=surface!==null;
   if(framed&&(!['workspace','sidebar'].includes(surface.role)||surface.root?.ownerDocument!==doc))throw Error('invalid-navigation-surface');
   const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,frameSearchOffset=0,frameSearchWaiting=false,frameWorkingSetOffset=0,frameWorkingSetWaiting=false,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
@@ -262,6 +262,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       select.value=String(frameProjection.viewSession.H);select.disabled=!!horizonPending;select.onchange=()=>{void requestHorizon(select.value);};label.append(select);toolbar.append(label);
       if(horizonPending||horizonError)toolbar.append(node(doc,'span',{role:'status'},horizonPending?'正在更新时间范围…':horizonError));page.append(toolbar);
     }
+    if(frameProjection&&typeof onRecoveryRequest==='function')page.append(button('本地数据恢复',()=>onRecoveryRequest()));
     if(frameProjection&&workingSetError)page.append(node(doc,'p',{role:'alert'},workingSetError));
     if(frameProjection&&searchQuery!==null){
       const section=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
@@ -347,7 +348,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     // Presentation-only metadata. This intentionally has no complete refs/index
     // and never enters the prepared Free snapshot or full-snapshot update path.
     snapshot={scope:copy.scope,viewMode:'free',viewSession:copy.viewSession,preferences:{}};
-    if(!views.has(copy.scope))views.set(copy.scope,initialView());view=views.get(copy.scope);view.segment=copy.segment;if(scopeChanged)view.worksetOpen=false;
+    if(!views.has(copy.scope))views.set(copy.scope,initialView());view=views.get(copy.scope);view.segment=copy.segment;if(scopeChanged){view.worksetOpen=!!copy.workingSet;if(copy.workingSet)frameWorkingSetOffset=copy.workingSet.offset;if(copy.search){searchQuery=copy.search.query;searchTheme=copy.search.projectId;frameSearchOffset=copy.search.offset;}}
     groups=copy.groups.items.map(g=>({...g,current:g.lists.current.items,old:g.lists.old.items,unknown:g.lists.unknown.items}));index=null;
     layout();render();layout();
   }

@@ -42,7 +42,11 @@ export function freeProjection(facts, {scope, now, knownState = null}) {
     else unknown.push(row);
   }
   for (const ref of Object.values(knownState?.refs ?? {})) {
-    if (Object.hasOwn(facts.refs, ref.id)) continue;
+    const native = facts.refs[ref.id];
+    // Revoked metadata cannot publish titles or membership, but a separately
+    // retained shared reference still has its original route. Keep explicit
+    // unavailable tombstones hidden; never revive them through this fallback.
+    if (native && (!facts.sources[native.sourceId].revoked || native.availability === 'unavailable')) continue;
     const row = {id: ref.id, scope: facts.scopeKey, nativeUrl: ref.nativeUrl,
       nativeTitle: null, displayTitle: '名称暂不可用', membership: 'UNKNOWN', projectId: null};
     refs.push(row);
