@@ -1,10 +1,11 @@
+import {auditEvidencePartitions} from './evidence-partition-audit.mjs';
 import {EVIDENCE_DIRECTORY_FORMAT,validateEvidenceDirectoryRoot} from './evidence-ref-directory.mjs';
 import {createEvidenceDirectoryReader} from './evidence-directory-reader.mjs';
 import {NATIVE_INDEX_FORMAT,validateNativeIndexRoot} from './native-version-index.mjs';
 import {createNativeIndexReader} from './native-index-reader.mjs';
 import {digest} from './hash.mjs';
 import {nativeRecoveryKey,validateNativeManifest,loadNativePieces} from './native-partitions.mjs';
-import {freeEvidenceKey,evidenceRecoveryKey,validateEvidenceManifest,loadEvidencePieces,loadEvidenceIndexes} from './free-evidence-partitions.mjs';
+import {freeEvidenceKey,evidenceRecoveryKey,validateEvidenceManifest,loadEvidenceIndexes} from './free-evidence-partitions.mjs';
 /** Diagnostic only; no state is changed and repair still performs its own CAS. */
 export async function freeRecoveryStatus(repository,scope,kind,options={}) {
  const check=()=>{if(options.signal?.aborted||options.guard?.()===false)throw Error('stale-binding');};check();
@@ -27,7 +28,7 @@ export async function freeRecoveryStatus(repository,scope,kind,options={}) {
     if(!native&&root.result?.payload?.format===EVIDENCE_DIRECTORY_FORMAT&&manifest.format!==EVIDENCE_DIRECTORY_FORMAT)throw Error('evidence-directory-recovery-format-conflict');
     const done=()=>{if(!result.recoveryReason)result.recoverable=true;};
     const verify=complete=>{if(native)loadNativePieces(store,complete,normalized,{projects:Object.keys(complete.projects),refs:Object.keys(complete.refs)},done,fail);
-     else loadEvidenceIndexes(store,complete,normalized,Object.keys(complete.indexVersions),()=>loadEvidencePieces(store,complete,normalized,Object.keys(complete.refVersions),evidence=>{for(const table of ['events','hints','coverage'])if(Object.keys(evidence[table]).length!==manifest.counts[table]){fail(Error('free-evidence-count-mismatch'));return;}done();},fail),fail);};
+     else loadEvidenceIndexes(store,complete,normalized,Object.keys(complete.indexVersions),indexes=>auditEvidencePartitions(store,complete,normalized,check,done,fail,indexes),fail);};
     if(native&&manifest.format===NATIVE_INDEX_FORMAT)createNativeIndexReader(store,manifest,normalized,fail).all(verify);
     else if(!native&&manifest.format===EVIDENCE_DIRECTORY_FORMAT)createEvidenceDirectoryReader(store,manifest,normalized,fail).all(verify);
     else verify(manifest);

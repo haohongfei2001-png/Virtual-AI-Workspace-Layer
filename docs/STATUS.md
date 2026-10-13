@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第七十三轮：前置e0db3f1，最后确认远端b46ef83。活动索引绑定根校验，旧库完整双向核验后才允许增量写；完整1264/1264、真实IDB10/10、MV3回归9/9通过。恢复诊断一致性、慢速100k与真实Free验收仍未完成。
+当前已推进至第七十四轮：恢复诊断与执行统一，完整1282/1282、真实IDB10/10通过。已获取Pro正式72ca068，保存本地成果后整合，并优先按更新计划实现生产HostAdapter离线闭环；真实Free验收仍未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -827,3 +827,10 @@ Round72最终规模补充：实际安装headless MV3 100k，首载22393.2ms、�
 真实ChatGPT来源/账号/跨端、PAIA、物理IME/真人仍未满足；4x100k旧FAIL保持，Free未完成、NOT_RELEASE_READY。独立审查发现恢复诊断仍未复用双向审计：旧shadow错误locator可能被错误展示可恢复，但实际恢复安全拒绝；下一项修正诊断一致性。
 
 Round73最终安装包100k：首标签24265.4ms、第二15209.5ms，三发送816.9/889.7/693.6ms单样本PASS，scope隔离、唯一事件、原名/NONE、双tab草稿保持，sourceChangedDuringRun=false。63文件/53worker模块；ZIP SHA256 71c234083de3170ca30c04dcd0ef8e8a2912f6a711f969bde6d593e36747f755，source manifest 23ec7cf66b7c5faa4c055d429151a65e5e2ddc88431286b2989610d87aa57deb；路径见free-round73-mv3-100k.json。非p95，未重跑4x，仍非真实Free交付。
+
+
+## Round74：恢复诊断与执行统一，准备整合Host正式规格
+
+前置aeb850d；恢复诊断复用同一个分批双向索引审计，保持readonly事务与guard。旧shadow错误/缺失locator不再显示可恢复。新增18项中修前2合法控制PASS/16反例FAIL；修后全量1282/1282、0失败/跳过，相关恢复47/47。真实IDB10/10新增诊断断言：合法true、错误false/content-mismatch，诊断前后八表逐row保持；实际恢复撤权与错误拒绝继续通过。100k包/性能仍为Round73源码，不重跑与正常导航无关的规模验证。
+
+用户已要求在自然检查点整合Pro正式72ca068；正常fetch已成功，远端实际72ca068基于a3d8f13，已包含此前到Round71的本地提交。先保存Round72–74成果，再非强制merge该文档提交、核对四份spec原件与既有代码均保留。此后优先B1.F+B2.F1+C2生产HostAdapter离线闭环；不再将额外100k合成优化置于其前。真实权限边界与原FAIL保持，Free未完成。
