@@ -569,3 +569,17 @@ partialContext显式boundedDirectory opt-in仅对目录格式启用，读取目�
 - 下一可执行F1：在现有send-scale真实IDB/client harness加入原生标题/成员增量更新反例（不复制整套fixture），验证尾部引用、重属与删除/unknown可达、草稿和只取变更refs。继续cold全量读取与warmHEADER串行开销。真实数据/跨端/PAIA/物理IME/真人条件仍未获授权或未验收，不阻止独立工作。
 
 证据：free-round60-full.log、mixed100k.json、single100k.json、mv3.json、package.json、source-receipt.json。
+
+
+## Round61：原生改名、成员三态与不可用恢复规模验证
+
+8a35843已正常push。此次只改测试harness/helper，无生产改动，无必要重复完整Node/MV3或打新包；其证据仍明确源自Round60。
+
+- FREE_SCALE_UPDATES=1 复用现有真实IDB/client harness，仅在controlled native host补一个尾部metadata行以让原生host可导航，不复制消息；随后尾部聊天改名/Project->NONE/NONE->UNKNOWN/UNKNOWN->Project并改聊天项目名/unavailable隐藏/恢复available，共六项。
+- 1k：49.5/51.5/51.1/67.9/40/38.5ms；10k：79.9/62.4/63.3/80.6/68.7/79.1ms；100k：467.6/444.9/399.1/478.5/430.2/863.9ms。源码均冻结，单样本非p95。
+- 每项原草稿/textarea同节点、原生/共享已知ID不丢；每项各1native.page/1evidence.page，read/snapshot调用0。没有宣称该单页必然只含一个ref。unavailable真实omittedRefs出现，缓存标题/currentRef隐藏，恢复新观察后可达；UNKNOWN membership仍可达。availability='unknown'未在这六步单独覆盖（schema支持），不能误称不存在。
+- 计时从synthetic owner apply完成后起，经显式client.refresh到DOM，排除apply事务耗时；不证明真实上游通知自动刷新。当前100k初载21550.3ms、发送664.1/595.8/544.1ms另列，未用重复样本挑更快值覆盖旧报告。
+- 初始测试宿主未创建尾部metadata，导航没有composer（工具history保留，日志已被调试覆盖不冒称有文件）；随后探针试图替换冻结broker.handle而静默失败，已改为实际响应trace.omittedRefs并保留该失败json/log。两者均测试fixture问题，无production修补或放宽断言。
+- 下一步10k 4x/100k4x、规模多tab及失败退让；原生source/真实账号/跨端/PAIA/IME/真人仍未授权或未验证。真实Free/发布仍未完成。
+
+证据：free-round61-updates{1k,10k,100k}.json、updates1k-tombstone-failure.json/log、source-receipt.json。
