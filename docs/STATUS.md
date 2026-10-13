@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第九十五轮：生产双frame本地恢复闭环已接通，修复撤源后共享引用UNKNOWN不可达缺陷。最终2007项Node、恢复5旅程及原打包8旅程通过；工作集间歇点击、生产本人ACK/context和真实验收等条件仍未满足。Free未完成、NOT_RELEASE_READY。
+当前已推进至第九十六轮：current body只读识别、共享观察序列及私有RAM正文关联已接通；2055项Node、正文专项6组及原打包8旅程通过。正文关联不是本人ACK，认证当前聊天元数据读回待接；Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1041,3 +1041,16 @@ workspace frame通过窄HOST_UI_WORKING_SET协议发送add/remove/move-up+refId�
 工作集点击另两次诊断分别FAIL/PASS：失败时目标frame没有pointer事件，成功时首次点击正常；未确证根因，最终脚本无后备点击/重试，不宣称已解决C5间歇问题。
 
 继续既有计划B2.F2：目前current-object/BodyProof与认证current conversation读回尚未接入，不能将发送correlator候选提升为本人ACK；生产默认context仍未认证，G/U及原4x100k性能失败保持。备份/设置剩余通道也未全部完成。无真实ChatGPT/PAIA访问、付费调用、部署或真实原生写入。Free未完成、NOT_RELEASE_READY。
+
+
+## Round96：当前正文DOM关联与私有RAM证明
+
+在008dfee继续；该提交正常push后API确认PR16为open Draft、head008dfee21565b3374b71309e7630388efda3d647，base仍PR15，描述已同步。
+
+按既有VA-HOST CurrentBodyClaim增加显式profile选择器的只读正文识别：唯一可见根显式C须与当前route一致，最多256个message ID，不读正文/草稿/作者；隐藏/歧义/无ID/换route生成unproven，容器或ID改变推进epoch。owner严格验证exact字段与locator，不接受scope、伪receipt、未实现的response-intersection。
+
+adapter的body/surface共用producer序列与单个发送队列，分别去重；续期重扫body，拒绝body不阻塞正常surface。现有owner增加current-object分支和有界RAM BodyProof，复用序列账本，不写Native/Evidence、不签发送ACK。unproven撤销旧proof、根重挂更换proof、region不能回退；正常同claim续期保留proof而非重写事实。withCurrent仅内部调用，前后核验Chrome frame/route/handshake/有效scope，提供6秒guard/signal，晚结果拒绝。实际doc/scope仍有效时保留producer高水位，避免旧20秒淘汰导致重放；失效记录才回收，容量不增加。
+
+最终Node2055/2055、0失败/跳过；current body真实headless隔离MV3六组PASS，实际原构建包八旅程PASS，sourceChangedDuringRun=false。正文专项使用明确test-only MV3组装及合成无正文message IDs，证明真实content adapter→Chrome sender→owner、根重挂/隐藏/route/privileged scope撤销和current-object零native.apply；evidence库未在该专项组装，不能称原包/本人ACK认证。既有observation浏览器脚本更新为按surface kind等待，不把先到的body accepted当native数据已落盘。首轮旧adapter计数合同失败原样保留，旧surface-only测试继续严格验证，默认双kind行为另测。
+
+下一步复用session-provider.readCurrentConversation，在有效RAM证明内限定当前C及scope，以包内显式开关接认证元数据读回；返回仍为metadata candidate，selfMatchCandidate不构成ACK。生产默认context/当前读取仍关闭，G/U、本人发送语义、备份设置、C5间歇点击与原4x100k条件保持。Free未完成、NOT_RELEASE_READY。
