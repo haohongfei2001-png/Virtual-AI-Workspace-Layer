@@ -29,7 +29,8 @@ export class FreeEvidenceRepository {
  }
  async migrateRefDirectory(scope,request,options={}) {return migrateEvidenceDirectory(this,scope,request,options);}
  async read(scope,options={}) { return (await this.query(scope,null,options)).evidence; }
- async header(scope,options={}) { return this.query(scope,{metadataOnly:true},options); }
+ async header(scope,options={}) { return this.query(scope,{metadataOnly:true,includeStorageFormat:options.includeStorageFormat===true},options); }
+ async version(scope,options={}) { return (await this.query(scope,{rootOnly:true},options)).revision; }
  async page(scope,{revision=null,offset=0,limit=500,ids=null}={},options={}) {
   if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>5000||ids!==null&&(!Array.isArray(ids)||ids.length>5000))throw Error('invalid-free-evidence-page');
   ids?.forEach(id);return this.query(scope,{revision,offset,limit,ids},options);
@@ -48,11 +49,12 @@ export class FreeEvidenceRepository {
     const current=manifest?evidenceHeader(manifest,normalized):payload;
     if(query?.revision!==undefined&&query.revision!==null&&query.revision!==current.revision)throw Error('snapshot-revision-changed');
     const marker=tx.objectStore('native_operations').get(key);marker.onsuccess=()=>{try{fence(options);markerCheck(root.result,marker.result,current.revision);}catch(failure){abort(failure);}};
+    if(query?.rootOnly){value={revision:current.revision};return;}
     // Root metadata is not an inventory-integrity certificate. Marker and final
     // authority fences still complete in this same readonly transaction.
     const reader=indexed?createEvidenceDirectoryReader(states,payload,normalized,abort):null;
     if(query?.metadataOnly){
-     const done=complete=>{value={revision:current.revision,manifest:complete,sources:current.sources};};
+     const done=complete=>{value={revision:current.revision,manifest:complete,sources:current.sources,...(query.includeStorageFormat?{storageFormat:payload.format}: {})};};
      // Existing HEADER consumers require refVersions; restore that contract.
      // This verifies directory inventory, not the evidence contents themselves.
      if(reader)reader.all(done);else done(manifest);return;

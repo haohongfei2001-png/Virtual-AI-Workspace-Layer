@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第四十三轮：活动ref版本+大小同桶目录基础已实现，尚未接仓库或迁移；22项新合同、完整Node867和真实IDB100k原语5项通过。实际运行时仍88ff239；其100k三发送1441.6/1495.7/1361.2ms仍1秒FAIL。正常push已同步至88ff239，API确认PR16仍Draft同head；后续Git为准。Free及发布验收未完成。
+当前已推进至第四十六轮：原生与活动目录均已接服务自动迁移、同CAS写入与完整恢复撤权；完整Node930/930、MV3 9/9，活动跨包升级/旧reader拒绝/恢复4步通过。本次正常100k三发送764.8/846.2/813.4ms均低于1秒，仍仅隔离合成环境样本，不代替完整F1与真实验收。最新本地提交以Git为准；最近远端核验PR16仍Draft的88ff239，后续本地检查点等待正常同步。Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -559,3 +559,16 @@ NativeRepository的read/header/page支持新格式：完整读/header验证所�
 独立子代理写入13合同、恢复诊断9合同通过；最终完整Node915/915、0失败/跳过。实际headless IDB7项覆盖双连接迁移CAS/写CAS、注入quota/撤权全store回滚、version-size配对/旧片GC、恢复撤源、Pro/账号隔离和重开；MV3 9/9通过。报告free-round45-*各自保留hash。旧读取合同现在检查stale revision拒绝与intact根不可恢复，原write-not-enabled门控已由真实写路径替换。
 
 包/private/tmp/vaiwl-free-delivery-round45-20261013/vaiwl-free-synthetic-only.zip，SHA256 `eb29951f232261f2817df68a807ce71d61a0ec4e37315f19802789c98c9a9e7a`，50文件/43worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。正常1k/10k/100k本轮NOT_RUN，不把显式迁移测试当日常服务接线或提速；100k一秒FAIL保持。下一步服务有界自动迁移、version根级元数据查询，再真实MV3/规模回归和跨包旧reader拒绝。真实账户/来源/跨端/PAIA/物理IME/真人条件仍缺，Free未完成。
+
+
+## 第四十六轮：活动自动迁移、根级version与100k正常发送
+
+接230f856。服务HEADER检测实际落盘format后执行一次owner活动目录迁移；CAS冲突只重读，下次HEADER仍legacy时再尝试，其他失败不吞掉、不循环。默认header保持旧manifest/refVersions结构；includeStorageFormat显式opt-in。新增version只读root+marker、完整root字节/schema/来源/末次guard保持，不宣称未加载库存完整；CHECK改为该version，三个独立读仍allSettled并保持原失败顺序。
+
+子代理version合同12/12；新增自动迁移/一次CAS冲突/非CAS错误服务合同3条。CHECK并行测试原先拦截header，随接口改为拦截version，原并发/等待/错误顺序断言保持。最终完整Node930/930、0失败/跳过，实际MV3 9/9。
+
+冻结源码、顺序正常1k/10k/100k九发送功能全部通过：1k 59.8/47.8/47.0ms，10k 138.3/98.2/99.3ms，100k 764.8/846.2/813.4ms（依次existing/new-none/new-project）。本次100k三场景均低于1秒；每条1消息/event/hint、fullread0、阅读/草稿保持，所有源码hash未变；最终native indexed/evidence directory两格式均断言。Round42旧FAIL仍保留原来源；本次仅此机器合成正常样本，不替代弱设备/分布/真实产品全部F1。
+
+实际同路径Round42旧活动包→Round46目录包→Round42拒绝→Round46恢复四步PASS，独立headless新profile。旧包明确invalid-free-evidence-schema、UI WAITING，native_states/native_operations全摘要不变；新版ACTIVE、未再次迁移、Pro/原生活动事实保持（只migration revision+1），原宿主草稿DOM未刷新。新证据free-round46-evidence-upgrade，旧Round41仅native索引证据保留。
+
+包/private/tmp/vaiwl-free-delivery-round46-20261013/vaiwl-free-synthetic-only.zip，SHA256 `145471c98318d0166e5bf04fcb1a8a9602366031123febaf32b48edf09ab7641`，50文件/43worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。下一可执行F1工作是最新双目录运行时的导航/搜索分布及4x受限CPU、长中文/多tab反例，优先复用现有ui-performance-browser/header-scale/replica测试，不重复已通过的正常发送。真实来源/账户/跨端/PAIA/物理IME/真人条件仍缺，Free未完成。

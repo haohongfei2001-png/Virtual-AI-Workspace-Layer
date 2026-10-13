@@ -41,6 +41,17 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
     if(activityVersionCache.size>=8&&!activityVersionCache.has(key))activityVersionCache.delete(activityVersionCache.keys().next().value);
     activityVersionCache.set(key,{revision,value});return value;
   }
+  async function ensureEvidence(scope,options){
+    let stored=await evidence.header(scope,{...options,includeStorageFormat:true});
+    if(stored.storageFormat==='vaiwl-free-evidence-partitions-v1'){
+      const result=await evidence.migrateRefDirectory(scope,{operationId:'evidence_ref_directory_v1',expectedRevision:stored.revision},options);
+      if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);
+      // One bounded attempt. A concurrent writer can win; the next HEADER
+      // retries if still legacy. No request replay or source renewal.
+      stored=await evidence.header(scope,{...options,includeStorageFormat:true});
+    }
+    return stored;
+  }
   function activitySourceRevision(state,stored){
     return digest(Object.entries({...state.sources,...stored.sources}).map(([id,s])=>({id,revoked:s.revoked,generation:s.generation??null,channel:s.channel,validUntil:s.validUntil??null,trustLevel:s.trustLevel??null})));
   }
@@ -88,7 +99,7 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
         const root=await ensureNative(scope,options,new URL(url).origin);
         // Bootstrap can write shared anchors, so it must finish first. The two
         // remaining owner reads are independent; settle both even if one fails.
-        const reads=await Promise.allSettled([workspaceContext(scope,options),evidence.header(scope,options)]);
+        const reads=await Promise.allSettled([workspaceContext(scope,options),ensureEvidence(scope,options)]);
         for(const result of reads)if(result.status==='rejected')throw result.reason;
         const context=reads[0].value,stored=reads[1].value;
         const {state,view,diagnostics}=context,policy=state.preferences.freeTimePolicy?.value;
@@ -160,9 +171,9 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
           preferences:state.preferences,view:view?.value??null,viewRevision:view?.revision??0,workspaceRevision:state.revision,diagnostics};
       },
       version:async(scope,options)=>{
-        const reads=await Promise.allSettled([native.version(scope,options),evidence.header(scope,options),workspaces.partitionHeader(scope,options)]);
+        const reads=await Promise.allSettled([native.version(scope,options),evidence.version(scope,options),workspaces.partitionHeader(scope,options)]);
         for(const result of reads)if(result.status==='rejected')throw result.reason;
-        const nativeRevision=reads[0].value,stored=reads[1].value,large=reads[2].value;
+        const nativeRevision=reads[0].value,stored={revision:reads[1].value},large=reads[2].value;
         if(large)return {nativeRevision,evidenceRevision:`${large.manifest.revision}:${stored.revision}`,revision:large.manifest.revision,viewRevision:large.view?.revision??0,viewDiagnostic:large.diagnostics.view};const {state,view,diagnostics}=await workspaces.read(scope,options);return {nativeRevision,evidenceRevision:`${state.revision}:${stored.revision}`,revision:state.revision,viewRevision:view?.revision??0,viewDiagnostic:diagnostics.view};},
       partitionHeader:(...args)=>workspaces.partitionHeader(...args),partitionPage:(...args)=>workspaces.partitionPage(...args),
       snapshot:async(scope,now,timeZone,options,size=8)=>{await wait();const value=await workspaces.snapshot(scope,now,timeZone,options);

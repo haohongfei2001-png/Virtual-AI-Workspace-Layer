@@ -97,3 +97,15 @@ test('MOCK_IDB directory evidence retains service HEADER activity versions and P
   assert.deepEqual(after.manifest.activityVersions,before.manifest.activityVersions);assert.equal(page.ok,true,JSON.stringify(page));const expected=structuredClone(prior.page.refs);for(const row of expected)for(const field of ['activity','activityDecision'])row[field].evidenceRevision=page.page.evidenceRevision;assert.deepEqual(page.page.refs,expected);
  }finally{h.close();}
 });
+
+test('service HEADER migrates evidence once and preserves observation timestamps',async()=>{
+ const h=await setup();try{
+  await h.header();assert((await h.call('B23_SYNTHETIC_SEND',{conversationId:'T0',messageId:'auto_directory',projectId:null,nativeTitle:'从哪里开始'})).ok);
+  const before=await h.service.evidence.read(h.scope);assert.equal((await h.service.evidence.header(h.scope,{includeStorageFormat:true})).storageFormat,'vaiwl-free-evidence-partitions-v1');
+  await h.header();const after=await h.service.evidence.read(h.scope);assert.deepEqual(after,{...before,revision:before.revision+1});assert.equal((await h.service.evidence.header(h.scope,{includeStorageFormat:true})).storageFormat,'vaiwl-free-evidence-directory-v1');
+  h.service.evidence.migrateRefDirectory=async()=>{throw Error('unexpected-repeat-migration');};await h.header();assert.equal(await h.service.evidence.version(h.scope),after.revision);
+ }finally{h.close();}
+});
+for(const reason of ['revision-conflict','injected-migration-failure'])test('service evidence migration bounded failure '+reason,async()=>{
+ const h=await setup();try{await h.header();assert((await h.call('B23_SYNTHETIC_SEND',{conversationId:'T0',messageId:'conflicting_directory',projectId:null,nativeTitle:'从哪里开始'})).ok);let calls=0;const original=h.service.evidence.migrateRefDirectory.bind(h.service.evidence);h.service.evidence.migrateRefDirectory=async()=>{calls++;return {ok:false,reason};};const result=await h.call('B23_FREE_HEADER');assert.equal(calls,1);assert.equal(result.ok,reason==='revision-conflict');if(!result.ok)assert.equal(result.reason,reason);h.service.evidence.migrateRefDirectory=original;await h.header();assert.equal((await h.service.evidence.header(h.scope,{includeStorageFormat:true})).storageFormat,'vaiwl-free-evidence-directory-v1');}finally{h.close();}
+});
