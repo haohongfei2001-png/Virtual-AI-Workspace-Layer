@@ -76,7 +76,7 @@ test('MOCK_IDB cached UI view recalibrates at native source expiry under a still
  const first=await ready(h);assert.equal(first.state,'ready',JSON.stringify(first));assert.equal(first.page.groups.items[0].nativeName,'Native Project');
  const initialPages=pages;h.setTime(start+59999);assert.equal((await h.view()).state,'ready');assert.equal(pages,initialPages,'time progression without a deadline must not reload');
  h.setTime(start+60000);const crossed=await h.view();assert.equal(crossed.state,'preparing','expired native witnesses cannot be returned as the old ready view');
- const second=await ready(h);assert.equal(second.state,'ready',JSON.stringify(second));assert.deepEqual(second.page.groups.items,[]);assert.equal(second.page.entries.unknown.items[0].nativeTitle,null);assert.equal(second.page.entries.unknown.items[0].membership,'UNKNOWN');
+ const second=await ready(h);assert.equal(second.state,'ready',JSON.stringify(second));assert.equal(second.page.groups.items[0].nativeName,'Native Project');assert.equal(second.page.groups.items[0].freshness,'last-known');assert.equal(second.page.entries.unknown.items[0].nativeTitle,'Native conversation');assert.equal(second.page.entries.unknown.items[0].freshness,'last-known');assert.equal(second.page.entries.unknown.items[0].membership,'UNKNOWN');
  assert.deepEqual(second.page.viewSession,first.page.viewSession,'freshness refresh preserves the shared history session');
  const refreshedPages=pages;assert(refreshedPages>initialPages);assert.equal((await h.view('sidebar')).state,'ready');assert.equal(pages,refreshedPages,'one deadline crossing refresh serves both frames');
 });

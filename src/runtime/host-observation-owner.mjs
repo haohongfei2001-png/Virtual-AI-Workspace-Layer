@@ -2,7 +2,7 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {surfaceBatch} from '../host/surface-batch.mjs';
 import {digest} from '../data/hash.mjs';
 /** Privileged owner; the gate recognizes request object identity, never serialized labels. */
-export function createHostObservationOwner({handshake,authority,getFrame,profiles,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createHostObservationOwner({handshake,authority,getFrame,profiles,onAccepted=null,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(!handshake?.verify||!handshake?.isBound||!handshake?.matchesFrame||!authority?.peek||!authority?.scopeFor||typeof getFrame!=='function'||!(profiles instanceof Map))throw Error('invalid-host-observation-owner');
  const admissions=new WeakMap(),producers=new Map();let busy=null;
  function gate(scope,request){const entry=admissions.get(request);return entry&&entry.scopeKey===scope.key&&entry.guard()?entry:null;}
@@ -53,6 +53,9 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    if(!result.ok)return result.reason==='revision-conflict'?{state:'retry-after',localSeq:proposal.localSeq,delayMs:50}:rejected('host-native-apply-failed');
    if(!guard())return rejected('stale-host-scope');
    producers.set(proposal.producerToken,{scopeKey:scope.key,grantId:grant.id,scopeEpoch:grant.scopeEpoch,seq:proposal.localSeq,fingerprint:semanticFingerprint,receiptId,until:Math.min(Date.parse(grant.expiresAt),time+20000)});
+   // Notify with the already verified scope inside the guarded owner turn.
+   // Transport notification failure must not turn a committed write into a retry.
+   try{onAccepted?.(scope);}catch{}
    return {state:'accepted',localSeq:proposal.localSeq,receiptId};
   }catch{return rejected('invalid-host-observation');}
   finally{if(request)admissions.delete(request);}

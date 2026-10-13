@@ -4,14 +4,14 @@ import {createUiFrameClient} from '../../src/host/ui-frame-client.mjs';
 const drain=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
 function fixture(){
- let time=1000,id=0;const timers=new Map(),listeners=new Set(),messages=[],requests=[],grants=[],clears=[];
+ let time=1000,id=0;const timers=new Map(),listeners=new Set(),messageListeners=new Set(),historicalMessages=[],messages=[],requests=[],grants=[],clears=[];
  const body={textContent:'old_private',replaceChildren(){this.textContent='';}};
  const doc={body,defaultView:{parent:{postMessage:(message,origin)=>messages.push({message,origin})}}};
  const grant=()=>({id:'grant',mountId:'mount',parentDocumentId:'parent',uiDocumentId:'ui',scopeGrantId:'scope',role:'workspace',expiresAt:new Date(time+20000).toISOString()});
- const runtime={connect:()=>({onDisconnect:{addListener:fn=>listeners.add(fn),removeListener:fn=>listeners.delete(fn)},disconnect(){}}),sendMessage:async message=>{requests.push(message);return {ok:true,grant:grant()};}};
+ const runtime={connect:()=>({onMessage:{addListener:fn=>{messageListeners.add(fn);historicalMessages.push(fn);},removeListener:fn=>messageListeners.delete(fn)},onDisconnect:{addListener:fn=>listeners.add(fn),removeListener:fn=>listeners.delete(fn)},disconnect(){}}),sendMessage:async message=>{requests.push(message);return {ok:true,grant:grant()};}};
  const options={document:doc,runtime,role:'workspace',parentOrigin:'https://chatgpt.com',makeNonce:()=> 'random_key',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),onGrant:g=>{grants.push(g);body.textContent='private_projection';},onClear:reason=>clears.push(reason)};
  const advance=async ms=>{time+=ms;for(const [key,value]of [...timers])if(value.at<=time&&timers.has(key)){timers.delete(key);value.fn();}await drain();};
- return {body,doc,runtime,options,messages,requests,grants,clears,grant,advance,disconnect:()=>{for(const fn of [...listeners])fn();}};
+ return {messageListeners,historicalMessages,emit:m=>{for(const fn of [...messageListeners])fn(m);},body,doc,runtime,options,messages,requests,grants,clears,grant,advance,disconnect:()=>{for(const fn of [...listeners])fn();}};
 }
 test('static frame sends only public nonce to parent and exact versioned runtime join',async()=>{const f=fixture(),client=createUiFrameClient(f.options);assert.equal(await client.start(),true);assert.deepEqual(f.messages,[{origin:'https://chatgpt.com',message:{type:'VAIWL_UI_JOIN',role:'workspace',nonce:'random_key'}}]);assert.deepEqual(f.requests,[{v:1,type:'HOST_UI_JOIN',nonce:'random_key',role:'workspace'}]);assert.equal(client.isAuthorized(),true);});
 test('runtime disconnect synchronously clears private DOM once and invalidates grant',async()=>{const f=fixture(),client=createUiFrameClient(f.options);await client.start();f.disconnect();assert.equal(f.body.textContent,'');assert.equal(client.isAuthorized(),false);assert.deepEqual(f.clears,['ui-port-disconnected']);client.stop();assert.equal(f.clears.length,1);});
@@ -37,4 +37,19 @@ test('cross-start pending render is cleared before new epoch renders, never afte
  f.options.onGrant=async()=>{count++;if(count===1){await held.promise;f.body.textContent='stale_side_effect';}else f.body.textContent='new_epoch';};
  const client=createUiFrameClient(f.options),first=client.start();await drain();client.stop();const second=client.start();await drain();assert.equal(count,1);assert.equal(f.body.textContent,'');
  held.resolve();assert.equal(await first,false);assert.equal(await second,true);assert.equal(count,2);assert.equal(f.body.textContent,'new_epoch');assert.equal(client.isAuthorized(),true);assert.equal(f.clears.length,1);
+});
+test('only exact active port invalidations reach callback; stopped and historical ports cannot notify',async()=>{
+ const f=fixture();let count=0;f.options.onInvalidate=()=>count++;const client=createUiFrameClient(f.options);
+ const starting=client.start();await drain();await starting;
+ for(const value of [null,[],{}, {type:'other'},{type:'VAIWL_UI_DATA_CHANGED',scope:'private'},Object.create({type:'VAIWL_UI_DATA_CHANGED'})])f.emit(value);
+ assert.equal(count,0);f.emit({type:'VAIWL_UI_DATA_CHANGED'});assert.equal(count,1);
+ const old=f.historicalMessages[0];client.stop();assert.equal(f.messageListeners.size,0);old({type:'VAIWL_UI_DATA_CHANGED'});assert.equal(count,1);
+ await client.start();old({type:'VAIWL_UI_DATA_CHANGED'});assert.equal(count,1);f.emit({type:'VAIWL_UI_DATA_CHANGED'});assert.equal(count,2);
+ f.disconnect();assert.equal(f.messageListeners.size,0);f.historicalMessages.at(-1)({type:'VAIWL_UI_DATA_CHANGED'});assert.equal(count,2);
+});
+test('pending join and rejected scope renewal cannot authorize invalidation',async()=>{
+ const f=fixture(),held=deferred();let count=0;f.options.onInvalidate=()=>count++;f.runtime.sendMessage=()=>held.promise;
+ const client=createUiFrameClient(f.options),starting=client.start();await drain();f.emit({type:'VAIWL_UI_DATA_CHANGED'});assert.equal(count,0);
+ held.resolve({ok:true,grant:f.grant()});await starting;f.runtime.sendMessage=async()=>({ok:true,grant:{...f.grant(),scopeGrantId:'other'}});
+ await f.advance(10000);f.historicalMessages[0]({type:'VAIWL_UI_DATA_CHANGED'});assert.equal(count,0);
 });

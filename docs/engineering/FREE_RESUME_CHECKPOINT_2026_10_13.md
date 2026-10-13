@@ -801,3 +801,14 @@ HOST_UI_STATUS通过已验证父文档与实际两role frame同步最新UiGrant�
 最终Node1597/1597、0失败/跳过；导航定向81/81，frame renderer headless1、prepared9、safe-update6、sidebar8全部通过；新UI lifecycle再跑同mount超20秒及四退出路径全PASS。全套后仅替换搜索/工作集占位为用户状态文案，并补consumer7/7，不重复浏览器；source receipt明确该差异。新旅程与生命周期sourceChangedDuringRun=false。
 
 尚未完成的真实产品行为明确保留：当前页原生变化仍靠后续VIEW/10秒grant刷新读取，待同scope事件即时失效通知；搜索/工作集结果、当前聊天定位、native create/snippet、scope proof刷新及C1/C2、发送/continuation/last-known新codec、完整视觉与81项/J1–J4未齐。旧4x100k FAIL/G/U NOT_RUN保持。下一项在已有闭环继续这些Free差额；Free未完成、NOT_RELEASE_READY，不发布。
+
+
+## Round80：原生变化即时刷新与同scope上次确认
+
+接05e2924，正常push因GitHub网络超时未成功；API仍确认PR16 Draft/head e2ae316，保留本地连续提交，不改变远端或强推。
+
+原生owner在已提交且guard仍有效的内部接受点按受检scope通知UI；消息只有VAIWL_UI_DATA_CHANGED，不传账户或私有数据。仅当前已配对port、有效scope/UI/document可接收；拒绝/duplicate不发，端口故障只撤其UI。SPA sender旧URL不再用于推断通知scope，反例原失败已保存。frame将突发合并为一次在途后续读取，同繁忙链不重置30秒预算，续租保留renderer/query。
+
+host-dom合法admission事实TTL到期仍在同已授权scope保留Project/聊天原名、原链接与已知PROJECT/NONE；标为上次确认，成员新鲜度单独表达，不再认证current/complete。撤销/不可用/未来source或row/跨scope/非法generation仍拒绝；旧synthetic过期语义不变。复用原codec及分页/replica，无schema升级、无历史资产改写；分页重新拼装不能用完整库存把过期成员变成完整覆盖。
+
+最终Node1627/1627，0失败/跳过；真实隔离headless MV3四旅程PASS：真实owner/IDB→双frame名字、原生DOM改名两帧2.5秒内更新、预计算原生href保留源草稿、撤权清私有显示；sourceChangedDuringRun=false。last-known显示及成员标识有Node/分页反例，未宣称真实账户TTL旅程。旧4x100k FAIL和G/U NOT_RUN保持。Free未完成、NOT_RELEASE_READY。下一项按原计划接正式生产入口/静态资源，并继续scope/context、发送continuation及原生动作差额。

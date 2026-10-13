@@ -15,7 +15,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const asFrame=(doc,sender)=>({tabId:doc.tabId,frameId:0,documentId:doc.documentId,parentDocumentId:null,actualURL:doc.url,documentLifecycle:'active',incognito:sender.tab?.incognito===true});
 
  const ui=uiURL||uiURLs?createHostUiOwner({extensionId,uiURL,uiURLs,getFrame,getContexts,handshake,authority,now,makeId}):null;
- const observations=surfaceProfiles?createHostObservationOwner({handshake,authority,getFrame,profiles:surfaceProfiles,now}):null;
+ const observations=surfaceProfiles?createHostObservationOwner({handshake,authority,getFrame,profiles:surfaceProfiles,onAccepted:scope=>ui?.notifyScope(scope.key),now}):null;
  const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:observations.gate,clock:()=>new Date(now()).toISOString()}):null;
  const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
  const views=ui&&readService?createHostViewService({ui,readService,prepareNavigation,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
@@ -26,7 +26,10 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(message?.type==='HOST_DOCUMENT_RENEW')return handshake.renew(message,sender);
   if(message?.type==='HOST_UI_VIEW')return views?views.handle(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(typeof message?.type==='string'&&message.type.startsWith('HOST_UI_'))return ui?ui.handle(message,sender):{ok:false,reason:'host-ui-unavailable'};
-  if(message?.protocol==='vaiwl-host-observation/1')return observations?observations.ingest(message,sender,nativeRepository):{state:'rejected',localSeq:message.localSeq,reason:'host-observations-unavailable'};
+  if(message?.protocol==='vaiwl-host-observation/1'){
+   if(!observations)return {state:'rejected',localSeq:message.localSeq,reason:'host-observations-unavailable'};
+   return observations.ingest(message,sender,nativeRepository);
+  }
   if(message?.type!=='HOST_REFRESH')return broker.handle(message,sender);
   if(!exactHostRecord(message,['v','type','clientId','seq','documentToken','producerToken','routeEpoch'])||message.v!==1||!tokenOK(message.clientId)||!Number.isSafeInteger(message.seq)||message.seq<1||!tokenOK(message.documentToken)||!tokenOK(message.producerToken)||!Number.isSafeInteger(message.routeEpoch)||message.routeEpoch<1)return {ok:false,reason:'invalid-host-refresh'};
   try{

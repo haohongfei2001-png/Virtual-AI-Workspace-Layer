@@ -68,7 +68,7 @@ test('MOCK_IDB old synthetic shared events never acquire production authorship',
 test('MOCK_IDB header/page use the same explicit evaluation time for expired native witnesses',async t=>{
  const h=await fixture(t);await h.observe();const initialFacts=await h.native.read(h.scope),expiry=Object.values(initialFacts.sources)[0].validUntil;
  const current=await h.page(NOW),facts=await h.native.read(h.scope);assert.equal(current.page.projects.length,1);assert.equal(current.page.refs[0].nativeTitle,'Native conversation title');
- const expired=await h.page(expiry);assert.equal(expired.header.evaluatedAt,expiry);assert.equal(expired.header.inventoryComplete,false);assert.deepEqual(expired.page.projects,[]);assert.equal(expired.page.refs[0].nativeTitle,null);assert.equal(expired.page.refs[0].membership,'UNKNOWN');assert.deepEqual(await h.native.read(h.scope),facts);
+ const expired=await h.page(expiry);assert.equal(expired.header.evaluatedAt,expiry);assert.equal(expired.header.inventoryComplete,false);assert.equal(expired.page.projects[0].nativeName,'Native project name');assert.equal(expired.page.projects[0].freshness,'last-known');assert.equal(expired.page.projects[0].membershipWitnessCurrent,false);assert.equal(expired.page.projects[0].membershipComplete,false);assert.equal(expired.page.refs[0].nativeTitle,'Native conversation title');assert.equal(expired.page.refs[0].freshness,'last-known');assert.equal(expired.page.refs[0].membership,'UNKNOWN');assert.deepEqual(await h.native.read(h.scope),facts);
 });
 
 test('MOCK_IDB Free header/page/snapshot do not modify Pro human assets or project them as native cards',async t=>{

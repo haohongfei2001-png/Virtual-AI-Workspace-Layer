@@ -59,7 +59,7 @@ function* assemble(prior,header,pages,plan){
    if(row.membership==='PROJECT'){const card=cards.get(row.projectId);if(!card)throw Error('missing-free-project-dependency');card.members.push(row);}
    else if(row.membership==='NONE')noProject.push(row);else unknown.push(row);if(++count%512===0)yield;
  }
- if(header.inventoryComplete===true&&!unknown.length)for(const p of cards.values())p.membershipComplete=p.memberCount==null?(!Object.hasOwn(p,'membershipComplete')&&!Object.hasOwn(p,'membershipWitnessCurrent')):p.membershipWitnessCurrent===true&&p.memberCount===p.members.length&&p.members.every(r=>p.membershipWitness&&r.membershipWitness&&['sourceId','generation','sourceRevision'].every(k=>p.membershipWitness[k]===r.membershipWitness[k]));
+ if(header.inventoryComplete===true&&!unknown.length)for(const p of cards.values())p.membershipComplete=p.memberCount==null?(!Object.hasOwn(p,'membershipComplete')&&!Object.hasOwn(p,'membershipWitnessCurrent')):p.membershipWitnessCurrent===true&&p.memberCount===p.members.length&&p.members.every(r=>r.membershipWitnessCurrent!==false&&p.membershipWitness&&r.membershipWitness&&['sourceId','generation','sourceRevision'].every(k=>p.membershipWitness[k]===r.membershipWitness[k]));
  const snapshot=aggregateFreeActivity({...header,viewMode:'free',refs:[...refs.values()],projects:[...cards.values()],noProject,unknown});
  return {header,projects,refs,omittedProjects,omittedRefs,snapshot};
 }

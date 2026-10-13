@@ -44,3 +44,18 @@ test('sidebar expansion requests bounded group page; shared presentation intent 
 test('projection cannot enter unframed/full-snapshot path and wrong role is rejected',()=>{const f=fixture();assert.throws(()=>f.nav.updateFrameProjection({...projection(),completeSnapshot:true}),/invalid-frame-projection/);assert.throws(()=>f.nav.updateFrameProjection(projection('sidebar')),/invalid-frame-projection/);const doc=dom(),nav=createNavigation({document:doc,adapter:{status(){}}});assert.throws(()=>nav.updateFrameProjection(projection()),/invalid-frame-projection/);});
 test('late page after scope replacement is discarded',async()=>{let finish;const f=fixture('workspace',()=>new Promise(r=>finish=r));f.nav.updateFrameProjection(projection());f.button('显示更多项目').click();f.nav.updateFrameProjection({...projection(),scope:'scopeB'});finish(projection());await tick();assert.equal(f.nav.status().scope,'scopeB');});
 test('bounded DTO is rejected by ordinary snapshot update and unsolicited same-scope page fences pending replies',async()=>{let finish;const f=fixture('workspace',()=>new Promise(r=>finish=r));assert.throws(()=>f.nav.update(projection()),/frame-projection-requires-explicit-consumer/);f.nav.updateFrameProjection(projection());f.button('显示更多项目').click();const fresh=projection();fresh.groups.items[0].name='Fresh owner name';f.nav.updateFrameProjection(fresh);finish(projection());await tick();assert.ok(f.pane().querySelectorAll('.theme-name').some(n=>n.textContent==='Fresh owner name'));});
+test('last-known card and rows append accessible labels without changing original names or ordering',()=>{
+ const f=fixture(),dto=projection();dto.groups.items[0].freshness='last-known';dto.groups.items[0].lists.current.items[0].freshness='last-known';dto.groups.items[1].freshness='current';dto.entries.unknown.items[0].freshness='last-known';
+ f.nav.updateFrameProjection(dto);
+ assert.deepEqual(f.pane().querySelectorAll('[data-theme-id]').map(n=>n.getAttribute('data-theme-id')),['P2','P1']);
+ const card=f.pane().querySelector('[data-theme-id="P2"]');assert.equal(card.querySelector('.theme-name').textContent,'Original P2');assert.equal(card.querySelector('h2').querySelector('.freshness-label').textContent,'上次确认');
+ const link=card.querySelector('[data-ref-id="P2_0"]');assert.equal(link.querySelector('.window-title').textContent,'Native P2_0');assert.equal(link.getAttribute('title'),'Native P2_0');assert.equal(link.querySelector('.freshness-label').textContent,'上次确认');assert.equal(link.querySelector('.freshness-label').getAttribute('aria-hidden'),null);
+ assert.equal(f.pane().querySelector('[data-theme-id="P1"]').querySelector('.freshness-label'),null);
+ assert.equal(f.pane().querySelector('[data-ref-id="unknown"]').querySelector('.freshness-label').textContent,'上次确认');
+ dto.groups.items[0].freshness='current';dto.groups.items[0].lists.current.items[0].freshness='current';dto.entries.unknown.items[0].freshness='current';f.nav.updateFrameProjection(dto);assert.equal(f.pane().querySelectorAll('.freshness-label').length,0);f.nav.stop();
+});
+test('sidebar last-known qualifier is included in the button accessible name and cleared across scope',()=>{
+ const f=fixture('sidebar'),dto=projection('sidebar');dto.groups.items[0].freshness='last-known';f.nav.updateFrameProjection(dto);
+ const button=f.button('侧栏主题 Original P2，上次确认');assert.ok(button);assert.equal(button.querySelector('.theme-name').textContent,'Original P2');assert.equal(button.querySelector('.freshness-label').textContent,'上次确认');
+ f.nav.updateFrameProjection({...projection('sidebar'),scope:'scopeB'});assert.equal(f.pane().querySelectorAll('.freshness-label').length,0);assert.ok(f.button('侧栏主题 Original P2'));f.nav.stop();
+});

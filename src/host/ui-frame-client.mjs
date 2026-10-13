@@ -3,14 +3,14 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 
 /** Normal-JS frame lifecycle only; frozen processes/browser hard-kill need their
  * own acceptance evidence. Private data never travels through parent messages. */
-export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant=()=>{},onClear=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),makeNonce=()=>crypto.randomUUID(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant=()=>{},onClear=()=>{},onInvalidate=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),makeNonce=()=>crypto.randomUUID(),schedule=setTimeout,cancel=clearTimeout}={}){
  const parsed=new URL(parentOrigin);
  if(!['workspace','sidebar'].includes(role)||!doc?.defaultView?.parent||!privateRoot||typeof privateRoot.replaceChildren!=='function'||typeof runtime?.connect!=='function'||typeof runtime.sendMessage!=='function'||parsed.origin!==parentOrigin||!['https:','http:'].includes(parsed.protocol))throw Error('invalid-ui-frame-client');
- let active=false,epoch=0,grant=null,port=null,expiryTimer=null,renewTimer=null,abort=null,disconnect=null,rendering=false,desired=null;
+ let active=false,epoch=0,grant=null,port=null,expiryTimer=null,renewTimer=null,abort=null,disconnect=null,messageListener=null,rendering=false,desired=null;
  const clear=(reason,notify=true)=>{privateRoot.replaceChildren();try{if(notify)onClear(reason);}catch{/* Cleanup cannot restore authority. */}};
  function stop(reason='ui-stopped'){
   const wasActive=active;active=false;if(desired){desired.resolve(false);desired=null;}epoch++;grant=null;cancel(expiryTimer);cancel(renewTimer);expiryTimer=renewTimer=null;abort?.abort();abort=null;
-  const previous=port;port=null;if(previous){try{previous.onDisconnect.removeListener(disconnect);}catch{}try{previous.disconnect();}catch{}}
+  const previous=port;port=null;if(previous){try{previous.onDisconnect.removeListener(disconnect);}catch{}try{previous.onMessage?.removeListener(messageListener);}catch{}try{previous.disconnect();}catch{}}
   clear(reason,wasActive);
   if(wasActive)try{doc.defaultView.parent.postMessage({type:'VAIWL_UI_SUSPEND',role},parentOrigin);}catch{}
  }
@@ -59,6 +59,13 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
    const nonce=makeNonce();if(!tokenOK(nonce))throw Error('invalid-ui-nonce');
    port=runtime.connect({name:'vaiwl-ui'});if(!port?.onDisconnect?.addListener)throw Error('invalid-ui-port');
    disconnect=()=>{if(epoch===run)stop('ui-port-disconnected');};port.onDisconnect.addListener(disconnect);
+   const connected=port;
+   messageListener=message=>{
+    if(!active||epoch!==run||port!==connected||!grant||now()>=Date.parse(grant.expiresAt))return;
+    if(!message||typeof message!=='object'||Array.isArray(message)||Object.keys(message).length!==1||!Object.hasOwn(message,'type')||message.type!=='VAIWL_UI_DATA_CHANGED')return;
+    try{onInvalidate();}catch{/* A notification cannot change authority. */}
+   };
+   port.onMessage?.addListener(messageListener);
    doc.defaultView.parent.postMessage({type:'VAIWL_UI_JOIN',role,nonce},parentOrigin);
    const ack=await request({v:1,type:'HOST_UI_JOIN',nonce,role},signal);if(epoch!==run)return false;
    if(ack?.ok!==true||!valid(ack.grant)){stop('ui-join-failed');return false;}
