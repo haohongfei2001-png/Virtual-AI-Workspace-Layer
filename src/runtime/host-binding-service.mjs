@@ -1,3 +1,4 @@
+import {createHostContinuationOwner} from './host-continuation-owner.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {createFreeReadService} from './free-read-service.mjs';
 import {createHostViewService} from './host-view-service.mjs';
@@ -18,12 +19,14 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const ui=uiURL||uiURLs?createHostUiOwner({extensionId,uiURL,uiURLs,getFrame,getContexts,handshake,authority,now,makeId}):null;
  const observations=surfaceProfiles?createHostObservationOwner({handshake,authority,getFrame,profiles:surfaceProfiles,onAccepted:scope=>ui?.notifyScope(scope.key),now}):null;
  const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:observations.gate,clock:()=>new Date(now()).toISOString()}):null;
+ const continuations=nativeRepository&&typeof freeEvidenceRepository?.applyContinuation==='function'?createHostContinuationOwner({nativeRepository,evidenceRepository:freeEvidenceRepository,profileFor:id=>surfaceProfiles.get(id)}):null;
  const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
  const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,prepareNavigation,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
  const commands={};if(readService)for(const name of ['snapshot','command','undo','history','saveView','exportBackup','previewRestore','restoreBackup','recoveryStatus','recover'])if(typeof workspaceRepository[name]==='function')commands[name]=workspaceRepository[name].bind(workspaceRepository);
  const broker=createDocumentBindingBroker({extensionId,getFrame,allowedURL,repository,workspaceRepository:readService?{...readService,...commands}:workspaceRepository,freeRuntime,now,makeId,hostHandshake:handshake,resolveScope:({currentFrame,sender})=>authority.scopeFor(asFrame(currentFrame,sender))});
- const sequences=new Map();
+ const sequences=new Map(),refreshAttempts=new Set();let serviceActive=true;
  async function handle(message,sender){
+  if(!serviceActive)return {ok:false,reason:'host-service-stopped'};
   if(message?.type==='HOST_DOCUMENT_RENEW')return handshake.renew(message,sender);
   if(message?.type==='HOST_UI_SET_HORIZON')return views?views.setHorizon(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_PRESENT')return views?views.present(message,sender):{ok:false,reason:'host-view-unavailable'};
@@ -36,7 +39,8 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(message?.type!=='HOST_REFRESH')return broker.handle(message,sender);
   if(!exactHostRecord(message,['v','type','clientId','seq','documentToken','producerToken','routeEpoch'])||message.v!==1||!tokenOK(message.clientId)||!Number.isSafeInteger(message.seq)||message.seq<1||!tokenOK(message.documentToken)||!tokenOK(message.producerToken)||!Number.isSafeInteger(message.routeEpoch)||message.routeEpoch<1)return {ok:false,reason:'invalid-host-refresh'};
   const attempt={active:true,started:elapsedNow(),abort:new AbortController(),frame:null,resolution:null,completed:false};
-  const check=()=>{if(!attempt.active||elapsedNow()-attempt.started>=6000)throw Error('host-refresh-expired');};
+  refreshAttempts.add(attempt);
+  const check=()=>{if(!serviceActive||!attempt.active||elapsedNow()-attempt.started>=6000)throw Error('host-refresh-expired');};
   try{const result=await withRequestDeadline(async()=>{
   if(!await handshake.verify(message,sender))return {ok:false,reason:'invalid-host-document'};check();
   const prior=sequences.get(message.producerToken);if(prior&&message.seq<=prior.seq)return {ok:false,reason:'replayed-sequence'};
@@ -50,11 +54,24 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   const resolution=await (authority.peek(frame).state==='verified'?authority.revalidate(frame,attempt.abort.signal):authority.refresh(frame,'bind',attempt.abort.signal));attempt.resolution=resolution;check();
   const verified=await handshake.verify(message,sender);check();
   if(!verified){if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant)authority.invalidate(frame.documentId);return {ok:false,reason:'stale-host-document'};}
+  if(resolution.state==='verified'&&continuations&&surfaceProfiles.size===1&&elapsedNow()-attempt.started<4500){
+   // Reuse the existing refresh request; no background timer or restored grant.
+   // A slow/damaged queue must not consume the scope renewal's whole deadline.
+   const activeProfile=surfaceProfiles.values().next().value,scope=authority.scopeFor(frame),drainAbort=new AbortController(),started=elapsedNow();
+   let active=true;
+   const abort=()=>drainAbort.abort();attempt.abort.signal.addEventListener('abort',abort,{once:true});
+   const guard=()=>active&&attempt.active&&!drainAbort.signal.aborted&&elapsedNow()-started<1000&&handshake.isBound(message,sender)&&authority.peek(frame).grant===resolution.grant;
+   try{const drained=await withRequestDeadline(()=>continuations.drain({scope,guard,verify:()=>handshake.verify(message,sender),signal:drainAbort.signal,profileId:activeProfile.id,profileVersion:activeProfile.revision}),{timeoutMs:1000,now:elapsedNow,schedule,cancel});if(drained.state==='complete'||drained.state==='needs-revalidation')ui?.notifyScope(scope.key);}catch{}finally{active=false;drainAbort.abort();attempt.abort.signal.removeEventListener('abort',abort);}
+   check();
+   const stillVerified=await handshake.verify(message,sender);check();
+   if(!stillVerified||authority.peek(frame).grant!==resolution.grant)return {ok:false,reason:'stale-host-document'};
+  }
   return {ok:true,v:1,type:'HOST_SCOPE_STATUS',state:resolution.state,...(resolution.reason?{reason:resolution.reason}:{})};
   },{timeoutMs:6000,now:elapsedNow,schedule,cancel});attempt.completed=true;return result;}catch{return {ok:false,reason:'host-refresh-unavailable'};}
-  finally{attempt.active=false;attempt.abort.abort();if(!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);}
+  finally{refreshAttempts.delete(attempt);attempt.active=false;attempt.abort.abort();if(!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);}
  }
  function invalidate({tabId,frameId=0,documentId}={}){broker.invalidate({tabId,frameId});if(documentId){authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}}
  function tabClosed(tabId){broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
- return Object.freeze({connectPort:port=>ui?.connectPort(port)??false,handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,readService,ui,views});
+ function stop(){if(!serviceActive)return;serviceActive=false;for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
+ return Object.freeze({stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,continuations,readService,ui,views});
 }

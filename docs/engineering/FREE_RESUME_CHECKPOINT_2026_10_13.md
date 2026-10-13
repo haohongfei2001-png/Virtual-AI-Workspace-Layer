@@ -931,3 +931,16 @@ markContinuationComplete同事务验证实际evidence receipt kind/operation/fin
 完整Node1904/1904、0失败/跳过；真实headless Chrome IndexedDB五项PASS（CAS竞争历史补写、guard全库回滚、重开去重、完成释放/Pro保留、撤源后小摘要），打包MV3八旅程PASS；浏览器报告sourceChangedDuringRun=false。测试authority仍显式合成WeakMap，不认证production本人ACK或真实ChatGPT。证据见free-round91-*。
 
 下一步接入现有Host启动/续期的有界drain，不增加定时调度引擎；生产当前body/作者/ACK、C1/C2、恢复界面及J/G/U差额仍存在。原4x100k失败和远端最后确认7122447保持，未将未推送本地成果称远端交付。Free未完成、NOT_RELEASE_READY。
+
+
+## Round92：接入现有Host续期与worker恢复
+
+在c71d085继续。新私有continuation owner只在既有HOST_REFRESH最终scope验证后运行，每次最多一项、CAS最多两次；复用当前RPC，独立1秒上限且认证剩余预算不足则跳过，无新后台timer/调度引擎。worker的证据gate只转发owner的原request WeakMap admission，落盘字段不能恢复scope许可。实际页面绑定在异步读取后、写入和终态前再次verify；route/scope改变和晚回包拒写。
+
+有界scope游标轮转，首项失败不阻塞全部；foreign profile只让仓库核验是否真正撤源/变化，不获得evidence admission，普通TTL不压缩。service.stop取消在途refresh并清所有scope proof，迟到provider/renewal不能复活grant；worker.stop转发一次。生产当前只有一个显式surface profile才自动drain，多profile情形未擅自选任一profile。
+
+完整Node1931/1931、0失败/跳过；实际构建包原八旅程PASS。新增真实headless Chrome MV3两旅程PASS：既有续期自动补写并保持原锚/草稿/Pro标题；CDP确认worker stopped后新页面HELLO/REFRESH在新授权下恢复持久pending。该测试在同源扩展测试页用私有WeakMap人工种入SYNTHETIC_ACK_FIXTURE，原包worker/CSP/owner/gate未改；证明真实补写接线，不是生产本人ACK。报告sourceChangedDuringRun=false，worker停止/重新running事件有独立确认。
+
+测试夹具首两FAIL原样保留：ServiceWorker禁止dynamic import，改同源扩展测试页；Target.closeTarget未确认worker close，改仓库既有ServiceWorker.stopWorker并核验事件。旧profile永久idle反例原FAIL亦保留，修后专项及全量通过。Round91真实IDB证据仍仅对应当时脚本，本轮只补其sourceHashes覆盖验证器。
+
+PR16 API本轮复核仍open Draft、head7122447，Pro72ca068已在本地祖先正常整合；之前正常push low-speed超时未重写origin。接下来继续原计划人工工作集界面与恢复能力、当前body/本人ACK、C1/C2和J/G/U；原4x100k失败保持。Free未完成、NOT_RELEASE_READY。

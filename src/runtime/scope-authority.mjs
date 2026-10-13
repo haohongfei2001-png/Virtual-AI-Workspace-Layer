@@ -88,5 +88,6 @@ export function createScopeAuthority({provider,profile,now=Date.now,makeId=()=>c
  }
  function scopeFor(frame){const result=peek(frame);return result.state==='verified'?states.get(key(frame)).scope:null;}
  function invalidateTab(tabId){for(const [k,entry]of states)if(entry.frame.tabId===tabId){entry.abort.abort();states.delete(k);}}
- return Object.freeze({peek,refresh,revalidate,invalidate,invalidateTab,scopeFor});
+ function invalidateAll(){for(const entry of states.values())entry.abort?.abort();states.clear();}
+ return Object.freeze({peek,refresh,revalidate,invalidate,invalidateTab,invalidateAll,scopeFor});
 }
