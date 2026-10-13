@@ -2,7 +2,8 @@ import {VerifiedRecordCache} from './verified-record-cache.mjs';
 import {normalizedScope} from '../b1/identity.mjs';
 import {id,exact} from './state.mjs';
 import {stable,digest} from './hash.mjs';
-import {PARTITION_FORMAT,checkManifest,partitionRecord,partitionUnpack} from './partitioned.mjs';
+import {manifest_PARTITION_FORMAT,manifest_checkManifest,manifest_partitionRecord,manifest_partitionUnpack} from './partition-manifest.mjs';
+const PARTITION_FORMAT=manifest_PARTITION_FORMAT,checkManifest=manifest_checkManifest,partitionRecord=manifest_partitionRecord,partitionUnpack=manifest_partitionUnpack;
 
 export const SHARED_DIRECTORY_FORMAT='vaiwl-shared-ref-directory-v1';
 const MAX_REFS=100000,MAX_RECORD=16*1024*1024;
@@ -72,7 +73,8 @@ export function materializeSharedRefDirectory(root,scope,records){
  * The owner must reconcile humanRefs/preferences and commit all data/receipts
  * atomically; old immutable records remain available to its checkpoint/GC policy.
  */
-export function updateSharedRefDirectory(root,scope,revision,updates,records){
+export function updateSharedRefDirectory(root,scope,revision,updates,records,options={}){
+ exact(options,[],['metadata']);const metadataPatch=options.metadata===undefined?{}:options.metadata;exact(metadataPatch,[],['channel','sources','workspaces','preferences','humanRefs','units','changes']);
  validateSharedDirectoryRoot(root,scope);version(revision,Number.MAX_SAFE_INTEGER);if(revision!==root.revision+1)throw Error('shared-directory-revision-conflict');
  if(!updates||typeof updates!=='object'||Array.isArray(updates)||Object.keys(updates).length>20000)throw Error('invalid-shared-directory-updates');
  const next={...root,revision,refDirectory:{...root.refDirectory}},byKey=new Map(),used=new Set(),groups=new Map(),written=[];let count=countDirectory(root);
@@ -86,5 +88,5 @@ export function updateSharedRefDirectory(root,scope,revision,updates,records){
  }
  if(used.size!==byKey.size)throw Error('unexpected-shared-directory-record');if(count>MAX_REFS)throw Error('shared-directory-capacity');
  for(const [bucket,g] of groups){if(Object.keys(g.versions).length)written.push(makeBucket(next,bucket,g.versions,g.ordinals));else delete next.refDirectory[bucket];}
- validateSharedDirectoryRoot(next,scope);return {root:next,records:written};
+ Object.assign(next,metadataPatch);validateSharedDirectoryRoot(next,scope);return {root:next,records:written};
 }

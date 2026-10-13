@@ -1,0 +1,30 @@
+{
+  "baseHead": "0600133fb88ae1e133062173a1b31d02a4f05ebd",
+  "git": "UNCOMMITTED_ROUNDS49_THROUGH54",
+  "sourceHashes": {
+    "src/data/partitioned.mjs": "da639429c7a46b05dd4cc380e6ba1d62b118e2622b7a497efe96aa8c96367757",
+    "src/data/repository.mjs": "369daf7710259f3f751e5d57badcf68810cc544e43f3da1d4d3728435bfe28a8",
+    "simulator/service.mjs": "1cd8eecee043db51b57c12aef3a5bb88d731fc52451e902df7457cf97c822703",
+    "tests/free/shared-directory-fast-read.test.mjs": "78e8e5d24fa6f182f4d2b1115f0215d495e3a59370990d1080bd2cb05f38367b",
+    "tests/free/shared-directory-auto.test.mjs": "88d7557946476c7e97470f969ef460b3572cacc1e95cb98520230e15494e5a0e",
+    "tests/free/version-parallel-read.test.mjs": "b2ac8d13d7d199cc504330afff39ce8b8130fedc2c366bad0a65d9a760266e79",
+    "tests/free/header-parallel-read.test.mjs": "becd509b2cfac19e2feb1d7427435c34689fc9d20af298abb9f16fe98cd3cec1",
+    "tests/free/known-anchor.test.mjs": "baa5730f68efa0dd3a17ea61e5dea719c0209dd35510b534692acaced070a153",
+    "tests/free/replica-removal.test.mjs": "97577ceaa1f881fd311856d62c6885bdd06cbdb11c8e17f3943d740ec0cb14b8"
+  },
+  "fullNode": {
+    "pass": 1055,
+    "fail": 0,
+    "skip": 0
+  },
+  "initialFullRun": {
+    "pass": 1048,
+    "fail": 7,
+    "repair": "Move HEADER concurrency interception to storageInfo start; use HEADER current workspaceRevision for undo after structural migration, preserving CAS and all asset assertions"
+  },
+  "fastReadContracts": 8,
+  "autoMigrationContracts": 5,
+  "realIDBAndMV3": "NOT_RUN_APPROVAL_REVIEW_USAGE_LIMIT",
+  "performance": "NOT_RUN_LAST_MIXED100K_FAIL",
+  "package": "SYNTHETIC_ONLY_NOT_RELEASE_READY"
+}

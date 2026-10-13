@@ -422,3 +422,97 @@ NativeRepository的read/header/page支持新格式：完整读/header验证所�
 独立子代理27合同通过；最终完整Node957/957、0失败/跳过。实际headless真实IDB100k六项通过：原元数据/顺序往返、事务abort全保持、单桶删除、重新追加、旧checkpoint可还原、100001拒绝。证据free-round48-*保留源码hash。本模块尚未接入共享owner、worker或build，未做实际迁移/备份恢复，不称产品提速；MV3/规模发送/打包本轮NOT_RUN，runtime与Round46包不变，Round47 mixed100k三次一秒FAIL保持。
 
 下一步同事务shared directory reader与owner读取接线，然后完整writer/迁移/CAS/inverse/恢复/备份/known anchors/GC；每条路径保留Pro人工资产、旧reader拒绝及授权隔离。真实来源/账户/跨端/PAIA/物理IME/真人条件仍缺，Free未完成。
+
+
+## 第四十九轮在途检查点：共享目录只读接线，尚未提交
+
+已提交并正常push的最后head为0600133fb88ae1e133062173a1b31d02a4f05ebd，GitHub API确认PR16仍Draft且同head。此后工作树新增同事务shared directory reader及manifest/page/partialContext/full read/人工备份读取支持，保持原manifest接口和piece验证；全量materialize尚不是有界写入优化。目录写入/native注册及恢复显式拒绝，旧checkpoint不能降级可识别目录root。没有owner迁移，没有发布目录新格式到正常运行时。
+
+子代理独立23 reader合同通过，并发现partitioned与目录互相导入在现有bundler导致栈溢出。已将原清单结构/大小/checksum逻辑抽到无循环partition-manifest纯模块，原partitioned导出保留；目录改为依赖纯模块，build纳入全部模块。新增两项实际bundle factory求值回归，避免只通过ESM语法而MV3不能启动。
+
+现有完整Node980/980、0失败/跳过；之后新增MockIDB owner合同（含六项检查）与两个bundle测试，最后相关53/53通过，不相加冒称新完整总数。Mock owner核对完整Pro状态/header/page/partial/human backup，revision/guard/scope，缺桶/跨generation/坏piece/孤立humanRefs，拒绝写入和旧checkpoint恢复后全store摘要不变。真实IDB首跑因夹具使用未规范化scope.key而DataError，已修正并复用同一合同；修正后浏览器尚未执行，不能以Mock替代。初始失败日志保留。
+
+自动审批服务额度耗尽使提权命令被拒绝执行；这是审批系统失败，不是安全性否定。未绕过审批启动浏览器或Git提交。修正后的真实IDB、MV3、package本轮NOT_RUN；新代码仍在正式目录工作树未提交。证据free-round49-*含当前源码hash。最后已打包仍Round46 SYNTHETIC_ONLY/NOT_RELEASE_READY，Round47 mixed100k一秒FAIL未改变。
+
+恢复接续：先核对工作树和本检查点，运行tests/free/shared-directory-reader-browser.mjs与MV3（审批条件恢复后），修复任何新反例后提交/正常push已有PR16；随后同一计划继续共享directory writer/迁移/checkpoint/inverse/恢复/known anchors/GC。不要重建目录/分支，不把只读接线当整个Free完成。真实来源/账户/跨端/PAIA/物理IME/真人条件不变。
+
+
+## 第五十轮在途：有界共享变更加载与写入适配器
+
+继续正式工作树，HEAD仍0600133，未提交内容包含上一轮。共享目录update新增严格metadata选项，使引用删除与humanRefs/preferences/units/changes同次协调，禁止覆盖scope/generation/revision/目录等结构字段。20项独立合同通过。
+
+新增shared-directory-writer：从已验证桶构造有界legacy reducer输入，复用原saveMutation的piece/locator/units逻辑，仅截下中间legacy root，最终发布新目录桶与完整metadata root。未触及人工ref索引保留，旧分片供checkpoint保留，不擅自GC；缺失旧piece拒绝。失败可能发生在stage之后，调用owner必须abort同一事务，不可吞错。8项独立合同通过。
+
+PartitionedState增加尚未开放的loadSharedMutation/saveSharedMutation适配入口；旧loadMutation仅可注入pieceLoader，其原全局event/coverage locator解析顺序保留。有界加载先验证所需目录桶再调用原piece校验。Mock IDB三项证明单ref改名仅一桶+一piece读取，其他Pro identity/placement/workspace/event保持；显式abort回滚全部暂存写；重复event ID跨ref能加载旧归属并由原reducer明确evidence-id-conflict拒绝。未用Mock冒称真实IDB。
+
+完整Node1014/1014、0失败/跳过；之后仅增强loader合同，最后3/3通过，生产源码不变。free-round50-*保存日志与源码hash。公开owner mutation/native注册仍拒绝目录，未做迁移、source/CAS/receipt/逆操作恢复的最终接线。真实IDB/MV3/package/发送规模仍NOT_RUN，审批服务额度阻塞未绕过；最后已同步PR16/包/性能结论不变。
+
+下一可独立工作是owner事务集成和迁移恢复合同；需在启用前保留CAS、checkpoint、receipt、guard/revoke、inverse、人工备份、known anchors及旧reader拒绝全部边界。审批恢复后补真实浏览器并提交/正常push同一PR；Free仍未完成。
+
+
+## 第五十一轮在途：共享owner事务与原生引用接线
+
+仍沿正式工作树，已同步head仍0600133，49–51轮尚未提交。owner.mutate识别并严格验证共享directory root，在同一事务保存原checkpoint，使用有界loader与writer，保留原CAS、receipt、原生anchor冲突、human patch及undo流程。registerNativeReferences也接入同事务目录适配，known-anchor-backfill读取完整目录manifest后继续原身份见证逻辑。没有自动迁移，正常已有legacy根不被替换；目录恢复仍显式拒绝。
+
+子代理新增6项owner合同：人工改名+undo与其他Pro保持、双连接CAS/相同receipt重放、stage后quota失败全store回滚、stage后guard撤权回滚、metadata-only偏好/撤源、全局event ID冲突与新证据导入。独立反例发现原mutate只在commit后发现writer期间撤权，现已在writer返回后和日志收尾后再次check，及时abort；旧格式也受此加强。修复后独立6/6通过。
+
+加载/native引用合同共6项通过，新增调用者失败的整事务回滚、原生anchor新增保留人工数据、B1遗漏identity补录。最终完整Node1023/1023、0失败/跳过。源码与日志分别见free-round51-*，Mock仍不替代真实浏览器。先前只读owner合同的拒绝写断言更新为stale revision拒绝，当前真正写入由新增合同验证。
+
+不需提权的离线包已生成：/private/tmp/vaiwl-free-delivery-round51-20261013/vaiwl-free-synthetic-only.zip，SHA256 5b52c5061f17c660eb4fcc24d94ffa081fc5049b3912517b9daafbb3f0f1805f，54文件/47worker模块。它仍SYNTHETIC_ONLY/NOT_RELEASE_READY且新包MV3 NOT_RUN；最近实际MV3仍Round46旧包，不能混称新包已安装验证。修正后真实IDB/MV3受自动审批额度问题未执行，未绕过；未提交/未push新改动。
+
+下一现有任务为显式共享迁移和完整directory checkpoint/inverse恢复，随后必要真实IDB/MV3和100k mixed回归；当前适配接线不证明性能已改善。真实账户/来源/跨端/PAIA/物理IME/真人条件未变，Free仍未完成。
+
+
+## 第五十二轮在途：显式共享目录迁移与旧代码拒绝降级
+
+仍在正式目录/同分支，最后已同步head0600133，49–52轮工作树未提交。新增owner.migrateSharedDirectory显式API，沿原b23同库RW事务/CAS/receipt/fence，先按5000refs批次验证全部piece、真实units总和、跨piece全局event/coverage ID唯一性与每条locator的scope/table/id/refId。通过后revision+1、changes追加空refs结构记录，发布目录桶/root/同格式当前checkpoint/迁移日志；所有source、Pro资产、旧pieces保留，不续授权、不自动触发。
+
+迁移checkpoint也采用完整已验证目录格式，防旧代码误认新root损坏后用legacy checkpoint降级覆盖。已有receipt重放与invalidated拒绝、already目录no-op、MAX_SAFE revision拒绝及同事务失败回滚保持。
+
+独立10合同通过：完整事实除revision保持、旧分片/locator保留、双连接CAS/replay、stage后quota/guard回滚重试、缺/坏piece、units错配、event locator缺失/coverage locator跨ref、B scope与迁移后人工改名undo。最终完整Node1033/1033、0失败/跳过。另运行Round46旧包实际WorkspaceRepository代码配合MockIDB：read invalid-schema、恢复诊断不可恢复、recover拒绝，四个store完整摘要不变；新版读取原事实保持。此为旧包代码合同，不是MV3实际跨包浏览器证据。报告free-round52-*保留来源hash。
+
+共享directory恢复/inverse完整接线仍待完成，自动迁移未启用；本轮没有新package，最新Round51包不包含本次显式迁移。真实IDB/MV3/规模发送仍待审批条件恢复后验证，未绕过自动审批，未提交/推送工作树。继续既有B5恢复与F1验证，不能把迁移合同通过算Free完成。
+
+
+## 第五十三轮在途：共享目录完整恢复与异步abort结果修复
+
+HEAD仍0600133，49–53轮未提交。checkpoint识别目录后路由新recoverSharedDirectory，同事务读取root/checkpoint/日志；完整目录materialize与全部piece/units/locator审计通过后，沿原plan/recoverAssets重建人工意图、撤销所有共享source。截下临时legacy root，重建目录root/当前checkpoint，删除known-anchor cursor，失效旧receipt并加入本次恢复receipt；旧格式checkpoint不能降级可识别新root的拒绝边界仍保留。intact根不替换、damagedHash冲突拒绝、恢复重放不重复写入。
+
+从迁移提取shared-partition-audit供两条完整验证路径共用，日常写入不变成全量审计。9项独立恢复合同覆盖人工title/Pro保持、source撤销、旧receipt失效与恢复重放、缺目录桶/未触及piece/locator拒绝、intact与fingerprint冲突、配额/guard回滚、B scope保持，以及旧partitioned不迁移的配额回滚。
+
+初跑发现异步Quota使IDB已abort但预先result.ok=true仍被返回；新目录和原partitioned两条onabort现只保留明确失败结果，不能把暂存成功当提交成功。初始FAIL日志保存，修复后9合同独立通过，最终完整Node1042/1042、0失败/跳过。free-round53-*保存hash及实际来源，不把Mock当真实IDB。
+
+新离线包/private/tmp/vaiwl-free-delivery-round53-20261013/vaiwl-free-synthetic-only.zip，SHA256 fe58a12063d1fe931954d41f2bfb872885ced2a21e205fcc2ac2511e0cafe88a，57文件/50worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。自动共享迁移仍未启用；真实IDB/MV3/规模发送仍待审批服务恢复后验证，未绕过、未提交/推送新工作树。下一继续既有服务接线、完整恢复诊断和F1验证；Free未完成。
+
+
+## 第五十四轮在途：服务自动迁移、CHECK元数据与局部读取
+
+最后同步head仍0600133，49–54轮工作树未提交。新增partitioned.storageInfo/version与workspace.partitionVersion，目录只读完整校验后的root元数据，不宣称未读桶库存；legacy版本仍完整原清单验证。CHECK改用partitionVersion，保留allSettled、原错误顺序、view诊断与末次scope/guard。
+
+partialContext显式boundedDirectory opt-in仅对目录格式启用，读取目标与偏好依赖的桶/piece，返回明确refVersions和inventoryComplete:false，不伪造完整manifest；默认接口和legacy形状不变。Free PAGE/合成发送采用此路径，无ids HEADER仍完整引用可达性校验。
+
+合成服务HEADER从storageInfo发现legacy partition后最多一次显式迁移，固定op shared_ref_directory_v1；CAS loser继续完整重读，后续HEADER才可再次尝试；非CAS失败明确返回。native bootstrap先完成，context与evidence仍并行settle。独立fast-read8项、自动迁移5项通过，含缺未触及桶仅metadata可读但full拒绝、目标缺桶拒绝、源/Pro/事实保持、bounded PAGE、root-only CHECK与账户切换防迟到发布。
+
+初次全量1048PASS/7FAIL：HEADER并发夹具仍拦截较晚partitionHeader（新入口storageInfo），两条undo夹具在HEADER结构迁移后继续用旧revision被正确CAS拒绝。已改拦截新读取起点及采用HEADER.workspaceRevision；并发等待/错误顺序/账户隔离、UNKNOWN身份、人工逆操作等原断言不变。修复后相关14项通过，最终完整Node1055/1055、0失败/跳过；初始失败及最终日志分别保留free-round54-*。
+
+离线包/private/tmp/vaiwl-free-delivery-round54-20261013/vaiwl-free-synthetic-only.zip，SHA256 3e43e3a3d6af3ec45f49db8c0a81cc0098cdd96f609f54bca3d224a95ebfed4c，57文件/50worker模块，仅SYNTHETIC_ONLY/NOT_RELEASE_READY。真实IDB/MV3/100k mixed新运行仍因审批条件未恢复而NOT_RUN，旧Round47一秒FAIL不被推翻。待补当前服务级浏览器迁移/恢复/旧包拒绝和规模回归，再提交/正常push原PR16；Free未完成。
+
+
+## 第五十五至五十六轮在途：可复用生命周期合同与共享分片回收
+
+最后同步HEAD仍0600133，49–56轮工作树未提交。新增同一套可运行于Mock/真实IDB的服务生命周期和5001引用分批合同：HEADER迁移、双连接CAS及原envelope检查点、PAGE/CHECK、事务中止、异步重复RECOVER receipt引发ConstraintError后的整体回滚/同ID重试、人工资产恢复与撤权、跨scope和关闭重开。Node两组通过（7个生命周期断言组、4个分批场景），浏览器入口已准备并通过语法检查，但真实执行NOT_RUN。入口使用空白独立context，避免模拟UI启动污染测试数据库。
+
+独立审查发现旧共享piece/bucket随日常更新累积；新增prepareSharedDirectoryRetention，在owner覆写checkpoint前同事务捕获旧checkpoint，写入新root后只删除旧checkpoint引用且不再被prior/new root引用的同generation分片与桶。当前根和检查点都保留；全部journal/receipt/locator/B1 anchor不删，人工undo/recovery仍沿原patch。旧checkpoint/桶损坏或generation变化不授予删除权限；保留根的桶验证失败、guard失效或delete中止必须整事务回滚。此机制抑制普通连续写入增长，未声称清理此前所有孤立分片或恢复/迁移遗留。
+
+当前运行时代码完整Node1057/1057、0失败/跳过；该次收集早于新增独立GC测试文件，后者单独10/10通过，不与全量相加。独立反例覆盖重复改名仅保留current/checkpoint、A/B/A旧片回收、同桶邻ref、undo/坏root恢复、坏旧桶保守保留、跨scope/generation、缺新桶/guard/delete失败全事务回滚。free-round55/56-*保留日志与当前源码hash。
+
+新离线包/private/tmp/vaiwl-free-delivery-round56-20261013/vaiwl-free-synthetic-only.zip，SHA256 ecdd702c57e30b20884b11773ad5a03303f57c182aadc16e1f5821c9e74d3f2d，58文件/51worker模块，仅SYNTHETIC_ONLY/NOT_RELEASE_READY。自动审批服务额度限制尚未解除：本轮没有重试或绕过浏览器/Git升级，没有新commit/push；真实IDB/MV3及mixed100k性能仍NOT_RUN，Round47一秒FAIL保持。继续现有计划，Free未完成。
+
+
+### 第五十六轮真实验证补充：审批恢复，功能通过、性能仍失败
+
+集成节点再次请求审批后已获准。真实Chrome IDB首次恢复重放快照不一致，定位到夹具独立known-anchor后台任务在两快照间更新b23_states游标；原恢复receipt分支无写入。夹具在owner原子性断言前stopAll并等待在途referenceTask结束，仍比较全部表全部记录，未弱化回滚/重放断言。初始失败日志独立保存。
+
+当前源码真实IDB：生命周期7组、5001分批4项、GC10项、原读取6组全部通过；真实隔离无界面MV3 9/9通过。最终完整Node1068/1068、0失败/跳过。这些仍为合成源，非私人ChatGPT/实际PAIA认证。
+
+冻结源码、无并行负载的100k mixed真实发送：existing1108.9ms/new-none1481ms/new-project1480.3ms，1秒门槛FAIL；sourceChangedDuringRun=false。新聊天HEADER约744ms，初步定位nextOrdinal改变导致全部桶验证缓存失效；后续优化须保留每次ordinal上界、完整fresh字节及损坏拒绝。当前package运行时代码与真实IDB/MV3报告hash匹配，SYNTHETIC_ONLY仍不变。准备把49–56轮普通提交并推送现有PR16后继续性能修复；此前审批阻塞记录为历史，不再代表当前工具状态。Free未完成。

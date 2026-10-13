@@ -31,7 +31,7 @@ for(const partitioned of [false,true])test(`undo human backup restore retains sc
   const later=await call('B23_COMMAND',{operationId:'unrelated_later_asset',expectedRevision:restored.revision,command:{type:'CREATE_WORKSPACE',id:'unrelated_later_workspace',name:'Keep later human work'}});
   const before=await header(),beforeRow=(await page(before)).refs.find(r=>r.id===refId);
   assert.equal(beforeRow.membership,'UNKNOWN');assert.equal(beforeRow.nativeTitle,null);assert.equal(beforeRow.displayTitle,'名称暂不可用');
-  const undoRequest={operationId:'human_undo_restore_anchor',expectedRevision:later.revision,targetOperationId:'human_restore_anchor'};
+  const undoRequest={operationId:'human_undo_restore_anchor',expectedRevision:before.workspaceRevision,targetOperationId:'human_restore_anchor'};
   const undone=await call('B23_UNDO',undoRequest),replayed=await call('B23_UNDO',undoRequest);assert.equal(replayed.replayed,true);assert.equal(replayed.revision,undone.revision);
   const finalState=(await service.workspaces.read(scope)).state;assert.equal(finalState.identities[refId],undefined);assert.equal(finalState.workspaces.restored_workspace,undefined);assert.equal(finalState.placements[placementId('restored_workspace',refId)],undefined);assert.deepEqual(finalState.preferences.workingSet,baseline.preferences.workingSet);assert.equal(finalState.workspaces.unrelated_later_workspace.name,'Keep later human work');
   for(const table of ['sources','events','coverage'])assert.deepEqual(finalState[table],baseline[table],'undo does not resurrect or revoke unrelated sources');

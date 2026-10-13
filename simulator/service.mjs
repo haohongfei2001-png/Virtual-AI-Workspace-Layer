@@ -57,8 +57,15 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
   }
   async function workspaceContext(scope,options,ids=null){
     if(ids!==null){
-      const context=await workspaces.partitioned.partialContext(scope,ids,options);
-      return context?{state:context.state,refVersions:context.manifest.refVersions}:workspaces.read(scope,options);
+      const context=await workspaces.partitioned.partialContext(scope,ids,{...options,boundedDirectory:true});
+      return context?{state:context.state,refVersions:context.refVersions??context.manifest.refVersions}:workspaces.read(scope,options);
+    }
+    const info=await workspaces.partitioned.storageInfo(scope,options);
+    if(info?.format==='vaiwl-partitioned-v1'){
+      const migration=await workspaces.migrateSharedDirectory(scope,{operationId:'shared_ref_directory_v1',expectedRevision:info.revision},options);
+      // One attempt per HEADER. A CAS loser reads the winner; only another
+      // HEADER may retry, with no source renewal or command replay.
+      if(!migration.ok&&migration.reason!=='revision-conflict')throw Error(migration.reason);
     }
     const large=await workspaces.partitionHeader(scope,options);
     if(!large)return workspaces.read(scope,options);
@@ -171,10 +178,10 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
           preferences:state.preferences,view:view?.value??null,viewRevision:view?.revision??0,workspaceRevision:state.revision,diagnostics};
       },
       version:async(scope,options)=>{
-        const reads=await Promise.allSettled([native.version(scope,options),evidence.version(scope,options),workspaces.partitionHeader(scope,options)]);
+        const reads=await Promise.allSettled([native.version(scope,options),evidence.version(scope,options),workspaces.partitionVersion(scope,options)]);
         for(const result of reads)if(result.status==='rejected')throw result.reason;
         const nativeRevision=reads[0].value,stored={revision:reads[1].value},large=reads[2].value;
-        if(large)return {nativeRevision,evidenceRevision:`${large.manifest.revision}:${stored.revision}`,revision:large.manifest.revision,viewRevision:large.view?.revision??0,viewDiagnostic:large.diagnostics.view};const {state,view,diagnostics}=await workspaces.read(scope,options);return {nativeRevision,evidenceRevision:`${state.revision}:${stored.revision}`,revision:state.revision,viewRevision:view?.revision??0,viewDiagnostic:diagnostics.view};},
+        if(large)return {nativeRevision,evidenceRevision:`${large.revision}:${stored.revision}`,revision:large.revision,viewRevision:large.view?.revision??0,viewDiagnostic:large.diagnostics.view};const {state,view,diagnostics}=await workspaces.read(scope,options);return {nativeRevision,evidenceRevision:`${state.revision}:${stored.revision}`,revision:state.revision,viewRevision:view?.revision??0,viewDiagnostic:diagnostics.view};},
       partitionHeader:(...args)=>workspaces.partitionHeader(...args),partitionPage:(...args)=>workspaces.partitionPage(...args),
       snapshot:async(scope,now,timeZone,options,size=8)=>{await wait();const value=await workspaces.snapshot(scope,now,timeZone,options);
         // Visibility scale is a fixture control, never a deletion or truncated DB write.

@@ -1,4 +1,6 @@
-import { PartitionedState, isPartitioned } from './partitioned.mjs';
+import {prepareSharedDirectoryRetention} from './shared-directory-retention.mjs';
+import {migrateSharedDirectory} from './shared-directory-migration.mjs';
+import { PartitionedState, isPartitioned, isSharedDirectory } from './partitioned.mjs';
 import { createBackup, previewBackup, recoverAssets } from './backup.mjs';
 import { normalizedScope } from '../b1/identity.mjs';
 import { B23_STORES } from './schema.mjs';
@@ -37,6 +39,7 @@ export class WorkspaceRepository {
     });
   }
   async viewOnly(scope,{guard=()=>true,signal=null}={}){const s=scopeChecked(scope),db=await this.connection();fence(guard,signal);return new Promise((resolve,reject)=>{const tx=db.transaction('b23_views'),q=tx.objectStore('b23_views').get(s.key);let view=null,diagnostic=null;q.onsuccess=()=>{try{view=q.result?unpack(q.result):null;if(view)validateView(view.value);}catch{view=null;diagnostic='CORRUPT_VIEW';}};tx.oncomplete=()=>{try{fence(guard,signal);resolve({view,diagnostics:{view:diagnostic}});}catch(e){reject(e);}};tx.onabort=()=>reject(tx.error??Error('read-aborted'));});}
+  async partitionVersion(scope,options={}){const revision=await this.partitioned.version(scope,options);return revision===null?null:{revision,...await this.viewOnly(scope,options)};}
   async partitionHeader(scope,options={}){const manifest=await this.partitioned.manifest(scope,options);if(!manifest)return null;return {manifest,...await this.viewOnly(scope,options)};}
   async partitionPage(scope,query,options={}){const {manifest,...page}=await this.partitioned.page(scope,query,options);return page;}
   async snapshot(scope,now,timeZone,options){const {state,view,diagnostics}=await this.read(scope,options);return {diagnostics,...dataProjection(state,now,timeZone),view:view?.value??null,viewRevision:view?.revision??0,objects:{workspaces:state.workspaces,placements:state.placements,identities:state.identities,sources:state.sources},preferences:state.preferences};}
@@ -49,6 +52,7 @@ export class WorkspaceRepository {
     const s=scopeChecked(scope);this.allowEvidence(s);
     return this.mutate(s,{operationId,expectedRevision,fingerprint:{batch,expectedRevision},type:'INGEST',actor:'evidence',...options,apply:current=>reduceCommand(current,{type:'INGEST',batch},'evidence')});
   }
+  async migrateSharedDirectory(scope,request,options={}){return migrateSharedDirectory(this,scope,request,options);}
   async migratePartitioned(scope,options={}){return this.partitioned.migrate(scope,options);}
   async initializePartitioned(scope,initial,options={}){return this.partitioned.initialize(scope,initial,options);}
   async reconcileKnownReferences(scope,options={}){return reconcileKnownReferences(this,scope,options);}
@@ -78,10 +82,11 @@ export class WorkspaceRepository {
           const sr=states.get(s.key);sr.onsuccess=()=>{
             if(!check())return;
             try{
-              const payload=sr.result?(isPartitioned(sr.result.payload)?this.partitioned.verifiedManifest(sr.result,s.key):unpack(sr.result)):null;
+              const payload=sr.result?(isSharedDirectory(sr.result.payload)?this.partitioned.verifiedDirectory(sr.result,s):isPartitioned(sr.result.payload)?this.partitioned.verifiedManifest(sr.result,s.key):unpack(sr.result)):null;
               // IDB clones the verified envelope before reducers or guards can
               // mutate shared header objects. Failed mutations abort this write.
-              if(isPartitioned(payload))tx.objectStore('b23_checkpoints').put(sr.result);
+              const retire=isSharedDirectory(payload)?prepareSharedDirectoryRetention(tx,s,payload,()=>{if(!check())throw Error('stale-binding');},e=>abort(e.message)):null;
+              if(isPartitioned(payload)||isSharedDirectory(payload))tx.objectStore('b23_checkpoints').put(sr.result);
               const enter=(current,storage=null,loadedPrior=null)=>{
               if(current.revision!==expectedRevision){abort('revision-conflict');return;}
               const finish=prior=>{
@@ -100,16 +105,18 @@ export class WorkspaceRepository {
                     };
                   }
                   if(!check())return;
-                  if(storage)this.partitioned.saveMutation(tx,storage,current,next,patch,actor);
+                  if(storage){if(isSharedDirectory(storage.manifest))retire(this.partitioned.saveSharedMutation(tx,storage,s,current,next,patch,actor));else this.partitioned.saveMutation(tx,storage,current,next,patch,actor);}
                   else{if(current.revision)tx.objectStore('b23_checkpoints').put(record(s.key,current));states.put(record(s.key,next));}
+                  if(!check())return;
                   ops.put(record(opKey,log));
                   if(prior){prior.undoneBy=operationId;ops.put(record(JSON.stringify([s.key,targetOperationId]),prior));}
+                  if(!check())return;
                   outcome={ok:true,replayed:false,revision:next.revision,operationId};
                 }catch(e){abort(e.message);}
               };
               if(storage)finish(loadedPrior);else if(targetOperationId){const ur=ops.get(JSON.stringify([s.key,targetOperationId]));ur.onsuccess=()=>{try{if(!ur.result)throw Error('missing-operation');finish(unpack(ur.result));}catch(e){abort(e.message);}};}else finish(null);
               };
-              if(isPartitioned(payload)){const load=prior=>this.partitioned.loadMutation(tx,payload,params,prior,(current,storage)=>{if(check())enter(current,storage,prior);},e=>abort(e.message));if(targetOperationId){const q=ops.get(JSON.stringify([s.key,targetOperationId]));q.onsuccess=()=>{try{if(!q.result)throw Error('missing-operation');load(unpack(q.result));}catch(e){abort(e.message);}};}else load(null);}
+              if(isPartitioned(payload)||isSharedDirectory(payload)){const load=prior=>{const ready=(current,storage)=>{if(check())enter(current,storage,prior);},fail=e=>abort(e.message);if(isSharedDirectory(payload))this.partitioned.loadSharedMutation(tx,payload,s,params,prior,ready,fail);else this.partitioned.loadMutation(tx,payload,params,prior,ready,fail);};if(targetOperationId){const q=ops.get(JSON.stringify([s.key,targetOperationId]));q.onsuccess=()=>{try{if(!q.result)throw Error('missing-operation');load(unpack(q.result));}catch(e){abort(e.message);}};}else load(null);}
               else enter(payload?validateState(payload,s.key):emptyState(s));
             }catch(e){abort(e.message);}
           };
@@ -155,12 +162,13 @@ export class WorkspaceRepository {
     const s=scopeChecked(scope),store=tx.objectStore('b23_states');
     const request=store.get(s.key);
     request.onsuccess=()=>{try{
-      check();const payload=request.result?(isPartitioned(request.result.payload)?this.partitioned.verifiedManifest(request.result,s.key):unpack(request.result)):null;
+      check();const payload=request.result?(isSharedDirectory(request.result.payload)?this.partitioned.verifiedDirectory(request.result,s):isPartitioned(request.result.payload)?this.partitioned.verifiedManifest(request.result,s.key):unpack(request.result)):null;
       const apply=(current,storage=null)=>{try{
         check();
         if(migrateLegacy&&!storage&&Object.keys(current.refs).length+nativeRefs.length>15000)throw Error('native-shared-migration-required');
         const added=nativeRefs.filter(ref=>!Object.hasOwn(current.refs,ref.id));
         if(!added.length){done({added:0});return;}
+        const retire=isSharedDirectory(storage?.manifest)?prepareSharedDirectoryRetention(tx,s,storage.manifest,check,fail):null;
         if(storage)tx.objectStore('b23_checkpoints').put(request.result);
         const next=structuredClone(current);
         for(const ref of added)next.refs[ref.id]={id:ref.id,nativeUrl:ref.nativeUrl,projectId:ref.projectId,nativeTitle:ref.nativeTitle??'名称暂不可用',available:ref.availability==='available'};
@@ -170,13 +178,14 @@ export class WorkspaceRepository {
         duplicate.onsuccess=()=>{try{
           check();if(duplicate.result)throw Error('native-shared-operation-conflict');
           for(const ref of added){const key=this.base.key(s,ref.id),r=tx.objectStore('refs').get(key);r.onsuccess=()=>{try{check();if(r.result&&(r.result.nativeUrl!==ref.nativeUrl||r.result.projectId!==ref.projectId))throw Error('native-reference-conflict');if(!r.result)tx.objectStore('refs').put({key,scopeKey:s.key,conversationId:ref.id,nativeUrl:ref.nativeUrl,projectId:ref.projectId,revision:1});}catch(error){fail(error);}};}
-          if(storage)this.partitioned.saveMutation(tx,storage,current,next,patch,'evidence');
+          if(storage){if(isSharedDirectory(storage.manifest))retire(this.partitioned.saveSharedMutation(tx,storage,s,current,next,patch,'evidence'));else this.partitioned.saveMutation(tx,storage,current,next,patch,'evidence');}
           else{if(current.revision)tx.objectStore('b23_checkpoints').put(record(s.key,current));store.put(record(s.key,next));}
           tx.objectStore('b23_operations').put(record(key,{id:operationId,scopeKey:s.key,type:'NATIVE_REFERENCES',actor:'evidence',fingerprint:digest(added),baseRevision:current.revision,resultRevision:next.revision,recordedAt:this.clock(),patch:[],changedObjects:added.length,undoneBy:null}));
           check();done({added:added.length});
         }catch(error){fail(error);}};
       }catch(error){fail(error);}};
-      if(isPartitioned(payload)){this.partitioned.loadMutation(tx,payload,{fingerprint:{batch:{refs:nativeRefs}}},null,apply,fail);}
+      if(isSharedDirectory(payload)){this.partitioned.loadSharedMutation(tx,payload,s,{fingerprint:{batch:{refs:nativeRefs}}},null,apply,fail);}
+      else if(isPartitioned(payload)){this.partitioned.loadMutation(tx,payload,{fingerprint:{batch:{refs:nativeRefs}}},null,apply,fail);}
       else if(payload)apply(validateState(payload,s.key));
       else{
         // A missing root cannot erase prior human history. Check inside the same
@@ -197,7 +206,7 @@ export class WorkspaceRepository {
     const tx=db.transaction(['b23_states','b23_checkpoints','b23_operations'],'readonly');let stateRow,checkpoint,error;const logs=[];
     const a=tx.objectStore('b23_states').get(s.key),b=tx.objectStore('b23_checkpoints').get(s.key);a.onsuccess=()=>{stateRow=a.result};b.onsuccess=()=>{checkpoint=b.result};
     const c=tx.objectStore('b23_operations').index('scopeKey').openCursor(s.key);c.onsuccess=()=>{try{const row=c.result;if(row){logs.push(unpack(row.value));row.continue();}}catch(e){error=e;tx.abort();}};
-    tx.oncomplete=()=>{try{fence(guard,signal);let intact=true;try{validateState(unpack(stateRow),s.key);}catch{intact=false;}if(intact){resolve({corrupt:false});return;}
+    tx.oncomplete=()=>{try{fence(guard,signal);if(isSharedDirectory(stateRow?.payload))throw Error('shared-directory-recovery-not-enabled');let intact=true;try{validateState(unpack(stateRow),s.key);}catch{intact=false;}if(intact){resolve({corrupt:false});return;}
       try{const prior=validateState(unpack(checkpoint),s.key),plan=recoverAssets(prior,logs,s.key);resolve({corrupt:true,recoverable:true,damagedHash:digest(stateRow??null),checkpointRevision:prior.revision,restoredHumanChanges:plan.restoredHumanChanges,recoveryRevision:plan.state.revision,evidenceInvalidated:true});}catch(e){resolve({corrupt:true,recoverable:false,reason:e.message});}
     }catch(e){reject(e);}};tx.onabort=()=>reject(error??tx.error);
   });}
@@ -227,7 +236,7 @@ export class WorkspaceRepository {
         }
         const r=states.get(s.key);
         r.onsuccess=()=>{try{
-          check();if(digest(r.result??null)!==damagedHash)throw Error('recovery-conflict');
+          check();if(isSharedDirectory(r.result?.payload))throw Error('shared-directory-recovery-not-enabled');if(digest(r.result??null)!==damagedHash)throw Error('recovery-conflict');
           let corrupt=false;try{validateState(unpack(r.result),s.key);}catch{corrupt=true;}
           if(!corrupt)throw Error('intact-state-not-replaced');
           const p=tx.objectStore('b23_checkpoints').get(s.key);

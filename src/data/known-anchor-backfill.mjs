@@ -1,7 +1,7 @@
 import {canonicalRef,normalizedScope,tokenOK} from '../b1/identity.mjs';
 import {digest} from './hash.mjs';
 import {validateState} from './state.mjs';
-import {isPartitioned} from './partitioned.mjs';
+import {isPartitioned,isSharedDirectory} from './partitioned.mjs';
 import {knownAnchorCursorKey} from './known-anchor-key.mjs';
 
 export {knownAnchorCursorKey};
@@ -81,6 +81,7 @@ export async function reconcileKnownReferences(owner,scope,{limit=128,guard=()=>
         read.onsuccess=()=>{try{
           check();const row=read.result;
           if(row){
+            if(isSharedDirectory(row.payload)){owner.partitioned.readManifest(tx,row,s,value=>{root=value;prepareScan();},fail);return;}
             if(isPartitioned(row.payload))root=owner.partitioned.verifiedManifest(row,s.key);
             else {if(row.checksum!==digest(row.payload))throw Error('corrupt-record');root=validateState(row.payload,s.key);}
             prepareScan();return;

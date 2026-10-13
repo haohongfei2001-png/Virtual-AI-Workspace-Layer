@@ -1,0 +1,10 @@
+✔ MOCK_IDB 5001-ref migration and recovery batch contracts (1431.363ms)
+✔ shared service lifecycle contracts in mock IDB (not real browser evidence) (2299.381958ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2368.482458
