@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第四十二轮：原生索引移除重复临时库存映射，并按ordinal线性还原顺序；完整校验/顺序/恢复保持。完整Node845、真实IDB读6/写恢复6及MV3 9通过；最新100k三发送功能通过但1441.6/1495.7/1361.2ms均未达1秒，比Round40慢，端到端提速未证明。最后确认远端PR16 Draft head8503b14，本地后续提交待同步；后续HEAD以Git为准。Free及发布验收未完成。
+当前已推进至第四十三轮：活动ref版本+大小同桶目录基础已实现，尚未接仓库或迁移；22项新合同、完整Node867和真实IDB100k原语5项通过。实际运行时仍88ff239；其100k三发送1441.6/1495.7/1361.2ms仍1秒FAIL。正常push已同步至88ff239，API确认PR16仍Draft同head；后续Git为准。Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -522,3 +522,16 @@ NativeRepository的read/header/page支持新格式：完整读/header验证所�
 最后完整Node845/845、0失败/跳过；真实IDB读取6项、写入迁移/CAS/GC/恢复6项及MV3 9项通过。正常无采样100k三发送功能3/3，1441.6/1495.7/1361.2ms均1秒FAIL，比Round40慢，不证明端到端提速；每条1消息/event/hint、fullread0、阅读/草稿保持，源码hash不变。1k/10k本轮NOT_RUN，最近对应旧源码正常数据仍Round40。
 
 包/private/tmp/vaiwl-free-delivery-round42-20261013/vaiwl-free-synthetic-only.zip，SHA256 `3cf13d039f0f7ece194281e402eba5c92093b56af6fc82dd57cb51b857702c20`，仍SYNTHETIC_ONLY/NOT_RELEASE_READY。下一已有F1/B5切点是活动refVersions+sizes同桶目录，减少100k根与恢复副本克隆；必须保持loadEvidenceIndexes对已加载group所有ref存在性的核验（不限命中键）、版本与size绑定、100k/128Mi/16Mi边界、完整恢复撤权、同事务CAS/receipt和旧格式拒绝。不是新的开发计划，不简化活动真值或权限。真实账户/来源/跨端/PAIA/物理/真人条件与完整Free未完成状态保持。
+
+
+## 第四十三轮：活动引用目录同桶基础
+
+从已正常push并API确认Draft PR16 head88ff239继续。新增evidence-ref-directory.mjs纯目录模块：版本map、大小数组与原始ordinal数组同一个不可变桶，root至多256个bucket指针，各含revision/count/bytes；原sources/counts/global indexVersions保留。明确独立格式，不修改旧活动writer/schema/build/service。纯build/materialize/update验证scope/key/checksum/路由、version-size对齐、原引用顺序、跨桶ordinal、单片16Mi/聚合128Mi/100k边界；增量只写触及桶、无删除已知ref、旧片不修改。
+
+目录counts/bytes仅是未读片的声明，不当库存或授权证明。验证缓存512项/8Mi只保留编码与checksum，每次新读完整严格比较全部字节，context包含scope/bucket/pointer revision/count/bytes；不保留事实对象。子代理独立22合同全部通过，包含warm后同key/checksum篡改及上下文变化拒绝、当前payload返回、缺片/多片/重复及输入保持。
+
+最后完整Node867/867、0失败/跳过。实际headless/IDB100k基础5项通过：版本+size+顺序往返、整事务abort保持原root/片/marker、单条更新仅1桶（样本395ref）、旧目录仍可还原、100001容量拒绝。使用合成目录和真实IDB，未存真实活动内容；**不代表仓库迁移、恢复或服务已接线**，未把目录原语算产品性能。报告与源码hash见free-round43-*。
+
+本模块尚未被FreeEvidenceRepository/worker/build引用，包与正常发送路径保持88ff239。MV3/正常1k/10k/100k本轮NOT_RUN；最近100k正常仍Round42 1441.6/1495.7/1361.2ms且1秒FAIL，包仍Round42 SHA2563cf13d039f0f7ece194281e402eba5c92093b56af6fc82dd57cb51b857702c20。
+
+接续时先做同事务directory reader并接query/header/page及global index归属核验；每个已加载global index group的所有ref都必须经目录验证存在，不能只查命中项。写入、迁移、回收和恢复必须在原CAS事务发布directory/native evidence pieces/global index/root+recovery/marker/receipt，恢复完整核验后撤销来源；quota/撤权/冲突/旧reader拒绝与Pro数据保持须另测。权限与真实来源/账户/跨端/PAIA/物理/真人条件不变，完整Free未完成。
