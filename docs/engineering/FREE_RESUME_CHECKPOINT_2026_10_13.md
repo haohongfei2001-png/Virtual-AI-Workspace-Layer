@@ -197,3 +197,9 @@ pendingSynthetic已绑定捕获时验证过的scope/document/route/有效期；B
 ## 第二十八轮（接565178f）
 
 已完成暖态重绑前至多1观察、冷态保守读取、末次CHECK不变；Free/人工恢复清空旧观察与副本。Node703/0、来源/恢复10/10、MV3 9/9。100k正常1611.2/1729.7/1729.1ms均1秒FAIL，各报告free-round28-*，不与旧结果相加。包 `/private/tmp/vaiwl-free-delivery-round28-20261013/vaiwl-free-synthetic-only.zip` SHA2560791b4768a002688704e388e7c4105c2058580843adb1519f653d508f65e1c73。下一工作集索引优化已有独立测试准备，继续当前目录/分支/PR16。真实源/PAIA/物理验收条件保持，完整产品尚未完成。
+
+## 第二十九轮：工作集复用当前scope ID索引
+
+从5120109继续，当前索引增加精确byId查询，工作集渲染替代逐项全量find。复用当前快照既有Map，未增第二套缓存；人工顺序、缺失项占位与原生路由first-match规则保留。独立3项Node覆盖重复URL不同ID、新标题/UNKNOWN、两种rebind与跨scope隔离。相关Node组合48/48；真实headless DOM100k引用/1000工作集的7项功能检查通过，重复find比较99,501,499→0。带计数诊断render 490.5→13.1ms，不冒充正常延迟认证或发送达标。
+
+完整Node/MV3/100k发送本轮NOT_RUN，上一轮各自证据与发送1秒FAIL保留。包SHA256 `84f20612d831f44c469c49ed1000c763d39907899be405fe54272a32a398ed72`，仍SYNTHETIC_ONLY。已同步上一轮5120109到原远端，当前新HEAD以Git为准。下一独立热点是零页、只偏好或view更新时仍全量适配Free引用，须由私有prepared来源与严格plan条件证明复用，不省略末次CHECK。真实Free和发布仍未完成。

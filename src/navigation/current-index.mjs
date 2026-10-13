@@ -33,6 +33,7 @@ function* buildIndex(snapshot,groups){
  }
  const bind=(referenceMap,groupList)=>{const groupMap=new Map(groupList.map(g=>[g.id,g]));return Object.freeze({
   rebindCompatibleAsync(next,nextGroups,guard){return finishAsync(compatible(next,nextGroups),guard);},
+  byId(id){return referenceMap.get(id);},
   matches(raw,here){const a=key(raw),b=key(here);return a!==null&&b!==null&&a===b;},
   at(raw){const k=key(raw),r=referenceMap.get(refs.get(k)),entries=routes.get(k)??[];return {ref:r,selected:groupMap.get(entries[0]?.groupId),independent:r&&!memberIds.has(r.id)?r:null,inGroup:g=>referenceMap.get(entries.find(x=>x.groupId===g.id)?.refId)};},
   // Reuse immutable route/membership lookup only when the replica proved unchanged
