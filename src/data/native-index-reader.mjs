@@ -17,7 +17,10 @@ export function createNativeIndexReader(store,root,scope,fail){
   pending.set(key,[done]);
   try{const request=store.get(key);request.onsuccess=()=>{if(failed)return;try{
    const record=request.result,piece=verifyNativeIndexPiece(record,root,kind,bucketId);
-   records.set(key,record);Object.assign(manifest[kind],piece.versions);
+   // Targeted consumers resolve versions through lookup. Full consumers
+   // receive the complete ordered maps from all(); do not build a second,
+   // unordered inventory here only to discard it during materialization.
+   records.set(key,record);
    const callbacks=pending.get(key);pending.delete(key);for(const callback of callbacks){if(failed)break;callback(piece);}
   }catch(error){reject(error);}};request.onerror=()=>reject(request.error??Error('native-index-read-failed'));}catch(error){reject(error);}
  }

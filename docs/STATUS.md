@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第四十一轮：实际同路径旧包→索引包→旧包拒绝→索引包恢复4项通过，Pro/原生事实/活动/草稿保留。运行时代码为277c410，最新完整Node845、真实IDB6、MV3 9；1k/10k/100k九条发送功能通过，100k约1.23–1.28秒仍未达1秒目标。正常push45秒超时且无遗留进程，API再次确认PR16仍Draft head8503b14，本地后续提交待同步。Free及发布验收未完成。
+当前已推进至第四十二轮：原生索引移除重复临时库存映射，并按ordinal线性还原顺序；完整校验/顺序/恢复保持。完整Node845、真实IDB读6/写恢复6及MV3 9通过；最新100k三发送功能通过但1441.6/1495.7/1361.2ms均未达1秒，比Round40慢，端到端提速未证明。最后确认远端PR16 Draft head8503b14，本地后续提交待同步；后续HEAD以Git为准。Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -511,3 +511,14 @@ NativeRepository的read/header/page支持新格式：完整读/header验证所�
 本轮无runtime改动，完整Node/常规MV3/性能不重复运行；最近对应实现证据仍Round40完整845/0/0skip、IDB6、MV39及1k/10k/100k正常三发送。包仍Round40 SHA2564162206f2cbe5dca2f187b378f9778cbadfe91e7859f5eb4053b96496d3e4da4。100k一秒FAIL与真实源/账户/跨端/PAIA/物理/真人条件保持。
 
 277c410正常HTTP1.1 push在45秒超时；已确认无遗留Git网络进程，不循环重试、不改remote/config。只读API随后确认Draft PR16仍8503b14；本地后续提交尚未同步，GitHub Desktop可沿原仓库同步。下一可执行工作是剩余F1发送约230–280ms差距的真实热点，尤其HEADER完整版本清单与活动/共享写入，须保留CAS/完整字节/来源/最终发布栅栏；不重复无收益微编码实验，不为等外部权限停止独立工作。
+
+
+## 第四十二轮：索引重复映射与顺序还原
+
+从0245861继续。主代理移除reader每桶Object.assign临时无序库存：targeted请求始终经lookup解析版本，all最终用完整已校验有序映射，旧临时副本无消费者。子代理独立对比固定0245861 baseline与ordinal数组候选，1k/10k/100k非字典ID及倒序桶/records完整输出一致，重复/缺洞/越界/缺片/篡改错误等价；100k冷中位428.95→423.70ms、暖44.35→36.50ms，仅纯计算诊断。主代理采纳线性ordinal数组还原，保留每桶checksum/上下文/路由/size、跨桶秩校验和最终manifest验证；没有跳过reader暴露records后的第二次完整验证。
+
+变更前真实100k CPU profile仅用于诊断：strictJSON self约274.8ms，saveEvidencePieces约120.8ms，sha256约111.7ms，reader回调约93.1ms。活动writer的positionTicks主要在两次root/recovery put（57ticks），两个大map克隆24ticks；新Project活动apply约267.8ms、shared ingest183.8ms、native.apply127ms。不可把profile时序作为正常认证。原始压缩CPU采样和实际源码hash保留。
+
+最后完整Node845/845、0失败/跳过；真实IDB读取6项、写入迁移/CAS/GC/恢复6项及MV3 9项通过。正常无采样100k三发送功能3/3，1441.6/1495.7/1361.2ms均1秒FAIL，比Round40慢，不证明端到端提速；每条1消息/event/hint、fullread0、阅读/草稿保持，源码hash不变。1k/10k本轮NOT_RUN，最近对应旧源码正常数据仍Round40。
+
+包/private/tmp/vaiwl-free-delivery-round42-20261013/vaiwl-free-synthetic-only.zip，SHA256 `3cf13d039f0f7ece194281e402eba5c92093b56af6fc82dd57cb51b857702c20`，仍SYNTHETIC_ONLY/NOT_RELEASE_READY。下一已有F1/B5切点是活动refVersions+sizes同桶目录，减少100k根与恢复副本克隆；必须保持loadEvidenceIndexes对已加载group所有ref存在性的核验（不限命中键）、版本与size绑定、100k/128Mi/16Mi边界、完整恢复撤权、同事务CAS/receipt和旧格式拒绝。不是新的开发计划，不简化活动真值或权限。真实账户/来源/跨端/PAIA/物理/真人条件与完整Free未完成状态保持。

@@ -59,8 +59,12 @@ export function buildNativeVersionIndex(manifest,scope){
 export function materializeNativeVersionIndex(root,scope,records){
  validateNativeIndexRoot(root,scope);const byKey=new Map();for(const record of records){if(byKey.has(record.key))throw Error('duplicate-native-index-record');byKey.set(record.key,record);}
  const manifest={...root,format:NATIVE_PARTITION_FORMAT,projects:{},refs:{}};let expected=0;
- for(const kind of kinds){const ordered=[];for(const bucket of Object.keys(root[kind])){expected++;const pointer=root[kind][bucket],key=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision),piece=verifyNativeIndexPiece(byKey.get(key),root,kind,bucket);Object.keys(piece.versions).forEach((key,i)=>ordered.push({key,version:piece.versions[key],ordinal:piece.ordinals[i]}));}
- ordered.sort((a,b)=>a.ordinal-b.ordinal);for(let i=0;i<ordered.length;i++){if(ordered[i].ordinal!==i)throw Error('invalid-native-index-order');manifest[kind][ordered[i].key]=ordered[i].version;}}
+ for(const kind of kinds){
+ const buckets=Object.keys(root[kind]),count=buckets.reduce((sum,b)=>sum+root[kind][b].count,0),keys=new Array(count),versions=new Array(count);let orderError=false;
+ for(const bucket of buckets){expected++;const pointer=root[kind][bucket],physicalKey=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision),piece=verifyNativeIndexPiece(byKey.get(physicalKey),root,kind,bucket);
+ const names=Object.keys(piece.versions);for(let i=0;i<names.length;i++){const ordinal=piece.ordinals[i];if(ordinal>=count||keys[ordinal]!==undefined){orderError=true;continue;}keys[ordinal]=names[i];versions[ordinal]=piece.versions[names[i]];}}
+ if(orderError)throw Error('invalid-native-index-order');for(let i=0;i<count;i++){if(keys[i]===undefined)throw Error('invalid-native-index-order');manifest[kind][keys[i]]=versions[i];}}
+
  if(byKey.size!==expected)throw Error('unexpected-native-index-record');validateNativeManifest(manifest,scope);return manifest;
 }
 /** Copy-on-write replacement of touched buckets only. Unchanged pointers survive.
