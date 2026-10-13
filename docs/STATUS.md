@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第六十八轮：b46ef83已推送并由GitHub确认。新增实际MV3数据库v2→v3及旧连接阻塞恢复4/4、同URL跨scope设置隔离通过；生产代码未变，完整1160/MV3生命周期9及规模证据仍为Round67来源。4x100k启动和真实Free验收未完成，详情见文末。
+当前已推进至第六十九轮：最新已确认远端b46ef83，本地前置0c09d26。修复旧schema同名索引配置错误仍被升级导致漏列的问题；最终完整1172/1172、真实IDB反例9/9、实际MV3 schema升级4/4及生命周期9/9通过。4x100k启动和真实Free验收仍未完成，最新合成包及证据见文末。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -768,3 +768,12 @@ b46ef83已正常push，GitHub确认PR16仍Draft，base176ebc9a未变。此轮只
 另一真实client/broker、合成owner空库存及虚拟时钟反例首跑PASS：A设置文件挂起超时，同URL改可信scope到B并释放迟到A回复，旧设置不恢复，B新设置文件为空；再回A也不能复活已dispose节点。原生input与草稿全程保持；不宣称对象内存安全擦除或真实账户认证。
 
 两报告sourceChangedDuringRun=false，MV3 pageErrors为空，未发生初始失败。生产回归1160/MV3生命周期9和最终规模结果仍源自Round67，不能累加本轮4条成为新的全套。Round68临时包生产源码与Round67相同，继续使用Round67交付来源；4x100k启动FAIL与真实来源/账户/跨端/PAIA/物理IME/真人条件仍未解决。Free未完成。
+
+
+## Round69：拒绝错误同名索引的原子升级
+
+0c09d26保存Round68（尚未单独push）。真实Chrome发现v2同名scopeKey索引keyPath错误仍升级为v3，base.get有记录而base.list漏列；修复前合法1PASS/错误8FAIL分别留存。schema升级现在检查refs.scopeKey精确路径scopeKey、b23_operations.scopeKey精确路径payload.scopeKey，且unique/multiEntry必须false；v1阶段同样检查refs。任何不符中止事务，不自动重建索引或删除数据。DATABASE_VERSION仍3；已经存在的v3库不触发本次迁移检查，未冒称修复既有任意schema损坏。
+
+Mock增加索引元数据供合同断言使用，明确不模拟unique/multiEntry约束语义。新增v1/v2×两索引×四错误的12个Node反例修前全部FAIL、修后通过；最终完整1172/1172、0失败/跳过。相同真实Chrome反例修后9/9：8坏库AbortError、仍v2、六表逐row JSON不变且无native新store；合法控制正常v3。最终源码实际安装schema升级4/4、MV3生命周期9/9通过，source不变、无pageErrors。
+
+最终包62文件/52worker模块，确切路径见free-round69-schema-mv3.json；ZIP SHA256 ad7a87baa2a6226c98b0265e6a436c4a38e298c03fa26d348f759067d7a80413，source manifest 9e4fd5f555167a54c1d1723342d84c972db3e88b4297456c6322403d89d7f05e。没有重新做规模延迟认证，相关结果仍Round67来源。4x100k首次加载、真实ChatGPT来源/账户/跨端、PAIA、物理IME/真人条件仍未完成；SYNTHETIC_ONLY/NOT_RELEASE_READY，Free未交付成功。

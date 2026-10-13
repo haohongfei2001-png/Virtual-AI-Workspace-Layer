@@ -1,0 +1,102 @@
+{
+  "evidence": "REAL_HEADLESS_CHROME_INDEXEDDB_SCHEMA_INDEX_METADATA",
+  "realChatGPT": "NOT_RUN",
+  "mv3": "NOT_RUN",
+  "sourceHashes": {
+    "src/data/schema.mjs": "e26c835c73a6d3de22817ad092bff95aea6d03fab913f4fa2b778e03bb704bce",
+    "src/b1/scope-repository.mjs": "2415f70ab46da554003eb1732e82dfc0764a7165476cf4ebe914ea2eeebe2c10",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "tests/free/schema-index-browser.mjs": "e19bd02e687f0946f09327429e81a4fbdc02dafba896784fc265d0bf36388b16"
+  },
+  "results": [
+    {
+      "name": "valid",
+      "status": "PASS",
+      "opened": true,
+      "reason": null,
+      "version": 3,
+      "allSixStoresUnchanged": true,
+      "newStores": [
+        "native_states",
+        "native_operations"
+      ]
+    },
+    {
+      "name": "refs:wrong-keyPath",
+      "status": "PASS",
+      "opened": false,
+      "reason": "AbortError: Version change transaction was aborted in upgradeneeded event handler.",
+      "version": 2,
+      "allSixStoresUnchanged": true,
+      "newStores": []
+    },
+    {
+      "name": "refs:unique",
+      "status": "PASS",
+      "opened": false,
+      "reason": "AbortError: Version change transaction was aborted in upgradeneeded event handler.",
+      "version": 2,
+      "allSixStoresUnchanged": true,
+      "newStores": []
+    },
+    {
+      "name": "refs:multiEntry",
+      "status": "PASS",
+      "opened": false,
+      "reason": "AbortError: Version change transaction was aborted in upgradeneeded event handler.",
+      "version": 2,
+      "allSixStoresUnchanged": true,
+      "newStores": []
+    },
+    {
+      "name": "refs:array-keyPath",
+      "status": "PASS",
+      "opened": false,
+      "reason": "AbortError: Version change transaction was aborted in upgradeneeded event handler.",
+      "version": 2,
+      "allSixStoresUnchanged": true,
+      "newStores": []
+    },
+    {
+      "name": "b23_operations:wrong-keyPath",
+      "status": "PASS",
+      "opened": false,
+      "reason": "AbortError: Version change transaction was aborted in upgradeneeded event handler.",
+      "version": 2,
+      "allSixStoresUnchanged": true,
+      "newStores": []
+    },
+    {
+      "name": "b23_operations:unique",
+      "status": "PASS",
+      "opened": false,
+      "reason": "AbortError: Version change transaction was aborted in upgradeneeded event handler.",
+      "version": 2,
+      "allSixStoresUnchanged": true,
+      "newStores": []
+    },
+    {
+      "name": "b23_operations:multiEntry",
+      "status": "PASS",
+      "opened": false,
+      "reason": "AbortError: Version change transaction was aborted in upgradeneeded event handler.",
+      "version": 2,
+      "allSixStoresUnchanged": true,
+      "newStores": []
+    },
+    {
+      "name": "b23_operations:array-keyPath",
+      "status": "PASS",
+      "opened": false,
+      "reason": "AbortError: Version change transaction was aborted in upgradeneeded event handler.",
+      "version": 2,
+      "allSixStoresUnchanged": true,
+      "newStores": []
+    }
+  ],
+  "pageErrors": [],
+  "browser": "155.0.8059.40",
+  "sourceChangedDuringRun": false,
+  "pass": 9,
+  "fail": 0
+}

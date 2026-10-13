@@ -28,7 +28,9 @@ class Store {
   constructor(tx,name){this.tx=tx;this.name=name;}
   get data(){const d=(this.tx.local??this.tx.db.meta.stores).get(this.name);if(!d)throw error('NotFoundError');return d;}
   get keyPath(){return this.data.keyPath;}get indexNames(){return names(this.data.indexes);}
-  createIndex(name,keyPath){this.data.indexes.set(name,keyPath);}
+  // Metadata is modeled for upgrade validation; unique/multiEntry query/write
+  // semantics still require real IndexedDB coverage.
+  createIndex(name,keyPath,{unique=false,multiEntry=false}={}){this.data.indexes.set(name,{keyPath:copy(keyPath),unique:!!unique,multiEntry:!!multiEntry});}
   get(key){return this.tx.enqueue(()=>copy(this.data.rows.get(String(key))));}
   put(value){return this.write(value,false);}add(value){return this.write(value,true);}
   write(value,unique){const v=copy(value);return this.tx.enqueue(()=>{if(this.tx.mode==='readonly')throw error('ReadOnlyError');
@@ -36,7 +38,7 @@ class Store {
     const k=v[this.keyPath];if(k===undefined)throw error('DataError');if(unique&&this.data.rows.has(String(k)))throw error('ConstraintError');this.data.rows.set(String(k),v);return k;});}
   delete(key){return this.tx.enqueue(()=>this.data.rows.delete(String(key)));}
   count(){return this.tx.enqueue(()=>this.data.rows.size);}
-  index(name){const field=this.data.indexes.get(name);if(!field)throw error('NotFoundError');const indexKey=row=>field.split('.').reduce((v,k)=>v?.[k],row);return {openCursor:range=>this.cursor(row=>indexKey(row)===(range?.value??range),indexKey),count:query=>this.tx.enqueue(()=>[...this.data.rows.values()].filter(row=>indexKey(row)!==undefined&&(query==null||indexKey(row)===(query?.value??query))).length)};}
+  index(name){const metadata=this.data.indexes.get(name);if(!metadata)throw error('NotFoundError');const field=metadata.keyPath,indexKey=row=>{if(typeof field!=='string')throw error('MockUnsupportedIndexKeyPath');return field.split('.').reduce((v,k)=>v?.[k],row);};return {...copy(metadata),openCursor:range=>this.cursor(row=>indexKey(row)===(range?.value??range),indexKey),count:query=>this.tx.enqueue(()=>[...this.data.rows.values()].filter(row=>indexKey(row)!==undefined&&(query==null||indexKey(row)===(query?.value??query))).length)};}
   openCursor(){return this.cursor(()=>true);}
   cursor(filter,keyOf=row=>row[this.keyPath]){
     const compare=(a,b)=>a<b?-1:a>b?1:0;let rows,position=0,req;

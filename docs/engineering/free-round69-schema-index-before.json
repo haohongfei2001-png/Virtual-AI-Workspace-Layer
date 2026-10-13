@@ -1,0 +1,139 @@
+{
+  "evidence": "REAL_HEADLESS_CHROME_INDEXEDDB_SCHEMA_INDEX_METADATA",
+  "realChatGPT": "NOT_RUN",
+  "mv3": "NOT_RUN",
+  "sourceHashes": {
+    "src/data/schema.mjs": "9db57336e5d79ec002ef6308100d18008140292bcf1385899524b0a6972ebad6",
+    "src/b1/scope-repository.mjs": "2415f70ab46da554003eb1732e82dfc0764a7165476cf4ebe914ea2eeebe2c10",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "tests/free/schema-index-browser.mjs": "e19bd02e687f0946f09327429e81a4fbdc02dafba896784fc265d0bf36388b16"
+  },
+  "results": [
+    {
+      "name": "valid",
+      "status": "PASS",
+      "opened": true,
+      "reason": null,
+      "version": 3,
+      "allSixStoresUnchanged": true,
+      "newStores": [
+        "native_states",
+        "native_operations"
+      ]
+    },
+    {
+      "name": "refs:wrong-keyPath",
+      "status": "FAIL",
+      "leak": {
+        "getPresent": true,
+        "listedCount": 0
+      },
+      "opened": true,
+      "reason": null,
+      "version": 3,
+      "allSixStoresUnchanged": true,
+      "newStores": [
+        "native_states",
+        "native_operations"
+      ],
+      "error": "Error: malformed same-name index must reject atomically\n    at assertion (eval at evaluate (:370:30), <anonymous>:32:53)\n    at eval (eval at evaluate (:370:30), <anonymous>:26:10)\n    at async <anonymous>:396:30"
+    },
+    {
+      "name": "refs:unique",
+      "status": "FAIL",
+      "opened": true,
+      "reason": null,
+      "version": 3,
+      "allSixStoresUnchanged": true,
+      "newStores": [
+        "native_states",
+        "native_operations"
+      ],
+      "error": "Error: malformed same-name index must reject atomically\n    at assertion (eval at evaluate (:370:30), <anonymous>:32:53)\n    at eval (eval at evaluate (:370:30), <anonymous>:26:10)\n    at async <anonymous>:396:30"
+    },
+    {
+      "name": "refs:multiEntry",
+      "status": "FAIL",
+      "opened": true,
+      "reason": null,
+      "version": 3,
+      "allSixStoresUnchanged": true,
+      "newStores": [
+        "native_states",
+        "native_operations"
+      ],
+      "error": "Error: malformed same-name index must reject atomically\n    at assertion (eval at evaluate (:370:30), <anonymous>:32:53)\n    at eval (eval at evaluate (:370:30), <anonymous>:26:10)\n    at async <anonymous>:396:30"
+    },
+    {
+      "name": "refs:array-keyPath",
+      "status": "FAIL",
+      "opened": true,
+      "reason": null,
+      "version": 3,
+      "allSixStoresUnchanged": true,
+      "newStores": [
+        "native_states",
+        "native_operations"
+      ],
+      "error": "Error: malformed same-name index must reject atomically\n    at assertion (eval at evaluate (:370:30), <anonymous>:32:53)\n    at eval (eval at evaluate (:370:30), <anonymous>:26:10)\n    at async <anonymous>:396:30"
+    },
+    {
+      "name": "b23_operations:wrong-keyPath",
+      "status": "FAIL",
+      "opened": true,
+      "reason": null,
+      "version": 3,
+      "allSixStoresUnchanged": true,
+      "newStores": [
+        "native_states",
+        "native_operations"
+      ],
+      "error": "Error: malformed same-name index must reject atomically\n    at assertion (eval at evaluate (:370:30), <anonymous>:32:53)\n    at eval (eval at evaluate (:370:30), <anonymous>:26:10)\n    at async <anonymous>:396:30"
+    },
+    {
+      "name": "b23_operations:unique",
+      "status": "FAIL",
+      "opened": true,
+      "reason": null,
+      "version": 3,
+      "allSixStoresUnchanged": true,
+      "newStores": [
+        "native_states",
+        "native_operations"
+      ],
+      "error": "Error: malformed same-name index must reject atomically\n    at assertion (eval at evaluate (:370:30), <anonymous>:32:53)\n    at eval (eval at evaluate (:370:30), <anonymous>:26:10)\n    at async <anonymous>:396:30"
+    },
+    {
+      "name": "b23_operations:multiEntry",
+      "status": "FAIL",
+      "opened": true,
+      "reason": null,
+      "version": 3,
+      "allSixStoresUnchanged": true,
+      "newStores": [
+        "native_states",
+        "native_operations"
+      ],
+      "error": "Error: malformed same-name index must reject atomically\n    at assertion (eval at evaluate (:370:30), <anonymous>:32:53)\n    at eval (eval at evaluate (:370:30), <anonymous>:26:10)\n    at async <anonymous>:396:30"
+    },
+    {
+      "name": "b23_operations:array-keyPath",
+      "status": "FAIL",
+      "opened": true,
+      "reason": null,
+      "version": 3,
+      "allSixStoresUnchanged": true,
+      "newStores": [
+        "native_states",
+        "native_operations"
+      ],
+      "error": "Error: malformed same-name index must reject atomically\n    at assertion (eval at evaluate (:370:30), <anonymous>:32:53)\n    at eval (eval at evaluate (:370:30), <anonymous>:26:10)\n    at async <anonymous>:396:30"
+    }
+  ],
+  "pageErrors": [],
+  "browser": "155.0.8059.40",
+  "sourceChangedDuringRun": false,
+  "pass": 1,
+  "fail": 8,
+  "failure": "AssertionError [ERR_ASSERTION]: schema index metadata rejection failures\n\n8 !== 0\n\n    at file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/schema-index-browser.mjs:47:354"
+}
