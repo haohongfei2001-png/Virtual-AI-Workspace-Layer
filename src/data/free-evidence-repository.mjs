@@ -19,10 +19,18 @@ function markerCheck(root,marker,revision){
  if(revision&&!marker)throw Error('missing-free-evidence-marker');
  if(marker&&unpack(marker).revision!==revision)throw Error('free-evidence-root-revision-conflict');
 }
+/** Full root-envelope validation; marker and storage-key checks belong to the caller. */
+export function validateFreeEvidenceRootRecord(record,scope){
+ const payload=unpack(record);
+ if(payload?.format===EVIDENCE_DIRECTORY_FORMAT)validateEvidenceDirectoryRoot(payload,scope);
+ else if(isEvidencePartitioned(payload))validateEvidenceManifest(payload,scope);
+ else validateFreeEvidence(payload,scope);
+ return payload;
+}
 /** Evidence shares the B1 database but never its native or Pro record keys. No export/restore grants. */
 export class FreeEvidenceRepository {
  #rootCache=new VerifiedRecordCache();
- #validateRoot(payload,record,scope){unpack(record);if(payload?.format===EVIDENCE_DIRECTORY_FORMAT)validateEvidenceDirectoryRoot(payload,scope);else if(isEvidencePartitioned(payload))validateEvidenceManifest(payload,scope);else validateFreeEvidence(payload,scope);}
+ #validateRoot(_payload,record,scope){return validateFreeEvidenceRootRecord(record,scope);}
  verifiedRoot(row,scope){return this.#rootCache.read(row,scope.key,(payload,record)=>this.#validateRoot(payload,record,scope));}
  #rootWithCounts(row,scope){return this.#rootCache.readWithCounts(row,scope.key,(payload,record)=>this.#validateRoot(payload,record,scope),['refVersions']);}
 

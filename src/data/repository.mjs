@@ -1,3 +1,4 @@
+import {activityVersionPrecondition,checkActivityVersionFence} from './activity-version-fence.mjs';
 import {prepareSharedDirectoryRetention} from './shared-directory-retention.mjs';
 import {migrateSharedDirectory} from './shared-directory-migration.mjs';
 import { PartitionedState, isPartitioned, isSharedDirectory } from './partitioned.mjs';
@@ -43,9 +44,13 @@ export class WorkspaceRepository {
   async partitionHeader(scope,options={}){const manifest=await this.partitioned.manifest(scope,options);if(!manifest)return null;return {manifest,...await this.viewOnly(scope,options)};}
   async partitionPage(scope,query,options={}){const {manifest,...page}=await this.partitioned.page(scope,query,options);return page;}
   async snapshot(scope,now,timeZone,options){const {state,view,diagnostics}=await this.read(scope,options);return {diagnostics,...dataProjection(state,now,timeZone),view:view?.value??null,viewRevision:view?.revision??0,objects:{workspaces:state.workspaces,placements:state.placements,identities:state.identities,sources:state.sources},preferences:state.preferences};}
-  async command(scope,{operationId,expectedRevision,command},{actor='human',guard=()=>true,signal=null}={}){
+  async command(scope,{operationId,expectedRevision,command},{actor='human',guard=()=>true,signal=null,expectedActivityVersions}={}){
     if(!['human','candidate'].includes(actor))throw Error('invalid-command-authority');
-    return this.mutate(scope,{operationId,expectedRevision,fingerprint:{actor,command,expectedRevision},type:command.type,actor,guard,signal,apply:current=>reduceCommand(current,command,actor)});
+    command=structuredClone(command);
+    const versions=expectedActivityVersions===undefined?null:activityVersionPrecondition(expectedActivityVersions);
+    if(versions&&(actor!=='human'||command?.type!=='SET_PREFERENCE'||command.id!=='freeTimePolicy'))throw Error('invalid-activity-fenced-command');
+    const fingerprint={actor,command,expectedRevision,...(versions?{expectedActivityVersions:versions}:{})};
+    return this.mutate(scope,{operationId,expectedRevision,fingerprint,type:command.type,actor,guard,signal,...(versions?{expectedActivityVersions:versions}:{}),apply:current=>reduceCommand(current,command,actor)});
   }
   allowEvidence(scope){if(typeof this.evidenceGate!=='function'||this.evidenceGate(scope)!=='synthetic')throw Error('untrusted-evidence-channel');}
   async ingest(scope,{operationId,expectedRevision,batch},options={}){
@@ -69,7 +74,7 @@ export class WorkspaceRepository {
     id(operationId);if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)throw Error('invalid-revision');
     const hash=digest(params.fingerprint),db=await this.connection();fence(guard,signal);
     return new Promise(resolve=>{
-      const tx=db.transaction(['b23_states','b23_operations','b23_checkpoints','refs'],'readwrite');let outcome=null;
+      const tx=db.transaction(['b23_states','b23_operations','b23_checkpoints','refs',...(params.expectedActivityVersions?['native_states','native_operations']:[])],'readwrite');let outcome=null;
       const abort=reason=>{if(outcome?.ok!==false)outcome={ok:false,reason};try{tx.abort();}catch{}};
       const check=()=>{try{fence(guard,signal);return true;}catch(e){abort(e.message);return false;}};
       const onRevoke=()=>abort('stale-binding');signal?.addEventListener('abort',onRevoke,{once:true});
@@ -79,7 +84,7 @@ export class WorkspaceRepository {
         if(!check())return;
         try{
           if(req.result){const prior=unpack(req.result);if(prior.invalidatedBy){outcome={ok:false,reason:'operation-invalidated-by-recovery'};return;}outcome=prior.fingerprint===hash?{ok:true,replayed:true,revision:prior.resultRevision,operationId}:{ok:false,reason:'operation-replay-conflict'};return;}
-          const sr=states.get(s.key);sr.onsuccess=()=>{
+          const loadWorkspace=()=>{const sr=states.get(s.key);sr.onsuccess=()=>{
             if(!check())return;
             try{
               const payload=sr.result?(isSharedDirectory(sr.result.payload)?this.partitioned.verifiedDirectory(sr.result,s):isPartitioned(sr.result.payload)?this.partitioned.verifiedManifest(sr.result,s.key):unpack(sr.result)):null;
@@ -119,7 +124,8 @@ export class WorkspaceRepository {
               if(isPartitioned(payload)||isSharedDirectory(payload)){const load=prior=>{const ready=(current,storage)=>{if(check())enter(current,storage,prior);},fail=e=>abort(e.message);if(isSharedDirectory(payload))this.partitioned.loadSharedMutation(tx,payload,s,params,prior,ready,fail);else this.partitioned.loadMutation(tx,payload,params,prior,ready,fail);};if(targetOperationId){const q=ops.get(JSON.stringify([s.key,targetOperationId]));q.onsuccess=()=>{try{if(!q.result)throw Error('missing-operation');load(unpack(q.result));}catch(e){abort(e.message);}};}else load(null);}
               else enter(payload?validateState(payload,s.key):emptyState(s));
             }catch(e){abort(e.message);}
-          };
+          };};
+          if(params.expectedActivityVersions)checkActivityVersionFence(tx,s,params.expectedActivityVersions,check,loadWorkspace,abort);else loadWorkspace();
         }catch(e){abort(e.message);}
       };
       tx.oncomplete=()=>{signal?.removeEventListener('abort',onRevoke);try{fence(guard,signal);resolve(outcome);}catch{resolve({ok:false,reason:'stale-after-commit',committed:true});}};

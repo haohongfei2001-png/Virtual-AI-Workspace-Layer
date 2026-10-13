@@ -1129,3 +1129,12 @@ Round107审查另发现隐藏current P可能压过可见sidebar，提交前已�
 独立审查发现定时器迟到可能晚于6秒仍更新RAM，会话副作用前已增加elapsed硬检查并验证跨6000ms不派发timer的反例。最终完整Node2306/2306、0失败/跳过；实际原构建包headless MV3十二项PASS，sourceChangedDuringRun=false，真实四格→private owner RPC已执行，跨午夜本身以Node合同验证。原生textarea/草稿与P/C导航保留。renderer首次新增测试使用reading初始fixture造成两失败，已改为实际workspace历史入口；原失败日志保留。
 
 自动密度评估/短暂撤销及可靠新装初始化仍未接通。后续复用既有策略算法与SET_PREFERENCE，但需要原生/独立活动版本在同一写事务中校验，现workspace-only CAS不能消除取样后来源变化的竞态；不新增第二计划或调度器。真实context/ACK、新聊首发、G/U、4x100k和既有间歇条件保持。Free未完成、NOT_RELEASE_READY。
+
+
+## Round110：时间策略提交与原生／证据版本原子核对
+
+接4e43cd1。WorkspaceRepository的human freeTimePolicy命令新增可选expectedActivityVersions；同一IndexedDB写事务核对原生与独立活动root/marker，再执行workspace CAS和原有checkpoint/日志。根校验复用原有各存储格式的纯校验函数；旧调用fingerprint保持，已成功receipt先回放，不因后来活动变化重复写。命令及版本在异步连接前固定，拒绝accessor字段；任何损坏、版本变化、撤权、quota均不写入。没有schema迁移，不改Pro人工资产。此校验只证明root/marker修订一致，不替代全量piece完整性、成员覆盖或时间新鲜度。
+
+最终完整Node **2336/2336、0失败/跳过**。真实headless Chrome IndexedDB六项和原构建包MV3十二旅程均PASS，两报告sourceChangedDuringRun=false；分别见free-round110-activity-version-fence-reviewed.json与free-round110-package-mv3.json。首次全量2331通过/4失败为离线模拟包未包含新模块，已补清单；独立review发现版本getter重复读取，已改为只接受own data descriptor并补反例。原失败、修复中间和最终日志分开保留，不相加。
+
+生产自动评估／短暂撤销仍未接通；继续复用现有密度算法，必须有完整新鲜snapshot及提交时TTL/日期检查。真实context/ACK、新聊首发、G/U、4x100k及既有间歇条件仍未完成。Free未完成、NOT_RELEASE_READY。

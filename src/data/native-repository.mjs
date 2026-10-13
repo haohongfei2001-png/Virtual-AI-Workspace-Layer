@@ -30,9 +30,18 @@ function fence({guard = () => true, signal} = {}) {
   if (signal?.aborted || guard() !== true) throw Error('stale-binding');
 }
 
+/** Full root-envelope validation; marker and storage-key checks belong to the caller. */
+export function validateNativeRootRecord(record,scope){
+ const payload=unpack(record);
+ if(payload?.format===NATIVE_INDEX_FORMAT)validateNativeIndexRoot(payload,scope);
+ else if(isNativePartitioned(payload))validateNativeManifest(payload,scope);
+ else validateNativeFacts(payload,scope);
+ return payload;
+}
+
 export class NativeRepository {
   #rootCache=new VerifiedRecordCache({maxEntries:3});
-  #validateRoot(payload,record,scope){unpack(record);if(payload?.format===NATIVE_INDEX_FORMAT)validateNativeIndexRoot(payload,scope);else if(isNativePartitioned(payload))validateNativeManifest(payload,scope);else validateNativeFacts(payload,scope);}
+  #validateRoot(_payload,record,scope){return validateNativeRootRecord(record,scope);}
   #rootContext(row,scope){
     if(typeof row?.checksum!=='string'||!/^[0-9a-f]{64}$/.test(row.checksum))throw Error('corrupt-native-record');
     return JSON.stringify([scope.key,row.checksum]);
