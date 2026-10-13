@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第七十一轮：前置405d725，最后确认远端b46ef83。现有v3数据库新增只读结构校验及迟到连接关闭保护；完整1210/1210、真实IDB13/13、实际MV3 schema升级4/4及生命周期9/9通过。最新合成包及独立证据见文末；慢速100k及真实Free验收未完成。
+当前已推进至第七十二轮：前置a3d8f13，最后确认远端b46ef83。活动证据迁移改为有界分批完整审计；完整1223/1223、真实IDB3/3、MV3生命周期9/9及普通100k发送通过。发现原有错误索引指向现存ref可漏读旧事件的完整性缺口，下一项优先修复；慢速100k与真实Free验收仍未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -800,3 +800,17 @@ Round70同步/诊断补充：本地代码head c119f31，工作区测试完毕；
 最终完整Node1210/1210、0失败/跳过；current-schema37合同含每store缺失/错key/auto、索引五错、合法额外表与并行open、close/versionchange中断。真实Chrome相同harness修后13/13：12坏库保持v3及全部既有row，拒绝后不调用base.close就deleteDatabase均无blocked，证明拒绝路径自身关闭连接。最终实际MV3合法schema升级4/4及生命周期9/9通过，无pageErrors、源码冻结。修前失败独立保存。
 
 最新合成包62文件/52worker模块，路径见free-round71-schema-mv3.json；ZIP SHA256 11acd8e773250ee306255d6d46e5a0f4d27662d287f38f24545be99cbe83107f，source manifest ff670a41b6650d24274998743fc7653c1f10d16a3e6fb68bc96d9b3a6726a1ba。SYNTHETIC_ONLY/NOT_RELEASE_READY；未重跑规模性能，仍不能把4x100k失败或真实账户/来源/跨端/PAIA/物理IME/真人条件标通过。Free未完整交付。
+
+
+## Round72：活动证据迁移按引用分批完整审计
+
+前置a3d8f13，最后确认远端b46ef83。活动证据目录迁移原来一次装载全部facts；现在同一RW事务按最多5000引用同步串接批次，仅保留当批内容、全局行ID及hint事件键。每批仍走原checksum/精确piece大小/scope/revision/witness/逐行validator；全局各表ID、hint[sourceId,eventKey]去重、实际counts/100k行限制及精确完整JSON128Mi限制保留。原全局索引审核、CAS/receipt/恢复shadow/最终fence保持，不放宽6秒RPC。5000引用不等于5000活动行，未声称固定行数或已测内存峰值。
+
+新增13合同通过，含5001引用三表JSON独立oracle、跨批三表重ID/重复hint事件、末piece损坏、count偏差、空库、单ref多行、第二批撤权、完成callback异常。6000引用容量反例：piece大小和133879560合法，完整JSON长度136820607超过134217728；两批114629607/25868937分别合法，仍在全局拒绝，done0/fail1。
+
+最终完整Node1223/1223、0失败/跳过。真实Chrome IDB三组独立5001引用：成功完整facts仅revision2→3；末piece坏checksum及实际第二批get触发AbortSignal均拒绝，全部8store逐row保持。最终实际MV3生命周期9/9，无pageErrors、源码冻结。100k安装包运行结果另补，不能由批次改动预先推断速度通过。4x100k历史FAIL及真实来源/账户/跨端/PAIA/物理IME/真人条件仍未满足，Free未完成。
+
+
+Round72最终规模补充：实际安装headless MV3 100k，首载22393.2ms、第二标签12812.4ms；三发送745.8/832.2/640.4ms单样本PASS，唯一事件/原名/NONE/scope隔离/原textarea草稿保持，sourceChangedDuringRun=false。不是p95，也不证明4x启动失败已修复（本轮未重测4x，因为原失败尚在更早native迁移）。最新包63文件/53worker模块，ZIP SHA256 d70df9358de7ce08367515d4cdd4e5f38211765a15a1e9f5c1ae74a0cdf3917a，source manifest de9015f328dcdc3fff9d346453b1eb6b7590efb17959637d581bcbca8de5cfde；确切路径见free-round72-mv3-100k.json，SYNTHETIC_ONLY。
+
+独立审查另证实原有索引完整性缺口：global index只验证目标ref存在，合法checksum错指向另一现存ref可通过migration，随后增量写漏读旧event并制造全局重复。该缺陷不是本批次引入；本轮未暗中扩大索引规则，下一项以最小反例修复。不能因本轮全量测试通过宣称已无完整性缺陷或Free完成。

@@ -1,5 +1,6 @@
 import {EVIDENCE_DIRECTORY_FORMAT,buildEvidenceRefDirectory} from './evidence-ref-directory.mjs';
-import {freeEvidenceKey,evidenceRecoveryKey,evidenceRecord,unpackEvidence,isEvidencePartitioned,loadEvidencePieces,loadEvidenceIndexes} from './free-evidence-partitions.mjs';
+import {freeEvidenceKey,evidenceRecoveryKey,evidenceRecord,unpackEvidence,isEvidencePartitioned,loadEvidenceIndexes} from './free-evidence-partitions.mjs';
+import {auditEvidencePartitions} from './evidence-partition-audit.mjs';
 import {digest} from './hash.mjs';
 import {id} from './state.mjs';
 /** Explicit owner migration. Never upgrades a source grant or observes native data. */
@@ -17,8 +18,8 @@ export async function migrateEvidenceDirectory(owner,scope,{operationId,expected
    if(payload.revision!==expectedRevision)throw Error('revision-conflict');
    if(payload.format===EVIDENCE_DIRECTORY_FORMAT){result={ok:true,alreadyIndexed:true,revision:payload.revision,operationId};return;}
    if(!isEvidencePartitioned(payload))throw Error('evidence-directory-migration-requires-partitioned-root');
-   loadEvidenceIndexes(store,payload,normalized,Object.keys(payload.indexVersions),()=>loadEvidencePieces(store,payload,normalized,Object.keys(payload.refVersions),evidence=>{try{
-    fence();for(const table of ['events','hints','coverage'])if(Object.keys(evidence[table]).length!==payload.counts[table])throw Error('free-evidence-count-mismatch');
+   loadEvidenceIndexes(store,payload,normalized,Object.keys(payload.indexVersions),()=>auditEvidencePartitions(store,payload,normalized,fence,()=>{try{
+    fence();
     const built=buildEvidenceRefDirectory({...payload,revision:payload.revision+1},normalized);
     for(const row of built.records){fence();store.put(row);}const record=evidenceRecord(key,built.root);store.put(record);store.put({...record,key:evidenceRecoveryKey(normalized.key)});
     ops.put(evidenceRecord(key,{revision:built.root.revision}));ops.put(evidenceRecord(operationKey,{kind,fingerprint,revision:built.root.revision,operationId}));fence();result={ok:true,revision:built.root.revision,operationId};

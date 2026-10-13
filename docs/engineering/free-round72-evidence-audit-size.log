@@ -1,0 +1,10 @@
+✔ legal piece-size manifest and legal batches cannot hide global evidence overflow from sources (3263.71775ms)
+ℹ {"pieceSizeSum":133879560,"fullJSONLength":136820607,"firstBatchJSONLength":114629607,"lastBatchJSONLength":25868937,"limit":134217728,"refs":6000,"sources":20000,"gapCount":337}
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3320.78775
