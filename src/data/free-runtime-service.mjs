@@ -83,28 +83,50 @@ export class FreeRuntimeService {
    return {snapshot:result.snapshot,calibration:result.calibration.then(value=>this.active(entry)?value:{status:'cancelled',reason:'stale-binding'})};
   }catch(error){if(!this.active(entry))return {snapshot:null,calibration:Promise.resolve({status:'cancelled',reason:'stale-binding'})};throw error;}
  }
+ prioritizeForeground(bindingId){
+  const entry=this.get(bindingId);if(!entry||!this.referenceRepository)return;
+  entry.referencesNotBefore=Date.now()+1000;
+  if(entry.referenceFinished&&entry.referenceFinished.status!=='paused'&&!entry.referencesDirty&&!entry.referenceTask)return;
+  entry.referenceController?.abort();
+  entry.referencesDirty=true;
+  this.scheduleReferenceResume(entry);
+ }
+ scheduleReferenceResume(entry){
+  if(entry.referenceTimer!==undefined)this.timers.clearTimeout(entry.referenceTimer);
+  entry.referenceTimer=this.timers.setTimeout(()=>{
+   entry.referenceTimer=undefined;if(this.active(entry))this.reconcileReferences(entry.id);
+  },Math.max(1,(entry.referencesNotBefore??0)-Date.now()));
+ }
  reconcileReferences(bindingId,{restart=false}={}){
   const entry=this.get(bindingId);if(!entry||!this.referenceRepository)return Promise.resolve({status:'unsupported'});
   if(restart)entry.referencesDirty=true;
   if(entry.referenceTask)return entry.referenceTask;
+  if(Date.now()<(entry.referencesNotBefore??0)){
+   if(!entry.referenceFinished||entry.referencesDirty)this.scheduleReferenceResume(entry);
+   return Promise.resolve({status:'deferred'});
+  }
   if(entry.referenceFinished&&!entry.referencesDirty)return Promise.resolve(entry.referenceFinished);
   entry.referencesDirty=false;
+  const controller=new AbortController();entry.referenceController=controller;
+  const signal=AbortSignal.any([entry.controller.signal,controller.signal]);
+  const paused=()=>signal.aborted;
+  const cancelled=()=>({status:this.active(entry)?'paused':'cancelled',reason:this.active(entry)?'foreground-priority':'stale-binding'});
   const task=(async()=>{
    const began=Date.now();let migrated=false;
    for(let batch=0;batch<32;batch++){
-    if(!(await this.authority(entry)))return {status:'cancelled',reason:'stale-binding'};
-    const options={limit:5000,guard:()=>this.active(entry),signal:entry.controller.signal};
+    if(paused()||!(await this.authority(entry)))return cancelled();
+    const options={limit:5000,guard:()=>this.active(entry)&&!paused(),signal};
     let result=await this.referenceRepository.reconcileKnownReferences(entry.scope,options);
-    if(!(await this.authority(entry)))return {status:'cancelled',reason:'stale-binding'};
+    if(paused()||!(await this.authority(entry)))return cancelled();
     if(!result.ok&&result.reason==='invalid-state-table'&&!migrated){
      // A valid legacy root can reach its 20k ceiling during repair. Reuse the
      // existing checked migration once; corruption/capacity errors stay visible.
      const migration=await this.referenceRepository.migratePartitioned(entry.scope,options);migrated=true;
-     if(!(await this.authority(entry)))return {status:'cancelled',reason:'stale-binding'};
+     if(paused()||!(await this.authority(entry)))return cancelled();
      if(!migration.ok)return this.status(entry,{status:'degraded',reason:migration.reason,task:'known-references'});
      result=await this.referenceRepository.reconcileKnownReferences(entry.scope,options);
     }
-    if(!(await this.authority(entry)))return {status:'cancelled',reason:'stale-binding'};
+    if(paused()||!(await this.authority(entry)))return cancelled();
     if(!result.ok)return this.status(entry,{status:'degraded',reason:result.reason,task:'known-references'});
     if(result.added)this.onChange({bindingId:entry.id,scope:entry.scope.key,reason:'known-references',deadlines:[]});
     if(result.done)return this.status(entry,{status:'ready',task:'known-references'});
@@ -112,9 +134,9 @@ export class FreeRuntimeService {
     await new Promise(resolve=>globalThis.setTimeout(resolve,0));
    }
    return this.status(entry,{status:'partial',task:'known-references',nextTrigger:'binding-or-reference-change'});
-  })().catch(error=>this.active(entry)?this.status(entry,{status:'degraded',reason:error.message,task:'known-references'}):{status:'cancelled',reason:'stale-binding'});
+  })().catch(error=>paused()?cancelled():this.active(entry)?this.status(entry,{status:'degraded',reason:error.message,task:'known-references'}):{status:'cancelled',reason:'stale-binding'});
   entry.referenceTask=task;
-  void task.then(result=>{entry.referenceFinished=result;entry.referenceTask=null;if(entry.referencesDirty&&this.active(entry))this.reconcileReferences(bindingId);});
+  void task.then(result=>{entry.referenceFinished=result;entry.referenceTask=null;entry.referenceController=null;if(entry.referencesDirty&&this.active(entry))this.reconcileReferences(bindingId);});
   return task;
  }
  async notify(bindingId,kind,options={}){
@@ -161,6 +183,7 @@ export class FreeRuntimeService {
   const entry=this.bindings.get(bindingId);if(!entry)return false;
   this.bindings.delete(bindingId);entry.externalSignal?.removeEventListener('abort',entry.externalAbort);
   if(entry.timer!==null)this.timers.clearTimeout(entry.timer);entry.controller.abort();entry.runtime?.stop();
+  if(entry.referenceTimer!==undefined)this.timers.clearTimeout(entry.referenceTimer);
   this.onSnapshot({bindingId,scope:null,snapshot:null,reason});return true;
  }
  stopAll(reason='stopped'){for(const id of [...this.bindings.keys()])this.stop(id,reason);}

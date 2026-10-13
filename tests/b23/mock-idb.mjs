@@ -36,7 +36,7 @@ class Store {
     const k=v[this.keyPath];if(k===undefined)throw error('DataError');if(unique&&this.data.rows.has(String(k)))throw error('ConstraintError');this.data.rows.set(String(k),v);return k;});}
   delete(key){return this.tx.enqueue(()=>this.data.rows.delete(String(key)));}
   count(){return this.tx.enqueue(()=>this.data.rows.size);}
-  index(name){const field=this.data.indexes.get(name);if(!field)throw error('NotFoundError');const indexKey=row=>field.split('.').reduce((v,k)=>v?.[k],row);return {openCursor:range=>this.cursor(row=>indexKey(row)===(range?.value??range),indexKey)};}
+  index(name){const field=this.data.indexes.get(name);if(!field)throw error('NotFoundError');const indexKey=row=>field.split('.').reduce((v,k)=>v?.[k],row);return {openCursor:range=>this.cursor(row=>indexKey(row)===(range?.value??range),indexKey),count:query=>this.tx.enqueue(()=>[...this.data.rows.values()].filter(row=>indexKey(row)!==undefined&&(query==null||indexKey(row)===(query?.value??query))).length)};}
   openCursor(){return this.cursor(()=>true);}
   cursor(filter,keyOf=row=>row[this.keyPath]){
     const compare=(a,b)=>a<b?-1:a>b?1:0;let rows,position=0,req;

@@ -10,8 +10,9 @@ function cursorOf(row,scope){
   if(!row)return {lastId:null,done:false};
   const p=row.payload;
   if(row.key!==knownAnchorCursorKey(scope.key)||row.checksum!==digest(p)||!p||
-    Object.keys(p).length!==4||p.schema!==1||p.scopeKey!==scope.key||
+    ![4,6].includes(Object.keys(p).length)||p.schema!==1||p.scopeKey!==scope.key||
     !(p.lastId===null||tokenOK(p.lastId))||typeof p.done!=='boolean')throw Error('corrupt-anchor-cursor');
+  if(Object.keys(p).length===6&&(typeof p.refIdsDigest!=='string'||!/^[0-9a-f]{64}$/.test(p.refIdsDigest)||!Number.isSafeInteger(p.b1Count)||p.b1Count<0))throw Error('corrupt-anchor-cursor');
   return p;
 }
 
@@ -23,7 +24,7 @@ export async function reconcileKnownReferences(owner,scope,{limit=128,guard=()=>
   return new Promise(resolve=>{
     const tx=db.transaction(['refs','b23_states','b23_operations','b23_checkpoints'],'readwrite');
     const states=tx.objectStore('b23_states'),markerKey=knownAnchorCursorKey(s.key);
-    let result=null,root=null,cursor=null;
+    let result=null,root=null,cursor=null,known=null,knownIds=null,refIdsDigest=null,b1Count=null;
     const check=()=>{if(signal?.aborted||guard()!==true)throw Error('stale-binding');};
     const fail=error=>{result={ok:false,reason:error.message??'anchor-backfill-aborted'};try{tx.abort();}catch{}};
     const revoked=()=>fail(Error('stale-binding'));signal?.addEventListener('abort',revoked,{once:true});
@@ -34,10 +35,10 @@ export async function reconcileKnownReferences(owner,scope,{limit=128,guard=()=>
         let lastId=cursor.lastId;
         const finish=done=>{
           const save=({added=0}={})=>{try{
-            check();states.put(pack(markerKey,{schema:1,scopeKey:s.key,lastId,done}));
+            const nextDigest=added?digest([...knownIds,...missing.map(row=>row.id)].sort()):refIdsDigest;
+            check();states.put(pack(markerKey,{schema:1,scopeKey:s.key,lastId,done,refIdsDigest:nextDigest,b1Count}));
             result={ok:true,processed:rows.length,added,done};
           }catch(e){fail(e);}};
-          const known=isPartitioned(root)?root.refVersions:root?.refs??{};
           const missing=rows.filter(row=>!Object.hasOwn(known,row.id));
           // The verified manifest already proves identity membership. Existing
           // anchors need no per-reference piece reads or shared-state writes.
@@ -61,6 +62,18 @@ export async function reconcileKnownReferences(owner,scope,{limit=128,guard=()=>
         }catch(e){fail(e);}};
       }catch(e){fail(e);}
     };
+    const prepareScan=()=>{
+      const count=tx.objectStore('refs').index('scopeKey').count(s.key);
+      count.onsuccess=()=>{try{
+        check();b1Count=count.result;known=isPartitioned(root)?root.refVersions:root?.refs??{};
+        knownIds=Object.keys(known).sort();refIdsDigest=digest(knownIds);
+        // Older same-schema writers do not invalidate this new marker. Compare
+        // identity witnesses even for completed and partially completed scans.
+        // A legacy marker without witnesses is safe only as a restart request.
+        if(cursor.refIdsDigest!==refIdsDigest||cursor.b1Count!==b1Count)cursor={lastId:null,done:false};
+        scan();
+      }catch(e){fail(e);}};
+    };
     try{
       check();const marker=states.get(markerKey);
       marker.onsuccess=()=>{try{
@@ -70,11 +83,11 @@ export async function reconcileKnownReferences(owner,scope,{limit=128,guard=()=>
           if(row){
             if(isPartitioned(row.payload))root=owner.partitioned.verifiedManifest(row,s.key);
             else {if(row.checksum!==digest(row.payload))throw Error('corrupt-record');root=validateState(row.payload,s.key);}
-            scan();return;
+            prepareScan();return;
           }
           // A vanished shared root is never a license to recreate human data.
           if(cursor.lastId!==null)throw Error('corrupt-record');
-          let remaining=2;const checked=q=>{try{check();if(q.result)throw Error('corrupt-record');if(!--remaining)scan();}catch(e){fail(e);}};
+          let remaining=2;const checked=q=>{try{check();if(q.result)throw Error('corrupt-record');if(!--remaining)prepareScan();}catch(e){fail(e);}};
           const cp=tx.objectStore('b23_checkpoints').get(s.key),history=tx.objectStore('b23_operations').index('scopeKey').openCursor(s.key);
           cp.onsuccess=()=>checked(cp);history.onsuccess=()=>checked(history);
         }catch(e){fail(e);}};

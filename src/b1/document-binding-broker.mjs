@@ -156,6 +156,7 @@ export function createDocumentBindingBroker({
        slot.scope.key!==scope.key||message.seq<=slot.seq)return deny('stale-binding');
     // Every request observes a strictly increasing sequence.
     slot.seq=message.seq;
+    if(['CHECK','B23_FREE_HEADER','B23_FREE_PAGE','B23_SYNTHETIC_SEND','UPSERT_REF'].includes(message.type))freeRuntime?.prioritizeForeground?.(slot.leaseId);
     if(message.type==='CHECK'){
       try{const version=workspaceRepository?.version?await workspaceRepository.version(scope,{guard:()=>fresh(st,slot),signal:slot.abort.signal}):{};
         if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-workspace');

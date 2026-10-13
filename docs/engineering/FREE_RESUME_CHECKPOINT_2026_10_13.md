@@ -187,3 +187,9 @@ pendingSynthetic已绑定捕获时验证过的scope/document/route/有效期；B
 历史B1锚补录API/后台、游标原子性、B1新增及共享恢复失效、legacy容量自动分片已实现。完整Node693/0，真IDB API7、service3、20k+1容量1、MV3 9独立PASS，详见STATUS来源限制；打包已补两套新模块依赖。100k三功能PASS但2322.9/3101.8/2462ms退步且1秒FAIL，不能隐藏后台扫描成本。
 
 下一两项确定工作：1）done及partial marker增加共享ref-ID集合摘要+B1 scoped count以检测旧包回退writer不失效游标；旧undo/new B1合法链已查明，独立失败合同正在准备；2）新发送优先，后台补录需可取消单批/安静期再续，当前readwrite扫描阻塞SEND/HEADER。保持最终CHECK、全部字节验证和本地真实测量，不改harness等待掩盖。包/private/tmp/vaiwl-free-delivery-round26-20261013/extension，hash见STATUS。远端最后确认c2f92e0、网络未恢复，后续本地提交待正常推送。完整Free仍未完成。
+
+## 第二十七轮恢复增量（接160d7b7）
+
+旧writer4项遗漏用真实历史模块复现后修复：marker ID摘要+B1count覆盖done/partial与旧4字段迁移。前台请求中止独立补录事务、quiet1秒续作、不撤binding。完整Node703/0，真IDB service4/4含同lease CHECK heldtransaction取消；100k1758.2/2212.2/1997.7ms均功能PASS但1秒FAIL。包/private/tmp/vaiwl-free-delivery-round27-20261013/extension，hash及证据见STATUS。Git正常同步至160d7b7且PR16 Draft API已核对，下一提交需正常push。
+
+下一按已捕获scope/document来源实现新聊天安全前置至首次快照之前，限1项、同串行队列内直接函数避免嵌套queue死锁，只有已核验同scope库存初始化才能采用；冷无scope不能追认，最终CHECK与失败恢复保持。此路径尚NOT_IMPLEMENTED。子代理validation遭额度限制，主代理仍完成上述实测，下一轮直接接当前状态，禁止重建计划/目录。真实Free未验收。

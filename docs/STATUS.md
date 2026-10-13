@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第二十六轮：发送来源隔离、撤销人工恢复保留UNKNOWN、历史B1锚有界补录及后台接线已实现；100k发送性能出现退步，仍须修复。最新已确认远端为 `c2f92e0`，本地第二十三轮 `531c146` 推送45秒超时，未冒称同步；后续HEAD以Git为准。继续原正式目录、分支和PR #16 Draft，Free及发布验收未完成。
+当前已推进至第二十七轮：旧包writer回退后的引用补录检测及前台优先已修复；100k延迟回落但仍超过1秒。GitHub恢复后正常快进同步至 `160d7b7`，API确认PR #16仍Draft；后续HEAD以Git为准。继续原正式目录、分支和PR #16 Draft，Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -349,3 +349,15 @@ reconcileKnownReferences每事务最多5000行，scope索引+continuePrimaryKey�
 100k正常发送3/3功能通过、58hash稳定、无全量读取/重复事件/草稿丢失；2322.9/3101.8/2462.0ms均1秒FAIL，较Round23明显退步。当前脚本未单独测首屏，不伪造首屏数字。后台同库写扫描争用是下一诊断方向，新发送应优先，不能通过等待扫描完成再开始计时掩盖。
 
 包SHA256 `4ae4f026fa7acb03bc7e3915f83f09911f341e2c23ac173f5d74c9f771df861f`，SYNTHETIC_ONLY/NOT_RELEASE_READY。另已核实同schema旧包回退漏洞：旧writer不失效done marker，旧undo或B1新增可再次制造永久漏项。下一补marker的共享引用ID集合与B1数量witness，变化重开有界扫描；进度中的旧writer变化同样需检测。外部真实验收及100k性能未满足，Free未交付。
+
+## 第二十七轮：旧writer进度见证与前台优先
+
+直接内存加载531c146历史state/repository/B1 writer，合法restore/undo/upsert复现4项遗漏（done旧undo、新B1、等量shared替换、partial游标前方旧undo）。marker现保存共享ref ID集合摘要和scope B1 count，每批完整核对，变化或旧4字段marker重开有界扫描；缺root仍先检查旧非空cursor，不丢损坏见证。不将旧writer的人工资产撤销解释成原生删除。
+
+CHECK/HEADER/PAGE/SEND/UPSERT优先取消补录的独立子signal，主binding与原生发送保持；连续前台活动结束1秒后续作。ready后新写入可restart，degraded/partial不随heartbeat无限重试，stop清timer。实际同lease CHECK中止held IDB事务并静默恢复，不以refresh重绑定取消冒充优先级测试。
+
+完整Node703/0/0skip；包含4历史writer及新增priority合同。真实client/IDB4/4通过，scope取消、旧锚自动补录、新增自动刷新、Pro/草稿保持。正常100k功能3/3、源码hash稳定，1758.2/2212.2/1997.7ms，较Round26回落但全部1秒FAIL；未延后测试起点隐藏后台成本。包SHA256 `22d4f5d329016e5546f68783ca25001e4138de736d17ab7d7a0b34be24e1e446`，仍SYNTHETIC_ONLY。
+
+验证子代理额度中断后主代理接手浏览器验证，不据此宣称完成。下一具体优化仍为新聊天BIND→HEADER/CHECK→SEND→HEADER/PAGE/CHECK双快照；只能对捕获时已核验同scope/document且已有初始化库存的元数据做有界前置发送，保留冷启动Project初始化、CAS重试及最终发布CHECK。实际源/私人账户/PAIA/跨端/物理与真人验收条件仍缺失，完整Free未交付。
+
+第二十七轮最终实际MV3 9/9通过，新增worker模块、双tab、worker重启、发送/新NONE/工作集、未知账户与草稿保持；报告free-round27-mv3独立保留。
