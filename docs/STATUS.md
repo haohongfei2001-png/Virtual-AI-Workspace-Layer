@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第三十二轮：后台补录暂停覆盖整个前台RPC生命周期，最后请求结束后才开始安静期。最终753项Node、真IDB客户端4项及MV3 9项通过；正常100k1772.9/2107.1/1966.8ms均仍1秒FAIL。API再次确认远端Draft PR16为 `3e88682`，后续本地提交未同步；具体HEAD以Git为准。Free及发布验收未完成。
+当前已推进至第三十三轮：HEADER在原生bootstrap之后并行两个独立只读操作，全部settled后才发布/报错。20项针对性Node、10项发布屏障和9项MV3通过；最近完整回归为第三十二轮753项。正常100k1640.5/1700.3/1613.0ms仍1秒FAIL。远端最后确认Draft PR16为 `3e88682`，本地HEAD以Git为准；Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -401,3 +401,13 @@ CHECK/HEADER/PAGE/SEND/UPSERT优先取消补录的独立子signal，主binding�
 最终完整Node753/0/0skip，含7项runtime与13项broker生命周期反例。真headless/IDB客户端4/4：持有后台真实事务，前台使其abort；前台CHECK挂起1250ms仍无后台重启，释放后补录并保持Pro、草稿、阅读；账号切换仍取消旧scope。MV3 9/9。正常100k功能3/3、hash稳定，1772.9/2107.1/1966.8ms仍1秒FAIL；fullread0、各1事件/hint/消息，未在测量前等待后台静止。
 
 包 `/private/tmp/vaiwl-free-delivery-round32-20261013/vaiwl-free-synthetic-only.zip` SHA256 `e0b9d556a884d73d862bcc2613d23f45b98ae087e03ccab2586372e5b4504a1b`。只读API再次确认Draft PR16 head3e88682；未重复推送失败端点，后续本地提交尚未同步。剩余本地F1热点：HEADER独立只读等待及页面组装/索引协作调度，先证据判断再改，不减少安全校验。真实账户/来源/PAIA/物理/真人条件保持，完整Free未完成。
+
+## 第三十三轮：HEADER独立只读重叠
+
+从0e80492继续。保持ensureNative顺序完成（bootstrap可能写共享锚），之后workspaceContext和evidence.header用allSettled并行；按原调用顺序抛首个失败，两项均结束才返回，不残留未结束的只读任务。每仓库的checksum/scope/guard与最终版本/权限栅栏不变，不声称跨仓库原子快照。
+
+独立6项新合同含同时启动、单/双失败等待、固定错误顺序、换scope拒绝和cold bootstrap先持久；相关Node20/20。实际发布屏障10/10、MV39/9。正常100k功能3/3、hash稳定，1640.5/1700.3/1613.0ms均仍1秒FAIL；无fullread/重复发送/草稿损失，较Round32低但单次数据不作统计结论。本轮完整NodeNOT_RUN，最新全套仍是Round32的753/0。
+
+协作调度独立诊断：按4ms合并task的内存候选未显示构建收益（原155.2/151.3ms，对照153.0/161.2ms），重绑仅约1ms差；因此cooperate源码保持原样。该报告只属计算诊断，不是产品性能认证。包 `/private/tmp/vaiwl-free-delivery-round33-20261013/vaiwl-free-synthetic-only.zip` SHA256 `021b5b8d8fbf66625373ecaa5c104b9dc8880741053285e8b89606c7f47076f7`，仍SYNTHETIC_ONLY。
+
+接续位置：100k单次新聊天写链与HEADER/PAGE/CHECK仍超1秒；可进一步核对freePage已有native页之后两个独立只读、version独立只读的等待成本，必须以故障/settle/发布反例和新测量决定，不减少权限/完整性校验。不要重做已完成模块或更改原计划/目录。真实账户/库存/本人活动/跨端、PAIA、物理IME/弱设备及真人验收仍缺对应条件，完整Free未完成。

@@ -77,7 +77,12 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
       freeRecoveryStatus:async(scope,options)=>({native:await freeRecoveryStatus(native,scope,'native',options),evidence:await freeRecoveryStatus(evidence,scope,'evidence',options)}),
       freeRecover:(scope,request,options)=>(request.kind==='native'?native:evidence).recover(scope,request,options),
       freeHeader:async(scope,options,now=FIXTURE_NOW,timeZone='Asia/Shanghai',viewSession=null,url)=>{
-        const root=await ensureNative(scope,options,new URL(url).origin),context=await workspaceContext(scope,options),stored=await evidence.header(scope,options);
+        const root=await ensureNative(scope,options,new URL(url).origin);
+        // Bootstrap can write shared anchors, so it must finish first. The two
+        // remaining owner reads are independent; settle both even if one fails.
+        const reads=await Promise.allSettled([workspaceContext(scope,options),evidence.header(scope,options)]);
+        for(const result of reads)if(result.status==='rejected')throw result.reason;
+        const context=reads[0].value,stored=reads[1].value;
         const {state,view,diagnostics}=context,policy=state.preferences.freeTimePolicy?.value;
         const activeSources=Object.values(root.manifest?.sources??{}).filter(source=>!source.revoked&&Date.parse(source.validUntil)>Date.parse(FIXTURE_NOW));
         const refs={};for(const key of Object.keys(context.refVersions??state.refs))refs[key]=0;
