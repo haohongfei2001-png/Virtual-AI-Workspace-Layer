@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第四十七轮：最新runtime为已同步Draft PR16的74c7209，双目录自动迁移/写入/恢复已接线，Node930/MV39。新补测10k mixed长中文4x通过，但100k mixed长中文正常三发送1164.3/1098.2/1263.9ms均1秒FAIL；Round46 none-heavy通过不覆盖该分布。单次采样定位共享版本清单/检查点开销，继续F1/B5；完整Free和真实发布验收未完成。
+当前已推进至第四十八轮：共享引用目录基础及旧16Mi/128Mi/100k边界已验证，最终Node957/957、真实IDB100k六项通过；尚未接入运行时。最新runtime仍74c7209、包为Round46。Round47 mixed100k长中文三次发送均1秒FAIL保持，继续F1/B5共享owner接线；完整Free和真实发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -583,3 +583,14 @@ NativeRepository的read/header/page支持新格式：完整读/header验证所�
 对失败场景追加一次定向profile，原始CPU压缩保存。采样self strictJSON188.7ms、sha25666.2、GC49.3、共享saveMutation45.1/manifestSize45.1/repository回调43.3；首个发送shared ingest200.0ms、native.apply172.9ms，evidence.apply仅6.2ms。采样三场景963.7/1116.3/911.7ms有波动，仅诊断，不能拿其中快值替代正常FAIL。下一已有F1/B5切点是共享partitioned refVersions大根/检查点的读校验与重写，需保留humanRefs、Pro身份/placement/工作集、CAS/inverse/备份恢复和旧reader边界；不再重复已无稳定收益的JSON微编码实验。
 
 本轮只变测试夹具，完整Node/MV3/包不重复跑；最新对应runtime仍Round46 Node930、MV39、包SHA145471c98318d0166e5bf04fcb1a8a9602366031123febaf32b48edf09ab7641。未覆盖单Project大量成员、已有聊天原名/成员更新、规模多tab与物理弱设备，后续仍需各自证据；长中文库存发送不是改名测试。真实账户/来源/跨端/PAIA/物理IME/真人条件未变，Free未完成。
+
+
+## 第四十八轮：共享引用目录基础与兼容容量边界
+
+接已同步Draft PR16的5f64d2d。新增shared-ref-directory纯模块，将共享refVersions映射为最多256个不可变桶，scope/generation/revision绑定，保留humanRefs、Pro工作区、preferences、sources、units和changes。原引用ordinal保持；删除留洞、重加追加、空桶移除，只重写触及桶，旧记录供既有checkpoint策略保留。删除原语不授予删除已知原生聊天权限。
+
+每桶精确记录refVersions条目字符units，完整读桶核对；根级算出旧manifest总长度，保留16Mi旧清单、128Mi聚合和100k引用限制。root元数据引用只做声明校验，完整materialize仍验证humanRefs/preferences真实存在；未读目录不是事实或授权。验证缓存每次严格比较全部新读字节，包含scope/generation/revision/count/units/nextOrdinal上下文，不缓存权威对象。
+
+独立子代理27合同通过；最终完整Node957/957、0失败/跳过。实际headless真实IDB100k六项通过：原元数据/顺序往返、事务abort全保持、单桶删除、重新追加、旧checkpoint可还原、100001拒绝。证据free-round48-*保留源码hash。本模块尚未接入共享owner、worker或build，未做实际迁移/备份恢复，不称产品提速；MV3/规模发送/打包本轮NOT_RUN，runtime与Round46包不变，Round47 mixed100k三次一秒FAIL保持。
+
+下一步同事务shared directory reader与owner读取接线，然后完整writer/迁移/CAS/inverse/恢复/备份/known anchors/GC；每条路径保留Pro人工资产、旧reader拒绝及授权隔离。真实来源/账户/跨端/PAIA/物理IME/真人条件仍缺，Free未完成。
