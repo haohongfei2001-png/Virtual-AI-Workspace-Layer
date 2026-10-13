@@ -50,3 +50,23 @@ test('numeric sort preserves native stable ties and does not mutate row order or
  refs[0].activityDecision={basis:'undated',candidateDay:null,candidateTime:null,segment:null};
  const changed=aggregateFreeActivity(value);assert.deepEqual(changed.noProject.map(r=>r.id),['m','a','z']);assert.deepEqual(changed.projects.map(p=>p.id),['first','second']);
 });
+
+const anchorTime='2026-08-14T10:00:00Z';
+function anchored(){const e=evidence();e.sources.s={id:'s',channel:'host-evidence',codecVersion:1,profileId:'test',profileVersion:1,generation:'g1',sourceRevision:1,observedAt:anchorTime,validUntil:'2026-08-14T10:01:00Z',revoked:false};e.hints.h={id:'h',sourceId:'s',generation:'g1',sourceRevision:1,observedAt:anchorTime,revoked:false,conversationId:'a',eventKey:'event_a',messageId:'message_a',hintType:'observed-self-send',anchorVersion:1,actorVerified:true,actorScopeKey:scope,firstObservedAt:anchorTime,candidateInterval:{from:'2026-08-14T09:59:50Z',through:anchorTime},calibrationDueAt:'2026-08-14T10:00:30Z',clockBasis:'local-bounded',ackWitness:{kind:'authenticated-message-readback',profileId:'test',profileVersion:1,semanticFingerprint:'a'.repeat(64)}};return e;}
+test('host observed send stays provisional and naturally sinks after sixty days despite calibration due and source TTL',()=>{
+ const e=anchored(),before=JSON.stringify(e),early=createFreeViewSession({now:anchorTime,timeZone:'UTC'});const fresh=projectFreeActivity(snapshot,e,early,anchorTime).refs[0].activity;
+ assert.equal(fresh.segment,0);assert.equal(fresh.basis,'provisional');const aged=project(e).refs[0].activity;assert.equal(aged.segment,2);assert.equal(aged.reason,'observed-self-send');assert.equal(aged.candidateTime,anchorTime);assert.equal(aged.nextCheck,e.hints.h.calibrationDueAt);assert.equal(aged.validUntil,null);assert.equal(aged.basis,'provisional');assert.equal(aged.sentAt,undefined);assert.equal(JSON.stringify(e),before);
+});
+test('observed send polling cannot refresh anchor or calibration time',()=>{const e=anchored(),original=e.hints;e.hints=mergeFreeObservationHints(e.hints,[{...e.hints.h,observedAt:now,firstObservedAt:now,candidateInterval:{from:now,through:now},calibrationDueAt:'2026-10-13T12:01:00Z'}]);assert.deepEqual(e.hints,original);assert.equal(project(e).refs[0].activity.candidateTime,anchorTime);assert.equal(project(e).refs[0].activity.segment,2);});
+test('host durable hint rejects revoked, mismatched, untrusted and corrupt witnesses without widening legacy behavior',()=>{
+ const changes=[e=>e.sources.s.revoked=true,e=>e.hints.h.revoked=true,e=>e.hints.h.generation='g2',e=>e.hints.h.sourceRevision=2,e=>e.sources.s.sourceRevision=NaN,e=>e.sources.s.observedAt='bad',e=>e.hints.h.actorScopeKey='other',e=>e.hints.h.actorVerified=false,e=>e.sources.s.channel='synthetic',e=>e.sources.s.codecVersion=2,e=>e.sources.s.profileId='different',e=>e.hints.h.sentAt=anchorTime,e=>e.hints.h.validUntil=now,e=>e.hints.h.ackWitness.kind='http-200',e=>e.hints.h.candidateInterval.through=now,e=>e.hints.h.firstObservedAt=now,e=>e.hints.h.calibrationDueAt=anchorTime];
+ for(const change of changes){const e=anchored();change(e);assert.equal(project(e).refs[0].activity.candidateTime,null,String(change));}
+});
+test('due time is a calibration request, not expiration, and future observed anchors remain unusable',()=>{
+ const e=anchored(),due=e.hints.h.calibrationDueAt,view=createFreeViewSession({now:due,timeZone:'UTC'});assert.equal(projectFreeActivity(snapshot,e,view,due).refs[0].activity.candidateTime,anchorTime);
+ const before='2026-08-14T09:59:59Z';assert.equal(projectFreeActivity(snapshot,e,createFreeViewSession({now:before,timeZone:'UTC'}),before).refs[0].activity.candidateTime,null);
+});
+test('legacy local hints and exact events still expire under normal source TTL',()=>{
+ for(const kind of ['hint','event']){const e=anchored();e.hints={};if(kind==='hint')e.hints.old={id:'old',sourceId:'s',eventKey:'old',hintType:'local-confirmed-send',conversationId:'a',actorVerified:true,actorScopeKey:scope,observedAt:anchorTime,validUntil:'2026-10-14T00:00:00Z'};else e.events.old=send('a',anchorTime,{observedAt:anchorTime});assert.equal(project(e).refs[0].activity.candidateTime,null);}
+ const e=anchored();e.sources.s.validUntil='2026-10-14T00:00:00Z';e.sources.s.observedAt=now;e.events.latest=send('a',now);assert.equal(project(e).refs[0].activity.reason,'positive-send');assert.equal(project(e).refs[0].activity.basis,'exact');
+});

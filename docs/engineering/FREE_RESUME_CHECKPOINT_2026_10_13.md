@@ -898,3 +898,14 @@ context C1/C2/持续认证、可信发送/observed anchor/continuation、恢复�
 d5f42ff保存Round87成果后正常push再次遇GitHub 30秒low-speed超时；本地完整保留，未强推，不把未确认push称远端完成。继续HOST_REFRESH全链6秒期限：同一AbortController覆盖provider，前/后getFrame和handshake每次await后检查；超时前已形成但未完成响应的原grant撤销，使用冻结grant对象identity避免撤掉后来的授权，旧迟到verify先检查期限不再执行撤销。初始getFrame永久挂起、末次getFrame挂起及替代grant反例均通过。
 
 独立授权集成回归91/91，0失败/跳过，free-round88-auth-node.log。本轮未重跑浏览器；Round87真实66秒和八旅程证据仅对应其当时源码，不冒称本轮总deadline变更已浏览器复核。继续已批准B2/F活动锚与Native/Evidence原子continuation。Free未完成、NOT_RELEASE_READY。
+
+
+## Round89：版本化持久观察锚
+
+在0c8e678继续既有证据仓库/分片与ActivityDecision，没有新DB或第二引擎。新增host-evidence codec1来源及observed-self-send hint1：严格本人scope、message、同profile ACK witness、首次本机观察区间≤30秒、clockBasis和calibrationDueAt，无sentAt/serverTime/validUntil字段。源普通TTL与校准期限不删除锚；明确撤源、generation/profile/scope不符仍拒。锚始终provisional，并自然按H/T/Z变老，不把local-confirmed-send等旧synthetic数据升级。
+
+FreeEvidenceRepository新增原request身份的私有host gate；来源/ACK profile、scope和事务guard严格复核，默认未配置即拒。同message重开按source/eventKey保留完整原锚；同conversation/message换source/eventKey拒，不能刷新首次时间；ACK语义冲突拒。检查gate后保存请求快照，指纹与归约使用同快照，open等待期间篡改原请求不能改实际落库。旧synthetic路径、CAS、操作回放、恢复撤源与Pro资产保留。新型字段使旧严格reader拒写，不以改标签迁移历史资产。
+
+完整1844/1844 Node通过、0失败/跳过；真实headless Chrome IndexedDB六项PASS（重开、去重、60天自然老化、整库CAS回滚、损坏恢复撤源/Pro人工作品、跨scope撤权）；实际构建包LEGACY八旅程PASS。两个浏览器报告sourceChangedDuringRun=false。IDB测试明确使用合成WeakMap authority，未认证production本人ACK。首轮全量四个旧simulator打包依赖缺失失败保留，补上新共享validator到原构建器静态图后通过，不削弱依赖校验。
+
+生产入口仍默认无host evidence admission，读侧默认拒不支持的活动来源；当前对象/作者/ACK核验与有界continuation尚待接通，不能把纯候选或测试gate称真实发送。远端PR16 API最后确认仍7122447，本地87/88检查点push曾遇low-speed超时；未强推/更改origin。Free未完成、NOT_RELEASE_READY，旧4x100k与真实G/U条件保持。

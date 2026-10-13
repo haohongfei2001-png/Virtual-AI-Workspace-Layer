@@ -24,9 +24,9 @@ export class FreeEvidenceRepository {
  verifiedRoot(row,scope){return this.#rootCache.read(row,scope.key,(payload,record)=>this.#validateRoot(payload,record,scope));}
  #rootWithCounts(row,scope){return this.#rootCache.readWithCounts(row,scope.key,(payload,record)=>this.#validateRoot(payload,record,scope),['refVersions']);}
 
- constructor({baseRepository,observationGate=null,clock=()=>new Date().toISOString()}){
+ constructor({baseRepository,observationGate=null,hostObservationGate=null,clock=()=>new Date().toISOString()}){
   if(!baseRepository?.open||!baseRepository?.scopeOrThrow)throw Error('b1-repository-required');
-  this.base=baseRepository;this.observationGate=observationGate;this.clock=clock;
+  this.base=baseRepository;this.observationGate=observationGate;this.hostObservationGate=hostObservationGate;this.clock=clock;
  }
  async migrateRefDirectory(scope,request,options={}) {return migrateEvidenceDirectory(this,scope,request,options);}
  async read(scope,options={}) { return (await this.query(scope,null,options)).evidence; }
@@ -129,22 +129,26 @@ export class FreeEvidenceRepository {
   }
 
  async apply(scope,request,options={}){
-  const normalized=this.base.scopeOrThrow(scope),authority=this.observationGate?.(normalized);
-  if(authority?.channel!=='synthetic')throw Error('untrusted-free-evidence-source');
+  const normalized=this.base.scopeOrThrow(scope),host=this.hostObservationGate?.(normalized,request),authority=host??this.observationGate?.(normalized);
+  if(host?(host.channel!=='host-evidence'||host.scopeKey!==normalized.key||typeof host.guard!=='function'||host.guard()!==true):authority?.channel!=='synthetic')throw Error('untrusted-free-evidence-source');
+  // Gate admission belongs to the original object; persist one stable snapshot.
+  request=structuredClone(request);
   id(authority.sourceId);id(authority.generation);
+  if(host){id(host.profileId);if(!Number.isSafeInteger(host.profileVersion)||host.profileVersion<1)throw Error('invalid-host-evidence-profile');const original=options;options={...original,guard:()=>host.guard()===true&&(original.guard?.()??true)===true};}
   if(!request.batch||!['sources','events','hints','coverage'].every(t=>Array.isArray(request.batch[t])))throw Error('invalid-free-evidence-batch');
-  for(const row of request.batch.sources)if(row.id!==authority.sourceId||row.generation!==authority.generation)throw Error('free-evidence-source-gate-mismatch');
-  for(const table of ['events','hints','coverage'])for(const row of request.batch[table])if(row.sourceId!==authority.sourceId||row.generation!==authority.generation)throw Error('free-evidence-source-gate-mismatch');
+  for(const row of request.batch.sources)if(row.id!==authority.sourceId||row.generation!==authority.generation||(host&&(row.channel!=='host-evidence'||row.codecVersion!==1||row.profileId!==host.profileId||row.profileVersion!==host.profileVersion)))throw Error('free-evidence-source-gate-mismatch');
+  for(const table of ['events','hints','coverage'])for(const row of request.batch[table])if(row.sourceId!==authority.sourceId||row.generation!==authority.generation||(host&&(table!=='hints'||row.ackWitness?.profileId!==host.profileId||row.ackWitness?.profileVersion!==host.profileVersion)))throw Error('free-evidence-source-gate-mismatch');
   const command={type:'OBSERVE_FREE_EVIDENCE',batch:request.batch};
-  return this.mutate(normalized,request,command,options);
+  return this.mutate(normalized,request,command,options,host?{channel:'host-evidence',profileId:host.profileId,profileVersion:host.profileVersion,sourceId:host.sourceId,generation:host.generation}:null);
  }
  async invalidate(scope,request,options={}){
   id(request.sourceId);return this.mutate(scope,request,{type:'REVOKE_FREE_EVIDENCE_SOURCE',sourceId:request.sourceId},options);
  }
- async mutate(scope,{operationId,expectedRevision},command,options){
+ async mutate(scope,{operationId,expectedRevision},command,options,host=null){
+  command=structuredClone(command);host=host?structuredClone(host):null;
   const normalized=this.base.scopeOrThrow(scope);id(operationId);
   if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)throw Error('invalid-revision');
-  const fingerprint=digest({command,expectedRevision}),db=await this.base.open(),key=freeEvidenceKey(normalized.key);fence(options);
+  const fingerprint=digest({command,expectedRevision,...(host?{host}: {})}),db=await this.base.open(),key=freeEvidenceKey(normalized.key);fence(options);
   return new Promise(resolve=>{
    const tx=db.transaction(['native_states','native_operations'],'readwrite'),states=tx.objectStore('native_states'),operations=tx.objectStore('native_operations');let result;
    const abort=reason=>{if(result?.ok===false)return;result={ok:false,reason};try{tx.abort();}catch{}};
@@ -165,7 +169,7 @@ export class FreeEvidenceRepository {
       if(manifest&&!manifest.indexChecksums)throw Error('evidence-index-integrity-required');
       let indexes={};
       const save=partial=>{try{
-       const next=applyFreeEvidence(partial,command,{scope:normalized,now:this.clock(),channel:'synthetic'});fence(options);
+       const next=applyFreeEvidence(partial,command,{scope:normalized,now:this.clock(),channel:host?.channel??'synthetic'});fence(options);
        const finish=()=>{try{fence(options);operations.put(record(key,{revision:next.revision}));operations.put(record(operationKey,{fingerprint,revision:next.revision,operationId}));fence(options);result={ok:true,replayed:false,revision:next.revision,operationId};}catch(failure){abort(failure.message);}};
        if(reader)saveDirectoryEvidence(states,normalized,next,manifest,partial,indexes,reader,finish,failure=>abort(failure.message));else{saveEvidencePieces(states,normalized,next,manifest,manifest?partial:null,indexes);finish();}
       }catch(failure){abort(failure.message);}};

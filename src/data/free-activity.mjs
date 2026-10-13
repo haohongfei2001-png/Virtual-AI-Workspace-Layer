@@ -1,5 +1,6 @@
 import { instant, localDay } from '../navigation/projection.mjs';
 import { freeSegmentFor } from './free-time-policy.mjs';
+import { validateObservedSendAnchor } from './observed-send-anchor.mjs';
 function active(row,sources,clock) {
   const source=sources[row.sourceId];
   return !!source&&!source.revoked&&!row.revoked&&
@@ -52,6 +53,17 @@ export function projectFreeActivity(snapshot,evidence,session,now) {
         reason:!same?'interval-crosses-window':hi===0?'positive-send':complete?'covered-history':'historical-anchor-incomplete',sentInterval:{from:latest[0],through:latest[1]}};
     }
     for(const h of hints.get(id)??[]){
+      if(h.hintType==='observed-self-send'){
+        // A bounded local observation remains an estimate, not a server send
+        // timestamp. Calibration due/ordinary source TTL never erase its fixed
+        // first-observation anchor; explicit revocation still does.
+        const source=sources[h.sourceId];
+        try{validateObservedSendAnchor(h,{scopeKey:snapshot.scope,sources});}catch{continue;}
+        if(!source||source.id!==h.sourceId||source.channel!=='host-evidence'||source.codecVersion!==1||source.revoked!==false||h.revoked||h.generation!==source.generation||!Number.isSafeInteger(source.sourceRevision)||source.sourceRevision<1||h.sourceRevision>source.sourceRevision||instant(source.observedAt)===null||instant(source.validUntil)===null||instant(source.validUntil)<=instant(source.observedAt)||instant(h.observedAt)>instant(source.observedAt)||instant(h.observedAt)>clock||instant(h.firstObservedAt)>clock)continue;
+        const at=h.candidateInterval.through;if(instant(at)>clock||result.candidateTime!==null&&instant(at)<=instant(result.candidateTime))continue;
+        result={...base,basis:'provisional',candidateDay:localDay(at,session.Z),candidateTime:at,segment:freeSegmentFor(at,session),reason:'observed-self-send',nextCheck:h.calibrationDueAt,validUntil:null};
+        continue;
+      }
       if(!active(h,sources,clock)||!h.eventKey||instant(h.validUntil)===null)continue;
       const self=h.hintType==='local-confirmed-send'&&h.actorVerified===true&&h.actorScopeKey===snapshot.scope;
       if(!self&&!(h.hintType==='native-activity'&&h.semanticsVerified===true))continue;
