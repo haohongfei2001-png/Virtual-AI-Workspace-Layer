@@ -4,7 +4,7 @@ import {createServer} from '../../simulator/server.mjs';
 import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
-const files=['src/data/native-index-reader.mjs','src/data/native-index-writer.mjs','src/data/native-index-migration.mjs','src/data/native-version-index.mjs','src/data/native-partitions.mjs','src/data/native-repository.mjs'];
+const files=['src/data/native-partition-audit.mjs','tests/free/native-index-write-browser.mjs','src/data/native-index-reader.mjs','src/data/native-index-writer.mjs','src/data/native-index-migration.mjs','src/data/native-version-index.mjs','src/data/native-partitions.mjs','src/data/native-repository.mjs'];
 const hashes=async()=>Object.fromEntries(await Promise.all(files.map(async f=>[f,createHash('sha256').update(await readFile(f)).digest('hex')]))),sourceHashes=await hashes();
 const server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
 try{browser=await chromium.launch({headless:true});const page=await browser.newPage();await page.goto(`http://127.0.0.1:${server.address().port}/hf/A/c/T0?mode=native`);
@@ -23,6 +23,29 @@ const result=await page.evaluate(async()=>{
  // Fault at the first staged index bucket, after native pieces and shared registration.
  for(const mode of ['quota','revoke']){const before=await snapshot(),controller=new AbortController(),original=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(row,...rest){if(this.name==='native_states'&&String(row.key).includes('native-version-index')){if(mode==='quota')throw new DOMException('injected','QuotaExceededError');const q=original.call(this,row,...rest);controller.abort();return q;}return original.call(this,row,...rest);};let r;try{r=await native.apply(scope,request(5,'fault_'+mode),{signal:controller.signal});}finally{IDBObjectStore.prototype.put=original;}ok(!r.ok,'fault refused '+mode);eq(await snapshot(),before,'atomic rollback '+mode);checks.push('real-indexed-'+mode+'-rollback');}
  const root=await raw('native_states',scopeKey);root.checksum='0'.repeat(64);await put(root);const damagedHash=digest(root),repaired=await native.recover(scope,{operationId:'repair',damagedHash});ok(repaired.ok,'recover '+JSON.stringify(repaired));const after=await native.read(scope);eq(after.revision,5,'recovered revision');ok(after.sources.fixture.revoked,'source revoked');eq(after.refs.R.nativeTitle,'Title 4','facts retained');eq((await native.apply(scope,request(6))).reason,'native-source-invalidated','old source blocked');eq((await shared.read(scope)).state.workspaces,humanBefore.workspaces,'human assets after writes and recovery');checks.push('indexed-full-recovery-revokes-source-preserves-Pro');
- const other=await native.read(scopeOf('B'));eq(Object.keys(other.refs).length,0,'scope isolated');checks.push('other-account-isolation');base.close();peerBase.close();return {checks};
+ const other=await native.read(scopeOf('B'));eq(Object.keys(other.refs).length,0,'scope isolated');checks.push('other-account-isolation');base.close();peerBase.close();
+ // A separate database crosses the real transaction batch boundary. The last
+ // row must be read and verified before any migration root/receipt is published.
+ const batchBase=new ScopeRepository({indexedDB,databaseName:'native-audit-5001'}),batchOwner=new NativeRepository({baseRepository:batchBase,clock:()=>now,observationGate:gate}),batchDB=await batchBase.open();
+ try{
+  for(const [offset,count,revision]of [[0,5000,0],[5000,1,1]]){
+   const command=request(revision+1,'batch-seed-'+offset);
+   command.batch.refs=Array.from({length:count},(_,i)=>({id:'B'+(offset+i),nativeTitle:'审计 '+(offset+i),nativeUrl:'https://fixture.test/c/B'+(offset+i),availability:'available'}));
+   command.batch.membership=command.batch.refs.map(row=>({id:row.id,state:'PROJECT',projectId:'P'}));
+   ok((await batchOwner.apply(scope,command)).ok,'batch seed');
+  }
+  const batchRows=()=>new Promise((resolve,reject)=>{const tx=batchDB.transaction(['native_states','native_operations']),out={};for(const table of ['native_states','native_operations']){const q=tx.objectStore(table).getAll();q.onsuccess=()=>out[table]=q.result;}tx.oncomplete=()=>resolve(out);tx.onabort=()=>reject(tx.error);});
+  const batchPut=row=>new Promise((resolve,reject)=>{const tx=batchDB.transaction('native_states','readwrite');tx.objectStore('native_states').put(row);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+  const tailKey=nativePartitionKey(scopeKey,'refs','B5000',2),initialRows=await batchRows(),tail=initialRows.native_states.find(row=>row.key===tailKey),beforeFacts=await batchOwner.read(scope);
+  ok(tail,'second batch tail exists');await batchPut({...tail,checksum:'0'.repeat(64)});
+  const damaged=await batchRows(),rejected=await batchOwner.migrateVersionIndex(scope,{operationId:'batch-corrupt',expectedRevision:2});
+  ok(!rejected.ok,'late corrupt migration refused');eq(await batchRows(),damaged,'late corruption leaves all rows unchanged');checks.push('real-5001-late-corruption-atomic-rejection');await batchPut(tail);
+  const controller=new AbortController(),originalGet=IDBObjectStore.prototype.get;
+  IDBObjectStore.prototype.get=function(key,...rest){const q=originalGet.call(this,key,...rest);if(this.transaction.db.name==='native-audit-5001'&&this.name==='native_states'&&key===tailKey)controller.abort();return q;};
+  let aborted;try{aborted=await batchOwner.migrateVersionIndex(scope,{operationId:'batch-revoked',expectedRevision:2},{signal:controller.signal});}finally{IDBObjectStore.prototype.get=originalGet;}
+  ok(!aborted.ok,'second batch revocation refused');eq(await batchRows(),initialRows,'second batch revocation leaves all rows unchanged');checks.push('real-5001-second-batch-revocation-rollback');
+  const migrated=await batchOwner.migrateVersionIndex(scope,{operationId:'batch-success',expectedRevision:2});ok(migrated.ok,'5001 migration '+JSON.stringify(migrated));eq(await batchOwner.read(scope),{...beforeFacts,revision:3},'5001 full facts and order retained');checks.push('real-5001-same-transaction-complete-migration');
+ }finally{batchBase.close();}
+ return {checks};
 });assert.deepEqual(await hashes(),sourceHashes);await writeFile(process.argv[2]??'/private/tmp/free-index-write.json',JSON.stringify({evidence:'REAL_IDB_SYNTHETIC_EXPLICIT_INDEX_MIGRATION',browser:browser.version(),sourceHashes,result},null,2)+'\n');console.log(JSON.stringify(result));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

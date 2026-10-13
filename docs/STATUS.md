@@ -733,3 +733,14 @@ Round61/62已同步至df925b1。本轮仅测试代码：同浏览器context、�
 发布前一次100k实际MV3（在最后guard-release顺序修复之前）首载22963.9ms，发送730.3/739.8/1105.7ms；最后样本仍FAIL，不证明p95或唯一瓶颈根因。该规模证据明确不是最终源码，不重复计入最终MV3 9项。Round64 push遭网络低速超时，最后确认远端747d70d；本提交后再正常合并同步。
 
 未打最终65新ZIP；旧包保留其来源。下一独立任务为native migration逐批完整审计以减少100k request/facts副本峰值，速度收益未测。4x100k/实际MV3 100k一秒目标仍未满足；真实上游与账户/PAIA/IME/真人等条件仍未验证，Free未完成。
+
+
+## Round66（2026-10-14）：原生迁移有界全量审计
+
+570a906已确认push，PR16仍Draft且描述已更新。native migration改为同一RW事务内每批<=5000引用（另可加载最多5000 Project依赖），先所有Project再所有引用；复用原checksum/来源/成员/容量校验，不保留100k全facts/pieces副本。完整JSON大小按全局行长度和逗号精确累计，sources只计一次，128Mi限制保持。每批同步排下一批请求并检查fence，最终原CAS/checkpoint/receipt不变。
+
+最终完整Node1150/1150、0失败/跳过；独立新6合同含5001全facts和JSON长度oracle、空库存、末项损坏/依赖/跨scope/撤权。真实IDB9项通过，新增5001末项坏checksum与第二批撤权全部store回滚、同事务成功完整保留；实际headless MV3生命周期9/9。
+
+4x100k仍30秒启动FAIL；多次原子尝试在约6.5–7.4秒观察stale-binding并按批回滚，后续发送NOT_RUN；原生同input/草稿/连接/可见全部true，sourceChanged=false。未放宽6秒RPC。最终未限速实际MV3 100k首载24693.4ms、第二标签13912.3ms，发送730.1/707.9/662.1ms均单样本PASS；原草稿、唯一事件、scope隔离通过。冷启动并未显示明显改善，不从该组推断p95或物理设备达标。128Mi精确边界未做新增专项大数据测试，保留原限制与小数据全量JSON oracle。
+
+最终冻结包 /var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-scale-mv3-t4QFgT/package/extension；ZIP SHA256 6107adfc2da4c3d8b96fb33bddf0b54c4297d42dccc08abb50cdf22bd52b372e，source manifest c392158b4cc9edcb90499aa0e1071756ef009291f162ff8174bd2cfa30f235f5。SYNTHETIC_ONLY/NOT_RELEASE_READY。真实ChatGPT来源/账户、跨端、PAIA、IME与真人条件仍未验证，Free尚未完整交付。下一独立性能机会仅先测量canonical key编码热点，不以猜测引入缓存或弱化校验。

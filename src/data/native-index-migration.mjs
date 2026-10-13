@@ -1,5 +1,6 @@
 import {buildNativeVersionIndex,NATIVE_INDEX_FORMAT} from './native-version-index.mjs';
-import {isNativePartitioned,loadNativePieces,nativeRecord,nativeUnpack,nativeRecoveryKey,nativeCheckpointKey,nativePartitionKey} from './native-partitions.mjs';
+import {isNativePartitioned,nativeRecord,nativeUnpack,nativeRecoveryKey,nativeCheckpointKey,nativePartitionKey} from './native-partitions.mjs';
+import {auditNativePartitions} from './native-partition-audit.mjs';
 import {digest} from './hash.mjs';
 import {id} from './state.mjs';
 /** Explicit owner migration only. No observation grant or external native action. */
@@ -17,7 +18,7 @@ export async function migrateNativeVersionIndex(owner,scope,{operationId,expecte
    if(payload.revision!==expectedRevision)throw Error('revision-conflict');
    if(payload.format===NATIVE_INDEX_FORMAT){result={ok:true,alreadyIndexed:true,revision:payload.revision,operationId};return;}
    if(!isNativePartitioned(payload))throw Error('native-index-migration-requires-partitioned-root');
-   loadNativePieces(store,payload,normalized,{projects:Object.keys(payload.projects),refs:Object.keys(payload.refs)},()=>{try{
+   auditNativePartitions(store,payload,normalized,fence,()=>{try{
     // Structural migration changes no native piece versions. Record that fact
     // so the next write need not reconcile every unchanged legacy ID.
     fence();const built=buildNativeVersionIndex({...payload,revision:payload.revision+1,changes:[{revision:payload.revision+1,projects:[],refs:[]}]},normalized);
