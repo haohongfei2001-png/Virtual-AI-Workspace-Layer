@@ -30,8 +30,15 @@ try{
  assert.equal(await discovery.evaluate((d,h)=>d.getNode(h)===null,idless.target.control),true);
  const project=await discovery.evaluate(d=>d.scan());
  assert.equal(project.membershipClaims.find(c=>c.conversationId===expected.conversations[1].id).projectId,expected.projects[1].id);
+ const currentProject=project.candidates.find(c=>c.target.nativeId===expected.projects[1].id);assert.ok(currentProject);assert.equal(currentProject.target.liveHandle,null);assert.equal(currentProject.nativeTitle,expected.projects[1].name);
+ await page.locator('main > header > h1').evaluate(n=>n.textContent='Conflict');assert.equal((await discovery.evaluate(d=>d.scan())).candidates.some(c=>c.target.nativeId===expected.projects[1].id),false);
+ await page.locator('main > header > h1').evaluate(n=>n.textContent='Research');
+ await page.locator('main > #reading > h2').evaluate(n=>n.remove());assert.equal((await discovery.evaluate(d=>d.scan())).candidates.some(c=>c.target.nativeId===expected.projects[1].id),false);
+ await page.locator('#reading').evaluate(n=>{const h=document.createElement('h2');h.textContent='Research';n.prepend(h);});
+
  assert.ok(project.membershipClaims.filter(c=>c.conversationId!==expected.conversations[1].id).every(c=>c.asserted==='UNKNOWN'));
  await page.getByRole('navigation',{name:'Project conversations'}).evaluate(node=>node.dataset.projectId='g-p-stale');
+ assert.equal((await discovery.evaluate(d=>d.scan())).candidates.some(c=>c.target.nativeId===expected.projects[1].id),false);
  assert.equal((await discovery.evaluate(d=>d.scan())).membershipClaims.find(c=>c.conversationId===expected.conversations[1].id).asserted,'UNKNOWN');
  report.results.push({name:'route-fenced-handles-and-explicit-member-region',status:'PASS'});
  await page.getByRole('link',{name:expected.conversations[2].title,exact:true}).click();await page.waitForURL(`**/c/${expected.conversations[2].id}`);

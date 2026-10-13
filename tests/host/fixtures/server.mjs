@@ -1,3 +1,4 @@
+import { createVariantHostFixtureServer } from './variants-server.mjs';
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { randomBytes, createHash } from 'node:crypto';
@@ -14,10 +15,10 @@ const clone = (value) => structuredClone(value);
 /**
  * Loopback-only native application reconstruction, NOT a captured ChatGPT page.
  * Authentication and expected results never come from page-supplied verified flags.
- * Only LEGACY is currently implemented; unsupported profiles fail explicitly.
+ * LEGACY keeps its original behavior; other profiles use their own reconstruction.
  */
-export async function createHostFixtureServer({profile = 'LEGACY', principalId = 'user-host-fixture', accounts = null, now = () => Date.now()} = {}) {
-  if (profile !== 'LEGACY') throw new Error('fixture-profile-not-implemented');
+export async function createHostFixtureServer({profile = 'LEGACY', principalId = 'user-host-fixture', accounts = null, now = () => Date.now(), variant = 'positive', fault} = {}) {
+  if (profile !== 'LEGACY') return createVariantHostFixtureServer({profile,principalId,accounts,now,variant,fault});
   const files = Object.fromEntries(await Promise.all([
     ['/', 'legacy.html', 'text/html; charset=utf-8'],
     ['/native.mjs', 'native.mjs', 'text/javascript; charset=utf-8'],

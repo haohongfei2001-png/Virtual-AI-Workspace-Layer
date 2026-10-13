@@ -76,9 +76,11 @@ export function validateNativeFacts(facts, scope) {
       identifier(key);
       if (!isRecord(row) || row.id !== key) throw Error('invalid-native-row');
       if (table === 'sources') {
-        shape(row, ['id', 'generation', 'sourceRevision', 'observedAt', 'validUntil', 'revoked', 'channel', 'inventory']);
+        shape(row, ['id', 'generation', 'sourceRevision', 'observedAt', 'validUntil', 'revoked', 'channel', 'inventory'], ['admission']);
         witness({...row, sourceId: key});
-        if (row.channel !== 'synthetic' || typeof row.revoked !== 'boolean') throw Error('untrusted-native-source');
+        if (!['synthetic','host-dom'].includes(row.channel) || typeof row.revoked !== 'boolean') throw Error('untrusted-native-source');
+        if(row.channel==='host-dom') validateAdmission(row.admission);
+        else if(row.admission!==undefined)throw Error('invalid-native-admission');
         inventory(row.inventory);
         continue;
       }
@@ -113,9 +115,10 @@ function inventory(value) {
   }
 }
 
-export function applyNativeObservations(current, batch, {scope, channel, sourceId, generation, now}) {
+export function applyNativeObservations(current, batch, {scope, channel, sourceId, generation, now, admission}) {
   validateNativeFacts(current, scope);
-  if (channel !== 'synthetic') throw Error('untrusted-native-source');
+  if (!['synthetic','host-dom'].includes(channel)) throw Error('untrusted-native-source');
+  if(channel==='host-dom')validateAdmission(admission);
   identifier(sourceId);
   identifier(generation);
   shape(batch, ['scopeKey', 'sourceRevision', 'observedAt', 'validUntil', 'projects', 'refs', 'membership', 'inventory']);
@@ -153,7 +156,7 @@ export function applyNativeObservations(current, batch, {scope, channel, sourceI
   }
   next.sources[sourceId] = {id: sourceId, generation, sourceRevision: batch.sourceRevision,
     observedAt: batch.observedAt, validUntil: batch.validUntil, revoked: false, channel,
-    inventory: structuredClone(batch.inventory)};
+    inventory: structuredClone(batch.inventory),...(channel==='host-dom'?{admission:structuredClone(admission)}:{})};
   next.revision++;
   return validateNativeFacts(next, scope);
 }
@@ -173,4 +176,10 @@ export function nativeWitnessActive(row, facts, now) {
   return !!source && !source.revoked && source.generation === row.generation &&
     source.sourceRevision >= row.sourceRevision && timestamp(source.validUntil) > clock && timestamp(row.observedAt) <= clock &&
     timestamp(row.validUntil) > clock;
+}
+
+function validateAdmission(value){
+ shape(value,['profileId','profileVersion','evidenceClass','semanticFingerprint','acceptedAt']);
+ identifier(value.profileId);revision(value.profileVersion);timestamp(value.acceptedAt);
+ if(value.evidenceClass!=='surface'||typeof value.semanticFingerprint!=='string'||!/^[0-9a-f]{64}$/.test(value.semanticFingerprint))throw Error('invalid-native-admission');
 }

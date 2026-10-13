@@ -6,8 +6,10 @@ Returned fields are `origin`, `url`, `manifest`, `snapshot()`,
 The server binds only to `127.0.0.1` on a random port.
 
 This is a structure reconstruction under VA-HOST/1.1, **not a real ChatGPT
-DOM capture or live protocol certification**. Only LEGACY is implemented.
-MODERN, PARTIAL and FAULT are not yet supported and fail explicitly.
+DOM capture or live protocol certification**. Profiles are `LEGACY`, `MODERN`, `PARTIAL`, and `FAULT`.
+LEGACY retains its original page, script, and endpoint behavior.
+For the other profiles, `variant` accepts `positive`, `missing`, `conflict`, or
+`neighbor`; unrecognized profiles/variants/faults fail explicitly.
 
 The initial native page has two identically named Projects, one without any ID
 or href; two ordinary conversation links; separate header, transcript, editor,
@@ -40,3 +42,36 @@ headless native handlers and draft checks. Browser tests use the local Chrome
 binary, a fresh context, and block page requests outside the fixture origin;
 these tests do not contain an extension worker and do not certify worker
 network policy or actual MV3 compatibility.
+
+## Additional native profiles
+
+`MODERN` mounts both sidebar and rail, keeps a hidden old body, virtualizes its
+visible chat list, and exposes multiple native message ID nodes. Current-object
+responses contain original timestamps as well as deliberately missing author
+and time fields. `conflict` repeats a message ID with a different original time;
+`neighbor` adds a different author's message. Normal current-object and scroll
+requests carry `Chatgpt-Account-Id`. The roster contains two contexts and the
+selected context is the second, so selecting the roster's first row fails.
+`/native/preferences` is application state only, not an authentication proof.
+
+`PARTIAL` holds 1000 conversations but exposes only 25 initial links. Native
+scroll loads the next 25 through `/backend-api/conversations`; no hidden DOM or
+script contains the other IDs. Page revisions change, so these reads are not a
+complete atomic snapshot. The conflict variant overlaps one row at the page
+boundary; missing omits some metadata titles. Native search is still available.
+
+`FAULT` has a fixed `fault` option: `auth-failure`, `unsafe-reading`,
+`forged-scope`, `csp`, `iframe-destroy`, `stale-response`, `rate-limit`,
+`corrupt`, or `unknown-protocol`. Expected restrictions are declared separately
+in `../expected/fault.mjs`. `forged-scope` sends an explicitly hostile fabricated
+message; it never alters the server's authenticated identity. This is an
+adversarial input, not an oracle shortcut. `stale-response` holds the first
+conversation route response until the test process calls
+`releaseStaleResponses()`; subsequent requests can finish first. This control
+has no HTTP endpoint. `setSelectedContext(id)` is also test-process-only.
+
+`variants-server.test.mjs` checks these normal protocol and fault endpoints.
+`variants-browser-smoke.mjs` verifies actual headless native DOM/scroll/handler
+behavior and selected browser fault effects. It does not certify the production
+adapter, actual extension CSP/disable behavior, browser webRequest receipts, or
+all 81 acceptance cases. Those remain separate integration tests.

@@ -45,5 +45,15 @@ export function createHostDocumentHandshake({extensionId,getFrame,allowedURL,now
   if(!slot||now()>=slot.until||binding?.documentToken!==slot.binding.documentToken||binding?.producerToken!==slot.binding.producerToken||binding?.routeEpoch!==slot.binding.routeEpoch)return false;
   try{const frame=await current(sender);return slots.get(k)===slot&&now()<slot.until&&frame?.documentId===slot.frame.documentId&&frame.url===slot.frame.url;}catch{return false;}
  }
- return Object.freeze({handle,verify,invalidate,tabClosed});
+ function isBound(binding,sender){
+  const initial=senderFrame(sender);if(!initial)return false;
+  const slot=slots.get(key(initial.tabId));
+  return !!slot&&slot.frame.documentId===initial.documentId&&now()<slot.until&&binding?.documentToken===slot.binding.documentToken&&binding?.producerToken===slot.binding.producerToken&&binding?.routeEpoch===slot.binding.routeEpoch;
+ }
+ function matchesFrame(binding,sender,actual){
+  if(!isBound(binding,sender))return false;
+  const slot=slots.get(key(sender.tab.id));
+  return actual?.documentId===slot.frame.documentId&&actual?.url===slot.frame.url&&actual?.documentLifecycle==='active'&&actual?.errorOccurred!==true;
+ }
+ return Object.freeze({handle,verify,isBound,matchesFrame,invalidate,tabClosed});
 }

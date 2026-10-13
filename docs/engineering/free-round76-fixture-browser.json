@@ -1,0 +1,161 @@
+{
+  "evidence": "HEADLESS_NATIVE_PROFILE_RECONSTRUCTIONS",
+  "realChatGPT": "NOT_RUN",
+  "productionAdapter": "NOT_RUN",
+  "workerNetworkPolicy": "NOT_RUN",
+  "results": [
+    {
+      "profile": "MODERN",
+      "status": "PASS"
+    },
+    {
+      "profile": "PARTIAL",
+      "status": "PASS"
+    },
+    {
+      "profile": "FAULT",
+      "fault": "unsafe-reading",
+      "status": "PASS"
+    },
+    {
+      "profile": "FAULT",
+      "fault": "iframe-destroy",
+      "status": "PASS"
+    },
+    {
+      "profile": "FAULT",
+      "fault": "csp",
+      "status": "PASS"
+    }
+  ],
+  "fixtures": [
+    {
+      "fixtureId": "chatgpt-host-modern-reconstruction-v1",
+      "profile": "MODERN",
+      "variant": "positive",
+      "fault": null,
+      "reconstruction": true,
+      "source": "VA-HOST/1.1 structure reconstruction, not real captured DOM",
+      "sourceCommit": null,
+      "sourceBlob": null,
+      "fixtureHash": "bab28cc0a797e58e2fe6af1b1ad58f6bc092b1454e1fa7106b3ff0068450de60",
+      "expectedWorldFile": "tests/host/expected/modern.mjs",
+      "oracleHash": "2a309caf7b7b65ff8ed60c33386b923a172783c64f0331151db4614d04e86a9d",
+      "exposedFields": [
+        "loaded navigation links",
+        "current object metadata",
+        "native selected menu",
+        "fixed session",
+        "fixed account roster"
+      ],
+      "supportedCapabilities": [
+        "native-navigation",
+        "native-search",
+        "native-create",
+        "partial-observed-list",
+        "current-message-metadata",
+        "native-move-menu"
+      ]
+    },
+    {
+      "fixtureId": "chatgpt-host-partial-reconstruction-v1",
+      "profile": "PARTIAL",
+      "variant": "positive",
+      "fault": null,
+      "reconstruction": true,
+      "source": "VA-HOST/1.1 structure reconstruction, not real captured DOM",
+      "sourceCommit": null,
+      "sourceBlob": null,
+      "fixtureHash": "62ea065492a68991b3589170ec53e9fac3da998a51ac91fc346f3bb02d65047b",
+      "expectedWorldFile": "tests/host/expected/partial.mjs",
+      "oracleHash": "acc6ac83aa3901638b0742e7aa5391c3f4e6e3165dec492eadb0e0baa905d76e",
+      "exposedFields": [
+        "loaded navigation links",
+        "current object metadata",
+        "native selected menu",
+        "fixed session",
+        "fixed account roster"
+      ],
+      "supportedCapabilities": [
+        "native-navigation",
+        "native-search",
+        "native-create",
+        "partial-observed-list",
+        "current-message-metadata",
+        "native-move-menu"
+      ]
+    },
+    {
+      "fixtureId": "chatgpt-host-fault-reconstruction-v1",
+      "profile": "FAULT",
+      "variant": "positive",
+      "fault": "unsafe-reading",
+      "reconstruction": true,
+      "source": "VA-HOST/1.1 structure reconstruction, not real captured DOM",
+      "sourceCommit": null,
+      "sourceBlob": null,
+      "fixtureHash": "7a09a9daeed1d1fd73e5a4d89009664c17855477b9b77dcf81e2aedec7666ccc",
+      "expectedWorldFile": "tests/host/expected/fault.mjs",
+      "oracleHash": "c7f2478352e1b868e42208d6dc15f067f681c68f5b45f760dade7586fe461ec9",
+      "exposedFields": [
+        "loaded navigation links",
+        "current object metadata",
+        "native selected menu",
+        "fixed session",
+        "fixed account roster"
+      ],
+      "supportedCapabilities": [
+        "native-fallback-under-designated-fault"
+      ]
+    },
+    {
+      "fixtureId": "chatgpt-host-fault-reconstruction-v1",
+      "profile": "FAULT",
+      "variant": "positive",
+      "fault": "iframe-destroy",
+      "reconstruction": true,
+      "source": "VA-HOST/1.1 structure reconstruction, not real captured DOM",
+      "sourceCommit": null,
+      "sourceBlob": null,
+      "fixtureHash": "7ad548511812cd00d39fa78ef93464b8a4a6701dcef261b86ee2f4883a847752",
+      "expectedWorldFile": "tests/host/expected/fault.mjs",
+      "oracleHash": "c7f2478352e1b868e42208d6dc15f067f681c68f5b45f760dade7586fe461ec9",
+      "exposedFields": [
+        "loaded navigation links",
+        "current object metadata",
+        "native selected menu",
+        "fixed session",
+        "fixed account roster"
+      ],
+      "supportedCapabilities": [
+        "native-fallback-under-designated-fault"
+      ]
+    },
+    {
+      "fixtureId": "chatgpt-host-fault-reconstruction-v1",
+      "profile": "FAULT",
+      "variant": "positive",
+      "fault": "csp",
+      "reconstruction": true,
+      "source": "VA-HOST/1.1 structure reconstruction, not real captured DOM",
+      "sourceCommit": null,
+      "sourceBlob": null,
+      "fixtureHash": "06fc65e8412d730b03adab9a49bffd3d27704d4645b890a820d975ab55c513c2",
+      "expectedWorldFile": "tests/host/expected/fault.mjs",
+      "oracleHash": "c7f2478352e1b868e42208d6dc15f067f681c68f5b45f760dade7586fe461ec9",
+      "exposedFields": [
+        "loaded navigation links",
+        "current object metadata",
+        "native selected menu",
+        "fixed session",
+        "fixed account roster"
+      ],
+      "supportedCapabilities": [
+        "native-fallback-under-designated-fault"
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "browser": "155.0.8059.40",
+  "status": "PASS"
+}

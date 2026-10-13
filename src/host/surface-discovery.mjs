@@ -2,6 +2,7 @@
 export const LEGACY_SURFACE_PROFILE = Object.freeze({
   id:'chatgpt-legacy-reconstruction',revision:1,reconstruction:true,liveVerified:false,
   regions:Object.freeze({projects:'aside section[aria-label="Projects"]',history:'aside nav[aria-label="Chat history"]',members:'main #reading nav[aria-label="Project conversations"]',moveMenu:'dialog#move-dialog[open]'}),
+  currentProjectTitle:'main > #reading > h2',currentProjectHeader:'main > header > h1',
   memberProjectIdAttribute:'data-project-id',menuConversationIdAttribute:'data-conversation-id',
   controls:'a[href],button',conversationControls:'a[href]',noneLabel:'No project',maxCandidates:256,
 });
@@ -55,6 +56,15 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       const target=id?{kind:'resolved',entity,nativeId:id,navigationURL:parsed.navigationURL,liveHandle:handle}:{kind:'live-control',control:handle,navigationURL:null};
       const result={renderKey:id?`${entity}:${id}`:`candidate:${handle.id}`,entity,...title(node),target,evidence:evidence(regionKind,'textContent',href?'href':'button')};
       candidates.push(result);return result;
+    }
+    // A canonical current Project needs route identity and the explicitly scoped
+    // member surface; an IDless sidebar label never supplies that identity.
+    const members=roots.get('members');
+    if(route.kind==='project'&&members&&members.getAttribute(profile.memberProjectIdAttribute)===route.projectId&&profile.currentProjectTitle&&profile.currentProjectHeader){
+      const heading=unique(profile.currentProjectTitle),header=unique(profile.currentProjectHeader);
+      if(heading&&header&&heading.isConnected&&header.isConnected&&heading.parentNode===members.parentNode&&heading.textContent.trim()===header.textContent.trim()){
+        candidates.push({renderKey:`project:${route.projectId}`,entity:'project',...title(heading),target:{kind:'resolved',entity:'project',nativeId:route.projectId,navigationURL:route.navigationURL,liveHandle:null},evidence:evidence('current-project-route','current-project-title','members')});
+      }
     }
     const projects=roots.get('projects');
     if(projects) for(const node of projects.querySelectorAll(profile.controls)) { if(candidates.length>=limit) break;candidate(node,projects,'projects','project'); }

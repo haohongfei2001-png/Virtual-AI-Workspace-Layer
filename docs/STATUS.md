@@ -851,3 +851,16 @@ Round73最终安装包100k：首标签24265.4ms、第二15209.5ms，三发送816
 下一原任务继续B1.F+B2.F1+C2：ChatGPTHostAdapter、owner receipt/reducer与现有FreeUI接线、预计划native动作、实际UiGrant/退出，随后原81项适用子场景和J1–J4。正常profile不能以全部UNKNOWN/NATIVE_ONLY过测。新基础是离线实施差额，不是完整Host候选；真实Free/G/U、4x100k旧FAIL及发布条件仍未满足。
 
 Round75最终计时补充：session provider将expiry墙钟与6秒monotonic elapsed分离，墙钟回拨反例通过。最终既有+Host基础1366项全通过，命令及确切模块hash见source receipt；下一未提交native-actions切片不计入本次。原1365首轮保留独立log。
+
+
+## Round76：Host 原生映射写入、导航与单角色 renderer
+
+前置 fb2849c，GitHub 已确认该提交正常进入原 Draft PR16，base 176ebc9a 不变。新增 ChatGPT adapter 组合真实区域发现、原节点单次导航与 owner epoch 重绑定；64KiB UTF-8 / 256实体边界，明确 retry-after 同提案限6秒，未知ACK不热循环。当前Project独立标题与成员域/精确路由一致才生成P，补上IDless按钮原生打开后P2缺记录的实测缺口，原失败报告保留。
+
+生产观察入口独立于旧synthetic gate：Chrome当前文档、HELLO、scope grant先校验；WeakMap请求身份给予一次host-dom入库资格，事务中/后持续fence。来源及CAS operation保留profile/语义digest/surface admission，不生成发送时间或完整coverage；UNKNOWN不覆盖已确认成员。A→B→A frame竞态、跨scope/grant旧ACK、永久getFrame/page/apply导致全局busy已用反例修复；授权改变必须新producer。现有NativeRepository、分片、shared引用和旧Pro数据路径复用，无DB版本升级。此窄DOM codec不代表消息/发送/continuation或跨producer字段冲突规格已全部实现。
+
+原v2.7 renderer新增可选workspace/sidebar独立frame根，保留旧combined路径；frame不调用宿主inspect、不写host mask/return/inert，使用预计算plan/单DTO派发，href默认_top或_blank且拒绝裸URL回退。UiGrant保留规范UI随机key两通道，补20秒受scope限制续租、撤权竞态与未获parent确认的过期pending回收。新增content surface controller及8个mock合同，真实worker/frame接线仍未完成；frame原生创建/片段是明确blocked hook，不能称完整C2。
+
+最终普通Node1469/1469、0失败/跳过；frame renderer另跑真实headless1合同/21断言，既有prepared9/safe-update6/sidebar8通过。初次全套把Chrome测试混入普通Node，受启动限制且server未释放导致子进程不退出；已终止该明确子进程、补30秒超时与launch失败清理，将browser脚本分开运行；原失败log保留。实际隔离Chrome MV32/2：固定provider真实loopback cookie/fetch、真实sender/getFrame、扩展IDB、同名P/UNKNOWN/伪造字段拒绝/重开与草稿保持；不是真实ChatGPT或UiGrant渲染认证。独立MODERN/PARTIAL/FAULT夹具新增19个端点合同（含旧共24）与headless5项；expected仅Node，生产这些profile适配未据此宣称通过。
+
+本轮未重复100k，历史4x冷启FAIL和静态frame disable/uninstall残留FAIL保留。下一项继续现有B1.F+B2.F1+C2：实际UiGrant双通道与controller、共享ViewSession/staged数据和双frame renderer闭环，随后原计划剩余Free。Free未完成，NOT_RELEASE_READY；G/U仍NOT_RUN。

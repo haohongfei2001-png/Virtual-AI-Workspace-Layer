@@ -34,12 +34,13 @@ export class NativeRepository {
     return this.verifiedRoot({...row,key:scope.key},scope);
   }
 
-  constructor({baseRepository, workspaceRepository = null, observationGate = null, clock = () => new Date().toISOString()}) {
+  constructor({baseRepository, workspaceRepository = null, observationGate = null, hostObservationGate = null, clock = () => new Date().toISOString()}) {
     if (!baseRepository?.open || !baseRepository?.scopeOrThrow) throw Error('b1-repository-required');
     this.base = baseRepository;
     if(workspaceRepository&&workspaceRepository.base!==baseRepository)throw Error('shared-native-database-required');
     this.shared=workspaceRepository;
     this.observationGate = observationGate;
+    this.hostObservationGate = hostObservationGate;
     this.clock = clock;
   }
 
@@ -252,9 +253,11 @@ export class NativeRepository {
 
   async apply(scope, request, options = {}) {
     const normalized = this.base.scopeOrThrow(scope);
-    const authority = this.observationGate?.(normalized);
-    if (authority?.channel !== 'synthetic') throw Error('untrusted-native-source');
-    const witness = {channel: authority.channel, sourceId: authority.sourceId, generation: authority.generation};
+    const host = this.hostObservationGate?.(normalized,request);
+    const authority = host ?? this.observationGate?.(normalized);
+    if (host ? host.channel!=='host-dom'||typeof host.guard!=='function'||host.guard()!==true : authority?.channel !== 'synthetic') throw Error('untrusted-native-source');
+    const witness = {channel: authority.channel, sourceId: authority.sourceId, generation: authority.generation,...(host?{admission:host.admission}:{})};
+    if(host){const original=options;options={...original,guard:()=>host.guard()===true&&(original.guard?.()??true)===true};}
     id(witness.sourceId);
     id(witness.generation);
     const apply=()=>this.mutate(normalized, request, {kind: 'APPLY_NATIVE_OBSERVATIONS', ...witness, batch: request.batch},
@@ -330,7 +333,7 @@ export class NativeRepository {
                           // saveNativePieces queued the older checkpoint GC read before this put.
                           if(payload?.revision)states.put({...request.result,key:nativeCheckpointKey(normalized.key)});
                           operations.put(record(normalized.key, {revision: next.revision}));
-                          operations.put(record(operationKey, {fingerprint, revision: next.revision, operationId}));
+                          operations.put(record(operationKey, {fingerprint, revision: next.revision, operationId,...(command.channel==='host-dom'?{admission:structuredClone(command.admission)}:{})}));
                           check();result = {ok: true, replayed: false, revision: next.revision, operationId};
                         }catch(failure){abort(failure.message);}
                       };
