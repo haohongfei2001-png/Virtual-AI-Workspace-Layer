@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第二十九轮：工作集复用scope ID索引，消除1000项反复扫描100k引用。相关48项Node和7项真实DOM检查通过；上一轮703项完整回归、10项来源/恢复、9项MV3及100k发送FAIL各自保留。远端已正常同步 `5120109`；当前HEAD以Git为准。Free及发布验收未完成。
+当前已推进至第三十轮：零页偏好/视图更新复用受私有来源校验的Free展示结构，候选仅在最终权限/版本检查后保存。最终724项Node、10项发布屏障、10项观察恢复及9项MV3通过。远端已正常同步 `3e88682`；当前HEAD以Git为准。100k发送仍保留第二十八轮1秒FAIL，Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -375,3 +375,11 @@ CHECK/HEADER/PAGE/SEND/UPSERT优先取消补录的独立子signal，主binding�
 从5120109继续，当前索引增加精确byId查询，工作集渲染替代逐项全量find。复用当前快照既有Map，未增第二套缓存；人工顺序、缺失项占位与原生路由first-match规则保留。独立3项Node覆盖重复URL不同ID、新标题/UNKNOWN、两种rebind与跨scope隔离。相关Node组合48/48；真实headless DOM100k引用/1000工作集的7项功能检查通过，重复find比较99,501,499→0。带计数诊断render 490.5→13.1ms，不冒充正常延迟认证或发送达标。
 
 完整Node/MV3/100k发送本轮NOT_RUN，上一轮各自证据与发送1秒FAIL保留。包SHA256 `84f20612d831f44c469c49ed1000c763d39907899be405fe54272a32a398ed72`，仍SYNTHETIC_ONLY。已同步上一轮5120109到原远端，当前新HEAD以Git为准。下一独立热点是零页、只偏好或view更新时仍全量适配Free引用，须由私有prepared来源与严格plan条件证明复用，不省略末次CHECK。真实Free和发布仍未完成。
+
+## 第三十轮：零页展示结构复用与发布边界
+
+从3e88682继续。free-view私有凭据同时绑定scope和原始assembled快照；rebind只在客户端已证明零差异plan时调用，拒绝scope/session/评估时刻/来源/成员见证/库存变化及header结构字段。偏好、view及版本元数据更新保留旧refs/groups等展示结构，末次CHECK和通用current/lease/scope/expiry验证后才保存候选。恢复、账号路由及退出同步清理prepared；文档重绑首次重新适配原base，后续可复用。拒绝旧revision移至缓存更新之前。
+
+最终完整Node724/0/0skip（含18新rebind、3上轮工作集合同）。实际headless/IDB发布屏障10/10，含零页偏好生效、跨scope拒绝、document首次ADAPT后下一次0ADAPT；使用明确的测试调度钩子/部分transport注入，不冒充生产权限。观察来源/恢复小owner10/10及真实MV39/9分别通过。100k发送本轮NOT_RUN，第二十八轮1611.2/1729.7/1729.1ms及1秒FAIL保留。
+
+包 `/private/tmp/vaiwl-free-delivery-round30-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `9ad78c47ba875d38f7d67ea59cce93daa0d8d77d3f401bb5445bb94e4a393a5b`。仍SYNTHETIC_ONLY/NOT_RELEASE_READY；真实账户/来源、PAIA、物理弱设备/IME及真人日常验收仍缺对应条件。继续正式计划，不能把展示优化或合成包算完整Free交付。

@@ -2,7 +2,7 @@ import {loadFreePages} from '../src/data/free-page-loader.mjs';
 import {isFreeRecoveryReason,freeRecoveryPanel} from '../src/navigation/free-recovery.mjs';
 import {planFreeReplica,freeReplicaRequests,assembleFreeReplicaAsync} from '../src/data/free-replica.mjs';
 import {createFreeViewSession,initialFreeTimePolicy,freeProjectDensity,evaluateFreeTimePolicy,coolFreeTimePolicy,setFreeHorizon} from '../src/data/free-time-policy.mjs';
-import {freeNavigationSnapshot} from '../src/navigation/free-view.mjs';
+import {freeNavigationSnapshot,rebindPreparedFreeSnapshot} from '../src/navigation/free-view.mjs';
 import { localDay } from '../src/navigation/projection.mjs';
 import {currentIndexAsync} from '../src/navigation/current-index.mjs';
 import { replicaDelta, assembleReplicaAsync } from '../src/data/replica.mjs';
@@ -19,7 +19,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   let autoNotice=null,autoNoticeTimer=null;
   let syntheticFlush=false,verifiedAuthority=null;const pendingSynthetic=new Map();
   let freeSession=null,freeSessionRoute=new URL(env.location.href).pathname.split('/')[2];
-  let freeReplica=null,freeIndex=null,partitionReplica=null,partitionIndex=null;let recoveryPanel=null;let data=null,editor=null,retries=0,viewTimer=null,viewRevision=0,lastView='',chain=Promise.resolve(),feedback=null;
+  let freeReplica=null,freeIndex=null,freePrepared=null,partitionReplica=null,partitionIndex=null;let recoveryPanel=null;let data=null,editor=null,retries=0,viewTimer=null,viewRevision=0,lastView='',chain=Promise.resolve(),feedback=null;
   const visible=()=>document.visibilityState!=='hidden';
   const controlsKey=()=>{const c=readControls();return JSON.stringify([c.size,c.now,c.timeZone]);};let lastControls=controlsKey();
   const queue=fn=>{const task=chain.then(fn);chain=task.catch(()=>{});return task;};
@@ -77,7 +77,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   function acceptBinding(bound){
     // An observation keeps its original identity across a lease renewal. A new
     // binding must never assign old metadata to a different account/document.
-    if(verifiedAuthority&&(verifiedAuthority.scope!==bound.scope||verifiedAuthority.documentId!==bound.documentId))verifiedAuthority=null;
+    if(verifiedAuthority&&(verifiedAuthority.scope!==bound.scope||verifiedAuthority.documentId!==bound.documentId)){verifiedAuthority=null;freePrepared=null;}
     for(const [key,item] of pendingSynthetic)if(item.authority.scope!==bound.scope||item.authority.documentId!==bound.documentId)pendingSynthetic.delete(key);
     lease=bound;
   }
@@ -91,7 +91,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   async function readSnapshot(ticket,url){
     const c=readControls(),freeMode=new URL(env.location.href).searchParams.get('view')!=='pro',reply=await request(freeMode?'B23_FREE_HEADER':'B23_SNAPSHOT',{now:c.now??FIXTURE_NOW,timeZone:c.timeZone??'Asia/Shanghai',size:c.size??8,...(freeMode&&freeSession?{viewSession:freeSession}:{})});
     if(!current(ticket,url))throw Error('stale-client-response');if(!reply?.ok)throw Error(reply?.reason??'read-failed');
-    let next=reply.snapshot,nextIndex=null,nextPrepared=false;
+    let next=reply.snapshot,nextIndex=null,nextPrepared=false,nextReplica=null;
     if(freeMode){
       const header=reply.header,plan=planFreeReplica(freeReplica,header);
       const pages=await loadFreePages({requests:freeReplicaRequests(plan,5000),guard:()=>current(ticket,url),load:async ids=>{
@@ -105,7 +105,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
       await renewReadBinding(ticket,url);
       let candidate=null;
       if(!plan.full&&!plan.rebuild&&!plan.projects.length&&!plan.refs.length&&freeReplica){
-        next={...freeReplica.snapshot,...header,viewMode:'free'};nextIndex=freeIndex;
+        try{next=rebindPreparedFreeSnapshot(freePrepared??freeNavigationSnapshot(freeReplica.snapshot),freeReplica.snapshot,header);}catch{next=freeNavigationSnapshot({...freeReplica.snapshot,...header,viewMode:'free'});}nextPrepared=true;nextIndex=freeIndex;
       }else{
         const assembled=await assembleFreeReplicaAsync(freeReplica,header,pages,plan,()=>current(ticket,url));
         next=freeNavigationSnapshot(assembled.snapshot);nextPrepared=true;
@@ -113,7 +113,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
         candidate=assembled;
       }
       await verify();
-      if(candidate){freeReplica=candidate;freeIndex=nextIndex;}
+      nextReplica=candidate;
     }
     if(reply.partition){const root=reply.partition,m=root.manifest,delta=replicaDelta(partitionReplica,m),incoming=[];
       if(delta===null){const total=Object.keys(m.refVersions).length;for(let offset=0;offset<total;offset+=5000){const r=await request('B23_PARTITION_PAGE',{revision:m.revision,offset,ids:null});if(!current(ticket,url))throw Error('stale-client-response');if(!r.ok)throw Error(r.reason);if(r.page.scope!==m.scopeKey||r.page.revision!==m.revision||r.page.total!==total)throw Error('incomplete-partition-snapshot');incoming.push(...r.page.pieces);}}
@@ -128,8 +128,9 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     }else{partitionReplica=null;partitionIndex=null;}
 
     if(!current(ticket,url)||!lease||next.scope!==lease.scope||typeof lease.documentId!=='string'||Date.now()>=lease.expiresAt)throw Error('stale-client-response');
-    verifiedAuthority={scope:next.scope,documentId:lease.documentId,expiresAt:lease.expiresAt,accountRoute:new URL(url).pathname.split('/')[2]};
     if(data?.scope===next.scope&&next.revision<data.revision)return data;
+    if(freeMode){if(nextReplica){freeReplica=nextReplica;freeIndex=nextIndex;}freePrepared=next;}
+    verifiedAuthority={scope:next.scope,documentId:lease.documentId,expiresAt:lease.expiresAt,accountRoute:new URL(url).pathname.split('/')[2]};
     const changed=!data||data.revision!==next.revision||data.workspaceRevision!==next.workspaceRevision||data.evidenceRevision!==next.evidenceRevision||JSON.stringify(data.viewSession)!==JSON.stringify(next.viewSession)||data.viewRevision!==next.viewRevision||data.diagnostics?.view!==next.diagnostics?.view;
     if(next.viewMode==='free'&&!freeSession)freeSession=next.viewSession;data=next;viewRevision=data.viewRevision;
     if(lastView===''&&data.view)lastView=JSON.stringify(data.view);
@@ -153,7 +154,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     }catch(e){if(current(ticket,url)){if(lease&&isFreeRecoveryReason(e.message)){await showFreeRecovery(ticket,url,e.message);}else if(lease&&['corrupt-record','invalid-state','invalid-schema','invalid-user-event','invalid-text','orphan-placement','orphan-title','invalid-state-row','invalid-state-table'].includes(e.message)){await showAssetRecovery(ticket,url,e.message);}else recover(e.message);}}
   }
   async function showFreeRecovery(ticket,url,reason){
-    verifiedAuthority=null;pendingSynthetic.clear();freeReplica=null;freeIndex=null;
+    verifiedAuthority=null;pendingSynthetic.clear();freeReplica=null;freeIndex=null;freePrepared=null;
     fail(reason,true);clearRecovery();let plans;
     try{const reply=await request('B23_FREE_RECOVERY_STATUS');if(!current(ticket,url)||!reply?.ok)throw Error(reply?.reason??'stale-client-response');plans=reply.recovery??reply;}
     catch(e){if(!current(ticket,url))return;plans={native:{corrupt:true,recoverable:false,reason:e.message}};}
@@ -162,12 +163,12 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
       if(!current(ticket,url)||!lease||Date.now()>=lease.expiresAt)throw Error('stale-binding');
       const reply=await request('B23_FREE_RECOVER',{kind,operationId:'free_repair_'+randomId().replaceAll('-',''),damagedHash:plan.damagedHash});
       if(!current(ticket,url))throw Error('write-result-unknown');if(!reply?.ok)throw Error(reply?.reason??'write-result-unknown');
-      freeReplica=null;freeIndex=null;await load();
+      freeReplica=null;freeIndex=null;freePrepared=null;await load();
     }});(host.navigationSlot??host.history).before(recoveryPanel);
     expiry=setTimeout(()=>{if(current(ticket,url))void load();},Math.max(0,lease.expiresAt-Date.now()));
   }
   async function showAssetRecovery(ticket,url,reason){
-    verifiedAuthority=null;pendingSynthetic.clear();freeReplica=null;freeIndex=null;
+    verifiedAuthority=null;pendingSynthetic.clear();freeReplica=null;freeIndex=null;freePrepared=null;
     fail(reason,true);clearRecovery();let plan;try{const r=await request('B23_RECOVERY_STATUS');if(!current(ticket,url)||!r.ok)throw Error(r.reason??'stale-client-response');plan=r.recovery;}catch(e){if(!current(ticket,url))return;if(retryable(e.message)){recover(e.message);return;}plan={recoverable:false,reason:e.message};}
     const panel=document.createElement('div');panel.dataset.vaiwlOwned='asset-recovery';panel.setAttribute('role','region');panel.setAttribute('aria-label','工作空间数据恢复');panel.style.cssText='font:13px/1.6 system-ui;padding:12px 18px;background:var(--surface,#fff);color:var(--ink,#171717);border-bottom:1px solid var(--line,#ddd)';
     const text=document.createElement('p');text.textContent=plan.recoverable?'工作空间记录损坏，原始记录仍保留。已核验检查点与最新人工日志，可以恢复人工资产；旧发送证据与操作收据会失效。':'工作空间或人工日志损坏，无法证明安全恢复；未覆盖原始记录。请保留备份与损坏记录。';panel.append(text);
@@ -214,7 +215,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     }),180);
   }
   function changed(){if(stopped)return;if(lastURL!==env.location.href||lastControls!==controlsKey()){
-      clearRecovery();if(lastURL!==env.location.href)navigation.enterReading();const accountRoute=new URL(env.location.href).pathname.split('/')[2];if(accountRoute!==freeSessionRoute){freeSession=null;freeReplica=null;freeIndex=null;freeSessionRoute=accountRoute;verifiedAuthority=null;pendingSynthetic.clear();}partitionReplica=null;partitionIndex=null;lastURL=env.location.href;lastControls=controlsKey();generation++;invalidateRemote();clearTimers();fail('route-changed');lease=null;data=null;retries=0;clearFeedback();pending=setTimeout(load,0);
+      clearRecovery();if(lastURL!==env.location.href)navigation.enterReading();const accountRoute=new URL(env.location.href).pathname.split('/')[2];if(accountRoute!==freeSessionRoute){freeSession=null;freeReplica=null;freeIndex=null;freePrepared=null;freeSessionRoute=accountRoute;verifiedAuthority=null;pendingSynthetic.clear();}partitionReplica=null;partitionIndex=null;lastURL=env.location.href;lastControls=controlsKey();generation++;invalidateRemote();clearTimers();fail('route-changed');lease=null;data=null;retries=0;clearFeedback();pending=setTimeout(load,0);
     }else navigation.layout();}
   // Re-observe only bounded synthetic metadata; never replay a native send or body.
   function syntheticOriginMatches(item,scope){
@@ -290,6 +291,6 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   const resume=()=>{if(!stopped&&visible()){retries=0;void load();}};
   document.addEventListener('visibilitychange',hide);document.addEventListener('freeze',pageHide);document.addEventListener('resume',resume);addEventListener('pagehide',pageHide);addEventListener('pageshow',resume);
   const refresh=()=>{generation++;invalidateRemote();retries=0;return load();};
-  function stop(){clearRecovery();if(stopped)return;stopped=true;verifiedAuthority=null;pendingSynthetic.clear();freeReplica=null;freeIndex=null;generation++;clearTimers();clearFeedback();editor?.close();observer.disconnect();resize.disconnect();unsub();document.removeEventListener('hf:change',nativeChange);document.removeEventListener('hf:synthetic-send',syntheticSend);document.removeEventListener('toggle',nativeChange,true);document.removeEventListener('visibilitychange',hide);document.removeEventListener('freeze',pageHide);document.removeEventListener('resume',resume);removeEventListener('pagehide',pageHide);removeEventListener('pageshow',resume);removeEventListener('popstate',nativeChange);removeEventListener('resize',nativeChange);navigation.stop();}
+  function stop(){clearRecovery();if(stopped)return;stopped=true;verifiedAuthority=null;pendingSynthetic.clear();freeReplica=null;freeIndex=null;freePrepared=null;generation++;clearTimers();clearFeedback();editor?.close();observer.disconnect();resize.disconnect();unsub();document.removeEventListener('hf:change',nativeChange);document.removeEventListener('hf:synthetic-send',syntheticSend);document.removeEventListener('toggle',nativeChange,true);document.removeEventListener('visibilitychange',hide);document.removeEventListener('freeze',pageHide);document.removeEventListener('resume',resume);removeEventListener('pagehide',pageHide);removeEventListener('pageshow',resume);removeEventListener('popstate',nativeChange);removeEventListener('resize',nativeChange);navigation.stop();}
   void load();return {stop,refresh,command,undo,manage,showWorkspace:()=>navigation.showWorkspace(),status:()=>navigation.status(),navigation};
 }
