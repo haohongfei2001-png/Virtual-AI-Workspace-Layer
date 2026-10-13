@@ -1,0 +1,12 @@
+✔ MOCK_IDB valid 60-second scope cannot authorize frame renewal or view after parent document lease expires (22.700875ms)
+✔ MOCK_IDB same-identity document renewal permits both UI frames beyond original document expiry (5.370917ms)
+✔ MOCK_IDB parent document expiry during native plan wait rejects a late ready reply (4.42925ms)
+✔ MOCK browser frame checks permit only renewal replacement during in-flight grant validation (0.482125ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 82.271209

@@ -786,3 +786,18 @@ HOST_UI_STATUS通过已验证父文档与实际两role frame同步最新UiGrant�
 最终Node1554/1554、0失败/跳过。真实隔离headless MV3同一mount及原frame超过初始20秒后仍有效，随后文档撤权/端口断连/实际disable/uninstall四路径PASS，0open popover、私有frame不可达、原生reading与同一textarea草稿保持；sourceChangedDuringRun=false。第一次长会话测试在填入原生draft后错误期待workspace仍打开，实际原生focus按设计suspend；测试显式重新打开后才量续期，保留原失败而不改生产让位规则。UiGrant wrapper先返回错误reason导致旧两合同失败已保持原expired语义修复，不弱化拒绝。
 
 这仍是固定私有标记的离线生命周期测试，不是完整Free UI数据J1；独立scope proof60秒后安全退出路径保持，需后续可检测身份刷新/重授。下一项直接接单owner共享ViewSession到现有双frame renderer的有界真实Project/Conversation显示与原生导航。所有既有真实G/U、C1/C2、发送continuation、4x100k及发布差额保持；Free未完成、NOT_RELEASE_READY。
+
+
+## Round79：原生事实到双frame真实Free显示与原生链接闭环
+
+前置cf381ff，本地保持原分支；414122d/cf381ff尚未确认推送，最后远端API为e2ae316。新增HostViewService复用同一FreeViewOwner，两角色共享一次staged读取/replica/index；真实UiGrant+父文档+scope确认后才返回<=64KiB有界DTO，不向每个frame复制完整100k集合。准备态不是空库存，版本或freshness deadline变化触发共享刷新；最终授权再核验，迟到页/计划拒绝。scope/role不能由UI query输入。
+
+现有navigation新增显式updateFrameProjection，复用v2.7卡片/行/图标/样式，局部页不能冒充完整snapshot；按owner既有顺序显示原生名、准确total/hasMore、5行/+12有界后续页、历史箭头、始终存在NONE/UNKNOWN入口。FreeFrameClient复用UiFrameClient与6秒RPC/30秒总预算，同grant续租保留renderer和当前query，超大页在同预算有限细分。scope换页/旧异步结果不能盖新页。
+
+原生导航计划由隔离content的既有adapter预计算，worker只发送当前页去重refId/nativeURL，不发送标题或账户；计划回包核对ID/URL/模式且有界。当前闭环使用真实原生href默认打开；未知输入风险保持new-tab-preserve-current，不造点击确认或自动重试。IDless原控件、同目标body proof和完整动作分派仍是后续缺口。
+
+实际隔离headless Chrome MV3三旅程PASS：固定认证provider+真实sender/context+extension IndexedDB+owner admitted native facts→两获权iframe显示Research/真实聊天名；点击真实预计划链接打开对应原生聊天，源页面同一textarea未发送草稿保持；文档撤权清除私有projection并恢复原生reading。不是固定PRIVATE_PROBE；但仍是离线重建、不是完整J1或真实ChatGPT。另新doc门槛反例证明scope60秒/UI grant未过期不能越过父document20秒，正常document续期后才继续读/续；validate允许仅expiry续约的同mount/ui身份，撤销重授即使复用grantId仍拒绝。
+
+最终Node1597/1597、0失败/跳过；导航定向81/81，frame renderer headless1、prepared9、safe-update6、sidebar8全部通过；新UI lifecycle再跑同mount超20秒及四退出路径全PASS。全套后仅替换搜索/工作集占位为用户状态文案，并补consumer7/7，不重复浏览器；source receipt明确该差异。新旅程与生命周期sourceChangedDuringRun=false。
+
+尚未完成的真实产品行为明确保留：当前页原生变化仍靠后续VIEW/10秒grant刷新读取，待同scope事件即时失效通知；搜索/工作集结果、当前聊天定位、native create/snippet、scope proof刷新及C1/C2、发送/continuation/last-known新codec、完整视觉与81项/J1–J4未齐。旧4x100k FAIL/G/U NOT_RUN保持。下一项在已有闭环继续这些Free差额；Free未完成、NOT_RELEASE_READY，不发布。

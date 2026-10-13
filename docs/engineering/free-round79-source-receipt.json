@@ -1,0 +1,26 @@
+{
+  "parent": "cf381ff54636dece029c67be6fdcccb103d331e4",
+  "sourceHashes": {
+    "src/host/frame-native-plans.mjs": "d3fc2e60cd961c77048146235e72353a9a401e2048605f4dfaa4d3df02499746",
+    "src/host/free-frame-client.mjs": "5e1f21ab1cf3424b32c2f6b372d1a25a21743d2d6c422f36f85ffa4ec8f43bdb",
+    "src/host/ui-grants.mjs": "38b648ca69fa08342e93393ea8e75fb660ec7fa3871611b3b8c8e110f92ba1a1",
+    "src/navigation/navigation.mjs": "9336d2bc79ab14d512a135294afc166f79c244f6e20d9b263fca9ca47e00e1ca",
+    "src/runtime/free-frame-projection.mjs": "ebada21bee57895a38964e376bc85986a957083e1fd5a90400a43e3288c26bed",
+    "src/runtime/host-binding-service.mjs": "c33afbdbcba8bad829672ecec10ed5b719851bcba382e03cb82bc737a5008b67",
+    "src/runtime/host-ui-owner.mjs": "498fc38513f0e285547005d558c2d105f8a49029584ad99ec35e1355a7992653",
+    "src/runtime/host-view-service.mjs": "592fe62c2ad4b8918c25cfbcc4dfcccdfe5c80e287548042a4d6acab7aa29348",
+    "tests/host/frame-native-plans.test.mjs": "9fe7c31a9684101b907cfcfd221bb18144e5a9e9e7553df5c6b743dae98e4738",
+    "tests/host/frame-projection-renderer.test.mjs": "d558c4162952648212958fd410b035e2f717ed259ca3c04e02fb521f5f92d069",
+    "tests/host/free-frame-client.test.mjs": "d9ead65296a7ed06135a46f10c8b2d80c626a94dcd18a570dd79c9f1cea9f540",
+    "tests/host/free-frame-projection.test.mjs": "24c8a75f73e8bd38d04a9004ae8da3947c59df35a0b736e62e3d9ee0d8db626f",
+    "tests/host/host-view-service.test.mjs": "01f21ee49a30a881cad05666cc4773fdf0f7ac90cc20235c973a22b3d0e94c0c",
+    "tests/host/ui-document-expiry.test.mjs": "4474173ff366a1f72821df60722b209c50fdf9bc047334033628a3d2bf3619ef",
+    "tests/host/ui-grants.test.mjs": "bffdd2a207604f7f70cad6aff47ccb642b29135813254569a5c9fe12a3bddf99",
+    "tests/host/view-mv3-browser.mjs": "986913c764b69d34fc391123ad70c10b9ca90adb4440d18c22994933ab83a624"
+  },
+  "nodeTests": 1597,
+  "evidence": "OFFLINE_REAL_MV3_NATIVE_FREE_VIEW_LINK_LOOP_NOT_FULL_J1",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "postFullSuiteChange": "Only search/working-set placeholder copy; targeted renderer 7 tests rerun."
+}

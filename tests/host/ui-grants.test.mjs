@@ -129,3 +129,20 @@ test('coalesced pending renewals cannot survive revocation or scope replacement'
   assert(results.every(row=>row.status==='rejected'));assert(results.every(row=>/ui-grant-revoked|ui-scope-changed/.test(row.reason.message)));
  }
 });
+test('validate awaiting browser checks accepts concurrent expiry-only renewal and returns latest grant',async()=>{
+ let f,hold=false,heldReads=0;const releases=[];f=fixture({getFrame:async({frameId})=>{if(hold&&heldReads++<2)await new Promise(resolve=>releases.push(resolve));return f.frames.get(frameId);}});
+ const initial=await f.pair();hold=true;const validation=f.owner.validate({sender:f.ui,grantId:initial.id,mountId:'mount'});f.tick(1000);
+ const latest=await f.owner.renew({sender:f.ui,grantId:initial.id,mountId:'mount'});assert.notEqual(latest,initial);assert.equal(latest.id,initial.id);assert.ok(Date.parse(latest.expiresAt)>Date.parse(initial.expiresAt));releases.forEach(r=>r());assert.equal(await validation,latest);
+});
+for(const change of ['mount','ui'])test(`validate awaiting browser checks rejects revoke/regrant ${change} even reused grant id`,async()=>{
+ let f,hold=false,heldReads=0;const releases=[];f=fixture({makeId:()=> 'reused_grant',getFrame:async({frameId})=>{if(hold&&heldReads++<2)await new Promise(resolve=>releases.push(resolve));return f.frames.get(frameId);}});
+ const initial=await f.pair();hold=true;const validation=f.owner.validate({sender:f.ui,grantId:initial.id,mountId:'mount'}),rejected=assert.rejects(validation,/ui-grant-revoked/);
+ if(change==='mount'){
+  f.owner.revokeMount('mount');f.owner.registerMount({handle:{id:'mount',documentToken:'document_token',regionEpoch:1},parent:f.parent});
+  await f.join('replacement');await f.confirm('replacement');
+ }else{
+  f.owner.revokeDocument('ui');const replacement={...f.ui,frameId:3,documentId:'new_ui'};f.frames.set(3,{documentId:'new_ui',documentLifecycle:'active',url:replacement.url,parentFrameId:0});
+  await f.join('replacement',{sender:replacement});await f.confirm('replacement');
+ }
+ releases.forEach(r=>r());await rejected;
+});

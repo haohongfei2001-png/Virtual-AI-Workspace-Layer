@@ -7,11 +7,11 @@ const gridIcon='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stro
 import { css } from './styles.mjs';
 function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);n.textContent=text;return n;}
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
-export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null}) {
+export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onProjectionRequest=null}) {
   const framed=surface!==null;
   if(framed&&(!['workspace','sidebar'].includes(surface.role)||surface.root?.ownerDocument!==doc))throw Error('invalid-navigation-surface');
   const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
-  let index=null,sidebarDirty=true,sidebarKey=null;
+  let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,projectionRequest=0;
   // Keep the original event target alive until its click, drop, or composition
   // completes. Coalesce updates instead of extending a debounce on each change.
   const pointers=new Set(),keys=new Set(),win=doc.defaultView??globalThis;
@@ -19,7 +19,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const owned=e=>e.composedPath().some(n=>n?.getAttribute?.('data-vaiwl-owned')===token);
   const interacting=()=>pointers.size>0||keys.size>0||composing||dragging;
   const clearUpdateTimer=()=>{if(updateTimer!==null){win.clearTimeout(updateTimer);updateTimer=null;}};
-  function flushUpdate(){clearUpdateTimer();if(!pendingUpdate||interacting()||stopped)return;const args=pendingUpdate;pendingUpdate=null;const [value,now,timeZone,preparedIndex,alreadyPrepared]=args;if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
+  function flushUpdate(){clearUpdateTimer();if(!pendingUpdate||interacting()||stopped)return;const args=pendingUpdate;pendingUpdate=null;const [value,now,timeZone,preparedIndex,alreadyPrepared]=args;if(alreadyPrepared==='frame')updateFrameProjection(value);else if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
   function finishInteraction(){if(!interacting()&&pendingUpdate&&updateTimer===null)updateTimer=win.setTimeout(flushUpdate,0);}
   function resetInteraction(discard=false){pointers.clear();keys.clear();composing=false;dragging=false;if(discard){pendingUpdate=null;clearUpdateTimer();}else finishInteraction();}
   const interactionHandlers={
@@ -136,7 +136,28 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const chevron='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
   const symbols={search:'M20 20l-5-5 M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0',up:'M6 15l6-6 6 6',down:'M6 9l6 6 6-6',more:'M5 12h.01 M12 12h.01 M19 12h.01',minus:'M5 12h14',plus:'M5 12h14 M12 5v14',close:'m6 6 12 12 M18 6 6 18'};
   function graphic(b,kind){if(kind==='more'){b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>';return b;}b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+symbols[kind]+'"/></svg>';return b;}
+  function requestFrame(partial={}){
+    if(!frameProjection||typeof onProjectionRequest!=='function')return;
+    const scope=frameProjection.scope,run=++projectionRequest;
+    const query={role:surface.role,segment:view.segment,offset:frameProjection.groups.offset,limit:frameProjection.groups.limit,...partial};
+    try{Promise.resolve(onProjectionRequest(query)).then(dto=>{if(dto&&run===projectionRequest&&!stopped&&frameProjection?.scope===scope&&dto.scope===scope)updateFrameProjection(dto);}).catch(()=>{});}catch{}
+  }
+  function frameRows(groupId,list){const selected=frameProjection.selection;if(selected&&selected.groupId===groupId&&selected.list===list)return selected;return groupId===null?frameProjection.entries[list]:frameProjection.groups.items.find(g=>g.id===groupId)?.lists[list];}
+  function moreFrame(page,groupId,list){requestFrame({...(groupId===null?{}:{groupId}),list,rowOffset:page.limit<200?page.offset:page.offset+page.limit,rowLimit:page.limit<200?Math.min(200,page.limit+12):200});}
+  function frameMembers(group,parent,side){
+    const key=(side?'side:':'home:')+group.id;
+    for(const kind of ['current','old','unknown']){
+      const page=frameRows(group.id,kind);if(!page||page.total===0)continue;let list=parent;
+      if(kind==='old'){
+        const open=view.oldOpen.has(key),toggle=button('展开旧窗口 '+group.name,()=>{view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();if(view.oldOpen.has(key))requestFrame({groupId:group.id,list:'old',rowOffset:0,rowLimit:5});},'','square old');toggle.innerHTML=chevron;toggle.setAttribute('aria-expanded',String(open));parent.append(toggle);if(!open)continue;list=node(doc,'div',{class:'old-list'});parent.append(list);
+      }
+      for(const ref of page.items)list.append(row(ref,key));
+      if(page.hasMore)list.append(button(kind==='old'?'显示更多旧窗口 '+group.name:kind==='unknown'?'显示更多待核对窗口':'显示更多近期窗口',()=>moreFrame(page,group.id,kind),page.limit<200?'显示更多':'下一页','more'));
+      if(page.offset>0)list.append(button('返回前页 '+group.name,()=>requestFrame({groupId:group.id,list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more'));
+    }
+  }
   function members(group,parent,side=false){
+    if(frameProjection){frameMembers(group,parent,side);return;}
     const key=(side?'side:':'home:')+group.id,cap=view.capacities.get(key)??5;
     for(const r of group.current.slice(0,cap))parent.append(row(r,key));
     if(cap<group.current.length){const more=button('显示更多近期窗口',()=>{remember();view.capacities.set(key,cap+12);render();},'显示更多','more');more.dataset.focusKey='more:'+key;parent.append(more);}
@@ -151,6 +172,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(side){const active=current().inGroup?.(group);if(active&&!parent.querySelector('[data-ref-id="'+active.id+'"]')){const context=node(doc,'div',{class:'current-context'});context.append(row(active,key));parent.append(context);}}
   }
   function appendFreeList(parent,kind,segment,side=false){
+    if(frameProjection){const page=frameRows(null,kind),label=kind==='noProject'?'无项目聊天':'归属待核对',list=node(doc,'section',{class:'free-list '+(side?'':'search'),'data-free-list':kind,'aria-label':label});list.append(node(doc,'h2',{},label));for(const ref of page.items)list.append(row(ref,kind));if(page.total===0)list.append(node(doc,'p',{},frameProjection.entries[kind].inventoryTotal>0?'此区间没有记录；其他区间仍可达。':'暂无已知记录。'));if(page.hasMore)list.append(button('显示更多'+label,()=>moreFrame(page,null,kind),page.limit<200?'显示更多':'下一页','more'));if(page.offset>0)list.append(button('返回前页'+label,()=>requestFrame({list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more'));parent.append(list);return;}
     const rows=freeListRows(snapshot,kind,segment);if(!rows.length)return;
     const key=(side?'side:':'home:')+kind,cap=view.capacities.get(key)??(side?5:12),label=kind==='noProject'?'无项目聊天':'归属待核对';
     const list=node(doc,'section',{class:'free-list '+(side?'':'search'),'data-free-list':kind,'aria-label':label});list.append(node(doc,'h2',{},label));
@@ -182,14 +204,16 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(side&&(sidebarDirty||sidebarKey!==nextSidebarKey||!side.querySelector('section'))){
     side.querySelector('section')?.remove();const panel=node(doc,'section');const tools=node(doc,'div',{class:'toolbar'});tools.append(node(doc,'strong',{},free()?'项目':'主题'),graphic(button(free()?'查找已知项目与聊天':'查找主题与派生名称',()=>findKnown()),'search'),graphic(button('折叠主题导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;render();}),view.sidebarVisible?'minus':'plus'),graphic(button('退出测试增强',()=>{stop();onExit();}),'close'));if(onManage)tools.append(graphic(button('管理工作空间',()=>onManage()),'more'));const workset=button('当前工作集',()=>showWorkingSet());workset.innerHTML=svgIcon('collection');tools.append(workset);panel.append(tools);
     const list=node(doc,'nav',{class:'themes','aria-label':'VAIWL 主题导航'});list.hidden=!view.sidebarVisible;
-    const sideGroups=groups.filter(g=>g.segment===0||(free()&&g.segment===null)||g===selected);
-    for(const g of sideGroups){const block=node(doc,'section',{class:'group'});const toggle=button('侧栏主题 '+g.name,()=>{view.sidebarOpen.has(g.id)?view.sidebarOpen.delete(g.id):view.sidebarOpen.add(g.id);render();},'','theme-toggle');toggle.dataset.focusKey='theme:'+g.id;toggle.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));const disclosure=node(doc,'span',{class:'theme-disclosure','aria-hidden':'true'});disclosure.innerHTML=chevron;toggle.append(disclosure);toggle.setAttribute('aria-expanded',String(view.sidebarOpen.has(g.id)));block.append(toggle);
+    const sideGroups=frameProjection?groups:groups.filter(g=>g.segment===0||(free()&&g.segment===null)||g===selected);
+    for(const g of sideGroups){const block=node(doc,'section',{class:'group'});const toggle=button('侧栏主题 '+g.name,()=>{view.sidebarOpen.has(g.id)?view.sidebarOpen.delete(g.id):view.sidebarOpen.add(g.id);render();if(frameProjection&&view.sidebarOpen.has(g.id))requestFrame({groupId:g.id,list:'current',rowOffset:0,rowLimit:5});},'','theme-toggle');toggle.dataset.focusKey='theme:'+g.id;toggle.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));const disclosure=node(doc,'span',{class:'theme-disclosure','aria-hidden':'true'});disclosure.innerHTML=chevron;toggle.append(disclosure);toggle.setAttribute('aria-expanded',String(view.sidebarOpen.has(g.id)));block.append(toggle);
       if(view.sidebarOpen.has(g.id)){const children=node(doc,'div',{class:'children'});members(g,children,true);block.append(children);}list.append(block);}
+    if(frameProjection){if(frameProjection.groups.offset>0)list.append(button('返回前页项目',()=>requestFrame({offset:Math.max(0,frameProjection.groups.offset-frameProjection.groups.limit)}),'上一页项目','more'));if(frameProjection.groups.hasMore)list.append(button('显示更多项目',()=>requestFrame({offset:frameProjection.groups.offset+frameProjection.groups.limit}),'显示更多项目','more'));}
     const independent=current().independent;if(independent){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}if(free()){appendFreeList(list,'noProject',0,true);appendFreeList(list,'unknown',0,true);}panel.append(list);side.append(panel);list.scrollTop=view.sidebarScroll??0;sidebarKey=nextSidebarKey;sidebarDirty=false;locateCurrent();
     }
     if(!roots.workspace){restoreOwnedFocus(focused);emitView();return;}
     const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-segment':String(view.segment)});roots.workspace.scroller=page;page.addEventListener('scroll',()=>{if(roots?.workspace?.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){view.scroll=page.scrollTop;emitView();}},{passive:true});
-    if(searchQuery!==null){
+    if(frameProjection&&(searchQuery!==null||view.worksetOpen)){const section=node(doc,'section',{class:'search'});section.append(node(doc,'strong',{},searchQuery!==null?'查找已知项目与聊天':'当前工作集'),node(doc,'p',{},searchQuery!==null?'工作空间查找暂不可用，请使用原生搜索。':'当前工作集暂不可用，请稍后重试。'),button('返回主题视图',()=>{searchQuery=null;view.worksetOpen=false;render();},'返回主题','more'));page.append(section);
+    }else if(searchQuery!==null){
       const search=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
       top.append(node(doc,'strong',{},theme?.name??(free()?'查找已知项目与聊天':'查找主题与派生名称')),graphic(button('关闭派生查找',()=>{searchQuery=null;searchTheme=null;render();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));}),'close'));search.append(top);
       const input=node(doc,'input',{'aria-label':free()?'已知聊天查找输入':'派生查找输入',placeholder:'输入主题或窗口名称','data-focus-key':'search-input',type:'search'});input.value=searchQuery;
@@ -204,21 +228,21 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       const workset=node(doc,'section',{class:'search working-set','aria-label':'当前工作集'}),top=node(doc,'div',{class:'search-top'});top.append(node(doc,'strong',{},'当前工作集'),button('返回主题视图',()=>{view.worksetOpen=false;render();},'返回主题','more'));workset.append(top,node(doc,'p',{},'只保存窗口引用与人工顺序，点击后打开。草稿与任务运行状态由原生页面保留。'));const saved=snapshot.preferences?.workingSet?.value??{refs:[],current:null};for(const id of saved.refs){const ref=index.byId(id);if(ref)workset.append(row(ref,'workset'));else workset.append(node(doc,'p',{class:'failed-ref'},'暂时无法打开的引用 '+id));}if(!saved.refs.length)workset.append(node(doc,'p',{},'还没有窗口。可在工作空间管理中加入窗口。'));if(onManage)workset.append(button('编辑当前工作集',()=>onManage(), '整理工作集','more'));page.append(workset);
     }else{
       const arrows=node(doc,'div',{class:'arrows','aria-label':'主题区间导航'});
-      if(view.segment>0)arrows.append(graphic(button('较近的'+span()+'日',()=>{view.segment--;view.scroll=0;render();if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();}),'up'));
-      const down=graphic(button('较早的'+span()+'日',()=>{view.segment++;view.scroll=0;render();calibrationEntry();}),'down');down.disabled=view.segment>=Math.max(groups.reduce((max,g)=>Math.max(max,g.segment??0),0),free()?snapshot.refs.reduce((max,r)=>Math.max(max,(r.activityDecision??r.activity)?.segment??0),0):0);arrows.append(down);page.append(arrows);
+      if(view.segment>0)arrows.append(graphic(button('较近的'+span()+'日',()=>{if(frameProjection){requestFrame({segment:view.segment-1,offset:0});return;}view.segment--;view.scroll=0;render();if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();}),'up'));
+      const down=graphic(button('较早的'+span()+'日',()=>{if(frameProjection){requestFrame({segment:view.segment+1,offset:0});return;}view.segment++;view.scroll=0;render();calibrationEntry();}),'down');down.disabled=frameProjection?!frameProjection.navigation.hasOlder:view.segment>=Math.max(groups.reduce((max,g)=>Math.max(max,g.segment??0),0),free()?snapshot.refs.reduce((max,r)=>Math.max(max,(r.activityDecision??r.activity)?.segment??0),0):0);arrows.append(down);page.append(arrows);
       const cards=node(doc,'div',{class:'cards'});
-      for(const g of groups.filter(g=>g.segment===view.segment||(free()&&g.segment===null&&view.segment===0))){
+      for(const g of (frameProjection?groups:groups.filter(g=>g.segment===view.segment||(free()&&g.segment===null&&view.segment===0)))){
         const card=node(doc,'section',{class:'card','data-theme-id':g.id}),head=node(doc,'div',{class:'card-head'}),title=node(doc,'h2'),list=node(doc,'div',{class:'members'});
         title.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));head.append(title);if(framed&&free()){const create=button('在项目中新建聊天 '+g.name,()=>{},'+');create.disabled=true;create.dataset.navigationReason='native-create-plan-unavailable';head.append(create);}if(!framed&&free()&&adapter.projectCreateHref?.(g)){const a=node(doc,'a',{href:adapter.projectCreateHref(g),class:'square','aria-label':'在项目中新建聊天 '+g.name,title:'在项目中新建聊天 '+g.name},'+');a.addEventListener('click',e=>{if(!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){view.mode='reading';layout();adapter.openNative(a.href,e);}});head.append(a);}themeActions(g,head);card.append(head);members(g,list);card.append(list);cards.append(card);
       }
-      if(!cards.children.length&&(!free()||!freeListRows(snapshot,'noProject',view.segment).length&&!freeListRows(snapshot,'unknown',view.segment).length)){const empty=node(doc,'div',{class:'empty'});empty.innerHTML=gridIcon;empty.append(node(doc,'strong',{},'这里还没有活跃主题'),node(doc,'p',{},'可切换区间，或查找已有窗口。'),button('查找已知主题与窗口',()=>findKnown(),'查找窗口','more'));cards.append(empty);}page.append(cards);if(free()){appendFreeList(page,'noProject',view.segment);appendFreeList(page,'unknown',view.segment);}
+      if(!frameProjection&&!cards.children.length&&(!free()||!freeListRows(snapshot,'noProject',view.segment).length&&!freeListRows(snapshot,'unknown',view.segment).length)){const empty=node(doc,'div',{class:'empty'});empty.innerHTML=gridIcon;empty.append(node(doc,'strong',{},'这里还没有活跃主题'),node(doc,'p',{},'可切换区间，或查找已有窗口。'),button('查找已知主题与窗口',()=>findKnown(),'查找窗口','more'));cards.append(empty);}page.append(cards);if(frameProjection){if(frameProjection.groups.offset>0)page.append(button('返回前页项目',()=>requestFrame({offset:Math.max(0,frameProjection.groups.offset-frameProjection.groups.limit)}),'上一页项目','more'));if(frameProjection.groups.hasMore)page.append(button('显示更多项目',()=>requestFrame({offset:frameProjection.groups.offset+frameProjection.groups.limit}),'显示更多项目','more'));}if(free()){appendFreeList(page,'noProject',view.segment);appendFreeList(page,'unknown',view.segment);}
     }
     shadow.append(page);layoutCards();page.scrollTop=view.scroll;restoreOwnedFocus(focused);emitView();
   }
   function applyUpdate(value,now,timeZone,preparedIndex=null,alreadyPrepared=false){
     if(stopped)return;
     if(snapshot?.scope===value.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[value,now,timeZone,preparedIndex,alreadyPrepared];return;}
-    resetInteraction(true);sidebarDirty=true;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free'&&!alreadyPrepared)value=freeNavigationSnapshot(value);snapshot=value;
+    frameProjection=null;projectionRequest++;resetInteraction(true);sidebarDirty=true;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free'&&!alreadyPrepared)value=freeNavigationSnapshot(value);snapshot=value;
     if(!views.has(value.scope)){
       const initial=initialView(),v=value.view;
       if(v)Object.assign(initial,{segment:v.segment,oldOpen:new Set(v.oldOpen),sidebarOpen:new Set(v.sidebarOpen),capacities:new Map(v.capacities),scroll:v.scroll,sidebarVisible:v.sidebarVisible});
@@ -228,10 +252,25 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(value.preferences?.sidebarVisible)view.sidebarVisible=value.preferences.sidebarVisible.value;
     layout();render();layout();locateAnchor();
   }
-  function update(value,now,timeZone,preparedIndex=null){return applyUpdate(value,now,timeZone,preparedIndex);}
+  function updateFrameProjection(dto){
+    if(stopped)return;if(!framed||dto?.protocol!=='vaiwl-free-frame/1'||dto.role!==surface.role||dto.completeSnapshot!==false||typeof dto.scope!=='string'||!dto.navigation||!Number.isSafeInteger(dto.segment)||dto.segment<0)throw Error('invalid-frame-projection');
+    const pageOK=p=>p&&Array.isArray(p.items)&&Number.isSafeInteger(p.total)&&Number.isSafeInteger(p.offset)&&Number.isSafeInteger(p.limit)&&p.total>=0&&p.offset>=0&&p.limit>0&&p.limit<=200&&p.items.length<=p.limit&&typeof p.hasMore==='boolean'&&p.hasMore===(p.offset+p.items.length<p.total);
+    if(!Number.isSafeInteger(dto.navigation.maxSegment)||dto.navigation.maxSegment<0||dto.navigation.hasNewer!==(dto.segment>0)||dto.navigation.hasOlder!==(dto.segment<dto.navigation.maxSegment)||!pageOK(dto.groups)||dto.groups.limit>24||!['noProject','unknown'].every(k=>pageOK(dto.entries?.[k]))||dto.groups.items.some(g=>!['current','old','unknown'].every(k=>pageOK(g.lists?.[k])))||dto.selection&&!pageOK(dto.selection)||new TextEncoder().encode(JSON.stringify(dto)).length>65536)throw Error('invalid-frame-projection');
+    if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame'];return;}
+    const copy=structuredClone(dto);resetInteraction(true);sidebarDirty=true;remember();
+    if(snapshot?.scope!==copy.scope){detach();searchQuery=null;searchTheme=null;projectionRequest++;}
+    projectionRequest++;frameProjection=copy;
+    // Presentation-only metadata. This intentionally has no complete refs/index
+    // and never enters the prepared Free snapshot or full-snapshot update path.
+    snapshot={scope:copy.scope,viewMode:'free',viewSession:copy.viewSession,preferences:{}};
+    if(!views.has(copy.scope))views.set(copy.scope,initialView());view=views.get(copy.scope);view.segment=copy.segment;
+    groups=copy.groups.items.map(g=>({...g,current:g.lists.current.items,old:g.lists.old.items,unknown:g.lists.unknown.items}));index=null;
+    layout();render();layout();
+  }
+  function update(value,now,timeZone,preparedIndex=null){if(value?.protocol==='vaiwl-free-frame/1')throw Error('frame-projection-requires-explicit-consumer');return applyUpdate(value,now,timeZone,preparedIndex);}
   function updatePreparedFree(value,now,timeZone,preparedIndex=null){assertPreparedFreeSnapshot(value);return applyUpdate(value,now,timeZone,preparedIndex,true);}
-  function invalidate(reason='binding-invalidated'){resetInteraction(true);remember();snapshot=null;index=null;detach();status={state:'WAITING',reason};adapter.status(status);}
+  function invalidate(reason='binding-invalidated'){resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
   function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);for(const[type,handler]of Object.entries(interactionHandlers))doc.removeEventListener(type,handler,true);win.removeEventListener?.('blur',windowBlur);if(!framed)restoreFocus();status={state:'STOPPED'};adapter.status(status);}
   function present(intent){if(intent?.kind==='show-workspace')showWorkspace(false);else if(intent?.kind==='enter-reading')enterReading(false);else if(intent?.kind==='search-known')findKnown(intent.themeId??null,false);else if(intent?.kind==='show-working-set')showWorkingSet(false);else return false;return true;}
-  return Object.freeze({present,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
+  return Object.freeze({present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
 }

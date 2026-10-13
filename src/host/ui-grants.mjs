@@ -79,7 +79,8 @@ export function createUiGrants({extensionId,uiURL=null,uiURLs=null,getFrame,getC
   const ui=uiFrame(sender),entry=grants.get(grantId);if(!entry||entry.grant.mountId!==mountId||entry.grant.expiresAt<=new Date(now()).toISOString())fail('ui-grant-expired');
   const {mount}=liveMount(mountId);if(sender.url!==roleURLs[entry.grant.role]||mount!==entry.mount||ui.tabId!==entry.ui.tabId||ui.frameId!==entry.ui.frameId||ui.documentId!==entry.ui.documentId)fail('ui-grant-mismatch');
   await Promise.all([actual(mount.parent),actual(ui,0)]);
-  if(grants.get(grantId)!==entry||liveMount(mountId).mount!==mount||Date.parse(entry.grant.expiresAt)<=now())fail('ui-grant-revoked');return entry.grant;
+  const latest=grants.get(grantId);
+  if(!latest||latest.mount!==entry.mount||latest.ui!==entry.ui||liveMount(mountId).mount!==mount||Date.parse(latest.grant.expiresAt)<=now())fail('ui-grant-revoked');return latest.grant;
  }
  function revokeMount(id){mounts.delete(id);for(const [key,value]of grants)if(value.grant.mountId===id)grants.delete(key);for(const entry of joins.values())if(entry.parent?.mountId===id)discard(entry);}
  function revokeDocument(id){for(const [key,value]of mounts)if(value.parent.documentId===id)revokeMount(key);for(const [key,value]of grants)if(value.ui.documentId===id)grants.delete(key);for(const entry of joins.values())if(entry.ui?.documentId===id){entry.used=true;entry.revoked=true;}}
