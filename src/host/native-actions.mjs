@@ -1,7 +1,7 @@
 /** Owner-issued plans only. No URL fallback, simulated acknowledgement or replay. */
 const id=v=>typeof v==='string'&&v.length>0&&v.length<=128&&/^[A-Za-z0-9_-]+$/.test(v);
 const exact=(v,keys)=>!!v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));
-const riskKey=r=>r&&['clear','unsaved','unknown'].includes(r.state)&&Array.isArray(r.flags)&&r.flags.every(v=>['composer','attachment','upload','generation','voice','canvas'].includes(v))?JSON.stringify([r.state,[...new Set(r.flags)].sort()]):null;
+const riskKey=r=>r&&['clear','unsaved','unknown'].includes(r.state)&&Array.isArray(r.flags)&&r.flags.every(v=>['composer','attachment','upload','generation','voice','canvas'].includes(v))&&(r.state!=='clear'||r.flags.length===0)?JSON.stringify([r.state,[...new Set(r.flags)].sort()]):null;
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 export function createNativeActions({discovery,urlPolicy,currentURL,bodyProof=()=>null,inputRisk=()=>({state:'unknown',flags:[]}),authorize=()=>false,beforeDispatch=()=>{},now=()=>performance.now()}={}){
  if(typeof discovery?.getNode!=='function'||typeof urlPolicy?.parse!=='function'||typeof currentURL!=='function'||[bodyProof,inputRisk,authorize,beforeDispatch,now].some(f=>typeof f!=='function'))throw Error('invalid-native-actions');
@@ -22,9 +22,9 @@ export function createNativeActions({discovery,urlPolicy,currentURL,bodyProof=()
   }else return unavailable('invalid-native-target');
   const issuedURL=currentURL(),proof=bodyProof();let plan,node=null;
   if(chosen.kind==='resolved'&&chosen.entity==='conversation'&&urlPolicy.sameTarget(issuedURL,chosen.navigationURL)&&proof?.conversationId===chosen.nativeId&&id(proof.bodyProofId))plan={mode:'same-target',target:chosen,bodyProofId:proof.bodyProofId,planRevision};
-  else if(handle&&(node=discovery.getNode(handle)))plan={mode:'native-control',target:chosen,control:handle,planRevision};
+  else if(risk.state==='clear'&&risk.flags.length===0&&handle&&(node=discovery.getNode(handle)))plan={mode:'native-control',target:chosen,control:handle,planRevision};
   else if(chosen.kind==='resolved')plan={mode:'href',target:chosen,disposition:risk.state==='clear'?'same-tab':'new-tab-preserve-current',planRevision};
-  else return unavailable('stale-native-handle');
+  else return unavailable(risk.state==='clear'?'stale-native-handle':'input-risk-unresolved');
   freeze(plan);const targetKey='plan_'+nonce+'_'+planRevision;const entry={plan,targetKey,risk:riskAtIssue,url:issuedURL,node,expiresAt:now()+30000};
   if(plans.size>=256)plans.delete(plans.keys().next().value);plans.set(targetKey,entry);certificates.set(plan,targetKey);return plan;
  }

@@ -1131,3 +1131,12 @@ frame显式导出后需点击下载；选择JSON后上传并展示新增/更新/
 单次真实headless page-transport mixed 4x/100k冷启动诊断仍FAIL：30,153.6ms达到总读取预算，HEADER多次6.54–7.60秒stale-binding，未进入分页。CPU profile约30.36秒，SHA256自耗10.37秒、stable2.26秒、native piece回调1.82秒、度量0.95秒。原input同节点/草稿/connected/visible均保持，sourceChangedDuringRun=false。不循环重跑，保留报告/压缩profile。Round70 23.25秒是1x，不能直接比较改善比；本次不是MV3 worker或物理弱机认证。
 
 局部优化已验证，但原4x100k冷迁移预算阻塞仍在，未放宽6/30秒或跳过校验。下一步继续该瓶颈与原生导航风险护栏，真实context/ACK、自动评估/新装默认和既列G/U等未完成条件保持。Free未完成、NOT_RELEASE_READY。
+
+
+## Round104：原生控件导航前保留未提交内容
+
+在4946a0e继续。修复独立审查发现的latent路径：此前风险稳定的unknown/unsaved仍可产生native-control计划，未来开启授权可能卸载草稿。现在只有clear且无风险flags允许该计划；有真实已验证URL则在计划阶段转为浏览器new-tab-preserve-current，无URL控件保持unavailable和原入口。clear却含风险flag的矛盾输入拒绝。同目标且bodyproof匹配仍already-current，不做导航；原授权前后复核、节点/route/期限/risk复核、单次action账本不变，无新增生产授权或派发RPC。
+
+45项native-actions定向、全部975项host合同及实际原构建包headless10项均PASS，运行源码稳定。验证unknown/unsaved各风险flag、真实URL/live handle、IDless控件、同目标body与beforeDispatch风险变化。完整Node回归本轮NOT_RUN，上一2244只对应Round103，不相加。生产直接native-control权限仍默认拒绝，不能以href回归称已启用。
+
+下一步继续原4x100k冷迁移HEADER阻塞，保留原子迁移/CAS和预算；其他真实context/ACK、新聊首发、自适应与G/U条件保持。Free未完成、NOT_RELEASE_READY。
