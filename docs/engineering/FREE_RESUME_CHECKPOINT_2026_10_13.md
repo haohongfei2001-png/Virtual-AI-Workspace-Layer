@@ -265,3 +265,14 @@ pendingSynthetic已绑定捕获时验证过的scope/document/route/有效期；B
 正常100k三功能3/3，1707.4/1596.3/1612.5ms仍全部1秒FAIL；各1事件/hint/原生消息、fullread0、阅读/草稿保持、运行源码哈希一致。既有路径比上轮慢，不宣称整体提速。首次启动的自动审批超时未执行，允许的一次重试成功完成；不是绕过拒绝。包SHA256 `0d60e736d645c2191c37a033d6b9069e66822f9eda6ec58daa85f56fb0bc63ed`，路径/private/tmp/vaiwl-free-delivery-round35-20261013/vaiwl-free-synthetic-only.zip，仍SYNTHETIC_ONLY。
 
 已正常快进推送486dacd且API确认PR16 Draft同head、正文更新Round34。下一具体热点：fixtureObserve先partialContext再ingest导致同100k共享manifest两次读取编码验证；只能考虑同事务的固定用途准备/写入，不能跨事务信任旧对象、绕CAS或更改一般ingest合同。尚未实施，须保留跨ref事件冲突、撤销重放、恢复receipt、quota/撤权回滚及部分成功重试TTL反例。真实源/账户/跨端、PAIA、物理设备与真人验收条件保持，完整Free未完成。
+
+
+## 第三十六轮：按真实热点筛除无收益候选
+
+从已推送315db11继续，运行时代码未变。新增固定历史baseline、内存候选的隔离诊断脚本，未采用任何候选。真实100k一次CPU profile仅为诊断，不能替代Round35正常发送延迟：strictJSON约281ms、GC145ms、sha256140ms、stable匿名108ms、manifestSize35ms selfCPU。新Project的shared前读约28.6ms、ingest153.6ms、evidence.apply225.5ms、native.apply334.1ms；不能再以“重复前读”为显著收益假设改写事务合同。原profile JSON与压缩原始CPU采样独立保留。
+
+隔离计算结果：manifest容器栈候选中位51.55→51.15ms无明显收益；数字内联候选read/counts在同值、混合、唯一三分布各有快慢，无稳定收益。单遍stream候选保持getter次序/唯一访问与失配继续编码，最初对象表有收益，补测真实数字版本表却19.9→21.6、18.7→19.6、28.2→28.55ms，因此全部不接入。不能选择性只报对象表收益。16Mi UTF16精确边界、非JSON、特殊原型、循环/共享、完整校验和及篡改等价诊断保留各自范围，不称真实产品验收。
+
+新增公开cache API的16项安全反例，完整相关组合90/90通过；无新增runtime改动，本轮完整Node/MV3/正常100k NOT_RUN，最新完整Round34 774/774、MV3 9/9与正常发送Round35 1707.4/1596.3/1612.5ms保持，1秒仍FAIL。包仍Round35 SHA2560d60e736d645c2191c37a033d6b9069e66822f9eda6ec58daa85f56fb0bc63ed。
+
+接续限制：不重复以上无收益编码试验，不为约30ms收益改写共享CAS接口。剩余主要成本是native/evidence/shared全量版本索引根在读写时的编码/完整验证与复制；进一步优化必须先保持有界索引、旧格式读取/恢复、每次完整字节验证和Pro人工资产。尚未实施新的存储格式或授权真实来源。真实账户/来源/跨端、PAIA、物理设备/IME、真人日常验收仍缺条件，Free未完整交付，继续既有计划。
