@@ -148,11 +148,12 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   async function load(){
     clearRecovery();if(stopped||!visible())return;const ticket=++generation,url=env.location.href;clearTimers();fail('validating-binding',true);lease=null;data=null;lastView='';
     try{const bound=await request('BIND');if(!current(ticket,url))return;if(!bound?.ok)throw Error(bound?.reason??'bind-failed');
-      acceptBinding(bound);await queue(()=>readSnapshot(ticket,url));if(!current(ticket,url))return;retries=0;
+      acceptBinding(bound);await queue(async()=>{await sendBeforeSnapshot(ticket,url);if(current(ticket,url))return readSnapshot(ticket,url);});if(!current(ticket,url))return;retries=0;
       expiry=setTimeout(()=>recover('lease-expired-active-js',{immediate:true}),Math.max(0,lease.expiresAt-Date.now()));scheduleHeartbeat();flushSynthetic();
     }catch(e){if(current(ticket,url)){if(lease&&isFreeRecoveryReason(e.message)){await showFreeRecovery(ticket,url,e.message);}else if(lease&&['corrupt-record','invalid-state','invalid-schema','invalid-user-event','invalid-text','orphan-placement','orphan-title','invalid-state-row','invalid-state-table'].includes(e.message)){await showAssetRecovery(ticket,url,e.message);}else recover(e.message);}}
   }
   async function showFreeRecovery(ticket,url,reason){
+    verifiedAuthority=null;pendingSynthetic.clear();freeReplica=null;freeIndex=null;
     fail(reason,true);clearRecovery();let plans;
     try{const reply=await request('B23_FREE_RECOVERY_STATUS');if(!current(ticket,url)||!reply?.ok)throw Error(reply?.reason??'stale-client-response');plans=reply.recovery??reply;}
     catch(e){if(!current(ticket,url))return;plans={native:{corrupt:true,recoverable:false,reason:e.message}};}
@@ -166,6 +167,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     expiry=setTimeout(()=>{if(current(ticket,url))void load();},Math.max(0,lease.expiresAt-Date.now()));
   }
   async function showAssetRecovery(ticket,url,reason){
+    verifiedAuthority=null;pendingSynthetic.clear();freeReplica=null;freeIndex=null;
     fail(reason,true);clearRecovery();let plan;try{const r=await request('B23_RECOVERY_STATUS');if(!current(ticket,url)||!r.ok)throw Error(r.reason??'stale-client-response');plan=r.recovery;}catch(e){if(!current(ticket,url))return;if(retryable(e.message)){recover(e.message);return;}plan={recoverable:false,reason:e.message};}
     const panel=document.createElement('div');panel.dataset.vaiwlOwned='asset-recovery';panel.setAttribute('role','region');panel.setAttribute('aria-label','工作空间数据恢复');panel.style.cssText='font:13px/1.6 system-ui;padding:12px 18px;background:var(--surface,#fff);color:var(--ink,#171717);border-bottom:1px solid var(--line,#ddd)';
     const text=document.createElement('p');text.textContent=plan.recoverable?'工作空间记录损坏，原始记录仍保留。已核验检查点与最新人工日志，可以恢复人工资产；旧发送证据与操作收据会失效。':'工作空间或人工日志损坏，无法证明安全恢复；未覆盖原始记录。请保留备份与损坏记录。';panel.append(text);
@@ -215,19 +217,48 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
       clearRecovery();if(lastURL!==env.location.href)navigation.enterReading();const accountRoute=new URL(env.location.href).pathname.split('/')[2];if(accountRoute!==freeSessionRoute){freeSession=null;freeReplica=null;freeIndex=null;freeSessionRoute=accountRoute;verifiedAuthority=null;pendingSynthetic.clear();}partitionReplica=null;partitionIndex=null;lastURL=env.location.href;lastControls=controlsKey();generation++;invalidateRemote();clearTimers();fail('route-changed');lease=null;data=null;retries=0;clearFeedback();pending=setTimeout(load,0);
     }else navigation.layout();}
   // Re-observe only bounded synthetic metadata; never replay a native send or body.
+  function syntheticOriginMatches(item,scope){
+    return Date.now()-item.createdAt<=600000&&Date.now()<item.authority.expiresAt&&
+      item.authority.scope===lease?.scope&&item.authority.scope===scope&&
+      item.authority.documentId===lease?.documentId&&
+      item.authority.accountRoute===new URL(env.location.href).pathname.split('/')[2];
+  }
+  async function observeSynthetic(key,item,ticket,url){
+    item.attempts++;
+    try{
+      const reply=await request('B23_SYNTHETIC_SEND',item.metadata);
+      if(!current(ticket,url))throw Error('stale-client-response');
+      if(!reply?.ok)throw Error(reply?.reason??'synthetic-send-failed');
+      pendingSynthetic.delete(key);
+    }catch(error){
+      if(item.attempts>=2||!retryable(error.message)&&error.message!=='revision-conflict')pendingSynthetic.delete(key);
+      throw error;
+    }
+  }
+  async function sendBeforeSnapshot(ticket,url){
+    // Only a previously published Free replica proves that this scope already
+    // completed its initial native inventory read. Cold startup keeps that read.
+    if(!current(ticket,url)||!lease||Date.now()>=lease.expiresAt||freeReplica?.header.scope!==lease.scope)return;
+    for(const [key,item] of pendingSynthetic){
+      if(!syntheticOriginMatches(item,freeReplica.header.scope)){pendingSynthetic.delete(key);continue;}
+      if(new URL(url).pathname!==item.pathname)continue;
+      try{await observeSynthetic(key,item,ticket,url);}
+      catch(error){throw Error(retryable(error.message)?error.message:'stale-binding');}
+      // Limit work before first paint to one observation. Remaining entries use
+      // the normal queue after the final snapshot authority/version check.
+      return;
+    }
+  }
   function flushSynthetic(){
     if(syntheticFlush||!lease||!data||stopped||!visible())return;syntheticFlush=true;
     void queue(async()=>{try{
       for(const [key,item] of pendingSynthetic){
-        if(Date.now()-item.createdAt>600000||Date.now()>=item.authority.expiresAt||item.authority.scope!==lease?.scope||item.authority.scope!==data?.scope||item.authority.documentId!==lease?.documentId||item.authority.accountRoute!==new URL(env.location.href).pathname.split('/')[2]){pendingSynthetic.delete(key);continue;}
+        if(!syntheticOriginMatches(item,data?.scope)){pendingSynthetic.delete(key);continue;}
         const url=env.location.href;if(new URL(url).pathname!==item.pathname)continue;
         if(!lease||!data||stopped||!visible()||Date.now()>=lease.expiresAt)break;
-        const ticket=generation;item.attempts++;
-        try{const reply=await request('B23_SYNTHETIC_SEND',item.metadata);
-          if(!current(ticket,url)){if(item.attempts>=2)pendingSynthetic.delete(key);break;}
-          if(!reply?.ok)throw Error(reply?.reason??'synthetic-send-failed');
-          pendingSynthetic.delete(key);await readSnapshot(ticket,url);
-        }catch(e){if(item.attempts>=2||!retryable(e.message)&&e.message!=='revision-conflict')pendingSynthetic.delete(key);
+        const ticket=generation;
+        try{await observeSynthetic(key,item,ticket,url);await readSnapshot(ticket,url);
+        }catch(e){
           if(current(ticket,url))recover(retryable(e.message)?e.message:'stale-binding',{immediate:true});break;}
       }
     }finally{syntheticFlush=false;}});

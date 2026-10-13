@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第二十七轮：旧包writer回退后的引用补录检测及前台优先已修复；100k延迟回落但仍超过1秒。GitHub恢复后正常快进同步至 `160d7b7`，API确认PR #16仍Draft；后续HEAD以Git为准。继续原正式目录、分支和PR #16 Draft，Free及发布验收未完成。
+当前已推进至第二十八轮：同作用域已验证的新聊天观察优先于重绑快照，恢复面板清除旧观察来源。703项Node、10项来源/恢复浏览器、9项MV3通过；100k仍超过1秒。已确认远端Draft PR #16为 `565178f`，本轮HEAD以Git为准。继续同一分支，完整Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -361,3 +361,11 @@ CHECK/HEADER/PAGE/SEND/UPSERT优先取消补录的独立子signal，主binding�
 验证子代理额度中断后主代理接手浏览器验证，不据此宣称完成。下一具体优化仍为新聊天BIND→HEADER/CHECK→SEND→HEADER/PAGE/CHECK双快照；只能对捕获时已核验同scope/document且已有初始化库存的元数据做有界前置发送，保留冷启动Project初始化、CAS重试及最终发布CHECK。实际源/私人账户/PAIA/跨端/物理与真人验收条件仍缺失，完整Free未交付。
 
 第二十七轮最终实际MV3 9/9通过，新增worker模块、双tab、worker重启、发送/新NONE/工作集、未知账户与草稿保持；报告free-round27-mv3独立保留。
+
+## 第二十八轮：暖态新聊天与恢复观察隔离
+
+从565178f继续。仅已发布Free副本、原账户/文档、未过期来源的待处理合成观察，可在重绑后快照前处理至多1项；冷启动保持先读库存，余项等最终CHECK后处理。路由失效不再发无效HEADER。Free和人工资产恢复面板入口立即清空来源、待观察和副本，修复不会重放旧观察。未改真实原生发送。
+
+最终完整Node703/0/0skip；实际headless client/broker小合成owner来源/恢复10/10（不是IDB认证），实际MV3另9/9。正常100k真实IDB三发送功能3/3、hash稳定，既有1611.2ms、新NONE1729.7ms、新Project1729.1ms，全部仍1秒FAIL。新聊天trace为BIND→SEND→HEADER/PAGE→CHECK，无全量read，每次1事件/hint/原生消息，阅读/草稿保留；单次测量不作统计结论。
+
+包SHA256 `0791b4768a002688704e388e7c4105c2058580843adb1519f653d508f65e1c73`，仍SYNTHETIC_ONLY。下一独立任务：工作集最多1000项逐项find扫描100k refs，复用已有scope索引避免重复遍历，保留人工顺序/缺失项/新标题。真实账户、PAIA及物理/真人条件未改变，Free未完成。

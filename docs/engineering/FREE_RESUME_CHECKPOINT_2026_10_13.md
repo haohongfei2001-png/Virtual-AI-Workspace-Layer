@@ -193,3 +193,7 @@ pendingSynthetic已绑定捕获时验证过的scope/document/route/有效期；B
 旧writer4项遗漏用真实历史模块复现后修复：marker ID摘要+B1count覆盖done/partial与旧4字段迁移。前台请求中止独立补录事务、quiet1秒续作、不撤binding。完整Node703/0，真IDB service4/4含同lease CHECK heldtransaction取消；100k1758.2/2212.2/1997.7ms均功能PASS但1秒FAIL。包/private/tmp/vaiwl-free-delivery-round27-20261013/extension，hash及证据见STATUS。Git正常同步至160d7b7且PR16 Draft API已核对，下一提交需正常push。
 
 下一按已捕获scope/document来源实现新聊天安全前置至首次快照之前，限1项、同串行队列内直接函数避免嵌套queue死锁，只有已核验同scope库存初始化才能采用；冷无scope不能追认，最终CHECK与失败恢复保持。此路径尚NOT_IMPLEMENTED。子代理validation遭额度限制，主代理仍完成上述实测，下一轮直接接当前状态，禁止重建计划/目录。真实Free未验收。
+
+## 第二十八轮（接565178f）
+
+已完成暖态重绑前至多1观察、冷态保守读取、末次CHECK不变；Free/人工恢复清空旧观察与副本。Node703/0、来源/恢复10/10、MV3 9/9。100k正常1611.2/1729.7/1729.1ms均1秒FAIL，各报告free-round28-*，不与旧结果相加。包 `/private/tmp/vaiwl-free-delivery-round28-20261013/vaiwl-free-synthetic-only.zip` SHA2560791b4768a002688704e388e7c4105c2058580843adb1519f653d508f65e1c73。下一工作集索引优化已有独立测试准备，继续当前目录/分支/PR16。真实源/PAIA/物理验收条件保持，完整产品尚未完成。
