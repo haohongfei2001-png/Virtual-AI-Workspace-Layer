@@ -30,4 +30,4 @@ node simulator/package.mjs /private/tmp/vaiwl-free-package-candidate
 
 2026-10-13新增本地实测：同一路径Round23→Round24→Round23实际包重载/回退保留extension ID、人工资产、原生/活动事实与宿主草稿；两包均manifest0.2.0/schema3，不代表跨schema升级已认证。独立模拟schema4数据库使旧schema3 reader拒绝且数据保留。证据见`free-round24-upgrade-2026-10-13.json`，仅隔离合成Chrome环境。
 
-当前Free合成服务首次读取旧原生分片时会同库迁移为 `vaiwl-native-version-index-v1`，数据库schema仍为3，但原生记录格式已改变。旧格式的原生片与上一检查点按引用保留，Pro人工资产不变；格式迁移不恢复任何来源授权。旧包是否兼容必须检查其原生格式支持，不能仅比较schema版本。没有索引支持的旧包应拒绝读写；需要保留原库并使用支持索引的版本恢复，不能清库强制回退。Round24的同格式回退证据不覆盖这次索引格式迁移；实际跨包索引升级/旧包拒绝仍需另行验证。
+当前Free合成服务首次读取旧原生分片时会同库迁移为 `vaiwl-native-version-index-v1`，数据库schema仍为3，但原生记录格式已改变。旧格式的原生片与上一检查点按引用保留，Pro人工资产不变；格式迁移不恢复任何来源授权。旧包是否兼容必须检查其原生格式支持，不能仅比较schema版本。没有索引支持的旧包应拒绝读写；需要保留原库并使用支持索引的版本恢复，不能清库强制回退。Round24的同格式回退证据不覆盖这次索引格式迁移；Round41已在隔离headless Chrome实测同路径Round35→Round40→Round35→Round40：旧包明确invalid-native-schema拒绝且原生两store完整摘要不变；恢复索引包后导航ACTIVE，Pro资产、活动证据、原生事实与原草稿DOM保持。证据见`free-round41-index-upgrade-2026-10-13.json`，不代表生产Chrome账户或其他旧版本兼容。

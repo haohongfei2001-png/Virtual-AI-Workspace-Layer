@@ -328,3 +328,14 @@ NativeRepository的read/header/page支持新格式：完整读/header验证所�
 最终完整Node845/845、0失败/跳过；实际headless IDB6项和最终MV3 9项通过。冻结源码、顺序1k/10k/100k，九条发送功能全部通过：1k 61.2/47.4/47.4ms；10k 148.5/131.0/131.4ms；100k 1281.6/1278.9/1229.6ms，**100k一秒目标仍FAIL**。每条1消息/event/hint，fullread/snapshot0，阅读/草稿保持，最终native格式明确indexed，各运行hash不变。报告free-round40-*独立保存，不加总中间结果；未改6秒RPC、20秒lease或30秒初始测试窗口。
 
 最终包/private/tmp/vaiwl-free-delivery-round40-integrated-20261013/vaiwl-free-synthetic-only.zip，SHA256 `4162206f2cbe5dca2f187b378f9778cbadfe91e7859f5eb4053b96496d3e4da4`，46文件/39worker模块，仍SYNTHETIC_ONLY/NOT_RELEASE_READY。下一可执行验证：实际同路径旧格式包→索引包升级、旧包遇到新格式拒绝且存储不丢、新包重新启用恢复；原Round24同schema回退证据不覆盖新格式。性能仍需处理剩余HEADER/活动和共享索引成本，不重复已无收益的编码实验。真实来源/账户/跨端/PAIA/物理设备与真人条件仍缺，完整Free未完成。
+
+
+## 第四十一轮：实际跨包索引格式升级与旧reader拒绝
+
+运行时代码保持277c410。新增独立隔离headless Chrome测试，使用固定Round35旧包与Round40最终包，实际同路径替换并reload扩展，extension ID保持。四步PASS：旧包建立人工作品与原生事实；新版首次同库迁移并ACTIVE；旧包对indexed根精确invalid-native-schema拒绝且native_states/native_operations全字节摘要不变；恢复新版再ACTIVE且不重新迁移。shared/evidence摘要、原生事实（仅migration revision+1）、人工标题/工作集、原宿主草稿DOM/阅读页面不刷新均保持。两个包source manifest哈希和最终测试脚本哈希留在free-round41-index-upgrade-2026-10-13.json。
+
+初次脚本在probe抢走隔离tab焦点后采集到WAITING/validating-binding，已强化为probe后重新前台并再次等ACTIVE；旧包必须等精确invalid-native-schema，最终四步重跑通过。并非放宽断言或忽略页面错误。全程headless新profile，未接触用户Chrome或私人账户。
+
+本轮无runtime改动，完整Node/常规MV3/性能不重复运行；最近对应实现证据仍Round40完整845/0/0skip、IDB6、MV39及1k/10k/100k正常三发送。包仍Round40 SHA2564162206f2cbe5dca2f187b378f9778cbadfe91e7859f5eb4053b96496d3e4da4。100k一秒FAIL与真实源/账户/跨端/PAIA/物理/真人条件保持。
+
+277c410正常HTTP1.1 push在45秒超时；已确认无遗留Git网络进程，不循环重试、不改remote/config。只读API随后确认Draft PR16仍8503b14；本地后续提交尚未同步，GitHub Desktop可沿原仓库同步。下一可执行工作是剩余F1发送约230–280ms差距的真实热点，尤其HEADER完整版本清单与活动/共享写入，须保留CAS/完整字节/来源/最终发布栅栏；不重复无收益微编码实验，不为等外部权限停止独立工作。
