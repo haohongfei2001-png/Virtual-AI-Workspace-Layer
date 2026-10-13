@@ -543,3 +543,16 @@ partialContext显式boundedDirectory opt-in仅对目录格式启用，读取目�
 - 当前包仍以Round57冻结zip为其独立来源；本轮源码变化不冒称旧zip包含本修改。未部署/merge/付费/私人账户/PAIA/原生写入。真实来源/跨端/PAIA/物理IME/真人与剩余F1仍未完成。
 
 证据：free-round58-node.log、oracle.log、idb.json、mv3.json、mixed100k.json、long100k.json、mixed10k-4x.json、startup-profile.json/cpuprofile、source-receipt.json。
+
+
+## Round59：保持6秒RPC的阶段化准备
+
+前一d318209已正常push现有Free分支。新增可选staged:true HEADER协议，旧无flag接口不变。每次最多完成native-bootstrap/native-index/shared-directory/evidence-directory之一的原有原子迁移，仅返回scope绑定preparing；客户端最多四个严格递增阶段和最终HEADER，首await之前固定scope，每步检查取消和续租，重复/退回/未知/错误均拒绝。全部准备完成后才组装PAGE并执行最终CHECK；无partial导航发布，无超时放宽或权限放宽。
+
+- 完整Node1118/1118、0失败/跳过；随后新增首await scope反例，独立阶段合同19/19（5 service+14 loader），不相加为单次全套。最终源码实际无界面MV3 9/9。
+- 冻结源码100k mixed：初载23341.3ms；三个迁移2987.8/3131.8/3824.1ms、最终HEADER504.6ms，均ok无超时；发送895.3/611.6/680.3ms。
+- 冻结源码100k长中文：初载23769.5ms；迁移3368.1/3196.2/3817.8ms、最终HEADER447.4ms；发送693.8/594.6/583.8ms。两组sourceChangedDuringRun=false，仍为单样本非p95/物理设备验收。
+- 剩余：全量冷读取仍约23秒；staged最终HEADER目前共享/活动串行，可在安全区分无迁移后恢复独立并行；单个迁移在更慢设备超过6秒仍是失败，未认证100k 4x。下一独立机会是有界纯timestamp解析缓存（不缓存活动/授权/过期），以及剩余single-project/多tab/增量原名成员F1。
+- 未生成新的冻结安装zip；Round57 zip仍按其旧来源使用，不冒称包含59源码。真实来源/跨端/PAIA/IME/真人及完整Free/发布仍未验收。
+
+证据：free-round59-node.log、staged-contracts.log、mv3.json、mixed100k.json、long100k.json、source-receipt.json。

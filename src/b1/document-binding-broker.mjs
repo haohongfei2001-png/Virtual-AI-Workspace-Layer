@@ -13,6 +13,7 @@ const viewSessionOK=s=>s===null||exact(s,['H','T','Z','policyRevision'])&&[7,14,
 const requestOK=m=>{
   if(!isRecord(m)||m.v!==VERSION||!tokenOK(m.clientId)||
      !Number.isSafeInteger(m.seq)||m.seq<1)return false;
+  if(Object.hasOwn(m,'staged')){if(m.type!=='B23_FREE_HEADER'||m.staged!==true)return false;const {staged,...original}=m;return requestOK(original);}
   const base=['v','type','clientId','seq'];
   switch(m.type){
     case 'BIND':return exact(m,base);
@@ -183,7 +184,7 @@ export function createDocumentBindingBroker({
         }
         else if(message.type==='B23_FREE_HEADER'){
           if(freeRuntime){const foreground=await freeRuntime.foreground(slot.leaseId,{session:message.viewSession??null,readCached:false});foreground.calibration.catch(()=>{});}
-          result=workspaceRepository.freeHeader?{ok:true,header:await workspaceRepository.freeHeader(scope,options,message.now,message.timeZone,message.viewSession,doc.url)}:deny('free-header-unavailable');}
+          result=workspaceRepository.freeHeader?{ok:true,header:await workspaceRepository.freeHeader(scope,options,message.now,message.timeZone,message.viewSession,doc.url,message.staged===true)}:deny('free-header-unavailable');}
         else if(message.type==='B23_FREE_PAGE')result=workspaceRepository.freePage?{ok:true,page:await workspaceRepository.freePage(scope,{revision:message.revision,offset:message.offset,limit:message.limit,ids:message.ids,viewSession:message.viewSession,now:message.now},options)}:deny('free-page-unavailable');
         else if(message.type==='B23_FREE_SNAPSHOT')result=workspaceRepository.freeSnapshot?{ok:true,snapshot:await workspaceRepository.freeSnapshot(scope,options,message.now,message.timeZone,message.viewSession)}:deny('free-snapshot-unavailable');
         else if(message.type==='B23_PARTITION_HEADER'){const value=await workspaceRepository.partitionHeader(scope,options);result=value?{ok:true,partition:value}:{ok:true,snapshot:await workspaceRepository.snapshot(scope,message.now,message.timeZone,options,message.size)};}

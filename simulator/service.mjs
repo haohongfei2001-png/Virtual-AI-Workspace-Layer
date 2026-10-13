@@ -41,11 +41,13 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
     if(activityVersionCache.size>=8&&!activityVersionCache.has(key))activityVersionCache.delete(activityVersionCache.keys().next().value);
     activityVersionCache.set(key,{revision,value});return value;
   }
-  async function ensureEvidence(scope,options){
+  const preparing=(scope,stage)=>({preparing:{scope:repository.scopeOrThrow(scope).key,stage}});
+  async function ensureEvidence(scope,options,staged=false){
     let stored=await evidence.header(scope,{...options,includeStorageFormat:true});
     if(stored.storageFormat==='vaiwl-free-evidence-partitions-v1'){
       const result=await evidence.migrateRefDirectory(scope,{operationId:'evidence_ref_directory_v1',expectedRevision:stored.revision},options);
       if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);
+      if(staged)return preparing(scope,'evidence-directory');
       // One bounded attempt. A concurrent writer can win; the next HEADER
       // retries if still legacy. No request replay or source renewal.
       stored=await evidence.header(scope,{...options,includeStorageFormat:true});
@@ -55,7 +57,7 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
   function activitySourceRevision(state,stored){
     return digest(Object.entries({...state.sources,...stored.sources}).map(([id,s])=>({id,revoked:s.revoked,generation:s.generation??null,channel:s.channel,validUntil:s.validUntil??null,trustLevel:s.trustLevel??null})));
   }
-  async function workspaceContext(scope,options,ids=null){
+  async function workspaceContext(scope,options,ids=null,staged=false){
     if(ids!==null){
       const context=await workspaces.partitioned.partialContext(scope,ids,{...options,boundedDirectory:true});
       return context?{state:context.state,refVersions:context.refVersions??context.manifest.refVersions}:workspaces.read(scope,options);
@@ -66,19 +68,21 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
       // One attempt per HEADER. A CAS loser reads the winner; only another
       // HEADER may retry, with no source renewal or command replay.
       if(!migration.ok&&migration.reason!=='revision-conflict')throw Error(migration.reason);
+      if(staged)return preparing(scope,'shared-directory');
     }
     const large=await workspaces.partitionHeader(scope,options);
     if(!large)return workspaces.read(scope,options);
     return {state:headerState(large.manifest),view:large.view,diagnostics:large.diagnostics,refVersions:large.manifest.refVersions};
   }
-  async function ensureNative(scope,options,origin){
+  async function ensureNative(scope,options,origin,staged=false){
     let root=await native.header(scope,options);
-    if(!root.revision){const result=await native.apply(scope,{operationId:'native_fixture_bootstrap_v1',expectedRevision:0,batch:nativeSeed(scope,origin)},options);if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);root=await native.header(scope,options);}
+    if(!root.revision){const result=await native.apply(scope,{operationId:'native_fixture_bootstrap_v1',expectedRevision:0,batch:nativeSeed(scope,origin)},options);if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);if(staged)return preparing(scope,'native-bootstrap');root=await native.header(scope,options);}
     if(root.storageFormat===NATIVE_PARTITION_FORMAT){
       const result=await native.migrateVersionIndex(scope,{operationId:'native_version_index_v1',expectedRevision:root.revision},options);
       // A concurrent writer wins normally. Re-read once; a later HEADER can
       // retry migration if it still sees the legacy format. Never loop here.
       if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);
+      if(staged)return preparing(scope,'native-index');
       root=await native.header(scope,options);
     }
     return root;
@@ -102,13 +106,22 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
     workspaceRepository:{
       freeRecoveryStatus:async(scope,options)=>({native:await freeRecoveryStatus(native,scope,'native',options),evidence:await freeRecoveryStatus(evidence,scope,'evidence',options)}),
       freeRecover:(scope,request,options)=>(request.kind==='native'?native:evidence).recover(scope,request,options),
-      freeHeader:async(scope,options,now=FIXTURE_NOW,timeZone='Asia/Shanghai',viewSession=null,url)=>{
-        const root=await ensureNative(scope,options,new URL(url).origin);
+      freeHeader:async(scope,options,now=FIXTURE_NOW,timeZone='Asia/Shanghai',viewSession=null,url,staged=false)=>{
+        const root=await ensureNative(scope,options,new URL(url).origin,staged);
+        if(root.preparing)return root;
         // Bootstrap can write shared anchors, so it must finish first. The two
         // remaining owner reads are independent; settle both even if one fails.
-        const reads=await Promise.allSettled([workspaceContext(scope,options),ensureEvidence(scope,options)]);
-        for(const result of reads)if(result.status==='rejected')throw result.reason;
-        const context=reads[0].value,stored=reads[1].value;
+        let context,stored;
+        if(staged){
+          // Each continuation completes at most one existing atomic migration.
+          // No partial inventory is ever published as a usable header.
+          context=await workspaceContext(scope,options,null,true);if(context.preparing)return context;
+          stored=await ensureEvidence(scope,options,true);if(stored.preparing)return stored;
+        }else{
+          const reads=await Promise.allSettled([workspaceContext(scope,options),ensureEvidence(scope,options)]);
+          for(const result of reads)if(result.status==='rejected')throw result.reason;
+          context=reads[0].value;stored=reads[1].value;
+        }
         const {state,view,diagnostics}=context,policy=state.preferences.freeTimePolicy?.value;
         const activeSources=Object.values(root.manifest?.sources??{}).filter(source=>!source.revoked&&Date.parse(source.validUntil)>Date.parse(FIXTURE_NOW));
         const refs={};for(const key of Object.keys(context.refVersions??state.refs))refs[key]=0;

@@ -1,3 +1,4 @@
+import {loadFreeHeader} from '../src/data/free-header-loader.mjs';
 import {loadFreePages} from '../src/data/free-page-loader.mjs';
 import {isFreeRecoveryReason,freeRecoveryPanel} from '../src/navigation/free-recovery.mjs';
 import {planFreeReplica,freeReplicaRequests,assembleFreeReplicaAsync} from '../src/data/free-replica.mjs';
@@ -89,7 +90,9 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     acceptBinding(bound);clearTimeout(expiry);expiry=setTimeout(()=>recover('lease-expired-active-js',{immediate:true}),Math.max(0,bound.expiresAt-Date.now()));
   }
   async function readSnapshot(ticket,url){
-    const c=readControls(),freeMode=new URL(env.location.href).searchParams.get('view')!=='pro',reply=await request(freeMode?'B23_FREE_HEADER':'B23_SNAPSHOT',{now:c.now??FIXTURE_NOW,timeZone:c.timeZone??'Asia/Shanghai',size:c.size??8,...(freeMode&&freeSession?{viewSession:freeSession}:{})});
+    const c=readControls(),freeMode=new URL(env.location.href).searchParams.get('view')!=='pro';
+    const params={now:c.now??FIXTURE_NOW,timeZone:c.timeZone??'Asia/Shanghai',size:c.size??8,...(freeMode&&freeSession?{viewSession:freeSession}:{})};
+    const reply=freeMode?await loadFreeHeader({scope:()=>lease?.scope,guard:()=>current(ticket,url),load:async()=>{await renewReadBinding(ticket,url);return request('B23_FREE_HEADER',{...params,staged:true});}}):await request('B23_SNAPSHOT',params);
     if(!current(ticket,url))throw Error('stale-client-response');if(!reply?.ok)throw Error(reply?.reason??'read-failed');
     let next=reply.snapshot,nextIndex=null,nextPrepared=false,nextReplica=null;
     if(freeMode){
