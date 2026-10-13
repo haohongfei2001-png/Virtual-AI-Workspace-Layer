@@ -992,3 +992,14 @@ adapter的body/surface共用producer序列与单个发送队列，分别去重�
 最终Node2055/2055、0失败/跳过；current body真实headless隔离MV3六组PASS，实际原构建包八旅程PASS，sourceChangedDuringRun=false。正文专项使用明确test-only MV3组装及合成无正文message IDs，证明真实content adapter→Chrome sender→owner、根重挂/隐藏/route/privileged scope撤销和current-object零native.apply；evidence库未在该专项组装，不能称原包/本人ACK认证。既有observation浏览器脚本更新为按surface kind等待，不把先到的body accepted当native数据已落盘。首轮旧adapter计数合同失败原样保留，旧surface-only测试继续严格验证，默认双kind行为另测。
 
 下一步复用session-provider.readCurrentConversation，在有效RAM证明内限定当前C及scope，以包内显式开关接认证元数据读回；返回仍为metadata candidate，selfMatchCandidate不构成ACK。生产默认context/当前读取仍关闭，G/U、本人发送语义、备份设置、C5间歇点击与原4x100k条件保持。Free未完成、NOT_RELEASE_READY。
+
+
+## Round97：当前正文限定的认证元数据读回
+
+在2c32853继续，正常fetch确认本地与远端一致，API确认PR16仍open Draft、原base且Pro72ca068已为祖先。worker增加包内默认关闭的当前读取配置；service仅提供内部readCurrentMetadata(proofId)，无页面RPC、任意C入口、自动轮询或缓存。有效BodyProof提供owner认证principal/profile/transport，读回复用固定session/accounts/current-C请求；只返回当前DOM消息ID集合的候选，缺项明确partial，保留gaps且不制造coverage。正文响应可能含正文，parser归约后不输出/持久正文，不宣称metadata-only API。
+
+同proof单飞、异proof忙拒、64KiB结果上限；精度/lineage指纹/密集数据数组验证、深冻结，迟到结果不能绕过scope/route/proof guard。正文替换、unproven、文档/tab失效立即abort关联读取；stop拒绝在途与后续调用。没有ACK、sentAt或活动数据库写入；默认生产context仍未认证。
+
+冻结源码完整Node2095/2095、0失败/跳过；真实headless测试组装MV3当前读回5/5、原构建包8/8 PASS，sourceChangedDuringRun=false。专项验证默认禁用零请求、实际adapter→owner proof→认证固定GET→当前ID过滤及八store逐行摘要不变、在飞route/scope/stop拒绝。专项是离线重建及test-only组装，不冒充生产ACK；首次composition夹具字段错误日志与最终通过分开保留。
+
+继续原B2.F2发送关联：同一正文新增消息与正文重挂的epoch需区分，现有correlator才能保留已建立baseline和intent；原生intent ingress与合格ACK语义仍未完成。备份设置、C1/C2、J/G/U、C5间歇点击、原4x100k失败保持。Free未完成、NOT_RELEASE_READY。

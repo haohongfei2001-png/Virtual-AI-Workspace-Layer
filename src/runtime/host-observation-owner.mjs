@@ -6,6 +6,7 @@ import {digest} from '../data/hash.mjs';
 export function createHostObservationOwner({handshake,authority,getFrame,profiles,onAccepted=null,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(!handshake?.verify||!handshake?.isBound||!handshake?.matchesFrame||!authority?.peek||!authority?.scopeFor||typeof getFrame!=='function'||!(profiles instanceof Map))throw Error('invalid-host-observation-owner');
  const admissions=new WeakMap(),producers=new Map(),bodies=new Map(),reads=new Set();let busy=null,stopped=false;
+ function discardBody(key){const entry=bodies.get(key);if(!entry)return;bodies.delete(key);for(const read of reads)if(read.entry===entry){read.active=false;read.abort.abort();}}
  function gate(scope,request){const entry=admissions.get(request);return entry&&entry.scopeKey===scope.key&&entry.guard()?entry:null;}
  async function ingest(proposal,sender,repository){
   const rejected=reason=>({state:'rejected',localSeq:Number.isSafeInteger(proposal?.localSeq)?proposal.localSeq:0,reason});
@@ -32,7 +33,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    if(!profile||profile.revision!==proposal.profileVersion)return rejected('unsupported-host-profile');
    const guard=()=>!stopped&&attempt.active&&elapsedNow()>=attempt.started&&elapsedNow()-attempt.started<6000&&handshake.isBound(proposal,sender)&&authority.peek(frame).grant?.id===grant.id&&authority.peek(frame).grant?.scopeEpoch===grant.scopeEpoch;
    const producerCurrent=()=>!stopped&&handshake.isBound(proposal,sender)&&authority.peek(frame).grant?.id===grant.id&&authority.peek(frame).grant?.scopeEpoch===grant.scopeEpoch;
-   const time=now();for(const [key,value]of producers)if(value.until<=time&&value.isBound?.()!==true){producers.delete(key);bodies.delete(key);}
+   const time=now();for(const [key,value]of producers)if(value.until<=time&&value.isBound?.()!==true){producers.delete(key);discardBody(key);}
    if(!producers.has(proposal.producerToken)&&producers.size>=maxProducers)return rejected('host-producer-capacity');
    // Validate the complete shape before any storage read; revision and timestamps are owner values.
    const observedAt=new Date(time).toISOString(),validUntil=new Date(Math.min(time+60000,Date.parse(grant.expiresAt))).toISOString();
@@ -51,7 +52,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
     if(!await handshake.verify(proposal,sender)||!guard())return rejected('stale-host-document');
     const prior=bodies.get(proposal.producerToken),unchanged=body.association==='explicit-body-id'&&prior?.current()&&digest(prior.claim)===digest(body);
     const bodyEpoch=unchanged?prior.bodyEpoch:(previous?.bodyEpoch??0)+1;
-    if(!unchanged)bodies.delete(proposal.producerToken);
+    if(!unchanged)discardBody(proposal.producerToken);
     const proofId=unchanged?prior.proofId:body.association==='explicit-body-id'?makeId():null;
     if(proofId!==null&&!unchanged&&[...bodies.values()].some(entry=>entry.proofId===proofId))return rejected('body-proof-id-conflict');
     if(proofId!==null&&(typeof proofId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(proofId)))return rejected('invalid-body-proof-id');
@@ -88,19 +89,20 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
   if(typeof work!=='function')throw Error('invalid-body-reader');
   const entry=[...bodies.values()].find(item=>item.proofId===proofId);
   if(!entry||!entry.current())throw Error('stale-body-proof');
-  const attempt={active:true,abort:new AbortController(),started:elapsedNow()};reads.add(attempt);
+  const attempt={entry,active:true,abort:new AbortController(),started:elapsedNow()};reads.add(attempt);
   const guard=()=>attempt.active&&!attempt.abort.signal.aborted&&elapsedNow()>=attempt.started&&elapsedNow()-attempt.started<6000&&entry.current();
   const check=()=>{if(!guard())throw Error('stale-body-proof');};
   try{return await withRequestDeadline(async()=>{
    if(!await handshake.verify(entry.proposal,entry.sender))throw Error('stale-body-proof');check();
    const actual=await getFrame({tabId:entry.frame.tabId,frameId:0});check();
    if(!handshake.matchesFrame(entry.proposal,entry.sender,actual)||actual.url!==entry.frame.actualURL)throw Error('stale-body-proof');
-   const result=await work(Object.freeze({scope:Object.freeze({...entry.scope}),conversationId:entry.claim.conversationId,messageIds:Object.freeze([...entry.claim.messageIds]),bodyEpoch:entry.bodyEpoch,evidenceClass:'dom-observed',guard,signal:attempt.abort.signal}));
+   const principal=authority.peek(entry.frame).grant.principal;
+   const result=await work(Object.freeze({scope:Object.freeze({...entry.scope}),providerProfile:principal.providerProfile,providerTransport:principal.transport,conversationId:entry.claim.conversationId,messageIds:Object.freeze([...entry.claim.messageIds]),bodyEpoch:entry.bodyEpoch,evidenceClass:'dom-observed',guard,signal:attempt.abort.signal}));
    if(!await handshake.verify(entry.proposal,entry.sender))throw Error('stale-body-proof');check();return result;
   },{now:elapsedNow,schedule,cancel});}finally{attempt.active=false;attempt.abort.abort();reads.delete(attempt);}
  }
- function invalidateDocument(documentId){for(const [key,entry]of bodies)if(entry.frame.documentId===documentId)bodies.delete(key);}
- function invalidateTab(tabId){for(const [key,entry]of bodies)if(entry.frame.tabId===tabId)bodies.delete(key);}
+ function invalidateDocument(documentId){for(const [key,entry]of bodies)if(entry.frame.documentId===documentId)discardBody(key);}
+ function invalidateTab(tabId){for(const [key,entry]of bodies)if(entry.frame.tabId===tabId)discardBody(key);}
  function stop(){stopped=true;busy&&(busy.active=false,busy.abort.abort());bodies.clear();producers.clear();for(const attempt of reads){attempt.active=false;attempt.abort.abort();}reads.clear();}
  return Object.freeze({gate,ingest,withCurrent,invalidateDocument,invalidateTab,stop});
 }

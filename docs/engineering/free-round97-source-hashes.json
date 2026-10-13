@@ -1,0 +1,10 @@
+{
+  "src/runtime/current-metadata-reader.mjs": "eef34958a8f01051ea186cbe1856f29ff32ccba7f4de2916900fca8afb1608ec",
+  "src/runtime/host-binding-service.mjs": "43939fe4f26c1202814649212006dca562858e00e57474c4effd6ba15f030d7a",
+  "src/runtime/host-observation-owner.mjs": "0c58488896f0ea515eeb9bf1a50f1ba2502db80f09b0df49f7e1f6d36bd09bad",
+  "src/runtime/host-worker-runtime.mjs": "296208b1885479d94c4f53ff3ca39745c88c6af53d5f0bb58596fef7e5a495e7",
+  "tests/host/current-metadata-reader.test.mjs": "45aceb00ee7944fc634911ad3313574d612d9bf772c3930f177abb996545f704",
+  "tests/host/current-metadata-composition.test.mjs": "d442ce02e1629760374e51fb78c0fb219478c438acbaf092361def651f2dec99",
+  "tests/host/current-metadata-mv3-browser.mjs": "c8c4c2899b457a52375935de77bad3a0f7c148f3c85647a16b012cf2f09d83ec",
+  "tests/host/fixtures/server.mjs": "7a54227f01947f465616f7cba6ff57931d753313c6f3afb4381559e0d7eadaa1"
+}
