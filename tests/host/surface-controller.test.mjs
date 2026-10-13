@@ -80,3 +80,14 @@ test('short scope-clipped grants renew before their hard expiry',async()=>{
  await f.controller.start({});await f.both();f.tick(4999);await drain();assert.equal(renews,0);
  f.tick(1);await drain();assert.equal(renews,1);f.tick(5000);await drain();assert.equal(f.calls.dispose,0);f.controller.stop();
 });
+
+test('only trusted return-button entry notifies owner after synchronous successful show',async()=>{
+ const f=fixture(),entered=[],held=deferred();f.bridge.workspaceEntered=value=>{assert.equal(f.slot.children.length,0);assert.equal(f.calls.show,4);entered.push(value);return held.promise;};await f.controller.start({});await f.both();assert.deepEqual(entered,[]);f.controller.showWorkspace();assert.deepEqual(entered,[]);f.controller.showReading();f.slot.children[0].events.click({isTrusted:false});assert.deepEqual(entered,[]);f.controller.showReading();f.slot.children[0].events.click({isTrusted:true});assert.deepEqual(entered,[{mountId:'mount'}]);assert.equal(f.calls.show,4);held.resolve({ok:false});await drain();assert.equal(f.calls.dispose,0);
+});
+test('notification failures never prevent native return and stale or blocked buttons cannot notify',async()=>{
+ for(const failure of [()=>{throw Error('unavailable');},()=>Promise.reject(Error('unavailable'))]){const f=fixture();f.bridge.workspaceEntered=failure;await f.controller.start({});await f.both();f.controller.showReading();f.slot.children[0].events.click({isTrusted:true});await drain();assert.equal(f.calls.show,2);assert.equal(f.calls.dispose,0);}
+ const f=fixture();let calls=0;f.bridge.workspaceEntered=()=>{calls++;};await f.controller.start({});await f.both();f.controller.showReading();const old=f.slot.children[0];f.layer(true);old.events.click({isTrusted:true});assert.equal(calls,0);f.controller.stop();old.events.click({isTrusted:true});assert.equal(calls,0);
+});
+test('session renewal and programmatic workspace presentation never notify entry',async()=>{
+ const f=fixture();let calls=0;f.bridge.workspaceEntered=()=>{calls++;};f.bridge.renewSession=async()=>f.renewAck();await f.controller.start({});await f.both();f.tick(10000);await drain();f.controller.showWorkspace();assert.equal(calls,0);f.controller.stop();
+});

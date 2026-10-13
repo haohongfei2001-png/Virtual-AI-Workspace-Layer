@@ -19,7 +19,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(!authorized(state)||adapter.hasNativeLayer()){removeReturn(state);return false;}
   const inspection=adapter.inspect(),slot=inspection.navigationSlot;
   if(!slot?.isConnected||slot!==state.inspection.navigationSlot){removeReturn(state);return false;}
-  if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.textContent='▦';button.addEventListener('click',showWorkspace);slot.append(button);state.button=button;}return true;
+  if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.textContent='▦';button.addEventListener('click',event=>{if(current!==state||!showWorkspace()||event?.isTrusted!==true)return;try{Promise.resolve(bridge.workspaceEntered?.({mountId:state.handle.id})).catch(()=>{});}catch{/* Entering the visible workspace never waits for a private notification. */}});slot.append(button);state.button=button;}return true;
  }
  function nativeSurrender(state){if(current!==state||!authorized(state))return;state.mode='reading';if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}
  function showReading(){const state=current;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}surface.showReading(state.handle);state.mode='reading';return ensureReturn(state);}

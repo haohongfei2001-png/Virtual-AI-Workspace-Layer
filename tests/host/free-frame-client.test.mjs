@@ -5,16 +5,16 @@ import assert from 'node:assert/strict';
 import {createFreeFrameClient} from '../../src/host/free-frame-client.mjs';
 const drain=async()=>{for(let i=0;i<60;i++)await Promise.resolve();};
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
-function fixture(){
+function fixture(role='workspace'){
  let time=1000,id=0,navOptions,views=0;const timers=new Map(),listeners=new Set(),messageListeners=new Set(),historicalMessages=[],calls=[],pages=[],states=[],presented=[];let factories=0,stops=0,invalidations=0,recoveryOptions,recoveryOpens=0,recoveryStops=0,backupOptions,backupOpens=0,backupStops=0,backupInvalidations=0;
  const element=()=>({children:[],setAttribute(){},append(n){n.parent=this;this.children.push(n);},replaceChildren(){this.children=[];},remove(){if(this.parent)this.parent.children=this.parent.children.filter(n=>n!==this);}});
  const body=element(),privateRoot=element();body.append(privateRoot);
  const document={body,createElement:element,defaultView:{parent:{postMessage(){}}}};
- const grant=()=>({id:'grant',mountId:'mount',parentDocumentId:'parent',uiDocumentId:'ui',scopeGrantId:'scope',role:'workspace',expiresAt:new Date(time+20000).toISOString()});
- const page=()=>({protocol:'vaiwl-free-frame/1',role:'workspace',scope:'A',completeSnapshot:false,groups:{items:[]},entries:{noProject:{items:[]},unknown:{items:[]}},selection:null});
+ const grant=()=>({id:'grant',mountId:'mount',parentDocumentId:'parent',uiDocumentId:'ui',scopeGrantId:'scope',role,expiresAt:new Date(time+20000).toISOString()});
+ const page=()=>({protocol:'vaiwl-free-frame/1',role,scope:'A',completeSnapshot:false,groups:{items:[]},entries:{noProject:{items:[]},unknown:{items:[]}},selection:null});
  let view=async()=>({ok:true,state:'ready',page:page(),navigation:[]});
  const runtime={connect:()=>({onMessage:{addListener:fn=>{messageListeners.add(fn);historicalMessages.push(fn);},removeListener:fn=>messageListeners.delete(fn)},onDisconnect:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},disconnect(){}}),sendMessage:async m=>{calls.push(m);if(m.type==='HOST_UI_VIEW'){views++;return view(m);}return {ok:true,grant:grant()};}};
- const client=createFreeFrameClient({document,privateRoot,runtime,role:'workspace',parentOrigin:'https://chatgpt.com',onState:s=>states.push(s),now:()=>time,elapsedNow:()=>time,makeNonce:()=> 'nonce',schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),backupFactory:options=>{backupOptions=options;return {open(){backupOpens++;},stop(){backupStops++;},invalidate(){backupInvalidations++;}};},recoveryFactory:options=>{recoveryOptions=options;return {open(){recoveryOpens++;},stop(){recoveryStops++;}};},navigationFactory:options=>{factories++;navOptions=options;return {invalidate(){invalidations++;},present:intent=>presented.push(intent),updateFrameProjection:p=>pages.push(p),stop:()=>{stops++;}};}});
+ const client=createFreeFrameClient({document,privateRoot,runtime,role,parentOrigin:'https://chatgpt.com',onState:s=>states.push(s),now:()=>time,elapsedNow:()=>time,makeNonce:()=> 'nonce',schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),backupFactory:options=>{backupOptions=options;return {open(){backupOpens++;},stop(){backupStops++;},invalidate(){backupInvalidations++;}};},recoveryFactory:options=>{recoveryOptions=options;return {open(){recoveryOpens++;},stop(){recoveryStops++;}};},navigationFactory:options=>{factories++;navOptions=options;return {invalidate(){invalidations++;},present:intent=>presented.push(intent),updateFrameProjection:p=>pages.push(p),stop:()=>{stops++;}};}});
  return {jump(ms){time+=ms;},runtime,grant,presented,messageListeners,historicalMessages,emit:m=>{for(const fn of [...messageListeners])fn(m);},client,calls,pages,states,body,privateRoot,page,setView:fn=>{view=fn;},get backup(){return backupOptions;},get backupOpens(){return backupOpens;},get backupStops(){return backupStops;},get backupInvalidations(){return backupInvalidations;},get recovery(){return recoveryOptions;},get recoveryOpens(){return recoveryOpens;},get recoveryStops(){return recoveryStops;},get invalidations(){return invalidations;},get nav(){return navOptions;},get factories(){return factories;},get stops(){return stops;},get views(){return views;},disconnect:()=>{for(const fn of [...listeners])fn();},async advance(ms){time+=ms;for(const [key,t]of [...timers])if(t.at<=time&&timers.has(key)){timers.delete(key);t.fn();}await drain();}};
 }
 test('actual lifecycle composition sends bounded VIEW without role and keeps one renderer across grant renewal',async()=>{const f=fixture();await f.client.start();await drain();assert.equal(f.pages.length,1);assert.deepEqual(f.calls.find(m=>m.type==='HOST_UI_VIEW'),{v:1,type:'HOST_UI_VIEW',grantId:'grant',mountId:'mount',query:{segment:0,offset:0,limit:8}});await f.advance(10000);assert.equal(f.factories,1);assert.equal(f.pages.length,2);assert.equal(f.stops,0);assert.equal(f.body.children[0],f.privateRoot);});
@@ -187,4 +187,59 @@ test('real search projection with long Unicode native titles remains reachable t
  let offset=0,seen=[];
  while(offset<refs.length){const result=await f.nav.onProjectionRequest({limit:8,search:{query:'中',offset,limit:24}});assert(result);assert(new TextEncoder().encode(JSON.stringify(result.search)).length<=65536);seen.push(...result.search.items.map(r=>r.id));for(const row of result.search.items)assert.equal(row.nativeTitle,refs.find(r=>r.id===row.id).nativeTitle);offset+=result.search.items.length;assert.equal(result.search.hasMore,offset<refs.length);}
  assert.deepEqual(new Set(seen),new Set(refs.map(r=>r.id)));assert.equal(seen.length,refs.length);assert.equal(f.stops,0);f.client.stop();
+});
+
+async function currentEntryFixture(role='workspace'){
+ const f=fixture(role);let session={H:30,T:20740,Z:'UTC',policyRevision:2},revision=5;
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),workspaceRevision:revision,viewSession:{...session}},navigation:[]}));
+ f.setSession=value=>{session=value;};f.setWorkspaceRevision=value=>{revision=value;};await f.client.start();await drain();return f;
+}
+test('safe current entry alone sends frozen authority and adopts returned session before a current-page read',async()=>{
+ const f=await currentEntryFixture(),other=await currentEntryFixture(),send=f.runtime.sendMessage,writes=[],next={H:14,T:20741,Z:'Asia/Shanghai',policyRevision:3};
+ await f.advance(10000);assert.equal(f.calls.some(m=>m.type==='HOST_UI_CURRENT_ENTRY'),false);
+ f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_CURRENT_ENTRY'){writes.push(m);f.setSession(next);return Promise.resolve({ok:true,segment:0,workspaceRevision:5,viewSession:next});}return send(m);};
+ const result=await f.nav.onCurrentWorkspaceEntry();assert.equal(result.ok,true);assert.deepEqual(writes,[{v:1,type:'HOST_UI_CURRENT_ENTRY',grantId:'grant',mountId:'mount',expectedRevision:5,viewSession:{H:30,T:20740,Z:'UTC',policyRevision:2}}]);
+ assert.deepEqual(f.calls.at(-1).query,{segment:0,offset:0,limit:8});assert.deepEqual(f.pages.at(-1).viewSession,next);assert.equal(other.pages.at(-1).viewSession.T,20740);f.client.stop();other.client.stop();
+});
+test('safe current entry does not run for sidebar history search working set or expired grant',async()=>{
+ for(const kind of ['sidebar','history','search','workingSet','expired']){
+  const f=await currentEntryFixture(kind==='sidebar'?'sidebar':'workspace');
+  if(kind==='history')await f.nav.onProjectionRequest({segment:1});
+  if(kind==='search')await f.nav.onProjectionRequest({segment:0,search:{query:'term',projectId:null,offset:0,limit:24}});
+  if(kind==='workingSet')await f.nav.onProjectionRequest({segment:0,workingSet:{offset:0,limit:24}});
+  if(kind==='expired')f.jump(20001);
+  assert.equal((await f.nav.onCurrentWorkspaceEntry()).ok,false,kind);assert.equal(f.calls.some(m=>m.type==='HOST_UI_CURRENT_ENTRY'),false,kind);f.client.stop();
+ }
+});
+test('late current entry response cannot overwrite stopped disconnected changed-scope or later history view',async()=>{
+ for(const kind of ['stop','disconnect','scope','history']){
+  const f=await currentEntryFixture(),held=deferred(),send=f.runtime.sendMessage;
+  if(kind==='scope')await f.advance(9000);
+  f.runtime.sendMessage=m=>m.type==='HOST_UI_CURRENT_ENTRY'?held.promise:m.type==='HOST_UI_RENEW'&&kind==='scope'?Promise.resolve({ok:true,grant:{...f.grant(),scopeGrantId:'different'}}):send(m);
+  const job=f.nav.onCurrentWorkspaceEntry();await drain();
+  if(kind==='stop')f.client.stop();if(kind==='disconnect')f.disconnect();if(kind==='scope')await f.advance(1000);if(kind==='history')await f.nav.onProjectionRequest({segment:2});
+  const views=f.views,count=f.pages.length;held.resolve({ok:true,segment:0,workspaceRevision:5,viewSession:{H:7,T:20741,Z:'UTC',policyRevision:3}});
+  assert.equal((await job).ok,false,kind);assert.equal(f.views,views,kind);assert.equal(f.pages.length,count,kind);f.client.stop();
+ }
+});
+test('current entry and horizon changes share a single mutation mutex in both directions',async()=>{
+ for(const first of ['current','horizon']){
+  const f=await currentEntryFixture(),held=deferred(),send=f.runtime.sendMessage,packets=[];
+  f.runtime.sendMessage=m=>{if(['HOST_UI_CURRENT_ENTRY','HOST_UI_SET_HORIZON'].includes(m.type)){packets.push(m);return held.promise;}return send(m);};
+  const h=()=>f.nav.onHorizonRequest({H:7,segment:0,anchorRefId:null}),c=()=>f.nav.onCurrentWorkspaceEntry();const job=first==='current'?c():h();await drain();
+  assert.equal((await(first==='current'?h():c())).ok,false);assert.equal((await c()).ok,false);assert.equal(packets.length,1);
+  held.resolve({ok:false,reason:'revision-conflict'});assert.equal((await job).ok,false);assert.equal(f.pages.at(-1).viewSession.H,30);f.client.stop();
+ }
+});
+test('malformed current-entry responses never change session or trigger projection reads',async()=>{
+ const good={ok:true,segment:0,workspaceRevision:5,viewSession:{H:30,T:20741,Z:'UTC',policyRevision:2}};
+ for(const patch of [{segment:1},{workspaceRevision:6},{viewSession:{...good.viewSession,H:8}},{viewSession:{...good.viewSession,T:1.5}},{viewSession:{...good.viewSession,Z:'invalid-zone'}},{viewSession:{...good.viewSession,policyRevision:1}},{viewSession:{...good.viewSession,scope:'other'}},{ok:false,reason:'revision-conflict'}]){
+  const f=await currentEntryFixture(),send=f.runtime.sendMessage,views=f.views;f.runtime.sendMessage=m=>m.type==='HOST_UI_CURRENT_ENTRY'?Promise.resolve({...good,...patch}):send(m);
+  assert.equal((await f.nav.onCurrentWorkspaceEntry()).ok,false);assert.equal(f.views,views);assert.equal(f.pages.at(-1).viewSession.T,20740);f.client.stop();
+ }
+});
+test('current-entry RPC expires at six seconds and a late success cannot publish',async()=>{
+ const f=await currentEntryFixture(),held=deferred(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_CURRENT_ENTRY'?held.promise:send(m);
+ const job=f.nav.onCurrentWorkspaceEntry();await drain();await f.advance(5999);const views=f.views;await f.advance(1);assert.equal((await job).ok,false);assert.equal(f.views,views);
+ held.resolve({ok:true,segment:0,workspaceRevision:5,viewSession:{H:7,T:20741,Z:'UTC',policyRevision:3}});await drain();assert.equal(f.views,views);assert.equal(f.pages.at(-1).viewSession.T,20740);f.client.stop();
 });

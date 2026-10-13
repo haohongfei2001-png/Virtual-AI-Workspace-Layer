@@ -105,6 +105,15 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
     if(epoch!==revocationEpoch||registrations.get(message.mountId)!==mount)throw Error('ui-authority-invalidated');
     return {ok:true,grants:renewed};
    }
+   if(message.type==='HOST_UI_WORKSPACE_ENTERED'){
+    if(!schema(message,[...bindingKeys,'mountId']))throw Error('invalid-ui-workspace-entry');
+    sender=await parent(message,sender);check();
+    const mount=registrations.get(message.mountId);
+    if(mount?.tabId!==sender.tab.id||mount?.documentId!==sender.documentId||mount.url!==sender.url||bindingKeys.some(key=>mount.binding[key]!==message[key]))throw Error('ui-mount-mismatch');
+    const scope=authority.scopeFor({tabId:mount.tabId,frameId:0,documentId:mount.documentId,actualURL:mount.url,documentLifecycle:'active',incognito:false});
+    if(!scope)throw Error('ui-scope-changed');
+    notify(scope.key,message.mountId,'VAIWL_UI_WORKSPACE_ENTERED');return {ok:true};
+   }
    if(message.type==='HOST_UI_RELEASE'){
     if(!schema(message,[...bindingKeys,'mountId']))throw Error('invalid-ui-release');
     sender=await parent(message,sender);check();
@@ -123,7 +132,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
  }
  function revokeTab(tabId){for(const entry of [...registrations.values()])if(entry.tabId===tabId)revokeDocument(entry.documentId);for(const [id,entry]of [...uiDocuments])if(entry.sender.tab.id===tabId)revokeDocument(id);for(const [port,entry]of [...ports])if(entry.sender.tab.id===tabId)disconnectPort(port);}
  function revokeAll(){revocationEpoch++;grants.revokeAll();registrations.clear();uiDocuments.clear();for(const port of [...ports.keys()])disconnectPort(port);for(const key of [...pending.keys()])deliver(key,null);}
- function notifyScope(scopeKey,mountId=null){
+ function notify(scopeKey,mountId,type){
   if(typeof scopeKey!=='string'||!scopeKey)return 0;
   let delivered=0;
   for(const [port,entry]of [...ports]){
@@ -138,11 +147,12 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
     if(proof?.state!=='verified'||proof.grant?.scopeKey!==scopeKey||proof.grant.id!==grant.scopeGrantId||Date.parse(proof.grant.expiresAt)<=now()||handshake.isBound?.(mount.binding,sender)!==true)continue;
     // A dirty hint contains no identity or projection. The next read still
     // performs full current browser/document/grant validation.
-    port.postMessage({type:'VAIWL_UI_DATA_CHANGED'});delivered++;
+    port.postMessage({type});delivered++;
    }catch{revokeDocument(entry.sender.documentId);}
   }
   return delivered;
  }
+ function notifyScope(scopeKey,mountId=null){return notify(scopeKey,mountId,'VAIWL_UI_DATA_CHANGED');}
  function notifyMount(id){const mount=registrations.get(id);if(!mount)return 0;const scope=authority.scopeFor({tabId:mount.tabId,frameId:0,documentId:mount.documentId,actualURL:mount.url,documentLifecycle:'active',incognito:false});return scope?notifyScope(scope.key,id):0;}
  async function withScope(args,work){
   const sender=structuredClone(args.sender),grant=await validate({...args,sender}),mount=registrations.get(grant.mountId);

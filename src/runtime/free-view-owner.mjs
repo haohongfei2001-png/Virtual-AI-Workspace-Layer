@@ -1,4 +1,4 @@
-import {FREE_HORIZONS} from '../data/free-time-policy.mjs';
+import {FREE_HORIZONS,createFreeViewSession,validateFreeTimePolicy} from '../data/free-time-policy.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {createReadRecoveryBudget} from '../data/read-recovery-budget.mjs';
 import {normalizedScope} from '../b1/identity.mjs';
@@ -21,6 +21,22 @@ export function createFreeViewOwner({readService,scope,guard=()=>true,clock=()=>
   if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).length!==2||!Object.hasOwn(value,'H')||!Object.hasOwn(value,'policyRevision')||!FREE_HORIZONS.includes(value.H)||!Number.isSafeInteger(value.policyRevision)||value.policyRevision<session.policyRevision||value.policyRevision===session.policyRevision&&value.H!==session.H)throw Error('invalid-free-session-reconfiguration');
   if(value.H===session.H&&value.policyRevision===session.policyRevision)return session;
   const next=Object.freeze({...session,H:value.H,policyRevision:value.policyRevision});
+  generation++;pending?.abort.abort(Error('stale-free-view'));pending=null;
+  cachedIndex=published.index;published=null;session=next;return next;
+ }
+ function enterCurrentSession(){
+  if(arguments.length)throw Error('invalid-free-current-session');
+  if(!allowed()){invalidate();throw Error('stale-free-view');}
+  if(!published||!session)throw Error('free-view-session-unavailable');
+  let H=session.H,policyRevision=session.policyRevision;
+  const preferences=published.snapshot.preferences;
+  if(preferences&&Object.hasOwn(preferences,'freeTimePolicy')){
+   const policy=validateFreeTimePolicy(preferences.freeTimePolicy?.value);
+   if(policy.revision<policyRevision||policy.revision===policyRevision&&policy.H!==H)throw Error('invalid-free-session-policy-revision');
+   H=policy.H;policyRevision=policy.revision;
+  }
+  const next=createFreeViewSession({now:clock(),timeZone,H,policyRevision});
+  if(next.H===session.H&&next.T===session.T&&next.Z===session.Z&&next.policyRevision===session.policyRevision)return session;
   generation++;pending?.abort.abort(Error('stale-free-view'));pending=null;
   cachedIndex=published.index;published=null;session=next;return next;
  }
@@ -58,5 +74,5 @@ export function createFreeViewOwner({readService,scope,guard=()=>true,clock=()=>
   })()]).catch(error=>{if(ticket===generation&&!allowed())invalidate();throw error;}).finally(()=>{budget.complete();abort.signal.removeEventListener('abort',onAbort);abort.abort();if(pending===entry)pending=null;});
   return entry.promise;
  }
- return Object.freeze({refresh,current,reconfigureSession,invalidate,stop(){stopped=true;invalidate();}});
+ return Object.freeze({refresh,current,reconfigureSession,enterCurrentSession,invalidate,stop(){stopped=true;invalidate();}});
 }

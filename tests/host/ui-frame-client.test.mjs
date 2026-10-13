@@ -66,3 +66,12 @@ test('short-grant early renewal accepts only same identity and cannot extend aut
 test('unchanged short expiration is not converted into an implicit twenty-second extension',async()=>{
  const f=fixture();f.runtime.sendMessage=async()=>({ok:true,grant:{...f.grant(),expiresAt:new Date(11000).toISOString()}});const client=createUiFrameClient(f.options);await client.start();await f.advance(5000);assert.equal(client.isAuthorized(),true);assert.equal(f.grants.at(-1).expiresAt,new Date(11000).toISOString());await f.advance(5000);assert.equal(client.isAuthorized(),false);assert.equal(f.body.textContent,'');
 });
+
+test('private workspace-entry hint is distinct from dirty reads and rejected after lifecycle invalidation',async()=>{
+ const f=fixture();let entries=0,dirty=0;const client=createUiFrameClient({...f.options,onWorkspaceEntry:()=>entries++,onInvalidate:()=>dirty++});
+ f.emit({type:'VAIWL_UI_WORKSPACE_ENTERED'});assert.equal(entries,0);await client.start();
+ f.emit({type:'VAIWL_UI_WORKSPACE_ENTERED'});assert.equal(entries,1);assert.equal(dirty,0);
+ for(const message of [{type:'VAIWL_UI_WORKSPACE_ENTERED',scope:'forged'},null,{type:'OTHER'}])f.emit(message);
+ assert.equal(entries,1);f.emit({type:'VAIWL_UI_DATA_CHANGED'});assert.equal(dirty,1);
+ await f.advance(10000);assert.equal(entries,1,'renew is not a safe entry');client.stop();f.historicalMessages[0]({type:'VAIWL_UI_WORKSPACE_ENTERED'});assert.equal(entries,1);
+});

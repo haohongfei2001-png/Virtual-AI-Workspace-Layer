@@ -9,7 +9,7 @@ import {reduceCommand} from '../../src/data/state.mjs';
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const NOW='2026-10-14T00:00:00Z',url='https://chatgpt.com/';
 // Mock IndexedDB and explicitly authored provider response; no browser auth claim.
-async function fixture(t,{prepareNavigation=null,presentSurface=null,documentURL=url}={}){
+async function fixture(t,{prepareNavigation=null,presentSurface=null,documentURL=url,elapsedNow=()=>performance.now()}={}){
  const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'host-read-binding'});t.after(()=>base.close());
  const workspaces=new WorkspaceRepository({baseRepository:base,clock:()=>NOW});
  const evidence=new FreeEvidenceRepository({baseRepository:base,clock:()=>NOW});
@@ -18,7 +18,7 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,documentURL
  const profile={id:'read-binding-reconstruction',revision:1,urlPolicy:createURLPolicy({profile:{conversationId:value=>value,projectId:({container})=>container}})};
  const uiURLs={workspace:'chrome-extension://extension/workspace.html',sidebar:'chrome-extension://extension/sidebar.html'};
  const children=Object.fromEntries(Object.entries(uiURLs).map(([role,url],i)=>[role,{...sender,frameId:i+1,documentId:'ui_'+role,url}]));
- const service=createHostBindingService({extensionId:'extension',prepareNavigation,presentSurface,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{read:async()=>{providerReads++;return {principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
+ const service=createHostBindingService({elapsedNow,extensionId:'extension',prepareNavigation,presentSurface,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{read:async()=>{providerReads++;return {principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
  const request=(type,extra={})=>service.handle({v:1,type,clientId:'client',seq:++seq,...extra},sender);
  let binding,bound;
  async function bind(){const hello=await request('HOST_HELLO');assert.equal(hello.ok,true);binding=hello.binding;const {documentToken,producerToken,routeEpoch}=binding;assert.equal((await request('HOST_REFRESH',{documentToken,producerToken,routeEpoch})).state,'verified');bound=await request('BIND');assert.equal(bound.ok,true,JSON.stringify(bound));return bound;}
@@ -31,9 +31,10 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,documentURL
  async function mount(){const auth={documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch};assert.equal((await service.handle({v:1,type:'HOST_UI_MOUNT',...auth,mountId:'mount',regionEpoch:1},sender)).ok,true);for(const role of ['workspace','sidebar']){const joined=service.handle({v:1,type:'HOST_UI_JOIN',nonce:'nonce_'+role,role},children[role]);const confirmed=await service.handle({v:1,type:'HOST_UI_CONFIRM',...auth,mountId:'mount',regionEpoch:1,nonce:'nonce_'+role,role},sender);assert.equal(confirmed.ok,true,JSON.stringify(confirmed));const result=await joined;assert.equal(result.ok,true,JSON.stringify(result));grants[role]=result.grant;}}
  const view=(role='workspace',query={},patch={},as=children[role])=>service.handle({v:1,type:'HOST_UI_VIEW',grantId:grants[role].id,mountId:'mount',query,...patch},as);
  const present=(role,intent,patch={},as=children[role])=>service.handle({v:1,type:'HOST_UI_PRESENT',grantId:grants[role].id,mountId:'mount',intent,...patch},as);
+ const enterCurrent=(role,extra={},as=children[role])=>service.handle({v:1,type:'HOST_UI_CURRENT_ENTRY',grantId:grants[role].id,mountId:'mount',...extra},as);
  const horizon=(role,extra={},as=children[role])=>service.handle({v:1,type:'HOST_UI_SET_HORIZON',grantId:grants[role].id,mountId:'mount',operationId:'set_horizon',expectedRevision:0,H:14,segment:0,anchorRefId:null,...extra},as);
  async function renew(){const auth={documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch};const doc=await request('HOST_DOCUMENT_RENEW',auth);assert.equal(doc.ok,true,JSON.stringify(doc));binding=doc.binding;const refresh=await request('HOST_REFRESH',auth);const status=await service.handle({v:1,type:'HOST_UI_STATUS',...auth,mountId:'mount'},sender);return {refresh,status};}
- return{renew,get providerReads(){return providerReads;},horizon,present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
+ return{enterCurrent,renew,get providerReads(){return providerReads;},horizon,present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
 }
 const drain=()=>new Promise(resolve=>setImmediate(resolve));
 async function ready(h,role='workspace'){
@@ -304,4 +305,48 @@ for(const mode of ['entity','url','mixed-id','duplicate'])test('MOCK_IDB Project
   if(mode==='mixed-id')item.refId=item.projectId;
   return mode==='duplicate'?[item,structuredClone(item)]:[item];
  }});await h.bind();await h.observe();await h.mount();const result=await ready(h);assert.equal(result.ok,false);assert.equal(result.reason,'invalid-native-plans');assert.equal(result.page,undefined);
+});
+
+async function midnightFixture(t,options={}){
+ const previousTZ=process.env.TZ;process.env.TZ='UTC';t.after(()=>{if(previousTZ===undefined)delete process.env.TZ;else process.env.TZ=previousTZ;});
+ const h=await fixture(t,{presentSurface:async()=>({ok:true}),...options});h.setTime(Date.parse(NOW)-1000);await h.bind();await h.observe();await h.mount();const initial=await ready(h);assert.equal(initial.state,'ready');h.setTime(Date.parse(NOW)+1000);return {h,initial,request:{expectedRevision:initial.page.workspaceRevision,viewSession:initial.page.viewSession}};
+}
+test('MOCK_IDB only explicit current workspace entry refreshes local day and does not write preferences',async t=>{
+ const {h,initial,request}=await midnightFixture(t),scope=workspaceScope(h),before=(await h.workspaces.read(scope)).state;
+ assert.deepEqual((await ready(h)).page.viewSession,initial.page.viewSession,'ordinary reads preserve yesterday');
+ const result=await h.enterCurrent('workspace',request);assert.equal(result.ok,true,JSON.stringify(result));assert.equal(result.segment,0);assert.equal(result.viewSession.T,initial.page.viewSession.T+1);assert.equal(result.viewSession.H,initial.page.viewSession.H);assert.equal(result.viewSession.Z,'UTC');
+ assert.deepEqual((await ready(h)).page.viewSession,result.viewSession);assert.deepEqual((await ready(h,'sidebar')).page.viewSession,result.viewSession,'two surfaces share this mount session');
+ assert.deepEqual((await h.workspaces.read(scope)).state,before,'entry neither rewrites policy nor native activity');
+ const repeated=await h.enterCurrent('workspace',{...request,viewSession:result.viewSession});assert.equal(repeated.ok,true);assert.deepEqual(repeated.viewSession,result.viewSession);
+});
+test('MOCK_IDB current entry rejects history, search and working set without changing the frozen session',async t=>{
+ const {h,initial,request}=await midnightFixture(t);
+ for(const query of [{segment:2},{search:{query:'Native'}},{workingSet:{offset:0,limit:24}}]){assert.equal((await h.view('workspace',query)).state,'ready');const response=await h.enterCurrent('workspace',request);assert.equal(response.ok,false);assert.equal(response.reason,'free-current-entry-unavailable');assert.deepEqual((await ready(h)).page.viewSession,initial.page.viewSession);}
+});
+test('MOCK_IDB current entry requires exact workspace grant, revision and session; cannot choose date or scope',async t=>{
+ const {h,initial,request}=await midnightFixture(t);
+ for(const [role,patch,sender]of [['sidebar',{}],['workspace',{},h.sender],['workspace',{},h.children.sidebar],['workspace',{scope:'other'}],['workspace',{viewSession:{...request.viewSession,T:request.viewSession.T+1}}],['workspace',{viewSession:{...request.viewSession,Z:'Asia/Shanghai'}}],['workspace',{viewSession:{...request.viewSession,other:true}}],['workspace',{expectedRevision:request.expectedRevision+1}]])assert.equal((await h.enterCurrent(role,{...request,...patch},sender)).ok,false);
+ assert.deepEqual((await ready(h)).page.viewSession,initial.page.viewSession);
+});
+test('MOCK_IDB failed native presentation and late scope invalidation cannot advance date',async t=>{
+ let allowed=false;const {h,initial,request}=await midnightFixture(t,{presentSurface:async()=>({ok:allowed})});
+ assert.equal((await h.enterCurrent('workspace',request)).reason,'host-presentation-unavailable');assert.deepEqual((await ready(h)).page.viewSession,initial.page.viewSession);
+ allowed=true;h.switchPrincipal('other');assert.equal((await h.enterCurrent('workspace',request)).ok,false);
+});
+test('MOCK_IDB in-flight current entry fences manual writes and abandons date when user leaves current segment',async t=>{
+ let release,entered=false;const held=new Promise(resolve=>release=resolve);const {h,initial,request}=await midnightFixture(t,{presentSurface:async()=>{entered=true;await held;return {ok:true};}});
+ const pending=h.enterCurrent('workspace',request);for(let i=0;i<50&&!entered;i++)await drain();assert.equal(entered,true);
+ assert.equal((await h.horizon('workspace',{expectedRevision:request.expectedRevision})).reason,'preference-change-in-progress');
+ assert.equal((await h.view('workspace',{segment:2})).state,'ready');release();assert.equal((await pending).ok,false);assert.deepEqual((await ready(h)).page.viewSession,initial.page.viewSession);
+});
+test('MOCK_IDB final version check prevents applying a stale current-entry policy',async t=>{
+ const {h,initial,request}=await midnightFixture(t),scope=workspaceScope(h);
+ const write=await h.workspaces.command(scope,{operationId:'concurrent_policy',expectedRevision:request.expectedRevision,command:{type:'SET_PREFERENCE',id:'workingSet',value:{refs:[],current:null}}},{actor:'human'});assert.equal(write.ok,true);
+ assert.equal((await h.enterCurrent('workspace',request)).reason,'snapshot-revision-changed');assert.deepEqual((await ready(h)).page.viewSession,initial.page.viewSession);
+});
+
+test('MOCK_IDB elapsed deadline fences current entry even before the timer callback executes',async t=>{
+ let elapsed=0;const {h,initial,request}=await midnightFixture(t,{elapsedNow:()=>elapsed,presentSurface:async()=>{elapsed=6000;return {ok:true};}});
+ const response=await h.enterCurrent('workspace',request);assert.equal(response.ok,false);assert.match(response.reason,/expired|timeout/);
+ assert.deepEqual((await ready(h)).page.viewSession,initial.page.viewSession);
 });

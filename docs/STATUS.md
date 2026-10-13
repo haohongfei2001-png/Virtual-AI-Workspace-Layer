@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百零八轮：生产Host当地时区、当前Project原名映射/导航、长标题搜索有界分页和partial元数据有限恢复已集成；最终2279项Node、原打包11旅程和测试专用候选MV3四项通过。候选关联不是本人ACK，安全回当前/完整自适应及真实G/U等尚未完成；Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百零九轮：原生Project/Conversation映射与导航、当地时区、长标题搜索及安全回当前会话已接通；最终2306项Node和原打包12旅程通过。候选关联不是本人ACK，完整自适应及真实G/U等尚未完成；Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1180,3 +1180,14 @@ Round107审查另发现隐藏current P可能压过可见sidebar，提交前已�
 最终源码完整Node2279/2279、0失败/跳过；实际原包headless MV3十一项及测试专用发送候选MV3四项均PASS，两份sourceChangedDuringRun=false。候选浏览器仍是默认关闭能力的离线夹具，partial新增恢复以Node合同验证，不冒称真实ACK。Round107先前982 Host/原包11报告保留其原源码，最终集成以本轮摘要为准。
 
 后续仍直接按唯一计划实施；生产安全回当前日期刷新、自适应/撤销和新装策略、真实context/ACK、新聊首发、G/U、4x100k及旧间歇问题未完成。Free未完成、NOT_RELEASE_READY。
+
+
+## Round109：安全返回当前工作区时更新当地会话
+
+在已正常推送d427d73继续。Free ViewOwner新增无外部字段的enterCurrentSession，仅已有授权published快照可用；owner时钟/时区刷新T/Z并采纳当前合法已保存H/策略修订，拒非法或回退修订。普通refresh及手动H仍冻结历史T/Z；有变化沿用原generation/abort/index/replica刷新，无变化幂等，无偏好或活动写入。
+
+三段闭环：frame历史1→0仅在有效DTO实际安全应用后回调（含指针延迟）；唯一原生四格真实点击成功显示后发送绑定mount的私有通知，不通过window暴露权限；workspace frame以当前grant/workspace revision/session向owner请求进入当前，owner只接受刚显示的第0段且非搜索/工作集，复核原生展示、版本、scope及elapsed 6秒，再仅通知该mount。普通读/续租/初次挂载/程序show不触发，其他mount历史不重解释。人工偏好与在飞入口互斥；离开当前、旧返回、撤权、停止或超时不应用。
+
+独立审查发现定时器迟到可能晚于6秒仍更新RAM，会话副作用前已增加elapsed硬检查并验证跨6000ms不派发timer的反例。最终完整Node2306/2306、0失败/跳过；实际原构建包headless MV3十二项PASS，sourceChangedDuringRun=false，真实四格→private owner RPC已执行，跨午夜本身以Node合同验证。原生textarea/草稿与P/C导航保留。renderer首次新增测试使用reading初始fixture造成两失败，已改为实际workspace历史入口；原失败日志保留。
+
+自动密度评估/短暂撤销及可靠新装初始化仍未接通。后续复用既有策略算法与SET_PREFERENCE，但需要原生/独立活动版本在同一写事务中校验，现workspace-only CAS不能消除取样后来源变化的竞态；不新增第二计划或调度器。真实context/ACK、新聊首发、G/U、4x100k和既有间歇条件保持。Free未完成、NOT_RELEASE_READY。

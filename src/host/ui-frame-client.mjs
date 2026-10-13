@@ -3,7 +3,7 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 
 /** Normal-JS frame lifecycle only; frozen processes/browser hard-kill need their
  * own acceptance evidence. Private data never travels through parent messages. */
-export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant=()=>{},onClear=()=>{},onInvalidate=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),makeNonce=()=>crypto.randomUUID(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant=()=>{},onClear=()=>{},onInvalidate=()=>{},onWorkspaceEntry=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),makeNonce=()=>crypto.randomUUID(),schedule=setTimeout,cancel=clearTimeout}={}){
  const parsed=new URL(parentOrigin);
  if(!['workspace','sidebar'].includes(role)||!doc?.defaultView?.parent||!privateRoot||typeof privateRoot.replaceChildren!=='function'||typeof runtime?.connect!=='function'||typeof runtime.sendMessage!=='function'||parsed.origin!==parentOrigin||!['https:','http:'].includes(parsed.protocol))throw Error('invalid-ui-frame-client');
  let active=false,epoch=0,grant=null,port=null,expiryTimer=null,renewTimer=null,abort=null,disconnect=null,messageListener=null,rendering=false,desired=null;
@@ -63,8 +63,8 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
    const connected=port;
    messageListener=message=>{
     if(!active||epoch!==run||port!==connected||!grant||now()>=Date.parse(grant.expiresAt))return;
-    if(!message||typeof message!=='object'||Array.isArray(message)||Object.keys(message).length!==1||!Object.hasOwn(message,'type')||message.type!=='VAIWL_UI_DATA_CHANGED')return;
-    try{onInvalidate();}catch{/* A notification cannot change authority. */}
+    if(!message||typeof message!=='object'||Array.isArray(message)||Object.keys(message).length!==1||!Object.hasOwn(message,'type')||!['VAIWL_UI_DATA_CHANGED','VAIWL_UI_WORKSPACE_ENTERED'].includes(message.type))return;
+    try{if(message.type==='VAIWL_UI_WORKSPACE_ENTERED')onWorkspaceEntry();else onInvalidate();}catch{/* A notification cannot change authority. */}
    };
    port.onMessage?.addListener(messageListener);
    doc.defaultView.parent.postMessage({type:'VAIWL_UI_JOIN',role,nonce},parentOrigin);

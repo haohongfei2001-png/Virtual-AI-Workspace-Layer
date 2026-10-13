@@ -161,3 +161,31 @@ function projectPlan(group){return {plan:{mode:'href',disposition:'new-tab-prese
 test('project create fallback is a browser-only original project anchor with default keyboard/modifier semantics',()=>{let plans=0;const f=fixture('workspace',()=>assert.fail('click RPC'),null,null,{nativeHref:url=>url===projectHref?url:null,projectNavigationPlan:g=>{plans++;return projectPlan(g);}}),dto=projection();dto.groups.items[0].nativeUrl=projectHref;const draft=f.doc.createElement('textarea');draft.value='NATIVE DRAFT';f.doc.body.append(draft);f.nav.updateFrameProjection(dto);const a=f.pane().querySelector('[aria-label="打开项目以新建聊天 Original P2"]');assert(a);assert.equal(a.tagName,'a');assert.equal(a.href,projectHref);assert.equal(a.target,'_blank');assert.equal(a.rel,'noopener noreferrer');assert.equal(a.textContent,'+');assert.match(a.getAttribute('title'),/原生项目/);assert.equal(a.events.click,undefined);assert.equal(a.events.keydown,undefined);const count=plans,mode=f.nav.view().mode;a.click();assert.equal(plans,count);assert.equal(f.nav.view().mode,mode);assert.equal(draft.value,'NATIVE DRAFT');assert.equal(draft.isConnected,true);f.nav.stop();});
 test('project fallback rejects wrong entity ID URL disposition unsafe href and unavailable plans without C/P mixing',()=>{for(const change of [p=>null,p=>({...p,plan:{...p.plan,mode:'native-control'}}),p=>({...p,plan:{...p.plan,disposition:'same-tab'}}),p=>({...p,plan:{...p.plan,target:{...p.plan.target,entity:'conversation'}}}),p=>({...p,plan:{...p.plan,target:{...p.plan.target,nativeId:'other'}}}),p=>({...p,plan:{...p.plan,target:{...p.plan.target,navigationURL:projectHref+'?create=true'}}})]){const f=fixture('workspace',()=>null,null,null,{nativeHref:u=>u,projectNavigationPlan:g=>change(projectPlan(g)),navigationPlan:ref=>({plan:{mode:'href',disposition:'new-tab-preserve-current',target:{kind:'resolved',entity:'conversation',nativeId:ref.id,navigationURL:ref.nativeUrl}}})}),dto=projection();dto.groups.items[0].nativeUrl=projectHref;dto.groups.items[0].lists.current=page([row('P2')]);f.nav.updateFrameProjection(dto);assert.equal(f.pane().querySelector('[aria-label="打开项目以新建聊天 Original P2"]'),null);assert.equal(f.button('在项目中新建聊天 Original P2').disabled,true);assert(f.pane().querySelector('[data-ref-id="P2"]'));f.nav.stop();}for(const safe of [()=>null,()=>projectHref+'/']){const f=fixture('workspace',()=>null,null,null,{nativeHref:safe,projectNavigationPlan:projectPlan}),dto=projection();dto.groups.items[0].nativeUrl=projectHref;f.nav.updateFrameProjection(dto);assert.equal(f.button('在项目中新建聊天 Original P2').disabled,true);f.nav.stop();}});
 test('project href is not synthesized without an independent project plan and disappears across scope invalidation',()=>{const f=fixture('workspace',()=>null,null,null,{nativeHref:u=>u,projectNavigationPlan:projectPlan}),dto=projection();dto.groups.items[0].nativeUrl=projectHref;f.nav.updateFrameProjection(dto);assert(f.pane().querySelector('[aria-label="打开项目以新建聊天 Original P2"]'));f.nav.invalidate();f.nav.updateFrameProjection({...projection(),scope:'different'});assert.equal(f.pane().querySelector('[aria-label="打开项目以新建聊天 Original P2"]'),null);assert.equal(f.button('在项目中新建聊天 Original P2').disabled,true);f.nav.stop();});
+
+const historyProjection=segment=>({...projection(),segment,navigation:{hasNewer:segment>0,hasOlder:segment<8,maxSegment:8}});
+test('explicit frame history return calls safe current entry only after current DTO is applied',async()=>{
+ let finish;const seen=[],calls=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(r=>finish=r);},null,null,{}, {onCurrentWorkspaceEntry:()=>seen.push(f.nav.view().segment)});
+ f.nav.updateFrameProjection(historyProjection(2));f.nav.showWorkspace();f.button('较近的30日').click();finish(historyProjection(1));await tick();assert.deepEqual(seen,[]);
+ f.button('较近的30日').click();assert.deepEqual(seen,[]);assert.equal(calls.at(-1).segment,0);assert.equal(calls.at(-1).offset,0);finish(historyProjection(0));await tick();assert.deepEqual(seen,[0]);
+ f.nav.updateFrameProjection(historyProjection(0));assert.deepEqual(seen,[0],'ordinary refresh is not user entry');f.nav.stop();
+});
+test('failed stale stopped invalidated or noncurrent frame response never announces safe current entry',async()=>{
+ for(const variant of ['reject','null','scope','stop','invalidate','superseded','older','malformed']){
+  let finish,reject,count=0;const f=fixture('workspace',()=>new Promise((r,j)=>{finish=r;reject=j;}),null,null,{}, {onCurrentWorkspaceEntry:()=>count++});
+  f.nav.updateFrameProjection(historyProjection(1));f.nav.showWorkspace();f.button('较近的30日').click();
+  if(variant==='scope')f.nav.updateFrameProjection({...historyProjection(0),scope:'scopeB'});
+  if(variant==='stop')f.nav.stop();if(variant==='invalidate')f.nav.invalidate();
+  if(variant==='superseded')f.nav.updateFrameProjection(historyProjection(1));
+  if(variant==='reject')reject(Error('unavailable'));else finish(variant==='null'?null:variant==='older'?historyProjection(1):variant==='malformed'?{...historyProjection(0),completeSnapshot:true}:historyProjection(0));
+  await tick();assert.equal(count,0,variant);f.nav.stop();
+ }
+});
+test('safe current entry waits for pointer-deferred application and discarded pending page cannot announce',async()=>{
+ for(const discard of [false,true]){
+  let finish,count=0;const f=fixture('workspace',()=>new Promise(r=>finish=r),null,null,{}, {onCurrentWorkspaceEntry:()=>count++});
+  f.nav.updateFrameProjection(historyProjection(1));f.nav.showWorkspace();const up=f.button('较近的30日'),owner=f.nav.roots().workspace.n;
+  f.doc.handlers.get('pointerdown')({pointerId:9,composedPath:()=>[up,owner]});up.click();finish(historyProjection(0));await tick();assert.equal(count,0);assert.equal(f.nav.view().segment,1);
+  if(discard)f.nav.invalidate();else{f.doc.handlers.get('pointerup')({pointerId:9});await new Promise(r=>setTimeout(r,5));assert.equal(f.nav.view().segment,0);}
+  assert.equal(count,discard?0:1);f.nav.stop();
+ }
+});

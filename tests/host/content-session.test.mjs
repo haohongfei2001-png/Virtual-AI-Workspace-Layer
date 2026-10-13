@@ -83,3 +83,8 @@ test('slow scope revalidation consumes the remaining renewal budget',async()=>{
  await f.advance(3000);resolveScope({state:'verified'});await drain();assert.equal(f.calls.at(-1).type,'HOST_UI_STATUS');
  await f.advance(1000);await rejected;f.client.stop();
 });
+
+test('workspace entered bridge uses current private binding and bounded RPC; stopped bridge cannot send',async()=>{
+ const f=fixture();await f.client.start();const before=f.calls.length;assert.equal((await f.bridge.workspaceEntered({mountId:'mount'})).ok,true);assert.deepEqual(f.calls[before],{v:1,type:'HOST_UI_WORKSPACE_ENTERED',documentToken:'doc',producerToken:'producer',routeEpoch:1,mountId:'mount'});
+ f.setResponse(()=>new Promise(()=>{}));const pending=f.bridge.workspaceEntered({mountId:'mount'}),rejected=assert.rejects(pending,/request-timeout/);await drain();await f.advance(6000);await rejected;f.client.stop();const count=f.calls.length;await assert.rejects(f.bridge.workspaceEntered({mountId:'mount'}));assert.equal(f.calls.length,count);
+});

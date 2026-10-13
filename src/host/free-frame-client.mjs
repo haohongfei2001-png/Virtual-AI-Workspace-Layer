@@ -127,6 +127,22 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(result?.ok!==true)throw Error('presentation-unavailable');applyPresentation(result.presentation);invalidate();
   }catch{if(!closed&&navigation===renderer)state({state:'ready',reason:'presentation-unavailable'});}
  }
+ async function enterCurrent(){
+  if(role!=='workspace'||closed||horizonPending||recovery||backup||!grantCurrent()||!viewSession||!Number.isSafeInteger(workspaceRevision)||(query.segment??0)!==0||query.search||query.workingSet)return {ok:false,reason:'current-entry-unavailable'};
+  horizonPending=true;const current=grant,renderer=navigation,expectedRevision=workspaceRevision,old=viewSession,ticket=serial;
+  const valid=()=>!closed&&navigation===renderer&&grant?.id===current.id&&grantCurrent()&&serial===ticket&&(query.segment??0)===0&&!query.search&&!query.workingSet;
+  try{
+   const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_CURRENT_ENTRY',grantId:current.id,mountId:current.mountId,expectedRevision,viewSession:old}),{now:elapsedNow,schedule,cancel});
+   if(!valid())return {ok:false,reason:'current-entry-unavailable'};
+   if(result?.ok!==true)return {ok:false,reason:result?.reason??'current-entry-unavailable'};
+   const next=result.viewSession;
+   if(result.segment!==0||result.workspaceRevision!==expectedRevision||!next||Object.keys(next).sort().join(',')!=='H,T,Z,policyRevision'||!FREE_HORIZONS.includes(next.H)||!Number.isSafeInteger(next.T)||typeof next.Z!=='string'||!Number.isSafeInteger(next.policyRevision)||next.policyRevision<old.policyRevision)throw Error('invalid-current-entry-response');
+   new Intl.DateTimeFormat('en',{timeZone:next.Z});
+   viewSession=next;query={segment:0,offset:0,limit:8};dirty=false;
+   const page=await read(query,true);return page?result:{ok:false,reason:'current-entry-refresh-unavailable'};
+  }catch{return {ok:false,reason:'current-entry-unavailable'};}
+  finally{horizonPending=false;if(dirty&&!closed){dirty=false;invalidate();}}
+ }
  async function setHorizon(value){
   if(closed||horizonPending||!grantCurrent()||!Number.isSafeInteger(workspaceRevision)||(value?.H!=='auto'&&!FREE_HORIZONS.includes(value?.H)))return {ok:false,reason:'horizon-change-unavailable'};
   const expectedH=value.H==='auto'?viewSession?.H:value.H;if(!FREE_HORIZONS.includes(expectedH))return {ok:false,reason:'horizon-change-unavailable'};
@@ -164,10 +180,10 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;
   if(!navigation){root=doc.createElement('div');root.setAttribute('data-vaiwl-frame-root','');privateRoot.append(root);
-   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),projectNavigationPlan:group=>projectPlans.get(group.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup});
+   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),projectNavigationPlan:group=>projectPlans.get(group.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onCurrentWorkspaceEntry:enterCurrent,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup});
   }
   if(!backup)invalidate();
  }
- const lifecycle=createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant,onClear:clear,onInvalidate:invalidate,privateRoot,now,elapsedNow,schedule,cancel,...(makeNonce?{makeNonce}:{})});
+ const lifecycle=createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant,onClear:clear,onInvalidate:invalidate,onWorkspaceEntry:()=>{void enterCurrent();},privateRoot,now,elapsedNow,schedule,cancel,...(makeNonce?{makeNonce}:{})});
  return Object.freeze({start:()=>lifecycle.start(),stop:()=>lifecycle.stop('frame-view-stopped')});
 }

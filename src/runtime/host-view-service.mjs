@@ -79,7 +79,40 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     }
    }
    const result={ok:true,state:'ready',page,navigation};
-   if(new TextEncoder().encode(JSON.stringify(result)).length>65536)throw Error('free-frame-page-too-large');return result;
+   if(new TextEncoder().encode(JSON.stringify(result)).length>65536)throw Error('free-frame-page-too-large');
+   if(context.role==='workspace')entry.currentEntryEligible=page.segment===0&&search===undefined&&workingSet===undefined;
+   return result;
+  }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;}
+ }
+ async function enterCurrent(input,sender){
+  let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-current-entry'};}
+  if(!exactHostRecord(message,['v','type','grantId','mountId','expectedRevision','viewSession'])||message.v!==1||message.type!=='HOST_UI_CURRENT_ENTRY'||!Number.isSafeInteger(message.expectedRevision)||message.expectedRevision<0||!exactHostRecord(message.viewSession,['H','T','Z','policyRevision']))return {ok:false,reason:'invalid-ui-current-entry'};
+  let active=true;const started=elapsedNow();
+  try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+   if(!active||elapsedNow()-started>=6000)throw Error('ui-current-entry-expired');
+   const entry=views.get(message.mountId),current=entry?.owner.current();
+   if(context.role!=='workspace'||!current||entry.pending||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId||!entry.currentEntryEligible)throw Error('free-current-entry-unavailable');
+   if(entry.horizonPending||entry.workingSetPending||entry.currentEntryPending)throw Error('preference-change-in-progress');
+   const old=current.snapshot.viewSession;
+   if(current.snapshot.workspaceRevision!==message.expectedRevision||['H','T','Z','policyRevision'].some(key=>message.viewSession[key]!==old[key]))throw Error('revision-conflict');
+   entry.currentEntryPending=true;
+   const valid=()=>active&&elapsedNow()-started<6000&&context.isCurrent()&&views.get(message.mountId)===entry&&entry.owner.current()===current&&!entry.pending&&entry.currentEntryEligible;
+   try{
+    if(!presentSurface)throw Error('host-presentation-unavailable');
+    const shown=await presentSurface({parentFrame:context.parentFrame,binding:context.binding,mode:'workspace'});
+    if(!valid())throw Error('ui-current-entry-expired');
+    if(shown?.ok!==true)throw Error('host-presentation-unavailable');
+    const version=await readService.version(context.scope,{guard:valid});
+    if(!valid())throw Error('ui-current-entry-expired');
+    const snapshot=current.snapshot;
+    if(version.nativeRevision!==snapshot.revision||version.revision!==snapshot.workspaceRevision||version.evidenceRevision!==snapshot.evidenceRevision||version.viewRevision!==snapshot.viewRevision)throw Error('snapshot-revision-changed');
+    const viewSession=entry.owner.enterCurrentSession();
+    const presentationChanged=entry.presentation.intent.kind!=='show-workspace';
+    if(presentationChanged)entry.presentation={revision:entry.presentation.revision+1,intent:{kind:'show-workspace'}};
+    if(viewSession!==old)begin(entry);
+    if(viewSession!==old||presentationChanged)ui.notifyMount?.(message.mountId);
+    return {ok:true,segment:0,viewSession,workspaceRevision:snapshot.workspaceRevision};
+   }finally{entry.currentEntryPending=false;}
   }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;}
  }
  async function setHorizon(input,sender){
@@ -89,6 +122,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    const entry=views.get(message.mountId),current=entry?.owner.current();
    if(!workspaceRepository||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)throw Error('free-view-not-ready');
+   if(entry.currentEntryPending)throw Error('preference-change-in-progress');
    if(entry.horizonPending)throw Error('horizon-change-in-progress');
    if(entry.workingSetPending)throw Error('preference-change-in-progress');
    if(current.snapshot.workspaceRevision!==message.expectedRevision)throw Error('revision-conflict');
@@ -118,6 +152,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    const entry=views.get(message.mountId),current=entry?.owner.current();
    if(!workspaceRepository||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)throw Error('free-view-not-ready');
+   if(entry.currentEntryPending)throw Error('preference-change-in-progress');
    if(entry.horizonPending)throw Error('horizon-change-in-progress');
    if(entry.workingSetPending)throw Error('preference-change-in-progress');
    if(current.snapshot.workspaceRevision!==message.expectedRevision)throw Error('revision-conflict');
@@ -164,5 +199,5 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  }
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId){for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({handle,present,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({handle,present,enterCurrent,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){for(const key of [...views.keys()])remove(key);}});
 }

@@ -1,4 +1,4 @@
-import {createFreeViewSession} from '../../src/data/free-time-policy.mjs';
+import {createFreeViewSession,initialFreeTimePolicy} from '../../src/data/free-time-policy.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {createFreeViewOwner} from '../../src/runtime/free-view-owner.mjs';import {normalizedScope} from '../../src/b1/identity.mjs';
 const NOW='2026-10-14T00:00:00Z',scope=normalizedScope({verified:true,provider:'chatgpt',accountId:'A',organizationId:'personal'});
@@ -62,4 +62,21 @@ test('explicit owner timezone overrides environment; explicit refresh timezone i
  try{for(const [options,query,zone]of [[{timeZone:'UTC'},{},'UTC'],[{timeZone:'UTC'},{timeZone:'America/Los_Angeles'},'America/Los_Angeles']]){
   const h=fixture(options);h.read.freeHeader=async(_s,_o,now,timeZone,requested)=>({...h.header(),viewSession:requested??createFreeViewSession({now,timeZone})});const view=await h.owner.refresh(query);assert.equal(view.snapshot.viewSession.Z,zone);assert.equal(view.snapshot.viewSession.T,createFreeViewSession({now:NOW,timeZone:zone}).T);h.owner.stop();
  }}finally{if(priorTZ===undefined)delete process.env.TZ;else process.env.TZ=priorTZ;}
+});
+
+function currentFixture(){let at='2026-10-14T15:30:00Z',policy=null;const h=fixture({clock:()=>at,timeZone:'Asia/Shanghai'});h.read.freeHeader=async(_s,_o,now,zone,requested)=>({...h.header(),preferences:policy===null?{}:{freeTimePolicy:{value:policy}},viewSession:requested??createFreeViewSession({now,timeZone:zone})});return {...h,now:v=>at=v,policy:v=>policy=v};}
+test('explicit current entry advances local midnight while ordinary refresh and manual H freeze history',async()=>{
+ const h=currentFixture(),first=await h.owner.refresh(),old=first.snapshot.viewSession;h.now('2026-10-14T16:30:00Z');await h.owner.refresh();assert.deepEqual(h.owner.current().snapshot.viewSession,old);h.owner.reconfigureSession({H:7,policyRevision:1});await h.owner.refresh();const next=h.owner.enterCurrentSession();assert(Object.isFrozen(next));assert.equal(next.T,old.T+1);assert.equal(next.Z,'Asia/Shanghai');assert.equal(next.H,7);assert.equal(next.policyRevision,1);assert.equal(h.owner.current(),null);const updated=await h.owner.refresh();assert.deepEqual(updated.snapshot.viewSession,next);assert.equal(h.owner.enterCurrentSession(),next);assert.equal(h.owner.current(),updated);
+});
+test('only explicit current entry adopts a newly published valid policy; prior snapshot remains unchanged',async()=>{
+ const h=currentFixture(),first=await h.owner.refresh(),old=structuredClone(first.snapshot.viewSession);h.policy({...initialFreeTimePolicy(),H:60,revision:2});await h.owner.refresh();assert.deepEqual(h.owner.current().snapshot.viewSession,old);const next=h.owner.enterCurrentSession();assert.equal(next.H,60);assert.equal(next.policyRevision,2);assert.equal(next.T,old.T);await h.owner.refresh();assert.deepEqual(first.snapshot.viewSession,old);
+});
+test('explicit current entry aborts old in-flight publication and preserves replica for fresh guarded refresh',async()=>{
+ const h=currentFixture();await h.owner.refresh();const original=h.read.freeHeader;let release;h.read.freeHeader=async(...args)=>{await new Promise(r=>release=r);return original(...args);};const pending=h.owner.refresh(),rejected=assert.rejects(pending,/stale-free-view/);for(let i=0;i<10;i++)await Promise.resolve();h.now('2026-10-15T16:30:00Z');const next=h.owner.enterCurrentSession();h.read.freeHeader=original;const fresh=await h.owner.refresh();await rejected;release();for(let i=0;i<20;i++)await Promise.resolve();assert.equal(h.owner.current(),fresh);assert.deepEqual(fresh.snapshot.viewSession,next);
+});
+test('current entry refuses external fields, missing publication, malformed or regressing policy, guard loss and stop',async()=>{
+ const empty=currentFixture();assert.throws(()=>empty.owner.enterCurrentSession(),/unavailable/);await empty.owner.refresh();assert.throws(()=>empty.owner.enterCurrentSession({H:7}),/invalid-free-current-session/);
+ for(const policy of [{}, {...initialFreeTimePolicy(),H:1},{...initialFreeTimePolicy(),H:7,revision:0}]){const h=currentFixture();await h.owner.refresh();h.policy(policy);await h.owner.refresh();const before=h.owner.current();assert.throws(()=>h.owner.enterCurrentSession(),/invalid-free/);assert.equal(h.owner.current(),before);}
+ const older=currentFixture();await older.owner.refresh();older.owner.reconfigureSession({H:7,policyRevision:2});await older.owner.refresh();older.policy({...initialFreeTimePolicy(),H:7,revision:1});await older.owner.refresh();assert.throws(()=>older.owner.enterCurrentSession(),/policy-revision/);
+ const denied=currentFixture();await denied.owner.refresh();denied.deny();assert.throws(()=>denied.owner.enterCurrentSession(),/stale/);assert.equal(denied.owner.current(),null);const stopped=currentFixture();await stopped.owner.refresh();stopped.owner.stop();assert.throws(()=>stopped.owner.enterCurrentSession(),/stale/);
 });

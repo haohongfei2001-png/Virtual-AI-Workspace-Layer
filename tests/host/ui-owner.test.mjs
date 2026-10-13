@@ -102,3 +102,23 @@ test('MOCK mount notification excludes expired, revoked, unbound and unpaired po
   assert.deepEqual(f.unpaired.messages,[]);f.owner.revokeAll();
  }
 });
+
+test('MOCK verified parent workspace entry notifies only its exact mount through private ports',async()=>{
+ const f=await mountNotificationFixture(),sender={id:'ext',tab:{id:1,incognito:false},frameId:0,documentId:'parent_1',documentLifecycle:'active',url:'https://chatgpt.com/'};
+ const message={v:1,type:'HOST_UI_WORKSPACE_ENTERED',documentToken:'doc',producerToken:'producer',routeEpoch:1,mountId:'selected'};
+ assert.equal((await f.owner.handle(message,sender)).ok,true);
+ for(const port of Object.values(f.ports.selected))assert.deepEqual(port.messages,[{type:'VAIWL_UI_WORKSPACE_ENTERED'}]);
+ for(const id of ['same_tab_other','other_tab'])for(const port of Object.values(f.ports[id]))assert.deepEqual(port.messages,[]);
+ assert.deepEqual(f.unpaired.messages,[]);
+ for(const patch of [{mountId:'other_tab'},{mountId:'missing'},{routeEpoch:2},{scope:'forged'},{documentToken:'wrong'}])assert.equal((await f.owner.handle({...message,...patch},sender)).ok,false);
+ assert.equal((await f.owner.handle(message,f.ports.selected.workspace.sender)).ok,false);
+ assert.equal(f.ports.selected.workspace.messages.length,1);
+ f.owner.revokeMount('selected');assert.equal((await f.owner.handle(message,sender)).ok,false);f.owner.revokeAll();
+});
+test('MOCK expired or unbound parent cannot deliver a workspace-entry hint',async()=>{
+ for(const invalidate of [f=>f.elapse(20000),f=>f.unbind('parent_1')]){
+  const f=await mountNotificationFixture();invalidate(f);
+  await f.owner.handle({v:1,type:'HOST_UI_WORKSPACE_ENTERED',documentToken:'doc',producerToken:'producer',routeEpoch:1,mountId:'selected'},{id:'ext',tab:{id:1,incognito:false},frameId:0,documentId:'parent_1',documentLifecycle:'active',url:'https://chatgpt.com/'});
+  for(const port of Object.values(f.ports.selected))assert.deepEqual(port.messages,[]);f.owner.revokeAll();
+ }
+});

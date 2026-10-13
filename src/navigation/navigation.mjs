@@ -20,7 +20,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const owned=e=>e.composedPath().some(n=>n?.getAttribute?.('data-vaiwl-owned')===token);
   const interacting=()=>pointers.size>0||keys.size>0||composing||dragging;
   const clearUpdateTimer=()=>{if(updateTimer!==null){win.clearTimeout(updateTimer);updateTimer=null;}};
-  function flushUpdate(){clearUpdateTimer();if(interacting()||stopped)return;if(!pendingUpdate){if(pendingRender){pendingRender=false;render();}return;}const args=pendingUpdate;pendingUpdate=null;pendingRender=false;const [value,now,timeZone,preparedIndex,alreadyPrepared]=args;if(alreadyPrepared==='frame')updateFrameProjection(value);else if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
+  function flushUpdate(){clearUpdateTimer();if(interacting()||stopped)return;if(!pendingUpdate){if(pendingRender){pendingRender=false;render();}return;}const args=pendingUpdate;pendingUpdate=null;pendingRender=false;const [value,now,timeZone,preparedIndex,alreadyPrepared,currentEntry]=args;if(alreadyPrepared==='frame')applyFrameProjection(value,currentEntry);else if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
   function requestRender(){if(stopped)return;if(interacting()||updateTimer!==null){pendingRender=true;finishInteraction();return;}render();}
   function finishInteraction(){if(!interacting()&&(pendingUpdate||pendingRender)&&updateTimer===null)updateTimer=win.setTimeout(flushUpdate,0);}
   function resetInteraction(discard=false){pointers.clear();keys.clear();composing=false;dragging=false;if(discard){pendingUpdate=null;pendingRender=false;clearUpdateTimer();}else finishInteraction();}
@@ -170,11 +170,11 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const chevron='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
   const symbols={search:'M20 20l-5-5 M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0',up:'M6 15l6-6 6 6',down:'M6 9l6 6 6-6',more:'M5 12h.01 M12 12h.01 M19 12h.01',minus:'M5 12h14',plus:'M5 12h14 M12 5v14',close:'m6 6 12 12 M18 6 6 18'};
   function graphic(b,kind){if(kind==='more'){b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>';return b;}b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+symbols[kind]+'"/></svg>';return b;}
-  function requestFrame(partial={}){
+  function requestFrame(partial={},safeCurrentEntry=false){
     if(!frameProjection||typeof onProjectionRequest!=='function')return;
     const scope=frameProjection.scope,run=++projectionRequest;
     const query={role:surface.role,segment:view.segment,offset:frameProjection.groups.offset,limit:frameProjection.groups.limit,...partial};
-    try{Promise.resolve(onProjectionRequest(query)).then(dto=>{if(dto&&run===projectionRequest&&!stopped&&frameProjection?.scope===scope&&dto.scope===scope)updateFrameProjection(dto);}).catch(()=>{});}catch{}
+    try{Promise.resolve(onProjectionRequest(query)).then(dto=>{if(dto&&run===projectionRequest&&!stopped&&frameProjection?.scope===scope&&dto.scope===scope)applyFrameProjection(dto,safeCurrentEntry?{scope,run}:null);}).catch(()=>{});}catch{}
   }
   async function requestHorizon(value){
     const H=value==='auto'?'auto':Number(value);if(!frameProjection||surface.role!=='workspace'||typeof onHorizonRequest!=='function'||horizonPending||H!=='auto'&&![7,14,30,60,90].includes(H))return;
@@ -321,7 +321,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       const workset=node(doc,'section',{class:'search working-set','aria-label':'当前工作集'}),top=node(doc,'div',{class:'search-top'});top.append(node(doc,'strong',{},'当前工作集'),button('返回主题视图',()=>{view.worksetOpen=false;render();},'返回主题','more'));workset.append(top,node(doc,'p',{},'只保存窗口引用与人工顺序，点击后打开。草稿与任务运行状态由原生页面保留。'));const saved=snapshot.preferences?.workingSet?.value??{refs:[],current:null};for(const id of saved.refs){const ref=index.byId(id);if(ref)workset.append(row(ref,'workset'));else workset.append(node(doc,'p',{class:'failed-ref'},'暂时无法打开的引用 '+id));}if(!saved.refs.length)workset.append(node(doc,'p',{},'还没有窗口。可在工作空间管理中加入窗口。'));if(onManage)workset.append(button('编辑当前工作集',()=>onManage(), '整理工作集','more'));page.append(workset);
     }else{
       const arrows=node(doc,'div',{class:'arrows','aria-label':'主题区间导航'});
-      if(view.segment>0)arrows.append(graphic(button('较近的'+span()+'日',()=>{if(frameProjection){requestFrame({segment:view.segment-1,offset:0});return;}view.segment--;view.scroll=0;render();if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();}),'up'));
+      if(view.segment>0)arrows.append(graphic(button('较近的'+span()+'日',()=>{if(frameProjection){requestFrame({segment:view.segment-1,offset:0},view.segment===1);return;}view.segment--;view.scroll=0;render();if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();}),'up'));
       const down=graphic(button('较早的'+span()+'日',()=>{if(frameProjection){requestFrame({segment:view.segment+1,offset:0});return;}view.segment++;view.scroll=0;render();calibrationEntry();}),'down');down.disabled=frameProjection?!frameProjection.navigation.hasOlder:view.segment>=Math.max(groups.reduce((max,g)=>Math.max(max,g.segment??0),0),free()?snapshot.refs.reduce((max,r)=>Math.max(max,(r.activityDecision??r.activity)?.segment??0),0):0);arrows.append(down);page.append(arrows);
       const cards=node(doc,'div',{class:'cards'});
       for(const g of (frameProjection?groups:groups.filter(g=>g.segment===view.segment||(free()&&g.segment===null&&view.segment===0)))){
@@ -346,7 +346,9 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(value.preferences?.sidebarVisible)view.sidebarVisible=value.preferences.sidebarVisible.value;
     layout();render();layout();locateAnchor();
   }
-  function updateFrameProjection(dto){
+  function updateFrameProjection(dto){return applyFrameProjection(dto);}
+  function applyFrameProjection(dto,currentEntry=null){
+    if(currentEntry&&(currentEntry.run!==projectionRequest||frameProjection?.scope!==currentEntry.scope))return;
     if(stopped)return;if(!framed||dto?.protocol!=='vaiwl-free-frame/1'||dto.role!==surface.role||dto.completeSnapshot!==false||typeof dto.scope!=='string'||!dto.navigation||!Number.isSafeInteger(dto.segment)||dto.segment<0)throw Error('invalid-frame-projection');
     const policy=dto.timePolicy;if(policy!==undefined&&(!policy||typeof policy!=='object'||Array.isArray(policy)||Object.keys(policy).sort().join(',')!=='H,mode,revision'||!['fixed','auto'].includes(policy.mode)||![7,14,30,60,90].includes(policy.H)||!Number.isSafeInteger(policy.revision)||policy.revision<0))throw Error('invalid-frame-time-policy');
     const c=dto.current;
@@ -360,7 +362,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(dto.search!==undefined&&dto.workingSet!==undefined)throw Error('conflicting-frame-lists');
     if(snapshot?.scope===dto.scope&&dto.workingSet&&(!view.worksetOpen||searchQuery!==null||dto.workingSet.offset!==frameWorkingSetOffset))return;
     if(snapshot?.scope===dto.scope&&dto.search&&(searchQuery===null||dto.search.query!==searchQuery||dto.search.projectId!==searchTheme||dto.search.offset!==frameSearchOffset))return;
-    if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame'];return;}
+    if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame',currentEntry];return;}
     const scopeChanged=snapshot?.scope!==dto.scope;const copy=structuredClone(dto);resetInteraction(true);sidebarDirty=true;remember();
     if(snapshot?.scope!==copy.scope){horizonPending=null;horizonError=null;detach();searchQuery=null;searchTheme=null;projectionRequest++;}
     if(scopeChanged){settingsOpen=false;workingSetPending=null;workingSetError=null;}projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
@@ -370,6 +372,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(!views.has(copy.scope))views.set(copy.scope,initialView());view=views.get(copy.scope);view.segment=copy.segment;if(scopeChanged){view.worksetOpen=!!copy.workingSet;if(copy.workingSet)frameWorkingSetOffset=copy.workingSet.offset;if(copy.search){searchQuery=copy.search.query;searchTheme=copy.search.projectId;frameSearchOffset=copy.search.offset;}}
     groups=copy.groups.items.map(g=>({...g,current:g.lists.current.items,old:g.lists.old.items,unknown:g.lists.unknown.items}));index=null;
     layout();render();layout();
+    if(currentEntry&&!stopped&&frameProjection?.scope===currentEntry.scope&&view.segment===0&&view.mode==='workspace')onCurrentWorkspaceEntry();
   }
   function update(value,now,timeZone,preparedIndex=null){if(value?.protocol==='vaiwl-free-frame/1')throw Error('frame-projection-requires-explicit-consumer');return applyUpdate(value,now,timeZone,preparedIndex);}
   function updatePreparedFree(value,now,timeZone,preparedIndex=null){assertPreparedFreeSnapshot(value);return applyUpdate(value,now,timeZone,preparedIndex,true);}
