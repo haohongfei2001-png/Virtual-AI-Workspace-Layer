@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第七十二轮：前置a3d8f13，最后确认远端b46ef83。活动证据迁移改为有界分批完整审计；完整1223/1223、真实IDB3/3、MV3生命周期9/9及普通100k发送通过。发现原有错误索引指向现存ref可漏读旧事件的完整性缺口，下一项优先修复；慢速100k与真实Free验收仍未完成。
+当前已推进至第七十三轮：前置e0db3f1，最后确认远端b46ef83。活动索引绑定根校验，旧库完整双向核验后才允许增量写；完整1264/1264、真实IDB10/10、MV3回归9/9通过。恢复诊断一致性、慢速100k与真实Free验收仍未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -814,3 +814,16 @@ Round70同步/诊断补充：本地代码head c119f31，工作区测试完毕；
 Round72最终规模补充：实际安装headless MV3 100k，首载22393.2ms、第二标签12812.4ms；三发送745.8/832.2/640.4ms单样本PASS，唯一事件/原名/NONE/scope隔离/原textarea草稿保持，sourceChangedDuringRun=false。不是p95，也不证明4x启动失败已修复（本轮未重测4x，因为原失败尚在更早native迁移）。最新包63文件/53worker模块，ZIP SHA256 d70df9358de7ce08367515d4cdd4e5f38211765a15a1e9f5c1ae74a0cdf3917a，source manifest de9015f328dcdc3fff9d346453b1eb6b7590efb17959637d581bcbca8de5cfde；确切路径见free-round72-mv3-100k.json，SYNTHETIC_ONLY。
 
 独立审查另证实原有索引完整性缺口：global index只验证目标ref存在，合法checksum错指向另一现存ref可通过migration，随后增量写漏读旧event并制造全局重复。该缺陷不是本批次引入；本轮未暗中扩大索引规则，下一项以最小反例修复。不能因本轮全量测试通过宣称已无完整性缺陷或Free完成。
+
+
+## Round73：活动索引与根校验绑定及旧库完整核验
+
+前置e0db3f1，最后确认远端b46ef83。修复前错误/缺失global locator可通过迁移或增量写入的10个反例失败，合法控制通过；原失败独立保存。新根以可选indexChecksums绑定各indexVersions记录的checksum，增量读取必须匹配后才使用locator；新写入原子更新根/影子/索引。旧partition/directory无map时保持可读，普通增量写拒绝evidence-index-integrity-required；既有evidence-directory准备阶段先完整分批核对实际三表行与四类索引的双向对应，再原子建立map。旧directory只递增root revision，不重写桶/索引版本；用新operationId避免旧迁移receipt跳过此次核验。
+
+恢复复用相同双向审计，发布前校验新根并撤销全部sources；错误索引不允许恢复。新增校验不是密码学认证，不授予真实来源权限。无DB版本变更；不宣称可以降级旧扩展：旧directory精确schema reader不认识新增字段，旧版本不能作为新根的写入者。
+
+独立合同33/33含两格式、四类索引、错误/缺失locator、显式null/false、先拒写再密封后成功写、16Mi-8合法旧根添加map后超限整事务回滚。最终完整Node1264/1264、0失败/跳过；真实headless IDB10/10，错误迁移/恢复八表逐row不变，合法恢复撤权和禁止regrant；实际MV3回归9/9，原生输入/草稿/多tab/worker重启/UNKNOWN scope保持。staged服务合同验证旧receipt不会跳过新完整性准备。两旧容量测试补齐新门槛前置条件，容量及默认header兼容断言不降低。
+
+真实ChatGPT来源/账号/跨端、PAIA、物理IME/真人仍未满足；4x100k旧FAIL保持，Free未完成、NOT_RELEASE_READY。独立审查发现恢复诊断仍未复用双向审计：旧shadow错误locator可能被错误展示可恢复，但实际恢复安全拒绝；下一项修正诊断一致性。
+
+Round73最终安装包100k：首标签24265.4ms、第二15209.5ms，三发送816.9/889.7/693.6ms单样本PASS，scope隔离、唯一事件、原名/NONE、双tab草稿保持，sourceChangedDuringRun=false。63文件/53worker模块；ZIP SHA256 71c234083de3170ca30c04dcd0ef8e8a2912f6a711f969bde6d593e36747f755，source manifest 23ec7cf66b7c5faa4c055d429151a65e5e2ddc88431286b2989610d87aa57deb；路径见free-round73-mv3-100k.json。非p95，未重跑4x，仍非真实Free交付。

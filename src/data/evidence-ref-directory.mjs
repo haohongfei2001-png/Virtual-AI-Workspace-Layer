@@ -16,10 +16,10 @@ function totals(directory,revision){
  let count=0,bytes=0;for(const [bucket,pointer] of Object.entries(directory)){bucketId(bucket);exact(pointer,['revision','count','bytes']);positive(pointer.revision,revision);positive(pointer.count,MAX_REFS);positive(pointer.bytes,MAX_TOTAL);count+=pointer.count;bytes+=pointer.bytes;}
  if(count>MAX_REFS||bytes>MAX_TOTAL)throw Error('evidence-directory-capacity');return {count,bytes};
 }
-function legacyHeader(root){return {format:LEGACY,scopeKey:root.scopeKey,revision:root.revision,sources:root.sources,refVersions:{},indexVersions:root.indexVersions,counts:root.counts,sizes:{}};}
+function legacyHeader(root){return {format:LEGACY,scopeKey:root.scopeKey,revision:root.revision,sources:root.sources,refVersions:{},indexVersions:root.indexVersions,...(root.indexChecksums!==undefined?{indexChecksums:root.indexChecksums}:{}),counts:root.counts,sizes:{}};}
 /** Counts and byte totals are directory claims until the referenced buckets are verified. */
 export function validateEvidenceDirectoryRoot(root,scope){
- const normalized=scopeOf(scope);exact(root,['format','scopeKey','revision','sources','directory','indexVersions','counts']);
+ const normalized=scopeOf(scope);exact(root,['format','scopeKey','revision','sources','directory','indexVersions','counts'],['indexChecksums']);
  if(root.format!==EVIDENCE_DIRECTORY_FORMAT)throw Error('invalid-evidence-directory-format');
  validateEvidenceManifest(legacyHeader(root),normalized);totals(root.directory,root.revision);
  if(stable(root).length>MAX_RECORD)throw Error('free-evidence-too-large');return root;
@@ -54,8 +54,8 @@ function bucketRecord(root,bucket,versions,sizes,ordinals){
 /** Pure conversion only. The repository must verify actual evidence/index pieces before committing migration. */
 export function buildEvidenceRefDirectory(manifest,scope){
  const normalized=scopeOf(scope);validateEvidenceManifest(manifest,normalized);
- exact(manifest,['format','scopeKey','revision','sources','refVersions','indexVersions','counts','sizes']);
- const root={format:EVIDENCE_DIRECTORY_FORMAT,scopeKey:manifest.scopeKey,revision:manifest.revision,sources:manifest.sources,directory:{},indexVersions:manifest.indexVersions,counts:manifest.counts},groups=new Map(),records=[];let ordinal=0;
+ exact(manifest,['format','scopeKey','revision','sources','refVersions','indexVersions','counts','sizes'],['indexChecksums']);
+ const root={format:EVIDENCE_DIRECTORY_FORMAT,scopeKey:manifest.scopeKey,revision:manifest.revision,sources:manifest.sources,directory:{},indexVersions:manifest.indexVersions,...(manifest.indexChecksums!==undefined?{indexChecksums:manifest.indexChecksums}:{}),counts:manifest.counts},groups=new Map(),records=[];let ordinal=0;
  for(const ref of Object.keys(manifest.refVersions)){const bucket=evidenceRefBucket(ref);if(!groups.has(bucket))groups.set(bucket,{versions:{},sizes:{},ordinals:{}});const group=groups.get(bucket);group.versions[ref]=manifest.refVersions[ref];group.sizes[ref]=manifest.sizes[ref];group.ordinals[ref]=ordinal++;}
  for(const [bucket,group] of groups)records.push(bucketRecord(root,bucket,group.versions,group.sizes,group.ordinals));validateEvidenceDirectoryRoot(root,normalized);return {root,records};
 }

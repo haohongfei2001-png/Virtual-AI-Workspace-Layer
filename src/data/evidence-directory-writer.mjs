@@ -7,7 +7,7 @@ import {saveEvidencePieces,evidenceRecord,freeEvidenceKey,evidenceRecoveryKey} f
 export function saveDirectoryEvidence(store,scope,next,root,partial,indexes,reader,done,fail){
  const refs=[...new Set(['events','hints','coverage'].flatMap(table=>Object.values(next[table]).map(row=>row.conversationId)))];
  reader.lookupMany(refs,versions=>{try{
-  const bounded={format:'vaiwl-free-evidence-partitions-v1',scopeKey:root.scopeKey,revision:root.revision,sources:root.sources,refVersions:{},sizes:{},counts:root.counts,indexVersions:root.indexVersions};
+  const bounded={format:'vaiwl-free-evidence-partitions-v1',scopeKey:root.scopeKey,revision:root.revision,sources:root.sources,refVersions:{},sizes:{},counts:root.counts,indexVersions:root.indexVersions,indexChecksums:root.indexChecksums};
   for(const [ref,pointer] of versions){bounded.refVersions[ref]=pointer.version;bounded.sizes[ref]=pointer.size;}
   const rootKey=freeEvidenceKey(scope.key),shadowKey=evidenceRecoveryKey(scope.key);
   const piecesOnly={put:record=>{if(record.key!==rootKey&&record.key!==shadowKey)store.put(record);},delete:key=>store.delete(key)};
@@ -15,7 +15,7 @@ export function saveDirectoryEvidence(store,scope,next,root,partial,indexes,read
   for(const ref of refs)updates[ref]={version:written.refVersions[ref],size:written.sizes[ref]};
   for(const bucket of buckets){const pointer=root.directory[bucket];if(pointer)records.push(reader.records.get(evidenceRefDirectoryKey(root.scopeKey,bucket,pointer.revision)));}
   const built=updateEvidenceRefDirectory(root,scope,next.revision,updates,records);
-  built.root.sources=written.sources;built.root.counts=written.counts;built.root.indexVersions=written.indexVersions;validateEvidenceDirectoryRoot(built.root,scope);
+  built.root.sources=written.sources;built.root.counts=written.counts;built.root.indexVersions=written.indexVersions;built.root.indexChecksums=written.indexChecksums;validateEvidenceDirectoryRoot(built.root,scope);
   for(const record of built.records)store.put(record);
   // Activity recovery is an identical current-root shadow, not an older
   // checkpoint. Superseded buckets/pieces retire in this same transaction.

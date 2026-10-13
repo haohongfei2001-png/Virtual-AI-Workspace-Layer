@@ -1,6 +1,7 @@
-import {EVIDENCE_DIRECTORY_FORMAT,buildEvidenceRefDirectory} from './evidence-ref-directory.mjs';
+import {EVIDENCE_DIRECTORY_FORMAT,buildEvidenceRefDirectory,validateEvidenceDirectoryRoot} from './evidence-ref-directory.mjs';
 import {freeEvidenceKey,evidenceRecoveryKey,evidenceRecord,unpackEvidence,isEvidencePartitioned,loadEvidenceIndexes} from './free-evidence-partitions.mjs';
 import {auditEvidencePartitions} from './evidence-partition-audit.mjs';
+import {createEvidenceDirectoryReader} from './evidence-directory-reader.mjs';
 import {digest} from './hash.mjs';
 import {id} from './state.mjs';
 /** Explicit owner migration. Never upgrades a source grant or observes native data. */
@@ -16,14 +17,17 @@ export async function migrateEvidenceDirectory(owner,scope,{operationId,expected
    if(unpackEvidence(marker.result).revision!==payload.revision)throw Error('free-evidence-root-revision-conflict');
    if(receipt.result){const prior=unpackEvidence(receipt.result);result=prior.kind===kind&&prior.fingerprint===fingerprint?{ok:true,replayed:true,revision:prior.revision,operationId}:{ok:false,reason:'operation-replay-conflict'};return;}
    if(payload.revision!==expectedRevision)throw Error('revision-conflict');
-   if(payload.format===EVIDENCE_DIRECTORY_FORMAT){result={ok:true,alreadyIndexed:true,revision:payload.revision,operationId};return;}
-   if(!isEvidencePartitioned(payload))throw Error('evidence-directory-migration-requires-partitioned-root');
-   loadEvidenceIndexes(store,payload,normalized,Object.keys(payload.indexVersions),()=>auditEvidencePartitions(store,payload,normalized,fence,()=>{try{
+   const indexed=payload.format===EVIDENCE_DIRECTORY_FORMAT;
+   if(indexed&&payload.indexChecksums){result={ok:true,alreadyIndexed:true,revision:payload.revision,operationId};return;}
+   if(!indexed&&!isEvidencePartitioned(payload))throw Error('evidence-directory-migration-requires-partitioned-root');
+   const migrate=complete=>loadEvidenceIndexes(store,complete,normalized,Object.keys(complete.indexVersions),(indexes,{checksums})=>auditEvidencePartitions(store,complete,normalized,fence,()=>{try{
     fence();
-    const built=buildEvidenceRefDirectory({...payload,revision:payload.revision+1},normalized);
+    const built=indexed?{root:{...payload,revision:payload.revision+1,indexChecksums:checksums},records:[]}:buildEvidenceRefDirectory({...complete,revision:payload.revision+1,indexChecksums:checksums},normalized);
+    validateEvidenceDirectoryRoot(built.root,normalized);
     for(const row of built.records){fence();store.put(row);}const record=evidenceRecord(key,built.root);store.put(record);store.put({...record,key:evidenceRecoveryKey(normalized.key)});
     ops.put(evidenceRecord(key,{revision:built.root.revision}));ops.put(evidenceRecord(operationKey,{kind,fingerprint,revision:built.root.revision,operationId}));fence();result={ok:true,revision:built.root.revision,operationId};
-   }catch(e){abort(e.message);}},e=>abort(e.message)),e=>abort(e.message));
+   }catch(e){abort(e.message);}},e=>abort(e.message),indexes),e=>abort(e.message));
+   if(indexed)createEvidenceDirectoryReader(store,payload,normalized,e=>abort(e.message)).all(migrate);else migrate(payload);
   }catch(e){abort(e.message);}};
   tx.oncomplete=()=>{signal?.removeEventListener('abort',revoked);try{fence();resolve(result);}catch{resolve({ok:false,reason:'stale-after-commit',committed:true});}};
   tx.onabort=()=>{signal?.removeEventListener('abort',revoked);resolve(result?.ok===false?result:{ok:false,reason:tx.error?.name??'evidence-directory-migration-aborted'});};tx.onerror=()=>{};

@@ -44,8 +44,8 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
   const preparing=(scope,stage)=>({preparing:{scope:repository.scopeOrThrow(scope).key,stage}});
   async function ensureEvidence(scope,options,staged=false){
     let stored=await evidence.header(scope,{...options,includeStorageFormat:true});
-    if(stored.storageFormat==='vaiwl-free-evidence-partitions-v1'){
-      const result=await evidence.migrateRefDirectory(scope,{operationId:'evidence_ref_directory_v1',expectedRevision:stored.revision},options);
+    if(stored.storageFormat==='vaiwl-free-evidence-partitions-v1'||stored.storageFormat==='vaiwl-free-evidence-directory-v1'&&!stored.indexIntegrityBound){
+      const result=await evidence.migrateRefDirectory(scope,{operationId:'evidence_index_integrity_v1',expectedRevision:stored.revision},options);
       if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);
       if(staged)return preparing(scope,'evidence-directory');
       // One bounded attempt. A concurrent writer can win; the next HEADER

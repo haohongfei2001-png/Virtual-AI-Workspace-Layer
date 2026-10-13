@@ -1,5 +1,6 @@
 import {saveDirectoryEvidence} from './evidence-directory-writer.mjs';
 import {migrateEvidenceDirectory} from './evidence-directory-migration.mjs';
+import {auditEvidencePartitions} from './evidence-partition-audit.mjs';
 import {EVIDENCE_DIRECTORY_FORMAT,validateEvidenceDirectoryRoot} from './evidence-ref-directory.mjs';
 import {createEvidenceDirectoryReader} from './evidence-directory-reader.mjs';
 import {VerifiedRecordCache} from './verified-record-cache.mjs';
@@ -54,7 +55,7 @@ export class FreeEvidenceRepository {
     // authority fences still complete in this same readonly transaction.
     const reader=indexed?createEvidenceDirectoryReader(states,payload,normalized,abort):null;
     if(query?.metadataOnly){
-     const done=complete=>{value={revision:current.revision,manifest:complete,sources:current.sources,...(query.includeStorageFormat?{storageFormat:payload.format}: {})};};
+     const done=complete=>{value={revision:current.revision,manifest:complete,sources:current.sources,...(query.includeStorageFormat?{storageFormat:payload.format,indexIntegrityBound:!!payload.indexChecksums}: {})};};
      // Existing HEADER consumers require refVersions; restore that contract.
      // This verifies directory inventory, not the evidence contents themselves.
      if(reader)reader.all(done);else done(manifest);return;
@@ -105,11 +106,10 @@ export class FreeEvidenceRepository {
           if(root.result?.payload?.format===EVIDENCE_DIRECTORY_FORMAT&&!indexed)throw Error('evidence-directory-recovery-format-conflict');
           if (unpack(marker.result).revision !== manifest.revision) throw Error('free-evidence-root-revision-conflict');
           // Verify every referenced piece before publishing a recovered manifest.
-          const verify=complete=>loadEvidenceIndexes(store,complete,normalized,Object.keys(complete.indexVersions),()=>loadEvidencePieces(store, complete, normalized, Object.keys(complete.refVersions), evidence => {
+          const verify=complete=>loadEvidenceIndexes(store,complete,normalized,Object.keys(complete.indexVersions),(indexes,{checksums})=>auditEvidencePartitions(store, complete, normalized, ()=>fence(options), () => {
             try {
               fence(options);
-              for(const table of ['events','hints','coverage'])if(Object.keys(evidence[table]).length!==manifest.counts[table])throw Error('free-evidence-count-mismatch');
-              const next = structuredClone(manifest); next.revision++;
+              const next = structuredClone(manifest); next.revision++;next.indexChecksums=checksums;
               for (const source of Object.values(next.sources)) source.revoked = true;
 
               if(indexed)validateEvidenceDirectoryRoot(next,normalized);else validateEvidenceManifest(next, normalized);
@@ -119,7 +119,7 @@ export class FreeEvidenceRepository {
               fence(options);
               result = {ok: true, revision: next.revision, operationId, evidenceInvalidated: true};
             } catch (failure) { abort(failure.message); }
-          }, failure => abort(failure.message)),failure=>abort(failure.message));
+          }, failure => abort(failure.message),indexes),failure=>abort(failure.message));
           if(indexed)createEvidenceDirectoryReader(store,manifest,normalized,failure=>abort(failure.message)).all(verify);else verify(manifest);
         } catch (failure) { abort(failure.message); }
       };
@@ -162,6 +162,7 @@ export class FreeEvidenceRepository {
       fence(options);
       if(receipt.result){const prior=unpack(receipt.result);result=prior.fingerprint===fingerprint?{ok:true,replayed:true,revision:prior.revision,operationId}:{ok:false,reason:'operation-replay-conflict'};return;}
       if(current.revision!==expectedRevision)throw Error('revision-conflict');
+      if(manifest&&!manifest.indexChecksums)throw Error('evidence-index-integrity-required');
       let indexes={};
       const save=partial=>{try{
        const next=applyFreeEvidence(partial,command,{scope:normalized,now:this.clock(),channel:'synthetic'});fence(options);
