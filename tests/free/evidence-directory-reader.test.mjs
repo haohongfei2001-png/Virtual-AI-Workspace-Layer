@@ -27,3 +27,11 @@ for(const method of ['lookup','lookupMany','all','readBucket'])test('exposed rec
 test('mutation by first coalesced consumer prevents second consumer observing unverified payload',async()=>{const f=fixture(),store=storeFor(f.rows);let calls=0;await assert.rejects(new Promise((resolve,reject)=>{const r=createEvidenceDirectoryReader(store,f.root,scope,reject);r.readBucket(bucket('ref_0'),piece=>{calls++;piece.sizes[0]++;});r.readBucket(bucket('ref_0'),()=>{calls++;resolve();});}),/corrupt/);assert.equal(calls,1);});
 test('all rejects valid-checksum cross-bucket ordinal collisions',async()=>{const f=fixture(),a=f.records[0],b=f.records.find(r=>r.payload.bucket!==a.payload.bucket);b.payload.ordinals[0]=a.payload.ordinals[0];f.rows.set(b.key,evidenceRecord(b.key,b.payload));await assert.rejects(new Promise((resolve,reject)=>createEvidenceDirectoryReader(storeFor(f.rows),f.root,scope,reject).all(resolve)),/order/);});
 test('all rejects extraneous records inserted into public map',async()=>{const f=fixture();await assert.rejects(new Promise((resolve,reject)=>{const r=createEvidenceDirectoryReader(storeFor(f.rows),f.root,scope,reject);r.lookup('ref_0',()=>{r.records.set('extra',{...f.records[0],key:'extra'});r.all(resolve);});}),/unexpected/);});
+test('overridden exposed records.set cannot mutate bytes after the first verification',async()=>{
+ const f=fixture(),store=storeFor(f.rows);let calls=0;
+ await assert.rejects(new Promise((resolve,reject)=>{
+  const r=createEvidenceDirectoryReader(store,f.root,scope,reject);
+  r.records.set=function(key,row){Map.prototype.set.call(this,key,row);row.payload.sizes[0]++;return this;};
+  r.readBucket(bucket('ref_0'),()=>{calls++;resolve();});
+ }),/corrupt/);assert.equal(calls,0);
+});

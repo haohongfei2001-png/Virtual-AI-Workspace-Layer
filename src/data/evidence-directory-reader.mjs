@@ -19,11 +19,14 @@ export function createEvidenceDirectoryReader(store,root,scope,fail){
    pending.set(key,[done]);
    const request=store.get(key);
    request.onsuccess=()=>{if(failed)return;try{
-    const record=request.result;verifyEvidenceDirectoryPiece(record,root,bucket);records.set(key,record);
+    const record=request.result;records.set(key,record);
     const callbacks=pending.get(key);pending.delete(key);
-    // A prior consumer can mutate an exposed record. Recheck bytes for each
-    // callback; the validation cache retains strings, never trusted objects.
-    for(const callback of callbacks){if(failed)break;callback(verifyEvidenceDirectoryPiece(record,root,bucket));}
+    // records is exposed for inspection; even an overridden set must run before
+    // verification, never between verified bytes and their first consumer.
+    const verified=verifyEvidenceDirectoryPiece(record,root,bucket);
+    // No consumer ran between verification and the first callback. Subsequent
+    // consumers must recheck bytes because a prior callback can mutate them.
+    for(let i=0;i<callbacks.length;i++){if(failed)break;callbacks[i](i===0?verified:verifyEvidenceDirectoryPiece(record,root,bucket));}
    }catch(error){reject(error);}};
    request.onerror=()=>reject(request.error??Error('evidence-directory-read-failed'));
   }catch(error){reject(error);}

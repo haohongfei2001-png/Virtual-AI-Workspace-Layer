@@ -673,3 +673,14 @@ b46ef83已正常push，GitHub确认PR16仍Draft，base176ebc9a未变。此轮只
 Mock增加索引元数据供合同断言使用，明确不模拟unique/multiEntry约束语义。新增v1/v2×两索引×四错误的12个Node反例修前全部FAIL、修后通过；最终完整1172/1172、0失败/跳过。相同真实Chrome反例修后9/9：8坏库AbortError、仍v2、六表逐row JSON不变且无native新store；合法控制正常v3。最终源码实际安装schema升级4/4、MV3生命周期9/9通过，source不变、无pageErrors。
 
 最终包62文件/52worker模块，确切路径见free-round69-schema-mv3.json；ZIP SHA256 ad7a87baa2a6226c98b0265e6a436c4a38e298c03fa26d348f759067d7a80413，source manifest 9e4fd5f555167a54c1d1723342d84c972db3e88b4297456c6322403d89d7f05e。没有重新做规模延迟认证，相关结果仍Round67来源。4x100k首次加载、真实ChatGPT来源/账户/跨端、PAIA、物理IME/真人条件仍未完成；SYNTHETIC_ONLY/NOT_RELEASE_READY，Free未交付成功。
+
+
+## Round70：冷启动分阶段诊断与证据桶重复验证
+
+1946891普通push遇30秒低速超时，最后确认远端b46ef83。单次100k page-transport CPU诊断首载23251ms，其中HEADER11393ms、PAGE11439ms；sha256自耗5727ms，主要为三类迁移审计的真实piece checksum。4x旧失败完全在HEADER、PAGE调用0，不能以分页优化冒称解决。
+
+evidence directory首次回调前原来连续校验同一record两次，改为一次；后续回调/records命中/all仍重验fresh字节，CAS/source/final CHECK不变。独立审查指出公开records.set可被覆盖成重入点，最终排列先执行Map写入再验证，随后直接首callback；新增hook篡改反例必须拒绝且callback0次，39相关合同通过。
+
+最终完整1173/1173、0失败/跳过，真实IDB目录6/6，实际headless MV3生命周期9/9通过。一次优化后诊断（早于最终Map排列修正）首载21846ms、HEADER10352ms/PAGE11093ms，源码hash另存；非配对统计、非最终源码延迟认证，不把总1.4秒差值归因单项改动。两份完整CPU profile压缩保留，没有再次为追求更快数字重复100k测试。
+
+最新冻结ZIP仍Round69独立来源，未包含本轮reader改动；本轮MV3源码构建回归单独有hash。4x100k冷启动仍FAIL；真实ChatGPT来源/账户/跨端、PAIA、物理IME/真人条件未满足，Free未完成。下一项需针对迁移重复hash/审计成本做有证据的最小改进，不能跳过fresh checksum、全量审计或放宽截止。
