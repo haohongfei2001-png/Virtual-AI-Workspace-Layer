@@ -1087,3 +1087,14 @@ adapter先绑定已接受正文proof，意图队列最多32且与body/surface共
 冻结源码完整Node2172/2172、0失败/跳过；隔离真实headless候选MV34/4与原构建包8/8 PASS、源码哈希稳定。真实按钮点击无新消息只留intent；真实remount清前例后，另一次真实click加明确测试进程metadata/DOM追加得到单个correlated，无ACK/sentAt、八store摘要不变。这是离线重建，未真正发出消息。owner握手/伪proof/过期/跨kind重放/字段升级5项另测；首次fixture漏profile错误原样保留。
 
 继续依原计划完成Free本地人工资产备份/恢复通道等独立任务；真实本人ACK/time、默认context/C1/C2、新聊天首发关联、J/G/U、C5间歇点击和旧4x100k仍未满足。Free未完成、NOT_RELEASE_READY。
+
+
+## Round100：授权frame人工资产备份与显式导入
+
+在已正常push且PR16 API确认的a92453c继续。新增备份入口，使用原WorkspaceRepository.exportBackup/previewRestore/restoreBackup及CAS、人工作品优先保护，无DB/schema变更。仅人工资产/必要引用，不带sources/events/coverage授权、不读取ChatGPT正文。worker私有RAM最多2个17MiB传输，24KiB bytes/base64分片保持单RPC低于64KiB；绑定scope、scopeGrant、UiGrant、mount及持续isCurrent，120秒elapsed期限、6秒RPC、回拨/撤权/stop/迟到拒绝。导出前预留容量，上传按序且相同chunk重传幂等；恢复只用owner持有bundle/planHash/revision，同operation单飞，冲突与失败消耗方案，无自动重试。
+
+frame显式导出后需点击下载；选择JSON后上传并展示新增/更新/保留摘要，只有确认恢复才写。原生草稿不动，另一scope/损坏备份不能导入；返回/stop/通知清plan、文件及Blob URL，正常grant续期保留用户预览；恢复自己的成功通知不丢终态，返回后重读原查询。独立审查发现客户端超时后late分配名额未释放，修复为原RPC持续挂清理，即使timer延迟而reply先到也关闭；两条反例加入最终回归。
+
+最终冻结Node2208/2208、0失败/跳过；实际headless原构建包备份5/5、原导航8/8 PASS，源码哈希稳定。备份浏览器验证真实下载无证据/授权、预览确认及较新人工作品/原textarea草稿保留、异账户与损坏备份全库摘要不变、关闭父页面旧packet拒读。最后一项仅旧请求拒绝，不冒充在飞活跃transfer撤权；后者由owner/客户端合同覆盖。修复前2206全量与首次浏览器结果单独保留，只认证当时源码。
+
+后续继续现有Free设置/自适应接线及未满足验收；主界面当前手动H toolbar尚需移入既有设置以符合不常驻时间条约束。真实本人ACK/time、默认context/C1/C2、新聊天首发关联、J/G/U、C5间歇点击和旧4x100k条件保持。Free未完成、NOT_RELEASE_READY。

@@ -1,3 +1,4 @@
+import {createFreeFrameBackup} from './free-frame-backup.mjs';
 import {createFreeFrameRecovery} from './free-frame-recovery.mjs';
 import {isFreeRecoveryReason} from '../navigation/free-recovery.mjs';
 import {FREE_HORIZONS,relocateFreeSegment} from '../data/free-time-policy.mjs';
@@ -9,17 +10,17 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 
 /** Bounded runtime-only projection consumer. No full workspace replica is built
  * in either frame; parent messages remain the lifecycle's public join/suspend. */
-export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,onPresentationRequest=()=>{},onState=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeNonce,navigationFactory=createNavigation,recoveryFactory=createFreeFrameRecovery}={}){
+export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,onPresentationRequest=()=>{},onState=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeNonce,navigationFactory=createNavigation,recoveryFactory=createFreeFrameRecovery,backupFactory=createFreeFrameBackup}={}){
  const policy=createURLPolicy({origin:parentOrigin});
  let navigation=null,root=null,plans=new Map(),grant=null,grantCurrent=()=>false,serial=0,activeRead=null,query={segment:0,offset:0,limit:8},closed=true,splits=0,dirty=false,currentNativeURL='',presentationRevision=0,presentationIntent='',workspaceRevision=null,viewSession=null,horizonPending=false;
- let recovery=null,recoveryRoot=null;
+ let recovery=null,recoveryRoot=null,backup=null,backupRoot=null;
  const recoverable=reason=>isFreeRecoveryReason(reason)||['corrupt-record','invalid-partition-manifest','invalid-partition-piece'].includes(reason);
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function clear(){backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function fail(reason){if(closed)return;if(recoverable(reason)&&grantCurrent()&&Date.parse(grant?.expiresAt)>now()){openRecovery(true);return;}state({state:'failed',reason});lifecycle.stop(reason);}
  function openRecovery(fromFailure=false){
-  if(recovery||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending&&!fromFailure)return;
+  if(recovery||backup||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending&&!fromFailure)return;
   serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-recovery');
   recoveryRoot=doc.createElement('div');recoveryRoot.setAttribute('data-vaiwl-frame-recovery','');privateRoot.append(recoveryRoot);
   const current=grant;
@@ -30,6 +31,24 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(recovery!==panel||!valid())throw Error('recovery-unavailable');return response;
   },onResume:()=>{if(recovery!==panel||!valid())return;panel.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;budget.reset();void read(query,true);}});
   recovery=panel;state({state:'recovery'});void panel.open();
+ }
+ function openBackup(){
+  if(backup||recovery||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending)return;
+  serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-backup');
+  backupRoot=doc.createElement('div');backupRoot.setAttribute('data-vaiwl-frame-backup','');privateRoot.append(backupRoot);
+  const current=grant,valid=()=>!closed&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
+  const panel=backupFactory({document:doc,container:backupRoot,request:async message=>{
+   if(backup!==panel||!valid())throw Error('backup-unavailable');
+   let abandoned=false,cleaned=false;
+   const cleanup=response=>{if(cleaned||!valid()||response?.ok!==true||typeof response.transferId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(response.transferId))return;cleaned=true;Promise.resolve().then(()=>runtime.sendMessage({v:1,type:'HOST_UI_BACKUP_CLOSE',transferId:response.transferId,grantId:current.id,mountId:current.mountId})).catch(()=>{});};
+   const pending=Promise.resolve().then(()=>runtime.sendMessage({...message,grantId:current.id,mountId:current.mountId}));
+   // Keep cleanup attached to the original RPC even if the local deadline wins.
+   pending.then(response=>{if(abandoned||backup!==panel||!valid())cleanup(response);},()=>{});
+   let response;try{response=await withRequestDeadline(()=>pending,{now:elapsedNow,schedule,cancel});}catch(error){abandoned=true;pending.then(cleanup,()=>{});throw error;}
+   if(backup!==panel||!valid()){cleanup(response);throw Error('backup-unavailable');}
+   return response;
+  },onResume:()=>{if(backup!==panel||!valid())return;panel.stop();backup=null;backupRoot?.remove();backupRoot=null;budget.reset();void read(query,true);}});
+  backup=panel;state({state:'backup'});void panel.open();
  }
  function live(ticket){return !closed&&ticket===serial&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();}
  function cancellable(work,signal){
@@ -43,7 +62,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   const {role:ignored,...rest}=value;return structuredClone(rest);
  }
  async function read(value,publish){
-  if(recovery)return null;
+  if(recovery||backup)return null;
   const requested=boundedQuery(value);query=requested;const ticket=++serial;activeRead?.abort();const controller=new AbortController();activeRead=controller;
   if(budget.remaining()===Infinity)splits=0;
   if(!budget.begin()){fail('read-budget-exhausted');return null;}
@@ -81,7 +100,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   finally{if(activeRead===controller){activeRead=null;if(dirty&&live(ticket)){dirty=false;void read(query,true);}}}
   return null;
  }
- function invalidate(){if(recovery){recovery.invalidate?.();return;}if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;if(activeRead||horizonPending)dirty=true;else void read(query,true);}
+ function invalidate(){if(backup){backup.invalidate?.();return;}if(recovery){recovery.invalidate?.();return;}if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;if(activeRead||horizonPending)dirty=true;else void read(query,true);}
  function applyPresentation(value){
   if(value===undefined)return;
   if(!value||!Number.isSafeInteger(value.revision)||value.revision<0||!value.intent||!['show-workspace','enter-reading','search-known','show-working-set'].includes(value.intent.kind))throw Error('invalid-frame-presentation');
@@ -137,9 +156,9 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;
   if(!navigation){root=doc.createElement('div');root.setAttribute('data-vaiwl-frame-root','');privateRoot.append(root);
-   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery});
+   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup});
   }
-  invalidate();
+  if(!backup)invalidate();
  }
  const lifecycle=createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant,onClear:clear,onInvalidate:invalidate,privateRoot,now,elapsedNow,schedule,cancel,...(makeNonce?{makeNonce}:{})});
  return Object.freeze({start:()=>lifecycle.start(),stop:()=>lifecycle.stop('frame-view-stopped')});
