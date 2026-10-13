@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第三十四轮：PAGE在原生页完成后并行共享上下文/活动证据，CHECK并行三个独立版本读取；全部settled后才发布或报错。针对性Node49/49、完整Node774/774、实际发布屏障10/10、MV3 9/9通过。正常100k1624.1/1662.5/1662.9ms仍1秒FAIL。此前已正常推送fe07e50至PR16；本轮提交和同步以Git为准。Free及发布验收未完成。
+当前已推进至第三十五轮：聚合排序新增单次调用内最多256项时间解析缓存，严格日期和稳定顺序不变。37项针对性Node、10项发布屏障通过；最新完整Node为Round34的774项。正常100k1707.4/1596.3/1612.5ms仍1秒FAIL。已推送486dacd并确认PR16仍Draft；后续HEAD及同步以Git为准。Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -424,3 +424,16 @@ CHECK/HEADER/PAGE/SEND/UPSERT优先取消补录的独立子signal，主binding�
 正常无采样100k三发送功能3/3，1624.1/1662.5/1662.9ms均1秒FAIL；每条只有1个事件/hint/原生用户消息，fullread0，草稿/阅读保持，源码hash稳定。新报告free-round34-*独立保存，不与旧计数相加。包/private/tmp/vaiwl-free-delivery-round34-20261013/vaiwl-free-synthetic-only.zip，SHA256 `96e1da34fea3d10e932c431ebf06c0213cdd21a6e5cdb201b72de1d87de53822`，仍SYNTHETIC_ONLY/NOT_RELEASE_READY。
 
 接续：候选热点为聚合排序的重复时间解析，先比较高重复/部分重复/全唯一分布且严格输出等价；尚未修改生产实现。真实账户/来源/跨端、PAIA、物理IME/弱设备及真人验收条件仍缺，完整Free未完成。
+
+
+## 第三十五轮：聚合排序时间解析有界复用
+
+从486dacd继续。每次aggregate单独缓存至多256个精确字符串的instant结果，包含null；非字符串仍经原instant，满额后不添加、不淘汰。只复用数值解析，不缓存活动决策或跨scope/版本状态，稳定排序/Project最新成员语义保持。
+
+独立5项合同覆盖非法日期、offset等值、非字符串/空值、稳定ties、跨聚合scope/evidence、超容量、Project及输入不变。针对性Node37/37，实际发布屏障10/10。完整Node和MV3本轮NOT_RUN，最近完整仍Round34 774/774及MV3 9/9。
+
+隔离headless计算诊断首次baseline/candidate中位：高重复41.55/27.20ms、部分72.15/65.40ms、全唯一52.45/52.65ms；随后固定486dacd历史baseline的可复现脚本测41.55/26.65、63.00/54.30、46.25/45.25ms。各3分布100k、预热及交错6轮、完整输出等价，纯计算不当作端到端认证；两份原报告分别保留。
+
+正常100k三功能3/3，1707.4/1596.3/1612.5ms仍全部1秒FAIL；各1事件/hint/原生消息、fullread0、阅读/草稿保持、运行源码哈希一致。既有路径比上轮慢，不宣称整体提速。首次启动的自动审批超时未执行，允许的一次重试成功完成；不是绕过拒绝。包SHA256 `0d60e736d645c2191c37a033d6b9069e66822f9eda6ec58daa85f56fb0bc63ed`，路径/private/tmp/vaiwl-free-delivery-round35-20261013/vaiwl-free-synthetic-only.zip，仍SYNTHETIC_ONLY。
+
+已正常快进推送486dacd且API确认PR16 Draft同head、正文更新Round34。下一具体热点：fixtureObserve先partialContext再ingest导致同100k共享manifest两次读取编码验证；只能考虑同事务的固定用途准备/写入，不能跨事务信任旧对象、绕CAS或更改一般ingest合同。尚未实施，须保留跨ref事件冲突、撤销重放、恢复receipt、quota/撤权回滚及部分成功重试TTL反例。真实源/账户/跨端、PAIA、物理设备与真人验收条件保持，完整Free未完成。

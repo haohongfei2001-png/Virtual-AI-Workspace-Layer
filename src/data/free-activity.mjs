@@ -75,8 +75,16 @@ export function aggregateFreeActivity(snapshot) {
   const byId=new Map(refs.map(r=>[r.id,r]));
   // ISO validation/parsing is O(rows), not O(sort comparisons). This cache lives
   // for exactly one projection, so expiry, scope and evidence changes cannot reuse it.
-  const sortKeys=new Map();
-  const rememberKey=row=>{const d=row.activityDecision;sortKeys.set(row,[Number(d.candidateDay===null),instant(d.candidateTime)??0]);};
+  const sortKeys=new Map(),timeCache=new Map();
+  // Exact input keys preserve strict instant validation. Stop adding at the cap
+  // so unique timestamps cannot cause eviction churn or unbounded memory use.
+  const cachedInstant=value=>{
+    if(typeof value!=='string')return instant(value);
+    if(timeCache.has(value))return timeCache.get(value);
+    const parsed=instant(value);if(timeCache.size<256)timeCache.set(value,parsed);
+    return parsed;
+  };
+  const rememberKey=row=>{const d=row.activityDecision;sortKeys.set(row,[Number(d.candidateDay===null),cachedInstant(d.candidateTime)??0]);};
   for(const row of refs)rememberKey(row);
   // Returning zero preserves the native input order for equal or undated activity.
   const order=(a,b)=>{const x=sortKeys.get(a),y=sortKeys.get(b);return x[0]-y[0]||y[1]-x[1];};
