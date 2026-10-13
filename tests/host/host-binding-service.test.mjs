@@ -63,3 +63,23 @@ test('MOCK HOST_REFRESH rejects interleaved A/B/A actual-frame snapshot before p
  assert.equal(result.ok,false,JSON.stringify(result));assert.equal(f.providerReads,before,'mismatched intermediate document must never reach provider');
  const resolution=f.service.authority.peek({tabId:1,frameId:0,documentId:B.documentId,parentDocumentId:null,actualURL:B.url,documentLifecycle:'active',incognito:false});assert.notEqual(resolution.state,'verified');
 });
+const flushTasks=async()=>{for(let i=0;i<60;i++)await Promise.resolve();};
+async function refreshDeadlineFixture(t){
+ let elapsed=0,id=0,reads=0,providerReads=0,holdAt=0,release=null;const timers=new Map();
+ const actual={documentId:'deadline_doc',url,documentLifecycle:'active',parentFrameId:-1},sender={id:'ext',tab:{id:1,incognito:false},frameId:0,documentId:actual.documentId,documentLifecycle:'active',url};
+ const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'refresh-deadline'});t.after(()=>base.close());
+ const service=createHostBindingService({extensionId:'ext',repository:base,allowedURL:u=>u===url,getFrame:async()=>{reads++;if(reads===holdAt)return new Promise(r=>release=r);return {...actual};},provider:{read:async()=>{providerReads++;return {principalId:'deadline-principal',expiresAt:new Date(100000).toISOString(),contexts:[{id:'personal',kind:'personal'}],providerProfile:'deadline-test',transport:'worker-fixed-fetch'};}},profile:{id:'deadline-test',singlePersonalDefault:true},now:()=>1000,elapsedNow:()=>elapsed,makeId:()=> 'deadline_'+(++id),schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:elapsed+ms});return key;},cancel:key=>timers.delete(key)});
+ const hello=await service.handle({v:1,type:'HOST_HELLO',clientId:'client',seq:1},sender);assert.equal(hello.ok,true);reads=0;const {documentToken,producerToken,routeEpoch}=hello.binding;
+ const frame={tabId:1,frameId:0,documentId:actual.documentId,parentDocumentId:null,actualURL:url,documentLifecycle:'active',incognito:false};
+ return {service,frame,get reads(){return reads;},get providerReads(){return providerReads;},hold:n=>{holdAt=n;},release:()=>release?.({...actual}),request:seq=>service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq,documentToken,producerToken,routeEpoch},sender),async advance(ms){elapsed+=ms;for(const [key,timer]of [...timers])if(timer.at<=elapsed&&timers.has(key)){timers.delete(key);timer.fn();}await flushTasks();}};
+}
+test('MOCK whole HOST_REFRESH deadline includes hanging first frame verification and prevents late provider call',async t=>{
+ const f=await refreshDeadlineFixture(t);f.hold(1);const pending=f.request(2);let settled=false;pending.then(()=>settled=true);await flushTasks();assert.equal(f.reads,1);await f.advance(6000);assert.equal(settled,true,'entire RPC must settle despite a hung getFrame');const result=await pending;assert.equal(result.ok,false);assert.equal(f.providerReads,0);f.release();await flushTasks();assert.equal(f.providerReads,0);assert.notEqual(f.service.authority.peek(f.frame).state,'verified');
+});
+test('MOCK whole HOST_REFRESH deadline revokes its unpublished grant when final frame verification hangs',async t=>{
+ const f=await refreshDeadlineFixture(t);f.hold(4);const pending=f.request(2);let settled=false;pending.then(()=>settled=true);await flushTasks();assert.equal(f.reads,4);assert.equal(f.providerReads,1);assert.equal(f.service.authority.peek(f.frame).state,'verified');await f.advance(6000);assert.equal(settled,true);assert.equal((await pending).ok,false);assert.notEqual(f.service.authority.peek(f.frame).state,'verified');f.release();await flushTasks();assert.notEqual(f.service.authority.peek(f.frame).state,'verified');assert.equal(f.providerReads,1);
+});
+test('MOCK timed-out old refresh cannot revoke replacement grant or revive itself on late frame reply',async t=>{
+ const f=await refreshDeadlineFixture(t);f.hold(4);const old=f.request(2);await flushTasks();assert.equal(f.reads,4);const previous=f.service.authority.peek(f.frame).grant;
+ f.service.authority.invalidate(f.frame.documentId);const next=await f.request(3);assert.equal(next.state,'verified',JSON.stringify(next));const replacement=f.service.authority.peek(f.frame).grant;assert.notEqual(replacement.id,previous.id);await f.advance(6000);assert.equal((await old).ok,false);assert.equal(f.service.authority.peek(f.frame).grant.id,replacement.id);f.release();await flushTasks();assert.equal(f.service.authority.peek(f.frame).grant.id,replacement.id);assert.equal(f.providerReads,2);
+});

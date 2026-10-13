@@ -1,3 +1,4 @@
+import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {createFreeReadService} from './free-read-service.mjs';
 import {createHostViewService} from './host-view-service.mjs';
 import {createHostUiOwner} from './host-ui-owner.mjs';
@@ -34,19 +35,24 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   }
   if(message?.type!=='HOST_REFRESH')return broker.handle(message,sender);
   if(!exactHostRecord(message,['v','type','clientId','seq','documentToken','producerToken','routeEpoch'])||message.v!==1||!tokenOK(message.clientId)||!Number.isSafeInteger(message.seq)||message.seq<1||!tokenOK(message.documentToken)||!tokenOK(message.producerToken)||!Number.isSafeInteger(message.routeEpoch)||message.routeEpoch<1)return {ok:false,reason:'invalid-host-refresh'};
-  try{
-  if(!await handshake.verify(message,sender))return {ok:false,reason:'invalid-host-document'};
+  const attempt={active:true,started:elapsedNow(),abort:new AbortController(),frame:null,resolution:null,completed:false};
+  const check=()=>{if(!attempt.active||elapsedNow()-attempt.started>=6000)throw Error('host-refresh-expired');};
+  try{const result=await withRequestDeadline(async()=>{
+  if(!await handshake.verify(message,sender))return {ok:false,reason:'invalid-host-document'};check();
   const prior=sequences.get(message.producerToken);if(prior&&message.seq<=prior.seq)return {ok:false,reason:'replayed-sequence'};
   const time=now();for(const [key,value]of sequences)if(value.until<=time)sequences.delete(key);
   if(!sequences.has(message.producerToken)&&sequences.size>=128)return {ok:false,reason:'capacity'};
   sequences.set(message.producerToken,{seq:message.seq,until:time+20000});
-  const actual=await getFrame({tabId:sender.tab.id,frameId:0});
-  if(!handshake.matchesFrame(message,sender,actual)||!await handshake.verify(message,sender))return {ok:false,reason:'stale-host-document'};
+  const actual=await getFrame({tabId:sender.tab.id,frameId:0});check();
+  if(!handshake.matchesFrame(message,sender,actual)||!await handshake.verify(message,sender))return {ok:false,reason:'stale-host-document'};check();
   const frame=asFrame({tabId:sender.tab.id,documentId:actual.documentId,url:actual.url},sender);
-  const resolution=await (authority.peek(frame).state==='verified'?authority.revalidate(frame):authority.refresh(frame,'bind'));
-  if(!await handshake.verify(message,sender)){authority.invalidate(frame.documentId);return {ok:false,reason:'stale-host-document'};}
+  attempt.frame=frame;
+  const resolution=await (authority.peek(frame).state==='verified'?authority.revalidate(frame,attempt.abort.signal):authority.refresh(frame,'bind',attempt.abort.signal));attempt.resolution=resolution;check();
+  const verified=await handshake.verify(message,sender);check();
+  if(!verified){if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant)authority.invalidate(frame.documentId);return {ok:false,reason:'stale-host-document'};}
   return {ok:true,v:1,type:'HOST_SCOPE_STATUS',state:resolution.state,...(resolution.reason?{reason:resolution.reason}:{})};
-  }catch{return {ok:false,reason:'host-refresh-unavailable'};}
+  },{timeoutMs:6000,now:elapsedNow,schedule,cancel});attempt.completed=true;return result;}catch{return {ok:false,reason:'host-refresh-unavailable'};}
+  finally{attempt.active=false;attempt.abort.abort();if(!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);}
  }
  function invalidate({tabId,frameId=0,documentId}={}){broker.invalidate({tabId,frameId});if(documentId){authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}}
  function tabClosed(tabId){broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}

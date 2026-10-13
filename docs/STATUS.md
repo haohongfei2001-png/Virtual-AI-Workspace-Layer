@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第八十七轮：同身份持续核验保留既有界面与历史会话，短授权续租竞态已修复。完整1812/1812 Node、真实66秒隔离MV3续租与既有八旅程通过；发送关联目前仅候选，不签发可信发送。Free与真实G/U未完成。
+当前已推进至第八十八轮：worker认证全链6秒期限及迟到清理栅栏补齐，91项授权集成回归通过。上一完整1812项与66秒/八旅程报告保持各自源码来源；新发送锚与两仓库continuation继续实施，Free与真实G/U未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 

@@ -891,3 +891,10 @@ context C1/C2/持续认证、可信发送/observed anchor/continuation、恢复�
 最终Node1812/1812、0失败/跳过；真实headless打包66秒续租两项PASS、既有LEGACY八旅程PASS，各报告sourceChangedDuringRun=false。无真实ChatGPT/PAIA访问、付费服务、部署或原生写入。Pro正式文档72ca068此前已非强制整合，四份正式附件保持原blob。
 
 下一执行项仍为原计划：当前对象/作者/ACK证据、observed-self-send codec与现有Native/Evidence两仓库有界continuation、恢复界面，以及context C1/C2、完整J1–J4/真实G/U。旧4x100k失败保留。Free未完成、NOT_RELEASE_READY。
+
+
+## Round88：worker认证全链期限
+
+d5f42ff保存Round87成果后正常push再次遇GitHub 30秒low-speed超时；本地完整保留，未强推，不把未确认push称远端完成。继续HOST_REFRESH全链6秒期限：同一AbortController覆盖provider，前/后getFrame和handshake每次await后检查；超时前已形成但未完成响应的原grant撤销，使用冻结grant对象identity避免撤掉后来的授权，旧迟到verify先检查期限不再执行撤销。初始getFrame永久挂起、末次getFrame挂起及替代grant反例均通过。
+
+独立授权集成回归91/91，0失败/跳过，free-round88-auth-node.log。本轮未重跑浏览器；Round87真实66秒和八旅程证据仅对应其当时源码，不冒称本轮总deadline变更已浏览器复核。继续已批准B2/F活动锚与Native/Evidence原子continuation。Free未完成、NOT_RELEASE_READY。
