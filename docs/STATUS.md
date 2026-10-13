@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第七十轮：前置本地1946891，上次push低速超时，最后确认远端b46ef83。冷启动分阶段剖析与证据目录重复校验优化已完成；最终完整1173/1173、真实IDB6/6、MV3生命周期9/9。4x100k冷启动及真实Free验收仍未完成，详细来源见文末。
+当前已推进至第七十一轮：前置405d725，最后确认远端b46ef83。现有v3数据库新增只读结构校验及迟到连接关闭保护；完整1210/1210、真实IDB13/13、实际MV3 schema升级4/4及生命周期9/9通过。最新合成包及独立证据见文末；慢速100k及真实Free验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -791,3 +791,12 @@ evidence directory首次回调前原来连续校验同一record两次，改为�
 
 
 Round70同步/诊断补充：本地代码head c119f31，工作区测试完毕；此次正常push在75秒后连接GitHub443失败，最后确认远端仍b46ef83。不连续重试、不改变remote。独立SHA工作区复用/去DataView候选经225个字符串及递归coercion oracle通过，但512–8192字符微基准收益仅0–3%或负，未采纳、未额外跑browser；候选源码与结果见free-round70-sha-diagnostic.json。该诊断不是产品性能证据，生产仍保持全部逐piece checksum。
+
+
+## Round71：现有v3数据库只读结构校验
+
+前置405d725，最后确认远端仍b46ef83。Round69只检查迁移；本轮真实Chrome证明已处于v3的12种畸形结构仍被直接接受（合法对照1PASS、坏库12FAIL）。现在ScopeRepository.open成功后先用readonly事务验证8个必需store的keyPath/noautoIncrement及两scope索引精确配置，等事务complete才缓存连接；保留额外store/index、不读改用户row、不自动修库。失败关闭句柄并返回invalid-schema。versionchange及显式close的epoch均能阻止迟到连接重新发布。
+
+最终完整Node1210/1210、0失败/跳过；current-schema37合同含每store缺失/错key/auto、索引五错、合法额外表与并行open、close/versionchange中断。真实Chrome相同harness修后13/13：12坏库保持v3及全部既有row，拒绝后不调用base.close就deleteDatabase均无blocked，证明拒绝路径自身关闭连接。最终实际MV3合法schema升级4/4及生命周期9/9通过，无pageErrors、源码冻结。修前失败独立保存。
+
+最新合成包62文件/52worker模块，路径见free-round71-schema-mv3.json；ZIP SHA256 11acd8e773250ee306255d6d46e5a0f4d27662d287f38f24545be99cbe83107f，source manifest ff670a41b6650d24274998743fc7653c1f10d16a3e6fb68bc96d9b3a6726a1ba。SYNTHETIC_ONLY/NOT_RELEASE_READY；未重跑规模性能，仍不能把4x100k失败或真实账户/来源/跨端/PAIA/物理IME/真人条件标通过。Free未完整交付。

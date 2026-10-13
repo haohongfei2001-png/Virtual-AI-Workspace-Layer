@@ -7,6 +7,21 @@ function scopeIndexMatches(store,keyPath){
   const index=store.index('scopeKey');
   return index.keyPath===keyPath&&index.unique===false&&index.multiEntry===false;
 }
+/** Check an existing schema without reading, rewriting, or repairing user rows. */
+export function validateDatabase(db){
+  return new Promise((resolve,reject)=>{
+    let tx;
+    const invalid=()=>reject(Error('invalid-schema'));
+    try{
+      const names=['refs','operations',...B23_STORES,...NATIVE_STORES];
+      if(db.version!==DATABASE_VERSION||names.some(name=>!db.objectStoreNames.contains(name)))throw Error('invalid-schema');
+      tx=db.transaction(names,'readonly');
+      tx.onabort=invalid;tx.onerror=()=>{};tx.oncomplete=resolve;
+      for(const name of names){const store=tx.objectStore(name);if(store.keyPath!=='key'||store.autoIncrement!==false)throw Error('invalid-schema');}
+      if(!scopeIndexMatches(tx.objectStore('refs'),'scopeKey')||!scopeIndexMatches(tx.objectStore('b23_operations'),'payload.scopeKey'))throw Error('invalid-schema');
+    }catch{if(tx){try{tx.abort();}catch{}}invalid();}
+  });
+}
 export function upgradeDatabase(db, transaction, oldVersion) {
   if (oldVersion < 1) {
     const refs=db.createObjectStore('refs',{keyPath:'key'});refs.createIndex('scopeKey','scopeKey',{unique:false});

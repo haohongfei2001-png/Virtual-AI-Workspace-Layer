@@ -1,4 +1,4 @@
-import { DATABASE_VERSION, upgradeDatabase } from '../data/schema.mjs';
+import { DATABASE_VERSION, upgradeDatabase, validateDatabase } from '../data/schema.mjs';
 import { canonicalRef, normalizedScope, tokenOK } from './identity.mjs';
 import {knownAnchorCursorKey} from '../data/known-anchor-key.mjs';
 
@@ -9,11 +9,12 @@ export class ScopeRepository {
   constructor({indexedDB, databaseName='vaiwl-b1-v1'}={}) {
     if (!indexedDB?.open || !tokenOK(databaseName)) throw Error('indexeddb-unavailable');
     this.idb=indexedDB;this.name=databaseName;
-    this.connection=null;
+    this.connection=null;this.connectionEpoch=0;
   }
   async open() {
     if(this.connection)return this.connection;
     if(this.opening)return this.opening;
+    const epoch=this.connectionEpoch;
     this.opening=new Promise((resolve,reject)=>{
       const req=this.idb.open(this.name,DATABASE_VERSION);
       let cancelled=false;
@@ -26,13 +27,18 @@ export class ScopeRepository {
       req.onsuccess=()=>{
         const db=req.result;
         if(cancelled){db.close();return;}
-        db.onversionchange=()=>{db.close();if(this.connection===db)this.connection=null;};
-        this.connection=db;resolve(db);
+        if(epoch!==this.connectionEpoch){db.close();reject(Error('idb-open-cancelled'));return;}
+        let invalidated=false;
+        db.onversionchange=()=>{invalidated=true;db.close();if(this.connection===db)this.connection=null;};
+        validateDatabase(db).then(()=>{
+          if(invalidated||epoch!==this.connectionEpoch){db.close();reject(Error(invalidated?'invalid-schema':'idb-open-cancelled'));return;}
+          this.connection=db;resolve(db);
+        },error=>{db.close();reject(error);});
       };
     }).finally(()=>{this.opening=null});
     return this.opening;
   }
-  close(){this.connection?.close();this.connection=null;}
+  close(){this.connectionEpoch++;this.connection?.close();this.connection=null;}
   scopeOrThrow(scope){
     const n=normalizedScope(scope);
     if(!n)throw Error('unverified-scope');

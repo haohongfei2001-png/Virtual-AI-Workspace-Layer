@@ -27,7 +27,7 @@ class Transaction {
 class Store {
   constructor(tx,name){this.tx=tx;this.name=name;}
   get data(){const d=(this.tx.local??this.tx.db.meta.stores).get(this.name);if(!d)throw error('NotFoundError');return d;}
-  get keyPath(){return this.data.keyPath;}get indexNames(){return names(this.data.indexes);}
+  get keyPath(){return this.data.keyPath;}get autoIncrement(){return this.data.autoIncrement;}get indexNames(){return names(this.data.indexes);}
   // Metadata is modeled for upgrade validation; unique/multiEntry query/write
   // semantics still require real IndexedDB coverage.
   createIndex(name,keyPath,{unique=false,multiEntry=false}={}){this.data.indexes.set(name,{keyPath:copy(keyPath),unique:!!unique,multiEntry:!!multiEntry});}
@@ -53,13 +53,13 @@ class Store {
 class Database {
   constructor(factory,meta){this.factory=factory;this.meta=meta;this.closed=false;meta.handles.add(this);}
   get objectStoreNames(){return names(this.meta.stores);}get version(){return this.meta.version;}get name(){return this.meta.name;}
-  createObjectStore(name,{keyPath}={}){if(this.meta.stores.has(name))throw error('ConstraintError');this.meta.stores.set(name,{keyPath,indexes:new Map(),rows:new Map()});return new Store(this.upgradeTx,name);}
+  createObjectStore(name,{keyPath,autoIncrement=false}={}){if(this.meta.stores.has(name))throw error('ConstraintError');this.meta.stores.set(name,{keyPath,autoIncrement:!!autoIncrement,indexes:new Map(),rows:new Map()});return new Store(this.upgradeTx,name);}
   transaction(stores,mode='readonly'){if(this.closed)throw error('InvalidStateError');for(const n of typeof stores==='string'?[stores]:stores)if(!this.meta.stores.has(n))throw error('NotFoundError');return new Transaction(this,stores,mode);}
   close(){this.closed=true;this.meta.handles.delete(this);for(const retry of this.meta.waiting.splice(0))queueMicrotask(retry);}
 }
 export class MockIDBFactory {
   constructor(){this.databasesMap=new Map();this.failNextPut=false;}
-  start(meta){const tx=meta.queue[0];if(!tx||tx.started)return;tx.started=true;tx.local=new Map([...meta.stores].map(([n,d])=>[n,{keyPath:d.keyPath,indexes:new Map(d.indexes),rows:new Map([...d.rows].map(([k,v])=>[k,copy(v)]))}]));queueMicrotask(()=>tx.pump());}
+  start(meta){const tx=meta.queue[0];if(!tx||tx.started)return;tx.started=true;tx.local=new Map([...meta.stores].map(([n,d])=>[n,{keyPath:d.keyPath,autoIncrement:d.autoIncrement,indexes:new Map(d.indexes),rows:new Map([...d.rows].map(([k,v])=>[k,copy(v)]))}]));queueMicrotask(()=>tx.pump());}
   open(name,version){const req={result:null,error:null,transaction:null};let notified=false;
     const attempt=()=>{
       let meta=this.databasesMap.get(name);if(!meta){meta={name,version:0,stores:new Map(),handles:new Set(),queue:[],waiting:[]};this.databasesMap.set(name,meta);}const target=version??(meta.version||1);
