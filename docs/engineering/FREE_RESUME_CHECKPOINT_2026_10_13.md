@@ -241,3 +241,14 @@ pendingSynthetic已绑定捕获时验证过的scope/document/route/有效期；B
 接续位置：100k单次新聊天写链与HEADER/PAGE/CHECK仍超1秒；可进一步核对freePage已有native页之后两个独立只读、version独立只读的等待成本，必须以故障/settle/发布反例和新测量决定，不减少权限/完整性校验。不要重做已完成模块或更改原计划/目录。真实账户/库存/本人活动/跨端、PAIA、物理IME/弱设备及真人验收仍缺对应条件，完整Free未完成。
 
 第三十三轮同步完成：正常快进push从3e88682到c8ee632成功，API确认PR16仍Draft、head=c8ee632b7b782bc2067c8c8930c81e21b5bc02f1，正文已更新实际测试与性能FAIL。此前未同步说明保留为历史，当前远端以本条和Git为准；未force/merge/deploy。
+
+
+## 第三十四轮：PAGE与CHECK独立读取并行
+
+从fe07e50继续。PAGE保留native.page先完成，再以同一selectedRefs或显式ids并行workspaceContext/evidence.page；CHECK并行native.version/evidence.header/partitionHeader，legacy fallback只在全部成功后读取。allSettled等待所有分支，按原调用顺序抛首个错误；每仓库权限、字节验证及最终发布屏障均保留，不声称跨仓库原子快照。
+
+新增6项PAGE、9项version合同，涵盖依赖顺序、显式ids、失败等待/错误顺序、scope切换、legacy fallback及分片无fullread。针对性49/49、完整Node774/774（0失败/跳过）；真实headless发布屏障10/10与MV3 9/9。发布报告现在记录六个关键模块运行前哈希并在运行后验证一致。
+
+正常无采样100k三发送功能3/3，1624.1/1662.5/1662.9ms均1秒FAIL；每条只有1个事件/hint/原生用户消息，fullread0，草稿/阅读保持，源码hash稳定。新报告free-round34-*独立保存，不与旧计数相加。包/private/tmp/vaiwl-free-delivery-round34-20261013/vaiwl-free-synthetic-only.zip，SHA256 `96e1da34fea3d10e932c431ebf06c0213cdd21a6e5cdb201b72de1d87de53822`，仍SYNTHETIC_ONLY/NOT_RELEASE_READY。
+
+接续：候选热点为聚合排序的重复时间解析，先比较高重复/部分重复/全唯一分布且严格输出等价；尚未修改生产实现。真实账户/来源/跨端、PAIA、物理IME/弱设备及真人验收条件仍缺，完整Free未完成。

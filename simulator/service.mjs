@@ -92,7 +92,10 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
           preferences:state.preferences,view:view?.value??null,viewRevision:view?.revision??0,workspaceRevision:state.revision,diagnostics,viewSession:session,evidenceRevision:`${state.revision}:${stored.revision}`};
       },
       freePage:async(scope,query,options)=>{
-        const page=await native.page(scope,query,options),context=await workspaceContext(scope,options,query.ids?.refs??page.selectedRefs),stored=(await evidence.page(scope,{ids:query.ids?.refs??page.selectedRefs},options)).evidence;
+        const page=await native.page(scope,query,options),ids=query.ids?.refs??page.selectedRefs;
+        const reads=await Promise.allSettled([workspaceContext(scope,options,ids),evidence.page(scope,{ids},options)]);
+        for(const result of reads)if(result.status==='rejected')throw result.reason;
+        const context=reads[0].value,stored=reads[1].value.evidence;
         const {state}=context,knownState={scopeKey:state.scopeKey,refs:Object.fromEntries((query.ids?.refs??page.selectedRefs).filter(key=>state.refs[key]).map(key=>[key,state.refs[key]]))};
         const snapshot=freeProjection(page.facts,{scope,now:FIXTURE_NOW,knownState});
         const projected=projectFreeActivity(snapshot,activityEvidence(scope,state,stored),query.viewSession,query.now);
@@ -148,7 +151,11 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
         return {...projectFreeActivity(snapshot,activityEvidence(scope,state,stored),session,now),
           preferences:state.preferences,view:view?.value??null,viewRevision:view?.revision??0,workspaceRevision:state.revision,diagnostics};
       },
-      version:async(scope,options)=>{const nativeRevision=await native.version(scope,options),stored=await evidence.header(scope,options);const large=await workspaces.partitionHeader(scope,options);if(large)return {nativeRevision,evidenceRevision:`${large.manifest.revision}:${stored.revision}`,revision:large.manifest.revision,viewRevision:large.view?.revision??0,viewDiagnostic:large.diagnostics.view};const {state,view,diagnostics}=await workspaces.read(scope,options);return {nativeRevision,evidenceRevision:`${state.revision}:${stored.revision}`,revision:state.revision,viewRevision:view?.revision??0,viewDiagnostic:diagnostics.view};},
+      version:async(scope,options)=>{
+        const reads=await Promise.allSettled([native.version(scope,options),evidence.header(scope,options),workspaces.partitionHeader(scope,options)]);
+        for(const result of reads)if(result.status==='rejected')throw result.reason;
+        const nativeRevision=reads[0].value,stored=reads[1].value,large=reads[2].value;
+        if(large)return {nativeRevision,evidenceRevision:`${large.manifest.revision}:${stored.revision}`,revision:large.manifest.revision,viewRevision:large.view?.revision??0,viewDiagnostic:large.diagnostics.view};const {state,view,diagnostics}=await workspaces.read(scope,options);return {nativeRevision,evidenceRevision:`${state.revision}:${stored.revision}`,revision:state.revision,viewRevision:view?.revision??0,viewDiagnostic:diagnostics.view};},
       partitionHeader:(...args)=>workspaces.partitionHeader(...args),partitionPage:(...args)=>workspaces.partitionPage(...args),
       snapshot:async(scope,now,timeZone,options,size=8)=>{await wait();const value=await workspaces.snapshot(scope,now,timeZone,options);
         // Visibility scale is a fixture control, never a deletion or truncated DB write.

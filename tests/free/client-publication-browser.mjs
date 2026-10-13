@@ -3,6 +3,8 @@ import {writeFile,readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {createServer} from '../../simulator/server.mjs';
+const files=['simulator/client.mjs','simulator/service.mjs','src/navigation/free-view.mjs','src/data/free-replica.mjs','src/b1/document-binding-broker.mjs','src/data/free-runtime-service.mjs'];
+const sourceHashes=Object.fromEntries(await Promise.all(files.map(async p=>[p,createHash('sha256').update(await readFile(p)).digest('hex')])));
 const server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;const results=[];
 try{
  browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
@@ -41,6 +43,6 @@ try{
   else {assert.equal(result.status.state,'ACTIVE');assert.equal(checks,1);if(['reuse','metadata'].includes(mode)){assert.equal(result.hooked,false);assert(!result.timeline.includes('B23_FREE_PAGE'));assert(!result.timeline.includes('ADAPT'),'zero-difference header must reuse prepared rows');if(mode==='metadata')assert.equal(result.sidebarHidden,true,'fresh preferences remain effective');}if(mode==='document-reuse'){assert.equal(result.timeline.filter(x=>x==='ADAPT').length,1);assert(!result.secondTimeline.includes('ADAPT'));assert(!result.secondTimeline.includes('B23_FREE_PAGE'));assert.equal(result.secondTimeline.filter(x=>x==='CHECK').length,1);}if(mode==='empty'){assert(!result.timeline.includes('B23_FREE_PAGE'));assert(result.timeline.includes('ASSEMBLY_START'),'empty full inventory must assemble before its single fence');}if(mode==='renew'){assert(result.hooked);assert(result.timeline.indexOf('BIND',result.timeline.indexOf('B23_FREE_PAGE'))<result.timeline.indexOf('ASSEMBLY_START'));}}
   results.push(result);console.log(JSON.stringify(result));await context.close();
  }
- const sourceHashes=Object.fromEntries(await Promise.all(['simulator/client.mjs','src/navigation/free-view.mjs','src/data/free-replica.mjs'].map(async p=>[p,createHash('sha256').update(await readFile(p)).digest('hex')])));
+ for(const file of files)assert.equal(createHash('sha256').update(await readFile(file)).digest('hex'),sourceHashes[file],'source changed during publication tests: '+file);
  await writeFile(process.argv[2]??'/private/tmp/free-round19-publication.json',JSON.stringify({sourceHashes,evidence:'HEADLESS_SYNTHETIC_REAL_IDB_TEST_SCHEDULING_SEAM',results,fail:0},null,2));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

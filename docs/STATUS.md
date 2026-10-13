@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第三十三轮：HEADER在原生bootstrap之后并行两个独立只读操作，全部settled后才发布/报错。20项针对性Node、10项发布屏障和9项MV3通过；最近完整回归为第三十二轮753项。正常100k1640.5/1700.3/1613.0ms仍1秒FAIL。网络恢复后已正常快进推送 `c8ee632`，API确认PR16仍Draft且正文已更新。后续HEAD以Git为准；Free及发布验收未完成。
+当前已推进至第三十四轮：PAGE在原生页完成后并行共享上下文/活动证据，CHECK并行三个独立版本读取；全部settled后才发布或报错。针对性Node49/49、完整Node774/774、实际发布屏障10/10、MV3 9/9通过。正常100k1624.1/1662.5/1662.9ms仍1秒FAIL。此前已正常推送fe07e50至PR16；本轮提交和同步以Git为准。Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -413,3 +413,14 @@ CHECK/HEADER/PAGE/SEND/UPSERT优先取消补录的独立子signal，主binding�
 接续位置：100k单次新聊天写链与HEADER/PAGE/CHECK仍超1秒；可进一步核对freePage已有native页之后两个独立只读、version独立只读的等待成本，必须以故障/settle/发布反例和新测量决定，不减少权限/完整性校验。不要重做已完成模块或更改原计划/目录。真实账户/库存/本人活动/跨端、PAIA、物理IME/弱设备及真人验收仍缺对应条件，完整Free未完成。
 
 第三十三轮同步完成：正常快进push从3e88682到c8ee632成功，API确认PR16仍Draft、head=c8ee632b7b782bc2067c8c8930c81e21b5bc02f1，正文已更新实际测试与性能FAIL。此前未同步说明保留为历史，当前远端以本条和Git为准；未force/merge/deploy。
+
+
+## 第三十四轮：PAGE与CHECK独立读取并行
+
+从fe07e50继续。PAGE保留native.page先完成，再以同一selectedRefs或显式ids并行workspaceContext/evidence.page；CHECK并行native.version/evidence.header/partitionHeader，legacy fallback只在全部成功后读取。allSettled等待所有分支，按原调用顺序抛首个错误；每仓库权限、字节验证及最终发布屏障均保留，不声称跨仓库原子快照。
+
+新增6项PAGE、9项version合同，涵盖依赖顺序、显式ids、失败等待/错误顺序、scope切换、legacy fallback及分片无fullread。针对性49/49、完整Node774/774（0失败/跳过）；真实headless发布屏障10/10与MV3 9/9。发布报告现在记录六个关键模块运行前哈希并在运行后验证一致。
+
+正常无采样100k三发送功能3/3，1624.1/1662.5/1662.9ms均1秒FAIL；每条只有1个事件/hint/原生用户消息，fullread0，草稿/阅读保持，源码hash稳定。新报告free-round34-*独立保存，不与旧计数相加。包/private/tmp/vaiwl-free-delivery-round34-20261013/vaiwl-free-synthetic-only.zip，SHA256 `96e1da34fea3d10e932c431ebf06c0213cdd21a6e5cdb201b72de1d87de53822`，仍SYNTHETIC_ONLY/NOT_RELEASE_READY。
+
+接续：候选热点为聚合排序的重复时间解析，先比较高重复/部分重复/全唯一分布且严格输出等价；尚未修改生产实现。真实账户/来源/跨端、PAIA、物理IME/弱设备及真人验收条件仍缺，完整Free未完成。
