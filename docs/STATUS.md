@@ -1140,3 +1140,12 @@ frame显式导出后需点击下载；选择JSON后上传并展示新增/更新/
 45项native-actions定向、全部975项host合同及实际原构建包headless10项均PASS，运行源码稳定。验证unknown/unsaved各风险flag、真实URL/live handle、IDless控件、同目标body与beforeDispatch风险变化。完整Node回归本轮NOT_RUN，上一2244只对应Round103，不相加。生产直接native-control权限仍默认拒绝，不能以href回归称已启用。
 
 下一步继续原4x100k冷迁移HEADER阻塞，保留原子迁移/CAS和预算；其他真实context/ACK、新聊首发、自适应与G/U条件保持。Free未完成、NOT_RELEASE_READY。
+
+
+## Round105：SHA状态与常量保持32位整数表示
+
+在已正常push、PR16 API确认的aa9a929继续。只将原SHA-256的K和H存储改为Int32Array；原轮函数、UTF8、padding、stable和checksum字节不变，无新hash算法/格式/缓存/弱校验。临时Node诊断四组合163个独立crypto oracle一致，交替六轮1万次样本，both在500/1000/1500B中位改善13–16%，1MiB三次改善约17%；这是Node局部测量，不是Chrome总体性能认证。
+
+最终完整Node2269/2269（包含原SHA兼容、Unicode、padding与多MiB独立crypto用例），原构建包headless10/10 PASS，运行源码稳定。未反复重跑100k；Round103的4x冷启动FAIL仍有效，未声称解决。跨事务只检查root的分批审计方案经只读反例检查不能保持fresh-piece保证，未实施；现有原子迁移/6秒/30秒护栏保留。
+
+继续依正式计划推进生产HostAdapter界面/活动策略接线，不让100k合成优化无限前置。真实context/ACK、新聊首发、自动评估/新装默认、G/U及既列性能和间歇问题保持。Free未完成、NOT_RELEASE_READY。
