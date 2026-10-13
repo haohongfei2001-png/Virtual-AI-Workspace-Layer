@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第四十六轮：原生与活动目录均已接服务自动迁移、同CAS写入与完整恢复撤权；完整Node930/930、MV3 9/9，活动跨包升级/旧reader拒绝/恢复4步通过。本次正常100k三发送764.8/846.2/813.4ms均低于1秒，仍仅隔离合成环境样本，不代替完整F1与真实验收。最新本地提交以Git为准；最近远端核验PR16仍Draft的88ff239，后续本地检查点等待正常同步。Free及发布验收未完成。
+当前已推进至第四十七轮：最新runtime为已同步Draft PR16的74c7209，双目录自动迁移/写入/恢复已接线，Node930/MV39。新补测10k mixed长中文4x通过，但100k mixed长中文正常三发送1164.3/1098.2/1263.9ms均1秒FAIL；Round46 none-heavy通过不覆盖该分布。单次采样定位共享版本清单/检查点开销，继续F1/B5；完整Free和真实发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -572,3 +572,14 @@ NativeRepository的read/header/page支持新格式：完整读/header验证所�
 实际同路径Round42旧活动包→Round46目录包→Round42拒绝→Round46恢复四步PASS，独立headless新profile。旧包明确invalid-free-evidence-schema、UI WAITING，native_states/native_operations全摘要不变；新版ACTIVE、未再次迁移、Pro/原生活动事实保持（只migration revision+1），原宿主草稿DOM未刷新。新证据free-round46-evidence-upgrade，旧Round41仅native索引证据保留。
 
 包/private/tmp/vaiwl-free-delivery-round46-20261013/vaiwl-free-synthetic-only.zip，SHA256 `145471c98318d0166e5bf04fcb1a8a9602366031123febaf32b48edf09ab7641`，50文件/43worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。下一可执行F1工作是最新双目录运行时的导航/搜索分布及4x受限CPU、长中文/多tab反例，优先复用现有ui-performance-browser/header-scale/replica测试，不重复已通过的正常发送。真实来源/账户/跨端/PAIA/物理IME/真人条件仍缺，Free未完成。
+
+
+## 第四十七轮：混合项目长中文与受限CPU差额
+
+从已正常push且API确认Draft PR16 head74c7209继续。仅扩展原send-scale-browser夹具，runtime/构建不变；支持project-mixed、长中文库存和1x/4x renderer参数。mixed实际经native.apply写80% PROJECT/20% NONE，每100ref一个Project，最终c1/c5成员与Project数量断言；T0保持NONE，100k种子99998为两个新聊天留容量。CDP4x在seed后、首次client/BIND前启动，覆盖page-transport内service/repository JavaScript，不冒称MV3 worker、磁盘或物理弱设备节流。独立子代理只读审查与F1差额核对完成。
+
+初次长标题repeat6超过既有200字符限制，seed被invalid-native-name拒绝；修正夹具为repeat4，产品校验不变，失败报告保留。冻结源码顺序正常测量：10k mixed长中文4x三发送485.3/408.7/395.3ms，全部功能与1秒目标通过；100k mixed长中文1x 1164.3/1098.2/1263.9ms，功能3/3但一秒目标全部FAIL。两运行均单消息/event/hint、fullread0、草稿/阅读保持、两种目录格式与全部引用数量正确、hash未变。Round46 none-heavy的通过不能覆盖此分布。
+
+对失败场景追加一次定向profile，原始CPU压缩保存。采样self strictJSON188.7ms、sha25666.2、GC49.3、共享saveMutation45.1/manifestSize45.1/repository回调43.3；首个发送shared ingest200.0ms、native.apply172.9ms，evidence.apply仅6.2ms。采样三场景963.7/1116.3/911.7ms有波动，仅诊断，不能拿其中快值替代正常FAIL。下一已有F1/B5切点是共享partitioned refVersions大根/检查点的读校验与重写，需保留humanRefs、Pro身份/placement/工作集、CAS/inverse/备份恢复和旧reader边界；不再重复已无稳定收益的JSON微编码实验。
+
+本轮只变测试夹具，完整Node/MV3/包不重复跑；最新对应runtime仍Round46 Node930、MV39、包SHA145471c98318d0166e5bf04fcb1a8a9602366031123febaf32b48edf09ab7641。未覆盖单Project大量成员、已有聊天原名/成员更新、规模多tab与物理弱设备，后续仍需各自证据；长中文库存发送不是改名测试。真实账户/来源/跨端/PAIA/物理IME/真人条件未变，Free未完成。
