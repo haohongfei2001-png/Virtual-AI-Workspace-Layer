@@ -1,3 +1,5 @@
+import {saveDirectoryEvidence} from './evidence-directory-writer.mjs';
+import {migrateEvidenceDirectory} from './evidence-directory-migration.mjs';
 import {EVIDENCE_DIRECTORY_FORMAT,validateEvidenceDirectoryRoot} from './evidence-ref-directory.mjs';
 import {createEvidenceDirectoryReader} from './evidence-directory-reader.mjs';
 import {VerifiedRecordCache} from './verified-record-cache.mjs';
@@ -25,6 +27,7 @@ export class FreeEvidenceRepository {
   if(!baseRepository?.open||!baseRepository?.scopeOrThrow)throw Error('b1-repository-required');
   this.base=baseRepository;this.observationGate=observationGate;this.clock=clock;
  }
+ async migrateRefDirectory(scope,request,options={}) {return migrateEvidenceDirectory(this,scope,request,options);}
  async read(scope,options={}) { return (await this.query(scope,null,options)).evidence; }
  async header(scope,options={}) { return this.query(scope,{metadataOnly:true},options); }
  async page(scope,{revision=null,offset=0,limit=500,ids=null}={},options={}) {
@@ -76,7 +79,7 @@ export class FreeEvidenceRepository {
     return new Promise(resolve => {
       const tx = db.transaction(['native_states', 'native_operations'], 'readwrite'), store = tx.objectStore('native_states'), ops = tx.objectStore('native_operations');
       let result;
-      const abort = reason => { result = {ok: false, reason}; try { tx.abort(); } catch {} };
+      const abort = reason => { if(result?.ok===false)return;result = {ok: false, reason}; try { tx.abort(); } catch {} };
       const revoked = () => abort('stale-binding');
       options.signal?.addEventListener('abort', revoked, {once: true});
       const root = store.get(freeEvidenceKey(normalized.key)), shadow = store.get(evidenceRecoveryKey(normalized.key)), marker = ops.get(freeEvidenceKey(normalized.key));
@@ -91,20 +94,23 @@ export class FreeEvidenceRepository {
             return;
           }
           if (digest(root.result ?? null) !== damagedHash) throw Error('recovery-conflict');
-          if(root.result?.payload?.format===EVIDENCE_DIRECTORY_FORMAT||shadow.result?.payload?.format===EVIDENCE_DIRECTORY_FORMAT)throw Error('evidence-directory-recovery-not-enabled');
           let intact = false;
-          try { validateEvidenceManifest(unpack(root.result), normalized); intact = true; } catch {}
+          try { const value=this.verifiedRoot(root.result,normalized);intact=isEvidencePartitioned(value)||value.format===EVIDENCE_DIRECTORY_FORMAT; } catch {}
           if (intact) throw Error('intact-state-not-replaced');
-          const manifest = validateEvidenceManifest(unpack(shadow.result), normalized);
+          const manifest = this.verifiedRoot(shadow.result, normalized),indexed=manifest.format===EVIDENCE_DIRECTORY_FORMAT;
+          if(!indexed&&!isEvidencePartitioned(manifest))throw Error('invalid-free-evidence-manifest');
+          // Never use a legacy shadow to roll back a recognizable directory root.
+          if(root.result?.payload?.format===EVIDENCE_DIRECTORY_FORMAT&&!indexed)throw Error('evidence-directory-recovery-format-conflict');
           if (unpack(marker.result).revision !== manifest.revision) throw Error('free-evidence-root-revision-conflict');
           // Verify every referenced piece before publishing a recovered manifest.
-          loadEvidenceIndexes(store,manifest,normalized,Object.keys(manifest.indexVersions),()=>loadEvidencePieces(store, manifest, normalized, Object.keys(manifest.refVersions), () => {
+          const verify=complete=>loadEvidenceIndexes(store,complete,normalized,Object.keys(complete.indexVersions),()=>loadEvidencePieces(store, complete, normalized, Object.keys(complete.refVersions), evidence => {
             try {
               fence(options);
+              for(const table of ['events','hints','coverage'])if(Object.keys(evidence[table]).length!==manifest.counts[table])throw Error('free-evidence-count-mismatch');
               const next = structuredClone(manifest); next.revision++;
               for (const source of Object.values(next.sources)) source.revoked = true;
 
-              validateEvidenceManifest(next, normalized);
+              if(indexed)validateEvidenceDirectoryRoot(next,normalized);else validateEvidenceManifest(next, normalized);
               store.put(evidenceRecord(freeEvidenceKey(normalized.key), next)); store.put(evidenceRecord(evidenceRecoveryKey(normalized.key), next));
               ops.put(record(freeEvidenceKey(normalized.key), {revision: next.revision}));
               ops.put(record(key, {kind: 'RECOVER_FREE_EVIDENCE', fingerprint: damagedHash, revision: next.revision, operationId}));
@@ -112,6 +118,7 @@ export class FreeEvidenceRepository {
               result = {ok: true, revision: next.revision, operationId, evidenceInvalidated: true};
             } catch (failure) { abort(failure.message); }
           }, failure => abort(failure.message)),failure=>abort(failure.message));
+          if(indexed)createEvidenceDirectoryReader(store,manifest,normalized,failure=>abort(failure.message)).all(verify);else verify(manifest);
         } catch (failure) { abort(failure.message); }
       };
       tx.oncomplete = () => { options.signal?.removeEventListener('abort', revoked); try { fence(options); resolve(result); } catch { resolve({ok: false, reason: 'stale-after-commit', committed: true}); } };
@@ -138,13 +145,13 @@ export class FreeEvidenceRepository {
   const fingerprint=digest({command,expectedRevision}),db=await this.base.open(),key=freeEvidenceKey(normalized.key);fence(options);
   return new Promise(resolve=>{
    const tx=db.transaction(['native_states','native_operations'],'readwrite'),states=tx.objectStore('native_states'),operations=tx.objectStore('native_operations');let result;
-   const abort=reason=>{result={ok:false,reason};try{tx.abort();}catch{}};
+   const abort=reason=>{if(result?.ok===false)return;result={ok:false,reason};try{tx.abort();}catch{}};
    const revoked=()=>abort('stale-binding');options.signal?.addEventListener('abort',revoked,{once:true});
    const root=states.get(key);
    root.onsuccess=()=>{try{
     fence(options);const payload=root.result?this.verifiedRoot(root.result,normalized):emptyFreeEvidence(normalized);
-    if(payload?.format===EVIDENCE_DIRECTORY_FORMAT)throw Error('evidence-directory-write-not-enabled');
-    const manifest=isEvidencePartitioned(payload)?payload:null;
+    const indexed=payload?.format===EVIDENCE_DIRECTORY_FORMAT,manifest=indexed||isEvidencePartitioned(payload)?payload:null;
+    const reader=indexed?createEvidenceDirectoryReader(states,payload,normalized,failure=>abort(failure.message)):null;
     const current=manifest?evidenceHeader(manifest,normalized):payload;
     const marker=operations.get(key);marker.onsuccess=()=>{try{
      fence(options);markerCheck(root.result,marker.result,current.revision);
@@ -156,10 +163,10 @@ export class FreeEvidenceRepository {
       let indexes={};
       const save=partial=>{try{
        const next=applyFreeEvidence(partial,command,{scope:normalized,now:this.clock(),channel:'synthetic'});fence(options);
-       saveEvidencePieces(states,normalized,next,manifest,manifest?partial:null,indexes);operations.put(record(key,{revision:next.revision}));operations.put(record(operationKey,{fingerprint,revision:next.revision,operationId}));fence(options);
-       result={ok:true,replayed:false,revision:next.revision,operationId};
+       const finish=()=>{try{fence(options);operations.put(record(key,{revision:next.revision}));operations.put(record(operationKey,{fingerprint,revision:next.revision,operationId}));fence(options);result={ok:true,replayed:false,revision:next.revision,operationId};}catch(failure){abort(failure.message);}};
+       if(reader)saveDirectoryEvidence(states,normalized,next,manifest,partial,indexes,reader,finish,failure=>abort(failure.message));else{saveEvidencePieces(states,normalized,next,manifest,manifest?partial:null,indexes);finish();}
       }catch(failure){abort(failure.message);}};
-      if(manifest)evidenceTouchedRefs(states,manifest,normalized,command,(refs,loaded)=>{indexes=loaded;loadEvidencePieces(states,manifest,normalized,refs,save,failure=>abort(failure.message));},failure=>abort(failure.message));else save(current);
+      if(manifest)evidenceTouchedRefs(states,manifest,normalized,command,(refs,loaded)=>{indexes=loaded;loadEvidencePieces(states,manifest,normalized,refs,save,failure=>abort(failure.message),reader?.lookupMany);},failure=>abort(failure.message),reader?.lookupMany);else save(current);
      }catch(failure){abort(failure.message);}};
     }catch(failure){abort(failure.message);}};
    }catch(failure){abort(failure.message);}};

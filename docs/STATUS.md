@@ -548,3 +548,14 @@ NativeRepository的read/header/page支持新格式：完整读/header验证所�
 包/private/tmp/vaiwl-free-delivery-round44-20261013/vaiwl-free-synthetic-only.zip，SHA256 `202791c2e49a22961934be0546a4e35685598eca813faff1689b346f99c380e2`，48文件/41worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。正常1k/10k/100k本轮NOT_RUN；最近100k仍Round42三发送1441.6/1495.7/1361.2ms、一秒FAIL，不把新读取接线算性能提速。
 
 下一步沿已有B5/F1完成目录writer、显式迁移、GC和恢复，所有片/global index/root+recovery/marker/receipt同CAS，完整恢复核验后撤权；先补quota/撤权/CAS/旧reader/Pro保持，再启用自动迁移。HEADER目前保持完整refVersions接口，后续若需根级version快速路径应单独明确，不静默丢活动版本。真实账号/来源/跨端/PAIA/物理IME/真人条件不变，Free未完成。
+
+
+## 第四十五轮：活动目录写入、显式迁移与恢复
+
+从181d78c继续。新增目录writer复用现有活动piece/global index逻辑，仅给其触及ref的有界manifest，截住中间root/shadow写入；完整目录aggregate校验后发布root/recovery。目录bucket、活动piece及global index旧版本按既有活动策略在同一CAS事务清除，当前root/recovery保持相同，不误套原生prior checkpoint规则。source-only撤权无需全量materialize。
+
+新增owner migrateRefDirectory：先核验所有global index引用及全部活动片/counts，再revision+1原子发布目录片/root/recovery/marker/receipt，CAS、重放、guard/配额回滚保持。显式迁移不变更source授权、不触及Pro或其他scope；尚未接自动迁移。目录恢复全量验证目录顺序/global index/活动片/counts，递增revision并撤销全部来源，拒绝旧legacy shadow降级可识别directory根。恢复诊断同时补齐活动directory及已启用native index格式，完整根但坏piece保持不可替换。
+
+独立子代理写入13合同、恢复诊断9合同通过；最终完整Node915/915、0失败/跳过。实际headless IDB7项覆盖双连接迁移CAS/写CAS、注入quota/撤权全store回滚、version-size配对/旧片GC、恢复撤源、Pro/账号隔离和重开；MV3 9/9通过。报告free-round45-*各自保留hash。旧读取合同现在检查stale revision拒绝与intact根不可恢复，原write-not-enabled门控已由真实写路径替换。
+
+包/private/tmp/vaiwl-free-delivery-round45-20261013/vaiwl-free-synthetic-only.zip，SHA256 `eb29951f232261f2817df68a807ce71d61a0ec4e37315f19802789c98c9a9e7a`，50文件/43worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。正常1k/10k/100k本轮NOT_RUN，不把显式迁移测试当日常服务接线或提速；100k一秒FAIL保持。下一步服务有界自动迁移、version根级元数据查询，再真实MV3/规模回归和跨包旧reader拒绝。真实账户/来源/跨端/PAIA/物理IME/真人条件仍缺，Free未完成。
