@@ -529,3 +529,17 @@ partialContext显式boundedDirectory opt-in仅对目录格式启用，读取目�
 真实隔离headless MV3同路径Round46→Round57→Round46→Round57四步通过：新共享目录迁移仅结构revision+1，原生/活动事实和revision、Pro人工title/workingSet、原草稿DOM保持；旧包明确invalid-schema且六store所有row摘要不变，新包恢复ACTIVE且不重写数据。初始夹具缺syntheticEvidenceGate被正确拒绝，修正夹具后通过；初始日志保留。
 
 最新合成ZIP /private/tmp/vaiwl-free-delivery-round57-20261013/vaiwl-free-synthetic-only.zip，SHA256 90da5229af565a1090cb07e252f71e53687935ac759ba6ba9fc41dc81b3da6ec，58文件/51worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。后续仍沿原F1/FR-14推进首次加载、当前4x/多tab/单Project大成员及增量原名/归属；真实ChatGPT/跨端/PAIA/IME与真人条件仍未具备。Free未完成，不进入Pro、不发布。
+
+
+## Round58：同步哈希兼容优化与首次加载诊断
+
+前一检查点f52fd4905e7a98b02beef451462b0c7a44f7f3b3已正常push，GitHub PR16已核对Draft/open及该head；当前以包含本节的提交为准。
+
+- 保持SHA-256算法、stable序列化和落盘checksum不变，复用只读常量/TextEncoder/rotate及256项hex表；每次可变hash状态仍独立。独立代理新增crypto oracle边界/Unicode/随机/coercion/拒绝兼容测试8/8。
+- 最终生产源码既有完整组合1092/1092、0失败/跳过；独立8项另报，不累加为一次全套结果。真实IDB lifecycle7/batch4/retention10和实际MV3 9/9通过。
+- 冻结源码串行：mixed100k首次23901.5ms，发送659.8/615.3/596.3ms；长中文100k首次26022.6ms，发送609/582.1/583.7ms；mixed10k 4x renderer CPU首次7960.8ms，发送539.5/426.1/412.3ms。全部sourceChangedDuringRun=false；只为独立样本，不是p95/物理弱设备或完整F1。4x不代表MV3 worker降速。
+- 启动profile在修改前记录，SHA计算及hex输出耗时突出；该profile不能当修改后性能。优化后100k第一次HEADER7294ms仍stale-binding，下一次4203ms成功，保留6秒RPC护栏。
+- 下一可执行项：既有HEADER把native/shared/evidence迁移串在一起；探索每次最多一个原子迁移的有界preparing continuation，全部准备完成后才返回完整HEADER，再PAGE及最终CHECK。不能延长RPC、绕权限/校验或将迁移失败当完整数据。单迁移本身>6秒另行处理。known-ref任务在foreground请求期间已暂停，不把主要耗时误归后台争用。
+- 当前包仍以Round57冻结zip为其独立来源；本轮源码变化不冒称旧zip包含本修改。未部署/merge/付费/私人账户/PAIA/原生写入。真实来源/跨端/PAIA/物理IME/真人与剩余F1仍未完成。
+
+证据：free-round58-node.log、oracle.log、idb.json、mv3.json、mixed100k.json、long100k.json、mixed10k-4x.json、startup-profile.json/cpuprofile、source-receipt.json。
