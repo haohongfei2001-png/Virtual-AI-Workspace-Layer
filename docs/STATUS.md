@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第三十八轮：新原生索引同事务读取已接read/header/page，写入/恢复仍明确关闭，未启用迁移。完整Node817项、真实IDB6项读取/拒绝检查与MV3 9项通过。正常100k仍以前次约1.6–1.7秒为证据，1秒目标FAIL。245f92f已正常推送原Draft PR16；后续HEAD和同步以Git为准。Free及发布验收未完成。
+当前已推进至第三十九轮：原生索引写入、显式同库迁移及完整恢复已实现；自动迁移尚未接入。完整Node832项、真实IDB迁移/并发/回滚/恢复6项、读取6项及MV3 9项通过。正常100k仍以前次约1.6–1.7秒为证据，1秒目标FAIL。最后确认远端PR16为245f92f，后续HEAD和同步以Git为准。Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -476,3 +476,14 @@ NativeRepository的read/header/page支持新格式：完整读/header验证所�
 包/private/tmp/vaiwl-free-delivery-round38-20261013/vaiwl-free-synthetic-only.zip，SHA256 `45e67782bd22c3de7e6cd0a5784d476c85f4a28777ab19a17e33b79dd21330ee`；44文件/37worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。正常100k本轮NOT_RUN，原1秒FAIL保持，不把只读接线当性能达标。
 
 接续写入/迁移/恢复时使用本事务reader.records为已加载bucket来源；更新root目录与native pieces/共享锚/receipt/marker须同一CAS事务。Project依赖lookup已就绪，不需为单条更新全量materialize。迁移需完整验证原数据并发布root+所有index片，旧格式及旧source授权不能重放；恢复完整验证目录与native片并撤销来源；GC保留current/prior检查点所需桶和native片，旧checkpoint验证失败不能授权删除。完成这些反例后才能移除新格式write/recovery门控或启用迁移。真实ChatGPT/跨端/PAIA/物理设备/IME/真人条件仍缺，Free未完成。
+
+
+## 第三十九轮：索引写入、显式迁移和完整恢复
+
+从ab688fb继续。indexed写入同CAS事务发布changed native片、版本桶、root/recovery、旧checkpoint、marker/receipt及共享锚；只读触及桶与Project依赖。GC保留当前和上一checkpoint的native片/索引片，清除更早已验证版本；恢复后无changes时完整核对旧checkpoint，损坏旧checkpoint不授权删除。
+
+新增owner显式migrateVersionIndex：先完整验证旧native片，再原子发布全部索引、revision/marker/receipt，保留来源状态与Pro数据；并发只允许一个expectedRevision胜出，重放不重迁移。新格式损坏根恢复先完整核验所有目录桶和native片，递增revision并撤销全部来源，旧source不能复活。自动迁移尚未接服务，原运行种子仍旧格式；不冒称现有库已自动升级。
+
+新增15项合同通过，最后完整Node832/832、0失败/跳过。真实headless IDB6项覆盖实际迁移双连接CAS、indexed写入CAS/GC、quota/撤权原子回滚、全量恢复撤权及Pro/账号隔离；旧读取接线6项和MV3 9项分别通过。新浏览器夹具第一次因未声明synthetic evidenceGate在seed前拒绝，修复明确合成声明后重跑通过，没有放宽运行时门控。报告free-round39-*保留各自源码hash。
+
+包/private/tmp/vaiwl-free-delivery-round39-20261013/vaiwl-free-synthetic-only.zip，SHA256 `601b78455910990c40ac44cd1e38492bf901ae365594d96b5794df4a2f83d35b`，46文件/39worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。正常100k本轮NOT_RUN，Round35的1秒FAIL保持。下一步是有界自动迁移接线与version根级校验，并在实际服务/MV3/100k下验证，不能只以纯索引计算收益认证产品。真实来源/账户/PAIA/跨端/物理设备/真人条件仍缺，完整Free未完成。

@@ -1,3 +1,5 @@
+import {migrateNativeVersionIndex} from './native-index-migration.mjs';
+import {saveIndexedNativePieces} from './native-index-writer.mjs';
 import {NATIVE_INDEX_FORMAT,validateNativeIndexRoot} from './native-version-index.mjs';
 import {createNativeIndexReader} from './native-index-reader.mjs';
 import {VerifiedRecordCache} from './verified-record-cache.mjs';
@@ -199,20 +201,21 @@ export class NativeRepository {
             return;
           }
           if (digest(root.result ?? null) !== damagedHash) throw Error('recovery-conflict');
-          if(root.result?.payload?.format===NATIVE_INDEX_FORMAT||shadow.result?.payload?.format===NATIVE_INDEX_FORMAT)throw Error('native-index-recovery-not-enabled');
           let intact = false;
-          try { validateNativeManifest(unpack(root.result), normalized); intact = true; } catch {}
+          try {const value=unpack(root.result);if(value?.format===NATIVE_INDEX_FORMAT)validateNativeIndexRoot(value,normalized);else validateNativeManifest(value,normalized);intact=true;} catch {}
           if (intact) throw Error('intact-state-not-replaced');
-          const manifest = validateNativeManifest(unpack(shadow.result), normalized);
+          const shadowPayload=unpack(shadow.result),indexed=shadowPayload?.format===NATIVE_INDEX_FORMAT;
+          const recoveryRoot=indexed?validateNativeIndexRoot(shadowPayload,normalized):validateNativeManifest(shadowPayload,normalized);
+          const verifyAndRecover=manifest=>{
           if (unpack(marker.result).revision !== manifest.revision) throw Error('native-root-revision-conflict');
           // Verify every referenced piece before publishing a recovered manifest.
           loadNativePieces(store, manifest, normalized, {projects: Object.keys(manifest.projects), refs: Object.keys(manifest.refs)}, () => {
             try {
               fence(options);
-              const next = structuredClone(manifest); next.revision++;
+              const next = structuredClone(recoveryRoot); next.revision++;
               for (const source of Object.values(next.sources)) source.revoked = true;
               next.changes = [];
-              validateNativeManifest(next, normalized);
+              if(indexed)validateNativeIndexRoot(next,normalized);else validateNativeManifest(next, normalized);
               store.put(nativeRecord(normalized.key, next)); store.put(nativeRecord(nativeRecoveryKey(normalized.key), next));
               ops.put(record(normalized.key, {revision: next.revision}));
               ops.put(record(key, {kind: 'RECOVER_NATIVE', fingerprint: damagedHash, revision: next.revision, operationId}));
@@ -220,12 +223,16 @@ export class NativeRepository {
               result = {ok: true, revision: next.revision, operationId, evidenceInvalidated: true};
             } catch (failure) { abort(failure.message); }
           }, failure => abort(failure.message));
+          };
+          if(indexed)createNativeIndexReader(store,recoveryRoot,normalized,failure=>abort(failure.message)).all(verifyAndRecover);else verifyAndRecover(recoveryRoot);
         } catch (failure) { abort(failure.message); }
       };
       tx.oncomplete = () => { options.signal?.removeEventListener('abort', revoked); try { fence(options); resolve(result); } catch { resolve({ok: false, reason: 'stale-after-commit', committed: true}); } };
       tx.onabort = () => { options.signal?.removeEventListener('abort', revoked); resolve(result ?? {ok: false, reason: tx.error?.name ?? 'native-recovery-aborted'}); };
     });
   }
+
+  async migrateVersionIndex(scope,request,options={}){return migrateNativeVersionIndex(this,scope,request,options);}
 
   async snapshot(scope, options = {}) {
     const facts = await this.read(scope, options);
@@ -279,8 +286,8 @@ export class NativeRepository {
         try {
           check();
           const payload = request.result ? this.verifiedRoot(request.result, normalized) : null;
-          if(payload?.format===NATIVE_INDEX_FORMAT)throw Error('native-index-write-not-enabled');
-          const manifest = isNativePartitioned(payload) ? payload : null;
+          const indexReader=payload?.format===NATIVE_INDEX_FORMAT?createNativeIndexReader(states,payload,normalized,failure=>abort(failure.message)):null;
+          const manifest = indexReader?.manifest ?? (isNativePartitioned(payload) ? payload : null);
           const current = manifest ? nativeHeader(manifest, normalized) : payload ?? emptyNativeFacts(normalized);
           const marker = operations.get(normalized.key);
           marker.onsuccess = () => {
@@ -306,7 +313,8 @@ export class NativeRepository {
                       const next = reduce(partial);
                       check();
                       const publish=()=>{
-                        try {check();saveNativePieces(states, normalized, partial, next, storage, command,row=>this.#verifyCheckpoint(row,normalized));
+                        try {check();if(indexReader)saveIndexedNativePieces(states,normalized,next,storage,command,indexReader,row=>this.#verifyCheckpoint(row,normalized),check,failure=>abort(failure.message));
+                          else saveNativePieces(states, normalized, partial, next, storage, command,row=>this.#verifyCheckpoint(row,normalized));
                           // This exact envelope was verified above in the same CAS transaction.
                           // The reducer clones its input; only rekey the unchanged prior payload.
                           // saveNativePieces queued the older checkpoint GC read before this put.
@@ -326,7 +334,7 @@ export class NativeRepository {
                     const projects = new Set((command.batch?.projects ?? []).map(row => row.id));
                     for (const row of command.batch?.membership ?? []) if (row.state === 'PROJECT') projects.add(row.projectId);
                     const refs = new Set([...(command.batch?.refs ?? []).map(row => row.id), ...(command.batch?.membership ?? []).map(row => row.id)]);
-                    loadNativePieces(states, manifest, normalized, {projects, refs}, save, failure => abort(failure.message));
+                    loadNativePieces(states, manifest, normalized, {projects, refs}, save, failure => abort(failure.message),indexReader?.lookup??null);
                   } else save(current);
                 } catch (failure) { abort(failure.message); }
               };

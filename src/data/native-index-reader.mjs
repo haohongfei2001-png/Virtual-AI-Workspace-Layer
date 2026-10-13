@@ -30,5 +30,5 @@ export function createNativeIndexReader(store,root,scope,fail){
   if(!remaining){finish();return;}
   for(const [kind,key] of entries)bucket(kind,key,()=>{if(!--remaining)finish();});
  }
- return {root,manifest,records,lookup,all};
+ return {root,manifest,records,lookup,all,readBucket:bucket};
 }
