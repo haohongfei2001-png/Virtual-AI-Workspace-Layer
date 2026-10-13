@@ -73,3 +73,10 @@ test('native portal removes return then restores only the entry; invalid slot ne
 test('late native surrender after pagehide, expiry or stop cannot restore return',async()=>{
  for(const end of [f=>f.pagehide(),f=>f.tick(20000),f=>f.controller.stop()]){const f=fixture();await f.controller.start({});await f.both();f.surrender();assert.equal(f.slot.children.length,1);end(f);f.surrender();f.layer(false);f.change();assert.equal(f.slot.children.length,0);assert.equal(f.controller.showWorkspace(),false);}
 });
+test('short scope-clipped grants renew before their hard expiry',async()=>{
+ const f=fixture(),confirm=f.bridge.confirmParent;let renews=0;
+ f.bridge.confirmParent=async value=>{const result=await confirm(value);result.grant.expiresAt=new Date(11000).toISOString();return result;};
+ f.bridge.renewSession=async()=>{renews++;return f.renewAck();};
+ await f.controller.start({});await f.both();f.tick(4999);await drain();assert.equal(renews,0);
+ f.tick(1);await drain();assert.equal(renews,1);f.tick(5000);await drain();assert.equal(f.calls.dispose,0);f.controller.stop();
+});

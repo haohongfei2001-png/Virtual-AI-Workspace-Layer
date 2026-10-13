@@ -31,8 +31,8 @@ test('unverified scope and invalid binding fail closed before surface; pagehide 
 test('pending RPC deadline is six seconds and cannot revive after late response',async()=>{
  const f=fixture();f.setResponse(()=>new Promise(()=>{}));const started=f.client.start();await drain();await f.advance(6000);assert.equal(await started,null);assert.equal(f.events.size,0);
 });
-test('document renewal precedes UI status and shares one six-second budget',async()=>{
- const f=fixture();await f.client.start();let resolve;f.setResponse(m=>m.type==='HOST_DOCUMENT_RENEW'?new Promise(r=>resolve=r):new Promise(()=>{}));const renewal=f.bridge.renewSession({handle:{id:'mount'},binding:f.binding()});const rejected=assert.rejects(renewal,/request-timeout/);await drain();await f.advance(4000);resolve({ok:true,binding:f.binding()});await drain();assert.equal(f.calls.at(-1).type,'HOST_UI_STATUS');await f.advance(2000);await rejected;f.client.stop();
+test('document renewal and scope revalidation precede UI status with one six-second budget',async()=>{
+ const f=fixture();await f.client.start();let resolve;f.setResponse(m=>m.type==='HOST_DOCUMENT_RENEW'?new Promise(r=>resolve=r):m.type==='HOST_REFRESH'?{state:'verified'}:new Promise(()=>{}));const renewal=f.bridge.renewSession({handle:{id:'mount'},binding:f.binding()});const rejected=assert.rejects(renewal,/request-timeout/);await drain();await f.advance(4000);resolve({ok:true,binding:f.binding()});await drain();assert.equal(f.calls.at(-1).type,'HOST_UI_STATUS');await f.advance(2000);await rejected;f.client.stop();
 });
 test('SPA adapter rebind withdraws old surface and remounts without modifying native draft',async()=>{
  const f=fixture();f.document.draft='untouched';await f.client.start();const old=f.adapterOptions;f.document.location.href+='c/next';old.onRebindNeeded();assert.equal(f.stops,1);await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,2);assert.equal(f.client.showWorkspace(),true);assert.equal(f.document.draft,'untouched');old.onRebindNeeded();await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,2);f.client.stop();
@@ -66,4 +66,20 @@ test('presentation rejects wrong sender, extra fields, invalid mode/binding and 
 });
 test('old session presentation cannot act on replacement even with identical binding fields',async()=>{
  const f=fixture();await f.client.start();const old=[...f.listeners][0];await f.client.start();old({type:'HOST_PRESENT_SURFACE',documentToken:'doc',producerToken:'producer',routeEpoch:1,mode:'reading'},{id:'extension'},()=>{});assert.equal(f.presentations.length,0);f.client.stop();
+});
+test('renewal checks scope before exposing renewed UI and refuses unverified authority',async()=>{
+ const f=fixture();await f.client.start();const start=f.calls.length;
+ await f.bridge.renewSession({handle:{id:'mount'},binding:f.binding()});
+ assert.deepEqual(f.calls.slice(start).map(m=>m.type),['HOST_DOCUMENT_RENEW','HOST_REFRESH','HOST_UI_STATUS']);
+ f.setResponse(m=>m.type==='HOST_DOCUMENT_RENEW'?{ok:true,binding:f.binding()}:{state:'unverified'});
+ await assert.rejects(f.bridge.renewSession({handle:{id:'mount'},binding:f.binding()}),/scope-not-verified/);
+ assert.equal(f.calls.at(-1).type,'HOST_REFRESH');f.client.stop();
+});
+test('slow scope revalidation consumes the remaining renewal budget',async()=>{
+ const f=fixture();await f.client.start();let resolveDocument,resolveScope;
+ f.setResponse(m=>m.type==='HOST_DOCUMENT_RENEW'?new Promise(r=>resolveDocument=r):m.type==='HOST_REFRESH'?new Promise(r=>resolveScope=r):new Promise(()=>{}));
+ const rejected=assert.rejects(f.bridge.renewSession({handle:{id:'mount'},binding:f.binding()}),/request-timeout/);
+ await drain();await f.advance(2000);resolveDocument({ok:true,binding:f.binding()});await drain();
+ await f.advance(3000);resolveScope({state:'verified'});await drain();assert.equal(f.calls.at(-1).type,'HOST_UI_STATUS');
+ await f.advance(1000);await rejected;f.client.stop();
 });

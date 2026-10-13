@@ -41,8 +41,9 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
  }
  function publish(value,run){
   grant=Object.freeze({...value});cancel(expiryTimer);cancel(renewTimer);
-  expiryTimer=schedule(()=>{if(epoch===run)stop('ui-grant-expired');},Math.max(0,Date.parse(grant.expiresAt)-now()));
-  renewTimer=schedule(()=>{void renew(run);},10000);
+  const remaining=Math.max(0,Date.parse(grant.expiresAt)-now());
+  expiryTimer=schedule(()=>{if(epoch===run)stop('ui-grant-expired');},remaining);
+  renewTimer=schedule(()=>{void renew(run);},Math.min(10000,remaining/2));
   if(desired)desired.resolve(false);
   const completion=new Promise(resolve=>{desired={value:grant,run,resolve};});
   void drainRender();return completion;

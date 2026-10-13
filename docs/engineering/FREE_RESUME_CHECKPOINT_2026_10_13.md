@@ -878,3 +878,16 @@ context C1/C2/持续认证、可靠发送continuation、剩余原生动作与恢
 最终Node1763/1763，0失败/跳过。真实headless DOM五组PASS（含自有mask例外反例）；实际未改写构建包的PARTIAL三旅程PASS：第1000条深链、卸载history后当前标题刷新、原生search SPA到第999条直接当前入口且同输入节点/草稿保留。原LEGACY打包八旅程另PASS。两实际包sourceChangedDuringRun=false；原mask停更、页外入口、snapshot-revision-changed失败/trace报告保留，不把早期失败算通过。
 
 context C1/C2/持续认证、可信发送/observed anchor/continuation、恢复界面、完整J1–J4与真实G/U仍未齐；旧4x100k失败保持。Free未完成、NOT_RELEASE_READY，继续原计划。
+
+
+## Round87：持续scope核验、短授权续租和候选关联
+
+在8cb9b9d基础继续。HOST_REFRESH在现有有效scope内使用近截止revalidate；仅余10秒时固定provider重验，单飞且6秒有界。same principal/context/profile成功保持grantId、scope/selection/session epochs，更新冻结的proof receipt与expiry；原截止、身份变化、provider失败/撤权均拒旧授权。初始bind语义保持。Document renewal→scope revalidation→UI status共享客户端6秒总预算；精确中间actual frame与握手一致才进入authority，补A/B/A交错快照反例。worker整个HOST_REFRESH的前后getFrame仍无独立总deadline，provider本身有6秒，后续需补整体迟到栅栏。
+
+首轮真实66秒测试发现短grant竞态：50秒UI可能先取得仅余10秒授权，固定10秒续租与硬expiry同刻触发。现frame/controller均按剩余TTL一半、上限10秒续租，硬过期退出不变。修复后同两frame、H7、查找词和原生同输入节点/草稿跨66秒保持，session/roster各初次一次+近截止一次，非每10秒读取。原失败报告保留。持久native/evidence revision、observedAt与人工资产不续新由组合MockIDB测试验证，浏览器报告明确未直接读取DB认证该项。
+
+独立纯send-correlator复用元数据候选，仅完整baseline、窗口内单意图、唯一新增本人候选和连续谱系产生correlated候选；partial、编辑/分支、多意图、重放、跨绑定、时钟回退均保守拒绝。无ACK、actorVerified或sentAt，不接生产owner，不代表可信发送完成。
+
+最终Node1812/1812、0失败/跳过；真实headless打包66秒续租两项PASS、既有LEGACY八旅程PASS，各报告sourceChangedDuringRun=false。无真实ChatGPT/PAIA访问、付费服务、部署或原生写入。Pro正式文档72ca068此前已非强制整合，四份正式附件保持原blob。
+
+下一执行项仍为原计划：当前对象/作者/ACK证据、observed-self-send codec与现有Native/Evidence两仓库有界continuation、恢复界面，以及context C1/C2、完整J1–J4/真实G/U。旧4x100k失败保留。Free未完成、NOT_RELEASE_READY。

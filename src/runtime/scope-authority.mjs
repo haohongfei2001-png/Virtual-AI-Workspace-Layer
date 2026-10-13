@@ -19,6 +19,16 @@ export function createScopeAuthority({provider,profile,now=Date.now,makeId=()=>c
   if(entry.grant&&now()<entry.until)return {state:'verified',grant:entry.grant};
   return entry.grant?unverified('scope-proof-expired'):entry.result??unverified('scope-not-verified');
  }
+ function inspectIdentity(identity,elapsedStarted){
+  const expiry=Date.parse(identity?.expiresAt),time=now();
+  if(!Number.isFinite(expiry)||expiry<=time||elapsedNow()-elapsedStarted>=6000||typeof identity?.principalId!=='string'||!identity.principalId||identity.principalId.length>1024||!Array.isArray(identity.contexts)||identity.contexts.length>256||!tokenOK(identity.providerProfile)||!['worker-fixed-fetch','isolated-fixed-fetch'].includes(identity.transport))throw Error('invalid-principal-proof');
+  const ids=new Set();for(const context of identity.contexts){if(typeof context.id!=='string'||!context.id||context.id.length>1024||ids.has(context.id)||!['personal','organization','unknown'].includes(context.kind))throw Error('invalid-context-roster');ids.add(context.id);}
+  // A single roster entry selects context only with packaged C3 semantics.
+  if(!profile.singlePersonalDefault||identity.contexts.length!==1||identity.contexts[0].kind!=='personal')return {time,expiry,scope:null};
+  const contextId=identity.contexts[0].id,principalKey='principal_'+digest(['chatgpt-principal-v1',identity.principalId]);
+  const scope=normalizedScope({verified:true,provider:'chatgpt',accountId:principalKey,organizationId:'context_'+digest(['chatgpt-context-v1',identity.principalId,contextId])});
+  return {time,expiry,scope,principalKey};
+ }
  function refresh(frame,reason,signal){
   if(!valid(frame)||!['bind','focus','expiry','auth-change'].includes(reason))return Promise.resolve(unverified('invalid-scope-refresh'));
   if(signal?.aborted)return Promise.resolve(unverified('scope-refresh-aborted'));
@@ -34,14 +44,8 @@ export function createScopeAuthority({provider,profile,now=Date.now,makeId=()=>c
   let onAbort;const aborted=new Promise((_,reject)=>{onAbort=()=>reject(Error('scope-refresh-aborted'));abort.signal.addEventListener('abort',onAbort,{once:true});});
   const task=withRequestDeadline(()=>Promise.race([Promise.resolve().then(()=>provider.read({signal:abort.signal})),aborted]),{timeoutMs:6000,now:elapsedNow,schedule,cancel}).then(identity=>{
    if(!current())return unverified('stale-scope-refresh');
-   const expiry=Date.parse(identity?.expiresAt),time=now();
-   if(!Number.isFinite(expiry)||expiry<=time||elapsedNow()-entry.elapsedStarted>=6000||typeof identity?.principalId!=='string'||!identity.principalId||identity.principalId.length>1024||!Array.isArray(identity.contexts)||identity.contexts.length>256||!tokenOK(identity.providerProfile)||!['worker-fixed-fetch','isolated-fixed-fetch'].includes(identity.transport))throw Error('invalid-principal-proof');
-   const ids=new Set();for(const context of identity.contexts){if(typeof context.id!=='string'||!context.id||context.id.length>1024||ids.has(context.id)||!['personal','organization','unknown'].includes(context.kind))throw Error('invalid-context-roster');ids.add(context.id);}
-   // C3 is enabled only by a packaged profile whose default-context semantics
-   // have separate offline/live evidence. A roster's first item never selects it.
-   if(!profile.singlePersonalDefault||identity.contexts.length!==1||identity.contexts[0].kind!=='personal'){entry.result={state:'ambiguous',reason:'current-context-unproven'};entry.until=time+proofTTL;return entry.result;}
-   const contextId=identity.contexts[0].id,principalKey='principal_'+digest(['chatgpt-principal-v1',identity.principalId]);
-   const scope=normalizedScope({verified:true,provider:'chatgpt',accountId:principalKey,organizationId:'context_'+digest(['chatgpt-context-v1',identity.principalId,contextId])});
+   const {time,expiry,scope,principalKey}=inspectIdentity(identity,entry.elapsedStarted);
+   if(!scope){entry.result={state:'ambiguous',reason:'current-context-unproven'};entry.until=time+proofTTL;return entry.result;}
    const issuedAt=new Date(time).toISOString(),until=Math.min(expiry,time+proofTTL),expiresAt=new Date(until).toISOString();
    const receipt=makeId(),grantId=makeId();if(!tokenOK(receipt)||!tokenOK(grantId)||receipt===grantId)throw Error('invalid-scope-proof-id');
    const principal=Object.freeze({id:receipt,principalKey,sessionGeneration:entry.epoch,providerProfile:identity.providerProfile,transport:identity.transport,verifiedAt:issuedAt,expiresAt});
@@ -51,7 +55,38 @@ export function createScopeAuthority({provider,profile,now=Date.now,makeId=()=>c
   }).catch(error=>{const result=unverified(current()?(error?.message==='invalid-context-roster'?'invalid-context-roster':'scope-provider-unavailable'):'stale-scope-refresh');if(states.get(k)===entry){entry.result=result;entry.grant=null;entry.scope=null;abort.abort();}return result;}).finally(()=>{signal?.removeEventListener('abort',cancelRefresh);abort.signal.removeEventListener('abort',onAbort);if(states.get(k)===entry)entry.pending=null;});
   entry.pending=task;return task;
  }
+ function revalidate(frame,signal){
+  const resolution=peek(frame);
+  if(resolution.state!=='verified')return Promise.resolve(unverified('scope-not-verified'));
+  const k=key(frame),entry=states.get(k);
+  if(signal?.aborted){invalidate(frame.documentId);return Promise.resolve(unverified('scope-refresh-aborted'));}
+  if(entry.rechecking)return entry.rechecking;
+  if(entry.until-now()>10000)return Promise.resolve(resolution);
+  const original=entry.grant,deadline=entry.until,started=elapsedNow();
+  const current=()=>states.get(k)===entry&&!entry.abort.signal.aborted&&entry.grant===original&&now()<deadline;
+  const cancelRefresh=()=>{if(states.get(k)===entry)invalidate(frame.documentId);};
+  signal?.addEventListener('abort',cancelRefresh,{once:true});
+  let onAbort;const aborted=new Promise((_,reject)=>{onAbort=()=>reject(Error('scope-refresh-aborted'));entry.abort.signal.addEventListener('abort',onAbort,{once:true});});
+  const task=withRequestDeadline(()=>Promise.race([Promise.resolve().then(()=>{
+   if(!current())throw Error('stale-scope-refresh');return provider.read({signal:entry.abort.signal});
+  }),aborted]),{timeoutMs:6000,now:elapsedNow,schedule,cancel}).then(identity=>{
+   if(!current())throw Error('stale-scope-refresh');
+   const {time,expiry,scope,principalKey}=inspectIdentity(identity,started);
+   if(!scope||scope.key!==original.scopeKey||principalKey!==original.principal.principalKey||scope.organizationId!==original.context.contextKey||profile.id!==original.context.bindingProfile||identity.providerProfile!==original.principal.providerProfile||identity.transport!==original.principal.transport)throw Error('scope-identity-changed');
+   const receipt=makeId();if(!tokenOK(receipt)||receipt===original.id||receipt===original.principal.id)throw Error('invalid-scope-proof-id');
+   const until=Math.min(expiry,time+proofTTL),expiresAt=new Date(until).toISOString(),verifiedAt=new Date(time).toISOString();
+   const principal=Object.freeze({...original.principal,id:receipt,verifiedAt,expiresAt});
+   const context=Object.freeze({...original.context,rosterReceiptId:receipt});
+   if(!current())throw Error('stale-scope-refresh');
+   entry.until=until;entry.grant=Object.freeze({...original,principal,context,expiresAt});
+   return {state:'verified',grant:entry.grant};
+  }).catch(error=>{
+   if(states.get(k)===entry)invalidate(frame.documentId);
+   return unverified(error?.message==='scope-identity-changed'?'scope-identity-changed':'scope-revalidation-failed');
+  }).finally(()=>{signal?.removeEventListener('abort',cancelRefresh);entry.abort.signal.removeEventListener('abort',onAbort);if(entry.rechecking===task)entry.rechecking=null;});
+  entry.rechecking=task;return task;
+ }
  function scopeFor(frame){const result=peek(frame);return result.state==='verified'?states.get(key(frame)).scope:null;}
  function invalidateTab(tabId){for(const [k,entry]of states)if(entry.frame.tabId===tabId){entry.abort.abort();states.delete(k);}}
- return Object.freeze({peek,refresh,invalidate,invalidateTab,scopeFor});
+ return Object.freeze({peek,refresh,revalidate,invalidate,invalidateTab,scopeFor});
 }

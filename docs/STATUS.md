@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第八十六轮：深链当前聊天始终可达，自有遮罩下原生更新及有界并发准备已修复。完整1763/1763 Node、PARTIAL三旅程与LEGACY八旅程通过；元数据接口默认关闭，可信发送仍待接入。Free与真实G/U未完成。
+当前已推进至第八十七轮：同身份持续核验保留既有界面与历史会话，短授权续租竞态已修复。完整1812/1812 Node、真实66秒隔离MV3续租与既有八旅程通过；发送关联目前仅候选，不签发可信发送。Free与真实G/U未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 

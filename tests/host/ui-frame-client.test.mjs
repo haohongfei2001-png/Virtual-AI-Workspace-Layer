@@ -53,3 +53,16 @@ test('pending join and rejected scope renewal cannot authorize invalidation',asy
  held.resolve({ok:true,grant:f.grant()});await starting;f.runtime.sendMessage=async()=>({ok:true,grant:{...f.grant(),scopeGrantId:'other'}});
  await f.advance(10000);f.historicalMessages[0]({type:'VAIWL_UI_DATA_CHANGED'});assert.equal(count,0);
 });
+test('ten-second grant renews at five seconds, preserving identity and original hard expiry until ACK',async()=>{
+ const f=fixture(),held=deferred();let requests=0;f.runtime.sendMessage=async()=>++requests===1?{ok:true,grant:{...f.grant(),expiresAt:new Date(11000).toISOString()}}:held.promise;
+ const client=createUiFrameClient(f.options);await client.start();await f.advance(4999);assert.equal(requests,1);await f.advance(1);assert.equal(requests,2);assert.equal(client.isAuthorized(),true);assert.equal(f.body.textContent,'private_projection');
+ await f.advance(5000);assert.equal(client.isAuthorized(),false);assert.equal(f.body.textContent,'');assert.deepEqual(f.clears,['ui-grant-expired']);held.resolve({ok:true,grant:f.grant()});await drain();assert.equal(client.isAuthorized(),false);assert.equal(f.grants.length,1);
+});
+test('short-grant early renewal accepts only same identity and cannot extend authorization itself',async()=>{
+ for(const changed of [false,true]){const f=fixture();let requests=0;f.runtime.sendMessage=async()=>{requests++;return {ok:true,grant:requests===1?{...f.grant(),expiresAt:new Date(11000).toISOString()}:{...f.grant(),...(changed?{scopeGrantId:'other'}:{})}};};
+ const client=createUiFrameClient(f.options);await client.start();await f.advance(5000);assert.equal(requests,2);assert.equal(client.isAuthorized(),!changed);
+ if(changed){assert.equal(f.body.textContent,'');assert.deepEqual(f.clears,['ui-renew-failed']);}else{assert.equal(f.grants.length,2);assert.equal(f.grants[1].scopeGrantId,'scope');await f.advance(9999);assert.equal(requests,2);await f.advance(1);assert.equal(requests,3);}client.stop();}
+});
+test('unchanged short expiration is not converted into an implicit twenty-second extension',async()=>{
+ const f=fixture();f.runtime.sendMessage=async()=>({ok:true,grant:{...f.grant(),expiresAt:new Date(11000).toISOString()}});const client=createUiFrameClient(f.options);await client.start();await f.advance(5000);assert.equal(client.isAuthorized(),true);assert.equal(f.grants.at(-1).expiresAt,new Date(11000).toISOString());await f.advance(5000);assert.equal(client.isAuthorized(),false);assert.equal(f.body.textContent,'');
+});

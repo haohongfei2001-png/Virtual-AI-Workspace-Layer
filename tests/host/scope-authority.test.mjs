@@ -9,3 +9,42 @@ test('expiry, route mismatch and incognito prohibit cache scope',async()=>{const
 test('auth change removes old grant immediately and rejects its delayed result',async()=>{let release;const h=setup({provider:{read:()=>new Promise(r=>release=r)}});const pending=h.auth.refresh(frame,'bind');await Promise.resolve();h.auth.invalidate('doc');assert.equal(h.auth.peek(frame).state,'unverified');release(identity());assert.equal((await pending).state,'unverified');assert.equal(h.auth.scopeFor(frame),null);});
 test('two principals produce distinct namespaces without changing previous immutable grant',async()=>{const h=setup(),a=await h.auth.refresh(frame,'bind');h.answer={...identity(),principalId:'userB'};const pending=h.auth.refresh(frame,'auth-change');assert.equal(h.auth.scopeFor(frame),null);const b=await pending;assert.notEqual(a.grant.scopeKey,b.grant.scopeKey);assert(Object.isFrozen(a.grant));});
 test('abort and duplicate roster fail closed',async()=>{const h=setup();assert.equal((await h.auth.refresh(frame,'bind',AbortSignal.abort())).state,'unverified');assert.equal(h.calls,0);h.answer={...identity(),contexts:[{id:'A',kind:'personal'},{id:'A',kind:'personal'}]};assert.equal((await h.auth.refresh(frame,'bind')).state,'unverified');});
+
+function renewalFixture(){
+ let time=1000,n=0,calls=0,answer=identity(),read=null;const timers=new Map();
+ const profile={id:'personal_v1',singlePersonalDefault:true};
+ const auth=createScopeAuthority({provider:{read:args=>{calls++;return read?read(args):Promise.resolve(answer);}},profile,now:()=>time,elapsedNow:()=>time,makeId:()=>`renew_${++n}`,schedule:(fn,ms)=>{const id=++n;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
+ return {auth,profile,get calls(){return calls;},set answer(v){answer=v;},set read(v){read=v;},advance(ms){time+=ms;},fire(){for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
+}
+test('revalidation keeps far proof network-free and coalesces near-expiry reads without hiding valid grant',async()=>{
+ const h=renewalFixture(),old=(await h.auth.refresh(frame,'bind')).grant,bytes=JSON.stringify(old);
+ await Promise.all(Array.from({length:50},()=>h.auth.revalidate(frame)));assert.equal(h.calls,1);
+ h.advance(50000);let release;h.read=()=>new Promise(r=>release=r);
+ const jobs=Array.from({length:50},()=>h.auth.revalidate(frame));await Promise.resolve();assert.equal(h.calls,2);assert.equal(h.auth.peek(frame).grant,old);
+ release(identity());const results=await Promise.all(jobs),next=results[0].grant;
+ assert(results.every(x=>x.grant===next));assert.equal(next.id,old.id);assert.equal(next.scopeEpoch,old.scopeEpoch);assert.equal(next.principal.sessionGeneration,old.principal.sessionGeneration);assert.equal(next.context.selectionEpoch,old.context.selectionEpoch);assert.notEqual(next.principal.id,old.principal.id);assert.equal(next.context.rosterReceiptId,next.principal.id);assert.equal(Date.parse(next.expiresAt),111000);assert.equal(Date.parse(next.principal.verifiedAt),51000);assert.equal(JSON.stringify(old),bytes);assert(Object.isFrozen(next)&&Object.isFrozen(next.principal)&&Object.isFrozen(next.context));
+});
+test('revalidation caps proof to actual session expiration',async()=>{const h=renewalFixture();await h.auth.refresh(frame,'bind');h.advance(50000);h.answer={...identity(),expiresAt:new Date(53000).toISOString()};assert.equal(Date.parse((await h.auth.revalidate(frame)).grant.expiresAt),53000);});
+for(const [name,change]of [
+ ['principal',x=>({...x,principalId:'userB'})],['context',x=>({...x,contexts:[{id:'other',kind:'personal'}]})],['multi',x=>({...x,contexts:[...x.contexts,{id:'org',kind:'organization'}]})],['organization',x=>({...x,contexts:[{id:'personalA',kind:'organization'}]})],['unknown',x=>({...x,contexts:[{id:'personalA',kind:'unknown'}]})],['duplicate',x=>({...x,contexts:[...x.contexts,...x.contexts]})],['signed-out',()=>null],['provider-profile',x=>({...x,providerProfile:'other'})],['transport',x=>({...x,transport:'isolated-fixed-fetch'})],['expired-session',x=>({...x,expiresAt:new Date(51000).toISOString()})]
+])test('revalidation revokes immediately on '+name,async()=>{const h=renewalFixture();await h.auth.refresh(frame,'bind');h.advance(50000);h.answer=change(identity());assert.equal((await h.auth.revalidate(frame)).state,'unverified');assert.equal(h.auth.scopeFor(frame),null);assert.equal((await h.auth.revalidate(frame)).state,'unverified');assert.equal(h.calls,2);});
+for(const field of ['id','singlePersonalDefault'])test('revalidation rejects changed packaged profile '+field,async()=>{const h=renewalFixture();await h.auth.refresh(frame,'bind');h.advance(50000);h.profile[field]=field==='id'?'different':false;assert.equal((await h.auth.revalidate(frame)).state,'unverified');assert.equal(h.auth.scopeFor(frame),null);});
+for(const kind of ['old-expiry','late-deadline','timer-timeout','revoke','abort','auth-change'])test('pending revalidation never restores revoked authorization: '+kind,async()=>{
+ const h=renewalFixture();await h.auth.refresh(frame,'bind');h.advance(kind==='old-expiry'?55000:50000);let release;h.read=()=>new Promise(r=>release=r);const abort=new AbortController(),pending=h.auth.revalidate(frame,abort.signal);await Promise.resolve();
+ let replacement;
+ if(kind==='old-expiry'){h.advance(5000);assert.equal(h.auth.scopeFor(frame),null);}
+ if(kind==='late-deadline')h.advance(6000);
+ if(kind==='timer-timeout'){h.advance(6000);h.fire();await Promise.resolve();}
+ if(kind==='revoke')h.auth.invalidate(frame.documentId);
+ if(kind==='abort')abort.abort();
+ if(kind==='auth-change'){h.read=null;replacement=(await h.auth.refresh(frame,'auth-change')).grant;}
+ release(identity());assert.equal((await pending).state,'unverified');
+ if(replacement)assert.equal(h.auth.peek(frame).grant,replacement);else assert.equal(h.auth.scopeFor(frame),null);
+});
+test('revalidation accepts neither wrong route nor expired grant and abort fails closed before fetch',async()=>{
+ const h=renewalFixture();await h.auth.refresh(frame,'bind');assert.equal((await h.auth.revalidate({...frame,actualURL:'https://chatgpt.com/c/other'})).state,'unverified');assert.equal(h.calls,1);
+ assert.equal((await h.auth.revalidate(frame,AbortSignal.abort())).state,'unverified');assert.equal(h.auth.scopeFor(frame),null);assert.equal(h.calls,1);
+ await h.auth.refresh(frame,'bind');h.advance(60000);assert.equal((await h.auth.revalidate(frame)).state,'unverified');assert.equal(h.calls,2);
+});
+
+test('provider failure invalidates without retry',async()=>{const h=renewalFixture();await h.auth.refresh(frame,'bind');h.advance(50000);h.read=()=>Promise.reject(Error('offline'));assert.equal((await h.auth.revalidate(frame)).state,'unverified');assert.equal(h.auth.scopeFor(frame),null);assert.equal(h.calls,2);});
