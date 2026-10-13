@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第五十六轮集成：49–56轮共享目录读写/迁移/恢复/事务回收完成合成验证，完整Node1068通过，真实IDB合同及MV3 9/9通过。审批已恢复，准备提交推送现有PR16；100k mixed发送1108.9/1481/1480.3ms，1秒门槛仍FAIL。当前包仅SYNTHETIC_ONLY，Free未完成。
+当前已推进至第五十七轮：前一检查点8ff44e5已push现有Draft PR16；当前完整Node1092、真实IDB及MV3、同路径旧包拒绝/恢复均通过。1k/10k/100k mixed普通及长中文发送样本均<1秒；100k首次完整加载仍26–29秒，当前4x/多tab等未认证。仅SYNTHETIC_ONLY，真实Free与发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -688,3 +688,16 @@ partialContext显式boundedDirectory opt-in仅对目录格式启用，读取目�
 当前源码真实IDB：生命周期7组、5001分批4项、GC10项、原读取6组全部通过；真实隔离无界面MV3 9/9通过。最终完整Node1068/1068、0失败/跳过。这些仍为合成源，非私人ChatGPT/实际PAIA认证。
 
 冻结源码、无并行负载的100k mixed真实发送：existing1108.9ms/new-none1481ms/new-project1480.3ms，1秒门槛FAIL；sourceChangedDuringRun=false。新聊天HEADER约744ms，初步定位nextOrdinal改变导致全部桶验证缓存失效；后续优化须保留每次ordinal上界、完整fresh字节及损坏拒绝。当前package运行时代码与真实IDB/MV3报告hash匹配，SYNTHETIC_ONLY仍不变。准备把49–56轮普通提交并推送现有PR16后继续性能修复；此前审批阻塞记录为历史，不再代表当前工具状态。Free未完成。
+
+
+## 第五十七轮：共享目录和路由验证优化，真实同路径回退通过
+
+前一检查点8ff44e5已正常push，GitHub确认PR16保持Draft且基线仍176ebc9a。CPU profile定位新增ref导致所有桶nextOrdinal缓存失效、根changes长列表重复校验及URL反复解析。本轮保留全部fresh字节比较与owner真实checksum，ordinal上界改每次显式校验，首callback复用刚验证payload；后续callback及all仍重验。私有WeakMap仅复用同scope URL字符串解析，所有路由/成员/顺序仍重建，full/invalidation不复用。
+
+共享changes提示改为最多64行/总20000 refs的完整连续后缀（迁移和新写入）。不删除任何事实或b23_operations；过旧Pro副本按既有缺revision规则退回完整重验。新增深变/跨scope/取消、路由等价及预算/undo/日志合同。最终完整Node1092/1092，真实IDB生命周期7组+5001分批4项+GC10项、实际MV3 9/9均通过，计数不累加旧轮结果。
+
+同源冻结顺序mixed发送（已有/新NONE/新Project，毫秒）：1k 57.7/64.4/48.9；10k 164.7/113.8/114.4；100k普通772.7/895.8/684.4；100k长中文698.8/698.8/627.4。该组1秒样本全通过，sourceChangedDuringRun=false；100k首次完整加载26.3/29.0秒仍慢，不算p95/物理弱设备认证。优化前1033.9ms发送FAIL及长标题初次30秒超时分别保留，没有放宽6秒RPC或30秒夹具超时。
+
+真实隔离headless MV3同路径Round46→Round57→Round46→Round57四步通过：新共享目录迁移仅结构revision+1，原生/活动事实和revision、Pro人工title/workingSet、原草稿DOM保持；旧包明确invalid-schema且六store所有row摘要不变，新包恢复ACTIVE且不重写数据。初始夹具缺syntheticEvidenceGate被正确拒绝，修正夹具后通过；初始日志保留。
+
+最新合成ZIP /private/tmp/vaiwl-free-delivery-round57-20261013/vaiwl-free-synthetic-only.zip，SHA256 90da5229af565a1090cb07e252f71e53687935ac759ba6ba9fc41dc81b3da6ec，58文件/51worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。后续仍沿原F1/FR-14推进首次加载、当前4x/多tab/单Project大成员及增量原名/归属；真实ChatGPT/跨端/PAIA/IME与真人条件仍未具备。Free未完成，不进入Pro、不发布。

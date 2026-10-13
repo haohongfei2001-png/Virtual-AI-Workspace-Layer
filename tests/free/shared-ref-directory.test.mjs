@@ -26,3 +26,28 @@ test('metadata target claims validate syntax only and never certify missing refs
 test('warm cache remains bound to ordinal ceiling generation count and pointer revision',()=>{const b=build(fixture(),scope),row=b.records.find(r=>r.payload.ordinals.some(n=>n>0)),name=row.payload.bucket;verify(row,b.root,name);for(const change of ['nextOrdinal','generation','count','revision']){const root=structuredClone(b.root);if(change==='nextOrdinal')root.nextOrdinal=Math.max(...row.payload.ordinals);if(change==='generation')root.generation='other_generation';if(change==='count')root.refDirectory[name].count++;if(change==='revision')root.refDirectory[name].revision++;assert.throws(()=>verify(structuredClone(row),root,name),change+' cannot reuse earlier cache validation');}const fresh=structuredClone(row);assert.equal(verify(fresh,b.root,name),fresh.payload);assert.notEqual(fresh.payload,row.payload);});
 test('bucket units exactly bind canonical key and version widths and invalidate a warm context',()=>{const b=build(fixture(),scope),row=b.records[0],name=row.payload.bucket;const expected=Object.entries(row.payload.versions).reduce((sum,[ref,v])=>sum+JSON.stringify(ref).length+1+String(v).length,0);assert.equal(b.root.refDirectory[name].units,expected);verify(row,b.root,name);for(const delta of [-1,1]){const root=structuredClone(b.root);root.refDirectory[name].units+=delta;assert.throws(()=>verify(structuredClone(row),root,name),/units-mismatch/);}assert.equal(verify(structuredClone(row),b.root,name).generation,b.root.generation);});
 test('root unverified units claims preserve exact 16Mi legacy manifest boundary across buckets',()=>{const original=fixture(0),b=build(original,scope),limit=16*1024*1024,claimedUnits=limit-stable(original).length-1;const root={...b.root,nextOrdinal:2,refDirectory:{'00':{revision:4,count:1,units:Math.floor(claimedUnits/2)},'01':{revision:4,count:1,units:Math.ceil(claimedUnits/2)}}};assert.equal(validate(root,scope),root,'only claims validated, no synthetic inventory proof');assert.throws(()=>materialize(root,scope,[]),'claimed bytes never prove buckets exist');const over=structuredClone(root);over.refDirectory['01'].units++;assert.throws(()=>validate(over,scope),/state-too-large/);const below=structuredClone(root);below.refDirectory['00'].units--;assert.equal(validate(below,scope),below);});
+
+for(const fault of ['changes-ref','units','source','preferences','humanRefs','nextOrdinal','schema'])test('warm root structure cache rejects deep mutation: '+fault,()=>{
+ const b=build(fixture(),scope),root=structuredClone(b.root);
+ root.sources.fixture={id:'fixture',channel:'synthetic',description:'Synthetic only',trustLevel:'synthetic',observedAt:'2026-10-13T12:00:00Z',revoked:false};
+ assert.equal(validate(root,scope),root);
+ if(fault==='changes-ref')root.changes[0].refs[0]='__proto__';
+ if(fault==='units')root.units=-1;
+ if(fault==='source')root.sources.fixture.revoked='false';
+ if(fault==='preferences')root.preferences.workingSet.value.current='not_in_working_set';
+ if(fault==='humanRefs')root.humanRefs[0]='__proto__';
+ if(fault==='nextOrdinal')root.nextOrdinal=Number.MAX_SAFE_INTEGER+1;
+ if(fault==='schema')root.unexpectedSchemaField=true;
+ assert.throws(()=>validate(root,scope),fault+' must not reuse warm validation');
+});
+
+test('warm root structure cache returns the fresh object and remains scope bound',()=>{
+ const b=build(fixture(),scope),root=b.root;
+ assert.equal(validate(root,scope),root);
+ const fresh=structuredClone(root);
+ assert.notEqual(fresh,root);assert.equal(validate(fresh,scope),fresh);
+ assert.throws(()=>validate(structuredClone(root),scopeOf('B')));
+ // A failed foreign lookup must not poison the valid scope's cache entry.
+ const again=structuredClone(root);assert.equal(validate(again,scope),again);
+ const before=structuredClone(again);validate(again,scope);assert.deepEqual(again,before);
+});

@@ -26,7 +26,7 @@ function countDirectory(root){
 /** Root validation checks metadata syntax, not the existence of human/preference
  * targets. Those claims require verified buckets and full legacy validation.
  */
-export function validateSharedDirectoryRoot(root,scope){
+function validateRootStructure(root,scope){
  exact(root,['format',...metadata,'refDirectory','nextOrdinal']);if(root.format!==SHARED_DIRECTORY_FORMAT)throw Error('invalid-shared-directory-format');
  const count=countDirectory(root),refs={};
  // Reuse the original metadata validators with explicit target claims only.
@@ -37,12 +37,24 @@ export function validateSharedDirectoryRoot(root,scope){
  if(Object.keys(refs).length>count)throw Error('orphan-shared-directory-metadata');
  checkManifest(legacy(root,refs),scopeKey(scope));if(stable(root).length>MAX_RECORD)throw Error('state-too-large');return root;
 }
+// This cache certifies structure only. Owners separately verify the stored
+// envelope checksum. Every caller's fresh object is encoded and compared in
+// full, including large change lists; no mutable object identity is trusted.
+const rootValidation=new VerifiedRecordCache({maxEntries:8,maxChars:16*1024*1024});
+export function validateSharedDirectoryRoot(root,scope){
+ const key=scopeKey(scope);
+ return rootValidation.read({key,payload:root,checksum:'shared-directory-structure-v1'},key,()=>validateRootStructure(root,scope));
+}
 const pieceValidation=new VerifiedRecordCache({maxEntries:512,maxChars:8*1024*1024});
 export function verifySharedDirectoryPiece(record,root,bucket){
  bucketId(bucket);const pointer=root.refDirectory[bucket];if(!pointer)throw Error('missing-shared-directory-pointer');
  if(record?.key!==sharedRefDirectoryKey(root.scopeKey,root.generation,bucket,pointer.revision))throw Error('shared-directory-key-mismatch');
- const context=JSON.stringify([root.scopeKey,root.generation,bucket,pointer.revision,pointer.count,pointer.units,root.nextOrdinal]);
- return pieceValidation.read(record,context,()=>validatePiece(record,root,bucket,pointer));
+ const context=JSON.stringify([root.scopeKey,root.generation,bucket,pointer.revision,pointer.count,pointer.units]);
+ const piece=pieceValidation.read(record,context,()=>validatePiece(record,root,bucket,pointer));
+ // Appending a ref changes this ceiling, not the bytes or routing of every
+ // untouched bucket. Still check the CURRENT bound on every cached read.
+ if(piece.ordinals.some(ordinal=>ordinal>=root.nextOrdinal))throw Error('invalid-shared-directory-order');
+ return piece;
 }
 function validatePiece(record,root,bucket,pointer){
  const p=partitionUnpack(record);exact(p,['scopeKey','generation','bucket','revision','versions','ordinals']);

@@ -30,3 +30,32 @@ test('all rejects valid-checksum cross-bucket ordinal collisions',async()=>{cons
 test('all rejects extraneous records inserted into public map',async()=>{const f=fixture();await assert.rejects(new Promise((resolve,reject)=>{const r=createSharedDirectoryReader(storeFor(f.rows),f.root,scope,reject);r.lookup('ref_0',()=>{r.records.set('extra',{...f.records[0],key:'extra'});r.all(resolve);});}),/unexpected/);});
 for(const field of ['humanRefs','preferences'])test('all rejects unproven '+field+' targets despite valid pieces',async()=>{const f=fixture(),root=structuredClone(f.root);if(field==='humanRefs')root.humanRefs=['missing'];else root.preferences.workingSet.value={refs:['missing'],current:'missing'};await assert.rejects(new Promise((resolve,reject)=>createSharedDirectoryReader(storeFor(f.rows),root,scope,reject).all(resolve)));});
 test('consumer exception fails once and suppresses subsequent callbacks',async()=>{const f=fixture(),store=storeFor(f.rows);let failures=0,successes=0;await new Promise(resolve=>{const r=createSharedDirectoryReader(store,f.root,scope,error=>{assert.equal(error.message,'consumer-error');failures++;queueMicrotask(resolve);});r.lookup('ref_0',()=>{throw Error('consumer-error');});r.lookup('ref_0',()=>successes++);});assert.equal(failures,1);assert.equal(successes,0);});
+
+test('all revalidates an earlier bucket mutated while another bucket request is pending',()=>{
+ const f=fixture(),requests=new Map();let failures=0,successes=0,error;
+ const store={get(key){const q={};requests.set(key,q);return q;}};
+ const reader=createSharedDirectoryReader(store,f.root,scope,e=>{failures++;error=e;});
+ reader.all(()=>successes++);
+ const keys=[...requests.keys()];assert(keys.length>1);
+ const deliver=key=>{const q=requests.get(key);q.result=structuredClone(f.rows.get(key));q.onsuccess();};
+ deliver(keys[0]);
+ assert.equal(reader.records.size,1);assert.equal(failures,0);assert.equal(successes,0);
+ // This bucket was valid when its request completed. The public map remains
+ // reachable while IDB delivers other buckets; all must recheck its bytes.
+ reader.records.get(keys[0]).payload.ordinals[0]++;
+ for(const key of keys.slice(1))deliver(key);
+ assert.equal(failures,1);assert.match(error.message,/corrupt/);assert.equal(successes,0);
+ reader.all(()=>successes++);reader.lookupMany([],()=>successes++);
+ assert.equal(failures,1);assert.equal(successes,0);
+});
+
+test('first coalesced callback shrinking nextOrdinal prevents later callback publication',async()=>{
+ const f=fixture(),store=storeFor(f.rows);let callbacks=0,failures=0,error;
+ await new Promise(resolve=>{
+  const reader=createSharedDirectoryReader(store,f.root,scope,e=>{failures++;error=e;queueMicrotask(resolve);});
+  reader.readBucket(bucket('ref_0'),piece=>{callbacks++;assert(piece.ordinals.length>0);f.root.nextOrdinal=0;});
+  reader.readBucket(bucket('ref_0'),()=>{callbacks++;resolve();});
+ });
+ assert.equal(store.calls.length,1);assert.equal(callbacks,1);assert.equal(failures,1);
+ assert.match(error.message,/order/);
+});

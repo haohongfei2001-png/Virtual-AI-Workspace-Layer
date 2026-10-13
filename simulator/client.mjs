@@ -109,7 +109,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
       }else{
         const assembled=await assembleFreeReplicaAsync(freeReplica,header,pages,plan,()=>current(ticket,url));
         next=freeNavigationSnapshot(assembled.snapshot);nextPrepared=true;
-        nextIndex=(!plan.full&&freeIndex?await freeIndex.rebindCompatibleAsync(next,next.groups,()=>current(ticket,url)):null)??await currentIndexAsync(next,next.groups,()=>current(ticket,url));
+        nextIndex=(!plan.full&&freeIndex?await freeIndex.rebindCompatibleAsync(next,next.groups,()=>current(ticket,url)):null)??await currentIndexAsync(next,next.groups,()=>current(ticket,url),!plan.full?freeIndex:null);
         candidate=assembled;
       }
       await verify();

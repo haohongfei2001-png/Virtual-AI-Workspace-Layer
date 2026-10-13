@@ -19,11 +19,11 @@ export function createSharedDirectoryReader(store,root,scope,fail){
    pending.set(key,[done]);
    const request=store.get(key);
    request.onsuccess=()=>{if(failed)return;try{
-    const record=request.result;verifySharedDirectoryPiece(record,root,bucket);records.set(key,record);
+    const record=request.result,verified=verifySharedDirectoryPiece(record,root,bucket);records.set(key,record);
     const callbacks=pending.get(key);pending.delete(key);
-    // A prior consumer can mutate an exposed record. Recheck bytes for each
-    // callback; the validation cache retains strings, never trusted objects.
-    for(const callback of callbacks){if(failed)break;callback(verifySharedDirectoryPiece(record,root,bucket));}
+    // No external callback intervenes before the first consumer. Every later
+    // consumer rechecks fresh bytes and the current root ordinal ceiling.
+    for(let i=0;i<callbacks.length;i++){if(failed)break;callbacks[i](i===0?verified:verifySharedDirectoryPiece(record,root,bucket));}
    }catch(error){reject(error);}};
    request.onerror=()=>reject(request.error??Error('shared-directory-read-failed'));
   }catch(error){reject(error);}

@@ -1,3 +1,4 @@
+import {boundedSharedChanges} from './shared-directory-writer.mjs';
 import {auditSharedPartitions} from './shared-partition-audit.mjs';
 import {normalizedScope} from '../b1/identity.mjs';
 import {id} from './state.mjs';
@@ -24,7 +25,7 @@ export async function migrateSharedDirectory(owner,scope,{operationId,expectedRe
    if(manifest.revision===Number.MAX_SAFE_INTEGER)throw Error('revision-exhausted');
    const publish=()=>{try{
     fence();
-    const revision=manifest.revision+1,built=buildSharedRefDirectory({...manifest,revision,changes:[...manifest.changes,{revision,refs:[]}].slice(-64)},s);
+    const revision=manifest.revision+1,built=buildSharedRefDirectory({...manifest,revision,changes:boundedSharedChanges([...manifest.changes,{revision,refs:[]}])},s);
     for(const row of built.records){fence();store.put(row);}
     const row=manifest_partitionRecord(s.key,built.root);store.put(row);
     // A legacy checkpoint would let old readers mistake a new format for damage

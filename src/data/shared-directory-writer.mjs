@@ -2,6 +2,15 @@ import {normalizedScope} from '../b1/identity.mjs';
 import {validateSharedDirectoryRoot,updateSharedRefDirectory,sharedRefBucket,sharedRefDirectoryKey,verifySharedDirectoryPiece} from './shared-ref-directory.mjs';
 import {manifest_PARTITION_FORMAT,manifest_checkManifest,manifest_partitionRecord} from './partition-manifest.mjs';
 
+/** Delta hints are a bounded contiguous suffix, never the human journal.
+ * A replica older than this suffix must use its existing full-read fallback.
+ * Keep whole rows: truncating a row would falsely certify an incomplete delta.
+ */
+export function boundedSharedChanges(changes){
+ let total=0,start=changes.length;
+ while(start>0&&changes.length-start<64){const count=changes[start-1].refs.length;if(total+count>20000)break;total+=count;start--;}
+ return changes.slice(start);
+}
 const metadata=['generation','scopeKey','revision','channel','sources','workspaces','preferences','humanRefs','units','changes'];
 const changedRefs=patch=>[...new Set(patch.flatMap(p=>['refs','identities'].includes(p.table)?[p.key]:p.table==='placements'?[(p.after??p.before).refId]:['events','coverage'].includes(p.table)?[(p.after??p.before).conversationId]:[]))];
 /** Build a bounded legacy view only from verified transaction-local buckets.
@@ -38,7 +47,7 @@ export function saveSharedDirectoryMutation(tx,root,scope,storage,current,next,p
  const touched=new Set(ids.map(sharedRefBucket)),selected=[];
  for(const bucket of touched){const pointer=root.refDirectory[bucket];if(pointer){const key=sharedRefDirectoryKey(root.scopeKey,root.generation,bucket,pointer.revision);if(!byKey.has(key))throw Error('missing-shared-directory-record');selected.push(byKey.get(key));}}
  const humans=[...new Set([...root.humanRefs,...(actor==='human'?ids:[])])].filter(ref=>!Object.hasOwn(updates,ref)||updates[ref]!==null);
- const built=updateSharedRefDirectory(root,scope,next.revision,updates,selected,{metadata:{channel:legacy.channel,sources:legacy.sources,workspaces:legacy.workspaces,preferences:legacy.preferences,humanRefs:humans,units:legacy.units,changes:legacy.changes}});
+ const built=updateSharedRefDirectory(root,scope,next.revision,updates,selected,{metadata:{channel:legacy.channel,sources:legacy.sources,workspaces:legacy.workspaces,preferences:legacy.preferences,humanRefs:humans,units:legacy.units,changes:boundedSharedChanges(legacy.changes)}});
  for(const row of built.records)store.put(row);
  store.put(manifest_partitionRecord(root.scopeKey,built.root));return built.root;
 }
