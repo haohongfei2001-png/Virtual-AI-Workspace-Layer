@@ -1,3 +1,4 @@
+import {validateFreeTimePolicy} from '../data/free-time-policy.mjs';
 import {assertPreparedFreeSnapshot} from '../navigation/free-view.mjs';
 const integer=(n,max)=>Number.isSafeInteger(n)&&n>=0&&n<=max;
 const segmentOf=row=>(row.activityDecision??row.activity)?.segment??row.segment??null;
@@ -17,8 +18,10 @@ export function projectFreeFrame(current,query){
  let selection=null;
  if(list!==null){let rows;if(groupId!==null){const group=snapshot.groups.find(g=>g.id===groupId);if(!group||!included(group,segment))throw Error('free-frame-group-unavailable');rows=group[list];}else rows=snapshot[list]??[];selection={groupId,list,...pageRows(rows,segment,rowOffset,rowLimit,groupId===null)};}
  let maxSegment=0;for(const rows of [snapshot.groups,snapshot.refs])for(const row of rows){const value=segmentOf(row);if(Number.isSafeInteger(value)&&value>=0)maxSegment=Math.max(maxSegment,value);}
- const v=snapshot.viewSession;
+ const v=snapshot.viewSession,policy=snapshot.preferences?.freeTimePolicy?.value;
+ if(policy)validateFreeTimePolicy(policy);
  const result={protocol:'vaiwl-free-frame/1',role,scope:snapshot.scope,revision:snapshot.revision,workspaceRevision:snapshot.workspaceRevision,evidenceRevision:snapshot.evidenceRevision,viewRevision:snapshot.viewRevision,viewSession:v?{H:v.H,T:v.T,Z:v.Z,policyRevision:v.policyRevision}:null,segment,
+  timePolicy:policy?{mode:policy.mode,H:policy.H,revision:policy.revision}:{mode:'fixed',H:v?.H??30,revision:v?.policyRevision??0},
   navigation:{hasNewer:segment>0,hasOlder:segment<maxSegment,maxSegment},
   groups:{items:groups,total,offset,limit,hasMore:offset+groups.length<total},entries,selection,
   inventory:{projects:snapshot.groups.length,refs:snapshot.refs.length,omittedProjects:snapshot.manifest?.projectVersions?Math.max(0,countKeys(snapshot.manifest.projectVersions)-snapshot.groups.length):null,omittedRefs:snapshot.manifest?.refVersions?Math.max(0,countKeys(snapshot.manifest.refVersions)-snapshot.refs.length):null,complete:snapshot.inventoryComplete===true},completeSnapshot:false};

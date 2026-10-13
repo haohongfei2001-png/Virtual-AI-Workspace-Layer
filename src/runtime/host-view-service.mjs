@@ -1,4 +1,5 @@
-import {FREE_HORIZONS,initialFreeTimePolicy,setFreeHorizon,relocateFreeSegment} from '../data/free-time-policy.mjs';
+import {localDay} from '../navigation/projection.mjs';
+import {FREE_HORIZONS,initialFreeTimePolicy,setFreeHorizon,enableFreeAutoTimePolicy,relocateFreeSegment} from '../data/free-time-policy.mjs';
 import {projectFreeWorkingSet} from './free-working-set-projection.mjs';
 import {projectFreeSearch} from './free-search-projection.mjs';
 import {createURLPolicy} from '../host/url-policy.mjs';
@@ -81,7 +82,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  }
  async function setHorizon(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-horizon'};}
-  if(!exactHostRecord(message,['v','type','grantId','mountId','operationId','expectedRevision','H','segment','anchorRefId'])||message.v!==1||message.type!=='HOST_UI_SET_HORIZON'||typeof message.operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(message.operationId)||!Number.isSafeInteger(message.expectedRevision)||message.expectedRevision<0||!FREE_HORIZONS.includes(message.H)||!Number.isSafeInteger(message.segment)||message.segment<0||message.segment>1000000||!(message.anchorRefId===null||typeof message.anchorRefId==='string'&&message.anchorRefId.length>0&&message.anchorRefId.length<=128))return {ok:false,reason:'invalid-ui-horizon'};
+  if(!exactHostRecord(message,['v','type','grantId','mountId','operationId','expectedRevision','H','segment','anchorRefId'])||message.v!==1||message.type!=='HOST_UI_SET_HORIZON'||typeof message.operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(message.operationId)||!Number.isSafeInteger(message.expectedRevision)||message.expectedRevision<0||(message.H!=='auto'&&!FREE_HORIZONS.includes(message.H))||!Number.isSafeInteger(message.segment)||message.segment<0||message.segment>1000000||!(message.anchorRefId===null||typeof message.anchorRefId==='string'&&message.anchorRefId.length>0&&message.anchorRefId.length<=128))return {ok:false,reason:'invalid-ui-horizon'};
   let active=true;const started=elapsedNow(),abort=new AbortController();
   try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    const entry=views.get(message.mountId),current=entry?.owner.current();
@@ -94,7 +95,8 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     const old=current.snapshot.viewSession,anchor=message.anchorRefId===null?null:current.index.byId(message.anchorRefId);
     if(message.anchorRefId!==null&&!anchor)throw Error('horizon-anchor-unavailable');
     const candidateDay=anchor?(anchor.activityDecision??anchor.activity)?.candidateDay??null:old.T-old.H*message.segment;
-    const policy=setFreeHorizon(current.snapshot.preferences?.freeTimePolicy?.value??initialFreeTimePolicy({day:old.T}),message.H,old.T);
+    const day=localDay(clock(),old.Z),prior=current.snapshot.preferences?.freeTimePolicy?.value??{...initialFreeTimePolicy({day}),H:old.H,revision:old.policyRevision};
+    const policy=message.H==='auto'?enableFreeAutoTimePolicy({...prior,H:old.H},day):setFreeHorizon(prior,message.H,day);
     const valid=()=>active&&elapsedNow()-started<6000&&context.isCurrent()&&views.get(message.mountId)===entry;
     if(!valid())throw Error('ui-horizon-expired');
     const result=await workspaceRepository.command(context.scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,command:{type:'SET_PREFERENCE',id:'freeTimePolicy',value:policy}},{actor:'human',guard:valid,signal:abort.signal});

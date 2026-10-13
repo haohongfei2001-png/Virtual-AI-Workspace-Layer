@@ -1,0 +1,13 @@
+{
+  "src/host/free-frame-client.mjs": "76ea5ad30fed0f3ec96ab05545559d6d989ead9735e2946982a92f909ca3afb0",
+  "src/navigation/navigation.mjs": "d82f4308977e24e27dbf4ebdf0d8701bed329c188bee20e293681e00e3719354",
+  "src/runtime/free-frame-projection.mjs": "2411de58fbdb97084f62476007efc2816e9a096854ded5c2bf1a55b3d36a537e",
+  "src/runtime/host-view-service.mjs": "be042c42920e993c5ee988ae06489aab6eb18092cb5e4de11690a09c93d2ee2e",
+  "tests/host/backup-package-mv3-browser.mjs": "c5567ba2401493399e3e69710ab5dab9c0f4c5f2121184aac56dd14adf551a60",
+  "tests/host/frame-projection-renderer.test.mjs": "ccafde0442b1e0c3bd3a5751957bb15b17e5bbdcea197e9348c74b125ef90a0a",
+  "tests/host/free-frame-client.test.mjs": "2b204c41a23b9f706f23a3d2c2cd61cf03a1ac273aaeda1927cf6e18d28a90b8",
+  "tests/host/host-view-service.test.mjs": "e90d23b4831f244a267aa5aad160cd0fb0245a4d8916bf959cbb6a8cab30aaa1",
+  "tests/host/package-mv3-browser.mjs": "078076fbfb7878ead96ba8beb268478d90af935e902c5a0a7e81563f301b7a84",
+  "tests/host/recovery-package-mv3-browser.mjs": "a7695c79bd0b4c6ca4c3eb3e19e8796bdda759be54ea51fa1f7ab4719fb05fb0",
+  "tests/host/working-set-pointer-race.test.mjs": "7d40f4d80603d4c895c9e00dfb3b1bb2b9c6673bec49c81f94cf1e1bb09403ad"
+}

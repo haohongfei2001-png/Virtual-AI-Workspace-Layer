@@ -121,14 +121,15 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   }catch{if(!closed&&navigation===renderer)state({state:'ready',reason:'presentation-unavailable'});}
  }
  async function setHorizon(value){
-  if(closed||horizonPending||!grantCurrent()||!Number.isSafeInteger(workspaceRevision)||!FREE_HORIZONS.includes(value?.H))return {ok:false,reason:'horizon-change-unavailable'};
+  if(closed||horizonPending||!grantCurrent()||!Number.isSafeInteger(workspaceRevision)||(value?.H!=='auto'&&!FREE_HORIZONS.includes(value?.H)))return {ok:false,reason:'horizon-change-unavailable'};
+  const expectedH=value.H==='auto'?viewSession?.H:value.H;if(!FREE_HORIZONS.includes(expectedH))return {ok:false,reason:'horizon-change-unavailable'};
   horizonPending=true;const current=grant,renderer=navigation;
   const operationId=globalThis.crypto.randomUUID();
   try{
    const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_SET_HORIZON',grantId:current.id,mountId:current.mountId,operationId,expectedRevision:workspaceRevision,H:value.H,segment:value.segment,anchorRefId:value.anchorRefId}),{now:elapsedNow,schedule,cancel});
    if(closed||navigation!==renderer||grant?.id!==current.id||!grantCurrent())return {ok:false,reason:'horizon-change-unavailable'};
    if(result?.ok!==true)return {ok:false,reason:result?.reason??'horizon-change-unavailable'};
-   if(!Number.isSafeInteger(result.segment)||result.segment<0||result.segment>1000000||result.viewSession?.H!==value.H||!Number.isSafeInteger(result.workspaceRevision))return {ok:false,reason:'invalid-horizon-response'};
+   if(!Number.isSafeInteger(result.segment)||result.segment<0||result.segment>1000000||result.viewSession?.H!==expectedH||!Number.isSafeInteger(result.workspaceRevision))return {ok:false,reason:'invalid-horizon-response'};
    workspaceRevision=result.workspaceRevision;viewSession=result.viewSession;
    query={segment:result.segment,offset:0,limit:8,...(query.search?{search:query.search}:{}),...(query.workingSet?{workingSet:query.workingSet}:{})};
    dirty=false;await read(query,true);return result;

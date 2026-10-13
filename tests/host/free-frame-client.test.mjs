@@ -90,6 +90,17 @@ test('manual horizon writes once using current revision and relocates before ref
  const send=f.runtime.sendMessage,writes=[];f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_SET_HORIZON'){writes.push(m);session={...old,H:7,policyRevision:1};return Promise.resolve({ok:true,segment:8,viewSession:session,workspaceRevision:6});}return send(m);};
  const result=await f.nav.onHorizonRequest({H:7,segment:2,anchorRefId:null});await drain();assert.equal(result.ok,true);assert.equal(writes.length,1);assert.equal(writes[0].expectedRevision,5);assert.equal(writes[0].scope,undefined);assert.equal(f.calls.at(-1).query.segment,8);assert.equal(f.pages.at(-1).viewSession.H,7);
 });
+test('automatic mode keeps frozen horizon and history query while writing only the selection',async()=>{
+ const f=fixture(),old={H:60,T:20740,Z:'UTC',policyRevision:4};let session=old;
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),workspaceRevision:5,viewSession:session},navigation:[]}));await f.client.start();await drain();
+ const send=f.runtime.sendMessage,writes=[];f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_SET_HORIZON'){writes.push(m);session={...old,policyRevision:5};return Promise.resolve({ok:true,segment:3,viewSession:session,workspaceRevision:6});}return send(m);};
+ const result=await f.nav.onHorizonRequest({H:'auto',segment:3,anchorRefId:null});await drain();assert.equal(result.ok,true);assert.equal(writes.length,1);assert.equal(writes[0].H,'auto');assert.equal(writes[0].expectedRevision,5);assert.equal(writes[0].scope,undefined);assert.equal(f.calls.at(-1).query.segment,3);assert.deepEqual(f.pages.at(-1).viewSession,{...old,policyRevision:5});
+});
+test('automatic selection rejects a response which changes the frozen horizon',async()=>{
+ const f=fixture();f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),workspaceRevision:5,viewSession:{H:60,T:20740,Z:'UTC',policyRevision:4}},navigation:[]}));await f.client.start();await drain();
+ const send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_SET_HORIZON'?Promise.resolve({ok:true,segment:0,viewSession:{H:30,T:20740,Z:'UTC',policyRevision:5},workspaceRevision:6}):send(m);
+ assert.equal((await f.nav.onHorizonRequest({H:'auto',segment:0,anchorRefId:null})).reason,'invalid-horizon-response');assert.equal(f.pages.at(-1).viewSession.H,60);
+});
 test('another frame horizon change relocates existing date interval before publishing',async()=>{
  const f=fixture();let session={H:30,T:20740,Z:'UTC',policyRevision:0};f.setView(async m=>({ok:true,state:'ready',page:{...f.page(),workspaceRevision:5,viewSession:session,segment:m.query.segment??0},navigation:[]}));await f.client.start();await drain();await f.nav.onProjectionRequest({segment:2,offset:0,limit:8});
  session={...session,H:7,policyRevision:1};f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();assert.equal(f.calls.at(-1).query.segment,8);assert.equal(f.pages.at(-1).segment,8);

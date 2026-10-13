@@ -11,6 +11,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const framed=surface!==null;
   if(framed&&(!['workspace','sidebar'].includes(surface.role)||surface.root?.ownerDocument!==doc))throw Error('invalid-navigation-surface');
   const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,frameSearchOffset=0,frameSearchWaiting=false,frameWorkingSetOffset=0,frameWorkingSetWaiting=false,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
+  let settingsOpen=false;
   let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,projectionRequest=0,horizonPending=null,horizonError=null,workingSetPending=null,workingSetError=null;
   // Keep the original event target alive until its click, drop, or composition
   // completes. Coalesce updates instead of extending a debounce on each change.
@@ -169,7 +170,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     try{Promise.resolve(onProjectionRequest(query)).then(dto=>{if(dto&&run===projectionRequest&&!stopped&&frameProjection?.scope===scope&&dto.scope===scope)updateFrameProjection(dto);}).catch(()=>{});}catch{}
   }
   async function requestHorizon(value){
-    const H=Number(value);if(!frameProjection||surface.role!=='workspace'||typeof onHorizonRequest!=='function'||horizonPending||![7,14,30,60,90].includes(H))return;
+    const H=value==='auto'?'auto':Number(value);if(!frameProjection||surface.role!=='workspace'||typeof onHorizonRequest!=='function'||horizonPending||H!=='auto'&&![7,14,30,60,90].includes(H))return;
     const attempt={scope:frameProjection.scope};horizonPending=attempt;horizonError=null;
     const args={H,segment:view.segment,anchorRefId:current()?.ref?.id??null};requestRender();
     try{const result=await onHorizonRequest(args);if(horizonPending!==attempt||stopped||frameProjection?.scope!==attempt.scope)return;if(result?.ok!==true)throw Error('horizon-unavailable');}
@@ -236,7 +237,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       const outside=e=>{if(!e.composedPath().includes(popup)&&!e.composedPath().includes(trigger))closeMenu(false);};menu={n:popup,trigger,outside};trigger.setAttribute('aria-expanded','true');head.append(popup);doc.addEventListener('pointerdown',outside,true);popup.querySelector('button')?.focus();
     },'','square card-actions'),'more');trigger.dataset.focusKey='actions:'+g.id;trigger.setAttribute('aria-haspopup','menu');trigger.setAttribute('aria-expanded','false');head.append(trigger);}
   function focusState(){for(const root of [roots?.sidebar,roots?.workspace]){const n=root?.shadow?.activeElement;if(n?.dataset.focusKey)return {root,key:n.dataset.focusKey,start:n.selectionStart,end:n.selectionEnd};}return null;}
-  function restoreOwnedFocus(f){if(!f)return;const n=[...f.root.shadow.querySelectorAll('[data-focus-key]')].find(n=>n.dataset.focusKey===f.key);if(n){n.focus({preventScroll:true});if(n.setSelectionRange&&typeof f.start==='number')n.setSelectionRange(f.start,f.end);}else{(f.root.shadow.querySelector('[aria-label="较早的30日"]')??f.root.shadow.querySelector('.workspace'))?.focus({preventScroll:true});}}
+  function restoreOwnedFocus(f){if(!f)return;const key=f.key==='关闭设置'&&!settingsOpen?'workspace-settings':f.key;const n=[...f.root.shadow.querySelectorAll('[data-focus-key]')].find(n=>n.dataset.focusKey===key);if(n){n.focus({preventScroll:true});if(n.setSelectionRange&&typeof f.start==='number')n.setSelectionRange(f.start,f.end);}else{(f.root.shadow.querySelector('[aria-label="较早的30日"]')??f.root.shadow.querySelector('.workspace'))?.focus({preventScroll:true});}}
   function render(){if(!roots||!view)return;const focused=focusState();view.sidebarScroll=roots.sidebar?.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;closeMenu(false);
     const selected=current().selected;
     if(selected&&lastSelected!==adapter.currentURL()){view.sidebarOpen.add(selected.id);lastSelected=adapter.currentURL();selectionPending=true;}
@@ -256,14 +257,23 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(!roots.workspace){restoreOwnedFocus(focused);emitView();return;}
     const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-segment':String(view.segment)});roots.workspace.scroller=page;page.addEventListener('scroll',()=>{if(roots?.workspace?.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){view.scroll=page.scrollTop;emitView();}},{passive:true});
     const currentSlot=frameProjection&&searchQuery===null&&!view.worksetOpen?node(doc,'div',{}):null;if(currentSlot)page.append(currentSlot);
-    if(frameProjection&&surface.role==='workspace'&&typeof onHorizonRequest==='function'){
-      const toolbar=node(doc,'div',{class:'toolbar'}),label=node(doc,'label',{},'时间范围 '),select=node(doc,'select',{'aria-label':'工作空间时间范围','data-focus-key':'free-horizon'});
-      for(const H of [7,14,30,60,90])select.append(node(doc,'option',{value:String(H)},H+'天'));
-      select.value=String(frameProjection.viewSession.H);select.disabled=!!horizonPending;select.onchange=()=>{void requestHorizon(select.value);};label.append(select);toolbar.append(label);
-      if(horizonPending||horizonError)toolbar.append(node(doc,'span',{role:'status'},horizonPending?'正在更新时间范围…':horizonError));page.append(toolbar);
+    if(frameProjection&&surface.role==='workspace'){
+      const settingsScope=frameProjection.scope,settingsLive=()=>!stopped&&frameProjection?.scope===settingsScope;
+      const trigger=graphic(button('工作空间设置',()=>{if(!settingsLive())return;settingsOpen=!settingsOpen;requestRender();}),'more');trigger.setAttribute('aria-expanded',String(settingsOpen));trigger.dataset.focusKey='workspace-settings';page.append(trigger);
+      if(settingsOpen){
+        const settings=node(doc,'section',{'aria-label':'工作空间设置',class:'toolbar'});settings.append(node(doc,'strong',{},'工作空间设置'));
+        if(typeof onHorizonRequest==='function'){
+          const label=node(doc,'label',{},'时间范围 '),select=node(doc,'select',{'aria-label':'工作空间时间范围','data-focus-key':'free-horizon'}),policy=frameProjection.timePolicy;
+          select.append(node(doc,'option',{value:'auto'},'自动'));
+          for(const H of [7,14,30,60,90])select.append(node(doc,'option',{value:String(H)},H+'天'));
+          select.value=policy?.mode==='auto'?'auto':String(policy?.H??frameProjection.viewSession.H);select.disabled=!!horizonPending;select.onchange=()=>{if(settingsLive()&&settingsOpen)void requestHorizon(select.value);};label.append(select);settings.append(label,node(doc,'span',{},'当前范围：'+String(frameProjection.viewSession.H)+'天'));
+          if(horizonPending||horizonError)settings.append(node(doc,'span',{role:'status'},horizonPending?'正在更新时间范围…':horizonError));
+        }
+        if(typeof onBackupRequest==='function')settings.append(button('备份与导入',()=>{if(settingsLive()&&settingsOpen)onBackupRequest();}));
+        if(typeof onRecoveryRequest==='function')settings.append(button('本地数据恢复',()=>{if(settingsLive()&&settingsOpen)onRecoveryRequest();}));
+        settings.append(button('关闭设置',()=>{if(!settingsLive())return;settingsOpen=false;requestRender();}));page.append(settings);
+      }
     }
-    if(frameProjection&&typeof onBackupRequest==='function')page.append(button('备份与导入',()=>onBackupRequest()));
-    if(frameProjection&&typeof onRecoveryRequest==='function')page.append(button('本地数据恢复',()=>onRecoveryRequest()));
     if(frameProjection&&workingSetError)page.append(node(doc,'p',{role:'alert'},workingSetError));
     if(frameProjection&&searchQuery!==null){
       const section=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
@@ -319,7 +329,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function applyUpdate(value,now,timeZone,preparedIndex=null,alreadyPrepared=false){
     if(stopped)return;
     if(snapshot?.scope===value.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[value,now,timeZone,preparedIndex,alreadyPrepared];return;}
-    frameProjection=null;projectionRequest++;resetInteraction(true);sidebarDirty=true;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free'&&!alreadyPrepared)value=freeNavigationSnapshot(value);snapshot=value;
+    if(snapshot?.scope!==value.scope)settingsOpen=false;frameProjection=null;projectionRequest++;resetInteraction(true);sidebarDirty=true;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free'&&!alreadyPrepared)value=freeNavigationSnapshot(value);snapshot=value;
     if(!views.has(value.scope)){
       const initial=initialView(),v=value.view;
       if(v)Object.assign(initial,{segment:v.segment,oldOpen:new Set(v.oldOpen),sidebarOpen:new Set(v.sidebarOpen),capacities:new Map(v.capacities),scroll:v.scroll,sidebarVisible:v.sidebarVisible});
@@ -331,6 +341,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function updateFrameProjection(dto){
     if(stopped)return;if(!framed||dto?.protocol!=='vaiwl-free-frame/1'||dto.role!==surface.role||dto.completeSnapshot!==false||typeof dto.scope!=='string'||!dto.navigation||!Number.isSafeInteger(dto.segment)||dto.segment<0)throw Error('invalid-frame-projection');
+    const policy=dto.timePolicy;if(policy!==undefined&&(!policy||typeof policy!=='object'||Array.isArray(policy)||Object.keys(policy).sort().join(',')!=='H,mode,revision'||!['fixed','auto'].includes(policy.mode)||![7,14,30,60,90].includes(policy.H)||!Number.isSafeInteger(policy.revision)||policy.revision<0))throw Error('invalid-frame-time-policy');
     const c=dto.current;
     if(c!==undefined&&(!c||typeof c!=='object'||Array.isArray(c)||Object.keys(c).sort().join(',')!=='nativeUrl,projectId,refId'||typeof c.nativeUrl!=='string'||!c.nativeUrl.length||c.nativeUrl.length>2048||!['refId','projectId'].every(k=>c[k]===null||typeof c[k]==='string'&&c[k].length>0&&c[k].length<=128&&!/[\s\x00-\x1f]/.test(c[k]))))throw Error('invalid-frame-current');
     const cr=dto.currentRef;
@@ -345,7 +356,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame'];return;}
     const scopeChanged=snapshot?.scope!==dto.scope;const copy=structuredClone(dto);resetInteraction(true);sidebarDirty=true;remember();
     if(snapshot?.scope!==copy.scope){horizonPending=null;horizonError=null;detach();searchQuery=null;searchTheme=null;projectionRequest++;}
-    if(scopeChanged){workingSetPending=null;workingSetError=null;}projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
+    if(scopeChanged){settingsOpen=false;workingSetPending=null;workingSetError=null;}projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
     // Presentation-only metadata. This intentionally has no complete refs/index
     // and never enters the prepared Free snapshot or full-snapshot update path.
     snapshot={scope:copy.scope,viewMode:'free',viewSession:copy.viewSession,preferences:{}};
@@ -355,7 +366,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function update(value,now,timeZone,preparedIndex=null){if(value?.protocol==='vaiwl-free-frame/1')throw Error('frame-projection-requires-explicit-consumer');return applyUpdate(value,now,timeZone,preparedIndex);}
   function updatePreparedFree(value,now,timeZone,preparedIndex=null){assertPreparedFreeSnapshot(value);return applyUpdate(value,now,timeZone,preparedIndex,true);}
-  function invalidate(reason='binding-invalidated'){workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
+  function invalidate(reason='binding-invalidated'){settingsOpen=false;workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
   function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);for(const[type,handler]of Object.entries(interactionHandlers))doc.removeEventListener(type,handler,true);win.removeEventListener?.('blur',windowBlur);if(!framed)restoreFocus();status={state:'STOPPED'};adapter.status(status);}
   function present(intent){if(intent?.kind==='show-workspace')showWorkspace(false);else if(intent?.kind==='enter-reading')enterReading(false);else if(intent?.kind==='search-known')findKnown(intent.themeId??null,false);else if(intent?.kind==='show-working-set')showWorkingSet(false);else return false;return true;}
   return Object.freeze({present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});

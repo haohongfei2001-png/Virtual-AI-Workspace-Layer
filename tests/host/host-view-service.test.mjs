@@ -266,3 +266,29 @@ test('MOCK_IDB authorized recovery repairs native root and restarts failed share
  assert.equal((await rpc('HOST_UI_RECOVER',repair)).ok,false,'RAM plan is consumed');
  h.service.stop();assert.equal((await rpc('HOST_UI_RECOVERY_STATUS')).ok,false);
 });
+test('MOCK_IDB enabling auto preserves chosen H and frozen T/Z while publishing policy mode to both frames',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();const first=await ready(h);
+ const fixed=await h.horizon('workspace',{operationId:'choose_fixed_60',expectedRevision:first.page.workspaceRevision,H:60,segment:3});assert.equal(fixed.ok,true,JSON.stringify(fixed));const before=await ready(h),scope=workspaceScope(h),assets=(await h.workspaces.read(scope)).state;
+ const automatic=await h.horizon('sidebar',{operationId:'enable_auto',expectedRevision:before.page.workspaceRevision,H:'auto',segment:3});assert.equal(automatic.ok,true,JSON.stringify(automatic));assert.equal(automatic.viewSession.H,60);assert.equal(automatic.viewSession.T,before.page.viewSession.T);assert.equal(automatic.viewSession.Z,before.page.viewSession.Z);assert.equal(automatic.viewSession.policyRevision,before.page.viewSession.policyRevision+1);assert.equal(automatic.segment,3);
+ for(const role of ['workspace','sidebar']){const page=(await ready(h,role)).page;assert.deepEqual(page.viewSession,automatic.viewSession);assert.deepEqual(page.timePolicy,{mode:'auto',H:60,revision:automatic.viewSession.policyRevision});}
+ const after=(await h.workspaces.read(scope)).state,policy=after.preferences.freeTimePolicy;assert.equal(policy.owner,'human');assert.equal(policy.value.mode,'auto');assert.equal(policy.value.lastChangedDay,before.page.viewSession.T);assert.equal(policy.value.lastEvaluatedDay,null);assert.equal(policy.value.recommendation,null);assert.equal(policy.value.confirmations,0);for(const key of ['refs','workspaces','placements','identities','sources','events','coverage'])assert.deepEqual(after[key],assets[key]);
+});
+test('MOCK_IDB repeated auto enable requires fresh CAS and does not run density evaluation or change H',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();const initial=await ready(h);const a=await h.horizon('workspace',{H:'auto',operationId:'auto_first',expectedRevision:initial.page.workspaceRevision});assert.equal(a.ok,true,JSON.stringify(a));await ready(h);
+ const stale=await h.horizon('sidebar',{H:'auto',operationId:'auto_stale',expectedRevision:initial.page.workspaceRevision});assert.equal(stale.ok,false);assert.equal(stale.reason,'revision-conflict');const current=await ready(h);const b=await h.horizon('sidebar',{H:'auto',operationId:'auto_second',expectedRevision:current.page.workspaceRevision});assert.equal(b.ok,true,JSON.stringify(b));assert.equal(b.viewSession.H,a.viewSession.H);assert.equal(b.viewSession.T,a.viewSession.T);assert.equal(b.viewSession.Z,a.viewSession.Z);assert.equal(b.viewSession.policyRevision,a.viewSession.policyRevision+1);const policy=(await h.workspaces.read(workspaceScope(h))).state.preferences.freeTimePolicy.value;assert.equal(policy.lastEvaluatedDay,null);assert.equal(policy.confirmations,0);
+ const latest=await ready(h);const fixed=await h.horizon('workspace',{H:14,operationId:'return_fixed',expectedRevision:latest.page.workspaceRevision});assert.equal(fixed.ok,true);assert.equal((await ready(h)).page.timePolicy.mode,'fixed');assert.equal(fixed.viewSession.H,14);
+});
+test('MOCK_IDB auto cannot accept page chosen policy fields or scope and rejects parent sender',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();const initial=await ready(h),scope=workspaceScope(h),before=(await h.workspaces.read(scope)).state;
+ for(const [extra,sender]of [[{mode:'auto'}],[{policy:{H:7,revision:99}}],[{scope:'fake'}],[{H:'AUTO'}],[{},h.sender]])assert.equal((await h.horizon('workspace',{H:'auto',expectedRevision:initial.page.workspaceRevision,...extra},sender)).ok,false);
+ assert.deepEqual((await h.workspaces.read(scope)).state,before);
+});
+test('MOCK_IDB auto enable loses authority before delayed CAS and cannot mutate saved policy',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();const initial=await ready(h),scope=workspaceScope(h),before=(await h.workspaces.read(scope)).state,original=h.workspaces.command.bind(h.workspaces);let entered=false,release;const held=new Promise(r=>release=r);h.workspaces.command=async(...args)=>{entered=true;await held;return original(...args);};
+ const pending=h.horizon('workspace',{H:'auto',expectedRevision:initial.page.workspaceRevision});for(let i=0;i<50&&!entered;i++)await drain();assert.equal(entered,true);h.switchPrincipal('auto_revoked');release();assert.equal((await pending).ok,false);assert.deepEqual((await h.workspaces.read(scope)).state,before);
+});
+test('MOCK_IDB auto policy change records current local day across midnight while historical T/Z remain frozen',async t=>{
+ const h=await fixture(t);h.setTime(Date.parse(NOW)-10000);await h.bind();await h.observe();await h.mount();const initial=await ready(h);assert.equal(initial.state,'ready');h.setTime(Date.parse(NOW)+1000);
+ const result=await h.horizon('workspace',{H:'auto',operationId:'auto_after_midnight',expectedRevision:initial.page.workspaceRevision,segment:2});assert.equal(result.ok,true,JSON.stringify(result));assert.equal(result.viewSession.T,initial.page.viewSession.T);assert.equal(result.viewSession.Z,initial.page.viewSession.Z);assert.equal(result.viewSession.H,initial.page.viewSession.H);assert.equal(result.segment,2);
+ const policy=(await h.workspaces.read(workspaceScope(h))).state.preferences.freeTimePolicy.value;assert.equal(policy.lastChangedDay,initial.page.viewSession.T+1);assert.equal(policy.lastEvaluatedDay,null);assert.deepEqual((await ready(h)).page.viewSession,result.viewSession);
+});
