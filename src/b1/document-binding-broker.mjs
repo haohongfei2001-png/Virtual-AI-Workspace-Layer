@@ -156,7 +156,9 @@ export function createDocumentBindingBroker({
        slot.scope.key!==scope.key||message.seq<=slot.seq)return deny('stale-binding');
     // Every request observes a strictly increasing sequence.
     slot.seq=message.seq;
-    if(['CHECK','B23_FREE_HEADER','B23_FREE_PAGE','B23_SYNTHETIC_SEND','UPSERT_REF'].includes(message.type))freeRuntime?.prioritizeForeground?.(slot.leaseId);
+    const priority=['CHECK','B23_FREE_HEADER','B23_FREE_PAGE','B23_SYNTHETIC_SEND','UPSERT_REF'].includes(message.type);
+    const releaseForeground=priority?(freeRuntime?.beginForeground?freeRuntime.beginForeground(slot.leaseId):freeRuntime?.prioritizeForeground?.(slot.leaseId)):null;
+    try{
     if(message.type==='CHECK'){
       try{const version=workspaceRepository?.version?await workspaceRepository.version(scope,{guard:()=>fresh(st,slot),signal:slot.abort.signal}):{};
         if(!(await currentAuthority(st,slot,doc,sender)))return deny('stale-after-workspace');
@@ -228,6 +230,7 @@ export function createDocumentBindingBroker({
       }
     }catch(e){return deny(e?.message||'repository-failure');}
     return deny('unsupported');
+    }finally{if(typeof releaseForeground==='function')releaseForeground();}
   }
   async function notificationTarget(leaseId){
     for(const st of states.values()){

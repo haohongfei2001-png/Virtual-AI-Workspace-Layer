@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第三十一轮：原生写取消共享根事务外预读，旧格式仅在原子中止后迁移重试一次；缺根/损坏/撤权/CAS检查保留。最终733项Node、真实IDB两类容量迁移及9项MV3通过。100k功能通过但2138.3/2161.2/1945.2ms仍FAIL且较上次慢。远端最后确认 `3e88682`；0ab58f0推送HTTP2失败、一次限时HTTP1.1补救超时，之后提交尚未同步。Free及发布验收未完成。
+当前已推进至第三十二轮：后台补录暂停覆盖整个前台RPC生命周期，最后请求结束后才开始安静期。最终753项Node、真IDB客户端4项及MV3 9项通过；正常100k1772.9/2107.1/1966.8ms均仍1秒FAIL。API再次确认远端Draft PR16为 `3e88682`，后续本地提交未同步；具体HEAD以Git为准。Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -393,3 +393,11 @@ CHECK/HEADER/PAGE/SEND/UPSERT优先取消补录的独立子signal，主binding�
 正常无采样100k三发送功能3/3、源码hash稳定，2138.3/2161.2/1945.2ms均1秒FAIL，比Round28更慢，不能声称端到端提速。每次1发送/event/hint，fullread0，阅读/草稿保持。下一可执行检查：foreground优先目前从请求开始设1秒安静期，长RPC结束前后台可能恢复；需按实际请求生命周期维持暂停，不人为延后测试起点。
 
 包 `/private/tmp/vaiwl-free-delivery-round31-20261013/vaiwl-free-synthetic-only.zip` SHA256 `cf68596a32a092d3a7bd1e89f3f1deb631c9fdf2d4d90a12259a67ea002cf535`，仍SYNTHETIC_ONLY。Git正常推送0ab58f0报HTTP2 framing，一次命令级HTTP1.1补救45秒超时后停止；最后API确认Draft PR16 head3e88682。未改remote/config、未force/merge/deploy。真实源/账户、PAIA、物理及真人条件仍缺，完整Free未交付。
+
+## 第三十二轮：后台暂停覆盖完整前台请求
+
+从d182aeb继续。新增beginForeground幂等release与活动计数；broker CHECK/HEADER/PAGE/SEND/UPSERT以finally释放，成功、错误、权限失效均覆盖。所有活动RPC结束后才开始1秒quiet，期间不启动后台或轮询timer；stop/rebind旧release不影响新绑定，终态degraded/partial不会自动循环。旧瞬时prioritize接口保持。
+
+最终完整Node753/0/0skip，含7项runtime与13项broker生命周期反例。真headless/IDB客户端4/4：持有后台真实事务，前台使其abort；前台CHECK挂起1250ms仍无后台重启，释放后补录并保持Pro、草稿、阅读；账号切换仍取消旧scope。MV3 9/9。正常100k功能3/3、hash稳定，1772.9/2107.1/1966.8ms仍1秒FAIL；fullread0、各1事件/hint/消息，未在测量前等待后台静止。
+
+包 `/private/tmp/vaiwl-free-delivery-round32-20261013/vaiwl-free-synthetic-only.zip` SHA256 `e0b9d556a884d73d862bcc2613d23f45b98ae087e03ccab2586372e5b4504a1b`。只读API再次确认Draft PR16 head3e88682；未重复推送失败端点，后续本地提交尚未同步。剩余本地F1热点：HEADER独立只读等待及页面组装/索引协作调度，先证据判断再改，不减少安全校验。真实账户/来源/PAIA/物理/真人条件保持，完整Free未完成。

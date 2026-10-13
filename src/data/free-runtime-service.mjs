@@ -83,6 +83,19 @@ export class FreeRuntimeService {
    return {snapshot:result.snapshot,calibration:result.calibration.then(value=>this.active(entry)?value:{status:'cancelled',reason:'stale-binding'})};
   }catch(error){if(!this.active(entry))return {snapshot:null,calibration:Promise.resolve({status:'cancelled',reason:'stale-binding'})};throw error;}
  }
+ beginForeground(bindingId){
+  const entry=this.get(bindingId);if(!entry||!this.referenceRepository)return ()=>{};
+  entry.foregroundRequests=(entry.foregroundRequests??0)+1;
+  this.prioritizeForeground(bindingId);
+  let released=false;
+  return ()=>{
+   if(released)return;released=true;
+   entry.foregroundRequests--;
+   if(this.get(bindingId)!==entry||entry.foregroundRequests)return;
+   entry.referencesNotBefore=Date.now()+1000;
+   if(entry.referencesDirty||!entry.referenceFinished)this.scheduleReferenceResume(entry);
+  };
+ }
  prioritizeForeground(bindingId){
   const entry=this.get(bindingId);if(!entry||!this.referenceRepository)return;
   entry.referencesNotBefore=Date.now()+1000;
@@ -93,6 +106,8 @@ export class FreeRuntimeService {
  }
  scheduleReferenceResume(entry){
   if(entry.referenceTimer!==undefined)this.timers.clearTimeout(entry.referenceTimer);
+  entry.referenceTimer=undefined;
+  if(entry.foregroundRequests)return;
   entry.referenceTimer=this.timers.setTimeout(()=>{
    entry.referenceTimer=undefined;if(this.active(entry))this.reconcileReferences(entry.id);
   },Math.max(1,(entry.referencesNotBefore??0)-Date.now()));
@@ -101,7 +116,7 @@ export class FreeRuntimeService {
   const entry=this.get(bindingId);if(!entry||!this.referenceRepository)return Promise.resolve({status:'unsupported'});
   if(restart)entry.referencesDirty=true;
   if(entry.referenceTask)return entry.referenceTask;
-  if(Date.now()<(entry.referencesNotBefore??0)){
+  if(entry.foregroundRequests||Date.now()<(entry.referencesNotBefore??0)){
    if(!entry.referenceFinished||entry.referencesDirty)this.scheduleReferenceResume(entry);
    return Promise.resolve({status:'deferred'});
   }
