@@ -1,3 +1,4 @@
+import {createNativeContinuation,validateNativeContinuation,continuationDirectoryKey,emptyContinuationDirectory,validateContinuationDirectory,updateContinuationDirectory} from './native-observation-continuation.mjs';
 import {migrateNativeVersionIndex} from './native-index-migration.mjs';
 import {saveIndexedNativePieces} from './native-index-writer.mjs';
 import {NATIVE_INDEX_FORMAT,validateNativeIndexRoot} from './native-version-index.mjs';
@@ -13,6 +14,16 @@ const record = (key, payload) => ({key, payload, checksum: digest(payload)});
 function unpack(row) {
   if (!row || row.checksum !== digest(row.payload)) throw Error('corrupt-native-record');
   return row.payload;
+}
+const continuationMarkerKey=key=>JSON.stringify([key,'native-continuations','marker']);
+function continuationDirectory(directoryRow,markerRow,scope,nativeMarkerRow){
+  const witness=nativeMarkerRow?unpack(nativeMarkerRow).continuations:null;
+  if(!directoryRow&&!markerRow){if(witness)throw Error('missing-native-continuation-directory');return null;}
+  if(!directoryRow||!markerRow)throw Error('missing-native-continuation-directory');
+  const directory=validateContinuationDirectory(unpack(directoryRow),scope),marker=unpack(markerRow);
+  if(Object.keys(marker).sort().join(',')!=='directoryDigest,revision'||marker.revision!==directory.revision||marker.directoryDigest!==digest(directory))throw Error('native-continuation-directory-conflict');
+  if(!witness||Object.keys(witness).sort().join(',')!=='directoryDigest,revision'||witness.revision!==directory.revision||witness.directoryDigest!==digest(directory))throw Error('native-continuation-root-witness-conflict');
+  return directory;
 }
 function fence({guard = () => true, signal} = {}) {
   if (signal?.aborted || guard() !== true) throw Error('stale-binding');
@@ -228,7 +239,7 @@ export class NativeRepository {
               next.changes = [];
               if(indexed)validateNativeIndexRoot(next,normalized);else validateNativeManifest(next, normalized);
               store.put(nativeRecord(normalized.key, next)); store.put(nativeRecord(nativeRecoveryKey(normalized.key), next));
-              ops.put(record(normalized.key, {revision: next.revision}));
+              ops.put(record(normalized.key, {...unpack(marker.result),revision: next.revision}));
               ops.put(record(key, {kind: 'RECOVER_NATIVE', fingerprint: damagedHash, revision: next.revision, operationId}));
               fence(options);
               result = {ok: true, revision: next.revision, operationId, evidenceInvalidated: true};
@@ -255,12 +266,20 @@ export class NativeRepository {
     const normalized = this.base.scopeOrThrow(scope);
     const host = this.hostObservationGate?.(normalized,request);
     const authority = host ?? this.observationGate?.(normalized);
+    if(Object.hasOwn(request,'continuation'))throw Error('untrusted-native-continuation');
+    request=structuredClone(request);
     if (host ? host.channel!=='host-dom'||typeof host.guard!=='function'||host.guard()!==true : authority?.channel !== 'synthetic') throw Error('untrusted-native-source');
-    const witness = {channel: authority.channel, sourceId: authority.sourceId, generation: authority.generation,...(host?{admission:host.admission}:{})};
+    const witness = {channel: authority.channel, sourceId: authority.sourceId, generation: authority.generation,...(host?{admission:structuredClone(host.admission)}:{})};
     if(host){const original=options;options={...original,guard:()=>host.guard()===true&&(original.guard?.()??true)===true};}
     id(witness.sourceId);
     id(witness.generation);
-    const apply=()=>this.mutate(normalized, request, {kind: 'APPLY_NATIVE_OBSERVATIONS', ...witness, batch: request.batch},
+    let continuation=null;
+    if(host?.continuation){
+      const admission=structuredClone(host.continuationAdmission);
+      if(!admission||admission.profileId!==witness.admission.profileId||admission.profileVersion!==witness.admission.profileVersion)throw Error('native-continuation-profile-mismatch');
+      continuation=createNativeContinuation({scope:normalized,operationId:request.operationId,nativeRevision:request.expectedRevision+1,authority:{...witness,admission},proposal:structuredClone(host.continuation),now:this.clock()});
+    }
+    const apply=()=>this.mutate(normalized, request, {kind: 'APPLY_NATIVE_OBSERVATIONS', ...witness, batch: request.batch,...(continuation?{continuation}:{})},
       current => applyNativeObservations(current, request.batch, {scope: normalized, ...witness, now: this.clock()}), options);
     const result=await apply();
     // The write transaction already reads and validates the shared root. Only a
@@ -273,6 +292,24 @@ export class NativeRepository {
     return result;
   }
 
+  /** Owner-only pending observations; reading these records grants no replay authority. */
+  async listContinuations(scope,options={}){
+    const normalized=this.base.scopeOrThrow(scope),db=await this.base.open();fence(options);
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction('native_operations'),store=tx.objectStore('native_operations'),request=store.get(continuationDirectoryKey(normalized.key)),marker=store.get(continuationMarkerKey(normalized.key)),nativeMarker=store.get(normalized.key);let rows=[],error;
+      const fail=value=>{error=value;try{tx.abort();}catch{}};
+      nativeMarker.onsuccess=()=>{try{
+        fence(options);const directory=continuationDirectory(request.result,marker.result,normalized,nativeMarker.result);if(!directory)return;
+        for(const [operationId,size]of Object.entries(directory.entries)){
+          const receipt=store.get(JSON.stringify([normalized.key,operationId]));
+          receipt.onsuccess=()=>{try{fence(options);const prior=unpack(receipt.result),row=validateNativeContinuation(prior.continuation,normalized);if(prior.operationId!==operationId||row.operationId!==operationId||prior.revision!==row.nativeRevision||new TextEncoder().encode(JSON.stringify(row)).length!==size)throw Error('native-continuation-directory-conflict');rows.push(row);}catch(failure){fail(failure);}};
+        }
+      }catch(failure){fail(failure);}};
+      tx.oncomplete=()=>{try{fence(options);resolve(rows);}catch(failure){reject(failure);}};
+      tx.onabort=()=>reject(error??tx.error??Error('native-continuation-read-aborted'));
+    });
+  }
+
   async invalidate(scope, request, options = {}) {
     id(request.sourceId);
     return this.mutate(scope, request, {kind: 'INVALIDATE_NATIVE_SOURCE', sourceId: request.sourceId},
@@ -283,6 +320,7 @@ export class NativeRepository {
     const normalized = this.base.scopeOrThrow(scope);
     id(operationId);
     if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0) throw Error('invalid-revision');
+    command=structuredClone(command);
     const fingerprint = digest({command, expectedRevision}), db = await this.base.open();
     fence(options);
     return new Promise(resolve => {
@@ -325,17 +363,23 @@ export class NativeRepository {
                       check();
                       const next = reduce(partial);
                       check();
-                      const publish=()=>{
+                      const publishNow=(directory=null)=>{
                         try {check();if(indexReader)saveIndexedNativePieces(states,normalized,next,storage,command,indexReader,row=>this.#verifyCheckpoint(row,normalized),check,failure=>abort(failure.message));
                           else saveNativePieces(states, normalized, partial, next, storage, command,row=>this.#verifyCheckpoint(row,normalized));
                           // This exact envelope was verified above in the same CAS transaction.
                           // The reducer clones its input; only rekey the unchanged prior payload.
                           // saveNativePieces queued the older checkpoint GC read before this put.
                           if(payload?.revision)states.put({...request.result,key:nativeCheckpointKey(normalized.key)});
-                          operations.put(record(normalized.key, {revision: next.revision}));
-                          operations.put(record(operationKey, {fingerprint, revision: next.revision, operationId,...(command.channel==='host-dom'?{admission:structuredClone(command.admission)}:{})}));
+                          operations.put(record(normalized.key, {...(marker.result?unpack(marker.result):{}),revision: next.revision,...(directory?{continuations:{revision:directory.revision,directoryDigest:digest(directory)}}:{})}));
+                          operations.put(record(operationKey, {fingerprint, revision: next.revision, operationId,...(command.channel==='host-dom'?{admission:structuredClone(command.admission)}:{}),...(command.continuation?{continuation:structuredClone(command.continuation)}:{})}));
+                          if(directory){operations.put(record(continuationDirectoryKey(normalized.key),directory));operations.put(record(continuationMarkerKey(normalized.key),{revision:directory.revision,directoryDigest:digest(directory)}));}
                           check();result = {ok: true, replayed: false, revision: next.revision, operationId};
                         }catch(failure){abort(failure.message);}
+                      };
+                      const publish=()=>{
+                        if(!command.continuation){publishNow();return;}
+                        const queued=operations.get(continuationDirectoryKey(normalized.key)),queueMarker=operations.get(continuationMarkerKey(normalized.key));
+                        queueMarker.onsuccess=()=>{try{check();const directory=continuationDirectory(queued.result,queueMarker.result,normalized,marker.result)??emptyContinuationDirectory(normalized);if(command.continuation.nativeRevision!==next.revision)throw Error('native-continuation-revision-mismatch');publishNow(updateContinuationDirectory(directory,command.continuation,normalized));}catch(failure){abort(failure.message);}};
                       };
                       if(this.shared&&command.batch){
                         const refs=command.batch.refs.map(row=>({...row,projectId:next.membership[row.id]?.state==='PROJECT'?next.membership[row.id].projectId:null}));

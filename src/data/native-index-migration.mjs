@@ -29,7 +29,7 @@ export async function migrateNativeVersionIndex(owner,scope,{operationId,expecte
     let old=null;try{if(checkpoint.result?.key===nativeCheckpointKey(normalized.key))old=owner.verifiedRoot({...checkpoint.result,key:normalized.key},normalized);}catch{}
     if(isNativePartitioned(old))for(const kind of ['projects','refs'])for(const [key,version] of Object.entries(old[kind]))if(version!==payload[kind][key]){fence();store.delete(nativePartitionKey(normalized.key,kind,key,version));}
     store.put({...root.result,key:nativeCheckpointKey(normalized.key)});store.put(rootRecord);store.put({...rootRecord,key:nativeRecoveryKey(normalized.key)});
-    ops.put(nativeRecord(normalized.key,{revision:built.root.revision}));ops.put(nativeRecord(operationKey,{kind:'MIGRATE_NATIVE_VERSION_INDEX',fingerprint,revision:built.root.revision,operationId}));fence();result={ok:true,revision:built.root.revision,operationId};
+    ops.put(nativeRecord(normalized.key,{...nativeUnpack(marker.result),revision:built.root.revision}));ops.put(nativeRecord(operationKey,{kind:'MIGRATE_NATIVE_VERSION_INDEX',fingerprint,revision:built.root.revision,operationId}));fence();result={ok:true,revision:built.root.revision,operationId};
    }catch(error){abort(error.message);}},error=>abort(error.message));
   }catch(error){abort(error.message);}};
   tx.oncomplete=()=>{signal?.removeEventListener('abort',onRevoke);try{fence();resolve(result);}catch{resolve({ok:false,reason:'stale-after-commit',committed:true});}};

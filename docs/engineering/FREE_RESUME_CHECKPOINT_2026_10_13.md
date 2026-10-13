@@ -909,3 +909,14 @@ FreeEvidenceRepository新增原request身份的私有host gate；来源/ACK prof
 完整1844/1844 Node通过、0失败/跳过；真实headless Chrome IndexedDB六项PASS（重开、去重、60天自然老化、整库CAS回滚、损坏恢复撤源/Pro人工作品、跨scope撤权）；实际构建包LEGACY八旅程PASS。两个浏览器报告sourceChangedDuringRun=false。IDB测试明确使用合成WeakMap authority，未认证production本人ACK。首轮全量四个旧simulator打包依赖缺失失败保留，补上新共享validator到原构建器静态图后通过，不削弱依赖校验。
 
 生产入口仍默认无host evidence admission，读侧默认拒不支持的活动来源；当前对象/作者/ACK核验与有界continuation尚待接通，不能把纯候选或测试gate称真实发送。远端PR16 API最后确认仍7122447，本地87/88检查点push曾遇low-speed超时；未强推/更改origin。Free未完成、NOT_RELEASE_READY，旧4x100k与真实G/U条件保持。
+
+
+## Round90：原事务原子保存观察continuation
+
+在7c18f9a继续。NativeRepository.apply仅接纳私有host gate独立continuationAdmission及payload；外部request.continuation拒绝。native表面admission与活动ACK admission分开，profile/source/generation严格匹配，语义指纹不含观察时间，完整payload另做digest。acceptedAt保持owner首次接纳值，延迟构造不改时间；原request及gate payload在首次await前快照。
+
+既有native_states/native_operations和共享引用同事务保存native delta、原操作receipt中的pending-evidence，以及有界目录；单记录UTF8≤64KiB、scope≤256条且≤1MiB。无continuation的普通路径不多读目录。目录/queue marker/native根marker三方校验，双丢目录和queue marker也拒绝空队列；普通写、撤源、损坏恢复及索引迁移保留根关联。read/list仅结构校验，不恢复scope/ACK许可。
+
+完整Node1866/1866、0失败/跳过；真实headless IndexedDB六项PASS：CAS全库回滚、事务内guard失效无半写、native/shared/pending同存、单次回放与close/reopen、撤源保留待办、根损坏恢复保留待办及Pro。实际构建包LEGACY八旅程PASS；各报告sourceChangedDuringRun=false。真实IDB权限仍为显式合成WeakMap替身，未声称生产ACK、worker补写或完成状态已经通过。
+
+下一项是同源未撤销且重新取得scope许可后，将pending补入现有EvidenceRepository，再原子标complete；来源变更/撤销转needs-revalidation并保留最小目标，不重发原生操作。该处理尚未实现，本轮只完成不丢窗口的原子待办，不标整体continuation完成。当前对象/body/本人ACK、恢复界面、C1/C2与J/G/U仍有差额，旧4x100k失败保持。正常push再次low-speed超时（含使用Git默认HTTP协议），不循环重试、不更改origin；远端最后API确认7122447。Free未完成、NOT_RELEASE_READY。
