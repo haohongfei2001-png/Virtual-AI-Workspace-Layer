@@ -18,7 +18,9 @@ export async function migrateNativeVersionIndex(owner,scope,{operationId,expecte
    if(payload.format===NATIVE_INDEX_FORMAT){result={ok:true,alreadyIndexed:true,revision:payload.revision,operationId};return;}
    if(!isNativePartitioned(payload))throw Error('native-index-migration-requires-partitioned-root');
    loadNativePieces(store,payload,normalized,{projects:Object.keys(payload.projects),refs:Object.keys(payload.refs)},()=>{try{
-    fence();const built=buildNativeVersionIndex({...payload,revision:payload.revision+1,changes:[]},normalized);
+    // Structural migration changes no native piece versions. Record that fact
+    // so the next write need not reconcile every unchanged legacy ID.
+    fence();const built=buildNativeVersionIndex({...payload,revision:payload.revision+1,changes:[{revision:payload.revision+1,projects:[],refs:[]}]},normalized);
     for(const record of built.records){fence();store.put(record);}
     const rootRecord=nativeRecord(normalized.key,built.root);
     // Retire only native versions referenced by the superseded old checkpoint.

@@ -84,12 +84,12 @@ export class NativeRepository {
     const normalized = this.base.scopeOrThrow(scope), db = await this.base.open();
     fence(options);
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(['native_states', 'native_operations']); let revision = 0, manifest = null, error;
+      const tx = db.transaction(['native_states', 'native_operations']); let revision = 0, manifest = null, storageFormat = null, error;
       const request = tx.objectStore('native_states').get(normalized.key);
       request.onsuccess = () => {
         try {
           if (request.result) {
-            const value = this.verifiedRoot(request.result, normalized);
+            const value = this.verifiedRoot(request.result, normalized);storageFormat=value.format??null;
             if(value?.format===NATIVE_INDEX_FORMAT)createNativeIndexReader(tx.objectStore('native_states'),value,normalized,failure=>{error=failure;tx.abort();}).all(value=>{manifest=value;});
             else if (isNativePartitioned(value)) manifest = value;
             revision = (manifest ?? value).revision;
@@ -101,12 +101,22 @@ export class NativeRepository {
           };
         } catch (failure) {error = failure;tx.abort();}
       };
-      tx.oncomplete = () => {try {fence(options);resolve({revision,manifest});} catch (failure) {reject(failure);}};
+      tx.oncomplete = () => {try {fence(options);resolve({revision,manifest,storageFormat});} catch (failure) {reject(failure);}};
       tx.onabort = () => reject(error ?? tx.error ?? Error('native-read-aborted'));
     });
   }
 
-  async version(scope, options = {}) { return (await this.header(scope, options)).revision; }
+  // Version is a root/marker fence, not an inventory or piece-integrity claim.
+  // PAGE/HEADER continue to verify every bucket/piece required by their result.
+  async version(scope, options = {}) {
+    const normalized=this.base.scopeOrThrow(scope),db=await this.base.open();fence(options);
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(['native_states','native_operations']),root=tx.objectStore('native_states').get(normalized.key),marker=tx.objectStore('native_operations').get(normalized.key);let revision=0,error;
+      marker.onsuccess=()=>{try{fence(options);const value=root.result?this.verifiedRoot(root.result,normalized):null;revision=value?.revision??0;if(!value&&marker.result)throw Error('missing-native-root');if(marker.result?unpack(marker.result).revision!==revision:revision!==0)throw Error('native-root-revision-conflict');}catch(failure){error=failure;tx.abort();}};
+      tx.oncomplete=()=>{try{fence(options);resolve(revision);}catch(failure){reject(failure);}};
+      tx.onabort=()=>reject(error??tx.error??Error('native-read-aborted'));
+    });
+  }
 
   async page(scope, {revision = null, offset = 0, limit = 500, ids = null} = {}, options = {}) {
     if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 5000) throw Error('invalid-native-page');

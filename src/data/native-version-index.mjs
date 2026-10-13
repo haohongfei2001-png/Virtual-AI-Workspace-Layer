@@ -1,3 +1,4 @@
+import {VerifiedRecordCache} from './verified-record-cache.mjs';
 import {digest,stable} from './hash.mjs';
 import {id,exact} from './state.mjs';
 import {validateNativeManifest,NATIVE_PARTITION_FORMAT,nativeRecord,nativeUnpack} from './native-partitions.mjs';
@@ -24,10 +25,18 @@ export function validateNativeIndexRoot(root,scope){
  validateNativeManifest({...root,format:NATIVE_PARTITION_FORMAT,projects:{},refs:{}},scope);
  if(stable(root).length>16*1024*1024)throw Error('native-manifest-too-large');return root;
 }
+// Bounded byte-validation cache only: each newly read payload is fully encoded
+// and compared. Scope, physical identity and directory count remain contextual.
+// No facts, IDB records or source permissions survive a read through this cache.
+const indexPieceValidation=new VerifiedRecordCache({maxEntries:512,maxChars:8*1024*1024});
 export function verifyNativeIndexPiece(record,root,kind,bucket){
  if(!kinds.includes(kind))throw Error('invalid-native-index-kind');bucketId(bucket);
  const pointer=root[kind][bucket];if(!pointer)throw Error('missing-native-index-pointer');
  if(record?.key!==nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision))throw Error('native-index-key-mismatch');
+ const context=JSON.stringify([root.scopeKey,kind,bucket,pointer.revision,pointer.count]);
+ return indexPieceValidation.read(record,context,()=>validateIndexPiece(record,root,kind,bucket,pointer));
+}
+function validateIndexPiece(record,root,kind,bucket,pointer){
  const payload=nativeUnpack(record);exact(payload,['scopeKey','kind','bucket','revision','versions','ordinals']);
  if(payload.scopeKey!==root.scopeKey||payload.kind!==kind||payload.bucket!==bucket||payload.revision!==pointer.revision)throw Error('native-index-context-mismatch');
  const rows=payload.versions;if(!rows||typeof rows!=='object'||Array.isArray(rows))throw Error('invalid-native-index-rows');

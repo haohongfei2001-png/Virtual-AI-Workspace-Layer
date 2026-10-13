@@ -66,10 +66,21 @@ function nativeManifestRecord(key,manifest,scope){
 export function loadNativePieces(store, manifest, scope, wanted, done, fail, lookup = null) {
   const facts = nativeHeader(manifest, scope), pieces = new Map();
   const requested = new Set();
+  const order=lookup?{projects:[...wanted.projects],refs:[...wanted.refs]}:null;
   let waiting = 0, launching = true, failed = false;
   const finish = () => {
     if (!waiting && !launching && !failed) {
-      try { validateNativeFacts(facts, scope); done(facts, {manifest, pieces}); } catch (error) { failed = true; fail(error); }
+      try {
+        if(order){
+          // Bucket callbacks can finish in a different order from the caller's
+          // IDs. Preserve stable native navigation order across warm/cold reads.
+          const ordered=(table,keys)=>Object.fromEntries([...new Set(keys)].filter(key=>Object.hasOwn(table,key)).map(key=>[key,table[key]]));
+          facts.refs=ordered(facts.refs,order.refs);facts.membership=ordered(facts.membership,order.refs);
+          const dependencies=Object.values(facts.membership).filter(row=>row.state==='PROJECT').map(row=>row.projectId);
+          facts.projects=ordered(facts.projects,[...order.projects,...dependencies]);
+        }
+        validateNativeFacts(facts, scope); done(facts, {manifest, pieces});
+      } catch (error) { failed = true; fail(error); }
     }
   };
   const load = (kind, key) => {
@@ -99,7 +110,7 @@ export function loadNativePieces(store, manifest, scope, wanted, done, fail, loo
     };
     if(lookup)lookup(kind,key,read);else read(Object.hasOwn(manifest[kind],key)?manifest[kind][key]:undefined);
   };
-  for (const kind of ['projects', 'refs']) for (const key of wanted[kind]) load(kind, key);
+  for (const kind of ['projects', 'refs']) for (const key of (order??wanted)[kind]) load(kind, key);
   launching = false; finish();
 }
 

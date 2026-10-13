@@ -1,0 +1,22 @@
+{
+  "evidence": "REAL_IDB_SYNTHETIC_EXPLICIT_INDEX_MIGRATION",
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "src/data/native-index-reader.mjs": "2402bfb54e0ab30641de1a78ba3d21c1d9777da7f7e8ff3bf015b356a82952d0",
+    "src/data/native-index-writer.mjs": "b24b74a4470602b8196c5ee9559aaa8d5f53454c034b02aeb84b2652532a2808",
+    "src/data/native-index-migration.mjs": "1f681e0c0049d91b37394bb26313caa8dfeba1d2ede97833c9b3321fc61a4923",
+    "src/data/native-version-index.mjs": "9103bb884d25eddd247ab410bd697a0e639b51469a17e20ba331a59c9bc7e951",
+    "src/data/native-partitions.mjs": "df08b215677fa72bdef9523a327ff26432b076b1f61e39ca39d7ca926a996628",
+    "src/data/native-repository.mjs": "dc584933af87370baeada2d6cf566293b26677fe946a4d86c58379b8652ea806"
+  },
+  "result": {
+    "checks": [
+      "real-migration-CAS-source-and-Pro-preservation",
+      "indexed-dual-connection-write-GC",
+      "real-indexed-quota-rollback",
+      "real-indexed-revoke-rollback",
+      "indexed-full-recovery-revokes-source-preserves-Pro",
+      "other-account-isolation"
+    ]
+  }
+}

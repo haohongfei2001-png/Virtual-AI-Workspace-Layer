@@ -315,3 +315,16 @@ NativeRepository的read/header/page支持新格式：完整读/header验证所�
 新增15项合同通过，最后完整Node832/832、0失败/跳过。真实headless IDB6项覆盖实际迁移双连接CAS、indexed写入CAS/GC、quota/撤权原子回滚、全量恢复撤权及Pro/账号隔离；旧读取接线6项和MV3 9项分别通过。新浏览器夹具第一次因未声明synthetic evidenceGate在seed前拒绝，修复明确合成声明后重跑通过，没有放宽运行时门控。报告free-round39-*保留各自源码hash。
 
 包/private/tmp/vaiwl-free-delivery-round39-20261013/vaiwl-free-synthetic-only.zip，SHA256 `601b78455910990c40ac44cd1e38492bf901ae365594d96b5794df4a2f83d35b`，46文件/39worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。正常100k本轮NOT_RUN，Round35的1秒FAIL保持。下一步是有界自动迁移接线与version根级校验，并在实际服务/MV3/100k下验证，不能只以纯索引计算收益认证产品。真实来源/账户/PAIA/跨端/物理设备/真人条件仍缺，完整Free未完成。
+
+
+## 第四十轮：服务自动迁移、稳定顺序与索引校验复用
+
+接8503b14，已正常快进push并API确认PR16仍Draft同head。ensureNative首次HEADER在旧原生分片上执行owner迁移；CAS冲突只重读一次、下次HEADER再尝试，其他失败不循环、不发布成功。version核对完整root字节/schema与marker，不宣称库存完整；HEADER/PAGE仍验证所需索引与native片。header新增storageFormat区分落盘格式，外部权限不增加。
+
+接线回归发现桶回调顺序导致冷/暖列表顺序不同；loadNativePieces显式保留请求ID与依赖顺序，原备份撤销回归断言未改。首个100k真实测试因每页重复验证几乎全部桶，30秒内未完成首屏，失败报告保留。采用内部512项/8Mi字符验证缓存，每次新读仍完整严格编码比较payload、checksum和scope/kind/bucket/revision/count上下文，变化重新完整验证；不缓存事实对象或授权。暖缓存篡改/错scope/count/routing/order反例保持拒绝。
+
+缓存后100k三发送2352.5/1645.2/1427.8ms，首次迁移后写入还因空changes全量核对GC。迁移本身不改native片版本，现记录对应revision的空变更集，下一写入仅触及所需桶；新增1000ref合同限制读取桶数量并保留全部引用。真实恢复清空changes仍走原完整GC核对。
+
+最终完整Node845/845、0失败/跳过；实际headless IDB6项和最终MV3 9项通过。冻结源码、顺序1k/10k/100k，九条发送功能全部通过：1k 61.2/47.4/47.4ms；10k 148.5/131.0/131.4ms；100k 1281.6/1278.9/1229.6ms，**100k一秒目标仍FAIL**。每条1消息/event/hint，fullread/snapshot0，阅读/草稿保持，最终native格式明确indexed，各运行hash不变。报告free-round40-*独立保存，不加总中间结果；未改6秒RPC、20秒lease或30秒初始测试窗口。
+
+最终包/private/tmp/vaiwl-free-delivery-round40-integrated-20261013/vaiwl-free-synthetic-only.zip，SHA256 `4162206f2cbe5dca2f187b378f9778cbadfe91e7859f5eb4053b96496d3e4da4`，46文件/39worker模块，仍SYNTHETIC_ONLY/NOT_RELEASE_READY。下一可执行验证：实际同路径旧格式包→索引包升级、旧包遇到新格式拒绝且存储不丢、新包重新启用恢复；原Round24同schema回退证据不覆盖新格式。性能仍需处理剩余HEADER/活动和共享索引成本，不重复已无收益的编码实验。真实来源/账户/跨端/PAIA/物理设备与真人条件仍缺，完整Free未完成。

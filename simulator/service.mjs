@@ -1,3 +1,4 @@
+import {NATIVE_PARTITION_FORMAT} from '../src/data/native-partitions.mjs';
 import {headerState} from '../src/data/partitioned.mjs';
 import {FreeRuntimeService} from '../src/data/free-runtime-service.mjs';
 import {freeRecoveryStatus} from '../src/data/free-recovery-status.mjs';
@@ -55,6 +56,13 @@ export function createFixtureService({indexedDB,extensionId,getFrame,makeId,cali
   async function ensureNative(scope,options,origin){
     let root=await native.header(scope,options);
     if(!root.revision){const result=await native.apply(scope,{operationId:'native_fixture_bootstrap_v1',expectedRevision:0,batch:nativeSeed(scope,origin)},options);if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);root=await native.header(scope,options);}
+    if(root.storageFormat===NATIVE_PARTITION_FORMAT){
+      const result=await native.migrateVersionIndex(scope,{operationId:'native_version_index_v1',expectedRevision:root.revision},options);
+      // A concurrent writer wins normally. Re-read once; a later HEADER can
+      // retry migration if it still sees the legacy format. Never loop here.
+      if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);
+      root=await native.header(scope,options);
+    }
     return root;
   }
   function activityEvidence(scope,state,stored){
