@@ -760,3 +760,18 @@ Round75最终计时补充：session provider将expiry墙钟与6秒monotonic elap
 最终普通Node1469/1469、0失败/跳过；frame renderer另跑真实headless1合同/21断言，既有prepared9/safe-update6/sidebar8通过。初次全套把Chrome测试混入普通Node，受启动限制且server未释放导致子进程不退出；已终止该明确子进程、补30秒超时与launch失败清理，将browser脚本分开运行；原失败log保留。实际隔离Chrome MV32/2：固定provider真实loopback cookie/fetch、真实sender/getFrame、扩展IDB、同名P/UNKNOWN/伪造字段拒绝/重开与草稿保持；不是真实ChatGPT或UiGrant渲染认证。独立MODERN/PARTIAL/FAULT夹具新增19个端点合同（含旧共24）与headless5项；expected仅Node，生产这些profile适配未据此宣称通过。
 
 本轮未重复100k，历史4x冷启FAIL和静态frame disable/uninstall残留FAIL保留。下一项继续现有B1.F+B2.F1+C2：实际UiGrant双通道与controller、共享ViewSession/staged数据和双frame renderer闭环，随后原计划剩余Free。Free未完成，NOT_RELEASE_READY；G/U仍NOT_RUN。
+
+
+## Round77：真实 UiGrant 生命周期、共享读取与单 owner 视图基础
+
+前置 e2ae316，正常推送后的原 Draft PR16/base不变。生产读取从现有simulator实现提取为同一FreeReadService，无默认seed、不新增排序引擎或schema；原fixture只保留显式seed及synthetic admission。HEADER/PAGE/兼容snapshot统一请求时间；修复snapshot误用仓库时钟。默认生产activity不接纳旧synthetic来源，事件/hint/coverage不升级为真实事实，旧八表数据保持。原生owner事实到真实MockIDB绑定→staged HEADER/PAGE→CHECK合同通过，含空库零写、UNKNOWN、切换隔离和Pro人工资产保持。
+
+新增实际UI runtime owner、固定workspace/sidebar静态shell角色、UI随机key原两通道配对、6秒请求上限、有界Port注册与即时文档/mount/tab撤权。真实Chrome155的webNavigation不返回自身WAR子frame，采用Chrome runtime.getContexts严格核验TAB/document/frame/tab/URL/origin/incognito，再与真实topframe和contentWindow确认共同建立关联；不伪造parentFrameId。修复注册ACK前early JOIN丢失（每role最多一个合法缓存）、断连只清frame但未释放mask、旧异步renderer完成/失败擦除新grant画面。render最多一个在途回调与一个latest待渲染授权，过期立即清屏。
+
+实际隔离headless MV3使用真实sender/getContexts/UiGrant：文档撤权、端口断连、禁用、卸载四路径PASS，0自有open popover、私有frame移除/不可达、原生reading与同一textarea草稿保持；额外WAR、错误role和伪SUSPEND不获授权。sourceChangedDuringRun=false、pageErrors为空。此探针显示固定测试标记，不是完整Free renderer J1，不是冻结进程/无JS hard-kill证明；此前静态frame残留失败仍保留。Chrome API机制见官方runtime参考：https://developer.chrome.com/docs/extensions/reference/api/runtime/ 。
+
+新增单owner FreeViewSession/replica/index基础复用现有staged loader、分页细分、增量assemble和currentIndex；同请求singleflight，最终native/workspace/evidence/view版本核对后发布。6秒每RPC、30秒整次读预算，超时/取消不发布迟到结果；正常page-too-large仍按既有loader细分且不重置预算。尚未接有界显示DTO或双frame真实数据，不各复制100k集合。
+
+最终完整Node1532/1532，0失败/跳过；实际旧合成MV3 9/9；新UI MV3四退出路径PASS。旧MV3初次2PASS/7FAIL由本地server未开放新静态import导致host初始化失败，已精确放行单模块并补HTTP合同，原失败保留。新build缺静态模块、snapshot时钟、UiGrant子frame诊断/断连mask失败也独立保存。无重复100k测试，历史4x冷启FAIL不改标签。
+
+下一项仍为既有B1.F+B2.F1+C2：安全document及controller期限同步、共享ViewSession的有界双frame数据/导航闭环，再继续原计划其余Free。当前controller仍安全地在初始20秒文档期限退出，frame续租尚不能代表长期完整支持；scope C1/C2、发送/continuation、生产完整profile及真实G/U仍未验收。Free未完成，NOT_RELEASE_READY。

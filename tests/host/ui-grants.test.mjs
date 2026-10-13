@@ -77,3 +77,25 @@ test('expired parent-confirmed pending is never evicted for anonymous WAR traffi
  assert.throws(()=>f.join('other_key'),/ui-grant-capacity/);
  assert.throws(()=>f.join(),/ui-join-replayed/);
 });
+
+test('fixed per-role static shells bind actual sender URL, never window.name or page role',async()=>{
+ const urls={workspace:'chrome-extension://fixture/workspace.html',sidebar:'chrome-extension://fixture/sidebar.html'};
+ const f=fixture({uiURLs:urls}),ui={...f.ui,url:urls.sidebar};f.frames.set(2,{...f.frames.get(2),url:ui.url});
+ assert.throws(()=>f.join('wrong_role',{sender:ui,role:'workspace'}),/invalid-ui-sender/);
+ assert.equal(await f.owner.joinUI({sender:ui,nonce:'sidebar_pair',role:'sidebar'}),null);
+ const grant=await f.confirm('sidebar_pair',{role:'sidebar'});assert.equal(grant.role,'sidebar');
+ assert.equal((await f.owner.validate({sender:ui,grantId:grant.id,mountId:'mount'})).id,grant.id);
+ await assert.rejects(f.owner.validate({sender:{...ui,url:urls.workspace},grantId:grant.id,mountId:'mount'}),/ui-grant-mismatch/);
+});
+
+test('browser extension context verifies WAR documents without inventing parentFrameId',async()=>{
+ let context={contextType:'TAB',documentId:'ui',frameId:2,tabId:1,incognito:false,documentUrl:'chrome-extension://fixture/ui.html',documentOrigin:'chrome-extension://fixture'},filters=[];
+ const f=fixture({getContexts:async filter=>{filters.push(filter);return context?[context]:[];}});f.frames.delete(2);
+ const grant=await f.pair();assert.equal(grant.uiDocumentId,'ui');assert.deepEqual(filters[0],{documentIds:['ui'],tabIds:[1],frameIds:[2]});assert.equal(Object.hasOwn(context,'parentFrameId'),false);
+ for(const patch of [{contextType:'BACKGROUND'},{documentId:'old'},{frameId:3},{tabId:2},{incognito:true},{documentUrl:'chrome-extension://fixture/other.html'},{documentOrigin:'https://chatgpt.com'}]){const original=context;context={...context,...patch};await assert.rejects(f.owner.validate({sender:f.ui,grantId:grant.id,mountId:'mount'}),/stale-ui-document/);context=original;}
+ context=null;await assert.rejects(f.owner.validate({sender:f.ui,grantId:grant.id,mountId:'mount'}),/stale-ui-document/);
+});
+test('extension context existence alone cannot replace actual parent and parent confirmation',async()=>{
+ const context={contextType:'TAB',documentId:'ui',frameId:2,tabId:1,incognito:false,documentUrl:'chrome-extension://fixture/ui.html',documentOrigin:'chrome-extension://fixture'};
+ const f=fixture({getContexts:async()=>[context]});assert.equal(await f.join(),null);f.frames.set(0,{...f.frames.get(0),documentId:'replaced'});await assert.rejects(f.confirm(),/stale-ui-document/);
+});

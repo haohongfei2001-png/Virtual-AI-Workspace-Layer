@@ -3,9 +3,11 @@ import {tokenOK} from '../b1/identity.mjs';
 /** Worker-owned RAM only. confirmParent is called by the authenticated content
  * controller only after its own connected iframe.contentWindow/region check.
  * Neither channel alone, nor possession of the public join nonce, grants access. */
-export function createUiGrants({extensionId,uiURL,getFrame,peekScope,now=Date.now,makeId=()=>crypto.randomUUID(),maxEntries=2048}={}){
+export function createUiGrants({extensionId,uiURL=null,uiURLs=null,getFrame,getContexts=null,peekScope,now=Date.now,makeId=()=>crypto.randomUUID(),maxEntries=2048}={}){
  if(!tokenOK(extensionId)||typeof getFrame!=='function'||typeof peekScope!=='function'||!Number.isInteger(maxEntries)||maxEntries<1||maxEntries>8192)throw Error('invalid-ui-grants');
- const url=new URL(uiURL);if(url.protocol!=='chrome-extension:'||url.hostname!==extensionId||url.search||url.hash)throw Error('invalid-ui-url');
+ const urls=uiURLs??{workspace:uiURL,sidebar:uiURL};
+ if(Object.keys(urls).length!==2||!Object.hasOwn(urls,'workspace')||!Object.hasOwn(urls,'sidebar'))throw Error('invalid-ui-url');
+ const roleURLs=Object.freeze({...urls});for(const value of Object.values(roleURLs)){const url=new URL(value);if(url.protocol!=='chrome-extension:'||url.hostname!==extensionId||url.search||url.hash)throw Error('invalid-ui-url');}
  const mounts=new Map(),joins=new Map(),grants=new Map();let generation=0;
  const fail=reason=>{throw Error(reason);};
  const roleOK=role=>role==='workspace'||role==='sidebar';
@@ -14,11 +16,22 @@ export function createUiGrants({extensionId,uiURL,getFrame,peekScope,now=Date.no
   if(sender?.id!==extensionId||!Number.isSafeInteger(sender.tab?.id)||sender.tab.id<0||sender.tab.incognito!==false||sender.frameId!==0||!tokenOK(sender.documentId)||sender.documentLifecycle!=='active')fail('invalid-ui-parent');
   return {tabId:sender.tab.id,frameId:0,documentId:sender.documentId,documentLifecycle:'active',incognito:false,actualURL:sender.url};
  }
- function uiFrame(sender){
-  if(sender?.id!==extensionId||!Number.isSafeInteger(sender.tab?.id)||sender.tab.id<0||sender.tab.incognito!==false||!Number.isSafeInteger(sender.frameId)||sender.frameId<=0||!tokenOK(sender.documentId)||sender.documentLifecycle!=='active'||sender.url!==uiURL)fail('invalid-ui-sender');
+ function uiFrame(sender,role=null){
+  if(sender?.id!==extensionId||!Number.isSafeInteger(sender.tab?.id)||sender.tab.id<0||sender.tab.incognito!==false||!Number.isSafeInteger(sender.frameId)||sender.frameId<=0||!tokenOK(sender.documentId)||sender.documentLifecycle!=='active'||!(role?sender.url===roleURLs[role]:Object.values(roleURLs).includes(sender.url)))fail('invalid-ui-sender');
   return Object.freeze({tabId:sender.tab.id,frameId:sender.frameId,documentId:sender.documentId,url:sender.url});
  }
- async function actual(frame,parentId){const found=await getFrame({tabId:frame.tabId,frameId:frame.frameId});if(!found||found.documentId!==frame.documentId||found.documentLifecycle!=='active'||found.url!==(frame.actualURL??frame.url)||(parentId!==undefined&&found.parentFrameId!==parentId))fail('stale-ui-document');}
+ async function actual(frame,parentId){
+  if(parentId!==undefined&&getContexts){
+   // Chrome hides WAR children from webNavigation. Browser ExtensionContext
+   // verifies the child; the actual top frame plus the connected contentWindow
+   // confirmation verifies parentage. No parentFrameId is fabricated here.
+   const rows=await getContexts({documentIds:[frame.documentId],tabIds:[frame.tabId],frameIds:[frame.frameId]});
+   const value=Array.isArray(rows)&&rows.length===1?rows[0]:null;
+   if(!value||value.contextType!=='TAB'||value.documentId!==frame.documentId||value.frameId!==frame.frameId||value.tabId!==frame.tabId||value.incognito!==false||value.documentUrl!==frame.url||value.documentOrigin!==`chrome-extension://${extensionId}`)fail('stale-ui-document');
+   return;
+  }
+  const found=await getFrame({tabId:frame.tabId,frameId:frame.frameId});if(!found||found.documentId!==frame.documentId||found.documentLifecycle!=='active'||found.url!==(frame.actualURL??frame.url)||(parentId!==undefined&&found.parentFrameId!==parentId))fail('stale-ui-document');
+ }
  function registerMount({handle,parent}){
   const frame=parentFrame(parent),scope=currentScope(frame);
   if(!tokenOK(handle?.id)||!tokenOK(handle.documentToken)||!Number.isSafeInteger(handle.regionEpoch)||handle.regionEpoch<0||mounts.has(handle.id))fail('invalid-ui-mount');
@@ -56,7 +69,7 @@ export function createUiGrants({extensionId,uiURL,getFrame,peekScope,now=Date.no
   const grant=Object.freeze({id,mountId:mount.handle.id,parentDocumentId:mount.parent.documentId,uiDocumentId:ui.documentId,scopeGrantId:scope.id,role:entry.role,expiresAt:new Date(until).toISOString()});
   grants.set(id,{grant,mount,ui});return grant;
  }
- function joinUI({sender,nonce,role}){const ui=uiFrame(sender),entry=join(nonce,role);if(entry.ui){entry.used=true;fail('ui-join-conflict');}entry.ui=ui;return pair(entry);}
+ function joinUI({sender,nonce,role}){const ui=uiFrame(sender,role),entry=join(nonce,role);if(entry.ui){entry.used=true;fail('ui-join-conflict');}entry.ui=ui;return pair(entry);}
  function confirmParent({sender,mountId,documentToken,regionEpoch,nonce,role}){
   const parent=parentFrame(sender),{mount}=liveMount(mountId);
   if(parent.tabId!==mount.parent.tabId||parent.documentId!==mount.parent.documentId||parent.actualURL!==mount.parent.actualURL||documentToken!==mount.handle.documentToken||regionEpoch!==mount.handle.regionEpoch)fail('ui-mount-mismatch');
@@ -64,7 +77,7 @@ export function createUiGrants({extensionId,uiURL,getFrame,peekScope,now=Date.no
  }
  async function validate({sender,grantId,mountId}){
   const ui=uiFrame(sender),entry=grants.get(grantId);if(!entry||entry.grant.mountId!==mountId||entry.grant.expiresAt<=new Date(now()).toISOString())fail('ui-grant-expired');
-  const {mount}=liveMount(mountId);if(mount!==entry.mount||ui.tabId!==entry.ui.tabId||ui.frameId!==entry.ui.frameId||ui.documentId!==entry.ui.documentId)fail('ui-grant-mismatch');
+  const {mount}=liveMount(mountId);if(sender.url!==roleURLs[entry.grant.role]||mount!==entry.mount||ui.tabId!==entry.ui.tabId||ui.frameId!==entry.ui.frameId||ui.documentId!==entry.ui.documentId)fail('ui-grant-mismatch');
   await Promise.all([actual(mount.parent),actual(ui,0)]);
   if(grants.get(grantId)!==entry||liveMount(mountId).mount!==mount||Date.parse(entry.grant.expiresAt)<=now())fail('ui-grant-revoked');return entry.grant;
  }

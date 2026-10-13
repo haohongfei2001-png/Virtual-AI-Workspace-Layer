@@ -1,3 +1,5 @@
+import {createFreeReadService} from './free-read-service.mjs';
+import {createHostUiOwner} from './host-ui-owner.mjs';
 import {createHostObservationOwner} from './host-observation-owner.mjs';
 import {NativeRepository} from '../data/native-repository.mjs';
 import {createDocumentBindingBroker} from '../b1/document-binding-broker.mjs';
@@ -6,15 +8,20 @@ import {createScopeAuthority} from './scope-authority.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Zero-seed identity composition. Existing repository/broker owners remain unchanged. */
-export function createHostBindingService({extensionId,getFrame,allowedURL,provider,profile,repository,surfaceProfiles=null,workspaceRepository=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID()}={}){
+export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,repository,surfaceProfiles=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID()}={}){
  const handshake=createHostDocumentHandshake({extensionId,getFrame,allowedURL,now,makeId});
  const authority=createScopeAuthority({provider,profile,allowedURL,now,makeId});
  const asFrame=(doc,sender)=>({tabId:doc.tabId,frameId:0,documentId:doc.documentId,parentDocumentId:null,actualURL:doc.url,documentLifecycle:'active',incognito:sender.tab?.incognito===true});
- const broker=createDocumentBindingBroker({extensionId,getFrame,allowedURL,repository,workspaceRepository,freeRuntime,now,makeId,hostHandshake:handshake,resolveScope:({currentFrame,sender})=>authority.scopeFor(asFrame(currentFrame,sender))});
+
+ const ui=uiURL||uiURLs?createHostUiOwner({extensionId,uiURL,uiURLs,getFrame,getContexts,handshake,authority,now,makeId}):null;
  const observations=surfaceProfiles?createHostObservationOwner({handshake,authority,getFrame,profiles:surfaceProfiles,now}):null;
  const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:observations.gate,clock:()=>new Date(now()).toISOString()}):null;
+ const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
+ const commands={};if(readService)for(const name of ['snapshot','command','undo','history','saveView','exportBackup','previewRestore','restoreBackup','recoveryStatus','recover'])if(typeof workspaceRepository[name]==='function')commands[name]=workspaceRepository[name].bind(workspaceRepository);
+ const broker=createDocumentBindingBroker({extensionId,getFrame,allowedURL,repository,workspaceRepository:readService?{...readService,...commands}:workspaceRepository,freeRuntime,now,makeId,hostHandshake:handshake,resolveScope:({currentFrame,sender})=>authority.scopeFor(asFrame(currentFrame,sender))});
  const sequences=new Map();
  async function handle(message,sender){
+  if(typeof message?.type==='string'&&message.type.startsWith('HOST_UI_'))return ui?ui.handle(message,sender):{ok:false,reason:'host-ui-unavailable'};
   if(message?.protocol==='vaiwl-host-observation/1')return observations?observations.ingest(message,sender,nativeRepository):{state:'rejected',localSeq:message.localSeq,reason:'host-observations-unavailable'};
   if(message?.type!=='HOST_REFRESH')return broker.handle(message,sender);
   if(!exactHostRecord(message,['v','type','clientId','seq','documentToken','producerToken','routeEpoch'])||message.v!==1||!tokenOK(message.clientId)||!Number.isSafeInteger(message.seq)||message.seq<1||!tokenOK(message.documentToken)||!tokenOK(message.producerToken)||!Number.isSafeInteger(message.routeEpoch)||message.routeEpoch<1)return {ok:false,reason:'invalid-host-refresh'};
@@ -32,7 +39,7 @@ export function createHostBindingService({extensionId,getFrame,allowedURL,provid
   return {ok:true,v:1,type:'HOST_SCOPE_STATUS',state:resolution.state,...(resolution.reason?{reason:resolution.reason}:{})};
   }catch{return {ok:false,reason:'host-refresh-unavailable'};}
  }
- function invalidate({tabId,frameId=0,documentId}={}){broker.invalidate({tabId,frameId});if(documentId)authority.invalidate(documentId);else authority.invalidateTab(tabId);}
- function tabClosed(tabId){broker.tabClosed(tabId);authority.invalidateTab(tabId);}
- return Object.freeze({handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository});
+ function invalidate({tabId,frameId=0,documentId}={}){broker.invalidate({tabId,frameId});if(documentId){authority.invalidate(documentId);ui?.revokeDocument(documentId);}else{authority.invalidateTab(tabId);ui?.revokeTab(tabId);}}
+ function tabClosed(tabId){broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);}
+ return Object.freeze({connectPort:port=>ui?.connectPort(port)??false,handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,readService,ui});
 }

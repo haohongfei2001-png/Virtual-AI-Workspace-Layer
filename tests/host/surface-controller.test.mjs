@@ -28,3 +28,20 @@ test('route or region replacement disposes owned UI and stops adapter',async()=>
 test('grant expiry and explicit revoke remove return and dispose both surfaces',async()=>{for(const change of [f=>f.tick(20000),f=>f.controller.revoke()]){const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();change(f);assert.equal(f.slot.children.length,0);assert.equal(f.calls.dispose,1);assert.equal(f.controller.showWorkspace(),false);}});
 test('late registration or grant ACK after stop never shows stale surfaces',async()=>{for(const method of ['registerMount','confirmParent']){const f=fixture(),held=deferred(),original=f.bridge[method];f.bridge[method]=()=>held.promise;const start=f.controller.start({});await drain();if(method==='confirmParent')f.message();await drain();f.controller.stop();held.resolve(method==='registerMount'?{ok:true}:await original({role:'workspace'}));await start;await drain();assert.equal(f.calls.show,0);assert.equal(f.calls.dispose,1);}});
 test('owner denial and stale region during registration dispose without show',async()=>{for(const denied of [true,false]){const f=fixture();f.bridge.registerMount=async()=>{if(!denied)f.region();return {ok:!denied};};assert.equal(await f.controller.start({}),null);assert.equal(f.calls.dispose,1);assert.equal(f.calls.show,0);}});
+test('both early JOINs drain only after owner ACK, with one pending nonce per role',async()=>{
+ const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const starting=f.controller.start({});await drain();
+ f.message();f.message('workspace',{data:{type:'VAIWL_UI_JOIN',role:'workspace',nonce:'later_nonce'}});f.message('sidebar');await drain();
+ assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);held.resolve({ok:true});await starting;await drain();
+ assert.equal(f.calls.confirm.length,2);assert.equal(f.calls.confirm[0].nonce,'nonce_workspace');assert.equal(f.calls.show,1);
+});
+test('cached JOIN cannot survive stop or changed original WindowProxy before register ACK',async()=>{
+ for(const change of [f=>f.controller.stop(),f=>{f.frames[0].frame.contentWindow={};}]){
+  const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const starting=f.controller.start({});await drain();f.message();change(f);held.resolve({ok:true});await starting;await drain();assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);
+ }
+});
+test('early forged source/origin cannot occupy cache ahead of legitimate JOIN',async()=>{
+ const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const starting=f.controller.start({});await drain();f.message('workspace',{source:{}});f.message('workspace',{origin:'https://chatgpt.com'});f.message();held.resolve({ok:true});await starting;await drain();assert.equal(f.calls.confirm.length,1);assert.equal(f.calls.confirm[0].nonce,'nonce_workspace');
+});
+test('owned-frame public SUSPEND remains effective while registration is pending',async()=>{
+ const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const starting=f.controller.start({});await drain();f.message('workspace',{data:{type:'VAIWL_UI_SUSPEND',role:'workspace'}});held.resolve({ok:true});await starting;await drain();assert.equal(f.calls.dispose,1);assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);
+});
