@@ -2,6 +2,7 @@
 export const LEGACY_SURFACE_PROFILE = Object.freeze({
   id:'chatgpt-legacy-reconstruction',revision:1,reconstruction:true,liveVerified:false,
   regions:Object.freeze({projects:'aside section[aria-label="Projects"]',history:'aside nav[aria-label="Chat history"]',members:'main #reading nav[aria-label="Project conversations"]',moveMenu:'dialog#move-dialog[open]'}),
+  sendIntent:Object.freeze({formSelector:'main > form#composer',editorSelector:'#prompt-textarea',sendButtonSelector:'main > form#composer > button[type="submit"]',enterSends:false}),
   currentBody:Object.freeze({rootSelector:'main > #reading',conversationIdAttribute:'data-conversation-id',messageSelector:'[data-message-id]',messageIdAttribute:'data-message-id'}),
   currentConversationHeader:'main > header > h1',currentConversationReading:'main > #reading',currentConversationIdAttribute:'data-conversation-id',
   currentProjectTitle:'main > #reading > h2',currentProjectHeader:'main > header > h1',

@@ -1012,3 +1012,16 @@ adapter的body/surface共用producer序列与单个发送队列，分别去重�
 新增反例修前1PASS/3FAIL原样保留；修后66项针对性测试PASS，隔离真实headless正文MV37/7 PASS、源码哈希不变。浏览器实际DOM同root追加核验proof换发、epoch保留、旧proof拒绝，新IDs可读；原remount/hidden/route/scope和零native写保留。上一检查点完整2095项和原包8项只对应Round97，本轮完整回归NOT_RUN，不混算。
 
 继续原生intent与私有candidate关联；尚无本人accepted-send认证。Free未完成、NOT_RELEASE_READY，其余真实验收/备份设置/C5/性能未满足条件保持。
+
+
+## Round99：被动发送意图与认证读回候选闭环
+
+在已正常push的5cb1ca9继续。原生监听只接受显式profile中可见可用发送按钮的trusted click；Enter必须另有enterSends:true，当前LEGACY为false。不读正文/草稿/files、不preventDefault/调用原生动作，不监听可程序触发的submit。IME/修饰键/重复键和非发送目标拒绝；键盘默认click有界去重，独立点击保留。
+
+adapter先绑定已接受正文proof，意图队列最多32且与body/surface共用seq及singlepump；重挂/隐藏/C切换在派发前拒旧意图，正常发送导致的纯ID追加保留已捕获意图并先于新body观察发送。最初测试把任何IDs变化都当失效，修正该错误假设并新增append保留及三类真正失效反例；原FAIL与修后29PASS分别保存。owner仅接strict intent stage，拒绝页面ACK/author/message/operation升级，与全部观察共用序列，无native.apply路径。
+
+私有coordinator复用原correlator及current metadata reader，先建立baseline才接意图，scope/document/producer/route/bodyEpoch隔离，partial/gaps/迟到结果清关联。同proof去重，read-tail无timer串行等待旧singleflight清理；旧producer有界清理、publish前再次检查proof。currentMetadataReadEnabled与sendCandidatesEnabled是独立包内开关，均默认false，页面无启用RPC。生产onCandidate为空，不持久发送事件或签ACK；尚未获得真实接受/作者/手势语义认证。
+
+冻结源码完整Node2172/2172、0失败/跳过；隔离真实headless候选MV34/4与原构建包8/8 PASS、源码哈希稳定。真实按钮点击无新消息只留intent；真实remount清前例后，另一次真实click加明确测试进程metadata/DOM追加得到单个correlated，无ACK/sentAt、八store摘要不变。这是离线重建，未真正发出消息。owner握手/伪proof/过期/跨kind重放/字段升级5项另测；首次fixture漏profile错误原样保留。
+
+继续依原计划完成Free本地人工资产备份/恢复通道等独立任务；真实本人ACK/time、默认context/C1/C2、新聊天首发关联、J/G/U、C5间歇点击和旧4x100k仍未满足。Free未完成、NOT_RELEASE_READY。

@@ -1,9 +1,10 @@
+import {validateSendIntentProposal} from '../host/send-intent-claim.mjs';
 import {validateCurrentBodyProposal} from '../host/current-body-claim.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {surfaceBatch} from '../host/surface-batch.mjs';
 import {digest} from '../data/hash.mjs';
 /** Privileged owner; the gate recognizes request object identity, never serialized labels. */
-export function createHostObservationOwner({handshake,authority,getFrame,profiles,onAccepted=null,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
+export function createHostObservationOwner({handshake,authority,getFrame,profiles,onAccepted=null,onSendIntent=null,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(!handshake?.verify||!handshake?.isBound||!handshake?.matchesFrame||!authority?.peek||!authority?.scopeFor||typeof getFrame!=='function'||!(profiles instanceof Map))throw Error('invalid-host-observation-owner');
  const admissions=new WeakMap(),producers=new Map(),bodies=new Map(),reads=new Set();let busy=null,stopped=false;
  function discardBody(key){const entry=bodies.get(key);if(!entry)return;bodies.delete(key);for(const read of reads)if(read.entry===entry){read.active=false;read.abort.abort();}}
@@ -37,15 +38,26 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    if(!producers.has(proposal.producerToken)&&producers.size>=maxProducers)return rejected('host-producer-capacity');
    // Validate the complete shape before any storage read; revision and timestamps are owner values.
    const observedAt=new Date(time).toISOString(),validUntil=new Date(Math.min(time+60000,Date.parse(grant.expiresAt))).toISOString();
-   const isBody=proposal.kind==='current-object';
+   const isBody=proposal.kind==='current-object',isSend=proposal.kind==='send-candidate';
+   const current=bodies.get(proposal.producerToken);
+   const intent=isSend?validateSendIntentProposal(proposal,{profile,actualURL:actual.url,current:current?.current()?{proofId:current.proofId,conversationId:current.claim.conversationId,regionEpoch:current.claim.regionEpoch}:null}):null;
    const body=isBody?validateCurrentBodyProposal(proposal,{profile,actualURL:actual.url}):null;
-   let batch=isBody?null:surfaceBatch(proposal,{scope,binding:proposal,profile,urlPolicy:profile.urlPolicy,sourceRevision:1,observedAt,validUntil});
-   const semanticFingerprint=digest({... (isBody?{kind:'current-object'}:{}),profileId:profile.id,profileVersion:profile.revision,payload:proposal.payload});
+   let batch=isBody||isSend?null:surfaceBatch(proposal,{scope,binding:proposal,profile,urlPolicy:profile.urlPolicy,sourceRevision:1,observedAt,validUntil});
+   const semanticFingerprint=digest({... (isBody||isSend?{kind:proposal.kind}:{}),profileId:profile.id,profileVersion:profile.revision,payload:proposal.payload});
    const recorded=producers.get(proposal.producerToken);
    if(recorded&&(recorded.scopeKey!==scope.key||recorded.grantId!==grant.id||recorded.scopeEpoch!==grant.scopeEpoch))return rejected('host-producer-scope-changed');
    const previous=recorded;
    if(previous&&proposal.localSeq<=previous.seq)return previous.seq===proposal.localSeq&&previous.fingerprint===semanticFingerprint?{state:'duplicate',localSeq:proposal.localSeq,receiptId:previous.receiptId,...(previous.bodyProofId?{bodyProofId:previous.bodyProofId,bodyEpoch:previous.bodyEpoch}:{})}:rejected('replayed-host-proposal');
    if(!guard())return rejected('stale-host-scope');
+   if(isSend){
+    if(!current?.current()||!await handshake.verify(proposal,sender)||!guard())return rejected('stale-host-document');
+    // Acceptance consumes a candidate only. A page cannot request an ACK or activity write.
+    await onSendIntent?.(current.proofId,intent);
+    if(!current.current()||!await handshake.verify(proposal,sender)||!guard())return rejected('stale-host-document');
+    const receiptId='intent_'+digest([grant.id,proposal.producerToken,proposal.localSeq,semanticFingerprint]).slice(0,48);
+    producers.set(proposal.producerToken,{isBound:producerCurrent,scopeKey:scope.key,grantId:grant.id,scopeEpoch:grant.scopeEpoch,seq:proposal.localSeq,fingerprint:semanticFingerprint,receiptId,bodyEpoch:previous?.bodyEpoch??current.bodyEpoch,bodyRegionEpoch:current.claim.regionEpoch,until:Math.min(Date.parse(grant.expiresAt),time+20000)});
+    return {state:'accepted',localSeq:proposal.localSeq,receiptId};
+   }
    if(isBody){
     if(previous?.bodyRegionEpoch!==undefined&&body.regionEpoch<previous.bodyRegionEpoch)return rejected('stale-body-region');
     // A DOM claim is only a current-object association, never an ACK or author proof.
@@ -99,12 +111,12 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    const actual=await getFrame({tabId:entry.frame.tabId,frameId:0});check();
    if(!handshake.matchesFrame(entry.proposal,entry.sender,actual)||actual.url!==entry.frame.actualURL)throw Error('stale-body-proof');
    const principal=authority.peek(entry.frame).grant.principal;
-   const result=await work(Object.freeze({scope:Object.freeze({...entry.scope}),providerProfile:principal.providerProfile,providerTransport:principal.transport,conversationId:entry.claim.conversationId,messageIds:Object.freeze([...entry.claim.messageIds]),bodyEpoch:entry.bodyEpoch,evidenceClass:'dom-observed',guard,signal:attempt.abort.signal}));
+   const result=await work(Object.freeze({scope:Object.freeze({...entry.scope}),providerProfile:principal.providerProfile,providerTransport:principal.transport,documentToken:entry.proposal.documentToken,producerToken:entry.proposal.producerToken,routeEpoch:entry.proposal.routeEpoch,conversationId:entry.claim.conversationId,messageIds:Object.freeze([...entry.claim.messageIds]),bodyEpoch:entry.bodyEpoch,evidenceClass:'dom-observed',guard,signal:attempt.abort.signal}));
    if(!await handshake.verify(entry.proposal,entry.sender))throw Error('stale-body-proof');check();return result;
   },{now:elapsedNow,schedule,cancel});}finally{attempt.active=false;attempt.abort.abort();reads.delete(attempt);}
  }
  function invalidateDocument(documentId){for(const [key,entry]of bodies)if(entry.frame.documentId===documentId)discardBody(key);}
  function invalidateTab(tabId){for(const [key,entry]of bodies)if(entry.frame.tabId===tabId)discardBody(key);}
  function stop(){stopped=true;busy&&(busy.active=false,busy.abort.abort());bodies.clear();producers.clear();for(const attempt of reads){attempt.active=false;attempt.abort.abort();}reads.clear();}
- return Object.freeze({gate,ingest,withCurrent,invalidateDocument,invalidateTab,stop});
+ return Object.freeze({isCurrentProof:proofId=>[...bodies.values()].some(entry=>entry.proofId===proofId&&entry.current()),isCurrentProducer:producerToken=>bodies.get(producerToken)?.current()===true,gate,ingest,withCurrent,invalidateDocument,invalidateTab,stop});
 }
