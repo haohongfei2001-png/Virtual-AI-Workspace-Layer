@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第九十六轮：current body只读识别、共享观察序列及私有RAM正文关联已接通；2055项Node、正文专项6组及原打包8旅程通过。正文关联不是本人ACK，认证当前聊天元数据读回待接；Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百零八轮：生产Host当地时区、当前Project原名映射/导航、长标题搜索有界分页和partial元数据有限恢复已集成；最终2279项Node、原打包11旅程和测试专用候选MV3四项通过。候选关联不是本人ACK，安全回当前/完整自适应及真实G/U等尚未完成；Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1158,3 +1158,25 @@ frame显式导出后需点击下载；选择JSON后上传并展示新增/更新/
 最终完整Node2272/2272、0失败/跳过；实际原构建包headless MV3十一项PASS，sourceChangedDuringRun=false。实际worker与DTO均为Asia/Shanghai（未用页面时区模拟代替worker），原生节点/草稿与Project/Conversation导航保留。Node另覆盖Shanghai/Los_Angeles跨UTC日界。首次完整回归发现既有午夜测试隐含UTC假设，已显式设定测试UTC并保留原跨午夜/冻结断言，失败原日志独立保存；不是产品行为回退。
 
 生产安全回当前的日期刷新、自适应评估/短暂撤销及可靠新装初始化仍待接线，不把本次时区修复称自适应完成。下一项修复当前Project改名与侧栏滞后同ID冲突导致观察整批拒绝；真实context/ACK、新聊首发、G/U、4x100k及旧间歇问题保持。Free未完成、NOT_RELEASE_READY。
+
+
+## Round107：当前Project改名优先与长标题搜索可达
+
+在已正常推送058508d继续。当前Project已由route、成员容器ID及双标题关联确认时，按exact native ID忽略侧栏同Project滞后标题，避免surfaceBatch冲突拒绝整批及成员更新；同名不同ID、IDless原入口保留，当前关联不成立仍回退侧栏。未按名称合并或放松scope/source。
+
+修复frame未处理free-search-page-too-large导致已知查找失效的问题；复用现有有限分页缩减，对明确超限的search/workingSet先缩该列表，未显式limit按既有默认24；保留query、Project、offset和历史段。总8次缩减、6秒请求/30秒总预算和64KiB限制不变；单项仍超限有界失败，不截断原名、不发布部分成功。真实搜索投影30条长Unicode原名反例通过缩页完整访问且不丢/重记录。
+
+最终全部Host Node982/982、0失败/跳过；实际原包headless MV3十一项PASS，sourceChangedDuringRun=false。surface DOM独立六组PASS，新增同ID滞后/同名异ID/IDless/成员归约与未证回退；最初沙箱Chrome启动失败另存，获准隔离headless后完成。完整Node本轮NOT_RUN，上一2272仅属Round106，不累加。
+
+安全回当前/auto/new-install、真实context/ACK、新聊首发、G/U、4x100k及旧间歇条件仍未满足。Free未完成、NOT_RELEASE_READY。
+
+
+## Round108：部分元数据的有限恢复与最终集成
+
+与Round107改动合并验证并提交。相同body proof的partial读回不再永久标记完成；后续明确observe可重读，至少间隔1秒、每proof初次加最多2次，不增加定时器/轮询。完整baseline继续去重，partial清除旧pending intent，恢复只建立新基线，不产生ACK/sentAt，不自动重放发送；singleflight、scope/producer/epoch及迟到撤权保持。专项24/24通过。
+
+Round107审查另发现隐藏current P可能压过可见sidebar，提交前已要求heading/header/members均通过既有可见性检查；3节点×5种隐藏状态验证侧栏仍可达、恢复可见后current标题优先。最后surface DOM六组PASS见free-round107-surface-discovery-visible.json。既有owned-mask继承含糊时不把隐藏节点升级为当前P证明；通用members/menu可见性仍需独立收紧，不冒称全面解决。
+
+最终源码完整Node2279/2279、0失败/跳过；实际原包headless MV3十一项及测试专用发送候选MV3四项均PASS，两份sourceChangedDuringRun=false。候选浏览器仍是默认关闭能力的离线夹具，partial新增恢复以Node合同验证，不冒称真实ACK。Round107先前982 Host/原包11报告保留其原源码，最终集成以本轮摘要为准。
+
+后续仍直接按唯一计划实施；生产安全回当前日期刷新、自适应/撤销和新装策略、真实context/ACK、新聊首发、G/U、4x100k及旧间歇问题未完成。Free未完成、NOT_RELEASE_READY。

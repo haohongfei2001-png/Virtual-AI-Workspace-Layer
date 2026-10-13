@@ -49,7 +49,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     refreshRoute();refreshRoots();
     for(const [id,entry] of byId) if(!valid(entry)) { byId.delete(id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(id); }
     const route=urlPolicy.parse(document.location.href),candidates=[],claims=new Map();
-    let currentConversationId=null;
+    let currentConversationId=null,currentProjectId=null;
     const visible=node=>{
       if(!node?.isConnected||!node.getClientRects().length)return false;
       for(let parent=node;parent;parent=parent.parentElement){const style=document.defaultView.getComputedStyle(parent);if(parent.hidden||parent.getAttribute('aria-hidden')==='true'||style.display==='none'||style.visibility==='hidden'&&isOwnedMask(parent)!==true||style.visibility==='collapse')return false;}
@@ -70,6 +70,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     function candidate(node,root,regionKind,entity) {
       const href=node.getAttribute('href'),parsed=href?urlPolicy.parse(href):null;
       if(entity==='conversation'&&parsed?.kind==='conversation'&&parsed.conversationId===currentConversationId)return null;
+      if(entity==='project'&&parsed?.kind==='project'&&parsed.projectId===currentProjectId)return null;
       if(parsed?.kind==='unsupported'||parsed&&parsed.kind!==entity&&!(entity==='project'&&parsed.kind==='project-candidate')) return null;
       if(!parsed&&!(entity==='project'&&node.tagName==='BUTTON')) return null;
       const handle=control(node,root,regionKind,entity);
@@ -83,7 +84,9 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const members=roots.get('members');
     if(route.kind==='project'&&members&&members.getAttribute(profile.memberProjectIdAttribute)===route.projectId&&profile.currentProjectTitle&&profile.currentProjectHeader){
       const heading=unique(profile.currentProjectTitle),header=unique(profile.currentProjectHeader);
-      if(heading&&header&&heading.isConnected&&header.isConnected&&heading.parentNode===members.parentNode&&heading.textContent.trim()===header.textContent.trim()){
+      if(heading&&header&&visible(heading)&&visible(header)&&visible(members)&&heading.parentNode===members.parentNode&&heading.textContent.trim()===header.textContent.trim()){
+        // The confirmed current title wins over a sidebar label that may lag a rename.
+        currentProjectId=route.projectId;
         candidates.push({renderKey:`project:${route.projectId}`,entity:'project',...title(heading),target:{kind:'resolved',entity:'project',nativeId:route.projectId,navigationURL:route.navigationURL,liveHandle:null},evidence:evidence('current-project-route','current-project-title','members')});
       }
     }

@@ -1,0 +1,6 @@
+{
+  "src/host/free-frame-client.mjs": "e11cdabbfff754d92156269be6cac4d6ee4f4991624d9638b3893abba8069621",
+  "src/host/surface-discovery.mjs": "7126fd1459c63f82fc1ea15cdee9380ced73a94e220412c749386677001ceb56",
+  "tests/host/free-frame-client.test.mjs": "fc77ca57f8da5b32d6eea2507f1f9121178324b08cf55db8542dc96f8e0d4514",
+  "tests/host/surface-discovery-browser.mjs": "8bda3f8952be628248be7dfbea6ae1b12d6c596e7ad2aa092fe0185ec0b44cfe"
+}

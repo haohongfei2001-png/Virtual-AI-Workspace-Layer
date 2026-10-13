@@ -4,6 +4,9 @@ import {createHash} from 'node:crypto';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {createHostFixtureServer} from './fixtures/server.mjs';
 import {legacyExpectedWorld as expected} from './expected/legacy.mjs';
+import {surfaceBatch} from '../../src/host/surface-batch.mjs';
+import {createURLPolicy} from '../../src/host/url-policy.mjs';
+import {LEGACY_SURFACE_PROFILE} from '../../src/host/surface-discovery.mjs';
 const source=await readFile('src/host/surface-discovery.mjs','utf8'),policy=await readFile('src/host/url-policy.mjs','utf8');
 const server=await createHostFixtureServer(),report={evidence:'REAL_HEADLESS_DOM_RECONSTRUCTION',productionAuth:'NOT_RUN',realChatGPT:'NOT_RUN',fixture:server.manifest,sourceHash:createHash('sha256').update(source).digest('hex'),results:[],errors:[]};
 let browser;
@@ -31,6 +34,33 @@ try{
  const project=await discovery.evaluate(d=>d.scan());
  assert.equal(project.membershipClaims.find(c=>c.conversationId===expected.conversations[1].id).projectId,expected.projects[1].id);
  const currentProject=project.candidates.find(c=>c.target.nativeId===expected.projects[1].id);assert.ok(currentProject);assert.equal(currentProject.target.liveHandle,null);assert.equal(currentProject.nativeTitle,expected.projects[1].name);
+ // A native rename can update the current surface before its sidebar label.
+ await page.evaluate(id=>{const a=document.createElement('a');a.id='stale-project-link';a.href=`/g/${id}/project`;a.textContent='Previous project name';document.querySelector('aside section[aria-label="Projects"]').append(a);},expected.projects[1].id);
+ const renamed=await discovery.evaluate(d=>d.scan());
+ const renamedRows=renamed.candidates.filter(c=>c.target.nativeId===expected.projects[1].id);
+ assert.equal(renamedRows.length,1);assert.equal(renamedRows[0].nativeTitle,'Research');assert.equal(renamedRows[0].target.liveHandle,null);
+ assert.equal(renamed.candidates.find(c=>c.target.nativeId===expected.projects[0].id).nativeTitle,'Research','same name with a different Project ID remains distinct');
+ assert.ok(renamed.candidates.some(c=>c.target.kind==='live-control'),'IDless original entry remains available');
+ const binding={documentToken:'doc-local',producerToken:'producer-local',routeEpoch:renamed.candidates.find(c=>c.target.liveHandle)?.target.liveHandle.routeEpoch};
+ const scope={verified:true,provider:'chatgpt',accountId:'fixture-account',organizationId:'fixture-context'};
+ const reduced=surfaceBatch({protocol:'vaiwl-host-observation/1',...binding,localSeq:1,profileId:LEGACY_SURFACE_PROFILE.id,profileVersion:LEGACY_SURFACE_PROFILE.revision,bodyProofId:null,kind:'surface-delta',payload:renamed},{scope,binding,profile:LEGACY_SURFACE_PROFILE,urlPolicy:createURLPolicy({origin:server.origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),sourceRevision:1,observedAt:'2026-10-14T00:00:00.000Z',validUntil:'2026-10-14T00:01:00.000Z'});
+ assert.equal(reduced.projects.length,2);assert.equal(reduced.membership.find(c=>c.id===expected.conversations[1].id).projectId,expected.projects[1].id);
+ await page.locator('main > header > h1').evaluate(n=>n.textContent='Unconfirmed title');
+ const fallback=(await discovery.evaluate(d=>d.scan())).candidates.filter(c=>c.target.nativeId===expected.projects[1].id);
+ assert.equal(fallback.length,1);assert.equal(fallback[0].nativeTitle,'Previous project name');assert.ok(fallback[0].target.liveHandle,'unproven current Project must not suppress native sidebar entry');
+ await page.locator('main > header > h1').evaluate(n=>n.textContent='Research');
+ for(const selector of ['main > #reading > h2','main > header > h1','main > #reading > nav']){
+  for(const mode of ['hidden','aria-hidden','display:none','visibility:hidden','visibility:collapse']){
+   await page.locator(selector).evaluate((n,value)=>{if(value.includes(':'))n.setAttribute('style',value);else n.setAttribute(value,'true');},mode);
+   const hiddenRows=(await discovery.evaluate(d=>d.scan())).candidates.filter(c=>c.target.nativeId===expected.projects[1].id);
+   assert.equal(hiddenRows.length,1,`${selector} ${mode} retains only visible sidebar Project`);
+   assert.equal(hiddenRows[0].nativeTitle,'Previous project name');assert.ok(hiddenRows[0].target.liveHandle);
+   await page.locator(selector).evaluate((n,value)=>n.removeAttribute(value.includes(':')?'style':value),mode);
+  }
+ }
+ assert.equal((await discovery.evaluate(d=>d.scan())).candidates.find(c=>c.target.nativeId===expected.projects[1].id).nativeTitle,'Research','restored visible current Project regains priority');
+ await page.locator('#stale-project-link').evaluate(n=>n.remove());
+ report.results.push({name:'current-project-title-priority-preserves-other-ids-members-and-unproven-fallback',status:'PASS'});
  await page.locator('main > header > h1').evaluate(n=>n.textContent='Conflict');assert.equal((await discovery.evaluate(d=>d.scan())).candidates.some(c=>c.target.nativeId===expected.projects[1].id),false);
  await page.locator('main > header > h1').evaluate(n=>n.textContent='Research');
  await page.locator('main > #reading > h2').evaluate(n=>n.remove());assert.equal((await discovery.evaluate(d=>d.scan())).candidates.some(c=>c.target.nativeId===expected.projects[1].id),false);

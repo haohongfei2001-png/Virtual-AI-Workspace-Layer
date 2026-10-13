@@ -73,12 +73,14 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    const response=await withRequestDeadline(()=>cancellable(()=>runtime.sendMessage({v:1,type:'HOST_UI_VIEW',grantId:current.id,mountId:current.mountId,query:effective}),controller.signal),{timeoutMs:Math.min(6000,budget.remaining()),now:elapsedNow,schedule,cancel});
    if(!live(ticket))return null;budget.check();
    if(response?.ok!==true){
-    if(['free-frame-page-too-large','free-working-set-page-too-large'].includes(response?.reason)&&splits<8){
+    if(['free-frame-page-too-large','free-working-set-page-too-large','free-search-page-too-large'].includes(response?.reason)&&splits<8){
      const limit=effective.limit??8,rowLimit=effective.rowLimit??5;
+     const list=response.reason==='free-search-page-too-large'?'search':response.reason==='free-working-set-page-too-large'?'workingSet':null;
+     if(list&&effective[list]&&(effective[list].limit??24)>1){effective={...effective,[list]:{...effective[list],limit:Math.max(1,Math.floor((effective[list].limit??24)/2))}};splits++;continue;}
      if(limit>1){effective={...effective,limit:Math.max(1,Math.floor(limit/2))};splits++;continue;}
      if(rowLimit>5){effective={...effective,rowLimit:5};splits++;continue;}
-     if(effective.workingSet?.limit>1){effective={...effective,workingSet:{...effective.workingSet,limit:Math.max(1,Math.floor(effective.workingSet.limit/2))}};splits++;continue;}
-     if(effective.search?.limit>1){effective={...effective,search:{...effective.search,limit:Math.max(1,Math.floor(effective.search.limit/2))}};splits++;continue;}
+     if(effective.workingSet&&(effective.workingSet.limit??24)>1){effective={...effective,workingSet:{...effective.workingSet,limit:Math.max(1,Math.floor((effective.workingSet.limit??24)/2))}};splits++;continue;}
+     if(effective.search&&(effective.search.limit??24)>1){effective={...effective,search:{...effective.search,limit:Math.max(1,Math.floor((effective.search.limit??24)/2))}};splits++;continue;}
     }
     throw Error(recoverable(response?.reason)?response.reason:response?.reason==='free-frame-page-too-large'?'free-frame-page-too-large':'frame-view-unavailable');
    }

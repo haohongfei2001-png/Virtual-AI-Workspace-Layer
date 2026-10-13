@@ -1,3 +1,5 @@
+import {freeNavigationSnapshot} from '../../src/navigation/free-view.mjs';
+import {projectFreeSearch} from '../../src/runtime/free-search-projection.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createFreeFrameClient} from '../../src/host/free-frame-client.mjs';
@@ -157,4 +159,32 @@ for(const invalid of ['wrong-entity','wrong-url','unknown-project','both-ids','s
  if(invalid==='same-tab')item.plan.disposition='same-tab';
  if(invalid==='duplicate')items.push(structuredClone(item));
  f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),groups:{items:[{id,nativeUrl}]}},navigation:items}));await f.client.start();await drain();assert.equal(f.pages.length,0);assert.equal(f.states.at(-1).reason,'invalid-frame-navigation');
+});
+
+for(const explicit of [true,false])test('oversize search refines its own page and preserves query, project and history: '+explicit,async()=>{
+ const f=fixture();await f.client.start();await drain();
+ f.setView(async m=>(m.query.search.limit??24)>6?{ok:false,reason:'free-search-page-too-large'}:{ok:true,state:'ready',page:f.page(),navigation:[]});
+ const search={query:'原生标题',projectId:'P1',offset:48,...(explicit?{limit:24}:{})};
+ await f.nav.onProjectionRequest({segment:3,offset:8,limit:8,search});
+ const queries=f.calls.filter(m=>m.query?.search).map(m=>m.query);
+ assert.deepEqual(queries.map(q=>q.search.limit),[explicit?24:undefined,12,6]);
+ for(const q of queries){assert.equal(q.segment,3);assert.equal(q.offset,8);assert.equal(q.limit,8);assert.equal(q.search.query,search.query);assert.equal(q.search.projectId,'P1');assert.equal(q.search.offset,48);}
+ assert.equal(f.stops,0);f.client.stop();
+});
+test('permanently oversize search stops after bounded refinement without publishing a partial page',async()=>{
+ const f=fixture();await f.client.start();await drain();const published=f.pages.length;
+ f.setView(async()=>({ok:false,reason:'free-search-page-too-large'}));
+ assert.equal(await f.nav.onProjectionRequest({limit:1,search:{query:'long',offset:24}}),null);
+ assert.deepEqual(f.calls.filter(m=>m.query?.search).map(m=>m.query.search.limit),[undefined,12,6,3,1]);
+ assert.equal(f.pages.length,published);assert.equal(f.stops,1);
+});
+
+test('real search projection with long Unicode native titles remains reachable through smaller pages',async()=>{
+ const refs=Array.from({length:30},(_,i)=>({id:'C'+i,scope:'A',nativeTitle:'中'.repeat(1000)+i,nativeUrl:'https://chatgpt.com/c/C'+i,membership:'NONE',projectId:null}));
+ const current={snapshot:freeNavigationSnapshot({scope:'A',viewMode:'free',projects:[],refs,preferences:{}})};
+ const f=fixture();await f.client.start();await drain();
+ f.setView(async m=>{try{return {ok:true,state:'ready',page:{...f.page(),search:projectFreeSearch(current,m.query.search)},navigation:[]};}catch(error){return {ok:false,reason:error.message};}});
+ let offset=0,seen=[];
+ while(offset<refs.length){const result=await f.nav.onProjectionRequest({limit:8,search:{query:'中',offset,limit:24}});assert(result);assert(new TextEncoder().encode(JSON.stringify(result.search)).length<=65536);seen.push(...result.search.items.map(r=>r.id));for(const row of result.search.items)assert.equal(row.nativeTitle,refs.find(r=>r.id===row.id).nativeTitle);offset+=result.search.items.length;assert.equal(result.search.hasMore,offset<refs.length);}
+ assert.deepEqual(new Set(seen),new Set(refs.map(r=>r.id)));assert.equal(seen.length,refs.length);assert.equal(f.stops,0);f.client.stop();
 });

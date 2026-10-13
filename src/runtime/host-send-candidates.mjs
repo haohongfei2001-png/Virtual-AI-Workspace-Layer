@@ -8,7 +8,7 @@ export function createHostSendCandidates({observations,reader,enabled=false,now=
  const active=()=>{if(stopped)throw Error('host-send-candidates-stopped');if(!enabled)throw Error('host-send-candidates-disabled');};
  function binding(context){const b={scopeKey:context.scope?.key,documentToken:context.documentToken,producerToken:context.producerToken,routeEpoch:context.routeEpoch,bodyEpoch:context.bodyEpoch,conversationId:context.conversationId};if(typeof b.scopeKey!=='string'||!b.scopeKey||!['documentToken','producerToken','conversationId'].every(k=>tokenOK(b[k]))||!['routeEpoch','bodyEpoch'].every(k=>Number.isSafeInteger(b[k])&&b[k]>=0)||typeof context.guard!=='function'||!context.signal)throw Error('invalid-send-context');return b;}
  function check(context){active();if(context.signal.aborted||context.guard()!==true)throw Error('stale-send-context');}
- function entryFor(context){check(context);const b=binding(context),key=b.producerToken,signature=JSON.stringify(b);let entry=entries.get(key);if(entry?.signature!==signature){if(entry){entry.correlator.stop();entries.delete(key);}for(const [otherKey,other]of entries)if(otherKey!==key&&observations.isCurrentProducer(otherKey)!==true){other.correlator.stop();entries.delete(otherKey);}if(entries.size>=maxBindings)throw Error('host-send-capacity');const correlator=createSendCorrelator({now});correlator.bind(b);entry={signature,correlator,baseline:false,proof:null,generation:0};entries.set(key,entry);}return entry;}
+ function entryFor(context){check(context);const b=binding(context),key=b.producerToken,signature=JSON.stringify(b);let entry=entries.get(key);if(entry?.signature!==signature){if(entry){entry.correlator.stop();entries.delete(key);}for(const [otherKey,other]of entries)if(otherKey!==key&&observations.isCurrentProducer(otherKey)!==true){other.correlator.stop();entries.delete(otherKey);}if(entries.size>=maxBindings)throw Error('host-send-capacity');const correlator=createSendCorrelator({now});correlator.bind(b);entry={signature,correlator,baseline:false,proof:null,generation:0,readProof:null,readAttempts:0,lastReadAt:null};entries.set(key,entry);}return entry;}
  function publish(candidates){if(onCandidate)for(const candidate of candidates){try{onCandidate(candidate);}catch{/* A diagnostic consumer cannot authorize retries. */}}return candidates;}
  function observe(proofId){
   try{active();if(!tokenOK(proofId))throw Error('invalid-body-proof');}catch(error){return Promise.reject(error);}
@@ -16,7 +16,14 @@ export function createHostSendCandidates({observations,reader,enabled=false,now=
   if(inflight.size>=maxBindings)return Promise.reject(Error('host-send-capacity'));
   let context,entry,generation;
   const pending=settled.then(()=>observations.withCurrent(proofId,async current=>{
-   context=current;entry=entryFor(current);if(entry.proof===proofId)return [];
+   context=current;entry=entryFor(current);
+   const at=now();if(!Number.isFinite(at))throw Error('send-clock-invalid');
+   if(entry.proof===proofId&&entry.baseline)return [];
+   // A partial response is not a permanent completion. Retry only on a later
+   // explicit observation, with a per-proof budget; never schedule polling.
+   if(entry.readProof===proofId){if(entry.readAttempts>=3||at-entry.lastReadAt<1000)return [];}
+   else{entry.readProof=proofId;entry.readAttempts=0;}
+   entry.readAttempts++;entry.lastReadAt=at;
    generation=++entry.generation;
    const value=await reader.read(proofId);check(current);
    if(entries.get(current.producerToken)!==entry||entry.generation!==generation)throw Error('stale-send-observation');
