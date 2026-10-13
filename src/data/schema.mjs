@@ -1,3 +1,4 @@
+import {freshInstallationRecord} from './free-policy-initialization.mjs';
 /** Upgrade the SAME B1 database. No second database, destructive reset or native data. */
 export const DATABASE_VERSION = 3;
 export const NATIVE_STORES = ['native_states', 'native_operations'];
@@ -41,4 +42,7 @@ export function upgradeDatabase(db, transaction, oldVersion) {
         !scopeIndexMatches(transaction.objectStore('b23_operations'),'payload.scopeKey')) throw Error('invalid-v2-schema');
     for (const name of NATIVE_STORES) db.createObjectStore(name, {keyPath: 'key'});
   }
+  // Provenance is written only by the atomic creation transaction, never by
+  // observing missing scope data or upgrading an existing database.
+  if(oldVersion===0)transaction.objectStore('b23_views').put(freshInstallationRecord());
 }

@@ -1,3 +1,5 @@
+import {loadFreeHeader} from '../../src/data/free-header-loader.mjs';
+import {freshInstallationRecord} from '../../src/data/free-policy-initialization.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MockIDBFactory} from '../b23/mock-idb.mjs';
@@ -35,7 +37,7 @@ async function fixture(t){
  return{base,workspaces,evidence,native,read,scope,observe,page};
 }
 
-test('MOCK_IDB production defaults read an empty scope without seed or any writes',async t=>{
+test('MOCK_IDB default read adds no scoped data after atomic database creation',async t=>{
  const h=await fixture(t),db=await h.base.open();
  const header=await h.read.freeHeader(h.scope,{},NOW,'UTC',null,url,true);
  assert.equal(header.preparing,undefined);assert.equal(header.revision,0);assert.deepEqual(header.manifest.projectVersions,{});assert.deepEqual(header.manifest.refVersions,{});
@@ -43,7 +45,7 @@ test('MOCK_IDB production defaults read an empty scope without seed or any write
  assert.deepEqual(page.projects,[]);assert.deepEqual(page.refs,[]);
  let nativeReads=0;const original=h.native.read.bind(h.native);h.native.read=async(...args)=>{nativeReads++;return original(...args);};
  assert.deepEqual((await h.read.freeSnapshot(h.scope,{},NOW)).refs,[]);assert.equal(nativeReads,1,'compatibility snapshot reads native facts once');
- for(const name of db.objectStoreNames){const rows=await new Promise(resolve=>{const tx=db.transaction(name),request=tx.objectStore(name).openCursor(),values=[];request.onsuccess=()=>{const cursor=request.result;if(cursor){values.push(cursor.value);cursor.continue();}};tx.oncomplete=()=>resolve(values);});assert.deepEqual(rows,[],name+' must remain empty');}
+ for(const name of db.objectStoreNames){const rows=await new Promise(resolve=>{const tx=db.transaction(name),request=tx.objectStore(name).openCursor(),values=[];request.onsuccess=()=>{const cursor=request.result;if(cursor){values.push(cursor.value);cursor.continue();}};tx.oncomplete=()=>resolve(values);});assert.deepEqual(rows,name==='b23_views'?[freshInstallationRecord()]:[],name+' must retain only its creation metadata');}
 });
 
 test('MOCK_IDB owner-admitted native names and UNKNOWN flow through the existing page pipeline',async t=>{
@@ -134,4 +136,13 @@ test('MOCK_IDB unadmitted synthetic coverage cannot certify an admitted historic
  const admitted=await composition((_scope,source)=>source.channel==='synthetic').freeSnapshot(h.scope,{},NOW);
  assert.equal(admitted.refs[0].activityDecision.basis,'exact');assert.equal(admitted.refs[0].activityDecision.reason,'covered-history');
  assert.deepEqual(await storedBytes(h.base),before);
+});
+
+test('MOCK_IDB initialization CAS loss is a retryable snapshot conflict, not fake preparation progress',async t=>{
+ const h=await fixture(t),initialize=h.workspaces.initializeFreeTimePolicy.bind(h.workspaces);
+ h.workspaces.initializeFreeTimePolicy=async(scope,request,options)=>{h.workspaces.initializeFreeTimePolicy=initialize;assert.equal((await h.workspaces.command(scope,{operationId:'human-before-init',expectedRevision:request.expectedRevision,command:{type:'CREATE_WORKSPACE',id:'manual',name:'Human intent'}})).ok,true);return initialize(scope,request,options);};
+ const read=createFreeReadService({repository:h.base,workspaces:h.workspaces,native:h.native,evidence:h.evidence,clock:()=>NOW,timeZone:'UTC',initializeTimePolicy:true});
+ await assert.rejects(read.freeHeader(h.scope,{},NOW,'UTC',null,url,true),/snapshot-revision-changed/);
+ const stages=[];const final=await loadFreeHeader({scope:()=>h.scope.key,load:async()=>{const header=await read.freeHeader(h.scope,{},NOW,'UTC',null,url,true);if(header.preparing)stages.push(header.preparing.stage);return {ok:true,header};}});
+ assert.deepEqual(stages,['free-policy']);assert.equal(final.header.preferences.freeTimePolicy.value.mode,'auto');assert.equal((await h.workspaces.read(h.scope)).state.workspaces.manual.name,'Human intent');
 });

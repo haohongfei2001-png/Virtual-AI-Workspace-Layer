@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百一十一轮：Host安全入口自动密度评估、原子版本核对和15秒撤销已接通离线链路。最终2392项Node、真实IDB/DOM四项与原包MV3十二旅程通过；真实账号验收、新装初始化等仍未完成。Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百一十二轮：Host自动范围／撤销及可靠新旧库策略初始化已接通离线链路。最终2417项Node、真实IDB八项和原包MV3十三旅程通过。真实账号与性能等验收仍未完成；Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1213,3 +1213,16 @@ Round107审查另发现隐藏current P可能压过可见sidebar，提交前已�
 初次浏览器fixture处于reading导致notice拒显，已显式进入workspace并同步测试时钟，未放宽生产15秒。初次全量一次周采样日期断言失败，修复为同日保护而非改旧断言；旧current-entry history ready合同亦保持。失败、中间与最终日志分开保存，不相加。
 
 仍未完成：可靠新装／旧数据初始化标记、生产principal/context及accepted-send ACK/time、新聊首发关联、真实G/U与PAIA/真人关口、4x100k冷启动及旧间歇working-set问题。生产context默认仍unverified fail-closed，自动密度需要真实完整证据才可能运行；本轮不是实际ChatGPT验收或发布。Free未完成、NOT_RELEASE_READY，继续唯一正式计划。
+
+
+## Round112：可靠创建来源与一次性Free策略初始化
+
+接已正常推送bb7fdbd。沿同一数据库v3，在真实oldVersion===0的versionchange事务写入新库来源标记；现存v1/v2/v3不补造来源，不根据空scope、缺root或缺偏好推断新装。标记使用既有b23_views的保留键，无第二库／schema重建，不携带授权。每个已验证scope首次Host HEADER，以原CAS、guard/signal及分片writer原子写初始化留痕和默认策略：可靠新库auto30，否则legacy fixed30。已有策略完整保留；默认owner为bootstrap，不假装human，因此明确人工备份可覆盖默认。
+
+任何已有scope初始化标记（含损坏行）都禁止重复初始化；标记独立于workspace恢复／undo且不进入人工资产备份。已有偏好仅补标记，不改root/revision/checkpoint。缺root却有scope历史／checkpoint时整体拒绝，不用新默认掩盖损坏。首次CAS被人工写入抢先时抛既有snapshot-revision-changed，沿有界重读机制恢复，不把失败伪装为准备进度；成功初始化作为最后free-policy阶段且不可重复或倒退。
+
+最终完整Node **2417/2417、0失败/跳过**（free-round112-node-reviewed.log.gz）。真实headless Chrome IndexedDB八项首跑PASS（free-round112-policy-initialization-browser.json）：新旧库、旧B1/Pro资产、双连接一次、恢复/损坏标记防重放、缺根保护、人工备份优先。实际原构建包MV3十三旅程PASS（free-round112-package-mv3.json），新增检查真实新库marker、scope marker及bootstrap auto30，原P/C导航和草稿仍通过。两浏览器sourceChangedDuringRun=false。
+
+首次定向回归发现新增准备阶段未入loader和旧B1构建漏依赖，均已修复；旧断言因首次策略初始化不再为空而更新为精确初始化数据／保留原偏好，不移除无原生种子与人工CAS断言。首次完整2416项有3个旧契约失败，修复后2416项通过；追加CAS反例后的最终为2417项，结果不相加，原失败日志保留。
+
+本轮只完成离线初始化链路。生产principal/context及accepted-send ACK/time、新聊首发、真实G/U/PAIA/真人验收、4x100k冷启动和旧间歇working-set条件仍未完成；context默认unverified fail-closed不变。Free未完成、NOT_RELEASE_READY；后续从当前Git继续唯一计划，不重做已验模块。

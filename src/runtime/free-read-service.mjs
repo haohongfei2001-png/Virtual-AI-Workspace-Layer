@@ -1,3 +1,4 @@
+import {localDay} from '../navigation/projection.mjs';
 import {NATIVE_PARTITION_FORMAT} from '../data/native-partitions.mjs';
 import {headerState} from '../data/partitioned.mjs';
 import {freeRecoveryStatus} from '../data/free-recovery-status.mjs';
@@ -6,7 +7,7 @@ import {digest} from '../data/hash.mjs';
 import {projectFreeActivity} from '../data/free-activity.mjs';
 import {createFreeViewSession} from '../data/free-time-policy.mjs';
 /** Shared existing read pipeline. Production has no seed and never certifies shared authorship. */
-export function createFreeReadService({repository,workspaces,native,evidence,clock=()=>new Date().toISOString(),timeZone:defaultTimeZone='UTC',bootstrapNative=null,adaptSharedEvents=null,admitActivitySource=()=>false}={}){
+export function createFreeReadService({repository,workspaces,native,evidence,clock=()=>new Date().toISOString(),timeZone:defaultTimeZone='UTC',bootstrapNative=null,adaptSharedEvents=null,admitActivitySource=()=>false,initializeTimePolicy=false}={}){
   const deadlines=(...tables)=>[...new Set(tables.flatMap(table=>Object.values(table??{})).filter(row=>!row.revoked&&row.validUntil).map(row=>row.validUntil))];
   const activityVersionCache=new Map();
   function activityVersions(context,stored){
@@ -97,7 +98,13 @@ export function createFreeReadService({repository,workspaces,native,evidence,clo
           for(const result of reads)if(result.status==='rejected')throw result.reason;
           context=reads[0].value;stored=reads[1].value;
         }
-        const {state,view,diagnostics}=context,policy=state.preferences.freeTimePolicy?.value;
+        const {state,view,diagnostics}=context;
+        if(initializeTimePolicy){
+          const result=await workspaces.initializeFreeTimePolicy(scope,{expectedRevision:state.revision,day:localDay(now,timeZone)},options);
+          if(!result.ok)throw Error(result.reason==='revision-conflict'?'snapshot-revision-changed':result.reason);
+          if(result.initialized)return preparing(scope,'free-policy');
+        }
+        const policy=state.preferences.freeTimePolicy?.value;
         const activeSources=Object.values(root.manifest?.sources??{}).filter(source=>!source.revoked&&Date.parse(source.validUntil)>Date.parse(now));
         const refs={};for(const key of Object.keys(context.refVersions??state.refs))refs[key]=0;
         for(const [key,version] of Object.entries(root.manifest?.refs??{}))refs[key]=version;

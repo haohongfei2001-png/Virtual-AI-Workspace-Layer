@@ -1,3 +1,5 @@
+import {FREE_INSTALLATION_KEY,freePolicyInitializationKey,isFreshInstallationRecord,freePolicyInitializationRecord,validFreePolicyInitializationRecord} from './free-policy-initialization.mjs';
+import {initialFreeTimePolicy} from './free-time-policy.mjs';
 import {activityVersionPrecondition,checkActivityVersionFence} from './activity-version-fence.mjs';
 import {prepareSharedDirectoryRetention} from './shared-directory-retention.mjs';
 import {migrateSharedDirectory} from './shared-directory-migration.mjs';
@@ -65,6 +67,10 @@ export class WorkspaceRepository {
     const s=scopeChecked(scope);this.allowEvidence(s);validateState(initial,s.key);if(initial.revision!==1||initial.channel!=='synthetic')throw Error('invalid-bootstrap');
     return this.mutate(s,{operationId:'synthetic_bootstrap_v1',expectedRevision:0,fingerprint:{bootstrap:'v1',scope:s.key},type:'BOOTSTRAP',actor:'bootstrap',...options,apply:()=>structuredClone(initial)});
   }
+  async initializeFreeTimePolicy(scope,{expectedRevision,day},{guard=()=>true,signal=null}={}){
+    if(!Number.isSafeInteger(day))throw Error('invalid-free-policy-day');
+    return this.mutate(scope,{operationId:'free_policy_initialization_v1',expectedRevision,fingerprint:{initialization:'free-policy-v1',day,expectedRevision},type:'INITIALIZE_FREE_POLICY',actor:'bootstrap',guard,signal,initializeFreePolicy:{day}});
+  }
   async undo(scope,{operationId,expectedRevision,targetOperationId},options={}){
     id(targetOperationId);
     return this.mutate(scope,{operationId,expectedRevision,fingerprint:{undo:targetOperationId,expectedRevision},type:'UNDO',actor:'human',...options,targetOperationId,apply:(current,op)=>undoChanges(current,op)});
@@ -74,12 +80,13 @@ export class WorkspaceRepository {
     id(operationId);if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)throw Error('invalid-revision');
     const hash=digest(params.fingerprint),db=await this.connection();fence(guard,signal);
     return new Promise(resolve=>{
-      const tx=db.transaction(['b23_states','b23_operations','b23_checkpoints','refs',...(params.expectedActivityVersions?['native_states','native_operations']:[])],'readwrite');let outcome=null;
+      const tx=db.transaction(['b23_states','b23_operations','b23_checkpoints','refs',...(params.expectedActivityVersions?['native_states','native_operations']:[]),...(params.initializeFreePolicy?['b23_views']:[])],'readwrite');let outcome=null;
       const abort=reason=>{if(outcome?.ok!==false)outcome={ok:false,reason};try{tx.abort();}catch{}};
       const check=()=>{try{fence(guard,signal);return true;}catch(e){abort(e.message);return false;}};
       const onRevoke=()=>abort('stale-binding');signal?.addEventListener('abort',onRevoke,{once:true});
       const states=tx.objectStore('b23_states'),ops=tx.objectStore('b23_operations'),opKey=JSON.stringify([s.key,operationId]);
-      const req=ops.get(opKey);
+      let freshInstallation=false;
+      const start=()=>{const req=ops.get(opKey);
       req.onsuccess=()=>{
         if(!check())return;
         try{
@@ -88,15 +95,26 @@ export class WorkspaceRepository {
             if(!check())return;
             try{
               const payload=sr.result?(isSharedDirectory(sr.result.payload)?this.partitioned.verifiedDirectory(sr.result,s):isPartitioned(sr.result.payload)?this.partitioned.verifiedManifest(sr.result,s.key):unpack(sr.result)):null;
+              if(params.initializeFreePolicy&&!sr.result){
+                const checkpoint=tx.objectStore('b23_checkpoints').get(s.key),history=ops.index('scopeKey').openCursor(s.key);
+                for(const request of [checkpoint,history])request.onsuccess=()=>{if(check()&&request.result)abort('corrupt-record');};
+              }
               // IDB clones the verified envelope before reducers or guards can
               // mutate shared header objects. Failed mutations abort this write.
               const retire=isSharedDirectory(payload)?prepareSharedDirectoryRetention(tx,s,payload,()=>{if(!check())throw Error('stale-binding');},e=>abort(e.message)):null;
-              if(isPartitioned(payload)||isSharedDirectory(payload))tx.objectStore('b23_checkpoints').put(sr.result);
               const enter=(current,storage=null,loadedPrior=null)=>{
               if(current.revision!==expectedRevision){abort('revision-conflict');return;}
+              const initialization=params.initializeFreePolicy;
+              if(initialization){
+                if(!check())return;
+                const existing=Object.hasOwn(current.preferences,'freeTimePolicy');
+                tx.objectStore('b23_views').put(freePolicyInitializationRecord(s.key,existing?'existing':freshInstallation?'auto':'fixed'));
+                if(existing){if(check())outcome={ok:true,initialized:false,revision:current.revision};return;}
+              }
+              if(isPartitioned(payload)||isSharedDirectory(payload))tx.objectStore('b23_checkpoints').put(sr.result);
               const finish=prior=>{
                 try{
-                  if(!check())return;const next=apply(current,prior);validateState(next,s.key);
+                  if(!check())return;const next=initialization?reduceCommand(current,{type:'SET_PREFERENCE',id:'freeTimePolicy',value:initialFreeTimePolicy({legacy:!freshInstallation,day:initialization.day})},'bootstrap'):apply(current,prior);validateState(next,s.key);
                   if(next.revision!==current.revision+1)throw Error('invalid-next-revision');
                   const patch=changes(current,next),log={id:operationId,scopeKey:s.key,type,actor,fingerprint:hash,baseRevision:current.revision,resultRevision:next.revision,recordedAt:this.clock(),patch:actor==='human'?patch:[],changedObjects:patch.length,undoneBy:null};
                   // All IDB requests stay within this transaction; no network or awaits.
@@ -116,7 +134,7 @@ export class WorkspaceRepository {
                   ops.put(record(opKey,log));
                   if(prior){prior.undoneBy=operationId;ops.put(record(JSON.stringify([s.key,targetOperationId]),prior));}
                   if(!check())return;
-                  outcome={ok:true,replayed:false,revision:next.revision,operationId};
+                  outcome={ok:true,replayed:false,revision:next.revision,operationId,...(initialization?{initialized:true}:{})};
                 }catch(e){abort(e.message);}
               };
               if(storage)finish(loadedPrior);else if(targetOperationId){const ur=ops.get(JSON.stringify([s.key,targetOperationId]));ur.onsuccess=()=>{try{if(!ur.result)throw Error('missing-operation');finish(unpack(ur.result));}catch(e){abort(e.message);}};}else finish(null);
@@ -128,6 +146,15 @@ export class WorkspaceRepository {
           if(params.expectedActivityVersions)checkActivityVersionFence(tx,s,params.expectedActivityVersions,check,loadWorkspace,abort);else loadWorkspace();
         }catch(e){abort(e.message);}
       };
+      };
+      if(params.initializeFreePolicy){
+        const store=tx.objectStore('b23_views'),marker=store.get(freePolicyInitializationKey(s.key));
+        marker.onsuccess=()=>{try{
+          if(!check())return;
+          if(marker.result){outcome={ok:true,initialized:false,...(!validFreePolicyInitializationRecord(marker.result,s.key)?{diagnostic:'invalid-free-policy-initialization'}:{})};return;}
+          const provenance=store.get(FREE_INSTALLATION_KEY);provenance.onsuccess=()=>{try{if(check()){freshInstallation=isFreshInstallationRecord(provenance.result);start();}}catch(error){abort(error.message);}};
+        }catch(error){abort(error.message);}};
+      }else start();
       tx.oncomplete=()=>{signal?.removeEventListener('abort',onRevoke);try{fence(guard,signal);resolve(outcome);}catch{resolve({ok:false,reason:'stale-after-commit',committed:true});}};
       tx.onabort=()=>{signal?.removeEventListener('abort',onRevoke);resolve(outcome?.ok===false?outcome:{ok:false,reason:tx.error?.name??'write-aborted'});};
       tx.onerror=()=>{};

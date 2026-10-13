@@ -200,10 +200,11 @@ test('MOCK_IDB horizon scope revocation before delayed guarded command prevents 
 });
 test('MOCK_IDB concurrent human commit wins CAS over delayed horizon without changing shared session',async t=>{
  const h=await fixture(t);await h.bind();await h.observe();await h.mount();const initial=await ready(h),scope=workspaceScope(h),original=h.workspaces.command.bind(h.workspaces);let entered=false,release;const held=new Promise(r=>release=r);
+ const before=(await h.workspaces.read(scope)).state;
  h.workspaces.command=async(...args)=>{entered=true;await held;return original(...args);};
  const pending=h.horizon('sidebar',{expectedRevision:initial.page.workspaceRevision,H:90});for(let i=0;i<50&&!entered;i++)await drain();assert.equal(entered,true);
  assert.equal((await original(scope,{operationId:'concurrent_manual_title',expectedRevision:initial.page.workspaceRevision,command:{type:'SET_TITLE',refId:'c1',title:'Concurrent manual title'}})).ok,true);release();const result=await pending;assert.equal(result.ok,false);assert.equal(result.reason,'revision-conflict');assert.equal(result.viewSession,undefined);
- const after=(await h.workspaces.read(scope)).state;assert.equal(after.identities.c1.title,'Concurrent manual title');assert.equal(after.preferences.freeTimePolicy,undefined);assert.deepEqual((await ready(h)).page.viewSession,initial.page.viewSession);
+ const after=(await h.workspaces.read(scope)).state;assert.equal(after.identities.c1.title,'Concurrent manual title');assert.deepEqual(after.preferences.freeTimePolicy,before.preferences.freeTimePolicy);assert.deepEqual((await ready(h)).page.viewSession,initial.page.viewSession);
 });
 test('MOCK_IDB delayed obsolete ordinary refresh cannot poison a newly configured horizon',async t=>{
  const h=await fixture(t);await h.bind();await h.observe();await h.mount();const initial=await ready(h),native=h.service.nativeRepository;
