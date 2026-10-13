@@ -1,3 +1,4 @@
+import {digest} from '../../src/data/hash.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import {createSessionProvider} from '../../src/runtime/session-provider.mjs';
 const now=Date.parse('2026-10-14T00:00:00Z'),expiry='2026-10-14T01:00:00Z',origin='https://chatgpt.com';
 const session=()=>({user:{id:'user_7',email:'private@example.test',name:'Private'},expires:expiry,accessToken:'SECRET'}),accounts=()=>({accounts:{P:{account:{account_id:'P',structure:'personal',name:'Private'}},O:{account:{account_id:'O',structure:'team'}}},account_order:['O','P']});
@@ -16,3 +17,36 @@ test('bounded stream rejects excess bytes without trusting missing length header
 test('malformed JSON and fetch diagnostics cannot disclose response text or token',async()=>{for(const mode of ['json','fetch']){const provider=createSessionProvider({now:()=>now,fetch:async url=>{if(mode==='fetch')throw Error('SECRET response text');const r=new Response('SECRET private body',{headers:{'content-type':'application/json'}});Object.defineProperty(r,'url',{value:url});return r;}});await assert.rejects(provider.read(),error=>!error.message.includes('SECRET')&&error.message===(mode==='json'?'invalid-session-json':'session-transport-failed'));}});
 
 test('wall clock rollback cannot hide an elapsed deadline overrun',async()=>{let wall=now,elapsed=0;const base=fixture(),provider=createSessionProvider({now:()=>wall,elapsedNow:()=>elapsed,fetch:async(...args)=>{const response=await (async()=>{const n=base.calls.length;const body=n===0?session():accounts();base.calls.push(args);const r=new Response(JSON.stringify(body),{headers:{'content-type':'application/json'}});Object.defineProperty(r,'url',{value:args[0]});return r;})();if(base.calls.length===2){wall-=3600000;elapsed=6001;}return response;}});await assert.rejects(provider.read(),/request-timeout/);});
+const C='12345678-1234-4234-8234-123456789abc',currentOptions={conversationId:C,expectedPrincipalKey:'principal_'+digest(['chatgpt-principal-v1','user_7']),expectedContextKey:'context_'+digest(['chatgpt-context-v1','user_7','P'])};
+function currentFixture(change=()=>{},profile={currentConversationReadEnabled:true}){
+ const calls=[];let elapsed=0;const fetch=async(url,options)=>{calls.push({url,options});const n=calls.length,state={body:n===1?session():n===2?{accounts:{P:accounts().accounts.P}}:{conversation_id:C,mapping:{n:{id:'n',parent:null,message:{id:'m',author:{role:'user',id:'user_7'},create_time:1700000000,content:{parts:['PRIVATE_CONVERSATION_BODY']}}}}},status:200,mime:'application/json',url,redirected:false};change(state,n,()=>elapsed=6000);const response=new Response(typeof state.body==='string'?state.body:JSON.stringify(state.body),{status:state.status,headers:{'content-type':state.mime,...state.headers}});Object.defineProperties(response,{url:{value:state.url},redirected:{value:state.redirected}});return response;};
+ return {calls,provider:createSessionProvider({fetch,now:()=>now,elapsedNow:()=>elapsed,profile})};
+}
+test('current conversation is disabled by default and malformed ID is refused before fetch',async()=>{
+ for(const profile of [{},{currentConversationReadEnabled:false},{currentConversationReadEnabled:'true'}]){const f=currentFixture(()=>{},profile);await assert.rejects(f.provider.readCurrentConversation(currentOptions),/disabled/);assert.equal(f.calls.length,0);}
+ for(const patch of [{conversationId:'../other'},{conversationId:'c1'},{expectedContextKey:''},{url:'https://evil.test'}]){const f=currentFixture();await assert.rejects(f.provider.readCurrentConversation({...currentOptions,...patch}),/options/);assert.equal(f.calls.length,0);}
+});
+test('current fixed GET reauthenticates personal context and returns candidates without body/token',async()=>{
+ const f=currentFixture(()=>{},{currentConversationReadEnabled:true,currentConversationContextHeader:true}),result=await f.provider.readCurrentConversation(currentOptions);
+ assert.equal(f.calls.length,3);assert.equal(f.calls[2].url,origin+'/backend-api/conversation/'+C);assert.equal(f.calls[2].options.headers.Authorization,'Bearer SECRET');assert.equal(f.calls[2].options.headers['ChatGPT-Account-ID'],'P');assert.equal(result.principalKey,currentOptions.expectedPrincipalKey);assert.equal(result.contextKey,currentOptions.expectedContextKey);assert.equal(result.principalId,undefined);assert.equal(result.contextId,undefined);assert.equal(result.transport,'worker-fixed-fetch');assert.equal(result.metadata.messages[0].messageId,'m');assert.equal(result.metadata.messages[0].actorVerified,undefined);assert(!/SECRET|PRIVATE_CONVERSATION_BODY|private@example/.test(JSON.stringify(result)));assert(f.calls.every(c=>c.options.signal.aborted));
+});
+test('principal conflict prevents roster and context ambiguity prevents conversation fetch',async()=>{
+ const f=currentFixture();await assert.rejects(f.provider.readCurrentConversation({...currentOptions,expectedPrincipalKey:'principal_'+digest(['chatgpt-principal-v1','other'])}),/principal-conflict/);assert.equal(f.calls.length,1);
+ for(const patch of [s=>s.body=accounts(),s=>s.body.accounts.P.account.structure='team',s=>s.body.accounts.P.account.structure='unknown']){const x=currentFixture((s,n)=>{if(n===2)patch(s);});await assert.rejects(x.provider.readCurrentConversation(currentOptions),/context-conflict/);assert.equal(x.calls.length,2);}
+ const mismatch=currentFixture();await assert.rejects(mismatch.provider.readCurrentConversation({...currentOptions,expectedContextKey:'context_'+digest(['chatgpt-context-v1','user_7','other'])}),/context-conflict/);assert.equal(mismatch.calls.length,2);
+});
+for(const [label,mutate,reason]of [['wrong-C',s=>s.body.conversation_id='other','metadata'],['mime',s=>s.mime='text/html','mime'],['redirect',s=>s.redirected=true,'response'],['foreign-url',s=>s.url='https://evil.test','response'],['unauthorized',s=>s.status=403,'unauthorized'],['bad-json',s=>s.body='PRIVATE_INVALID_BODY','metadata'],['declared-byte-limit',s=>s.headers={'content-length':String(8*1024*1024+1)},'too-large'],['stream-byte-limit',s=>s.body.padding='界'.repeat(3*1024*1024),'too-large']])test('current conversation rejects '+label+' without disclosing data',async()=>{
+ const f=currentFixture((s,n)=>{if(n===3)mutate(s);});await assert.rejects(f.provider.readCurrentConversation(currentOptions),e=>new RegExp(reason).test(e.message)&&!e.message.includes('PRIVATE'));assert.equal(f.calls.length,3);
+});
+test('current entire chain shares six-second budget and never starts detail after deadline',async()=>{
+ const f=currentFixture((s,n,late)=>{if(n===2)late();});await assert.rejects(f.provider.readCurrentConversation(currentOptions),/request-timeout/);assert.equal(f.calls.length,2);
+ const g=currentFixture((s,n,late)=>{if(n===3)late();});await assert.rejects(g.provider.readCurrentConversation(currentOptions),/request-timeout/);
+});
+test('current abort settles even when fetch ignores abort and late response cannot trigger next fetch',async()=>{
+ let resolve;const calls=[],controller=new AbortController(),provider=createSessionProvider({profile:{currentConversationReadEnabled:true},now:()=>now,fetch:(url,options)=>{calls.push({url,options});return new Promise(r=>resolve=r);}});
+ const pending=provider.readCurrentConversation({...currentOptions,signal:controller.signal});controller.abort();await assert.rejects(pending,/aborted/);assert.equal(calls.length,1);const response=new Response(JSON.stringify(session()),{headers:{'content-type':'application/json'}});Object.defineProperty(response,'url',{value:calls[0].url});resolve(response);await new Promise(r=>setImmediate(r));assert.equal(calls.length,1);assert.equal(calls[0].options.signal.aborted,true);
+});
+
+test('unpublished current-reader API rejects raw identity parameters rather than maintaining a second authority path',async()=>{
+ const f=currentFixture();await assert.rejects(f.provider.readCurrentConversation({conversationId:C,expectedPrincipalId:'user_7',expectedContextId:'P'}),/options/);await assert.rejects(f.provider.readCurrentConversation({...currentOptions,expectedPrincipalId:'user_7'}),/options/);assert.equal(f.calls.length,0);
+});

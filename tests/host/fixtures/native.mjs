@@ -15,6 +15,9 @@ async function navigate(path, {pop = false} = {}) {
   if (!pop) history.pushState(null, '', path);
   $('h1').textContent = view.title;
   const reading = $('#reading'); reading.replaceChildren();
+  // Reconstruction's own rendered object association, from the route response.
+  // This attribute is not a claim about the live ChatGPT DOM.
+  if(view.conversationId)reading.dataset.conversationId=view.conversationId;else delete reading.dataset.conversationId;
   if (view.project) {
     const heading = document.createElement('h2'); heading.textContent = view.project.name; reading.append(heading);
     const members = document.createElement('nav'); members.setAttribute('aria-label','Project conversations'); members.dataset.projectId = view.project.id;

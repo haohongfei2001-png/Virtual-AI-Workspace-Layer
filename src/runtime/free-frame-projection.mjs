@@ -2,8 +2,8 @@ import {assertPreparedFreeSnapshot} from '../navigation/free-view.mjs';
 const integer=(n,max)=>Number.isSafeInteger(n)&&n>=0&&n<=max;
 const segmentOf=row=>(row.activityDecision??row.activity)?.segment??row.segment??null;
 const included=(row,segment)=>segmentOf(row)===segment||(segmentOf(row)===null&&segment===0);
-const rowDTO=row=>({id:row.id,available:row.available!==false,freshness:row.freshness??null,nativeTitle:row.nativeTitle??null,displayTitle:row.displayTitle,nativeUrl:row.nativeUrl??null,membership:row.membership,membershipFreshness:row.membershipFreshness??null,projectId:row.projectId??null,segment:segmentOf(row)});
-function pageRows(rows,segment,offset,limit,filter){let total=0;const items=[];for(const row of rows){if(filter&&!included(row,segment))continue;if(total>=offset&&items.length<limit)items.push(rowDTO(row));total++;}return {items,total,offset,limit,hasMore:offset+items.length<total};}
+export const freeFrameRowDTO=row=>({id:row.id,available:row.available!==false,freshness:row.freshness??null,nativeTitle:row.nativeTitle??null,displayTitle:row.displayTitle,nativeUrl:row.nativeUrl??null,membership:row.membership,membershipFreshness:row.membershipFreshness??null,projectId:row.projectId??null,segment:segmentOf(row)});
+function pageRows(rows,segment,offset,limit,filter){let total=0;const items=[];for(const row of rows){if(filter&&!included(row,segment))continue;if(total>=offset&&items.length<limit)items.push(freeFrameRowDTO(row));total++;}return {items,total,offset,limit,hasMore:offset+items.length<total};}
 const countKeys=table=>{let n=0;for(const key in table??{})if(Object.hasOwn(table,key))n++;return n;};
 /** Bounded display DTO over the owner's existing prepared ordering. No authority or cursor. */
 export function projectFreeFrame(current,query){

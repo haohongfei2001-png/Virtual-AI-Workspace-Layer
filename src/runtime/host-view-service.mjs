@@ -4,7 +4,7 @@ import {projectFreeSearch} from './free-search-projection.mjs';
 import {createURLPolicy} from '../host/url-policy.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 import {createFreeViewOwner} from './free-view-owner.mjs';
-import {projectFreeFrame} from './free-frame-projection.mjs';
+import {projectFreeFrame,freeFrameRowDTO} from './free-frame-projection.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 /** One privileged replica per mount, shared by its two granted UI documents.
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
@@ -12,10 +12,19 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  if(typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
  const views=new Map();
  const reason=error=>/^[a-z0-9-]{1,80}$/.test(error?.message)?error.message:'free-view-unavailable';
- function remove(id){const entry=views.get(id);if(entry){entry.owner.stop();views.delete(id);}}
+ function remove(id){const entry=views.get(id);if(entry){entry.prepareGeneration=(entry.prepareGeneration??0)+1;cancel(entry.retryTimer);entry.owner.stop();views.delete(id);}}
  function begin(entry){
-  entry.error=null;entry.pending=true;const generation=entry.prepareGeneration=(entry.prepareGeneration??0)+1;
-  entry.owner.refresh().then(()=>{if(entry.prepareGeneration===generation)entry.pending=false;},error=>{if(entry.prepareGeneration===generation){entry.pending=false;entry.error=reason(error);}});
+  cancel(entry.retryTimer);entry.retryTimer=null;entry.error=null;entry.pending=true;
+  const generation=entry.prepareGeneration=(entry.prepareGeneration??0)+1,started=elapsedNow();let retries=0;
+  const current=()=>entry.prepareGeneration===generation&&entry.isCurrent();
+  const run=()=>{
+   if(!current())return;
+   entry.owner.refresh().then(()=>{if(!current())return;entry.pending=false;if(elapsedNow()-started>=30000)entry.error='read-budget-exhausted';},error=>{
+    if(!current())return;
+    if(['snapshot-revision-changed','stale-free-page'].includes(error?.message)&&retries<2&&elapsedNow()-started<29950){retries++;entry.retryTimer=schedule(run,50);return;}
+    entry.pending=false;entry.error=reason(error);
+   });
+  };run();
  }
  async function handle(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-view'};}
@@ -48,6 +57,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    const nativeUrl=context.parentFrame.actualURL,route=createURLPolicy({origin:new URL(nativeUrl).origin}).parse(nativeUrl);
    const selected=current.index.at(nativeUrl),ref=selected.ref??(route.kind==='conversation'?current.index.byId(route.conversationId):null);
    page.current={nativeUrl,refId:ref?.id??null,projectId:ref?.membership==='PROJECT'?ref.projectId:null};
+   page.currentRef=ref?freeFrameRowDTO(ref):null;
    let navigation=[];
    if(prepareNavigation){
     const rows=new Map();for(const group of page.groups.items)for(const list of Object.values(group.lists))for(const row of list.items)rows.set(row.id,row);
@@ -55,6 +65,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     for(const row of page.selection?.items??[])rows.set(row.id,row);
     for(const row of page.search?.items??[])rows.set(row.id,row);
     for(const row of page.workingSet?.items??[])rows.set(row.id,row);
+    if(page.currentRef)rows.set(page.currentRef.id,page.currentRef);
     const targets=[...rows.values()].filter(row=>row.available!==false&&typeof row.nativeUrl==='string').map(row=>({refId:row.id,navigationURL:row.nativeUrl}));
     if(targets.length>200)throw Error('free-frame-page-too-large');
     navigation=await prepareNavigation({parentFrame:context.parentFrame,binding:context.binding,targets});check();

@@ -62,6 +62,47 @@ try{
  const over=(await discovery.evaluate(d=>d.scan())).candidates.find(c=>c.target.nativeId==='g-p-11111111111111111111111111111111');
  assert.equal(over.titleState,'over-limit');assert.equal(over.nativeTitle,null);assert.equal(over.target.kind,'resolved');
  report.results.push({name:'changed-or-replaced-node-never-rebound-title-over-limit-retains-id',status:'PASS'});
+ // Current object absent from sidebar: native route rendering supplies the
+ // reconstruction-only ID association; no expected-world JSON enters discovery.
+ const currentId=expected.conversations[0].id;
+ await page.evaluate(id=>{const a=document.createElement('a');a.href='/c/'+id;a.textContent='Open native current';document.body.append(a);a.click();a.remove();},currentId);
+ await page.waitForURL('**/c/'+currentId);await page.waitForFunction(id=>document.querySelector('#reading').dataset.conversationId===id,currentId);
+ const currentRows=()=>discovery.evaluate((d,id)=>d.scan().candidates.filter(c=>c.entity==='conversation'&&c.target.nativeId===id),currentId);
+ let rows=await currentRows();assert.equal(rows.length,1);assert.equal(rows[0].nativeTitle,expected.conversations[0].title);assert.equal(rows[0].target.liveHandle,null);
+ assert.equal((await discovery.evaluate(d=>d.scan())).membershipClaims.find(c=>c.conversationId===currentId).asserted,'UNKNOWN');
+ await page.locator('main > header > h1').evaluate(n=>n.textContent='Current renamed title');
+ await page.evaluate(id=>{const a=document.createElement('a');a.href='/c/'+id;a.textContent='Stale history title';document.querySelector('aside nav[aria-label="Chat history"]').append(a);},currentId);
+ rows=await currentRows();assert.equal(rows.length,1);assert.equal(rows[0].nativeTitle,'Current renamed title');
+ await page.evaluate(()=>{const old=document.querySelector('main').cloneNode(true);old.hidden=true;old.querySelector('h1').textContent='Hidden stale title';document.body.append(old);});
+ assert.equal((await currentRows())[0].nativeTitle,'Current renamed title');
+ await page.evaluate(()=>document.querySelector('main[hidden]').remove());
+ await page.locator('aside nav[aria-label="Chat history"]').evaluate((n,id)=>{for(const a of n.querySelectorAll('a'))if(a.getAttribute('href')==='/c/'+id)a.remove();},currentId);
+ await page.locator('main > #reading').evaluate(n=>n.hidden=true);assert.deepEqual(await currentRows(),[]);await page.locator('main > #reading').evaluate(n=>n.hidden=false);
+ await page.locator('main > #reading').evaluate(n=>n.dataset.conversationId='stale-id');assert.deepEqual(await currentRows(),[]);
+ await page.locator('main > #reading').evaluate((n,id)=>n.dataset.conversationId=id,currentId);
+ await page.evaluate(()=>history.pushState(null,'','/c/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'));
+ assert.equal((await discovery.evaluate(d=>d.scan())).candidates.some(c=>c.evidence.fieldPaths.includes('current-conversation-reading-id')),false,'popstate-era old body cannot be rebound by new URL');
+ await page.evaluate(id=>history.pushState(null,'','/c/'+id),currentId);
+ for(const name of ['ChatGPT','New chat','新聊天','新建聊天']){await page.locator('main > header > h1').evaluate((n,value)=>n.textContent=value,name);rows=await currentRows();assert.equal(rows[0].nativeTitle,name);assert.equal(rows[0].titleState,'exact');}
+ await page.locator('main > #reading').evaluate(n=>delete n.dataset.conversationId);assert.deepEqual(await currentRows(),[],'unbound generic header is not a current conversation');
+ await page.locator('main > #reading').evaluate((n,id)=>n.dataset.conversationId=id,currentId);
+ await page.locator('main > header > h1').evaluate(n=>n.textContent='中'.repeat(201));rows=await currentRows();assert.equal(rows[0].nativeTitle,null);assert.equal(rows[0].titleState,'over-limit');
+ // Explicit injected callback double checks discovery's contract only. Actual
+ // production RAM registration remains covered by mount-surrender/MV3 tests.
+ const maskedDiscovery=await page.evaluateHandle(async({source,policy})=>{
+  const module=await import(URL.createObjectURL(new Blob([source],{type:'text/javascript'}))),urls=await import(URL.createObjectURL(new Blob([policy],{type:'text/javascript'})));
+  const reading=document.querySelector('main > #reading');
+  return module.createSurfaceDiscovery({document,binding:{documentToken:'mask-test',routeEpoch:1},urlPolicy:urls.createURLPolicy({origin:location.origin}),isOwnedMask:node=>node===reading});
+ },{source,policy});
+ const maskedCurrent=()=>maskedDiscovery.evaluate(d=>d.scan().candidates.filter(c=>c.evidence.fieldPaths.includes('current-conversation-reading-id')));
+ await page.locator('main > #reading').evaluate(n=>n.style.visibility='hidden');assert.equal((await maskedCurrent()).length,1);
+ assert.deepEqual(await currentRows(),[],'default discovery cannot trust a public style or mask marker');
+ await page.locator('main > header > h1').evaluate(n=>n.style.visibility='hidden');assert.deepEqual(await maskedCurrent(),[],'reading-only exemption never unmasks the header');await page.locator('main > header > h1').evaluate(n=>n.style.visibility='');
+ for(const attr of ['hidden','aria-hidden']){await page.locator('main > #reading').evaluate((n,key)=>n.setAttribute(key,'true'),attr);assert.deepEqual(await maskedCurrent(),[]);await page.locator('main > #reading').evaluate((n,key)=>n.removeAttribute(key),attr);}
+ await page.locator('main > #reading').evaluate(n=>n.style.display='none');assert.deepEqual(await maskedCurrent(),[]);await page.locator('main > #reading').evaluate(n=>{n.style.display='';n.style.visibility='collapse';});assert.deepEqual(await maskedCurrent(),[]);
+ await page.locator('main > #reading').evaluate(n=>n.style.visibility='');await maskedDiscovery.evaluate(d=>d.stop());
+ await page.evaluate(()=>history.pushState(null,'','/unsupported'));assert.equal((await discovery.evaluate(d=>d.scan())).candidates.some(c=>c.evidence.fieldPaths.includes('current-conversation-reading-id')),false);
+ report.results.push({name:'reconstruction-current-conversation-id-associated-title-priority-and-stale-body-fences',status:'PASS'});
  await discovery.evaluate(d=>d.stop());assert.deepEqual((await discovery.evaluate(d=>d.scan())).candidates,[]);
  assert.deepEqual(report.errors,[]);report.status='PASS';
 }catch(error){report.status='FAIL';report.error=error.stack;process.exitCode=1;}

@@ -99,3 +99,7 @@ test('denied horizon never retries or changes query; late success after stop can
  const send=f.runtime.sendMessage;let writes=0;f.runtime.sendMessage=m=>m.type==='HOST_UI_SET_HORIZON'?(writes++,Promise.resolve({ok:false,reason:'revision-conflict'})):send(m);const fail=await f.nav.onHorizonRequest({H:7,segment:0,anchorRefId:null});assert.equal(fail.reason,'revision-conflict');assert.equal(writes,1);assert.equal(f.pages.at(-1).viewSession.H,30);
  const held=deferred();f.runtime.sendMessage=m=>m.type==='HOST_UI_SET_HORIZON'?held.promise:send(m);const late=f.nav.onHorizonRequest({H:7,segment:0,anchorRefId:null});f.client.stop();const count=f.pages.length;held.resolve({ok:true,segment:0,viewSession:{H:7,T:20740,Z:'UTC',policyRevision:1},workspaceRevision:6});assert.equal((await late).ok,false);assert.equal(f.pages.length,count);
 });
+
+test('current ref cannot mismatch owner current identity',async()=>{
+ const f=fixture();f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),current:{nativeUrl:'https://chatgpt.com/',refId:null,projectId:null},currentRef:{id:'forged'}},navigation:[]}));await f.client.start();await drain();assert.equal(f.states.at(-1).reason,'invalid-frame-current-ref');assert.equal(f.pages.length,0);
+});

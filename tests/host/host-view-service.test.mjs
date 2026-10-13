@@ -222,3 +222,16 @@ test('MOCK_IDB document and UI lease expire before delayed horizon CAS despite u
  // Advance authority wall clock only, not the six-second performance deadline.
  h.setTime(Date.parse(NOW)+21000);release();const result=await pending;assert.equal(result.ok,false);assert.equal(result.viewSession,undefined);assert.deepEqual((await h.workspaces.read(scope)).state,before);assert.equal((await h.view()).ok,false);
 });
+
+test('MOCK_IDB current ref remains separately navigable outside bounded visible history page',async t=>{
+ const calls=[],h=await fixture(t,{documentURL:'https://chatgpt.com/c/c1',prepareNavigation:async x=>{calls.push(x);return x.targets.map(hrefPlan);}});await h.bind();await h.observe();await h.mount();await ready(h);
+ const result=await h.view('workspace',{segment:100,offset:0,limit:1});assert.equal(result.state,'ready');assert.equal(result.page.entries.unknown.items.length,0);assert.equal(result.page.currentRef.id,'c1');assert.equal(result.page.currentRef.nativeTitle,'Native conversation');assert.equal(result.page.currentRef.membership,'UNKNOWN');assert.equal(result.page.current.refId,'c1');assert(result.navigation.some(p=>p.refId==='c1'));assert(calls.at(-1).targets.some(r=>r.refId==='c1'));assert.equal(result.page.entries.unknown.total,0);
+ assert.equal((await h.view('workspace',{currentRef:{id:'forged'}})).ok,false);
+});
+
+for(const constant of [false,true])test('MOCK_IDB snapshot CAS movement has bounded preparation recovery '+constant,async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();const native=h.service.nativeRepository,original=native.page.bind(native);let pages=0;
+ native.page=async(...args)=>{const result=await original(...args);pages++;if(constant||pages===1){const scope=workspaceScope(h),state=(await h.workspaces.read(scope)).state;assert.equal((await h.workspaces.command(scope,{operationId:'prep_race_'+pages,expectedRevision:state.revision,command:{type:'SET_PREFERENCE',id:'compactRows',value:pages%2===0}})).ok,true);}return result;};
+ let result;for(let i=0;i<100;i++){result=await h.view();if(result.state!=='preparing')break;await new Promise(r=>setTimeout(r,5));}
+ if(constant){assert.equal(result.ok,false);assert(['snapshot-revision-changed','stale-free-page'].includes(result.reason));assert.equal(pages,3);}else{assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(pages,2);}
+});

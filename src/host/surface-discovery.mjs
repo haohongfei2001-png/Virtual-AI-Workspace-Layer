@@ -2,12 +2,13 @@
 export const LEGACY_SURFACE_PROFILE = Object.freeze({
   id:'chatgpt-legacy-reconstruction',revision:1,reconstruction:true,liveVerified:false,
   regions:Object.freeze({projects:'aside section[aria-label="Projects"]',history:'aside nav[aria-label="Chat history"]',members:'main #reading nav[aria-label="Project conversations"]',moveMenu:'dialog#move-dialog[open]'}),
+  currentConversationHeader:'main > header > h1',currentConversationReading:'main > #reading',currentConversationIdAttribute:'data-conversation-id',
   currentProjectTitle:'main > #reading > h2',currentProjectHeader:'main > header > h1',
   memberProjectIdAttribute:'data-project-id',menuConversationIdAttribute:'data-conversation-id',
   controls:'a[href],button',conversationControls:'a[href]',noneLabel:'No project',maxCandidates:256,
 });
 
-export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGACY_SURFACE_PROFILE}={}) {
+export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false}={}) {
   if(!document?.defaultView || typeof binding?.documentToken !== 'string' || !Number.isSafeInteger(binding.routeEpoch) || typeof urlPolicy?.parse !== 'function') throw Error('invalid-surface-discovery-context');
   const instance=document.defaultView.crypto.randomUUID();
   let stopped=false,routeEpoch=binding.routeEpoch,regionEpoch=0,sequence=0;
@@ -46,9 +47,27 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     refreshRoute();refreshRoots();
     for(const [id,entry] of byId) if(!valid(entry)) { byId.delete(id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(id); }
     const route=urlPolicy.parse(document.location.href),candidates=[],claims=new Map();
+    let currentConversationId=null;
+    const visible=node=>{
+      if(!node?.isConnected||!node.getClientRects().length)return false;
+      for(let parent=node;parent;parent=parent.parentElement){const style=document.defaultView.getComputedStyle(parent);if(parent.hidden||parent.getAttribute('aria-hidden')==='true'||style.display==='none'||style.visibility==='hidden'&&isOwnedMask(parent)!==true||style.visibility==='collapse')return false;}
+      return true;
+    };
+    const oneVisible=selector=>{const nodes=selector?[...document.querySelectorAll(selector)].filter(visible):[];return nodes.length===1?nodes[0]:null;};
+    if(route.kind==='conversation'&&profile.currentConversationIdAttribute){
+      const reading=oneVisible(profile.currentConversationReading),heading=oneVisible(profile.currentConversationHeader);
+      // URL alone cannot bind an old reading surface during an SPA transition.
+      // This profile requires a native-rendered current-object association.
+      if(reading&&heading&&heading.parentElement?.parentElement===reading.parentElement&&reading.getAttribute(profile.currentConversationIdAttribute)===route.conversationId){
+        currentConversationId=route.conversationId;const label=title(heading);
+        candidates.push({renderKey:`conversation:${route.conversationId}`,entity:'conversation',...label,target:{kind:'resolved',entity:'conversation',nativeId:route.conversationId,navigationURL:route.navigationURL,liveHandle:null},evidence:evidence('current-conversation-route','current-conversation-header','current-conversation-reading-id')});
+        claims.set(route.conversationId,{conversationId:route.conversationId,asserted:'UNKNOWN',projectId:null,reason:'membership-not-observed',evidence:evidence('current-conversation-reading-id')});
+      }
+    }
     const limit=Math.max(1,Math.min(256,Number.isInteger(profile.maxCandidates)?profile.maxCandidates:256));
     function candidate(node,root,regionKind,entity) {
       const href=node.getAttribute('href'),parsed=href?urlPolicy.parse(href):null;
+      if(entity==='conversation'&&parsed?.kind==='conversation'&&parsed.conversationId===currentConversationId)return null;
       if(parsed?.kind==='unsupported'||parsed&&parsed.kind!==entity&&!(entity==='project'&&parsed.kind==='project-candidate')) return null;
       if(!parsed&&!(entity==='project'&&node.tagName==='BUTTON')) return null;
       const handle=control(node,root,regionKind,entity);

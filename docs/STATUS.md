@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第八十五轮：手动时间范围已接入真实授权CAS与正式离线包。完整1730/1730 Node与八条打包MV3旅程通过；7122447已正常推送PR16。Free、真实context和G/U仍未完成，继续既有计划。
+当前已推进至第八十六轮：深链当前聊天始终可达，自有遮罩下原生更新及有界并发准备已修复。完整1763/1763 Node、PARTIAL三旅程与LEGACY八旅程通过；元数据接口默认关闭，可信发送仍待接入。Free与真实G/U未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -969,3 +969,16 @@ d8b6d94已正常推送且PR16 API确认。工作集复用现有preferences、pre
 最终Node1730/1730，0失败/跳过；构建器产物真实headless MV3八旅程PASS，新增14→7天实际持久化设置、workspace范围/导航标签、侧栏仍可用且原生同输入节点/草稿保留，随后工作集与查找继续通过。双frame H精确一致由MockIDB owner验证，sidebar暂无可观察H标签，不冒称DOM证明。sourceChangedDuringRun=false。初次Chrome测试查询未穿透既有shadow root导致等待超时，修正定位后批量重跑；原失败报告保留。
 
 context C1/C2/持续认证、可靠发送continuation、剩余原生动作与恢复界面、完整J1–J4及真实G/U仍未齐；旧4x100k失败保持。Free未完成、NOT_RELEASE_READY。
+
+
+## Round86：深链当前聊天、遮罩自然更新与有界元数据读取
+
+4cb0e80正常push遇GitHub low-speed超时，成果保留本地，未强推。当前C必须有resolved路由、唯一活动header/reading及reading明确ID匹配才采集；fixture在正常native route响应渲染时提供关联，明确仅重建app属性，不宣称真实ChatGPT具该字段。当前标题优先于旧history同ID条目，所有真实原名（含ChatGPT/New chat）保留，归属未知不推NONE。
+
+实际PARTIAL测试暴露并修复三项：自有visibility遮罩使后续采集停更（现仅RAM登记的活动遮罩可豁免，DOM伪造/样式变更/撤销拒绝）；当前C在预览页外无入口（现可信owner返回独立有界currentRef，两帧直接可达，不改分页/历史计数）；并发原生更新导致快照版本变化退出（原读预算内最多2次重新准备，持续冲突仍拒绝，不无限轮询）。
+
+另复用固定session/roster读取器新增默认关闭的当前C读取接口：重验ScopeAuthority同源hashed principal/context，固定当前UUID endpoint、8MiB/全链6秒/abort，不返回token或raw身份。JSON parser只输出候选，深度32/结构与mapping节点10000/消息256，跳过正文，根至本消息谱系稳定，冲突/缺父/循环/超限partial，不生成actorVerified/sentAt。尚未接生产读取调度或可信发送/evidence，默认配置不自动读取聊天正文。
+
+最终Node1763/1763，0失败/跳过。真实headless DOM五组PASS（含自有mask例外反例）；实际未改写构建包的PARTIAL三旅程PASS：第1000条深链、卸载history后当前标题刷新、原生search SPA到第999条直接当前入口且同输入节点/草稿保留。原LEGACY打包八旅程另PASS。两实际包sourceChangedDuringRun=false；原mask停更、页外入口、snapshot-revision-changed失败/trace报告保留，不把早期失败算通过。
+
+context C1/C2/持续认证、可信发送/observed anchor/continuation、恢复界面、完整J1–J4与真实G/U仍未齐；旧4x100k失败保持。Free未完成、NOT_RELEASE_READY，继续原计划。
