@@ -66,6 +66,14 @@ try{
  await page.locator('main > #reading > h2').evaluate(n=>n.remove());assert.equal((await discovery.evaluate(d=>d.scan())).candidates.some(c=>c.target.nativeId===expected.projects[1].id),false);
  await page.locator('#reading').evaluate(n=>{const h=document.createElement('h2');h.textContent='Research';n.prepend(h);});
 
+
+ for(const selector of ['main > #reading','nav[aria-label="Project conversations"]','nav[aria-label="Project conversations"] a'])for(const mode of ['hidden','aria-hidden','display:none','visibility:hidden','visibility:collapse']){
+  await page.locator(selector).evaluate((n,value)=>{if(value.includes(':'))n.setAttribute('style',value);else n.setAttribute(value,'true');},mode);
+  const hidden=await discovery.evaluate(d=>d.scan());assert.equal(hidden.membershipClaims.find(c=>c.conversationId===expected.conversations[1].id)?.asserted,'UNKNOWN',selector+' '+mode);assert(hidden.candidates.some(c=>c.target.nativeId===expected.conversations[1].id),'hidden member reference remains reachable');
+  await page.locator(selector).evaluate((n,value)=>n.removeAttribute(value.includes(':')?'style':value),mode);
+  assert.equal((await discovery.evaluate(d=>d.scan())).membershipClaims.find(c=>c.conversationId===expected.conversations[1].id).asserted,'PROJECT');
+ }
+ report.results.push({name:'hidden-member-roots-and-items-never-certify-project-but-references-remain',status:'PASS'});
  assert.ok(project.membershipClaims.filter(c=>c.conversationId!==expected.conversations[1].id).every(c=>c.asserted==='UNKNOWN'));
  await page.getByRole('navigation',{name:'Project conversations'}).evaluate(node=>node.dataset.projectId='g-p-stale');
  assert.equal((await discovery.evaluate(d=>d.scan())).candidates.some(c=>c.target.nativeId===expected.projects[1].id),false);
@@ -75,6 +83,14 @@ try{
  assert.equal((await discovery.evaluate(d=>d.scan())).membershipClaims.find(c=>c.conversationId===expected.conversations[2].id).asserted,'UNKNOWN');
  await page.getByRole('button',{name:'Move to project',exact:true}).click();await page.locator('#move-dialog[open]').waitFor();
  assert.equal((await discovery.evaluate(d=>d.scan())).membershipClaims.find(c=>c.conversationId===expected.conversations[2].id).asserted,'NONE');
+
+ for(const selector of ['#move-dialog','#move-dialog label:has(input:checked)','#move-dialog input:checked'])for(const mode of ['hidden','aria-hidden','display:none','visibility:hidden','visibility:collapse']){
+  await page.locator(selector).evaluate((n,value)=>{if(value.includes(':'))n.setAttribute('style',value);else n.setAttribute(value,'true');},mode);
+  assert.equal((await discovery.evaluate(d=>d.scan())).membershipClaims.find(c=>c.conversationId===expected.conversations[2].id)?.asserted,'UNKNOWN',selector+' '+mode);
+  await page.locator(selector).evaluate((n,value)=>n.removeAttribute(value.includes(':')?'style':value),mode);
+  assert.equal((await discovery.evaluate(d=>d.scan())).membershipClaims.find(c=>c.conversationId===expected.conversations[2].id).asserted,'NONE');
+ }
+ report.results.push({name:'open-but-hidden-menu-label-and-option-never-certify-none',status:'PASS'});
  await page.locator('#move-dialog').evaluate(node=>node.dataset.conversationId='stale-conversation');
  assert.equal((await discovery.evaluate(d=>d.scan())).membershipClaims.find(c=>c.conversationId===expected.conversations[2].id).asserted,'UNKNOWN');
  await page.locator('#move-dialog').getByRole('button',{name:'Close'}).click();

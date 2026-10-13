@@ -1164,3 +1164,12 @@ Round107审查另发现隐藏current P可能压过可见sidebar，提交前已�
 首次定向回归发现新增准备阶段未入loader和旧B1构建漏依赖，均已修复；旧断言因首次策略初始化不再为空而更新为精确初始化数据／保留原偏好，不移除无原生种子与人工CAS断言。首次完整2416项有3个旧契约失败，修复后2416项通过；追加CAS反例后的最终为2417项，结果不相加，原失败日志保留。
 
 本轮只完成离线初始化链路。生产principal/context及accepted-send ACK/time、新聊首发、真实G/U/PAIA/真人验收、4x100k冷启动和旧间歇working-set条件仍未完成；context默认unverified fail-closed不变。Free未完成、NOT_RELEASE_READY；后续从当前Git继续唯一计划，不重做已验模块。
+
+
+## Round113：隐藏原生区域不能证明成员归属
+
+接d040949。成员列表需root与当前link都可见才签发PROJECT；打开的move菜单、checked选项及label均可见才签发NONE。hidden、aria-hidden、display:none、visibility:hidden/collapse均不得提供正向归属。仍保留可识别引用并降为UNKNOWN；既有surfaceBatch忽略UNKNOWN写入，不抹除已保存原生事实。不扩大owned-mask例外，不改原生输入／导航。
+
+针对性Host Node **1057/1057、0失败/跳过**；真实headless重建DOM八组PASS，新增两组覆盖30种隐藏／恢复状态；实际原构建包MV3十三旅程PASS、sourceChangedDuringRun=false。证据为free-round113-host.log.gz、free-round113-surface-browser.json、free-round113-package-mv3.json。DOM报告仅记录开始sourceHash，没有运行后哈希声明。这不是实际ChatGPT授权或生产验收。
+
+并行审查另复现异步present在pointerdown期间替换链接的独立竞态，三项新反例当前FAIL，尚不纳入本轮提交；下一轮修复，不能当作旧间歇浏览器问题的已证根因。真实context/ACK、新聊首发、G/U及4x100k等既有条件保持；Free未完成、NOT_RELEASE_READY。

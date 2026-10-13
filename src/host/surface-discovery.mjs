@@ -98,14 +98,14 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
         if(candidates.length>=limit) break;
         const item=candidate(node,root,regionKind,'conversation');if(!item||item.target.kind!=='resolved')continue;
         const conversationId=item.target.nativeId;
-        if(regionKind==='members'&&route.kind==='project'&&root.getAttribute(profile.memberProjectIdAttribute)===route.projectId) claims.set(conversationId,{conversationId,asserted:'PROJECT',projectId:route.projectId,upstreamRevision:null,evidence:evidence('members','current-project-route')});
+        if(regionKind==='members'&&visible(root)&&visible(node)&&route.kind==='project'&&root.getAttribute(profile.memberProjectIdAttribute)===route.projectId) claims.set(conversationId,{conversationId,asserted:'PROJECT',projectId:route.projectId,upstreamRevision:null,evidence:evidence('members','current-project-route')});
         else if(!claims.has(conversationId)) claims.set(conversationId,{conversationId,asserted:'UNKNOWN',projectId:null,reason:'membership-not-observed',evidence:evidence(regionKind)});
       }
     }
     const menu=roots.get('moveMenu');
-    if(route.kind==='conversation'&&menu&&menu.getAttribute(profile.menuConversationIdAttribute)===route.conversationId) {
+    if(route.kind==='conversation'&&menu&&visible(menu)&&menu.getAttribute(profile.menuConversationIdAttribute)===route.conversationId) {
       const checked=[...menu.querySelectorAll('input[type="radio"]:checked')];
-      if(checked.length===1&&checked[0].closest('label')?.textContent.trim()===profile.noneLabel) claims.set(route.conversationId,{conversationId:route.conversationId,asserted:'NONE',projectId:null,upstreamRevision:null,evidence:evidence('moveMenu','checked-no-project')});
+      if(checked.length===1&&visible(checked[0])&&visible(checked[0].closest('label'))&&checked[0].closest('label')?.textContent.trim()===profile.noneLabel) claims.set(route.conversationId,{conversationId:route.conversationId,asserted:'NONE',projectId:null,upstreamRevision:null,evidence:evidence('moveMenu','checked-no-project')});
     }
     const detachedHandles=[...detached];detached.clear();
     // A visible DOM slice is not an account-wide or terminal snapshot.
