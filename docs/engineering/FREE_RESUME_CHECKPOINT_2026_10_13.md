@@ -1047,3 +1047,14 @@ frame显式导出后需点击下载；选择JSON后上传并展示新增/更新/
 最终完整Node2220/2220，0失败/跳过；最终原包headless设置导航9/9 PASS，真实Enter关闭后的焦点已验证。备份5/5、恢复5/5为本轮焦点微修前源码，各自来源哈希保留；未冒称最终重跑。全部浏览器运行内源码稳定。初次SW realm dynamic import夹具错误、旧常驻H测试假设及未等待延迟绘制的立即count断言失败均单独保存；未降低原功能或指针断言。最终日志与源码摘要在free-round101-*。
 
 自动密度评估尚未接线，不能把模式持久化称自适应完成。新装auto/legacy固定仍需可靠初始化来源，当前无标记不能猜测。下一步按VA-HOST §7.6接通已知Project真实URL的普通导航回退，由用户进入原生Project继续新聊；不拼创建URL、不自动多步点击。真实ACK/time、默认context/C1/C2、新聊天首发、J/G/U、C5旧间歇点击与4x100k失败条件保持。Free未完成、NOT_RELEASE_READY。
+
+
+## Round102：Project卡片到原生Project页面的导航闭环
+
+在已正常push的84a6ce7继续。按VA-HOST §7.6，卡片“+”已有真实P导航计划时显示“打开项目以新建聊天”，浏览器原生新标签打开该Project，由用户继续原生操作。无计划仍禁用；不把进入Project冒充创建成功，不拼query、不自动多步点击。原生项目名不变，原tab/草稿保留。
+
+复用现有HOST_NATIVE_PLAN链，targets严格互斥refId/projectId，owner只从当前有界DTO的已知对象取得原生URL；回包核对entity/ID/URL，frame两类Map独立，P/C同字符串不冲突。renderer再次检查Project URL完全相同与new-tab-preserve-current，纯href默认键盘/修饰键，无派发RPC。200目标与64KiB上限、binding检查、scope/恢复/stop清理保留。
+
+最终完整Node2239/2239、0失败/跳过；原构建包真实headless MV3十项PASS，sourceChangedDuringRun=false。新增旅程实际打开合成原生P页面，原textarea节点和草稿不变、新建聊天动作计数未增加。独立只读审查无新finding。初次owner测试错误期待不存在的p2记录已修正，原失败日志保留。
+
+下一步继续B/F性能与剩余生产HostAdapter实现；本轮不是原生创建动作认证。默认context/C1/C2、真实ACK/time、新聊天首发、自动密度评估与新装默认、J/G/U、C5旧间歇点击及原4x100k失败仍未满足。Free未完成、NOT_RELEASE_READY。

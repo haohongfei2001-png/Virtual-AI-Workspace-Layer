@@ -140,3 +140,21 @@ test('scope change clears backup and denies late chunks without resuming old pri
 test('backup allocation arriving after client deadline is closed under the still-current grant',async()=>{for(const type of ['HOST_UI_BACKUP_EXPORT','HOST_UI_BACKUP_UPLOAD']){const f=fixture();await f.client.start();await drain();f.nav.onBackupRequest();const held=deferred(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type===type?held.promise:send(m);const request=f.backup.request({v:1,type,...(type.endsWith('UPLOAD')?{byteLength:100}:{})}),rejected=assert.rejects(request,/request-timeout/);await drain();await f.advance(6000);await rejected;held.resolve({ok:true,transferId:'late_allocated'});await drain();assert.deepEqual(f.calls.filter(m=>m.type==='HOST_UI_BACKUP_CLOSE'),[{v:1,type:'HOST_UI_BACKUP_CLOSE',transferId:'late_allocated',grantId:'grant',mountId:'mount'}]);assert.equal(f.backupStops,0);f.client.stop();}});
 
 test('backup allocation is also closed when an overdue reply beats a delayed timer callback',async()=>{const f=fixture();await f.client.start();await drain();f.nav.onBackupRequest();const held=deferred(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_BACKUP_EXPORT'?held.promise:send(m);const pending=f.backup.request({v:1,type:'HOST_UI_BACKUP_EXPORT'}),rejected=assert.rejects(pending,/request-timeout/);await drain();f.jump(6001);held.resolve({ok:true,transferId:'overdue_allocated'});await rejected;await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_UI_BACKUP_CLOSE'&&m.transferId==='overdue_allocated').length,1);f.client.stop();});
+
+const projectPlanFixture=()=>{const id='33333333-3333-4333-8333-333333333333',nativeUrl='https://chatgpt.com/g/'+id+'/project';return {id,nativeUrl,item:{projectId:id,targetKey:'project-plan',plan:{mode:'href',disposition:'new-tab-preserve-current',planRevision:1,target:{kind:'resolved',entity:'project',nativeId:id,navigationURL:nativeUrl}}}};};
+test('project and conversation plans with identical IDs remain separate and revoke together',async()=>{
+ const f=fixture(),{id,nativeUrl,item}=projectPlanFixture(),conversation={refId:id,targetKey:'conversation-plan',plan:{...item.plan,target:{kind:'resolved',entity:'conversation',nativeId:id,navigationURL:'https://chatgpt.com/c/'+id}}};
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),groups:{items:[{id,nativeUrl}]}},navigation:[item,conversation]}));await f.client.start();await drain();
+ const adapter=f.nav.adapter;assert.equal(adapter.projectNavigationPlan({id}).targetKey,'project-plan');assert.equal(adapter.navigationPlan({id}).targetKey,'conversation-plan');assert.equal(f.stops,0);
+ f.disconnect();assert.equal(adapter.projectNavigationPlan({id}),undefined);assert.equal(adapter.navigationPlan({id}),undefined);
+});
+for(const invalid of ['wrong-entity','wrong-url','unknown-project','both-ids','same-tab','duplicate'])test('project navigation rejects '+invalid,async()=>{
+ const f=fixture(),{id,nativeUrl,item}=projectPlanFixture();let items=[item];
+ if(invalid==='wrong-entity')item.plan.target.entity='conversation';
+ if(invalid==='wrong-url')item.plan.target.navigationURL='https://chatgpt.com/g/other/project';
+ if(invalid==='unknown-project')item.projectId='other';
+ if(invalid==='both-ids')item.refId=id;
+ if(invalid==='same-tab')item.plan.disposition='same-tab';
+ if(invalid==='duplicate')items.push(structuredClone(item));
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),groups:{items:[{id,nativeUrl}]}},navigation:items}));await f.client.start();await drain();assert.equal(f.pages.length,0);assert.equal(f.states.at(-1).reason,'invalid-frame-navigation');
+});

@@ -67,13 +67,15 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     for(const row of page.search?.items??[])rows.set(row.id,row);
     for(const row of page.workingSet?.items??[])rows.set(row.id,row);
     if(page.currentRef)rows.set(page.currentRef.id,page.currentRef);
+    const projects=new Map(page.groups.items.map(group=>[group.id,group]));
     const targets=[...rows.values()].filter(row=>row.available!==false&&typeof row.nativeUrl==='string').map(row=>({refId:row.id,navigationURL:row.nativeUrl}));
+    for(const group of projects.values())if(typeof group.nativeUrl==='string')targets.push({projectId:group.id,navigationURL:group.nativeUrl});
     if(targets.length>200)throw Error('free-frame-page-too-large');
     navigation=await prepareNavigation({parentFrame:context.parentFrame,binding:context.binding,targets});check();
     if(!Array.isArray(navigation)||navigation.length>200)throw Error('invalid-native-plans');
-    const seen=new Set();for(const item of navigation){const expected=rows.get(item?.refId),target=item?.plan?.target;
-     if(!expected||seen.has(item.refId)||!exactHostRecord(item,['refId','plan','targetKey'])||!['href','unavailable'].includes(item.plan?.mode)||(item.plan.mode==='href'&&(target?.kind!=='resolved'||target.entity!=='conversation'||target.nativeId!==item.refId||target.navigationURL!==expected.nativeUrl||!['same-tab','new-tab-preserve-current'].includes(item.plan.disposition))))throw Error('invalid-native-plans');
-     seen.add(item.refId);
+    const seen=new Set();for(const item of navigation){const project=Object.hasOwn(item??{},'projectId'),key=project?'projectId':'refId',entity=project?'project':'conversation',id=item?.[key],expected=(project?projects:rows).get(id),target=item?.plan?.target,identity=JSON.stringify([entity,id]);
+     if(!expected||seen.has(identity)||!exactHostRecord(item,[key,'plan','targetKey'])||!['href','unavailable'].includes(item.plan?.mode)||(item.plan.mode==='href'&&(target?.kind!=='resolved'||target.entity!==entity||target.nativeId!==id||target.navigationURL!==expected.nativeUrl||!['same-tab','new-tab-preserve-current'].includes(item.plan.disposition))))throw Error('invalid-native-plans');
+     seen.add(identity);
     }
    }
    const result={ok:true,state:'ready',page,navigation};

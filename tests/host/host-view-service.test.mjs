@@ -85,14 +85,14 @@ test('MOCK_IDB cached UI view recalibrates at native source expiry under a still
  const refreshedPages=pages;assert(refreshedPages>initialPages);assert.equal((await h.view('sidebar')).state,'ready');assert.equal(pages,refreshedPages,'one deadline crossing refresh serves both frames');
 });
 
-const hrefPlan=target=>({refId:target.refId,targetKey:'native_target',plan:{mode:'href',planRevision:1,disposition:'same-tab',target:{kind:'resolved',entity:'conversation',nativeId:target.refId,navigationURL:target.navigationURL}}});
+const hrefPlan=target=>{const project=Object.hasOwn(target,'projectId'),key=project?'projectId':'refId';return {[key]:target[key],targetKey:'native_target',plan:{mode:'href',planRevision:1,disposition:'same-tab',target:{kind:'resolved',entity:project?'project':'conversation',nativeId:target[key],navigationURL:target.navigationURL}}};};
 test('MOCK_IDB trusted native plan callback receives only current bounded identities and document binding',async t=>{
  const calls=[],h=await fixture(t,{prepareNavigation:async args=>{calls.push(structuredClone(args));return args.targets.map(hrefPlan);}});
  await h.bind();await h.observe();await h.mount();const result=await ready(h);
  assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(calls.length,1);
- assert.deepEqual(calls[0].targets,[{refId:'c1',navigationURL:'https://chatgpt.com/c/c1'}]);
+ assert.deepEqual(calls[0].targets,[{refId:'c1',navigationURL:'https://chatgpt.com/c/c1'},{projectId:'p1',navigationURL:'https://chatgpt.com/g/p1/project'}]);
  assert.deepEqual(Object.keys(calls[0]).sort(),['binding','parentFrame','targets']);assert.equal(calls[0].parentFrame.documentId,'document');assert.deepEqual(Object.keys(calls[0].binding).sort(),['documentToken','producerToken','routeEpoch']);assert.equal(typeof calls[0].binding.documentToken,'string');
- assert.deepEqual(result.navigation,[hrefPlan(calls[0].targets[0])]);
+ assert.deepEqual(result.navigation,calls[0].targets.map(hrefPlan));
  assert.equal(result.binding,undefined);assert.equal(result.parentFrame,undefined);assert(!JSON.stringify(result).includes(calls[0].binding.documentToken),'internal document token never enters UI DTO');
 });
 for(const mode of ['different-url','different-id','duplicate','oversize','unsafe-mode'])test(`MOCK_IDB malformed native plans ${mode} cannot publish UI payload`,async t=>{
@@ -291,4 +291,14 @@ test('MOCK_IDB auto policy change records current local day across midnight whil
  const h=await fixture(t);h.setTime(Date.parse(NOW)-10000);await h.bind();await h.observe();await h.mount();const initial=await ready(h);assert.equal(initial.state,'ready');h.setTime(Date.parse(NOW)+1000);
  const result=await h.horizon('workspace',{H:'auto',operationId:'auto_after_midnight',expectedRevision:initial.page.workspaceRevision,segment:2});assert.equal(result.ok,true,JSON.stringify(result));assert.equal(result.viewSession.T,initial.page.viewSession.T);assert.equal(result.viewSession.Z,initial.page.viewSession.Z);assert.equal(result.viewSession.H,initial.page.viewSession.H);assert.equal(result.segment,2);
  const policy=(await h.workspaces.read(workspaceScope(h))).state.preferences.freeTimePolicy.value;assert.equal(policy.lastChangedDay,initial.page.viewSession.T+1);assert.equal(policy.lastEvaluatedDay,null);assert.deepEqual((await ready(h)).page.viewSession,result.viewSession);
+});
+
+for(const mode of ['entity','url','mixed-id','duplicate'])test('MOCK_IDB Project plan '+mode+' cannot replace owner-known native identity',async t=>{
+ const h=await fixture(t,{prepareNavigation:async({targets})=>{
+  const item=hrefPlan(targets.find(t=>Object.hasOwn(t,'projectId')));
+  if(mode==='entity')item.plan.target.entity='conversation';
+  if(mode==='url')item.plan.target.navigationURL='https://chatgpt.com/g/other/project';
+  if(mode==='mixed-id')item.refId=item.projectId;
+  return mode==='duplicate'?[item,structuredClone(item)]:[item];
+ }});await h.bind();await h.observe();await h.mount();const result=await ready(h);assert.equal(result.ok,false);assert.equal(result.reason,'invalid-native-plans');assert.equal(result.page,undefined);
 });
