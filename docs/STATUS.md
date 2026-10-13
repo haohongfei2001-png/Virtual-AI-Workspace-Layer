@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第六十七轮：前置本地9e07906，最后确认远端570a906；本轮读取/重连共享30秒预算，超时明确退让并保留设置/草稿。完整1160/MV3生命周期9通过，普通实际MV3 100k三发送均低于1秒；4x100k启动仍FAIL。最新证据和合成包见文末Round67；真实Free验收及发布未完成。
+当前已推进至第六十八轮：b46ef83已推送并由GitHub确认。新增实际MV3数据库v2→v3及旧连接阻塞恢复4/4、同URL跨scope设置隔离通过；生产代码未变，完整1160/MV3生命周期9及规模证据仍为Round67来源。4x100k启动和真实Free验收未完成，详情见文末。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -757,3 +757,14 @@ Round61/62已同步至df925b1。本轮仅测试代码：同浏览器context、�
 最终4x100k仍30秒启动FAIL，明确read-budget-exhausted退让通过；后续发送NOT_RUN，原input/草稿/连接/可见均保留。最终普通实际安装MV3 100k首标签25798.9ms、第二14357.3ms（goto返回后计）；三发送830.1/779.7/692.3ms，单样本PASS，唯一持久事件/原名/NONE/scope隔离/原草稿通过，sourceChangedDuringRun=false。冷启动仍慢，不证明p95或弱设备达标。
 
 最新合成包路径见free-round67-mv3-100k.json，62文件/52worker模块；ZIP SHA256 08810ff60260263b3826750e75a8769ade25d7b4d9d35d8b542bb77dec88acfd，source manifest 1d74c59c71a8cf43de7f5a3c0cd271a7fb377cf233780df32586e1fd11fe2d49。SYNTHETIC_ONLY/NOT_RELEASE_READY。真实ChatGPT来源/账户/跨端、PAIA、物理IME/真人条件仍未验证，Free未完成。继续现有计划的本地功能反例，不以重复规模测试代替产品完成。
+
+
+## Round68：实际数据库schema升级与换账号设置隔离
+
+b46ef83已正常push，GitHub确认PR16仍Draft，base176ebc9a未变。此轮只增加两项独立浏览器harness，无生产代码改动，不重复完整Node或规模压测。
+
+实际安装MV3扩展来源IndexedDB v2→v3首跑4/4通过：用owner生成的合法人工资产/日志/视图/B1引用填充真实v2六store（604/1/1/3/1/1行）；旧连接未关闭时owner收到idb-open-blocked与trusted versionchange，全表原字节不变；正常close后pending升级及重试得到v3，新增native stores、六表逐row JSON完全保留，旧v2 reader被VersionError拒绝。随后真实content/worker ACTIVE、604原生引用可读，Pro人工标题/工作集保留且不进原生标题，原textarea/草稿保持。此为真实schema升级，区别于以前仅包切换升级；没有模拟私人ChatGPT认证。
+
+另一真实client/broker、合成owner空库存及虚拟时钟反例首跑PASS：A设置文件挂起超时，同URL改可信scope到B并释放迟到A回复，旧设置不恢复，B新设置文件为空；再回A也不能复活已dispose节点。原生input与草稿全程保持；不宣称对象内存安全擦除或真实账户认证。
+
+两报告sourceChangedDuringRun=false，MV3 pageErrors为空，未发生初始失败。生产回归1160/MV3生命周期9和最终规模结果仍源自Round67，不能累加本轮4条成为新的全套。Round68临时包生产源码与Round67相同，继续使用Round67交付来源；4x100k启动FAIL与真实来源/账户/跨端/PAIA/物理IME/真人条件仍未解决。Free未完成。
