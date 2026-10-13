@@ -711,3 +711,14 @@ Round61/62已同步至df925b1。本轮仅测试代码：同浏览器context、�
 
 本轮未重复生产回归；完整1135与实际MV3 9结果仍源自Round62。下一步实际安装MV3规模路径；4x100k冷启动失败仍未解决，真实账号/来源/跨端/PAIA/物理IME/真人条件仍未验证。Free未完成，SYNTHETIC_ONLY/NOT_RELEASE_READY。
 证据：free-round63-multitab{1k,10k,100k}.json与initial-context-failure.json。
+
+
+## Round64：实际安装MV3的规模与双标签
+
+747d70d已push。抽取共同scale-seed，页面和扩展来源probe共用真实IDB合成种子；实际MV3无worker hook，原content script/发送按钮/service worker运行。seed服务仅初始化后关闭；独立扩展probe核验持久化。初始抽取将page frame误固定T0，安全校验拒绝SPA发送；已恢复动态frame，失败证据保留。修复后page 1k及双tab通过。
+
+实际headless系统Chrome MV3：1k三次发送63.9/63.7/62.7ms；10k130.8/130/130ms；100k746.9/821.1/1474.7ms。100k第二标签超过1秒，timingStatus=FAIL，不能拿页面transport证据代替。100k首标签23.35秒、第二标签16.26秒（从goto返回后计，不含完整navigation耗时）。各规模功能断言通过：事件唯一/原名/NONE/其他scope空/原草稿textarea保留，源码与冻结包未变，pageErrors空。不测广播/跨设备，无worker方法计数探针。
+
+100k冻结包含Round62 deadline：60文件/51worker模块，ZIP SHA256 2166278e2dfdaf4ce213a049972841dcb18593fa152d288aea2c551573562b77，source manifest 7b6623e2cb844a608d666a84ea3036a468bb2970ea1dc0923b8eb9de55b4c856；确切临时路径见mv3-100k.json。SYNTHETIC_ONLY/NOT_RELEASE_READY。完整Node/MV3生命周期结果仍Round62，不合并成新全套。
+
+下一项：同scope跨binding后台校准与前台争用；低速100k迁移仍FAIL，独立审查建议有界原生全量审计但尚未实现/未证明收益。真实账号/上游来源/跨端/PAIA/IME/真人与Free完整交付仍未完成。
