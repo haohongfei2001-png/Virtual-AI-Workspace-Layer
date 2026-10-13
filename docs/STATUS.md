@@ -788,3 +788,6 @@ evidence directory首次回调前原来连续校验同一record两次，改为�
 最终完整1173/1173、0失败/跳过，真实IDB目录6/6，实际headless MV3生命周期9/9通过。一次优化后诊断（早于最终Map排列修正）首载21846ms、HEADER10352ms/PAGE11093ms，源码hash另存；非配对统计、非最终源码延迟认证，不把总1.4秒差值归因单项改动。两份完整CPU profile压缩保留，没有再次为追求更快数字重复100k测试。
 
 最新冻结ZIP仍Round69独立来源，未包含本轮reader改动；本轮MV3源码构建回归单独有hash。4x100k冷启动仍FAIL；真实ChatGPT来源/账户/跨端、PAIA、物理IME/真人条件未满足，Free未完成。下一项需针对迁移重复hash/审计成本做有证据的最小改进，不能跳过fresh checksum、全量审计或放宽截止。
+
+
+Round70同步/诊断补充：本地代码head c119f31，工作区测试完毕；此次正常push在75秒后连接GitHub443失败，最后确认远端仍b46ef83。不连续重试、不改变remote。独立SHA工作区复用/去DataView候选经225个字符串及递归coercion oracle通过，但512–8192字符微基准收益仅0–3%或负，未采纳、未额外跑browser；候选源码与结果见free-round70-sha-diagnostic.json。该诊断不是产品性能证据，生产仍保持全部逐piece checksum。
