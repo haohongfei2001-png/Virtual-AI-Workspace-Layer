@@ -239,3 +239,5 @@ pendingSynthetic已绑定捕获时验证过的scope/document/route/有效期；B
 协作调度独立诊断：按4ms合并task的内存候选未显示构建收益（原155.2/151.3ms，对照153.0/161.2ms），重绑仅约1ms差；因此cooperate源码保持原样。该报告只属计算诊断，不是产品性能认证。包 `/private/tmp/vaiwl-free-delivery-round33-20261013/vaiwl-free-synthetic-only.zip` SHA256 `021b5b8d8fbf66625373ecaa5c104b9dc8880741053285e8b89606c7f47076f7`，仍SYNTHETIC_ONLY。
 
 接续位置：100k单次新聊天写链与HEADER/PAGE/CHECK仍超1秒；可进一步核对freePage已有native页之后两个独立只读、version独立只读的等待成本，必须以故障/settle/发布反例和新测量决定，不减少权限/完整性校验。不要重做已完成模块或更改原计划/目录。真实账户/库存/本人活动/跨端、PAIA、物理IME/弱设备及真人验收仍缺对应条件，完整Free未完成。
+
+第三十三轮同步完成：正常快进push从3e88682到c8ee632成功，API确认PR16仍Draft、head=c8ee632b7b782bc2067c8c8930c81e21b5bc02f1，正文已更新实际测试与性能FAIL。此前未同步说明保留为历史，当前远端以本条和Git为准；未force/merge/deploy。
