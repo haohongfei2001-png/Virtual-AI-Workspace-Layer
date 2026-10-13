@@ -1,8 +1,16 @@
 /** Pure v2.7 projection. No storage, host authentication, text capture or native writes. */
 const DAY = 86400000;
 const dayFormatters=new Map();
+// Cache only pure parsing, never an activity decision or source authority.
+const instantCache=new Map();
 export function instant(value) {
   if (typeof value !== 'string') return null;
+  if(instantCache.has(value))return instantCache.get(value);
+  const parsed=parseInstant(value);
+  if(value.length<=32){if(instantCache.size>=256)instantCache.delete(instantCache.keys().next().value);instantCache.set(value,parsed);}
+  return parsed;
+}
+function parseInstant(value) {
   const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?(Z|[+-]\d{2}:\d{2})$/.exec(value);
   if(!m)return null;
   const [year,month,day,hour,minute,second]=m.slice(1,7).map(Number);

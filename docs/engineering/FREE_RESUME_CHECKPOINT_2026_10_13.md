@@ -556,3 +556,16 @@ partialContext显式boundedDirectory opt-in仅对目录格式启用，读取目�
 - 未生成新的冻结安装zip；Round57 zip仍按其旧来源使用，不冒称包含59源码。真实来源/跨端/PAIA/IME/真人及完整Free/发布仍未验收。
 
 证据：free-round59-node.log、staged-contracts.log、mv3.json、mixed100k.json、long100k.json、source-receipt.json。
+
+
+## Round60：纯时间解析缓存与单Project 100k
+
+16ce76e首次push遇HTTP2 framing error；单次 git -c http.version=HTTP/1.1 push 同一origin/分支成功，无持久配置更改。当前以包含本节的提交为准。
+
+- instant() 只按原始string缓存数学解析，最多256项且key<=32字符，保留原日期严格性/非法null/epoch0/非string无coercion；不缓存now/source撤权/TTL/actorScope。独立原算法oracle及行为反例6项纳入最终完整1125/1125，0失败/跳过。最终真实headless MV3 9/9。
+- send-scale新增single-project：初始99998refs中T0为NONE，其余归同一P1，最终100000refs；首载22170.4ms，发送697.5/629.2/563.4ms，草稿/阅读/原生消息唯一/活动持久化/成员正确且sourceChangedDuringRun=false。
+- 当前mixed100k首载24248.6ms，发送938/679.1/659.7ms，同样通过。比Round59样本没有明确端到端提升，不宣称冷加载已优化达标；单样本非p95。4x100k/多tab规模/原名成员增量仍未认证。
+- 新冻结包 /private/tmp/vaiwl-free-delivery-round60-20261013/extension；ZIP SHA256 a6f37078783659a56bf4d512ee9c63ffc2bcc55a844472007bd46a9744e346eb，source manifest d715c3fbe33869a346e1c08d529166c23c7a309f37c506ece2f4aa45f85e2ca2。59文件/51worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY，不访问真实ChatGPT。
+- 下一可执行F1：在现有send-scale真实IDB/client harness加入原生标题/成员增量更新反例（不复制整套fixture），验证尾部引用、重属与删除/unknown可达、草稿和只取变更refs。继续cold全量读取与warmHEADER串行开销。真实数据/跨端/PAIA/物理IME/真人条件仍未获授权或未验收，不阻止独立工作。
+
+证据：free-round60-full.log、mixed100k.json、single100k.json、mv3.json、package.json、source-receipt.json。
