@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第六十二轮：8b2a7b2本地已提交，push遇30秒网络低速超时，最后确认远端为8a35843。修复主线程繁忙时计时器迟到可接收超6秒响应的问题，按monotonic实际耗时再检查截止；完整1135/MV3 9/9通过。100k 4x启动仍FAIL(30秒)，原生输入/草稿/可见性保持；不放宽RPC或伪称性能通过。多标签规模测试继续，真实Free/发布未完成。
+当前已推进至第六十七轮：前置本地9e07906，最后确认远端570a906；本轮读取/重连共享30秒预算，超时明确退让并保留设置/草稿。完整1160/MV3生命周期9通过，普通实际MV3 100k三发送均低于1秒；4x100k启动仍FAIL。最新证据和合成包见文末Round67；真实Free验收及发布未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -744,3 +744,16 @@ Round61/62已同步至df925b1。本轮仅测试代码：同浏览器context、�
 4x100k仍30秒启动FAIL；多次原子尝试在约6.5–7.4秒观察stale-binding并按批回滚，后续发送NOT_RUN；原生同input/草稿/连接/可见全部true，sourceChanged=false。未放宽6秒RPC。最终未限速实际MV3 100k首载24693.4ms、第二标签13912.3ms，发送730.1/707.9/662.1ms均单样本PASS；原草稿、唯一事件、scope隔离通过。冷启动并未显示明显改善，不从该组推断p95或物理设备达标。128Mi精确边界未做新增专项大数据测试，保留原限制与小数据全量JSON oracle。
 
 最终冻结包 /var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-scale-mv3-t4QFgT/package/extension；ZIP SHA256 6107adfc2da4c3d8b96fb33bddf0b54c4297d42dccc08abb50cdf22bd52b372e，source manifest c392158b4cc9edcb90499aa0e1071756ef009291f162ff8174bd2cfa30f235f5。SYNTHETIC_ONLY/NOT_RELEASE_READY。真实ChatGPT来源/账户、跨端、PAIA、IME与真人条件仍未验证，Free尚未完整交付。下一独立性能机会仅先测量canonical key编码热点，不以猜测引入缓存或弱化校验。
+
+
+## Round67（2026-10-14）：读取恢复总预算与保留设置
+
+本地前置9e07906；其push曾遇网络低速超时，写本节时最后确认远端570a906。Free首次load/内部重连共享30秒monotonic预算，单RPC仍最多6秒；超时撤销当前绑定、停止自动重试并明确提示，迟到响应不能重新显示。手动重连、路由/可见性新周期才重置；Pro原有行为保留。该预算覆盖load恢复链，不冒称所有活跃期直接刷新均有新总预算。
+
+实际发现超时会销毁设置文件选择，已改为同scope悬挂/恢复原设置节点；原有跨scope核验保留。虚拟时钟+真实DOM证据：30000ms失效、五次BIND后停止、迟到回复无重启、手动恢复ACTIVE、同设置/文件节点及pending.json保留，关闭模态层后ACTIVE；原textarea/草稿始终保持。初始生产失败和随后错误要求模态层为ACTIVE的夹具失败分别保存。
+
+最终完整Node1160/1160，0失败/跳过；实际隔离headless MV3生命周期9/9。新增128Mi全局容量反例以5500引用跨5000/500两批：各批独立合法，聚合实际JSON超限，最终只失败一次、不完成。候选canonical key缓存微基准在真实manifest先行分布反而慢4.7%，未采纳任何生产缓存。
+
+最终4x100k仍30秒启动FAIL，明确read-budget-exhausted退让通过；后续发送NOT_RUN，原input/草稿/连接/可见均保留。最终普通实际安装MV3 100k首标签25798.9ms、第二14357.3ms（goto返回后计）；三发送830.1/779.7/692.3ms，单样本PASS，唯一持久事件/原名/NONE/scope隔离/原草稿通过，sourceChangedDuringRun=false。冷启动仍慢，不证明p95或弱设备达标。
+
+最新合成包路径见free-round67-mv3-100k.json，62文件/52worker模块；ZIP SHA256 08810ff60260263b3826750e75a8769ade25d7b4d9d35d8b542bb77dec88acfd，source manifest 1d74c59c71a8cf43de7f5a3c0cd271a7fb377cf233780df32586e1fd11fe2d49。SYNTHETIC_ONLY/NOT_RELEASE_READY。真实ChatGPT来源/账户/跨端、PAIA、物理IME/真人条件仍未验证，Free未完成。继续现有计划的本地功能反例，不以重复规模测试代替产品完成。

@@ -1,3 +1,4 @@
+import {createReadRecoveryBudget} from '../src/data/read-recovery-budget.mjs';
 import {withRequestDeadline} from '../src/data/request-deadline.mjs';
 import {loadFreeHeader} from '../src/data/free-header-loader.mjs';
 import {loadFreePages} from '../src/data/free-page-loader.mjs';
@@ -25,7 +26,14 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   const visible=()=>document.visibilityState!=='hidden';
   const controlsKey=()=>{const c=readControls();return JSON.stringify([c.size,c.now,c.timeZone]);};let lastControls=controlsKey();
   const queue=fn=>{const task=chain.then(fn);chain=task.catch(()=>{});return task;};
-  const request=async(type,extra={})=>{try{return await withRequestDeadline(()=>send({v:1,type,clientId,seq:++seq,...(type==='BIND'?{}:{leaseId:lease?.leaseId}),...extra}));}catch{throw Error('transport-unavailable');}};
+  // clearTimers intentionally excludes this shared deadline: internal retries
+  // and lease renewal cannot buy another thirty seconds of foreground waiting.
+  const readBudget=createReadRecoveryBudget({onExpire:()=>{if(!stopped&&visible()){invalidateRemote();recover('read-budget-exhausted');}}});
+  const request=async(type,extra={})=>{try{
+    readBudget.check();
+    const reply=await withRequestDeadline(()=>send({v:1,type,clientId,seq:++seq,...(type==='BIND'?{}:{leaseId:lease?.leaseId}),...extra}),{timeoutMs:Math.min(6000,readBudget.remaining())});
+    readBudget.check();return reply;
+  }catch{if(readBudget.remaining()===0)throw Error('read-budget-exhausted');throw Error('transport-unavailable');}};
   const navigation=createNavigation({document,adapter,onExit:()=>stop(),onManage:context=>void manage(context),onViewChange:(value,scope)=>saveViewSoon(value,scope),onCurrentWorkspaceEntry:()=>safeCurrentEntry(),onCalibrationEntry:value=>calibrateEntry(value)});
   const clearTimers=()=>{clearTimeout(expiry);clearTimeout(pending);clearTimeout(heartbeat);clearTimeout(viewTimer);};
   const clearFeedback=()=>{feedback?.remove();feedback=null;};
@@ -33,8 +41,8 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   function showFeedback(reason){
     clearFeedback();if(!visible()||stopped||reason==='unverified-scope'||retries<5&&retryable(reason))return;
     feedback=document.createElement('div');feedback.dataset.vaiwlOwned='connection-status';feedback.setAttribute('role','status');feedback.style.cssText='font:12px/1.5 system-ui;padding:6px 12px';
-    const text=document.createElement('span');text.textContent=reason==='unverified-scope'?'身份尚未确认，派生内容已隐藏。':(retries>=5||!retryable(reason))?'派生工作空间暂时无法连接，原生聊天仍可使用。':'派生工作空间正在重新连接，原生聊天仍可使用。';feedback.append(text);
-    const button=document.createElement('button');button.type='button';button.textContent='重新连接派生工作空间';button.onclick=()=>{retries=0;void load();};feedback.append(button);const host=adapter.inspect();if(host.ok)(host.navigationSlot??host.history).before(feedback);
+    const text=document.createElement('span');text.textContent=reason==='read-budget-exhausted'?'工作空间加载超时，原生聊天仍可使用。':reason==='unverified-scope'?'身份尚未确认，派生内容已隐藏。':(retries>=5||!retryable(reason))?'派生工作空间暂时无法连接，原生聊天仍可使用。':'派生工作空间正在重新连接，原生聊天仍可使用。';feedback.append(text);
+    const button=document.createElement('button');button.type='button';button.textContent='重新连接派生工作空间';button.onclick=()=>{retries=0;readBudget.reset();void load();};feedback.append(button);const host=adapter.inspect();if(host.ok)(host.navigationSlot??host.history).before(feedback);
   }
   function clearAutoNotice(){clearTimeout(autoNoticeTimer);autoNotice?.remove();autoNotice=null;}
   function showAutoNotice(previous,next,day){
@@ -70,9 +78,11 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
   function current(ticket,url){return !stopped&&visible()&&ticket===generation&&url===env.location.href;}
   const retryable=reason=>['invalidated-during-check','stale-document','not-current-document','stale-binding','stale-after-workspace','stale-after-commit','stale-client-response','transport-unavailable','binding-not-ready','lease-expired-active-js','snapshot-revision-changed'].includes(reason);
   function recover(reason,{preserve=true,immediate=false}={}){
+    if(readBudget.expired)reason='read-budget-exhausted';
+    if(!retryable(reason)&&reason!=='read-budget-exhausted')readBudget.reset();
     if(!retryable(reason)){verifiedAuthority=null;pendingSynthetic.clear();}
-    clearRecovery();if(stopped)return;generation++;lease=null;data=null;clearTimers();fail(reason,preserve&&retryable(reason));showFeedback(reason);
-    if(!visible()||!retryable(reason)||retries>=5)return;
+    clearRecovery();if(stopped)return;generation++;lease=null;data=null;clearTimers();fail(reason,preserve&&(retryable(reason)||reason==='read-budget-exhausted'));showFeedback(reason);
+    if(!visible()||!retryable(reason)||retries>=5){if(reason!=='read-budget-exhausted')readBudget.reset();return;}
     const ticket=generation,url=env.location.href,delay=immediate?0:[90,180,360,1000,2000][retries++];
     pending=setTimeout(()=>{if(current(ticket,url))void load();},delay);
   }
@@ -131,6 +141,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
       partitionReplica=assembled;partitionIndex=nextIndex;next=assembled.snapshot;
     }else{partitionReplica=null;partitionIndex=null;}
 
+    readBudget.check();
     if(!current(ticket,url)||!lease||next.scope!==lease.scope||typeof lease.documentId!=='string'||Date.now()>=lease.expiresAt)throw Error('stale-client-response');
     if(data?.scope===next.scope&&next.revision<data.revision)return data;
     if(freeMode){if(nextReplica){freeReplica=nextReplica;freeIndex=nextIndex;}freePrepared=next;}
@@ -151,13 +162,16 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     }),2000);
   }
   async function load(){
-    clearRecovery();if(stopped||!visible())return;const ticket=++generation,url=env.location.href;clearTimers();fail('validating-binding',true);lease=null;data=null;lastView='';
+    clearRecovery();if(stopped||!visible())return;
+    if(new URL(env.location.href).searchParams.get('view')!=='pro'){if(!readBudget.begin())return;}else readBudget.reset();
+    const ticket=++generation,url=env.location.href;clearTimers();fail('validating-binding',true);lease=null;data=null;lastView='';
     try{const bound=await request('BIND');if(!current(ticket,url))return;if(!bound?.ok)throw Error(bound?.reason??'bind-failed');
-      acceptBinding(bound);await queue(async()=>{await sendBeforeSnapshot(ticket,url);if(current(ticket,url))return readSnapshot(ticket,url);});if(!current(ticket,url))return;retries=0;
+      acceptBinding(bound);await queue(async()=>{await sendBeforeSnapshot(ticket,url);if(current(ticket,url))return readSnapshot(ticket,url);});if(!current(ticket,url))return;readBudget.check();retries=0;readBudget.reset();
       expiry=setTimeout(()=>recover('lease-expired-active-js',{immediate:true}),Math.max(0,lease.expiresAt-Date.now()));scheduleHeartbeat();flushSynthetic();
     }catch(e){if(current(ticket,url)){if(lease&&isFreeRecoveryReason(e.message)){await showFreeRecovery(ticket,url,e.message);}else if(lease&&['corrupt-record','invalid-state','invalid-schema','invalid-user-event','invalid-text','orphan-placement','orphan-title','invalid-state-row','invalid-state-table'].includes(e.message)){await showAssetRecovery(ticket,url,e.message);}else recover(e.message);}}
   }
   async function showFreeRecovery(ticket,url,reason){
+    readBudget.reset();
     verifiedAuthority=null;pendingSynthetic.clear();freeReplica=null;freeIndex=null;freePrepared=null;
     fail(reason,true);clearRecovery();let plans;
     try{const reply=await request('B23_FREE_RECOVERY_STATUS');if(!current(ticket,url)||!reply?.ok)throw Error(reply?.reason??'stale-client-response');plans=reply.recovery??reply;}
@@ -172,6 +186,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     expiry=setTimeout(()=>{if(current(ticket,url))void load();},Math.max(0,lease.expiresAt-Date.now()));
   }
   async function showAssetRecovery(ticket,url,reason){
+    readBudget.reset();
     verifiedAuthority=null;pendingSynthetic.clear();freeReplica=null;freeIndex=null;freePrepared=null;
     fail(reason,true);clearRecovery();let plan;try{const r=await request('B23_RECOVERY_STATUS');if(!current(ticket,url)||!r.ok)throw Error(r.reason??'stale-client-response');plan=r.recovery;}catch(e){if(!current(ticket,url))return;if(retryable(e.message)){recover(e.message);return;}plan={recoverable:false,reason:e.message};}
     const panel=document.createElement('div');panel.dataset.vaiwlOwned='asset-recovery';panel.setAttribute('role','region');panel.setAttribute('aria-label','工作空间数据恢复');panel.style.cssText='font:13px/1.6 system-ui;padding:12px 18px;background:var(--surface,#fff);color:var(--ink,#171717);border-bottom:1px solid var(--line,#ddd)';
@@ -219,7 +234,7 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
     }),180);
   }
   function changed(){if(stopped)return;if(lastURL!==env.location.href||lastControls!==controlsKey()){
-      clearRecovery();if(lastURL!==env.location.href)navigation.enterReading();const accountRoute=new URL(env.location.href).pathname.split('/')[2];if(accountRoute!==freeSessionRoute){freeSession=null;freeReplica=null;freeIndex=null;freePrepared=null;freeSessionRoute=accountRoute;verifiedAuthority=null;pendingSynthetic.clear();}partitionReplica=null;partitionIndex=null;lastURL=env.location.href;lastControls=controlsKey();generation++;invalidateRemote();clearTimers();fail('route-changed');lease=null;data=null;retries=0;clearFeedback();pending=setTimeout(load,0);
+      clearRecovery();if(lastURL!==env.location.href)navigation.enterReading();const accountRoute=new URL(env.location.href).pathname.split('/')[2];if(accountRoute!==freeSessionRoute){freeSession=null;freeReplica=null;freeIndex=null;freePrepared=null;freeSessionRoute=accountRoute;verifiedAuthority=null;pendingSynthetic.clear();}partitionReplica=null;partitionIndex=null;lastURL=env.location.href;lastControls=controlsKey();generation++;invalidateRemote();clearTimers();fail('route-changed');lease=null;data=null;retries=0;readBudget.reset();clearFeedback();pending=setTimeout(load,0);
     }else navigation.layout();}
   // Re-observe only bounded synthetic metadata; never replay a native send or body.
   function syntheticOriginMatches(item,scope){
@@ -290,11 +305,11 @@ export function startClient({send,invalidateRemote=()=>{},readControls=()=>({siz
       try{await readSnapshot(ticket,url);}catch(e){if(current(ticket,url))recover(e.message);}
     });
   });
-  const hide=()=>{if(!visible()){verifiedAuthority=null;generation++;clearTimers();lease=null;data=null;invalidateRemote();fail('hidden-document',true);clearFeedback();}else{retries=0;void load();}};
-  const pageHide=()=>{verifiedAuthority=null;generation++;clearTimers();lease=null;data=null;invalidateRemote();fail('page-hidden',true);clearFeedback();};
-  const resume=()=>{if(!stopped&&visible()){retries=0;void load();}};
+  const hide=()=>{if(!visible()){readBudget.reset();verifiedAuthority=null;generation++;clearTimers();lease=null;data=null;invalidateRemote();fail('hidden-document',true);clearFeedback();}else{retries=0;readBudget.reset();void load();}};
+  const pageHide=()=>{readBudget.reset();verifiedAuthority=null;generation++;clearTimers();lease=null;data=null;invalidateRemote();fail('page-hidden',true);clearFeedback();};
+  const resume=()=>{if(!stopped&&visible()){retries=0;readBudget.reset();void load();}};
   document.addEventListener('visibilitychange',hide);document.addEventListener('freeze',pageHide);document.addEventListener('resume',resume);addEventListener('pagehide',pageHide);addEventListener('pageshow',resume);
-  const refresh=()=>{generation++;invalidateRemote();retries=0;return load();};
-  function stop(){clearRecovery();if(stopped)return;stopped=true;verifiedAuthority=null;pendingSynthetic.clear();freeReplica=null;freeIndex=null;freePrepared=null;generation++;clearTimers();clearFeedback();editor?.close();observer.disconnect();resize.disconnect();unsub();document.removeEventListener('hf:change',nativeChange);document.removeEventListener('hf:synthetic-send',syntheticSend);document.removeEventListener('toggle',nativeChange,true);document.removeEventListener('visibilitychange',hide);document.removeEventListener('freeze',pageHide);document.removeEventListener('resume',resume);removeEventListener('pagehide',pageHide);removeEventListener('pageshow',resume);removeEventListener('popstate',nativeChange);removeEventListener('resize',nativeChange);navigation.stop();}
+  const refresh=()=>{generation++;invalidateRemote();retries=0;readBudget.reset();return load();};
+  function stop(){clearRecovery();if(stopped)return;stopped=true;readBudget.reset();verifiedAuthority=null;pendingSynthetic.clear();freeReplica=null;freeIndex=null;freePrepared=null;generation++;clearTimers();clearFeedback();editor?.close();observer.disconnect();resize.disconnect();unsub();document.removeEventListener('hf:change',nativeChange);document.removeEventListener('hf:synthetic-send',syntheticSend);document.removeEventListener('toggle',nativeChange,true);document.removeEventListener('visibilitychange',hide);document.removeEventListener('freeze',pageHide);document.removeEventListener('resume',resume);removeEventListener('pagehide',pageHide);removeEventListener('pageshow',resume);removeEventListener('popstate',nativeChange);removeEventListener('resize',nativeChange);navigation.stop();}
   void load();return {stop,refresh,command,undo,manage,showWorkspace:()=>navigation.showWorkspace(),status:()=>navigation.status(),navigation};
 }
