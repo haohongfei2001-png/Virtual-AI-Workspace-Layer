@@ -83,3 +83,19 @@ test('working set oversize refines bounded rows without changing offset',async()
 test('simultaneous search and working set is rejected before privileged read',async()=>{
  const f=fixture();await f.client.start();await drain();const views=f.views;await assert.rejects(f.nav.onProjectionRequest({search:{query:'x'},workingSet:{offset:0}}),/invalid-frame-query/);assert.equal(f.views,views);assert.equal(f.stops,0);
 });
+
+test('manual horizon writes once using current revision and relocates before refreshing',async()=>{
+ const f=fixture(),old={H:30,T:20740,Z:'UTC',policyRevision:0};let session=old;
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),workspaceRevision:5,viewSession:session},navigation:[]}));await f.client.start();await drain();
+ const send=f.runtime.sendMessage,writes=[];f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_SET_HORIZON'){writes.push(m);session={...old,H:7,policyRevision:1};return Promise.resolve({ok:true,segment:8,viewSession:session,workspaceRevision:6});}return send(m);};
+ const result=await f.nav.onHorizonRequest({H:7,segment:2,anchorRefId:null});await drain();assert.equal(result.ok,true);assert.equal(writes.length,1);assert.equal(writes[0].expectedRevision,5);assert.equal(writes[0].scope,undefined);assert.equal(f.calls.at(-1).query.segment,8);assert.equal(f.pages.at(-1).viewSession.H,7);
+});
+test('another frame horizon change relocates existing date interval before publishing',async()=>{
+ const f=fixture();let session={H:30,T:20740,Z:'UTC',policyRevision:0};f.setView(async m=>({ok:true,state:'ready',page:{...f.page(),workspaceRevision:5,viewSession:session,segment:m.query.segment??0},navigation:[]}));await f.client.start();await drain();await f.nav.onProjectionRequest({segment:2,offset:0,limit:8});
+ session={...session,H:7,policyRevision:1};f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();assert.equal(f.calls.at(-1).query.segment,8);assert.equal(f.pages.at(-1).segment,8);
+});
+test('denied horizon never retries or changes query; late success after stop cannot publish',async()=>{
+ const f=fixture();f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),workspaceRevision:5,viewSession:{H:30,T:20740,Z:'UTC',policyRevision:0}},navigation:[]}));await f.client.start();await drain();
+ const send=f.runtime.sendMessage;let writes=0;f.runtime.sendMessage=m=>m.type==='HOST_UI_SET_HORIZON'?(writes++,Promise.resolve({ok:false,reason:'revision-conflict'})):send(m);const fail=await f.nav.onHorizonRequest({H:7,segment:0,anchorRefId:null});assert.equal(fail.reason,'revision-conflict');assert.equal(writes,1);assert.equal(f.pages.at(-1).viewSession.H,30);
+ const held=deferred();f.runtime.sendMessage=m=>m.type==='HOST_UI_SET_HORIZON'?held.promise:send(m);const late=f.nav.onHorizonRequest({H:7,segment:0,anchorRefId:null});f.client.stop();const count=f.pages.length;held.resolve({ok:true,segment:0,viewSession:{H:7,T:20740,Z:'UTC',policyRevision:1},workspaceRevision:6});assert.equal((await late).ok,false);assert.equal(f.pages.length,count);
+});

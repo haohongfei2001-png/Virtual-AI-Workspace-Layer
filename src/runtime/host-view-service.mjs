@@ -1,3 +1,4 @@
+import {FREE_HORIZONS,initialFreeTimePolicy,setFreeHorizon,relocateFreeSegment} from '../data/free-time-policy.mjs';
 import {projectFreeWorkingSet} from './free-working-set-projection.mjs';
 import {projectFreeSearch} from './free-search-projection.mjs';
 import {createURLPolicy} from '../host/url-policy.mjs';
@@ -7,14 +8,14 @@ import {projectFreeFrame} from './free-frame-projection.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 /** One privileged replica per mount, shared by its two granted UI documents.
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
-export function createHostViewService({ui,readService,prepareNavigation=null,presentSurface=null,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,presentSurface=null,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
  const views=new Map();
  const reason=error=>/^[a-z0-9-]{1,80}$/.test(error?.message)?error.message:'free-view-unavailable';
  function remove(id){const entry=views.get(id);if(entry){entry.owner.stop();views.delete(id);}}
  function begin(entry){
-  entry.error=null;entry.pending=true;
-  entry.owner.refresh().then(()=>{entry.pending=false;},error=>{entry.pending=false;entry.error=reason(error);});
+  entry.error=null;entry.pending=true;const generation=entry.prepareGeneration=(entry.prepareGeneration??0)+1;
+  entry.owner.refresh().then(()=>{if(entry.prepareGeneration===generation)entry.pending=false;},error=>{if(entry.prepareGeneration===generation){entry.pending=false;entry.error=reason(error);}});
  }
  async function handle(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-view'};}
@@ -67,6 +68,33 @@ export function createHostViewService({ui,readService,prepareNavigation=null,pre
    if(new TextEncoder().encode(JSON.stringify(result)).length>65536)throw Error('free-frame-page-too-large');return result;
   }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;}
  }
+ async function setHorizon(input,sender){
+  let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-horizon'};}
+  if(!exactHostRecord(message,['v','type','grantId','mountId','operationId','expectedRevision','H','segment','anchorRefId'])||message.v!==1||message.type!=='HOST_UI_SET_HORIZON'||typeof message.operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(message.operationId)||!Number.isSafeInteger(message.expectedRevision)||message.expectedRevision<0||!FREE_HORIZONS.includes(message.H)||!Number.isSafeInteger(message.segment)||message.segment<0||message.segment>1000000||!(message.anchorRefId===null||typeof message.anchorRefId==='string'&&message.anchorRefId.length>0&&message.anchorRefId.length<=128))return {ok:false,reason:'invalid-ui-horizon'};
+  let active=true;const started=elapsedNow(),abort=new AbortController();
+  try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+   const entry=views.get(message.mountId),current=entry?.owner.current();
+   if(!workspaceRepository||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)throw Error('free-view-not-ready');
+   if(entry.horizonPending)throw Error('horizon-change-in-progress');
+   if(current.snapshot.workspaceRevision!==message.expectedRevision)throw Error('revision-conflict');
+   entry.horizonPending=true;
+   try{
+    const old=current.snapshot.viewSession,anchor=message.anchorRefId===null?null:current.index.byId(message.anchorRefId);
+    if(message.anchorRefId!==null&&!anchor)throw Error('horizon-anchor-unavailable');
+    const candidateDay=anchor?(anchor.activityDecision??anchor.activity)?.candidateDay??null:old.T-old.H*message.segment;
+    const policy=setFreeHorizon(current.snapshot.preferences?.freeTimePolicy?.value??initialFreeTimePolicy({day:old.T}),message.H,old.T);
+    const valid=()=>active&&elapsedNow()-started<6000&&context.isCurrent()&&views.get(message.mountId)===entry;
+    if(!valid())throw Error('ui-horizon-expired');
+    const result=await workspaceRepository.command(context.scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,command:{type:'SET_PREFERENCE',id:'freeTimePolicy',value:policy}},{actor:'human',guard:valid,signal:abort.signal});
+    if(!result?.ok)throw Error(result?.reason??'horizon-write-unavailable');
+    if(!valid())throw Error('ui-horizon-expired');
+    const viewSession=entry.owner.reconfigureSession({H:policy.H,policyRevision:policy.revision});
+    const segment=Math.min(1000000,relocateFreeSegment({candidateDay},viewSession));
+    begin(entry);ui.notifyScope?.(context.scope.key);
+    return {ok:true,segment,viewSession,workspaceRevision:result.revision};
+   }finally{entry.horizonPending=false;}
+  }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;abort.abort();}
+ }
  async function present(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-presentation'};}
   const intent=message?.intent,kind=intent?.kind;
@@ -85,5 +113,5 @@ export function createHostViewService({ui,readService,prepareNavigation=null,pre
  }
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId){for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({handle,present,revokeDocument,revokeTab,revokeMount:remove,stop(){for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({handle,present,setHorizon,revokeDocument,revokeTab,revokeMount:remove,stop(){for(const key of [...views.keys()])remove(key);}});
 }

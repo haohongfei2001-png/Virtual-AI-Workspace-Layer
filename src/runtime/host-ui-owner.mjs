@@ -149,7 +149,11 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   if(!mount||typeof work!=='function')throw Error('ui-mount-revoked');
   const frame=Object.freeze({tabId:mount.tabId,frameId:0,documentId:mount.documentId,actualURL:mount.url,documentLifecycle:'active',incognito:false});
   const scope=authority.scopeFor(frame);
-  const current=()=>registrations.get(grant.mountId)===mount&&authority.peek(frame)?.grant?.id===grant.scopeGrantId&&authority.scopeFor(frame)?.key===scope?.key;
+  const parentSender={id:extensionId,tab:{id:mount.tabId,incognito:false},frameId:0,documentId:mount.documentId,documentLifecycle:'active',url:mount.url};
+  const current=()=>{
+   const live=uiDocuments.get(sender.documentId);
+   return registrations.get(grant.mountId)===mount&&live?.grant.id===grant.id&&live.grant.scopeGrantId===grant.scopeGrantId&&sameSender(live.sender,sender)&&Date.parse(live.grant.expiresAt)>now()&&handshake.isBound?.(mount.binding,parentSender)===true&&authority.peek(frame)?.grant?.id===grant.scopeGrantId&&authority.scopeFor(frame)?.key===scope?.key;
+  };
   if(!scope||!current())throw Error('ui-scope-changed');
   const result=await work(Object.freeze({scope,parentFrame:frame,binding:mount.binding,scopeGrantId:grant.scopeGrantId,role:grant.role,isCurrent:current}));
   await validate({...args,sender});if(!current())throw Error('ui-scope-changed');return result;

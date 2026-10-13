@@ -18,12 +18,13 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const observations=surfaceProfiles?createHostObservationOwner({handshake,authority,getFrame,profiles:surfaceProfiles,onAccepted:scope=>ui?.notifyScope(scope.key),now}):null;
  const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:observations.gate,clock:()=>new Date(now()).toISOString()}):null;
  const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
- const views=ui&&readService?createHostViewService({ui,readService,prepareNavigation,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
+ const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,prepareNavigation,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
  const commands={};if(readService)for(const name of ['snapshot','command','undo','history','saveView','exportBackup','previewRestore','restoreBackup','recoveryStatus','recover'])if(typeof workspaceRepository[name]==='function')commands[name]=workspaceRepository[name].bind(workspaceRepository);
  const broker=createDocumentBindingBroker({extensionId,getFrame,allowedURL,repository,workspaceRepository:readService?{...readService,...commands}:workspaceRepository,freeRuntime,now,makeId,hostHandshake:handshake,resolveScope:({currentFrame,sender})=>authority.scopeFor(asFrame(currentFrame,sender))});
  const sequences=new Map();
  async function handle(message,sender){
   if(message?.type==='HOST_DOCUMENT_RENEW')return handshake.renew(message,sender);
+  if(message?.type==='HOST_UI_SET_HORIZON')return views?views.setHorizon(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_PRESENT')return views?views.present(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_VIEW')return views?views.handle(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(typeof message?.type==='string'&&message.type.startsWith('HOST_UI_'))return ui?ui.handle(message,sender):{ok:false,reason:'host-ui-unavailable'};

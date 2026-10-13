@@ -31,7 +31,8 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,documentURL
  async function mount(){const auth={documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch};assert.equal((await service.handle({v:1,type:'HOST_UI_MOUNT',...auth,mountId:'mount',regionEpoch:1},sender)).ok,true);for(const role of ['workspace','sidebar']){const joined=service.handle({v:1,type:'HOST_UI_JOIN',nonce:'nonce_'+role,role},children[role]);const confirmed=await service.handle({v:1,type:'HOST_UI_CONFIRM',...auth,mountId:'mount',regionEpoch:1,nonce:'nonce_'+role,role},sender);assert.equal(confirmed.ok,true,JSON.stringify(confirmed));const result=await joined;assert.equal(result.ok,true,JSON.stringify(result));grants[role]=result.grant;}}
  const view=(role='workspace',query={},patch={},as=children[role])=>service.handle({v:1,type:'HOST_UI_VIEW',grantId:grants[role].id,mountId:'mount',query,...patch},as);
  const present=(role,intent,patch={},as=children[role])=>service.handle({v:1,type:'HOST_UI_PRESENT',grantId:grants[role].id,mountId:'mount',intent,...patch},as);
- return{present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
+ const horizon=(role,extra={},as=children[role])=>service.handle({v:1,type:'HOST_UI_SET_HORIZON',grantId:grants[role].id,mountId:'mount',operationId:'set_horizon',expectedRevision:0,H:14,segment:0,anchorRefId:null,...extra},as);
+ return{horizon,present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
 }
 const drain=()=>new Promise(resolve=>setImmediate(resolve));
 async function ready(h,role='workspace'){
@@ -168,4 +169,56 @@ test('MOCK_IDB working set rejects search combination and forged fields',async t
 test('MOCK_IDB account replacement cannot reveal old saved working set',async t=>{
  const h=await fixture(t);await h.bind();await h.observe();await seedManualWorkingSet(h);await h.mount();await ready(h);assert.equal((await h.view('workspace',{workingSet:{}})).page.workingSet.total,2);
  h.switchPrincipal('other-working-set-principal');assert.equal((await h.view('workspace',{workingSet:{}})).ok,false);await h.bind();await h.mount();await ready(h);const next=await h.view('workspace',{workingSet:{}});assert.equal(next.state,'ready',JSON.stringify(next));assert.equal(next.page.workingSet.total,0);assert.deepEqual(next.page.workingSet.items,[]);assert(!JSON.stringify(next).includes('missing_saved'));
+});
+
+function workspaceScope(h){const [provider,accountId,organizationId]=JSON.parse(h.bound.scope);return {verified:true,provider,accountId,organizationId};}
+test('MOCK_IDB human horizon change shares frozen T/Z and H across both frame views, preserving manual assets',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await seedManualWorkingSet(h);const scope=workspaceScope(h);
+ for(const [i,command] of [{type:'CREATE_WORKSPACE',id:'manual_theme',name:'Manual Pro Theme'},{type:'SET_TITLE',refId:'c1',title:'Manual Pro Title'},{type:'PLACE',workspaceId:'manual_theme',refId:'c1'}].entries()){const {state}=await h.workspaces.read(scope);assert.equal((await h.workspaces.command(scope,{operationId:'manual_asset_'+i,expectedRevision:state.revision,command})).ok,true);}
+ const before=(await h.workspaces.read(scope)).state;await h.mount();const initial=await ready(h);
+ const result=await h.horizon('sidebar',{expectedRevision:initial.page.workspaceRevision,H:14,segment:2});assert.equal(result.ok,true,JSON.stringify(result));assert.equal(result.viewSession.H,14);assert.equal(result.viewSession.T,initial.page.viewSession.T);assert.equal(result.viewSession.Z,initial.page.viewSession.Z);assert(Number.isSafeInteger(result.segment)&&result.segment>=0);
+ const workspace=await ready(h),sidebar=await ready(h,'sidebar');assert.deepEqual(workspace.page.viewSession,result.viewSession);assert.deepEqual(sidebar.page.viewSession,result.viewSession);assert.equal(workspace.page.workspaceRevision,result.workspaceRevision);
+ const after=(await h.workspaces.read(scope)).state;for(const key of ['refs','workspaces','placements','identities'])assert.deepEqual(after[key],before[key]);assert.deepEqual(after.preferences.workingSet,before.preferences.workingSet);assert.equal(after.preferences.freeTimePolicy.value.H,14);assert.equal(after.preferences.freeTimePolicy.value.mode,'fixed');
+});
+test('MOCK_IDB invalid H, forged scope/grant and parent sender cannot alter policy or session',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();const initial=await ready(h),scope=workspaceScope(h),before=(await h.workspaces.read(scope)).state;
+ for(const [patch,sender]of [[{H:8}],[{H:'14'}],[{scope:'forged'}],[{grantId:'wrong'}],[{segment:-1}],[{},h.sender]]){const result=await h.horizon('workspace',{expectedRevision:initial.page.workspaceRevision,...patch},sender);assert.equal(result.ok,false,JSON.stringify(result));}
+ assert.deepEqual((await h.workspaces.read(scope)).state,before);assert.deepEqual((await ready(h)).page.viewSession,initial.page.viewSession);
+});
+test('MOCK_IDB stale horizon CAS rejects without replacing the successfully published session',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();const initial=await ready(h);
+ const first=await h.horizon('workspace',{operationId:'first_horizon',expectedRevision:initial.page.workspaceRevision,H:7});assert.equal(first.ok,true,JSON.stringify(first));await ready(h);
+ const second=await h.horizon('sidebar',{operationId:'stale_horizon',expectedRevision:initial.page.workspaceRevision,H:90});assert.equal(second.ok,false,JSON.stringify(second));assert.equal(second.reason,'revision-conflict');assert.deepEqual((await ready(h)).page.viewSession,first.viewSession);assert.equal((await h.workspaces.read(workspaceScope(h))).state.preferences.freeTimePolicy.value.H,7);
+});
+test('MOCK_IDB horizon scope revocation before delayed guarded command prevents persistence',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();const initial=await ready(h),scope=workspaceScope(h),before=(await h.workspaces.read(scope)).state;
+ const original=h.workspaces.command.bind(h.workspaces);let entered=false,release;const held=new Promise(r=>release=r);
+ h.workspaces.command=async(...args)=>{entered=true;await held;return original(...args);};
+ const pending=h.horizon('workspace',{expectedRevision:initial.page.workspaceRevision,H:60});for(let i=0;i<50&&!entered;i++)await drain();assert.equal(entered,true);h.switchPrincipal('revoked-before-horizon');release();const result=await pending;assert.equal(result.ok,false);assert.equal(result.viewSession,undefined);assert.deepEqual((await h.workspaces.read(scope)).state,before);assert.equal((await h.view()).ok,false);
+});
+test('MOCK_IDB concurrent human commit wins CAS over delayed horizon without changing shared session',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();const initial=await ready(h),scope=workspaceScope(h),original=h.workspaces.command.bind(h.workspaces);let entered=false,release;const held=new Promise(r=>release=r);
+ h.workspaces.command=async(...args)=>{entered=true;await held;return original(...args);};
+ const pending=h.horizon('sidebar',{expectedRevision:initial.page.workspaceRevision,H:90});for(let i=0;i<50&&!entered;i++)await drain();assert.equal(entered,true);
+ assert.equal((await original(scope,{operationId:'concurrent_manual_title',expectedRevision:initial.page.workspaceRevision,command:{type:'SET_TITLE',refId:'c1',title:'Concurrent manual title'}})).ok,true);release();const result=await pending;assert.equal(result.ok,false);assert.equal(result.reason,'revision-conflict');assert.equal(result.viewSession,undefined);
+ const after=(await h.workspaces.read(scope)).state;assert.equal(after.identities.c1.title,'Concurrent manual title');assert.equal(after.preferences.freeTimePolicy,undefined);assert.deepEqual((await ready(h)).page.viewSession,initial.page.viewSession);
+});
+test('MOCK_IDB delayed obsolete ordinary refresh cannot poison a newly configured horizon',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();const initial=await ready(h),native=h.service.nativeRepository;
+ const version=native.version.bind(native),header=native.header.bind(native);let changed=true,entered=false,rejectOld;
+ // Inject one independently changed version read to enter normal refresh; its
+ // first header remains outstanding while the actual human CAS commits.
+ native.version=async(...args)=>{const result=await version(...args);if(changed){changed=false;return result+1;}return result;};
+ native.header=async(...args)=>{if(!entered){entered=true;await new Promise((_,reject)=>rejectOld=reject);}return header(...args);};
+ assert.equal((await h.view()).state,'preparing');for(let i=0;i<50&&!entered;i++)await drain();assert.equal(entered,true);
+ const result=await h.horizon('workspace',{expectedRevision:initial.page.workspaceRevision,H:60});assert.equal(result.ok,true,JSON.stringify(result));const fresh=await ready(h);assert.equal(fresh.state,'ready',JSON.stringify(fresh));assert.equal(fresh.page.viewSession.H,60);
+ rejectOld(Error('obsolete-header-failure'));await drain();await drain();const after=await h.view('sidebar');assert.equal(after.state,'ready',JSON.stringify(after));assert.deepEqual(after.page.viewSession,result.viewSession);assert.equal(after.reason,undefined);
+});
+test('MOCK_IDB document and UI lease expire before delayed horizon CAS despite unexpired RPC deadline',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();const initial=await ready(h),scope=workspaceScope(h),before=(await h.workspaces.read(scope)).state;
+ const original=h.workspaces.command.bind(h.workspaces);let entered=false,release;const held=new Promise(r=>release=r);
+ h.workspaces.command=async(...args)=>{entered=true;await held;return original(...args);};
+ h.setTime(Date.parse(NOW)+19000);const pending=h.horizon('workspace',{expectedRevision:initial.page.workspaceRevision,H:14});for(let i=0;i<50&&!entered;i++)await drain();assert.equal(entered,true);
+ // Advance authority wall clock only, not the six-second performance deadline.
+ h.setTime(Date.parse(NOW)+21000);release();const result=await pending;assert.equal(result.ok,false);assert.equal(result.viewSession,undefined);assert.deepEqual((await h.workspaces.read(scope)).state,before);assert.equal((await h.view()).ok,false);
 });

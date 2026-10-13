@@ -854,3 +854,14 @@ d8b6d94已正常推送且PR16 API确认。工作集复用现有preferences、pre
 最终Node1712/1712，0失败/跳过；正式构建器产物隔离headless MV3七旅程PASS，新增真实空工作集打开→关闭→再次查找且原生输入同节点和草稿保留。sourceChangedDuringRun=false。人工非空顺序与账户隔离由MockIDB及纯投影测试覆盖，不冒称浏览器写过真实人工资产。首次owner测试误要求有可靠旧原链接的引用不得导航，依据已知引用必须可达修正测试，原失败日志保留。
 
 手动时间范围/恢复入口、scope C1/C2/持续认证、可靠发送continuation及真实G/U等仍未齐；旧4x100k失败保持。Free未完成、NOT_RELEASE_READY，继续既有计划。
+
+
+## Round85：手动时间范围与真实授权CAS
+
+7122447已正常推送并由PR16 API确认。workspace可选7/14/30/60/90天，经UiGrant授权的窄接口复用原WorkspaceRepository SET_PREFERENCE、人工作业日志/inverse和CAS，不开放通用Pro写命令。成功后仅当前mount的owner显式换H，保留T/Z并按对象日期/旧窗口日期重定位；其他mount普通刷新保留自己的历史会话。两帧共享owner，旧异步读取不能污染新范围；冲突/拒绝/未知结果不自动重写。
+
+加强实际写入guard：6秒elapsed检查、当前登记UI最新续租expiry和父DocumentBinding同步有效性均检查到IDB提交；19秒开始、21秒权限过期反例拒写。续租不会因捕获旧expiry误失效；保留工作集及Pro人工资产。
+
+最终Node1730/1730，0失败/跳过；构建器产物真实headless MV3八旅程PASS，新增14→7天实际持久化设置、workspace范围/导航标签、侧栏仍可用且原生同输入节点/草稿保留，随后工作集与查找继续通过。双frame H精确一致由MockIDB owner验证，sidebar暂无可观察H标签，不冒称DOM证明。sourceChangedDuringRun=false。初次Chrome测试查询未穿透既有shadow root导致等待超时，修正定位后批量重跑；原失败报告保留。
+
+context C1/C2/持续认证、可靠发送continuation、剩余原生动作与恢复界面、完整J1–J4及真实G/U仍未齐；旧4x100k失败保持。Free未完成、NOT_RELEASE_READY。

@@ -22,6 +22,16 @@ try{
  const previous=page.frames().filter(frame=>frame.url().startsWith('chrome-extension://'+id));
  await page.locator('textarea').fill('DRAFT_SURVIVES_SPA');await page.evaluate(()=>{globalThis.testOriginalInput=document.querySelector('textarea');});
  await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0);const back=page.getByRole('button',{name:'返回工作空间',exact:true});assert.equal(await back.count(),1);await back.click();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);assert.equal(await page.locator('textarea').inputValue(),'DRAFT_SURVIVES_SPA');report.results.push({name:'native-input-surrender-retains-unique-return-without-draft-loss',status:'PASS'});
+ const horizon=workspace.getByRole('combobox',{name:'工作空间时间范围',exact:true});
+ for(const H of [14,7]){
+  await horizon.selectOption(String(H));
+  await workspace.waitForFunction(value=>{const select=[...document.querySelectorAll('*')].map(node=>node.shadowRoot?.querySelector('[aria-label="工作空间时间范围"]')).find(Boolean);return select?.value===String(value)&&!select.disabled;},H,{timeout:10000});
+  assert.equal(await horizon.inputValue(),String(H));
+  await workspace.getByRole('button',{name:'较早的'+H+'日',exact:true}).waitFor({timeout:10000});
+  await sidebar.getByText('Membership not loaded',{exact:true}).waitFor({timeout:10000});
+  assert.equal(await page.evaluate(()=>document.querySelector('textarea')===testOriginalInput&&testOriginalInput.value==='DRAFT_SURVIVES_SPA'),true);
+ }
+ report.results.push({name:'manual-horizon-14-then-7-owner-command-updates-workspace-keeps-sidebar-and-native-draft',status:'PASS',horizonDOMObservation:'workspace select and navigation labels; sidebar has no exposed horizon label'});
  await sidebar.getByRole('button',{name:'当前工作集',exact:true}).click();
  await workspace.getByText('当前工作集尚未保存窗口。',{exact:true}).waitFor({timeout:10000});
  assert.equal(await workspace.getByText('正在读取当前工作集…',{exact:true}).count(),0);
