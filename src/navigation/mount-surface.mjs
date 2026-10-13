@@ -4,7 +4,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
  const lookup=handle=>{const m=mounts.get(handle?.id);if(!m||m.handle!==handle)throw Error('stale-mount');return m;};
  const hide=m=>{for(const surface of m.surfaces)if(surface.node.matches(':popover-open'))surface.node.hidePopover();};
  return {
-  async mount(context,inspection){
+  async mount(context,inspection,{onSurrender=()=>{}}={}){
    const win=doc.defaultView;if(!win.CSS?.supports('interactivity','inert')||!win.HTMLElement.prototype.showPopover)throw Error('unsupported-mount-surface');
    if(!inspection?.ok||inspection.viewMask!=='declarative-css'||!context?.binding?.documentToken)throw Error('invalid-mount-inspection');
    if(!Array.isArray(inspection.historyMaskRoots)||!Array.isArray(inspection.protectedRegions))throw Error('invalid-mount-inspection');
@@ -28,12 +28,15 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     for(const root of maskRoots){const attr='data-va-mask-'+role;markers.push({root,attr,previous:root.getAttribute(attr)});root.setAttribute(attr,id);}
     style.textContent+=`${allowed}:has(#${node.id}:popover-open) [data-va-mask-${role}="${id}"]{visibility:hidden;interactivity:inert;}body:has(${nativeOpen}) #${node.id}{visibility:hidden;interactivity:inert;}\n`;
    }
-   const m={handle,surfaces,markers,style};mounts.set(id,m);doc.head.append(style);for(const s of surfaces)doc.body.append(s.node);
+   const m={handle,surfaces,markers,style};mounts.set(id,m);
+   const workspace=surfaces.find(s=>s.role==='workspace')?.node;
+   const workspaceClosed=e=>{if(e.target!==workspace||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||workspace.matches(':popover-open'))return;try{onSurrender({reason:'native-reading'});}catch{}};
+   workspace?.addEventListener('toggle',workspaceClosed);doc.head.append(style);for(const s of surfaces)doc.body.append(s.node);
    const inspectLayer=()=>{if(hasNativeLayer()||doc.querySelector(nativeOpen))hide(m);};
    const observer=new win.MutationObserver(inspectLayer);observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class','style','hidden','aria-expanded']});
    const beforeToggle=e=>{if(e.newState==='open'&&!e.target.closest?.('[data-va-owned]'))hide(m);};doc.addEventListener('beforetoggle',beforeToggle,true);
-   const nativeInput=e=>{if(protectedNodes.some(n=>n===e.target||n.contains(e.target)))hide(m);};doc.addEventListener('pointerdown',nativeInput,true);doc.addEventListener('focusin',nativeInput,true);
-   m.cleanup=()=>{observer.disconnect();doc.removeEventListener('beforetoggle',beforeToggle,true);doc.removeEventListener('pointerdown',nativeInput,true);doc.removeEventListener('focusin',nativeInput,true);};return handle;
+   const nativeInput=e=>{if(protectedNodes.some(n=>n===e.target||n.contains(e.target))){hide(m);try{onSurrender({reason:'native-input'});}catch{}}};doc.addEventListener('pointerdown',nativeInput,true);doc.addEventListener('focusin',nativeInput,true);
+   m.cleanup=()=>{workspace?.removeEventListener('toggle',workspaceClosed);observer.disconnect();doc.removeEventListener('beforetoggle',beforeToggle,true);doc.removeEventListener('pointerdown',nativeInput,true);doc.removeEventListener('focusin',nativeInput,true);};return handle;
   },
   showWorkspace(handle){const m=lookup(handle);if(hasNativeLayer()||doc.querySelector('dialog[open]:not([data-va-owned]),[popover]:popover-open:not([data-va-owned])')){hide(m);return;}for(const s of m.surfaces)if(!s.node.matches(':popover-open'))s.node.showPopover();},
   showReading(handle){const m=lookup(handle);for(const s of m.surfaces)if(s.role==='workspace'&&s.node.matches(':popover-open'))s.node.hidePopover();},

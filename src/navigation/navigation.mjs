@@ -40,7 +40,14 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const windowBlur=()=>resetInteraction();win.addEventListener?.('blur',windowBlur);
   const free=()=>snapshot?.viewMode==='free';
   const span=()=>snapshot?.policy?.h??snapshot?.viewSession?.H??30;
-  const current=()=>index?.at(adapter.currentURL())??{};
+  const current=()=>{
+    if(!frameProjection)return index?.at(adapter.currentURL())??{};
+    const route=frameProjection.current;if(!route)return {};
+    const selected=groups.find(g=>g.id===route.projectId);
+    const lists=[...groups.flatMap(g=>['current','old','unknown'].map(k=>frameRows(g.id,k))),frameRows(null,'noProject'),frameRows(null,'unknown')];
+    const ref=lists.flatMap(p=>p?.items??[]).find(r=>r.id===route.refId);
+    return {ref,selected,independent:ref&&ref.projectId===null?ref:null,inGroup:g=>g.id===route.projectId?ref:null};
+  };
   let status={state:'WAITING',reason:'no-verified-snapshot'},lastNativeFocus=null;
   const trackFocus=e=>{const n=e.composedPath()[0];if((n?.tagName==='TEXTAREA'||n?.tagName==='INPUT')&&!e.composedPath().some(x=>x?.hasAttribute?.('data-vaiwl-owned')))lastNativeFocus={node:n,start:n.selectionStart,end:n.selectionEnd};};
   if(!framed)doc.addEventListener('focusin',trackFocus);
@@ -133,7 +140,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   const windowGlyph=node(doc,'span',{class:'window-glyph','aria-hidden':'true'});windowGlyph.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.65"><path d="M4 5h16v12H9l-5 4z"/></svg>';
   function appendFreshness(parent,value){if(value.freshness==='last-known'||value.membershipFreshness==='last-known')parent.append(node(doc,'small',{class:'freshness-label','data-freshness':'last-known',title:'上次确认的信息',style:'flex:none;font-weight:400;color:var(--muted,#646464);margin-left:4px'},'上次确认'));}
-  function row(ref,context=''){const a=node(doc,'a',{class:'row','data-ref-id':ref.id,title:ref.displayTitle});const text=node(doc,'span',{class:'window-title'},ref.displayTitle??ref.nativeTitle);a.append(windowGlyph.cloneNode(true),text);appendFreshness(a,ref);a.dataset.focusKey='ref:'+context+':'+ref.id;if(index?.matches(ref.nativeUrl,adapter.currentURL())??adapter.isCurrent(ref.nativeUrl))a.setAttribute('aria-current','page');if(ref.available===false)a.setAttribute('aria-disabled','true');if(framed)bindPlannedLink(a,ref);else{const href=adapter.nativeHref?.(ref.nativeUrl);if(href)a.setAttribute('href',href);else a.setAttribute('aria-disabled','true');a.addEventListener('click',e=>{if(!href){e.preventDefault();return;}openRef(ref,e);});}return a;}
+  function row(ref,context=''){const a=node(doc,'a',{class:'row','data-ref-id':ref.id,title:ref.displayTitle});const text=node(doc,'span',{class:'window-title'},ref.displayTitle??ref.nativeTitle);a.append(windowGlyph.cloneNode(true),text);appendFreshness(a,ref);a.dataset.focusKey='ref:'+context+':'+ref.id;if(frameProjection?frameProjection.current?.refId===ref.id:(index?.matches(ref.nativeUrl,adapter.currentURL())??adapter.isCurrent(ref.nativeUrl)))a.setAttribute('aria-current','page');if(ref.available===false)a.setAttribute('aria-disabled','true');if(framed)bindPlannedLink(a,ref);else{const href=adapter.nativeHref?.(ref.nativeUrl);if(href)a.setAttribute('href',href);else a.setAttribute('aria-disabled','true');a.addEventListener('click',e=>{if(!href){e.preventDefault();return;}openRef(ref,e);});}return a;}
   const chevron='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
   const symbols={search:'M20 20l-5-5 M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0',up:'M6 15l6-6 6 6',down:'M6 9l6 6 6-6',more:'M5 12h.01 M12 12h.01 M19 12h.01',minus:'M5 12h14',plus:'M5 12h14 M12 5v14',close:'m6 6 12 12 M18 6 6 18'};
   function graphic(b,kind){if(kind==='more'){b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>';return b;}b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+symbols[kind]+'"/></svg>';return b;}
@@ -255,6 +262,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function updateFrameProjection(dto){
     if(stopped)return;if(!framed||dto?.protocol!=='vaiwl-free-frame/1'||dto.role!==surface.role||dto.completeSnapshot!==false||typeof dto.scope!=='string'||!dto.navigation||!Number.isSafeInteger(dto.segment)||dto.segment<0)throw Error('invalid-frame-projection');
+    const c=dto.current;
+    if(c!==undefined&&(!c||typeof c!=='object'||Array.isArray(c)||Object.keys(c).sort().join(',')!=='nativeUrl,projectId,refId'||typeof c.nativeUrl!=='string'||!c.nativeUrl.length||c.nativeUrl.length>2048||!['refId','projectId'].every(k=>c[k]===null||typeof c[k]==='string'&&c[k].length>0&&c[k].length<=128&&!/[\s\x00-\x1f]/.test(c[k]))))throw Error('invalid-frame-current');
     const pageOK=p=>p&&Array.isArray(p.items)&&Number.isSafeInteger(p.total)&&Number.isSafeInteger(p.offset)&&Number.isSafeInteger(p.limit)&&p.total>=0&&p.offset>=0&&p.limit>0&&p.limit<=200&&p.items.length<=p.limit&&typeof p.hasMore==='boolean'&&p.hasMore===(p.offset+p.items.length<p.total);
     if(!Number.isSafeInteger(dto.navigation.maxSegment)||dto.navigation.maxSegment<0||dto.navigation.hasNewer!==(dto.segment>0)||dto.navigation.hasOlder!==(dto.segment<dto.navigation.maxSegment)||!pageOK(dto.groups)||dto.groups.limit>24||!['noProject','unknown'].every(k=>pageOK(dto.entries?.[k]))||dto.groups.items.some(g=>!['current','old','unknown'].every(k=>pageOK(g.lists?.[k])))||dto.selection&&!pageOK(dto.selection)||new TextEncoder().encode(JSON.stringify(dto)).length>65536)throw Error('invalid-frame-projection');
     if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame'];return;}

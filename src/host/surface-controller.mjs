@@ -7,15 +7,22 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  const trustedOrigin=`${origin.protocol}//${origin.host}`,win=doc.defaultView;
  let epoch=0,current=null;
  function removeReturn(state){state.button?.remove();state.button=null;}
- function dispose(state,reason){if(!state)return;cancel(state.timer);cancel(state.renewTimer);state.observer?.disconnect();win.removeEventListener('message',state.listener);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
+ function dispose(state,reason){if(!state)return;cancel(state.timer);cancel(state.renewTimer);state.observer?.disconnect();win.removeEventListener('message',state.listener);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);doc.removeEventListener?.('toggle',state.changed,true);win.removeEventListener('pagehide',state.pagehide);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
  function stop(reason='surface-stopped'){epoch++;const prior=current;current=null;adapter.stop();dispose(prior,reason);}
  function valid(state,requireRegistered=true){
   if(current!==state||state.epoch!==epoch||requireRegistered&&!state.registered||doc.location.href!==state.url)return false;
   const inspection=adapter.inspect();return inspection?.ok&&inspection.regionEpoch===state.handle.regionEpoch&&state.frames.every(({frame})=>frame.isConnected&&frame.ownerDocument===doc);
  }
- function authorized(state){return valid(state)&&state.frames.every(({role})=>{const grant=state.grants.get(role);return grant&&Date.parse(grant.expiresAt)>now();});}
+ function authorized(state){return valid(state)&&Date.parse(state.context.binding.expiresAt)>now()&&state.frames.every(({role})=>{const grant=state.grants.get(role);return grant&&Date.parse(grant.expiresAt)>now();});}
  function showWorkspace(){const state=current;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}removeReturn(state);surface.showWorkspace(state.handle);state.mode='workspace';return true;}
- function showReading(){const state=current;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}surface.showReading(state.handle);state.mode='reading';if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.textContent='▦';button.addEventListener('click',showWorkspace);state.inspection.navigationSlot.append(button);state.button=button;}return true;}
+ function ensureReturn(state){
+  if(!authorized(state)||adapter.hasNativeLayer()){removeReturn(state);return false;}
+  const inspection=adapter.inspect(),slot=inspection.navigationSlot;
+  if(!slot?.isConnected||slot!==state.inspection.navigationSlot){removeReturn(state);return false;}
+  if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.textContent='▦';button.addEventListener('click',showWorkspace);slot.append(button);state.button=button;}return true;
+ }
+ function nativeSurrender(state){if(current!==state||!authorized(state))return;state.mode='reading';if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}
+ function showReading(){const state=current;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}surface.showReading(state.handle);state.mode='reading';return ensureReturn(state);}
  function suspend(reason='native-layer'){const state=current;if(!state?.handle)return;removeReturn(state);surface.suspend(state.handle,reason);state.mode='suspended';}
  function arm(state){cancel(state.timer);const until=Math.min(Date.parse(state.context.binding.expiresAt),...Array.from(state.grants.values(),g=>Date.parse(g.expiresAt)));state.timer=schedule(()=>{if(current===state)stop('ui-grant-expired');},Math.max(0,until-now()));if(typeof bridge.renewSession==='function'&&state.grants.size===2&&!state.renewing&&state.renewTimer===null)state.renewTimer=schedule(()=>{state.renewTimer=null;void renewSession(state);},10000);}
  async function renewSession(state){
@@ -37,13 +44,14 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   try{
    state.context=await adapter.start(options);if(current!==state)return null;
    state.inspection=adapter.inspect();if(!state.inspection?.ok||!state.inspection.navigationSlot?.isConnected)throw Error('invalid-return-slot');
-   state.handle=await surface.mount(state.context,state.inspection);if(current!==state){dispose(state,'stale-mount');return null;}
+   state.handle=await surface.mount(state.context,state.inspection,{onSurrender:()=>nativeSurrender(state)});if(current!==state){dispose(state,'stale-mount');return null;}
    state.frames=surface.frames(state.handle).map(value=>({...value,window:value.frame.contentWindow}));if(state.frames.length!==2||new Set(state.frames.map(x=>x.role)).size!==2||state.frames.some(x=>!['workspace','sidebar'].includes(x.role)))throw Error('incomplete-dual-surface');
    state.listener=event=>{void receive(state,event);};win.addEventListener('message',state.listener);
    const ack=await bridge.registerMount({handle:state.handle});if(current!==state)return null;if(ack?.ok!==true)throw Error('mount-registration-denied');state.registered=true;
    if(!valid(state))throw Error('stale-mount-registration');
    state.nativeToggle=event=>{if(event.newState==='open'&&!event.target.closest?.('[data-va-owned]'))suspend('native-layer');};doc.addEventListener?.('beforetoggle',state.nativeToggle,true);
-   state.changed=()=>{if(current!==state)return;if(!valid(state)){stop('native-region-changed');return;}if(adapter.hasNativeLayer())suspend('native-layer');};
+   state.changed=()=>{if(current!==state)return;if(!valid(state)){stop('native-region-changed');return;}if(adapter.hasNativeLayer())suspend('native-layer');else if(state.mode==='reading'||state.mode==='suspended')ensureReturn(state);};
+   state.pagehide=()=>{if(current===state)stop('page-hidden');};win.addEventListener('pagehide',state.pagehide);doc.addEventListener?.('toggle',state.changed,true);
    win.addEventListener('popstate',state.changed);win.addEventListener('hashchange',state.changed);
    if(win.MutationObserver){state.observer=new win.MutationObserver(state.changed);state.observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class','aria-modal']});}
    arm(state);const queued=[...state.earlyJoins.values()];state.earlyJoins.clear();for(const event of queued)void receive(state,event);return state.handle;

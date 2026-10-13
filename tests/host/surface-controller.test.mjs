@@ -5,7 +5,7 @@ const drain=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
 // Isolated DOM/lifecycle mocks: these contracts do not certify actual Chrome masks.
 function fixture(){
- const listeners=new Map(),timers=new Map();let time=1000,n=0,layer=false,region=1,observer;
+ const listeners=new Map(),timers=new Map();let time=1000,n=0,layer=false,region=1,observer,surrender;
  const calls={updates:[],show:0,reading:0,suspend:0,dispose:0,confirm:[],register:0,stop:0};
  const win={addEventListener:(k,fn)=>{if(!listeners.has(k))listeners.set(k,new Set());listeners.get(k).add(fn);},removeEventListener:(k,fn)=>listeners.get(k)?.delete(fn),MutationObserver:class{constructor(fn){observer=fn;}observe(){}disconnect(){}}};
  const slot={isConnected:true,children:[],append(b){this.children.push(b);b.parent=this;}};
@@ -13,12 +13,12 @@ function fixture(){
  const frames=['workspace','sidebar'].map(role=>({role,frame:{isConnected:true,ownerDocument:doc,contentWindow:{}}}));
  const binding={documentToken:'token',producerToken:'producer',browserDocumentId:'parent',routeEpoch:1,origin:'https://chatgpt.com',expiresAt:new Date(60000).toISOString()};
  const adapter={updateBinding:next=>{calls.updates.push(next);return true;},start:async()=>({binding}),stop:()=>{calls.stop++;},inspect:()=>({ok:true,regionEpoch:region,navigationSlot:slot}),hasNativeLayer:()=>layer};
- const surface={mount:async()=>({id:'mount',documentToken:'token',regionEpoch:region}),frames:()=>frames,showWorkspace:()=>{calls.show++;},showReading:()=>{calls.reading++;},suspend:()=>{calls.suspend++;},dispose:()=>{calls.dispose++;}};
+ const surface={mount:async(c,i,o)=>(surrender=o.onSurrender,{id:'mount',documentToken:'token',regionEpoch:region}),frames:()=>frames,showWorkspace:()=>{calls.show++;},showReading:()=>{calls.reading++;},suspend:()=>{calls.suspend++;},dispose:()=>{calls.dispose++;}};
  const bridge={registerMount:async()=>{calls.register++;return {ok:true};},confirmParent:async value=>{calls.confirm.push(value);return {ok:true,grant:{id:`grant_${value.role}`,mountId:'mount',role:value.role,parentDocumentId:'parent',uiDocumentId:`ui_${value.role}`,scopeGrantId:'scope',expiresAt:new Date(21000).toISOString()}};}};
  const controller=createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://extension',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++n;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
  const message=(role='workspace',patch={})=>{const event={source:frames.find(x=>x.role===role).frame.contentWindow,origin:'chrome-extension://extension',data:{type:'VAIWL_UI_JOIN',role,nonce:`nonce_${role}`},...patch};for(const fn of listeners.get('message')??[])fn(event);};
  const both=async()=>{message();message('sidebar');await drain();};
- return {renewAck:()=>({ok:true,binding:{...binding,expiresAt:new Date(time+20000).toISOString()},grants:['workspace','sidebar'].map(role=>({id:`grant_${role}`,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:`ui_${role}`,scopeGrantId:'scope',expiresAt:new Date(time+20000).toISOString()}))}),controller,bridge,adapter,surface,doc,slot,frames,binding,calls,message,both,change:()=>observer?.(),layer:value=>{layer=value;},region:()=>{region++;},tick:ms=>{time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
+ return {renewAck:()=>({ok:true,binding:{...binding,expiresAt:new Date(time+20000).toISOString()},grants:['workspace','sidebar'].map(role=>({id:`grant_${role}`,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:`ui_${role}`,scopeGrantId:'scope',expiresAt:new Date(time+20000).toISOString()}))}),surrender:()=>surrender?.(),pagehide:()=>{for(const fn of listeners.get('pagehide')??[])fn();},controller,bridge,adapter,surface,doc,slot,frames,binding,calls,message,both,change:()=>observer?.(),layer:value=>{layer=value;},region:()=>{region++;},tick:ms=>{time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
 }
 test('owner registration and both UiGrant ACKs gate initial dual-surface show',async()=>{const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const start=f.controller.start({});await drain();f.message();assert.equal(f.calls.confirm.length,0);assert.equal(f.controller.showWorkspace(),false);held.resolve({ok:true});await start;f.message();await drain();assert.equal(f.calls.show,0);f.message('sidebar');await drain();assert.equal(f.calls.show,1);assert.deepEqual(Object.keys(f.calls.confirm[0]).sort(),['documentToken','mountId','nonce','regionEpoch','role']);});
 test('origin, original contentWindow, connectedness and public join shape are mandatory',async()=>{for(const mutate of [f=>f.message('workspace',{origin:'https://chatgpt.com'}),f=>f.message('workspace',{source:{}}),f=>{f.frames[0].frame.isConnected=false;f.message();},f=>f.message('workspace',{data:{type:'VAIWL_UI_JOIN',role:'workspace',nonce:'n',scope:'forged'}})]){const f=fixture();await f.controller.start({});mutate(f);await drain();assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);}});
@@ -63,4 +63,13 @@ test('stop, route and region changes fence pending session renewal',async()=>{
  for(const change of [f=>f.controller.stop(),f=>{f.doc.location.href+='c/new';},f=>f.region()]){
   const f=fixture(),held=deferred();f.bridge.renewSession=()=>held.promise;await f.controller.start({});await f.both();f.tick(10000);await drain();change(f);held.resolve(f.renewAck());await drain();assert.equal(f.calls.updates.length,0);assert.equal(f.calls.dispose,1);
  }
+});
+test('native input surrender creates one return without reopening masks or changing draft',async()=>{
+ const f=fixture();await f.controller.start({});f.surrender();assert.equal(f.slot.children.length,0);await f.both();f.doc.draft='unsent';f.surrender();const button=f.slot.children[0];f.surrender();f.change();assert.equal(f.slot.children.length,1);assert.equal(f.slot.children[0],button);assert.equal(f.calls.show,1);assert.equal(f.calls.reading,0);assert.equal(f.doc.draft,'unsent');button.events.click();assert.equal(f.calls.show,2);assert.equal(f.slot.children.length,0);f.controller.stop();
+});
+test('native portal removes return then restores only the entry; invalid slot never receives it',async()=>{
+ const f=fixture();await f.controller.start({});await f.both();f.surrender();f.layer(true);f.change();assert.equal(f.slot.children.length,0);f.surrender();assert.equal(f.slot.children.length,0);f.layer(false);f.change();assert.equal(f.slot.children.length,1);assert.equal(f.calls.show,1);f.slot.isConnected=false;f.change();assert.equal(f.slot.children.length,0);f.controller.stop();
+});
+test('late native surrender after pagehide, expiry or stop cannot restore return',async()=>{
+ for(const end of [f=>f.pagehide(),f=>f.tick(20000),f=>f.controller.stop()]){const f=fixture();await f.controller.start({});await f.both();f.surrender();assert.equal(f.slot.children.length,1);end(f);f.surrender();f.layer(false);f.change();assert.equal(f.slot.children.length,0);assert.equal(f.controller.showWorkspace(),false);}
 });

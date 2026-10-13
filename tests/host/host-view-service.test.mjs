@@ -8,16 +8,16 @@ import {createHostBindingService} from '../../src/runtime/host-binding-service.m
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const NOW='2026-10-14T00:00:00Z',url='https://chatgpt.com/';
 // Mock IndexedDB and explicitly authored provider response; no browser auth claim.
-async function fixture(t,{prepareNavigation=null}={}){
+async function fixture(t,{prepareNavigation=null,documentURL=url}={}){
  const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'host-read-binding'});t.after(()=>base.close());
  const workspaces=new WorkspaceRepository({baseRepository:base,clock:()=>NOW});
  const evidence=new FreeEvidenceRepository({baseRepository:base,clock:()=>NOW});
  let n=0,seq=0,principal='fixture-principal',time=Date.parse(NOW);
- const sender={id:'extension',tab:{id:1,incognito:false},frameId:0,documentId:'document',documentLifecycle:'active',url};
+ const sender={id:'extension',tab:{id:1,incognito:false},frameId:0,documentId:'document',documentLifecycle:'active',url:documentURL};
  const profile={id:'read-binding-reconstruction',revision:1,urlPolicy:createURLPolicy({profile:{conversationId:value=>value,projectId:({container})=>container}})};
  const uiURLs={workspace:'chrome-extension://extension/workspace.html',sidebar:'chrome-extension://extension/sidebar.html'};
  const children=Object.fromEntries(Object.entries(uiURLs).map(([role,url],i)=>[role,{...sender,frameId:i+1,documentId:'ui_'+role,url}]));
- const service=createHostBindingService({extensionId:'extension',prepareNavigation,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url}),allowedURL:value=>value===url,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{read:async()=>({principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'})},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
+ const service=createHostBindingService({extensionId:'extension',prepareNavigation,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{read:async()=>({principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'})},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
  const request=(type,extra={})=>service.handle({v:1,type,clientId:'client',seq:++seq,...extra},sender);
  let binding,bound;
  async function bind(){const hello=await request('HOST_HELLO');assert.equal(hello.ok,true);binding=hello.binding;const {documentToken,producerToken,routeEpoch}=binding;assert.equal((await request('HOST_REFRESH',{documentToken,producerToken,routeEpoch})).state,'verified');bound=await request('BIND');assert.equal(bound.ok,true,JSON.stringify(bound));return bound;}
@@ -108,4 +108,13 @@ test('MOCK_IDB invalidation while trusted native plans await prevents late UI pu
  for(let i=0;i<100&&!entered;i++)await drain();assert.equal(entered,true);
  h.switchPrincipal('replacement-principal');release();const result=await pending;
  assert.equal(result.ok,false);assert.equal(result.page,undefined);assert.equal(result.navigation,undefined);
+});
+
+
+test('MOCK_IDB current conversation comes from verified parent route and existing owner index',async t=>{
+ const h=await fixture(t,{documentURL:'https://chatgpt.com/c/c1'});await h.bind();await h.observe();await h.mount();
+ const result=await ready(h);assert.equal(result.state,'ready',JSON.stringify(result));assert.deepEqual(result.page.current,{nativeUrl:'https://chatgpt.com/c/c1',refId:'c1',projectId:null});
+ assert.equal((await h.view('workspace',{current:{nativeUrl:'https://chatgpt.com/c/forged'}})).ok,false);
+ const other=await fixture(t,{documentURL:'https://chatgpt.com/c/unseen'});await other.bind();await other.observe();await other.mount();
+ assert.deepEqual((await ready(other)).page.current,{nativeUrl:'https://chatgpt.com/c/unseen',refId:null,projectId:null});
 });

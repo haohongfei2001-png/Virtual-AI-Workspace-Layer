@@ -1,3 +1,4 @@
+import {createURLPolicy} from '../host/url-policy.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 import {createFreeViewOwner} from './free-view-owner.mjs';
 import {projectFreeFrame} from './free-frame-projection.mjs';
@@ -36,6 +37,9 @@ export function createHostViewService({ui,readService,prepareNavigation=null,clo
    const elapsed=Date.parse(clock()),evaluated=Date.parse(value.evaluatedAt),freshnessChanged=(value.calibrationDeadlines??[]).some(deadline=>Date.parse(deadline)>evaluated&&Date.parse(deadline)<=elapsed);
    if(freshnessChanged||version.nativeRevision!==value.revision||version.revision!==value.workspaceRevision||version.evidenceRevision!==value.evidenceRevision||version.viewRevision!==value.viewRevision){begin(entry);return {ok:true,state:'preparing',retryAfterMs:50};}
    const page=projectFreeFrame(current,{...message.query,role:context.role});check();
+   const nativeUrl=context.parentFrame.actualURL,route=createURLPolicy({origin:new URL(nativeUrl).origin}).parse(nativeUrl);
+   const selected=current.index.at(nativeUrl),ref=selected.ref??(route.kind==='conversation'?current.index.byId(route.conversationId):null);
+   page.current={nativeUrl,refId:ref?.id??null,projectId:ref?.membership==='PROJECT'?ref.projectId:null};
    let navigation=[];
    if(prepareNavigation){
     const rows=new Map();for(const group of page.groups.items)for(const list of Object.values(group.lists))for(const row of list.items)rows.set(row.id,row);

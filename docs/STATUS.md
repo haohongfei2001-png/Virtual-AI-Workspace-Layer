@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第八十一轮：正式Host入口及独立开发包、真实离线SPA重绑定闭环已实现。最终1659/1659 Node与打包产物三条MV3旅程通过；默认真实context仍未核验并安全拒绝。8707936已正常推送原PR16；Free及真实验收未完成，继续原计划。
+当前已推进至第八十二轮：原生让位/声明式关闭后的唯一阅读返回、当前聊天定位已接正式离线包。最终1672/1672 Node、五条打包MV3旅程及四退出生命周期通过。c4fe9c7已正常推送原PR16；完整Free/真实context与G/U尚未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -927,3 +927,14 @@ worker接真实Chrome导航/SPA/tab关闭撤权及定向公共失效通知；con
 最终Node1659/1659、0失败/跳过。实际Chrome加载构建器生成且未改写的离线包，三旅程PASS：首次原名显示；原生无ID同名Project按钮进入真实第二Project并撤旧frame/重绑且保留原编辑器草稿；原链接打开成员聊天保留源草稿。sourceChangedDuringRun=false。初次测试误把无ID按钮预期为第一同名P，独立oracle核对后修正测试；随后SPA真实MOUNT失败的trace与修复前日志均保留。该包仍仅离线实现，不是可用真实Free或完整J1–J4。
 
 下一项继续同一计划的当前聊天定位、原生让位后的唯一返回、搜索/工作集、scope C1/C2/刷新与可靠发送continuation等；旧4x100k/G/U差额保持，不访问私人账户、不发布。
+
+
+## Round82：当前聊天定位与唯一阅读返回
+
+c4fe9c7已正常推送原PR16。owner从已核验parent actualURL及已有当前索引生成只含原URL/refId/projectId的current DTO；frame不自报路由、不复制全库index，标记已加载当前聊天并展开已加载所属Project。未加载当前对象不造条目；旧DTO/撤权清selection。
+
+原生composer/header交互先让出双surface，再在批准空slot保留唯一四格返回；workspace声明式“返回原生阅读”关闭也恢复同一入口。sidebar原生列表关闭不创建第二入口。native层打开清返回，关闭只恢复入口不自动重开mask/抢焦点；过期document/grant、原槽变化、pagehide、stop和迟到toggle均拒绝复活。
+
+最终Node1672/1672、0失败/跳过。正式构建器产物实际隔离headless MV3五旅程PASS：原名显示、声明式阅读关闭→唯一返回、原生输入让位→返回且草稿保持、SPA Project重绑定、原生聊天链接及新frame aria-current。受影响UI生命周期另测同frame超20秒及invalidate/disconnect/实际disable/uninstall全部PASS，draft/reading保留、0open popover、私有frame不可达。两报告sourceChangedDuringRun=false；不冒称冻结进程瞬间清像素或真实G/U。
+
+继续C3查询/共享展示、手工范围和既有Free其余差额；context C1/C2/定期刷新、发送与continuation、完整profile及J1–J4/真实验收仍未齐。Free未完成、NOT_RELEASE_READY。

@@ -8,10 +8,10 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
  * in either frame; parent messages remain the lifecycle's public join/suspend. */
 export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,onPresentationRequest=()=>{},onState=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeNonce,navigationFactory=createNavigation}={}){
  const policy=createURLPolicy({origin:parentOrigin});
- let navigation=null,root=null,plans=new Map(),grant=null,grantCurrent=()=>false,serial=0,activeRead=null,query={segment:0,offset:0,limit:8},closed=true,splits=0,dirty=false;
+ let navigation=null,root=null,plans=new Map(),grant=null,grantCurrent=()=>false,serial=0,activeRead=null,query={segment:0,offset:0,limit:8},closed=true,splits=0,dirty=false,currentNativeURL='';
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function clear(){currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function fail(reason){if(closed)return;state({state:'failed',reason});lifecycle.stop(reason);}
  function live(ticket){return !closed&&ticket===serial&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();}
  function cancellable(work,signal){
@@ -46,8 +46,10 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
     state({state:'preparing'});const wait=Math.max(50,response.retryAfterMs);if(wait>=budget.remaining())throw Error('read-budget-exhausted');await delay(wait,controller.signal);continue;
    }
    if(response.state!=='ready'||response.page?.protocol!=='vaiwl-free-frame/1'||response.page.role!==role||response.page.completeSnapshot!==false||!Array.isArray(response.navigation)||response.navigation.length>200)throw Error('invalid-frame-view');
+   const currentRoute=response.page.current;
+   if(currentRoute!==undefined&&(!currentRoute||typeof currentRoute!=='object'||Array.isArray(currentRoute)||Object.keys(currentRoute).sort().join(',')!=='nativeUrl,projectId,refId'||typeof currentRoute.nativeUrl!=='string'||!policy.nativeHref(currentRoute.nativeUrl)||!['refId','projectId'].every(k=>currentRoute[k]===null||typeof currentRoute[k]==='string'&&currentRoute[k].length>0&&currentRoute[k].length<=128&&!/[\s\x00-\x1f]/.test(currentRoute[k]))))throw Error('invalid-frame-current');
    const nextPlans=new Map();for(const item of response.navigation){if(typeof item?.refId!=='string'||nextPlans.has(item.refId)||!['href','unavailable'].includes(item.plan?.mode)||item.plan.mode==='href'&&(item.plan.target?.kind!=='resolved'||item.plan.target.entity!=='conversation'||item.plan.target.nativeId!==item.refId||item.plan.disposition!=='new-tab-preserve-current'||!policy.nativeHref(item.plan.target.navigationURL)))throw Error('invalid-frame-navigation');nextPlans.set(item.refId,Object.freeze({plan:structuredClone(item.plan),targetKey:item.targetKey,uiGrantId:current.id,mountId:current.mountId}));}
-   if(!live(ticket))return null;plans=nextPlans;query=effective;if(!dirty)budget.complete();if(publish)navigation.updateFrameProjection(response.page);state({state:'ready'});return response.page;
+   if(!live(ticket))return null;plans=nextPlans;currentNativeURL=currentRoute?.nativeUrl??'';query=effective;if(!dirty)budget.complete();if(publish)navigation.updateFrameProjection(response.page);state({state:'ready'});return response.page;
   }}catch(error){if(live(ticket))fail(error?.message==='frame-read-cancelled'?'frame-view-unavailable':error?.message??'frame-view-unavailable');return null;}
   finally{if(activeRead===controller){activeRead=null;if(dirty&&live(ticket)){dirty=false;void read(query,true);}}}
   return null;
@@ -56,7 +58,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;
   if(!navigation){root=doc.createElement('div');root.setAttribute('data-vaiwl-frame-root','');privateRoot.append(root);
-   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>'',isCurrent:()=>false,nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest});
+   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest});
   }
   invalidate();
  }
