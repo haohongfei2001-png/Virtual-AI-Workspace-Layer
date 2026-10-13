@@ -98,10 +98,28 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   }catch{return {ok:false,reason:'horizon-change-unavailable'};}
   finally{horizonPending=false;if(dirty&&!closed){dirty=false;invalidate();}}
  }
+ async function changeWorkingSet(value){
+  if(!value||Object.getPrototypeOf(value)!==Object.prototype||Object.keys(value).sort().join(',')!=='action,refId'||!['add','remove','move-up'].includes(value.action)||typeof value.refId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(value.refId))return {ok:false,reason:'invalid-working-set-request'};
+  if(closed||horizonPending||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||!Number.isSafeInteger(workspaceRevision))return {ok:false,reason:'working-set-change-unavailable'};
+  horizonPending=true;const current=grant,renderer=navigation,expectedRevision=workspaceRevision;
+  const valid=()=>!closed&&navigation===renderer&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
+  try{
+   const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_WORKING_SET',grantId:current.id,mountId:current.mountId,operationId:globalThis.crypto.randomUUID(),expectedRevision,action:value.action,refId:value.refId}),{now:elapsedNow,schedule,cancel});
+   if(!valid())return {ok:false,reason:'working-set-change-unavailable'};
+   if(result?.ok!==true)return {ok:false,reason:result?.reason??'working-set-change-unavailable'};
+   if(!Number.isSafeInteger(result.workspaceRevision)||result.workspaceRevision<expectedRevision||!Number.isSafeInteger(result.workingSet?.total)||result.workingSet.total<0||result.workingSet.total>1000||!(result.workingSet.currentRefId===null||typeof result.workingSet.currentRefId==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(result.workingSet.currentRefId)))return {ok:false,reason:'invalid-working-set-response'};
+   workspaceRevision=result.workspaceRevision;
+   query={...query,...(query.workingSet?{workingSet:{...query.workingSet,offset:0}}:{})};
+   dirty=false;const page=await read(query,true);
+   if(!valid()||!page||!Number.isSafeInteger(page.workspaceRevision)||page.workspaceRevision<result.workspaceRevision)return {ok:false,reason:'working-set-refresh-unavailable'};
+   return result;
+  }catch{return {ok:false,reason:'working-set-change-unavailable'};}
+  finally{horizonPending=false;if(dirty&&!closed){dirty=false;invalidate();}}
+ }
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;
   if(!navigation){root=doc.createElement('div');root.setAttribute('data-vaiwl-frame-root','');privateRoot.append(root);
-   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onHorizonRequest:setHorizon});
+   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet});
   }
   invalidate();
  }

@@ -944,3 +944,16 @@ markContinuationComplete同事务验证实际evidence receipt kind/operation/fin
 测试夹具首两FAIL原样保留：ServiceWorker禁止dynamic import，改同源扩展测试页；Target.closeTarget未确认worker close，改仓库既有ServiceWorker.stopWorker并核验事件。旧profile永久idle反例原FAIL亦保留，修后专项及全量通过。Round91真实IDB证据仍仅对应当时脚本，本轮只补其sourceHashes覆盖验证器。
 
 PR16 API本轮复核仍open Draft、head7122447，Pro72ca068已在本地祖先正常整合；之前正常push low-speed超时未重写origin。接下来继续原计划人工工作集界面与恢复能力、当前body/本人ACK、C1/C2和J/G/U；原4x100k失败保持。Free未完成、NOT_RELEASE_READY。
+
+
+## Round93：人工工作集编辑接入Free原生界面
+
+在c71abbd继续；该检查点正常push成功，API复核远端c71abbdf4e58365cf8c3c4d32e525258ff19b19e、PR16仍open Draft且base仍PR15。PR描述同步已推送事实，不重写main/远端配置。
+
+workspace frame通过窄HOST_UI_WORKING_SET协议发送add/remove/move-up+refId，不能提交scope或完整refs数组。owner用完整prepared偏好产生原SET_PREFERENCE human命令，保留≤1000人工顺序、current、CAS/inverse/undo；分页外引用不被丢弃。mutations与H互斥、6秒/guard/abort、失败不自动重放；通知两个frame刷新。renderer按钮与原生anchor为siblings，支持失效saved引用移除/前移；client更新后实际重读，失败/旧grant/缺页不谎称成功，保留原生编辑器/草稿。
+
+全量首次1951PASS/1FAIL揭示测试假设错误：不能将旧shared available:false升级为原生不可用并挡住历史链接。撤回该投影改动、保留既有FreeProjection，修正新增反例使用真正NativeRepository观察到的unavailable事实；历史shared无论旧available值如何仍UNKNOWN、原链接可达、旧Pro名不升级，原生确认unavailable则不能新增引用但已保存引用可清理。新旧服务42/42及最终全量1953/1953、0失败/跳过。
+
+真实headless打包原八旅程PASS；工作集五旅程PASS：两引用加入、前移、另一原生标签读取持久顺序、原链接新标签打开、移除current和最后项后empty；全过程原textarea节点/草稿不变且fixture原生写动作为空。sourceChangedDuringRun=false。首跑前三项PASS后链接点击未观察到新page而超时；加入安全状态诊断后的重跑通过，未定位首跑根因，不宣称已修复该间歇现象；原FAIL完整保留，作为C5稳定性后续条件。
+
+下一步继续工作集交互稳定性及原计划恢复/设置通道，生产body/本人ACK、C1/C2、J/G/U与旧4x100k仍有未满足条件。无真实ChatGPT/PAIA访问、付费调用、部署或原生写入。Free未完成、NOT_RELEASE_READY。

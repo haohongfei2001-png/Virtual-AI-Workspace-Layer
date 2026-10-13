@@ -87,6 +87,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    const entry=views.get(message.mountId),current=entry?.owner.current();
    if(!workspaceRepository||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)throw Error('free-view-not-ready');
    if(entry.horizonPending)throw Error('horizon-change-in-progress');
+   if(entry.workingSetPending)throw Error('preference-change-in-progress');
    if(current.snapshot.workspaceRevision!==message.expectedRevision)throw Error('revision-conflict');
    entry.horizonPending=true;
    try{
@@ -104,6 +105,41 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     begin(entry);ui.notifyScope?.(context.scope.key);
     return {ok:true,segment,viewSession,workspaceRevision:result.revision};
    }finally{entry.horizonPending=false;}
+  }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;abort.abort();}
+ }
+ async function setWorkingSet(input,sender){
+  let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-working-set'};}
+  if(!exactHostRecord(message,['v','type','grantId','mountId','operationId','expectedRevision','action','refId'])||message.v!==1||message.type!=='HOST_UI_WORKING_SET'||typeof message.operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(message.operationId)||!Number.isSafeInteger(message.expectedRevision)||message.expectedRevision<0||!['add','remove','move-up'].includes(message.action)||typeof message.refId!=='string'||message.refId.length<1||message.refId.length>128||['__proto__','constructor','prototype'].includes(message.refId))return {ok:false,reason:'invalid-ui-working-set'};
+  let active=true;const started=elapsedNow(),abort=new AbortController();
+  try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+   const entry=views.get(message.mountId),current=entry?.owner.current();
+   if(!workspaceRepository||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)throw Error('free-view-not-ready');
+   if(entry.horizonPending)throw Error('horizon-change-in-progress');
+   if(entry.workingSetPending)throw Error('preference-change-in-progress');
+   if(current.snapshot.workspaceRevision!==message.expectedRevision)throw Error('revision-conflict');
+   entry.workingSetPending=true;
+   try{
+    // Update the complete owner snapshot, never a frame's bounded visible page.
+    const saved=current.snapshot.preferences?.workingSet?.value??{refs:[],current:null},refs=[...saved.refs];let selected=saved.current;
+    const index=refs.indexOf(message.refId);
+    if(message.action==='add'){
+     const ref=current.index.byId(message.refId);
+     if(!ref||ref.scope!==current.snapshot.scope||ref.available===false)throw Error('working-set-ref-unavailable');
+     if(index<0)refs.push(message.refId);selected=message.refId;
+    }else{
+     if(index<0)throw Error('working-set-ref-not-saved');
+     if(message.action==='remove'){refs.splice(index,1);if(selected===message.refId)selected=refs[0]??null;}
+     else {if(index===0)throw Error('working-set-cannot-move');[refs[index-1],refs[index]]=[refs[index],refs[index-1]];}
+    }
+    if(refs.length>1000)throw Error('working-set-capacity');
+    const valid=()=>active&&elapsedNow()-started<6000&&context.isCurrent()&&views.get(message.mountId)===entry;
+    if(!valid())throw Error('ui-working-set-expired');
+    const result=await workspaceRepository.command(context.scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,command:{type:'SET_PREFERENCE',id:'workingSet',value:{refs,current:selected}}},{actor:'human',guard:valid,signal:abort.signal});
+    if(!result?.ok)throw Error(result?.reason??'working-set-write-unavailable');
+    if(!valid())throw Error('ui-working-set-expired');
+    begin(entry);try{ui.notifyScope?.(context.scope.key);}catch{}
+    return {ok:true,workspaceRevision:result.revision,workingSet:{total:refs.length,currentRefId:selected}};
+   }finally{entry.workingSetPending=false;}
   }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;abort.abort();}
  }
  async function present(input,sender){
@@ -124,5 +160,5 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  }
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId){for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({handle,present,setHorizon,revokeDocument,revokeTab,revokeMount:remove,stop(){for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({handle,present,setHorizon,setWorkingSet,revokeDocument,revokeTab,revokeMount:remove,stop(){for(const key of [...views.keys()])remove(key);}});
 }

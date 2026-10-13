@@ -28,6 +28,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  async function handle(message,sender){
   if(!serviceActive)return {ok:false,reason:'host-service-stopped'};
   if(message?.type==='HOST_DOCUMENT_RENEW')return handshake.renew(message,sender);
+  if(message?.type==='HOST_UI_WORKING_SET')return views?views.setWorkingSet(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_SET_HORIZON')return views?views.setHorizon(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_PRESENT')return views?views.present(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_VIEW')return views?views.handle(message,sender):{ok:false,reason:'host-view-unavailable'};

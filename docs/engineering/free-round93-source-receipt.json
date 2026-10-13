@@ -1,0 +1,14 @@
+{
+  "baselineHead": "c71abbdf4e58365cf8c3c4d32e525258ff19b19e",
+  "evidence": "OFFLINE_ONLY_NOT_RELEASE_READY",
+  "sourceHashes": {
+    "src/host/free-frame-client.mjs": "81bf4e4afad49c1a3e4ea726b97b482b6347ae24e932e6874ff9279707826d1d",
+    "src/navigation/navigation.mjs": "19f6f3f0079d176dde1a034f443820071ad9ca2b2bfb2458ae547c0016704c64",
+    "src/runtime/host-binding-service.mjs": "9452a9c23c29bea25157f4b00532537a197d50d36771bfcb496a46dcd24d5ad3",
+    "src/runtime/host-view-service.mjs": "56c31f605be0f8b31b0d89faed4c472bf6e6891a8595f552c545c937f15fd954",
+    "tests/host/frame-projection-renderer.test.mjs": "970726afa5235f83f1c37bbc2b0b0b809c1edf33952a4564cd885e313e3dac3a",
+    "tests/host/free-frame-client.test.mjs": "aafe002f4f933916f134dc3007cc4f28eca84d50fa2ed414dddb99be7a1eda27",
+    "tests/host/host-working-set-mutation.test.mjs": "81403866b0aec04577cf6997bc91763431e1aca1c2227acc494a47f9902a66d4",
+    "tests/host/working-set-package-mv3-browser.mjs": "bb8be5100a8359203171d73fb14a7248f81e7fbf38059359ed8bf57b4c03fae8"
+  }
+}
