@@ -1,39 +1,47 @@
-# 文档效力与执行权限：Free-first最终整合
+# VAIWL：权威、权限与文档职责
 
-2026-10-13。用户已明确Free-first/Pro-later，并要求将旧正文真正整合。本文件区分产品决定、待实现设计和执行权限；不再把整个Free方向标为“等待D28六项批准”。
+## 1. 已批准产品与正式Host规格
 
-## 1. 已确定的产品规则
+Free-first / Pro-later已经批准。Free使用真实ChatGPT Project稳定ID/原名与Conversation，确认NONE与UNKNOWN分开，原生历史/搜索/新建/输入/消息/工具保持；活跃和历史、完整H策略、工作集/片段、持久恢复属于Free。Pro保留虚拟组织/派生标题/Series/拆合/人工约束及端云模型目标，旧人工作品受保护，不提前开发Pro AI或收费。
 
-Free主题=真实原生Project；Project/聊天显示原生名称；无Project聊天必须同等显示。原生Project ID而非名称作为键，UNKNOWN不当NONE。活跃准确与可用并重、旧项自动进入较早区间、历史不失联；不虚构原始时间/覆盖。Pro保留AI虚拟主题/命名/系列/拆合/人工纠错等，当前新开发先完成Free。
+用户已正式批准将 **VA-HOST/1.1 FINAL** 四份完整文件固化到 `docs/specs/chatgpt-host/`，并整合进现有开发体系：主规格、类型合同、81项验收、Codex交接全部为正式技术附件，16项问题修订与81项子场景不删减。唯一执行路线仍为[DEVELOPMENT_PLAN](DEVELOPMENT_PLAN.md)原A–G，不建立第二套Host计划，不改变批准v2.7。
 
-界面沿v2.7批准视觉：静态项目卡、紧凑窗口、侧栏由用户控制、左侧旧窗口、相邻上下/默认无向上、阅读区一个无字返回；不加常驻日期/来源/计数。原生输入/消息/模型/工具/账户/搜索/dot/新入口不能消失。可用性不能越过scope安全；近似排序不等于伪造原生事实。
+附件内日期/审查head/“本轮未提交”等文字属于其原形成记录，不是当前状态和权限；本次采纳后Codex直接从仓库读取，不再要求用户下载、上传或重述。当前HEAD/本地未提交成果优先于附件历史基线，不得回退或重复开发后续已完成的模块。
 
-Free普通创建入口走原生，由用户确认/操作；复杂代理创建/改名是E后续而非必须先过的Free前置。手工范围和证据足够时的自适应属于Free共享能力，Pro订阅不决定原生工具权限。
+## 2. 权威顺序与职责
 
-## 2. 唯一权威结构
+用户最新明确决定与授权在首位，随后为本AUTHORITY及安全边界。CORE_MECHANISMS_V2_8定义产品机制，FREE_PRO_PRODUCT_SCOPE定义分级，INTERACTION_SPEC/批准v2.7定义产品行为；TECHNICAL_ARCHITECTURE、DATA_MODEL、PRIVACY_SAFETY_RECOVERY和VA-HOST/1.1完整附件定义生产实现合同；FREE_PRO_ACCEPTANCE定义原FR/PR退出与81项对应；唯一DEVELOPMENT_PLAN定义任务、依赖、优先级和owner；STATUS和工程证据只记录实施者实际结果。
 
-用户最新明确要求与安全限制 → 本AUTHORITY → CORE_MECHANISMS_V2_8中的当前Free/共享/Pro分区 → 对应INTERACTION_SPEC/DATA_MODEL/TECHNICAL_ARCHITECTURE/PRIVACY_SAFETY_RECOVERY/AI_NAMING_EVALUATION → 唯一DEVELOPMENT_PLAN的任务依赖/验收 → 历史研究及原型。
+1.1已撤回的旧Host选择不再是可并行选项：不使用auto Popover作主工作区，不以纯不透明覆盖忽略焦点穿透，不把header不足变为侧栏/rail重复返回，不令已ACK活动因短期校准due消失。按1.1允许的限定声明式CSS view mask不等于允许HTML inert残留、重建原生聊天或通配修改宿主。
 
-FREE_PRO_PRODUCT_SCOPE为当前范围摘要，不是第二Canonical；FREE_PRO_ACCEPTANCE为用例而非第二计划；STATUS为唯一实际进度。历史v2.7用于视觉/未改变的不变量，不能覆盖Free原生对象定义；旧v2.8自由Workspace规则已移入Pro，不保留“通用规则但另读页首排除Free”的双重解释。
+四份附件是被本计划引用的完整规格与验收/交接，不独立分配另一条路线或新阶段。其类型与实际legacy调用、正文机制与恢复约束同时有效，不能仅凭类型编译忽略语义。旧研究/基线表/PR #1–#15与实验失败原件保留历史证据，不复活过时默认产品目标，不把来源UNKNOWN泛化为全部技术不可能。
 
-原件保留在Git历史固定提交和现有design/approved及工程证据目录。基线/文档验收页明确何为旧证据与新要求。后续批准实施后按同一计划走，不再复制一个“Codex新计划”。
+## 3. 本次文档写入与持续工程权限
 
-## 3. 本轮权限与后续持续执行
+本次正式授权仅由文档整合执行者修改四份完整规格和必要计划/Canonical引用，安全提交到 `codex/vaiwl-free-first-20261013` /现有 Draft PR #16。不得修改src、simulator、tests、STATUS、既有工程证据或批准设计原件；不操作Mac、不进入真实ChatGPT、不接管或暂停正在运行的Codex。此文档提交不产生新增测试或功能通过声明。
 
-**本轮仅文档**：目标为更新现有PR #15；不改src/tests/simulator/design/工程原始结果，不访问Mac/Remote Desktop Commander/私人ChatGPT/PAIA，不做原生动作、付费服务、merge或部署。当前连接是否能写入，以实际工具结果为准，不能因过去成功提交就宣称本轮可提交。
+Codex原已获准的Free持续工程在原目录 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、同一工作树/分支继续；接入本次正式文档不要求停工、reset、重建、复制仓库、建立worktree或额外PR。正常fetch/整合时保全未提交与未推送成果，只处理自己的文档/代码冲突，不强推。最新共享目录、staged HEADER、elapsed deadline、scope-wide foreground及人工恢复等成果直接继承，不按旧基线重做。
 
-后续若用户明确授权按整合计划实施Free，可在许可环境持续执行所有依赖满足的Free任务，不逐阶段索要重复批准；计划本身不自动授予真实账号、原生测试发送、PAIA本体、Mac、付费、系统权限或发布。遇到真实缺条件只停止相应动作，继续独立Free任务；不能绕批准拒绝，也不转去抢跑Pro。
+生产适配的主要研发/验收按已批准交接完全离线：新的隔离测试Profile、本地native-shaped页面和固定认证fixture、外网阻断覆盖worker；不借日常ChatGPT/Chrome的账号/私有历史/凭证测试，不改变系统代理/DNS/根证书、不绕浏览器管理策略。正常代码/文档读取和GitHub同步依原权限进行。
 
-产品方向已批准不等于每个工程参数已验证。重试/校准/自适应默认属于待测工程参数，按既有目标校准，不要求每次微调重新做产品设计；降低质量/改变付费边界/引入额外数据采集则必须明确再批准。
+真实ChatGPT账号、原生创建/发送/移动/改名/删除、PAIA实际安装运行或数据访问、付费API/模型、外部同步服务、merge、部署、商店提交和发布都不能从本次文档采纳自动推导许可。既有具体授权只在原范围内有效；缺少真实条件按相应G/U门槛NOT_RUN，不阻止无依赖离线工程，也不以另一个Profile/目录重置原生动作总预算。
 
-## 4. 证据与状态
+## 4. 不可绕过的安全合同
 
-REPOSITORY_READ、LOGIC、MOCK_DOM、REAL_IDB、REAL_CHROME_SYNTHETIC、LIVE_GUEST_PARTIAL、LIVE_ACCOUNT、HUMAN_USABILITY分别记录。原始测试报告是对应旧源码的证据，不重复累加成产品完成度；本轮只作文档检查，不造新的产品PASS。
+账户主体、当前workspace、browser document/route/body、producer、UI frame和数据source是不同边界。页面昵称/头像/DOM字段/nonce/roster第一项/普通URL不提供账户授权；locator或profile标签不自证receipt。ScopeAuthority的peek纯本地、refresh有限单飞，IDB事务不await认证网络。固定worker认证与包内隔离世界备选按1.1验证，token只在对应受限RAM中短期使用，不传MAIN/UI/日志/DB，不让用户复制凭证。
 
-任务状态用READY/IN_PROGRESS/IMPLEMENTED_SYNTHETIC/LIVE_VERIFIED/BLOCKED/DEFERRED_PRO；发布状态FREE_ACCEPTED/RELEASE_READY/PUBLISHED不混淆。PR仍Draft/未合并不能说代码已经在main，文档包完成也不等于已写回PR。
+Free原生ID必须确证，IDless真实控件只用临时句柄并通过用户自然激活提升；不持久造假ID，不按名字合并。NONE需明确语义，unknown不等于null无项目；原生未完整发现历史仍可访问。body旧route新时不误关联消息，shared role=user不自动是本人。
 
-## 5. 并发与交接
+原始UserSendEvent、短期hint、durable本地ACK观察锚、无日期recency和ActivityDecision分别处理。观察锚始终provisional且无sentAt/serverTime，校准due不删除已ACK活动，误配可撤销；重复不续起点。grant、freshness、revocation、库存/成员/时间覆盖不混用。
 
-本轮只追加到PR #15当前head；提交前再次比较expected SHA，非强制快进，父PR和main不改。其他执行者推进则先核对具体差异，不能用旧整文件覆盖。未来实现保持模块单writer，不操作用户其他项目。
+原生操作只委托真实入口，预计划并一次派发，未知结果不自动补跳或重发；无原生入口且有未保存风险/风险未知时不整页卸载。原生消息/composer/model/tool/file/菜单/运行态不复制，草稿不持久化。manual双surface仅可对独立reading/纯history施加浏览器开闭驱动的限定CSS，禁止HTML inert/hidden/display和原生handler改写；唯一阅读四格返回和完整v2.7保持。
 
-旧D28的目的地/虚拟主题/拆合转Pro/E；Free和共享决策以DECISIONS中的最新映射生效。不能以Pro还没完成或商店尚未批准阻断Free的本地开发、真实验收与可安装交付准备。
+同库CAS/inverse/分片/恢复/备份/旧reader/容量护栏保留。native delta与有界continuation/admission同事务，evidence幂等补观察但不重放原生动作或旧授权；恢复不提升synthetic来源、不丢Pro人工作品。任何核心缺口不以大面积UNKNOWN/NATIVE_ONLY、不适用或手工文件维护来充完整Free。
+
+## 5. 证据、交付和并发
+
+L/D/S/G/U与WEB_MECHANISM_ONLY分开。旧合成测试只认证其原代码/环境，不因文档固化提升为生产能力；已批准16项修订是待落地的处理，不代表新增运行PASS。真实disable/uninstall不能由stop代替，nativeOperable/privateProjectionAbsent/cleanLayout分别验；可关闭敏感残留仍不通过。完整离线候选、LIVE_VERIFIED、FREE-ACCEPTED、RELEASE-READY和PUBLISHED为不同等级，实际状态由原实施者维护。
+
+最先执行B1.F+B2.F1+C2纵向闭环，并在C2/C5/F3尽早完成实际Chrome离线挂载/退出关口；原F1性能目标不删除，但不无限占据适配之前。真实条件阻塞只记录具体provider/profile/字段/权限缺口，继续全部独立工程，不再全面研究、不提前转Pro。
+
+一个模块一个writer，共享broker/service/client/navigation/schema和Git由唯一集成owner管理。文档提交前后核对实际HEAD和目标路径，使用非强制快进/expected-head；并发推进则吸收最新tree后只重放自己的文档差异，不覆盖Codex代码/STATUS/证据，不修改PR #15/base/main或新建PR。无法安全更新时报告真实阻塞和可恢复对象，不宣称已同步。将来merge/发布依独立明确授权，不由本次采纳自动完成。
