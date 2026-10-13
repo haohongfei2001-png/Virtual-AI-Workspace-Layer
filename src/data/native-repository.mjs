@@ -1,3 +1,5 @@
+import {NATIVE_INDEX_FORMAT,validateNativeIndexRoot} from './native-version-index.mjs';
+import {createNativeIndexReader} from './native-index-reader.mjs';
 import {VerifiedRecordCache} from './verified-record-cache.mjs';
 import { isNativePartitioned, validateNativeManifest, loadNativePieces, saveNativePieces, nativeHeader, nativeRecoveryKey, nativeCheckpointKey, nativeRecord } from './native-partitions.mjs';
 import { emptyNativeFacts, validateNativeFacts, applyNativeObservations, invalidateNativeSource } from './native-facts.mjs';
@@ -16,7 +18,7 @@ function fence({guard = () => true, signal} = {}) {
 
 export class NativeRepository {
   #rootCache=new VerifiedRecordCache({maxEntries:3});
-  #validateRoot(payload,record,scope){unpack(record);if(isNativePartitioned(payload))validateNativeManifest(payload,scope);else validateNativeFacts(payload,scope);}
+  #validateRoot(payload,record,scope){unpack(record);if(payload?.format===NATIVE_INDEX_FORMAT)validateNativeIndexRoot(payload,scope);else if(isNativePartitioned(payload))validateNativeManifest(payload,scope);else validateNativeFacts(payload,scope);}
   #rootContext(row,scope){
     if(typeof row?.checksum!=='string'||!/^[0-9a-f]{64}$/.test(row.checksum))throw Error('corrupt-native-record');
     return JSON.stringify([scope.key,row.checksum]);
@@ -49,7 +51,10 @@ export class NativeRepository {
       request.onsuccess = () => {
         try {
           const payload = request.result ? this.verifiedRoot(request.result, normalized) : null;
-          if (isNativePartitioned(payload)) {
+          if(payload?.format===NATIVE_INDEX_FORMAT){
+            facts=nativeHeader(payload,normalized);const fail=failure=>{error=failure;transaction.abort();};
+            createNativeIndexReader(transaction.objectStore('native_states'),payload,normalized,fail).all(manifest=>loadNativePieces(transaction.objectStore('native_states'),manifest,normalized,{projects:Object.keys(manifest.projects),refs:Object.keys(manifest.refs)},value=>{facts=value;},fail));
+          } else if (isNativePartitioned(payload)) {
             const manifest = payload;
             loadNativePieces(transaction.objectStore('native_states'), manifest, normalized,
               {projects: Object.keys(manifest.projects), refs: Object.keys(manifest.refs)}, value => { facts = value; },
@@ -83,7 +88,8 @@ export class NativeRepository {
         try {
           if (request.result) {
             const value = this.verifiedRoot(request.result, normalized);
-            if (isNativePartitioned(value)) manifest = value;
+            if(value?.format===NATIVE_INDEX_FORMAT)createNativeIndexReader(tx.objectStore('native_states'),value,normalized,failure=>{error=failure;tx.abort();}).all(value=>{manifest=value;});
+            else if (isNativePartitioned(value)) manifest = value;
             revision = (manifest ?? value).revision;
           }
           const marker = tx.objectStore('native_operations').get(normalized.key);
@@ -115,8 +121,21 @@ export class NativeRepository {
       const request = store.get(normalized.key);
       request.onsuccess = () => {
         try {
-          const counted=ids&&request.result?this.#rootWithCounts(request.result,normalized):null;
+          const counted=ids&&request.result&&request.result.payload?.format!==NATIVE_INDEX_FORMAT?this.#rootWithCounts(request.result,normalized):null;
           const payload = counted?.payload ?? (request.result ? this.verifiedRoot(request.result, normalized) : emptyNativeFacts(normalized));
+          if(payload?.format===NATIVE_INDEX_FORMAT){
+            if(revision!==null&&revision!==payload.revision)throw Error('snapshot-revision-changed');
+            const total=['projects','refs'].reduce((sum,kind)=>sum+Object.values(payload[kind]).reduce((n,p)=>n+p.count,0),0);
+            const reader=createNativeIndexReader(store,payload,normalized,fail),marker=tx.objectStore('native_operations').get(normalized.key);
+            marker.onsuccess=()=>{try{if(unpack(marker.result).revision!==payload.revision)throw Error('native-root-revision-conflict');}catch(failure){fail(failure);}};
+            const load=(manifest,selectedProjects,selectedRefs,lookup=null)=>loadNativePieces(store,manifest,normalized,{projects:selectedProjects,refs:selectedRefs},facts=>{
+              result={revision:payload.revision,offset,total,nextOffset:Math.min(total,offset+limit),facts,selectedProjects,selectedRefs};
+              if(JSON.stringify(result).length>16*1024*1024)fail(Error('native-page-too-large'));
+            },fail,lookup);
+            if(ids)load(reader.manifest,ids.projects,ids.refs,reader.lookup);
+            else reader.all(manifest=>{const projects=Object.keys(manifest.projects),refs=Object.keys(manifest.refs);load(manifest,projects.slice(offset,offset+limit),refs.slice(Math.max(0,offset-projects.length),Math.max(0,offset+limit-projects.length)));});
+            return;
+          }
           if (!isNativePartitioned(payload)) {
             const all = payload;
             if (revision !== null && revision !== all.revision) throw Error('snapshot-revision-changed');
@@ -180,6 +199,7 @@ export class NativeRepository {
             return;
           }
           if (digest(root.result ?? null) !== damagedHash) throw Error('recovery-conflict');
+          if(root.result?.payload?.format===NATIVE_INDEX_FORMAT||shadow.result?.payload?.format===NATIVE_INDEX_FORMAT)throw Error('native-index-recovery-not-enabled');
           let intact = false;
           try { validateNativeManifest(unpack(root.result), normalized); intact = true; } catch {}
           if (intact) throw Error('intact-state-not-replaced');
@@ -259,6 +279,7 @@ export class NativeRepository {
         try {
           check();
           const payload = request.result ? this.verifiedRoot(request.result, normalized) : null;
+          if(payload?.format===NATIVE_INDEX_FORMAT)throw Error('native-index-write-not-enabled');
           const manifest = isNativePartitioned(payload) ? payload : null;
           const current = manifest ? nativeHeader(manifest, normalized) : payload ?? emptyNativeFacts(normalized);
           const marker = operations.get(normalized.key);

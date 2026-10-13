@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第三十七轮：原生版本索引的不可变分片基础已实现，14项新合同与真实IDB100k的5项基础检查通过；完整Node809项通过。尚未接NativeRepository或启用迁移，当前扩展运行时仍315db11，发送1秒目标仍FAIL。最后确认PR16 Draft为315db11，6e88ce5正常推送遇网络失败；后续HEAD与同步以Git为准。Free及发布验收未完成。
+当前已推进至第三十八轮：新原生索引同事务读取已接read/header/page，写入/恢复仍明确关闭，未启用迁移。完整Node817项、真实IDB6项读取/拒绝检查与MV3 9项通过。正常100k仍以前次约1.6–1.7秒为证据，1秒目标FAIL。245f92f已正常推送原Draft PR16；后续HEAD和同步以Git为准。Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -463,3 +463,16 @@ CHECK/HEADER/PAGE/SEND/UPSERT优先取消补录的独立子signal，主binding�
 当前新索引模块尚未被NativeRepository/worker/build引用，**没有启动真实迁移、没有改变现有包或发送路径**；正常100k仍以前次1707.4/1596.3/1612.5ms为最后证据，1秒FAIL。本轮MV3/正常100k NOT_RUN，实际运行时仍315db11，合成包仍Round35。
 
 直接接续native-repository.mjs/native-partitions.mjs接线：旧格式读取不删除，原事务发布新root+index pieces+native pieces+marker/receipt/共享锚；PAGE只验证目标桶，HEADER完整还原原顺序，版本检查验证根与marker。恢复须验证所有被引用桶及原生片、撤销来源且不重放授权，保留当前/上一检查点的桶和片；损坏/撤权/quota/旧reader回退反例与真实IDB通过前不启用。目录count在未验证桶之前只是声明，不能冒作完整库存见证。此为原F1/B5实施接续，不是第二开发计划。完整Free、真实来源/账户/跨端、PAIA、物理设备/IME及真人验收仍未达成。
+
+
+## 第三十八轮：同事务索引读取接入原生仓库
+
+接245f92f（已正常推送，API确认PR16仍Draft同head）。新增native-index-reader：每个IDB事务内按目标桶加载，缺目录指针为当前revision的缺项，同桶并发lookup合并；Project依赖从聊天片段发现后继续读取相应桶。完整还原保留旧原生顺序；错误只报告一次并抑制后续成功回调。loadNativePieces保留原checksum/scope/row验证，增加可选版本lookup；旧调用方式兼容。
+
+NativeRepository的read/header/page支持新格式：完整读/header验证所有目录片，按ID页只读目标及成员依赖，offset页仍完整还原顺序；marker/请求revision/末次guard均保持。构建已包含两个新模块。**写入和恢复尚未完成，检测新格式时明确native-index-write-not-enabled/native-index-recovery-not-enabled，避免旧写法或旧shadow降级新根。没有自动迁移或对现有库写入新格式。** version仍走header，不冒称已完成根级快速检查。
+
+新增8项reader合同、相关组合124/124，最终完整Node817/817、0失败/跳过。真headless IDB6项通过：实际repository read/header/page等价、写入拒绝不降级、恢复不从旧shadow重放、同事务Project依赖、完整顺序、缺片中止；小fixture针对查询只读2个index片+2个native片。这是新格式读取接线证据，不是生产迁移/完整写入验收。实际MV3 9/9通过，覆盖仍在使用的旧格式、worker重启、原生草稿/搜索、NONE发送与UNKNOWN作用域。
+
+包/private/tmp/vaiwl-free-delivery-round38-20261013/vaiwl-free-synthetic-only.zip，SHA256 `45e67782bd22c3de7e6cd0a5784d476c85f4a28777ab19a17e33b79dd21330ee`；44文件/37worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。正常100k本轮NOT_RUN，原1秒FAIL保持，不把只读接线当性能达标。
+
+接续写入/迁移/恢复时使用本事务reader.records为已加载bucket来源；更新root目录与native pieces/共享锚/receipt/marker须同一CAS事务。Project依赖lookup已就绪，不需为单条更新全量materialize。迁移需完整验证原数据并发布root+所有index片，旧格式及旧source授权不能重放；恢复完整验证目录与native片并撤销来源；GC保留current/prior检查点所需桶和native片，旧checkpoint验证失败不能授权删除。完成这些反例后才能移除新格式write/recovery门控或启用迁移。真实ChatGPT/跨端/PAIA/物理设备/IME/真人条件仍缺，Free未完成。

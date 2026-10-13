@@ -63,7 +63,7 @@ function nativeManifestRecord(key,manifest,scope){
 /** Immutable bounded pieces share the original store and root CAS transaction.
  * A partial mutation reads only changed rows and their Project dependencies.
  */
-export function loadNativePieces(store, manifest, scope, wanted, done, fail) {
+export function loadNativePieces(store, manifest, scope, wanted, done, fail, lookup = null) {
   const facts = nativeHeader(manifest, scope), pieces = new Map();
   const requested = new Set();
   let waiting = 0, launching = true, failed = false;
@@ -74,16 +74,19 @@ export function loadNativePieces(store, manifest, scope, wanted, done, fail) {
   };
   const load = (kind, key) => {
     const identity = JSON.stringify([kind, key]);
-    if (requested.has(identity) || !Object.hasOwn(manifest[kind], key)) return;
+    if (requested.has(identity)) return;
     requested.add(identity); waiting++;
-    const request = store.get(nativePartitionKey(manifest.scopeKey, kind, key, manifest[kind][key]));
+    const read = version => {
+    if(failed)return;
+    if(version===undefined){waiting--;finish();return;}
+    const request = store.get(nativePartitionKey(manifest.scopeKey, kind, key, version));
     request.onsuccess = () => {
       if (failed) return;
       try {
         const piece = nativeUnpack(request.result);
         exact(piece, kind === 'projects' ? ['scopeKey', 'kind', 'id', 'revision', 'row'] : ['scopeKey', 'kind', 'id', 'revision', 'row', 'membership']);
         if (piece.scopeKey !== manifest.scopeKey || piece.kind !== kind || piece.id !== key ||
-            piece.revision !== manifest[kind][key] || piece.row?.id !== key) throw Error('invalid-native-piece');
+            piece.revision !== version || piece.row?.id !== key) throw Error('invalid-native-piece');
         pieces.set(identity, piece); facts[kind][key] = piece.row;
         if (kind === 'refs' && piece.membership) {
           if (piece.membership.id !== key) throw Error('invalid-native-piece');
@@ -93,6 +96,8 @@ export function loadNativePieces(store, manifest, scope, wanted, done, fail) {
         waiting--; finish();
       } catch (error) { failed = true; fail(error); }
     };
+    };
+    if(lookup)lookup(kind,key,read);else read(Object.hasOwn(manifest[kind],key)?manifest[kind][key]:undefined);
   };
   for (const kind of ['projects', 'refs']) for (const key of wanted[kind]) load(kind, key);
   launching = false; finish();
