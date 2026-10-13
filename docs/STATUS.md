@@ -701,3 +701,13 @@ partialContext显式boundedDirectory opt-in仅对目录格式启用，读取目�
 真实隔离headless MV3同路径Round46→Round57→Round46→Round57四步通过：新共享目录迁移仅结构revision+1，原生/活动事实和revision、Pro人工title/workingSet、原草稿DOM保持；旧包明确invalid-schema且六store所有row摘要不变，新包恢复ACTIVE且不重写数据。初始夹具缺syntheticEvidenceGate被正确拒绝，修正夹具后通过；初始日志保留。
 
 最新合成ZIP /private/tmp/vaiwl-free-delivery-round57-20261013/vaiwl-free-synthetic-only.zip，SHA256 90da5229af565a1090cb07e252f71e53687935ac759ba6ba9fc41dc81b3da6ec，58文件/51worker模块，SYNTHETIC_ONLY/NOT_RELEASE_READY。后续仍沿原F1/FR-14推进首次加载、当前4x/多tab/单Project大成员及增量原名/归属；真实ChatGPT/跨端/PAIA/IME与真人条件仍未具备。Free未完成，不进入Pro、不发布。
+
+
+## Round63：同库双标签规模验证
+
+Round61/62已同步至df925b1。本轮仅测试代码：同浏览器context、独立service/broker连接同一IndexedDB；第二标签新NONE发送后，第一标签显式refresh。没有把显式refresh当作广播或跨设备证明。
+
+1k/10k/100k第二标签event-to-DOM分别64/147.1/695.2ms；第一标签refresh-to-DOM分别33.4/74.7/476.5ms，均单样本低于1秒。第一标签原URL/阅读/textarea同节点/草稿保留，新事件持久化唯一，其他scope仍空，read/snapshot均0，sourceChangedDuringRun=false。100k初始99997为三次新建预留名额，不放宽100000上限。初始单页context夹具错误已保留并修复为显式browser context。
+
+本轮未重复生产回归；完整1135与实际MV3 9结果仍源自Round62。下一步实际安装MV3规模路径；4x100k冷启动失败仍未解决，真实账号/来源/跨端/PAIA/物理IME/真人条件仍未验证。Free未完成，SYNTHETIC_ONLY/NOT_RELEASE_READY。
+证据：free-round63-multitab{1k,10k,100k}.json与initial-context-failure.json。

@@ -597,3 +597,13 @@ partialContext显式boundedDirectory opt-in仅对目录格式启用，读取目�
 - 冻结安装包仍Round60独立来源；本轮新增deadline尚不在旧ZIP，不冒称旧包包含。
 
 证据：free-round62-updates10k-4x.json、updates100k-4x.json(旧源码)、deadline100k-4x.json(最终)、full.log、mv3.json、source-receipt.json。
+
+
+## Round63：同库双标签规模验证
+
+Round61/62已同步至df925b1。本轮仅测试代码：同浏览器context、独立service/broker连接同一IndexedDB；第二标签新NONE发送后，第一标签显式refresh。没有把显式refresh当作广播或跨设备证明。
+
+1k/10k/100k第二标签event-to-DOM分别64/147.1/695.2ms；第一标签refresh-to-DOM分别33.4/74.7/476.5ms，均单样本低于1秒。第一标签原URL/阅读/textarea同节点/草稿保留，新事件持久化唯一，其他scope仍空，read/snapshot均0，sourceChangedDuringRun=false。100k初始99997为三次新建预留名额，不放宽100000上限。初始单页context夹具错误已保留并修复为显式browser context。
+
+本轮未重复生产回归；完整1135与实际MV3 9结果仍源自Round62。下一步实际安装MV3规模路径；4x100k冷启动失败仍未解决，真实账号/来源/跨端/PAIA/物理IME/真人条件仍未验证。Free未完成，SYNTHETIC_ONLY/NOT_RELEASE_READY。
+证据：free-round63-multitab{1k,10k,100k}.json与initial-context-failure.json。
