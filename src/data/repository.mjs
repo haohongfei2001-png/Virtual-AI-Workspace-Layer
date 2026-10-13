@@ -151,13 +151,15 @@ export class WorkspaceRepository {
   /** Enlist newly discovered native references in the caller's existing IDB transaction.
    * This adds shared reference anchors only; Pro identities and placements are never rewritten.
    */
-  registerNativeReferences(tx, scope, nativeRefs, operationId, check, done, fail) {
+  registerNativeReferences(tx, scope, nativeRefs, operationId, check, done, fail, {migrateLegacy=false}={}) {
     const s=scopeChecked(scope),store=tx.objectStore('b23_states');
     const request=store.get(s.key);
     request.onsuccess=()=>{try{
       check();const payload=request.result?(isPartitioned(request.result.payload)?this.partitioned.verifiedManifest(request.result,s.key):unpack(request.result)):null;
       const apply=(current,storage=null)=>{try{
-        check();const added=nativeRefs.filter(ref=>!Object.hasOwn(current.refs,ref.id));
+        check();
+        if(migrateLegacy&&!storage&&Object.keys(current.refs).length+nativeRefs.length>15000)throw Error('native-shared-migration-required');
+        const added=nativeRefs.filter(ref=>!Object.hasOwn(current.refs,ref.id));
         if(!added.length){done({added:0});return;}
         if(storage)tx.objectStore('b23_checkpoints').put(request.result);
         const next=structuredClone(current);
@@ -175,7 +177,13 @@ export class WorkspaceRepository {
         }catch(error){fail(error);}};
       }catch(error){fail(error);}};
       if(isPartitioned(payload)){this.partitioned.loadMutation(tx,payload,{fingerprint:{batch:{refs:nativeRefs}}},null,apply,fail);}
-      else apply(payload?validateState(payload,s.key):emptyState(s));
+      else if(payload)apply(validateState(payload,s.key));
+      else{
+        // A missing root cannot erase prior human history. Check inside the same
+        // native/shared transaction before treating this scope as fresh storage.
+        let pending=2;
+        for(const probe of [tx.objectStore('b23_checkpoints').get(s.key),tx.objectStore('b23_operations').index('scopeKey').openCursor(s.key)])probe.onsuccess=()=>{try{check();if(probe.result)throw Error('corrupt-record');if(!--pending)apply(emptyState(s));}catch(error){fail(error);}};
+      }
     }catch(error){fail(error);}};
   }
 

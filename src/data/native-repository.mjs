@@ -220,12 +220,17 @@ export class NativeRepository {
     const witness = {channel: authority.channel, sourceId: authority.sourceId, generation: authority.generation};
     id(witness.sourceId);
     id(witness.generation);
-    if(this.shared&&!await this.shared.partitioned.manifest(normalized,options)){
-      const {state}=await this.shared.read(normalized,options);
-      if(Object.keys(state.refs).length+(request.batch?.refs?.length??0)>15000){const migrated=await this.shared.migratePartitioned(normalized,options);if(!migrated.ok)throw Error(migrated.reason);}
-    }
-    return this.mutate(normalized, request, {kind: 'APPLY_NATIVE_OBSERVATIONS', ...witness, batch: request.batch},
+    const apply=()=>this.mutate(normalized, request, {kind: 'APPLY_NATIVE_OBSERVATIONS', ...witness, batch: request.batch},
       current => applyNativeObservations(current, request.batch, {scope: normalized, ...witness, now: this.clock()}), options);
+    const result=await apply();
+    // The write transaction already reads and validates the shared root. Only a
+    // legacy capacity boundary needs an out-of-transaction migration and one retry.
+    if(this.shared&&result.reason==='native-shared-migration-required'){
+      const migrated=await this.shared.migratePartitioned(normalized,options);
+      if(!migrated.ok)throw Error(migrated.reason);
+      fence(options);return apply();
+    }
+    return result;
   }
 
   async invalidate(scope, request, options = {}) {
@@ -292,7 +297,7 @@ export class NativeRepository {
                       };
                       if(this.shared&&command.batch){
                         const refs=command.batch.refs.map(row=>({...row,projectId:next.membership[row.id]?.state==='PROJECT'?next.membership[row.id].projectId:null}));
-                        this.shared.registerNativeReferences(transaction,normalized,refs,'native_refs_'+digest(operationId),check,publish,failure=>abort(failure.message));
+                        this.shared.registerNativeReferences(transaction,normalized,refs,'native_refs_'+digest(operationId),check,publish,failure=>abort(failure.message),{migrateLegacy:true});
                       }else publish();
                     } catch (failure) { abort(failure.message); }
                   };

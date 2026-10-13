@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第三十轮：零页偏好/视图更新复用受私有来源校验的Free展示结构，候选仅在最终权限/版本检查后保存。最终724项Node、10项发布屏障、10项观察恢复及9项MV3通过。远端已正常同步 `3e88682`；当前HEAD以Git为准。100k发送仍保留第二十八轮1秒FAIL，Free及发布验收未完成。
+当前已推进至第三十一轮：原生写取消共享根事务外预读，旧格式仅在原子中止后迁移重试一次；缺根/损坏/撤权/CAS检查保留。最终733项Node、真实IDB两类容量迁移及9项MV3通过。100k功能通过但2138.3/2161.2/1945.2ms仍FAIL且较上次慢。远端最后确认 `3e88682`；0ab58f0推送HTTP2失败、一次限时HTTP1.1补救超时，之后提交尚未同步。Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -383,3 +383,13 @@ CHECK/HEADER/PAGE/SEND/UPSERT优先取消补录的独立子signal，主binding�
 最终完整Node724/0/0skip（含18新rebind、3上轮工作集合同）。实际headless/IDB发布屏障10/10，含零页偏好生效、跨scope拒绝、document首次ADAPT后下一次0ADAPT；使用明确的测试调度钩子/部分transport注入，不冒充生产权限。观察来源/恢复小owner10/10及真实MV39/9分别通过。100k发送本轮NOT_RUN，第二十八轮1611.2/1729.7/1729.1ms及1秒FAIL保留。
 
 包 `/private/tmp/vaiwl-free-delivery-round30-20261013/vaiwl-free-synthetic-only.zip`，SHA256 `9ad78c47ba875d38f7d67ea59cce93daa0d8d77d3f401bb5445bb94e4a393a5b`。仍SYNTHETIC_ONLY/NOT_RELEASE_READY；真实账户/来源、PAIA、物理弱设备/IME及真人日常验收仍缺对应条件。继续正式计划，不能把展示优化或合成包算完整Free交付。
+
+## 第三十一轮：共享根验证回到原生写事务
+
+从0ab58f0继续。native.apply不再预读shared manifest/full legacy；registerNativeReferences同tx验证后，只有Native opt-in且legacy refs+batch>15000才要求中止、调用现有迁移并最多重试一次原请求。保留原expectedRevision/fingerprint；后台B1补录仍走旧20k路径。缺根在同tx查checkpoint/history，有旧人工作品证据拒绝空库重建；损坏根、撤权、CAS及失败不迁移循环。已提交receipt的重放可返回历史结果，不是共享根健康或新写许可。
+
+最终完整Node733/0/0skip，含9项新合同。实际headless IDB原生15000→15001迁移1次，首native事务无残留，Pro/工作集/其他scope/幂等保持；损坏共享根精确corrupt-record拒绝且native stores不变。测试初次scopeKey写错及旧sourceRevision提前拒绝已修正后重跑，不用错误拒绝冒充checksum覆盖。原后台20000→20001容量迁移另通过，证明opt-in未改旧路径；MV3 9/9通过。
+
+正常无采样100k三发送功能3/3、源码hash稳定，2138.3/2161.2/1945.2ms均1秒FAIL，比Round28更慢，不能声称端到端提速。每次1发送/event/hint，fullread0，阅读/草稿保持。下一可执行检查：foreground优先目前从请求开始设1秒安静期，长RPC结束前后台可能恢复；需按实际请求生命周期维持暂停，不人为延后测试起点。
+
+包 `/private/tmp/vaiwl-free-delivery-round31-20261013/vaiwl-free-synthetic-only.zip` SHA256 `cf68596a32a092d3a7bd1e89f3f1deb631c9fdf2d4d90a12259a67ea002cf535`，仍SYNTHETIC_ONLY。Git正常推送0ab58f0报HTTP2 framing，一次命令级HTTP1.1补救45秒超时后停止；最后API确认Draft PR16 head3e88682。未改remote/config、未force/merge/deploy。真实源/账户、PAIA、物理及真人条件仍缺，完整Free未交付。
