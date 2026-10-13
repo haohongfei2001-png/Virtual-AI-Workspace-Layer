@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第三十六轮：运行时仍为315db11，完整编码/数字内联/单遍stream三候选均因实际数字版本表无明显收益而未接入。缓存安全组合90/90通过；最新完整Node为Round34 774项、正常100k为Round35 1707.4/1596.3/1612.5ms，仍1秒FAIL。315db11已正常推送原PR16；后续HEAD以Git为准。Free及发布验收未完成。
+当前已推进至第三十七轮：原生版本索引的不可变分片基础已实现，14项新合同与真实IDB100k的5项基础检查通过；完整Node809项通过。尚未接NativeRepository或启用迁移，当前扩展运行时仍315db11，发送1秒目标仍FAIL。最后确认PR16 Draft为315db11，6e88ce5正常推送遇网络失败；后续HEAD与同步以Git为准。Free及发布验收未完成。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -448,3 +448,18 @@ CHECK/HEADER/PAGE/SEND/UPSERT优先取消补录的独立子signal，主binding�
 新增公开cache API的16项安全反例，完整相关组合90/90通过；无新增runtime改动，本轮完整Node/MV3/正常100k NOT_RUN，最新完整Round34 774/774、MV3 9/9与正常发送Round35 1707.4/1596.3/1612.5ms保持，1秒仍FAIL。包仍Round35 SHA2560d60e736d645c2191c37a033d6b9069e66822f9eda6ec58daa85f56fb0bc63ed。
 
 接续限制：不重复以上无收益编码试验，不为约30ms收益改写共享CAS接口。剩余主要成本是native/evidence/shared全量版本索引根在读写时的编码/完整验证与复制；进一步优化必须先保持有界索引、旧格式读取/恢复、每次完整字节验证和Pro人工资产。尚未实施新的存储格式或授权真实来源。真实账户/来源/跨端、PAIA、物理设备/IME、真人日常验收仍缺条件，Free未完整交付，继续既有计划。
+
+
+## 第三十七轮：原生版本索引分片基础（尚未接运行时）
+
+从6e88ce5继续；上一提交正常push遭HTTP2 framing，一次45秒HTTP1.1补救超时，最后确认PR16 Draft head315db11。未遗留push进程，不循环重试。子代理本轮额度受限，主代理完成实现与实测。
+
+新增native-version-index.mjs：按确定性ID摘要分桶的不可变目录，原生Project/ref各最多256目录项、总量各100k、原16Mi单记录限制保持；物理key/scope/kind/bucket/revision/count/完整checksum逐片验证。纯迁移构造、完整旧形态还原、只复制触及桶的增量更新均保留原生ID顺序，使用紧凑ordinal数组避免重复长ID。旧根/旧片不修改，未知引用不删除，不含来源授权迁移。旧reader拒绝新格式。完整还原拒绝缺片/多片/重复片与跨桶ordinal冲突。
+
+14项新合同通过，包含增量/稳定顺序、checksum/key/scope/count/routing/order损坏、遗漏/多余片、revision冲突与空库存。最后完整Node809/809，0失败/跳过。真实headless IndexedDB100k基础测试5项通过：迁移往返顺序一致、根/片/marker事务abort保持原样、单条更新仅1桶（本样本395项）、旧checkpoint可完整还原、100001容量拒绝；报告记录最终源码hash。build约403.8ms与单桶计算约2.4ms只是基础计算，不是发送延迟或持久化性能认证；该基础测试与Node同时运行，不用于延迟结论。
+
+另一个独立写入canonical JSON串接诊断完整字节/digest一致，但收益小（同值14.70→14.65ms、混合15.25→14.30、唯一16.10→15.00、对象45.20→41.55），未采用。索引复制隔离探索收益亦不足，未改旧复制逻辑。
+
+当前新索引模块尚未被NativeRepository/worker/build引用，**没有启动真实迁移、没有改变现有包或发送路径**；正常100k仍以前次1707.4/1596.3/1612.5ms为最后证据，1秒FAIL。本轮MV3/正常100k NOT_RUN，实际运行时仍315db11，合成包仍Round35。
+
+直接接续native-repository.mjs/native-partitions.mjs接线：旧格式读取不删除，原事务发布新root+index pieces+native pieces+marker/receipt/共享锚；PAGE只验证目标桶，HEADER完整还原原顺序，版本检查验证根与marker。恢复须验证所有被引用桶及原生片、撤销来源且不重放授权，保留当前/上一检查点的桶和片；损坏/撤权/quota/旧reader回退反例与真实IDB通过前不启用。目录count在未验证桶之前只是声明，不能冒作完整库存见证。此为原F1/B5实施接续，不是第二开发计划。完整Free、真实来源/账户/跨端、PAIA、物理设备/IME及真人验收仍未达成。
