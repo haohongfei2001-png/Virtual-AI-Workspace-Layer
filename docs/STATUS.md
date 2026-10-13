@@ -1120,3 +1120,14 @@ frame显式导出后需点击下载；选择JSON后上传并展示新增/更新/
 最终完整Node2239/2239、0失败/跳过；原构建包真实headless MV3十项PASS，sourceChangedDuringRun=false。新增旅程实际打开合成原生P页面，原textarea节点和草稿不变、新建聊天动作计数未增加。独立只读审查无新finding。初次owner测试错误期待不存在的p2记录已修正，原失败日志保留。
 
 下一步继续B/F性能与剩余生产HostAdapter实现；本轮不是原生创建动作认证。默认context/C1/C2、真实ACK/time、新聊天首发、自动密度评估与新装默认、J/G/U、C5旧间歇点击及原4x100k失败仍未满足。Free未完成、NOT_RELEASE_READY。
+
+
+## Round103：冷迁移审计复用精确表容量度量
+
+在已正常push、API确认PR16 open Draft原base的31f018d继续。将原NativeFacts结构校验复用为私有validator，迁移分片按表编码一次并返回冻结的精确JSON长度/count/units；审计复用数据，跨非空批补一个逗号，不重编码每row，也不重复计refs载入的Project依赖。sources/header仅计一次，原UTF16 JSON容量语义、v1 16Mi/v2 128Mi、全局128Mi与每片checksum全部保留。普通分页仍使用原validateNativeFacts路径，只有audit显式请求metrics；无schema/授权/事务异步边界变化。
+
+最终完整Node2244/2244、0失败/跳过；新旧度量/容量/审计12项定向通过，独立审查未发现普通IDB路径完整性回退。5000行同进程Node诊断中，旧验证+审计编码中位14.409ms，新度量8.949ms；仅局部CPU诊断，不含IDB/checksum/浏览器，不能认证总延迟。基准脚本和所有样本保留。
+
+单次真实headless page-transport mixed 4x/100k冷启动诊断仍FAIL：30,153.6ms达到总读取预算，HEADER多次6.54–7.60秒stale-binding，未进入分页。CPU profile约30.36秒，SHA256自耗10.37秒、stable2.26秒、native piece回调1.82秒、度量0.95秒。原input同节点/草稿/connected/visible均保持，sourceChangedDuringRun=false。不循环重跑，保留报告/压缩profile。Round70 23.25秒是1x，不能直接比较改善比；本次不是MV3 worker或物理弱机认证。
+
+局部优化已验证，但原4x100k冷迁移预算阻塞仍在，未放宽6/30秒或跳过校验。下一步继续该瓶颈与原生导航风险护栏，真实context/ACK、自动评估/新装默认和既列G/U等未完成条件保持。Free未完成、NOT_RELEASE_READY。

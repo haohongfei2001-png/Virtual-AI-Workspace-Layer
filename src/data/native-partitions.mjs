@@ -1,4 +1,4 @@
-import { emptyNativeFacts, validateNativeFacts } from './native-facts.mjs';
+import { emptyNativeFacts, validateNativeFacts, validateAndMeasureNativeFacts } from './native-facts.mjs';
 import { digest, stable, sha256 } from './hash.mjs';
 import { id, exact } from './state.mjs';
 
@@ -63,7 +63,7 @@ function nativeManifestRecord(key,manifest,scope){
 /** Immutable bounded pieces share the original store and root CAS transaction.
  * A partial mutation reads only changed rows and their Project dependencies.
  */
-export function loadNativePieces(store, manifest, scope, wanted, done, fail, lookup = null) {
+export function loadNativePieces(store, manifest, scope, wanted, done, fail, lookup = null, measureForAudit = false) {
   const facts = nativeHeader(manifest, scope), pieces = new Map();
   const requested = new Set();
   const order=lookup?{projects:[...wanted.projects],refs:[...wanted.refs]}:null;
@@ -79,7 +79,10 @@ export function loadNativePieces(store, manifest, scope, wanted, done, fail, loo
           const dependencies=Object.values(facts.membership).filter(row=>row.state==='PROJECT').map(row=>row.projectId);
           facts.projects=ordered(facts.projects,[...order.projects,...dependencies]);
         }
-        validateNativeFacts(facts, scope); done(facts, {manifest, pieces});
+        // Ordinary page reads retain their original validation cost. Only the
+        // migration audit consumes metrics; both paths fully validate facts.
+        if(measureForAudit){const validation=validateAndMeasureNativeFacts(facts,scope);done(facts,{manifest,pieces,validation});}
+        else{validateNativeFacts(facts,scope);done(facts,{manifest,pieces});}
       } catch (error) { failed = true; fail(error); }
     }
   };

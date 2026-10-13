@@ -66,7 +66,7 @@ export function emptyNativeFacts(scope) {
     projects: {}, refs: {}, membership: {}, sources: {}};
 }
 
-export function validateNativeFacts(facts, scope) {
+function validateNativeFactsStructure(facts, scope) {
   shape(facts, ['format', 'scopeKey', 'revision', 'projects', 'refs', 'membership', 'sources']);
   if (!['vaiwl-native-facts-v1', 'vaiwl-native-facts-v2'].includes(facts.format) || facts.scopeKey !== scopeKey(scope) ||
       !Number.isSafeInteger(facts.revision) || facts.revision < 0) throw Error('invalid-native-facts');
@@ -100,8 +100,29 @@ export function validateNativeFacts(facts, scope) {
       } else nativeObject(row, table === 'projects' ? 'nativeName' : 'nativeTitle');
     }
   }
+  return facts;
+}
+
+export function validateNativeFacts(facts, scope) {
+  validateNativeFactsStructure(facts,scope);
   if (JSON.stringify(facts).length > (facts.format === 'vaiwl-native-facts-v2' ? 128 : 16) * 1024 * 1024) throw Error('native-facts-too-large');
   return facts;
+}
+
+/** Internal partition reads need both validation and exact global-audit sizes.
+ * Encode each table once; no caller-supplied size or skipped validation path.
+ * Units include the table's internal commas, but not its two braces.
+ */
+export function validateAndMeasureNativeFacts(facts,scope){
+  validateNativeFactsStructure(facts,scope);
+  let jsonLength=JSON.stringify({...facts,projects:{},refs:{},membership:{},sources:{}}).length;
+  const tables={},limit=(facts.format==='vaiwl-native-facts-v2'?128:16)*1024*1024;
+  for(const table of ['projects','refs','membership','sources']){
+    const units=JSON.stringify(facts[table]).length-2,count=Object.keys(facts[table]).length;
+    jsonLength+=units;if(jsonLength>limit)throw Error('native-facts-too-large');
+    tables[table]=Object.freeze({count,units});
+  }
+  return Object.freeze({jsonLength,tables:Object.freeze(tables)});
 }
 
 function inventory(value) {

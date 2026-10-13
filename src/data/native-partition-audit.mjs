@@ -9,11 +9,12 @@ export function auditNativePartitions(store,manifest,scope,fence,done,fail){
  const counts={projects:0,refs:0,membership:0};
  let size=0,phase=0,offset=0,keys=[],failed=false,finished=false;
  const reject=error=>{if(!failed&&!finished){failed=true;fail(error);}};
- const measure=(table,rows)=>{
-  for(const [key,row] of Object.entries(rows)){
-   size+=JSON.stringify(key).length+1+JSON.stringify(row).length+(counts[table]++?1:0);
-   if(size>128*1024*1024)throw Error('native-facts-too-large');
-  }
+ const measure=(table,validation)=>{
+  const {count,units}=validation.tables[table];
+  // Each batch already includes its internal commas. Add only the join comma
+  // between nonempty batches, and never recount loaded Project dependencies.
+  size+=units+(count&&counts[table]?1:0);counts[table]+=count;
+  if(size>128*1024*1024)throw Error('native-facts-too-large');
  };
  const next=()=>{
   if(failed||finished)return;
@@ -29,14 +30,14 @@ export function auditNativePartitions(store,manifest,scope,fence,done,fail){
    }
    const table=phase===0?'projects':'refs',selected=keys.slice(offset,offset+5000);
    offset+=selected.length;
-   loadNativePieces(store,manifest,scope,{projects:table==='projects'?selected:[],refs:table==='refs'?selected:[]},facts=>{
+   loadNativePieces(store,manifest,scope,{projects:table==='projects'?selected:[],refs:table==='refs'?selected:[]},(facts,storage)=>{
     if(failed||finished)return;
     try{
-     fence();measure(table,facts[table]);
-     if(table==='refs')measure('membership',facts.membership);
+     fence();measure(table,storage.validation);
+     if(table==='refs')measure('membership',storage.validation);
      next();
     }catch(error){reject(error);}
-   },reject);
+   },reject,null,true);
   }catch(error){reject(error);}
  };
  try{
