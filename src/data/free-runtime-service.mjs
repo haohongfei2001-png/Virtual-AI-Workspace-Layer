@@ -83,6 +83,19 @@ export class FreeRuntimeService {
    return {snapshot:result.snapshot,calibration:result.calibration.then(value=>this.active(entry)?value:{status:'cancelled',reason:'stale-binding'})};
   }catch(error){if(!this.active(entry))return {snapshot:null,calibration:Promise.resolve({status:'cancelled',reason:'stale-binding'})};throw error;}
  }
+ scopeEntries(scopeKey){
+  return [...this.bindings.values()].filter(entry=>entry.scope.key===scopeKey&&this.active(entry));
+ }
+ scopeForegroundBusy(entry){return this.scopeEntries(entry.scope.key).some(peer=>peer.foregroundRequests>0);}
+ scopeReferenceDeadline(entry){return Math.max(0,...this.scopeEntries(entry.scope.key).map(peer=>peer.referencesNotBefore??0));}
+ resumeScopeReferences(scopeKey){
+  const peers=this.scopeEntries(scopeKey);
+  if(peers.some(peer=>peer.foregroundRequests>0))return;
+  for(const peer of peers){
+   peer.referencesNotBefore=Date.now()+1000;
+   if(peer.referencesDirty||!peer.referenceFinished)this.scheduleReferenceResume(peer);
+  }
+ }
  beginForeground(bindingId){
   const entry=this.get(bindingId);if(!entry||!this.referenceRepository)return ()=>{};
   entry.foregroundRequests=(entry.foregroundRequests??0)+1;
@@ -90,33 +103,38 @@ export class FreeRuntimeService {
   let released=false;
   return ()=>{
    if(released)return;released=true;
+   // Resolve revocation while the hold is still visible to stop(), so peers
+   // receive their quiet-resume deadline even when the guard just expired.
+   if(this.get(bindingId)!==entry)return;
    entry.foregroundRequests--;
-   if(this.get(bindingId)!==entry||entry.foregroundRequests)return;
-   entry.referencesNotBefore=Date.now()+1000;
-   if(entry.referencesDirty||!entry.referenceFinished)this.scheduleReferenceResume(entry);
+   this.resumeScopeReferences(entry.scope.key);
   };
  }
  prioritizeForeground(bindingId){
   const entry=this.get(bindingId);if(!entry||!this.referenceRepository)return;
-  entry.referencesNotBefore=Date.now()+1000;
-  if(entry.referenceFinished&&entry.referenceFinished.status!=='paused'&&!entry.referencesDirty&&!entry.referenceTask)return;
-  entry.referenceController?.abort();
-  entry.referencesDirty=true;
-  this.scheduleReferenceResume(entry);
+  // All tabs of this scope share the owner database. A background repair in
+  // another binding must yield as well, without revoking that binding or writes.
+  for(const peer of this.scopeEntries(entry.scope.key)){
+   peer.referencesNotBefore=Date.now()+1000;
+   if(peer.referenceFinished&&peer.referenceFinished.status!=='paused'&&!peer.referencesDirty&&!peer.referenceTask)continue;
+   peer.referenceController?.abort();
+   peer.referencesDirty=true;
+   this.scheduleReferenceResume(peer);
+  }
  }
  scheduleReferenceResume(entry){
   if(entry.referenceTimer!==undefined)this.timers.clearTimeout(entry.referenceTimer);
   entry.referenceTimer=undefined;
-  if(entry.foregroundRequests)return;
+  if(this.scopeForegroundBusy(entry))return;
   entry.referenceTimer=this.timers.setTimeout(()=>{
    entry.referenceTimer=undefined;if(this.active(entry))this.reconcileReferences(entry.id);
-  },Math.max(1,(entry.referencesNotBefore??0)-Date.now()));
+  },Math.max(1,this.scopeReferenceDeadline(entry)-Date.now()));
  }
  reconcileReferences(bindingId,{restart=false}={}){
   const entry=this.get(bindingId);if(!entry||!this.referenceRepository)return Promise.resolve({status:'unsupported'});
   if(restart)entry.referencesDirty=true;
   if(entry.referenceTask)return entry.referenceTask;
-  if(entry.foregroundRequests||Date.now()<(entry.referencesNotBefore??0)){
+  if(this.scopeForegroundBusy(entry)||Date.now()<this.scopeReferenceDeadline(entry)){
    if(!entry.referenceFinished||entry.referencesDirty)this.scheduleReferenceResume(entry);
    return Promise.resolve({status:'deferred'});
   }
@@ -199,6 +217,7 @@ export class FreeRuntimeService {
   this.bindings.delete(bindingId);entry.externalSignal?.removeEventListener('abort',entry.externalAbort);
   if(entry.timer!==null)this.timers.clearTimeout(entry.timer);entry.controller.abort();entry.runtime?.stop();
   if(entry.referenceTimer!==undefined)this.timers.clearTimeout(entry.referenceTimer);
+  if(entry.foregroundRequests>0&&this.referenceRepository)this.resumeScopeReferences(entry.scope.key);
   this.onSnapshot({bindingId,scope:null,snapshot:null,reason});return true;
  }
  stopAll(reason='stopped'){for(const id of [...this.bindings.keys()])this.stop(id,reason);}

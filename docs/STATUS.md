@@ -722,3 +722,14 @@ Round61/62已同步至df925b1。本轮仅测试代码：同浏览器context、�
 100k冻结包含Round62 deadline：60文件/51worker模块，ZIP SHA256 2166278e2dfdaf4ce213a049972841dcb18593fa152d288aea2c551573562b77，source manifest 7b6623e2cb844a608d666a84ea3036a468bb2970ea1dc0923b8eb9de55b4c856；确切临时路径见mv3-100k.json。SYNTHETIC_ONLY/NOT_RELEASE_READY。完整Node/MV3生命周期结果仍Round62，不合并成新全套。
 
 下一项：同scope跨binding后台校准与前台争用；低速100k迁移仍FAIL，独立审查建议有界原生全量审计但尚未实现/未证明收益。真实账号/上游来源/跨端/PAIA/IME/真人与Free完整交付仍未完成。
+
+
+## Round65：同作用域跨标签前台优先
+
+后台known-reference修复现在对同scope全部binding共同让位；不同scope不取消。任一前台hold期间不轮询/重启，最后释放或停止后静默1秒再恢复；terminal degraded/partial不被普通foreground隐式重试。独立审查发现guard刚失效时release先减计数会漏恢复peer，新增反例先FAIL后修为先确认binding（stop仍能看见hold），再减计数。旧release不能解除新绑定。
+
+最终完整Node1144/1144、0失败/跳过，最终真实headless MV3 9/9。新增9项scope反例含撤权、stop、rebind、其他账户和不重试。初始两条terminal测试错误预期已纠正（原API held返回deferred），原失败日志保留。最终source receipt单独记录。
+
+发布前一次100k实际MV3（在最后guard-release顺序修复之前）首载22963.9ms，发送730.3/739.8/1105.7ms；最后样本仍FAIL，不证明p95或唯一瓶颈根因。该规模证据明确不是最终源码，不重复计入最终MV3 9项。Round64 push遭网络低速超时，最后确认远端747d70d；本提交后再正常合并同步。
+
+未打最终65新ZIP；旧包保留其来源。下一独立任务为native migration逐批完整审计以减少100k request/facts副本峰值，速度收益未测。4x100k/实际MV3 100k一秒目标仍未满足；真实上游与账户/PAIA/IME/真人等条件仍未验证，Free未完成。
