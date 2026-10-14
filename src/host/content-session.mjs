@@ -136,7 +136,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
       if(matches(prior.upgraded?.identity,handle))upgradedHandle=handle;
       if(matches(prior.identity,handle))pendingHandle=handle;
       return !!(prior.upgraded&&prior.projects.has(prior.upgraded.projectId)&&matches(prior.upgraded.identity,handle)||prior.learned.some(item=>matches(item.identity,handle))||preview&&preview.identity===prior.identity&&matches(prior.identity,handle));
-     },commit:()=>{
+     },retainedHandles:()=>{check();return [...new Set([...seen.values(),upgradedHandle,pendingHandle].filter(Boolean))];},commit:()=>{
       check();const kept=prior.learned.filter(item=>seen.has(item.identity)&&matches(item.identity,seen.get(item.identity)));
       if(kept.length!==seen.size||upgradedHandle&&!matches(prior.upgraded?.identity,upgradedHandle)||pendingHandle&&!matches(prior.identity,pendingHandle))throw Error('stale-candidate-identity-scan');
       let next=upgradedHandle&&matches(prior.upgraded?.identity,upgradedHandle)?prior.upgraded:null,result=null;

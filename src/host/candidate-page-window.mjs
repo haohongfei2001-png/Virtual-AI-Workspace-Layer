@@ -19,5 +19,5 @@ export function createCandidatePageWindow(offset){
   return {items,total,offset:selectedOffset,nextOffset:selectedOffset+items.length<total?selectedOffset+PAGE_SIZE:null};
  }
  function stats(){return {retainedRows:requested.length+tail.length,total};}
- return Object.freeze({add,finish,stats});
+ return Object.freeze({add,finish,stats,retained:()=>[...new Set([...requested,...tail])]});
 }

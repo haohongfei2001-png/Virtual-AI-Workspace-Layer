@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round193：不可用原生入口给出可聚焦说明，明确返回会释放双surface并保留唯一四格；完整Node3613项、workspace/sidebar离线浏览器各3项通过。100k/4x预算FAIL、首页首发、候选内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
+当前已推进至Round194：原生句柄缓存有界，候选页、升级身份与已签发计划按原期限保留；完整Node3673项、后补身份接线4项、真实DOM机制3项及正式MV3导航5项分别通过。100k/4x预算FAIL、首页首发、剩余候选内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1930,3 +1930,13 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 正式package隔离headless Chrome MV3，workspace **3/3 PASS**、sidebar **3/3 PASS**，各独立报告截图。明确PROJECTION_UNAVAILABLE_FAILURE_INJECTION：仅复制真实HOST_UI_VIEW回复并将指定C计划替为unavailable，grant/scope和真实展示回复不改。实际focus及force pointer点击（绕过Playwright对aria-disabled的自动拒绝）只显示说明，零导航RPC；明确返回走真实worker/content后双surface为0、唯一grid存在，原aside anchor随后接受trusted点击、导航一次、原textarea保留。返回按钮几何落在frame viewport，截图已查看。
 - source/script hashes稳定、worker外网阻断；仍使用双rAF+200ms绘制前置，不将旧即时pointer FAIL记为修复。未验证实际ChatGPT/PAIA/物理IME等G/U，Free NOT_RELEASE_READY。
 - 1a2bd43此前网络超时后已确认正常push。下一候选RAM修复不能简单FIFO/LRU：须保留请求页/待派发句柄并防止淘汰重复节点后误判唯一；memberIds/精确重复key集合仍为独立O(N)来源，不把WeakMap或单页有界当总内存有界。
+
+
+## Round194：原生句柄容量与请求/计划保留（接5c9b49c）
+
+- discovery同一RAM注册表限制2048项，未保留项O(1)淘汰且同步解除byNode引用；最多1024个保留句柄、512个owner。容量淘汰使本region的resolved唯一性证明失效，仍保留安全href退路；不将剩余一个缓存控件误当唯一，须region失效重建才恢复完整lookup。显式节点/route/root失效仍立即拒绝，不把pin当授权。
+- streaming候选请求在原6秒deadline保留请求页/尾页最多64个句柄，生产身份事务另提供最多34个learned/upgraded/pending句柄；合并去重最多98。计划接手时沿原issuedAt+30秒保留，FIFO最多256计划释放最旧owner；派发、拒绝、异步授权均不续期。共享扫描引用计数覆盖所有消费者；stop同步释放暂停生成器的租期。
+- 独立反例发现并修复首消费者提前释放、excluded升级身份被尾部淘汰、显式null/undefined身份返回被当缺省三处问题；首次失败日志保留。身份commit仍复核原节点/文档，失败不消费升级或修改learned，不降低校验。detached队列到512背压停止DOM admission并按页排空；是有界突发，不声称队列最多512。
+- 最终完整Node **3673/3673 PASS**（free-round194-node.log.gz）；随后新增生产content-session身份接线 **4/4 PASS** 独立记录，不相加为新全套。覆盖并发/期限/容量/stop/route/替换/失败回滚与旧调用兼容。
+- 实际headless Chrome DOM机制 **3/3 PASS**：100k控件391页、records2048/pinned1，原节点保留、到期churn失效、重复淘汰不误判唯一及invalidate。明确WEB_MECHANISM_ONLY，不是MV3/100k端到端预算认证。正式package隔离MV3原生导航 **5/5 PASS**：P/C各一次原anchor委托同tab、旧action拒绝、修改键真链接新tab零委托；原editor保留、worker外网阻断、源码/脚本hash稳定。
+- memberIds与候选精确重复keys仍O(N)，不把此轮缓存上限当总RAM有界。原100k/4x预算FAIL、首页首发、即时reading pointer FAIL、完整81项/J1–J4与实际G/U/PAIA/物理IME仍未闭合，Free NOT_RELEASE_READY。72ca068已确认仍是祖先；Round193本地提交保留，本轮fetch低速超时，后续只正常push原PR #16，不强推。

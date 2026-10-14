@@ -1,3 +1,4 @@
+import {createBoundedHandleRegistry} from './bounded-handle-registry.mjs';
 import {exactHostRecord} from './contract.mjs';
 
 // Private cross-discovery identity witnesses. Tokens carry neither a handle nor authority.
@@ -15,18 +16,19 @@ export const LEGACY_SURFACE_PROFILE = Object.freeze({
   controls:'a[href],button',conversationControls:'a[href]',noneLabel:'No project',maxCandidates:256,
 });
 
-export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false}={}) {
+export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,elapsedNow=()=>performance.now()}={}) {
   if(!document?.defaultView || typeof binding?.documentToken !== 'string' || !Number.isSafeInteger(binding.routeEpoch) || typeof urlPolicy?.parse !== 'function') throw Error('invalid-surface-discovery-context');
   const instance=document.defaultView.crypto.randomUUID();
   let stopped=false,routeEpoch=binding.routeEpoch,regionEpoch=0,sequence=0;
   let routeURL=document.location.href;
-  let byNode=new WeakMap(); const byId=new Map(),detached=new Set();
+  let byNode=new WeakMap(),lookupComplete=true;const detached=new Set();
+  const byId=createBoundedHandleRegistry({now:elapsedNow,onEvict:(_id,entry)=>{const node=entry.node.deref();if(node&&byNode.get(node)===entry)byNode.delete(node);lookupComplete=false;}});
   const roots=new Map(),pages=new WeakMap();let watched=[];
   const unique = (selector) => { const nodes=document.querySelectorAll(selector);return nodes.length===1?nodes[0]:null; };
   const fingerprint = (node) => JSON.stringify([node.tagName,node.getAttribute('href'),node.getAttribute('aria-label'),node.getAttribute('role'),node.textContent,node.disabled===true]);
   const title = (node) => { const text=(node.textContent??'').trim();return text.length>200?{nativeTitle:null,titleState:'over-limit'}:text?{nativeTitle:text,titleState:'exact'}:{nativeTitle:null,titleState:'unavailable'}; };
   const evidence = (...fieldPaths) => ({profileId:profile.id,profileVersion:profile.revision,sourceKind:'native-dom',regionEpoch,fieldPaths,receiptId:null});
-  function clearHandles() { for(const id of byId.keys()) detached.add(id);byId.clear();byNode=new WeakMap();regionEpoch++; }
+  function clearHandles() { for(const id of byId.keys()) detached.add(id);byId.clear();byNode=new WeakMap();lookupComplete=true;regionEpoch++; }
   function refreshRoute() { if(document.location.href!==routeURL) { routeURL=document.location.href;routeEpoch++;clearHandles();roots.clear(); } }
   function refreshRoots() {
     for(const [kind,selector] of Object.entries(profile.regions)) {
@@ -53,7 +55,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const empty=()=>({candidates:[],membershipClaims:[],coverageClaims:[],detachedHandles:[]});
     if(stopped){if(cursor)throw Error('stale-surface-cursor');return {payload:empty(),cursor:null};}
     refreshRoute();refreshRoots();
-    if(!cursor)for(const [id,entry] of byId) if(!valid(entry)) { byId.delete(id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(id); }
+    if(!cursor)for(const [id,entry] of byId.entries()) if(!valid(entry)) { byId.delete(id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(id); }
     const route=urlPolicy.parse(document.location.href),candidates=[],claims=new Map();
     let currentConversationId=null,currentProjectId=null;
     const visible=node=>{
@@ -107,7 +109,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     // bounds inspected elements, including non-controls, and rechecks identity.
     if(cursor&&candidates.length>=limit){candidates.length=0;claims.clear();}
     let inspected=0;
-    while(page.region<page.regions.length&&candidates.length<limit&&inspected<256){
+    while(page.region<page.regions.length&&candidates.length<limit&&inspected<256&&detached.size<512){
       const region=page.regions[page.region],{kind:regionKind,root}=region;
       if(!root||region.finished){page.region++;continue;}
       if(!region.walker)region.walker=document.createTreeWalker(root,1);
@@ -188,6 +190,9 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     }
     if(stopped||!targets.length)return keys.map(()=>null);
     refreshRoute();refreshRoots();
+    // Capacity eviction loses complete ambiguity evidence. Never infer unique
+    // identity from the remaining cache; resolved href stays the safe fallback.
+    if(!lookupComplete)return keys.map(()=>null);
     for(const entry of byId.values()){
       const result=wanted.get(entry.resolvedKey);if(!result)continue;
       // Reuse the ordinary handle gate; no new node/locator lookup or dispatch.
@@ -213,7 +218,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const entry=candidateEntry(handle);if(!entry)return false;
     return identity.document.deref()===document&&identity.profileId===profile.id&&identity.profileVersion===profile.revision&&identity.node.deref()===entry.node.deref()&&identity.root.deref()===entry.root.deref()&&identity.parent.deref()===entry.parent.deref()&&identity.fingerprint===entry.fingerprint;
   }
-  return Object.freeze({scan,scanPage,affectsSurface,getNode,resolveLoadedTargets,captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
+  return Object.freeze({scan,scanPage,affectsSurface,getNode,resolveLoadedTargets,retainHandles(owner,handles,deadline){if(stopped||!Array.isArray(handles)||handles.length>256||handles.some(handle=>!getNode(handle)))return false;return byId.retain(owner,handles.map(handle=>handle.id),deadline);},releaseHandles:owner=>byId.release(owner),handleStats:()=>({...byId.stats(),detached:detached.size,lookupComplete}),captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
     if(stopped)return;routeEpoch=Number.isSafeInteger(nextEpoch)&&nextEpoch>routeEpoch?nextEpoch:routeEpoch+1;clearHandles();roots.clear();routeURL=document.location.href;
   },stop() {stopped=true;clearHandles();roots.clear();}});
 }

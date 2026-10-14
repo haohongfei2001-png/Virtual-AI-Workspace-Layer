@@ -1,0 +1,43 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createHostContentSession} from '../../src/host/content-session.mjs';
+// DOM, browser transport, adapter identity certificates and surfaces are explicit
+// doubles. The production content session and candidate correlation run unchanged.
+const P='g-p-11111111111111111111111111111111',URL='https://chatgpt.com/g/'+P+'/project';
+const drain=async()=>{for(let i=0;i<80;i++)await Promise.resolve();};
+function fixture({extraCandidates=0}={}){
+ let scanFactory=null;let present=true;let cancelClick=false;const focusCalls=[],retentions=[],releases=[];let holdHello=null;let time=1000;let scope='scopeA',documentId='browser',epoch=0,ack='accepted',matches=true,serial=0,options,controller,emit;const identity={},extraIdentities=new Map(Array.from({length:extraCandidates},(_,i)=>['extra'+i,{}])),listeners=new Set(),events=new Map(),docEvents=new Map(),timers=new Map(),modes=[],calls=[];
+ const document={addEventListener:(n,f)=>docEvents.set(n,f),removeEventListener:(n,f)=>{if(docEvents.get(n)===f)docEvents.delete(n);},location:{origin:'https://chatgpt.com',href:'https://chatgpt.com/'},defaultView:{addEventListener:(n,f)=>events.set(n,f),removeEventListener:(n,f)=>{if(events.get(n)===f)events.delete(n);}}};
+ const binding=()=>({documentToken:'doc'+epoch,producerToken:'producer'+epoch,browserDocumentId:documentId,routeEpoch:epoch,origin:document.location.origin,expiresAt:new Date(time+20000).toISOString()});
+ const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},sendMessage:async m=>{calls.push(m);if(m.type==='HOST_HELLO'){epoch++;if(holdHello)await holdHello;return {binding:binding()};}if(m.type==='HOST_REFRESH')return {state:'verified',scopeKey:scope};if(m.kind==='surface-delta')return {state:ack};return {ok:true};}};
+ const row=id=>({entity:'project',renderKey:id,nativeTitle:'Same',titleState:'exact',target:{kind:'live-control',control:{id},navigationURL:null}});
+ const proposal=()=>({kind:'surface-delta',payload:{candidates:[...(present?[row('clicked')]:[]),row('neighbor'),...[...extraIdentities.keys()].map(row),...(document.location.href===URL?[{entity:'project',target:{kind:'resolved',nativeId:P},evidence:{fieldPaths:['current-project-route']}}]:[])]}});
+ const client=createHostContentSession({document,runtime,now:()=>time,elapsedNow:()=>time,makeId:()=> 'client',schedule:(f,ms)=>{const id=++serial;timers.set(id,{f,at:time+ms});return id;},cancel:id=>timers.delete(id),surfaceFactory:()=>({}),plansFactory:()=>({}),adapterFactory:o=>{options=o;const plans=new Map();return {inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,retainLoadedHandles:(owner,handles,deadline)=>{retentions.push({owner,handles:structuredClone(handles),deadline});return true;},releaseLoadedHandles:owner=>releases.push(owner),captureCandidateIdentity:h=>h.id==='clicked'?identity:extraIdentities.get(h.id)??null,matchesCandidateIdentity:(token,h)=>matches&&(h.id==='clicked'?token===identity:extraIdentities.get(h.id)===token&&token!==undefined),loadedPages:()=>scanFactory?scanFactory(proposal):(async function*(){yield proposal();})(),readLoaded:async()=>[proposal()],planNavigation:target=>{const p={mode:'native-control',target,control:target.control,planRevision:++serial};plans.set('key'+p.planRevision,p);return p;},planKey:p=>'key'+p.planRevision,dispatchNative:async command=>{assert.equal(await o.authorize(command),true);o.beforeDispatch();const event={actionId:command.actionId,command,plan:plans.get(command.targetKey)};o.onNativeDispatch(event);if(cancelClick){o.onNativeDispatchCancelled(event);return {state:'unconfirmed'};}document.location.href=URL;o.onRebindNeeded();return {state:'dispatched'};}};},controllerFactory:o=>{let mode=o.initialMode;controller=o;modes.push(o.initialMode);return {start:async c=>{emit=c.emit;await emit(proposal());return {id:'mount'};},stop(){},presentationMode:()=>mode,showReading:()=>{mode='reading';return true;},showWorkspace:()=>{mode='workspace';return true;},focusFrame:role=>{focusCalls.push(role);return true;},isReturnTarget:node=>node==='return'};}});
+ const list=(role)=>new Promise(resolve=>[...listeners][0]({type:'HOST_CANDIDATES',...(({documentToken,producerToken,routeEpoch})=>({documentToken,producerToken,routeEpoch}))(binding()),phase:'list',...(role?{role}:{})},{id:'extension'},resolve));
+ async function navigate({beforeRoute=()=>{},cancel=false,newScope=scope,newDocument=documentId,nodeMatches=true,controlId='clicked'}={}){const old=options,event={actionId:'action',plan:{target:{kind:'live-control'},control:{id:controlId}}};old.onNativeDispatch(event);if(cancel)old.onNativeDispatchCancelled(event);await beforeRoute();scope=newScope;documentId=newDocument;matches=nodeMatches;document.location.href=URL;old.onRebindNeeded();await drain();return old;}
+ const activate=(candidate,display)=>new Promise(resolve=>[...listeners][0]({type:'HOST_CANDIDATES',documentToken:binding().documentToken,producerToken:binding().producerToken,routeEpoch:binding().routeEpoch,phase:'activate',candidate,actionId:'realAction',uiGrantId:'grant',mountId:'mount',expiresAt:new Date(time+6000).toISOString(),display},{id:'extension'},resolve));
+ return {retentions,releases,setScanFactory:f=>scanFactory=f,client,list,activate,focusCalls,setPresent:v=>present=v,async spa(url,{newScope=scope,newDocument=documentId}={}){scope=newScope;documentId=newDocument;document.location.href=url;options.onRebindNeeded();await drain();},setCancelClick:v=>cancelClick=v,listener:()=>[...listeners][0],binding,navigate,modes,calls,document,holdHello:p=>holdHello=p,docEvents,timers,events,setTime:v=>time=v,setMatches:v=>matches=v,async advance(ms){time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.f();}await drain();},setAck:v=>ack=v,ack:()=>emit(proposal()),get options(){return options;},get controller(){return controller;}};
+}
+
+test('actual content-session scan retains excluded pending upgrade and learned identity handles',async()=>{
+ const f=fixture();await f.client.start();await f.navigate();f.retentions.length=0;
+ const upgraded=await f.list();assert.deepEqual(upgraded.items.map(x=>x.renderKey),['neighbor']);
+ assert.equal(f.retentions.length,1);assert.deepEqual(f.retentions[0].handles.map(h=>h.id).sort(),['clicked','neighbor']);assert.equal(f.retentions[0].deadline,7000);assert(f.releases.includes(f.retentions[0].owner));
+ // Upgrade has committed; a fresh scan follows the learned/upgraded exclusion path.
+ f.retentions.length=0;assert.equal((await f.list()).total,1);assert.deepEqual(f.retentions[0].handles.map(h=>h.id).sort(),['clicked','neighbor']);assert.equal(f.retentions[0].deadline,7000);f.client.stop();
+});
+for(const change of ['stop','route'])test('actual identity transaction cannot continue retaining after '+change,async()=>{
+ const f=fixture();await f.client.start();await f.navigate();await f.list();f.retentions.length=0;
+ let release,entered;const held=new Promise(r=>release=r),seen=new Promise(r=>entered=r);
+ f.setScanFactory(async function*(proposal){yield proposal();entered();await held;yield {kind:'surface-delta',payload:{candidates:[]}};});
+ const pending=f.list();await seen;assert.equal(f.retentions.length,1);const owner=f.retentions[0].owner;
+ assert.deepEqual(f.retentions[0].handles.map(h=>h.id).sort(),['clicked','neighbor']);
+ if(change==='stop')f.client.stop();else f.document.location.href='https://chatgpt.com/c/11111111-1111-4111-8111-111111111111';
+ release();assert.deepEqual(await pending,{ok:false});assert.equal(f.retentions.length,1);assert.equal(f.releases.filter(value=>value===owner).length,1);f.client.stop();
+});
+test('failed identity scan releases retained excluded handles without consuming learned state',async()=>{
+ const f=fixture();await f.client.start();await f.navigate();await f.list();f.retentions.length=0;
+ f.setScanFactory(async function*(proposal){yield proposal();throw Error('tail-failure');});
+ assert.deepEqual(await f.list(),{ok:false});assert.equal(f.retentions.length,1);assert.deepEqual(f.retentions[0].handles.map(h=>h.id).sort(),['clicked','neighbor']);assert(f.releases.includes(f.retentions[0].owner));
+ f.setScanFactory(null);assert.deepEqual((await f.list()).items.map(x=>x.renderKey),['neighbor']);f.client.stop();
+});

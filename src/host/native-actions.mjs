@@ -28,7 +28,9 @@ export function createNativeActions({discovery,urlPolicy,currentURL,bodyProof=()
   else return unavailable(risk.state==='clear'?'stale-native-handle':'input-risk-unresolved');
   const issuedAt=now();if(!Number.isFinite(issuedAt))return unavailable('invalid-navigation-clock');
   freeze(plan);const targetKey='plan_'+nonce+'_'+planRevision;const entry={plan,targetKey,risk:riskAtIssue,url:issuedURL,node,issuedAt};
-  if(plans.size>=256)plans.delete(plans.keys().next().value);plans.set(targetKey,entry);certificates.set(plan,targetKey);return plan;
+  if(plans.size>=256){const oldest=plans.keys().next().value;plans.delete(oldest);discovery.releaseHandles?.(oldest);}
+  if(plan.mode==='native-control'&&typeof discovery.retainHandles==='function'&&discovery.retainHandles(targetKey,[plan.control],issuedAt+30000)!==true)return unavailable('native-handle-capacity');
+  plans.set(targetKey,entry);certificates.set(plan,targetKey);return plan;
  }
  function planKey(plan){const key=certificates.get(plan);return key&&plans.get(key)?.plan===plan?key:null;}
  const blocked=reason=>({state:'blocked',reason});
