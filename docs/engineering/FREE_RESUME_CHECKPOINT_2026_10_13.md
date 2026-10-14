@@ -1642,3 +1642,12 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 完整Node **3218/3218 PASS**（free-round169-node.log.gz）；真实IDB生命周期7、跨5001边界4、retention10项通过（free-round169-shared-idb.json），含损坏、撤权、回滚、恢复、Pro资产和账户隔离。
 - 固定最终源码100k/project-mixed/4x仍 **FAIL**（free-round169-100k-final.json）：约30459ms仍WAITING/read-budget-exhausted，已到shared-directory，后续HEADER超期；输入原节点、草稿、可见性保留，sourceChangedDuringRun=false。未延长6秒/总预算，未把诊断或阶段推进当F1达标。
 - 首页首发、预证明立即发送、候选完整内存、间歇退出与真实G/U继续未完成；Free NOT_RELEASE_READY。d0f4fba已正常推送原PR #16。
+
+
+## Round170：原生与共享审计复用有界精确预取（接 f1798eb）
+
+- 抽取原native审计已有预取实现为共用audit-record-prefetch：每批≤5000目标、每页≤512键/值、最多扫描2×目标数；仅读取连续确切目标，不加载陈旧/其他版本payload。缺失目标仍由原get/checksum路径判定，不能以range扫描认证缺失。共享loadPieces增加本事务预取入口，依然逐片hash/schema及全局locator/units审计。
+- 完整Node **3220/3220 PASS**（free-round170-node-final.log.gz）；最初构建闭包发现新增模块未纳入合成包清单，已修复并重跑完整回归，不削弱构建断言。
+- 真实IDB原生六项通过（free-round170-native-idb.json）；共享生命周期7/批次4/retention10通过（free-round170-shared-idb.json）。新增真实API计数证明批次组执行44页键扫描、42页值读取，最大512；没有仅走mock/无bulk备用路径冒充完成。
+- 最终固定源码100k/project-mixed/4x仍 **FAIL**（free-round170-100k.json）：约30253ms后WAITING/read-budget-exhausted，已越过shared-directory，后续HEADER仍stale-binding。输入原节点、可见性与草稿保留，sourceChangedDuringRun=false；未延长6秒/总预算。
+- 首页首发、预证明立即发送、候选完整内存、间歇退出及真实G/U仍未完成，Free NOT_RELEASE_READY。f1798eb已正常推送原PR #16。

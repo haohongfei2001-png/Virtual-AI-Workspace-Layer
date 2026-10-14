@@ -4,7 +4,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {createServer} from '../../simulator/server.mjs';
-const files=['src/data/native-partition-audit.mjs','src/data/native-partitions.mjs','src/data/native-index-migration.mjs','src/data/native-repository.mjs','src/data/native-facts.mjs','src/data/hash.mjs','src/data/repository.mjs','src/data/schema.mjs','tests/free/native-audit-bulk-browser.mjs'];
+const files=['src/data/audit-record-prefetch.mjs','src/data/native-partition-audit.mjs','src/data/native-partitions.mjs','src/data/native-index-migration.mjs','src/data/native-repository.mjs','src/data/native-facts.mjs','src/data/hash.mjs','src/data/repository.mjs','src/data/schema.mjs','tests/free/native-audit-bulk-browser.mjs'];
 const hashes=async()=>Object.fromEntries(await Promise.all(files.map(async f=>[f,createHash('sha256').update(await readFile(f)).digest('hex')]))),before=await hashes();
 const prepare=process.env.FREE_AUDIT_PREPARE==='1';
 const output=process.argv[2]??'/private/tmp/free-native-audit-bulk-browser.json',report={evidence:'REAL_HEADLESS_IDB_SYNTHETIC_NATIVE_BULK_AUDIT',realChatGPT:'NOT_RUN',mv3:'NOT_RUN',preparedIndex:prepare,sourceHashes:before,results:[],pageErrors:[]};

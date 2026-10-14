@@ -58,7 +58,22 @@ export class PartitionedState {
   tx.oncomplete=()=>{try{fence(options);resolve(result);}catch(e){reject(e);}};tx.onabort=()=>reject(error??tx.error??Error('read-aborted'));
  });}
  async manifest(scope,options={}){const s=normalizedScope(scope);if(!s)throw Error('unverified-scope');const db=await this.owner.connection();fence(options);return new Promise((resolve,reject)=>{const tx=db.transaction('b23_states'),r=tx.objectStore('b23_states').get(s.key);let result,error;const fail=e=>{error??=e;try{tx.abort();}catch{}};r.onsuccess=()=>{if(isReadablePartition(r.result?.payload))this.readManifest(tx,r.result,s,value=>result=value,fail);else result=null;};tx.oncomplete=()=>{try{fence(options);resolve(result);}catch(e){reject(e);}};tx.onabort=()=>reject(error??tx.error??Error('read-aborted'));});}
- loadPieces(tx,m,ids,done,fail,measureUnits=false){const pieces=new Map(),wanted=[...new Set(ids)].filter(k=>Object.hasOwn(m.refVersions,k));if(!wanted.length){done(pieces,0);return;}let left=wanted.length,units=0;for(const refId of wanted){const r=tx.objectStore('b23_states').get(partitionKey(m.scopeKey,refId,m.refVersions[refId],m.generation));r.onsuccess=()=>{try{const measured=measureUnits?manifest_partitionUnpackMeasured(r.result):null;pieces.set(refId,checkPiece(m,measured?measured.payload:partitionUnpack(r.result),refId));if(measured)units+=measured.units;if(!--left)done(pieces,units);}catch(e){fail(e);}};}}
+ loadPieces(tx,m,ids,done,fail,measureUnits=false,prefetched=null){
+  const pieces=new Map(),wanted=[...new Set(ids)].filter(k=>Object.hasOwn(m.refVersions,k));if(!wanted.length){done(pieces,0);return;}
+  let left=wanted.length,units=0,failed=false;
+  const reject=error=>{if(!failed){failed=true;fail(error);}};
+  for(const refId of wanted){
+   if(failed)break;
+   const key=partitionKey(m.scopeKey,refId,m.refVersions[refId],m.generation);
+   const consume=row=>{if(failed)return;try{
+    const measured=measureUnits?manifest_partitionUnpackMeasured(row):null;
+    pieces.set(refId,checkPiece(m,measured?measured.payload:partitionUnpack(row),refId));if(measured)units+=measured.units;
+    if(!--left)done(pieces,units);
+   }catch(error){reject(error);}};
+   if(prefetched?.has(key))consume(prefetched.get(key));else{const request=tx.objectStore('b23_states').get(key);request.onsuccess=()=>consume(request.result);}
+  }
+ }
+
  loadMutation(tx,m,params,prior,done,fail,pieceLoader=this.loadPieces.bind(this)){
   const c=params.fingerprint?.command,ids=new Set(preferenceRefs(m.preferences));
   if(c?.refId)ids.add(c.refId);
