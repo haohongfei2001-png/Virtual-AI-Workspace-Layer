@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round156：已加载原生P/C有限分页已接入producer，604条长标题真实IDB验证通过。完整Node3177项、隔离Chrome六旅程通过；IDless候选面板分页、持续DOM调度、首页首发、100k/4x与真实G/U仍未完成，Free为NOT_RELEASE_READY。
+当前已推进至Round157：已加载原生P/C分页支持持续正文更新，604条长标题真实IDB验证通过。完整Node3180项、隔离Chrome六旅程通过；IDless候选面板分页、首页首发、100k/4x与真实G/U仍未完成，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1601,3 +1601,10 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - adapter将发现页接入原单producer队列，仍优先intent/current body并逐片ACK；按页缓存既有SHA-256指纹，重复扫描不循环写库。DOM变化丢弃未发送旧片后重扫，stop/重绑撤销游标；尾部改名与区域替换有反例。临时detached通知不污染稳定内容去重。
 - 完整Node **3177/3177 PASS**（free-round156-node.log.gz）；定向73项通过。隔离headless MV3 **6/6 PASS/sourceChangedDuringRun=false**（free-round156-paged-surface-mv3.json）：604/604条已加载长标题（每项600 UTF-8字节）全部进入真实IDB，并保留自动本人ACK纯evidence链。仅显式离线profile/test-only包，不是真实ChatGPT G认证。
 - 下一步仍需处理IDless候选面板/listPage自身256项限制、持续DOM更新下的扫描调度及大DOM重复句柄检查；本轮不声称所有导航入口已完整或F1达标。首页首发跨路由、100k/4x最终审计、真实G/U等既有缺口保持；Free NOT_RELEASE_READY。
+
+## Round157：正文更新不再打断目录分页（接 88937e8）
+
+- discovery区分目录/标题/成员/菜单及其祖先、替换节点的变化与无关正文变化；所有mutation仍调度body观察，但仅影响surface的变化重启目录分页。保留旧/新root交集检查，覆盖节点移除、标签和祖先可见性变化；不读取正文内容。
+- 完整旧handle检查仅在新pass开始执行，分页继续只重新检查本页节点；原生动作getNode始终即时核验原节点、父节点、指纹、route/region。没有缓存授权。增加连续token变化下1000聊天发现、不漏新message ID、旧handle改动拒绝及root变化测试。
+- 完整Node **3180/3180 PASS**（free-round157-node.log.gz）。隔离headless MV3 **6/6 PASS/sourceChangedDuringRun=false**（free-round157-streaming-surface-mv3.json）：604/604条600 UTF-8字节标题落库，期间合成正文更新76次，自动本人ACK链仍通过。仅离线fixture与显式profile；不代表真实ChatGPT/物理弱设备验证。
+- IDless候选面板的分页上限仍待解决；首页首发、100k/4x最终审计、真实G/U等缺口保留。Free NOT_RELEASE_READY。

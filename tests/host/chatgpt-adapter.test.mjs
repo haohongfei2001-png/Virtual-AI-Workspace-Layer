@@ -139,3 +139,14 @@ for(const mode of ['stop','root-replaced'])test('pending multi-page scan handles
  release();for(let i=0;i<100;i++)await tick();
  if(mode==='stop')assert.equal(f.emitted.length,1);else{assert(f.emitted.slice(1).some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Replacement tail')));assert(f.emitted.slice(1).every(p=>p.payload.candidates.every(c=>!c.nativeTitle.startsWith('Old '))));}f.adapter.stop();
 });
+
+test('continuous assistant text mutations do not starve loaded directory pages or hide body-ID changes',async()=>{
+ const f=bodyFixture(),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};
+ for(let i=0;i<1000;i++){const id='55555555-5555-4555-8555-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'Native '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);
+ const textNode={parentNode:f.reading.children[0]};let surfaceCount=0;
+ await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta'){surfaceCount++;f.observer().cb([{type:'characterData',target:textNode}]);}return Promise.resolve(bodyAck(p));});for(let i=0;i<150;i++)await tick();
+ assert.equal(new Set(f.emitted.filter(p=>p.kind==='surface-delta').flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,1000);assert(surfaceCount<30);
+ const before=f.emitted.length;for(let i=0;i<20;i++)f.observer().cb([{type:'characterData',target:textNode}]);for(let i=0;i<100;i++)await tick();assert.equal(f.emitted.length,before);
+ const message=f.makeMessage('M2');f.reading.children.push(message);f.observer().cb([{type:'childList',target:f.reading,addedNodes:[message],removedNodes:[]}]);await settle();assert(f.emitted.some(p=>p.kind==='current-object'&&p.payload.messageIds.includes('M2')));f.adapter.stop();
+});

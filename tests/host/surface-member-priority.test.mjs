@@ -56,3 +56,16 @@ test('detached handles drain in bounded pages after a large loaded surface is re
  for(const n of f.projects.children)n.isConnected=false;
  let count=0;p=f.discovery.scanPage();while(true){assert(p.payload.detachedHandles.length<=512);count+=p.payload.detachedHandles.length;if(!p.cursor)break;p=f.discovery.scanPage(p.cursor);}assert.equal(count,800);
 });
+
+test('continuation avoids re-reading prior handles but direct activation still rejects changed node',()=>{
+ const f=fixture({memberCount:400}),first=f.discovery.scanPage(),node=f.members.children[0],handle=first.payload.candidates[1].target.liveHandle;let reads=0;const get=node.getAttribute;node.getAttribute=function(k){reads++;return get.call(this,k);};
+ const second=f.discovery.scanPage(first.cursor);assert(second.payload.candidates.length>0);assert.equal(reads,0);
+ node.attrs.href='/c/changed';assert.equal(f.discovery.getNode(handle),null);assert(reads>0);
+});
+test('surface mutation filter includes roots, labels, ancestor visibility and detached roots',()=>{
+ const f=fixture({projectCount:1,historyCount:1,memberCount:1}),d=f.discovery;
+ for(const target of [f.members,f.members.children[0],f.header,f.projects.children[0]])assert(d.affectsSurface([{type:'attributes',target}]));
+ const ancestor={contains:n=>n===f.members};assert(d.affectsSurface([{type:'attributes',target:ancestor}]));
+ const unrelated={contains:()=>false};assert.equal(d.affectsSurface([{type:'characterData',target:unrelated}]),false);
+ assert(d.affectsSurface([{type:'childList',target:unrelated,addedNodes:[],removedNodes:[f.members]}]));
+});

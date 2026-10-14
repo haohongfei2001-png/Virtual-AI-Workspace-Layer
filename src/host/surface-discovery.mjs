@@ -19,7 +19,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
   let stopped=false,routeEpoch=binding.routeEpoch,regionEpoch=0,sequence=0;
   let routeURL=document.location.href;
   let byNode=new WeakMap(); const byId=new Map(),detached=new Set();
-  const roots=new Map(),pages=new WeakMap();
+  const roots=new Map(),pages=new WeakMap();let watched=[];
   const unique = (selector) => { const nodes=document.querySelectorAll(selector);return nodes.length===1?nodes[0]:null; };
   const fingerprint = (node) => JSON.stringify([node.tagName,node.getAttribute('href'),node.getAttribute('aria-label'),node.getAttribute('role'),node.textContent,node.disabled===true]);
   const title = (node) => { const text=(node.textContent??'').trim();return text.length>200?{nativeTitle:null,titleState:'over-limit'}:text?{nativeTitle:text,titleState:'exact'}:{nativeTitle:null,titleState:'unavailable'}; };
@@ -51,7 +51,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const empty=()=>({candidates:[],membershipClaims:[],coverageClaims:[],detachedHandles:[]});
     if(stopped){if(cursor)throw Error('stale-surface-cursor');return {payload:empty(),cursor:null};}
     refreshRoute();refreshRoots();
-    for(const [id,entry] of byId) if(!valid(entry)) { byId.delete(id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(id); }
+    if(!cursor)for(const [id,entry] of byId) if(!valid(entry)) { byId.delete(id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(id); }
     const route=urlPolicy.parse(document.location.href),candidates=[],claims=new Map();
     let currentConversationId=null,currentProjectId=null;
     const visible=node=>{
@@ -129,6 +129,23 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     return {payload:{candidates,membershipClaims:[...claims.values()],coverageClaims:[],detachedHandles},cursor:next};
   }
   const scan=()=>scanPage().payload;
+  function watchSurface(){
+    const selectors=[...Object.values(profile.regions),profile.currentConversationHeader,profile.currentProjectTitle,profile.currentProjectHeader].filter(Boolean);
+    const next=selectors.flatMap(selector=>[...document.querySelectorAll(selector)]);
+    const reading=profile.currentConversationReading?[...document.querySelectorAll(profile.currentConversationReading)]:[];
+    const prior=watched;watched=[...next.map(node=>({node,subtree:true})),...reading.map(node=>({node,subtree:false}))];return [...prior,...watched];
+  }
+  function affectsSurface(records){
+    const nodes=watchSurface();
+    if(!records?.length)return true;
+    const contains=(parent,child)=>parent===child||parent?.contains?.(child)===true;
+    return records.some(record=>nodes.some(({node,subtree})=>{
+      if(subtree&&(contains(node,record.target)||contains(record.target,node)))return true;
+      if(record.type==='attributes'&&contains(record.target,node))return true;
+      return record.type==='childList'&&[...record.addedNodes,...record.removedNodes].some(changed=>contains(changed,node));
+    }));
+  }
+  watchSurface();
   function getNode(handle) {
     if(stopped)return null;refreshRoute();refreshRoots();
     const entry=byId.get(typeof handle==='string'?handle:handle?.id);
@@ -154,7 +171,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const entry=candidateEntry(handle);if(!entry)return false;
     return identity.document.deref()===document&&identity.profileId===profile.id&&identity.profileVersion===profile.revision&&identity.node.deref()===entry.node.deref()&&identity.root.deref()===entry.root.deref()&&identity.parent.deref()===entry.parent.deref()&&identity.fingerprint===entry.fingerprint;
   }
-  return Object.freeze({scan,scanPage,getNode,captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
+  return Object.freeze({scan,scanPage,affectsSurface,getNode,captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
     if(stopped)return;routeEpoch=Number.isSafeInteger(nextEpoch)&&nextEpoch>routeEpoch?nextEpoch:routeEpoch+1;clearHandles();roots.clear();routeURL=document.location.href;
   },stop() {stopped=true;clearHandles();roots.clear();}});
 }
