@@ -100,7 +100,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     if(cursor){
       pages.delete(cursor);
       if(!page||page.routeEpoch!==routeEpoch||page.regionEpoch!==regionEpoch||page.currentProjectId!==currentProjectId||page.currentConversationId!==currentConversationId)throw Error('stale-surface-cursor');
-    }else page={routeEpoch,regionEpoch,currentProjectId,currentConversationId,region:0,index:0,regions:order.map(kind=>({kind,root:roots.get(kind),nodes:roots.get(kind)?.querySelectorAll(kind==='projects'?profile.controls:profile.conversationControls)??[]}))};
+    }else page={routeEpoch,regionEpoch,currentProjectId,currentConversationId,memberIds:new Set(),region:0,index:0,regions:order.map(kind=>({kind,root:roots.get(kind),nodes:roots.get(kind)?.querySelectorAll(kind==='projects'?profile.controls:profile.conversationControls)??[]}))};
     // Keep DOM node snapshots only for this finite pass. Each page rechecks live
     // membership and identity; offsets are never used to authorize navigation.
     if(cursor&&candidates.length>=limit){candidates.length=0;claims.clear();}
@@ -110,10 +110,11 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       if(page.index>=nodes.length){page.region++;page.index=0;continue;}
       const node=nodes[page.index++];inspected++;
       if(!node.isConnected||node.ownerDocument!==document||!root?.contains(node))continue;
+      if(regionKind==='history'&&page.memberIds.size){const parsed=urlPolicy.parse(node.getAttribute('href'));if(parsed.kind==='conversation'&&page.memberIds.has(parsed.conversationId))continue;}
       const item=candidate(node,root,regionKind,regionKind==='projects'?'project':'conversation');
       if(regionKind==='projects'||!item||item.target.kind!=='resolved')continue;
       const conversationId=item.target.nativeId;
-      if(regionKind==='members'&&visible(root)&&visible(node)&&route.kind==='project'&&root.getAttribute(profile.memberProjectIdAttribute)===route.projectId) claims.set(conversationId,{conversationId,asserted:'PROJECT',projectId:route.projectId,upstreamRevision:null,evidence:evidence('members','current-project-route')});
+      if(regionKind==='members'&&visible(root)&&visible(node)&&route.kind==='project'&&root.getAttribute(profile.memberProjectIdAttribute)===route.projectId){claims.set(conversationId,{conversationId,asserted:'PROJECT',projectId:route.projectId,upstreamRevision:null,evidence:evidence('members','current-project-route')});if(currentProjectId===route.projectId)page.memberIds.add(conversationId);}
       else if(!claims.has(conversationId)) claims.set(conversationId,{conversationId,asserted:'UNKNOWN',projectId:null,reason:'membership-not-observed',evidence:evidence(regionKind)});
     }
     while(page.region<page.regions.length&&page.index>=page.regions[page.region].nodes.length){page.region++;page.index=0;}

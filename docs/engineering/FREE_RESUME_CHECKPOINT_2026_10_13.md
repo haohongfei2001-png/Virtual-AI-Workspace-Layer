@@ -1562,3 +1562,10 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 候选缓冲只保留名称/目标/显示字段，移除已不再使用的evidence。未将带副作用的identity提升直接改成流式；完整对象收集的进一步有界化仍未完成，不能宣称O(1)内存。
 - 定向 **171/171 PASS**（free-round159-target.log）；原打包扩展隔离headless MV3 **5/5 PASS/sourceChangedDuringRun=false**（free-round159-shared-candidates-mv3.json），605项分页、双frame焦点、同名IDless提升、阅读返回和草稿保护保持。本轮完整Node NOT_RUN，最近完整为Round158的3186项，不混加次数。
 - 首页首发跨路由证据、100k/4x及真实G/U仍未完成；Free NOT_RELEASE_READY。
+
+## Round160：当前成员改名优先于陈旧历史镜像（接 b393f39）
+
+- 已确认当前Project可见成员区的同ID聊天优先于历史镜像：同页不再因旧标题冲突拒绝整批，跨页不再把成员新标题覆盖回旧标题。分页只保留本次已证明member IDs，不按名称合并；隐藏/身份不一致的成员区不能抑制有效历史条目。
+- 完整Node **3192/3192 PASS**（free-round160-node.log.gz）；定向81项通过。新增原打包扩展隔离headless验证可见原生阅读→改名→返回Free，**3/3 PASS/sourceChangedDuringRun=false**（free-round160-visible-native-updates-mv3.json）：真实别名保留、Project标题更新、成员/历史卸载不删除或无证据清空归属。
+- 首次在工作空间展开、reading受声明式mask隐藏时直接修改fixture成员标题，等待更新FAIL（free-round160-masked-native-updates-fail.json）。当前可见性校验不会接受隐藏子节点的新成员证据；未放宽护栏，后续测试明确先通过原生focus交还阅读，不能拿后者PASS覆盖前者FAIL。展开期间后台成员更新仍是独立缺口。
+- 本轮只认证已观察改名和卸载反例，不认证真实删除/404/410或获准原生写入。首页首发、100k/4x、候选完整内存有界化、真实G/U等保持未完成；Free NOT_RELEASE_READY。

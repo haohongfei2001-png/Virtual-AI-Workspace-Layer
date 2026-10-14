@@ -24,9 +24,9 @@ test('confirmed current Project members precede saturated project and history li
  assert.deepEqual(p.coverageClaims,[]);
  for(const c of p.candidates.slice(1,4))assert.equal(f.discovery.getNode(c.target.liveHandle),f.members.children[Number(c.target.nativeId.slice(1))]);
 });
-test('member evidence survives a duplicate ordinary history entry',()=>{
+test('confirmed member entry wins over its duplicate ordinary history entry',()=>{
  const f=fixture({projectCount:1,historyCount:1,memberCount:1});f.history.children[0].attrs.href='/c/m0';f.history.children[0].textContent='Member 0';
- const p=f.discovery.scan();assert.equal(p.candidates.filter(c=>c.renderKey==='conversation:m0').length,2);assert.equal(p.membershipClaims.length,1);assert.equal(p.membershipClaims[0].asserted,'PROJECT');assert.equal(p.membershipClaims[0].projectId,'p1');
+ const p=f.discovery.scan();assert.equal(p.candidates.filter(c=>c.renderKey==='conversation:m0').length,1);assert.equal(p.membershipClaims.length,1);assert.equal(p.membershipClaims[0].asserted,'PROJECT');assert.equal(p.membershipClaims[0].projectId,'p1');
 });
 for(const change of ['wrong-member-id','hidden-members','mismatched-title','ambiguous-title'])test('unconfirmed current Project does not acquire priority: '+change,()=>{
  const f=fixture();if(change==='wrong-member-id')f.members.attrs['data-project-id']='p2';if(change==='hidden-members')f.members.hidden=true;if(change==='mismatched-title')f.header.textContent='Different';if(change==='ambiguous-title'){const query=f.document.querySelectorAll;f.document.querySelectorAll=s=>s===profile.currentProjectTitle?[f.heading,f.heading]:query(s);}
@@ -68,4 +68,11 @@ test('surface mutation filter includes roots, labels, ancestor visibility and de
  const ancestor={contains:n=>n===f.members};assert(d.affectsSurface([{type:'attributes',target:ancestor}]));
  const unrelated={contains:()=>false};assert.equal(d.affectsSurface([{type:'characterData',target:unrelated}]),false);
  assert(d.affectsSurface([{type:'childList',target:unrelated,addedNodes:[],removedNodes:[f.members]}]));
+});
+
+for(const members of [1,300])test('current member rename cannot be overwritten by stale history across '+members+' members',()=>{
+ const f=fixture({projectCount:0,historyCount:1,memberCount:members});f.members.children[0].textContent='Renamed member';f.history.children[0].attrs.href='/c/m0';f.history.children[0].textContent='Old sidebar title';const rows=[];let p=f.discovery.scanPage();while(true){rows.push(...p.payload.candidates.filter(c=>c.renderKey==='conversation:m0'));if(!p.cursor)break;p=f.discovery.scanPage(p.cursor);}assert.equal(rows.length,1);assert.equal(rows[0].nativeTitle,'Renamed member');assert(rows[0].evidence.fieldPaths.includes('members'));
+});
+test('hidden or unconfirmed member region cannot suppress a valid history entry',()=>{
+ for(const mode of ['hidden','wrong-id']){const f=fixture({projectCount:0,historyCount:1,memberCount:1});f.history.children[0].attrs.href='/c/m0';if(mode==='hidden')f.members.hidden=true;else f.members.attrs['data-project-id']='p2';const p=f.discovery.scan();assert(p.candidates.some(c=>c.renderKey==='conversation:m0'&&c.evidence.fieldPaths.includes('history')));assert(!p.membershipClaims.some(c=>c.asserted==='PROJECT'));}
 });
