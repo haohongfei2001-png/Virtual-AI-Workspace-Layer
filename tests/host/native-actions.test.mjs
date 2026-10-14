@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {createNativeActions} from '../../src/host/native-actions.mjs';import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const C='11111111-2222-4333-8444-555555555555',D='aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',handle={id:'h',documentToken:'doc',routeEpoch:1,regionEpoch:1,controlKind:'conversation'};
-function fixture(options={}){let clicks=0,time=0,url='https://chatgpt.com/c/'+C,risk={state:'clear',flags:[]},proof=null,authorized=true,connected=true;const node={get isConnected(){return connected;},click(){clicks++;options.click?.();}};let currentNode=node;const actions=createNativeActions({discovery:{getNode:()=>currentNode},urlPolicy:createURLPolicy(),currentURL:()=>url,inputRisk:()=>risk,bodyProof:()=>proof,authorize:options.authorize??(()=>authorized),beforeDispatch:options.beforeDispatch??(()=>{}),onNativeDispatch:options.onNativeDispatch??(()=>{}),onNativeDispatchCancelled:options.onNativeDispatchCancelled??(()=>{}),now:()=>time});const target=(id=D,liveHandle={...handle})=>({kind:'resolved',entity:'conversation',nativeId:id,navigationURL:'https://chatgpt.com/c/'+id,liveHandle});const plan=(t=target())=>actions.planNavigation(t,risk),command=p=>({actionId:'action',uiGrantId:'grant',mountId:'mount',planRevision:p.planRevision,targetKey:actions.planKey(p)});return {actions,target,plan,command,node,get clicks(){return clicks;},setRisk:r=>risk=r,setURL:u=>url=u,setProof:p=>proof=p,revoke:()=>authorized=false,detach:()=>{connected=false;currentNode=null;},replace:()=>currentNode={...node},advance:n=>time+=n};}
+function fixture(options={}){let clicks=0,time=0,url='https://chatgpt.com/c/'+C,risk={state:'clear',flags:[]},proof=null,authorized=true,connected=true;const node={get isConnected(){return connected;},click(){clicks++;options.click?.();}};let currentNode=node;const actions=createNativeActions({discovery:{getNode:()=>currentNode},urlPolicy:createURLPolicy(),currentURL:()=>url,inputRisk:()=>risk,bodyProof:()=>proof,authorize:options.authorize??(()=>authorized),beforeDispatch:options.beforeDispatch??(()=>{}),onNativeDispatch:options.onNativeDispatch??(()=>{}),onNativeDispatchCancelled:options.onNativeDispatchCancelled??(()=>{}),now:()=>time});const target=(id=D,liveHandle={...handle})=>({kind:'resolved',entity:'conversation',nativeId:id,navigationURL:'https://chatgpt.com/c/'+id,liveHandle});const plan=(t=target())=>actions.planNavigation(t,risk),command=p=>({actionId:'action',uiGrantId:'grant',mountId:'mount',planRevision:p.planRevision,targetKey:actions.planKey(p)});return {actions,target,plan,command,node,get clicks(){return clicks;},setRisk:r=>risk=r,setURL:u=>url=u,setProof:p=>proof=p,revoke:()=>authorized=false,detach:()=>{connected=false;currentNode=null;},replace:()=>currentNode={...node},advance:n=>time+=n,clock:n=>{time=n;}};}
 test('authorized owner plan clicks original control once and replay cannot redispatch',async()=>{const f=fixture(),p=f.plan(),dto=f.command(p);assert.equal(p.mode,'native-control');assert.equal((await f.actions.dispatchNative(dto)).state,'dispatched');assert.equal((await f.actions.dispatchNative(dto)).reason,'action-already-used');assert.equal(f.clicks,1);});
 test('default authorization denies any dispatch',async()=>{const a=createNativeActions({discovery:{getNode:()=>null},urlPolicy:createURLPolicy(),currentURL:()=> 'https://chatgpt.com/',inputRisk:()=>({state:'clear',flags:[]})}),p=a.planNavigation({kind:'resolved',entity:'conversation',nativeId:C,navigationURL:'https://chatgpt.com/c/'+C,liveHandle:null});assert.equal((await a.dispatchNative({actionId:'a',uiGrantId:'g',mountId:'m',targetKey:a.planKey(p),planRevision:p.planRevision})).reason,'unauthorized-navigation');});
 test('same URL alone cannot certify current body; matching proof yields same-target',async()=>{const f=fixture(),unproven=f.plan(f.target(C));assert.equal(unproven.mode,'native-control');f.setProof({conversationId:C,bodyProofId:'proof'});const p=f.plan(f.target(C));assert.equal(p.mode,'same-target');assert.equal((await f.actions.dispatchNative(f.command(p))).state,'already-current');assert.equal(f.clicks,0);});
@@ -45,4 +45,36 @@ test('cancel hook receives identical issued event exactly once for every post-ho
 });
 test('successful native click and failures before dispatch hook never cancel',async()=>{
  for(const deny of [false,true]){let hooks=0,cancels=0;const f=fixture({onNativeDispatch:()=>hooks++,onNativeDispatchCancelled:()=>cancels++});if(deny)f.revoke();await f.actions.dispatchNative(f.command(f.plan()));assert.equal(hooks,deny?0:1);assert.equal(cancels,0);}
+});
+
+for(const stage of ['authorize-first','authorize-second','beforeDispatch','hook'])for(const elapsed of [5999,6000])test(`dispatch original six-second deadline at ${stage}: ${elapsed} ms`,async()=>{
+ let f,authorizations=0,event=null;const cancelled=[];
+ f=fixture({authorize:async()=>{authorizations++;if(stage===(authorizations===1?'authorize-first':'authorize-second'))f.advance(elapsed);return true;},beforeDispatch:async()=>{if(stage==='beforeDispatch')f.advance(elapsed);},onNativeDispatch:value=>{event=value;if(stage==='hook')f.advance(elapsed);},onNativeDispatchCancelled:value=>cancelled.push(value)});
+ const command=f.command(f.plan()),result=await f.actions.dispatchNative(command);
+ assert.equal(result.state,elapsed===5999?'dispatched':'blocked');assert.equal(f.clicks,elapsed===5999?1:0);
+ if(stage==='beforeDispatch'&&elapsed===6000)assert.equal(authorizations,1,'expired release must not request another authorization');
+ assert.deepEqual(cancelled,elapsed===6000&&stage==='hook'?[event]:[]);
+ assert.equal((await f.actions.dispatchNative(command)).reason,'action-already-used');assert.equal(cancelled.length,elapsed===6000&&stage==='hook'?1:0);
+});
+
+test('dispatch deadline is cumulative across release and both authorization awaits',async()=>{
+ let f,calls=0,hooks=0;f=fixture({authorize:async()=>{calls++;f.advance(2000);return true;},beforeDispatch:async()=>f.advance(2000),onNativeDispatch:()=>hooks++});const command=f.command(f.plan());
+ assert.equal((await f.actions.dispatchNative(command)).state,'blocked');assert.equal(calls,2);assert.equal(f.clicks,0);assert.equal(hooks,0);assert.equal((await f.actions.dispatchNative(command)).reason,'action-already-used');
+});
+
+for(const value of [-1,NaN,Infinity,-Infinity])test('invalid or backwards plan-age clock revokes issued plan: '+String(value),async()=>{
+ const f=fixture(),command=f.command(f.plan());f.clock(value);assert.equal((await f.actions.dispatchNative(command)).state,'blocked');assert.equal(f.clicks,0);f.clock(1);assert.equal((await f.actions.dispatchNative(command)).reason,'action-already-used');
+});
+
+for(const value of [NaN,Infinity,-Infinity])test('nonfinite plan issuance cannot mint usable certificate: '+String(value),()=>{
+ const f=fixture();f.clock(value);const plan=f.plan();assert.equal(plan.mode,'unavailable');assert.equal(f.actions.planKey(plan),null);assert.equal(f.clicks,0);
+});
+
+for(const elapsed of [29999,30000])test('plan lifetime remains independently bounded at '+elapsed+' ms',async()=>{
+ const f=fixture(),command=f.command(f.plan());f.advance(elapsed);assert.equal((await f.actions.dispatchNative(command)).state,elapsed===29999?'dispatched':'blocked');assert.equal(f.clicks,elapsed===29999?1:0);
+});
+
+for(const value of [999,NaN,Infinity])test('dispatch backwards/nonfinite time after hook cancels exactly once: '+String(value),async()=>{
+ let f,event;const cancelled=[];f=fixture({onNativeDispatch:dispatchEvent=>{event=dispatchEvent;f.clock(value);},onNativeDispatchCancelled:value=>cancelled.push(value)});const plan=f.plan();f.clock(1000);const command=f.command(plan);
+ assert.equal((await f.actions.dispatchNative(command)).state,'blocked');assert.equal(f.clicks,0);assert.deepEqual(cancelled,[event]);f.clock(1001);assert.equal((await f.actions.dispatchNative(command)).reason,'action-already-used');assert.equal(cancelled.length,1);
 });

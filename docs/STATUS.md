@@ -1782,3 +1782,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 子代理分别实现组件和集成反例，主代理接线与实际浏览器故障验证；只读审查未发现具体阻断。定向 **170/170 PASS**；最终完整 Node **3294/3294 PASS**（free-round178-node.log.gz），新增17项涵盖首次/翻页失败、旧按钮失效、trusted-only、代际/作用域隔离和恢复。
 - 实际离线生产候选 MV3 **6组 PASS**（free-round178-candidates-mv3.json）；新增一次test-only frame RPC读取失败，明确不冒充真实服务故障。观察offsets=[32,32]且activations=0，旧可激活按钮清除、显式重试后恢复33–64页；605候选全程、原生激活/升级/阅读返回继续通过，sourceChangedDuringRun=false。
 - f46cab8已正常推送原PR #16；72ca068仍为祖先。本轮不消除100k性能、首页首发因果来源、完整候选RAM、间歇退出和真实G/U缺口，Free仍NOT_RELEASE_READY。
+
+
+## Round179：原生点击前单调时间栅栏（接 2af8a82）
+
+- 修复adapter将墙钟传给native-actions导致计划TTL依赖系统时间的问题：现在传elapsedNow；计划保存单调issuedAt，30秒有效期检查有限/非负年龄。派发从本地dispatch入口计时，初始、两次authorize返回、beforeDispatch返回及同步hook后均检查累计6秒期限，超时不click、不补跳、不重放。beforeDispatch超时立即拒绝，不再发第二次授权RPC；hook后超时保留一次cancel回调。
+- 子代理新增21项原生动作反例，HEAD原实现的临时只读副本 **13 FAIL/60 PASS**（free-round179-before.log.gz），修复后该文件 **73/73 PASS**。主代理补2项adapter墙钟回拨接线测试，独立审查确认提前期限检查闭合。最终完整 Node **3317/3317 PASS**（free-round179-node.log.gz）。
+- 实际隔离headless生产候选MV3 **6组 PASS**（free-round179-candidates-mv3.json），保持读取失败显式恢复、605候选分页、原生激活/升级、输入保护和阅读返回；sourceChangedDuringRun=false。时钟注入反例属于离线单元/adapter测试，不宣称实际系统时钟改变或真实账户认证。
+- worker已有单调6秒guard，本轮补最后授权回复迟到后的content本地栅栏；本地起点不等于更早worker请求起点，因此不宣称跨realm全局期限已完整证明。100k性能、首页首发来源、完整候选RAM、间歇退出及真实G/U仍未完成，Free NOT_RELEASE_READY。
+- 上轮2af8a82普通push低速超时；本地成果完整、72ca068祖先保留，沿用原PR #16与分支。

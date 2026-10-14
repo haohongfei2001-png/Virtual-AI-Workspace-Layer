@@ -221,3 +221,12 @@ test('directory mutation requests native surrender before scanning while unrelat
  f.observer().cb([{type:'characterData',target:{parentNode:f.reading}}]);await tick();assert.equal(changes.length,0);
  const records=[{type:'characterData',target:f.selectors.get(LEGACY_SURFACE_PROFILE.regions.history)[0]}];const callback=f.observer().cb;callback(records);assert.equal(changes.length,1);assert.equal(changes[0],records);f.adapter.stop();callback(records);assert.equal(changes.length,1);
 });
+
+for(const mode of ['plan-expiry','late-authorization'])test('adapter native action uses monotonic '+mode+' despite wall clock rollback',async()=>{
+ let elapsed=100,authorizations=0,clicks=0;const f=fixture({elapsedNow:()=>elapsed,inputRisk:()=>({state:'clear',flags:[]}),authorize:async()=>{if(++authorizations===2&&mode==='late-authorization'){elapsed=6100;f.setTime(2000);}return true;}});
+ const root={isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]},button={tagName:'BUTTON',textContent:'Same',isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null,getClientRects:()=>[{}],matches:()=>false,click:()=>clicks++};
+ f.setTime(5000);f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await tick();const proposals=await f.adapter.readLoaded(null),target=proposals.find(p=>p.kind==='surface-delta').payload.candidates[0].target,plan=f.adapter.planNavigation(target);
+ assert.equal(plan.mode,'native-control');if(mode==='plan-expiry'){elapsed=30100;f.setTime(2000);}
+ const command={actionId:'deadline',uiGrantId:'grant',mountId:'mount',planRevision:plan.planRevision,targetKey:f.adapter.planKey(plan)};
+ assert.equal((await f.adapter.dispatchNative(command)).reason,'stale-navigation-plan');assert.equal(clicks,0);assert.equal((await f.adapter.dispatchNative(command)).reason,'action-already-used');f.adapter.stop();
+});
