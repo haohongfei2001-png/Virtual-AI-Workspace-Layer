@@ -1487,3 +1487,9 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 同时新增私有prepareSendAckAdmission纯校验器：显式包内ACK profile/有限acceptedStates及providerProfile，exact body proof/C/账号/context、本人author hash、固定lineage、0..30秒观察区间、读回未过期；scopeKey严格等canonical ChatGPT principal/context，拒绝内部跨账号矛盾。getter/额外字段/错误作者/阶段/lineage等拒绝，输出冻结且无sentAt/source/grant。**尚未接入provider/reader/correlator/native continuation，不创建权限、不写活动，不得称可靠发送完成。**
 - 下一B2接线复用现有模块：host-binding创建sendCandidates没有onCandidate，observe结果仍丢弃；publish回调是diagnostic、candidate没有独立ACK信息。需在持有withCurrent proof/context时，从明确配置的认证读回profile取得exact消息接受状态及独立作者hash，再复核guard并形成私有admission，复用NativeRepository同事务pending continuation→HostContinuationOwner→evidence分片。不能只把correlated字段改成ACK。现provider/parser尚无accepted状态，生产仍default disabled；先完成existingC，再处理首页首发跨SPA关联，真实profile因果语义G仍NOT_RUN。
 - b0f7307在上一自然检查点已正常push并GitHub API确认，PR16仍Draft基于PR15、Pro72ca068保留；此前网络超时已恢复。Free仍未完成，64KiB长来源、100k/4x、ACK/首发、G/U及既有稳定性缺口继续推进，NOT_RELEASE_READY。
+
+## Round139：额度中断前的安全检查点（接 5889da8）
+
+- 抽出 validateSendAckProfile，复用原有严格字段与有限 acceptedStates 校验；返回独立深冻结配置，不构成认证证据或权限。新增复制/冻结/调用方修改隔离测试。定向 Node **17/17 PASS**，证据 free-round139-ack.log；本轮完整回归与浏览器测试 NOT_RUN。
+- 子代理明确返回 usage limit，认证接受状态提取器尚未创建文件；未把未完成实现计为完成。provider/reader/correlator/native continuation ACK 接线仍未实现，生产默认关闭。下一轮从当前代码继续：先完成 conversation-acceptance 纯提取及反例，再将固定认证读回的对象身份与当前 proof/guard 绑定，接入现有持久 continuation。
+- Pro 72ca068 已由既有正常 merge 保留；上一提交 5889da8 已正常推送 PR16。本检查点不改变计划、分支或原生权限，Free 仍 NOT_RELEASE_READY。

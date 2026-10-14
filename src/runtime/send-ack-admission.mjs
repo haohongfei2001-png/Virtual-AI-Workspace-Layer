@@ -14,6 +14,13 @@ const epoch=value=>Number.isSafeInteger(value)&&value>=0;
 const principal=value=>typeof value==='string'&&/^principal_[0-9a-f]{64}$/.test(value);
 const account=value=>typeof value==='string'&&/^context_[0-9a-f]{64}$/.test(value);
 function time(value){requireValue(typeof value==='string'&&value.length<=40);const parsed=instant(value);requireValue(parsed!==null);return parsed;}
+/** Package configuration validation only; a valid shape is not profile evidence. */
+export function validateSendAckProfile(profile){
+ record(profile,['id','revision','providerProfile','ack']);record(profile.ack,['kind','acceptedStates']);
+ requireValue(id(profile.id)&&Number.isSafeInteger(profile.revision)&&profile.revision>0&&id(profile.providerProfile)&&profile.ack.kind==='authenticated-message-readback');
+ const accepted=list(profile.ack.acceptedStates,8);requireValue(accepted.every(id)&&new Set(accepted).size===accepted.length);
+ return Object.freeze({id:profile.id,revision:profile.revision,providerProfile:profile.providerProfile,ack:Object.freeze({kind:profile.ack.kind,acceptedStates:Object.freeze([...accepted])})});
+}
 /** Pure validation of private caller-supplied readback data, NOT authority.
  * The caller must independently establish provider/ACK profile provenance and
  * fresh body/scope guards before and after this call. No grants or writes occur.
@@ -22,9 +29,7 @@ function time(value){requireValue(typeof value==='string'&&value.length<=40);con
 export function prepareSendAckAdmission(input){
  record(input,['profile','context','candidate','readback','intentAt','observedAt']);
  const {profile,context,candidate,readback,intentAt,observedAt}=input;
- record(profile,['id','revision','providerProfile','ack']);record(profile.ack,['kind','acceptedStates']);
- requireValue(id(profile.id)&&Number.isSafeInteger(profile.revision)&&profile.revision>0&&id(profile.providerProfile)&&profile.ack.kind==='authenticated-message-readback');
- const accepted=list(profile.ack.acceptedStates,8);requireValue(accepted.every(id)&&new Set(accepted).size===accepted.length);
+ const accepted=validateSendAckProfile(profile).ack.acceptedStates;
  record(context,['proofId','conversationId','bodyEpoch','scopeKey','principalKey','contextKey','providerProfile','providerTransport']);
  requireValue(id(context.proofId)&&id(context.conversationId)&&epoch(context.bodyEpoch)&&typeof context.scopeKey==='string'&&context.scopeKey.length>0&&context.scopeKey.length<=4096&&principal(context.principalKey)&&account(context.contextKey)&&context.providerProfile===profile.providerProfile&&context.providerTransport==='worker-fixed-fetch');
  requireValue(context.scopeKey===normalizedScope({verified:true,provider:'chatgpt',accountId:context.principalKey,organizationId:context.contextKey})?.key);

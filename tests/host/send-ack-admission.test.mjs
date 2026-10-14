@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {prepareSendAckAdmission} from '../../src/runtime/send-ack-admission.mjs';
+import {prepareSendAckAdmission,validateSendAckProfile} from '../../src/runtime/send-ack-admission.mjs';
 import {normalizedScope} from '../../src/b1/identity.mjs';
 import {digest} from '../../src/data/hash.mjs';
 function input(){const principalKey='principal_'+'a'.repeat(64),contextKey='context_'+'b'.repeat(64);return {profile:{id:'offline_ack',revision:1,providerProfile:'fixed_provider',ack:{kind:'authenticated-message-readback',acceptedStates:['fixture-accepted']}},context:{proofId:'proof',conversationId:'C',bodyEpoch:2,scopeKey:normalizedScope({verified:true,provider:'chatgpt',accountId:principalKey,organizationId:contextKey}).key,principalKey,contextKey,providerProfile:'fixed_provider',providerTransport:'worker-fixed-fetch'},candidate:{protocol:'vaiwl-send-candidate/1',intentId:'intent',conversationId:'C',messageId:'M',operationId:null,stage:'correlated',observedAt:'2026-10-14T00:00:00Z'},readback:{proofId:'proof',conversationId:'C',bodyEpoch:2,principalKey,contextKey,providerProfile:'fixed_provider',transport:'worker-fixed-fetch',expiresAt:'2026-10-14T00:01:00Z',message:{messageId:'M',mappingNodeId:'node2',role:'user',authorPrincipalKey:principalKey,lineage:{kind:'derived',nodeIds:['node1','node2'],fingerprint:digest(['C',['node1','node2']])},acceptanceState:'fixture-accepted'}},intentAt:'2026-10-14T00:00:00Z',observedAt:'2026-10-14T00:00:02Z'};}
@@ -15,4 +15,8 @@ test('extra authority fields, symbols, sparse arrays, wrong prototypes and calle
 
 test('scope key must canonically bind the same ChatGPT principal and account context',()=>{
  for(const mutate of [x=>x.context.scopeKey=normalizedScope({verified:true,provider:'chatgpt',accountId:'principal_'+'d'.repeat(64),organizationId:x.context.contextKey}).key,x=>x.context.scopeKey=normalizedScope({verified:true,provider:'chatgpt',accountId:x.context.principalKey,organizationId:'context_'+'e'.repeat(64)}).key,x=>x.context.scopeKey=normalizedScope({verified:true,provider:'other',accountId:x.context.principalKey,organizationId:x.context.contextKey}).key,x=>x.context.scopeKey=JSON.stringify(JSON.parse(x.context.scopeKey),null,2),x=>x.context.scopeKey='scopeA']){const x=input();mutate(x);assert.throws(()=>prepareSendAckAdmission(x));}
+});
+
+test('standalone ACK profile validation copies and deeply freezes configuration without authority',()=>{
+ const profile=input().profile,result=validateSendAckProfile(profile);assert.deepEqual(result,profile);assert.notEqual(result,profile);assert.notEqual(result.ack.acceptedStates,profile.ack.acceptedStates);assert(Object.isFrozen(result)&&Object.isFrozen(result.ack)&&Object.isFrozen(result.ack.acceptedStates));profile.ack.acceptedStates[0]='changed';assert.equal(result.ack.acceptedStates[0],'fixture-accepted');
 });
