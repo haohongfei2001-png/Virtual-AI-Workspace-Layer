@@ -15,6 +15,22 @@ Pro在Free之后保留AI虚拟归类/命名、Series、拆合和人工纠错等�
 
 ## 当前交付状态
 
-已核对PR #15的`fd5df2be`及父#14的`0b07455`。main仍为初始化提交。B/C/F已存在丰富隔离合成工程证据，D1/D2为模板影子实验，真实访客原始时间和覆盖仍UNKNOWN；没有据此宣布完整Free已支持真实账户。
+Free运行时正在原目录和 `codex/vaiwl-free-first-20261013` 分支持续实施，交付沿用 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。已有原生数据存储、Host观察与授权、双框架导航、工作集、片段、备份恢复及隔离MV3测试；最新完成项、源码对应证据与阻塞见[实际状态](docs/STATUS.md)，不以旧文档基线代替当前代码。
 
-本次提供的是现行文档正文整合；不改运行时代码、不执行Mac/私人数据/原生操作。是否已经提交应查实际PR head，不能把文件包与GitHub写入混淆。实现者以后按计划从真实Project/成员/原生标题和活动通路的差额推进，不重新设计产品或模拟器。
+**Free尚未完整验收，开发包为 `NOT_RELEASE_READY`。** 默认Host包的真实ChatGPT上下文选择仍为 `UNVERIFIED_FAIL_CLOSED`，不能当作已支持私人账户的成品。离线包只验证loopback重建宿主，不能证明真实ChatGPT适配完成；100k/4x冷启动和完整扩展BFCache等缺口仍按STATUS保留。不要为验证开发包访问私人ChatGPT或执行真实原生写入。
+
+### Host开发包构建与校验
+
+在仓库根目录执行，输出目录必须尚不存在：
+
+```sh
+node extension/build.mjs /private/tmp/vaiwl-host-unpacked
+node extension/package.mjs /private/tmp/vaiwl-host-package
+node --input-type=module -e "import {verifyHost} from './extension/package.mjs'; console.log(verifyHost('/private/tmp/vaiwl-host-package/extension'));"
+```
+
+`build.mjs` 生成可加载目录；`package.mjs` 另生成 `extension/`、开发ZIP及 `SHA256SUMS`。`verifyHost` 检查文件哈希、权限与打包边界，不代表功能或发布验收通过。CLI只接收新输出目录，不支持 `--offline` 或 `--verify` 参数。
+
+离线构建由测试脚本调用 `packageHost(output, {offlineOrigin})`，仅接受明确的 `http://127.0.0.1:端口` origin；片段重建配置 `offlineSnippets: true` 也仅允许离线包。实际包测试入口包括 [Host MV3旅程](tests/host/package-mv3-browser.mjs)；应使用独立headless测试环境，不加载到用户日常浏览器配置。
+
+[simulator说明](simulator/README.md)及其构建工具保留，服务于合成数据、旧Pro兼容和规模回归；它与 `extension/` Host开发包的证据边界不同，不能用模拟器通过代替真实Host验收。

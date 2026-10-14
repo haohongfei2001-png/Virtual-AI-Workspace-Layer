@@ -1370,3 +1370,10 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 四项反例和既有client测试84/84，完整Node **2666/2666 PASS**。实际原包MV3四旅程PASS，真实SAVE已在owner成功，其回包仅由测试过程延迟跨正常HOST_UI_RENEW且小于6秒；新scroll55真正保存，再新frame/grant重建恢复55，原生textarea和草稿不变。sourceChangedDuringRun=false；无伪造grant/owner写入，无生产账户。
 - Round125原始完整Node、标准/恢复MV3与完整扩展BFCache NOT_HIT报告补存engineering；Round126保留最初失败、最终测试及源hash报告。无需因单一client锁修复重复全部浏览器模块。100k/4x、真实context/accepted ACK/G/U条件仍未完成，NOT_RELEASE_READY。
 - 性能只读诊断：SHA轮展开没有显著收益；schema字段数组分配候选在Node完整codec约改善2.9%，未改生产代码、未作为100k关口通过。Project新建导航候选经源码核验Round102已存在，本轮不重复实现。
+
+
+## Round127：F1候选收束与实际Host包使用入口（接 06aea98）
+
+- 重读Round117 profile/118无采样失败证据：最终native迁移审计超过6秒，尚未进入PAGE；不重新运行未改变代码的同一失败实验。SHA轮展开无显著收益；有界encodeInto scratch完整native digest仅约4%，stable loop完整native/100k manifest digest约4.15%/4.70%，未合入。nested序列化29%不是完整链收益；数组自定义map/Proxy完整兼容未证实。停止这些微优化候选，保留诊断JSON，不作为F1通过或新产品回归。
+- README当前状态原仍写仅文档整合/未来实施，现改为实际Host开发状态及准确build/package/verify命令，区别extension Host与旧simulator。实际运行package+verify成功，118文件，ZIP SHA256 349b2aab61f13cb77b3f7356fc9eb0fc451d5909e4935ad06f2d838e22b616f7；包位于/private/tmp/vaiwl-free-round127-host-package。未安装到日常浏览器，HOST_IMPLEMENTATION_UNVERIFIED / NOT_RELEASE_READY。
+- 本轮没有运行时代码改动，不重复完整Node/浏览器回归；最新代码证据仍为Round126的2666及恢复MV3四旅程。真实context/accepted ACK/首发关联/G/U/PAIA、100k/4x与完整扩展BFCache条件仍未闭合，Free未完成。
