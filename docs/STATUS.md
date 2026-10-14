@@ -1819,3 +1819,11 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 真实headless IndexedDB **5组 PASS**（free-round182-evidence-idb.json）：原5001refs成功/尾损坏/撤权保持；新增root重签错误checksum绑定时prepare成功且indexReads=0，但final拒绝free-evidence-index-checksum-mismatch且所有store不变；无绑定旧root+损坏index时prepare实际读取256索引并拒绝，零写入。
 - 固定最终源码100k/project-mixed/4x **仍FAIL**（free-round182-100k.json）：约30015ms startup超时，prepare约3072ms（上轮约3794ms，不是配对微基准），最终证据目录阶段约6552ms仍stale-binding。未放宽6秒/总预算；原生输入原节点、草稿与可见性保持，sourceChangedDuringRun=false。优化不等于F1通过。
 - 上轮067b95f push连接超时且返回不确定，不能据尾部Everything up-to-date宣称同步；本地检查点完整。72ca068祖先保留，其他未完成Free验收继续保持，NOT_RELEASE_READY。
+
+
+## Round183：拒绝无足够收益的索引分组memo实验（接 2892afd）
+
+- 实验在最终迁移load时增加最多400000项key→hash suffix临时Map，省略audit的重复分组hash；全部当前bucket/own-key/ref/count校验保留。实验态Node3353/3353、真实IDB五组通过，独立审查未发现校验绕过。
+- 固定实验源码100k/project-mixed/4x仍FAIL：startup约30012ms，最终证据目录约6504ms stale-binding，未获得足够收益；原生输入原节点、草稿及可见性保持。free-round183-100k.json和evidence-idb.json为实验源码证据，sourceChangedDuringRun=false，不代表最终源码新增验收。
+- 因额外O(N)内存成本且端到端没有改善，已撤回本轮三个src文件及专属新测试；最终运行代码与2892afd完全一致，复用Round182最终验证。400k容量边界与峰值堆未实测，不宣称通过。free-round183-experiment-node.log.gz仅保留被拒实验记录。
+- 100k FAIL与真实G/U等未完成项保持；停止连续微优化，继续无外部权限依赖的生产Host功能工作。上两轮远端push未确认，本地提交完整；Free NOT_RELEASE_READY。
