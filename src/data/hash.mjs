@@ -11,12 +11,24 @@ const K = new Int32Array([0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b
 const encoder = new TextEncoder();
 const hexBytes = Array.from({length:256},(_,n)=>n.toString(16).padStart(2,'0'));
 const rotate = (x,n)=>(x>>>n)|(x<<(32-n));
+const initialHash = new Int32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+const workHash = new Int32Array(8), workWords = new Int32Array(64);
+// Synchronous calls cannot overlap after input coercion. Retain at most 64 KiB;
+// large payloads keep the exact-size allocation path instead of growing this buffer.
+const smallBuffer = new Uint8Array(65536), smallView = new DataView(smallBuffer.buffer);
 export function sha256(text) {
-  const bytes = encoder.encode(text), length = Math.ceil((bytes.length + 9) / 64) * 64;
-  const data = new Uint8Array(length); data.set(bytes); data[bytes.length] = 128;
-  const dv = new DataView(data.buffer); dv.setUint32(length-8, Math.floor(bytes.length / 0x20000000)); dv.setUint32(length-4, bytes.length * 8 >>> 0);
-
-  const H = new Int32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]), w = new Int32Array(64), r = rotate;
+  // Convert before borrowing scratch memory: a caller's toString may reenter.
+  if(typeof text==='symbol')throw new TypeError('Cannot convert a Symbol value to a string');
+  const input=text===undefined?'':String(text);let data,dv,length,byteLength;
+  if(input.length<=21840){
+    data=smallBuffer;dv=smallView;byteLength=encoder.encodeInto(input,data).written;
+    length=Math.ceil((byteLength+9)/64)*64;data.fill(0,byteLength,length);
+  }else{
+    const bytes=encoder.encode(input);byteLength=bytes.length;length=Math.ceil((byteLength+9)/64)*64;
+    data=new Uint8Array(length);data.set(bytes);dv=new DataView(data.buffer);
+  }
+  data[byteLength]=128;dv.setUint32(length-8,Math.floor(byteLength/0x20000000));dv.setUint32(length-4,byteLength*8>>>0);
+  const H=workHash,w=workWords,r=rotate;H.set(initialHash);
   for (let p=0;p<length;p+=64) {
     for(let i=0;i<16;i++)w[i]=dv.getInt32(p+i*4);
     for(let i=16;i<64;i++){const x=w[i-15],y=w[i-2];w[i]=(r(x,7)^r(x,18)^(x>>>3))+w[i-16]+(r(y,17)^r(y,19)^(y>>>10))+w[i-7];}

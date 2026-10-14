@@ -42,3 +42,15 @@ test('stable and digest retain non-JSON rejection and do not invoke toJSON hooks
  for(const value of [new Date(),new Map(),new Set(),new Uint8Array([1]),Object.create({custom:true})])for(const fn of [stable,digest])assert.throws(()=>fn(value),/non-json-object/);
  let called=0;const hooked={toJSON(){called++;return 'replacement';}};assert.throws(()=>digest(hooked),/non-json-value/);assert.equal(called,0);
 });
+
+
+test('scratch capacity boundary and alternating sizes never reuse dirty bytes',()=>{
+ for(let round=0;round<3;round++)for(const length of [21839,21840,21841,21842,65535,65536,1,0,55,56]){
+  match('中'.repeat(length));match('a'.repeat(length));match('\ud800'.repeat(length));match('😀'.repeat(Math.floor(length/2)));
+ }
+});
+test('input coercion may reenter SHA256 before scratch memory is borrowed',()=>{
+ let calls=0;const value={toString(){calls++;assert.equal(sha256('inner中'.repeat(500)),oracle('inner中'.repeat(500)));return 'outer😀'.repeat(400);}};
+ assert.equal(sha256(value),oracle('outer😀'.repeat(400)));assert.equal(calls,1);match('after nested coercion');
+ assert.throws(()=>sha256({toString(){sha256('nested before error');throw Error('coercion-stop');}}),/coercion-stop/);match('after error');
+});

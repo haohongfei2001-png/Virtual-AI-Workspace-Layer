@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round167：关闭时同步记录阅读状态，修复授权过期导致恢复模式错误的竞态；完整Node3214项、原生更新MV3四项及候选五项通过。Round166间歇超时未归因；首页首发、预证明立即发送、100k/4x、候选内存及真实G/U仍未完成，Free为NOT_RELEASE_READY。
+当前已推进至Round168：降低SHA-256分配成本并修复性能fixture模块加载；完整Node3216项、真实IDB六项通过。Chrome微基准改善，但100k/4x实际启动仍超时FAIL。首页首发、预证明立即发送、候选内存、间歇退出及真实G/U仍未完成，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1683,3 +1683,13 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 完整Node **3214/3214 PASS**（free-round167-node.log.gz），相关56项通过。原打包隔离MV3原生更新 **4/4 PASS**（free-round167-native-updates-mv3.json）、候选导航 **5/5 PASS**（free-round167-candidates-mv3.json），均sourceChangedDuringRun=false。
 - 本轮证明并修复了该状态竞态，**尚未证明它就是Round166浏览器间歇退出超时的原因**，旧FAIL继续保留。首页首发、预证明立即发送、100k/4x、候选完整内存与真实G/U仍未完成；Free NOT_RELEASE_READY。
 - 0299d1e此前普通push在30秒超时，本轮自然检查点正常同步，不强推。
+
+
+## Round168：SHA-256分配优化与100k实际复验（接 61ab5ce）
+
+- 不改变SHA-256算法、稳定编码或校验语义；同步哈希在输入coercion完成后复用固定64KiB缓冲和工作数组，大输入保留精确分配路径。覆盖临界UTF8容量、孤立代理项、交替大小、嵌套toString调用与异常后恢复，避免旧字节或重入污染。
+- Chrome155/4x微基准5000条中位数 **49.1ms→30.2ms**，五组WebCrypto对照一致（free-round168-chrome-hash-benchmark.json）。仅hash分配微基准，不是F1验收。
+- 最终完整Node **3216/3216 PASS**（free-round168-node-final.log.gz）；真实headless IDB六项通过（free-round168-native-audit-idb.json），含损坏尾片、撤权、保留版本、配额/修复重试及Pro/其他scope不变。未缓存piece校验证书或放宽最终新鲜审计。
+- 100k首次未进入性能路径：共享navigation引用的frame-resume-state被simulator服务器拒绝加载，保留free-round168-import-fail.json；仅放行该纯presentation依赖，其他host/runtime路径仍404，并补服务器回归及性能脚本源码hash。
+- 修复环境后的100k/project-mixed/4x实际仍 **FAIL**（free-round168-100k-4x-final.json）：约30454ms仍WAITING/read-budget-exhausted，HEADER超期/stale-binding；原生输入节点、可见性及未提交草稿保留，sourceChangedDuringRun=false。不能用微基准收益替代此FAIL，6秒期限保持。
+- 真实G/U、首页首发、预证明立即发送、候选完整内存、Round166间歇退出超时等缺口仍保留；Free NOT_RELEASE_READY。61ab5ce上轮push超时，本轮自然检查点正常同步。
