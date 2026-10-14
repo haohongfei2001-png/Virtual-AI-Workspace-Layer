@@ -1,10 +1,10 @@
 /** Actual service/repository integration with MOCK_IDB and explicit browser/provider doubles. */
 import test from 'node:test';import assert from 'node:assert/strict';import {MockIDBFactory} from '../b23/mock-idb.mjs';import {ScopeRepository} from '../../src/b1/scope-repository.mjs';import {createHostBindingService} from '../../src/runtime/host-binding-service.mjs';import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const url='https://chatgpt.com/',C='33333333-3333-4333-8333-333333333333';
-async function fixture(t){let time=1000,id=0,principal='A',providerReads=0,providerFailure=false;const frames=new Map(),base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'notify-service'});t.after(()=>base.close());const profile={id:'offline',revision:1,urlPolicy:createURLPolicy()};const service=createHostBindingService({extensionId:'ext',uiURL:'chrome-extension://ext/ui.html',getFrame:async({tabId,frameId})=>frames.get(`${tabId}:${frameId}`),allowedURL:u=>new URL(u).origin==='https://chatgpt.com',repository:base,provider:{read:async()=>{providerReads++;if(providerFailure)throw Error('request-timeout');return {principalId:principal,expiresAt:new Date(100000).toISOString(),contexts:[{id:'personal',kind:'personal'}],providerProfile:'test',transport:'worker-fixed-fetch'};}},profile:{id:'test',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`id_${++id}`});
+async function fixture(t){let time=1000,id=0,principal='A',providerReads=0,providerFailure=false,providerWait=null;const frames=new Map(),base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'notify-service'});t.after(()=>base.close());const profile={id:'offline',revision:1,urlPolicy:createURLPolicy()};const service=createHostBindingService({extensionId:'ext',uiURL:'chrome-extension://ext/ui.html',getFrame:async({tabId,frameId})=>frames.get(`${tabId}:${frameId}`),allowedURL:u=>new URL(u).origin==='https://chatgpt.com',repository:base,provider:{read:async()=>{providerReads++;if(providerWait)await providerWait;if(providerFailure)throw Error('request-timeout');return {principalId:principal,expiresAt:new Date(100000).toISOString(),contexts:[{id:'personal',kind:'personal'}],providerProfile:'test',transport:'worker-fixed-fetch'};}},profile:{id:'test',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`id_${++id}`});
 const bind=async(tabId,actualURL=url)=>{const sender={id:'ext',tab:{id:tabId,incognito:false},frameId:0,documentId:'doc'+tabId,documentLifecycle:'active',url};frames.set(`${tabId}:0`,{documentId:sender.documentId,url:actualURL,documentLifecycle:'active',parentFrameId:-1});const hello=await service.handle({v:1,type:'HOST_HELLO',clientId:'client',seq:1},sender),binding=hello.binding;assert(hello.ok);const packet={documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch};assert.equal((await service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:2,...packet},sender)).state,'verified');return {sender,binding,packet};};
 const parent=await bind(1),ui={...parent.sender,frameId:2,documentId:'ui',url:'chrome-extension://ext/ui.html'};frames.set('1:2',{documentId:'ui',url:ui.url,documentLifecycle:'active',parentFrameId:0});const listeners=new Set(),port={name:'vaiwl-ui',sender:ui,messages:[],onDisconnect:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},disconnect(){for(const f of listeners)f();},postMessage:m=>port.messages.push(m)};assert(service.connectPort(port));assert.equal((await service.handle({v:1,type:'HOST_UI_MOUNT',...parent.packet,mountId:'mount',regionEpoch:1},parent.sender)).ok,true);const joined=service.handle({v:1,type:'HOST_UI_JOIN',nonce:'nonce',role:'workspace'},ui),confirmed=service.handle({v:1,type:'HOST_UI_CONFIRM',...parent.packet,mountId:'mount',regionEpoch:1,nonce:'nonce',role:'workspace'},parent.sender);const [a,b]=await Promise.all([joined,confirmed]);assert(a.ok&&b.ok);const evidence={profileId:'offline',profileVersion:1,sourceKind:'native-dom',regionEpoch:1,fieldPaths:['history','href'],receiptId:null};
-const proposal=(p=parent,seq=1)=>({protocol:'vaiwl-host-observation/1',...p.packet,localSeq:seq,profileId:'offline',profileVersion:1,bodyProofId:null,kind:'surface-delta',payload:{candidates:[{renderKey:'conversation:'+C,entity:'conversation',nativeTitle:'Native',titleState:'exact',target:{kind:'resolved',entity:'conversation',nativeId:C,navigationURL:'https://chatgpt.com/c/'+C,liveHandle:null},evidence}],membershipClaims:[{conversationId:C,asserted:'UNKNOWN',projectId:null,reason:'missing',evidence}],coverageClaims:[],detachedHandles:[]}});return {get providerReads(){return providerReads;},failProvider:()=>{providerFailure=true;},frames,service,parent,ui,grant:a.grant,port,bind,proposal,setPrincipal:p=>principal=p,advance:ms=>time+=ms};}
+const proposal=(p=parent,seq=1)=>({protocol:'vaiwl-host-observation/1',...p.packet,localSeq:seq,profileId:'offline',profileVersion:1,bodyProofId:null,kind:'surface-delta',payload:{candidates:[{renderKey:'conversation:'+C,entity:'conversation',nativeTitle:'Native',titleState:'exact',target:{kind:'resolved',entity:'conversation',nativeId:C,navigationURL:'https://chatgpt.com/c/'+C,liveHandle:null},evidence}],membershipClaims:[{conversationId:C,asserted:'UNKNOWN',projectId:null,reason:'missing',evidence}],coverageClaims:[],detachedHandles:[]}});return {holdProvider:promise=>{providerWait=promise;},get providerReads(){return providerReads;},failProvider:()=>{providerFailure=true;},frames,service,parent,ui,grant:a.grant,port,bind,proposal,setPrincipal:p=>principal=p,advance:ms=>time+=ms};}
 test('MOCK service only accepted observations notify; duplicate and rejected carry no new data hint',async t=>{const f=await fixture(t),p=f.proposal();assert.equal((await f.service.handle(p,f.parent.sender)).state,'accepted');assert.deepEqual(f.port.messages,[{type:'VAIWL_UI_DATA_CHANGED'}]);assert.equal((await f.service.handle(p,f.parent.sender)).state,'duplicate');assert.equal((await f.service.handle({...p,verified:true},f.parent.sender)).state,'rejected');assert.equal(f.port.messages.length,1);});
 test('MOCK accepted other-scope observation never notifies prior-scope frame',async t=>{const f=await fixture(t);f.setPrincipal('B');const other=await f.bind(2);assert.equal((await f.service.handle(f.proposal(other),other.sender)).state,'accepted');assert.deepEqual(f.port.messages,[]);});
 test('MOCK expired document binding suppresses dirty hint even if UI grant was renewed',async t=>{const f=await fixture(t);f.advance(10000);assert.equal((await f.service.handle({v:1,type:'HOST_UI_RENEW',grantId:f.grant.id,mountId:'mount'},f.ui)).ok,true);f.advance(10000);const frame={tabId:1,frameId:0,documentId:'doc1',parentDocumentId:null,actualURL:url,documentLifecycle:'active',incognito:false},scope=f.service.authority.scopeFor(frame);assert(scope);assert.equal(f.service.ui.notifyScope(scope.key),0);assert.deepEqual(f.port.messages,[]);assert.equal((await f.service.handle(f.proposal(),f.parent.sender)).state,'rejected');});
@@ -82,4 +82,65 @@ test('MOCK whole HOST_REFRESH deadline revokes its unpublished grant when final 
 test('MOCK timed-out old refresh cannot revoke replacement grant or revive itself on late frame reply',async t=>{
  const f=await refreshDeadlineFixture(t);f.hold(4);const old=f.request(2);await flushTasks();assert.equal(f.reads,4);const previous=f.service.authority.peek(f.frame).grant;
  f.service.authority.invalidate(f.frame.documentId);const next=await f.request(3);assert.equal(next.state,'verified',JSON.stringify(next));const replacement=f.service.authority.peek(f.frame).grant;assert.notEqual(replacement.id,previous.id);await f.advance(6000);assert.equal((await old).ok,false);assert.equal(f.service.authority.peek(f.frame).grant.id,replacement.id);f.release();await flushTasks();assert.equal(f.service.authority.peek(f.frame).grant.id,replacement.id);assert.equal(f.providerReads,2);
+});
+
+const parentAuthorityFrame={tabId:1,frameId:0,documentId:'doc1',parentDocumentId:null,actualURL:url,documentLifecycle:'active',incognito:false};
+async function newProducerSameDocument(f){
+ const hello=await f.service.handle({v:1,type:'HOST_HELLO',clientId:'client',seq:3},f.parent.sender);
+ assert.equal(hello.ok,true);assert.equal(hello.binding.browserDocumentId,f.parent.binding.browserDocumentId);
+ assert.notEqual(hello.binding.producerToken,f.parent.packet.producerToken);
+ const {documentToken,producerToken,routeEpoch}=hello.binding;
+ return {documentToken,producerToken,routeEpoch};
+}
+test('MOCK short same-document restore authenticates changed principal and revokes old UI',async t=>{
+ const f=await fixture(t),old=f.service.authority.peek(parentAuthorityFrame).grant,scope=f.service.authority.scopeFor(parentAuthorityFrame).key;
+ assert.equal(f.providerReads,1);f.advance(1);f.setPrincipal('restored-account-B');
+ const packet=await newProducerSameDocument(f);
+ const refreshed=await f.service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:4,...packet},f.parent.sender);
+ assert.equal(refreshed.state,'verified',JSON.stringify(refreshed));assert.equal(f.providerReads,2,'new producer must not reuse the far-from-expiry grant');
+ assert.notEqual(f.service.authority.peek(parentAuthorityFrame).grant.id,old.id);
+ assert.notEqual(f.service.authority.scopeFor(parentAuthorityFrame).key,scope);
+ await assert.rejects(f.service.ui.withScope({sender:f.ui,grantId:f.grant.id,mountId:'mount'},()=>assert.fail('old account UI must be revoked')));
+ assert.equal((await f.service.handle(f.proposal(),f.parent.sender)).state,'rejected');
+ assert.equal((await f.service.handle({v:1,type:'HOST_UI_RENEW',grantId:f.grant.id,mountId:'mount'},f.ui)).ok,false);
+});
+test('MOCK failed new-producer authentication never falls back to old same-document scope',async t=>{
+ const f=await fixture(t);assert.equal(f.service.authority.peek(parentAuthorityFrame).state,'verified');f.advance(1);f.failProvider();
+ const packet=await newProducerSameDocument(f);
+ const result=await f.service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:4,...packet},f.parent.sender);
+ assert.notEqual(result.state,'verified');assert.equal(f.providerReads,2);
+ assert.notEqual(f.service.authority.peek(parentAuthorityFrame).state,'verified');assert.equal(f.service.authority.scopeFor(parentAuthorityFrame),null);
+ await assert.rejects(f.service.ui.withScope({sender:f.ui,grantId:f.grant.id,mountId:'mount'},()=>assert.fail('old UI cannot survive failed fresh identity proof')));
+});
+test('MOCK ordinary same-producer refresh keeps grant and performs no extra provider read',async t=>{
+ const f=await fixture(t),old=f.service.authority.peek(parentAuthorityFrame).grant;f.advance(1);
+ const result=await f.service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:3,...f.parent.packet},f.parent.sender);
+ assert.equal(result.state,'verified');assert.equal(f.providerReads,1);assert.equal(f.service.authority.peek(parentAuthorityFrame).grant.id,old.id);
+ assert.equal(await f.service.ui.withScope({sender:f.ui,grantId:f.grant.id,mountId:'mount'},context=>context.isCurrent()),true);
+});
+test('MOCK concurrent new-producer refresh cannot bypass unfinished fresh identity proof',async t=>{
+ const f=await fixture(t),oldScope=f.service.authority.scopeFor(parentAuthorityFrame).key;f.setPrincipal('concurrent-account-B');
+ const packet=await newProducerSameDocument(f),get=f.frames.get.bind(f.frames);let reads=0,release;
+ f.frames.get=key=>key==='1:0'&&++reads===2?new Promise(resolve=>{release=()=>resolve(get(key));}):get(key);
+ const first=f.service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:4,...packet},f.parent.sender);
+ await flushTasks();assert.equal(typeof release,'function');
+ try{
+  const second=await f.service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:5,...packet},f.parent.sender);
+  if(second.state==='verified'){
+   assert.equal(f.providerReads,2,'a seen sequence is not a completed new-producer identity proof');
+   assert.notEqual(f.service.authority.scopeFor(parentAuthorityFrame).key,oldScope);
+  }
+ }finally{release();await first;}
+});
+
+test('MOCK concurrent same-producer fresh refreshes share one pending provider read',async t=>{
+ const f=await fixture(t);let release;f.holdProvider(new Promise(resolve=>{release=resolve;}));f.setPrincipal('single-flight-B');
+ const packet=await newProducerSameDocument(f);
+ const first=f.service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:4,...packet},f.parent.sender);
+ await flushTasks();assert.equal(f.providerReads,2);
+ const rest=[5,6,7].map(seq=>f.service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq,...packet},f.parent.sender));
+ await flushTasks();assert.equal(f.providerReads,2,'all requests join the first fresh authentication');
+ release();const replies=await Promise.all([first,...rest]);assert(replies.every(r=>r.state==='verified'),JSON.stringify(replies));assert.equal(f.providerReads,2);
+ const next=await f.service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:8,...packet},f.parent.sender);
+ assert.equal(next.state,'verified');assert.equal(f.providerReads,2,'authenticated producer now uses normal revalidation');
 });

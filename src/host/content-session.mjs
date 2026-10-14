@@ -13,7 +13,7 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,surfaceFactory=createMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(!doc?.defaultView||new URL(origin).origin!==origin||doc.location.origin!==origin||!['http:','https:'].includes(new URL(origin).protocol)||!tokenOK(runtime?.id)||typeof runtime.sendMessage!=='function'||typeof runtime.getURL!=='function'||!runtime.onMessage?.addListener)throw Error('invalid-content-session');
  const clientId=makeId();if(!tokenOK(clientId))throw Error('invalid-content-client');
- let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0;
+ let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false;
  const bindingFields=b=>({documentToken:b.documentToken,producerToken:b.producerToken,routeEpoch:b.routeEpoch});
  function live(s){return current===s&&!s.abort.signal.aborted&&doc.location.href===s.url;}
  function bindingOK(b,prior){return exactHostRecord(b,['documentToken','producerToken','browserDocumentId','routeEpoch','origin','expiresAt'])&&['documentToken','producerToken','browserDocumentId'].every(k=>tokenOK(b[k]))&&Number.isSafeInteger(b.routeEpoch)&&b.routeEpoch>=0&&b.origin===origin&&Date.parse(b.expiresAt)>now()&&Date.parse(b.expiresAt)<=now()+20000&&(!prior||['documentToken','producerToken','browserDocumentId','routeEpoch','origin'].every(k=>b[k]===prior[k]));}
@@ -25,17 +25,23 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  }
  function dispose(s){if(!s)return;s.restorePending?.();s.snippets?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
  function reset(){epoch++;const s=current;current=null;dispose(s);}
- function stop(){enabled=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',stop);}
+ function stop(){enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
+ function pagehide(event){
+  if(event?.persisted!==true){stop();return;}if(!enabled)return;
+  restoreArmed=true;rebindQueued=false;rebindRun++;reset();
+  doc.defaultView.addEventListener('pagehide',pagehide);
+ }
+ function pageshow(event){if(event?.persisted!==true||!enabled||!restoreArmed)return;restoreArmed=false;void begin();}
  function rebind(s){
   if(!enabled||current!==s||rebindQueued)return;
-  rebindQueued=true;const run=++rebindRun;reset();doc.defaultView.addEventListener('pagehide',stop);
+  rebindQueued=true;const run=++rebindRun;reset();doc.defaultView.addEventListener('pagehide',pagehide);
   // Collapse a burst into one replacement. Only external events can request a
   // subsequent attempt; failures never schedule their own recovery loop.
   queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true);});
  }
- async function start(){enabled=true;rebindQueued=false;rebindRun++;return begin();}
+ async function start(){enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  async function begin(rebinding=false){
-  reset();const s={run:epoch,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide:stop,plans:null,rebinding,ready:false,snippets:null,snippetRef:null,snippetScopeGrant:null};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
+  reset();const s={run:epoch,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,snippets:null,snippetRef:null,snippetScopeGrant:null};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
   s.listener=(m,sender,reply)=>{
    if(current!==s||!enabled||sender?.id!==runtime.id)return;
    if(exactHostRecord(m,['type'])&&m.type==='HOST_DOCUMENT_INVALIDATED'){rebind(s);return;}
@@ -92,7 +98,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    };
    s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,now,elapsedNow,schedule,cancel});
    const handle=await s.controller.start({binding:s.binding,emit:p=>rpc(s,p)});if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;return handle;
-  }catch{if(current===s){current=null;dispose(s);}return null;}
+  }catch{if(current===s)stop();return null;}
  }
  return Object.freeze({start,stop,showWorkspace:()=>current?.controller?.showWorkspace()??false,showReading:()=>current?.controller?.showReading()??false});
 }

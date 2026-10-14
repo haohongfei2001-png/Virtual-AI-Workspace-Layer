@@ -1282,3 +1282,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - Shadow DOM新增snippet-match局部换行；真实Chrome DOM在320px/100%、640px/200%、1000px/200%分别覆盖搜索与工作集。改前搜索scrollWidth1329/1329/1348超出320/320/500，改后分别等于容器且160无空格预览实际换行，六组通过。缩放为明确CSS zoom、DTO合成；不是物理浏览器缩放/批准视觉golden/真实账户认证。源hash稳定。
 - 15项等待撤销反例、28项controller合同分别通过。旧工作集偶发click缺失仍不能证实产品修复：证据存在关闭第二tab后原生focus让位的疑点，需事件级复现，未按无失败回归宣称已解决。
 - 最终完整Node **2591/2591** 通过（free-round123-node.log）；最终MV3与布局报告各自保留源码hash，不与历史计数相加。100k/4x冷启动、生产context/accepted ACK、真实G/U/PAIA验收仍未完成；NOT_RELEASE_READY。保持原目录/分支/PR16与Pro文档，不新增计划或访问私人数据。
+
+
+## Round124：BFCache恢复与新握手账户重核验（接 309a0c5）
+
+- UI-04缺口：原content入口只启动一次，pagehide永久stop，BFCache后退会保留已停脚本而不重启。现在persisted hide同步撤旧会话、pending定位、adapter及mount，只保留一次性pageshow恢复；persisted show全新HELLO/REFRESH，显式stop与普通卸载不自动复活。旧异步响应不能覆盖新current；失败移除所有监听，不自重试。
+- 新producer的首次REFRESH强制重新读取账户证明并撤旧UI/views/body observations，同producer正常续租保留已有有界revalidate。独立反例找到“seq已出现但首次核验尚未完成”并发绕过，改为稳定producer record分离verified/freshStarted，四个并发请求共享一次新provider读取；账户切换/失败拒旧scope，续租不额外联网。host-binding-service定向18/18通过。
+- 真Chrome A→B→goBack实际BFCache **HIT**，旧adapter停止/监听清除，恢复两次HELLO/REFRESH且新mount、原textarea节点/草稿保留，显式stop不复活。runtime/adapter factories明确合成，非真实账户或完整扩展BFCache认证。首次脚本等待load超时（缓存恢复不发load），改为commit+实际persisted oracle后PASS，原失败保留。
+- 工作集实际原包新增原生textarea focus使双popover归零→用户明确返回workspace→原人工顺序/草稿保持→原生href新标签正常。最终六旅程PASS/sourceChangedDuringRun=false；关闭第二tab前后增加无私人文本的focus/toggle/click诊断。本次第二tab关闭后仍双surface，并未复现历史偶发，因此不将历史未捕获失败归因已定或宣称所有条件已消失。
+- 最终标准实际MV3十三旅程PASS/sourceChangedDuringRun=false。最终完整Node **2601/2601** 通过，见free-round124-node.log；结果不与历史计数相加。现有100k mixed/4x审计分析仅1067次重复Project依赖读取（约1%），不引入低收益缓存或放宽fresh audit；F1冷启动仍FAIL。真实context/accepted ACK/G/U/PAIA条件仍未满足；Free未完成、NOT_RELEASE_READY。

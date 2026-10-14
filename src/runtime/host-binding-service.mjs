@@ -66,12 +66,16 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   const prior=sequences.get(message.producerToken);if(prior&&message.seq<=prior.seq)return {ok:false,reason:'replayed-sequence'};
   const time=now();for(const [key,value]of sequences)if(value.until<=time)sequences.delete(key);
   if(!sequences.has(message.producerToken)&&sequences.size>=128)return {ok:false,reason:'capacity'};
-  sequences.set(message.producerToken,{seq:message.seq,until:time+20000});
+  const producer=prior??{verified:false,freshStarted:false};producer.seq=message.seq;producer.until=time+20000;sequences.set(message.producerToken,producer);
   const actual=await getFrame({tabId:sender.tab.id,frameId:0});check();
   if(!handshake.matchesFrame(message,sender,actual)||!await handshake.verify(message,sender))return {ok:false,reason:'stale-host-document'};check();
   const frame=asFrame({tabId:sender.tab.id,documentId:actual.documentId,url:actual.url},sender);
   attempt.frame=frame;
-  const resolution=await (authority.peek(frame).state==='verified'?authority.revalidate(frame,attempt.abort.signal):authority.refresh(frame,'bind',attempt.abort.signal));attempt.resolution=resolution;check();
+  // A newly issued producer must not reuse a pre-suspension account proof.
+  // Ordinary renewals keep the existing bounded revalidation/single-flight path.
+  const firstFresh=!producer.verified&&!producer.freshStarted;
+  if(firstFresh){producer.freshStarted=true;observations?.invalidateDocument(frame.documentId);ui?.revokeDocument(frame.documentId);views?.revokeDocument(frame.documentId);}
+  const resolution=await (!producer.verified?authority.refresh(frame,firstFresh?'auth-change':'focus',attempt.abort.signal):authority.peek(frame).state==='verified'?authority.revalidate(frame,attempt.abort.signal):authority.refresh(frame,'bind',attempt.abort.signal));attempt.resolution=resolution;check();
   const verified=await handshake.verify(message,sender);check();
   if(!verified){if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant)authority.invalidate(frame.documentId);return {ok:false,reason:'stale-host-document'};}
   if(resolution.state==='verified'&&continuations&&surfaceProfiles.size===1&&elapsedNow()-attempt.started<4500){
@@ -86,6 +90,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
    const stillVerified=await handshake.verify(message,sender);check();
    if(!stillVerified||authority.peek(frame).grant!==resolution.grant)return {ok:false,reason:'stale-host-document'};
   }
+  if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant&&sequences.get(message.producerToken)===producer)producer.verified=true;
   return {ok:true,v:1,type:'HOST_SCOPE_STATUS',state:resolution.state,...(resolution.reason?{reason:resolution.reason}:{})};
   },{timeoutMs:6000,now:elapsedNow,schedule,cancel});attempt.completed=true;return result;}catch{return {ok:false,reason:'host-refresh-unavailable'};}
   finally{refreshAttempts.delete(attempt);attempt.active=false;attempt.abort.abort();if(!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);}
