@@ -1599,3 +1599,11 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 新增单页/跨页改名发生在yield之后的反例，确认失败前onScan/isUpgraded均未调用，下一次扫描完整展示新名称。完整Node **3210/3210 PASS**（free-round164-node.log.gz），定向77项通过。
 - 原打包扩展隔离headless MV3 **5/5 PASS/sourceChangedDuringRun=false**（free-round164-candidates-mv3.json）：605候选尾页/返回/刷新/缩减、同节点身份提升、原生P→C→Back与草稿保护。仅离线fixture，不代表真实G/U。
 - 5eee947已正常推送原PR #16。首页首发、预证明立即发送、mask展开期间即时更新、100k/4x、候选完整内存有界化及真实G/U仍未完成；Free NOT_RELEASE_READY。
+
+
+## Round165：原生遮罩边界变化后交还阅读（接 72a49f7）
+
+- mount观察阅读/history根的class/style/hidden/aria-hidden及节点连接性变化，关闭双surface并释放声明式mask，不改写原生属性。用户返回时，沿controller的新inspect，仅对当前可见且未被自有mask覆盖的根重新记录边界；隐藏/失效根拒绝重开。controller在拒绝时保留阅读模式及唯一四格返回。
+- 完整Node **3211/3211 PASS**（free-round165-node.log.gz），定向34项通过。原打包隔离headless MV3 **4/4 PASS/sourceChangedDuringRun=false**（free-round165-native-boundary-final-mv3.json）：此前改名/卸载三项加原生class变化自动交还、原输入/草稿保留、保留新class重新检查后返回。
+- 本轮不宣称mask保持展开时成员即时更新已解决，亦不认证真实ChatGPT/PAIA/物理输入。首页首发、预证明立即发送、100k/4x、候选内存与真实G/U仍未完成；Free NOT_RELEASE_READY。
+- 72a49f7此前普通push因GitHub低速失败；本轮自然检查点继续正常推送，不强推。

@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {createMountSurface} from '../../src/navigation/mount-surface.mjs';
 // DOM double checks callback/cleanup, not Chrome popover layout.
 test('mount native focus hides both surfaces and notifies; owned controls and disposed mounts do not',async()=>{
- const listeners=new Map();let doc;
+ const listeners=new Map();let doc,observer;
  const element=()=>({ownerDocument:doc,isConnected:true,dataset:{},style:{},attrs:{},textContent:'',open:false,children:[],events:new Map(),addEventListener(k,f){this.events.set(k,f);},removeEventListener(k,f){if(this.events.get(k)===f)this.events.delete(k);},contains(){return false;},getBoundingClientRect(){return {width:0,height:0};},setAttribute(k,v){this.attrs[k]=v;},getAttribute(k){return this.attrs[k]??null;},removeAttribute(k){delete this.attrs[k];},append(...v){this.children.push(...v);},matches(){return this.open;},showPopover(){this.open=true;},hidePopover(){this.open=false;},remove(){this.isConnected=false;}});
- doc={defaultView:{getComputedStyle:node=>({visibility:node.nativeVisibility??'visible'}),CSS:{supports:()=>true},HTMLElement:{prototype:{showPopover(){}}},crypto:{randomUUID:()=> 'unique'},MutationObserver:class{observe(){}disconnect(){}}},createElement:element,querySelector:()=>null,addEventListener:(type,fn)=>listeners.set(type,fn),removeEventListener:(type,fn)=>{if(listeners.get(type)===fn)listeners.delete(type);}};doc.head=element();doc.body=element();
+ doc={defaultView:{getComputedStyle:node=>({visibility:node.nativeVisibility??'visible'}),CSS:{supports:()=>true},HTMLElement:{prototype:{showPopover(){}}},crypto:{randomUUID:()=> 'unique'},MutationObserver:class{constructor(callback){observer=callback;}observe(){}disconnect(){}}},createElement:element,querySelector:()=>null,addEventListener:(type,fn)=>listeners.set(type,fn),removeEventListener:(type,fn)=>{if(listeners.get(type)===fn)listeners.delete(type);}};doc.head=element();doc.body=element();
  const reading=element(),history=element(),composer=element(),header=element(),events=[];
  const surface=createMountSurface({document:doc,createFrameURL:()=> 'chrome-extension://extension/ui.html'});
  const handle=await surface.mount({binding:{documentToken:'doc'}},{ok:true,viewMask:'declarative-css',reading,historyMaskRoots:[history],composer,header,protectedRegions:[composer,header],regionEpoch:1,readingRect:{x:0,y:0,width:100,height:100},sidebarRect:{x:100,y:0,width:100,height:100}},{onSurrender:e=>events.push(e)});
@@ -21,6 +21,15 @@ test('mount native focus hides both surfaces and notifies; owned controls and di
   ()=>{reading.isConnected=false;return ()=>reading.isConnected=true;},
   ()=>{reading.setAttribute('data-va-mask-workspace','forged');return ()=>reading.setAttribute('data-va-mask-workspace',handle.id);},
  ]){const undo=mutate();assert.equal(surface.isMasked(reading),false);undo();assert.equal(surface.isMasked(reading),true);}
+ for(const mutate of [
+  ()=>{reading.setAttribute('class','native-changed');return ()=>reading.removeAttribute('class');},
+  ()=>{reading.setAttribute('style','visibility:hidden');return ()=>reading.removeAttribute('style');},
+  ()=>{reading.setAttribute('hidden','');return ()=>reading.removeAttribute('hidden');},
+  ()=>{history.setAttribute('aria-hidden','true');return ()=>history.removeAttribute('aria-hidden');},
+  ()=>{reading.isConnected=false;return ()=>reading.isConnected=true;},
+ ]){surface.showWorkspace(handle);const undo=mutate();observer();assert(doc.body.children.every(n=>!n.open),'changed native mask boundary releases both surfaces');undo();}
+ surface.showWorkspace(handle);observer();assert(doc.body.children.every(n=>n.open),'unchanged boundaries do not close workspace');
+ reading.setAttribute('class','new-native-layout');observer();assert(doc.body.children.every(n=>!n.open));assert.equal(surface.showWorkspace(handle),true);observer();assert(doc.body.children.every(n=>n.open));assert.equal(surface.isMasked(reading),true);reading.removeAttribute('class');observer();surface.showWorkspace(handle);
  surface.showReading(handle);assert.equal(surface.isMasked(reading),false);assert.equal(surface.isMasked(history),true,'workspace closure does not impersonate sidebar closure');
  surface.showWorkspace(handle);assert(doc.body.children.every(n=>n.open));listeners.get('focusin')({target:composer});assert(doc.body.children.every(n=>!n.open));assert.deepEqual(events,[{reason:'native-input'}]);
  surface.showWorkspace(handle);listeners.get('pointerdown')({target:element()});assert(doc.body.children.every(n=>n.open));assert.equal(events.length,1);

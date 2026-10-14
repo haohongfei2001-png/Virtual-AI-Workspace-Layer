@@ -138,3 +138,9 @@ test('private frame focus recognizes actual iframe through nested shadow active 
 test('presentationMode is a read-only hint, reading before grants and after suspension or stop',async()=>{
  const f=fixture();assert.equal(f.controller.presentationMode(),'reading');await f.controller.start({});assert.equal(f.controller.presentationMode(),'reading');const before=f.calls.show;await f.both();assert.equal(f.controller.presentationMode(),'workspace');assert.equal(f.calls.show,before+1);f.controller.showReading();assert.equal(f.controller.presentationMode(),'reading');f.controller.showWorkspace();assert.equal(f.controller.presentationMode(),'workspace');f.controller.suspend();assert.equal(f.controller.presentationMode(),'reading');f.controller.stop();assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.controller.showWorkspace(),false);
 });
+
+test('native boundary refusal preserves reading mode and its unique return control',async()=>{
+ const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();const button=f.slot.children[0];
+ f.surface.showWorkspace=()=>false;assert.equal(f.controller.showWorkspace(),false);assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.slot.children.length,1);assert.equal(f.slot.children[0],button);
+ f.surface.showWorkspace=()=>true;assert.equal(f.controller.showWorkspace(),true);assert.equal(f.controller.presentationMode(),'workspace');assert.equal(f.slot.children.length,0);f.controller.stop();
+});

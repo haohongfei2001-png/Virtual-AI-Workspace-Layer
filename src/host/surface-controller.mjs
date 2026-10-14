@@ -14,7 +14,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   const inspection=adapter.inspect();return inspection?.ok&&inspection.regionEpoch===state.handle.regionEpoch&&state.frames.every(({frame})=>frame.isConnected&&frame.ownerDocument===doc);
  }
  function authorized(state){return valid(state)&&Date.parse(state.context.binding.expiresAt)>now()&&state.frames.every(({role})=>{const grant=state.grants.get(role);return grant&&Date.parse(grant.expiresAt)>now();});}
- function showWorkspace(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}removeReturn(state);surface.showWorkspace(state.handle);state.mode='workspace';return true;}
+ function showWorkspace(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}if(surface.showWorkspace(state.handle)===false)return false;removeReturn(state);state.mode='workspace';return true;}
  function ensureReturn(state){
   if(!authorized(state)||adapter.hasNativeLayer()){removeReturn(state);return false;}
   const inspection=adapter.inspect(),slot=inspection.navigationSlot;
