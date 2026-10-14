@@ -1514,3 +1514,10 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 分片前冲突检查原先比较整条候选，包括不同 DOM handle/evidence，会错误拒绝同一聊天的两个合法入口。现 resolved 对象仅比较原生事实身份、名称及 URL，保留各入口 locator；真正事实冲突仍拒绝，live-control 继续严格比较。
 - 增加长批次同聊天不同 locator 反例，以及实际 adapter→surfaceBatch 两个原生控件归并一个 ref 的集成断言。定向 **41/41 PASS**（free-round152-target.log），本轮完整回归/浏览器 NOT_RUN，最近完整证据仍为 Round151，不混加计数。
 - 工作区继续沿原分支，上一检查点4cec4f1的普通push仍网络超时，未宣称远端已同步。Free NOT_RELEASE_READY；首发跨SPA、100k/4x、真实G/U等缺口未完成。
+
+## Round153：观察分片的精确增量字节计数（接 5f63504）
+
+- 重读既有F1证据确认100k/4x仍卡在最终完整迁移审计；本轮没有跳过校验或重复运行同一未改迁移路径。发现新surface分片反复编码增长中的packet，将其改为一次编码每条观察、缓存UTF-8长度与完整编码、按数组逗号精确累计。没有改变64KiB或对象数量限制。
+- 独立序列化测试覆盖4096..65536预算、中文/emoji/引号反斜杠/换行/孤立surrogate以及恰好边界/少一字节拒绝；定向 **43/43 PASS**（free-round153-target.log）。80次交错Node微基准分片完全一致，中位9.097→1.096ms（free-round153-benchmark.json），仅组件微基准，不能代替F1。
+- 隔离headless MV3 **6/6 PASS/sourceChangedDuringRun=false**（free-round153-long-surface-mv3.json），253个发现上限内600字节标题完整进入真实IDB，自动ACK链保持。本轮完整Node NOT_RUN，最近完整为Round151。100k/4x最终审计、首页首发独立因果证据与真实G/U仍未完成，Free NOT_RELEASE_READY。
+- 上轮5f63504普通push达到30秒总时限，仍未确认远端同步；本地提交与成果完整。
