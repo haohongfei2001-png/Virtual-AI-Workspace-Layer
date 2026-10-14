@@ -4,7 +4,7 @@ export function splitSurfacePayload(payload,envelope,{maxBytes=65536}={}){
  const empty=()=>({candidates:[],membershipClaims:[],coverageClaims:[],detachedHandles:[]});
  const fits=p=>p.candidates.length<=256&&p.membershipClaims.length<=256&&p.detachedHandles.length<=512&&new TextEncoder().encode(JSON.stringify({...envelope,localSeq:Number.MAX_SAFE_INTEGER,payload:p})).length<=maxBytes;
  if(!fits(empty()))throw Error('host-proposal-too-large');
- const seen=new Map();for(const candidate of payload.candidates){const key=candidate.renderKey,semantic=JSON.stringify(candidate);if(seen.has(key)&&seen.get(key)!==semantic)throw Error('host-candidate-conflict');seen.set(key,semantic);}
+ const seen=new Map();for(const candidate of payload.candidates){const key=candidate.renderKey,target=candidate.target,semantic=JSON.stringify(target.kind==='resolved'?{entity:candidate.entity,nativeTitle:candidate.nativeTitle,nativeId:target.nativeId,navigationURL:target.navigationURL}:candidate);if(seen.has(key)&&seen.get(key)!==semantic)throw Error('host-candidate-conflict');seen.set(key,semantic);}
  if(fits(payload))return [structuredClone(payload)];
  const projects=new Map(payload.candidates.filter(c=>c.entity==='project'&&c.target.kind==='resolved').map(c=>[c.target.nativeId,c]));
  const usedClaims=new Set(),units=payload.candidates.map(candidate=>{

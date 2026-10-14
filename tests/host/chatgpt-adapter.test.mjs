@@ -113,3 +113,10 @@ test('adapter drains all 256 long-title observations in bounded packets without 
  assert(f.emitted.length>1);assert.equal(new Set(f.emitted.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,256);assert(f.emitted.every(p=>new TextEncoder().encode(JSON.stringify(p)).length<=65536));assert(f.emitted.every((p,i)=>!i||p.localSeq>f.emitted[i-1].localSeq));
  const count=f.emitted.length;f.trigger();for(let i=0;i<30;i++)await tick();assert.equal(f.emitted.length,count);const loaded=await f.adapter.readLoaded(null);assert(loaded.length>1);assert.equal(new Set(loaded.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,256);f.adapter.stop();
 });
+
+test('duplicate native history controls reach owner reduction as one conversation fact',async()=>{
+ const {surfaceBatch}=await import('../../src/host/surface-batch.mjs');const f=fixture(),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes},id='77777777-7777-4777-8777-777777777777';
+ for(let i=0;i<2;i++)nodes.push({tagName:'A',textContent:'Native duplicate',isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);await f.start();for(let i=0;i<10;i++)await tick();assert.equal(f.emitted.length,1);const p=f.emitted[0];assert.equal(p.payload.candidates.length,2);assert.notEqual(p.payload.candidates[0].target.liveHandle.id,p.payload.candidates[1].target.liveHandle.id);
+ const batch=surfaceBatch(p,{scope:{verified:true,provider:'chatgpt',accountId:'test',organizationId:'personal'},binding:f.binding,profile:LEGACY_SURFACE_PROFILE,urlPolicy:createURLPolicy(),sourceRevision:1,observedAt:'2026-10-14T00:00:00Z',validUntil:'2026-10-14T00:01:00Z'});assert.equal(batch.refs.length,1);assert.equal(batch.refs[0].id,id);f.adapter.stop();
+});

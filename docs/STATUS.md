@@ -1568,3 +1568,9 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - adapter 顺序发送分片，只有全部确认才缓存整批fingerprint；每次泵先处理发送意图/current body，剩余surface不抢占ACK。stop丢弃待片，单片失败不宣称整批已接受；readLoaded也返回有界多片。新增256个200字中文名称的全部送达、序号和无循环测试。
 - 完整 Node **3157/3157 PASS**（free-round151-node.log.gz）。隔离headless MV3 **6/6 PASS/sourceChangedDuringRun=false**（free-round151-long-surface-mv3.json）：保留自动ACK真实IDB链，256个新增长标题链接中，受既有发现总上限及其他3个候选占位影响的253项全部进入真实IDB，名称每项600 UTF-8字节完整。此结果不宣称突破发现上限或全账号覆盖；纯分片测试覆盖全部256候选。
 - 首页首发当前缺独立跨路由因果证据，继续保留为未完成；100k/4x、真实profile/账号G/U等仍未完成。Free NOT_RELEASE_READY。上轮539b4fc推送因GitHub连接超时失败，与6f33edb均安全保存在本地，下一检查点普通同步。
+
+## Round152：分片保留重复原生入口（接 4cec4f1）
+
+- 分片前冲突检查原先比较整条候选，包括不同 DOM handle/evidence，会错误拒绝同一聊天的两个合法入口。现 resolved 对象仅比较原生事实身份、名称及 URL，保留各入口 locator；真正事实冲突仍拒绝，live-control 继续严格比较。
+- 增加长批次同聊天不同 locator 反例，以及实际 adapter→surfaceBatch 两个原生控件归并一个 ref 的集成断言。定向 **41/41 PASS**（free-round152-target.log），本轮完整回归/浏览器 NOT_RUN，最近完整证据仍为 Round151，不混加计数。
+- 工作区继续沿原分支，上一检查点4cec4f1的普通push仍网络超时，未宣称远端已同步。Free NOT_RELEASE_READY；首发跨SPA、100k/4x、真实G/U等缺口未完成。
