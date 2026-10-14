@@ -3,7 +3,7 @@
 此文件仅记录同一 DEVELOPMENT_PLAN 的恢复入口，不另立计划。用户已恢复并明确授权持续并行Free开发。
 
 - 唯一目录：`/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`；不迁移、不建worktree。
-- 分支：`codex/vaiwl-free-first-20261013`，本轮从 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44` 继续，实现检查点 `627696e`、`b2a262b` 已推送PR #16；实际新HEAD以 `git rev-parse HEAD` 为准。
+- 分支：`codex/vaiwl-free-first-20261013`，本轮从 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44` 继续，最新代码检查点 `15e5d9a` 已推送PR #16，Pro `72ca068`已整合保留；实际新HEAD以 `git rev-parse HEAD` 为准。
 - 已核对远端 Draft PR #16，基于计划PR #15；允许正常commit/push，不force、不改父PR/main、不merge/deploy。
 - 私人ChatGPT、PAIA本体、真实原生写入、付费均无授权；只能阻塞相应真实验收，不停独立本地工程。
 

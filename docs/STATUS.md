@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百二十一轮：片段管理入口及实际离线MV3保存/定位/删除闭环；完整Node2548项、样式后UI7项、实际片段包四旅程通过。默认生产snippet profile仍未启用，搜索直接定位待接；100k/4x与真实验收条件保留。Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百二十五轮，已推送代码检查点 `15e5d9a`：片段搜索定位、原生操作优先、BFCache生命周期重核验及同文档私有界面恢复。最新完整Node 2662项、标准实际MV3十三旅程、同文档恢复三旅程通过。完整扩展BFCache未命中，恢复断言NOT_RUN；100k/4x与真实生产验收仍有缺口。Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
