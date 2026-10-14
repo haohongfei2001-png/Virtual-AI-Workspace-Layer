@@ -1338,3 +1338,5 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - authority强制模式只绕过远期缓存，保留原6秒截止、身份解析和grant ID/epoch。同producer的FOCUS失败设置稳定denied，provider前后均检查，阻止并发续租在旧认证失效后自动签发新账户。旧请求不撤新producer；denied仅在真实握手失效后清理，130次替换不耗尽容量，跨普通20秒GC不恢复拒绝的权限。
 - 完整Node最终 **2715/2715 PASS**，标准实际原包headless MV3 **13/13 PASS**，sourceChangedDuringRun=false。账户强制核验44项、binding28项及前台/片段19项为各自定向证据，不重复相加。第一次全回归9项失败为旧片段fixture将新增visibility监听计入临时监听总数，现分别严格检查五种临时监听与stop全部清理；真实distinct foreground丢失反例先FAIL后修复。
 - 首次浏览器因沙箱Chrome启动失败，原报告保留；隔离headless获准执行后通过。Round129真实标签visibility实验仍NOT_SUPPORTED；本轮账户前台链的新增反例为明确transport/DOM doubles，不冒充实际ChatGPT账户切换验收。100k/4x、真实context/ACK/首发/G/U/PAIA及完整扩展BFCache仍未闭合；Free未完成、NOT_RELEASE_READY。
+
+Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），工作区已验证。正常Git fetch无响应后终止，正常push有界30秒超时；curl直连github.com:443亦5秒连接超时。GitHub连接器只读确认PR16仍Draft、远端0277eb5，故未宣称推送成功。Pro72ca068仍为本地祖先。恢复网络后仅正常push原分支；不改remote、不强推、不重做已通过模块。此网络条件只阻塞Git传输，继续独立离线Free任务。
