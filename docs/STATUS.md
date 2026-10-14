@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百三十一轮：无ID原生Project候选现可在Free中通过一次受授权的原生点击进入真实Project与成员。完整Node2780项、候选实际原包2旅程和标准MV3十三旅程通过。候选去重/焦点迁移/大列表分页仍待完成，真实生产与100k/4x关口未通过。Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百三十二轮：无ID原生Project候选已接通32项分页、刷新保页及列表收缩。完整Node2820项与候选实际原包3旅程通过；实际浏览器覆盖65合成候选。候选升级去重/焦点迁移、生产发送闭环和100k/4x关口仍未完成。Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1409,3 +1409,11 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 实际原包候选2/2 PASS/source stable：按钮位于438px视口的58–93px，空草稿点击第二同名Project一次→正常原生路由→真实ID及成员投影，无candidate:持久ID；有草稿禁用，原textarea与草稿保持。前两次FAIL为新risk clear导致已知href变same-tab、被frame严格拒绝；已将框架href固定保留当前页，原计划不被改写。第三次FAIL发现候选追加在navigation之后落到视口外，移到其前并限制局部高度后通过。全部旧失败原样保留。
 - 最终完整Node **2780/2780 PASS**；标准实际原包MV3 **13/13 PASS/sourceChangedDuringRun=false**。最初完整Node10个旧fixture因未声明候选能力却收到新RPC而失败，改为显式能力门控，未弱化旧断言。新增真实renderer/client/owner/风险/计划反例并行独立验证后统一集成。
 - MAP-06仍IN_PROGRESS：后置候选到canonical去重、展开/焦点迁移以及超过32候选的有界分页尚未接通，下一步继续该模块，不能把本轮两旅程当整项完成。原生接受ACK/首发因果持久锚仍缺离线owner闭环；100k/4x、真实context/G/U/PAIA与完整扩展BFCache仍未闭合。Free未完成、NOT_RELEASE_READY，不访问私人账户/PAIA、不真实原生写入或部署。
+
+
+## Round132：无ID候选有界分页与刷新保页（接 540f9eb）
+
+- MAP-06候选按32项分页，协议上限256；只为当前页生成原生计划，owner严格验证offset/total/nextOffset、完整页与重复键。列表收缩夹定到最后有效页；旧页注册和迟到回包不能操作新页。刷新保持候选offset，独立于Free查询与历史H/T/Z；分页不点击原生节点。
+- 完整Node **2820/2820 PASS**，见free-round132-node.log.gz；content18、owner50、renderer11、frame12定向测试独立保留、不累加。实际原包headless MV3 **3/3 PASS/sourceChangedDuringRun=false**：65个合成DOM候选0/32/64末页可达、返回32后自然观察刷新保页、收缩1回首页，既有单次原生点击与草稿保护仍通过。仅65合成候选实测，不宣称256真实浏览器或真实账户验收。
+- 首次实际测试FAIL保留：添加64按钮使未限高的原生fixture列表挤掉history区域，mount安全退出。最终fixture保持原127.21875px高度并内部滚动，删除额外项后恢复原style；未弱化mount几何断言、未伪造grant或扩展内部接口。
+- MAP-06候选升级后的精确节点去重、展开/焦点迁移仍IN_PROGRESS。256长标题候选还受既有surface-delta 64KiB边界约束，不能将分页协议容量视作整批来源已达标。生产context/accepted ACK/首发、100k/4x、真实G/U/PAIA及完整扩展BFCache条件仍未闭合；Free未完成、NOT_RELEASE_READY。

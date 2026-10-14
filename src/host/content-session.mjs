@@ -58,9 +58,9 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    if(current!==s||!enabled||sender?.id!==runtime.id)return;
    if(exactHostRecord(m,['type'])&&m.type==='HOST_DOCUMENT_INVALIDATED'){rebind(s);return;}
    if(m?.type==='HOST_CANDIDATES'){
-    const fields=m.phase==='list'?['type','documentToken','producerToken','routeEpoch','phase']:['type','documentToken','producerToken','routeEpoch','phase','candidate','actionId','uiGrantId','mountId','expiresAt'];
+    const fields=m.phase==='list'?['type','documentToken','producerToken','routeEpoch','phase',...(Object.hasOwn(m,'offset')?['offset']:[])]:['type','documentToken','producerToken','routeEpoch','phase','candidate','actionId','uiGrantId','mountId','expiresAt'];
     if(!exactHostRecord(m,fields)||!['list','activate'].includes(m.phase)||!s.ready||!s.candidates||!live(s)||Date.parse(s.binding.expiresAt)<=now()||Object.entries(bindingFields(s.binding)).some(([k,v])=>m[k]!==v)){reply({ok:false});return;}
-    const task=m.phase==='list'?s.candidates.list():s.candidates.activate({candidate:m.candidate,actionId:m.actionId,uiGrantId:m.uiGrantId,mountId:m.mountId,expiresAt:m.expiresAt});
+    const task=m.phase==='list'?s.candidates.listPage(Object.hasOwn(m,'offset')?m.offset:0):s.candidates.activate({candidate:m.candidate,actionId:m.actionId,uiGrantId:m.uiGrantId,mountId:m.mountId,expiresAt:m.expiresAt});
     Promise.resolve(task).then(value=>reply(live(s)?value:{ok:false}),()=>reply({ok:false}));return true;
    }
    if(m?.type==='HOST_SNIPPET_RESTORE'){

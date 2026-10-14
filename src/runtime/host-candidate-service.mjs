@@ -25,7 +25,9 @@ export function createHostCandidateService({ui,bridge,elapsedNow=()=>performance
  async function handle(input,sender){
   if(stopped)return failure();let m;try{m=structuredClone(input);sender=structuredClone(sender);}catch{return failure();}
   const listing=m?.type==='HOST_UI_CANDIDATES';
-  if(!exactHostRecord(m,['v','type','grantId','mountId',...listing?[]:['renderKey','actionId']])||m.v!==1||!tokenOK(m.grantId)||!tokenOK(m.mountId)||!listing&&(m.type!=='HOST_UI_ACTIVATE_CANDIDATE'||!renderKeyOK(m.renderKey)||!tokenOK(m.actionId)))return failure();
+  const requestedOffset=listing&&Object.hasOwn(m,'offset')?m.offset:0;
+  if(listing&&(!Number.isSafeInteger(requestedOffset)||requestedOffset<0||requestedOffset>224||requestedOffset%32!==0))return failure();
+  if(!exactHostRecord(m,['v','type','grantId','mountId',...(listing?(Object.hasOwn(m,'offset')?['offset']:[]):['renderKey','actionId'])])||m.v!==1||!tokenOK(m.grantId)||!tokenOK(m.mountId)||!listing&&(m.type!=='HOST_UI_ACTIVATE_CANDIDATE'||!renderKeyOK(m.renderKey)||!tokenOK(m.actionId)))return failure();
   const a={active:true,started:elapsedNow(),order:++order};attempts.add(a);
   const live=()=>{const time=elapsedNow();if(stopped||!Number.isFinite(time)||time<a.started||time-a.started>=6000)a.active=false;return a.active;};
   try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:m.grantId,mountId:m.mountId},async context=>{
@@ -36,10 +38,17 @@ export function createHostCandidateService({ui,bridge,elapsedNow=()=>performance
    if(listing){
     const prior=lists.get(key);if(prior&&prior.order>a.order)throw Error('stale-candidate-list');if(!prior&&lists.size>=64)throw Error('candidate-capacity');
     const e={key,order:a.order,created:elapsedNow(),until:elapsedNow()+30000,current:context.isCurrent,rows:new Map()};lists.set(key,e);
-    const result=structuredClone(await bridge({context,uiGrantId:m.grantId,mountId:m.mountId,phase:'list'}));check();if(!liveList(e))throw Error('stale-candidate-list');
-    if(!Array.isArray(result)||result.length>32)throw Error('invalid-candidate-list');
-    const items=[],rows=new Map();for(let i=0;i<result.length;i++){const row=candidate(result[i]);if(rows.has(row.renderKey))throw Error('duplicate-candidate');rows.set(row.renderKey,row);const {planRevision,targetKey,...item}=row;items.push(item);}
-    e.rows=rows;return {ok:true,items};
+    const result=structuredClone(await bridge({context,uiGrantId:m.grantId,mountId:m.mountId,phase:'list',offset:requestedOffset}));check();if(!liveList(e))throw Error('stale-candidate-list');
+    let page,values;
+    if(Array.isArray(result)){if(requestedOffset!==0||result.length>32)throw Error('invalid-candidate-list');values=result;page={offset:0,total:result.length,nextOffset:null};}
+    else{
+     if(!exactHostRecord(result,['items','total','offset','nextOffset'])||!Array.isArray(result.items)||!Number.isSafeInteger(result.total)||result.total<0||result.total>256)throw Error('invalid-candidate-page');
+     const offset=Math.min(requestedOffset,result.total?Math.floor((result.total-1)/32)*32:0),count=Math.min(32,result.total-offset),nextOffset=offset+count<result.total?offset+32:null;
+     if(result.offset!==offset||result.nextOffset!==nextOffset||result.items.length!==count)throw Error('invalid-candidate-page');
+     values=result.items;page={offset,total:result.total,nextOffset};
+    }
+    const items=[],rows=new Map();for(let i=0;i<values.length;i++){const row=candidate(values[i]);if(rows.has(row.renderKey))throw Error('duplicate-candidate');rows.set(row.renderKey,row);const {planRevision,targetKey,...item}=row;items.push(item);}
+    e.rows=rows;return {ok:true,items,page};
    }
    const e=lists.get(key),row=e?.rows.get(m.renderKey);if(!e||!liveList(e)||!row?.available||actions.has(m.actionId)||actions.size>=1024)throw Error('candidate-unavailable');
    actions.set(m.actionId,context.isCurrent);

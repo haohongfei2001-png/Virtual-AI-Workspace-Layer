@@ -13,3 +13,36 @@ test('late list after route invalidation or stop cannot issue plans',async()=>{f
 
 test('issued plan ledger is bounded to 256 without replacing same-render-key siblings prematurely',async()=>{const f=fixture(),first=(await f.owner.list())[0];let last;for(let i=0;i<256;i++)last=(await f.owner.list())[0];assert.equal((await f.owner.activate(f.dto(first))).state,'blocked');assert.equal((await f.owner.activate(f.dto(last))).state,'dispatched');});
 test('unavailable plans remain displayable but never authorize activation',async()=>{const f=fixture();f.adapter.planNavigation=()=>({mode:'unavailable',reason:'input-risk-unresolved'});const row=(await f.owner.list())[0];assert.equal(row.available,false);assert.equal(row.targetKey,null);assert.equal((await f.owner.activate(f.dto(row))).state,'blocked');assert.equal(f.calls.length,0);});
+
+for(const total of [33,65,256])test(`pagination reaches all ${total} same-name controls in native order and issues only page plans`,async()=>{
+ const f=fixture();f.setRows(Array.from({length:total},(_,i)=>f.project(`r${i}`,'Same')));
+ let issued=0;const original=f.adapter.planNavigation;f.adapter.planNavigation=target=>{issued++;return original(target);};
+ const seen=[];let offset=0;do{const page=await f.owner.listPage(offset);assert.equal(page.total,total);assert.equal(page.offset,offset);assert.equal(page.items.length,Math.min(32,total-offset));assert.equal(issued,seen.length+page.items.length);seen.push(...page.items.map(row=>row.renderKey));offset=page.nextOffset;}while(offset!==null);
+ assert.deepEqual(seen,Array.from({length:total},(_,i)=>`r${i}`));
+ const last=await f.owner.listPage(224),expected=Math.floor((total-1)/32)*32;assert.equal(last.offset,expected);assert.equal(last.nextOffset,null);assert.equal(last.items.at(-1).renderKey,`r${total-1}`);
+});
+test('fresh shrinking inventory clamps page offset and empty inventory returns page zero',async()=>{
+ const f=fixture();f.setRows(Array.from({length:256},(_,i)=>f.project(`r${i}`)));assert.equal((await f.owner.listPage(224)).offset,224);
+ f.setRows(Array.from({length:33},(_,i)=>f.project(`r${i}`)));assert.deepEqual((await f.owner.listPage(224)).items.map(row=>row.renderKey),['r32']);
+ f.setRows([]);assert.deepEqual(await f.owner.listPage(224),{items:[],total:0,offset:0,nextOffset:null});
+});
+test('offset validation precedes adapter reads',async()=>{
+ const f=fixture();let reads=0;f.read(()=>{reads++;return [];});
+ for(const offset of [-32,1,31,33,225,256,1.5,NaN,Infinity,null,'32',{},true])await assert.rejects(f.owner.listPage(offset),/invalid-candidate-offset/);
+ assert.equal(reads,0);assert.deepEqual(await f.owner.listPage(),{items:[],total:0,offset:0,nextOffset:null});
+});
+test('duplicate render keys or oversized inventory reject before any page plans are minted',async()=>{
+ for(const mode of ['duplicate','oversized']){const f=fixture();let plans=0;f.adapter.planNavigation=()=>{plans++;throw Error('should-not-plan');};
+ const rows=Array.from({length:mode==='oversized'?257:65},(_,i)=>f.project(`r${i}`));if(mode==='duplicate')rows[64]=f.project('r0');f.setRows(rows);
+ await assert.rejects(f.owner.listPage(0),/invalid-content-candidates/);assert.equal(plans,0);}
+});
+test('duplicate keys across surface proposals reject and non-controls do not affect total',async()=>{
+ const f=fixture();f.read(()=>[{kind:'surface-delta',payload:{candidates:[f.project('a')]}},{kind:'surface-delta',payload:{candidates:[f.project('a')]}}]);await assert.rejects(f.owner.listPage(),/invalid-content-candidates/);
+ f.read(()=>[{kind:'surface-delta',payload:{candidates:[{...f.project('a'),entity:'conversation'},f.project('b'),{...f.project('b'),target:{kind:'resolved'}}]}}]);const page=await f.owner.listPage();assert.equal(page.total,1);assert.deepEqual(page.items.map(row=>row.renderKey),['b']);
+});
+test('dual-frame different pages retain old issued plans without authorizing unissued or stale targets',async()=>{
+ const f=fixture();f.setRows(Array.from({length:65},(_,i)=>f.project(`r${i}`)));const first=await f.owner.listPage(),tail=await f.owner.listPage(64);
+ assert.equal((await f.owner.activate(f.dto(first.items[0]))).state,'dispatched');assert.equal((await f.owner.activate({...f.dto(tail.items[0]),actionId:'tailAction'})).state,'dispatched');
+ assert.equal((await f.owner.activate(f.dto({...tail.items[0],renderKey:'r33'}))).state,'blocked');
+ f.invalidate();assert.equal((await f.owner.activate(f.dto(first.items[0]))).state,'blocked');await assert.rejects(f.owner.listPage(32),/stale-content/);
+});
