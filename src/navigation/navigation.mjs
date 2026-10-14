@@ -13,7 +13,14 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const framed=surface!==null;
   if(framed&&(!['workspace','sidebar'].includes(surface.role)||surface.root?.ownerDocument!==doc))throw Error('invalid-navigation-surface');
   const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,frameSearchOffset=0,frameSearchWaiting=false,frameWorkingSetOffset=0,frameWorkingSetWaiting=false,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
-  let navigationIntent=0;
+  let navigationIntent=0,navigationFeedback=null;
+  function clearNavigationFeedback(){navigationFeedback=null;for(const pane of [roots?.workspace,roots?.sidebar])pane?.shadow.querySelector('.navigation-feedback')?.remove();}
+  function advanceNavigationIntent(preserveFeedback=false){navigationIntent++;if(preserveFeedback&&navigationFeedback&&navigationFeedback.scope===snapshot?.scope&&navigationFeedback.url===adapter.currentURL())navigationFeedback.intent=navigationIntent;else clearNavigationFeedback();return navigationIntent;}
+  function renderNavigationFeedback(parent){
+    if(!navigationFeedback||navigationFeedback.scope!==snapshot?.scope||navigationFeedback.intent!==navigationIntent)return;
+    const notice=node(doc,'div',{class:'navigation-feedback toolbar',role:'status','aria-live':'polite'});notice.append(node(doc,'span',{},navigationFeedback.state==='blocked'?'暂时无法打开，请使用原生入口继续。':'打开结果未确认，请先查看原生页面。'));
+    if(navigationFeedback.href){const link=node(doc,'a',{},'保留当前内容，在新标签打开');link.href=navigationFeedback.href;link.target='_blank';link.rel='noopener noreferrer';notice.append(link);}parent.append(notice);
+  }
   let settingsOpen=false,timePolicyNotice=null,timePolicyNoticeTimer=null,lastTimePolicyNotice=null;
   let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,projectionRequest=0,horizonPending=null,horizonError=null,workingSetPending=null,workingSetError=null,snippetLocatePending=null,resumeLayout=null;
   // Keep the original event target alive until its click, drop, or composition
@@ -86,7 +93,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   if(!framed)doc.addEventListener('focusin',trackFocus);
   const captureFocus=()=>{const n=doc.activeElement;if(n===lastNativeFocus?.node){lastNativeFocus.start=n.selectionStart;lastNativeFocus.end=n.selectionEnd;}};
   const restoreFocus=()=>{const f=lastNativeFocus;if(f?.node.isConnected){f.node.focus({preventScroll:true});if(typeof f.start==='number'&&f.node.setSelectionRange)f.node.setSelectionRange(f.start,f.end);}};
-  const button=(label,fn,text='',cls='square')=>{const b=node(doc,'button',{type:'button','aria-label':label,title:label,class:cls},text);b.dataset.focusKey=label;b.addEventListener('click',event=>{navigationIntent++;fn(event);});return b;};
+  const button=(label,fn,text='',cls='square')=>{const b=node(doc,'button',{type:'button','aria-label':label,title:label,class:cls},text);b.dataset.focusKey=label;b.addEventListener('click',event=>{advanceNavigationIntent();fn(event);});return b;};
   function own(tag='div'){const n=node(doc,tag,{'data-vaiwl-owned':token});const shadow=n.attachShadow({mode:'open'});shadow.append(node(doc,'style',{},css));return {n,shadow};}
   function restoreMask(){if(!mask)return;for(const[name,prior,expected]of mask.attrs){if(mask.node.getAttribute(name)===expected){if(prior===null)mask.node.removeAttribute(name);else mask.node.setAttribute(name,prior);}}mask=null;}
   function setMask(n,enabled){if(!enabled){restoreMask();return;}if(mask?.node===n)return;restoreMask();const attrs=[['data-vaiwl-mask',n.getAttribute('data-vaiwl-mask'),token],['inert',n.getAttribute('inert'),'']];for(const[k,,v]of attrs)n.setAttribute(k,v);mask={node:n,attrs};}
@@ -148,8 +155,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function emitView(){if(view&&snapshot)onViewChange({segment:view.segment,oldOpen:[...view.oldOpen],sidebarOpen:[...view.sidebarOpen],capacities:[...view.capacities],scroll:view.scroll,sidebarScroll:view.sidebarScroll??0,sidebarVisible:view.sidebarVisible,...(free()&&snapshot.viewSession?{freeSession:snapshot.viewSession}:{})},snapshot.scope,...(framed?[{role:surface.role}]:[]));}
   function remember(){if(view&&roots)view.sidebarScroll=roots.sidebar?.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;if(view?.mode==='workspace'&&roots?.workspace?.scroller&&roots.workspace.n.style.display!=='none')view.scroll=roots.workspace.scroller.scrollTop;}
   function calibrationEntry(){if(!free()||!roots)return;const objectIds=view.segment===0?['inventory']:[...new Set([...(roots.workspace?.shadow.querySelectorAll('[data-ref-id]')??[])].map(n=>n.dataset.refId))].slice(0,64);onCalibrationEntry({kind:view.segment===0?'foreground':'history',objectIds:objectIds.length?objectIds:['inventory']});}
-  function showWorkspace(notify=true){if(!view)return;navigationIntent++;if(!framed)captureFocus();remember();const resetFrame=frameProjection&&(view.worksetOpen||searchQuery!==null);view.mode='workspace';view.worksetOpen=false;searchQuery=null;searchTheme=null;if(resetFrame){projectionRequest++;requestFrame();}render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();if(framed&&notify)onPresentationRequest({kind:'show-workspace'});}
-  function enterReading(notify=true){if(!view)return;navigationIntent++;remember();clearTimePolicyNotice();view.mode='reading';searchQuery=null;searchTheme=null;layout();if(framed&&notify)onPresentationRequest({kind:'enter-reading'});}
+  function showWorkspace(notify=true){if(!view)return;advanceNavigationIntent(true);if(!framed)captureFocus();remember();const resetFrame=frameProjection&&(view.worksetOpen||searchQuery!==null);view.mode='workspace';view.worksetOpen=false;searchQuery=null;searchTheme=null;if(resetFrame){projectionRequest++;requestFrame();}render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();if(framed&&notify)onPresentationRequest({kind:'show-workspace'});}
+  function enterReading(notify=true){if(!view)return;advanceNavigationIntent();remember();clearTimePolicyNotice();view.mode='reading';searchQuery=null;searchTheme=null;layout();if(framed&&notify)onPresentationRequest({kind:'enter-reading'});}
   function openRef(ref,event){if(ref.available===false){event.preventDefault();return;}if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;remember();if(ref.anchor)pendingAnchor={scope:snapshot.scope,ref,anchor:ref.anchor};clearTimePolicyNotice();view.mode='reading';searchQuery=null;searchTheme=null;layout();const same=adapter.isCurrent(ref.nativeUrl);adapter.openNative(ref.nativeUrl,event);if(same){restoreFocus();locateAnchor();}}
   // Frame plans are supplied synchronously before activation. Never fetch a plan in a click handler.
   function bindPlannedLink(a,ref,entity='conversation'){
@@ -164,11 +171,15 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     else{a.setAttribute('role','button');a.tabIndex=0;}
     a.addEventListener('click',event=>{
       if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;
-      const dispatchIntent=++navigationIntent;
+      const dispatchIntent=advanceNavigationIntent(),dispatchProjection=frameProjection,dispatchScope=snapshot?.scope,dispatchURL=adapter.currentURL();
       if(plan.mode==='href')return; // Browser default only; no duplicate RPC or fallback.
       event.preventDefault();
       const dto={actionId:'ui_'+win.crypto.randomUUID().replaceAll('-',''),uiGrantId:issued.uiGrantId,mountId:issued.mountId,planRevision:plan.planRevision,targetKey:issued.targetKey};
-      try{Promise.resolve(onDispatch(dto)).then(result=>{if((plan.mode==='same-target'&&result?.state==='already-current'||plan.mode==='native-control'&&result?.state==='dispatched')&&!stopped&&navigationIntent===dispatchIntent)enterReading(false);}).catch(()=>{});}catch{} // Unconfirmed dispatch is never retried.
+      const showResult=result=>{if(stopped||navigationIntent!==dispatchIntent||snapshot?.scope!==dispatchScope||frameProjection!==dispatchProjection||adapter.currentURL()!==dispatchURL)return;
+        if(plan.mode==='same-target'&&result?.state==='already-current'||plan.mode==='native-control'&&result?.state==='dispatched'){enterReading(false);return;}
+        navigationFeedback={scope:dispatchScope,url:dispatchURL,intent:dispatchIntent,state:result?.state==='blocked'?'blocked':'unconfirmed',href:safeHref??null};sidebarDirty=true;requestRender();
+      };
+      try{Promise.resolve(onDispatch(dto)).then(showResult,()=>showResult({state:'unconfirmed'}));}catch{showResult({state:'unconfirmed'});} // Only an explicit later link click navigates; never retry here.
     });
     if(!safeHref)a.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();a.click();}});
   }
@@ -285,7 +296,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const nextSidebarKey=JSON.stringify([snapshot.scope,adapter.currentURL(),view.sidebarVisible,[...view.sidebarOpen],[...view.oldOpen].filter(k=>k.startsWith('side:')),[...view.capacities].filter(([k])=>k.startsWith('side:')||k.includes(':side:'))]);
     const side=roots.sidebar?.shadow;
     if(side&&(sidebarDirty||sidebarKey!==nextSidebarKey||!side.querySelector('section'))){
-    side.querySelector('section')?.remove();const panel=node(doc,'section');const tools=node(doc,'div',{class:'toolbar'});tools.append(node(doc,'strong',{},free()?'项目':'主题'),graphic(button(free()?'查找已知项目与聊天':'查找主题与派生名称',()=>findKnown()),'search'),graphic(button('折叠主题导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;render();}),view.sidebarVisible?'minus':'plus'),graphic(button(framed?'退出工作空间增强':'退出测试增强',()=>{if(stopped)return;stop();onExit();}),'close'));if(onManage)tools.append(graphic(button('管理工作空间',()=>onManage()),'more'));const workset=button('当前工作集',()=>showWorkingSet());workset.innerHTML=svgIcon('collection');tools.append(workset);if(frameProjection&&typeof onSnippetsRequest==='function')tools.append(button('已保存片段',()=>{if(!stopped&&frameProjection)onSnippetsRequest();}));panel.append(tools);
+    side.querySelector('section')?.remove();const panel=node(doc,'section');const tools=node(doc,'div',{class:'toolbar'});tools.append(node(doc,'strong',{},free()?'项目':'主题'),graphic(button(free()?'查找已知项目与聊天':'查找主题与派生名称',()=>findKnown()),'search'),graphic(button('折叠主题导航',()=>{remember();view.sidebarVisible=!view.sidebarVisible;render();}),view.sidebarVisible?'minus':'plus'),graphic(button(framed?'退出工作空间增强':'退出测试增强',()=>{if(stopped)return;stop();onExit();}),'close'));if(onManage)tools.append(graphic(button('管理工作空间',()=>onManage()),'more'));const workset=button('当前工作集',()=>showWorkingSet());workset.innerHTML=svgIcon('collection');tools.append(workset);if(frameProjection&&typeof onSnippetsRequest==='function')tools.append(button('已保存片段',()=>{if(!stopped&&frameProjection)onSnippetsRequest();}));panel.append(tools);renderNavigationFeedback(panel);
     const list=node(doc,'nav',{class:'themes','aria-label':'VAIWL 主题导航'});list.hidden=!view.sidebarVisible;
     const sideGroups=frameProjection?groups:groups.filter(g=>g.segment===0||(free()&&g.segment===null)||g===selected);
     for(const g of sideGroups){const block=node(doc,'section',{class:'group'});const toggle=button('侧栏主题 '+g.name,()=>{view.sidebarOpen.has(g.id)?view.sidebarOpen.delete(g.id):view.sidebarOpen.add(g.id);render();if(frameProjection&&view.sidebarOpen.has(g.id))requestFrame({groupId:g.id,list:'current',rowOffset:0,rowLimit:5});},'','theme-toggle');toggle.dataset.focusKey='theme:'+g.id;toggle.append(themeGlyph(g),node(doc,'span',{class:'theme-name',title:g.name},g.name));appendFreshness(toggle,g);if(g.freshness==='last-known')toggle.setAttribute('aria-label','侧栏主题 '+g.name+'，上次确认');const disclosure=node(doc,'span',{class:'theme-disclosure','aria-hidden':'true'});disclosure.innerHTML=chevron;toggle.append(disclosure);toggle.setAttribute('aria-expanded',String(view.sidebarOpen.has(g.id)));block.append(toggle);
@@ -295,6 +306,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     }
     if(!roots.workspace){restoreOwnedFocus(focused);emitView();return;}
     const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-segment':String(view.segment)});roots.workspace.scroller=page;page.addEventListener('scroll',()=>{if(roots?.workspace?.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){view.scroll=page.scrollTop;emitView();}},{passive:true});
+    renderNavigationFeedback(page);
     const currentSlot=frameProjection&&searchQuery===null&&!view.worksetOpen?node(doc,'div',{}):null;if(currentSlot)page.append(currentSlot);
     if(frameProjection&&surface.role==='workspace'){
       const settingsScope=frameProjection.scope,settingsLive=()=>!stopped&&frameProjection?.scope===settingsScope;
@@ -305,7 +317,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
           const label=node(doc,'label',{},'时间范围 '),select=node(doc,'select',{'aria-label':'工作空间时间范围','data-focus-key':'free-horizon'}),policy=frameProjection.timePolicy;
           select.append(node(doc,'option',{value:'auto'},'自动'));
           for(const H of [7,14,30,60,90])select.append(node(doc,'option',{value:String(H)},H+'天'));
-          select.value=policy?.mode==='auto'?'auto':String(policy?.H??frameProjection.viewSession.H);select.disabled=!!horizonPending;select.onchange=()=>{if(settingsLive()&&settingsOpen)void requestHorizon(select.value);};label.append(select);settings.append(label,node(doc,'span',{},'当前范围：'+String(frameProjection.viewSession.H)+'天'));
+          select.value=policy?.mode==='auto'?'auto':String(policy?.H??frameProjection.viewSession.H);select.disabled=!!horizonPending;select.onchange=()=>{if(settingsLive()&&settingsOpen){advanceNavigationIntent();void requestHorizon(select.value);}};label.append(select);settings.append(label,node(doc,'span',{},'当前范围：'+String(frameProjection.viewSession.H)+'天'));
           if(horizonPending||horizonError)settings.append(node(doc,'span',{role:'status'},horizonPending?'正在更新时间范围…':horizonError));
         }
         if(typeof onSnippetsRequest==='function')settings.append(button('已保存片段',()=>{if(settingsLive()&&settingsOpen)onSnippetsRequest();}));
@@ -341,7 +353,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         if(found.hasMore)results.append(button('显示更多查找结果',()=>{requestFrameSearch(found.offset+found.limit);render();},'显示更多','more'));
         if(found.offset>0)results.append(button('返回前页查找结果',()=>{requestFrameSearch(Math.max(0,found.offset-found.limit));render();},'上一页','more'));
       };
-      input.oninput=()=>{searchQuery=input.value.slice(0,200);input.value=searchQuery;requestFrameSearch();display();};
+      input.oninput=()=>{advanceNavigationIntent();searchQuery=input.value.slice(0,200);input.value=searchQuery;requestFrameSearch();display();};
       section.append(input,node(doc,'p',{},'查找已知项目、聊天与已保存片段。原生搜索独立保留。'),results);display();page.append(section);
     }else if(frameProjection&&view.worksetOpen){
       const section=node(doc,'section',{class:'search working-set','aria-label':'当前工作集'}),found=frameProjection.workingSet;
@@ -411,7 +423,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(snapshot?.scope===dto.scope&&dto.workingSet&&(!view.worksetOpen||searchQuery!==null||dto.workingSet.offset!==frameWorkingSetOffset))return;
     if(snapshot?.scope===dto.scope&&dto.search&&(searchQuery===null||dto.search.query!==searchQuery||dto.search.projectId!==searchTheme||dto.search.offset!==frameSearchOffset))return;
     if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame',currentEntry];return;}
-    const scopeChanged=snapshot?.scope!==dto.scope;const copy=structuredClone(dto);resetInteraction(true);sidebarDirty=true;remember();
+    const scopeChanged=snapshot?.scope!==dto.scope;const copy=structuredClone(dto);if(scopeChanged||navigationFeedback?.url!==adapter.currentURL())clearNavigationFeedback();resetInteraction(true);sidebarDirty=true;remember();
     if(snapshot?.scope!==copy.scope){horizonPending=null;horizonError=null;detach();searchQuery=null;searchTheme=null;projectionRequest++;}
     if(copy.segment!==0||copy.search||copy.workingSet)clearTimePolicyNotice(false);
     if(scopeChanged){clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;workingSetPending=null;workingSetError=null;}projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
@@ -425,7 +437,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function update(value,now,timeZone,preparedIndex=null){if(value?.protocol==='vaiwl-free-frame/1')throw Error('frame-projection-requires-explicit-consumer');return applyUpdate(value,now,timeZone,preparedIndex);}
   function updatePreparedFree(value,now,timeZone,preparedIndex=null){assertPreparedFreeSnapshot(value);return applyUpdate(value,now,timeZone,preparedIndex,true);}
-  function invalidate(reason='binding-invalidated'){clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
+  function invalidate(reason='binding-invalidated'){advanceNavigationIntent();clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
   function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);for(const[type,handler]of Object.entries(interactionHandlers))doc.removeEventListener(type,handler,true);win.removeEventListener?.('blur',windowBlur);if(!framed)restoreFocus();status={state:'STOPPED'};adapter.status(status);}
   function needsNativeProject(projectId){
     if(stopped||!framed||!frameProjection||!view||view.mode!=='workspace'||searchQuery!==null||view.worksetOpen||interacting()||updateTimer!==null||typeof projectId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(projectId)||['__proto__','prototype','constructor'].includes(projectId)||groups.some(group=>group.id===projectId))return false;
@@ -450,9 +462,9 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     return true;
   }
   function present(intent){
-    navigationIntent++;
+    advanceNavigationIntent(intent?.kind==='show-workspace');
     if(stopped||!snapshot||!['show-workspace','enter-reading','search-known','show-working-set'].includes(intent?.kind))return false;
     if(interacting()||updateTimer!==null){pendingPresentation={scope:snapshot.scope,intent:{kind:intent.kind,...(intent.kind==='search-known'?{themeId:intent.themeId??null}:{})}};finishInteraction();return true;}
     if(intent?.kind==='show-workspace')showWorkspace(false);else if(intent?.kind==='enter-reading')enterReading(false);else if(intent?.kind==='search-known')findKnown(intent.themeId??null,false);else if(intent?.kind==='show-working-set')showWorkingSet(false);else return false;return true;}
-  return Object.freeze({needsNativeProject,workspaceEntered(){if(stopped||!framed||!frameProjection||!view)return false;navigationIntent++;view.mode='workspace';return true;},revealNativeProject,restoreFrameView(value){if(!framed||stopped)return false;resumeLayout=validateFrameResumeView(value);return true;},showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
+  return Object.freeze({needsNativeProject,workspaceEntered(){if(stopped||!framed||!frameProjection||!view)return false;advanceNavigationIntent(true);view.mode='workspace';return true;},revealNativeProject,restoreFrameView(value){if(!framed||stopped)return false;resumeLayout=validateFrameResumeView(value);return true;},showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
 }

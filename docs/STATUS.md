@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round191：已解析原生Project/Conversation通过原控件单次导航接入Free UI；完整Node3536项、正式隔离Chrome MV3五项通过。100k/4x预算FAIL、首页首发、候选内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
+当前已推进至Round192：已解析原生P/C单次导航及结果未知提示接入双frame；本轮定向Node258项、workspace/sidebar故障注入各3项通过，上一里程碑完整Node3536项通过。100k/4x预算FAIL、首页首发、候选内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1908,3 +1908,14 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 最终完整Node **3536/3536 PASS**（free-round191-node.log.gz）。独立新增句柄、owner/frame严格合同与deadline/replay反例；初次getter读取定向失败及完整回归2处Project入口失败日志保留。修复不完整native计划呈现，旧href断言改为直接验证默认不被preventDefault且无RPC，保留href取消旧呈现意图的监听。
 - 最终正式package隔离headless Chrome MV3 **5组PASS**（free-round191-resolved-navigation-browser.json）：C和P真实Free点击各触发原anchor程序click一次、server导航一次、同tab SPA、原textarea保留；各自旧action在route rebind后拒绝；Meta真链接新tab零委托。worker外网阻断，源码/脚本未漂移。最终Project校验前的5项另存before-project-guard，不叠加统计；明确双visible-frame rAF+200ms前置，不证明旧即时pointer失败已修复。
 - 88fa5ef此前已正常推送，含Round189积压；72ca068仍为祖先。此轮仅闭合已解析原生控件导航切片，结果提示仍需接UI；100k FAIL、首页首发/候选内存、完整81项/J1–J4、真实profile/G/U/PAIA/物理IME等缺口保持，Free NOT_RELEASE_READY。
+
+
+## Round192：未知导航结果可见反馈与明确后续链接（接69d6503）
+
+- 已解析导航的blocked/unconfirmed/异常不再静默：owned renderer给出role=status、aria-live=polite提示；只有既有安全href才给出“保留当前内容，在新标签打开”独立真链接。当前次失败不自动跳转、不第二次RPC、不重试；未知结果不声称已成功或确定失败。
+- 已结算反馈仅同scope/原生URL跨四格返回与普通同上下文刷新保留；返回仍递增意图使尚未结算的旧回复失效。新导航、按钮、搜索输入、时间范围选择、route/scope变化、撤权/stop均清除旧反馈。原projection对象与URL/意图一起隔离迟到结果，不增加持久化数据或抢原生焦点。
+- 独立审查修复两个实际缺口：隐藏frame中的未知提示不能在四格返回时被无条件删除；搜索input与范围select不是button，须单独推进新意图。侧栏提示放toolbar后/列表前，保持可达。
+- 最终定向Node **258/258 PASS**（free-round192-targeted.log.gz），含renderer63项及frame/既有navigation回归；本轮只改renderer，不将上轮3536项称为此轮重跑。
+- 正式package隔离headless Chrome MV3，workspace **3/3 PASS**、sidebar **3/3 PASS**，分别记录navigation-feedback-browser及sidebar-navigation-feedback-browser报告与截图。明确本地fixture故障注入：CDP仅在实际扩展ISOLATED world使指定原anchor.click抛错；真实产品链回unconfirmed、仅一次attempt/RPC、双surface隐藏、唯一四格返回后提示实际可见，用户明确fallback新tab且零重复RPC/原生导航，原editor与页面保留。不是实际ChatGPT故障或普通原生handler行为认证。
+- 首次MAIN world覆盖无效导致实际dispatched的测试失败保留main-world-injection报告；改正注入后、侧栏布局修改前结果另存before-sidebar-layout，不与最终角色测试叠加。worker外网阻断、最终source/script hashes稳定；已人工查看截图，未记录运行期boundingBox。沿用双rAF+200ms绘制条件，旧reading即时pointer FAIL仍保留。
+- 69d6503已正常push到原PR #16，72ca068仍为祖先。首页首发因缺独立因果witness不可把后读消息冒充本次发送ACK；生产send开关仍原默认。原100k FAIL、完整81项/J1–J4、真实G/U/PAIA/物理IME等缺口保持，Free NOT_RELEASE_READY。
