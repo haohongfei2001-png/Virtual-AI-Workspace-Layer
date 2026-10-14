@@ -4,13 +4,16 @@ import { instant } from '../navigation/projection.mjs';
 const reserved = new Set(['__proto__', 'constructor', 'prototype']);
 const availabilityValues = ['available', 'unavailable', 'unknown'];
 const membershipValues = ['PROJECT', 'NONE', 'UNKNOWN'];
+const rowWitnessFields=['sourceId','generation','sourceRevision','observedAt','validUntil'];
+const rowFields={projects:['id','nativeName','nativeUrl','availability',...rowWitnessFields],refs:['id','nativeTitle','nativeUrl','availability',...rowWitnessFields],membership:['id','state','projectId',...rowWitnessFields]};
+const rowOptional={projects:['nativeAliases','memberCount'],refs:['nativeAliases'],membership:[]};
 function identifier(value) {
   if (!tokenOK(value) || reserved.has(value)) throw Error('invalid-native-id');
   return value;
 }
 function shape(value, fields, optional = []) {
   if (!isRecord(value) || fields.some(key => !Object.hasOwn(value, key)) ||
-      Object.keys(value).some(key => ![...fields,...optional].includes(key))) throw Error('invalid-native-schema');
+      Object.keys(value).some(key => !fields.includes(key) && !optional.includes(key))) throw Error('invalid-native-schema');
 }
 function timestamp(value) {
   const result = instant(value);
@@ -84,9 +87,7 @@ function validateNativeFactsStructure(facts, scope) {
         inventory(row.inventory);
         continue;
       }
-      const fields = table === 'membership' ? ['state', 'projectId'] :
-        [table === 'projects' ? 'nativeName' : 'nativeTitle', 'nativeUrl', 'availability'];
-      shape(row, ['id', ...fields, 'sourceId', 'generation', 'sourceRevision', 'observedAt', 'validUntil'], table === 'membership' ? [] : ['nativeAliases', ...(table === 'projects' ? ['memberCount'] : [])]);
+      shape(row,rowFields[table],rowOptional[table]);
       if (row.nativeAliases !== undefined && (!Array.isArray(row.nativeAliases) || row.nativeAliases.length > 20 || row.nativeAliases.some(v => typeof v !== 'string' || !v.trim() || v.length > 200))) throw Error('invalid-native-aliases');
       if (row.memberCount !== undefined && row.memberCount !== null && (!Number.isSafeInteger(row.memberCount) || row.memberCount < 0 || row.memberCount > 100000)) throw Error('invalid-native-member-count');
       witness(row);

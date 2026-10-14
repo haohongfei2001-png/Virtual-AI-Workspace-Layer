@@ -1521,3 +1521,9 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 独立序列化测试覆盖4096..65536预算、中文/emoji/引号反斜杠/换行/孤立surrogate以及恰好边界/少一字节拒绝；定向 **43/43 PASS**（free-round153-target.log）。80次交错Node微基准分片完全一致，中位9.097→1.096ms（free-round153-benchmark.json），仅组件微基准，不能代替F1。
 - 隔离headless MV3 **6/6 PASS/sourceChangedDuringRun=false**（free-round153-long-surface-mv3.json），253个发现上限内600字节标题完整进入真实IDB，自动ACK链保持。本轮完整Node NOT_RUN，最近完整为Round151。100k/4x最终审计、首页首发独立因果证据与真实G/U仍未完成，Free NOT_RELEASE_READY。
 - 上轮5f63504普通push达到30秒总时限，仍未确认远端同步；本地提交与成果完整。
+
+## Round154：原生结构校验减少重复分配（接 268b566）
+
+- native-facts shape 检查不再为每个字段重建 required+optional 数组；Project/ref/membership 的固定字段表复用。字段、时间、来源、成员依赖、容量和checksum审计均保留，没有跳过最终fresh piece校验。
+- 相关审计/准备/损坏反例 **45/45 PASS**；完整 Node **3161/3161 PASS**（free-round154-node.log.gz）。5000分片hash+validation交错微基准约32.156→30.884ms（free-round154-benchmark.json），约4%，不足以证明100k/4x启动达标，本轮不重复整套压力实验，浏览器 NOT_RUN。
+- 现有F1最终审计6秒缺口、首页首发和真实G/U保持未完成；Free NOT_RELEASE_READY。上一提交268b566普通推送仍网络低速超时，本地检查点完整。
