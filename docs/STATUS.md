@@ -1845,3 +1845,14 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 第五项为LOCAL_SYNTHETIC_GENERATION_NOT_CHATGPT_G：本地生成循环在确认disable及私有投影消失后tick从5增至9，原Stop handler点击一次停止，原输入继续可用。仅证明离线重建生成/真实Chrome生命周期，不代表真实ChatGPT生成或UI-12所有其他维度。
 - 保留三个测试前置失败报告：startup-timeout、reading-startup（原生reading重建后合法让位，非未挂载）、frame-commit-race（DOM iframe先于frame URL可观察）。最终使用已挂载frame实际内容与唯一返回按钮进入workspace；不修改产品代码、不延长期限，不将最终通过描述为产品竞态已修复。
 - 原100k FAIL和G/U等缺口保持；Free NOT_RELEASE_READY。9f1ae28已本地保存，上轮push低速超时，下一正常push将一并同步。下一具体产品修复：framed侧栏退出目前仅stop renderer，须区分用户主动退出与故障恢复，不能简单走SUSPEND自动重绑。
+
+
+## Round186：主动退出接线及阅读态指针失败检查点（接 148b08c；部分完成）
+
+- 修复framed侧栏“退出测试增强”只stop renderer、没有通知owner的问题：生产标签改“退出工作空间增强”，明确VAIWL_UI_EXIT只带role/type；parent核对owned frame/origin/window及exact字段后完整dispose，content-session主动stop而不是故障自动恢复。非framed旧标签/行为保持。阅读返回四格规则不变，主动完全退出本身不保留重入按钮，新文档可正常重新授权。
+- 保留SUSPEND原故障恢复语义；用户退出使enabled/restoreArmed/rebind队列与旧回调失效。cleanup先capture旧port/remove旧listeners、清私有DOM、排入父intent，再onClear及断旧port，避免onClear重入start误断新port或旧EXIT排在新JOIN之后。
+- 新增12项定向反例（4个frame接线、5个surface来源/早期注册/晚ACK、1个content-session晚恢复、2个清理顺序/同步重入）。最初frame接线80 PASS/4 FAIL保留before.log.gz；最终完整Node **3353/3353 PASS**。Symbol额外字段现由已有exactHostRecord拒绝。
+- 最终正式包workspace态实际headless MV3 **2组 PASS**（free-round186-workspace-exit.json，sourceChangedDuringRun=false）：真实点击退出、双surface/private frame/四格返回清空、同textarea草稿继续键入，真实21秒超过初始grant仍不复活；原生SPA导航保持同草稿，新文档重新取得新grant。
+- **reading-sidebar态仍FAIL，退出模块未完整验收**（free-round186-reading-exit-fail.json/png）：退出按钮位置/可见性正常，但真实点击事件停在parent IFRAME，child无pointer、无EXIT；原frame仍续期。单页+headless bringToFront亦复现，不能归因为多tab。该失败在handler之前，不能以workspace态通过覆盖。
+- 一组合并诊断：仅移除reading mask的interactivity、owned sidebar显式auto、同sidebar hide/show均无改善；临时包反转iframe append顺序也无改善，sidebar文档visible且shadow内部命中正确。相关diagnostic receipts与压缩脚本保留，只属DIAGNOSTIC_NOT_ACCEPTANCE；未将这些变体写进产品或放宽mask。继续最小双iframe机制复现，根因未明。
+- 148b08c及9f1ae28普通push低速超时，本地成果安全；当前远端上次确认8110537。100k及G/U等旧缺口保留，Free NOT_RELEASE_READY。

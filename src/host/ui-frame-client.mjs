@@ -8,11 +8,14 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
  if(!['workspace','sidebar'].includes(role)||!doc?.defaultView?.parent||!privateRoot||typeof privateRoot.replaceChildren!=='function'||typeof runtime?.connect!=='function'||typeof runtime.sendMessage!=='function'||parsed.origin!==parentOrigin||!['https:','http:'].includes(parsed.protocol))throw Error('invalid-ui-frame-client');
  let active=false,epoch=0,grant=null,port=null,expiryTimer=null,renewTimer=null,abort=null,disconnect=null,messageListener=null,rendering=false,desired=null;
  const clear=(reason,notify=true)=>{privateRoot.replaceChildren();try{if(notify)onClear(reason);}catch{/* Cleanup cannot restore authority. */}};
- function stop(reason='ui-stopped'){
+ function stop(reason='ui-stopped',userExit=false){
   const wasActive=active;active=false;if(desired){desired.resolve(false);desired=null;}epoch++;grant=null;cancel(expiryTimer);cancel(renewTimer);expiryTimer=renewTimer=null;abort?.abort();abort=null;
-  const previous=port;port=null;if(previous){try{previous.onDisconnect.removeListener(disconnect);}catch{}try{previous.onMessage?.removeListener(messageListener);}catch{}try{previous.disconnect();}catch{}}
-  clear(reason,wasActive);
-  if(wasActive)try{doc.defaultView.parent.postMessage({type:'VAIWL_UI_SUSPEND',role},parentOrigin);}catch{}
+  const previous=port;port=null;if(previous){try{previous.onDisconnect.removeListener(disconnect);}catch{}try{previous.onMessage?.removeListener(messageListener);}catch{}}
+  clear(reason,false);
+  // Notify before reentrant onClear callbacks or port teardown can start a new session.
+  if(wasActive)try{doc.defaultView.parent.postMessage({type:userExit?'VAIWL_UI_EXIT':'VAIWL_UI_SUSPEND',role},parentOrigin);}catch{}
+  if(wasActive)try{onClear(reason);}catch{}
+  try{previous?.disconnect();}catch{}
  }
  function valid(value,prior){
   if(!value||!['id','mountId','parentDocumentId','uiDocumentId','scopeGrantId'].every(k=>tokenOK(value[k]))||value.role!==role)return false;
@@ -73,5 +76,5 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
    return await publish(ack.grant,run);
   }catch{if(epoch===run)stop('ui-join-failed');return false;}
  }
- return Object.freeze({start,stop,isAuthorized:()=>!!grant&&now()<Date.parse(grant.expiresAt)});
+ return Object.freeze({start,stop,exit:()=>stop('ui-user-exit',true),isAuthorized:()=>!!grant&&now()<Date.parse(grant.expiresAt)});
 }

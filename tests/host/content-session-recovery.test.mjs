@@ -31,3 +31,14 @@ test('explicitly unverified scope during renewal forbids automatic recovery',asy
 });
 
 test('automatic replacement carries only private presentation intent and ignores old callbacks',async()=>{for(const mode of ['reading','workspace']){const f=fixture();await f.session.start();const prior=f.controllers[0];prior.terminate('ui-frame-suspended',{mode});await drain();assert.equal(f.controllers[1].options.initialMode,mode);prior.terminate('ui-frame-suspended',{mode:mode==='reading'?'workspace':'reading'});await drain();assert.equal(f.controllers.length,2);assert.equal(f.controllers[1].options.initialMode,mode);f.session.stop();}});
+
+
+test('explicit user exit ends session and fences late recovery callbacks until a new start',async()=>{
+ const f=fixture();await f.session.start();const old=f.controllers[0];old.terminate('ui-user-exit');await drain();
+ assert.equal(f.session.showWorkspace(),false);assert.equal(f.listeners.size,0);assert.equal(f.doc.draft,'UNSENT');
+ old.options.onTerminated('ui-frame-suspended');old.options.onTerminated('session-renew-failed');await f.advance(30000);
+ assert.equal(f.hellos().length,1);assert.equal(f.controllers.length,1);
+ await f.session.start();assert.equal(f.hellos().length,2);assert.equal(f.session.showWorkspace(),true);
+ old.options.onTerminated('ui-user-exit');assert.equal(f.session.showWorkspace(),true);
+ f.controllers[1].terminate('ui-frame-suspended');await drain();assert.equal(f.hellos().length,3);f.session.stop();
+});

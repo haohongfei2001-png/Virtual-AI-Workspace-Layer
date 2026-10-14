@@ -1,5 +1,6 @@
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {tokenOK} from '../b1/identity.mjs';
+import {exactHostRecord} from './contract.mjs';
 /** Isolated content composition. Public window messages only correlate an owned
  * frame. Grants and mount registration travel exclusively over the trusted bridge. */
 export function createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin,onTerminated=()=>{},initialMode='workspace',now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
@@ -61,7 +62,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(!valid(state,false)||event.origin!==trustedOrigin)return;
   const data=event.data;if(!data||Object.getPrototypeOf(data)!==Object.prototype)return;
   const target=state.frames.find(x=>x.role===data.role);if(!target||!target.frame.isConnected||event.source!==target.window||target.frame.contentWindow!==target.window)return;
-  if(data.type==='VAIWL_UI_SUSPEND'&&Object.keys(data).sort().join(',')==='role,type'){stop('ui-frame-suspended');return;}
+  if(exactHostRecord(data,['role','type'])&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(data.type)){stop(data.type==='VAIWL_UI_EXIT'?'ui-user-exit':'ui-frame-suspended');return;}
   if(Object.keys(data).sort().join(',')!=='nonce,role,type'||data.type!=='VAIWL_UI_JOIN'||!tokenOK(data.nonce)||state.pending.has(data.role)||state.grants.has(data.role))return;
   if(!state.registered){if(!state.earlyJoins.has(data.role))state.earlyJoins.set(data.role,{origin:event.origin,source:event.source,data:{type:data.type,role:data.role,nonce:data.nonce}});return;}
   state.pending.add(data.role);

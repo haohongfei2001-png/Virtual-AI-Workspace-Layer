@@ -170,6 +170,8 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     renewSession:async({handle,binding})=>{if(!bindingOK(binding,s.binding))throw Error('stale-content-binding');const started=elapsedNow();const renewed=await rpc(s,{v:1,type:'HOST_DOCUMENT_RENEW',clientId,seq:++seq,...bindingFields(binding)});if(renewed?.ok!==true||!bindingOK(renewed.binding,s.binding))throw Error('invalid-host-binding');const remaining=()=>{const budget=6000-(elapsedNow()-started);if(budget<=0)throw Error('request-timeout');return budget;};const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());if(authority?.state!=='verified'||authority.scopeKey!==s.scopeKey){s.recoveryDenied=true;throw Error('scope-not-verified');}const status=await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining());if(status?.ok===true)s.binding=Object.freeze({...renewed.binding});return {...status,binding:renewed.binding};}
    };
    s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onTerminated:(reason,presentation)=>{
+    // Intentional exit ends this document session, including late recovery callbacks.
+    if(current===s&&reason==='ui-user-exit'){stop();return;}
     // One fresh authorization attempt per explicit content start. A failed
     // replacement never schedules another loop or revives an old grant.
     if(!enabled||!s.ready||!live(s)||s.recoveryDenied||recoveryRemaining<1||!['ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason))return;

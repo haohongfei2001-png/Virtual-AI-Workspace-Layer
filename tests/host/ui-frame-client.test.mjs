@@ -75,3 +75,23 @@ test('private workspace-entry hint is distinct from dirty reads and rejected aft
  assert.equal(entries,1);f.emit({type:'VAIWL_UI_DATA_CHANGED'});assert.equal(dirty,1);
  await f.advance(10000);assert.equal(entries,1,'renew is not a safe entry');client.stop();f.historicalMessages[0]({type:'VAIWL_UI_WORKSPACE_ENTERED'});assert.equal(entries,1);
 });
+
+
+test('explicit exit clears private data and queues parent intent before port teardown',async()=>{
+ const f=fixture(),connect=f.runtime.connect;let disconnected=0,observed;
+ f.runtime.connect=()=>({...connect(),disconnect(){disconnected++;observed={text:f.body.textContent,message:f.messages.at(-1)};}});
+ const client=createUiFrameClient(f.options);await client.start();client.exit();
+ assert.equal(disconnected,1);assert.deepEqual(observed,{text:'',message:{origin:'https://chatgpt.com',message:{type:'VAIWL_UI_EXIT',role:'workspace'}}});assert.equal(client.isAuthorized(),false);assert.equal(f.clears.at(-1),'ui-user-exit');
+ client.exit();client.stop();assert.equal(disconnected,1);
+});
+
+
+test('onClear reentrant start cannot have its new port disconnected by the old exit',async()=>{
+ const f=fixture(),connect=f.runtime.connect,disconnected=[];let sequence=0,restarted=false,client;
+ f.runtime.connect=()=>{const id=++sequence;return {...connect(),disconnect(){disconnected.push(id);}};};
+ f.options.onClear=()=>{if(!restarted){restarted=true;void client.start();}};
+ client=createUiFrameClient(f.options);await client.start();client.exit();await drain();
+ assert.deepEqual(disconnected,[1]);assert.equal(client.isAuthorized(),true);
+ assert.deepEqual(f.messages.map(x=>x.message.type),['VAIWL_UI_JOIN','VAIWL_UI_EXIT','VAIWL_UI_JOIN']);
+ client.stop();assert.deepEqual(disconnected,[1,2]);
+});

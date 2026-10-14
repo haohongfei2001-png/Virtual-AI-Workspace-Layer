@@ -152,3 +152,36 @@ test('native surrender records reading for recovery even if authority expires be
  assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.slot.children.length,0,'expired grant cannot create a return control');
  f.controller.stop('ui-grant-expired');assert.deepEqual(f.calls.terminations.at(-1),{reason:'ui-grant-expired',presentation:{mode:'reading'}});
 });
+
+for(const role of ['workspace','sidebar'])test('owned '+role+' EXIT fully disposes surfaces and the reading return',async()=>{
+ const f=fixture(),released=[];f.bridge.revokeMount=value=>released.push(value);await f.controller.start({});await f.both();f.controller.showReading();assert.equal(f.slot.children.length,1);const stops=f.calls.stop;
+ f.message(role,{data:{type:'VAIWL_UI_EXIT',role}});await drain();
+ assert.equal(f.calls.dispose,1);assert.equal(f.calls.stop,stops+1);assert.equal(f.slot.children.length,0);assert.deepEqual(released,[{mountId:'mount'}]);assert.deepEqual(f.calls.terminations,[{reason:'ui-user-exit',presentation:{mode:'reading'}}]);assert.equal(f.controller.showWorkspace(),false);
+ f.message(role,{data:{type:'VAIWL_UI_EXIT',role}});f.message();f.tick(60000);await drain();assert.equal(f.calls.dispose,1);assert.equal(f.calls.show,1);assert.equal(f.slot.children.length,0);
+});
+
+test('EXIT rejects wrong origin, source, role, disconnected or replaced frame and extra fields',async()=>{
+ const cases=[
+  f=>f.message('workspace',{origin:'https://chatgpt.com',data:{type:'VAIWL_UI_EXIT',role:'workspace'}}),
+  f=>f.message('workspace',{source:{},data:{type:'VAIWL_UI_EXIT',role:'workspace'}}),
+  f=>f.message('workspace',{data:{type:'VAIWL_UI_EXIT',role:'sidebar'}}),
+  f=>f.message('workspace',{data:{type:'VAIWL_UI_EXIT',role:'other'}}),
+  f=>f.message('workspace',{data:{type:'VAIWL_UI_EXIT',role:'workspace',nonce:'extra'}}),
+  f=>f.message('workspace',{data:{type:'VAIWL_UI_EXIT',role:'workspace',[Symbol('extra')]:true}}),
+  f=>{f.frames[0].frame.isConnected=false;f.message('workspace',{data:{type:'VAIWL_UI_EXIT',role:'workspace'}});},
+  f=>{f.frames[0].frame.contentWindow={};f.message('workspace',{data:{type:'VAIWL_UI_EXIT',role:'workspace'}});}
+ ];
+ for(const attempt of cases){const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();attempt(f);await drain();assert.equal(f.calls.dispose,0);assert.equal(f.slot.children.length,1);assert.deepEqual(f.calls.terminations,[]);f.controller.stop();}
+});
+
+test('owned EXIT while mount registration is pending clears queued JOINs and rejects the late registration',async()=>{
+ const f=fixture(),held=deferred(),released=[];f.bridge.registerMount=()=>held.promise;f.bridge.revokeMount=value=>released.push(value);const starting=f.controller.start({});await drain();f.message();f.message('sidebar');
+ f.message('sidebar',{data:{type:'VAIWL_UI_EXIT',role:'sidebar'}});await drain();assert.equal(f.calls.dispose,1);assert.equal(f.calls.terminations[0]?.reason,'ui-user-exit');assert.deepEqual(released,[{mountId:'mount'}]);
+ held.resolve({ok:true});assert.equal(await starting,null);await drain();assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);assert.equal(f.calls.dispose,1);assert.equal(f.controller.showWorkspace(),false);assert.equal(f.slot.children.length,0);
+});
+
+test('owned EXIT fences an in-flight grant confirmation and no late ACK can recreate UI',async()=>{
+ const f=fixture(),held=deferred(),original=f.bridge.confirmParent;f.bridge.confirmParent=value=>value.role==='workspace'?held.promise:original(value);await f.controller.start({});f.message();f.message('sidebar');await drain();assert.equal(f.calls.show,0);
+ f.message('workspace',{data:{type:'VAIWL_UI_EXIT',role:'workspace'}});await drain();assert.equal(f.calls.dispose,1);assert.equal(f.calls.terminations[0]?.reason,'ui-user-exit');
+ held.resolve(await original({role:'workspace'}));await drain();assert.equal(f.calls.show,0);assert.equal(f.calls.dispose,1);assert.equal(f.slot.children.length,0);assert.equal(f.controller.showWorkspace(),false);f.message();await drain();assert.equal(f.calls.show,0);
+});
