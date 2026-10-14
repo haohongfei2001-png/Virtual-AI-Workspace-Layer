@@ -6,7 +6,7 @@ async function action(kind, extra = {}) {
   if (!response.ok) throw new Error('Native action failed');
   return response.json();
 }
-function hasDraft() { return $('#prompt-textarea').value.length > 0 || $('#composer input[type=file]').files.length > 0; }
+function hasDraft() { return ($('#composer [data-j3-editor=plain]') ?? $('#prompt-textarea')).value.length > 0 || ($('#composer [data-j3-editor=rich]')?.textContent.length ?? 0)>0 || $('#composer input[type=file]').files.length > 0; }
 async function navigate(path, {pop = false} = {}) {
   // A native SPA route transition retains the actual editor node and draft.
   const response = await fetch(`/native/route?path=${encodeURIComponent(path)}`);
@@ -26,7 +26,7 @@ async function navigate(path, {pop = false} = {}) {
     const create = document.createElement('button'); create.textContent = 'New chat in project';
     create.onclick = async () => { const result = await action('new-project-chat', {projectId:view.project.id}); await navigate(result.href); };
     reading.append(create);
-  } else { const p = document.createElement('p'); p.textContent = view.text; reading.append(p); }
+  } else if(Array.isArray(view.messages)){for(const item of view.messages){const article=document.createElement('article');article.dataset.messageId=item.messageId;article.dataset.branchId=item.branchId;const body=document.createElement('div');body.className='message-body';body.textContent=item.text;article.append(body);reading.append(article);}} else { const p = document.createElement('p'); p.textContent = view.text; reading.append(p); }
   $('#move-button').disabled = !view.conversationId;
 }
 document.addEventListener('click', async (event) => {
@@ -50,8 +50,14 @@ $('#move-button').onclick = async () => {
   for (const item of data.items) { const label = document.createElement('label'); const input = document.createElement('input'); input.type='radio'; input.name='project'; input.checked=item.selected; label.append(input, document.createTextNode(item.label)); options.append(label); }
   $('#move-dialog').showModal();
 };
-for (const id of ['model','tools','account']) $(`#${id}-button`).onclick = async () => { await action(id); $('#native-dialog p').textContent = `${id} options`; $('#native-dialog').showModal(); };
+for (const id of ['model','tools','account']) $(`#${id}-button`).onclick = async () => { await action(id); if(id==='tools'&&$('#permission-dialog')){$('#permission-dialog').showModal();return;} $('#native-dialog p').textContent = `${id} options`; $('#native-dialog').showModal(); };
 $('#composer').onsubmit = async (event) => { event.preventDefault(); if(event.isComposing) return; await action('send-intent'); $('#composer output').textContent = 'Offline reconstruction: message not sent'; };
 addEventListener('beforeunload', (event) => { if(hasDraft()) { event.preventDefault(); event.returnValue=''; } });
 addEventListener('popstate', () => navigate(location.pathname, {pop:true}));
 await navigate(location.pathname, {pop:true});
+
+// Optional J3 application-owned surfaces. No extension API or synthetic ACK.
+if($('#editor-mode')){
+ $('#editor-mode').onclick=async()=>{await action('editor-mode');const plain=$('#composer [data-j3-editor=plain]'),rich=$('#composer [data-j3-editor=rich]'),toRich=rich.hidden;plain.id=toRich?'j3-textarea':'prompt-textarea';rich.id=toRich?'prompt-textarea':'j3-contenteditable';plain.hidden=toRich;rich.hidden=!toRich;$('#editor-mode').textContent=toRich?'Use textarea':'Use contenteditable';(toRich?rich:plain).focus();};
+ for(const choice of ['allow','deny'])$('#permission-'+choice).onclick=async()=>{await action('permission-'+choice);$('#permission-result').textContent=choice==='allow'?'Fixture permission allowed':'Fixture permission denied';$('#permission-dialog').close(choice);};
+}

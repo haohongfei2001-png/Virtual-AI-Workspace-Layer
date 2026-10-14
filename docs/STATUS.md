@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前功能检查点Round197，Round198–199已保存当前包即时退出反例及命中诊断：修复真实Chrome 200%缩放后扩展面板沿用旧尺寸的越界故障，按原生边界安全刷新并重排卡片；完整Node3740项、实际tab zoom隔离MV3旅程4项通过。100k/4x端到端预算FAIL、首页首发、剩余内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
+当前功能检查点Round200：修复快速原生SPA Back/Forward在重绑等待期间使增强永久停止的竞态；完整Node3757项通过，单文档J3离线旅程12步通过、2步因缺可信旧日期证据未覆盖。原生双草稿/File、200%缩放、片段与搜索连续通过；不称完整J3。即时reading退出、100k/4x预算、首页首发及真实G/U缺口仍保留，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1985,3 +1985,13 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 单次MECHANISM_NOT_ACCEPTANCE差分实验仅把两个native mask CSSOM规则的interactivity从inert改auto，保留visibility:hidden及owned保护规则，仍 **FAIL**。未改产品CSS、未转发/合成点击、未把延时成功当即时验收。此轮没有新增产品通过声明。
 - 三份失败报告、截图及两版诊断执行脚本快照保留各自hash，旧脚本与后续增强区分；sourceChanged均false。相同问题继续缩小独立浏览器机制，原Round197完整Node/200%通过范围不扩大。J3旧窗口需要合法历史活动前置；正式备份明确剥离活动证据，不能为验收注入旧日期/伪ACK。
 - Pro文档72ca068及所有本地代码提交保持；远端同步此前超时未确认。仍使用原分支/PR #16且不强推，整体Free NOT_RELEASE_READY。
+
+
+## Round200：快速SPA路由重绑修复与连续原生兼容旅程（接ab1e003）
+
+- J3连续旅程复现快速native route→Back→Forward后owned与返回入口全部消失。独立测试证实HELLO/REFRESH/controller.start待决时URL漂移，旧rpc拒绝后begin错误stop整个document。现在仅当前且enabled的session遇实际URL漂移时沿原rebind重新HELLO/REFRESH；旧回复不采用，同URL权限/启动失败仍stop，不重放原生动作。旧session迟到、显式stop及同URL无效HELLO/start拒绝反例保持。修前3 FAIL/7 PASS与修后12 PASS分别保留。
+- 最终完整Node **3757/3757 PASS**（free-round200-node.log.gz），没有skip。J3可选原生fixture新增权限allow/deny、textarea/contenteditable两原节点独立草稿、active editor唯一ID和原生route返回message/branch；默认LEGACY不增加这些声明。fixture定向24项通过属于早期组合，包含在最终全套，不相加。
+- 正式package单页单document隔离headless MV3 J3旅程 **PARTIAL_NOT_J3_ACCEPTED**：14步中12 PASS、2 NOT_COVERED。workspace/sidebar、model/files、权限允许/拒绝（仅S应用重建非系统G）、双editor切换、原生SPA Back/Forward、实际tabs200%、UNKNOWN可达、原生消息Range保存片段/文本查找/定位、native搜索连续通过。每阶段核对原document、两editor、原file input/File对象和草稿；没有send-intent。source/script/build hashes稳定、worker外网阻断。
+- 没有可信旧活跃度时较早按钮实际disabled，未强行启用；旧窗口与旧日期聊天仍NOT_COVERED。早期原脚本误设可点击而超时的FAIL保留；active editor新oracle揭示原生异步切换需等待实际新ID可见，已修测试等待，未降低断言。生产snippet profile仍未认证，物理IME/真实权限/完整v2.7不由此旅程代替。最终截图已查看。
+- 即时退出的最小机制对照：同源/跨端口、manual/非popover四例，以及跨site且CDP确认OOPIF的两例都成功trusted child click；均是WEB_MECHANISM_ONLY、未复现产品FAIL，不把Chrome或iframe普遍机制先验认定为原因。对应报告和旧执行脚本压缩快照保留。
+- 正常推送已恢复，ab1e003及此前Round193–199提交成功同步原PR #16；72ca068仍是祖先，原计划/代码均保留。整体Free继续实施，NOT_RELEASE_READY。

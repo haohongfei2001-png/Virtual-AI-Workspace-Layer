@@ -185,7 +185,16 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     recoveryRemaining--;rebind(s,presentation?.mode==='workspace'?'workspace':'reading');
    },now,elapsedNow,schedule,cancel});
    const handle=await s.controller.start({binding:s.binding,emit:async p=>{const result=await rpc(s,p);if(['accepted','duplicate'].includes(result?.state)&&p.kind==='surface-delta')for(const row of p.payload.candidates)if(row.entity==='project'&&row.target?.kind==='resolved'&&row.evidence?.fieldPaths?.includes('current-project-route'))s.ackProjects.add(row.target.nativeId);return result;}});if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;return handle;
-  }catch{if(current===s)stop();return null;}
+  }catch{
+   if(current===s){
+    // A native route can change while HELLO, REFRESH or mount is pending,
+    // before the adapter has installed its route listeners. The old reply
+    // remains unusable; bind the new route instead of disabling the document.
+    // Same-route failures still stop, and replaced/stopped sessions cannot retry.
+    if(enabled&&doc.location.href!==s.url)rebind(s);else stop();
+   }
+   return null;
+  }
  }
  return Object.freeze({start,stop,showWorkspace:()=>current?.controller?.showWorkspace()??false,showReading:()=>current?.controller?.showReading()??false});
 }

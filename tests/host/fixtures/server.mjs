@@ -17,13 +17,15 @@ const clone = (value) => structuredClone(value);
  * Authentication and expected results never come from page-supplied verified flags.
  * LEGACY keeps its original behavior; other profiles use their own reconstruction.
  */
-export async function createHostFixtureServer({profile = 'LEGACY', principalId = 'user-host-fixture', accounts = null, now = () => Date.now(), variant = 'positive', fault} = {}) {
+export async function createHostFixtureServer({profile = 'LEGACY', principalId = 'user-host-fixture', accounts = null, now = () => Date.now(), variant = 'positive', fault, journey = null} = {}) {
+  if(journey!==null&&(journey!=='J3'||profile!=='LEGACY'))throw Error('invalid-fixture-journey');
   if (profile !== 'LEGACY') return createVariantHostFixtureServer({profile,principalId,accounts,now,variant,fault});
   const files = Object.fromEntries(await Promise.all([
     ['/', 'legacy.html', 'text/html; charset=utf-8'],
     ['/native.mjs', 'native.mjs', 'text/javascript; charset=utf-8'],
     ['/native.css', 'native.css', 'text/css; charset=utf-8'],
   ].map(async ([url, file, mime]) => [url, {body: await readFile(new URL(file, import.meta.url)), mime}])));
+  if(journey==='J3')files['/'].body=Buffer.from(files['/'].body.toString().replace('<textarea id="prompt-textarea"','<textarea data-j3-editor="plain" id="prompt-textarea"').replace('<!-- J3_EDITOR -->','<button type="button" id="editor-mode">Use contenteditable</button><div id="j3-contenteditable" data-j3-editor="rich" contenteditable="true" role="textbox" aria-label="Rich message ChatGPT" hidden></div>').replace('<!-- J3_PERMISSION -->','<dialog id="permission-dialog" aria-label="Fixture tool permission"><p>Offline reconstruction permission, not a system permission.</p><button id="permission-allow">Allow fixture tool</button><button id="permission-deny">Deny fixture tool</button><output id="permission-result" aria-live="polite"></output></dialog>'));
   const oracleBytes = await readFile(new URL('../expected/legacy.mjs', import.meta.url));
   const sourceBytes = await readFile(new URL('./server.mjs', import.meta.url));
   let identity = principalId;
@@ -54,7 +56,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
     }
     const conversationMatch = /^\/c\/([^/]+)$/.exec(path);
     const conversation = conversationMatch && conversations.get(conversationMatch[1]);
-    if(conversation) return {title:conversation.title,conversationId:conversation.id,text:'This is an offline native application reconstruction.'};
+    if(conversation) return {title:conversation.title,conversationId:conversation.id,text:'This is an offline native application reconstruction.',...(journey==='J3'?{messages:[{messageId:'j3_'+conversation.id.replaceAll('-','')+'_message',branchId:'j3_branch',text:'Offline prefix uniquely selected fixture words suffix.'}]}:{})};
     return null;
   };
   const readBody = async (req) => {
@@ -110,7 +112,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
       }
       if(url.pathname === '/native/action' && req.method === 'POST') {
         const input = await readBody(req);
-        const allowed = ['navigate','new-chat','open-project-button','search','new-project','create-project','new-project-chat','model','tools','account','send-intent'];
+        const allowed = ['navigate','new-chat','open-project-button','search','new-project','create-project','new-project-chat','model','tools','account','send-intent',...(journey==='J3'?['permission-allow','permission-deny','editor-mode']:[])];
         if(!input || !allowed.includes(input.kind)) return json(res,400,{error:'invalid-action'});
         counts[input.kind] = (counts[input.kind] ?? 0) + 1;
         if(input.kind === 'open-project-button') return json(res,200,{href:projectHref(PROJECT_TWO)});
@@ -132,7 +134,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
   const origin = `http://127.0.0.1:${server.address().port}`;
   return {
     origin,url:`${origin}/`,
-    manifest: Object.freeze({fixtureId:'chatgpt-host-legacy-reconstruction-v1',profile,reconstruction:true,source:'VA-HOST/1.1 structure reconstruction; not a real DOM snapshot',sourceCommit:null,sourceBlob:null,fixtureHash:createHash('sha256').update(sourceBytes).update(Buffer.concat(Object.values(files).map((f) => f.body))).digest('hex'),expectedWorldFile:'tests/host/expected/legacy.mjs',oracleHash:createHash('sha256').update(oracleBytes).digest('hex'),supportedCapabilities:['principal','personal-context-candidate','project-identity','idless-native-control','conversation-identity','native-move-menu','native-navigation','native-search','native-create','independent-regions','draft-preservation']}),
+    manifest: Object.freeze({fixtureId:'chatgpt-host-legacy-reconstruction-v1',profile,...(journey?{journey,journeyEvidence:'S_RECONSTRUCTION_NOT_REAL_PERMISSION'}:{}),reconstruction:true,source:'VA-HOST/1.1 structure reconstruction; not a real DOM snapshot',sourceCommit:null,sourceBlob:null,fixtureHash:createHash('sha256').update(sourceBytes).update(Buffer.concat(Object.values(files).map((f) => f.body))).digest('hex'),expectedWorldFile:'tests/host/expected/legacy.mjs',oracleHash:createHash('sha256').update(oracleBytes).digest('hex'),supportedCapabilities:['principal','personal-context-candidate','project-identity','idless-native-control','conversation-identity','native-move-menu','native-navigation','native-search','native-create','independent-regions','draft-preservation']}),
     snapshot: () => clone({actions:counts,requests,projectCount:projects.size,conversationCount:conversations.size}),
     // Test-process controls only; not HTTP endpoints, not page-visible authority.
     setPrincipal: (id,{accounts: nextAccounts = roster} = {}) => { identity = id; roster = clone(nextAccounts); },
