@@ -3,7 +3,7 @@
 此文件仅记录同一 DEVELOPMENT_PLAN 的恢复入口，不另立计划。用户已恢复并明确授权持续并行Free开发。
 
 - 唯一目录：`/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`；不迁移、不建worktree。
-- 分支：`codex/vaiwl-free-first-20261013`，本轮从 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44` 继续，最新代码检查点 `15e5d9a` 已推送PR #16，Pro `72ca068`已整合保留；实际新HEAD以 `git rev-parse HEAD` 为准。
+- 分支：`codex/vaiwl-free-first-20261013`，本轮从 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44` 继续，最新轮次见文件末尾，Pro `72ca068`已整合保留；实际新HEAD以 `git rev-parse HEAD` 为准。
 - 已核对远端 Draft PR #16，基于计划PR #15；允许正常commit/push，不force、不改父PR/main、不merge/deploy。
 - 私人ChatGPT、PAIA本体、真实原生写入、付费均无授权；只能阻塞相应真实验收，不停独立本地工程。
 
@@ -1315,3 +1315,11 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 重读Round117 profile/118无采样失败证据：最终native迁移审计超过6秒，尚未进入PAGE；不重新运行未改变代码的同一失败实验。SHA轮展开无显著收益；有界encodeInto scratch完整native digest仅约4%，stable loop完整native/100k manifest digest约4.15%/4.70%，未合入。nested序列化29%不是完整链收益；数组自定义map/Proxy完整兼容未证实。停止这些微优化候选，保留诊断JSON，不作为F1通过或新产品回归。
 - README当前状态原仍写仅文档整合/未来实施，现改为实际Host开发状态及准确build/package/verify命令，区别extension Host与旧simulator。实际运行package+verify成功，118文件，ZIP SHA256 349b2aab61f13cb77b3f7356fc9eb0fc451d5909e4935ad06f2d838e22b616f7；包位于/private/tmp/vaiwl-free-round127-host-package。未安装到日常浏览器，HOST_IMPLEMENTATION_UNVERIFIED / NOT_RELEASE_READY。
 - 本轮没有运行时代码改动，不重复完整Node/浏览器回归；最新代码证据仍为Round126的2666及恢复MV3四旅程。真实context/accepted ACK/首发关联/G/U/PAIA、100k/4x与完整扩展BFCache条件仍未闭合，Free未完成。
+
+
+## Round128：活跃原页面在worker丢失后有界重新授权（接 d0b3039）
+
+- UI-11实际缺口：UI断连/续租失败只清框架并停止controller，content没有重新HELLO路径。controller现在先停adapter、撤surface/mask/return再发私有终止通知；adapter.stop或通知异常不阻断清理，无prior不重复通知。content对四种会话失效原因至多自动重新握手一次/显式start；已知账户核验拒绝、用户stop、pagehide、旧回调和URL变化不触发该恢复，替代失败不循环。
+- 恢复总是新的HELLO/REFRESH/MOUNT/双JOIN，未复用旧grant、来源或正文证明。仅携带私有展示意图；此前reading或suspended恢复reading，双授权完成前不展示，保留唯一原生返回；不因worker恢复把正在输入的用户切回workspace。短期worker内resume cache随worker退出丢失，未宣称恢复其搜索/历史位置。
+- 最终完整Node **2683/2683 PASS**；随后仅新增presentation传递/旧callback反例，content专项10/10独立通过（不冒称重跑完整集）。旧HEAD合同反例9FAIL原因是缺失onTerminated接口，作为合同缺失证据保留，不当作旧Chrome实测。最终实际原包worker强制退出→stopped→running→同页面新frame私有投影PASS，native textarea同节点/草稿/焦点保持、无popover自动打开；无reload/navigation/focus/显式invalidated注入。naturalWorkerSleep=NOT_TESTED。
+- 标准实际MV3十三旅程PASS，最终两报告sourceChangedDuringRun=false。首次新增reading断言浏览器测试因getByRole默认排除隐藏项超时，FAIL报告保留；改为includeHidden+attached检查私有投影，仍严格断言无popover、唯一返回和原生焦点。100k/4x、真实context/ACK/首发/G/U/PAIA与完整扩展BFCache仍未闭合，Free未完成、NOT_RELEASE_READY。
