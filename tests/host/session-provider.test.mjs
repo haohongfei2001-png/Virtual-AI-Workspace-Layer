@@ -18,9 +18,9 @@ test('malformed JSON and fetch diagnostics cannot disclose response text or toke
 
 test('wall clock rollback cannot hide an elapsed deadline overrun',async()=>{let wall=now,elapsed=0;const base=fixture(),provider=createSessionProvider({now:()=>wall,elapsedNow:()=>elapsed,fetch:async(...args)=>{const response=await (async()=>{const n=base.calls.length;const body=n===0?session():accounts();base.calls.push(args);const r=new Response(JSON.stringify(body),{headers:{'content-type':'application/json'}});Object.defineProperty(r,'url',{value:args[0]});return r;})();if(base.calls.length===2){wall-=3600000;elapsed=6001;}return response;}});await assert.rejects(provider.read(),/request-timeout/);});
 const C='12345678-1234-4234-8234-123456789abc',currentOptions={conversationId:C,expectedPrincipalKey:'principal_'+digest(['chatgpt-principal-v1','user_7']),expectedContextKey:'context_'+digest(['chatgpt-context-v1','user_7','P'])};
-function currentFixture(change=()=>{},profile={currentConversationReadEnabled:true}){
+function currentFixture(change=()=>{},profile={currentConversationReadEnabled:true},clock=()=>now){
  const calls=[];let elapsed=0;const fetch=async(url,options)=>{calls.push({url,options});const n=calls.length,state={body:n===1?session():n===2?{accounts:{P:accounts().accounts.P}}:{conversation_id:C,mapping:{n:{id:'n',parent:null,message:{id:'m',author:{role:'user',id:'user_7'},create_time:1700000000,content:{parts:['PRIVATE_CONVERSATION_BODY']}}}}},status:200,mime:'application/json',url,redirected:false};change(state,n,()=>elapsed=6000);const response=new Response(typeof state.body==='string'?state.body:JSON.stringify(state.body),{status:state.status,headers:{'content-type':state.mime,...state.headers}});Object.defineProperties(response,{url:{value:state.url},redirected:{value:state.redirected}});return response;};
- return {calls,provider:createSessionProvider({fetch,now:()=>now,elapsedNow:()=>elapsed,profile})};
+ return {calls,provider:createSessionProvider({fetch,now:clock,elapsedNow:()=>elapsed,profile})};
 }
 test('current conversation is disabled by default and malformed ID is refused before fetch',async()=>{
  for(const profile of [{},{currentConversationReadEnabled:false},{currentConversationReadEnabled:'true'}]){const f=currentFixture(()=>{},profile);await assert.rejects(f.provider.readCurrentConversation(currentOptions),/disabled/);assert.equal(f.calls.length,0);}
@@ -49,4 +49,27 @@ test('current abort settles even when fetch ignores abort and late response cann
 
 test('unpublished current-reader API rejects raw identity parameters rather than maintaining a second authority path',async()=>{
  const f=currentFixture();await assert.rejects(f.provider.readCurrentConversation({conversationId:C,expectedPrincipalId:'user_7',expectedContextId:'P'}),/options/);await assert.rejects(f.provider.readCurrentConversation({...currentOptions,expectedPrincipalId:'user_7'}),/options/);assert.equal(f.calls.length,0);
+});
+
+const ackProfile=()=>({id:'offline_ack',revision:1,providerProfile:'chatgpt-session-v1',ack:{kind:'authenticated-message-readback',acceptedStates:['fixture-accepted']}});
+test('ACK readback association belongs to exact provider result and never crosses serialization or provider',async()=>{
+ const profile={currentConversationReadEnabled:true,sendAckProfile:ackProfile()},f=currentFixture((s,n)=>{if(n===3)s.body.mapping.n.message.status='fixture-accepted';},profile);
+ const result=await f.provider.readCurrentConversation(currentOptions),accepted=f.provider.acceptanceFor(result);
+ assert.equal(accepted.messages.length,1);assert.equal(accepted.messages[0].authorPrincipalKey,currentOptions.expectedPrincipalKey);assert.equal(accepted.conversationId,C);assert.equal(accepted.contextKey,currentOptions.expectedContextKey);assert(Object.isFrozen(accepted));
+ assert.equal(f.provider.acceptanceFor(structuredClone(result)),null);assert.equal(currentFixture().provider.acceptanceFor(result),null);assert.equal(f.provider.acceptanceFor(null),null);
+ assert.equal(result.messages,undefined);assert.equal(result.profile,undefined);assert(!/SECRET|PRIVATE_CONVERSATION_BODY|user_7/.test(JSON.stringify(accepted)));
+ profile.sendAckProfile.ack.acceptedStates[0]='changed';assert.equal(accepted.profile.ack.acceptedStates[0],'fixture-accepted');
+ result.principalKey='changed';assert.equal(accepted.principalKey,currentOptions.expectedPrincipalKey);
+});
+test('unconfigured ACK never emits readback association and profile mismatch refuses construction',async()=>{
+ const f=currentFixture((s,n)=>{if(n===3)s.body.mapping.n.message.status='fixture-accepted';});assert.equal(f.provider.acceptanceFor(await f.provider.readCurrentConversation(currentOptions)),null);
+ assert.throws(()=>currentFixture(()=>{},{sendAckProfile:ackProfile()}),/ack-profile/);
+ assert.throws(()=>currentFixture(()=>{},{id:'different',currentConversationReadEnabled:true,sendAckProfile:ackProfile()}),/ack-profile/);
+});
+test('explicit ACK profile still cannot accept missing status',async()=>{
+ const f=currentFixture(()=>{},{currentConversationReadEnabled:true,sendAckProfile:ackProfile()});assert.deepEqual(f.provider.acceptanceFor(await f.provider.readCurrentConversation(currentOptions)).messages,[]);
+});
+
+test('expired private ACK association is discarded and clock rollback cannot revive it',async()=>{
+ let wall=now;const f=currentFixture((s,n)=>{if(n===3)s.body.mapping.n.message.status='fixture-accepted';},{currentConversationReadEnabled:true,sendAckProfile:ackProfile()},()=>wall);const result=await f.provider.readCurrentConversation(currentOptions);assert(f.provider.acceptanceFor(result));wall=Date.parse(expiry);assert.equal(f.provider.acceptanceFor(result),null);wall=now;assert.equal(f.provider.acceptanceFor(result),null);
 });

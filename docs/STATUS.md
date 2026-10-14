@@ -1498,3 +1498,9 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 
 - 新增 conversation-acceptance，内部重新调用既有有界 metadata parser 核对 exact conversation；仅完整无 gap 元数据继续处理。显式 ACK profile acceptedStates、原始消息作者及 user 角色均匹配后输出消息/映射节点/作者 hash/固定 lineage/接受状态，深冻结且不携带正文。缺失状态、泛化 accepted 字符串、其他作者、损坏 lineage 和重复冲突均不能确认发送。
 - 接受状态、metadata 与 admission 定向测试 **38/38 PASS**（free-round140-acceptance.log）；完整回归及浏览器 NOT_RUN。纯提取不是认证证明，尚未接 provider/reader 私有对象来源和 proof/guard，未写入持久活动。下一步继续该接线，再处理首发跨 SPA；Free 仍 NOT_RELEASE_READY。
+
+## Round141：固定认证读回绑定私有 ACK 候选（接 fe759ae）
+
+- SessionProvider 仅显式 sendAckProfile 且 providerProfile 匹配、currentConversationReadEnabled 时提取接受状态。既有 session→accounts→当前 C 的固定认证请求、身份/context 核对与六秒预算继续执行。默认未配置不创建关联。
+- WeakMap 以本 provider 返回的 exact 对象保存深冻结私有快照，不增加现有 public metadata DTO 字段，不序列化权限。复制/结构克隆/跨 provider 对象无关联；过期或无效时钟删除，已过期对象不因时钟回退复活。调用方修改原始 profile 或 result 不修改私有快照。
+- 定向 **80/80 PASS**；完整 Node **3101/3101 PASS**（free-round141-node.log.gz）。浏览器本轮 NOT_RUN。尚未接 reader 的 current proof/body guard 与 send candidate→durable continuation；此关联本身不能写活动，真实 ACK profile 验收仍 NOT_RUN，Free NOT_RELEASE_READY。

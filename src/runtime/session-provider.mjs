@@ -1,5 +1,7 @@
 import {digest} from '../data/hash.mjs';
 import {parseConversationMetadata} from '../host/conversation-metadata.mjs';
+import {extractConversationAcceptance} from '../host/conversation-acceptance.mjs';
+import {validateSendAckProfile} from './send-ack-admission.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {instant} from '../navigation/projection.mjs';
 const record=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
@@ -11,6 +13,8 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
  const providerProfile=profile.id??'chatgpt-session-v1',structures=new Map(Object.entries(profile.structures??{personal:'personal',team:'organization',enterprise:'organization'}));
  if(!identifier(providerProfile)||[...structures.values()].some(v=>!['personal','organization','unknown'].includes(v)))throw Error('invalid-session-profile');
  const currentEnabled=profile.currentConversationReadEnabled===true,contextHeader=profile.currentConversationContextHeader===true;
+ const ackProfile=profile.sendAckProfile===undefined?null:validateSendAckProfile(profile.sendAckProfile),acceptances=new WeakMap();
+ if(ackProfile&&(!currentEnabled||ackProfile.providerProfile!==providerProfile))throw Error('invalid-session-ack-profile');
  async function execute(options={},current=null){
   if(!record(options)||Object.keys(options).some(k=>k!=='signal'))throw Error('invalid-session-read-options');
   const started=elapsedNow();const {signal}=options,controller=new AbortController(),combined=signal?AbortSignal.any([signal,controller.signal]):controller.signal;
@@ -45,7 +49,13 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
     const raw=await json('/backend-api/conversation/'+encodeURIComponent(current.conversationId),token,{raw:true,contextId:contexts[0].id});check();
     let metadata;try{metadata=parseConversationMetadata({conversationId:current.conversationId,principalId,payload:raw});}catch{throw Error('invalid-conversation-metadata');}
     check();if(instant(expiresAt)<=now())throw Error('session-expired');
-    return {principalKey,contextKey:current.expectedContextKey,expiresAt,providerProfile,transport:'worker-fixed-fetch',metadata};
+    const result={principalKey,contextKey:current.expectedContextKey,expiresAt,providerProfile,transport:'worker-fixed-fetch',metadata};
+    if(ackProfile){
+     let messages;try{messages=extractConversationAcceptance({conversationId:current.conversationId,principalId,payload:raw,profile:ackProfile});}catch{throw Error('invalid-conversation-metadata');}
+     check();if(instant(expiresAt)<=now())throw Error('session-expired');
+     acceptances.set(result,Object.freeze({profile:ackProfile,conversationId:current.conversationId,principalKey,contextKey:current.expectedContextKey,expiresAt,providerProfile,transport:'worker-fixed-fetch',messages}));
+    }
+    return result;
    }
    return {principalId,expiresAt,contexts,providerProfile,transport:'worker-fixed-fetch'};
    }finally{token=null;}
@@ -58,5 +68,8 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
   const {signal,conversationId,expectedPrincipalKey,expectedContextKey}=options;
   return execute({signal},{conversationId,expectedPrincipalKey,expectedContextKey});
  }
- return Object.freeze({read,readCurrentConversation});
+ // Private in-process association, never restored from serialized data. Fresh
+ // observation/body guards remain the reader's responsibility.
+ function acceptanceFor(result){const value=acceptances.get(result);if(!value)return null;const checkedAt=now();if(!Number.isFinite(checkedAt)||instant(value.expiresAt)<=checkedAt){acceptances.delete(result);return null;}return value;}
+ return Object.freeze({read,readCurrentConversation,acceptanceFor});
 }
