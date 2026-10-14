@@ -1462,3 +1462,9 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 完整认证读回中缺少该消息的明确接受状态时，reader 返回 pending-send-ack，不能当 ACK。发送关联器保存最多32项原始候选及消息依赖摘要，后续显式观察可重新读回；每项最多3次、至少1秒间隔、原意图30秒窗口，不创建轮询。成功后删除且不重复发布诊断候选。
 - 新 proof 不重置待确认项的次数预算。scope/route/body变化、partial、原消息或前序消息语义变化、过期、时钟回退均不能沿用旧确认。开始消费后的错误（即使同名 pending-send-ack）不重试写入，避免把不确定写结果当未确认状态。
 - reader/send-candidates 定向 **89/89 PASS**（free-round144-target.log）；本轮完整回归/浏览器 NOT_RUN，最近完整为 Round143 3123项。尚须接现有持久 continuation，并验证实际 provider→reader→correlator→IDB 整链；生产仍未启用，Free NOT_RELEASE_READY。
+
+## Round145：真实模块 ACK 离线链验证（接 059f5e9）
+
+- 新增 send-ack-pipeline.test，直接组合真实 SessionProvider、CurrentMetadataReader、HostSendCandidates；仅固定 GET HTTP 响应和 owner 文档上下文为离线 fixture。owner guard/signal 随每次 withCurrent 结束失效，消费必须重新取得当前证明。完整验证基线→发送意图→无接受状态的新消息→后续明确接受状态→恰一次 admission 消费。错误作者与撤权路径无消费，正文/token 不进入输出。
+- 管线及既有 native continuation 定向 **44/44 PASS**（free-round145-pipeline.log）。这是模块整链至内部消费回调，不是 IDB 整链；continuation 测试仍为原有 MOCK_IDB 独立用例，不合并宣称 production。完整回归/浏览器本轮 NOT_RUN。
+- 下一接线位置已核实：binding-service 创建 NativeRepository 时 gate 仅 observations.gate；需在受当前 proof 保护的内部 ACK owner 中创建 exact request 弱关联及 continuation/continuationAdmission，经 NativeRepository 同事务提交。现 continuation drainer 要求匹配 profileId/revision，ACK profile 与 surface profile 的恢复授权映射必须明确，不能只填字段跳过。现有 Pro/历史数据及 schema 保留。Free NOT_RELEASE_READY。
