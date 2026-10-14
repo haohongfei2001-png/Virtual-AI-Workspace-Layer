@@ -12,7 +12,7 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
  if(!chrome?.runtime?.id||typeof chrome.runtime.getContexts!=='function'||typeof chrome.webNavigation?.getFrame!=='function')throw Error('host-browser-unavailable');
  const allowedURL=value=>{try{return new URL(value).origin===origin&&policy.nativeHref(value)!==null;}catch{return false;}};
  let service;
- const repository=new ScopeRepository({indexedDB}),workspaceRepository=new WorkspaceRepository({baseRepository:repository}),freeEvidenceRepository=new FreeEvidenceRepository({baseRepository:repository,hostObservationGate:(scope,request)=>service?.continuations?.admission(scope,request)});
+ const repository=new ScopeRepository({indexedDB}),workspaceRepository=new WorkspaceRepository({baseRepository:repository}),freeEvidenceRepository=new FreeEvidenceRepository({baseRepository:repository,hostObservationGate:(scope,request)=>service?.ackAdmission?.(scope,request)??service?.continuations?.admission(scope,request)});
  service=serviceFactory({extensionId:chrome.runtime.id,repository,workspaceRepository,freeEvidenceRepository,allowedURL,provider:provider??createSessionProvider({origin,profile:{currentConversationReadEnabled:currentMetadataReadEnabled,...(sendAckProfile?{sendAckProfile}:{} )}}),currentMetadataReadEnabled,sendCandidatesEnabled,sendAckProfile,profile:scopeProfile,
   surfaceProfiles:new Map([[LEGACY_SURFACE_PROFILE.id,{...LEGACY_SURFACE_PROFILE,urlPolicy:policy}]]),
   uiURLs:Object.fromEntries(['workspace','sidebar'].map(role=>[role,chrome.runtime.getURL(role+'.html')])),

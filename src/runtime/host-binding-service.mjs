@@ -33,14 +33,11 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const observations=surfaceProfiles?createHostObservationOwner({handshake,authority,getFrame,profiles:surfaceProfiles,onAccepted:scope=>ui?.notifyScope(scope.key),onSendIntent:(proof,intent)=>sendCandidates?.intent(proof,intent),now,makeId,elapsedNow,schedule,cancel}):null;
  const currentMetadata=observations?createCurrentMetadataReader({observations,provider,enabled:currentMetadataReadEnabled,now}):null;
 
- const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:(scope,request)=>observations.gate(scope,request)??ackOwner?.gate(scope,request),clock:()=>new Date(now()).toISOString()}):null;
+ const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:observations.gate,clock:()=>new Date(now()).toISOString()}):null;
  const continuations=nativeRepository&&typeof freeEvidenceRepository?.applyContinuation==='function'?createHostContinuationOwner({nativeRepository,evidenceRepository:freeEvidenceRepository,profileFor:continuationProfileFor}):null;
- if(ackProfile&&nativeRepository&&continuations)ackOwner=createHostSendAckOwner({nativeRepository:()=>nativeRepository,profileFor:continuationProfileFor,now});
+ if(ackProfile&&nativeRepository&&continuations)ackOwner=createHostSendAckOwner({evidenceRepository:()=>freeEvidenceRepository,profileFor:continuationProfileFor,now});
  sendCandidates=currentMetadata?createHostSendCandidates({observations,reader:currentMetadata,enabled:sendCandidatesEnabled,now,schedule,cancel,onAcknowledged:ackOwner?async input=>{
-  await ackOwner.consume(input);input.guard();
-  const guard=()=>{try{input.guard();return true;}catch{return false;}};
-  const drained=await continuations.drain({scope:input.context.scope,guard,signal:input.context.signal,profileId:ackProfile.id,profileVersion:ackProfile.revision});
-  input.guard();if(drained.state==='complete'||drained.state==='needs-revalidation')ui?.notifyScope(input.context.scope.key);
+  await ackOwner.consume(input);input.guard();ui?.notifyScope(input.context.scope.key);
  }:null}):null;
  const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({initializeTimePolicy:true,repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
  const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,prepareNavigation,nativeCandidatesEnabled:!!candidateBridge,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
@@ -128,5 +125,5 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  function stop(){if(!serviceActive)return;serviceActive=false;candidates?.stop();views?.stop();snippets?.stop();sendCandidates?.stop();ackOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
  // Internal worker composition only; no page RPC exposes metadata or accepts proof IDs.
  const readCurrentMetadata=proofId=>currentMetadata?currentMetadata.read(proofId):Promise.reject(Error('current-metadata-unavailable'));
- return Object.freeze({sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
+ return Object.freeze({ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
 }

@@ -1,4 +1,3 @@
-import {createHostContinuationOwner} from '../../src/runtime/host-continuation-owner.mjs';
 import {FreeEvidenceRepository} from '../../src/data/free-evidence-repository.mjs';
 import {createHostSendAckOwner} from '../../src/runtime/host-send-ack-owner.mjs';
 import {NativeRepository} from '../../src/data/native-repository.mjs';
@@ -39,14 +38,12 @@ test('fixed authenticated provider through reader and correlator confirms delaye
 test('authenticated other-author readback cannot complete a pending self intent',async()=>{const f=fixture();await f.service.observe('p1');await f.service.intent('p1',send);const p=f.next();await f.service.observe(p);f.accept();f.otherAuthor();f.tick();await f.service.observe(p);assert.equal(f.commits.length,0);});
 test('revoked current proof blocks late accepted readback without another fetch',async()=>{const f=fixture();await f.service.observe('p1');await f.service.intent('p1',send);const p=f.next();await f.service.observe(p);f.accept();f.tick();f.revoke();await assert.rejects(f.service.observe(p));assert.equal(f.requests.length,6);assert.equal(f.commits.length,0);});
 
-test('offline authenticated ACK persists native source and pending continuation atomically in MOCK_IDB',async t=>{
- const h=await harness(new MockIDBFactory(),{seed:false});t.after(()=>h.close());let owner;const f=fixture(input=>owner.consume(input));const native=new NativeRepository({baseRepository:h.base,workspaceRepository:h.repo,hostObservationGate:(scope,request)=>owner.gate(scope,request),clock:()=> '2026-10-14T00:00:01.000Z'});
- owner=createHostSendAckOwner({nativeRepository:()=>native,profileFor:id=>id===f.profile.sendAckProfile.id?f.profile.sendAckProfile:null,now:()=>Date.parse('2026-10-14T00:00:01Z')});
- await f.service.observe('p1');await f.service.intent('p1',send);const p=f.next();await f.service.observe(p);assert.deepEqual(await native.listContinuations(f.scope),[]);f.accept();f.tick();await f.service.observe(p);const rows=await native.listContinuations(f.scope);assert.equal(rows.length,1);assert.equal(rows[0].state,'pending-evidence');assert.equal(rows[0].evidence.batch.hints[0].messageId,'m2');assert.equal(rows[0].admission.profileId,'offline_ack');assert.equal((await native.read(f.scope)).revision,1);assert.equal(f.commits.length,1);
- f.tick();await f.service.observe(p);assert.deepEqual(await native.listContinuations(f.scope),rows);
- let drainer;const evidence=new FreeEvidenceRepository({baseRepository:h.base,clock:()=> '2026-10-14T00:00:01.000Z',hostObservationGate:(scope,request)=>drainer.admission(scope,request)});
- drainer=createHostContinuationOwner({nativeRepository:native,evidenceRepository:evidence,profileFor:id=>id===f.profile.sendAckProfile.id?f.profile.sendAckProfile:null});
- const args={scope:f.scope,guard:()=>true,profileId:f.profile.sendAckProfile.id,profileVersion:1};
- const drained=await drainer.drain(args);assert.equal(drained.state,'complete',JSON.stringify(drained));assert.deepEqual(await native.listContinuations(f.scope),[]);
- const state=await evidence.read(f.scope);assert.equal(Object.keys(state.hints).length,1);assert.equal(Object.values(state.hints)[0].messageId,'m2');assert.equal((await drainer.drain(args)).state,'idle');assert.deepEqual(await evidence.read(f.scope),state);
+test('offline authenticated ACK writes only evidence in MOCK_IDB and preserves native revision',async t=>{
+ const h=await harness(new MockIDBFactory(),{seed:false});t.after(()=>h.close());let owner;const f=fixture(input=>owner.consume(input));const native=new NativeRepository({baseRepository:h.base,workspaceRepository:h.repo});
+ const evidence=new FreeEvidenceRepository({baseRepository:h.base,clock:()=> '2026-10-14T00:00:01.000Z',hostObservationGate:(scope,request)=>owner.gate(scope,request)});
+ owner=createHostSendAckOwner({evidenceRepository:()=>evidence,profileFor:id=>id===f.profile.sendAckProfile.id?f.profile.sendAckProfile:null,now:()=>Date.parse('2026-10-14T00:00:01Z')});
+ await f.service.observe('p1');await f.service.intent('p1',send);const p=f.next();await f.service.observe(p);assert.equal((await evidence.read(f.scope)).revision,0);f.accept();f.tick();await f.service.observe(p);
+ const state=await evidence.read(f.scope);assert.equal(Object.keys(state.hints).length,1);assert.equal(Object.values(state.hints)[0].messageId,'m2');assert.equal((await native.read(f.scope)).revision,0);assert.deepEqual(await native.listContinuations(f.scope),[]);
+ f.tick();await f.service.observe(p);assert.deepEqual(await evidence.read(f.scope),state);
+ const replay=await owner.consume({admission:f.commits[0],context:{scope:f.scope,conversationId:C,providerProfile:f.profile.id,signal:new AbortController().signal},guard:()=>{}});assert.equal(replay.replayed,true);assert.deepEqual(await evidence.read(f.scope),state);
 });

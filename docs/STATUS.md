@@ -1554,3 +1554,10 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 增加独立 wakeup 计数，避免墙上时钟冻结导致重复安排；冻结时钟、次数耗尽、停止、撤权、证明替换等定向测试通过。原外部显式观察校准仍保留，各自不能重置候选原窗口和总读取预算。
 - 最终隔离 headless MV3 **5/5 PASS/sourceChangedDuringRun=false**（free-round149-auto-ack-final.json）：无新 DOM 变化、无测试 observe 调用即可自动读回明确 ACK、真实 IDB 写入、续接清理；重复观察无再写。仍是显式离线 profile/test-only 包，不代表真实 ChatGPT ACK 语义验收。
 - 最终完整 Node **3152/3152 PASS**（free-round149-node-final.log.gz）；中途修补唤醒上限前的3151结果不作最终证据。首页首发跨 SPA、真实 profile/账号 G/U、100k/4x 和其他既有缺口仍待完成；Free NOT_RELEASE_READY。
+
+## Round150：按 Host 主规格纠正纯 ACK 的空 native 写入（接 6f33edb）
+
+- 核对首发相关契约时发现主规格§持久化第3项明确“没有native delta的纯evidence读取使用既有evidence operation receipt，不强制空写native”。Round146–149 使用空 native batch 产生 continuation 与此不符，现已纠正，不将先前实现当完整合规。
+- ACK owner 改用 FreeEvidenceRepository.page/apply 与 exact-request host-evidence gate，稳定 operationId、消息 eventKey 与现有 evidence receipt。既有同语义锚直接复用，不续 firstObservedAt/区间；撤销或语义冲突拒绝。只提交 hint/source，native revision 和成员/title 保持不变。旧 continuation drainer/恢复注册保留，历史记录不丢。
+- 完整 Node **3152/3152 PASS**（free-round150-node.log.gz）；最终隔离 headless MV3 **5/5 PASS/sourceChangedDuringRun=false**（free-round150-evidence-only-final.json），明确断言自动 ACK 只写 evidence、不改变 native revision、不产生空 continuation。仍是离线 profile，不是私人 ChatGPT 认证。
+- 首页首发尚未实施：当前 send-intent 契约要求已接受 C body proof，homepage 没有该证明；后续需建立独立有界跨路由因果关联，不能放宽现有 proof 检查冒充已支持。Free NOT_RELEASE_READY。6f33edb 上轮两次普通 push 网络低速超时，本地成果保留，本轮检查点再正常同步。

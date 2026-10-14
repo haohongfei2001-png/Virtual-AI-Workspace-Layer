@@ -1,9 +1,8 @@
 import {normalizedScope} from '../b1/identity.mjs';
 import {digest} from '../data/hash.mjs';
-import {continuationSemanticFingerprint} from '../data/native-observation-continuation.mjs';
 /** Internal consumer only; never expose this owner through an extension message. */
-export function createHostSendAckOwner({nativeRepository,profileFor,now=Date.now}={}){
- if(typeof nativeRepository!=='function'||typeof profileFor!=='function'||typeof now!=='function')throw Error('invalid-send-ack-owner');
+export function createHostSendAckOwner({evidenceRepository,profileFor,now=Date.now}={}){
+ if(typeof evidenceRepository!=='function'||typeof profileFor!=='function'||typeof now!=='function')throw Error('invalid-send-ack-owner');
  const gates=new WeakMap();let stopped=false;
  function gate(scope,request){const value=gates.get(request);return value&&value.scopeKey===normalizedScope(scope)?.key&&value.guard()?value:null;}
  async function consume({admission,context,guard}){
@@ -21,15 +20,15 @@ export function createHostSendAckOwner({nativeRepository,profileFor,now=Date.now
   const sourceId='host_ack_'+digest(profile.id).slice(0,32),generation='profile_'+profile.revision;
   const eventKey='send_'+digest([scope.key,snapshot.conversationId,snapshot.messageId]).slice(0,48);
   const operationId='ack_'+digest([scope.key,profile.id,profile.revision,snapshot.conversationId,snapshot.messageId,ack.semanticFingerprint]).slice(0,48);
-  const repository=nativeRepository();
+  const repository=evidenceRepository();
   try{for(let attempt=0;attempt<2;attempt++){
-   check();const page=await repository.page(scope,{ids:{projects:[],refs:[]},limit:1},{guard:current,signal});check();
-   const sourceRevision=(page.facts.sources[sourceId]?.sourceRevision??0)+1;
-   const batch={scopeKey:scope.key,sourceRevision,observedAt,validUntil,projects:[],refs:[],membership:[],inventory:{projects:'partial',conversations:'partial',cursor:null}};
+   check();const page=await repository.page(scope,{ids:[snapshot.conversationId],limit:1},{guard:current,signal});check();
+   const sourceRevision=(page.evidence.sources[sourceId]?.sourceRevision??0)+1;
    const evidence={sources:[{id:sourceId,generation,sourceRevision,observedAt,validUntil,channel:'host-evidence',codecVersion:1,profileId:profile.id,profileVersion:profile.revision}],events:[],coverage:[],hints:[{...snapshot,id:eventKey,sourceId,generation,sourceRevision,observedAt,eventKey,hintType:'observed-self-send',anchorVersion:1,calibrationDueAt:validUntil}]};
-   const surface={profileId:profile.id,profileVersion:profile.revision,evidenceClass:'surface',semanticFingerprint:digest(batch),acceptedAt:observedAt};
-   const request={operationId,expectedRevision:page.revision,batch};
-   gates.set(request,{scopeKey:scope.key,channel:'host-dom',sourceId,generation,guard:current,admission:surface,continuation:{evidenceOperationId:operationId+'_evidence',expectedEvidenceRevision:0,batch:evidence},continuationAdmission:{...surface,evidenceClass:'observed-self-send',semanticFingerprint:continuationSemanticFingerprint(evidence)}});
+   const prior=page.evidence.hints[eventKey];
+   if(prior){if(prior.revoked||prior.conversationId!==snapshot.conversationId||prior.messageId!==snapshot.messageId||prior.actorScopeKey!==scope.key||digest(prior.ackWitness)!==digest(ack))throw Error('send-ack-existing-conflict');return {ok:true,replayed:true,revision:page.revision};}
+   const request={operationId,expectedRevision:page.revision,batch:evidence};
+   gates.set(request,{scopeKey:scope.key,channel:'host-evidence',sourceId,generation,guard:current,profileId:profile.id,profileVersion:profile.revision});
    let result;try{check();result=await repository.apply(scope,request,{guard:current,signal});}finally{gates.delete(request);}check();
    if(result?.ok===true)return result;
    if(result?.reason!=='revision-conflict'||attempt===1)throw Error(result?.reason??'send-ack-persist-failed');
