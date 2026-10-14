@@ -63,7 +63,7 @@ function nativeManifestRecord(key,manifest,scope){
 /** Immutable bounded pieces share the original store and root CAS transaction.
  * A partial mutation reads only changed rows and their Project dependencies.
  */
-export function loadNativePieces(store, manifest, scope, wanted, done, fail, lookup = null, measureForAudit = false) {
+export function loadNativePieces(store, manifest, scope, wanted, done, fail, lookup = null, measureForAudit = false, prefetched = null) {
   const facts = nativeHeader(manifest, scope), pieces = new Map();
   const requested = new Set();
   const order=lookup?{projects:[...wanted.projects],refs:[...wanted.refs]}:null;
@@ -93,11 +93,11 @@ export function loadNativePieces(store, manifest, scope, wanted, done, fail, loo
     const read = version => {
     if(failed)return;
     if(version===undefined){waiting--;finish();return;}
-    const request = store.get(nativePartitionKey(manifest.scopeKey, kind, key, version));
-    request.onsuccess = () => {
+    const physicalKey=nativePartitionKey(manifest.scopeKey,kind,key,version);
+    const consume = record => {
       if (failed) return;
       try {
-        const piece = nativeUnpack(request.result);
+        const piece = nativeUnpack(record);
         exact(piece, kind === 'projects' ? ['scopeKey', 'kind', 'id', 'revision', 'row'] : ['scopeKey', 'kind', 'id', 'revision', 'row', 'membership']);
         if (piece.scopeKey !== manifest.scopeKey || piece.kind !== kind || piece.id !== key ||
             piece.revision !== version || piece.row?.id !== key) throw Error('invalid-native-piece');
@@ -110,6 +110,8 @@ export function loadNativePieces(store, manifest, scope, wanted, done, fail, loo
         waiting--; finish();
       } catch (error) { failed = true; fail(error); }
     };
+    if(prefetched?.has(physicalKey))consume(prefetched.get(physicalKey));
+    else{const request=store.get(physicalKey);request.onsuccess=()=>consume(request.result);}
     };
     if(lookup)lookup(kind,key,read);else read(Object.hasOwn(manifest[kind],key)?manifest[kind][key]:undefined);
   };

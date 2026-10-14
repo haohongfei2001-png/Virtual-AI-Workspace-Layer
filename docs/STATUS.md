@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百一十五轮：隐藏成员判定与异步展示修复通过完整Node2425项、原包MV3十三通用及五工作集旅程；当前100k/4x冷启动诊断仍FAIL，原生输入与草稿保留。真实账号与性能等验收未完成，Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百一十六轮：原子迁移内有界批量读取已通过完整Node2433项、真实IDB五旅程、原包MV3十三旅程；100k/4x冷启动仍FAIL，原生输入与草稿保留。真实账号与性能等验收未完成，Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1256,3 +1256,14 @@ Round107审查另发现隐藏current P可能压过可见sidebar，提交前已�
 
 
 同步检查点：Round113 bd142a7已推送；Round114界面修复与Round115性能检查点已本地提交。随后正常push两次分别遭遇Recv timeout与github.com:443连接75秒超时；不改远端／代理／分支，不循环重试。当前远端仍bd142a7，本地领先两项提交，后续正常同步即可。
+
+
+## Round116：原子迁移内有界批量读取，100k关口仍未通过
+
+接ce15a2b。native audit每批先getAllKeys读取最多512个物理字符串键，仅对连续的当前manifest精确键区间getAll取值；旧revision／额外键会切断区间，其payload不加载。每个audit batch最多扫描2×选中ID数，未取得的目标回到原get；不能用扫描覆盖数冒充实际完整性。所有命中与回退均复用原nativeUnpack、checksum、身份／scope／revision、成员依赖及全局容量校验。没有getAll/getAllKeys/bound的平台保持原路径。同一最终RW事务内完成全部fresh piece校验和root/receipt发布，没有RAM审计证书或跨事务放行。
+
+完整Node **2433/2433、0失败/跳过**。新增八项bulk合同覆盖1／512边界、600跨页、1200键扫描上限与精确回退、缺失／checksum／末页损坏／撤权全store回滚。真实headless IndexedDB五旅程PASS：旧版本与2400额外条目不加载payload，上限后400条exact-get补齐；损坏、缺失、第二键页撤权均整体回滚，Pro人工资产及B scope保持。实际原构建包MV3十三旅程PASS。浏览器报告均sourceChangedDuringRun=false，scope为离线合成，不是生产授权。证据free-round116-node.log.gz、free-native-audit-bulk-final.log.gz、free-round116-native-audit-bulk-browser.json、free-round116-package-mv3.json。
+
+同100k mixed／CDP4x initial profile复测仍**FAIL**：约30626ms未ACTIVE，原生input／草稿／可见性保持，sourceChangedDuringRun=false。不能以请求数减少宣称延迟通过或直接与旧采样作收益结论；当前trace仍超6秒，profile已记录审计后native-index-migration构建回调开销。证据free-round116-initial-4x-profile.json及压缩profile。后续可审查纯索引构建的独立准备，但最终RW必须重新完整校验fresh pieces和新读root字节；不得转为RAM审计后只校验版本的方案。
+
+本轮启动时对原分支正常push一次仍遇github.com:443连接75秒超时，没有改远端/配置/强推；远端已确认bd142a7，后续检查点继续本地保存待正常同步。真实context/ACK、新聊首发、G/U/PAIA/真人及100k性能关口仍未完成；Free未完成、NOT_RELEASE_READY。
