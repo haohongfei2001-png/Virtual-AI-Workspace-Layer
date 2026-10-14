@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {normalizedScope} from '../../src/b1/identity.mjs';
 import {A} from '../b23/contracts.mjs';
 import {evidenceHeader,evidenceRecord,evidencePieceKey,validateEvidenceManifest} from '../../src/data/free-evidence-partitions.mjs';
-import {validateFreeEvidence} from '../../src/data/free-evidence.mjs';
+import {measureFreeEvidence,validateFreeEvidence} from '../../src/data/free-evidence.mjs';
 import {auditEvidencePartitions} from '../../src/data/evidence-partition-audit.mjs';
 const scope=normalizedScope(A),now='2026-10-13T12:00:00Z',until='2026-10-14T00:00:00Z',tables=['events','hints','coverage'];
 function fixture(count=5001){
@@ -46,4 +46,39 @@ test('legal piece-size manifest and legal batches cannot hide global evidence ov
  let reads=0,successes=0,failures=0;const store={get(key){reads++;const [,kind,id]=JSON.parse(key);assert.equal(kind,'free-evidence-piece');const request={};queueMicrotask(()=>{request.result=evidenceRecord(key,make(id,gaps));request.onsuccess();});return request;}};
  const error=await new Promise(resolve=>auditEvidencePartitions(store,f.manifest,scope,()=>{},()=>{successes++;resolve(null);},error=>{failures++;resolve(error);}));
  assert.equal(error?.message,'free-evidence-too-large');assert.equal(reads,count);assert.equal(successes,0);assert.equal(failures,1);
+});
+
+function sparseFixture(count,keep){
+ const f=fixture(count);for(const table of tables)f.facts[table]={};
+ for(let i=0;i<count;i++){
+  const ref='R'+i,key=evidencePieceKey(scope.key,ref,1),piece=f.rows.get(key).payload;
+  for(const table of tables){if(!keep(table,i))piece[table]={};Object.assign(f.facts[table],piece[table]);}
+  f.manifest.sizes[ref]=JSON.stringify(piece).length;f.rows.set(key,evidenceRecord(key,piece));
+ }
+ for(const table of tables)f.manifest.counts[table]=Object.keys(f.facts[table]).length;
+ validateEvidenceManifest(f.manifest,scope);validateFreeEvidence(f.facts,scope);return f;
+}
+for(const mode of ['first-and-tail','different-batch-tables','empty-middle-batch'])test('sparse table JSON oracle accounts for only actual cross-batch commas: '+mode,async()=>{
+ const count=mode==='empty-middle-batch'?10001:5001;
+ const f=sparseFixture(count,(table,i)=>mode==='first-and-tail'?(table!=='coverage'&&(i===0||i===5000)):mode==='different-batch-tables'?(table==='events'?i===0:table==='hints'?i===5000:false):i===0||i===10000);
+ const expected=JSON.stringify(f.facts),r=await run(f);
+ assert.equal(r.error,undefined);assert.equal(r.doneCalls,1);assert.equal(r.failCalls,0);assert.equal(r.reads,count);
+ assert.equal(r.stats.evidenceJSONLength,expected.length);assert.deepEqual(r.stats.counts,f.manifest.counts);
+ assert.ok(expected.includes('\\"'),'scope strings contain JSON-escaped quotes');
+});
+
+test('nonempty ref directory whose every evidence table is empty measures only the header',async()=>{
+ const f=sparseFixture(5001,()=>false),r=await run(f);assert.equal(r.error,undefined);assert.equal(r.reads,5001);assert.equal(r.stats.evidenceJSONLength,JSON.stringify(f.facts).length);assert.deepEqual(r.stats.counts,{events:0,hints:0,coverage:0});
+});
+
+for(const invalidId of ['中文标识','quoted"id','back\\slash'])test('measuring audit still rejects unsupported non-token evidence identifier '+JSON.stringify(invalidId),async()=>{
+ const f=fixture(1),key=evidencePieceKey(scope.key,'R0',1),piece=f.rows.get(key).payload;piece.events.E0.messageId=invalidId;
+ f.manifest.sizes.R0=JSON.stringify(piece).length;f.rows.set(key,evidenceRecord(key,piece));const r=await run(f);
+ assert.equal(r.error?.message,'invalid-free-evidence-id');assert.equal(r.doneCalls,0);assert.equal(r.failCalls,1);
+});
+
+test('measurement validates current state on every call and legacy wrapper preserves object identity',()=>{
+ const f=fixture(1),state=f.facts;assert.equal(measureFreeEvidence(state,scope),JSON.stringify(state).length);assert.equal(validateFreeEvidence(state,scope),state);
+ state.events.E0.messageId='a_longer_valid_message_id';assert.equal(measureFreeEvidence(state,scope),JSON.stringify(state).length);
+ state.events.E0.actorVerified=false;assert.throws(()=>measureFreeEvidence(state,scope),/unverified-free-send-author/);assert.throws(()=>validateFreeEvidence(state,scope),/unverified-free-send-author/);
 });

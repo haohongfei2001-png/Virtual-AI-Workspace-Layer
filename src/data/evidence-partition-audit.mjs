@@ -8,7 +8,7 @@ import {digest} from './hash.mjs';
  */
 export function auditEvidencePartitions(store,manifest,scope,fence,done,fail,indexes=null){
  const tables=['events','hints','coverage'],seen=Object.fromEntries(tables.map(t=>[t,new Set()])),hintEvents=new Set();
- let refs=[],offset=0,size=0,failed=false,finished=false;
+ let refs=[],offset=0,size=0,headerSize=0,failed=false,finished=false;
  const matched=new Map();
  const match=(table,key,ref)=>{
   if(!indexes)return;
@@ -29,13 +29,15 @@ export function auditEvidencePartitions(store,manifest,scope,fence,done,fail,ind
    }
    const ids=refs.slice(offset,offset+5000);offset+=ids.length;
    prefetchExactAuditRecords(store,ids.map(ref=>evidencePieceKey(scope.key,ref,manifest.refVersions[ref])),fence,prefetched=>{
-   loadEvidencePieces(store,manifest,scope,ids,evidence=>{
+   loadEvidencePieces(store,manifest,scope,ids,(evidence,{jsonLength})=>{
     if(failed||finished)return;
     try{
      fence();
+     size+=jsonLength-headerSize;
+     for(const table of tables)if(seen[table].size&&Object.keys(evidence[table]).length)size++;
+     if(size>128*1024*1024)throw Error('free-evidence-too-large');
      for(const table of tables)for(const [key,row] of Object.entries(evidence[table])){
       if(seen[table].has(key))throw Error('invalid-free-evidence-piece-index');
-      size+=JSON.stringify(key).length+1+JSON.stringify(row).length+(seen[table].size?1:0);
       seen[table].add(key);
       if(seen[table].size>100000)throw Error('free-evidence-capacity');
       if(size>128*1024*1024)throw Error('free-evidence-too-large');
@@ -53,5 +55,5 @@ export function auditEvidencePartitions(store,manifest,scope,fence,done,fail,ind
    },reject);
   }catch(error){reject(error);}
  };
- try{fence();validateEvidenceManifest(manifest,scope);refs=Object.keys(manifest.refVersions);size=JSON.stringify(evidenceHeader(manifest,scope)).length;next();}catch(error){reject(error);}
+ try{fence();validateEvidenceManifest(manifest,scope);refs=Object.keys(manifest.refVersions);headerSize=JSON.stringify(evidenceHeader(manifest,scope)).length;size=headerSize;next();}catch(error){reject(error);}
 }

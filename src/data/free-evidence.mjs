@@ -8,7 +8,7 @@ const forbidden=new Set(['__proto__','constructor','prototype']);
 const id=v=>{if(!tokenOK(v)||forbidden.has(v))throw Error('invalid-free-evidence-id');return v;};
 const time=v=>{const n=instant(v);if(n===null)throw Error('invalid-free-evidence-time');return n;};
 const revision=v=>{if(!Number.isSafeInteger(v)||v<1)throw Error('invalid-free-evidence-revision');};
-function shape(value,required,optional=[]){if(!isRecord(value)||required.some(k=>!Object.hasOwn(value,k))||Object.keys(value).some(k=>![...required,...optional].includes(k)))throw Error('invalid-free-evidence-schema');}
+function shape(value,required,optional=[]){if(!isRecord(value)||required.some(k=>!Object.hasOwn(value,k))||Object.keys(value).some(k=>!required.includes(k)&&!optional.includes(k)))throw Error('invalid-free-evidence-schema');}
 function scopeKey(scope){const s=normalizedScope(scope);if(!s)throw Error('unverified-scope');return s.key;}
 const witnessFields=['id','sourceId','generation','sourceRevision','observedAt','revoked'];
 function witness(row,state){
@@ -54,7 +54,7 @@ function validateRow(table,row,state){
  }
 }
 export function emptyFreeEvidence(scope){return {format:'vaiwl-free-evidence-v1',scopeKey:scopeKey(scope),revision:0,sources:{},events:{},hints:{},coverage:{}};}
-export function validateFreeEvidence(state,scope){
+export function measureFreeEvidence(state,scope){
  shape(state,['format','scopeKey','revision',...tables]);
  if(!['vaiwl-free-evidence-v1','vaiwl-free-evidence-v2'].includes(state.format)||state.scopeKey!==scopeKey(scope)||!Number.isSafeInteger(state.revision)||state.revision<0)throw Error('invalid-free-evidence-state');
  for(const table of tables){
@@ -63,8 +63,9 @@ export function validateFreeEvidence(state,scope){
  }
  const anchors=new Set();for(const h of Object.values(state.hints))if(h.hintType==='observed-self-send'){const key=JSON.stringify([h.conversationId,h.messageId]);if(anchors.has(key))throw Error('duplicate-free-anchor-message');anchors.add(key);}
  const hints=new Set();for(const h of Object.values(state.hints)){const key=JSON.stringify([h.sourceId,h.eventKey]);if(hints.has(key))throw Error('duplicate-free-hint-event');hints.add(key);}
- if(JSON.stringify(state).length>(state.format==='vaiwl-free-evidence-v2'?128:16)*1024*1024)throw Error('free-evidence-too-large');return state;
+ const jsonLength=JSON.stringify(state).length;if(jsonLength>(state.format==='vaiwl-free-evidence-v2'?128:16)*1024*1024)throw Error('free-evidence-too-large');return jsonLength;
 }
+export function validateFreeEvidence(state,scope){measureFreeEvidence(state,scope);return state;}
 const equal=(a,b)=>stable(a)===stable(b);
 /** Call only behind broker authorization; synthetic is not a production trust label. */
 export function applyFreeEvidence(state,command,{scope,now,channel,historical=false}){

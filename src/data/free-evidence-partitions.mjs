@@ -1,4 +1,4 @@
-import {emptyFreeEvidence,validateFreeEvidence} from './free-evidence.mjs';
+import {emptyFreeEvidence,validateFreeEvidence,measureFreeEvidence} from './free-evidence.mjs';
 import {digest,stable,sha256} from './hash.mjs';
 import {id} from './state.mjs';
 export const freeEvidenceKey=scopeKey=>JSON.stringify([scopeKey,'free-evidence']);
@@ -50,14 +50,14 @@ export function loadEvidencePieces(store,manifest,scope,ids,done,fail,lookupMany
  const reject=error=>{if(!failed){failed=true;fail(error);}};
  const load=versions=>{if(failed)return;try{
   const keys=wanted.filter(ref=>versions.has(ref));let pending=keys.length;
-  if(!pending){done(result);return;}
+  if(!pending){done(result,{jsonLength:measureFreeEvidence(result,scope)});return;}
   for(const ref of keys){if(failed)break;const {version,size}=versions.get(ref),key=evidencePieceKey(scope.key,ref,version);const consume=row=>{if(failed)return;try{
    const piece=unpackEvidence(row);
    if(piece.scopeKey!==scope.key||piece.ref!==ref||piece.revision!==version||JSON.stringify(piece).length!==size)throw Error('invalid-free-evidence-piece');
    for(const table of tables){if(!piece[table]||typeof piece[table]!=='object')throw Error('invalid-free-evidence-piece');for(const [key,row] of Object.entries(piece[table])){
     if(row.conversationId!==ref||row.id!==key||Object.hasOwn(result[table],key))throw Error('invalid-free-evidence-piece-index');result[table][key]=row;
    }}
-   if(--pending===0){validateFreeEvidence(result,scope);done(result);}
+   if(--pending===0){const jsonLength=measureFreeEvidence(result,scope);done(result,{jsonLength});}
   }catch(error){reject(error);}};if(prefetched?.has(key))consume(prefetched.get(key));else{const request=store.get(key);request.onsuccess=()=>consume(request.result);request.onerror=()=>reject(request.error??Error('free-evidence-piece-read-failed'));}}
  }catch(error){reject(error);}};
  try{if(lookupMany)lookupMany(wanted,load);else load(new Map(wanted.filter(ref=>Object.hasOwn(manifest.refVersions,ref)).map(ref=>[ref,{version:manifest.refVersions[ref],size:manifest.sizes[ref]}])));}catch(error){reject(error);}

@@ -1791,3 +1791,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 实际隔离headless生产候选MV3 **6组 PASS**（free-round179-candidates-mv3.json），保持读取失败显式恢复、605候选分页、原生激活/升级、输入保护和阅读返回；sourceChangedDuringRun=false。时钟注入反例属于离线单元/adapter测试，不宣称实际系统时钟改变或真实账户认证。
 - worker已有单调6秒guard，本轮补最后授权回复迟到后的content本地栅栏；本地起点不等于更早worker请求起点，因此不宣称跨realm全局期限已完整证明。100k性能、首页首发来源、完整候选RAM、间歇退出及真实G/U仍未完成，Free NOT_RELEASE_READY。
 - 上轮2af8a82普通push低速超时；本地成果完整、72ca068祖先保留，沿用原PR #16与分支。
+
+
+## Round180：证据审计复用当次精确JSON长度（接 aa3dbbb）
+
+- 去除证据shape校验逐字段构造required+optional数组；predicate仍完整检查required与optional。新增measureFreeEvidence执行完整原校验并返回当次JSON长度，validateFreeEvidence保留返回原state的API。loadEvidencePieces向audit传递该次实测长度，audit按批次减header并补跨批非空table逗号，避免逐row再次序列化；无跨事务校验证书或授权缓存。
+- 每piece新鲜hash/scope/ref/revision/JSON大小、全局重复/计数/索引对应、128MiB上限保留。独立审查无阻断；子代理新增8项精确oracle，覆盖5000边界、稀疏三表、空中间批次、全空pieces、合法scopeKey转义、非法中文/引号/反斜杠ID拒绝及对象变更重校验。最终完整 Node **3325/3325 PASS**（free-round180-node.log.gz）。
+- 实际headless IndexedDB **3组 PASS**（free-round180-evidence-idb.json）：5001refs成功迁移完整保留、尾checksum损坏全部store不变、第二批撤权全部store回滚；每页key/value预取≤512。不是MV3/真实账户认证。
+- 固定最终源码100k/project-mixed/4x **仍FAIL**（free-round180-100k.json）：约30059ms后WAITING/read-budget-exhausted；evidence-directory-build约4172ms，随后目录阶段约6580ms后stale-binding。相较旧运行不足以证明端到端显著改善，不把计算削减当F1达标；原生输入原节点/草稿/可见性均保留，sourceChangedDuringRun=false，期限未放宽。
+- aa3dbbb已正常推送，含上一轮积压2af8a82；72ca068祖先保留。100k性能、首页首发来源、完整候选RAM、间歇退出及真实G/U仍未完成，Free NOT_RELEASE_READY。
