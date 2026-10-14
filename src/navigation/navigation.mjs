@@ -1,3 +1,4 @@
+import {isResolvedControlNavigationPlan} from '../host/current-navigation-plan.mjs';
 import {validateFrameResumeView} from '../host/frame-resume-state.mjs';
 import { freeNavigationSnapshot, freeListRows, assertPreparedFreeSnapshot } from './free-view.mjs';
 import { currentIndex } from './current-index.mjs';
@@ -151,11 +152,11 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function enterReading(notify=true){if(!view)return;navigationIntent++;remember();clearTimePolicyNotice();view.mode='reading';searchQuery=null;searchTheme=null;layout();if(framed&&notify)onPresentationRequest({kind:'enter-reading'});}
   function openRef(ref,event){if(ref.available===false){event.preventDefault();return;}if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;remember();if(ref.anchor)pendingAnchor={scope:snapshot.scope,ref,anchor:ref.anchor};clearTimePolicyNotice();view.mode='reading';searchQuery=null;searchTheme=null;layout();const same=adapter.isCurrent(ref.nativeUrl);adapter.openNative(ref.nativeUrl,event);if(same){restoreFocus();locateAnchor();}}
   // Frame plans are supplied synchronously before activation. Never fetch a plan in a click handler.
-  function bindPlannedLink(a,ref){
-    let issued;try{issued=structuredClone(adapter.navigationPlan?.(ref));}catch{}
+  function bindPlannedLink(a,ref,entity='conversation'){
+    let issued;try{issued=structuredClone(entity==='project'?adapter.projectNavigationPlan?.(ref):adapter.navigationPlan?.(ref));}catch{}
     const plan=issued?.plan;
     const safeHref=plan?.target?.kind==='resolved'?adapter.nativeHref?.(plan.target.navigationURL):null;
-    const resolvedOK=plan?.target?.kind==='resolved'&&plan.target.entity==='conversation'&&plan.target.nativeId===ref.id&&safeHref;
+    const resolvedOK=plan?.target?.kind==='resolved'&&plan.target.entity===entity&&plan.target.nativeId===ref.id&&safeHref;
     const delegation=['native-control','same-target'].includes(plan?.mode)&&typeof onDispatch==='function'&&['targetKey','uiGrantId','mountId'].every(key=>typeof issued?.[key]==='string'&&issued[key])&&Number.isSafeInteger(plan.planRevision);
     const valid=ref.available!==false&&!ref.anchor&&((plan?.mode==='href'&&resolvedOK&&['same-tab','new-tab-preserve-current'].includes(plan.disposition))||(delegation&&(resolvedOK||plan.target?.kind==='live-control')));
     if(!valid){a.setAttribute('aria-disabled','true');a.dataset.navigationReason=ref.anchor?'snippet-frame-controller-unavailable':'native-plan-unavailable';a.addEventListener('click',event=>event.preventDefault());return;}
@@ -165,16 +166,16 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;
       const dispatchIntent=++navigationIntent;
       if(plan.mode==='href')return; // Browser default only; no duplicate RPC or fallback.
-      event.preventDefault();if(plan.mode!=='same-target')enterReading();
+      event.preventDefault();
       const dto={actionId:'ui_'+win.crypto.randomUUID().replaceAll('-',''),uiGrantId:issued.uiGrantId,mountId:issued.mountId,planRevision:plan.planRevision,targetKey:issued.targetKey};
-      try{Promise.resolve(onDispatch(dto)).then(result=>{if(plan.mode==='same-target'&&result?.state==='already-current'&&!stopped&&navigationIntent===dispatchIntent)enterReading(false);}).catch(()=>{});}catch{} // Unconfirmed dispatch is never retried.
+      try{Promise.resolve(onDispatch(dto)).then(result=>{if((plan.mode==='same-target'&&result?.state==='already-current'||plan.mode==='native-control'&&result?.state==='dispatched')&&!stopped&&navigationIntent===dispatchIntent)enterReading(false);}).catch(()=>{});}catch{} // Unconfirmed dispatch is never retried.
     });
     if(!safeHref)a.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();a.click();}});
   }
   function projectCreateEntry(group){
-    let plan,href;try{plan=structuredClone(adapter.projectNavigationPlan?.(group))?.plan;if(plan?.target?.kind==='resolved')href=adapter.nativeHref?.(plan.target.navigationURL);}catch{}
-    if(group.available!==false&&typeof group.nativeUrl==='string'&&group.nativeUrl&&plan?.mode==='href'&&plan.disposition==='new-tab-preserve-current'&&plan.target?.kind==='resolved'&&plan.target.entity==='project'&&plan.target.nativeId===group.id&&plan.target.navigationURL===group.nativeUrl&&typeof href==='string'&&href===group.nativeUrl){
-      const a=node(doc,'a',{class:'square','aria-label':'打开项目以新建聊天 '+group.name,title:'打开原生项目后，继续使用原生控件新建聊天'},'+');a.href=href;a.target='_blank';a.rel='noopener noreferrer';a.dataset.focusKey='project-create:'+group.id;return a;
+    let issued,plan,href;try{issued=structuredClone(adapter.projectNavigationPlan?.(group));plan=issued?.plan;if(plan?.target?.kind==='resolved')href=adapter.nativeHref?.(plan.target.navigationURL);}catch{}
+    if(group.available!==false&&typeof group.nativeUrl==='string'&&group.nativeUrl&&(isResolvedControlNavigationPlan(plan)&&typeof onDispatch==='function'&&['targetKey','uiGrantId','mountId'].every(k=>typeof issued?.[k]==='string'&&issued[k])||plan?.mode==='href'&&plan.disposition==='new-tab-preserve-current')&&plan.target?.kind==='resolved'&&plan.target.entity==='project'&&plan.target.nativeId===group.id&&plan.target.navigationURL===group.nativeUrl&&typeof href==='string'&&href===group.nativeUrl){
+      const a=node(doc,'a',{class:'square','aria-label':'打开项目以新建聊天 '+group.name,title:'打开原生项目后，继续使用原生控件新建聊天'},'+');bindPlannedLink(a,{...group,displayTitle:group.name},'project');a.dataset.focusKey='project-create:'+group.id;return a;
     }
     const unavailable=button('在项目中新建聊天 '+group.name,()=>{},'+');unavailable.disabled=true;unavailable.dataset.navigationReason='native-create-plan-unavailable';return unavailable;
   }

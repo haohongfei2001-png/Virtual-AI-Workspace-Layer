@@ -1,3 +1,5 @@
+import {exactHostRecord} from './contract.mjs';
+
 // Private cross-discovery identity witnesses. Tokens carry neither a handle nor authority.
 const candidateIdentities=new WeakMap();
 
@@ -37,12 +39,12 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const node=entry.node.deref(),root=entry.root.deref();
     return node&&root&&node.isConnected&&root.isConnected&&node.ownerDocument===document&&root.contains(node)&&node.parentNode===entry.parent.deref()&&entry.handle.routeEpoch===routeEpoch&&entry.handle.regionEpoch===regionEpoch&&fingerprint(node)===entry.fingerprint&&roots.get(entry.regionKind)===root;
   }
-  function control(node,root,regionKind,controlKind) {
+  function control(node,root,regionKind,controlKind,resolvedKey=null) {
     let entry=byNode.get(node);
     if(entry&&!valid(entry)) { detached.add(entry.handle.id);byId.delete(entry.handle.id);entry=null; }
     if(!entry) {
       const handle={id:`live-${instance}-${++sequence}`,documentToken:binding.documentToken,routeEpoch,regionEpoch,controlKind};
-      entry={handle,node:new WeakRef(node),root:new WeakRef(root),parent:new WeakRef(node.parentNode),regionKind,fingerprint:fingerprint(node)};
+      entry={handle,node:new WeakRef(node),root:new WeakRef(root),parent:new WeakRef(node.parentNode),regionKind,fingerprint:fingerprint(node),resolvedKey};
       byNode.set(node,entry);byId.set(handle.id,entry);
     }
     return {...entry.handle};
@@ -77,8 +79,8 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       if(entity==='project'&&parsed?.kind==='project'&&parsed.projectId===currentProjectId)return null;
       if(parsed?.kind==='unsupported'||parsed&&parsed.kind!==entity&&!(entity==='project'&&parsed.kind==='project-candidate')) return null;
       if(!parsed&&!(entity==='project'&&node.tagName==='BUTTON')) return null;
-      const handle=control(node,root,regionKind,entity);
       const id=parsed?.kind===entity?(entity==='project'?parsed.projectId:parsed.conversationId):null;
+      const handle=control(node,root,regionKind,entity,id?JSON.stringify([entity,id,parsed.navigationURL]):null);
       const target=id?{kind:'resolved',entity,nativeId:id,navigationURL:parsed.navigationURL,liveHandle:handle}:{kind:'live-control',control:handle,navigationURL:null};
       const result={renderKey:id?`${entity}:${id}`:`candidate:${handle.id}`,entity,...title(node),target,evidence:evidence(regionKind,'textContent',href?'href':'button')};
       candidates.push(result);return result;
@@ -168,6 +170,32 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     if(typeof handle==='object'&&['documentToken','routeEpoch','regionEpoch','controlKind'].some(key=>handle[key]!==entry.handle[key]))return null;
     const node=entry.node.deref();return forDispatch&&!dispatchable(node)?null:node;
   }
+  /** Resolve only already sampled native controls. This is a DOM proposal, not authorization.
+   * One walk of the existing registry per batch; auxiliary state is bounded by 200 targets.
+   * Exact URLs deliberately do not collapse alternate containers or identity queries.
+   */
+  function resolveLoadedTargets(targets){
+    if(!Array.isArray(targets)||targets.length>200)throw Error('invalid-resolved-targets');
+    const wanted=new Map(),keys=[];
+    for(let index=0;index<targets.length;index++){
+      const descriptor=Object.getOwnPropertyDescriptor(targets,String(index));
+      const target=descriptor&&Object.hasOwn(descriptor,'value')?descriptor.value:null;
+      if(!exactHostRecord(target,['entity','nativeId','navigationURL'])||!['project','conversation'].includes(target.entity)||typeof target.nativeId!=='string'||typeof target.navigationURL!=='string')throw Error('invalid-resolved-targets');
+      const parsed=urlPolicy.parse(target.navigationURL);
+      if(parsed.kind!==target.entity||parsed.navigationURL!==target.navigationURL||(target.entity==='project'?parsed.projectId:parsed.conversationId)!==target.nativeId)throw Error('invalid-resolved-targets');
+      const key=JSON.stringify([target.entity,target.nativeId,target.navigationURL]);keys.push(key);
+      if(!wanted.has(key))wanted.set(key,{count:0,handle:null});
+    }
+    if(stopped||!targets.length)return keys.map(()=>null);
+    refreshRoute();refreshRoots();
+    for(const entry of byId.values()){
+      const result=wanted.get(entry.resolvedKey);if(!result)continue;
+      // Reuse the ordinary handle gate; no new node/locator lookup or dispatch.
+      if(entry.handle.documentToken!==binding.documentToken||!getNode(entry.handle))continue;
+      result.count++;result.handle=result.count===1?entry.handle:null;
+    }
+    return keys.map(key=>{const result=wanted.get(key);return result.count===1?{...result.handle}:null;});
+  }
   function candidateEntry(handle){
     if(!handle||typeof handle!=='object'||handle.controlKind!=='project'||!getNode(handle))return null;
     const entry=byId.get(handle.id);if(entry?.regionKind!=='projects')return null;
@@ -185,7 +213,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const entry=candidateEntry(handle);if(!entry)return false;
     return identity.document.deref()===document&&identity.profileId===profile.id&&identity.profileVersion===profile.revision&&identity.node.deref()===entry.node.deref()&&identity.root.deref()===entry.root.deref()&&identity.parent.deref()===entry.parent.deref()&&identity.fingerprint===entry.fingerprint;
   }
-  return Object.freeze({scan,scanPage,affectsSurface,getNode,captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
+  return Object.freeze({scan,scanPage,affectsSurface,getNode,resolveLoadedTargets,captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
     if(stopped)return;routeEpoch=Number.isSafeInteger(nextEpoch)&&nextEpoch>routeEpoch?nextEpoch:routeEpoch+1;clearHandles();roots.clear();routeURL=document.location.href;
   },stop() {stopped=true;clearHandles();roots.clear();}});
 }

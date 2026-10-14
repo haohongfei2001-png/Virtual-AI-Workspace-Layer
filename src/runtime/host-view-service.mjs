@@ -1,4 +1,4 @@
-import {isCurrentNavigationPlan} from '../host/current-navigation-plan.mjs';
+import {isCurrentNavigationPlan,isResolvedControlNavigationPlan} from '../host/current-navigation-plan.mjs';
 import {locateFreeProject} from './free-project-location.mjs';
 import {validateFrameResumeView,validateResumeQuery} from '../host/frame-resume-state.mjs';
 import {prepareHostAutoTimePolicy,hostAutoTimePolicyFresh} from './host-auto-time-policy.mjs';
@@ -106,7 +106,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     navigation=await prepareNavigation({parentFrame:context.parentFrame,binding:context.binding,targets});check();
     if(!Array.isArray(navigation)||navigation.length>200)throw Error('invalid-native-plans');
     const seen=new Set();for(const item of navigation){const project=Object.hasOwn(item??{},'projectId'),key=project?'projectId':'refId',entity=project?'project':'conversation',id=item?.[key],expected=(project?projects:rows).get(id),target=item?.plan?.target,identity=JSON.stringify([entity,id]);
-     if(!expected||seen.has(identity)||!exactHostRecord(item,[key,'plan','targetKey'])||!['href','unavailable','same-target'].includes(item.plan?.mode)||item.plan?.mode==='same-target'&&(!isCurrentNavigationPlan(item.plan)||project||id!==page.current.refId||target.nativeId!==id||target.navigationURL!==expected.nativeUrl||!createURLPolicy({origin:new URL(nativeUrl).origin}).sameTarget(target.navigationURL,nativeUrl))||(item.plan.mode==='href'&&(target?.kind!=='resolved'||target.entity!==entity||target.nativeId!==id||target.navigationURL!==expected.nativeUrl||!['same-tab','new-tab-preserve-current'].includes(item.plan.disposition))))throw Error('invalid-native-plans');
+     if(!expected||seen.has(identity)||!exactHostRecord(item,[key,'plan','targetKey'])||!['href','unavailable','same-target','native-control'].includes(item.plan?.mode)||item.plan?.mode==='native-control'&&(!isResolvedControlNavigationPlan(item.plan)||target.entity!==entity||target.nativeId!==id||target.navigationURL!==expected.nativeUrl||item.plan.control.documentToken!==context.binding.documentToken||item.plan.control.routeEpoch!==context.binding.routeEpoch)||item.plan?.mode==='same-target'&&(!isCurrentNavigationPlan(item.plan)||project||id!==page.current.refId||target.nativeId!==id||target.navigationURL!==expected.nativeUrl||!createURLPolicy({origin:new URL(nativeUrl).origin}).sameTarget(target.navigationURL,nativeUrl))||(item.plan.mode==='href'&&(target?.kind!=='resolved'||target.entity!==entity||target.nativeId!==id||target.navigationURL!==expected.nativeUrl||!['same-tab','new-tab-preserve-current'].includes(item.plan.disposition))))throw Error('invalid-native-plans');
      seen.add(identity);
     }
    }
@@ -114,7 +114,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    if(new TextEncoder().encode(JSON.stringify(result)).length>65536)throw Error('free-frame-page-too-large');
    if(context.role==='workspace')entry.currentEntryEligible=page.segment===0&&search===undefined&&workingSet===undefined;
    check();if(!context.isCurrent())throw Error('stale-view-resume');if(!locating)rememberResume(context,effectiveQuery,current.snapshot.viewSession);
-   registerCurrentNavigation?.({context,grantId:message.grantId,mountId:message.mountId,navigation:navigation.filter(item=>item.plan.mode==='same-target')});
+   registerCurrentNavigation?.({context,grantId:message.grantId,mountId:message.mountId,navigation:navigation.filter(item=>['same-target','native-control'].includes(item.plan.mode))});
    return result;
   }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;}
  }

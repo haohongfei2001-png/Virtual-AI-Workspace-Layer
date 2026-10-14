@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round171：evidence审计复用有界精确预取；完整Node3220项、真实evidence IDB三项通过。100k/4x仍未在启动预算内完成，保持FAIL；首页首发、预证明立即发送、候选内存、间歇退出及真实G/U仍未完成，Free为NOT_RELEASE_READY。
+当前已推进至Round191：已解析原生Project/Conversation通过原控件单次导航接入Free UI；完整Node3536项、正式隔离Chrome MV3五项通过。100k/4x预算FAIL、首页首发、候选内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1898,3 +1898,13 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 最终完整Node **3468/3468 PASS**（free-round190-node.log.gz），含新增owner注册/正文证明/严格frame接线/派发期限并发/renderer晚ACK反例。初次完整回归8个旧测试适配器无参调用失败保留initial-node，修复后候选升级50项与全套通过；不是删除失败或放宽授权。
 - 最终正式package隔离headless Chrome MV3 **3组PASS**（free-round190-current-navigation.json/png）：未发送草稿下同C计划为same-target，真实点击一次already-current，newPages=0、URL/原生actions/requests不变，同textarea及草稿保留；阅读态sidebar可用、唯一返回恢复双surface。worker外网拒绝，源码/脚本hash稳定。最后href晚ACK护栏前的运行独立保留，不合计为6项。
 - 只完成当前聊天已证明same-target切片；不同目标新标签保护策略、真实profile/G/U、100k FAIL、完整81项/J1–J4及即时reading退出旧FAIL仍未闭合，Free NOT_RELEASE_READY。9f2c0b0已本地提交但fetch低速超时、push30秒未确认；本轮检查点继续正常同步原PR #16，72ca068保留，绝不强推。
+
+
+## Round191：已解析Project/Conversation原生入口导航（接88fa5ef）
+
+- 从已有discovery句柄注册表批量匹配当前可见目标，严格entity/ID/完整URL/节点fingerprint；同目标多个有效控件歧义时不选择第一项。最多200目标、辅助匹配有界，不新增全历史DOM遍历或第二份完整映射；原句柄表O(N)问题未宣称解决。
+- Free双frame预计算计划接入已有原生handle。原生委托复用现有UI/mount/scope、双次授权、原节点复核、30秒计划/6秒派发与一次actionId；派发前只关闭两个owned popover以释放原控件，原生DOM/handler不改。已证明当前C仍为same-target并规范化liveHandle:null；风险不清或无handle仍保留既有保护当前页的真href。
+- worker注入已有qualified Project URL policy，默认解析未放宽。Project“+”只进入原生Project页面，后续创建由用户在原生界面完成。派发期间binding/route变更或ACK未知返回unconfirmed，不补跳/重发；frame保留此结果，修改键走真实href且零派发。
+- 最终完整Node **3536/3536 PASS**（free-round191-node.log.gz）。独立新增句柄、owner/frame严格合同与deadline/replay反例；初次getter读取定向失败及完整回归2处Project入口失败日志保留。修复不完整native计划呈现，旧href断言改为直接验证默认不被preventDefault且无RPC，保留href取消旧呈现意图的监听。
+- 最终正式package隔离headless Chrome MV3 **5组PASS**（free-round191-resolved-navigation-browser.json）：C和P真实Free点击各触发原anchor程序click一次、server导航一次、同tab SPA、原textarea保留；各自旧action在route rebind后拒绝；Meta真链接新tab零委托。worker外网阻断，源码/脚本未漂移。最终Project校验前的5项另存before-project-guard，不叠加统计；明确双visible-frame rAF+200ms前置，不证明旧即时pointer失败已修复。
+- 88fa5ef此前已正常推送，含Round189积压；72ca068仍为祖先。此轮仅闭合已解析原生控件导航切片，结果提示仍需接UI；100k FAIL、首页首发/候选内存、完整81项/J1–J4、真实profile/G/U/PAIA/物理IME等缺口保持，Free NOT_RELEASE_READY。

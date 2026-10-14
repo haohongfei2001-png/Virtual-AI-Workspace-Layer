@@ -22,7 +22,7 @@ export function createNativeActions({discovery,urlPolicy,currentURL,bodyProof=()
    if(!exact(chosen,['kind','control','navigationURL'])||chosen.navigationURL!==null||!validHandle(chosen.control))return unavailable('invalid-native-target');handle=chosen.control;
   }else return unavailable('invalid-native-target');
   const issuedURL=currentURL(),proof=bodyProof();let plan,node=null;
-  if(chosen.kind==='resolved'&&chosen.entity==='conversation'&&urlPolicy.sameTarget(issuedURL,chosen.navigationURL)&&proof?.conversationId===chosen.nativeId&&id(proof.bodyProofId))plan={mode:'same-target',target:chosen,bodyProofId:proof.bodyProofId,planRevision};
+  if(chosen.kind==='resolved'&&chosen.entity==='conversation'&&urlPolicy.sameTarget(issuedURL,chosen.navigationURL)&&proof?.conversationId===chosen.nativeId&&id(proof.bodyProofId))plan={mode:'same-target',target:{...chosen,liveHandle:null},bodyProofId:proof.bodyProofId,planRevision};
   else if(risk.state==='clear'&&risk.flags.length===0&&handle&&(node=discovery.getNode(handle)))plan={mode:'native-control',target:chosen,control:handle,planRevision};
   else if(chosen.kind==='resolved')plan={mode:'href',target:chosen,disposition:risk.state==='clear'?'same-tab':'new-tab-preserve-current',planRevision};
   else return unavailable(risk.state==='clear'?'stale-native-handle':'input-risk-unresolved');
