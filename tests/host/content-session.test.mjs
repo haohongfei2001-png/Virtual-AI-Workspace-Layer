@@ -119,3 +119,9 @@ test('expired queued snippet restore cannot scroll or switch native reading',asy
  const listener=[...f.listeners][0];for(const patch of [{expiresAt:new Date(1000).toISOString()},{expiresAt:new Date(8000).toISOString()},{routeEpoch:9}])listener({...message,...patch},{id:'extension'},r=>replies.push(r));assert.equal(restores,0);assert.deepEqual(f.presentations,[]);
  listener(message,{id:'extension'},r=>replies.push(r));assert.equal(restores,1);assert.deepEqual(f.presentations,['reading']);await f.advance(501);listener(message,{id:'extension'},r=>replies.push(r));assert.equal(restores,1);assert.equal(replies.at(-1).ok,false);client.stop();
 });
+
+
+test('native surface mutation callback only reaches the live document mount',async()=>{
+ const f=fixture(),seen=[];const client=createHostContentSession({...f.options,surfaceFactory:()=>({surrenderChanged:records=>seen.push(records)})});await client.start();
+ const records=[{type:'childList',target:{}}];f.adapterOptions.onSurfaceChange(records);assert.deepEqual(seen,[records]);client.stop();f.adapterOptions.onSurfaceChange(records);assert.equal(seen.length,1);
+});

@@ -38,6 +38,17 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    const nativeInput=e=>{if(protectedNodes.some(n=>n===e.target||n.contains(e.target))){hide(m);try{onSurrender({reason:'native-input'});}catch{}}};doc.addEventListener('pointerdown',nativeInput,true);doc.addEventListener('focusin',nativeInput,true);
    m.cleanup=()=>{workspace?.removeEventListener('toggle',workspaceClosed);observer.disconnect();doc.removeEventListener('beforetoggle',beforeToggle,true);doc.removeEventListener('pointerdown',nativeInput,true);doc.removeEventListener('focusin',nativeInput,true);};return handle;
   },
+  // Only directory-relevant records reach this method from the adapter. Release
+  // an affected mask before discovery; never treat cached visibility as evidence.
+  surrenderChanged(records){
+   if(!Array.isArray(records)||!records.length)return false;let changed=false;
+   const contains=(parent,child)=>parent===child||parent?.contains?.(child)===true;
+   for(const m of mounts.values()){
+    const affected=m.markers.some(({root,attr})=>m.surfaces.some(s=>attr==='data-va-mask-'+s.role&&s.node.matches(':popover-open'))&&records.some(record=>
+     contains(root,record.target)||record.type==='attributes'&&contains(record.target,root)||record.type==='childList'&&[...(record.addedNodes??[]),...(record.removedNodes??[])].some(node=>contains(node,root))));
+    if(affected){hide(m);changed=true;}
+   }return changed;
+  },
   isMasked(root){
    for(const m of mounts.values()){
     const marker=m.markers.find(value=>value.root===root);if(!marker)continue;

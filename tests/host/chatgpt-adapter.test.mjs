@@ -212,3 +212,10 @@ test('loaded candidate snapshot remains usable during unrelated body text change
  f.observer().cb([{type:'characterData',target:{parentNode:f.reading}}]);
  assert.equal((await iterator.next()).done,true);f.adapter.stop();
 });
+
+
+test('directory mutation requests native surrender before scanning while unrelated body text does not',async()=>{
+ const changes=[],f=fixture({onSurfaceChange:records=>changes.push(records)});await f.start();await tick();
+ f.observer().cb([{type:'characterData',target:{parentNode:f.reading}}]);await tick();assert.equal(changes.length,0);
+ const records=[{type:'characterData',target:f.selectors.get(LEGACY_SURFACE_PROFILE.regions.history)[0]}];const callback=f.observer().cb;callback(records);assert.equal(changes.length,1);assert.equal(changes[0],records);f.adapter.stop();callback(records);assert.equal(changes.length,1);
+});

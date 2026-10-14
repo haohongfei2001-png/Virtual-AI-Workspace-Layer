@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round165：原生遮罩边界变化自动交还阅读，重新检查后允许用户返回；完整Node3211项、原打包隔离MV3四项通过。首页首发、预证明立即发送、mask即时更新、100k/4x、候选内存及真实G/U仍未完成，Free为NOT_RELEASE_READY。
+当前已推进至Round166：遮罩内目录变化自动交还并重新发现；完整Node3213项、候选MV3五项通过。原生更新MV3复验通过但一次边界退出超时未定位并保留FAIL。首页首发、预证明立即发送、100k/4x、候选内存及真实G/U仍未完成，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1667,3 +1667,11 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 完整Node **3211/3211 PASS**（free-round165-node.log.gz），定向34项通过。原打包隔离headless MV3 **4/4 PASS/sourceChangedDuringRun=false**（free-round165-native-boundary-final-mv3.json）：此前改名/卸载三项加原生class变化自动交还、原输入/草稿保留、保留新class重新检查后返回。
 - 本轮不宣称mask保持展开时成员即时更新已解决，亦不认证真实ChatGPT/PAIA/物理输入。首页首发、预证明立即发送、100k/4x、候选内存与真实G/U仍未完成；Free NOT_RELEASE_READY。
 - 72a49f7此前普通push因GitHub低速失败；本轮自然检查点继续正常推送，不强推。
+
+
+## Round166：遮罩内目录变化自动交还并重新发现（接 897a4c5）
+
+- adapter仅将目录相关mutation交给当前content mount；受影响的已展开reading/history mask先关闭，随后沿原队列重新核验可见原生节点。无关正文更新不触发；已停止/旧文档不调用新mount；不读取隐藏证据、不自动重新打开workspace。
+- 原打包MV3已验证masked成员改名无需额外用户focus即可自动交还并落库；既有改名别名/卸载保留/原生边界与草稿返回也覆盖。完整Node **3213/3213 PASS**（free-round166-node.log.gz），候选打包MV3 **5/5 PASS**（free-round166-candidates-mv3.json）。
+- 浏览器原生更新首轮通过；最终源码复验一次在后续class边界关闭等待超时，前三项已PASS，完整FAIL保留（free-round166-native-boundary-fail.json）。新增仅fixture诊断后两次四项通过，最后报告free-round166-native-recheck-mv3.json，均sourceChangedDuringRun=false。该间歇退出超时未定位，不能当稳定性已解决；不混加次数。
+- 本轮实现自动交还后更新，**不是保持workspace展开读取隐藏成员**。首页首发、预证明立即发送、100k/4x、候选完整内存及真实G/U仍未完成；Free NOT_RELEASE_READY。897a4c5已正常推送原PR #16。

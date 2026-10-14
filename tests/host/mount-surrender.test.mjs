@@ -30,6 +30,10 @@ test('mount native focus hides both surfaces and notifies; owned controls and di
  ]){surface.showWorkspace(handle);const undo=mutate();observer();assert(doc.body.children.every(n=>!n.open),'changed native mask boundary releases both surfaces');undo();}
  surface.showWorkspace(handle);observer();assert(doc.body.children.every(n=>n.open),'unchanged boundaries do not close workspace');
  reading.setAttribute('class','new-native-layout');observer();assert(doc.body.children.every(n=>!n.open));assert.equal(surface.showWorkspace(handle),true);observer();assert(doc.body.children.every(n=>n.open));assert.equal(surface.isMasked(reading),true);reading.removeAttribute('class');observer();surface.showWorkspace(handle);
+ const child=element(),outside=element();const originalContains=reading.contains;reading.contains=node=>node===child;
+ assert.equal(surface.surrenderChanged([{type:'characterData',target:outside}]),false);assert(doc.body.children.every(n=>n.open));
+ assert.equal(surface.surrenderChanged([{type:'characterData',target:child}]),true);assert(doc.body.children.every(n=>!n.open));assert.equal(surface.surrenderChanged([{type:'characterData',target:child}]),false);
+ surface.showWorkspace(handle);assert.equal(surface.surrenderChanged([{type:'childList',target:outside,addedNodes:[],removedNodes:[reading]}]),true);assert(doc.body.children.every(n=>!n.open));reading.contains=originalContains;surface.showWorkspace(handle);
  surface.showReading(handle);assert.equal(surface.isMasked(reading),false);assert.equal(surface.isMasked(history),true,'workspace closure does not impersonate sidebar closure');
  surface.showWorkspace(handle);assert(doc.body.children.every(n=>n.open));listeners.get('focusin')({target:composer});assert(doc.body.children.every(n=>!n.open));assert.deepEqual(events,[{reason:'native-input'}]);
  surface.showWorkspace(handle);listeners.get('pointerdown')({target:element()});assert(doc.body.children.every(n=>n.open));assert.equal(events.length,1);
