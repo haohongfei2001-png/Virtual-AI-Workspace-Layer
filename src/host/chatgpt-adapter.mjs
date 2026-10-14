@@ -39,6 +39,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
    }
    if(cursor)await new Promise(resolve=>setTimeout(resolve,0));
   }while(cursor);
+  check();
  }
  function bodyProposal(){if(!live())throw Error('stale-host-binding');syncRoute();return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'current-object',payload:bodyDiscovery.scan()};}
  function intentProposal(item){return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:item.proofId,kind:'send-candidate',payload:item.payload};}

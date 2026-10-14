@@ -1584,3 +1584,10 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 最终完整Node **3207/3207 PASS**（free-round162-node-final.log.gz）。隔离headless test-only MV3 **7/7 PASS/sourceChangedDuringRun=false**（free-round162-held-baseline-final-mv3.json）：实际挂起认证响应、真实点击、一次detail请求后接受intent；默认关闭、纯意图无写库、自动ACK仅evidence，以及604长标题/82次正文更新通过。
 - 测试worker原先等metadata后才reply body ACK，掩盖了生产竞态；现与生产一样先reply、测试观察独立等待。中途fixture点击计数被过早读取，改为等待既有异步native fixture请求完成，未放宽产品断言。早期3202/6项不当最终源码证据。
 - 证明未接受前的立即发送与首页首发仍未完成；展开mask内即时更新、100k/4x、候选完整内存有界化、真实G/U仍保留。Free NOT_RELEASE_READY。49c2be2及6b5808a此前push网络失败/超时，本地成果完整，本轮自然检查点再次正常同步。
+
+
+## Round163：候选扫描完成边界复核（接 dd3a06b）
+
+- loadedPages在最后一个packet消费完成后重新核验存活、取消与6秒elapsed期限，避免最后一次yield之后失效却正常结束并进入身份整理。新增最后一包之后stop/abort/deadline反例；不延长期限，不增加网络读取。
+- 定向Node **75/75 PASS**（free-round163-target.log）。本轮完整Node及浏览器NOT_RUN；最近完整3207项和隔离MV3七项属于Round162，不能当本轮全套证明。
+- 已成功fetch并确认72ca068仍为HEAD祖先；远端无分叉。b393f39..dd3a06b已正常推送原PR #16，Round160–162本地检查点已同步。所有未完成验收保持，Free NOT_RELEASE_READY。

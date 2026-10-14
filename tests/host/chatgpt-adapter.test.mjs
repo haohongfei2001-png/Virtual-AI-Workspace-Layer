@@ -179,3 +179,14 @@ test('binding renewal cannot make an expired body proof eligible for a trusted s
 test('queued send expires with the proof captured at the gesture even when transport is renewed',async()=>{
  const f=sendFixture();let release;await f.start(p=>{f.emitted.push(p);return p.kind==='surface-delta'?new Promise(r=>release=()=>r(bodyAck(p))):Promise.resolve(bodyAck(p));});await settle();f.setTime(90000);f.click();f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()});f.setTime(100000);release();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);f.adapter.stop();
 });
+
+
+test('loaded iterator rechecks expiry and cancellation before declaring its final packet complete',async()=>{
+ for(const mode of ['stop','abort','deadline']){
+  let elapsed=0;const f=fixture({elapsedNow:()=>elapsed});await f.start();
+  const controller=new AbortController(),iterator=f.adapter.loadedPages(controller.signal);
+  assert.equal((await iterator.next()).done,false);
+  if(mode==='stop')f.adapter.stop();if(mode==='abort')controller.abort();if(mode==='deadline')elapsed=6000;
+  await assert.rejects(iterator.next(),/stale-host-loaded-read/);f.adapter.stop();
+ }
+});
