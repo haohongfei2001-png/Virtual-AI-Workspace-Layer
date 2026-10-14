@@ -55,13 +55,13 @@ export function createScopeAuthority({provider,profile,now=Date.now,makeId=()=>c
   }).catch(error=>{const result=unverified(current()?(error?.message==='invalid-context-roster'?'invalid-context-roster':'scope-provider-unavailable'):'stale-scope-refresh');if(states.get(k)===entry){entry.result=result;entry.grant=null;entry.scope=null;abort.abort();}return result;}).finally(()=>{signal?.removeEventListener('abort',cancelRefresh);abort.signal.removeEventListener('abort',onAbort);if(states.get(k)===entry)entry.pending=null;});
   entry.pending=task;return task;
  }
- function revalidate(frame,signal){
+ function revalidate(frame,signal,{force=false}={}){
   const resolution=peek(frame);
   if(resolution.state!=='verified')return Promise.resolve(unverified('scope-not-verified'));
   const k=key(frame),entry=states.get(k);
   if(signal?.aborted){invalidate(frame.documentId);return Promise.resolve(unverified('scope-refresh-aborted'));}
   if(entry.rechecking)return entry.rechecking;
-  if(entry.until-now()>10000)return Promise.resolve(resolution);
+  if(force!==true&&entry.until-now()>10000)return Promise.resolve(resolution);
   const original=entry.grant,deadline=entry.until,started=elapsedNow();
   const current=()=>states.get(k)===entry&&!entry.abort.signal.aborted&&entry.grant===original&&now()<deadline;
   const cancelRefresh=()=>{if(states.get(k)===entry)invalidate(frame.documentId);};

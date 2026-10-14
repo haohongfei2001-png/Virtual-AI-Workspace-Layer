@@ -71,7 +71,7 @@ async function refreshDeadlineFixture(t){
  const service=createHostBindingService({extensionId:'ext',repository:base,allowedURL:u=>u===url,getFrame:async()=>{reads++;if(reads===holdAt)return new Promise(r=>release=r);return {...actual};},provider:{read:async()=>{providerReads++;return {principalId:'deadline-principal',expiresAt:new Date(100000).toISOString(),contexts:[{id:'personal',kind:'personal'}],providerProfile:'deadline-test',transport:'worker-fixed-fetch'};}},profile:{id:'deadline-test',singlePersonalDefault:true},now:()=>1000,elapsedNow:()=>elapsed,makeId:()=> 'deadline_'+(++id),schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:elapsed+ms});return key;},cancel:key=>timers.delete(key)});
  const hello=await service.handle({v:1,type:'HOST_HELLO',clientId:'client',seq:1},sender);assert.equal(hello.ok,true);reads=0;const {documentToken,producerToken,routeEpoch}=hello.binding;
  const frame={tabId:1,frameId:0,documentId:actual.documentId,parentDocumentId:null,actualURL:url,documentLifecycle:'active',incognito:false};
- return {service,frame,get reads(){return reads;},get providerReads(){return providerReads;},hold:n=>{holdAt=n;},release:()=>release?.({...actual}),request:seq=>service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq,documentToken,producerToken,routeEpoch},sender),async advance(ms){elapsed+=ms;for(const [key,timer]of [...timers])if(timer.at<=elapsed&&timers.has(key)){timers.delete(key);timer.fn();}await flushTasks();}};
+ return {service,frame,get reads(){return reads;},get providerReads(){return providerReads;},hold:n=>{holdAt=n;},release:()=>release?.({...actual}),request:(seq,type='HOST_REFRESH')=>service.handle({v:1,type,clientId:'client',seq,documentToken,producerToken,routeEpoch},sender),async advance(ms){elapsed+=ms;for(const [key,timer]of [...timers])if(timer.at<=elapsed&&timers.has(key)){timers.delete(key);timer.fn();}await flushTasks();}};
 }
 test('MOCK whole HOST_REFRESH deadline includes hanging first frame verification and prevents late provider call',async t=>{
  const f=await refreshDeadlineFixture(t);f.hold(1);const pending=f.request(2);let settled=false;pending.then(()=>settled=true);await flushTasks();assert.equal(f.reads,1);await f.advance(6000);assert.equal(settled,true,'entire RPC must settle despite a hung getFrame');const result=await pending;assert.equal(result.ok,false);assert.equal(f.providerReads,0);f.release();await flushTasks();assert.equal(f.providerReads,0);assert.notEqual(f.service.authority.peek(f.frame).state,'verified');
@@ -85,8 +85,8 @@ test('MOCK timed-out old refresh cannot revoke replacement grant or revive itsel
 });
 
 const parentAuthorityFrame={tabId:1,frameId:0,documentId:'doc1',parentDocumentId:null,actualURL:url,documentLifecycle:'active',incognito:false};
-async function newProducerSameDocument(f){
- const hello=await f.service.handle({v:1,type:'HOST_HELLO',clientId:'client',seq:3},f.parent.sender);
+async function newProducerSameDocument(f,seq=3){
+ const hello=await f.service.handle({v:1,type:'HOST_HELLO',clientId:'client',seq},f.parent.sender);
  assert.equal(hello.ok,true);assert.equal(hello.binding.browserDocumentId,f.parent.binding.browserDocumentId);
  assert.notEqual(hello.binding.producerToken,f.parent.packet.producerToken);
  const {documentToken,producerToken,routeEpoch}=hello.binding;
@@ -143,4 +143,65 @@ test('MOCK concurrent same-producer fresh refreshes share one pending provider r
  release();const replies=await Promise.all([first,...rest]);assert(replies.every(r=>r.state==='verified'),JSON.stringify(replies));assert.equal(f.providerReads,2);
  const next=await f.service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:8,...packet},f.parent.sender);
  assert.equal(next.state,'verified');assert.equal(f.providerReads,2,'authenticated producer now uses normal revalidation');
+});
+
+const focusPacket=(f,seq=3)=>({v:1,type:'HOST_FOCUS',clientId:'client',seq,...f.parent.packet});
+test('MOCK foreground forces fresh identity while retaining same scope and paired UI',async t=>{
+ const f=await fixture(t),old=f.service.authority.peek(parentAuthorityFrame).grant;
+ const result=await f.service.handle(focusPacket(f),f.parent.sender);
+ assert.equal(result.state,'verified');assert.equal(f.providerReads,2);
+ const next=f.service.authority.peek(parentAuthorityFrame).grant;assert.equal(next.id,old.id);assert.equal(next.scopeEpoch,old.scopeEpoch);
+ assert.equal(await f.service.ui.withScope({sender:f.ui,grantId:f.grant.id,mountId:'mount'},c=>c.isCurrent()),true);
+ assert.equal((await f.service.handle({...focusPacket(f,4),type:'HOST_REFRESH'},f.parent.sender)).state,'verified');assert.equal(f.providerReads,2);
+});
+for(const failure of ['changed-principal','provider-failure'])test('MOCK foreground '+failure+' revokes old UI and never grants replacement',async t=>{
+ const f=await fixture(t);if(failure==='changed-principal')f.setPrincipal('foreground-B');else f.failProvider();
+ const result=await f.service.handle(focusPacket(f),f.parent.sender);assert.notEqual(result.state,'verified');assert.equal(f.providerReads,2);
+ assert.equal(f.service.authority.scopeFor(parentAuthorityFrame),null);
+ await assert.rejects(f.service.ui.withScope({sender:f.ui,grantId:f.grant.id,mountId:'mount'},()=>assert.fail('old scope unavailable')));
+ assert.equal((await f.service.handle(f.proposal(),f.parent.sender)).state,'rejected');
+ assert.notEqual((await f.service.handle(focusPacket(f,4),f.parent.sender)).state,'verified');assert.equal(f.providerReads,2);
+});
+test('MOCK foreground rejects unknown producer, extra reason, replay and foreign frame without fetch',async t=>{
+ const f=await fixture(t);
+ assert.equal((await f.service.handle({...focusPacket(f),reason:'auth-change'},f.parent.sender)).ok,false);
+ assert.equal((await f.service.handle(focusPacket(f,2),f.parent.sender)).ok,false);
+ assert.equal((await f.service.handle(focusPacket(f),{...f.parent.sender,documentId:'other'})).ok,false);
+ const packet=await newProducerSameDocument(f);
+ assert.equal((await f.service.handle({...focusPacket(f,4),...packet},f.parent.sender)).ok,false);assert.equal(f.providerReads,1);
+});
+test('MOCK concurrent foreground requests share one forced provider read',async t=>{
+ const f=await fixture(t);let release;f.holdProvider(new Promise(r=>release=r));
+ const jobs=[3,4,5].map(seq=>f.service.handle(focusPacket(f,seq),f.parent.sender));await flushTasks();assert.equal(f.providerReads,2);
+ release();assert((await Promise.all(jobs)).every(r=>r.state==='verified'));assert.equal(f.providerReads,2);
+});
+
+test('MOCK focus final frame timeout rejects late result and does not revive grant',async t=>{
+ const f=await refreshDeadlineFixture(t);assert.equal((await f.request(2)).state,'verified');f.hold(f.reads+4);
+ const pending=f.request(3,'HOST_FOCUS');await flushTasks();assert.equal(f.providerReads,2);await f.advance(6000);assert.equal((await pending).ok,false);assert.notEqual(f.service.authority.peek(f.frame).state,'verified');f.release();await flushTasks();assert.notEqual(f.service.authority.peek(f.frame).state,'verified');
+});
+
+test('MOCK failed foreground permanently denies same-producer ordinary renewal but allows new HELLO',async t=>{
+ const f=await fixture(t);f.setPrincipal('B');assert.notEqual((await f.service.handle(focusPacket(f),f.parent.sender)).state,'verified');
+ for(const type of ['HOST_REFRESH','HOST_FOCUS'])assert.notEqual((await f.service.handle({...focusPacket(f,4),type},f.parent.sender)).state,'verified');
+ assert.equal(f.providerReads,2);assert.equal(f.service.authority.scopeFor(parentAuthorityFrame),null);
+ const packet=await newProducerSameDocument(f);assert.equal((await f.service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:5,...packet},f.parent.sender)).state,'verified');assert.equal(f.providerReads,3);
+});
+test('MOCK renewal waiting on actual frame cannot grant changed account after focus failure',async t=>{
+ const f=await fixture(t),get=f.frames.get.bind(f.frames);let calls=0,release;
+ f.frames.get=key=>key==='1:0'&&++calls===2?new Promise(r=>release=()=>r(get(key))):get(key);
+ const renewal=f.service.handle({...focusPacket(f,3),type:'HOST_REFRESH'},f.parent.sender);await flushTasks();assert.equal(typeof release,'function');
+ f.setPrincipal('B');assert.notEqual((await f.service.handle(focusPacket(f,4),f.parent.sender)).state,'verified');
+ release();assert.notEqual((await renewal).state,'verified');assert.equal(f.providerReads,2);assert.equal(f.service.authority.scopeFor(parentAuthorityFrame),null);
+});
+
+test('MOCK failed producers are pruned after replacement HELLO without exhausting capacity',async t=>{
+ const f=await fixture(t);for(let i=0;i<130;i++){const packet=await newProducerSameDocument(f,10+i);assert.equal((await f.service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:4,...packet},f.parent.sender)).state,'verified');f.setPrincipal('rotated_'+i);assert.notEqual((await f.service.handle({v:1,type:'HOST_FOCUS',clientId:'client',seq:5,...packet},f.parent.sender)).state,'verified');}
+ const packet=await newProducerSameDocument(f,200);assert.equal((await f.service.handle({v:1,type:'HOST_REFRESH',clientId:'client',seq:4,...packet},f.parent.sender)).state,'verified');
+});
+test('MOCK denied producer survives ordinary sequence TTL while document remains renewed',async t=>{
+ const f=await fixture(t);f.setPrincipal('B');assert.notEqual((await f.service.handle(focusPacket(f),f.parent.sender)).state,'verified');
+ f.advance(15000);assert.equal((await f.service.handle({v:1,type:'HOST_DOCUMENT_RENEW',clientId:'client',seq:4,...f.parent.packet},f.parent.sender)).ok,true);
+ f.advance(6000);await f.bind(2);const reads=f.providerReads;
+ assert.notEqual((await f.service.handle({...focusPacket(f,5),type:'HOST_REFRESH'},f.parent.sender)).state,'verified');assert.equal(f.providerReads,reads);
 });

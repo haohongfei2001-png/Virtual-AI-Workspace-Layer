@@ -57,29 +57,33 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
    if(message.kind==='current-object'&&result.bodyProofId&&['accepted','duplicate'].includes(result.state))sendCandidates?.observe(result.bodyProofId).catch(()=>{});
    return result;
   }
-  if(message?.type!=='HOST_REFRESH')return broker.handle(message,sender);
+  if(!['HOST_REFRESH','HOST_FOCUS'].includes(message?.type))return broker.handle(message,sender);
+  const focus=message.type==='HOST_FOCUS';
   if(!exactHostRecord(message,['v','type','clientId','seq','documentToken','producerToken','routeEpoch'])||message.v!==1||!tokenOK(message.clientId)||!Number.isSafeInteger(message.seq)||message.seq<1||!tokenOK(message.documentToken)||!tokenOK(message.producerToken)||!Number.isSafeInteger(message.routeEpoch)||message.routeEpoch<1)return {ok:false,reason:'invalid-host-refresh'};
   const attempt={active:true,started:elapsedNow(),abort:new AbortController(),frame:null,resolution:null,completed:false};
   refreshAttempts.add(attempt);
-  const check=()=>{if(!serviceActive||!attempt.active||elapsedNow()-attempt.started>=6000)throw Error('host-refresh-expired');};
+  const revokeFocus=()=>{if(!focus||!attempt.frame||!handshake.isBound(message,sender))return;const grant=authority.peek(attempt.frame).grant;if(grant&&grant.id!==attempt.scopeGrantId)return;observations?.invalidateDocument(attempt.frame.documentId);ui?.revokeDocument(attempt.frame.documentId);views?.revokeDocument(attempt.frame.documentId);};
+  const denyFocus=()=>{if(focus&&attempt.producer&&sequences.get(message.producerToken)===attempt.producer)attempt.producer.denied=true;};
+  const check=()=>{if(!serviceActive||!attempt.active||attempt.producer?.denied||elapsedNow()-attempt.started>=6000)throw Error('host-refresh-expired');};
   try{const result=await withRequestDeadline(async()=>{
   if(!await handshake.verify(message,sender))return {ok:false,reason:'invalid-host-document'};check();
-  const prior=sequences.get(message.producerToken);if(prior&&message.seq<=prior.seq)return {ok:false,reason:'replayed-sequence'};
-  const time=now();for(const [key,value]of sequences)if(value.until<=time)sequences.delete(key);
+  const prior=sequences.get(message.producerToken);if(prior?.denied)return {ok:false,reason:'scope-not-verified'};if(focus&&!prior?.verified)return {ok:false,reason:'scope-not-verified'};if(prior&&message.seq<=prior.seq)return {ok:false,reason:'replayed-sequence'};
+  const time=now();for(const [key,value]of sequences)if(value.denied?!handshake.isBound(value.binding,value.sender):value.until<=time)sequences.delete(key);
   if(!sequences.has(message.producerToken)&&sequences.size>=128)return {ok:false,reason:'capacity'};
-  const producer=prior??{verified:false,freshStarted:false};producer.seq=message.seq;producer.until=time+20000;sequences.set(message.producerToken,producer);
+  const producer=prior??{verified:false,freshStarted:false,binding:Object.freeze({documentToken:message.documentToken,producerToken:message.producerToken,routeEpoch:message.routeEpoch}),sender:Object.freeze({id:sender.id,tab:Object.freeze({id:sender.tab.id,incognito:sender.tab.incognito}),frameId:sender.frameId,documentId:sender.documentId,documentLifecycle:sender.documentLifecycle,url:sender.url})};producer.seq=message.seq;producer.until=time+20000;sequences.set(message.producerToken,producer);attempt.producer=producer;
   const actual=await getFrame({tabId:sender.tab.id,frameId:0});check();
   if(!handshake.matchesFrame(message,sender,actual)||!await handshake.verify(message,sender))return {ok:false,reason:'stale-host-document'};check();
   const frame=asFrame({tabId:sender.tab.id,documentId:actual.documentId,url:actual.url},sender);
-  attempt.frame=frame;
+  attempt.frame=frame;attempt.scopeGrantId=authority.peek(frame).grant?.id;
   // A newly issued producer must not reuse a pre-suspension account proof.
   // Ordinary renewals keep the existing bounded revalidation/single-flight path.
   const firstFresh=!producer.verified&&!producer.freshStarted;
   if(firstFresh){producer.freshStarted=true;observations?.invalidateDocument(frame.documentId);ui?.revokeDocument(frame.documentId);views?.revokeDocument(frame.documentId);}
-  const resolution=await (!producer.verified?authority.refresh(frame,firstFresh?'auth-change':'focus',attempt.abort.signal):authority.peek(frame).state==='verified'?authority.revalidate(frame,attempt.abort.signal):authority.refresh(frame,'bind',attempt.abort.signal));attempt.resolution=resolution;check();
+  const resolution=await (focus?authority.revalidate(frame,attempt.abort.signal,{force:true}):!producer.verified?authority.refresh(frame,firstFresh?'auth-change':'focus',attempt.abort.signal):authority.peek(frame).state==='verified'?authority.revalidate(frame,attempt.abort.signal):authority.refresh(frame,'bind',attempt.abort.signal));attempt.resolution=resolution;
+  if(focus&&resolution.state!=='verified'){denyFocus();revokeFocus();}check();
   const verified=await handshake.verify(message,sender);check();
-  if(!verified){if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant)authority.invalidate(frame.documentId);return {ok:false,reason:'stale-host-document'};}
-  if(resolution.state==='verified'&&continuations&&surfaceProfiles.size===1&&elapsedNow()-attempt.started<4500){
+  if(!verified){if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant)authority.invalidate(frame.documentId);revokeFocus();return {ok:false,reason:'stale-host-document'};}
+  if(!focus&&resolution.state==='verified'&&continuations&&surfaceProfiles.size===1&&elapsedNow()-attempt.started<4500){
    // Reuse the existing refresh request; no background timer or restored grant.
    // A slow/damaged queue must not consume the scope renewal's whole deadline.
    const activeProfile=surfaceProfiles.values().next().value,scope=authority.scopeFor(frame),drainAbort=new AbortController(),started=elapsedNow();
@@ -94,7 +98,8 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant&&sequences.get(message.producerToken)===producer)producer.verified=true;
   return {ok:true,v:1,type:'HOST_SCOPE_STATUS',state:resolution.state,...(resolution.reason?{reason:resolution.reason}:{})};
   },{timeoutMs:6000,now:elapsedNow,schedule,cancel});attempt.completed=true;return result;}catch{return {ok:false,reason:'host-refresh-unavailable'};}
-  finally{refreshAttempts.delete(attempt);attempt.active=false;attempt.abort.abort();if(!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);}
+  finally{refreshAttempts.delete(attempt);attempt.active=false;attempt.abort.abort();if(!attempt.completed){denyFocus();revokeFocus();}
+  if(!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);}
  }
  function invalidate({tabId,frameId=0,documentId}={}){broker.invalidate({tabId,frameId});if(documentId){observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{observations?.invalidateTab(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}}
  function tabClosed(tabId){observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}

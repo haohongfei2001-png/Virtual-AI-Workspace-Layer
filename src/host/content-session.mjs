@@ -23,7 +23,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   try{const result=await withRequestDeadline(()=>Promise.race([Promise.resolve().then(()=>{if(!live(s))throw Error('stale-content-session');return runtime.sendMessage(message);}),cancelled]),{timeoutMs,now:elapsedNow,schedule,cancel});if(!live(s))throw Error('stale-content-session');return result;}
   finally{s.abort.signal.removeEventListener('abort',abort);}
  }
- function dispose(s){if(!s)return;s.restorePending?.();s.snippets?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
+ function dispose(s){if(!s)return;doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.snippets?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
  function reset(){epoch++;const s=current;current=null;dispose(s);}
  function stop(){enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function pagehide(event){
@@ -42,6 +42,17 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  async function start(){recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  async function begin(rebinding=false,initialMode='workspace'){
   reset();const s={run:epoch,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
+  let foregroundArmed=doc.visibilityState==='hidden',foregroundPending=false;
+  s.blur=()=>{foregroundArmed=true;};
+  s.focus=()=>{
+   if(doc.visibilityState!=='visible'||!foregroundArmed||!s.ready||!live(s))return;
+   if(foregroundPending)return;foregroundArmed=false;foregroundPending=true;
+   void rpc(s,{v:1,type:'HOST_FOCUS',clientId,seq:++seq,...bindingFields(s.binding)}).then(result=>{
+    if(result?.ok!==true||result.state!=='verified')throw Error('foreground-scope-unverified');
+   }).catch(()=>{if(live(s)){s.recoveryDenied=true;stop();}}).finally(()=>{foregroundPending=false;s.focus();});
+  };
+  s.visibility=()=>{if(doc.visibilityState==='hidden')foregroundArmed=true;else s.focus();};
+  doc.addEventListener?.('visibilitychange',s.visibility);doc.defaultView.addEventListener('focus',s.focus);doc.defaultView.addEventListener('blur',s.blur);
   s.listener=(m,sender,reply)=>{
    if(current!==s||!enabled||sender?.id!==runtime.id)return;
    if(exactHostRecord(m,['type'])&&m.type==='HOST_DOCUMENT_INVALIDATED'){rebind(s);return;}

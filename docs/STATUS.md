@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百二十八轮：活跃原页面在worker强制退出后可进行一次有界重新授权，并保持阅读模式、原生输入焦点与草稿。完整Node2683项、随后content专项10项、实际worker恢复及标准MV3十三旅程通过，各自证据独立。自然worker休眠、完整扩展BFCache、100k/4x与真实生产验收仍有缺口；Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百三十轮：前台立即刷新查询，并独立强制核验账户；修复核验期间丢失新前台边沿及失败后并发续租再授权。完整Node2715项、标准实际原包MV3十三旅程通过。真实headless标签visibility实验NOT_SUPPORTED；生产账户、100k/4x与真人验收尚未完成。Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1392,3 +1392,11 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 真实document hidden→visible边沿进入现有VIEW单飞刷新；保留当前查询、历史会话和原30秒准备预算，不重新进入当前项或重置H/T/Z。重复visible、过期/停止/断连不发请求。备份打开时保持文件与预览，不触发备份invalidate。
 - 完整Node **2691/2691 PASS**，前台合同7/7，证据free-round129-node.log.gz、free-round129-foreground.log.gz。原包headless真实bringToFront未产生hidden；唯一fallback使用真实chrome.tabs.update激活独立标签仍不支持，报告明确 **FAIL / NOT_SUPPORTED**。未伪造visibility，未启动可见浏览器，未宣称真实前台浏览器通过。
 - 前台VIEW不是账户认证；独立审查确认现有60秒账户证明的远期缓存不因focus重核验，该缺口另行修复。100k/4x、真实context/ACK/G/U/PAIA等既有条件仍未闭合，Free未完成、NOT_RELEASE_READY。
+
+
+## Round130：前台独立账户核验及并发拒绝围栏（接 d1b5add）
+
+- content在hidden→visible或blur→focus后通过严格HOST_FOCUS重新认证，单飞合并；核验在途时新的真实离开/返回边沿保留一次补查，重复focus不排队。stop、路由变化和失败的晚回不重活；同身份不拆mount、不清备份File/预览、不重置H/T/Z。普通续租仍用缓存策略。
+- authority强制模式只绕过远期缓存，保留原6秒截止、身份解析和grant ID/epoch。同producer的FOCUS失败设置稳定denied，provider前后均检查，阻止并发续租在旧认证失效后自动签发新账户。旧请求不撤新producer；denied仅在真实握手失效后清理，130次替换不耗尽容量，跨普通20秒GC不恢复拒绝的权限。
+- 完整Node最终 **2715/2715 PASS**，标准实际原包headless MV3 **13/13 PASS**，sourceChangedDuringRun=false。账户强制核验44项、binding28项及前台/片段19项为各自定向证据，不重复相加。第一次全回归9项失败为旧片段fixture将新增visibility监听计入临时监听总数，现分别严格检查五种临时监听与stop全部清理；真实distinct foreground丢失反例先FAIL后修复。
+- 首次浏览器因沙箱Chrome启动失败，原报告保留；隔离headless获准执行后通过。Round129真实标签visibility实验仍NOT_SUPPORTED；本轮账户前台链的新增反例为明确transport/DOM doubles，不冒充实际ChatGPT账户切换验收。100k/4x、真实context/ACK/首发/G/U/PAIA及完整扩展BFCache仍未闭合；Free未完成、NOT_RELEASE_READY。
