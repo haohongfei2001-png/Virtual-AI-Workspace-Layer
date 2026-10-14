@@ -21,11 +21,16 @@ export async function prepareEvidenceDirectory(owner,scope,{expectedRevision},{g
    if(payload.revision!==expectedRevision)throw Error('revision-conflict');
    if(payload.format===EVIDENCE_DIRECTORY_FORMAT){result={ok:true,prepared:false};return;}
    if(!isEvidencePartitioned(payload))throw Error('evidence-directory-migration-requires-partitioned-root');
-   loadEvidenceIndexes(store,payload,normalized,Object.keys(payload.indexVersions),(_indexes,{checksums})=>{try{
+   const prepare=checksums=>{try{
     fence();const input=buildInput(payload,checksums),encoded=JSON.stringify(input);
     if(preparedBuilds.get(owner)?.encoded===encoded){result={ok:true,prepared:false};return;}
     candidate={encoded,built:buildEvidenceRefDirectory(input,normalized)};fence();result={ok:true,prepared:true};
-   }catch(error){abort(error.message);}},error=>abort(error.message));
+   }catch(error){abort(error.message);}};
+   // A candidate build is not an integrity certificate. Manifest checksums
+   // suffice here; final RW still reads every index/piece and compares its
+   // actual checksums before this exact input can reuse the pure construction.
+   if(payload.indexChecksums)prepare(payload.indexChecksums);
+   else loadEvidenceIndexes(store,payload,normalized,Object.keys(payload.indexVersions),(_indexes,{checksums})=>prepare(checksums),error=>abort(error.message));
   }catch(error){abort(error.message);}};
   tx.oncomplete=()=>{signal?.removeEventListener('abort',revoked);try{fence();if(candidate)preparedBuilds.set(owner,candidate);resolve(result);}catch(error){resolve({ok:false,reason:error.message});}};
   tx.onabort=()=>{signal?.removeEventListener('abort',revoked);resolve(result?.ok===false?result:{ok:false,reason:tx.error?.name??'evidence-directory-preparation-aborted'});};tx.onerror=()=>{};

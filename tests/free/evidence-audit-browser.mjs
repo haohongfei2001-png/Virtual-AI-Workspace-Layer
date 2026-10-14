@@ -10,14 +10,35 @@ const report={evidence:'REAL_HEADLESS_CHROME_IDB_EVIDENCE_BATCH_AUDIT',realChatG
 const save=()=>writeFile(receipt,JSON.stringify(report,null,2)+'\n'),server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
 try{
  browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});report.browser=browser.version();const page=await browser.newPage();page.on('pageerror',e=>report.pageErrors.push(e.message));await page.goto(`http://127.0.0.1:${server.address().port}/hf/A/c/T0?mode=native`);
- for(const mode of ['success','checksum','abort']){
+ for(const mode of ['success','checksum','abort','signed-index-mismatch','legacy-corrupt-index']){
   try{const value=await page.evaluate(async mode=>{
-   const {ScopeRepository}=await import('/src/b1/scope-repository.mjs'),{FreeEvidenceRepository}=await import('/src/data/free-evidence-repository.mjs'),{scopeOf}=await import('/simulator/data.mjs'),{normalizedScope}=await import('/src/b1/identity.mjs'),{evidencePieceKey}=await import('/src/data/free-evidence-partitions.mjs');
+   const {ScopeRepository}=await import('/src/b1/scope-repository.mjs'),{FreeEvidenceRepository}=await import('/src/data/free-evidence-repository.mjs'),{scopeOf}=await import('/simulator/data.mjs'),{normalizedScope}=await import('/src/b1/identity.mjs'),{evidencePieceKey,freeEvidenceKey,evidenceIndexKey,evidenceRecord}=await import('/src/data/free-evidence-partitions.mjs');
    const scope=normalizedScope(scopeOf('A')),now='2026-10-13T00:00:00Z',base=new ScopeRepository({indexedDB,databaseName:'evidence_audit_'+crypto.randomUUID().replaceAll('-','')}),repo=new FreeEvidenceRepository({baseRepository:base,clock:()=>now,observationGate:()=>({channel:'synthetic',sourceId:'source',generation:'one'})});
    const check=(ok,message)=>{if(!ok)throw Error(message);},same=(a,b,message)=>check(JSON.stringify(a)===JSON.stringify(b),message);let restore=()=>{};
    try{
     for(let offset=0;offset<5001;offset+=5000){const revision=offset?2:1,events=Array.from({length:Math.min(5000,5001-offset)},(_,i)=>({id:'E'+(offset+i),sourceId:'source',generation:'one',sourceRevision:revision,observedAt:now,conversationId:'R'+(offset+i),messageId:'M'+(offset+i),branchId:'main',actorVerified:true,actorScopeKey:scope.key,role:'user',kind:'new-send',sendState:'committed',precision:'second',sentAt:'2026-08-01T00:00:00Z'}));const result=await repo.apply(scope,{operationId:'seed_'+revision,expectedRevision:revision-1,batch:{sources:[{id:'source',generation:'one',sourceRevision:revision,observedAt:now,validUntil:'2026-10-14T00:00:00Z',channel:'synthetic'}],events,hints:[],coverage:[]}});check(result.ok,JSON.stringify(result));}
     const db=await base.open(),tail=evidencePieceKey(scope.key,'R5000',2),dump=()=>new Promise((resolve,reject)=>{const names=[...db.objectStoreNames],tx=db.transaction(names),rows={};for(const name of names){const q=tx.objectStore(name).getAll();q.onsuccess=()=>rows[name]=q.result;}tx.oncomplete=()=>resolve(rows);tx.onabort=()=>reject(tx.error);});
+    if(mode==='signed-index-mismatch'||mode==='legacy-corrupt-index'){
+     await new Promise((resolve,reject)=>{
+      const tx=db.transaction('native_states','readwrite'),store=tx.objectStore('native_states'),key=freeEvidenceKey(scope.key),request=store.get(key);
+      request.onsuccess=()=>{try{
+       const manifest=structuredClone(request.result.payload),group=Object.keys(manifest.indexVersions)[0];check(!!group,'missing-index-fixture');
+       if(mode==='signed-index-mismatch'){check(!!manifest.indexChecksums,'missing-bound-checksums');manifest.indexChecksums[group]=manifest.indexChecksums[group]==='0'.repeat(64)?'1'.repeat(64):'0'.repeat(64);}
+       else{delete manifest.indexChecksums;const index=store.get(evidenceIndexKey(scope.key,group,manifest.indexVersions[group]));index.onsuccess=()=>{check(!!index.result,'missing-index-record');store.put({...index.result,checksum:'0'.repeat(64)});};}
+       store.put(evidenceRecord(key,manifest));
+      }catch(error){reject(error);tx.abort();}};tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error??Error('fixture-mutation-aborted'));
+     });
+     const beforePreparation=await dump(),originalGet=IDBObjectStore.prototype.get;let preparationIndexReads=0;
+     IDBObjectStore.prototype.get=function(key){if(this.transaction.db===db&&this.name==='native_states'&&typeof key==='string'&&key.includes('free-evidence-index'))preparationIndexReads++;return originalGet.call(this,key);};restore=()=>{IDBObjectStore.prototype.get=originalGet;};
+     const preparation=await repo.prepareRefDirectory(scope,{expectedRevision:2});restore();same(await dump(),beforePreparation,'preparation-wrote-stores');
+     if(mode==='legacy-corrupt-index'){
+      check(preparation.ok===false&&preparation.reason==='corrupt-free-evidence-record','legacy-preparation-accepted-corrupt-index:'+JSON.stringify(preparation));check(preparationIndexReads>0,'legacy-index-read-not-exercised');
+      return {mode,refs:5001,preparation,preparationIndexReads,allStoresUnchanged:true,directoryPublished:false};
+     }
+     check(preparation.ok&&preparation.prepared,'pure-preparation-rejected-manifest-checksums:'+JSON.stringify(preparation));check(preparationIndexReads===0,'pure-preparation-loaded-indexes');
+     const result=await repo.migrateRefDirectory(scope,{operationId:'audit_'+mode,expectedRevision:2});check(result.ok===false&&result.reason==='free-evidence-index-checksum-mismatch','final-audit-accepted-wrong-index-binding:'+JSON.stringify(result));same(await dump(),beforePreparation,'failed-final-audit-published-stores');
+     return {mode,refs:5001,preparation,preparationIndexReads,result,allStoresUnchanged:true,directoryPublished:false};
+    }
     const beforePreparation=await dump(),preparation=await repo.prepareRefDirectory(scope,{expectedRevision:2});check(preparation.ok&&preparation.prepared,'preparation-failed');same(await dump(),beforePreparation,'preparation-wrote-stores');
     if(mode==='checksum')await new Promise((resolve,reject)=>{const tx=db.transaction('native_states','readwrite'),s=tx.objectStore('native_states'),q=s.get(tail);q.onsuccess=()=>{check(!!q.result,'missing-tail-fixture');s.put({...q.result,checksum:'0'.repeat(64)});};tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
     const oldRows=await dump(),facts=mode==='success'?await repo.read(scope):null,controller=new AbortController();let sawTail=false;

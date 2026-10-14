@@ -1809,3 +1809,13 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 隔离Chrome155/4x的5000个代表piece纯编码微基准中位 **36.0→34.6ms**（free-round181-stable-benchmark.json，记录旧/新source hash），仅小幅收益，不是F1验收。真实IDB原生迁移/保留版本/尾损坏/缺片/撤权 **5组 PASS**（free-round181-native-idb.json），Pro及其他scope完整保留，失败事务回滚。
 - 固定最终源码非采样100k/project-mixed/4x **仍FAIL**（free-round181-100k.json）：约30062ms后startup超时/read-budget-exhausted，evidence-directory阶段约6646ms后stale-binding；原生输入原节点、未提交草稿和可见性保持，sourceChangedDuringRun=false。不能将微基准改善或阶段推进当整体性能通过，后续仍须解决迁移总成本。
 - 7753964已推送原PR #16，72ca068祖先保留；首页首发来源、候选完整RAM、间歇退出及真实G/U等继续未完成，Free NOT_RELEASE_READY。
+
+
+## Round182：纯证据目录准备复用manifest索引绑定（接 067b95f）
+
+- prepareEvidenceDirectory在已验证root有indexChecksums时直接纯build，去掉该阶段重复全读indexes；缺绑定的旧格式保留原loadEvidenceIndexes路径。root/marker/revision CAS/前后fence、事务完成后才保存候选均保持。prepare成功只表示构建候选，不是底层完整性证明。
+- 最终RW未改：新鲜indexes checksum/内容验证、全部pieces审计仍执行；完整manifest与实际checksums精确一致才复用候选，不缓存事实或授权。没有新增全量逆向索引内存。独立审查无阻断。
+- 最终完整Node **3341/3341 PASS**（free-round182-node.log.gz），新增准备后unsigned/resigned索引改ref拒绝且全store不变反例；既有另一连接改变事实、CAS与撤权反例保持。
+- 真实headless IndexedDB **5组 PASS**（free-round182-evidence-idb.json）：原5001refs成功/尾损坏/撤权保持；新增root重签错误checksum绑定时prepare成功且indexReads=0，但final拒绝free-evidence-index-checksum-mismatch且所有store不变；无绑定旧root+损坏index时prepare实际读取256索引并拒绝，零写入。
+- 固定最终源码100k/project-mixed/4x **仍FAIL**（free-round182-100k.json）：约30015ms startup超时，prepare约3072ms（上轮约3794ms，不是配对微基准），最终证据目录阶段约6552ms仍stale-binding。未放宽6秒/总预算；原生输入原节点、草稿与可见性保持，sourceChangedDuringRun=false。优化不等于F1通过。
+- 上轮067b95f push连接超时且返回不确定，不能据尾部Everything up-to-date宣称同步；本地检查点完整。72ca068祖先保留，其他未完成Free验收继续保持，NOT_RELEASE_READY。
