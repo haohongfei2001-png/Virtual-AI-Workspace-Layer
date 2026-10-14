@@ -1468,3 +1468,10 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 新增 send-ack-pipeline.test，直接组合真实 SessionProvider、CurrentMetadataReader、HostSendCandidates；仅固定 GET HTTP 响应和 owner 文档上下文为离线 fixture。owner guard/signal 随每次 withCurrent 结束失效，消费必须重新取得当前证明。完整验证基线→发送意图→无接受状态的新消息→后续明确接受状态→恰一次 admission 消费。错误作者与撤权路径无消费，正文/token 不进入输出。
 - 管线及既有 native continuation 定向 **44/44 PASS**（free-round145-pipeline.log）。这是模块整链至内部消费回调，不是 IDB 整链；continuation 测试仍为原有 MOCK_IDB 独立用例，不合并宣称 production。完整回归/浏览器本轮 NOT_RUN。
 - 下一接线位置已核实：binding-service 创建 NativeRepository 时 gate 仅 observations.gate；需在受当前 proof 保护的内部 ACK owner 中创建 exact request 弱关联及 continuation/continuationAdmission，经 NativeRepository 同事务提交。现 continuation drainer 要求匹配 profileId/revision，ACK profile 与 surface profile 的恢复授权映射必须明确，不能只填字段跳过。现有 Pro/历史数据及 schema 保留。Free NOT_RELEASE_READY。
+
+## Round146：ACK 原子持久化 owner 与 MOCK_IDB 管线（接 4cd90fe）
+
+- 新增内部 HostSendAckOwner，将已校验 admission 转为 host-evidence observed-self-send hint，与空原生对象批次的来源记录及 pending continuation 同事务提交。使用 WeakMap exact request gate，apply 后立即删除；不从 ACK 生成 Project、聊天标题或成员关系。不暴露消息入口，不改变 schema。
+- 当前 guard、signal、scope、ACK profile 与 providerProfile、profile 身份/内容及30秒期限须持续有效。仅显式 CAS 冲突最多重试一次，其他写结果不自动重放；批次保留原观察区间与固定 ACK 摘要。
+- 真实 provider→reader→correlator→ACK owner→NativeRepository 的 MOCK_IDB 测试确认首次无 ACK 零续接、延迟确认后一个 pending-evidence、重复观察无重写。owner/profile/撤权/expiry 与既有 continuation 定向 **52/52 PASS**（free-round146-owner.log）。完整回归/真实 IDB/浏览器本轮 NOT_RUN。
+- owner 尚未接 binding-service production composition，续接 drainer 的 ACK profile 注册与 evidence gate 仍需完成；不能把 pending 写入称为活动已刷新。下一步接该恢复授权映射并补真实 IDB 整链。Free NOT_RELEASE_READY。
