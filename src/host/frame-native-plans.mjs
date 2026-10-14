@@ -20,8 +20,12 @@ export function createFrameNativePlans({adapter,bindingCurrent}={}){
   const check=()=>{if(typeof binding!=='string'||!binding||binding.length>256||bindingCurrent()!==binding||adapter.currentURL()!==url)throw Error('stale-frame-native-plans');};check();
   const result=targets.map(target=>{
    const field=Object.hasOwn(target,'projectId')?'projectId':'refId',entity=field==='projectId'?'project':'conversation',nativeId=target[field],{navigationURL}=target;
-   check();const plan=adapter.planNavigation({kind:'resolved',entity,nativeId,navigationURL,liveHandle:null});check();
-   const targetKey=adapter.planKey(plan);check();return {[field]:nativeId,plan,targetKey};
+   check();const issued=adapter.planNavigation({kind:'resolved',entity,nativeId,navigationURL,liveHandle:null});check();
+   const targetKey=adapter.planKey(issued);
+   // Frame anchors cannot recheck a later draft at default browser navigation.
+   // Their issued href always preserves the current page, even when empty now.
+   const plan=issued.mode==='href'?{...issued,disposition:'new-tab-preserve-current'}:issued;
+   check();return {[field]:nativeId,plan,targetKey};
   });
   if(new TextEncoder().encode(JSON.stringify(result)).length>65536)throw Error('frame-native-plans-too-large');check();return result;
  }});

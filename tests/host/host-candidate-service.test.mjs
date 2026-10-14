@@ -1,0 +1,52 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {createHostCandidateService} from '../../src/runtime/host-candidate-service.mjs';
+const row={renderKey:'candidate:one',nativeTitle:'同名',titleState:'exact',available:true,reason:null,planRevision:1,targetKey:'plan_one'};
+const list={v:1,type:'HOST_UI_CANDIDATES',grantId:'grant',mountId:'mount'};
+const activate={...list,type:'HOST_UI_ACTIVATE_CANDIDATE',renderKey:row.renderKey,actionId:'action'};
+const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};
+function fixture(){let current=true,time=0,scope='scope',handler=async r=>r.phase==='list'?[row]:{state:'dispatched'};const calls=[],timers=new Map();let id=0;
+ const ui={withScope:async({grantId,mountId},work)=>{if(grantId!=='grant'||mountId!=='mount')throw Error('denied');const old=scope;return work({parentFrame:{tabId:1,frameId:0,documentId:'doc',actualURL:'https://chatgpt.com/'},scope:{key:scope},scopeGrantId:'scopeGrant',role:'workspace',isCurrent:()=>current&&scope===old});}};
+ const service=createHostCandidateService({ui,bridge:async r=>{calls.push(r);return handler(r);},elapsedNow:()=>time,schedule:(f,ms)=>{timers.set(++id,{f,at:time+ms});return id;},cancel:i=>timers.delete(i)});
+ return {service,calls,setHandler:f=>handler=f,revoke:()=>current=false,setScope:v=>scope=v,async advance(ms){time+=ms;for(const [i,t]of [...timers])if(t.at<=time){timers.delete(i);t.f();}await Promise.resolve();}};
+}
+test('candidate DTO removes plan; registered action once only and no UI plan injection',async()=>{const f=fixture();assert.deepEqual(await f.service.handle(list,{}),{ok:true,items:[{renderKey:row.renderKey,nativeTitle:'同名',titleState:'exact',available:true,reason:null}]});assert.equal((await f.service.handle({...activate,targetKey:'evil'},{})).ok,false);assert.deepEqual(await f.service.handle(activate,{}),{ok:true,state:'dispatched'});assert.equal((await f.service.handle(activate,{})).ok,false);assert.equal(f.calls.filter(x=>x.phase==='activate').length,1);assert(Object.isFrozen(f.calls[1].candidate));assert.equal(f.calls[1].uiGrantId,'grant');assert.equal(f.calls[1].mountId,'mount');});
+test('foreign scope, grant, missing registration and revoke reject before dispatch',async()=>{const f=fixture();assert.equal((await f.service.handle(activate,{})).ok,false);await f.service.handle(list,{});assert.equal((await f.service.handle({...activate,grantId:'other'},{})).ok,false);f.setScope('other');assert.equal((await f.service.handle(activate,{})).ok,false);f.revoke();assert.equal((await f.service.handle(list,{})).ok,false);assert.equal(f.calls.length,1);});
+test('late old listing never replaces newer list and does not expose invalid partial rows',async()=>{const f=fixture(),held=deferred();let n=0;f.setHandler(async()=>++n===1?held.promise:[{...row,renderKey:'candidate:two'}]);const first=f.service.handle(list,{});await Promise.resolve();await Promise.resolve();await f.service.handle(list,{});held.resolve([row]);assert.equal((await first).ok,false);assert.equal((await f.service.handle(activate,{})).ok,false);f.setHandler(async()=>[row,{...row,renderKey:'candidate:bad',href:'leak'}]);assert.equal((await f.service.handle(list,{})).ok,false);assert.equal((await f.service.handle(activate,{})).ok,false);});
+test('new list invalidates in-flight action guard without replacing its frozen row',async()=>{const f=fixture(),held=deferred();await f.service.handle(list,{});let command;f.setHandler(r=>{if(r.phase==='activate'){command=r;return held.promise;}return [{...row,planRevision:2,targetKey:'plan_two'}];});const pending=f.service.handle(activate,{});await Promise.resolve();await Promise.resolve();assert.equal(command.guard(),true);await f.service.handle(list,{});assert.equal(command.guard(),false);assert.equal(command.candidate.planRevision,1);held.resolve({state:'dispatched'});assert.equal((await pending).ok,false);assert.equal((await f.service.handle(activate,{})).ok,false);});
+for(const mode of ['stop','revoke','timeout','rollback'])test('late action stays invalid after '+mode,async()=>{const f=fixture(),held=deferred();await f.service.handle(list,{});let command;f.setHandler(r=>{command=r;return held.promise;});const pending=f.service.handle(activate,{});await Promise.resolve();await Promise.resolve();if(mode==='stop')f.service.stop();if(mode==='revoke')f.revoke();if(mode==='timeout')await f.advance(6000);if(mode==='rollback')await f.advance(-1);assert.equal(command.guard(),false);held.resolve({state:'dispatched'});assert.equal((await pending).ok,false);});
+for(const value of [[...Array(33)].map((_,i)=>({...row,renderKey:'candidate:'+i})),[row,row],[{...row,nativeTitle:'x'.repeat(201)}],[{...row,available:false}],[{...row,renderKey:'project:canonical'}]])test('invalid bounded listing rejected '+JSON.stringify(value).slice(0,60),async()=>{const f=fixture();f.setHandler(async()=>value);assert.equal((await f.service.handle(list,{})).ok,false);assert.equal((await f.service.handle(activate,{})).ok,false);});
+test('listing maximum 64 registrations is bounded and stop rejects further use',async()=>{
+ let current=true;const ui={withScope:async({grantId},work)=>work({scope:{key:grantId},scopeGrantId:grantId,role:'workspace',isCurrent:()=>current})};
+ const service=createHostCandidateService({ui,bridge:async()=>[row]});
+ for(let i=0;i<64;i++)assert.equal((await service.handle({...list,grantId:'g'+i},{})).ok,true);
+ assert.equal((await service.handle({...list,grantId:'g64'},{})).ok,false);service.stop();assert.equal((await service.handle(list,{})).ok,false);
+});
+test('timed-out authority callback cannot fetch or publish later',async()=>{
+ let callback,time=0,expire,calls=0;const service=createHostCandidateService({ui:{withScope:async(_,work)=>new Promise(resolve=>{callback=()=>resolve(work({scope:{key:'scope'},scopeGrantId:'sg',role:'workspace',isCurrent:()=>true}));})},bridge:async()=>{calls++;return [row];},elapsedNow:()=>time,schedule:f=>{expire=f;return 1;},cancel:()=>{}});
+ const pending=service.handle(list,{});await Promise.resolve();time=6000;expire();assert.equal((await pending).ok,false);callback();await Promise.resolve();assert.equal(calls,0);
+});
+test('rollback observed by activation guard cannot revive after clock catches up',async()=>{const f=fixture(),held=deferred();await f.service.handle(list,{});let command;f.setHandler(r=>{command=r;return held.promise;});const pending=f.service.handle(activate,{});await Promise.resolve();await Promise.resolve();await f.advance(-1);assert.equal(command.guard(),false);await f.advance(1);assert.equal(command.guard(),false);held.resolve({state:'dispatched'});assert.equal((await pending).ok,false);});
+
+test('older list delayed in authorization cannot replace newer generation',async()=>{
+ let release,n=0,calls=0;const context={scope:{key:'scope'},scopeGrantId:'sg',role:'workspace',isCurrent:()=>true};
+ const service=createHostCandidateService({ui:{withScope:async(_,work)=>++n===1?new Promise(resolve=>release=()=>resolve(work(context))):work(context)},bridge:async()=>{calls++;return [row];}});
+ const first=service.handle(list,{});await Promise.resolve();assert.equal((await service.handle(list,{})).ok,true);release();assert.equal((await first).ok,false);assert.equal(calls,1);
+});
+
+for(const end of ['reply','stop','revoke','timeout'])test('native authorization exact pending command and parent identity: '+end,async()=>{
+ const f=fixture(),held=deferred(),parent={tabId:1,frameId:0,documentId:'doc',actualURL:'https://chatgpt.com/'},command={actionId:'action',uiGrantId:'grant',mountId:'mount',planRevision:1,targetKey:'plan_one'};
+ assert.equal(f.service.authorize(command,parent),false);await f.service.handle(list,{});f.setHandler(()=>held.promise);const pending=f.service.handle(activate,{});await Promise.resolve();await Promise.resolve();assert.equal(f.service.authorize(command,parent),true);
+ for(const changed of [{tabId:2},{frameId:1},{documentId:'other'},{actualURL:'https://chatgpt.com/c/other'}])assert.equal(f.service.authorize(command,{...parent,...changed}),false);
+ for(const changed of [{actionId:'other'},{uiGrantId:'other'},{mountId:'other'},{planRevision:2},{targetKey:'other'},{extra:true}])assert.equal(f.service.authorize({...command,...changed},parent),false);
+ if(end==='stop')f.service.stop();if(end==='revoke')f.revoke();if(end==='timeout')await f.advance(6000);if(end!=='reply')assert.equal(f.service.authorize(command,parent),false);held.resolve({state:'dispatched'});await pending;assert.equal(f.service.authorize(command,parent),false);
+});
+
+test('action ledger releases invalidated route authorizations beyond global capacity',async()=>{
+ const f=fixture();for(let i=0;i<1030;i++){f.setScope('scope_'+i);assert.equal((await f.service.handle(list,{})).ok,true);assert.equal((await f.service.handle({...activate,actionId:'action_'+i},{})).state,'dispatched');}
+});
+test('action ledger retains live authorization across listing TTL and refresh, enforcing capacity',async()=>{
+ const f=fixture();await f.service.handle(list,{});for(let i=0;i<1024;i++)assert.equal((await f.service.handle({...activate,actionId:'action_'+i},{})).state,'dispatched');
+ assert.equal((await f.service.handle({...activate,actionId:'action_over'},{})).ok,false);
+ await f.advance(30001);await f.service.handle(list,{});assert.equal((await f.service.handle({...activate,actionId:'action_0'},{})).ok,false);assert.equal((await f.service.handle({...activate,actionId:'action_over'},{})).ok,false);
+ f.setScope('next_scope');await f.service.handle(list,{});assert.equal((await f.service.handle({...activate,actionId:'next'},{})).state,'dispatched');
+});

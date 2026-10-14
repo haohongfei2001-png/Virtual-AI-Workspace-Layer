@@ -1,3 +1,4 @@
+import {createFreeFrameCandidates} from './free-frame-candidates.mjs';
 import {validateFrameResumeView,validateResumeQuery} from './frame-resume-state.mjs';
 import {createFreeFrameSnippets} from './free-frame-snippets.mjs';
 import {createFreeFrameBackup} from './free-frame-backup.mjs';
@@ -15,18 +16,32 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,onPresentationRequest=()=>{},onState=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeNonce,navigationFactory=createNavigation,recoveryFactory=createFreeFrameRecovery,backupFactory=createFreeFrameBackup,snippetsFactory=createFreeFrameSnippets}={}){
  const policy=createURLPolicy({origin:parentOrigin});
  let navigation=null,root=null,plans=new Map(),projectPlans=new Map(),grant=null,grantCurrent=()=>false,serial=0,activeRead=null,query={segment:0,offset:0,limit:8},closed=true,splits=0,dirty=false,currentNativeURL='',presentationRevision=0,presentationIntent='',workspaceRevision=null,viewSession=null,horizonPending=false;
- let wasHidden=false,visibilityAttached=false;
+ let wasHidden=false,visibilityAttached=false,candidates=null,candidateRoot=null,candidateRun=0;
  let bootstrapping=false,resumeTimer=null,resumeQueued=null,resumeWriting=false,resumeLast=null,resumeQuery=null;
  let recovery=null,recoveryRoot=null,backup=null,backupRoot=null,autoChange=null,snippets=null,snippetsRoot=null,currentRef=null,searchSnippetIds=new Map(),snippetLocatePending=false;
  function clearAutoNotice(){autoChange=null;navigation?.clearTimePolicyNotice?.();}
  const recoverable=reason=>isFreeRecoveryReason(reason)||['corrupt-record','invalid-partition-manifest','invalid-partition-piece'].includes(reason);
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function clear(){candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ async function refreshCandidates(){
+  if(closed||backup||recovery||snippets||!grantCurrent())return;
+  const run=++candidateRun,current=grant;
+  const valid=()=>run===candidateRun&&!closed&&grant?.id===current.id&&grantCurrent()&&Date.parse(grant.expiresAt)>now()&&!backup&&!recovery&&!snippets;
+  try{
+   const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_CANDIDATES',grantId:current.id,mountId:current.mountId}),{now:elapsedNow,schedule,cancel});
+   if(!valid())return;if(result?.ok!==true){candidates?.clear();return;}
+   if(!candidates){candidateRoot=doc.createElement('div');candidateRoot.setAttribute('data-vaiwl-candidate-root','');if(typeof root?.before==='function')root.before(candidateRoot);else privateRoot.append(candidateRoot);candidates=createFreeFrameCandidates({document:doc,container:candidateRoot,onActivate:async renderKey=>{
+    const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
+    return withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_ACTIVATE_CANDIDATE',grantId:active.id,mountId:active.mountId,renderKey,actionId:doc.defaultView.crypto.randomUUID()}),{now:elapsedNow,schedule,cancel});
+   }});}candidates.update(result.items);
+  }catch{if(valid())candidates?.clear();}
+ }
+ function clearCandidates(){candidateRun++;candidates?.clear();}
  function fail(reason){if(closed)return;if(recoverable(reason)&&grantCurrent()&&Date.parse(grant?.expiresAt)>now()){openRecovery(true);return;}state({state:'failed',reason});lifecycle.stop(reason);}
  function openRecovery(fromFailure=false){
   if(recovery||backup||snippets||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending&&!fromFailure)return;
-  clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-recovery');
+  clearCandidates();clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-recovery');
   recoveryRoot=doc.createElement('div');recoveryRoot.setAttribute('data-vaiwl-frame-recovery','');privateRoot.append(recoveryRoot);
   const current=grant;
   const valid=()=>!closed&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
@@ -39,7 +54,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  function openBackup(){
   if(backup||recovery||snippets||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending)return;
-  clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-backup');
+  clearCandidates();clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-backup');
   backupRoot=doc.createElement('div');backupRoot.setAttribute('data-vaiwl-frame-backup','');privateRoot.append(backupRoot);
   const current=grant,valid=()=>!closed&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
   const panel=backupFactory({document:doc,container:backupRoot,request:async message=>{
@@ -57,7 +72,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  function openSnippets(){
   if(snippets||backup||recovery||closed||horizonPending||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;
-  clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();navigation?.invalidate?.('saved-snippets');
+  clearCandidates();clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();navigation?.invalidate?.('saved-snippets');
   snippetsRoot=doc.createElement('div');snippetsRoot.setAttribute('data-vaiwl-frame-snippets','');privateRoot.append(snippetsRoot);
   const current=grant,selectedRef=currentRef?{...currentRef}:null,valid=()=>!closed&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
   const panel=snippetsFactory({document:doc,container:snippetsRoot,parentOrigin,currentRef:selectedRef,request:async message=>{
@@ -123,7 +138,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
     if(!item||Object.keys(item).sort().join(',')!==[key,'plan','targetKey'].sort().join(',')||typeof id!=='string'||destination.has(id)||project&&!groups.has(id)||!['href','unavailable'].includes(item.plan?.mode)||item.plan.mode==='href'&&(target?.kind!=='resolved'||target.entity!==entity||target.nativeId!==id||item.plan.disposition!=='new-tab-preserve-current'||!policy.nativeHref(target.navigationURL)||project&&target.navigationURL!==groups.get(id).nativeUrl))throw Error('invalid-frame-navigation');
     destination.set(id,Object.freeze({plan:structuredClone(item.plan),targetKey:item.targetKey,uiGrantId:current.id,mountId:current.mountId}));
    }
-   if(!live(ticket))return null;plans=nextPlans;projectPlans=nextProjectPlans;searchSnippetIds=nextSnippetIds;workspaceRevision=response.page.workspaceRevision??null;viewSession=nextSession??null;currentNativeURL=currentRoute?.nativeUrl??'';currentRef=currentRoute?.refId?{id:currentRoute.refId,nativeUrl:currentRoute.nativeUrl}:null;query=effective;resumeQuery=structuredClone(effective);if(!dirty)budget.complete();if(publish)navigation.updateFrameProjection(response.page);if(!snippets)applyPresentation(response.page.presentation);state({state:'ready'});return response.page;
+   if(!live(ticket))return null;plans=nextPlans;projectPlans=nextProjectPlans;searchSnippetIds=nextSnippetIds;workspaceRevision=response.page.workspaceRevision??null;viewSession=nextSession??null;currentNativeURL=currentRoute?.nativeUrl??'';currentRef=currentRoute?.refId?{id:currentRoute.refId,nativeUrl:currentRoute.nativeUrl}:null;query=effective;resumeQuery=structuredClone(effective);if(!dirty)budget.complete();if(publish)navigation.updateFrameProjection(response.page);if(!snippets)applyPresentation(response.page.presentation);state({state:'ready'});if(publish){if(response.nativeCandidates===true)void refreshCandidates();else clearCandidates();}return response.page;
   }}catch(error){if(live(ticket))fail(error?.message==='frame-read-cancelled'?'frame-view-unavailable':error?.message??'frame-view-unavailable');return null;}
   finally{if(activeRead===controller){activeRead=null;if(dirty&&live(ticket)){dirty=false;void read(query,true);}}}
   return null;

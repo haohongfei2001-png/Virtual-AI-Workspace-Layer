@@ -1340,3 +1340,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 首次浏览器因沙箱Chrome启动失败，原报告保留；隔离headless获准执行后通过。Round129真实标签visibility实验仍NOT_SUPPORTED；本轮账户前台链的新增反例为明确transport/DOM doubles，不冒充实际ChatGPT账户切换验收。100k/4x、真实context/ACK/首发/G/U/PAIA及完整扩展BFCache仍未闭合；Free未完成、NOT_RELEASE_READY。
 
 Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），工作区已验证。正常Git fetch无响应后终止，正常push有界30秒超时；curl直连github.com:443亦5秒连接超时。GitHub连接器只读确认PR16仍Draft、远端0277eb5，故未宣称推送成功。Pro72ca068仍为本地祖先。恢复网络后仅正常push原分支；不改remote、不强推、不重做已通过模块。此网络条件只阻塞Git传输，继续独立离线Free任务。
+
+
+## Round131：无ID原生Project候选进入Free并执行一次原生导航（接 5add78e）
+
+- 修补MAP-06实际缺口：原surface已有live-control，但此前直接略过、Free界面无法点击。新增独立候选区域及RAM owner列表，不占canonical计数、不借同名合并、不写候选假ID。真实节点计划由content持有，UI只传renderKey与单次actionId；执行前后回worker验证当前授权和原父document/route，六秒截止、一次命令、风险/节点变更均拒绝。旧列表、迟到授权、scope撤销不能点击；失效授权释放重放账本，活授权刷新不恢复已用action。
+- 新只读inputRisk不返回草稿/文件名，边界完整且空闲才clear；显式语法只用于loopback重建，生产未知仍fail closed。候选列表当前最多32、计划256、授权列表64，候选区局部滚动。开启候选能力的owner才advertise独立LIST路径，旧Host不额外RPC；备份/恢复/停止清候选。
+- 实际原包候选2/2 PASS/source stable：按钮位于438px视口的58–93px，空草稿点击第二同名Project一次→正常原生路由→真实ID及成员投影，无candidate:持久ID；有草稿禁用，原textarea与草稿保持。前两次FAIL为新risk clear导致已知href变same-tab、被frame严格拒绝；已将框架href固定保留当前页，原计划不被改写。第三次FAIL发现候选追加在navigation之后落到视口外，移到其前并限制局部高度后通过。全部旧失败原样保留。
+- 最终完整Node **2780/2780 PASS**；标准实际原包MV3 **13/13 PASS/sourceChangedDuringRun=false**。最初完整Node10个旧fixture因未声明候选能力却收到新RPC而失败，改为显式能力门控，未弱化旧断言。新增真实renderer/client/owner/风险/计划反例并行独立验证后统一集成。
+- MAP-06仍IN_PROGRESS：后置候选到canonical去重、展开/焦点迁移以及超过32候选的有界分页尚未接通，下一步继续该模块，不能把本轮两旅程当整项完成。原生接受ACK/首发因果持久锚仍缺离线owner闭环；100k/4x、真实context/G/U/PAIA与完整扩展BFCache仍未闭合。Free未完成、NOT_RELEASE_READY，不访问私人账户/PAIA、不真实原生写入或部署。

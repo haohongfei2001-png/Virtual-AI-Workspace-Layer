@@ -1,3 +1,4 @@
+import {createNativeInputRisk} from './native-input-risk.mjs';
 import {createNativeSendIntentObserver} from './native-send-intent.mjs';
 import {createNativeSnippets} from './native-snippets.mjs';
 import {createCurrentBodyDiscovery} from './current-body-discovery.mjs';
@@ -8,8 +9,9 @@ import {publicAdapterStatus} from './contract.mjs';
 const rect=node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
 const overlaps=(a,b)=>a.x<b.x+b.width&&b.x<a.x+a.width&&a.y<b.y+b.height&&b.y<a.y+a.height;
 /** Isolated-world composition. DOM observations remain proposals, never scope proof. */
-export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,snippetsFactory=createNativeSnippets,bodyProof=()=>null,inputRisk=()=>({state:'unknown',flags:[]}),authorize=()=>false,beforeDispatch=()=>{},onRebindNeeded=()=>{},onObservationIssue=()=>{},now=Date.now,elapsedNow=()=>performance.now(),scheduleRetry=(fn,ms)=>setTimeout(fn,ms),cancelRetry=id=>clearTimeout(id)}={}){
+export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,snippetsFactory=createNativeSnippets,bodyProof=()=>null,inputRisk=null,authorize=()=>false,beforeDispatch=()=>{},onRebindNeeded=()=>{},onObservationIssue=()=>{},now=Date.now,elapsedNow=()=>performance.now(),scheduleRetry=(fn,ms)=>setTimeout(fn,ms),cancelRetry=id=>clearTimeout(id)}={}){
  if(!document?.defaultView)throw Error('invalid-host-document');
+ inputRisk=inputRisk??createNativeInputRisk({document,profile});
  let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[];
  const one=selector=>{const nodes=document.querySelectorAll(selector);return nodes.length===1?nodes[0]:null;};
  const live=()=>!stopped&&now()<Date.parse(binding.expiresAt);

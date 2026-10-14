@@ -11,7 +11,7 @@ import {projectFreeFrame,freeFrameRowDTO} from './free-frame-projection.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 /** One privileged replica per mount, shared by its two granted UI documents.
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
-export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,presentSurface=null,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
  const views=new Map(),resumes=new Map();
  const resumeKey=(context,role=context.role)=>JSON.stringify([context.parentFrame.tabId,context.parentFrame.documentId,context.parentFrame.actualURL,context.scope.key,role]);
@@ -104,7 +104,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
      seen.add(identity);
     }
    }
-   const result={ok:true,state:'ready',page,navigation};
+   const result={ok:true,state:'ready',page,navigation,...(nativeCandidatesEnabled?{nativeCandidates:true}:{})};
    if(new TextEncoder().encode(JSON.stringify(result)).length>65536)throw Error('free-frame-page-too-large');
    if(context.role==='workspace')entry.currentEntryEligible=page.segment===0&&search===undefined&&workingSet===undefined;
    check();if(!context.isCurrent())throw Error('stale-view-resume');rememberResume(context,message.query,current.snapshot.viewSession);

@@ -1,3 +1,4 @@
+import {createHostCandidateService} from './host-candidate-service.mjs';
 import {createHostSnippetService} from './host-snippet-service.mjs';
 import {createHostBackupService} from './host-backup-service.mjs';
 import {BACKUP_TYPES} from '../host/backup-transfer.mjs';
@@ -17,7 +18,7 @@ import {createScopeAuthority} from './scope-authority.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Zero-seed identity composition. Existing repository/broker owners remain unchanged. */
-export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,candidateBridge=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const handshake=createHostDocumentHandshake({extensionId,getFrame,allowedURL,now,makeId,elapsedNow,schedule,cancel});
  const authority=createScopeAuthority({provider,profile,allowedURL,now,makeId,elapsedNow,schedule,cancel});
  const asFrame=(doc,sender)=>({tabId:doc.tabId,frameId:0,documentId:doc.documentId,parentDocumentId:null,actualURL:doc.url,documentLifecycle:'active',incognito:sender.tab?.incognito===true});
@@ -30,7 +31,8 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:observations.gate,clock:()=>new Date(now()).toISOString()}):null;
  const continuations=nativeRepository&&typeof freeEvidenceRepository?.applyContinuation==='function'?createHostContinuationOwner({nativeRepository,evidenceRepository:freeEvidenceRepository,profileFor:id=>surfaceProfiles.get(id)}):null;
  const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({initializeTimePolicy:true,repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
- const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,prepareNavigation,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
+ const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,prepareNavigation,nativeCandidatesEnabled:!!candidateBridge,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
+ const candidates=ui&&candidateBridge?createHostCandidateService({ui,bridge:candidateBridge,elapsedNow,schedule,cancel,makeId}):null;
  const snippets=ui&&views&&selectionBridge?createHostSnippetService({ui,workspaceRepository,resolveView:views.resolveSnippetView,selectionBridge,onChanged:scopeKey=>{views.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
  const recovery=ui&&readService?createHostRecoveryService({ui,readService,workspaceRepository,onRecovered:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel}):null;
  const backup=ui&&['exportBackup','previewRestore','restoreBackup'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostBackupService({ui,workspaceRepository,onRestored:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
@@ -39,6 +41,13 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const sequences=new Map(),refreshAttempts=new Set();let serviceActive=true;
  async function handle(message,sender){
   if(!serviceActive)return {ok:false,reason:'host-service-stopped'};
+  if(message?.type==='HOST_NATIVE_AUTHORIZE'){
+   if(!candidates||!exactHostRecord(message,['v','type','documentToken','producerToken','routeEpoch','command'])||message.v!==1||!await handshake.verify(message,sender))return {ok:false};
+   const actual=await getFrame({tabId:sender.tab.id,frameId:0});
+   if(!handshake.matchesFrame(message,sender,actual)||!await handshake.verify(message,sender))return {ok:false};
+   return {ok:candidates.authorize(message.command,asFrame({tabId:sender.tab.id,documentId:actual.documentId,url:actual.url},sender))};
+  }
+  if(['HOST_UI_CANDIDATES','HOST_UI_ACTIVATE_CANDIDATE'].includes(message?.type))return candidates?candidates.handle(message,sender):{ok:false,state:'blocked'};
   if(['HOST_UI_SNIPPET','HOST_UI_SNIPPET_LIST'].includes(message?.type))return snippets?snippets.handle(message,sender):{ok:false,reason:'snippet-unavailable'};
   if(BACKUP_TYPES.includes(message?.type))return backup?backup.handle(message,sender):{ok:false,reason:'backup-unavailable'};
   if(['HOST_UI_RECOVERY_STATUS','HOST_UI_RECOVER'].includes(message?.type))return recovery?recovery.handle(message,sender):{ok:false,reason:'recovery-unavailable'};
@@ -103,7 +112,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  }
  function invalidate({tabId,frameId=0,documentId}={}){broker.invalidate({tabId,frameId});if(documentId){observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{observations?.invalidateTab(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}}
  function tabClosed(tabId){observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
- function stop(){if(!serviceActive)return;serviceActive=false;views?.stop();snippets?.stop();sendCandidates?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
+ function stop(){if(!serviceActive)return;serviceActive=false;candidates?.stop();views?.stop();snippets?.stop();sendCandidates?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
  // Internal worker composition only; no page RPC exposes metadata or accepts proof IDs.
  const readCurrentMetadata=proofId=>currentMetadata?currentMetadata.read(proofId):Promise.reject(Error('current-metadata-unavailable'));
  return Object.freeze({sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});

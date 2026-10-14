@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百三十轮：前台立即刷新查询，并独立强制核验账户；修复核验期间丢失新前台边沿及失败后并发续租再授权。完整Node2715项、标准实际原包MV3十三旅程通过。真实headless标签visibility实验NOT_SUPPORTED；生产账户、100k/4x与真人验收尚未完成。Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百三十一轮：无ID原生Project候选现可在Free中通过一次受授权的原生点击进入真实Project与成员。完整Node2780项、候选实际原包2旅程和标准MV3十三旅程通过。候选去重/焦点迁移/大列表分页仍待完成，真实生产与100k/4x关口未通过。Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1400,3 +1400,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - authority强制模式只绕过远期缓存，保留原6秒截止、身份解析和grant ID/epoch。同producer的FOCUS失败设置稳定denied，provider前后均检查，阻止并发续租在旧认证失效后自动签发新账户。旧请求不撤新producer；denied仅在真实握手失效后清理，130次替换不耗尽容量，跨普通20秒GC不恢复拒绝的权限。
 - 完整Node最终 **2715/2715 PASS**，标准实际原包headless MV3 **13/13 PASS**，sourceChangedDuringRun=false。账户强制核验44项、binding28项及前台/片段19项为各自定向证据，不重复相加。第一次全回归9项失败为旧片段fixture将新增visibility监听计入临时监听总数，现分别严格检查五种临时监听与stop全部清理；真实distinct foreground丢失反例先FAIL后修复。
 - 首次浏览器因沙箱Chrome启动失败，原报告保留；隔离headless获准执行后通过。Round129真实标签visibility实验仍NOT_SUPPORTED；本轮账户前台链的新增反例为明确transport/DOM doubles，不冒充实际ChatGPT账户切换验收。100k/4x、真实context/ACK/首发/G/U/PAIA及完整扩展BFCache仍未闭合；Free未完成、NOT_RELEASE_READY。
+
+
+## Round131：无ID原生Project候选进入Free并执行一次原生导航（接 5add78e）
+
+- 修补MAP-06实际缺口：原surface已有live-control，但此前直接略过、Free界面无法点击。新增独立候选区域及RAM owner列表，不占canonical计数、不借同名合并、不写候选假ID。真实节点计划由content持有，UI只传renderKey与单次actionId；执行前后回worker验证当前授权和原父document/route，六秒截止、一次命令、风险/节点变更均拒绝。旧列表、迟到授权、scope撤销不能点击；失效授权释放重放账本，活授权刷新不恢复已用action。
+- 新只读inputRisk不返回草稿/文件名，边界完整且空闲才clear；显式语法只用于loopback重建，生产未知仍fail closed。候选列表当前最多32、计划256、授权列表64，候选区局部滚动。开启候选能力的owner才advertise独立LIST路径，旧Host不额外RPC；备份/恢复/停止清候选。
+- 实际原包候选2/2 PASS/source stable：按钮位于438px视口的58–93px，空草稿点击第二同名Project一次→正常原生路由→真实ID及成员投影，无candidate:持久ID；有草稿禁用，原textarea与草稿保持。前两次FAIL为新risk clear导致已知href变same-tab、被frame严格拒绝；已将框架href固定保留当前页，原计划不被改写。第三次FAIL发现候选追加在navigation之后落到视口外，移到其前并限制局部高度后通过。全部旧失败原样保留。
+- 最终完整Node **2780/2780 PASS**；标准实际原包MV3 **13/13 PASS/sourceChangedDuringRun=false**。最初完整Node10个旧fixture因未声明候选能力却收到新RPC而失败，改为显式能力门控，未弱化旧断言。新增真实renderer/client/owner/风险/计划反例并行独立验证后统一集成。
+- MAP-06仍IN_PROGRESS：后置候选到canonical去重、展开/焦点迁移以及超过32候选的有界分页尚未接通，下一步继续该模块，不能把本轮两旅程当整项完成。原生接受ACK/首发因果持久锚仍缺离线owner闭环；100k/4x、真实context/G/U/PAIA与完整扩展BFCache仍未闭合。Free未完成、NOT_RELEASE_READY，不访问私人账户/PAIA、不真实原生写入或部署。

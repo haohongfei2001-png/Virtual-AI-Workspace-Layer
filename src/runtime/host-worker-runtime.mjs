@@ -29,6 +29,15 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
    if(phase==='capture')return result?.ok===true?{selectionId:result.selectionId,anchor:result.anchor}:null;
    return result;
   },
+  candidateBridge:async({context,phase,candidate,actionId,uiGrantId,mountId,guard=()=>true,remainingMs=6000})=>{
+   if(!guard()||!context.isCurrent())return {state:'blocked'};
+   const message={type:'HOST_CANDIDATES',...context.binding,phase};
+   if(phase==='activate'){
+    if(!Number.isFinite(remainingMs)||remainingMs<=0||remainingMs>6000)return {state:'blocked'};
+    Object.assign(message,{candidate,actionId,uiGrantId,mountId,expiresAt:new Date(Date.now()+remainingMs).toISOString()});
+   }
+   return chrome.tabs.sendMessage(context.parentFrame.tabId,message,{documentId:context.parentFrame.documentId});
+  },
   prepareNavigation:({parentFrame,binding,targets})=>chrome.tabs.sendMessage(parentFrame.tabId,{type:'HOST_NATIVE_PLAN',...binding,targets},{documentId:parentFrame.documentId})});
  let active=true;
  const message=(value,sender,reply)=>{if(!active)return;Promise.resolve().then(()=>active?service.handle(value,sender):null).then(result=>{if(active)reply(result);},()=>{if(active)reply({ok:false,reason:'host-unavailable'});});return true;};
