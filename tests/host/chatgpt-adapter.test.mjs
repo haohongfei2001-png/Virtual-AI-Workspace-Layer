@@ -86,3 +86,13 @@ test('document renewal cannot extend a snippet proof before the new body acknowl
  f.setTime(90000);hold=true;f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()});await settle();
  f.setTime(100000);assert.equal(config.guard(),true);assert.equal(config.proof(),null);release();await settle();assert(config.proof());f.adapter.stop();
 });
+
+test('adapter forwards native dispatch hook with real discovered node and stops safely inside hook',async()=>{
+ for(const stopInHook of [false,true]){
+  let f,event,clicks=0;f=fixture({inputRisk:()=>({state:'clear',flags:[]}),authorize:()=>true,onNativeDispatch:value=>{event=value;if(stopInHook)f.adapter.stop();}});
+  const root={isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]},button={tagName:'BUTTON',textContent:'Same',isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null,click:()=>clicks++};
+  f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await tick();const proposals=await f.adapter.readLoaded(null),target=proposals.find(p=>p.kind==='surface-delta').payload.candidates[0].target,plan=f.adapter.planNavigation(target);
+  assert.equal(plan.mode,'native-control');const command={actionId:'action',uiGrantId:'grant',mountId:'mount',planRevision:plan.planRevision,targetKey:f.adapter.planKey(plan)},result=await f.adapter.dispatchNative(command);
+  assert.equal(event.node,button);assert.equal(event.plan,plan);assert.equal(event.originalURL,f.document.location.href);assert.equal(clicks,stopInHook?0:1);assert.equal(result.state,stopInHook?'unconfirmed':'dispatched');f.adapter.stop();
+ }
+});

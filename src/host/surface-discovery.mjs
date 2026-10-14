@@ -1,3 +1,6 @@
+// Private cross-discovery identity witnesses. Tokens carry neither a handle nor authority.
+const candidateIdentities=new WeakMap();
+
 /** DOM proposals only: a locator is never an authenticated receipt or scope grant. */
 export const LEGACY_SURFACE_PROFILE = Object.freeze({
   id:'chatgpt-legacy-reconstruction',revision:1,reconstruction:true,liveVerified:false,
@@ -111,14 +114,32 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     // A visible DOM slice is not an account-wide or terminal snapshot.
     return {candidates,membershipClaims:[...claims.values()],coverageClaims:[],detachedHandles};
   }
-  return Object.freeze({scan,getNode(handle) {
+  function getNode(handle) {
     if(stopped)return null;refreshRoute();refreshRoots();
     const entry=byId.get(typeof handle==='string'?handle:handle?.id);
     if(!entry)return null;
     if(!valid(entry)){byId.delete(entry.handle.id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(entry.handle.id);return null;}
     if(typeof handle==='object'&&['documentToken','routeEpoch','regionEpoch','controlKind'].some(key=>handle[key]!==entry.handle[key]))return null;
     return entry.node.deref();
-  },invalidate({routeEpoch:nextEpoch}={}) {
+  }
+  function candidateEntry(handle){
+    if(!handle||typeof handle!=='object'||handle.controlKind!=='project'||!getNode(handle))return null;
+    const entry=byId.get(handle.id);if(entry?.regionKind!=='projects')return null;
+    const node=entry.node.deref(),href=node.getAttribute('href'),parsed=href?urlPolicy.parse(href):null;
+    return ((!parsed&&node.tagName==='BUTTON')||parsed?.kind==='project-candidate')?entry:null;
+  }
+  function captureCandidateIdentity(handle){
+    const entry=candidateEntry(handle);if(!entry)return null;
+    const token=Object.freeze(Object.create(null));
+    candidateIdentities.set(token,{node:entry.node,root:entry.root,parent:entry.parent,document:new WeakRef(document),fingerprint:entry.fingerprint,profileId:profile.id,profileVersion:profile.revision});
+    return token;
+  }
+  function matchesCandidateIdentity(token,handle){
+    const identity=token&&typeof token==='object'?candidateIdentities.get(token):null;if(!identity)return false;
+    const entry=candidateEntry(handle);if(!entry)return false;
+    return identity.document.deref()===document&&identity.profileId===profile.id&&identity.profileVersion===profile.revision&&identity.node.deref()===entry.node.deref()&&identity.root.deref()===entry.root.deref()&&identity.parent.deref()===entry.parent.deref()&&identity.fingerprint===entry.fingerprint;
+  }
+  return Object.freeze({scan,getNode,captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
     if(stopped)return;routeEpoch=Number.isSafeInteger(nextEpoch)&&nextEpoch>routeEpoch?nextEpoch:routeEpoch+1;clearHandles();roots.clear();routeURL=document.location.href;
   },stop() {stopped=true;clearHandles();roots.clear();}});
 }

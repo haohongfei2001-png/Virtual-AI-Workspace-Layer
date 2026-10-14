@@ -1357,3 +1357,12 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 完整Node **2820/2820 PASS**，见free-round132-node.log.gz；content18、owner50、renderer11、frame12定向测试独立保留、不累加。实际原包headless MV3 **3/3 PASS/sourceChangedDuringRun=false**：65个合成DOM候选0/32/64末页可达、返回32后自然观察刷新保页、收缩1回首页，既有单次原生点击与草稿保护仍通过。仅65合成候选实测，不宣称256真实浏览器或真实账户验收。
 - 首次实际测试FAIL保留：添加64按钮使未限高的原生fixture列表挤掉history区域，mount安全退出。最终fixture保持原127.21875px高度并内部滚动，删除额外项后恢复原style；未弱化mount几何断言、未伪造grant或扩展内部接口。
 - MAP-06候选升级后的精确节点去重、展开/焦点迁移仍IN_PROGRESS。256长标题候选还受既有surface-delta 64KiB边界约束，不能将分页协议容量视作整批来源已达标。生产context/accepted ACK/首发、100k/4x、真实G/U/PAIA及完整扩展BFCache条件仍未闭合；Free未完成、NOT_RELEASE_READY。
+
+
+## Round133：候选升级的私有点击与节点身份基础（接 4894b51）
+
+- native actions新增同步onNativeDispatch，最终两次授权与valid之后、实际click之前提供真实节点、冻结plan/command/actionId及原URL；不新增await。抛错或thenable拒绝点击；hook后再次检查风险/节点/URL，adapter前后验证live/generation，stop不能遗留可点击动作。same-target/href/拒绝路径不触发hook，actionId失败也不重放。
+- discovery新增仅RAM opaque identity token：模块私有WeakMap保存node/root/parent/document弱引用及profile/指纹；仅当前有效IDless Projects控件可生成。新adapter必须重新观察并使用新handle，比较原节点/root/parent/profile/document/指纹；不恢复旧route/region句柄、不按同名匹配、不携带授权、不生成持久事实。
+- 最终完整Node **2840/2840 PASS**（free-round133-node.log.gz）。hook83及identity14为独立定向测试、不相加；identity明确DOM double。该轮基础接口尚无新产品消费者，未新增Chrome旅程；Round132的实际原包3旅程证据属于此前源码，不冒称本轮浏览器已测。
+- 下一接续：主代理将单条短期待关联放在content-session外层，只跨一次SPA重绑；新旧独立认证scope必须相同，exact P仍由原生route+可见标题/member事实链独立确认。只抑制同原node对应候选，不影响同名另一按钮；hook后未click/失败要清pending，stop/pagehide/第二路由/用户相反动作/超时清除。新canonical实际发布后才迁移位置与展开；原生reading期间不抢焦点，用户明确返回workspace后才考虑一次性焦点恢复。此闭环尚未实施，MAP-06仍IN_PROGRESS。
+- 4894b51正常HTTP/1.1推送30秒超时；GitHub API随后仍确认远端540f9eb、PR16为Draft且基于PR15。本地已保存，不强推或改remote。Pro72ca068仍为本地祖先。Free未完成、NOT_RELEASE_READY，既有ACK/首发/100k/真实G/U等缺口不变。

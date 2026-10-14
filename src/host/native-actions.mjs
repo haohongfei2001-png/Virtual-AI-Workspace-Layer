@@ -3,8 +3,8 @@ const id=v=>typeof v==='string'&&v.length>0&&v.length<=128&&/^[A-Za-z0-9_-]+$/.t
 const exact=(v,keys)=>!!v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));
 const riskKey=r=>r&&['clear','unsaved','unknown'].includes(r.state)&&Array.isArray(r.flags)&&r.flags.every(v=>['composer','attachment','upload','generation','voice','canvas'].includes(v))&&(r.state!=='clear'||r.flags.length===0)?JSON.stringify([r.state,[...new Set(r.flags)].sort()]):null;
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
-export function createNativeActions({discovery,urlPolicy,currentURL,bodyProof=()=>null,inputRisk=()=>({state:'unknown',flags:[]}),authorize=()=>false,beforeDispatch=()=>{},now=()=>performance.now()}={}){
- if(typeof discovery?.getNode!=='function'||typeof urlPolicy?.parse!=='function'||typeof currentURL!=='function'||[bodyProof,inputRisk,authorize,beforeDispatch,now].some(f=>typeof f!=='function'))throw Error('invalid-native-actions');
+export function createNativeActions({discovery,urlPolicy,currentURL,bodyProof=()=>null,inputRisk=()=>({state:'unknown',flags:[]}),authorize=()=>false,beforeDispatch=()=>{},onNativeDispatch=()=>{},now=()=>performance.now()}={}){
+ if(typeof discovery?.getNode!=='function'||typeof urlPolicy?.parse!=='function'||typeof currentURL!=='function'||[bodyProof,inputRisk,authorize,beforeDispatch,onNativeDispatch,now].some(f=>typeof f!=='function'))throw Error('invalid-native-actions');
  const plans=new Map(),certificates=new WeakMap(),actions=new Map();let revision=0;const nonce=crypto.randomUUID().replaceAll('-','');
  const validHandle=h=>exact(h,['id','documentToken','routeEpoch','regionEpoch','controlKind'])&&id(h.id)&&id(h.documentToken)&&Number.isSafeInteger(h.routeEpoch)&&h.routeEpoch>=0&&Number.isSafeInteger(h.regionEpoch)&&h.regionEpoch>=0&&['project','conversation','new-project','new-chat','native-search'].includes(h.controlKind);
  function planNavigation(target,risk=inputRisk()){
@@ -50,6 +50,9 @@ export function createNativeActions({discovery,urlPolicy,currentURL,bodyProof=()
    if(!valid(entry))return blocked('stale-navigation-plan');
    if(entry.plan.mode==='same-target')return {state:'already-current',actionId:dto.actionId};
    // Marked before every await: a lost acknowledgement cannot trigger a second click.
+   const hookResult=onNativeDispatch(Object.freeze({node:entry.node,plan:entry.plan,actionId:command.actionId,command,originalURL:entry.url}));
+   if(hookResult&&typeof hookResult.then==='function'){Promise.resolve(hookResult).catch(()=>{});throw Error('async-native-dispatch-hook');}
+   if(!valid(entry))return blocked('stale-navigation-plan');
    entry.node.click();return {state:'dispatched',actionId:dto.actionId};
   }catch{return {state:'unconfirmed',reason:'native-dispatch-unconfirmed'};}
  }
