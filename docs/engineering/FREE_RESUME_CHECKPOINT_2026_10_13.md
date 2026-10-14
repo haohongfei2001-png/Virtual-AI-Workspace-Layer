@@ -1433,3 +1433,8 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 抽出 validateSendAckProfile，复用原有严格字段与有限 acceptedStates 校验；返回独立深冻结配置，不构成认证证据或权限。新增复制/冻结/调用方修改隔离测试。定向 Node **17/17 PASS**，证据 free-round139-ack.log；本轮完整回归与浏览器测试 NOT_RUN。
 - 子代理明确返回 usage limit，认证接受状态提取器尚未创建文件；未把未完成实现计为完成。provider/reader/correlator/native continuation ACK 接线仍未实现，生产默认关闭。下一轮从当前代码继续：先完成 conversation-acceptance 纯提取及反例，再将固定认证读回的对象身份与当前 proof/guard 绑定，接入现有持久 continuation。
 - Pro 72ca068 已由既有正常 merge 保留；上一提交 5889da8 已正常推送 PR16。本检查点不改变计划、分支或原生权限，Free 仍 NOT_RELEASE_READY。
+
+## Round140：认证读回接受状态纯提取（接 47d1cb4）
+
+- 新增 conversation-acceptance，内部重新调用既有有界 metadata parser 核对 exact conversation；仅完整无 gap 元数据继续处理。显式 ACK profile acceptedStates、原始消息作者及 user 角色均匹配后输出消息/映射节点/作者 hash/固定 lineage/接受状态，深冻结且不携带正文。缺失状态、泛化 accepted 字符串、其他作者、损坏 lineage 和重复冲突均不能确认发送。
+- 接受状态、metadata 与 admission 定向测试 **38/38 PASS**（free-round140-acceptance.log）；完整回归及浏览器 NOT_RUN。纯提取不是认证证明，尚未接 provider/reader 私有对象来源和 proof/guard，未写入持久活动。下一步继续该接线，再处理首发跨 SPA；Free 仍 NOT_RELEASE_READY。
