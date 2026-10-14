@@ -50,3 +50,15 @@ test('dual-frame different pages retain old issued plans without authorizing uni
 test('257 observed candidates still reject when one candidate is already upgraded',async()=>{
  let plans=0;const rows=Array.from({length:257},(_,i)=>({entity:'project',renderKey:`r${i}`,target:{kind:'live-control'}}));const owner=createContentCandidates({adapter:{readLoaded:async()=>[{kind:'surface-delta',payload:{candidates:rows}}],planNavigation:()=>{plans++;throw Error('must-not-mint');}},current:()=>true,showReading:()=>true,isUpgraded:r=>r.renderKey==='r0'});await assert.rejects(owner.listPage(),/invalid-content-candidates/);assert.equal(plans,0);owner.stop();
 });
+
+for(const role of ['workspace','sidebar'])test('active '+role+' display is copied and available only for exact authorized command',async()=>{
+ const f=fixture(),row=(await f.owner.list())[0],display={role,presentation:{offset:32,scrollTop:127,focused:true}},held=deferred();let command,stored;
+ f.dispatch(c=>{command=c;stored=f.owner.displayFor(c);assert.deepEqual(stored,display);assert.ok(Object.isFrozen(stored)&&Object.isFrozen(stored.presentation));assert.deepEqual(Object.keys(c).sort(),['actionId','mountId','planRevision','targetKey','uiGrantId']);return held.promise;});
+ assert.equal(f.owner.displayFor({}),null);const pending=f.owner.activate({...f.dto(row),display});display.presentation.scrollTop=999;display.role='other';assert.equal(stored.presentation.scrollTop,127);assert.equal(f.owner.displayFor({...command,actionId:'wrong'}),null);assert.equal(f.owner.displayFor({...command,display:stored}),null);held.resolve({state:'dispatched'});await pending;assert.equal(f.owner.displayFor(command),null);
+});
+test('legacy activation has no display; expiry and stop revoke active display',async()=>{
+ for(const mode of ['legacy','expiry','stop']){const f=fixture(),row=(await f.owner.list())[0],held=deferred();let command;f.dispatch(c=>{command=c;return held.promise;});const pending=f.owner.activate({...f.dto(row),...(mode==='legacy'?{}:{display:{role:'workspace',presentation:{offset:0,scrollTop:0,focused:false}}})});if(mode==='expiry')f.clock(7000);if(mode==='stop')f.owner.stop();assert.equal(f.owner.displayFor(command),null);held.resolve({state:'unconfirmed'});await pending;}
+});
+test('invalid optional display fails before dispatch without changing legacy command contract',async()=>{
+ const f=fixture(),row=(await f.owner.list())[0],p={offset:0,scrollTop:0,focused:false};for(const display of [null,{}, {role:'other',presentation:p},{role:'workspace',presentation:p,scope:'fake'},{role:'workspace',presentation:{...p,offset:1}},{role:'workspace',presentation:{...p,scrollTop:-1}},{role:'workspace',presentation:{...p,focused:'yes'}},{role:'workspace',presentation:{...p,title:'private'}}])assert.equal((await f.owner.activate({...f.dto(row),display})).state,'blocked');assert.equal(f.calls.length,0);
+});

@@ -29,12 +29,12 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
    if(phase==='capture')return result?.ok===true?{selectionId:result.selectionId,anchor:result.anchor}:null;
    return result;
   },
-  candidateBridge:async({context,phase,candidate,actionId,uiGrantId,mountId,offset=0,guard=()=>true,remainingMs=6000})=>{
+  candidateBridge:async({context,phase,candidate,actionId,display,uiGrantId,mountId,offset=0,guard=()=>true,remainingMs=6000})=>{
    if(!guard()||!context.isCurrent())return {state:'blocked'};
-   const message={type:'HOST_CANDIDATES',...context.binding,phase,...(phase==='list'?{offset}:{})};
+   const message={type:'HOST_CANDIDATES',...context.binding,phase,role:context.role,...(phase==='list'?{offset}:{})};
    if(phase==='activate'){
     if(!Number.isFinite(remainingMs)||remainingMs<=0||remainingMs>6000)return {state:'blocked'};
-    Object.assign(message,{candidate,actionId,uiGrantId,mountId,expiresAt:new Date(Date.now()+remainingMs).toISOString()});
+    Object.assign(message,{candidate,actionId,...(display?{display}:{}),uiGrantId,mountId,expiresAt:new Date(Date.now()+remainingMs).toISOString()});
    }
    return chrome.tabs.sendMessage(context.parentFrame.tabId,message,{documentId:context.parentFrame.documentId});
   },

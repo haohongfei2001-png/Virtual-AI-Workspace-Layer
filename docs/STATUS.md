@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百三十五轮：候选同页刷新保位，候选和正式导航均避免后台iframe抢焦点；可信返回顺序修复，正式卡精确定位接口已实现。完整Node2908项与最终原包Chrome四旅程通过。跨frame位置/展开/焦点迁移仍待接线，Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百三十六轮：已接通候选到当前页正式Project的跨frame位置/展开/焦点迁移，可信返回后准确聚焦。完整Node3013项与最终原包Chrome四旅程通过。当前页外目标有界定位仍待接通；Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1449,3 +1449,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 独立反例发现既有navigation render在iframe已失焦但shadow.activeElement残留时仍调用focus；捕获和恢复两处均增加framed doc.hasFocus检查。后台反例先FAIL保留，前景正常恢复、期间失焦不恢复等最终9项通过。返回按钮改为先检isTrusted再showWorkspace，缺事件/合成click不能打开或消耗原生阅读返回入口。
 - 最终完整Node **2908/2908 PASS**（free-round135-node.log.gz）。最终实际原包headless MV3 **4/4 PASS/sourceChangedDuringRun=false**：page32精确候选focus保持、scroll137→137、visible sidebar焦点不被workspace刷新抢回、原生model焦点与双surface让位保持500ms；既有分页/同名节点精确升级/单次原生click/草稿仍通过。首次浏览器FAIL是测试在隐藏workspace等待未承诺的刷新，原报告保留；将可见跨frame刷新与原生让位拆成各自严格断言后通过，不伪造visibility或改写扩展接口。
 - MAP-06呈现迁移继续IN_PROGRESS。下一接续接口已明确：client→owner仅传有界presentation，role由withScope确定；实际click时跟随同节点关联，确认exactP后用有界迁移ID重复返回、frame幂等消费，不能在旧LIST出站就删除。只原激活role继承focused；等待当前授权canonical实际渲染及用户明确return，后续可信输入/焦点/滚动应阻止迟到焦点恢复。候选scroll不能直接套正式卡scroll；当前页缺目标的有界定位仍待owner闭合。ACK/首发/64KiB长来源/100k与真实G/U等既有缺口不变，Free未完成、NOT_RELEASE_READY。
+
+
+## Round136：候选到正式Project的跨frame呈现迁移（接 d1f7f85）
+
+- 有界presentation随实际一次native click进入私有同节点关联；role由owner的已核验UiGrant决定，UI不可伪造role。确认exactP后，LIST返回当前session迁移DTO；原role继承候选分页/scroll/focused，其他role不继承焦点。30秒有界期限、每次原节点复验、时钟回退/重建/撤权/stop均撤迁移；内容不建立scope或原生写权。client最多32个终结ID防重放，满后fail closed，不逐出旧ID重放。
+- 只在生命周期可信workspace ENTRY与owner ready均成立后定位当前授权页exactP；同步renderer的workspace模式，不清搜索/工作集/历史/H/T/Z、不主动聚焦。实际可见、原role文档仍持焦且未有后续可信输入才交接focus；隐藏/阅读/实际focus失败返回false不假消费。候选位置恢复一次，空列表失败也结束，跨页回复缺migration或换ID先撤旧恢复，不迟到覆盖用户滚动。侧栏只展开exactP；目标缺页仍保留有界待定位，下一步补owner同段定位接口。
+- 实际原包headless Chrome **4/4 PASS/sourceChangedDuringRun=false**（free-round136-candidates-package-mv3-entry-mode.json）：可信return后exactP2卡的document.hasFocus与shadow.activeElement确实成立；阅读前不抢焦点、同名仅原节点升级、候选分页/滚动保持、恰一次native click、原编辑器和草稿保留。前三次浏览器FAIL原件完整保留：父shadow内frame聚焦判定、返回后LIST刷新、renderer仍reading而假成功依次定位修复；未放宽卡片焦点断言。仅隔离fixture，本轮未访问私人ChatGPT或做真实原生写入。
+- 最终完整Node **3013/3013 PASS**（free-round136-node.log.gz），定向codec37、owner69、renderer13、frame迁移集成32为各自来源，不相加。过期/回退return负例原失败保留，修复后定向和完整通过。
+- MAP-06仍IN_PROGRESS：当前canonical页外exactP有界定位、后续原生路由的已学同节点映射生命周期待继续。ACK/首发持久活动、64KiB长候选来源、100k/4x、生产context及真实G/U/PAIA、完整扩展BFCache等缺口未被本轮替代，Free未完成、NOT_RELEASE_READY。Pro72ca068已合入且保留，本轮不改变远端、分支或PR结构。

@@ -427,13 +427,17 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function revealNativeProject({projectId,focus=false}={}){
     if(stopped||!framed||!frameProjection||!view||searchQuery!==null||view.worksetOpen||typeof projectId!=='string'||typeof focus!=='boolean'||interacting()||updateTimer!==null)return false;
     const group=groups.find(g=>g.id===projectId);if(!group)return false;
+    if(focus&&(view.mode!=='workspace'||doc.hasFocus?.()===false))return false;
+    const initialPane=roots?.[surface.role],initialViewport=surface.role==='sidebar'?initialPane?.shadow.querySelector('.themes'):initialPane?.scroller;
+    if(!initialViewport||doc.visibilityState==='hidden'||initialViewport.hidden||initialPane.n.style.visibility==='hidden'||initialPane.n.style.display==='none'||!(initialViewport.getBoundingClientRect().height>0))return false;
     if(surface.role==='sidebar'&&!view.sidebarOpen.has(projectId)){view.sidebarOpen.add(projectId);render();}
     const pane=roots?.[surface.role],viewport=surface.role==='sidebar'?pane?.shadow.querySelector('.themes'):pane?.scroller;
     const target=surface.role==='sidebar'?[...(pane?.shadow.querySelectorAll('[data-focus-key]')??[])].find(n=>n.dataset.focusKey==='theme:'+projectId):[...(pane?.shadow.querySelectorAll('[data-theme-id]')??[])].find(n=>n.getAttribute('data-theme-id')===projectId);
     if(!target||!viewport)return false;
     const box=target.getBoundingClientRect(),bounds=viewport.getBoundingClientRect();
     const visible=doc.visibilityState!=='hidden'&&!viewport.hidden&&pane.n.style.visibility!=='hidden'&&pane.n.style.display!=='none'&&bounds.height>0&&box.height>0;
-    if(visible){if(box.top<bounds.top)viewport.scrollTop+=box.top-bounds.top;else if(box.bottom>bounds.bottom)viewport.scrollTop+=Math.min(box.top-bounds.top,box.bottom-bounds.bottom);if(surface.role==='sidebar')view.sidebarScroll=viewport.scrollTop;else view.scroll=viewport.scrollTop;if(focus&&view.mode==='workspace')target.focus({preventScroll:true});emitView();}
+    if(!visible)return false;
+    if(visible){if(box.top<bounds.top)viewport.scrollTop+=box.top-bounds.top;else if(box.bottom>bounds.bottom)viewport.scrollTop+=Math.min(box.top-bounds.top,box.bottom-bounds.bottom);if(surface.role==='sidebar')view.sidebarScroll=viewport.scrollTop;else view.scroll=viewport.scrollTop;if(focus){if(doc.hasFocus?.()===false)return false;target.focus({preventScroll:true});if(pane.shadow.activeElement!==target)return false;}emitView();}
     if(surface.role==='sidebar'&&group.lists.current.total>0&&group.lists.current.items.length===0)requestFrame({groupId:projectId,list:'current',rowOffset:0,rowLimit:5});
     return true;
   }
@@ -441,5 +445,5 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(stopped||!snapshot||!['show-workspace','enter-reading','search-known','show-working-set'].includes(intent?.kind))return false;
     if(interacting()||updateTimer!==null){pendingPresentation={scope:snapshot.scope,intent:{kind:intent.kind,...(intent.kind==='search-known'?{themeId:intent.themeId??null}:{})}};finishInteraction();return true;}
     if(intent?.kind==='show-workspace')showWorkspace(false);else if(intent?.kind==='enter-reading')enterReading(false);else if(intent?.kind==='search-known')findKnown(intent.themeId??null,false);else if(intent?.kind==='show-working-set')showWorkingSet(false);else return false;return true;}
-  return Object.freeze({revealNativeProject,restoreFrameView(value){if(!framed||stopped)return false;resumeLayout=validateFrameResumeView(value);return true;},showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
+  return Object.freeze({workspaceEntered(){if(stopped||!framed||!frameProjection||!view)return false;view.mode='workspace';return true;},revealNativeProject,restoreFrameView(value){if(!framed||stopped)return false;resumeLayout=validateFrameResumeView(value);return true;},showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
 }

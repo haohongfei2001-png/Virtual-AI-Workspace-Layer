@@ -1,3 +1,4 @@
+import {validateCandidatePresentation,validateCandidateMigration} from '../host/candidate-presentation.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
@@ -27,7 +28,8 @@ export function createHostCandidateService({ui,bridge,elapsedNow=()=>performance
   const listing=m?.type==='HOST_UI_CANDIDATES';
   const requestedOffset=listing&&Object.hasOwn(m,'offset')?m.offset:0;
   if(listing&&(!Number.isSafeInteger(requestedOffset)||requestedOffset<0||requestedOffset>224||requestedOffset%32!==0))return failure();
-  if(!exactHostRecord(m,['v','type','grantId','mountId',...(listing?(Object.hasOwn(m,'offset')?['offset']:[]):['renderKey','actionId'])])||m.v!==1||!tokenOK(m.grantId)||!tokenOK(m.mountId)||!listing&&(m.type!=='HOST_UI_ACTIVATE_CANDIDATE'||!renderKeyOK(m.renderKey)||!tokenOK(m.actionId)))return failure();
+  if(!exactHostRecord(m,['v','type','grantId','mountId',...(listing?(Object.hasOwn(m,'offset')?['offset']:[]):['renderKey','actionId',...(Object.hasOwn(m,'presentation')?['presentation']:[])])])||m.v!==1||!tokenOK(m.grantId)||!tokenOK(m.mountId)||!listing&&(m.type!=='HOST_UI_ACTIVATE_CANDIDATE'||!renderKeyOK(m.renderKey)||!tokenOK(m.actionId)))return failure();
+  let presentation=null;try{if(!listing&&Object.hasOwn(m,'presentation'))presentation=validateCandidatePresentation(m.presentation);}catch{return failure();}
   const a={active:true,started:elapsedNow(),order:++order};attempts.add(a);
   const live=()=>{const time=elapsedNow();if(stopped||!Number.isFinite(time)||time<a.started||time-a.started>=6000)a.active=false;return a.active;};
   try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:m.grantId,mountId:m.mountId},async context=>{
@@ -42,20 +44,20 @@ export function createHostCandidateService({ui,bridge,elapsedNow=()=>performance
     let page,values;
     if(Array.isArray(result)){if(requestedOffset!==0||result.length>32)throw Error('invalid-candidate-list');values=result;page={offset:0,total:result.length,nextOffset:null};}
     else{
-     if(!exactHostRecord(result,['items','total','offset','nextOffset'])||!Array.isArray(result.items)||!Number.isSafeInteger(result.total)||result.total<0||result.total>256)throw Error('invalid-candidate-page');
+     if(!exactHostRecord(result,['items','total','offset','nextOffset',...(Object.hasOwn(result,'migration')?['migration']:[])])||!Array.isArray(result.items)||!Number.isSafeInteger(result.total)||result.total<0||result.total>256)throw Error('invalid-candidate-page');
      const offset=Math.min(requestedOffset,result.total?Math.floor((result.total-1)/32)*32:0),count=Math.min(32,result.total-offset),nextOffset=offset+count<result.total?offset+32:null;
      if(result.offset!==offset||result.nextOffset!==nextOffset||result.items.length!==count)throw Error('invalid-candidate-page');
      values=result.items;page={offset,total:result.total,nextOffset};
     }
     const items=[],rows=new Map();for(let i=0;i<values.length;i++){const row=candidate(values[i]);if(rows.has(row.renderKey))throw Error('duplicate-candidate');rows.set(row.renderKey,row);const {planRevision,targetKey,...item}=row;items.push(item);}
-    e.rows=rows;return {ok:true,items,page};
+    const migration=result.migration==null?null:validateCandidateMigration(result.migration);e.rows=rows;return {ok:true,items,page,...(migration?{migration}:{})};
    }
    const e=lists.get(key),row=e?.rows.get(m.renderKey);if(!e||!liveList(e)||!row?.available||actions.has(m.actionId)||actions.size>=1024)throw Error('candidate-unavailable');
    actions.set(m.actionId,context.isCurrent);
    const guard=()=>{if(!live()||context.isCurrent()!==true||!liveList(e)||e.rows.get(m.renderKey)!==row)a.active=false;return a.active;};
    if(!guard())throw Error('candidate-expired');
    const command=Object.freeze({actionId:m.actionId,uiGrantId:m.grantId,mountId:m.mountId,planRevision:row.planRevision,targetKey:row.targetKey}),pending={command,context,guard};pendingActions.set(m.actionId,pending);a.pending=pending;a.actionId=m.actionId;
-   const result=await bridge({context,uiGrantId:m.grantId,mountId:m.mountId,phase:'activate',candidate:row,actionId:m.actionId,guard,remainingMs:6000-(elapsedNow()-a.started)});check();if(!guard())throw Error('candidate-expired');
+   const result=await bridge({context,uiGrantId:m.grantId,mountId:m.mountId,phase:'activate',candidate:row,actionId:m.actionId,...(presentation?{display:Object.freeze({role:context.role,presentation})}:{}),guard,remainingMs:6000-(elapsedNow()-a.started)});check();if(!guard())throw Error('candidate-expired');
    if(!['dispatched','already-current','blocked','unconfirmed'].includes(result?.state))throw Error('invalid-candidate-result');
    return {ok:true,state:result.state};
   }),{timeoutMs:6000,now:elapsedNow,schedule,cancel});}catch{return failure();}finally{a.active=false;attempts.delete(a);if(a.pending&&pendingActions.get(a.actionId)===a.pending)pendingActions.delete(a.actionId);}
