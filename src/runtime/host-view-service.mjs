@@ -1,3 +1,4 @@
+import {locateFreeProject} from './free-project-location.mjs';
 import {validateFrameResumeView,validateResumeQuery} from '../host/frame-resume-state.mjs';
 import {prepareHostAutoTimePolicy,hostAutoTimePolicyFresh} from './host-auto-time-policy.mjs';
 import {localDay} from '../navigation/projection.mjs';
@@ -54,7 +55,8 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  }
  async function handle(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-view'};}
-  if(!exactHostRecord(message,['v','type','grantId','mountId','query'])||message.v!==1||message.type!=='HOST_UI_VIEW'||!message.query||Object.getPrototypeOf(message.query)!==Object.prototype||Reflect.ownKeys(message.query).some(k=>!['segment','offset','limit','groupId','list','rowOffset','rowLimit','search','workingSet'].includes(k)))return {ok:false,reason:'invalid-ui-view'};
+  if(!exactHostRecord(message,['v','type','grantId','mountId','query',...(Object.hasOwn(message??{},'locateProjectId')?['locateProjectId']:[])])||message.v!==1||message.type!=='HOST_UI_VIEW'||!message.query||Object.getPrototypeOf(message.query)!==Object.prototype||Reflect.ownKeys(message.query).some(k=>!['segment','offset','limit','groupId','list','rowOffset','rowLimit','search','workingSet'].includes(k)))return {ok:false,reason:'invalid-ui-view'};
+  if(Object.hasOwn(message,'locateProjectId')&&(message.query.search!==undefined||message.query.workingSet!==undefined))return {ok:false,reason:'invalid-ui-view'};
   if(message.query.search!==undefined&&message.query.workingSet!==undefined)return {ok:false,reason:'invalid-ui-view'};
   let active=true;const started=elapsedNow();
   const check=()=>{if(!active||elapsedNow()-started>=6000)throw Error('ui-view-expired');};
@@ -77,7 +79,10 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    const elapsed=Date.parse(clock()),evaluated=Date.parse(value.evaluatedAt),freshnessChanged=[...(value.calibrationDeadlines??[]),...(value.activityFreshness?.deadlines??[])].some(deadline=>Date.parse(deadline)>evaluated&&Date.parse(deadline)<=elapsed);
    if(freshnessChanged||version.nativeRevision!==value.revision||version.revision!==value.workspaceRevision||version.evidenceRevision!==value.evidenceRevision||version.viewRevision!==value.viewRevision){begin(entry);return {ok:true,state:'preparing',retryAfterMs:50};}
    const {search,workingSet,...frameQuery}=message.query;
-   const page=projectFreeFrame(current,{...frameQuery,role:context.role});check();
+   const locating=Object.hasOwn(message,'locateProjectId');if(locating)validateResumeQuery(message.query);
+   const location=locating?locateFreeProject(current,{projectId:message.locateProjectId,segment:frameQuery.segment??0,limit:frameQuery.limit??24}):null;
+   const effectiveQuery=location?{...message.query,offset:location.offset}:message.query;
+   const page=projectFreeFrame(current,{...frameQuery,...(location?{offset:location.offset}:{}),role:context.role});check();
    if(search!==undefined)page.search=projectFreeSearch(current,search);
    if(workingSet!==undefined)page.workingSet=projectFreeWorkingSet(current,workingSet);
    page.presentation=structuredClone(entry.presentation);
@@ -104,10 +109,10 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
      seen.add(identity);
     }
    }
-   const result={ok:true,state:'ready',page,navigation,...(nativeCandidatesEnabled?{nativeCandidates:true}:{})};
+   const result={ok:true,state:'ready',page,navigation,...(locating?{location:{projectId:message.locateProjectId,found:location!==null}}:{}),...(nativeCandidatesEnabled?{nativeCandidates:true}:{})};
    if(new TextEncoder().encode(JSON.stringify(result)).length>65536)throw Error('free-frame-page-too-large');
    if(context.role==='workspace')entry.currentEntryEligible=page.segment===0&&search===undefined&&workingSet===undefined;
-   check();if(!context.isCurrent())throw Error('stale-view-resume');rememberResume(context,message.query,current.snapshot.viewSession);
+   check();if(!context.isCurrent())throw Error('stale-view-resume');rememberResume(context,effectiveQuery,current.snapshot.viewSession);
    return result;
   }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;}
  }

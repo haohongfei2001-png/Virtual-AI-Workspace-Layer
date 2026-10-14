@@ -1398,3 +1398,11 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 实际原包headless Chrome **4/4 PASS/sourceChangedDuringRun=false**（free-round136-candidates-package-mv3-entry-mode.json）：可信return后exactP2卡的document.hasFocus与shadow.activeElement确实成立；阅读前不抢焦点、同名仅原节点升级、候选分页/滚动保持、恰一次native click、原编辑器和草稿保留。前三次浏览器FAIL原件完整保留：父shadow内frame聚焦判定、返回后LIST刷新、renderer仍reading而假成功依次定位修复；未放宽卡片焦点断言。仅隔离fixture，本轮未访问私人ChatGPT或做真实原生写入。
 - 最终完整Node **3013/3013 PASS**（free-round136-node.log.gz），定向codec37、owner69、renderer13、frame迁移集成32为各自来源，不相加。过期/回退return负例原失败保留，修复后定向和完整通过。
 - MAP-06仍IN_PROGRESS：当前canonical页外exactP有界定位、后续原生路由的已学同节点映射生命周期待继续。ACK/首发持久活动、64KiB长候选来源、100k/4x、生产context及真实G/U/PAIA、完整扩展BFCache等缺口未被本轮替代，Free未完成、NOT_RELEASE_READY。Pro72ca068已合入且保留，本轮不改变远端、分支或PR结构。
+
+
+## Round137接续：同段exact Project分页定位基础（接 5b7fda2）
+
+- owner的HOST_UI_VIEW新增顶层optional locateProjectId，在同一fresh prepared snapshot内求exactID所在当前segment的offset并构造有界page，返回location={projectId,found}；不把定位字段写入resume query，不跨段、不改H/T/Z、不用名字，不为客户端拉取全库。resume保存实际offset。query原始边界仍先校验，search/workset禁止定位；新版本沿已有preparing刷新后重算位置。
+- 独立纯定位器逐项对照65组、2区间与3种limit的真实projector；renderer新增无副作用needsNativeProject，只有当前可见workspace、无搜索/工作集/交互且exactP缺页才为true。owner/投影/resume/binding/renderer定向组合 **119/119 PASS**（free-round137-owner-location.log.gz）；此源码尚未跑新完整Node或Chrome（NOT_RUN），不能套用Round136完整来源。
+- **客户端自动消费尚未接线**。下一步在既有迁移期限/可信ENTRY/输入取消边界下，仅缺页时发一次带locateProjectId的原子VIEW；严格校验location与page对应、使用实际offset、迟到/换query/节点撤销/期限/输入取消不发布或滚动；不要新建第二endpoint或先求offset再用旧版本分页。
+- Git同步：5b7fda2已本地提交。一次fetch30秒、正常push30秒及带低速超时的push45秒均超时退出；GitHub API再次确认远端Draft PR16仍d1f7f85，base仍计划PR15。未称已推送，未强推或改remote。停止循环网络重试，继续独立代码；下个自然检查点再核对远端并正常同步。Pro72ca068已是本地祖先，不需重复合并。

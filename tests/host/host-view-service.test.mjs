@@ -22,10 +22,11 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBr
  const request=(type,extra={})=>service.handle({v:1,type,clientId:'client',seq:++seq,...extra},sender);
  let binding,bound;
  async function bind(){const hello=await request('HOST_HELLO');assert.equal(hello.ok,true);binding=hello.binding;const {documentToken,producerToken,routeEpoch}=binding;assert.equal((await request('HOST_REFRESH',{documentToken,producerToken,routeEpoch})).state,'verified');bound=await request('BIND');assert.equal(bound.ok,true,JSON.stringify(bound));return bound;}
- async function observe(){
+ let observationSeq=0;
+ async function observe(projectIds=null){
   const locator={profileId:profile.id,profileVersion:1,sourceKind:'native-dom',regionEpoch:1,fieldPaths:['history','href'],receiptId:null};
   const candidate=(entity,id,name)=>({renderKey:`${entity}:${id}`,entity,nativeTitle:name,titleState:'exact',target:{kind:'resolved',entity,nativeId:id,navigationURL:entity==='project'?`https://chatgpt.com/g/${id}/project`:`https://chatgpt.com/c/${id}`,liveHandle:null},evidence:locator});
-  const result=await service.handle({protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,localSeq:1,profileId:profile.id,profileVersion:1,bodyProofId:null,kind:'surface-delta',payload:{candidates:[candidate('project','p1','Native Project'),candidate('conversation','c1','Native conversation')],membershipClaims:[{conversationId:'c1',asserted:'UNKNOWN',projectId:null,reason:'not-observed',evidence:locator}],coverageClaims:[],detachedHandles:[]}},sender);assert.equal(result.state,'accepted',JSON.stringify(result));
+  const result=await service.handle({protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,localSeq:++observationSeq,profileId:profile.id,profileVersion:1,bodyProofId:null,kind:'surface-delta',payload:{candidates:[...(projectIds?projectIds.map(id=>candidate('project',id,'Same native name')):[candidate('project','p1','Native Project')]),candidate('conversation','c1','Native conversation')],membershipClaims:[{conversationId:'c1',asserted:'UNKNOWN',projectId:null,reason:'not-observed',evidence:locator}],coverageClaims:[],detachedHandles:[]}},sender);assert.equal(result.state,'accepted',JSON.stringify(result));
  }
  const grants={};
  async function mount(){const auth={documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch};assert.equal((await service.handle({v:1,type:'HOST_UI_MOUNT',...auth,mountId:'mount',regionEpoch:1},sender)).ok,true);for(const role of ['workspace','sidebar']){const joined=service.handle({v:1,type:'HOST_UI_JOIN',nonce:'nonce_'+role,role},children[role]);const confirmed=await service.handle({v:1,type:'HOST_UI_CONFIRM',...auth,mountId:'mount',regionEpoch:1,nonce:'nonce_'+role,role},sender);assert.equal(confirmed.ok,true,JSON.stringify(confirmed));const result=await joined;assert.equal(result.ok,true,JSON.stringify(result));grants[role]=result.grant;}}
@@ -362,4 +363,19 @@ test('MOCK_IDB scoped host view saves native-ref snippet through private bridge 
  assert.equal((await send('remove',row.id,first.page.workspaceRevision,'stale-remove')).ok,false);
  assert.equal((await send('remove',row.id,next.page.workspaceRevision,'remove-snippet')).ok,true);await ready(h);assert.deepEqual((await h.workspaces.read(scope)).state.preferences.savedSnippets.value,[]);
  h.switchPrincipal('new-principal');assert.equal((await send('save','c1',next.page.workspaceRevision,'wrong-scope')).ok,false);
+});
+
+async function locatedReady(h,query,projectId){for(let i=0;i<100;i++){const result=await h.view('workspace',query,{locateProjectId:projectId});if(result.state!=='preparing')return result;await drain();}assert.fail('location preparation did not settle');}
+test('atomic location reaches exact same-name Project beyond first page and resumes effective offset',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe(Array.from({length:33},(_,i)=>'p'+String(i).padStart(2,'0')));await h.mount();const initial=await ready(h),query={segment:0,offset:0,limit:8},found=await locatedReady(h,query,'p32');assert.equal(found.ok,true,JSON.stringify(found));assert.deepEqual(found.location,{projectId:'p32',found:true});assert.equal(found.page.groups.offset,32);assert.equal(found.page.groups.items[0].id,'p32');assert.equal(found.page.groups.items[0].nativeName,'Same native name');assert.deepEqual(found.page.viewSession,initial.page.viewSession);assert.deepEqual(query,{segment:0,offset:0,limit:8});
+ const resumed=await h.service.handle({v:1,type:'HOST_UI_RESUME',grantId:h.grants.workspace.id,mountId:'mount'},h.children.workspace);assert.equal(resumed.ok,true);assert.deepEqual(resumed.resume.query,{segment:0,offset:32,limit:8});
+ const absent=await locatedReady(h,{segment:1,offset:0,limit:8},'p32');assert.equal(absent.ok,true,JSON.stringify(absent));assert.deepEqual(absent.location,{projectId:'p32',found:false});assert.equal(absent.page.segment,1);assert.equal(absent.page.groups.offset,0);assert.deepEqual(absent.page.viewSession,initial.page.viewSession);
+});
+test('location rejects malformed identity and query-level or search/workset authority widening',async t=>{
+ const h=await fixture(t);await h.bind();await h.observe();await h.mount();await ready(h);for(const id of [null,'','with space','__proto__','x'.repeat(129),{},2])assert.equal((await locatedReady(h,{},id)).ok,false,JSON.stringify(id));
+ for(const query of [{locateProjectId:'p1'},{search:{query:'Native',projectId:null,offset:0,limit:24}},{workingSet:{offset:0,limit:24}}])assert.equal((await h.view('workspace',query,{locateProjectId:'p1'})).ok,false);assert.equal((await ready(h)).ok,true);
+});
+
+test('new accepted native version re-locates formerly absent Project against fresh owner snapshot',async t=>{
+ const h=await fixture(t);await h.bind();const ids=Array.from({length:32},(_,i)=>'p'+String(i).padStart(2,'0'));await h.observe(ids);await h.mount();const query={segment:0,offset:0,limit:8},before=await locatedReady(h,query,'p32');assert.deepEqual(before.location,{projectId:'p32',found:false});await h.observe([...ids,'p32']);const after=await locatedReady(h,query,'p32');assert.equal(after.ok,true,JSON.stringify(after));assert.deepEqual(after.location,{projectId:'p32',found:true});assert.equal(after.page.groups.offset,32);assert.equal(after.page.groups.items[0].id,'p32');assert.deepEqual(after.page.viewSession,before.page.viewSession);assert.notEqual(after.page.revision,before.page.revision);
 });
