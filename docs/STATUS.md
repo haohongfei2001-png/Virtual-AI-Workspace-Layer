@@ -1836,3 +1836,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 私有检测遍历open shadow roots，并在禁用前用同一检测器确认可发现真实私有文本；连接但不可读不按消失处理。初稿漏shadow/不可读判据的报告保存为insufficient-detector，不计通过；后续DOM移除与Playwright frame列表暂时不同步的失败保存为detach-race，修正快照判据后最终通过。独立只读审查与主审均已处理这些证据漏洞。
 - 此轮仅增加离线测试，无产品源码变化；未重复无变化的全部Node/100k。只覆盖UI-13重启用子场景，不代表UI-12全开关组合、更新、卸载或完整J4/81项验收完成。原100k FAIL及G/U缺口保持，Free NOT_RELEASE_READY。
 - 8110537已正常push，含此前067b95f/2892afd积压提交；72ca068仍为祖先，原目录/分支/PR #16保持。
+
+
+## Round185：UI-12四种surface状态与合成生成中实际禁用（接 9f1ae28）
+
+- 新增disable-states-package-mv3-browser.mjs，正式离线包、新隔离headless profile与固定target独立management控制扩展；用真实声明式按钮取得workspace/sidebar四种开关组合，逐项现场核验，不调用产品内部show/stop造状态。
+- 最终真实Chrome MV3 **5/5 PASS**（free-round185-disable-states.json，sourceChangedDuringRun=false）：四组合实际disable后原textarea可继续键入、草稿保留、私有投影消失；nativeOperable/privateProjectionAbsent/cleanLayout分别记录。shadow私有检测有禁用前正控，连接但不可读不按消失处理，worker外网拒绝。
+- 第五项为LOCAL_SYNTHETIC_GENERATION_NOT_CHATGPT_G：本地生成循环在确认disable及私有投影消失后tick从5增至9，原Stop handler点击一次停止，原输入继续可用。仅证明离线重建生成/真实Chrome生命周期，不代表真实ChatGPT生成或UI-12所有其他维度。
+- 保留三个测试前置失败报告：startup-timeout、reading-startup（原生reading重建后合法让位，非未挂载）、frame-commit-race（DOM iframe先于frame URL可观察）。最终使用已挂载frame实际内容与唯一返回按钮进入workspace；不修改产品代码、不延长期限，不将最终通过描述为产品竞态已修复。
+- 原100k FAIL和G/U等缺口保持；Free NOT_RELEASE_READY。9f1ae28已本地保存，上轮push低速超时，下一正常push将一并同步。下一具体产品修复：framed侧栏退出目前仅stop renderer，须区分用户主动退出与故障恢复，不能简单走SUSPEND自动重绑。
