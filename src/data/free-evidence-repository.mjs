@@ -1,7 +1,7 @@
 import {readContinuationForEvidence} from './continuation-evidence-reader.mjs';
 import {continuationEvidenceFingerprint} from './native-observation-continuation.mjs';
 import {saveDirectoryEvidence} from './evidence-directory-writer.mjs';
-import {migrateEvidenceDirectory} from './evidence-directory-migration.mjs';
+import {migrateEvidenceDirectory,prepareEvidenceDirectory} from './evidence-directory-migration.mjs';
 import {auditEvidencePartitions} from './evidence-partition-audit.mjs';
 import {EVIDENCE_DIRECTORY_FORMAT,validateEvidenceDirectoryRoot} from './evidence-ref-directory.mjs';
 import {createEvidenceDirectoryReader} from './evidence-directory-reader.mjs';
@@ -38,6 +38,7 @@ export class FreeEvidenceRepository {
   if(!baseRepository?.open||!baseRepository?.scopeOrThrow)throw Error('b1-repository-required');
   this.base=baseRepository;this.observationGate=observationGate;this.hostObservationGate=hostObservationGate;this.clock=clock;
  }
+ async prepareRefDirectory(scope,request,options={}) {return prepareEvidenceDirectory(this,scope,request,options);}
  async migrateRefDirectory(scope,request,options={}) {return migrateEvidenceDirectory(this,scope,request,options);}
  async read(scope,options={}) { return (await this.query(scope,null,options)).evidence; }
  async header(scope,options={}) { return this.query(scope,{metadataOnly:true,includeStorageFormat:options.includeStorageFormat===true},options); }

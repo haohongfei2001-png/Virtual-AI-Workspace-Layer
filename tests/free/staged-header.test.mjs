@@ -16,7 +16,7 @@ test('cold staged requests perform one atomic preparation each then return a ful
  const h=await setup(t),before=await readyPending(h),calls=[];
  for(const [object,method]of [[h.service.native,'migrateVersionIndex'],[h.service.workspaces,'migrateSharedDirectory'],[h.service.evidence,'migrateRefDirectory']]){const original=object[method].bind(object);object[method]=async(...args)=>{calls.push(method);return original(...args);};}
  const storedBefore=await allStoredRows(h),built=await h.send('B23_FREE_HEADER',{staged:true});assert.equal(built.ok,true,JSON.stringify(built));assert.deepEqual(built.header,{preparing:{stage:'native-index-build',scope:h.scope}});assert.deepEqual(await allStoredRows(h),storedBefore,'read-only index preparation must not change any store');assert.equal(calls.length,0,'building is not migration publication');
- for(const stage of ['native-index','shared-directory','evidence-directory']){const count=calls.length,reply=await h.send('B23_FREE_HEADER',{staged:true,now:FIXTURE_NOW,timeZone:'Asia/Shanghai',size:8,viewSession:null});assert(reply.ok,JSON.stringify(reply));assert.deepEqual(reply.header,{preparing:{stage,scope:h.scope}});assert.equal(calls.length,count+1);}
+ for(const stage of ['native-index','shared-directory','evidence-directory-build','evidence-directory']){const count=calls.length,reply=await h.send('B23_FREE_HEADER',{staged:true,now:FIXTURE_NOW,timeZone:'Asia/Shanghai',size:8,viewSession:null});assert(reply.ok,JSON.stringify(reply));assert.deepEqual(reply.header,{preparing:{stage,scope:h.scope}});assert.equal(calls.length,count+(stage==='evidence-directory-build'?0:1));}
  const reply=await h.send('B23_FREE_HEADER',{staged:true});assert(reply.ok);assert.equal(reply.header.preparing,undefined);assert.equal(reply.header.scope,h.scope);assert(reply.header.manifest.refVersions.T0);assert.equal(calls.length,3);
  assert.deepEqual(await h.service.native.read(A),{...before.native,revision:before.native.revision+1});assert.deepEqual((await h.service.workspaces.read(A)).state,{...before.shared,revision:before.shared.revision+1});assert.deepEqual(await h.service.evidence.read(A),{...before.evidence,revision:before.evidence.revision+1});
  assert.equal((await h.send('B23_FREE_HEADER',{staged:true})).header.preparing,undefined);assert.equal(calls.length,3);
@@ -36,4 +36,14 @@ test('legacy directory is integrity-sealed once despite an older migration recei
  const first=await h.send('B23_FREE_HEADER',{staged:true});assert(first.ok,JSON.stringify(first));assert.deepEqual(first.header,{preparing:{stage:'evidence-directory',scope:h.scope}});assert.equal(calls.length,1);assert.equal(calls[0].operationId,'evidence_index_integrity_v1');
  assert.deepEqual(await h.service.evidence.read(A),{...before,revision:before.revision+1});assert.equal((await h.service.evidence.header(A,{includeStorageFormat:true})).indexIntegrityBound,true);
  const warm=await h.send('B23_FREE_HEADER',{staged:true});assert(warm.ok,JSON.stringify(warm));assert.equal(warm.header.preparing,undefined);assert.equal(calls.length,1);
+});
+test('evidence preparation remains read-only, rejects stale revisions and cannot bypass revoked publication',async t=>{
+ const h=await setup(t);await readyPending(h);const repo=h.service.evidence,revision=await repo.version(A),before=await allStoredRows(h);
+ assert.deepEqual(await repo.prepareRefDirectory(A,{expectedRevision:revision}),{ok:true,prepared:true});
+ assert.deepEqual(await repo.prepareRefDirectory(A,{expectedRevision:revision}),{ok:true,prepared:false});
+ assert.deepEqual(await repo.prepareRefDirectory(A,{expectedRevision:revision+1}),{ok:false,reason:'revision-conflict'});
+ assert.deepEqual(await allStoredRows(h),before);
+ const controller=new AbortController();controller.abort();await assert.rejects(repo.migrateRefDirectory(A,{operationId:'revoked_prepared',expectedRevision:revision},{signal:controller.signal}),/stale-binding/);
+ assert.deepEqual(await allStoredRows(h),before);
+ assert((await repo.migrateRefDirectory(A,{operationId:'prepared_retry',expectedRevision:revision})).ok);
 });

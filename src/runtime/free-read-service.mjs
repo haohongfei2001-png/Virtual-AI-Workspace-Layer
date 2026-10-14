@@ -29,6 +29,11 @@ export function createFreeReadService({repository,workspaces,native,evidence,clo
   async function ensureEvidence(scope,options,staged=false){
     let stored=await evidence.header(scope,{...options,includeStorageFormat:true});
     if(stored.storageFormat==='vaiwl-free-evidence-partitions-v1'||stored.storageFormat==='vaiwl-free-evidence-directory-v1'&&!stored.indexIntegrityBound){
+      if(staged&&typeof evidence.prepareRefDirectory==='function'){
+        const preparation=await evidence.prepareRefDirectory(scope,{expectedRevision:stored.revision},options);
+        if(!preparation.ok)throw Error(preparation.reason==='revision-conflict'?'snapshot-revision-changed':preparation.reason);
+        if(preparation.prepared)return preparing(scope,'evidence-directory-build');
+      }
       const result=await evidence.migrateRefDirectory(scope,{operationId:'evidence_index_integrity_v1',expectedRevision:stored.revision},options);
       if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);
       if(staged)return preparing(scope,'evidence-directory');

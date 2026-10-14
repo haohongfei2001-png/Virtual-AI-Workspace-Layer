@@ -1719,3 +1719,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 完整Node **3220/3220 PASS**（free-round171-node.log.gz），定向13项覆盖全局超限及错误索引等反例。真实headless IDB三项通过（free-round171-evidence-idb.json）：5001 refs用11页key/12页value、最大512；成功保留完整facts，尾片坏checksum和实际批量读取尾片时AbortController撤权均全库回滚。撤权注入已覆盖getAll而非仅旧get路径。
 - 固定源码100k/project-mixed/4x仍 **FAIL**（free-round171-100k.json）：约30259ms后WAITING/read-budget-exhausted，native-index/shared-directory已推进，后续HEADER仍stale-binding。输入原节点、可见性、草稿保留，sourceChangedDuringRun=false；6秒及总预算未放宽。
 - 当前预取降低逐条请求，但不足以完成F1；首页首发、预证明立即发送、候选完整内存、间歇退出及真实G/U仍未完成，Free NOT_RELEASE_READY。53371db上轮普通push超时，本轮自然检查点正常同步。
+
+
+## Round172：evidence 目录纯构建准备与最终审计分离（接 726a4ad）
+
+- 复用现有 staged HEADER 增加可跳过、单次递增的 evidence-directory-build；只读事务核验根/marker/CAS 和当前索引后构建目录。每 owner 一个私有可替换纯结果，按完整有序 manifest 与实际 indexChecksums 精确匹配；不作为分片审计证书。最终 RW 仍重新核验根、索引、全部实际分片、全局计数及对应关系后发布。保留6秒/30秒/12请求预算。
+- 完整 Node **3222/3222 PASS**（free-round172-node.log.gz）；随后新增双连接准备后写入反例 **1/1 PASS**，旧 revision 拒绝，新 revision 迁移保留新增事实。只读准备不改任何 store、撤权提交拒绝、失败后重试和 stage 重复/倒退均有覆盖。
+- 真实 headless IDB **3/3 PASS**（free-round172-evidence-idb.json）：5001 refs 准备后再损坏尾片仍拒绝，实际批量读尾片时撤权全库回滚，成功保留完整 facts；准备阶段全库无变化。
+- 固定源码100k/project-mixed/4x仍 **FAIL**（free-round172-100k.json）：约30053ms WAITING/read-budget-exhausted；新 build 约3715ms，但最终迁移约6634ms stale-binding。原生输入节点、可见性及草稿保留，sourceChangedDuringRun=false。该结果不构成F1通过。
+- 远端 fetch 遇GitHub low-speed失败；本地既有72ca068文档祖先保留，没有reset/覆盖/强推。性能缺口保留，下一步回到生产Host功能缺口，不继续无限前置合成优化。首页首发、预证明立即发送、候选完整内存、间歇退出和真实G/U仍未完成；Free NOT_RELEASE_READY。
