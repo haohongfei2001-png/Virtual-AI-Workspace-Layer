@@ -2,8 +2,8 @@ import {tokenOK} from '../b1/identity.mjs';
 /** Passive candidate only. Profile selectors must distinguish send from stop/upload/regenerate.
  * Submit is deliberately not observed: requestSubmit is not proof of a trusted gesture,
  * and a native click/Enter may also dispatch submit. No body or editor value is read. */
-export function createNativeSendIntentObserver({document:doc,profile,onIntent,makeId=()=>crypto.randomUUID(),now=Date.now}={}){
- if(!doc?.defaultView||typeof doc.addEventListener!=='function'||typeof onIntent!=='function'||typeof makeId!=='function'||typeof now!=='function')throw Error('invalid-native-send-intent');
+export function createNativeSendIntentObserver({document:doc,profile,onIntent,onPrepare=null,makeId=()=>crypto.randomUUID(),now=Date.now}={}){
+ if(!doc?.defaultView||typeof doc.addEventListener!=='function'||typeof onIntent!=='function'||onPrepare!==null&&typeof onPrepare!=='function'||typeof makeId!=='function'||typeof now!=='function')throw Error('invalid-native-send-intent');
  const config=profile?.sendIntent?{...profile.sendIntent}:null;
  if(config&&!['formSelector','editorSelector','sendButtonSelector'].every(k=>typeof config[k]==='string'&&config[k].length>0&&config[k].length<=256))throw Error('invalid-send-intent-profile');
  if(config&&config.enterSends!==undefined&&typeof config.enterSends!=='boolean')throw Error('invalid-send-intent-profile');
@@ -16,6 +16,7 @@ export function createNativeSendIntentObserver({document:doc,profile,onIntent,ma
   if(event.type==='compositionstart'){if(inEditor)composing=b.editor;return;}
   if(event.type==='compositionend'){if(inEditor&&composing===b.editor)composing=null;return;}
   if(composing===b.editor||event.isComposing===true||event.keyCode===229||event.defaultPrevented||event.shiftKey||event.ctrlKey||event.metaKey||event.altKey)return;
+  if(event.type==='focusin'||event.type==='pointerdown'){if((inEditor||b.button===event.target||b.button.contains(event.target))&&(event.type!=='pointerdown'||event.button===0)){try{onPrepare?.();}catch{/* Preparation cannot interfere with native focus or input. */}}return;}
   if(event.type==='keydown'){if(config.enterSends!==true||!inEditor||event.key!=='Enter'||event.repeat)return;}else if(event.type==='click'){if(event.button!==0||!(b.button===event.target||b.button.contains(event.target)))return;}else return;
   const time=now();if(!Number.isFinite(time))return;const observedAt=new Date(time).toISOString();
   // Enter can activate the same native send button. Consume just its following click;
@@ -24,7 +25,7 @@ export function createNativeSendIntentObserver({document:doc,profile,onIntent,ma
   const intentId=makeId();if(!tokenOK(intentId))return;last={form:b.form,type:event.type,time};
   try{onIntent(Object.freeze({intentId,kind:'send',isComposing:false,observedAt}));}catch{/* Candidate consumer cannot interfere with the host gesture. */}
  }catch{/* Unsupported or changing native DOM fails closed. */}}
- if(config)for(const type of ['click','keydown','compositionstart','compositionend']){doc.addEventListener(type,handle,{capture:true,passive:true});listeners.push(type);}
+ if(config)for(const type of ['click','keydown','compositionstart','compositionend',...(onPrepare?['focusin','pointerdown']:[])]){doc.addEventListener(type,handle,{capture:true,passive:true});listeners.push(type);}
  function stop(){if(stopped)return;stopped=true;for(const type of listeners)doc.removeEventListener(type,handle,true);listeners.length=0;composing=null;last=null;}
  return Object.freeze({stop});
 }

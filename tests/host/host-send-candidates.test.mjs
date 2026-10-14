@@ -64,3 +64,13 @@ test('unaccepted message schedules only two further reads and then stops',async(
 for(const kind of ['stop','revoke','proof'])test('automatic ACK '+kind+' prevents scheduled fetch',async()=>{const timers=scheduler(),f=ackFixture(()=>assert.fail('ACK'),()=>false,timers);await f.service.observe('p1');await f.service.intent('p1',send);await f.service.observe(f.next());if(kind==='stop'){f.service.stop();assert.equal(timers.tasks.size,0);}else{if(kind==='revoke')f.revoke();else f.next();f.tick(1000);await timers.run();}assert.equal(f.calls,2);assert.equal(timers.tasks.size,0);});
 
 test('frozen wall clock cannot create an unbounded wakeup loop',async()=>{const timers=scheduler(),f=ackFixture(()=>assert.fail('ACK'),()=>false,timers);await f.service.observe('p1');await f.service.intent('p1',send);await f.service.observe(f.next());await timers.run();await timers.run();assert.equal(timers.tasks.size,0);assert.equal(f.calls,2);});
+
+test('intent joins an already running baseline without a second read and later append correlates',async()=>{
+ const f=fixture(),release=f.hold(),baseline=f.service.observe('p1');await Promise.resolve();await Promise.resolve();assert.equal(f.calls,1);const input={...send},intent=f.service.intent('p1',input);input.intentId='mutated';let settled=false;void intent.then(()=>settled=true);await Promise.resolve();assert.equal(settled,false);release();await baseline;const accepted=await intent;assert.equal(accepted.intentId,'i1');assert.equal(accepted.stage,'intent');assert.equal(f.calls,1);const appended=await f.service.observe(f.next());assert.equal(appended.length,1);assert.equal(appended[0].messageId,'m2');
+});
+for(const action of ['stop','revoke','newproof'])test('waiting baseline cannot authorize intent after '+action,async()=>{
+ const f=fixture(),release=f.hold(),baseline=f.service.observe('p1');await Promise.resolve();await Promise.resolve();const intent=f.service.intent('p1',send),results=Promise.allSettled([baseline,intent]);if(action==='stop')f.service.stop();if(action==='revoke')f.revoke();if(action==='newproof')f.next();release();assert((await results).every(r=>r.status==='rejected'));assert.equal(f.calls,1);assert.equal(f.outputs.length,0);
+});
+test('partial initial baseline settles waiting intent as absent without fetching again',async()=>{
+ const f=fixture(),release=f.hold(),baseline=f.service.observe('p1');await Promise.resolve();await Promise.resolve();const intent=f.service.intent('p1',send),partial=metadata();partial.state='partial';partial.gaps=[{reason:'missing-parent'}];f.metadata(partial);release();await baseline;assert.equal(await intent,null);assert.equal(f.calls,1);assert.equal(f.outputs.length,0);
+});

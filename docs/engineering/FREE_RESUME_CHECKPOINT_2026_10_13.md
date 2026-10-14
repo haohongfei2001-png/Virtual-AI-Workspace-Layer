@@ -1576,3 +1576,11 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 定向 **105/105 PASS**（free-round161-target.log）。原打包扩展两组隔离headless报告分别 **3/3 PASS**（free-round161-native-return-mv3.json）和 **5/5 PASS**（free-round161-candidates-mv3.json），均sourceChangedDuringRun=false：masked期间改名→返回原生后自动发现、Project更新/卸载保留，以及605候选双frame/身份提升/阅读返回/草稿回归。两组不合并为完整Host认证。
 - 本轮完整Node NOT_RUN；最近完整为Round160的3192项。Round160的工作空间展开期间即时更新FAIL仍保留，本轮只补可靠退出恢复，不宣称该FAIL已消失。首页首发、100k/4x、候选完整内存有界化、真实G/U等仍未完成；Free NOT_RELEASE_READY。
 - 49c2be2上轮普通push因GitHub低速失败，本地检查点完整，本轮检查点继续正常同步。
+
+## Round162：发送前复核与正在进行的基线竞态（接 6b5808a）
+
+- 配置原生发送profile时，可信focusin/primary pointerdown可提前调度既有body复核；不读取草稿/正文，不创建intent/ACK，不阻止原生事件。真正click/Enter仍要求已接受且未过期的body proof；队列保留捕获时proof期限，文档续期不能延长旧发送资格。未接受proof的点击仍不回填。
+- 修复owner在body proof已接受、同proof初始认证metadata仍读取时直接丢弃intent的竞态：只等待意图到达时已经存在的那一次inflight read，之后重新withCurrent检查。没有基线或读未启动时仍不追溯fetch；partial/stop/revoke/proof变化拒绝，不延长既有6秒操作deadline，不增加请求预算。
+- 最终完整Node **3207/3207 PASS**（free-round162-node-final.log.gz）。隔离headless test-only MV3 **7/7 PASS/sourceChangedDuringRun=false**（free-round162-held-baseline-final-mv3.json）：实际挂起认证响应、真实点击、一次detail请求后接受intent；默认关闭、纯意图无写库、自动ACK仅evidence，以及604长标题/82次正文更新通过。
+- 测试worker原先等metadata后才reply body ACK，掩盖了生产竞态；现与生产一样先reply、测试观察独立等待。中途fixture点击计数被过早读取，改为等待既有异步native fixture请求完成，未放宽产品断言。早期3202/6项不当最终源码证据。
+- 证明未接受前的立即发送与首页首发仍未完成；展开mask内即时更新、100k/4x、候选完整内存有界化、真实G/U仍保留。Free NOT_RELEASE_READY。49c2be2及6b5808a此前push网络失败/超时，本地成果完整，本轮自然检查点再次正常同步。

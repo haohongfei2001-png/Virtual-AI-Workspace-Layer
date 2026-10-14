@@ -166,3 +166,16 @@ test('popover toggle rescans deferred native changes and stop removes its listen
  const f=fixture(),button={tagName:'BUTTON',textContent:'Before',isConnected:true,ownerDocument:f.document,getAttribute:()=>null},root={isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]};button.parentNode=root;f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,'Before');
  button.textContent='Changed while masked';const toggle=f.documentListeners.get('toggle');assert.equal(typeof toggle,'function');toggle();await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,'Changed while masked');const count=f.emitted.length;toggle();await settle();assert.equal(f.emitted.length,count);f.adapter.stop();assert.equal(f.documentListeners.has('toggle'),false);toggle();await settle();assert.equal(f.emitted.length,count);
 });
+
+test('trusted native preparation refreshes restored reading proof before later send, never creates intent itself',async()=>{
+ const f=sendFixture();await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();f.reading.hidden=true;f.trigger();await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-object').at(-1).payload.association,'unproven');
+ f.reading.hidden=false;f.documentListeners.get('pointerdown')({type:'pointerdown',isTrusted:true,target:f.button,button:0});await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-object').at(-1).payload.association,'explicit-body-id');assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);
+ f.click();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,1);f.adapter.stop();assert.equal(f.documentListeners.has('pointerdown'),false);
+});
+test('binding renewal cannot make an expired body proof eligible for a trusted send',async()=>{
+ const f=sendFixture();let hold=false,release;await f.start(p=>{f.emitted.push(p);return hold&&p.kind==='current-object'?new Promise(r=>release=()=>r(bodyAck(p))):Promise.resolve(bodyAck(p));});await settle();f.setTime(90000);hold=true;f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()});await settle();f.setTime(100000);f.click();release();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);f.adapter.stop();
+});
+
+test('queued send expires with the proof captured at the gesture even when transport is renewed',async()=>{
+ const f=sendFixture();let release;await f.start(p=>{f.emitted.push(p);return p.kind==='surface-delta'?new Promise(r=>release=()=>r(bodyAck(p))):Promise.resolve(bodyAck(p));});await settle();f.setTime(90000);f.click();f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()});f.setTime(100000);release();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);f.adapter.stop();
+});

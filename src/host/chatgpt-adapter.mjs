@@ -43,13 +43,13 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  function bodyProposal(){if(!live())throw Error('stale-host-binding');syncRoute();return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'current-object',payload:bodyDiscovery.scan()};}
  function intentProposal(item){return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:item.proofId,kind:'send-candidate',payload:item.payload};}
  function captureIntent(intent){
-  try{if(!live()||!bodyDiscovery||!acceptedBody)return;syncRoute();const body=bodyDiscovery.scan();
+  try{if(!live()||!bodyDiscovery||!acceptedBody||now()>=Date.parse(acceptedBody.validUntil))return;syncRoute();const body=bodyDiscovery.scan();
    if(JSON.stringify(body)!==acceptedBody.fingerprint)return schedule();
    if(intents.length>=32)return issue('send-intent-capacity');
-   intents.push({proofId:acceptedBody.proofId,payload:{intentId:intent.intentId,conversationId:body.conversationId,messageId:null,operationId:null,stage:'intent',observedAt:intent.observedAt,evidence:{profileId:profile.id,profileVersion:profile.revision,sourceKind:'native-dom',regionEpoch:body.regionEpoch,fieldPaths:['native-send-intent'],receiptId:null}}});schedule();
+   intents.push({proofId:acceptedBody.proofId,validUntil:acceptedBody.validUntil,payload:{intentId:intent.intentId,conversationId:body.conversationId,messageId:null,operationId:null,stage:'intent',observedAt:intent.observedAt,evidence:{profileId:profile.id,profileVersion:profile.revision,sourceKind:'native-dom',regionEpoch:body.regionEpoch,fieldPaths:['native-send-intent'],receiptId:null}}});schedule();
   }catch{/* Never interfere with the native gesture. */}
  }
- function intentCurrent(item){if(!acceptedBody||acceptedBody.proofId!==item.proofId||!bodyDiscovery)return false;const body=bodyDiscovery.scan();return body.association==='explicit-body-id'&&body.conversationId===item.payload.conversationId&&body.regionEpoch===item.payload.evidence.regionEpoch;}
+ function intentCurrent(item){if(now()>=Date.parse(item.validUntil)||!acceptedBody||acceptedBody.proofId!==item.proofId||!bodyDiscovery)return false;const body=bodyDiscovery.scan();return body.association==='explicit-body-id'&&body.conversationId===item.payload.conversationId&&body.regionEpoch===item.payload.evidence.regionEpoch;}
  function bounded(p){if(p.kind==='send-candidate')return new TextEncoder().encode(JSON.stringify(p)).length<=65536;if(p.kind==='current-object')return p.payload.messageIds.length<=256&&new TextEncoder().encode(JSON.stringify(p)).length<=65536;return p.payload.candidates.length<=256&&p.payload.membershipClaims.length<=256&&p.payload.detachedHandles.length<=512&&new TextEncoder().encode(JSON.stringify(p)).length<=65536;}
  function issue(reason){try{onObservationIssue({reason});}catch{/* Diagnostics cannot authorize a retry. */}}
  async function pump(){
@@ -108,7 +108,7 @@ if(!p)return;}catch{surfaceScanning=false;surfaceCursor=null;if(surfaceWanted)sc
   snippets=snippetsFactory({document,urlPolicy,profile,isOwnedMask,guard:snippetGuard,
    current:()=>{const body=snippetBody();return body?{conversationId:body.conversationId,regionEpoch:body.regionEpoch}:null;},
    proof:()=>{const body=snippetBody();return body?{bodyProofId:acceptedBody.proofId,conversationId:body.conversationId,regionEpoch:body.regionEpoch,messageIds:[...body.messageIds]}:null;}});
-  sendObserver=profile.sendIntent?createNativeSendIntentObserver({document,profile,onIntent:captureIntent,now}):null;
+  sendObserver=profile.sendIntent?createNativeSendIntentObserver({document,profile,onIntent:captureIntent,onPrepare:schedule,now}):null;
   observer=new document.defaultView.MutationObserver(mutations);observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});document.addEventListener('toggle',requestScan,true);document.defaultView.addEventListener('popstate',requestScan);document.defaultView.addEventListener('hashchange',requestScan);requestScan();
   const route=urlPolicy.parse(url),proof=bodyProof();const body=route.kind==='conversation'&&proof?.conversationId===route.conversationId&&typeof proof.bodyProofId==='string'&&Number.isSafeInteger(proof.bodyEpoch)?{state:'bound',proofId:proof.bodyProofId,conversationId:proof.conversationId,bodyEpoch:proof.bodyEpoch}:{state:'unbound',reason:'body-proof-unavailable'};
   return {binding,route,body,capabilities:{'conversation-identity':{state:'partial',profileId:profile.id,reason:'loaded-surfaces-only',evidence:'implementation-only'},'native-navigation':{state:'partial',profileId:profile.id,reason:'owner-authorization-required',evidence:'implementation-only'}}};
