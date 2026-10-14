@@ -115,7 +115,43 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    const auth=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});if(auth?.state!=='verified')throw Error('scope-not-verified');s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
    if(learnedScope!==s.scopeKey||learnedDocument!==s.binding.browserDocumentId)clearLearned();learnedScope=s.scopeKey;learnedDocument=s.binding.browserDocumentId;
    let surface;const adapter=s.adapter=adapterFactory({document:doc,onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,authorize:async command=>{if(s.candidates?.authorize(command)!==true)return false;const result=await rpc(s,{v:1,type:'HOST_NATIVE_AUTHORIZE',...bindingFields(s.binding),command});return result?.ok===true&&s.candidates?.authorize(command)===true;},beforeDispatch:()=>s.candidates?.beforeDispatch(),onNativeDispatch:event=>{if(event.plan.target.kind!=='live-control'||!s.scopeKey)return;const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;clearUpgrade();upgradeIdentity=identity;upgradeDisplay=s.candidates?.displayFor(event.command)??null;for(const type of ['pointerdown','keydown'])doc.addEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.addEventListener(type,upgradeRoute);upgrade.propose({actionId:event.actionId,identity,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,originalURL:s.url,expiresAt:now()+6000});upgradeTimer=schedule(clearUpgrade,6000);},onNativeDispatchCancelled:event=>{if(upgrade.cancel(event.actionId))clearUpgrade();},onRebindNeeded:()=>rebind(s)});
-   s.candidates=createContentCandidates({adapter,current:()=>live(s)&&s.ready&&Date.parse(s.binding.expiresAt)>now(),showReading:()=>s.controller?.showReading()===true,onScan:rows=>{learned=learned.filter(item=>rows.some(row=>adapter.matchesCandidateIdentity?.(item.identity,row.target.control)===true));if(s.upgraded&&!rows.some(row=>adapter.matchesCandidateIdentity?.(s.upgraded.identity,row.target.control)===true))s.upgraded=null;if(s.migration&&!rows.some(row=>adapter.matchesCandidateIdentity?.(s.upgraded?.identity,row.target.control)===true))clearMigration(s);},isUpgraded:row=>{const matches=identity=>adapter.matchesCandidateIdentity?.(identity,row.target.control)===true;if(s.upgraded){const valid=s.ackProjects.has(s.upgraded.projectId)&&matches(s.upgraded.identity);if(valid&&s.migration)s.migration.handle=row.target.control;if(valid)return true;}if(learned.some(item=>matches(item.identity)))return true;if(!upgradeIdentity||!matches(upgradeIdentity))return false;const route=createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}).parse(s.url);if(route.kind!=='project'||!s.ackProjects.has(route.projectId))return false;const result=upgrade.resolve({scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,url:s.url,projectId:route.projectId,identityMatches:true});if(!result)return false;s.upgraded=result;if(learned.length<32&&!learned.some(item=>item.identity===result.identity))learned.push(Object.freeze({identity:result.identity,projectId:result.projectId}));if(upgradeDisplay){s.migration={id:result.actionId,projectId:result.projectId,display:upgradeDisplay,handle:row.target.control,createdAt:now(),lastTime:now(),ready:s.returned===true,focusAllowed:true};const migration=s.migration;s.migrationInterrupt=event=>{const target=event.composedPath?.()[0]??event.target;if(s.migration===migration&&event.isTrusted===true&&!s.controller?.isReturnTarget?.(target)&&!(event.type==='focusin'&&migration.ready&&s.controller?.isFrameTarget?.(migration.display.role,target)))migration.focusAllowed=false;};for(const type of ['pointerdown','keydown','wheel','focusin'])doc.addEventListener?.(type,s.migrationInterrupt,true);}clearUpgrade();return true;},now});
+   s.candidates=createContentCandidates({adapter,current:()=>live(s)&&s.ready&&Date.parse(s.binding.expiresAt)>now(),showReading:()=>s.controller?.showReading()===true,
+    beginScan:()=>{
+     // Only fixed-size document identities are staged. Visiting a row cannot
+     // prune learned state, consume an upgrade, or install a return migration.
+     const prior={learned,upgraded:s.upgraded,migration:s.migration,identity:upgradeIdentity,display:upgradeDisplay,projects:new Set(s.ackProjects)},seen=new Map();
+     let upgradedHandle=null,pendingHandle=null,committed=false;
+     const matches=(identity,handle)=>!!identity&&adapter.matchesCandidateIdentity?.(identity,handle)===true;
+     const check=()=>{if(committed||!live(s)||!s.ready||Date.parse(s.binding.expiresAt)<=now()||learned!==prior.learned||s.upgraded!==prior.upgraded||s.migration!==prior.migration||upgradeIdentity!==prior.identity||upgradeDisplay!==prior.display||s.ackProjects.size!==prior.projects.size||[...prior.projects].some(id=>!s.ackProjects.has(id)))throw Error('stale-candidate-identity-scan');};
+     return {visit:row=>{
+      check();const handle=row.target.control;
+      for(const item of prior.learned)if(matches(item.identity,handle))seen.set(item.identity,handle);
+      if(matches(prior.upgraded?.identity,handle))upgradedHandle=handle;
+      if(matches(prior.identity,handle))pendingHandle=handle;
+     },commit:()=>{
+      check();const kept=prior.learned.filter(item=>seen.has(item.identity)&&matches(item.identity,seen.get(item.identity)));
+      let next=upgradedHandle&&matches(prior.upgraded?.identity,upgradedHandle)?prior.upgraded:null,result=null;
+      const pendingValid=pendingHandle&&matches(prior.identity,pendingHandle);
+      const known=pendingValid&&(next&&prior.projects.has(next.projectId)&&matches(next.identity,pendingHandle)||kept.some(item=>matches(item.identity,pendingHandle)));
+      if(pendingValid&&!known){
+       const route=createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}).parse(s.url);
+       if(route.kind==='project'&&prior.projects.has(route.projectId))result=upgrade.resolve({scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,url:s.url,projectId:route.projectId,identityMatches:true});
+      }
+      check();committed=true;learned=kept;s.upgraded=next;
+      if(s.migration&&!next)clearMigration(s);
+      if(next&&prior.projects.has(next.projectId)&&s.migration)s.migration.handle=upgradedHandle;
+      if(!result)return;
+      s.upgraded=result;if(learned.length<32&&!learned.some(item=>item.identity===result.identity))learned.push(Object.freeze({identity:result.identity,projectId:result.projectId}));
+      if(prior.display){
+       clearMigration(s);
+       s.migration={id:result.actionId,projectId:result.projectId,display:prior.display,handle:pendingHandle,createdAt:now(),lastTime:now(),ready:s.returned===true,focusAllowed:true};
+       const migration=s.migration;s.migrationInterrupt=event=>{const target=event.composedPath?.()[0]??event.target;if(s.migration===migration&&event.isTrusted===true&&!s.controller?.isReturnTarget?.(target)&&!(event.type==='focusin'&&migration.ready&&s.controller?.isFrameTarget?.(migration.display.role,target)))migration.focusAllowed=false;};
+       for(const type of ['pointerdown','keydown','wheel','focusin'])doc.addEventListener?.(type,s.migrationInterrupt,true);
+      }
+      clearUpgrade();
+     }};
+    },
+    isUpgraded:row=>{const matches=identity=>adapter.matchesCandidateIdentity?.(identity,row.target.control)===true;return !!(s.upgraded&&s.ackProjects.has(s.upgraded.projectId)&&matches(s.upgraded.identity)||learned.some(item=>matches(item.identity)));},now});
    s.snippets=createSnippetSelectionSession({adapter:{selectedSnippet:ref=>adapter.selectedSnippet?.(ref)??null},now,makeId,
     currentBinding:()=>live(s)&&s.ready&&s.binding&&Date.parse(s.binding.expiresAt)>now()&&s.snippetScopeGrant?JSON.stringify({...bindingFields(s.binding),scopeGrantId:s.snippetScopeGrant}):null,
     currentSelectionEpoch:()=>s.snippetRef?adapter.selectionEpoch?.(s.snippetRef)??null:null});

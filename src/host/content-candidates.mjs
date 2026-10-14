@@ -3,23 +3,26 @@ import {exactHostRecord} from './contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Isolated-document RAM plans. A worker command selects only a previously
  * issued plan; page names and positions never resolve a native control. */
-export function createContentCandidates({adapter,current,showReading,isUpgraded=()=>false,onScan=()=>{},now=Date.now}={}){
+export function createContentCandidates({adapter,current,showReading,isUpgraded=()=>false,onScan=()=>{},beginScan=null,now=Date.now}={}){
+ if(beginScan!==null&&typeof beginScan!=='function')throw Error('invalid-content-candidates');
  if(!adapter||typeof current!=='function'||typeof showReading!=='function')throw Error('invalid-content-candidates');
  let stopped=false,active=null,pendingScan=null;const rows=new Map();
  const live=()=>!stopped&&current()===true;
  function authorize(command){return live()&&active!==null&&exactHostRecord(command,Object.keys(active.command))&&now()<active.expiresAt&&Object.keys(active.command).every(key=>command[key]===active.command[key]);}
  async function scan(){
   if(!live())throw Error('stale-content-candidates');
+  const transaction=beginScan?.();
+  if(beginScan&&(!transaction||typeof transaction.visit!=='function'||typeof transaction.commit!=='function'))throw Error('invalid-candidate-scan');
   const proposals=typeof adapter.loadedPages==='function'?adapter.loadedPages():await adapter.readLoaded(null);if(!live())throw Error('stale-content-candidates');
   let candidates=[];const keys=new Set();
   for await(const p of proposals){if(!live())throw Error('stale-content-candidates');if(p.kind==='surface-delta'&&(!Array.isArray(p.payload?.candidates)||p.payload.candidates.length>256))throw Error('invalid-content-candidates');for(const row of p.kind==='surface-delta'?p.payload.candidates:[]){
    if(row.entity!=='project'||row.target?.kind!=='live-control')continue;
    if(typeof row.renderKey!=='string'||!row.renderKey||keys.has(row.renderKey))throw Error('invalid-content-candidates');
-   keys.add(row.renderKey);const {entity,renderKey,nativeTitle,titleState,target}=row;candidates.push({entity,renderKey,nativeTitle,titleState,target});
+   keys.add(row.renderKey);const {entity,renderKey,nativeTitle,titleState,target}=row;const value={entity,renderKey,nativeTitle,titleState,target};candidates.push(value);transaction?.visit(value);
   }
   }
   if(!live())throw Error('stale-content-candidates');
-  onScan(candidates);candidates=candidates.filter(row=>!isUpgraded(row));
+  if(transaction)transaction.commit();else onScan(candidates);candidates=candidates.filter(row=>!isUpgraded(row));
   if(!live())throw Error('stale-content-candidates');return candidates;
  }
  function sharedScan(){

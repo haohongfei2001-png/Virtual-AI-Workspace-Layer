@@ -1756,3 +1756,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 实际离线生产候选 MV3 **5组 PASS**（free-round175-candidates-mv3.json），含605候选翻页、末尾激活、升级及阅读返回。独立审查确认分页不能过滤跳过无界节点；本次实现符合。
 - 仅移除一个真实O(N)DOM快照来源，不宣称完整RAM已界定：discovery byId/memberIds、content聚合与精确重复key集合仍存在；content副作用须后续纯扫描事务成功后一次提交，不能边扫描边升级。首页首发来源、100k性能、间歇退出和真实G/U仍未完成；Free NOT_RELEASE_READY。
 - 上轮已正常推送 f1798eb..475261f 到原PR #16；72ca068祖先保留，既有网络积压提交已同步。
+
+
+## Round176：候选身份扫描收集与状态提交分离（接 4273154）
+
+- content-candidates新增私有beginScan/visit/commit生命周期；合法行逐条收集，完整生成器正常结束且current仍有效后才commit。生产content-session暂存learned≤32身份匹配及upgraded/pending两个handle，visit不修剪learned、不resolve升级、不安装返回迁移。最终对learned/upgraded/migration/pending及当前ACK集合做一致性检查，统一更新状态；isUpgraded改为只读过滤。旧onScan路径兼容。
+- 副作用仍只在本document/scope RAM，未增加权限/原生写入。扫描中gesture、过期、ACK变化拒绝旧结果；相同名称不参与匹配；失败不会删除已学习身份。扫描末尾失败后可重新扫描，双frame共享一次事务与visit/commit。
+- 完整 Node **3238/3238 PASS**（free-round176-node.log.gz）。子代理独立新增9项接口测试；主代理新增生产流式失败、gesture/expiry反例。审查后追加最后包后ACK竞态，生产升级文件 **48/48 PASS**（free-round176-upgrade-final.log.gz）；这项追加未混算入此前全套次数。
+- 实际离线生产候选 MV3 **5组 PASS**（free-round176-candidates-mv3.json），原生候选升级、跨frame、605条分页及阅读返回保持。独立只读审查未发现阻断回归，建议ACK竞态已补测。
+- 本轮建立减少聚合内存所需的状态提交边界，尚未删除content全量候选数组/keysSet或discovery索引，不宣称完整RAM有界。100k性能、首页首发因果来源、间歇退出与真实G/U仍未完成；Free NOT_RELEASE_READY。4273154上轮普通push超时，成果完整保存在本地同分支。

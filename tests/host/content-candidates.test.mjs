@@ -78,3 +78,35 @@ test('failed shared scan rejects all waiters before identity effects and can be 
 test('stop invalidates every shared scan waiter without publishing identity effects or plans',async()=>{
  const f=fixture(),held=deferred();let reads=0;f.read(()=>{reads++;return held.promise;});const a=f.owner.listPage(),b=f.owner.listPage(32);f.owner.stop();held.resolve([{kind:'surface-delta',payload:{candidates:[f.project()]}}]);const results=await Promise.allSettled([a,b]);assert.equal(reads,1);assert(results.every(r=>r.status==='rejected'));assert.equal(f.calls.length,0);
 });
+
+function scanFixture({stream,transaction=true}={}){
+ const events=[];let live=true,reads=0,plans=0,commits=0,begins=0;const visited=[],row=(key,extra={})=>({entity:'project',renderKey:key,nativeTitle:key,titleState:'observed',target:{kind:'live-control',control:{id:key}},...extra});
+ const packet=rows=>({kind:'surface-delta',payload:{candidates:rows}});
+ const adapter={loadedPages:()=>{reads++;events.push('read');return stream({row,packet});},planNavigation:()=>{plans++;return {mode:'unavailable'};},planKey:()=>null};
+ const owner=createContentCandidates({adapter,current:()=>live,showReading:()=>true,...(transaction?{beginScan:()=>{begins++;events.push('begin');return {visit:value=>{visited.push(value);events.push('visit:'+value.renderKey);},commit:()=>{commits++;events.push('commit');}};}}:{}),onScan:values=>events.push('legacy:'+values.map(v=>v.renderKey).join(',')),isUpgraded:value=>{events.push('filter:'+value.renderKey);return value.renderKey==='upgraded';}});
+ return {owner,events,visited,invalidate:()=>{live=false;},counts:()=>({reads,plans,commits,begins})};
+}
+test('transaction visits only minimal eligible rows, commits before upgraded filtering and replaces legacy callback',async()=>{
+ const f=scanFixture({stream:async function*({row,packet}){yield packet([row('upgraded',{privateText:'do-not-copy'}),row('ignored',{entity:'conversation'}),row('ignored',{target:{kind:'resolved'}}),row('visible')]);}});
+ const page=await f.owner.listPage();assert.deepEqual(page.items.map(r=>r.renderKey),['visible']);assert.equal(page.total,1);
+ assert.deepEqual(f.events,['begin','read','visit:upgraded','visit:visible','commit','filter:upgraded','filter:visible']);assert.deepEqual(f.counts(),{reads:1,plans:1,commits:1,begins:1});
+ for(const value of f.visited)assert.deepEqual(Object.keys(value).sort(),['entity','nativeTitle','renderKey','target','titleState']);f.owner.stop();
+});
+for(const failure of ['tail-throw','duplicate','oversized','invalid-key'])test('transaction discards staged visits after '+failure+' without filtering or minting plans',async()=>{
+ const f=scanFixture({stream:async function*({row,packet}){yield packet([row('first')]);if(failure==='tail-throw')throw Error('generator-tail-failed');if(failure==='duplicate')yield packet([row('first')]);if(failure==='oversized')yield packet(Array.from({length:257},(_,i)=>row('next'+i)));if(failure==='invalid-key')yield packet([row('')]);}});
+ await assert.rejects(f.owner.listPage(),failure==='tail-throw'?/generator-tail-failed/:/invalid-content-candidates/);
+ assert.deepEqual(f.events,['begin','read','visit:first']);assert.deepEqual(f.counts(),{reads:1,plans:0,commits:0,begins:1});f.owner.stop();
+});
+for(const invalidation of ['stop','route'])test('transaction cannot commit after '+invalidation+' while generator finishes its last packet',async()=>{
+ const held=deferred(),visited=deferred();const f=scanFixture({stream:async function*({row,packet}){yield packet([row('first')]);visited.resolve();await held.promise;}});
+ const pending=f.owner.listPage();await visited.promise;assert.equal(f.visited.length,1);if(invalidation==='stop')f.owner.stop();else f.invalidate();held.resolve();await assert.rejects(pending,/stale-content-candidates/);
+ assert.deepEqual(f.events,['begin','read','visit:first']);assert.deepEqual(f.counts(),{reads:1,plans:0,commits:0,begins:1});f.owner.stop();
+});
+test('concurrent frame pages share exactly one transaction and visits but later refresh starts a fresh transaction',async()=>{
+ const held=deferred();const f=scanFixture({stream:async function*({row,packet}){yield packet(Array.from({length:65},(_,i)=>row('r'+i)));await held.promise;}});
+ const first=f.owner.listPage(),tail=f.owner.listPage(64);held.resolve();const [a,b]=await Promise.all([first,tail]);assert.equal(a.total,65);assert.equal(b.total,65);assert.equal(b.items[0].renderKey,'r64');assert.equal(f.visited.length,65);assert.deepEqual(f.counts(),{reads:1,plans:33,commits:1,begins:1});
+ assert.equal(f.events.filter(e=>e.startsWith('filter:')).length,65);assert.equal(f.events.indexOf('commit'),67);await f.owner.listPage();assert.equal(f.visited.length,130);assert.deepEqual(f.counts(),{reads:2,plans:65,commits:2,begins:2});f.owner.stop();
+});
+test('legacy onScan remains after complete validation and before upgraded filtering without transaction',async()=>{
+ const f=scanFixture({transaction:false,stream:async function*({row,packet}){yield packet([row('upgraded'),row('visible')]);}});assert.equal((await f.owner.listPage()).total,1);assert.deepEqual(f.events,['read','legacy:upgraded,visible','filter:upgraded','filter:visible']);assert.deepEqual(f.counts(),{reads:1,plans:1,commits:0,begins:0});f.owner.stop();
+});
