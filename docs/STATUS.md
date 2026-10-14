@@ -1504,3 +1504,9 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - SessionProvider 仅显式 sendAckProfile 且 providerProfile 匹配、currentConversationReadEnabled 时提取接受状态。既有 session→accounts→当前 C 的固定认证请求、身份/context 核对与六秒预算继续执行。默认未配置不创建关联。
 - WeakMap 以本 provider 返回的 exact 对象保存深冻结私有快照，不增加现有 public metadata DTO 字段，不序列化权限。复制/结构克隆/跨 provider 对象无关联；过期或无效时钟删除，已过期对象不因时钟回退复活。调用方修改原始 profile 或 result 不修改私有快照。
 - 定向 **80/80 PASS**；完整 Node **3101/3101 PASS**（free-round141-node.log.gz）。浏览器本轮 NOT_RUN。尚未接 reader 的 current proof/body guard 与 send candidate→durable continuation；此关联本身不能写活动，真实 ACK profile 验收仍 NOT_RUN，Free NOT_RELEASE_READY。
+
+## Round142：当前页面证明绑定 ACK 读回（接 44af702）
+
+- CurrentMetadataReader 内部仅对 exact provider result 取得 ACK 私有关联；校验 C/principal/context/profile/transport/expiry 后，完整无 gap 的原始输出对象才登记 WeakMap。公开 metadata DTO 不变。
+- 新增 withReadback：exact 输出对象+proof+已观察消息才能进入 owner.withCurrent 回调；复核原始 guard/signal 和当前 C/body/account/profile/transport/message/expiry，异步工作前后均检查。失效关联删除，过期后时钟回退不复活。克隆结果、错 proof、不可见消息、partial、未配置、stop/revoke 均无确认入口。此回调仍无仓库写入，调用者需在最终写入使用 guard。
+- reader/provider/send-candidates 定向 **108/108 PASS**（free-round142-reader.log）。本轮完整回归与浏览器 NOT_RUN；最近完整回归为 Round141 的 3101 项，不拼接计数。下一步在 send-candidates 的 withCurrent 内消费 readback 与 prepareSendAckAdmission，再接现有 durable continuation。Free 仍 NOT_RELEASE_READY。
