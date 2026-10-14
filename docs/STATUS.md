@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round197：修复真实Chrome 200%缩放后扩展面板沿用旧尺寸的越界故障，按原生边界安全刷新并重排卡片；完整Node3740项、实际tab zoom隔离MV3旅程4项通过。100k/4x端到端预算FAIL、首页首发、剩余内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
+当前功能检查点Round197，Round198已保存当前包即时退出反例：修复真实Chrome 200%缩放后扩展面板沿用旧尺寸的越界故障，按原生边界安全刷新并重排卡片；完整Node3740项、实际tab zoom隔离MV3旅程4项通过。100k/4x端到端预算FAIL、首页首发、剩余内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1969,3 +1969,11 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 正式package隔离headless Chrome MV3实际200%旅程 **4/4 PASS**（free-round197-browser-zoom.json/png）：getZoom=2、DPR2、未reload；动态双frame几何、原生阅读与唯一四格返回、trusted composer输入/model/tools操作、原editor/draft保留及显式退出owned=0。9个关键按钮/链接通过trial hit-test与各overflow祖先、iframe、父popover、topviewport裁剪交集；卡片仅记录布局，不要求任意长卡片单屏显示。最终绘制后截图已查看，worker外网拒绝，source/script hashes未漂移。
 - 最初固定尺寸FAIL及修复后过早读取异步返回按钮count=0的测试FAIL分别保留；后者改为等待真实可见后仍断言唯一并实际点击。较弱的仅frame/top bounds PASS另存before-clip-oracle，不合并统计。使用双rAF+200ms绘制前置，不宣称旧reading即时pointer FAIL解决。
 - 该实际缩放切片不代表UI-10所有尺寸/色彩/长中文/键盘高度组合或J3完整旅程，物理IME/真实宿主G/U仍未验证。原100k/4x预算、首页首发及剩余精确去重/成员RAM问题保持，Free NOT_RELEASE_READY。559115d及72ca068保留，本次fetch仍低速失败；Git只正常同步原分支/PR #16，不强推。
+
+
+## Round198：当前包即时阅读退出反例与排除的机制实验（接6104bc2）
+
+- 在Round197实际几何修复后的正式package再次执行EXIT_CASE=reading-sidebar、EXIT_TIMING=immediate：**FAIL**，等待退出10秒超时。点击时parent hit-test为可见/auto的iframe，trusted pointerdown/up/click都落在parent IFRAME，workspace/sidebar子文档均无pointer事件、无EXIT消息；不是用户退出请求到达后被owner拒绝。当前包失败JSON/截图保留，旧FAIL仍成立。
+- 只做一次明确MECHANISM_INJECTION_NOT_ACCEPTANCE实验：workspace关闭后，对已open的owned sidebar同步hidePopover/showPopover；原iframe/WindowProxy不变、无等待/原生DOM修改。**FAIL**，仍是parent iframe事件且child为空。排除该单一候选修复，未将重开逻辑加入产品代码、不伪造子frame点击或原生派发，不将局部几何通过当pointer验收。
+- 两次报告均source未漂移，脚本自身hash保留。此轮无产品功能通过声明；下一步需缩小实际浏览器跨frame事件条件，不能用延时成功或转发点击冒充即时退出修复。Round197独立完整Node3740和200%四项通过仍按原范围有效。
+- 6104bc2已本地保存，正常fetch/push仍低速超时，未确认远端同步；当前全部提交、Pro文档72ca068及既有成果保留，整体目标保持进行中，Free NOT_RELEASE_READY。
