@@ -1866,3 +1866,14 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 正式exit-package脚本保留默认immediate，新增显式EXIT_TIMING=after-paint独立条件。首次含主题交互前置的4组PASS保留为after-theme及原脚本；独立审查指出该前置会改变focus/render，随后最终脚本删除该交互再测。最终仅双rAF+200ms、priorThemeInteraction=false的正式包 **4组PASS**（after-paint-exit.json，sourceChangedDuringRun=false）：两态退出、原草稿可继续输入、真实21秒后不复活、原生SPA一次导航与新文档fresh grants。两次不是8组新验收。即时点击旧FAIL仍保留，不能称完整UI-08/退出模块无缺口。
 - 修复buildHost.sourceHashes漏掉workspace/sidebar HTML的问题：同一次读取得到打包shell与源digest，运行末尾sourceChanged检查现在覆盖HTML；不改变权限/生产profile/包验证边界。定向打包测试 **13/13 PASS**，含shell字节绑定与可复现包。产品runtime未改，未重复无变化的完整Node和100k。
 - 原100k FAIL、完整81项/J1–J4、真实G/U/PAIA/物理IME等缺口继续保留，Free NOT_RELEASE_READY。下一步继续无依赖Free实现及界面可达性验收，不用此时序对照替代整体交付。
+
+
+## Round188：双frame有界布局与真实关闭控件高度（接6c965ec）
+
+- 增加仅extension文档使用的frame-shell.css，两正式HTML共用，源码/产物哈希覆盖。html/body/main高度受视口约束；候选整个区域最大40%并可滚动，含分页/状态；导航与恢复/备份/片段根独立可滚，空导航不占剩余空间。framed sidebar工具栏换行，历史列表保留最小44px及自身滚动；非framed旧v2.7调用不改。
+- 真实截图揭示外层原frame固定扣28px，但关闭按钮在fixture中实际42px，导致越过surface底边。改为仅owned :popover-open的flex列布局，frame占实际剩余空间；声明式关闭按钮保持原来宽度、不压缩。closed态不覆盖UA隐藏，native mask和styleText完整性检查保持。最终sidebar surface bottom=646，frame bottom=646；旧HTML inert/原生handler均未引入。
+- 完整Node **3354/3354 PASS**。新增frame-shell-layout-browser实际正式MV3 **6组PASS**，真实client/worker/grants、worker外网拒绝；初始双shell与candidate分页有界，窄sidebar全部工具按钮可见；恢复/备份/片段从真实菜单打开并返回。历史及辅助超长内容是明确MECHANISM_ONLY的本地DOM布局探针，不冒充历史完整性或恢复操作验收。最终截图已人工检查。
+- 同一最终脚本移除临时包shell CSS时正确EXPECTED_MUTATION_REJECTION：295px viewport产生495px document，初始几何oracle拒绝。不是产品通过；正式与变异sourceChanged/scriptChanged均false。初稿测试误假设fixture追加必出现return按钮，已改成仅实际可见时进入，不改产品以迁就测试。
+- 最终固定源码绘制后退出 **4组PASS**，原草稿/真实21秒后不复活/原生SPA/新document fresh grants保持。默认immediate **reading仍FAIL**（单击无EXIT），报告及截图保留，不能因布局修正认定Round186/187即时合成窗口问题解决。两类条件继续独立记录。
+- 挂载样式变化后实际Chrome管理disable回归 **5/5 PASS**：四种workspace/sidebar开关组合及LOCAL_SYNTHETIC_GENERATION；原输入/草稿可续写、私有投影消失、cleanLayout分别true，合成Stop原handler一次。不是实际ChatGPT生成或卸载/更新全验收。
+- 原100k FAIL、完整81项/J1–J4、200%/物理IME/真实G/U/PAIA等未完成项保持；本轮只完成有界布局与相应可达性切片，Free NOT_RELEASE_READY。

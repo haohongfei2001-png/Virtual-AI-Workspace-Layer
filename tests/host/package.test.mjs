@@ -16,7 +16,12 @@ test('frame shell bytes participate in the live source drift check and package d
   const path='extension/'+role+'.html',bytes=readFileSync(new URL('../../'+path,import.meta.url));
   assert.equal(info.sourceHashes[path],sha(bytes));assert.equal(info.files[role+'.html'],sha(bytes));
   assert.notEqual(info.sourceHashes[path],sha(Buffer.concat([bytes,Buffer.from('<style>main{height:1px}</style>')])));
+  assert.match(bytes.toString(),/href="extension\/frame-shell\.css"/);
  }
+ const css=readFileSync(new URL('../../extension/frame-shell.css',import.meta.url));
+ assert.equal(info.sourceHashes['extension/frame-shell.css'],sha(css));
+ assert.deepEqual(readFileSync(join(out,'extension/frame-shell.css')),css);
+ assert.equal(info.files['extension/frame-shell.css'],sha(css));
 });
 test('formal development build defaults to unverified context without simulator or seed modules',async t=>{
  const out=join(root(t),'formal'),info=buildHost(out),manifest=json(join(out,'manifest.json'));

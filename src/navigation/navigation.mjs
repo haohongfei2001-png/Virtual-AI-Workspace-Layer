@@ -93,7 +93,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(stopped||!snapshot)return;
     if(framed){
       if(!surface.root.isConnected){detach();status={state:'WAITING',reason:'frame-surface-detached'};adapter.status?.(status);return;}
-      if(!roots){const pane=own();if(surface.role==='sidebar')pane.shadow.append(node(doc,'style',{},':host>section{height:100%;display:flex;flex-direction:column}.themes{max-height:none;min-height:0;flex:1}'));pane.n.style.cssText='display:block;width:100%;height:100%;min-height:0';surface.root.append(pane.n);roots={sidebar:surface.role==='sidebar'?pane:null,workspace:surface.role==='workspace'?pane:null};render();}
+      if(!roots){const pane=own();if(surface.role==='sidebar')pane.shadow.append(node(doc,'style',{},':host>section{height:100%;display:flex;flex-direction:column}.toolbar{flex:none;flex-wrap:wrap}.themes{max-height:none;min-height:44px;flex:1}'));pane.n.style.cssText='display:block;width:100%;height:100%;min-height:0';surface.root.append(pane.n);roots={sidebar:surface.role==='sidebar'?pane:null,workspace:surface.role==='workspace'?pane:null};render();}
       const pane=roots[surface.role];pane.n.dataset.vaiwlCompact=String(snapshot.preferences?.compactRows?.value!==false);
       if(surface.role==='workspace')layoutCards();else locateCurrent();
       status={state:'ACTIVE',mode:view.mode,scope:snapshot.scope};adapter.status?.(status);return;
