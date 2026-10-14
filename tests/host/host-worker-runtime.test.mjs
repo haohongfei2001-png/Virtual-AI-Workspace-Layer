@@ -28,3 +28,9 @@ test('snippet bridge uses owner parent document and strips all unrelated ref dat
  assert.deepEqual(f.calls.sent[0],[9,{type:'HOST_SNIPPET_SELECTION',...context.binding,scopeGrantId:'scope',phase:'capture',ref:{id:'C',nativeUrl:'https://chatgpt.com/c/C'},selectionId:null},{documentId:'actual-parent'}]);
  f.chrome.tabs.sendMessage=async()=>({ok:false,anchor});assert.equal(await f.config.selectionBridge({context,ref:{id:'C',nativeUrl:'url'},phase:'capture'}),null);
 });
+test('snippet restore and reveal is one expiring parent command; late reply cannot send another action',async t=>{
+ const f=fixture(t);let current=true;const context={parentFrame:{tabId:9,documentId:'parent'},binding:{documentToken:'d',producerToken:'p',routeEpoch:1},scopeGrantId:'s',isCurrent:()=>current},ref={id:'C',nativeUrl:'https://chatgpt.com/c/C'},anchor={refId:'C',messageId:'M',branchId:'B',text:'selected',bodyHash:'a'.repeat(64)},options={context,ref,phase:'restore',anchor,guard:()=>current,remainingMs:500};
+ assert.deepEqual(await f.config.selectionBridge(options),{ok:true});assert.deepEqual(f.calls.sent.map(c=>c[1].type),['HOST_SNIPPET_RESTORE']);assert(Date.parse(f.calls.sent[0][1].expiresAt)>Date.now());
+ f.calls.sent.length=0;f.chrome.tabs.sendMessage=async(...args)=>{f.calls.sent.push(args);current=false;return {ok:true};};assert.deepEqual(await f.config.selectionBridge(options),{ok:false});assert.equal(f.calls.sent.length,1);
+ f.calls.sent.length=0;assert.deepEqual(await f.config.selectionBridge(options),{ok:false});assert.equal(f.calls.sent.length,0);
+});

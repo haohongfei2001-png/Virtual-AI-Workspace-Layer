@@ -113,3 +113,9 @@ test('content ticket expires on node replacement elapsed six seconds route chang
   assert.notEqual(f.request({phase:'validate',selectionId:captured.selectionId})?.ok,true);f.client.stop();
  }
 });
+test('expired queued snippet restore cannot scroll or switch native reading',async()=>{
+ const f=fixture();let restores=0;const client=createHostContentSession({...f.options,adapterFactory:()=>({inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,restoreSnippet:()=>{restores++;return {ok:true};}})});await client.start();
+ const message={type:'HOST_SNIPPET_RESTORE',documentToken:'doc',producerToken:'producer',routeEpoch:1,scopeGrantId:'scope',ref:{id:'C',nativeUrl:'https://chatgpt.com/c/C'},anchor:{refId:'C',messageId:'M',branchId:'B',text:'selected',bodyHash:'a'.repeat(64)},expiresAt:new Date(1500).toISOString()},replies=[];
+ const listener=[...f.listeners][0];for(const patch of [{expiresAt:new Date(1000).toISOString()},{expiresAt:new Date(8000).toISOString()},{routeEpoch:9}])listener({...message,...patch},{id:'extension'},r=>replies.push(r));assert.equal(restores,0);assert.deepEqual(f.presentations,[]);
+ listener(message,{id:'extension'},r=>replies.push(r));assert.equal(restores,1);assert.deepEqual(f.presentations,['reading']);await f.advance(501);listener(message,{id:'extension'},r=>replies.push(r));assert.equal(restores,1);assert.equal(replies.at(-1).ok,false);client.stop();
+});

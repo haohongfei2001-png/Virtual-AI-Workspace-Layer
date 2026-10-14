@@ -1,3 +1,4 @@
+import {createFreeFrameSnippets} from './free-frame-snippets.mjs';
 import {createFreeFrameBackup} from './free-frame-backup.mjs';
 import {createFreeFrameRecovery} from './free-frame-recovery.mjs';
 import {isFreeRecoveryReason} from '../navigation/free-recovery.mjs';
@@ -10,18 +11,18 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 
 /** Bounded runtime-only projection consumer. No full workspace replica is built
  * in either frame; parent messages remain the lifecycle's public join/suspend. */
-export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,onPresentationRequest=()=>{},onState=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeNonce,navigationFactory=createNavigation,recoveryFactory=createFreeFrameRecovery,backupFactory=createFreeFrameBackup}={}){
+export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,onPresentationRequest=()=>{},onState=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeNonce,navigationFactory=createNavigation,recoveryFactory=createFreeFrameRecovery,backupFactory=createFreeFrameBackup,snippetsFactory=createFreeFrameSnippets}={}){
  const policy=createURLPolicy({origin:parentOrigin});
  let navigation=null,root=null,plans=new Map(),projectPlans=new Map(),grant=null,grantCurrent=()=>false,serial=0,activeRead=null,query={segment:0,offset:0,limit:8},closed=true,splits=0,dirty=false,currentNativeURL='',presentationRevision=0,presentationIntent='',workspaceRevision=null,viewSession=null,horizonPending=false;
- let recovery=null,recoveryRoot=null,backup=null,backupRoot=null,autoChange=null;
+ let recovery=null,recoveryRoot=null,backup=null,backupRoot=null,autoChange=null,snippets=null,snippetsRoot=null,currentRef=null;
  function clearAutoNotice(){autoChange=null;navigation?.clearTimePolicyNotice?.();}
  const recoverable=reason=>isFreeRecoveryReason(reason)||['corrupt-record','invalid-partition-manifest','invalid-partition-piece'].includes(reason);
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function clear(){snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function fail(reason){if(closed)return;if(recoverable(reason)&&grantCurrent()&&Date.parse(grant?.expiresAt)>now()){openRecovery(true);return;}state({state:'failed',reason});lifecycle.stop(reason);}
  function openRecovery(fromFailure=false){
-  if(recovery||backup||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending&&!fromFailure)return;
+  if(recovery||backup||snippets||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending&&!fromFailure)return;
   clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-recovery');
   recoveryRoot=doc.createElement('div');recoveryRoot.setAttribute('data-vaiwl-frame-recovery','');privateRoot.append(recoveryRoot);
   const current=grant;
@@ -34,7 +35,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   recovery=panel;state({state:'recovery'});void panel.open();
  }
  function openBackup(){
-  if(backup||recovery||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending)return;
+  if(backup||recovery||snippets||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending)return;
   clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-backup');
   backupRoot=doc.createElement('div');backupRoot.setAttribute('data-vaiwl-frame-backup','');privateRoot.append(backupRoot);
   const current=grant,valid=()=>!closed&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
@@ -50,6 +51,21 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    return response;
   },onResume:()=>{if(backup!==panel||!valid())return;panel.stop();backup=null;backupRoot?.remove();backupRoot=null;budget.reset();void read(query,true);}});
   backup=panel;state({state:'backup'});void panel.open();
+ }
+ function openSnippets(){
+  if(snippets||backup||recovery||closed||horizonPending||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;
+  clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();navigation?.invalidate?.('saved-snippets');
+  snippetsRoot=doc.createElement('div');snippetsRoot.setAttribute('data-vaiwl-frame-snippets','');privateRoot.append(snippetsRoot);
+  const current=grant,selectedRef=currentRef?{...currentRef}:null,valid=()=>!closed&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
+  const panel=snippetsFactory({document:doc,container:snippetsRoot,parentOrigin,currentRef:selectedRef,request:async message=>{
+   if(snippets!==panel||!valid())throw Error('snippet-unavailable');
+   // Reuse the view owner's bounded preparation before reading a list after a
+   // human preference commit. No second replica or unbounded retry is created.
+   if(message.type==='HOST_UI_SNIPPET_LIST'){budget.reset();const ready=await read(query,false);if(!ready||snippets!==panel||!valid())throw Error('snippet-unavailable');}
+   const result=await withRequestDeadline(()=>runtime.sendMessage({...message,v:1,grantId:current.id,mountId:current.mountId}),{now:elapsedNow,schedule,cancel});
+   if(snippets!==panel||!valid())throw Error('snippet-unavailable');return result;
+  },onClose:()=>{if(snippets!==panel||!valid())return;panel.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;budget.reset();void read(query,true);}});
+  snippets=panel;void panel.open();
  }
  function live(ticket){return !closed&&ticket===serial&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();}
  function cancellable(work,signal){
@@ -103,12 +119,12 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
     if(!item||Object.keys(item).sort().join(',')!==[key,'plan','targetKey'].sort().join(',')||typeof id!=='string'||destination.has(id)||project&&!groups.has(id)||!['href','unavailable'].includes(item.plan?.mode)||item.plan.mode==='href'&&(target?.kind!=='resolved'||target.entity!==entity||target.nativeId!==id||item.plan.disposition!=='new-tab-preserve-current'||!policy.nativeHref(target.navigationURL)||project&&target.navigationURL!==groups.get(id).nativeUrl))throw Error('invalid-frame-navigation');
     destination.set(id,Object.freeze({plan:structuredClone(item.plan),targetKey:item.targetKey,uiGrantId:current.id,mountId:current.mountId}));
    }
-   if(!live(ticket))return null;plans=nextPlans;projectPlans=nextProjectPlans;workspaceRevision=response.page.workspaceRevision??null;viewSession=nextSession??null;currentNativeURL=currentRoute?.nativeUrl??'';query=effective;if(!dirty)budget.complete();if(publish)navigation.updateFrameProjection(response.page);applyPresentation(response.page.presentation);state({state:'ready'});return response.page;
+   if(!live(ticket))return null;plans=nextPlans;projectPlans=nextProjectPlans;workspaceRevision=response.page.workspaceRevision??null;viewSession=nextSession??null;currentNativeURL=currentRoute?.nativeUrl??'';currentRef=currentRoute?.refId?{id:currentRoute.refId,nativeUrl:currentRoute.nativeUrl}:null;query=effective;if(!dirty)budget.complete();if(publish)navigation.updateFrameProjection(response.page);if(!snippets)applyPresentation(response.page.presentation);state({state:'ready'});return response.page;
   }}catch(error){if(live(ticket))fail(error?.message==='frame-read-cancelled'?'frame-view-unavailable':error?.message??'frame-view-unavailable');return null;}
   finally{if(activeRead===controller){activeRead=null;if(dirty&&live(ticket)){dirty=false;void read(query,true);}}}
   return null;
  }
- function invalidate(){if(backup){backup.invalidate?.();return;}if(recovery){recovery.invalidate?.();return;}if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;if(activeRead||horizonPending)dirty=true;else void read(query,true);}
+ function invalidate(){if(snippets){snippets.invalidate?.();return;}if(backup){backup.invalidate?.();return;}if(recovery){recovery.invalidate?.();return;}if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;if(activeRead||horizonPending)dirty=true;else void read(query,true);}
  function applyPresentation(value){
   if(value===undefined)return;
   if(!value||!Number.isSafeInteger(value.revision)||value.revision<0||!value.intent||!['show-workspace','enter-reading','search-known','show-working-set'].includes(value.intent.kind))throw Error('invalid-frame-presentation');
@@ -200,7 +216,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;
   if(!navigation){root=doc.createElement('div');root.setAttribute('data-vaiwl-frame-root','');privateRoot.append(root);
-   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),projectNavigationPlan:group=>projectPlans.get(group.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onCurrentWorkspaceEntry:enterCurrent,onUndoTimePolicyRequest:undoAutoHorizon,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup});
+   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),projectNavigationPlan:group=>projectPlans.get(group.id),status(){}},onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onCurrentWorkspaceEntry:enterCurrent,onUndoTimePolicyRequest:undoAutoHorizon,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup,onSnippetsRequest:openSnippets});
   }
   if(!backup)invalidate();
  }

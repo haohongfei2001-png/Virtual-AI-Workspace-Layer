@@ -39,7 +39,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const sequences=new Map(),refreshAttempts=new Set();let serviceActive=true;
  async function handle(message,sender){
   if(!serviceActive)return {ok:false,reason:'host-service-stopped'};
-  if(message?.type==='HOST_UI_SNIPPET')return snippets?snippets.handle(message,sender):{ok:false,reason:'snippet-unavailable'};
+  if(['HOST_UI_SNIPPET','HOST_UI_SNIPPET_LIST'].includes(message?.type))return snippets?snippets.handle(message,sender):{ok:false,reason:'snippet-unavailable'};
   if(BACKUP_TYPES.includes(message?.type))return backup?backup.handle(message,sender):{ok:false,reason:'backup-unavailable'};
   if(['HOST_UI_RECOVERY_STATUS','HOST_UI_RECOVER'].includes(message?.type))return recovery?recovery.handle(message,sender):{ok:false,reason:'recovery-unavailable'};
   if(message?.type==='HOST_DOCUMENT_RENEW')return handshake.renew(message,sender);

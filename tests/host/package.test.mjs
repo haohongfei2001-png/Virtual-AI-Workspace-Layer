@@ -66,3 +66,9 @@ for(const mutation of ['origin','csp','war'])test(`rehashed offline package reje
  }
  assert.throws(()=>verifyHost(out));
 });
+
+test('snippet reconstruction profile is explicit loopback-only and cannot enable production',t=>{
+ const dir=root(t);assert.throws(()=>buildHost(join(dir,'production-snippets'),{offlineSnippets:true}),/snippet-profile-offline-only/);
+ const out=join(dir,'offline-snippets'),info=buildHost(out,{offlineOrigin:'http://127.0.0.1:43210',offlineSnippets:true});assert.equal(info.offlineSnippets,true);assert.equal(verifyHost(out).status,'OFFLINE_HOST_RECONSTRUCTION');
+ assert.match(readFileSync(join(out,'extension/config.mjs'),'utf8'),/"offlineSnippets":true/);
+});

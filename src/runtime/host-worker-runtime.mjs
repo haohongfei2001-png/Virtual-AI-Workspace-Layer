@@ -18,7 +18,13 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
   uiURLs:Object.fromEntries(['workspace','sidebar'].map(role=>[role,chrome.runtime.getURL(role+'.html')])),
   getContexts:filter=>chrome.runtime.getContexts(filter),getFrame:query=>chrome.webNavigation.getFrame(query),
   presentSurface:({parentFrame,binding,mode})=>chrome.tabs.sendMessage(parentFrame.tabId,{type:'HOST_PRESENT_SURFACE',...binding,mode},{documentId:parentFrame.documentId}),
-  selectionBridge:async({context,ref,phase,selectionId=null})=>{
+  selectionBridge:async({context,ref,phase,selectionId=null,anchor=null,guard=()=>false,remainingMs=0})=>{
+   if(phase==='restore'){
+    if(guard()!==true||!Number.isFinite(remainingMs)||remainingMs<=0||remainingMs>6000)return {ok:false};
+    const expiresAt=new Date(Date.now()+remainingMs).toISOString();
+    const restored=await chrome.tabs.sendMessage(context.parentFrame.tabId,{type:'HOST_SNIPPET_RESTORE',...context.binding,scopeGrantId:context.scopeGrantId,ref:{id:ref.id,nativeUrl:ref.nativeUrl},anchor,expiresAt},{documentId:context.parentFrame.documentId});
+    return {ok:restored?.ok===true&&guard()===true&&context.isCurrent()===true};
+   }
    const result=await chrome.tabs.sendMessage(context.parentFrame.tabId,{type:'HOST_SNIPPET_SELECTION',...context.binding,scopeGrantId:context.scopeGrantId,phase,ref:{id:ref.id,nativeUrl:ref.nativeUrl},selectionId},{documentId:context.parentFrame.documentId});
    if(phase==='capture')return result?.ok===true?{selectionId:result.selectionId,anchor:result.anchor}:null;
    return result;

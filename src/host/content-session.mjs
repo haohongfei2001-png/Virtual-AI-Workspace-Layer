@@ -39,6 +39,11 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   s.listener=(m,sender,reply)=>{
    if(current!==s||!enabled||sender?.id!==runtime.id)return;
    if(exactHostRecord(m,['type'])&&m.type==='HOST_DOCUMENT_INVALIDATED'){rebind(s);return;}
+   if(m?.type==='HOST_SNIPPET_RESTORE'){
+    const allowed=exactHostRecord(m,['type','documentToken','producerToken','routeEpoch','scopeGrantId','ref','anchor','expiresAt'])&&typeof m.expiresAt==='string'&&Date.parse(m.expiresAt)>now()&&Date.parse(m.expiresAt)<=now()+6000&&s.ready&&s.binding&&live(s)&&Date.parse(s.binding.expiresAt)>now()&&Object.entries(bindingFields(s.binding)).every(([k,v])=>m[k]===v)&&tokenOK(m.scopeGrantId)&&exactHostRecord(m.ref,['id','nativeUrl'])&&tokenOK(m.ref.id)&&typeof m.ref.nativeUrl==='string'&&m.ref.nativeUrl.length<=2048&&exactHostRecord(m.anchor,['refId','messageId','branchId','text','bodyHash']);
+    if(!allowed){reply({ok:false});return;}
+    try{const restored=s.adapter?.restoreSnippet?.(m.ref,m.anchor)?.ok===true;reply({ok:restored&&live(s)&&Date.parse(m.expiresAt)>now()&&s.controller?.showReading()===true});}catch{reply({ok:false});}return;
+   }
    if(m?.type==='HOST_SNIPPET_SELECTION'){
     const allowed=exactHostRecord(m,['type','documentToken','producerToken','routeEpoch','scopeGrantId','phase','ref','selectionId'])&&s.ready&&s.binding&&live(s)&&Date.parse(s.binding.expiresAt)>now()&&Object.entries(bindingFields(s.binding)).every(([k,v])=>m[k]===v)&&tokenOK(m.scopeGrantId)&&['capture','validate','release'].includes(m.phase)&&exactHostRecord(m.ref,['id','nativeUrl'])&&tokenOK(m.ref.id)&&typeof m.ref.nativeUrl==='string'&&m.ref.nativeUrl.length<=2048&&(m.phase==='capture'?m.selectionId===null:tokenOK(m.selectionId));
     if(!allowed||!s.snippets){reply({ok:false});return;}

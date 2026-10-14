@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百二十轮：Host私有选区票据和owner CAS保存/移除桥接；完整Node2531项、真实IDB四组、DOM选区八组、原包MV3十三旅程通过。frame入口/搜索定位尚待接通、默认snippet profile关闭；100k/4x与真实验收条件保留。Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百二十一轮：片段管理入口及实际离线MV3保存/定位/删除闭环；完整Node2548项、样式后UI7项、实际片段包四旅程通过。默认生产snippet profile仍未启用，搜索直接定位待接；100k/4x与真实验收条件保留。Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1313,3 +1313,14 @@ Round118补充：静态schema键编码缓存的Map与null-prototype frozen字典
 - 最终源码完整Node **2531/2531**、真实headless IndexedDB四组、真实DOM Selection八组、原包MV3十三旅程通过，三个最终browser report sourceChangedDuringRun=false。IDB的UI/selection是明确test doubles；DOM的scope/body proof是fixture但节点epoch使用真实模块；包回归不认证生产snippet启用。计数与历史结果不相加。
 - 真实IDB初次失败`old-snippet`：fixture漏传NativeRepository.workspaceRepository，原生引用未登记到shared。修成与生产一致并加refs.C断言后四组通过，原失败report/log保留。备份/恢复保持原格式，Pro/另一scope保持。
 - 原PR16在Round119已正常推送到d8a2297，之前积压全部同步。Pro72ca068仍为祖先。当前继续原目录/原分支，无新计划/PR/worktree/强推/部署。下一直接补frame保存/移除入口及安全搜索定位；100k/4x冷启动失败、真实context/ACK/G/U仍保留。Free未完成、NOT_RELEASE_READY。
+
+
+## Round121：片段管理界面与实际MV3保存/定位闭环（接 d18471c）
+
+- workspace设置及sidebar新增“已保存片段”入口。panel分页12项，只显示160字符人工预览及原生标题；明确用户操作保存当前选区、指定删除、当前聊天定位，跨聊天提供保留当前草稿的新标签原生链接。缺ref仍可见/可删除，不删除旧Pro资产。不将未知branch猜成精确锚。
+- worker LIST从既有owner私有完整偏好投影，不发送message/branch/hash；frame LIST前复用原view有界准备，保持原历史query/返回。通知与在途写入竞争、scope撤销、迟到列表和RPC均有保护。完整保存后的owner刷新不会让panel失去数据。
+- locate是一条限时私有content指令：入站核验scope绑定与绝对截止→精确锚scroll→再次截止核验→显示原生阅读。修复独立审查发现的“6秒超时后迟到restore回复再触发第二次阅读跳转”；owner guard贯穿worker。新增过期排队反例。
+- `offlineSnippets:true`仅构建loopback重建包可用，manifest和verify显式标记；production请求开启会拒绝，content再检查http/127.0.0.1。默认生产profile未启用。测试仅在合成fixture当前C插入有明确branch/message/body的消息，不改打包后代码。
+- 最终逻辑完整Node2548/2548；之后仅panel局部样式调整，原UI7/7回归通过。actual packaged MV3片段四旅程PASS：实际Selection→真实sidebar按钮→owner保存→列表→精确定位→正文变更拒旧hash→删除，textarea节点/草稿不变、零send-intent。最终report sourceChangedDuringRun=false。截图free-round121-snippets-saved.png已人工查看，无按钮/文字溢出横向，窄sidebar可滚动。不是production/真人视觉验收。
+- 初次MV3 FAIL保留：测试先fill原生输入触发既定让位，再错误寻找已消失的workspace关闭按钮。改成真实返回workspace再进入reading，不放宽产品断言；修后两次包旅程分别source-scoped保留。最终标准原包13/13旅程PASS且sourceChangedDuringRun=false，free-round121-package-mv3-final保存来源。
+- 下一继续C4搜索结果直接片段定位/定位失败体验及其它正式Free缺口。100k/4x冷启动失败、真实context/ACK/G/U/PAIA条件仍保留；Free未完成、NOT_RELEASE_READY。

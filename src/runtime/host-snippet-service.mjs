@@ -10,9 +10,11 @@ export function createHostSnippetService({ui,workspaceRepository,resolveView,sel
  if(typeof ui?.withScope!=='function'||typeof workspaceRepository?.command!=='function'||typeof resolveView!=='function'||typeof selectionBridge!=='function'||onChanged!==null&&typeof onChanged!=='function')throw Error('invalid-host-snippet-service');
  let stopped=false;const attempts=new Set(),busy=new Set(),failure=()=>({ok:false,reason:'snippet-unavailable'});
  async function handle(input,sender){
-  if(stopped||!exactHostRecord(input,['v','type','grantId','mountId','operationId','expectedRevision','action','id']))return failure();
+  const list=input?.type==='HOST_UI_SNIPPET_LIST';
+  if(stopped||!exactHostRecord(input,list?['v','type','grantId','mountId','offset','limit']:['v','type','grantId','mountId','operationId','expectedRevision','action','id']))return failure();
   let m;try{m=structuredClone(input);sender=structuredClone(sender);}catch{return failure();}
-  if(m.v!==1||m.type!=='HOST_UI_SNIPPET'||!['save','remove'].includes(m.action)||!['grantId','mountId','operationId','id'].every(k=>token(m[k]))||!Number.isSafeInteger(m.expectedRevision)||m.expectedRevision<0)return failure();
+  if(m.v!==1||!token(m.grantId)||!token(m.mountId))return failure();
+  if(list?(!Number.isSafeInteger(m.offset)||m.offset<0||m.offset>100||!Number.isSafeInteger(m.limit)||m.limit<1||m.limit>12):(m.type!=='HOST_UI_SNIPPET'||!['save','remove','locate'].includes(m.action)||!['operationId','id'].every(k=>token(m[k]))||!Number.isSafeInteger(m.expectedRevision)||m.expectedRevision<0))return failure();
   const attempt={active:true,started:elapsedNow(),abort:new AbortController()};attempts.add(attempt);let busyKey;
   const active=()=>{const at=elapsedNow();return !stopped&&attempt.active&&!attempt.abort.signal.aborted&&Number.isFinite(at)&&at>=attempt.started&&at-attempt.started<6000;};
   try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:m.grantId,mountId:m.mountId},async context=>{
@@ -22,11 +24,21 @@ export function createHostSnippetService({ui,workspaceRepository,resolveView,sel
     const view=await resolveView(context,m.mountId);
     const guard=()=>active()&&context.isCurrent()===true&&view?.isCurrent()===true;
     const check=()=>{if(!guard())throw Error('stale');};check();
-    if(view.workspaceRevision!==m.expectedRevision)throw Error('revision-conflict');
-    busyKey=context.scope.key;if(busy.has(busyKey))throw Error('busy');busy.add(busyKey);attempt.busyKey=busyKey;
+    if(!Number.isSafeInteger(view.workspaceRevision)||view.workspaceRevision<0||!list&&view.workspaceRevision!==m.expectedRevision)throw Error('revision-conflict');
     const old=structuredClone(view.preferences?.savedSnippets?.value??[]);
     if(!Array.isArray(old)||old.length>100||new Set(old.map(row=>row.id)).size!==old.length)throw Error('invalid-snippets');
     for(const row of old){if(!exactHostRecord(row,['id',...fields])||!token(row.id))throw Error('invalid-snippets');const {id,...data}=row;anchor(data);}
+    if(list){
+     const items=old.slice(m.offset,m.offset+m.limit).map(row=>{const target=view.index?.byId(row.refId);if(target&&(target.id!==row.refId||target.scope!==context.scope.key))throw Error('cross-scope-ref');return {id:row.id,refId:row.refId,preview:row.text.slice(0,160),title:target?.nativeTitle??null,nativeUrl:target?.nativeUrl??null};});
+     check();return {ok:true,workspaceRevision:view.workspaceRevision,snippets:{total:old.length,offset:m.offset,limit:m.limit,items}};
+    }
+    if(m.action==='locate'){
+     const saved=old.find(row=>row.id===m.id);if(!saved)throw Error('missing-snippet');ref=view.index?.byId(saved.refId);
+     if(!ref||ref.id!==saved.refId||ref.scope!==context.scope.key||ref.available===false||typeof ref.nativeUrl!=='string'||!ref.nativeUrl)throw Error('unavailable-ref');
+     const {id,...selected}=saved;const result=await selectionBridge({context,ref:Object.freeze({...ref}),phase:'restore',anchor:anchor(selected),guard,remainingMs:Math.max(0,6000-(elapsedNow()-attempt.started))});check();
+     if(!exactHostRecord(result,['ok'])||result.ok!==true)throw Error('restore-unavailable');return {ok:true};
+    }
+    busyKey=context.scope.key;if(busy.has(busyKey))throw Error('busy');busy.add(busyKey);attempt.busyKey=busyKey;
     let next;
     if(m.action==='remove'){if(!old.some(row=>row.id===m.id))throw Error('missing-snippet');next=old.filter(row=>row.id!==m.id);}
     else{
