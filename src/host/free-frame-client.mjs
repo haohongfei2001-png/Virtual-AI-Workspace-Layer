@@ -304,6 +304,6 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   }
   if(!backup)invalidate();
  }
- const lifecycle=createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant,onClear:clear,onInvalidate:invalidate,onWorkspaceEntry:()=>{workspaceEntered=true;workspaceModePending=navigation?.workspaceEntered?.()!==true;void enterCurrent();applyCandidateMigration();if(migrationListening)void refreshCandidates();},privateRoot,now,elapsedNow,schedule,cancel,...(makeNonce?{makeNonce}:{})});
+ const lifecycle=createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant,onAppearance:()=>navigation?.layout?.(),onClear:clear,onInvalidate:invalidate,onWorkspaceEntry:()=>{workspaceEntered=true;workspaceModePending=navigation?.workspaceEntered?.()!==true;void enterCurrent();applyCandidateMigration();if(migrationListening)void refreshCandidates();},privateRoot,now,elapsedNow,schedule,cancel,...(makeNonce?{makeNonce}:{})});
  return Object.freeze({start:()=>lifecycle.start(),stop:()=>lifecycle.stop('frame-view-stopped')});
 }

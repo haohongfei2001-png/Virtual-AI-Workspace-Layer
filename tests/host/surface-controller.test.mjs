@@ -185,3 +185,24 @@ test('owned EXIT fences an in-flight grant confirmation and no late ACK can recr
  f.message('workspace',{data:{type:'VAIWL_UI_EXIT',role:'workspace'}});await drain();assert.equal(f.calls.dispose,1);assert.equal(f.calls.terminations[0]?.reason,'ui-user-exit');
  held.resolve(await original({role:'workspace'}));await drain();assert.equal(f.calls.show,0);assert.equal(f.calls.dispose,1);assert.equal(f.slot.children.length,0);assert.equal(f.controller.showWorkspace(),false);f.message();await drain();assert.equal(f.calls.show,0);
 });
+
+test('appearance is allowlisted, sent after owned JOIN and deduplicated without native work',async()=>{
+ const f=fixture(),sent=[],observers=[];let theme='light';
+ f.doc.documentElement={classList:{contains:()=>false}};
+ f.doc.defaultView.getComputedStyle=()=>({colorScheme:theme,direction:'ltr',fontFamily:'PrivateFont, serif',fontSize:'20px',backgroundColor:'rgb(255,255,255)'});
+ f.doc.defaultView.MutationObserver=class{constructor(fn){this.fn=fn;observers.push(this);}observe(){}disconnect(){this.disconnected=true;}};
+ for(const target of f.frames)target.frame.contentWindow.postMessage=(data,origin)=>sent.push({data,origin});
+ await f.controller.start({});assert.equal(sent.length,0);await f.both();assert.equal(sent.length,2);
+ assert.deepEqual(sent[0],{origin:'chrome-extension://extension',data:{type:'VAIWL_UI_APPEARANCE',role:'workspace',appearance:{theme:'light',direction:'ltr',fontFamily:'serif',baseFontSize:20}}});
+ const watcher=observers[1];for(let i=0;i<100;i++)watcher.fn();f.tick(0);assert.equal(sent.length,2);
+ theme='dark';for(let i=0;i<100;i++)watcher.fn();f.tick(0);assert.equal(sent.length,4);assert(sent.slice(2).every(v=>v.data.appearance.theme==='dark'));assert.equal(f.calls.confirm.length,2);assert.equal(f.calls.show,1);
+ watcher.fn();f.controller.stop();f.tick(0);watcher.fn();f.tick(0);assert.equal(sent.length,4);assert(watcher.disconnected);
+});
+test('appearance queued for replaced frame window or retired mount cannot reach it',async()=>{
+ const f=fixture(),sent=[],observers=[];let theme='light';f.doc.documentElement={classList:{contains:()=>false}};
+ f.doc.defaultView.getComputedStyle=()=>({colorScheme:theme,fontFamily:'system-ui',fontSize:'16px',direction:'ltr'});
+ f.doc.defaultView.MutationObserver=class{constructor(fn){this.fn=fn;observers.push(this);}observe(){}disconnect(){}};
+ for(const target of f.frames)target.frame.contentWindow.postMessage=data=>sent.push(data.role);
+ await f.controller.start({});await f.both();sent.length=0;theme='dark';observers[1].fn();f.frames[0].frame.contentWindow={postMessage:()=>assert.fail('replacement frame received appearance')};f.tick(0);assert.deepEqual(sent,['sidebar']);
+ f.controller.stop();theme='light';observers[1].fn();f.tick(0);assert.deepEqual(sent,['sidebar']);
+});

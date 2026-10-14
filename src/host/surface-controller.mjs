@@ -1,3 +1,4 @@
+import {readFrameAppearance} from './frame-appearance.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 import {exactHostRecord} from './contract.mjs';
@@ -8,11 +9,24 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  const trustedOrigin=`${origin.protocol}//${origin.host}`,win=doc.defaultView;
  let epoch=0,current=null;
  function removeReturn(state){state.button?.remove();state.button=null;}
- function dispose(state,reason){if(!state)return;cancel(state.timer);cancel(state.renewTimer);state.observer?.disconnect();win.removeEventListener('message',state.listener);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);doc.removeEventListener?.('toggle',state.changed,true);win.removeEventListener('pagehide',state.pagehide);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
+ function dispose(state,reason){if(!state)return;cancel(state.timer);cancel(state.renewTimer);cancel(state.appearanceTimer);state.appearanceObserver?.disconnect();state.media?.removeEventListener?.('change',state.appearanceChanged);win.removeEventListener('resize',state.appearanceChanged);state.observer?.disconnect();win.removeEventListener('message',state.listener);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);doc.removeEventListener?.('toggle',state.changed,true);win.removeEventListener('pagehide',state.pagehide);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
  function stop(reason='surface-stopped'){epoch++;const prior=current;current=null;try{adapter.stop();}catch{/* Surface cleanup must still complete. */}dispose(prior,reason);if(prior)try{onTerminated(reason,Object.freeze({mode:prior.mode==='workspace'?'workspace':'reading'}));}catch{/* Recovery notification cannot undo cleanup. */}}
  function valid(state,requireRegistered=true){
   if(current!==state||state.epoch!==epoch||requireRegistered&&!state.registered||doc.location.href!==state.url)return false;
   const inspection=adapter.inspect();return inspection?.ok&&inspection.regionEpoch===state.handle.regionEpoch&&state.frames.every(({frame})=>frame.isConnected&&frame.ownerDocument===doc);
+ }
+ // Public, allowlisted presentation only; never a source of UI authority.
+ function publishAppearance(state,targetRole=null){
+  if(!valid(state)||Date.parse(state.context.binding.expiresAt)<=now())return;
+  let appearance;try{appearance=readFrameAppearance(doc);}catch{return;}const key=JSON.stringify(appearance);
+  for(const target of state.frames){if(targetRole&&target.role!==targetRole||!state.grants.has(target.role)||Date.parse(state.grants.get(target.role).expiresAt)<=now()||target.frame.contentWindow!==target.window)continue;if(!targetRole&&state.appearanceKeys.get(target.role)===key)continue;
+   try{target.window.postMessage?.({type:'VAIWL_UI_APPEARANCE',role:target.role,appearance},trustedOrigin);state.appearanceKeys.set(target.role,key);}catch{/* Keep the current appearance; no network, replay or authorization change. */}
+  }
+ }
+ function watchAppearance(state){
+  state.appearanceChanged=()=>{if(current!==state||state.appearanceTimer!==null)return;state.appearanceTimer=schedule(()=>{state.appearanceTimer=null;if(current===state)publishAppearance(state);},0);};
+  if(win.MutationObserver&&doc.documentElement){state.appearanceObserver=new win.MutationObserver(state.appearanceChanged);for(const node of [doc.documentElement,doc.body])if(node)state.appearanceObserver.observe(node,{attributes:true,attributeFilter:['class','style','dir']});}
+  state.media=win.matchMedia?.('(prefers-color-scheme: dark)');state.media?.addEventListener?.('change',state.appearanceChanged);win.addEventListener('resize',state.appearanceChanged);
  }
  function authorized(state){return valid(state)&&Date.parse(state.context.binding.expiresAt)>now()&&state.frames.every(({role})=>{const grant=state.grants.get(role);return grant&&Date.parse(grant.expiresAt)>now();});}
  function showWorkspace(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}if(surface.showWorkspace(state.handle)===false)return false;removeReturn(state);state.mode='workspace';return true;}
@@ -41,7 +55,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   finally{state.renewing=false;if(current===state)arm(state);}
  }
  async function start(options){
-  stop('surface-restart');const run=epoch,state={epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,observer:null,mode:'waiting'};current=state;
+  stop('surface-restart');const run=epoch,state={epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),mode:'waiting'};current=state;
   try{
    state.context=await adapter.start(options);if(current!==state)return null;
    state.inspection=adapter.inspect();if(!state.inspection?.ok||!state.inspection.navigationSlot?.isConnected)throw Error('invalid-return-slot');
@@ -55,7 +69,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    state.pagehide=()=>{if(current===state)stop('page-hidden');};win.addEventListener('pagehide',state.pagehide);doc.addEventListener?.('toggle',state.changed,true);
    win.addEventListener('popstate',state.changed);win.addEventListener('hashchange',state.changed);
    if(win.MutationObserver){state.observer=new win.MutationObserver(state.changed);state.observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class','aria-modal']});}
-   arm(state);const queued=[...state.earlyJoins.values()];state.earlyJoins.clear();for(const event of queued)void receive(state,event);return state.handle;
+   watchAppearance(state);arm(state);const queued=[...state.earlyJoins.values()];state.earlyJoins.clear();for(const event of queued)void receive(state,event);return state.handle;
   }catch{if(current===state)stop('mount-unavailable');return null;}
  }
  async function receive(state,event){
@@ -70,7 +84,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    const ack=await bridge.confirmParent({mountId:state.handle.id,documentToken:state.handle.documentToken,regionEpoch:state.handle.regionEpoch,nonce:data.nonce,role:data.role});
    if(!valid(state)||event.source!==target.window||target.frame.contentWindow!==target.window)return;
    const grant=ack?.grant;if(ack?.ok!==true||!tokenOK(grant?.id)||grant.mountId!==state.handle.id||grant.role!==data.role||grant.parentDocumentId!==state.context.binding.browserDocumentId||!tokenOK(grant.uiDocumentId)||!tokenOK(grant.scopeGrantId)||!Number.isFinite(Date.parse(grant.expiresAt))||Date.parse(grant.expiresAt)<=now())return;
-   state.grants.set(data.role,Object.freeze({...grant}));arm(state);if(state.mode==='waiting'&&authorized(state)){if(initialMode==='reading')showReading();else showWorkspace();}
+   state.grants.set(data.role,Object.freeze({...grant}));publishAppearance(state,data.role);arm(state);if(state.mode==='waiting'&&authorized(state)){if(initialMode==='reading')showReading();else showWorkspace();}
   }catch{/* A failed public join never authorizes a surface. */}finally{state.pending.delete(data.role);}
  }
  return Object.freeze({start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,showReading,focusFrame(role){const state=current;if(!state||state.mode!=='workspace'||!authorized(state)||adapter.hasNativeLayer())return false;const target=state.frames.find(x=>x.role===role);if(!target?.frame?.focus)return false;target.frame.focus({preventScroll:true});let active=doc.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;return active===target.frame;},isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});

@@ -8,3 +8,14 @@ main > div { min-width: 0; min-height: 0; box-sizing: border-box; }
 [data-vaiwl-frame-recovery], [data-vaiwl-frame-backup], [data-vaiwl-frame-snippets] {
   flex: 1 1 0; overflow: auto;
 }
+:root {
+  --vaiwl-card-menu-top: 100%;
+  --ink: #202123; --surface: #fff; --bubble: #f4f4f4; --line: #e5e5e5;
+  --muted: #646464; --hover: #eee; --focus: #3877ba;
+}
+:root[data-vaiwl-theme="dark"] {
+  --ink: #ececec; --surface: #212121; --bubble: #2f2f2f; --line: #424242;
+  --muted: #b4b4b4; --hover: #383838; --focus: #8ab4f8;
+}
+body { color: var(--ink); background: var(--surface); font: calc(14px * var(--vaiwl-font-scale, 1))/1.5 var(--vaiwl-font-family, system-ui); }
+button, input, select, textarea { font: inherit; color: inherit; }

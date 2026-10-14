@@ -3,9 +3,9 @@ import {exactHostRecord} from './contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 // Every selector is restricted to this owned panel, including narrow frame layouts.
 const panelStyle=`
-[data-vaiwl-snippets]{box-sizing:border-box;font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif;color:var(--ink,#202123);background:var(--surface,#fff);padding:16px;max-width:780px;margin:0 auto;overflow-wrap:anywhere}
-[data-vaiwl-snippets] h2{font-size:15px;font-weight:600;margin:0 0 12px}
-[data-vaiwl-snippets] h3{font-size:14px;font-weight:550;margin:0 0 6px}
+[data-vaiwl-snippets]{box-sizing:border-box;font:calc(14px * var(--vaiwl-font-scale,1))/1.5 var(--vaiwl-font-family,-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif);color:var(--ink,#202123);background:var(--surface,#fff);padding:16px;max-width:780px;margin:0 auto;overflow-wrap:anywhere}
+[data-vaiwl-snippets] h2{font-size:calc(15px * var(--vaiwl-font-scale,1));font-weight:600;margin:0 0 12px}
+[data-vaiwl-snippets] h3{font-size:calc(14px * var(--vaiwl-font-scale,1));font-weight:550;margin:0 0 6px}
 [data-vaiwl-snippets] p{margin:8px 0 12px;color:var(--muted,#646464);white-space:pre-wrap}
 [data-vaiwl-snippets] [data-snippet-row]{border:1px solid var(--line,#e5e5e5);border-radius:13px;padding:12px;margin:12px 0;min-width:0}
 [data-vaiwl-snippets] button,[data-vaiwl-snippets] a{box-sizing:border-box;display:inline-block;font:inherit;color:inherit;background:var(--bubble,#f4f4f4);border:1px solid var(--line,#e5e5e5);border-radius:8px;padding:6px 10px;min-height:34px;margin:2px 6px 2px 0;text-decoration:none;cursor:pointer;max-width:100%;overflow-wrap:anywhere}

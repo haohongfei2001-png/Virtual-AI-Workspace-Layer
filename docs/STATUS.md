@@ -1877,3 +1877,14 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 最终固定源码绘制后退出 **4组PASS**，原草稿/真实21秒后不复活/原生SPA/新document fresh grants保持。默认immediate **reading仍FAIL**（单击无EXIT），报告及截图保留，不能因布局修正认定Round186/187即时合成窗口问题解决。两类条件继续独立记录。
 - 挂载样式变化后实际Chrome管理disable回归 **5/5 PASS**：四种workspace/sidebar开关组合及LOCAL_SYNTHETIC_GENERATION；原输入/草稿可续写、私有投影消失、cleanLayout分别true，合成Stop原handler一次。不是实际ChatGPT生成或卸载/更新全验收。
 - 原100k FAIL、完整81项/J1–J4、200%/物理IME/真实G/U/PAIA等未完成项保持；本轮只完成有界布局与相应可达性切片，Free NOT_RELEASE_READY。
+
+
+## Round189：双frame白名单主题与字体接线（接34b6f2f）
+
+- 增加frame-appearance纯展示模块：只读取html/body的主题、方向、通用字体和12–32px字号，映射固定浅深palette与font-scale；不传宿主字体名/资源/私有文本，不改变授权。parent在有效owned frame/grant下发送，frame严格核对parent/origin/role/exact字段；停止后只恢复自己仍持有的样式，迟到消息不复活。观察范围限html/body class/style/dir、系统色彩和resize，不声明任意stylesheet/data-theme自动支持。
+- 现有导航、候选、片段使用字体token；放大glyph框随字形增长，菜单在extension shell内按卡片头底边定位，legacy默认尺寸/菜单定位保留。字体变化重算现有卡片布局，没有改原生输入、mask或安全让位规则。
+- 正式隔离Chrome MV3最终 **5组PASS**（appearance-pixels.json）：初始深色/serif/2x字体、切浅色保留同grant、错误来源消息拒绝、字号恢复、原生同节点草稿与动作计数保持。仅白名单方向DTO，不是RTL布局；2x字体不是浏览器200%缩放。主题变化合法让位后由唯一返回按钮重开，显式双visible-frame rAF+200ms后截图像素深色33/浅色255，源码/脚本未漂移。
+- 旧computed-style通过但浅色截图仍旧深色的报告和截图保留为insufficient-visual-oracle，不算可见效果通过；另保留早期主题等待超时。最终绘制后结果不能证明即时合成窗口已修复，reading即时退出FAIL仍保持。
+- 最终完整Node **3369/3369 PASS**（排除下一slice尚未提交的6项same-target底层测试）；新增展示纯模块、frame来源/生命周期、parent观察发布反例通过。
+- 本地renderer布局四组合（420/1000px × 1x/2x字体）PASS：长中文、菜单在放大标题下方、25/50px方形glyph、Home/End/Escape与焦点恢复；仅布局机制，不是MV3或浏览器zoom。测试服务器漏codec依赖的初始失败保留，未为测试改变产品。
+- 原100k FAIL、完整81项/J1–J4、实际200%/物理IME/真实G/U/PAIA等未完成项不变，Free NOT_RELEASE_READY。下一个具体生产缺口为当前聊天same-target阅读返回；已有底层计划并未贯通生产worker/frame派发，不以底层测试通过冒充完成。

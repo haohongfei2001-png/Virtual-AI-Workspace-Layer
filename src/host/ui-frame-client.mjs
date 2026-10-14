@@ -1,15 +1,19 @@
+import {createFrameAppearance,validateFrameAppearance} from './frame-appearance.mjs';
+import {exactHostRecord} from './contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 
 /** Normal-JS frame lifecycle only; frozen processes/browser hard-kill need their
  * own acceptance evidence. Private data never travels through parent messages. */
-export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant=()=>{},onClear=()=>{},onInvalidate=()=>{},onWorkspaceEntry=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),makeNonce=()=>crypto.randomUUID(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant=()=>{},onClear=()=>{},onInvalidate=()=>{},onWorkspaceEntry=()=>{},onAppearance=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),makeNonce=()=>crypto.randomUUID(),schedule=setTimeout,cancel=clearTimeout}={}){
  const parsed=new URL(parentOrigin);
  if(!['workspace','sidebar'].includes(role)||!doc?.defaultView?.parent||!privateRoot||typeof privateRoot.replaceChildren!=='function'||typeof runtime?.connect!=='function'||typeof runtime.sendMessage!=='function'||parsed.origin!==parentOrigin||!['https:','http:'].includes(parsed.protocol))throw Error('invalid-ui-frame-client');
+ const appearance=doc.documentElement?.style?createFrameAppearance({document:doc}):null;
+ let appearanceListener=null,appearanceKey=null;
  let active=false,epoch=0,grant=null,port=null,expiryTimer=null,renewTimer=null,abort=null,disconnect=null,messageListener=null,rendering=false,desired=null;
  const clear=(reason,notify=true)=>{privateRoot.replaceChildren();try{if(notify)onClear(reason);}catch{/* Cleanup cannot restore authority. */}};
  function stop(reason='ui-stopped',userExit=false){
-  const wasActive=active;active=false;if(desired){desired.resolve(false);desired=null;}epoch++;grant=null;cancel(expiryTimer);cancel(renewTimer);expiryTimer=renewTimer=null;abort?.abort();abort=null;
+  const wasActive=active;active=false;if(appearanceListener){doc.defaultView.removeEventListener?.('message',appearanceListener);appearanceListener=null;}appearance?.clear();appearanceKey=null;if(desired){desired.resolve(false);desired=null;}epoch++;grant=null;cancel(expiryTimer);cancel(renewTimer);expiryTimer=renewTimer=null;abort?.abort();abort=null;
   const previous=port;port=null;if(previous){try{previous.onDisconnect.removeListener(disconnect);}catch{}try{previous.onMessage?.removeListener(messageListener);}catch{}}
   clear(reason,false);
   // Notify before reentrant onClear callbacks or port teardown can start a new session.
@@ -58,7 +62,10 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
   }catch{if(epoch===run)stop('ui-renew-failed');}
  }
  async function start(){
-  stop('ui-starting');active=true;const run=epoch;abort=new AbortController();const signal=abort.signal;
+  stop('ui-starting');active=true;const run=epoch;
+  appearanceListener=event=>{if(!active||epoch!==run||event.source!==doc.defaultView.parent||event.origin!==parentOrigin)return;const data=event.data;if(!exactHostRecord(data,['type','role','appearance'])||data.type!=='VAIWL_UI_APPEARANCE'||data.role!==role)return;try{const value=validateFrameAppearance(data.appearance),key=JSON.stringify(value);if(key===appearanceKey)return;appearance?.apply(value);appearanceKey=key;onAppearance(value);}catch{/* Cosmetic input cannot change authority or restart the client. */}};
+  doc.defaultView.addEventListener?.('message',appearanceListener);
+  abort=new AbortController();const signal=abort.signal;
   try{
    const nonce=makeNonce();if(!tokenOK(nonce))throw Error('invalid-ui-nonce');
    port=runtime.connect({name:'vaiwl-ui'});if(!port?.onDisconnect?.addListener)throw Error('invalid-ui-port');
