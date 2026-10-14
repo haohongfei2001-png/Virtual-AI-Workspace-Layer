@@ -244,7 +244,14 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    ui.notifyMount?.(message.mountId);return {ok:true,presentation:structuredClone(entry.presentation)};
   }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;}
  }
+ // Private owner view; no full snapshot or body proof is sent to an iframe.
+ function resolveSnippetView(context,mountId){
+  const entry=views.get(mountId),current=entry?.owner.current();
+  if(!entry||entry.pending||entry.error||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId||!context.isCurrent())throw Error('free-view-not-ready');
+  return {workspaceRevision:current.snapshot.workspaceRevision,preferences:current.snapshot.preferences,index:current.index,
+   isCurrent:()=>context.isCurrent()&&views.get(mountId)===entry&&!entry.pending&&!entry.error&&entry.owner.current()===current};
+ }
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId){for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({handle,present,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({handle,present,resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){for(const key of [...views.keys()])remove(key);}});
 }

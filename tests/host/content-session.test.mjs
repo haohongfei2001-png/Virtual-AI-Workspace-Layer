@@ -88,3 +88,28 @@ test('workspace entered bridge uses current private binding and bounded RPC; sto
  const f=fixture();await f.client.start();const before=f.calls.length;assert.equal((await f.bridge.workspaceEntered({mountId:'mount'})).ok,true);assert.deepEqual(f.calls[before],{v:1,type:'HOST_UI_WORKSPACE_ENTERED',documentToken:'doc',producerToken:'producer',routeEpoch:1,mountId:'mount'});
  f.setResponse(()=>new Promise(()=>{}));const pending=f.bridge.workspaceEntered({mountId:'mount'}),rejected=assert.rejects(pending,/request-timeout/);await drain();await f.advance(6000);await rejected;f.client.stop();const count=f.calls.length;await assert.rejects(f.bridge.workspaceEntered({mountId:'mount'}));assert.equal(f.calls.length,count);
 });
+function snippetFixture(){
+ const f=fixture();let epoch='node-1',reads=0;
+ const anchor={refId:'C',messageId:'M',branchId:'B',text:'selected',bodyHash:'a'.repeat(64)};
+ const client=createHostContentSession({...f.options,adapterFactory:()=>({inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,selectionEpoch:()=>epoch,selectedSnippet:()=>{reads++;return {...anchor};}})});
+ const message={type:'HOST_SNIPPET_SELECTION',documentToken:'doc',producerToken:'producer',routeEpoch:1,scopeGrantId:'scope-grant',phase:'capture',ref:{id:'C',nativeUrl:'https://chatgpt.com/c/C'},selectionId:null};
+ const request=(patch={},sender={id:'extension'})=>{let reply;[...f.listeners][0]?.({...message,...patch},sender,value=>reply=value);return reply;};
+ return {...f,client,message,request,anchor,setEpoch:value=>epoch=value,get reads(){return reads;}};
+}
+test('private content selection capture validates and releases one scope-bound ticket',async()=>{
+ const f=snippetFixture();await f.client.start();const captured=f.request();assert.equal(captured.ok,true);assert.deepEqual(captured.anchor,f.anchor);
+ assert.deepEqual(f.request({phase:'validate',selectionId:captured.selectionId}),{ok:true,anchor:f.anchor});
+ assert.deepEqual(f.request({phase:'validate',selectionId:captured.selectionId,scopeGrantId:'other'}),{ok:false});
+ assert.deepEqual(f.request({phase:'release',selectionId:captured.selectionId}),{ok:true});assert.deepEqual(f.request({phase:'validate',selectionId:captured.selectionId}),{ok:false});f.client.stop();
+});
+test('content selection rejects untrusted sender extra fields route mismatch and absent node epoch before reading',async()=>{
+ const f=snippetFixture();await f.client.start();assert.equal(f.request({}, {id:'page'}),undefined);
+ for(const patch of [{scope:'forged'},{routeEpoch:2},{producerToken:'other'},{ref:{id:'C',nativeUrl:'https://chatgpt.com/c/C',text:'forged'}},{selectionId:'unexpected'}])assert.deepEqual(f.request(patch),{ok:false});
+ assert.equal(f.reads,0);f.setEpoch(null);assert.deepEqual(f.request(),{ok:false});assert.equal(f.reads,0);f.client.stop();
+});
+test('content ticket expires on node replacement elapsed six seconds route change or stop',async()=>{
+ for(const kind of ['node','expiry','route','stop']){const f=snippetFixture();await f.client.start();const captured=f.request();assert(captured.ok);
+  if(kind==='node')f.setEpoch('replacement');if(kind==='expiry')await f.advance(6000);if(kind==='route')f.document.location.href+='other';if(kind==='stop')f.client.stop();
+  assert.notEqual(f.request({phase:'validate',selectionId:captured.selectionId})?.ok,true);f.client.stop();
+ }
+});

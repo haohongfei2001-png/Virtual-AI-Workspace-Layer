@@ -1241,3 +1241,13 @@ Round118补充：静态schema键编码缓存的Map与null-prototype frozen字典
 - `snippet-selection-session` 是尚未接入保存路径的内部RAM基础：单票据、6秒、绑定scopeGrant/document/producer/route指纹及独立节点epoch，重读比对、单次销毁；不把文本hash当节点身份。
 - 已完成初始完整Node2505/2505，最后选区大小边界修复后相关85/85通过（计数不相加）。真实DOM选区8组及实际原包MV3十三旅程通过，两个report均sourceChangedDuringRun=false。free-round119-*保存源码来源与日志；DOM的proof/node epoch是fixture，未认证生产保存。
 - 下一直接接线：content可信用户选区/私有node epoch → worker owner保存/移除CAS（只更新owner已有savedSnippets数组）→ frame入口和不泄露body的搜索定位。现未开放frame持久写入、未宣称片段完整完成。既有人工资产/备份格式/schema不改。100k/4x性能失败与真实context/ACK/G/U条件保留，不重跑无代码变化的性能案例。
+
+
+## Round120：content选区票据与owner人工保存桥接（接 d8a2297）
+
+- `native-snippets.selectionEpoch` 用私有WeakMap节点/Range身份、offsets、route/body/proof/branch生成稳定票据上下文，不读取正文。`content-session`新增仅扩展私有通道的capture/validate/release，绑定document/producer/route/scopeGrant；worker定向真实parent document，UI无法提交正文。
+- 新 `host-snippet-service` 通过现有UI授权与私有owner snapshot，先capture再validate，human SET_PREFERENCE/CAS保存；最多100项、只精确移除目标、保留全部旧片段。scope互斥、6秒deadline、signal、scope/view变化与迟到回应均拒绝；过期响应仅释放ticket，不落库。sidebar/workspace均可请求，提交后刷新不因旧view失效误报失败。
+- 正式binding/worker已接入服务；完整MockIDB Host握手/UI双grant→native-ref→sidebar save→remove→账户撤销链通过。生产默认profile依旧没有snippets，UI按钮与搜索定位仍未接，不能宣称片段日常闭环完成。
+- 最终源码完整Node **2531/2531**、真实headless IndexedDB四组、真实DOM Selection八组、原包MV3十三旅程通过，三个最终browser report sourceChangedDuringRun=false。IDB的UI/selection是明确test doubles；DOM的scope/body proof是fixture但节点epoch使用真实模块；包回归不认证生产snippet启用。计数与历史结果不相加。
+- 真实IDB初次失败`old-snippet`：fixture漏传NativeRepository.workspaceRepository，原生引用未登记到shared。修成与生产一致并加refs.C断言后四组通过，原失败report/log保留。备份/恢复保持原格式，Pro/另一scope保持。
+- 原PR16在Round119已正常推送到d8a2297，之前积压全部同步。Pro72ca068仍为祖先。当前继续原目录/原分支，无新计划/PR/worktree/强推/部署。下一直接补frame保存/移除入口及安全搜索定位；100k/4x冷启动失败、真实context/ACK/G/U仍保留。Free未完成、NOT_RELEASE_READY。

@@ -1,3 +1,4 @@
+import {createSnippetSelectionSession} from './snippet-selection-session.mjs';
 import {createChatGPTAdapter} from './chatgpt-adapter.mjs';
 import {createURLPolicy} from './url-policy.mjs';
 import {createMountSurface} from '../navigation/mount-surface.mjs';
@@ -22,7 +23,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   try{const result=await withRequestDeadline(()=>Promise.race([Promise.resolve().then(()=>{if(!live(s))throw Error('stale-content-session');return runtime.sendMessage(message);}),cancelled]),{timeoutMs,now:elapsedNow,schedule,cancel});if(!live(s))throw Error('stale-content-session');return result;}
   finally{s.abort.signal.removeEventListener('abort',abort);}
  }
- function dispose(s){if(!s)return;try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
+ function dispose(s){if(!s)return;s.snippets?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
  function reset(){epoch++;const s=current;current=null;dispose(s);}
  function stop(){enabled=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',stop);}
  function rebind(s){
@@ -34,10 +35,23 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  }
  async function start(){enabled=true;rebindQueued=false;rebindRun++;return begin();}
  async function begin(rebinding=false){
-  reset();const s={run:epoch,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide:stop,plans:null,rebinding,ready:false};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
+  reset();const s={run:epoch,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide:stop,plans:null,rebinding,ready:false,snippets:null,snippetRef:null,snippetScopeGrant:null};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
   s.listener=(m,sender,reply)=>{
    if(current!==s||!enabled||sender?.id!==runtime.id)return;
    if(exactHostRecord(m,['type'])&&m.type==='HOST_DOCUMENT_INVALIDATED'){rebind(s);return;}
+   if(m?.type==='HOST_SNIPPET_SELECTION'){
+    const allowed=exactHostRecord(m,['type','documentToken','producerToken','routeEpoch','scopeGrantId','phase','ref','selectionId'])&&s.ready&&s.binding&&live(s)&&Date.parse(s.binding.expiresAt)>now()&&Object.entries(bindingFields(s.binding)).every(([k,v])=>m[k]===v)&&tokenOK(m.scopeGrantId)&&['capture','validate','release'].includes(m.phase)&&exactHostRecord(m.ref,['id','nativeUrl'])&&tokenOK(m.ref.id)&&typeof m.ref.nativeUrl==='string'&&m.ref.nativeUrl.length<=2048&&(m.phase==='capture'?m.selectionId===null:tokenOK(m.selectionId));
+    if(!allowed||!s.snippets){reply({ok:false});return;}
+    try{
+     if(m.phase==='capture'){
+      s.snippetScopeGrant=m.scopeGrantId;s.snippetRef=Object.freeze({...m.ref});const id=s.snippets.capture(s.snippetRef),anchor=id&&s.snippets.read(id,s.snippetRef);
+      if(!anchor){reply({ok:false});return;}reply({ok:true,selectionId:id,anchor});return;
+     }
+     if(m.scopeGrantId!==s.snippetScopeGrant||(m.ref.id!==s.snippetRef?.id||m.ref.nativeUrl!==s.snippetRef?.nativeUrl)){reply({ok:false});return;}
+     if(m.phase==='release'){reply({ok:s.snippets.consume(m.selectionId)});return;}
+     const anchor=s.snippets.read(m.selectionId,s.snippetRef);reply(anchor?{ok:true,anchor}:{ok:false});return;
+    }catch{reply({ok:false});return;}
+   }
    if(m?.type==='HOST_PRESENT_SURFACE'){
     const allowed=exactHostRecord(m,['type','documentToken','producerToken','routeEpoch','mode'])&&['workspace','reading'].includes(m.mode)&&s.ready&&s.binding&&live(s)&&Date.parse(s.binding.expiresAt)>now()&&Object.entries(bindingFields(s.binding)).every(([k,v])=>m[k]===v);
     if(!allowed){reply({ok:false});return;}
@@ -50,6 +64,9 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    const hello=await rpc(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq});if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
    const auth=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});if(auth?.state!=='verified')throw Error('scope-not-verified');
    let surface;const adapter=s.adapter=adapterFactory({document:doc,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,onRebindNeeded:()=>rebind(s)});
+   s.snippets=createSnippetSelectionSession({adapter:{selectedSnippet:ref=>adapter.selectedSnippet?.(ref)??null},now,makeId,
+    currentBinding:()=>live(s)&&s.ready&&s.binding&&Date.parse(s.binding.expiresAt)>now()&&s.snippetScopeGrant?JSON.stringify({...bindingFields(s.binding),scopeGrantId:s.snippetScopeGrant}):null,
+    currentSelectionEpoch:()=>s.snippetRef?adapter.selectionEpoch?.(s.snippetRef)??null:null});
    s.plans=plansFactory({adapter,bindingCurrent:()=>live(s)&&Date.parse(s.binding.expiresAt)>now()&&adapter.inspect().ok?s.binding.documentToken+':'+s.binding.routeEpoch:false});
    surface=surfaceFactory({document:doc,createFrameURL:({role})=>runtime.getURL(role+'.html'),hasNativeLayer:()=>adapter.hasNativeLayer()});
    const bridge={

@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百一十九轮：Host显式单消息片段锚与有界RAM票据基础；初始完整Node2505项、最后边界修复定向85项、真实DOM选区8组及原包MV3十三旅程通过。片段保存/搜索定位桥接尚待接通，默认profile关闭；100k/4x失败及真实验收阻塞保留。Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百二十轮：Host私有选区票据和owner CAS保存/移除桥接；完整Node2531项、真实IDB四组、DOM选区八组、原包MV3十三旅程通过。frame入口/搜索定位尚待接通、默认snippet profile关闭；100k/4x与真实验收条件保留。Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1303,3 +1303,13 @@ Round118补充：静态schema键编码缓存的Map与null-prototype frozen字典
 初始完整Node2505/2505通过；最后大小边界改动后相关85/85通过，计数不相加。真实headless DOM Selection八组、原封打包MV3十三组均PASS且sourceChangedDuringRun=false；报告为free-round119-*。DOM测试owner proof与节点epoch明确fixture，不认证生产保存桥接。没有修改schema或旧人工片段/备份。
 
 下一继续content可信选区票据、owner CAS保存/移除、frame按钮与搜索定位。F1冷启动、真实context/ACK及G/U关口仍未通过。
+
+
+## Round120：content选区票据与owner人工保存桥接（接 d8a2297）
+
+- `native-snippets.selectionEpoch` 用私有WeakMap节点/Range身份、offsets、route/body/proof/branch生成稳定票据上下文，不读取正文。`content-session`新增仅扩展私有通道的capture/validate/release，绑定document/producer/route/scopeGrant；worker定向真实parent document，UI无法提交正文。
+- 新 `host-snippet-service` 通过现有UI授权与私有owner snapshot，先capture再validate，human SET_PREFERENCE/CAS保存；最多100项、只精确移除目标、保留全部旧片段。scope互斥、6秒deadline、signal、scope/view变化与迟到回应均拒绝；过期响应仅释放ticket，不落库。sidebar/workspace均可请求，提交后刷新不因旧view失效误报失败。
+- 正式binding/worker已接入服务；完整MockIDB Host握手/UI双grant→native-ref→sidebar save→remove→账户撤销链通过。生产默认profile依旧没有snippets，UI按钮与搜索定位仍未接，不能宣称片段日常闭环完成。
+- 最终源码完整Node **2531/2531**、真实headless IndexedDB四组、真实DOM Selection八组、原包MV3十三旅程通过，三个最终browser report sourceChangedDuringRun=false。IDB的UI/selection是明确test doubles；DOM的scope/body proof是fixture但节点epoch使用真实模块；包回归不认证生产snippet启用。计数与历史结果不相加。
+- 真实IDB初次失败`old-snippet`：fixture漏传NativeRepository.workspaceRepository，原生引用未登记到shared。修成与生产一致并加refs.C断言后四组通过，原失败report/log保留。备份/恢复保持原格式，Pro/另一scope保持。
+- 原PR16在Round119已正常推送到d8a2297，之前积压全部同步。Pro72ca068仍为祖先。当前继续原目录/原分支，无新计划/PR/worktree/强推/部署。下一直接补frame保存/移除入口及安全搜索定位；100k/4x冷启动失败、真实context/ACK/G/U仍保留。Free未完成、NOT_RELEASE_READY。

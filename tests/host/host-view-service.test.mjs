@@ -9,7 +9,7 @@ import {reduceCommand} from '../../src/data/state.mjs';
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const NOW='2026-10-14T00:00:00Z',url='https://chatgpt.com/';
 // Mock IndexedDB and explicitly authored provider response; no browser auth claim.
-async function fixture(t,{prepareNavigation=null,presentSurface=null,documentURL=url,elapsedNow=()=>performance.now()}={}){
+async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBridge=null,documentURL=url,elapsedNow=()=>performance.now()}={}){
  const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'host-read-binding'});t.after(()=>base.close());
  const workspaces=new WorkspaceRepository({baseRepository:base,clock:()=>NOW});
  const evidence=new FreeEvidenceRepository({baseRepository:base,clock:()=>NOW});
@@ -18,7 +18,7 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,documentURL
  const profile={id:'read-binding-reconstruction',revision:1,urlPolicy:createURLPolicy({profile:{conversationId:value=>value,projectId:({container})=>container}})};
  const uiURLs={workspace:'chrome-extension://extension/workspace.html',sidebar:'chrome-extension://extension/sidebar.html'};
  const children=Object.fromEntries(Object.entries(uiURLs).map(([role,url],i)=>[role,{...sender,frameId:i+1,documentId:'ui_'+role,url}]));
- const service=createHostBindingService({elapsedNow,extensionId:'extension',prepareNavigation,presentSurface,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{read:async()=>{providerReads++;return {principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
+ const service=createHostBindingService({elapsedNow,extensionId:'extension',prepareNavigation,presentSurface,selectionBridge,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{read:async()=>{providerReads++;return {principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
  const request=(type,extra={})=>service.handle({v:1,type,clientId:'client',seq:++seq,...extra},sender);
  let binding,bound;
  async function bind(){const hello=await request('HOST_HELLO');assert.equal(hello.ok,true);binding=hello.binding;const {documentToken,producerToken,routeEpoch}=binding;assert.equal((await request('HOST_REFRESH',{documentToken,producerToken,routeEpoch})).state,'verified');bound=await request('BIND');assert.equal(bound.ok,true,JSON.stringify(bound));return bound;}
@@ -350,4 +350,16 @@ test('MOCK_IDB elapsed deadline fences current entry even before the timer callb
  let elapsed=0;const {h,initial,request}=await midnightFixture(t,{elapsedNow:()=>elapsed,presentSurface:async()=>{elapsed=6000;return {ok:true};}});
  const response=await h.enterCurrent('workspace',request);assert.equal(response.ok,false);assert.match(response.reason,/expired|timeout/);
  assert.deepEqual((await ready(h)).page.viewSession,initial.page.viewSession);
+});
+
+test('MOCK_IDB scoped host view saves native-ref snippet through private bridge and refreshes both frames',async t=>{
+ const anchor={refId:'c1',messageId:'m1',branchId:'branch1',text:'explicit selected text',bodyHash:'a'.repeat(64)},phases=[];
+ const h=await fixture(t,{selectionBridge:async({context,ref,phase})=>{phases.push(phase);assert.equal(ref.id,'c1');assert.equal(context.isCurrent(),true);return phase==='capture'?{selectionId:'selection',anchor}:phase==='validate'?{ok:true,anchor}:{ok:true};}});
+ await h.bind();await h.observe();await h.mount();const first=await ready(h);
+ const send=(action,id,expectedRevision,operationId)=>h.service.handle({v:1,type:'HOST_UI_SNIPPET',grantId:h.grants.sidebar.id,mountId:'mount',operationId,expectedRevision,action,id},h.children.sidebar);
+ const saved=await send('save','c1',first.page.workspaceRevision,'save-snippet');assert.equal(saved.ok,true,JSON.stringify(saved));assert.equal(saved.savedSnippets.total,1);assert.deepEqual(phases,['capture','validate','release']);
+ const next=await ready(h),scope=h.service.authority.scopeFor({tabId:1,frameId:0,documentId:'document',actualURL:url,documentLifecycle:'active',incognito:false}),state=(await h.workspaces.read(scope)).state;const row=state.preferences.savedSnippets.value[0];assert.deepEqual({...row,id:undefined},{id:undefined,...anchor});
+ assert.equal((await send('remove',row.id,first.page.workspaceRevision,'stale-remove')).ok,false);
+ assert.equal((await send('remove',row.id,next.page.workspaceRevision,'remove-snippet')).ok,true);await ready(h);assert.deepEqual((await h.workspaces.read(scope)).state.preferences.savedSnippets.value,[]);
+ h.switchPrincipal('new-principal');assert.equal((await send('save','c1',next.page.workspaceRevision,'wrong-scope')).ok,false);
 });

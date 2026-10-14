@@ -5,6 +5,8 @@ import {tokenOK} from '../b1/identity.mjs';
 export function createNativeSnippets({document:doc,urlPolicy,profile,current,proof,guard=()=>false,isOwnedMask=()=>false}={}){
  const raw=profile?.snippets,config=raw?.enabled===true?{...raw}:null;
  let stopped=false;
+ const identities=new WeakMap();let nextIdentity=0;
+ const identity=node=>{if(!identities.has(node))identities.set(node,++nextIdentity);return identities.get(node);};
  const configured=!!config&&['rootSelector','conversationIdAttribute','messageSelector','messageIdAttribute','bodySelector','branchIdAttribute'].every(k=>typeof config[k]==='string'&&config[k].length>0&&config[k].length<=256);
  const live=()=>!stopped&&configured&&guard()===true;
  function visible(node){if(!node?.isConnected||node.ownerDocument!==doc||!node.getClientRects().length)return false;let depth=0;for(let p=node;p;p=p.parentElement){if(++depth>64)return false;const style=doc.defaultView.getComputedStyle(p);if(p.hidden||p.getAttribute('aria-hidden')==='true'||style.display==='none'||style.visibility==='collapse'||style.visibility==='hidden'&&isOwnedMask(p)!==true)return false;}return true;}
@@ -32,6 +34,16 @@ export function createNativeSnippets({document:doc,urlPolicy,profile,current,pro
  }
  function bodyText(body){let text='',visited=0;const stack=[body];while(stack.length){const n=stack.pop();if(++visited>10000||n.ownerDocument!==doc||!n.isConnected)throw Error('unavailable');if(n.nodeType===3){const piece=n.nodeValue??'';if(piece.length>65536-text.length)throw Error('unavailable');text+=piece;continue;}if(n.nodeType!==1)continue;if(n.isContentEditable||['INPUT','TEXTAREA','SELECT','SCRIPT','STYLE'].includes(n.tagName))throw Error('unavailable');const children=n.childNodes;if(children.length+stack.length>10000)throw Error('unavailable');for(let i=children.length-1;i>=0;i--)stack.push(children[i]);}return text;}
  function unchanged(c,ref,pair,messageId){const next=context(ref),currentPair=next&&messageFor(next,messageId);return !!currentPair&&next.root===c.root&&next.state.conversationId===c.state.conversationId&&next.state.regionEpoch===c.state.regionEpoch&&currentPair.message===pair.message&&currentPair.body===pair.body&&safeStructure(pair.body);}
+ function selectionEpoch(ref){try{
+  const c=context(ref);if(!c)return null;const selection=doc.getSelection();if(!selection||selection.rangeCount!==1||selection.isCollapsed)return null;const range=selection.getRangeAt(0);
+  if(!Number.isSafeInteger(range.startOffset)||range.startOffset<0||!Number.isSafeInteger(range.endOffset)||range.endOffset<0)return null;
+  const candidates=[...c.messages].filter(m=>m.contains(range.startContainer)&&m.contains(range.endContainer));if(candidates.length!==1)return null;
+  const messageId=candidates[0].getAttribute(config.messageIdAttribute);if(!tokenOK(messageId))return null;const pair=messageFor(c,messageId);
+  if(!pair||!pair.body.contains(range.startContainer)||!pair.body.contains(range.endContainer)||!safeStructure(pair.body))return null;
+  const branchId=branchFor(c,pair.message,messageId);if(!branchId||!unchanged(c,ref,pair,messageId))return null;
+  const latest=doc.getSelection();if(latest!==selection||latest.rangeCount!==1||latest.isCollapsed||latest.getRangeAt(0)!==range||!live())return null;
+  return digest(['native-selection-epoch-v1',doc.location.href,c.state.conversationId,c.state.regionEpoch,c.bodyProofId,branchId,messageId,...[c.root,pair.message,pair.body,range.startContainer,range.endContainer,range].map(identity),range.startOffset,range.endOffset]);
+ }catch{return null;}}
  function selectedSnippet(ref){try{
   const c=context(ref);if(!c)return null;const selection=doc.getSelection();if(!selection||selection.rangeCount!==1||selection.isCollapsed)return null;const range=selection.getRangeAt(0);
   const candidates=[...c.messages].filter(m=>m.contains(range.startContainer)&&m.contains(range.endContainer));if(candidates.length!==1)return null;
@@ -46,5 +58,5 @@ export function createNativeSnippets({document:doc,urlPolicy,profile,current,pro
   const body=bodyText(pair.body),offset=body.indexOf(anchor.text);if(digest(body)!==anchor.bodyHash||offset<0||offset!==body.lastIndexOf(anchor.text)||branchFor(c,pair.message,anchor.messageId)!==anchor.branchId||!unchanged(c,ref,pair,anchor.messageId)||!live())throw Error('unavailable');
   pair.message.scrollIntoView({block:'center',behavior:'auto'});return {ok:true};
  }catch{return {ok:false,reason:'non-unique-or-changed-anchor'};}}
- return Object.freeze({selectedSnippet,restoreSnippet,stop(){stopped=true;}});
+ return Object.freeze({selectedSnippet,restoreSnippet,selectionEpoch,stop(){stopped=true;}});
 }
