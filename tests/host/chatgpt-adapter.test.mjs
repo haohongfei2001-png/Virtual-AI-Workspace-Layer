@@ -89,10 +89,19 @@ test('document renewal cannot extend a snippet proof before the new body acknowl
 
 test('adapter forwards native dispatch hook with real discovered node and stops safely inside hook',async()=>{
  for(const stopInHook of [false,true]){
-  let f,event,clicks=0;f=fixture({inputRisk:()=>({state:'clear',flags:[]}),authorize:()=>true,onNativeDispatch:value=>{event=value;if(stopInHook)f.adapter.stop();}});
+  let f,event,cancelEvent,clicks=0;f=fixture({onNativeDispatchCancelled:value=>{cancelEvent=value;},inputRisk:()=>({state:'clear',flags:[]}),authorize:()=>true,onNativeDispatch:value=>{event=value;if(stopInHook)f.adapter.stop();}});
   const root={isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]},button={tagName:'BUTTON',textContent:'Same',isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null,click:()=>clicks++};
   f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await tick();const proposals=await f.adapter.readLoaded(null),target=proposals.find(p=>p.kind==='surface-delta').payload.candidates[0].target,plan=f.adapter.planNavigation(target);
   assert.equal(plan.mode,'native-control');const command={actionId:'action',uiGrantId:'grant',mountId:'mount',planRevision:plan.planRevision,targetKey:f.adapter.planKey(plan)},result=await f.adapter.dispatchNative(command);
-  assert.equal(event.node,button);assert.equal(event.plan,plan);assert.equal(event.originalURL,f.document.location.href);assert.equal(clicks,stopInHook?0:1);assert.equal(result.state,stopInHook?'unconfirmed':'dispatched');f.adapter.stop();
+  assert.equal(cancelEvent,stopInHook?event:undefined);assert.equal(event.node,button);assert.equal(event.plan,plan);assert.equal(event.originalURL,f.document.location.href);assert.equal(clicks,stopInHook?0:1);assert.equal(result.state,stopInHook?'unconfirmed':'dispatched');f.adapter.stop();
  }
+});
+
+test('candidate identity proxy uses live discovery and rejects route, replacement and restart tokens',async()=>{
+ const f=fixture(),root={isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]};let button={tagName:'BUTTON',textContent:'Same',isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null,click(){}};
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);assert.equal(f.adapter.captureCandidateIdentity({}),null);await f.start();
+ const handle=()=>f.emitted.at(-1).payload.candidates[0].target.control;await tick();const h=handle(),token=f.adapter.captureCandidateIdentity(h);assert.ok(token);assert.equal(f.adapter.matchesCandidateIdentity(token,h),true);assert.equal(f.adapter.matchesCandidateIdentity({},h),false);
+ button={...button};const proposals=await f.adapter.readLoaded(null),replacement=proposals[0].payload.candidates[0].target.control;assert.equal(f.adapter.matchesCandidateIdentity(token,replacement),false);
+ const next=f.adapter.captureCandidateIdentity(replacement);f.document.location.href='https://chatgpt.com/';assert.equal(f.adapter.matchesCandidateIdentity(next,replacement),false);assert.equal(f.adapter.captureCandidateIdentity(replacement),null);
+ await f.start();assert.equal(f.adapter.matchesCandidateIdentity(next,replacement),false);f.adapter.stop();assert.equal(f.adapter.matchesCandidateIdentity(next,replacement),false);
 });

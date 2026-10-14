@@ -46,3 +46,7 @@ test('dual-frame different pages retain old issued plans without authorizing uni
  assert.equal((await f.owner.activate(f.dto({...tail.items[0],renderKey:'r33'}))).state,'blocked');
  f.invalidate();assert.equal((await f.owner.activate(f.dto(first.items[0]))).state,'blocked');await assert.rejects(f.owner.listPage(32),/stale-content/);
 });
+
+test('257 observed candidates still reject when one candidate is already upgraded',async()=>{
+ let plans=0;const rows=Array.from({length:257},(_,i)=>({entity:'project',renderKey:`r${i}`,target:{kind:'live-control'}}));const owner=createContentCandidates({adapter:{readLoaded:async()=>[{kind:'surface-delta',payload:{candidates:rows}}],planNavigation:()=>{plans++;throw Error('must-not-mint');}},current:()=>true,showReading:()=>true,isUpgraded:r=>r.renderKey==='r0'});await assert.rejects(owner.listPage(),/invalid-content-candidates/);assert.equal(plans,0);owner.stop();
+});

@@ -1,3 +1,4 @@
+import {createCandidateUpgrade} from './candidate-upgrade.mjs';
 import {createContentCandidates} from './content-candidates.mjs';
 import {createSnippetSelectionSession} from './snippet-selection-session.mjs';
 import {createChatGPTAdapter} from './chatgpt-adapter.mjs';
@@ -13,6 +14,10 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
  * module never exposes its runtime bridge or authority on the page window. */
 export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,surfaceFactory=createMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(!doc?.defaultView||new URL(origin).origin!==origin||doc.location.origin!==origin||!['http:','https:'].includes(new URL(origin).protocol)||!tokenOK(runtime?.id)||typeof runtime.sendMessage!=='function'||typeof runtime.getURL!=='function'||!runtime.onMessage?.addListener)throw Error('invalid-content-session');
+ const upgrade=createCandidateUpgrade({now});let upgradeIdentity=null,upgradeTimer=null;
+ const clearUpgrade=()=>{if(upgradeTimer!==null)cancel(upgradeTimer);upgradeTimer=null;upgrade.clear();upgradeIdentity=null;for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.removeEventListener(type,upgradeRoute);};
+ const interruptUpgrade=event=>{if(event.isTrusted===true)clearUpgrade();};
+ const upgradeRoute=()=>{if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();};
  const clientId=makeId();if(!tokenOK(clientId))throw Error('invalid-content-client');
  let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0;
  const bindingFields=b=>({documentToken:b.documentToken,producerToken:b.producerToken,routeEpoch:b.routeEpoch});
@@ -26,21 +31,22 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  }
  function dispose(s){if(!s)return;doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
  function reset(){epoch++;const s=current;current=null;dispose(s);}
- function stop(){enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
+ function stop(){clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function pagehide(event){
   if(event?.persisted!==true){stop();return;}if(!enabled)return;
-  restoreArmed=true;rebindQueued=false;rebindRun++;reset();
+  clearUpgrade();restoreArmed=true;rebindQueued=false;rebindRun++;reset();
   doc.defaultView.addEventListener('pagehide',pagehide);
  }
  function pageshow(event){if(event?.persisted!==true||!enabled||!restoreArmed)return;restoreArmed=false;void begin();}
  function rebind(s,initialMode='workspace'){
   if(!enabled||current!==s||rebindQueued)return;
+  if(doc.location.href!==s.url){if(upgrade.navigate({url:doc.location.href}))initialMode='reading';}else clearUpgrade();
   rebindQueued=true;const run=++rebindRun;reset();doc.defaultView.addEventListener('pagehide',pagehide);
   // Collapse a burst into one replacement. Only external events can request a
   // subsequent attempt; failures never schedule their own recovery loop.
   queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode);});
  }
- async function start(){recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
+ async function start(){clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  async function begin(rebinding=false,initialMode='workspace'){
   reset();const s={run:epoch,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
   let foregroundArmed=doc.visibilityState==='hidden',foregroundPending=false;
@@ -49,7 +55,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    if(doc.visibilityState!=='visible'||!foregroundArmed||!s.ready||!live(s))return;
    if(foregroundPending)return;foregroundArmed=false;foregroundPending=true;
    void rpc(s,{v:1,type:'HOST_FOCUS',clientId,seq:++seq,...bindingFields(s.binding)}).then(result=>{
-    if(result?.ok!==true||result.state!=='verified')throw Error('foreground-scope-unverified');
+    if(result?.ok!==true||result.state!=='verified'||result.scopeKey!==s.scopeKey)throw Error('foreground-scope-unverified');
    }).catch(()=>{if(live(s)){s.recoveryDenied=true;stop();}}).finally(()=>{foregroundPending=false;s.focus();});
   };
   s.visibility=()=>{if(doc.visibilityState==='hidden')foregroundArmed=true;else s.focus();};
@@ -100,9 +106,9 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   };runtime.onMessage.addListener(s.listener);
   try{
    const hello=await rpc(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq});if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
-   const auth=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});if(auth?.state!=='verified')throw Error('scope-not-verified');
-   let surface;const adapter=s.adapter=adapterFactory({document:doc,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,authorize:async command=>{if(s.candidates?.authorize(command)!==true)return false;const result=await rpc(s,{v:1,type:'HOST_NATIVE_AUTHORIZE',...bindingFields(s.binding),command});return result?.ok===true&&s.candidates?.authorize(command)===true;},beforeDispatch:()=>s.candidates?.beforeDispatch(),onRebindNeeded:()=>rebind(s)});
-   s.candidates=createContentCandidates({adapter,current:()=>live(s)&&s.ready&&Date.parse(s.binding.expiresAt)>now(),showReading:()=>s.controller?.showReading()===true,now});
+   const auth=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});if(auth?.state!=='verified')throw Error('scope-not-verified');s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
+   let surface;const adapter=s.adapter=adapterFactory({document:doc,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,authorize:async command=>{if(s.candidates?.authorize(command)!==true)return false;const result=await rpc(s,{v:1,type:'HOST_NATIVE_AUTHORIZE',...bindingFields(s.binding),command});return result?.ok===true&&s.candidates?.authorize(command)===true;},beforeDispatch:()=>s.candidates?.beforeDispatch(),onNativeDispatch:event=>{if(event.plan.target.kind!=='live-control'||!s.scopeKey)return;const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;clearUpgrade();upgradeIdentity=identity;for(const type of ['pointerdown','keydown'])doc.addEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.addEventListener(type,upgradeRoute);upgrade.propose({actionId:event.actionId,identity,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,originalURL:s.url,expiresAt:now()+6000});upgradeTimer=schedule(clearUpgrade,6000);},onNativeDispatchCancelled:event=>{if(upgrade.cancel(event.actionId))clearUpgrade();},onRebindNeeded:()=>rebind(s)});
+   s.candidates=createContentCandidates({adapter,current:()=>live(s)&&s.ready&&Date.parse(s.binding.expiresAt)>now(),showReading:()=>s.controller?.showReading()===true,isUpgraded:row=>{const matches=identity=>adapter.matchesCandidateIdentity?.(identity,row.target.control)===true;if(s.upgraded)return s.ackProjects.has(s.upgraded.projectId)&&matches(s.upgraded.identity);if(!upgradeIdentity||!matches(upgradeIdentity))return false;const route=createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}).parse(s.url);if(route.kind!=='project'||!s.ackProjects.has(route.projectId))return false;const result=upgrade.resolve({scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,url:s.url,projectId:route.projectId,identityMatches:true});if(!result)return false;s.upgraded=result;clearUpgrade();return true;},now});
    s.snippets=createSnippetSelectionSession({adapter:{selectedSnippet:ref=>adapter.selectedSnippet?.(ref)??null},now,makeId,
     currentBinding:()=>live(s)&&s.ready&&s.binding&&Date.parse(s.binding.expiresAt)>now()&&s.snippetScopeGrant?JSON.stringify({...bindingFields(s.binding),scopeGrantId:s.snippetScopeGrant}):null,
     currentSelectionEpoch:()=>s.snippetRef?adapter.selectionEpoch?.(s.snippetRef)??null:null});
@@ -113,7 +119,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     confirmParent:v=>rpc(s,{v:1,type:'HOST_UI_CONFIRM',...v,...bindingFields(s.binding)}),
     workspaceEntered:({mountId})=>rpc(s,{v:1,type:'HOST_UI_WORKSPACE_ENTERED',...bindingFields(s.binding),mountId}),
     revokeMount:({mountId})=>{if(s.binding)void withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_RELEASE',...bindingFields(s.binding),mountId}),{now:elapsedNow,schedule,cancel}).catch(()=>{});},
-    renewSession:async({handle,binding})=>{if(!bindingOK(binding,s.binding))throw Error('stale-content-binding');const started=elapsedNow();const renewed=await rpc(s,{v:1,type:'HOST_DOCUMENT_RENEW',clientId,seq:++seq,...bindingFields(binding)});if(renewed?.ok!==true||!bindingOK(renewed.binding,s.binding))throw Error('invalid-host-binding');const remaining=()=>{const budget=6000-(elapsedNow()-started);if(budget<=0)throw Error('request-timeout');return budget;};const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());if(authority?.state!=='verified'){s.recoveryDenied=true;throw Error('scope-not-verified');}const status=await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining());if(status?.ok===true)s.binding=Object.freeze({...renewed.binding});return {...status,binding:renewed.binding};}
+    renewSession:async({handle,binding})=>{if(!bindingOK(binding,s.binding))throw Error('stale-content-binding');const started=elapsedNow();const renewed=await rpc(s,{v:1,type:'HOST_DOCUMENT_RENEW',clientId,seq:++seq,...bindingFields(binding)});if(renewed?.ok!==true||!bindingOK(renewed.binding,s.binding))throw Error('invalid-host-binding');const remaining=()=>{const budget=6000-(elapsedNow()-started);if(budget<=0)throw Error('request-timeout');return budget;};const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());if(authority?.state!=='verified'||authority.scopeKey!==s.scopeKey){s.recoveryDenied=true;throw Error('scope-not-verified');}const status=await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining());if(status?.ok===true)s.binding=Object.freeze({...renewed.binding});return {...status,binding:renewed.binding};}
    };
    s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onTerminated:(reason,presentation)=>{
     // One fresh authorization attempt per explicit content start. A failed
@@ -121,7 +127,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     if(!enabled||!s.ready||!live(s)||s.recoveryDenied||recoveryRemaining<1||!['ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason))return;
     recoveryRemaining--;rebind(s,presentation?.mode==='workspace'?'workspace':'reading');
    },now,elapsedNow,schedule,cancel});
-   const handle=await s.controller.start({binding:s.binding,emit:p=>rpc(s,p)});if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;return handle;
+   const handle=await s.controller.start({binding:s.binding,emit:async p=>{const result=await rpc(s,p);if(['accepted','duplicate'].includes(result?.state)&&p.kind==='surface-delta')for(const row of p.payload.candidates)if(row.entity==='project'&&row.target?.kind==='resolved'&&row.evidence?.fieldPaths?.includes('current-project-route'))s.ackProjects.add(row.target.nativeId);return result;}});if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;return handle;
   }catch{if(current===s)stop();return null;}
  }
  return Object.freeze({start,stop,showWorkspace:()=>current?.controller?.showWorkspace()??false,showReading:()=>current?.controller?.showReading()??false});

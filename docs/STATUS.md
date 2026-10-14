@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百三十三轮：候选分页完成，并补齐精确升级所需的同步点击回调与跨重绑节点身份验证。完整Node2840项通过；候选升级去重/位置焦点迁移尚待接通。真实生产发送闭环、100k/4x及真实验收未完成，NOT_RELEASE_READY。
+当前已推进至第一百三十四轮：原生候选可在同scope、同document及独立Project事实确认后精确升级去重，点击后保持原生阅读。完整Node2893项与原包Chrome四旅程通过。视图位置/展开和有条件焦点迁移仍待接通，生产及性能关口未齐，Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1426,3 +1426,17 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 最终完整Node **2840/2840 PASS**（free-round133-node.log.gz）。hook83及identity14为独立定向测试、不相加；identity明确DOM double。该轮基础接口尚无新产品消费者，未新增Chrome旅程；Round132的实际原包3旅程证据属于此前源码，不冒称本轮浏览器已测。
 - 下一接续：主代理将单条短期待关联放在content-session外层，只跨一次SPA重绑；新旧独立认证scope必须相同，exact P仍由原生route+可见标题/member事实链独立确认。只抑制同原node对应候选，不影响同名另一按钮；hook后未click/失败要清pending，stop/pagehide/第二路由/用户相反动作/超时清除。新canonical实际发布后才迁移位置与展开；原生reading期间不抢焦点，用户明确返回workspace后才考虑一次性焦点恢复。此闭环尚未实施，MAP-06仍IN_PROGRESS。
 - 4894b51正常HTTP/1.1推送30秒超时；GitHub API随后仍确认远端540f9eb、PR16为Draft且基于PR15。本地已保存，不强推或改remote。Pro72ca068仍为本地祖先。Free未完成、NOT_RELEASE_READY，既有ACK/首发/100k/真实G/U等缺口不变。
+
+
+## Round134：原生候选的同节点升级去重与阅读连续性（接 b8e4a9a）
+
+- 待关联动作只在实际native click前登记，最多6秒，绑定action、opaque node witness、浏览器document、原URL及worker独立核验的scopeKey；scope标识仅私有content回复，不是授权。最多一次SPA目标路由，取消/未click/throw/第二路由/可信pointer或key操作/stop/pagehide/超时/时钟回退均撤待关联。回调失败或异步返回不留可重放动作，取消通知在旧adapter停止后仍清对应action。
+- 新adapter必须重新观察并持新handle；仅同scope/document、当前Project路由事实已被owner accepted/duplicate、同原node/root/parent/profile/指纹才去掉对应IDless候选。同名其他节点保留；候选原始观察数仍先按256限制，不能靠过滤绕容量。已完成映射属于当前content session的私有结果，每次LIST继续验证节点身份，session结束即丢弃；不把6秒待关联授权延长，也不在完成6秒后重新制造重复候选。跨后续会话的升级呈现仍待继续。
+- 原生点击后的SPA重绑保持reading，不自动打开workspace或把焦点放到iframe；用户显式返回后正式Project/成员可达。实际原包headless MV3 **4/4 PASS/sourceChangedDuringRun=false**：65合成候选分页、同名两个IDless控件中仅被点击原节点去重（移除准确other DOM node后候选0且原节点仍在）、原生click恰1次、无候选假持久ID、原textarea/草稿保留。无私人ChatGPT或真实原生写入，报告free-round134-candidates-package-mv3.json。
+- 最终完整Node **2889/2889 PASS**。首次完整回归9项FAIL：新增全会话监听影响旧snippet临时监听检查；改为仅待关联期间安装并于完成/取消/6秒/stop/pagehide清理，新增生命周期反例后完整回归通过，原FAIL保留。状态机29、取消/adapter86、集成及容量35为各自定向证据，不相加。
+- MAP-06仍IN_PROGRESS：正式卡接替候选的视图位置/展开，以及用户回workspace后有条件焦点恢复尚未接通；不能以四条浏览器旅程宣布整项完成。下一步继续这段呈现迁移，保留跨后续原生路由时同节点已学关联的边界核对。ACK/首发持久活动、64KiB长候选来源、100k/4x、生产context/G/U/PAIA及完整扩展BFCache仍未闭合，Free未完成、NOT_RELEASE_READY。
+- 上一检查点正常push已恢复：b8e4a9a经GitHub API确认在原Draft PR16，Pro72ca068仍祖先，未改远端/父PR/main。
+
+- Round134独立审查追加：旧adapter停止而新HELLO/REFRESH等待期间，工具栏P→Q→P可能漏掉第二导航。已在pending独立监听popstate/hashchange、遇第二路由立即撤关联，确认/取消/stop清监听；暂停新HELLO反例及同P重复事件20/20通过。最终源码实际包仍4/4 PASS，证据free-round134-candidates-package-mv3-final.json；此前报告单独保留。
+
+- Route窗口修复后的最终完整Node **2893/2893 PASS**，见free-round134-node-route-final.log.gz；前述2889为修复前来源，不合并计数。

@@ -105,7 +105,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
    if(!stillVerified||authority.peek(frame).grant!==resolution.grant)return {ok:false,reason:'stale-host-document'};
   }
   if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant&&sequences.get(message.producerToken)===producer)producer.verified=true;
-  return {ok:true,v:1,type:'HOST_SCOPE_STATUS',state:resolution.state,...(resolution.reason?{reason:resolution.reason}:{})};
+  return {ok:true,v:1,type:'HOST_SCOPE_STATUS',state:resolution.state,...(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant?{scopeKey:authority.scopeFor(frame)?.key}:{}),...(resolution.reason?{reason:resolution.reason}:{})};
   },{timeoutMs:6000,now:elapsedNow,schedule,cancel});attempt.completed=true;return result;}catch{return {ok:false,reason:'host-refresh-unavailable'};}
   finally{refreshAttempts.delete(attempt);attempt.active=false;attempt.abort.abort();if(!attempt.completed){denyFocus();revokeFocus();}
   if(!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);}

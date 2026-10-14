@@ -40,7 +40,40 @@ try{context=await chromium.launchPersistentContext(join(dir,'profile'),{headless
  assert.equal(await panel.getByRole('button',{name:'下一页',exact:true}).count(),0);
  assert.equal(server.snapshot().actions['open-project-button']??0,paginationActionsBefore);
  report.results.push({name:'fixture-dom-only-65-candidates-pages-0-32-64-back-refresh-preserves-offset-shrink-clamps-without-activation',status:'PASS',fixtureOnlyAdditionalButtons:64,realAccountProjectCount:'NOT_ASSERTED'});
- await frame.getByRole('link',{name:'打开项目以新建聊天 Research',exact:true}).first().waitFor();const clicksBefore=server.snapshot().actions['open-project-button']??0;await page.evaluate(()=>globalThis.candidateEditor=document.querySelector('textarea'));await candidate.click();await page.waitForURL(`**/g/${expected.projects[1].id}/project`,{timeout:15000});await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,{},{timeout:15000});const until=Date.now()+15000;let current;do{current=page.frames().find(f=>f.url()===workspaceURL&&f!==frame);if(current)break;await new Promise(r=>setTimeout(r,50));}while(Date.now()<until);assert(current);frame=current;await frame.getByRole('link',{name:'Second project conversation',exact:true}).waitFor({timeout:15000});assert.equal(server.snapshot().actions['open-project-button']-clicksBefore,1);assert(await page.evaluate(()=>candidateEditor===document.querySelector('textarea')));
+ // A second same-name idless DOM control is intentionally inert; only the
+ // original native fixture control is activated. Identity assertions use keys/nodes.
+ const originalKey=await candidate.getAttribute('data-candidate-key');
+ await page.evaluate(()=>{const section=document.querySelector('aside section[aria-label="Projects"]');globalThis.originalCandidateNode=document.querySelector('.project-entry');globalThis.originalCandidateRoot=section;globalThis.candidateEditor=document.querySelector('textarea');const duplicate=document.createElement('button');duplicate.type='button';duplicate.textContent='Research';duplicate.setAttribute('data-same-name-probe','');section.append(duplicate);globalThis.otherCandidateNode=duplicate;});
+ await panel.getByText('已观察的待识别项目 1–2 / 2',{exact:true}).waitFor({timeout:15000});
+ const candidateKeys=await panel.locator('button[data-candidate-key]').evaluateAll(ns=>ns.map(n=>n.getAttribute('data-candidate-key')));
+ assert(candidateKeys.includes(originalKey));assert.equal(new Set(candidateKeys).size,2);assert(candidateKeys.some(k=>k!==originalKey));
+ await frame.getByRole('link',{name:'打开项目以新建聊天 Research',exact:true}).first().waitFor();const clicksBefore=server.snapshot().actions['open-project-button']??0;
+ await panel.locator(`button[data-candidate-key="${originalKey}"]`).click();
+ await page.waitForURL(`**/g/${expected.projects[1].id}/project`,{timeout:15000});
+ const returnButton=page.getByRole('button',{name:'返回工作空间',exact:true});await returnButton.waitFor({timeout:15000});
+ // Wait through a short settled reading interval, never force focus or reopen.
+ await page.waitForTimeout(500);
+ assert.equal(await page.locator(`iframe[src="${workspaceURL}"]`).evaluate(n=>n.closest('[data-va-owned]')?.matches(':popover-open')??false),false);
+ assert(await page.locator('#reading').isVisible());
+ assert(await page.evaluate(()=>document.activeElement?.tagName!=='IFRAME'),'candidate upgrade must not steal native reading focus');
+ assert.equal(await returnButton.count(),1);
+ assert(await page.evaluate(()=>originalCandidateNode===document.querySelector('.project-entry')&&originalCandidateRoot===document.querySelector('aside section[aria-label="Projects"]')&&otherCandidateNode.isConnected&&candidateEditor===document.querySelector('textarea')));
+ await returnButton.click();
+ await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,{},{timeout:15000});
+ const until=Date.now()+15000;let current;do{current=page.frames().find(f=>f.url()===workspaceURL&&f!==frame);if(current)break;await new Promise(r=>setTimeout(r,50));}while(Date.now()<until);assert(current);frame=current;
+ await frame.getByRole('link',{name:'Second project conversation',exact:true}).waitFor({timeout:15000});
+ const upgradedPanel=frame.locator('[data-vaiwl-candidates]');
+ await upgradedPanel.getByText('已观察的待识别项目 1–1 / 1',{exact:true}).waitFor({timeout:15000});
+ assert.equal(await upgradedPanel.locator('button[data-candidate-key]').count(),1);
+ assert(await page.evaluate(()=>originalCandidateNode===document.querySelector('.project-entry')&&originalCandidateRoot===document.querySelector('aside section[aria-label="Projects"]')&&otherCandidateNode.isConnected));
+ // New producer legitimately issues new handles. Remove the exact other node
+ // to prove the survivor was not the upgraded original with an identical title.
+ await page.evaluate(()=>otherCandidateNode.remove());
+ await frame.waitForFunction(()=>!document.querySelector('[data-vaiwl-candidates]'),{},{timeout:15000});
+ assert(await page.evaluate(()=>originalCandidateNode===document.querySelector('.project-entry')&&originalCandidateNode.isConnected));
+ assert.equal(server.snapshot().actions['open-project-button']-clicksBefore,1);assert(await page.evaluate(()=>candidateEditor===document.querySelector('textarea')));
+ report.results.push({name:'candidate-upgrade-keeps-reading-until-user-return-removes-only-original-same-node-candidate',status:'PASS',sameNameProbe:'one extra inert fixture DOM control'});
+
  const facts=await frame.evaluate(async()=>{const {ScopeRepository}=await import(chrome.runtime.getURL('src/b1/scope-repository.mjs')),{NativeRepository}=await import(chrome.runtime.getURL('src/data/native-repository.mjs'));const base=new ScopeRepository({indexedDB});try{const db=await base.open(),roots=await new Promise((resolve,reject)=>{const tx=db.transaction('native_states'),q=tx.objectStore('native_states').getAll();tx.oncomplete=()=>resolve(q.result.filter(r=>r.key===r.payload?.scopeKey).map(r=>r.key));tx.onabort=()=>reject(tx.error);});const keys=[];for(const key of roots){const [provider,accountId,organizationId]=JSON.parse(key),s=await new NativeRepository({baseRepository:base}).read({verified:true,provider,accountId,organizationId});keys.push(...Object.keys(s.projects));}return keys;}finally{base.close();}});assert(facts.includes(expected.projects[1].id));assert(!facts.some(k=>k.startsWith('candidate:')));report.results.push({name:'idless-same-name-project-one-native-click-upgrades-exact-project-and-members-without-fake-id',status:'PASS'});
  // Separate native home navigation resets the fixture UI, not the persistent native facts.
  await page.goto(server.url);await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,{},{timeout:15000});await page.locator('textarea').fill('CANDIDATE_UNSENT_DRAFT');await page.evaluate(()=>globalThis.draftEditor=document.querySelector('textarea'));const back=page.getByRole('button',{name:'返回工作空间',exact:true});await back.click();frame=page.frames().find(f=>f.url()===workspaceURL);assert(frame);const blocked=frame.locator('[data-vaiwl-candidates] button').filter({hasText:'Research'});await blocked.waitFor({timeout:15000});await page.waitForTimeout(250);assert.equal(await blocked.isDisabled(),true);assert(await frame.getByText('暂时无法打开；请先处理未发送内容，或使用原生入口继续。',{exact:true}).count()>0);assert.equal(server.snapshot().actions['open-project-button']-clicksBefore,1);assert(await page.evaluate(()=>draftEditor===document.querySelector('textarea')&&draftEditor.value==='CANDIDATE_UNSENT_DRAFT'));assert(await page.locator('.project-entry').count()>0);report.results.push({name:'draft-disables-candidate-with-native-entry-and-original-editor-preserved',status:'PASS'});
