@@ -1291,3 +1291,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 真Chrome A→B→goBack实际BFCache **HIT**，旧adapter停止/监听清除，恢复两次HELLO/REFRESH且新mount、原textarea节点/草稿保留，显式stop不复活。runtime/adapter factories明确合成，非真实账户或完整扩展BFCache认证。首次脚本等待load超时（缓存恢复不发load），改为commit+实际persisted oracle后PASS，原失败保留。
 - 工作集实际原包新增原生textarea focus使双popover归零→用户明确返回workspace→原人工顺序/草稿保持→原生href新标签正常。最终六旅程PASS/sourceChangedDuringRun=false；关闭第二tab前后增加无私人文本的focus/toggle/click诊断。本次第二tab关闭后仍双surface，并未复现历史偶发，因此不将历史未捕获失败归因已定或宣称所有条件已消失。
 - 最终标准实际MV3十三旅程PASS/sourceChangedDuringRun=false。最终完整Node **2601/2601** 通过，见free-round124-node.log；结果不与历史计数相加。现有100k mixed/4x审计分析仅1067次重复Project依赖读取（约1%），不引入低收益缓存或放宽fresh audit；F1冷启动仍FAIL。真实context/accepted ACK/G/U/PAIA条件仍未满足；Free未完成、NOT_RELEASE_READY。
+
+
+## Round125：同文档重新授权后的私有界面恢复（接 ab9d439）
+
+- owner只在已授权scope下保留有界恢复元数据：tab/document/native URL/scope/role隔离，最多32项、30分钟、时钟回退失效；账户变化清除该文档旧scope，关闭tab或service清除。新grant先取恢复查询再读新原生事实，不复用旧授权/完整数据副本。历史H/T/Z只从owner已确认session恢复，布局不接收scope、grant、正文或自由session。
+- 工作区/侧栏保存展开项、容量和滚动；精确codec限32KiB，100ms合并。SAVE携带expectedQuery，与当前owner query比较，阻止同segment新搜索被迟到布局覆盖；6秒截止后迟到授权回调无读写效果。新查询清除不匹配布局；恢复是短期worker内最后已确认状态，worker终止或立即卸载前未确认布局不承诺保留，不写Pro资产或额外IDB schema。
+- 完整Node **2662/2662 PASS**（free-round125-node.log），覆盖账户A→B→A、旧grant、角色/URL/document隔离、30分钟/回退、迟到GET/SAVE、query变化、历史锚点和渲染滚动。实际同文档MV3三旅程PASS：真实worker定向失效、新双frame/grant、Ordinary搜索、双scroll 40→40、同原生textarea/draft。仅测试过程对两代shadow viewport相同缩至60px确保可滚动；非零历史浏览器路径NOT_TESTED，未伪装为真实ChatGPT。
+- 最终标准实际MV3十三旅程PASS；free-round125-frame-rebind-package-mv3.json和free-round125-package-mv3.json均sourceChangedDuringRun=false。实际完整扩展BFCache实验free-round125-bfcache-package-mv3.json为**FAIL/NOT_HIT**，Chrome报告no-store、EmbedderExtensionFrame等限制，恢复断言NOT_RUN；与Round124合成factory BFCache HIT明确区分，不重复重试或改标签。
+- Pro 72ca068仍为HEAD祖先。100k mixed/4x冷启动、生产context/accepted-send ACK、真实G/U/PAIA条件尚未完成；Free未完成、NOT_RELEASE_READY。继续既有DEVELOPMENT_PLAN，不新增计划/PR/目录。

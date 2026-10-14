@@ -9,9 +9,13 @@ import {planFreeReplica,freeReplicaRequests,assembleFreeReplicaAsync} from '../d
 import {freeNavigationSnapshot,rebindPreparedFreeSnapshot} from '../navigation/free-view.mjs';
 import {currentIndexAsync} from '../navigation/current-index.mjs';
 /** Privileged local owner only. Never serialize this complete replica into UI frames. */
-export function createFreeViewOwner({readService,scope,guard=()=>true,clock=()=>new Date().toISOString(),timeZone=Intl.DateTimeFormat().resolvedOptions().timeZone,elapsedNow=()=>performance.now(),schedule=(fn,ms)=>setTimeout(fn,ms),cancel=id=>clearTimeout(id)}={}){
+export function createFreeViewOwner({readService,scope,guard=()=>true,clock=()=>new Date().toISOString(),timeZone=Intl.DateTimeFormat().resolvedOptions().timeZone,elapsedNow=()=>performance.now(),schedule=(fn,ms)=>setTimeout(fn,ms),cancel=id=>clearTimeout(id),initialSession=null}={}){
  const normalized=normalizedScope(scope);if(!normalized||!['freeHeader','freePage','version'].every(k=>typeof readService?.[k]==='function')||typeof guard!=='function')throw Error('invalid-free-view-owner');
- const bound=Object.freeze({...normalized});let generation=0,stopped=false,pending=null,replica=null,published=null,session=null,cachedIndex=null;
+ if(initialSession!==null){
+  if(!initialSession||Object.getPrototypeOf(initialSession)!==Object.prototype||Reflect.ownKeys(initialSession).sort().join(',')!=='H,T,Z,policyRevision'||!FREE_HORIZONS.includes(initialSession.H)||!Number.isSafeInteger(initialSession.T)||Math.abs(initialSession.T)>100000000||typeof initialSession.Z!=='string'||initialSession.Z.length>80||!Number.isSafeInteger(initialSession.policyRevision)||initialSession.policyRevision<0)throw Error('invalid-free-view-session');
+  try{new Intl.DateTimeFormat('en',{timeZone:initialSession.Z});}catch{throw Error('invalid-free-view-session');}
+ }
+ const bound=Object.freeze({...normalized});let generation=0,stopped=false,pending=null,replica=null,published=null,session=initialSession?Object.freeze(structuredClone(initialSession)):null,cachedIndex=null;
  const allowed=()=>!stopped&&guard()===true;
  function invalidate(){generation++;pending?.abort.abort(Error('stale-free-view'));pending=null;replica=null;published=null;session=null;cachedIndex=null;}
  function current(){if(!allowed()){invalidate();return null;}return published;}

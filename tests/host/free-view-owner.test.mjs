@@ -80,3 +80,11 @@ test('current entry refuses external fields, missing publication, malformed or r
  const older=currentFixture();await older.owner.refresh();older.owner.reconfigureSession({H:7,policyRevision:2});await older.owner.refresh();older.policy({...initialFreeTimePolicy(),H:7,revision:1});await older.owner.refresh();assert.throws(()=>older.owner.enterCurrentSession(),/policy-revision/);
  const denied=currentFixture();await denied.owner.refresh();denied.deny();assert.throws(()=>denied.owner.enterCurrentSession(),/stale/);assert.equal(denied.owner.current(),null);const stopped=currentFixture();await stopped.owner.refresh();stopped.owner.stop();assert.throws(()=>stopped.owner.enterCurrentSession(),/stale/);
 });
+
+test('private resumed history session is detached and frozen through fresh replica reads',async()=>{
+ const session={H:7,T:20700,Z:'Asia/Shanghai',policyRevision:2},expected=structuredClone(session),h=fixture({initialSession:session});session.T=20800;session.H=30;
+ const first=await h.owner.refresh();assert.deepEqual(first.snapshot.viewSession,expected);h.advance();const next=await h.owner.refresh();assert.deepEqual(next.snapshot.viewSession,expected);assert.equal(next.snapshot.refs[0].nativeTitle,'Native 2');h.owner.stop();
+});
+test('private resumed session rejects invalid horizon day timezone revision and extra authority',()=>{
+ const base={H:7,T:20700,Z:'UTC',policyRevision:2};for(const session of [{...base,H:1},{...base,T:NaN},{...base,T:100000001},{...base,Z:'invalid-zone'},{...base,policyRevision:-1},{...base,scope:'foreign'}])assert.throws(()=>fixture({initialSession:session}),/invalid-free-view-session/);
+});

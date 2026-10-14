@@ -1,3 +1,4 @@
+import {validateFrameResumeView,validateResumeQuery} from '../host/frame-resume-state.mjs';
 import {prepareHostAutoTimePolicy,hostAutoTimePolicyFresh} from './host-auto-time-policy.mjs';
 import {localDay} from '../navigation/projection.mjs';
 import {FREE_HORIZONS,initialFreeTimePolicy,setFreeHorizon,coolFreeTimePolicy,enableFreeAutoTimePolicy,relocateFreeSegment} from '../data/free-time-policy.mjs';
@@ -12,7 +13,30 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
 export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,presentSurface=null,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
- const views=new Map();
+ const views=new Map(),resumes=new Map();
+ const resumeKey=(context,role=context.role)=>JSON.stringify([context.parentFrame.tabId,context.parentFrame.documentId,context.parentFrame.actualURL,context.scope.key,role]);
+ function resumeFor(context,role=context.role){
+  const time=elapsedNow();for(const [key,value]of resumes)if(time<value.at||time-value.at>=1800000||value.tabId===context.parentFrame.tabId&&value.documentId===context.parentFrame.documentId&&value.scopeKey!==context.scope.key)resumes.delete(key);
+  return resumes.get(resumeKey(context,role));
+ }
+ function rememberResume(context,query,session,view){
+  const key=resumeKey(context),prior=resumeFor(context),validatedQuery=validateResumeQuery(query);
+  if(!context.isCurrent())return;
+  const record={tabId:context.parentFrame.tabId,documentId:context.parentFrame.documentId,scopeKey:context.scope.key,at:elapsedNow(),query:validatedQuery,session:structuredClone(session),view:view??(prior&&JSON.stringify(prior.query)===JSON.stringify(validatedQuery)?prior.view:null)??null};
+  resumes.delete(key);resumes.set(key,record);while(resumes.size>32)resumes.delete(resumes.keys().next().value);
+ }
+ async function resume(input,sender){
+  let m,active=true;const started=elapsedNow();try{m=structuredClone(input);const write=m?.type==='HOST_UI_SAVE_VIEW';if(!['HOST_UI_RESUME','HOST_UI_SAVE_VIEW'].includes(m?.type)||!exactHostRecord(m,write?['v','type','grantId','mountId','view','expectedQuery']:['v','type','grantId','mountId'])||m.v!==1)throw Error('invalid-view-resume');if(write){m.view=validateFrameResumeView(m.view);m.expectedQuery=validateResumeQuery(m.expectedQuery);}
+   return await withRequestDeadline(()=>ui.withScope({sender,grantId:m.grantId,mountId:m.mountId},context=>{
+    if(!active||elapsedNow()-started<0||elapsedNow()-started>=6000)throw Error('expired-view-resume');
+    const old=resumeFor(context);if(!context.isCurrent())throw Error('stale-view-resume');
+    if(!write)return {ok:true,resume:old?{query:structuredClone(old.query),view:old.view?structuredClone(old.view):null}:null};
+    const entry=views.get(m.mountId),current=entry?.owner.current();
+    if(!old||JSON.stringify(m.expectedQuery)!==JSON.stringify(old.query)||!current||entry.pending||entry.error||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId||m.view.segment!==(old.query.segment??0))throw Error('stale-view-resume');
+    rememberResume(context,old.query,current.snapshot.viewSession,m.view);return {ok:true};
+   }),{now:elapsedNow,schedule,cancel});
+  }catch{return {ok:false,reason:'view-resume-unavailable'};}finally{active=false;}
+ }
  const reason=error=>/^[a-z0-9-]{1,80}$/.test(error?.message)?error.message:'free-view-unavailable';
  function remove(id){const entry=views.get(id);if(entry){entry.prepareGeneration=(entry.prepareGeneration??0)+1;cancel(entry.retryTimer);entry.owner.stop();views.delete(id);}}
  function begin(entry){
@@ -41,7 +65,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    if(!entry){
     if(views.size>=maxViews)throw Error('free-view-capacity');
     entry={scopeKey:context.scope.key,scopeGrantId:context.scopeGrantId,parentFrame:context.parentFrame,isCurrent:context.isCurrent,pending:false,error:null,presentation:{revision:0,intent:{kind:'show-workspace'}},
-     owner:createFreeViewOwner({readService,scope:context.scope,guard:context.isCurrent,clock,elapsedNow,schedule,cancel})};
+     owner:createFreeViewOwner({readService,scope:context.scope,guard:context.isCurrent,clock,elapsedNow,schedule,cancel,initialSession:(resumeFor(context,'workspace')?.query.segment??0)>0?resumeFor(context,'workspace').session:null})};
     views.set(message.mountId,entry);begin(entry);
    }
    if(entry.currentEntryPending&&context.role==='workspace'&&((message.query.segment??0)!==0||message.query.search!==undefined||message.query.workingSet!==undefined))entry.currentEntryEligible=false;
@@ -83,6 +107,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    const result={ok:true,state:'ready',page,navigation};
    if(new TextEncoder().encode(JSON.stringify(result)).length>65536)throw Error('free-frame-page-too-large');
    if(context.role==='workspace')entry.currentEntryEligible=page.segment===0&&search===undefined&&workingSet===undefined;
+   check();if(!context.isCurrent())throw Error('stale-view-resume');rememberResume(context,message.query,current.snapshot.viewSession);
    return result;
   }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;}
  }
@@ -252,6 +277,6 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    isCurrent:()=>context.isCurrent()&&views.get(mountId)===entry&&!entry.pending&&!entry.error&&entry.owner.current()===current};
  }
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
- function revokeTab(tabId){for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({handle,present,resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){for(const key of [...views.keys()])remove(key);}});
+ function revokeTab(tabId){for(const [key,value]of resumes)if(value.tabId===tabId)resumes.delete(key);for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
+ return Object.freeze({handle,resume,present,resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){resumes.clear();for(const key of [...views.keys()])remove(key);}});
 }
