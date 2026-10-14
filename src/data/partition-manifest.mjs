@@ -8,6 +8,13 @@ const MAX_REFS=100000,MAX_UNITS=128*1024*1024;
 export const manifest_partitionKey=(scope,refId,revision,generation)=>JSON.stringify([scope,'ref-partition',generation,refId,revision]);
 export const manifest_partitionRecord=(key,payload)=>({key,payload,checksum:digest(payload)});
 export function manifest_partitionUnpack(row){if(!row||digest(row.payload)!==row.checksum)throw Error('corrupt-record');return row.payload;}
+/** Same fresh checksum verification, with the canonical length from this read.
+ * No supplied size or retained validation certificate is accepted. */
+export function manifest_partitionUnpackMeasured(row){
+ if(!row)throw Error('corrupt-record');
+ const encoded=stable(row.payload);if(sha256(encoded)!==row.checksum)throw Error('corrupt-record');
+ return {payload:row.payload,units:encoded.length};
+}
 export const manifest_isPartitioned=p=>p?.format===manifest_PARTITION_FORMAT;
 export function manifest_headerState(m,preferences=m.preferences){return {schema:2,scopeKey:m.scopeKey,revision:m.revision,channel:m.channel,refs:{},events:{},coverage:{},identities:{},placements:{},sources:m.sources,workspaces:m.workspaces,preferences};}
 function* manifestStructureChecks(m,scopeKey){let checked=0;

@@ -8,7 +8,7 @@ import { TABLES, emptyState, validateState, id, exact } from './state.mjs';
 import { stable, digest } from './hash.mjs';
 import { normalizedScope } from '../b1/identity.mjs';
 import {knownAnchorCursorKey} from './known-anchor-key.mjs';
-import {manifest_PARTITION_FORMAT,manifest_PAGE_SIZE,manifest_partitionKey,manifest_partitionRecord,manifest_partitionUnpack,manifest_isPartitioned,manifest_headerState,manifest_checkManifest,manifest_checkManifestAsync,manifest_manifestRecord} from './partition-manifest.mjs';
+import {manifest_PARTITION_FORMAT,manifest_PAGE_SIZE,manifest_partitionKey,manifest_partitionRecord,manifest_partitionUnpack,manifest_partitionUnpackMeasured,manifest_isPartitioned,manifest_headerState,manifest_checkManifest,manifest_checkManifestAsync,manifest_manifestRecord} from './partition-manifest.mjs';
 export const PARTITION_FORMAT=manifest_PARTITION_FORMAT;
 export const PAGE_SIZE=manifest_PAGE_SIZE;
 export const partitionKey=manifest_partitionKey;
@@ -58,7 +58,7 @@ export class PartitionedState {
   tx.oncomplete=()=>{try{fence(options);resolve(result);}catch(e){reject(e);}};tx.onabort=()=>reject(error??tx.error??Error('read-aborted'));
  });}
  async manifest(scope,options={}){const s=normalizedScope(scope);if(!s)throw Error('unverified-scope');const db=await this.owner.connection();fence(options);return new Promise((resolve,reject)=>{const tx=db.transaction('b23_states'),r=tx.objectStore('b23_states').get(s.key);let result,error;const fail=e=>{error??=e;try{tx.abort();}catch{}};r.onsuccess=()=>{if(isReadablePartition(r.result?.payload))this.readManifest(tx,r.result,s,value=>result=value,fail);else result=null;};tx.oncomplete=()=>{try{fence(options);resolve(result);}catch(e){reject(e);}};tx.onabort=()=>reject(error??tx.error??Error('read-aborted'));});}
- loadPieces(tx,m,ids,done,fail){const pieces=new Map(),wanted=[...new Set(ids)].filter(k=>Object.hasOwn(m.refVersions,k));if(!wanted.length){done(pieces);return;}let left=wanted.length;for(const refId of wanted){const r=tx.objectStore('b23_states').get(partitionKey(m.scopeKey,refId,m.refVersions[refId],m.generation));r.onsuccess=()=>{try{pieces.set(refId,checkPiece(m,partitionUnpack(r.result),refId));if(!--left)done(pieces);}catch(e){fail(e);}};}}
+ loadPieces(tx,m,ids,done,fail,measureUnits=false){const pieces=new Map(),wanted=[...new Set(ids)].filter(k=>Object.hasOwn(m.refVersions,k));if(!wanted.length){done(pieces,0);return;}let left=wanted.length,units=0;for(const refId of wanted){const r=tx.objectStore('b23_states').get(partitionKey(m.scopeKey,refId,m.refVersions[refId],m.generation));r.onsuccess=()=>{try{const measured=measureUnits?manifest_partitionUnpackMeasured(r.result):null;pieces.set(refId,checkPiece(m,measured?measured.payload:partitionUnpack(r.result),refId));if(measured)units+=measured.units;if(!--left)done(pieces,units);}catch(e){fail(e);}};}}
  loadMutation(tx,m,params,prior,done,fail,pieceLoader=this.loadPieces.bind(this)){
   const c=params.fingerprint?.command,ids=new Set(preferenceRefs(m.preferences));
   if(c?.refId)ids.add(c.refId);

@@ -1633,3 +1633,12 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 100k首次未进入性能路径：共享navigation引用的frame-resume-state被simulator服务器拒绝加载，保留free-round168-import-fail.json；仅放行该纯presentation依赖，其他host/runtime路径仍404，并补服务器回归及性能脚本源码hash。
 - 修复环境后的100k/project-mixed/4x实际仍 **FAIL**（free-round168-100k-4x-final.json）：约30454ms仍WAITING/read-budget-exhausted，HEADER超期/stale-binding；原生输入节点、可见性及未提交草稿保留，sourceChangedDuringRun=false。不能用微基准收益替代此FAIL，6秒期限保持。
 - 真实G/U、首页首发、预证明立即发送、候选完整内存、Round166间歇退出超时等缺口仍保留；Free NOT_RELEASE_READY。61ab5ce上轮push超时，本轮自然检查点正常同步。
+
+
+## Round169：共享片审计复用本次校验编码长度（接 d0f4fba）
+
+- 新采样显示已推进至shared-directory，stable重复编码成为最大self CPU热点；采样为诊断而非延迟认证（free-round169-current-profile.json及cpuprofile.gz）。泛型stable改写仅做临时实验，未接入；选择消除审计中同片的第二次完整编码。
+- measured unpack在当前事务本次read中完成原SHA-256及canonical编码，返回该次编码长度；loadPieces仍逐片执行checkPiece/schema，audit继续核对全局units、重复evidence和真实locator。普通调用兼容；无外部传入size、跨事务缓存或旧piece证书。
+- 完整Node **3218/3218 PASS**（free-round169-node.log.gz）；真实IDB生命周期7、跨5001边界4、retention10项通过（free-round169-shared-idb.json），含损坏、撤权、回滚、恢复、Pro资产和账户隔离。
+- 固定最终源码100k/project-mixed/4x仍 **FAIL**（free-round169-100k-final.json）：约30459ms仍WAITING/read-budget-exhausted，已到shared-directory，后续HEADER超期；输入原节点、草稿、可见性保留，sourceChangedDuringRun=false。未延长6秒/总预算，未把诊断或阶段推进当F1达标。
+- 首页首发、预证明立即发送、候选完整内存、间歇退出与真实G/U继续未完成；Free NOT_RELEASE_READY。d0f4fba已正常推送原PR #16。
