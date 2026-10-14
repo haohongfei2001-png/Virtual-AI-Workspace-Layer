@@ -51,7 +51,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     }
     return {...entry.handle};
   }
-  function scanPage(cursor=null) {
+  function scanPageCore(cursor=null,candidateOnly=false) {
     const empty=()=>({candidates:[],membershipClaims:[],coverageClaims:[],detachedHandles:[]});
     if(stopped){if(cursor)throw Error('stale-surface-cursor');return {payload:empty(),cursor:null};}
     refreshRoute();refreshRoots();
@@ -64,7 +64,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       return true;
     };
     const oneVisible=selector=>{const nodes=selector?[...document.querySelectorAll(selector)].filter(visible):[];return nodes.length===1?nodes[0]:null;};
-    if(route.kind==='conversation'&&profile.currentConversationIdAttribute){
+    if(!candidateOnly&&route.kind==='conversation'&&profile.currentConversationIdAttribute){
       const reading=oneVisible(profile.currentConversationReading),heading=oneVisible(profile.currentConversationHeader);
       // URL alone cannot bind an old reading surface during an SPA transition.
       // This profile requires a native-rendered current-object association.
@@ -82,6 +82,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       if(parsed?.kind==='unsupported'||parsed&&parsed.kind!==entity&&!(entity==='project'&&parsed.kind==='project-candidate')) return null;
       if(!parsed&&!(entity==='project'&&node.tagName==='BUTTON')) return null;
       const id=parsed?.kind===entity?(entity==='project'?parsed.projectId:parsed.conversationId):null;
+      if(candidateOnly&&id)return null;
       const handle=control(node,root,regionKind,entity,id?JSON.stringify([entity,id,parsed.navigationURL]):null);
       const target=id?{kind:'resolved',entity,nativeId:id,navigationURL:parsed.navigationURL,liveHandle:handle}:{kind:'live-control',control:handle,navigationURL:null};
       const result={renderKey:id?`${entity}:${id}`:`candidate:${handle.id}`,entity,...title(node),target,evidence:evidence(regionKind,'textContent',href?'href':'button')};
@@ -90,7 +91,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     // A canonical current Project needs route identity and the explicitly scoped
     // member surface; an IDless sidebar label never supplies that identity.
     const members=roots.get('members');
-    if(route.kind==='project'&&members&&members.getAttribute(profile.memberProjectIdAttribute)===route.projectId&&profile.currentProjectTitle&&profile.currentProjectHeader){
+    if(!candidateOnly&&route.kind==='project'&&members&&members.getAttribute(profile.memberProjectIdAttribute)===route.projectId&&profile.currentProjectTitle&&profile.currentProjectHeader){
       const heading=unique(profile.currentProjectTitle),header=unique(profile.currentProjectHeader);
       if(heading&&header&&visible(heading)&&visible(header)&&visible(members)&&heading.parentNode===members.parentNode&&heading.textContent.trim()===header.textContent.trim()){
         // The confirmed current title wins over a sidebar label that may lag a rename.
@@ -99,12 +100,12 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       }
     }
     // A confirmed open Project must not lose its member evidence to a full sidebar.
-    const order=currentProjectId?['members','projects','history']:['projects','history','members'];
+    const order=candidateOnly?['projects']:currentProjectId?['members','projects','history']:['projects','history','members'];
     let page=cursor&&pages.get(cursor);
     if(cursor){
       pages.delete(cursor);
-      if(!page||page.routeEpoch!==routeEpoch||page.regionEpoch!==regionEpoch||page.currentProjectId!==currentProjectId||page.currentConversationId!==currentConversationId)throw Error('stale-surface-cursor');
-    }else page={routeEpoch,regionEpoch,currentProjectId,currentConversationId,memberIds:new Set(),region:0,regions:order.map(kind=>({kind,root:roots.get(kind),walker:null,finished:false}))};
+      if(!page||page.candidateOnly!==candidateOnly||page.routeEpoch!==routeEpoch||page.regionEpoch!==regionEpoch||page.currentProjectId!==currentProjectId||page.currentConversationId!==currentConversationId)throw Error('stale-surface-cursor');
+    }else page={candidateOnly,routeEpoch,regionEpoch,currentProjectId,currentConversationId,memberIds:new Set(),region:0,regions:order.map(kind=>({kind,root:roots.get(kind),walker:null,finished:false}))};
     // Walk loaded DOM lazily: never allocate a whole-region NodeList. Each page
     // bounds inspected elements, including non-controls, and rechecks identity.
     if(cursor&&candidates.length>=limit){candidates.length=0;claims.clear();}
@@ -127,7 +128,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     }
 
     const menu=roots.get('moveMenu');
-    if(route.kind==='conversation'&&menu&&visible(menu)&&menu.getAttribute(profile.menuConversationIdAttribute)===route.conversationId) {
+    if(!candidateOnly&&route.kind==='conversation'&&menu&&visible(menu)&&menu.getAttribute(profile.menuConversationIdAttribute)===route.conversationId) {
       const checked=[...menu.querySelectorAll('input[type="radio"]:checked')];
       if(checked.length===1&&visible(checked[0])&&visible(checked[0].closest('label'))&&checked[0].closest('label')?.textContent.trim()===profile.noneLabel) claims.set(route.conversationId,{conversationId:route.conversationId,asserted:'NONE',projectId:null,upstreamRevision:null,evidence:evidence('moveMenu','checked-no-project')});
     }
@@ -136,6 +137,8 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     let next=null;if(page.region<page.regions.length||detached.size){next=Object.freeze(Object.create(null));pages.set(next,page);}
     return {payload:{candidates,membershipClaims:[...claims.values()],coverageClaims:[],detachedHandles},cursor:next};
   }
+  const scanPage=cursor=>scanPageCore(cursor,false);
+  const scanCandidatePage=cursor=>scanPageCore(cursor,true);
   const scan=()=>scanPage().payload;
   function watchSurface(){
     const selectors=[...Object.values(profile.regions),profile.currentConversationHeader,profile.currentProjectTitle,profile.currentProjectHeader].filter(Boolean);
@@ -218,7 +221,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const entry=candidateEntry(handle);if(!entry)return false;
     return identity.document.deref()===document&&identity.profileId===profile.id&&identity.profileVersion===profile.revision&&identity.node.deref()===entry.node.deref()&&identity.root.deref()===entry.root.deref()&&identity.parent.deref()===entry.parent.deref()&&identity.fingerprint===entry.fingerprint;
   }
-  return Object.freeze({scan,scanPage,affectsSurface,getNode,resolveLoadedTargets,retainHandles(owner,handles,deadline){if(stopped||!Array.isArray(handles)||handles.length>256||handles.some(handle=>!getNode(handle)))return false;return byId.retain(owner,handles.map(handle=>handle.id),deadline);},releaseHandles:owner=>byId.release(owner),handleStats:()=>({...byId.stats(),detached:detached.size,lookupComplete}),captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
+  return Object.freeze({scan,scanPage,scanCandidatePage,affectsSurface,getNode,resolveLoadedTargets,retainHandles(owner,handles,deadline){if(stopped||!Array.isArray(handles)||handles.length>256||handles.some(handle=>!getNode(handle)))return false;return byId.retain(owner,handles.map(handle=>handle.id),deadline);},releaseHandles:owner=>byId.release(owner),handleStats:()=>({...byId.stats(),detached:detached.size,lookupComplete}),captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
     if(stopped)return;routeEpoch=Number.isSafeInteger(nextEpoch)&&nextEpoch>routeEpoch?nextEpoch:routeEpoch+1;clearHandles();roots.clear();routeURL=document.location.href;
   },stop() {stopped=true;clearHandles();roots.clear();}});
 }

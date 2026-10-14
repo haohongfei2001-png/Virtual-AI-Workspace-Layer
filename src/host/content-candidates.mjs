@@ -18,7 +18,7 @@ export function createContentCandidates({adapter,current,showReading,isUpgraded=
   try{
   const transaction=beginScan?.();
   if(beginScan&&(!transaction||typeof transaction.visit!=='function'||typeof transaction.commit!=='function'))throw Error('invalid-candidate-scan');
-  const proposals=typeof adapter.loadedPages==='function'?adapter.loadedPages():await adapter.readLoaded(null);check();
+  const proposals=typeof adapter.loadedCandidatePages==='function'?adapter.loadedCandidatePages():typeof adapter.loadedPages==='function'?adapter.loadedPages():await adapter.readLoaded(null);check();
   let candidates=[];const keys=new Set();
   for await(const p of proposals){check();if(p.kind==='surface-delta'&&(!Array.isArray(p.payload?.candidates)||p.payload.candidates.length>256))throw Error('invalid-content-candidates');for(const row of p.kind==='surface-delta'?p.payload.candidates:[]){
    if(row.entity!=='project'||row.target?.kind!=='live-control')continue;

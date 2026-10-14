@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round195：已升级候选的四格返回句柄独立保留原30秒期限，避免后台缓存淘汰丢失来路；定向Node532项、正式MV3候选升级6项通过。Round194完整Node3673项与其他证据独立保留。100k/4x预算FAIL、首页首发、剩余候选内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
+当前已推进至Round196：候选列表复用现有分页，仅遍历Project区域中的IDless控件；完整Node3709项、真实100k混合DOM机制2项、正式MV3候选升级6项分别通过。100k/4x端到端预算FAIL、首页首发、剩余精确去重/事实成员内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1949,3 +1949,13 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 最终定向Node **532/532 PASS**（free-round195-targeted.log.gz），包括生产content-session与实际小容量registry集成：100次churn后仍保留原句柄，四格返回恢复焦点；重复refresh原deadline、stop/route/身份丢失恰好释放，时钟/retain失败不focus。仅此受影响组合，不冒称重新运行Round194全套。
 - 正式package隔离headless Chrome MV3候选升级旅程 **6/6 PASS**（free-round195-candidates-browser.json）：605个fixture控件分页/尾页/收缩、用户明确重试、同名节点单次原生委托及升级、阅读到四格返回、P/C往返、草稿保护和原editor保持。sourceHashes未漂移；该浏览器规模并非新>2048 churn认证（churn由独立集成测试覆盖），不是实际ChatGPT/G/U。
 - 9c0c5cd已本地提交；上次正常push30秒超时未确认，网络问题不回退代码。72ca068与所有前轮成果保持，继续原PR #16正常同步。剩余O(N)成员优先集合不能直接删除：UNKNOWN虽不覆盖PROJECT，旧history标题仍会覆盖成员新名；后续候选专用遍历须复用原游标而保持事实路径。整体Free仍NOT_RELEASE_READY。
+
+
+## Round196：候选界面复用Project专用分页（接6165cf3）
+
+- discovery的scanCandidatePage复用同一TreeWalker/每页256 inspected/route-region失效逻辑，仅遍历projects，稳定ID对象在创建句柄前过滤；不生成当前P/C、成员或NONE事实。私有cursor绑定candidateOnly模式，跨模式/跨实例/重复/失效使用均拒绝。常规scanPage的成员新名优先及事实投影保持不变。
+- adapter.loadedCandidatePages复用原异步迭代、6秒elapsed期限、generation/surfaceEpoch/abort校验与分片；不修改生产事实pump的surfaceCursor。候选UI优先新口，旧adapter兼容；新口异常直接拒绝，不回退全扫描，原精确重复检查、窗口/身份保留和事务提交护栏保持。
+- 最终完整Node **3709/3709 PASS**（free-round196-node.log.gz）。初次定向测试仍注入旧loadedPages导致失效未触发，已移到生产实际新口；首次完整回归新增双入口测试的局部变量错误已修复，原失败日志独立保留。未删反例或降低生产护栏。
+- 真实headless Chrome DOM机制 **2/2 PASS**：50k history+50k members及600IDless/1resolved Project，候选3页、projects602次nextNode（含尾null）、history/member各0，records600；普通事实小样本仍保留当前P与成员新名/PROJECT声明。明确WEB_MECHANISM_ONLY，不等于100k MV3加载或6秒端到端性能通过。源码/脚本hash稳定且外网阻断。
+- 正式package隔离MV3候选升级旅程 **6/6 PASS**（free-round196-candidates-browser.json）：605控件分页/尾页/收缩、显式重试、同名原节点单次导航、升级及P/C返回、草稿与原editor均保持；sourceHashes未漂移。
+- 专用路径不再累计无关memberIds，但仍做至多2048缓存节点valid复核及根检查，不宣称完全不触及其他region。常规事实memberIds与精确candidate keys仍O(N)，原性能/首发/即时pointer/81项与真实G/U缺口保留。6165cf3已本地保存，正常push仍超时未确认；继续同分支和原PR #16，不强推。

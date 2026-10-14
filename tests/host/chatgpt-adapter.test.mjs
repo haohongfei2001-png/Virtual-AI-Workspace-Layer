@@ -160,8 +160,8 @@ test('content candidate listing reaches native IDless tail through bounded adapt
  const tail=await owner.listPage(576);assert.equal(tail.total,605);assert.equal(tail.items.length,29);assert.equal(tail.nextOffset,null);assert.equal(tail.items.at(-1).nativeTitle,'Candidate 604');
  const result=await owner.activate({candidate:tail.items.at(-1),actionId:'tail-action',uiGrantId:'grant',mountId:'mount',expiresAt:new Date(6000).toISOString()});assert.equal(result.state,'dispatched');assert.equal(clicks,1);owner.stop();f.adapter.stop();
 });
-test('loaded iterator rejects stop, abort and elapsed budget between pages',async()=>{
- for(const mode of ['stop','abort','deadline']){let elapsed=0;const f=fixture({elapsedNow:()=>elapsed}),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};for(let i=0;i<300;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null});f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();const controller=new AbortController(),iterator=f.adapter.loadedPages(controller.signal);assert.equal((await iterator.next()).done,false);if(mode==='stop')f.adapter.stop();if(mode==='abort')controller.abort();if(mode==='deadline')elapsed=6000;await assert.rejects(iterator.next(),/stale-host-loaded-read/);f.adapter.stop();}
+test('both loaded iterators reject stop, abort and elapsed budget between pages',async()=>{
+ for(const method of ['loadedPages','loadedCandidatePages'])for(const mode of ['stop','abort','deadline']){let elapsed=0;const f=fixture({elapsedNow:()=>elapsed}),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};for(let i=0;i<300;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null});f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();const controller=new AbortController(),iterator=f.adapter[method](controller.signal);assert.equal((await iterator.next()).done,false);if(mode==='stop')f.adapter.stop();if(mode==='abort')controller.abort();if(mode==='deadline')elapsed=6000;await assert.rejects(iterator.next(),/stale-host-loaded-read/);f.adapter.stop();}
 });
 
 test('popover toggle rescans deferred native changes and stop removes its listener',async()=>{
@@ -183,10 +183,10 @@ test('queued send expires with the proof captured at the gesture even when trans
 });
 
 
-test('loaded iterator rechecks expiry and cancellation before declaring its final packet complete',async()=>{
- for(const mode of ['stop','abort','deadline']){
+test('both loaded iterators recheck expiry and cancellation before declaring their final packet complete',async()=>{
+ for(const method of ['loadedPages','loadedCandidatePages'])for(const mode of ['stop','abort','deadline']){
   let elapsed=0;const f=fixture({elapsedNow:()=>elapsed});await f.start();
-  const controller=new AbortController(),iterator=f.adapter.loadedPages(controller.signal);
+  const controller=new AbortController(),iterator=f.adapter[method](controller.signal);
   assert.equal((await iterator.next()).done,false);
   if(mode==='stop')f.adapter.stop();if(mode==='abort')controller.abort();if(mode==='deadline')elapsed=6000;
   await assert.rejects(iterator.next(),/stale-host-loaded-read/);f.adapter.stop();
@@ -201,7 +201,7 @@ test('candidate scan rejects directory mutation before identity cleanup or publi
   for(let i=0;i<count;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null});
   f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await tick();
   let scans=0,upgrades=0,changed=false;
-  const adapter={...f.adapter,async *loadedPages(){for await(const packet of f.adapter.loadedPages()){yield packet;if(!changed){changed=true;nodes[0].textContent='Renamed';f.trigger();}}}};
+  const adapter={...f.adapter,async *loadedCandidatePages(){for await(const packet of f.adapter.loadedCandidatePages()){yield packet;if(!changed){changed=true;nodes[0].textContent='Renamed';f.trigger();}}}};
   const owner=createContentCandidates({adapter,current:()=>true,showReading:()=>true,onScan:()=>scans++,isUpgraded:()=>{upgrades++;return false;}});
   await assert.rejects(owner.listPage(),/stale-host-loaded-read/);assert.equal(scans,0);assert.equal(upgrades,0);
   const page=await owner.listPage();assert.equal(page.total,count);assert.equal(page.items[0].nativeTitle,'Renamed');assert.equal(scans,1);assert.equal(upgrades,count);
