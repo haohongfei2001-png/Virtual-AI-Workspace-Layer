@@ -255,3 +255,22 @@ test('scope replacement clears snippet panel and rejects late selected-asset rep
  f.runtime.sendMessage=m=>m.type==='HOST_UI_SNIPPET'?held.promise:m.type==='HOST_UI_RENEW'?Promise.resolve({ok:true,grant:{...f.grant(),scopeGrantId:'other'}}):send(m);
  const pending=panel.request({type:'HOST_UI_SNIPPET',action:'save',id:'C'}),rejected=assert.rejects(pending,/snippet-unavailable/);await f.advance(1000);held.resolve({ok:true});await rejected;panel.onClose();assert.equal(f.snippetStops,1);assert.equal(f.privateRoot.children.length,0);
 });
+
+async function searchSnippetFixture(){
+ const f=fixture(),C='11111111-1111-4111-8111-111111111111';
+ f.setView(async m=>({ok:true,state:'ready',page:{...f.page(),workspaceRevision:5,current:{refId:C,projectId:null,nativeUrl:'https://chatgpt.com/c/'+C},...(m.query.search?{search:{...m.query.search,items:[{id:C,snippetMatches:[{id:'saved',preview:'match'}]},{id:'other',snippetMatches:[{id:'elsewhere',preview:'match'}]}]}}:{})},navigation:[]}));
+ await f.client.start();await drain();await f.nav.onProjectionRequest({search:{query:'match',offset:0,limit:24,projectId:null}});return f;
+}
+test('search locate uses only current owner-issued saved asset and bounded authority',async()=>{
+ const f=await searchSnippetFixture(),send=f.runtime.sendMessage,packets=[];f.runtime.sendMessage=m=>m.type==='HOST_UI_SNIPPET'?(packets.push(m),Promise.resolve({ok:true})):send(m);
+ for(const value of [{id:'unknown'},{id:'elsewhere'},{id:'saved',scope:'A'},null])assert.equal((await f.nav.onSnippetLocateRequest(value)).ok,false);
+ assert.equal(packets.length,0);assert.deepEqual(await f.nav.onSnippetLocateRequest({id:'saved'}),{ok:true});assert.deepEqual({...packets[0],operationId:'uuid'},{v:1,type:'HOST_UI_SNIPPET',grantId:'grant',mountId:'mount',operationId:'uuid',expectedRevision:5,action:'locate',id:'saved'});f.client.stop();
+});
+for(const change of ['query','stop','disconnect','scope','deadline'])test('search locate rejects duplicate and late '+change+' reply',async()=>{
+ const f=await searchSnippetFixture(),held=deferred(),send=f.runtime.sendMessage;let count=0;
+ if(change==='scope')await f.advance(9000);
+ f.runtime.sendMessage=m=>m.type==='HOST_UI_SNIPPET'?(count++,held.promise):m.type==='HOST_UI_RENEW'&&change==='scope'?Promise.resolve({ok:true,grant:{...f.grant(),scopeGrantId:'other'}}):send(m);
+ const pending=f.nav.onSnippetLocateRequest({id:'saved'});await drain();assert.equal((await f.nav.onSnippetLocateRequest({id:'saved'})).ok,false);assert.equal(count,1);
+ if(change==='query')await f.nav.onProjectionRequest({segment:1});if(change==='stop')f.client.stop();if(change==='disconnect')f.disconnect();if(change==='scope')await f.advance(1000);if(change==='deadline')await f.advance(6000);
+ held.resolve({ok:true});assert.equal((await pending).ok,false);f.client.stop();
+});

@@ -1,0 +1,28 @@
+✔ production composition sequences HELLO REFRESH and mount with no page bridge; restart seq is monotonic (2.109333ms)
+✔ native plans require real extension sender and exact current binding, no mutation path (0.354834ms)
+✔ stop cancels pending HELLO; late result cannot create surfaces or listeners (0.203208ms)
+✔ unverified scope and invalid binding fail closed before surface; pagehide tears down live session (0.23775ms)
+✔ pending RPC deadline is six seconds and cannot revive after late response (0.129375ms)
+✔ document renewal and scope revalidation precede UI status with one six-second budget (0.461833ms)
+✔ SPA adapter rebind withdraws old surface and remounts without modifying native draft (0.220958ms)
+✔ same-URL invalidation after replacement HELLO revokes it; old-listener bursts coalesce (0.351167ms)
+✔ pagehide or explicit stop during queued rebind prevents automatic revival (0.218125ms)
+✔ failed replacement stops without self-retry (0.142917ms)
+✔ trusted surface presentation dispatches only the two modes without native plans or writes (0.100584ms)
+✔ presentation rejects wrong sender, extra fields, invalid mode/binding and stale route, expiry or stop (0.322833ms)
+✔ old session presentation cannot act on replacement even with identical binding fields (0.09525ms)
+✔ renewal checks scope before exposing renewed UI and refuses unverified authority (0.126917ms)
+✔ slow scope revalidation consumes the remaining renewal budget (0.2445ms)
+✔ workspace entered bridge uses current private binding and bounded RPC; stopped bridge cannot send (0.152792ms)
+✔ private content selection capture validates and releases one scope-bound ticket (0.411875ms)
+✔ content selection rejects untrusted sender extra fields route mismatch and absent node epoch before reading (0.131333ms)
+✔ content ticket expires on node replacement elapsed six seconds route change or stop (0.285667ms)
+✔ expired queued snippet restore cannot scroll or switch native reading (0.164583ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 50.024708

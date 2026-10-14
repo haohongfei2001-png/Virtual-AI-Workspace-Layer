@@ -7,12 +7,12 @@ const gridIcon='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stro
 import { css } from './styles.mjs';
 function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);n.textContent=text;return n;}
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
-export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onProjectionRequest=null,onHorizonRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null,onBackupRequest=null,onSnippetsRequest=null,onUndoTimePolicyRequest=null}) {
+export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onProjectionRequest=null,onHorizonRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null,onBackupRequest=null,onSnippetsRequest=null,onSnippetLocateRequest=null,onUndoTimePolicyRequest=null}) {
   const framed=surface!==null;
   if(framed&&(!['workspace','sidebar'].includes(surface.role)||surface.root?.ownerDocument!==doc))throw Error('invalid-navigation-surface');
   const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,frameSearchOffset=0,frameSearchWaiting=false,frameWorkingSetOffset=0,frameWorkingSetWaiting=false,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
   let settingsOpen=false,timePolicyNotice=null,timePolicyNoticeTimer=null,lastTimePolicyNotice=null;
-  let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,projectionRequest=0,horizonPending=null,horizonError=null,workingSetPending=null,workingSetError=null;
+  let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,projectionRequest=0,horizonPending=null,horizonError=null,workingSetPending=null,workingSetError=null,snippetLocatePending=null;
   // Keep the original event target alive until its click, drop, or composition
   // completes. Coalesce updates instead of extending a debounce on each change.
   const pointers=new Set(),keys=new Set(),win=doc.defaultView??globalThis;
@@ -315,17 +315,30 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(frameProjection&&searchQuery!==null){
       const section=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
       top.append(node(doc,'strong',{},theme?.name??'查找已知项目与聊天'),graphic(button('关闭派生查找',closeFrameSearch),'close'));section.append(top);
-      const input=node(doc,'input',{'aria-label':'已知聊天查找输入',placeholder:'输入项目或聊天名称','data-focus-key':'search-input',type:'search',maxlength:'200'});input.value=searchQuery;
+      const input=node(doc,'input',{'aria-label':'已知聊天查找输入',placeholder:'输入项目、聊天名称或已保存片段','data-focus-key':'search-input',type:'search',maxlength:'200'});input.value=searchQuery;
       const results=node(doc,'div',{class:'search-results'});
       const display=()=>{results.replaceChildren();const found=frameProjection.search;
         if(frameSearchWaiting||!found||found.query!==searchQuery||found.projectId!==searchTheme||found.offset!==frameSearchOffset){results.append(node(doc,'p',{role:'status'},'正在查找已知记录…'));return;}
-        for(const ref of found.items)results.append(row(ref,'search'));
+        for(const ref of found.items){
+          results.append(row(ref,'search'));
+          for(const snippet of ref.snippetMatches??[]){
+            const detail=node(doc,'section',{'data-snippet-id':snippet.id,class:'snippet-match'}),feedback=node(doc,'span',{role:'status'});detail.append(node(doc,'p',{},snippet.preview));
+            if(frameProjection.current?.refId===ref.id&&typeof onSnippetLocateRequest==='function'){
+              const locate=button('定位片段',async()=>{
+                if(stopped||snippetLocatePending)return;const attempt={projection:frameProjection,query:searchQuery,theme:searchTheme,offset:frameSearchOffset,run:projectionRequest};snippetLocatePending=attempt;locate.disabled=true;feedback.textContent='正在定位…';
+                const valid=()=>!stopped&&snippetLocatePending===attempt&&frameProjection===attempt.projection&&searchQuery===attempt.query&&searchTheme===attempt.theme&&frameSearchOffset===attempt.offset&&projectionRequest===attempt.run;
+                try{const result=await onSnippetLocateRequest({id:snippet.id});if(valid())feedback.textContent=result?.ok===true?'已定位片段。':'定位未确认，可使用原生搜索。';}catch{if(valid())feedback.textContent='定位未确认，可使用原生搜索。';}finally{if(snippetLocatePending===attempt){const active=valid();snippetLocatePending=null;if(active)locate.disabled=false;}}
+              });detail.append(locate,feedback);
+            }else detail.append(node(doc,'p',{},'打开原聊天后，可从已保存片段定位。'));
+            results.append(detail);
+          }
+        }
         if(!found.total)results.append(node(doc,'p',{role:'status'},'未找到已知记录。可以继续使用原生搜索。'));
         if(found.hasMore)results.append(button('显示更多查找结果',()=>{requestFrameSearch(found.offset+found.limit);render();},'显示更多','more'));
         if(found.offset>0)results.append(button('返回前页查找结果',()=>{requestFrameSearch(Math.max(0,found.offset-found.limit));render();},'上一页','more'));
       };
       input.oninput=()=>{searchQuery=input.value.slice(0,200);input.value=searchQuery;requestFrameSearch();display();};
-      section.append(input,node(doc,'p',{},'仅查找已知项目与聊天。原生搜索独立保留。'),results);display();page.append(section);
+      section.append(input,node(doc,'p',{},'查找已知项目、聊天与已保存片段。原生搜索独立保留。'),results);display();page.append(section);
     }else if(frameProjection&&view.worksetOpen){
       const section=node(doc,'section',{class:'search working-set','aria-label':'当前工作集'}),found=frameProjection.workingSet;
       section.append(node(doc,'strong',{},'当前工作集'),button('返回主题视图',closeFrameWorkingSet,'返回主题','more'),node(doc,'p',{},'按已保存的人工顺序显示窗口引用。草稿由原生页面保留。'));
@@ -388,6 +401,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const pageOK=p=>p&&Array.isArray(p.items)&&Number.isSafeInteger(p.total)&&Number.isSafeInteger(p.offset)&&Number.isSafeInteger(p.limit)&&p.total>=0&&p.offset>=0&&p.limit>0&&p.limit<=200&&p.items.length<=p.limit&&typeof p.hasMore==='boolean'&&p.hasMore===(p.offset+p.items.length<p.total);
     if(!Number.isSafeInteger(dto.navigation.maxSegment)||dto.navigation.maxSegment<0||dto.navigation.hasNewer!==(dto.segment>0)||dto.navigation.hasOlder!==(dto.segment<dto.navigation.maxSegment)||!pageOK(dto.groups)||dto.groups.limit>24||!['noProject','unknown'].every(k=>pageOK(dto.entries?.[k]))||dto.groups.items.some(g=>!['current','old','unknown'].every(k=>pageOK(g.lists?.[k])))||dto.selection&&!pageOK(dto.selection)||new TextEncoder().encode(JSON.stringify(dto)).length>65536)throw Error('invalid-frame-projection');
     if(dto.search!==undefined&&(!pageOK(dto.search)||dto.search.limit>24||typeof dto.search.query!=='string'||dto.search.query.length>200||!(dto.search.projectId===null||typeof dto.search.projectId==='string'&&dto.search.projectId.length>0&&dto.search.projectId.length<=128)))throw Error('invalid-frame-search');
+    if(dto.search){let count=0;const ids=new Set();for(const ref of dto.search.items){if(ref.snippetMatches===undefined)continue;if(!Array.isArray(ref.snippetMatches)||ref.snippetMatches.length<1||ref.snippetMatches.length>100)throw Error('invalid-frame-snippets');for(const value of ref.snippetMatches){if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).sort().join(',')!=='id,preview'||typeof value.id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(value.id)||['__proto__','constructor','prototype'].includes(value.id)||ids.has(value.id)||typeof value.preview!=='string'||value.preview.length>160||++count>100)throw Error('invalid-frame-snippets');ids.add(value.id);}}}
     if(dto.workingSet!==undefined&&(!pageOK(dto.workingSet)||dto.workingSet.limit>24||!(dto.workingSet.currentRefId===null||typeof dto.workingSet.currentRefId==='string'&&dto.workingSet.currentRefId.length>0&&dto.workingSet.currentRefId.length<=128)))throw Error('invalid-frame-working-set');
     if(dto.search!==undefined&&dto.workingSet!==undefined)throw Error('conflicting-frame-lists');
     if(snapshot?.scope===dto.scope&&dto.workingSet&&(!view.worksetOpen||searchQuery!==null||dto.workingSet.offset!==frameWorkingSetOffset))return;

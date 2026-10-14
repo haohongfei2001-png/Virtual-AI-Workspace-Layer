@@ -19,6 +19,29 @@ try{
  // a stored Range. Reselect native text before the explicit save click.
  assert.equal(await select(),true);await panel.getByRole('button',{name:'保存当前选区',exact:true}).click();await panel.getByText('共 1 个片段',{exact:true}).waitFor({timeout:10000});await panel.getByText('uniquely selected fixture words',{exact:true}).waitFor();await draft();report.results.push({name:'actual-native-selection-explicit-sidebar-save-and-legacy-list',status:'PASS'});
  report.savedScreenshot=output.replace(/\.json$/,'-saved.png');await page.screenshot({path:report.savedScreenshot,fullPage:true});
+ // Search the saved text, which is absent from the native conversation title.
+ // This must come from the authorized snippetMatches projection, not a local
+ // scan of this frame's partial conversation page.
+ await panel.getByRole('button',{name:'返回工作空间',exact:true}).click();
+ await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
+ const search=workspace.getByRole('searchbox',{name:'已知聊天查找输入'});
+ await search.waitFor({timeout:10000});await search.fill('uniquely selected fixture words');
+ await workspace.getByRole('link',{name:'Ordinary conversation',exact:true}).waitFor({timeout:10000});
+ const match=workspace.locator('.search-results .snippet-match');await match.getByText('uniquely selected fixture words',{exact:true}).waitFor({timeout:10000});assert.equal(await match.count(),1);
+ await draft();report.results.push({name:'saved-snippet-text-search-preserves-native-title-and-exact-preview',status:'PASS'});
+ const beforeSearchLocate=report.transport.length;
+ await match.getByRole('button',{name:'定位片段',exact:true}).click();
+ await page.locator('#reading .message-body').waitFor({state:'visible',timeout:10000});
+ await workspace.getByText('已定位片段。',{exact:true}).waitFor({state:'attached',timeout:10000});
+ assert.equal(report.transport.slice(beforeSearchLocate).some(r=>r.type==='HOST_UI_SNIPPET'&&r.action==='locate'&&r.ok===true),true);
+ await draft();report.results.push({name:'current-conversation-search-snippet-locates-native-reading-with-draft-preserved',status:'PASS'});
+ // Restore the original panel journey, including its independent stale-hash
+ // rejection and targeted removal assertions.
+ await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+ await workspace.getByRole('button',{name:'关闭派生查找',exact:true}).click();
+ await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
+ await sidebar.getByRole('button',{name:'已保存片段',exact:true}).click();
+ await panel.getByText('共 1 个片段',{exact:true}).waitFor({timeout:10000});
  await panel.getByRole('button',{name:'定位片段',exact:true}).click();await panel.getByText('已定位片段。',{exact:true}).waitFor({timeout:10000});await page.locator('#reading .message-body').waitFor({state:'visible'});await draft();report.results.push({name:'locate-verified-anchor-in-native-reading-with-draft-preserved',status:'PASS'});
  await page.locator('#reading .message-body').evaluate(node=>node.append(' changed native body'));await panel.getByRole('button',{name:'定位片段',exact:true}).click();await panel.getByRole('alert').filter({hasText:'操作结果未确认'}).waitFor({timeout:10000});await draft();report.results.push({name:'edited-native-body-rejects-old-hash-and-offers-native-search',status:'PASS'});
  await panel.getByRole('button',{name:'删除片段',exact:true}).click();await panel.getByText('暂无已保存片段。',{exact:true}).waitFor({timeout:10000});await draft();report.results.push({name:'remove-only-manual-snippet-preserves-native-input',status:'PASS'});

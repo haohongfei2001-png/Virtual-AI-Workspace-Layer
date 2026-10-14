@@ -1324,3 +1324,14 @@ Round118补充：静态schema键编码缓存的Map与null-prototype frozen字典
 - 最终逻辑完整Node2548/2548；之后仅panel局部样式调整，原UI7/7回归通过。actual packaged MV3片段四旅程PASS：实际Selection→真实sidebar按钮→owner保存→列表→精确定位→正文变更拒旧hash→删除，textarea节点/草稿不变、零send-intent。最终report sourceChangedDuringRun=false。截图free-round121-snippets-saved.png已人工查看，无按钮/文字溢出横向，窄sidebar可滚动。不是production/真人视觉验收。
 - 初次MV3 FAIL保留：测试先fill原生输入触发既定让位，再错误寻找已消失的workspace关闭按钮。改成真实返回workspace再进入reading，不放宽产品断言；修后两次包旅程分别source-scoped保留。最终标准原包13/13旅程PASS且sourceChangedDuringRun=false，free-round121-package-mv3-final保存来源。
 - 下一继续C4搜索结果直接片段定位/定位失败体验及其它正式Free缺口。100k/4x冷启动失败、真实context/ACK/G/U/PAIA条件仍保留；Free未完成、NOT_RELEASE_READY。
+
+
+## Round122：已知搜索中的人工片段预览与安全定位（接 b96a018）
+
+- 搜索沿用原生名称与已有 knownMatches；同一聊天仍是一条结果，附带匹配人工片段的 opaque id/最多160字符预览。多个片段保持保存顺序，标题先命中不会吞掉片段；不发送正文hash/message/branch锚，不改旧偏好格式或Pro资产。
+- 当前聊天结果可明确点击定位，复用既有 owner CAS版本/scope/private content restore通道；跨聊天继续原生新标签链接及片段入口提示。失败保留原生搜索提示，查询/route/scope/停止后的迟到回复不覆盖新界面。
+- frame严格验证片段DTO、最多100项，只允许当前搜索页与当前聊天关联的id；六秒期限和单次互斥。独立审查发现旧授权请求finally可释放新授权锁，已用attempt身份修复；真实client重新JOIN的独立反例1/1通过。
+- 完整Node2570/2570通过，随后新增跨代锁测试另1/1（不相加冒充重跑）。标准实际打包headless MV3十三旅程PASS、sourceChangedDuringRun=false。初次renderer三项失败是DOM模拟属性、未实际输入查询、stop后测试读空root，已修测试流程，定向94/94通过；原失败日志保留。
+- 实际搜索片段MV3六旅程最终PASS、sourceChangedDuringRun=false。前两次失败保留：第一轮隐藏原生body导致严格定位拒绝；单纯先reveal仍因body epoch等待owner ACK而失败。最终在同一六秒命令内先reveal、最多120次50ms仅等新ACK proof，再restore一次；不重试滚动、不放宽锚校验。生产snippet profile仍关闭，仅loopback重建包可显式启用。100k/4x冷启动、真实context/accepted ACK、G/U与PAIA条件仍未解决；Free未完成、NOT_RELEASE_READY。
+
+Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2571**；之后新增独立等待/stop/route/期限/不重试反例 **5/5**（未冒充再跑完整集）。最终标准打包MV3 **13/13**、片段/搜索MV3 **6/6**，两个最终源码报告均stable。精确来源：free-round122-node-final.log、free-round122-snippet-restore-wait-final.log、free-round122-package-mv3-final.json、free-round122-snippets-package-mv3-proof.json。名称含 snippets-package-mv3-final 的早期报告是第二次FAIL，原样保留，以status和sourceHashes为准。下一继续正式C4/C5剩余兼容及F1离线缺口，不重复实现本轮闭环。
