@@ -1416,3 +1416,14 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 最终实际原包headless MV3 **4/4 PASS/sourceChangedDuringRun=false**（free-round137-candidates-offpage-diagnostic.json）：仅隔离fixture DOM加入33个可核验href Project，不直写库/替换adapter。实录首个offset0页不含P2，唯一成功locating VIEW返回offset32含exactP2，之后普通VIEW保持offset32；可信return后该卡确实持焦，原生恰1click、阅读让位和草稿保留。非私人ChatGPT/真实原生写入。
 - 首次Chrome在旧候选同页刷新保焦断言失败，尚无定位请求或迁移DTO；保留free-round137-candidates-offpage-mv3.json。增加精确focus key诊断、不改断言后上述复验通过，**首个间歇焦点失败尚未解释，不宣称已修复或稳定性已通过**。下一回归如复现需采集有界focus事件及available状态，不能增加sleep遮掩。
 - MAP-06页外当前段闭环已有离线证据；跨后续原生路由的已学同节点映射生命周期仍需继续核对。ACK/首发持久活动、64KiB长来源、100k/4x及真实G/U等仍未完成，Free保持NOT_RELEASE_READY。此前Git传输超时的未推送提交均安全保留，下一自然检查点正常同步，不强推。
+
+
+## Round138：跨原生SPA保留已学Project映射与阅读状态（接 b0f7307）
+
+- 已通过same-node+owner accepted exactP的关联，在content私有内存保留最多32项identity/projectId。仅fresh HELLO/REFRESH重新验证同scopeKey/browserDocument后使用，每次LIST仍以新adapter新handle核对原node/root/parent/profile/fingerprint。原节点失配/消失立即永久删除；scope/document变化、start/stop/pagehide/授权失败清空。不保留旧句柄、grant、pending动作或focus迁移，不按名字匹配。
+- 真实原包连续两次失败揭示展示模式问题：普通P→C新URL重绑默认workspace；Back的URL及body异步更新，又触发同URL默认workspace。现所有实际URL变化重绑保持reading，同URL重绑通过controller只读presentationMode继承当前状态，显式恢复模式保持；不改变原生history。两次FAIL报告分别保留，不改断言绕过。
+- 最终原包隔离headless Chrome **5/5 PASS/sourceChangedDuringRun=false**（free-round138-candidates-learned-final.json）：首屏外P2原子定位/focus仍通过；原生P→C→Back各次新frame的成功LIST total0且无旧migration，原节点持续相同，原生项目点击累计仍恰1次。阅读返回、原编辑器与草稿、同名节点区分继续通过。不是私人ChatGPT或真实原生写入验收。Round137首次候选刷新focus间歇失败仍未归因，不用本轮PASS宣称已修复。
+- 完整Node最终 **3087/3087 PASS**（free-round138-node.log.gz）。展示/身份定向111项与ACK纯校验16项分别记录，不累加为完整结果。
+- 同时新增私有prepareSendAckAdmission纯校验器：显式包内ACK profile/有限acceptedStates及providerProfile，exact body proof/C/账号/context、本人author hash、固定lineage、0..30秒观察区间、读回未过期；scopeKey严格等canonical ChatGPT principal/context，拒绝内部跨账号矛盾。getter/额外字段/错误作者/阶段/lineage等拒绝，输出冻结且无sentAt/source/grant。**尚未接入provider/reader/correlator/native continuation，不创建权限、不写活动，不得称可靠发送完成。**
+- 下一B2接线复用现有模块：host-binding创建sendCandidates没有onCandidate，observe结果仍丢弃；publish回调是diagnostic、candidate没有独立ACK信息。需在持有withCurrent proof/context时，从明确配置的认证读回profile取得exact消息接受状态及独立作者hash，再复核guard并形成私有admission，复用NativeRepository同事务pending continuation→HostContinuationOwner→evidence分片。不能只把correlated字段改成ACK。现provider/parser尚无accepted状态，生产仍default disabled；先完成existingC，再处理首页首发跨SPA关联，真实profile因果语义G仍NOT_RUN。
+- b0f7307在上一自然检查点已正常push并GitHub API确认，PR16仍Draft基于PR15、Pro72ca068保留；此前网络超时已恢复。Free仍未完成，64KiB长来源、100k/4x、ACK/首发、G/U及既有稳定性缺口继续推进，NOT_RELEASE_READY。

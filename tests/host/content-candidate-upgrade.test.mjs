@@ -5,24 +5,24 @@ import {createHostContentSession} from '../../src/host/content-session.mjs';
 // doubles. The production content session and candidate correlation run unchanged.
 const P='g-p-11111111111111111111111111111111',URL='https://chatgpt.com/g/'+P+'/project';
 const drain=async()=>{for(let i=0;i<80;i++)await Promise.resolve();};
-function fixture(){
- let cancelClick=false;const focusCalls=[];let holdHello=null;let time=1000;let scope='scopeA',documentId='browser',epoch=0,ack='accepted',matches=true,serial=0,options,controller,emit;const identity={},listeners=new Set(),events=new Map(),docEvents=new Map(),timers=new Map(),modes=[],calls=[];
+function fixture({extraCandidates=0}={}){
+ let present=true;let cancelClick=false;const focusCalls=[];let holdHello=null;let time=1000;let scope='scopeA',documentId='browser',epoch=0,ack='accepted',matches=true,serial=0,options,controller,emit;const identity={},extraIdentities=new Map(Array.from({length:extraCandidates},(_,i)=>['extra'+i,{}])),listeners=new Set(),events=new Map(),docEvents=new Map(),timers=new Map(),modes=[],calls=[];
  const document={addEventListener:(n,f)=>docEvents.set(n,f),removeEventListener:(n,f)=>{if(docEvents.get(n)===f)docEvents.delete(n);},location:{origin:'https://chatgpt.com',href:'https://chatgpt.com/'},defaultView:{addEventListener:(n,f)=>events.set(n,f),removeEventListener:(n,f)=>{if(events.get(n)===f)events.delete(n);}}};
  const binding=()=>({documentToken:'doc'+epoch,producerToken:'producer'+epoch,browserDocumentId:documentId,routeEpoch:epoch,origin:document.location.origin,expiresAt:new Date(time+20000).toISOString()});
  const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},sendMessage:async m=>{calls.push(m);if(m.type==='HOST_HELLO'){epoch++;if(holdHello)await holdHello;return {binding:binding()};}if(m.type==='HOST_REFRESH')return {state:'verified',scopeKey:scope};if(m.kind==='surface-delta')return {state:ack};return {ok:true};}};
  const row=id=>({entity:'project',renderKey:id,nativeTitle:'Same',titleState:'exact',target:{kind:'live-control',control:{id},navigationURL:null}});
- const proposal=()=>({kind:'surface-delta',payload:{candidates:[row('clicked'),row('neighbor'),...(document.location.href===URL?[{entity:'project',target:{kind:'resolved',nativeId:P},evidence:{fieldPaths:['current-project-route']}}]:[])]}});
- const client=createHostContentSession({document,runtime,now:()=>time,elapsedNow:()=>time,makeId:()=> 'client',schedule:(f,ms)=>{const id=++serial;timers.set(id,{f,at:time+ms});return id;},cancel:id=>timers.delete(id),surfaceFactory:()=>({}),plansFactory:()=>({}),adapterFactory:o=>{options=o;const plans=new Map();return {inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,captureCandidateIdentity:h=>h.id==='clicked'?identity:null,matchesCandidateIdentity:(token,h)=>matches&&token===identity&&h.id==='clicked',readLoaded:async()=>[proposal()],planNavigation:target=>{const p={mode:'native-control',target,control:target.control,planRevision:++serial};plans.set('key'+p.planRevision,p);return p;},planKey:p=>'key'+p.planRevision,dispatchNative:async command=>{assert.equal(await o.authorize(command),true);o.beforeDispatch();const event={actionId:command.actionId,command,plan:plans.get(command.targetKey)};o.onNativeDispatch(event);if(cancelClick){o.onNativeDispatchCancelled(event);return {state:'unconfirmed'};}document.location.href=URL;o.onRebindNeeded();return {state:'dispatched'};}};},controllerFactory:o=>{controller=o;modes.push(o.initialMode);return {start:async c=>{emit=c.emit;await emit(proposal());return {id:'mount'};},stop(){},showReading:()=>true,showWorkspace:()=>true,focusFrame:role=>{focusCalls.push(role);return true;},isReturnTarget:node=>node==='return'};}});
+ const proposal=()=>({kind:'surface-delta',payload:{candidates:[...(present?[row('clicked')]:[]),row('neighbor'),...[...extraIdentities.keys()].map(row),...(document.location.href===URL?[{entity:'project',target:{kind:'resolved',nativeId:P},evidence:{fieldPaths:['current-project-route']}}]:[])]}});
+ const client=createHostContentSession({document,runtime,now:()=>time,elapsedNow:()=>time,makeId:()=> 'client',schedule:(f,ms)=>{const id=++serial;timers.set(id,{f,at:time+ms});return id;},cancel:id=>timers.delete(id),surfaceFactory:()=>({}),plansFactory:()=>({}),adapterFactory:o=>{options=o;const plans=new Map();return {inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,captureCandidateIdentity:h=>h.id==='clicked'?identity:extraIdentities.get(h.id)??null,matchesCandidateIdentity:(token,h)=>matches&&(h.id==='clicked'?token===identity:extraIdentities.get(h.id)===token&&token!==undefined),readLoaded:async()=>[proposal()],planNavigation:target=>{const p={mode:'native-control',target,control:target.control,planRevision:++serial};plans.set('key'+p.planRevision,p);return p;},planKey:p=>'key'+p.planRevision,dispatchNative:async command=>{assert.equal(await o.authorize(command),true);o.beforeDispatch();const event={actionId:command.actionId,command,plan:plans.get(command.targetKey)};o.onNativeDispatch(event);if(cancelClick){o.onNativeDispatchCancelled(event);return {state:'unconfirmed'};}document.location.href=URL;o.onRebindNeeded();return {state:'dispatched'};}};},controllerFactory:o=>{let mode=o.initialMode;controller=o;modes.push(o.initialMode);return {start:async c=>{emit=c.emit;await emit(proposal());return {id:'mount'};},stop(){},presentationMode:()=>mode,showReading:()=>{mode='reading';return true;},showWorkspace:()=>{mode='workspace';return true;},focusFrame:role=>{focusCalls.push(role);return true;},isReturnTarget:node=>node==='return'};}});
  const list=(role)=>new Promise(resolve=>[...listeners][0]({type:'HOST_CANDIDATES',...(({documentToken,producerToken,routeEpoch})=>({documentToken,producerToken,routeEpoch}))(binding()),phase:'list',...(role?{role}:{})},{id:'extension'},resolve));
- async function navigate({beforeRoute=()=>{},cancel=false,newScope=scope,newDocument=documentId,nodeMatches=true}={}){const old=options,event={actionId:'action',plan:{target:{kind:'live-control'},control:{id:'clicked'}}};old.onNativeDispatch(event);if(cancel)old.onNativeDispatchCancelled(event);await beforeRoute();scope=newScope;documentId=newDocument;matches=nodeMatches;document.location.href=URL;old.onRebindNeeded();await drain();return old;}
+ async function navigate({beforeRoute=()=>{},cancel=false,newScope=scope,newDocument=documentId,nodeMatches=true,controlId='clicked'}={}){const old=options,event={actionId:'action',plan:{target:{kind:'live-control'},control:{id:controlId}}};old.onNativeDispatch(event);if(cancel)old.onNativeDispatchCancelled(event);await beforeRoute();scope=newScope;documentId=newDocument;matches=nodeMatches;document.location.href=URL;old.onRebindNeeded();await drain();return old;}
  const activate=(candidate,display)=>new Promise(resolve=>[...listeners][0]({type:'HOST_CANDIDATES',documentToken:binding().documentToken,producerToken:binding().producerToken,routeEpoch:binding().routeEpoch,phase:'activate',candidate,actionId:'realAction',uiGrantId:'grant',mountId:'mount',expiresAt:new Date(time+6000).toISOString(),display},{id:'extension'},resolve));
- return {client,list,activate,focusCalls,setCancelClick:v=>cancelClick=v,listener:()=>[...listeners][0],binding,navigate,modes,calls,document,holdHello:p=>holdHello=p,docEvents,timers,events,setTime:v=>time=v,setMatches:v=>matches=v,async advance(ms){time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.f();}await drain();},setAck:v=>ack=v,ack:()=>emit(proposal()),get options(){return options;},get controller(){return controller;}};
+ return {client,list,activate,focusCalls,setPresent:v=>present=v,async spa(url,{newScope=scope,newDocument=documentId}={}){scope=newScope;documentId=newDocument;document.location.href=url;options.onRebindNeeded();await drain();},setCancelClick:v=>cancelClick=v,listener:()=>[...listeners][0],binding,navigate,modes,calls,document,holdHello:p=>holdHello=p,docEvents,timers,events,setTime:v=>time=v,setMatches:v=>matches=v,async advance(ms){time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.f();}await drain();},setAck:v=>ack=v,ack:()=>emit(proposal()),get options(){return options;},get controller(){return controller;}};
 }
 test('same document/scope and accepted current Project upgrades only matching node, never same name',async()=>{
  const f=fixture();await f.client.start();assert.deepEqual((await f.list()).items.map(r=>r.renderKey),['clicked','neighbor']);await f.navigate();assert.deepEqual(f.modes,['workspace','reading']);assert.deepEqual((await f.list()).items.map(r=>r.renderKey),['neighbor']);assert.deepEqual((await f.list()).items.map(r=>r.renderKey),['neighbor']);f.client.stop();
 });
 for(const mode of ['cancel','scope','document','node','unacknowledged'])test(mode+' cannot suppress the clicked candidate',async()=>{
- const f=fixture();await f.client.start();if(mode==='unacknowledged')f.setAck('rejected');await f.navigate({cancel:mode==='cancel',newScope:mode==='scope'?'scopeB':'scopeA',newDocument:mode==='document'?'otherBrowser':'browser',nodeMatches:mode!=='node'});assert.deepEqual((await f.list()).items.map(r=>r.renderKey),['clicked','neighbor']);assert.equal(f.modes.at(-1),mode==='cancel'?'workspace':'reading');f.client.stop();
+ const f=fixture();await f.client.start();if(mode==='unacknowledged')f.setAck('rejected');await f.navigate({cancel:mode==='cancel',newScope:mode==='scope'?'scopeB':'scopeA',newDocument:mode==='document'?'otherBrowser':'browser',nodeMatches:mode!=='node'});assert.deepEqual((await f.list()).items.map(r=>r.renderKey),['clicked','neighbor']);assert.equal(f.modes.at(-1),'reading');f.client.stop();
 });
 test('candidate stays visible before ACK and upgrades after accepted current-project observation',async()=>{
  const f=fixture();await f.client.start();f.setAck('rejected');await f.navigate();assert.equal((await f.list()).total,2);f.setAck('accepted');await f.ack();assert.deepEqual((await f.list()).items.map(r=>r.renderKey),['neighbor']);f.client.stop();
@@ -34,10 +34,10 @@ test('duplicate ACK is accepted and stale rebind callback cannot replace current
 for(const type of ['pointerdown','keydown'])for(const trusted of [false,true])test(`pending ${type} trusted=${trusted} interruption and listener cleanup`,async()=>{
  const f=fixture();await f.client.start();assert.equal(f.docEvents.has(type),false);
  await f.navigate({beforeRoute:()=>{assert.equal(f.docEvents.has('pointerdown'),true);assert.equal(f.docEvents.has('keydown'),true);f.docEvents.get(type)({isTrusted:trusted});if(trusted)assert.equal(f.docEvents.has(type),false);}});
- assert.equal((await f.list()).total,trusted?2:1);assert.equal(f.modes.at(-1),trusted?'workspace':'reading');assert.equal(f.docEvents.has('pointerdown'),false);assert.equal(f.docEvents.has('keydown'),false);assert.equal(f.timers.size,0);f.client.stop();
+ assert.equal((await f.list()).total,trusted?2:1);assert.equal(f.modes.at(-1),'reading');assert.equal(f.docEvents.has('pointerdown'),false);assert.equal(f.docEvents.has('keydown'),false);assert.equal(f.timers.size,0);f.client.stop();
 });
 test('six-second pending expiry removes hooks and cannot suppress after route ACK',async()=>{
- const f=fixture();await f.client.start();await f.navigate({beforeRoute:async()=>{assert.equal(f.timers.size,1);await f.advance(6000);assert.equal(f.timers.size,0);assert.equal(f.docEvents.has('pointerdown'),false);}});assert.equal((await f.list()).total,2);assert.equal(f.modes.at(-1),'workspace');f.client.stop();
+ const f=fixture();await f.client.start();await f.navigate({beforeRoute:async()=>{assert.equal(f.timers.size,1);await f.advance(6000);assert.equal(f.timers.size,0);assert.equal(f.docEvents.has('pointerdown'),false);}});assert.equal((await f.list()).total,2);assert.equal(f.modes.at(-1),'reading');f.client.stop();
 });
 for(const mode of ['stop','pagehide'])test(mode+' clears pending listeners/timer and old rebind cannot revive it',async()=>{
  const f=fixture();await f.client.start();await f.navigate({beforeRoute:()=>{if(mode==='stop')f.client.stop();else f.events.get('pagehide')({persisted:true});assert.equal(f.docEvents.has('pointerdown'),false);assert.equal(f.docEvents.has('keydown'),false);assert.equal(f.timers.size,0);}});assert.equal(f.modes.length,1);await f.client.start();assert.equal((await f.list()).total,2);f.client.stop();
@@ -83,4 +83,44 @@ test('explicit display null is rejected rather than silently downgraded to legac
 
 for(const time of [31000,500])test('migration return outside its time window cannot focus at '+time,async()=>{
  const f=fixture();await f.client.start();await f.activate((await f.list()).items[0],{role:'workspace',presentation:{offset:0,scrollTop:11,focused:true}});await drain();assert.ok((await f.list('workspace')).migration);f.setTime(time);await f.controller.bridge.workspaceEntered({mountId:'mount'});assert.deepEqual(f.focusCalls,[]);f.client.stop();
+});
+
+const C='https://chatgpt.com/c/11111111-1111-4111-8111-111111111111';
+test('learned exact node survives P to C to P with fresh producers but no repeated presentation action',async()=>{
+ const f=fixture();await f.client.start();await f.activate((await f.list()).items[0],{role:'workspace',presentation:{offset:0,scrollTop:11,focused:true}});await drain();assert.equal((await f.list('workspace')).total,1);const old=f.listener(),oldBinding=f.binding();
+ await f.spa(C);assert.notEqual(f.binding().producerToken,oldBinding.producerToken);assert.deepEqual((await f.list('workspace')).items.map(x=>x.renderKey),['neighbor']);assert.equal((await f.list('workspace')).migration,undefined);await f.controller.bridge.workspaceEntered({mountId:'mount'});assert.deepEqual(f.focusCalls,[]);
+ await f.spa(URL);assert.equal((await f.list()).total,1);assert.equal((await f.list('workspace')).migration,undefined);let reply=false;old({type:'HOST_CANDIDATES',...oldBinding,phase:'list'},{id:'extension'},()=>reply=true);assert.equal(reply,false);f.client.stop();
+});
+for(const kind of ['scope','document','identity','absent','stop','pagehide'])test('learned identity permanently discarded on '+kind,async()=>{
+ const f=fixture();await f.client.start();await f.navigate();assert.equal((await f.list()).total,1);
+ if(kind==='scope'||kind==='document'){await f.spa(C,kind==='scope'?{newScope:'scopeB'}:{newDocument:'browserB'});assert.equal((await f.list()).total,2);await f.spa(URL,{newScope:'scopeA',newDocument:'browser'});}
+ else if(kind==='identity'){f.setMatches(false);await f.spa(C);assert.equal((await f.list()).total,2);f.setMatches(true);await f.spa(URL);}
+ else if(kind==='absent'){f.setPresent(false);await f.spa(C);assert.equal((await f.list()).total,1);f.setPresent(true);await f.spa(URL);}
+ else {if(kind==='stop')f.client.stop();else f.events.get('pagehide')({persisted:true});await f.client.start();}
+ assert.equal((await f.list()).total,2);f.client.stop();
+});
+test('replacement handshake cannot expose learned candidates before verified session readiness',async()=>{
+ const f=fixture();await f.client.start();await f.navigate();assert.equal((await f.list()).total,1);let release;f.holdHello(new Promise(r=>release=r));await f.spa(C);assert.deepEqual(await f.list(),{ok:false});release();await drain();assert.equal((await f.list()).total,1);f.client.stop();
+});
+
+test('learned registry stores at most 32 identities without evicting into stale replay',async()=>{
+ const f=fixture({extraCandidates:33});await f.client.start();
+ for(let i=0;i<33;i++){await f.spa(C);await f.navigate({controlId:'extra'+i});await f.list();}
+ await f.spa(C);assert.deepEqual((await f.list()).items.map(x=>x.renderKey),['clicked','neighbor','extra32']);f.client.stop();
+});
+
+test('ordinary P to C and native Back keep new authorized surfaces in reading',async()=>{
+ const f=fixture();await f.client.start();await f.spa(URL);await f.spa(C);await f.spa(URL);assert.deepEqual(f.modes,['workspace','reading','reading','reading']);assert.equal((await f.list()).total,2);assert.equal(f.calls.filter(x=>x.type==='HOST_NATIVE_AUTHORIZE').length,0);f.client.stop();
+});
+for(const mode of ['workspace','reading'])test('same URL authorization recovery retains explicit presentation '+mode,async()=>{
+ const f=fixture();await f.client.start();const prior=f.controller;prior.onTerminated('ui-frame-suspended',{mode});await drain();assert.equal(f.modes.at(-1),mode);assert.equal(f.calls.filter(x=>x.type==='HOST_REFRESH').length,2);assert.equal((await f.list()).total,2);f.client.stop();
+});
+
+for(const mode of ['workspace','reading'])test('same URL body invalidation and trusted worker invalidation preserve '+mode,async()=>{
+ const f=fixture();await f.client.start();if(mode==='reading')f.client.showReading();else f.client.showWorkspace();
+ f.options.onRebindNeeded();await drain();assert.equal(f.modes.at(-1),mode);
+ f.listener()({type:'HOST_DOCUMENT_INVALIDATED'},{id:'extension'},()=>{});await drain();assert.equal(f.modes.at(-1),mode);assert.equal(f.calls.filter(x=>x.type==='HOST_REFRESH').length,3);f.client.stop();
+});
+test('Back route followed by same URL body invalidation never reopens workspace',async()=>{
+ const f=fixture();await f.client.start();await f.spa(URL);await f.spa(C);await f.spa(URL);f.options.onRebindNeeded();await drain();assert.deepEqual(f.modes,['workspace','reading','reading','reading','reading']);f.client.stop();
 });
