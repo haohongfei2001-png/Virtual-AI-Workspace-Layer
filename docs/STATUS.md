@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百一十四轮：异步展示保留正在激活的原生链接，完整Node2425项、原包MV3十三通用及五工作集旅程通过。正在继续100k性能诊断；真实账号与性能等验收仍未完成，Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百一十五轮：隐藏成员判定与异步展示修复通过完整Node2425项、原包MV3十三通用及五工作集旅程；当前100k/4x冷启动诊断仍FAIL，原生输入与草稿保留。真实账号与性能等验收未完成，Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1244,3 +1244,15 @@ Round107审查另发现隐藏current P可能压过可见sidebar，提交前已�
 新增八项合同包含原三项失败复现、最后意图只发一次查询、三种失效清理、DTO顺序及最终search焦点。完整Node **2425/2425、0失败/跳过**，定向78/78；真实headless原包MV3通用十三旅程及工作集五旅程PASS，两报告sourceChangedDuringRun=false，工作集buildManifestUnchanged=true。实际跨tab持久化、原链接打开和原草稿保留通过；pointer竞态本身是Node事件合同，不冒称浏览器已施加该交错。证据free-round114-node.log.gz、free-round114-navigation-final.log.gz、free-round114-package-mv3.json及free-round114-working-set-mv3.json。原三项失败复现保留free-presentation-pointer-race-final.log.gz。
 
 此独立可复现竞态不等于旧Chrome未收到pointer事件的间歇故障根因。本轮浏览器通过不能消除该历史未定条件。继续100k当前源码性能诊断及正式计划剩余可执行工作；真实context/ACK、新聊首发、G/U等尚未完成，Free未完成、NOT_RELEASE_READY。
+
+
+## Round115：当前100k冷启动诊断仍失败，拒绝低收益改写
+
+接e3c3661。测试脚本允许显式VAIWL_CHROME_EXECUTABLE，默认行为不变；本机缺Playwright缓存shell时使用已安装系统Chrome headless，不下载、不打开可见窗口。首次缺可执行文件日志独立保留。使用现源码重新运行100k project-mixed、CDP4x、initial CPU profile：**FAIL**，启动约30228ms后仍WAITING/read-budget-exhausted，HEADER约6.49–7.23s超过既有6s预算；原生input身份／连接、未发送草稿及可见性均保留。sourceChangedDuringRun=false。证据free-round115-initial-4x-system.json、压缩profile及日志。测量是page transport、合成IDB和CPU诊断，非真实账号／MV3 worker／物理弱设备，不作延迟认证。
+
+当前profile的SHA自耗时约5.01s、stable约2.48s、其回调约1.17s、encode约1.54s，均是整个30秒失败运行内的采样，不与Round103数字直接宣称收益。独立Node实验：canonical直接累加520合法／12非法等价，native编码改善22.2%，完整digest仅3.1%；encodeInto候选1071 oracle及1000 native digest等价，完整digest仅4.3%，且ASCII缓冲上界约3倍。两候选未合入生产，原子IDB事务、fresh piece校验及6秒预算均保持。脚本和结果free-round115-stable-diagnostic.*、free-round115-sha-encodeinto-*作为诊断附件，非验收测试数。
+
+最近功能完整Node仍是Round114的2425/2425，未为纯诊断重跑。Free未完成、NOT_RELEASE_READY。真实context/accepted-send、新聊首发、G/U/PAIA/真人、100k冷启动及历史间歇点击等条件继续保持，不能用本轮安全退回原生界面替代性能通过。
+
+
+同步检查点：Round113 bd142a7已推送；Round114界面修复与Round115性能检查点已本地提交。随后正常push两次分别遭遇Recv timeout与github.com:443连接75秒超时；不改远端／代理／分支，不循环重试。当前远端仍bd142a7，本地领先两项提交，后续正常同步即可。
