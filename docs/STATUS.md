@@ -1561,3 +1561,10 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - ACK owner 改用 FreeEvidenceRepository.page/apply 与 exact-request host-evidence gate，稳定 operationId、消息 eventKey 与现有 evidence receipt。既有同语义锚直接复用，不续 firstObservedAt/区间；撤销或语义冲突拒绝。只提交 hint/source，native revision 和成员/title 保持不变。旧 continuation drainer/恢复注册保留，历史记录不丢。
 - 完整 Node **3152/3152 PASS**（free-round150-node.log.gz）；最终隔离 headless MV3 **5/5 PASS/sourceChangedDuringRun=false**（free-round150-evidence-only-final.json），明确断言自动 ACK 只写 evidence、不改变 native revision、不产生空 continuation。仍是离线 profile，不是私人 ChatGPT 认证。
 - 首页首发尚未实施：当前 send-intent 契约要求已接受 C body proof，homepage 没有该证明；后续需建立独立有界跨路由因果关联，不能放宽现有 proof 检查冒充已支持。Free NOT_RELEASE_READY。6f33edb 上轮两次普通 push 网络低速超时，本地成果保留，本轮检查点再正常同步。
+
+## Round151：64KiB 原生长名称观察分片（接 539b4fc）
+
+- surface-fragments 按完整UTF-8 envelope字节预算拆分一次已发现的partial观察，不截断名称、不造complete。成员声明携带同片对应conversation与已观察Project依赖；detached handles完整分片；冲突重复候选不能靠跨片逃过拒绝。每片仍≤64KiB/256候选，序号预留上界计算。
+- adapter 顺序发送分片，只有全部确认才缓存整批fingerprint；每次泵先处理发送意图/current body，剩余surface不抢占ACK。stop丢弃待片，单片失败不宣称整批已接受；readLoaded也返回有界多片。新增256个200字中文名称的全部送达、序号和无循环测试。
+- 完整 Node **3157/3157 PASS**（free-round151-node.log.gz）。隔离headless MV3 **6/6 PASS/sourceChangedDuringRun=false**（free-round151-long-surface-mv3.json）：保留自动ACK真实IDB链，256个新增长标题链接中，受既有发现总上限及其他3个候选占位影响的253项全部进入真实IDB，名称每项600 UTF-8字节完整。此结果不宣称突破发现上限或全账号覆盖；纯分片测试覆盖全部256候选。
+- 首页首发当前缺独立跨路由因果证据，继续保留为未完成；100k/4x、真实profile/账号G/U等仍未完成。Free NOT_RELEASE_READY。上轮539b4fc推送因GitHub连接超时失败，与6f33edb均安全保存在本地，下一检查点普通同步。

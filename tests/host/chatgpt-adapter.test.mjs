@@ -105,3 +105,11 @@ test('candidate identity proxy uses live discovery and rejects route, replacemen
  const next=f.adapter.captureCandidateIdentity(replacement);f.document.location.href='https://chatgpt.com/';assert.equal(f.adapter.matchesCandidateIdentity(next,replacement),false);assert.equal(f.adapter.captureCandidateIdentity(replacement),null);
  await f.start();assert.equal(f.adapter.matchesCandidateIdentity(next,replacement),false);f.adapter.stop();assert.equal(f.adapter.matchesCandidateIdentity(next,replacement),false);
 });
+
+test('adapter drains all 256 long-title observations in bounded packets without cycling',async()=>{
+ const f=fixture(),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};
+ for(let i=0;i<256;i++){const id='11111111-1111-4111-8111-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'长'.repeat(200),isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);await f.start();for(let i=0;i<100;i++)await tick();
+ assert(f.emitted.length>1);assert.equal(new Set(f.emitted.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,256);assert(f.emitted.every(p=>new TextEncoder().encode(JSON.stringify(p)).length<=65536));assert(f.emitted.every((p,i)=>!i||p.localSeq>f.emitted[i-1].localSeq));
+ const count=f.emitted.length;f.trigger();for(let i=0;i<30;i++)await tick();assert.equal(f.emitted.length,count);const loaded=await f.adapter.readLoaded(null);assert(loaded.length>1);assert.equal(new Set(loaded.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,256);f.adapter.stop();
+});
