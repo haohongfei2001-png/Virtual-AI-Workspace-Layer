@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round162：修复已接受body但认证基线未完成时丢弃发送意图的竞态，并提前复核/限制旧proof期限。完整Node3207项、隔离ACK MV3七项通过；预证明立即发送、首页首发、mask即时更新、100k/4x、候选内存及真实G/U仍未完成，Free为NOT_RELEASE_READY。
+当前已推进至Round164：候选分页绑定目录版本，避免变化后混合快照并误清理身份；完整Node3210项、原打包隔离MV3五项通过。首页首发、预证明立即发送、mask即时更新、100k/4x、候选内存及真实G/U仍未完成，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1651,3 +1651,11 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - loadedPages在最后一个packet消费完成后重新核验存活、取消与6秒elapsed期限，避免最后一次yield之后失效却正常结束并进入身份整理。新增最后一包之后stop/abort/deadline反例；不延长期限，不增加网络读取。
 - 定向Node **75/75 PASS**（free-round163-target.log）。本轮完整Node及浏览器NOT_RUN；最近完整3207项和隔离MV3七项属于Round162，不能当本轮全套证明。
 - 已成功fetch并确认72ca068仍为HEAD祖先；远端无分叉。b393f39..dd3a06b已正常推送原PR #16，Round160–162本地检查点已同步。所有未完成验收保持，Free NOT_RELEASE_READY。
+
+
+## Round164：候选分页目录版本一致性（接 5eee947）
+
+- loadedPages捕获目录surfaceEpoch并在每片及最终完成时核对；目录变化后拒绝旧扫描，不能混合两版候选后执行learned identity清理。保留单飞失败释放，后续重新读取；无关正文更新不使目录扫描失效。
+- 新增单页/跨页改名发生在yield之后的反例，确认失败前onScan/isUpgraded均未调用，下一次扫描完整展示新名称。完整Node **3210/3210 PASS**（free-round164-node.log.gz），定向77项通过。
+- 原打包扩展隔离headless MV3 **5/5 PASS/sourceChangedDuringRun=false**（free-round164-candidates-mv3.json）：605候选尾页/返回/刷新/缩减、同节点身份提升、原生P→C→Back与草稿保护。仅离线fixture，不代表真实G/U。
+- 5eee947已正常推送原PR #16。首页首发、预证明立即发送、mask展开期间即时更新、100k/4x、候选完整内存有界化及真实G/U仍未完成；Free NOT_RELEASE_READY。

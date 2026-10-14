@@ -190,3 +190,25 @@ test('loaded iterator rechecks expiry and cancellation before declaring its fina
   await assert.rejects(iterator.next(),/stale-host-loaded-read/);f.adapter.stop();
  }
 });
+
+
+test('candidate scan rejects directory mutation before identity cleanup or publishing mixed pages',async()=>{
+ const {createContentCandidates}=await import('../../src/host/content-candidates.mjs');
+ for(const count of [1,300]){
+  const f=fixture(),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};
+  for(let i=0;i<count;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null});
+  f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await tick();
+  let scans=0,upgrades=0,changed=false;
+  const adapter={...f.adapter,async *loadedPages(){for await(const packet of f.adapter.loadedPages()){yield packet;if(!changed){changed=true;nodes[0].textContent='Renamed';f.trigger();}}}};
+  const owner=createContentCandidates({adapter,current:()=>true,showReading:()=>true,onScan:()=>scans++,isUpgraded:()=>{upgrades++;return false;}});
+  await assert.rejects(owner.listPage(),/stale-host-loaded-read/);assert.equal(scans,0);assert.equal(upgrades,0);
+  const page=await owner.listPage();assert.equal(page.total,count);assert.equal(page.items[0].nativeTitle,'Renamed');assert.equal(scans,1);assert.equal(upgrades,count);
+  owner.stop();f.adapter.stop();
+ }
+});
+
+test('loaded candidate snapshot remains usable during unrelated body text changes',async()=>{
+ const f=fixture();await f.start();await tick();const iterator=f.adapter.loadedPages();assert.equal((await iterator.next()).done,false);
+ f.observer().cb([{type:'characterData',target:{parentNode:f.reading}}]);
+ assert.equal((await iterator.next()).done,true);f.adapter.stop();
+});

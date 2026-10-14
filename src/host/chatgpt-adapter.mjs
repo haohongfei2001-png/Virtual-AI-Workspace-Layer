@@ -28,8 +28,8 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  function proposal(page=false){if(!live())throw Error('stale-host-binding');syncRoute();const found=page?discovery.scanPage(surfaceCursor):null,payload=found?found.payload:discovery.scan();if(found){surfaceCursor=found.cursor;surfaceScanning=found.cursor!==null;}return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta',payload};}
  // Private content-side iterator yields bounded packets without aggregating them. This does not fetch unmounted history or authorize any native action.
  async function* loadedPages(signal){
-  const run=generation,started=elapsedNow();let cursor=null;
-  const check=()=>{const elapsed=elapsedNow()-started;if(signal?.aborted||!live()||run!==generation||!Number.isFinite(elapsed)||elapsed<0||elapsed>=6000)throw Error('stale-host-loaded-read');syncRoute();};
+  const run=generation,revision=surfaceEpoch,started=elapsedNow();let cursor=null;
+  const check=()=>{const elapsed=elapsedNow()-started;if(signal?.aborted||!live()||run!==generation||revision!==surfaceEpoch||!Number.isFinite(elapsed)||elapsed<0||elapsed>=6000)throw Error('stale-host-loaded-read');syncRoute();};
   do{
    check();const found=discovery.scanPage(cursor);cursor=found.cursor;
    const source={protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta',payload:found.payload};
