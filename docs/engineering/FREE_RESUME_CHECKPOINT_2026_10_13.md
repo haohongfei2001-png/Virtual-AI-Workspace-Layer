@@ -1323,3 +1323,10 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 恢复总是新的HELLO/REFRESH/MOUNT/双JOIN，未复用旧grant、来源或正文证明。仅携带私有展示意图；此前reading或suspended恢复reading，双授权完成前不展示，保留唯一原生返回；不因worker恢复把正在输入的用户切回workspace。短期worker内resume cache随worker退出丢失，未宣称恢复其搜索/历史位置。
 - 最终完整Node **2683/2683 PASS**；随后仅新增presentation传递/旧callback反例，content专项10/10独立通过（不冒称重跑完整集）。旧HEAD合同反例9FAIL原因是缺失onTerminated接口，作为合同缺失证据保留，不当作旧Chrome实测。最终实际原包worker强制退出→stopped→running→同页面新frame私有投影PASS，native textarea同节点/草稿/焦点保持、无popover自动打开；无reload/navigation/focus/显式invalidated注入。naturalWorkerSleep=NOT_TESTED。
 - 标准实际MV3十三旅程PASS，最终两报告sourceChangedDuringRun=false。首次新增reading断言浏览器测试因getByRole默认排除隐藏项超时，FAIL报告保留；改为includeHidden+attached检查私有投影，仍严格断言无popover、唯一返回和原生焦点。100k/4x、真实context/ACK/首发/G/U/PAIA与完整扩展BFCache仍未闭合，Free未完成、NOT_RELEASE_READY。
+
+
+## Round129：前台恢复立即刷新当前Free查询（接 0277eb5）
+
+- 真实document hidden→visible边沿进入现有VIEW单飞刷新；保留当前查询、历史会话和原30秒准备预算，不重新进入当前项或重置H/T/Z。重复visible、过期/停止/断连不发请求。备份打开时保持文件与预览，不触发备份invalidate。
+- 完整Node **2691/2691 PASS**，前台合同7/7，证据free-round129-node.log.gz、free-round129-foreground.log.gz。原包headless真实bringToFront未产生hidden；唯一fallback使用真实chrome.tabs.update激活独立标签仍不支持，报告明确 **FAIL / NOT_SUPPORTED**。未伪造visibility，未启动可见浏览器，未宣称真实前台浏览器通过。
+- 前台VIEW不是账户认证；独立审查确认现有60秒账户证明的远期缓存不因focus重核验，该缺口另行修复。100k/4x、真实context/ACK/G/U/PAIA等既有条件仍未闭合，Free未完成、NOT_RELEASE_READY。
