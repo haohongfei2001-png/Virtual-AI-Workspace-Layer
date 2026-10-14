@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百三十四轮：原生候选可在同scope、同document及独立Project事实确认后精确升级去重，点击后保持原生阅读。完整Node2893项与原包Chrome四旅程通过。视图位置/展开和有条件焦点迁移仍待接通，生产及性能关口未齐，Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百三十五轮：候选同页刷新保位，候选和正式导航均避免后台iframe抢焦点；可信返回顺序修复，正式卡精确定位接口已实现。完整Node2908项与最终原包Chrome四旅程通过。跨frame位置/展开/焦点迁移仍待接线，Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1440,3 +1440,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - Round134独立审查追加：旧adapter停止而新HELLO/REFRESH等待期间，工具栏P→Q→P可能漏掉第二导航。已在pending独立监听popstate/hashchange、遇第二路由立即撤关联，确认/取消/stop清监听；暂停新HELLO反例及同P重复事件20/20通过。最终源码实际包仍4/4 PASS，证据free-round134-candidates-package-mv3-final.json；此前报告单独保留。
 
 - Route窗口修复后的最终完整Node **2893/2893 PASS**，见free-round134-node-route-final.log.gz；前述2889为修复前来源，不合并计数。
+
+
+## Round135：候选刷新保位、后台焦点保护与正式卡定位接口（接 3fa79f4）
+
+- 候选同页刷新保留局部scroll，仅文档仍hasFocus且原shadow按钮确实持焦、同renderKey仍可用时恢复；换页/目标消失/失焦不抢焦点。可信click在禁用按钮前捕获冻结{offset,scrollTop,focused}，数值有界。此信息目前是renderer回调第二参数，尚未穿过owner/content重绑，不能称跨frame迁移完成。
+- 新renderer私有revealNativeProject只精确匹配当前授权DTO中的Project id，保留query/segment/H/T/Z，展开指定侧栏组、滚动自己的viewport；显式focus且workspace/可见才focus preventScroll。搜索/工作集/交互在途/缺目标返回false，不猜同名或自动翻页；当前尚无迁移消费者。目标存在但不可见时返回true不是焦点已恢复，接线须先具备可信返回与可见性guard。
+- 独立反例发现既有navigation render在iframe已失焦但shadow.activeElement残留时仍调用focus；捕获和恢复两处均增加framed doc.hasFocus检查。后台反例先FAIL保留，前景正常恢复、期间失焦不恢复等最终9项通过。返回按钮改为先检isTrusted再showWorkspace，缺事件/合成click不能打开或消耗原生阅读返回入口。
+- 最终完整Node **2908/2908 PASS**（free-round135-node.log.gz）。最终实际原包headless MV3 **4/4 PASS/sourceChangedDuringRun=false**：page32精确候选focus保持、scroll137→137、visible sidebar焦点不被workspace刷新抢回、原生model焦点与双surface让位保持500ms；既有分页/同名节点精确升级/单次原生click/草稿仍通过。首次浏览器FAIL是测试在隐藏workspace等待未承诺的刷新，原报告保留；将可见跨frame刷新与原生让位拆成各自严格断言后通过，不伪造visibility或改写扩展接口。
+- MAP-06呈现迁移继续IN_PROGRESS。下一接续接口已明确：client→owner仅传有界presentation，role由withScope确定；实际click时跟随同节点关联，确认exactP后用有界迁移ID重复返回、frame幂等消费，不能在旧LIST出站就删除。只原激活role继承focused；等待当前授权canonical实际渲染及用户明确return，后续可信输入/焦点/滚动应阻止迟到焦点恢复。候选scroll不能直接套正式卡scroll；当前页缺目标的有界定位仍待owner闭合。ACK/首发/64KiB长来源/100k与真实G/U等既有缺口不变，Free未完成、NOT_RELEASE_READY。

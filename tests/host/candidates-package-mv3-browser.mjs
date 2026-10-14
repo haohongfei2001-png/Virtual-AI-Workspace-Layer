@@ -29,10 +29,36 @@ try{context=await chromium.launchPersistentContext(join(dir,'profile'),{headless
  assert.equal(await panel.getByRole('button',{name:'下一页',exact:true}).isDisabled(),true);
  await panel.getByRole('button',{name:'上一页',exact:true}).click();
  await panel.getByText('已观察的待识别项目 33–64 / 65',{exact:true}).waitFor();
- // Natural native DOM observation refreshes the displayed row without resetting offset 32.
- await page.evaluate(()=>{document.querySelector('[data-pagination-probe="40"]').textContent='Candidate 40 updated';});
- await panel.getByRole('button',{name:'Candidate 40 updated',exact:true}).waitFor({timeout:15000});
+ // Preserve an exact candidate's focus and local list scroll through natural observation.
+ const focusedCandidate=panel.getByRole('button',{name:'Candidate 40',exact:true});
+ await focusedCandidate.focus();
+ const focusedKey=await focusedCandidate.getAttribute('data-candidate-key');
+ const candidateScroll=await focusedCandidate.evaluate(n=>{const list=n.closest('ul');if(list.scrollHeight<=list.clientHeight)throw Error('candidate-list-must-actually-scroll');list.scrollTop=Math.min(137,list.scrollHeight-list.clientHeight);return list.scrollTop;});
+ assert(candidateScroll>0);
+ await page.evaluate(()=>{document.querySelector('[data-pagination-probe="41"]').textContent='Candidate 41 updated';});
+ await panel.getByRole('button',{name:'Candidate 41 updated',exact:true}).waitFor({timeout:15000});
+ const preserved=await panel.locator(`button[data-candidate-key="${focusedKey}"]`).evaluate(n=>({focused:n.getRootNode().activeElement===n,scroll:n.closest('ul').scrollTop}));
+ assert.equal(preserved.focused,true);assert(Math.abs(preserved.scroll-candidateScroll)<=1);
  assert.equal(await panel.getByText('已观察的待识别项目 33–64 / 65',{exact:true}).count(),1);
+ // Focus the still-visible sibling frame, leaving the workspace's stale activeElement.
+ const sidebarFrame=page.frames().find(f=>f.url()===`chrome-extension://${id}/sidebar.html`);assert(sidebarFrame);
+ const siblingTarget=sidebarFrame.locator('[data-vaiwl-candidates] button[data-candidate-key]').first();await siblingTarget.focus();
+ assert.equal(await frame.evaluate(()=>document.hasFocus()),false);
+ await page.evaluate(()=>{document.querySelector('[data-pagination-probe="42"]').textContent='Candidate 42 updated';});
+ await panel.getByRole('button',{name:'Candidate 42 updated',exact:true}).waitFor({timeout:15000});
+ assert.equal(await sidebarFrame.evaluate(()=>document.hasFocus()),true);
+ assert.equal(await frame.evaluate(()=>document.hasFocus()),false);
+ assert.equal(await panel.locator(`button[data-candidate-key="${focusedKey}"]`).evaluate(n=>n.getRootNode().activeElement===n),false);
+ // Native focus surrenders both surfaces; hidden frames need not refresh.
+ await page.locator('#model-button').focus();
+ await page.evaluate(()=>{globalThis.paginationNativeFocus=document.activeElement;});
+ await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0,{},{timeout:5000});
+ await page.waitForTimeout(500);
+ assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);
+ assert(await page.evaluate(()=>document.activeElement===paginationNativeFocus&&document.activeElement===document.querySelector('#model-button')));
+ assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);
+ await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+ report.candidatePresentation={samePageOffset:32,focusedKeyPreserved:true,scrollBefore:candidateScroll,scrollAfter:preserved.scroll,siblingFocusNotReclaimed:true,nativeFocusNotReclaimed:true};
  assert.equal(server.snapshot().actions['open-project-button']??0,paginationActionsBefore);
  await page.evaluate(()=>{document.querySelectorAll('[data-pagination-probe]').forEach(n=>n.remove());const section=document.querySelector('aside section[aria-label="Projects"]');if(paginationOriginalStyle===null)section.removeAttribute('style');else section.setAttribute('style',paginationOriginalStyle);});
  await panel.getByText('已观察的待识别项目 1–1 / 1',{exact:true}).waitFor({timeout:15000});
