@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round158：IDless候选605项分页、尾部可达与原生导航闭环离线验证通过。完整Node3186项、原打包扩展Chrome五旅程通过；超大DOM内存/并发扫描、首页首发、100k/4x与真实G/U仍未完成，Free为NOT_RELEASE_READY。
+当前已推进至Round159：IDless候选605项分页与双frame共享扫描离线验证通过。本轮定向171项、原包Chrome五旅程通过；最近完整Node为Round158的3186项。完整内存有界化、首页首发、100k/4x与真实G/U仍未完成，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1615,3 +1615,10 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 候选总量不再固定截断256；content/worker/frame/presentation统一校验安全整数及32项页边界，总量由实际扫描计算。每条观察仍≤256、每页仍≤32，计划账本仍≤256，动作6秒门控/一次派发不变。跨片重复键、超大单包、停机/撤销/超时、列表缩减均有反例。604/1000项前后分页和尾部原节点激活通过。
 - 完整Node **3186/3186 PASS**（free-round158-node.log.gz），定向191项通过。原打包扩展隔离headless MV3 **5/5 PASS/sourceChangedDuringRun=false**（free-round158-candidates-package-mv3.json）：605个DOM候选逐页到尾部再返回、同页更新保留焦点/滚动、缩减归零、IDless→exact P/成员、P→C→Back及原生草稿保护。新增604按钮仅离线fixture，非真实账户Project。
 - 候选扫描仍临时收集当前已加载候选以完成既有learned identity清理，超大DOM内存/并发扫描需继续有界化；不宣称F1通过。首页首发独立因果证据、100k/4x、真实G/U等仍未完成；Free NOT_RELEASE_READY。
+
+## Round159：双frame共享进行中的候选扫描（接 1c7f325）
+
+- 内容端并发listPage共享一次进行中的目录扫描，完整去重/单包校验和身份清理完成后各自只生成当前页计划；完成/失败立即释放promise，后续请求重新扫描，不缓存授权。停止和失效同时拒绝等待者，失败前不执行身份副作用。
+- 候选缓冲只保留名称/目标/显示字段，移除已不再使用的evidence。未将带副作用的identity提升直接改成流式；完整对象收集的进一步有界化仍未完成，不能宣称O(1)内存。
+- 定向 **171/171 PASS**（free-round159-target.log）；原打包扩展隔离headless MV3 **5/5 PASS/sourceChangedDuringRun=false**（free-round159-shared-candidates-mv3.json），605项分页、双frame焦点、同名IDless提升、阅读返回和草稿保护保持。本轮完整Node NOT_RUN，最近完整为Round158的3186项，不混加次数。
+- 首页首发跨路由证据、100k/4x及真实G/U仍未完成；Free NOT_RELEASE_READY。

@@ -62,3 +62,19 @@ test('legacy activation has no display; expiry and stop revoke active display',a
 test('invalid optional display fails before dispatch without changing legacy command contract',async()=>{
  const f=fixture(),row=(await f.owner.list())[0],p={offset:0,scrollTop:0,focused:false};for(const display of [null,{}, {role:'other',presentation:p},{role:'workspace',presentation:p,scope:'fake'},{role:'workspace',presentation:{...p,offset:1}},{role:'workspace',presentation:{...p,scrollTop:-1}},{role:'workspace',presentation:{...p,focused:'yes'}},{role:'workspace',presentation:{...p,title:'private'}}])assert.equal((await f.owner.activate({...f.dto(row),display})).state,'blocked');assert.equal(f.calls.length,0);
 });
+
+test('concurrent frame pages share one validated scan but issue separate bounded plans',async()=>{
+ const f=fixture(),held=deferred();let reads=0;f.read(()=>{reads++;return held.promise;});
+ const first=f.owner.listPage(0),tail=f.owner.listPage(576);assert.equal(reads,1);
+ const all=Array.from({length:605},(_,i)=>f.project('r'+i));held.resolve(Array.from({length:3},(_,i)=>({kind:'surface-delta',payload:{candidates:all.slice(i*256,(i+1)*256)}})));
+ const [a,b]=await Promise.all([first,tail]);assert.equal(reads,1);assert.equal(a.total,605);assert.equal(b.total,605);assert.equal(a.items.length,32);assert.equal(b.items.length,29);assert.equal(b.items.at(-1).renderKey,'r604');assert.notEqual(a.items[0].targetKey,b.items[0].targetKey);
+ await f.owner.listPage();assert.equal(reads,2,'completed scans do not become an authority cache');f.owner.stop();
+});
+test('failed shared scan rejects all waiters before identity effects and can be retried',async()=>{
+ const held=deferred();let reads=0,effects=0;const owner=createContentCandidates({adapter:{readLoaded:()=>{reads++;return reads===1?held.promise:[];},planNavigation:()=>{throw Error('must-not-plan');}},current:()=>true,showReading:()=>true,onScan:()=>effects++,isUpgraded:()=>{effects++;return false;}});
+ const a=owner.listPage(),b=owner.listPage(32);held.resolve([{kind:'surface-delta',payload:{candidates:Array.from({length:257},(_,i)=>({entity:'project',renderKey:'r'+i,target:{kind:'live-control'}}))}}]);
+ const results=await Promise.allSettled([a,b]);assert(results.every(r=>r.status==='rejected'));assert.equal(reads,1);assert.equal(effects,0);assert.deepEqual(await owner.listPage(),{items:[],total:0,offset:0,nextOffset:null});assert.equal(reads,2);owner.stop();
+});
+test('stop invalidates every shared scan waiter without publishing identity effects or plans',async()=>{
+ const f=fixture(),held=deferred();let reads=0;f.read(()=>{reads++;return held.promise;});const a=f.owner.listPage(),b=f.owner.listPage(32);f.owner.stop();held.resolve([{kind:'surface-delta',payload:{candidates:[f.project()]}}]);const results=await Promise.allSettled([a,b]);assert.equal(reads,1);assert(results.every(r=>r.status==='rejected'));assert.equal(f.calls.length,0);
+});
