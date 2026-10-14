@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round170：共享审计接入原有有界精确预取；完整Node3220项、真实IDB原生六项及共享7/4/10项通过。100k/4x仍未能在启动预算内完成，保持FAIL；首页首发、预证明立即发送、候选内存、间歇退出及真实G/U仍未完成，Free为NOT_RELEASE_READY。
+当前已推进至Round171：evidence审计复用有界精确预取；完整Node3220项、真实evidence IDB三项通过。100k/4x仍未在启动预算内完成，保持FAIL；首页首发、预证明立即发送、候选内存、间歇退出及真实G/U仍未完成，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1711,3 +1711,11 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 真实IDB原生六项通过（free-round170-native-idb.json）；共享生命周期7/批次4/retention10通过（free-round170-shared-idb.json）。新增真实API计数证明批次组执行44页键扫描、42页值读取，最大512；没有仅走mock/无bulk备用路径冒充完成。
 - 最终固定源码100k/project-mixed/4x仍 **FAIL**（free-round170-100k.json）：约30253ms后WAITING/read-budget-exhausted，已越过shared-directory，后续HEADER仍stale-binding。输入原节点、可见性与草稿保留，sourceChangedDuringRun=false；未延长6秒/总预算。
 - 首页首发、预证明立即发送、候选完整内存、间歇退出及真实G/U仍未完成，Free NOT_RELEASE_READY。f1798eb已正常推送原PR #16。
+
+
+## Round171：evidence审计复用有界精确预取（接 53371db）
+
+- evidence分片迁移接入共用prefetch；仅本事务当前目标可命中预取，缺片仍get后拒绝。仍逐片hash、scope/ref/revision/JSON大小、完整FreeEvidence schema，并核对全局计数、event/hint唯一性及index对应，不缓存活动裁决或旧校验证书。
+- 完整Node **3220/3220 PASS**（free-round171-node.log.gz），定向13项覆盖全局超限及错误索引等反例。真实headless IDB三项通过（free-round171-evidence-idb.json）：5001 refs用11页key/12页value、最大512；成功保留完整facts，尾片坏checksum和实际批量读取尾片时AbortController撤权均全库回滚。撤权注入已覆盖getAll而非仅旧get路径。
+- 固定源码100k/project-mixed/4x仍 **FAIL**（free-round171-100k.json）：约30259ms后WAITING/read-budget-exhausted，native-index/shared-directory已推进，后续HEADER仍stale-binding。输入原节点、可见性、草稿保留，sourceChangedDuringRun=false；6秒及总预算未放宽。
+- 当前预取降低逐条请求，但不足以完成F1；首页首发、预证明立即发送、候选完整内存、间歇退出及真实G/U仍未完成，Free NOT_RELEASE_READY。53371db上轮普通push超时，本轮自然检查点正常同步。

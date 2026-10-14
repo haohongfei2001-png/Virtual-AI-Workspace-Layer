@@ -4,7 +4,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {createServer} from '../../simulator/server.mjs';
-const files=['src/data/evidence-partition-audit.mjs','src/data/evidence-directory-migration.mjs','src/data/free-evidence-partitions.mjs','src/data/free-evidence-repository.mjs','src/data/free-evidence.mjs','src/data/evidence-ref-directory.mjs','src/data/hash.mjs','src/data/schema.mjs','src/b1/scope-repository.mjs','tests/free/evidence-audit-browser.mjs'];
+const files=['src/data/audit-record-prefetch.mjs','src/data/evidence-partition-audit.mjs','src/data/evidence-directory-migration.mjs','src/data/free-evidence-partitions.mjs','src/data/free-evidence-repository.mjs','src/data/free-evidence.mjs','src/data/evidence-ref-directory.mjs','src/data/hash.mjs','src/data/schema.mjs','src/b1/scope-repository.mjs','tests/free/evidence-audit-browser.mjs'];
 const hashes=async()=>Object.fromEntries(await Promise.all(files.map(async file=>[file,createHash('sha256').update(await readFile(file)).digest('hex')]))),before=await hashes();
 const report={evidence:'REAL_HEADLESS_CHROME_IDB_EVIDENCE_BATCH_AUDIT',realChatGPT:'NOT_RUN',mv3:'NOT_RUN',sourceHashes:before,results:[],pageErrors:[]},receipt=process.argv[2]??'/private/tmp/free-round72-evidence-audit-browser.json';
 const save=()=>writeFile(receipt,JSON.stringify(report,null,2)+'\n'),server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
@@ -20,13 +20,19 @@ try{
     const db=await base.open(),tail=evidencePieceKey(scope.key,'R5000',2),dump=()=>new Promise((resolve,reject)=>{const names=[...db.objectStoreNames],tx=db.transaction(names),rows={};for(const name of names){const q=tx.objectStore(name).getAll();q.onsuccess=()=>rows[name]=q.result;}tx.oncomplete=()=>resolve(rows);tx.onabort=()=>reject(tx.error);});
     if(mode==='checksum')await new Promise((resolve,reject)=>{const tx=db.transaction('native_states','readwrite'),s=tx.objectStore('native_states'),q=s.get(tail);q.onsuccess=()=>{check(!!q.result,'missing-tail-fixture');s.put({...q.result,checksum:'0'.repeat(64)});};tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
     const oldRows=await dump(),facts=mode==='success'?await repo.read(scope):null,controller=new AbortController();let sawTail=false;
-    if(mode==='abort'){
-     const get=IDBObjectStore.prototype.get;IDBObjectStore.prototype.get=function(key){const request=get.call(this,key);if(this.transaction.db===db&&this.transaction.mode==='readwrite'&&key===tail){sawTail=true;controller.abort();}return request;};restore=()=>{IDBObjectStore.prototype.get=get;};
-    }
-    const result=await repo.migrateRefDirectory(scope,{operationId:'audit_'+mode,expectedRevision:2},{signal:controller.signal});restore();
+    const originals={get:IDBObjectStore.prototype.get,getAll:IDBObjectStore.prototype.getAll,getAllKeys:IDBObjectStore.prototype.getAllKeys},prefetch={keyPages:0,valuePages:0,maxPage:0};
+    for(const method of Object.keys(originals))IDBObjectStore.prototype[method]=function(...args){
+     const request=originals[method].apply(this,args),active=this.transaction.db===db&&this.transaction.mode==='readwrite';
+     if(active&&method!=='get'&&args[0] instanceof IDBKeyRange&&String(args[0].lower).includes('free-evidence-piece')){
+      check(Number.isSafeInteger(args[1])&&args[1]>0&&args[1]<=512,'unbounded-evidence-prefetch');prefetch[method==='getAll'?'valuePages':'keyPages']++;prefetch.maxPage=Math.max(prefetch.maxPage,args[1]);
+     }
+     if(mode==='abort'&&active&&(method==='get'&&args[0]===tail||method==='getAll'&&args[0] instanceof IDBKeyRange&&args[0].includes(tail))){sawTail=true;controller.abort();}
+     return request;
+    };restore=()=>{for(const method of Object.keys(originals))IDBObjectStore.prototype[method]=originals[method];};
+    const result=await repo.migrateRefDirectory(scope,{operationId:'audit_'+mode,expectedRevision:2},{signal:controller.signal});restore();check(prefetch.keyPages>0&&prefetch.valuePages>0,'real-prefetch-not-exercised');
     if(mode==='success'){check(result.ok,JSON.stringify(result));same(await repo.read(scope),{...facts,revision:3},'complete-evidence-changed');check((await repo.header(scope,{includeStorageFormat:true})).storageFormat==='vaiwl-free-evidence-directory-v1','directory-not-published');}
     else{check(!result.ok,'failure-accepted');check(result.reason===(mode==='checksum'?'corrupt-free-evidence-record':'stale-binding'),'wrong-failure:'+result.reason);if(mode==='abort')check(sawTail,'second-batch-not-reached');same(await dump(),oldRows,'atomic-all-stores-rollback-failed');}
-    return {mode,refs:5001,result,secondBatchReached:mode==='abort'?sawTail:undefined,allStoresUnchanged:mode!=='success',completeFactsPreserved:mode==='success'};
+    return {mode,refs:5001,prefetch,result,secondBatchReached:mode==='abort'?sawTail:undefined,allStoresUnchanged:mode!=='success',completeFactsPreserved:mode==='success'};
    }finally{restore();base.close();}
   },mode);report.results.push({status:'PASS',...value});}catch(error){report.results.push({mode,status:'FAIL',error:error.stack});}
   await save();

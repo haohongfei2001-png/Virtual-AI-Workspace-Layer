@@ -1,4 +1,5 @@
-import {evidenceHeader,loadEvidencePieces,validateEvidenceManifest,indexGroup} from './free-evidence-partitions.mjs';
+import {prefetchExactAuditRecords} from './audit-record-prefetch.mjs';
+import {evidenceHeader,loadEvidencePieces,validateEvidenceManifest,indexGroup,evidencePieceKey} from './free-evidence-partitions.mjs';
 import {digest} from './hash.mjs';
 
 /** Complete atomic migration audit, retaining one payload batch and global IDs.
@@ -27,6 +28,7 @@ export function auditEvidencePartitions(store,manifest,scope,fence,done,fail,ind
     done({evidenceJSONLength:size,refCount:refs.length,counts});finished=true;return;
    }
    const ids=refs.slice(offset,offset+5000);offset+=ids.length;
+   prefetchExactAuditRecords(store,ids.map(ref=>evidencePieceKey(scope.key,ref,manifest.refVersions[ref])),fence,prefetched=>{
    loadEvidencePieces(store,manifest,scope,ids,evidence=>{
     if(failed||finished)return;
     try{
@@ -47,6 +49,7 @@ export function auditEvidencePartitions(store,manifest,scope,fence,done,fail,ind
      }
      next();
     }catch(error){reject(error);}
+   },reject,null,prefetched);
    },reject);
   }catch(error){reject(error);}
  };
