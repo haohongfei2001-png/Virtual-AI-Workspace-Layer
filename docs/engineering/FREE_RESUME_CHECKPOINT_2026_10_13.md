@@ -1273,3 +1273,12 @@ Round118补充：静态schema键编码缓存的Map与null-prototype frozen字典
 - 实际搜索片段MV3六旅程最终PASS、sourceChangedDuringRun=false。前两次失败保留：第一轮隐藏原生body导致严格定位拒绝；单纯先reveal仍因body epoch等待owner ACK而失败。最终在同一六秒命令内先reveal、最多120次50ms仅等新ACK proof，再restore一次；不重试滚动、不放宽锚校验。生产snippet profile仍关闭，仅loopback重建包可显式启用。100k/4x冷启动、真实context/accepted ACK、G/U与PAIA条件仍未解决；Free未完成、NOT_RELEASE_READY。
 
 Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2571**；之后新增独立等待/stop/route/期限/不重试反例 **5/5**（未冒充再跑完整集）。最终标准打包MV3 **13/13**、片段/搜索MV3 **6/6**，两个最终源码报告均stable。精确来源：free-round122-node-final.log、free-round122-snippet-restore-wait-final.log、free-round122-package-mv3-final.json、free-round122-snippets-package-mv3-proof.json。名称含 snippets-package-mv3-final 的早期报告是第二次FAIL，原样保留，以status和sourceHashes为准。下一继续正式C4/C5剩余兼容及F1离线缺口，不重复实现本轮闭环。
+
+
+## Round123：原生操作优先与窄屏片段布局（接 8d13d50）
+
+- 定位等待body proof时，原生modal、可信pointer/focus/key/wheel/打开弹层、返回workspace或新的reading意图永久撤销旧命令。content持有单次pending取消器，清理计时器/监听器并只回复一次；stop、替代请求、wall/elapsed期限和时钟回退均阻止迟到滚动。controller的readingGuard只见证当前同授权reading意图，不延长授权或proof。
+- 实际原包第一次新保护回归暴露showReading→hidePopover→异步native-reading回声误撤销自己的问题；区分已reading的程序关闭回声和native-input，后者始终取消。原FAIL报告保留，最终实际MV3片段六旅程与标准十三旅程PASS/sourceChangedDuringRun=false，原生草稿及节点保持。
+- Shadow DOM新增snippet-match局部换行；真实Chrome DOM在320px/100%、640px/200%、1000px/200%分别覆盖搜索与工作集。改前搜索scrollWidth1329/1329/1348超出320/320/500，改后分别等于容器且160无空格预览实际换行，六组通过。缩放为明确CSS zoom、DTO合成；不是物理浏览器缩放/批准视觉golden/真实账户认证。源hash稳定。
+- 15项等待撤销反例、28项controller合同分别通过。旧工作集偶发click缺失仍不能证实产品修复：证据存在关闭第二tab后原生focus让位的疑点，需事件级复现，未按无失败回归宣称已解决。
+- 最终完整Node **2591/2591** 通过（free-round123-node.log）；最终MV3与布局报告各自保留源码hash，不与历史计数相加。100k/4x冷启动、生产context/accepted ACK、真实G/U/PAIA验收仍未完成；NOT_RELEASE_READY。保持原目录/分支/PR16与Pro文档，不新增计划或访问私人数据。

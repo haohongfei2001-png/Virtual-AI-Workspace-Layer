@@ -14,16 +14,16 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   const inspection=adapter.inspect();return inspection?.ok&&inspection.regionEpoch===state.handle.regionEpoch&&state.frames.every(({frame})=>frame.isConnected&&frame.ownerDocument===doc);
  }
  function authorized(state){return valid(state)&&Date.parse(state.context.binding.expiresAt)>now()&&state.frames.every(({role})=>{const grant=state.grants.get(role);return grant&&Date.parse(grant.expiresAt)>now();});}
- function showWorkspace(){const state=current;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}removeReturn(state);surface.showWorkspace(state.handle);state.mode='workspace';return true;}
+ function showWorkspace(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}removeReturn(state);surface.showWorkspace(state.handle);state.mode='workspace';return true;}
  function ensureReturn(state){
   if(!authorized(state)||adapter.hasNativeLayer()){removeReturn(state);return false;}
   const inspection=adapter.inspect(),slot=inspection.navigationSlot;
   if(!slot?.isConnected||slot!==state.inspection.navigationSlot){removeReturn(state);return false;}
   if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.textContent='▦';button.addEventListener('click',event=>{if(current!==state||!showWorkspace()||event?.isTrusted!==true)return;try{Promise.resolve(bridge.workspaceEntered?.({mountId:state.handle.id})).catch(()=>{});}catch{/* Entering the visible workspace never waits for a private notification. */}});slot.append(button);state.button=button;}return true;
  }
- function nativeSurrender(state){if(current!==state||!authorized(state))return;state.mode='reading';if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}
- function showReading(){const state=current;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}surface.showReading(state.handle);state.mode='reading';return ensureReturn(state);}
- function suspend(reason='native-layer'){const state=current;if(!state?.handle)return;removeReturn(state);surface.suspend(state.handle,reason);state.mode='suspended';}
+ function nativeSurrender(state,event){if(event?.reason!=='native-reading'||state.mode!=='reading')state.intentEpoch++;if(current!==state||!authorized(state))return;state.mode='reading';if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}
+ function showReading(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}surface.showReading(state.handle);state.mode='reading';return ensureReturn(state);}
+ function suspend(reason='native-layer'){const state=current;if(state)state.intentEpoch++;if(!state?.handle)return;removeReturn(state);surface.suspend(state.handle,reason);state.mode='suspended';}
  function arm(state){cancel(state.timer);const until=Math.min(Date.parse(state.context.binding.expiresAt),...Array.from(state.grants.values(),g=>Date.parse(g.expiresAt)));state.timer=schedule(()=>{if(current===state)stop('ui-grant-expired');},Math.max(0,until-now()));if(typeof bridge.renewSession==='function'&&state.grants.size===2&&!state.renewing&&state.renewTimer===null)state.renewTimer=schedule(()=>{state.renewTimer=null;void renewSession(state);},Math.max(1,Math.min(10000,(until-now())/2)));}
  async function renewSession(state){
   if(!authorized(state)){if(current===state)stop('stale-session-renewal');return;}state.renewing=true;
@@ -40,11 +40,11 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   finally{state.renewing=false;if(current===state)arm(state);}
  }
  async function start(options){
-  stop('surface-restart');const run=epoch,state={epoch:run,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,observer:null,mode:'waiting'};current=state;
+  stop('surface-restart');const run=epoch,state={epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,observer:null,mode:'waiting'};current=state;
   try{
    state.context=await adapter.start(options);if(current!==state)return null;
    state.inspection=adapter.inspect();if(!state.inspection?.ok||!state.inspection.navigationSlot?.isConnected)throw Error('invalid-return-slot');
-   state.handle=await surface.mount(state.context,state.inspection,{onSurrender:()=>nativeSurrender(state)});if(current!==state){dispose(state,'stale-mount');return null;}
+   state.handle=await surface.mount(state.context,state.inspection,{onSurrender:event=>nativeSurrender(state,event)});if(current!==state){dispose(state,'stale-mount');return null;}
    state.frames=surface.frames(state.handle).map(value=>({...value,window:value.frame.contentWindow}));if(state.frames.length!==2||new Set(state.frames.map(x=>x.role)).size!==2||state.frames.some(x=>!['workspace','sidebar'].includes(x.role)))throw Error('incomplete-dual-surface');
    state.listener=event=>{void receive(state,event);};win.addEventListener('message',state.listener);
    const ack=await bridge.registerMount({handle:state.handle});if(current!==state)return null;if(ack?.ok!==true)throw Error('mount-registration-denied');state.registered=true;
@@ -72,5 +72,5 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    state.grants.set(data.role,Object.freeze({...grant}));arm(state);if(state.mode==='waiting'&&authorized(state))showWorkspace();
   }catch{/* A failed public join never authorizes a surface. */}finally{state.pending.delete(data.role);}
  }
- return Object.freeze({start,showWorkspace,showReading,suspend,stop,revoke:()=>stop('ui-authority-revoked')});
+ return Object.freeze({start,showWorkspace,showReading,readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
 }

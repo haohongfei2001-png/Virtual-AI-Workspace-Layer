@@ -18,7 +18,7 @@ function fixture(){
  const controller=createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://extension',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++n;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
  const message=(role='workspace',patch={})=>{const event={source:frames.find(x=>x.role===role).frame.contentWindow,origin:'chrome-extension://extension',data:{type:'VAIWL_UI_JOIN',role,nonce:`nonce_${role}`},...patch};for(const fn of listeners.get('message')??[])fn(event);};
  const both=async()=>{message();message('sidebar');await drain();};
- return {renewAck:()=>({ok:true,binding:{...binding,expiresAt:new Date(time+20000).toISOString()},grants:['workspace','sidebar'].map(role=>({id:`grant_${role}`,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:`ui_${role}`,scopeGrantId:'scope',expiresAt:new Date(time+20000).toISOString()}))}),surrender:()=>surrender?.(),pagehide:()=>{for(const fn of listeners.get('pagehide')??[])fn();},controller,bridge,adapter,surface,doc,slot,frames,binding,calls,message,both,change:()=>observer?.(),layer:value=>{layer=value;},region:()=>{region++;},tick:ms=>{time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
+ return {renewAck:()=>({ok:true,binding:{...binding,expiresAt:new Date(time+20000).toISOString()},grants:['workspace','sidebar'].map(role=>({id:`grant_${role}`,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:`ui_${role}`,scopeGrantId:'scope',expiresAt:new Date(time+20000).toISOString()}))}),surrender:event=>surrender?.(event),pagehide:()=>{for(const fn of listeners.get('pagehide')??[])fn();},controller,bridge,adapter,surface,doc,slot,frames,binding,calls,message,both,change:()=>observer?.(),layer:value=>{layer=value;},region:()=>{region++;},tick:ms=>{time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
 }
 test('owner registration and both UiGrant ACKs gate initial dual-surface show',async()=>{const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const start=f.controller.start({});await drain();f.message();assert.equal(f.calls.confirm.length,0);assert.equal(f.controller.showWorkspace(),false);held.resolve({ok:true});await start;f.message();await drain();assert.equal(f.calls.show,0);f.message('sidebar');await drain();assert.equal(f.calls.show,1);assert.deepEqual(Object.keys(f.calls.confirm[0]).sort(),['documentToken','mountId','nonce','regionEpoch','role']);});
 test('origin, original contentWindow, connectedness and public join shape are mandatory',async()=>{for(const mutate of [f=>f.message('workspace',{origin:'https://chatgpt.com'}),f=>f.message('workspace',{source:{}}),f=>{f.frames[0].frame.isConnected=false;f.message();},f=>f.message('workspace',{data:{type:'VAIWL_UI_JOIN',role:'workspace',nonce:'n',scope:'forged'}})]){const f=fixture();await f.controller.start({});mutate(f);await drain();assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);}});
@@ -90,4 +90,36 @@ test('notification failures never prevent native return and stale or blocked but
 });
 test('session renewal and programmatic workspace presentation never notify entry',async()=>{
  const f=fixture();let calls=0;f.bridge.workspaceEntered=()=>{calls++;};f.bridge.renewSession=async()=>f.renewAck();await f.controller.start({});await f.both();f.tick(10000);await drain();f.controller.showWorkspace();assert.equal(calls,0);f.controller.stop();
+});
+
+test('reading guard is tied to one explicit reading intent and never revives after workspace return',async()=>{
+ const f=fixture();const absent=f.controller.readingGuard();assert.equal(absent(),false);
+ await f.controller.start({});await f.both();assert.equal(f.controller.readingGuard()(),false);
+ assert.equal(f.controller.showReading(),true);const old=f.controller.readingGuard();assert.equal(old(),true);
+ assert.equal(f.controller.showWorkspace(),true);assert.equal(old(),false);
+ assert.equal(f.controller.showReading(),true);assert.equal(old(),false);assert.equal(f.controller.readingGuard()(),true);assert.equal(absent(),false);f.controller.stop();
+});
+test('native surrender and suspension invalidate prior reading intent permanently',async()=>{
+ for(const interrupt of [f=>f.surrender(),f=>f.controller.suspend('native-layer')]){
+  const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();const old=f.controller.readingGuard();assert.equal(old(),true);
+  interrupt(f);assert.equal(old(),false);f.controller.showReading();assert.equal(old(),false);assert.equal(f.controller.readingGuard()(),true);f.controller.stop();
+ }
+});
+test('successful in-place session renewal preserves a reading guard and stop invalidates it',async()=>{
+ const f=fixture();f.bridge.renewSession=async()=>f.renewAck();await f.controller.start({});await f.both();f.controller.showReading();const guard=f.controller.readingGuard();assert.equal(guard(),true);
+ f.tick(10000);await drain();assert.equal(f.calls.updates.length,1);assert.equal(guard(),true);
+ f.tick(10000);await drain();assert.equal(f.calls.updates.length,2);assert.equal(guard(),true);
+ f.controller.stop();assert.equal(guard(),false);assert.equal(f.controller.readingGuard()(),false);
+});
+
+test('asynchronous native-reading close echo preserves the programmatic reading guard',async()=>{
+ const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();const guard=f.controller.readingGuard(),button=f.slot.children[0];assert.equal(guard(),true);
+ await drain();f.surrender({reason:'native-reading'});assert.equal(guard(),true);assert.equal(f.slot.children[0],button);
+ f.surrender({reason:'native-reading'});assert.equal(guard(),true);assert.equal(f.calls.reading,1);f.controller.stop();
+});
+test('native-input surrender while already reading still invalidates the previous guard',async()=>{
+ const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();const guard=f.controller.readingGuard();assert.equal(guard(),true);
+ f.surrender({reason:'native-input'});assert.equal(guard(),false);const next=f.controller.readingGuard();assert.equal(next(),true);
+ f.surrender({reason:'native-reading'});assert.equal(guard(),false);assert.equal(next(),true);
+ f.surrender({reason:'native-input'});assert.equal(next(),false);f.controller.stop();
 });

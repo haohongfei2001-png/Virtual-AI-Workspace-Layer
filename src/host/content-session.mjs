@@ -23,7 +23,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   try{const result=await withRequestDeadline(()=>Promise.race([Promise.resolve().then(()=>{if(!live(s))throw Error('stale-content-session');return runtime.sendMessage(message);}),cancelled]),{timeoutMs,now:elapsedNow,schedule,cancel});if(!live(s))throw Error('stale-content-session');return result;}
   finally{s.abort.signal.removeEventListener('abort',abort);}
  }
- function dispose(s){if(!s)return;s.snippets?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
+ function dispose(s){if(!s)return;s.restorePending?.();s.snippets?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
  function reset(){epoch++;const s=current;current=null;dispose(s);}
  function stop(){enabled=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',stop);}
  function rebind(s){
@@ -44,9 +44,14 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     if(!allowed){reply({ok:false});return;}
     // Revealing a masked body can require a new owner-acknowledged body proof.
     // Wait for that proof within this one command; never retry scrolling.
-    let attempts=0;const fresh=()=>current===s&&live(s)&&Date.parse(m.expiresAt)>now();
-    const restore=()=>{try{if(!fresh()||++attempts>120){reply({ok:false});return;}if(typeof s.adapter?.snippetReady==='function'&&!s.adapter.snippetReady(m.ref)){schedule(restore,Math.min(50,Math.max(1,Date.parse(m.expiresAt)-now())));return;}const restored=s.adapter?.restoreSnippet?.(m.ref,m.anchor)?.ok===true;reply({ok:restored&&fresh()});}catch{reply({ok:false});}};
-    try{if(s.controller?.showReading()!==true){reply({ok:false});return;}restore();}catch{reply({ok:false});}return true;
+    s.restorePending?.();let attempts=0,timer=null,done=false,readingCurrent=()=>true;
+    const events=['pointerdown','focusin','keydown','wheel','beforetoggle'];
+    const finish=ok=>{if(done)return;done=true;if(timer!==null)cancel(timer);for(const type of events)doc.removeEventListener?.(type,interrupted,true);if(s.restorePending===abort)s.restorePending=null;reply({ok});};
+    const abort=()=>finish(false),interrupted=event=>{if(event.isTrusted===true&&(event.type!=='beforetoggle'||event.newState==='open'))abort();};
+    const started=elapsedNow(),remaining=Date.parse(m.expiresAt)-now();
+    const fresh=()=>!done&&current===s&&live(s)&&Date.parse(s.binding.expiresAt)>now()&&Date.parse(m.expiresAt)>now()&&elapsedNow()-started>=0&&elapsedNow()-started<remaining&&readingCurrent()&&s.adapter?.hasNativeLayer?.()!==true;
+    const restore=()=>{try{if(!fresh()||++attempts>120){finish(false);return;}if(typeof s.adapter?.snippetReady==='function'&&!s.adapter.snippetReady(m.ref)){timer=schedule(restore,Math.min(50,Math.max(1,Date.parse(m.expiresAt)-now())));return;}const restored=s.adapter?.restoreSnippet?.(m.ref,m.anchor)?.ok===true;finish(restored&&fresh());}catch{finish(false);}};
+    try{if(s.controller?.showReading()!==true){finish(false);return;}readingCurrent=s.controller.readingGuard?.()??(()=>true);s.restorePending=abort;for(const type of events)doc.addEventListener?.(type,interrupted,true);restore();}catch{finish(false);}return true;
    }
    if(m?.type==='HOST_SNIPPET_SELECTION'){
     const allowed=exactHostRecord(m,['type','documentToken','producerToken','routeEpoch','scopeGrantId','phase','ref','selectionId'])&&s.ready&&s.binding&&live(s)&&Date.parse(s.binding.expiresAt)>now()&&Object.entries(bindingFields(s.binding)).every(([k,v])=>m[k]===v)&&tokenOK(m.scopeGrantId)&&['capture','validate','release'].includes(m.phase)&&exactHostRecord(m.ref,['id','nativeUrl'])&&tokenOK(m.ref.id)&&typeof m.ref.nativeUrl==='string'&&m.ref.nativeUrl.length<=2048&&(m.phase==='capture'?m.selectionId===null:tokenOK(m.selectionId));
