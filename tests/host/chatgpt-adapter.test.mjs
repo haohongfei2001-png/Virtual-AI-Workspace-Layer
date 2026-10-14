@@ -120,3 +120,22 @@ test('duplicate native history controls reach owner reduction as one conversatio
  f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);await f.start();for(let i=0;i<10;i++)await tick();assert.equal(f.emitted.length,1);const p=f.emitted[0];assert.equal(p.payload.candidates.length,2);assert.notEqual(p.payload.candidates[0].target.liveHandle.id,p.payload.candidates[1].target.liveHandle.id);
  const batch=surfaceBatch(p,{scope:{verified:true,provider:'chatgpt',accountId:'test',organizationId:'personal'},binding:f.binding,profile:LEGACY_SURFACE_PROFILE,urlPolicy:createURLPolicy(),sourceRevision:1,observedAt:'2026-10-14T00:00:00Z',validUntil:'2026-10-14T00:01:00Z'});assert.equal(batch.refs.length,1);assert.equal(batch.refs[0].id,id);f.adapter.stop();
 });
+
+test('finite producer pass reaches 1000 loaded conversations and detects a tail rename without cycling',async()=>{
+ const f=fixture(),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};
+ for(let i=0;i<1000;i++){const id='11111111-1111-4111-8111-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'Native '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);await f.start();for(let i=0;i<150;i++)await tick();
+ assert.equal(new Set(f.emitted.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,1000);assert(f.emitted.every(p=>p.payload.candidates.length<=256&&new TextEncoder().encode(JSON.stringify(p)).length<=65536));
+ const count=f.emitted.length;f.trigger();for(let i=0;i<150;i++)await tick();assert.equal(f.emitted.length,count);
+ nodes[999].textContent='Renamed tail';f.trigger();for(let i=0;i<150;i++)await tick();assert(f.emitted.slice(count).some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Renamed tail')));
+ const changed=f.emitted.length;f.trigger();for(let i=0;i<150;i++)await tick();assert.equal(f.emitted.length,changed);assert(f.emitted.every((p,i)=>!i||p.localSeq>f.emitted[i-1].localSeq));f.adapter.stop();
+});
+for(const mode of ['stop','root-replaced'])test('pending multi-page scan handles '+mode+' without emitting old tail',async()=>{
+ const f=fixture();let nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};
+ for(let i=0;i<600;i++){const id='22222222-2222-4222-8222-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'Old '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);let release;
+ await f.start(p=>{f.emitted.push(p);return f.emitted.length===1?new Promise(r=>release=()=>r({state:'accepted',localSeq:p.localSeq})):Promise.resolve({state:'accepted',localSeq:p.localSeq});});await tick();
+ if(mode==='stop')f.adapter.stop();else{root.isConnected=false;root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};nodes=[{...nodes[599],textContent:'Replacement tail',parentNode:root}];f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);f.trigger();}
+ release();for(let i=0;i<100;i++)await tick();
+ if(mode==='stop')assert.equal(f.emitted.length,1);else{assert(f.emitted.slice(1).some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Replacement tail')));assert(f.emitted.slice(1).every(p=>p.payload.candidates.every(c=>!c.nativeTitle.startsWith('Old '))));}f.adapter.stop();
+});

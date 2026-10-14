@@ -51,11 +51,11 @@ try{
  const afterAck=await worker.evaluate(()=>dump());await worker.evaluate(id=>service.sendCandidates.observe(id),appendedProof);assert.deepEqual(await worker.evaluate(()=>dump()),afterAck);
  report.results.push({name:'automatic-ACK-writes-evidence-once-without-native-revision-or-continuation',status:'PASS',trigger:'owner finite wakeup; no new DOM mutation or test observe call before commit'});
  if(process.env.FREE_LONG_SURFACE==='1'){
-  const ids=Array.from({length:256},(_,i)=>'77777777-7777-4777-8777-'+i.toString(16).padStart(12,'0'));
+  const ids=Array.from({length:604},(_,i)=>'77777777-7777-4777-8777-'+i.toString(16).padStart(12,'0'));
   await page.locator('aside nav[aria-label="Chat history"]').evaluate((root,ids)=>{root.replaceChildren(...ids.map(id=>{const link=document.createElement('a');link.href='/c/'+id;link.textContent='长'.repeat(200);return link;}));},ids);
-  const inspect=()=>worker.evaluate(async ({proof,ids})=>service.observations.withCurrent(proof,async c=>{const page=await service.nativeRepository.page(c.scope,{ids:{projects:[],refs:ids},limit:256});return Object.values(page.facts.refs).map(r=>({id:r.id,title:r.nativeTitle}));}),{proof:appendedProof,ids});
-  await wait(async()=> (await inspect()).length>=250);const rows=await inspect();assert(rows.length>=250);assert(rows.every(r=>r.title==='长'.repeat(200)));
-  report.results.push({name:'long-native-titles-arrive-through-bounded-fragments-in-real-IDB',status:'PASS',visibleFixtureLinks:256,persistedWithinDiscoveryCap:rows.length,titleUTF8Bytes:600});
+  const inspect=()=>worker.evaluate(async ({proof,ids})=>service.observations.withCurrent(proof,async c=>{const rows=[];for(let offset=0;offset<ids.length;offset+=200){const page=await service.nativeRepository.page(c.scope,{ids:{projects:[],refs:ids.slice(offset,offset+200)},limit:200});rows.push(...Object.values(page.facts.refs).map(r=>({id:r.id,title:r.nativeTitle})));}return rows;}),{proof:appendedProof,ids});
+  await wait(async()=> (await inspect()).length===ids.length);const rows=await inspect();assert.equal(rows.length,ids.length);assert(rows.every(r=>r.title==='长'.repeat(200)));
+  report.results.push({name:'long-native-titles-arrive-through-bounded-fragments-in-real-IDB',status:'PASS',visibleFixtureLinks:ids.length,persistedAcrossDiscoveryPages:rows.length,titleUTF8Bytes:600});
  }
  const bodyLogs=await worker.evaluate(()=>logs.filter(r=>['current-object','send-candidate'].includes(r.kind)&&r.state==='accepted'));assert(bodyLogs.filter(r=>r.kind==='send-candidate').every(r=>r.nativeCalls===0));report.results.push({name:'body-and-intent-claims-never-invoke-native-writer',status:'PASS'});
  report.fixture=server.manifest;report.requests=server.snapshot().requests;

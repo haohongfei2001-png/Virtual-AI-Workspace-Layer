@@ -19,7 +19,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
   let stopped=false,routeEpoch=binding.routeEpoch,regionEpoch=0,sequence=0;
   let routeURL=document.location.href;
   let byNode=new WeakMap(); const byId=new Map(),detached=new Set();
-  const roots=new Map();
+  const roots=new Map(),pages=new WeakMap();
   const unique = (selector) => { const nodes=document.querySelectorAll(selector);return nodes.length===1?nodes[0]:null; };
   const fingerprint = (node) => JSON.stringify([node.tagName,node.getAttribute('href'),node.getAttribute('aria-label'),node.getAttribute('role'),node.textContent,node.disabled===true]);
   const title = (node) => { const text=(node.textContent??'').trim();return text.length>200?{nativeTitle:null,titleState:'over-limit'}:text?{nativeTitle:text,titleState:'exact'}:{nativeTitle:null,titleState:'unavailable'}; };
@@ -47,8 +47,9 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     }
     return {...entry.handle};
   }
-  function scan() {
-    if(stopped) return {candidates:[],membershipClaims:[],coverageClaims:[],detachedHandles:[]};
+  function scanPage(cursor=null) {
+    const empty=()=>({candidates:[],membershipClaims:[],coverageClaims:[],detachedHandles:[]});
+    if(stopped){if(cursor)throw Error('stale-surface-cursor');return {payload:empty(),cursor:null};}
     refreshRoute();refreshRoots();
     for(const [id,entry] of byId) if(!valid(entry)) { byId.delete(id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(id); }
     const route=urlPolicy.parse(document.location.href),candidates=[],claims=new Map();
@@ -93,32 +94,41 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
         candidates.push({renderKey:`project:${route.projectId}`,entity:'project',...title(heading),target:{kind:'resolved',entity:'project',nativeId:route.projectId,navigationURL:route.navigationURL,liveHandle:null},evidence:evidence('current-project-route','current-project-title','members')});
       }
     }
-    const projects=roots.get('projects');
     // A confirmed open Project must not lose its member evidence to a full sidebar.
     const order=currentProjectId?['members','projects','history']:['projects','history','members'];
-    for(const regionKind of order) {
-      const root=roots.get(regionKind);if(!root) continue;
-      if(regionKind==='projects'){
-        for(const node of projects.querySelectorAll(profile.controls)){if(candidates.length>=limit)break;candidate(node,projects,'projects','project');}
-        continue;
-      }
-      for(const node of root.querySelectorAll(profile.conversationControls)) {
-        if(candidates.length>=limit) break;
-        const item=candidate(node,root,regionKind,'conversation');if(!item||item.target.kind!=='resolved')continue;
-        const conversationId=item.target.nativeId;
-        if(regionKind==='members'&&visible(root)&&visible(node)&&route.kind==='project'&&root.getAttribute(profile.memberProjectIdAttribute)===route.projectId) claims.set(conversationId,{conversationId,asserted:'PROJECT',projectId:route.projectId,upstreamRevision:null,evidence:evidence('members','current-project-route')});
-        else if(!claims.has(conversationId)) claims.set(conversationId,{conversationId,asserted:'UNKNOWN',projectId:null,reason:'membership-not-observed',evidence:evidence(regionKind)});
-      }
+    let page=cursor&&pages.get(cursor);
+    if(cursor){
+      pages.delete(cursor);
+      if(!page||page.routeEpoch!==routeEpoch||page.regionEpoch!==regionEpoch||page.currentProjectId!==currentProjectId||page.currentConversationId!==currentConversationId)throw Error('stale-surface-cursor');
+    }else page={routeEpoch,regionEpoch,currentProjectId,currentConversationId,region:0,index:0,regions:order.map(kind=>({kind,root:roots.get(kind),nodes:roots.get(kind)?.querySelectorAll(kind==='projects'?profile.controls:profile.conversationControls)??[]}))};
+    // Keep DOM node snapshots only for this finite pass. Each page rechecks live
+    // membership and identity; offsets are never used to authorize navigation.
+    if(cursor&&candidates.length>=limit){candidates.length=0;claims.clear();}
+    let inspected=0;
+    while(page.region<page.regions.length&&candidates.length<limit&&inspected<256){
+      const {kind:regionKind,root,nodes}=page.regions[page.region];
+      if(page.index>=nodes.length){page.region++;page.index=0;continue;}
+      const node=nodes[page.index++];inspected++;
+      if(!node.isConnected||node.ownerDocument!==document||!root?.contains(node))continue;
+      const item=candidate(node,root,regionKind,regionKind==='projects'?'project':'conversation');
+      if(regionKind==='projects'||!item||item.target.kind!=='resolved')continue;
+      const conversationId=item.target.nativeId;
+      if(regionKind==='members'&&visible(root)&&visible(node)&&route.kind==='project'&&root.getAttribute(profile.memberProjectIdAttribute)===route.projectId) claims.set(conversationId,{conversationId,asserted:'PROJECT',projectId:route.projectId,upstreamRevision:null,evidence:evidence('members','current-project-route')});
+      else if(!claims.has(conversationId)) claims.set(conversationId,{conversationId,asserted:'UNKNOWN',projectId:null,reason:'membership-not-observed',evidence:evidence(regionKind)});
     }
+    while(page.region<page.regions.length&&page.index>=page.regions[page.region].nodes.length){page.region++;page.index=0;}
+
     const menu=roots.get('moveMenu');
     if(route.kind==='conversation'&&menu&&visible(menu)&&menu.getAttribute(profile.menuConversationIdAttribute)===route.conversationId) {
       const checked=[...menu.querySelectorAll('input[type="radio"]:checked')];
       if(checked.length===1&&visible(checked[0])&&visible(checked[0].closest('label'))&&checked[0].closest('label')?.textContent.trim()===profile.noneLabel) claims.set(route.conversationId,{conversationId:route.conversationId,asserted:'NONE',projectId:null,upstreamRevision:null,evidence:evidence('moveMenu','checked-no-project')});
     }
-    const detachedHandles=[...detached];detached.clear();
+    const detachedHandles=[];for(const id of detached){if(detachedHandles.length===512)break;detachedHandles.push(id);detached.delete(id);}
     // A visible DOM slice is not an account-wide or terminal snapshot.
-    return {candidates,membershipClaims:[...claims.values()],coverageClaims:[],detachedHandles};
+    let next=null;if(page.region<page.regions.length||detached.size){next=Object.freeze(Object.create(null));pages.set(next,page);}
+    return {payload:{candidates,membershipClaims:[...claims.values()],coverageClaims:[],detachedHandles},cursor:next};
   }
+  const scan=()=>scanPage().payload;
   function getNode(handle) {
     if(stopped)return null;refreshRoute();refreshRoots();
     const entry=byId.get(typeof handle==='string'?handle:handle?.id);
@@ -144,7 +154,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const entry=candidateEntry(handle);if(!entry)return false;
     return identity.document.deref()===document&&identity.profileId===profile.id&&identity.profileVersion===profile.revision&&identity.node.deref()===entry.node.deref()&&identity.root.deref()===entry.root.deref()&&identity.parent.deref()===entry.parent.deref()&&identity.fingerprint===entry.fingerprint;
   }
-  return Object.freeze({scan,getNode,captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
+  return Object.freeze({scan,scanPage,getNode,captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
     if(stopped)return;routeEpoch=Number.isSafeInteger(nextEpoch)&&nextEpoch>routeEpoch?nextEpoch:routeEpoch+1;clearHandles();roots.clear();routeURL=document.location.href;
   },stop() {stopped=true;clearHandles();roots.clear();}});
 }

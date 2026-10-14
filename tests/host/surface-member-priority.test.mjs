@@ -36,3 +36,23 @@ test('large current member list remains bounded and handle invalidation still ap
  const f=fixture({memberCount:300}),p=f.discovery.scan();assert.equal(p.candidates.length,256);assert.equal(p.membershipClaims.length,255);assert(p.membershipClaims.every(c=>c.asserted==='PROJECT'));assert.deepEqual(p.coverageClaims,[]);
  const handle=p.candidates[1].target.liveHandle;f.members.children[0].attrs.href='/c/replaced';assert.equal(f.discovery.getNode(handle),null);assert(f.discovery.scan().detachedHandles.includes(handle.id));
 });
+
+test('finite pages expose every loaded project, member and history without a coverage claim',()=>{
+ const f=fixture({memberCount:603}),keys=new Set();let result=f.discovery.scanPage(),pages=0;
+ while(true){pages++;assert(pages<20);assert(result.payload.candidates.length<=256);assert(result.payload.membershipClaims.length<=256);assert.deepEqual(result.payload.coverageClaims,[]);for(const c of result.payload.candidates)keys.add(c.renderKey);
+  if(!result.cursor)break;const cursor=result.cursor;result=f.discovery.scanPage(cursor);assert.throws(()=>f.discovery.scanPage(cursor),/stale-surface-cursor/);
+ }
+ assert.equal(keys.size,1204);for(let i=0;i<603;i++)assert(keys.has('conversation:m'+i));assert(keys.has('project:p301'));assert(keys.has('conversation:h299'));
+});
+for(const change of ['route','root','stop','foreign-cursor'])test('page continuation rejects '+change,()=>{
+ const f=fixture(),page=f.discovery.scanPage();assert(page.cursor);
+ if(change==='route')f.document.location.href='https://chatgpt.com/';
+ if(change==='root'){const query=f.document.querySelectorAll;f.document.querySelectorAll=s=>s===profile.regions.members?[]:query(s);}
+ if(change==='stop')f.discovery.stop();
+ assert.throws(()=>f.discovery.scanPage(change==='foreign-cursor'?{}:page.cursor),/stale-surface-cursor/);
+});
+test('detached handles drain in bounded pages after a large loaded surface is removed',()=>{
+ const f=fixture({projectCount:800,historyCount:0,memberCount:0});let p=f.discovery.scanPage();while(p.cursor)p=f.discovery.scanPage(p.cursor);
+ for(const n of f.projects.children)n.isConnected=false;
+ let count=0;p=f.discovery.scanPage();while(true){assert(p.payload.detachedHandles.length<=512);count+=p.payload.detachedHandles.length;if(!p.cursor)break;p=f.discovery.scanPage(p.cursor);}assert.equal(count,800);
+});

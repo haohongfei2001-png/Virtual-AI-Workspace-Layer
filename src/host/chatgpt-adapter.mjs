@@ -1,3 +1,4 @@
+import {sha256} from '../data/hash.mjs';
 import {splitSurfacePayload} from './surface-fragments.mjs';
 import {createNativeInputRisk} from './native-input-risk.mjs';
 import {createNativeSendIntentObserver} from './native-send-intent.mjs';
@@ -13,7 +14,7 @@ const overlaps=(a,b)=>a.x<b.x+b.width&&b.x<a.x+a.width&&a.y<b.y+b.height&&b.y<a.
 export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,snippetsFactory=createNativeSnippets,bodyProof=()=>null,inputRisk=null,authorize=()=>false,beforeDispatch=()=>{},onNativeDispatch=()=>{},onNativeDispatchCancelled=()=>{},onRebindNeeded=()=>{},onObservationIssue=()=>{},now=Date.now,elapsedNow=()=>performance.now(),scheduleRetry=(fn,ms)=>setTimeout(fn,ms),cancelRetry=id=>clearTimeout(id)}={}){
  if(!document?.defaultView)throw Error('invalid-host-document');
  inputRisk=inputRisk??createNativeInputRisk({document,profile});
- let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[],surfaceParts=[],surfaceKey=null,surfaceSequence=null;
+ let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[],surfaceParts=[],surfaceKey=null,surfaceSequence=null,surfaceWanted=true,surfaceScanning=false,surfaceCursor=null,surfacePage=0,surfacePageKey=null,surfaceEpoch=0,surfaceSnapshotEpoch=0;const surfaceAccepted=new Map(),surfaceFailed=new Map();
  const one=selector=>{const nodes=document.querySelectorAll(selector);return nodes.length===1?nodes[0]:null;};
  const live=()=>!stopped&&now()<Date.parse(binding.expiresAt);
  function syncRoute(){if(document.location.href!==url){stop();onRebindNeeded({reason:'native-route-changed'});throw Error('host-rebind-required');}}
@@ -22,9 +23,9 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
   const keys=['documentToken','producerToken','browserDocumentId','routeEpoch','origin'];
   if(!next||Object.keys(next).sort().join(',')!==[...keys,'expiresAt'].sort().join(',')||keys.some(key=>next[key]!==binding[key]))throw Error('invalid-host-binding-renewal');
   const expiry=Date.parse(next.expiresAt),time=now();if(!Number.isFinite(expiry)||expiry<=time||expiry>time+20000)throw Error('invalid-host-binding-renewal');
-  binding=Object.freeze({...next});last.delete('current-object');failedKey.delete('current-object');schedule();return true;
+  binding=Object.freeze({...next});last.delete('current-object');failedKey.delete('current-object');requestScan();return true;
  }
- function proposal(){if(!live())throw Error('stale-host-binding');syncRoute();const payload=discovery.scan();return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta',payload};}
+ function proposal(page=false){if(!live())throw Error('stale-host-binding');syncRoute();const found=page?discovery.scanPage(surfaceCursor):null,payload=found?found.payload:discovery.scan();if(found){surfaceCursor=found.cursor;surfaceScanning=found.cursor!==null;}return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta',payload};}
  function bodyProposal(){if(!live())throw Error('stale-host-binding');syncRoute();return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'current-object',payload:bodyDiscovery.scan()};}
  function intentProposal(item){return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:item.proofId,kind:'send-candidate',payload:item.payload};}
  function captureIntent(intent){
@@ -38,13 +39,19 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  function bounded(p){if(p.kind==='send-candidate')return new TextEncoder().encode(JSON.stringify(p)).length<=65536;if(p.kind==='current-object')return p.payload.messageIds.length<=256&&new TextEncoder().encode(JSON.stringify(p)).length<=65536;return p.payload.candidates.length<=256&&p.payload.membershipClaims.length<=256&&p.payload.detachedHandles.length<=512&&new TextEncoder().encode(JSON.stringify(p)).length<=65536;}
  function issue(reason){try{onObservationIssue({reason});}catch{/* Diagnostics cannot authorize a retry. */}}
  async function pump(){
-  queued=false;if(!live()||busy)return;dirty=false;const run=generation;let p,key,intentItem=null;
+  queued=false;if(!live()||busy)return;if(surfaceEpoch!==surfaceSnapshotEpoch){surfaceParts=[];surfaceScanning=false;surfaceCursor=null;surfaceSnapshotEpoch=surfaceEpoch;}dirty=false;const run=generation;let p,key,intentItem=null;
   try{while(intents.length&&!p){intentItem=intents.shift();if(!intentCurrent(intentItem))continue;p=intentProposal(intentItem);key=JSON.stringify([p.routeEpoch,p.payload]);}for(const candidate of p?[]:[...(bodyDiscovery?[bodyProposal()]:[])]){if(!bounded(candidate)){issue('host-proposal-too-large');continue;}const fingerprint=JSON.stringify([candidate.routeEpoch,candidate.payload]);if(fingerprint===last.get(candidate.kind)||fingerprint===failedKey.get(candidate.kind))continue;p=candidate;key=fingerprint;break;}
-   if(!p){if(!surfaceParts.length){const source=proposal();surfaceSequence=source.localSeq;surfaceKey=JSON.stringify([source.routeEpoch,source.payload]);if(surfaceKey!==last.get('surface-delta')&&surfaceKey!==failedKey.get('surface-delta'))surfaceParts=splitSurfacePayload(source.payload,source);}
+   if(!p){if(!surfaceParts.length&&(surfaceScanning||surfaceWanted)){
+     if(!surfaceScanning){surfaceWanted=false;surfaceCursor=null;surfacePage=0;surfaceScanning=true;}
+     const source=proposal(true);surfacePageKey=surfacePage++;surfaceSequence=source.localSeq;surfaceKey=sha256(JSON.stringify([source.routeEpoch,{...source.payload,detachedHandles:[]}]));
+     if(source.payload.detachedHandles.length||surfaceKey!==surfaceAccepted.get(surfacePageKey)&&surfaceKey!==surfaceFailed.get(surfacePageKey))surfaceParts=splitSurfacePayload(source.payload,source);
+     if(!surfaceScanning){for(const cache of [surfaceAccepted,surfaceFailed])for(const index of cache.keys())if(index>=surfacePage)cache.delete(index);}
+     if(!surfaceParts.length&&(surfaceScanning||surfaceWanted))schedule();
+    }
     if(surfaceParts.length){const localSeq=surfaceSequence??++seq;surfaceSequence=null;p={protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta',payload:surfaceParts[0]};key=surfaceKey;}}
-if(!p)return;}catch{return;}
+if(!p)return;}catch{surfaceScanning=false;surfaceCursor=null;if(surfaceWanted)schedule();return;}
   busy=true;const started=elapsedNow(),proofExpiry=binding.expiresAt;let attempts=0;
-  const finish=reason=>{if(run!==generation)return;if(reason){failedKey.set(p.kind,key);if(p.kind==='surface-delta')surfaceParts=[];dirty=true;issue(reason);}busy=false;if(dirty)schedule();};
+  const finish=reason=>{if(run!==generation)return;if(reason){failedKey.set(p.kind,key);if(p.kind==='surface-delta'){surfaceParts=[];surfaceFailed.set(surfacePageKey,key);}dirty=true;issue(reason);}busy=false;if(dirty)schedule();};
   const send=async()=>{
    retryTimer=null;if(run!==generation||!live())return finish('stale-host-binding');
    try{syncRoute();if(p.kind==='send-candidate'&&!intentCurrent(intentItem))return finish('stale-send-intent');}catch{return;}
@@ -52,7 +59,7 @@ if(!p)return;}catch{return;}
    let ack;try{ack=await emit(p);}catch{return finish('host-observation-ack-unknown');}
    if(run!==generation)return;if(!live())return finish('stale-host-binding');
    if(ack?.localSeq!==p.localSeq)return finish('host-observation-ack-unknown');
-   if(ack.state==='accepted'||ack.state==='duplicate'){if(p.kind==='current-object'){acceptedBody=p.payload.association==='explicit-body-id'&&typeof ack.bodyProofId==='string'?{proofId:ack.bodyProofId,fingerprint:JSON.stringify(p.payload),validUntil:proofExpiry}:null;}if(p.kind==='surface-delta')surfaceParts.shift();if(p.kind!=='surface-delta'||!surfaceParts.length)last.set(p.kind,key);failedKey.delete(p.kind);dirty=true;return finish();}
+   if(ack.state==='accepted'||ack.state==='duplicate'){if(p.kind==='current-object'){acceptedBody=p.payload.association==='explicit-body-id'&&typeof ack.bodyProofId==='string'?{proofId:ack.bodyProofId,fingerprint:JSON.stringify(p.payload),validUntil:proofExpiry}:null;}if(p.kind==='surface-delta'){surfaceParts.shift();if(!surfaceParts.length){surfaceAccepted.set(surfacePageKey,key);surfaceFailed.delete(surfacePageKey);}}if(p.kind!=='surface-delta'||!surfaceParts.length)last.set(p.kind,key);failedKey.delete(p.kind);dirty=true;return finish();}
    if(ack.state==='retry-after'&&Number.isFinite(ack.delayMs)&&ack.delayMs>=0){
     const delay=Math.max(50,ack.delayMs),remaining=6000-(elapsedNow()-started);
     if(delay>=remaining||attempts>=120)return finish('host-observation-retry-budget');
@@ -63,7 +70,8 @@ if(!p)return;}catch{return;}
   await send();
  }
  function schedule(){if(!live())return;dirty=true;if(busy||queued)return;queued=true;queueMicrotask(pump);}
- function stop(){generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];surfaceParts=[];surfaceKey=null;surfaceSequence=null;observer?.disconnect();observer=null;document.defaultView.removeEventListener('popstate',schedule);document.defaultView.removeEventListener('hashchange',schedule);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();}
+ function requestScan(){surfaceEpoch++;surfaceWanted=true;schedule();}
+ function stop(){generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();}
  function inspect(){
   const fail=reason=>({ok:false,reason,profileId:profile.id});if(!live())return fail('stale-host-binding');try{syncRoute();}catch{return fail('host-rebind-required');}if(urlPolicy.parse(url).kind==='unsupported')return fail('unsupported-host-route');
   const history=one(profile.regions.history),header=one('main > header'),reading=one('main > section[aria-label="Conversation"]'),composer=one('main > form#composer'),navigationSlot=one('main > header > .navigation-slot');
@@ -86,7 +94,7 @@ if(!p)return;}catch{return;}
    current:()=>{const body=snippetBody();return body?{conversationId:body.conversationId,regionEpoch:body.regionEpoch}:null;},
    proof:()=>{const body=snippetBody();return body?{bodyProofId:acceptedBody.proofId,conversationId:body.conversationId,regionEpoch:body.regionEpoch,messageIds:[...body.messageIds]}:null;}});
   sendObserver=profile.sendIntent?createNativeSendIntentObserver({document,profile,onIntent:captureIntent,now}):null;
-  observer=new document.defaultView.MutationObserver(schedule);observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});document.defaultView.addEventListener('popstate',schedule);document.defaultView.addEventListener('hashchange',schedule);schedule();
+  observer=new document.defaultView.MutationObserver(requestScan);observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});document.defaultView.addEventListener('popstate',requestScan);document.defaultView.addEventListener('hashchange',requestScan);requestScan();
   const route=urlPolicy.parse(url),proof=bodyProof();const body=route.kind==='conversation'&&proof?.conversationId===route.conversationId&&typeof proof.bodyProofId==='string'&&Number.isSafeInteger(proof.bodyEpoch)?{state:'bound',proofId:proof.bodyProofId,conversationId:proof.conversationId,bodyEpoch:proof.bodyEpoch}:{state:'unbound',reason:'body-proof-unavailable'};
   return {binding,route,body,capabilities:{'conversation-identity':{state:'partial',profileId:profile.id,reason:'loaded-surfaces-only',evidence:'implementation-only'},'native-navigation':{state:'partial',profileId:profile.id,reason:'owner-authorization-required',evidence:'implementation-only'}}};
  },stop,updateBinding,inspect,captureCandidateIdentity(handle){if(!live())return null;try{syncRoute();return discovery.captureCandidateIdentity(handle);}catch{return null;}},matchesCandidateIdentity(token,handle){if(!live())return false;try{syncRoute();return discovery.matchesCandidateIdentity(token,handle);}catch{return false;}},hasNativeLayer(){return !!document.querySelector('dialog[open], [aria-modal="true"]');},currentURL:()=>document.location.href,isCurrent:raw=>urlPolicy.sameTarget(document.location.href,raw),nativeHref:raw=>urlPolicy.nativeHref(raw),planNavigation(target,risk){if(!live())return {mode:'unavailable',reason:'stale-host-binding',planRevision:0};try{syncRoute();}catch{return {mode:'unavailable',reason:'host-rebind-required',planRevision:0};}return actions.planNavigation(target,risk);},planKey:plan=>live()?actions.planKey(plan):null,dispatchNative:command=>live()?actions.dispatchNative(command):Promise.resolve({state:'blocked',reason:'stale-host-binding'}),activateNative:async()=>({state:'blocked',reason:'unsupported-native-action'}),async readLoaded(target,signal){if(signal?.aborted)throw Error('aborted');const p=proposal();return splitSurfacePayload(p.payload,p).map((payload,index)=>({...p,localSeq:index?++seq:p.localSeq,payload}));},snippetReady:ref=>snippetReady(ref),selectionEpoch:ref=>snippets?.selectionEpoch?.(ref)??null,selectedSnippet:ref=>snippets?.selectedSnippet(ref)??null,restoreSnippet:(ref,anchor)=>snippets?.restoreSnippet(ref,anchor)??{ok:false,reason:'unsupported-snippet-anchor'},status(value){const status=publicAdapterStatus(value);document.documentElement.dataset.vaiwlState=status.state;document.documentElement.dataset.vaiwlReason=status.reason??'';}};

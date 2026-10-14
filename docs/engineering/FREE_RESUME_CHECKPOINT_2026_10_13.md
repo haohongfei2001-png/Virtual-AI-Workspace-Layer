@@ -1534,3 +1534,10 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 定向 Node **64/64 PASS**（free-round155-target.log），包含拥挤列表、重复入口、错误ID/隐藏/标题冲突/歧义及失效handle。完整回归/浏览器本轮NOT_RUN；最近完整Node仍为Round154、浏览器仍为Round153，证据不混用。发现上限和全量已加载分页仍未完成。
 - 固定结构checksum编码实验收益不足1%，且省略admission检查，未接入产品。Free仍NOT_RELEASE_READY；首页首发独立因果证据、100k/4x最终审计与真实G/U等缺口保留。
 - f510729已正常推送到原PR #16（9dccb5c..f510729），此前本地检查点已同步。
+
+## Round156：已加载原生对象的有限分页发现（接 8557463）
+
+- discovery增加仅当前实例可用、一次消费的RAM游标，按已加载DOM区域快照逐页发现；每页≤256实体、检查≤256待选节点，失效handle每页≤512。每页重新检查路由/region/current对象与节点；不造coverage、不请求未加载历史。默认scan/readLoaded兼容旧首片调用。
+- adapter将发现页接入原单producer队列，仍优先intent/current body并逐片ACK；按页缓存既有SHA-256指纹，重复扫描不循环写库。DOM变化丢弃未发送旧片后重扫，stop/重绑撤销游标；尾部改名与区域替换有反例。临时detached通知不污染稳定内容去重。
+- 完整Node **3177/3177 PASS**（free-round156-node.log.gz）；定向73项通过。隔离headless MV3 **6/6 PASS/sourceChangedDuringRun=false**（free-round156-paged-surface-mv3.json）：604/604条已加载长标题（每项600 UTF-8字节）全部进入真实IDB，并保留自动本人ACK纯evidence链。仅显式离线profile/test-only包，不是真实ChatGPT G认证。
+- 下一步仍需处理IDless候选面板/listPage自身256项限制、持续DOM更新下的扫描调度及大DOM重复句柄检查；本轮不声称所有导航入口已完整或F1达标。首页首发跨路由、100k/4x最终审计、真实G/U等既有缺口保持；Free NOT_RELEASE_READY。
