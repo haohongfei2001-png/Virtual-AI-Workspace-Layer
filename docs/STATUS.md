@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round194：原生句柄缓存有界，候选页、升级身份与已签发计划按原期限保留；完整Node3673项、后补身份接线4项、真实DOM机制3项及正式MV3导航5项分别通过。100k/4x预算FAIL、首页首发、剩余候选内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
+当前已推进至Round195：已升级候选的四格返回句柄独立保留原30秒期限，避免后台缓存淘汰丢失来路；定向Node532项、正式MV3候选升级6项通过。Round194完整Node3673项与其他证据独立保留。100k/4x预算FAIL、首页首发、剩余候选内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1940,3 +1940,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 最终完整Node **3673/3673 PASS**（free-round194-node.log.gz）；随后新增生产content-session身份接线 **4/4 PASS** 独立记录，不相加为新全套。覆盖并发/期限/容量/stop/route/替换/失败回滚与旧调用兼容。
 - 实际headless Chrome DOM机制 **3/3 PASS**：100k控件391页、records2048/pinned1，原节点保留、到期churn失效、重复淘汰不误判唯一及invalidate。明确WEB_MECHANISM_ONLY，不是MV3/100k端到端预算认证。正式package隔离MV3原生导航 **5/5 PASS**：P/C各一次原anchor委托同tab、旧action拒绝、修改键真链接新tab零委托；原editor保留、worker外网阻断、源码/脚本hash稳定。
 - memberIds与候选精确重复keys仍O(N)，不把此轮缓存上限当总RAM有界。原100k/4x预算FAIL、首页首发、即时reading pointer FAIL、完整81项/J1–J4与实际G/U/PAIA/物理IME仍未闭合，Free NOT_RELEASE_READY。72ca068已确认仍是祖先；Round193本地提交保留，本轮fetch低速超时，后续只正常push原PR #16，不强推。
+
+
+## Round195：已提交升级的返回来路句柄保留（接9c0c5cd）
+
+- 独立审查发现Round194只保留扫描与计划，excluded升级项目在扫描结束后保存到migration的句柄仍可能被后台扫描淘汰，使原节点未变时四格返回错误丢失分页/滚动/焦点来路。已提交migration改为独立单句柄owner，使用创建时固定elapsed+30秒deadline；刷新仅替换同owner句柄，不续期。
+- clearMigration/dispose/route/身份消失释放owner；原wall-clock到期护栏保持，另核验单调elapsed到期、倒退和非有限值。容量拒绝或保留异常清除migration，不伪造身份、不转移焦点、不重放原生动作；升级确证事实和已学身份不因可选显示恢复失败回滚。
+- 最终定向Node **532/532 PASS**（free-round195-targeted.log.gz），包括生产content-session与实际小容量registry集成：100次churn后仍保留原句柄，四格返回恢复焦点；重复refresh原deadline、stop/route/身份丢失恰好释放，时钟/retain失败不focus。仅此受影响组合，不冒称重新运行Round194全套。
+- 正式package隔离headless Chrome MV3候选升级旅程 **6/6 PASS**（free-round195-candidates-browser.json）：605个fixture控件分页/尾页/收缩、用户明确重试、同名节点单次原生委托及升级、阅读到四格返回、P/C往返、草稿保护和原editor保持。sourceHashes未漂移；该浏览器规模并非新>2048 churn认证（churn由独立集成测试覆盖），不是实际ChatGPT/G/U。
+- 9c0c5cd已本地提交；上次正常push30秒超时未确认，网络问题不回退代码。72ca068与所有前轮成果保持，继续原PR #16正常同步。剩余O(N)成员优先集合不能直接删除：UNKNOWN虽不覆盖PROJECT，旧history标题仍会覆盖成员新名；后续候选专用遍历须复用原游标而保持事实路径。整体Free仍NOT_RELEASE_READY。

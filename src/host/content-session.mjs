@@ -32,9 +32,10 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   try{const result=await withRequestDeadline(()=>Promise.race([Promise.resolve().then(()=>{if(!live(s))throw Error('stale-content-session');return runtime.sendMessage(message);}),cancelled]),{timeoutMs,now:elapsedNow,schedule,cancel});if(!live(s))throw Error('stale-content-session');return result;}
   finally{s.abort.signal.removeEventListener('abort',abort);}
  }
- function clearMigration(s){for(const type of ['pointerdown','keydown','wheel','focusin'])doc.removeEventListener?.(type,s.migrationInterrupt,true);s.migration=null;}
- function liveMigration(s){const m=s.migration;if(!m)return null;const time=now();if(!Number.isFinite(time)||time<m.lastTime||time>=m.createdAt+30000){clearMigration(s);return null;}m.lastTime=time;return m;}
- function dispose(s){if(!s)return;for(const type of ['pointerdown','keydown','wheel','focusin'])doc.removeEventListener?.(type,s.migrationInterrupt,true);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
+ function clearMigration(s){const prior=s.migration;s.migration=null;if(prior?.leaseOwner)try{s.adapter?.releaseLoadedHandles?.(prior.leaseOwner);}catch{}for(const type of ['pointerdown','keydown','wheel','focusin'])doc.removeEventListener?.(type,s.migrationInterrupt,true);}
+ function liveMigration(s){const m=s.migration;if(!m)return null;const time=now(),elapsed=elapsedNow();if(!Number.isFinite(time)||time<m.lastTime||time>=m.createdAt+30000||!Number.isFinite(elapsed)||elapsed<m.lastElapsed||elapsed>=m.elapsedDeadline){clearMigration(s);return null;}m.lastTime=time;m.lastElapsed=elapsed;return m;}
+ function retainMigration(s,handle){const m=liveMigration(s);if(!m)return false;try{if(typeof s.adapter?.retainLoadedHandles==='function'&&s.adapter.retainLoadedHandles(m.leaseOwner,[handle],m.elapsedDeadline)!==true){clearMigration(s);return false;}}catch{clearMigration(s);return false;}m.handle=handle;return true;}
+ function dispose(s){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
  function reset(){epoch++;const s=current;current=null;dispose(s);}
  function stop(){clearLearned();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function pagehide(event){
@@ -148,12 +149,14 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
       }
       check();committed=true;learned=kept;s.upgraded=next;
       if(s.migration&&!next)clearMigration(s);
-      if(next&&prior.projects.has(next.projectId)&&s.migration)s.migration.handle=upgradedHandle;
+      if(next&&prior.projects.has(next.projectId)&&s.migration)retainMigration(s,upgradedHandle);
       if(!result)return;
       s.upgraded=result;if(learned.length<32&&!learned.some(item=>item.identity===result.identity))learned.push(Object.freeze({identity:result.identity,projectId:result.projectId}));
       if(prior.display){
        clearMigration(s);
-       s.migration={id:result.actionId,projectId:result.projectId,display:prior.display,handle:pendingHandle,createdAt:now(),lastTime:now(),ready:s.returned===true,focusAllowed:true};
+       const createdAt=now(),createdElapsed=elapsedNow();
+       s.migration={id:result.actionId,leaseOwner:'candidate-migration_'+result.actionId,projectId:result.projectId,display:prior.display,handle:pendingHandle,createdAt,lastTime:createdAt,lastElapsed:createdElapsed,elapsedDeadline:createdElapsed+30000,ready:s.returned===true,focusAllowed:true};
+       if(!retainMigration(s,pendingHandle)){clearUpgrade();return;}
        const migration=s.migration;s.migrationInterrupt=event=>{const target=event.composedPath?.()[0]??event.target;if(s.migration===migration&&event.isTrusted===true&&!s.controller?.isReturnTarget?.(target)&&!(event.type==='focusin'&&migration.ready&&s.controller?.isFrameTarget?.(migration.display.role,target)))migration.focusAllowed=false;};
        for(const type of ['pointerdown','keydown','wheel','focusin'])doc.addEventListener?.(type,s.migrationInterrupt,true);
       }
