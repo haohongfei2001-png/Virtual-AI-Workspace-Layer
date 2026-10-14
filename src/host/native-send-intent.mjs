@@ -10,13 +10,16 @@ export function createNativeSendIntentObserver({document:doc,profile,onIntent,on
  let stopped=false,composing=null,last=null;const listeners=[];
  function shown(node){if(!node?.isConnected||node.ownerDocument!==doc||!node.getClientRects().length)return false;let depth=0;for(let p=node;p;p=p.parentElement){if(++depth>64)return false;const s=doc.defaultView.getComputedStyle(p);if(p.hidden||p.inert||p.getAttribute('aria-hidden')==='true'||s.display==='none'||['hidden','collapse'].includes(s.visibility))return false;}return true;}
  function available(node){return !node.disabled&&node.getAttribute('aria-disabled')!=='true'&&!node.matches(':disabled');}
- function boundary(){const forms=doc.querySelectorAll(config.formSelector),editors=doc.querySelectorAll(config.editorSelector),buttons=doc.querySelectorAll(config.sendButtonSelector);if(forms.length!==1||editors.length!==1||buttons.length!==1)return null;const [form]=forms,[editor]=editors,[button]=buttons;if(form.tagName!=='FORM'||!form.contains(editor)||!form.contains(button)||button.form!==form||editor.form&&editor.form!==form||![form,editor,button].every(shown)||![editor,button].every(available)||editor.readOnly||['file','reset'].includes(button.type)||!['BUTTON','INPUT'].includes(button.tagName))return null;return {form,editor,button};}
+ function boundary(allowDisabledButton=false){const forms=doc.querySelectorAll(config.formSelector),editors=doc.querySelectorAll(config.editorSelector),buttons=doc.querySelectorAll(config.sendButtonSelector);if(forms.length!==1||editors.length!==1||buttons.length!==1)return null;const [form]=forms,[editor]=editors,[button]=buttons;if(form.tagName!=='FORM'||!form.contains(editor)||!form.contains(button)||button.form!==form||editor.form&&editor.form!==form||![form,editor,button].every(shown)||(!available(editor)||!allowDisabledButton&&!available(button))||editor.readOnly||['file','reset'].includes(button.type)||!['BUTTON','INPUT'].includes(button.tagName))return null;return {form,editor,button};}
  function handle(event){if(stopped||event.isTrusted!==true)return;try{
-  const b=boundary();if(!b)return;const inEditor=b.editor===event.target||b.editor.contains(event.target);
+  // A native rerender can remove/disable Send before compositionend. End only
+  // the tracked editor's composition; this grants no intent or body authority.
+  if(event.type==='compositionend'){if(composing&&(composing===event.target||composing.contains(event.target)))composing=null;return;}
+  const preparing=event.type==='focusin'||event.type==='pointerdown';
+  const b=boundary(event.type==='compositionstart'||preparing);if(!b)return;const inEditor=b.editor===event.target||b.editor.contains(event.target);
   if(event.type==='compositionstart'){if(inEditor)composing=b.editor;return;}
-  if(event.type==='compositionend'){if(inEditor&&composing===b.editor)composing=null;return;}
   if(composing===b.editor||event.isComposing===true||event.keyCode===229||event.defaultPrevented||event.shiftKey||event.ctrlKey||event.metaKey||event.altKey)return;
-  if(event.type==='focusin'||event.type==='pointerdown'){if((inEditor||b.button===event.target||b.button.contains(event.target))&&(event.type!=='pointerdown'||event.button===0)){try{onPrepare?.();}catch{/* Preparation cannot interfere with native focus or input. */}}return;}
+  if(preparing){if((inEditor||available(b.button)&&(b.button===event.target||b.button.contains(event.target)))&&(event.type!=='pointerdown'||event.button===0)){try{onPrepare?.();}catch{/* Preparation cannot interfere with native focus or input. */}}return;}
   if(event.type==='keydown'){if(config.enterSends!==true||!inEditor||event.key!=='Enter'||event.repeat)return;}else if(event.type==='click'){if(event.button!==0||!(b.button===event.target||b.button.contains(event.target)))return;}else return;
   const time=now();if(!Number.isFinite(time))return;const observedAt=new Date(time).toISOString();
   // Enter can activate the same native send button. Consume just its following click;

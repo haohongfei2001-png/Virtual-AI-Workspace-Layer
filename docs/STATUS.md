@@ -1728,3 +1728,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 真实 headless IDB **3/3 PASS**（free-round172-evidence-idb.json）：5001 refs 准备后再损坏尾片仍拒绝，实际批量读尾片时撤权全库回滚，成功保留完整 facts；准备阶段全库无变化。
 - 固定源码100k/project-mixed/4x仍 **FAIL**（free-round172-100k.json）：约30053ms WAITING/read-budget-exhausted；新 build 约3715ms，但最终迁移约6634ms stale-binding。原生输入节点、可见性及草稿保留，sourceChangedDuringRun=false。该结果不构成F1通过。
 - 远端 fetch 遇GitHub low-speed失败；本地既有72ca068文档祖先保留，没有reset/覆盖/强推。性能缺口保留，下一步回到生产Host功能缺口，不继续无限前置合成优化。首页首发、预证明立即发送、候选完整内存、间歇退出和真实G/U仍未完成；Free NOT_RELEASE_READY。
+
+
+## Round173：原生发送观察器跨按钮状态保留组合输入生命周期（接 2587aeb）
+
+- 两个先失败后修复反例（free-round173-before.log.gz）：Send disabled 时 compositionstart 被忽略，随后 Send enabled 的 Enter 被误记 intent；compositionend 时 Send 临时缺失导致后续 Enter 一直被忽略。组合开始允许禁用的 Send 但仍核验唯一可见表单/editor/control；组合结束只清理同一已跟踪 editor，不授予发送/读取/ACK权限。真实物理 IME 仍 NOT_RUN，不能用事件 double 认证。
+- 可用空 editor 的 trusted focus/primary pointer 现在可在 Send disabled 时触发已有 body 准备，禁用按钮本身不能触发；实际 click/Enter 仍须可用 Send，禁用 editor/隐藏/多重/错误表单仍拒绝。不读草稿、不阻止原生事件、不制造 intent。仅减少已有 C 的证明准备延后，不声称修复首页首发。
+- 完整 Node **3226/3226 PASS**（free-round173-node.log.gz）；隔离 headless test-only MV3 ACK 管道 **6/6 PASS**（free-round173-send-ack.json），包括 held initial baseline 单飞、真实原生形状点击只作候选、独立fixture ACK后仅evidence写入且不改native revision。生产ACK、真实G仍NOT_TESTED/NOT_RUN。
+- 独立只读审查确认：首页首发缺少本次原生提交→operation/message ID→新C的可靠因果 witness。现有 authenticated-message-readback 只能证实读回消息，不能把新route/唯一self消息冒充本次intent。后续实现须重新绑定新route/body权限并核对同scope，不能携旧grant或伪造空baseline；本轮未放宽合同。
+- 2587aeb上一轮普通push超时，当前72ca068文档祖先保留；100k/4x FAIL、首页首发、预证明立即发送、候选完整内存、间歇退出及真实G/U仍未完成。Free NOT_RELEASE_READY。
