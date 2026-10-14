@@ -8,7 +8,7 @@ function fixture(){
  const binding=()=>({documentToken:'doc',producerToken:'producer',browserDocumentId:'browser',routeEpoch:1,origin:document.location.origin,expiresAt:new Date(time+20000).toISOString()});
  let respond=m=>m.type==='HOST_HELLO'?{binding:binding()}:m.type==='HOST_REFRESH'?{state:'verified'}:m.type==='HOST_DOCUMENT_RENEW'?{ok:true,binding:binding()}:{ok:true,grants:[]};
  const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},sendMessage:async m=>{calls.push(m);return respond(m);}};
- const options={document,runtime,makeId:()=> 'client',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),adapterFactory:o=>(adapterOptions=o,{inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false}),surfaceFactory:()=>({}),plansFactory:({bindingCurrent})=>({plan:()=>{assert.ok(bindingCurrent());planned++;return ['plan'];}}),controllerFactory:o=>{bridge=o.bridge;return {start:async c=>{context=c;await bridge.registerMount({handle:{id:'mount',regionEpoch:1}});return {id:'mount'};},stop:()=>{stops++;bridge.revokeMount({mountId:'mount'});},showWorkspace:()=>{presentations.push('workspace');return true;},showReading:()=>{presentations.push('reading');return true;}};}};
+ const options={document,runtime,makeId:()=> 'client',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),adapterFactory:o=>(adapterOptions=o,{inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false}),surfaceFactory:()=>({}),plansFactory:({bindingCurrent})=>({plan:()=>{assert.ok(bindingCurrent());planned++;return ['plan'];}}),controllerFactory:o=>{bridge=o.bridge;return {start:async c=>{context=c;await bridge.registerMount({handle:{id:'mount',regionEpoch:1}});return {id:'mount'};},stop:()=>{stops++;bridge.revokeMount({mountId:'mount'});},showWorkspace:()=>{presentations.push('workspace');return true;},showReading:()=>{presentations.push('reading');return true;},showNativeReading:()=>{presentations.push('native-page');return true;}};}};
  const client=createHostContentSession(options);
  return {presentations,get adapterOptions(){return adapterOptions;},client,options,runtime,document,binding,calls,listeners,events,setResponse:f=>{respond=f;},get bridge(){return bridge;},get context(){return context;},get stops(){return stops;},get planned(){return planned;},async advance(ms){time+=ms;for(const [key,t]of [...timers])if(t.at<=time){timers.delete(key);t.fn();}await drain();}};
 }
@@ -51,7 +51,7 @@ test('pagehide or explicit stop during queued rebind prevents automatic revival'
 test('failed replacement stops without self-retry',async()=>{
  const f=fixture();await f.client.start();f.setResponse(()=>({ok:false}));[...f.listeners][0]({type:'HOST_DOCUMENT_INVALIDATED'},{id:'extension'});await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,2);await f.advance(30000);assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,2);assert.equal(f.listeners.size,0);assert.equal(f.events.size,0);
 });
-test('trusted surface presentation dispatches only the two modes without native plans or writes',async()=>{
+test('ordinary workspace and reading presentation remain distinct without native plans or writes',async()=>{
  const f=fixture();await f.client.start();const listener=[...f.listeners][0],replies=[],before=f.calls.length;
  for(const mode of ['workspace','reading'])listener({type:'HOST_PRESENT_SURFACE',documentToken:'doc',producerToken:'producer',routeEpoch:1,mode},{id:'extension'},r=>replies.push(r));
  assert.deepEqual(replies,[{ok:true},{ok:true}]);assert.deepEqual(f.presentations,['workspace','reading']);assert.equal(f.calls.length,before);assert.equal(f.planned,0);f.client.stop();
@@ -124,4 +124,21 @@ test('expired queued snippet restore cannot scroll or switch native reading',asy
 test('native surface mutation callback only reaches the live document mount',async()=>{
  const f=fixture(),seen=[];const client=createHostContentSession({...f.options,surfaceFactory:()=>({surrenderChanged:records=>seen.push(records)})});await client.start();
  const records=[{type:'childList',target:{}}];f.adapterOptions.onSurfaceChange(records);assert.deepEqual(seen,[records]);client.stop();f.adapterOptions.onSurfaceChange(records);assert.equal(seen.length,1);
+});
+
+const nativePagePresentation=()=>({type:'HOST_PRESENT_SURFACE',documentToken:'doc',producerToken:'producer',routeEpoch:1,mode:'native-page'});
+test('explicit native-page presentation calls dual-surface reading only and does not plan or write',async()=>{
+ const f=fixture();await f.client.start();const fn=[...f.listeners][0],before=f.calls.length;let reply;
+ fn(nativePagePresentation(),{id:'extension'},r=>reply=r);assert.deepEqual(reply,{ok:true});assert.deepEqual(f.presentations,['native-page']);assert.equal(f.planned,0);assert.equal(f.calls.length,before);f.client.stop();
+});
+test('native-page rejects untrusted sender and malformed or stale binding tuples before controller',async()=>{
+ const f=fixture();await f.client.start();const fn=[...f.listeners][0];let foreignReplies=0;
+ fn(nativePagePresentation(),{id:'other'},()=>foreignReplies++);assert.equal(foreignReplies,0);
+ for(const patch of [{documentToken:'other'},{producerToken:'other'},{routeEpoch:2},{grantId:'forged'},{mode:'native-page ',extra:true},{url:'https://chatgpt.com/'}]){let reply;fn({...nativePagePresentation(),...patch},{id:'extension'},r=>reply=r);assert.deepEqual(reply,{ok:false});}
+ assert.deepEqual(f.presentations,[]);assert.equal(f.planned,0);f.client.stop();
+});
+for(const change of ['route','expiry','stop','replacement'])test('native-page old content authority cannot survive '+change,async()=>{
+ const f=fixture();await f.client.start();const old=[...f.listeners][0];
+ if(change==='route')f.document.location.href+='c/new';if(change==='expiry')await f.advance(20000);if(change==='stop')f.client.stop();if(change==='replacement')await f.client.start();
+ old(nativePagePresentation(),{id:'extension'},()=>{});assert.deepEqual(f.presentations,[]);assert.equal(f.planned,0);f.client.stop();
 });

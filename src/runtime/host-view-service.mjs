@@ -263,13 +263,13 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  async function present(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-presentation'};}
   const intent=message?.intent,kind=intent?.kind;
-  if(!exactHostRecord(message,['v','type','grantId','mountId','intent'])||message.v!==1||message.type!=='HOST_UI_PRESENT'||!exactHostRecord(intent,kind==='search-known'?['kind','themeId']:['kind'])||!['show-workspace','enter-reading','search-known','show-working-set'].includes(kind)||kind==='search-known'&&intent.themeId!==null&&(typeof intent.themeId!=='string'||intent.themeId.length<1||intent.themeId.length>128))return {ok:false,reason:'invalid-ui-presentation'};
+  if(!exactHostRecord(message,['v','type','grantId','mountId','intent'])||message.v!==1||message.type!=='HOST_UI_PRESENT'||!exactHostRecord(intent,kind==='search-known'?['kind','themeId']:['kind'])||!['show-workspace','enter-reading','show-native-page','search-known','show-working-set'].includes(kind)||kind==='search-known'&&intent.themeId!==null&&(typeof intent.themeId!=='string'||intent.themeId.length<1||intent.themeId.length>128))return {ok:false,reason:'invalid-ui-presentation'};
   let active=true;try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    const entry=views.get(message.mountId),current=entry?.owner.current();
    if(!entry||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)throw Error('free-view-not-ready');
    if(kind==='search-known'&&intent.themeId!==null&&!current.snapshot.groups.some(group=>group.id===intent.themeId))throw Error('free-search-project-unavailable');
    if(!presentSurface)throw Error('host-presentation-unavailable');
-   const shown=await presentSurface({parentFrame:context.parentFrame,binding:context.binding,mode:kind==='enter-reading'?'reading':'workspace'});
+   const shown=await presentSurface({parentFrame:context.parentFrame,binding:context.binding,mode:kind==='show-native-page'?'native-page':kind==='enter-reading'?'reading':'workspace'});
    if(!active||!context.isCurrent()||views.get(message.mountId)!==entry)throw Error('ui-presentation-expired');
    if(shown?.ok!==true)throw Error('host-presentation-unavailable');
    if(JSON.stringify(entry.presentation.intent)!==JSON.stringify(intent))entry.presentation={revision:entry.presentation.revision+1,intent};

@@ -107,9 +107,9 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     }catch{reply({ok:false});return;}
    }
    if(m?.type==='HOST_PRESENT_SURFACE'){
-    const allowed=exactHostRecord(m,['type','documentToken','producerToken','routeEpoch','mode'])&&['workspace','reading'].includes(m.mode)&&s.ready&&s.binding&&live(s)&&Date.parse(s.binding.expiresAt)>now()&&Object.entries(bindingFields(s.binding)).every(([k,v])=>m[k]===v);
+    const allowed=exactHostRecord(m,['type','documentToken','producerToken','routeEpoch','mode'])&&['workspace','reading','native-page'].includes(m.mode)&&s.ready&&s.binding&&live(s)&&Date.parse(s.binding.expiresAt)>now()&&Object.entries(bindingFields(s.binding)).every(([k,v])=>m[k]===v);
     if(!allowed){reply({ok:false});return;}
-    let ok=false;try{ok=(m.mode==='workspace'?s.controller.showWorkspace():s.controller.showReading())===true;}catch{}reply({ok});return;
+    let ok=false;try{ok=(m.mode==='workspace'?s.controller.showWorkspace():m.mode==='native-page'?s.controller.showNativeReading():s.controller.showReading())===true;}catch{}reply({ok});return;
    }
    if(!s.plans||!live(s)||Date.parse(s.binding.expiresAt)<=now()||!exactHostRecord(m,['type','documentToken','producerToken','routeEpoch','targets'])||m.type!=='HOST_NATIVE_PLAN'||Object.entries(bindingFields(s.binding)).some(([k,v])=>m[k]!==v))return;
    try{reply(s.plans.plan({targets:m.targets}));}catch{reply(null);}

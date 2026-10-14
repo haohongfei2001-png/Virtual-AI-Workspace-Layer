@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round192：已解析原生P/C单次导航及结果未知提示接入双frame；本轮定向Node258项、workspace/sidebar故障注入各3项通过，上一里程碑完整Node3536项通过。100k/4x预算FAIL、首页首发、候选内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
+当前已推进至Round193：不可用原生入口给出可聚焦说明，明确返回会释放双surface并保留唯一四格；完整Node3613项、workspace/sidebar离线浏览器各3项通过。100k/4x预算FAIL、首页首发、候选内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1919,3 +1919,14 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 正式package隔离headless Chrome MV3，workspace **3/3 PASS**、sidebar **3/3 PASS**，分别记录navigation-feedback-browser及sidebar-navigation-feedback-browser报告与截图。明确本地fixture故障注入：CDP仅在实际扩展ISOLATED world使指定原anchor.click抛错；真实产品链回unconfirmed、仅一次attempt/RPC、双surface隐藏、唯一四格返回后提示实际可见，用户明确fallback新tab且零重复RPC/原生导航，原editor与页面保留。不是实际ChatGPT故障或普通原生handler行为认证。
 - 首次MAIN world覆盖无效导致实际dispatched的测试失败保留main-world-injection报告；改正注入后、侧栏布局修改前结果另存before-sidebar-layout，不与最终角色测试叠加。worker外网阻断、最终source/script hashes稳定；已人工查看截图，未记录运行期boundingBox。沿用双rAF+200ms绘制条件，旧reading即时pointer FAIL仍保留。
 - 69d6503已正常push到原PR #16，72ca068仍为祖先。首页首发因缺独立因果witness不可把后读消息冒充本次发送ACK；生产send开关仍原默认。原100k FAIL、完整81项/J1–J4、真实G/U/PAIA/物理IME等缺口保持，Free NOT_RELEASE_READY。
+
+
+## Round193：不可用入口说明与完整原生退路（接1a2bd43）
+
+- framed不可用聊天保留原名/title，显示“入口暂不可用”及aria-description；无有效计划不生成href，提供可聚焦button语义，点击或Enter/Space只解释限制。Project“+”在不可用时仍不创建/导航，但可聚焦查看固定说明；没有以安全URL猜测补造入口。
+- 说明提供明确“返回原生页面”。新增内部show-native-page展示意图复用原UI/scope/binding授权与controller.showNativeReading，关闭两个owned popover、释放原生history，保留唯一四格返回；普通enter-reading/连续侧栏不改。独立审查指出原先仅关workspace无法释放历史，已修正，未新增原生动作。
+- 不可用入口closure绑定原projection/scope；返回控件也绑定渲染时projection。初次测试发现同scope刷新后旧DOM按钮仍可操作，保留60/62失败日志并修复；新renderer按钮仍可用，未用全拒绝替代正例。
+- 最终完整Node **3613/3613 PASS**（free-round193-node.log.gz），包括不可用renderer新增13项及双surface展示授权新增12项。错误sender/grant/mount/shape/binding、过期、替换会话及scope撤销后迟到响应均拒绝；无native write/dispatch。
+- 正式package隔离headless Chrome MV3，workspace **3/3 PASS**、sidebar **3/3 PASS**，各独立报告截图。明确PROJECTION_UNAVAILABLE_FAILURE_INJECTION：仅复制真实HOST_UI_VIEW回复并将指定C计划替为unavailable，grant/scope和真实展示回复不改。实际focus及force pointer点击（绕过Playwright对aria-disabled的自动拒绝）只显示说明，零导航RPC；明确返回走真实worker/content后双surface为0、唯一grid存在，原aside anchor随后接受trusted点击、导航一次、原textarea保留。返回按钮几何落在frame viewport，截图已查看。
+- source/script hashes稳定、worker外网阻断；仍使用双rAF+200ms绘制前置，不将旧即时pointer FAIL记为修复。未验证实际ChatGPT/PAIA/物理IME等G/U，Free NOT_RELEASE_READY。
+- 1a2bd43此前网络超时后已确认正常push。下一候选RAM修复不能简单FIFO/LRU：须保留请求页/待派发句柄并防止淘汰重复节点后误判唯一；memberIds/精确重复key集合仍为独立O(N)来源，不把WeakMap或单页有界当总内存有界。

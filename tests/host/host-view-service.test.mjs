@@ -379,3 +379,35 @@ test('location rejects malformed identity and query-level or search/workset auth
 test('new accepted native version re-locates formerly absent Project against fresh owner snapshot',async t=>{
  const h=await fixture(t);await h.bind();const ids=Array.from({length:32},(_,i)=>'p'+String(i).padStart(2,'0'));await h.observe(ids);await h.mount();const query={segment:0,offset:0,limit:8},before=await locatedReady(h,query,'p32');assert.deepEqual(before.location,{projectId:'p32',found:false});await h.observe([...ids,'p32']);const after=await locatedReady(h,query,'p32');assert.equal(after.ok,true,JSON.stringify(after));assert.deepEqual(after.location,{projectId:'p32',found:true});assert.equal(after.page.groups.offset,32);assert.equal(after.page.groups.items[0].id,'p32');assert.deepEqual(after.page.viewSession,before.page.viewSession);assert.notEqual(after.page.revision,before.page.revision);
 });
+
+for(const role of ['workspace','sidebar'])test('MOCK_IDB show-native-page '+role+' uses bound native-page callback and shared presentation only',async t=>{
+ const calls=[],h=await fixture(t,{presentSurface:async value=>{calls.push(structuredClone(value));return {ok:true};}});await h.bind();await h.observe();await h.mount();await ready(h);
+ const before=await h.view(),reply=await h.present(role,{kind:'show-native-page'});
+ assert.equal(reply.ok,true);assert.deepEqual(reply.presentation,{revision:1,intent:{kind:'show-native-page'}});assert.equal(calls.length,1);
+ assert.deepEqual(Object.keys(calls[0]).sort(),['binding','mode','parentFrame']);assert.equal(calls[0].mode,'native-page');assert.equal(calls[0].parentFrame.documentId,'document');assert.deepEqual(Object.keys(calls[0].binding).sort(),['documentToken','producerToken','routeEpoch']);
+ const after=await h.view(role);assert.deepEqual(after.page.presentation,reply.presentation);assert.equal(after.page.workspaceRevision,before.page.workspaceRevision);
+});
+test('MOCK_IDB show-native-page rejects wrong grant mount sender role and intent extensions before callback',async t=>{
+ let calls=0;const h=await fixture(t,{presentSurface:async()=>{calls++;return {ok:true};}});await h.bind();await h.observe();await h.mount();await ready(h);
+ for(const [intent,patch,sender]of [
+ [{kind:'show-native-page'},{grantId:'unknown'}],
+ [{kind:'show-native-page'},{mountId:'other'}],
+ [{kind:'show-native-page'},{},h.children.sidebar],
+ [{kind:'show-native-page'},{role:'sidebar'}],
+ [{kind:'show-native-page',url:'https://chatgpt.com/'},{}],
+ [{kind:'show-native-page',themeId:null},{}],
+ ])assert.equal((await h.present('workspace',intent,patch,sender)).ok,false);
+ assert.equal(calls,0);assert.deepEqual((await h.view()).page.presentation,{revision:0,intent:{kind:'show-workspace'}});
+});
+test('MOCK_IDB show-native-page cannot use expired UI authority',async t=>{
+ let calls=0;const h=await fixture(t,{presentSurface:async()=>{calls++;return {ok:true};}});await h.bind();await h.observe();await h.mount();await ready(h);h.setTime(Date.parse(NOW)+20001);
+ assert.equal((await h.present('workspace',{kind:'show-native-page'})).ok,false);assert.equal(calls,0);
+});
+test('MOCK_IDB failed native-page callback never publishes successful return',async t=>{
+ const h=await fixture(t,{presentSurface:async()=>({ok:false})});await h.bind();await h.observe();await h.mount();await ready(h);
+ assert.equal((await h.present('sidebar',{kind:'show-native-page'})).ok,false);assert.deepEqual((await h.view()).page.presentation,{revision:0,intent:{kind:'show-workspace'}});
+});
+test('MOCK_IDB late native-page completion after scope revocation cannot publish',async t=>{
+ let entered=false,release;const wait=new Promise(resolve=>release=resolve),h=await fixture(t,{presentSurface:async()=>{entered=true;await wait;return {ok:true};}});await h.bind();await h.observe();await h.mount();await ready(h);
+ const pending=h.present('sidebar',{kind:'show-native-page'});for(let i=0;i<50&&!entered;i++)await drain();assert.equal(entered,true);h.switchPrincipal('replacement');release();const reply=await pending;assert.equal(reply.ok,false);assert.equal(reply.presentation,undefined);
+});

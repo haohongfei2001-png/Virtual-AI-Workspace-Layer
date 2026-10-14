@@ -181,7 +181,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function invalidate(){if(activeLocation){const attempt=activeLocation,record=locatedMigrations.get(attempt.id);if(record&&locationCurrent(attempt))record.retry=true;attempt.cancelled=true;activeRead?.abort();}if(bootstrapping){dirty=true;return;}if(snippets){snippets.invalidate?.();return;}if(backup){backup.invalidate?.();return;}if(recovery){recovery.invalidate?.();return;}if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;if(activeRead||horizonPending)dirty=true;else void read(query,true);}
  function applyPresentation(value){
   if(value===undefined)return;
-  if(!value||!Number.isSafeInteger(value.revision)||value.revision<0||!value.intent||!['show-workspace','enter-reading','search-known','show-working-set'].includes(value.intent.kind))throw Error('invalid-frame-presentation');
+  if(!value||!Number.isSafeInteger(value.revision)||value.revision<0||!value.intent||!['show-workspace','enter-reading','show-native-page','search-known','show-working-set'].includes(value.intent.kind))throw Error('invalid-frame-presentation');
   if(value.revision<=presentationRevision)return;presentationRevision=value.revision;dispatchEpoch++;
   if(value.intent.kind!=='show-working-set'&&query.workingSet!==undefined){const {workingSet,...rest}=query;query=rest;dirty=true;}
   if(value.intent.kind!=='search-known'&&query.search!==undefined){const {search,...rest}=query;query=rest;dirty=true;}
