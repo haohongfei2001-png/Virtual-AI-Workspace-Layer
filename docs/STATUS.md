@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百一十八轮：迁移中止保留纯build、实际提交后清理，完整Node2450项、真实IDB六旅程、原包MV3十三旅程通过；不启用采样器的100k/4x冷启动仍FAIL，原生输入与草稿保留。Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百一十九轮：Host显式单消息片段锚与有界RAM票据基础；初始完整Node2505项、最后边界修复定向85项、真实DOM选区8组及原包MV3十三旅程通过。片段保存/搜索定位桥接尚待接通，默认profile关闭；100k/4x失败及真实验收阻塞保留。Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1294,3 +1294,12 @@ staged loader六个可选单调阶段，含新build阶段在native-index前；�
 
 
 Round118补充：静态schema键编码缓存的Map与null-prototype frozen字典候选仅做Node等价/交错微基准；native digest约改善7.4%／8.6%，但未知manifest键分别回退7.3%／6.6%。均未合入，停止该方向；原脚本与结果保存free-round118-key-cache-*和free-round118-key-object-*，不算产品验收。正常push本轮仅有界尝试一次，30秒网络超时后停止该进程组；GitHub API随后确认PR16 head仍bd142a7，本地五项提交待同步。
+
+
+## 第一百一十九轮：Host用户选区锚与原格式保护
+
+接 b28ad50，实现profile显式启用的单消息选区/严格hash定位并接入adapter已确认body关联。新增RAM票据模块未接持久写入；scope/node epoch由私有owner提供，无凭DOM猜测授权。输入/可编辑区域先纯结构排除，选中消息体先限64Ki字符再转换Range，避免超大选区分配；跨块、多ID、缺branch、重复文字、节点替换、续租旧proof都拒绝。默认生产snippet配置仍关闭。
+
+初始完整Node2505/2505通过；最后大小边界改动后相关85/85通过，计数不相加。真实headless DOM Selection八组、原封打包MV3十三组均PASS且sourceChangedDuringRun=false；报告为free-round119-*。DOM测试owner proof与节点epoch明确fixture，不认证生产保存桥接。没有修改schema或旧人工片段/备份。
+
+下一继续content可信选区票据、owner CAS保存/移除、frame按钮与搜索定位。F1冷启动、真实context/ACK及G/U关口仍未通过。

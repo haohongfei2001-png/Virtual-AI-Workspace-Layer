@@ -1232,3 +1232,12 @@ staged loader六个可选单调阶段，含新build阶段在native-index前；�
 
 
 Round118补充：静态schema键编码缓存的Map与null-prototype frozen字典候选仅做Node等价/交错微基准；native digest约改善7.4%／8.6%，但未知manifest键分别回退7.3%／6.6%。均未合入，停止该方向；原脚本与结果保存free-round118-key-cache-*和free-round118-key-object-*，不算产品验收。正常push本轮仅有界尝试一次，30秒网络超时后停止该进程组；GitHub API随后确认PR16 head仍bd142a7，本地五项提交待同步。
+
+
+## Round119：生产片段锚离线基础（接 b28ad50）
+
+- `native-snippets` 复用旧 `{refId,messageId,branchId,text,bodyHash}`，只显式profile和当前body owner ACK已匹配时读取用户单消息选区。跨消息/多range/重复文本/多ID/缺branch/改hash拒绝；不会从当前叶节点伪造lineage。读取前纯结构扫描拒绝输入与contenteditable；仅所选消息体参与有界hash。
+- `chatgpt-adapter` 接入该模块；route/generation/stop/绑定到期和未ack的body变化全部撤销。文档续期不延长旧body proof有效期。默认生产profile没有snippet配置，仍保持关闭。
+- `snippet-selection-session` 是尚未接入保存路径的内部RAM基础：单票据、6秒、绑定scopeGrant/document/producer/route指纹及独立节点epoch，重读比对、单次销毁；不把文本hash当节点身份。
+- 已完成初始完整Node2505/2505，最后选区大小边界修复后相关85/85通过（计数不相加）。真实DOM选区8组及实际原包MV3十三旅程通过，两个report均sourceChangedDuringRun=false。free-round119-*保存源码来源与日志；DOM的proof/node epoch是fixture，未认证生产保存。
+- 下一直接接线：content可信用户选区/私有node epoch → worker owner保存/移除CAS（只更新owner已有savedSnippets数组）→ frame入口和不泄露body的搜索定位。现未开放frame持久写入、未宣称片段完整完成。既有人工资产/备份格式/schema不改。100k/4x性能失败与真实context/ACK/G/U条件保留，不重跑无代码变化的性能案例。
