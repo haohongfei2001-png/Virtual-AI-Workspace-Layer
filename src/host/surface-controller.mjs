@@ -9,7 +9,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  const trustedOrigin=`${origin.protocol}//${origin.host}`,win=doc.defaultView;
  let epoch=0,current=null;
  function removeReturn(state){state.button?.remove();state.button=null;}
- function dispose(state,reason){if(!state)return;cancel(state.timer);cancel(state.renewTimer);cancel(state.appearanceTimer);state.appearanceObserver?.disconnect();state.media?.removeEventListener?.('change',state.appearanceChanged);win.removeEventListener('resize',state.appearanceChanged);state.observer?.disconnect();win.removeEventListener('message',state.listener);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);doc.removeEventListener?.('toggle',state.changed,true);win.removeEventListener('pagehide',state.pagehide);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
+ function dispose(state,reason){if(!state)return;cancel(state.timer);cancel(state.renewTimer);cancel(state.appearanceTimer);state.geometryObserver?.disconnect();win.removeEventListener('resize',state.geometryChanged);win.visualViewport?.removeEventListener?.('resize',state.geometryChanged);state.appearanceObserver?.disconnect();state.media?.removeEventListener?.('change',state.appearanceChanged);win.removeEventListener('resize',state.appearanceChanged);state.observer?.disconnect();win.removeEventListener('message',state.listener);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);doc.removeEventListener?.('toggle',state.changed,true);win.removeEventListener('pagehide',state.pagehide);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
  function stop(reason='surface-stopped'){epoch++;const prior=current;current=null;try{adapter.stop();}catch{/* Surface cleanup must still complete. */}dispose(prior,reason);if(prior)try{onTerminated(reason,Object.freeze({mode:prior.mode==='workspace'?'workspace':'reading'}));}catch{/* Recovery notification cannot undo cleanup. */}}
  function valid(state,requireRegistered=true){
   if(current!==state||state.epoch!==epoch||requireRegistered&&!state.registered||doc.location.href!==state.url)return false;
@@ -28,8 +28,19 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(win.MutationObserver&&doc.documentElement){state.appearanceObserver=new win.MutationObserver(state.appearanceChanged);for(const node of [doc.documentElement,doc.body])if(node)state.appearanceObserver.observe(node,{attributes:true,attributeFilter:['class','style','dir']});}
   state.media=win.matchMedia?.('(prefers-color-scheme: dark)');state.media?.addEventListener?.('change',state.appearanceChanged);win.addEventListener('resize',state.appearanceChanged);
  }
+ function refreshGeometry(state){
+  if(typeof surface.refreshGeometry!=='function')return true;
+  try{if(surface.refreshGeometry(state.handle,adapter.inspect())===true)return true;}catch{}
+  if(current===state)stop('native-geometry-changed');return false;
+ }
+ function watchGeometry(state){
+  if(typeof surface.refreshGeometry!=='function')return;
+  state.geometryChanged=()=>{if(current!==state)return;if(!valid(state)){stop('native-region-changed');return;}refreshGeometry(state);};
+  win.addEventListener('resize',state.geometryChanged);win.visualViewport?.addEventListener?.('resize',state.geometryChanged);
+  if(win.ResizeObserver){state.geometryObserver=new win.ResizeObserver(state.geometryChanged);for(const node of new Set([state.inspection.reading,...state.inspection.historyMaskRoots,state.inspection.header,state.inspection.composer,...state.inspection.protectedRegions]))state.geometryObserver.observe(node);}
+ }
  function authorized(state){return valid(state)&&Date.parse(state.context.binding.expiresAt)>now()&&state.frames.every(({role})=>{const grant=state.grants.get(role);return grant&&Date.parse(grant.expiresAt)>now();});}
- function showWorkspace(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}if(surface.showWorkspace(state.handle)===false)return false;removeReturn(state);state.mode='workspace';return true;}
+ function showWorkspace(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}if(!refreshGeometry(state)||surface.showWorkspace(state.handle)===false)return false;removeReturn(state);state.mode='workspace';return true;}
  function ensureReturn(state){
   if(!authorized(state)||adapter.hasNativeLayer()){removeReturn(state);return false;}
   const inspection=adapter.inspect(),slot=inspection.navigationSlot;
@@ -70,7 +81,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    state.pagehide=()=>{if(current===state)stop('page-hidden');};win.addEventListener('pagehide',state.pagehide);doc.addEventListener?.('toggle',state.changed,true);
    win.addEventListener('popstate',state.changed);win.addEventListener('hashchange',state.changed);
    if(win.MutationObserver){state.observer=new win.MutationObserver(state.changed);state.observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class','aria-modal']});}
-   watchAppearance(state);arm(state);const queued=[...state.earlyJoins.values()];state.earlyJoins.clear();for(const event of queued)void receive(state,event);return state.handle;
+   watchGeometry(state);watchAppearance(state);arm(state);const queued=[...state.earlyJoins.values()];state.earlyJoins.clear();for(const event of queued)void receive(state,event);return state.handle;
   }catch{if(current===state)stop('mount-unavailable');return null;}
  }
  async function receive(state,event){

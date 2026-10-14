@@ -4,7 +4,24 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
  const lookup=handle=>{const m=mounts.get(handle?.id);if(!m||m.handle!==handle)throw Error('stale-mount');return m;};
  const hide=m=>{for(const surface of m.surfaces)if(surface.node.matches(':popover-open'))surface.node.hidePopover();};
  const surrender=m=>{const opened=m.surfaces.some(surface=>surface.node.matches(':popover-open'));hide(m);if(opened)try{m.onSurrender({reason:'native-change'});}catch{/* Closure remains effective even if its consumer has stopped. */}};
+ const refreshGeometry=(m,inspection)=>{
+  try{
+   const prior=m.inspection,same=(a,b)=>Array.isArray(a)&&a.length===b.length&&a.every((node,i)=>node===b[i]);
+   if(!inspection?.ok||inspection.viewMask!=='declarative-css'||inspection.regionEpoch!==m.handle.regionEpoch||['reading','header','composer'].some(key=>inspection[key]!==prior[key])||!same(inspection.historyMaskRoots,prior.historyMaskRoots)||!same(inspection.protectedRegions,prior.protectedRegions))throw Error('stale-mount-geometry');
+   const protectedNodes=[inspection.header,inspection.composer,...inspection.protectedRegions];
+   if([...protectedNodes,inspection.reading,...inspection.historyMaskRoots].some(node=>!node?.isConnected||node.ownerDocument!==doc))throw Error('stale-mount-geometry');
+   const updates=m.surfaces.map(surface=>({surface,rect:inspection[surface.role==='workspace'?'readingRect':'sidebarRect']}));
+   for(const {rect}of updates){
+    if(!rect||!['x','y','width','height'].every(key=>Number.isFinite(rect[key]))||rect.width<=0||rect.height<=0)throw Error('invalid-mount-rect');
+    if(protectedNodes.some(node=>{const r=node.getBoundingClientRect();return r.width>0&&r.height>0&&rect.x<r.right&&rect.x+rect.width>r.left&&rect.y<r.bottom&&rect.y+rect.height>r.top;}))throw Error('unsafe-mask-geometry');
+   }
+   // Validate the complete layout before changing either owned surface.
+   for(const {surface,rect}of updates)Object.assign(surface.node.style,{left:rect.x+'px',top:rect.y+'px',width:rect.width+'px',height:rect.height+'px'});
+   return true;
+  }catch{surrender(m);return false;}
+ };
  return {
+  refreshGeometry(handle,inspection){return refreshGeometry(lookup(handle),inspection);},
   async mount(context,inspection,{onSurrender=()=>{}}={}){
    const win=doc.defaultView;if(!win.CSS?.supports('interactivity','inert')||!win.HTMLElement.prototype.showPopover)throw Error('unsupported-mount-surface');
    if(!inspection?.ok||inspection.viewMask!=='declarative-css'||!context?.binding?.documentToken)throw Error('invalid-mount-inspection');
@@ -30,7 +47,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     style.textContent+=`#${node.id}:popover-open{display:flex;flex-direction:column}#${node.id}>button{flex:none;align-self:flex-start}\n`;
     style.textContent+=`${allowed}:has(#${node.id}:popover-open) [data-va-mask-${role}="${id}"]{visibility:hidden;interactivity:inert;}body:has(${nativeOpen}) #${node.id}{visibility:hidden;interactivity:inert;}\n`;
    }
-   const m={handle,surfaces,markers,style,styleText:style.textContent,onSurrender};mounts.set(id,m);
+   const m={handle,surfaces,markers,style,styleText:style.textContent,onSurrender,inspection:{...inspection,historyMaskRoots:[...inspection.historyMaskRoots],protectedRegions:[...inspection.protectedRegions]}};mounts.set(id,m);
    const workspace=surfaces.find(s=>s.role==='workspace')?.node;
    const workspaceClosed=e=>{if(e.target!==workspace||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||workspace.matches(':popover-open'))return;try{onSurrender({reason:'native-reading'});}catch{}};
    workspace?.addEventListener('toggle',workspaceClosed);doc.head.append(style);for(const s of surfaces)doc.body.append(s.node);

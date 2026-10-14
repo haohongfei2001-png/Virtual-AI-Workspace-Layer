@@ -24,7 +24,7 @@ function dom(){
   querySelectorAll(selector){const direct=selector.startsWith(':scope > ');if(direct)selector=selector.slice(9);const out=[];const walk=n=>{for(const c of n.children){if(c.matches(selector))out.push(c);if(!direct)walk(c);}};walk(this);return out;}
   querySelector(s){return this.querySelectorAll(s)[0]??null;}
  }
- const handlers=new Map();doc={handlers,defaultView:{setTimeout,clearTimeout,addEventListener(){},removeEventListener(){},crypto},addEventListener:(k,f)=>handlers.set(k,f),removeEventListener:k=>handlers.delete(k),createElement:tag=>new Element(tag)};doc.body=new Element('body');return doc;
+ const handlers=new Map(),winHandlers=new Map();doc={handlers,winHandlers,defaultView:{setTimeout,clearTimeout,addEventListener(type,fn){if(!winHandlers.has(type))winHandlers.set(type,new Set());winHandlers.get(type).add(fn);},removeEventListener(type,fn){winHandlers.get(type)?.delete(fn);},crypto},addEventListener:(k,f)=>handlers.set(k,f),removeEventListener:k=>handlers.delete(k),createElement:tag=>new Element(tag)};doc.body=new Element('body');return doc;
 }
 const row=id=>({id,nativeTitle:`Native ${id}`,displayTitle:`Native ${id}`,nativeUrl:`https://chatgpt.com/c/${id}`,membership:'NONE',projectId:null,segment:0});
 const page=(items=[],total=items.length,offset=0,limit=5)=>({items,total,offset,limit,hasMore:offset+items.length<total});
@@ -211,4 +211,16 @@ for(const entity of ['project','conversation'])for(const change of ['projection'
 });
 test('same-context refreshed explanation preserves a usable newly rendered native-return button',async()=>{
  const f=unavailableFixture();try{unavailableEntry(f,'project').click();await tick();const old=f.pane().querySelector('.navigation-feedback').querySelector('button');f.nav.updateFrameProjection(projection());await tick();const current=f.pane().querySelector('.navigation-feedback').querySelector('button');assert.notEqual(current,old);const count=f.intents.length;old.click();assert.equal(f.nav.view().mode,'workspace');assert.equal(f.intents.length,count);current.click();assert.equal(f.nav.view().mode,'reading');assert.deepEqual(f.intents.at(-1),{kind:'show-native-page'});assert.deepEqual(f.calls,[]);}finally{f.nav.stop();}
+});
+
+test('framed workspace resize reflows existing cards without fetching, navigation, focus or scroll replacement',()=>{
+ const requests=[],f=fixture('workspace',request=>requests.push(request));try{f.nav.updateFrameProjection(projection());f.nav.showWorkspace();const scroller=f.nav.roots().workspace.scroller,container=scroller.querySelector('.cards'),cards=[...container.querySelectorAll(':scope > .card')],first=cards[0].querySelector('[data-ref-id="P2_0"]');assert.equal(cards.length,2);cards[0].getBoundingClientRect=()=>({height:120,width:340});cards[1].getBoundingClientRect=()=>({height:180,width:340});first.focus();scroller.scrollTop=137;const mode=f.nav.view().mode,intents=f.intents.length,resize=[...(f.doc.winHandlers.get('resize')??[])];assert(resize.length>0);
+ container.clientWidth=740;for(const fn of resize)fn();assert.equal(cards[0].style.width,'356px');assert.equal(cards[1].style.left,'374px');assert.equal(cards[1].style.top,'0px');assert.equal(container.style.height,'198px');
+ container.clientWidth=320;for(const fn of resize)fn();assert.equal(cards[0].style.width,'320px');assert.equal(cards[1].style.left,'0px');assert.equal(cards[1].style.top,'138px');assert.equal(container.style.height,'336px');assert.equal(scroller.scrollTop,137);assert.equal(f.pane().activeElement,first);assert.equal(f.nav.roots().workspace.scroller,scroller);assert.deepEqual(container.querySelectorAll(':scope > .card'),cards);assert.equal(f.nav.view().mode,mode);assert.equal(f.intents.length,intents);assert.deepEqual(requests,[]);
+ const style={...cards[0].style};container.clientWidth=0;for(const fn of resize)fn();assert.deepEqual(cards[0].style,style,'hidden or collapsed frame cannot reset card geometry');
+ f.nav.stop();assert.equal(f.doc.winHandlers.get('resize')?.size??0,0);container.clientWidth=900;for(const fn of resize)fn();assert.deepEqual(cards[0].style,style,'historical resize callback cannot modify disposed card nodes');
+ }finally{f.nav.stop();}
+});
+test('sidebar resize does not locate current chat or disturb sidebar scroll',()=>{
+ const requests=[],f=fixture('sidebar',request=>requests.push(request));try{const dto=projection('sidebar');dto.current={nativeUrl:'https://chatgpt.com/c/P1_0',refId:'P1_0',projectId:'P1'};f.nav.updateFrameProjection(dto);const list=f.pane().querySelector('.themes');list.scrollTop=91;list.clientHeight=200;let measures=0;list.getBoundingClientRect=()=>{measures++;return {top:0,bottom:200,height:200};};const link=list.querySelector('[aria-current="page"]');assert(link);link.getBoundingClientRect=()=>{measures++;return {top:900,bottom:930,height:30};};const intents=f.intents.length;for(const fn of f.doc.winHandlers.get('resize')??[])fn();assert.equal(measures,0);assert.equal(list.scrollTop,91);assert.equal(f.intents.length,intents);assert.deepEqual(requests,[]);}finally{f.nav.stop();}
 });

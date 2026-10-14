@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至Round196：候选列表复用现有分页，仅遍历Project区域中的IDless控件；完整Node3709项、真实100k混合DOM机制2项、正式MV3候选升级6项分别通过。100k/4x端到端预算FAIL、首页首发、剩余精确去重/事实成员内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
+当前已推进至Round197：修复真实Chrome 200%缩放后扩展面板沿用旧尺寸的越界故障，按原生边界安全刷新并重排卡片；完整Node3740项、实际tab zoom隔离MV3旅程4项通过。100k/4x端到端预算FAIL、首页首发、剩余内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1959,3 +1959,13 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 真实headless Chrome DOM机制 **2/2 PASS**：50k history+50k members及600IDless/1resolved Project，候选3页、projects602次nextNode（含尾null）、history/member各0，records600；普通事实小样本仍保留当前P与成员新名/PROJECT声明。明确WEB_MECHANISM_ONLY，不等于100k MV3加载或6秒端到端性能通过。源码/脚本hash稳定且外网阻断。
 - 正式package隔离MV3候选升级旅程 **6/6 PASS**（free-round196-candidates-browser.json）：605控件分页/尾页/收缩、显式重试、同名原节点单次导航、升级及P/C返回、草稿与原editor均保持；sourceHashes未漂移。
 - 专用路径不再累计无关memberIds，但仍做至多2048缓存节点valid复核及根检查，不宣称完全不触及其他region。常规事实memberIds与精确candidate keys仍O(N)，原性能/首发/即时pointer/81项与真实G/U缺口保留。6165cf3已本地保存，正常push仍超时未确认；继续同分支和原PR #16，不强推。
+
+
+## Round197：真实浏览器缩放后的安全几何刷新（接559115d）
+
+- chrome.tabs.setZoom(tabId,2)/getZoom=2实际复现：1440×1000物理窗口的CSS viewport变为720×500，原workspace仍1180宽、sidebar仍旧高度，越出屏幕。已复用adapter.inspect实时原生边界，window/visualViewport resize及原生区域ResizeObserver刷新owned surface尺寸；进入工作区前再校验。相同handle/regionEpoch/reading/history/header/composer/protected根身份，双rect须全部finite/positive且不压原生保护区域，验证后才更新两个owned面板；不安全则关闭/清理，不修改原生DOM或授权。
+- iframe工作区resize只重算现有卡片列/width/top，保持nodes、focus和scroll，不发请求/导航；sidebar不触发重新定位。stop清除监听/observer，旧state回调无效。未重建frame/输入框、未修改草稿或放宽CSS mask。
+- 最终完整Node **3740/3740 PASS**（free-round197-node.log.gz），含18项mount几何原子验证、11项controller生命周期/authority与2项renderer重排反例。
+- 正式package隔离headless Chrome MV3实际200%旅程 **4/4 PASS**（free-round197-browser-zoom.json/png）：getZoom=2、DPR2、未reload；动态双frame几何、原生阅读与唯一四格返回、trusted composer输入/model/tools操作、原editor/draft保留及显式退出owned=0。9个关键按钮/链接通过trial hit-test与各overflow祖先、iframe、父popover、topviewport裁剪交集；卡片仅记录布局，不要求任意长卡片单屏显示。最终绘制后截图已查看，worker外网拒绝，source/script hashes未漂移。
+- 最初固定尺寸FAIL及修复后过早读取异步返回按钮count=0的测试FAIL分别保留；后者改为等待真实可见后仍断言唯一并实际点击。较弱的仅frame/top bounds PASS另存before-clip-oracle，不合并统计。使用双rAF+200ms绘制前置，不宣称旧reading即时pointer FAIL解决。
+- 该实际缩放切片不代表UI-10所有尺寸/色彩/长中文/键盘高度组合或J3完整旅程，物理IME/真实宿主G/U仍未验证。原100k/4x预算、首页首发及剩余精确去重/成员RAM问题保持，Free NOT_RELEASE_READY。559115d及72ca068保留，本次fetch仍低速失败；Git只正常同步原分支/PR #16，不强推。

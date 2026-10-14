@@ -79,6 +79,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   };
   for(const [type,handler]of Object.entries(interactionHandlers))doc.addEventListener(type,handler,true);
   const windowBlur=()=>resetInteraction();win.addEventListener?.('blur',windowBlur);
+  const windowResize=()=>{if(!stopped&&framed&&surface.role==='workspace')layoutCards();};win.addEventListener?.('resize',windowResize);
   const free=()=>snapshot?.viewMode==='free';
   const span=()=>snapshot?.policy?.h??snapshot?.viewSession?.H??30;
   const current=()=>{
@@ -447,7 +448,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function update(value,now,timeZone,preparedIndex=null){if(value?.protocol==='vaiwl-free-frame/1')throw Error('frame-projection-requires-explicit-consumer');return applyUpdate(value,now,timeZone,preparedIndex);}
   function updatePreparedFree(value,now,timeZone,preparedIndex=null){assertPreparedFreeSnapshot(value);return applyUpdate(value,now,timeZone,preparedIndex,true);}
   function invalidate(reason='binding-invalidated'){advanceNavigationIntent();clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
-  function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);for(const[type,handler]of Object.entries(interactionHandlers))doc.removeEventListener(type,handler,true);win.removeEventListener?.('blur',windowBlur);if(!framed)restoreFocus();status={state:'STOPPED'};adapter.status(status);}
+  function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);for(const[type,handler]of Object.entries(interactionHandlers))doc.removeEventListener(type,handler,true);win.removeEventListener?.('blur',windowBlur);win.removeEventListener?.('resize',windowResize);if(!framed)restoreFocus();status={state:'STOPPED'};adapter.status(status);}
   function needsNativeProject(projectId){
     if(stopped||!framed||!frameProjection||!view||view.mode!=='workspace'||searchQuery!==null||view.worksetOpen||interacting()||updateTimer!==null||typeof projectId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(projectId)||['__proto__','prototype','constructor'].includes(projectId)||groups.some(group=>group.id===projectId))return false;
     const pane=roots?.[surface.role],viewport=surface.role==='sidebar'?pane?.shadow.querySelector('.themes'):pane?.scroller;
