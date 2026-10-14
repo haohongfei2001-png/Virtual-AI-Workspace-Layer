@@ -1856,3 +1856,13 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - **reading-sidebar态仍FAIL，退出模块未完整验收**（free-round186-reading-exit-fail.json/png）：退出按钮位置/可见性正常，但真实点击事件停在parent IFRAME，child无pointer、无EXIT；原frame仍续期。单页+headless bringToFront亦复现，不能归因为多tab。该失败在handler之前，不能以workspace态通过覆盖。
 - 一组合并诊断：仅移除reading mask的interactivity、owned sidebar显式auto、同sidebar hide/show均无改善；临时包反转iframe append顺序也无改善，sidebar文档visible且shadow内部命中正确。相关diagnostic receipts与压缩脚本保留，只属DIAGNOSTIC_NOT_ACCEPTANCE；未将这些变体写进产品或放宽mask。继续最小双iframe机制复现，根因未明。
 - 148b08c及9f1ae28普通push低速超时，本地成果安全；当前远端上次确认8110537。100k及G/U等旧缺口保留，Free NOT_RELEASE_READY。
+
+
+## Round187：退出失败因果对照与HTML源漂移校验（接677bc71）
+
+- 沿用原目录/分支，72ca068仍为祖先；677bc71普通push已确认成功，含Round184/185积压成果。没有丢弃代码或重建计划。
+- 针对Round186 reading即时pointer失败做有限离线对照：真实grant+简单固定组件通过；完整renderer固定按钮通过；有界flex布局仅exit通过而主题失败；relative/iframe transform未解决主题失败。所有变体仅临时包，未进入产品，不能据此将根因判为CSS溢出。相关脚本/哈希和诊断报告保存，均DIAGNOSTIC_NOT_ACCEPTANCE。
+- 关键未修改原包对照：关闭workspace后双rAF+200ms，主题与exit通过；普通流documentHeight仍超viewport，排除“溢出必然不可点击”的归因。证据支持即时合成提交窗口影响，但没有证明Chrome具体根因或修复rapid点击。
+- 正式exit-package脚本保留默认immediate，新增显式EXIT_TIMING=after-paint独立条件。首次含主题交互前置的4组PASS保留为after-theme及原脚本；独立审查指出该前置会改变focus/render，随后最终脚本删除该交互再测。最终仅双rAF+200ms、priorThemeInteraction=false的正式包 **4组PASS**（after-paint-exit.json，sourceChangedDuringRun=false）：两态退出、原草稿可继续输入、真实21秒后不复活、原生SPA一次导航与新文档fresh grants。两次不是8组新验收。即时点击旧FAIL仍保留，不能称完整UI-08/退出模块无缺口。
+- 修复buildHost.sourceHashes漏掉workspace/sidebar HTML的问题：同一次读取得到打包shell与源digest，运行末尾sourceChanged检查现在覆盖HTML；不改变权限/生产profile/包验证边界。定向打包测试 **13/13 PASS**，含shell字节绑定与可复现包。产品runtime未改，未重复无变化的完整Node和100k。
+- 原100k FAIL、完整81项/J1–J4、真实G/U/PAIA/物理IME等缺口继续保留，Free NOT_RELEASE_READY。下一步继续无依赖Free实现及界面可达性验收，不用此时序对照替代整体交付。

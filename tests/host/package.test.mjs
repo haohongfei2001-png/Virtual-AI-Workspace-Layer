@@ -10,6 +10,14 @@ import {verifyHost,packageHost} from '../../extension/package.mjs';
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const json=path=>JSON.parse(readFileSync(path,'utf8'));
 function root(t){const dir=mkdtempSync(join(tmpdir(),'vaiwl-host-package-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));return dir;}
+test('frame shell bytes participate in the live source drift check and package digest',t=>{
+ const out=join(root(t),'shells'),info=buildHost(out);
+ for(const role of ['workspace','sidebar']){
+  const path='extension/'+role+'.html',bytes=readFileSync(new URL('../../'+path,import.meta.url));
+  assert.equal(info.sourceHashes[path],sha(bytes));assert.equal(info.files[role+'.html'],sha(bytes));
+  assert.notEqual(info.sourceHashes[path],sha(Buffer.concat([bytes,Buffer.from('<style>main{height:1px}</style>')])));
+ }
+});
 test('formal development build defaults to unverified context without simulator or seed modules',async t=>{
  const out=join(root(t),'formal'),info=buildHost(out),manifest=json(join(out,'manifest.json'));
  assert.equal(info.status,'HOST_IMPLEMENTATION_UNVERIFIED');assert.equal(info.releaseStatus,'NOT_RELEASE_READY');assert.equal(info.realChatGPT,'NOT_RUN');assert.equal(info.contextSelection,'UNVERIFIED_FAIL_CLOSED');
