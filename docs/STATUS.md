@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前功能检查点Round197，Round198已保存当前包即时退出反例：修复真实Chrome 200%缩放后扩展面板沿用旧尺寸的越界故障，按原生边界安全刷新并重排卡片；完整Node3740项、实际tab zoom隔离MV3旅程4项通过。100k/4x端到端预算FAIL、首页首发、剩余内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
+当前功能检查点Round197，Round198–199已保存当前包即时退出反例及命中诊断：修复真实Chrome 200%缩放后扩展面板沿用旧尺寸的越界故障，按原生边界安全刷新并重排卡片；完整Node3740项、实际tab zoom隔离MV3旅程4项通过。100k/4x端到端预算FAIL、首页首发、剩余内存、reading即时退出及真实G/U等缺口仍保留，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1977,3 +1977,11 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 只做一次明确MECHANISM_INJECTION_NOT_ACCEPTANCE实验：workspace关闭后，对已open的owned sidebar同步hidePopover/showPopover；原iframe/WindowProxy不变、无等待/原生DOM修改。**FAIL**，仍是parent iframe事件且child为空。排除该单一候选修复，未将重开逻辑加入产品代码、不伪造子frame点击或原生派发，不将局部几何通过当pointer验收。
 - 两次报告均source未漂移，脚本自身hash保留。此轮无产品功能通过声明；下一步需缩小实际浏览器跨frame事件条件，不能用延时成功或转发点击冒充即时退出修复。Round197独立完整Node3740和200%四项通过仍按原范围有效。
 - 6104bc2已本地保存，正常fetch/push仍低速超时，未确认远端同步；当前全部提交、Pro文档72ca068及既有成果保留，整体目标保持进行中，Free NOT_RELEASE_READY。
+
+
+## Round199：即时退出的子frame命中与CSS隔离诊断（接e040839）
+
+- 当前正式包即时reading-sidebar退出仍 **FAIL**。点击前约26.5ms的子frame document→shadowRoot hit-test命中原退出BUTTON且connected；实际trusted pointer/mouse/click全部落父IFRAME，子frame捕获列表为空。原按钮detach的MutationObserver观察在click约9.8秒之后，失败时同位置的新同label按钮仍可被子frame hit-test命中。两个采样时点不能冒充事件瞬间命中，但不支持用后置detach解释原点击丢失。
+- 单次MECHANISM_NOT_ACCEPTANCE差分实验仅把两个native mask CSSOM规则的interactivity从inert改auto，保留visibility:hidden及owned保护规则，仍 **FAIL**。未改产品CSS、未转发/合成点击、未把延时成功当即时验收。此轮没有新增产品通过声明。
+- 三份失败报告、截图及两版诊断执行脚本快照保留各自hash，旧脚本与后续增强区分；sourceChanged均false。相同问题继续缩小独立浏览器机制，原Round197完整Node/200%通过范围不扩大。J3旧窗口需要合法历史活动前置；正式备份明确剥离活动证据，不能为验收注入旧日期/伪ACK。
+- Pro文档72ca068及所有本地代码提交保持；远端同步此前超时未确认。仍使用原分支/PR #16且不强推，整体Free NOT_RELEASE_READY。
