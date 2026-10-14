@@ -1,3 +1,4 @@
+import {installTreeWalkerDouble} from './tree-walker-double.mjs';
 // Offline DOM double. These assertions do not certify a live ChatGPT profile.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -13,6 +14,7 @@ function fixture({projectCount=300,historyCount=300,memberCount=3}={}){
  members.children=Array.from({length:memberCount},(_,i)=>node('A','Member '+i,{href:`/c/m${i}`},members));
  const selectors=new Map([[profile.regions.projects,[projects]],[profile.regions.history,[history]],[profile.regions.members,[members]],[profile.currentProjectTitle,[heading]],[profile.currentProjectHeader,[header]]]);
  document.querySelectorAll=s=>selectors.get(s)??[];
+ installTreeWalkerDouble(document);
  const discovery=createSurfaceDiscovery({document,binding:{documentToken:'doc',routeEpoch:1},profile,urlPolicy:createURLPolicy({profile:{projectId:({container})=>container,conversationId:id=>id}})});
  return {document,discovery,projects,history,members,heading,header,node};
 }

@@ -1,3 +1,4 @@
+import {installTreeWalkerDouble} from './tree-walker-double.mjs';
 /** Lightweight DOM identity double; no live browser or production-profile certification. */
 import test from 'node:test';import assert from 'node:assert/strict';import {randomUUID} from 'node:crypto';
 import {createSurfaceDiscovery,LEGACY_SURFACE_PROFILE} from '../../src/host/surface-discovery.mjs';import {createURLPolicy} from '../../src/host/url-policy.mjs';
@@ -6,6 +7,7 @@ function fixture(){
  const parent={};let nodes=[],root;const newRoot=()=>({isConnected:true,ownerDocument:document,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes});root=newRoot();
  const button=()=>({tagName:'BUTTON',isConnected:true,ownerDocument:document,parentNode:parent,textContent:'Same native name',disabled:false,attrs:{},getAttribute(k){return this.attrs[k]??null;}});
  nodes=[button(),button()];document.querySelectorAll=s=>s===LEGACY_SURFACE_PROFILE.regions.projects?[root]:[];
+ installTreeWalkerDouble(document);
  const discovery=(profile=LEGACY_SURFACE_PROFILE)=>createSurfaceDiscovery({document,binding:{documentToken:randomUUID(),routeEpoch:1},urlPolicy:createURLPolicy(),profile});
  return {document,nodes,discovery,replaceRoot:()=>root=newRoot(),replaceNode:()=>nodes[0]=button()};
 }

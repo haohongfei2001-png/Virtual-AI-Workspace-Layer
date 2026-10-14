@@ -47,6 +47,17 @@ try{
   return checks;
  },{discovery,actionsSource,handle:idless.target.control});
  assert.equal(dispatchChecks.length,13);report.results.push({name:'native-control-final-dispatch-rechecks-ancestor-operability-and-consumes-action-once',status:'PASS',checks:dispatchChecks});
+ const traversal=await page.evaluate(discovery=>{
+  const root=document.querySelector('aside section[aria-label="Projects"]'),box=document.createElement('div');
+  for(let i=0;i<4096;i++)box.append(document.createElement('span'));
+  const tail=document.createElement('button');tail.textContent='Bounded traversal tail';box.append(tail);root.append(box);
+  const originalQuery=root.querySelectorAll,originalWalker=document.createTreeWalker;let calls=0,queries=0,maxCalls=0,pages=0,found=false;
+  root.querySelectorAll=()=>{queries++;throw Error('whole-region-snapshot-forbidden');};
+  document.createTreeWalker=function(...args){const walker=originalWalker.apply(this,args);return {nextNode(){calls++;return walker.nextNode();}};};
+  try{let cursor=null;do{calls=0;const page=discovery.scanPage(cursor);pages++;if(pages>40)throw Error('unbounded-traversal-pages');maxCalls=Math.max(maxCalls,calls);if(calls>259)throw Error('unbounded-element-visits:'+calls);found ||= page.payload.candidates.some(c=>c.nativeTitle==='Bounded traversal tail');cursor=page.cursor;}while(cursor);if(!found||queries!==0)throw Error('tail-not-reached-without-snapshot');return {pages,maxCalls,queries,tailReached:found,decorativeElements:4096};}
+  finally{root.querySelectorAll=originalQuery;document.createTreeWalker=originalWalker;box.remove();}
+ },discovery);
+ report.results.push({name:'lazy-element-traversal-bounds-non-controls-without-region-snapshot-and-reaches-tail',status:'PASS',...traversal});
  assert.equal(initial.membershipClaims.length,2);assert.ok(initial.membershipClaims.every(c=>c.asserted==='UNKNOWN'));
  assert.ok(initial.candidates.every(c=>c.evidence.receiptId===null));assert.deepEqual(initial.coverageClaims,[]);
  assert.equal(await discovery.evaluate((d,handle)=>d.getNode(handle)?.textContent,idless.target.control),'Research');

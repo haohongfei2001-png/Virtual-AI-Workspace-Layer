@@ -100,15 +100,19 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     if(cursor){
       pages.delete(cursor);
       if(!page||page.routeEpoch!==routeEpoch||page.regionEpoch!==regionEpoch||page.currentProjectId!==currentProjectId||page.currentConversationId!==currentConversationId)throw Error('stale-surface-cursor');
-    }else page={routeEpoch,regionEpoch,currentProjectId,currentConversationId,memberIds:new Set(),region:0,index:0,regions:order.map(kind=>({kind,root:roots.get(kind),nodes:roots.get(kind)?.querySelectorAll(kind==='projects'?profile.controls:profile.conversationControls)??[]}))};
-    // Keep DOM node snapshots only for this finite pass. Each page rechecks live
-    // membership and identity; offsets are never used to authorize navigation.
+    }else page={routeEpoch,regionEpoch,currentProjectId,currentConversationId,memberIds:new Set(),region:0,regions:order.map(kind=>({kind,root:roots.get(kind),walker:null,finished:false}))};
+    // Walk loaded DOM lazily: never allocate a whole-region NodeList. Each page
+    // bounds inspected elements, including non-controls, and rechecks identity.
     if(cursor&&candidates.length>=limit){candidates.length=0;claims.clear();}
     let inspected=0;
     while(page.region<page.regions.length&&candidates.length<limit&&inspected<256){
-      const {kind:regionKind,root,nodes}=page.regions[page.region];
-      if(page.index>=nodes.length){page.region++;page.index=0;continue;}
-      const node=nodes[page.index++];inspected++;
+      const region=page.regions[page.region],{kind:regionKind,root}=region;
+      if(!root||region.finished){page.region++;continue;}
+      if(!region.walker)region.walker=document.createTreeWalker(root,1);
+      const node=region.walker.nextNode();
+      if(!node){region.finished=true;region.walker=null;page.region++;continue;}
+      inspected++;
+      if(!node.matches(regionKind==='projects'?profile.controls:profile.conversationControls))continue;
       if(!node.isConnected||node.ownerDocument!==document||!root?.contains(node))continue;
       if(regionKind==='history'&&page.memberIds.size){const parsed=urlPolicy.parse(node.getAttribute('href'));if(parsed.kind==='conversation'&&page.memberIds.has(parsed.conversationId))continue;}
       const item=candidate(node,root,regionKind,regionKind==='projects'?'project':'conversation');
@@ -117,7 +121,6 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       if(regionKind==='members'&&visible(root)&&visible(node)&&route.kind==='project'&&root.getAttribute(profile.memberProjectIdAttribute)===route.projectId){claims.set(conversationId,{conversationId,asserted:'PROJECT',projectId:route.projectId,upstreamRevision:null,evidence:evidence('members','current-project-route')});if(currentProjectId===route.projectId)page.memberIds.add(conversationId);}
       else if(!claims.has(conversationId)) claims.set(conversationId,{conversationId,asserted:'UNKNOWN',projectId:null,reason:'membership-not-observed',evidence:evidence(regionKind)});
     }
-    while(page.region<page.regions.length&&page.index>=page.regions[page.region].nodes.length){page.region++;page.index=0;}
 
     const menu=roots.get('moveMenu');
     if(route.kind==='conversation'&&menu&&visible(menu)&&menu.getAttribute(profile.menuConversationIdAttribute)===route.conversationId) {

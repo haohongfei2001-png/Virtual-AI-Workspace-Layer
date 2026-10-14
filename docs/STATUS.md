@@ -1746,3 +1746,13 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 真实 headless DOM **9组 PASS**（free-round174-dispatch-browser.json），新增组含12个beforeDispatch/onNativeDispatch隐藏/禁用祖先反例与1个恢复可见后恰好一次click正例。失败action不能再次派发。该DOM fixture不冒充MV3或真实账户认证。
 - 实际离线生产候选 MV3 **5组 PASS**（free-round174-candidates-mv3.json）：候选列表、翻页、原生激活、升级及返回未被新增护栏破坏。独立只读审查无阻断问题，正向恢复例来自审查建议。
 - d7c6f8d上轮普通push超时；72ca068文档祖先保留。候选完整内存、100k性能、首页首发因果来源、间歇退出与真实G/U仍未完成；Free NOT_RELEASE_READY。
+
+
+## Round175：原生区域懒遍历，移除全区域DOM快照（接 475261f）
+
+- surface discovery 由三个区域预取完整 querySelectorAll NodeList 改为当前区域懒建 SHOW_ELEMENT TreeWalker。每个实际访问元素（含非控件）计入每页256预算，然后匹配selector；不使用可无界跳过元素的filter。允许空页继续，保留一用cursor、route/region及adapter surface epoch、elapsed deadline和末尾检查。扫描树变动依赖现有observer撤销，不能把实时walker说成不可变快照。
+- 完整 Node **3226/3226 PASS**（free-round175-node.log.gz）。原DOM doubles集中补充明确标注的数组walker替身；实际DOM行为另由浏览器验证，不用替身宣称浏览器性能。
+- 真实 headless DOM **10组 PASS**（free-round175-discovery.json）：新增4096装饰元素+末尾候选，用17页到达，实际每页最多256次nextNode，区域querySelectorAll计数0且被设置为抛错，未静默截断。既有原生身份/标题/成员/NONE/隐藏边界和派发13分支继续通过。
+- 实际离线生产候选 MV3 **5组 PASS**（free-round175-candidates-mv3.json），含605候选翻页、末尾激活、升级及阅读返回。独立审查确认分页不能过滤跳过无界节点；本次实现符合。
+- 仅移除一个真实O(N)DOM快照来源，不宣称完整RAM已界定：discovery byId/memberIds、content聚合与精确重复key集合仍存在；content副作用须后续纯扫描事务成功后一次提交，不能边扫描边升级。首页首发来源、100k性能、间歇退出和真实G/U仍未完成；Free NOT_RELEASE_READY。
+- 上轮已正常推送 f1798eb..475261f 到原PR #16；72ca068祖先保留，既有网络积压提交已同步。
