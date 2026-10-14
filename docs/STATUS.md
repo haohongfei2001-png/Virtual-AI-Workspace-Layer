@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前功能检查点Round200：修复快速原生SPA Back/Forward在重绑等待期间使增强永久停止的竞态；完整Node3757项通过，单文档J3离线旅程12步通过、2步因缺可信旧日期证据未覆盖。原生双草稿/File、200%缩放、片段与搜索连续通过；不称完整J3。即时reading退出、100k/4x预算、首页首发及真实G/U缺口仍保留，Free为NOT_RELEASE_READY。
+当前功能检查点Round201：接快速SPA重绑修复，新增显式contenteditable及保留多编辑器草稿风险识别。完整Node3825项、真实DOM9项通过；正式包单文档J3仍12步通过/旧窗口2步未覆盖。即时reading退出、100k/4x预算、首页首发及真实G/U缺口保留，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1995,3 +1995,13 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 没有可信旧活跃度时较早按钮实际disabled，未强行启用；旧窗口与旧日期聊天仍NOT_COVERED。早期原脚本误设可点击而超时的FAIL保留；active editor新oracle揭示原生异步切换需等待实际新ID可见，已修测试等待，未降低断言。生产snippet profile仍未认证，物理IME/真实权限/完整v2.7不由此旅程代替。最终截图已查看。
 - 即时退出的最小机制对照：同源/跨端口、manual/非popover四例，以及跨site且CDP确认OOPIF的两例都成功trusted child click；均是WEB_MECHANISM_ONLY、未复现产品FAIL，不把Chrome或iframe普遍机制先验认定为原因。对应报告和旧执行脚本压缩快照保留。
 - 正常推送已恢复，ab1e003及此前Round193–199提交成功同步原PR #16；72ca068仍是祖先，原计划/代码均保留。整体Free继续实施，NOT_RELEASE_READY。
+
+
+## Round201：明确支持rich与隐藏编辑器草稿（接824784f）
+
+- 输入风险读取新增显式editorKinds与可选draftEditorsSelector，缺省仍只textarea。rich须DIV、role=textbox、显式true/plaintext-only及有效editable边界；空白/零宽文本或任意子元素保守视为composer未保存。所有保留editor逐一验证（最多32），必须包括active；未声明的其他编辑器、失效/跨document DOM节点、读取异常或读中边界变化返回unknown。只读本地文本，仅返回state/flags，不写DOM或持久化内容。
+- 独立审查发现并防住active rich空但hidden textarea有草稿的漏判；只有rich可覆盖其后代，textarea只读value不可替其他editor背书。editorKinds先核验普通data descriptor再快照，getter不执行、不允许验证和复制之间变更种类。只在既有loopback profile明确声明双editor；真实生产profile仍不因离线重建获完整域或新权限。NativeActions原risk重核和未知风险安全退路不变。
+- 最终完整Node **3825/3825 PASS**（free-round201-node.log.gz），定向input/actions151项属此前组合，不另加全套次数。真实headless DOM **9/9 PASS**：无附件rich-only、hidden plain草稿、双空、BR、NBSP、未声明editor等，原节点保留/reader未写DOM/不返回草稿全文，源码与脚本hash稳定；明确WEB_MECHANISM_ONLY。
+- 更新正式package后重新运行同一单document J3：**12 PASS/2 NOT_COVERED，PARTIAL_NOT_J3_ACCEPTED**。双原editor/File对象、Back/Forward、真实200%、片段保存查找定位及native搜索保持；无send-intent，worker外网阻断，source/script/build未漂移。旧日期前置、生产snippet profile/真实账户/物理IME缺口保持。
+- 即时退出进一步机制对照：临时静态MV3扩展两例，以及直接加载当前真实mount-surface模块（原CSS mask/inert完整保留）的一例均立即trusted child click成功，CDP确认扩展iframe target。仅定位到完整renderer/会话组合尚未解释；不推翻正式MV3 FAIL。临时包source哈希与匹配脚本快照保留，未改产品挂载或转发点击。
+- ab1e003已同步远端；824784f后一次正常push再次低速超时，本地成果完整保留，继续仅向原PR #16非强制同步。72ca068及原计划保持，整体目标继续进行，NOT_RELEASE_READY。
