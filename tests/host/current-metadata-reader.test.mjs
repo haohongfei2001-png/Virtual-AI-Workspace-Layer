@@ -52,3 +52,5 @@ test('readback reacquires owner proof after the read attempt guard expires',asyn
  const value=await f.reader.read('proof');await f.reader.withReadback(value,'proof','m1',({guard})=>guard());assert.equal(attempts,2);
 });
 for(const field of ['documentToken','producerToken','routeEpoch'])test('readback refuses changed owner binding '+field,async()=>{const f=fixture({ack:true});f.context[field]=field==='routeEpoch'?1:'original';const value=await f.reader.read('proof');f.context[field]=field==='routeEpoch'?2:'changed';await assert.rejects(f.reader.withReadback(value,'proof','m1',()=>assert.fail('changed binding')));});
+
+test('complete authenticated metadata without accepted message reports pending ACK only',async()=>{const f=fixture({ack:true}),original=f.provider.acceptanceFor;f.provider.acceptanceFor=result=>({...original(result),messages:[]});const reader=createCurrentMetadataReader({observations:f.observations,provider:f.provider,enabled:true,now:()=>time}),value=await reader.read('proof');await assert.rejects(reader.withReadback(value,'proof','m1',()=>assert.fail('missing ACK')),/pending-send-ack/);});

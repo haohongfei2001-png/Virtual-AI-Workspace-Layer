@@ -1456,3 +1456,9 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 接线检查发现真实 HostObservationOwner.withCurrent 的 guard/signal 在本次调用 finally 即失效，Round142 存储旧 guard 会使后续消费始终拒绝。现保存 document/producer/route/scope 绑定，消费时重新进入 withCurrent 认证同 proof 并检查绑定；加入真实 attempt 生命周期形状反例，未沿用简化 fixture 的永久有效 guard 假设。
 - HostSendCandidates 新增显式 onAcknowledged 内部消费者；须具备 reader.withReadback，在当前 owner 与读回 owner 双重 guard 下调用 prepareSendAckAdmission，再 await 消费者并再次检查。原 onCandidate 仍仅诊断，输出 DTO 不增加 ACK 权限。错误 scope、处理失败、异步撤权拒绝；失败不重放已消费意图。生产 composition 尚未设置该消费者。
 - 完整 Node **3123/3123 PASS**（free-round143-node.log.gz），浏览器本轮 NOT_RUN。尚无实际持久写入；下一步必须处理 optimistic message 先出现但接受状态后到的有界 ACK 重试，不能因当前失败清 baseline 而永久漏收；再接 native continuation 原子持久化，补整链隔离浏览器验收。Free NOT_RELEASE_READY。
+
+## Round144：延迟 ACK 有界校准（接 f39e5a5）
+
+- 完整认证读回中缺少该消息的明确接受状态时，reader 返回 pending-send-ack，不能当 ACK。发送关联器保存最多32项原始候选及消息依赖摘要，后续显式观察可重新读回；每项最多3次、至少1秒间隔、原意图30秒窗口，不创建轮询。成功后删除且不重复发布诊断候选。
+- 新 proof 不重置待确认项的次数预算。scope/route/body变化、partial、原消息或前序消息语义变化、过期、时钟回退均不能沿用旧确认。开始消费后的错误（即使同名 pending-send-ack）不重试写入，避免把不确定写结果当未确认状态。
+- reader/send-candidates 定向 **89/89 PASS**（free-round144-target.log）；本轮完整回归/浏览器 NOT_RUN，最近完整为 Round143 3123项。尚须接现有持久 continuation，并验证实际 provider→reader→correlator→IDB 整链；生产仍未启用，Free NOT_RELEASE_READY。

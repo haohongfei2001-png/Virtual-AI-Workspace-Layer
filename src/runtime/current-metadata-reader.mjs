@@ -68,7 +68,8 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
    const a=saved.acceptance;
    const guard=()=>{const at=now();if(stopped||context.documentToken!==saved.documentToken||context.producerToken!==saved.producerToken||context.routeEpoch!==saved.routeEpoch||context.scope?.key!==saved.scopeKey||context.signal?.aborted||context.guard?.()!==true||context.conversationId!==value.conversationId||context.bodyEpoch!==value.bodyEpoch||context.scope?.accountId!==a.principalKey||context.scope?.organizationId!==a.contextKey||context.providerProfile!==a.providerProfile||context.providerTransport!==a.transport||!Array.isArray(context.messageIds)||!context.messageIds.includes(messageId)||!Number.isFinite(at)||instant(a.expiresAt)<=at){readbacks.delete(value);throw Error('stale-send-readback');}};
    guard();const observed=value.metadata.messages.find(m=>m.messageId===messageId),message=a.messages.find(m=>m.messageId===messageId);
-   requireValue(observed&&message&&context.messageIds.includes(messageId)&&observed.mappingNodeId===message.mappingNodeId&&observed.lineage?.fingerprint===message.lineage?.fingerprint);
+   requireValue(observed&&context.messageIds.includes(messageId));if(!message)throw Error('pending-send-ack');
+   requireValue(observed.mappingNodeId===message.mappingNodeId&&observed.lineage?.fingerprint===message.lineage?.fingerprint);
    const readback=freeze({proofId,conversationId:value.conversationId,bodyEpoch:value.bodyEpoch,principalKey:a.principalKey,contextKey:a.contextKey,providerProfile:a.providerProfile,transport:a.transport,expiresAt:a.expiresAt,message});
    const result=await work({profile:a.profile,readback,context,guard});guard();return result;
   });
