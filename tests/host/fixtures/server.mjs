@@ -33,7 +33,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
   const counts = Object.create(null), requests = Object.create(null);
   let projectCounter = 0, newConversationCounter = 0;
   let detailHold = null;
-  const detailAppends = new Map();
+  const detailAppends = new Map(), detailAcceptances = new Map();
   const projects = new Map([[PROJECT_ONE,{id:PROJECT_ONE,name:'Research'}],[PROJECT_TWO,{id:PROJECT_TWO,name:'Research'}]]);
   const conversations = new Map([
     [C_ONE,{id:C_ONE,title:'First project conversation',project:PROJECT_ONE}],
@@ -90,7 +90,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
         if(detailHold) await detailHold.promise;
         if(res.destroyed) return;
         // Deliberate offline metadata reconstruction; never a live API capture or ACK.
-        return json(res,200,{conversation_id:conversation.id,mapping:Object.fromEntries(['fixture_m1','fixture_m2','fixture_not_current',...(detailAppends.get(conversation.id)??[])].map((id,i)=>['node_'+i,{id:'node_'+i,parent:i?'node_'+(i-1):null,message:{id,author:{role:i===1?'assistant':'user',id:authorId},create_time:1700000000+i,content:{parts:['SYNTHETIC_BODY_MUST_NOT_ESCAPE']}}}]))});
+        return json(res,200,{conversation_id:conversation.id,mapping:Object.fromEntries(['fixture_m1','fixture_m2','fixture_not_current',...(detailAppends.get(conversation.id)??[])].map((id,i)=>['node_'+i,{id:'node_'+i,parent:i?'node_'+(i-1):null,message:{id,...(detailAcceptances.get(conversation.id)?.has(id)?{status:'fixture-accepted'}:{}),author:{role:i===1?'assistant':'user',id:authorId},create_time:1700000000+i,content:{parts:['SYNTHETIC_BODY_MUST_NOT_ESCAPE']}}}]))});
       }
       if(!sessionAuthorized(req) || !identity) return json(res,401,{error:'unauthenticated'});
       if(url.pathname === '/native/route' && req.method === 'GET') {
@@ -136,6 +136,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
     snapshot: () => clone({actions:counts,requests,projectCount:projects.size,conversationCount:conversations.size}),
     // Test-process controls only; not HTTP endpoints, not page-visible authority.
     setPrincipal: (id,{accounts: nextAccounts = roster} = {}) => { identity = id; roster = clone(nextAccounts); },
+    acceptConversationMetadata: (conversationId,messageId) => { if(!(detailAppends.get(conversationId)??[]).includes(messageId))throw Error('missing-fixture-metadata');const ids=detailAcceptances.get(conversationId)??new Set();ids.add(messageId);detailAcceptances.set(conversationId,ids); },
     appendConversationMetadata: (conversationId,messageId) => { if(!conversations.has(conversationId)||typeof messageId!=='string'||!/^fixture_[a-z0-9_]+$/.test(messageId))throw Error('invalid-fixture-metadata');const ids=detailAppends.get(conversationId)??[];if(ids.includes(messageId))throw Error('duplicate-fixture-metadata');detailAppends.set(conversationId,[...ids,messageId]); },
     holdConversationDetails: () => { if(detailHold) throw Error('detail-already-held'); let release; const promise = new Promise(r=>release=r); detailHold={promise,release}; },
     releaseConversationDetails: () => { const pending=detailHold; detailHold=null; pending?.release(); },

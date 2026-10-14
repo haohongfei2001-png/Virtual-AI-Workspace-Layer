@@ -1541,3 +1541,9 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - binding-service 接入可选 sendAckProfile，严格校验并要求 current read/send candidates/workspace/evidence/surface 配置齐备，profile ID 不与 surface 重名。NativeRepository gate 组合既有 observation 与 ACK owner exact-request 私有授权。ACK 提交后调用既有 continuation drainer 写证据，完成时通知 UI。stop 同时停止 ACK owner。默认 null 保持未启用。
 - worker 仅转交显式包内 ACK profile。刷新恢复在单一 surface profile 与匹配当前认证 provider 的 ACK profile 之间轮换；使用原有一秒恢复预算与文档复核，不从持久记录恢复权限。
 - 真实模块 MOCK_IDB 管线已覆盖 pending→evidence hint→complete 清队列，再次 drain idle 且证据不变。完整 Node **3145/3145 PASS**（free-round147-node.log.gz）。正式 composition 的 enabled 全流程仍需隔离浏览器/真实 IDB 进一步验证，不能以模块 fixture 代替。私人账号及真实 ACK profile NOT_RUN，生产配置默认关闭。Free NOT_RELEASE_READY。
+
+## Round148：隔离 MV3 ACK 真实 IndexedDB 验证（接 e75afe1）
+
+- 新增 send-ack-mv3-browser，临时 test-only MV3 包使用正式 adapter、binding composition、provider、reader、ACK owner、NativeRepository 与 continuation drainer。真实原生形状提交按钮点击+DOM新消息ID只生成候选；明确接受状态由测试进程设置在本地 HTTP fixture，非页面 ACK 属性。
+- headless Chrome **5/5 PASS/sourceChangedDuringRun=false**（free-round148-ack-mv3.json）：默认 disabled 无 detail 请求，只有意图不写库，未确认新增消息不写库，后续明确 ACK 在真实 IDB 产生恰一条 observed-self-send 提示并清 pending，重复观察不再改库。临时独立 profile，无私人 ChatGPT/真实原生写入。fixture 控制回归 **25/25 PASS**（free-round148-fixture.log）。
+- 重要边界：延迟确认由测试主动调用后续 observation；生产页面没有新 DOM 变化时的自动校准触发尚未认证。不是正式安装包完整验收，也不证明真实 ACK profile 语义。下一步核对并补齐有界自动校准触发、首发跨 SPA 等剩余路径；Free NOT_RELEASE_READY。

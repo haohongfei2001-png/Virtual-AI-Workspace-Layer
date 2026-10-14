@@ -68,3 +68,10 @@ test('test-process identity control retains independent roster order without act
   assert.equal(Object.hasOwn(roster,'active_account_id'),false);
   assert.equal(server.snapshot().projectCount,2);
 });
+
+test('offline acceptance requires explicit test-process control and never comes from append alone',async t=>{
+ const server=await fixture(t),C=expected.conversations[0].id,session=await (await server.get('/api/auth/session')).json();
+ const read=async()=> (await fetch(server.origin+'/backend-api/conversation/'+C,{headers:{cookie:server.cookie,authorization:`Bearer ${session.accessToken}`}})).json();
+ assert.throws(()=>server.acceptConversationMetadata(C,'fixture_new'),/missing/);server.appendConversationMetadata(C,'fixture_new');let detail=await read();assert.equal(Object.values(detail.mapping).find(n=>n.message.id==='fixture_new').message.status,undefined);
+ server.acceptConversationMetadata(C,'fixture_new');detail=await read();assert.equal(Object.values(detail.mapping).find(n=>n.message.id==='fixture_new').message.status,'fixture-accepted');assert.equal(Object.values(detail.mapping)[0].message.status,undefined);
+});
