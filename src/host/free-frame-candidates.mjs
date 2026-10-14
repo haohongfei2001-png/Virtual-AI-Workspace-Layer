@@ -9,6 +9,22 @@ export function createFreeFrameCandidates({document:doc,container,onActivate,onP
  const scrollValue=value=>Number.isFinite(value)?Math.max(0,Math.min(1e7,value)):0;
  const node=(tag,text='')=>{const n=doc.createElement(tag);n.textContent=text;return n;};
  function clear(){generation++;host?.remove();host=null;mounted=null;}
+ function showError(offset){
+  if(stopped)return;
+  if(!Number.isSafeInteger(offset)||offset<0||offset%32!==0)throw Error('invalid-candidate-offset');
+  clear();const run=generation;let pending=false;
+  host=node('div');host.setAttribute('data-vaiwl-candidates','');
+  const shadow=host.attachShadow({mode:'open'}),section=node('section'),heading=node('h2','待识别的项目'),status=node('p','加载未完成，请重试。'),retry=node('button','重试');
+  section.setAttribute('aria-label','待识别的项目');status.setAttribute('role','status');status.setAttribute('aria-live','polite');retry.type='button';retry.disabled=false;
+  retry.addEventListener('click',async event=>{
+   if(event.isTrusted!==true||stopped||generation!==run||pending)return;
+   pending=true;retry.disabled=true;status.textContent='正在加载…';
+   try{await onPageRequest(offset);}catch{}finally{
+    if(!stopped&&generation===run){pending=false;retry.disabled=false;status.textContent='加载未完成，请重试。';}
+   }
+  });
+  section.append(heading,status,retry);shadow.append(node('style',css),section);container.append(host);
+ }
  function update(input,page={offset:0,total:input?.length,nextOffset:null}){if(stopped)return;const items=validated(input),paging=validatedPage(page,items.length);const samePage=mounted?.offset===paging.offset,priorScroll=samePage?scrollValue(mounted.list.scrollTop):0,priorFocus=samePage&&doc.hasFocus?.()!==false&&doc.activeElement===host?[...mounted.buttons].find(([,button])=>mounted.shadow.activeElement===button)?.[0]:null;clear();if(!items.length)return;const run=generation;let pagePending=false,activationPending=0;host=node('div');host.setAttribute('data-vaiwl-candidates','');const shadow=host.attachShadow({mode:'open'}),section=node('section'),heading=node('h2','待识别的项目'),list=node('ul');section.setAttribute('aria-label','待识别的项目');section.append(heading,list);shadow.append(node('style',css),section);container.append(host);mounted={offset:paging.offset,list,shadow,buttons:new Map()};
   for(const item of items){const row=node('li'),button=node('button',item.nativeTitle??'项目名称暂不可用'),status=node('p',item.available?'进入原生项目后确认项目身份。':'暂时无法打开；请先处理未发送内容，或使用原生入口继续。');button.type='button';button.disabled=!item.available;button.setAttribute('data-candidate-key',item.renderKey);status.setAttribute('role','status');status.setAttribute('aria-live','polite');let pending=false,used=false;
    button.addEventListener('click',async event=>{if(event.isTrusted!==true||stopped||generation!==run||!item.available||pending||used||pagePending)return;const presentation=Object.freeze({offset:paging.offset,scrollTop:scrollValue(list.scrollTop),focused:doc.hasFocus?.()!==false&&shadow.activeElement===button});pending=true;activationPending++;used=true;button.disabled=true;status.textContent='正在打开原生项目…';try{const result=await onActivate(item.renderKey,presentation);if(stopped||generation!==run)return;status.textContent=['dispatched','already-current'].includes(result?.state)?'已请求打开原生项目，请在原生页面继续。':'打开结果未确认，请使用原生入口继续。';}catch{if(!stopped&&generation===run)status.textContent='打开结果未确认，请使用原生入口继续。';}finally{pending=false;activationPending--;}});row.append(button,status);list.append(row);mounted.buttons.set(item.renderKey,button);
@@ -17,5 +33,5 @@ export function createFreeFrameCandidates({document:doc,container,onActivate,onP
   const range=node('p',`已观察的待识别项目 ${paging.offset+1}–${paging.offset+items.length} / ${paging.total}`),controls=node('div'),pageStatus=node('p');pageStatus.setAttribute('role','status');section.append(range);if(paging.total<=32)return;section.append(controls,pageStatus);const buttons=[];
   for(const [label,offset] of [['上一页',paging.offset>0?paging.offset-32:null],['下一页',paging.nextOffset]]){const button=node('button',label);button.type='button';button.disabled=offset===null;controls.append(button);buttons.push([button,offset]);button.addEventListener('click',async event=>{if(event.isTrusted!==true||stopped||generation!==run||offset===null||pagePending||activationPending)return;pagePending=true;for(const [b]of buttons)b.disabled=true;pageStatus.textContent='正在加载…';try{const result=await onPageRequest(offset);if(stopped||generation!==run)return;pageStatus.textContent=result?.ok===false?'加载未完成，请重试。':'';}catch{if(!stopped&&generation===run)pageStatus.textContent='加载未完成，请重试。';}finally{if(!stopped&&generation===run){pagePending=false;for(const [b,o]of buttons)b.disabled=o===null;}}});}
  }
- return Object.freeze({restorePosition({offset,scrollTop}={}){if(stopped||!mounted||mounted.offset!==offset||!Number.isFinite(scrollTop)||scrollTop<0||scrollTop>1e7)return false;mounted.list.scrollTop=scrollTop;return true;},update,clear,stop(){if(stopped)return;stopped=true;clear();}});
+ return Object.freeze({restorePosition({offset,scrollTop}={}){if(stopped||!mounted||mounted.offset!==offset||!Number.isFinite(scrollTop)||scrollTop<0||scrollTop>1e7)return false;mounted.list.scrollTop=scrollTop;return true;},update,showError,clear,stop(){if(stopped)return;stopped=true;clear();}});
 }

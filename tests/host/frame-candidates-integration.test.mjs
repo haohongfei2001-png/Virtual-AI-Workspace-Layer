@@ -98,3 +98,29 @@ test('changed versions cannot exceed three location attempts for one migration',
 test('current-entry calibration completes before ready missing Project location can start',async()=>{
  const f=locatingFixture(),held=deferred();let calibrated=false;f.currentEntryReply(()=>held.promise);f.viewReply(async m=>{if(m.locateProjectId)assert.equal(calibrated,true,'location may not compete with current-entry');const r=locationReply(m);if(calibrated)r.page.viewSession={...locationSession,T:locationSession.T+1};return r;});await f.start(false);f.workspaceEntry();await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_UI_CURRENT_ENTRY').length,1);assert.equal(f.calls.some(m=>m.locateProjectId),false);calibrated=true;held.resolve({ok:true,segment:0,workspaceRevision:0,viewSession:{...locationSession,T:locationSession.T+1}});await drain();assert.equal(f.calls.filter(m=>m.locateProjectId).length,1);assert.equal(f.published.at(-1).groups.offset,24);assert.equal(f.published.at(-1).viewSession.T,locationSession.T+1);f.client.stop();
 });
+
+for(const failure of ['reply','throw'])test('failed next candidate page '+failure+' removes old controls and explicitly retries the requested offset',async()=>{
+ const f=fixture();let fail=true;
+ f.list(async m=>{if(m.offset===32&&fail){if(failure==='throw')throw Error('offline');return {ok:false};}const offset=m.offset??0;return {ok:true,items:Array.from({length:offset===0?32:1},(_,i)=>f.item('row'+(offset+i))),page:{offset,total:33,nextOffset:offset===0?32:null}};});
+ await f.start();const old=f.buttons().find(b=>b.attrs['data-candidate-key']),next=f.buttons().find(b=>b.textContent==='下一页');assert.ok(next);await next.handlers.click({isTrusted:true});await drain();
+ assert.equal(f.buttons().some(b=>b.attrs['data-candidate-key']),false);const retry=f.buttons().find(b=>b.textContent==='重试');assert.ok(retry);
+ await old.handlers.click({isTrusted:true});assert.equal(f.calls.some(m=>m.type==='HOST_UI_ACTIVATE_CANDIDATE'),false);
+ const requests=f.calls.filter(m=>m.type==='HOST_UI_CANDIDATES').length;await retry.handlers.click({isTrusted:false});assert.equal(f.calls.filter(m=>m.type==='HOST_UI_CANDIDATES').length,requests);
+ fail=false;await retry.handlers.click({isTrusted:true});await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_UI_CANDIDATES').at(-1).offset,32);assert.ok(f.buttons().some(b=>b.attrs['data-candidate-key']==='candidate:row32'));assert.equal(f.buttons().some(b=>b.textContent==='重试'),false);assert.equal(f.calls.some(m=>m.type==='HOST_UI_ACTIVATE_CANDIDATE'),false);f.client.stop();
+});
+
+for(const failure of ['reply','throw'])test('initial candidate '+failure+' exposes explicit retry without a prior candidate renderer',async()=>{
+ const f=fixture();f.list(async()=>{if(failure==='throw')throw Error('offline');return {ok:false};});await f.start(false);
+ const retry=f.buttons().find(b=>b.textContent==='重试');assert.ok(retry);assert.equal(f.buttons().some(b=>b.attrs['data-candidate-key']),false);
+ f.list(async()=>({ok:true,items:[f.item('recovered')]}));await retry.handlers.click({isTrusted:true});await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_UI_CANDIDATES').at(-1).offset,0);assert.ok(f.buttons().some(b=>b.attrs['data-candidate-key']==='candidate:recovered'));assert.equal(f.calls.some(m=>m.type==='HOST_UI_ACTIVATE_CANDIDATE'),false);f.client.stop();
+});
+
+for(const invalidation of ['scope','backup','stop'])test('candidate retry after '+invalidation+' cannot fetch or activate stale controls',async()=>{
+ const f=fixture();f.list(async()=>({ok:false}));await f.start();const retry=f.buttons().find(b=>b.textContent==='重试');assert.ok(retry);
+ if(invalidation==='scope'){f.viewReply(async()=>({ok:true,state:'ready',nativeCandidates:false,page:f.published.at(-1),navigation:[]}));await f.renewScope();}else if(invalidation==='backup')f.nav.onBackupRequest();else f.client.stop();
+ assert.equal(f.buttons().length,0);const before=f.calls.filter(m=>m.type==='HOST_UI_CANDIDATES').length;await retry.handlers.click({isTrusted:true});await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_UI_CANDIDATES').length,before);assert.equal(f.calls.some(m=>m.type==='HOST_UI_ACTIVATE_CANDIDATE'),false);assert.equal(f.buttons().length,0);f.client.stop();
+});
+
+test('late failed candidate reply after scope replacement cannot recreate retry surface',async()=>{
+ const f=fixture(),held=deferred();f.list(()=>held.promise);await f.start();f.viewReply(async()=>({ok:true,state:'ready',nativeCandidates:false,page:f.published.at(-1),navigation:[]}));await f.renewScope();held.resolve({ok:false});await drain();assert.equal(f.buttons().length,0);assert.equal(f.calls.some(m=>m.type==='HOST_UI_ACTIVATE_CANDIDATE'),false);f.client.stop();
+});

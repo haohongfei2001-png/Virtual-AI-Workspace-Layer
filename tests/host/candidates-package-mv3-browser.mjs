@@ -22,6 +22,20 @@ try{context=await chromium.launchPersistentContext(join(dir,'profile'),{headless
  await panel.getByText('已观察的待识别项目 1–32 / 605',{exact:true}).waitFor({timeout:15000});
  assert.equal(await panel.locator('button[data-candidate-key]').count(),32);
  assert.equal(await panel.getByRole('button',{name:'上一页',exact:true}).isDisabled(),true);
+ // Test-only frame RPC fault; packaged worker and native actions are unchanged.
+ await frame.evaluate(()=>{const send=chrome.runtime.sendMessage.bind(chrome.runtime);globalThis.candidateRetryProbe={offsets:[],activations:0,failed:false};chrome.runtime.sendMessage=function(...args){const m=args[0],p=candidateRetryProbe;if(m?.type==='HOST_UI_ACTIVATE_CANDIDATE')p.activations++;if(m?.type==='HOST_UI_CANDIDATES'){p.offsets.push(m.offset);if(m.offset===32&&!p.failed){p.failed=true;return Promise.resolve({ok:false,reason:'fixture-transient-read'});}}return send(...args);};});
+ await panel.getByRole('button',{name:'下一页',exact:true}).click();
+ await panel.getByRole('button',{name:'重试',exact:true}).waitFor();
+ assert.equal(await panel.locator('button[data-candidate-key]').count(),0);
+ assert.equal((await frame.evaluate(()=>candidateRetryProbe.offsets)).length,1,'failed read must not auto retry');
+ await panel.getByRole('button',{name:'重试',exact:true}).click();
+ await panel.getByText('已观察的待识别项目 33–64 / 605',{exact:true}).waitFor();
+ report.retryFault=await frame.evaluate(()=>candidateRetryProbe);
+ assert.deepEqual(report.retryFault.offsets,[32,32]);assert.equal(report.retryFault.activations,0);
+ assert.equal(server.snapshot().actions['open-project-button']??0,paginationActionsBefore);
+ report.results.push({name:'frame-fixture-transient-read-removes-stale-actions-and-explicit-retry-restores-requested-page',status:'PASS',fault:'test-only frame RPC rejection; no native operation replay'});
+ await panel.getByRole('button',{name:'上一页',exact:true}).click();
+ await panel.getByText('已观察的待识别项目 1–32 / 605',{exact:true}).waitFor();
  for(let offset=32;offset<605;offset+=32){await panel.getByRole('button',{name:'下一页',exact:true}).click();await panel.getByText(`已观察的待识别项目 ${offset+1}–${Math.min(offset+32,605)} / 605`,{exact:true}).waitFor();assert.equal(await panel.locator('button[data-candidate-key]').count(),Math.min(32,605-offset));}
  assert.equal(await panel.getByRole('button',{name:'Candidate 604',exact:true}).isVisible(),true);
  assert.equal(await panel.getByRole('button',{name:'下一页',exact:true}).isDisabled(),true);

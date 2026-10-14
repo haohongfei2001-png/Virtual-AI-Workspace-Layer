@@ -23,3 +23,34 @@ test('missing focused candidate, page change and clear do not restore old focus 
 test('presentation scroll is finite bounded, unfocused is false, and stale events capture nothing',async()=>{for(const [input,want] of [[Infinity,0],[NaN,0],[-1,0],[1e8,1e7]]){const f=fixture();f.ui.update([item()]);const old=f.buttons()[0];f.list().scrollTop=input;await old.handlers.click({isTrusted:true});assert.deepEqual(f.presentations,[{offset:0,scrollTop:want,focused:false}]);f.ui.update([item('new')]);await old.handlers.click({isTrusted:true});assert.equal(f.presentations.length,1);}});
 
 test('inactive iframe cannot restore or report focus even when its activeElement remains stale',async()=>{const f=fixture();f.ui.update([item()]);f.buttons()[0].focus();f.doc.hasFocus=()=>false;f.list().scrollTop=35;f.ui.update([item()]);assert.equal(f.shadow().activeElement,undefined);assert.equal(f.list().scrollTop,35);f.buttons()[0].focus();await f.buttons()[0].handlers.click({isTrusted:true});assert.equal(f.presentations[0].focused,false);});
+
+test('error replaces candidates and invalidates their native activation handlers',async()=>{
+ const requests=[],f=fixture(offset=>requests.push(offset));f.ui.update([item()]);const old=f.buttons()[0];
+ f.ui.showError(64);assert.equal(f.buttons().length,0);assert.equal(f.pageButtons().length,1);assert.equal(f.pageButtons()[0].textContent,'重试');assert(f.text().includes('加载未完成'));assert.equal(f.ui.restorePosition({offset:64,scrollTop:12}),false);
+ await old.handlers.click({isTrusted:true});assert.deepEqual(f.calls,[]);assert.deepEqual(requests,[]);
+});
+test('error retry requires trusted click, preserves requested offset and serializes attempts',async()=>{
+ const requests=[];let finish;const f=fixture(offset=>{requests.push(offset);return new Promise(resolve=>finish=resolve);});f.ui.showError(608);const retry=f.pageButtons()[0];
+ for(const event of [{isTrusted:false},{}, {isTrusted:1}])await retry.handlers.click(event);
+ assert.deepEqual(requests,[]);const pending=retry.handlers.click({isTrusted:true});await retry.handlers.click({isTrusted:true});assert.deepEqual(requests,[608]);assert.equal(retry.disabled,true);assert(f.text().includes('正在加载'));
+ finish({ok:false});await pending;assert.equal(retry.disabled,false);assert(f.text().includes('加载未完成'));
+ const second=retry.handlers.click({isTrusted:true});assert.deepEqual(requests,[608,608]);finish({ok:false});await second;assert.deepEqual(f.calls,[]);
+});
+test('rejected page load remains explicitly retryable without automatic requests',async()=>{
+ let requests=0;const f=fixture(async()=>{requests++;throw Error('transport');});f.ui.showError(0);const retry=f.pageButtons()[0];
+ await retry.handlers.click({isTrusted:true});await drain();assert.equal(requests,1);assert.equal(retry.disabled,false);assert(f.text().includes('加载未完成'));
+ await retry.handlers.click({isTrusted:true});assert.equal(requests,2);
+});
+for(const replacement of ['clear','stop','update','showError'])test(`error retry and delayed result cannot affect ${replacement} generation`,async()=>{
+ let finish;const requests=[],f=fixture(offset=>{requests.push(offset);return new Promise(resolve=>finish=resolve);});f.ui.showError(32);const old=f.pageButtons()[0];const pending=old.handlers.click({isTrusted:true});
+ if(replacement==='update')f.ui.update([item('fresh')]);else if(replacement==='showError')f.ui.showError(64);else f.ui[replacement]();
+ const before=f.text();finish({ok:false});await pending;assert.equal(f.text(),before);await old.handlers.click({isTrusted:true});assert.deepEqual(requests,[32]);
+ if(replacement==='stop'){f.ui.showError(0);assert.equal(f.root.children.length,0);}
+ if(replacement==='showError')assert.equal(f.pageButtons()[0].disabled,false);
+});
+test('successful retry may render updated page without its old finally overwriting it',async()=>{
+ const f=fixture(async offset=>{f.ui.update(rows(offset,1),{offset,total:offset+1,nextOffset:null});return {ok:true};});f.ui.showError(32);await f.pageButtons()[0].handlers.click({isTrusted:true});assert.equal(f.buttons()[0].attrs['data-candidate-key'],'candidate:32');assert.equal(f.text().includes('加载未完成'),false);
+});
+test('error offset validation leaves existing content untouched',()=>{
+ const f=fixture();f.ui.update([item()]);const before=f.text();for(const offset of [-32,1,NaN,Infinity,Number.MAX_SAFE_INTEGER+1,'32',null,undefined]){assert.throws(()=>f.ui.showError(offset),/invalid-candidate-offset/);assert.equal(f.text(),before);}
+});

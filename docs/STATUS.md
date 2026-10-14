@@ -1774,3 +1774,11 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 独立审查发现初版队列期限使用墙钟；已改用生产传入elapsedNow，排队与扫描共用最初6秒单调期限，另加墙钟回拨反例，验证当前事务不commit、超时排队事务不begin。原授权expiresAt仍用墙钟校验，没有扩大权限。
 - 最终完整 Node **3277/3277 PASS**（free-round177-node.log.gz），包含独立页窗口25项及流式并发/过滤/容量/超时反例。实际离线生产候选 MV3 **5组 PASS**（free-round177-candidates-mv3.json），605条分页、末尾激活、同名隔离、身份升级及阅读返回保持；sourceChangedDuringRun=false。审查复核无其他具体阻断。
 - 上轮已正常推送475261f..972e7b1至原PR #16，72ca068为当前祖先。100k冷加载性能、首页首发因果来源、间歇退出与真实G/U仍未完成；Free NOT_RELEASE_READY。
+
+
+## Round178：候选读取失败保留显式恢复入口（接 f46cab8）
+
+- 修复初次/翻页读取失败直接clear整块候选区域、导致无法就地重试的问题。新增showError(offset)：清理旧候选与旧handler，展示单一重试按钮；仅trusted click重读同offset，pending单飞，不自动重试、不调用activate。失败回复/异常均可恢复；失效scope、stop、backup/recovery及迟到旧回复仍不能重建旧界面。失败同时撤销待应用候选迁移，避免旧阅读位置继续应用。
+- 子代理分别实现组件和集成反例，主代理接线与实际浏览器故障验证；只读审查未发现具体阻断。定向 **170/170 PASS**；最终完整 Node **3294/3294 PASS**（free-round178-node.log.gz），新增17项涵盖首次/翻页失败、旧按钮失效、trusted-only、代际/作用域隔离和恢复。
+- 实际离线生产候选 MV3 **6组 PASS**（free-round178-candidates-mv3.json）；新增一次test-only frame RPC读取失败，明确不冒充真实服务故障。观察offsets=[32,32]且activations=0，旧可激活按钮清除、显式重试后恢复33–64页；605候选全程、原生激活/升级/阅读返回继续通过，sourceChangedDuringRun=false。
+- f46cab8已正常推送原PR #16；72ca068仍为祖先。本轮不消除100k性能、首页首发因果来源、完整候选RAM、间歇退出和真实G/U缺口，Free仍NOT_RELEASE_READY。

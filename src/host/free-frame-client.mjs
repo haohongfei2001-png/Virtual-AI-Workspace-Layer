@@ -29,18 +29,25 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
  function clear(){migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function ensureCandidates(){
+  if(!candidates){candidateRoot=doc.createElement('div');candidateRoot.setAttribute('data-vaiwl-candidate-root','');if(typeof root?.before==='function')root.before(candidateRoot);else privateRoot.append(candidateRoot);candidates=createFreeFrameCandidates({document:doc,container:candidateRoot,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
+    const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
+    return withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_ACTIVATE_CANDIDATE',grantId:active.id,mountId:active.mountId,renderKey,presentation,actionId:doc.defaultView.crypto.randomUUID()}),{now:elapsedNow,schedule,cancel});
+   }});}
+ }
+ function candidateReadFailed(offset){
+  migration.revoke();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;
+  ensureCandidates();candidates.showError(offset);return {ok:false};
+ }
  async function refreshCandidates(offset=candidateOffset){
   if(closed||backup||recovery||snippets||!grantCurrent())return;
   const run=++candidateRun,current=grant;
   const valid=()=>run===candidateRun&&!closed&&grant?.id===current.id&&grantCurrent()&&Date.parse(grant.expiresAt)>now()&&!backup&&!recovery&&!snippets;
   try{
    const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_CANDIDATES',grantId:current.id,mountId:current.mountId,offset}),{now:elapsedNow,schedule,cancel});
-   if(!valid())return;if(result?.ok!==true){candidates?.clear();return;}
-   if(!candidates){candidateRoot=doc.createElement('div');candidateRoot.setAttribute('data-vaiwl-candidate-root','');if(typeof root?.before==='function')root.before(candidateRoot);else privateRoot.append(candidateRoot);candidates=createFreeFrameCandidates({document:doc,container:candidateRoot,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
-    const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
-    return withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_ACTIVATE_CANDIDATE',grantId:active.id,mountId:active.mountId,renderKey,presentation,actionId:doc.defaultView.crypto.randomUUID()}),{now:elapsedNow,schedule,cancel});
-   }});}candidates.update(result.items,result.page);candidateOffset=result.page?.offset??0;if(result.migration){if(migration.offer(result.migration)){candidateMigrationId=result.migration.id;candidateMigrationProject=result.migration.projectId;}if(candidateRestore?.migrationId!==candidateMigrationId)candidateRestore=null;}else{migration.revoke();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;}if(candidateRestore){candidates.restorePosition?.(candidateRestore);candidateRestore=null;}applyCandidateMigration();
-  }catch{if(valid())candidates?.clear();}
+   if(!valid())return {ok:false};if(result?.ok!==true)return candidateReadFailed(offset);
+   ensureCandidates();candidates.update(result.items,result.page);candidateOffset=result.page?.offset??0;if(result.migration){if(migration.offer(result.migration)){candidateMigrationId=result.migration.id;candidateMigrationProject=result.migration.projectId;}if(candidateRestore?.migrationId!==candidateMigrationId)candidateRestore=null;}else{migration.revoke();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;}if(candidateRestore){candidates.restorePosition?.(candidateRestore);candidateRestore=null;}applyCandidateMigration();return {ok:true};
+  }catch{if(valid())return candidateReadFailed(offset);return {ok:false};}
  }
  function applyCandidateMigration(){
   if(!workspaceEntered||closed||backup||recovery||snippets||activeRead||horizonPending)return;
