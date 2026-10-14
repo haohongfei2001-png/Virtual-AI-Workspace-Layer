@@ -229,16 +229,16 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  async function flushResume(){
   resumeTimer=null;if(!resumeQueued||closed||!grantCurrent())return;
-  const item=resumeQueued;resumeQueued=null;if(JSON.stringify(item.expectedQuery)!==JSON.stringify(query))return;const current=grant,renderer=navigation;resumeWriting=true;
+  const item=resumeQueued;resumeQueued=null;if(JSON.stringify(item.expectedQuery)!==JSON.stringify(query))return;const current=grant,renderer=navigation,attempt={};resumeWriting=attempt;
   try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_SAVE_VIEW',grantId:current.id,mountId:current.mountId,expectedQuery:item.expectedQuery,view:item.view}),{now:elapsedNow,schedule,cancel});if(!closed&&grant===current&&navigation===renderer&&JSON.stringify(query)===JSON.stringify(item.expectedQuery)&&result?.ok===true)resumeLast=item.key;}catch{}
-  finally{if(!closed&&grant===current&&navigation===renderer){resumeWriting=false;if(resumeQueued&&resumeTimer===null)resumeTimer=schedule(flushResume,100);}}
+  finally{if(resumeWriting===attempt){resumeWriting=false;if(!closed&&navigation===renderer&&resumeQueued&&resumeTimer===null)resumeTimer=schedule(flushResume,100);}}
  }
  async function bootstrapResume(){
-  bootstrapping=true;const current=grant,renderer=navigation,ticket=serial;
+  const attempt={};bootstrapping=attempt;const current=grant,renderer=navigation,ticket=serial;
   try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_RESUME',grantId:current.id,mountId:current.mountId}),{now:elapsedNow,schedule,cancel});
    if(!live(ticket)||grant!==current||navigation!==renderer)return;
    if(result?.ok===true&&result.resume){const restored=validateResumeQuery(result.resume.query),layout=result.resume.view===null?null:validateFrameResumeView(result.resume.view);query=restored;if(layout)navigation.restoreFrameView?.(layout);}
-  }catch{}finally{if(live(ticket)&&grant===current&&navigation===renderer){bootstrapping=false;invalidate();}}
+  }catch{}finally{if(bootstrapping===attempt){bootstrapping=false;if(!closed&&navigation===renderer)invalidate();}}
  }
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;

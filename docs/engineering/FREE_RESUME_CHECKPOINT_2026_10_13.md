@@ -1300,3 +1300,11 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 完整Node **2662/2662 PASS**（free-round125-node.log），覆盖账户A→B→A、旧grant、角色/URL/document隔离、30分钟/回退、迟到GET/SAVE、query变化、历史锚点和渲染滚动。实际同文档MV3三旅程PASS：真实worker定向失效、新双frame/grant、Ordinary搜索、双scroll 40→40、同原生textarea/draft。仅测试过程对两代shadow viewport相同缩至60px确保可滚动；非零历史浏览器路径NOT_TESTED，未伪装为真实ChatGPT。
 - 最终标准实际MV3十三旅程PASS；free-round125-frame-rebind-package-mv3.json和free-round125-package-mv3.json均sourceChangedDuringRun=false。实际完整扩展BFCache实验free-round125-bfcache-package-mv3.json为**FAIL/NOT_HIT**，Chrome报告no-store、EmbedderExtensionFrame等限制，恢复断言NOT_RUN；与Round124合成factory BFCache HIT明确区分，不重复重试或改标签。
 - Pro 72ca068仍为HEAD祖先。100k mixed/4x冷启动、生产context/accepted-send ACK、真实G/U/PAIA条件尚未完成；Free未完成、NOT_RELEASE_READY。继续既有DEVELOPMENT_PLAN，不新增计划/PR/目录。
+
+
+## Round126：正常授权续租不阻断后续布局保存（接 5c4456b）
+
+- 独立反例复现：SAVE pending时正常UiGrant续租替换对象，旧finally按grant身份判断而未解锁，后续滚动永久只排队。改为请求实例锁；正常续租后完成/超时均解锁，clear/restart后旧实例不能释放新实例锁。首次RESUME在短lease续租下也按实例清bootstrap，拒绝旧grant结果后继续新授权默认读取。
+- 四项反例和既有client测试84/84，完整Node **2666/2666 PASS**。实际原包MV3四旅程PASS，真实SAVE已在owner成功，其回包仅由测试过程延迟跨正常HOST_UI_RENEW且小于6秒；新scroll55真正保存，再新frame/grant重建恢复55，原生textarea和草稿不变。sourceChangedDuringRun=false；无伪造grant/owner写入，无生产账户。
+- Round125原始完整Node、标准/恢复MV3与完整扩展BFCache NOT_HIT报告补存engineering；Round126保留最初失败、最终测试及源hash报告。无需因单一client锁修复重复全部浏览器模块。100k/4x、真实context/accepted ACK/G/U条件仍未完成，NOT_RELEASE_READY。
+- 性能只读诊断：SHA轮展开没有显著收益；schema字段数组分配候选在Node完整codec约改善2.9%，未改生产代码、未作为100k关口通过。Project新建导航候选经源码核验Round102已存在，本轮不重复实现。
