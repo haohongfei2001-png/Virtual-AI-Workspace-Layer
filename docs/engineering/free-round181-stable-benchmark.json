@@ -1,0 +1,84 @@
+{
+  "same": true,
+  "rounds": [
+    [
+      {
+        "ms": 36.5,
+        "length": 2569450
+      },
+      {
+        "ms": 34.30000001192093,
+        "length": 2569450
+      }
+    ],
+    [
+      {
+        "ms": 36.30000001192093,
+        "length": 2569450
+      },
+      {
+        "ms": 34.29999998211861,
+        "length": 2569450
+      }
+    ],
+    [
+      {
+        "ms": 36.099999994039536,
+        "length": 2569450
+      },
+      {
+        "ms": 35,
+        "length": 2569450
+      }
+    ],
+    [
+      {
+        "ms": 35.30000001192093,
+        "length": 2569450
+      },
+      {
+        "ms": 34.19999998807907,
+        "length": 2569450
+      }
+    ],
+    [
+      {
+        "ms": 36.599999994039536,
+        "length": 2569450
+      },
+      {
+        "ms": 33.599999994039536,
+        "length": 2569450
+      }
+    ],
+    [
+      {
+        "ms": 36,
+        "length": 2569450
+      },
+      {
+        "ms": 34.60000002384186,
+        "length": 2569450
+      }
+    ],
+    [
+      {
+        "ms": 35,
+        "length": 2569450
+      },
+      {
+        "ms": 35.19999998807907,
+        "length": 2569450
+      }
+    ]
+  ],
+  "beforeMedianMs": 36,
+  "afterMedianMs": 34.60000002384186,
+  "evidence": "DIAGNOSTIC_HEADLESS_CHROME_4X_ENCODING_ONLY",
+  "rows": 5000,
+  "browser": "155.0.8059.40",
+  "baselineCommit": "7753964",
+  "beforeSourceSha256": "3d5e80f093baf140cf5362972a56d2635ead2791daadeacd7e5207ae35a4dc03",
+  "afterSourceSha256": "aef21d1842cdc09b33fef973a9d29f15cb7c0c3f773a6a9d31726b83ffee7b21",
+  "scope": "5000 generated evidence-like pieces, stable encoding only, alternating order, last five samples median; not an F1 acceptance result"
+}

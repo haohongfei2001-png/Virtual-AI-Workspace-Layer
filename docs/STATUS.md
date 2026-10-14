@@ -1800,3 +1800,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 实际headless IndexedDB **3组 PASS**（free-round180-evidence-idb.json）：5001refs成功迁移完整保留、尾checksum损坏全部store不变、第二批撤权全部store回滚；每页key/value预取≤512。不是MV3/真实账户认证。
 - 固定最终源码100k/project-mixed/4x **仍FAIL**（free-round180-100k.json）：约30059ms后WAITING/read-budget-exhausted；evidence-directory-build约4172ms，随后目录阶段约6580ms后stale-binding。相较旧运行不足以证明端到端显著改善，不把计算削减当F1达标；原生输入原节点/草稿/可见性均保留，sourceChangedDuringRun=false，期限未放宽。
 - aa3dbbb已正常推送，含上一轮积压2af8a82；72ca068祖先保留。100k性能、首页首发来源、完整候选RAM、间歇退出及真实G/U仍未完成，Free NOT_RELEASE_READY。
+
+
+## Round181：固定编码语义下减少stable临时分配（接 7753964）
+
+- 先采样现有100k初始路径（free-round181-profile.json/cpuprofile.gz，仅诊断）：stable约3025ms self CPU，加对象字段回调约1015ms，SHA256约3929ms，strictJSON约2115ms。随后仅优化stable类型/prototype检查的数组分配与对象keys局部原地编码，数组map/join路径原样保留；不改变SHA256算法、排序、编码格式或校验依据。
+- 子代理新增独立旧实现oracle差分14项，含1500固定seed随机JSON、null-prototype、Unicode/转义、稀疏数组/继承索引/custom map/species、getter重入/删除/新增/覆写及原异常对象传播；独立只读审查无阻断。最终完整 Node **3339/3339 PASS**（free-round181-node.log.gz）。
+- 隔离Chrome155/4x的5000个代表piece纯编码微基准中位 **36.0→34.6ms**（free-round181-stable-benchmark.json，记录旧/新source hash），仅小幅收益，不是F1验收。真实IDB原生迁移/保留版本/尾损坏/缺片/撤权 **5组 PASS**（free-round181-native-idb.json），Pro及其他scope完整保留，失败事务回滚。
+- 固定最终源码非采样100k/project-mixed/4x **仍FAIL**（free-round181-100k.json）：约30062ms后startup超时/read-budget-exhausted，evidence-directory阶段约6646ms后stale-binding；原生输入原节点、未提交草稿和可见性保持，sourceChangedDuringRun=false。不能将微基准改善或阶段推进当整体性能通过，后续仍须解决迁移总成本。
+- 7753964已推送原PR #16，72ca068祖先保留；首页首发来源、候选完整RAM、间歇退出及真实G/U等继续未完成，Free NOT_RELEASE_READY。
