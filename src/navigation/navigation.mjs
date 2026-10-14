@@ -12,6 +12,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const framed=surface!==null;
   if(framed&&(!['workspace','sidebar'].includes(surface.role)||surface.root?.ownerDocument!==doc))throw Error('invalid-navigation-surface');
   const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,frameSearchOffset=0,frameSearchWaiting=false,frameWorkingSetOffset=0,frameWorkingSetWaiting=false,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
+  let navigationIntent=0;
   let settingsOpen=false,timePolicyNotice=null,timePolicyNoticeTimer=null,lastTimePolicyNotice=null;
   let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,projectionRequest=0,horizonPending=null,horizonError=null,workingSetPending=null,workingSetError=null,snippetLocatePending=null,resumeLayout=null;
   // Keep the original event target alive until its click, drop, or composition
@@ -84,7 +85,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   if(!framed)doc.addEventListener('focusin',trackFocus);
   const captureFocus=()=>{const n=doc.activeElement;if(n===lastNativeFocus?.node){lastNativeFocus.start=n.selectionStart;lastNativeFocus.end=n.selectionEnd;}};
   const restoreFocus=()=>{const f=lastNativeFocus;if(f?.node.isConnected){f.node.focus({preventScroll:true});if(typeof f.start==='number'&&f.node.setSelectionRange)f.node.setSelectionRange(f.start,f.end);}};
-  const button=(label,fn,text='',cls='square')=>{const b=node(doc,'button',{type:'button','aria-label':label,title:label,class:cls},text);b.dataset.focusKey=label;b.addEventListener('click',fn);return b;};
+  const button=(label,fn,text='',cls='square')=>{const b=node(doc,'button',{type:'button','aria-label':label,title:label,class:cls},text);b.dataset.focusKey=label;b.addEventListener('click',event=>{navigationIntent++;fn(event);});return b;};
   function own(tag='div'){const n=node(doc,tag,{'data-vaiwl-owned':token});const shadow=n.attachShadow({mode:'open'});shadow.append(node(doc,'style',{},css));return {n,shadow};}
   function restoreMask(){if(!mask)return;for(const[name,prior,expected]of mask.attrs){if(mask.node.getAttribute(name)===expected){if(prior===null)mask.node.removeAttribute(name);else mask.node.setAttribute(name,prior);}}mask=null;}
   function setMask(n,enabled){if(!enabled){restoreMask();return;}if(mask?.node===n)return;restoreMask();const attrs=[['data-vaiwl-mask',n.getAttribute('data-vaiwl-mask'),token],['inert',n.getAttribute('inert'),'']];for(const[k,,v]of attrs)n.setAttribute(k,v);mask={node:n,attrs};}
@@ -146,8 +147,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function emitView(){if(view&&snapshot)onViewChange({segment:view.segment,oldOpen:[...view.oldOpen],sidebarOpen:[...view.sidebarOpen],capacities:[...view.capacities],scroll:view.scroll,sidebarScroll:view.sidebarScroll??0,sidebarVisible:view.sidebarVisible,...(free()&&snapshot.viewSession?{freeSession:snapshot.viewSession}:{})},snapshot.scope,...(framed?[{role:surface.role}]:[]));}
   function remember(){if(view&&roots)view.sidebarScroll=roots.sidebar?.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;if(view?.mode==='workspace'&&roots?.workspace?.scroller&&roots.workspace.n.style.display!=='none')view.scroll=roots.workspace.scroller.scrollTop;}
   function calibrationEntry(){if(!free()||!roots)return;const objectIds=view.segment===0?['inventory']:[...new Set([...(roots.workspace?.shadow.querySelectorAll('[data-ref-id]')??[])].map(n=>n.dataset.refId))].slice(0,64);onCalibrationEntry({kind:view.segment===0?'foreground':'history',objectIds:objectIds.length?objectIds:['inventory']});}
-  function showWorkspace(notify=true){if(!view)return;if(!framed)captureFocus();remember();const resetFrame=frameProjection&&(view.worksetOpen||searchQuery!==null);view.mode='workspace';view.worksetOpen=false;searchQuery=null;searchTheme=null;if(resetFrame){projectionRequest++;requestFrame();}render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();if(framed&&notify)onPresentationRequest({kind:'show-workspace'});}
-  function enterReading(notify=true){if(!view)return;remember();clearTimePolicyNotice();view.mode='reading';searchQuery=null;searchTheme=null;layout();if(framed&&notify)onPresentationRequest({kind:'enter-reading'});}
+  function showWorkspace(notify=true){if(!view)return;navigationIntent++;if(!framed)captureFocus();remember();const resetFrame=frameProjection&&(view.worksetOpen||searchQuery!==null);view.mode='workspace';view.worksetOpen=false;searchQuery=null;searchTheme=null;if(resetFrame){projectionRequest++;requestFrame();}render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();if(framed&&notify)onPresentationRequest({kind:'show-workspace'});}
+  function enterReading(notify=true){if(!view)return;navigationIntent++;remember();clearTimePolicyNotice();view.mode='reading';searchQuery=null;searchTheme=null;layout();if(framed&&notify)onPresentationRequest({kind:'enter-reading'});}
   function openRef(ref,event){if(ref.available===false){event.preventDefault();return;}if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;remember();if(ref.anchor)pendingAnchor={scope:snapshot.scope,ref,anchor:ref.anchor};clearTimePolicyNotice();view.mode='reading';searchQuery=null;searchTheme=null;layout();const same=adapter.isCurrent(ref.nativeUrl);adapter.openNative(ref.nativeUrl,event);if(same){restoreFocus();locateAnchor();}}
   // Frame plans are supplied synchronously before activation. Never fetch a plan in a click handler.
   function bindPlannedLink(a,ref){
@@ -162,10 +163,11 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     else{a.setAttribute('role','button');a.tabIndex=0;}
     a.addEventListener('click',event=>{
       if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;
+      const dispatchIntent=++navigationIntent;
       if(plan.mode==='href')return; // Browser default only; no duplicate RPC or fallback.
-      event.preventDefault();enterReading();
+      event.preventDefault();if(plan.mode!=='same-target')enterReading();
       const dto={actionId:'ui_'+win.crypto.randomUUID().replaceAll('-',''),uiGrantId:issued.uiGrantId,mountId:issued.mountId,planRevision:plan.planRevision,targetKey:issued.targetKey};
-      try{Promise.resolve(onDispatch(dto)).catch(()=>{});}catch{} // Unconfirmed dispatch is never retried.
+      try{Promise.resolve(onDispatch(dto)).then(result=>{if(plan.mode==='same-target'&&result?.state==='already-current'&&!stopped&&navigationIntent===dispatchIntent)enterReading(false);}).catch(()=>{});}catch{} // Unconfirmed dispatch is never retried.
     });
     if(!safeHref)a.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();a.click();}});
   }
@@ -447,8 +449,9 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     return true;
   }
   function present(intent){
+    navigationIntent++;
     if(stopped||!snapshot||!['show-workspace','enter-reading','search-known','show-working-set'].includes(intent?.kind))return false;
     if(interacting()||updateTimer!==null){pendingPresentation={scope:snapshot.scope,intent:{kind:intent.kind,...(intent.kind==='search-known'?{themeId:intent.themeId??null}:{})}};finishInteraction();return true;}
     if(intent?.kind==='show-workspace')showWorkspace(false);else if(intent?.kind==='enter-reading')enterReading(false);else if(intent?.kind==='search-known')findKnown(intent.themeId??null,false);else if(intent?.kind==='show-working-set')showWorkingSet(false);else return false;return true;}
-  return Object.freeze({needsNativeProject,workspaceEntered(){if(stopped||!framed||!frameProjection||!view)return false;view.mode='workspace';return true;},revealNativeProject,restoreFrameView(value){if(!framed||stopped)return false;resumeLayout=validateFrameResumeView(value);return true;},showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
+  return Object.freeze({needsNativeProject,workspaceEntered(){if(stopped||!framed||!frameProjection||!view)return false;navigationIntent++;view.mode='workspace';return true;},revealNativeProject,restoreFrameView(value){if(!framed||stopped)return false;resumeLayout=validateFrameResumeView(value);return true;},showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
 }

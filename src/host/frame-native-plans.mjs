@@ -1,9 +1,26 @@
 import {exactHostRecord} from './contract.mjs';
+import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Content-owner preparation only. Neither this helper nor its DTO clicks a node. */
-export function createFrameNativePlans({adapter,bindingCurrent}={}){
+export function createFrameNativePlans({adapter,bindingCurrent,showReading=()=>false,captureIntent=()=>()=>true,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof bindingCurrent!=='function'||!['planNavigation','planKey','currentURL'].every(k=>typeof adapter?.[k]==='function'))throw Error('invalid-frame-native-plans');
- return Object.freeze({plan(input){
+ const issuedCurrent=new Map(),pending=new Map();
+ const commandFields=['actionId','uiGrantId','mountId','planRevision','targetKey'];
+ const validCommand=value=>exactHostRecord(value,commandFields)&&['actionId','uiGrantId','mountId','targetKey'].every(k=>tokenOK(value[k]))&&Number.isSafeInteger(value.planRevision)&&value.planRevision>0;
+ function authorize(command){const p=pending.get(command?.actionId);return validCommand(command)&&!!p&&commandFields.every(k=>command[k]===p.command[k])&&p.current();}
+ async function activate({command,expiresAt}={}){
+  const failed={state:'blocked'};if(!validCommand(command)||pending.has(command.actionId)||pending.size>=16||typeof adapter.dispatchNative!=='function')return failed;
+  const entry=issuedCurrent.get(command.targetKey),started=elapsedNow(),remaining=Date.parse(expiresAt)-now();
+  if(!entry||entry.plan.planRevision!==command.planRevision||!Number.isFinite(remaining)||remaining<=0||remaining>6000)return failed;
+  let active=true;const intentCurrent=captureIntent();const current=()=>{const age=elapsedNow()-entry.at,elapsed=elapsedNow()-started;return active&&typeof intentCurrent==='function'&&intentCurrent()===true&&issuedCurrent.get(command.targetKey)===entry&&bindingCurrent()===entry.binding&&adapter.currentURL()===entry.url&&Number.isFinite(age)&&age>=0&&age<30000&&Number.isFinite(elapsed)&&elapsed>=0&&elapsed<remaining&&Date.parse(expiresAt)>now();};
+  if(!current())return failed;const attempt={command:Object.freeze({...command}),current};pending.set(command.actionId,attempt);
+  try{return await withRequestDeadline(async()=>{
+   const result=await adapter.dispatchNative(attempt.command);if(!current())return failed;
+   if(result?.state==='already-current')return showReading()===true?result:failed;
+   return ['blocked','unconfirmed'].includes(result?.state)?{state:result.state}:failed;
+  },{timeoutMs:remaining,now:elapsedNow,schedule,cancel});}catch{return {state:'unconfirmed'};}finally{active=false;if(pending.get(command.actionId)===attempt)pending.delete(command.actionId);}
+ }
+ return Object.freeze({authorize,activate,plan(input){
   if(!exactHostRecord(input,['targets'])||!Array.isArray(input.targets)||input.targets.length>200)throw Error('invalid-frame-native-targets');
   const targets=[],seen=new Map();
   for(const item of input.targets){
@@ -22,6 +39,7 @@ export function createFrameNativePlans({adapter,bindingCurrent}={}){
    const field=Object.hasOwn(target,'projectId')?'projectId':'refId',entity=field==='projectId'?'project':'conversation',nativeId=target[field],{navigationURL}=target;
    check();const issued=adapter.planNavigation({kind:'resolved',entity,nativeId,navigationURL,liveHandle:null});check();
    const targetKey=adapter.planKey(issued);
+   if(issued.mode==='same-target'&&tokenOK(targetKey)){if(issuedCurrent.size>=256)issuedCurrent.delete(issuedCurrent.keys().next().value);issuedCurrent.set(targetKey,{plan:issued,binding,url,at:elapsedNow()});}
    // Frame anchors cannot recheck a later draft at default browser navigation.
    // Their issued href always preserves the current page, even when empty now.
    const plan=issued.mode==='href'?{...issued,disposition:'new-tab-preserve-current'}:issued;

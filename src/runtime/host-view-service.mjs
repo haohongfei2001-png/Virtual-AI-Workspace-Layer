@@ -1,3 +1,4 @@
+import {isCurrentNavigationPlan} from '../host/current-navigation-plan.mjs';
 import {locateFreeProject} from './free-project-location.mjs';
 import {validateFrameResumeView,validateResumeQuery} from '../host/frame-resume-state.mjs';
 import {prepareHostAutoTimePolicy,hostAutoTimePolicyFresh} from './host-auto-time-policy.mjs';
@@ -12,7 +13,7 @@ import {projectFreeFrame,freeFrameRowDTO} from './free-frame-projection.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 /** One privileged replica per mount, shared by its two granted UI documents.
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
-export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
  const views=new Map(),resumes=new Map();
  const resumeKey=(context,role=context.role)=>JSON.stringify([context.parentFrame.tabId,context.parentFrame.documentId,context.parentFrame.actualURL,context.scope.key,role]);
@@ -105,7 +106,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     navigation=await prepareNavigation({parentFrame:context.parentFrame,binding:context.binding,targets});check();
     if(!Array.isArray(navigation)||navigation.length>200)throw Error('invalid-native-plans');
     const seen=new Set();for(const item of navigation){const project=Object.hasOwn(item??{},'projectId'),key=project?'projectId':'refId',entity=project?'project':'conversation',id=item?.[key],expected=(project?projects:rows).get(id),target=item?.plan?.target,identity=JSON.stringify([entity,id]);
-     if(!expected||seen.has(identity)||!exactHostRecord(item,[key,'plan','targetKey'])||!['href','unavailable'].includes(item.plan?.mode)||(item.plan.mode==='href'&&(target?.kind!=='resolved'||target.entity!==entity||target.nativeId!==id||target.navigationURL!==expected.nativeUrl||!['same-tab','new-tab-preserve-current'].includes(item.plan.disposition))))throw Error('invalid-native-plans');
+     if(!expected||seen.has(identity)||!exactHostRecord(item,[key,'plan','targetKey'])||!['href','unavailable','same-target'].includes(item.plan?.mode)||item.plan?.mode==='same-target'&&(!isCurrentNavigationPlan(item.plan)||project||id!==page.current.refId||target.nativeId!==id||target.navigationURL!==expected.nativeUrl||!createURLPolicy({origin:new URL(nativeUrl).origin}).sameTarget(target.navigationURL,nativeUrl))||(item.plan.mode==='href'&&(target?.kind!=='resolved'||target.entity!==entity||target.nativeId!==id||target.navigationURL!==expected.nativeUrl||!['same-tab','new-tab-preserve-current'].includes(item.plan.disposition))))throw Error('invalid-native-plans');
      seen.add(identity);
     }
    }
@@ -113,6 +114,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    if(new TextEncoder().encode(JSON.stringify(result)).length>65536)throw Error('free-frame-page-too-large');
    if(context.role==='workspace')entry.currentEntryEligible=page.segment===0&&search===undefined&&workingSet===undefined;
    check();if(!context.isCurrent())throw Error('stale-view-resume');if(!locating)rememberResume(context,effectiveQuery,current.snapshot.viewSession);
+   registerCurrentNavigation?.({context,grantId:message.grantId,mountId:message.mountId,navigation:navigation.filter(item=>item.plan.mode==='same-target')});
    return result;
   }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;}
  }

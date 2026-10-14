@@ -11,12 +11,17 @@ import {publicAdapterStatus} from './contract.mjs';
 const rect=node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
 const overlaps=(a,b)=>a.x<b.x+b.width&&b.x<a.x+a.width&&a.y<b.y+b.height&&b.y<a.y+a.height;
 /** Isolated-world composition. DOM observations remain proposals, never scope proof. */
-export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,snippetsFactory=createNativeSnippets,bodyProof=()=>null,inputRisk=null,authorize=()=>false,beforeDispatch=()=>{},onNativeDispatch=()=>{},onNativeDispatchCancelled=()=>{},onRebindNeeded=()=>{},onSurfaceChange=()=>{},onObservationIssue=()=>{},now=Date.now,elapsedNow=()=>performance.now(),scheduleRetry=(fn,ms)=>setTimeout(fn,ms),cancelRetry=id=>clearTimeout(id)}={}){
+export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,snippetsFactory=createNativeSnippets,bodyProof=null,inputRisk=null,authorize=()=>false,beforeDispatch=()=>{},onNativeDispatch=()=>{},onNativeDispatchCancelled=()=>{},onRebindNeeded=()=>{},onSurfaceChange=()=>{},onObservationIssue=()=>{},now=Date.now,elapsedNow=()=>performance.now(),scheduleRetry=(fn,ms)=>setTimeout(fn,ms),cancelRetry=id=>clearTimeout(id)}={}){
  if(!document?.defaultView)throw Error('invalid-host-document');
  inputRisk=inputRisk??createNativeInputRisk({document,profile});
  let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[],surfaceParts=[],surfaceKey=null,surfaceSequence=null,surfaceWanted=true,surfaceScanning=false,surfaceCursor=null,surfacePage=0,surfacePageKey=null,surfaceEpoch=0,surfaceSnapshotEpoch=0;const surfaceAccepted=new Map(),surfaceFailed=new Map();
  const one=selector=>{const nodes=document.querySelectorAll(selector);return nodes.length===1?nodes[0]:null;};
  const live=()=>!stopped&&now()<Date.parse(binding.expiresAt);
+ function acknowledgedBody(){
+  if(!live()||!acceptedBody||now()>=Date.parse(acceptedBody.validUntil)||!bodyDiscovery)return null;
+  try{syncRoute();const body=bodyDiscovery.scan();return body.association==='explicit-body-id'&&JSON.stringify(body)===acceptedBody.fingerprint?body:null;}catch{return null;}
+ }
+ bodyProof=bodyProof??(()=>{const body=acknowledgedBody();return body&&Number.isSafeInteger(acceptedBody.bodyEpoch)&&acceptedBody.bodyEpoch>=0?{conversationId:body.conversationId,bodyProofId:acceptedBody.proofId,bodyEpoch:acceptedBody.bodyEpoch}:null;});
  function syncRoute(){if(document.location.href!==url){stop();onRebindNeeded({reason:'native-route-changed'});throw Error('host-rebind-required');}}
  function updateBinding(next){
   if(!live())throw Error('stale-host-binding');syncRoute();
@@ -74,7 +79,7 @@ if(!p)return;}catch{surfaceScanning=false;surfaceCursor=null;if(surfaceWanted)sc
    let ack;try{ack=await emit(p);}catch{return finish('host-observation-ack-unknown');}
    if(run!==generation)return;if(!live())return finish('stale-host-binding');
    if(ack?.localSeq!==p.localSeq)return finish('host-observation-ack-unknown');
-   if(ack.state==='accepted'||ack.state==='duplicate'){if(p.kind==='current-object'){acceptedBody=p.payload.association==='explicit-body-id'&&typeof ack.bodyProofId==='string'?{proofId:ack.bodyProofId,fingerprint:JSON.stringify(p.payload),validUntil:proofExpiry}:null;}if(p.kind==='surface-delta'){surfaceParts.shift();if(!surfaceParts.length){surfaceAccepted.set(surfacePageKey,key);surfaceFailed.delete(surfacePageKey);}}if(p.kind!=='surface-delta'||!surfaceParts.length)last.set(p.kind,key);failedKey.delete(p.kind);dirty=true;return finish();}
+   if(ack.state==='accepted'||ack.state==='duplicate'){if(p.kind==='current-object'){acceptedBody=p.payload.association==='explicit-body-id'&&typeof ack.bodyProofId==='string'?{proofId:ack.bodyProofId,bodyEpoch:ack.bodyEpoch,fingerprint:JSON.stringify(p.payload),validUntil:proofExpiry}:null;}if(p.kind==='surface-delta'){surfaceParts.shift();if(!surfaceParts.length){surfaceAccepted.set(surfacePageKey,key);surfaceFailed.delete(surfacePageKey);}}if(p.kind!=='surface-delta'||!surfaceParts.length)last.set(p.kind,key);failedKey.delete(p.kind);dirty=true;return finish();}
    if(ack.state==='retry-after'&&Number.isFinite(ack.delayMs)&&ack.delayMs>=0){
     const delay=Math.max(50,ack.delayMs),remaining=6000-(elapsedNow()-started);
     if(delay>=remaining||attempts>=120)return finish('host-observation-retry-budget');
@@ -104,7 +109,7 @@ if(!p)return;}catch{surfaceScanning=false;surfaceCursor=null;if(surfaceWanted)sc
   binding=Object.freeze({...b});emit=options.emit;epoch=b.routeEpoch;seq=0;url=document.location.href;stopped=false;
   discovery=createSurfaceDiscovery({document,binding,urlPolicy,profile,isOwnedMask});bodyDiscovery=profile.currentBody?createCurrentBodyDiscovery({document,urlPolicy,profile,isOwnedMask}):null;const actionGeneration=generation;actions=createNativeActions({discovery,urlPolicy,currentURL:()=>document.location.href,bodyProof,inputRisk,authorize:async c=>{if(!live()||actionGeneration!==generation)return false;const allowed=await authorize(c);return live()&&actionGeneration===generation&&allowed===true;},beforeDispatch,onNativeDispatch:event=>{if(!live()||actionGeneration!==generation)throw Error('stale-host-binding');const result=onNativeDispatch(event);if(!live()||actionGeneration!==generation)throw Error('stale-host-binding');return result;},onNativeDispatchCancelled,now:elapsedNow});
   const snippetGuard=()=>{if(!live()||actionGeneration!==generation)return false;try{syncRoute();return true;}catch{return false;}};
-  const snippetBody=()=>{if(!snippetGuard()||!acceptedBody||now()>=Date.parse(acceptedBody.validUntil)||!bodyDiscovery)return null;const body=bodyDiscovery.scan();return body.association==='explicit-body-id'&&JSON.stringify(body)===acceptedBody.fingerprint?body:null;};
+  const snippetBody=()=>snippetGuard()?acknowledgedBody():null;
   snippetReady=ref=>{const body=snippetBody();return !!body&&body.conversationId===ref?.id;};
   snippets=snippetsFactory({document,urlPolicy,profile,isOwnedMask,guard:snippetGuard,
    current:()=>{const body=snippetBody();return body?{conversationId:body.conversationId,regionEpoch:body.regionEpoch}:null;},

@@ -230,3 +230,40 @@ for(const mode of ['plan-expiry','late-authorization'])test('adapter native acti
  const command={actionId:'deadline',uiGrantId:'grant',mountId:'mount',planRevision:plan.planRevision,targetKey:f.adapter.planKey(plan)};
  assert.equal((await f.adapter.dispatchNative(command)).reason,'stale-navigation-plan');assert.equal(clicks,0);assert.equal((await f.adapter.dispatchNative(command)).reason,'action-already-used');f.adapter.stop();
 });
+
+const currentConversationTarget=()=>({kind:'resolved',entity:'conversation',nativeId:C,navigationURL:`https://chatgpt.com/c/${C}`,liveHandle:null});
+test('production default body proof enables same-target only after exact current owner ACK',async()=>{
+ const f=bodyFixture();let release;await f.start(p=>p.kind==='current-object'?new Promise(resolve=>release=()=>resolve(bodyAck(p))):Promise.resolve(bodyAck(p)));await settle();
+ assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');release();await settle();const plan=f.adapter.planNavigation(currentConversationTarget());assert.equal(plan.mode,'same-target');assert.equal(plan.bodyProofId,'accepted-body-proof');assert(f.adapter.planKey(plan));f.adapter.stop();assert.equal(f.adapter.planNavigation(currentConversationTarget()).mode,'unavailable');
+});
+for(const patch of [{bodyEpoch:undefined},{bodyEpoch:-1},{bodyEpoch:1.5},{bodyEpoch:NaN},{bodyEpoch:Number.MAX_SAFE_INTEGER+1},{bodyProofId:undefined},{state:'rejected'}])test('production default same-target rejects incomplete or rejected body ACK '+JSON.stringify(patch),async()=>{
+ const f=bodyFixture();await f.start(async p=>({...bodyAck(p),...patch}));await settle();assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');f.adapter.stop();
+});
+test('production default does not infer body proof from route or body discovery alone',async()=>{
+ const f=bodyFixture();await f.start();await settle();assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');f.adapter.stop();
+});
+for(const change of ['message-ids','same-id-root-replacement','hidden-body'])test('current URL alone cannot retain same-target after '+change,async()=>{
+ const f=bodyFixture();await f.start(async p=>bodyAck(p));await settle();assert.equal(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');
+ if(change==='message-ids')f.reading.children.push(f.makeMessage('M2'));
+ if(change==='same-id-root-replacement'){const replacement={...f.reading};f.selectors.set('main > #reading',[replacement]);}
+ if(change==='hidden-body')f.reading.hidden=true;
+ assert.equal(f.adapter.currentURL(),currentConversationTarget().navigationURL);assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');f.adapter.stop();
+});
+test('binding renewal does not extend original same-target ACK lifetime before a new accepted observation',async()=>{
+ const f=bodyFixture();let accepted=false;await f.start(async p=>{if(p.kind==='current-object'){if(accepted)return {state:'rejected',localSeq:p.localSeq};accepted=true;}return bodyAck(p);});await settle();assert.equal(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');
+ f.setTime(99999);assert(f.adapter.updateBinding({...f.binding,expiresAt:new Date(119999).toISOString()}));f.setTime(100000);assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');await settle();assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');f.adapter.stop();
+});
+for(const change of ['stop','body-replacement','new-generation'])test('delayed owner ACK cannot promote stale same-target after '+change,async()=>{
+ const f=bodyFixture();let release,first=true;await f.start(p=>{if(p.kind==='current-object'&&first){first=false;return new Promise(resolve=>release=()=>resolve(bodyAck(p)));}return Promise.resolve({state:'rejected',localSeq:p.localSeq});});await settle();
+ if(change==='stop')f.adapter.stop();
+ if(change==='body-replacement')f.selectors.set('main > #reading',[{...f.reading}]);
+ if(change==='new-generation'){f.adapter.stop();await f.start();}
+ release();await settle();assert.notEqual(f.adapter.planNavigation(currentConversationTarget()).mode,'same-target');f.adapter.stop();
+});
+test('same-target dispatch rechecks production body fingerprint after authorization yields',async()=>{
+ let authorizeResolve;const f=bodyFixture({authorize:()=>new Promise(resolve=>authorizeResolve=resolve)});await f.start(async p=>bodyAck(p));await settle();const plan=f.adapter.planNavigation(currentConversationTarget());assert.equal(plan.mode,'same-target');
+ const pending=f.adapter.dispatchNative({actionId:'current-action',uiGrantId:'grant',mountId:'mount',planRevision:plan.planRevision,targetKey:f.adapter.planKey(plan)});await settle();f.reading.children.push(f.makeMessage('M2'));authorizeResolve(true);assert.equal((await pending).state,'blocked');f.adapter.stop();
+});
+test('explicit bodyProof override remains available to existing integrations',async()=>{
+ const f=bodyFixture({bodyProof:()=>({conversationId:C,bodyProofId:'explicit-proof',bodyEpoch:9})});await f.start();await settle();const plan=f.adapter.planNavigation(currentConversationTarget());assert.equal(plan.mode,'same-target');assert.equal(plan.bodyProofId,'explicit-proof');f.adapter.stop();
+});

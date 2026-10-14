@@ -1888,3 +1888,13 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 最终完整Node **3369/3369 PASS**（排除下一slice尚未提交的6项same-target底层测试）；新增展示纯模块、frame来源/生命周期、parent观察发布反例通过。
 - 本地renderer布局四组合（420/1000px × 1x/2x字体）PASS：长中文、菜单在放大标题下方、25/50px方形glyph、Home/End/Escape与焦点恢复；仅布局机制，不是MV3或浏览器zoom。测试服务器漏codec依赖的初始失败保留，未为测试改变产品。
 - 原100k FAIL、完整81项/J1–J4、实际200%/物理IME/真实G/U/PAIA等未完成项不变，Free NOT_RELEASE_READY。下一个具体生产缺口为当前聊天same-target阅读返回；已有底层计划并未贯通生产worker/frame派发，不以底层测试通过冒充完成。
+
+
+## Round190：当前聊天same-target原生阅读返回（接9f2c0b0）
+
+- 接通已有same-target机制：adapter默认复用owner ACK的正文proof/epoch、当前fingerprint与原有效期；不从URL或DOM单独授权，原snippet/send证明路径保持。无证明时仍走既有保护草稿的新标签href。
+- 正式worker/view/frame接入严格same-target合同，RAM注册原UI/mount/role与计划，复用withCurrent核对scope/document/producer/route/C；派发期间才开放精确pending tuple授权。双次授权、30秒plan、6秒请求、一次actionId、容量上限保留，不增加原生click/create/send或数据库。parent确认already-current后才切阅读；风险、正文、绑定或surface意图变化均拒绝，不补跳。
+- renderer同步preventDefault后只派发一次；迟到成功须匹配新的意图代际和当前issued plan，工作区往返/搜索/设置/辅助面板/其他href均可使旧回复失效。独立审查复现普通href未递增代际的反例，已修复；错误或未知结果不当成功。候选native-control的旧beforeDispatch无参适配保持。
+- 最终完整Node **3468/3468 PASS**（free-round190-node.log.gz），含新增owner注册/正文证明/严格frame接线/派发期限并发/renderer晚ACK反例。初次完整回归8个旧测试适配器无参调用失败保留initial-node，修复后候选升级50项与全套通过；不是删除失败或放宽授权。
+- 最终正式package隔离headless Chrome MV3 **3组PASS**（free-round190-current-navigation.json/png）：未发送草稿下同C计划为same-target，真实点击一次already-current，newPages=0、URL/原生actions/requests不变，同textarea及草稿保留；阅读态sidebar可用、唯一返回恢复双surface。worker外网拒绝，源码/脚本hash稳定。最后href晚ACK护栏前的运行独立保留，不合计为6项。
+- 只完成当前聊天已证明same-target切片；不同目标新标签保护策略、真实profile/G/U、100k FAIL、完整81项/J1–J4及即时reading退出旧FAIL仍未闭合，Free NOT_RELEASE_READY。9f2c0b0已本地提交但fetch低速超时、push30秒未确认；本轮检查点继续正常同步原PR #16，72ca068保留，绝不强推。

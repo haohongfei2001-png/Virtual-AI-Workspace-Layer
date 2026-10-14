@@ -303,3 +303,35 @@ for(const role of ['workspace','sidebar'])test(`explicit ${role} exit fences a p
  assert.equal(f.pages.length,pageCount);assert.equal(f.privateRoot.children.length,0);assert.equal(f.calls.length,requests);assert.equal(f.factories,1);
  assert.deepEqual(f.parentMessages,[{message:{type:'VAIWL_UI_EXIT',role},origin:'https://chatgpt.com'}]);
 });
+
+const sameCurrentId='33333333-3333-4333-8333-333333333333';
+const sameCurrentURL=`https://chatgpt.com/c/${sameCurrentId}`;
+const sameCurrentPlan=()=>({mode:'same-target',bodyProofId:'current-body-proof',planRevision:4,target:{kind:'resolved',entity:'conversation',nativeId:sameCurrentId,navigationURL:sameCurrentURL,liveHandle:null}});
+const sameCurrentCommand=()=>({actionId:'current-action',uiGrantId:'grant',mountId:'mount',planRevision:4,targetKey:'current-key'});
+async function currentDispatchFixture(){const f=fixture();f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),current:{nativeUrl:sameCurrentURL,refId:sameCurrentId,projectId:null}},navigation:[{refId:sameCurrentId,plan:sameCurrentPlan(),targetKey:'current-key'}]}));await f.client.start();await drain();return f;}
+test('same-target current plan is issued with frame grant and dispatch uses only owner tuple',async()=>{
+ const f=await currentDispatchFixture(),issued=f.nav.adapter.navigationPlan({id:sameCurrentId});assert.deepEqual(issued,{plan:sameCurrentPlan(),targetKey:'current-key',uiGrantId:'grant',mountId:'mount'});
+ const send=f.runtime.sendMessage,packets=[];f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_CURRENT'?(packets.push(m),Promise.resolve({ok:true,state:'already-current'})):send(m);
+ assert.deepEqual(await f.nav.onDispatch(sameCurrentCommand()),{state:'already-current'});assert.deepEqual(packets,[{v:1,type:'HOST_UI_DISPATCH_CURRENT',grantId:'grant',mountId:'mount',actionId:'current-action',planRevision:4,targetKey:'current-key'}]);f.client.stop();
+});
+for(const bad of ['no-current','different-current-id','different-current-url','different-target-id','extra-plan','extra-target','bad-epoch','missing-proof','project'])test('same-target projection rejects '+bad,async()=>{
+ const f=fixture(),plan=sameCurrentPlan(),current={nativeUrl:sameCurrentURL,refId:sameCurrentId,projectId:null},item={refId:sameCurrentId,plan,targetKey:'current-key'};
+ if(bad==='different-current-id')current.refId='other';if(bad==='different-current-url')current.nativeUrl='https://chatgpt.com/c/44444444-4444-4444-8444-444444444444';if(bad==='different-target-id')plan.target.nativeId='other';if(bad==='extra-plan')plan.extra=true;if(bad==='extra-target')plan.target.extra=true;if(bad==='bad-epoch')plan.planRevision=0;if(bad==='missing-proof')delete plan.bodyProofId;if(bad==='project'){delete item.refId;item.projectId=sameCurrentId;}
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),...(bad==='no-current'?{}:{current}),groups:{items:[{id:sameCurrentId}]}},navigation:[item]}));await f.client.start();await drain();assert.equal(f.pages.length,0);assert.equal(f.states.at(-1).reason,'invalid-frame-navigation');f.client.stop();
+});
+test('current dispatch rejects unissued tuple without sending an owner request',async()=>{
+ const f=await currentDispatchFixture();const count=f.calls.length;
+ for(const patch of [{uiGrantId:'other'},{mountId:'other'},{planRevision:5},{targetKey:'other'},{extra:true}])assert.equal((await f.nav.onDispatch({...sameCurrentCommand(),...patch})).state,'blocked');
+ assert.equal(f.calls.length,count);f.client.stop();
+});
+for(const result of [{ok:true,state:'dispatched'},{ok:true},{ok:false,state:'already-current'},{state:'already-current'},null])test('current dispatch does not turn unconfirmed reply into success '+JSON.stringify(result),async()=>{
+ const f=await currentDispatchFixture(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_CURRENT'?Promise.resolve(result):send(m);assert.notEqual((await f.nav.onDispatch(sameCurrentCommand())).state,'already-current');f.client.stop();
+});
+for(const change of ['stop','scope-change','expired','deadline'])test('late same-target success remains fenced after '+change,async()=>{
+ const f=await currentDispatchFixture(),held=deferred(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_CURRENT'?held.promise:m.type==='HOST_UI_RENEW'&&change==='scope-change'?Promise.resolve({ok:true,grant:{...f.grant(),scopeGrantId:'replacement-scope'}}):send(m);
+ const pending=f.nav.onDispatch(sameCurrentCommand());await drain();if(change==='stop')f.client.stop();if(change==='scope-change')await f.advance(10000);if(change==='expired')f.jump(21000);if(change==='deadline')f.jump(6001);
+ held.resolve({ok:true,state:'already-current'});assert.notEqual((await pending).state,'already-current');f.client.stop();
+});
+test('ordinary href plan remains browser-default-only and cannot use current dispatch',async()=>{
+ const f=fixture(),plan={mode:'href',target:sameCurrentPlan().target,disposition:'new-tab-preserve-current'};f.setView(async()=>({ok:true,state:'ready',page:f.page(),navigation:[{refId:sameCurrentId,plan,targetKey:'current-key'}]}));await f.client.start();await drain();assert.deepEqual(f.nav.adapter.navigationPlan({id:sameCurrentId}).plan,plan);const before=f.calls.length;assert.equal((await f.nav.onDispatch(sameCurrentCommand())).state,'blocked');assert.equal(f.calls.length,before);f.client.stop();
+});
