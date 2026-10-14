@@ -1527,3 +1527,10 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - native-facts shape 检查不再为每个字段重建 required+optional 数组；Project/ref/membership 的固定字段表复用。字段、时间、来源、成员依赖、容量和checksum审计均保留，没有跳过最终fresh piece校验。
 - 相关审计/准备/损坏反例 **45/45 PASS**；完整 Node **3161/3161 PASS**（free-round154-node.log.gz）。5000分片hash+validation交错微基准约32.156→30.884ms（free-round154-benchmark.json），约4%，不足以证明100k/4x启动达标，本轮不重复整套压力实验，浏览器 NOT_RUN。
 - 现有F1最终审计6秒缺口、首页首发和真实G/U保持未完成；Free NOT_RELEASE_READY。上一提交268b566普通推送仍网络低速超时，本地检查点完整。
+
+## Round155：当前 Project 成员优先发现（接 f510729）
+
+- 已确认当前 Project 的路由、成员区ID与可见标题一致时，先发现成员，再发现侧栏Project和普通历史，避免拥挤侧栏耗尽256项预算后丢失当前成员归属。未确认身份仍保持原顺序；重复history不能覆盖PROJECT声明，原生handle失效校验不变。
+- 定向 Node **64/64 PASS**（free-round155-target.log），包含拥挤列表、重复入口、错误ID/隐藏/标题冲突/歧义及失效handle。完整回归/浏览器本轮NOT_RUN；最近完整Node仍为Round154、浏览器仍为Round153，证据不混用。发现上限和全量已加载分页仍未完成。
+- 固定结构checksum编码实验收益不足1%，且省略admission检查，未接入产品。Free仍NOT_RELEASE_READY；首页首发独立因果证据、100k/4x最终审计与真实G/U等缺口保留。
+- f510729已正常推送到原PR #16（9dccb5c..f510729），此前本地检查点已同步。

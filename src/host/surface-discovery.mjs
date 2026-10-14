@@ -94,9 +94,14 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       }
     }
     const projects=roots.get('projects');
-    if(projects) for(const node of projects.querySelectorAll(profile.controls)) { if(candidates.length>=limit) break;candidate(node,projects,'projects','project'); }
-    for(const regionKind of ['history','members']) {
+    // A confirmed open Project must not lose its member evidence to a full sidebar.
+    const order=currentProjectId?['members','projects','history']:['projects','history','members'];
+    for(const regionKind of order) {
       const root=roots.get(regionKind);if(!root) continue;
+      if(regionKind==='projects'){
+        for(const node of projects.querySelectorAll(profile.controls)){if(candidates.length>=limit)break;candidate(node,projects,'projects','project');}
+        continue;
+      }
       for(const node of root.querySelectorAll(profile.conversationControls)) {
         if(candidates.length>=limit) break;
         const item=candidate(node,root,regionKind,'conversation');if(!item||item.target.kind!=='resolved')continue;
