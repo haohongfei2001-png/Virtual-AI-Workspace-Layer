@@ -1,6 +1,6 @@
 import {freeEvidenceKey} from './free-evidence-partitions.mjs';
 import {createNativeContinuation,validateNativeContinuation,continuationDirectoryKey,emptyContinuationDirectory,validateContinuationDirectory,updateContinuationDirectory,finishNativeContinuation,deferNativeContinuation,transitionContinuationDirectory,continuationEvidenceFingerprint} from './native-observation-continuation.mjs';
-import {migrateNativeVersionIndex} from './native-index-migration.mjs';
+import {migrateNativeVersionIndex,prepareNativeVersionIndex} from './native-index-migration.mjs';
 import {saveIndexedNativePieces} from './native-index-writer.mjs';
 import {NATIVE_INDEX_FORMAT,validateNativeIndexRoot} from './native-version-index.mjs';
 import {createNativeIndexReader} from './native-index-reader.mjs';
@@ -264,6 +264,7 @@ export class NativeRepository {
     });
   }
 
+  async prepareVersionIndex(scope,request,options={}){return prepareNativeVersionIndex(this,scope,request,options);}
   async migrateVersionIndex(scope,request,options={}){return migrateNativeVersionIndex(this,scope,request,options);}
 
   async snapshot(scope, options = {}) {

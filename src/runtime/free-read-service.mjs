@@ -62,6 +62,11 @@ export function createFreeReadService({repository,workspaces,native,evidence,clo
     let root=await native.header(scope,options);
     if(!root.revision&&bootstrapNative){const result=await bootstrapNative(scope,origin,options);if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);if(staged)return preparing(scope,'native-bootstrap');root=await native.header(scope,options);}
     if(root.storageFormat===NATIVE_PARTITION_FORMAT){
+      if(staged&&typeof native.prepareVersionIndex==='function'){
+        const preparation=await native.prepareVersionIndex(scope,{expectedRevision:root.revision},options);
+        if(!preparation.ok)throw Error(preparation.reason==='revision-conflict'?'snapshot-revision-changed':preparation.reason);
+        if(preparation.prepared)return preparing(scope,'native-index-build');
+      }
       const result=await native.migrateVersionIndex(scope,{operationId:'native_version_index_v1',expectedRevision:root.revision},options);
       // A concurrent writer wins normally. Re-read once; a later HEADER can
       // retry migration if it still sees the legacy format. Never loop here.

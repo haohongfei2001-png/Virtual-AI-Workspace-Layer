@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前已推进至第一百一十六轮：原子迁移内有界批量读取已通过完整Node2433项、真实IDB五旅程、原包MV3十三旅程；100k/4x冷启动仍FAIL，原生输入与草稿保留。真实账号与性能等验收未完成，Free未完成、NOT_RELEASE_READY。
+当前已推进至第一百一十七轮：纯目录构建准备与最终原子审计分离，完整Node2447项、真实IDB五旅程、原包MV3十三旅程通过；100k/4x冷启动仍FAIL，原生输入与草稿保留。真实账号与性能等验收未完成，Free未完成、NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -1267,3 +1267,16 @@ Round107审查另发现隐藏current P可能压过可见sidebar，提交前已�
 同100k mixed／CDP4x initial profile复测仍**FAIL**：约30626ms未ACTIVE，原生input／草稿／可见性保持，sourceChangedDuringRun=false。不能以请求数减少宣称延迟通过或直接与旧采样作收益结论；当前trace仍超6秒，profile已记录审计后native-index-migration构建回调开销。证据free-round116-initial-4x-profile.json及压缩profile。后续可审查纯索引构建的独立准备，但最终RW必须重新完整校验fresh pieces和新读root字节；不得转为RAM审计后只校验版本的方案。
 
 本轮启动时对原分支正常push一次仍遇github.com:443连接75秒超时，没有改远端/配置/强推；远端已确认bd142a7，后续检查点继续本地保存待正常同步。真实context/ACK、新聊首发、G/U/PAIA/真人及100k性能关口仍未完成；Free未完成、NOT_RELEASE_READY。
+
+
+## Round117：独立纯目录准备，最终fresh piece审计保持
+
+接24b9fc4。新增只读native-index-build准备阶段，在每owner最多一条私有WeakMap候选中计算目录/root记录；不写DB、不读取或认证piece、不向调用方暴露候选。最终迁移重新读取并验证root/marker及CAS，在原RW事务中完整审计全部fresh piece后，只有新root保序编码完全一致才使用候选，否则按当前root重建。直接migrate调用保留原构建路径。审查发现stable编码会忽略Project/ref插入顺序而复用旧ordinal，已改为通过原完整根校验后的保序JSON编码匹配；同revision、同checksum仅重排键的反例验证最终采用新顺序。
+
+staged loader六个可选单调阶段，含新build阶段在native-index前；最多七次HEADER，重复／倒退仍拒绝。每次6秒与总30秒预算未延长；准备CAS冲突映射已有snapshot-revision-changed，不假装取得准备进展。scope/owner不共享候选；准备及重准备不修改任何store，缺piece／坏checksum／撤权仍拒绝最终发布。
+
+完整Node **2447/2447、0失败/跳过**；新增准备九合同及loader20／真实service staging六项分别通过。真实headless IndexedDB五旅程在先prepare再篡改/撤权条件下PASS；实际原构建包MV3十三旅程PASS，两报告sourceChangedDuringRun=false。证据free-round117-node.log.gz、free-native-index-preparation-order-final2.log.gz、free-round117-header-loader.log.gz、free-round117-staged-header.log.gz、free-round117-prepared-native-idb.json和free-round117-package-mv3.json。首次旧定向回归三项阶段预期失败已分开保留；更新的是显式只读阶段断言，原失败／回滚断言仍保持。
+
+同100k mixed／4x profile仍**FAIL**，约30261ms未ACTIVE，原生输入身份/连接/草稿/可见性保持，sourceChangedDuringRun=false。trace的native-index-build约1.29–1.41s成功，最终迁移仍超过既有6秒且失败；不把分阶段或本地原子性通过算性能达标。profile与原日志见free-round117-initial-4x-profile.*。后续仍需减轻最终审计/发布成本；纯候选目前在尝试发布前消费，失败后可能重新准备，可评估保留到实际commit的安全性，但不减少最终fresh校验。
+
+当前正常Git网络连接阻塞沿用Round116证据，未循环重试或更改远端/配置；全部新增代码保存在现分支待正常同步。真实context/ACK、新聊首发、G/U/PAIA/真人及100k关口仍未完成。Free未完成、NOT_RELEASE_READY；继续唯一正式计划。

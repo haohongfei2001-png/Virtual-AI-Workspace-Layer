@@ -1,7 +1,7 @@
 /** Continue only explicit, distinct preparation stages; never publish partial inventory. */
 export async function loadFreeHeader({load,scope,guard=()=>true}){
   if(typeof load!=='function'||typeof scope!=='function'||typeof guard!=='function')throw Error('invalid-free-header-loader');
-  const stages=['native-bootstrap','native-index','shared-directory','evidence-directory','free-policy'],seen=new Set(),boundScope=scope();let last=-1;
+  const stages=['native-bootstrap','native-index-build','native-index','shared-directory','evidence-directory','free-policy'],seen=new Set(),boundScope=scope();let last=-1;
   if(typeof boundScope!=='string'||!boundScope)throw Error('stale-client-response');
   const check=()=>{if(!guard())throw Error('stale-client-response');};
   for(let attempt=0;attempt<=stages.length;attempt++){
