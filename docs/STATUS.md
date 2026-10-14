@@ -1827,3 +1827,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 固定实验源码100k/project-mixed/4x仍FAIL：startup约30012ms，最终证据目录约6504ms stale-binding，未获得足够收益；原生输入原节点、草稿及可见性保持。free-round183-100k.json和evidence-idb.json为实验源码证据，sourceChangedDuringRun=false，不代表最终源码新增验收。
 - 因额外O(N)内存成本且端到端没有改善，已撤回本轮三个src文件及专属新测试；最终运行代码与2892afd完全一致，复用Round182最终验证。400k容量边界与峰值堆未实测，不宣称通过。free-round183-experiment-node.log.gz仅保留被拒实验记录。
 - 100k FAIL与真实G/U等未完成项保持；停止连续微优化，继续无外部权限依赖的生产Host功能工作。上两轮远端push未确认，本地提交完整；Free NOT_RELEASE_READY。
+
+
+## Round184：UI-13实际禁用后重新启用的两阶段验证（接 8110537）
+
+- 新增tests/host/reenable-package-mv3-browser.mjs，使用正式packageHost离线产物、全新隔离headless Chrome profile与独立target-only management测试扩展；产品包不增加management权限。实际get核对disable=false/re-enable=true，worker前后外网请求均被拒。未访问真实账户。
+- 最终实际MV3 **3/3 PASS**（free-round184-reenable-mv3.json，sourceChangedDuringRun=false）：disable后原textarea/草稿保持且可真实续输；重新启用同页不刷新、pagehide=0、旧私有投影不复活；随后浏览器导航至已观察原生href，新双frame取得不同grant/mount/uiDocument，同候选端点新grant成功、旧grant拒绝。前两阶段nativeOperable/privateProjectionAbsent/cleanLayout分别记录且均true。
+- 私有检测遍历open shadow roots，并在禁用前用同一检测器确认可发现真实私有文本；连接但不可读不按消失处理。初稿漏shadow/不可读判据的报告保存为insufficient-detector，不计通过；后续DOM移除与Playwright frame列表暂时不同步的失败保存为detach-race，修正快照判据后最终通过。独立只读审查与主审均已处理这些证据漏洞。
+- 此轮仅增加离线测试，无产品源码变化；未重复无变化的全部Node/100k。只覆盖UI-13重启用子场景，不代表UI-12全开关组合、更新、卸载或完整J4/81项验收完成。原100k FAIL及G/U缺口保持，Free NOT_RELEASE_READY。
+- 8110537已正常push，含此前067b95f/2892afd积压提交；72ca068仍为祖先，原目录/分支/PR #16保持。
