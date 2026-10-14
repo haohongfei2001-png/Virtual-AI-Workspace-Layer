@@ -1406,3 +1406,13 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 独立纯定位器逐项对照65组、2区间与3种limit的真实projector；renderer新增无副作用needsNativeProject，只有当前可见workspace、无搜索/工作集/交互且exactP缺页才为true。owner/投影/resume/binding/renderer定向组合 **119/119 PASS**（free-round137-owner-location.log.gz）；此源码尚未跑新完整Node或Chrome（NOT_RUN），不能套用Round136完整来源。
 - **客户端自动消费尚未接线**。下一步在既有迁移期限/可信ENTRY/输入取消边界下，仅缺页时发一次带locateProjectId的原子VIEW；严格校验location与page对应、使用实际offset、迟到/换query/节点撤销/期限/输入取消不发布或滚动；不要新建第二endpoint或先求offset再用旧版本分页。
 - Git同步：5b7fda2已本地提交。一次fetch30秒、正常push30秒及带低速超时的push45秒均超时退出；GitHub API再次确认远端Draft PR16仍d1f7f85，base仍计划PR15。未称已推送，未强推或改remote。停止循环网络重试，继续独立代码；下个自然检查点再核对远端并正常同步。Pro72ca068已是本地祖先，不需重复合并。
+
+
+## Round137完成接线：当前页外Project的原子定位与取消边界（接 65d9da0）
+
+- client现仅可信ENTRY、ready迁移、可见workspace且renderer确认exactP缺页后，发顶层locateProjectId的原子VIEW。同一逻辑定位最多6秒，preparing按剩余预算轮询，不续deadline；同迁移只有数据失效取消且普通VIEW的完整版本四元组变化后才可重试，总共最多3次，仍受原30秒迁移期限限制。搜索/工作集/交互/其他panel不抢占；输入、查询/会话/账号/迁移变化、超时或错误回复均拒绝迟到发布。
+- 严格核对location exactID、found、scope、segment、完整H/T/Z/policyRevision、page offset/limit/count与exact卡成员；目标在另一段时不自动跳历史。正常CURRENT_ENTRY及其刷新先于定位，避免定位被自己的horizon mutex取消。成功采用实际offset并普通VIEW确认；失败保留原界面，不关闭整个扩展。
+- 修正上一基础的恢复副作用：定位VIEW现在不预写resume，只在客户端接受后通过普通VIEW保存actualoffset；被取消的定位回复不能偷偷改变重载恢复位置。新isPending守卫要求exactID、ready、未过期/未中断，检查本身不操作视图。新专项57/57、owner/guard68项分别为定向来源，完整Node最终 **3055/3055 PASS**（free-round137-node.log.gz），不合并计数。
+- 最终实际原包headless MV3 **4/4 PASS/sourceChangedDuringRun=false**（free-round137-candidates-offpage-diagnostic.json）：仅隔离fixture DOM加入33个可核验href Project，不直写库/替换adapter。实录首个offset0页不含P2，唯一成功locating VIEW返回offset32含exactP2，之后普通VIEW保持offset32；可信return后该卡确实持焦，原生恰1click、阅读让位和草稿保留。非私人ChatGPT/真实原生写入。
+- 首次Chrome在旧候选同页刷新保焦断言失败，尚无定位请求或迁移DTO；保留free-round137-candidates-offpage-mv3.json。增加精确focus key诊断、不改断言后上述复验通过，**首个间歇焦点失败尚未解释，不宣称已修复或稳定性已通过**。下一回归如复现需采集有界focus事件及available状态，不能增加sleep遮掩。
+- MAP-06页外当前段闭环已有离线证据；跨后续原生路由的已学同节点映射生命周期仍需继续核对。ACK/首发持久活动、64KiB长来源、100k/4x及真实G/U等仍未完成，Free保持NOT_RELEASE_READY。此前Git传输超时的未推送提交均安全保留，下一自然检查点正常同步，不强推。

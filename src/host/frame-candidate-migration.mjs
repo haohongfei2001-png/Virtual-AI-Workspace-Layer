@@ -17,5 +17,5 @@ export function createFrameCandidateMigration({reveal,restoreCandidates,now=Date
    if(pending!==entry)return false;if(result!==true)return false;finish(entry);return true;
   }catch{return false;}finally{applying=false;}
  }
- return Object.freeze({offer,apply,revoke(){if(pending)finish(pending);},interrupt(){interrupted=true;},clear(){pending=null;consumed.clear();interrupted=false;}});
+ return Object.freeze({offer,apply,isPending(id){const entry=pending;if(!entry||entry.dto.id!==id)return false;if(interrupted||expired(entry)){finish(entry);return false;}return entry.dto.ready;},revoke(){if(pending)finish(pending);},interrupt(){interrupted=true;},clear(){pending=null;consumed.clear();interrupted=false;}});
 }

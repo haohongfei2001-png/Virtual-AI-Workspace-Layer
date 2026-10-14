@@ -112,7 +112,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    const result={ok:true,state:'ready',page,navigation,...(locating?{location:{projectId:message.locateProjectId,found:location!==null}}:{}),...(nativeCandidatesEnabled?{nativeCandidates:true}:{})};
    if(new TextEncoder().encode(JSON.stringify(result)).length>65536)throw Error('free-frame-page-too-large');
    if(context.role==='workspace')entry.currentEntryEligible=page.segment===0&&search===undefined&&workingSet===undefined;
-   check();if(!context.isCurrent())throw Error('stale-view-resume');rememberResume(context,effectiveQuery,current.snapshot.viewSession);
+   check();if(!context.isCurrent())throw Error('stale-view-resume');if(!locating)rememberResume(context,effectiveQuery,current.snapshot.viewSession);
    return result;
   }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;}
  }
