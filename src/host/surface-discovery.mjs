@@ -147,13 +147,23 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     }));
   }
   watchSurface();
-  function getNode(handle) {
+  function dispatchable(node) {
+    if(!node?.getClientRects().length||node.disabled===true||node.matches(':disabled'))return false;
+    let depth=0;
+    for(let parent=node;parent;parent=parent.parentElement){
+      if(++depth>64||parent.hidden||parent.inert||parent.getAttribute('aria-hidden')==='true'||parent.getAttribute('aria-disabled')==='true')return false;
+      const style=document.defaultView.getComputedStyle(parent);
+      if(style.display==='none'||style.visibility==='hidden'||style.visibility==='collapse')return false;
+    }
+    return true;
+  }
+  function getNode(handle,{forDispatch=false}={}) {
     if(stopped)return null;refreshRoute();refreshRoots();
     const entry=byId.get(typeof handle==='string'?handle:handle?.id);
     if(!entry)return null;
     if(!valid(entry)){byId.delete(entry.handle.id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(entry.handle.id);return null;}
     if(typeof handle==='object'&&['documentToken','routeEpoch','regionEpoch','controlKind'].some(key=>handle[key]!==entry.handle[key]))return null;
-    return entry.node.deref();
+    const node=entry.node.deref();return forDispatch&&!dispatchable(node)?null:node;
   }
   function candidateEntry(handle){
     if(!handle||typeof handle!=='object'||handle.controlKind!=='project'||!getNode(handle))return null;

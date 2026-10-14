@@ -7,8 +7,9 @@ import {legacyExpectedWorld as expected} from './expected/legacy.mjs';
 import {surfaceBatch} from '../../src/host/surface-batch.mjs';
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 import {LEGACY_SURFACE_PROFILE} from '../../src/host/surface-discovery.mjs';
+const actionsSource=await readFile('src/host/native-actions.mjs','utf8');
 const source=await readFile('src/host/surface-discovery.mjs','utf8'),policy=await readFile('src/host/url-policy.mjs','utf8');
-const server=await createHostFixtureServer(),report={evidence:'REAL_HEADLESS_DOM_RECONSTRUCTION',productionAuth:'NOT_RUN',realChatGPT:'NOT_RUN',fixture:server.manifest,sourceHash:createHash('sha256').update(source).digest('hex'),results:[],errors:[]};
+const server=await createHostFixtureServer(),report={evidence:'REAL_HEADLESS_DOM_RECONSTRUCTION',productionAuth:'NOT_RUN',realChatGPT:'NOT_RUN',fixture:server.manifest,sourceHash:createHash('sha256').update(source).digest('hex'),actionsSourceHash:createHash('sha256').update(actionsSource).digest('hex'),results:[],errors:[]};
 let browser;
 try{
  browser=await chromium.launch({headless:true,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
@@ -22,6 +23,30 @@ try{
  const initial=await discovery.evaluate(d=>d.scan());
  assert.equal(initial.candidates.length,4);assert.equal(initial.candidates.filter(c=>c.entity==='project'&&c.target.kind==='resolved').length,1);
  const idless=initial.candidates.find(c=>c.target.kind==='live-control');assert.ok(idless);assert.equal(idless.nativeTitle,expected.projects[1].name);
+ const dispatchChecks=await page.evaluate(async({discovery,actionsSource,handle})=>{
+  const {createNativeActions}=await import(URL.createObjectURL(new Blob([actionsSource],{type:'text/javascript'})));
+  const node=discovery.getNode(handle),parent=node.parentElement,checks=[];
+  for(const phase of ['beforeDispatch','onNativeDispatch'])for(const mode of ['hidden','inert','aria-hidden','aria-disabled','visibility','display']){
+   const change=()=>{if(mode==='visibility')parent.style.visibility='hidden';else if(mode==='display')parent.style.display='none';else parent.setAttribute(mode,'true');};
+   const actions=createNativeActions({discovery,urlPolicy:{parse:()=>({kind:'home'})},currentURL:()=>location.href,inputRisk:()=>({state:'clear',flags:[]}),authorize:()=>true,[phase]:change});
+   const plan=actions.planNavigation({kind:'live-control',control:handle,navigationURL:null});if(plan.mode!=='native-control')throw Error('plan-not-issued');
+   const command={actionId:'check_'+phase+'_'+mode.replaceAll('-','_'),uiGrantId:'grant',mountId:'mount',planRevision:plan.planRevision,targetKey:actions.planKey(plan)};
+   const result=await actions.dispatchNative(command);
+   if(mode==='visibility'||mode==='display')parent.style[mode]='';else parent.removeAttribute(mode);
+   if(result.state!=='blocked'||result.reason!=='stale-navigation-plan')throw Error('hidden-control-dispatched:'+phase+':'+mode+':'+JSON.stringify(result));
+   const replay=await actions.dispatchNative(command);if(replay.reason!=='action-already-used')throw Error('replay-not-consumed');
+   if(!discovery.getNode(handle,{forDispatch:true}))throw Error('restored-original-unavailable');checks.push(phase+':'+mode);
+  }
+  let clicks=0;const count=event=>{clicks++;event.preventDefault();event.stopImmediatePropagation();};node.addEventListener('click',count,true);
+  parent.style.visibility='hidden';
+  const restored=createNativeActions({discovery,urlPolicy:{parse:()=>({kind:'home'})},currentURL:()=>location.href,inputRisk:()=>({state:'clear',flags:[]}),authorize:()=>true,beforeDispatch:()=>{parent.style.visibility='';}});
+  const plan=restored.planNavigation({kind:'live-control',control:handle,navigationURL:null});if(plan.mode!=='native-control')throw Error('masked-plan-unavailable');
+  const command={actionId:'restored',uiGrantId:'grant',mountId:'mount',planRevision:plan.planRevision,targetKey:restored.planKey(plan)};
+  const result=await restored.dispatchNative(command),replay=await restored.dispatchNative(command);node.removeEventListener('click',count,true);
+  if(result.state!=='dispatched'||clicks!==1||replay.reason!=='action-already-used')throw Error('restored-control-not-once');checks.push('restored-after-beforeDispatch');
+  return checks;
+ },{discovery,actionsSource,handle:idless.target.control});
+ assert.equal(dispatchChecks.length,13);report.results.push({name:'native-control-final-dispatch-rechecks-ancestor-operability-and-consumes-action-once',status:'PASS',checks:dispatchChecks});
  assert.equal(initial.membershipClaims.length,2);assert.ok(initial.membershipClaims.every(c=>c.asserted==='UNKNOWN'));
  assert.ok(initial.candidates.every(c=>c.evidence.receiptId===null));assert.deepEqual(initial.coverageClaims,[]);
  assert.equal(await discovery.evaluate((d,handle)=>d.getNode(handle)?.textContent,idless.target.control),'Research');

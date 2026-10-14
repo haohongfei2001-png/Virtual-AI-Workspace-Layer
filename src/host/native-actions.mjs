@@ -30,10 +30,10 @@ export function createNativeActions({discovery,urlPolicy,currentURL,bodyProof=()
  }
  function planKey(plan){const key=certificates.get(plan);return key&&plans.get(key)?.plan===plan?key:null;}
  const blocked=reason=>({state:'blocked',reason});
- function valid(entry){
+ function valid(entry,forDispatch=false){
   if(plans.get(entry.targetKey)!==entry||now()>=entry.expiresAt||currentURL()!==entry.url||riskKey(inputRisk())!==entry.risk)return false;
   if(entry.plan.mode==='same-target'){const proof=bodyProof();return proof?.conversationId===entry.plan.target.nativeId&&proof?.bodyProofId===entry.plan.bodyProofId&&urlPolicy.sameTarget(currentURL(),entry.plan.target.navigationURL);}
-  if(entry.plan.mode==='native-control')return discovery.getNode(entry.plan.control)===entry.node&&entry.node?.isConnected===true;
+  if(entry.plan.mode==='native-control')return discovery.getNode(entry.plan.control,{forDispatch})===entry.node&&entry.node?.isConnected===true;
   return true;
  }
  async function dispatchNative(dto){
@@ -47,13 +47,13 @@ export function createNativeActions({discovery,urlPolicy,currentURL,bodyProof=()
    if(entry.plan.mode==='href')return blocked('renderer-default-required');
    await beforeDispatch(entry.plan);
    if(await authorize(command)!==true)return blocked('unauthorized-navigation');
-   if(!valid(entry))return blocked('stale-navigation-plan');
+   if(!valid(entry,true))return blocked('stale-navigation-plan');
    if(entry.plan.mode==='same-target')return {state:'already-current',actionId:dto.actionId};
    // Marked before every await: a lost acknowledgement cannot trigger a second click.
    dispatchEvent=Object.freeze({node:entry.node,plan:entry.plan,actionId:command.actionId,command,originalURL:entry.url});
    const hookResult=onNativeDispatch(dispatchEvent);
    if(hookResult&&typeof hookResult.then==='function'){Promise.resolve(hookResult).catch(()=>{});throw Error('async-native-dispatch-hook');}
-   if(!valid(entry))return blocked('stale-navigation-plan');
+   if(!valid(entry,true))return blocked('stale-navigation-plan');
    entry.node.click();clicked=true;return {state:'dispatched',actionId:dto.actionId};
   }catch{return {state:'unconfirmed',reason:'native-dispatch-unconfirmed'};}finally{if(dispatchEvent&&!clicked)try{const result=onNativeDispatchCancelled(dispatchEvent);if(result&&typeof result.then==='function')Promise.resolve(result).catch(()=>{});}catch{}}
  }

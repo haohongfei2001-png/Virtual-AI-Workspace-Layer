@@ -1737,3 +1737,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 完整 Node **3226/3226 PASS**（free-round173-node.log.gz）；隔离 headless test-only MV3 ACK 管道 **6/6 PASS**（free-round173-send-ack.json），包括 held initial baseline 单飞、真实原生形状点击只作候选、独立fixture ACK后仅evidence写入且不改native revision。生产ACK、真实G仍NOT_TESTED/NOT_RUN。
 - 独立只读审查确认：首页首发缺少本次原生提交→operation/message ID→新C的可靠因果 witness。现有 authenticated-message-readback 只能证实读回消息，不能把新route/唯一self消息冒充本次intent。后续实现须重新绑定新route/body权限并核对同scope，不能携旧grant或伪造空baseline；本轮未放宽合同。
 - 2587aeb上一轮普通push超时，当前72ca068文档祖先保留；100k/4x FAIL、首页首发、预证明立即发送、候选完整内存、间歇退出及真实G/U仍未完成。Free NOT_RELEASE_READY。
+
+
+## Round174：原生派发前即时核验可操作性（接 d7c6f8d）
+
+- 修复已发导航计划仅核验节点身份、未核验祖先隐藏/禁用状态的缺口。surface discovery 新增 getNode 的 forDispatch 严格模式：当前 rect、disabled/:disabled、祖先 hidden/inert/aria-hidden/aria-disabled、display/visibility 和有界祖先深度。只在 beforeDispatch 恢复阅读、再次授权之后及同步派发 hook 后执行；计划阶段保留原生 mask 正常退出机会。失败消耗 actionId，不补跳/重试，取消未点击的升级。
+- 完整 Node **3226/3226 PASS**（free-round174-node.log.gz）；最初两个旧 DOM double 缺少真实浏览器可操作性API，补齐 getClientRects/matches/getComputedStyle 后重跑，没有放宽生产护栏或原断言。
+- 真实 headless DOM **9组 PASS**（free-round174-dispatch-browser.json），新增组含12个beforeDispatch/onNativeDispatch隐藏/禁用祖先反例与1个恢复可见后恰好一次click正例。失败action不能再次派发。该DOM fixture不冒充MV3或真实账户认证。
+- 实际离线生产候选 MV3 **5组 PASS**（free-round174-candidates-mv3.json）：候选列表、翻页、原生激活、升级及返回未被新增护栏破坏。独立只读审查无阻断问题，正向恢复例来自审查建议。
+- d7c6f8d上轮普通push超时；72ca068文档祖先保留。候选完整内存、100k性能、首页首发因果来源、间歇退出与真实G/U仍未完成；Free NOT_RELEASE_READY。
