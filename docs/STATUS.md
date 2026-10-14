@@ -1510,3 +1510,9 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - CurrentMetadataReader 内部仅对 exact provider result 取得 ACK 私有关联；校验 C/principal/context/profile/transport/expiry 后，完整无 gap 的原始输出对象才登记 WeakMap。公开 metadata DTO 不变。
 - 新增 withReadback：exact 输出对象+proof+已观察消息才能进入 owner.withCurrent 回调；复核原始 guard/signal 和当前 C/body/account/profile/transport/message/expiry，异步工作前后均检查。失效关联删除，过期后时钟回退不复活。克隆结果、错 proof、不可见消息、partial、未配置、stop/revoke 均无确认入口。此回调仍无仓库写入，调用者需在最终写入使用 guard。
 - reader/provider/send-candidates 定向 **108/108 PASS**（free-round142-reader.log）。本轮完整回归与浏览器 NOT_RUN；最近完整回归为 Round141 的 3101 项，不拼接计数。下一步在 send-candidates 的 withCurrent 内消费 readback 与 prepareSendAckAdmission，再接现有 durable continuation。Free 仍 NOT_RELEASE_READY。
+
+## Round143：guard 生命周期修正与发送 ACK 消费入口（接 584799d）
+
+- 接线检查发现真实 HostObservationOwner.withCurrent 的 guard/signal 在本次调用 finally 即失效，Round142 存储旧 guard 会使后续消费始终拒绝。现保存 document/producer/route/scope 绑定，消费时重新进入 withCurrent 认证同 proof 并检查绑定；加入真实 attempt 生命周期形状反例，未沿用简化 fixture 的永久有效 guard 假设。
+- HostSendCandidates 新增显式 onAcknowledged 内部消费者；须具备 reader.withReadback，在当前 owner 与读回 owner 双重 guard 下调用 prepareSendAckAdmission，再 await 消费者并再次检查。原 onCandidate 仍仅诊断，输出 DTO 不增加 ACK 权限。错误 scope、处理失败、异步撤权拒绝；失败不重放已消费意图。生产 composition 尚未设置该消费者。
+- 完整 Node **3123/3123 PASS**（free-round143-node.log.gz），浏览器本轮 NOT_RUN。尚无实际持久写入；下一步必须处理 optimistic message 先出现但接受状态后到的有界 ACK 重试，不能因当前失败清 baseline 而永久漏收；再接 native continuation 原子持久化，补整链隔离浏览器验收。Free NOT_RELEASE_READY。

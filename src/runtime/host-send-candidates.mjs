@@ -1,8 +1,10 @@
 import {createSendCorrelator} from '../host/send-correlator.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
-/** Private RAM candidate correlation. Never signs an ACK or writes activity facts. */
-export function createHostSendCandidates({observations,reader,enabled=false,now=Date.now,onCandidate=null,maxBindings=128}={}){
+import {prepareSendAckAdmission} from './send-ack-admission.mjs';
+/** Private correlation with an optional guarded ACK consumer; no repository writes here. */
+export function createHostSendCandidates({observations,reader,enabled=false,now=Date.now,onCandidate=null,onAcknowledged=null,maxBindings=128}={}){
+ if(onAcknowledged!==null&&(typeof onAcknowledged!=='function'||typeof reader?.withReadback!=='function'))throw Error('invalid-send-ack-consumer');
  if(typeof observations?.withCurrent!=='function'||typeof observations?.isCurrentProof!=='function'||typeof observations?.isCurrentProducer!=='function'||typeof enabled!=='boolean'||enabled&&typeof reader?.read!=='function'||typeof now!=='function'||onCandidate!==null&&typeof onCandidate!=='function'||!Number.isInteger(maxBindings)||maxBindings<1||maxBindings>128)throw Error('invalid-host-send-candidates');
  const entries=new Map(),inflight=new Map();let stopped=false,settled=Promise.resolve();
  const active=()=>{if(stopped)throw Error('host-send-candidates-stopped');if(!enabled)throw Error('host-send-candidates-disabled');};
@@ -29,6 +31,12 @@ export function createHostSendCandidates({observations,reader,enabled=false,now=
    if(entries.get(current.producerToken)!==entry||entry.generation!==generation)throw Error('stale-send-observation');
    if(!value||value.conversationId!==current.conversationId||value.bodyEpoch!==current.bodyEpoch||value.state!==value.metadata?.state)throw Error('invalid-send-metadata');
    const candidates=entry.correlator.observe(value.metadata);entry.baseline=value.metadata.state==='candidate'&&value.metadata.gaps?.length===0;
+   if(onAcknowledged)for(const candidate of candidates)await reader.withReadback(value,proofId,candidate.messageId,async({profile,readback,guard:readbackGuard})=>{
+    const guard=()=>{check(current);readbackGuard();if(entries.get(current.producerToken)!==entry||entry.generation!==generation||observations.isCurrentProof(proofId)!==true)throw Error('stale-send-observation');};
+    guard();const context={proofId,conversationId:current.conversationId,bodyEpoch:current.bodyEpoch,scopeKey:current.scope.key,principalKey:current.scope.accountId,contextKey:current.scope.organizationId,providerProfile:current.providerProfile,providerTransport:current.providerTransport};
+    const admission=prepareSendAckAdmission({profile,context,candidate,readback,intentAt:candidate.observedAt,observedAt:new Date(now()).toISOString()});
+    guard();await onAcknowledged({admission,context:current,guard});guard();
+   });
    entry.proof=proofId;check(current);return candidates;
   })).then(candidates=>{active();if(observations.isCurrentProof(proofId)!==true)throw Error('stale-send-proof');if(entries.get(context.producerToken)!==entry||generation!==undefined&&entry.generation!==generation)throw Error('stale-send-observation');return publish(candidates);}).catch(error=>{if(entry&&generation!==undefined&&entry.generation===generation){entry.baseline=false;entry.proof=null;entry.correlator.invalidate();entries.forEach((value,key)=>{if(value===entry)entries.delete(key);});}throw error;}).finally(()=>{if(inflight.get(proofId)===pending)inflight.delete(proofId);});
   settled=pending.catch(()=>{});inflight.set(proofId,pending);return pending;

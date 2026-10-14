@@ -56,7 +56,7 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
     if(acceptance)requireValue(acceptance.conversationId===conversationId&&acceptance.principalKey===principal&&acceptance.contextKey===account&&acceptance.providerProfile===profile&&acceptance.transport===transport&&acceptance.expiresAt===result.expiresAt);
    }
    guard();const value={state:metadata.state,conversationId,bodyEpoch,metadata};requireValue(new TextEncoder().encode(JSON.stringify(value)).length<=65536);
-   if(acceptance&&metadata.state==='candidate'&&!metadata.gaps.length)readbacks.set(value,{acceptance,proofId,guard:currentGuard,signal:currentSignal});
+   if(acceptance&&metadata.state==='candidate'&&!metadata.gaps.length)readbacks.set(value,{acceptance,proofId,documentToken:context.documentToken,producerToken:context.producerToken,routeEpoch:context.routeEpoch,scopeKey:context.scope?.key});
    return freeze(value);
   })).then(result=>{check();return result;}).finally(()=>{attempt.abort.abort();if(busy===attempt)busy=null;});
   return attempt.promise;
@@ -66,7 +66,7 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
   const saved=readbacks.get(value);if(stopped||!enabled||!saved||saved.proofId!==proofId||!id(messageId)||typeof work!=='function')throw Error('unavailable-send-readback');
   return observations.withCurrent(proofId,async context=>{
    const a=saved.acceptance;
-   const guard=()=>{const at=now();if(stopped||saved.signal.aborted||saved.guard()!==true||context.signal?.aborted||context.guard?.()!==true||context.conversationId!==value.conversationId||context.bodyEpoch!==value.bodyEpoch||context.scope?.accountId!==a.principalKey||context.scope?.organizationId!==a.contextKey||context.providerProfile!==a.providerProfile||context.providerTransport!==a.transport||!Array.isArray(context.messageIds)||!context.messageIds.includes(messageId)||!Number.isFinite(at)||instant(a.expiresAt)<=at){readbacks.delete(value);throw Error('stale-send-readback');}};
+   const guard=()=>{const at=now();if(stopped||context.documentToken!==saved.documentToken||context.producerToken!==saved.producerToken||context.routeEpoch!==saved.routeEpoch||context.scope?.key!==saved.scopeKey||context.signal?.aborted||context.guard?.()!==true||context.conversationId!==value.conversationId||context.bodyEpoch!==value.bodyEpoch||context.scope?.accountId!==a.principalKey||context.scope?.organizationId!==a.contextKey||context.providerProfile!==a.providerProfile||context.providerTransport!==a.transport||!Array.isArray(context.messageIds)||!context.messageIds.includes(messageId)||!Number.isFinite(at)||instant(a.expiresAt)<=at){readbacks.delete(value);throw Error('stale-send-readback');}};
    guard();const observed=value.metadata.messages.find(m=>m.messageId===messageId),message=a.messages.find(m=>m.messageId===messageId);
    requireValue(observed&&message&&context.messageIds.includes(messageId)&&observed.mappingNodeId===message.mappingNodeId&&observed.lineage?.fingerprint===message.lineage?.fingerprint);
    const readback=freeze({proofId,conversationId:value.conversationId,bodyEpoch:value.bodyEpoch,principalKey:a.principalKey,contextKey:a.contextKey,providerProfile:a.providerProfile,transport:a.transport,expiresAt:a.expiresAt,message});
