@@ -1218,3 +1218,17 @@ staged loader六个可选单调阶段，含新build阶段在native-index前；�
 同100k mixed／4x profile仍**FAIL**，约30261ms未ACTIVE，原生输入身份/连接/草稿/可见性保持，sourceChangedDuringRun=false。trace的native-index-build约1.29–1.41s成功，最终迁移仍超过既有6秒且失败；不把分阶段或本地原子性通过算性能达标。profile与原日志见free-round117-initial-4x-profile.*。后续仍需减轻最终审计/发布成本；纯候选目前在尝试发布前消费，失败后可能重新准备，可评估保留到实际commit的安全性，但不减少最终fresh校验。
 
 当前正常Git网络连接阻塞沿用Round116证据，未循环重试或更改远端/配置；全部新增代码保存在现分支待正常同步。真实context/ACK、新聊首发、G/U/PAIA/真人及100k关口仍未完成。Free未完成、NOT_RELEASE_READY；继续唯一正式计划。
+
+
+## Round118：事务中止保留纯构建，提交后才清理
+
+接5410a66。只有最终RW事务真正oncomplete时清理本次匹配且仍为当前owner候选的纯build；abort保留，后续每次仍重新读取root保序字节、CAS及全部fresh piece。清理先于完成后的guard，因此stale-after-commit也会清理；fallback、回放和其他候选不误删。不保存审计结论或减少任何校验。
+
+完整Node **2450/2450、0失败/跳过**；准备合同12/12包含首put配额失败、写已排队后撤权回滚、提交后撤权及候选保留期间坏piece仍拒。真实headless IDB六旅程PASS，新增明确标注SYNTHETIC_INJECTED_QUOTA_FIRST_NATIVE_PUT的配额注入→整库回滚→prepare false→fresh checksum损坏拒绝→修复后同操作成功。配额异常为注入，不冒称真实磁盘耗尽；底层事务及回滚是真IDB。原构建包MV3十三旅程PASS，两个浏览器报告sourceChangedDuringRun=false。
+
+本轮不启用采样器运行100k mixed／CDP4x，仍**FAIL**：约30093ms未ACTIVE，trace仅一次native-index-build（约1402ms），之后最终迁移约6.3–7.1s超原6s预算；不重复构建已实现，但不是性能达标。原生input、连接、草稿与可见性保持，sourceChangedDuringRun=false。故障不只是Profiler开销；不改6秒／30秒阈值。证据free-round118-100k-4x.json、free-round118-node.log.gz、free-native-index-preparation-retention.log.gz、free-round118-prepared-retry-idb.json与free-round118-package-mv3.json。
+
+当前全部代码继续保存原分支，Git网络连接阻塞与真实context/ACK、新聊首发、G/U/PAIA/真人关口保持。Free未完成、NOT_RELEASE_READY，继续正式计划可执行项。
+
+
+Round118补充：静态schema键编码缓存的Map与null-prototype frozen字典候选仅做Node等价/交错微基准；native digest约改善7.4%／8.6%，但未知manifest键分别回退7.3%／6.6%。均未合入，停止该方向；原脚本与结果保存free-round118-key-cache-*和free-round118-key-object-*，不算产品验收。正常push本轮仅有界尝试一次，30秒网络超时后停止该进程组；GitHub API随后确认PR16 head仍bd142a7，本地五项提交待同步。

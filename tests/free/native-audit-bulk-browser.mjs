@@ -11,7 +11,7 @@ const output=process.argv[2]??'/private/tmp/free-native-audit-bulk-browser.json'
 const save=()=>writeFile(output,JSON.stringify(report,null,2)+'\n');const server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
 try{
  browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});report.browser=browser.version();const context=await browser.newContext();const origin=`http://127.0.0.1:${server.address().port}`;await context.route('**/*',route=>new URL(route.request().url()).origin===origin?route.continue():route.abort());const page=await context.newPage();page.on('pageerror',e=>report.pageErrors.push(e.message));await page.goto(origin+'/hf/A/c/T0?mode=native');
- for(const mode of ['bulk','retained-extra-fallback','tail-checksum','tail-missing','guard']){
+ for(const mode of ['bulk','retained-extra-fallback','tail-checksum','tail-missing','guard',...(prepare?['prepared-retry']:[])]){
   try{const result=await page.evaluate(async ({mode,prepare})=>{
    const {ScopeRepository}=await import('/src/b1/scope-repository.mjs'),{WorkspaceRepository}=await import('/src/data/repository.mjs'),{NativeRepository}=await import('/src/data/native-repository.mjs'),{normalizedScope}=await import('/src/b1/identity.mjs'),{scopeOf}=await import('/simulator/data.mjs'),{nativePartitionKey,nativeRecord}=await import('/src/data/native-partitions.mjs'),{digest}=await import('/src/data/hash.mjs');
    const check=(v,m)=>{if(!v)throw Error(m);},same=(a,b,m)=>check(digest(a)===digest(b),m),scope=normalizedScope(scopeOf('A')),other=normalizedScope(scopeOf('B')),now='2026-10-13T00:00:00Z';
@@ -27,20 +27,33 @@ try{
     const tail=nativePartitionKey(scope.key,'refs',ids.at(-1),2);
     if(mode==='tail-missing')await edit(store=>store.delete(tail));
     if(mode==='tail-checksum')await edit(store=>{const q=store.get(tail);q.onsuccess=()=>store.put({...q.result,checksum:'0'.repeat(64)});});
-    const facts=mode==='bulk'||mode==='retained-extra-fallback'?await native.read(scope):null,assets=(await shared.read(scope)).state,otherAssets=(await shared.read(other)).state,before=await dump();
+    const facts=mode==='bulk'||mode==='retained-extra-fallback'||mode==='prepared-retry'?await native.read(scope):null,assets=(await shared.read(scope)).state,otherAssets=(await shared.read(other)).state,before=await dump();
     let bulkCalls=0,keyCalls=0,scanned=0,loadedValues=0,loadedExtraValues=0,exactPieceGets=0,authorized=true;
-    const get=IDBObjectStore.prototype.get,getAll=IDBObjectStore.prototype.getAll,getAllKeys=IDBObjectStore.prototype.getAllKeys;
+    const get=IDBObjectStore.prototype.get,getAll=IDBObjectStore.prototype.getAll,getAllKeys=IDBObjectStore.prototype.getAllKeys,put=IDBObjectStore.prototype.put;
     const isAudit=(store,args)=>store.transaction.db===db&&store.transaction.mode==='readwrite'&&store.name==='native_states'&&args[0] instanceof IDBKeyRange&&String(args[0].lower).includes('native-piece');
     IDBObjectStore.prototype.get=function(key){if(this.transaction.db===db&&this.transaction.mode==='readwrite'&&this.name==='native_states'&&String(key).includes('native-piece'))exactPieceGets++;return get.call(this,key);};
     IDBObjectStore.prototype.getAllKeys=function(...args){const q=getAllKeys.apply(this,args);if(isAudit(this,args)){keyCalls++;check(args[1]<=512,'unbounded bulk key page');q.addEventListener('success',()=>{scanned+=q.result.length;if(mode==='guard'&&keyCalls>=2)authorized=false;});}return q;};
     IDBObjectStore.prototype.getAll=function(...args){const q=getAll.apply(this,args);if(isAudit(this,args)){bulkCalls++;check(args[1]<=512,'unbounded bulk value page');q.addEventListener('success',()=>{loadedValues+=q.result.length;for(const row of q.result)if(row.payload?.revision!==2)loadedExtraValues++;});}return q;};
-    restore=()=>{IDBObjectStore.prototype.get=get;IDBObjectStore.prototype.getAll=getAll;IDBObjectStore.prototype.getAllKeys=getAllKeys;};
-    const result=await native.migrateVersionIndex(scope,{operationId:'migrate_'+mode,expectedRevision:2},{guard:()=>authorized});restore();
+    restore=()=>{IDBObjectStore.prototype.get=get;IDBObjectStore.prototype.getAll=getAll;IDBObjectStore.prototype.getAllKeys=getAllKeys;IDBObjectStore.prototype.put=put;};
+    const attempts=[],metrics=()=>({bulkCalls,keyCalls,loadedValues,loadedExtraValues,scanned,exactPieceGets}),resetMetrics=()=>{bulkCalls=keyCalls=loadedValues=loadedExtraValues=scanned=exactPieceGets=0;};
+    const migration={operationId:'migrate_'+mode,expectedRevision:2};
+    if(mode==='prepared-retry'){
+     let injected=false;IDBObjectStore.prototype.put=function(...args){if(!injected&&this.transaction.db===db&&this.transaction.mode==='readwrite'&&this.name==='native_states'){injected=true;throw new DOMException('QuotaExceededError','QuotaExceededError');}return put.apply(this,args);};
+     const quota=await native.migrateVersionIndex(scope,migration);IDBObjectStore.prototype.put=put;
+     attempts.push({kind:'SYNTHETIC_INJECTED_QUOTA_FIRST_NATIVE_PUT',injected,result:quota,metrics:metrics()});check(injected&&!quota.ok&&quota.reason==='QuotaExceededError','quota injection must reject: '+JSON.stringify(quota));same(await dump(),before,'quota changed any store');
+     const reused=await native.prepareVersionIndex(scope,{expectedRevision:2});check(reused.ok&&reused.prepared===false,'aborted publication must retain private candidate');same(await dump(),before,'reuse wrote state');attempts.at(-1).preparation=reused;
+     const originalTail=before.native_states.find(row=>row.key===tail);check(!!originalTail,'fixture tail missing');await edit(store=>store.put({...originalTail,checksum:'0'.repeat(64)}));const damaged=await dump();resetMetrics();
+     const corrupt=await native.migrateVersionIndex(scope,migration);attempts.push({kind:'FRESH_PIECE_CHECKSUM_CORRUPTION_WITH_CACHED_CANDIDATE',result:corrupt,metrics:metrics()});check(!corrupt.ok&&corrupt.reason==='corrupt-native-record','cached candidate bypassed fresh piece audit: '+JSON.stringify(corrupt));same(await dump(),damaged,'corrupt retry changed any store');
+     const retained=await native.prepareVersionIndex(scope,{expectedRevision:2});check(retained.ok&&retained.prepared===false,'corrupt aborted publication discarded candidate');attempts.at(-1).preparation=retained;
+     await edit(store=>store.put(originalTail));same(await dump(),before,'fixture repair must restore original stores');resetMetrics();
+    }
+    const result=await native.migrateVersionIndex(scope,migration,{guard:()=>authorized});
+    if(mode==='prepared-retry')attempts.push({kind:'REPAIRED_SAME_OPERATION',result,metrics:metrics()});restore();
     check(keyCalls>=2,'must cross 512-key bulk page');check(loadedExtraValues===0,'retained or extra payloads must not be loaded');check(scanned<=1200,'scan exceeds 2x selected refs');
     if(facts){check(result.ok,'migration '+JSON.stringify(result));same(await native.read(scope),{...facts,revision:3},'extra or retained version counted as current facts');if(mode==='retained-extra-fallback'){check(scanned===1200,'must reach exact scan budget');check(exactPieceGets>0,'scan cap must fall back to exact gets');}}
     else{check(result.ok===false,'damaged or revoked migration accepted');if(mode==='guard')check(result.reason==='stale-binding','guard reason');same(await dump(),before,'failure changed records or receipts');}
     same((await shared.read(scope)).state,assets,'Pro changed');same((await shared.read(other)).state,otherAssets,'other scope changed');check((await native.read(other)).revision===0,'native crossed scope');
-    return {mode,refs:600,bulkCalls,keyCalls,loadedValues,loadedExtraValues,scanned,scanBound:1200,exactPieceGets,result,proPreserved:true,otherScopePreserved:true,rollback:!facts};
+    return {mode,...(attempts.length?{attempts}:{}),refs:600,bulkCalls,keyCalls,loadedValues,loadedExtraValues,scanned,scanBound:1200,exactPieceGets,result,proPreserved:true,otherScopePreserved:true,rollback:!facts};
    }finally{restore();base.close();}
   },{mode,prepare});report.results.push({status:'PASS',...result});}catch(error){report.results.push({mode,status:'FAIL',error:error.stack});}await save();
  }

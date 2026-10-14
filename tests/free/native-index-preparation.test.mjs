@@ -48,3 +48,22 @@ test('same checksum and revisions with reordered root keys publishes fresh ordin
   const header=await h.native.header(scope);assert.deepEqual(Object.keys(header.manifest.projects),expectedProjects);assert.deepEqual(Object.keys(header.manifest.refs),expectedRefs);const after=await h.native.read(scope);assert.deepEqual(after,{...before,revision:3});
  }finally{h.base.close();}
 });
+function restoreFixtureRows(h,snapshot){for(const [name,rows]of snapshot)h.factory.databasesMap.get(h.name).stores.get(name).rows=new Map(structuredClone(rows));}
+test('quota abort retains prepared build while every retry still audits fresh pieces',async()=>{
+ const h=await fixture();try{await h.prepare();const original=h.dump();h.factory.failNextPut=true;const quota=await h.migrate();assert.equal(quota.ok,false);assert.equal(quota.reason,'QuotaExceededError');assert.deepEqual(h.dump(),original);assert.deepEqual(await h.prepare(),{ok:true,prepared:false});
+  const rows=h.factory.databasesMap.get(h.name).stores.get('native_states').rows,key=nativePartitionKey(scope.key,'refs','C',1),piece=structuredClone(rows.get(key));rows.get(key).checksum='bad';const damaged=h.dump();assert.equal((await h.migrate()).ok,false);assert.deepEqual(h.dump(),damaged);assert.equal((await h.prepare()).prepared,false);rows.set(key,piece);
+  assert.equal((await h.migrate()).ok,true);restoreFixtureRows(h,original);assert.equal((await h.prepare()).prepared,true,'successful commit consumes the pure build');
+ }finally{h.base.close();}
+});
+test('final guard failure after all writes are queued aborts without consuming candidate',async()=>{
+ const h=await fixture(),db=await h.base.open(),transaction=db.transaction.bind(db);let queuedReceipt=false;try{
+  await h.prepare();const before=h.dump();db.transaction=(...args)=>{const tx=transaction(...args),objectStore=tx.objectStore.bind(tx);tx.objectStore=name=>{const store=objectStore(name);if(name==='native_operations'&&args[1]==='readwrite'){const put=store.put.bind(store);store.put=row=>{const request=put(row);if(row.payload?.kind==='MIGRATE_NATIVE_VERSION_INDEX')queuedReceipt=true;return request;};}return store;};return tx;};
+  const result=await h.migrate({guard:()=>!queuedReceipt});assert.equal(queuedReceipt,true);assert.equal(result.reason,'stale-binding');assert.deepEqual(h.dump(),before);db.transaction=transaction;assert.equal((await h.prepare()).prepared,false);assert.equal((await h.migrate()).ok,true);
+ }finally{db.transaction=transaction;h.base.close();}
+});
+test('stale-after-commit still consumes build even though caller receives no successful publication',async()=>{
+ const h=await fixture(),db=await h.base.open(),transaction=db.transaction.bind(db);let migrationTx;try{
+  await h.prepare();const original=h.dump();db.transaction=(...args)=>{const tx=transaction(...args);if(args[1]==='readwrite')migrationTx=tx;return tx;};
+  const result=await h.migrate({guard:()=>!migrationTx?.done});assert.deepEqual(result,{ok:false,reason:'stale-after-commit',committed:true});db.transaction=transaction;assert.equal(await h.native.version(scope),2,'transaction did commit before authority changed');restoreFixtureRows(h,original);assert.equal((await h.prepare()).prepared,true,'committed candidate must be cleared before final authority check');
+ }finally{db.transaction=transaction;h.base.close();}
+});

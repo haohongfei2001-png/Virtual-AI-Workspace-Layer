@@ -36,7 +36,7 @@ export async function migrateNativeVersionIndex(owner,scope,{operationId,expecte
  const normalized=owner.base.scopeOrThrow(scope);id(operationId);if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)throw Error('invalid-revision');
  const fence=()=>{if(signal?.aborted||guard()!==true)throw Error('stale-binding');},fingerprint=digest({kind:'MIGRATE_NATIVE_VERSION_INDEX',expectedRevision}),db=await owner.base.open();fence();
  return new Promise(resolve=>{
-  const tx=db.transaction(['native_states','native_operations'],'readwrite'),store=tx.objectStore('native_states'),ops=tx.objectStore('native_operations'),operationKey=JSON.stringify([normalized.key,operationId]);let result;
+  const tx=db.transaction(['native_states','native_operations'],'readwrite'),store=tx.objectStore('native_states'),ops=tx.objectStore('native_operations'),operationKey=JSON.stringify([normalized.key,operationId]);let result,consumedBuild;
   const abort=reason=>{result={ok:false,reason};try{tx.abort();}catch{}},onRevoke=()=>abort('stale-binding');signal?.addEventListener('abort',onRevoke,{once:true});
   const root=store.get(normalized.key),marker=ops.get(normalized.key),checkpoint=store.get(nativeCheckpointKey(normalized.key)),receipt=ops.get(operationKey);
   receipt.onsuccess=()=>{try{
@@ -50,7 +50,7 @@ export async function migrateNativeVersionIndex(owner,scope,{operationId,expecte
     // Structural migration changes no native piece versions. Record that fact
     // so the next write need not reconcile every unchanged legacy ID.
     fence();const prepared=preparedBuilds.get(owner),built=prepared?.encoded===JSON.stringify(payload)?prepared.built:buildFor(payload,normalized);
-    preparedBuilds.delete(owner);
+    if(built===prepared?.built)consumedBuild=prepared;
     for(const record of built.records){fence();store.put(record);}
     const rootRecord=nativeRecord(normalized.key,built.root);
     // Retire only native versions referenced by the superseded old checkpoint.
@@ -61,7 +61,7 @@ export async function migrateNativeVersionIndex(owner,scope,{operationId,expecte
     ops.put(nativeRecord(normalized.key,{...nativeUnpack(marker.result),revision:built.root.revision}));ops.put(nativeRecord(operationKey,{kind:'MIGRATE_NATIVE_VERSION_INDEX',fingerprint,revision:built.root.revision,operationId}));fence();result={ok:true,revision:built.root.revision,operationId};
    }catch(error){abort(error.message);}},error=>abort(error.message));
   }catch(error){abort(error.message);}};
-  tx.oncomplete=()=>{signal?.removeEventListener('abort',onRevoke);try{fence();resolve(result);}catch{resolve({ok:false,reason:'stale-after-commit',committed:true});}};
+  tx.oncomplete=()=>{signal?.removeEventListener('abort',onRevoke);if(consumedBuild&&preparedBuilds.get(owner)===consumedBuild)preparedBuilds.delete(owner);try{fence();resolve(result);}catch{resolve({ok:false,reason:'stale-after-commit',committed:true});}};
   tx.onabort=()=>{signal?.removeEventListener('abort',onRevoke);resolve(result?.ok===false?result:{ok:false,reason:tx.error?.name??'native-index-migration-aborted'});};tx.onerror=()=>{};
  });
 }
