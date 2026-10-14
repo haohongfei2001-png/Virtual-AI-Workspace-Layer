@@ -1535,3 +1535,9 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 当前 guard、signal、scope、ACK profile 与 providerProfile、profile 身份/内容及30秒期限须持续有效。仅显式 CAS 冲突最多重试一次，其他写结果不自动重放；批次保留原观察区间与固定 ACK 摘要。
 - 真实 provider→reader→correlator→ACK owner→NativeRepository 的 MOCK_IDB 测试确认首次无 ACK 零续接、延迟确认后一个 pending-evidence、重复观察无重写。owner/profile/撤权/expiry 与既有 continuation 定向 **52/52 PASS**（free-round146-owner.log）。完整回归/真实 IDB/浏览器本轮 NOT_RUN。
 - owner 尚未接 binding-service production composition，续接 drainer 的 ACK profile 注册与 evidence gate 仍需完成；不能把 pending 写入称为活动已刷新。下一步接该恢复授权映射并补真实 IDB 整链。Free NOT_RELEASE_READY。
+
+## Round147：ACK composition 与证据续接消费（接 6a174e5）
+
+- binding-service 接入可选 sendAckProfile，严格校验并要求 current read/send candidates/workspace/evidence/surface 配置齐备，profile ID 不与 surface 重名。NativeRepository gate 组合既有 observation 与 ACK owner exact-request 私有授权。ACK 提交后调用既有 continuation drainer 写证据，完成时通知 UI。stop 同时停止 ACK owner。默认 null 保持未启用。
+- worker 仅转交显式包内 ACK profile。刷新恢复在单一 surface profile 与匹配当前认证 provider 的 ACK profile 之间轮换；使用原有一秒恢复预算与文档复核，不从持久记录恢复权限。
+- 真实模块 MOCK_IDB 管线已覆盖 pending→evidence hint→complete 清队列，再次 drain idle 且证据不变。完整 Node **3145/3145 PASS**（free-round147-node.log.gz）。正式 composition 的 enabled 全流程仍需隔离浏览器/真实 IDB 进一步验证，不能以模块 fixture 代替。私人账号及真实 ACK profile NOT_RUN，生产配置默认关闭。Free NOT_RELEASE_READY。

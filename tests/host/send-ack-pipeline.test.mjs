@@ -1,3 +1,5 @@
+import {createHostContinuationOwner} from '../../src/runtime/host-continuation-owner.mjs';
+import {FreeEvidenceRepository} from '../../src/data/free-evidence-repository.mjs';
 import {createHostSendAckOwner} from '../../src/runtime/host-send-ack-owner.mjs';
 import {NativeRepository} from '../../src/data/native-repository.mjs';
 import {MockIDBFactory} from '../b23/mock-idb.mjs';
@@ -42,4 +44,9 @@ test('offline authenticated ACK persists native source and pending continuation 
  owner=createHostSendAckOwner({nativeRepository:()=>native,profileFor:id=>id===f.profile.sendAckProfile.id?f.profile.sendAckProfile:null,now:()=>Date.parse('2026-10-14T00:00:01Z')});
  await f.service.observe('p1');await f.service.intent('p1',send);const p=f.next();await f.service.observe(p);assert.deepEqual(await native.listContinuations(f.scope),[]);f.accept();f.tick();await f.service.observe(p);const rows=await native.listContinuations(f.scope);assert.equal(rows.length,1);assert.equal(rows[0].state,'pending-evidence');assert.equal(rows[0].evidence.batch.hints[0].messageId,'m2');assert.equal(rows[0].admission.profileId,'offline_ack');assert.equal((await native.read(f.scope)).revision,1);assert.equal(f.commits.length,1);
  f.tick();await f.service.observe(p);assert.deepEqual(await native.listContinuations(f.scope),rows);
+ let drainer;const evidence=new FreeEvidenceRepository({baseRepository:h.base,clock:()=> '2026-10-14T00:00:01.000Z',hostObservationGate:(scope,request)=>drainer.admission(scope,request)});
+ drainer=createHostContinuationOwner({nativeRepository:native,evidenceRepository:evidence,profileFor:id=>id===f.profile.sendAckProfile.id?f.profile.sendAckProfile:null});
+ const args={scope:f.scope,guard:()=>true,profileId:f.profile.sendAckProfile.id,profileVersion:1};
+ const drained=await drainer.drain(args);assert.equal(drained.state,'complete',JSON.stringify(drained));assert.deepEqual(await native.listContinuations(f.scope),[]);
+ const state=await evidence.read(f.scope);assert.equal(Object.keys(state.hints).length,1);assert.equal(Object.values(state.hints)[0].messageId,'m2');assert.equal((await drainer.drain(args)).state,'idle');assert.deepEqual(await evidence.read(f.scope),state);
 });

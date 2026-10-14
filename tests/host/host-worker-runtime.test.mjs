@@ -34,3 +34,5 @@ test('snippet restore and reveal is one expiring parent command; late reply cann
  f.calls.sent.length=0;f.chrome.tabs.sendMessage=async(...args)=>{f.calls.sent.push(args);current=false;return {ok:true};};assert.deepEqual(await f.config.selectionBridge(options),{ok:false});assert.equal(f.calls.sent.length,1);
  f.calls.sent.length=0;assert.deepEqual(await f.config.selectionBridge(options),{ok:false});assert.equal(f.calls.sent.length,0);
 });
+
+test('ACK profile is explicit packaged configuration and default remains absent',t=>{const f=fixture(t);assert.equal(f.config.sendAckProfile,null);const ack={id:'offline_ack',revision:1,providerProfile:'chatgpt-session-v1',ack:{kind:'authenticated-message-readback',acceptedStates:['fixture-accepted']}};const enabled=fixture(t,{currentMetadataReadEnabled:true,sendCandidatesEnabled:true,sendAckProfile:ack});assert.deepEqual(enabled.config.sendAckProfile,ack);assert.equal(typeof enabled.config.provider.acceptanceFor,'function');assert.equal(enabled.opens(),0);});

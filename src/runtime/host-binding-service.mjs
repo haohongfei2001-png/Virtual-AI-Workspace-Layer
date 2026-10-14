@@ -1,3 +1,5 @@
+import {createHostSendAckOwner} from './host-send-ack-owner.mjs';
+import {validateSendAckProfile} from './send-ack-admission.mjs';
 import {createHostCandidateService} from './host-candidate-service.mjs';
 import {createHostSnippetService} from './host-snippet-service.mjs';
 import {createHostBackupService} from './host-backup-service.mjs';
@@ -18,18 +20,28 @@ import {createScopeAuthority} from './scope-authority.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Zero-seed identity composition. Existing repository/broker owners remain unchanged. */
-export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,candidateBridge=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,candidateBridge=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const handshake=createHostDocumentHandshake({extensionId,getFrame,allowedURL,now,makeId,elapsedNow,schedule,cancel});
  const authority=createScopeAuthority({provider,profile,allowedURL,now,makeId,elapsedNow,schedule,cancel});
  const asFrame=(doc,sender)=>({tabId:doc.tabId,frameId:0,documentId:doc.documentId,parentDocumentId:null,actualURL:doc.url,documentLifecycle:'active',incognito:sender.tab?.incognito===true});
 
  const ui=uiURL||uiURLs?createHostUiOwner({extensionId,uiURL,uiURLs,getFrame,getContexts,handshake,authority,now,makeId}):null;
- let sendCandidates=null;
+ const ackProfile=sendAckProfile===null?null:validateSendAckProfile(sendAckProfile);
+ if(ackProfile&&(!currentMetadataReadEnabled||!sendCandidatesEnabled||!workspaceRepository||!freeEvidenceRepository||!(surfaceProfiles instanceof Map)||!surfaceProfiles.size||surfaceProfiles.has(ackProfile.id)))throw Error('invalid-send-ack-composition');
+ const continuationProfileFor=id=>id===ackProfile?.id?ackProfile:surfaceProfiles?.get(id);
+ let sendCandidates=null,ackOwner=null,recoveryProfileCursor=0;
  const observations=surfaceProfiles?createHostObservationOwner({handshake,authority,getFrame,profiles:surfaceProfiles,onAccepted:scope=>ui?.notifyScope(scope.key),onSendIntent:(proof,intent)=>sendCandidates?.intent(proof,intent),now,makeId,elapsedNow,schedule,cancel}):null;
  const currentMetadata=observations?createCurrentMetadataReader({observations,provider,enabled:currentMetadataReadEnabled,now}):null;
- sendCandidates=currentMetadata?createHostSendCandidates({observations,reader:currentMetadata,enabled:sendCandidatesEnabled,now}):null;
- const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:observations.gate,clock:()=>new Date(now()).toISOString()}):null;
- const continuations=nativeRepository&&typeof freeEvidenceRepository?.applyContinuation==='function'?createHostContinuationOwner({nativeRepository,evidenceRepository:freeEvidenceRepository,profileFor:id=>surfaceProfiles.get(id)}):null;
+
+ const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:(scope,request)=>observations.gate(scope,request)??ackOwner?.gate(scope,request),clock:()=>new Date(now()).toISOString()}):null;
+ const continuations=nativeRepository&&typeof freeEvidenceRepository?.applyContinuation==='function'?createHostContinuationOwner({nativeRepository,evidenceRepository:freeEvidenceRepository,profileFor:continuationProfileFor}):null;
+ if(ackProfile&&nativeRepository&&continuations)ackOwner=createHostSendAckOwner({nativeRepository:()=>nativeRepository,profileFor:continuationProfileFor,now});
+ sendCandidates=currentMetadata?createHostSendCandidates({observations,reader:currentMetadata,enabled:sendCandidatesEnabled,now,onAcknowledged:ackOwner?async input=>{
+  await ackOwner.consume(input);input.guard();
+  const guard=()=>{try{input.guard();return true;}catch{return false;}};
+  const drained=await continuations.drain({scope:input.context.scope,guard,signal:input.context.signal,profileId:ackProfile.id,profileVersion:ackProfile.revision});
+  input.guard();if(drained.state==='complete'||drained.state==='needs-revalidation')ui?.notifyScope(input.context.scope.key);
+ }:null}):null;
  const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({initializeTimePolicy:true,repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
  const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,prepareNavigation,nativeCandidatesEnabled:!!candidateBridge,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
  const candidates=ui&&candidateBridge?createHostCandidateService({ui,bridge:candidateBridge,elapsedNow,schedule,cancel,makeId}):null;
@@ -92,10 +104,11 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(focus&&resolution.state!=='verified'){denyFocus();revokeFocus();}check();
   const verified=await handshake.verify(message,sender);check();
   if(!verified){if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant)authority.invalidate(frame.documentId);revokeFocus();return {ok:false,reason:'stale-host-document'};}
-  if(!focus&&resolution.state==='verified'&&continuations&&surfaceProfiles.size===1&&elapsedNow()-attempt.started<4500){
+  const recoveryProfiles=[...(surfaceProfiles?.size===1?[surfaceProfiles.values().next().value]:[]),...(ackProfile&&resolution.grant?.principal?.providerProfile===ackProfile.providerProfile?[ackProfile]:[])];
+  if(!focus&&resolution.state==='verified'&&continuations&&recoveryProfiles.length&&elapsedNow()-attempt.started<4500){
    // Reuse the existing refresh request; no background timer or restored grant.
    // A slow/damaged queue must not consume the scope renewal's whole deadline.
-   const activeProfile=surfaceProfiles.values().next().value,scope=authority.scopeFor(frame),drainAbort=new AbortController(),started=elapsedNow();
+   const activeProfile=recoveryProfiles[recoveryProfileCursor++%recoveryProfiles.length],scope=authority.scopeFor(frame),drainAbort=new AbortController(),started=elapsedNow();
    let active=true;
    const abort=()=>drainAbort.abort();attempt.abort.signal.addEventListener('abort',abort,{once:true});
    const guard=()=>active&&attempt.active&&!drainAbort.signal.aborted&&elapsedNow()-started<1000&&handshake.isBound(message,sender)&&authority.peek(frame).grant===resolution.grant;
@@ -112,7 +125,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  }
  function invalidate({tabId,frameId=0,documentId}={}){broker.invalidate({tabId,frameId});if(documentId){observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{observations?.invalidateTab(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}}
  function tabClosed(tabId){observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
- function stop(){if(!serviceActive)return;serviceActive=false;candidates?.stop();views?.stop();snippets?.stop();sendCandidates?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
+ function stop(){if(!serviceActive)return;serviceActive=false;candidates?.stop();views?.stop();snippets?.stop();sendCandidates?.stop();ackOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
  // Internal worker composition only; no page RPC exposes metadata or accepts proof IDs.
  const readCurrentMetadata=proofId=>currentMetadata?currentMetadata.read(proofId):Promise.reject(Error('current-metadata-unavailable'));
  return Object.freeze({sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
