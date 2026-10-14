@@ -1765,3 +1765,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 完整 Node **3238/3238 PASS**（free-round176-node.log.gz）。子代理独立新增9项接口测试；主代理新增生产流式失败、gesture/expiry反例。审查后追加最后包后ACK竞态，生产升级文件 **48/48 PASS**（free-round176-upgrade-final.log.gz）；这项追加未混算入此前全套次数。
 - 实际离线生产候选 MV3 **5组 PASS**（free-round176-candidates-mv3.json），原生候选升级、跨frame、605条分页及阅读返回保持。独立只读审查未发现阻断回归，建议ACK竞态已补测。
 - 本轮建立减少聚合内存所需的状态提交边界，尚未删除content全量候选数组/keysSet或discovery索引，不宣称完整RAM有界。100k性能、首页首发因果来源、间歇退出与真实G/U仍未完成；Free NOT_RELEASE_READY。4273154上轮普通push超时，成果完整保存在本地同分支。
+
+
+## Round177：生产候选流式页窗口与排队期限（接 972e7b1）
+
+- 生产 content-candidates 不再聚合全部候选行；纯页窗口只保留请求页32与末页32个引用，过滤后精确 total/offset/nextOffset，超大offset钳位至末页。100k合成流逐包≤256、窗口引用≤64与所有页面可达均有独立测试。精确重复keys Set及discovery byId/memberIds仍为O(N)，本轮不声称完整RAM有界。
+- 身份升级增加只读preview预测过滤，末尾resolve重复核验；过期、节点身份变化或ACK集合变化时拒绝整页，不隐藏未确认Project。相同offset共享扫描、不同offset串行提交，最多4个不同offset排队；这不是所有调用者promise数量上限。失败不污染后续扫描，旧非streaming接口保留。
+- 独立审查发现初版队列期限使用墙钟；已改用生产传入elapsedNow，排队与扫描共用最初6秒单调期限，另加墙钟回拨反例，验证当前事务不commit、超时排队事务不begin。原授权expiresAt仍用墙钟校验，没有扩大权限。
+- 最终完整 Node **3277/3277 PASS**（free-round177-node.log.gz），包含独立页窗口25项及流式并发/过滤/容量/超时反例。实际离线生产候选 MV3 **5组 PASS**（free-round177-candidates-mv3.json），605条分页、末尾激活、同名隔离、身份升级及阅读返回保持；sourceChangedDuringRun=false。审查复核无其他具体阻断。
+- 上轮已正常推送475261f..972e7b1至原PR #16，72ca068为当前祖先。100k冷加载性能、首页首发因果来源、间歇退出与真实G/U仍未完成；Free NOT_RELEASE_READY。

@@ -144,3 +144,9 @@ test('current Project ACK arriving after last packet invalidates scan; next scan
  assert.deepEqual(await f.list(),{ok:false});assert.equal(f.docEvents.has('pointerdown'),true,'pending upgrade was not consumed');
  f.setScanFactory(null);assert.equal((await f.list()).total,1);assert.equal(f.docEvents.has('pointerdown'),false);f.client.stop();
 });
+for(const change of ['silent-expiry','identity-loss'])test('streaming predicted exclusion is discarded before commit on '+change,async()=>{
+ const f=fixture();await f.client.start();await f.navigate();if(change==='silent-expiry')f.setTime(4500);
+ f.setScanFactory(async function*(proposal){yield proposal();if(change==='silent-expiry')f.setTime(7000);else f.setMatches(false);});
+ assert.deepEqual(await f.list(),{ok:false});f.setScanFactory(null);
+ assert.equal((await f.list()).total,2);f.client.stop();
+});

@@ -25,6 +25,14 @@ export function createCandidateUpgrade({now=Date.now}={}){
   if(state.targetURL===null){if(value.url===state.originalURL)return true;state.targetURL=value.url;return true;}
   if(value.url!==state.targetURL){clear();return false;}return true;
  }
+ // Read-only prediction for a private scan. It is neither a grant nor a
+ // committed upgrade; resolve must repeat every check at publication.
+ function preview(value){
+  const state=pending,time=now();
+  if(!state||!Number.isFinite(time)||time<state.lastTime||time>=state.expiresAt)return null;
+  if(!exactHostRecord(value,['scopeKey','documentId','url','projectId','identityMatches'])||value.scopeKey!==state.scopeKey||value.documentId!==state.documentId||!urlOK(value.url)||!projectOK(value.projectId)||value.identityMatches!==true||state.targetURL===null||value.url!==state.targetURL||state.projectId!==null&&state.projectId!==value.projectId)return null;
+  return Object.freeze({projectId:value.projectId,identity:state.identity,actionId:state.actionId});
+ }
  function resolve(value){
   const state=current();if(!state)return null;
   if(!exactHostRecord(value,['scopeKey','documentId','url','projectId','identityMatches'])||value.scopeKey!==state.scopeKey||value.documentId!==state.documentId||!urlOK(value.url)||!projectOK(value.projectId)||value.identityMatches!==true){clear();return null;}
@@ -32,5 +40,5 @@ export function createCandidateUpgrade({now=Date.now}={}){
   if(value.url!==state.targetURL||state.projectId!==null&&state.projectId!==value.projectId){clear();return null;}
   state.projectId=value.projectId;return Object.freeze({projectId:state.projectId,identity:state.identity,actionId:state.actionId});
  }
- return Object.freeze({propose,cancel,navigate,resolve,clear});
+ return Object.freeze({propose,cancel,navigate,preview,resolve,clear});
 }

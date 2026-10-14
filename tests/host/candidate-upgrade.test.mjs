@@ -10,3 +10,12 @@ test('new proposal replaces old; cancellation is exact action and clear is perma
 for(const change of [{expiresAt:7001},{expiresAt:1000},{expiresAt:NaN},{expiresAt:'7000'},{identity:null},{identity:[]},{identity:'opaque'},{actionId:''},{scopeKey:''},{documentId:''},{originalURL:''},{extra:true}])test('invalid proposal clears old pending '+JSON.stringify(change),()=>{const f=fixture();f.ready();assert.equal(f.state.propose({...f.proposal,...change}),false);assert.equal(f.state.resolve(f.result),null);});
 test('nonfinite clock and malformed navigate permanently invalidate',()=>{for(const value of [NaN,Infinity,-Infinity]){const f=fixture();f.ready();f.setTime(value);assert.equal(f.state.navigate({url:f.result.url}),false);f.setTime(1001);assert.equal(f.state.resolve(f.result),null);}const f=fixture();f.ready();assert.equal(f.state.navigate({url:f.result.url,extra:true}),false);assert.equal(f.state.resolve(f.result),null);});
 test('caller mutation cannot redirect pending identity, scope or expiry',()=>{const f=fixture();f.state.propose(f.proposal);f.proposal.scopeKey='other';f.proposal.expiresAt=999999;f.proposal.identity={};f.state.navigate({url:f.result.url});assert.equal(f.state.resolve(f.result).identity,f.identity);f.setTime(7000);assert.equal(f.state.resolve(f.result),null);});
+test('preview is read-only, exact-context and never commits project identity or extends expiry',()=>{
+ const f=fixture();f.ready();const first=f.state.preview(f.result);assert.deepEqual(first,{projectId:'project',identity:f.identity,actionId:'action'});assert(Object.isFrozen(first));
+ assert.equal(f.state.preview({...f.result,scopeKey:'other'}),null);assert.deepEqual(f.state.preview(f.result),first,'wrong preview must not mutate pending');
+ assert.equal(f.state.preview({...f.result,projectId:'other'}).projectId,'other','preview must not commit first project');
+ f.setTime(6999);assert.deepEqual(f.state.preview(f.result),first);f.setTime(7000);assert.equal(f.state.preview(f.result),null);assert.equal(f.state.resolve(f.result),null);
+});
+test('preview cannot certify original route, cancelled or changed project correlation',()=>{
+ const f=fixture();f.state.propose(f.proposal);assert.equal(f.state.preview(f.result),null);f.state.navigate({url:f.result.url});assert(f.state.resolve(f.result));assert.equal(f.state.preview({...f.result,projectId:'other'}),null);assert(f.state.preview(f.result));f.state.cancel('action');assert.equal(f.state.preview(f.result),null);
+});

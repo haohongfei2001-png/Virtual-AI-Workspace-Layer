@@ -1,41 +1,57 @@
+import {createCandidatePageWindow} from './candidate-page-window.mjs';
 import {validateCandidatePresentation} from './candidate-presentation.mjs';
 import {exactHostRecord} from './contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Isolated-document RAM plans. A worker command selects only a previously
  * issued plan; page names and positions never resolve a native control. */
-export function createContentCandidates({adapter,current,showReading,isUpgraded=()=>false,onScan=()=>{},beginScan=null,now=Date.now}={}){
+export function createContentCandidates({adapter,current,showReading,isUpgraded=()=>false,onScan=()=>{},beginScan=null,streaming=false,now=Date.now,elapsedNow=()=>performance.now()}={}){
+ if(typeof elapsedNow!=='function'||typeof streaming!=='boolean'||streaming&&typeof beginScan!=='function')throw Error('invalid-content-candidates');
  if(beginScan!==null&&typeof beginScan!=='function')throw Error('invalid-content-candidates');
  if(!adapter||typeof current!=='function'||typeof showReading!=='function')throw Error('invalid-content-candidates');
- let stopped=false,active=null,pendingScan=null;const rows=new Map();
+ let stopped=false,active=null,pendingScan=null;const rows=new Map(),pendingPages=new Map();let streamTail=Promise.resolve();
  const live=()=>!stopped&&current()===true;
  function authorize(command){return live()&&active!==null&&exactHostRecord(command,Object.keys(active.command))&&now()<active.expiresAt&&Object.keys(active.command).every(key=>command[key]===active.command[key]);}
- async function scan(){
-  if(!live())throw Error('stale-content-candidates');
+ async function scan(offset=null,requestedAt=null){
+  const check=()=>{if(!live())throw Error('stale-content-candidates');if(requestedAt!==null){const elapsed=elapsedNow()-requestedAt;if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=6000)throw Error('stale-content-candidates');}};
+  check();const window=offset===null?null:createCandidatePageWindow(offset);
   const transaction=beginScan?.();
   if(beginScan&&(!transaction||typeof transaction.visit!=='function'||typeof transaction.commit!=='function'))throw Error('invalid-candidate-scan');
-  const proposals=typeof adapter.loadedPages==='function'?adapter.loadedPages():await adapter.readLoaded(null);if(!live())throw Error('stale-content-candidates');
+  const proposals=typeof adapter.loadedPages==='function'?adapter.loadedPages():await adapter.readLoaded(null);check();
   let candidates=[];const keys=new Set();
-  for await(const p of proposals){if(!live())throw Error('stale-content-candidates');if(p.kind==='surface-delta'&&(!Array.isArray(p.payload?.candidates)||p.payload.candidates.length>256))throw Error('invalid-content-candidates');for(const row of p.kind==='surface-delta'?p.payload.candidates:[]){
+  for await(const p of proposals){check();if(p.kind==='surface-delta'&&(!Array.isArray(p.payload?.candidates)||p.payload.candidates.length>256))throw Error('invalid-content-candidates');for(const row of p.kind==='surface-delta'?p.payload.candidates:[]){
    if(row.entity!=='project'||row.target?.kind!=='live-control')continue;
    if(typeof row.renderKey!=='string'||!row.renderKey||keys.has(row.renderKey))throw Error('invalid-content-candidates');
-   keys.add(row.renderKey);const {entity,renderKey,nativeTitle,titleState,target}=row;const value={entity,renderKey,nativeTitle,titleState,target};candidates.push(value);transaction?.visit(value);
+   keys.add(row.renderKey);const {entity,renderKey,nativeTitle,titleState,target}=row;const value={entity,renderKey,nativeTitle,titleState,target};const excluded=transaction?.visit(value);if(window){if(typeof excluded!=='boolean')throw Error('invalid-candidate-scan');if(!excluded)window.add(value);}else candidates.push(value);
   }
   }
-  if(!live())throw Error('stale-content-candidates');
-  if(transaction)transaction.commit();else onScan(candidates);candidates=candidates.filter(row=>!isUpgraded(row));
-  if(!live())throw Error('stale-content-candidates');return candidates;
+  check();
+  if(transaction)transaction.commit();else onScan(candidates);
+  check();if(window)return window.finish();
+  candidates=candidates.filter(row=>!isUpgraded(row));
+  check();return candidates;
  }
  function sharedScan(){
   if(!pendingScan){const pending=scan().finally(()=>{if(pendingScan===pending)pendingScan=null;});pendingScan=pending;}
   return pendingScan;
  }
+ function streamPage(offset){
+  if(pendingPages.has(offset))return pendingPages.get(offset);
+  // Distinct frame requests serialize so only one identity transaction commits
+  // at a time. Queuing never extends a request's original six-second deadline.
+  if(pendingPages.size>=4)return Promise.reject(Error('candidate-page-capacity'));
+  const requestedAt=elapsedNow();if(!Number.isFinite(requestedAt))return Promise.reject(Error('stale-content-candidates'));
+  const pending=streamTail.then(()=>scan(offset,requestedAt)).finally(()=>{if(pendingPages.get(offset)===pending)pendingPages.delete(offset);});
+  pendingPages.set(offset,pending);streamTail=pending.catch(()=>{});return pending;
+ }
  async function listPage(offset=0){
   if(!Number.isSafeInteger(offset)||offset<0||offset%32!==0)throw Error('invalid-candidate-offset');
   if(!live())throw Error('stale-content-candidates');
-  const candidates=await sharedScan();if(!live())throw Error('stale-content-candidates');
-  const total=candidates.length;offset=Math.min(offset,Math.max(0,Math.floor((total-1)/32)*32));
+  let selected,total;
+  if(streaming){const page=await streamPage(offset);selected=page.items;total=page.total;offset=page.offset;}
+  else{const candidates=await sharedScan();total=candidates.length;offset=Math.min(offset,Math.max(0,Math.floor((total-1)/32)*32));selected=candidates.slice(offset,offset+32);}
+  if(!live())throw Error('stale-content-candidates');
   const items=[];
-  for(const row of candidates.slice(offset,offset+32)){
+  for(const row of selected){
    const plan=adapter.planNavigation(row.target),targetKey=adapter.planKey(plan),available=plan.mode==='native-control'&&typeof targetKey==='string';
    const value=Object.freeze({renderKey:row.renderKey,nativeTitle:row.nativeTitle,titleState:row.titleState,available,reason:available?null:plan.reason??'native-control-unavailable',planRevision:available?plan.planRevision:null,targetKey:available?targetKey:null});
    items.push(value);if(available){rows.set(targetKey,value);while(rows.size>256)rows.delete(rows.keys().next().value);}
