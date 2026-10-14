@@ -1569,3 +1569,10 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 完整Node **3192/3192 PASS**（free-round160-node.log.gz）；定向81项通过。新增原打包扩展隔离headless验证可见原生阅读→改名→返回Free，**3/3 PASS/sourceChangedDuringRun=false**（free-round160-visible-native-updates-mv3.json）：真实别名保留、Project标题更新、成员/历史卸载不删除或无证据清空归属。
 - 首次在工作空间展开、reading受声明式mask隐藏时直接修改fixture成员标题，等待更新FAIL（free-round160-masked-native-updates-fail.json）。当前可见性校验不会接受隐藏子节点的新成员证据；未放宽护栏，后续测试明确先通过原生focus交还阅读，不能拿后者PASS覆盖前者FAIL。展开期间后台成员更新仍是独立缺口。
 - 本轮只认证已观察改名和卸载反例，不认证真实删除/404/410或获准原生写入。首页首发、100k/4x、候选完整内存有界化、真实G/U等保持未完成；Free NOT_RELEASE_READY。
+
+## Round161：退出声明式遮罩后重读延迟更新（接 49c2be2）
+
+- adapter监听原生popover toggle的捕获事件，调度既有有界body/surface队列；stop解除监听，重复toggle仍按现有指纹去重。CSS伪类显隐变化不依赖额外DOM mutation即可重新发现。没有暂停mask、改写native属性或把历史可见性缓存当新成员证明。
+- 定向 **105/105 PASS**（free-round161-target.log）。原打包扩展两组隔离headless报告分别 **3/3 PASS**（free-round161-native-return-mv3.json）和 **5/5 PASS**（free-round161-candidates-mv3.json），均sourceChangedDuringRun=false：masked期间改名→返回原生后自动发现、Project更新/卸载保留，以及605候选双frame/身份提升/阅读返回/草稿回归。两组不合并为完整Host认证。
+- 本轮完整Node NOT_RUN；最近完整为Round160的3192项。Round160的工作空间展开期间即时更新FAIL仍保留，本轮只补可靠退出恢复，不宣称该FAIL已消失。首页首发、100k/4x、候选完整内存有界化、真实G/U等仍未完成；Free NOT_RELEASE_READY。
+- 49c2be2上轮普通push因GitHub低速失败，本地检查点完整，本轮检查点继续正常同步。
