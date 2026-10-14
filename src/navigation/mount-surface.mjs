@@ -3,6 +3,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
  const mounts=new Map();
  const lookup=handle=>{const m=mounts.get(handle?.id);if(!m||m.handle!==handle)throw Error('stale-mount');return m;};
  const hide=m=>{for(const surface of m.surfaces)if(surface.node.matches(':popover-open'))surface.node.hidePopover();};
+ const surrender=m=>{const opened=m.surfaces.some(surface=>surface.node.matches(':popover-open'));hide(m);if(opened)try{m.onSurrender({reason:'native-change'});}catch{/* Closure remains effective even if its consumer has stopped. */}};
  return {
   async mount(context,inspection,{onSurrender=()=>{}}={}){
    const win=doc.defaultView;if(!win.CSS?.supports('interactivity','inert')||!win.HTMLElement.prototype.showPopover)throw Error('unsupported-mount-surface');
@@ -28,11 +29,11 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     for(const root of maskRoots){const attr='data-va-mask-'+role;markers.push({root,attr,previous:root.getAttribute(attr),nativeClass:root.getAttribute('class'),nativeStyle:root.getAttribute('style'),nativeHidden:root.getAttribute('hidden'),nativeAriaHidden:root.getAttribute('aria-hidden'),wasVisible:win.getComputedStyle?.(root).visibility==='visible'});root.setAttribute(attr,id);}
     style.textContent+=`${allowed}:has(#${node.id}:popover-open) [data-va-mask-${role}="${id}"]{visibility:hidden;interactivity:inert;}body:has(${nativeOpen}) #${node.id}{visibility:hidden;interactivity:inert;}\n`;
    }
-   const m={handle,surfaces,markers,style,styleText:style.textContent};mounts.set(id,m);
+   const m={handle,surfaces,markers,style,styleText:style.textContent,onSurrender};mounts.set(id,m);
    const workspace=surfaces.find(s=>s.role==='workspace')?.node;
    const workspaceClosed=e=>{if(e.target!==workspace||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||workspace.matches(':popover-open'))return;try{onSurrender({reason:'native-reading'});}catch{}};
    workspace?.addEventListener('toggle',workspaceClosed);doc.head.append(style);for(const s of surfaces)doc.body.append(s.node);
-   const inspectLayer=()=>{if(hasNativeLayer()||doc.querySelector(nativeOpen)||markers.some(({root,nativeClass,nativeStyle,nativeHidden,nativeAriaHidden})=>!root.isConnected||root.ownerDocument!==doc||root.getAttribute('class')!==nativeClass||root.getAttribute('style')!==nativeStyle||root.getAttribute('hidden')!==nativeHidden||root.getAttribute('aria-hidden')!==nativeAriaHidden))hide(m);};
+   const inspectLayer=()=>{if(hasNativeLayer()||doc.querySelector(nativeOpen)||markers.some(({root,nativeClass,nativeStyle,nativeHidden,nativeAriaHidden})=>!root.isConnected||root.ownerDocument!==doc||root.getAttribute('class')!==nativeClass||root.getAttribute('style')!==nativeStyle||root.getAttribute('hidden')!==nativeHidden||root.getAttribute('aria-hidden')!==nativeAriaHidden))surrender(m);};
    const observer=new win.MutationObserver(inspectLayer);observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class','style','hidden','aria-hidden','aria-expanded']});
    const beforeToggle=e=>{if(e.newState==='open'&&!e.target.closest?.('[data-va-owned]'))hide(m);};doc.addEventListener('beforetoggle',beforeToggle,true);
    const nativeInput=e=>{if(protectedNodes.some(n=>n===e.target||n.contains(e.target))){hide(m);try{onSurrender({reason:'native-input'});}catch{}}};doc.addEventListener('pointerdown',nativeInput,true);doc.addEventListener('focusin',nativeInput,true);
@@ -46,7 +47,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    for(const m of mounts.values()){
     const affected=m.markers.some(({root,attr})=>m.surfaces.some(s=>attr==='data-va-mask-'+s.role&&s.node.matches(':popover-open'))&&records.some(record=>
      contains(root,record.target)||record.type==='attributes'&&contains(record.target,root)||record.type==='childList'&&[...(record.addedNodes??[]),...(record.removedNodes??[])].some(node=>contains(node,root))));
-    if(affected){hide(m);changed=true;}
+    if(affected){surrender(m);changed=true;}
    }return changed;
   },
   isMasked(root){

@@ -1615,3 +1615,11 @@ Round130同步检查点：代码本地提交7ad7594（前一模块d1b5add），�
 - 原打包MV3已验证masked成员改名无需额外用户focus即可自动交还并落库；既有改名别名/卸载保留/原生边界与草稿返回也覆盖。完整Node **3213/3213 PASS**（free-round166-node.log.gz），候选打包MV3 **5/5 PASS**（free-round166-candidates-mv3.json）。
 - 浏览器原生更新首轮通过；最终源码复验一次在后续class边界关闭等待超时，前三项已PASS，完整FAIL保留（free-round166-native-boundary-fail.json）。新增仅fixture诊断后两次四项通过，最后报告free-round166-native-recheck-mv3.json，均sourceChangedDuringRun=false。该间歇退出超时未定位，不能当稳定性已解决；不混加次数。
 - 本轮实现自动交还后更新，**不是保持workspace展开读取隐藏成员**。首页首发、预证明立即发送、100k/4x、候选完整内存及真实G/U仍未完成；Free NOT_RELEASE_READY。897a4c5已正常推送原PR #16。
+
+
+## Round167：关闭与授权过期之间的恢复模式竞态（接 0299d1e）
+
+- 两项确定性反例在原代码失败（free-round167-before.log）：native变化关闭依赖queued toggle通知；通知到达前授权过期会忽略阅读状态，终止恢复仍记录workspace。现实际关闭时同步通知native-change，controller先保留已打开表面的阅读意图，再检查授权；过期不能创建控件，未授权waiting状态不受提前通知影响。
+- 完整Node **3214/3214 PASS**（free-round167-node.log.gz），相关56项通过。原打包隔离MV3原生更新 **4/4 PASS**（free-round167-native-updates-mv3.json）、候选导航 **5/5 PASS**（free-round167-candidates-mv3.json），均sourceChangedDuringRun=false。
+- 本轮证明并修复了该状态竞态，**尚未证明它就是Round166浏览器间歇退出超时的原因**，旧FAIL继续保留。首页首发、预证明立即发送、100k/4x、候选完整内存与真实G/U仍未完成；Free NOT_RELEASE_READY。
+- 0299d1e此前普通push在30秒超时，本轮自然检查点正常同步，不强推。

@@ -6,7 +6,7 @@ const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});retur
 // Isolated DOM/lifecycle mocks: these contracts do not certify actual Chrome masks.
 function fixture(){
  const listeners=new Map(),timers=new Map();let time=1000,n=0,layer=false,region=1,observer,surrender;
- const calls={updates:[],show:0,reading:0,suspend:0,dispose:0,confirm:[],register:0,stop:0};
+ const calls={terminations:[],updates:[],show:0,reading:0,suspend:0,dispose:0,confirm:[],register:0,stop:0};
  const win={addEventListener:(k,fn)=>{if(!listeners.has(k))listeners.set(k,new Set());listeners.get(k).add(fn);},removeEventListener:(k,fn)=>listeners.get(k)?.delete(fn),MutationObserver:class{constructor(fn){observer=fn;}observe(){}disconnect(){}}};
  const slot={isConnected:true,children:[],append(b){this.children.push(b);b.parent=this;}};
  const doc={defaultView:win,location:{href:'https://chatgpt.com/'},body:{},createElement:()=>({dataset:{},events:{},setAttribute(k,v){this[k]=v;},addEventListener(k,fn){this.events[k]=fn;},remove(){if(this.parent)this.parent.children=this.parent.children.filter(x=>x!==this);}})};
@@ -15,7 +15,7 @@ function fixture(){
  const adapter={updateBinding:next=>{calls.updates.push(next);return true;},start:async()=>({binding}),stop:()=>{calls.stop++;},inspect:()=>({ok:true,regionEpoch:region,navigationSlot:slot}),hasNativeLayer:()=>layer};
  const surface={mount:async(c,i,o)=>(surrender=o.onSurrender,{id:'mount',documentToken:'token',regionEpoch:region}),frames:()=>frames,showWorkspace:()=>{calls.show++;},showReading:()=>{calls.reading++;},suspend:()=>{calls.suspend++;},dispose:()=>{calls.dispose++;}};
  const bridge={registerMount:async()=>{calls.register++;return {ok:true};},confirmParent:async value=>{calls.confirm.push(value);return {ok:true,grant:{id:`grant_${value.role}`,mountId:'mount',role:value.role,parentDocumentId:'parent',uiDocumentId:`ui_${value.role}`,scopeGrantId:'scope',expiresAt:new Date(21000).toISOString()}};}};
- const controller=createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://extension',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++n;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
+ const controller=createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://extension',onTerminated:(reason,presentation)=>calls.terminations.push({reason,presentation}),now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++n;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
  const message=(role='workspace',patch={})=>{const event={source:frames.find(x=>x.role===role).frame.contentWindow,origin:'chrome-extension://extension',data:{type:'VAIWL_UI_JOIN',role,nonce:`nonce_${role}`},...patch};for(const fn of listeners.get('message')??[])fn(event);};
  const both=async()=>{message();message('sidebar');await drain();};
  return {renewAck:()=>({ok:true,binding:{...binding,expiresAt:new Date(time+20000).toISOString()},grants:['workspace','sidebar'].map(role=>({id:`grant_${role}`,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:`ui_${role}`,scopeGrantId:'scope',expiresAt:new Date(time+20000).toISOString()}))}),surrender:event=>surrender?.(event),pagehide:()=>{for(const fn of listeners.get('pagehide')??[])fn();},controller,bridge,adapter,surface,doc,slot,frames,binding,calls,message,both,change:()=>observer?.(),layer:value=>{layer=value;},region:()=>{region++;},tick:ms=>{time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
@@ -143,4 +143,12 @@ test('native boundary refusal preserves reading mode and its unique return contr
  const f=fixture();await f.controller.start({});await f.both();f.controller.showReading();const button=f.slot.children[0];
  f.surface.showWorkspace=()=>false;assert.equal(f.controller.showWorkspace(),false);assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.slot.children.length,1);assert.equal(f.slot.children[0],button);
  f.surface.showWorkspace=()=>true;assert.equal(f.controller.showWorkspace(),true);assert.equal(f.controller.presentationMode(),'workspace');assert.equal(f.slot.children.length,0);f.controller.stop();
+});
+
+
+test('native surrender records reading for recovery even if authority expires before toggle',async()=>{
+ const f=fixture();await f.controller.start({});await f.both();assert.equal(f.controller.presentationMode(),'workspace');
+ f.binding.expiresAt=new Date(0).toISOString();f.surrender({reason:'native-change'});
+ assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.slot.children.length,0,'expired grant cannot create a return control');
+ f.controller.stop('ui-grant-expired');assert.deepEqual(f.calls.terminations.at(-1),{reason:'ui-grant-expired',presentation:{mode:'reading'}});
 });
