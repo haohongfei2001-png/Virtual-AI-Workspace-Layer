@@ -36,7 +36,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:(scope,request)=>observations.gate(scope,request)??ackOwner?.gate(scope,request),clock:()=>new Date(now()).toISOString()}):null;
  const continuations=nativeRepository&&typeof freeEvidenceRepository?.applyContinuation==='function'?createHostContinuationOwner({nativeRepository,evidenceRepository:freeEvidenceRepository,profileFor:continuationProfileFor}):null;
  if(ackProfile&&nativeRepository&&continuations)ackOwner=createHostSendAckOwner({nativeRepository:()=>nativeRepository,profileFor:continuationProfileFor,now});
- sendCandidates=currentMetadata?createHostSendCandidates({observations,reader:currentMetadata,enabled:sendCandidatesEnabled,now,onAcknowledged:ackOwner?async input=>{
+ sendCandidates=currentMetadata?createHostSendCandidates({observations,reader:currentMetadata,enabled:sendCandidatesEnabled,now,schedule,cancel,onAcknowledged:ackOwner?async input=>{
   await ackOwner.consume(input);input.guard();
   const guard=()=>{try{input.guard();return true;}catch{return false;}};
   const drained=await continuations.drain({scope:input.context.scope,guard,signal:input.context.signal,profileId:ackProfile.id,profileVersion:ackProfile.revision});

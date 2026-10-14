@@ -40,17 +40,16 @@ try{
  // Explicit offline reconstruction controls, not a live native write or ACK.
  server.appendConversationMetadata(C,'fixture_appended');await page.locator('#reading').evaluate(root=>{const n=document.createElement('div');n.dataset.messageId='fixture_appended';root.append(n);});
  await wait(()=>worker.evaluate(()=>candidates.length===1));const correlated=await worker.evaluate(()=>candidates[0]);assert.equal(correlated.stage,'correlated');assert.equal(correlated.messageId,'fixture_appended');assert.equal(correlated.conversationId,C);assert.equal(correlated.operationId,null);assert(!/sentAt|actorVerified|native-ack|SYNTHETIC_BODY/.test(JSON.stringify(correlated)));assert.deepEqual(await worker.evaluate(()=>dump()),before);report.results.push({name:'real-click-plus-explicit-fixture-metadata-and-DOM-append-correlates-without-ACK-or-eight-store-write',status:'PASS',fixtureMutation:'test process append metadata plus DOM ID; no real message sent'});
- // A subsequent explicit observation exercises bounded readback retry. The
+ // Owner-scheduled bounded wakeup exercises delayed readback without a new DOM change. The
  // test process sets only offline HTTP acceptance, never a DOM ACK attribute.
  server.acceptConversationMetadata(C,'fixture_appended');
  const appendedProof=await worker.evaluate(()=>proofs.at(-1).id);
- await page.waitForTimeout(1100);
- await worker.evaluate(id=>service.sendCandidates.observe(id),appendedProof);
+ await wait(()=>worker.evaluate(async id=>Object.keys((await ackState(id)).evidence.hints).length===1,appendedProof));
  const ack=await worker.evaluate(id=>ackState(id),appendedProof);
  assert.equal(ack.pending.length,0);assert.equal(Object.keys(ack.evidence.hints).length,1);
  const hint=Object.values(ack.evidence.hints)[0];assert.equal(hint.messageId,'fixture_appended');assert.equal(hint.hintType,'observed-self-send');assert.equal(hint.ackWitness.profileId,'offline_ack');assert(!/SYNTHETIC_BODY|accessToken/.test(JSON.stringify(ack)));
  const afterAck=await worker.evaluate(()=>dump());await worker.evaluate(id=>service.sendCandidates.observe(id),appendedProof);assert.deepEqual(await worker.evaluate(()=>dump()),afterAck);
- report.results.push({name:'explicit-offline-accepted-readback-commits-once-through-real-IDB-and-drains',status:'PASS',trigger:'test-only subsequent explicit observation; automatic re-observation not certified'});
+ report.results.push({name:'automatic-offline-accepted-readback-commits-once-through-real-IDB-and-drains',status:'PASS',trigger:'owner finite wakeup; no new DOM mutation or test observe call before commit'});
  const bodyLogs=await worker.evaluate(()=>logs.filter(r=>['current-object','send-candidate'].includes(r.kind)&&r.state==='accepted'));assert(bodyLogs.filter(r=>r.kind==='send-candidate').every(r=>r.nativeCalls===0));report.results.push({name:'body-and-intent-claims-never-invoke-native-writer',status:'PASS'});
  report.fixture=server.manifest;report.requests=server.snapshot().requests;
  assert.deepEqual(report.errors,[]);report.status='PASS';

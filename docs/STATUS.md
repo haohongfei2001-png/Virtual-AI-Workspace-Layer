@@ -1547,3 +1547,10 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 新增 send-ack-mv3-browser，临时 test-only MV3 包使用正式 adapter、binding composition、provider、reader、ACK owner、NativeRepository 与 continuation drainer。真实原生形状提交按钮点击+DOM新消息ID只生成候选；明确接受状态由测试进程设置在本地 HTTP fixture，非页面 ACK 属性。
 - headless Chrome **5/5 PASS/sourceChangedDuringRun=false**（free-round148-ack-mv3.json）：默认 disabled 无 detail 请求，只有意图不写库，未确认新增消息不写库，后续明确 ACK 在真实 IDB 产生恰一条 observed-self-send 提示并清 pending，重复观察不再改库。临时独立 profile，无私人 ChatGPT/真实原生写入。fixture 控制回归 **25/25 PASS**（free-round148-fixture.log）。
 - 重要边界：延迟确认由测试主动调用后续 observation；生产页面没有新 DOM 变化时的自动校准触发尚未认证。不是正式安装包完整验收，也不证明真实 ACK profile 语义。下一步核对并补齐有界自动校准触发、首发跨 SPA 等剩余路径；Free NOT_RELEASE_READY。
+
+## Round149：待 ACK 自动有限唤醒与最终 MV3 验证（接 9dccb5c）
+
+- binding composition 为 ACK 关联器注入既有 scheduler/cancel。仅当前有效 proof 下的 pending ACK 安排一次性唤醒，每项最多两次额外唤醒、三次总读取，间隔至少1秒且仍受原意图30秒窗口约束。无候选/只有意图/默认关闭时不安排；stop 取消，证明变化/撤权不再 fetch。没有长期周期轮询。
+- 增加独立 wakeup 计数，避免墙上时钟冻结导致重复安排；冻结时钟、次数耗尽、停止、撤权、证明替换等定向测试通过。原外部显式观察校准仍保留，各自不能重置候选原窗口和总读取预算。
+- 最终隔离 headless MV3 **5/5 PASS/sourceChangedDuringRun=false**（free-round149-auto-ack-final.json）：无新 DOM 变化、无测试 observe 调用即可自动读回明确 ACK、真实 IDB 写入、续接清理；重复观察无再写。仍是显式离线 profile/test-only 包，不代表真实 ChatGPT ACK 语义验收。
+- 最终完整 Node **3152/3152 PASS**（free-round149-node-final.log.gz）；中途修补唤醒上限前的3151结果不作最终证据。首页首发跨 SPA、真实 profile/账号 G/U、100k/4x 和其他既有缺口仍待完成；Free NOT_RELEASE_READY。
