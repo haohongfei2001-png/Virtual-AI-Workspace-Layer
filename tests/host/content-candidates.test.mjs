@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {createContentCandidates} from '../../src/host/content-candidates.mjs';
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};
-function fixture(){let time=1000,live=true,reading=true,serial=0,read=null,dispatch=null;const calls=[],issued=new WeakMap();let proposals=[];const adapter={readLoaded:async()=>read?read():proposals,planNavigation:target=>{const plan={mode:'native-control',planRevision:++serial};issued.set(plan,'key'+serial);return plan;},planKey:plan=>issued.get(plan),dispatchNative:async command=>{calls.push(command);assert.equal(owner.authorize(command),true);owner.beforeDispatch();return dispatch?dispatch(command):{state:'dispatched'};}};const owner=createContentCandidates({adapter,current:()=>live,showReading:()=>reading,now:()=>time});const project=(key='r1',name='Same')=>({entity:'project',renderKey:key,nativeTitle:name,titleState:'observed',target:{kind:'live-control',control:{id:key}}});const setRows=rows=>{proposals=[{kind:'surface-delta',payload:{candidates:rows}}];};setRows([project()]);const dto=row=>({candidate:{...row},actionId:'action1',uiGrantId:'grant1',mountId:'mount1',expiresAt:new Date(time+6000).toISOString()});return {owner,adapter,calls,project,setRows,dto,clock:n=>{time=n;},invalidate:()=>{live=false;},reading:v=>{reading=v;},read:f=>{read=f;},dispatch:f=>{dispatch=f;}};}
+function fixture(){let time=1000,live=true,reading=true,serial=0,read=null,dispatch=null;const calls=[],issued=new WeakMap();let proposals=[];const adapter={readLoaded:async()=>read?read():proposals,planNavigation:target=>{const plan={mode:'native-control',planRevision:++serial};issued.set(plan,'key'+serial);return plan;},planKey:plan=>issued.get(plan),dispatchNative:async command=>{calls.push(command);assert.equal(owner.authorize(command),true);owner.beforeDispatch();return dispatch?dispatch(command):{state:'dispatched'};}};const owner=createContentCandidates({adapter,current:()=>live,showReading:()=>reading,now:()=>time});const project=(key='r1',name='Same')=>({entity:'project',renderKey:key,nativeTitle:name,titleState:'observed',target:{kind:'live-control',control:{id:key}}});const setRows=rows=>{proposals=Array.from({length:Math.ceil(rows.length/256)},(_,i)=>({kind:'surface-delta',payload:{candidates:rows.slice(i*256,(i+1)*256)}}));};setRows([project()]);const dto=row=>({candidate:{...row},actionId:'action1',uiGrantId:'grant1',mountId:'mount1',expiresAt:new Date(time+6000).toISOString()});return {owner,adapter,calls,project,setRows,dto,clock:n=>{time=n;},invalidate:()=>{live=false;},reading:v=>{reading=v;},read:f=>{read=f;},dispatch:f=>{dispatch=f;}};}
 test('only previously issued local candidate can activate; names do not choose controls',async()=>{const f=fixture();assert.deepEqual(await f.owner.activate(f.dto({renderKey:'r1',targetKey:'key1',planRevision:1})),{state:'blocked'});f.setRows([f.project('a'),f.project('b')]);const rows=await f.owner.list();assert.equal(rows.length,2);assert.equal(rows[0].nativeTitle,rows[1].nativeTitle);assert.notEqual(rows[0].targetKey,rows[1].targetKey);assert.equal((await f.owner.activate(f.dto(rows[1]))).state,'dispatched');assert.equal(f.calls[0].targetKey,rows[1].targetKey);f.owner.stop();});
 test('two frames listing the same render key retain both issued target plans',async()=>{const f=fixture(),first=(await f.owner.list())[0],second=(await f.owner.list())[0];assert.notEqual(first.targetKey,second.targetKey);assert.equal((await f.owner.activate(f.dto(first))).state,'dispatched');assert.equal((await f.owner.activate({...f.dto(second),actionId:'action2'})).state,'dispatched');});
 test('empty and non-project proposals do not mint actionable entries',async()=>{const f=fixture();f.setRows([]);assert.deepEqual(await f.owner.list(),[]);f.setRows([{...f.project(),entity:'conversation'},{...f.project(),target:{kind:'resolved'}}]);assert.deepEqual(await f.owner.list(),[]);});
@@ -14,12 +14,12 @@ test('late list after route invalidation or stop cannot issue plans',async()=>{f
 test('issued plan ledger is bounded to 256 without replacing same-render-key siblings prematurely',async()=>{const f=fixture(),first=(await f.owner.list())[0];let last;for(let i=0;i<256;i++)last=(await f.owner.list())[0];assert.equal((await f.owner.activate(f.dto(first))).state,'blocked');assert.equal((await f.owner.activate(f.dto(last))).state,'dispatched');});
 test('unavailable plans remain displayable but never authorize activation',async()=>{const f=fixture();f.adapter.planNavigation=()=>({mode:'unavailable',reason:'input-risk-unresolved'});const row=(await f.owner.list())[0];assert.equal(row.available,false);assert.equal(row.targetKey,null);assert.equal((await f.owner.activate(f.dto(row))).state,'blocked');assert.equal(f.calls.length,0);});
 
-for(const total of [33,65,256])test(`pagination reaches all ${total} same-name controls in native order and issues only page plans`,async()=>{
+for(const total of [33,65,256,604,1000])test(`pagination reaches all ${total} same-name controls in native order and issues only page plans`,async()=>{
  const f=fixture();f.setRows(Array.from({length:total},(_,i)=>f.project(`r${i}`,'Same')));
  let issued=0;const original=f.adapter.planNavigation;f.adapter.planNavigation=target=>{issued++;return original(target);};
  const seen=[];let offset=0;do{const page=await f.owner.listPage(offset);assert.equal(page.total,total);assert.equal(page.offset,offset);assert.equal(page.items.length,Math.min(32,total-offset));assert.equal(issued,seen.length+page.items.length);seen.push(...page.items.map(row=>row.renderKey));offset=page.nextOffset;}while(offset!==null);
  assert.deepEqual(seen,Array.from({length:total},(_,i)=>`r${i}`));
- const last=await f.owner.listPage(224),expected=Math.floor((total-1)/32)*32;assert.equal(last.offset,expected);assert.equal(last.nextOffset,null);assert.equal(last.items.at(-1).renderKey,`r${total-1}`);
+ const last=await f.owner.listPage(1024),expected=Math.floor((total-1)/32)*32;assert.equal(last.offset,expected);assert.equal(last.nextOffset,null);assert.equal(last.items.at(-1).renderKey,`r${total-1}`);
 });
 test('fresh shrinking inventory clamps page offset and empty inventory returns page zero',async()=>{
  const f=fixture();f.setRows(Array.from({length:256},(_,i)=>f.project(`r${i}`)));assert.equal((await f.owner.listPage(224)).offset,224);
@@ -28,12 +28,12 @@ test('fresh shrinking inventory clamps page offset and empty inventory returns p
 });
 test('offset validation precedes adapter reads',async()=>{
  const f=fixture();let reads=0;f.read(()=>{reads++;return [];});
- for(const offset of [-32,1,31,33,225,256,1.5,NaN,Infinity,null,'32',{},true])await assert.rejects(f.owner.listPage(offset),/invalid-candidate-offset/);
+ for(const offset of [-32,1,31,33,225,Number.MAX_SAFE_INTEGER+1,1.5,NaN,Infinity,null,'32',{},true])await assert.rejects(f.owner.listPage(offset),/invalid-candidate-offset/);
  assert.equal(reads,0);assert.deepEqual(await f.owner.listPage(),{items:[],total:0,offset:0,nextOffset:null});
 });
-test('duplicate render keys or oversized inventory reject before any page plans are minted',async()=>{
+test('duplicate render keys or oversized packet reject before any page plans are minted',async()=>{
  for(const mode of ['duplicate','oversized']){const f=fixture();let plans=0;f.adapter.planNavigation=()=>{plans++;throw Error('should-not-plan');};
- const rows=Array.from({length:mode==='oversized'?257:65},(_,i)=>f.project(`r${i}`));if(mode==='duplicate')rows[64]=f.project('r0');f.setRows(rows);
+ const rows=Array.from({length:mode==='oversized'?257:65},(_,i)=>f.project(`r${i}`));if(mode==='duplicate')rows[64]=f.project('r0');f.read(()=>[{kind:'surface-delta',payload:{candidates:rows}}]);
  await assert.rejects(f.owner.listPage(0),/invalid-content-candidates/);assert.equal(plans,0);}
 });
 test('duplicate keys across surface proposals reject and non-controls do not affect total',async()=>{
@@ -47,7 +47,7 @@ test('dual-frame different pages retain old issued plans without authorizing uni
  f.invalidate();assert.equal((await f.owner.activate(f.dto(first.items[0]))).state,'blocked');await assert.rejects(f.owner.listPage(32),/stale-content/);
 });
 
-test('257 observed candidates still reject when one candidate is already upgraded',async()=>{
+test('257 candidates in one packet still reject when one candidate is already upgraded',async()=>{
  let plans=0;const rows=Array.from({length:257},(_,i)=>({entity:'project',renderKey:`r${i}`,target:{kind:'live-control'}}));const owner=createContentCandidates({adapter:{readLoaded:async()=>[{kind:'surface-delta',payload:{candidates:rows}}],planNavigation:()=>{plans++;throw Error('must-not-mint');}},current:()=>true,showReading:()=>true,isUpgraded:r=>r.renderKey==='r0'});await assert.rejects(owner.listPage(),/invalid-content-candidates/);assert.equal(plans,0);owner.stop();
 });
 

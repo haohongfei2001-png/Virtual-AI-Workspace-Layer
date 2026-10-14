@@ -27,7 +27,7 @@ export function createHostCandidateService({ui,bridge,elapsedNow=()=>performance
   if(stopped)return failure();let m;try{m=structuredClone(input);sender=structuredClone(sender);}catch{return failure();}
   const listing=m?.type==='HOST_UI_CANDIDATES';
   const requestedOffset=listing&&Object.hasOwn(m,'offset')?m.offset:0;
-  if(listing&&(!Number.isSafeInteger(requestedOffset)||requestedOffset<0||requestedOffset>224||requestedOffset%32!==0))return failure();
+  if(listing&&(!Number.isSafeInteger(requestedOffset)||requestedOffset<0||requestedOffset%32!==0))return failure();
   if(!exactHostRecord(m,['v','type','grantId','mountId',...(listing?(Object.hasOwn(m,'offset')?['offset']:[]):['renderKey','actionId',...(Object.hasOwn(m,'presentation')?['presentation']:[])])])||m.v!==1||!tokenOK(m.grantId)||!tokenOK(m.mountId)||!listing&&(m.type!=='HOST_UI_ACTIVATE_CANDIDATE'||!renderKeyOK(m.renderKey)||!tokenOK(m.actionId)))return failure();
   let presentation=null;try{if(!listing&&Object.hasOwn(m,'presentation'))presentation=validateCandidatePresentation(m.presentation);}catch{return failure();}
   const a={active:true,started:elapsedNow(),order:++order};attempts.add(a);
@@ -44,7 +44,7 @@ export function createHostCandidateService({ui,bridge,elapsedNow=()=>performance
     let page,values;
     if(Array.isArray(result)){if(requestedOffset!==0||result.length>32)throw Error('invalid-candidate-list');values=result;page={offset:0,total:result.length,nextOffset:null};}
     else{
-     if(!exactHostRecord(result,['items','total','offset','nextOffset',...(Object.hasOwn(result,'migration')?['migration']:[])])||!Array.isArray(result.items)||!Number.isSafeInteger(result.total)||result.total<0||result.total>256)throw Error('invalid-candidate-page');
+     if(!exactHostRecord(result,['items','total','offset','nextOffset',...(Object.hasOwn(result,'migration')?['migration']:[])])||!Array.isArray(result.items)||!Number.isSafeInteger(result.total)||result.total<0)throw Error('invalid-candidate-page');
      const offset=Math.min(requestedOffset,result.total?Math.floor((result.total-1)/32)*32:0),count=Math.min(32,result.total-offset),nextOffset=offset+count<result.total?offset+32:null;
      if(result.offset!==offset||result.nextOffset!==nextOffset||result.items.length!==count)throw Error('invalid-candidate-page');
      values=result.items;page={offset,total:result.total,nextOffset};

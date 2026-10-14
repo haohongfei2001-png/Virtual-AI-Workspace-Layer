@@ -17,19 +17,15 @@ try{context=await chromium.launchPersistentContext(join(dir,'profile'),{headless
  // These are not real account Projects, and none is activated or assigned a fake grant/ID.
  const paginationActionsBefore=server.snapshot().actions['open-project-button']??0;
  report.paginationFixtureGeometry=await page.evaluate(()=>{const section=document.querySelector('aside section[aria-label="Projects"]'),r=section.getBoundingClientRect();globalThis.paginationOriginalStyle=section.getAttribute('style');section.style.height=`${r.height}px`;section.style.flex=`0 0 ${r.height}px`;section.style.overflow='auto';section.style.minHeight='0';return {originalHeight:r.height,originalStyle:paginationOriginalStyle,setup:'Native fixture list retains original height and scrolls internally; mount geometry safety unchanged'};});
- await page.evaluate(()=>{const section=document.querySelector('aside section[aria-label="Projects"]');for(let i=1;i<=64;i++){const b=document.createElement('button');b.type='button';b.textContent=`Candidate ${i}`;b.setAttribute('data-pagination-probe',String(i));section.append(b);}});
+ await page.evaluate(()=>{const section=document.querySelector('aside section[aria-label="Projects"]');for(let i=1;i<=604;i++){const b=document.createElement('button');b.type='button';b.textContent=`Candidate ${i}`;b.setAttribute('data-pagination-probe',String(i));section.append(b);}});
  const panel=frame.locator('[data-vaiwl-candidates]');
- await panel.getByText('已观察的待识别项目 1–32 / 65',{exact:true}).waitFor({timeout:15000});
+ await panel.getByText('已观察的待识别项目 1–32 / 605',{exact:true}).waitFor({timeout:15000});
  assert.equal(await panel.locator('button[data-candidate-key]').count(),32);
  assert.equal(await panel.getByRole('button',{name:'上一页',exact:true}).isDisabled(),true);
- await panel.getByRole('button',{name:'下一页',exact:true}).click();
- await panel.getByText('已观察的待识别项目 33–64 / 65',{exact:true}).waitFor();
- await panel.getByRole('button',{name:'下一页',exact:true}).click();
- await panel.getByText('已观察的待识别项目 65–65 / 65',{exact:true}).waitFor();
- assert.equal(await panel.getByRole('button',{name:'Candidate 64',exact:true}).isVisible(),true);
+ for(let offset=32;offset<605;offset+=32){await panel.getByRole('button',{name:'下一页',exact:true}).click();await panel.getByText(`已观察的待识别项目 ${offset+1}–${Math.min(offset+32,605)} / 605`,{exact:true}).waitFor();assert.equal(await panel.locator('button[data-candidate-key]').count(),Math.min(32,605-offset));}
+ assert.equal(await panel.getByRole('button',{name:'Candidate 604',exact:true}).isVisible(),true);
  assert.equal(await panel.getByRole('button',{name:'下一页',exact:true}).isDisabled(),true);
- await panel.getByRole('button',{name:'上一页',exact:true}).click();
- await panel.getByText('已观察的待识别项目 33–64 / 65',{exact:true}).waitFor();
+ for(let offset=544;offset>=32;offset-=32){await panel.getByRole('button',{name:'上一页',exact:true}).click();await panel.getByText(`已观察的待识别项目 ${offset+1}–${offset+32} / 605`,{exact:true}).waitFor();}
  // Preserve an exact candidate's focus and local list scroll through natural observation.
  const focusedCandidate=panel.getByRole('button',{name:'Candidate 40',exact:true});
  await focusedCandidate.focus();
@@ -40,7 +36,7 @@ try{context=await chromium.launchPersistentContext(join(dir,'profile'),{headless
  await panel.getByRole('button',{name:'Candidate 41 updated',exact:true}).waitFor({timeout:15000});
  const preserved=await panel.locator(`button[data-candidate-key="${focusedKey}"]`).evaluate(n=>({focused:n.getRootNode().activeElement===n,scroll:n.closest('ul').scrollTop,expectedKey:n.getAttribute('data-candidate-key'),activeKey:n.getRootNode().activeElement?.getAttribute('data-candidate-key'),documentFocus:document.hasFocus()}));
  report.candidateRefreshFocus=preserved;assert.equal(preserved.focused,true);assert(Math.abs(preserved.scroll-candidateScroll)<=1);
- assert.equal(await panel.getByText('已观察的待识别项目 33–64 / 65',{exact:true}).count(),1);
+ assert.equal(await panel.getByText('已观察的待识别项目 33–64 / 605',{exact:true}).count(),1);
  // Focus the still-visible sibling frame, leaving the workspace's stale activeElement.
  const sidebarFrame=page.frames().find(f=>f.url()===`chrome-extension://${id}/sidebar.html`);assert(sidebarFrame);
  const siblingTarget=sidebarFrame.locator('[data-vaiwl-candidates] button[data-candidate-key]').first();await siblingTarget.focus();
@@ -66,7 +62,7 @@ try{context=await chromium.launchPersistentContext(join(dir,'profile'),{headless
  assert.equal(await panel.locator('button[data-candidate-key]').count(),1);
  assert.equal(await panel.getByRole('button',{name:'下一页',exact:true}).count(),0);
  assert.equal(server.snapshot().actions['open-project-button']??0,paginationActionsBefore);
- report.results.push({name:'fixture-dom-only-65-candidates-pages-0-32-64-back-refresh-preserves-offset-shrink-clamps-without-activation',status:'PASS',fixtureOnlyAdditionalButtons:64,realAccountProjectCount:'NOT_ASSERTED'});
+ report.results.push({name:'fixture-dom-only-605-candidates-through-tail-and-back-refresh-preserves-offset-shrink-clamps-without-activation',status:'PASS',fixtureOnlyAdditionalButtons:604,realAccountProjectCount:'NOT_ASSERTED'});
  // A second same-name idless DOM control is intentionally inert; only the
  // original native fixture control is activated. Identity assertions use keys/nodes.
  if(offpage)await page.evaluate(()=>{const section=document.querySelector('aside section[aria-label="Projects"]'),height=section.getBoundingClientRect().height;section.style.height=height+'px';section.style.flex='0 0 '+height+'px';section.style.overflow='auto';section.style.minHeight='0';for(let i=1;i<=33;i++){const a=document.createElement('a');a.href='/g/g-p-'+i.toString(16).padStart(32,'0')+'/project';a.textContent='Research';a.setAttribute('data-offpage-project','');section.append(a);}});

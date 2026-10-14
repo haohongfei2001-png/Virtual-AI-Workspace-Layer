@@ -2,7 +2,7 @@ import {exactHostRecord} from './contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Display metadata only. Neither schema establishes scope, identity or authority. */
 export function validateCandidatePresentation(value){
- if(!exactHostRecord(value,['offset','scrollTop','focused'])||!Number.isSafeInteger(value.offset)||value.offset<0||value.offset>224||value.offset%32!==0||!Number.isFinite(value.scrollTop)||value.scrollTop<0||value.scrollTop>1e7||typeof value.focused!=='boolean')throw Error('invalid-candidate-presentation');
+ if(!exactHostRecord(value,['offset','scrollTop','focused'])||!Number.isSafeInteger(value.offset)||value.offset<0||value.offset%32!==0||!Number.isFinite(value.scrollTop)||value.scrollTop<0||value.scrollTop>1e7||typeof value.focused!=='boolean')throw Error('invalid-candidate-presentation');
  return Object.freeze({offset:value.offset,scrollTop:value.scrollTop,focused:value.focused});
 }
 export function validateCandidateMigration(value){

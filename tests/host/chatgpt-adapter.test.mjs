@@ -150,3 +150,14 @@ test('continuous assistant text mutations do not starve loaded directory pages o
  const before=f.emitted.length;for(let i=0;i<20;i++)f.observer().cb([{type:'characterData',target:textNode}]);for(let i=0;i<100;i++)await tick();assert.equal(f.emitted.length,before);
  const message=f.makeMessage('M2');f.reading.children.push(message);f.observer().cb([{type:'childList',target:f.reading,addedNodes:[message],removedNodes:[]}]);await settle();assert(f.emitted.some(p=>p.kind==='current-object'&&p.payload.messageIds.includes('M2')));f.adapter.stop();
 });
+
+test('content candidate listing reaches native IDless tail through bounded adapter pages',async()=>{
+ const {createContentCandidates}=await import('../../src/host/content-candidates.mjs');let clicks=0;const f=fixture({inputRisk:()=>({state:'clear',flags:[]}),authorize:()=>true}),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};
+ for(let i=0;i<605;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null,click:()=>{assert.equal(i,604);clicks++;}});
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();const owner=createContentCandidates({adapter:f.adapter,current:()=>true,showReading:()=>true,now:()=>0});
+ const tail=await owner.listPage(576);assert.equal(tail.total,605);assert.equal(tail.items.length,29);assert.equal(tail.nextOffset,null);assert.equal(tail.items.at(-1).nativeTitle,'Candidate 604');
+ const result=await owner.activate({candidate:tail.items.at(-1),actionId:'tail-action',uiGrantId:'grant',mountId:'mount',expiresAt:new Date(6000).toISOString()});assert.equal(result.state,'dispatched');assert.equal(clicks,1);owner.stop();f.adapter.stop();
+});
+test('loaded iterator rejects stop, abort and elapsed budget between pages',async()=>{
+ for(const mode of ['stop','abort','deadline']){let elapsed=0;const f=fixture({elapsedNow:()=>elapsed}),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};for(let i=0;i<300;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null});f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();const controller=new AbortController(),iterator=f.adapter.loadedPages(controller.signal);assert.equal((await iterator.next()).done,false);if(mode==='stop')f.adapter.stop();if(mode==='abort')controller.abort();if(mode==='deadline')elapsed=6000;await assert.rejects(iterator.next(),/stale-host-loaded-read/);f.adapter.stop();}
+});
