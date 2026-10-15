@@ -1,0 +1,85 @@
+✔ private receipt needs actual successful native request and matching current body; minimal listener permissions (9.797933ms)
+✔ no receipt from subframe (0.666355ms)
+✔ no receipt from worker (1.725774ms)
+✔ no receipt from extension (0.492813ms)
+✔ no receipt from prerender (0.491682ms)
+✔ no receipt from missingDocument (0.485172ms)
+✔ no receipt from post (0.449218ms)
+✔ no receipt from list (0.542619ms)
+✔ no receipt from query (0.497761ms)
+✔ no receipt from foreign (0.519894ms)
+✔ no receipt from prefetch (0.359743ms)
+✔ no receipt from duplicateHeader (0.378151ms)
+✔ no receipt from missingHeader (0.353363ms)
+✔ no receipt from invalidHeader (0.361556ms)
+✔ no receipt from neighborObject (0.382888ms)
+✔ completion rejects failed (0.620215ms)
+✔ completion rejects cached (0.47041ms)
+✔ completion rejects wrongDocument (0.385933ms)
+✔ completion rejects wrongUrl (0.419283ms)
+✔ onErrorOccurred cannot turn into later success (0.369447ms)
+✔ onBeforeRedirect cannot turn into later success (0.338941ms)
+✔ fresh association rejects route (0.904465ms)
+✔ fresh association rejects document (0.521937ms)
+✔ fresh association rejects body (0.626255ms)
+✔ fresh association rejects challenge (0.462448ms)
+✔ fresh association rejects expiry (0.608718ms)
+✔ fresh association rejects rollback (0.659925ms)
+✔ fresh association rejects elapsed (0.512142ms)
+✔ fresh association rejects invalidate (0.62318ms)
+✔ fresh association rejects stop (0.581768ms)
+✔ parallel different contexts poison both old completions; fresh serial request may recover (0.599484ms)
+✔ actual C2 receipt joins authenticated roster, second organization selected without first-account guessing (2.673664ms)
+✔ roster alone and fabricated serialized receipt never select C2 (0.449087ms)
+✔ incognito is checked from trusted tabs, absent browser event field is normal (1.919045ms)
+✔ switch header revokes old receipt synchronously before async getFrame (0.597461ms)
+✔ parallel conflict survives one request completing before other getFrame (0.475477ms)
+✔ verify abort settles pending browser read and late frame cannot restore receipt authority (0.651392ms)
+✔ elapsed rollback permanently poisons a receipt even after wall clock recovers (0.536059ms)
+✔ scope six-second budget covers unresolved C2 association abort (0.881239ms)
+✔ scope six-second budget covers unresolved C2 association deadline (0.717983ms)
+✔ same request ID cannot be reused after onBeforeRedirect (0.375106ms)
+✔ same request ID cannot be reused after onErrorOccurred (0.29817ms)
+✔ same request ID cannot be reused after onCompleted (0.433234ms)
+✔ capacity rejects new grants but never suppresses synchronous switch revocation: closed (0.826617ms)
+✔ capacity rejects new grants but never suppresses synchronous switch revocation: pending (0.410279ms)
+✔ full pending capacity poisons first request when another context cannot enter queue (0.460595ms)
+✖ trusted same-document history keeps only the genuine new-route first-prepare request while revoking old receipt (1.569127ms)
+✔ history preservation rejects missingDocument (1.169945ms)
+✔ history preservation rejects otherDocument (0.452432ms)
+✔ history preservation rejects inactive (0.389257ms)
+✔ history preservation rejects subframe (0.466594ms)
+✔ history preservation rejects wrongFrame (0.476989ms)
+✔ history preservation rejects otherRoute (0.363408ms)
+✔ history preservation rejects foreign (0.331961ms)
+✔ history preservation rejects query (0.297549ms)
+✔ preserved request keeps its deadline and cannot survive a second history invalidation (1.993117ms)
+ℹ tests 56
+ℹ suites 0
+ℹ pass 55
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 129.73639
+
+✖ failing tests:
+
+test at tests/host/browser-request-context.test.mjs:50:1
+✖ trusted same-document history keeps only the genuine new-route first-prepare request while revoking old receipt (1.569127ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - '22222222-2222-4222-8222-222222222222'
+  
+      at TestContext.<anonymous> (file:///tmp/vaiwl-free-takeover/tests/host/browser-request-context.test.mjs:55:102)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: '22222222-2222-4222-8222-222222222222',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

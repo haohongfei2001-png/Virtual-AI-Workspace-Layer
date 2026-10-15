@@ -131,3 +131,10 @@ for(const enabled of [true,false])test('packaged static module evaluation regist
  for(const path of ['extension/browser-bootstrap.mjs','src/runtime/host-browser-bootstrap.mjs','src/runtime/browser-request-context.mjs']){assert(info.files[path]);assert(!manifest.web_accessible_resources[0].resources.includes(path),path+' is worker-only');}
  assert.deepEqual(manifest.permissions,enabled?['webNavigation','webRequest']:['webNavigation']);assert.equal(verifyHost(out).status,info.status);globalThis.__hostEvaluatedRuntime.stop();assert(Object.values(f.events).every(e=>e.listeners.size===0));
 });
+
+test('trusted history event revokes tab authorization without losing a genuine new-route pending GET',async t=>{
+ const f=fixture(t);f.start();await f.finish(await f.send());const old=await f.owner.verify(frame);assert(old);const D='22222222-2222-4222-8222-222222222222',url=origin+'/c/'+D;
+ f.chrome.webNavigation.getFrame=async()=>({...browserFrame,url});const next=f.details({requestId:'next',url:origin+'/backend-api/conversation/'+D});f.events.onSendHeaders.emit(next);
+ f.events.onHistoryStateUpdated.emit({tabId:7,frameId:0,documentId:'doc',frameType:'outermost_frame',documentLifecycle:'active',url});assert.equal(f.owner.isCurrent(frame,old),false);assert(f.calls.invalidated.some(x=>x.tabId===7));
+ await f.finish(next);assert.equal((await f.owner.verify({...frame,actualURL:url}))?.conversationId,D);
+});

@@ -15,9 +15,19 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
  const conversation=url=>{try{const u=new URL(url);if(u.origin!==origin||u.username||u.password||u.search||u.hash)return null;return /^\/c\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.exec(u.pathname)?.[1]??null;}catch{return null;}};
  const requestConversation=url=>{try{const u=new URL(url);if(u.origin!==origin||u.username||u.password||u.search||u.hash)return null;return /^\/backend-api\/conversation\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.exec(u.pathname)?.[1]??null;}catch{return null;}};
  const validDetails=d=>active&&Number.isSafeInteger(d?.tabId)&&d.tabId>=0&&d.frameId===0&&tokenOK(d.documentId)&&d.documentLifecycle==='active'&&d.initiator===origin&&d.type==='xmlhttprequest'&&d.method==='GET'&&tokenOK(d.requestId);
- const frameMatches=(frame,entry)=>frame?.documentId===entry.documentId&&frame.frameType==='outermost_frame'&&frame.documentLifecycle==='active'&&conversation(frame.url)===entry.conversationId&&(!entry.actualURL||frame.url===entry.actualURL);
+ const frameMatches=(frame,entry)=>frame?.documentId===entry.documentId&&frame.frameType==='outermost_frame'&&frame.documentLifecycle==='active'&&conversation(frame.url)===entry.conversationId&&(!entry.actualURL||frame.url===entry.actualURL)&&(!entry.historyTargetURL||frame.url===entry.historyTargetURL);
  function drop(document,reason){document.receipt=null;document.epoch=++epoch;document.reason=reason;notify(onInvalidate,{tabId:document.tabId,documentId:document.documentId});}
  function invalidateTab(tabId){for(const [k,d]of documents)if(d.tabId===tabId){drop(d,'navigation');documents.delete(k);}for(const [id,r]of requests)if(r.tabId===tabId)requests.delete(id);}
+ function invalidateHistory(details){
+  const target=conversation(details?.url),valid=details?.frameId===0&&details?.frameType==='outermost_frame'&&details?.documentLifecycle==='active'&&tokenOK(details?.documentId)&&target;
+  const keep=new Set();
+  if(valid)for(const r of requests.values())if(r.tabId===details.tabId&&r.documentId===details.documentId&&r.conversationId===target&&!r.accepted&&r.actualURL===null&&!r.conflicted&&!r.historyRetained&&r.document.receipt&&r.document.receipt.actualURL!==details.url&&clockOK(r,6000))keep.add(r);
+  // History delivery may follow the real new-route GET. Revoke every old grant
+  // now, but do not erase that still-unprepared, independently verified request.
+  // Its original six-second clock and later frame/tab/body checks are unchanged.
+  for(const [k,d]of documents)if(d.tabId===details?.tabId){drop(d,'navigation');if(![...keep].some(r=>r.document===d))documents.delete(k);}
+  for(const [id,r]of requests)if(r.tabId===details?.tabId){if(keep.has(r)){r.historyRetained=true;r.historyTargetURL=details.url;r.epoch=r.document.epoch;}else requests.delete(id);}
+ }
  function cleanup(){for(const [id,r]of closedRequests)if(!clockOK(r,ttl))closedRequests.delete(id);for(const [id,r]of requests)if(!clockOK(r,6000)){requests.delete(id);if(documents.get(key(r))===r.document)drop(r.document,'request-expired');}for(const [k,d]of documents)if(!clockOK(d,ttl)&&!Array.from(requests.values()).some(r=>r.document===d)){drop(d,'context-expired');documents.delete(k);}}
  function send(details){
   if(!validDetails(details))return;
@@ -85,5 +95,5 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
  const listeners=[[webRequest.onSendHeaders,send,['requestHeaders']],[webRequest.onCompleted,complete],[webRequest.onErrorOccurred,fail],[webRequest.onBeforeRedirect,fail]];
  for(const [event,listener,extra]of listeners)extra?event.addListener(listener,filter,extra):event.addListener(listener,filter);
  function stop(){if(!active)return;active=false;for(const [event,listener]of listeners)event.removeListener(listener);requests.clear();closedRequests.clear();documents.clear();}
- return Object.freeze({verify,isCurrent,invalidateTab,stop});
+ return Object.freeze({verify,isCurrent,invalidateTab,invalidateHistory,stop});
 }

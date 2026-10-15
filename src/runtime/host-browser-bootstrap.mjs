@@ -19,7 +19,7 @@ export function createHostBrowserBootstrap({chrome,origin='https://chatgpt.com',
    onInvalidate:details=>dispatch('onContextInvalidate',details),onReady:details=>dispatch('onContextReady',details)}):null;
   const navigate=(details,replacement)=>{
    if(!active||details.frameId!==0||!Number.isSafeInteger(details.tabId))return;
-   contextObserver?.invalidateTab(details.tabId);
+   if(replacement)contextObserver?.invalidateTab(details.tabId);else contextObserver?.invalidateHistory(details);
    dispatch('onNavigation',details,replacement);
   };
   const removed=tabId=>{if(!active)return;contextObserver?.invalidateTab(tabId);dispatch('onRemoved',tabId);};
