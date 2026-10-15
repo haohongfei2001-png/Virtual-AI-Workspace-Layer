@@ -6,28 +6,50 @@ import {J4_SEND_C,J4_MIXED_TITLE} from './fixtures/j4-interruption.mjs';
 const poll=async(read,label)=>{const end=Date.now()+20000;let last;while(Date.now()<end){last=await read();if(last)return last;await new Promise(r=>setTimeout(r,50));}throw Error('J4-joint-timeout:'+label);};
 // Read only the currently attached extension frame. A prior frame's cached grant
 // cannot establish readiness after route replacement or worker restart.
-export async function currentJ4Grant(page,id,scopeKey,{previousGrant=null}={}){
+export async function currentJ4Grant(page,id,scopeKey,{previousGrant=null,expectedCurrentRef=null}={}){
  const url=`chrome-extension://${id}/workspace.html`,frame=page.frames().find(f=>!f.isDetached()&&f.url()===url);
  if(!frame)return null;
  let value;
- try{value=await frame.evaluate(()=>({grant:globalThis.j4Grant??null,scope:globalThis.j4LastScope??null}));}
+ try{value=await frame.evaluate(()=>({grant:globalThis.j4Grant??null,scope:globalThis.j4LastScope??null,currentRef:globalThis.j4LastCurrentRef??null}));}
  catch(error){if(frame.isDetached()||!page.frames().includes(frame)||/Execution context was destroyed/.test(error.message))return null;throw error;}
- if(frame.isDetached()||frame.url()!==url||!page.frames().includes(frame)||typeof value?.grant!=='string'||!value.grant||value.grant===previousGrant||value.scope!==scopeKey)return null;
+ if(frame.isDetached()||frame.url()!==url||!page.frames().includes(frame)||typeof value?.grant!=='string'||!value.grant||value.grant===previousGrant||value.scope!==scopeKey||(expectedCurrentRef!==null&&value.currentRef!==expectedCurrentRef))return null;
  return {frame,grant:value.grant};
 }
 export function waitJ4Grant(page,id,scopeKey,options){return poll(()=>currentJ4Grant(page,id,scopeKey,options),'current-authorized-frame-grant');}
 // A background peer may have surrendered its frame after the real worker stop.
 // Foregrounding is a real browser action; this read only waits for its current proof.
-export async function waitJ4PeerScope(page,id,scopeKey,{now=Date.now,sleep=ms=>new Promise(r=>setTimeout(r,ms))}={}){
+export async function waitJ4PeerScope(page,id,scopeKey,{previousGrant=null,expectedCurrentRef=null,now=Date.now,sleep=ms=>new Promise(r=>setTimeout(r,ms))}={}){
  const expectedURL=page.url(),deadline=now()+15000;
  while(now()<deadline){
   assert.equal(page.url(),expectedURL,'J4-peer-native-URL-changed');
-  const current=await currentJ4Grant(page,id,scopeKey);
+  const current=await currentJ4Grant(page,id,scopeKey,{previousGrant,expectedCurrentRef});
   assert.equal(page.url(),expectedURL,'J4-peer-native-URL-changed');
   if(current&&now()<deadline)return scopeKey;
   if(now()<deadline)await sleep(Math.min(50,deadline-now()));
  }
  throw Error('J4-peer-current-scope-timeout');
+}
+export async function recoverJ4PeerByNativeNavigation({page,id,scopeKey,server,assets,scope,preserved}){
+ const originalURL=page.url(),paths=['/c/'+J4_SEND_C,'/c/33333333-3333-4333-8333-333333333333'];
+ assert.equal(originalURL,server.origin+paths[1]);
+ const before=await page.evaluate(()=>{globalThis.j4PeerDocument=document;globalThis.j4PeerEditor=document.querySelector('textarea');return {draft:j4PeerEditor.value};});
+ const requestStart=server.snapshot().nativeRequests.length;let previousGrant=(await currentJ4Grant(page,id,scopeKey))?.grant??null;
+ for(const path of paths){
+  await page.locator('textarea').click();
+  previousGrant=(await currentJ4Grant(page,id,scopeKey))?.grant??previousGrant;
+  const expectedCurrentRef=path.split('/').at(-1);
+  await page.locator('aside nav[aria-label="Chat history"] a[href="'+path+'"]').click();
+  await page.waitForURL(server.origin+path);
+  assert.equal(await waitJ4PeerScope(page,id,scopeKey,{previousGrant,expectedCurrentRef}),scopeKey);
+  const current=await currentJ4Grant(page,id,scopeKey,{previousGrant,expectedCurrentRef});assert(current,'J4-peer-new-route-grant-required');previousGrant=current.grant;
+  const state=await page.evaluate(()=>({sameDocument:document===j4PeerDocument,sameEditor:document.querySelector('textarea')===j4PeerEditor,draft:j4PeerEditor.value}));
+  assert(state.sameDocument&&state.sameEditor);assert.equal(state.draft,before.draft);
+ }
+ assert.equal(page.url(),originalURL);
+ const requests=server.snapshot().nativeRequests.slice(requestStart);
+ for(const path of paths)assert(requests.some(r=>r.path==='/backend-api/conversation/'+path.split('/').at(-1)&&r.context==='account-host-team'),'J4-peer-new-native-context-request-required');
+ assert.deepEqual(await assets(scope),preserved);
+ return {originalURL,finalURL:page.url(),sameDocument:true,sameEditor:true,draftPreserved:true,actualNativeRoutes:paths,context:'team',assetDigest:preserved.hash};
 }
 export async function j4ReadinessFacts(page,id){
  const facts={at:Date.now(),frames:[]};
@@ -125,5 +147,9 @@ export async function runJ4JointInterruption({a,b,id,server,cdp,debugEndpoint,co
  record('same-J4-real-worker-stop-recovers-native-title-and-one-original-ACK-without-send-replay',{nativeOperationId:pending.operationId,eventKey:hints[0].eventKey,firstObservedAt:hints[0].firstObservedAt,workerStopConfirmed:true,continuationState:recovered.receipt.continuation.state,assetDigest:preserved.hash});
  await budgetWindow();const readsBefore=server.snapshot().interruption.reads.filter(r=>r.authenticatedWorker&&r.finishedAt!==null).length;await a.bringToFront();await a.reload();await a.locator('[data-message-id="'+sent.id+'"]').first().waitFor();await poll(()=>server.snapshot().interruption.reads.filter(r=>r.authenticatedWorker&&r.finishedAt!==null).length>readsBefore,'second-authenticated-read');await poll(async()=>{const v=await inspect();return v.receipts.find(r=>r.operationId===pending.operationId)?.continuation?.state==='complete';},'idempotent-terminal');const repeated=await inspect();assert.deepEqual(Object.values(repeated.evidence.hints).filter(h=>h.messageId===sent.id),hints);assert.equal(server.snapshot().interruption.accepts,acceptsBefore+1);assert.equal(Object.values((await inspect(team)).evidence.hints).filter(h=>h.messageId===sent.id).length,0);assert.deepEqual(await assets(team),teamAssets);
  record('same-J4-joint-recovery-second-load-is-idempotent-and-peer-context-isolated',{nativeOperationId:pending.operationId,nativeAccepts:acceptsBefore+1});
- await a.bringToFront();await a.locator('#model-button').click();await a.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();await a.locator('aside nav[aria-label="Chat history"] a[href="/c/33333333-3333-4333-8333-333333333333"]').click();await a.waitForURL(server.origin+'/c/33333333-3333-4333-8333-333333333333');await ensureJ4Workspace(a,mounted);assert.equal(await scopeOf(a),key(personal));await b.bringToFront();try{assert.equal(await waitJ4PeerScope(b,id,key(team)),key(team));}catch(error){try{diagnostic({stage:'joint-peer-scope-after-real-worker-stop',...await j4ReadinessFacts(b,id)});}catch{}throw error;}await a.bringToFront();assert.equal(await scopeOf(a),key(personal));assert.deepEqual(await assets(personal),preserved);
+ await a.bringToFront();await a.locator('#model-button').click();await a.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();await a.locator('aside nav[aria-label="Chat history"] a[href="/c/33333333-3333-4333-8333-333333333333"]').click();await a.waitForURL(server.origin+'/c/33333333-3333-4333-8333-333333333333');await ensureJ4Workspace(a,mounted);assert.equal(await scopeOf(a),key(personal));await b.bringToFront();let foregroundRecovered=false;
+ try{assert.equal(await waitJ4PeerScope(b,id,key(team)),key(team));foregroundRecovered=true;}
+ catch(error){try{diagnostic({stage:'joint-peer-scope-after-real-worker-stop',status:'FAIL',reason:error.message,...await j4ReadinessFacts(b,id)});}catch{}if(error.message!=='J4-peer-current-scope-timeout')throw error;}
+ if(!foregroundRecovered){const recovery=await recoverJ4PeerByNativeNavigation({page:b,id,scopeKey:key(team),server,assets,scope:team,preserved:teamAssets});record('peer-real-native-navigation-establishes-new-C2-after-worker-memory-loss',{...recovery,automaticForegroundRecovery:'NOT_ESTABLISHED',foregroundFailure:'J4-peer-current-scope-timeout',authority:'NEW_NATIVE_REQUEST_AND_FRESH_AUTHENTICATION'});}
+ await a.bringToFront();assert.equal(await waitJ4PeerScope(a,id,key(personal)),key(personal));assert.deepEqual(await assets(personal),preserved);
 }

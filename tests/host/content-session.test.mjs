@@ -147,3 +147,14 @@ for(const exit of ['stop','pagehide'])test('C2 ready cannot revive explicit '+ex
 test('C2 pending withdraws immediately and one completed receipt may start a fresh handshake',async()=>{const f=fixture({contextRecovery:true});await f.client.start();f.client.contextPending();assert.equal(f.client.showWorkspace(),false);assert.equal(f.listeners.size,0);await f.client.contextReady();assert.equal(f.client.showWorkspace(),true);assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,2);f.client.stop();});
 test('context wake is disabled by default and ordinary scope denial cannot wake it',async()=>{const f=fixture();await f.client.start();f.client.contextPending();const count=f.calls.length;await f.client.contextReady();assert.equal(f.calls.length,count);assert.equal(f.client.showWorkspace(),false);});
 test('C2 initial ambiguous identity can await a newly completed receipt, malformed HELLO cannot',async()=>{for(const malformed of [false,true]){const f=fixture({contextRecovery:true});f.setResponse(m=>m.type==='HOST_HELLO'?{binding:{...f.binding(),...(malformed?{origin:'https://other.test'}:{})}}:{state:'ambiguous'});assert.equal(await f.client.start(),null);const count=f.calls.length;f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified'}:{ok:true});await f.client.contextReady();assert.equal(f.calls.length>count,!malformed);assert.equal(f.client.showWorkspace(),!malformed);f.client.stop();}});
+
+for(const failure of ['ambiguous','transport'])test('C2 foreground '+failure+' withdraws and awaits only a new authorized handshake',async()=>{
+ const f=fixture({contextRecovery:true});f.document.visibilityState='visible';await f.client.start();
+ f.setResponse(m=>{if(m.type==='HOST_FOCUS'){if(failure==='transport')throw Error('worker-unavailable');return {state:'ambiguous'};}return m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified'}:{ok:true,grants:[]};});
+ f.events.get('blur')();f.events.get('focus')();await drain();assert.equal(f.client.showWorkspace(),false);assert.equal(f.listeners.size,0);const before=f.calls.filter(m=>m.type==='HOST_HELLO').length;
+ await f.advance(30000);assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,before);
+ f.client.contextPending();await f.client.contextReady();assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,before+1);assert.equal(f.client.showWorkspace(),true);f.client.stop();
+});
+test('explicit stop after foreground denial still cancels all context wake eligibility',async()=>{
+ const f=fixture({contextRecovery:true});f.document.visibilityState='visible';await f.client.start();f.setResponse(()=>({state:'ambiguous'}));f.events.get('blur')();f.events.get('focus')();await drain();f.client.stop();const count=f.calls.length;f.client.contextPending();await f.client.contextReady();assert.equal(f.calls.length,count);assert.equal(f.client.showWorkspace(),false);
+});

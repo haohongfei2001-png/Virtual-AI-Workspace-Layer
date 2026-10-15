@@ -74,7 +74,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    if(foregroundPending)return;foregroundArmed=false;foregroundPending=true;
    void rpc(s,{v:1,type:'HOST_FOCUS',clientId,seq:++seq,...bindingFields(s.binding)}).then(result=>{
     if(result?.ok!==true||result.state!=='verified'||result.scopeKey!==s.scopeKey)throw Error('foreground-scope-unverified');
-   }).catch(()=>{if(live(s)){s.recoveryDenied=true;stop();}}).finally(()=>{foregroundPending=false;s.focus();});
+   }).catch(()=>{if(live(s)){s.recoveryDenied=true;const awaitingContext=contextRecovery===true&&contextResumeAllowed;stop();contextResumeAllowed=awaitingContext;}}).finally(()=>{foregroundPending=false;s.focus();});
   };
   s.visibility=()=>{if(doc.visibilityState==='hidden')foregroundArmed=true;else s.focus();};
   doc.addEventListener?.('visibilitychange',s.visibility);doc.defaultView.addEventListener('focus',s.focus);doc.defaultView.addEventListener('blur',s.blur);
