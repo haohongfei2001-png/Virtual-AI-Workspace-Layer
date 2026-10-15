@@ -46,5 +46,6 @@ export function createSendCorrelator({now=Date.now,windowMs=30000,maxPending=32}
  }
  function settle({intentId,stage}={}){if(stopped||!binding)return null;clock();if(!['failed','cancelled'].includes(stage))return null;const row=pending.get(intentId);if(!row)return null;pending.delete(intentId);return candidate(row,stage);}
  function stop(){invalidate();stopped=true;}
- return Object.freeze({bind,observe,intent,settle,invalidate,stop});
+ function pendingIntent(intentId){if(stopped||!binding)return null;clock();const row=pending.get(intentId);return row?candidate(row,'intent'):null;}
+ return Object.freeze({bind,observe,intent,settle,pendingIntent,invalidate,stop});
 }

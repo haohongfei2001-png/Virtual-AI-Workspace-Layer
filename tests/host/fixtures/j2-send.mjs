@@ -1,18 +1,21 @@
 import {randomUUID} from 'node:crypto';
 export const J2_C='33333333-3333-4333-8333-333333333333';
 /** Independent native app state. Stored original timestamp belongs to actual POST acceptance. */
-export function createJ2SendFixture({principal,now=Date.now}){
- let mode='failure',revealed=false;const rows=[{id:'j2_old',author:principal(),parent:null,at:new Date(now()-90*86400000).toISOString(),original:true}],actions=[];
+export function createJ2SendFixture({principal,accounts=()=>[],now=Date.now}){
+ const operations=new Map();let mode='failure',revealed=false;const rows=[{id:'j2_old',author:principal(),parent:null,at:new Date(now()-90*86400000).toISOString(),original:true}],actions=[];
  const view=()=>({messages:rows.map(r=>({messageId:r.id,branchId:r.parent===null?'j2-root':'j2-main',text:'Native J2 message '+r.id}))});
  const detail=()=>({conversation_id:J2_C,history_semantics:'fixture-original-self-send/1',mapping:Object.fromEntries(rows.map(r=>[r.id,{id:r.id,parent:r.parent,message:{id:r.id,author:{role:'user',id:r.author},status:'fixture-accepted',...(r.original||revealed&&r.kind==='success'?{original_send:{author_id:r.author,conversation_id:J2_C,kind:'new-send',state:'committed',precision:'millisecond',sent_at:r.at}}:{}),content:{parts:['Synthetic J2 native content']}}}]))});
- return {view,detail,snapshot:()=>structuredClone({mode,revealed,actions,rows}),handle(req,res,url,json){
+ return {view,detail,snapshot:()=>structuredClone({mode,revealed,actions,rows,operations:[...operations.values()]}),handle(req,res,url,json){
+  const match=/^\/native\/j2\/operations\/([a-zA-Z0-9_-]{1,128})$/.exec(url.pathname);if(req.method==='GET'&&match){const row=operations.get(match[1]);if(!row||row.principalId!==principal()||!accounts().some(a=>a.account_id===row.contextId)||url.search)json(res,404,{error:'missing-operation'});else json(res,200,row);return true;}
   if(req.method!=='POST'||!url.pathname.startsWith('/native/j2/'))return false;
   const command=url.pathname.slice('/native/j2/'.length);
-  if(['failure','success','other','old-branch'].includes(command)){mode=command;json(res,200,{ok:true});return true;}
+  if(['failure','cancelled','success','other','old-branch'].includes(command)){mode=command;json(res,200,{ok:true});return true;}
   if(command==='reveal'){revealed=true;actions.push({kind:'reveal',at:now()});json(res,200,view());return true;}
   if(command!=='send')return false;
-  actions.push({kind:mode,at:now()});if(mode==='failure'){json(res,503,{error:'native-send-failed'});return true;}
-  const row={id:randomUUID(),author:mode==='other'?'other-principal':principal(),parent:mode==='old-branch'?null:rows.at(-1).id,at:new Date(now()).toISOString(),kind:mode,original:false};rows.push(row);json(res,200,{message:view().messages.at(-1)});return true;
+  const operationId=req.headers?.['x-j2-operation-id'],messageId=req.headers?.['x-j2-message-id'];const declared=operationId!==undefined||messageId!==undefined;if(declared&&(![operationId,messageId].every(v=>typeof v==='string'&&/^[a-zA-Z0-9_-]{1,128}$/.test(v))||operations.has(operationId)||[...operations.values()].some(r=>r.messageId===messageId)||accounts().length!==1)){json(res,409,{error:'ambiguous-operation'});return true;}
+  if(declared)operations.set(operationId,{operationId,messageId,conversationId:J2_C,acceptanceState:mode==='failure'?'failed':mode==='cancelled'?'cancelled':'accepted',principalId:principal(),contextId:accounts()[0].account_id});
+  actions.push({kind:mode,at:now()});if(mode==='cancelled'){res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.flushHeaders();const timer=setTimeout(()=>{if(!res.destroyed)res.end('{}');},250);timer.unref?.();return true;}if(mode==='failure'){json(res,503,{error:'native-send-failed'});return true;}
+  const row={id:messageId??randomUUID(),author:mode==='other'?'other-principal':principal(),parent:mode==='old-branch'?null:rows.at(-1).id,at:new Date(now()).toISOString(),kind:mode,original:false};rows.push(row);json(res,200,{message:view().messages.at(-1)});return true;
  }};
 }
 export function j2Native(source){
@@ -21,7 +24,8 @@ export function j2Native(source){
  return source.replace(original,`
 function appendJ2(item){const article=document.createElement('article');article.dataset.messageId=item.messageId;article.dataset.branchId=item.branchId;const body=document.createElement('div');body.className='message-body';body.textContent=item.text;article.append(body);$('#reading').append(article);}
 const controls=document.createElement('section');controls.id='j2-controls';
-for(const mode of ['failure','success','other','old-branch']){const b=document.createElement('button');b.textContent='J2 mode '+mode;b.onclick=async()=>{await fetch('/native/j2/'+mode,{method:'POST'});controls.dataset.mode=mode;};controls.append(b);}
+for(const mode of ['failure','cancelled','success','other','old-branch']){const b=document.createElement('button');b.textContent='J2 mode '+mode;b.onclick=async()=>{await fetch('/native/j2/'+mode,{method:'POST'});controls.dataset.mode=mode;};controls.append(b);}
 const reveal=document.createElement('button');reveal.textContent='J2 reveal original time';reveal.onclick=async()=>{await fetch('/native/j2/reveal',{method:'POST'});await navigate(location.pathname,{pop:true});};controls.append(reveal);$('#composer').before(controls);
-$('#composer').onsubmit=async event=>{event.preventDefault();if(event.isComposing)return;await action('send-intent');const response=await fetch('/native/j2/send',{method:'POST'});if(!response.ok){$('#composer output').textContent='Native J2 send failed';return;}const data=await response.json();appendJ2(data.message);$('#prompt-textarea').value='';$('#composer output').textContent='Native J2 send accepted';};`);
+function prepareJ2Operation(){const form=$('#composer');form.dataset.j2OperationId=crypto.randomUUID();form.dataset.j2MessageId=crypto.randomUUID();}prepareJ2Operation();
+$('#composer').onsubmit=async event=>{event.preventDefault();if(event.isComposing)return;const form=$('#composer'),operationId=form.dataset.j2OperationId,messageId=form.dataset.j2MessageId,controller=new AbortController();await action('send-intent');try{const response=await fetch('/native/j2/send',{method:'POST',headers:{'x-j2-operation-id':operationId,'x-j2-message-id':messageId},signal:controller.signal});if(controls.dataset.mode==='cancelled'){controller.abort();try{await response.text();}catch{}$('#composer output').textContent='Native J2 send cancelled';return;}if(!response.ok){$('#composer output').textContent='Native J2 send failed';return;}const data=await response.json();appendJ2(data.message);$('#prompt-textarea').value='';$('#composer output').textContent='Native J2 send accepted';}finally{prepareJ2Operation();}};`);
 }

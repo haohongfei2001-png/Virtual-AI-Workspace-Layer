@@ -1,3 +1,4 @@
+import {createBrowserOldSendTerminal} from './browser-old-send-terminal.mjs';
 import {createSharedHostReadBudget} from './shared-host-read-budget.mjs';
 import {createBrowserFirstSend} from './browser-first-send.mjs';
 import {createBrowserRequestContext} from './browser-request-context.mjs';
@@ -10,7 +11,7 @@ import {createHostBindingService} from './host-binding-service.mjs';
 import {createSessionProvider} from './session-provider.mjs';
 
 /** Zero-seed worker composition. Configuration is packaged code, never page input. */
-export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgpt.com',scopeProfile={id:'chatgpt-context-unverified',singlePersonalDefault:false},provider=null,sessionProfile={},currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,offlineFirstSend=false,serviceFactory=createHostBindingService}={}){
+export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgpt.com',scopeProfile={id:'chatgpt-context-unverified',singlePersonalDefault:false},provider=null,sessionProfile={},currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,offlineFirstSend=false,offlineOldSendTerminal=false,serviceFactory=createHostBindingService}={}){
  const policy=createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}});
  if(!chrome?.runtime?.id||typeof chrome.runtime.getContexts!=='function'||typeof chrome.webNavigation?.getFrame!=='function')throw Error('host-browser-unavailable');
  const allowedURL=value=>{try{return new URL(value).origin===origin&&policy.nativeHref(value)!==null;}catch{return false;}};
@@ -18,7 +19,7 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
  const contextObserver=scopeProfile.browserRequestContext===true?createBrowserRequestContext({webRequest:chrome.webRequest,getTab:id=>chrome.tabs.get(id),getFrame:q=>chrome.webNavigation.getFrame(q),origin,associatePage:({tabId,documentId,...query})=>chrome.tabs.sendMessage(tabId,{type:'HOST_CONTEXT_ASSOCIATE',...query},{documentId}),onInvalidate:({tabId,documentId})=>{service?.invalidate({tabId,documentId});return chrome.tabs.sendMessage(tabId,{type:'HOST_CONTEXT_PENDING'},{documentId});},onReady:({tabId,documentId})=>chrome.tabs.sendMessage(tabId,{type:'HOST_CONTEXT_READY'},{documentId})}):null;
  const repository=new ScopeRepository({indexedDB}),workspaceRepository=new WorkspaceRepository({baseRepository:repository}),freeEvidenceRepository=new FreeEvidenceRepository({baseRepository:repository,hostObservationGate:(scope,request)=>service?.ackAdmission?.(scope,request)??service?.continuations?.admission(scope,request)});
  const readBudget=createSharedHostReadBudget({repository});
- service=serviceFactory({readBudget,extensionId:chrome.runtime.id,repository,workspaceRepository,freeEvidenceRepository,allowedURL,contextObserver,provider:provider??createSessionProvider({origin,readBudget,profile:{...sessionProfile,currentConversationReadEnabled:currentMetadataReadEnabled,...(sendAckProfile?{sendAckProfile}:{} ),...(historicalSendProfile?{historicalSendProfile}:{})}}),currentMetadataReadEnabled,sendCandidatesEnabled,sendAckProfile,historicalSendProfile,firstSendOrigin:offlineFirstSend?origin:null,profile:scopeProfile,
+ service=serviceFactory({readBudget,extensionId:chrome.runtime.id,repository,workspaceRepository,freeEvidenceRepository,allowedURL,contextObserver,provider:provider??createSessionProvider({origin,readBudget,profile:{...sessionProfile,currentConversationReadEnabled:currentMetadataReadEnabled,...(sendAckProfile?{sendAckProfile}:{} ),...(historicalSendProfile?{historicalSendProfile}:{})}}),currentMetadataReadEnabled,sendCandidatesEnabled,sendAckProfile,historicalSendProfile,firstSendOrigin:offlineFirstSend?origin:null,oldSendTerminalOrigin:offlineOldSendTerminal?origin:null,profile:scopeProfile,
   navigationURLPolicy:policy,surfaceProfiles:new Map([[LEGACY_SURFACE_PROFILE.id,{...LEGACY_SURFACE_PROFILE,urlPolicy:policy}]]),
   uiURLs:Object.fromEntries(['workspace','sidebar'].map(role=>[role,chrome.runtime.getURL(role+'.html')])),
   getContexts:filter=>chrome.runtime.getContexts(filter),getFrame:query=>chrome.webNavigation.getFrame(query),
@@ -48,6 +49,7 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
    return chrome.tabs.sendMessage(context.parentFrame.tabId,{type:mode==='native-control'?'HOST_NATIVE_DISPATCH_PLAN':'HOST_NATIVE_DISPATCH_CURRENT',...context.binding,command,expiresAt:new Date(Date.now()+remainingMs).toISOString()},{documentId:context.parentFrame.documentId});
   },
   prepareNavigation:({parentFrame,binding,targets})=>chrome.tabs.sendMessage(parentFrame.tabId,{type:'HOST_NATIVE_PLAN',...binding,targets},{documentId:parentFrame.documentId})});
+ const oldSendObserver=offlineOldSendTerminal?createBrowserOldSendTerminal({webRequest:chrome.webRequest,origin,onTerminal:event=>service.oldSendTerminal?.terminal(event)}):null;
  const firstSendObserver=offlineFirstSend?createBrowserFirstSend({webRequest:chrome.webRequest,origin,onSubmit:event=>service.firstSend?.submit(event)}):null;
  let active=true;
  const message=(value,sender,reply)=>{if(!active)return;Promise.resolve().then(()=>active?service.handle(value,sender):null).then(result=>{if(active)reply(result);},()=>{if(active)reply({ok:false,reason:'host-unavailable'});});return true;};
@@ -59,13 +61,13 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
   contextObserver?.invalidateTab(details.tabId);
   // Only a trusted same-document browser event may retain display metadata.
   // All tab authority is still revoked synchronously, even on SPA navigation.
-  service.invalidate({tabId:details.tabId,...(!replacement&&allowedURL(details.url)&&typeof details.documentId==='string'&&details.documentId.length>0?{preserveViewDocumentId:details.documentId}:{}),...(!replacement&&offlineFirstSend?{firstSendNavigation:{browserDocumentId:details.documentId,url:details.url,navigatedAt:details.timeStamp}}:{})});
+  oldSendObserver?.invalidateTab(details.tabId);service.invalidate({tabId:details.tabId,...(!replacement&&allowedURL(details.url)&&typeof details.documentId==='string'&&details.documentId.length>0?{preserveViewDocumentId:details.documentId}:{}),...(!replacement&&offlineFirstSend?{firstSendNavigation:{browserDocumentId:details.documentId,url:details.url,navigatedAt:details.timeStamp}}:{})});
   if(allowedURL(details.url)&&typeof details.documentId==='string')Promise.resolve().then(()=>active?chrome.tabs.sendMessage(details.tabId,{type:'HOST_DOCUMENT_INVALIDATED'},{documentId:details.documentId}):null).catch(()=>{});
  };
- const removed=tabId=>{if(active){firstSendObserver?.invalidateTab(tabId);service.firstSend?.invalidateTab(tabId);contextObserver?.invalidateTab(tabId);service.tabClosed(tabId);}};
+ const removed=tabId=>{if(active){oldSendObserver?.invalidateTab(tabId);firstSendObserver?.invalidateTab(tabId);service.firstSend?.invalidateTab(tabId);contextObserver?.invalidateTab(tabId);service.tabClosed(tabId);}};
  const committed=details=>invalidate(details,true),historyChanged=details=>invalidate(details,false);
  const listeners=[[chrome.runtime.onMessage,message],[chrome.runtime.onConnect,connect],[chrome.webNavigation.onCommitted,committed],[chrome.webNavigation.onHistoryStateUpdated,historyChanged],[chrome.tabs.onRemoved,removed]];
  for(const [event,listener]of listeners)event.addListener(listener);
- function stop(){if(!active)return;active=false;firstSendObserver?.stop();contextObserver?.stop();service.stop?.();for(const [event,listener]of listeners)event.removeListener(listener);service.ui?.revokeAll();service.views?.stop();repository.close();}
+ function stop(){if(!active)return;active=false;oldSendObserver?.stop();firstSendObserver?.stop();contextObserver?.stop();service.stop?.();for(const [event,listener]of listeners)event.removeListener(listener);service.ui?.revokeAll();service.views?.stop();repository.close();}
  return Object.freeze({service,stop});
 }

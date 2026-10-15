@@ -52,7 +52,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
     [C_NONE,{id:C_NONE,title:'Ordinary conversation',project:null}],
     [C_UNKNOWN,{id:C_UNKNOWN,title:'Membership not loaded'}],
   ]);
-  const j2=journey==='J2'?createJ2SendFixture({principal:()=>identity,now}):null;
+  const j2=journey==='J2'?createJ2SendFixture({principal:()=>identity,accounts:()=>roster,now}):null;
   const firstSend=journey==='FIRST_SEND'?createFirstSendFixture({principal:()=>identity,accounts:()=>roster,conversations,detailAppends,detailAcceptances}):null;
   const projectHref = (id) => `/g/${id}/project`;
   const sessionAuthorized = (req) => (req.headers.cookie ?? '').split(';').some((item) => item.trim() === `host_fixture_session=${cookie}`);

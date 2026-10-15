@@ -1,0 +1,22 @@
+import {MockIDBFactory} from '../b23/mock-idb.mjs';
+import {ScopeRepository} from '../../src/b1/scope-repository.mjs';
+import {createSharedHostReadBudget} from '../../src/runtime/shared-host-read-budget.mjs';
+import {digest} from '../../src/data/hash.mjs';
+import test from 'node:test';import assert from 'node:assert/strict';
+import {createHostOldSendTerminal} from '../../src/runtime/host-old-send-terminal.mjs';
+const origin='http://127.0.0.1:1234';
+function fixture(options={}){let proof='proof',time=1000,current=true,readState='failed',calls=0,reads=0,budget=0;const pending=new Set(['i1','i2']),c={tabId:1,browserDocumentId:'doc',documentToken:'d',producerToken:'p',routeEpoch:1,conversationId:'C',messageIds:['old'],scope:{accountId:'principal',organizationId:'context'},guard:()=>current,signal:new AbortController().signal};const owner=createHostOldSendTerminal({origin,handshake:{verify:async()=>true},observations:{withCurrent:async(id,fn)=>{if(!current||id!==proof)throw Error('stale');return fn(c);}},sendCandidates:options.sendCandidates??{pendingIntent:async(_,id)=>pending.has(id),settle:async(_,v)=>{if(!current||!pending.delete(v.intentId))return null;calls++;return v;}},readBudget:options.readBudget??{reserve:async()=>{budget++;return {windowStartedAt:1000};}},readOperation:options.readOperation??(async()=>{reads++;if(readState==='network')throw Error('network');return {operationId:'op',messageId:'new',conversationId:'C',acceptanceState:readState};}),now:()=>time,elapsedNow:()=>time});const message={type:'HOST_OLD_SEND_OPERATION',documentToken:'d',producerToken:'p',routeEpoch:1,bodyProofId:'proof',intentId:'i1',operationId:'op',messageId:'new',observedAt:new Date(time).toISOString()},sender={tab:{id:1},documentId:'doc'},event={tabId:1,browserDocumentId:'doc',requestId:'req',operationId:'op',messageId:'new',startedAt:time,stage:'failed'};return {owner,message,sender,event,pending,c,stats:()=>({calls,reads,budget}),clock:t=>time=t,revoke:()=>current=false,state:s=>readState=s,nextProof:()=>proof='next'};}
+
+for(const mode of ['conflicting-terminal','invalidation'])test('audit '+mode+' aborts in-flight settlement',async()=>{let started,release;const entered=new Promise(r=>started=r),held=new Promise(r=>release=r);const f=fixture({readOperation:async()=>{started();await held;return {operationId:'op',messageId:'new',conversationId:'C',acceptanceState:'failed'};}});await f.owner.intent(f.message,f.sender);const first=f.owner.terminal(f.event);await entered;if(mode==='conflicting-terminal')await f.owner.terminal({...f.event,requestId:'second-request'});else f.owner.invalidateTab(1);release();await first;await f.owner.drain();assert.equal(f.stats().calls,0);});
+
+import {createHostSendCandidates} from '../../src/runtime/host-send-candidates.mjs';
+test('audit conflict during real terminalAccess async guard cannot consume pending intent',async()=>{
+ let real,arm=false,entered,release;const started=new Promise(r=>entered=r),hold=new Promise(r=>release=r);
+ const delegated={pendingIntent:(...args)=>real.pendingIntent(...args),settle:(...args)=>real.settle(...args)};
+ const f=fixture({sendCandidates:delegated,readOperation:async()=>{arm=true;return {operationId:'op',messageId:'new',conversationId:'C',acceptanceState:'failed'};}});Object.assign(f.c,{scope:{...f.c.scope,key:'scope'},bodyEpoch:1});
+ const obs={isCurrentProof:()=>true,isCurrentProducer:()=>true,withCurrent:async(_,fn)=>{if(arm){arm=false;entered();await hold;}return fn(f.c);}};
+ real=createHostSendCandidates({enabled:true,observations:obs,reader:{read:async()=>({state:'candidate',conversationId:'C',bodyEpoch:1,metadata:{protocol:'vaiwl-conversation-metadata-candidate/1',conversationId:'C',coverage:'observed-only',messages:[],state:'candidate',gaps:[]}})},now:()=>1000});
+ await real.observe('proof');await real.intent('proof',{intentId:'i1',kind:'send',isComposing:false});assert(await real.pendingIntent('proof','i1'));
+ await f.owner.intent(f.message,f.sender);const running=f.owner.terminal(f.event);await started;await f.owner.terminal({...f.event,requestId:'conflict'});release();await running;
+ assert(await real.pendingIntent('proof','i1'),'conflict must be checked again immediately before deleting the real correlator intent');real.stop();f.owner.stop();
+});

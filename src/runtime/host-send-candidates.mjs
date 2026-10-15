@@ -74,5 +74,9 @@ export function createHostSendCandidates({observations,reader,enabled=false,now=
   let usedEntry=null,intentGeneration=null;return observations.withCurrent(proofId,current=>{const entry=entryFor(current);usedEntry=entry;intentGeneration=entry.generation;check(current);if(!entry.baseline||entry.proof!==proofId)return null;const candidate=entry.correlator.intent(input);check(current);return candidate;}).then(candidate=>{active();if(observations.isCurrentProof(proofId)!==true)throw Error('stale-send-proof');return candidate;}).catch(error=>{if(usedEntry&&usedEntry.generation===intentGeneration){usedEntry.correlator.invalidate();usedEntry.baseline=false;usedEntry.proof=null;entries.forEach((entry,key)=>{if(entry===usedEntry)entries.delete(key);});}throw error;});
  }
  function stop(){if(stopped)return;stopped=true;for(const entry of entries.values()){clearRetry(entry);entry.correlator.stop();}entries.clear();inflight.clear();}
- return Object.freeze({observe,intent,stop});
+ // The terminal owner guard must run after withCurrent async revalidation and
+ // immediately before the synchronous correlator mutation; a post-check cannot
+ // restore an intent already consumed by a revoked terminal read.
+ async function terminalAccess(proofId,intentId,stage=null,terminalGuard=()=>{}){active();if(!tokenOK(proofId)||!tokenOK(intentId))return null;return observations.withCurrent(proofId,current=>{check(current);const entry=entries.get(current.producerToken);if(!entry||entry.signature!==JSON.stringify(binding(current)))return null;if(stage===null)return entry.correlator.pendingIntent(intentId);if(typeof terminalGuard!=='function')return null;terminalGuard();return entry.correlator.settle({intentId,stage});});}
+ return Object.freeze({observe,intent,pendingIntent:(proofId,intentId)=>terminalAccess(proofId,intentId),settle:(proofId,{intentId,stage}={},terminalGuard)=>['failed','cancelled'].includes(stage)?terminalAccess(proofId,intentId,stage,terminalGuard):Promise.resolve(null),stop});
 }

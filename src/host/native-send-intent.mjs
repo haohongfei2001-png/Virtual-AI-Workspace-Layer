@@ -52,7 +52,8 @@ export function createNativeSendIntentObserver({document:doc,profile,onIntent,on
    const operationId=b.form.getAttribute(first.operationAttribute),messageId=b.form.getAttribute(first.messageAttribute);
    if(tokenOK(operationId)&&tokenOK(messageId))try{onFirstIntent(Object.freeze({intentId,operationId,messageId,observedAt}));}catch{}
   }
-  try{onIntent(Object.freeze({intentId,kind:'send',isComposing:false,observedAt}));}catch{/* Candidate consumer cannot interfere with the host gesture. */}
+  const terminal=profile?.oldSendTerminal;let operation=null;if(terminal&&doc.location?.origin===terminal.origin&&doc.location?.pathname?.startsWith('/c/')){const operationId=b.form.getAttribute(terminal.operationAttribute),messageId=b.form.getAttribute(terminal.messageAttribute);if(tokenOK(operationId)&&tokenOK(messageId))operation=Object.freeze({operationId,messageId});}
+  try{onIntent(Object.freeze({intentId,kind:'send',isComposing:false,observedAt,...(operation?{operation}: {})}));}catch{/* Candidate consumer cannot interfere with the host gesture. */}
  }catch{/* Unsupported or changing native DOM fails closed. */}}
  if(config)for(const type of ['click','keydown','compositionstart','compositionend',...(onPrepare?['focusin','pointerdown']:[])]){doc.addEventListener(type,handle,{capture:true,passive:true});listeners.push(type);}
  function stop(){if(stopped)return;stopped=true;for(const type of listeners)doc.removeEventListener(type,handle,true);listeners.length=0;composing=null;last=null;}
