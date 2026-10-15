@@ -2432,3 +2432,7 @@ CI34 at 05b57a9 passed 4668 Node tests and verified the scale fixture geometry c
 ## Round240 — query intent and bounded10k preparation diagnostics
 
 CI35:4689/4690 Node; original new-view late-ACK rejection exposed a genuine client intent fence omission. Minimal reviewed fix preserves the assertion and defers transport only, with218 integrated checks. J1 actual9-step slice passed independently; cold diagnostic and10k startup still failed.10k root sampling at failure had no remaining frame, so limited explicit preparation-time snapshots are added without enabling timing acceptance or extending30s. See [round240](evidence/round240/README.md). No complete10k audit/timing, full Free or release readiness is claimed.
+
+## Round241 — preserve finite native ingestion across valid renewal
+
+CI36 passed4703 Node contracts;10k diagnostic roots grew55→4679→5133→5273 while revisions4→96→199→303, without full admission/timing. Independent real-adapter10s renewal reproduces cursor restart starvation (138/1000 IDs); minimal same-identity active-pass preservation reaches1000/1000 without relaxing external read/body/identity invalidation or budgets.138 targeted checks pass. Disable temporary progress sampling for the next formal10k CI and retain strict gates. [Round241 exact evidence](evidence/round241/README.md). Original cold and fullFree/SYS04/SYS05 remain open.

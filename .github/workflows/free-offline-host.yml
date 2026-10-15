@@ -177,7 +177,7 @@ jobs:
         timeout-minutes: 5
         run: |
           set +e
-          FREE_HOST_SCALE_PROGRESS=1 HOST_SCALE_RUN=1 HOST_SCALE_SIZE=10000 HOST_SCALE_DISTRIBUTION=project-mixed HOST_SCALE_CPU_RATE=1 node tests/host/host-scale-package-browser.mjs "$RUNNER_TEMP/host-scale-10k.json"
+          HOST_SCALE_RUN=1 HOST_SCALE_SIZE=10000 HOST_SCALE_DISTRIBUTION=project-mixed HOST_SCALE_CPU_RATE=1 node tests/host/host-scale-package-browser.mjs "$RUNNER_TEMP/host-scale-10k.json"
           result=$?
           set -e
           test "$result" -eq 2

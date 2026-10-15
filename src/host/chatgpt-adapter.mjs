@@ -29,7 +29,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
   const keys=['documentToken','producerToken','browserDocumentId','routeEpoch','origin'];
   if(!next||Object.keys(next).sort().join(',')!==[...keys,'expiresAt'].sort().join(',')||keys.some(key=>next[key]!==binding[key]))throw Error('invalid-host-binding-renewal');
   const expiry=Date.parse(next.expiresAt),time=now();if(!Number.isFinite(expiry)||expiry<=time||expiry>time+20000)throw Error('invalid-host-binding-renewal');
-  binding=Object.freeze({...next});last.delete('current-object');failedKey.delete('current-object');requestScan();return true;
+  binding=Object.freeze({...next});last.delete('current-object');failedKey.delete('current-object');requestScan(true);return true;
  }
  function proposal(page=false){if(!live())throw Error('stale-host-binding');syncRoute();const found=page?discovery.scanPage(surfaceCursor):null,payload=found?found.payload:discovery.scan();if(found){surfaceCursor=found.cursor;surfaceScanning=found.cursor!==null;}return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta',payload};}
  // Private content-side iterator yields bounded packets without aggregating them. This does not fetch unmounted history or authorize any native action.
@@ -94,7 +94,17 @@ if(!p)return;}catch{surfaceScanning=false;surfaceCursor=null;if(surfaceWanted)sc
   await send();
  }
  function schedule(){if(!live())return;dirty=true;if(busy||queued)return;queued=true;queueMicrotask(pump);}
- function requestScan(){surfaceEpoch++;surfaceWanted=true;schedule();}
+ function requestScan(preserveProducerCursor=false){
+  // Same-identity renewal invalidates independent loaded reads, but must not
+  // starve the private finite directory pass. Never consume a pending real DOM
+  // invalidation: that pass still resets before its next bounded packet.
+  const preserve=preserveProducerCursor===true&&surfaceEpoch===surfaceSnapshotEpoch;
+  const continuing=preserve&&(surfaceScanning||surfaceParts.length>0);
+  surfaceEpoch++;if(preserve)surfaceSnapshotEpoch=surfaceEpoch;
+  // The active pass is already fresh observation; renewal alone must not queue
+  // another full pass behind it. Preserve any separately requested real scan.
+  if(!continuing)surfaceWanted=true;schedule();
+ }
  function mutations(records){
   if(!live())return;
   const bodyChanged=bodyDiscovery?.affectsBody(records),surfaceChanged=discovery?.affectsSurface(records);

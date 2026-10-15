@@ -334,3 +334,43 @@ test('SYS05 settled assistant token-only changes must not traverse directory',as
  await f.start();await settle();const before=d.counts();f.observer().cb([{type:'characterData',target:text}]);await settle();const after=d.counts();
  assert.equal(after.visits-before.visits,0,'body-only characterData must not start a directory traversal');
 });
+
+for(const renew of [false,true])test('renewal continuity 1000 directory '+(renew?'same-identity renewals':'no renewal control'),async t=>{
+ const f=bodyFixture(),d=sys05Directory(f,1000);t.after(()=>f.adapter.stop());f.binding.expiresAt=new Date(20000).toISOString();
+ let packets=0,renewals=0;let shouldRenew=renew;
+ await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta'){packets++;if(shouldRenew&&packets%2===0){renewals++;f.setTime(renewals*10000);assert.equal(f.adapter.updateBinding({...f.binding,expiresAt:new Date(renewals*10000+20000).toISOString()}),true);}}return Promise.resolve(bodyAck(p));});
+ for(let i=0;i<150;i++)await tick();
+ const distinct=()=>new Set(f.emitted.filter(p=>p.kind==='surface-delta').flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size;
+ const snapshot={renew,distinctIDs:distinct(),...d.counts(),packets,renewals};t.diagnostic(JSON.stringify(snapshot));
+ // Stop synthetic renewal injection and drain: a continuation should recover, proving no missing fixture IDs.
+ shouldRenew=false;for(let i=0;i<150;i++)await tick();assert.equal(distinct(),1000,'all fixture IDs remain discoverable once renewal injection stops');
+ assert.equal(snapshot.distinctIDs,1000,'legal same-identity renewal must preserve an in-flight directory traversal');
+ assert.equal(packets,snapshot.packets,'renewal during the final fragment must not queue another complete pass');assert.deepEqual(d.counts(),{visits:snapshot.visits,walkers:snapshot.walkers},'finished finite pass remains idle');
+});
+
+for(const change of ['title','body','route'])test('renewal continuity conservative '+change+' invalidation',async t=>{
+ const f=bodyFixture(),d=sys05Directory(f,32);t.after(()=>f.adapter.stop());f.binding.expiresAt=new Date(20000).toISOString();
+ await f.start(p=>{f.emitted.push(p);return Promise.resolve(bodyAck(p));});await settle();f.setTime(10000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()});await settle();const before=d.counts(),count=f.emitted.length;
+ if(change==='title'){d.nodes[31].textContent='Changed after renewal';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[31],parentElement:d.nodes[31]}}]);await settle();assert(d.counts().visits>before.visits);assert(f.emitted.slice(count).some(p=>p.kind==='surface-delta'&&p.payload.candidates.some(c=>c.nativeTitle==='Changed after renewal')));}
+ if(change==='body'){const next=f.makeMessage('USER-ACK-RENEWED');f.reading.children.push(next);f.observer().cb([{type:'childList',target:f.reading,addedNodes:[next],removedNodes:[]}]);await settle();assert.deepEqual(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.messageIds,['M1','USER-ACK-RENEWED']);f.reading.hidden=true;f.observer().cb([{type:'attributes',attributeName:'hidden',target:f.reading}]);await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.association,'unproven');}
+ if(change==='route'){f.document.location.href='https://chatgpt.com/';f.trigger();await settle();assert.equal(f.rebind.length,1);assert.equal(f.emitted.length,count);assert.equal(f.adapter.inspect().ok,false);}
+});
+
+test('renewal continuity must not mask pending native title invalidation',async t=>{
+ const f=bodyFixture(),d=sys05Directory(f,1000);t.after(()=>f.adapter.stop());f.binding.expiresAt=new Date(20000).toISOString();let changed=false;
+ await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta'&&!changed){changed=true;d.nodes[0].textContent='Changed before renewal';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[0],parentElement:d.nodes[0]}}]);f.setTime(10000);assert(f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()}));}return Promise.resolve(bodyAck(p));});
+ for(let i=0;i<150;i++)await tick();const candidates=f.emitted.filter(p=>p.kind==='surface-delta').flatMap(p=>p.payload.candidates);assert.equal(new Set(candidates.map(c=>c.renderKey)).size,1000);assert(candidates.some(c=>c.nativeTitle==='Changed before renewal'));
+});
+for(const method of ['loadedPages','loadedCandidatePages'])test('renewal continuity invalidates external '+method+' iterator',async t=>{
+ const f=fixture(),d=sys05Directory(f,300);t.after(()=>f.adapter.stop());f.binding.expiresAt=new Date(20000).toISOString();
+ if(method==='loadedCandidatePages'){f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[d.root]);for(const node of d.nodes){node.tagName='BUTTON';node.getAttribute=()=>null;}}
+ await f.start();for(let i=0;i<30;i++)await tick();const iterator=f.adapter[method](new AbortController().signal);assert.equal((await iterator.next()).done,false);
+ f.setTime(10000);assert(f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()}));await assert.rejects(iterator.next(),/stale-host-loaded-read/);
+});
+
+
+test('toggle event cannot opt into private renewal cursor preservation',async t=>{
+ const f=bodyFixture(),d=sys05Directory(f,1000);t.after(()=>f.adapter.stop());let changed=false;
+ await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta'&&!changed){changed=true;d.nodes[0].textContent='Real native title after toggle';f.documentListeners.get('toggle')({type:'toggle',preserveProducerCursor:true});}return Promise.resolve(bodyAck(p));});
+ for(let i=0;i<150;i++)await tick();assert(f.emitted.filter(p=>p.kind==='surface-delta').some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Real native title after toggle')));
+});
