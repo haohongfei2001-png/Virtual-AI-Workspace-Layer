@@ -2053,3 +2053,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 整合J1非零candidate分页/scroll/focus断言及J2/J4前置runner；浏览器新增断言尚未运行，不升级既有J1/J3 PARTIAL或81项。12类guard变异独立临时副本执行，12 baseline通过、12预定断言杀死；L-only，MOCK_IDB不冒充D，UI声明不冒充S。
 - 本云环境Chromium启动被socket权限限制，S为NOT_RUN。经批准加入原分支最小GitHub Actions隔离Chromium切片；核实public仓库与标准Ubuntu runner免费规则，无artifact/cache上传、付费runner、私人账户或部署。CI尚待本次提交后运行，不能预报通过。
 - 恢复真实git历史后旧writer兼容回归5/5通过；第一轮整合完整Node4008/4008通过，容量审查随后新增3例，最终完整Node **4011/4011 PASS**、无skip。首页first-send因果链、strict旧活动、J1–J4完整旅程、大数据性能及G/U仍开放。可恢复命令与边界见docs/evidence/round206/README.md，Free NOT_RELEASE_READY。
+
+
+## Round207：显式历史本人活动与候选早返回焦点修复（接9279d1c2）
+
+- 仅loopback历史profile通过认证current-object读回、明确本人/committed原发送/原时间精度/稳定message身份导入codec2事件；私有request gate复用现有evidence repository，codec1 ACK hints不变。原时间冲突保留并拒绝争议活动，同消息视图lineage改变不重复记事件；无完整coverage仍是provisional，未伪造全历史覆盖。独立33项L/MOCK_IDB审查通过，不作D/S/G证明。
+- 保留第二轮CI真实失败：C2 warm已mount，但测试worker动态import被Chrome拒；J2/J4同oracle问题。只读检查移至已有extension iframe；新增独立immediate-load C2 cold回归，不以warm路径替代首次启动缺口。第二轮J1真实canonical焦点失败对应早返先于candidate commit未focusFrame，现保存现有intentGuard并在身份/ACK/commit后有条件聚焦；新native意图不得抢焦点，不改6秒/30秒，不放宽原浏览器断言。
+- J3以显式历史源实现旧日期入口及重开断言，实际浏览器尚待本次CI；无注库/强启按钮。独立visibility实验3项PASS_MECHANISM_ONLY，前后focus/AX/popover及3帧恢复通过，瞬态paint/AX仍NOT_PROVEN，未改正式mask。报告保留于Round206；恢复说明见docs/evidence/round207/README.md。
+- 整合定向111/111 PASS；唯一整合树限制test-concurrency=2后最终完整Node **4044/4044 PASS**、无skip；12/12 baseline及12/12指定guard断言杀死。此前并发无界全套有7个文件进程失败、无具体断言诊断，保留摘要，不冒称确认产品根因。正式默认生产包构建/校验通过但仍HOST_IMPLEMENTATION_UNVERIFIED/NOT_RELEASE_READY。
+- 首页first-send被独立拆出：仍待修异步intent/POST双向join与全局请求预算，不随本切片误报完成。完整81项/J1–J4、大数据性能、G/U等未完成；无私人账户、部署、合并或main修改。

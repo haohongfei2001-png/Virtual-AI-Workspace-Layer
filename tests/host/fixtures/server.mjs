@@ -30,6 +30,8 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
   if(journey==='J3')files['/'].body=Buffer.from(files['/'].body.toString().replace('<textarea id="prompt-textarea"','<textarea data-j3-editor="plain" id="prompt-textarea"').replace('<!-- J3_EDITOR -->','<button type="button" id="editor-mode">Use contenteditable</button><div id="j3-contenteditable" data-j3-editor="rich" contenteditable="true" role="textbox" aria-label="Rich message ChatGPT" hidden></div>').replace('<!-- J3_PERMISSION -->','<dialog id="permission-dialog" aria-label="Fixture tool permission"><p>Offline reconstruction permission, not a system permission.</p><button id="permission-allow">Allow fixture tool</button><button id="permission-deny">Deny fixture tool</button><output id="permission-result" aria-live="polite"></output></dialog>'));
   const oracleBytes = await readFile(new URL('../expected/legacy.mjs', import.meta.url));
   const sourceBytes = await readFile(new URL('./server.mjs', import.meta.url));
+  // Original dates belong to this local service's fixed historical records, not a backup or UI injection.
+  const historySentAt=new Date(now()-45*86400000).toISOString().replace(/\.\d{3}Z$/,'Z');
   let identity = principalId;
   let roster = clone(accounts ?? [{account_id:DEFAULT_ACCOUNT,name:'Personal',plan_type:'free',structure:'personal'}]);
   const cookie = randomBytes(24).toString('hex');
@@ -93,6 +95,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
         const authorId = identity;
         if(detailHold) await detailHold.promise;
         if(res.destroyed) return;
+        if(journey==='J3'){const messageId='j3_'+conversation.id.replaceAll('-','')+'_message';return json(res,200,{conversation_id:conversation.id,history_semantics:'fixture-original-self-send/1',mapping:{j3_node:{id:'j3_node',parent:null,message:{id:messageId,author:{role:'user',id:principalId},original_send:{author_id:principalId,conversation_id:conversation.id,kind:'new-send',state:'committed',precision:'second',sent_at:historySentAt},content:{parts:['Offline prefix uniquely selected fixture words suffix.']}}}}});}
         // Deliberate offline metadata reconstruction; never a live API capture or ACK.
         return json(res,200,{conversation_id:conversation.id,mapping:Object.fromEntries(['fixture_m1','fixture_m2','fixture_not_current',...(detailAppends.get(conversation.id)??[])].map((id,i)=>['node_'+i,{id:'node_'+i,parent:i?'node_'+(i-1):null,message:{id,...(detailAcceptances.get(conversation.id)?.has(id)?{status:'fixture-accepted'}:{}),author:{role:i===1?'assistant':'user',id:authorId},create_time:1700000000+i,content:{parts:['SYNTHETIC_BODY_MUST_NOT_ESCAPE']}}}]))});
       }

@@ -42,15 +42,15 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
   scriptHash,sourceHashes:manifest.sourceHashes,buildManifestHash:hash(manifestBytes),fixture:server.manifest,os:platform(),
   networkPolicy:'page allowlist plus unchanged package worker CSP; external worker fetch checked',
   steps:[],errors:[],limitations:requiredGaps.map(([journey,name,reason])=>({journey,name,status:'NOT_RUN',reason}))};
- let context,worker,id;
+ let context,worker,id,inspectionFrame;
  const record=(journey,name,details={})=>report.steps.push({journey,name,status:'PASS',...details});
  async function mounted(page){
   await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:15000});
   const frame=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(frame);
-  await frame.getByText('Ordinary conversation',{exact:true}).waitFor({timeout:15000});return frame;
+  await frame.getByText('Ordinary conversation',{exact:true}).waitFor({timeout:15000});inspectionFrame=frame;return frame;
  }
  async function evidenceCounts(){
-  return worker.evaluate(async()=>{
+  return inspectionFrame.evaluate(async()=>{
    const {ScopeRepository}=await import(chrome.runtime.getURL('src/b1/scope-repository.mjs'));
    const {FreeEvidenceRepository}=await import(chrome.runtime.getURL('src/data/free-evidence-repository.mjs'));
    const base=new ScopeRepository({indexedDB});

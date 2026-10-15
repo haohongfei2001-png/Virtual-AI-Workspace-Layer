@@ -25,8 +25,10 @@ function reduceMetadata(metadata,conversationId,wanted){
  return {protocol:metadata.protocol,conversationId,state:missing?'partial':metadata.state,messages,gaps,coverage:'observed-only'};
 }
 /** Current-object private readback only. No repository writes, send ACKs or events. */
-export function createCurrentMetadataReader({observations,provider,enabled=false,now=Date.now}={}){
+export function createCurrentMetadataReader({observations,provider,enabled=false,now=Date.now,onHistorical=null}={}){
  if(typeof observations?.withCurrent!=='function'||enabled&&typeof provider?.readCurrentConversation!=='function'||typeof enabled!=='boolean'||typeof now!=='function')throw Error('invalid-current-metadata-reader');
+ if(onHistorical!==null&&typeof onHistorical!=='function')throw Error('invalid-history-consumer');
+ const historyFor=enabled&&typeof provider.historyFor==='function'?provider.historyFor.bind(provider):null;
  const readCurrent=enabled?provider.readCurrentConversation.bind(provider):null;
  const acceptanceFor=enabled&&typeof provider.acceptanceFor==='function'?provider.acceptanceFor.bind(provider):null,readbacks=new WeakMap();
  let stopped=false,busy=null;
@@ -42,7 +44,7 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
    const currentGuard=context.guard,currentSignal=context.signal;
    const guard=()=>{check();if(currentSignal.aborted||currentGuard()!==true)throw Error('stale-body-proof');};guard();
    const conversationId=context.conversationId,bodyEpoch=context.bodyEpoch,wanted=new Set(context.messageIds);
-   let acceptance=null;
+   let acceptance=null,history=null;
    let metadata={protocol:'vaiwl-conversation-metadata-candidate/1',conversationId,state:'candidate',messages:[],gaps:[],coverage:'observed-only'};
    if(wanted.size){
     const principal=context.scope?.accountId,account=context.scope?.organizationId,profile=context.providerProfile,transport=context.providerTransport;
@@ -52,10 +54,15 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
     let result;try{result=await Promise.race([readCurrent({conversationId,expectedPrincipalKey:principal,expectedContextKey:account,signal}),cancelled]);}finally{signal.removeEventListener('abort',onAbort);}
     guard();const checkedAt=now();requireValue(exactHostRecord(result,['principalKey','contextKey','expiresAt','providerProfile','transport','metadata'])&&result.principalKey===principal&&result.contextKey===account&&result.providerProfile===profile&&result.transport===transport&&instant(result.expiresAt)!==null&&Number.isFinite(checkedAt)&&instant(result.expiresAt)>checkedAt);
     metadata=reduceMetadata(result.metadata,conversationId,wanted);
-    acceptance=acceptanceFor?.(result)??null;
+    acceptance=acceptanceFor?.(result)??null;history=historyFor?.(result)??null;
     if(acceptance)requireValue(acceptance.conversationId===conversationId&&acceptance.principalKey===principal&&acceptance.contextKey===account&&acceptance.providerProfile===profile&&acceptance.transport===transport&&acceptance.expiresAt===result.expiresAt);
    }
    guard();const value={state:metadata.state,conversationId,bodyEpoch,metadata};requireValue(new TextEncoder().encode(JSON.stringify(value)).length<=65536);
+   guard();if(history&&onHistorical&&metadata.state==='candidate'&&!metadata.gaps.length){
+    requireValue(history.conversationId===conversationId&&history.principalKey===context.scope.accountId&&history.contextKey===context.scope.organizationId&&history.providerProfile===context.providerProfile&&history.transport===context.providerTransport);
+    const selected=history.messages.filter(m=>wanted.has(m.messageId)&&metadata.messages.some(observed=>observed.messageId===m.messageId&&'lineage_'+observed.lineage?.fingerprint===m.branchId));
+    if(selected.length)await onHistorical({history:{...history,messages:selected},context,guard});guard();
+   }
    if(acceptance&&metadata.state==='candidate'&&!metadata.gaps.length)readbacks.set(value,{acceptance,proofId,documentToken:context.documentToken,producerToken:context.producerToken,routeEpoch:context.routeEpoch,scopeKey:context.scope?.key});
    return freeze(value);
   })).then(result=>{check();return result;}).finally(()=>{attempt.abort.abort();if(busy===attempt)busy=null;});

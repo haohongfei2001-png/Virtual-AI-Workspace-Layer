@@ -168,6 +168,10 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
        const createdAt=now(),createdElapsed=elapsedNow();
        s.migration={id:result.actionId,leaseOwner:'candidate-migration_'+result.actionId,projectId:result.projectId,display:prior.display,handle:pendingHandle,createdAt,lastTime:createdAt,lastElapsed:createdElapsed,elapsedDeadline:createdElapsed+30000,ready:s.returned===true,focusAllowed:true};
        if(!retainMigration(s,pendingHandle)){clearUpgrade();return;}
+       // A trusted return can precede this first committed candidate scan.
+       // Focus only while that return's surface intent is still current; the
+       // normal controller gate rechecks live grants, mode and native layers.
+       if(s.migration.ready&&prior.display.presentation.focused)s.migration.focusAllowed=s.returnFocusGuard?.()===true&&s.controller.focusFrame?.(prior.display.role)===true;
        const migration=s.migration;s.migrationInterrupt=event=>{const target=event.composedPath?.()[0]??event.target;if(s.migration===migration&&event.isTrusted===true&&!s.controller?.isReturnTarget?.(target)&&!(event.type==='focusin'&&migration.ready&&s.controller?.isFrameTarget?.(migration.display.role,target)))migration.focusAllowed=false;};
        for(const type of ['pointerdown','keydown','wheel','focusin'])doc.addEventListener?.(type,s.migrationInterrupt,true);
       }
@@ -183,7 +187,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    const bridge={
     registerMount:({handle})=>rpc(s,{v:1,type:'HOST_UI_MOUNT',...bindingFields(s.binding),mountId:handle.id,regionEpoch:handle.regionEpoch}),
     confirmParent:v=>rpc(s,{v:1,type:'HOST_UI_CONFIRM',...v,...bindingFields(s.binding)}),
-    workspaceEntered:({mountId})=>{s.returned=true;liveMigration(s);if(s.migration&&adapter.matchesCandidateIdentity?.(s.upgraded.identity,s.migration.handle)!==true)clearMigration(s);if(s.migration){s.migration.ready=true;if(s.migration.display.presentation.focused&&s.migration.focusAllowed)s.migration.focusAllowed=s.controller.focusFrame?.(s.migration.display.role)===true;}return rpc(s,{v:1,type:'HOST_UI_WORKSPACE_ENTERED',...bindingFields(s.binding),mountId});},
+    workspaceEntered:({mountId})=>{s.returned=true;s.returnFocusGuard=s.controller.intentGuard?.()??(()=>false);liveMigration(s);if(s.migration&&adapter.matchesCandidateIdentity?.(s.upgraded.identity,s.migration.handle)!==true)clearMigration(s);if(s.migration){s.migration.ready=true;if(s.migration.display.presentation.focused&&s.migration.focusAllowed)s.migration.focusAllowed=s.controller.focusFrame?.(s.migration.display.role)===true;}return rpc(s,{v:1,type:'HOST_UI_WORKSPACE_ENTERED',...bindingFields(s.binding),mountId});},
     revokeMount:({mountId})=>{if(s.binding)void withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_RELEASE',...bindingFields(s.binding),mountId}),{now:elapsedNow,schedule,cancel}).catch(()=>{});},
     renewSession:async({handle,binding})=>{if(!bindingOK(binding,s.binding))throw Error('stale-content-binding');const started=elapsedNow();const renewed=await rpc(s,{v:1,type:'HOST_DOCUMENT_RENEW',clientId,seq:++seq,...bindingFields(binding)});if(renewed?.ok!==true||!bindingOK(renewed.binding,s.binding))throw Error('invalid-host-binding');const remaining=()=>{const budget=6000-(elapsedNow()-started);if(budget<=0)throw Error('request-timeout');return budget;};const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());if(authority?.state!=='verified'||authority.scopeKey!==s.scopeKey){s.recoveryDenied=true;throw Error('scope-not-verified');}const status=await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining());if(status?.ok===true)s.binding=Object.freeze({...renewed.binding});return {...status,binding:renewed.binding};}
    };

@@ -1,0 +1,41 @@
+✔ historical grammar uses original send, never create_time or read time; lineage is message anchored (3.090783ms)
+✔ historical profile refuses noSemantics (0.633105ms)
+✔ historical profile refuses noOriginal (0.335877ms)
+✔ historical profile refuses otherAuthor (2.039587ms)
+✔ historical profile refuses imported (0.290388ms)
+✔ historical profile refuses edited (0.353704ms)
+✔ historical profile refuses pending (0.621338ms)
+✔ historical profile refuses wrongOriginalAuthor (0.488236ms)
+✔ historical profile refuses fakeMilliseconds (0.395066ms)
+✔ historical profile refuses numeric (0.242837ms)
+✔ historical profile refuses unknownPrecision (0.19864ms)
+✔ historical profile refuses extra (0.181815ms)
+✔ historical profile refuses cycle (0.497991ms)
+✔ fixed authenticated provider → guarded body reader → existing repository stores strict event without new intent (33.758101ms)
+✔ same message conflicting original times both persist without replacing prior and invalidate activity (44.87283ms)
+✔ history rejects revoke before persistence (1.739795ms)
+✔ history rejects future before persistence (4.714924ms)
+✔ history rejects unmounted before persistence (0.501527ms)
+✔ history profile cannot be enabled on live ChatGPT origin (0.435356ms)
+✔ serialized provider result carries no private historical authority (0.980259ms)
+✔ forged serialized codec2 batch is rejected without private request gate (0.276137ms)
+✔ historical positive survives calibration expiry, stays provisional without coverage, and explicit revocation removes it (8.521227ms)
+✔ INDEPENDENT codec1 old writer rejects codec2 read and write while original storage remains intact (9.77004ms)
+✔ INDEPENDENT epoch revocation after queued storage writes rolls back all evidence and receipt (3.557417ms)
+✔ INDEPENDENT owner stop during repository page boundary cannot mint or persist gate (9.589998ms)
+✔ INDEPENDENT long paginated metadata cannot manufacture complete evidence (23.280423ms)
+✔ INDEPENDENT changed body proof in response turn rejects current-object historical admission (1.687326ms)
+✔ INDEPENDENT tampered transport, principal or context result cannot claim historical authority (3.580983ms)
+✔ INDEPENDENT duplicate historical reads after source TTL do not change event or start source lifetime again (3.111494ms)
+✔ INDEPENDENT same message third time conflict deduplicates across repeated reads (22.004069ms)
+✔ INDEPENDENT private request gate rejects clone and other scope, expires after apply (2.37934ms)
+✔ INDEPENDENT self-named principal in ordinary metadata without package original_send grammar is not an event (0.816903ms)
+✔ INDEPENDENT same semantic message reparenting must preserve original event and revision (6.081886ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 502.749085

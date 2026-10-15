@@ -1,3 +1,4 @@
+import {validateHistoricalSendProfile,extractHistoricalSends} from './historical-send-profile.mjs';
 import {digest} from '../data/hash.mjs';
 import {parseConversationMetadata} from '../host/conversation-metadata.mjs';
 import {extractConversationAcceptance} from '../host/conversation-acceptance.mjs';
@@ -13,6 +14,8 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
  const providerProfile=profile.id??'chatgpt-session-v1',structures=new Map(Object.entries(profile.structures??{personal:'personal',team:'organization',enterprise:'organization'}));
  if(!identifier(providerProfile)||[...structures.values()].some(v=>!['personal','organization','unknown'].includes(v)))throw Error('invalid-session-profile');
  const currentEnabled=profile.currentConversationReadEnabled===true,contextHeader=profile.currentConversationContextHeader===true,rosterContext=profile.currentConversationRosterContext===true;
+ const historicalProfile=profile.historicalSendProfile===undefined?null:validateHistoricalSendProfile(profile.historicalSendProfile),histories=new WeakMap();
+ if(historicalProfile&&(!currentEnabled||historicalProfile.providerProfile!==providerProfile||!loopback))throw Error('invalid-session-history-profile');
  const ackProfile=profile.sendAckProfile===undefined?null:validateSendAckProfile(profile.sendAckProfile),acceptances=new WeakMap();
  if(ackProfile&&(!currentEnabled||ackProfile.providerProfile!==providerProfile))throw Error('invalid-session-ack-profile');
  async function execute(options={},current=null){
@@ -56,6 +59,7 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
      check();if(instant(expiresAt)<=now())throw Error('session-expired');
      acceptances.set(result,Object.freeze({profile:ackProfile,conversationId:current.conversationId,principalKey,contextKey:current.expectedContextKey,expiresAt,providerProfile,transport:'worker-fixed-fetch',messages}));
     }
+    if(historicalProfile){const messages=extractHistoricalSends({conversationId:current.conversationId,principalId,payload:raw,profile:historicalProfile});check();if(instant(expiresAt)<=now())throw Error('session-expired');histories.set(result,Object.freeze({profile:historicalProfile,conversationId:current.conversationId,principalKey,contextKey:current.expectedContextKey,expiresAt,providerProfile,transport:'worker-fixed-fetch',messages}));}
     return result;
    }
    return {principalId,expiresAt,contexts,providerProfile,transport:'worker-fixed-fetch'};
@@ -72,5 +76,6 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
  // Private in-process association, never restored from serialized data. Fresh
  // observation/body guards remain the reader's responsibility.
  function acceptanceFor(result){const value=acceptances.get(result);if(!value)return null;const checkedAt=now();if(!Number.isFinite(checkedAt)||instant(value.expiresAt)<=checkedAt){acceptances.delete(result);return null;}return value;}
- return Object.freeze({read,readCurrentConversation,acceptanceFor});
+ function historyFor(result){const value=histories.get(result);if(!value)return null;const checkedAt=now();if(!Number.isFinite(checkedAt)||instant(value.expiresAt)<=checkedAt){histories.delete(result);return null;}return value;}
+ return Object.freeze({read,readCurrentConversation,acceptanceFor,historyFor});
 }

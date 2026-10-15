@@ -85,3 +85,11 @@ test('snippet reconstruction profile is explicit loopback-only and cannot enable
  const out=join(dir,'offline-snippets'),info=buildHost(out,{offlineOrigin:'http://127.0.0.1:43210',offlineSnippets:true});assert.equal(info.offlineSnippets,true);assert.equal(verifyHost(out).status,'OFFLINE_HOST_RECONSTRUCTION');
  assert.match(readFileSync(join(out,'extension/config.mjs'),'utf8'),/"offlineSnippets":true/);
 });
+
+test('historical grammar is explicit offline-only package configuration',t=>{
+ const out=join(root(t),'history'),info=buildHost(out,{offlineOrigin:'http://127.0.0.1:3210',offlineHistory:true});
+ assert.equal(info.offlineHistory,true);assert.equal(verifyHost(out).status,'OFFLINE_HOST_RECONSTRUCTION');
+ const config=readFileSync(join(out,'extension/config.mjs'),'utf8');assert.match(config,/"historicalSendProfile"/);assert.match(config,/fixture-original-self-send/);assert.match(config,/"currentMetadataReadEnabled":true/);
+ assert.throws(()=>buildHost(join(root(t),'live'),{offlineHistory:true}),/offline-only/);
+ const plain=join(root(t),'plain');buildHost(plain);assert(!readFileSync(join(plain,'extension/config.mjs'),'utf8').includes('historicalSendProfile'));
+});

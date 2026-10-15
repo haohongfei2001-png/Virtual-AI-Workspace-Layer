@@ -20,13 +20,13 @@ function span(value){shape(value,['from','through']);if(time(value.from)>time(va
 function source(row){
  shape(row,['id','generation','sourceRevision','observedAt','validUntil','channel','revoked'],row.channel==='host-evidence'?['codecVersion','profileId','profileVersion']:[]);id(row.id);id(row.generation);revision(row.sourceRevision);
  if(!['synthetic','host-evidence'].includes(row.channel)||typeof row.revoked!=='boolean')throw Error('untrusted-free-evidence-source');
- if(row.channel==='host-evidence'){if(row.codecVersion!==1)throw Error('unsupported-host-evidence-codec');id(row.profileId);revision(row.profileVersion);}
+ if(row.channel==='host-evidence'){if(![1,2].includes(row.codecVersion))throw Error('unsupported-host-evidence-codec');id(row.profileId);revision(row.profileVersion);}
  if(time(row.validUntil)<=time(row.observedAt))throw Error('invalid-free-evidence-expiry');
 }
 function validateRow(table,row,state){
  if(table==='sources'){source(row);return;}
  witness(row,state);id(row.conversationId);
- if(state.sources[row.sourceId].channel==='host-evidence'&&(table!=='hints'||row.hintType!=='observed-self-send'))throw Error('unsupported-host-evidence-kind');
+ if(state.sources[row.sourceId].channel==='host-evidence'&&(state.sources[row.sourceId].codecVersion===2?table!=='events':table!=='hints'||row.hintType!=='observed-self-send'))throw Error('unsupported-host-evidence-kind');
  if(table==='events'){
   shape(row,[...witnessFields,'conversationId','messageId','branchId','actorVerified','actorScopeKey','role','kind','sendState','sentAt','precision'],['sentInterval']);
   id(row.messageId);id(row.branchId);
@@ -78,7 +78,7 @@ export function applyFreeEvidence(state,command,{scope,now,channel,historical=fa
  }else{
   shape(command,['type','batch']);if(command.type!=='OBSERVE_FREE_EVIDENCE')throw Error('unsupported-free-evidence-command');
   shape(command.batch,tables);
-  if(channel==='host-evidence'&&(!Array.isArray(command.batch.events)||!Array.isArray(command.batch.coverage)||command.batch.events.length||command.batch.coverage.length))throw Error('unsupported-host-evidence-kind');
+  if(channel==='host-evidence'&&(!Array.isArray(command.batch.events)||!Array.isArray(command.batch.coverage)||command.batch.events.some(e=>command.batch.sources.find(s=>s.id===e.sourceId)?.codecVersion!==2)||command.batch.coverage.length))throw Error('unsupported-host-evidence-kind');
   for(const table of tables){if(!Array.isArray(command.batch[table])||command.batch[table].length>5000)throw Error('invalid-free-evidence-batch');const ids=new Set();for(const r of command.batch[table]){id(r?.id);if(ids.has(r.id))throw Error('duplicate-free-evidence-row');ids.add(r.id);if(time(r.observedAt)>clock)throw Error('future-free-evidence-observation');}}
   const historicalSources={};
   for(const input of command.batch.sources){

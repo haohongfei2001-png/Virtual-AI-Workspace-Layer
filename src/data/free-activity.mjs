@@ -4,7 +4,7 @@ import { validateObservedSendAnchor } from './observed-send-anchor.mjs';
 function active(row,sources,clock) {
   const source=sources[row.sourceId];
   return !!source&&!source.revoked&&!row.revoked&&
-    (source.validUntil===undefined||instant(source.validUntil)>clock)&&
+    (source.channel==='host-evidence'&&source.codecVersion===2&&row.kind==='new-send'||source.validUntil===undefined||instant(source.validUntil)>clock)&&
     (row.validUntil===undefined||instant(row.validUntil)>clock)&&
     (row.generation===undefined||row.generation===source.generation)&&
     (row.sourceRevision===undefined||row.sourceRevision<=source.sourceRevision)&&
@@ -40,7 +40,7 @@ export function projectFreeActivity(snapshot,evidence,session,now) {
     const seen=new Map(),bad=new Set();
     for(const e of events.get(id)??[]){
       if(!active(e,sources,clock)||e.actorVerified!==true||e.actorScopeKey!==snapshot.scope||e.role!=='user'||e.kind!=='new-send'||e.sendState!=='committed'||!e.messageId||!e.branchId)continue;
-      const key=JSON.stringify([e.branchId,e.messageId]),r=interval(e);
+      const key=JSON.stringify(sources[e.sourceId]?.channel==='host-evidence'&&sources[e.sourceId]?.codecVersion===2?[e.conversationId,e.messageId]:[e.branchId,e.messageId]),r=interval(e);
       if(!r||instant(r[1])>clock||instant(r[1])>instant(e.observedAt)){bad.add(key);continue;}
       if(seen.has(key)&&JSON.stringify(seen.get(key))!==JSON.stringify(r))bad.add(key);else seen.set(key,r);
     }
