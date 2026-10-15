@@ -1,6 +1,7 @@
 /** One continuous offline J3 journey. Missing fixture surfaces are explicit
  * NOT_COVERED requirements, never fabricated by injecting editor/message DOM. */
 import assert from 'node:assert/strict';
+import {waitForHistoryControl} from './j3-control-wait.mjs';
 import {tmpdir} from 'node:os';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -24,7 +25,7 @@ async function historyFacts(){const reader=page.frames().find(f=>f.url()===`chro
 });}
 async function historyDiagnostics(){
  const reader=page.frames().find(f=>f.url()===`chrome-extension://${extensionId}/workspace.html`);if(!reader)return {missingFrame:true};
- const controls=await reader.evaluate(()=>{const root=document.querySelector('main > [data-vaiwl-owned]')?.shadowRoot;return {missingNavigationRoot:!root,segment:root?.querySelector('.workspace')?.dataset.segment,buttons:[...(root?.querySelectorAll('button')??[])].map(n=>({label:n.getAttribute('aria-label'),text:n.textContent,disabled:n.disabled})),text:root?.querySelector('.workspace')?.textContent.slice(0,6000)??''};});
+ const controls={buttons:await reader.getByRole('button').evaluateAll(nodes=>nodes.map(n=>({label:n.getAttribute('aria-label'),text:n.textContent,disabled:n.disabled}))),workspaces:await reader.locator('.workspace').evaluateAll(nodes=>nodes.map(n=>({segment:n.dataset.segment,text:n.textContent.slice(0,6000)})))};
  const facts=await historyFacts();
  const projection=await reader.evaluate(async({native,evidence})=>{
   const {createHostActivitySourceAdmission}=await import(chrome.runtime.getURL('src/runtime/host-activity-source-admission.mjs')),{HOST_CONFIG}=await import(chrome.runtime.getURL('extension/config.mjs')),{freeProjection}=await import(chrome.runtime.getURL('src/data/free-projection.mjs')),{projectFreeActivity}=await import(chrome.runtime.getURL('src/data/free-activity.mjs')),{createFreeViewSession}=await import(chrome.runtime.getURL('src/data/free-time-policy.mjs'));
@@ -77,7 +78,7 @@ try{
  const originalEvent=Object.values(historyBefore.evidence.events).find(e=>e.conversationId==='33333333-3333-4333-8333-333333333333');assert.equal(originalEvent.actorVerified,true);assert.equal(originalEvent.kind,'new-send');assert.equal(originalEvent.sendState,'committed');assert.equal(originalEvent.precision,'second');assert.equal(historyBefore.evidence.sources[originalEvent.sourceId].codecVersion,2);assert(Date.now()-Date.parse(originalEvent.sentAt)>44*86400000);assert(Date.now()-Date.parse(originalEvent.sentAt)<46*86400000);assert.equal(Object.keys(historyBefore.evidence.hints).length,0);report.originalHistoricalEvent=originalEvent;
  report.historyBeforeControls=await historyDiagnostics();
  const older=frames.workspace.getByRole('button',{name:'较早的30日',exact:true});await older.waitFor({state:'visible'});
- await frames.workspace.waitForFunction(()=>[...(document.querySelector('main > [data-vaiwl-owned]')?.shadowRoot?.querySelectorAll('button')??[])].some(n=>n.getAttribute('aria-label')==='较早的30日'&&n.disabled===false));
+ await waitForHistoryControl(older);
  const olderAvailable=await older.isEnabled();assert.equal(olderAvailable,true);await older.click();await frames.workspace.locator('.workspace[data-segment="1"]').waitFor();await draft();record('older-interval-navigation','PASS',{source:'worker-authenticated explicit historical profile',activityDecision:'provisional without all-history coverage; original event remains strict'});
  const old=frames.workspace.locator('[data-free-list="noProject"]').getByRole('link',{name:'Ordinary conversation',exact:true});await old.waitFor({state:'visible'});await old.click();await page.waitForURL(server.origin+'/c/33333333-3333-4333-8333-333333333333');await page.waitForFunction(()=>document.querySelector('#reading')?.dataset.conversationId==='33333333-3333-4333-8333-333333333333');await draft();frames=await workspace();await frames.workspace.locator('.workspace[data-segment="1"]').waitFor();const historyAfter=await historyFacts();assert.deepEqual(historyAfter.evidence.events[originalEvent.id],originalEvent);record('old-window-reopen','PASS',{conversationId:'33333333-3333-4333-8333-333333333333',sameDocument:true,unsentDraftPreserved:true});
  await frames.sidebar.getByRole('link',{name:'Membership not loaded',exact:true}).waitFor({state:'visible'});await draft();record('unknown-membership-conversation-remains-reachable','PASS',{olderIntervalEntered:olderAvailable,conversationId:'44444444-4444-4444-8444-444444444444'});

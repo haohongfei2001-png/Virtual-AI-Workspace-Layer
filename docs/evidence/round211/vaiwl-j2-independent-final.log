@@ -1,0 +1,37 @@
+✔ sixty day positive anchor sinks reversibly despite unknown member and incomplete coverage (2.846765ms)
+✔ no Project rows have independent activity and unknown remains reachable (0.272211ms)
+✔ other authors, role-only user, future events and same-message contradictions never invent activity (0.495377ms)
+✔ confirmed local send is hint only, expiry returns to old anchor, polling cannot renew hint (1.176795ms)
+✔ generic updated_at and revoked sources cannot supply activity; scope mismatch fails closed (1.169895ms)
+✔ interval precision preserved and crossing boundary remains provisional (0.275766ms)
+✔ coverage gaps cannot certify historical inactivity (0.377359ms)
+✔ numeric sort preserves native stable ties and does not mutate row order or reuse expired keys (0.311791ms)
+✔ host observed send stays provisional and naturally sinks after sixty days despite calibration due and source TTL (4.017646ms)
+✔ observed send polling cannot refresh anchor or calibration time (0.483419ms)
+✔ host durable hint rejects revoked, mismatched, untrusted and corrupt witnesses without widening legacy behavior (0.960299ms)
+✔ due time is a calibration request, not expiration, and future observed anchors remain unusable (0.244569ms)
+✔ legacy local hints and exact events still expire under normal source TTL (0.395006ms)
+✔ same-message original host time supersedes a later ACK observation without changing either record (0.259421ms)
+✔ original time does not suppress observation on other-message (0.216957ms)
+✔ original time does not suppress observation on other-author (0.114552ms)
+✔ original time does not suppress observation on revoked (0.122635ms)
+✔ original time does not suppress observation on future (0.11924ms)
+✔ original time does not suppress observation on legacy-codec (0.142705ms)
+✔ conflicting valid host originals quarantine their own observation anchor without suppressing another message (0.191789ms)
+✔ legacy branch equal to conversation cannot impersonate a host original event key (0.759846ms)
+✔ INDEPENDENT legacy branch namespace cannot impersonate original key (0.202065ms)
+✔ INDEPENDENT authentic original older window supersedes anchor but never creates coverage and mutates neither (0.186251ms)
+✔ INDEPENDENT old branch of same stable message is not a second event identity (0.125429ms)
+✔ INDEPENDENT other conversation and other message retain their own observation even with matching branch (0.24518ms)
+✔ INDEPENDENT revoked wrong-scope incomplete invalid state strict claims do not erase ACK (0.429288ms)
+✔ INDEPENDENT strict source TTL calibration expiry does not restore a superseded observation (0.172831ms)
+✔ INDEPENDENT valid original conflicts quarantine only same-message ACK irrespective order branch or source (0.253833ms)
+✔ INDEPENDENT scope container mismatch throws before any cross-scope calibration (0.155474ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 114.904347

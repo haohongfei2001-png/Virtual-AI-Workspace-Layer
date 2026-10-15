@@ -37,12 +37,12 @@ export function projectFreeActivity(snapshot,evidence,session,now) {
   const sources=evidence.sources??{},events=index(evidence.events,'conversationId'),hints=index(evidence.hints,'conversationId'),coverage=index(evidence.coverage,'conversationId');
   const decision=(id)=>{
     const base={objectKey:id,evidenceRevision:evidence.evidenceRevision??0,basis:'undated',candidateDay:null,candidateTime:null,segment:null,reason:'no-valid-activity',nextCheck:null,validUntil:null};
-    const seen=new Map(),bad=new Set();
+    const seen=new Map(),bad=new Set(),originalConflicts=new Set();
     for(const e of events.get(id)??[]){
       if(!active(e,sources,clock)||e.actorVerified!==true||e.actorScopeKey!==snapshot.scope||e.role!=='user'||e.kind!=='new-send'||e.sendState!=='committed'||!e.messageId||!e.branchId)continue;
-      const key=JSON.stringify(sources[e.sourceId]?.channel==='host-evidence'&&sources[e.sourceId]?.codecVersion===2?[e.conversationId,e.messageId]:[e.branchId,e.messageId]),r=interval(e);
+      const key=JSON.stringify(sources[e.sourceId]?.channel==='host-evidence'&&sources[e.sourceId]?.codecVersion===2?['host-original',e.conversationId,e.messageId]:[e.branchId,e.messageId]),r=interval(e);
       if(!r||instant(r[1])>clock||instant(r[1])>instant(e.observedAt)){bad.add(key);continue;}
-      if(seen.has(key)&&JSON.stringify(seen.get(key))!==JSON.stringify(r))bad.add(key);else seen.set(key,r);
+      if(seen.has(key)&&JSON.stringify(seen.get(key))!==JSON.stringify(r)){bad.add(key);if(sources[e.sourceId]?.channel==='host-evidence'&&sources[e.sourceId]?.codecVersion===2)originalConflicts.add(key);}else seen.set(key,r);
     }
     const positives=[...seen].filter(([key])=>!bad.has(key)).map(([,r])=>r).sort((a,b)=>instant(b[1])-instant(a[1]));
     const latest=positives[0];let result=base;
@@ -54,6 +54,11 @@ export function projectFreeActivity(snapshot,evidence,session,now) {
     }
     for(const h of hints.get(id)??[]){
       if(h.hintType==='observed-self-send'){
+        // A validated, uncontested original-send event for this exact message
+        // supersedes its observation estimate even when the ACK arrived later.
+        // Conflicting valid originals quarantine this same message, including its estimate.
+        const originalKey=JSON.stringify(['host-original',h.conversationId,h.messageId]);
+        if(seen.has(originalKey)&&!bad.has(originalKey)||originalConflicts.has(originalKey))continue;
         // A bounded local observation remains an estimate, not a server send
         // timestamp. Calibration due/ordinary source TTL never erase its fixed
         // first-observation anchor; explicit revocation still does.

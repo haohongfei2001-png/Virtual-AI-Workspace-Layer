@@ -1,3 +1,4 @@
+import {createJ2SendFixture,j2Native,J2_C} from './j2-send.mjs';
 import {createFirstSendFixture,firstSendNative} from './first-send.mjs';
 import { j1CandidatePage, j1NativeProjects } from './j1-candidate-page.mjs';
 import { createVariantHostFixtureServer } from './variants-server.mjs';
@@ -20,13 +21,14 @@ const clone = (value) => structuredClone(value);
  * LEGACY keeps its original behavior; other profiles use their own reconstruction.
  */
 export async function createHostFixtureServer({profile = 'LEGACY', principalId = 'user-host-fixture', accounts = null, now = () => Date.now(), variant = 'positive', fault, journey = null} = {}) {
-  if(journey!==null&&(!['J1','J3','FIRST_SEND'].includes(journey)||profile!=='LEGACY'))throw Error('invalid-fixture-journey');
+  if(journey!==null&&(!['J1','J2','J3','FIRST_SEND'].includes(journey)||profile!=='LEGACY'))throw Error('invalid-fixture-journey');
   if (profile !== 'LEGACY') return createVariantHostFixtureServer({profile,principalId,accounts,now,variant,fault});
   const files = Object.fromEntries(await Promise.all([
     ['/', 'legacy.html', 'text/html; charset=utf-8'],
     ['/native.mjs', 'native.mjs', 'text/javascript; charset=utf-8'],
     ['/native.css', 'native.css', 'text/css; charset=utf-8'],
   ].map(async ([url, file, mime]) => [url, {body: await readFile(new URL(file, import.meta.url)), mime}])));
+  if(journey==='J2')files['/native.mjs'].body=Buffer.from(j2Native(files['/native.mjs'].body.toString()));
   if(journey==='FIRST_SEND')files['/native.mjs'].body=Buffer.from(firstSendNative(files['/native.mjs'].body.toString()));
   if(journey==='J1')files['/'].body=Buffer.from(j1CandidatePage(files['/'].body.toString()));
   if(journey==='J3')files['/'].body=Buffer.from(files['/'].body.toString().replace('<textarea id="prompt-textarea"','<textarea data-j3-editor="plain" id="prompt-textarea"').replace('<!-- J3_EDITOR -->','<button type="button" id="editor-mode">Use contenteditable</button><div id="j3-contenteditable" data-j3-editor="rich" contenteditable="true" role="textbox" aria-label="Rich message ChatGPT" hidden></div>').replace('<!-- J3_PERMISSION -->','<dialog id="permission-dialog" aria-label="Fixture tool permission"><p>Offline reconstruction permission, not a system permission.</p><button id="permission-allow">Allow fixture tool</button><button id="permission-deny">Deny fixture tool</button><output id="permission-result" aria-live="polite"></output></dialog>'));
@@ -50,6 +52,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
     [C_NONE,{id:C_NONE,title:'Ordinary conversation',project:null}],
     [C_UNKNOWN,{id:C_UNKNOWN,title:'Membership not loaded'}],
   ]);
+  const j2=journey==='J2'?createJ2SendFixture({principal:()=>identity,now}):null;
   const firstSend=journey==='FIRST_SEND'?createFirstSendFixture({principal:()=>identity,accounts:()=>roster,conversations,detailAppends,detailAcceptances}):null;
   const projectHref = (id) => `/g/${id}/project`;
   const sessionAuthorized = (req) => (req.headers.cookie ?? '').split(';').some((item) => item.trim() === `host_fixture_session=${cookie}`);
@@ -64,7 +67,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
     }
     const conversationMatch = /^\/c\/([^/]+)$/.exec(path);
     const conversation = conversationMatch && conversations.get(conversationMatch[1]);
-    if(conversation) return {...(firstSend?.view(conversation.id)??{}),title:conversation.title,conversationId:conversation.id,text:'This is an offline native application reconstruction.',...(journey==='J3'?{messages:[{messageId:'j3_'+conversation.id.replaceAll('-','')+'_message',branchId:'j3_branch',text:'Offline prefix uniquely selected fixture words suffix.'}]}:{})};
+    if(conversation) return {...(j2&&conversation.id===J2_C?j2.view():{}),...(firstSend?.view(conversation.id)??{}),title:conversation.title,conversationId:conversation.id,text:'This is an offline native application reconstruction.',...(journey==='J3'?{messages:[{messageId:'j3_'+conversation.id.replaceAll('-','')+'_message',branchId:'j3_branch',text:'Offline prefix uniquely selected fixture words suffix.'}]}:{})};
     return null;
   };
   const readBody = async (req) => {
@@ -100,6 +103,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
         if(!identity || !sessionAuthorized(req) || req.headers.authorization !== `Bearer ${token}`) return json(res,401,{error:'unauthenticated'});
         const conversation = conversations.get(detailMatch[1]);
         if(!conversation || url.search) return notFound(res);
+        if(j2&&conversation.id===J2_C)return json(res,200,j2.detail());
         const authorId = identity;
         if(detailHold) await detailHold.promise;
         if(res.destroyed) return;
@@ -108,6 +112,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
         return json(res,200,{conversation_id:conversation.id,mapping:Object.fromEntries(['fixture_m1','fixture_m2','fixture_not_current',...(detailAppends.get(conversation.id)??[])].map((id,i)=>['node_'+i,{id:'node_'+i,parent:i?'node_'+(i-1):null,message:{id,...(detailAcceptances.get(conversation.id)?.has(id)?{status:'fixture-accepted'}:{}),author:{role:i===1?'assistant':'user',id:authorId},create_time:1700000000+i,content:{parts:['SYNTHETIC_BODY_MUST_NOT_ESCAPE']}}}]))});
       }
       if(!sessionAuthorized(req) || !identity) return json(res,401,{error:'unauthenticated'});
+      if(j2?.handle(req,res,url,json))return;
       if(firstSend?.handle(req,res,url,json))return;
       if(url.pathname === '/native/route' && req.method === 'GET') {
         const view = appRoute(url.searchParams.get('path')); return view ? json(res,200,view) : notFound(res);
@@ -149,7 +154,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
   return {
     origin,url:`${origin}/`,
     manifest: Object.freeze({fixtureId:'chatgpt-host-legacy-reconstruction-v1',profile,...(journey?{journey,journeyEvidence:journey==='J3'?'S_RECONSTRUCTION_NOT_REAL_PERMISSION':'S_RECONSTRUCTION_NATIVE_PENDING_CONTROLS'}:{}),reconstruction:true,source:'VA-HOST/1.1 structure reconstruction; not a real DOM snapshot',sourceCommit:null,sourceBlob:null,fixtureHash:createHash('sha256').update(sourceBytes).update(Buffer.concat(Object.values(files).map((f) => f.body))).digest('hex'),expectedWorldFile:'tests/host/expected/legacy.mjs',oracleHash:createHash('sha256').update(oracleBytes).digest('hex'),supportedCapabilities:['principal','personal-context-candidate','project-identity','idless-native-control','conversation-identity','native-move-menu','native-navigation','native-search','native-create','independent-regions','draft-preservation']}),
-    snapshot: () => clone({actions:counts,requests,fixedGetTrace,...(firstSend?{firstSends:firstSend.snapshot()}:{}),projectCount:projects.size,conversationCount:conversations.size}),
+    snapshot: () => clone({actions:counts,requests,fixedGetTrace,...(j2?{j2:j2.snapshot()}:{}),...(firstSend?{firstSends:firstSend.snapshot()}:{}),projectCount:projects.size,conversationCount:conversations.size}),
     // Test-process controls only; not HTTP endpoints, not page-visible authority.
     setPrincipal: (id,{accounts: nextAccounts = roster} = {}) => { identity = id; roster = clone(nextAccounts); },
     acceptConversationMetadata: (conversationId,messageId) => { if(!(detailAppends.get(conversationId)??[]).includes(messageId))throw Error('missing-fixture-metadata');const ids=detailAcceptances.get(conversationId)??new Set();ids.add(messageId);detailAcceptances.set(conversationId,ids); },

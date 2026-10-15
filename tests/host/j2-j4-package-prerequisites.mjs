@@ -1,3 +1,4 @@
+import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
 /** Partial J2/J4 prerequisites only. Run with Node; output defaults to OS tmpdir.
  * No writes to repositories, fake grants, ACKs, clock acceleration or custom worker.
  * Exit 2 is intentional when tested prerequisites pass but full journeys remain open.
@@ -35,13 +36,6 @@ export function assertNaturalRevocation(sample){
  assert(Number.isFinite(sample.removedAfterProofStartMs)&&sample.removedAfterProofStartMs>=0,'missing natural revocation timestamp');
  assert(sample.removedAfterProofStartMs<=scopeLossTiming.proofTTL,'private projection survived conservative original proof deadline');
 }
-// Playwright enables focus emulation on main frames by default (crPage.ts).
-// Restore native visibility before observation; never simulate an activation.
-export async function restoreNativeFocusBehavior(context,page){
- const session=await context.newCDPSession(page);
- await session.send('Emulation.setFocusEmulationEnabled',{enabled:false});
- return {command:'Emulation.setFocusEmulationEnabled',parameters:{enabled:false},acknowledged:true,readback:'UNAVAILABLE: no protocol getter; trusted visibility events are checked separately',activation:'chrome.tabs.update',syntheticVisibilityEvents:false,defaultEvidence:{officialSource:'https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/chromium/crPage.ts',verifiedLocalVersion:'1.63',verifiedLocalCall:'this._client.send("Emulation.setFocusEmulationEnabled", { enabled: true })'}};
-}
 const hash=x=>createHash('sha256').update(x).digest('hex');
 export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequisites.json')}={}){
  const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -53,10 +47,10 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
  const report={specRevision:'VA-HOST/1.1 FINAL',evidence:'S_REAL_DEFAULT_PACKAGED_MV3_OFFLINE_PREREQUISITES',browserMode:headed?'HEADED':'HEADLESS',display:headed?(process.env.DISPLAY??null):null,
   realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',fullJourneys:'NOT_ACCEPTED',profile:'LEGACY_OFFLINE_C3',
   sourceCommit:process.env.FREE_SOURCE_COMMIT??null,sourceCommitProvenance:'caller supplied; source hashes are authoritative',
-  scriptHash,sourceHashes:manifest.sourceHashes,buildManifestHash:hash(manifestBytes),fixture:server.manifest,os:platform(),
+  scriptHash,visibilityLauncherHash:hash(await readFile(new URL('./native-visibility-browser.mjs',import.meta.url))),sourceHashes:manifest.sourceHashes,buildManifestHash:hash(manifestBytes),fixture:server.manifest,os:platform(),
   networkPolicy:'page allowlist plus unchanged package worker CSP; external worker fetch checked',
   steps:[],errors:[],limitations:requiredGaps.map(([journey,name,reason])=>({journey,name,status:'NOT_RUN',reason}))};
- let context,worker,id,inspectionFrame;const observedPages=[];
+ let context,worker,id,inspectionFrame,browserHandle;const observedPages=[];
  const record=(journey,name,details={})=>report.steps.push({journey,name,status:'PASS',...details});
  async function mounted(page){
   await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:15000});
@@ -97,9 +91,7 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
   });
  }
  try{
-  context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:!headed,viewport:{width:1440,height:1000},
-   executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium'),
-   ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
+  browserHandle=await launchNativeVisibilityBrowser({chromium,profileDir:join(dir,'profile'),headed,executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium')});context=browserHandle.context;report.browserPrecondition=browserHandle.diagnostic;
   await context.route('**/*',r=>r.request().url().startsWith(server.origin+'/')||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());
   const cdp=await context.browser().newBrowserCDPSession();({id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked}));
   worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`))??await context.waitForEvent('serviceworker');
@@ -129,7 +121,7 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
   record('J4','normal-authentication-restoration-renders-without-replaying-unconfirmed-send',{nativeDispatches:1});
   // Independent foreground case starts with a freshly authorized document;
   // its activation cannot affect the already completed natural-renewal case.
-  const c=await context.newPage();c.on('pageerror',e=>report.errors.push(e.message));await c.goto(server.origin+'/c/44444444-4444-4444-8444-444444444444');await mounted(c);report.foregroundBrowserPrecondition=await restoreNativeFocusBehavior(context,c);await activate(c);await c.waitForFunction(()=>document.visibilityState==='visible',null,{timeout:5000,polling:100});
+  const c=await context.newPage();c.on('pageerror',e=>report.errors.push(e.message));await c.goto(server.origin+'/c/44444444-4444-4444-8444-444444444444');await mounted(c);report.foregroundBrowserPrecondition={...browserHandle.diagnostic,activation:'chrome.tabs.update',syntheticVisibilityEvents:false};await activate(c);await c.waitForFunction(()=>document.visibilityState==='visible',null,{timeout:5000,polling:100});
   await c.locator('textarea').fill('J4_FOREGROUND_DRAFT');await c.evaluate(()=>{globalThis.j4OriginalDocument=document;globalThis.j4OriginalEditor=document.querySelector('textarea');});await observeLoss(c);
   await activate(b);await c.waitForFunction(()=>document.visibilityState==='hidden',null,{timeout:5000,polling:100});
   server.setPrincipal(null);await b.reload();await removed(b,scopeLossTiming.foregroundTimeout);
@@ -142,9 +134,9 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
   assert.deepEqual(report.errors,[]);assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');report.browserVersion=context.browser().version();
  }catch(error){report.failureObservations=await Promise.all(observedPages.map(async page=>{try{return await page.evaluate(()=>({url:location.href,owned:document.querySelectorAll('[data-va-owned]').length,state:document.documentElement.dataset.vaiwlState,reason:document.documentElement.dataset.vaiwlReason,loss:globalThis.j4ScopeLoss}));}catch{return {unavailable:true};}}));report.nativeRequests=server.snapshot().requests;report.steps.push({journey:'prerequisites',name:'execution',status:context?'FAIL':'NOT_RUN',error:error.stack});}
  finally{
-  await context?.close();await server.close();
+  await browserHandle?.close();await server.close();
   report.sourceChangedDuringRun=(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);
-  report.scriptChangedDuringRun=hash(await readFile(script))!==scriptHash;report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;
+  report.scriptChangedDuringRun=hash(await readFile(script))!==scriptHash||hash(await readFile(new URL('./native-visibility-browser.mjs',import.meta.url)))!==report.visibilityLauncherHash;report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;
   report.status=resultStatus(report.steps,{sourceChanged:report.sourceChangedDuringRun||report.scriptChangedDuringRun||!report.buildManifestUnchanged});
   await writeFile(output,JSON.stringify(report,null,2)+'\n');
  }

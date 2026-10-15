@@ -2191,3 +2191,10 @@ Round210 follow-through: shared fixture review caught the oldJ1/J3 whitelist
 rejecting FIRST_SEND before startup. Fixed explicit journey entry and added a
 real server-start/native-script test,3/3 PASS. The4160 full result predates this
 runner-fixture correction; final CI must revalidate the complete tree.
+
+## Round 211 — sixth CI evidence, real-browser prerequisites and J2 candidate (2026-10-15)
+
+- Sixth CI at 9a9163c completed FAIL: Node 4165/4165, 12 L guard kills, warm/cold C2 pass; first homepage native POST → exact operation/message/new-C → authenticated ACK persisted in 295ms, but subsequent-home step failed. J1 detached-frame observation, J3 shallow-root observation and foreground startup failed; retained reports in docs/evidence/round211.
+- Correct only observations/real startup: J1 detached read-only frame reacquisition, J3 same role-locator enabled check, second homepage genuine return control. Chromium noDefaults loopback attachment replaces ineffective cross-CDP-session focus-emulation reset. Independent startup smoke gates foreground journey.
+- Added J2 continuous candidate and real S/D guard mutation candidates. Same-message validated original-time supersession and conflict quarantine independently audited 29/29; integrated targeted 50/50. New browser results pending; no global acceptance upgrade. Pure evidence ACK is not required to fabricate empty native transactions; mixed native/evidence integration design remains separate.
+- Draft / NOT_RELEASE_READY. All thresholds, production defaults and private G/U boundaries retained.
