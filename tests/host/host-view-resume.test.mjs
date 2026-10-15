@@ -19,7 +19,7 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBr
  const profile={id:'read-binding-reconstruction',revision:1,urlPolicy:createURLPolicy({profile:{conversationId:value=>value,projectId:({container})=>container}})};
  const uiURLs={workspace:'chrome-extension://extension/workspace.html',sidebar:'chrome-extension://extension/sidebar.html'};
  const children=Object.fromEntries(Object.entries(uiURLs).map(([role,url],i)=>[role,{...sender,frameId:i+1,documentId:'ui_'+role,url}]));
- const service=createHostBindingService({elapsedNow,extensionId:'extension',prepareNavigation,presentSurface,selectionBridge,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{read:async()=>{providerReads++;return {principalId:principal,expiresAt:new Date(time+3600000).toISOString(),contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
+ const service=createHostBindingService({elapsedNow,extensionId:'extension',prepareNavigation,presentSurface,selectionBridge,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:sender.documentId,documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{read:async()=>{providerReads++;return {principalId:principal,expiresAt:new Date(time+3600000).toISOString(),contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
  const request=(type,extra={})=>service.handle({v:1,type,clientId:'client',seq:++seq,...extra},sender);
  let binding,bound;
  async function bind(){const hello=await request('HOST_HELLO');assert.equal(hello.ok,true);binding=hello.binding;const {documentToken,producerToken,routeEpoch}=binding;assert.equal((await request('HOST_REFRESH',{documentToken,producerToken,routeEpoch})).state,'verified');bound=await request('BIND');assert.equal(bound.ok,true,JSON.stringify(bound));return bound;}
@@ -35,7 +35,7 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBr
  const enterCurrent=(role,extra={},as=children[role])=>service.handle({v:1,type:'HOST_UI_CURRENT_ENTRY',grantId:grants[role].id,mountId,...extra},as);
  const horizon=(role,extra={},as=children[role])=>service.handle({v:1,type:'HOST_UI_SET_HORIZON',grantId:grants[role].id,mountId,operationId:'set_horizon',expectedRevision:0,H:14,segment:0,anchorRefId:null,...extra},as);
  async function renew(){const auth={documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch};const doc=await request('HOST_DOCUMENT_RENEW',auth);assert.equal(doc.ok,true,JSON.stringify(doc));binding=doc.binding;const refresh=await request('HOST_REFRESH',auth);const status=await service.handle({v:1,type:'HOST_UI_STATUS',...auth,mountId},sender);return {refresh,status};}
- return{get mountId(){return mountId;},enterCurrent,renew,get providerReads(){return providerReads;},horizon,present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
+ return{get mountId(){return mountId;},enterCurrent,renew,get providerReads(){return providerReads;},horizon,present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchRoute(value){documentURL=value;sender.url=value;service.invalidate({tabId:1,documentId:'document'});},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
 }
 const drain=()=>new Promise(resolve=>setImmediate(resolve));
 async function ready(h,role='workspace',query={}){
@@ -110,7 +110,8 @@ test('bounded resume cache isolates tabs/documents and evicts the oldest beyond 
  active=0;context=contexts[0];assert.deepEqual(await get(),{ok:true,resume:null});
  active=1;context=contexts[1];assert.equal((await get()).resume.query.segment,2);
  active=32;context=contexts[32];assert.equal((await get()).resume.query.segment,33);
- context={...context,parentFrame:{...context.parentFrame,actualURL:'https://chatgpt.com/c/33333333-3333-4333-8333-333333333333'}};assert.deepEqual(await get(),{ok:true,resume:null});
+ context={...context,parentFrame:{...context.parentFrame,actualURL:'https://chatgpt.com/c/33333333-3333-4333-8333-333333333333'}};assert.equal((await get()).resume.query.segment,33,'same document retains presentation on SPA route');
+ context={...context,parentFrame:{...context.parentFrame,documentId:'different-document'}};assert.deepEqual(await get(),{ok:true,resume:null});
 });
 
 test('ready query changing segment never reuses a different segment layout',async t=>{
@@ -143,4 +144,46 @@ test('late SAVE cannot attach old layout to a newer same-segment query',async t=
  holdNext=true;const pending=views.resume({...base,type:'HOST_UI_SAVE_VIEW',view:layout,expectedQuery:oldQuery},{});await drain();assert.equal(typeof release,'function');
  assert.equal((await views.handle({...base,type:'HOST_UI_VIEW',query:newQuery},{})).state,'ready');release();assert.equal((await pending).ok,false);
  const latest=await views.resume({...base,type:'HOST_UI_RESUME'},{});assert.deepEqual(latest.resume.query,newQuery);assert.equal(latest.resume.view,null);
+});
+
+test('authorized same-document P to C and Back restore nonzero query/scroll but never revive old grants',async t=>{
+ const project='https://chatgpt.com/g/p1/project',conversation='https://chatgpt.com/c/c1',h=await boot(t,{documentURL:project}),query={segment:0,offset:32,limit:8},origin={...layout,segment:0,scroll:521};
+ assert.equal((await ready(h,'workspace',query)).state,'ready');assert.equal((await save(h,origin)).ok,true);
+ for(const next of [conversation,project]){
+  const oldGrant=h.grants.workspace.id,oldMount=h.mountId;h.switchRoute(next);await h.bind();await h.mount();
+  assert.notEqual(h.grants.workspace.id,oldGrant);assert.equal((await h.service.handle({v:1,type:'HOST_UI_RESUME',grantId:oldGrant,mountId:oldMount},h.children.workspace)).ok,false);
+  assert.deepEqual(await resume(h),{ok:true,resume:{query,view:origin}});assert.deepEqual(await resume(h,'sidebar'),{ok:true,resume:null});
+  assert.equal((await ready(h,'workspace',query)).state,'ready');assert.equal((await save(h,origin)).ok,true);
+ }
+ h.switchPrincipal('other-account');await h.bind();await h.mount();assert.deepEqual(await resume(h),{ok:true,resume:null});
+ h.switchPrincipal('fixture-principal');await h.bind();await h.mount();assert.deepEqual(await resume(h),{ok:true,resume:null});
+});
+
+test('account round trip without intermediate view erases prior display state',async t=>{
+ const h=await boot(t); await ready(h,'workspace',{segment:3});assert.equal((await save(h)).ok,true);
+ h.switchPrincipal('other-account');await h.bind();await h.mount();
+ h.switchPrincipal('fixture-principal');await h.bind();await h.mount();
+ assert.deepEqual(await resume(h),{ok:true,resume:null});
+});
+test('other project route preserves layout only and recomputes current C',async t=>{
+ const h=await boot(t,{documentURL:'https://chatgpt.com/c/c1'}),query={segment:0,offset:32,limit:8};
+ const first=await ready(h,'workspace',query);assert.equal(first.page.current.refId,'c1');
+ await save(h,{...layout,segment:0});
+ const oldGrant=h.grants.workspace.id,oldMount=h.mountId;
+ h.switchRoute('https://chatgpt.com/g/p2/project');await h.bind();await h.mount();
+ assert.deepEqual((await resume(h)).resume.query,query);
+ const fresh=await ready(h,'workspace',query);assert.equal(fresh.page.current.nativeUrl,'https://chatgpt.com/g/p2/project');assert.equal(fresh.page.current.refId,null);assert.equal(fresh.page.currentRef,null);
+ assert.equal((await h.service.handle({v:1,type:'HOST_UI_VIEW',grantId:oldGrant,mountId:oldMount,query},h.children.workspace)).ok,false);
+ assert.equal((await h.service.handle({v:1,type:'HOST_UI_SAVE_VIEW',grantId:oldGrant,mountId:oldMount,view:{...layout,segment:0},expectedQuery:query},h.children.workspace)).ok,false);
+});
+test('route resume read never extends TTL',async t=>{
+ let elapsed=100;const h=await boot(t,{elapsedNow:()=>elapsed});await ready(h,'workspace',{segment:3});await save(h);
+ elapsed+=1799999;h.switchRoute('https://chatgpt.com/c/c1');await h.bind();await h.mount();assert((await resume(h)).resume);
+ elapsed++;assert.deepEqual(await resume(h),{ok:true,resume:null});
+});
+
+test('document replacement cannot resume old document display',async t=>{
+ const h=await boot(t);await ready(h,'workspace',{segment:3});await save(h);
+ h.service.invalidate({tabId:1,documentId:'document'});h.sender.documentId='replacement-document';await h.bind();await h.mount();
+ assert.deepEqual(await resume(h),{ok:true,resume:null});
 });

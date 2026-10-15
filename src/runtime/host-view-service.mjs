@@ -16,7 +16,9 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
  const views=new Map(),resumes=new Map();
- const resumeKey=(context,role=context.role)=>JSON.stringify([context.parentFrame.tabId,context.parentFrame.documentId,context.parentFrame.actualURL,context.scope.key,role]);
+ // Presentation belongs to the authorized document/scope/role, not its SPA route.
+ // Every read still obtains a fresh current grant through withScope; no page data or grant is resumed.
+ const resumeKey=(context,role=context.role)=>JSON.stringify([context.parentFrame.tabId,context.parentFrame.documentId,context.scope.key,role]);
  function resumeFor(context,role=context.role){
   const time=elapsedNow();for(const [key,value]of resumes)if(time<value.at||time-value.at>=1800000||value.tabId===context.parentFrame.tabId&&value.documentId===context.parentFrame.documentId&&value.scopeKey!==context.scope.key)resumes.delete(key);
   return resumes.get(resumeKey(context,role));
@@ -283,7 +285,9 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   return {workspaceRevision:current.snapshot.workspaceRevision,preferences:current.snapshot.preferences,index:current.index,
    isCurrent:()=>context.isCurrent()&&views.get(mountId)===entry&&!entry.pending&&!entry.error&&entry.owner.current()===current};
  }
+ // Called only after current document and authoritative scope were freshly verified.
+ function confirmScope(frame,scopeKey){for(const [key,value]of resumes)if(value.tabId===frame.tabId&&value.documentId===frame.documentId&&value.scopeKey!==scopeKey)resumes.delete(key);}
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId){for(const [key,value]of resumes)if(value.tabId===tabId)resumes.delete(key);for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({handle,resume,present,resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){resumes.clear();for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({handle,resume,present,confirmScope,resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){resumes.clear();for(const key of [...views.keys()])remove(key);}});
 }

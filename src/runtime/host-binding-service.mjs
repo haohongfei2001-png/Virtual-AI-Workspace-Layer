@@ -115,6 +115,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(focus&&resolution.state!=='verified'){denyFocus();revokeFocus();}check();
   const verified=await handshake.verify(message,sender);check();
   if(!verified){firstSend?.invalidateTab(frame.tabId);if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant)authority.invalidate(frame.documentId);revokeFocus();return {ok:false,reason:'stale-host-document'};}
+  if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant){const scope=authority.scopeFor(frame);if(scope)views?.confirmScope(frame,scope.key);}
   const recoveryProfiles=[...(surfaceProfiles?.size===1?[surfaceProfiles.values().next().value]:[]),...(ackProfile&&resolution.grant?.principal?.providerProfile===ackProfile.providerProfile?[ackProfile]:[])];
   if(!focus&&resolution.state==='verified'&&continuations&&recoveryProfiles.length&&elapsedNow()-attempt.started<4500){
    // Reuse the existing refresh request; no background timer or restored grant.
