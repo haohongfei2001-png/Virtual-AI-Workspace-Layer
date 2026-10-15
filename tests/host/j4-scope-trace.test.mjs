@@ -18,4 +18,11 @@ test('default formal path does not start diagnostic listeners and v2 body is red
  const s=await readFile(new URL('./j4-evidence-interruption.mjs',import.meta.url),'utf8');assert(s.includes('const traceWorker=diagnosticOnly?'));assert(s.includes("'vaiwl-host-observation/2'"));assert(s.includes("m.kind==='current-observation'?m.payload?.body"));assert(s.includes('packageTraceLimitReached:'));
 });
 
-test('trace setup is inside cleanup boundary and debugger helper is source-hashed',async()=>{const s=await readFile(new URL('./j4-package-journey.mjs',import.meta.url),'utf8');assert(s.indexOf(' try{\n  trace=')>=0);assert(s.includes("files=['j4-debugger-transport.mjs'"));});
+test('trace setup is inside cleanup boundary and debugger helper is source-hashed',async()=>{const s=await readFile(new URL('./j4-package-journey.mjs',import.meta.url),'utf8');assert(s.indexOf(' try{\n  trace=')>=0);assert(runnerHashedFiles(s).includes('j4-debugger-transport.mjs'));});
+
+function runnerHashedFiles(source){const match=/\bfiles\s*=\s*(\[[^\]]*\])/.exec(source);assert(match,'J4-hashed-files-list-required');const files=JSON.parse(match[1].replaceAll("'",'"'));assert(Array.isArray(files)&&files.every(p=>typeof p==='string'));return files;}
+test('hash inventory assertion is order-independent but does not accept filenames outside the inventory',()=>{
+ assert(runnerHashedFiles("const files=['expected/modern.mjs','j4-debugger-transport.mjs'];").includes('j4-debugger-transport.mjs'));
+ assert(!runnerHashedFiles("const note='j4-debugger-transport.mjs',files=['other.mjs'];").includes('j4-debugger-transport.mjs'));
+ assert.throws(()=>runnerHashedFiles("const note='j4-debugger-transport.mjs';"),/hashed-files-list-required/);
+});

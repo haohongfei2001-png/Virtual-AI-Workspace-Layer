@@ -1,3 +1,4 @@
+import {nativeSourceIncarnation} from './native-source-incarnation.mjs';
 import {splitCurrentObservation,validateCurrentSurfaceRelation,CURRENT_OBSERVATION_PROTOCOL} from '../host/current-observation-batch.mjs';
 import {continuationSemanticFingerprint} from '../data/native-observation-continuation.mjs';
 import {validateSendIntentProposal} from '../host/send-intent-claim.mjs';
@@ -89,10 +90,10 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
     return {state:'accepted',localSeq:proposal.localSeq,receiptId,bodyProofId:proofId,bodyEpoch};}
    }
    const surfaceProposal=combined?.surface??proposal;
-   const sourceId='host_dom_'+digest(profile.id).slice(0,32),generation='profile_'+profile.revision;
    const projectIds=[...new Set([...batch.projects.map(p=>p.id),...surfaceProposal.payload.membershipClaims.filter(c=>c.asserted==='PROJECT').map(c=>c.projectId)])];
    const page=await repository.page(scope,{ids:{projects:projectIds,refs:batch.refs.map(r=>r.id)},limit:512},{guard,signal:attempt.abort.signal});
-   batch=surfaceBatch(surfaceProposal,{scope,binding:proposal,profile,urlPolicy:profile.urlPolicy,sourceRevision:(page.facts.sources[sourceId]?.sourceRevision??0)+1,observedAt,validUntil,knownProjects:Object.keys(page.facts.projects)});
+   const {sourceId,generation,sourceRevision}=nativeSourceIncarnation(page.facts.sources,profile);
+   batch=surfaceBatch(surfaceProposal,{scope,binding:proposal,profile,urlPolicy:profile.urlPolicy,sourceRevision,observedAt,validUntil,knownProjects:Object.keys(page.facts.projects)});
    if(!await handshake.verify(proposal,sender)||!guard())return rejected('stale-host-document');
    const receiptId='dom_'+digest([grant.id,proposal.producerToken,proposal.localSeq,semanticFingerprint]).slice(0,48);
    request={operationId:receiptId,expectedRevision:page.revision,batch};
@@ -102,6 +103,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    // revision refresh, missing NONE and repeated surfaces are never a delta.
    const changed=(rows,table,fields)=>rows.some(row=>!table[row.id]||fields.some(key=>row[key]!==table[row.id][key]));
    const nativeChanged=changed(batch.projects,page.facts.projects,['nativeName','nativeUrl','availability'])||changed(batch.refs,page.facts.refs,['nativeTitle','nativeUrl','availability'])||changed(batch.membership,page.facts.membership,['state','projectId']);
+   const revalidating=['projects','refs','membership'].some(table=>batch[table].some(row=>page.facts[table][row.id]?.sourceId!==sourceId||page.facts[table][row.id]?.generation!==generation));
    let result;
    const bodyEntry=bodies.get(proposal.producerToken);
    if(nativeChanged&&onNativeDelta&&bodyEntry?.current()&&batch.refs.some(r=>r.id===bodyEntry.claim.conversationId)){
@@ -111,7 +113,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
     // A failed joint commit must never fall back to a native-only write.
     if(turn.claimed&&!result?.ok)return rejected('host-joint-apply-failed');
    }
-   if(combined&&!nativeChanged){if(onNativeDelta&&bodyEntry?.current())await onNativeDelta(bodyEntry.proofId);result={ok:true};}
+   if(combined&&!nativeChanged){if(onNativeDelta&&bodyEntry?.current())await onNativeDelta(bodyEntry.proofId);if(!revalidating)result={ok:true};}
    if(!result)result=await repository.apply(scope,request,{guard,signal:attempt.abort.signal});
    if(!result.ok)return result.reason==='revision-conflict'?{state:'retry-after',localSeq:proposal.localSeq,delayMs:50}:rejected('host-native-apply-failed');
    if(!guard())return rejected('stale-host-scope');
