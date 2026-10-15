@@ -17,7 +17,7 @@ function fixture(options={}){
  installTreeWalkerDouble(document);
  const binding={documentToken:'doc',producerToken:'producer',browserDocumentId:'browser-doc',routeEpoch:4,origin:'https://chatgpt.com',expiresAt:new Date(100000).toISOString()};
  const adapter=createChatGPTAdapter({document,profile:{...LEGACY_SURFACE_PROFILE,currentBody:undefined},now:()=>clock,onRebindNeeded:v=>rebind.push(v),...options});
- return {adapter,document,documentListeners,binding,emitted,rebind,selectors,reading,composer,slot,setTime:v=>clock=v,trigger:()=>observer.cb([]),observer:()=>observer,start:emit=>adapter.start({binding,emit:emit??(async p=>{emitted.push(p);return {state:'accepted',localSeq:p.localSeq,receiptId:'r'};})})};
+ return {adapter,document,documentListeners,binding,emitted,rebind,selectors,reading,composer,slot,setTime:v=>clock=v,trigger:()=>observer.cb([]),observer:()=>observer,start:(emit,extra={})=>adapter.start({binding,...extra,emit:emit??(async p=>{emitted.push(p);return {state:'accepted',localSeq:p.localSeq,receiptId:'r'};})})};
 }
 const tick=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 test('formal context remains unbound without owner body proof; bounded proposals carry no scope',async()=>{const f=fixture(),context=await f.start();await tick();assert.equal(context.body.state,'unbound');assert.equal(context.route.conversationId,C);assert.equal(f.emitted.length,1);assert.equal(f.emitted[0].bodyProofId,null);assert.equal(f.emitted[0].routeEpoch,4);assert.equal(Object.hasOwn(f.emitted[0],'scope'),false);assert.deepEqual(f.emitted[0].payload.coverageClaims,[]);f.adapter.stop();});
@@ -392,4 +392,33 @@ for(const size of [1000,2100])test('idle renewal handle churn '+size+' resolved 
  const beforeChange=f.emitted.length;d.nodes[size-1].textContent='Genuine changed title';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[size-1],parentElement:d.nodes[size-1]}}]);await drain();assert(f.emitted.slice(beforeChange).some(p=>p.kind==='surface-delta'&&p.payload.candidates.some(c=>c.nativeTitle==='Genuine changed title')));
  const added=f.makeMessage('GENUINE-USER-ACK');f.reading.children.push(added);f.observer().cb([{type:'childList',target:f.reading,addedNodes:[added],removedNodes:[]}]);await drain();assert(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.messageIds.includes('GENUINE-USER-ACK'));
  assert.equal(semanticChanges,0,'idle renewal has no genuine candidate field changes beyond handles');assert.equal(renewed.length,0,'unchanged resolved directory should not replay solely due to idle renewal handle churn');assert.equal(secondRenewed.length,0,'a second idle renewal remains publication-stable');
+});
+
+test('private pass registration precedes first body and terminal end waits for final surface ACK',async t=>{
+ const f=bodyFixture(),events=[];t.after(()=>f.adapter.stop());let register,ack;
+ const started=f.start(p=>{events.push(p.kind);f.emitted.push(p);return p.kind==='surface-delta'?new Promise(resolve=>ack=()=>resolve(bodyAck(p))):Promise.resolve(bodyAck(p));},{ingestionPass:m=>{events.push(m.phase);return m.phase==='start'?new Promise(resolve=>register=()=>resolve({ok:true})):Promise.resolve({ok:true});}});
+ await settle();assert.deepEqual(events,['start']);register();await started;await settle();assert.deepEqual(events,['start','current-observation','surface-delta']);assert.equal(f.emitted[0].payload.body.messageIds[0],'M1');assert.equal(f.emitted[0].passSeq,undefined);ack();await settle();assert.deepEqual(events,['start','current-observation','surface-delta','end']);
+});
+test('empty and entirely deduplicated finite passes terminate without treating a pending packet as drained',async t=>{
+ const f=fixture(),events=[];t.after(()=>f.adapter.stop());await f.start(null,{ingestionPass:async m=>{events.push(m);return {ok:true};}});await settle();assert.deepEqual(events.map(m=>m.phase),['start','end']);assert.equal(f.emitted.length,1);
+ f.setTime(10000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()});await settle();assert.deepEqual(events.map(m=>m.phase),['start','end','start','end']);assert.equal(events[2].passSeq,events[0].passSeq+1);assert.equal(f.emitted.length,1);
+});
+for(const mode of ['reject','throw','wrong-sequence'])test('surface ACK '+mode+' cancels scheduling without claiming pass completion',async t=>{
+ const f=fixture(),events=[];sys05Directory(f,1000);t.after(()=>f.adapter.stop());await f.start(p=>{f.emitted.push(p);if(mode==='throw')throw Error('lost');return {state:mode==='reject'?'rejected':'accepted',localSeq:p.localSeq+(mode==='wrong-sequence'?1:0)};},{ingestionPass:async m=>{events.push(m);return {ok:true};}});for(let i=0;i<100;i++)await tick();assert.deepEqual(events.map(m=>m.phase),['start','cancel']);assert(f.emitted.length>1);
+});
+for(const mode of ['reject','throw'])test('scheduling start '+mode+' degrades once without false registration or terminal end',async t=>{
+ const f=fixture(),events=[];sys05Directory(f,1000);t.after(()=>f.adapter.stop());await f.start(null,{ingestionPass:async m=>{events.push(m);if(m.phase==='start'&&mode==='throw')throw Error('lost');return {ok:false};}});for(let i=0;i<100;i++)await tick();assert.deepEqual(events.map(m=>m.phase),['start','cancel']);assert(f.emitted.length>1);
+});
+test('stop during delayed registration cancels same pass and ignores late ACK before any packet',async()=>{
+ const f=fixture(),events=[];let release;const started=f.start(null,{ingestionPass:m=>{events.push(m);return m.phase==='start'?new Promise(resolve=>release=()=>resolve({ok:true})):Promise.resolve({ok:true});}}),rejected=assert.rejects(started,/stale-host-binding/);await settle();f.adapter.stop();release();await rejected;await settle();assert.deepEqual(events.map(m=>m.phase),['start','cancel']);assert.equal(events[0].passSeq,events[1].passSeq);assert.equal(f.emitted.length,0);
+});
+test('real directory restart retains old scheduling pass while successor start is delayed',async t=>{
+ const f=fixture(),d=sys05Directory(f,1000),events=[];t.after(()=>f.adapter.stop());let firstAck,nextStart,active=null;
+ await f.start(p=>{f.emitted.push(p);if(f.emitted.length===1)return new Promise(resolve=>firstAck=()=>resolve(bodyAck(p)));return Promise.resolve(bodyAck(p));},{ingestionPass:m=>{events.push(m);if(m.phase==='start'&&m.passSeq===2)return new Promise(resolve=>nextStart=()=>{active=2;resolve({ok:true});});active=m.phase==='start'?m.passSeq:null;return Promise.resolve({ok:true});}});await settle();assert.equal(active,1);
+ d.nodes[0].textContent='Changed midpass';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[0],parentElement:d.nodes[0]}}]);firstAck();await settle();assert(nextStart);assert.deepEqual(events.map(m=>m.phase),['start','start']);assert.equal(active,1,'old validated pass bridges the async successor validation gap');assert.equal(f.emitted.length,1);nextStart();for(let i=0;i<100;i++)await tick();assert.equal(active,null);assert.deepEqual(events.map(m=>m.phase),['start','start','end']);assert.equal(events.at(-1).passSeq,2);assert(f.emitted.some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Changed midpass')));
+});
+test('same producer renewal retains the finite pass and a reused adapter starts without cancellation gap',async t=>{
+ const f=fixture(),d=sys05Directory(f,1000),events=[];t.after(()=>f.adapter.stop());let packets=0;
+ const ingestionPass=async m=>{events.push(m);return {ok:true};};await f.start(p=>{f.emitted.push(p);if(++packets===2){f.setTime(10000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()});}return Promise.resolve(bodyAck(p));},{ingestionPass});for(let i=0;i<100;i++)await tick();assert.deepEqual(events.map(m=>m.phase),['start','end']);assert.equal(new Set(f.emitted.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,1000);
+ d.nodes[0].textContent='Changed before restart';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[0],parentElement:d.nodes[0]}}]);f.adapter.stop();events.length=0;await f.start(null,{ingestionPass});for(let i=0;i<100;i++)await tick();assert.deepEqual(events.map(m=>m.phase),['start','end']);
 });

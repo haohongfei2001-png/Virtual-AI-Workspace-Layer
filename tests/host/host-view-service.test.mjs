@@ -35,7 +35,8 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBr
  const enterCurrent=(role,extra={},as=children[role])=>service.handle({v:1,type:'HOST_UI_CURRENT_ENTRY',grantId:grants[role].id,mountId:'mount',...extra},as);
  const horizon=(role,extra={},as=children[role])=>service.handle({v:1,type:'HOST_UI_SET_HORIZON',grantId:grants[role].id,mountId:'mount',operationId:'set_horizon',expectedRevision:0,H:14,segment:0,anchorRefId:null,...extra},as);
  async function renew(){const auth={documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch};const doc=await request('HOST_DOCUMENT_RENEW',auth);assert.equal(doc.ok,true,JSON.stringify(doc));binding=doc.binding;const refresh=await request('HOST_REFRESH',auth);const status=await service.handle({v:1,type:'HOST_UI_STATUS',...auth,mountId:'mount'},sender);return {refresh,status};}
- return{enterCurrent,renew,get providerReads(){return providerReads;},horizon,present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
+ const pass=(phase='start',passSeq=1,patch={})=>service.handle({v:1,type:'HOST_INGESTION_PASS',documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,profileId:profile.id,profileVersion:profile.revision,passSeq,phase,...patch},sender);
+ return{pass,enterCurrent,renew,get providerReads(){return providerReads;},horizon,present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
 }
 const drain=()=>new Promise(resolve=>setImmediate(resolve));
 async function ready(h,role='workspace'){
@@ -412,7 +413,7 @@ test('MOCK_IDB late native-page completion after scope revocation cannot publish
  const pending=h.present('sidebar',{kind:'show-native-page'});for(let i=0;i<50&&!entered;i++)await drain();assert.equal(entered,true);h.switchPrincipal('replacement');release();const reply=await pending;assert.equal(reply.ok,false);assert.equal(reply.presentation,undefined);
 });
 
-function preparationClock(){let time=0,next=0;const timers=new Map();return {now:()=>time,schedule:(fn,ms)=>{const id=++next;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id),advance(ms){time+=ms;for(const [id,timer]of [...timers])if(timer.at<=time&&timers.delete(id))timer.fn();},get timers(){return [...timers.values()];}};}
+function preparationClock(){let time=0,next=0;const timers=new Map();return {now:()=>time,schedule:(fn,ms)=>{const id=++next;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id),advance(ms){time+=ms;for(const [id,timer]of [...timers])if(timer.at<=time&&timers.delete(id))timer.fn();},jump(ms){time+=ms;},get timers(){return [...timers.values()];}};}
 async function pendingNativePreparation(t){
  const clock=preparationClock(),h=await fixture(t,{elapsedNow:clock.now,schedule:clock.schedule,cancel:clock.cancel});await h.bind();await h.observe();await h.mount();
  const native=h.service.nativeRepository,original=native.page.bind(native);let pages=0,writing=false;
@@ -457,4 +458,32 @@ for(const ending of ['revoke','stop','timeout','rollback'])test('MOCK_IDB native
   assert.equal(pending(h.bound.scope),false);
  }finally{release();await write;}
  assert.equal(pending(h.bound.scope),false);
+});
+
+test('MOCK_IDB finite pass packet gaps cannot spend the initial attempt; both surfaces share its terminal read',async t=>{
+ const clock=preparationClock(),h=await fixture(t,{elapsedNow:clock.now,schedule:clock.schedule,cancel:clock.cancel});await h.bind();assert.equal((await h.pass()).ok,true);await h.observe();await h.mount();
+ let pages=0,ended=false;const native=h.service.nativeRepository,original=native.page.bind(native);
+ native.page=async(...args)=>{const value=await original(...args);if(args[1]?.limit!==512){pages++;if(!ended)await h.observe(['p1','racing_'+pages]);}return value;};
+ assert.equal((await h.view()).state,'preparing');
+ for(let i=0;i<6;i++){clock.advance(50);await drain();await h.observe(['p1','finite_'+i]);assert.equal((await h.view('sidebar')).state,'preparing');assert.equal(h.service.observations.isNativeWritePending(h.bound.scope),false,'fixture is between actual packets');}
+ assert.equal(pages,0,'finite pass must bridge idle transaction gaps before the first counted read');ended=true;assert.equal((await h.pass('end')).ok,true);clock.advance(50);assert.equal((await ready(h)).state,'ready');assert.equal((await h.view('sidebar')).state,'ready');assert.equal(pages,1);
+});
+test('MOCK_IDB a finite pass arriving during one counted retry prevents gap-driven retry exhaustion',async t=>{
+ const {h,clock,pages}=await pendingNativePreparation(t);assert.equal((await h.pass()).ok,true);
+ for(let i=0;i<5;i++){clock.advance(60);await drain();assert.equal(pages(),1);await h.observe(['p1','between_'+i]);assert.equal((await h.view('sidebar')).state,'preparing');}
+ assert.equal((await h.pass('end')).ok,true);clock.advance(50);assert.equal((await ready(h)).state,'ready');assert.equal(pages(),2);
+});
+test('MOCK_IDB lost end and successive pass starts cannot extend the original thirty-second preparation',async t=>{
+ const clock=preparationClock(),h=await fixture(t,{elapsedNow:clock.now,schedule:clock.schedule,cancel:clock.cancel});await h.bind();await h.observe();await h.mount();await h.pass();let headers=0;const original=h.service.nativeRepository.page.bind(h.service.nativeRepository);h.service.nativeRepository.page=(...args)=>{headers++;return original(...args);};
+ assert.equal((await h.view()).state,'preparing');for(let i=1;i<=5;i++){clock.advance(5000);await h.pass('start',i+1);assert.equal((await h.view('sidebar')).state,'preparing');}
+ clock.advance(5000);assert.equal((await h.view()).reason,'read-budget-exhausted');assert.equal(headers,0);await h.pass('end',6);await h.pass('start',7);clock.advance(50);assert.equal((await h.view('sidebar')).reason,'read-budget-exhausted');assert.equal(headers,0);
+});
+for(const delayedTimer of [false,true])test('MOCK_IDB pass ending at 29s cannot lend a fresh owner budget, delayed timer '+delayedTimer,async t=>{
+ const clock=preparationClock(),h=await fixture(t,{elapsedNow:clock.now,schedule:clock.schedule,cancel:clock.cancel});await h.bind();await h.observe();await h.mount();await h.pass();assert.equal((await h.view()).state,'preparing');clock.advance(29000);await h.pass('end');
+ let entered=false,release;const original=h.service.nativeRepository.page.bind(h.service.nativeRepository),held=new Promise(resolve=>release=resolve);h.service.nativeRepository.page=async(...args)=>{entered=true;await held;return original(...args);};clock.advance(50);for(let i=0;i<100&&!entered;i++)await drain();assert(entered);
+ if(delayedTimer)clock.jump(950);else clock.advance(950);assert.equal((await h.view()).reason,'read-budget-exhausted');release();await drain();assert.equal((await h.view('sidebar')).reason,'read-budget-exhausted');
+});
+test('MOCK_IDB completed or replaced preparation clears its old absolute expiry callback',async t=>{
+ const clock=preparationClock(),h=await fixture(t,{elapsedNow:clock.now,schedule:clock.schedule,cancel:clock.cancel});await h.bind();await h.observe();await h.mount();await h.pass();await h.view();const stale=clock.timers.find(timer=>timer.at===30000).fn;
+ await h.pass('end');clock.advance(50);assert.equal((await ready(h)).state,'ready');clock.advance(29000);await h.observe(['p1','new_cycle']);assert.equal((await h.view()).state,'preparing');assert.equal((await ready(h)).state,'ready');clock.jump(1000);stale();assert.equal((await h.view()).state,'ready');
 });

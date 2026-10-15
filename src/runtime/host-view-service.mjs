@@ -42,13 +42,20 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   }catch{return {ok:false,reason:'view-resume-unavailable'};}finally{active=false;}
  }
  const reason=error=>/^[a-z0-9-]{1,80}$/.test(error?.message)?error.message:'free-view-unavailable';
- function remove(id){const entry=views.get(id);if(entry){entry.prepareGeneration=(entry.prepareGeneration??0)+1;cancel(entry.retryTimer);entry.deferPreparation=null;entry.owner.stop();views.delete(id);}}
+ function remove(id){const entry=views.get(id);if(entry){entry.prepareGeneration=(entry.prepareGeneration??0)+1;cancel(entry.retryTimer);cancel(entry.prepareTimer);entry.checkPreparation=null;entry.deferPreparation=null;entry.owner.stop();views.delete(id);}}
  function begin(entry){
-  cancel(entry.retryTimer);entry.retryTimer=null;entry.deferPreparation=null;entry.error=null;entry.pending=true;
+  cancel(entry.prepareTimer);cancel(entry.retryTimer);entry.retryTimer=null;entry.deferPreparation=null;entry.error=null;entry.pending=true;
   const generation=entry.prepareGeneration=(entry.prepareGeneration??0)+1,started=elapsedNow();let retries=0;
   const current=()=>entry.prepareGeneration===generation&&entry.isCurrent();
+  const completed=()=>{cancel(entry.prepareTimer);entry.prepareTimer=null;entry.checkPreparation=null;};
+  entry.checkPreparation=()=>{
+   const elapsed=elapsedNow()-started;if(Number.isFinite(elapsed)&&elapsed>=0&&elapsed<30000)return false;
+   if(current()){entry.prepareGeneration++;cancel(entry.retryTimer);entry.retryTimer=null;entry.deferPreparation=null;entry.pending=false;entry.error='read-budget-exhausted';completed();entry.owner.invalidate();}
+   return true;
+  };
+  entry.prepareTimer=schedule(()=>{if(current())entry.checkPreparation?.();},30000);
   const queueRetry=()=>{
-   if(!current())return;
+   if(!current()||entry.checkPreparation?.())return;
    cancel(entry.retryTimer);entry.retryTimer=null;
    const elapsed=elapsedNow()-started;
    if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=30000){entry.deferPreparation=null;entry.pending=false;entry.error='read-budget-exhausted';return;}
@@ -65,12 +72,12 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   };
   const run=()=>{
    if(!current())return;
-   entry.owner.refresh().then(()=>{if(!current())return;entry.pending=false;if(elapsedNow()-started>=30000)entry.error='read-budget-exhausted';},error=>{
-    if(!current())return;
+   entry.owner.refresh().then(()=>{if(!current()||entry.checkPreparation?.())return;completed();entry.pending=false;if(elapsedNow()-started>=30000)entry.error='read-budget-exhausted';},error=>{
+    if(!current()||entry.checkPreparation?.())return;
     if(['snapshot-revision-changed','stale-free-page'].includes(error?.message)&&retries<2&&elapsedNow()-started<29950){retries++;entry.deferPreparation=queueRetry;queueRetry();return;}
-    entry.pending=false;entry.error=reason(error);
+    completed();entry.pending=false;entry.error=reason(error);
    });
-  };run();
+  };if(nativeWritePending(entry.scopeKey)===true){entry.deferPreparation=queueRetry;queueRetry();}else run();
  }
  async function handle(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-view'};}
@@ -90,6 +97,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     views.set(message.mountId,entry);begin(entry);
    }
    if(entry.currentEntryPending&&context.role==='workspace'&&((message.query.segment??0)!==0||message.query.search!==undefined||message.query.workingSet!==undefined))entry.currentEntryEligible=false;
+   entry.checkPreparation?.();
    if(entry.pending||entry.autoReading)return {ok:true,state:'preparing',retryAfterMs:50};
    if(entry.error)return {ok:false,reason:entry.error};
    const current=entry.owner.current();if(!current)throw Error('stale-free-view');

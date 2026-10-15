@@ -158,3 +158,9 @@ for(const failure of ['ambiguous','transport'])test('C2 foreground '+failure+' w
 test('explicit stop after foreground denial still cancels all context wake eligibility',async()=>{
  const f=fixture({contextRecovery:true});f.document.visibilityState='visible';await f.client.start();f.setResponse(()=>({state:'ambiguous'}));f.events.get('blur')();f.events.get('focus')();await drain();f.client.stop();const count=f.calls.length;f.client.contextPending();await f.client.contextReady();assert.equal(f.calls.length,count);assert.equal(f.client.showWorkspace(),false);
 });
+
+test('private ingestion scheduling uses bound transport and a six-second RPC without observation metadata',async()=>{
+ const f=fixture();await f.client.start();const start={passSeq:1,phase:'start',profileId:'profile',profileVersion:1};assert.equal((await f.context.ingestionPass(start)).ok,true);assert.deepEqual(f.calls.at(-1),{v:1,type:'HOST_INGESTION_PASS',documentToken:'doc',producerToken:'producer',routeEpoch:1,...start});
+ f.setResponse(()=>new Promise(()=>{}));const pending=f.context.ingestionPass({...start,passSeq:2}),rejected=assert.rejects(pending,/request-timeout/);await drain();await f.advance(6000);await rejected;
+ f.setResponse(()=>({ok:true}));f.client.stop();const before=f.calls.length;assert.equal((await f.context.ingestionPass({...start,phase:'cancel'})).ok,true);assert.equal(f.calls.length,before+1,'bounded owner can retire a stopped private producer');await assert.rejects(f.context.ingestionPass({...start,phase:'end'}),/stale-content-session/);
+});
