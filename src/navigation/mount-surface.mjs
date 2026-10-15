@@ -44,6 +44,11 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     const button=doc.createElement('button');button.type='button';button.setAttribute('popovertarget',node.id);button.setAttribute('popovertargetaction','hide');button.textContent=role==='workspace'?'返回原生阅读':'显示原生列表';
     const frame=doc.createElement('iframe');frame.src=urls.get(role);frame.title=role==='workspace'?'工作空间':'导航';frame.style.cssText='border:0;width:100%;min-height:0;flex:1;display:block';node.append(button,frame);surfaces.push({role,node,frame});
     for(const root of maskRoots){const attr='data-va-mask-'+role;markers.push({root,attr,previous:root.getAttribute(attr),nativeClass:root.getAttribute('class'),nativeStyle:root.getAttribute('style'),nativeHidden:root.getAttribute('hidden'),nativeAriaHidden:root.getAttribute('aria-hidden'),wasVisible:win.getComputedStyle?.(root).visibility==='visible'});root.setAttribute(attr,id);}
+    // Keep the owned iframe's layout through native-input surrender. Removing
+    // its layout on close can leave Chromium's cross-process hit target stale
+    // on immediate re-entry. Closed surfaces remain invisible and inert; the
+    // browser's popover state alone continues to control each native mask.
+    style.textContent+=`#${node.id}:not(:popover-open){display:flex;flex-direction:column;visibility:hidden;interactivity:inert;}\n`;
     style.textContent+=`#${node.id}:popover-open{display:flex;flex-direction:column}#${node.id}>button{flex:none;align-self:flex-start}\n`;
     style.textContent+=`${allowed}:has(#${node.id}:popover-open) [data-va-mask-${role}="${id}"]{visibility:hidden;interactivity:inert;}body:has(${nativeOpen}) #${node.id}{visibility:hidden;interactivity:inert;}\n`;
    }

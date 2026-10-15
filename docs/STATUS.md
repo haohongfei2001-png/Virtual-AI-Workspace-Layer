@@ -2005,3 +2005,14 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 更新正式package后重新运行同一单document J3：**12 PASS/2 NOT_COVERED，PARTIAL_NOT_J3_ACCEPTED**。双原editor/File对象、Back/Forward、真实200%、片段保存查找定位及native搜索保持；无send-intent，worker外网阻断，source/script/build未漂移。旧日期前置、生产snippet profile/真实账户/物理IME缺口保持。
 - 即时退出进一步机制对照：临时静态MV3扩展两例，以及直接加载当前真实mount-surface模块（原CSS mask/inert完整保留）的一例均立即trusted child click成功，CDP确认扩展iframe target。仅定位到完整renderer/会话组合尚未解释；不推翻正式MV3 FAIL。临时包source哈希与匹配脚本快照保留，未改产品挂载或转发点击。
 - ab1e003已同步远端；824784f后一次正常push再次低速超时，本地成果完整保留，继续仅向原PR #16非强制同步。72ca068及原计划保持，整体目标继续进行，NOT_RELEASE_READY。
+
+
+## Round202：关闭态保留自有布局修复即时阅读退出（接fe28e07）
+
+- 进一步最小复现定位到原生输入让位→双popover关闭→原返回入口重开→workspace声明式关闭→即时sidebar点击的完整周期；实际生产mount模块加静态MV3子frame同样丢失child trusted click。原FAIL、单变量retain实验及对应执行脚本快照分别保存，不归因于后置DOM detach或把旧FAIL覆盖。
+- 产品只在owned ID的:not(:popover-open)保留flex布局，并以visibility:hidden/interactivity:inert隔离；native mask仍仅由:popover-open驱动，未改原生display/DOM/handler、未合成或转发click、未添加等待。移除owned stylesheet即恢复UA关闭布局。独立审查未发现原生遮罩残留或卸载oracle放宽。
+- 最终完整Node **3829/3829 PASS**，无skip。新增4项关闭态合同验证owned范围、open-only原生mask、style篡改/移除拒绝及dispose/foreign owner保护。
+- 正式不可变package隔离headless MV3：**reading-sidebar immediate 2/2 PASS、workspace immediate 2/2 PASS**，原失败路径现可立即退出；退出后跨21秒授权期限和原生SPA不复活私有投影/返回入口，原草稿可操作，新document获得新owner grants。未向这两条即时路径加入延时。
+- 当前生产mount闭态实际浏览器机制审计：关闭frame不进入trusted Tab序列，父/子AX不暴露关闭iframe/button，workspace单独关闭只保留sidebar AX，native输入自然让位；该审计明确机制范围。正式package实际 **disable 5/5、uninstall 4/4、re-enable 3/3 PASS**，覆盖双开/单开/双关，disable另有合成generation；原Frame引用及闭态私有内容阳性对照、无visibility过滤、connected不可读即失败。卸载4态均旧frame detached、owned清除、native mask自然释放，未手动关闭；原document/editor/draft保持，原生历史导航仅一次且不复活。重新启用不恢复旧私有frame，新document拒绝旧grant。
+- 同一正式包J3连续旅程仍为 **12 PASS / 2 NOT_COVERED，PARTIAL_NOT_J3_ACCEPTED**；原生model/files/权限fixture/双editor/Back-Forward/真实200%/片段/搜索保持，截图已查看。旧日期前置仍缺，不伪造ACK或启用disabled旧窗口。全部报告source/script/build在各自运行中稳定，保留原始JSON及执行快照。
+- 即时退出的此浏览器/包切片已修复，不代表完整UI-12、81项/J1–J4、实际G/U/PAIA/物理IME或100k预算通过。72ca068及此前代码完整保留；Round200–201已本地提交但最新push仍超时未确认。整体Free继续实施，NOT_RELEASE_READY。
