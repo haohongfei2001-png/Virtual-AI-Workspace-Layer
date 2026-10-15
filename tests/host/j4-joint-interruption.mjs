@@ -37,11 +37,27 @@ export async function pauseJointDrain(cdp,id){
  const receive=e=>{if(e.sessionId!==sessionId)return;const m=JSON.parse(e.message);if(m.id){const pending=requests.get(m.id);if(pending){requests.delete(m.id);m.error?pending.reject(Error(m.error.message)):pending.resolve(m.result);}}else if(m.method==='Debugger.paused')paused=m.params;else if(m.method==='Debugger.scriptParsed'&&m.params.url.endsWith('/src/runtime/host-continuation-owner.mjs'))scripts.push({scriptId:m.params.scriptId,url:m.params.url});else if(m.method==='Debugger.breakpointResolved')resolutions.push(m.params);};
  cdp.on('Target.receivedMessageFromTarget',receive);
  const send=(method,params={})=>new Promise((resolve,reject)=>{const n=++sequence;requests.set(n,{resolve,reject});cdp.send('Target.sendMessageToTarget',{sessionId,message:JSON.stringify({id:n,method,params})}).catch(reject);});
- await send('Debugger.enable');
- const source=await readFile(new URL('../../src/runtime/host-continuation-owner.mjs',import.meta.url),'utf8'),lines=source.split('\n'),lineNumber=lines.findIndex(l=>l.includes('result=await evidenceRepository.applyContinuation('));assert(lineNumber>=0);
- const result=await send('Debugger.setBreakpointByUrl',{url:`chrome-extension://${id}/src/runtime/host-continuation-owner.mjs`,lineNumber,condition:'Boolean(pending.nativeWitness)'});
- if(!Array.isArray(result.locations)||!result.locations.length){cdp.off('Target.receivedMessageFromTarget',receive);await cdp.send('Target.detachFromTarget',{sessionId});throw Error('J4-production-drain-breakpoint-unresolved');}
- return {targetId:target.targetId,breakpoint:result.breakpointId,lineNumber,diagnostics:()=>({targetId:target.targetId,lineNumber,locations:result.locations,scripts,resolutions,paused:paused?{reason:paused.reason,hitBreakpoints:paused.hitBreakpoints,frames:paused.callFrames?.map(f=>({functionName:f.functionName,url:f.url,location:f.location}))}:null}),wait:()=>poll(()=>paused,'production-joint-drain-breakpoint'),async close(){cdp.off('Target.receivedMessageFromTarget',receive);try{await cdp.send('Target.detachFromTarget',{sessionId});}catch{}}};
+ let result,location,lineNumber;
+ try{
+  await send('Debugger.enable');
+  await send('Debugger.setSkipAllPauses',{skip:false});
+  await send('Debugger.setBreakpointsActive',{active:true});
+  const url=`chrome-extension://${id}/src/runtime/host-continuation-owner.mjs`,matches=scripts.filter(s=>s.url===url);
+  assert.equal(matches.length,1,'J4-production-drain-script-required');
+  const scriptId=matches[0].scriptId,{scriptSource}=await send('Debugger.getScriptSource',{scriptId});
+  const source=await readFile(new URL('../../src/runtime/host-continuation-owner.mjs',import.meta.url),'utf8');
+  assert.equal(scriptSource,source,'J4-production-drain-source-mismatch');
+  const lines=source.split('\n');lineNumber=lines.findIndex(l=>l.includes('result=await evidenceRepository.applyContinuation('));assert(lineNumber>=0);
+  const columnNumber=lines[lineNumber].indexOf('applyContinuation('),possible=await send('Debugger.getPossibleBreakpoints',{start:{scriptId,lineNumber,columnNumber},end:{scriptId,lineNumber,columnNumber:columnNumber+'applyContinuation'.length},restrictToFunction:true});
+  location=possible.locations?.find(p=>p.type==='call'&&p.scriptId===scriptId&&p.lineNumber===lineNumber&&p.columnNumber===columnNumber);
+  assert(location,'J4-production-drain-breakpoint-unresolved');
+  // Pause unconditionally at the actual call, after verifyCurrent. A conditional
+  // breakpoint can silently skip on evaluation failure. The durable assertions
+  // below independently require this to be the real mixed pending operation.
+  result=await send('Debugger.setBreakpoint',{location:{scriptId,lineNumber,columnNumber}});
+  assert.deepEqual(result.actualLocation,{scriptId,lineNumber,columnNumber},'J4-production-drain-breakpoint-moved');
+ }catch(error){cdp.off('Target.receivedMessageFromTarget',receive);await cdp.send('Target.detachFromTarget',{sessionId});throw error;}
+ return {targetId:target.targetId,breakpoint:result.breakpointId,lineNumber,diagnostics:()=>({targetId:target.targetId,lineNumber,locations:[result.actualLocation],scripts,resolutions,paused:paused?{reason:paused.reason,hitBreakpoints:paused.hitBreakpoints,frames:paused.callFrames?.map(f=>({functionName:f.functionName,url:f.url,location:f.location}))}:null}),wait:async()=>{const hit=await poll(()=>paused,'production-joint-drain-breakpoint');assert(hit.hitBreakpoints?.includes(result.breakpointId),'J4-production-drain-unrelated-pause');assert.deepEqual(hit.callFrames?.[0]?.location,result.actualLocation,'J4-production-drain-wrong-callsite');return hit;},async close(){cdp.off('Target.receivedMessageFromTarget',receive);try{await cdp.send('Target.detachFromTarget',{sessionId});}catch{}}};
 }
 export async function runJ4JointInterruption({a,b,id,server,cdp,context,inspector,assets,preserved,personal,team,scopeOf,mounted,record,diagnostic=()=>{}}){
  const key=s=>JSON.stringify([s.provider,s.accountId,s.organizationId]),teamAssets=await assets(team);

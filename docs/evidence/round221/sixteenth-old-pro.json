@@ -1,0 +1,161 @@
+{
+  "evidence": "S_REAL_HISTORICAL_SYNTHETIC_PRO_SCHEMA_UPGRADE",
+  "compatibility": "SYNTHETIC_ONLY_NOT_HOST_SCHEMA_MIGRATION",
+  "sourceCommit": "a1df95dcdaa7e4e4723a120fcf307a2b5e78c95e",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "steps": [
+    {
+      "name": "actual-schema-2-product-human-assets-imported-through-real-preview-and-confirm-UI",
+      "status": "PASS",
+      "version": 2,
+      "assetHash": "a0ded626cd6f32c330c141f32aae9681c3c55d34f4c362f660e4db9f3bc4f188"
+    },
+    {
+      "name": "same-extension-id-original-database-scope-schema-2-to-3-all-human-assets-retained",
+      "status": "PASS",
+      "version": 3,
+      "assetHash": "a0ded626cd6f32c330c141f32aae9681c3c55d34f4c362f660e4db9f3bc4f188"
+    },
+    {
+      "name": "actual-archived-schema-2-reader-refuses-newer-database",
+      "status": "PASS",
+      "refusal": {
+        "opened": false,
+        "name": "VersionError",
+        "message": "The requested version (2) is less than the existing version (3)."
+      }
+    },
+    {
+      "name": "same-slot-current-reupgrade-restores-normal-UI-and-unchanged-human-assets",
+      "status": "PASS",
+      "version": 3,
+      "assetHash": "a0ded626cd6f32c330c141f32aae9681c3c55d34f4c362f660e4db9f3bc4f188"
+    }
+  ],
+  "runnerFixtureHashes": {
+    "historical-pro-upgrade.mjs": "328b90e9efdb24a88fd382f5651118a4c8c43a1cd660ea9c3a2da929706f9317",
+    "historical-pro-assets.mjs": "978d0172f5b58f28417f06ffb691a3169b6b85b00df54be2184956354c949971",
+    "historical-package.mjs": "2dbd70e9ff7e759c0d3c6358bc553296b8d86581ff121656ca3b89a2719c9262",
+    "native-visibility-browser.mjs": "9661985c6ee149033b9653957e1e45d89b45feed6d67b1f8346838d187a9830a",
+    "isolated-browser-cleanup.mjs": "c3d4a053d485efbd86a487ac1e4257849120b30939e63be346ceceaaea2fafb0",
+    "historical-network-guard.mjs": "e38719134f6087c3efbc66044922967262a6c2e585c11a7ee69b5016b22dc416"
+  },
+  "oldSource": {
+    "commit": "176ebc9a3620f6e174e542e3320ff7008cd6ebe8",
+    "archiveHash": "2e7cc1df71aa54d9bf2b42e22a03f6f6ecb4c5260ac62fe0c1f56fbe52842333",
+    "paths": [
+      "src",
+      "simulator"
+    ]
+  },
+  "oldBuild": {
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "387fe0586e8c9492e0b2c1eae7dc86a13c3f6b97eb52c2e520333d7a5aa855f4",
+    "src/b1/document-binding-broker.mjs": "18f75d2f839ca52f2417241bd678748a4a554e90a14eeb004de9cbcde7c91ca3",
+    "simulator/service.mjs": "03cad5aabac17b9f0fe846923099ea66f62c55ebe1022aa62f173bb4269b6400",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/worker.mjs": "1abede3e4bc224a5972c927986ecaf8fbbdfe12eb7a63b3b2372ebba8e9fb6f9",
+    "src/data/schema.mjs": "cdf1d47b69b04b06f5cce3ea08e1e3982a4f45e715c12386b286f0d950c82a1d",
+    "src/data/partitioned.mjs": "25d3756bf4e3e45342541140efd6d6eac8d381380c90baf57098560ddd18d63d",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/hash.mjs": "1c30ed33f7f01d364680f67dc2fd2ee69f10b7be7a7afd03b5d7911275be25b7",
+    "src/data/state.mjs": "e306bdd92ec89299e0507ab411ebbd683e3e8146535eb7179d019d4416a72af9",
+    "src/data/preferences.mjs": "1ef1278af73bb5ef27904863242ab4b09ca177d009da96b9758b83c2ee6f104b",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/repository.mjs": "a8f6504650db363c4092c8ac4332e3515e1d4ccc1e6b893ea4bd468b8b37a6cc",
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "content.js": "30391c0827ec42966d49a4fcdbb44312ffd20f1e75d12033753685adcf3329cd",
+    "manifest.json": "aad5e00624a2246c96471a03fc8c118c0b1eaffdd8170f61ee600d52102a80c5"
+  },
+  "oldPackageHash": "60e4ee3594411a2f07b34b35f5640f7a1e75f560a38ab1fca25c3ee3d44fde59",
+  "currentBuild": {
+    "archiveHash": "186bccb0c320bafa03183aeca45dfb656b51e5e36dbe03d960c5230b1dcf7e1d",
+    "sourceManifestHash": "65e623567b1715e11e7c38556ccc3def2112d08036f16f3cf160fc4ecbb64bda"
+  },
+  "fixture": {
+    "origin": "http://127.0.0.1:40003",
+    "sourceCommit": "176ebc9a3620f6e174e542e3320ff7008cd6ebe8"
+  },
+  "browserPrecondition": {
+    "transport": "isolated-loopback-CDP",
+    "noDefaults": true,
+    "headed": true,
+    "focusEmulation": "NOT_ENABLED_BY_PLAYWRIGHT",
+    "networkGuard": {
+      "mode": "DISPOSABLE_CHROME_REJECT_PROXY",
+      "fixtureOrigin": "http://127.0.0.1:40003",
+      "proxyPort": 37413
+    },
+    "source": "Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned"
+  },
+  "extensionId": "lphnciaodlkhjjfmjfdkegiojdppapof",
+  "networkChecks": [
+    {
+      "target": "http://127.0.0.1:33743/guard",
+      "result": {
+        "rejected": false,
+        "status": 403
+      },
+      "proxyCounter": "GET 127.0.0.1",
+      "proxyDeniedDelta": 1,
+      "testRouteDeniedDelta": 1,
+      "nonFixtureCanaryRequests": 0,
+      "initialInterception": {
+        "rejected": true,
+        "error": "TypeError",
+        "message": "Failed to fetch"
+      },
+      "redundantTestRouteRemoved": true
+    },
+    {
+      "target": "http://example.invalid/guard",
+      "result": {
+        "rejected": true,
+        "error": "TypeError",
+        "message": "Failed to fetch"
+      },
+      "proxyCounter": "GET example.invalid",
+      "proxyDeniedDelta": 1,
+      "testRouteDeniedDelta": 0,
+      "nonFixtureCanaryRequests": 0
+    },
+    {
+      "target": "https://example.invalid/guard",
+      "result": {
+        "rejected": true,
+        "error": "TypeError",
+        "message": "Failed to fetch"
+      },
+      "proxyCounter": "CONNECT example.invalid",
+      "proxyDeniedDelta": 1,
+      "testRouteDeniedDelta": 0,
+      "nonFixtureCanaryRequests": 0
+    }
+  ],
+  "upgradePackageHash": "3ed1e2347384e81635425aca22877eb04679d026f45368169a7bc18ef60a522b",
+  "loadedCurrentManifestHash": "43145706587b2d733fc69919e52091b796ed6283d15e1b1b19437bbe39dc7076",
+  "sourceUnchanged": true,
+  "browserVersion": "156.0.8078.4",
+  "status": "PASS_SYNTHETIC_PRO_SCHEMA_COMPATIBILITY_ONLY",
+  "networkGuard": {
+    "mode": "DISPOSABLE_CHROME_REJECT_PROXY",
+    "closed": true,
+    "denied": 64,
+    "counts": {
+      "CONNECT www.google.com": 44,
+      "GET clients2.google.com": 1,
+      "CONNECT accounts.google.com": 3,
+      "CONNECT update.googleapis.com": 1,
+      "POST update.googleapis.com": 1,
+      "CONNECT redirector.gvt1.com": 1,
+      "GET 127.0.0.1": 1,
+      "GET example.invalid": 1,
+      "CONNECT example.invalid": 1,
+      "CONNECT content-autofill.googleapis.com": 10
+    }
+  }
+}

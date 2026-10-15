@@ -58,6 +58,9 @@ jobs:
       - name: C2 cold passive diagnostic copy (not package acceptance)
         if: ${{ !cancelled() }}
         run: node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold-trace.json" cold-trace
+      - name: Separate cold safety boundary and genuine native navigation recovery
+        if: ${{ !cancelled() }}
+        run: node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold-recovery.json" cold-recovery
       - name: Continuous J1 candidate journey (partial coverage only)
         if: ${{ !cancelled() }}
         run: |
@@ -93,7 +96,7 @@ jobs:
         run: |
           echo "Source commit: $GITHUB_SHA"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          for name in context-package context-cold context-cold-trace j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled; do
+          for name in context-package context-cold context-cold-trace context-cold-recovery j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done
   offline-durability-compat:
