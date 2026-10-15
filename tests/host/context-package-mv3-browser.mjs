@@ -8,7 +8,7 @@ import {createVariantHostFixtureServer} from './fixtures/variants-server.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {createColdTracePackage,verifyColdTracePackage} from './cold-context-trace.mjs';
 import {digest} from '../../src/data/hash.mjs';
-import {observeColdBoundary} from './context-cold-boundary.mjs';
+import {observeColdBoundary,coldConversationRequests} from './context-cold-boundary.mjs';
 import {cleanupOwnedResources} from './isolated-browser-cleanup.mjs';
 const C='33333333-3333-4333-8333-333333333333',server=await createVariantHostFixtureServer({profile:'MODERN'}),dir=await mkdtemp(join(tmpdir(),'vaiwl-c2-package-')),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineContext:true});
 const info=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8')),hash=v=>createHash('sha256').update(v).digest('hex');
@@ -33,7 +33,7 @@ try{
   const editor=page.locator('#prompt-textarea'),draft='offline cold recovery draft';await editor.click();await editor.fill(draft);
   const nativeLink=page.locator('aside nav[aria-label="Chat history"] a[href="/c/44444444-4444-4444-8444-444444444444"]');await nativeLink.click();
   await page.waitForURL(server.origin+'/c/44444444-4444-4444-8444-444444444444',{timeout:20000});await waitMounted();
-  assert.equal(await editor.inputValue(),draft);const requests=server.snapshot().nativeRequests;assert.equal(requests.length,2);assert.equal(requests[1].path,'/backend-api/conversation/44444444-4444-4444-8444-444444444444');
+  assert.equal(await editor.inputValue(),draft);const allRequests=server.snapshot().nativeRequests,requests=coldConversationRequests(allRequests);report.coldBoundary.nativeAfterNavigation=allRequests;assert.equal(requests.length,2);assert.equal(requests[1].path,'/backend-api/conversation/44444444-4444-4444-8444-444444444444');
   report.coldBoundary.nativeNavigationRecovery='PASS';report.coldBoundary.originalDraftRetained=true;
   }else report.coldBoundary.nativeNavigationRecovery='NOT_COVERED_THIS_RUN';
  }else await waitMounted();

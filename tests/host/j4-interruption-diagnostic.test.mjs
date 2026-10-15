@@ -13,7 +13,7 @@ test('timeout diagnostics preserve real hold predicate and timeout without reset
 
 test('baseline failure is diagnosed before any native send without bypass or retry',async()=>{
  const s=await readFile(new URL('./j4-evidence-interruption.mjs',import.meta.url),'utf8');
- const start=s.indexOf("await capture('baseline-current-body-visible-before-observation')"),failure=s.indexOf("await capture('baseline-original-history-timeout');throw error;"),send=s.indexOf("fill('J4 explicit native interruption send')");
- assert(start>=0&&start<failure&&failure<send);assert(s.slice(start,failure).includes("try{await poll(async()=>events(await evidence()).some(e=>e.messageId==='j4_original_old'))"));
+ const start=s.indexOf("await capture('baseline-current-body-visible-before-observation')"),failure=s.indexOf("await capture('baseline-original-history-timeout')"),send=s.indexOf("fill('J4 explicit native interruption send')");
+ assert(start>=0&&start<failure&&failure<send);assert(s.slice(failure,send).includes('throw error;'));assert(s.slice(start,failure).includes("try{await poll(async()=>events(await evidence()).some(e=>e.messageId==='j4_original_old'))"));
  assert(s.includes('readingConversationMatches:'));assert(s.includes('scopeKnown:'));
 });

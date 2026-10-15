@@ -21,4 +21,22 @@ export const css=`
 @media(max-width:760px){.workspace{padding:15px 46px 24px 9px}.arrows{margin-right:-37px}.card-head{padding-left:11px}.card h2{gap:8px}.card-actions{opacity:1}.card{border-radius:13px}}
 @media(pointer:coarse){.card-actions{opacity:1}.card .row{min-height:44px}.old,.arrows button{min-height:40px}}
 .snippet-preview{display:block;font-size:calc(12px * var(--vaiwl-font-scale,1));color:var(--muted,#646464);white-space:normal;max-height:3em;overflow:hidden;margin-left:8px;flex:1}.anchor-feedback{font-size:calc(12px * var(--vaiwl-font-scale,1));color:var(--muted,#646464);padding:8px}.working-set .row{margin:3px 0}.toolbar .square{width:30px;height:32px}
+
+/* The host may retain its native rail at a narrow viewport. Reflow only our
+   owned controls so required titles and actions still get usable inline space. */
+@media(max-width:240px){
+ .workspace{padding:8px}
+ .arrows{float:none;display:flex;position:sticky;width:max-content;max-width:100%;margin:0 0 8px auto;gap:4px}
+ .card-head{flex-wrap:wrap;padding:8px;gap:6px}
+ .card h2{flex:1 0 100%;width:100%;gap:6px}
+ .card-actions{margin-left:auto;opacity:1}
+ .search{padding:6px}
+ .search-top{flex-wrap:wrap;gap:4px}
+ .search-top strong{flex:1 0 100%;min-width:0;overflow-wrap:anywhere}
+ .search .row{padding:8px 4px;gap:4px}
+ .card .members{margin-left:10px;margin-right:4px;padding-left:5px}
+ .card .row{padding-left:4px;padding-right:4px;gap:4px}
+ .working-set-row{min-width:0}
+ .working-set-row>.row{flex-basis:100%!important;width:100%}
+}
 `;

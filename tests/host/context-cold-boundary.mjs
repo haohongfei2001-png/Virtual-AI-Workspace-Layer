@@ -11,3 +11,9 @@ export async function observeColdBoundary({waitMounted,snapshot}) {
   return {initialProjection:'TIMEOUT',initialError:String(error.message),missingReceiptSafety:'NO_PRIVATE_SURFACE_NATIVE_PRESENT',receiptCause:'NOT_ESTABLISHED_WITHOUT_OWNER_TRACE',immediateColdSupport:'FAIL',actual};
  }
 }
+
+// Native history pagination is independent of the two current-conversation GETs.
+export function coldConversationRequests(requests) {
+ assert(Array.isArray(requests));
+ return requests.filter(row=>/^\/backend-api\/conversation\/[0-9a-f-]+$/.test(row?.path??''));
+}
