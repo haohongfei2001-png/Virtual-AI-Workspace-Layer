@@ -46,18 +46,31 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   await context.addInitScript(()=>{
    if(location.protocol!=='chrome-extension:'||!globalThis.chrome?.runtime?.sendMessage)return;
    const send=chrome.runtime.sendMessage.bind(chrome.runtime);
-   chrome.runtime.sendMessage=function(...args){const started=performance.now(),result=send(...args),type=args[0]?.type;
-    if(type?.startsWith('HOST_UI_')&&result?.then)result.then(r=>console.log('HOST_SCALE_RPC '+JSON.stringify({role:location.pathname,type,elapsedMs:performance.now()-started,state:r?.state,ok:r?.ok,reason:r?.reason,groupCount:r?.page?.groups?.items?.length})),()=>console.log('HOST_SCALE_RPC '+JSON.stringify({role:location.pathname,type,elapsedMs:performance.now()-started,rejected:true})));
+   chrome.runtime.sendMessage=function(...args){const started=performance.now(),requestAt=Date.now(),result=send(...args);
+    // Diagnostic observation cannot change the original call or Promise.
+    const log=(prefix,value)=>{try{console.log(prefix+JSON.stringify(value));}catch{}};
+    try{const type=args[0]?.type;
+     if(typeof type==='string'&&type.startsWith('HOST_UI_')&&result?.then)result.then(r=>{try{log('HOST_SCALE_RPC ',{role:location.pathname,type,requestAt,at:Date.now(),elapsedMs:performance.now()-started,state:r?.state,ok:r?.ok,reason:r?.reason,groupCount:r?.page?.groups?.items?.length});}catch{}},()=>log('HOST_SCALE_RPC ',{role:location.pathname,type,requestAt,at:Date.now(),elapsedMs:performance.now()-started,rejected:true}));
+    }catch{}
     return result;
    };
   });
   const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:tracePackage?.unpacked??built.unpacked});loadedExtensionId=id;report.browserVersion=context.browser().version();
+  await context.addInitScript(({extensionId,nativeOrigin})=>{
+   if(location.origin!==nativeOrigin)return;
+   addEventListener('message',event=>{try{
+    if(event.origin!==`chrome-extension://${extensionId}`||!event.source)return;
+    let directChild=false;for(let i=0;i<Math.min(window.length,16);i++)if(window[i]===event.source){directChild=true;break;}if(!directChild)return;
+    const data=event.data;if(!data||Object.keys(data).sort().join(',')!=='role,type'||!['workspace','sidebar'].includes(data.role)||!['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(data.type))return;
+    console.log('HOST_SCALE_LIFECYCLE '+JSON.stringify({role:`/${data.role}.html`,type:data.type,at:Date.now()}));
+   }catch{}});
+  },{extensionId:id,nativeOrigin:server.origin});
   const surfaces=page=>{const sampled=(traceEnabled||process.env.FREE_HOST_SCALE_PROGRESS==='1')&&report.phase==='tab-0-initial-surfaces';
    let sampler;if(sampled){report.nativeIndexSamples=[];report.timingUse=traceEnabled?'DIAGNOSTIC_ONLY_INSTRUMENTED_PACKAGE':'DIAGNOSTIC_ONLY_PROGRESS_SAMPLING';sampler=createHostScaleProgressSampler({page,extensionId:id,records:report.nativeIndexSamples});}
    return waitHostScaleSurfaces(page,{extensionId:id,timeout:30000,onObservation:value=>{report.surfaceWait??=[];report.surfaceWait.push({phase:report.phase,...value});if(report.surfaceWait.length>16)report.surfaceWait.shift();sampler?.observe({remainingMs:value.remainingMs,preparing:report.rpc.some(row=>row.tab===0&&row.state==='preparing')});}}).finally(()=>sampler?.stop());};
   const pages=[],ingestionStarted=performance.now();
   for(let tab=0;tab<2;tab++){
-   const page=await context.newPage();activePage=page;report.phase=`tab-${tab}-native-navigation`;pages.push(page);page.on('pageerror',e=>report.errors.push(e.message));page.on('console',message=>{const text=message.text();if(traceEnabled&&text.startsWith('HOST_SCALE_TRACE ')){try{appendScaleTrace(report.trace,{...JSON.parse(text.slice(17)),realmOrdinal:tab+1});}catch{report.trace.dropped++;}return;}if(text.startsWith('HOST_SCALE_RPC ')){if(report.rpc.length<4096)report.rpc.push({tab,...JSON.parse(text.slice(15))});else report.rpcTraceDropped++;}});
+   const page=await context.newPage();activePage=page;report.phase=`tab-${tab}-native-navigation`;pages.push(page);page.on('pageerror',e=>report.errors.push(e.message));page.on('console',message=>{const text=message.text();if(text.startsWith('HOST_SCALE_LIFECYCLE ')){try{const value=JSON.parse(text.slice(21));if(['/workspace.html','/sidebar.html'].includes(value.role)&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(value.type)&&Number.isSafeInteger(value.at)&&value.at>=0){report.uiLifecycle??=[];if(report.uiLifecycle.length<128)report.uiLifecycle.push({tab,role:value.role,type:value.type,at:value.at});else report.uiLifecycleDropped=(report.uiLifecycleDropped??0)+1;}}catch{}return;}if(traceEnabled&&text.startsWith('HOST_SCALE_TRACE ')){try{appendScaleTrace(report.trace,{...JSON.parse(text.slice(17)),realmOrdinal:tab+1});}catch{report.trace.dropped++;}return;}if(text.startsWith('HOST_SCALE_RPC ')){if(report.rpc.length<4096)report.rpc.push({tab,...JSON.parse(text.slice(15))});else report.rpcTraceDropped++;}});
    const session=await context.newCDPSession(page);await session.send('Emulation.setCPUThrottlingRate',{rate:scenario.cpuRate});
    const start=performance.now();await page.goto(server.url,{waitUntil:'domcontentloaded',timeout:60000});report.phase=`tab-${tab}-initial-surfaces`;const frames=await surfaces(page);
    report.ingestion.push({scaleBasis:'NATIVE_WORLD_NOT_PROVEN_ADMITTED_AT_SAMPLE',tab,coldProfile:tab===0,initialSurfacesMs:performance.now()-start,nativeHistoryLinks:await page.locator('nav[aria-label="Chat history"] a').count(),surfaces:frames.map(f=>f.url())});

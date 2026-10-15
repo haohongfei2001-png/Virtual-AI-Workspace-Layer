@@ -2,6 +2,10 @@
 
 ## 最新正式检查点（2026-10-15，隔离云环境）
 
+原分支 / Draft PR16 已提交371f327（Round246），CI42完整Node4859/4859、全部离线旅程作业通过，耐久/兼容作业仅正式10k基线失败。两tab初次双surface准备与原生尾部搜索导航通过，返回工作区仍超原30秒，尚无完整10k接纳审计或计时。171源码/夹具哈希与正式提交匹配；2636条UI RPC均成功，旧跨tab授权误拒本轮未再现。后续候选与证据见本文末尾及[Round247](evidence/round247/README.md)。完整81子场景、SYS04/SYS05、真实G/U和发布条件仍未完成。此处不以测试条数推算开发完成百分比。
+
+## 历史正式检查点（Round219，保留原记录）
+
 正式源仍为原分支 / Draft PR16，当前已提交 e667ec4（Round219）。第十五 CI38682903702 整体 FAIL，完整 Node4378/4378、零跳过；J1已实现9步仍为PARTIAL，J2已实现8步、J3已实现15步、首页首发、真实失败/取消后立即重试、旧Host同ID换包及旧Pro升级兼容均通过相应离线范围。J4纯evidence中断恢复通过，mixed原生发送后未触发联合drain；独立插桩cold缺少onSendHeaders事件而安全拒绑，同轮原包cold通过。100k/4x、全81/支持profile矩阵、完整v2.7与真实G/U仍未完成。本文末尾Round220及evidence/round220保存最新实际结果；后续候选未运行前不计通过。
 
 当前开发只使用隔离云临时目录和获批免费GitHub CI，不在用户Mac操作。旧桌面路径与以下旧检查点仅保留历史来源，不是当前执行环境。
@@ -2456,3 +2460,7 @@ CI40 passed4751 Node contracts. Its one instrumented10k run collected503 zero-dr
 ## Round246 — both 10k tabs initially ready; unrelated-tab revocation defect
 
 CI41 at17433d2 passed4788 Node contracts and all scoped journeys; durability failed only formal10k. Both initial dual-surface tab preparations now pass their original30s limits (27.52s/23.07s), followed by native tail search/navigation. Failure moves to return-workspace-local-search before complete admitted-index audit/timing.171 exact source/fixture hashes match. A real two-tab UI-owner reproduction independently shows global revocation fencing rejecting a healthy tab when only another tab's parent is revoked; the independently reviewed isolation repair retains own-authority revocation and final current-grant checks, including safe late-result cleanup.128 focused and137 adjacent contracts pass;77 integrated checks pass. This does not yet prove the entire browser failure is explained. [Round246 evidence](evidence/round246/README.md). FullFree/SYS04/SYS05 and immediate cold remain incomplete; Draft NOT_RELEASE_READY.
+
+## Round247 — client preparation lifecycle remains under investigation
+
+CI42 at371f327 passes4859 Node contracts and all scoped journeys. Formal10k both initial preparations pass25.03s/21.19s, native tail navigation passes, then return readiness fails30s before complete audit/timing.171 hashes match;2636 recorded RPCs including24 renewals all succeed. A controlled real-client reproduction confirms an accepted-ready read retaining its old budget solely because another invalidation is queued; the minimal candidate completes that validated read and gives the next read its original independent budget. The exact CI42 cascade remains unproven. No deadline or retry increase is made. [Round247 evidence](evidence/round247/README.md). FullFree/SYS04/SYS05 remain open.
