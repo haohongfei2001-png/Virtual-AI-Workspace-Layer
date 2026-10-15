@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 当前持续实施（2026-10-13，正式桌面目录）
+## 最新正式检查点（2026-10-15，隔离云环境）
+
+正式源仍为原分支/ Draft PR16。已提交7b0e467（Round215）；第十一CI38677052525整体FAIL，Node4295/4295、J3已实现连续15步、J1已实现9步、首页首发、C2与独立联合IDB/指定变异通过。J2后来原时、J4完整连续恢复、旧Host换包仍失败；100k/4x及全81/支持profile矩阵、完整v2.7、真实G/U尚未完成。最新明细见本文末尾Round216及evidence/round216，不能把早期数字当当前验收。
+
+当前开发只使用隔离云临时目录和获批免费GitHub CI，不在用户Mac操作。旧桌面路径与以下旧检查点仅保留历史来源，不是当前执行环境。
+
+## 历史持续实施（2026-10-13，原正式桌面目录）
 
 当前功能检查点Round205：即时退出、rich发送候选与隐藏旧目录采样已修复；J1又修复立即四格返回取消候选升级的竞态。完整Node3924项通过，同一正式包J1连续6步/2项目4聊天映射通过，但分页/滚动/焦点来路仍待验。J3旧日期、100k/4x、首页首发及真实G/U缺口保留，Free为NOT_RELEASE_READY。
 
@@ -2250,3 +2256,15 @@ Round214 independent actual-worker-event audit: 5/5 PASS. The history event itse
 - J4 held-detail prerequisite remains open with no claimed root cause; bounded readback/budget/visibility snapshots now preserve evidence before send and at the unchanged timeout.
 - Approved genuine joint native delta and ACK implementation is now integrated after independent review: dual-source v2 witness, native plus pending in one CAS, exact evidence drain and terminal root/marker/revision revalidation. Pure ACK remains independent. Five independent regression counterexamples and63 targeted pass; integrated89 pass, composition124 pass. The real IDB/page-close candidate and exact DROP_NATIVE_CONTINUATION assertion mutation are added to CI; production-package/whole-process crash/live G remain NOT_RUN.
 - Evidence/round215 preserves tenth reports and final audit logs. No complete-suite or new browser result is inferred from focused tests. Draft / NOT_RELEASE_READY.
+
+## Round 216 — eleventh continuous journey and real durability evidence (2026-10-15)
+
+- Eleventh CI38677052525 /7b0e467 completed FAIL. Complete Node4295/4295, zero skips, twelve L guard kills pass. C2 warm/cold, firstsend, native visibility/prerequisites and four narrow S/D guards remain green. Source-scoped reports are preserved under evidence/round216; identifiers are generated loopback fixture data, no private account exports.
+- J3 now passes all15 implemented continuous browser steps, including older-window reopening, historical UNKNOWN, actual snippet save/search/location and native search. Full v2.7 and supported-profile matrix remain NOT_ESTABLISHED. J1 retains nine-step PARTIAL status.
+- J2 actual successful ACK now persists in147ms and passes actual worker restart plus real calibration expiry. Later original-time revalidation remains failed. J4 pure-evidence interruption and two fresh authenticated original-time reads pass with single event and Team isolation; final native return control timeout keeps the journey failed.
+- Genuine joint native/ACK real Chromium IDB candidate passes ten cases, and removing pending yields the designated atomicity assertion failure. Explicit offline authority/page-lifetime evidence is not a formal packaged mixed J4 or whole-browser crash result.
+- Real old Pro schema2→3→old-reader VersionError→current re-upgrade passes four stages with unchanged human assets, after positive rejecting-proxy counters and zero nonfixture-canary hits. This is SYNTHETIC_PRO_SCHEMA_COMPATIBILITY_ONLY. Old Host asset import passes, but current update mount remains failed; runtime manifest verification/reload candidate has11 focused tests passing, browser pending.
+- Draft / NOT_RELEASE_READY. Full81, complete J1–J4 profiles, performance and private G/U remain open.
+
+Round216 next continuous candidate: the same J4 sequence now preserves its pure-evidence segment, then uses a real native send that renames the current conversation, production authenticated ACK and v2 pending. A debugger breakpoint only suspends the existing drain; actual ServiceWorker.stopWorker plus stopped event is the interruption witness. Fresh grant recovery requires the same operation terminal, original ACK, unchanged assets, actual later authenticated read, no native replay and peer-context isolation. Product source is unchanged by this runner; independent27/27 and integrated focused32/32 pass, real S pending. Historical runtime helper adds12 focused tests; runtime manifest mismatch remains a hypothesis until next browser evidence.
+Round216 J2 original-time follow-through: same-ID native message node replacement now changes the body region epoch; deletion/shrink changes it even during a read-only scan, preventing old-proof revival after re-add. Append/reorder preserve existing-node causality and the256-node bound. Independent9 cases plus92 targeted pass; final integrated154/154, zero skips/failures. No owner/budget/fixture-time semantics changed. The earlier v1 deletion/re-add counterexample was withheld, fixed in v2 before integration. Actual later-original-time J2 remains pending next CI.

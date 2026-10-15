@@ -16,7 +16,7 @@ export async function createVariantHostFixtureServer({profile,journey=null,inter
  let identity=principalId;
  let roster=structuredClone(accounts??(profile==='MODERN'?[{account_id:'account-host-personal',name:'Personal',plan_type:'free',structure:'personal'},{account_id:'account-host-team',name:'Team',plan_type:'team',structure:'workspace'}]:[{account_id:'account-host-personal',name:'Personal',plan_type:'free',structure:'personal'}]));
  let selectedContext=profile==='MODERN'?'account-host-team':'account-host-personal';
- const interrupted=interruption?createJ4InterruptionFixture({principal:()=>identity,now}):null;
+ const interrupted=interruption?createJ4InterruptionFixture({principal:()=>identity,now,onTitle:title=>{conversations.get(J4_SEND_C).title=title;}}):null;
  const cookie=randomBytes(24).toString('hex'),token=`fixture-only-${randomBytes(24).toString('hex')}`;
  const projects=new Map([[P1,{id:P1,name:'Research'}],[P2,{id:P2,name:'Research'}]]);
  const conversations=new Map(profile==='PARTIAL'?Array.from({length:1000},(_,i)=>{

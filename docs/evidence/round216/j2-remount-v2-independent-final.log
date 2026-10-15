@@ -1,0 +1,17 @@
+✔ audit deletion scan then same-ID replacement cannot resurrect accepted proof (12.28323ms)
+✔ audit append and reorder preserve epoch without reading private properties (1.413252ms)
+✔ audit duplicate addition is stable but canonical duplicate node switch invalidates (0.889612ms)
+✔ audit node list cap never reads 257th node (1.09417ms)
+✔ audit real mount masked same-id revokes original worker proof (23.899514ms)
+✔ audit real mount masked delete-readd-same revokes original worker proof (4.680941ms)
+✔ audit real mount masked delete-readd-new revokes original worker proof (4.358325ms)
+✔ audit real mount masked hidden-show revokes original worker proof (3.113597ms)
+✔ audit real mount masked duplicate-switch revokes original worker proof (3.434702ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 179.756402

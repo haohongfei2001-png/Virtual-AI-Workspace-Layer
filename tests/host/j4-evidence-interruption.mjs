@@ -2,6 +2,17 @@ import assert from 'node:assert/strict';import {J4_SEND_C} from './fixtures/j4-i
 const poll=async read=>{const end=Date.now()+15000;while(Date.now()<end){const value=await read();if(value)return value;await new Promise(r=>setTimeout(r,100));}throw Error('J4-interruption-observation-timeout');};
 /** Real native acceptance, held authenticated detail, real lifecycle exit and C4 recovery.
  * This is not a mixed-event SYS-01 continuation or restored send authorization. */
+// Native route changes may already remount workspace; inspect actual presentation
+// before requesting an explicit return from a still-native view.
+export async function ensureJ4Workspace(page,mounted){
+ await poll(async()=>{
+  if(await page.locator('[data-va-owned]:popover-open').count()===2)return true;
+  const back=page.getByRole('button',{name:'返回工作空间',exact:true});
+  if(await back.isVisible()){await back.click();return true;}
+  return false;
+ });
+ return mounted(page);
+}
 export function interruptionRequestFacts(snapshot){const s=snapshot?.interruption;return s?{accepts:s.accepts,held:s.held,pending:s.pending,rowCount:s.rows.length,reads:s.reads.slice(-64).map(r=>({authenticatedWorker:r.authenticatedWorker,held:r.held,receivedAt:r.receivedAt,finishedAt:r.finishedAt}))}:null;}
 export async function runJ4EvidenceInterruption({a,b,id,server,controller,inspector,closeProbe,assets,preserved,personal,team,scopeOf,mounted,absent,record,diagnostic=()=>{}}){
  const key=s=>JSON.stringify([s.provider,s.accountId,s.organizationId]);
@@ -26,5 +37,5 @@ export async function runJ4EvidenceInterruption({a,b,id,server,controller,inspec
  await a.bringToFront();await a.reload();await a.locator('[data-message-id="'+sent.id+'"]').first().waitFor();const secondGrant=await grant();assert.notEqual(secondGrant,newGrant);await poll(()=>server.snapshot().interruption.reads.filter(r=>r.authenticatedWorker&&r.finishedAt!==null).length>readsBefore);const repeated=events(await evidence()).filter(e=>e.messageId===sent.id);assert.deepEqual(repeated,[event]);assert.equal(server.snapshot().interruption.accepts,1);assert.equal(events(await evidence(team)).filter(e=>e.messageId===sent.id).length,0);assert.deepEqual(await assets(team),teamPreserved);record('second-new-grant-authenticated-read-preserves-single-original-event-and-context-isolation',{eventId:event.id,nativeAccepts:1,budgetBefore:budget,waitedForFormalBudgetMs:waitMs,budgetWindowMs:30000,authenticatedReadsBefore:readsBefore,authenticatedReadsAfter:server.snapshot().interruption.reads.filter(r=>r.authenticatedWorker&&r.finishedAt!==null).length,teamEventsForMessage:0});
  // Re-establish both independent C2 witnesses after the intentional lifecycle exit.
  for(const [page,label,scope]of [[b,'Switch to Team',team],[a,'Switch to Personal',personal]]){await page.bringToFront();await page.locator('#account-button').click();const navigation=page.waitForNavigation();await page.locator('#native-dialog').getByRole('button',{name:label,exact:true}).click();await navigation;await poll(()=>page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`));await poll(async()=>{try{return await scopeOf(page)===key(scope);}catch{return false;}});}
- await native(a);await a.locator('aside nav[aria-label="Chat history"] a[href="/c/33333333-3333-4333-8333-333333333333"]').click();await a.waitForURL(server.origin+'/c/33333333-3333-4333-8333-333333333333');await a.getByRole('button',{name:'返回工作空间',exact:true}).click();await mounted(a);assert.deepEqual(await assets(personal),preserved);assert.equal(await scopeOf(a),key(personal));assert.equal(await scopeOf(b),key(team));
+ await native(a);await a.locator('aside nav[aria-label="Chat history"] a[href="/c/33333333-3333-4333-8333-333333333333"]').click();await a.waitForURL(server.origin+'/c/33333333-3333-4333-8333-333333333333');await ensureJ4Workspace(a,mounted);assert.deepEqual(await assets(personal),preserved);assert.equal(await scopeOf(a),key(personal));assert.equal(await scopeOf(b),key(team));
 }
