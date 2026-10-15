@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前功能检查点Round201：接快速SPA重绑修复，新增显式contenteditable及保留多编辑器草稿风险识别。完整Node3825项、真实DOM9项通过；正式包单文档J3仍12步通过/旧窗口2步未覆盖。即时reading退出、100k/4x预算、首页首发及真实G/U缺口保留，Free为NOT_RELEASE_READY。
+当前功能检查点Round203：即时阅读退出已修复并通过正式包双路径、禁用/卸载/重新启用验证；新增rich发送候选与组合输入边界。完整Node3878项、真实DOM12项、MV3候选4项通过；正式包J3旧窗口2步仍未覆盖。100k/4x预算、首页首发及真实G/U缺口保留，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -2027,3 +2027,12 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 隔离MV3生产adapter/owner组合 **4/4 PASS**：默认owner不fetch、真实native click无新消息仅intent、显式fixture metadata+DOM追加只关联候选，均不升级ACK/不写八库事实；是测试组合而非正式包全链或真实ChatGPT。source/script哈希稳定。
 - 补入Round202未及同次提交的无JS声明式关闭机制：实际CDP停用页面script后trusted mouse操作原popovertargetaction，两surface分别关闭且原native reading/history mask按CSS自然解除，JS sentinel未执行。仅WEB_MECHANISM_ONLY，不代替disable/私有授权清除。
 - 95c6855及Round200–201已正常推送原PR #16；72ca068仍为祖先，无强推/新分支。首页首发独立ACK、旧日期J3、100k预算及81项剩余/实际G/U/PAIA/物理IME保持未完成，整体Free NOT_RELEASE_READY，继续原计划。
+
+
+## Round204：明确隐藏的陈旧原生控件不再污染映射（接50a5d44）
+
+- 可见history已经改名、旧members被hidden/aria-hidden/display:none/collapse隐藏时，原扫描仍把旧title送入同批次，造成重复conversation冲突。独立26项修前1 PASS/25 FAIL已保留。现在普通及candidate-only遍历在提案前检查布局、同document/connected及至多64层祖先的明确隐藏状态，陈旧行不参与该次事实提案，visible history新名保留。
+- 保持同库native事实/成员与历史可达：不将DOM遗漏转删除，不发unavailable，不升级partial inventory，不改变CAS、surfaceBatch冲突拒绝或Pro资产。一般visibility:hidden仍可能由owned root继承，本切片不误过滤所有此类行；真正native visibility:hidden和自有mask的完整区分仍留缺口，未宣称解决全部可见性。
+- 最终完整Node **3904/3904 PASS**，无skip。首次全套失败是4组旧DOM double缺getClientRects/getComputedStyle/parentElement等；仅补真实可见最小接口与替换后的新parent关系，原断言/产品检查不放宽，失败日志保留。26项新反例已包含在全套，不叠加次数。
+- 真实隔离headless DOM **25/25 PASS，WEB_MECHANISM_ONLY**：成员control/ancestor、Project/history control/root四种明确隐藏，实际CSS visibility:hidden继承的owned mask采样正例；不声称后者的PROJECT membership可见性或实际ChatGPT已认证。source/script/fixture在运行中保持，未发网络原生写入。
+- 正式package J1连续旅程同时实施中，现有测试oracle的散列principal和UNKNOWN派生状态两处错误分别保留后修正，尚未作为J1通过。50a5d44本地提交保留，其正常push低速失败；95c6855已确认同步原PR #16。完整81项/J1–J4、100k/4x、首页首发ACK及实际G/U仍未完成，Free NOT_RELEASE_READY。

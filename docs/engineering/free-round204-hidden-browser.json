@@ -1,0 +1,154 @@
+{
+  "evidence": "WEB_MECHANISM_ONLY_REAL_HEADLESS_DOM",
+  "scope": "Structural hiding excludes sampling; no deletion, coverage, native fact revocation or complete visibility proof",
+  "scriptHash": "1bff6b6ca0b891c60b9d612608c73f87778564d78f9e6935f9d95e12e352a6b0",
+  "sourceHashes": {
+    "src/host/surface-discovery.mjs": "785dedcba626c4c9f338485fbbc3246eb43456a206969a82de669079b371c846",
+    "src/host/bounded-handle-registry.mjs": "ea3a48ed3760741b8d845b4116830cffc611571b6fd01bb9561bd8a63efdee5c",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99"
+  },
+  "fixtureHash": "4a61f96a6a726e3e493314fe31ff4591d4ca7ab10964caa397b8ca258afb5b49",
+  "results": [
+    {
+      "name": "member-hidden-control",
+      "status": "PASS",
+      "freshVisibleTitle": true,
+      "noMembershipOrDeletionInference": true
+    },
+    {
+      "name": "member-hidden-ancestor",
+      "status": "PASS",
+      "freshVisibleTitle": true,
+      "noMembershipOrDeletionInference": true
+    },
+    {
+      "name": "member-aria-hidden-control",
+      "status": "PASS",
+      "freshVisibleTitle": true,
+      "noMembershipOrDeletionInference": true
+    },
+    {
+      "name": "member-aria-hidden-ancestor",
+      "status": "PASS",
+      "freshVisibleTitle": true,
+      "noMembershipOrDeletionInference": true
+    },
+    {
+      "name": "member-display-none-control",
+      "status": "PASS",
+      "freshVisibleTitle": true,
+      "noMembershipOrDeletionInference": true
+    },
+    {
+      "name": "member-display-none-ancestor",
+      "status": "PASS",
+      "freshVisibleTitle": true,
+      "noMembershipOrDeletionInference": true
+    },
+    {
+      "name": "member-visibility-collapse-control",
+      "status": "PASS",
+      "freshVisibleTitle": true,
+      "noMembershipOrDeletionInference": true
+    },
+    {
+      "name": "member-visibility-collapse-ancestor",
+      "status": "PASS",
+      "freshVisibleTitle": true,
+      "noMembershipOrDeletionInference": true
+    },
+    {
+      "name": "projects-hidden-control",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "projects-hidden-ancestor",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "history-hidden-control",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "history-hidden-ancestor",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "projects-aria-hidden-control",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "projects-aria-hidden-ancestor",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "history-aria-hidden-control",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "history-aria-hidden-ancestor",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "projects-display-none-control",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "projects-display-none-ancestor",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "history-display-none-control",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "history-display-none-ancestor",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "projects-visibility-collapse-control",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "projects-visibility-collapse-ancestor",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "history-visibility-collapse-control",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "history-visibility-collapse-ancestor",
+      "status": "PASS",
+      "samplingOnly": true
+    },
+    {
+      "name": "owned-root-visibility-hidden-real-inheritance-remains-sampleable",
+      "status": "PASS",
+      "membershipVisibilityAcceptance": "NOT_CLAIMED",
+      "generalNativeVisibilityHiddenDisambiguation": "NOT_CLAIMED"
+    }
+  ],
+  "status": "PASS",
+  "externalNetworkBlocked": true,
+  "browserVersion": "155.0.8059.40",
+  "sourceChangedDuringRun": false,
+  "scriptChangedDuringRun": false
+}

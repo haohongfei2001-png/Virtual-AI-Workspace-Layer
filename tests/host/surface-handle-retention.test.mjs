@@ -2,16 +2,16 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {randomUUID} from 'node:crypto';
 import {createSurfaceDiscovery,LEGACY_SURFACE_PROFILE} from '../../src/host/surface-discovery.mjs';import {createURLPolicy} from '../../src/host/url-policy.mjs';
 function fixture(size){
- let clock=0,steps=0;const document={defaultView:{crypto:{randomUUID}},location:{href:'https://chatgpt.com/'}},nodes=[];
- let root={isConnected:true,ownerDocument:document,contains:n=>n.parentNode===root};
+ let clock=0,steps=0;const document={defaultView:{crypto:{randomUUID},getComputedStyle:()=>({display:"block",visibility:"visible"})},location:{href:'https://chatgpt.com/'}},nodes=[];
+ let root={parentElement:null,getAttribute:()=>null,getClientRects:()=>[{width:100,height:30}],isConnected:true,ownerDocument:document,contains:n=>n.parentNode===root};
  document.querySelectorAll=selector=>selector===LEGACY_SURFACE_PROFILE.regions.history?[root]:[];
  document.createTreeWalker=()=>{let index=0;return {nextNode(){steps++;return nodes[index++]??null;}};};
- for(let i=0;i<size;i++)nodes.push({tagName:'A',isConnected:true,ownerDocument:document,parentNode:root,disabled:false,textContent:`Native ${i}`,href:`/c/c${i}`,getAttribute(k){return k==='href'?this.href:null;},matches:s=>s==='a[href]'||s==='a[href],button'});
+ for(let i=0;i<size;i++)nodes.push({tagName:'A',getClientRects:()=>[{width:100,height:30}],get parentElement(){return this.parentNode;},isConnected:true,ownerDocument:document,parentNode:root,disabled:false,textContent:`Native ${i}`,href:`/c/c${i}`,getAttribute(k){return k==='href'?this.href:null;},matches:s=>s==='a[href]'||s==='a[href],button'});
  const d=createSurfaceDiscovery({document,binding:{documentToken:'doc',routeEpoch:1},urlPolicy:createURLPolicy({profile:{conversationId:id=>id}}),elapsedNow:()=>clock});
  const target=id=>({entity:'conversation',nativeId:id,navigationURL:`https://chatgpt.com/c/${id}`});
  function next(cursor){const before=steps,page=d.scanPage(cursor);assert(page.payload.candidates.length<=256);assert(page.payload.detachedHandles.length<=512);assert(steps-before<=259);assert(d.handleStats().records<=2048);return page;}
  function drain(page=next()){let count=page.payload.candidates.length,pages=1;while(page.cursor){page=next(page.cursor);count+=page.payload.candidates.length;assert(++pages<size+20,'finite continuation');}return count;}
- return {d,document,nodes,target,next,drain,setTime:t=>clock=t,replaceRoot(){root={isConnected:true,ownerDocument:document,contains:n=>n.parentNode===root};}};
+ return {d,document,nodes,target,next,drain,setTime:t=>clock=t,replaceRoot(){root={parentElement:null,getAttribute:()=>null,getClientRects:()=>[{width:100,height:30}],isConnected:true,ownerDocument:document,contains:n=>n.parentNode===root};}};
 }
 test('100k loaded controls paginate with 2048 record cap; first-page pins survive while old unpinned handles expire',()=>{
  const f=fixture(100000),first=f.next(),pinned=first.payload.candidates.map(c=>c.target.liveHandle);assert.equal(f.d.retainHandles('visible-page',pinned,30000),true);

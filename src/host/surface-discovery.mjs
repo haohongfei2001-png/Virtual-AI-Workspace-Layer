@@ -63,6 +63,17 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       for(let parent=node;parent;parent=parent.parentElement){const style=document.defaultView.getComputedStyle(parent);if(parent.hidden||parent.getAttribute('aria-hidden')==='true'||style.display==='none'||style.visibility==='hidden'&&isOwnedMask(parent)!==true||style.visibility==='collapse')return false;}
       return true;
     };
+    // Reject definite native concealment before a stale hidden control can
+    // conflict with a visible renamed record. visibility:hidden alone remains
+    // distinct: our own root mask inherits it into otherwise loaded controls.
+    const sampleable=node=>{
+      if(!node?.isConnected||node.ownerDocument!==document||!node.getClientRects().length)return false;
+      let depth=0;for(let parent=node;parent;parent=parent.parentElement){
+        if(++depth>64||!parent.isConnected||parent.ownerDocument!==document)return false;
+        const style=document.defaultView.getComputedStyle(parent);
+        if(parent.hidden||parent.getAttribute('aria-hidden')==='true'||style.display==='none'||style.visibility==='collapse')return false;
+      }return true;
+    };
     const oneVisible=selector=>{const nodes=selector?[...document.querySelectorAll(selector)].filter(visible):[];return nodes.length===1?nodes[0]:null;};
     if(!candidateOnly&&route.kind==='conversation'&&profile.currentConversationIdAttribute){
       const reading=oneVisible(profile.currentConversationReading),heading=oneVisible(profile.currentConversationHeader);
@@ -118,7 +129,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       if(!node){region.finished=true;region.walker=null;page.region++;continue;}
       inspected++;
       if(!node.matches(regionKind==='projects'?profile.controls:profile.conversationControls))continue;
-      if(!node.isConnected||node.ownerDocument!==document||!root?.contains(node))continue;
+      if(!root?.contains(node)||!sampleable(node))continue;
       if(regionKind==='history'&&page.memberIds.size){const parsed=urlPolicy.parse(node.getAttribute('href'));if(parsed.kind==='conversation'&&page.memberIds.has(parsed.conversationId))continue;}
       const item=candidate(node,root,regionKind,regionKind==='projects'?'project':'conversation');
       if(regionKind==='projects'||!item||item.target.kind!=='resolved')continue;

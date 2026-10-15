@@ -5,6 +5,8 @@ import {createChatGPTAdapter} from '../../src/host/chatgpt-adapter.mjs';
 import {LEGACY_SURFACE_PROFILE} from '../../src/host/surface-discovery.mjs';
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const C='33333333-3333-4333-8333-333333333333';
+// Minimal visible directory DOM for discovery; these remain offline doubles.
+function visibleDirectoryNode(document,parentElement=null){return {ownerDocument:document,parentElement,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:()=>null};}
 function fixture(options={}){
  let observer,clock=0;const listeners=new Map(),emitted=[],rebind=[];
  const node=(x,y,width,height)=>({textContent:'',children:[],contains:()=>false,querySelectorAll:()=>[],getBoundingClientRect:()=>({x,y,width,height}),isConnected:true});
@@ -92,7 +94,7 @@ test('document renewal cannot extend a snippet proof before the new body acknowl
 test('adapter forwards native dispatch hook with real discovered node and stops safely inside hook',async()=>{
  for(const stopInHook of [false,true]){
   let f,event,cancelEvent,clicks=0;f=fixture({onNativeDispatchCancelled:value=>{cancelEvent=value;},inputRisk:()=>({state:'clear',flags:[]}),authorize:()=>true,onNativeDispatch:value=>{event=value;if(stopInHook)f.adapter.stop();}});
-  const root={isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]},button={tagName:'BUTTON',textContent:'Same',isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null,getClientRects:()=>[{}],matches:()=>false,click:()=>clicks++};
+  const root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]},button={tagName:'BUTTON',textContent:'Same',isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:()=>null,getClientRects:()=>[{}],matches:()=>false,click:()=>clicks++};
   f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await tick();const proposals=await f.adapter.readLoaded(null),target=proposals.find(p=>p.kind==='surface-delta').payload.candidates[0].target,plan=f.adapter.planNavigation(target);
   assert.equal(plan.mode,'native-control');const command={actionId:'action',uiGrantId:'grant',mountId:'mount',planRevision:plan.planRevision,targetKey:f.adapter.planKey(plan)},result=await f.adapter.dispatchNative(command);
   assert.equal(cancelEvent,stopInHook?event:undefined);assert.equal(event.node,button);assert.equal(event.plan,plan);assert.equal(event.originalURL,f.document.location.href);assert.equal(clicks,stopInHook?0:1);assert.equal(result.state,stopInHook?'unconfirmed':'dispatched');f.adapter.stop();
@@ -100,7 +102,7 @@ test('adapter forwards native dispatch hook with real discovered node and stops 
 });
 
 test('candidate identity proxy uses live discovery and rejects route, replacement and restart tokens',async()=>{
- const f=fixture(),root={isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]};let button={tagName:'BUTTON',textContent:'Same',isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null,click(){}};
+ const f=fixture(),root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]};let button={tagName:'BUTTON',textContent:'Same',isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:()=>null,click(){}};
  f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);assert.equal(f.adapter.captureCandidateIdentity({}),null);await f.start();
  const handle=()=>f.emitted.at(-1).payload.candidates[0].target.control;await tick();const h=handle(),token=f.adapter.captureCandidateIdentity(h);assert.ok(token);assert.equal(f.adapter.matchesCandidateIdentity(token,h),true);assert.equal(f.adapter.matchesCandidateIdentity({},h),false);
  button={...button};const proposals=await f.adapter.readLoaded(null),replacement=proposals[0].payload.candidates[0].target.control;assert.equal(f.adapter.matchesCandidateIdentity(token,replacement),false);
@@ -109,23 +111,23 @@ test('candidate identity proxy uses live discovery and rejects route, replacemen
 });
 
 test('adapter drains all 256 long-title observations in bounded packets without cycling',async()=>{
- const f=fixture(),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};
- for(let i=0;i<256;i++){const id='11111111-1111-4111-8111-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'长'.repeat(200),isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
+ const f=fixture(),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};
+ for(let i=0;i<256;i++){const id='11111111-1111-4111-8111-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'长'.repeat(200),isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
  f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);await f.start();for(let i=0;i<100;i++)await tick();
  assert(f.emitted.length>1);assert.equal(new Set(f.emitted.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,256);assert(f.emitted.every(p=>new TextEncoder().encode(JSON.stringify(p)).length<=65536));assert(f.emitted.every((p,i)=>!i||p.localSeq>f.emitted[i-1].localSeq));
  const count=f.emitted.length;f.trigger();for(let i=0;i<30;i++)await tick();assert.equal(f.emitted.length,count);const loaded=await f.adapter.readLoaded(null);assert(loaded.length>1);assert.equal(new Set(loaded.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,256);f.adapter.stop();
 });
 
 test('duplicate native history controls reach owner reduction as one conversation fact',async()=>{
- const {surfaceBatch}=await import('../../src/host/surface-batch.mjs');const f=fixture(),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes},id='77777777-7777-4777-8777-777777777777';
- for(let i=0;i<2;i++)nodes.push({tagName:'A',textContent:'Native duplicate',isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});
+ const {surfaceBatch}=await import('../../src/host/surface-batch.mjs');const f=fixture(),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes},id='77777777-7777-4777-8777-777777777777';
+ for(let i=0;i<2;i++)nodes.push({tagName:'A',textContent:'Native duplicate',isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});
  f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);await f.start();for(let i=0;i<10;i++)await tick();assert.equal(f.emitted.length,1);const p=f.emitted[0];assert.equal(p.payload.candidates.length,2);assert.notEqual(p.payload.candidates[0].target.liveHandle.id,p.payload.candidates[1].target.liveHandle.id);
  const batch=surfaceBatch(p,{scope:{verified:true,provider:'chatgpt',accountId:'test',organizationId:'personal'},binding:f.binding,profile:LEGACY_SURFACE_PROFILE,urlPolicy:createURLPolicy(),sourceRevision:1,observedAt:'2026-10-14T00:00:00Z',validUntil:'2026-10-14T00:01:00Z'});assert.equal(batch.refs.length,1);assert.equal(batch.refs[0].id,id);f.adapter.stop();
 });
 
 test('finite producer pass reaches 1000 loaded conversations and detects a tail rename without cycling',async()=>{
- const f=fixture(),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};
- for(let i=0;i<1000;i++){const id='11111111-1111-4111-8111-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'Native '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
+ const f=fixture(),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};
+ for(let i=0;i<1000;i++){const id='11111111-1111-4111-8111-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'Native '+i,isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
  f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);await f.start();for(let i=0;i<150;i++)await tick();
  assert.equal(new Set(f.emitted.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,1000);assert(f.emitted.every(p=>p.payload.candidates.length<=256&&new TextEncoder().encode(JSON.stringify(p)).length<=65536));
  const count=f.emitted.length;f.trigger();for(let i=0;i<150;i++)await tick();assert.equal(f.emitted.length,count);
@@ -133,18 +135,18 @@ test('finite producer pass reaches 1000 loaded conversations and detects a tail 
  const changed=f.emitted.length;f.trigger();for(let i=0;i<150;i++)await tick();assert.equal(f.emitted.length,changed);assert(f.emitted.every((p,i)=>!i||p.localSeq>f.emitted[i-1].localSeq));f.adapter.stop();
 });
 for(const mode of ['stop','root-replaced'])test('pending multi-page scan handles '+mode+' without emitting old tail',async()=>{
- const f=fixture();let nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};
- for(let i=0;i<600;i++){const id='22222222-2222-4222-8222-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'Old '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
+ const f=fixture();let nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};
+ for(let i=0;i<600;i++){const id='22222222-2222-4222-8222-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'Old '+i,isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
  f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);let release;
  await f.start(p=>{f.emitted.push(p);return f.emitted.length===1?new Promise(r=>release=()=>r({state:'accepted',localSeq:p.localSeq})):Promise.resolve({state:'accepted',localSeq:p.localSeq});});await tick();
- if(mode==='stop')f.adapter.stop();else{root.isConnected=false;root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};nodes=[{...nodes[599],textContent:'Replacement tail',parentNode:root}];f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);f.trigger();}
+ if(mode==='stop')f.adapter.stop();else{root.isConnected=false;root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};nodes=[{...nodes[599],textContent:'Replacement tail',parentNode:root,parentElement:root}];f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);f.trigger();}
  release();for(let i=0;i<100;i++)await tick();
  if(mode==='stop')assert.equal(f.emitted.length,1);else{assert(f.emitted.slice(1).some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Replacement tail')));assert(f.emitted.slice(1).every(p=>p.payload.candidates.every(c=>!c.nativeTitle.startsWith('Old '))));}f.adapter.stop();
 });
 
 test('continuous assistant text mutations do not starve loaded directory pages or hide body-ID changes',async()=>{
- const f=bodyFixture(),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};
- for(let i=0;i<1000;i++){const id='55555555-5555-4555-8555-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'Native '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
+ const f=bodyFixture(),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};
+ for(let i=0;i<1000;i++){const id='55555555-5555-4555-8555-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'Native '+i,isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
  f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);
  const textNode={parentNode:f.reading.children[0]};let surfaceCount=0;
  await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta'){surfaceCount++;f.observer().cb([{type:'characterData',target:textNode}]);}return Promise.resolve(bodyAck(p));});for(let i=0;i<150;i++)await tick();
@@ -154,18 +156,18 @@ test('continuous assistant text mutations do not starve loaded directory pages o
 });
 
 test('content candidate listing reaches native IDless tail through bounded adapter pages',async()=>{
- const {createContentCandidates}=await import('../../src/host/content-candidates.mjs');let clicks=0;const f=fixture({inputRisk:()=>({state:'clear',flags:[]}),authorize:()=>true}),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};
- for(let i=0;i<605;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null,getClientRects:()=>[{}],matches:()=>false,click:()=>{assert.equal(i,604);clicks++;}});
+ const {createContentCandidates}=await import('../../src/host/content-candidates.mjs');let clicks=0;const f=fixture({inputRisk:()=>({state:'clear',flags:[]}),authorize:()=>true}),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};
+ for(let i=0;i<605;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:()=>null,getClientRects:()=>[{}],matches:()=>false,click:()=>{assert.equal(i,604);clicks++;}});
  f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();const owner=createContentCandidates({adapter:f.adapter,current:()=>true,showReading:()=>true,now:()=>0});
  const tail=await owner.listPage(576);assert.equal(tail.total,605);assert.equal(tail.items.length,29);assert.equal(tail.nextOffset,null);assert.equal(tail.items.at(-1).nativeTitle,'Candidate 604');
  const result=await owner.activate({candidate:tail.items.at(-1),actionId:'tail-action',uiGrantId:'grant',mountId:'mount',expiresAt:new Date(6000).toISOString()});assert.equal(result.state,'dispatched');assert.equal(clicks,1);owner.stop();f.adapter.stop();
 });
 test('both loaded iterators reject stop, abort and elapsed budget between pages',async()=>{
- for(const method of ['loadedPages','loadedCandidatePages'])for(const mode of ['stop','abort','deadline']){let elapsed=0;const f=fixture({elapsedNow:()=>elapsed}),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};for(let i=0;i<300;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null});f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();const controller=new AbortController(),iterator=f.adapter[method](controller.signal);assert.equal((await iterator.next()).done,false);if(mode==='stop')f.adapter.stop();if(mode==='abort')controller.abort();if(mode==='deadline')elapsed=6000;await assert.rejects(iterator.next(),/stale-host-loaded-read/);f.adapter.stop();}
+ for(const method of ['loadedPages','loadedCandidatePages'])for(const mode of ['stop','abort','deadline']){let elapsed=0;const f=fixture({elapsedNow:()=>elapsed}),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};for(let i=0;i<300;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:()=>null});f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();const controller=new AbortController(),iterator=f.adapter[method](controller.signal);assert.equal((await iterator.next()).done,false);if(mode==='stop')f.adapter.stop();if(mode==='abort')controller.abort();if(mode==='deadline')elapsed=6000;await assert.rejects(iterator.next(),/stale-host-loaded-read/);f.adapter.stop();}
 });
 
 test('popover toggle rescans deferred native changes and stop removes its listener',async()=>{
- const f=fixture(),button={tagName:'BUTTON',textContent:'Before',isConnected:true,ownerDocument:f.document,getAttribute:()=>null},root={isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]};button.parentNode=root;f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,'Before');
+ const f=fixture(),button={tagName:'BUTTON',textContent:'Before',isConnected:true,ownerDocument:f.document,getAttribute:()=>null},root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]};button.parentNode=root;Object.assign(button,visibleDirectoryNode(f.document,root));f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,'Before');
  button.textContent='Changed while masked';const toggle=f.documentListeners.get('toggle');assert.equal(typeof toggle,'function');toggle();await settle();assert.equal(f.emitted.at(-1).payload.candidates[0].nativeTitle,'Changed while masked');const count=f.emitted.length;toggle();await settle();assert.equal(f.emitted.length,count);f.adapter.stop();assert.equal(f.documentListeners.has('toggle'),false);toggle();await settle();assert.equal(f.emitted.length,count);
 });
 
@@ -197,8 +199,8 @@ test('both loaded iterators recheck expiry and cancellation before declaring the
 test('candidate scan rejects directory mutation before identity cleanup or publishing mixed pages',async()=>{
  const {createContentCandidates}=await import('../../src/host/content-candidates.mjs');
  for(const count of [1,300]){
-  const f=fixture(),nodes=[],root={isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};
-  for(let i=0;i<count;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null});
+  const f=fixture(),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>nodes};
+  for(let i=0;i<count;i++)nodes.push({tagName:'BUTTON',textContent:'Candidate '+i,isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:()=>null});
   f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await tick();
   let scans=0,upgrades=0,changed=false;
   const adapter={...f.adapter,async *loadedCandidatePages(){for await(const packet of f.adapter.loadedCandidatePages()){yield packet;if(!changed){changed=true;nodes[0].textContent='Renamed';f.trigger();}}}};
@@ -224,7 +226,7 @@ test('directory mutation requests native surrender before scanning while unrelat
 
 for(const mode of ['plan-expiry','late-authorization'])test('adapter native action uses monotonic '+mode+' despite wall clock rollback',async()=>{
  let elapsed=100,authorizations=0,clicks=0;const f=fixture({elapsedNow:()=>elapsed,inputRisk:()=>({state:'clear',flags:[]}),authorize:async()=>{if(++authorizations===2&&mode==='late-authorization'){elapsed=6100;f.setTime(2000);}return true;}});
- const root={isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]},button={tagName:'BUTTON',textContent:'Same',isConnected:true,ownerDocument:f.document,parentNode:root,getAttribute:()=>null,getClientRects:()=>[{}],matches:()=>false,click:()=>clicks++};
+ const root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>n===button,querySelectorAll:()=>[button]},button={tagName:'BUTTON',textContent:'Same',isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:()=>null,getClientRects:()=>[{}],matches:()=>false,click:()=>clicks++};
  f.setTime(5000);f.selectors.set(LEGACY_SURFACE_PROFILE.regions.projects,[root]);await f.start();await tick();const proposals=await f.adapter.readLoaded(null),target=proposals.find(p=>p.kind==='surface-delta').payload.candidates[0].target,plan=f.adapter.planNavigation(target);
  assert.equal(plan.mode,'native-control');if(mode==='plan-expiry'){elapsed=30100;f.setTime(2000);}
  const command={actionId:'deadline',uiGrantId:'grant',mountId:'mount',planRevision:plan.planRevision,targetKey:f.adapter.planKey(plan)};

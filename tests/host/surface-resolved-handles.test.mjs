@@ -6,16 +6,16 @@ import {createSurfaceDiscovery,LEGACY_SURFACE_PROFILE} from '../../src/host/surf
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 import {installTreeWalkerDouble} from './tree-walker-double.mjs';
 function fixture(){
- const document={defaultView:{crypto:{randomUUID}},location:{href:'https://chatgpt.com/'}};
+ const document={defaultView:{crypto:{randomUUID},getComputedStyle:()=>({display:"block",visibility:"visible"})},location:{href:'https://chatgpt.com/'}};
  const binding={documentToken:'doc',routeEpoch:1},nodes={projects:[],history:[],members:[]},roots={};
  let textReads=0,walks=0;
- const makeRoot=kind=>({isConnected:true,ownerDocument:document,contains:n=>nodes[kind].includes(n),querySelectorAll:()=>nodes[kind]});
+ const makeRoot=kind=>({parentElement:null,getAttribute:()=>null,getClientRects:()=>[{width:100,height:30}],isConnected:true,ownerDocument:document,contains:n=>nodes[kind].includes(n),querySelectorAll:()=>nodes[kind]});
  for(const kind of Object.keys(nodes))roots[kind]=makeRoot(kind);
  document.querySelectorAll=selector=>{const kind=Object.keys(nodes).find(k=>LEGACY_SURFACE_PROFILE.regions[k]===selector);return kind?[roots[kind]]:[];};
  installTreeWalkerDouble(document);const walker=document.createTreeWalker;document.createTreeWalker=(...args)=>{walks++;return walker(...args);};
  const policy=createURLPolicy({profile:{conversationId:id=>id,projectId:({container})=>container}});
  const d=createSurfaceDiscovery({document,binding,urlPolicy:policy});
- function add(kind,id,href=kind==='projects'?`/g/${id}/project`:`/c/${id}`){const node={tagName:'A',isConnected:true,ownerDocument:document,parentNode:roots[kind],disabled:false,attrs:{href},name:'Native title',get textContent(){textReads++;return this.name;},getAttribute(k){return this.attrs[k]??null;}};nodes[kind].push(node);return node;}
+ function add(kind,id,href=kind==='projects'?`/g/${id}/project`:`/c/${id}`){const node={tagName:'A',getClientRects:()=>[{width:100,height:30}],get parentElement(){return this.parentNode;},isConnected:true,ownerDocument:document,parentNode:roots[kind],disabled:false,attrs:{href},name:'Native title',get textContent(){textReads++;return this.name;},getAttribute(k){return this.attrs[k]??null;}};nodes[kind].push(node);return node;}
  const target=(entity,id,url=entity==='project'?`/g/${id}/project`:`/c/${id}`)=>({entity,nativeId:id,navigationURL:new URL(url,'https://chatgpt.com').href});
  function scan(){let page=d.scanPage();while(page.cursor)page=d.scanPage(page.cursor);}
  return {document,binding,nodes,roots,d,add,target,scan,replaceRoot(kind){roots[kind]=makeRoot(kind);},counts:()=>({textReads,walks}),reset(){textReads=0;walks=0;}};
