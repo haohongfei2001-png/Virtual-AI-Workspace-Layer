@@ -7,13 +7,14 @@ import {createHash} from 'node:crypto';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {createSys05StreamServer} from './fixtures/sys05-stream-server.mjs';
 import {attachSys05Observer} from './sys05-stream-observer.mjs';
+import {createSys05StartupDeadline,waitForSys05Worker} from './sys05-startup-precondition.mjs';
 import {SYS05_LIMITS,counterDelta,assertTokenOnlyWork,assertStreamOutcome} from './sys05-stream-oracle.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const sha=v=>createHash('sha256').update(v).digest('hex'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const C='44444444-4444-4444-8444-444444444444',PEER='33333333-3333-4333-8333-333333333333';
 const scope=context=>({verified:true,provider:'chatgpt',accountId:'principal_'+sha(JSON.stringify(['chatgpt-principal-v1','user-host-fixture'])),organizationId:'context_'+sha(JSON.stringify(['chatgpt-context-v1','user-host-fixture',context]))});
 const scopeKey=s=>JSON.stringify([s.provider,s.accountId,s.organizationId]);
-const fixtureFiles=['sys05-stream-package-journey.mjs','sys05-stream-oracle.mjs','sys05-stream-observer.mjs','fixtures/sys05-stream-server.mjs','fixtures/sys05-native-stream.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/ui10-conversation-title.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','expected/modern.mjs'];
+const fixtureFiles=['sys05-stream-package-journey.mjs','sys05-startup-precondition.mjs','sys05-stream-oracle.mjs','sys05-stream-observer.mjs','fixtures/sys05-stream-server.mjs','fixtures/sys05-native-stream.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/ui10-conversation-title.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','expected/modern.mjs'];
 async function poll(read,label,timeout=6000){const end=Date.now()+timeout;let result;while(Date.now()<end){result=await read();if(result&&Date.now()<end)return result;await sleep(50);}throw Error('sys05-timeout:'+label);}
 export async function runSys05(output,{execute=false,observeWork=false}={}){
  const report={status:'NOT_RUN',requirement:'VA-HOST/1.1 SYS-05 narrow candidate',S:'NOT_RUN',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',fullSYS05:'NOT_ESTABLISHED',sourceCommit:process.env.FREE_SOURCE_COMMIT??null,workInstrumentation:observeWork,limits:SYS05_LIMITS,steps:[],errors:[],uncovered:['Forced backpressure/gap and queue overflow','Full supported-profile matrix','Full admitted inventory and large-scale token storms','Uninstrumented latency/p95 and physical-device performance','Actual ChatGPT G/U and PAIA']};
@@ -32,10 +33,14 @@ export async function runSys05(output,{execute=false,observeWork=false}={}){
   await context.route('**/*',route=>{const url=new URL(route.request().url());return url.origin===server.origin||url.protocol==='chrome-extension:'?route.continue():route.abort();});
   /* No MAIN/UI/runtime patch is installed in correctness mode. */
   const cdp=await browser.newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
+  const startup=createSys05StartupDeadline();
+  report.browserPrecondition.startup={kind:'WORKER_READY_FUNCTIONAL_JOURNEY',totalBudgetMs:startup.timeoutMs,coldStart:'NOT_TESTED'};
+  report.browserPrecondition.startup.worker=await waitForSys05Worker(context,id,startup);
   const frame=page=>page.frames().find(f=>!f.isDetached()&&f.url()===`chrome-extension://${id}/workspace.html`);
-  async function ready(page,expected,currentRef){return poll(async()=>{const f=frame(page);if(!f)return null;const contextId=expected.organizationId===scope('account-host-personal').organizationId?'account-host-personal':'account-host-team';const hasNativeContext=server.snapshot().nativeRequests.some(r=>r.path==='/backend-api/conversation/'+currentRef&&r.context===contextId);const native=await page.locator('#reading').getAttribute('data-conversation-id');return hasNativeContext&&native===currentRef&&await f.getByRole('button',{name:'工作空间设置',exact:true}).count()>0?f:null;},'normal-native-context-and-live-UI',30000);}
+  async function ready(page,expected,currentRef,deadline=null){const read=async()=>{const f=frame(page);if(!f)return null;const contextId=expected.organizationId===scope('account-host-personal').organizationId?'account-host-personal':'account-host-team';const hasNativeContext=server.snapshot().nativeRequests.some(r=>r.path==='/backend-api/conversation/'+currentRef&&r.context===contextId);const native=await page.locator('#reading').getAttribute('data-conversation-id');return hasNativeContext&&native===currentRef&&await f.getByRole('button',{name:'工作空间设置',exact:true}).count()>0?f:null;};return deadline?deadline.poll(read,'normal-native-context-and-live-UI'):poll(read,'normal-native-context-and-live-UI',30000);}
   const personal=scope('account-host-personal'),team=scope('account-host-team');
-  const b=await context.newPage();b.on('pageerror',e=>report.errors.push(e.message));await b.goto(server.origin+'/c/'+PEER);await ready(b,team,PEER);
+  const b=await startup.run(()=>context.newPage(),'initial-peer-page');b.on('pageerror',e=>report.errors.push(e.message));await startup.run(()=>b.goto(server.origin+'/c/'+PEER,{timeout:startup.remaining('initial-native-navigation')}),'initial-native-navigation');await ready(b,team,PEER,startup);
+  report.browserPrecondition.startup.elapsedMs=startup.elapsedMs();
   const a=activePage=await context.newPage();a.on('pageerror',e=>report.errors.push(e.message));await a.goto(server.origin+'/c/'+C);await ready(a,team,C);
   await a.locator('#account-button').click();const navigation=a.waitForNavigation();await a.getByRole('button',{name:'Switch to Personal',exact:true}).click();await navigation;await ready(a,personal,C);
   assert(server.snapshot().nativeRequests.some(r=>r.path==='/backend-api/conversation/'+C&&r.context==='account-host-personal'));
