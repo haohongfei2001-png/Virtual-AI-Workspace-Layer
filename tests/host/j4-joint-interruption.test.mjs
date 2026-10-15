@@ -86,16 +86,16 @@ test('joint tail uses real peer foreground and current proof, then restores orig
  assert(!tail.includes('.reload('));assert(tail.includes('await scopeOf(a),key(personal)'));assert(tail.includes('await assets(personal),preserved'));
 });
 
-test('native peer recovery uses two real history links, preserves document draft and exact team assets',async()=>{
+test('native peer recovery uses history then native search, preserving document draft and exact team assets',async()=>{
  const {recoverJ4PeerByNativeNavigation}=await import('./j4-joint-interruption.mjs'),{runInNewContext}=await import('node:vm');
  for(const fault of [null,'draft','document','requests','assets']){
-  const origin='http://fixture',original='/c/33333333-3333-4333-8333-333333333333';let url=origin+original;const clicks=[],requests=[];
+  const origin='http://fixture',original='/c/33333333-3333-4333-8333-333333333333';let url=origin+original;const clicks=[],requests=[],queries=[],hops=[];
   const editor={value:'actual existing draft'},document={querySelector:()=>editor},realm={document};realm.globalThis=realm;
   const frame={url:()=> 'chrome-extension://test/workspace.html',isDetached:()=>false,evaluate:async()=>({grant:'actual-rpc-grant-'+clicks.filter(s=>s!=='textarea').length,scope:'team-scope',currentRef:url.split('/').at(-1)})};
-  const page={url:()=>url,frames:()=>[frame],evaluate:async fn=>runInNewContext('('+fn.toString()+')()',realm),locator:selector=>({click:async()=>{clicks.push(selector);if(selector==='textarea')return;const path=selector.match(/a\[href="([^"]+)"\]/)[1];url=origin+path;if(fault!=='requests')requests.push({path:'/backend-api/conversation/'+path.split('/').at(-1),context:'account-host-team'});if(fault==='draft')editor.value='changed';if(fault==='document')realm.document={querySelector:()=>editor};}}),waitForURL:async expected=>assert.equal(url,expected)};
-  const preserved={hash:'original-assets'},args={page,id:'test',scopeKey:'team-scope',server:{origin,snapshot:()=>({nativeRequests:requests})},assets:async()=>fault==='assets'?{hash:'different'}:preserved,scope:{accountId:'team'},preserved};
+  const page={url:()=>url,frames:()=>[frame],evaluate:async fn=>runInNewContext('('+fn.toString()+')()',realm),locator:selector=>({click:async()=>{clicks.push(selector);if(selector==='textarea'||selector==='#search-button')return;const path=selector.match(/a\[href="([^"]+)"\]/)[1];url=origin+path;if(fault!=='requests')requests.push({path:'/backend-api/conversation/'+path.split('/').at(-1),context:'account-host-team'});if(fault==='draft')editor.value='changed';if(fault==='document')realm.document={querySelector:()=>editor};},fill:async text=>{queries.push(text);}}),waitForURL:async expected=>assert.equal(url,expected)};
+  const preserved={hash:'original-assets'},args={page,id:'test',scopeKey:'team-scope',server:{origin,snapshot:()=>({nativeRequests:requests})},assets:async()=>fault==='assets'?{hash:'different'}:preserved,scope:{accountId:'team'},preserved,onHop:hop=>hops.push(hop)};
   if(fault){await assert.rejects(recoverJ4PeerByNativeNavigation(args));continue;}
-  const result=await recoverJ4PeerByNativeNavigation(args);assert.equal(result.finalURL,origin+original);assert.equal(result.assetDigest,preserved.hash);assert.equal(result.draftPreserved,true);assert.equal(clicks.length,4);assert.equal(requests.length,2);assert.equal(editor.value,'actual existing draft');
+  const result=await recoverJ4PeerByNativeNavigation(args);assert.equal(result.finalURL,origin+original);assert.equal(result.assetDigest,preserved.hash);assert.equal(result.draftPreserved,true);assert.equal(clicks.length,5);assert.deepEqual(queries,['Ordinary conversation']);assert.equal(hops.length,2);assert.equal(hops[0].currentRef,J4_SEND_C);assert.equal(requests.length,2);assert.equal(editor.value,'actual existing draft');
  }
 });
 test('only the already recorded peer timeout enters separate native recovery; other failures stay failures',async()=>{
@@ -116,7 +116,7 @@ test('new grant with stale route currentRef cannot satisfy a peer navigation',as
  const {waitJ4PeerScope}=await import('./j4-joint-interruption.mjs');let time=0,currentRef='444';const frame={isDetached:()=>false,url:()=> 'chrome-extension://test/workspace.html',evaluate:async()=>({grant:'new',scope:'team',currentRef})},page={url:()=> 'native/c/333',frames:()=>[frame]};
  await assert.rejects(waitJ4PeerScope(page,'test','team',{previousGrant:'old',expectedCurrentRef:'333',now:()=>time,sleep:async ms=>{time+=ms;}}),/peer-current-scope-timeout/);
  time=0;assert.equal(await waitJ4PeerScope(page,'test','team',{previousGrant:'old',expectedCurrentRef:'333',now:()=>time,sleep:async ms=>{time+=ms;currentRef='333';}}),'team');
- const source=await readFile(new URL('./j4-joint-interruption.mjs',import.meta.url),'utf8');const start=source.indexOf("await page.locator('textarea').click()"),capture=source.indexOf('previousGrant=(await currentJ4Grant',start),click=source.indexOf("await page.locator('aside",start);assert(start<capture&&capture<click);
+ const source=await readFile(new URL('./j4-joint-interruption.mjs',import.meta.url),'utf8');const start=source.indexOf("await page.locator('textarea').click()"),capture=source.indexOf('previousGrant=(await currentJ4Grant',start),click=source.indexOf("await link.click()",start);assert(start<capture&&capture<click);
 });
 test('actual passive runner observer binds currentRef to successful VIEW and clears it on new grant',async()=>{
  const {runInNewContext}=await import('node:vm'),source=await readFile(new URL('./j4-package-journey.mjs',import.meta.url),'utf8'),start=source.indexOf('await context.addInitScript(')+'await context.addInitScript('.length,end=source.indexOf(');\n  const cdp',start);assert(start>0&&end>start);
@@ -127,4 +127,9 @@ test('actual passive runner observer binds currentRef to successful VIEW and cle
  await send('HOST_UI_RESUME',{ok:true,page:{scope:'fake',currentRef:{id:'333'}}});assert.equal(realm.j4LastCurrentRef,null);
  await send('HOST_UI_VIEW',{ok:false,page:{scope:'fake',currentRef:{id:'333'}}});assert.equal(realm.j4LastScope,null);
  await send('HOST_UI_VIEW',{ok:true,page:{scope:'team',currentRef:{id:'333'}}});assert.equal(realm.j4LastCurrentRef,'333');assert.equal(realm.j4LastScope,'team');assert.equal(realm.j4Grant,'two');
+});
+test('real MODERN native search retains exact original chat after virtual history window replaces it',async()=>{
+ const {modernExpectedWorld}=await import('./expected/modern.mjs'),expected=modernExpectedWorld.conversations.find(row=>row.id==='33333333-3333-4333-8333-333333333333'),server=await createVariantHostFixtureServer({profile:'MODERN',journey:'J4',interruption:true});
+ try{const visit=await fetch(server.url),headers={Cookie:visit.headers.get('set-cookie').split(';')[0]};const window=await (await fetch(server.origin+'/backend-api/conversations?offset=2&limit=25',{headers})).json();assert.equal(window.windowed,true);assert(!window.items.some(row=>row.id===expected.id));const result=await (await fetch(server.origin+'/backend-api/conversations?query='+encodeURIComponent(expected.title),{headers})).json();assert.equal(result.windowed,false);assert.deepEqual(result.items,[{id:expected.id,title:expected.title}]);}finally{await server.close();}
+ const source=await readFile(new URL('./j4-package-journey.mjs',import.meta.url),'utf8');assert(source.includes("files=['expected/modern.mjs'"));
 });

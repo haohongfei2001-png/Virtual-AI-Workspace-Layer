@@ -1,3 +1,4 @@
+import {modernExpectedWorld} from './expected/modern.mjs';
 import {connectJ4Debugger} from './j4-debugger-transport.mjs';
 import {ensureJ4Workspace} from './j4-evidence-interruption.mjs';
 import assert from 'node:assert/strict';
@@ -29,21 +30,28 @@ export async function waitJ4PeerScope(page,id,scopeKey,{previousGrant=null,expec
  }
  throw Error('J4-peer-current-scope-timeout');
 }
-export async function recoverJ4PeerByNativeNavigation({page,id,scopeKey,server,assets,scope,preserved}){
+export async function recoverJ4PeerByNativeNavigation({page,id,scopeKey,server,assets,scope,preserved,onHop=()=>{}}){
  const originalURL=page.url(),paths=['/c/'+J4_SEND_C,'/c/33333333-3333-4333-8333-333333333333'];
  assert.equal(originalURL,server.origin+paths[1]);
  const before=await page.evaluate(()=>{globalThis.j4PeerDocument=document;globalThis.j4PeerEditor=document.querySelector('textarea');return {draft:j4PeerEditor.value};});
  const requestStart=server.snapshot().nativeRequests.length;let previousGrant=(await currentJ4Grant(page,id,scopeKey))?.grant??null;
  for(const path of paths){
   await page.locator('textarea').click();
-  previousGrant=(await currentJ4Grant(page,id,scopeKey))?.grant??previousGrant;
   const expectedCurrentRef=path.split('/').at(-1);
-  await page.locator('aside nav[aria-label="Chat history"] a[href="'+path+'"]').click();
+  let link=page.locator('aside nav[aria-label="Chat history"] a[href="'+path+'"]');
+  if(path===paths[1]){
+   const expected=modernExpectedWorld.conversations.find(row=>row.id===expectedCurrentRef);assert(expected);
+   await page.locator('#search-button').click();await page.locator('#search-dialog input').fill(expected.title);
+   link=page.locator('#search-dialog a[href="'+path+'"]');
+  }
+  previousGrant=(await currentJ4Grant(page,id,scopeKey))?.grant??previousGrant;
+  await link.click();
   await page.waitForURL(server.origin+path);
   assert.equal(await waitJ4PeerScope(page,id,scopeKey,{previousGrant,expectedCurrentRef}),scopeKey);
   const current=await currentJ4Grant(page,id,scopeKey,{previousGrant,expectedCurrentRef});assert(current,'J4-peer-new-route-grant-required');previousGrant=current.grant;
   const state=await page.evaluate(()=>({sameDocument:document===j4PeerDocument,sameEditor:document.querySelector('textarea')===j4PeerEditor,draft:j4PeerEditor.value}));
   assert(state.sameDocument&&state.sameEditor);assert.equal(state.draft,before.draft);
+  onHop({stage:'joint-peer-native-hop',status:'PASS',nativeURL:page.url(),currentRef:expectedCurrentRef,newGrant:true,scope:scopeKey,sameDocument:true,sameEditor:true,draftPreserved:true});
  }
  assert.equal(page.url(),originalURL);
  const requests=server.snapshot().nativeRequests.slice(requestStart);
@@ -150,6 +158,6 @@ export async function runJ4JointInterruption({a,b,id,server,cdp,debugEndpoint,co
  await a.bringToFront();await a.locator('#model-button').click();await a.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();await a.locator('aside nav[aria-label="Chat history"] a[href="/c/33333333-3333-4333-8333-333333333333"]').click();await a.waitForURL(server.origin+'/c/33333333-3333-4333-8333-333333333333');await ensureJ4Workspace(a,mounted);assert.equal(await scopeOf(a),key(personal));await b.bringToFront();let foregroundRecovered=false;
  try{assert.equal(await waitJ4PeerScope(b,id,key(team)),key(team));foregroundRecovered=true;}
  catch(error){try{diagnostic({stage:'joint-peer-scope-after-real-worker-stop',status:'FAIL',reason:error.message,...await j4ReadinessFacts(b,id)});}catch{}if(error.message!=='J4-peer-current-scope-timeout')throw error;}
- if(!foregroundRecovered){const recovery=await recoverJ4PeerByNativeNavigation({page:b,id,scopeKey:key(team),server,assets,scope:team,preserved:teamAssets});record('peer-real-native-navigation-establishes-new-C2-after-worker-memory-loss',{...recovery,automaticForegroundRecovery:'NOT_ESTABLISHED',foregroundFailure:'J4-peer-current-scope-timeout',authority:'NEW_NATIVE_REQUEST_AND_FRESH_AUTHENTICATION'});}
+ if(!foregroundRecovered){const recovery=await recoverJ4PeerByNativeNavigation({page:b,id,scopeKey:key(team),server,assets,scope:team,preserved:teamAssets,onHop:diagnostic});record('peer-real-native-navigation-establishes-new-C2-after-worker-memory-loss',{...recovery,automaticForegroundRecovery:'NOT_ESTABLISHED',foregroundFailure:'J4-peer-current-scope-timeout',authority:'NEW_NATIVE_REQUEST_AND_FRESH_AUTHENTICATION'});}
  await a.bringToFront();assert.equal(await waitJ4PeerScope(a,id,key(personal)),key(personal));assert.deepEqual(await assets(personal),preserved);
 }
