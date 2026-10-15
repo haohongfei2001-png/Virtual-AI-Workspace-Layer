@@ -1,3 +1,6 @@
+import {freeEvidenceKey,isEvidencePartitioned,validateEvidenceManifest} from './free-evidence-partitions.mjs';
+import {validateFreeEvidence} from './free-evidence.mjs';
+import {EVIDENCE_DIRECTORY_FORMAT,validateEvidenceDirectoryRoot} from './evidence-ref-directory.mjs';
 import {validateNativeContinuation,validateContinuationDirectory,continuationDirectoryKey} from './native-observation-continuation.mjs';
 import {validateNativeFacts} from './native-facts.mjs';
 import {isNativePartitioned,validateNativeManifest} from './native-partitions.mjs';
@@ -25,12 +28,29 @@ export function readContinuationForEvidence(tx,scope,request,authority,check,don
   if(digest(qm)!==digest(witness)||digest(nativeMarker.continuations??null)!==digest(witness))throw Error('native-continuation-directory-conflict');
   if(pending.state==='pending-evidence'?dir.entries[pending.operationId]!==new TextEncoder().encode(JSON.stringify(pending)).length:Object.hasOwn(dir.entries,pending.operationId))throw Error('native-continuation-directory-conflict');
   // Ordinary source TTL is not revocation. Never renew it while draining.
-  const validateCurrentSource=()=>{const source=facts.sources[a.sourceId];
+  const validateCurrentSource=()=>{const n=pending.nativeWitness??a,source=facts.sources[n.sourceId];
    if(!source)throw Error('native-continuation-missing-source');
    if(source.revoked)throw Error('native-continuation-source-revoked');
-   if(source.channel!=='host-dom'||source.generation!==a.generation)throw Error('native-continuation-source-changed');
-   if(source.admission?.profileId!==a.profileId||source.admission?.profileVersion!==a.profileVersion)throw Error('native-continuation-profile-changed');
+   if(source.channel!=='host-dom'||source.generation!==n.generation||pending.nativeWitness&&(source.sourceRevision!==n.sourceRevision||source.admission?.semanticFingerprint!==n.semanticFingerprint))throw Error('native-continuation-source-changed');
+   if(source.admission?.profileId!==n.profileId||source.admission?.profileVersion!==n.profileVersion)throw Error('native-continuation-profile-changed');
   };
   done(pending,validateCurrentSource);
  }catch(error){fail(error);}};
+}
+
+/** Missing initial ACK source is legitimate: this may be its first observation.
+ * Existing source retirement is checked independently of the native source. */
+export function continuationAckSourceFailure(pending,sources){
+ if(!pending.nativeWitness)return null;
+ const a=pending.admission,source=sources[a.sourceId];if(!source)return null;
+ return source.revoked?'source-revoked':source.channel!=='host-evidence'||source.codecVersion!==1||source.generation!==a.generation?'source-changed':source.profileId!==a.profileId||source.profileVersion!==a.profileVersion?'profile-changed':null;
+}
+/** Synchronous validation of rows fetched within the caller's existing tx. */
+export function continuationEvidenceSources(root,marker,scope,{minimumRevision=0,requiredSourceId=null}={}){
+ if(!root){if(marker||minimumRevision>0)throw Error('missing-free-evidence-root');return {};}
+ if(root.key!==freeEvidenceKey(scope.key)||!marker||marker.key!==root.key)throw Error('missing-free-evidence-marker');
+ const value=unpack(root),mark=unpack(marker);
+ if(value.format===EVIDENCE_DIRECTORY_FORMAT)validateEvidenceDirectoryRoot(value,scope);else if(isEvidencePartitioned(value))validateEvidenceManifest(value,scope);else validateFreeEvidence(value,scope);
+ if(mark.revision!==value.revision||value.revision<minimumRevision)throw Error('free-evidence-root-revision-conflict');
+ if(requiredSourceId!==null&&!value.sources[requiredSourceId])throw Error('missing-continuation-evidence-source');return value.sources;
 }

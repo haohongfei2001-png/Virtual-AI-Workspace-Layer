@@ -1,4 +1,4 @@
-import {readContinuationForEvidence} from './continuation-evidence-reader.mjs';
+import {readContinuationForEvidence,continuationAckSourceFailure} from './continuation-evidence-reader.mjs';
 import {continuationEvidenceFingerprint} from './native-observation-continuation.mjs';
 import {saveDirectoryEvidence} from './evidence-directory-writer.mjs';
 import {migrateEvidenceDirectory,prepareEvidenceDirectory} from './evidence-directory-migration.mjs';
@@ -189,12 +189,12 @@ export class FreeEvidenceRepository {
      receipt.onsuccess=()=>{try{
       fence(options);
       if(receipt.result){const prior=unpack(receipt.result);result=prior.fingerprint===fingerprint&&(!continuation||(prior.kind==='OBSERVE_HOST_CONTINUATION'&&prior.operationId===operationId&&Number.isSafeInteger(prior.revision)&&prior.revision>0&&prior.revision<=current.revision&&(continuationRecord.state!=='complete'||continuationRecord.evidenceRevision===prior.revision)))?{ok:true,replayed:true,revision:prior.revision,operationId}:{ok:false,reason:'operation-replay-conflict'};return;}
-      if(continuation){if(continuationRecord.state!=='pending-evidence')throw Error('missing-continuation-evidence-receipt');validateContinuationSource();}
+      if(continuation){if(continuationRecord.state!=='pending-evidence')throw Error('missing-continuation-evidence-receipt');validateContinuationSource();const ackFailure=continuationAckSourceFailure(continuationRecord,current.sources);if(ackFailure)throw Error('native-continuation-'+ackFailure);}
       if(current.revision!==expectedRevision)throw Error('revision-conflict');
       if(manifest&&!manifest.indexChecksums)throw Error('evidence-index-integrity-required');
       let indexes={};
       const save=partial=>{try{
-       const next=applyFreeEvidence(partial,command,{scope:normalized,now:continuationRecord?.admission.acceptedAt??this.clock(),channel:continuation?'host-evidence':host?.channel??'synthetic',historical:!!continuation});fence(options);
+       const next=applyFreeEvidence(partial,command,{scope:normalized,now:continuationRecord?.admission.acceptedAt??this.clock(),channel:continuation?'host-evidence':host?.channel??'synthetic',historical:!!continuation,jointContinuation:!!continuationRecord?.nativeWitness});fence(options);
        const finish=()=>{try{fence(options);operations.put(record(key,{revision:next.revision}));operations.put(record(operationKey,{fingerprint,revision:next.revision,operationId,...(continuation?{kind:'OBSERVE_HOST_CONTINUATION'}:{})}));fence(options);result={ok:true,replayed:false,revision:next.revision,operationId};}catch(failure){abort(failure.message);}};
        if(reader)saveDirectoryEvidence(states,normalized,next,manifest,partial,indexes,reader,finish,failure=>abort(failure.message));else{saveEvidencePieces(states,normalized,next,manifest,manifest?partial:null,indexes);finish();}
       }catch(failure){abort(failure.message);}};

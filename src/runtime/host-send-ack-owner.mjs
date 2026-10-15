@@ -1,7 +1,7 @@
 import {normalizedScope} from '../b1/identity.mjs';
 import {digest} from '../data/hash.mjs';
 /** Internal consumer only; never expose this owner through an extension message. */
-export function createHostSendAckOwner({evidenceRepository,profileFor,now=Date.now}={}){
+export function createHostSendAckOwner({evidenceRepository,profileFor,commitNative=null,drain=null,now=Date.now}={}){
  if(typeof evidenceRepository!=='function'||typeof profileFor!=='function'||typeof now!=='function')throw Error('invalid-send-ack-owner');
  const gates=new WeakMap();let stopped=false;
  function gate(scope,request){const value=gates.get(request);return value&&value.scopeKey===normalizedScope(scope)?.key&&value.guard()?value:null;}
@@ -28,6 +28,17 @@ export function createHostSendAckOwner({evidenceRepository,profileFor,now=Date.n
    const prior=page.evidence.hints[eventKey];
    if(prior){if(prior.revoked||prior.conversationId!==snapshot.conversationId||prior.messageId!==snapshot.messageId||prior.actorScopeKey!==scope.key||digest(prior.ackWitness)!==digest(ack))throw Error('send-ack-existing-conflict');return {ok:true,replayed:true,revision:page.revision};}
    const request={operationId,expectedRevision:page.revision,batch:evidence};
+   if(commitNative){
+    gates.set(request,{scopeKey:scope.key,channel:'host-evidence',sourceId,generation,guard:current,profileId:profile.id,profileVersion:profile.revision});
+    let joint;try{check();joint=await commitNative({context,evidenceRequest:request,guard:current});}finally{gates.delete(request);}check();
+    if(joint){
+     if(joint.ok!==true)throw Error('joint-native-apply-failed');
+     // Pending payload is durable now. Completion may be retried under a fresh
+     // owner grant; never write a second ordinary evidence operation here.
+     const result=await drain?.({scope,guard:current,signal,profileId:profile.id,profileVersion:profile.revision});
+     return {ok:true,nativeOperationId:joint.nativeOperationId,pending:result?.state!=='complete',continuation:result?.state??'pending'};
+    }
+   }
    gates.set(request,{scopeKey:scope.key,channel:'host-evidence',sourceId,generation,guard:current,profileId:profile.id,profileVersion:profile.revision});
    let result;try{check();result=await repository.apply(scope,request,{guard:current,signal});}finally{gates.delete(request);}check();
    if(result?.ok===true)return result;

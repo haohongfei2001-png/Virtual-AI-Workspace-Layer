@@ -1,3 +1,4 @@
+import {continuationAckSourceFailure,continuationEvidenceSources} from './continuation-evidence-reader.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 import {freeEvidenceKey} from './free-evidence-partitions.mjs';
 import {createNativeContinuation,validateNativeContinuation,continuationDirectoryKey,emptyContinuationDirectory,validateContinuationDirectory,updateContinuationDirectory,finishNativeContinuation,deferNativeContinuation,transitionContinuationDirectory,continuationEvidenceFingerprint} from './native-observation-continuation.mjs';
@@ -288,8 +289,13 @@ export class NativeRepository {
     let continuation=null;
     if(host?.continuation){
       const admission=structuredClone(host.continuationAdmission);
-      if(!admission||admission.profileId!==witness.admission.profileId||admission.profileVersion!==witness.admission.profileVersion)throw Error('native-continuation-profile-mismatch');
-      continuation=createNativeContinuation({scope:normalized,operationId:request.operationId,nativeRevision:request.expectedRevision+1,authority:{...witness,admission},proposal:structuredClone(host.continuation),now:this.clock()});
+      const ack=host.continuationAuthority;
+      if(ack){
+        if(typeof ack.guard!=='function'||ack.guard()!==true||ack.scopeKey!==normalized.key||ack.channel!=='host-evidence'||ack.profileId!==admission?.profileId||ack.profileVersion!==admission?.profileVersion)throw Error('native-continuation-ack-authority');
+        const previous=options.guard;options={...options,guard:()=>previous()===true&&ack.guard()===true};
+      }else if(!admission||admission.profileId!==witness.admission.profileId||admission.profileVersion!==witness.admission.profileVersion)throw Error('native-continuation-profile-mismatch');
+      const nativeWitness=ack?{sourceId:witness.sourceId,generation:witness.generation,profileId:witness.admission.profileId,profileVersion:witness.admission.profileVersion,sourceRevision:request.batch.sourceRevision,semanticFingerprint:witness.admission.semanticFingerprint}:null;
+      continuation=createNativeContinuation({scope:normalized,operationId:request.operationId,nativeRevision:request.expectedRevision+1,authority:{...witness,...(ack?{sourceId:ack.sourceId,generation:ack.generation}:{}),admission},proposal:structuredClone(host.continuation),now:this.clock(),nativeWitness});
     }
     const apply=()=>this.mutate(normalized, request, {kind: 'APPLY_NATIVE_OBSERVATIONS', ...witness, batch: request.batch,...(continuation?{continuation}:{})},
       current => applyNativeObservations(current, request.batch, {scope: normalized, ...witness, now: this.clock()}), options);
@@ -336,6 +342,7 @@ export class NativeRepository {
       const tx=db.transaction(['native_states','native_operations'],'readwrite'),states=tx.objectStore('native_states'),ops=tx.objectStore('native_operations');let result;
       const abort=reason=>{result={ok:false,reason};try{tx.abort();}catch{}};
       const check=()=>fence(options),revoked=()=>abort('stale-binding');options.signal?.addEventListener('abort',revoked,{once:true});
+      const ackRoot=states.get(freeEvidenceKey(normalized.key)),ackMarker=ops.get(freeEvidenceKey(normalized.key));
       const root=states.get(normalized.key),marker=ops.get(normalized.key),directoryRow=ops.get(continuationDirectoryKey(normalized.key)),queueMarker=ops.get(continuationMarkerKey(normalized.key)),operationKey=JSON.stringify([normalized.key,request.operationId]),receipt=ops.get(operationKey);
       receipt.onsuccess=()=>{try{
         check();const facts=this.verifiedRoot(root.result,normalized),nativeMarker=unpack(marker.result);
@@ -346,15 +353,18 @@ export class NativeRepository {
         if(prior.operationId!==request.operationId||pending.operationId!==request.operationId||prior.revision!==pending.nativeRevision||pending.nativeRevision>facts.revision||pending.payloadDigest!==request.expectedPayloadDigest)throw Error('native-continuation-completion-conflict');
         const persist=(next)=>{const nextDirectory=transitionContinuationDirectory(directory,pending,next,normalized),witness={revision:nextDirectory.revision,directoryDigest:digest(nextDirectory)};
           check();ops.put(record(operationKey,{...prior,continuation:next}));ops.put(record(continuationDirectoryKey(normalized.key),nextDirectory));ops.put(record(continuationMarkerKey(normalized.key),witness));ops.put(record(normalized.key,{...nativeMarker,continuations:witness}));check();};
+        const ackFailure=pending.nativeWitness?continuationAckSourceFailure(pending,continuationEvidenceSources(ackRoot.result,ackMarker.result,normalized)):null;
+        const n=pending.nativeWitness,nativeSource=n?facts.sources[n.sourceId]:null;
+        const nativeFailure=!n?null:!nativeSource?'missing-source':nativeSource.revoked?'source-revoked':nativeSource.channel!=='host-dom'||nativeSource.generation!==n.generation||nativeSource.sourceRevision!==n.sourceRevision||nativeSource.admission?.semanticFingerprint!==n.semanticFingerprint?'source-changed':nativeSource.admission?.profileId!==n.profileId||nativeSource.admission?.profileVersion!==n.profileVersion?'profile-changed':null;
         if(mode==='needs-revalidation'){
           if(pending.state!=='pending-evidence')throw Error('native-continuation-completion-conflict');
-          const source=facts.sources[pending.admission.sourceId],a=pending.admission;
+          const a=pending.nativeWitness??pending.admission,source=facts.sources[a.sourceId];
           // Live owner authority only; never accept a profile label from stored payload/request.
           // The guard keeps this profile current through every queued write and commit fence.
           const profile=options.currentProfile?.();check();
           if(options.currentProfile&&(!profile||!tokenOK(profile.id)||!Number.isSafeInteger(profile.revision)||profile.revision<1))throw Error('invalid-continuation-current-profile');
-          const profileChanged=profile&&profile.id===a.profileId&&profile.revision!==a.profileVersion;
-          const reason=!source?'missing-source':source.revoked?'source-revoked':source.generation!==a.generation||source.channel!=='host-dom'?'source-changed':source.admission?.profileId!==a.profileId||source.admission?.profileVersion!==a.profileVersion||profileChanged?'profile-changed':null;
+          const profileChanged=profile&&[a,pending.admission].some(w=>profile.id===w.profileId&&profile.revision!==w.profileVersion);
+          const reason=!source?'missing-source':source.revoked?'source-revoked':source.generation!==a.generation||source.channel!=='host-dom'||pending.nativeWitness&&(source.sourceRevision!==a.sourceRevision||source.admission?.semanticFingerprint!==a.semanticFingerprint)?'source-changed':source.admission?.profileId!==a.profileId||source.admission?.profileVersion!==a.profileVersion||profileChanged?'profile-changed':ackFailure;
           if(!reason)throw Error('native-continuation-source-still-valid');
           persist(deferNativeContinuation(pending,{reason}));result={ok:true,replayed:false,operationId:request.operationId,state:'needs-revalidation',reason};return;
         }
@@ -366,7 +376,12 @@ export class NativeRepository {
         evidence.onsuccess=()=>{try{
           check();const proof=unpack(evidence.result);
           if(proof.kind!=='OBSERVE_HOST_CONTINUATION'||proof.operationId!==evidenceOperationId||proof.fingerprint!==continuationEvidenceFingerprint(pending,normalized)||proof.revision!==request.evidenceRevision)throw Error('native-continuation-evidence-receipt-conflict');
+          // An operation receipt is not sufficient evidence that its data still
+          // exists. Preserve the only durable pending payload if the ACK root
+          // was lost or rolled back after the evidence commit.
+          if(pending.nativeWitness)continuationEvidenceSources(ackRoot.result,ackMarker.result,normalized,{minimumRevision:proof.revision,requiredSourceId:pending.admission.sourceId});
           if(replayed){result={ok:true,replayed:true,operationId:request.operationId,evidenceRevision:pending.evidenceRevision};return;}
+          if(nativeFailure||ackFailure){const reason=nativeFailure??ackFailure;persist(deferNativeContinuation(pending,{reason}));result={ok:true,replayed:false,operationId:request.operationId,state:'needs-revalidation',reason};return;}
           persist(finishNativeContinuation(pending,{evidenceRevision:proof.revision}));
           result={ok:true,replayed:false,operationId:request.operationId,evidenceRevision:proof.revision};
         }catch(failure){abort(failure.message);}};

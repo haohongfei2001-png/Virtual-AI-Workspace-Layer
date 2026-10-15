@@ -38,13 +38,13 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  if(ackProfile&&(!currentMetadataReadEnabled||!sendCandidatesEnabled||!workspaceRepository||!freeEvidenceRepository||!(surfaceProfiles instanceof Map)||!surfaceProfiles.size||surfaceProfiles.has(ackProfile.id)))throw Error('invalid-send-ack-composition');
  const continuationProfileFor=id=>id===historyProfile?.id?historyProfile:id===ackProfile?.id?ackProfile:surfaceProfiles?.get(id);
  let sendCandidates=null,ackOwner=null,recoveryProfileCursor=0;
- const observations=surfaceProfiles?createHostObservationOwner({handshake,authority,getFrame,profiles:surfaceProfiles,onAccepted:scope=>ui?.notifyScope(scope.key),onSendIntent:(proof,intent)=>sendCandidates?.intent(proof,intent),now,makeId,elapsedNow,schedule,cancel}):null;
+ const observations=surfaceProfiles?createHostObservationOwner({handshake,authority,getFrame,profiles:surfaceProfiles,onAccepted:scope=>ui?.notifyScope(scope.key),onSendIntent:(proof,intent)=>sendCandidates?.intent(proof,intent),ackAdmission:(scope,request)=>ackOwner?.gate(scope,request),onNativeDelta:async proof=>{if(firstSend)await firstSend.observe(proof);await sendCandidates?.observe(proof);},now,makeId,elapsedNow,schedule,cancel}):null;
  const historyOwner=historyProfile?createHostHistoricalSendOwner({evidenceRepository:()=>freeEvidenceRepository,profileFor:continuationProfileFor,now}):null;
  const currentMetadata=observations?createCurrentMetadataReader({observations,provider,enabled:currentMetadataReadEnabled,now,onHistorical:historyOwner?async input=>{await historyOwner.consume(input);input.guard();ui?.notifyScope(input.context.scope.key);}:null}):null;
 
  const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:observations.gate,clock:()=>new Date(now()).toISOString()}):null;
  const continuations=nativeRepository&&typeof freeEvidenceRepository?.applyContinuation==='function'?createHostContinuationOwner({nativeRepository,evidenceRepository:freeEvidenceRepository,profileFor:continuationProfileFor}):null;
- if(ackProfile&&nativeRepository&&continuations)ackOwner=createHostSendAckOwner({evidenceRepository:()=>freeEvidenceRepository,profileFor:continuationProfileFor,now});
+ if(ackProfile&&nativeRepository&&continuations)ackOwner=createHostSendAckOwner({evidenceRepository:()=>freeEvidenceRepository,profileFor:continuationProfileFor,commitNative:input=>observations.commitAcknowledged(input),drain:input=>continuations.drain(input),now});
  sendCandidates=currentMetadata?createHostSendCandidates({observations,reader:currentMetadata,enabled:sendCandidatesEnabled,now,schedule,cancel,onAcknowledged:ackOwner?async input=>{
   await ackOwner.consume(input);input.guard();ui?.notifyScope(input.context.scope.key);
  }:null}):null;

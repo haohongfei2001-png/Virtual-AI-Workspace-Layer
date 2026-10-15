@@ -20,6 +20,21 @@ export function createCurrentBodyDiscovery({document:doc,urlPolicy,profile,isOwn
    return claim(root,JSON.stringify(base),conversationId,ids);
   }catch{return claim(root,'unavailable');}
  }
+ // Presentation-owned concealment is not a native empty-message observation.
+ // Do not cache or return old message IDs; consumers defer new proposals until
+ // native visibility returns. The existing proof retains its original expiry.
+ function isPresentationMasked(){if(stopped||!config)return false;try{const roots=doc.querySelectorAll(config.rootSelector);return roots.length===1&&isOwnedMask(roots[0])===true;}catch{return false;}}
+ function affectsBody(records){
+  if(stopped||!config||!Array.isArray(records)||!records.length)return false;
+  try{const roots=[lastRoot,...doc.querySelectorAll(config.rootSelector)].filter(Boolean),contains=(a,b)=>a===b||a?.contains?.(b)===true;
+   return records.some(r=>roots.some(root=>{
+    if(r.type==='attributes'&&['data-va-mask-workspace','data-va-mask-sidebar'].includes(r.attributeName))return false;
+    if(contains(root,r.target))return ['attributes','childList','characterData'].includes(r.type);
+    if(r.type==='attributes'&&contains(r.target,root))return true;
+    return r.type==='childList'&&[...(r.addedNodes??[]),...(r.removedNodes??[])].some(n=>contains(n,root));
+   }));
+  }catch{return true;}
+ }
  function stop(){if(stopped)return;stopped=true;claim(null,'stopped');}
- return Object.freeze({scan,stop});
+ return Object.freeze({scan,isPresentationMasked,affectsBody,stop});
 }

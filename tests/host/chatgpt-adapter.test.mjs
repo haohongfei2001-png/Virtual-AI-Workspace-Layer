@@ -269,3 +269,35 @@ test('same-target dispatch rechecks production body fingerprint after authorizat
 test('explicit bodyProof override remains available to existing integrations',async()=>{
  const f=bodyFixture({bodyProof:()=>({conversationId:C,bodyProofId:'explicit-proof',bodyEpoch:9})});await f.start();await settle();const plan=f.adapter.planNavigation(currentConversationTarget());assert.equal(plan.mode,'same-target');assert.equal(plan.bodyProofId,'explicit-proof');f.adapter.stop();
 });
+test('owned reading presentation mask does not publish inherited-hidden messages as an empty body or renew proof',async()=>{
+ let masked=false;const f=fixture({profile:LEGACY_SURFACE_PROFILE,isOwnedMask:n=>masked&&n===f.reading});
+ const message={ownerDocument:f.document,isConnected:true,parentElement:f.reading,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:k=>k==='data-message-id'?'m1':null};
+ Object.assign(f.reading,{ownerDocument:f.document,parentElement:null,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:k=>k==='data-conversation-id'?C:null,querySelectorAll:()=>[message],contains:n=>n===message});
+ f.selectors.set('main > #reading',[f.reading]);
+ await f.start(async p=>{f.emitted.push(p);return {state:'accepted',localSeq:p.localSeq,receiptId:'r',...(p.kind==='current-object'?{bodyProofId:'proof',bodyEpoch:1}:{})};});
+ for(let i=0;i<10;i++)await tick();
+ assert.deepEqual(f.emitted.filter(p=>p.kind==='current-object').map(p=>p.payload.messageIds),[['m1']]);
+ masked=true;f.reading.style.visibility=message.style.visibility='hidden';f.trigger();for(let i=0;i<10;i++)await tick();
+ assert.deepEqual(f.emitted.filter(p=>p.kind==='current-object').map(p=>p.payload.messageIds),[['m1']]);
+ masked=false;f.reading.style.visibility=message.style.visibility='visible';f.trigger();for(let i=0;i<10;i++)await tick();
+ assert.equal(f.emitted.filter(p=>p.kind==='current-object').length,1);
+ message.style.visibility='hidden';f.trigger();for(let i=0;i<10;i++)await tick();
+ assert.deepEqual(f.emitted.filter(p=>p.kind==='current-object').at(-1).payload.messageIds,[],'native hidden change still invalidates current messages');
+ f.adapter.stop();
+});
+test('masked binding renewal emits no body proof and native remount cannot inherit the old body epoch',async()=>{
+ let masked=false;const f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading});await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();const initial=f.emitted.find(p=>p.kind==='current-object');masked=true;f.reading.style.visibility='hidden';f.reading.children[0].style.visibility='hidden';f.setTime(90000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(110000).toISOString()});await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-object').length,1);
+ const replacement={...f.reading,style:{display:'block',visibility:'visible'},children:[]};replacement.querySelectorAll=()=>[];f.selectors.set('main > #reading',[replacement]);f.trigger();await settle();const latest=f.emitted.filter(p=>p.kind==='current-object').at(-1);assert(latest.payload.regionEpoch>initial.payload.regionEpoch);assert.deepEqual(latest.payload.messageIds,[]);f.adapter.stop();
+});
+test('route change under owned presentation mask stops producer rather than retaining current authority',async()=>{
+ let masked=false;const f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading});await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();masked=true;f.reading.style.visibility='hidden';f.reading.children[0].style.visibility='hidden';const count=f.emitted.length;f.document.location.href='https://chatgpt.com/';f.trigger();await settle();assert.equal(f.rebind.length,1);assert.equal(f.emitted.length,count);assert.equal(f.adapter.inspect().ok,false);
+});
+test('message replacement while masked is observed freshly on release, never cached as old IDs',async()=>{
+ let masked=false;const f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading});await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();masked=true;f.reading.style.visibility='hidden';f.reading.children=[f.makeMessage('M2')];f.reading.children[0].style.visibility='hidden';f.trigger();await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-object').length,1);masked=false;f.reading.style.visibility=f.reading.children[0].style.visibility='visible';f.trigger();await settle();assert.deepEqual(f.emitted.filter(p=>p.kind==='current-object').at(-1).payload.messageIds,['M2']);f.adapter.stop();
+});
+for(const mutation of ['childList','data-message-id'])test('masked native body '+mutation+' synchronously surrenders before publishing fresh body',async()=>{
+ let masked=false,released=0;const f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading,onSurfaceChange:records=>{if(!records.length)return;released++;masked=false;f.reading.style.visibility='visible';for(const n of f.reading.children)n.style.visibility='visible';}});
+ await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();const initial=f.emitted.find(p=>p.kind==='current-object');masked=true;f.reading.style.visibility='hidden';const old=f.reading.children[0],next=f.makeMessage('M2');next.style.visibility='hidden';f.reading.children=[next];
+ const record=mutation==='childList'?{type:'childList',target:f.reading,addedNodes:[next],removedNodes:[old]}:{type:'attributes',attributeName:'data-message-id',target:next};
+ f.observer().cb([record]);assert.equal(masked,false);assert.equal(released,1);await settle();const latest=f.emitted.filter(p=>p.kind==='current-object').at(-1);assert.notEqual(latest,initial);assert.deepEqual(latest.payload.messageIds,['M2']);f.adapter.stop();
+});

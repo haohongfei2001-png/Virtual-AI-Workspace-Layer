@@ -23,13 +23,15 @@ function validateEvidence(evidence,admission,scope){
 }
 /** Codec only: persisted admission never replaces current owner authorization. */
 export function validateNativeContinuation(record,scope){
- const common=['format','scopeKey','operationId','nativeRevision','state','admission','payloadDigest'];
+ const joint=record?.format==='vaiwl-native-continuation-v2';
+ const common=[...(joint?['nativeWitness']:[]),'format','scopeKey','operationId','nativeRevision','state','admission','payloadDigest'];
  if(record?.state==='pending-evidence')shape(record,[...common,'evidence']);
  else if(record?.state==='complete')shape(record,[...common,'evidenceOperationId','evidenceRevision']);
  else if(record?.state==='needs-revalidation')shape(record,[...common,'evidenceOperationId','targets','reason']);
  else fail('record');
- if(record.format!==FORMAT||record.scopeKey!==scopeKey(scope))fail('record');
+ if(![FORMAT,'vaiwl-native-continuation-v2'].includes(record.format)||record.scopeKey!==scopeKey(scope))fail('record');
  id(record.operationId);revision(record.nativeRevision,1);
+ if(joint){const n=record.nativeWitness;shape(n,['sourceId','generation','profileId','profileVersion','sourceRevision','semanticFingerprint']);for(const key of ['sourceId','generation','profileId'])id(n[key]);revision(n.profileVersion,1);revision(n.sourceRevision,1);if(typeof n.semanticFingerprint!=='string'||! /^[0-9a-f]{64}$/.test(n.semanticFingerprint))fail('native-witness');}
  const a=record.admission;shape(a,['scopeKey','sourceId','generation','profileId','profileVersion','evidenceClass','semanticFingerprint','acceptedAt']);
  if(a.scopeKey!==record.scopeKey||a.evidenceClass!=='observed-self-send'||instant(a.acceptedAt)===null)fail('admission');
  for(const k of ['sourceId','generation','profileId'])id(a[k]);revision(a.profileVersion,1);
@@ -41,12 +43,12 @@ export function validateNativeContinuation(record,scope){
  else {if(!REASONS.includes(record.reason)||!Array.isArray(record.targets)||record.targets.length<1||record.targets.length>256||new Set(record.targets).size!==record.targets.length)fail('targets');for(const target of record.targets)id(target);}}
  return record;
 }
-export function createNativeContinuation({scope,operationId,nativeRevision,authority,proposal,now}){
+export function createNativeContinuation({scope,operationId,nativeRevision,authority,proposal,now,nativeWitness=null}){
  shape(proposal,['evidenceOperationId','expectedEvidenceRevision','batch']);
  const a=authority?.admission;
  if(authority?.channel!=='host-dom'||!a||a.evidenceClass!=='observed-self-send')fail('authority');
  const evidence=structuredClone({operationId:proposal.evidenceOperationId,expectedRevision:proposal.expectedEvidenceRevision,batch:proposal.batch});
- const record={format:FORMAT,scopeKey:scopeKey(scope),operationId,nativeRevision,state:'pending-evidence',admission:{scopeKey:scopeKey(scope),sourceId:authority.sourceId,generation:authority.generation,profileId:a.profileId,profileVersion:a.profileVersion,evidenceClass:'observed-self-send',semanticFingerprint:continuationSemanticFingerprint(evidence.batch),acceptedAt:a.acceptedAt},evidence,payloadDigest:digest(evidence)};
+ const record={format:nativeWitness?'vaiwl-native-continuation-v2':FORMAT,...(nativeWitness?{nativeWitness:structuredClone(nativeWitness)}:{}),scopeKey:scopeKey(scope),operationId,nativeRevision,state:'pending-evidence',admission:{scopeKey:scopeKey(scope),sourceId:authority.sourceId,generation:authority.generation,profileId:a.profileId,profileVersion:a.profileVersion,evidenceClass:'observed-self-send',semanticFingerprint:continuationSemanticFingerprint(evidence.batch),acceptedAt:a.acceptedAt},evidence,payloadDigest:digest(evidence)};
  // The owner's semantic commitment must match; this equality grants no authority.
  if(a.semanticFingerprint!==record.admission.semanticFingerprint||instant(a.acceptedAt)===null||instant(now)===null||instant(a.acceptedAt)>instant(now))fail('admission');
  return validateNativeContinuation(record,scope);
@@ -69,7 +71,7 @@ export function transitionContinuationDirectory(directory,prior,next,scope){
  validateContinuationDirectory(directory,scope);validateNativeContinuation(prior,scope);validateNativeContinuation(next,scope);
  if(prior.state!=='pending-evidence'||!['complete','needs-revalidation'].includes(next.state))fail('transition');
  if(!Object.hasOwn(directory.entries,prior.operationId)||directory.entries[prior.operationId]!==bytes(prior))fail('directory-conflict');
- for(const key of ['format','scopeKey','operationId','nativeRevision','admission','payloadDigest'])if(digest(prior[key])!==digest(next[key]))fail('operation-conflict');
+ for(const key of ['format','scopeKey','operationId','nativeRevision','admission','payloadDigest',...(prior.nativeWitness?['nativeWitness']:[])])if(digest(prior[key])!==digest(next[key]))fail('operation-conflict');
  if(next.evidenceOperationId!==prior.evidence.operationId)fail('operation-conflict');
  if(next.state==='needs-revalidation'&&digest(next.targets)!==digest([...new Set(prior.evidence.batch.hints.map(h=>h.conversationId))].sort()))fail('targets');
  const updated=structuredClone(directory);updated.revision++;
@@ -80,5 +82,5 @@ export function transitionContinuationDirectory(directory,prior,next,scope){
 export function continuationEvidenceFingerprint(record,scope){
  validateNativeContinuation(record,scope);
  const {scopeKey,operationId,payloadDigest,admission}=record;
- return digest({kind:'OBSERVE_HOST_CONTINUATION',scopeKey,operationId,payloadDigest,admission});
+ return digest({kind:'OBSERVE_HOST_CONTINUATION',scopeKey,operationId,payloadDigest,admission,...(record.nativeWitness?{nativeWitness:record.nativeWitness}:{})});
 }

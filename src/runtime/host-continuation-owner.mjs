@@ -1,3 +1,4 @@
+import {digest} from '../data/hash.mjs';
 import {normalizedScope,tokenOK} from '../b1/identity.mjs';
 import {validateNativeContinuation} from '../data/native-observation-continuation.mjs';
 const sourceFailures=new Set(['native-continuation-missing-source','native-continuation-source-revoked','native-continuation-source-changed','native-continuation-profile-changed']);
@@ -10,8 +11,9 @@ export function createHostContinuationOwner({nativeRepository,evidenceRepository
   if(busy)return {state:'busy'};
   const normalized=normalizedScope(scope);
   if(!normalized||typeof guard!=='function'||(verify!==null&&typeof verify!=='function')||!tokenOK(profileId)||!Number.isSafeInteger(profileVersion)||profileVersion<1)return {state:'cancelled',reason:'invalid-continuation-authority'};
+  let nativeProfile=null,nativeFingerprint=null;
   const attempt={active:true};busy=attempt;
-  const current=()=>{try{if(!attempt.active||signal?.aborted||guard()!==true)return false;const profile=profileFor?.(profileId);return !profileFor||(profile?.id===profileId&&profile.revision===profileVersion);}catch{return false;}};
+  const current=()=>{try{if(!attempt.active||signal?.aborted||guard()!==true)return false;const profile=profileFor?.(profileId);return (!profileFor||(profile?.id===profileId&&profile.revision===profileVersion))&&(!nativeProfile||profileFor?.(nativeProfile.id)===nativeProfile&&digest([nativeProfile.id,nativeProfile.revision])===nativeFingerprint);}catch{return false;}};
   const check=()=>{if(!current())throw Error('stale-continuation-authority');};
   const options={guard:current,signal};let abortListener;
   const verifyCurrent=async()=>{check();if(verify){let valid=false;try{valid=await verify();}catch{}if(valid!==true){attempt.active=false;throw Error('stale-continuation-document');}}check();};
@@ -31,12 +33,20 @@ export function createHostContinuationOwner({nativeRepository,evidenceRepository
     const retirementOptions=pending.admission.profileId===profileId?{...options,currentProfile:()=>{check();return {id:profileId,revision:profileVersion};}}:options;
     const marked=await nativeRepository.markContinuationNeedsRevalidation(normalized,mark,retirementOptions);check();return marked?.ok===true?{state:'needs-revalidation',attempts:0,reason:marked.reason}:{state:'pending',attempts:0,reason:marked?.reason??'continuation-revalidation-failed'};
    }
+   if(pending.nativeWitness){
+    const n=pending.nativeWitness,profile=profileFor?.(n.profileId);
+    if(!profile||profile.id!==n.profileId)return {state:'pending',attempts:0,reason:'unavailable-native-continuation-profile'};
+    nativeProfile=profile;nativeFingerprint=digest([profile.id,profile.revision]);await verifyCurrent();
+    if(profile.revision!==n.profileVersion){
+     const marked=await nativeRepository.markContinuationNeedsRevalidation(normalized,mark,{...options,currentProfile:()=>{check();return {id:profile.id,revision:profile.revision};}});check();return marked?.ok===true?{state:'needs-revalidation',attempts:0,reason:marked.reason}:{state:'pending',attempts:0,reason:marked?.reason};
+    }
+   }
    for(let attempts=1;attempts<=2;attempts++){
     check();const expectedRevision=await evidenceRepository.version(normalized,options);await verifyCurrent();
     const request={operationId:pending.evidence.operationId,expectedRevision,nativeOperationId:pending.operationId,payloadDigest:pending.payloadDigest};
     admissions.set(request,Object.freeze({channel:'host-evidence',scopeKey:normalized.key,sourceId:pending.admission.sourceId,generation:pending.admission.generation,profileId,profileVersion,purpose:'native-continuation',nativeOperationId:pending.operationId,payloadDigest:pending.payloadDigest,guard:current}));
     let result;try{await verifyCurrent();result=await evidenceRepository.applyContinuation(normalized,request,options);}finally{admissions.delete(request);}check();
-    if(result?.ok===true){await verifyCurrent();const completed=await nativeRepository.markContinuationComplete(normalized,{...mark,evidenceRevision:result.revision},options);check();return completed?.ok===true?{state:'complete',attempts,replayed:result.replayed===true}:{state:'pending',attempts,reason:completed?.reason??'continuation-completion-failed'};}
+    if(result?.ok===true){await verifyCurrent();const completed=await nativeRepository.markContinuationComplete(normalized,{...mark,evidenceRevision:result.revision},options);check();return completed?.ok===true?{state:completed.state==='needs-revalidation'?'needs-revalidation':'complete',attempts,replayed:result.replayed===true,...(completed.reason?{reason:completed.reason}:{})}:{state:'pending',attempts,reason:completed?.reason??'continuation-completion-failed'};}
     if(sourceFailures.has(result?.reason)){await verifyCurrent();const marked=await nativeRepository.markContinuationNeedsRevalidation(normalized,mark,options);check();return marked?.ok===true?{state:'needs-revalidation',attempts,reason:marked.reason}:{state:'pending',attempts,reason:marked?.reason??'continuation-revalidation-failed'};}
     if(result?.reason!=='revision-conflict'||attempts===2)return {state:'pending',attempts,reason:result?.reason??'continuation-evidence-failed'};
    }

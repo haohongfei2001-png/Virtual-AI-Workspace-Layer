@@ -19,7 +19,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  const live=()=>!stopped&&now()<Date.parse(binding.expiresAt);
  function acknowledgedBody(){
   if(!live()||!acceptedBody||now()>=Date.parse(acceptedBody.validUntil)||!bodyDiscovery)return null;
-  try{syncRoute();const body=bodyDiscovery.scan();return body.association==='explicit-body-id'&&JSON.stringify(body)===acceptedBody.fingerprint?body:null;}catch{return null;}
+  try{syncRoute();if(bodyDiscovery.isPresentationMasked())return null;const body=bodyDiscovery.scan();return body.association==='explicit-body-id'&&JSON.stringify(body)===acceptedBody.fingerprint?body:null;}catch{return null;}
  }
  bodyProof=bodyProof??(()=>{const body=acknowledgedBody();return body&&Number.isSafeInteger(acceptedBody.bodyEpoch)&&acceptedBody.bodyEpoch>=0?{conversationId:body.conversationId,bodyProofId:acceptedBody.proofId,bodyEpoch:acceptedBody.bodyEpoch}:null;});
  function syncRoute(){if(document.location.href!==url){stop();onRebindNeeded({reason:'native-route-changed'});throw Error('host-rebind-required');}}
@@ -48,21 +48,21 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  }
  const loadedPages=signal=>loadedPageStream(signal,false);
  const loadedCandidatePages=signal=>loadedPageStream(signal,true);
- function bodyProposal(){if(!live())throw Error('stale-host-binding');syncRoute();return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'current-object',payload:bodyDiscovery.scan()};}
+ function bodyProposal(){if(!live())throw Error('stale-host-binding');syncRoute();if(bodyDiscovery.isPresentationMasked())return null;return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'current-object',payload:bodyDiscovery.scan()};}
  function intentProposal(item){return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:item.proofId,kind:'send-candidate',payload:item.payload};}
  function captureIntent(intent){
-  try{if(!live()||!bodyDiscovery||!acceptedBody||now()>=Date.parse(acceptedBody.validUntil))return;syncRoute();const body=bodyDiscovery.scan();
+  try{if(!live()||!bodyDiscovery||!acceptedBody||now()>=Date.parse(acceptedBody.validUntil))return;syncRoute();if(bodyDiscovery.isPresentationMasked())return null;const body=bodyDiscovery.scan();
    if(JSON.stringify(body)!==acceptedBody.fingerprint)return schedule();
    if(intents.length>=32)return issue('send-intent-capacity');
    intents.push({proofId:acceptedBody.proofId,validUntil:acceptedBody.validUntil,payload:{intentId:intent.intentId,conversationId:body.conversationId,messageId:null,operationId:null,stage:'intent',observedAt:intent.observedAt,evidence:{profileId:profile.id,profileVersion:profile.revision,sourceKind:'native-dom',regionEpoch:body.regionEpoch,fieldPaths:['native-send-intent'],receiptId:null}}});schedule();
   }catch{/* Never interfere with the native gesture. */}
  }
- function intentCurrent(item){if(now()>=Date.parse(item.validUntil)||!acceptedBody||acceptedBody.proofId!==item.proofId||!bodyDiscovery)return false;const body=bodyDiscovery.scan();return body.association==='explicit-body-id'&&body.conversationId===item.payload.conversationId&&body.regionEpoch===item.payload.evidence.regionEpoch;}
+ function intentCurrent(item){if(bodyDiscovery?.isPresentationMasked())return false;if(now()>=Date.parse(item.validUntil)||!acceptedBody||acceptedBody.proofId!==item.proofId||!bodyDiscovery)return false;const body=bodyDiscovery.scan();return body.association==='explicit-body-id'&&body.conversationId===item.payload.conversationId&&body.regionEpoch===item.payload.evidence.regionEpoch;}
  function bounded(p){if(p.kind==='send-candidate')return new TextEncoder().encode(JSON.stringify(p)).length<=65536;if(p.kind==='current-object')return p.payload.messageIds.length<=256&&new TextEncoder().encode(JSON.stringify(p)).length<=65536;return p.payload.candidates.length<=256&&p.payload.membershipClaims.length<=256&&p.payload.detachedHandles.length<=512&&new TextEncoder().encode(JSON.stringify(p)).length<=65536;}
  function issue(reason){try{onObservationIssue({reason});}catch{/* Diagnostics cannot authorize a retry. */}}
  async function pump(){
   queued=false;if(!live()||busy)return;if(surfaceEpoch!==surfaceSnapshotEpoch){surfaceParts=[];surfaceScanning=false;surfaceCursor=null;surfaceSnapshotEpoch=surfaceEpoch;}dirty=false;const run=generation;let p,key,intentItem=null;
-  try{while(intents.length&&!p){intentItem=intents.shift();if(!intentCurrent(intentItem))continue;p=intentProposal(intentItem);key=JSON.stringify([p.routeEpoch,p.payload]);}for(const candidate of p?[]:[...(bodyDiscovery?[bodyProposal()]:[])]){if(!bounded(candidate)){issue('host-proposal-too-large');continue;}const fingerprint=JSON.stringify([candidate.routeEpoch,candidate.payload]);if(fingerprint===last.get(candidate.kind)||fingerprint===failedKey.get(candidate.kind))continue;p=candidate;key=fingerprint;break;}
+  try{while(intents.length&&!p){intentItem=intents.shift();if(!intentCurrent(intentItem))continue;p=intentProposal(intentItem);key=JSON.stringify([p.routeEpoch,p.payload]);}for(const candidate of p?[]:[...(bodyDiscovery?[bodyProposal()]:[])]){if(!candidate)continue;if(!bounded(candidate)){issue('host-proposal-too-large');continue;}const fingerprint=JSON.stringify([candidate.routeEpoch,candidate.payload]);if(fingerprint===last.get(candidate.kind)||fingerprint===failedKey.get(candidate.kind))continue;p=candidate;key=fingerprint;break;}
    if(!p){if(!surfaceParts.length&&(surfaceScanning||surfaceWanted)){
      if(!surfaceScanning){surfaceWanted=false;surfaceCursor=null;surfacePage=0;surfaceScanning=true;}
      const source=proposal(true);surfacePageKey=surfacePage++;surfaceSequence=source.localSeq;surfaceKey=sha256(JSON.stringify([source.routeEpoch,{...source.payload,detachedHandles:[]}]));
@@ -93,7 +93,7 @@ if(!p)return;}catch{surfaceScanning=false;surfaceCursor=null;if(surfaceWanted)sc
  }
  function schedule(){if(!live())return;dirty=true;if(busy||queued)return;queued=true;queueMicrotask(pump);}
  function requestScan(){surfaceEpoch++;surfaceWanted=true;schedule();}
- function mutations(records){if(!live())return;if(discovery?.affectsSurface(records)){try{onSurfaceChange(records);}catch{/* A failed surrender never authorizes hidden native evidence. */}requestScan();}else schedule();}
+ function mutations(records){if(!live())return;if(bodyDiscovery?.affectsBody(records)||discovery?.affectsSurface(records)){try{onSurfaceChange(records);}catch{/* A failed surrender never authorizes hidden native evidence. */}requestScan();}else schedule();}
  function stop(){generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('toggle',requestScan,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();}
  function inspect(){
   const fail=reason=>({ok:false,reason,profileId:profile.id});if(!live())return fail('stale-host-binding');try{syncRoute();}catch{return fail('host-rebind-required');}if(urlPolicy.parse(url).kind==='unsupported')return fail('unsupported-host-route');

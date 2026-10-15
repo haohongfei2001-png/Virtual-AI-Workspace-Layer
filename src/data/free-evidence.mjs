@@ -68,9 +68,10 @@ export function measureFreeEvidence(state,scope){
 export function validateFreeEvidence(state,scope){measureFreeEvidence(state,scope);return state;}
 const equal=(a,b)=>stable(a)===stable(b);
 /** Call only behind broker authorization; synthetic is not a production trust label. */
-export function applyFreeEvidence(state,command,{scope,now,channel,historical=false}){
+export function applyFreeEvidence(state,command,{scope,now,channel,historical=false,jointContinuation=false}){
  validateFreeEvidence(state,scope);const clock=time(now);
  if(!['synthetic','host-evidence'].includes(channel))throw Error('untrusted-free-evidence-channel');
+ if(typeof jointContinuation!=='boolean'||jointContinuation&&!historical)throw Error('unsupported-joint-continuation');
  if(typeof historical!=='boolean'||(historical&&(channel!=='host-evidence'||command?.type!=='OBSERVE_FREE_EVIDENCE')))throw Error('unsupported-historical-free-evidence');
  const next=structuredClone(state);
  if(command?.type==='REVOKE_FREE_EVIDENCE_SOURCE'){
@@ -88,6 +89,13 @@ export function applyFreeEvidence(state,command,{scope,now,channel,historical=fa
    if(prior&&(prior.revoked||prior.generation!==row.generation))throw Error('revoked-free-source-replay');
    if(historical)historicalSources[row.id]=row;
    if(historical&&prior&&row.sourceRevision<prior.sourceRevision&&time(row.observedAt)<=time(prior.observedAt))continue;
+   // Separate ACK and continuation receipts can reserve the same next source
+   // revision before either commits. Only the older v2 durable observation may
+   // retain an independently newer source; equal-time conflicts still reject.
+   if(jointContinuation&&prior&&row.sourceRevision===prior.sourceRevision&&time(row.observedAt)<time(prior.observedAt)&&time(row.validUntil)<=time(prior.validUntil)){
+    const incoming=command.batch.hints.filter(h=>h.sourceId===row.id),identity=['id','sourceId','generation','sourceRevision','conversationId','eventKey','hintType','anchorVersion','messageId','clockBasis','actorVerified','actorScopeKey','ackWitness'];
+    if(incoming.length&&incoming.every(h=>{const old=next.hints[h.id];return old?!old.revoked&&identity.every(k=>equal(old[k],h[k])):!Object.values(next.hints).some(other=>other.sourceId===h.sourceId&&other.eventKey===h.eventKey||other.conversationId===h.conversationId&&other.messageId===h.messageId);}))continue;
+   }
    if(prior&&(time(row.observedAt)<time(prior.observedAt)||prior.sourceRevision>row.sourceRevision||(prior.sourceRevision===row.sourceRevision&&!equal(prior,row))))throw Error('stale-free-source-revision');
    next.sources[row.id]=row;
   }
@@ -108,7 +116,9 @@ export function applyFreeEvidence(state,command,{scope,now,channel,historical=fa
   const byMessage=new Map(Object.values(next.hints).filter(h=>h.hintType==='observed-self-send').map(h=>[JSON.stringify([h.conversationId,h.messageId]),h]));
   for(const h of hints)if(h.hintType==='observed-self-send'){const key=JSON.stringify([h.conversationId,h.messageId]),old=byMessage.get(key);if(old&&(old.sourceId!==h.sourceId||old.eventKey!==h.eventKey))throw Error('duplicate-free-anchor-message');byMessage.set(key,old??h);}
   for(const h of hints){const key=JSON.stringify([h.sourceId,h.eventKey]),old=byEvent.get(key);if(old&&(old.conversationId!==h.conversationId||old.hintType!==h.hintType))throw Error('free-hint-event-conflict');if(old&&h.hintType==='observed-self-send'&&['messageId','actorScopeKey','clockBasis','anchorVersion','ackWitness'].some(k=>!equal(old[k],h[k])))throw Error('immutable-free-anchor-conflict');byEvent.set(key,old??h);}
-  next.hints=mergeFreeObservationHints(next.hints,hints);
+  const merged=mergeFreeObservationHints(next.hints,hints);
+  if(jointContinuation)for(const h of hints){const old=byEvent.get(JSON.stringify([h.sourceId,h.eventKey]));if(old&&old!==h&&h.hintType==='observed-self-send'&&time(h.firstObservedAt)<time(old.firstObservedAt)){if(old.revoked||old.id!==h.id)throw Error('immutable-free-anchor-conflict');merged[old.id]=structuredClone(h);}}
+  next.hints=merged;
  }
  next.revision++;return validateFreeEvidence(next,scope);
 }
