@@ -1,0 +1,13 @@
+✔ same version but stale resources requires actual runtime reload (1.144347ms)
+✔ already re-read exact manifest does not cause extra reload (0.202055ms)
+✔ reload failure or still-old manifest cannot proceed to asset acceptance (0.66295ms)
+✔ replacement runtime may be transiently absent, but success requires later exact manifest (0.364671ms)
+✔ Chrome manifest object key order is not a semantic stale-manifest signal (0.224238ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 89.7717
