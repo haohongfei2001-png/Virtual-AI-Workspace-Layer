@@ -6,6 +6,7 @@ export function assertTokenOnlyWork({active,peer}){
  assert.equal(active.directoryVisits,0,'token-only-directory-rescan');
  assert.equal(active.directoryWalkers,0,'token-only-directory-walker');
  assert.equal(peer.directoryVisits,0,'unrelated-page-directory-work');
+ assert.equal(peer.directoryWalkers,0,'unrelated-page-directory-walker');
  assert.equal(peer.bodyQueries,0,'unrelated-page-body-work');
 }
 export function assertStreamOutcome(value){

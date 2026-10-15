@@ -62,8 +62,13 @@ const mutants={
 };
 for(const [name,mutate]of Object.entries(mutants))test('falsifies '+name,()=>{const value=outcome();mutate(value);assert.throws(()=>assertStreamOutcome(value));});
 test('token-only local-work controls fail on directory or unrelated page scanning',()=>{
- const good={active:{bodyQueries:3,directoryVisits:0,directoryWalkers:0},peer:{bodyQueries:0,directoryVisits:0}};assertTokenOnlyWork(good);
- for(const [side,key]of [['active','bodyQueries'],['active','directoryVisits'],['active','directoryWalkers'],['peer','bodyQueries'],['peer','directoryVisits']]){const v=structuredClone(good);v[side][key]=key==='bodyQueries'&&side==='active'?0:1;assert.throws(()=>assertTokenOnlyWork(v));}
+ const good={active:{bodyQueries:3,directoryVisits:0,directoryWalkers:0},peer:{bodyQueries:0,directoryVisits:0,directoryWalkers:0}};assertTokenOnlyWork(good);
+ for(const [side,key]of [['active','bodyQueries'],['active','directoryVisits'],['active','directoryWalkers'],['peer','bodyQueries'],['peer','directoryVisits'],['peer','directoryWalkers']]){const v=structuredClone(good);v[side][key]=key==='bodyQueries'&&side==='active'?0:1;assert.throws(()=>assertTokenOnlyWork(v));}
+});
+test('token-only work rejects an unrelated-page directory walker even without node visits',()=>{
+ const value={active:{bodyQueries:3,directoryVisits:0,directoryWalkers:0},peer:{bodyQueries:0,directoryVisits:0,directoryWalkers:1}};
+ assert.throws(()=>assertTokenOnlyWork(value),{code:'ERR_ASSERTION',message:/^unrelated-page-directory-walker\b/});
+ value.peer.directoryWalkers=0;assertTokenOnlyWork(value);
 });
 test('isolated-world wrappers preserve return objects, this, arguments and thrown errors; cleanup restores descriptors',async()=>{
  const node={},nodes=[node],root={matches:()=>true},calls=[];

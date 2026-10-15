@@ -2,7 +2,7 @@
 
 ## 最新正式检查点（2026-10-15，隔离云环境）
 
-原分支 / Draft PR16 已提交5aa65ec（Round249），CI45 Node4944/4944、12/12 guard mutants通过。新SYS05正式包窄流式正确性实际通过：6400次原生token变更期间真实发送/认证ACK/标题入近期列表，证据准入到可见221ms保守单样本；全部167源码/夹具hash匹配。完整SYS05仍缺内部工作/强制背压与gap等验收。10k插桩双tab初始surface在28.26s/24.00s到位，根库存10000引用/100项目，但诊断未做完整接纳审计或计时；171原文件及3插桩文件hash核实。即刻冷启动和其被动诊断仍失败，其余现有旅程/耐久兼容切片通过。下一轮仅关闭临时插桩，恢复原严格正式10k前后审计/计时，不新增性能猜测修改。详见[Round250](evidence/round250/README.md)。完整81、SYS04/SYS05、G/U与发布条件仍未完成。
+原分支 / Draft PR16 已提交f82f1bf（Round250），CI46 Node4944/4944、12/12 guard mutants与全部现有旅程作业通过；此前cold失败历史仍保留，不能因本轮通过宣称稳定支持。SYS05默认正式包再次窄正确性通过，6400次token变更、证据准入到可见238ms保守单样本，167哈希匹配。正式10k仍在首tab原30秒失败，VERSION_INDEX根库存8973引用/100项目，尚未完整接纳审计或计时，171哈希匹配。下一自然批独立执行既有SYS05工作计数诊断并补peer目录walker零断言，保默认正确性gate；没有新性能产品猜测修改。详见[Round251](evidence/round251/README.md)。完整81、SYS04/SYS05、G/U与发布条件仍未完成。
 
 ## 历史正式检查点（Round219，保留原记录）
 
@@ -2477,3 +2477,8 @@ CI44 at486693b passes4890/4892 Node tests; two older first-Host revision/staged-
 ## Round250：保留CI45实际证据，恢复正式10k门槛
 
 见[evidence/round250](evidence/round250/README.md)。新增正式包SYS05窄正确性通过，10k仅插桩摄取完成；关闭TRACE进行下一严格正式验证。无产品代码修改，无阈值放宽。
+
+
+## Round251：正式10k失败保留，独立SYS05工作计数
+
+见[evidence/round251](evidence/round251/README.md)。新诊断独立报告，不能替代默认正确性/F1；peer walker反例闭合。产品、规模和时间预算不变。
