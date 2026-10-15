@@ -30,6 +30,60 @@ export async function waitJ4PeerScope(page,id,scopeKey,{previousGrant=null,expec
  }
  throw Error('J4-peer-current-scope-timeout');
 }
+// Diagnostics are projections, never authority. Unknown objects/getters cannot
+// escape into the report, and one broken field cannot suppress the others.
+const diagnosticGet=(value,key)=>{try{return value?.[key];}catch{return null;}};
+const diagnosticText=value=>typeof value==='string'?value.slice(0,160):null;
+const diagnosticError=value=>{const name=diagnosticGet(value,'name');return ['Error','TypeError','RangeError','SyntaxError','TimeoutError','AssertionError'].includes(name)?name:'Error';};
+const diagnosticContext=value=>['account-host-team','account-host-personal'].includes(value)?value:value==null?null:'other-context';
+const diagnosticPath=value=>{if(typeof value!=='string'||value.length>512)return 'other-path';return /^\/(?:backend-api\/conversation|c)\/[0-9a-f-]{36}$/i.test(value)||value==='/native/route'?value:'other-path';};
+const diagnosticKeys=new Set('truncated at stage status expectedURL expectedCurrentRef expectedScope previousGrantPresent reason freshExpectedGrant readinessError document documentError requestsError requestTraceError nativeRequestCount nativeRequests nativeRequestsTruncated browserRequests events dropped errors phase path context failure name sameDocument sameEditor draftLength conversationId readingVisibility messageNodes native nativeError frames framesError url detached getterError readError grantPresent scope currentRef readyState rpc type routeEpoch ok state hasGrant grantExpiresAt visibility focused ownedPopovers returnButtonPresent'.split(' '));
+export function boundJ4Diagnostic(value){
+ // Reserve space for the root truncation marker. Charge serialized UTF-8,
+ // including keys, punctuation and nulls, after every field normalization.
+ const budget={nodes:1024,bytes:16384-32},encoder=new TextEncoder();let truncated=false;
+ const charge=n=>{if(n>budget.bytes){truncated=true;return false;}budget.bytes-=n;return true;};
+ const scalar=v=>charge(encoder.encode(JSON.stringify(v)).length)?v:undefined;
+ const visit=(v,depth=0)=>{
+  if(--budget.nodes<0||depth>7){truncated=true;return undefined;}
+  if(v===null||typeof v==='boolean')return scalar(v);
+  if(typeof v==='number')return scalar(Number.isSafeInteger(v)&&v>=0?v:null);
+  if(typeof v==='string'){if(v.length>160)truncated=true;return scalar(v.slice(0,160));}
+  if(typeof v!=='object')return scalar(null);
+  if(!charge(2))return undefined;
+  if(Array.isArray(v)){
+   const out=[],length=diagnosticGet(v,'length');if(length>64)truncated=true;
+   for(let i=0;i<Math.min(length,64);i++){if(i&&!charge(1))break;const item=visit(diagnosticGet(v,i),depth+1);if(item===undefined)break;out.push(item);}return out;
+  }
+  const out={};for(const key of diagnosticKeys){let item=diagnosticGet(v,key);if(item===undefined)continue;
+   if(key==='context')item=diagnosticContext(item);
+   else if(key==='path')item=diagnosticPath(item);
+   else if(['currentRef','expectedCurrentRef','conversationId'].includes(key))item=typeof item==='string'&&/^[0-9a-f-]{36}$/i.test(item)?item:null;
+   if(!charge(encoder.encode(JSON.stringify(key)).length+1+(Object.keys(out).length?1:0)))break;
+   const projected=visit(item,depth+1);if(projected===undefined)break;out[key]=projected;
+  }return out;
+ };
+ try{const result=visit(value);if(result&&typeof result==='object'&&!Array.isArray(result)){if(truncated)result.truncated=true;return result;}return result??{truncated:true};}
+ catch{return {truncated:true,stage:'diagnostic-projection-failed'};}
+}
+// Passive listeners on the existing page only; no request is started or changed.
+export function observeJ4PeerRequests(page,origin){
+ const events=[],errors=[],listeners=[];let dropped=0;
+ const error=(stage,e)=>{if(errors.length<8)errors.push({stage,name:diagnosticError(e)});};
+ const record=(phase,request,response=null)=>{try{const url=new URL(request.url());if(url.origin!==origin||!/^\/(?:backend-api\/conversation\/|native\/route$)/.test(url.pathname))return;const row={at:Date.now(),phase,path:diagnosticPath(url.pathname),context:diagnosticContext(diagnosticGet(request.headers(),'chatgpt-account-id'))};if(response){const status=response.status();row.status=Number.isInteger(status)&&status>=100&&status<=599?status:null;}if(phase==='failed')row.failure=(typeof diagnosticGet(request.failure(),'errorText')==='string'&&/^net::ERR_[A-Z_]{1,64}$/.test(diagnosticGet(request.failure(),'errorText'))?diagnosticGet(request.failure(),'errorText'):null);if(events.length===64){events.shift();dropped++;}events.push(row);}catch(e){error(phase,e);}};
+ for(const [event,listener]of [['request',r=>record('request',r)],['response',r=>{try{record('response',r.request(),r);}catch(e){error('response-request',e);}}],['requestfailed',r=>record('failed',r)]]){try{page.on(event,listener);listeners.push([event,listener]);}catch(e){error('attach-'+event,e);}}
+ return {snapshot:()=>boundJ4Diagnostic({events,dropped,errors}),close(){for(const [event,listener]of listeners.splice(0)){try{page.off(event,listener);}catch(e){error('detach-'+event,e);}}}};
+}
+// Observe the failed native hop without issuing requests, changing presentation,
+// or accepting cached scope as authority. Keep the original failure unchanged.
+export async function j4PeerHopFacts({page,id,server,requestStart,path,scopeKey,previousGrant,error=null,requestTrace=null}){
+ const facts={stage:'joint-peer-native-hop-state',status:error?'FAIL':'OBSERVED',expectedURL:server.origin+path,expectedCurrentRef:path.split('/').at(-1),expectedScope:scopeKey,previousGrantPresent:typeof previousGrant==='string',...(error?{reason:diagnosticText(diagnosticGet(error,'message'))}:{})};
+ try{Object.assign(facts,await j4ReadinessFacts(page,id));facts.freshExpectedGrant=!!await currentJ4Grant(page,id,scopeKey,{previousGrant,expectedCurrentRef:facts.expectedCurrentRef});}catch(failure){facts.readinessError=diagnosticError(failure);}
+ try{facts.document=await page.evaluate(()=>{const reading=document.querySelector('#reading'),editor=document.querySelector('textarea');return {sameDocument:document===globalThis.j4PeerDocument,sameEditor:editor===globalThis.j4PeerEditor,draftLength:editor?.value?.length??null,conversationId:reading?.getAttribute('data-conversation-id')??null,readingVisibility:reading?getComputedStyle(reading).visibility:null,messageNodes:reading?.querySelectorAll('[data-message-id]').length??0};});}catch(failure){facts.documentError=diagnosticError(failure);}
+ try{const rows=server.snapshot().nativeRequests.slice(requestStart);facts.nativeRequestCount=rows.length;facts.nativeRequests=rows.slice(-64).map(({path,context})=>({path,context}));facts.nativeRequestsTruncated=rows.length>64;}catch(failure){facts.requestsError=diagnosticError(failure);}
+ if(requestTrace)try{facts.browserRequests=requestTrace.snapshot();}catch(failure){facts.requestTraceError=diagnosticError(failure);}
+ try{return boundJ4Diagnostic(facts);}catch{return {stage:'diagnostic-projection-failed'};}
+}
 export async function recoverJ4PeerByNativeNavigation({page,id,scopeKey,server,assets,scope,preserved,onHop=()=>{}}){
  const originalURL=page.url(),paths=['/c/'+J4_SEND_C,'/c/33333333-3333-4333-8333-333333333333'];
  assert.equal(originalURL,server.origin+paths[1]);
@@ -45,13 +99,20 @@ export async function recoverJ4PeerByNativeNavigation({page,id,scopeKey,server,a
    link=page.locator('#search-dialog a[href="'+path+'"]');
   }
   previousGrant=(await currentJ4Grant(page,id,scopeKey))?.grant??previousGrant;
-  await link.click();
-  await page.waitForURL(server.origin+path);
-  assert.equal(await waitJ4PeerScope(page,id,scopeKey,{previousGrant,expectedCurrentRef}),scopeKey);
+  const hopRequestStart=server.snapshot().nativeRequests.length,requestTrace=observeJ4PeerRequests(page,server.origin);
+  try{
+   await link.click();
+   await page.waitForURL(server.origin+path);
+   assert.equal(await waitJ4PeerScope(page,id,scopeKey,{previousGrant,expectedCurrentRef}),scopeKey);
+  }catch(error){
+   requestTrace.close();
+   try{await onHop(await j4PeerHopFacts({page,id,server,requestStart:hopRequestStart,path,scopeKey,previousGrant,error,requestTrace}));}catch{}
+   throw error;
+  }finally{requestTrace.close();}
   const current=await currentJ4Grant(page,id,scopeKey,{previousGrant,expectedCurrentRef});assert(current,'J4-peer-new-route-grant-required');previousGrant=current.grant;
   const state=await page.evaluate(()=>({sameDocument:document===j4PeerDocument,sameEditor:document.querySelector('textarea')===j4PeerEditor,draft:j4PeerEditor.value}));
   assert(state.sameDocument&&state.sameEditor);assert.equal(state.draft,before.draft);
-  onHop({stage:'joint-peer-native-hop',status:'PASS',nativeURL:page.url(),currentRef:expectedCurrentRef,newGrant:true,scope:scopeKey,sameDocument:true,sameEditor:true,draftPreserved:true});
+  try{await onHop({stage:'joint-peer-native-hop',status:'PASS',nativeURL:page.url(),currentRef:expectedCurrentRef,newGrant:true,scope:scopeKey,sameDocument:true,sameEditor:true,draftPreserved:true});}catch{}
  }
  assert.equal(page.url(),originalURL);
  const requests=server.snapshot().nativeRequests.slice(requestStart);
@@ -61,13 +122,14 @@ export async function recoverJ4PeerByNativeNavigation({page,id,scopeKey,server,a
 }
 export async function j4ReadinessFacts(page,id){
  const facts={at:Date.now(),frames:[]};
- try{facts.native=await page.evaluate(()=>({url:location.href,readyState:document.readyState,visibility:document.visibilityState,focused:document.hasFocus(),state:document.documentElement.dataset.vaiwlState??null,reason:document.documentElement.dataset.vaiwlReason??null,ownedPopovers:document.querySelectorAll('[data-va-owned]:popover-open').length,returnButtonPresent:!!document.querySelector('[aria-label="返回工作空间"]')}));}catch(error){facts.nativeError=error.name;}
- for(const f of page.frames()){
-  const item={url:f.url(),detached:f.isDetached()};facts.frames.push(item);
+ try{facts.native=await page.evaluate(()=>({url:location.href,readyState:document.readyState,visibility:document.visibilityState,focused:document.hasFocus(),state:document.documentElement.dataset.vaiwlState??null,reason:document.documentElement.dataset.vaiwlReason??null,ownedPopovers:document.querySelectorAll('[data-va-owned]:popover-open').length,returnButtonPresent:!!document.querySelector('[aria-label="返回工作空间"]')}));}catch(error){facts.nativeError=diagnosticError(error);}
+ let frames=[];try{frames=page.frames();}catch(error){facts.framesError=diagnosticError(error);}
+ for(const f of frames.slice(0,16)){
+  let item;try{item={url:f.url(),detached:f.isDetached()};}catch(error){facts.frames.push({getterError:diagnosticError(error)});continue;}facts.frames.push(item);
   if(item.url!==`chrome-extension://${id}/workspace.html`||item.detached)continue;
-  try{Object.assign(item,await f.evaluate(()=>({grantPresent:typeof globalThis.j4Grant==='string'&&!!globalThis.j4Grant,scope:globalThis.j4LastScope??null,readyState:document.readyState,rpc:globalThis.j4RpcTrace??[]})));}catch(error){item.readError=error.name;}
+  try{Object.assign(item,await f.evaluate(()=>({grantPresent:typeof globalThis.j4Grant==='string'&&!!globalThis.j4Grant,scope:globalThis.j4LastScope??null,currentRef:globalThis.j4LastCurrentRef??null,readyState:document.readyState,rpc:globalThis.j4RpcTrace??[]})));}catch(error){item.readError=diagnosticError(error);}
  }
- return facts;
+ try{return boundJ4Diagnostic(facts);}catch{return {stage:'diagnostic-projection-failed'};}
 }
 export async function waitJ4GrantWithDiagnostic(page,id,scopeKey,options,diagnostic){
  try{return await waitJ4Grant(page,id,scopeKey,options);}

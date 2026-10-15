@@ -12,6 +12,7 @@ import {hostScaleScenario,hostScaleExpected} from './fixtures/host-scale-world.m
 import {hostScalePlan,HOST_SCALE_GAPS} from './fixtures/host-scale-plan.mjs';
 import {cleanupHostScaleRun} from './fixtures/host-scale-cleanup.mjs';
 import {auditHostScaleIndex} from './fixtures/host-scale-audit.mjs';
+import {readHostScaleNativeTail} from './fixtures/host-scale-native-tail.mjs';
 import {checkHostScaleSearchPage} from './fixtures/host-scale-ui-oracle.mjs';
 import {measureAtAdmittedScale} from './fixtures/host-scale-measurement.mjs';
 import {waitHostScaleSurfaces,hostScaleFailureFacts} from './fixtures/host-scale-surfaces.mjs';
@@ -24,7 +25,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
  const hash=x=>createHash('sha256').update(x).digest('hex');
  const report={sourceCommit:process.env.FREE_SOURCE_COMMIT??null,requirement:'SYS-04 / original F1',status:'NOT_RUN',acceptance:'NOT_ESTABLISHED',realChatGPT:'NOT_RUN',scenario,expected:hostScaleExpected(scenario),remaining:[...HOST_SCALE_GAPS],ingestion:[],errors:[],rpc:[],rpcTraceDropped:0};
  let server,context,manifest,manifestPath,manifestHash,directory,activePage;
- const sourceFiles=['host-scale-package-browser.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
+ const sourceFiles=['host-scale-package-browser.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sourceFiles.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -56,10 +57,10 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    report.ingestion.push({scaleBasis:'NATIVE_WORLD_NOT_PROVEN_ADMITTED_AT_SAMPLE',tab,coldProfile:tab===0,initialSurfacesMs:performance.now()-start,nativeHistoryLinks:await page.locator('nav[aria-label="Chat history"] a').count(),surfaces:frames.map(f=>f.url())});
    assert.equal(report.ingestion.at(-1).nativeHistoryLinks,scenario.size);
   }
-  const page=pages[1],tail={id:report.expected.last,title:await page.locator('nav[aria-label="Chat history"] a').last().innerText()};
+  const page=pages[1];
   report.phase='native-tail-ingestion';
   // Native tail navigation is ingestion/reachability, never the admitted-index sample.
-  await page.locator('textarea').focus();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0);
+  const tail=await readHostScaleNativeTail(page,{id:report.expected.last,size:scenario.size,longTitles:scenario.longTitles});
   await page.locator('#search-button').click();await page.locator('#search-dialog input').fill(tail.title);
   const nativeTailLink=page.locator('#search-dialog .results').getByRole('link',{name:tail.title,exact:true});await nativeTailLink.waitFor();await nativeTailLink.click();
   await page.waitForURL(server.origin+'/c/'+tail.id);await page.waitForFunction(title=>document.querySelector('h1')?.textContent===title,tail.title);
