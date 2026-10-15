@@ -38,9 +38,32 @@ jobs:
       - name: Actual packaged C2 conversation slice
         if: ${{ !cancelled() }}
         run: node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-package.json"
+      - name: Continuous J1 candidate journey (partial coverage only)
+        if: ${{ !cancelled() }}
+        run: |
+          set +e
+          node tests/host/j1-package-journey.mjs "$RUNNER_TEMP/j1.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node -e "const r=require(process.env.RUNNER_TEMP+'/j1.json'); if(r.status!=='PARTIAL_J1_NOT_ACCEPTED') process.exit(1); console.log(r.status)"
+      - name: J2 and J4 prerequisites (partial coverage only)
+        if: ${{ !cancelled() }}
+        run: |
+          set +e
+          node tests/host/j2-j4-package-prerequisites.mjs "$RUNNER_TEMP/j2-j4.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node -e "const r=require(process.env.RUNNER_TEMP+'/j2-j4.json'); if(r.status!=='PARTIAL_J2_J4_NOT_ACCEPTED') process.exit(1); console.log(r.status)"
+      - name: Isolated visibility proposal experiment (not production)
+        if: ${{ !cancelled() }}
+        run: node tests/host/experiments/native-visibility/probe-browser.mjs "$RUNNER_TEMP/visibility-probe.json"
       - name: Publish bounded text evidence to logs only
         if: ${{ !cancelled() }}
         run: |
           echo "Source commit: $GITHUB_SHA"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          if [ -f "$RUNNER_TEMP/context-package.json" ]; then cat "$RUNNER_TEMP/context-package.json"; fi
+          for name in context-package j1 j2-j4 visibility-probe; do
+            if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
+          done
