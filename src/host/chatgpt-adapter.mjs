@@ -11,6 +11,10 @@ import {createNativeActions} from './native-actions.mjs';
 import {publicAdapterStatus} from './contract.mjs';
 const rect=node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
 const overlaps=(a,b)=>a.x<b.x+b.width&&b.x<a.x+a.width&&a.y<b.y+b.height&&b.y<a.y+a.height;
+// Resolved native identity is its exact URL/ID, not a bounded-cache handle.
+// Keep real handles on the wire and in navigation; IDless candidates remain
+// handle-identified. Detached handles still force publication below.
+const publicationKey=source=>sha256(JSON.stringify([source.routeEpoch,{...source.payload,detachedHandles:[],candidates:source.payload.candidates.map(row=>row.target.kind==='resolved'?{...row,target:{...row.target,liveHandle:null}}:row)}]));
 /** Isolated-world composition. DOM observations remain proposals, never scope proof. */
 export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,snippetsFactory=createNativeSnippets,bodyProof=null,inputRisk=null,authorize=()=>false,beforeDispatch=()=>{},onNativeDispatch=()=>{},onNativeDispatchCancelled=()=>{},onRebindNeeded=()=>{},onSurfaceChange=()=>{},onObservationIssue=()=>{},onFirstSendIntent=null,onOldSendOperation=null,now=Date.now,elapsedNow=()=>performance.now(),scheduleRetry=(fn,ms)=>setTimeout(fn,ms),cancelRetry=id=>clearTimeout(id)}={}){
  if(!document?.defaultView)throw Error('invalid-host-document');
@@ -67,7 +71,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
   try{while(intents.length&&!p){intentItem=intents.shift();if(!intentCurrent(intentItem))continue;p=intentProposal(intentItem);key=JSON.stringify([p.routeEpoch,p.payload]);}for(const candidate of p?[]:[...(bodyDiscovery?[bodyProposal()]:[])]){if(!candidate)continue;if(!bounded(candidate)){issue('host-proposal-too-large');continue;}const fingerprint=JSON.stringify([candidate.routeEpoch,candidate.payload]);if(fingerprint===last.get(candidate.kind)||fingerprint===failedKey.get(candidate.kind))continue;try{p=currentObservation(candidate,currentSurfaceSlice(discovery.scan(),candidate.payload.conversationId));}catch{failedKey.set(candidate.kind,fingerprint);issue('host-proposal-too-large');continue;}key=fingerprint;break;}
    if(!p){if(!surfaceParts.length&&(surfaceScanning||surfaceWanted)){
      if(!surfaceScanning){surfaceWanted=false;surfaceCursor=null;surfacePage=0;surfaceScanning=true;}
-     const source=proposal(true);surfacePageKey=surfacePage++;surfaceSequence=source.localSeq;surfaceKey=sha256(JSON.stringify([source.routeEpoch,{...source.payload,detachedHandles:[]}]));
+     const source=proposal(true);surfacePageKey=surfacePage++;surfaceSequence=source.localSeq;surfaceKey=publicationKey(source);
      if(source.payload.detachedHandles.length||surfaceKey!==surfaceAccepted.get(surfacePageKey)&&surfaceKey!==surfaceFailed.get(surfacePageKey))surfaceParts=splitSurfacePayload(source.payload,source);
      if(!surfaceScanning){for(const cache of [surfaceAccepted,surfaceFailed])for(const index of cache.keys())if(index>=surfacePage)cache.delete(index);}
      if(!surfaceParts.length&&(surfaceScanning||surfaceWanted))schedule();

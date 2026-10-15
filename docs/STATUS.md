@@ -2440,3 +2440,7 @@ CI36 passed4703 Node contracts;10k diagnostic roots grew55→4679→5133→5273 
 ## Round242 — bounded shared reference ingestion
 
 CI37 passed4712 Node contracts; formal10k reached6983 refs/revision140 within the unchanged30s window but still failed before full admission/timing.169 source/fixture hashes match. Independent actual repository counters identify repeated monolithic shared-state traversal. Candidate reuses checked partition/directory migration early for Host new-reference admission, with exact-state checksum equality and unchanged native CAS/guard/retry;10 new contracts and existing affected/storage groups pass locally. [Round242 evidence](evidence/round242/README.md). Actual10k completion/performance and fullFree remain unestablished.
+
+## Round243 — large-directory handle churn
+
+CI38 passed4722 Node contracts and all scoped journeys. Formal10k first-tab surfaces now appeared in27.17s; second-tab preparation still failed30s. Consistent root inventory reached10000 refs/100 projects, revision506, but no complete admission audit/timing exists. A2100-row real-adapter regression independently confirms repeated33-packet publication on each idle renewal solely from bounded-cache resolved-handle churn. Candidate normalizes only that private fingerprint field while retaining wire handles, IDless identity, semantic changes, detached publication and navigation authorization.180 targeted tests pass; actual10k remains to be verified. [Round243 evidence](evidence/round243/README.md). FullFree/SYS04/SYS05 remain unaccepted.

@@ -374,3 +374,22 @@ test('toggle event cannot opt into private renewal cursor preservation',async t=
  await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta'&&!changed){changed=true;d.nodes[0].textContent='Real native title after toggle';f.documentListeners.get('toggle')({type:'toggle',preserveProducerCursor:true});}return Promise.resolve(bodyAck(p));});
  for(let i=0;i<150;i++)await tick();assert(f.emitted.filter(p=>p.kind==='surface-delta').some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Real native title after toggle')));
 });
+
+for(const size of [1000,2100])test('idle renewal handle churn '+size+' resolved directory',async t=>{
+ const f=bodyFixture(),d=sys05Directory(f,size);t.after(()=>f.adapter.stop());f.binding.expiresAt=new Date(20000).toISOString();
+ const drain=async()=>{for(let i=0;i<300;i++)await tick();};
+ await f.start(p=>{f.emitted.push(p);return Promise.resolve(bodyAck(p));});await drain();
+ const surfaces=()=>f.emitted.filter(p=>p.kind==='surface-delta'),initial=surfaces(),initialNodes=d.counts(),stableCount=f.emitted.length;
+ await drain();assert.equal(f.emitted.length,stableCount,'baseline fully drained');
+ const initialMap=new Map(initial.flatMap(p=>p.payload.candidates).map(c=>[c.renderKey,c]));assert.equal(initialMap.size,size);
+ f.setTime(10000);assert(f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()}));await drain();const renewed=surfaces().slice(initial.length),renewedMap=new Map(renewed.flatMap(p=>p.payload.candidates).map(c=>[c.renderKey,c]));
+ const semantic=c=>JSON.stringify({...c,target:{...c.target,liveHandle:null}});let semanticChanges=0,handleChanges=0;
+ for(const [id,c]of renewedMap){const old=initialMap.get(id);if(semantic(c)!==semantic(old))semanticChanges++;if(JSON.stringify(c.target.liveHandle)!==JSON.stringify(old.target.liveHandle))handleChanges++;}
+ t.diagnostic(JSON.stringify({size,initialPackets:initial.length,renewPackets:renewed.length,renewDistinctIDs:renewedMap.size,extraVisits:d.counts().visits-initialNodes.visits,extraWalkers:d.counts().walkers-initialNodes.walkers,semanticChanges,handleChanges,detached:renewed.reduce((sum,p)=>sum+p.payload.detachedHandles.length,0)}));
+ const firstRenewalEnd=surfaces().length;f.setTime(20000);assert(f.adapter.updateBinding({...f.binding,expiresAt:new Date(40000).toISOString()}));await drain();const secondRenewed=surfaces().slice(firstRenewalEnd);
+ t.diagnostic(JSON.stringify({size,secondRenewPackets:secondRenewed.length,secondRenewDistinctIDs:new Set(secondRenewed.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size}));
+ // Genuine title/body evidence remains observed after this idle pass.
+ const beforeChange=f.emitted.length;d.nodes[size-1].textContent='Genuine changed title';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[size-1],parentElement:d.nodes[size-1]}}]);await drain();assert(f.emitted.slice(beforeChange).some(p=>p.kind==='surface-delta'&&p.payload.candidates.some(c=>c.nativeTitle==='Genuine changed title')));
+ const added=f.makeMessage('GENUINE-USER-ACK');f.reading.children.push(added);f.observer().cb([{type:'childList',target:f.reading,addedNodes:[added],removedNodes:[]}]);await drain();assert(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.messageIds.includes('GENUINE-USER-ACK'));
+ assert.equal(semanticChanges,0,'idle renewal has no genuine candidate field changes beyond handles');assert.equal(renewed.length,0,'unchanged resolved directory should not replay solely due to idle renewal handle churn');assert.equal(secondRenewed.length,0,'a second idle renewal remains publication-stable');
+});
