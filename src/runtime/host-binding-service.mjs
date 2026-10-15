@@ -124,11 +124,19 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(!focus&&resolution.state==='verified'&&continuations&&recoveryProfiles.length&&elapsedNow()-attempt.started<4500){
    // Reuse the existing refresh request; no background timer or restored grant.
    // A slow/damaged queue must not consume the scope renewal's whole deadline.
-   const activeProfile=recoveryProfiles[recoveryProfileCursor++%recoveryProfiles.length],scope=authority.scopeFor(frame),drainAbort=new AbortController(),started=elapsedNow();
-   let active=true;
+   const scope=authority.scopeFor(frame),drainAbort=new AbortController(),started=elapsedNow();
+   let active=true,abortSelection;
    const abort=()=>drainAbort.abort();attempt.abort.signal.addEventListener('abort',abort,{once:true});
    const guard=()=>active&&attempt.active&&!drainAbort.signal.aborted&&elapsedNow()-started<1000&&handshake.isBound(message,sender)&&authority.peek(frame).grant===resolution.grant;
-   try{const drained=await withRequestDeadline(()=>continuations.drain({scope,guard,verify:()=>handshake.verify(message,sender),signal:drainAbort.signal,profileId:activeProfile.id,profileVersion:activeProfile.revision}),{timeoutMs:1000,now:elapsedNow,schedule,cancel});if(drained.state==='complete'||drained.state==='needs-revalidation')ui?.notifyScope(scope.key);}catch{}finally{active=false;drainAbort.abort();attempt.abort.signal.removeEventListener('abort',abort);}
+   try{const drained=await withRequestDeadline(async()=>{
+    // Validated durable data selects among current trusted profiles; it never
+    // creates authority. Select before fresh observations advance source epochs.
+    const cancelled=new Promise((_,reject)=>{abortSelection=()=>reject(Error('stale-continuation-authority'));drainAbort.signal.addEventListener('abort',abortSelection,{once:true});if(drainAbort.signal.aborted)abortSelection();});
+    const rows=await Promise.race([nativeRepository.listContinuations(scope,{guard,signal:drainAbort.signal}),cancelled]);if(!guard())throw Error('stale-continuation-authority');
+    const queued=recoveryProfiles.filter(profile=>rows.some(row=>row.state==='pending-evidence'&&row.admission.profileId===profile.id)),eligible=queued.length?queued:recoveryProfiles;
+    const activeProfile=eligible[recoveryProfileCursor++%eligible.length];
+    return continuations.drain({scope,guard,verify:()=>handshake.verify(message,sender),signal:drainAbort.signal,profileId:activeProfile.id,profileVersion:activeProfile.revision});
+   },{timeoutMs:1000,now:elapsedNow,schedule,cancel});if(drained.state==='complete'||drained.state==='needs-revalidation')ui?.notifyScope(scope.key);}catch{}finally{active=false;if(abortSelection)drainAbort.signal.removeEventListener('abort',abortSelection);drainAbort.abort();attempt.abort.signal.removeEventListener('abort',abort);}
    check();
    const stillVerified=await handshake.verify(message,sender);check();
    if(!stillVerified||authority.peek(frame).grant!==resolution.grant)return {ok:false,reason:'stale-host-document'};

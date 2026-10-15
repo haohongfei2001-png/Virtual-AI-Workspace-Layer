@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {observeColdBoundary,coldConversationRequests} from './context-cold-boundary.mjs';
+import {observeColdBoundary,coldConversationRequests,coldProjectionTarget} from './context-cold-boundary.mjs';
 const timeout=()=>{throw Object.assign(new Error('20-second original deadline'),{name:'TimeoutError'});};
 test('missing receipt observation preserves cold failure and checks native presence',async()=>{
  let calls=0;const r=await observeColdBoundary({waitMounted:()=>{calls++;return timeout();},snapshot:async()=>({owned:0,nativeReading:true,nativeComposer:true})});assert.equal(calls,1);assert.equal(r.immediateColdSupport,'FAIL');assert.equal(r.receiptCause,'NOT_ESTABLISHED_WITHOUT_OWNER_TRACE');
@@ -18,3 +18,8 @@ test('native list pagination cannot inflate exact conversation recovery GET coun
  assert.equal(coldConversationRequests([first,list,second,second]).length,3,'duplicate detail is not hidden');
  assert.equal(coldConversationRequests([first,list]).length,1,'missing detail is not manufactured');
 });
+
+test('post-recovery exact title oracle follows the genuinely navigated conversation',()=>{assert.deepEqual(coldProjectionTarget({nativeNavigationRecovery:'PASS'}),{path:'/c/44444444-4444-4444-8444-444444444444',title:'Membership not loaded'});for(const boundary of [undefined,{nativeNavigationRecovery:'NOT_COVERED_THIS_RUN'},{initialProjection:'PASS'}])assert.deepEqual(coldProjectionTarget(boundary),{path:'/c/33333333-3333-4333-8333-333333333333',title:'Ordinary conversation'});});
+test('runner requires exact expected URL and current title before unchanged scope oracle',async()=>{const s=await readFile(new URL('./context-package-mv3-browser.mjs',import.meta.url),'utf8');assert.match(s,/assert.equal\(page.url\(\),server.origin\+expectedProjection.path\)/);assert.match(s,/getByText\(expectedProjection.title,\{exact:true\}\).waitFor\(\{timeout:15000\}\)/);assert.match(s,/assert.deepEqual\(scopes,\[expected\]\)/);assert(s.indexOf('getByText(expectedProjection.title')<s.indexOf('assert.deepEqual(scopes'));});
+
+test('independent projection oracle is hashed before and after the browser run',async()=>{const s=await readFile(new URL('./context-package-mv3-browser.mjs',import.meta.url),'utf8');assert.match(s,/projectionOracle=new URL\('\.\/expected\/modern.mjs'/);assert.match(s,/projectionOracleHash=hash\(await readFile\(projectionOracle\)\)/);assert.match(s,/hash\(await readFile\(projectionOracle\)\)!==projectionOracleHash/);});

@@ -21,10 +21,10 @@ export function createHostContinuationOwner({nativeRepository,evidenceRepository
    await verifyCurrent();const rows=await nativeRepository.listContinuations(normalized,options);await verifyCurrent();
    if(!Array.isArray(rows)||rows.length>256)throw Error('continuation-capacity');
    let total=0;for(const row of rows){total+=new TextEncoder().encode(JSON.stringify(row)).length;if(total>1048576)throw Error('continuation-capacity');validateNativeContinuation(row,normalized);}
-   const candidates=rows.filter(r=>r.state==='pending-evidence');
+   const pendingRows=rows.filter(r=>r.state==='pending-evidence'),matching=pendingRows.filter(r=>r.admission.profileId===profileId),candidates=matching.length?matching:pendingRows;
    if(!candidates.length)return {state:'idle'};
-   const previous=cursors.get(normalized.key),index=candidates.findIndex(r=>r.operationId===previous),row=candidates[(index+1)%candidates.length];
-   cursors.delete(normalized.key);cursors.set(normalized.key,row.operationId);if(cursors.size>128)cursors.delete(cursors.keys().next().value);
+   const cursorKey=JSON.stringify([normalized.key,profileId]),previous=cursors.get(cursorKey),index=candidates.findIndex(r=>r.operationId===previous),row=candidates[(index+1)%candidates.length];
+   cursors.delete(cursorKey);cursors.set(cursorKey,row.operationId);if(cursors.size>128)cursors.delete(cursors.keys().next().value);
    // Snapshot the selected data before the next await; only caller authority is live.
    const pending=structuredClone(row),mark={operationId:pending.operationId,expectedPayloadDigest:pending.payloadDigest};
    if(pending.admission.profileId!==profileId||pending.admission.profileVersion!==profileVersion){

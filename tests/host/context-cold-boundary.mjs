@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {modernExpectedWorld} from './expected/modern.mjs';
 // A separate conditional safety observation. It never changes the original
 // cold acceptance case, deadline or scope authority, and never retries a GET.
 export async function observeColdBoundary({waitMounted,snapshot}) {
@@ -16,4 +17,10 @@ export async function observeColdBoundary({waitMounted,snapshot}) {
 export function coldConversationRequests(requests) {
  assert(Array.isArray(requests));
  return requests.filter(row=>/^\/backend-api\/conversation\/[0-9a-f-]+$/.test(row?.path??''));
+}
+
+export function coldProjectionTarget(boundary) {
+ const id=boundary?.nativeNavigationRecovery==='PASS'?'44444444-4444-4444-8444-444444444444':'33333333-3333-4333-8333-333333333333';
+ const expected=modernExpectedWorld.conversations.find(row=>row.id===id);assert(expected);
+ return {path:'/c/'+id,title:expected.title};
 }

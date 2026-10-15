@@ -8,12 +8,12 @@ import {createVariantHostFixtureServer} from './fixtures/variants-server.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {createColdTracePackage,verifyColdTracePackage} from './cold-context-trace.mjs';
 import {digest} from '../../src/data/hash.mjs';
-import {observeColdBoundary,coldConversationRequests} from './context-cold-boundary.mjs';
+import {observeColdBoundary,coldConversationRequests,coldProjectionTarget} from './context-cold-boundary.mjs';
 import {cleanupOwnedResources} from './isolated-browser-cleanup.mjs';
 const C='33333333-3333-4333-8333-333333333333',server=await createVariantHostFixtureServer({profile:'MODERN'}),dir=await mkdtemp(join(tmpdir(),'vaiwl-c2-package-')),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineContext:true});
 const info=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8')),hash=v=>createHash('sha256').update(v).digest('hex');
-const script=new URL(import.meta.url),scriptHash=hash(await readFile(script)),boundaryHelper=new URL('./context-cold-boundary.mjs',import.meta.url),boundaryHelperHash=hash(await readFile(boundaryHelper));
-const report={scriptHash,boundaryHelperHash,startupMode:['cold','cold-trace','cold-recovery'].includes(process.argv[3])?'COLD_IMMEDIATE_AFTER_LOAD_UNPACKED':'WORKER_READY_PRECONDITION',evidence:'REAL_HEADLESS_PACKAGED_MV3_OFFLINE_C2',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',profileScope:'CONVERSATION_GET_ONLY_NOT_FULL_MODERN_ACCEPTANCE',package:built,fixture:server.manifest,sourceHashes:info.sourceHashes,results:[],errors:[]};let context,page,worker;
+const script=new URL(import.meta.url),scriptHash=hash(await readFile(script)),boundaryHelper=new URL('./context-cold-boundary.mjs',import.meta.url),boundaryHelperHash=hash(await readFile(boundaryHelper)),projectionOracle=new URL('./expected/modern.mjs',import.meta.url),projectionOracleHash=hash(await readFile(projectionOracle));
+const report={scriptHash,boundaryHelperHash,projectionOracleHash,startupMode:['cold','cold-trace','cold-recovery'].includes(process.argv[3])?'COLD_IMMEDIATE_AFTER_LOAD_UNPACKED':'WORKER_READY_PRECONDITION',evidence:'REAL_HEADLESS_PACKAGED_MV3_OFFLINE_C2',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',profileScope:'CONVERSATION_GET_ONLY_NOT_FULL_MODERN_ACCEPTANCE',package:built,fixture:server.manifest,sourceHashes:info.sourceHashes,results:[],errors:[]};let context,page,worker;
 try{
  report.originalPackageVerification=verifyHost(built.unpacked);
  const trace=process.argv[3]==='cold-trace'?await createColdTracePackage(built.unpacked,join(dir,'cold-trace-extension')):null;if(trace){report.evidence="REAL_HEADLESS_INSTRUMENTED_PACKAGE_COPY_OFFLINE_C2";report.instrumentation=trace;await verifyColdTracePackage(trace);}
@@ -37,7 +37,8 @@ try{
   report.coldBoundary.nativeNavigationRecovery='PASS';report.coldBoundary.originalDraftRetained=true;
   }else report.coldBoundary.nativeNavigationRecovery='NOT_COVERED_THIS_RUN';
  }else await waitMounted();
- const workspace=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(workspace);await workspace.getByText('Ordinary conversation',{exact:true}).waitFor({timeout:15000});
+ const expectedProjection=coldProjectionTarget(report.coldBoundary);assert.equal(page.url(),server.origin+expectedProjection.path);
+ const workspace=page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);assert(workspace);await workspace.getByText(expectedProjection.title,{exact:true}).waitFor({timeout:15000});report.currentProjection=expectedProjection;
  worker??=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`));assert(worker);
  assert(await worker.evaluate(async()=>{try{await fetch('https://example.com/');return false;}catch{return true;}}));report.workerExternalNetworkBlocked=true;
  const scopes=await workspace.evaluate(async()=>{const {ScopeRepository}=await import(chrome.runtime.getURL('src/b1/scope-repository.mjs'));const base=new ScopeRepository({indexedDB});try{const db=await base.open();return await new Promise((resolve,reject)=>{const tx=db.transaction('native_states'),q=tx.objectStore('native_states').getAll();tx.oncomplete=()=>resolve(q.result.filter(r=>r.key===r.payload?.scopeKey).map(r=>r.key));tx.onabort=()=>reject(tx.error);});}finally{base.close();}});
@@ -53,7 +54,7 @@ try{
  if(worker&&!report.diagnostics)try{report.diagnostics=await worker.evaluate(()=>({warm:globalThis.__offlineDiagnostic??null,cold:globalThis.__vaiwlColdTrace??null}));}catch{}
  const clean=await cleanupOwnedResources(report,[['browser',()=>context?.close()],['instrumentation',()=>report.instrumentation?verifyColdTracePackage(report.instrumentation):undefined],['package',()=>verifyHost(built.unpacked)],['fixture',()=>server.close()],['source-integrity',async()=>{
   report.sourceChangedDuringRun=(await Promise.all(Object.entries(info.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);
-  report.scriptChangedDuringRun=hash(await readFile(script))!==scriptHash||hash(await readFile(boundaryHelper))!==boundaryHelperHash;
+  report.scriptChangedDuringRun=hash(await readFile(script))!==scriptHash||hash(await readFile(boundaryHelper))!==boundaryHelperHash||hash(await readFile(projectionOracle))!==projectionOracleHash;
   if(report.sourceChangedDuringRun||report.scriptChangedDuringRun)throw Error('C2-source-integrity-changed');
  }]]);if(!clean)process.exitCode=1;
  await writeFile(process.argv[2]??join(dir,'report.json'),JSON.stringify(report,null,2)+'\n');
