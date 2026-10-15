@@ -1,4 +1,4 @@
-import { j1CandidatePage } from './j1-candidate-page.mjs';
+import { j1CandidatePage, j1NativeProjects } from './j1-candidate-page.mjs';
 import { createVariantHostFixtureServer } from './variants-server.mjs';
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -41,6 +41,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
   let detailHold = null;
   const detailAppends = new Map(), detailAcceptances = new Map();
   const projects = new Map([[PROJECT_ONE,{id:PROJECT_ONE,name:'Research'}],[PROJECT_TWO,{id:PROJECT_TWO,name:'Research'}]]);
+  if(journey==='J1')for(const project of j1NativeProjects)projects.set(project.id,{...project});
   const conversations = new Map([
     [C_ONE,{id:C_ONE,title:'First project conversation',project:PROJECT_ONE}],
     [C_TWO,{id:C_TWO,title:'Second project conversation',project:PROJECT_TWO}],

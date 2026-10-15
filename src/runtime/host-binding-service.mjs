@@ -1,3 +1,4 @@
+import {createHostActivitySourceAdmission} from './host-activity-source-admission.mjs';
 import {createHostHistoricalSendOwner} from './host-historical-send-owner.mjs';
 import {validateHistoricalSendProfile} from './historical-send-profile.mjs';
 import {createHostCurrentNavigation} from './host-current-navigation.mjs';
@@ -45,7 +46,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  sendCandidates=currentMetadata?createHostSendCandidates({observations,reader:currentMetadata,enabled:sendCandidatesEnabled,now,schedule,cancel,onAcknowledged:ackOwner?async input=>{
   await ackOwner.consume(input);input.guard();ui?.notifyScope(input.context.scope.key);
  }:null}):null;
- const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({initializeTimePolicy:true,repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
+ const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({admitActivitySource:createHostActivitySourceAdmission({sendAckProfile:ackProfile,historicalSendProfile:historyProfile}),initializeTimePolicy:true,repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
  const currentNavigation=ui&&observations&&dispatchCurrent?createHostCurrentNavigation({ui,observations,bridge:dispatchCurrent,urlPolicy:navigationURLPolicy,elapsedNow,schedule,cancel}):null;
  const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,prepareNavigation,registerCurrentNavigation:currentNavigation?input=>currentNavigation.register(input):null,nativeCandidatesEnabled:!!candidateBridge,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
  const candidates=ui&&candidateBridge?createHostCandidateService({ui,bridge:candidateBridge,elapsedNow,schedule,cancel,makeId}):null;

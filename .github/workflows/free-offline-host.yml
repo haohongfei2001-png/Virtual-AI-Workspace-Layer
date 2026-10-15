@@ -67,8 +67,9 @@ jobs:
       - name: J2 and J4 prerequisites (partial coverage only)
         if: ${{ !cancelled() }}
         run: |
+          command -v xvfb-run
           set +e
-          node tests/host/j2-j4-package-prerequisites.mjs "$RUNNER_TEMP/j2-j4.json"
+          FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j2-j4-package-prerequisites.mjs "$RUNNER_TEMP/j2-j4.json"
           result=$?
           set -e
           test "$result" -eq 2

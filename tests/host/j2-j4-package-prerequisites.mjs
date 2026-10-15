@@ -42,7 +42,8 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
  const server=await createHostFixtureServer(),dir=await mkdtemp(join(tmpdir(),'vaiwl-j2-j4-'));
  const built=packageHost(join(dir,'package'),{offlineOrigin:server.origin});
  const manifestPath=join(built.unpacked,'build-manifest.json'),manifestBytes=await readFile(manifestPath),manifest=JSON.parse(manifestBytes);
- const report={specRevision:'VA-HOST/1.1 FINAL',evidence:'S_REAL_HEADLESS_DEFAULT_PACKAGED_MV3_OFFLINE_PREREQUISITES',
+ const headed=process.env.FREE_CHROME_HEADED==='1';
+ const report={specRevision:'VA-HOST/1.1 FINAL',evidence:'S_REAL_DEFAULT_PACKAGED_MV3_OFFLINE_PREREQUISITES',browserMode:headed?'HEADED':'HEADLESS',display:headed?(process.env.DISPLAY??null):null,
   realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',fullJourneys:'NOT_ACCEPTED',profile:'LEGACY_OFFLINE_C3',
   sourceCommit:process.env.FREE_SOURCE_COMMIT??null,sourceCommitProvenance:'caller supplied; source hashes are authoritative',
   scriptHash,sourceHashes:manifest.sourceHashes,buildManifestHash:hash(manifestBytes),fixture:server.manifest,os:platform(),
@@ -89,7 +90,7 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
   });
  }
  try{
-  context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,viewport:{width:1440,height:1000},
+  context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:!headed,viewport:{width:1440,height:1000},
    executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium'),
    ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
   await context.route('**/*',r=>r.request().url().startsWith(server.origin+'/')||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());

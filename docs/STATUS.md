@@ -2106,3 +2106,43 @@ exit but independently fails if actual removal is later than60s from document
 origin (conservatively before proof issuance); foreground retains35s. Actual
 removal/visibility timestamps are recorded. Combined runner tests15/15 PASS;
 no product TTL/source change. Both browser outcomes remain pending.
+
+## Round209 — close real activity projection admission and deepen native journeys (2026-10-15 UTC)
+
+- [Fourth CI](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/38666470613)
+  at `b954abc2a0841e1576c106d07fa2e8f4efb1e287`: Node **4054/4054**,
+  guards **12/12**, warm/cold C2 and implemented J1 steps PASS; overall **FAIL**.
+- J4 natural silent authentication loss is now measured: private projection
+  removed at **50251.7ms from document origin**, **48124.8ms after change**,
+  within the unchanged conservative60s assertion. Original draft, both tabs and
+  restoration without send replay pass. The separate foreground test cannot
+  reach hidden visibility in headless Chrome, so is not passed. The next CI uses
+  standard Ubuntu Xvfb/headed Chrome for J2/J4 only, preserving native trusted
+  visibility assertions and all natural-renewal checks.
+- J3 persisted a real strict original45day event but still could not navigate
+  older intervals. Root cause: host composition omitted activity-source admission,
+  leaving FreeReadService's default deny-all. Explicit current owner profile,
+  exact sourceId/generation/codec/version and evidence-store provenance now gate
+  read projection. No configured profile still denies all.
+- Independent review found the initial admission could lend a stored host source
+  to same-ID synthetic shared coverage. The real failing counterexample is kept.
+  Admission now binds each store's source and associated rows before combining,
+  refuses inconsistent admitted collisions and does not mutate stored data.
+  Legacy shared event diagnostics remain unverified. Incomplete history remains
+  **provisional**, never fabricated complete coverage; actual frame hasOlder can
+  expose a supported historical positive. Independent final **19/19 PASS**, also
+  rerun **19/19** on the integrated tree with matching production hashes.
+  Integrated focused activity/reader/history tests **56/56 PASS**.
+- J1 now exercises40 real native Projects, separate canonical offset32/eighth-card
+  target and candidate offset32, real workspace scroll and successful SAVE_VIEW,
+  native C/unique return/Back. Independent fixture oracle preserves actual IDs,
+  titles and routes. These new browser assertions await execution; no acceptance
+  is claimed from Node tests. J1/J4 runner targeted **15/15 PASS**.
+- Raw fourth-run reports, independent red/green admission checks and recoverable
+  audit script are in [Round209 evidence](evidence/round209/README.md).
+  No private account, main merge, deployment, paid resource or production context
+  enablement. Homepage causal/budget repair is separate pending final integration.
+  Full81/J1–J4/G/U/performance remains incomplete; **Free NOT_RELEASE_READY**.
+
+Round209 final integrated full Node **4073/4073 PASS**, zero skip/fail,118794.832ms
+(limit concurrency2). Independent audit19/19 and focused56/56 above remain separate.

@@ -86,8 +86,19 @@ export function createFreeReadService({repository,workspaces,native,evidence,clo
     // Existing evidence codecs accept synthetic records. Persistence and a valid
     // checksum are not production admission; retain every historical row while
     // exposing only sources explicitly admitted by this privileged composition.
-    const sources=Object.fromEntries(Object.entries({...state.sources,...stored.sources}).filter(([,source])=>admitActivitySource(scope,source)===true));
-    return {scopeKey:state.scopeKey,events:{...events,...stored.events},hints:stored.hints,coverage:{...state.coverage,...stored.coverage},sources,evidenceRevision:`${state.revision}:${stored.revision}`};
+    // Admission is bound to a store and its own source before combining rows.
+    // A restored shared row cannot borrow a same-ID evidence source's authority.
+    const admitted=(table,store)=>Object.fromEntries(Object.entries(table??{}).filter(([,source])=>admitActivitySource(scope,source,{store})===true));
+    const sharedSources=admitted(state.sources,'shared'),storedSources=admitted(stored.sources,'evidence');
+    // Independently admitted but inconsistent same-ID sources are ambiguous.
+    // Refuse their activity only; neither persisted store is changed.
+    for(const id of Object.keys(sharedSources))if(Object.hasOwn(storedSources,id)&&digest(sharedSources[id])!==digest(storedSources[id])){delete sharedSources[id];delete storedSources[id];}
+    const rows=(table,sources)=>Object.fromEntries(Object.entries(table??{}).filter(([,row])=>Object.hasOwn(sources,row.sourceId)));
+    const sources={...sharedSources,...storedSources};
+    // Preserve legacy shared event diagnostics, but never lend them authorship
+    // via a same-ID stored source (including an optional shared adapter).
+    const sharedEvents=Object.fromEntries(Object.entries(events).map(([id,row])=>[id,Object.hasOwn(sharedSources,row.sourceId)?row:{...row,actorVerified:false,actorScopeKey:state.scopeKey}]));
+    return {scopeKey:state.scopeKey,events:{...sharedEvents,...rows(stored.events,storedSources)},hints:rows(stored.hints,storedSources),coverage:{...rows(state.coverage,sharedSources),...rows(stored.coverage,storedSources)},sources,evidenceRevision:`${state.revision}:${stored.revision}`};
   }
   return Object.freeze({workspaceContext,activityEvidence,
       freeRecoveryStatus:async(scope,options)=>({native:await freeRecoveryStatus(native,scope,'native',options),evidence:await freeRecoveryStatus(evidence,scope,'evidence',options)}),

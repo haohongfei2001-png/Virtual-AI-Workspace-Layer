@@ -30,3 +30,11 @@ test('runner keeps independent natural and trusted-foreground observations',asyn
  assert(source.includes("e.state==='visible'&&e.trusted"));assert(source.includes('polling:100'));
  assert(!source.includes('dispatchEvent('));assert(!source.includes('setDefaultTimeout('));
 });
+
+test('headed execution is explicit and keeps native trusted visibility assertions',async()=>{
+ const {readFile}=await import('node:fs/promises');const source=await readFile(new URL('./j2-j4-package-prerequisites.mjs',import.meta.url),'utf8');
+ assert.match(source,/FREE_CHROME_HEADED==='1'/);assert.match(source,/headless:!headed/);
+ assert.match(source,/state==='hidden'&&e.isTrusted|state==='hidden'&&e.trusted/);
+ assert.match(source,/state==='visible'&&e.isTrusted|state==='visible'&&e.trusted/);
+ assert(!source.includes('dispatchEvent'));assert(!source.includes('setWebLifecycleState'));
+});
