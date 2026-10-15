@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {runInNewContext} from 'node:vm';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {waitHostScaleSurfaces,hostScaleFailureFacts} from './fixtures/host-scale-surfaces.mjs';
@@ -35,4 +36,15 @@ test('failure facts are bounded and text-free, including absent/closed parents',
 });
 test('runner retains original RPC failures and capture phase before owned cleanup',async()=>{
  const source=await readFile(new URL('./host-scale-package-browser.mjs',import.meta.url),'utf8');assert(source.includes('waitHostScaleSurfaces(page,{extensionId:id,timeout:30000'));assert(!source.includes("frames[0].locator('.workspace').waitFor"));assert(source.includes('rpcTail:report.rpc.slice(-16)'));assert(source.includes('captureError:failure.message'));assert(source.indexOf('report.failure={')<source.indexOf('const cleaned=await cleanupHostScaleRun'));
+});
+
+test('actual diagnostic callback records zero history geometry and allowlisted public status only',async()=>{
+ const {page}=setup();
+ const node={getBoundingClientRect:()=>({x:0,y:4000,width:228,height:0}),scrollHeight:999999,clientHeight:0};
+ const document={readyState:'complete',documentElement:{dataset:{vaiwlState:'NATIVE_ONLY',vaiwlReason:'unsafe-native-geometry'}},querySelectorAll:selector=>selector.startsWith('aside')?[node]:[],querySelector:()=>null};
+ page.evaluate=fn=>runInNewContext('('+fn.toString()+')()',{document,getComputedStyle:()=>({display:'flex',overflowY:'auto'})});
+ const facts=await hostScaleFailureFacts(page);assert.equal(facts.nativeDOM.geometry.history.height,0);assert.equal(facts.nativeDOM.contentReason,'unsafe-native-geometry');assert.equal(facts.nativeDOM.geometry.projects.scrollHeight,999999);
+ document.documentElement.dataset={vaiwlState:'SECRET'.repeat(100000),vaiwlReason:{token:'SECRET'}};
+ node.getBoundingClientRect=()=>({x:Infinity,y:NaN,width:1e20,height:-1e20});
+ const bad=await hostScaleFailureFacts(page);assert.equal(bad.nativeDOM.contentState,null);assert.equal(bad.nativeDOM.contentReason,null);assert.equal(bad.nativeDOM.geometry.history.width,null);assert(!JSON.stringify(bad).includes('SECRET'));assert(JSON.stringify(bad).length<4096);
 });

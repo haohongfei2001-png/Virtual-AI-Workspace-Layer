@@ -2416,3 +2416,7 @@ CI31 atd56fba8b5c7572a1a1ffd7cbf8c166dd5ca7a0a8 has all3 jobs SUCCESS and4666/46
 Formal Host1k achieves exact1000 distinct refs/10 projects, stable pre/post revision66 and no missing/duplicate/unexpected refs. Local exact/broad/next single samples are87.93/88.70/129.90ms including automation; two24-row pages pass independent ID/title checks. All1000 membership states are UNKNOWN, so native project-mixed truth does not certify membership. No p95/fullSYS04/SYS05/Free acceptance is claimed.
 
 The same one scale CI slot advances to approved10000/project-mixed/1x with unchanged5-minute fault bound, exactSHA and complete stable audits; no100k yet. All original other gates remain mandatory. Draft NOT_RELEASE_READY.
+
+## Round237 — 2026-10-15 UTC: first10k initial-surface failure
+
+CI32/ac610c4 passed Node and all journey gates; durability's first10k step failed at `tab-0-initial-surfaces` within the unchanged30s startup boundary. No UI RPC/frame or admission/timing exists; native authentication session/accounts each occurred once. All167 scale source/fixture hashes match the exact CI SHA. The 100-project native flex layout may shrink history to zero height, but CI32 lacks actual geometry; no product cause is asserted. Candidate adds only bounded fixed-region geometry/public-state failure diagnostics; original fixture/guard/thresholds remain. Next single10k run collects the missing evidence. See `docs/evidence/round237/README.md`. Prior1k single sample/allUNKNOWN boundaries and full Free/SYS04/SYS05 gaps remain unchanged.
