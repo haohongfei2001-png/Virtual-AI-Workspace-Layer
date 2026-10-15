@@ -19,6 +19,7 @@ import {checkHostScaleSearchPage} from './fixtures/host-scale-ui-oracle.mjs';
 import {measureAtAdmittedScale} from './fixtures/host-scale-measurement.mjs';
 import {waitHostScaleSurfaces,hostScaleFailureFacts} from './fixtures/host-scale-surfaces.mjs';
 import {observeCurrentFrame} from './observe-current-frame.mjs';
+import {waitHostScaleMemberProgress} from './fixtures/host-scale-member-progress.mjs';
 const output=process.argv[2]??join(tmpdir(),'vaiwl-host-scale.json');
 if(process.env.HOST_SCALE_RUN!=='1'){
  const plan=hostScalePlan();await writeFile(output,JSON.stringify(plan,null,2)+'\n');console.log(JSON.stringify({status:plan.status,report:output,scenarios:plan.scenarios.length}));
@@ -28,7 +29,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
  const report={sourceCommit:process.env.FREE_SOURCE_COMMIT??null,requirement:'SYS-04 / original F1',status:'NOT_RUN',acceptance:'NOT_ESTABLISHED',realChatGPT:'NOT_RUN',scenario,expected:hostScaleExpected(scenario),remaining:[...HOST_SCALE_GAPS],ingestion:[],errors:[],rpc:[],rpcTraceDropped:0};
  const traceEnabled=process.env.FREE_HOST_SCALE_TRACE==='1';
  let server,context,manifest,manifestPath,manifestHash,directory,activePage,loadedExtensionId,tracePackage;
- const sourceFiles=['host-scale-package-browser.mjs','host-scale-trace.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-progress-sampler.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
+ const sourceFiles=['host-scale-package-browser.mjs','host-scale-trace.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-progress-sampler.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sourceFiles.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -65,9 +66,9 @@ if(process.env.HOST_SCALE_RUN!=='1'){
     console.log('HOST_SCALE_LIFECYCLE '+JSON.stringify({role:`/${data.role}.html`,type:data.type,at:Date.now()}));
    }catch{}});
   },{extensionId:id,nativeOrigin:server.origin});
-  const surfaces=page=>{const sampled=(traceEnabled||process.env.FREE_HOST_SCALE_PROGRESS==='1')&&report.phase==='tab-0-initial-surfaces';
+  const surfaces=(page,{deadline=null}={})=>{const sampled=(traceEnabled||process.env.FREE_HOST_SCALE_PROGRESS==='1')&&report.phase==='tab-0-initial-surfaces';
    let sampler;if(sampled){report.nativeIndexSamples=[];report.timingUse=traceEnabled?'DIAGNOSTIC_ONLY_INSTRUMENTED_PACKAGE':'DIAGNOSTIC_ONLY_PROGRESS_SAMPLING';sampler=createHostScaleProgressSampler({page,extensionId:id,records:report.nativeIndexSamples});}
-   return waitHostScaleSurfaces(page,{extensionId:id,timeout:30000,onObservation:value=>{report.surfaceWait??=[];report.surfaceWait.push({phase:report.phase,...value});if(report.surfaceWait.length>16)report.surfaceWait.shift();sampler?.observe({remainingMs:value.remainingMs,preparing:report.rpc.some(row=>row.tab===0&&row.state==='preparing')});}}).finally(()=>sampler?.stop());};
+   return waitHostScaleSurfaces(page,{extensionId:id,timeout:30000,deadline,onObservation:value=>{report.surfaceWait??=[];report.surfaceWait.push({phase:report.phase,...value});if(report.surfaceWait.length>16)report.surfaceWait.shift();sampler?.observe({remainingMs:value.remainingMs,preparing:report.rpc.some(row=>row.tab===0&&row.state==='preparing')});}}).finally(()=>sampler?.stop());};
   const pages=[],ingestionStarted=performance.now();
   for(let tab=0;tab<2;tab++){
    const page=await context.newPage();activePage=page;report.phase=`tab-${tab}-native-navigation`;pages.push(page);page.on('pageerror',e=>report.errors.push(e.message));page.on('console',message=>{const text=message.text();if(text.startsWith('HOST_SCALE_LIFECYCLE ')){try{const value=JSON.parse(text.slice(21));if(['/workspace.html','/sidebar.html'].includes(value.role)&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(value.type)&&Number.isSafeInteger(value.at)&&value.at>=0){report.uiLifecycle??=[];if(report.uiLifecycle.length<128)report.uiLifecycle.push({tab,role:value.role,type:value.type,at:value.at});else report.uiLifecycleDropped=(report.uiLifecycleDropped??0)+1;}}catch{}return;}if(traceEnabled&&text.startsWith('HOST_SCALE_TRACE ')){try{appendScaleTrace(report.trace,{...JSON.parse(text.slice(17)),realmOrdinal:tab+1});}catch{report.trace.dropped++;}return;}if(text.startsWith('HOST_SCALE_RPC ')){if(report.rpc.length<4096)report.rpc.push({tab,...JSON.parse(text.slice(15))});else report.rpcTraceDropped++;}});
@@ -88,18 +89,26 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   const nativeTailLink=page.locator('#search-dialog .results').getByRole('link',{name:tail.title,exact:true});await nativeTailLink.waitFor();await nativeTailLink.click();
   await page.waitForURL(server.origin+'/c/'+tail.id);await page.waitForFunction(title=>document.querySelector('h1')?.textContent===title,tail.title);
   assert.equal(await page.locator('#reading').getAttribute('data-conversation-id'),tail.id);report.ingestionNativeTailReachability='PASS';
-  // Native member collection is ingestion, before any admitted-scale measurement.
+  // This separate single-project scenario keeps native reading visible for
+  // bounded observation before returning. Immediate return remains partial/UNKNOWN.
+  // The same original 30s budget covers this prerequisite and return surfaces.
+  let memberReturnDeadline=null;
+  const memberReturnRemaining=()=>{const value=memberReturnDeadline-performance.now();if(!(value>0))throw Error('host-scale-member-return-deadline');return value;};
   if(scenario.distribution==='single-project'){
-   report.phase='native-project-members-ingestion';
-   await page.locator('textarea').focus();
+   report.phase='native-project-members-ingestion';memberReturnDeadline=performance.now()+30000;
+   await page.locator('textarea').focus({timeout:memberReturnRemaining()});
    const projectPath='/g/g-p-00000000000000000000000000000001/project';
-   await page.locator(`aside section[aria-label="Projects"] a[href="${projectPath}"]`).click();await page.waitForURL(server.origin+projectPath);
-   await page.waitForFunction(size=>document.querySelectorAll('#reading nav[aria-label="Project conversations"] a').length===size,scenario.size);
+   await page.locator(`aside section[aria-label="Projects"] a[href="${projectPath}"]`).click({timeout:memberReturnRemaining()});await page.waitForURL(server.origin+projectPath,{timeout:memberReturnRemaining()});
+   await page.waitForFunction(size=>document.querySelectorAll('#reading nav[aria-label="Project conversations"] a').length===size,scenario.size,{timeout:memberReturnRemaining()});
    report.nativeProjectMembersRendered=await page.locator('#reading nav[aria-label="Project conversations"] a').count();
+   report.phase='visible-native-member-progress';
+   report.nativeMemberProgress=await waitHostScaleMemberProgress({page,extensionId:id,url:server.origin+projectPath,projectId:projectPath.split('/')[2],id:tail.id,deadline:memberReturnDeadline});
+   report.nativeMemberProgress.scenario='VISIBLE_NATIVE_READING_BEFORE_RETURN_NOT_IMMEDIATE_RETURN';
+   // Tail progress is not completeness: the unchanged full ID audit follows.
   }
   report.phase='return-workspace-local-search';
-  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
-  const [workspace,sidebar]=await surfaces(page);
+  await page.getByRole('button',{name:'返回工作空间',exact:true}).click(memberReturnDeadline===null?{}:{timeout:memberReturnRemaining()});
+  const [workspace,sidebar]=await surfaces(page,{deadline:memberReturnDeadline});
   await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
   const localSearch=workspace.getByRole('searchbox',{name:'已知聊天查找输入'});await localSearch.waitFor();
   const nativeRouteBeforeMeasurement=page.url();

@@ -1,6 +1,7 @@
 /** Test-only readonly observation. One shared budget; never repeats a UI action. */
-export async function waitHostScaleSurfaces(page,{extensionId,timeout=30000,now=()=>performance.now(),pause=ms=>new Promise(r=>setTimeout(r,ms)),onObservation=()=>{}}={}){
- const until=now()+timeout,roles=['workspace','sidebar'];
+export async function waitHostScaleSurfaces(page,{extensionId,timeout=30000,deadline=null,now=()=>performance.now(),pause=ms=>new Promise(r=>setTimeout(r,ms)),onObservation=()=>{}}={}){
+ const until=deadline??now()+timeout,roles=['workspace','sidebar'];
+ if(!Number.isFinite(until)||until<=now())throw Error('host-scale-surfaces-deadline');
  const current=()=>roles.map(role=>{const found=page.frames().filter(frame=>!frame.isDetached()&&frame.url()===`chrome-extension://${extensionId}/${role}.html`);return found.length===1?found[0]:null;});
  const bounded=async operation=>{
   const remaining=until-now();if(remaining<=0)throw Error('host-scale-surfaces-deadline');let timer;

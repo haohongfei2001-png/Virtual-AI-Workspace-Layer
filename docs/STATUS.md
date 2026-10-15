@@ -2,7 +2,7 @@
 
 ## 最新正式检查点（2026-10-15，隔离云环境）
 
-原分支 / Draft PR16 已提交af24f65（Round251）。CI47正式10k首次完成前后精确10000引用/100项目审计且revision608稳定；搜索/首屏/下一页84.70/182.36/219.78ms单样本，全部membership仍UNKNOWN，不算完整SYS04或p95。独立SYS05工作诊断实际通过：token-only窗口active body41次、目录与peer工作0、额外detail GET0；全程5包accepted，不能把窗口结论扩大为全程零目录工作。正式scale171、SYS05两报告各167哈希匹配。默认SYS05在首Team页面启动前置超时，未send/token；cold两项也失败，原记录保留。下一唯一规模槽切既有1k单项目全成员见证；SYS05明确就绪后行为的worker-ready前置，共用原初始预算。详见[Round252](evidence/round252/README.md)。完整81、SYS04/SYS05、G/U与发布条件仍未完成。
+原分支 / Draft PR16 当前正式提交fab65ecd（Round252）。CI48 Node4966/4966及12个guard变异全过；两个SYS05就绪后行为切片实际通过，默认6400次token与真实ACK/title、单样本保守可见上界212ms，诊断token-only前缀目录/peer/额外detail读取为0。独立cold仍FAIL，未宣称冷启动修复。1k单项目完整审计已有1000引用/1项目，但112 PROJECT、888 UNKNOWN，故原完整成员前置FAIL、计时未运行；实际报告保留。Canonical允许有界部分观察，立即返回产生mask会中断尚未采集成员，不是错误归属。下一独立正常旅程保持真实reading可见，单一原30s内观察精确尾成员后返回；尾成员不是完整覆盖，原全量逐ID/projectId前后审计仍必过。无产品返回延迟或隐藏证据豁免。详见[Round253](evidence/round253/README.md)。完整81、SYS04/SYS05、G/U与发布条件仍未完成。
 
 ## 历史正式检查点（Round219，保留原记录）
 
