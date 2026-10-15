@@ -86,7 +86,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(['HOST_UI_RESUME','HOST_UI_SAVE_VIEW'].includes(message?.type))return views?views.resume(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_VIEW')return views?views.handle(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(typeof message?.type==='string'&&message.type.startsWith('HOST_UI_'))return ui?ui.handle(message,sender):{ok:false,reason:'host-ui-unavailable'};
-  if(message?.protocol==='vaiwl-host-observation/1'){
+  if(['vaiwl-host-observation/1','vaiwl-host-observation/2'].includes(message?.protocol)){
    if(!observations)return {state:'rejected',localSeq:message.localSeq,reason:'host-observations-unavailable'};
    const result=await observations.ingest(message,sender,nativeRepository);
    if(message.kind==='current-object'&&result.bodyProofId&&['accepted','duplicate'].includes(result.state)){await oldSendTerminal?.observe(result.bodyProofId);if(firstSend)void firstSend.observe(result.bodyProofId).then(()=>sendCandidates?.observe(result.bodyProofId)).catch(()=>{});else sendCandidates?.observe(result.bodyProofId).catch(()=>{});}

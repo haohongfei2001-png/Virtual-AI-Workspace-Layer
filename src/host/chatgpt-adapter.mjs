@@ -1,3 +1,4 @@
+import {currentObservation,currentSurfaceSlice} from './current-observation-batch.mjs';
 import {sha256} from '../data/hash.mjs';
 import {splitSurfacePayload} from './surface-fragments.mjs';
 import {createNativeInputRisk} from './native-input-risk.mjs';
@@ -63,7 +64,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  function issue(reason){try{onObservationIssue({reason});}catch{/* Diagnostics cannot authorize a retry. */}}
  async function pump(){
   queued=false;if(!live()||busy)return;if(surfaceEpoch!==surfaceSnapshotEpoch){surfaceParts=[];surfaceScanning=false;surfaceCursor=null;surfaceSnapshotEpoch=surfaceEpoch;}dirty=false;const run=generation;let p,key,intentItem=null;
-  try{while(intents.length&&!p){intentItem=intents.shift();if(!intentCurrent(intentItem))continue;p=intentProposal(intentItem);key=JSON.stringify([p.routeEpoch,p.payload]);}for(const candidate of p?[]:[...(bodyDiscovery?[bodyProposal()]:[])]){if(!candidate)continue;if(!bounded(candidate)){issue('host-proposal-too-large');continue;}const fingerprint=JSON.stringify([candidate.routeEpoch,candidate.payload]);if(fingerprint===last.get(candidate.kind)||fingerprint===failedKey.get(candidate.kind))continue;p=candidate;key=fingerprint;break;}
+  try{while(intents.length&&!p){intentItem=intents.shift();if(!intentCurrent(intentItem))continue;p=intentProposal(intentItem);key=JSON.stringify([p.routeEpoch,p.payload]);}for(const candidate of p?[]:[...(bodyDiscovery?[bodyProposal()]:[])]){if(!candidate)continue;if(!bounded(candidate)){issue('host-proposal-too-large');continue;}const fingerprint=JSON.stringify([candidate.routeEpoch,candidate.payload]);if(fingerprint===last.get(candidate.kind)||fingerprint===failedKey.get(candidate.kind))continue;try{p=currentObservation(candidate,currentSurfaceSlice(discovery.scan(),candidate.payload.conversationId));}catch{failedKey.set(candidate.kind,fingerprint);issue('host-proposal-too-large');continue;}key=fingerprint;break;}
    if(!p){if(!surfaceParts.length&&(surfaceScanning||surfaceWanted)){
      if(!surfaceScanning){surfaceWanted=false;surfaceCursor=null;surfacePage=0;surfaceScanning=true;}
      const source=proposal(true);surfacePageKey=surfacePage++;surfaceSequence=source.localSeq;surfaceKey=sha256(JSON.stringify([source.routeEpoch,{...source.payload,detachedHandles:[]}]));
@@ -74,7 +75,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
     if(surfaceParts.length){const localSeq=surfaceSequence??++seq;surfaceSequence=null;p={protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta',payload:surfaceParts[0]};key=surfaceKey;}}
 if(!p)return;}catch{surfaceScanning=false;surfaceCursor=null;if(surfaceWanted)schedule();return;}
   busy=true;const started=elapsedNow(),proofExpiry=binding.expiresAt;let attempts=0;
-  const finish=reason=>{if(run!==generation)return;if(reason){failedKey.set(p.kind,key);if(p.kind==='surface-delta'){surfaceParts=[];surfaceFailed.set(surfacePageKey,key);}dirty=true;issue(reason);}busy=false;if(dirty)schedule();};
+  const finish=reason=>{if(run!==generation)return;if(reason){failedKey.set(p.kind==='current-observation'?'current-object':p.kind,key);if(p.kind==='surface-delta'){surfaceParts=[];surfaceFailed.set(surfacePageKey,key);}dirty=true;issue(reason);}busy=false;if(dirty)schedule();};
   const send=async()=>{
    retryTimer=null;if(run!==generation||!live())return finish('stale-host-binding');
    try{syncRoute();if(p.kind==='send-candidate'&&!intentCurrent(intentItem))return finish('stale-send-intent');}catch{return;}
@@ -82,7 +83,7 @@ if(!p)return;}catch{surfaceScanning=false;surfaceCursor=null;if(surfaceWanted)sc
    let ack;try{ack=await emit(p);}catch{return finish('host-observation-ack-unknown');}
    if(run!==generation)return;if(!live())return finish('stale-host-binding');
    if(ack?.localSeq!==p.localSeq)return finish('host-observation-ack-unknown');
-   if(ack.state==='accepted'||ack.state==='duplicate'){if(p.kind==='current-object'){acceptedBody=p.payload.association==='explicit-body-id'&&typeof ack.bodyProofId==='string'?{proofId:ack.bodyProofId,bodyEpoch:ack.bodyEpoch,fingerprint:JSON.stringify(p.payload),validUntil:proofExpiry}:null;}if(p.kind==='surface-delta'){surfaceParts.shift();if(!surfaceParts.length){surfaceAccepted.set(surfacePageKey,key);surfaceFailed.delete(surfacePageKey);}}if(p.kind!=='surface-delta'||!surfaceParts.length)last.set(p.kind,key);failedKey.delete(p.kind);dirty=true;return finish();}
+   if(ack.state==='accepted'||ack.state==='duplicate'){if(p.kind==='current-object'||p.kind==='current-observation'){const body=p.kind==='current-observation'?p.payload.body:p.payload;acceptedBody=body.association==='explicit-body-id'&&typeof ack.bodyProofId==='string'?{proofId:ack.bodyProofId,bodyEpoch:ack.bodyEpoch,fingerprint:JSON.stringify(body),validUntil:proofExpiry}:null;}if(p.kind==='surface-delta'){surfaceParts.shift();if(!surfaceParts.length){surfaceAccepted.set(surfacePageKey,key);surfaceFailed.delete(surfacePageKey);}}if(p.kind!=='surface-delta'||!surfaceParts.length)last.set(p.kind==='current-observation'?'current-object':p.kind,key);failedKey.delete(p.kind==='current-observation'?'current-object':p.kind);dirty=true;return finish();}
    if(ack.state==='retry-after'&&Number.isFinite(ack.delayMs)&&ack.delayMs>=0){
     const delay=Math.max(50,ack.delayMs),remaining=6000-(elapsedNow()-started);
     if(delay>=remaining||attempts>=120)return finish('host-observation-retry-budget');

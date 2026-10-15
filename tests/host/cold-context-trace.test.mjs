@@ -12,7 +12,7 @@ test('cold diagnostic copy keeps original verified; patches only named files and
  const built=packageHost(join(dir,'original'),{offlineOrigin:'http://127.0.0.1:1234',offlineContext:true});
  assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');
  const trace=await createColdTracePackage(built.unpacked,join(dir,'instrumented'));
- assert.equal(await verifyColdTracePackage(trace),true);assert.equal(trace.changes.length,2);assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');
+ assert.equal(await verifyColdTracePackage(trace),true);assert.equal(trace.changes.length,3);assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');
  assert.throws(()=>verifyHost(trace.unpacked),/host-package-hash-mismatch/);
  for(const row of trace.changes){assert.notEqual(row.originalSha256,row.instrumentedSha256);assert.throws(()=>instrumentColdSource(row.path,'drift'),/anchor-mismatch/);}
  const module=await import(pathToFileURL(join(trace.unpacked,'src/runtime/browser-request-context.mjs')));
@@ -23,6 +23,15 @@ test('cold diagnostic copy keeps original verified; patches only named files and
  const d={tabId:1,frameId:0,documentId:'document',documentLifecycle:'active',initiator:origin,type:'xmlhttprequest',method:'GET',requestId:'r1',url:origin+'/backend-api/conversation/'+c,requestHeaders:[{name:'chatgpt-account-id',value:'team'},{name:'Authorization',value:'SECRET_SENTINEL'}]};
  webRequest.onSendHeaders.f(d);await new Promise(r=>setImmediate(r));webRequest.onCompleted.f({...d,statusCode:200,fromCache:false});await new Promise(r=>setImmediate(r));assert.equal((await owner.verify(frame)).contextId,'team');
  const stages=globalThis.__vaiwlColdTrace.map(x=>x.stage);for(const stage of ['listeners-registered','send-enter','send-admitted','prepared','complete-enter','receipt-issued','verify-enter'])assert(stages.includes(stage),stage);
+ assert(!JSON.stringify(globalThis.__vaiwlColdTrace).includes('SECRET_SENTINEL'));
+ const {createHostBrowserBootstrap}=await import(pathToFileURL(join(trace.unpacked,'src/runtime/host-browser-bootstrap.mjs')));
+ const earlyEvents=Object.fromEntries(['onSendHeaders','onCompleted','onErrorOccurred','onBeforeRedirect'].map(k=>[k,event()]));
+ const chrome={runtime:{id:'ext',getContexts:async()=>[]},webRequest:earlyEvents,webNavigation:{getFrame:async()=>({documentId:'document',documentLifecycle:'active',frameType:'outermost_frame',url}),onCommitted:event(),onHistoryStateUpdated:event()},tabs:{get:async()=>({id:1,incognito:false}),onRemoved:event(),sendMessage:async(tabId,message)=>({...message,association:'explicit-body-id'})}};
+ const scopeProfile={browserRequestContext:true},bootstrap=createHostBrowserBootstrap({chrome,origin,scopeProfile});t.after(()=>bootstrap.stop());
+ bootstrap.claim({chrome,origin,scopeProfile}).attach({onContextInvalidate:()=>{},onContextReady:()=>{},onNavigation:()=>{},onRemoved:()=>{}});
+ earlyEvents.onSendHeaders.f(d);await new Promise(r=>setImmediate(r));earlyEvents.onCompleted.f({...d,statusCode:200,fromCache:false});await new Promise(r=>setImmediate(r));assert.equal((await bootstrap.contextObserver.verify(frame)).contextId,'team');
+ assert(globalThis.__vaiwlColdTrace.some(x=>x.stage==='outgoing'&&x.type==='HOST_CONTEXT_ASSOCIATE'));
+ assert(globalThis.__vaiwlColdTrace.some(x=>x.stage==='outgoing-result'&&x.type==='HOST_CONTEXT_ASSOCIATE'&&x.association==='explicit-body-id'));
  assert(!JSON.stringify(globalThis.__vaiwlColdTrace).includes('SECRET_SENTINEL'));
  for(let i=0;i<300;i++)webRequest.onSendHeaders.f({...d,requestId:'bad',tabId:-1});assert.equal(globalThis.__vaiwlColdTrace.length,160);
  await writeFile(join(trace.unpacked,'extension/worker.mjs'),'altered');await assert.rejects(verifyColdTracePackage(trace),/package-changed/);

@@ -1,3 +1,4 @@
+import {splitCurrentObservation,validateCurrentSurfaceRelation,CURRENT_OBSERVATION_PROTOCOL} from '../host/current-observation-batch.mjs';
 import {continuationSemanticFingerprint} from '../data/native-observation-continuation.mjs';
 import {validateSendIntentProposal} from '../host/send-intent-claim.mjs';
 import {validateCurrentBodyProposal} from '../host/current-body-claim.mjs';
@@ -7,7 +8,7 @@ import {digest} from '../data/hash.mjs';
 /** Privileged owner; the gate recognizes request object identity, never serialized labels. */
 export function createHostObservationOwner({handshake,authority,getFrame,profiles,onAccepted=null,onSendIntent=null,onNativeDelta=null,ackAdmission=null,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(!handshake?.verify||!handshake?.isBound||!handshake?.matchesFrame||!authority?.peek||!authority?.scopeFor||typeof getFrame!=='function'||!(profiles instanceof Map))throw Error('invalid-host-observation-owner');
- const admissions=new WeakMap(),producers=new Map(),bodies=new Map(),reads=new Set();let busy=null,stopped=false,joint=null;
+ const admissions=new WeakMap(),producers=new Map(),failedBatches=new Map(),bodies=new Map(),reads=new Set();let busy=null,stopped=false,joint=null;
  function discardBody(key){const entry=bodies.get(key);if(!entry)return;bodies.delete(key);for(const read of reads)if(read.entry===entry){read.active=false;read.abort.abort();}}
  function gate(scope,request){const entry=admissions.get(request);return entry&&entry.scopeKey===scope.key&&entry.guard()?entry:null;}
  async function ingest(proposal,sender,repository){
@@ -21,7 +22,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
  }
  async function run(proposal,sender,repository,attempt){
   const rejected=reason=>({state:'rejected',localSeq:Number.isSafeInteger(proposal?.localSeq)?proposal.localSeq:0,reason});
-  let request;
+  let request,newBatchProof=null,batchCommitted=false;
   try{
    proposal=structuredClone(proposal);sender=structuredClone(sender);
    if(new TextEncoder().encode(JSON.stringify(proposal)).length>65536)return rejected('host-proposal-too-large');
@@ -39,15 +40,20 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    if(!producers.has(proposal.producerToken)&&producers.size>=maxProducers)return rejected('host-producer-capacity');
    // Validate the complete shape before any storage read; revision and timestamps are owner values.
    const observedAt=new Date(time).toISOString(),validUntil=new Date(Math.min(time+60000,Date.parse(grant.expiresAt))).toISOString();
-   const isBody=proposal.kind==='current-object',isSend=proposal.kind==='send-candidate';
+   const combined=proposal.protocol===CURRENT_OBSERVATION_PROTOCOL?splitCurrentObservation(proposal):null;
+   const isBody=proposal.kind==='current-object'||!!combined,isSend=proposal.kind==='send-candidate';
    const current=bodies.get(proposal.producerToken);
    const intent=isSend?validateSendIntentProposal(proposal,{profile,actualURL:actual.url,current:current?.current()?{proofId:current.proofId,conversationId:current.claim.conversationId,regionEpoch:current.claim.regionEpoch}:null}):null;
-   const body=isBody?validateCurrentBodyProposal(proposal,{profile,actualURL:actual.url}):null;
-   let batch=isBody||isSend?null:surfaceBatch(proposal,{scope,binding:proposal,profile,urlPolicy:profile.urlPolicy,sourceRevision:1,observedAt,validUntil});
+   const body=isBody?validateCurrentBodyProposal(combined?.body??proposal,{profile,actualURL:actual.url}):null;
+   let batch=(!combined&&isBody)||isSend?null:surfaceBatch(combined?.surface??proposal,{scope,binding:proposal,profile,urlPolicy:profile.urlPolicy,sourceRevision:1,observedAt,validUntil});
+   if(combined)validateCurrentSurfaceRelation(combined);
    const semanticFingerprint=digest({... (isBody||isSend?{kind:proposal.kind}:{}),profileId:profile.id,profileVersion:profile.revision,payload:proposal.payload});
    const recorded=producers.get(proposal.producerToken);
    if(recorded&&(recorded.scopeKey!==scope.key||recorded.grantId!==grant.id||recorded.scopeEpoch!==grant.scopeEpoch))return rejected('host-producer-scope-changed');
    const previous=recorded;
+   for(const [key,value]of failedBatches)if(!value.isBound())failedBatches.delete(key);
+   if(failedBatches.get(proposal.producerToken)?.localSeq>=proposal.localSeq)return rejected('failed-current-observation-batch');
+   if(combined&&!failedBatches.has(proposal.producerToken)&&failedBatches.size>=maxProducers)return rejected('host-batch-capacity');
    if(previous&&proposal.localSeq<=previous.seq)return previous.seq===proposal.localSeq&&previous.fingerprint===semanticFingerprint?{state:'duplicate',localSeq:proposal.localSeq,receiptId:previous.receiptId,...(previous.bodyProofId?{bodyProofId:previous.bodyProofId,bodyEpoch:previous.bodyEpoch}:{})}:rejected('replayed-host-proposal');
    if(!guard())return rejected('stale-host-scope');
    if(isSend){
@@ -59,6 +65,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
     producers.set(proposal.producerToken,{isBound:producerCurrent,scopeKey:scope.key,grantId:grant.id,scopeEpoch:grant.scopeEpoch,seq:proposal.localSeq,fingerprint:semanticFingerprint,receiptId,bodyEpoch:previous?.bodyEpoch??current.bodyEpoch,bodyRegionEpoch:current.claim.regionEpoch,until:Math.min(Date.parse(grant.expiresAt),time+20000)});
     return {state:'accepted',localSeq:proposal.localSeq,receiptId};
    }
+   let batchBodyEpoch=null;
    if(isBody){
     if(previous?.bodyRegionEpoch!==undefined&&body.regionEpoch<previous.bodyRegionEpoch)return rejected('stale-body-region');
     // A DOM claim is only a current-object association, never an ACK or author proof.
@@ -66,24 +73,26 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
     const prior=bodies.get(proposal.producerToken),sameBody=body.association==='explicit-body-id'&&prior?.current()&&prior.claim.conversationId===body.conversationId&&prior.claim.regionEpoch===body.regionEpoch;
     const unchanged=sameBody&&digest(prior.claim)===digest(body);
     // Message observations replace read authority without pretending the body remounted.
-    const bodyEpoch=sameBody?prior.bodyEpoch:(previous?.bodyEpoch??0)+1;
+    const bodyEpoch=sameBody?prior.bodyEpoch:(previous?.bodyEpoch??0)+1;batchBodyEpoch=bodyEpoch;
     if(!unchanged)discardBody(proposal.producerToken);
     const proofId=unchanged?prior.proofId:body.association==='explicit-body-id'?makeId():null;
     if(proofId!==null&&!unchanged&&[...bodies.values()].some(entry=>entry.proofId===proofId))return rejected('body-proof-id-conflict');
     if(proofId!==null&&(typeof proofId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(proofId)))return rejected('invalid-body-proof-id');
+    if(combined)newBatchProof={producerToken:proposal.producerToken,proofId,localSeq:proposal.localSeq,isBound:producerCurrent};
     if(proofId!==null&&!unchanged){
      const entry={proofId,bodyEpoch,claim:body,frame,proposal,sender,scope,grantId:grant.id,scopeEpoch:grant.scopeEpoch,profile};
      entry.current=()=>!stopped&&bodies.get(proposal.producerToken)===entry&&profiles.get(profile.id)===profile&&profile.revision===proposal.profileVersion&&handshake.isBound(proposal,sender)&&authority.peek(frame).grant?.id===entry.grantId&&authority.peek(frame).grant?.scopeEpoch===entry.scopeEpoch&&authority.scopeFor(frame)?.key===scope.key;
      bodies.set(proposal.producerToken,entry);
     }
     const receiptId='body_'+digest([grant.id,proposal.producerToken,proposal.localSeq,semanticFingerprint]).slice(0,48);
-    producers.set(proposal.producerToken,{isBound:producerCurrent,scopeKey:scope.key,grantId:grant.id,scopeEpoch:grant.scopeEpoch,seq:proposal.localSeq,fingerprint:semanticFingerprint,receiptId,bodyProofId:proofId,bodyEpoch,bodyRegionEpoch:body.regionEpoch,until:Math.min(Date.parse(grant.expiresAt),time+20000)});
-    return {state:'accepted',localSeq:proposal.localSeq,receiptId,bodyProofId:proofId,bodyEpoch};
+    if(!combined){producers.set(proposal.producerToken,{isBound:producerCurrent,scopeKey:scope.key,grantId:grant.id,scopeEpoch:grant.scopeEpoch,seq:proposal.localSeq,fingerprint:semanticFingerprint,receiptId,bodyProofId:proofId,bodyEpoch,bodyRegionEpoch:body.regionEpoch,until:Math.min(Date.parse(grant.expiresAt),time+20000)});
+    return {state:'accepted',localSeq:proposal.localSeq,receiptId,bodyProofId:proofId,bodyEpoch};}
    }
+   const surfaceProposal=combined?.surface??proposal;
    const sourceId='host_dom_'+digest(profile.id).slice(0,32),generation='profile_'+profile.revision;
-   const projectIds=[...new Set([...batch.projects.map(p=>p.id),...proposal.payload.membershipClaims.filter(c=>c.asserted==='PROJECT').map(c=>c.projectId)])];
+   const projectIds=[...new Set([...batch.projects.map(p=>p.id),...surfaceProposal.payload.membershipClaims.filter(c=>c.asserted==='PROJECT').map(c=>c.projectId)])];
    const page=await repository.page(scope,{ids:{projects:projectIds,refs:batch.refs.map(r=>r.id)},limit:512},{guard,signal:attempt.abort.signal});
-   batch=surfaceBatch(proposal,{scope,binding:proposal,profile,urlPolicy:profile.urlPolicy,sourceRevision:(page.facts.sources[sourceId]?.sourceRevision??0)+1,observedAt,validUntil,knownProjects:Object.keys(page.facts.projects)});
+   batch=surfaceBatch(surfaceProposal,{scope,binding:proposal,profile,urlPolicy:profile.urlPolicy,sourceRevision:(page.facts.sources[sourceId]?.sourceRevision??0)+1,observedAt,validUntil,knownProjects:Object.keys(page.facts.projects)});
    if(!await handshake.verify(proposal,sender)||!guard())return rejected('stale-host-document');
    const receiptId='dom_'+digest([grant.id,proposal.producerToken,proposal.localSeq,semanticFingerprint]).slice(0,48);
    request={operationId:receiptId,expectedRevision:page.revision,batch};
@@ -102,16 +111,17 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
     // A failed joint commit must never fall back to a native-only write.
     if(turn.claimed&&!result?.ok)return rejected('host-joint-apply-failed');
    }
+   if(combined&&!nativeChanged){if(onNativeDelta&&bodyEntry?.current())await onNativeDelta(bodyEntry.proofId);result={ok:true};}
    if(!result)result=await repository.apply(scope,request,{guard,signal:attempt.abort.signal});
    if(!result.ok)return result.reason==='revision-conflict'?{state:'retry-after',localSeq:proposal.localSeq,delayMs:50}:rejected('host-native-apply-failed');
    if(!guard())return rejected('stale-host-scope');
-   producers.set(proposal.producerToken,{isBound:producerCurrent,scopeKey:scope.key,grantId:grant.id,scopeEpoch:grant.scopeEpoch,seq:proposal.localSeq,fingerprint:semanticFingerprint,receiptId,bodyEpoch:previous?.bodyEpoch??0,...(previous?.bodyRegionEpoch!==undefined?{bodyRegionEpoch:previous.bodyRegionEpoch}:{}),until:Math.min(Date.parse(grant.expiresAt),time+20000)});
+   producers.set(proposal.producerToken,{isBound:producerCurrent,scopeKey:scope.key,grantId:grant.id,scopeEpoch:grant.scopeEpoch,seq:proposal.localSeq,fingerprint:semanticFingerprint,receiptId,...(combined?{bodyProofId:bodyEntry?.proofId??null,bodyRegionEpoch:body.regionEpoch}:{}),bodyEpoch:batchBodyEpoch??bodyEntry?.bodyEpoch??previous?.bodyEpoch??0,...(!combined&&previous?.bodyRegionEpoch!==undefined?{bodyRegionEpoch:previous.bodyRegionEpoch}:{}),until:Math.min(Date.parse(grant.expiresAt),time+20000)});
    // Notify with the already verified scope inside the guarded owner turn.
    // Transport notification failure must not turn a committed write into a retry.
    try{onAccepted?.(scope);}catch{}
-   return {state:'accepted',localSeq:proposal.localSeq,receiptId};
+   batchCommitted=true;if(combined)failedBatches.delete(proposal.producerToken);return {state:'accepted',localSeq:proposal.localSeq,receiptId,...(combined?{bodyProofId:bodyEntry?.proofId??null,bodyEpoch:batchBodyEpoch??bodyEntry?.bodyEpoch??0}:{})};
   }catch{return rejected('invalid-host-observation');}
-  finally{if(request)admissions.delete(request);}
+  finally{if(request)admissions.delete(request);if(newBatchProof&&!batchCommitted){failedBatches.set(newBatchProof.producerToken,newBatchProof);if(bodies.get(newBatchProof.producerToken)?.proofId===newBatchProof.proofId)discardBody(newBatchProof.producerToken);}}
  }
  async function commitAcknowledged({context,evidenceRequest,guard:ackGuard}){
   const turn=joint;if(!turn)return null;
@@ -147,6 +157,6 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
  }
  function invalidateDocument(documentId){for(const [key,entry]of bodies)if(entry.frame.documentId===documentId)discardBody(key);}
  function invalidateTab(tabId){for(const [key,entry]of bodies)if(entry.frame.tabId===tabId)discardBody(key);}
- function stop(){stopped=true;busy&&(busy.active=false,busy.abort.abort());bodies.clear();producers.clear();for(const attempt of reads){attempt.active=false;attempt.abort.abort();}reads.clear();}
+ function stop(){stopped=true;busy&&(busy.active=false,busy.abort.abort());bodies.clear();producers.clear();failedBatches.clear();for(const attempt of reads){attempt.active=false;attempt.abort.abort();}reads.clear();}
  return Object.freeze({commitAcknowledged,isCurrentProof:proofId=>[...bodies.values()].some(entry=>entry.proofId===proofId&&entry.current()),isCurrentProducer:producerToken=>bodies.get(producerToken)?.current()===true,gate,ingest,withCurrent,invalidateDocument,invalidateTab,stop});
 }

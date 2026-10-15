@@ -19,9 +19,11 @@ export function instrumentColdSource(path,source){
   inject('r.document.receipt=receipt;','__c2Trace("receipt-issued",{requestId:r.requestId,epoch:r.epoch});r.document.receipt=receipt;');
   inject('async function verify(frame,{signal}={}){','async function verify(frame,{signal}={}){__c2Trace("verify-enter",{documentId:frame?.documentId,hasReceipt:!!documents.get(key(frame))?.receipt,aborted:signal?.aborted===true});');
   inject('for(const [event,listener,extra]of listeners)extra?event.addListener(listener,filter,extra):event.addListener(listener,filter);','for(const [event,listener,extra]of listeners)extra?event.addListener(listener,filter,extra):event.addListener(listener,filter);__c2Trace("listeners-registered");');
- }else if(path==='src/runtime/host-worker-runtime.mjs'){
+ }else if(['src/runtime/host-worker-runtime.mjs','src/runtime/host-browser-bootstrap.mjs'].includes(path)){
   out=out.replaceAll('chrome.tabs.sendMessage(', '__c2Send(');
-  inject(' let service;',' const __c2Send=(...args)=>{const type=args[1]?.type;__c2Trace("outgoing",{type});const p=chrome.tabs.sendMessage(...args);p.then(r=>__c2Trace("outgoing-result",{type,hasResult:r!=null,association:r?.association,ok:r?.ok}),()=>__c2Trace("outgoing-rejected",{type}));return p;};\n let service;');
+  const anchor=path.endsWith('/host-browser-bootstrap.mjs')?' const enabled=scopeProfile.browserRequestContext===true;':' const policy=createURLPolicy(';
+  inject(anchor,' const __c2Send=(...args)=>{const type=args[1]?.type;__c2Trace("outgoing",{type});const p=chrome.tabs.sendMessage(...args);p.then(r=>__c2Trace("outgoing-result",{type,hasResult:r!=null,association:r?.association,ok:r?.ok}),()=>__c2Trace("outgoing-rejected",{type}));return p;};\n'+anchor);
+  if(path.endsWith('/host-browser-bootstrap.mjs'))return recorder+out;
   inject('const message=(value,sender,reply)=>{','const message=(value,sender,reply)=>{__c2Trace("incoming",{type:value?.type,documentId:sender?.documentId});');
   inject('.then(result=>{if(active)reply(result);}', '.then(result=>{__c2Trace("incoming-result",{type:value?.type,state:result?.state,reason:result?.reason,ok:result?.ok});if(active)reply(result);}');
  }else throw Error('unknown-cold-trace-source');
@@ -30,7 +32,7 @@ export function instrumentColdSource(path,source){
 export async function createColdTracePackage(source,destination){
  await cp(source,destination,{recursive:true,errorOnExist:true,force:false});
  const changes=[];
- for(const path of ['src/runtime/browser-request-context.mjs','src/runtime/host-worker-runtime.mjs']){
+ for(const path of ['src/runtime/browser-request-context.mjs','src/runtime/host-browser-bootstrap.mjs','src/runtime/host-worker-runtime.mjs']){
   const original=await readFile(join(source,path),'utf8'),instrumented=instrumentColdSource(path,original);
   await writeFile(join(destination,path),instrumented);changes.push({path,originalSha256:hash(original),instrumentedSha256:hash(instrumented)});
  }

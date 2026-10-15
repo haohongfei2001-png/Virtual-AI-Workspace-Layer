@@ -1,0 +1,45 @@
+✔ cold diagnostic copy keeps original verified; patches only named files and detects alteration (235.387188ms)
+✔ runner preserves immediate cold navigation and collects existing worker only after failure (2.142853ms)
+✔ early receipt has no page association or scope before attachment; same owner later joins roster and body (12.726791ms)
+✔ runtime fallback constructs exactly one owner and stop removes only its listeners once (1.293176ms)
+✔ pre-attach onCommitted invalidates pending C2 receipt without later replay (1.558932ms)
+✔ pre-attach onHistoryStateUpdated invalidates pending C2 receipt without later replay (0.889271ms)
+✔ pre-attach onRemoved invalidates pending C2 receipt without later replay (1.000159ms)
+✔ pre-attach onCommitted invalidates complete C2 receipt without later replay (0.752125ms)
+✔ pre-attach onHistoryStateUpdated invalidates complete C2 receipt without later replay (0.759215ms)
+✔ pre-attach onRemoved invalidates complete C2 receipt without later replay (0.757272ms)
+✔ late pre-attach frame answer cannot restore a document invalidated before service readiness (0.817593ms)
+✔ live navigation invalidates the exact owner before the runtime handler and does not double invalidate (2.488765ms)
+✔ switch revocation is synchronous, service precedes pending notification, and stopped completion stays inert (1.066549ms)
+✔ subframe and other-tab lifecycle events cannot invalidate the current document (0.78838ms)
+✔ a stopped bootstrap is not reusable and a new worker owner does not inherit receipts (0.887119ms)
+✔ default disabled bootstrap needs no webRequest and cannot be attached under an enabled profile or other origin (0.525002ms)
+✔ a second runtime cannot stop a bootstrap already claimed by the live runtime (2.500983ms)
+✔ rejected origin claim preserves the unclaimed observer for its intended runtime (0.908891ms)
+✔ rejected chrome claim preserves the unclaimed observer for its intended runtime (0.734879ms)
+✔ rejected profile claim preserves the unclaimed observer for its intended runtime (0.562689ms)
+✔ exclusive claim prevents reentrant service construction from stealing the owner (0.772175ms)
+✔ service construction failure disposes the early owner and lifecycle registrations (0.68281ms)
+✔ repository construction failure disposes the early owner and lifecycle registrations (0.413214ms)
+✔ packaged static module evaluation registers early before heavy graph; C2 enabled=true (98.904809ms)
+✔ packaged static module evaluation registers early before heavy graph; C2 enabled=false (96.75804ms)
+✔ zero-seed default is unverified context and exact supported origin only (3.940716ms)
+✔ explicit packaged origin/provider and actual document-targeted navigation forwarded (0.773227ms)
+✔ runtime routing preserves sender and errors have safe bounded reply (4.05619ms)
+✔ unaccepted ports disconnect, accepted ports stay connected (0.644402ms)
+✔ top committed/history routes revoke tab authority; only history retains exact document display (2.329285ms)
+✔ stop detaches all listeners, closes views once and suppresses late service reply (0.70283ms)
+✔ stop before queued microtasks prevents late service execution and document notifications (0.760828ms)
+✔ throwing port admission fails closed and disconnects rejected port (0.445031ms)
+✔ snippet bridge uses owner parent document and strips all unrelated ref data (0.542348ms)
+✔ snippet restore and reveal is one expiring parent command; late reply cannot send another action (0.936042ms)
+✔ ACK profile is explicit packaged configuration and default remains absent (0.49683ms)
+✔ history display retention rejects missing, empty, non-string document and unsupported URL (0.404581ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 466.52102
