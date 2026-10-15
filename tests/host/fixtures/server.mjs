@@ -1,3 +1,4 @@
+import {createFirstSendFixture,firstSendNative} from './first-send.mjs';
 import { j1CandidatePage, j1NativeProjects } from './j1-candidate-page.mjs';
 import { createVariantHostFixtureServer } from './variants-server.mjs';
 import http from 'node:http';
@@ -19,13 +20,14 @@ const clone = (value) => structuredClone(value);
  * LEGACY keeps its original behavior; other profiles use their own reconstruction.
  */
 export async function createHostFixtureServer({profile = 'LEGACY', principalId = 'user-host-fixture', accounts = null, now = () => Date.now(), variant = 'positive', fault, journey = null} = {}) {
-  if(journey!==null&&(!['J1','J3'].includes(journey)||profile!=='LEGACY'))throw Error('invalid-fixture-journey');
+  if(journey!==null&&(!['J1','J3','FIRST_SEND'].includes(journey)||profile!=='LEGACY'))throw Error('invalid-fixture-journey');
   if (profile !== 'LEGACY') return createVariantHostFixtureServer({profile,principalId,accounts,now,variant,fault});
   const files = Object.fromEntries(await Promise.all([
     ['/', 'legacy.html', 'text/html; charset=utf-8'],
     ['/native.mjs', 'native.mjs', 'text/javascript; charset=utf-8'],
     ['/native.css', 'native.css', 'text/css; charset=utf-8'],
   ].map(async ([url, file, mime]) => [url, {body: await readFile(new URL(file, import.meta.url)), mime}])));
+  if(journey==='FIRST_SEND')files['/native.mjs'].body=Buffer.from(firstSendNative(files['/native.mjs'].body.toString()));
   if(journey==='J1')files['/'].body=Buffer.from(j1CandidatePage(files['/'].body.toString()));
   if(journey==='J3')files['/'].body=Buffer.from(files['/'].body.toString().replace('<textarea id="prompt-textarea"','<textarea data-j3-editor="plain" id="prompt-textarea"').replace('<!-- J3_EDITOR -->','<button type="button" id="editor-mode">Use contenteditable</button><div id="j3-contenteditable" data-j3-editor="rich" contenteditable="true" role="textbox" aria-label="Rich message ChatGPT" hidden></div>').replace('<!-- J3_PERMISSION -->','<dialog id="permission-dialog" aria-label="Fixture tool permission"><p>Offline reconstruction permission, not a system permission.</p><button id="permission-allow">Allow fixture tool</button><button id="permission-deny">Deny fixture tool</button><output id="permission-result" aria-live="polite"></output></dialog>'));
   const oracleBytes = await readFile(new URL('../expected/legacy.mjs', import.meta.url));
@@ -36,7 +38,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
   let roster = clone(accounts ?? [{account_id:DEFAULT_ACCOUNT,name:'Personal',plan_type:'free',structure:'personal'}]);
   const cookie = randomBytes(24).toString('hex');
   const token = `fixture-only-${randomBytes(24).toString('hex')}`;
-  const counts = Object.create(null), requests = Object.create(null);
+  const counts = Object.create(null), requests = Object.create(null), fixedGetTrace = [];
   let projectCounter = 0, newConversationCounter = 0;
   let detailHold = null;
   const detailAppends = new Map(), detailAcceptances = new Map();
@@ -48,6 +50,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
     [C_NONE,{id:C_NONE,title:'Ordinary conversation',project:null}],
     [C_UNKNOWN,{id:C_UNKNOWN,title:'Membership not loaded'}],
   ]);
+  const firstSend=journey==='FIRST_SEND'?createFirstSendFixture({principal:()=>identity,accounts:()=>roster,conversations,detailAppends,detailAcceptances}):null;
   const projectHref = (id) => `/g/${id}/project`;
   const sessionAuthorized = (req) => (req.headers.cookie ?? '').split(';').some((item) => item.trim() === `host_fixture_session=${cookie}`);
   const json = (res, status, value) => { res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}); res.end(JSON.stringify(value)); };
@@ -61,7 +64,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
     }
     const conversationMatch = /^\/c\/([^/]+)$/.exec(path);
     const conversation = conversationMatch && conversations.get(conversationMatch[1]);
-    if(conversation) return {title:conversation.title,conversationId:conversation.id,text:'This is an offline native application reconstruction.',...(journey==='J3'?{messages:[{messageId:'j3_'+conversation.id.replaceAll('-','')+'_message',branchId:'j3_branch',text:'Offline prefix uniquely selected fixture words suffix.'}]}:{})};
+    if(conversation) return {...(firstSend?.view(conversation.id)??{}),title:conversation.title,conversationId:conversation.id,text:'This is an offline native application reconstruction.',...(journey==='J3'?{messages:[{messageId:'j3_'+conversation.id.replaceAll('-','')+'_message',branchId:'j3_branch',text:'Offline prefix uniquely selected fixture words suffix.'}]}:{})};
     return null;
   };
   const readBody = async (req) => {
@@ -73,6 +76,10 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
     try {
       const url = new URL(req.url,'http://127.0.0.1');
       requests[url.pathname] = (requests[url.pathname] ?? 0) + 1;
+      if(req.method==='GET') {
+        const kind=url.pathname==='/api/auth/session'?'auth-shared-purpose':url.pathname==='/backend-api/accounts/check/v4-2023-04-27'?'accounts-shared-purpose':/^\/backend-api\/conversation\//.test(url.pathname)?'conversation-detail':/^\/native\/first-send\//.test(url.pathname)?'operation-mapping':null;
+        if(kind&&fixedGetTrace.length<4096)fixedGetTrace.push({kind,at:now()});
+      }
       // No catch-all file server: oracle, source, manifests and control methods are unreachable.
       if(req.method === 'GET' && (files[url.pathname] || appRoute(url.pathname))) {
         const file = files[url.pathname] ?? files['/'];
@@ -101,6 +108,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
         return json(res,200,{conversation_id:conversation.id,mapping:Object.fromEntries(['fixture_m1','fixture_m2','fixture_not_current',...(detailAppends.get(conversation.id)??[])].map((id,i)=>['node_'+i,{id:'node_'+i,parent:i?'node_'+(i-1):null,message:{id,...(detailAcceptances.get(conversation.id)?.has(id)?{status:'fixture-accepted'}:{}),author:{role:i===1?'assistant':'user',id:authorId},create_time:1700000000+i,content:{parts:['SYNTHETIC_BODY_MUST_NOT_ESCAPE']}}}]))});
       }
       if(!sessionAuthorized(req) || !identity) return json(res,401,{error:'unauthenticated'});
+      if(firstSend?.handle(req,res,url,json))return;
       if(url.pathname === '/native/route' && req.method === 'GET') {
         const view = appRoute(url.searchParams.get('path')); return view ? json(res,200,view) : notFound(res);
       }
@@ -141,7 +149,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
   return {
     origin,url:`${origin}/`,
     manifest: Object.freeze({fixtureId:'chatgpt-host-legacy-reconstruction-v1',profile,...(journey?{journey,journeyEvidence:journey==='J3'?'S_RECONSTRUCTION_NOT_REAL_PERMISSION':'S_RECONSTRUCTION_NATIVE_PENDING_CONTROLS'}:{}),reconstruction:true,source:'VA-HOST/1.1 structure reconstruction; not a real DOM snapshot',sourceCommit:null,sourceBlob:null,fixtureHash:createHash('sha256').update(sourceBytes).update(Buffer.concat(Object.values(files).map((f) => f.body))).digest('hex'),expectedWorldFile:'tests/host/expected/legacy.mjs',oracleHash:createHash('sha256').update(oracleBytes).digest('hex'),supportedCapabilities:['principal','personal-context-candidate','project-identity','idless-native-control','conversation-identity','native-move-menu','native-navigation','native-search','native-create','independent-regions','draft-preservation']}),
-    snapshot: () => clone({actions:counts,requests,projectCount:projects.size,conversationCount:conversations.size}),
+    snapshot: () => clone({actions:counts,requests,fixedGetTrace,...(firstSend?{firstSends:firstSend.snapshot()}:{}),projectCount:projects.size,conversationCount:conversations.size}),
     // Test-process controls only; not HTTP endpoints, not page-visible authority.
     setPrincipal: (id,{accounts: nextAccounts = roster} = {}) => { identity = id; roster = clone(nextAccounts); },
     acceptConversationMetadata: (conversationId,messageId) => { if(!(detailAppends.get(conversationId)??[]).includes(messageId))throw Error('missing-fixture-metadata');const ids=detailAcceptances.get(conversationId)??new Set();ids.add(messageId);detailAcceptances.set(conversationId,ids); },

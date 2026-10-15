@@ -2146,3 +2146,48 @@ no product TTL/source change. Both browser outcomes remain pending.
 
 Round209 final integrated full Node **4073/4073 PASS**, zero skip/fail,118794.832ms
 (limit concurrency2). Independent audit19/19 and focused56/56 above remain separate.
+
+## Round210 — integrate exact homepage first-send chain; repair real control observation (2026-10-15 UTC)
+
+- [Fifth CI](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/38667726248)
+  source `0f80c59e34c733a57ab86bd5d4204a00db80ec67`: Node/guards and both
+  C2 modes PASS, overall browser **FAIL**. Its actual reports are retained.
+- J1's added canonical previous-page test addressed visible text instead of the
+  true accessible name. J3's raw DOM predicate ignored the renderer open shadow
+  root. The diagnostic buttons list was empty although role lookup found a
+  visible control; this is **not proof the actual button was disabled**.
+  Read-only historical projection is provisional segment1. Real label/shadow-root
+  predicates now retain the original enabled/click/segment/deadline assertions.
+- Headed J4 still did not become hidden because Playwright enables focus
+  emulation. Only its independent foreground scenario now removes that framework
+  emulation before native tab activation and requires trusted visibility changes;
+  no document-property override or synthetic event. Natural renewal remains
+  unchanged and passed again at50262.7ms from original document.
+- Loopback-only C3 homepage first-send now joins a trusted candidate gesture,
+  exact browser native POST operation/message completion, authenticated fixed
+  operation-to-new-C readback and authenticated current self-message ACK through
+  the existing evidence owner. No body/draft collection or native action replay.
+  Bounded bidirectional join handles late intent/completion and one home-to-C
+  route; generic revoke, second hop, expired/forged transport, document/scope/
+  grant changes and replay reject. Retired transport is not renewed authority.
+- Shared persisted non-authoritative calibration high-water reserves each GET
+  before dispatch; mapping and metadata share12 requests/30s and bounded retries.
+  Multiple tabs, reconstructed owners and worker/database reconnection cannot
+  restart the window. Corrupt counters fail closed; no authorization is persisted.
+- Independent adversarial **15/15 PASS**, repeated on the integrated tree with
+  exact audited owner SHA256 `92e1e0ef59139010d19143f20bbab45469d1c9a639ddde0ea9c6158737b1f3f5`.
+  Shared composition review confirmed preserved historical profile/gate/stop/admission,
+  budget continuation, J1 fixture or early-return focus fix.
+- Complete integrated Node **4160/4160 PASS**,0skip/fail,116905.236ms, before final
+  runner-only corrections. Those corrections **20/20 PASS**; guard mutations
+  **12/12**. Combined history+first-send packaging also has an explicit regression.
+  Final real first-send Chrome path still awaits CI; no S claim from Node.
+- [Round210 recoverable evidence](evidence/round210/README.md) preserves actual
+  failures and the independent runnable audit. Production remains default
+  context-unverified/read/send-disabled. C2 homepage and real G/U not certified;
+  full81/J1–J4/performance/recovery/compatibility incomplete. **NOT_RELEASE_READY**.
+
+Round210 follow-through: shared fixture review caught the oldJ1/J3 whitelist
+rejecting FIRST_SEND before startup. Fixed explicit journey entry and added a
+real server-start/native-script test,3/3 PASS. The4160 full result predates this
+runner-fixture correction; final CI must revalidate the complete tree.

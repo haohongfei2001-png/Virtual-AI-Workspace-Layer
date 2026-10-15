@@ -35,6 +35,13 @@ export function assertNaturalRevocation(sample){
  assert(Number.isFinite(sample.removedAfterProofStartMs)&&sample.removedAfterProofStartMs>=0,'missing natural revocation timestamp');
  assert(sample.removedAfterProofStartMs<=scopeLossTiming.proofTTL,'private projection survived conservative original proof deadline');
 }
+// Playwright enables focus emulation on main frames by default (crPage.ts).
+// Restore native visibility before observation; never simulate an activation.
+export async function restoreNativeFocusBehavior(context,page){
+ const session=await context.newCDPSession(page);
+ await session.send('Emulation.setFocusEmulationEnabled',{enabled:false});
+ return {command:'Emulation.setFocusEmulationEnabled',parameters:{enabled:false},acknowledged:true,readback:'UNAVAILABLE: no protocol getter; trusted visibility events are checked separately',activation:'chrome.tabs.update',syntheticVisibilityEvents:false,defaultEvidence:{officialSource:'https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/chromium/crPage.ts',verifiedLocalVersion:'1.63',verifiedLocalCall:'this._client.send("Emulation.setFocusEmulationEnabled", { enabled: true })'}};
+}
 const hash=x=>createHash('sha256').update(x).digest('hex');
 export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequisites.json')}={}){
  const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -122,7 +129,7 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
   record('J4','normal-authentication-restoration-renders-without-replaying-unconfirmed-send',{nativeDispatches:1});
   // Independent foreground case starts with a freshly authorized document;
   // its activation cannot affect the already completed natural-renewal case.
-  const c=await context.newPage();c.on('pageerror',e=>report.errors.push(e.message));await c.goto(server.origin+'/c/44444444-4444-4444-8444-444444444444');await mounted(c);await activate(c);
+  const c=await context.newPage();c.on('pageerror',e=>report.errors.push(e.message));await c.goto(server.origin+'/c/44444444-4444-4444-8444-444444444444');await mounted(c);report.foregroundBrowserPrecondition=await restoreNativeFocusBehavior(context,c);await activate(c);await c.waitForFunction(()=>document.visibilityState==='visible',null,{timeout:5000,polling:100});
   await c.locator('textarea').fill('J4_FOREGROUND_DRAFT');await c.evaluate(()=>{globalThis.j4OriginalDocument=document;globalThis.j4OriginalEditor=document.querySelector('textarea');});await observeLoss(c);
   await activate(b);await c.waitForFunction(()=>document.visibilityState==='hidden',null,{timeout:5000,polling:100});
   server.setPrincipal(null);await b.reload();await removed(b,scopeLossTiming.foregroundTimeout);

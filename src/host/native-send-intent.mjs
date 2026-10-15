@@ -2,8 +2,9 @@ import {tokenOK} from '../b1/identity.mjs';
 /** Passive candidate only. Profile selectors must distinguish send from stop/upload/regenerate.
  * Submit is deliberately not observed: requestSubmit is not proof of a trusted gesture,
  * and a native click/Enter may also dispatch submit. No body or editor value is read. */
-export function createNativeSendIntentObserver({document:doc,profile,onIntent,onPrepare=null,makeId=()=>crypto.randomUUID(),now=Date.now}={}){
+export function createNativeSendIntentObserver({document:doc,profile,onIntent,onFirstIntent=null,onPrepare=null,makeId=()=>crypto.randomUUID(),now=Date.now}={}){
  if(!doc?.defaultView||typeof doc.addEventListener!=='function'||typeof onIntent!=='function'||onPrepare!==null&&typeof onPrepare!=='function'||typeof makeId!=='function'||typeof now!=='function')throw Error('invalid-native-send-intent');
+ if(onFirstIntent!==null&&typeof onFirstIntent!=='function')throw Error('invalid-first-intent-consumer');
  const supplied=profile?.sendIntent;
  let editorKinds=['textarea'];
  if(supplied&&Object.hasOwn(supplied,'editorKinds')){
@@ -46,6 +47,11 @@ export function createNativeSendIntentObserver({document:doc,profile,onIntent,on
   // independent repeated clicks or Enter presses are not collapsed into one intent.
   if(event.type==='click'&&event.detail===0&&last?.form===b.form&&last.type==='keydown'&&time>=last.time&&time-last.time<=500){last=null;return;}
   const intentId=makeId();if(!tokenOK(intentId))return;last={form:b.form,type:event.type,time};
+  const first=profile?.firstSend;
+  if(onFirstIntent&&first&&doc.location?.origin===first.origin&&doc.location?.href===first.origin+'/'){
+   const operationId=b.form.getAttribute(first.operationAttribute),messageId=b.form.getAttribute(first.messageAttribute);
+   if(tokenOK(operationId)&&tokenOK(messageId))try{onFirstIntent(Object.freeze({intentId,operationId,messageId,observedAt}));}catch{}
+  }
   try{onIntent(Object.freeze({intentId,kind:'send',isComposing:false,observedAt}));}catch{/* Candidate consumer cannot interfere with the host gesture. */}
  }catch{/* Unsupported or changing native DOM fails closed. */}}
  if(config)for(const type of ['click','keydown','compositionstart','compositionend',...(onPrepare?['focusin','pointerdown']:[])]){doc.addEventListener(type,handle,{capture:true,passive:true});listeners.push(type);}

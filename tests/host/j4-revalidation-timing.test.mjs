@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createScopeAuthority} from '../../src/runtime/scope-authority.mjs';
-import {scopeLossTiming,assertNaturalRevocation} from './j2-j4-package-prerequisites.mjs';
+import {scopeLossTiming,assertNaturalRevocation,restoreNativeFocusBehavior} from './j2-j4-package-prerequisites.mjs';
 function fixture(){
  let now=1000,n=0,calls=0,authorized=true;
  const authority=createScopeAuthority({provider:{read:async()=>{calls++;if(!authorized)throw Error('fixture-401');return {principalId:'user',expiresAt:new Date(1000000).toISOString(),contexts:[{id:'personal',kind:'personal'}],providerProfile:'session_v1',transport:'worker-fixed-fetch'};}},profile:{id:'personal_v1',singlePersonalDefault:true},now:()=>now,elapsedNow:()=>now,makeId:()=>`proof_${++n}`});
@@ -37,4 +37,15 @@ test('headed execution is explicit and keeps native trusted visibility assertion
  assert.match(source,/state==='hidden'&&e.isTrusted|state==='hidden'&&e.trusted/);
  assert.match(source,/state==='visible'&&e.isTrusted|state==='visible'&&e.trusted/);
  assert(!source.includes('dispatchEvent'));assert(!source.includes('setWebLifecycleState'));
+});
+
+test('foreground setup only removes Playwright focus simulation before observing native events',async()=>{
+ const calls=[],page={};
+ const result=await restoreNativeFocusBehavior({newCDPSession:async target=>{assert.equal(target,page);return {send:async(...args)=>calls.push(args)};}},page);
+ assert.deepEqual(calls,[['Emulation.setFocusEmulationEnabled',{enabled:false}]]);
+ assert.equal(result.acknowledged,true);assert.deepEqual(result.parameters,{enabled:false});assert.equal(result.activation,'chrome.tabs.update');assert.equal(result.syntheticVisibilityEvents,false);assert.match(result.readback,/UNAVAILABLE/);assert.equal(result.defaultEvidence.verifiedLocalVersion,'1.63');
+ const {readFile}=await import('node:fs/promises');const source=await readFile(new URL('./j2-j4-package-prerequisites.mjs',import.meta.url),'utf8');
+ assert(source.indexOf('const natural=await removed')<source.indexOf('report.foregroundBrowserPrecondition='));
+ assert(source.indexOf('report.foregroundBrowserPrecondition=')<source.indexOf('await observeLoss(c)'));
+ assert(!source.includes('dispatchEvent'));assert(!source.includes('Object.defineProperty'));
 });

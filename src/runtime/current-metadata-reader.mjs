@@ -32,12 +32,13 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
  const readCurrent=enabled?provider.readCurrentConversation.bind(provider):null;
  const acceptanceFor=enabled&&typeof provider.acceptanceFor==='function'?provider.acceptanceFor.bind(provider):null,readbacks=new WeakMap();
  let stopped=false,busy=null;
- function read(proofId){
+ function read(proofId,{budgetWindow}={}){
+  if(budgetWindow!==undefined&&(!Number.isFinite(budgetWindow)||budgetWindow<0))return Promise.reject(Error('invalid-read-budget-window'));
   if(stopped)return Promise.reject(Error('current-metadata-stopped'));
   if(!enabled)return Promise.reject(Error('current-metadata-disabled'));
   if(!id(proofId))return Promise.reject(Error('invalid-body-proof'));
-  if(busy)return busy.proofId===proofId?busy.promise:Promise.reject(Error('current-metadata-busy'));
-  const attempt={proofId,abort:new AbortController(),promise:null};busy=attempt;
+  if(busy)return busy.proofId===proofId&&busy.budgetWindow===budgetWindow?busy.promise:Promise.reject(Error('current-metadata-busy'));
+  const attempt={proofId,budgetWindow,abort:new AbortController(),promise:null};busy=attempt;
   const check=()=>{if(stopped||busy!==attempt||attempt.abort.signal.aborted)throw Error('current-metadata-stopped');};
   attempt.promise=Promise.resolve().then(()=>observations.withCurrent(proofId,async context=>{
    check();requireValue(context&&typeof context.guard==='function'&&context.signal&&id(context.conversationId)&&Number.isSafeInteger(context.bodyEpoch)&&context.bodyEpoch>=0&&denseList(context.messageIds,256)&&context.messageIds.every(id)&&new Set(context.messageIds).size===context.messageIds.length);
@@ -51,7 +52,7 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
     requireValue(typeof principal==='string'&&/^principal_[0-9a-f]{64}$/.test(principal)&&typeof account==='string'&&/^context_[0-9a-f]{64}$/.test(account)&&id(profile)&&transport==='worker-fixed-fetch');
     const signal=AbortSignal.any([currentSignal,attempt.abort.signal]);
     let onAbort;const cancelled=new Promise((_,reject)=>{onAbort=()=>reject(Error('current-metadata-aborted'));signal.addEventListener('abort',onAbort,{once:true});if(signal.aborted)onAbort();});
-    let result;try{result=await Promise.race([readCurrent({conversationId,expectedPrincipalKey:principal,expectedContextKey:account,signal}),cancelled]);}finally{signal.removeEventListener('abort',onAbort);}
+    let result;try{result=await Promise.race([readCurrent({conversationId,expectedPrincipalKey:principal,expectedContextKey:account,signal,...(budgetWindow===undefined?{}:{budgetWindow})}),cancelled]);}finally{signal.removeEventListener('abort',onAbort);}
     guard();const checkedAt=now();requireValue(exactHostRecord(result,['principalKey','contextKey','expiresAt','providerProfile','transport','metadata'])&&result.principalKey===principal&&result.contextKey===account&&result.providerProfile===profile&&result.transport===transport&&instant(result.expiresAt)!==null&&Number.isFinite(checkedAt)&&instant(result.expiresAt)>checkedAt);
     metadata=reduceMetadata(result.metadata,conversationId,wanted);
     acceptance=acceptanceFor?.(result)??null;history=historyFor?.(result)??null;

@@ -1,6 +1,8 @@
 import {createHostActivitySourceAdmission} from './host-activity-source-admission.mjs';
 import {createHostHistoricalSendOwner} from './host-historical-send-owner.mjs';
 import {validateHistoricalSendProfile} from './historical-send-profile.mjs';
+import {createHostFirstSend} from './host-first-send.mjs';
+import {createFirstSendReadback} from './first-send-readback.mjs';
 import {createHostCurrentNavigation} from './host-current-navigation.mjs';
 import {createHostSendAckOwner} from './host-send-ack-owner.mjs';
 import {validateSendAckProfile} from './send-ack-admission.mjs';
@@ -24,7 +26,7 @@ import {createScopeAuthority} from './scope-authority.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Zero-seed identity composition. Existing repository/broker owners remain unchanged. */
-export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,contextObserver=null,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,navigationURLPolicy=null,candidateBridge=null,dispatchCurrent=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,contextObserver=null,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,firstSendOrigin=null,readBudget=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,navigationURLPolicy=null,candidateBridge=null,dispatchCurrent=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const handshake=createHostDocumentHandshake({extensionId,getFrame,allowedURL,now,makeId,elapsedNow,schedule,cancel});
  const authority=createScopeAuthority({provider,profile,contextObserver,allowedURL,now,makeId,elapsedNow,schedule,cancel});
  const asFrame=(doc,sender)=>({tabId:doc.tabId,frameId:0,documentId:doc.documentId,parentDocumentId:null,actualURL:doc.url,documentLifecycle:'active',incognito:sender.tab?.incognito===true});
@@ -46,6 +48,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  sendCandidates=currentMetadata?createHostSendCandidates({observations,reader:currentMetadata,enabled:sendCandidatesEnabled,now,schedule,cancel,onAcknowledged:ackOwner?async input=>{
   await ackOwner.consume(input);input.guard();ui?.notifyScope(input.context.scope.key);
  }:null}):null;
+ const firstSend=firstSendOrigin&&ackOwner?createHostFirstSend({origin:firstSendOrigin,readBudget,handshake,authority,getFrame,observations,reader:currentMetadata,readOperation:createFirstSendReadback({origin:firstSendOrigin,elapsedNow}),onAcknowledged:async input=>{await ackOwner.consume(input);input.guard();ui?.notifyScope(input.context.scope.key);},now,elapsedNow}):null;
  const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({admitActivitySource:createHostActivitySourceAdmission({sendAckProfile:ackProfile,historicalSendProfile:historyProfile}),initializeTimePolicy:true,repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
  const currentNavigation=ui&&observations&&dispatchCurrent?createHostCurrentNavigation({ui,observations,bridge:dispatchCurrent,urlPolicy:navigationURLPolicy,elapsedNow,schedule,cancel}):null;
  const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,prepareNavigation,registerCurrentNavigation:currentNavigation?input=>currentNavigation.register(input):null,nativeCandidatesEnabled:!!candidateBridge,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
@@ -57,6 +60,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const broker=createDocumentBindingBroker({extensionId,getFrame,allowedURL,repository,workspaceRepository:readService?{...readService,...commands}:workspaceRepository,freeRuntime,now,makeId,hostHandshake:handshake,resolveScope:({currentFrame,sender})=>authority.scopeFor(asFrame(currentFrame,sender))});
  const sequences=new Map(),refreshAttempts=new Set();let serviceActive=true;
  async function handle(message,sender){
+  if(message?.type==='HOST_FIRST_SEND_INTENT')return firstSend?firstSend.intent(message,sender):{ok:false};
   if(!serviceActive)return {ok:false,reason:'host-service-stopped'};
   if(message?.type==='HOST_NATIVE_AUTHORIZE'){
    if((!candidates&&!currentNavigation)||!exactHostRecord(message,['v','type','documentToken','producerToken','routeEpoch','command'])||message.v!==1||!await handshake.verify(message,sender))return {ok:false};
@@ -81,7 +85,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(message?.protocol==='vaiwl-host-observation/1'){
    if(!observations)return {state:'rejected',localSeq:message.localSeq,reason:'host-observations-unavailable'};
    const result=await observations.ingest(message,sender,nativeRepository);
-   if(message.kind==='current-object'&&result.bodyProofId&&['accepted','duplicate'].includes(result.state))sendCandidates?.observe(result.bodyProofId).catch(()=>{});
+   if(message.kind==='current-object'&&result.bodyProofId&&['accepted','duplicate'].includes(result.state)){if(firstSend)void firstSend.observe(result.bodyProofId).then(()=>sendCandidates?.observe(result.bodyProofId)).catch(()=>{});else sendCandidates?.observe(result.bodyProofId).catch(()=>{});}
    return result;
   }
   if(!['HOST_REFRESH','HOST_FOCUS'].includes(message?.type))return broker.handle(message,sender);
@@ -107,9 +111,10 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   const firstFresh=!producer.verified&&!producer.freshStarted;
   if(firstFresh){producer.freshStarted=true;observations?.invalidateDocument(frame.documentId);ui?.revokeDocument(frame.documentId);views?.revokeDocument(frame.documentId);}
   const resolution=await (focus?authority.revalidate(frame,attempt.abort.signal,{force:true}):!producer.verified?authority.refresh(frame,firstFresh?'auth-change':'focus',attempt.abort.signal):authority.peek(frame).state==='verified'?authority.revalidate(frame,attempt.abort.signal):authority.refresh(frame,'bind',attempt.abort.signal));attempt.resolution=resolution;
+  if(resolution.state!=='verified')firstSend?.invalidateTab(frame.tabId);
   if(focus&&resolution.state!=='verified'){denyFocus();revokeFocus();}check();
   const verified=await handshake.verify(message,sender);check();
-  if(!verified){if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant)authority.invalidate(frame.documentId);revokeFocus();return {ok:false,reason:'stale-host-document'};}
+  if(!verified){firstSend?.invalidateTab(frame.tabId);if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant)authority.invalidate(frame.documentId);revokeFocus();return {ok:false,reason:'stale-host-document'};}
   const recoveryProfiles=[...(surfaceProfiles?.size===1?[surfaceProfiles.values().next().value]:[]),...(ackProfile&&resolution.grant?.principal?.providerProfile===ackProfile.providerProfile?[ackProfile]:[])];
   if(!focus&&resolution.state==='verified'&&continuations&&recoveryProfiles.length&&elapsedNow()-attempt.started<4500){
    // Reuse the existing refresh request; no background timer or restored grant.
@@ -127,12 +132,13 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   return {ok:true,v:1,type:'HOST_SCOPE_STATUS',state:resolution.state,...(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant?{scopeKey:authority.scopeFor(frame)?.key}:{}),...(resolution.reason?{reason:resolution.reason}:{})};
   },{timeoutMs:6000,now:elapsedNow,schedule,cancel});attempt.completed=true;return result;}catch{return {ok:false,reason:'host-refresh-unavailable'};}
   finally{refreshAttempts.delete(attempt);attempt.active=false;attempt.abort.abort();if(!attempt.completed){denyFocus();revokeFocus();}
+  if(!attempt.completed&&attempt.frame)firstSend?.invalidateTab(attempt.frame.tabId);
   if(!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);}
  }
- function invalidate({tabId,frameId=0,documentId}={}){broker.invalidate({tabId,frameId});if(documentId){observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{observations?.invalidateTab(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}}
- function tabClosed(tabId){observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
- function stop(){if(!serviceActive)return;serviceActive=false;currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
+ function invalidate({tabId,frameId=0,documentId,firstSendNavigation=null}={}){if(firstSendNavigation)firstSend?.navigate({tabId,...firstSendNavigation});else firstSend?.invalidateTab(tabId);broker.invalidate({tabId,frameId});if(documentId){observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{observations?.invalidateTab(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}}
+ function tabClosed(tabId){firstSend?.invalidateTab(tabId);observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
+ function stop(){if(!serviceActive)return;serviceActive=false;currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
  // Internal worker composition only; no page RPC exposes metadata or accepts proof IDs.
  const readCurrentMetadata=proofId=>currentMetadata?currentMetadata.read(proofId):Promise.reject(Error('current-metadata-unavailable'));
- return Object.freeze({ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
+ return Object.freeze({firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
 }

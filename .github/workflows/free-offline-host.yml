@@ -83,6 +83,9 @@ jobs:
           set -e
           test "$result" -eq 0 -o "$result" -eq 2
           node -e "const r=require(process.env.RUNNER_TEMP+'/j3.json'); if(!['PASS','PARTIAL_NOT_J3_ACCEPTED'].includes(r.status)) process.exit(1); console.log(r.status)"
+      - name: Actual packaged homepage first-send causal slice
+        if: ${{ !cancelled() }}
+        run: node tests/host/first-send-package-browser.mjs "$RUNNER_TEMP/first-send.json"
       - name: Isolated visibility proposal experiment (not production)
         if: ${{ !cancelled() }}
         run: node tests/host/experiments/native-visibility/probe-browser.mjs "$RUNNER_TEMP/visibility-probe.json"
@@ -91,6 +94,6 @@ jobs:
         run: |
           echo "Source commit: $GITHUB_SHA"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          for name in context-package context-cold j1 j2-j4 j3 visibility-probe; do
+          for name in context-package context-cold j1 j2-j4 j3 first-send visibility-probe; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done

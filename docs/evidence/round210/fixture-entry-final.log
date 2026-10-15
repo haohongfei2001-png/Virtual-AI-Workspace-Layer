@@ -1,0 +1,11 @@
+✔ application owns first-send mapping and distinct exact IDs; duplicate operations cannot create again (2.032817ms)
+✔ native fixture source declares IDs and sends headers without extension APIs (0.32473ms)
+✔ actual FIRST_SEND server entry starts with its native submit profile (32.410181ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 121.438116

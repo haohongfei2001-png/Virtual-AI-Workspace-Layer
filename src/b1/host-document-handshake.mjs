@@ -4,7 +4,7 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 /** Browser-document transport only. No scope resolver, storage or source grants. */
 export function createHostDocumentHandshake({extensionId,getFrame,allowedURL,now=Date.now,makeId=()=>crypto.randomUUID(),ttlMs=20000,maxDocuments=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(!tokenOK(extensionId)||typeof getFrame!=='function'||typeof allowedURL!=='function'||typeof now!=='function'||typeof makeId!=='function'||!Number.isInteger(ttlMs)||ttlMs<1000||ttlMs>20000||!Number.isInteger(maxDocuments)||maxDocuments<1||maxDocuments>512)throw Error('invalid-host-handshake');
- const slots=new Map(),pending=new Map();let nextEpoch=0;
+ const slots=new Map(),pending=new Map(),captures=new WeakSet();let nextEpoch=0;
  const key=tabId=>String(tabId),deny=reason=>({ok:false,reason});
  const invalidate=({tabId,frameId=0}={})=>{if(!Number.isSafeInteger(tabId)||frameId!==0)return false;const k=key(tabId);pending.delete(k);slots.delete(k);return true;};
  const tabClosed=tabId=>{invalidate({tabId});};
@@ -56,6 +56,12 @@ export function createHostDocumentHandshake({extensionId,getFrame,allowedURL,now
   const slot=slots.get(key(sender.tab.id));
   return actual?.documentId===slot.frame.documentId&&actual?.url===slot.frame.url&&actual?.documentLifecycle==='active'&&actual?.errorOccurred!==true;
  }
+ // Private transport snapshot for RAM-only gesture candidates. This is not a
+ // body/scope/ACK grant; later consumers must independently authorize all writes.
+ function snapshot(slot){const value=Object.freeze({tabId:slot.frame.tabId,documentId:slot.frame.documentId,url:slot.frame.url,expiresAt:new Date(slot.until).toISOString(),documentToken:slot.binding.documentToken,producerToken:slot.binding.producerToken,routeEpoch:slot.binding.routeEpoch});captures.add(value);return value;}
+ function capture(binding,sender){if(!isBound(binding,sender))return null;const slot=slots.get(key(sender.tab.id));if(sender.url!==slot.frame.url)return null;return snapshot(slot);}
+ function captureDeparture({tabId,documentId}={}){const slot=slots.get(key(tabId));return slot&&slot.frame.documentId===documentId&&now()<slot.until?snapshot(slot):null;}
+ function matchesCapture(value,binding,sender){const frame=senderFrame(sender);return !!frame&&captures.has(value)&&frame.tabId===value.tabId&&frame.documentId===value.documentId&&['documentToken','producerToken','routeEpoch'].every(k=>binding[k]===value[k]);}
  async function renew(message,sender){
   if(!exactHostRecord(message,['v','type','clientId','seq','documentToken','producerToken','routeEpoch'])||message.v!==1||message.type!=='HOST_DOCUMENT_RENEW'||!tokenOK(message.clientId)||!Number.isSafeInteger(message.seq)||message.seq<1)return deny('invalid-host-renew');
   try{message=structuredClone(message);sender=structuredClone(sender);}catch{return deny('invalid-host-renew');}
@@ -73,5 +79,5 @@ export function createHostDocumentHandshake({extensionId,getFrame,allowedURL,now
    return {ok:true,v:1,type:'HOST_BOUND',seq:message.seq,binding};
   },{now:elapsedNow,schedule,cancel});}catch{return deny('host-renew-unavailable');}finally{active=false;}
  }
- return Object.freeze({handle,renew,verify,isBound,matchesFrame,invalidate,tabClosed});
+ return Object.freeze({capture,captureDeparture,matchesCapture,handle,renew,verify,isBound,matchesFrame,invalidate,tabClosed});
 }

@@ -44,3 +44,12 @@ test('canonical nonzero page has deterministic native insertion order and target
  assert.equal(page.length,expected.canonicalPageSize);assert.equal(page.indexOf('g-p-22222222222222222222222222222222'),7);
  assert.equal(expected.canonicalPageOffset,32);assert.equal(j1CanonicalOrder.length,40);
 });
+
+test('J1 previous-page locator follows accessible label rather than visible text',async()=>{
+ const renderer=await readFile(new URL('../../src/navigation/navigation.mjs',import.meta.url),'utf8'),runner=await readFile(new URL('./j1-package-journey.mjs',import.meta.url),'utf8');
+ assert.match(renderer,/button\('返回前页项目',/);
+ assert.match(renderer,/'aria-label':label/);
+ assert.match(runner,/getByRole\('button',\{name:'返回前页项目',exact:true\}\)/);
+ assert(!runner.includes("name:'上一页项目'"));
+ assert(runner.includes('v.offset===8'));assert(runner.includes('?.offset===0'));
+});

@@ -111,7 +111,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    const actual=await getFrame({tabId:entry.frame.tabId,frameId:0});check();
    if(!handshake.matchesFrame(entry.proposal,entry.sender,actual)||actual.url!==entry.frame.actualURL)throw Error('stale-body-proof');
    const principal=authority.peek(entry.frame).grant.principal;
-   const result=await work(Object.freeze({scope:Object.freeze({...entry.scope}),providerProfile:principal.providerProfile,providerTransport:principal.transport,documentToken:entry.proposal.documentToken,producerToken:entry.proposal.producerToken,routeEpoch:entry.proposal.routeEpoch,conversationId:entry.claim.conversationId,messageIds:Object.freeze([...entry.claim.messageIds]),bodyEpoch:entry.bodyEpoch,evidenceClass:'dom-observed',guard,signal:attempt.abort.signal}));
+   const result=await work(Object.freeze({scope:Object.freeze({...entry.scope}),tabId:entry.frame.tabId,browserDocumentId:entry.frame.documentId,scopeGrantId:entry.grantId,scopeEpoch:entry.scopeEpoch,providerProfile:principal.providerProfile,providerTransport:principal.transport,documentToken:entry.proposal.documentToken,producerToken:entry.proposal.producerToken,routeEpoch:entry.proposal.routeEpoch,conversationId:entry.claim.conversationId,messageIds:Object.freeze([...entry.claim.messageIds]),bodyEpoch:entry.bodyEpoch,evidenceClass:'dom-observed',guard,signal:attempt.abort.signal}));
    if(!await handshake.verify(entry.proposal,entry.sender))throw Error('stale-body-proof');check();return result;
   },{now:elapsedNow,schedule,cancel});}finally{attempt.active=false;attempt.abort.abort();reads.delete(attempt);}
  }
