@@ -16,6 +16,19 @@ export async function currentJ4Grant(page,id,scopeKey,{previousGrant=null}={}){
  return {frame,grant:value.grant};
 }
 export function waitJ4Grant(page,id,scopeKey,options){return poll(()=>currentJ4Grant(page,id,scopeKey,options),'current-authorized-frame-grant');}
+// A background peer may have surrendered its frame after the real worker stop.
+// Foregrounding is a real browser action; this read only waits for its current proof.
+export async function waitJ4PeerScope(page,id,scopeKey,{now=Date.now,sleep=ms=>new Promise(r=>setTimeout(r,ms))}={}){
+ const expectedURL=page.url(),deadline=now()+15000;
+ while(now()<deadline){
+  assert.equal(page.url(),expectedURL,'J4-peer-native-URL-changed');
+  const current=await currentJ4Grant(page,id,scopeKey);
+  assert.equal(page.url(),expectedURL,'J4-peer-native-URL-changed');
+  if(current&&now()<deadline)return scopeKey;
+  if(now()<deadline)await sleep(Math.min(50,deadline-now()));
+ }
+ throw Error('J4-peer-current-scope-timeout');
+}
 export async function j4ReadinessFacts(page,id){
  const facts={at:Date.now(),frames:[]};
  try{facts.native=await page.evaluate(()=>({url:location.href,readyState:document.readyState,visibility:document.visibilityState,focused:document.hasFocus(),state:document.documentElement.dataset.vaiwlState??null,reason:document.documentElement.dataset.vaiwlReason??null,ownedPopovers:document.querySelectorAll('[data-va-owned]:popover-open').length,returnButtonPresent:!!document.querySelector('[aria-label="返回工作空间"]')}));}catch(error){facts.nativeError=error.name;}
@@ -112,5 +125,5 @@ export async function runJ4JointInterruption({a,b,id,server,cdp,debugEndpoint,co
  record('same-J4-real-worker-stop-recovers-native-title-and-one-original-ACK-without-send-replay',{nativeOperationId:pending.operationId,eventKey:hints[0].eventKey,firstObservedAt:hints[0].firstObservedAt,workerStopConfirmed:true,continuationState:recovered.receipt.continuation.state,assetDigest:preserved.hash});
  await budgetWindow();const readsBefore=server.snapshot().interruption.reads.filter(r=>r.authenticatedWorker&&r.finishedAt!==null).length;await a.bringToFront();await a.reload();await a.locator('[data-message-id="'+sent.id+'"]').first().waitFor();await poll(()=>server.snapshot().interruption.reads.filter(r=>r.authenticatedWorker&&r.finishedAt!==null).length>readsBefore,'second-authenticated-read');await poll(async()=>{const v=await inspect();return v.receipts.find(r=>r.operationId===pending.operationId)?.continuation?.state==='complete';},'idempotent-terminal');const repeated=await inspect();assert.deepEqual(Object.values(repeated.evidence.hints).filter(h=>h.messageId===sent.id),hints);assert.equal(server.snapshot().interruption.accepts,acceptsBefore+1);assert.equal(Object.values((await inspect(team)).evidence.hints).filter(h=>h.messageId===sent.id).length,0);assert.deepEqual(await assets(team),teamAssets);
  record('same-J4-joint-recovery-second-load-is-idempotent-and-peer-context-isolated',{nativeOperationId:pending.operationId,nativeAccepts:acceptsBefore+1});
- await a.bringToFront();await a.locator('#model-button').click();await a.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();await a.locator('aside nav[aria-label="Chat history"] a[href="/c/33333333-3333-4333-8333-333333333333"]').click();await a.waitForURL(server.origin+'/c/33333333-3333-4333-8333-333333333333');await ensureJ4Workspace(a,mounted);assert.equal(await scopeOf(a),key(personal));assert.equal(await scopeOf(b),key(team));assert.deepEqual(await assets(personal),preserved);
+ await a.bringToFront();await a.locator('#model-button').click();await a.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();await a.locator('aside nav[aria-label="Chat history"] a[href="/c/33333333-3333-4333-8333-333333333333"]').click();await a.waitForURL(server.origin+'/c/33333333-3333-4333-8333-333333333333');await ensureJ4Workspace(a,mounted);assert.equal(await scopeOf(a),key(personal));await b.bringToFront();try{assert.equal(await waitJ4PeerScope(b,id,key(team)),key(team));}catch(error){try{diagnostic({stage:'joint-peer-scope-after-real-worker-stop',...await j4ReadinessFacts(b,id)});}catch{}throw error;}await a.bringToFront();assert.equal(await scopeOf(a),key(personal));assert.deepEqual(await assets(personal),preserved);
 }

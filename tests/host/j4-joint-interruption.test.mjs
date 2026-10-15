@@ -66,3 +66,22 @@ test('actual repository entry hit is accepted only at its exact independently ve
 for(const [name,options,reason]of [['source mismatch',{repoSource:repositorySource+'\n'},'repository-source-mismatch'],['missing entry',{repoPossible:[]},'repository-entry-unresolved'],['moved entry',{repoActual:{...repositoryLocation,lineNumber:repositoryLine+1}},'repository-breakpoint-moved']])test('repository boundary rejects '+name+' before send',async()=>{const {cdp,calls}=debuggerFixture(options);await assert.rejects(pauseJointDrain(cdp,'test'),new RegExp(reason));assert(calls.some(c=>c.method==='Target.detachFromTarget'));});
 
 test('failed real restart recovery retains same-operation durable and budget diagnostics',async()=>{const source=await readFile(new URL('./j4-joint-interruption.mjs',import.meta.url),'utf8');assert(source.includes("await captureDrain('joint-recovery-failed',pause)"));assert(source.includes('nativeSources:facts.sources'));assert(source.includes("stage:'joint-recovery-expected-operation',operationId:pending.operationId,payloadDigest:pending.payloadDigest"));assert(source.includes('workerVersions:versions.slice(-16)'));assert(source.includes("'same-joint-operation-complete-after-worker-restart'"));});
+
+test('peer scope waits for actual replacement frame within the original 15s scope budget',async()=>{
+ const {waitJ4PeerScope}=await import('./j4-joint-interruption.mjs');let time=0,frames=[];
+ const frame={isDetached:()=>false,url:()=> 'chrome-extension://test/workspace.html',evaluate:async()=>({grant:'actual',scope:'team'})},page={url:()=> 'http://fixture/c/original',frames:()=>frames};
+ assert.equal(await waitJ4PeerScope(page,'test','team',{now:()=>time,sleep:async ms=>{time+=ms;frames=[frame];}}),'team');assert.equal(time,50);
+ for(const value of [{grant:null,scope:'team'},{grant:'real',scope:'wrong'}]){time=0;frames=[{...frame,evaluate:async()=>value}];await assert.rejects(waitJ4PeerScope(page,'test','team',{now:()=>time,sleep:async ms=>{time+=ms;}}),/peer-current-scope-timeout/);assert.equal(time,15000);}
+});
+test('peer readiness rejects changed URL and positive read after its original deadline',async()=>{
+ const {waitJ4PeerScope}=await import('./j4-joint-interruption.mjs');let time=0,url='original';
+ const frame={isDetached:()=>false,url:()=> 'chrome-extension://test/workspace.html',evaluate:async()=>{time=15001;return {grant:'actual',scope:'team'};}},page={url:()=>url,frames:()=>[frame]};
+ await assert.rejects(waitJ4PeerScope(page,'test','team',{now:()=>time,sleep:async()=>{}}),/peer-current-scope-timeout/);
+ time=0;frame.evaluate=async()=>{url='changed';return {grant:'actual',scope:'team'};};await assert.rejects(waitJ4PeerScope(page,'test','team',{now:()=>time}),/peer-native-URL-changed/);
+});
+test('joint tail uses real peer foreground and current proof, then restores original tab',async()=>{
+ const source=await readFile(new URL('./j4-joint-interruption.mjs',import.meta.url),'utf8'),tail=source.slice(source.indexOf("record('same-J4-joint-recovery-second-load-is-idempotent-and-peer-context-isolated'"));
+ assert(tail.indexOf('await b.bringToFront()')<tail.indexOf('await waitJ4PeerScope(b,id,key(team))'));
+ assert(tail.indexOf('await waitJ4PeerScope(b,id,key(team))')<tail.lastIndexOf('await a.bringToFront()'));
+ assert(!tail.includes('.reload('));assert(tail.includes('await scopeOf(a),key(personal)'));assert(tail.includes('await assets(personal),preserved'));
+});
