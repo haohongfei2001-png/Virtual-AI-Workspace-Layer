@@ -2,7 +2,7 @@
 
 ## 最新正式检查点（2026-10-15，隔离云环境）
 
-原分支 / Draft PR16 已提交371f327（Round246），CI42完整Node4859/4859、全部离线旅程作业通过，耐久/兼容作业仅正式10k基线失败。两tab初次双surface准备与原生尾部搜索导航通过，返回工作区仍超原30秒，尚无完整10k接纳审计或计时。171源码/夹具哈希与正式提交匹配；2636条UI RPC均成功，旧跨tab授权误拒本轮未再现。后续候选与证据见本文末尾及[Round247](evidence/round247/README.md)。完整81子场景、SYS04/SYS05、真实G/U和发布条件仍未完成。此处不以测试条数推算开发完成百分比。
+原分支 / Draft PR16 已提交602732b（Round247），CI43 Node4879/4880，仅一处静态runner字符串门控未兼容新时间戳；全部旅程作业通过，耐久/兼容作业仅正式10k失败。10k在首tab原30秒窗口尚未完成摄取，实际PARTITIONED根revision193、9741引用库存/100项目，395条UI RPC全部成功但均未得到ready。171源码/夹具哈希匹配，无完整接纳审计或计时。已独审候选在首次真实Host提交后复用原子索引迁移，保持原提交回执、授权与预算，实际效果待下一CI。详见[Round248](evidence/round248/README.md)。完整81、SYS04/SYS05、G/U与发布条件仍未完成，不以测试条数推算开发完成百分比。
 
 ## 历史正式检查点（Round219，保留原记录）
 
@@ -2464,3 +2464,7 @@ CI41 at17433d2 passed4788 Node contracts and all scoped journeys; durability fai
 ## Round247 — client preparation lifecycle remains under investigation
 
 CI42 at371f327 passes4859 Node contracts and all scoped journeys. Formal10k both initial preparations pass25.03s/21.19s, native tail navigation passes, then return readiness fails30s before complete audit/timing.171 hashes match;2636 recorded RPCs including24 renewals all succeed. A controlled real-client reproduction confirms an accepted-ready read retaining its old budget solely because another invalidation is queued; the minimal candidate completes that validated read and gives the next read its original independent budget. The exact CI42 cascade remains unproven. No deadline or retry increase is made. [Round247 evidence](evidence/round247/README.md). FullFree/SYS04/SYS05 remain open.
+
+## Round248 — checked initial Host index preparation
+
+CI43 at602732b has4879/4880 Node passes, with one stale static runner guard corrected without changing transport semantics. Scoped journeys pass. Formal10k still fails initial30s before complete ingestion/audit/timing; its verified PARTITIONED inventory contains9741 refs/100 projects atrevision193. The existing read-triggered index migration cannot run while first preparation waits on the active ingestion pass. The reviewed candidate reuses that checked migration once after the first committed genuine Host observation, under the original guard/signal; failures preserve receipt1, successful root2 preserves pending/source semantics.78 focused and66 adjacent tests pass; independent14 boundary cases pass. Existing large partitioned stores and failed first migration are outside this optimization. Actual10k remains pending; original deadlines, CAS and all acceptance gates remain. [Round248 evidence](evidence/round248/README.md).

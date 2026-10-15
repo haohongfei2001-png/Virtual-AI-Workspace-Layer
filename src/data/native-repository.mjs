@@ -57,13 +57,14 @@ export class NativeRepository {
     return this.verifiedRoot({...row,key:scope.key},scope);
   }
 
-  constructor({baseRepository, workspaceRepository = null, observationGate = null, hostObservationGate = null, clock = () => new Date().toISOString()}) {
+  constructor({baseRepository, workspaceRepository = null, observationGate = null, hostObservationGate = null, prepareInitialHostIndex = false, clock = () => new Date().toISOString()}) {
     if (!baseRepository?.open || !baseRepository?.scopeOrThrow) throw Error('b1-repository-required');
     this.base = baseRepository;
     if(workspaceRepository&&workspaceRepository.base!==baseRepository)throw Error('shared-native-database-required');
     this.shared=workspaceRepository;
     this.observationGate = observationGate;
     this.hostObservationGate = hostObservationGate;
+    this.prepareInitialHostIndex = prepareInitialHostIndex === true;
     this.clock = clock;
   }
 
@@ -299,6 +300,16 @@ export class NativeRepository {
     }
     const apply=()=>this.mutate(normalized, request, {kind: 'APPLY_NATIVE_OBSERVATIONS', ...witness, batch: request.batch,...(continuation?{continuation}:{})},
       current => applyNativeObservations(current, request.batch, {scope: normalized, ...witness, now: this.clock()}), options);
+    const finish=async result=>{
+      // The first observation is already durable. Reuse checked structural
+      // migration while its original guard is live, before a finite stream grows.
+      // Failure cannot undo that commit or change its receipt/revision. The owner
+      // still performs its ordinary post-apply guard before acknowledging it.
+      if(this.prepareInitialHostIndex===true&&host&&request.expectedRevision===0&&result.ok===true&&result.replayed===false&&result.revision===1){
+        try{fence(options);await this.migrateVersionIndex(normalized,{operationId:'host_initial_index_'+digest([normalized.key,request.operationId]),expectedRevision:1},options);}catch{/* Keep the actual committed observation result. */}
+      }
+      return result;
+    };
     const result=await apply();
     // The write transaction reads and validates the shared root. Host legacy
     // storage or a capacity boundary can require migration before one retry.
@@ -312,10 +323,10 @@ export class NativeRepository {
         if(!indexed.ok)throw Error(indexed.reason);
         fence(options);
       }
-      return apply();
+      return finish(await apply());
       }catch(error){return {ok:false,reason:error.message??'shared-migration-failed'};}
     }
-    return result;
+    return finish(result);
   }
 
   /** Owner-only pending observations; reading these records grants no replay authority. */
