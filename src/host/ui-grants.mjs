@@ -75,6 +75,19 @@ export function createUiGrants({extensionId,uiURL=null,uiURLs=null,getFrame,getC
   if(parent.tabId!==mount.parent.tabId||parent.documentId!==mount.parent.documentId||parent.actualURL!==mount.parent.actualURL||documentToken!==mount.handle.documentToken||regionEpoch!==mount.handle.regionEpoch)fail('ui-mount-mismatch');
   const entry=join(nonce,role);if(entry.parent){entry.used=true;fail('ui-join-conflict');}entry.parent={mountId};return pair(entry);
  }
+ // Synchronous final fences only: callers must still perform the asynchronous
+ // browser/document checks. Renewal may replace a grant object, not its authority.
+ function currentGrant(grant){
+  const entry=grants.get(grant?.id);
+  if(!entry||['mountId','parentDocumentId','uiDocumentId','scopeGrantId','role'].some(key=>entry.grant[key]!==grant[key])||Date.parse(entry.grant.expiresAt)<=now()||liveMount(entry.grant.mountId).mount!==entry.mount)fail('ui-grant-revoked');
+  return entry.grant;
+ }
+ function current({sender,grantId,mountId}){
+  const ui=uiFrame(sender),entry=grants.get(grantId);
+  if(!entry||entry.grant.mountId!==mountId)fail('ui-grant-revoked');
+  if(sender.url!==roleURLs[entry.grant.role]||ui.tabId!==entry.ui.tabId||ui.frameId!==entry.ui.frameId||ui.documentId!==entry.ui.documentId)fail('ui-grant-mismatch');
+  return currentGrant(entry.grant);
+ }
  async function validate({sender,grantId,mountId}){
   const ui=uiFrame(sender),entry=grants.get(grantId);if(!entry||entry.grant.mountId!==mountId||entry.grant.expiresAt<=new Date(now()).toISOString())fail('ui-grant-expired');
   const {mount}=liveMount(mountId);if(sender.url!==roleURLs[entry.grant.role]||mount!==entry.mount||ui.tabId!==entry.ui.tabId||ui.frameId!==entry.ui.frameId||ui.documentId!==entry.ui.documentId)fail('ui-grant-mismatch');
@@ -103,5 +116,5 @@ export function createUiGrants({extensionId,uiURL=null,uiURLs=null,getFrame,getC
   const task=renewOnce({...args,sender}).finally(()=>{if(renewing.get(args.grantId)===task)renewing.delete(args.grantId);});
   renewing.set(args.grantId,task);return task;
  }
- return Object.freeze({registerMount,renew,joinUI,confirmParent,validate,revokeMount,revokeDocument,revokeAll});
+ return Object.freeze({registerMount,renew,joinUI,confirmParent,validate,current,currentGrant,revokeMount,revokeDocument,revokeAll});
 }
