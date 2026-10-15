@@ -10,7 +10,9 @@ export async function createHostScaleServer(input={}){
  const projectHref=id=>'/g/'+id+'/project',firstProject=projects.values().next().value;
  const source=await readFile(new URL('legacy.html',import.meta.url),'utf8');
  const html=source.replace(/<section aria-label="Projects">[\s\S]*?<\/section>/,'<section aria-label="Projects"><h2>Projects</h2>'+[...projects.values()].map(p=>`<a href="${projectHref(p.id)}">${escape(p.name)}</a>`).join('')+'<button class="project-entry">Open first project</button></section>').replace(/<nav aria-label="Chat history">[\s\S]*?<\/nav>/,'<nav aria-label="Chat history"><h2>Chats</h2>'+rows.map(row=>`<a href="/c/${row.id}">${escape(row.title)}</a>`).join('')+'</nav>');
- const files=new Map([['/',{body:html,mime:'text/html'}],['/native.mjs',{body:await readFile(new URL('native.mjs',import.meta.url)),mime:'text/javascript'}],['/native.css',{body:await readFile(new URL('native.css',import.meta.url)),mime:'text/css'}]]);
+ // Scale application's own native layout keeps all project links in a real scroll region.
+ const scaleCSS=Buffer.concat([await readFile(new URL('native.css',import.meta.url)),Buffer.from('\naside section[aria-label="Projects"]{min-height:0;max-height:30vh;overflow:auto;flex-shrink:0}aside nav[aria-label="Chat history"]{min-height:0}\n')]);
+ const files=new Map([['/',{body:html,mime:'text/html'}],['/native.mjs',{body:await readFile(new URL('native.mjs',import.meta.url)),mime:'text/javascript'}],['/native.css',{body:scaleCSS,mime:'text/css'}]]);
  const cookie=randomBytes(24).toString('hex'),token='fixture-only-'+randomBytes(24).toString('hex'),principal='user-host-scale',requests={},actions={};
  const authorized=req=>(req.headers.cookie??'').split(';').some(x=>x.trim()==='host_scale_session='+cookie);
  const json=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));};

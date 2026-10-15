@@ -56,6 +56,9 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    const start=performance.now();await page.goto(server.url,{waitUntil:'domcontentloaded',timeout:60000});report.phase=`tab-${tab}-initial-surfaces`;const frames=await surfaces(page);
    report.ingestion.push({scaleBasis:'NATIVE_WORLD_NOT_PROVEN_ADMITTED_AT_SAMPLE',tab,coldProfile:tab===0,initialSurfacesMs:performance.now()-start,nativeHistoryLinks:await page.locator('nav[aria-label="Chat history"] a').count(),surfaces:frames.map(f=>f.url())});
    assert.equal(report.ingestion.at(-1).nativeHistoryLinks,scenario.size);
+   const layout=await hostScaleFailureFacts(page);report.ingestion.at(-1).nativeGeometry=layout.nativeDOM?.geometry??null;
+   assert(layout.nativeDOM?.geometry?.history?.height>0,'native scale history must have positive height');
+   assert(layout.nativeDOM?.geometry?.projects?.height>0&&layout.nativeDOM.geometry.projects.height<=270,'native scale project region must be independently scrollable within 30vh');
   }
   const page=pages[1];
   report.phase='native-tail-ingestion';

@@ -36,3 +36,17 @@ test('default runner writes NOT_RUN without importing browser or allocating nati
 test('runner is guarded, preserves transport, and does not seed authority or replace production deadline',async()=>{
  const source=await readFile(new URL('./host-scale-package-browser.mjs',import.meta.url),'utf8');assert(!source.includes('historicalNetworkGuard'));assert(source.includes("PACKAGED_EXACT_ORIGIN_CONNECT_SRC"));assert(source.includes('cleanupHostScaleRun')); assert(source.includes("Emulation.setCPUThrottlingRate"));assert(source.includes('const started=performance.now(),result=send(...args)'));assert(!source.includes('native_states'));assert(!source.includes('.seed('));assert(source.includes("PARTIAL_SYS04_NOT_ACCEPTED"));
 });
+
+test('10k native world keeps every real project/history link while scoping scroll layout to scale fixture',async()=>{
+ const before=await readFile(new URL('./fixtures/native.css',import.meta.url),'utf8');
+ const server=await createHostScaleServer({size:10000,distribution:'project-mixed'});
+ try{
+  const html=await(await fetch(server.url)).text(),css=await(await fetch(server.origin+'/native.css')).text();
+  assert.equal((html.match(/href="\/g\//g)??[]).length,100);assert.equal((html.match(/href="\/c\//g)??[]).length,10000);
+  assert.equal(server.snapshot().nativeProjects,100);assert(css.startsWith(before));
+  assert(css.includes('aside section[aria-label="Projects"]{min-height:0;max-height:30vh;overflow:auto;flex-shrink:0}'));
+  assert(css.includes('aside nav[aria-label="Chat history"]{min-height:0}'));
+  assert.equal(await readFile(new URL('./fixtures/native.css',import.meta.url),'utf8'),before);
+  assert(!css.slice(before.length).includes('display:none'));assert(!css.slice(before.length).includes('data-va-owned'));
+ }finally{await server.close();}
+});
