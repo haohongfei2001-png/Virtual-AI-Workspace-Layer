@@ -42,16 +42,31 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   }catch{return {ok:false,reason:'view-resume-unavailable'};}finally{active=false;}
  }
  const reason=error=>/^[a-z0-9-]{1,80}$/.test(error?.message)?error.message:'free-view-unavailable';
- function remove(id){const entry=views.get(id);if(entry){entry.prepareGeneration=(entry.prepareGeneration??0)+1;cancel(entry.retryTimer);entry.owner.stop();views.delete(id);}}
+ function remove(id){const entry=views.get(id);if(entry){entry.prepareGeneration=(entry.prepareGeneration??0)+1;cancel(entry.retryTimer);entry.deferPreparation=null;entry.owner.stop();views.delete(id);}}
  function begin(entry){
-  cancel(entry.retryTimer);entry.retryTimer=null;entry.error=null;entry.pending=true;
+  cancel(entry.retryTimer);entry.retryTimer=null;entry.deferPreparation=null;entry.error=null;entry.pending=true;
   const generation=entry.prepareGeneration=(entry.prepareGeneration??0)+1,started=elapsedNow();let retries=0;
   const current=()=>entry.prepareGeneration===generation&&entry.isCurrent();
+  const queueRetry=()=>{
+   if(!current())return;
+   cancel(entry.retryTimer);entry.retryTimer=null;
+   const elapsed=elapsedNow()-started;
+   if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=30000){entry.deferPreparation=null;entry.pending=false;entry.error='read-budget-exhausted';return;}
+   // Coalesce real publications into this already-counted retry, never a new
+   // attempt or lifetime. An endless stream reaches the same absolute deadline.
+   entry.retryTimer=schedule(()=>{
+    if(!current())return;
+    entry.retryTimer=null;entry.deferPreparation=null;
+    const elapsed=elapsedNow()-started;
+    if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=30000){entry.pending=false;entry.error='read-budget-exhausted';return;}
+    run();
+   },Math.min(50,30000-elapsed));
+  };
   const run=()=>{
    if(!current())return;
    entry.owner.refresh().then(()=>{if(!current())return;entry.pending=false;if(elapsedNow()-started>=30000)entry.error='read-budget-exhausted';},error=>{
     if(!current())return;
-    if(['snapshot-revision-changed','stale-free-page'].includes(error?.message)&&retries<2&&elapsedNow()-started<29950){retries++;entry.retryTimer=schedule(run,50);return;}
+    if(['snapshot-revision-changed','stale-free-page'].includes(error?.message)&&retries<2&&elapsedNow()-started<29950){retries++;entry.deferPreparation=queueRetry;queueRetry();return;}
     entry.pending=false;entry.error=reason(error);
    });
   };run();
@@ -289,5 +304,5 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  function confirmScope(frame,scopeKey){for(const [key,value]of resumes)if(value.tabId===frame.tabId&&value.documentId===frame.documentId&&value.scopeKey!==scopeKey)resumes.delete(key);}
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId,{preserveDocumentId=null}={}){for(const [key,value]of resumes)if(value.tabId===tabId&&(!preserveDocumentId||value.documentId!==preserveDocumentId))resumes.delete(key);for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({handle,resume,present,confirmScope,resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){resumes.clear();for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({handle,resume,present,confirmScope,nativePublished(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){resumes.clear();for(const key of [...views.keys()])remove(key);}});
 }

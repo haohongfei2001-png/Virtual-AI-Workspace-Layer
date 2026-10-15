@@ -95,7 +95,14 @@ if(!p)return;}catch{surfaceScanning=false;surfaceCursor=null;if(surfaceWanted)sc
  }
  function schedule(){if(!live())return;dirty=true;if(busy||queued)return;queued=true;queueMicrotask(pump);}
  function requestScan(){surfaceEpoch++;surfaceWanted=true;schedule();}
- function mutations(records){if(!live())return;if(bodyDiscovery?.affectsBody(records)||discovery?.affectsSurface(records)){try{onSurfaceChange(records);}catch{/* A failed surrender never authorizes hidden native evidence. */}requestScan();}else schedule();}
+ function mutations(records){
+  if(!live())return;
+  const bodyChanged=bodyDiscovery?.affectsBody(records),surfaceChanged=discovery?.affectsSurface(records);
+  if(bodyChanged||surfaceChanged)try{onSurfaceChange(records);}catch{/* A failed surrender never authorizes hidden native evidence. */}
+  // Body-only streaming still rechecks identity and visibility, but cannot discard
+  // an unrelated directory cursor or its pending bounded fragments.
+  if(surfaceChanged)requestScan();else schedule();
+ }
  function stop(){generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('toggle',requestScan,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();}
  function inspect(){
   const fail=reason=>({ok:false,reason,profileId:profile.id});if(!live())return fail('stale-host-binding');try{syncRoute();}catch{return fail('host-rebind-required');}if(urlPolicy.parse(url).kind==='unsupported')return fail('unsupported-host-route');

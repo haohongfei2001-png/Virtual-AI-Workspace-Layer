@@ -50,7 +50,7 @@ test('binding renewal rejects every changed identity, excess lifetime and stale 
 });
 
 const settle=async()=>{for(let i=0;i<35;i++)await Promise.resolve();};
-function bodyFixture(options={}){const f=fixture({profile:LEGACY_SURFACE_PROFILE,...options}),root=f.reading;root.ownerDocument=f.document;root.parentElement=null;root.attrs={'data-conversation-id':C};root.style={display:'block',visibility:'visible'};root.getAttribute=k=>root.attrs[k]??null;root.getClientRects=()=>[{}];f.document.defaultView.getComputedStyle=n=>n.style;const makeMessage=id=>({ownerDocument:f.document,isConnected:true,parentElement:root,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:key=>key==='data-message-id'?id:null,get textContent(){throw Error('message-body-read');},get value(){throw Error('draft-read');}});root.children=[makeMessage('M1')];root.querySelectorAll=selector=>selector==='[data-message-id]'?root.children:[];root.contains=n=>root.children.includes(n);f.selectors.set('main > #reading',[root]);return {...f,makeMessage};}
+function bodyFixture(options={}){const f=fixture({profile:LEGACY_SURFACE_PROFILE,...options}),root=f.reading;root.ownerDocument=f.document;root.parentElement=null;root.attrs={'data-conversation-id':C};root.style={display:'block',visibility:'visible'};root.getAttribute=k=>root.attrs[k]??null;root.getClientRects=()=>[{}];f.document.defaultView.getComputedStyle=n=>n.style;const makeMessage=id=>({ownerDocument:f.document,isConnected:true,parentElement:root,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:key=>key==='data-message-id'?id:null,get textContent(){throw Error('message-body-read');},get value(){throw Error('draft-read');}});root.children=[makeMessage('M1')];root.querySelectorAll=selector=>selector==='[data-message-id]'?root.children:[];root.contains=n=>{for(let current=n;current;current=current.parentNode??current.parentElement)if(current===root)return true;return false;};f.selectors.set('main > #reading',[root]);return {...f,makeMessage};}
 test('configured body and surface share a monotonic producer queue with body first and independent dedupe',async()=>{const f=bodyFixture();await f.start();await settle();assert.deepEqual(f.emitted.map(p=>p.kind),['current-observation','surface-delta']);const [body,surface]=f.emitted;assert(body.localSeq<surface.localSeq);assert.equal(body.producerToken,surface.producerToken);assert.equal(body.payload.body.association,'explicit-body-id');assert.deepEqual(body.payload.body.messageIds,['M1']);assert.equal(body.bodyProofId,null);for(let i=0;i<20;i++)f.trigger();await settle();assert.equal(f.emitted.length,2);f.adapter.stop();});
 test('body hidden unproven and restored remount emit fresh epochs without reading message text',async()=>{const f=bodyFixture();await f.start();await settle();f.reading.hidden=true;f.trigger();await settle();let bodies=f.emitted.filter(p=>p.kind==='current-observation');assert.equal(bodies.at(-1).payload.body.association,'unproven');assert.deepEqual(bodies.at(-1).payload.body.evidence.fieldPaths,['current-body-unproven']);f.reading.hidden=false;f.trigger();await settle();bodies=f.emitted.filter(p=>p.kind==='current-observation');assert.equal(bodies.at(-1).payload.body.association,'explicit-body-id');assert(bodies.at(-1).payload.body.regionEpoch>bodies.at(-2).payload.body.regionEpoch);const replacement={...f.reading};replacement.children=[];replacement.querySelectorAll=()=>[];f.selectors.set('main > #reading',[replacement]);f.trigger();await settle();bodies=f.emitted.filter(p=>p.kind==='current-observation');assert.deepEqual(bodies.at(-1).payload.body.messageIds,[]);assert(bodies.at(-1).payload.body.regionEpoch>bodies.at(-2).payload.body.regionEpoch);f.adapter.stop();});
 test('renewal rechecks body while same surface stays deduplicated and message additions are fresh',async()=>{const f=bodyFixture();await f.start();await settle();const seq=f.emitted.at(-1).localSeq;f.adapter.updateBinding({...f.binding,expiresAt:new Date(20000).toISOString()});await settle();assert.equal(f.emitted.filter(p=>p.kind==='surface-delta').length,1);assert.equal(f.emitted.filter(p=>p.kind==='current-observation').length,2);assert(f.emitted.at(-1).localSeq>seq);f.reading.children.push(f.makeMessage('M2'));f.trigger();await settle();assert.deepEqual(f.emitted.at(-1).payload.body.messageIds,['M1','M2']);f.adapter.stop();});
@@ -144,12 +144,16 @@ for(const mode of ['stop','root-replaced'])test('pending multi-page scan handles
  if(mode==='stop')assert.equal(f.emitted.length,1);else{assert(f.emitted.slice(1).some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Replacement tail')));assert(f.emitted.slice(1).every(p=>p.payload.candidates.every(c=>!c.nativeTitle.startsWith('Old '))));}f.adapter.stop();
 });
 
-test('continuous assistant text mutations do not starve loaded directory pages or hide body-ID changes',async()=>{
+test('continuous assistant text mutations do not starve loaded directory pages or hide body-ID changes',async t=>{
  const f=bodyFixture(),nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>nodes.includes(n),querySelectorAll:()=>[...nodes]};
  for(let i=0;i<1000;i++){const id='55555555-5555-4555-8555-'+i.toString(16).padStart(12,'0');nodes.push({tagName:'A',textContent:'Native '+i,isConnected:true,ownerDocument:f.document,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/'+id:null});}
  f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);
- const textNode={parentNode:f.reading.children[0]};let surfaceCount=0;
+ t.after(()=>f.adapter.stop());
+ let directoryVisits=0,directoryWalkers=0;const createWalker=f.document.createTreeWalker;
+ f.document.createTreeWalker=(r,what)=>{const walker=createWalker(r,what);if(r!==root)return walker;directoryWalkers++;return {nextNode(){const n=walker.nextNode();if(n)directoryVisits++;return n;}};};
+ const textNode={nodeType:3,parentNode:f.reading.children[0],parentElement:f.reading.children[0]};let surfaceCount=0;
  await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta'){surfaceCount++;f.observer().cb([{type:'characterData',target:textNode}]);}return Promise.resolve(bodyAck(p));});for(let i=0;i<150;i++)await tick();
+ t.diagnostic(JSON.stringify({directoryVisits,directoryWalkers,surfaceCount,uniqueIDs:new Set(f.emitted.filter(p=>p.kind==='surface-delta').flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size}));
  assert.equal(new Set(f.emitted.filter(p=>p.kind==='surface-delta').flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,1000);assert(surfaceCount<30);
  const before=f.emitted.length;for(let i=0;i<20;i++)f.observer().cb([{type:'characterData',target:textNode}]);for(let i=0;i<100;i++)await tick();assert.equal(f.emitted.length,before);
  const message=f.makeMessage('M2');f.reading.children.push(message);f.observer().cb([{type:'childList',target:f.reading,addedNodes:[message],removedNodes:[]}]);await settle();assert(f.emitted.some(p=>p.kind==='current-observation'&&p.payload.body.messageIds.includes('M2')));f.adapter.stop();
@@ -300,4 +304,33 @@ for(const mutation of ['childList','data-message-id'])test('masked native body '
  await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();const initial=f.emitted.find(p=>p.kind==='current-observation');masked=true;f.reading.style.visibility='hidden';const old=f.reading.children[0],next=f.makeMessage('M2');next.style.visibility='hidden';f.reading.children=[next];
  const record=mutation==='childList'?{type:'childList',target:f.reading,addedNodes:[next],removedNodes:[old]}:{type:'attributes',attributeName:'data-message-id',target:next};
  f.observer().cb([record]);assert.equal(masked,false);assert.equal(released,1);await settle();const latest=f.emitted.filter(p=>p.kind==='current-observation').at(-1);assert.notEqual(latest,initial);assert.deepEqual(latest.payload.body.messageIds,['M2']);f.adapter.stop();
+});
+
+// SYS05 deterministic mechanism probe only: no browser timings or real-S claim.
+function sys05Directory(f,size=32){
+ const nodes=[],root={...visibleDirectoryNode(f.document),isConnected:true,contains:n=>{for(let current=n;current;current=current.parentNode??current.parentElement)if(current===root)return true;return false;},querySelectorAll:()=>nodes};
+ for(let i=0;i<size;i++)nodes.push({tagName:'A',textContent:'Native '+i,isConnected:true,...visibleDirectoryNode(f.document,root),parentNode:root,getAttribute:k=>k==='href'?'https://chatgpt.com/c/55555555-5555-4555-8555-'+i.toString(16).padStart(12,'0'):null});
+ f.selectors.set(LEGACY_SURFACE_PROFILE.regions.history,[root]);
+ let visits=0,walkers=0;const original=f.document.createTreeWalker;
+ f.document.createTreeWalker=(r,what)=>{const walker=original(r,what);if(r!==root)return walker;walkers++;return {nextNode(){const n=walker.nextNode();if(n)visits++;return n;}};};
+ return {nodes,root,counts:()=>({visits,walkers})};
+}
+for(const faithful of [false,true])test('SYS05 settled token scan characterization '+(faithful?'recursive':'direct-child'),async t=>{
+ const f=bodyFixture();t.after(()=>f.adapter.stop());if(!faithful)f.reading.contains=n=>f.reading.children.includes(n);
+ const d=sys05Directory(f),message=f.reading.children[0],text={nodeType:3,parentNode:message,parentElement:message};
+ await f.start(p=>{f.emitted.push(p);return Promise.resolve(bodyAck(p));});await settle();const before=d.counts(),emitted=f.emitted.length;
+ for(let i=0;i<3;i++){f.observer().cb([{type:'characterData',target:text}]);await settle();}
+ const after=d.counts();t.diagnostic(JSON.stringify({faithful,before,after,extraVisits:after.visits-before.visits,extraWalkers:after.walkers-before.walkers,extraPackets:f.emitted.length-emitted}));
+ assert.equal(after.visits-before.visits,0);assert.equal(f.emitted.length,emitted);
+ // Same-ID assistant token changes preserve the accepted body ID set; ACK ID additions must still be observed.
+ const ack=f.makeMessage('USER-ACK');f.reading.children.push(ack);f.observer().cb([{type:'childList',target:f.reading,addedNodes:[ack],removedNodes:[]}]);await settle();
+ assert.deepEqual(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.messageIds,['M1','USER-ACK']);
+ d.nodes[31].textContent='Native title updated';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[31],parentElement:d.nodes[31]}}]);await settle();
+ assert(f.emitted.filter(p=>p.kind==='surface-delta').some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Native title updated')));
+ f.reading.hidden=true;f.observer().cb([{type:'attributes',attributeName:'hidden',target:f.reading}]);await settle();assert.equal(f.emitted.filter(p=>p.kind==='current-observation').at(-1).payload.body.association,'unproven');
+});
+test('SYS05 settled assistant token-only changes must not traverse directory',async t=>{
+ const f=bodyFixture();t.after(()=>f.adapter.stop());const d=sys05Directory(f),message=f.reading.children[0],text={nodeType:3,parentNode:message,parentElement:message};
+ await f.start();await settle();const before=d.counts();f.observer().cb([{type:'characterData',target:text}]);await settle();const after=d.counts();
+ assert.equal(after.visits-before.visits,0,'body-only characterData must not start a directory traversal');
 });

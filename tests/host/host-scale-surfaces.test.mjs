@@ -1,0 +1,38 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {waitHostScaleSurfaces,hostScaleFailureFacts} from './fixtures/host-scale-surfaces.mjs';
+const frame=(role,visible=async()=>true)=>({detached:false,url(){return `chrome-extension://fixture/${role}.html`;},isDetached(){return this.detached;},locator(selector){assert.equal(selector,'.workspace');return {isVisible:visible};}});
+function setup(){let clock=0;const state={frames:[frame('workspace'),frame('sidebar')],open:2,closed:false};const page={frames:()=>state.frames,isClosed:()=>state.closed,locator(){return {count:async()=>state.open};},url:()=> 'http://127.0.0.1:1234/'};return {state,page,options:{extensionId:'fixture',timeout:100,now:()=>clock,pause:async ms=>{clock+=ms;}},time:()=>clock,setTime:value=>{clock=value;}};}
+test('a detached observation is replaced by the unique current frame without any action replay',async()=>{
+ const {state,page,options}=setup(),replacement=frame('workspace'),old=state.frames[0],events=[];
+ old.locator=()=>({isVisible:async()=>{old.detached=true;state.frames=[replacement,state.frames[1]];throw Error('Frame was detached');}});
+ const result=await waitHostScaleSurfaces(page,{...options,onObservation:e=>events.push(e)});assert.equal(result[0],replacement);assert(events.some(e=>e.kind==='frame-replaced-during-read'));
+});
+test('popover and frame readiness share one deadline, never two timeout windows',async()=>{
+ const {state,page,options,time,setTime}=setup();page.locator=()=>({count:async()=>{setTime(90);return 2;}});state.frames[0]=frame('workspace',async()=>false);
+ await assert.rejects(waitHostScaleSurfaces(page,options),/surfaces-deadline/);assert.equal(time(),100);
+});
+test('permanent product revocation stays failed instead of accepting removed UI',async()=>{
+ const {state,page,options}=setup(),old=state.frames[0],events=[];old.locator=()=>({isVisible:async()=>{old.detached=true;state.frames=[];state.open=0;throw Error('Frame was detached');}});
+ await assert.rejects(waitHostScaleSurfaces(page,{...options,onObservation:e=>events.push(e)}),/surfaces-deadline/);assert.equal(events.at(-1).openSurfaces,0);assert(events.at(-1).roles.every(r=>!r.present));
+});
+test('duplicate exact URLs or wrong-extension frames cannot stand in for current surfaces',async()=>{
+ for(const kind of ['duplicate','other-extension']){const {state,page,options}=setup();if(kind==='duplicate')state.frames.push(frame('workspace'));else state.frames[0].url=()=> 'chrome-extension://other/workspace.html';await assert.rejects(waitHostScaleSurfaces(page,options),/surfaces-deadline/);}
+});
+test('visibility returning true for a replaced frame is not success',async()=>{
+ const {state,page,options}=setup(),old=state.frames[0],replacement=frame('workspace');old.locator=()=>({isVisible:async()=>{state.frames=[replacement,state.frames[1]];return true;}});
+ assert.equal((await waitHostScaleSurfaces(page,options))[0],replacement);
+});
+test('unrelated read error and closed parent are not swallowed as remounts',async()=>{
+ const {state,page,options}=setup();state.frames[0]=frame('workspace',async()=>{throw Error('protocol read failure');});await assert.rejects(waitHostScaleSurfaces(page,options),/protocol read failure/);state.closed=true;await assert.rejects(waitHostScaleSurfaces(page,options),/native-parent-closed/);
+});
+test('hung readonly query is bounded by original total budget',async()=>{
+ const {page}=setup();page.locator=()=>({count:()=>new Promise(()=>{})});await assert.rejects(waitHostScaleSurfaces(page,{extensionId:'fixture',timeout:10}),/surfaces-deadline/);
+});
+test('failure facts are bounded and text-free, including absent/closed parents',async()=>{
+ assert.deepEqual(await hostScaleFailureFacts(null),{closed:true});const {page}=setup();page.evaluate=async()=>({openSurfaces:0,iframeCount:0});const facts=await hostScaleFailureFacts(page);assert.equal(facts.nativeDOM.openSurfaces,0);assert.equal(facts.frames.length,2);assert(!JSON.stringify(facts).includes('inputValue'));
+});
+test('runner retains original RPC failures and capture phase before owned cleanup',async()=>{
+ const source=await readFile(new URL('./host-scale-package-browser.mjs',import.meta.url),'utf8');assert(source.includes('waitHostScaleSurfaces(page,{extensionId:id,timeout:30000'));assert(!source.includes("frames[0].locator('.workspace').waitFor"));assert(source.includes('rpcTail:report.rpc.slice(-16)'));assert(source.includes('captureError:failure.message'));assert(source.indexOf('report.failure={')<source.indexOf('const cleaned=await cleanupHostScaleRun'));
+});

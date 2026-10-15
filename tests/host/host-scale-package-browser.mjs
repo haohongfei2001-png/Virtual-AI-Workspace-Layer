@@ -14,6 +14,7 @@ import {cleanupHostScaleRun} from './fixtures/host-scale-cleanup.mjs';
 import {auditHostScaleIndex} from './fixtures/host-scale-audit.mjs';
 import {checkHostScaleSearchPage} from './fixtures/host-scale-ui-oracle.mjs';
 import {measureAtAdmittedScale} from './fixtures/host-scale-measurement.mjs';
+import {waitHostScaleSurfaces,hostScaleFailureFacts} from './fixtures/host-scale-surfaces.mjs';
 import {observeCurrentFrame} from './observe-current-frame.mjs';
 const output=process.argv[2]??join(tmpdir(),'vaiwl-host-scale.json');
 if(process.env.HOST_SCALE_RUN!=='1'){
@@ -22,8 +23,8 @@ if(process.env.HOST_SCALE_RUN!=='1'){
  const scenario=hostScaleScenario({size:Number(process.env.HOST_SCALE_SIZE??1000),distribution:process.env.HOST_SCALE_DISTRIBUTION??'project-mixed',cpuRate:Number(process.env.HOST_SCALE_CPU_RATE??1)});
  const hash=x=>createHash('sha256').update(x).digest('hex');
  const report={sourceCommit:process.env.FREE_SOURCE_COMMIT??null,requirement:'SYS-04 / original F1',status:'NOT_RUN',acceptance:'NOT_ESTABLISHED',realChatGPT:'NOT_RUN',scenario,expected:hostScaleExpected(scenario),remaining:[...HOST_SCALE_GAPS],ingestion:[],errors:[],rpc:[],rpcTraceDropped:0};
- let server,context,manifest,manifestPath,manifestHash,directory;
- const sourceFiles=['host-scale-package-browser.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
+ let server,context,manifest,manifestPath,manifestHash,directory,activePage;
+ const sourceFiles=['host-scale-package-browser.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sourceFiles.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -46,21 +47,17 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    };
   });
   const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});report.browserVersion=context.browser().version();
-  const surfaces=async page=>{
-   await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:30000});
-   const frames=['workspace','sidebar'].map(role=>page.frames().find(f=>f.url()===`chrome-extension://${id}/${role}.html`));assert(frames.every(Boolean),'both production surfaces must exist');
-   // Waiting for DOM is not a replacement/extension of the production 6s RPC deadline.
-   await frames[0].locator('.workspace').waitFor({timeout:30000});return frames;
-  };
+  const surfaces=page=>waitHostScaleSurfaces(page,{extensionId:id,timeout:30000,onObservation:value=>{report.surfaceWait??=[];report.surfaceWait.push({phase:report.phase,...value});if(report.surfaceWait.length>16)report.surfaceWait.shift();}});
   const pages=[],ingestionStarted=performance.now();
   for(let tab=0;tab<2;tab++){
-   const page=await context.newPage();pages.push(page);page.on('pageerror',e=>report.errors.push(e.message));page.on('console',message=>{const text=message.text();if(text.startsWith('HOST_SCALE_RPC ')){if(report.rpc.length<4096)report.rpc.push({tab,...JSON.parse(text.slice(15))});else report.rpcTraceDropped++;}});
+   const page=await context.newPage();activePage=page;report.phase=`tab-${tab}-native-navigation`;pages.push(page);page.on('pageerror',e=>report.errors.push(e.message));page.on('console',message=>{const text=message.text();if(text.startsWith('HOST_SCALE_RPC ')){if(report.rpc.length<4096)report.rpc.push({tab,...JSON.parse(text.slice(15))});else report.rpcTraceDropped++;}});
    const session=await context.newCDPSession(page);await session.send('Emulation.setCPUThrottlingRate',{rate:scenario.cpuRate});
-   const start=performance.now();await page.goto(server.url,{waitUntil:'domcontentloaded',timeout:60000});const frames=await surfaces(page);
+   const start=performance.now();await page.goto(server.url,{waitUntil:'domcontentloaded',timeout:60000});report.phase=`tab-${tab}-initial-surfaces`;const frames=await surfaces(page);
    report.ingestion.push({scaleBasis:'NATIVE_WORLD_NOT_PROVEN_ADMITTED_AT_SAMPLE',tab,coldProfile:tab===0,initialSurfacesMs:performance.now()-start,nativeHistoryLinks:await page.locator('nav[aria-label="Chat history"] a').count(),surfaces:frames.map(f=>f.url())});
    assert.equal(report.ingestion.at(-1).nativeHistoryLinks,scenario.size);
   }
   const page=pages[1],tail={id:report.expected.last,title:await page.locator('nav[aria-label="Chat history"] a').last().innerText()};
+  report.phase='native-tail-ingestion';
   // Native tail navigation is ingestion/reachability, never the admitted-index sample.
   await page.locator('textarea').focus();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0);
   await page.locator('#search-button').click();await page.locator('#search-dialog input').fill(tail.title);
@@ -69,12 +66,14 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   assert.equal(await page.locator('#reading').getAttribute('data-conversation-id'),tail.id);report.ingestionNativeTailReachability='PASS';
   // Native member collection is ingestion, before any admitted-scale measurement.
   if(scenario.distribution==='single-project'){
+   report.phase='native-project-members-ingestion';
    await page.locator('textarea').focus();
    const projectPath='/g/g-p-00000000000000000000000000000001/project';
    await page.locator(`aside section[aria-label="Projects"] a[href="${projectPath}"]`).click();await page.waitForURL(server.origin+projectPath);
    await page.waitForFunction(size=>document.querySelectorAll('#reading nav[aria-label="Project conversations"] a').length===size,scenario.size);
    report.nativeProjectMembersRendered=await page.locator('#reading nav[aria-label="Project conversations"] a').count();
   }
+  report.phase='return-workspace-local-search';
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
   const [workspace,sidebar]=await surfaces(page);
   await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
@@ -84,6 +83,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   const auditFrameURL=`chrome-extension://${id}/workspace.html`;
   const currentAuditFrame=()=>{const frames=page.frames().filter(frame=>frame.url()===auditFrameURL&&!frame.isDetached());return frames.length===1?frames[0]:null;};
   const audit=async()=>{
+   report.phase=report.measurementStarted?'post-measurement-audit':'pre-measurement-audit';
    const auditFrame=await observeCurrentFrame(currentAuditFrame,frame=>frame.evaluate(()=>document.readyState!=='loading'),{parentAlive:()=>!page.isClosed(),timeout:15000});
    const snapshot=await auditFrame.evaluate(auditHostScaleIndex,{size:scenario.size,distribution:scenario.distribution,requireProjectMembership:scenario.distribution==='single-project',limit:500});
    assert(!page.isClosed()&&!auditFrame.isDetached()&&currentAuditFrame()===auditFrame,'audit frame changed; snapshot not accepted');return snapshot;
@@ -91,6 +91,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   report.ingestionObservationMs=performance.now()-ingestionStarted;
   report.indexAuditRealm=auditFrameURL;
   report.measurement=await measureAtAdmittedScale({audit,measure:async()=>{
+   report.phase='local-search-pagination-measurement';report.measurementStarted=true;
    // Actual existing local-search/pagination UI, no native navigation or injected RPC.
    assert(currentAuditFrame()===workspace&&!workspace.isDetached(),'local search frame replaced before timing');
    const results=workspace.locator('.search-results');
@@ -116,7 +117,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   report.rpcObservation=report.rpc.length?{scope:'INGESTION_AND_MEASUREMENT_DIAGNOSTIC',count:report.rpc.length,maxMs:Math.max(...report.rpc.map(r=>r.elapsedMs)),over6000:report.rpc.filter(r=>r.elapsedMs>6000).length}: 'NOT_OBSERVED';
   assert.equal(report.measurement.status,'MEASURED_AT_STABLE_ADMITTED_INDEX','scale measurement not established: '+report.measurement.status);
   assert.deepEqual(report.errors,[]);report.status='PARTIAL_SYS04_NOT_ACCEPTED';process.exitCode=2;
- }catch(error){report.status=context?'FAIL':'NOT_RUN_BROWSER_OR_PACKAGE_STARTUP';report.error=error.stack;process.exitCode=1;}
+ }catch(error){report.status=context?'FAIL':'NOT_RUN_BROWSER_OR_PACKAGE_STARTUP';report.error=error.stack;report.failure={phase:report.phase,rpcCount:report.rpc.length,rpcTail:report.rpc.slice(-16),facts:await hostScaleFailureFacts(activePage).catch(failure=>({captureError:failure.message}))};process.exitCode=1;}
  finally{
   const cleaned=await cleanupHostScaleRun({report,context,server,directory,verify:async()=>{
   report.sourceChangedDuringRun=manifest?(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean):null;

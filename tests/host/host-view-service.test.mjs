@@ -9,7 +9,7 @@ import {reduceCommand} from '../../src/data/state.mjs';
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const NOW='2026-10-14T00:00:00Z',url='https://chatgpt.com/';
 // Mock IndexedDB and explicitly authored provider response; no browser auth claim.
-async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBridge=null,documentURL=url,elapsedNow=()=>performance.now()}={}){
+async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBridge=null,documentURL=url,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'host-read-binding'});t.after(()=>base.close());
  const workspaces=new WorkspaceRepository({baseRepository:base,clock:()=>NOW});
  const evidence=new FreeEvidenceRepository({baseRepository:base,clock:()=>NOW});
@@ -18,7 +18,7 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBr
  const profile={id:'read-binding-reconstruction',revision:1,urlPolicy:createURLPolicy({profile:{conversationId:value=>value,projectId:({container})=>container}})};
  const uiURLs={workspace:'chrome-extension://extension/workspace.html',sidebar:'chrome-extension://extension/sidebar.html'};
  const children=Object.fromEntries(Object.entries(uiURLs).map(([role,url],i)=>[role,{...sender,frameId:i+1,documentId:'ui_'+role,url}]));
- const service=createHostBindingService({elapsedNow,extensionId:'extension',prepareNavigation,presentSurface,selectionBridge,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{read:async()=>{providerReads++;return {principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
+ const service=createHostBindingService({elapsedNow,schedule,cancel,extensionId:'extension',prepareNavigation,presentSurface,selectionBridge,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{read:async()=>{providerReads++;return {principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
  const request=(type,extra={})=>service.handle({v:1,type,clientId:'client',seq:++seq,...extra},sender);
  let binding,bound;
  async function bind(){const hello=await request('HOST_HELLO');assert.equal(hello.ok,true);binding=hello.binding;const {documentToken,producerToken,routeEpoch}=binding;assert.equal((await request('HOST_REFRESH',{documentToken,producerToken,routeEpoch})).state,'verified');bound=await request('BIND');assert.equal(bound.ok,true,JSON.stringify(bound));return bound;}
@@ -410,4 +410,30 @@ test('MOCK_IDB failed native-page callback never publishes successful return',as
 test('MOCK_IDB late native-page completion after scope revocation cannot publish',async t=>{
  let entered=false,release;const wait=new Promise(resolve=>release=resolve),h=await fixture(t,{presentSurface:async()=>{entered=true;await wait;return {ok:true};}});await h.bind();await h.observe();await h.mount();await ready(h);
  const pending=h.present('sidebar',{kind:'show-native-page'});for(let i=0;i<50&&!entered;i++)await drain();assert.equal(entered,true);h.switchPrincipal('replacement');release();const reply=await pending;assert.equal(reply.ok,false);assert.equal(reply.presentation,undefined);
+});
+
+function preparationClock(){let time=0,next=0;const timers=new Map();return {now:()=>time,schedule:(fn,ms)=>{const id=++next;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id),advance(ms){time+=ms;for(const [id,timer]of [...timers])if(timer.at<=time&&timers.delete(id))timer.fn();},get timers(){return [...timers.values()];}};}
+async function pendingNativePreparation(t){
+ const clock=preparationClock(),h=await fixture(t,{elapsedNow:clock.now,schedule:clock.schedule,cancel:clock.cancel});await h.bind();await h.observe();await h.mount();
+ const native=h.service.nativeRepository,original=native.page.bind(native);let pages=0,writing=false;
+ native.page=async(...args)=>{const result=await original(...args);if(!writing&&args[1]?.limit!==512){pages++;if(pages===1){writing=true;try{await h.observe(['p1','p2']);}finally{writing=false;}}}return result;};
+ assert.equal((await h.view()).state,'preparing');for(let i=0;i<200&&!clock.timers.some(timer=>timer.at===50);i++)await drain();
+ assert(clock.timers.some(timer=>timer.at===50),'real snapshot movement must queue its first bounded retry');
+ for(let i=0;i<10;i++)await drain();return {h,clock,pages:()=>pages};
+}
+test('MOCK_IDB finite native publications coalesce one counted retry then both surfaces become ready',async t=>{
+ const {h,clock,pages}=await pendingNativePreparation(t);
+ for(let i=0;i<8;i++){clock.advance(40);await h.observe(['p1','p2','p'+(i+3)]);await h.view('sidebar');}
+ clock.advance(50);let result;for(let i=0;i<200;i++){result=await h.view();if(result.state!=='preparing')break;await drain();}
+ assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(pages(),2);assert.equal((await h.view('sidebar')).state,'ready');
+});
+test('MOCK_IDB endless native publications retain original preparation deadline and late notifications cannot restart it',async t=>{
+ const {h,clock,pages}=await pendingNativePreparation(t);
+ for(let i=0;i<750;i++){clock.advance(40);h.service.views.nativePublished(h.bound.scope);}
+ const result=await h.view();assert.equal(result.ok,false);assert.equal(result.reason,'read-budget-exhausted');assert.equal(pages(),1);
+ h.service.views.nativePublished(h.bound.scope);clock.advance(100);assert.equal((await h.view()).reason,'read-budget-exhausted');assert.equal(pages(),1);
+});
+test('MOCK_IDB revoked pending preparation cannot be rearmed by a late native publication',async t=>{
+ const {h,clock,pages}=await pendingNativePreparation(t);const scope=workspaceScope(h);h.service.invalidate({tabId:1});h.service.views.nativePublished(h.bound.scope);clock.advance(100);
+ assert.equal((await h.view()).ok,false);assert.equal(pages(),1);assert(!clock.timers.some(timer=>timer.at===50));
 });
