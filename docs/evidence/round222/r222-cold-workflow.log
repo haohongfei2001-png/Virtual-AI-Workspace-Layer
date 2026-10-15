@@ -1,0 +1,18 @@
+✔ cold diagnostic copy keeps original verified; patches only named files and detects alteration (209.465949ms)
+✔ runner preserves immediate cold navigation and collects existing worker only after failure (2.168451ms)
+✔ missing receipt observation preserves cold failure and checks native presence (0.826277ms)
+✔ successful first mount cannot claim missing-receipt safety coverage (0.147692ms)
+✔ private leftovers or missing native controls fail safety observation (1.65049ms)
+✔ non-timeout oracle errors are never converted to conditional recovery (0.323909ms)
+✔ C2 cleanup isolates diagnostics and always attempts fixture closure before report writing (5.967164ms)
+✔ separate mode keeps original cold wait and genuine native action with exact request count (0.821901ms)
+✔ one Node suite and two independent free browser jobs retain exact event SHA and mandatory outcomes (2.075321ms)
+✔ browser partition neither deletes nor duplicates any pre-existing actual slice (0.460695ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 302.945565

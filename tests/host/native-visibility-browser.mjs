@@ -26,6 +26,6 @@ export async function launchNativeVisibilityBrowser({chromium,executablePath,pro
   while(Date.now()<until){if(launchError)throw launchError;if(child.exitCode!==null)throw Error('isolated-chrome-exited:'+child.exitCode+':'+stderr);try{endpoint=endpointFromActivePort(await readFile(join(profileDir,'DevToolsActivePort'),'utf8'));break;}catch(e){if(e.code!=='ENOENT')throw e;}await new Promise(r=>setTimeout(r,50));}
   if(!endpoint)throw Error('isolated-chrome-debug-startup-timeout:'+stderr);
   browser=await chromium.connectOverCDP(endpoint,{noDefaults:true});const context=browser.contexts()[0];if(!context)throw Error('missing-isolated-default-context');
-  return {browser,context,close:cleanup,diagnostic:{transport:'isolated-loopback-CDP',noDefaults:true,headed,focusEmulation:'NOT_ENABLED_BY_PLAYWRIGHT',...(historicalNetworkGuard?{networkGuard:{mode:'DISPOSABLE_CHROME_REJECT_PROXY',...historicalNetworkGuard}}:{}),source:'Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned'}};
+  return {browser,context,debugEndpoint:endpoint,close:cleanup,diagnostic:{transport:'isolated-loopback-CDP',noDefaults:true,headed,focusEmulation:'NOT_ENABLED_BY_PLAYWRIGHT',...(historicalNetworkGuard?{networkGuard:{mode:'DISPOSABLE_CHROME_REJECT_PROXY',...historicalNetworkGuard}}:{}),source:'Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned'}};
  }catch(e){try{await cleanup();}catch(cleanupError){throw new AggregateError([e,cleanupError],'isolated-browser-startup-and-cleanup-failed');}throw e;}
 }

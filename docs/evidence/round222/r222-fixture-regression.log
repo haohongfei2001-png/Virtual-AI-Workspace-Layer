@@ -1,0 +1,26 @@
+✔ request diagnostic is bounded and excludes fixture body, principal and credentials (2.609197ms)
+✔ timeout diagnostics preserve real hold predicate and timeout without resetting budget (5.863028ms)
+✔ baseline failure is diagnosed before any native send without bypass or retry (1.299391ms)
+✔ native acceptance creates original send time, holds only detail delivery, and never replays send on release (2.8424ms)
+✔ bad native send cannot create evidence and changed native handler cannot silently bypass fixture (0.825966ms)
+✔ J4 fixture fault never blocks native C2 receipt GET and never changes default native submit (7.315669ms)
+✔ optional J4 server exposes authenticated-only held detail and actual original POST record (60.931849ms)
+✔ native detail uses existing exact historical and ACK codecs without broadening authenticated semantics (7.738407ms)
+✔ continuous interruption oracle requires actual new authenticated read, unmodified budget wait and peer-scope negatives (13.853736ms)
+✔ mixed native submit updates service title/detail and app DOM in one acceptance without holding ACK (1.83547ms)
+✔ portable J4 assets cover all manual asset classes without authority or evidence (5.602305ms)
+✔ same asset bundle cannot be restored into other authenticated context (1.838915ms)
+✔ J4 native context switch is opt-in authenticated roster-validated service (44.864492ms)
+✔ continuous segment never claims missing atomic/schema/profile acceptance (0.268114ms)
+✔ runner uses production file import and actual lifecycle APIs without business-state injection or synthetic grants (4.998503ms)
+✔ repair fault touches only checksum of an existing production root and remains explicit (1.128212ms)
+✔ repaired UNKNOWN route uses stable identity and never expects revoked native title (0.640336ms)
+✔ recovered link oracle requires the original route, enabled UNKNOWN identity and redacted title (1.746035ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 288.3223
