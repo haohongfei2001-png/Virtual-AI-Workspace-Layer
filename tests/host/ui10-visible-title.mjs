@@ -12,15 +12,27 @@ export async function inspectUi10Titles(frame,title){
 export function assertUi10TitleBox(box){
  assert(box&&Number.isFinite(box.width)&&Number.isFinite(box.height)&&box.width>0&&box.height>0,'ui10-title-no-visible-text-box');
 }
-export async function waitForVisibleUi10Title(frame,title){
+export async function waitForVisibleUi10Title(frame,title,{now=()=>performance.now(),pause=ms=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
+ const deadline=now()+15000;
  // Filter before first(): DOM ordering must not pin the wait to a hidden copy.
  // Restrict to actual rendered project/conversation titles, not tooltips/menus.
  const exact=frame.locator('.workspace').getByText(title,{exact:true});
  const visible=exact.and(frame.locator('.workspace .theme-name:visible, .workspace .window-title:visible')).first();
  try{
-  await visible.waitFor({state:'visible',timeout:15000});
-  const box=await visible.boundingBox();assertUi10TitleBox(box);
-  return {box,candidates:await inspectUi10Titles(frame,title)};
+  // A visible locator and its later layout read can straddle a renderer commit.
+  // Observe the actual node and its positive box together; all retries share
+  // the original deadline. Persistent zero-area or hidden text still fails.
+  for(;;){
+   await visible.waitFor({state:'visible',timeout:Math.max(1,deadline-now())});
+   const box=await visible.evaluate(node=>{
+    const r=node.getBoundingClientRect(),s=getComputedStyle(node);
+    return node.isConnected&&s.display!=='none'&&s.visibility==='visible'&&r.width>0&&r.height>0?{x:r.x,y:r.y,width:r.width,height:r.height}:null;
+   },undefined,{timeout:Math.max(1,deadline-now())});
+   assert(now()<=deadline,'ui10-title-observation-deadline');
+   if(box&&Number.isFinite(box.width)&&Number.isFinite(box.height)&&box.width>0&&box.height>0){assertUi10TitleBox(box);return {box,candidates:await inspectUi10Titles(frame,title)};}
+   const remaining=deadline-now();if(remaining<=0){assertUi10TitleBox(box);}
+   await pause(Math.min(50,remaining));
+  }
  }catch(error){
   try{error.ui10TitleDiagnostics=await inspectUi10Titles(frame,title);}catch(diagnosticError){error.ui10TitleDiagnosticError=diagnosticError.message;}
   throw error;
