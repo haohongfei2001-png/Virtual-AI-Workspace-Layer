@@ -178,12 +178,12 @@ jobs:
         run: |
           node tests/host/sys05-stream-package-journey.mjs "$RUNNER_TEMP/sys05-stream.json" --execute-browser
           node -e "const r=require(process.env.RUNNER_TEMP+'/sys05-stream.json'); if(r.status!=='PASS_NARROW_OFFLINE_SYS05_CORRECTNESS'||r.S!=='NARROW_UNINSTRUMENTED_BROWSER_OBSERVED'||r.sourceCommit!==process.env.GITHUB_SHA||r.fullSYS05!=='NOT_ESTABLISHED'||r.workInstrumentation!==false) process.exit(1)"
-      - name: Instrumented Host 10k phase diagnostic (not performance acceptance)
+      - name: Formal Host 10k admitted-index single sample
         if: ${{ !cancelled() }}
         timeout-minutes: 5
         run: |
           set +e
-          FREE_HOST_SCALE_TRACE=1 HOST_SCALE_RUN=1 HOST_SCALE_SIZE=10000 HOST_SCALE_DISTRIBUTION=project-mixed HOST_SCALE_CPU_RATE=1 node tests/host/host-scale-package-browser.mjs "$RUNNER_TEMP/host-scale-10k.json"
+          HOST_SCALE_RUN=1 HOST_SCALE_SIZE=10000 HOST_SCALE_DISTRIBUTION=project-mixed HOST_SCALE_CPU_RATE=1 node tests/host/host-scale-package-browser.mjs "$RUNNER_TEMP/host-scale-10k.json"
           result=$?
           set -e
           test "$result" -eq 2

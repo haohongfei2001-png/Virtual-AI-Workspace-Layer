@@ -2,7 +2,7 @@
 
 ## 最新正式检查点（2026-10-15，隔离云环境）
 
-原分支 / Draft PR16 已提交486693b（Round248），CI44 Node4890/4892，两处旧组合测试仍假设首次Host提交后root为revision1/首读才迁移，已独审精确同步新结构合同；全部旅程作业通过，耐久/兼容作业仅正式10k失败。首tab原30秒仍未完成摄取，实际VERSION_INDEX根revision187、9427引用库存/100项目，最终387条UI RPC成功（379 preparing VIEW）却无ready。171源码/夹具哈希匹配，无完整接纳审计或计时。早迁移实际生效，但没有性能收益证据，暂停继续猜测结构优化；下一性能变更必须有实际阶段测量。详见[Round249](evidence/round249/README.md)。完整81、SYS04/SYS05、G/U与发布条件仍未完成。
+原分支 / Draft PR16 已提交5aa65ec（Round249），CI45 Node4944/4944、12/12 guard mutants通过。新SYS05正式包窄流式正确性实际通过：6400次原生token变更期间真实发送/认证ACK/标题入近期列表，证据准入到可见221ms保守单样本；全部167源码/夹具hash匹配。完整SYS05仍缺内部工作/强制背压与gap等验收。10k插桩双tab初始surface在28.26s/24.00s到位，根库存10000引用/100项目，但诊断未做完整接纳审计或计时；171原文件及3插桩文件hash核实。即刻冷启动和其被动诊断仍失败，其余现有旅程/耐久兼容切片通过。下一轮仅关闭临时插桩，恢复原严格正式10k前后审计/计时，不新增性能猜测修改。详见[Round250](evidence/round250/README.md)。完整81、SYS04/SYS05、G/U与发布条件仍未完成。
 
 ## 历史正式检查点（Round219，保留原记录）
 
@@ -2472,3 +2472,8 @@ CI43 at602732b has4879/4880 Node passes, with one stale static runner guard corr
 ## Round249 — measured phase investigation and native stream candidate
 
 CI44 at486693b passes4890/4892 Node tests; two older first-Host revision/staged-read expectations are corrected with exact INDEX/revision2/sourceRevision1 assertions, preserving all original data/authorization checks. Scoped journeys pass; formal10k still fails initial30s with VERSION_INDEXrev187/9427refs/100P and no admitted-index audit/timing.171 hashes match. Early migration is observed but no throughput gain established. One explicit bounded instrumentation copy will capture native/shared-enlist/producer phases before further performance decisions; its results cannot satisfy the unchanged formal gate. Independently, a new uninstrumented native token-stream plus authenticated ACK/title narrow SYS05 candidate exercises actual activity/UI transition under original budgets.43 independent checks and77 integrated checks pass; browser result remains pending. FullSYS05/backpressure/gap/p95/81/Free release acceptance remains incomplete. [Exact evidence and limits](evidence/round249/README.md).
+
+
+## Round250：保留CI45实际证据，恢复正式10k门槛
+
+见[evidence/round250](evidence/round250/README.md)。新增正式包SYS05窄正确性通过，10k仅插桩摄取完成；关闭TRACE进行下一严格正式验证。无产品代码修改，无阈值放宽。
