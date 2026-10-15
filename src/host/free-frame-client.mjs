@@ -18,7 +18,7 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
  * in either frame; parent messages remain the lifecycle's public join/suspend. */
 export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,onPresentationRequest=()=>{},onState=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeNonce,navigationFactory=createNavigation,recoveryFactory=createFreeFrameRecovery,backupFactory=createFreeFrameBackup,snippetsFactory=createFreeFrameSnippets}={}){
  const policy=createURLPolicy({origin:parentOrigin});
- let dispatchEpoch=0;
+ let dispatchEpoch=0,dispatchPending=null,queuedDispatchView=null;
  let navigation=null,root=null,plans=new Map(),projectPlans=new Map(),grant=null,grantCurrent=()=>false,serial=0,activeRead=null,activeLocation=null,query={segment:0,offset:0,limit:8},closed=true,splits=0,dirty=false,currentNativeURL='',presentationRevision=0,presentationIntent='',workspaceRevision=null,viewSession=null,projectionScope=null,projectionVersion=null,horizonPending=false;
  let wasHidden=false,visibilityAttached=false,candidates=null,candidateRoot=null,candidateRun=0,candidateOffset=0;
  let candidateRestore=null,candidateMigrationId=null,candidateMigrationProject=null,migrationListening=false,workspaceEntered=false,workspaceModePending=false;
@@ -31,7 +31,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  const recoverable=reason=>isFreeRecoveryReason(reason)||['corrupt-record','invalid-partition-manifest','invalid-partition-piece'].includes(reason);
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function clear(){dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function ensureCandidates(){
   if(!candidates){candidateRoot=doc.createElement('div');candidateRoot.setAttribute('data-vaiwl-candidate-root','');if(typeof root?.before==='function')root.before(candidateRoot);else privateRoot.append(candidateRoot);candidates=createFreeFrameCandidates({document:doc,container:candidateRoot,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
     const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
@@ -124,7 +124,9 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  async function read(value,publish,location=null){
   if(recovery||backup||location&&!locationCurrent(location))return null;
-  const requested=boundedQuery(value);if(JSON.stringify(query)!==JSON.stringify(requested)){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;}if(!location)query=requested;const ticket=++serial;activeRead?.abort();const controller=new AbortController();activeRead=controller;activeLocation=location;
+  // A ready VIEW replaces this role's issued native plans. Do not replace them
+  // between the two native authorizations; keep only the latest requested read.
+  const requested=boundedQuery(value);if(dispatchPending){queuedDispatchView={value:requested,location};return null;}if(JSON.stringify(query)!==JSON.stringify(requested)){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;}if(!location)query=requested;const ticket=++serial;activeRead?.abort();const controller=new AbortController();activeRead=controller;activeLocation=location;navigation?.setNativeNavigationPending?.(true);
   if(budget.remaining()===Infinity)splits=0;
   if(!location&&!budget.begin()){fail('read-budget-exhausted');return null;}
   let effective={...requested},polls=0;
@@ -175,10 +177,10 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    }
    if(!live(ticket)||location&&!locationCurrent(location))return null;plans=nextPlans;projectPlans=nextProjectPlans;searchSnippetIds=nextSnippetIds;projectionScope=response.page.scope;projectionVersion=JSON.stringify([response.page.revision??null,response.page.workspaceRevision??null,response.page.evidenceRevision??null,response.page.viewRevision??null]);workspaceRevision=response.page.workspaceRevision??null;viewSession=nextSession??null;currentNativeURL=currentRoute?.nativeUrl??'';currentRef=currentRoute?.refId?{id:currentRoute.refId,nativeUrl:currentRoute.nativeUrl}:null;query=effective;resumeQuery=structuredClone(effective);if(!location&&!dirty)budget.complete();if(publish){navigation.updateFrameProjection(response.page);if(workspaceModePending&&navigation.workspaceEntered?.()===true)workspaceModePending=false;}if(!snippets&&!location)applyPresentation(response.page.presentation);state({state:'ready'});if(publish){if(response.nativeCandidates===true){if(!migrationListening){for(const type of ['pointerdown','keydown','wheel'])doc.addEventListener?.(type,interruptMigration,true);migrationListening=true;}void refreshCandidates();}else clearCandidates();}if(location&&live(ticket)&&migration.isPending(location.id)&&candidateMigrationId===location.id){dirty=true;}return response.page;
   }}catch(error){if(!location&&live(ticket))fail(error?.message==='frame-read-cancelled'?'frame-view-unavailable':error?.message??'frame-view-unavailable');return null;}
-  finally{if(activeRead===controller){activeRead=null;activeLocation=null;if(dirty&&live(ticket)){dirty=false;void read(query,true);}else if(live(ticket))applyCandidateMigration();}}
+  finally{if(activeRead===controller){activeRead=null;activeLocation=null;if(dirty&&live(ticket)){dirty=false;void read(query,true);}else if(live(ticket))applyCandidateMigration();navigation?.setNativeNavigationPending?.(!!activeRead||!!dispatchPending);}}
   return null;
  }
- function invalidate(){if(activeLocation){const attempt=activeLocation,record=locatedMigrations.get(attempt.id);if(record&&locationCurrent(attempt))record.retry=true;attempt.cancelled=true;activeRead?.abort();}if(bootstrapping){dirty=true;return;}if(snippets){snippets.invalidate?.();return;}if(backup){backup.invalidate?.();return;}if(recovery){recovery.invalidate?.();return;}if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;if(activeRead||horizonPending)dirty=true;else void read(query,true);}
+ function invalidate(){if(activeLocation){const attempt=activeLocation,record=locatedMigrations.get(attempt.id);if(record&&locationCurrent(attempt))record.retry=true;attempt.cancelled=true;activeRead?.abort();}if(bootstrapping){dirty=true;return;}if(snippets){snippets.invalidate?.();return;}if(backup){backup.invalidate?.();return;}if(recovery){recovery.invalidate?.();return;}if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;if(activeRead||horizonPending||dispatchPending)dirty=true;else void read(query,true);}
  function applyPresentation(value){
   if(value===undefined)return;
   if(!value||!Number.isSafeInteger(value.revision)||value.revision<0||!value.intent||!['show-workspace','enter-reading','show-native-page','search-known','show-working-set'].includes(value.intent.kind))throw Error('invalid-frame-presentation');
@@ -284,7 +286,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  async function flushResume(){
   resumeTimer=null;if(!resumeQueued||closed||!grantCurrent())return;
   const item=resumeQueued;resumeQueued=null;if(JSON.stringify(item.expectedQuery)!==JSON.stringify(query))return;const current=grant,renderer=navigation,attempt={};resumeWriting=attempt;
-  try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_SAVE_VIEW',grantId:current.id,mountId:current.mountId,expectedQuery:item.expectedQuery,view:item.view}),{now:elapsedNow,schedule,cancel});if(!closed&&grant===current&&navigation===renderer&&JSON.stringify(query)===JSON.stringify(item.expectedQuery)&&result?.ok===true)resumeLast=item.key;}catch{}
+  try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_SAVE_VIEW',grantId:current.id,mountId:current.mountId,expectedQuery:item.expectedQuery,view:item.view}),{now:elapsedNow,schedule,cancel});if(!closed&&grant?.id===current.id&&navigation===renderer&&JSON.stringify(query)===JSON.stringify(item.expectedQuery)&&result?.ok===true)resumeLast=item.key;}catch{}
   finally{if(resumeWriting===attempt){resumeWriting=false;if(!closed&&navigation===renderer&&resumeQueued&&resumeTimer===null)resumeTimer=schedule(flushResume,100);}}
  }
  async function bootstrapResume(){
@@ -305,12 +307,14 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  async function dispatchCurrent(command){
   if(!exactHostRecord(command,['actionId','uiGrantId','mountId','planRevision','targetKey'])||closed||!grantCurrent()||backup||recovery||snippets||command.uiGrantId!==grant?.id||command.mountId!==grant?.mountId)return {state:'blocked'};
   const attempt=dispatchEpoch,current=grant,renderer=navigation,issued=[...plans.values(),...projectPlans.values()].find(item=>item.targetKey===command.targetKey&&item.plan.planRevision===command.planRevision&&(isCurrentNavigationPlan(item.plan)||isResolvedControlNavigationPlan(item.plan)));
-  if(!issued)return {state:'blocked'};
+  // Old rendered controls cannot activate while their replacement VIEW is pending.
+  if(!issued||activeRead||dispatchPending||horizonPending)return {state:'blocked'};
+  const pending={};dispatchPending=pending;navigation?.setNativeNavigationPending?.(true);
   try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:issued.plan.mode==='native-control'?'HOST_UI_DISPATCH_NATIVE':'HOST_UI_DISPATCH_CURRENT',grantId:current.id,mountId:current.mountId,actionId:command.actionId,planRevision:command.planRevision,targetKey:command.targetKey}),{now:elapsedNow,schedule,cancel});
    if(closed||!grantCurrent()||grant?.id!==current.id||navigation!==renderer||dispatchEpoch!==attempt||backup||recovery||snippets||![...plans.values(),...projectPlans.values()].includes(issued)||result?.ok!==true)return {state:'blocked'};
    if(issued.plan.mode==='native-control'&&result.state==='unconfirmed')return {state:'unconfirmed'};
    return result.state===(issued.plan.mode==='native-control'?'dispatched':'already-current')?{state:result.state}:{state:'blocked'};
-  }catch{return {state:'unconfirmed'};}
+  }catch{return {state:'unconfirmed'};}finally{if(dispatchPending===pending){dispatchPending=null;const queued=queuedDispatchView;queuedDispatchView=null;if(!closed&&grantCurrent()&&grant?.id===current.id&&navigation===renderer){if(queued){dirty=false;void read(queued.value,true,queued.location);}else if(dirty){dirty=false;invalidate();}navigation?.setNativeNavigationPending?.(!!activeRead);}}}
  }
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;

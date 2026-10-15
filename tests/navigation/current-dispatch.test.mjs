@@ -9,6 +9,7 @@ function dom(){
   constructor(tag){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.attrs={};this.dataset={};this.style={};this.events={};this.isConnected=true;this.scrollTop=0;this.clientWidth=0;this.clientHeight=0;this.textContent='';}
   setAttribute(k,v){this.attrs[k]=String(v);if(k==='class')this.className=String(v);}
   getAttribute(k){return k==='data-focus-key'?this.dataset.focusKey??this.attrs[k]??null:this.attrs[k]??null;}
+  removeAttribute(k){delete this.attrs[k];}
   hasAttribute(k){return k==='data-focus-key'?this.getAttribute(k)!==null:k in this.attrs;}
   append(...nodes){for(const n of nodes){n.parentNode=this;this.children.push(n);}}
   replaceChildren(...nodes){this.children=[];this.append(...nodes);}
@@ -116,3 +117,5 @@ for(const phase of ['pending','settled'])test(`actual time-range onchange cancel
  const select=f.pane().querySelector('select');assert.equal(typeof select.onchange,'function');select.value='14';select.onchange();assert.equal(feedback(f),null);if(phase==='pending')f.reply({state:'unconfirmed'});await tick();assert.equal(feedback(f),null);assert.equal(f.commands.length,1);assert.equal(horizons.length,1);assert.equal(f.nav.view().mode,'workspace');
  }finally{f.nav.stop();}
 });
+
+for(const mode of ['same-target','native-control'])test('pending VIEW disables old delegated link and newly rendered link: '+mode,async()=>{const f=setupCurrent({mode});try{f.nav.setNativeNavigationPending(true);assert.equal(f.link.getAttribute('aria-disabled'),'true');assert.equal(f.link.click().defaultPrevented,true);assert.equal(f.commands.length,0);f.nav.updateFrameProjection(projection());const link=f.pane().querySelectorAll('a').find(n=>n.getAttribute('data-ref-id')==='P2_0');assert.equal(link.getAttribute('aria-disabled'),'true');link.click();assert.equal(f.commands.length,0);f.nav.setNativeNavigationPending(false);assert.equal(link.getAttribute('aria-disabled'),null);link.click();assert.equal(f.commands.length,1);f.reply({state:'unconfirmed'});await tick();}finally{f.nav.stop();}});

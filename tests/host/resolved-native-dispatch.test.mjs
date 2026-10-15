@@ -73,3 +73,16 @@ test('current conversation with loaded native handle normalizes to body-certifie
  const row=helper.plan({targets:[{refId:id,navigationURL:url}]})[0];assert.equal(row.plan.mode,'same-target');assert.equal(row.plan.target.liveHandle,null);assert.equal(row.plan.bodyProofId,'proof');
  const result=await helper.activate({command:{actionId:'action',uiGrantId:'grant',mountId:'mount',planRevision:row.plan.planRevision,targetKey:row.targetKey},expiresAt:new Date(Date.now()+5900).toISOString()});assert.equal(result.state,'already-current');assert.equal(reading,1);assert.equal(clicks,0);
 });
+
+test('CI33: ready VIEW replaces issued group between native authorizations, no native click and unconfirmed',async()=>{
+ const f=runtime();let frame,clicks=0,authorizations=0;
+ const node={isConnected:true,click(){clicks++;}},policy=createURLPolicy(),control=f.row.plan.control;
+ const actions=createNativeActions({discovery:{getNode:()=>node},urlPolicy:policy,currentURL:()=>f.context.parentFrame.actualURL,inputRisk:()=>({state:'clear',flags:[]}),authorize:async command=>{authorizations++;return frame.authorize(command)&&f.service.authorize(command,f.context.parentFrame);},beforeDispatch:plan=>{frame.beforeDispatch(plan);},now:()=>100});
+ const adapter={...actions,currentURL:()=>f.context.parentFrame.actualURL,resolveLoadedTargets:()=>[control]};
+ frame=createFrameNativePlans({adapter,bindingCurrent:()=> 'same-binding',captureIntent:()=>()=>true,showNativeReading:()=>{const refreshed=frame.plan({targets:[{refId:id,navigationURL:url}]});f.register(refreshed);return true;},now:()=>1800000000000,elapsedNow:()=>100});
+ const issued=frame.plan({targets:[{refId:id,navigationURL:url}]})[0];f.register([issued]);
+ f.setBridge(({command})=>frame.activate({command,expiresAt:new Date(1800000000000+6000).toISOString()}));
+ assert.deepEqual(await f.handle({planRevision:issued.plan.planRevision,targetKey:issued.targetKey}),{ok:true,state:'unconfirmed'});
+ assert.equal(authorizations,2);assert.equal(clicks,0);
+ assert.equal((await f.handle({planRevision:issued.plan.planRevision,targetKey:issued.targetKey})).ok,false,'consumed action cannot replay');
+});

@@ -13,7 +13,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const framed=surface!==null;
   if(framed&&(!['workspace','sidebar'].includes(surface.role)||surface.root?.ownerDocument!==doc))throw Error('invalid-navigation-surface');
   const token='vaiwl-'+Math.random().toString(36).slice(2), views=new Map();let snapshot=null,view=null,groups=[],roots=null,stopped=false,mask=null,searchQuery=null,searchTheme=null,searchCapacity=24,frameSearchOffset=0,frameSearchWaiting=false,frameWorkingSetOffset=0,frameWorkingSetWaiting=false,lastSelected=null,menu=null,selectionPending=false,pendingAnchor=null,anchorFeedback=null;
-  let navigationIntent=0,navigationFeedback=null;
+  let navigationIntent=0,navigationFeedback=null,nativeNavigationPending=false;
+  function setNativeNavigationPending(value){nativeNavigationPending=value===true;for(const pane of [roots?.workspace,roots?.sidebar])for(const control of pane?.shadow.querySelectorAll('[data-native-plan-control]')??[]){if(nativeNavigationPending)control.setAttribute('aria-disabled','true');else control.removeAttribute('aria-disabled');}}
   function clearNavigationFeedback(){navigationFeedback=null;for(const pane of [roots?.workspace,roots?.sidebar])pane?.shadow.querySelector('.navigation-feedback')?.remove();}
   function advanceNavigationIntent(preserveFeedback=false){navigationIntent++;if(preserveFeedback&&navigationFeedback&&navigationFeedback.scope===snapshot?.scope&&navigationFeedback.url===adapter.currentURL())navigationFeedback.intent=navigationIntent;else clearNavigationFeedback();return navigationIntent;}
   function renderNavigationFeedback(parent){
@@ -177,9 +178,11 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const delegation=['native-control','same-target'].includes(plan?.mode)&&typeof onDispatch==='function'&&['targetKey','uiGrantId','mountId'].every(key=>typeof issued?.[key]==='string'&&issued[key])&&Number.isSafeInteger(plan.planRevision);
     const valid=ref.available!==false&&!ref.anchor&&((plan?.mode==='href'&&resolvedOK&&['same-tab','new-tab-preserve-current'].includes(plan.disposition))||(delegation&&(resolvedOK||plan.target?.kind==='live-control')));
     if(!valid){a.dataset.navigationReason=ref.anchor?'snippet-frame-controller-unavailable':'native-plan-unavailable';explainUnavailable(a,ref.anchor?'该片段暂不能直接定位，请返回原生页面使用搜索。':'当前无法确认聊天入口，请返回原生页面继续。',{label:true});return;}
+    if(delegation){a.setAttribute('data-native-plan-control','');if(nativeNavigationPending)a.setAttribute('aria-disabled','true');}
     if(safeHref){a.href=safeHref;a.target=plan.mode==='href'&&plan.disposition==='same-tab'?'_top':'_blank';a.rel='noopener noreferrer';}
     else{a.setAttribute('role','button');a.tabIndex=0;}
     a.addEventListener('click',event=>{
+      if(delegation&&nativeNavigationPending){event.preventDefault();return;}
       if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;
       const dispatchIntent=advanceNavigationIntent(),dispatchProjection=frameProjection,dispatchScope=snapshot?.scope,dispatchURL=adapter.currentURL();
       if(plan.mode==='href')return; // Browser default only; no duplicate RPC or fallback.
@@ -476,5 +479,5 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(stopped||!snapshot||!['show-workspace','enter-reading','show-native-page','search-known','show-working-set'].includes(intent?.kind))return false;
     if(interacting()||updateTimer!==null){pendingPresentation={scope:snapshot.scope,intent:{kind:intent.kind,...(intent.kind==='search-known'?{themeId:intent.themeId??null}:{})}};finishInteraction();return true;}
     if(intent?.kind==='show-workspace')showWorkspace(false);else if(['enter-reading','show-native-page'].includes(intent?.kind))enterReading(false);else if(intent?.kind==='search-known')findKnown(intent.themeId??null,false);else if(intent?.kind==='show-working-set')showWorkingSet(false);else return false;return true;}
-  return Object.freeze({needsNativeProject,workspaceEntered(){if(stopped||!framed||!frameProjection||!view)return false;advanceNavigationIntent(true);view.mode='workspace';return true;},revealNativeProject,restoreFrameView(value){if(!framed||stopped)return false;resumeLayout=validateFrameResumeView(value);return true;},showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
+  return Object.freeze({setNativeNavigationPending,needsNativeProject,workspaceEntered(){if(stopped||!framed||!frameProjection||!view)return false;advanceNavigationIntent(true);view.mode='workspace';return true;},revealNativeProject,restoreFrameView(value){if(!framed||stopped)return false;resumeLayout=validateFrameResumeView(value);return true;},showTimePolicyNotice,clearTimePolicyNotice,present,updateFrameProjection,update,updatePreparedFree,layout,invalidate,stop,showWorkspace,enterReading,currentRef:()=>current().ref,status:()=>({...status}),view:()=>view,roots:()=>roots});
 }

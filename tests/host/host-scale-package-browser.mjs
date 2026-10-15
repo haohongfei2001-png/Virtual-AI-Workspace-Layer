@@ -24,8 +24,8 @@ if(process.env.HOST_SCALE_RUN!=='1'){
  const scenario=hostScaleScenario({size:Number(process.env.HOST_SCALE_SIZE??1000),distribution:process.env.HOST_SCALE_DISTRIBUTION??'project-mixed',cpuRate:Number(process.env.HOST_SCALE_CPU_RATE??1)});
  const hash=x=>createHash('sha256').update(x).digest('hex');
  const report={sourceCommit:process.env.FREE_SOURCE_COMMIT??null,requirement:'SYS-04 / original F1',status:'NOT_RUN',acceptance:'NOT_ESTABLISHED',realChatGPT:'NOT_RUN',scenario,expected:hostScaleExpected(scenario),remaining:[...HOST_SCALE_GAPS],ingestion:[],errors:[],rpc:[],rpcTraceDropped:0};
- let server,context,manifest,manifestPath,manifestHash,directory,activePage;
- const sourceFiles=['host-scale-package-browser.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
+ let server,context,manifest,manifestPath,manifestHash,directory,activePage,loadedExtensionId;
+ const sourceFiles=['host-scale-package-browser.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sourceFiles.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -47,7 +47,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
     return result;
    };
   });
-  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});report.browserVersion=context.browser().version();
+  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});loadedExtensionId=id;report.browserVersion=context.browser().version();
   const surfaces=page=>waitHostScaleSurfaces(page,{extensionId:id,timeout:30000,onObservation:value=>{report.surfaceWait??=[];report.surfaceWait.push({phase:report.phase,...value});if(report.surfaceWait.length>16)report.surfaceWait.shift();}});
   const pages=[],ingestionStarted=performance.now();
   for(let tab=0;tab<2;tab++){
@@ -121,7 +121,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   report.rpcObservation=report.rpc.length?{scope:'INGESTION_AND_MEASUREMENT_DIAGNOSTIC',count:report.rpc.length,maxMs:Math.max(...report.rpc.map(r=>r.elapsedMs)),over6000:report.rpc.filter(r=>r.elapsedMs>6000).length}: 'NOT_OBSERVED';
   assert.equal(report.measurement.status,'MEASURED_AT_STABLE_ADMITTED_INDEX','scale measurement not established: '+report.measurement.status);
   assert.deepEqual(report.errors,[]);report.status='PARTIAL_SYS04_NOT_ACCEPTED';process.exitCode=2;
- }catch(error){report.status=context?'FAIL':'NOT_RUN_BROWSER_OR_PACKAGE_STARTUP';report.error=error.stack;report.failure={phase:report.phase,rpcCount:report.rpc.length,rpcTail:report.rpc.slice(-16),facts:await hostScaleFailureFacts(activePage).catch(failure=>({captureError:failure.message}))};process.exitCode=1;}
+ }catch(error){const {hostScaleFailureProgress}=await import('./fixtures/host-scale-progress.mjs');report.nativeIndexProgress=await hostScaleFailureProgress(activePage,loadedExtensionId).catch(()=>({status:'DIAGNOSTIC_UNAVAILABLE',acceptance:'NOT_ESTABLISHED'}));report.status=context?'FAIL':'NOT_RUN_BROWSER_OR_PACKAGE_STARTUP';report.error=error.stack;report.failure={phase:report.phase,rpcCount:report.rpc.length,rpcTail:report.rpc.slice(-16),facts:await hostScaleFailureFacts(activePage).catch(failure=>({captureError:failure.message}))};process.exitCode=1;}
  finally{
   const cleaned=await cleanupHostScaleRun({report,context,server,directory,verify:async()=>{
   report.sourceChangedDuringRun=manifest?(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean):null;
