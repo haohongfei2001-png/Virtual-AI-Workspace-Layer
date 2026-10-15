@@ -2408,3 +2408,11 @@ A real-binding L counterexample now gates an already-counted preparation retry o
 CI30 atc82e13e270766c4977181037c660c76555344520 has4652/4652 Node PASS. Both initial scale tabs now prepare their surfaces, but native-tail search fails with an empty query before complete admission audit or timing. The test-only candidate performs the existing native-focus surrender before reading the exact visible tail anchor, and independently validates its real ID/title.18 lightweight tests and independent3 checks pass; actual1k timing remains unestablished. [Evidence](evidence/round235/README.md).
 
 Both rapid-retry modes, full scopedJ2/J3/firstsend, cold variants and48 layout cells pass this run, with earlier failures preserved. J1 later P1 navigation and J4 peer restoration fail; J4 mixed pending/worker recovery/idempotence still pass. No fullJ4/81/SYS04/SYS05 or release claim. Draft NOT_RELEASE_READY.
+
+## 2026-10-15 Round236 — first stable admitted1k sample; advance one10k baseline
+
+CI31 atd56fba8b5c7572a1a1ffd7cbf8c166dd5ca7a0a8 has all3 jobs SUCCESS and4666/4666 Node PASS. Existing scoped journeys including J1nine/J4nineteen implemented steps pass, retaining their partial acceptance labels and prior intermittent failures. [Actual evidence](evidence/round236/README.md).
+
+Formal Host1k achieves exact1000 distinct refs/10 projects, stable pre/post revision66 and no missing/duplicate/unexpected refs. Local exact/broad/next single samples are87.93/88.70/129.90ms including automation; two24-row pages pass independent ID/title checks. All1000 membership states are UNKNOWN, so native project-mixed truth does not certify membership. No p95/fullSYS04/SYS05/Free acceptance is claimed.
+
+The same one scale CI slot advances to approved10000/project-mixed/1x with unchanged5-minute fault bound, exactSHA and complete stable audits; no100k yet. All original other gates remain mandatory. Draft NOT_RELEASE_READY.
