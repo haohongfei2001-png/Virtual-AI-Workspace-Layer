@@ -4,21 +4,41 @@ import {tokenOK} from '../b1/identity.mjs';
  * and a native click/Enter may also dispatch submit. No body or editor value is read. */
 export function createNativeSendIntentObserver({document:doc,profile,onIntent,onPrepare=null,makeId=()=>crypto.randomUUID(),now=Date.now}={}){
  if(!doc?.defaultView||typeof doc.addEventListener!=='function'||typeof onIntent!=='function'||onPrepare!==null&&typeof onPrepare!=='function'||typeof makeId!=='function'||typeof now!=='function')throw Error('invalid-native-send-intent');
- const config=profile?.sendIntent?{...profile.sendIntent}:null;
+ const supplied=profile?.sendIntent;
+ let editorKinds=['textarea'];
+ if(supplied&&Object.hasOwn(supplied,'editorKinds')){
+  const entry=Object.getOwnPropertyDescriptor(supplied,'editorKinds');
+  if(!entry||!Object.hasOwn(entry,'value'))throw Error('invalid-send-intent-profile');
+  const kinds=entry.value,length=Object.getOwnPropertyDescriptor(kinds??{},'length')?.value;
+  if(!Array.isArray(kinds)||Object.getPrototypeOf(kinds)!==Array.prototype||!Number.isSafeInteger(length)||length<1||length>2||Reflect.ownKeys(kinds).length!==length+1)throw Error('invalid-send-intent-profile');
+  editorKinds=[];for(let i=0;i<length;i++){const item=Object.getOwnPropertyDescriptor(kinds,String(i));if(!item||!Object.hasOwn(item,'value')||!['textarea','contenteditable'].includes(item.value)||editorKinds.includes(item.value))throw Error('invalid-send-intent-profile');editorKinds.push(item.value);}
+ }
+ const config=supplied?{...supplied,editorKinds}:null;
  if(config&&!['formSelector','editorSelector','sendButtonSelector'].every(k=>typeof config[k]==='string'&&config[k].length>0&&config[k].length<=256))throw Error('invalid-send-intent-profile');
  if(config&&config.enterSends!==undefined&&typeof config.enterSends!=='boolean')throw Error('invalid-send-intent-profile');
  let stopped=false,composing=null,last=null;const listeners=[];
  function shown(node){if(!node?.isConnected||node.ownerDocument!==doc||!node.getClientRects().length)return false;let depth=0;for(let p=node;p;p=p.parentElement){if(++depth>64)return false;const s=doc.defaultView.getComputedStyle(p);if(p.hidden||p.inert||p.getAttribute('aria-hidden')==='true'||s.display==='none'||['hidden','collapse'].includes(s.visibility))return false;}return true;}
  function available(node){return !node.disabled&&node.getAttribute('aria-disabled')!=='true'&&!node.matches(':disabled');}
- function boundary(allowDisabledButton=false){const forms=doc.querySelectorAll(config.formSelector),editors=doc.querySelectorAll(config.editorSelector),buttons=doc.querySelectorAll(config.sendButtonSelector);if(forms.length!==1||editors.length!==1||buttons.length!==1)return null;const [form]=forms,[editor]=editors,[button]=buttons;if(form.tagName!=='FORM'||!form.contains(editor)||!form.contains(button)||button.form!==form||editor.form&&editor.form!==form||![form,editor,button].every(shown)||(!available(editor)||!allowDisabledButton&&!available(button))||editor.readOnly||['file','reset'].includes(button.type)||!['BUTTON','INPUT'].includes(button.tagName))return null;return {form,editor,button};}
+ function editable(node){return !node.readOnly&&node.getAttribute('aria-readonly')!=='true'&&(config.editorKinds.includes('textarea')&&node.tagName==='TEXTAREA'||config.editorKinds.includes('contenteditable')&&node.tagName==='DIV'&&node.getAttribute('role')==='textbox'&&['true','plaintext-only'].includes(node.getAttribute('contenteditable'))&&node.isContentEditable===true&&node.parentElement?.isContentEditable!==true);}
+ function editorTarget(editor,target){
+  if(editor===target)return true;
+  if(editor.tagName!=='DIV'||!editor.contains(target))return false;
+  // A rich editor may contain native widgets or a separate editing island.
+  // Their Enter/focus events do not establish this editing host's send path.
+  let depth=0;for(let node=target;node&&node!==editor;node=node.parentElement){
+   if(++depth>64||node.ownerDocument!==doc||!node.isConnected||node.isContentEditable!==true||['INPUT','TEXTAREA','BUTTON','SELECT','OPTION'].includes(node.tagName)||node.getAttribute('contenteditable')!==null||node.getAttribute('role')==='textbox')return false;
+   if(node.parentElement===editor)return true;
+  }return false;
+ }
+ function boundary(allowDisabledButton=false){const forms=doc.querySelectorAll(config.formSelector),editors=doc.querySelectorAll(config.editorSelector),buttons=doc.querySelectorAll(config.sendButtonSelector);if(forms.length!==1||editors.length!==1||buttons.length!==1)return null;const [form]=forms,[editor]=editors,[button]=buttons;if(form.tagName!=='FORM'||!form.contains(editor)||!form.contains(button)||button.form!==form||editor.form&&editor.form!==form||![form,editor,button].every(shown)||(!available(editor)||!allowDisabledButton&&!available(button))||!editable(editor)||['file','reset'].includes(button.type)||!['BUTTON','INPUT'].includes(button.tagName))return null;return {form,editor,button};}
  function handle(event){if(stopped||event.isTrusted!==true)return;try{
   // A native rerender can remove/disable Send before compositionend. End only
   // the tracked editor's composition; this grants no intent or body authority.
-  if(event.type==='compositionend'){if(composing&&(composing===event.target||composing.contains(event.target)))composing=null;return;}
+  if(event.type==='compositionend'){if(composing&&(composing.target===event.target||editorTarget(composing.editor,event.target)))composing=null;return;}
   const preparing=event.type==='focusin'||event.type==='pointerdown';
-  const b=boundary(event.type==='compositionstart'||preparing);if(!b)return;const inEditor=b.editor===event.target||b.editor.contains(event.target);
-  if(event.type==='compositionstart'){if(inEditor)composing=b.editor;return;}
-  if(composing===b.editor||event.isComposing===true||event.keyCode===229||event.defaultPrevented||event.shiftKey||event.ctrlKey||event.metaKey||event.altKey)return;
+  const b=boundary(event.type==='compositionstart'||preparing);if(!b)return;const inEditor=editorTarget(b.editor,event.target);
+  if(event.type==='compositionstart'){if(inEditor)composing={editor:b.editor,target:event.target};return;}
+  if(composing?.editor===b.editor||event.isComposing===true||event.keyCode===229||event.defaultPrevented||event.shiftKey||event.ctrlKey||event.metaKey||event.altKey)return;
   if(preparing){if((inEditor||available(b.button)&&(b.button===event.target||b.button.contains(event.target)))&&(event.type!=='pointerdown'||event.button===0)){try{onPrepare?.();}catch{/* Preparation cannot interfere with native focus or input. */}}return;}
   if(event.type==='keydown'){if(config.enterSends!==true||!inEditor||event.key!=='Enter'||event.repeat)return;}else if(event.type==='click'){if(event.button!==0||!(b.button===event.target||b.button.contains(event.target)))return;}else return;
   const time=now();if(!Number.isFinite(time))return;const observedAt=new Date(time).toISOString();

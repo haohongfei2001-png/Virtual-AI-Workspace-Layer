@@ -1,0 +1,109 @@
+{
+  "evidence": "WEB_MECHANISM_ONLY_ACTUAL_CDP_PAGE_SCRIPT_DISABLED",
+  "scope": "Exact production mount CSS and browser popovertargetaction hide with page script execution disabled; no broker, private authority cleanup, extension disable or full MV3 acceptance claim.",
+  "scriptHash": "651135f7da186d89f48223634ffdecf50dcd5a7d57e604b8ab0587519d172cde",
+  "mountSourceHash": "8431ca3951f3dea8973d779952a318a6aa9f9da71b27232c176dc6046699ac06",
+  "fixtureHashes": {
+    "manifest.json": "3b5468a66a8bf6024fcd2c40f2f57c495e7af76d13e48c699e88728c7eff193d",
+    "child.html": "c0ab68c8c5f103f6366bfdfb4ef8f55733955cbcaa7b2271924de8fee1e5f639"
+  },
+  "results": [
+    {
+      "name": "workspace-browser-native-hide-releases-native-mask-with-page-script-disabled",
+      "status": "PASS_MECHANISM_ONLY",
+      "mouse": {
+        "x": 347.9921875,
+        "y": 62.5
+      },
+      "observed": {
+        "workspaceOpen": false,
+        "sidebarOpen": true,
+        "reading": {
+          "visibility": "visible",
+          "interactivity": "auto",
+          "display": "block"
+        },
+        "history": {
+          "visibility": "hidden",
+          "interactivity": "inert",
+          "display": "block"
+        },
+        "workspace": {
+          "visibility": "hidden",
+          "interactivity": "inert",
+          "display": "flex"
+        },
+        "sidebar": {
+          "visibility": "visible",
+          "interactivity": "auto",
+          "display": "flex"
+        }
+      },
+      "jsClickSentinelAbsent": true
+    },
+    {
+      "name": "sidebar-browser-native-hide-releases-native-mask-with-page-script-disabled",
+      "status": "PASS_MECHANISM_ONLY",
+      "mouse": {
+        "x": 67.9921875,
+        "y": 192.5
+      },
+      "observed": {
+        "workspaceOpen": false,
+        "sidebarOpen": false,
+        "reading": {
+          "visibility": "visible",
+          "interactivity": "auto",
+          "display": "block"
+        },
+        "history": {
+          "visibility": "visible",
+          "interactivity": "auto",
+          "display": "block"
+        },
+        "workspace": {
+          "visibility": "hidden",
+          "interactivity": "inert",
+          "display": "flex"
+        },
+        "sidebar": {
+          "visibility": "hidden",
+          "interactivity": "inert",
+          "display": "flex"
+        }
+      },
+      "jsClickSentinelAbsent": true
+    }
+  ],
+  "before": {
+    "workspaceOpen": true,
+    "sidebarOpen": true,
+    "reading": {
+      "visibility": "hidden",
+      "interactivity": "inert",
+      "display": "block"
+    },
+    "history": {
+      "visibility": "hidden",
+      "interactivity": "inert",
+      "display": "block"
+    },
+    "workspace": {
+      "visibility": "visible",
+      "interactivity": "auto",
+      "display": "flex"
+    },
+    "sidebar": {
+      "visibility": "visible",
+      "interactivity": "auto",
+      "display": "flex"
+    }
+  },
+  "scriptExecutionDisabled": true,
+  "screenshot": "/private/tmp/vaiwl-nojs-close-TnQG7D/both-closed-nojs.png",
+  "status": "MECHANISM_SUCCEEDED_NOT_PRODUCT_ACCEPTANCE",
+  "browserVersion": "155.0.8059.40",
+  "sourceChangedDuringRun": false,
+  "scriptChangedDuringRun": false,
+  "fixtureChangedDuringRun": false
+}

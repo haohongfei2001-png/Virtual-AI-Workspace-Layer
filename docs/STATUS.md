@@ -2016,3 +2016,14 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 当前生产mount闭态实际浏览器机制审计：关闭frame不进入trusted Tab序列，父/子AX不暴露关闭iframe/button，workspace单独关闭只保留sidebar AX，native输入自然让位；该审计明确机制范围。正式package实际 **disable 5/5、uninstall 4/4、re-enable 3/3 PASS**，覆盖双开/单开/双关，disable另有合成generation；原Frame引用及闭态私有内容阳性对照、无visibility过滤、connected不可读即失败。卸载4态均旧frame detached、owned清除、native mask自然释放，未手动关闭；原document/editor/draft保持，原生历史导航仅一次且不复活。重新启用不恢复旧私有frame，新document拒绝旧grant。
 - 同一正式包J3连续旅程仍为 **12 PASS / 2 NOT_COVERED，PARTIAL_NOT_J3_ACCEPTED**；原生model/files/权限fixture/双editor/Back-Forward/真实200%/片段/搜索保持，截图已查看。旧日期前置仍缺，不伪造ACK或启用disabled旧窗口。全部报告source/script/build在各自运行中稳定，保留原始JSON及执行快照。
 - 即时退出的此浏览器/包切片已修复，不代表完整UI-12、81项/J1–J4、实际G/U/PAIA/物理IME或100k预算通过。72ca068及此前代码完整保留；Round200–201已本地提交但最新push仍超时未确认。整体Free继续实施，NOT_RELEASE_READY。
+
+
+## Round203：发送候选的rich编辑宿主与组合输入边界（接95c6855）
+
+- 修前独立反例6 PASS/11 FAIL证明role-only DIV、撤销contenteditable或aria-readonly仍可产生发送候选。native-send-intent新增显式editorKinds，缺省仅textarea；rich须DIV/role=textbox/显式true或plaintext-only/实际isContentEditable且无editable父节点，每次事件重核readonly与DOM资格。仅既有loopback profile声明rich，不扩真实宿主授权，不读取或写草稿、不拦截原生事件、不制造ACK。editorKinds采用data descriptor快照，拒绝getter/稀疏/重复/未知/空，原数组后改不能扩权；不声称其余旧profile字段已data-only。
+- 独立审查再补同一编辑宿主路径：内嵌INPUT/TEXTAREA/BUTTON/SELECT/OPTION及独立contenteditable/role=textbox岛不能用Enter/focus/组合事件建立父editor候选。普通文字SPAN可达。composition记录原起点与editor，独立widget的end不解除父锁，原起点或同宿主合法end仍可在Send消失/禁用后结束，不造成永锁。
+- 最终完整Node **3878/3878 PASS**，无skip；49项独立新反例包含在全套中，不另加统计。修前失败日志独立保存。真实headless DOM最终 **12/12 PASS_MECHANISM_ONLY**，readonly/role-only/撤销editable/未opt-in拒绝，正常textarea/rich/plaintext、独立控件及文字SPAN、CDP组合模拟保持原native handler；body读写拦截均0，无sentAt或ACK。CDP模拟不代表物理IME。
+- 浏览器初版新增widget前置FAIL保留：继承可编辑状态的button实际focus和Enter target均为父editor，并非目标独立控件；记录真实焦点诊断后，使用CEfalse按钮及CEfalse外层/CEtrue内部编辑岛验证实际active descendant和trusted Enter，拒绝断言未放宽。早期9项、失败和最终12项分账，均有匹配执行快照。
+- 隔离MV3生产adapter/owner组合 **4/4 PASS**：默认owner不fetch、真实native click无新消息仅intent、显式fixture metadata+DOM追加只关联候选，均不升级ACK/不写八库事实；是测试组合而非正式包全链或真实ChatGPT。source/script哈希稳定。
+- 补入Round202未及同次提交的无JS声明式关闭机制：实际CDP停用页面script后trusted mouse操作原popovertargetaction，两surface分别关闭且原native reading/history mask按CSS自然解除，JS sentinel未执行。仅WEB_MECHANISM_ONLY，不代替disable/私有授权清除。
+- 95c6855及Round200–201已正常推送原PR #16；72ca068仍为祖先，无强推/新分支。首页首发独立ACK、旧日期J3、100k预算及81项剩余/实际G/U/PAIA/物理IME保持未完成，整体Free NOT_RELEASE_READY，继续原计划。
