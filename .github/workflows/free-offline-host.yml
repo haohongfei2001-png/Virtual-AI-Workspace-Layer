@@ -172,12 +172,12 @@ jobs:
       - name: Actual historical Pro schema compatibility with isolated network guard
         if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
         run: FREE_CHROME_HEADED=1 FREE_SOURCE_COMMIT="$GITHUB_SHA" xvfb-run -a node tests/host/historical-pro-upgrade.mjs "$RUNNER_TEMP/historical-pro.json"
-      - name: Formal Host 10k admitted-index baseline (single sample)
+      - name: Temporary Host 10k stage diagnostic (strict acceptance gate retained)
         if: ${{ !cancelled() }}
         timeout-minutes: 5
         run: |
           set +e
-          HOST_SCALE_RUN=1 HOST_SCALE_SIZE=10000 HOST_SCALE_DISTRIBUTION=project-mixed HOST_SCALE_CPU_RATE=1 node tests/host/host-scale-package-browser.mjs "$RUNNER_TEMP/host-scale-10k.json"
+          FREE_HOST_SCALE_TRACE=1 HOST_SCALE_RUN=1 HOST_SCALE_SIZE=10000 HOST_SCALE_DISTRIBUTION=project-mixed HOST_SCALE_CPU_RATE=1 node tests/host/host-scale-package-browser.mjs "$RUNNER_TEMP/host-scale-10k.json"
           result=$?
           set -e
           test "$result" -eq 2

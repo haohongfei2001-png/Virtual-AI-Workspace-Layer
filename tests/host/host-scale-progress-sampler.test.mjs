@@ -24,6 +24,6 @@ test('read rejection is diagnostic only and never escapes observation',async()=>
  const s=setup({read:()=>{throw Error('token-do-not-leak');}});s.sampler.observe({remainingMs:29000,preparing:true});await tick();assert.equal(s.records[0].status,'DIAGNOSTIC_UNAVAILABLE');assert(!JSON.stringify(s.records).includes('token-do-not-leak'));
 });
 test('runner is opt-in, only first startup, retains 30s and bars diagnostic performance samples',async()=>{
- const source=await readFile(new URL('./host-scale-package-browser.mjs',import.meta.url),'utf8');assert.match(source,/FREE_HOST_SCALE_PROGRESS==='1'&&report.phase==='tab-0-initial-surfaces'/);assert.match(source,/timeout:30000/);assert.match(source,/preparing:report.rpc.some/);assert.match(source,/finally\(\(\)=>sampler\?\.stop\(\)\)/);
+ const source=await readFile(new URL('./host-scale-package-browser.mjs',import.meta.url),'utf8');assert.match(source,/const sampled=\(traceEnabled\|\|process.env.FREE_HOST_SCALE_PROGRESS==='1'\)&&report.phase==='tab-0-initial-surfaces'/);assert.match(source,/timeout:30000/);assert.match(source,/preparing:report.rpc.some/);assert.match(source,/finally\(\(\)=>sampler\?\.stop\(\)\)/);
  const gate=source.indexOf("status:'NOT_RUN_DIAGNOSTIC_INGESTION_OBSERVATION',samples:null");assert(gate>0&&gate<source.indexOf('report.measurement=await measureAtAdmittedScale'));assert.match(source.slice(gate,source.indexOf('report.measurement=await measureAtAdmittedScale')),/throw Error\('diagnostic-progress-run-cannot-produce-scale-timing'\)/);
 });
