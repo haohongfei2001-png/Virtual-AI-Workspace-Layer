@@ -1,3 +1,4 @@
+import {waitForVisibleUi10Title} from './ui10-visible-title.mjs';
 /** Opt-in isolated Chrome MV3 UI-10 layout subcontracts. NOT full v2.7 acceptance.
  * Usage: node tests/host/ui10-package-matrix-browser.mjs output.json [LEGACY|MODERN|PARTIAL]
  * Only local native fixture writes (one explicitly created project per profile).
@@ -18,7 +19,7 @@ const output=process.argv[2];assert(output,'output-json-path-required');
 const profiles=process.argv[3]?[process.argv[3]]:[...UI10_PROFILES];
 assert(profiles.every(p=>UI10_PROFILES.includes(p)),'unsupported-ui10-profile');
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const testFiles=['ui10-package-matrix-browser.mjs','ui10-package-sequence.mjs','ui10-matrix-contract.mjs','fixtures/variants-server.mjs','fixtures/ui10-conversation-title.mjs'];
+const testFiles=['ui10-visible-title.mjs','ui10-package-matrix-browser.mjs','ui10-package-sequence.mjs','ui10-matrix-contract.mjs','fixtures/variants-server.mjs','fixtures/ui10-conversation-title.mjs'];
 const testHashes=async()=>Object.fromEntries(await Promise.all(testFiles.map(async name=>[name,hash(await readFile(new URL(name,import.meta.url)))])));
 const report={...ui10PreparationReport(),kind:'PACKAGED_MV3_UI10_LAYOUT_SUBCONTRACT_CANDIDATE',status:'NOT_RUN',profiles:[],testHashesBefore:await testHashes()};
 
@@ -74,7 +75,7 @@ async function runProfile(profile,titleMode='all'){
    }
    await configureUi10Environment(page,cell);
    const frames=await workspace();await continuity();
-   if(cell.title==='long-Chinese')await frames.workspace.getByText(UI10_LONG_CHINESE,{exact:true}).first().waitFor({state:'visible',timeout:15000});
+   const titleObservation=cell.title==='long-Chinese'?await waitForVisibleUi10Title(frames.workspace,UI10_LONG_CHINESE):null;
    // Two visible functional frames required: normal profiles cannot pass as NATIVE_ONLY.
    const measurements={};for(const role of ['workspace','sidebar']){
     measurements[role]=await observeUi10Shell(frames[role]);
@@ -83,13 +84,13 @@ async function runProfile(profile,titleMode='all'){
    }
    assert.equal(await page.evaluate(expected=>matchMedia(`(prefers-color-scheme: ${expected})`).matches,cell.colorScheme),true);
    const screenshot=join(dir,`${cell.id.replaceAll('/','-')}-${phase}.png`);await page.screenshot({path:screenshot});
-   result.steps.push({id:cell.id,phase,status:'PASS_LAYOUT_SUBCONTRACT',measurements,screenshot});
+   result.steps.push({id:cell.id,phase,status:'PASS_LAYOUT_SUBCONTRACT',measurements,titleObservation,screenshot});
    const entry=report.cells.find(c=>c.id===cell.id);entry.nativeEvidence='PASS_LAYOUT_SUBCONTRACT_ONLY';
   }
   await continuity();assert.deepEqual(result.errors,[]);assert.equal(server.snapshot().actions['create-project']??0,profile==='LEGACY'?1:0);
   assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');
   result.nativeActions=server.snapshot().actions;result.browserVersion=context.browser().version();result.status='PASS_LAYOUT_SUBCONTRACT_ONLY';
- }catch(error){result.status='FAIL';result.error=error.stack;process.exitCode=1;try{if(page&&result.artifactDirectory){result.failureScreenshot=join(result.artifactDirectory,'failure.png');await page.screenshot({path:result.failureScreenshot});}}catch(screenshotError){result.screenshotError=screenshotError.message;}}
+ }catch(error){result.status='FAIL';result.error=error.stack;if(error.ui10TitleDiagnostics)result.titleDiagnostics=error.ui10TitleDiagnostics;if(error.ui10TitleDiagnosticError)result.titleDiagnosticError=error.ui10TitleDiagnosticError;process.exitCode=1;try{if(page&&result.artifactDirectory){result.failureScreenshot=join(result.artifactDirectory,'failure.png');await page.screenshot({path:result.failureScreenshot});}}catch(screenshotError){result.screenshotError=screenshotError.message;}}
  finally{
   try{if(info){result.sourceChangedDuringRun=(await Promise.all(Object.entries(info.sourceHashes).map(async([path,h])=>hash(await readFile(path))!==h))).some(Boolean);result.buildManifestUnchanged=hash(await readFile(join(built.unpacked,'build-manifest.json')))===manifestHash;if(result.sourceChangedDuringRun||!result.buildManifestUnchanged){result.status='FAIL';result.error=(result.error??'')+' source-or-package-changed';process.exitCode=1;}}}catch(error){result.status='FAIL';result.error=(result.error??'')+' '+error.stack;process.exitCode=1;}
   try{await context?.close();}catch(error){result.status='FAIL';result.cleanupError=error.message;process.exitCode=1;}

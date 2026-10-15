@@ -1,0 +1,33 @@
+✔ frozen-revision pages prove exact 1k ID set while dependency projects count once (5.780852ms)
+✔ native-sized world cannot hide a 25-ref admitted index (0.396798ms)
+✔ same cardinality with foreign IDs or duplicate page entries fails exact-set audit (7.478383ms)
+✔ revision changes at final check or during page read are explicitly unstable (1.671092ms)
+✔ single-project requires every actual member claim and exact project identity (8.037716ms)
+✔ invalid paging rejects; browser adapter cannot upgrade schema or open write transactions (7.039711ms)
+✔ audit is evaluated only in the current exact extension frame and freezes cursor keys (1.188103ms)
+✔ scale cleanup continues after browser failure and preserves live directory (1.843081ms)
+✔ scale cleanup removes only owned output even when verification throws (0.72246ms)
+✔ scale cleanup is safe before browser or directory creation (0.189876ms)
+✔ measurement starts only after complete audit and needs matching post-audit (2.182663ms)
+✔ partial, unstable, missing-index or failed membership audit never starts timers/actions (0.200342ms)
+✔ changed revision invalidates even an otherwise identical post-audit (0.379342ms)
+✔ changed set cardinality or member distribution also invalidates samples (0.228194ms)
+✔ measurement action failure still performs post-audit and cannot leave valid timing (0.467235ms)
+✔ post-audit failure retains only diagnostic samples (0.222846ms)
+✔ runner collects native project membership before gated timing and separates cold ingestion (6.376991ms)
+✔ measured callback is existing Host local search/pagination; native tail navigation is ingestion (0.813287ms)
+✔ runner applies independent native-name oracle to exact tail and both full pages (0.732105ms)
+✔ independent UI oracle accepts two exact-size native-name pages without assuming production order (1.220392ms)
+✔ foreign IDs that passed old two-page shape checks now fail (0.473234ms)
+✔ each page requires all 24 expected rows, not a one-row substitute (0.399453ms)
+✔ duplicate first-page rows and cross-page reuse fail independently (0.23226ms)
+✔ wrong original title, swapped titles, out-of-world index and wrong query fail (0.354024ms)
+✔ exact tail query requires its original ID/title and exactly one row (0.638023ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 198.007042

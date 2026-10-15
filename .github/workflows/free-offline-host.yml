@@ -7,6 +7,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FREE_SOURCE_COMMIT: ${{ github.sha }}
+
 concurrency:
   group: free-offline-host-${{ github.ref }}
   cancel-in-progress: true
@@ -144,6 +147,9 @@ jobs:
           set -e
           test "$result" -eq 2
           node -e "const r=require(process.env.RUNNER_TEMP+'/j4-journey.json'); if(r.status!=='PARTIAL_J4_NOT_ACCEPTED') process.exit(1); console.log(r.status)"
+      - name: Separate instrumented J4 scope baseline diagnostic
+        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
+        run: FREE_J4_SCOPE_TRACE=1 FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j4-package-journey.mjs "$RUNNER_TEMP/j4-scope-trace.json"
       - name: Real browser and IDB guard mutation counterexamples
         if: ${{ !cancelled() }}
         run: FREE_SOURCE_COMMIT="$GITHUB_SHA" node tests/host/guard-mutations-browser.runner.mjs "$RUNNER_TEMP/guard-browser.json"
@@ -174,6 +180,6 @@ jobs:
         run: |
           echo "Source commit: $GITHUB_SHA"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          for name in native-visibility j2-j4 j4-journey guard-browser joint-observation joint-observation-mutant sys02-pending-idb historical-host historical-pro visibility-probe; do
+          for name in native-visibility j2-j4 j4-journey j4-scope-trace guard-browser joint-observation joint-observation-mutant sys02-pending-idb historical-host historical-pro visibility-probe; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done

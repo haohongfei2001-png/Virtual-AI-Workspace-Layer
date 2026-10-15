@@ -12,6 +12,8 @@ import {hostScaleScenario,hostScaleExpected} from './fixtures/host-scale-world.m
 import {hostScalePlan,HOST_SCALE_GAPS} from './fixtures/host-scale-plan.mjs';
 import {cleanupHostScaleRun} from './fixtures/host-scale-cleanup.mjs';
 import {auditHostScaleIndex} from './fixtures/host-scale-audit.mjs';
+import {checkHostScaleSearchPage} from './fixtures/host-scale-ui-oracle.mjs';
+import {measureAtAdmittedScale} from './fixtures/host-scale-measurement.mjs';
 import {observeCurrentFrame} from './observe-current-frame.mjs';
 const output=process.argv[2]??join(tmpdir(),'vaiwl-host-scale.json');
 if(process.env.HOST_SCALE_RUN!=='1'){
@@ -19,9 +21,9 @@ if(process.env.HOST_SCALE_RUN!=='1'){
 }else{
  const scenario=hostScaleScenario({size:Number(process.env.HOST_SCALE_SIZE??1000),distribution:process.env.HOST_SCALE_DISTRIBUTION??'project-mixed',cpuRate:Number(process.env.HOST_SCALE_CPU_RATE??1)});
  const hash=x=>createHash('sha256').update(x).digest('hex');
- const report={requirement:'SYS-04 / original F1',status:'NOT_RUN',acceptance:'NOT_ESTABLISHED',realChatGPT:'NOT_RUN',scenario,expected:hostScaleExpected(scenario),remaining:[...HOST_SCALE_GAPS],samples:[],errors:[],rpc:[],rpcTraceDropped:0};
+ const report={requirement:'SYS-04 / original F1',status:'NOT_RUN',acceptance:'NOT_ESTABLISHED',realChatGPT:'NOT_RUN',scenario,expected:hostScaleExpected(scenario),remaining:[...HOST_SCALE_GAPS],ingestion:[],errors:[],rpc:[],rpcTraceDropped:0};
  let server,context,manifest,manifestPath,manifestHash,directory;
- const sourceFiles=['host-scale-package-browser.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
+ const sourceFiles=['host-scale-package-browser.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sourceFiles.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -50,24 +52,22 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    // Waiting for DOM is not a replacement/extension of the production 6s RPC deadline.
    await frames[0].locator('.workspace').waitFor({timeout:30000});return frames;
   };
-  const pages=[];
+  const pages=[],ingestionStarted=performance.now();
   for(let tab=0;tab<2;tab++){
    const page=await context.newPage();pages.push(page);page.on('pageerror',e=>report.errors.push(e.message));page.on('console',message=>{const text=message.text();if(text.startsWith('HOST_SCALE_RPC ')){if(report.rpc.length<4096)report.rpc.push({tab,...JSON.parse(text.slice(15))});else report.rpcTraceDropped++;}});
    const session=await context.newCDPSession(page);await session.send('Emulation.setCPUThrottlingRate',{rate:scenario.cpuRate});
    const start=performance.now();await page.goto(server.url,{waitUntil:'domcontentloaded',timeout:60000});const frames=await surfaces(page);
-   report.samples.push({scaleBasis:'NATIVE_WORLD_NOT_PROVEN_ADMITTED_AT_SAMPLE',tab,coldProfile:tab===0,initialSurfacesMs:performance.now()-start,nativeHistoryLinks:await page.locator('nav[aria-label="Chat history"] a').count(),surfaces:frames.map(f=>f.url())});
-   assert.equal(report.samples.at(-1).nativeHistoryLinks,scenario.size);
+   report.ingestion.push({scaleBasis:'NATIVE_WORLD_NOT_PROVEN_ADMITTED_AT_SAMPLE',tab,coldProfile:tab===0,initialSurfacesMs:performance.now()-start,nativeHistoryLinks:await page.locator('nav[aria-label="Chat history"] a').count(),surfaces:frames.map(f=>f.url())});
+   assert.equal(report.ingestion.at(-1).nativeHistoryLinks,scenario.size);
   }
-  // Tail reachability uses native search and its original handler, never a synthetic resolver.
   const page=pages[1],tail={id:report.expected.last,title:await page.locator('nav[aria-label="Chat history"] a').last().innerText()};
+  // Native tail navigation is ingestion/reachability, never the admitted-index sample.
   await page.locator('textarea').focus();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0);
-  await page.locator('#search-button').click();const searchStart=performance.now();await page.locator('#search-dialog input').fill(tail.title);
-  const tailLink=page.locator('#search-dialog .results').getByRole('link',{name:tail.title,exact:true});await tailLink.waitFor();report.nativeSearchFirstScreenMs=performance.now()-searchStart;
-  const navigationStart=performance.now();await tailLink.click();await page.waitForURL(server.origin+'/c/'+tail.id);await page.waitForFunction(title=>document.querySelector('h1')?.textContent===title,tail.title);report.nativeTailNavigationMs=performance.now()-navigationStart;
-  assert.equal(await page.locator('#reading').getAttribute('data-conversation-id'),tail.id);
-  report.nativeTailReachability='PASS';report.firstSchemaPreparing=report.rpc.some(r=>r.state==='preparing')?'OBSERVED_NOT_CERTIFIED':'NOT_OBSERVED';
-  report.rpcObservation=report.rpc.length?{count:report.rpc.length,maxMs:Math.max(...report.rpc.map(r=>r.elapsedMs)),over6000:report.rpc.filter(r=>r.elapsedMs>6000).length}: 'NOT_OBSERVED';
-  // Post-measurement diagnostic only: never count native DOM as admitted Host refs.
+  await page.locator('#search-button').click();await page.locator('#search-dialog input').fill(tail.title);
+  const nativeTailLink=page.locator('#search-dialog .results').getByRole('link',{name:tail.title,exact:true});await nativeTailLink.waitFor();await nativeTailLink.click();
+  await page.waitForURL(server.origin+'/c/'+tail.id);await page.waitForFunction(title=>document.querySelector('h1')?.textContent===title,tail.title);
+  assert.equal(await page.locator('#reading').getAttribute('data-conversation-id'),tail.id);report.ingestionNativeTailReachability='PASS';
+  // Native member collection is ingestion, before any admitted-scale measurement.
   if(scenario.distribution==='single-project'){
    await page.locator('textarea').focus();
    const projectPath='/g/g-p-00000000000000000000000000000001/project';
@@ -75,16 +75,46 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    await page.waitForFunction(size=>document.querySelectorAll('#reading nav[aria-label="Project conversations"] a').length===size,scenario.size);
    report.nativeProjectMembersRendered=await page.locator('#reading nav[aria-label="Project conversations"] a').count();
   }
+  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
+  const [workspace,sidebar]=await surfaces(page);
+  await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
+  const localSearch=workspace.getByRole('searchbox',{name:'已知聊天查找输入'});await localSearch.waitFor();
+  const nativeRouteBeforeMeasurement=page.url();
   // Dynamic module import belongs in an existing extension page, not an MV3 worker.
   const auditFrameURL=`chrome-extension://${id}/workspace.html`;
   const currentAuditFrame=()=>{const frames=page.frames().filter(frame=>frame.url()===auditFrameURL&&!frame.isDetached());return frames.length===1?frames[0]:null;};
-  const auditFrame=await observeCurrentFrame(currentAuditFrame,frame=>frame.evaluate(()=>document.readyState!=='loading'),{parentAlive:()=>!page.isClosed(),timeout:15000});
-  report.indexAudit=await auditFrame.evaluate(auditHostScaleIndex,{size:scenario.size,distribution:scenario.distribution,requireProjectMembership:scenario.distribution==='single-project',limit:500});
-  assert(!page.isClosed()&&!auditFrame.isDetached()&&currentAuditFrame()===auditFrame,'audit frame changed; snapshot not accepted');
+  const audit=async()=>{
+   const auditFrame=await observeCurrentFrame(currentAuditFrame,frame=>frame.evaluate(()=>document.readyState!=='loading'),{parentAlive:()=>!page.isClosed(),timeout:15000});
+   const snapshot=await auditFrame.evaluate(auditHostScaleIndex,{size:scenario.size,distribution:scenario.distribution,requireProjectMembership:scenario.distribution==='single-project',limit:500});
+   assert(!page.isClosed()&&!auditFrame.isDetached()&&currentAuditFrame()===auditFrame,'audit frame changed; snapshot not accepted');return snapshot;
+  };
+  report.ingestionObservationMs=performance.now()-ingestionStarted;
   report.indexAuditRealm=auditFrameURL;
-  report.indexAuditTiming='POST_MEASUREMENT_SINGLE_REVISION_SNAPSHOT_NO_INGESTION_COMPLETION_ASSUMED';
+  report.measurement=await measureAtAdmittedScale({audit,measure:async()=>{
+   // Actual existing local-search/pagination UI, no native navigation or injected RPC.
+   assert(currentAuditFrame()===workspace&&!workspace.isDetached(),'local search frame replaced before timing');
+   const results=workspace.locator('.search-results');
+   const localSearchStarted=performance.now();await localSearch.fill(tail.title);
+   await results.getByRole('link',{name:tail.title,exact:true}).waitFor();const localExactTailSearchMs=performance.now()-localSearchStarted;
+   const readRows=()=>results.locator('a[data-ref-id]').evaluateAll(nodes=>nodes.map(node=>({id:node.getAttribute('data-ref-id'),title:node.querySelector('.window-title')?.textContent})));
+   assert.deepEqual(checkHostScaleSearchPage({rows:await readRows(),size:scenario.size,query:tail.title,longTitles:scenario.longTitles,expectedCount:1}),[tail.id]);
+   const broadSearchStarted=performance.now();await localSearch.fill('原生压力聊天');
+   const next=results.getByRole('button',{name:'显示更多查找结果',exact:true});await next.waitFor();
+   const firstRows=await readRows(),localBroadSearchFirstScreenMs=performance.now()-broadSearchStarted;
+   const firstPage=checkHostScaleSearchPage({rows:firstRows,size:scenario.size,query:'原生压力聊天',longTitles:scenario.longTitles,expectedCount:24});
+   const pageStarted=performance.now();await next.click();await results.getByRole('button',{name:'返回前页查找结果',exact:true}).waitFor();
+   const secondRows=await readRows(),localNextPageMs=performance.now()-pageStarted;
+   const secondPage=checkHostScaleSearchPage({rows:secondRows,size:scenario.size,query:'原生压力聊天',longTitles:scenario.longTitles,expectedCount:24,excludedIds:firstPage});
+   assert.equal(page.url(),nativeRouteBeforeMeasurement,'local search must not change native route');
+   assert(currentAuditFrame()===workspace&&!workspace.isDetached(),'local search frame replaced during timing');
+   return {localExactTailSearchMs,localBroadSearchFirstScreenMs,localNextPageMs,firstPageRefs:firstPage.length,secondPageRefs:secondPage.length,kind:'HOST_LOCAL_SEARCH_AND_PAGINATION_SINGLE_SAMPLES_NOT_P95',coverage:'TWO_CORRECT_PAGES_NOT_FULL_SEARCH_COVERAGE_OR_ORDER_CERTIFICATION',timing:'PLAYWRIGHT_WALL_CLOCK_INCLUDING_AUTOMATION_OVERHEAD'};
+  }});
+  report.indexAudit=report.measurement.after??report.measurement.before;
+  report.indexAuditTiming='BEFORE_AND_AFTER_MEASUREMENT_SAME_REVISION_REQUIRED';
   report.nativeNoneTruth=report.expected.nativeNone;report.admittedNone=report.indexAudit.nativeNoneObserved;report.admittedUnknown=report.indexAudit.unknownMembership;
-  assert.equal(report.indexAudit.status,'PASS_INDEX_AUDIT_ONLY','native world size is not admitted Host index/membership evidence');
+  report.firstSchemaPreparing=report.rpc.some(r=>r.state==='preparing')?'OBSERVED_NOT_CERTIFIED':'NOT_OBSERVED';
+  report.rpcObservation=report.rpc.length?{scope:'INGESTION_AND_MEASUREMENT_DIAGNOSTIC',count:report.rpc.length,maxMs:Math.max(...report.rpc.map(r=>r.elapsedMs)),over6000:report.rpc.filter(r=>r.elapsedMs>6000).length}: 'NOT_OBSERVED';
+  assert.equal(report.measurement.status,'MEASURED_AT_STABLE_ADMITTED_INDEX','scale measurement not established: '+report.measurement.status);
   assert.deepEqual(report.errors,[]);report.status='PARTIAL_SYS04_NOT_ACCEPTED';process.exitCode=2;
  }catch(error){report.status=context?'FAIL':'NOT_RUN_BROWSER_OR_PACKAGE_STARTUP';report.error=error.stack;process.exitCode=1;}
  finally{

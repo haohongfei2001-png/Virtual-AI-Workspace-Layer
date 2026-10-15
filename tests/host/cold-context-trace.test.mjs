@@ -24,6 +24,8 @@ test('cold diagnostic copy keeps original verified; patches only named files and
  webRequest.onSendHeaders.f(d);await new Promise(r=>setImmediate(r));webRequest.onCompleted.f({...d,statusCode:200,fromCache:false});await new Promise(r=>setImmediate(r));assert.equal((await owner.verify(frame)).contextId,'team');
  const stages=globalThis.__vaiwlColdTrace.map(x=>x.stage);for(const stage of ['listeners-registered','send-enter','send-admitted','prepared','complete-enter','receipt-issued','verify-enter'])assert(stages.includes(stage),stage);
  assert(!JSON.stringify(globalThis.__vaiwlColdTrace).includes('SECRET_SENTINEL'));
+ for(const stage of ['prepare-frame','complete-frame']){const row=globalThis.__vaiwlColdTrace.find(r=>r.stage===stage);assert.equal(row.frameMatches,true);assert.equal(row.requestCurrent,true);}
+ {const drop=globalThis.__vaiwlColdTrace.find(r=>r.stage==='receipt-drop');assert.equal(drop.tabId,1);assert.equal(drop.documentId,'document');}
  const {createHostBrowserBootstrap}=await import(pathToFileURL(join(trace.unpacked,'src/runtime/host-browser-bootstrap.mjs')));
  const earlyEvents=Object.fromEntries(['onSendHeaders','onCompleted','onErrorOccurred','onBeforeRedirect'].map(k=>[k,event()]));
  const chrome={runtime:{id:'ext',getContexts:async()=>[]},webRequest:earlyEvents,webNavigation:{getFrame:async()=>({documentId:'document',documentLifecycle:'active',frameType:'outermost_frame',url}),onCommitted:event(),onHistoryStateUpdated:event()},tabs:{get:async()=>({id:1,incognito:false}),onRemoved:event(),sendMessage:async(tabId,message)=>({...message,association:'explicit-body-id'})}};
@@ -33,6 +35,8 @@ test('cold diagnostic copy keeps original verified; patches only named files and
  assert(globalThis.__vaiwlColdTrace.some(x=>x.stage==='outgoing'&&x.type==='HOST_CONTEXT_ASSOCIATE'));
  assert(globalThis.__vaiwlColdTrace.some(x=>x.stage==='outgoing-result'&&x.type==='HOST_CONTEXT_ASSOCIATE'&&x.association==='explicit-body-id'));
  assert(!JSON.stringify(globalThis.__vaiwlColdTrace).includes('SECRET_SENTINEL'));
+ for(const stage of ['prepare-frame','complete-frame']){const row=globalThis.__vaiwlColdTrace.find(r=>r.stage===stage);assert.equal(row.frameMatches,true);assert.equal(row.requestCurrent,true);}
+ {const drop=globalThis.__vaiwlColdTrace.find(r=>r.stage==='receipt-drop');assert.equal(drop.tabId,1);assert.equal(drop.documentId,'document');}
  for(let i=0;i<300;i++)webRequest.onSendHeaders.f({...d,requestId:'bad',tabId:-1});assert.equal(globalThis.__vaiwlColdTrace.length,160);
  await writeFile(join(trace.unpacked,'extension/worker.mjs'),'altered');await assert.rejects(verifyColdTracePackage(trace),/package-changed/);
 });

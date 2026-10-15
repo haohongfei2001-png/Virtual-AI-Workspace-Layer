@@ -10,7 +10,7 @@ is modified.
 
 From the repository root:
 
-    node --test tests/host/host-scale-world.test.mjs tests/host/host-scale-server.test.mjs tests/host/host-scale-cleanup.test.mjs tests/host/host-scale-audit.test.mjs tests/host/isolated-browser-cleanup.test.mjs
+    node --test tests/host/host-scale-world.test.mjs tests/host/host-scale-server.test.mjs tests/host/host-scale-cleanup.test.mjs tests/host/host-scale-audit.test.mjs tests/host/host-scale-measurement.test.mjs tests/host/host-scale-ui-oracle.test.mjs tests/host/isolated-browser-cleanup.test.mjs
     node tests/host/host-scale-package-browser.mjs /tmp/host-scale-plan.json
 
 The second command only records NOT_RUN for all 18 combinations:
@@ -40,13 +40,14 @@ create fake scope/admission/ACK fields, or replace adapter methods. All-history
 DOM is an intentional reconstruction workload, not a live DOM performance claim.
 
 The runner opens both production surfaces in two tabs, records initial-surface
-latency, bounded pass-through RPC metadata and real native tail search/navigation
-samples, then verifies unchanged package/source/fixture hashes. Every cleanup step
+latency and native tail reachability as ingestion, then measures actual Host local
+search/pagination only after admitted-index auditing, and verifies unchanged package/source/fixture hashes. Every cleanup step
 is attempted even after an earlier failure, and the report is still written. Its
 owned temporary package/profile directory is removed after browser closure; if
 closure fails without confirmation, the directory is retained and explicitly
-reported as FAIL_CLEANUP rather than deleting a possibly live profile. Native search
-samples are named as such and are not extension local-search or p95 acceptance.
+reported as FAIL_CLEANUP rather than deleting a possibly live profile. Local search and pagination use existing workspace controls and visible result
+rows, with no injected RPC responses. Each timing is one end-to-end wall-clock
+sample including automation overhead, never a p95 or performance acceptance claim.
 It does not retain full RPC pages or duplicate a 100k index in its instrumentation.
 Renderer 4x is applied only to the native page target: it does not certify worker,
 other renderer targets, or a physical weak device. A 30s DOM readiness diagnostic
@@ -58,7 +59,7 @@ Browser execution has NOT_RUN at preparation time. A successful implemented
 journey emits PARTIAL_SYS04_NOT_ACCEPTED and exit code 2, not PASS. Startup failure
 is NOT_RUN_BROWSER_OR_PACKAGE_STARTUP; a post-launch assertion failure is FAIL.
 The native service size and DOM link count are never called the admitted Host
-index size. A post-measurement audit now uses the production NativeRepository.page
+index size. Pre- and post-measurement audits use the production NativeRepository.page
 reader with a fixed revision, bounded pages (default 500, maximum 5000), distinct
 reference IDs and an exact expected-ID-set check. Dependency project rows do not
 inflate counts. A final version check detects changes after the last page. Revision
@@ -76,11 +77,35 @@ waits for the real project route/member surface and audits every reference's
 PROJECT state and exact projectId. An empty card, UNKNOWN members, or false NONE
 cannot pass this check. Other distributions report fixture nativeNone truth,
 actually admitted NONE and UNKNOWN separately; history links do not grant NONE.
-The audit takes one bounded-version snapshot, without assuming ingestion has
-finished. A partial or unstable snapshot fails the runner and remains visible in
-the report; it never extends RPC timeouts or silently lowers N. Existing initial
-and native-search samples are labeled NATIVE_WORLD_NOT_PROVEN_ADMITTED_AT_SAMPLE
-or named native-only: later cardinality does not retroactively certify them. Actual admitted 1k/10k/100k cardinality, observed membership by native
+Cold page opening and native membership collection are recorded separately in
+`ingestion` / `ingestionObservationMs`. They are never admitted-N latency samples.
+The unchanged Host cursor/fragments pipeline observes the real rendered native
+DOM; the runner neither injects admission nor starts background collection.
+After that preparation, a full stable-revision audit must report
+PASS_INDEX_AUDIT_ONLY before the measurement callback can start any timing/action.
+If admission is still incomplete or unstable, measurement is NOT_RUN_INDEX_NOT_READY
+and the run fails honestly; it does not lower N, extend RPC deadlines or poll full
+indexes indefinitely.
+
+Native tail search/navigation runs before admission auditing as ingestion. The
+measurement callback uses only the existing Host workspace local-search input,
+exact-tail result readback, broad-query first page, and its real next-page control.
+An independent fixture-contract oracle checks every visible result ID is in the
+requested world, the original title matches that ID exactly, and the title matches
+the query. Both broad-query pages must contain exactly 24 unique rows, with no
+cross-page duplicates; the fixed fixture has at least 1000 matching titles and its
+unchanged UI requests 24 per page. Short, foreign or mislabeled pages fail rather
+than becoming fast samples. The oracle does not import the production search/sort
+algorithm or claim full search coverage/order from two pages.
+It never clicks a result/native link. The native route and current frame must
+remain unchanged. After those local UI actions, the runner repeats the full
+audit. The revision, exact-ID-set admission, cardinality and membership summaries
+must remain unchanged. Otherwise INVALIDATED_INDEX_CHANGED keeps only
+`diagnosticSamples`, with `samples: null`. Any concurrently observed native revision change still invalidates the sample;
+there is no exemption or relaxed revision check.
+An action failure still attempts the final audit. Only matching before/after
+audits yield MEASURED_AT_STABLE_ADMITTED_INDEX, and these remain single local-search/pagination samples against an admitted Host
+index. Repeated samples are still required for p95 and full F1 certification. Actual admitted 1k/10k/100k cardinality, observed membership by native
 routes, full local search/pagination/tail reachability, shared-index ownership and
 bounded dual-surface DTOs still need evidence. First-schema preparing may be
 observed in the RPC trace, but that alone does not prove no false empty library.
