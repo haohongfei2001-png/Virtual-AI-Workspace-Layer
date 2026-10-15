@@ -2428,3 +2428,7 @@ CI33/8b0408a measured original native Projects height4585.21875px and history he
 ## Round239 — 10k preparation evidence and guarded J1 scheduling
 
 CI34 at 05b57a9 passed 4668 Node tests and verified the scale fixture geometry correction (history374px/Projects270px), but 10k initial preparation still hit the original30s deadline after429 UI RPCs; no admitted-index audit/timing exists. Original cold gates failed separately. This candidate adds reviewed J1 per-role dispatch/VIEW scheduling without relaxing registry revocation, plus bounded failure-only readonly root diagnostics. Prior1k all-UNKNOWN/single-sample limits remain. See [round239 evidence](evidence/round239/README.md). Draft/NOT_RELEASE_READY and incomplete Free/SYS04/SYS05 acceptance remain.
+
+## Round240 — query intent and bounded10k preparation diagnostics
+
+CI35:4689/4690 Node; original new-view late-ACK rejection exposed a genuine client intent fence omission. Minimal reviewed fix preserves the assertion and defers transport only, with218 integrated checks. J1 actual9-step slice passed independently; cold diagnostic and10k startup still failed.10k root sampling at failure had no remaining frame, so limited explicit preparation-time snapshots are added without enabling timing acceptance or extending30s. See [round240](evidence/round240/README.md). No complete10k audit/timing, full Free or release readiness is claimed.

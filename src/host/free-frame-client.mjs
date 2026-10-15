@@ -126,7 +126,12 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   if(recovery||backup||location&&!locationCurrent(location))return null;
   // A ready VIEW replaces this role's issued native plans. Do not replace them
   // between the two native authorizations; keep only the latest requested read.
-  const requested=boundedQuery(value);if(dispatchPending){queuedDispatchView={value:requested,location};return null;}if(JSON.stringify(query)!==JSON.stringify(requested)){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;}if(!location)query=requested;const ticket=++serial;activeRead?.abort();const controller=new AbortController();activeRead=controller;activeLocation=location;navigation?.setNativeNavigationPending?.(true);
+  const requested=boundedQuery(value);if(dispatchPending){
+   // Coalesce transport only. A different query is a new user intent now,
+   // so its predecessor's late acknowledgement cannot restore the old view.
+   if(JSON.stringify(query)!==JSON.stringify(requested))dispatchEpoch++;
+   queuedDispatchView={value:requested,location};return null;
+  }if(JSON.stringify(query)!==JSON.stringify(requested)){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;}if(!location)query=requested;const ticket=++serial;activeRead?.abort();const controller=new AbortController();activeRead=controller;activeLocation=location;navigation?.setNativeNavigationPending?.(true);
   if(budget.remaining()===Infinity)splits=0;
   if(!location&&!budget.begin()){fail('read-budget-exhausted');return null;}
   let effective={...requested},polls=0;

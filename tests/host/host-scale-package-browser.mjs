@@ -1,3 +1,4 @@
+import {createHostScaleProgressSampler} from './fixtures/host-scale-progress-sampler.mjs';
 /** Opt-in packaged production Host, fresh profile, native application-owned world.
  * Default invocation is a cheap NOT_RUN plan; never silently launches 100k.
  * HOST_SCALE_RUN=1 HOST_SCALE_SIZE=1000 HOST_SCALE_DISTRIBUTION=project-mixed
@@ -25,7 +26,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
  const hash=x=>createHash('sha256').update(x).digest('hex');
  const report={sourceCommit:process.env.FREE_SOURCE_COMMIT??null,requirement:'SYS-04 / original F1',status:'NOT_RUN',acceptance:'NOT_ESTABLISHED',realChatGPT:'NOT_RUN',scenario,expected:hostScaleExpected(scenario),remaining:[...HOST_SCALE_GAPS],ingestion:[],errors:[],rpc:[],rpcTraceDropped:0};
  let server,context,manifest,manifestPath,manifestHash,directory,activePage,loadedExtensionId;
- const sourceFiles=['host-scale-package-browser.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
+ const sourceFiles=['host-scale-package-browser.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-progress-sampler.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sourceFiles.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -48,7 +49,9 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    };
   });
   const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});loadedExtensionId=id;report.browserVersion=context.browser().version();
-  const surfaces=page=>waitHostScaleSurfaces(page,{extensionId:id,timeout:30000,onObservation:value=>{report.surfaceWait??=[];report.surfaceWait.push({phase:report.phase,...value});if(report.surfaceWait.length>16)report.surfaceWait.shift();}});
+  const surfaces=page=>{const sampled=process.env.FREE_HOST_SCALE_PROGRESS==='1'&&report.phase==='tab-0-initial-surfaces';
+   let sampler;if(sampled){report.nativeIndexSamples=[];report.timingUse='DIAGNOSTIC_ONLY_PROGRESS_SAMPLING';sampler=createHostScaleProgressSampler({page,extensionId:id,records:report.nativeIndexSamples});}
+   return waitHostScaleSurfaces(page,{extensionId:id,timeout:30000,onObservation:value=>{report.surfaceWait??=[];report.surfaceWait.push({phase:report.phase,...value});if(report.surfaceWait.length>16)report.surfaceWait.shift();sampler?.observe({remainingMs:value.remainingMs,preparing:report.rpc.some(row=>row.tab===0&&row.state==='preparing')});}}).finally(()=>sampler?.stop());};
   const pages=[],ingestionStarted=performance.now();
   for(let tab=0;tab<2;tab++){
    const page=await context.newPage();activePage=page;report.phase=`tab-${tab}-native-navigation`;pages.push(page);page.on('pageerror',e=>report.errors.push(e.message));page.on('console',message=>{const text=message.text();if(text.startsWith('HOST_SCALE_RPC ')){if(report.rpc.length<4096)report.rpc.push({tab,...JSON.parse(text.slice(15))});else report.rpcTraceDropped++;}});
@@ -94,6 +97,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   };
   report.ingestionObservationMs=performance.now()-ingestionStarted;
   report.indexAuditRealm=auditFrameURL;
+  if(process.env.FREE_HOST_SCALE_PROGRESS==='1'){report.measurement={status:'NOT_RUN_DIAGNOSTIC_INGESTION_OBSERVATION',samples:null,acceptance:'NOT_ESTABLISHED'};throw Error('diagnostic-progress-run-cannot-produce-scale-timing');}
   report.measurement=await measureAtAdmittedScale({audit,measure:async()=>{
    report.phase='local-search-pagination-measurement';report.measurementStarted=true;
    // Actual existing local-search/pagination UI, no native navigation or injected RPC.

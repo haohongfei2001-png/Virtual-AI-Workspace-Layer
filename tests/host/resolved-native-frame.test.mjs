@@ -85,3 +85,31 @@ test('native unconfirmed acknowledgement remains unknown and never retries or fe
  assert.deepEqual(await f.nav.onDispatch(command()),{state:'unconfirmed'});assert.equal(answered,true);await drain();
  assert.deepEqual(packets,[{v:1,type:'HOST_UI_DISPATCH_NATIVE',grantId:'grant',mountId:'mount',actionId:'native-action',planRevision:7,targetKey:'native-key'}]);f.client.stop();
 });
+
+for(const change of ['same-query','changed-query','changed-back','stop','timeout'])test('queued query fences acknowledgement without replacing active native plans: '+change,async()=>{
+ const f=await nativeFixture(),held=deferred(),send=f.runtime.sendMessage;let requests=0;
+ f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_NATIVE'?(requests++,held.promise):send(m);
+ const before=f.calls.filter(m=>m.type==='HOST_UI_VIEW').length,pending=f.nav.onDispatch(command());await drain();
+ const original={segment:0,offset:0,limit:8};
+ await f.nav.onProjectionRequest(change==='same-query'?original:{segment:1,offset:0,limit:8});
+ if(change==='changed-back')await f.nav.onProjectionRequest(original);
+ assert.equal(f.calls.filter(m=>m.type==='HOST_UI_VIEW').length,before,'queued intent must not replace the active registry group');
+ if(change==='stop')f.client.stop();if(change==='timeout')await f.advance(6000);
+ held.resolve({ok:true,state:'dispatched'});const result=await pending;await drain();
+ assert.equal(result.state==='dispatched',change==='same-query');assert.equal(requests,1,'never replay native action');
+ const reads=f.calls.filter(m=>m.type==='HOST_UI_VIEW');assert.equal(reads.length,before+(change==='stop'?0:1));
+ if(change!=='stop')assert.equal(reads.at(-1).query.segment,['same-query','changed-back'].includes(change)?0:1);
+ if(change==='changed-query'){
+  f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_NATIVE'?(requests++,Promise.resolve({ok:true,state:'dispatched'})):send(m);
+  assert.deepEqual(await f.nav.onDispatch({...command(),actionId:'next-action'}),{state:'dispatched'},'new intent is not permanently locked');assert.equal(requests,2);
+ }
+ f.client.stop();
+});
+test('timed-out old acknowledgement cannot unlock or settle the next dispatch',async()=>{
+ const f=await nativeFixture(),old=deferred(),fresh=deferred(),send=f.runtime.sendMessage;let requests=0;
+ f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_NATIVE'?(++requests===1?old.promise:fresh.promise):send(m);
+ const first=f.nav.onDispatch(command());await f.nav.onProjectionRequest({segment:1});await f.advance(6000);assert.notEqual((await first).state,'dispatched');await drain();
+ const next=f.nav.onDispatch({...command(),actionId:'next-action'});await drain();old.resolve({ok:true,state:'dispatched'});await drain();
+ assert.deepEqual(await f.nav.onDispatch({...command(),actionId:'third-action'}),{state:'blocked'});assert.equal(requests,2);
+ fresh.resolve({ok:true,state:'dispatched'});assert.deepEqual(await next,{state:'dispatched'});f.client.stop();
+});
