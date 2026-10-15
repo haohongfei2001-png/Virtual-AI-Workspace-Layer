@@ -21,9 +21,9 @@ import {createScopeAuthority} from './scope-authority.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Zero-seed identity composition. Existing repository/broker owners remain unchanged. */
-export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,navigationURLPolicy=null,candidateBridge=null,dispatchCurrent=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,contextObserver=null,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,navigationURLPolicy=null,candidateBridge=null,dispatchCurrent=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const handshake=createHostDocumentHandshake({extensionId,getFrame,allowedURL,now,makeId,elapsedNow,schedule,cancel});
- const authority=createScopeAuthority({provider,profile,allowedURL,now,makeId,elapsedNow,schedule,cancel});
+ const authority=createScopeAuthority({provider,profile,contextObserver,allowedURL,now,makeId,elapsedNow,schedule,cancel});
  const asFrame=(doc,sender)=>({tabId:doc.tabId,frameId:0,documentId:doc.documentId,parentDocumentId:null,actualURL:doc.url,documentLifecycle:'active',incognito:sender.tab?.incognito===true});
 
  const ui=uiURL||uiURLs?createHostUiOwner({extensionId,uiURL,uiURLs,getFrame,getContexts,handshake,authority,now,makeId}):null;

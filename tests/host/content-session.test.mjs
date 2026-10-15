@@ -2,14 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHostContentSession} from '../../src/host/content-session.mjs';
 const drain=async()=>{for(let i=0;i<40;i++)await Promise.resolve();};
-function fixture(){
+function fixture(overrides={}){
  let time=1000,id=0,bridge,context,adapterOptions,stops=0,planned=0;const presentations=[];const calls=[],listeners=new Set(),events=new Map(),timers=new Map();
  const document={location:{origin:'https://chatgpt.com',href:'https://chatgpt.com/'},defaultView:{addEventListener:(n,f)=>events.set(n,f),removeEventListener:(n,f)=>{if(events.get(n)===f)events.delete(n);}}};
  const binding=()=>({documentToken:'doc',producerToken:'producer',browserDocumentId:'browser',routeEpoch:1,origin:document.location.origin,expiresAt:new Date(time+20000).toISOString()});
  let respond=m=>m.type==='HOST_HELLO'?{binding:binding()}:m.type==='HOST_REFRESH'?{state:'verified'}:m.type==='HOST_DOCUMENT_RENEW'?{ok:true,binding:binding()}:{ok:true,grants:[]};
  const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},sendMessage:async m=>{calls.push(m);return respond(m);}};
  const options={document,runtime,makeId:()=> 'client',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),adapterFactory:o=>(adapterOptions=o,{inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false}),surfaceFactory:()=>({}),plansFactory:({bindingCurrent})=>({plan:()=>{assert.ok(bindingCurrent());planned++;return ['plan'];}}),controllerFactory:o=>{bridge=o.bridge;return {start:async c=>{context=c;await bridge.registerMount({handle:{id:'mount',regionEpoch:1}});return {id:'mount'};},stop:()=>{stops++;bridge.revokeMount({mountId:'mount'});},showWorkspace:()=>{presentations.push('workspace');return true;},showReading:()=>{presentations.push('reading');return true;},showNativeReading:()=>{presentations.push('native-page');return true;}};}};
- const client=createHostContentSession(options);
+ const client=createHostContentSession({...options,...overrides});
  return {presentations,get adapterOptions(){return adapterOptions;},client,options,runtime,document,binding,calls,listeners,events,setResponse:f=>{respond=f;},get bridge(){return bridge;},get context(){return context;},get stops(){return stops;},get planned(){return planned;},async advance(ms){time+=ms;for(const [key,t]of [...timers])if(t.at<=time){timers.delete(key);t.fn();}await drain();}};
 }
 test('production composition sequences HELLO REFRESH and mount with no page bridge; restart seq is monotonic',async()=>{
@@ -142,3 +142,8 @@ for(const change of ['route','expiry','stop','replacement'])test('native-page ol
  if(change==='route')f.document.location.href+='c/new';if(change==='expiry')await f.advance(20000);if(change==='stop')f.client.stop();if(change==='replacement')await f.client.start();
  old(nativePagePresentation(),{id:'extension'},()=>{});assert.deepEqual(f.presentations,[]);assert.equal(f.planned,0);f.client.stop();
 });
+
+for(const exit of ['stop','pagehide'])test('C2 ready cannot revive explicit '+exit,async()=>{const f=fixture({contextRecovery:true});await f.client.start();if(exit==='stop')f.client.stop();else f.events.get('pagehide')();const count=f.calls.length;f.client.contextPending();await f.client.contextReady();assert.equal(f.calls.length,count);assert.equal(f.client.showWorkspace(),false);});
+test('C2 pending withdraws immediately and one completed receipt may start a fresh handshake',async()=>{const f=fixture({contextRecovery:true});await f.client.start();f.client.contextPending();assert.equal(f.client.showWorkspace(),false);assert.equal(f.listeners.size,0);await f.client.contextReady();assert.equal(f.client.showWorkspace(),true);assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,2);f.client.stop();});
+test('context wake is disabled by default and ordinary scope denial cannot wake it',async()=>{const f=fixture();await f.client.start();f.client.contextPending();const count=f.calls.length;await f.client.contextReady();assert.equal(f.calls.length,count);assert.equal(f.client.showWorkspace(),false);});
+test('C2 initial ambiguous identity can await a newly completed receipt, malformed HELLO cannot',async()=>{for(const malformed of [false,true]){const f=fixture({contextRecovery:true});f.setResponse(m=>m.type==='HOST_HELLO'?{binding:{...f.binding(),...(malformed?{origin:'https://other.test'}:{})}}:{state:'ambiguous'});assert.equal(await f.client.start(),null);const count=f.calls.length;f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified'}:{ok:true});await f.client.contextReady();assert.equal(f.calls.length>count,!malformed);assert.equal(f.client.showWorkspace(),!malformed);f.client.stop();}});

@@ -2046,3 +2046,10 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 同一正式包J1原脚本不增加返回前等待，连续 **6步PASS，PARTIAL_J1_NOT_ACCEPTED**：空缓存认证scope、同名canonical P与IDless按钮、原生正向NONE/UNKNOWN分离、P2一次原按钮升级并候选消退、P2/C2/Back、P1/C1、最终2/2Project与4/4Conversation的原名/URL/成员关系独立oracle核对；同document/原editor/原candidate节点保持，唯一返回，全程worker外网阻断。截图已查看，source/script稳定。
 - 原始两次oracle错误（raw principal而非散列scope、把派生UNKNOWN误当持久成员记录）及候选消退首次即时count失败均分别保留；有界等待后仍残留的真实产品FAIL和修后PASS分开。J1未测非零分页/scroll/focus来路，不升级完整J1；J3旧窗口/81项与真实G/U等仍未完成。
 - 7883944及50a5d44已正常推送原PR #16；72ca068仍是祖先。继续现有分支/计划，不合并、不部署，整体Free NOT_RELEASE_READY。
+
+## Round206：云端接管，离线C2链与可恢复验收入口（接d1872d9）
+
+- 保留Round205全部成果；新增仅显式loopback启用的C2 conversation GET闭环：原生请求context header、可信tab/document、当前body挑战及认证roster匹配，默认生产能力不启用。旧grant同步撤销、异context并发及容量竞态拒绝、incognito可信tabs核验、用户退出不复活、整体6秒/abort边界均有L回归。非完整MODERN/home/Project验收，真实G尚未认证。
+- 整合J1非零candidate分页/scroll/focus断言及J2/J4前置runner；浏览器新增断言尚未运行，不升级既有J1/J3 PARTIAL或81项。12类guard变异独立临时副本执行，12 baseline通过、12预定断言杀死；L-only，MOCK_IDB不冒充D，UI声明不冒充S。
+- 本云环境Chromium启动被socket权限限制，S为NOT_RUN。经批准加入原分支最小GitHub Actions隔离Chromium切片；核实public仓库与标准Ubuntu runner免费规则，无artifact/cache上传、付费runner、私人账户或部署。CI尚待本次提交后运行，不能预报通过。
+- 恢复真实git历史后旧writer兼容回归5/5通过；第一轮整合完整Node4008/4008通过，容量审查随后新增3例，最终完整Node **4011/4011 PASS**、无skip。首页first-send因果链、strict旧活动、J1–J4完整旅程、大数据性能及G/U仍开放。可恢复命令与边界见docs/evidence/round206/README.md，Free NOT_RELEASE_READY。

@@ -1,3 +1,4 @@
+import {createBrowserRequestContext} from './browser-request-context.mjs';
 import {ScopeRepository} from '../b1/scope-repository.mjs';
 import {WorkspaceRepository} from '../data/repository.mjs';
 import {FreeEvidenceRepository} from '../data/free-evidence-repository.mjs';
@@ -7,13 +8,14 @@ import {createHostBindingService} from './host-binding-service.mjs';
 import {createSessionProvider} from './session-provider.mjs';
 
 /** Zero-seed worker composition. Configuration is packaged code, never page input. */
-export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgpt.com',scopeProfile={id:'chatgpt-context-unverified',singlePersonalDefault:false},provider=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,serviceFactory=createHostBindingService}={}){
+export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgpt.com',scopeProfile={id:'chatgpt-context-unverified',singlePersonalDefault:false},provider=null,sessionProfile={},currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,serviceFactory=createHostBindingService}={}){
  const policy=createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}});
  if(!chrome?.runtime?.id||typeof chrome.runtime.getContexts!=='function'||typeof chrome.webNavigation?.getFrame!=='function')throw Error('host-browser-unavailable');
  const allowedURL=value=>{try{return new URL(value).origin===origin&&policy.nativeHref(value)!==null;}catch{return false;}};
  let service;
+ const contextObserver=scopeProfile.browserRequestContext===true?createBrowserRequestContext({webRequest:chrome.webRequest,getTab:id=>chrome.tabs.get(id),getFrame:q=>chrome.webNavigation.getFrame(q),origin,associatePage:({tabId,documentId,...query})=>chrome.tabs.sendMessage(tabId,{type:'HOST_CONTEXT_ASSOCIATE',...query},{documentId}),onInvalidate:({tabId,documentId})=>{service?.invalidate({tabId,documentId});return chrome.tabs.sendMessage(tabId,{type:'HOST_CONTEXT_PENDING'},{documentId});},onReady:({tabId,documentId})=>chrome.tabs.sendMessage(tabId,{type:'HOST_CONTEXT_READY'},{documentId})}):null;
  const repository=new ScopeRepository({indexedDB}),workspaceRepository=new WorkspaceRepository({baseRepository:repository}),freeEvidenceRepository=new FreeEvidenceRepository({baseRepository:repository,hostObservationGate:(scope,request)=>service?.ackAdmission?.(scope,request)??service?.continuations?.admission(scope,request)});
- service=serviceFactory({extensionId:chrome.runtime.id,repository,workspaceRepository,freeEvidenceRepository,allowedURL,provider:provider??createSessionProvider({origin,profile:{currentConversationReadEnabled:currentMetadataReadEnabled,...(sendAckProfile?{sendAckProfile}:{} )}}),currentMetadataReadEnabled,sendCandidatesEnabled,sendAckProfile,profile:scopeProfile,
+ service=serviceFactory({extensionId:chrome.runtime.id,repository,workspaceRepository,freeEvidenceRepository,allowedURL,contextObserver,provider:provider??createSessionProvider({origin,profile:{...sessionProfile,currentConversationReadEnabled:currentMetadataReadEnabled,...(sendAckProfile?{sendAckProfile}:{} )}}),currentMetadataReadEnabled,sendCandidatesEnabled,sendAckProfile,profile:scopeProfile,
   navigationURLPolicy:policy,surfaceProfiles:new Map([[LEGACY_SURFACE_PROFILE.id,{...LEGACY_SURFACE_PROFILE,urlPolicy:policy}]]),
   uiURLs:Object.fromEntries(['workspace','sidebar'].map(role=>[role,chrome.runtime.getURL(role+'.html')])),
   getContexts:filter=>chrome.runtime.getContexts(filter),getFrame:query=>chrome.webNavigation.getFrame(query),
@@ -49,12 +51,13 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
  const invalidate=details=>{
   if(!active||details.frameId!==0||!Number.isSafeInteger(details.tabId))return;
   // A replacement document also revokes the prior tab document's scope/UI.
+  contextObserver?.invalidateTab(details.tabId);
   service.invalidate({tabId:details.tabId});
   if(allowedURL(details.url)&&typeof details.documentId==='string')Promise.resolve().then(()=>active?chrome.tabs.sendMessage(details.tabId,{type:'HOST_DOCUMENT_INVALIDATED'},{documentId:details.documentId}):null).catch(()=>{});
  };
- const removed=tabId=>{if(active)service.tabClosed(tabId);};
+ const removed=tabId=>{if(active){contextObserver?.invalidateTab(tabId);service.tabClosed(tabId);}};
  const listeners=[[chrome.runtime.onMessage,message],[chrome.runtime.onConnect,connect],[chrome.webNavigation.onCommitted,invalidate],[chrome.webNavigation.onHistoryStateUpdated,invalidate],[chrome.tabs.onRemoved,removed]];
  for(const [event,listener]of listeners)event.addListener(listener);
- function stop(){if(!active)return;active=false;service.stop?.();for(const [event,listener]of listeners)event.removeListener(listener);service.ui?.revokeAll();service.views?.stop();repository.close();}
+ function stop(){if(!active)return;active=false;contextObserver?.stop();service.stop?.();for(const [event,listener]of listeners)event.removeListener(listener);service.ui?.revokeAll();service.views?.stop();repository.close();}
  return Object.freeze({service,stop});
 }

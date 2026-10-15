@@ -12,7 +12,7 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
  if(url.origin!==origin||url.username||url.password||url.pathname!=='/'||url.search||url.hash||!(url.protocol==='https:'&&!url.port||loopback&&url.protocol==='http:')||typeof fetch!=='function'||typeof now!=='function'||typeof elapsedNow!=='function')throw Error('invalid-session-provider');
  const providerProfile=profile.id??'chatgpt-session-v1',structures=new Map(Object.entries(profile.structures??{personal:'personal',team:'organization',enterprise:'organization'}));
  if(!identifier(providerProfile)||[...structures.values()].some(v=>!['personal','organization','unknown'].includes(v)))throw Error('invalid-session-profile');
- const currentEnabled=profile.currentConversationReadEnabled===true,contextHeader=profile.currentConversationContextHeader===true;
+ const currentEnabled=profile.currentConversationReadEnabled===true,contextHeader=profile.currentConversationContextHeader===true,rosterContext=profile.currentConversationRosterContext===true;
  const ackProfile=profile.sendAckProfile===undefined?null:validateSendAckProfile(profile.sendAckProfile),acceptances=new WeakMap();
  if(ackProfile&&(!currentEnabled||ackProfile.providerProfile!==providerProfile))throw Error('invalid-session-ack-profile');
  async function execute(options={},current=null){
@@ -45,8 +45,9 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
    }
    check();if(instant(expiresAt)<=now())throw Error('session-expired');
    if(current){
-    if(contexts.length!==1||contexts[0].kind!=='personal'||'context_'+digest(['chatgpt-context-v1',principalId,contexts[0].id])!==current.expectedContextKey)throw Error('conversation-context-conflict');
-    const raw=await json('/backend-api/conversation/'+encodeURIComponent(current.conversationId),token,{raw:true,contextId:contexts[0].id});check();
+    const selected=contexts.filter(c=>c.kind!=='unknown'&&'context_'+digest(['chatgpt-context-v1',principalId,c.id])===current.expectedContextKey);
+    if(selected.length!==1||!(rosterContext&&contextHeader)&&!(contexts.length===1&&selected[0].kind==='personal'))throw Error('conversation-context-conflict');
+    const raw=await json('/backend-api/conversation/'+encodeURIComponent(current.conversationId),token,{raw:true,contextId:selected[0].id});check();
     let metadata;try{metadata=parseConversationMetadata({conversationId:current.conversationId,principalId,payload:raw});}catch{throw Error('invalid-conversation-metadata');}
     check();if(instant(expiresAt)<=now())throw Error('session-expired');
     const result={principalKey,contextKey:current.expectedContextKey,expiresAt,providerProfile,transport:'worker-fixed-fetch',metadata};
