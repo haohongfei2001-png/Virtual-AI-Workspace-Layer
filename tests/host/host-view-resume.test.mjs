@@ -1,3 +1,4 @@
+import {createHostWorkerRuntime} from '../../src/runtime/host-worker-runtime.mjs';
 import {createHostViewService} from '../../src/runtime/host-view-service.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -186,4 +187,28 @@ test('document replacement cannot resume old document display',async t=>{
  const h=await boot(t);await ready(h,'workspace',{segment:3});await save(h);
  h.service.invalidate({tabId:1,documentId:'document'});h.sender.documentId='replacement-document';await h.bind();await h.mount();
  assert.deepEqual(await resume(h),{ok:true,resume:null});
+});
+
+// Browser-event composition regression: direct service.invalidate(documentId) tests
+// miss the worker's tab-wide invalidation on actual SPA history notifications.
+test('real worker history event preserves display only while revoking old grants across P C Back',async t=>{
+ const h=await boot(t),events=()=>({addListener(fn){this.listener=fn;},removeListener(){}});
+ const chrome={runtime:{id:'extension',getURL:p=>'chrome-extension://extension/'+p,getContexts:async()=>[],onMessage:events(),onConnect:events()},webNavigation:{getFrame:async()=>null,onCommitted:events(),onHistoryStateUpdated:events()},tabs:{sendMessage:async()=>({ok:true}),onRemoved:events()}};
+ const worker=createHostWorkerRuntime({chrome,indexedDB:new MockIDBFactory(),serviceFactory:()=>h.service});t.after(()=>worker.stop());
+ const query={segment:0,offset:32,limit:8},origin={...layout,segment:0,scroll:521};
+ await ready(h,'workspace',query);assert.equal((await save(h,origin)).ok,true);
+ for(const route of ['https://chatgpt.com/c/11111111-1111-4111-8111-111111111111','https://chatgpt.com/g/g-p-11111111111111111111111111111111/project']){
+  h.switchRoute(route);chrome.webNavigation.onHistoryStateUpdated.listener({tabId:1,frameId:0,documentId:'document',url:route});
+  assert.equal((await resume(h)).ok,false,'old grant revoked synchronously');
+  await h.bind();await h.mount();assert.deepEqual(await resume(h),{ok:true,resume:{query,view:origin}});
+  await ready(h,'workspace',query);assert.equal((await save(h,origin)).ok,true);
+ }
+ // No renderer query can opt into this: only the internal browser event path.
+ for(const details of [{documentId:undefined},{documentId:''},{documentId:'other-document'},{documentId:'document',url:'https://outside.example/'}]){
+  chrome.webNavigation.onHistoryStateUpdated.listener({tabId:1,frameId:0,url:'https://chatgpt.com/',...details});
+  assert.equal((await resume(h)).ok,false);await h.bind();await h.mount();assert.deepEqual(await resume(h),{ok:true,resume:null});
+  await ready(h,'workspace',query);assert.equal((await save(h,origin)).ok,true);
+ }
+ chrome.webNavigation.onCommitted.listener({tabId:1,frameId:0,documentId:'document',url:'https://chatgpt.com/'});
+ assert.equal((await resume(h)).ok,false);await h.bind();await h.mount();assert.deepEqual(await resume(h),{ok:true,resume:null});
 });

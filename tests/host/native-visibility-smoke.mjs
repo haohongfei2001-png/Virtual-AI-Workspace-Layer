@@ -11,4 +11,4 @@ try{
  const b=await context.newPage();await b.goto(origin+'/b');await b.bringToFront();await a.waitForFunction(()=>document.visibilityState==='hidden',null,{polling:100,timeout:5000});
  await a.bringToFront();await a.waitForFunction(()=>document.visibilityState==='visible',null,{polling:100,timeout:5000});report.events=await a.evaluate(()=>observations);assert(report.events.some(e=>e.state==='hidden'&&e.trusted));assert(report.events.some(e=>e.state==='visible'&&e.trusted));report.browserVersion=handle.browser.version();report.status='PASS_NATIVE_VISIBILITY_PREREQUISITE';
 }catch(e){report.status=handle?'FAIL':'NOT_RUN_BROWSER_STARTUP';report.error=e.stack;process.exitCode=1;}
-finally{await handle?.close();await new Promise(r=>server.close(r));await writeFile(process.argv[2]??join(dir,'report.json'),JSON.stringify(report,null,2)+'\n');}console.log(JSON.stringify(report));
+finally{try{await handle?.close();}catch(e){report.cleanupError=e.stack;report.status='FAIL_CLEANUP';process.exitCode=1;}await new Promise(r=>server.close(r));await writeFile(process.argv[2]??join(dir,'report.json'),JSON.stringify(report,null,2)+'\n');}console.log(JSON.stringify(report));

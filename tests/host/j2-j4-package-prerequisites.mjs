@@ -47,7 +47,7 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
  const report={specRevision:'VA-HOST/1.1 FINAL',evidence:'S_REAL_DEFAULT_PACKAGED_MV3_OFFLINE_PREREQUISITES',browserMode:headed?'HEADED':'HEADLESS',display:headed?(process.env.DISPLAY??null):null,
   realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',fullJourneys:'NOT_ACCEPTED',profile:'LEGACY_OFFLINE_C3',
   sourceCommit:process.env.FREE_SOURCE_COMMIT??null,sourceCommitProvenance:'caller supplied; source hashes are authoritative',
-  scriptHash,visibilityLauncherHash:hash(await readFile(new URL('./native-visibility-browser.mjs',import.meta.url))),sourceHashes:manifest.sourceHashes,buildManifestHash:hash(manifestBytes),fixture:server.manifest,os:platform(),
+  scriptHash,visibilityDependencies:await Promise.all(['isolated-browser-cleanup.mjs','historical-network-guard.mjs'].map(async name=>[name,hash(await readFile(new URL(name,import.meta.url)))])),visibilityLauncherHash:hash(await readFile(new URL('./native-visibility-browser.mjs',import.meta.url))),sourceHashes:manifest.sourceHashes,buildManifestHash:hash(manifestBytes),fixture:server.manifest,os:platform(),
   networkPolicy:'page allowlist plus unchanged package worker CSP; external worker fetch checked',
   steps:[],errors:[],limitations:requiredGaps.map(([journey,name,reason])=>({journey,name,status:'NOT_RUN',reason}))};
  let context,worker,id,inspectionFrame,browserHandle;const observedPages=[];
@@ -136,7 +136,7 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
  finally{
   await browserHandle?.close();await server.close();
   report.sourceChangedDuringRun=(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);
-  report.scriptChangedDuringRun=hash(await readFile(script))!==scriptHash||hash(await readFile(new URL('./native-visibility-browser.mjs',import.meta.url)))!==report.visibilityLauncherHash;report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;
+  report.scriptChangedDuringRun=hash(await readFile(script))!==scriptHash||hash(await readFile(new URL('./native-visibility-browser.mjs',import.meta.url)))!==report.visibilityLauncherHash;for(const [name,before] of report.visibilityDependencies)if(hash(await readFile(new URL(name,import.meta.url)))!==before)report.scriptChangedDuringRun=true;report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;
   report.status=resultStatus(report.steps,{sourceChanged:report.sourceChangedDuringRun||report.scriptChangedDuringRun||!report.buildManifestUnchanged});
   await writeFile(output,JSON.stringify(report,null,2)+'\n');
  }

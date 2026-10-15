@@ -1,0 +1,17 @@
+import {randomUUID} from 'node:crypto';
+export const J4_SEND_C='44444444-4444-4444-8444-444444444444';
+/** Native app owns original timestamps. Only response delivery is fault-controlled. */
+export function createJ4InterruptionFixture({principal,now=Date.now}){
+ const rows=[{id:'j4_original_old',parent:null,author:principal(),at:new Date(now()-90*86400000).toISOString()}],pending=new Set(),reads=[];let held=false,accepts=0;
+ const detail=()=>({conversation_id:J4_SEND_C,history_semantics:'fixture-original-self-send/1',mapping:Object.fromEntries(rows.map(r=>[r.id,{id:r.id,parent:r.parent,message:{id:r.id,author:{role:'user',id:r.author},status:'fixture-accepted',create_time:Date.parse(r.at)/1000,original_send:{author_id:r.author,conversation_id:J4_SEND_C,kind:'new-send',state:'committed',precision:'millisecond',sent_at:r.at},content:{parts:['J4 native accepted message']}}}]))});
+ const release=()=>{held=false;const count=pending.size;for(const reply of [...pending])reply();return count;};
+ return {detail,snapshot:()=>structuredClone({rows,accepts,held,pending:pending.size,reads}),release,
+  async accept(req,res,json){let body='';for await(const c of req){body+=c;if(body.length>4096)return json(res,413,{error:'too-large'});}let value;try{value=JSON.parse(body);}catch{return json(res,400,{error:'invalid-json'});}if(typeof value.text!=='string'||!value.text.trim()||value.text.length>2000)return json(res,400,{error:'invalid-message'});const r={id:randomUUID(),parent:rows.at(-1).id,author:principal(),at:new Date(now()).toISOString()};rows.push(r);held=true;accepts++;return json(res,200,{message:{messageId:r.id,author:r.author,text:'J4 native accepted message'}});},
+  respond(res,json,{authenticatedWorker=false}={}){const entry={authenticatedWorker,held:held&&authenticatedWorker,receivedAt:now(),finishedAt:null};reads.push(entry);if(reads.length>64)reads.shift();res.once('finish',()=>{entry.finishedAt=now();});if(!held||!authenticatedWorker)return json(res,200,detail());const reply=()=>{pending.delete(reply);if(!res.destroyed)json(res,200,detail());};pending.add(reply);res.once('close',()=>pending.delete(reply));}
+ };
+}
+export function j4InterruptionNative(source){
+ const original="$('#composer').onsubmit = async (event) => { event.preventDefault(); if(event.isComposing) return; await action('send-intent'); $('#composer output').textContent = 'Offline reconstruction: message not sent'; };";
+ if(!source.includes(original))throw Error('j4-native-handler-changed');
+ return source.replace(original,`$('#composer').onsubmit=async event=>{event.preventDefault();if(event.isComposing)return;await action('send-intent');if(location.pathname!=='/c/${J4_SEND_C}'){$('#composer output').textContent='Offline reconstruction: message not sent';return;}const r=await fetch('/native/j4/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:$('#prompt-textarea').value})});if(!r.ok){$('#composer output').textContent='J4 native send failed';return;}const {message:m}=await r.json(),article=document.createElement('article');article.dataset.messageId=m.messageId;article.dataset.messageAuthorRole='user';article.dataset.authorId=m.author;const body=document.createElement('div');body.dataset.messageId=m.messageId;body.textContent=m.text;article.append(body);$('#reading').append(article);$('#prompt-textarea').value='';$('#composer output').textContent='J4 native send accepted';};`);
+}

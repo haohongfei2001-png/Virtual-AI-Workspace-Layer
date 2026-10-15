@@ -57,7 +57,9 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
   // A replacement document also revokes the prior tab document's scope/UI.
   if(replacement){firstSendObserver?.invalidateTab(details.tabId);service.firstSend?.invalidateTab(details.tabId);}
   contextObserver?.invalidateTab(details.tabId);
-  service.invalidate({tabId:details.tabId,...(!replacement&&offlineFirstSend?{firstSendNavigation:{browserDocumentId:details.documentId,url:details.url,navigatedAt:details.timeStamp}}:{})});
+  // Only a trusted same-document browser event may retain display metadata.
+  // All tab authority is still revoked synchronously, even on SPA navigation.
+  service.invalidate({tabId:details.tabId,...(!replacement&&allowedURL(details.url)&&typeof details.documentId==='string'&&details.documentId.length>0?{preserveViewDocumentId:details.documentId}:{}),...(!replacement&&offlineFirstSend?{firstSendNavigation:{browserDocumentId:details.documentId,url:details.url,navigatedAt:details.timeStamp}}:{})});
   if(allowedURL(details.url)&&typeof details.documentId==='string')Promise.resolve().then(()=>active?chrome.tabs.sendMessage(details.tabId,{type:'HOST_DOCUMENT_INVALIDATED'},{documentId:details.documentId}):null).catch(()=>{});
  };
  const removed=tabId=>{if(active){firstSendObserver?.invalidateTab(tabId);service.firstSend?.invalidateTab(tabId);contextObserver?.invalidateTab(tabId);service.tabClosed(tabId);}};
