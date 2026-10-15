@@ -200,8 +200,8 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  async function enterCurrent(){
   if(role!=='workspace'||closed||horizonPending||recovery||backup||!grantCurrent()||!viewSession||!Number.isSafeInteger(workspaceRevision)||(query.segment??0)!==0||query.search||query.workingSet)return {ok:false,reason:'current-entry-unavailable'};
-  horizonPending=true;const current=grant,renderer=navigation,expectedRevision=workspaceRevision,old=viewSession,ticket=serial;
-  const valid=()=>!closed&&navigation===renderer&&grant?.id===current.id&&grantCurrent()&&serial===ticket&&(query.segment??0)===0&&!query.search&&!query.workingSet;
+  horizonPending=true;const current=grant,renderer=navigation,expectedRevision=workspaceRevision,old=viewSession,ticket=serial,entryQuery=structuredClone(query);
+  const valid=()=>!closed&&navigation===renderer&&grant?.id===current.id&&grantCurrent()&&serial===ticket&&JSON.stringify(query)===JSON.stringify(entryQuery)&&(query.segment??0)===0&&!query.search&&!query.workingSet;
   try{
    const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_CURRENT_ENTRY',grantId:current.id,mountId:current.mountId,expectedRevision,viewSession:old}),{now:elapsedNow,schedule,cancel});
    if(!valid())return {ok:false,reason:'current-entry-unavailable'};
@@ -213,7 +213,10 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    new Intl.DateTimeFormat('en',{timeZone:next.Z});
    const change=result.autoChange;
    if(change&&(!commit||Object.keys(change).sort().join(',')!=='H,expiresAt,id,policyRevision,previousH,workspaceRevision'||typeof change.id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(change.id)||!FREE_HORIZONS.includes(change.previousH)||change.previousH===change.H||change.H!==next.H||change.policyRevision!==next.policyRevision||change.workspaceRevision!==result.workspaceRevision||!Number.isFinite(Date.parse(change.expiresAt))||Date.parse(change.expiresAt)>now()+15000))throw Error('invalid-current-entry-response');
-   viewSession=next;workspaceRevision=result.workspaceRevision;query={segment:0,offset:0,limit:8};dirty=false;
+   // A trusted return to the same current session preserves the selected page.
+   // A changed time window or policy still starts a fresh current-page query.
+   const sameSession=['H','T','Z','policyRevision'].every(key=>next[key]===old[key]);
+   viewSession=next;workspaceRevision=result.workspaceRevision;query=sameSession?entryQuery:{segment:0,offset:0,limit:8};dirty=false;
    const page=await read(query,true);
    if(page&&change&&!closed&&navigation===renderer&&grant?.id===current.id&&grantCurrent()&&workspaceRevision===change.workspaceRevision&&(query.segment??0)===0&&!query.search&&!query.workingSet){clearAutoNotice();autoChange=change;renderer.showTimePolicyNotice?.({id:change.id,expiresAt:change.expiresAt});}
    return page?result:{ok:false,reason:'current-entry-refresh-unavailable'};

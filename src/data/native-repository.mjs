@@ -1,3 +1,4 @@
+import {tokenOK} from '../b1/identity.mjs';
 import {freeEvidenceKey} from './free-evidence-partitions.mjs';
 import {createNativeContinuation,validateNativeContinuation,continuationDirectoryKey,emptyContinuationDirectory,validateContinuationDirectory,updateContinuationDirectory,finishNativeContinuation,deferNativeContinuation,transitionContinuationDirectory,continuationEvidenceFingerprint} from './native-observation-continuation.mjs';
 import {migrateNativeVersionIndex,prepareNativeVersionIndex} from './native-index-migration.mjs';
@@ -327,6 +328,7 @@ export class NativeRepository {
   async #markContinuation(scope,input,options,mode){
     options={...options};
     if(typeof options.guard!=='function')throw Error('continuation-guard-required');
+    if(mode==='needs-revalidation'&&options.currentProfile!==undefined&&typeof options.currentProfile!=='function')throw Error('invalid-continuation-current-profile');
     const normalized=this.base.scopeOrThrow(scope),request=structuredClone(input);
     if(!request||Object.keys(request).sort().join(',')!==(mode==='complete'?'evidenceRevision,expectedPayloadDigest,operationId':'expectedPayloadDigest,operationId')||(mode==='complete'&&(!Number.isSafeInteger(request.evidenceRevision)||request.evidenceRevision<1))||typeof request.expectedPayloadDigest!=='string'||!/^[0-9a-f]{64}$/.test(request.expectedPayloadDigest))throw Error('invalid-continuation-completion');
     id(request.operationId);fence(options);const db=await this.base.open();fence(options);
@@ -347,7 +349,12 @@ export class NativeRepository {
         if(mode==='needs-revalidation'){
           if(pending.state!=='pending-evidence')throw Error('native-continuation-completion-conflict');
           const source=facts.sources[pending.admission.sourceId],a=pending.admission;
-          const reason=!source?'missing-source':source.revoked?'source-revoked':source.generation!==a.generation||source.channel!=='host-dom'?'source-changed':source.admission?.profileId!==a.profileId||source.admission?.profileVersion!==a.profileVersion?'profile-changed':null;
+          // Live owner authority only; never accept a profile label from stored payload/request.
+          // The guard keeps this profile current through every queued write and commit fence.
+          const profile=options.currentProfile?.();check();
+          if(options.currentProfile&&(!profile||!tokenOK(profile.id)||!Number.isSafeInteger(profile.revision)||profile.revision<1))throw Error('invalid-continuation-current-profile');
+          const profileChanged=profile&&profile.id===a.profileId&&profile.revision!==a.profileVersion;
+          const reason=!source?'missing-source':source.revoked?'source-revoked':source.generation!==a.generation||source.channel!=='host-dom'?'source-changed':source.admission?.profileId!==a.profileId||source.admission?.profileVersion!==a.profileVersion||profileChanged?'profile-changed':null;
           if(!reason)throw Error('native-continuation-source-still-valid');
           persist(deferNativeContinuation(pending,{reason}));result={ok:true,replayed:false,operationId:request.operationId,state:'needs-revalidation',reason};return;
         }

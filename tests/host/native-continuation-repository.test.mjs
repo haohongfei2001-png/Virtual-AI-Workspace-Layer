@@ -93,3 +93,71 @@ test('MOCK_IDB actual source revocation defers to minimal target without changin
 test('MOCK_IDB defer quota failure rolls back summary directory and native witness',async t=>{const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const p=(await h.native.listContinuations(A))[0],args={operationId:p.operationId,expectedPayloadDigest:p.payloadDigest};await h.native.invalidate(A,{operationId:'revoke',expectedRevision:1,sourceId:'host_ack'});const before=await allRows(h);h.factory.failNextPut=true;assert.equal((await h.native.markContinuationNeedsRevalidation(A,args,{guard:()=>true})).ok,false);assert.deepEqual(await allRows(h),before);});
 test('MOCK_IDB defer derives missing generation and profile reasons from stored root only',async t=>{for(const [reason,change]of [['missing-source',p=>delete p.sources.host_ack],['source-changed',p=>p.sources.host_ack.generation='generation_two'],['profile-changed',p=>p.sources.host_ack.admission.profileVersion=2]]){const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const p=(await h.native.listContinuations(A))[0],db=await h.base.open();await new Promise((resolve,reject)=>{const tx=db.transaction('native_states','readwrite');rewrite(tx.objectStore('native_states'),h.base.scopeOrThrow(A).key,change);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});const result=await h.native.markContinuationNeedsRevalidation(A,{operationId:p.operationId,expectedPayloadDigest:p.payloadDigest},{guard:()=>true});assert.equal(result.ok,true,JSON.stringify(result));assert.equal(result.reason,reason);}});
 test('MOCK_IDB terminal methods snapshot guard function before open await',async t=>{for(const mode of ['complete','defer']){const h=await setup(t),{request}=h.make();await h.native.apply(A,request);let args;if(mode==='complete')args=await completion(h);else{const p=(await h.native.listContinuations(A))[0];args={operationId:p.operationId,expectedPayloadDigest:p.payloadDigest};await h.native.invalidate(A,{operationId:'revoke',expectedRevision:1,sourceId:'host_ack'});}const before=await allRows(h),open=h.base.open.bind(h.base);let release,entered=false,allowed=true;h.base.open=async()=>{entered=true;await new Promise(r=>release=r);return open();};const options={guard:()=>allowed};const pending=mode==='complete'?h.native.markContinuationComplete(A,args,options):h.native.markContinuationNeedsRevalidation(A,args,options);assert(entered);allowed=false;options.guard=()=>true;release();await assert.rejects(pending,/stale-binding/);h.base.open=open;assert.deepEqual(await allRows(h),before);}});
+
+// SYS-01: a current owner profile can retire an old admission before any new native delta.
+import {createHostContinuationOwner} from '../../src/runtime/host-continuation-owner.mjs';
+function retirementOwner(h,profileFor,extra={}){return createHostContinuationOwner({nativeRepository:h.native,profileFor,evidenceRepository:{version:async()=>{throw Error('unexpected-evidence-read');},applyContinuation:async()=>{throw Error('unexpected-evidence-write');}},...extra});}
+const retireArgs=()=>({scope:A,guard:()=>true,profileId:'profile_one',profileVersion:2});
+test('MOCK_IDB runtime-only profile upgrade retires pending atomically without native/evidence replay',async t=>{
+ const h=await setup(t),{request}=h.make();assert((await h.native.apply(A,request)).ok);const before=await allRows(h),owner=retirementOwner(h,()=>({id:'profile_one',revision:2}));
+ assert.deepEqual(await owner.drain(retireArgs()),{state:'needs-revalidation',attempts:0,reason:'profile-changed'});
+ const rows=await h.native.listContinuations(A);assert.equal(rows[0].state,'needs-revalidation');assert.equal(rows[0].evidence,undefined);assert.deepEqual(rows[0].targets,['continuation_ref']);
+ const after=await allRows(h);for(const name of Object.keys(before))if(name!=='native_operations')assert.deepEqual(after[name],before[name]);
+ assert.equal((await h.native.read(A)).revision,1);assert.equal((await h.native.read(A)).sources.host_ack.admission.profileVersion,1);assert.equal((await owner.drain(retireArgs())).state,'idle');
+ assert.equal((await h.native.apply(A,request)).replayed,true);assert.equal((await h.native.listContinuations(A))[0].state,'needs-revalidation');
+});
+test('MOCK_IDB equal current profile cannot retire a valid pending continuation',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const row=(await h.native.listContinuations(A))[0],before=await allRows(h);
+ const result=await h.native.markContinuationNeedsRevalidation(A,{operationId:row.operationId,expectedPayloadDigest:row.payloadDigest},{guard:()=>true,currentProfile:()=>({id:'profile_one',revision:1})});
+ assert.equal(result.reason,'native-continuation-source-still-valid');assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB runtime profile change during terminal open cancels retirement',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const before=await allRows(h);let profile={id:'profile_one',revision:2};
+ const mark=h.native.markContinuationNeedsRevalidation.bind(h.native),open=h.base.open.bind(h.base);
+ h.native.markContinuationNeedsRevalidation=(...args)=>{h.base.open=async()=>{profile={id:'profile_one',revision:3};return open();};return mark(...args);};
+ const result=await retirementOwner(h,()=>profile).drain(retireArgs());h.base.open=open;assert.equal(result.state,'cancelled');assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB runtime profile change after queued retirement writes rolls back every record',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const before=await allRows(h),db=await h.base.open(),transaction=db.transaction.bind(db);let profile={id:'profile_one',revision:2},puts=0;
+ db.transaction=(...args)=>{const tx=transaction(...args),objectStore=tx.objectStore.bind(tx);if(args[1]==='readwrite')tx.objectStore=name=>{const store=objectStore(name),put=store.put.bind(store);store.put=value=>{const result=put(value);puts++;profile={id:'profile_one',revision:3};return result;};return store;};return tx;};
+ const result=await retirementOwner(h,()=>profile).drain(retireArgs());db.transaction=transaction;assert(puts>0);assert.equal(result.state,'cancelled');assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB runtime profile retirement quota failure preserves pending and can retry',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const before=await allRows(h),owner=retirementOwner(h,()=>({id:'profile_one',revision:2}));h.factory.failNextPut=true;
+ assert.equal((await owner.drain(retireArgs())).state,'pending');assert.deepEqual(await allRows(h),before);assert.equal((await owner.drain(retireArgs())).state,'needs-revalidation');
+});
+test('MOCK_IDB profile retirement rejects serialized witness and malformed live profile',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const row=(await h.native.listContinuations(A))[0],args={operationId:row.operationId,expectedPayloadDigest:row.payloadDigest},before=await allRows(h);
+ await assert.rejects(h.native.markContinuationNeedsRevalidation(A,{...args,currentProfile:{id:'profile_one',revision:2}},{guard:()=>true}),/invalid-continuation-completion/);
+ await assert.rejects(h.native.markContinuationNeedsRevalidation(A,args,{guard:()=>true,currentProfile:{id:'profile_one',revision:2}}),/invalid-continuation-current-profile/);
+ for(const profile of [null,{id:'profile_one',revision:0},{id:'profile_one',revision:2.5},Promise.resolve({id:'profile_one',revision:2})]){
+  assert.equal((await h.native.markContinuationNeedsRevalidation(A,args,{guard:()=>true,currentProfile:()=>profile})).reason,'invalid-continuation-current-profile');
+ }
+ assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB profile retirement retains payload CAS and scope isolation',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const row=(await h.native.listContinuations(A))[0],args={operationId:row.operationId,expectedPayloadDigest:row.payloadDigest},before=await allRows(h),options={guard:()=>true,currentProfile:()=>({id:'profile_one',revision:2})};
+ assert.equal((await h.native.markContinuationNeedsRevalidation(A,{...args,expectedPayloadDigest:'f'.repeat(64)},options)).reason,'native-continuation-completion-conflict');
+ assert.equal((await h.native.markContinuationNeedsRevalidation(B,args,options)).ok,false);assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB retirement snapshots the live callback before open, not its profile value',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const row=(await h.native.listContinuations(A))[0],before=await allRows(h),open=h.base.open.bind(h.base);let release,entered=false,profile={id:'profile_one',revision:2};
+ h.base.open=async()=>{entered=true;await new Promise(r=>release=r);return open();};const options={guard:()=>true,currentProfile:()=>profile};
+ const pending=h.native.markContinuationNeedsRevalidation(A,{operationId:row.operationId,expectedPayloadDigest:row.payloadDigest},options);assert(entered);profile={id:'profile_one',revision:1};options.currentProfile=()=>({id:'profile_one',revision:2});release();
+ assert.equal((await pending).reason,'native-continuation-source-still-valid');h.base.open=open;assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB concurrently supported profile rotation preserves other profile pending payload',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const before=await allRows(h),profiles={profile_one:{id:'profile_one',revision:1},profile_two:{id:'profile_two',revision:1}};
+ const owner=retirementOwner(h,id=>profiles[id]);
+ assert.deepEqual(await owner.drain({...retireArgs(),profileId:'profile_two',profileVersion:1}),{state:'pending',attempts:0,reason:'native-continuation-source-still-valid'});
+ assert.deepEqual(await allRows(h),before);assert.equal((await h.native.listContinuations(A))[0].state,'pending-evidence');
+});
+test('MOCK_IDB foreign runtime profile witness cannot retire healthy stored profile',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const row=(await h.native.listContinuations(A))[0],before=await allRows(h);
+ for(const revision of [1,2])assert.equal((await h.native.markContinuationNeedsRevalidation(A,{operationId:row.operationId,expectedPayloadDigest:row.payloadDigest},{guard:()=>true,currentProfile:()=>({id:'profile_two',revision})})).reason,'native-continuation-source-still-valid');
+ assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB foreign current profile can still retire an actually revoked persisted source',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);assert((await h.native.invalidate(A,{operationId:'profile_rotation_revoke',expectedRevision:1,sourceId:'host_ack'})).ok);
+ const owner=retirementOwner(h,id=>({id,revision:1}));assert.deepEqual(await owner.drain({...retireArgs(),profileId:'profile_two',profileVersion:1}),{state:'needs-revalidation',attempts:0,reason:'source-revoked'});
+});

@@ -25,7 +25,12 @@ export function createHostContinuationOwner({nativeRepository,evidenceRepository
    cursors.delete(normalized.key);cursors.set(normalized.key,row.operationId);if(cursors.size>128)cursors.delete(cursors.keys().next().value);
    // Snapshot the selected data before the next await; only caller authority is live.
    const pending=structuredClone(row),mark={operationId:pending.operationId,expectedPayloadDigest:pending.payloadDigest};
-   if(pending.admission.profileId!==profileId||pending.admission.profileVersion!==profileVersion){await verifyCurrent();const marked=await nativeRepository.markContinuationNeedsRevalidation(normalized,mark,options);check();return marked?.ok===true?{state:'needs-revalidation',attempts:0,reason:marked.reason}:{state:'pending',attempts:0,reason:marked?.reason??'continuation-revalidation-failed'};}
+   if(pending.admission.profileId!==profileId||pending.admission.profileVersion!==profileVersion){
+    await verifyCurrent();
+    // Other supported profiles may be draining this scope too; their identity is not revocation.
+    const retirementOptions=pending.admission.profileId===profileId?{...options,currentProfile:()=>{check();return {id:profileId,revision:profileVersion};}}:options;
+    const marked=await nativeRepository.markContinuationNeedsRevalidation(normalized,mark,retirementOptions);check();return marked?.ok===true?{state:'needs-revalidation',attempts:0,reason:marked.reason}:{state:'pending',attempts:0,reason:marked?.reason??'continuation-revalidation-failed'};
+   }
    for(let attempts=1;attempts<=2;attempts++){
     check();const expectedRevision=await evidenceRepository.version(normalized,options);await verifyCurrent();
     const request={operationId:pending.evidence.operationId,expectedRevision,nativeOperationId:pending.operationId,payloadDigest:pending.payloadDigest};

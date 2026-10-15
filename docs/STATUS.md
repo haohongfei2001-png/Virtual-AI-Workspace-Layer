@@ -2209,3 +2209,22 @@ runner-fixture correction; final CI must revalidate the complete tree.
 - Subsequent runner work includes actual checksum-only fault injection of an existing native root followed by production recovery UI and unchanged manual assets. This is explicitly test-only corruption, never a grant/ACK/business-state seed. Pure evidence ACK remains separate from any future genuine mixed native/evidence observation.
 - Draft / NOT_RELEASE_READY: J1–J4 complete, 81-case mapping, compatibility, performance, production semantics and G/U remain unfinished.
 - Round 212 implementation: J1 resume now preserves non-authoritative layout across same tab/document/scope routes, plus fresh-scope proactive cross-scope display-cache clearing. Independent four adversarial cases and integrated54 focused tests pass; cross-project current content recomputes and old grants reject. J3 follows real safe-new-tab contract, J2 captures bounded read-only diagnostics, J4 exercises existing-root checksum repair. Profile-retirement patch is held after independent active-profile rotation counterexample, not silently integrated.
+
+## Round 213 — eighth source-scoped CI and reviewed follow-through (2026-10-15)
+
+- Source 1cdfd2c / CI 38672335728 completed FAIL. Complete Node 4205/4205, twelve L mutation kills, warm/cold C2, real visibility smoke, natural/foreground identity prerequisites, homepage firstsend and all four narrow S/D guard counterexamples pass again. Full failed journey reports are retained in [Round213 evidence](evidence/round213/README.md).
+- J1 second root cause is CURRENT_ENTRY unconditionally resetting restored canonical pagination. Preserve the full non-authoritative query only for unchanged H/T/Z/policyRevision, retaining owner authorization and query/document/grant race fences; session changes still reset. Integrated client/resume 125/125 and independent four cases with fourteen variants pass. Bounded cross-frame RPC trace retains exact original promises and errors; its actual wrapper regression passes. Real MV3 return remains pending next CI.
+- J4 actual checksum repair already revoked sources and preserved manual assets/draft before its old-title assertion failed. The runner now requires the exact UNKNOWN reference ID/href, enabled navigation and the specified unavailable-name label; revoked native and human titles must not leak. No projection rule is weakened.
+- Pending continuation profile retirement is limited to same-ID version changes with live runtime witness. Independent review caught and fixed an initial cross-profile false retirement; different active profiles preserve pending records. Integrated 60/60 and independent 60/60 pass. This does not create a mixed native/evidence producer.
+- Added explicit loopback-only C2 existing-conversation send composition, mutually exclusive with homepage firstsend and default-off. Exact packaging/profile verification retains existing scope, epoch and persistent request-budget gates; 16 package tests pass. Continuous interrupted pure-evidence readback recovery is still pending.
+- Historical real Host-to-Host update candidate uses frozen a8addaa, same extension slot/identity and actual backup UI assets; it is schema3-to3, not evidence of schema2 Host migration. Historical Pro schema2 compatibility code is saved; isolated network protection was approved at 02:56 UTC and is still being implemented before browser execution. Historical helper/contracts 6/6 pass; no historical browser result is claimed.
+- J2 accepted-send intent and body observation arrive, but all three detail reads precede successful send; J3 native-history action remains masked in reading-sidebar. Their source-scoped failures remain open pending fixes and real CI. Draft / NOT_RELEASE_READY; full81, complete J1–J4, performance and real G/U remain unfinished.
+
+Round213 final focused integration: 216/216 PASS, zero skips/failures (client/resume, continuation lifecycle, composition, compatibility helpers and journey-oracle contracts). This is not the complete Node suite or a new browser result.
+
+Round213 J2 follow-through: inherited owned-mask visibility produces false empty
+body observations and spends baseline attempts. A proposed suppression-only fix
+passed 80 local tests but independent real-owner composition found a blocking
+masked M1→M2 stale worker proof. It is withheld from this commit; budgets and
+production behavior are not relaxed. The failed candidate and independent
+counterexample remain recovery evidence for the next bounded fix.

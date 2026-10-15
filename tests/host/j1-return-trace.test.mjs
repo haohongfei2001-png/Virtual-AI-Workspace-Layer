@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import vm from 'node:vm';
+test('J1 trace observes original RPC result without changing request, return value or rejection',async()=>{
+ const source=await readFile(new URL('./j1-package-journey.mjs',import.meta.url),'utf8'),start=source.indexOf('await context.addInitScript(')+'await context.addInitScript('.length,end=source.indexOf(');const cdp=',start),fn=source.slice(start,end),logs=[],calls=[];let pending;
+ const world={location:{protocol:'chrome-extension:',href:'chrome-extension://fixture/workspace.html'},chrome:{runtime:{sendMessage(...args){calls.push(args);return pending;}}},crypto:{randomUUID:()=> 'frame-1'},console:{log:s=>logs.push(s)}};vm.runInNewContext('('+fn+')',world)();
+ const request={type:'HOST_UI_VIEW',query:{offset:32}},reply={ok:true,state:'ready',page:{groups:{offset:32,items:[{id:'p2'}]}}};pending=Promise.resolve(reply);assert.equal(world.chrome.runtime.sendMessage(request),pending);await pending;await Promise.resolve();assert.equal(calls[0][0],request);assert.equal(world.j1ViewTrace[0].offset,32);assert.equal(logs.length,2);assert.equal(JSON.parse(logs[1].slice(16)).page.offset,32);
+ pending=Promise.reject(Error('original-rejection'));const rejected=world.chrome.runtime.sendMessage({type:'HOST_UI_RESUME'});assert.equal(rejected,pending);await assert.rejects(rejected,/original-rejection/);assert.equal(JSON.parse(logs.at(-1).slice(16)).phase,'reject');
+});

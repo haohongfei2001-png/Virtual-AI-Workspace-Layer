@@ -335,3 +335,44 @@ for(const change of ['stop','scope-change','expired','deadline'])test('late same
 test('ordinary href plan remains browser-default-only and cannot use current dispatch',async()=>{
  const f=fixture(),plan={mode:'href',target:sameCurrentPlan().target,disposition:'new-tab-preserve-current'};f.setView(async()=>({ok:true,state:'ready',page:f.page(),navigation:[{refId:sameCurrentId,plan,targetKey:'current-key'}]}));await f.client.start();await drain();assert.deepEqual(f.nav.adapter.navigationPlan({id:sameCurrentId}).plan,plan);const before=f.calls.length;assert.equal((await f.nav.onDispatch(sameCurrentCommand())).state,'blocked');assert.equal(f.calls.length,before);f.client.stop();
 });
+
+
+test('trusted return lifecycle preserves resumed nonzero query and scroll in an unchanged current session',async()=>{
+ const f=fixture(),session={H:30,T:20740,Z:'UTC',policyRevision:2};
+ const query={segment:0,offset:32,limit:8,groupId:'project',list:'old',rowOffset:17,rowLimit:17};
+ const view={segment:0,oldOpen:['project'],sidebarOpen:[],capacities:[],scroll:566,sidebarScroll:0,sidebarVisible:true};
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),workspaceRevision:5,viewSession:session},navigation:[]}));
+ const send=f.runtime.sendMessage;
+ f.runtime.sendMessage=m=>{
+  if(m.type==='HOST_UI_RESUME')return Promise.resolve({ok:true,resume:{query,view}});
+  if(m.type==='HOST_UI_CURRENT_ENTRY'){f.calls.push(m);return Promise.resolve({ok:true,segment:0,workspaceRevision:5,viewSession:{...session}});}
+  return send(m);
+ };
+ await f.client.start();await drain();
+ assert.deepEqual(f.restoredViews,[view]);assert.deepEqual(f.calls.filter(m=>m.type==='HOST_UI_VIEW').at(-1).query,query);
+ f.emit({type:'VAIWL_UI_WORKSPACE_ENTERED'});await drain();
+ assert.equal(f.calls.filter(m=>m.type==='HOST_UI_CURRENT_ENTRY').length,1);
+ assert.deepEqual(f.calls.filter(m=>m.type==='HOST_UI_VIEW').at(-1).query,query);
+ f.nav.onViewChange(view);await f.advance(100);
+ const saved=f.calls.filter(m=>m.type==='HOST_UI_SAVE_VIEW').at(-1);assert.deepEqual(saved.expectedQuery,query);assert.equal(saved.view.scroll,566);f.client.stop();
+});
+
+test('trusted return lifecycle resets nonzero page only when current session fields change',async()=>{
+ for(const patch of [{H:14},{T:20741},{Z:'Asia/Shanghai'},{policyRevision:3}]){
+  const f=await currentEntryFixture(),send=f.runtime.sendMessage,next={H:30,T:20740,Z:'UTC',policyRevision:2,...patch};
+  await f.nav.onProjectionRequest({segment:0,offset:32,limit:8});
+  f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_CURRENT_ENTRY'){f.setSession(next);return Promise.resolve({ok:true,segment:0,workspaceRevision:5,viewSession:next});}return send(m);};
+  f.emit({type:'VAIWL_UI_WORKSPACE_ENTERED'});await drain();
+  assert.deepEqual(f.calls.filter(m=>m.type==='HOST_UI_VIEW').at(-1).query,{segment:0,offset:0,limit:8},JSON.stringify(patch));f.client.stop();
+ }
+});
+
+test('late unchanged current-entry response cannot overwrite newer current-page intent',async()=>{
+ const f=await currentEntryFixture(),held=deferred(),send=f.runtime.sendMessage;
+ await f.nav.onProjectionRequest({segment:0,offset:32,limit:8});
+ f.runtime.sendMessage=m=>m.type==='HOST_UI_CURRENT_ENTRY'?held.promise:send(m);
+ f.emit({type:'VAIWL_UI_WORKSPACE_ENTERED'});await drain();
+ const later={segment:0,offset:16,limit:8};await f.nav.onProjectionRequest(later);
+ const views=f.views;held.resolve({ok:true,segment:0,workspaceRevision:5,viewSession:{H:30,T:20740,Z:'UTC',policyRevision:2}});await drain();
+ assert.equal(f.views,views);assert.deepEqual(f.calls.filter(m=>m.type==='HOST_UI_VIEW').at(-1).query,later);f.client.stop();
+});
