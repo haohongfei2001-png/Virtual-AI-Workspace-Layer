@@ -2062,3 +2062,47 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - J3以显式历史源实现旧日期入口及重开断言，实际浏览器尚待本次CI；无注库/强启按钮。独立visibility实验3项PASS_MECHANISM_ONLY，前后focus/AX/popover及3帧恢复通过，瞬态paint/AX仍NOT_PROVEN，未改正式mask。报告保留于Round206；恢复说明见docs/evidence/round207/README.md。
 - 整合定向111/111 PASS；唯一整合树限制test-concurrency=2后最终完整Node **4044/4044 PASS**、无skip；12/12 baseline及12/12指定guard断言杀死。此前并发无界全套有7个文件进程失败、无具体断言诊断，保留摘要，不冒称确认产品根因。正式默认生产包构建/校验通过但仍HOST_IMPLEMENTATION_UNVERIFIED/NOT_RELEASE_READY。
 - 首页first-send被独立拆出：仍待修异步intent/POST双向join与全局请求预算，不随本切片误报完成。完整81项/J1–J4、大数据性能、G/U等未完成；无私人账户、部署、合并或main修改。
+
+## Round208 — third real Chromium evidence and contract-correct runner repair (2026-10-15 UTC)
+
+- Tested remote source: `e3122c924e47974a51354a50042afd5f6770662a`.
+  [CI 38665431868](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/38665431868)
+  is overall **FAIL**. Node **4044/4044**, guard mutation **12/12**, and exact
+  selected-context C2 assertions in both warm and independent immediate-load cold
+  browser runs pass. The first cold-mount failure remains recorded; this does
+  not claim all cold-start races are closed.
+- J1's unchanged canonical-focus assertion now passes: candidate offset32,
+  scroll521 preserved, canonicalFocused=true. All seven implemented continuous
+  steps pass. **PARTIAL_J1_NOT_ACCEPTED** remains because canonical-card
+  pagination/scroll coverage is incomplete.
+- J2's no-ACK/no-strict unconfirmed send and J4's two-tab setup pass. A silent
+  server authentication change then exceeds the runner's 35s assumption. The
+  actual authority proof is 60s with revalidation in its final10s; silent changes
+  and explicit foreground notification require separate scenarios. Product TTL
+  and acceptance thresholds must not be extended to accommodate the test.
+- J3 authenticates and persists the original strict event from45days earlier
+  through the actual packaged repository. Seven preceding steps pass, then the
+  runner waits forever for button textContent even though production renders
+  an SVG with an aria-label. The test now uses the accessible label and enabled
+  state; the original real-click/segment1 checks and timeout remain unchanged.
+  New regression: two initial failures, then six passes. Integrated historical
+  and runner targeted regressions: **38/38 PASS**. The remainder awaits real CI.
+- Raw reports and hash/source boundaries: [Round208 evidence](evidence/round208/README.md).
+  Isolated visibility proposal still proves only mechanism/before-after checks,
+  not absence of all transient painting/AX effects; no production mask change.
+- CI is split into standard public Ubuntu Node/guard and browser jobs using the
+  same pushed SHA. Both are required for workflow success, no continue-on-error,
+  duplicate full suite, paid runner/service, cache/artifact upload or private host.
+  Current run was allowed to finish before this change.
+- Homepage first-send remains separately blocked on bounded bidirectional
+  submit/intent joining and a shared 30-second/12-request budget. Its unreviewed
+  changes are not in this checkpoint. Production remains context-unverified,
+  metadata/send disabled. Full81/J1–J4/G/U/performance acceptance is incomplete;
+  **Free NOT_RELEASE_READY**.
+
+Round208 runner follow-through: J4 keeps both natural silent renewal and a separate
+fresh-document trusted foreground case. Natural observation has a70s diagnostic
+exit but independently fails if actual removal is later than60s from document
+origin (conservatively before proof issuance); foreground retains35s. Actual
+removal/visibility timestamps are recorded. Combined runner tests15/15 PASS;
+no product TTL/source change. Both browser outcomes remain pending.
