@@ -19,7 +19,18 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  let learned=[],learnedScope=null,learnedDocument=null;
  const clearLearned=()=>{learned=[];learnedScope=null;learnedDocument=null;};
  const clearUpgrade=()=>{if(upgradeTimer!==null)cancel(upgradeTimer);upgradeTimer=null;upgrade.clear();upgradeIdentity=null;upgradeDisplay=null;for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.removeEventListener(type,upgradeRoute);};
- const interruptUpgrade=event=>{if(event.isTrusted===true)clearUpgrade();};
+ const interruptUpgrade=event=>{
+  if(event.isTrusted!==true)return;
+  // The sole authenticated grid return changes presentation, not the native
+  // navigation that is still being correlated. Do not lose that pending
+  // identity when the user returns before its first candidate scan commits.
+  try{
+   const target=event.composedPath?.()[0]??event.target;
+   const activation=!event.defaultPrevented&&!event.shiftKey&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&(event.type==='pointerdown'&&event.button===0||event.type==='keydown'&&['Enter',' '].includes(event.key)&&!event.repeat&&!event.isComposing&&event.keyCode!==229);
+   if(activation&&current?.ready&&live(current)&&Date.parse(current.binding?.expiresAt)>now()&&current.controller?.isReturnTarget?.(target)===true)return;
+  }catch{/* An unreadable return boundary is still an interruption. */}
+  clearUpgrade();
+ };
  const upgradeRoute=()=>{if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();};
  const clientId=makeId();if(!tokenOK(clientId))throw Error('invalid-content-client');
  let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0;

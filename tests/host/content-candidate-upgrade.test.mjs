@@ -150,3 +150,80 @@ for(const change of ['silent-expiry','identity-loss'])test('streaming predicted 
  assert.deepEqual(await f.list(),{ok:false});f.setScanFactory(null);
  assert.equal((await f.list()).total,2);f.client.stop();
 });
+
+// Round205: returning immediately must not erase an ACKed identity before its
+// first candidate-list transaction commits. These are session/DOM doubles.
+const returnGestures=[
+ {type:'pointerdown',button:0},
+ {type:'keydown',key:'Enter',repeat:false,isComposing:false},
+ {type:'keydown',key:' ',repeat:false,isComposing:false}
+];
+async function pendingReturnFixture(){
+ const f=fixture();await f.client.start();
+ await f.activate((await f.list()).items[0],{role:'workspace',presentation:{offset:0,scrollTop:11,focused:true}});await drain();
+ assert.equal(f.modes.at(-1),'reading');
+ assert.ok(f.calls.some(m=>m.kind==='surface-delta'&&m.payload.candidates.some(r=>r.target?.nativeId===P)),'new controller emitted current Project observation');
+ assert.equal(f.docEvents.has('pointerdown'),true,'identity has not yet been consumed by list commit');
+ return f;
+}
+for(const gesture of returnGestures)test('immediate authenticated return retains pending identity: '+JSON.stringify(gesture),async()=>{
+ const f=await pendingReturnFixture();
+ try{
+  const deadlines=[...f.timers.values()].map(t=>t.at);
+  f.docEvents.get(gesture.type)({...gesture,isTrusted:true,target:'return'});
+  assert.equal(f.docEvents.has('pointerdown'),true);
+  assert.deepEqual([...f.timers.values()].map(t=>t.at),deadlines,'return does not renew correlation');
+  await f.controller.bridge.workspaceEntered({mountId:'mount'});
+  const result=await f.list('workspace');
+  assert.deepEqual(result.items.map(r=>r.renderKey),['neighbor']);
+  assert.equal(result.migration.ready,true,'return before commit becomes ready migration');
+  assert.equal(result.migration.focusAllowed,true);
+  assert.equal(f.docEvents.has('keydown'),true,'committed migration retains its own gesture hook');
+ }finally{f.client.stop();}
+});
+for(const [name,event] of [
+ ['native target',{type:'pointerdown',button:0,target:'native-composer'}],
+ ['forged return',{type:'pointerdown',button:0,target:{id:'return'}}],
+ ['composed native target',{type:'pointerdown',button:0,target:'return',composedPath:()=>['native']}],
+ ['Tab',{type:'keydown',key:'Tab',target:'return'}],
+ ['repeat',{type:'keydown',key:'Enter',repeat:true,target:'return'}],
+ ['composing',{type:'keydown',key:'Enter',isComposing:true,target:'return'}],
+ ['IME keyCode',{type:'keydown',key:'Enter',keyCode:229,target:'return'}],
+ ['secondary pointer',{type:'pointerdown',button:2,target:'return'}],
+ ['prevented',{type:'pointerdown',button:0,defaultPrevented:true,target:'return'}],
+ ...['shiftKey','ctrlKey','altKey','metaKey'].map(key=>[key,{type:'keydown',key:'Enter',[key]:true,target:'return'}])
+])test('pending return exemption rejects '+name,async()=>{
+ const f=await pendingReturnFixture();try{
+  f.docEvents.get(event.type)({...event,isTrusted:true});
+  assert.equal(f.docEvents.has('pointerdown'),false);
+  await f.controller.bridge.workspaceEntered({mountId:'mount'});
+  const result=await f.list('workspace');assert.deepEqual(result.items.map(r=>r.renderKey),['clicked','neighbor']);assert.equal(result.migration,undefined);
+ }finally{f.client.stop();}
+});
+test('authenticated return during streamed scan preserves transaction through commit',async()=>{
+ const f=await pendingReturnFixture();try{
+  f.setScanFactory(async function*(proposal){yield proposal();f.docEvents.get('pointerdown')({isTrusted:true,type:'pointerdown',button:0,target:'return'});await f.controller.bridge.workspaceEntered({mountId:'mount'});});
+  const result=await f.list('workspace');assert.deepEqual(result.items.map(r=>r.renderKey),['neighbor']);assert.equal(result.migration.ready,true);
+ }finally{f.client.stop();}
+});
+test('return target cannot exempt an unready replacement handshake',async()=>{
+ const f=fixture();await f.client.start();let release;f.holdHello(new Promise(r=>release=r));
+ try{await f.navigate();assert.equal(f.modes.length,1);assert.deepEqual(await f.list(),{ok:false});
+  f.docEvents.get('pointerdown')({isTrusted:true,type:'pointerdown',button:0,target:'return'});assert.equal(f.docEvents.has('pointerdown'),false);
+  release();await drain();assert.equal((await f.list()).total,2);
+ }finally{release();f.client.stop();}
+});
+test('repeated authenticated return does not extend six-second identity deadline',async()=>{
+ const f=await pendingReturnFixture();try{
+  await f.advance(5999);f.docEvents.get('keydown')({isTrusted:true,type:'keydown',key:'Enter',target:'return'});
+  assert.equal(f.docEvents.has('pointerdown'),true);await f.advance(1);
+  assert.equal(f.docEvents.has('pointerdown'),false);assert.equal((await f.list()).total,2);
+ }finally{f.client.stop();}
+});
+test('authenticated return cannot carry pending identity across scope replacement',async()=>{
+ const f=await pendingReturnFixture();try{
+  f.docEvents.get('pointerdown')({isTrusted:true,type:'pointerdown',button:0,target:'return'});
+  await f.spa(URL,{newScope:'scopeB'});await f.controller.bridge.workspaceEntered({mountId:'mount'});
+  const result=await f.list('workspace');assert.equal(result.total,2);assert.equal(result.migration,undefined);
+ }finally{f.client.stop();}
+});

@@ -2,7 +2,7 @@
 
 ## 当前持续实施（2026-10-13，正式桌面目录）
 
-当前功能检查点Round203：即时阅读退出已修复并通过正式包双路径、禁用/卸载/重新启用验证；新增rich发送候选与组合输入边界。完整Node3878项、真实DOM12项、MV3候选4项通过；正式包J3旧窗口2步仍未覆盖。100k/4x预算、首页首发及真实G/U缺口保留，Free为NOT_RELEASE_READY。
+当前功能检查点Round205：即时退出、rich发送候选与隐藏旧目录采样已修复；J1又修复立即四格返回取消候选升级的竞态。完整Node3924项通过，同一正式包J1连续6步/2项目4聊天映射通过，但分页/滚动/焦点来路仍待验。J3旧日期、100k/4x、首页首发及真实G/U缺口保留，Free为NOT_RELEASE_READY。
 
 用户明确恢复并授权完整Free本地并行开发，沿用 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、`codex/vaiwl-free-first-20261013` 和现有 Draft [PR #16](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16)。本轮起点及远端核对为 `81ff0ec37021eaabc5f7a8aecf61e9076619bf44`；PR #16 仍基于计划PR #15，不修改父PR/main，不部署。
 
@@ -2036,3 +2036,13 @@ Round122最终验证补充：等待proof逻辑加入后重新完整Node **2571/2
 - 最终完整Node **3904/3904 PASS**，无skip。首次全套失败是4组旧DOM double缺getClientRects/getComputedStyle/parentElement等；仅补真实可见最小接口与替换后的新parent关系，原断言/产品检查不放宽，失败日志保留。26项新反例已包含在全套，不叠加次数。
 - 真实隔离headless DOM **25/25 PASS，WEB_MECHANISM_ONLY**：成员control/ancestor、Project/history control/root四种明确隐藏，实际CSS visibility:hidden继承的owned mask采样正例；不声称后者的PROJECT membership可见性或实际ChatGPT已认证。source/script/fixture在运行中保持，未发网络原生写入。
 - 正式package J1连续旅程同时实施中，现有测试oracle的散列principal和UNKNOWN派生状态两处错误分别保留后修正，尚未作为J1通过。50a5d44本地提交保留，其正常push低速失败；95c6855已确认同步原PR #16。完整81项/J1–J4、100k/4x、首页首发ACK及实际G/U仍未完成，Free NOT_RELEASE_READY。
+
+
+## Round205：立即四格返回保留仍在确认的原生候选升级（接7883944）
+
+- 新正式package单document J1实际复现：空缓存→普通聊天→原生move-menu确证NONE→返回→IDless Research按钮打开P2，P2/C2已入库，但用户立即点唯一四格返回后旧candidate超过15秒仍可见。旧直接候选测试在返回前等500ms掩盖窗口；本轮真实FAIL与执行快照保留。
+- 根因是interruptUpgrade把返回按钮trusted pointerdown与新原生动作等同，清掉尚未scan commit的identity/display。现在仅豁免当前live/ready、binding未过期且controller认证的唯一返回目标，无modifier的primary pointer或非repeat/noncomposing Enter/Space；其他native/伪造target/Tab/修饰键/secondary/prevented仍取消。返回只切显示，不续6秒，不扩大scope/Project证明，不重放导航或放宽identity commit。
+- 最终完整Node **3924/3924 PASS**，无skip；20项新反例已含全套，覆盖ACK后及流式commit前返回、非法手势、未ready、原deadline和scope变化。独立作者读取时修复已存在，新增Node只有修后证据（文件归档名return-after），没有伪造修前FAIL；修前证据来自实际J1。
+- 同一正式包J1原脚本不增加返回前等待，连续 **6步PASS，PARTIAL_J1_NOT_ACCEPTED**：空缓存认证scope、同名canonical P与IDless按钮、原生正向NONE/UNKNOWN分离、P2一次原按钮升级并候选消退、P2/C2/Back、P1/C1、最终2/2Project与4/4Conversation的原名/URL/成员关系独立oracle核对；同document/原editor/原candidate节点保持，唯一返回，全程worker外网阻断。截图已查看，source/script稳定。
+- 原始两次oracle错误（raw principal而非散列scope、把派生UNKNOWN误当持久成员记录）及候选消退首次即时count失败均分别保留；有界等待后仍残留的真实产品FAIL和修后PASS分开。J1未测非零分页/scroll/focus来路，不升级完整J1；J3旧窗口/81项与真实G/U等仍未完成。
+- 7883944及50a5d44已正常推送原PR #16；72ca068仍是祖先。继续现有分支/计划，不合并、不部署，整体Free NOT_RELEASE_READY。
