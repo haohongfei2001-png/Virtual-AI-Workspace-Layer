@@ -1,3 +1,4 @@
+import {NATIVE_INDEX_FORMAT} from '../../src/data/native-version-index.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MockIDBFactory} from '../b23/mock-idb.mjs';
@@ -30,14 +31,14 @@ async function fixture(t){
   const candidate=(entity,id,name)=>({renderKey:`${entity}:${id}`,entity,nativeTitle:name,titleState:'exact',target:{kind:'resolved',entity,nativeId:id,navigationURL:entity==='project'?`https://chatgpt.com/g/${id}/project`:`https://chatgpt.com/c/${id}`,liveHandle:null},evidence:locator});
   const result=await service.handle({protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,localSeq:1,profileId:profile.id,profileVersion:1,bodyProofId:null,kind:'surface-delta',payload:{candidates:[candidate('project','p1','Native Project'),candidate('conversation','c1','Native conversation')],membershipClaims:[{conversationId:'c1',asserted:'UNKNOWN',projectId:null,reason:'not-observed',evidence:locator}],coverageClaims:[],detachedHandles:[]}},sender);assert.equal(result.state,'accepted',JSON.stringify(result));
  }
- return{base,workspaces,evidence,service,request,bind,read,observe,stages,get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
+ return{base,workspaces,evidence,service,request,bind,read,observe,stages,get bound(){return bound;},get nativeScope(){return service.authority.scopeFor({tabId:1,frameId:0,documentId:"document",parentDocumentId:null,actualURL:url,documentLifecycle:"active",incognito:false});},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
 }
 test('MOCK_IDB HELLO refresh BIND reads empty production HEADER/PAGE without seed',async t=>{
  const h=await fixture(t);assert.equal((await h.request('BIND')).ok,false);await h.bind();const {header,page}=await h.read();assert.equal(header.revision,0);assert.deepEqual(page.refs,[]);assert.deepEqual(page.projects,[]);assert.deepEqual(h.stages,['free-policy']);assert.equal(header.workspaceRevision,1);assert.deepEqual(Object.keys(header.preferences),['freeTimePolicy']);assert.equal(header.preferences.freeTimePolicy.owner,'bootstrap');assert.equal(header.preferences.freeTimePolicy.value.mode,'auto');assert.equal(header.preferences.freeTimePolicy.value.H,30);
  const db=await h.base.open();for(const storeName of db.objectStoreNames){const count=await new Promise(resolve=>{let n=0;const tx=db.transaction(storeName),q=tx.objectStore(storeName).openCursor();q.onsuccess=()=>{const cursor=q.result;if(cursor){n++;cursor.continue();}};tx.oncomplete=()=>resolve(n);});assert.equal(count,({b23_states:1,b23_operations:1,b23_views:2})[storeName]??0,storeName+' contains only policy initialization, never native seeds');}
 });
 test('MOCK_IDB admitted observations are reachable through real staged broker read composition',async t=>{
- const h=await fixture(t);await h.bind();await h.observe();const {header,page}=await h.read();assert.deepEqual(h.stages,['native-index-build','native-index','free-policy']);assert.equal(header.scope,h.bound.scope);assert.deepEqual(page.projects.map(p=>p.nativeName),['Native Project']);assert.equal(page.refs[0].nativeTitle,'Native conversation');assert.equal(page.refs[0].membership,'UNKNOWN');assert.equal(page.refs[0].activityDecision.basis,'undated');
+ const h=await fixture(t);await h.bind();await h.observe();const admitted=await h.service.nativeRepository.header(h.nativeScope);assert.equal(admitted.storageFormat,NATIVE_INDEX_FORMAT);assert.equal(admitted.revision,2);const {header,page}=await h.read();assert.deepEqual(h.stages,['free-policy']);assert.equal(header.revision,admitted.revision);assert.equal(header.scope,h.bound.scope);assert.deepEqual(page.projects.map(p=>p.nativeName),['Native Project']);assert.equal(page.refs[0].nativeTitle,'Native conversation');assert.equal(page.refs[0].membership,'UNKNOWN');assert.equal(page.refs[0].activityDecision.basis,'undated');
  const snapshot=await h.request('B23_FREE_SNAPSHOT',{leaseId:h.bound.leaseId,now:NOW,timeZone:'UTC',size:8});assert.equal(snapshot.ok,true);assert.equal(snapshot.snapshot.refs[0].nativeTitle,'Native conversation');
 });
 test('MOCK_IDB revoked lease cannot read and a new principal receives an empty scope',async t=>{

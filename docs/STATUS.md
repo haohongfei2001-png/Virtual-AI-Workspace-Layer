@@ -2,7 +2,7 @@
 
 ## 最新正式检查点（2026-10-15，隔离云环境）
 
-原分支 / Draft PR16 已提交602732b（Round247），CI43 Node4879/4880，仅一处静态runner字符串门控未兼容新时间戳；全部旅程作业通过，耐久/兼容作业仅正式10k失败。10k在首tab原30秒窗口尚未完成摄取，实际PARTITIONED根revision193、9741引用库存/100项目，395条UI RPC全部成功但均未得到ready。171源码/夹具哈希匹配，无完整接纳审计或计时。已独审候选在首次真实Host提交后复用原子索引迁移，保持原提交回执、授权与预算，实际效果待下一CI。详见[Round248](evidence/round248/README.md)。完整81、SYS04/SYS05、G/U与发布条件仍未完成，不以测试条数推算开发完成百分比。
+原分支 / Draft PR16 已提交486693b（Round248），CI44 Node4890/4892，两处旧组合测试仍假设首次Host提交后root为revision1/首读才迁移，已独审精确同步新结构合同；全部旅程作业通过，耐久/兼容作业仅正式10k失败。首tab原30秒仍未完成摄取，实际VERSION_INDEX根revision187、9427引用库存/100项目，最终387条UI RPC成功（379 preparing VIEW）却无ready。171源码/夹具哈希匹配，无完整接纳审计或计时。早迁移实际生效，但没有性能收益证据，暂停继续猜测结构优化；下一性能变更必须有实际阶段测量。详见[Round249](evidence/round249/README.md)。完整81、SYS04/SYS05、G/U与发布条件仍未完成。
 
 ## 历史正式检查点（Round219，保留原记录）
 
@@ -2468,3 +2468,7 @@ CI42 at371f327 passes4859 Node contracts and all scoped journeys. Formal10k both
 ## Round248 — checked initial Host index preparation
 
 CI43 at602732b has4879/4880 Node passes, with one stale static runner guard corrected without changing transport semantics. Scoped journeys pass. Formal10k still fails initial30s before complete ingestion/audit/timing; its verified PARTITIONED inventory contains9741 refs/100 projects atrevision193. The existing read-triggered index migration cannot run while first preparation waits on the active ingestion pass. The reviewed candidate reuses that checked migration once after the first committed genuine Host observation, under the original guard/signal; failures preserve receipt1, successful root2 preserves pending/source semantics.78 focused and66 adjacent tests pass; independent14 boundary cases pass. Existing large partitioned stores and failed first migration are outside this optimization. Actual10k remains pending; original deadlines, CAS and all acceptance gates remain. [Round248 evidence](evidence/round248/README.md).
+
+## Round249 — measured phase investigation and native stream candidate
+
+CI44 at486693b passes4890/4892 Node tests; two older first-Host revision/staged-read expectations are corrected with exact INDEX/revision2/sourceRevision1 assertions, preserving all original data/authorization checks. Scoped journeys pass; formal10k still fails initial30s with VERSION_INDEXrev187/9427refs/100P and no admitted-index audit/timing.171 hashes match. Early migration is observed but no throughput gain established. One explicit bounded instrumentation copy will capture native/shared-enlist/producer phases before further performance decisions; its results cannot satisfy the unchanged formal gate. Independently, a new uninstrumented native token-stream plus authenticated ACK/title narrow SYS05 candidate exercises actual activity/UI transition under original budgets.43 independent checks and77 integrated checks pass; browser result remains pending. FullSYS05/backpressure/gap/p95/81/Free release acceptance remains incomplete. [Exact evidence and limits](evidence/round249/README.md).

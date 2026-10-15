@@ -172,12 +172,18 @@ jobs:
       - name: Actual historical Pro schema compatibility with isolated network guard
         if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
         run: FREE_CHROME_HEADED=1 FREE_SOURCE_COMMIT="$GITHUB_SHA" xvfb-run -a node tests/host/historical-pro-upgrade.mjs "$RUNNER_TEMP/historical-pro.json"
-      - name: Formal Host 10k admitted-index baseline (single sample, partial only)
+      - name: Native token stream with authenticated ACK and title (narrow SYS05)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 3
+        run: |
+          node tests/host/sys05-stream-package-journey.mjs "$RUNNER_TEMP/sys05-stream.json" --execute-browser
+          node -e "const r=require(process.env.RUNNER_TEMP+'/sys05-stream.json'); if(r.status!=='PASS_NARROW_OFFLINE_SYS05_CORRECTNESS'||r.S!=='NARROW_UNINSTRUMENTED_BROWSER_OBSERVED'||r.sourceCommit!==process.env.GITHUB_SHA||r.fullSYS05!=='NOT_ESTABLISHED'||r.workInstrumentation!==false) process.exit(1)"
+      - name: Instrumented Host 10k phase diagnostic (not performance acceptance)
         if: ${{ !cancelled() }}
         timeout-minutes: 5
         run: |
           set +e
-          HOST_SCALE_RUN=1 HOST_SCALE_SIZE=10000 HOST_SCALE_DISTRIBUTION=project-mixed HOST_SCALE_CPU_RATE=1 node tests/host/host-scale-package-browser.mjs "$RUNNER_TEMP/host-scale-10k.json"
+          FREE_HOST_SCALE_TRACE=1 HOST_SCALE_RUN=1 HOST_SCALE_SIZE=10000 HOST_SCALE_DISTRIBUTION=project-mixed HOST_SCALE_CPU_RATE=1 node tests/host/host-scale-package-browser.mjs "$RUNNER_TEMP/host-scale-10k.json"
           result=$?
           set -e
           test "$result" -eq 2
@@ -190,6 +196,6 @@ jobs:
         run: |
           echo "Source commit: $GITHUB_SHA"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          for name in native-visibility j2-j4 j4-journey j4-scope-trace guard-browser joint-observation joint-observation-mutant sys02-pending-idb historical-host historical-pro host-scale-10k visibility-probe; do
+          for name in native-visibility j2-j4 j4-journey j4-scope-trace guard-browser joint-observation joint-observation-mutant sys02-pending-idb historical-host historical-pro sys05-stream host-scale-10k visibility-probe; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done

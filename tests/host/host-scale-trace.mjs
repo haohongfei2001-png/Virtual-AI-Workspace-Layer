@@ -3,19 +3,26 @@ import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 export const TRACE_PATHS=['src/data/native-repository.mjs','src/runtime/host-view-service.mjs','src/host/chatgpt-adapter.mjs'];
-export const TRACE_KINDS=['native-start','native-root','native-commit','native-abort','view-begin','view-run','view-error','view-retry','view-terminal','view-stop','pass-start','pass-complete','pass-drained'];
-const fields=['realmOrdinal','dropped','waitCount','waitFirstMs','waitLastMs','producer','generation','attempt','elapsed','revision','expectedRevision','refsCount','pages','fragments','candidates','busy','pending','ok','replayed','format','error'];
+export const TRACE_KINDS=['native-start','native-root','native-commit','native-abort','view-begin','view-run','view-error','view-retry','view-terminal','view-stop','pass-start','pass-complete','pass-drained','pass-summary','migration-start','migration-end'];
+const phaseFields=['elapsed','txMs','rootMs','saveMs','reduceMs','sharedMs','publishMs','queuedMs','scanCount','scanMs','scanMaxMs','splitCount','splitMs','splitMaxMs','emitCount','emitMs','emitMaxMs','accepted','duplicate','retry','rejected','samples'];
+const fields=['realmOrdinal','dropped','waitCount','waitFirstMs','waitLastMs','producer','generation','attempt','elapsed','revision','expectedRevision','refsCount','pages','fragments','candidates','busy','pending','ok','replayed','format','error',...phaseFields];
 // Ring retains latest events; dropped counts disclose missing early history.
 // Fixed schema; no arbitrary string fields, identifiers, URLs or thrown text.
 export const TRACE_RECORDER=`
 const __scaleKinds=${JSON.stringify(TRACE_KINDS)},__scaleFields=${JSON.stringify(fields)};
+const __scalePhaseFields=${JSON.stringify(phaseFields)};
+const __scaleNow=()=>{try{return performance.now();}catch{return null;}};
+const __scaleDelta=start=>{const end=__scaleNow();return start!==null&&end!==null&&end>=start?end-start:null;};
+const __scalePassStats=producer=>({producer,scanCount:0,scanMs:0,scanMaxMs:0,splitCount:0,splitMs:0,splitMaxMs:0,emitCount:0,emitMs:0,emitMaxMs:0,accepted:0,duplicate:0,retry:0,rejected:0,samples:0});
+const __scaleAdd=(s,key,start)=>{try{if(!s)return;const ms=__scaleDelta(start);s[key+'Count']++;if(ms!==null){s[key+'Ms']+=ms;s[key+'MaxMs']=Math.max(s[key+'MaxMs'],ms);}}catch{}};
 const __scaleStore=()=>globalThis.__vaiwlScaleTrace??={events:[],bytes:0,dropped:0,producers:0};
 const __scaleOrdinal=()=>{try{const s=__scaleStore();return s.producers=Math.min(1000000000,s.producers+1);}catch{return 0;}};
 const __scaleError=value=>['snapshot-revision-changed','stale-free-page','revision-conflict','read-budget-exhausted','stale-binding'].includes(value)?value:'other';
 const __scaleEmit=(kind,fields={})=>{try{
  if(!__scaleKinds.includes(kind))return;const s=__scaleStore(),row={kind,at:Date.now(),realm:"__SCALE_REALM__",dropped:s.dropped};
  for(const key of __scaleFields){const value=fields[key];if(value===undefined)continue;
- if(key==='format'){if(['ABSENT','FACTS','PARTITIONED','VERSION_INDEX'].includes(value))row[key]=value;}
+ if(value===null&&__scalePhaseFields.includes(key))row[key]=null;
+ else if(key==='format'){if(['ABSENT','FACTS','PARTITIONED','VERSION_INDEX'].includes(value))row[key]=value;}
  else if(key==='error')row[key]=__scaleError(value);
  else if(typeof value==='boolean')row[key]=value;
  else if(typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=1e15)row[key]=value;}
@@ -25,15 +32,30 @@ const __scaleEmit=(kind,fields={})=>{try{
 }catch{}};
 `;
 function once(source,from,to){if(source.split(from).length!==2)throw Error('scale-trace-anchor-mismatch');return source.replace(from,to);}
+// Test-only phase offsets are monotonic relative to mutate entry. Differences
+// delimit work + scheduling, never exclusive CPU/IDB time. publishMs is the
+// shared enlist callback; queuedMs is synchronous writer/bookkeeping return,
+// not completion of asynchronous index/GC requests. The transaction terminal
+// is the only drain boundary. Unreached stages stay null; a native-start without
+// a terminal can mean pre-transaction failure or an unfinished operation.
+// Pass summaries cover the private surface scan/hash/split and emit await only;
+// body discovery, transport, owner admission, and scheduling remain separate gaps.
 export function instrumentScaleSource(path,source){
  if(source.includes('const __scaleKinds='))throw Error('scale-trace-anchor-mismatch');
  let out=source;const add=(a,b)=>{out=once(out,a,b);};
  if(path===TRACE_PATHS[0]){
   const cut=out.indexOf('  async mutate(scope,');if(cut<0)throw Error('scale-trace-anchor-mismatch');const prefix=out.slice(0,cut);out=out.slice(cut);
-  add('    command=structuredClone(command);','    command=structuredClone(command);const __scaleProducer=__scaleOrdinal(),__scaleStarted=Date.now();let __scaleFormat="ABSENT";__scaleEmit("native-start",{producer:__scaleProducer,expectedRevision,refsCount:command.batch?.refs?.length??0});');
-  add('          const indexReader=payload?.format', '          __scaleFormat=payload?.format===NATIVE_INDEX_FORMAT?"VERSION_INDEX":isNativePartitioned(payload)?"PARTITIONED":payload?"FACTS":"ABSENT";__scaleEmit("native-root",{producer:__scaleProducer,revision:payload?.revision??0,format:__scaleFormat,elapsed:Date.now()-__scaleStarted});\n          const indexReader=payload?.format');
-  add('      transaction.oncomplete = () => {','      transaction.oncomplete = () => {__scaleEmit("native-commit",{producer:__scaleProducer,revision:result?.revision??expectedRevision,ok:result?.ok===true,replayed:result?.replayed===true,elapsed:Date.now()-__scaleStarted});');
-  add('      transaction.onabort = () => {','      transaction.onabort = () => {__scaleEmit("native-abort",{producer:__scaleProducer,expectedRevision,format:__scaleFormat,error:__scaleError(result?.reason),elapsed:Date.now()-__scaleStarted});');out=prefix+out;
+  add('    command=structuredClone(command);','    command=structuredClone(command);const __scaleProducer=__scaleOrdinal();const __scaleMono=__scaleNow(),__scaleStages={txMs:null,rootMs:null,saveMs:null,reduceMs:null,sharedMs:null,publishMs:null,queuedMs:null};let __scaleFormat="ABSENT";__scaleEmit("native-start",{producer:__scaleProducer,expectedRevision,refsCount:command.batch?.refs?.length??0});');
+  add('          const indexReader=payload?.format', '          __scaleStages.rootMs=__scaleDelta(__scaleMono);__scaleFormat=payload?.format===NATIVE_INDEX_FORMAT?"VERSION_INDEX":isNativePartitioned(payload)?"PARTITIONED":payload?"FACTS":"ABSENT";__scaleEmit("native-root",{producer:__scaleProducer,revision:payload?.revision??0,format:__scaleFormat,elapsed:__scaleDelta(__scaleMono)});\n          const indexReader=payload?.format');
+  add('      transaction.oncomplete = () => {','      transaction.oncomplete = () => {__scaleEmit("native-commit",{...__scaleStages,producer:__scaleProducer,revision:result?.revision??expectedRevision,ok:result?.ok===true,replayed:result?.replayed===true,elapsed:__scaleDelta(__scaleMono)});');
+  add('      transaction.onabort = () => {','      transaction.onabort = () => {__scaleEmit("native-abort",{...__scaleStages,producer:__scaleProducer,expectedRevision,format:__scaleFormat,error:__scaleError(result?.reason),elapsed:__scaleDelta(__scaleMono)});');out=prefix+out;
+  add("      const states = transaction.objectStore('native_states')", "      __scaleStages.txMs=__scaleDelta(__scaleMono);const states = transaction.objectStore('native_states')");
+  add('                  const save = (partial, storage = null) => {','                  const save = (partial, storage = null) => {__scaleStages.saveMs=__scaleDelta(__scaleMono);');
+  add('                      const next = reduce(partial);','                      const next = reduce(partial);__scaleStages.reduceMs=__scaleDelta(__scaleMono);');
+  add('                      const publish=()=>{','                      const publish=()=>{__scaleStages.publishMs=__scaleDelta(__scaleMono);');
+  add('                        this.shared.registerNativeReferences(', '                        __scaleStages.sharedMs=__scaleDelta(__scaleMono);this.shared.registerNativeReferences(');
+  add('                          check();result = {ok: true, replayed: false, revision: next.revision, operationId};', '                          __scaleStages.queuedMs=__scaleDelta(__scaleMono);check();result = {ok: true, replayed: false, revision: next.revision, operationId};');
+  add("try{fence(options);await this.migrateVersionIndex(normalized,{operationId:'host_initial_index_'+digest([normalized.key,request.operationId]),expectedRevision:1},options);}catch{/* Keep the actual committed observation result. */}", "const __scaleMigration=__scaleOrdinal(),__scaleMigrationStart=__scaleNow();__scaleEmit('migration-start',{producer:__scaleMigration,expectedRevision:1});try{fence(options);const __scaleMigrationResult=await this.migrateVersionIndex(normalized,{operationId:'host_initial_index_'+digest([normalized.key,request.operationId]),expectedRevision:1},options);__scaleEmit('migration-end',{producer:__scaleMigration,elapsed:__scaleDelta(__scaleMigrationStart),ok:__scaleMigrationResult?.ok===true,revision:__scaleMigrationResult?.revision,error:__scaleError(__scaleMigrationResult?.reason)});}catch{__scaleEmit('migration-end',{producer:__scaleMigration,elapsed:__scaleDelta(__scaleMigrationStart),ok:false,error:'other'});/* Keep the actual committed observation result. */}");
  }else if(path===TRACE_PATHS[1]){
   add('if(entry){entry.prepareGeneration=', 'if(entry){__scaleEmit("view-stop",{generation:entry.prepareGeneration??0,pending:entry.pending===true,error:__scaleError(entry.error)});entry.prepareGeneration=');
   add('started=elapsedNow();let retries=0;', 'started=elapsedNow();let retries=0;let __scaleLastBusy,__scaleWaitCount=0,__scaleWaitFirst,__scaleWaitLast;const __scaleProducer=__scaleOrdinal();__scaleEmit("view-begin",{producer:__scaleProducer,generation,attempt:1,elapsed:0});');
@@ -44,11 +66,22 @@ export function instrumentScaleSource(path,source){
   add('retries++;entry.deferPreparation=queueRetry;', 'retries++;__scaleEmit("view-retry",{producer:__scaleProducer,generation,attempt:retries+1,elapsed:elapsedNow()-started,waitCount:__scaleWaitCount,waitFirstMs:__scaleWaitFirst,waitLastMs:__scaleWaitLast});entry.deferPreparation=queueRetry;');
   add('entry.pending=false;entry.error=reason(error);', 'entry.pending=false;entry.error=reason(error);__scaleEmit("view-terminal",{producer:__scaleProducer,generation,attempt:retries+1,elapsed:elapsedNow()-started,waitCount:__scaleWaitCount,waitFirstMs:__scaleWaitFirst,waitLastMs:__scaleWaitLast,ok:false,error:__scaleError(entry.error)});');
   const budget="entry.error='read-budget-exhausted';return;";if(out.split(budget).length!==3)throw Error('scale-trace-anchor-mismatch');out=out.replaceAll(budget,"entry.error='read-budget-exhausted';__scaleEmit(\"view-terminal\",{producer:__scaleProducer,generation,attempt:retries+1,elapsed:elapsedNow()-started,waitCount:__scaleWaitCount,waitFirstMs:__scaleWaitFirst,waitLastMs:__scaleWaitLast,ok:false,error:'read-budget-exhausted'});return;");
+  add("entry.error='read-budget-exhausted';completed();entry.owner.invalidate();", "entry.error='read-budget-exhausted';__scaleEmit('view-terminal',{producer:__scaleProducer,generation,attempt:retries+1,elapsed:elapsedNow()-started,waitCount:__scaleWaitCount,waitFirstMs:__scaleWaitFirst,waitLastMs:__scaleWaitLast,ok:false,error:'read-budget-exhausted'});completed();entry.owner.invalidate();");
  }else if(path===TRACE_PATHS[2]){
-  add('const surfaceAccepted=new Map(),surfaceFailed=new Map();','let __scalePass=0,__scaleFragments=0,__scaleCandidates=0;const surfaceAccepted=new Map(),surfaceFailed=new Map();');
-  add('surfacePage=0;surfaceScanning=true;', 'surfacePage=0;surfaceScanning=true;__scalePass=__scaleOrdinal();__scaleFragments=0;__scaleCandidates=0;__scaleEmit("pass-start",{producer:__scalePass});');
+  add('const surfaceAccepted=new Map(),surfaceFailed=new Map();','let __scaleStatsOwner=null,__scaleStats=null,__scalePass=0,__scaleFragments=0,__scaleCandidates=0;const surfaceAccepted=new Map(),surfaceFailed=new Map();');
+  add('surfacePage=0;surfaceScanning=true;', 'surfacePage=0;surfaceScanning=true;__scalePass=__scaleOrdinal();__scaleStats=__scalePassStats(__scalePass);__scaleStatsOwner=pass;__scaleFragments=0;__scaleCandidates=0;__scaleEmit("pass-start",{producer:__scalePass});');
   add('if(!surfaceParts.length&&(surfaceScanning||surfaceWanted))schedule();','if(!surfaceParts.length&&!surfaceScanning)__scaleEmit("pass-drained",{producer:__scalePass,pages:surfacePage,fragments:__scaleFragments,candidates:__scaleCandidates});if(!surfaceParts.length&&(surfaceScanning||surfaceWanted))schedule();');
   add("if(p.kind==='surface-delta'){surfaceParts.shift();", "if(p.kind==='surface-delta'){__scaleFragments++;__scaleCandidates+=p.payload.candidates.length;surfaceParts.shift();if(!surfaceParts.length&&!surfaceScanning)__scaleEmit(\"pass-complete\",{producer:__scalePass,pages:surfacePage,fragments:__scaleFragments,candidates:__scaleCandidates});");
+  add('const found=page?discovery.scanPage(surfaceCursor):null,payload=', 'let found=null;const __scaleScanStats=__scaleStats,__scaleScanStart=__scaleNow();try{found=page?discovery.scanPage(surfaceCursor):null;}finally{if(page)__scaleAdd(__scaleScanStats,"scan",__scaleScanStart);}const payload=');
+  add('surfaceKey=publicationKey(source);', 'const __scaleSplitStats=__scaleStats,__scaleSplitStart=__scaleNow();try{surfaceKey=publicationKey(source);');
+  add('surfaceParts=splitSurfacePayload(source.payload,source);', 'surfaceParts=splitSurfacePayload(source.payload,source);}finally{__scaleAdd(__scaleSplitStats,"split",__scaleSplitStart);}');
+  add('  const send=async()=>{', '  const __scaleSendStats=p.kind==="surface-delta"?__scaleStats:null;const send=async()=>{');
+  add("let ack;try{ack=await emit(p);}catch{return finish('host-observation-ack-unknown');}", "let ack;const __scaleEmitStart=__scaleNow();try{try{ack=await emit(p);}finally{__scaleAdd(__scaleSendStats,'emit',__scaleEmitStart);}}catch{return finish('host-observation-ack-unknown');}");
+  add("   if(ack?.localSeq!==p.localSeq)", "   if(__scaleSendStats){if(ack?.state==='accepted')__scaleSendStats.accepted++;else if(ack?.state==='duplicate')__scaleSendStats.duplicate++;else if(ack?.state==='retry-after')__scaleSendStats.retry++;else __scaleSendStats.rejected++;if(__scaleSendStats.emitCount%32===0&&__scaleSendStats.samples<8){__scaleSendStats.samples++;__scaleEmit('pass-summary',__scaleSendStats);}}if(ack?.localSeq!==p.localSeq)");
+  add('if(surfaceEpoch!==surfaceSnapshotEpoch){pass=null;', "if(surfaceEpoch!==surfaceSnapshotEpoch){if(__scaleStats)__scaleEmit('pass-summary',{...__scaleStats,ok:false});__scaleStats=null;__scaleStatsOwner=null;pass=null;");
+  add('terminal:false};pass=entry;', 'terminal:false};__scaleStats=null;__scaleStatsOwner=null;pass=entry;');
+  add("function stop(){finishPass('cancel');", "function stop(){finishPass('cancel');__scaleStats=null;__scaleStatsOwner=null;");
+  add('  if(entry.terminal)return;entry.terminal=true;', "  if(entry.terminal)return;entry.terminal=true;if(__scaleStats&&__scaleStatsOwner===entry){__scaleEmit('pass-summary',{...__scaleStats,ok:phase==='end'});__scaleStats=null;__scaleStatsOwner=null;}");
  }else throw Error('unknown-scale-trace-source');
  return TRACE_RECORDER.replace('__SCALE_REALM__',path===TRACE_PATHS[2]?'content':'worker').replace('__SCALE_CONSOLE__',path===TRACE_PATHS[2]?'console.log("HOST_SCALE_TRACE "+encoded);':'')+out;
 }
@@ -65,7 +98,7 @@ export async function verifyScaleTracePackage(trace){
 /** Validate console / worker rows again before adding to the report. */
 export function appendScaleTrace(target,row){
  try{if(!row||!TRACE_KINDS.includes(row.kind)||!Number.isFinite(row.at)||row.at<0||row.at>1e15)throw Error();
-  for(const [key,value]of Object.entries(row)){if(['kind','at'].includes(key))continue;if(key==='realm'){if(!['worker','content'].includes(value))throw Error();continue;}if(!fields.includes(key))throw Error();if(key==='format'){if(!['ABSENT','FACTS','PARTITIONED','VERSION_INDEX'].includes(value))throw Error();}else if(key==='error'){if(!['snapshot-revision-changed','stale-free-page','revision-conflict','read-budget-exhausted','stale-binding','other'].includes(value))throw Error();}else if(typeof value!=='boolean'&&!(typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=1e15))throw Error();}
+  for(const [key,value]of Object.entries(row)){if(['kind','at'].includes(key))continue;if(key==='realm'){if(!['worker','content'].includes(value))throw Error();continue;}if(!fields.includes(key))throw Error();if(value===null&&phaseFields.includes(key))continue;if(key==='format'){if(!['ABSENT','FACTS','PARTITIONED','VERSION_INDEX'].includes(value))throw Error();}else if(key==='error'){if(!['snapshot-revision-changed','stale-free-page','revision-conflict','read-budget-exhausted','stale-binding','other'].includes(value))throw Error();}else if(typeof value!=='boolean'&&!(typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=1e15))throw Error();}
   const bytes=new TextEncoder().encode(JSON.stringify(row)).length;while(target.events.length&&(target.events.length>=1024||target.bytes+bytes>131072)){target.bytes-=new TextEncoder().encode(JSON.stringify(target.events.shift())).length;target.dropped++;}target.events.push(row);target.bytes+=bytes;
  }catch{target.dropped++;}
 }
