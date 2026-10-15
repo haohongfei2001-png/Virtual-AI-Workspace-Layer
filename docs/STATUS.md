@@ -2436,3 +2436,7 @@ CI35:4689/4690 Node; original new-view late-ACK rejection exposed a genuine clie
 ## Round241 — preserve finite native ingestion across valid renewal
 
 CI36 passed4703 Node contracts;10k diagnostic roots grew55→4679→5133→5273 while revisions4→96→199→303, without full admission/timing. Independent real-adapter10s renewal reproduces cursor restart starvation (138/1000 IDs); minimal same-identity active-pass preservation reaches1000/1000 without relaxing external read/body/identity invalidation or budgets.138 targeted checks pass. Disable temporary progress sampling for the next formal10k CI and retain strict gates. [Round241 exact evidence](evidence/round241/README.md). Original cold and fullFree/SYS04/SYS05 remain open.
+
+## Round242 — bounded shared reference ingestion
+
+CI37 passed4712 Node contracts; formal10k reached6983 refs/revision140 within the unchanged30s window but still failed before full admission/timing.169 source/fixture hashes match. Independent actual repository counters identify repeated monolithic shared-state traversal. Candidate reuses checked partition/directory migration early for Host new-reference admission, with exact-state checksum equality and unchanged native CAS/guard/retry;10 new contracts and existing affected/storage groups pass locally. [Round242 evidence](evidence/round242/README.md). Actual10k completion/performance and fullFree remain unestablished.

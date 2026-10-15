@@ -191,16 +191,18 @@ export class WorkspaceRepository {
   /** Enlist newly discovered native references in the caller's existing IDB transaction.
    * This adds shared reference anchors only; Pro identities and placements are never rewritten.
    */
-  registerNativeReferences(tx, scope, nativeRefs, operationId, check, done, fail, {migrateLegacy=false}={}) {
+  registerNativeReferences(tx, scope, nativeRefs, operationId, check, done, fail, {migrateLegacy=false,preferDirectory=false}={}) {
     const s=scopeChecked(scope),store=tx.objectStore('b23_states');
     const request=store.get(s.key);
     request.onsuccess=()=>{try{
       check();const payload=request.result?(isSharedDirectory(request.result.payload)?this.partitioned.verifiedDirectory(request.result,s):isPartitioned(request.result.payload)?this.partitioned.verifiedManifest(request.result,s.key):unpack(request.result)):null;
       const apply=(current,storage=null)=>{try{
         check();
-        if(migrateLegacy&&!storage&&Object.keys(current.refs).length+nativeRefs.length>15000)throw Error('native-shared-migration-required');
         const added=nativeRefs.filter(ref=>!Object.hasOwn(current.refs,ref.id));
         if(!added.length){done({added:0});return;}
+        // Real Host ingestion must not repeatedly clone the accumulated legacy
+        // inventory. Abort this atomic attempt before a verified storage migration.
+        if(migrateLegacy&&!storage&&(preferDirectory&&current.revision>0||Object.keys(current.refs).length+nativeRefs.length>15000))throw Error('native-shared-migration-required');
         const retire=isSharedDirectory(storage?.manifest)?prepareSharedDirectoryRetention(tx,s,storage.manifest,check,fail):null;
         if(storage)tx.objectStore('b23_checkpoints').put(request.result);
         const next=structuredClone(current);

@@ -143,7 +143,13 @@ export class PartitionedState {
  });}
  async migrate(scope,options={}){const s=normalizedScope(scope);if(!s)throw Error('unverified-scope');const existing=await this.manifest(s,options);if(existing)return {ok:true,migrated:false,revision:existing.revision};const {state}=await this.owner.read(s,options);if(!state.revision)throw Error('empty-state-not-migrated');return this.initialize(s,state,options,{checksum:digest(state)});}
  async initialize(scope,initial,options={},expected=null){
-  const s=normalizedScope(scope);if(!s)throw Error('unverified-scope');this.owner.allowEvidence(s);if(initial.schema!==2||initial.scopeKey!==s.key||(!expected&&initial.revision!==1)||!['none','synthetic'].includes(initial.channel))throw Error('invalid-bootstrap');
+  const s=normalizedScope(scope);if(!s)throw Error('unverified-scope');
+  // A verified storage migration preserves the exact old payload. It is not a
+  // synthetic ingestion permission, and a supplied CAS checksum alone is not authority.
+  initial=structuredClone(initial);
+  if(expected!==null){expected=structuredClone(expected);exact(expected,['checksum']);if(typeof expected.checksum!=='string'||!/^[0-9a-f]{64}$/.test(expected.checksum)||digest(initial)!==expected.checksum)throw Error('migration-state-mismatch');}
+  else this.owner.allowEvidence(s);
+  if(initial.schema!==2||initial.scopeKey!==s.key||(!expected&&initial.revision!==1)||!['none','synthetic'].includes(initial.channel))throw Error('invalid-bootstrap');
   const refs=Object.keys(initial.refs);if(refs.length>MAX_REFS)throw Error('partition-capacity');
   const m={format:PARTITION_FORMAT,generation:'g_'+crypto.randomUUID().replaceAll('-',''),scopeKey:s.key,revision:initial.revision,channel:initial.channel,sources:initial.sources,workspaces:initial.workspaces,preferences:initial.preferences,refVersions:Object.fromEntries(refs.map(k=>[k,initial.revision])),humanRefs:[...new Set([...Object.values(initial.identities).filter(n=>n.owner==='human').map(n=>n.id),...Object.values(initial.placements).filter(p=>p.owner==='human').map(p=>p.refId)])],units:0,changes:[]};checkManifest(m,s.key);
   const pieces=new Map(refs.map(refId=>[refId,{scopeKey:s.key,refId,revision:initial.revision,ref:initial.refs[refId],identity:initial.identities[refId]??null,events:[],coverage:[],placements:[]}]))
@@ -153,7 +159,7 @@ export class PartitionedState {
   for(let i=0;i<refs.length;i+=PAGE_SIZE){const partial=headerState(m,{});for(const refId of refs.slice(i,i+PAGE_SIZE)){const b=pieces.get(refId);addPiece(partial,b);m.units+=stable(b).length;}validateState(partial,s.key);}
   checkManifest(m,s.key);const db=await this.owner.connection();fence(options);
   const already=await new Promise((resolve,reject)=>{const tx=db.transaction('b23_states'),q=tx.objectStore('b23_states').get(s.key);let row;q.onsuccess=()=>row=q.result;tx.oncomplete=()=>resolve(row);tx.onabort=()=>reject(tx.error);});
-  fence(options);if(expected?(!already||already.checksum!==expected.checksum):!!already)return {ok:false,reason:'revision-conflict'};
+  fence(options);if(expected?(!already||already.checksum!==expected.checksum||digest(already.payload)!==expected.checksum):!!already)return {ok:false,reason:'revision-conflict'};
   // Staged pieces have no published manifest; live reads cannot reach them.
   for(let i=0;i<refs.length;i+=PAGE_SIZE)await new Promise((resolve,reject)=>{const tx=db.transaction('b23_states','readwrite'),store=tx.objectStore('b23_states');let error;try{fence(options);for(const refId of refs.slice(i,i+PAGE_SIZE))store.put(partitionRecord(partitionKey(s.key,refId,initial.revision,m.generation),pieces.get(refId)));}catch(e){error=e;tx.abort();}tx.oncomplete=()=>{try{fence(options);resolve();}catch(e){reject(e);}};tx.onabort=()=>reject(error??tx.error);});
   const outcome=await new Promise(resolve=>{const tx=db.transaction(['b23_states','b23_operations','b23_checkpoints','refs'],'readwrite');let result;const abort=reason=>{result={ok:false,reason};try{tx.abort();}catch{}};const revoked=()=>abort('stale-binding');options.signal?.addEventListener('abort',revoked,{once:true});const r=tx.objectStore('b23_states').get(s.key);r.onsuccess=()=>{try{fence(options);if(expected?(!r.result||r.result.checksum!==expected.checksum||digest(r.result.payload)!==expected.checksum):!!r.result){abort('revision-conflict');return;}

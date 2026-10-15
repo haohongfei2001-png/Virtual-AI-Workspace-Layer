@@ -300,12 +300,20 @@ export class NativeRepository {
     const apply=()=>this.mutate(normalized, request, {kind: 'APPLY_NATIVE_OBSERVATIONS', ...witness, batch: request.batch,...(continuation?{continuation}:{})},
       current => applyNativeObservations(current, request.batch, {scope: normalized, ...witness, now: this.clock()}), options);
     const result=await apply();
-    // The write transaction already reads and validates the shared root. Only a
-    // legacy capacity boundary needs an out-of-transaction migration and one retry.
+    // The write transaction reads and validates the shared root. Host legacy
+    // storage or a capacity boundary can require migration before one retry.
     if(this.shared&&result.reason==='native-shared-migration-required'){
+      try{
       const migrated=await this.shared.migratePartitioned(normalized,options);
       if(!migrated.ok)throw Error(migrated.reason);
-      fence(options);return apply();
+      fence(options);
+      if(host){
+        const indexed=await this.shared.migrateSharedDirectory(normalized,{operationId:'native_shared_directory_'+migrated.revision,expectedRevision:migrated.revision},options);
+        if(!indexed.ok)throw Error(indexed.reason);
+        fence(options);
+      }
+      return apply();
+      }catch(error){return {ok:false,reason:error.message??'shared-migration-failed'};}
     }
     return result;
   }
@@ -464,7 +472,7 @@ export class NativeRepository {
                       };
                       if(this.shared&&command.batch){
                         const refs=command.batch.refs.map(row=>({...row,projectId:next.membership[row.id]?.state==='PROJECT'?next.membership[row.id].projectId:null}));
-                        this.shared.registerNativeReferences(transaction,normalized,refs,'native_refs_'+digest(operationId),check,publish,failure=>abort(failure.message),{migrateLegacy:true});
+                        this.shared.registerNativeReferences(transaction,normalized,refs,'native_refs_'+digest(operationId),check,publish,failure=>abort(failure.message),{migrateLegacy:true,preferDirectory:command.channel==='host-dom'});
                       }else publish();
                     } catch (failure) { abort(failure.message); }
                   };
