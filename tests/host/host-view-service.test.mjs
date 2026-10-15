@@ -437,3 +437,24 @@ test('MOCK_IDB revoked pending preparation cannot be rearmed by a late native pu
  const {h,clock,pages}=await pendingNativePreparation(t);const scope=workspaceScope(h);h.service.invalidate({tabId:1});h.service.views.nativePublished(h.bound.scope);clock.advance(100);
  assert.equal((await h.view()).ok,false);assert.equal(pages(),1);assert(!clock.timers.some(timer=>timer.at===50));
 });
+
+test('MOCK_IDB a verified native write still in flight cannot consume the queued preparation retry',async t=>{
+ const {h,clock,pages}=await pendingNativePreparation(t),native=h.service.nativeRepository,apply=native.apply.bind(native);let entered=false,release;
+ const held=new Promise(resolve=>release=resolve);native.apply=async(...args)=>{entered=true;await held;return apply(...args);};
+ const write=h.observe(['p1','p2','slow-native-project']);for(let i=0;i<100&&!entered;i++)await drain();assert.equal(entered,true);
+ try{clock.advance(50);for(let i=0;i<20;i++)await drain();assert.equal(pages(),1,'a live same-scope native transaction must not spend another preparation attempt');}
+ finally{release();await write;}
+ clock.advance(50);let result;for(let i=0;i<200;i++){result=await h.view();if(result.state!=='preparing')break;await drain();}
+ assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(pages(),2);
+});
+for(const ending of ['revoke','stop','timeout','rollback'])test('MOCK_IDB native write scheduling hint is exact-scope and fails closed on '+ending,async t=>{
+ const {h,clock}=await pendingNativePreparation(t),native=h.service.nativeRepository,apply=native.apply.bind(native);let entered=false,release;
+ const held=new Promise(resolve=>release=resolve);native.apply=async(...args)=>{entered=true;await held;return apply(...args);};
+ const write=h.observe(['p1','pending-project']).then(()=>({ok:true}),error=>({ok:false,error}));for(let i=0;i<100&&!entered;i++)await drain();assert.equal(entered,true);
+ const pending=h.service.observations.isNativeWritePending;
+ try{assert.equal(pending(h.bound.scope),true);for(const foreign of ['',undefined,null,'another-scope'])assert.equal(pending(foreign),false);
+  if(ending==='revoke')h.service.invalidate({tabId:1});else if(ending==='stop')h.service.stop();else clock.advance(ending==='timeout'?6000:-1);
+  assert.equal(pending(h.bound.scope),false);
+ }finally{release();await write;}
+ assert.equal(pending(h.bound.scope),false);
+});

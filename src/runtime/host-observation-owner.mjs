@@ -107,14 +107,14 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    let result;
    const bodyEntry=bodies.get(proposal.producerToken);
    if(nativeChanged&&onNativeDelta&&bodyEntry?.current()&&batch.refs.some(r=>r.id===bodyEntry.claim.conversationId)){
-    const turn={scope,proposal,bodyEntry,request,admission,sourceId,generation,guard,repository,signal:attempt.abort.signal,result:null,claimed:false};joint=turn;
+    const turn={scope,proposal,bodyEntry,request,admission,sourceId,generation,guard,repository,attempt,signal:attempt.abort.signal,result:null,claimed:false};joint=turn;
     try{await onNativeDelta(bodyEntry.proofId);}catch(error){if(turn.claimed||!guard())throw error;}finally{if(joint===turn)joint=null;}
     result=turn.result;
     // A failed joint commit must never fall back to a native-only write.
     if(turn.claimed&&!result?.ok)return rejected('host-joint-apply-failed');
    }
    if(combined&&!nativeChanged){if(onNativeDelta&&bodyEntry?.current())await onNativeDelta(bodyEntry.proofId);if(!revalidating)result={ok:true};}
-   if(!result)result=await repository.apply(scope,request,{guard,signal:attempt.abort.signal});
+   if(!result){attempt.nativeWriteScope=scope.key;attempt.nativeWriteGuard=guard;try{result=await repository.apply(scope,request,{guard,signal:attempt.abort.signal});}finally{attempt.nativeWriteScope=null;attempt.nativeWriteGuard=null;}}
    if(!result.ok)return result.reason==='revision-conflict'?{state:'retry-after',localSeq:proposal.localSeq,delayMs:50}:rejected('host-native-apply-failed');
    if(!guard())return rejected('stale-host-scope');
    producers.set(proposal.producerToken,{isBound:producerCurrent,scopeKey:scope.key,grantId:grant.id,scopeEpoch:grant.scopeEpoch,seq:proposal.localSeq,fingerprint:semanticFingerprint,receiptId,...(combined?{bodyProofId:bodyEntry?.proofId??null,bodyRegionEpoch:body.regionEpoch}:{}),bodyEpoch:batchBodyEpoch??bodyEntry?.bodyEpoch??previous?.bodyEpoch??0,...(!combined&&previous?.bodyRegionEpoch!==undefined?{bodyRegionEpoch:previous.bodyRegionEpoch}:{}),until:Math.min(Date.parse(grant.expiresAt),time+20000)});
@@ -137,7 +137,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
   if(!guard())throw Error('stale-joint-native');
   const continuationAdmission={profileId:witness.profileId,profileVersion:witness.profileVersion,evidenceClass:'observed-self-send',semanticFingerprint:continuationSemanticFingerprint(evidenceRequest.batch),acceptedAt:evidenceRequest.batch.sources[0].observedAt};
   admissions.set(turn.request,Object.freeze({scopeKey:turn.scope.key,channel:'host-dom',sourceId:turn.sourceId,generation:turn.generation,admission:turn.admission,guard,continuationAuthority:witness,continuationAdmission,continuation:{evidenceOperationId:'joint_ack_'+digest([turn.request.operationId,evidenceRequest.operationId]).slice(0,48),expectedEvidenceRevision:evidenceRequest.expectedRevision,batch:evidenceRequest.batch}}));
-  turn.result=await turn.repository.apply(turn.scope,turn.request,{guard,signal:turn.signal});
+  turn.attempt.nativeWriteScope=turn.scope.key;turn.attempt.nativeWriteGuard=guard;try{turn.result=await turn.repository.apply(turn.scope,turn.request,{guard,signal:turn.signal});}finally{turn.attempt.nativeWriteScope=null;turn.attempt.nativeWriteGuard=null;}
   if(!turn.result?.ok)throw Error(turn.result?.reason??'joint-native-apply-failed');
   return {...turn.result,nativeOperationId:turn.request.operationId};
  }
@@ -160,5 +160,5 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
  function invalidateDocument(documentId){for(const [key,entry]of bodies)if(entry.frame.documentId===documentId)discardBody(key);}
  function invalidateTab(tabId){for(const [key,entry]of bodies)if(entry.frame.tabId===tabId)discardBody(key);}
  function stop(){stopped=true;busy&&(busy.active=false,busy.abort.abort());bodies.clear();producers.clear();failedBatches.clear();for(const attempt of reads){attempt.active=false;attempt.abort.abort();}reads.clear();}
- return Object.freeze({commitAcknowledged,isCurrentProof:proofId=>[...bodies.values()].some(entry=>entry.proofId===proofId&&entry.current()),isCurrentProducer:producerToken=>bodies.get(producerToken)?.current()===true,gate,ingest,withCurrent,invalidateDocument,invalidateTab,stop});
+ return Object.freeze({isNativeWritePending(scopeKey){try{return typeof scopeKey==='string'&&scopeKey.length>0&&!stopped&&busy?.active===true&&busy.nativeWriteScope===scopeKey&&busy.nativeWriteGuard?.()===true;}catch{return false;}},commitAcknowledged,isCurrentProof:proofId=>[...bodies.values()].some(entry=>entry.proofId===proofId&&entry.current()),isCurrentProducer:producerToken=>bodies.get(producerToken)?.current()===true,gate,ingest,withCurrent,invalidateDocument,invalidateTab,stop});
 }

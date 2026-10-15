@@ -13,8 +13,8 @@ import {projectFreeFrame,freeFrameRowDTO} from './free-frame-projection.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 /** One privileged replica per mount, shared by its two granted UI documents.
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
-export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
- if(typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
+export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,nativeWritePending=()=>false,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+ if(typeof nativeWritePending!=='function'||typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
  const views=new Map(),resumes=new Map();
  // Presentation belongs to the authorized document/scope/role, not its SPA route.
  // Every read still obtains a fresh current grant through withScope; no page data or grant is resumed.
@@ -59,6 +59,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     entry.retryTimer=null;entry.deferPreparation=null;
     const elapsed=elapsedNow()-started;
     if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=30000){entry.pending=false;entry.error='read-budget-exhausted';return;}
+    if(nativeWritePending(entry.scopeKey)){entry.deferPreparation=queueRetry;queueRetry();return;}
     run();
    },Math.min(50,30000-elapsed));
   };
