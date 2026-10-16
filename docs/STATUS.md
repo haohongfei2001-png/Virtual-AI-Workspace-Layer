@@ -2,9 +2,9 @@
 
 ## 最新正式检查点（2026-10-16，隔离云环境）
 
-原分支 / Draft PR16 当前正式提交15339a8（Round256）。CI52的原J4连续23步、两个就绪后SYS05及兼容性切片通过；Node5072/5076的4个失败为仍期待旧1k调度的静态断言，本候选精确同步10k并保原门槛。10k单项目在tab0初始准备原30秒截止失败，尚未进入Project成员观察、完整审计或计时；末态root inventory10000不替代这些前置。上一CI51的1k完整1000 PROJECT、零UNKNOWN、稳定revision104与三项单样本仍有效，但不能覆盖10k。独立cold历史间歇失败仍保留。
+原分支 / Draft PR16 当前正式提交420d19e（Round257）。CI53的Node5131/5131及12个guard全过，journeys成功，原J4连续23步、两个就绪后SYS05和兼容性切片通过。新增pending-repair S在第二次发送前失败，真实send-intent仅1、无pending，不能归因Evidence退休产品逻辑；本候选仅调整真实workspace旧grant取证到原生让位之前，并增加固定阶段标签，双fresh grant与原native witness/source-revoked门槛不变。49条轻合同与独立缺frame/错scope/ref/缺grant反例通过，真实S尚待下一CI。原FAIL完整保留。
 
-本候选另外准备一个独立SYS02/J4已有ACK源pending修复场景：真实第二次发送联合提交后、Evidence提交前中断，以原校验和故障及真实UI修复验证同operation因source-revoked安全退休。它不替换原23步，也不称为成功续接。另8个独立L用例区分“从未持久的首个ACK源”可按完整未撤销见证首次续接与“已存在源被撤销”必须退休；轻测试不代替S。新浏览器结果尚未产生。详见[Round257](evidence/round257/README.md)，上一完整Evidence恢复S见[Round256](evidence/round256/README.md)。完整81、SYS04/SYS05、UI、G/U与发布条件仍未完成。
+10k单项目仍在tab0原30秒准备截止失败，末态诊断inventory9212/revision182，不构成完整接纳/Project成员/计时证据；未继续猜改性能或放宽门槛。上一1k完整1000 PROJECT、稳定revision104及单样本结果不能覆盖10k。独立cold本次通过但历史间歇失败仍保留。详见[Round258](evidence/round258/README.md)；既有Evidence恢复23步S见[Round256](evidence/round256/README.md)。完整81、SYS02/J4、SYS04/SYS05、UI、G/U与发布条件仍未完成。
 
 ## 历史正式检查点（Round219，保留原记录）
 

@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
-import {PENDING_REPAIR_LIMITS,assertExistingSourcePending,assertCorruptPending,assertRetiredPending,assertPendingRepairBudget,observePendingRepairReplies,pendingDiagnosticText,pendingDiagnosticError,appendPendingDiagnostic,capturePendingRepairFailure,summarizePendingRepairFailure,observePendingWorkerVersions} from './existing-source-pending-repair-oracle.mjs';
+import {PENDING_REPAIR_LIMITS,PENDING_REPAIR_STAGES,PENDING_REPAIR_ASSERTIONS,setPendingRepairStage,assertExistingSourcePending,assertCorruptPending,assertRetiredPending,assertPendingRepairBudget,observePendingRepairReplies,pendingDiagnosticText,pendingDiagnosticError,appendPendingDiagnostic,capturePendingRepairFailure,summarizePendingRepairFailure,observePendingWorkerVersions} from './existing-source-pending-repair-oracle.mjs';
 import {pendingRepairPlan,preparePendingRepairPackage,runExistingSourcePendingRepair,faultThenStopPending,finalizePendingRepairReport} from './existing-source-pending-repair-journey.mjs';
 import {readPendingRepairState} from './existing-source-pending-repair-browser-read.mjs';
 import {contextScope} from './j4-package-journey.mjs';
@@ -106,4 +106,36 @@ test('failure summary validates each revoked accessor once before including a sc
  Object.defineProperty(value.retired.native.sources.native,'revoked',{get(){return ++nativeReads===1?false:{body:'x'.repeat(1000000)};}});
  Object.defineProperty(value.retired.evidence.sources.ack,'revoked',{get(){return ++ackReads===1?true:{body:'x'.repeat(1000000)};}});
  const result=summarizePendingRepairFailure(value.retired,value.pending);assert.equal(nativeReads,1);assert.equal(ackReads,1);assert.equal(result.nativeSourceRevoked,false);assert.equal(result.ACKSource.revoked,true);assert(Buffer.byteLength(JSON.stringify(result))<4096);
+});
+
+// Executes the actual runner declarations and pre-second-send statements. The
+// override permits the exact same regression to be run against a frozen runner.
+test('actual pre-second-send sequence captures current workspace authority before native surrender',async()=>{
+ const source=await readFile(process.env.PENDING_REPAIR_PRESECOND_SOURCE??new URL('./existing-source-pending-repair-journey.mjs',import.meta.url),'utf8');
+ const declarations=source.slice(source.indexOf('  const frame=page=>'),source.indexOf('  async function inspect('));
+ const marker="  record('first-real-send-persists-existing-ACK-source-before-second-send'",start=source.indexOf('\n',source.indexOf(marker))+1;
+ let end=source.indexOf("  stage('DEBUGGER_INSTALL');",start);if(end<0)end=source.indexOf('  debuggerCDP=await',start);assert(end>start);
+ const block=source.slice(start,end),events=[],report={},trace={events:[],seen:0,dropped:0,truncated:false},personal={provider:'chatgpt',accountId:'a',organizationId:'b'};
+ let attached=true,handler;const proof={grant:'PRIVATE_PRE_CUT_GRANT',scopeGrant:'PRIVATE_PRE_CUT_SCOPE_GRANT',scope:JSON.stringify(['chatgpt','a','b']),currentRef:conversationId};
+ const currentFrame={isDetached:()=>!attached,url:()=> 'chrome-extension://ext/workspace.html',evaluate:async()=>{events.push('read-current-proof');return structuredClone(proof);},getByRole:()=>({count:async()=>1})};
+ const a={frames:()=>attached?[currentFrame]:[],locator:selector=>({check:async()=>events.push('rename-on'),fill:async()=>events.push('fill-native')})};
+ const ctx=vm.createContext({assert,report,a,personal,id:'ext',J4_SEND_C:conversationId,lifecycleTrace:trace,observePendingWorkerVersions,key:value=>JSON.stringify([value.provider,value.accountId,value.organizationId]),poll:async read=>{const value=await read();if(!value)throw Error('readiness-not-established');return value;},stage:value=>setPendingRepairStage(report,value),budgetWindow:async()=>events.push('budget'),workspace:async()=>{events.push('workspace');attached=true;},native:async()=>{events.push('native-surrender');attached=false;},context:{newCDPSession:async()=>({on:(_name,callback)=>handler=callback,send:async()=>handler({versions:[{versionId:'2',scriptURL:'chrome-extension://ext/extension/worker.mjs',runningStatus:'running',targetId:'target'}]})})}});
+ const result=await vm.runInContext('(async()=>{'+declarations+block+';return {oldGrant,oldAuthority};})()',ctx);
+ assert.equal(result.oldGrant,proof.grant);assert.equal(result.oldAuthority.scopeGrant,proof.scopeGrant);assert(events.indexOf('workspace')<events.indexOf('read-current-proof'));assert(events.indexOf('read-current-proof')<events.indexOf('native-surrender'));assert.equal(attached,false);assert.equal(events.filter(v=>v==='native-surrender').length,1);assert(!JSON.stringify(report).includes('PRIVATE_'));assert.equal(report.stage,'WORKER_LIFECYCLE');
+});
+test('stage and assertion diagnostics accept only exact fixed enums, never arbitrary labels',()=>{
+ const report={};for(const stage of PENDING_REPAIR_STAGES){setPendingRepairStage(report,stage);assert.equal(report.stage,stage);}const before=report.stage;
+ for(const stage of ['PRIVATE_GRANT',PENDING_REPAIR_STAGES[0]+'_PRIVATE',{},null])assert.throws(()=>setPendingRepairStage(report,stage));assert.equal(report.stage,before);
+ for(const label of PENDING_REPAIR_ASSERTIONS){let error;try{assert(false,label);}catch(value){error=value;}assert.equal(pendingDiagnosticError(error).assertionLabel,label);}
+ for(const message of ['PRIVATE_GRANT',PENDING_REPAIR_ASSERTIONS[0]+'_PRIVATE_GRANT',{toString(){throw Error('no coercion');}}]){const diagnostic=pendingDiagnosticError({name:'AssertionError',message,stack:'PRIVATE_PAYLOAD'});assert.equal(diagnostic.assertionLabel,undefined);assert(!JSON.stringify(diagnostic).includes('PRIVATE_'));}
+ const diagnostic=pendingDiagnosticError({name:'AssertionError',get message(){throw Error('PRIVATE_BODY');},get stack(){throw Error('must not read assertion stack');}});assert.equal(diagnostic.assertionLabel,undefined);assert.equal(diagnostic.omitted,'assertion-diff');
+});
+
+test('actual post-restart predicate still requires both new grants and real recoverable corruption',async()=>{
+ const source=await readFile(new URL('./existing-source-pending-repair-journey.mjs',import.meta.url),'utf8'),statement=source.split('\n').find(line=>line.includes('const fresh=await poll('));assert(statement);
+ for(const [change,accepted]of [[{},true],[{grant:'old_ui'},false],[{scopeGrant:'old_scope'},false],[{recovery:{corrupt:false,recoverable:true}},false],[{recovery:{corrupt:true,recoverable:false}},false]]){
+  const value={grant:'new_ui',scopeGrant:'new_scope',recovery:{corrupt:true,recoverable:true},...change};
+  const ctx=vm.createContext({a:{},replies:async()=>value,oldGrant:'old_ui',oldAuthority:{scopeGrant:'old_scope'},poll:async read=>read()});
+  const result=await vm.runInContext('(async()=>{'+statement+';return fresh;})()',ctx);assert.equal(Boolean(result),accepted);
+ }
 });

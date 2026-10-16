@@ -36,7 +36,9 @@ through the real preview/confirmation UI; inspection checks preview is read-only
 1. Send once without rename. Release the existing fixture response hold while the
    same worker and intent remain alive. Require one actual authenticated ACK and
    its persisted source. The title is still `Membership not loaded`.
-2. Send once with rename. The fixture's fixed title now represents its first real
+2. Return to the real workspace and capture its current scope/ref/UI grant proof
+   before yielding to native controls. Keep that proof only for later inequality
+   comparisons, never as authority to replay a request. Send once with rename. The fixture's fixed title now represents its first real
    native delta. The unchanged production continuation call/entry breakpoint
    must fire before the Evidence writer opens its transaction. Require the
    atomic native delta and one genuine pending v2 continuation, whose ACK source
@@ -96,6 +98,20 @@ through the real preview/confirmation UI; inspection checks preview is read-only
 - Error collections cap at 16 entries, messages at 512 UTF-8 bytes and stacks at
   1024 bytes, with dropped/truncated markers and safe accessor reads. Assertion
   diffs are omitted so values such as grants or pending payloads cannot leak
-  through failed comparisons. Final
+  through failed comparisons. Only exact fixed assertion labels and phase enums
+  may identify the failing runner checkpoint. Final
   authenticated-read and worker-lifecycle summaries cap at 64 entries with
   truncation markers. These diagnostics are not acceptance evidence.
+
+## CI53 pre-second-send harness correction
+
+CI53 remains a real S failure before its second send: only the first two steps
+passed, native counters were model=2/send-intent=1 and no pending continuation
+existed. The bounded report cannot distinguish the exact assertion site.
+Native surface suspension hides popovers; it does not necessarily detach their
+frames. A same-script L counterexample shows that losing the frame before the old
+late grant read fails this runner precondition, not that CI53 actually detached.
+The corrected runner reads current scope/ref/grants in the real workspace before
+native surrender. It adds no native send or business RPC, preserves both fresh
+grant comparisons, and records only fixed phase/assertion labels. Real S must be
+rerun separately; the L result does not certify repair or worker durability.
