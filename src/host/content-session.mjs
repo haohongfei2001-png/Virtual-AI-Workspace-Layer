@@ -36,7 +36,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  };
  const upgradeRoute=()=>{if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();};
  const clientId=makeId();if(!tokenOK(clientId))throw Error('invalid-content-client');
- let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0,contextResumeAllowed=false;
+ let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0,contextResumeAllowed=false,contextResumeMode='workspace',contextResumeURL=null;
  const bindingFields=b=>({documentToken:b.documentToken,producerToken:b.producerToken,routeEpoch:b.routeEpoch});
  function live(s){return current===s&&!s.abort.signal.aborted&&doc.location.href===s.url;}
  function bindingOK(b,prior){return exactHostRecord(b,['documentToken','producerToken','browserDocumentId','routeEpoch','origin','expiresAt'])&&['documentToken','producerToken','browserDocumentId'].every(k=>tokenOK(b[k]))&&Number.isSafeInteger(b.routeEpoch)&&b.routeEpoch>=0&&b.origin===origin&&Date.parse(b.expiresAt)>now()&&Date.parse(b.expiresAt)<=now()+20000&&(!prior||['documentToken','producerToken','browserDocumentId','routeEpoch','origin'].every(k=>b[k]===prior[k]));}
@@ -51,8 +51,9 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function retainMigration(s,handle){const m=liveMigration(s);if(!m)return false;try{if(typeof s.adapter?.retainLoadedHandles==='function'&&s.adapter.retainLoadedHandles(m.leaseOwner,[handle],m.elapsedDeadline)!==true){clearMigration(s);return false;}}catch{clearMigration(s);return false;}m.handle=handle;return true;}
  function dispose(s){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.capturePending?.cancel();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
  function reset(){epoch++;const s=current;current=null;dispose(s);}
- function stop(){contextResumeAllowed=false;clearLearned();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
+ function stop(){contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function pagehide(event){
+  if(!enabled&&contextResumeAllowed){stop();return;}
   if(event?.persisted!==true){stop();return;}if(!enabled)return;
   clearLearned();clearUpgrade();restoreArmed=true;rebindQueued=false;rebindRun++;reset();
   doc.defaultView.addEventListener('pagehide',pagehide);
@@ -67,9 +68,9 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   // subsequent attempt; failures never schedule their own recovery loop.
   queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode);});
  }
- async function start(){contextResumeAllowed=contextRecovery===true;clearLearned();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
+ async function start(){contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  async function begin(rebinding=false,initialMode='workspace'){
-  reset();const s={run:epoch,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
+  reset();const s={run:epoch,initialMode,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
   let foregroundArmed=doc.visibilityState==='hidden',foregroundPending=false;
   s.blur=()=>{foregroundArmed=true;};
   s.focus=()=>{
@@ -236,12 +237,34 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // before the adapter has installed its route listeners. The old reply
     // remains unusable; bind the new route instead of disabling the document.
     // Same-route failures still stop, and replaced/stopped sessions cannot retry.
-    if(enabled&&doc.location.href!==s.url)rebind(s);else{const awaitingContext=contextRecovery===true&&contextResumeAllowed&&error?.message==='scope-not-verified';stop();contextResumeAllowed=awaitingContext;}
+    if(enabled&&doc.location.href!==s.url)rebind(s);else if(contextRecovery===true&&contextResumeAllowed&&error?.message==='scope-not-verified')contextPending();else stop();
    }
    return null;
   }
  }
- function contextPending(){const allowed=contextRecovery===true&&contextResumeAllowed;stop();contextResumeAllowed=allowed;}
- function contextReady(){if(contextRecovery===true&&contextResumeAllowed)return start();return Promise.resolve(null);}
+ function contextPending(){
+  if(contextRecovery!==true||!contextResumeAllowed){stop();return;}
+  // Withdraw every live capability immediately. Only document-local UI intent
+  // and the existing bounded candidate correlation survive a context wait.
+  // They still require the new handshake's scope/document checks; no old grant,
+  // handle, mount or controller is reused.
+  if(current){
+   contextResumeMode=doc.location.href!==current.url?'reading':(current.controller?.presentationMode?.()??current.initialMode)==='reading'?'reading':'workspace';
+   if(doc.location.href!==current.url&&!upgrade.navigate({url:doc.location.href}))clearUpgrade();
+   contextResumeURL=doc.location.href;
+  }
+  if(contextResumeURL!==null&&doc.location.href!==contextResumeURL){contextResumeMode='reading';if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();}
+  contextResumeURL=doc.location.href;
+  enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();
+  doc.defaultView.addEventListener('pagehide',pagehide);
+ }
+ function contextReady(){
+  if(contextRecovery!==true||!contextResumeAllowed||enabled)return Promise.resolve(null);
+  if(contextResumeURL!==null&&doc.location.href!==contextResumeURL){contextResumeMode='reading';if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();}
+  contextResumeURL=doc.location.href;
+  enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;
+  doc.defaultView.addEventListener('pageshow',pageshow);
+  return begin(true,contextResumeMode);
+ }
  return Object.freeze({start,stop,contextPending,contextReady,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>current?.controller?.showWorkspace()??false,showReading:()=>current?.controller?.showReading()??false});
 }

@@ -1,3 +1,4 @@
+import {j1CandidatePage,j1NativeProjects} from './j1-candidate-page.mjs';
 import {applyUi10ConversationTitle} from './ui10-conversation-title.mjs';
 import {createJ4InterruptionFixture,j4InterruptionNative,J4_SEND_C} from './j4-interruption.mjs';
 import http from 'node:http';
@@ -10,7 +11,7 @@ const escapeHTML=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<'
 
 export async function createVariantHostFixtureServer({profile,journey=null,interruption=false,variant='positive',fault='auth-failure',principalId='user-host-fixture',accounts=null,now=()=>Date.now(),ui10ConversationTitle=null}={}){
  if(typeof interruption!=='boolean'||interruption&&(journey!=='J4'||profile!=='MODERN'))throw Error('unsupported-j4-interruption');
- if(journey!==null&&(journey!=='J4'||profile!=='MODERN'))throw Error('unsupported-variant-journey');
+ if(journey!==null&&(!['J1','J4'].includes(journey)||profile!=='MODERN'))throw Error('unsupported-variant-journey');
  if(!['MODERN','PARTIAL','FAULT'].includes(profile))throw Error('fixture-profile-not-implemented');
  if(!['positive','missing','conflict','neighbor'].includes(variant))throw Error('fixture-variant-not-implemented');
  if(profile==='FAULT'&&!faults.includes(fault))throw Error('fixture-fault-not-implemented');
@@ -20,6 +21,7 @@ export async function createVariantHostFixtureServer({profile,journey=null,inter
  const interrupted=interruption?createJ4InterruptionFixture({principal:()=>identity,now,onTitle:title=>{conversations.get(J4_SEND_C).title=title;}}):null;
  const cookie=randomBytes(24).toString('hex'),token=`fixture-only-${randomBytes(24).toString('hex')}`;
  const projects=new Map([[P1,{id:P1,name:'Research'}],[P2,{id:P2,name:'Research'}]]);
+ if(journey==='J1')for(const project of j1NativeProjects)projects.set(project.id,{...project});
  const conversations=new Map(profile==='PARTIAL'?Array.from({length:1000},(_,i)=>{
   const id=`77777777-7777-4777-8777-${String(i+1).padStart(12,'0')}`;
   return [id,{id,title:`Archive conversation ${i+1}`,...(i%3===0?{project:null}:{})}];
@@ -30,6 +32,7 @@ export async function createVariantHostFixtureServer({profile,journey=null,inter
  const pending=new Set();let heldOnce=false,projectNumber=100,newConversationNumber=0,pageRevision=0;
  const bytes=await Promise.all(['legacy.html','native.css','native.mjs','variants-native.mjs','variants-server.mjs'].map(name=>readFile(new URL(name,import.meta.url))));
  let html=bytes[0].toString();
+ if(journey==='J1'){html=j1CandidatePage(html);bytes.push(await readFile(new URL('./j1-candidate-page.mjs',import.meta.url)));}
  const history=`<nav aria-label="Chat history"><h2>Chats</h2>${initial.map(c=>`<a href="/c/${c.id}">${escapeHTML(c.title)}</a>`).join('')}</nav>`;
  html=html.replace(/<nav aria-label="Chat history">[\s\S]*?<\/nav>/,history);
  html=html.replace('<script type="module" src="/native.mjs"></script>','<script type="module" src="/variants-native.mjs"></script>');

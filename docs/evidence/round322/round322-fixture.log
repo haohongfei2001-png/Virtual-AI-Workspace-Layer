@@ -1,0 +1,17 @@
+✔ MODERN J1 keeps independent pagination surface and explicit native Project context requests (73.080875ms)
+✔ J1 cannot silently use PARTIAL (0.509333ms)
+✔ J1 cannot silently use FAULT (0.100458ms)
+✔ J1 fixture exposes independent nonzero page target without fake project IDs (0.9635ms)
+✔ fixture rejects missing or duplicate native target (0.358167ms)
+✔ J1 is opt-in and served by native fixture, preserving default LEGACY (39.814584ms)
+✔ every extra canonical Project is a real fixture route with independent identity oracle (37.718416ms)
+✔ canonical nonzero page has deterministic native insertion order and target is eighth card (0.404708ms)
+✔ J1 previous-page locator follows accessible label rather than visible text (1.147292ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 196.990375

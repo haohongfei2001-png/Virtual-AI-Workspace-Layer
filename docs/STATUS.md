@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-17，原本地目录，Round321）
+## 最新正式检查点（2026-10-17，原本地目录，Round322）
+
+c332789已正常推送并API确认原Draft PR16/base。MODERN C2连续J1接入原分页/候选原生fixture与独立Team oracle，保留原9断言；首跑揭示context pending完整stop丢阅读/候选关联，已修复为撤下旧能力、只保留有界RAM意图并重新完整授权。等待期间换路由、暂时ambiguous、重复READY和pagehide/显式退出反例已覆盖，不续期候选、不补满恢复预算。
+
+最终完整Node **6270/6270 PASS**，独立审查无阻断；最终实际headless MODERN J1 **9/9连续步骤通过**，无page errors/源码或fixture漂移，原文档/草稿/非零分页与唯一返回保持。仍是空缓存且有既存worker只读检查的旅程，不冒称即时worker冷启动；完整矩阵仍PARTIAL_J1_NOT_ACCEPTED。原失败及全部证据见[Round322](evidence/round322/README.md)。10k/100k稳定审计与其他J2–J4/G/U仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-17，原本地目录，Round321）
 
 补齐显式离线Project C2：成功原生GET、当前document/route/Project成员域与认证roster共同校验；Project/Conversation分域，旧授权不沿用，原6秒时限/冲突/迟到/历史切换栅栏保持。新增profile仅明确loopback配置启用，不冒称真实ChatGPT接口已验证。
 

@@ -164,3 +164,51 @@ test('private ingestion scheduling uses bound transport and a six-second RPC wit
  f.setResponse(()=>new Promise(()=>{}));const pending=f.context.ingestionPass({...start,passSeq:2}),rejected=assert.rejects(pending,/request-timeout/);await drain();await f.advance(6000);await rejected;
  f.setResponse(()=>({ok:true}));f.client.stop();const before=f.calls.length;assert.equal((await f.context.ingestionPass({...start,phase:'cancel'})).ok,true);assert.equal(f.calls.length,before+1,'bounded owner can retire a stopped private producer');await assert.rejects(f.context.ingestionPass({...start,phase:'end'}),/stale-content-session/);
 });
+
+function c2PresentationFixture(){
+ const modes=[];let mode='workspace';
+ const f=fixture({contextRecovery:true,controllerFactory:options=>{
+  modes.push(options.initialMode);mode=options.initialMode;
+  return {start:async()=>{await options.bridge.registerMount({handle:{id:'mount',regionEpoch:1}});return {id:'mount'};},stop:()=>{},presentationMode:()=>mode,showWorkspace:()=>{mode='workspace';return true;},showReading:()=>{mode='reading';return true;}};
+ }});
+ return {...f,modes};
+}
+test('C2 changed route restores reading only after fresh HELLO REFRESH and mount',async()=>{
+ const f=c2PresentationFixture();try{
+  await f.client.start();const before=f.calls.length;f.document.location.href+='c/next';f.client.contextPending();assert.equal(f.client.showReading(),false);assert.equal(f.listeners.size,0);
+  await f.client.contextReady();assert.deepEqual(f.calls.slice(before).filter(m=>['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT'].includes(m.type)).map(m=>m.type),['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT']);assert.deepEqual(f.modes,['workspace','reading']);
+ }finally{f.client.stop();}
+});
+for(const mode of ['reading','workspace'])test('C2 same route preserves '+mode+' through repeated pending',async()=>{
+ const f=c2PresentationFixture();try{await f.client.start();if(mode==='reading')f.client.showReading();f.client.contextPending();f.client.contextPending();await f.client.contextReady();assert.deepEqual(f.modes,['workspace',mode]);}finally{f.client.stop();}
+});
+for(const exit of ['stop','pagehide','persisted-pagehide'])test('C2 pending '+exit+' prevents late READY revival',async()=>{
+ const f=c2PresentationFixture();try{
+  await f.client.start();f.client.contextPending();
+  if(exit==='stop')f.client.stop();else{assert.equal(typeof f.events.get('pagehide'),'function','pending document must retain its lifecycle revocation listener');f.events.get('pagehide')({persisted:exit==='persisted-pagehide'});}
+  const before=f.calls.length;await f.client.contextReady();assert.equal(f.calls.length,before);assert.equal(f.client.showWorkspace(),false);assert.deepEqual(f.modes,['workspace']);
+ }finally{f.client.stop();}
+});
+test('C2 repeated READY never restarts already active presentation or handshake',async()=>{
+ const f=c2PresentationFixture();try{await f.client.start();f.client.showReading();const before=f.calls.length;await f.client.contextReady();await f.client.contextReady();assert.equal(f.calls.length,before);assert.deepEqual(f.modes,['workspace']);}finally{f.client.stop();}
+});
+test('C2 READY burst shares one pending fresh authorization attempt',async()=>{
+ const f=c2PresentationFixture();try{
+  await f.client.start();f.client.showReading();f.client.contextPending();let resolveHello;f.setResponse(m=>m.type==='HOST_HELLO'?new Promise(resolve=>resolveHello=resolve):m.type==='HOST_REFRESH'?{state:'verified'}:{ok:true});
+  const first=f.client.contextReady();await drain();const second=f.client.contextReady();await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,2);resolveHello({binding:f.binding()});await Promise.all([first,second]);assert.deepEqual(f.modes,['workspace','reading']);
+ }finally{f.client.stop();}
+});
+
+test('C2 route changing after pending still restores native reading on READY',async()=>{
+ const f=c2PresentationFixture();try{
+  await f.client.start();f.client.contextPending();f.document.location.href+='c/late-route';f.client.contextPending();const before=f.calls.length;
+  await f.client.contextReady();assert.deepEqual(f.modes,['workspace','reading']);assert.deepEqual(f.calls.slice(before).filter(m=>['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT'].includes(m.type)).map(m=>m.type),['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT']);
+ }finally{f.client.stop();}
+});
+test('C2 ambiguous refresh retains reading intent while awaiting another external READY',async()=>{
+ const f=c2PresentationFixture();try{
+  await f.client.start();f.client.showReading();f.client.contextPending();f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'ambiguous'}:{ok:true});
+  assert.equal(await f.client.contextReady(),null);assert.equal(f.client.showReading(),false);assert.deepEqual(f.modes,['workspace']);const before=f.calls.length;await f.advance(1000);assert.equal(f.calls.length,before,'scope denial must not schedule an automatic authorization retry');
+  f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified'}:{ok:true});await f.client.contextReady();assert.deepEqual(f.modes,['workspace','reading']);assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,3);assert.equal(f.calls.filter(m=>m.type==='HOST_REFRESH').length,3);
+ }finally{f.client.stop();}
+});
