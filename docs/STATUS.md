@@ -1,6 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-17，原本地目录，Round325–326）
+## 最新本地检查点（2026-10-17，Round333）
+
+在803dcbf生产代码上新增实际离线生命周期证据：MODERN真实管理disable原5模式 **5/5 PASS**，包含双surface四种开关组合与本地模拟生成；原生可用/私有投影消失/布局清理均成立，原document/editor/草稿保持。仅本地生成，不冒称真实ChatGPT生成或全J4。
+
+新明确原生刷新入口的窄C2链路 **4/4 PASS**：初次响应后65,005ms、新响应后34,767ms，恰好初始+一次手动刷新两次GET，新frame仍连续可用，原草稿/selection/唯一阅读返回保留、Native库只Team。默认fixture不变；产品无改动、无定时补请求/TTL放宽。完整Node **6431/6431 PASS**。见[Round333](evidence/round333/README.md)。静默C2/worker恢复、冷启动稳定性、100k与G/U仍未完成，**Free NOT_RELEASE_READY**。
+
+正常push803dcbf再次GitHub网络低速超时；本地检查点与外部整理stash42c8877完整保留，尚未宣称最新成果已同步远端。
+
+## 前一正式检查点（2026-10-17，原本地目录，Round325–326）
 
 1bce716已正常推送并API确认原Draft PR16/base。普通原生surface重复提案在源/行证据仍有效、字段/成员/库存不变且版本/授权再次核验时复用，不续期witness；过期/撤销/变化仍走原CAS，combined路径不变。纯resolved无变化不再反复通知重绘，IDless/失效句柄仍通知候选UI。独立17反例及最终完整Node **6322/6322 PASS**，复审无阻断。
 
