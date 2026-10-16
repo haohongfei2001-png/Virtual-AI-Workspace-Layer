@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round274）
+## 最新正式检查点（2026-10-16，原本地目录，Round275）
+
+J4新增真实worker退出窗口：evidence已提交、continuation未complete。精确断点与独立持久receipt核验后真实stop，fresh grant恢复只补complete；原ACK/receipt字节不变、无send重放，Pro资产与peer context保持。明确prepared-budget变体24/24已实施步骤PASS，仍PARTIAL_J4_NOT_ACCEPTED；默认无准备前置阶段因12/12预算未到期的两次FAIL、首次prepared断点未命中FAIL全部保留，未清零预算或延长原截止。
+
+最终完整Node **5430/5430 PASS，零skip**，实际Chrome源码/构建不变且零错误。见[Round275](evidence/round275/README.md)。原PR16已正常推至7083ef0，API确认Draft/base不变；Pro/dot祖先完整保留。继续旧codec/SYS03等Free项，完整81/真实G/U/冷启动/100k可靠性仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round274）
 
 真实隔离MV3 mixed Project局部映射通过：1000 refs/10P完整审计，原生打开的第一P精确80成员，未打开的720成员与无归属证据的200条均UNKNOWN，零虚构NONE。原30秒成员/返回与6秒RPC保持；Free原名/链接、composer节点及单次原生导航通过。8项独立合同PASS，生产代码不变。见[Round274](evidence/round274/README.md)。100k此前FAIL继续保留；并行推进J4证据提交后退出窗口，完整81/真实G/U/冷启动/规模可靠性未完成，**Free NOT_RELEASE_READY**。
 

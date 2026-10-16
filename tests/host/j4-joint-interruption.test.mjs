@@ -2,9 +2,10 @@ import test from 'node:test';import assert from 'node:assert/strict';import {Eve
 import {pauseJointDrain} from './j4-joint-interruption.mjs';import {createVariantHostFixtureServer} from './fixtures/variants-server.mjs';import {J4_SEND_C,J4_MIXED_TITLE} from './fixtures/j4-interruption.mjs';
 const productionSource=await readFile(new URL('../../src/runtime/host-continuation-owner.mjs',import.meta.url),'utf8'),lineNumber=productionSource.split('\n').findIndex(l=>l.includes('result=await evidenceRepository.applyContinuation(')),columnNumber=productionSource.split('\n')[lineNumber].indexOf('applyContinuation('),location={scriptId:'real-script',lineNumber,columnNumber};
 const repositorySource=await readFile(new URL('../../src/data/free-evidence-repository.mjs',import.meta.url),'utf8'),repositoryLine=repositorySource.split('\n').findIndex(l=>l.trim()==='async applyContinuation(scope,request,options={}){')+1,repositoryLocation={scriptId:'repository-script',lineNumber:repositoryLine,columnNumber:19};
-function debuggerFixture({source=productionSource,possible=[{...location,type:'call'}],actualLocation=location,repoSource=repositorySource,repoPossible=[repositoryLocation],repoActual=repositoryLocation}={}){
+const nativeSource=await readFile(new URL('../../src/data/native-repository.mjs',import.meta.url),'utf8'),nativeLine=nativeSource.split('\n').findIndex(l=>l.includes('markContinuationComplete(scope,input,options={}){return this.#markContinuation(')),nativeLocation={scriptId:'native-script',lineNumber:nativeLine,columnNumber:nativeSource.split('\n')[nativeLine].indexOf('return this.#markContinuation')};
+function debuggerFixture({source=productionSource,possible=[{...location,type:'call'}],actualLocation=location,repoSource=repositorySource,repoPossible=[repositoryLocation],repoActual=repositoryLocation,nativeScript=nativeSource,nativePossible=[nativeLocation],nativeActual=nativeLocation}={}){
  const cdp=new EventEmitter(),calls=[];
- cdp.send=async(method,params)=>{calls.push({method,params});if(method==='Target.getTargets')return {targetInfos:[{type:'service_worker',targetId:'worker',url:'chrome-extension://test/extension/worker.mjs'}]};if(method==='Target.attachToTarget')return {sessionId:'session'};if(method==='Target.sendMessageToTarget'){const m=JSON.parse(params.message);queueMicrotask(()=>{if(m.method==='Debugger.enable'){cdp.emit('Target.receivedMessageFromTarget',{sessionId:'session',message:JSON.stringify({method:'Debugger.scriptParsed',params:{scriptId:'repository-script',url:'chrome-extension://test/src/data/free-evidence-repository.mjs'}})});cdp.emit('Target.receivedMessageFromTarget',{sessionId:'session',message:JSON.stringify({method:'Debugger.scriptParsed',params:{scriptId:'real-script',url:'chrome-extension://test/src/runtime/host-continuation-owner.mjs'}})});}const repository=m.params?.scriptId==='repository-script'||m.params?.start?.scriptId==='repository-script'||m.params?.location?.scriptId==='repository-script';const result=m.method==='Debugger.getScriptSource'?{scriptSource:repository?repoSource:source}:m.method==='Debugger.getPossibleBreakpoints'?{locations:repository?repoPossible:possible}:m.method==='Debugger.setBreakpoint'?{breakpointId:repository?'repository-entry':'production-call',actualLocation:repository?repoActual:actualLocation}:{};cdp.emit('Target.receivedMessageFromTarget',{sessionId:'session',message:JSON.stringify({id:m.id,result})});});}return {};};
+ cdp.send=async(method,params)=>{calls.push({method,params});if(method==='Target.getTargets')return {targetInfos:[{type:'service_worker',targetId:'worker',url:'chrome-extension://test/extension/worker.mjs'}]};if(method==='Target.attachToTarget')return {sessionId:'session'};if(method==='Target.sendMessageToTarget'){const m=JSON.parse(params.message);queueMicrotask(()=>{if(m.method==='Debugger.enable'){cdp.emit('Target.receivedMessageFromTarget',{sessionId:'session',message:JSON.stringify({method:'Debugger.scriptParsed',params:{scriptId:'native-script',url:'chrome-extension://test/src/data/native-repository.mjs'}})});cdp.emit('Target.receivedMessageFromTarget',{sessionId:'session',message:JSON.stringify({method:'Debugger.scriptParsed',params:{scriptId:'repository-script',url:'chrome-extension://test/src/data/free-evidence-repository.mjs'}})});cdp.emit('Target.receivedMessageFromTarget',{sessionId:'session',message:JSON.stringify({method:'Debugger.scriptParsed',params:{scriptId:'real-script',url:'chrome-extension://test/src/runtime/host-continuation-owner.mjs'}})});}const repository=m.params?.scriptId==='repository-script'||m.params?.start?.scriptId==='repository-script'||m.params?.location?.scriptId==='repository-script';const native=m.params?.scriptId==='native-script'||m.params?.start?.scriptId==='native-script'||m.params?.location?.scriptId==='native-script';const result=m.method==='Debugger.getScriptSource'?{scriptSource:native?nativeScript:repository?repoSource:source}:m.method==='Debugger.getPossibleBreakpoints'?{locations:native?nativePossible:repository?repoPossible:possible}:m.method==='Debugger.setBreakpoint'?{breakpointId:native?'native-completion-entry':repository?'repository-entry':'production-call',actualLocation:native?nativeActual:repository?repoActual:actualLocation}:{};cdp.emit('Target.receivedMessageFromTarget',{sessionId:'session',message:JSON.stringify({id:m.id,result})});});}return {};};
  const emit=(sessionId='session',hitBreakpoints=['production-call'],at=location)=>cdp.emit('Target.receivedMessageFromTarget',{sessionId,message:JSON.stringify({method:'Debugger.paused',params:{reason:'other',hitBreakpoints,callFrames:[{location:at}]}})});
  return {cdp,calls,emit};
 }
@@ -167,3 +168,66 @@ test('peer diagnostic charges normalized fields nulls keys and multibyte UTF8 wi
   const input={frames:Array.from({length:16},()=>({rpc:Array.from({length:64},()=>row)}))},out=boundJ4Diagnostic(input);assert.equal(out.truncated,true);assert(Buffer.byteLength(JSON.stringify(out),'utf8')<=16384);assert.doesNotThrow(()=>structuredClone(out));
  }
 });
+
+const completionLine=productionSource.split('\n').findIndex(line=>line.includes('const completed=await nativeRepository.markContinuationComplete('));
+const completionColumn=productionSource.split('\n')[completionLine].indexOf('markContinuationComplete(');
+const completionLocation={scriptId:'real-script',lineNumber:completionLine,columnNumber:completionColumn};
+const completionFixture=options=>debuggerFixture({possible:[{...completionLocation,type:'call'}],actualLocation:completionLocation,...options});
+test('afterEvidence installs owner completion and native completion entry without any evidence preapply breakpoint',async()=>{
+ const {cdp,calls,emit}=completionFixture({repoSource:'must not inspect this preapply source',repoPossible:[]}),pause=await pauseJointDrain(cdp,'test',{afterEvidence:true});
+ try{
+  const nested=calls.filter(c=>c.method==='Target.sendMessageToTarget').map(c=>JSON.parse(c.params.message));
+  assert.deepEqual(nested.map(c=>c.method),['Debugger.enable','Debugger.setSkipAllPauses','Debugger.setBreakpointsActive','Debugger.getScriptSource','Debugger.getPossibleBreakpoints','Debugger.setBreakpoint','Debugger.getScriptSource','Debugger.getPossibleBreakpoints','Debugger.setBreakpoint']);
+  assert.equal(nested.find(c=>c.method==='Debugger.getScriptSource').params.scriptId,'real-script');
+  const search=nested.find(c=>c.method==='Debugger.getPossibleBreakpoints').params;
+  assert.deepEqual(search,{start:completionLocation,end:{...completionLocation,columnNumber:completionColumn+'markContinuationComplete'.length},restrictToFunction:true});
+  assert.deepEqual(nested.filter(c=>c.method==='Debugger.setBreakpoint').map(c=>c.params),[{location:completionLocation},{location:nativeLocation}]);assert.deepEqual(pause.diagnostics().repositoryBoundary,{kind:'native-repository-completion-entry',breakpointId:'native-completion-entry',location:nativeLocation});assert(!nested.some(c=>c.params?.scriptId==='repository-script'));
+  emit('session',['production-call'],completionLocation);assert.equal((await pause.wait()).boundary,'continuation-owner-complete-call');emit('session',['native-completion-entry'],nativeLocation);assert.equal((await pause.wait()).boundary,'native-repository-completion-entry');
+ }finally{await pause.close();}assert.equal(cdp.listenerCount('Target.receivedMessageFromTarget'),0);
+});
+for(const [name,options,reason]of [
+ ['source mismatch',{source:productionSource+'\n'},'source-mismatch'],
+ ['missing completion call',{possible:[]},'breakpoint-unresolved'],
+ ['only former preapply call',{possible:[{...location,type:'call'}]},'breakpoint-unresolved'],
+ ['noncall completion location',{possible:[{...completionLocation,type:'return'}]},'breakpoint-unresolved'],
+ ['moved completion breakpoint',{actualLocation:{...completionLocation,columnNumber:completionColumn+1}},'breakpoint-moved']
+])test('afterEvidence refuses '+name+' and detaches without native execution',async()=>{
+ const {cdp,calls}=completionFixture(options);await assert.rejects(pauseJointDrain(cdp,'test',{afterEvidence:true}),new RegExp(reason));
+ assert(calls.some(c=>c.method==='Target.detachFromTarget'));assert.equal(cdp.listenerCount('Target.receivedMessageFromTarget'),0);
+ const nested=calls.filter(c=>c.method==='Target.sendMessageToTarget').map(c=>JSON.parse(c.params.message));assert(!nested.some(c=>c.params?.scriptId==='repository-script'||c.params?.location?.scriptId==='repository-script'));
+});
+for(const [name,ids,at,reason]of [
+ ['preapply repository pause',['repository-entry'],repositoryLocation,'unrelated-pause'],
+ ['old owner apply location',['production-call'],location,'wrong-callsite']
+])test('afterEvidence cannot certify '+name,async()=>{const {cdp,emit}=completionFixture(),pause=await pauseJointDrain(cdp,'test',{afterEvidence:true});try{emit('session',ids,at);await assert.rejects(pause.wait(),new RegExp(reason));}finally{await pause.close();}});
+
+test('real V8 afterEvidence owner and native entry pauses both precede completion with ACK already committed',async t=>{
+ const {Session}=await import('node:inspector'),{MockIDBFactory}=await import('../b23/mock-idb.mjs'),{createJointObservationFixture}=await import('./joint-observation-fixture.mjs');
+ const h=await createJointObservationFixture({indexedDB:new MockIDBFactory(),after:fn=>t.after(fn)});h.disableDrain();await h.ingest(h.surface());assert.equal((await h.free.read(h.scope)).revision,0);
+ const session=new Session();session.connect();t.after(()=>session.disconnect());const cdp=new EventEmitter(),sourceURL=new URL('../../src/runtime/host-continuation-owner.mjs',import.meta.url).href,nativeURL=new URL('../../src/data/native-repository.mjs',import.meta.url).href,hits=[];
+ let evidenceCommitted=false,completionCalls=0,completionFinished=false;const apply=h.free.applyContinuation.bind(h.free),complete=h.native.markContinuationComplete.bind(h.native);
+ h.free.applyContinuation=async(...args)=>{const result=await apply(...args);const evidence=await h.free.read(h.scope);assert.equal(Object.keys(evidence.hints).length,1);evidenceCommitted=result.ok===true;return result;};
+ h.native.markContinuationComplete=(...args)=>{completionCalls++;return complete(...args).then(result=>{completionFinished=true;return result;});};
+ session.on('inspectorNotification',message=>{
+  if(message.method==='Debugger.scriptParsed'){if(![sourceURL,nativeURL].includes(message.params.url))return;message={...message,params:{...message.params,url:message.params.url===sourceURL?'chrome-extension://test/src/runtime/host-continuation-owner.mjs':'chrome-extension://test/src/data/native-repository.mjs'}};}
+  cdp.emit('Target.receivedMessageFromTarget',{sessionId:'after-evidence-v8',message:JSON.stringify(message)});
+  if(message.method==='Debugger.paused'){hits.push({location:message.params.callFrames[0].location,evidenceCommitted,completionCalls,completionFinished});session.post('Debugger.resume');}
+ });
+ cdp.send=async(method,params)=>{
+  if(method==='Target.getTargets')return {targetInfos:[{type:'service_worker',targetId:'after-evidence-worker',url:'chrome-extension://test/extension/worker.mjs'}]};
+  if(method==='Target.attachToTarget')return {sessionId:'after-evidence-v8'};
+  if(method==='Target.sendMessageToTarget'){const m=JSON.parse(params.message);session.post(m.method,m.params,(error,result)=>cdp.emit('Target.receivedMessageFromTarget',{sessionId:'after-evidence-v8',message:JSON.stringify({id:m.id,...(error?{error:{message:error.message}}:{result})})}));}return {};
+ };
+ const pause=await pauseJointDrain(cdp,'test',{afterEvidence:true});t.after(()=>pause.close());
+ assert.equal((await h.recover()).state,'complete');assert.equal(hits.length,2,'only owner completion and native completion entry, no evidence preapply pauses');assert(hits.every(hit=>hit.evidenceCommitted&&!hit.completionFinished));assert.equal(hits[1].location.lineNumber,nativeLine);assert.equal(hits[1].completionCalls,1);assert.equal(completionFinished,true);
+ assert.equal(hits[0].location.lineNumber,completionLine);assert.equal(hits[0].location.columnNumber,completionColumn);assert.equal(hits[0].evidenceCommitted,true);assert.equal(hits[0].completionCalls,0);
+ assert.equal(completionCalls,1);assert.equal((await h.free.read(h.scope)).revision,1);assert.deepEqual(await h.native.listContinuations(h.scope),[]);
+});
+
+for(const [name,options,reason]of [
+ ['native source mismatch',{nativeScript:nativeSource+'\n'},'native-repository-source-mismatch'],
+ ['missing native entry',{nativePossible:[]},'native-completion-entry-unresolved'],
+ ['entry after private completion call',{nativePossible:[{...nativeLocation,columnNumber:1000}]},'native-completion-entry-unresolved'],
+ ['moved native entry',{nativeActual:{...nativeLocation,columnNumber:nativeLocation.columnNumber+1}},'native-completion-breakpoint-moved']
+])test('afterEvidence fallback rejects '+name,async()=>{const {cdp,calls}=completionFixture(options);await assert.rejects(pauseJointDrain(cdp,'test',{afterEvidence:true}),new RegExp(reason));assert(calls.some(c=>c.method==='Target.detachFromTarget'));assert.equal(cdp.listenerCount('Target.receivedMessageFromTarget'),0);});
+test('afterEvidence native completion entry hit at moved location cannot certify interruption',async()=>{const {cdp,emit}=completionFixture(),pause=await pauseJointDrain(cdp,'test',{afterEvidence:true});try{emit('session',['native-completion-entry'],{...nativeLocation,columnNumber:nativeLocation.columnNumber+1});await assert.rejects(pause.wait(),/wrong-callsite/);}finally{await pause.close();}});
