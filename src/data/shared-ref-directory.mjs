@@ -57,18 +57,27 @@ export function verifySharedDirectoryPiece(record,root,bucket){
  return piece;
 }
 function validatePiece(record,root,bucket,pointer){
- const p=partitionUnpack(record);exact(p,['scopeKey','generation','bucket','revision','versions','ordinals']);
+ return validatePiecePayload(partitionUnpack(record),root,bucket,pointer);
+}
+function validatePiecePayload(p,root,bucket,pointer,routingVerified=false){
+ exact(p,['scopeKey','generation','bucket','revision','versions','ordinals']);
  if(p.scopeKey!==root.scopeKey||p.generation!==root.generation||p.bucket!==bucket||p.revision!==pointer.revision)throw Error('shared-directory-context-mismatch');
  if(!p.versions||typeof p.versions!=='object'||Array.isArray(p.versions))throw Error('invalid-shared-directory-versions');
  const keys=Object.keys(p.versions);if(keys.length!==pointer.count)throw Error('shared-directory-count-mismatch');
  if(!Array.isArray(p.ordinals)||p.ordinals.length!==keys.length||Object.keys(p.ordinals).length!==keys.length)throw Error('invalid-shared-directory-order');
- let units=0;const seen=new Set();for(let i=0;i<keys.length;i++){const ordinal=p.ordinals[i];if(!Number.isSafeInteger(ordinal)||ordinal<0||ordinal>=root.nextOrdinal||seen.has(ordinal))throw Error('invalid-shared-directory-order');seen.add(ordinal);if(sharedRefBucket(keys[i])!==bucket)throw Error('shared-directory-routing-mismatch');version(p.versions[keys[i]],pointer.revision);units+=JSON.stringify(keys[i]).length+1+String(p.versions[keys[i]]).length;}
+ let units=0;const seen=new Set();for(let i=0;i<keys.length;i++){const ordinal=p.ordinals[i];if(!Number.isSafeInteger(ordinal)||ordinal<0||ordinal>=root.nextOrdinal||seen.has(ordinal))throw Error('invalid-shared-directory-order');seen.add(ordinal);if(!routingVerified&&sharedRefBucket(keys[i])!==bucket)throw Error('shared-directory-routing-mismatch');version(p.versions[keys[i]],pointer.revision);units+=JSON.stringify(keys[i]).length+1+String(p.versions[keys[i]]).length;}
  if(units!==pointer.units)throw Error('shared-directory-units-mismatch');
  if(stable(p).length>MAX_RECORD)throw Error('state-too-large');return p;
 }
 function makeBucket(root,bucket,versions,ordinals){
  const keys=Object.keys(versions);root.refDirectory[bucket]={revision:root.revision,count:keys.length,units:keys.reduce((sum,key)=>sum+JSON.stringify(key).length+1+String(versions[key]).length,0)};
- const record=partitionRecord(sharedRefDirectoryKey(root.scopeKey,root.generation,bucket,root.revision),{scopeKey:root.scopeKey,generation:root.generation,bucket,revision:root.revision,versions,ordinals:keys.map(k=>ordinals[k])});verifySharedDirectoryPiece(record,root,bucket);return record;
+ const record=partitionRecord(sharedRefDirectoryKey(root.scopeKey,root.generation,bucket,root.revision),{scopeKey:root.scopeKey,generation:root.generation,bucket,revision:root.revision,versions,ordinals:keys.map(k=>ordinals[k])});
+ // Only build/update call this constructor: every existing input piece was
+ // verified, and every new ref was independently routed before grouping.
+ // Certify these freshly constructed bytes once; fresh or mutated storage
+ // bytes still take the full checksum/routing validator above.
+ const pointer=root.refDirectory[bucket],context=JSON.stringify([root.scopeKey,root.generation,bucket,pointer.revision,pointer.count,pointer.units]);
+ pieceValidation.read(record,context,()=>validatePiecePayload(record.payload,root,bucket,pointer,true));return record;
 }
 export function buildSharedRefDirectory(manifest,scope){
  checkManifest(manifest,scopeKey(scope));const {refVersions,...rest}=manifest,root={...rest,format:SHARED_DIRECTORY_FORMAT,refDirectory:{},nextOrdinal:Object.keys(refVersions).length},groups=new Map(),records=[];let ordinal=0;

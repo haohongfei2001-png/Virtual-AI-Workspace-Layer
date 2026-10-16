@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round335）
+## 最新本地检查点（2026-10-17，Round336）
+
+共享目录私有构造复用已核验输入，去除重复路由/校验和工作；冷读和变更字节仍完整核验，未改hash/schema/预算。独立反例14/14、目录120/120、完整Node **6453/6453 PASS**。原100k CPU1/30秒门槛优化前后仍FAIL；18470→19381仅截止快照，不代表稳定吞吐或规模通过。[Round336原始证据](evidence/round336/README.md)。
+
+新增J4 before-evidence旧包往返与一次补写断言，定向78/78；实际浏览器在已有disable/re-enable前置阶段5步通过后fresh-grant超时，未到新codec，故新边界仍UNVERIFIED。原Round316默认23/23历史通过保留，当前恢复稳定性失败也保留。Free **NOT_RELEASE_READY**；外部整理stash及副本未删除。
+
+## 前一本地检查点（2026-10-17，Round335）
 
 MODERN正式J3单次原16步 **16/16 PASS**，源码/fixture/package校验无漂移，原冷启动失败尚不能据此消除。历史Host同ID schema3→4→3→4保留原5阶段，**5/5 PASS**；新增更新时原native页面不刷新断言通过：同document/editor/URL/draft、零pagehide、旧私有frame清除、遮罩自动释放、原生继续输入。原八存储逐行一致、六类人工资产摘要、旧writer三入口VersionError及真实已加载worker字节验证均保持。见[Round335](evidence/round335/README.md)。
 

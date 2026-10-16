@@ -1,3 +1,4 @@
+import {freeEvidenceKey} from '../../src/data/free-evidence-repository.mjs';
 import {verifyLoadedWorkerBytes} from './loaded-worker-bytes.mjs';
 import {DATABASE_VERSION} from '../../src/data/schema.mjs';
 import {ensureUpdatedRuntime} from './historical-host-runtime.mjs';
@@ -10,8 +11,9 @@ import {historicalSource,replaceDisabledPackage,directoryDigest,OLD_HOST_COMMIT}
 const hash=value=>createHash('sha256').update(value).digest('hex');
 /** TEST ONLY: real archived reader, same isolated extension ID and database.
  * Archived owners must fail at database open; raw inspectors never authorize them. */
-export async function probeJ4HistoricalCodec({debugEndpoint,context,cdp,controller,id,slot,root,origin,scope,pending,committedReceipt,closeProbe,assets,preserved,record}){
- assert.equal(pending.format,'vaiwl-native-continuation-v2');assert(committedReceipt);
+export async function probeJ4HistoricalCodec({debugEndpoint,context,cdp,controller,id,slot,root,origin,scope,pending,committedReceipt,afterEvidence=true,closeProbe,assets,preserved,record}){
+ assert.equal(pending.format,'vaiwl-native-continuation-v2');assert.equal(typeof afterEvidence,'boolean');if(afterEvidence)assert(committedReceipt);else assert.equal(committedReceipt,null);
+ const evidenceKey=JSON.stringify([freeEvidenceKey(JSON.stringify([scope.provider,scope.accountId,scope.organizationId])),pending.evidence.operationId]);if(afterEvidence)assert.equal(committedReceipt.key,evidenceKey);
  const saved=join(root,'codec-current-package'),frozen=join(root,'codec-old-source');
  await cp(slot,saved,{recursive:true});const currentDigest=await directoryDigest(saved);
  const archive=await historicalSource(fileURLToPath(new URL('../..',import.meta.url)),OLD_HOST_COMMIT,frozen);
@@ -31,16 +33,17 @@ export async function probeJ4HistoricalCodec({debugEndpoint,context,cdp,controll
   probe=await context.newPage();await probe.goto(`chrome-extension://${id}/workspace.html`);
   runtimeUpdates.old.loadedWorker=await verifyLoadedWorkerBytes({debugEndpoint,extensionId:id,packagePath:old.unpacked});
   assert.equal(hash(await probe.evaluate(async()=>await(await fetch(chrome.runtime.getURL('build-manifest.json'))).text())),oldManifestHash);
-  const result=await probe.evaluate(async({scope,pending,committedReceipt,expectedVersion})=>{
+  const result=await probe.evaluate(async({scope,pending,committedReceipt,evidenceKey,afterEvidence,expectedVersion})=>{
    const [{ScopeRepository},{NativeRepository},{digest}]=await Promise.all([import(chrome.runtime.getURL('src/b1/scope-repository.mjs')),import(chrome.runtime.getURL('src/data/native-repository.mjs')),import(chrome.runtime.getURL('src/data/hash.mjs'))]);
    const base=new ScopeRepository({indexedDB});let db;try{
     const normalized=base.scopeOrThrow(scope),nativeKey=JSON.stringify([normalized.key,pending.operationId]);
     // Raw read-only inspector is test evidence, never injected into the old owner.
     db=await new Promise((resolve,reject)=>{const q=indexedDB.open(base.name);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
     if(db.version!==expectedVersion)throw Error('codec-probe-database-version-mismatch');
-    const read=()=>new Promise((resolve,reject)=>{const names=[...db.objectStoreNames],tx=db.transaction(names,'readonly'),store=tx.objectStore('native_operations'),native=store.get(nativeKey),evidence=store.get(committedReceipt.key),rows={};for(const name of names){rows[name]=[];const q=tx.objectStore(name).openCursor();q.onsuccess=()=>{const c=q.result;if(c){rows[name].push({key:c.key,value:c.value});c.continue();}};}tx.oncomplete=()=>resolve({native:native.result,evidence:evidence.result,allTablesDigest:digest(rows)});tx.onabort=()=>reject(tx.error);});
+    const names=[...db.objectStoreNames].sort();if(JSON.stringify(names)!==JSON.stringify(['b23_checkpoints','b23_operations','b23_states','b23_views','native_operations','native_states','operations','refs']))throw Error('codec-probe-eight-stores-required');
+    const read=()=>new Promise((resolve,reject)=>{const tx=db.transaction(names,'readonly'),store=tx.objectStore('native_operations'),native=store.get(nativeKey),evidence=store.get(evidenceKey),rows={};for(const name of names){rows[name]=[];const q=tx.objectStore(name).openCursor();q.onsuccess=()=>{const c=q.result;if(c){rows[name].push({key:c.key,value:c.value});c.continue();}};}tx.oncomplete=()=>resolve({native:native.result,evidence:evidence.result??null,evidencePresent:evidence.result!==undefined,allTablesDigest:digest(rows)});tx.onabort=()=>reject(tx.error);});
     const before=await read();
-    if(!before.native||before.native.checksum!==digest(before.native.payload)||JSON.stringify(before.native.payload.continuation)!==JSON.stringify(pending)||JSON.stringify(before.evidence)!==JSON.stringify(committedReceipt))throw Error('codec-probe-original-record-mismatch');
+    if(!before.native||before.native.checksum!==digest(before.native.payload)||JSON.stringify(before.native.payload.continuation)!==JSON.stringify(pending)||(afterEvidence?JSON.stringify(before.evidence)!==JSON.stringify(committedReceipt):before.evidencePresent||before.evidence!==null))throw Error('codec-probe-original-record-mismatch');
     const old=new NativeRepository({baseRepository:base}),refusals={};
     for(const [name,run] of [['open',()=>base.open()],['listContinuations',()=>old.listContinuations(scope)],['invalidate',()=>old.invalidate(scope,{operationId:'offline-old-invalidate',expectedRevision:pending.nativeRevision,sourceId:pending.nativeWitness.sourceId},{guard:()=>true})]]){
       try{await run();}catch(error){refusals[name]=error.name;}
@@ -48,10 +51,10 @@ export async function probeJ4HistoricalCodec({debugEndpoint,context,cdp,controll
     }
     const refusal='VersionError';
     const after=await read();if(JSON.stringify(before)!==JSON.stringify(after))throw Error('codec-probe-old-reader-changed-records');
-    return {refusal,refusals,databaseVersion:db.version,allTablesDigest:before.allTablesDigest,nativeRecordHash:digest(before.native),evidenceReceiptHash:digest(before.evidence),originalRecordsUnchanged:true};
+    return {refusal,refusals,databaseVersion:db.version,allTablesDigest:before.allTablesDigest,nativeRecordHash:digest(before.native),evidenceReceiptHash:afterEvidence?digest(before.evidence):null,evidenceReceiptAbsent:!afterEvidence&&!before.evidencePresent,originalRecordsUnchanged:true};
    }finally{db?.close();base.close();}
-  },{scope,pending,committedReceipt,expectedVersion:DATABASE_VERSION});
-  record('actual-archived-v1-Host-reader-refuses-current-v2-with-original-assets-and-receipts',{...result,archive,oldManifestHash,extensionId:id,runtimeUpdate:runtimeUpdates.old,coverage:'ACTUAL_ARCHIVED_OWNER_DATABASE_VERSION_FENCE'});
+  },{scope,pending,committedReceipt,evidenceKey,afterEvidence,expectedVersion:DATABASE_VERSION});
+  record('actual-archived-v1-Host-reader-refuses-current-v2-with-original-assets-and-receipts',{...result,boundary:afterEvidence?'AFTER_EVIDENCE':'BEFORE_EVIDENCE',archive,oldManifestHash,extensionId:id,runtimeUpdate:runtimeUpdates.old,coverage:'ACTUAL_ARCHIVED_OWNER_DATABASE_VERSION_FENCE'});
  }catch(error){primaryError=error;}finally{
   const cleanupErrors=[];
   for(const close of [()=>probe?.close(),closeProbe])try{await close();}catch(error){cleanupErrors.push(error);}
