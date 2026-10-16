@@ -4,7 +4,7 @@
 
 在原生产代码上补齐MODERN UI-13两个离线切片：真实disable/re-enable **3/3 PASS**，原页面不刷新时不复活私有frame，后续原生目的地文档取得新grant/mount/UI文档，原端点接受新授权并拒绝旧授权；实际uninstall四开关组合 **4/4 PASS**，无需手动关闭便清除私有投影/遮罩，原document/editor/draft与后续原生导航保持。独立Team scope及native GET确认、worker外网阻断、source/fixture哈希均通过。见[Round334](evidence/round334/README.md)。
 
-本轮仅测试runner及对应合同，定向 **5/5 PASS**；上轮完整6431/6431不冒充新全套。更新/旧reader资产场景、全J4、冷启动、J2静默恢复、规模及G/U仍开放，**Free NOT_RELEASE_READY**。GitHub connector本轮亦Transport closed，最新远端未新确认；本地成果及原整理stash保全。
+本轮仅测试runner及对应合同，定向 **5/5 PASS**；上轮完整6431/6431不冒充新全套。更新/旧reader资产场景、全J4、冷启动、J2静默恢复、规模及G/U仍开放，**Free NOT_RELEASE_READY**。GitHub connector先前Transport closed；随后正常Git push成功将1ac979b快进至88b9003，本地/远端0/0，三个待同步检查点已交付原PR16分支。原整理stash保全。
 
 ## 前一本地检查点（2026-10-17，Round333）
 
