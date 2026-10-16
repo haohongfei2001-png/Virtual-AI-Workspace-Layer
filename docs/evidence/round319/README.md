@@ -9,3 +9,7 @@ Distinct existing bounded-admission preparation variant: member tail again compl
 Both real runs: no page errors, no source/fixture/manifest drift, owned browser/proxy/fixture closed, temporary directory removed. Network guard records denied browser external traffic only. Final targeted scale contracts234/234 PASS; cleanup fence22/22 PASS. No full regression rerun for this test-only slice; production full6130/6130 is Round318.
 
 Git normal fetch/push remained bounded and timed out. API confirmed PR16 stillDraft/head03b5881/base docs/vaiwl-v28-core-mechanisms-20261012; 72ca068 is already an ancestor of localHEAD. Local commits and external stash42c8877 remain intact. Free/SYS04/100k/81/live acceptance remains incomplete; NOT_RELEASE_READY.
+
+## Follow-up counterexample
+
+Actual adapter/discovery at1000/2100/10000 rows emits16/33/157 initial packets and zero unchanged-renewal packets or detached handles; real32→31 node removal emits one packet and one detached handle.4/4 tests pass. This disproves the proposed capacity-eviction→detached→republish explanation. `onEvict` only invalidates lookup; it does not enqueue detached handles. No product optimization is justified from that hypothesis. The remaining browser revision churn needs observed publication causes.
