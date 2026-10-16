@@ -16,3 +16,19 @@ async function observed(t){const f=await fixture();t.after(()=>f.surface.dispose
 test('identical rect refresh performs zero owned style setter calls',async t=>{const f=await observed(t),frames=f.surface.frames(f.handle);for(let i=0;i<20;i++)assert.equal(f.surface.refreshGeometry(f.handle,{...f.inspection,readingRect:{...f.inspection.readingRect},sidebarRect:{...f.inspection.sidebarRect}}),true);assert.deepEqual(f.writes,[]);assert.deepEqual(f.surface.frames(f.handle),frames);assert(f.nodes.every(n=>n.open));});
 test('position-only change writes exactly changed left and top while preserving dimensions',async t=>{const f=await observed(t),next={...f.inspection,readingRect:{...f.inspection.readingRect,x:210,y:45},sidebarRect:{...f.inspection.sidebarRect,x:5,y:45}};assert.equal(f.surface.refreshGeometry(f.handle,next),true);assert.deepEqual(f.writes,[{index:0,key:'left',value:'210px'},{index:0,key:'top',value:'45px'},{index:1,key:'left',value:'5px'},{index:1,key:'top',value:'45px'}]);f.writes.length=0;assert.equal(f.surface.refreshGeometry(f.handle,next),true);assert.deepEqual(f.writes,[]);assert(f.nodes.every(n=>n.open));});
 for(const invalidRole of ['readingRect','sidebarRect'])test('invalid '+invalidRole+' prevents every partial style write in otherwise moved geometry',async t=>{const f=await observed(t),before=f.nodes.map(n=>({...n.style})),next={...f.inspection,readingRect:{...f.inspection.readingRect,x:210},sidebarRect:{...f.inspection.sidebarRect,x:5}};next[invalidRole].height=0;assert.equal(f.surface.refreshGeometry(f.handle,next),false);assert.deepEqual(f.writes,[]);assert.deepEqual(f.nodes.map(n=>({...n.style})),before);assert(f.nodes.every(n=>!n.open));assert.equal(f.surface.isMasked(f.reading),false);assert.equal(f.surface.isMasked(f.history),false);});
+
+test('surface ownership uses exact live mount identity, never copied markers or descendants',async()=>{
+ const f=await fixture(),nodes=[...f.nodes];
+ for(const node of nodes){
+  assert.equal(f.surface.isOwnedSurface(node),true);
+  node.hidePopover();assert.equal(f.surface.isOwnedSurface(node),true,'closed toggle still belongs to this mount');
+  assert.equal(f.surface.isOwnedSurface({...node}),false);
+  for(const child of node.children)assert.equal(f.surface.isOwnedSurface(child),false);
+  node.isConnected=false;assert.equal(f.surface.isOwnedSurface(node),false);node.isConnected=true;
+  node.ownerDocument={};assert.equal(f.surface.isOwnedSurface(node),false);node.ownerDocument=f.doc;
+ }
+ assert.equal(f.surface.isOwnedSurface(f.reading),false);
+ assert.equal(f.surface.isOwnedSurface(null),false);
+ f.surface.dispose(f.handle);
+ for(const node of nodes){node.isConnected=true;assert.equal(f.surface.isOwnedSurface(node),false,'removed registry cannot be revived by reattachment');}
+});

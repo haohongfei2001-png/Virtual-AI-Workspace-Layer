@@ -79,6 +79,9 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     if(affected){surrender(m);changed=true;}
    }return changed;
   },
+  isOwnedSurface(node){
+   return !!node&&node.isConnected&&node.ownerDocument===doc&&[...mounts.values()].some(m=>m.surfaces.some(surface=>surface.node===node));
+  },
   isMasked(root){
    for(const m of mounts.values()){
     const marker=m.markers.find(value=>value.root===root);if(!marker)continue;
