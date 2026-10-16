@@ -2,10 +2,10 @@ import {cp,readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 const hash=value=>createHash('sha256').update(value).digest('hex');
-export const TRACE_PATHS=['src/data/native-repository.mjs','src/runtime/host-view-service.mjs','src/host/chatgpt-adapter.mjs','src/runtime/free-view-owner.mjs'];
-export const TRACE_KINDS=['native-start','native-root','native-commit','native-abort','view-begin','view-run','view-error','view-retry','view-terminal','view-stop','pass-start','pass-complete','pass-drained','pass-summary','migration-start','migration-end','window-reserve','window-expire','window-release','window-refused','view-version-restart','replica-terminal'];
-const phaseFields=['headerMs','pagesMs','assembleMs','snapshotMs','indexMs','versionMs','elapsed','txMs','rootMs','saveMs','reduceMs','sharedMs','publishMs','queuedMs','scanCount','scanMs','scanMaxMs','splitCount','splitMs','splitMaxMs','emitCount','emitMs','emitMaxMs','accepted','duplicate','retry','rejected','samples'];
-const fields=['window','refusal','shared','nativeChanged','workspaceChanged','evidenceChanged','viewChanged','freshnessChanged','realmOrdinal','dropped','waitCount','waitFirstMs','waitLastMs','producer','generation','attempt','elapsed','revision','expectedRevision','refsCount','pages','fragments','candidates','busy','pending','ok','replayed','format','error',...phaseFields];
+export const TRACE_PATHS=['src/data/native-repository.mjs','src/runtime/host-view-service.mjs','src/host/chatgpt-adapter.mjs','src/runtime/free-view-owner.mjs','src/runtime/free-read-service.mjs'];
+export const TRACE_KINDS=['native-start','native-root','native-commit','native-abort','view-begin','view-run','view-error','view-retry','view-terminal','view-stop','pass-start','pass-complete','pass-drained','pass-summary','migration-start','migration-end','window-reserve','window-expire','window-release','window-refused','view-version-restart','replica-terminal','page-terminal'];
+const phaseFields=['pageReadsMs','pageProjectionMs','headerMs','pagesMs','assembleMs','snapshotMs','indexMs','versionMs','elapsed','txMs','rootMs','saveMs','reduceMs','sharedMs','publishMs','queuedMs','scanCount','scanMs','scanMaxMs','splitCount','splitMs','splitMaxMs','emitCount','emitMs','emitMaxMs','accepted','duplicate','retry','rejected','samples'];
+const fields=['window','refusal','shared','nativeChanged','workspaceChanged','evidenceChanged','viewChanged','freshnessChanged','realmOrdinal','dropped','waitCount','waitFirstMs','waitLastMs','producer','generation','attempt','elapsed','revision','expectedRevision','selectedProjectsCount','selectedRefsCount','refsCount','pages','fragments','candidates','busy','pending','ok','replayed','format','error',...phaseFields];
 // Ring retains latest events; dropped counts disclose missing early history.
 // Fixed schema; no arbitrary string fields, identifiers, URLs or thrown text.
 export const TRACE_RECORDER=`
@@ -105,6 +105,13 @@ export function instrumentScaleSource(path,source){
   add('   check();const version=await request(()=>readService.version(bound,options));check();','   if(__scaleReplicaStages.snapshotMs===null)__scaleReplicaStages.snapshotMs=__scaleDelta(__scaleReplicaStart);check();const version=await request(()=>readService.version(bound,options));check();__scaleReplicaStages.versionMs=__scaleDelta(__scaleReplicaStart);');
   add('published=Object.freeze({snapshot,index});return published;','published=Object.freeze({snapshot,index});__scaleReplicaOK=true;return published;');
   add('}).finally(()=>{budget.complete();','}).finally(()=>{__scaleEmit("replica-terminal",{...__scaleReplicaStages,producer:__scaleReplica,ok:__scaleReplicaOK,elapsed:__scaleDelta(__scaleReplicaStart)});budget.complete();');
+ }else if(path===TRACE_PATHS[4]){
+  // Observe the exact original async call and DTO. No new awaits or error
+  // conversion; the terminal finally also runs when an original await rejects.
+  add('      freePage:async(scope,query,options)=>{','      freePage:async(scope,query,options)=>{const __scalePage=__scaleOrdinal(),__scalePageStart=__scaleNow(),__scalePageStages={pageReadsMs:null,pageProjectionMs:null};let __scalePageOK=false;const __scalePageCounts={};try{');
+  add('        const {state}=context,knownState=', '        __scalePageStages.pageReadsMs=__scaleDelta(__scalePageStart);try{for(const [key,field]of [["selectedProjects","selectedProjectsCount"],["selectedRefs","selectedRefsCount"]]){const rows=Object.getOwnPropertyDescriptor(page,key)?.value;if(Array.isArray(rows))__scalePageCounts[field]=Object.getOwnPropertyDescriptor(rows,"length")?.value;}}catch{}const {state}=context,knownState=');
+  add('        return {calibrationDeadlines:deadlines(page.facts.sources','        const __scalePageResult={calibrationDeadlines:deadlines(page.facts.sources');
+  add('          offset:page.offset,total:page.total,nextOffset:page.nextOffset,workspaceRevision:state.revision,evidenceRevision:`${state.revision}:${stored.revision}`};','          offset:page.offset,total:page.total,nextOffset:page.nextOffset,workspaceRevision:state.revision,evidenceRevision:`${state.revision}:${stored.revision}`};__scalePageStages.pageProjectionMs=__scaleDelta(__scalePageStart);__scalePageOK=true;return __scalePageResult;}finally{__scaleEmit("page-terminal",{...__scalePageStages,...__scalePageCounts,producer:__scalePage,ok:__scalePageOK,elapsed:__scaleDelta(__scalePageStart)});}');
  }else throw Error('unknown-scale-trace-source');
  return TRACE_RECORDER.replace('__SCALE_REALM__',path===TRACE_PATHS[2]?'content':'worker').replace('__SCALE_CONSOLE__',path===TRACE_PATHS[2]?'console.log("HOST_SCALE_TRACE "+encoded);':'')+out;
 }

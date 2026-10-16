@@ -129,3 +129,39 @@ test('replica trace strong anchors reject missing or duplicate phase and fixed s
  for(const replacement of ['',anchor+anchor])assert.throws(()=>instrumentScaleSource(TRACE_PATHS[3],source.replace(anchor,replacement)),/anchor-mismatch/);
  const c=vm.createContext({TextEncoder,Date,performance});vm.runInContext(recorder+`;__scaleEmit('replica-terminal',{headerMs:null,pagesMs:2,assembleMs:Infinity,snapshotMs:-1,indexMs:'PRIVATE',versionMs:1e16,body:'PRIVATE',ok:false});`,c);const target={events:[],bytes:0,dropped:0};appendScaleTrace(target,c.__vaiwlScaleTrace.events[0]);assert.equal(target.events.length,1);assert.equal(target.events[0].headerMs,null);assert.equal(target.events[0].pagesMs,2);for(const key of ['assembleMs','snapshotMs','indexMs','versionMs','body'])assert.equal(target.events[0][key],undefined);for(const value of ['PRIVATE',Infinity,-1])appendScaleTrace(target,{kind:'replica-terminal',at:1,headerMs:value});assert.equal(target.dropped,3);
 });
+
+async function pageHarness(instrumented,{failure=null,hold=false,explicit=true}={}){
+ const source=await readFile(join(root,TRACE_PATHS[4]),'utf8'),out=instrumented?instrumentScaleSource(TRACE_PATHS[4],source):source;
+ const start=out.indexOf('      freePage:')+'      freePage:'.length,end=out.indexOf('      freeSnapshot:',start),hook=out.slice(start,end).trim().replace(/,$/,'');
+ let time=0,release,queryReads=0;const calls=[],error=Error('PRIVATE_FAILURE'),controller=new AbortController();
+ const step=(name,ms,value)=>{calls.push(name);time+=ms;if(failure===name)throw error;return value;};
+ const refs=[{id:'PRIVATE_C'}],projects=[{id:'PRIVATE_P',nativeName:'PRIVATE_TITLE'}],facts={sources:{},projects:{},refs:{},membership:{}},page={facts,selectedProjects:['PRIVATE_P'],selectedRefs:['PRIVATE_C'],revision:1,offset:0,total:1,nextOffset:null};
+ const state={scopeKey:'PRIVATE_SCOPE',refs:{},sources:{},events:{},coverage:{},revision:2},stored={sources:{},events:{},hints:{},coverage:{},revision:3};
+ const c=vm.createContext({TextEncoder,Date,performance:{now:()=>time},
+  native:{page:async(scope,query,options)=>{step('native',10);if(hold)await new Promise((resolve,reject)=>{release=resolve;options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true});});return page;}},
+  workspaceContext:async()=>step('context',20,{state}),evidence:{page:async()=>step('evidence',30,{evidence:stored})},
+  freeProjection:()=>step('projection',20,{scope:'PRIVATE_SCOPE'}),activityEvidence:()=>step('activity-evidence',0,{}),
+  projectFreeActivity:()=>step('activity',30,{refs,projects}),deadlines:()=>step('dto',5,[])});
+ vm.runInContext((instrumented?recorder:'')+'globalThis.run='+hook+';',c);
+ const query={get ids(){queryReads++;return explicit?{projects:['PRIVATE_P'],refs:['PRIVATE_C']}:null;},now:'PRIVATE_NOW',viewSession:{}};
+ return {run:()=>c.run('PRIVATE_SCOPE',query,{signal:controller.signal}),calls,error,refs,projects,page,release:()=>release?.(),abort:()=>controller.abort(error),events:()=>c.__vaiwlScaleTrace?.events??[],reads:()=>queryReads};
+}
+for(const explicit of [false,true])test('freePage trace preserves DTO shape, identities, call order and selected counts explicit='+explicit,async()=>{
+ const original=await pageHarness(false,{explicit}),traced=await pageHarness(true,{explicit}),a=await original.run(),b=await traced.run();assert.deepEqual(JSON.parse(JSON.stringify(b)),JSON.parse(JSON.stringify(a)));assert.equal(b.refs,traced.refs);assert.deepEqual(traced.calls,original.calls);assert.equal(traced.reads(),original.reads());
+ const row=traced.events()[0];assert.equal(traced.events().length,1);assert.equal(row.kind,'page-terminal');assert.equal(row.ok,true);assert.equal(row.selectedProjectsCount,1);assert.equal(row.selectedRefsCount,1);assert.equal(row.pageReadsMs,60);assert.equal(row.pageProjectionMs,115);assert.equal(row.elapsed,115);assert(!JSON.stringify(row).includes('PRIVATE'));
+});
+for(const explicit of [false,true])for(const failure of ['native','context','evidence','projection','activity-evidence','activity','dto'])test('freePage '+failure+' rejection identity and original settlement order survive instrumentation explicit='+explicit,async()=>{
+ const runs=[];for(const instrumented of [false,true]){const h=await pageHarness(instrumented,{failure,explicit});await assert.rejects(h.run(),e=>e===h.error);runs.push(h);if(instrumented){assert.equal(h.events().length,1);const row=h.events()[0];assert.equal(row.ok,false);assert.equal(row.pageProjectionMs,null);if(['native','context','evidence'].includes(failure)){assert.equal(row.pageReadsMs,null);assert.equal(row.selectedRefsCount,undefined);}if(failure==='native')assert.equal(h.reads(),0);assert(!JSON.stringify(row).includes('PRIVATE'));}}assert.deepEqual(runs[1].calls,runs[0].calls);assert.equal(runs[1].reads(),runs[0].reads());
+});
+for(const explicit of [false,true])test('freePage cancelled native await keeps original abort identity and emits a single incomplete terminal explicit='+explicit,async()=>{
+ for(const instrumented of [false,true]){const h=await pageHarness(instrumented,{hold:true,explicit}),pending=h.run();h.abort();await assert.rejects(pending,e=>e===h.error);const before=JSON.stringify(h.events());h.release();for(let i=0;i<10;i++)await Promise.resolve();assert.equal(JSON.stringify(h.events()),before);assert.deepEqual(h.calls,['native']);if(instrumented){assert.equal(h.events().length,1);assert.equal(h.events()[0].pageReadsMs,null);assert.equal(h.events()[0].ok,false);}}
+});
+test('freePage observation cannot invoke selected array accessors or precede native validation',async()=>{
+ const source=await actual(4),prefix=source.slice(source.indexOf('      freePage:'),source.indexOf('        const page=await native.page(scope,query,options)'));
+ assert(!prefix.includes('query.'));assert(!prefix.includes('getOwnPropertyDescriptor(query'));
+ for(const explicit of [false,true]){const counts=[];for(const instrumented of [false,true]){const h=await pageHarness(instrumented,{explicit});let reads=0;Object.defineProperty(h.page,'selectedRefs',{get(){reads++;return ['PRIVATE_C'];}});await h.run();counts.push(reads);if(instrumented)assert.equal(h.events()[0].selectedRefsCount,undefined);}assert.equal(counts[1],counts[0]);assert(counts[0]>0);}
+});
+test('freePage anchors and report boundary reject altered instrumentation and unsafe page fields',async()=>{
+ const source=await readFile(join(root,TRACE_PATHS[4]),'utf8'),anchor='        const {state}=context,knownState=';for(const replacement of ['',anchor+anchor])assert.throws(()=>instrumentScaleSource(TRACE_PATHS[4],source.replace(anchor,replacement)),/anchor-mismatch/);
+ const c=vm.createContext({TextEncoder,Date,performance});vm.runInContext(recorder+`;__scaleEmit('page-terminal',{pageReadsMs:null,pageProjectionMs:Infinity,selectedRefsCount:5,selectedProjectsCount:1,query:'PRIVATE',scope:'PRIVATE'});`,c);const target={events:[],bytes:0,dropped:0};appendScaleTrace(target,c.__vaiwlScaleTrace.events[0]);assert.equal(target.events.length,1);assert.equal(target.events[0].pageReadsMs,null);assert.equal(target.events[0].selectedRefsCount,5);assert.equal(target.events[0].pageProjectionMs,undefined);assert(!JSON.stringify(target).includes('PRIVATE'));for(const value of ['PRIVATE',null,Infinity,-1])appendScaleTrace(target,{kind:'page-terminal',at:1,selectedRefsCount:value});assert.equal(target.dropped,4);
+});
