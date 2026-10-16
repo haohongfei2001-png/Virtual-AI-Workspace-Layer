@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-17，原本地目录，Round316）
+## 最新正式检查点（2026-10-17，原本地目录，Round317）
+
+03b5881已正常推送并API确认原Draft PR16/base。实际MV3反例确认：双popover关闭后iframe文档仍visible，普通IO始终交集1；trackVisibility也把打开的workspace误判为不可见。两方案均拒绝，生产代码与6095项已验证基线未改，既有保持布局的CSS不动。
+
+原始探针失败、成功测量和被否决的IO模型测试归档于[Round317](evidence/round317/README.md)。下一步以owned :popover-open真实状态经现有绑定/scope/grant私有通道合并非展示surface的数据提示；尚未实现，不宣称10k/100k问题解决。**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-17，原本地目录，Round316）
 
 修复J4测试辅助页对原生前台的干扰：精确后台target创建/关闭，逐个原生顶层及workspace frame验证可见性、焦点和期间事件完全不变。生产校准与持久预算未改；Personal发送前请求由9降至6，真实Team前台校准仍保留。后台诊断23项通过后，**未插桩正式包默认J4连续23/23 PASS**，7次辅助页不扰动检查通过，无准备预算，原等待阈值/原生操作/业务断言不变。
 
