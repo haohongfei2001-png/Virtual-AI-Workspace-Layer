@@ -75,7 +75,17 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
    if(!await r.prepared||r.conflicted||!active||requests.get(r.requestId)!==r||documents.get(key(r))!==r.document||r.epoch!==r.document.epoch||!clockOK(r,6000))return;
    const [frame,tab]=await Promise.all([getFrame({tabId:r.tabId,frameId:0}),getTab(r.tabId)]);
    if(r.conflicted||tab?.id!==r.tabId||tab.incognito!==false||!active||requests.get(r.requestId)!==r||r.epoch!==r.document.epoch||!clockOK(r,6000)||!frameMatches(frame,r))return;
-   if(r.document.receipt&&r.document.receipt.contextId===r.contextId&&r.document.receipt.actualURL===r.actualURL&&clockOK(r.document.receipt,ttl))return;
+   const prior=r.document.receipt;
+   if(prior&&prior.contextId===r.contextId&&prior.actualURL===r.actualURL){
+    // A genuinely later native request is new evidence, not a renewal of the
+    // old receipt. Ignore tied/older starts, including reversed completions.
+    if(r.wall<=prior.wall||r.elapsed<=prior.elapsed)return;
+    const previousEpoch=r.document.epoch;
+    drop(r.document,'context-selection-pending');r.epoch=r.document.epoch;
+    // Preserve only independently prepared, later requests for this unchanged
+    // selection. A conflict, route change or expired request never follows it.
+    for(const pending of requests.values())if(pending!==r&&pending.document===r.document&&pending.epoch===previousEpoch&&pending.accepted&&!pending.conflicted&&pending.contextId===r.contextId&&pending.actualURL===r.actualURL&&targetOf(pending)===targetOf(r)&&pending.wall>r.wall&&pending.elapsed>r.elapsed&&clockOK(pending,6000))pending.epoch=r.document.epoch;
+   }
    const id=makeId();if(!tokenOK(id))return;
    const receipt=Object.freeze({id,tabId:r.tabId,documentId:r.documentId,actualURL:r.actualURL,...(r.projectId?{projectId:r.projectId}:{conversationId:r.conversationId}),contextId:r.contextId,selectionEpoch:r.epoch,wall:r.wall,elapsed:r.elapsed});
    r.document.receipt=receipt;r.document.wall=r.wall;r.document.elapsed=r.elapsed;

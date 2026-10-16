@@ -2919,3 +2919,9 @@ Independent READY/REFRESH and invalidated-HELLO races repaired with one-shot rec
 Round330 final full Node regression: **6376/6376 PASS**, zero skips, terminal exit0.
 
 Round330 final-version formal MODERN J3 again FAILS initial15s/0 of16 with stable hashes. Earlier candidate16/16 remains single-run evidence; **cold startup remains unresolved**, not certified. No additional browser rerun this checkpoint.
+
+## Round331–332 — bounded J2 diagnosis and new native context evidence
+
+J2 now writes stage/failure evidence instead of hanging: MODERN passes first3 steps but loses C2 grant around60s before worker stop; original8-step journey remains FAIL. No TTL or fake periodic native refresh workaround. Two unchanged-production MODERN J3 samples pass16/16; earlier startup failures remain unresolved. New independently validated later native requests now replace old same-context receipts through revocation and full reauthorization, preserving parallel order and original clocks.123 focused contracts pass; first integration6406/6407 has a J2 finally-extraction test failure under repair. See [Round331](evidence/round331/README.md) and [Round332](evidence/round332/README.md). FullFree/100k/live gates remain NOT_RELEASE_READY.
+
+Round332 final integration: **6421/6421 Node PASS**, zero skips, terminal exit0. J2 extraction failure corrected; original failed run retained. New production receipt replacement has no new actual Chrome acceptance claim. Remaining Free gates unchanged.
