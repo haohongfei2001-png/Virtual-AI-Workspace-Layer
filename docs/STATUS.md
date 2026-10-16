@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round291）
+## 最新正式检查点（2026-10-16，原本地目录，Round292）
+
+修复自有设置条窄屏溢出、时间范围select不继承字号，以及32px箭头负37px边距造成的5px横滚。实际ShadowRoot renderer六组宽度/字号/操作全PASS（仅WEB_MECHANISM_ONLY），完整Node **5706/5706 PASS**。
+
+新的真实MV3组合仍FAIL：200%/1200px宽、900→760高度后双frame被移除；未以纯原生降级过测，正继续定位退出原因。初始runner故障、实际产品红测及组合失败均保留，见[Round292](evidence/round292/README.md)。本轮fetch超时，远端最后API仍7f14432；本地检查点保全后继续普通同步。完整81/G/U/冷启动/100k仍未完成，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round291）
 
 实际备用认证在途disable通过：真实accounts已认证200但挂起交付时禁用，私有frame消失、原生document/editor/草稿可用；迟到响应不恢复旧投影。重新启用新worker，旧文档无旧授权；一次新文档导航取得新身份并在原20秒内恢复双surface。八表20记录及本次捕获消息/日志零凭证/正文/草稿命中。该worker-ready样本不代表通用cold/reenable可靠性。
 

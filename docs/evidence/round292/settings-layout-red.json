@@ -1,0 +1,30 @@
+{
+  "kind": "WEB_MECHANISM_ONLY",
+  "evidence": "REAL_SHADOW_DOM_PRODUCTION_NAVIGATION_RENDERER_SYNTHETIC_PROJECTION",
+  "MV3": "NOT_RUN",
+  "realChatGPT": "NOT_RUN",
+  "zoom": "HOST_FONT_SCALE_NOT_BROWSER_ZOOM",
+  "checks": [],
+  "sourceBefore": {
+    "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/frame-resume-state.mjs": "fab35558b08d800722df1d0160b602af541ba3a0aa5a2f49a321a390e35b78c2",
+    "extension/frame-shell.css": "305e002e7610347fa491671aa45d852dbc8c4ec12096e4279a50a7e3e6c2847f",
+    "src/navigation/navigation.mjs": "9281ce20c79cd885b1667bed90aaf75e175ced61a7a83bfa922f92c18f37ca45",
+    "src/navigation/styles.mjs": "72850d9805a8dc725d36145cef30a59d24c6dd3f10504528f1e5c68e716d61c8",
+    "tests/host/settings-layout-browser.mjs": "03afb9139169c31cd206322ca36415f1edb5d7e2c03412739186b11abea232bc"
+  },
+  "browser": "155.0.8059.80",
+  "ok": false,
+  "error": "page.evaluate: Error: invalid-frame-time-policy\n    at applyFrameProjection (http://127.0.0.1:51900/src/navigation/navigation.mjs:425:316)\n    at Object.updateFrameProjection (http://127.0.0.1:51900/src/navigation/navigation.mjs:421:46)\n    at eval (eval at evaluate (:370:30), <anonymous>:4:8)\n    at async <anonymous>:396:30\n    at /Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/settings-layout-browser.mjs:15:14",
+  "sourceAfter": {
+    "src/host/current-navigation-plan.mjs": "c33cfd6af8e7523ac85fe812b59b2e24df109d4e03a3d507b9edab6b53d413ff",
+    "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+    "src/host/frame-resume-state.mjs": "fab35558b08d800722df1d0160b602af541ba3a0aa5a2f49a321a390e35b78c2",
+    "extension/frame-shell.css": "305e002e7610347fa491671aa45d852dbc8c4ec12096e4279a50a7e3e6c2847f",
+    "src/navigation/navigation.mjs": "9281ce20c79cd885b1667bed90aaf75e175ced61a7a83bfa922f92c18f37ca45",
+    "src/navigation/styles.mjs": "72850d9805a8dc725d36145cef30a59d24c6dd3f10504528f1e5c68e716d61c8",
+    "tests/host/settings-layout-browser.mjs": "03afb9139169c31cd206322ca36415f1edb5d7e2c03412739186b11abea232bc"
+  },
+  "sourceStable": true
+}
