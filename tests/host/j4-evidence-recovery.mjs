@@ -1,3 +1,4 @@
+import {waitForBudgetExpiry} from './fixtures/budget-expiry-wait.mjs';
 import {modernExpectedWorld} from './expected/modern.mjs';
 import assert from 'node:assert/strict';
 import {J4_SEND_C,J4_MIXED_TITLE} from './fixtures/j4-interruption.mjs';
@@ -148,9 +149,9 @@ export async function runJ4EvidenceRecovery({a,id,server,inspector,assets,preser
   assertJ4ReadBudget(budget);budgetObservations.push(budget);return budget;
  }
  async function budgetWindow(){
-  const budget=await readBudget(),waited=Math.max(0,budget.startedAt+30001-Date.now());
-  // This is the actual persistent budget expiry, never a fabricated readiness delay.
-  if(waited)await new Promise(resolve=>setTimeout(resolve,waited));
+  const budget=await readBudget();
+  // Recheck the persisted boundary after timer wakeup; timers can fire early.
+  const waited=await waitForBudgetExpiry(budget.startedAt);
   assert(Date.now()>budget.startedAt+30000);return {budget,waitedForFormalBudgetMs:waited};
  }
  async function native(){await a.bringToFront();await a.locator('#model-button').click();await a.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();}

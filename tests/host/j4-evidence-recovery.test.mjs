@@ -123,7 +123,7 @@ test('new slice faults only an existing valid Evidence root and repairs through 
  assert.equal((source.match(/'readwrite'/g)??[]).length,1);
  for(const value of ["const damaged={...root,checksum:'0'.repeat(64)}","root.checksum!==digest(root.payload)",'root.payload.revision!==expectedRevision',"changedFields:['checksum']",'freeEvidenceKey(scopeKey)',"name:'修复活跃度记录'",'repaired.nativeDigest,before.nativeDigest','repaired.continuations,before.continuations','assertJ4EvidenceRevoked(before.evidence,repaired.evidence)','assert.deepEqual(repaired.evidence[table],before.evidence[table])',"assert.deepEqual(preRepairContinuationStates,['complete'])"])assert(source.includes(value),value);
  for(const forbidden of ['.recover(','.apply(','.mutate(','.start(',"type:'HOST_UI_VIEW'",'hostObservationGate','dispatchEvent(','TestScopeProvider','setPrincipal(','setSelectedContext(','releaseInterruption(','setTimeout(resolve,30000)','Date.now='])assert(!source.includes(forbidden),forbidden);
- assert(source.includes("db.transaction('b23_views','readonly')"));assert(source.includes('budget.startedAt+30001-Date.now()'));
+ assert(source.includes("db.transaction('b23_views','readonly')"));assert(source.includes('await waitForBudgetExpiry(budget.startedAt)'));assert(source.includes('assert(Date.now()>budget.startedAt+30000)'));
  assert(source.includes('await a.reload()'));assert(source.includes('previousGrant:preRebindGrant'));assert(source.includes('completedReads().length>repeatReadStart'));
  assert(source.includes('assert.deepEqual(repeated.evidence,acknowledged.evidence)'));assert(source.includes('assert.deepEqual((await inspect(team)).evidence,teamBefore.evidence)'));
 });

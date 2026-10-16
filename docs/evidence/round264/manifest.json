@@ -1,0 +1,24 @@
+{
+  "base": "e5270a4e9c4757692c135d3a4adda6520edf63dc",
+  "productChanges": false,
+  "files": {
+    "tests/host/ui06-keyboard-ax.mjs": "3e01158fb60a5a50b2f5d90be2680e6e09020bb8589ed684cb62236e0b1a4b02",
+    "tests/host/ui06-stable-snapshot.test.mjs": "ad9ba7058e82ed0b241682f38cbefc54f764e01d1aa19830429197d8244cc7e1",
+    "tests/host/j4-evidence-recovery.mjs": "e253db8313724c178e8624fe6cdd03d493e9b69a381aa0b713c63c756d08e424",
+    "tests/host/j4-evidence-recovery.test.mjs": "0cad26c6c101bec6dc6aa492b37b31a56b3d4c541744ff58becd46188331550f",
+    "tests/host/j4-package-journey.mjs": "8e04224df6b8c9111e0fe2e150391cd23c054218ae3449bfc2496783ce2ee8a1",
+    "tests/host/fixtures/budget-expiry-wait.mjs": "841533629b045b434cc3eb2ff0748a444d436943980841f755e74c59aab4cca1",
+    "tests/host/budget-expiry-wait.test.mjs": "a633b74c0f6b13449901369ebfb7e436db943d2fff7ea55e49bad7a549343ec0"
+  },
+  "artifacts": {
+    "README.md": "3eec09a9de65a9909d24f0df62186e10230769b85b869787661ce3b8b9637ac2",
+    "ci58-failed.log.gz": "bc7c9d75bc55b3f6f158971cd27f7e50502387d9b63b79c536c394a2d581e39c",
+    "ci58-scale.json.gz": "082888fb021c50e8d5b600da092fe55a43643c28e68177578241c7fb8052d646",
+    "ci59-failed.log.gz": "1302bdc1ec4a158886ca437b45baf1fbd8be364a9cc3d53685b4047dcb6ada90",
+    "j3-stable.json.gz": "73ebf8d9cf274f301b6583b5d19c438b6a1298dd4c76f2b1a7d50497723bbde4",
+    "j4.json.gz": "d5b2179008f4a42888b7d259236dd0da9b687c4ba56ea4f43873842c01beb574",
+    "node.log.gz": "dfecb33357ac75ba3c25d8a379853e678b5c377727a1eba3a6c704dae9ead57d",
+    "targeted.log.gz": "04c55c543887da945963e18ddfb60941c4f90b5fb8895cb04d3c37afdc464358",
+    "ui06-stable-node.log.gz": "6e1d34da868ee67b649880be32cbd739a7bf6f3b2a75c2d65ec9c5cdf3c5a7a2"
+  }
+}

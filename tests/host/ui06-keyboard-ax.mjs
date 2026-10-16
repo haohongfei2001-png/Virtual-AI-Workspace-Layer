@@ -1,6 +1,7 @@
 /** UI-06 subcase in the original packaged J3 document. Test-only, no fixture or
  * business-state injection. Raw AX names/values and DOM IDs never enter reports. */
 import assert from 'node:assert/strict';
+import {isDeepStrictEqual} from 'node:util';
 export const UI06_LIMITS=Object.freeze({keys:64,deadlineMs:15000});
 const sentinel='Offline prefix uniquely selected fixture words suffix.';
 const historySelector='aside nav[aria-label="Chat history"] a[href="/c/33333333-3333-4333-8333-333333333333"]';
@@ -14,6 +15,19 @@ export function createUI06Deadline({now=()=>performance.now(),limit=UI06_LIMITS.
  const start=now();let last=start;assert(Number.isFinite(start));
  const remaining=()=>{const current=now();assert(Number.isFinite(current)&&current>=last,'UI06 monotonic clock regressed');last=current;assert(current-start<limit,'UI06 phase deadline');return limit-(current-start);};
  return {elapsed:()=>Math.min(limit+1,Math.max(0,Math.ceil(last-start))),async run(operation){const left=remaining();let timer;try{const result=await Promise.race([Promise.resolve().then(operation),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('UI06 phase deadline')),left);})]);remaining();return result;}finally{clearTimeout(timer);}}};
+}
+// Cross-process documents cannot be sampled in a single JavaScript task.
+// Retain every cumulative observation; never reset events or send another key
+// while waiting for two equal full rounds within the caller's phase deadline.
+export async function readUI06StableDocuments({readRound,deadline,trace,maxRounds=8}){
+ assert(Number.isSafeInteger(maxRounds)&&maxRounds>=2&&maxRounds<=8,'UI06 invalid snapshot bound');
+ assert(Array.isArray(trace));let prior;
+ for(let round=0;round<maxRounds;round++){
+  const current=await deadline.run(readRound);trace.push(structuredClone(current));
+  if(prior&&isDeepStrictEqual(prior,current))return current;
+  prior=structuredClone(current);
+ }
+ throw Error('UI06 unstable focus observation');
 }
 // Renderer updates are asynchronous. Both real expanded states must settle
 // under the same seed deadline before keyboard provenance starts.
@@ -114,7 +128,7 @@ export async function runUI06KeyboardAX({page,context,extensionId,workspace,nati
  const actionBaseline=snapshotActions();let cdp,frames;
  const report=Object.assign(trace??{},{scope:'UI06_J3_SUBCASE_NOT_FULL_ACCEPTANCE',phase:'setup',ax:[],paths:[],continuity:[]});
  const openCount=()=>page.locator('[data-va-owned]:popover-open').count();
- const readDocuments=async()=>{const first=await page.evaluate(()=>globalThis.__ui06Probe.read()),children=await Promise.all([['workspace',frames.workspace],['sidebar',frames.sidebar]].map(async([document,frame])=>({document,...await frame.evaluate(()=>globalThis.__ui06Probe.read())}))),last=await page.evaluate(()=>globalThis.__ui06Probe.read());assert.deepEqual(last,first,'UI06 non-atomic focus observation');return [{document:'parent',...last},...children];};
+ const readDocuments=async deadline=>{const trace=[];report.snapshots??=[];report.snapshots.push(trace);return readUI06StableDocuments({deadline,trace,readRound:async()=>Promise.all([['parent',page],['workspace',frames.workspace],['sidebar',frames.sidebar]].map(async([document,frame])=>({document,...await frame.evaluate(()=>globalThis.__ui06Probe.read())})))});};
  const reset=async()=>Promise.all([page,frames.workspace,frames.sidebar].map(f=>f.evaluate(()=>globalThis.__ui06Probe.reset())));
  async function continuity(){await draft();const state=await page.evaluate(()=>globalThis.__ui06Probe.continuity());state.actions=JSON.stringify(snapshotActions())===JSON.stringify(actionBaseline);assertUI06Continuity(state);report.continuity.push(state);}
  async function ax(open){
@@ -129,13 +143,13 @@ export async function runUI06KeyboardAX({page,context,extensionId,workspace,nati
   const facts=reduceUI06ParentAX({nodes,frameId:frameTree.frame.id,backend,readingMatches});report.ax.push({phase:open?'open':'closed',...facts});assertUI06AXPhase(facts,open);await timed(continuity);
  }
  async function walk(direction,target,open){
-  report.phase=open?(direction==='Tab'?'open-forward':'open-backward'):(target==='history'?'closed-history':'closed-composer');const deadline=createUI06Deadline(),timed=operation=>deadline.run(operation),startDocuments=await timed(readDocuments),startOpen=startDocuments[0].open;
+  report.phase=open?(direction==='Tab'?'open-forward':'open-backward'):(target==='history'?'closed-history':'closed-composer');const deadline=createUI06Deadline(),timed=operation=>deadline.run(operation),startDocuments=await readDocuments(deadline),startOpen=startDocuments[0].open;
   const start=open?startDocuments[1].focus:startDocuments[0].focus;
   const startTrustedClick=open?await timed(()=>frames.workspace.evaluate(()=>globalThis.__ui06Probe.clicked())):false;
   const path={direction,start,startOpen,startTrustedClick,elapsedMs:0,keys:[]};report.paths.push(path);
   for(let i=0;i<UI06_LIMITS.keys;i++){
    const before=await timed(openCount);await timed(reset);await timed(()=>page.keyboard.press(direction));
-   const documents=await timed(readDocuments),after=documents[0].open;const key=reduceUI06Key({before,after,direction,documents});path.keys.push(key);path.elapsedMs=deadline.elapsed();
+   const documents=await readDocuments(deadline),after=documents[0].open;const key=reduceUI06Key({before,after,direction,documents});path.keys.push(key);path.elapsedMs=deadline.elapsed();
    if(key.target===target)break;
   }
   path.elapsedMs=deadline.elapsed();assertUI06Path(path,{direction,target,open});await timed(continuity);
