@@ -24,6 +24,17 @@ export async function pollJ4EvidenceRecovery(read,label,{now=()=>performance.now
 }
 const poll=pollJ4EvidenceRecovery;
 
+// These two valid preconditions come from distinct actual interruption boundaries.
+export function j4EvidenceRecoveryMode(beforeNativeCommit=false){
+ assert.equal(typeof beforeNativeCommit,'boolean');return Object.freeze({beforeNativeCommit,initialEvents:3,initialHints:beforeNativeCommit?0:1,initialSources:beforeNativeCommit?1:2,finalSources:beforeNativeCommit?3:4,continuationStates:Object.freeze(beforeNativeCommit?[]:['complete']),oldACKState:beforeNativeCommit?'ABSENT_BEFORE_REPAIR_REMAINS_ABSENT':'PRESENT_SOURCE_REVOKED_ROWS_UNCHANGED'});
+}
+export function assertJ4EvidenceRecoveryBaseline(state,beforeNativeCommit=false){
+ const mode=j4EvidenceRecoveryMode(beforeNativeCommit);assert.equal(values(state.evidence.events).length,mode.initialEvents);assert.equal(values(state.evidence.hints).length,mode.initialHints);assert.equal(values(state.evidence.sources).length,mode.initialSources);assert.deepEqual(state.continuations.map(row=>row.payload.continuation.state),mode.continuationStates);return mode;
+}
+export function assertJ4EvidenceRecoveryFinal(state,beforeNativeCommit=false){
+ const mode=j4EvidenceRecoveryMode(beforeNativeCommit);assert.equal(values(state.evidence.sources).length,mode.finalSources);assert.equal(values(state.evidence.hints).length,mode.initialHints+1);assert.deepEqual(state.continuations.map(row=>row.payload.continuation.state),mode.continuationStates);return mode;
+}
+
 // Independent oracle: repair invalidates sources, not immutable witness rows.
 export function assertJ4EvidenceRevoked(before,after){
  assert.equal(after.scopeKey,before.scopeKey);
@@ -114,7 +125,8 @@ export async function faultJ4EvidenceRoot({scope,expectedRevision}){
 
 /** Additive packaged-MV3 slice. Existing J4 steps run before and after this one.
  * No wider branch matrix, missing-source continuation edge, or full J4 pass. */
-export async function runJ4EvidenceRecovery({a,id,server,inspector,assets,preserved,personal,team,scopeOf,mounted,record}){
+export async function runJ4EvidenceRecovery({a,id,server,inspector,assets,preserved,personal,team,scopeOf,mounted,record,beforeNativeCommit=false}){
+ const recoveryMode=j4EvidenceRecoveryMode(beforeNativeCommit);
  const recordEvidence=(name,details)=>record(name,{boundary:'EVIDENCE_ROOT_REPAIR_SLICE_NOT_FULL_J4',...details});
  const scopeKey=key(personal),frame=()=>a.frames().find(f=>!f.isDetached()&&f.url()===`chrome-extension://${id}/workspace.html`);
  const acceptsBefore=server.snapshot().interruption.accepts;assert.equal(acceptsBefore,2);
@@ -178,12 +190,12 @@ export async function runJ4EvidenceRecovery({a,id,server,inspector,assets,preser
  const unchangedAssets=async()=>{assert.deepEqual(await assets(personal),preserved);assert.deepEqual(await assets(team),teamAssets);};
  const teamBefore=await inspect(team);
 
- // Existing joint journey supplies real old history and a real old ACK.
+ // Both modes supply real old history. Only the committed-native mode has an old ACK.
  await navigate(J4_SEND_C);await a.locator('[data-message-id="j4_original_old"]').first().waitFor();
- let before=await inspect();assert.equal(values(before.evidence.events).length,3);assert.equal(values(before.evidence.hints).length,1);assert.equal(values(before.evidence.sources).length,2);
+ let before=await inspect();assertJ4EvidenceRecoveryBaseline(before,beforeNativeCommit);
  await native();await a.locator('textarea').fill('J4_EVIDENCE_REPAIR_NATIVE_DRAFT');
  await a.evaluate(()=>{globalThis.j4EvidenceDocument=document;globalThis.j4EvidenceEditor=document.querySelector('textarea');});
- await readyView(before.evidence.revision,0);before=await inspect();const preRepairContinuationStates=before.continuations.map(row=>row.payload.continuation.state);assert.deepEqual(preRepairContinuationStates,['complete']);const priorGrant=(await waitJ4Grant(a,id,scopeKey,{expectedCurrentRef:J4_SEND_C})).grant;
+ await readyView(before.evidence.revision,0);before=await inspect();const preRepairContinuationStates=before.continuations.map(row=>row.payload.continuation.state);assertJ4EvidenceRecoveryBaseline(before,beforeNativeCommit);assert.deepEqual(preRepairContinuationStates,recoveryMode.continuationStates);const priorGrant=(await waitJ4Grant(a,id,scopeKey,{expectedCurrentRef:J4_SEND_C})).grant;
  const draft=async()=>{assert(await a.evaluate(()=>document===j4EvidenceDocument&&document.querySelector('textarea')===j4EvidenceEditor&&j4EvidenceEditor.value==='J4_EVIDENCE_REPAIR_NATIVE_DRAFT'));};
  const fault=await (await inspector()).evaluate(faultJ4EvidenceRoot,{scope:personal,expectedRevision:before.evidence.revision});
  assert(fault.payloadUnchanged);assert.notEqual(fault.beforeRootDigest,fault.afterRootDigest);await a.bringToFront();
@@ -195,7 +207,7 @@ export async function runJ4EvidenceRecovery({a,id,server,inspector,assets,preser
  for(const table of ['events','hints','coverage'])assert.deepEqual(repaired.evidence[table],before.evidence[table]);
  assert.deepEqual(Object.keys(repaired.evidence.sources),Object.keys(before.evidence.sources));assert.equal(repaired.nativeDigest,before.nativeDigest);assert.deepEqual(repaired.continuations,before.continuations);
  const revokedView=await readyView(repaired.evidence.revision,null);await draft();await unchangedAssets();assert.deepEqual(await inspect(team),teamBefore);
- recordEvidence('same-J4-existing-evidence-checksum-fault-real-UI-repair-revokes-activity-and-preserves-draft-assets',{fault,projection:revokedView,oldSources:values(repaired.evidence.sources).map(source=>({id:source.id,generation:source.generation,revoked:source.revoked})),oldEvents:values(repaired.evidence.events).length,oldACKs:values(repaired.evidence.hints).length,continuationDigest:repaired.continuationDigest,preRepairContinuationStates,continuationCoverage:'COMPLETED_RECEIPT_BYTES_ONLY; PENDING_REPAIR_TO_NEEDS_REVALIDATION_NOT_COVERED',assetDigest:preserved.hash,nativeSends:acceptsBefore});
+ recordEvidence('same-J4-existing-evidence-checksum-fault-real-UI-repair-revokes-activity-and-preserves-draft-assets',{fault,projection:revokedView,oldSources:values(repaired.evidence.sources).map(source=>({id:source.id,generation:source.generation,revoked:source.revoked})),oldEvents:values(repaired.evidence.events).length,oldACKs:values(repaired.evidence.hints).length,continuationDigest:repaired.continuationDigest,preRepairContinuationStates,oldACKState:recoveryMode.oldACKState,continuationCoverage:beforeNativeCommit?'NO_CONTINUATION_BEFORE_OR_AFTER_REPAIR; PENDING_REPAIR_NOT_COVERED':'COMPLETED_RECEIPT_BYTES_ONLY; PENDING_REPAIR_TO_NEEDS_REVALIDATION_NOT_COVERED',assetDigest:preserved.hash,nativeSends:acceptsBefore});
 
  const historyBudget=await budgetWindow(),historyReadStart=completedReads().length;
  await navigate(J4_REF);await a.locator('[data-message-id="msg-self"]').first().waitFor();await navigate(J4_SEND_C);await a.locator('[data-message-id="j4_original_old"]').first().waitFor();
@@ -205,7 +217,7 @@ export async function runJ4EvidenceRecovery({a,id,server,inspector,assets,preser
  const witnesses=assertJ4CurrentHistory(before.evidence,historical.evidence,selected.messageIds,server.snapshot().interruption.rows);
  const historyView=await readyView(historical.evidence.revision,0),freshGrant=(await waitJ4Grant(a,id,scopeKey,{previousGrant:priorGrant,expectedCurrentRef:J4_SEND_C})).grant;
  await draft();await unchangedAssets();assert.deepEqual((await inspect(team)).evidence,teamBefore.evidence);assert.equal(server.snapshot().interruption.accepts,acceptsBefore);
- recordEvidence('same-J4-fresh-authenticated-current-body-history-restores-production-activity-only',{...historyBudget,currentBody:selected,projection:historyView,witnesses:witnesses.map(({id,messageId,sourceId,generation,sentAt,precision})=>({id,messageId,sourceId,generation,sentAt,precision})),oldACKsUnchanged:true,oldACKsStillRevoked:true,newGrant:true,nativeSends:acceptsBefore,subsetBoundary:'UNCHANGED_FIXTURE_RENDERS_ALL_CURRENT_CONVERSATION_MESSAGES; UNLOADED_BRANCH_NEGATIVE_NOT_RUN'});
+ recordEvidence('same-J4-fresh-authenticated-current-body-history-restores-production-activity-only',{...historyBudget,currentBody:selected,projection:historyView,witnesses:witnesses.map(({id,messageId,sourceId,generation,sentAt,precision})=>({id,messageId,sourceId,generation,sentAt,precision})),oldACKsUnchanged:true,oldACKState:recoveryMode.oldACKState,...(beforeNativeCommit?{oldACKsAbsent:true}:{oldACKsStillRevoked:true}),newGrant:true,nativeSends:acceptsBefore,subsetBoundary:'UNCHANGED_FIXTURE_RENDERS_ALL_CURRENT_CONVERSATION_MESSAGES; UNLOADED_BRANCH_NEGATIVE_NOT_RUN'});
 
  const sendBudget=await budgetWindow(),sendReadStart=completedReads().length;
  await native();await a.locator('#j4-rename-on-send').check();await a.locator('textarea').fill('J4 genuine new send after Evidence repair');
@@ -221,7 +233,7 @@ export async function runJ4EvidenceRecovery({a,id,server,inspector,assets,preser
  assert.equal(values(acknowledged.evidence.hints).length,values(before.evidence.hints).length+1);
  const sentHistory=values(acknowledged.evidence.events).filter(row=>row.messageId===sent.id&&acknowledged.evidence.sources[row.sourceId]?.revoked===false);assert.equal(sentHistory.length,1);assert.equal(sentHistory[0].sentAt,sent.at);
  const ackView=await readyView(acknowledged.evidence.revision,0);await unchangedAssets();assert.deepEqual((await inspect(team)).evidence,teamBefore.evidence);
- recordEvidence('same-J4-one-genuine-new-native-send-creates-successor-ACK-with-old-anchors-still-revoked',{...sendBudget,messageId:sent.id,originalSendAt:sent.at,anchor:{id:hint.id,messageId:hint.messageId,sourceId:hint.sourceId,generation:hint.generation,firstObservedAt:hint.firstObservedAt,candidateInterval:hint.candidateInterval,calibrationDueAt:hint.calibrationDueAt,ackWitness:hint.ackWitness},source:{id:source.id,generation:source.generation,revoked:source.revoked,codecVersion:source.codecVersion,profileId:source.profileId,profileVersion:source.profileVersion},projection:ackView,originalMessageIds,nativeSends:acceptsBefore+1,actualNewSends:1,activityProjection:'REAL_HOST_UI_VIEW_CURRENT_REF_SEGMENT; ACK_AND_AUTHENTICATED_ORIGINAL_COEXIST'});
+ recordEvidence(beforeNativeCommit?'same-J4-one-genuine-new-native-send-creates-first-ACK-after-aborted-ACK-and-evidence-repair':'same-J4-one-genuine-new-native-send-creates-successor-ACK-with-old-anchors-still-revoked',{...sendBudget,messageId:sent.id,originalSendAt:sent.at,oldACKState:recoveryMode.oldACKState,anchor:{id:hint.id,messageId:hint.messageId,sourceId:hint.sourceId,generation:hint.generation,firstObservedAt:hint.firstObservedAt,candidateInterval:hint.candidateInterval,calibrationDueAt:hint.calibrationDueAt,ackWitness:hint.ackWitness},source:{id:source.id,generation:source.generation,revoked:source.revoked,codecVersion:source.codecVersion,profileId:source.profileId,profileVersion:source.profileVersion},projection:ackView,originalMessageIds,nativeSends:acceptsBefore+1,actualNewSends:1,activityProjection:'REAL_HOST_UI_VIEW_CURRENT_REF_SEGMENT; ACK_AND_AUTHENTICATED_ORIGINAL_COEXIST'});
 
  const repeatBudget=await budgetWindow(),repeatReadStart=completedReads().length;
  const preRebindGrant=(await waitJ4Grant(a,id,scopeKey,{expectedCurrentRef:J4_SEND_C})).grant;
@@ -229,12 +241,12 @@ export async function runJ4EvidenceRecovery({a,id,server,inspector,assets,preser
  await poll(()=>completedReads().length>repeatReadStart,'rebind-authenticated-response');
  const repeatedGrant=(await waitJ4Grant(a,id,scopeKey,{previousGrant:preRebindGrant,expectedCurrentRef:J4_SEND_C})).grant;assert.notEqual(repeatedGrant,preRebindGrant);assert.notEqual(repeatedGrant,freshGrant);
  const repeated=await inspect();assert.deepEqual(repeated.evidence,acknowledged.evidence);assertJ4EvidenceRevoked(before.evidence,repeated.evidence);assert.deepEqual(repeated.continuations,before.continuations);
- const repeatedView=await readyView(repeated.evidence.revision,0);await readBudget();assert.equal(budgetObservations.length,4);assert.equal(values(repeated.evidence.sources).length,4);await unchangedAssets();assert.deepEqual((await inspect(team)).evidence,teamBefore.evidence);
+ const repeatedView=await readyView(repeated.evidence.revision,0);await readBudget();assert.equal(budgetObservations.length,4);assertJ4EvidenceRecoveryFinal(repeated,beforeNativeCommit);await unchangedAssets();assert.deepEqual((await inspect(team)).evidence,teamBefore.evidence);
  assert.equal(server.snapshot().interruption.accepts,3);assert.equal(server.snapshot().actions['send-intent'],3);
  assert.deepEqual(server.snapshot().interruption.rows.slice(1).map(row=>row.id),[...originalMessageIds,sent.id]);
  recordEvidence('same-J4-real-rebind-authenticated-reread-preserves-witness-bytes-origin-budget-and-context-isolation',{...repeatBudget,projection:repeatedView,nativeSends:3,messageIds:[...originalMessageIds,sent.id],freshACKUnchanged:true,evidenceByteIdentity:true,oldSourcesStillRevoked:true,teamEvidenceUnchanged:true,budgetObservations,requestDeadlineMs:6000,sendCycleMs:30000,maxReadAttempts:3,maxGETsPerWindow:12,missingInitialACKSourceContinuation:'NOT_COVERED'});
  // Return to the exact route expected by the original native repair/lifecycle steps.
  await navigate(J4_REF);await ensureJ4Workspace(a,mounted);assert.equal(await scopeOf(a),scopeKey);
  assert(await currentJ4Grant(a,id,scopeKey,{expectedCurrentRef:J4_REF}));await unchangedAssets();
- return {boundary:'EVIDENCE_ROOT_REPAIR_SLICE_NOT_FULL_J4',additionalNativeSends:1,messageId:sent.id};
+ return {boundary:'EVIDENCE_ROOT_REPAIR_SLICE_NOT_FULL_J4',beforeNativeCommit,oldACKState:recoveryMode.oldACKState,additionalNativeSends:1,messageId:sent.id};
 }

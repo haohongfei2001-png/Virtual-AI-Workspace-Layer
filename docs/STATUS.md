@@ -1,6 +1,16 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round342）
+## 最新本地检查点（2026-10-17，Round343）
+
+已fetch确认原开发分支与远端0/0，整理stash42c8877及副本保留。新增同scope/document、双时钟30秒且不续期的RAM检查顺序提示，来源为匹配ACK或离开已认证且绑定未过期的严格C路由；只优先扫描新P的真实可见成员链接，不由URL生成成员/正文证明/时间/授权。独立旧版11PASS/4FAIL→15/15，scope/文档/迟到响应/双时钟/重复/隐藏/冲突节点反例保持。[Round343证据](evidence/round343/README.md)。
+
+原100k快速C→P现在实际提前观察尾成员（原30秒预算剩26.3秒），返回及Project卡片5→17行展开通过，原生文档/输入保留。完整索引审计仍FAIL：5489refs、255PROJECT、5234UNKNOWN；不将窄导航闭环标为十万规模完成。首轮ACK-only门槛FAIL保留，未加等待或放宽原测试。
+
+J4同operation事务入口→queued writes→真实worker停止，八表严格回滚成立。独立反例纠正提交前回滚后的恢复预期：严格原时刻事件可重读，不伪造丢失的RAM intent/ACK。下游修复显式区分旧ACK存在/缺席，原default/codec要求保留。最终实际 **23/23连续步骤PASS**、exit2仍PARTIAL_J4_NOT_ACCEPTED，包含修复/新发送/撤权/disable/reenable/uninstall；源码/构建无漂移，进程正常退出。此前三次实际FAIL及一次报告后测试进程清理完整保留。
+
+Node早期6611/6611通过，随后完整6653PASS/2FAIL为J1诊断锚点随rebind变更失配；已同步准确锚点，最终完整 **6655/6655 PASS**（464文件，无跳过/取消），原FAIL保留。Free **NOT_RELEASE_READY**；完整100k、静默context、其余81/profile/J1–J4/G/U继续原计划，无新计划/分支/工作树/PR。
+
+## 前一本地检查点（2026-10-17，Round342）
 
 Native索引新桶在原有字节缓存登记完整构造校验，避免首次存储读取重复路由；独立旧/新513→0且输出完全一致。审查发现getter二次读取可换数据，已修复为完整record快照经原校验后仅消费该快照；冷读/篡改/淘汰仍完整核验。容量提前检查保留原100001错误类别。最终完整Node **6576/6576 PASS**。[Round342原始证据](evidence/round342/README.md)。
 

@@ -21,6 +21,38 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  // Learned identities are document-local facts, never reusable handles or grants.
  let learned=[],learnedScope=null,learnedDocument=null;
  const clearLearned=()=>{learned=[];learnedScope=null;learnedDocument=null;};
+ // RAM-only inspection hint; neither a membership fact nor a reusable proof.
+ let recentConversation=null;
+ const clearRecent=()=>{recentConversation=null;};
+ function recentId(s,forRebind=false){
+  const h=recentConversation;if(!h||!forRebind&&!live(s))return null;
+  const wall=now(),elapsed=elapsedNow();
+  if(h.scopeKey!==s.scopeKey||h.documentId!==s.binding.browserDocumentId){clearRecent();return null;}
+  if(!Number.isFinite(wall)||!Number.isFinite(elapsed)||wall<h.lastWall||elapsed<h.lastElapsed||wall-h.wall>=30000||elapsed-h.elapsed>=30000)h.expired=true;
+  h.lastWall=wall;h.lastElapsed=elapsed;return h.expired?null:h.id;
+ }
+ function rememberRecent(s,p,result){
+  if(!live(s))return;
+  if(!Number.isSafeInteger(p.localSeq)||result?.localSeq!==p.localSeq||!['accepted','duplicate'].includes(result?.state)||!tokenOK(result.bodyProofId)||!['current-object','current-observation'].includes(p.kind)||typeof s.scopeKey!=='string'||!s.scopeKey)return;
+  const body=p.kind==='current-observation'?p.payload.body:p.payload;
+  if(body?.association!=='explicit-body-id'||!tokenOK(body.conversationId))return;
+  rememberRecentId(s,body.conversationId);
+ }
+ function rememberRecentId(s,id){
+  recentId(s,true);const h=recentConversation;
+  // Re-observing or leaving the same conversation never renews this deadline.
+  if(h&&h.id===id)return;
+  const wall=now(),elapsed=elapsedNow();if(!Number.isFinite(wall)||!Number.isFinite(elapsed))return;
+  recentConversation={id,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,wall,elapsed,lastWall:wall,lastElapsed:elapsed,expired:false};
+ }
+ function rememberDepartingRoute(s){
+  // A route identity is only a request to inspect fresh DOM sooner. It carries
+  // no body, membership, activity, native handle or authority into the new bind.
+  if(!enabled||current!==s||s.abort.signal.aborted||typeof s.scopeKey!=='string'||!s.scopeKey||!tokenOK(s.binding?.browserDocumentId)||!(Date.parse(s.binding.expiresAt)>now()))return;
+  const route=createURLPolicy({origin}).parse(s.url);
+  if(route.kind==='conversation')rememberRecentId(s,route.conversationId);
+ }
+
  const clearUpgrade=()=>{if(upgradeTimer!==null)cancel(upgradeTimer);upgradeTimer=null;upgrade.clear();upgradeIdentity=null;upgradeDisplay=null;for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.removeEventListener(type,upgradeRoute);};
  const interruptUpgrade=event=>{
   if(event.isTrusted!==true)return;
@@ -51,24 +83,24 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function retainMigration(s,handle){const m=liveMigration(s);if(!m)return false;try{if(typeof s.adapter?.retainLoadedHandles==='function'&&s.adapter.retainLoadedHandles(m.leaseOwner,[handle],m.elapsedDeadline)!==true){clearMigration(s);return false;}}catch{clearMigration(s);return false;}m.handle=handle;return true;}
  function dispose(s){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.capturePending?.cancel();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
  function reset(){epoch++;const s=current;current=null;dispose(s);}
- function stop(){contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
+ function stop(){contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function pagehide(event){
   if(!enabled&&contextResumeAllowed){stop();return;}
   if(event?.persisted!==true){stop();return;}if(!enabled)return;
-  clearLearned();clearUpgrade();restoreArmed=true;rebindQueued=false;rebindRun++;reset();
+  clearLearned();clearRecent();clearUpgrade();restoreArmed=true;rebindQueued=false;rebindRun++;reset();
   doc.defaultView.addEventListener('pagehide',pagehide);
  }
  function pageshow(event){if(event?.persisted!==true||!enabled||!restoreArmed)return;restoreArmed=false;void begin();}
  function rebind(s,initialMode=null){
   if(!enabled||current!==s||rebindQueued)return;
   if(initialMode===null)initialMode=s.controller?.presentationMode?.()==='workspace'?'workspace':'reading';
-  if(doc.location.href!==s.url){upgrade.navigate({url:doc.location.href});initialMode='reading';}else if(!upgrade.isTarget({url:doc.location.href}))clearUpgrade();
+  if(doc.location.href!==s.url){rememberDepartingRoute(s);upgrade.navigate({url:doc.location.href});initialMode='reading';}else if(!upgrade.isTarget({url:doc.location.href}))clearUpgrade();
   rebindQueued=true;const run=++rebindRun;reset();doc.defaultView.addEventListener('pagehide',pagehide);
   // Collapse a burst into one replacement. Only external events can request a
   // subsequent attempt; failures never schedule their own recovery loop.
   queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode);});
  }
- async function start(){contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
+ async function start(){contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  async function begin(rebinding=false,initialMode='workspace'){
   reset();const s={run:epoch,initialMode,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
   let foregroundArmed=doc.visibilityState==='hidden',foregroundPending=false;
@@ -160,7 +192,8 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    const hello=await rpc(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq});if(contextRecovery===true&&exactHostRecord(hello,['ok','reason'])&&hello.ok===false&&hello.reason==='invalidated-during-check')throw Error('context-handshake-superseded');if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
    const auth=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});if(auth?.state!=='verified')throw Error('scope-not-verified');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
    if(learnedScope!==s.scopeKey||learnedDocument!==s.binding.browserDocumentId)clearLearned();learnedScope=s.scopeKey;learnedDocument=s.binding.browserDocumentId;
-   let surface;const adapter=s.adapter=adapterFactory({document:doc,onOldSendOperation:intent=>{if(!live(s)||!s.ready)return;void runtime.sendMessage({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:intent=>{if(!live(s)||!s.ready||s.url!==origin+'/')return;void runtime.sendMessage({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,authorize:async command=>{if(s.candidates?.authorize(command)!==true&&s.plans?.authorize(command)!==true)return false;const result=await rpc(s,{v:1,type:'HOST_NATIVE_AUTHORIZE',...bindingFields(s.binding),command});return result?.ok===true&&(s.candidates?.authorize(command)===true||s.plans?.authorize(command)===true);},beforeDispatch:plan=>plan?.mode==='same-target'||s.plans?.beforeDispatch?.(plan)===true?undefined:s.candidates?.beforeDispatch(),onNativeDispatch:event=>{if(event.plan.target.kind!=='live-control'||!s.scopeKey)return;const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;clearUpgrade();upgradeIdentity=identity;upgradeDisplay=s.candidates?.displayFor(event.command)??null;for(const type of ['pointerdown','keydown'])doc.addEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.addEventListener(type,upgradeRoute);upgrade.propose({actionId:event.actionId,identity,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,originalURL:s.url,expiresAt:now()+6000});upgradeTimer=schedule(clearUpgrade,6000);},onNativeDispatchCancelled:event=>{if(upgrade.cancel(event.actionId))clearUpgrade();},onRebindNeeded:()=>rebind(s)});
+   recentId(s);
+   let surface;const adapter=s.adapter=adapterFactory({document:doc,priorityConversationId:()=>recentId(s),onOldSendOperation:intent=>{if(!live(s)||!s.ready)return;void runtime.sendMessage({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:intent=>{if(!live(s)||!s.ready||s.url!==origin+'/')return;void runtime.sendMessage({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,authorize:async command=>{if(s.candidates?.authorize(command)!==true&&s.plans?.authorize(command)!==true)return false;const result=await rpc(s,{v:1,type:'HOST_NATIVE_AUTHORIZE',...bindingFields(s.binding),command});return result?.ok===true&&(s.candidates?.authorize(command)===true||s.plans?.authorize(command)===true);},beforeDispatch:plan=>plan?.mode==='same-target'||s.plans?.beforeDispatch?.(plan)===true?undefined:s.candidates?.beforeDispatch(),onNativeDispatch:event=>{if(event.plan.target.kind!=='live-control'||!s.scopeKey)return;const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;clearUpgrade();upgradeIdentity=identity;upgradeDisplay=s.candidates?.displayFor(event.command)??null;for(const type of ['pointerdown','keydown'])doc.addEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.addEventListener(type,upgradeRoute);upgrade.propose({actionId:event.actionId,identity,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,originalURL:s.url,expiresAt:now()+6000});upgradeTimer=schedule(clearUpgrade,6000);},onNativeDispatchCancelled:event=>{if(upgrade.cancel(event.actionId))clearUpgrade();},onRebindNeeded:()=>rebind(s)});
    s.candidates=createContentCandidates({adapter,streaming:true,current:()=>live(s)&&s.ready&&Date.parse(s.binding.expiresAt)>now(),showReading:()=>s.controller?.showReading()===true,
     beginScan:()=>{
      // Only fixed-size document identities are staged. Visiting a row cannot
@@ -230,7 +263,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     if(!enabled||!s.ready||!live(s)||s.recoveryDenied||recoveryRemaining<1||!['ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason))return;
     recoveryRemaining--;rebind(s,presentation?.mode==='workspace'?'workspace':'reading');
    },now,elapsedNow,schedule,cancel});
-   s.surface=surface;const handle=await s.controller.start({binding:s.binding,ingestionPass:async pass=>{const message={v:1,type:'HOST_INGESTION_PASS',...bindingFields(s.binding),...pass};return pass.phase==='cancel'?runtime.sendMessage(message):rpc(s,message);},emit:async p=>{const result=await rpc(s,p);if(['accepted','duplicate'].includes(result?.state)&&['surface-delta','current-observation'].includes(p.kind))for(const row of (p.kind==='current-observation'?p.payload.surface:p.payload).candidates)if(row.entity==='project'&&row.target?.kind==='resolved'&&row.evidence?.fieldPaths?.includes('current-project-route'))s.ackProjects.add(row.target.nativeId);return result;}});if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;return handle;
+   s.surface=surface;const handle=await s.controller.start({binding:s.binding,ingestionPass:async pass=>{const message={v:1,type:'HOST_INGESTION_PASS',...bindingFields(s.binding),...pass};return pass.phase==='cancel'?runtime.sendMessage(message):rpc(s,message);},emit:async p=>{const result=await rpc(s,p);rememberRecent(s,p,result);if(['accepted','duplicate'].includes(result?.state)&&['surface-delta','current-observation'].includes(p.kind))for(const row of (p.kind==='current-observation'?p.payload.surface:p.payload).candidates)if(row.entity==='project'&&row.target?.kind==='resolved'&&row.evidence?.fieldPaths?.includes('current-project-route'))s.ackProjects.add(row.target.nativeId);return result;}});if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;return handle;
   }catch(error){
    if(current===s){
     // A native route can change while HELLO, REFRESH or mount is pending,
@@ -243,6 +276,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   }
  }
  function contextPending(){
+  clearRecent();
   if(contextRecovery!==true||!contextResumeAllowed){stop();return;}
   const readyPending=current?.contextReadyPending===true;
   // Withdraw every live capability immediately. Only document-local UI intent

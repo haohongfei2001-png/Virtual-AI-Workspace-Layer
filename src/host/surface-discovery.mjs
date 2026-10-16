@@ -16,7 +16,7 @@ export const LEGACY_SURFACE_PROFILE = Object.freeze({
   controls:'a[href],button',conversationControls:'a[href]',noneLabel:'No project',maxCandidates:256,
 });
 
-export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,elapsedNow=()=>performance.now()}={}) {
+export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,priorityConversationId=()=>null,elapsedNow=()=>performance.now()}={}) {
   if(!document?.defaultView || typeof binding?.documentToken !== 'string' || !Number.isSafeInteger(binding.routeEpoch) || typeof urlPolicy?.parse !== 'function') throw Error('invalid-surface-discovery-context');
   const instance=document.defaultView.crypto.randomUUID();
   let stopped=false,routeEpoch=binding.routeEpoch,regionEpoch=0,sequence=0;
@@ -123,6 +123,25 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     // bounds inspected elements, including non-controls, and rechecks identity.
     if(cursor&&candidates.length>=limit){candidates.length=0;claims.clear();}
     let inspected=0;
+    // The hint only changes inspection order. Membership still comes from a
+    // currently visible link inside the independently confirmed Project root.
+    if(!cursor&&!candidateOnly&&currentProjectId&&candidates.length<limit){
+      const id=priorityConversationId();
+      if(typeof id==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(id)){
+        const node=members.querySelector?.(`a[href$="/c/${id}"]`);
+        if(node){
+          inspected++;
+          const parsed=urlPolicy.parse(node.getAttribute('href'));
+          if(parsed.kind==='conversation'&&parsed.conversationId===id&&members.contains(node)&&node.matches(profile.conversationControls)&&sampleable(node)&&visible(node)){
+            const item=candidate(node,members,'members','conversation');
+            if(item?.target.kind==='resolved'){
+              claims.set(id,{conversationId:id,asserted:'PROJECT',projectId:currentProjectId,upstreamRevision:null,evidence:evidence('members','current-project-route')});
+              page.memberIds.add(id);page.priorityNode=new WeakRef(node);
+            }
+          }
+        }
+      }
+    }
     while(page.region<page.regions.length&&candidates.length<limit&&inspected<256&&detached.size<512){
       const region=page.regions[page.region],{kind:regionKind,root}=region;
       if(!root||region.finished){page.region++;continue;}
@@ -130,6 +149,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       const node=region.walker.nextNode();
       if(!node){region.finished=true;region.walker=null;page.region++;continue;}
       inspected++;
+      if(node===page.priorityNode?.deref())continue;
       if(!node.matches(regionKind==='projects'?profile.controls:profile.conversationControls))continue;
       if(!root?.contains(node)||!sampleable(node))continue;
       if(regionKind==='history'&&page.memberIds.size){const parsed=urlPolicy.parse(node.getAttribute('href'));if(parsed.kind==='conversation'&&page.memberIds.has(parsed.conversationId))continue;}

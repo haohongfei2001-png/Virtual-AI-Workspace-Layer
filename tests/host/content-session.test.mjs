@@ -212,3 +212,60 @@ test('C2 ambiguous refresh retains reading intent while awaiting another externa
   f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified'}:{ok:true});await f.client.contextReady();assert.deepEqual(f.modes,['workspace','reading']);assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,3);assert.equal(f.calls.filter(m=>m.type==='HOST_REFRESH').length,3);
  }finally{f.client.stop();}
 });
+
+function recentFixture(overrides={}){
+ const f=fixture({contextRecovery:true,...overrides});let scope='scope-a',documentId='browser',ack={state:'accepted',bodyProofId:'proof',localSeq:1};
+ f.setResponse(m=>m.type==='HOST_HELLO'?{binding:{...f.binding(),browserDocumentId:documentId}}:m.type==='HOST_REFRESH'?{state:'verified',scopeKey:scope}:m.kind?ack:{ok:true,grants:[]});
+ return {...f,get adapter(){return f.adapterOptions;},send:(id='c1',association='explicit-body-id')=>f.context.emit({kind:'current-object',localSeq:1,payload:{association,conversationId:id}}),scope:v=>{scope=v;},doc:v=>{documentId=v;},ack:v=>{ack=v;}};
+}
+test('recent body hint survives only same-document same-scope route rebind',async()=>{
+ const f=recentFixture();await f.client.start();await f.send();const old=f.adapter;
+ assert.equal(old.priorityConversationId(),'c1');f.document.location.href+='/projects';old.onRebindNeeded();await drain();
+ assert.equal(old.priorityConversationId(),null);assert.equal(f.adapter.priorityConversationId(),'c1');f.client.stop();
+});
+for(const boundary of ['scope','document','stop','pending','pagehide'])test('recent body hint clears at '+boundary,async()=>{
+ const f=recentFixture();await f.client.start();await f.send();assert.equal(f.adapter.priorityConversationId(),'c1');
+ if(boundary==='scope'||boundary==='document'){if(boundary==='scope')f.scope('scope-b');else f.doc('other-doc');f.adapter.onRebindNeeded();await drain();}
+ else if(boundary==='pending'){f.client.contextPending();await f.client.contextReady();}
+ else {if(boundary==='stop')f.client.stop();else f.events.get('pagehide')({persisted:true});await f.client.start();}
+ assert.equal(f.adapter.priorityConversationId(),null);f.client.stop();
+});
+test('duplicate body ACK cannot renew recent hint and expiration cannot revive',async()=>{
+ const f=recentFixture();await f.client.start();await f.send();await f.advance(29999);await f.send();assert.equal(f.adapter.priorityConversationId(),'c1');
+ await f.advance(1);assert.equal(f.adapter.priorityConversationId(),null);await f.send();assert.equal(f.adapter.priorityConversationId(),null);
+ await f.send('c2');assert.equal(f.adapter.priorityConversationId(),'c2');f.client.stop();
+});
+for(const mode of ['denied','proofless','url-only'])test('recent hint requires explicit acknowledged body: '+mode,async()=>{
+ const f=recentFixture();await f.client.start();if(mode==='denied')f.ack({state:'rejected',bodyProofId:'proof'});if(mode==='proofless')f.ack({state:'accepted'});
+ await f.send('c1',mode==='url-only'?'url-only':'explicit-body-id');assert.equal(f.adapter.priorityConversationId(),null);f.client.stop();
+});
+
+for(const clock of ['wall','elapsed'])for(const change of ['deadline','rollback'])test('recent hint expires on '+clock+' '+change,async()=>{
+ let wall=1000,elapsed=1000;const f=recentFixture({now:()=>wall,elapsedNow:()=>elapsed});await f.client.start();await f.send();
+ if(clock==='wall')wall=change==='deadline'?31000:999;else elapsed=change==='deadline'?31000:999;
+ assert.equal(f.adapter.priorityConversationId(),null);wall=1000;elapsed=1000;assert.equal(f.adapter.priorityConversationId(),null);await f.send();assert.equal(f.adapter.priorityConversationId(),null);f.client.stop();
+});
+test('late body ACK after context withdrawal cannot repopulate recent hint',async()=>{
+ const f=recentFixture();await f.client.start();let resolve;f.ack(new Promise(r=>resolve=r));const pending=f.send();const rejected=assert.rejects(pending,/stale-content-session/);await drain();f.client.contextPending();resolve({state:'accepted',bodyProofId:'proof'});await rejected;await f.client.contextReady();assert.equal(f.adapter.priorityConversationId(),null);f.client.stop();
+});
+
+test('recent body hint rejects an ACK for another local sequence',async()=>{
+ const f=recentFixture();await f.client.start();f.ack({state:'accepted',bodyProofId:'proof',localSeq:2});await f.send();assert.equal(f.adapter.priorityConversationId(),null);f.client.stop();
+});
+
+const recentRouteId='11111111-1111-4111-8111-111111111111';
+test('verified departing conversation route can prioritize fresh member inspection before body ACK',async()=>{
+ const f=recentFixture();f.document.location.href+='c/'+recentRouteId;await f.client.start();assert.equal(f.adapter.priorityConversationId(),null);
+ f.document.location.href='https://chatgpt.com/g/g-p-00000000000000000000000000000001/project';f.adapter.onRebindNeeded();await drain();assert.equal(f.adapter.priorityConversationId(),recentRouteId);f.client.stop();
+});
+for(const route of ['https://foreign.test/c/'+recentRouteId,'https://chatgpt.com/c/'+recentRouteId+'?temporary=true','https://chatgpt.com/c/bad','https://chatgpt.com/share/'+recentRouteId])test('departing unsupported route gives no inspection hint: '+route,async()=>{
+ const f=recentFixture();f.document.location.href=route;await f.client.start();f.document.location.href='https://chatgpt.com/projects';f.adapter.onRebindNeeded();await drain();assert.equal(f.adapter.priorityConversationId(),null);f.client.stop();
+});
+for(const boundary of ['scope','document','expired'])test('departing route cannot cross '+boundary,async()=>{
+ const f=recentFixture();f.document.location.href+='c/'+recentRouteId;await f.client.start();if(boundary==='scope')f.scope('scope-b');else if(boundary==='document')f.doc('new-browser');else await f.advance(20000);
+ f.document.location.href='https://chatgpt.com/projects';f.adapter.onRebindNeeded();await drain();assert.equal(f.adapter.priorityConversationId(),null);f.client.stop();
+});
+test('same route hint departure cannot renew its original deadline',async()=>{
+ const f=recentFixture();f.document.location.href+='c/'+recentRouteId;await f.client.start();await f.send(recentRouteId);await f.advance(15000);
+ f.document.location.href='https://chatgpt.com/projects';f.adapter.onRebindNeeded();await drain();assert.equal(f.adapter.priorityConversationId(),recentRouteId);await f.advance(15000);assert.equal(f.adapter.priorityConversationId(),null);f.client.stop();
+});

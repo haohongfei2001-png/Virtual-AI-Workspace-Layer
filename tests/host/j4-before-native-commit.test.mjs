@@ -6,21 +6,22 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {packageHost} from '../../extension/package.mjs';
 import {freeEvidenceKey} from '../../src/data/free-evidence-repository.mjs';
-import {J4_NATIVE_STORES,locateJ4BeforeNativeCommit,pauseJ4BeforeNativeCommit,assertJ4NativePauseFacts,assertJ4NativeCommitRollback,readJ4NativeRawBrowser} from './j4-before-native-commit.mjs';
+import {J4_NATIVE_STORES,locateJ4BeforeNativeCommit,locateJ4NativeTransactionEntry,pauseJ4BeforeNativeCommit,assertJ4NativePauseFacts,assertJ4NativeCommitRollback,readJ4NativeRawBrowser} from './j4-before-native-commit.mjs';
 const dir=await mkdtemp(join(tmpdir(),'j4-before-native-node-'));after(()=>rm(dir,{recursive:true,force:true}));
 const packageRoot=packageHost(join(dir,'package'),{offlineOrigin:'http://127.0.0.1:43210',offlineContext:true}).unpacked;
 const source=await readFile(join(packageRoot,'extension/classic-runtime.js'),'utf8');
-const facts=()=>({operationId:'target-native',scopeKey:'["chatgpt","account","team"]',expectedRevision:5,nativeRevision:6,mode:'readwrite',stores:J4_NATIVE_STORES.filter(n=>!['b23_views','operations'].includes(n)),channel:'host-dom',hasAdmission:true,hasContinuation:true,continuationOperationId:'target-native',evidenceOperationId:'target-evidence',state:'pending-evidence'});
-function fixture({sourceOverride=source,moved=false,wrongFacts=false,exception=false}={}){
- const cdp=new EventEmitter(),calls=[],location={scriptId:'runtime',...locateJ4BeforeNativeCommit(source)};
- const receive=m=>cdp.emit('Target.receivedMessageFromTarget',{sessionId:'session',message:JSON.stringify(m)});
+const facts=()=>({fingerprint:'a'.repeat(64),payloadDigest:'b'.repeat(64),operationId:'target-native',scopeKey:'["chatgpt","account","team"]',expectedRevision:5,nativeRevision:6,mode:'readwrite',stores:J4_NATIVE_STORES.filter(n=>!['b23_views','operations'].includes(n)),channel:'host-dom',hasAdmission:true,hasContinuation:true,continuationOperationId:'target-native',evidenceOperationId:'target-evidence',state:'pending-evidence'});
+function fixture({sourceOverride=source,moved=false,wrongFacts=false,exception=false,queuedPatch={},holdEntryResume=false}={}){
+ const cdp=new EventEmitter(),calls=[],location={scriptId:'runtime',...locateJ4BeforeNativeCommit(source)},entryLocation={scriptId:'runtime',lineNumber:locateJ4NativeTransactionEntry(source).lineNumber,columnNumber:locateJ4NativeTransactionEntry(source).columnNumber};
+ let entryRemoved=false;const receive=m=>cdp.emit('Target.receivedMessageFromTarget',{sessionId:'session',message:JSON.stringify(m)});
  cdp.send=async(method,params={})=>{calls.push({method,params});if(method==='Target.getTargets')return {targetInfos:[{type:'service_worker',url:'chrome-extension://ext/extension/worker.mjs',targetId:'worker'}]};if(method==='Target.attachToTarget')return {sessionId:'session'};
  if(method==='Target.sendMessageToTarget'){const r=JSON.parse(params.message);queueMicrotask(()=>{
  if(r.method==='Debugger.enable')receive({method:'Debugger.scriptParsed',params:{scriptId:'runtime',url:'chrome-extension://ext/extension/classic-runtime.js'}});
  if(r.method==='Debugger.pause')receive({method:'Debugger.paused',params:{hitBreakpoints:[],callFrames:[]}});
- if(r.method==='Debugger.resume')receive({method:'Debugger.resumed',params:{}});
- const result=r.method==='Debugger.getScriptSource'?{scriptSource:sourceOverride}:r.method==='Debugger.getPossibleBreakpoints'?{locations:[location]}:r.method==='Debugger.setBreakpoint'?{breakpointId:'native',actualLocation:moved?{...location,columnNumber:999}:location}:r.method==='Debugger.evaluateOnCallFrame'?exception?{exceptionDetails:{text:'side effect'}}:{result:{value:wrongFacts?{...facts(),hasContinuation:false}:facts()}}:{};receive({id:r.id,result});});}return {};};
- return {cdp,calls,hit:()=>receive({method:'Debugger.paused',params:{hitBreakpoints:['native'],callFrames:[{callFrameId:'frame',location}]}})};
+ if(r.method==='Debugger.removeBreakpoint')entryRemoved=true;
+ if(r.method==='Debugger.resume'&&!(entryRemoved&&holdEntryResume))receive({method:'Debugger.resumed',params:{}});
+ const result=r.method==='Debugger.getScriptSource'?{scriptSource:sourceOverride}:r.method==='Debugger.getPossibleBreakpoints'?{locations:[r.params.start.lineNumber===entryLocation.lineNumber?entryLocation:location]}:r.method==='Debugger.setBreakpoint'?{breakpointId:r.params.location.lineNumber===entryLocation.lineNumber?'entry':'native',actualLocation:moved?{...location,columnNumber:999}:r.params.location}:r.method==='Debugger.evaluateOnCallFrame'?exception?{exceptionDetails:{text:'side effect'}}:{result:{value:wrongFacts?{...facts(),hasContinuation:false}:r.params.expression.includes('mode:transaction')?{...facts(),...queuedPatch}:Object.fromEntries(Object.entries(facts()).filter(([key])=>!['mode','stores'].includes(key)))}}:{};receive({id:r.id,result});});}return {};};
+ return {cdp,calls,resumed:()=>receive({method:'Debugger.resumed',params:{}}),entry:()=>receive({method:'Debugger.paused',params:{hitBreakpoints:['entry'],callFrames:[{callFrameId:'entryFrame',location:entryLocation}]}}),hit:(breakpoint='native')=>receive({method:'Debugger.paused',params:{hitBreakpoints:[breakpoint],callFrames:[{callFrameId:'frame',location}]}})};
 }
 test('classic boundary follows queued operation/directory writes and precedes callback return',()=>{
  const at=locateJ4BeforeNativeCommit(source),lines=source.split('\n');assert(lines[at.lineNumber].includes('result ='));assert.equal(lines[at.lineNumber-1].trim(),'check();');assert(lines.slice(at.lineNumber-8,at.lineNumber).join('\n').includes('continuationMarkerKey'));
@@ -28,12 +29,12 @@ test('classic boundary follows queued operation/directory writes and precedes ca
  assert.throws(()=>locateJ4BeforeNativeCommit(source+'\n'+source),/boundary-required/);
 });
 test('real packaged bytes and exact pause required; facts read has side-effect rejection enabled',async()=>{
- const f=fixture(),p=await pauseJ4BeforeNativeCommit(f.cdp,'ext',{packageRoot,expectedTargetId:'worker'});await p.verifyControl();f.hit();const hit=await p.wait();assert.deepEqual(hit.facts,facts());
+ const f=fixture(),p=await pauseJ4BeforeNativeCommit(f.cdp,'ext',{packageRoot,expectedTargetId:'worker'});await p.verifyControl();f.entry();await p.waitEntry();await p.resumeEntry();f.hit();const hit=await p.wait();assert.deepEqual(hit.facts,facts());
  const evalCall=f.calls.filter(x=>x.method==='Target.sendMessageToTarget').map(x=>JSON.parse(x.params.message)).find(x=>x.method==='Debugger.evaluateOnCallFrame');assert.equal(evalCall.params.throwOnSideEffect,true);assert.equal(evalCall.params.returnByValue,true);assert(!evalCall.params.expression.includes('.abort('));
  await p.close();assert.equal(f.cdp.listenerCount('Target.receivedMessageFromTarget'),0);assert(f.calls.some(x=>x.method==='Target.detachFromTarget'));
 });
 for(const [name,options,pattern]of [['different executed source',{sourceOverride:source+'\n'},/source-mismatch/],['moved breakpoint',{moved:true},/breakpoint-moved/]])test('reject '+name,async()=>{const f=fixture(options);await assert.rejects(pauseJ4BeforeNativeCommit(f.cdp,'ext',{packageRoot}),pattern);assert.equal(f.cdp.listenerCount('Target.receivedMessageFromTarget'),0);});
-for(const options of [{wrongFacts:true},{exception:true}])test('reject nonmixed or unreadable paused facts '+JSON.stringify(options),async()=>{const f=fixture(options),p=await pauseJ4BeforeNativeCommit(f.cdp,'ext',{packageRoot});try{f.hit();await assert.rejects(p.wait());}finally{await p.close();}});
+for(const options of [{wrongFacts:true},{exception:true}])test('reject nonmixed or unreadable paused facts '+JSON.stringify(options),async()=>{const f=fixture(options),p=await pauseJ4BeforeNativeCommit(f.cdp,'ext',{packageRoot});try{f.entry();await assert.rejects(p.waitEntry());}finally{await p.close();}});
 function rollback(){const before={version:4,rows:Object.fromEntries(J4_NATIVE_STORES.map(name=>[name,[{key:'untouched-'+name,value:{payload:{kept:true}}}]]))};return {before,after:structuredClone(before),facts:facts(),workerStopped:true,nativeAcceptsBefore:2,nativeAcceptsAfter:2,assetsBefore:{humanRefs:['original']},assetsAfter:{humanRefs:['original']}};}
 test('eight-store exact rollback plus native/evidence absence and independent assets is accepted',()=>{assert.equal(assertJ4NativeCommitRollback(rollback()).eightStoresUnchanged,true);});
 for(const name of J4_NATIVE_STORES)test('reject changed raw store '+name,()=>{const f=rollback();f.after.rows[name][0].value.payload.kept=false;assert.throws(()=>assertJ4NativeCommitRollback(f),/rollback-mismatch/);});
@@ -73,6 +74,33 @@ test('integration keeps one mixed send, reads raw after confirmed stop and compl
  assert.equal(joint.split("fill('J4 explicit native mixed send')").length-1,1);
  const stopped=joint.indexOf("'worker-stopped');workerStopped=true"),raw=joint.indexOf('rawAfter=await readJ4NativeRawSnapshot'),rollback=joint.indexOf('rollback=assertJ4NativeCommitRollback'),reload=joint.indexOf("await a.reload();await a.locator('[data-message-id=",raw);
  assert(stopped>0&&raw>stopped&&rollback>raw&&reload>rollback);
- for(const token of ['if(beforeNativeCommit){uncommittedFacts=hit.facts','J4-recovered-native-operation-not-unique','stopped.pending.length,0','stopped.ref.nativeTitle,before.ref.nativeTitle','beforeNativeCommit||codecRoundTrip&&!afterEvidence','assert.deepEqual(await assets(team),teamAssets)'])assert(joint.includes(token),token);
+ for(const token of ['if(beforeNativeCommit){uncommittedFacts=hit.facts','J4-recovered-native-operation-not-unique','stopped.pending.length,0','stopped.ref.nativeTitle,before.ref.nativeTitle','const recoveredEvidenceReceipt=codecRoundTrip&&!afterEvidence','assert.deepEqual(await assets(team),teamAssets)'])assert(joint.includes(token),token);
  assert(runner.includes("'j4-before-native-commit.mjs'"));assert(runner.includes('runJ4JointInterruption({beforeNativeCommit,'));assert(runner.indexOf('report.evidenceRecovery=await runJ4EvidenceRecovery')>runner.indexOf('await runJ4JointInterruption'));assert(runner.includes("await cdp.send('Extensions.uninstall',{id})"));
+});
+
+
+test('both pauses must identify the same operation, fingerprint and continuation',async()=>{
+ for(const queuedPatch of [{fingerprint:'c'.repeat(64)},{payloadDigest:'d'.repeat(64)},{operationId:'other',continuationOperationId:'other'},{expectedRevision:6,nativeRevision:7}]){
+ const f=fixture({queuedPatch}),p=await pauseJ4BeforeNativeCommit(f.cdp,'ext',{packageRoot});try{f.entry();await p.waitEntry();await p.resumeEntry();f.hit();await assert.rejects(p.wait(),/entry-operation-changed/);}finally{await p.close();}}
+});
+test('queued pause cannot substitute for missing transaction-entry baseline',async()=>{const f=fixture(),p=await pauseJ4BeforeNativeCommit(f.cdp,'ext',{packageRoot});try{f.hit();await assert.rejects(p.wait(),/entry-baseline-required/);await assert.rejects(p.waitEntry(),/entry-unrelated-pause/);}finally{await p.close();}});
+test('raw enumeration deadline never opens a late database',async()=>{let resolve,opens=0;const indexedDB={databases:()=>new Promise(r=>resolve=r),open(){opens++;}};await assert.rejects(readJ4NativeRawBrowser({indexedDB,expectedVersion:4,timeoutMs:10}),/snapshot-deadline/);resolve([{name:'vaiwl-b1-v1',version:4}]);await new Promise(r=>setImmediate(r));assert.equal(opens,0);});
+test('blocked readonly transaction aborts and closes at snapshot deadline',async()=>{const f=rawIDB();let aborted=0;const oldOpen=f.indexedDB.open;f.indexedDB.open=(...args)=>{const q=oldOpen(...args);q.result.transaction=()=>({abort(){aborted++;},objectStore:()=>({openCursor:()=>({})})});return q;};await assert.rejects(readJ4NativeRawBrowser({indexedDB:f.indexedDB,expectedVersion:4,timeoutMs:10}),/snapshot-deadline/);assert.equal(aborted,1);assert(f.calls.closes>0);});
+test('integration retains trigger-entry-stop raw snapshots and never overwrites initial baseline',async()=>{const s=await readFile(new URL('./j4-joint-interruption.mjs',import.meta.url),'utf8');assert.equal(s.split('rawBefore=await').length-1,1);assert(s.includes('before:rawEntry,after:rawAfter'));assert(s.includes('triggerBefore:rawBefore,transactionEntry:rawEntry,after:rawAfter'));const entry=s.indexOf('entryFacts=await pause.waitEntry()'),read=s.indexOf('rawEntry=await',entry),resume=s.indexOf('await pause.resumeEntry()',read),queued=s.indexOf('const hit=await pause.wait()',resume);assert(entry>0&&read>entry&&resume>read&&queued>resume);assert(s.includes('pause.remainingMs()-100'));});
+
+
+test('resume response before resumed event cannot expose the stale entry pause to wait',async()=>{
+ const f=fixture({holdEntryResume:true}),p=await pauseJ4BeforeNativeCommit(f.cdp,'ext',{packageRoot});try{
+  f.entry();await p.waitEntry();let settled=false;const resumed=p.resumeEntry().then(()=>{settled=true;});await new Promise(r=>setImmediate(r));
+  assert.equal(settled,false);await assert.rejects(p.wait(),/entry-not-resumed/);assert.equal(p.diagnostics().entryResumed,false);
+  f.resumed();f.hit();await resumed;const result=await p.wait();assert.equal(result.facts.operationId,facts().operationId);assert.equal(p.diagnostics().entryResumed,true);
+ }finally{await p.close();}
+});
+test('an immediate new unrelated pause after resumed still fails the exact breakpoint oracle',async()=>{
+ const f=fixture({holdEntryResume:true}),p=await pauseJ4BeforeNativeCommit(f.cdp,'ext',{packageRoot});try{
+  f.entry();await p.waitEntry();const resumed=p.resumeEntry();await new Promise(r=>setImmediate(r));f.resumed();f.hit('other');await resumed;await assert.rejects(p.wait(),/unrelated-pause/);
+ }finally{await p.close();}
+});
+test('transport failure while awaiting actual resumed event rejects without a new wait budget',async()=>{
+ const f=fixture({holdEntryResume:true}),p=await pauseJ4BeforeNativeCommit(f.cdp,'ext',{packageRoot});try{f.entry();await p.waitEntry();const resumed=p.resumeEntry();await new Promise(r=>setImmediate(r));f.cdp.emit('transportClosed',{reason:'original-transport-deadline'});await assert.rejects(resumed,/original-transport-deadline/);assert.equal(p.diagnostics().entryResumed,false);}finally{await p.close();}
 });

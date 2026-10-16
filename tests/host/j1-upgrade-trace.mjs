@@ -18,7 +18,7 @@ const __j1UpgradeTrace=(stage,flags={},rawStack=null)=>{try{
 `;
 export const J1_UPGRADE_ANCHORS=[
  ['const clearUpgrade=()=>{','const clearUpgrade=()=>{__j1UpgradeTrace("clear",{identity:!!upgradeIdentity,display:!!upgradeDisplay},new Error().stack);'],
- ["  if(doc.location.href!==s.url){upgrade.navigate",'  __j1UpgradeTrace("rebind",{routeChanged:doc.location.href!==s.url});if(doc.location.href!==s.url){upgrade.navigate'],
+ ["  if(doc.location.href!==s.url){rememberDepartingRoute(s);upgrade.navigate",'  __j1UpgradeTrace("rebind",{routeChanged:doc.location.href!==s.url});if(doc.location.href!==s.url){rememberDepartingRoute(s);upgrade.navigate'],
  ['const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;','const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);__j1UpgradeTrace("capture",{identity:!!identity});if(!identity)return;'],
  ['upgradeDisplay=s.candidates?.displayFor(event.command)??null;','upgradeDisplay=s.candidates?.displayFor(event.command)??null;__j1UpgradeTrace("dispatch",{identity:!!identity,display:!!upgradeDisplay});'],
  ['     const preview=resolution&&upgrade.preview(resolution);','     const preview=resolution&&upgrade.preview(resolution);__j1UpgradeTrace("scan",{identity:!!prior.identity,display:!!prior.display,projectAcknowledged:s.ackProjects.has(route.projectId),preview:!!preview});'],

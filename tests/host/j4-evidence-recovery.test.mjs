@@ -121,7 +121,7 @@ test('poll cleans timers on early success or read failure and keeps retries insi
 test('new slice faults only an existing valid Evidence root and repairs through real production UI',async()=>{
  const source=await readFile(new URL('./j4-evidence-recovery.mjs',import.meta.url),'utf8');
  assert.equal((source.match(/'readwrite'/g)??[]).length,1);
- for(const value of ["const damaged={...root,checksum:'0'.repeat(64)}","root.checksum!==digest(root.payload)",'root.payload.revision!==expectedRevision',"changedFields:['checksum']",'freeEvidenceKey(scopeKey)',"name:'修复活跃度记录'",'repaired.nativeDigest,before.nativeDigest','repaired.continuations,before.continuations','assertJ4EvidenceRevoked(before.evidence,repaired.evidence)','assert.deepEqual(repaired.evidence[table],before.evidence[table])',"assert.deepEqual(preRepairContinuationStates,['complete'])"])assert(source.includes(value),value);
+ for(const value of ["const damaged={...root,checksum:'0'.repeat(64)}","root.checksum!==digest(root.payload)",'root.payload.revision!==expectedRevision',"changedFields:['checksum']",'freeEvidenceKey(scopeKey)',"name:'修复活跃度记录'",'repaired.nativeDigest,before.nativeDigest','repaired.continuations,before.continuations','assertJ4EvidenceRevoked(before.evidence,repaired.evidence)','assert.deepEqual(repaired.evidence[table],before.evidence[table])',"assert.deepEqual(preRepairContinuationStates,recoveryMode.continuationStates)"])assert(source.includes(value),value);
  for(const forbidden of ['.recover(','.apply(','.mutate(','.start(',"type:'HOST_UI_VIEW'",'hostObservationGate','dispatchEvent(','TestScopeProvider','setPrincipal(','setSelectedContext(','releaseInterruption(','setTimeout(resolve,30000)','Date.now='])assert(!source.includes(forbidden),forbidden);
  assert(source.includes("db.transaction('b23_views','readonly')"));assert(source.includes('await waitForBudgetExpiry(budget.startedAt)'));assert(source.includes('assert(Date.now()>budget.startedAt+30000)'));
  assert(source.includes('await a.reload()'));assert(source.includes('previousGrant:preRebindGrant'));assert(source.includes('completedReads().length>repeatReadStart'));
@@ -178,4 +178,21 @@ test('actual Evidence recovery navigation rejects missing titles and unknown tar
 test('actual Evidence recovery navigation refuses an incorrect current title rather than using a stale expected name',async t=>{
  const h=await navigationFixture(t),server={origin:h.server.origin,snapshot:()=>({interruption:{title:'Wrong native title'}})},navigate=await actualRecoveryNavigation(h.page,server);
  await assert.rejects(navigate(J4_SEND_C),/unique-existing-native-search-href/);assert.equal(h.page.url,null);assert.equal(h.nodes.length,0);assert(!h.page.calls.some(row=>Array.isArray(row)&&row[0]==='waitForURL'));
+});
+
+
+test('explicit before-native recovery baseline and final counts cannot substitute for committed-native mode',async()=>{
+ const {j4EvidenceRecoveryMode,assertJ4EvidenceRecoveryBaseline,assertJ4EvidenceRecoveryFinal}=await import('./j4-evidence-recovery.mjs');
+ const table=n=>Object.fromEntries(Array.from({length:n},(_,i)=>['row'+i,{id:'row'+i}]));
+ const state=(before,final=false)=>({evidence:{events:table(3),hints:table((before?0:1)+(final?1:0)),sources:table(final?(before?3:4):(before?1:2))},continuations:before?[]:[{payload:{continuation:{state:'complete'}}}]});
+ assert.equal(j4EvidenceRecoveryMode().beforeNativeCommit,false);assert.throws(()=>j4EvidenceRecoveryMode('true'));
+ for(const before of [false,true]){
+  const baseline=state(before);assertJ4EvidenceRecoveryBaseline(baseline,before);assertJ4EvidenceRecoveryFinal(state(before,true),before);
+  assert.throws(()=>assertJ4EvidenceRecoveryBaseline(baseline,!before));assert.throws(()=>assertJ4EvidenceRecoveryFinal(state(before,true),!before));
+  for(const field of ['events','hints','sources']){const changed=structuredClone(baseline);changed.evidence[field].extra={};assert.throws(()=>assertJ4EvidenceRecoveryBaseline(changed,before));}
+  const changed=structuredClone(baseline);changed.continuations.push({payload:{continuation:{state:'pending-evidence'}}});assert.throws(()=>assertJ4EvidenceRecoveryBaseline(changed,before));
+  for(const field of ['hints','sources']){const changed=state(before,true);changed.evidence[field].extra={};assert.throws(()=>assertJ4EvidenceRecoveryFinal(changed,before));}
+ }
+ const source=await readFile(new URL('./j4-evidence-recovery.mjs',import.meta.url),'utf8'),runner=await readFile(new URL('./j4-package-journey.mjs',import.meta.url),'utf8');
+ assert(source.includes("beforeNativeCommit?{oldACKsAbsent:true}:{oldACKsStillRevoked:true}"));assert(source.includes('assertJ4EvidenceRecoveryFinal(repeated,beforeNativeCommit)'));assert(runner.includes('runJ4EvidenceRecovery({beforeNativeCommit,a,'));
 });
