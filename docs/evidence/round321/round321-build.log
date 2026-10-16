@@ -1,0 +1,32 @@
+✔ early receipt has no page association or scope before attachment; same owner later joins roster and body (5.036375ms)
+✔ runtime fallback constructs exactly one owner and stop removes only its listeners once (0.295209ms)
+✔ pre-attach onCommitted invalidates pending C2 receipt without later replay (0.522458ms)
+✔ pre-attach onHistoryStateUpdated invalidates pending C2 receipt without later replay (0.365125ms)
+✔ pre-attach onRemoved invalidates pending C2 receipt without later replay (0.315667ms)
+✔ pre-attach onCommitted invalidates complete C2 receipt without later replay (0.286083ms)
+✔ pre-attach onHistoryStateUpdated invalidates complete C2 receipt without later replay (0.25975ms)
+✔ pre-attach onRemoved invalidates complete C2 receipt without later replay (0.24375ms)
+✔ late pre-attach frame answer cannot restore a document invalidated before service readiness (0.264666ms)
+✔ live navigation invalidates the exact owner before the runtime handler and does not double invalidate (0.936125ms)
+✔ switch revocation is synchronous, service precedes pending notification, and stopped completion stays inert (0.398583ms)
+✔ subframe and other-tab lifecycle events cannot invalidate the current document (0.256583ms)
+✔ a stopped bootstrap is not reusable and a new worker owner does not inherit receipts (0.372917ms)
+✔ default disabled bootstrap needs no webRequest and cannot be attached under an enabled profile or other origin (0.1475ms)
+✔ a second runtime cannot stop a bootstrap already claimed by the live runtime (0.878333ms)
+✔ rejected origin claim preserves the unclaimed observer for its intended runtime (0.297125ms)
+✔ rejected chrome claim preserves the unclaimed observer for its intended runtime (0.201625ms)
+✔ rejected profile claim preserves the unclaimed observer for its intended runtime (0.176084ms)
+✔ exclusive claim prevents reentrant service construction from stealing the owner (0.247625ms)
+✔ service construction failure disposes the early owner and lifecycle registrations (0.220875ms)
+✔ repository construction failure disposes the early owner and lifecycle registrations (0.201666ms)
+✔ packaged classic bootstrap registers before runtime loading; C2 enabled=true (142.345333ms)
+✔ packaged classic bootstrap registers before runtime loading; C2 enabled=false (119.487959ms)
+✔ trusted history event revokes tab authorization without losing a genuine new-route pending GET (0.921083ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 337.025542

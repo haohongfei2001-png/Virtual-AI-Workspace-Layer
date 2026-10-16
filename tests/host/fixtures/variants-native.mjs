@@ -15,8 +15,11 @@ historyRegion.addEventListener('scroll',async()=>{
   offset=data.next_offset;
  }finally{loading=false;}
 });
-let lastConversation=null;
+let lastConversation=null,lastProject=null;
 async function loadCurrentMessages(){
+ const project=/^\/g\/(g-p-[0-9a-f]{32})\/project$/.exec(location.pathname);
+ if(project){lastConversation=null;if(lastProject===project[1])return;lastProject=project[1];await fetch('/backend-api/projects/'+project[1],{headers:{'Chatgpt-Account-Id':preferences.account_id}});return;}
+ lastProject=null;
  const match=/^\/c\/([^/]+)$/.exec(location.pathname);if(!match){lastConversation=null;return;}if(match[1]===lastConversation)return;
  lastConversation=match[1];
  const response=await fetch(`/backend-api/conversation/${encodeURIComponent(match[1])}`,{headers:{'Chatgpt-Account-Id':preferences.account_id}});

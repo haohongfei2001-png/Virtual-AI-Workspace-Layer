@@ -93,6 +93,13 @@ export async function createVariantHostFixtureServer({profile,journey=null,inter
    items=items.map(({id,title},i)=>({id,...(variant==='missing'&&i%4===1?{}:{title})}));
    return json(res,200,{items,total:all.length,offset,limit:25,next_offset:windowed?4:offset+25,windowed,page_revision:++pageRevision});
   }
+  // Explicit loopback reconstruction endpoint, not a verified ChatGPT API.
+  const projectDetail=/^\/backend-api\/projects\/(g-p-[0-9a-f]{32})$/.exec(url.pathname);
+  if(projectDetail&&req.method==='GET'){
+   nativeRequests.push({path:url.pathname,context:req.headers['chatgpt-account-id']??null});
+   if(!roster.some(a=>a.account_id===req.headers['chatgpt-account-id']))return json(res,403,{error:'unknown-context'});
+   const project=projects.get(projectDetail[1]);return project?json(res,200,{project:structuredClone(project)}):json(res,404,{error:'not-found'});
+  }
   const detail=/^\/backend-api\/conversation\/([^/]+)$/.exec(url.pathname);
   if(detail&&req.method==='GET'){
    const c=conversations.get(detail[1]);if(!c)return json(res,404,{error:'not-found'});

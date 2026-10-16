@@ -104,3 +104,12 @@ test('package verifier rejects forged existing-send composition even with rewrit
  for(const patch of [{offlineContext:false},{offlineFirstSend:true},{offlineExistingSend:false}]){writeFileSync(path,JSON.stringify({...original,...patch}));assert.throws(()=>verifyHost(built.unpacked),/invalid-host-(?:.*profile|package-permissions)/);}writeFileSync(path,JSON.stringify(original));assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');
  const configPath=join(built.unpacked,'extension/config.mjs'),forged=readFileSync(configPath,'utf8').replace('loopback-existing-send-ack','forged-ack');writeFileSync(configPath,forged);original.files['extension/config.mjs']=sha(forged);writeFileSync(path,JSON.stringify(original));assert.throws(()=>verifyHost(built.unpacked),/invalid-host-package-context/);
 });
+
+test('explicit loopback Project C2 package round-trips and rejects changed context configuration',t=>{
+ const out=join(root(t),'project'),info=buildHost(out,{offlineOrigin:'http://127.0.0.1:8123',offlineContext:true,offlineProjectContext:true});
+ assert.equal(info.contextSelection,'EXPLICIT_OFFLINE_C2_PROJECT_CONVERSATION');assert.equal(info.offlineProjectContext,true);assert.equal(verifyHost(out).status,'OFFLINE_HOST_RECONSTRUCTION');
+ const config=join(out,'extension/config.mjs'),changed=readFileSync(config,'utf8').replace('loopback-project-v1','future-project-v2');writeFileSync(config,changed);
+ const manifest=json(join(out,'build-manifest.json'));manifest.files['extension/config.mjs']=sha(changed);writeFileSync(join(out,'build-manifest.json'),JSON.stringify(manifest));
+ assert.throws(()=>verifyHost(out),/invalid-host-package-context/);
+});
+for(const options of [{offlineProjectContext:true},{offlineOrigin:'http://127.0.0.1:8123',offlineProjectContext:true},{offlineOrigin:'https://chatgpt.com',offlineContext:true,offlineProjectContext:true}])test('Project profile cannot escape explicit offline C2 '+JSON.stringify(options),t=>{assert.throws(()=>buildHost(join(root(t),'invalid'),options));});

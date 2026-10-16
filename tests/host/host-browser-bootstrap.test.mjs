@@ -138,3 +138,5 @@ test('trusted history event revokes tab authorization without losing a genuine n
  f.events.onHistoryStateUpdated.emit({tabId:7,frameId:0,documentId:'doc',frameType:'outermost_frame',documentLifecycle:'active',url});assert.equal(f.owner.isCurrent(frame,old),false);assert(f.calls.invalidated.some(x=>x.tabId===7));
  await f.finish(next);assert.equal((await f.owner.verify({...frame,actualURL:url}))?.conversationId,D);
 });
+
+test('bootstrap claim cannot introduce Project context into conversation-only owner',t=>{const f=fixture(t);assert.throws(()=>f.bootstrap.claim({chrome:f.chrome,origin,scopeProfile:{...scopeProfile,projectRequestContext:'loopback-project-v1'}}),/config-mismatch/);assert(f.bootstrap.claim({chrome:f.chrome,origin,scopeProfile}));});

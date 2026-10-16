@@ -1,6 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-17，原本地目录，Round320）
+## 最新正式检查点（2026-10-17，原本地目录，Round321）
+
+补齐显式离线Project C2：成功原生GET、当前document/route/Project成员域与认证roster共同校验；Project/Conversation分域，旧授权不沿用，原6秒时限/冲突/迟到/历史切换栅栏保持。新增profile仅明确loopback配置启用，不冒称真实ChatGPT接口已验证。
+
+实际隔离headless MODERN原导航7项在worker-ready和立即冷启动两种模式均通过，Project重挂/返回及独立Team scope正确，原文档/输入框/草稿与修饰键保留。DOM33/33、owner47/47及完整Node **6253/6253 PASS**，独立审查无阻断。首次测试锚点/返回值断言失败和修正原件保留于[Round321](evidence/round321/README.md)。
+
+31715ca已保存，正常push超时，远端最近API确认f672193；继续原PR16非强制同步。10k/100k稳定审计、完整81/profile/J1–J4和G/U仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-17，原本地目录，Round320）
 
 已恢复并持续使用原开发分支；外部整理stash42c8877保留。f672193已正常推送并API确认原Draft PR16/base，先前Git传输阻塞已解除。
 

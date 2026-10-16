@@ -9,13 +9,15 @@ import {createVariantHostFixtureServer} from './fixtures/variants-server.mjs';
 import {resolvedNavigationProfile} from './resolved-navigation-profile.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex'),scriptPath=fileURLToPath(import.meta.url),scriptHash=hash(await readFile(scriptPath));
+const coldStart=process.env.FREE_RESOLVED_NAVIGATION_STARTUP==='cold';
+if(process.env.FREE_RESOLVED_NAVIGATION_STARTUP&&!['cold','worker-ready'].includes(process.env.FREE_RESOLVED_NAVIGATION_STARTUP))throw Error('invalid-navigation-startup');
 const selected=resolvedNavigationProfile(process.env.FREE_RESOLVED_NAVIGATION_PROFILE??'LEGACY');
 const fixturePaths=['./resolved-navigation-profile.mjs','./expected/modern.mjs','./fixtures/server.mjs','./fixtures/variants-server.mjs','./fixtures/variants-native.mjs','./fixtures/native.mjs','./fixtures/native.css','./fixtures/legacy.html'];
 const fixtureSourceHashes=Object.fromEntries(await Promise.all(fixturePaths.map(async path=>[path,hash(await readFile(new URL(path,import.meta.url)))])));
 const server=selected.modern?await createVariantHostFixtureServer({profile:'MODERN'}):await createHostFixtureServer();
-const dir=await mkdtemp('/private/tmp/vaiwl-resolved-navigation-'),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,...(selected.modern?{offlineContext:true}:{})}),manifest=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8'));
+const dir=await mkdtemp('/private/tmp/vaiwl-resolved-navigation-'),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,...(selected.modern?{offlineContext:true,offlineProjectContext:true}:{})}),manifest=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8'));
 const {conversation,project}=selected;
-const report={evidence:'REAL_HEADLESS_MV3_PACKAGED_HOST_OFFLINE',realChatGPT:'NOT_RUN',profile:selected.profile,startupMode:selected.modern?'WORKER_READY_PRECONDITION_NOT_COLD_ACCEPTANCE':'LEGACY_UNCHANGED',profileAcceptance:'SCOPED_NAVIGATION_ONLY_NOT_FULL_PROFILE_ACCEPTANCE',fixture:server.manifest,fixtureSourceHashes,expectedScope:selected.expectedScope,scriptHash,sourceHashes:manifest.sourceHashes,package:built,results:[],trace:[]};let context,page,id;
+const report={evidence:'REAL_HEADLESS_MV3_PACKAGED_HOST_OFFLINE',realChatGPT:'NOT_RUN',profile:selected.profile,startupMode:selected.modern?(coldStart?'COLD_IMMEDIATE_AFTER_LOAD_UNPACKED':'WORKER_READY_PRECONDITION_NOT_COLD_ACCEPTANCE'):'LEGACY_UNCHANGED',profileAcceptance:'SCOPED_NAVIGATION_ONLY_NOT_FULL_PROFILE_ACCEPTANCE',fixture:server.manifest,fixtureSourceHashes,expectedScope:selected.expectedScope,scriptHash,sourceHashes:manifest.sourceHashes,package:built,results:[],trace:[]};let context,page,id;
 const count=()=>server.snapshot().actions.navigate??0;
 async function workspace(p){
  await p.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2||[...document.querySelectorAll('button')].some(n=>n.getAttribute('aria-label')==='返回工作空间'),null,{timeout:20000});
@@ -34,7 +36,7 @@ try{
   if(location.protocol==='chrome-extension:'&&globalThis.chrome?.runtime?.sendMessage){const send=chrome.runtime.sendMessage.bind(chrome.runtime);chrome.runtime.sendMessage=function(...args){const m=args[0],tracked=['HOST_UI_VIEW','HOST_UI_DISPATCH_CURRENT','HOST_UI_DISPATCH_NATIVE'].includes(m?.type);if(tracked&&m.type!=='HOST_UI_VIEW')globalThis.recordNavigationObservation({phase:'request',message:m});const pending=send(...args);if(tracked&&pending?.then)pending.then(reply=>globalThis.recordNavigationObservation({phase:'reply',message:m,reply:m.type==='HOST_UI_VIEW'?{state:reply?.state,scope:reply?.page?.scope,navigation:reply?.navigation}:reply}),()=>{});return pending;};}
  },{origin:server.origin});
  const cdp=await context.browser().newBrowserCDPSession();({id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked}));
- if(selected.modern){const readyWorker=context.serviceWorkers().find(worker=>worker.url().startsWith(`chrome-extension://${id}/`))??await context.waitForEvent('serviceworker',{predicate:worker=>worker.url().startsWith(`chrome-extension://${id}/`),timeout:15000});assert.equal(await readyWorker.evaluate(()=>chrome.runtime.id),id);report.workerReadyBeforeNativeRequest=true;}
+ if(selected.modern&&!coldStart){const readyWorker=context.serviceWorkers().find(worker=>worker.url().startsWith(`chrome-extension://${id}/`))??await context.waitForEvent('serviceworker',{predicate:worker=>worker.url().startsWith(`chrome-extension://${id}/`),timeout:15000});assert.equal(await readyWorker.evaluate(()=>chrome.runtime.id),id);report.workerReadyBeforeNativeRequest=true;}
  page=await context.newPage();await page.goto(server.origin+selected.startPath);let frame=await workspace(page);
  const worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id));assert(worker);report.workerNetworkBlocked=await worker.evaluate(async()=>{try{await fetch('https://example.com/');return false;}catch{return true;}});assert(report.workerNetworkBlocked);
  report.clickPrecondition='TWO_VISIBLE_FRAME_RAF_PLUS_200MS';
