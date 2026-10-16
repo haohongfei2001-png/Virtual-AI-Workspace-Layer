@@ -32,7 +32,7 @@ export function j4ScopeTrace({mode,origin}){
  const onMessage=(m,sender)=>{if(!route(sender?.url)||sender?.frameId!==0)return;const type=typeof m?.type==='string'&&/^HOST_|^BIND$/.test(m.type)?m.type:['vaiwl-host-observation/1','vaiwl-host-observation/2'].includes(m?.protocol)?m.kind:null;if(!type)return;const body=m.kind==='current-observation'?m.payload?.body:m.kind==='current-object'?m.payload:null;record({event:'content-message',type,tabId:sender.tab?.id,documentId:sender.documentId??null,routeEpoch:m.routeEpoch??null,localSeq:m.localSeq??null,association:body?.association??null,messageCount:body?.messageIds?.length??null});};
  chrome.runtime.onMessage.addListener(onMessage);listeners.push([chrome.runtime.onMessage,onMessage]);globalThis[key]=state;
 }
-export async function runJ4EvidenceInterruption({a,b,id,server,controller,inspector,closeProbe,assets,preserved,personal,team,scopeOf,mounted,absent,record,diagnostic=()=>{},diagnosticOnly=false,preparedBudget=false,naturalEntryRecovery=false,continueAfterNaturalEntry=false}){
+export async function runJ4EvidenceInterruption({a,b,id,server,controller,inspector,closeProbe,assets,preserved,personal,team,scopeOf,mounted,absent,record,diagnostic=()=>{},readBudgetDiagnostic=null,diagnosticOnly=false,preparedBudget=false,naturalEntryRecovery=false,continueAfterNaturalEntry=false}){
  const traceWorker=diagnosticOnly?a.context().serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`)):null;
  if(traceWorker)await traceWorker.evaluate(j4ScopeTrace,{mode:'start',origin:server.origin});
  const key=s=>JSON.stringify([s.provider,s.accountId,s.organizationId]);
@@ -45,6 +45,7 @@ export async function runJ4EvidenceInterruption({a,b,id,server,controller,inspec
   try{facts.budget=await (await inspector()).evaluate(async({scope,origin})=>{const {ScopeRepository}=await import(chrome.runtime.getURL('src/b1/scope-repository.mjs')),{digest}=await import(chrome.runtime.getURL('src/data/hash.mjs')),base=new ScopeRepository({indexedDB});try{const db=await base.open(),key='host-read-budget:'+digest([scope.accountId,scope.organizationId,origin]);return await new Promise((resolve,reject)=>{const tx=db.transaction('b23_views','readonly'),q=tx.objectStore('b23_views').get(key);tx.oncomplete=()=>{const row=q.result;if(!row)return resolve({present:false});const p=row.payload;resolve({present:true,checksumValid:row.checksum===digest(p),startedAt:p.startedAt,lastAt:p.lastAt,requests:p.requests,attemptCounts:p.attempts?.map(a=>a.count),windowMs:30000,requestLimit:12});};tx.onabort=()=>reject(tx.error);});}finally{base.close();}},{scope:personal,origin:server.origin});}catch(e){facts.budgetError=e.name;}
   facts.frames=[];for(const f of a.frames().filter(f=>f.url()===`chrome-extension://${id}/workspace.html`)){try{facts.frames.push(await f.evaluate(()=>({scopeKnown:typeof globalThis.j4LastScope==='string',grantPresent:typeof globalThis.j4Grant==='string'})));}catch(e){facts.frames.push({error:e.name});}}
   try{facts.scopeLifecycle=traceWorker?await traceWorker.evaluate(j4ScopeTrace,{mode:'read'}):null;}catch(e){facts.scopeTraceError=e.name;}
+  if(readBudgetDiagnostic)await readBudgetDiagnostic(stage);
   diagnostic(facts);return facts;
  }
  const teamPreserved=await assets(team);
