@@ -26,6 +26,12 @@ export function createNativeInputRisk({document:doc,profile}={}){
  if(!config||typeof doc?.querySelectorAll!=='function')return unknown;
  const connected=node=>node?.isConnected===true&&node.ownerDocument===doc;
  const one=selector=>{const matches=doc.querySelectorAll(selector);if(matches.length!==1||!connected(matches[0]))throw Error('unknown-boundary');return matches[0];};
+ const coversFiles=(form,files)=>{
+  // A narrow profile selector cannot certify a second retained file input.
+  // Hidden inputs can still own a selection; never inspect names or contents.
+  const inputs=form.querySelectorAll('input[type="file"]');
+  return inputs.length===1&&inputs[0]===files&&connected(files)&&form.contains(files)&&files.tagName==='INPUT'&&files.type==='file';
+ };
  const kind=node=>{
   if(config.editorKinds.includes('textarea')&&node.tagName==='TEXTAREA')return 'textarea';
   if(config.editorKinds.includes('contenteditable')&&node.tagName==='DIV'&&node.getAttribute('role')==='textbox'&&['true','plaintext-only'].includes(node.getAttribute('contenteditable'))&&node.isContentEditable===true&&node.parentElement?.isContentEditable!==true)return 'contenteditable';
@@ -47,7 +53,7 @@ export function createNativeInputRisk({document:doc,profile}={}){
  };
  return ()=>{try{
   const form=one(config.formSelector),editor=one(config.editorSelector),files=one(config.filesSelector);
-  if(form.tagName!=='FORM'||files.tagName!=='INPUT'||files.type!=='file'||!form.contains(editor)||!form.contains(files))return unknown();
+  if(form.tagName!=='FORM'||!form.contains(editor)||!coversFiles(form,files))return unknown();
   const draftNodes=editors(form,editor),kinds=draftNodes.map(kind),values=[];let draft=false;
   for(let i=0;i<draftNodes.length;i++){
    const node=draftNodes[i],rich=kinds[i]==='contenteditable',text=rich?node.textContent:node.value,children=rich?node.childElementCount:0;
@@ -62,7 +68,7 @@ export function createNativeInputRisk({document:doc,profile}={}){
   // Getter or DOM replacement during reading cannot certify an old boundary.
   if(one(config.formSelector)!==form||one(config.editorSelector)!==editor||one(config.filesSelector)!==files||roots.some(([query,node])=>one(query)!==node))return unknown();
   const currentEditors=editors(form,editor);
-  if(currentEditors.length!==draftNodes.length||currentEditors.some((node,i)=>node!==draftNodes[i]||kind(node)!==kinds[i])||form.tagName!=='FORM'||files.tagName!=='INPUT'||files.type!=='file'||!form.contains(files))return unknown();
+  if(currentEditors.length!==draftNodes.length||currentEditors.some((node,i)=>node!==draftNodes[i]||kind(node)!==kinds[i])||form.tagName!=='FORM'||!coversFiles(form,files))return unknown();
   return result(values.length?'unsaved':'clear',values);
  }catch{return unknown();}};
 }

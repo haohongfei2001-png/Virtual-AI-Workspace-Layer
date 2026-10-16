@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round344）
+## 最新本地检查点（2026-10-17，Round345）
+
+补公共input-risk窄selector的附件覆盖：读取前后检查真实form内file input唯一且与选中节点一致，隐藏/额外输入、读取中变更保持unknown，不读文件名/内容。独立旧代码9PASS/10FAIL，最终相关17文件 **241/241 PASS**；实际headless DOM **12/12 PASS**，仅WEB_MECHANISM_ONLY，原节点/内容/源码保持。[Round345证据](evidence/round345/README.md)。
+
+首次补跑MODERN × app-root嵌套完整J3，正式包在原15秒首个workspace阶段FAIL（0步）；一次已有诊断模式仍FAIL：只收到known=false的complete，没有配对send，HELLO成功、REFRESH ambiguous。不得把LEGACY嵌套或MODERN direct旧通过算作此组合通过；没有延期限、猜context或重复刷运行。原始正式/诊断结果分别保留。完整100k、静默context、其余81/profile/J1–J4/G/U继续开放，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round344）
 
 已重新fetch确认838961a与远端0/0，正式开发分支、整理stash42c8877及副本保全。独立反例确认异步browser查询可跨A请求失败撤销，让B重新采用新epoch；prepared回调现在先检查epoch，不复活旧选择凭据。旧代码2PASS/2FAIL，定向17文件 **291/291 PASS**，首次并发/失败后fresh请求及原commit/history保留路径通过。[Round344证据](evidence/round344/README.md)。
 

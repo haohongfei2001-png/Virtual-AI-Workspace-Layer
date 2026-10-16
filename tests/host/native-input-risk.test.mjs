@@ -8,6 +8,7 @@ function fixture(){
  const node=(tag)=>({tagName:tag,ownerDocument:doc,isConnected:true,contains:n=>n.parent===form,querySelectorAll:s=>active.get(s)??[]});
  const active=new Map(),form=node('FORM'),editor=node('TEXTAREA'),files=node('INPUT'),root=node('MAIN');editor.parent=form;files.parent=form;editor.value='';files.type='file';files.files={length:0};root.contains=n=>n.parent===root;
  map.set('#composer',[form]);map.set('#prompt-textarea',[editor]);map.set('#composer input[type="file"]',[files]);map.set('main',[root]);
+ form.querySelectorAll=s=>s==='input[type="file"]'?[files]:active.get(s)??[];
  const profile={inputRisk:{formSelector:'#composer',editorSelector:'#prompt-textarea',filesSelector:'#composer input[type="file"]',risks:Object.fromEntries(kinds.map(key=>[key,{rootSelector:'main',activeSelector:`[data-fixture-${key}="active"]`}])),complete:Object.fromEntries(['composer','attachment',...kinds].map(key=>[key,true]))}};
  const read=()=>createNativeInputRisk({document:doc,profile});return {doc,map,form,editor,files,root,active,profile,read,node};
 }

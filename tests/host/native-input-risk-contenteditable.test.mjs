@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createNativeInputRisk} from '../../src/host/native-input-risk.mjs';
 function fixture(){
  const map=new Map(),doc={querySelectorAll:s=>map.get(s)??[]};let writes=0;
- const form={tagName:'FORM',ownerDocument:doc,isConnected:true,isContentEditable:false,querySelectorAll:selector=>selector==='textarea,[contenteditable]'?[editor]:[],contains:n=>n.parent===form};
+ const form={tagName:'FORM',ownerDocument:doc,isConnected:true,isContentEditable:false,querySelectorAll:selector=>selector==='textarea,[contenteditable]'?[editor]:selector==='input[type="file"]'?[files]:[],contains:n=>n.parent===form};
  const attrs={role:'textbox',contenteditable:'true'},editor={tagName:'DIV',ownerDocument:doc,isConnected:true,parent:form,parentElement:form,isContentEditable:true,childElementCount:0,textContent:'',getAttribute:k=>attrs[k]??null,setAttribute(){writes++;throw Error('must-not-write');}};
  const files={tagName:'INPUT',type:'file',ownerDocument:doc,isConnected:true,parent:form,files:{length:0}},root={ownerDocument:doc,isConnected:true,querySelectorAll:()=>[],contains:()=>false};
  map.set('#form',[form]);map.set('#editor',[editor]);map.set('#files',[files]);map.set('#root',[root]);
