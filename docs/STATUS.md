@@ -1,6 +1,16 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，恢复原本地目录，Round261）
+## 最新正式检查点（2026-10-16，原本地目录，Round262）
+
+承接已正常推送的f6ac8a2（Round261）。仅调整owned双manual surface的DOM插入位置：从native文档末尾移到composer所在body顶层区域之前，原生节点parent/order/handler不移动，geometry/mask/授权/退出保持，不拦截Tab、不写正tabindex、不调用composer.focus。原body-tail布局使正向遍历必须先越过浏览器页面末尾焦点边界，旧失败及诊断保留。
+
+**未改正式J3脚本或断言，实际隔离正式包16/16步PASS**：UI06原64键/15秒约束内，反向13键、关闭恢复7/7键、正向18键达到原生目标，父AX遮罩正反/原文档/双draft/File保持；200%真实Chrome缩放、历史区间、Back/Forward、UNKNOWN、片段保存/搜索/定位及原生搜索均通过。此为LEGACY/J3已执行切片，嵌套app-root及其它profile真实键盘矩阵仍需验证，不升级完整UI06/UI10/v2.7或G/U。
+
+实际disable5/5、uninstall4/4、即时exit4/4通过，私有内容清除/原生可操作/布局恢复分别断言，卸载没有手动关残留；即时退出跨21秒、native SPA且新document仅新grant重入。源码/脚本hash稳定。最终完整Node **5207/5207 PASS，零skip**；新结构测试覆盖direct/nested parent保持，但不冒充嵌套浏览器可达性。截图已查看，证据见[Round262](evidence/round262/README.md)。
+
+原10k单次审计与CI失败各归原source/env；继承mask、100k/p95/冷启动、完整81/SYS02/J4/SYS04/SYS05、真实ChatGPT/PAIA/物理IME及发布门槛继续开放，**Free NOT_RELEASE_READY**。不改变原PR16/base/main，继续唯一计划。
+
+## 前一正式检查点（2026-10-16，恢复原本地目录，Round261）
 
 按用户要求核对 dot 成果：fetch 后本地/远端/原 Draft PR16 均为8fe97c9，零分叉，旧72ca068与本地d1872d9均已保留在祖先链；无需重复merge或重放旧206修改。PR base不变。原目录未跟踪副本（含不同内容及占位文件）全部保留，未混入本轮提交；本地隔离测试权限按本线程最新持续开发授权执行。
 
