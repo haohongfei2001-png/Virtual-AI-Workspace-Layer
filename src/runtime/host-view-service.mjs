@@ -123,8 +123,11 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    if(entry.pending||entry.autoReading)return {ok:true,state:'preparing',retryAfterMs:50};
    if(entry.error)return {ok:false,reason:entry.error};
    delivery={entry,window:entry.readWindow,generation:entry.prepareGeneration};
-   const current=entry.owner.current();if(!current)throw Error('stale-free-view');
+   const current=entry.owner.current(),generation=entry.prepareGeneration;if(!current)throw Error('stale-free-view');
    const version=await readService.version(context.scope,{guard:()=>active&&context.isCurrent()});check();
+   // The other surface may have begun or completed preparation while this
+   // version read waited. Its old snapshot cannot restart that preparation.
+   if(entry.prepareGeneration!==generation||entry.pending||entry.owner.current()!==current)return {ok:true,state:'preparing',retryAfterMs:50};
    const value=current.snapshot;
    const elapsed=Date.parse(clock()),evaluated=Date.parse(value.evaluatedAt),freshnessChanged=[...(value.calibrationDeadlines??[]),...(value.activityFreshness?.deadlines??[])].some(deadline=>Date.parse(deadline)>evaluated&&Date.parse(deadline)<=elapsed);
    if(freshnessChanged||version.nativeRevision!==value.revision||version.revision!==value.workspaceRevision||version.evidenceRevision!==value.evidenceRevision||version.viewRevision!==value.viewRevision){begin(entry);return {ok:true,state:'preparing',retryAfterMs:50};}

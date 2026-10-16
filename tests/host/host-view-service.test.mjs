@@ -638,3 +638,62 @@ for(const boundary of ['page','apply'])test('MOCK_IDB preparation reserves scope
  clock.advance(50);const result=await ready(h);assert.equal(result.state,'ready',JSON.stringify(result));assert(result.page.groups.items.some(row=>row.id==='inflight'));assert.equal(result.page.groups.items.some(row=>row.id==='must-yield'),false);
  assert.equal((await h.view('sidebar')).state,'ready');assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),false);
 });
+
+test('MOCK_IDB late second surface version check cannot restart an already pending shared refresh',async t=>{
+ const clock=preparationClock(),h=await fixture(t,{elapsedNow:clock.now,schedule:clock.schedule,cancel:clock.cancel});
+ await h.bind();await h.observe();await h.mount();assert.equal((await ready(h)).state,'ready');assert.equal((await h.view('sidebar')).state,'ready');
+ const native=h.service.nativeRepository,version=native.version.bind(native),header=native.header.bind(native);
+ const releases=[];let versionCalls=0,headerCalls=0,releaseHeaders;
+ const headersHeld=new Promise(resolve=>releaseHeaders=resolve);
+ native.version=async(...args)=>{const index=versionCalls++;if(index<2)await new Promise(resolve=>releases[index]=resolve);return version(...args);};
+ const workspace=h.view('workspace'),sidebar=h.view('sidebar');
+ t.after(async()=>{for(const release of releases)release?.();releaseHeaders();await Promise.allSettled([workspace,sidebar]);h.service.stop();});
+ for(let i=0;i<100&&releases.length<2;i++)await drain();assert.equal(releases.length,2,'both surface RPCs entered the old ready snapshot version check');
+ assert.equal((await h.observe(['p1','concurrent-publication'],{raw:true})).state,'accepted');
+ native.header=async(...args)=>{headerCalls++;await headersHeld;return header(...args);};
+ releases[0]();assert.equal((await workspace).state,'preparing');
+ for(let i=0;i<100&&!headerCalls;i++)await drain();assert.equal(headerCalls,1,'first stale version starts one real owner refresh');
+ assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),true);
+ clock.advance(100);releases[1]();assert.equal((await sidebar).state,'preparing');
+ for(let i=0;i<20;i++)await drain();
+ assert.equal(headerCalls,1,'second old version response must join the existing refresh instead of invalidating it');
+ assert(clock.timers.some(timer=>timer.at===30000),'original preparation deadline remains in force');
+ assert(!clock.timers.some(timer=>timer.at===30100),'late surface check cannot restart the preparation lifetime');
+ clock.advance(899);assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),true);
+ clock.advance(1);assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),false,'shared opportunity still expires at original 1000ms');
+ releaseHeaders();const result=await ready(h);assert.equal(result.state,'ready');assert(result.page.groups.items.some(row=>row.id==='concurrent-publication'));
+ assert.equal((await h.view('sidebar')).state,'ready');
+});
+
+for(const role of ['workspace','sidebar'])test('MOCK_IDB scope revoke during '+role+' version check cannot deliver the old page',async t=>{
+ const clock=preparationClock(),h=await fixture(t,{elapsedNow:clock.now,schedule:clock.schedule,cancel:clock.cancel});
+ await h.bind();await h.observe();await h.mount();assert.equal((await ready(h)).state,'ready');
+ const native=h.service.nativeRepository,version=native.version.bind(native);let entered=false,release;
+ const held=new Promise(resolve=>release=resolve);
+ native.version=async(...args)=>{const value=await version(...args);entered=true;await held;return value;};
+ const pending=h.view(role);t.after(async()=>{release();await pending;h.service.stop();});
+ for(let i=0;i<100&&!entered;i++)await drain();assert(entered,'version read has captured the old ready revision');
+ h.service.invalidate({tabId:1,documentId:'document'});release();
+ const reply=await pending;assert.equal(reply.ok,false);assert.equal(reply.page,undefined,'revoked version response must not expose cached native titles');
+ assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),false);assert.equal((await h.view(role)).ok,false);
+});
+
+test('MOCK_IDB coalesced old surface check cannot hide a publication after its successor refresh completes',async t=>{
+ const clock=preparationClock(),h=await fixture(t,{elapsedNow:clock.now,schedule:clock.schedule,cancel:clock.cancel});
+ await h.bind();await h.observe();await h.mount();assert.equal((await ready(h)).state,'ready');
+ const native=h.service.nativeRepository,version=native.version.bind(native),header=native.header.bind(native);let calls=0,headers=0;const releases=[];
+ native.version=async(...args)=>{const index=calls++;if(index<2)await new Promise(resolve=>releases[index]=resolve);return version(...args);};
+ native.header=async(...args)=>{headers++;return header(...args);};
+ const first=h.view('workspace'),late=h.view('sidebar');t.after(async()=>{for(const release of releases)release?.();await Promise.allSettled([first,late]);h.service.stop();});
+ for(let i=0;i<100&&releases.length<2;i++)await drain();assert.equal(releases.length,2);
+ await h.observe(['p1','first-publication']);releases[0]();assert.equal((await first).state,'preparing');
+ const successor=await ready(h);assert.equal(successor.state,'ready');assert(successor.page.groups.items.some(row=>row.id==='first-publication'));assert.equal(headers,1);
+ assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),false);
+ clock.advance(100);await h.observe(['p1','first-publication','later-publication']);
+ releases[1]();const staleReply=await late;assert.equal(staleReply.state,'preparing');assert.equal(staleReply.page,undefined);
+ assert.equal(headers,1,'obsolete RPC must not launch another refresh from its abandoned snapshot');
+ assert.equal((await h.view('sidebar')).state,'preparing','fresh RPC must detect the later real committed revision');
+ assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),true,'new committed publication permits a fresh bounded opportunity');
+ const current=await ready(h,'sidebar');assert.equal(current.state,'ready');assert(current.page.groups.items.some(row=>row.id==='later-publication'));assert.equal(headers,2);
+ const workspace=await h.view();assert.equal(workspace.state,'ready');assert(workspace.page.groups.items.some(row=>row.id==='later-publication'));assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),false);
+});

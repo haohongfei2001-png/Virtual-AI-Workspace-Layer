@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round281）
+## 最新正式检查点（2026-10-16，原本地目录，Round282）
+
+修复双surface旧version回包重复begin并延后30秒准备截止的竞态；await后复核代次、pending与快照身份，旧回包不交付旧page或释放新window。撤权与后续真实publication反例保持；独立审查通过，完整Node **5478/5478 PASS**。见[Round282](evidence/round282/README.md)。
+
+未插桩实际100k双tab双surface约3.08s/3.69s，原生尾部/返回PASS；完整基数278/100000仍FAIL，正式性能样本拒绝生成，源码/fixture稳定、零浏览器错误。Round281已保存1048b99；两次正常push分别45秒超时/低速失败，最终GitHub API确认远端仍c56342d、Draft/base不变。两轮代码已本地提交，后续仅正常补推。持续Free工程，完整81/G/U/冷启动/规模等未完成，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round281）
 
 修复首个界面准备撞上在途原生写入时未预留读取机会的饥饿窗口；沿用scope共享1秒窗口、30秒准备/6秒RPC与原重试，当前body/send优先及旧写入完成保持。独立红测转绿、审查无阻塞；最终完整Node **5474/5474 PASS**。见[Round281](evidence/round281/README.md)。
 
