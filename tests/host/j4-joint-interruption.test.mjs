@@ -125,7 +125,7 @@ test('new grant with stale route currentRef cannot satisfy a peer navigation',as
  const source=await readFile(new URL('./j4-joint-interruption.mjs',import.meta.url),'utf8');const start=source.indexOf("await page.locator('textarea').click()"),capture=source.indexOf('previousGrant=(await currentJ4Grant',start),click=source.indexOf("await link.click()",start);assert(start<capture&&capture<click);
 });
 test('actual passive runner observer binds currentRef to successful VIEW and clears it on new grant',async()=>{
- const {runInNewContext}=await import('node:vm'),source=await readFile(new URL('./j4-package-journey.mjs',import.meta.url),'utf8'),start=source.indexOf('await context.addInitScript(')+'await context.addInitScript('.length,end=source.indexOf(');\n  const cdp',start);assert(start>0&&end>start);
+ const {runInNewContext}=await import('node:vm'),source=await readFile(new URL('./j4-package-journey.mjs',import.meta.url),'utf8'),start=source.indexOf('await context.addInitScript(()=>{if(location.protocol')+'await context.addInitScript('.length,end=source.indexOf(');\n  cdp=',start);assert(start>0&&end>start);
  let response;const realm={location:{protocol:'chrome-extension:'},chrome:{runtime:{sendMessage:()=>Promise.resolve(response)}}};realm.globalThis=realm;runInNewContext('('+source.slice(start,end)+')()',realm);
  async function send(type,r){response=r;await realm.chrome.runtime.sendMessage({type});await Promise.resolve();}
  await send('HOST_UI_JOIN',{ok:true,grant:{id:'one'}});await send('HOST_UI_VIEW',{ok:true,page:{scope:'team',currentRef:{id:'444'}}});assert.equal(realm.j4LastCurrentRef,'444');assert.equal(realm.j4LastScope,'team');
