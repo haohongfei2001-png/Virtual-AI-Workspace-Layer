@@ -25,7 +25,7 @@ export async function probeJ4HistoricalCodec({context,cdp,controller,id,slot,roo
  try{
   await closeProbe();await enable(false);
   slotTouched=true;await replaceDisabledPackage(old.unpacked,slot,{disabled,root});
-  await enable(true);assert.equal((await cdp.send('Extensions.loadUnpacked',{path:slot})).id,id);await runtime(permissions,runtimeUpdates.old);
+  assert.equal((await cdp.send('Extensions.loadUnpacked',{path:slot})).id,id);await enable(true);await runtime(permissions,runtimeUpdates.old);
   probe=await context.newPage();await probe.goto(`chrome-extension://${id}/workspace.html`);
   assert.equal(hash(await probe.evaluate(async()=>await(await fetch(chrome.runtime.getURL('build-manifest.json'))).text())),oldManifestHash);
   const result=await probe.evaluate(async({scope,pending,committedReceipt})=>{
@@ -49,7 +49,7 @@ export async function probeJ4HistoricalCodec({context,cdp,controller,id,slot,roo
   if(slotTouched)try{
    // Always confirm disable again: a prior enable may have succeeded before its
    // acknowledgement failed. Never replace an ambiguously enabled package.
-   await enable(false);await replaceDisabledPackage(saved,slot,{disabled,root});assert.equal(await directoryDigest(slot),currentDigest);await enable(true);assert.equal((await cdp.send('Extensions.loadUnpacked',{path:slot})).id,id);
+   await enable(false);await replaceDisabledPackage(saved,slot,{disabled,root});assert.equal(await directoryDigest(slot),currentDigest);assert.equal((await cdp.send('Extensions.loadUnpacked',{path:slot})).id,id);await enable(true);
    await runtime(JSON.parse(await readFile(join(saved,'manifest.json'),'utf8')),runtimeUpdates.current);
   }catch(error){cleanupErrors.push(error);}
   if(cleanupErrors.length)primaryError=new AggregateError([...(primaryError?[primaryError]:[]),...cleanupErrors],'codec-roundtrip-or-restoration-failed');

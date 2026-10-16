@@ -84,7 +84,11 @@ test('joint tail uses real peer foreground and current proof, then restores orig
  const source=await readFile(new URL('./j4-joint-interruption.mjs',import.meta.url),'utf8'),tail=source.slice(source.indexOf("record('same-J4-joint-recovery-second-load-is-idempotent-and-peer-context-isolated'"));
  assert(tail.indexOf('await b.bringToFront()')<tail.indexOf('await waitJ4PeerScope(b,id,key(team))'));
  assert(tail.indexOf('await waitJ4PeerScope(b,id,key(team))')<tail.lastIndexOf('await a.bringToFront()'));
- assert(!tail.includes('.reload('));assert(tail.includes('await scopeOf(a),key(personal)'));assert(tail.includes('await assets(personal),preserved'));
+ const codecStart=tail.indexOf('if(codecRoundTrip){'),codecEnd=tail.indexOf("try{assert.equal(await waitJ4PeerScope(b,id,key(team))",codecStart);assert(codecStart>=0&&codecEnd>codecStart);
+ const codec=tail.slice(codecStart,codecEnd),ordinary=tail.slice(0,codecStart)+tail.slice(codecEnd);
+ assert(!ordinary.includes('.reload('));assert.equal((codec.match(/\.reload\(/g)??[]).length,1);
+ assert(codec.indexOf('codec-peer-reload-requires-empty-fixture-draft')<codec.indexOf('await b.reload()'));assert(codec.indexOf('codec-peer-reload-requires-no-files')<codec.indexOf('await b.reload()'));assert(codec.includes("automaticReattachment:'NOT_ESTABLISHED'"));assert(codec.includes('await assets(team),teamAssets'));
+ assert(tail.includes('await scopeOf(a),key(personal)'));assert(tail.includes('await assets(personal),preserved'));
 });
 
 test('native peer recovery uses history then native search, preserving document draft and exact team assets',async()=>{

@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round276）
+## 最新正式检查点（2026-10-16，原本地目录，Round277）
+
+定位并修复隔离codec测试包切换顺序：disabled slot先loadUnpacked确认同ID、再enable。实际未插桩旅程已通过旧v1拒绝→当前包fresh grant→同一pending完成→原ACK/receipt不变→重复恢复幂等，生产代码未改。后续peer旧文档SPA不重新注入仍FAIL；增加仅codec变体、空草稿/零文件前提下的显式重载，其复验在更早的禁用重启grant阶段失败，新增peer步骤尚未获浏览器认证。
+
+最终完整Node **5432/5432 PASS，零skip**；短包切换对照、完整诊断及全部FAIL按范围保留，见[Round277](evidence/round277/README.md)。下一步继续前置reenable授权可靠性及peer重载验证；完整SYS03/J4/81、冷启动/100k与真实G/U仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round276）
 
 实际隔离旧Host codec读取拒绝通过：真实v2 pending及已提交evidence保留，同ID历史包读取拒绝且原记录/receipt/人工资产不变；恢复当前包digest及实际manifest通过。但再升级fresh界面grant在原期限内未建立，整段往返FAIL，SYS03不标完成。63项定向合同PASS，包含真实历史模块在evidence前后两种窗口的无写拒绝与当前幂等恢复。见[Round276](evidence/round276/README.md)。下一步直接定位同slot升级后的重新挂载/context receipt，不重做计划。完整Free仍**NOT_RELEASE_READY**。
 
