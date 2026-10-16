@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round283）
+## 最新正式检查点（2026-10-16，原本地目录，Round284）
+
+新增生产包SYS07窄隐私旅程：真实已认证metadata故障后，等待唯一返回触发的校准请求明确失败终态，再扫八表38原始记录、content/worker与两个既有UI消息及DOM，凭证/正文/草稿零命中；56公开WAR成功、3私有资源拒绝，外域隔离阻断。最终真实Chrome PASS，仍PARTIAL_MAIN_AUTH_METADATA_FAILURE；首轮源码变化/selector失败及中间弱证据均保留，见[Round284](evidence/round284/README.md)。
+
+完整Node **5484/5484 PASS**，生产代码未改。主认证隐私证据不替代尚未实施的隔离世界备用认证；下一步直接接线规格§5.2，保留独立C2 context和6秒总预算。原PR16已正常同步至2c9bcad；完整Free/81/G/U/冷启动/规模仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round283）
 
 独立document_start transport-only唤醒候选：40项build/bootstrap及4项无授权副作用合同PASS，但实际隔离cold原20秒门槛仍FAIL；只有一次自然GET，零私有surface。未将无效候选加入生产，build/package逐字恢复d213dc5，实验源码/差异/失败证据完整保留，见[Round283](evidence/round283/README.md)。
 

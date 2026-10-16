@@ -45,6 +45,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
   const counts = Object.create(null), requests = Object.create(null), fixedGetTrace = [];
   let projectCounter = 0, newConversationCounter = 0;
   let detailHold = null;
+  let privacyFailureArmed=false,privacyFailures=0;
   const detailAppends = new Map(), detailAcceptances = new Map();
   const projects = new Map([[PROJECT_ONE,{id:PROJECT_ONE,name:'Research'}],[PROJECT_TWO,{id:PROJECT_TWO,name:'Research'}]]);
   if(journey==='J1')for(const project of j1NativeProjects)projects.set(project.id,{...project});
@@ -105,6 +106,11 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
         if(!identity || !sessionAuthorized(req) || req.headers.authorization !== `Bearer ${token}`) return json(res,401,{error:'unauthenticated'});
         const conversation = conversations.get(detailMatch[1]);
         if(!conversation || url.search) return notFound(res);
+        if(privacyFailureArmed){
+          privacyFailureArmed=false;privacyFailures++;
+          res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});
+          return res.end('{"content":"SYNTHETIC_BODY_MUST_NOT_ESCAPE","broken":');
+        }
         if(j2&&conversation.id===J2_C)return json(res,200,j2.detail());
         const authorId = identity;
         if(detailHold) await detailHold.promise;
@@ -158,6 +164,9 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
     manifest: Object.freeze({fixtureId:'chatgpt-host-legacy-reconstruction-v1',profile,j3Layout,...(journey?{journey,journeyEvidence:journey==='J3'?'S_RECONSTRUCTION_NOT_REAL_PERMISSION':'S_RECONSTRUCTION_NATIVE_PENDING_CONTROLS'}:{}),reconstruction:true,source:'VA-HOST/1.1 structure reconstruction; not a real DOM snapshot',sourceCommit:null,sourceBlob:null,fixtureHash:createHash('sha256').update(sourceBytes).update(Buffer.concat(Object.values(files).map((f) => f.body))).digest('hex'),expectedWorldFile:'tests/host/expected/legacy.mjs',oracleHash:createHash('sha256').update(oracleBytes).digest('hex'),supportedCapabilities:['principal','personal-context-candidate','project-identity','idless-native-control','conversation-identity','native-move-menu','native-navigation','native-search','native-create','independent-regions','draft-preservation']}),
     snapshot: () => clone({actions:counts,requests,fixedGetTrace,...(j2?{j2:j2.snapshot()}:{}),...(firstSend?{firstSends:firstSend.snapshot()}:{}),projectCount:projects.size,conversationCount:conversations.size}),
     // Test-process controls only; not HTTP endpoints, not page-visible authority.
+    privacySentinels: () => ({token,cookie,body:'SYNTHETIC_BODY_MUST_NOT_ESCAPE'}),
+    failNextAuthenticatedMetadata: () => { if(privacyFailureArmed)throw Error('privacy-failure-already-armed');privacyFailureArmed=true; },
+    privacyFailureStatus: () => ({armed:privacyFailureArmed,authenticatedFailures:privacyFailures}),
     setPrincipal: (id,{accounts: nextAccounts = roster} = {}) => { identity = id; roster = clone(nextAccounts); },
     acceptConversationMetadata: (conversationId,messageId) => { if(!(detailAppends.get(conversationId)??[]).includes(messageId))throw Error('missing-fixture-metadata');const ids=detailAcceptances.get(conversationId)??new Set();ids.add(messageId);detailAcceptances.set(conversationId,ids); },
     appendConversationMetadata: (conversationId,messageId) => { if(!conversations.has(conversationId)||typeof messageId!=='string'||!/^fixture_[a-z0-9_]+$/.test(messageId))throw Error('invalid-fixture-metadata');const ids=detailAppends.get(conversationId)??[];if(ids.includes(messageId))throw Error('duplicate-fixture-metadata');detailAppends.set(conversationId,[...ids,messageId]); },
