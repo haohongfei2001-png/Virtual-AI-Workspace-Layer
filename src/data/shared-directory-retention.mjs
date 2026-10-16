@@ -26,8 +26,12 @@ export function prepareSharedDirectoryRetention(tx,scope,prior,check,fail){
     // buckets, however, must validate or the whole owner write must abort.
     older.readBucket(bucket,piece=>{
      const refs=Object.keys(piece.versions);
-     retained.lookupMany(refs,before=>current.lookupMany(refs,after=>{try{
-      check();for(const ref of refs){const version=piece.versions[ref];if(version!==before.get(ref)&&version!==after.get(ref)){check();store.delete(manifest_partitionKey(old.scopeKey,ref,version,old.generation));}}
+     // The verified old piece already establishes every ref's bucket. Read
+     // both retained generations from storage with their full validators,
+     // without rerouting and regrouping the same refs twice.
+     const versionAt=(value,ref)=>value&&Object.hasOwn(value.versions,ref)?value.versions[ref]:undefined;
+     retained.readBucket(bucket,before=>current.readBucket(bucket,after=>{try{
+      check();for(const ref of refs){const version=piece.versions[ref];if(version!==versionAt(before,ref)&&version!==versionAt(after,ref)){check();store.delete(manifest_partitionKey(old.scopeKey,ref,version,old.generation));}}
       check();store.delete(sharedRefDirectoryKey(old.scopeKey,old.generation,bucket,pointer.revision));
      }catch(error){fail(error);}}));
     });

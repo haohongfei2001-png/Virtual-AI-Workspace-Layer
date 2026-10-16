@@ -1,6 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round338）
+## 最新本地检查点（2026-10-17，Round339）
+
+保留旧分片回收的完整读取/校验，利用已验证bucket直接读前后两代，避免对相同成员重复路由。独立旧/新模块计数4→0，删除集合一致；缺失/损坏前后代均整事务回滚。定向16/16、真实IndexedDB生命周期/批量/回收21项、完整Node **6486/6486 PASS**。真实IDB runner支持既有FREE_CHROME_EXECUTABLE，始终headless。[Round339证据](evidence/round339/README.md)。
+
+原MODERN J3即时冷启动16/16通过，仅本次回归，非稳定性认证。原100k single-project CPU1仍在原成员deadline **FAIL**；原生尾部导航通过，截止单事务快照18925refs/revision479不代表吞吐或完整规模通过；源码/fixture/manifest无漂移。未放宽门槛。静默C2、完整81/profile/J4、规模及G/U仍开放，Free **NOT_RELEASE_READY**。
+
+已在原开发分支保全整理stash42c8877及副本。388fca4的先前推送和本轮远端查询超时，connector Transport closed；同步尚未确认，继续正常非强制推送，不覆盖远端。
+
+## 前一本地检查点（2026-10-17，Round338）
 
 实际诊断锁定re-enable竞态：新文档有效GET先到，0.2ms后同document的onCommitted清除pending，随后complete找不到请求。修复为严格保留一次同doc/route、当前epoch、未冲突且6秒内的pending；原grant/已完成receipt仍撤销，时钟不续期，完成仍需原frame/tab/body/context核验。独立审查发现并修正旧epoch复活反例。未改schema/hash/预算。[Round338原始证据](evidence/round338/README.md)。
 

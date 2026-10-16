@@ -12,7 +12,7 @@ const server=createServer(),normal=server.listeners('request')[0];server.removeA
 server.on('request',async(req,res)=>{const path=new URL(req.url,'http://127.0.0.1').pathname;if(path==='/shared-contracts.html'){res.writeHead(200,{'Content-Type':'text/html'});res.end('<!doctype html><title>Isolated IDB contracts</title>');return;}if(contracts.some(f=>path==='/tests/free/'+f)){try{res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8'});res.end(await readFile('.'+path));}catch{res.end();}}else normal(req,res);});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
 try{
- browser=await chromium.launch({headless:true});const results={},prefetchMetrics={};
+ browser=await chromium.launch({headless:true,...(process.env.FREE_CHROME_EXECUTABLE?{executablePath:process.env.FREE_CHROME_EXECUTABLE}:{})});const results={},prefetchMetrics={};
  // Independent origins/IDB contexts prevent fixtures from contaminating each other.
  for(const [name,file,fn] of [['lifecycle',contracts[0],'runSharedLifecycleContracts'],['batch',contracts[1],'runSharedBatchContracts'],['retention',contracts[2],'runSharedRetentionContracts']]){
   const context=await browser.newContext();try{const page=await context.newPage();await page.goto(`http://127.0.0.1:${server.address().port}/shared-contracts.html`);
