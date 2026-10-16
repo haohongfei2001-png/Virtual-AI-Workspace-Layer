@@ -55,7 +55,9 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const empty=()=>({candidates:[],membershipClaims:[],coverageClaims:[],detachedHandles:[]});
     if(stopped){if(cursor)throw Error('stale-surface-cursor');return {payload:empty(),cursor:null};}
     refreshRoute();refreshRoots();
-    if(!cursor)for(const [id,entry] of byId.entries()) if(!valid(entry)) { byId.delete(id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(id); }
+    // IDless Project reads do not perform unrelated member cleanup. Ordinary
+    // ingestion and every actual handle lookup retain the full live checks.
+    if(!cursor)for(const [id,entry] of byId.entries()) if((!candidateOnly||entry.regionKind==='projects')&&!valid(entry)) { byId.delete(id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(id); }
     const route=urlPolicy.parse(document.location.href),candidates=[],claims=new Map();
     let currentConversationId=null,currentProjectId=null;
     const visible=node=>{
