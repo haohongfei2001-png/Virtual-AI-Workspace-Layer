@@ -1,10 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-17，原本地目录，Round325）
+## 最新正式检查点（2026-10-17，原本地目录，Round325–326）
 
 1bce716已正常推送并API确认原Draft PR16/base。普通原生surface重复提案在源/行证据仍有效、字段/成员/库存不变且版本/授权再次核验时复用，不续期witness；过期/撤销/变化仍走原CAS，combined路径不变。纯resolved无变化不再反复通知重绘，IDless/失效句柄仍通知候选UI。独立17反例及最终完整Node **6322/6322 PASS**，复审无阻断。
 
 实际隔离headless原10k single-project CPU1、无准备/插桩、原门槛：两次完整审计同revision211、10000refs与10000PROJECT；两页查找及原生成员导航/唯一返回通过，文档/输入框保持。单次搜索/翻页约85/184/223ms，仅单样本非p95。首轮按钮重绘FAIL保留；最终仍 **PARTIAL_SYS04_NOT_ACCEPTED**，不冒称全规模/全F1。证据见[Round325](evidence/round325/README.md)。完整81/profile/J1–J4/G/U及其他规模仍开放，**Free NOT_RELEASE_READY**。
+
+87d9c40已正常推送并API确认原Draft PR16/base。随后原100k single-project CPU1仍在30秒成员门槛FAIL；原生尾部聊天导航通过，截止库存18216refs仅诊断快照，未到完整审计/性能样本。600×380原FAIL复核为原生history零高，保留几何护栏及原失败，不改宿主布局凑通过。[Round326](evidence/round326/README.md)。
 
 ## 前一正式检查点（2026-10-17，原本地目录，Round323–324）
 
