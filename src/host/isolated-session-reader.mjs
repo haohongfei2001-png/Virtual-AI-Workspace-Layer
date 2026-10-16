@@ -12,7 +12,12 @@ export function createIsolatedSessionReader({origin,fetch=globalThis.fetch,now=D
  if(!record(profile)||profile.structures!==undefined&&!record(profile.structures))throw Error('invalid-session-profile');
  const providerProfile=profile.id??'chatgpt-session-v1',structures=new Map(Object.entries(profile.structures??{personal:'personal',team:'organization',enterprise:'organization'}));
  if(!identifier(providerProfile)||[...structures.values()].some(value=>!['personal','organization','unknown'].includes(value)))throw Error('invalid-session-profile');
- async function read(options={}){
+ let activeReads=0,rawReads=0,revision=0;
+ // Local readiness only: an aborted/deadlined caller does not finish its transport.
+ function prepareIdle(){if(activeReads||rawReads)return null;const prepared=revision;return Object.freeze({isCurrent:()=>prepared===revision&&activeReads===0&&rawReads===0});}
+ async function trackRaw(work){rawReads++;try{return await work();}finally{rawReads--;}}
+ async function read(options={}){revision++;activeReads++;try{return await readInner(options);}finally{activeReads--;}}
+ async function readInner(options){
   if(!record(options)||Object.keys(options).some(key=>!['signal','timeoutMs'].includes(key)))throw Error('invalid-session-read-options');
   const {signal,timeoutMs=6000}=options;
   if(!Number.isFinite(timeoutMs)||timeoutMs<=0||timeoutMs>6000||signal!==undefined&&!(signal instanceof AbortSignal))throw Error('invalid-session-read-options');
@@ -22,7 +27,7 @@ export function createIsolatedSessionReader({origin,fetch=globalThis.fetch,now=D
   const cancelled=new Promise((_,reject)=>{onAbort=()=>reject(Error('session-aborted'));combined.addEventListener('abort',onAbort,{once:true});if(combined.aborted)onAbort();});
   const json=async(path,limit)=>{check();const target=origin+path,response=await fetch(target,{method:'GET',credentials:'include',cache:'no-store',redirect:'error',signal:combined,headers:{Accept:'application/json',...(token?{Authorization:'Bearer '+token}:{})}});check();return readSessionJSON(response,{target,limit,check});};
   try{
-   const result=await withRequestDeadline(()=>Promise.race([cancelled,(async()=>{
+   const result=await withRequestDeadline(()=>Promise.race([cancelled,trackRaw(async()=>{
     check();const session=await json('/api/auth/session',256*1024);check();
     const sessionTime=now();if(!Number.isFinite(sessionTime))throw Error('invalid-session-schema');
     const credentials=sessionCredentials(session,sessionTime),{principalId,expiresAt}=credentials;
@@ -31,10 +36,10 @@ export function createIsolatedSessionReader({origin,fetch=globalThis.fetch,now=D
     const contexts=sessionContexts(accounts,structures),time=now();check();
     if(!Number.isFinite(time)||instant(expiresAt)<=time)throw Error('session-expired');
     return {principalId,expiresAt,contexts,providerProfile,transport:'isolated-fixed-fetch'};
-   })()]),{timeoutMs,now:elapsedNow});
+   })]),{timeoutMs,now:elapsedNow});
    check();const returnedAt=now();if(!Number.isFinite(returnedAt)||instant(result.expiresAt)<=returnedAt)throw Error('session-expired');return result;
   }catch(error){const code=error?.message;throw Error(errors.has(code)?code:combined.aborted?'session-aborted':'session-transport-failed');}
   finally{token=null;combined.removeEventListener('abort',onAbort);controller.abort();}
  }
- return Object.freeze({read});
+ return Object.freeze({read,prepareIdle});
 }

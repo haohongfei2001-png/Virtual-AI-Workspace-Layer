@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round357）
+## 最新本地检查点（2026-10-17，Round358）
+
+身份读取新增可撤销局部准备：deadline/abort已返回但实际fetch/流读取/cancel未结束时仍拒绝idle，新read使旧快照永久失效。独立6项与审查通过；最终相关11文件 **265/265 PASS**，原API key测试失败及精确修正保留。见 [Round358](evidence/round358/README.md)。
+
+content整体接线和原子关闭尚未完成，无新MV3验收；UI-11/完整Free继续NOT_RELEASE_READY。035d048已核对精确SHA同步PR16，整理stash保持。
+
+## 前一本地检查点（2026-10-17，Round357）
 
 新增adapter可撤销观察准备：保留原生发送监听/队列，实际emit、摄取通知、重试及挂起iterator未结束时拒绝准备；新输入/扫描/绑定变化使旧快照失效。独立12项与审查通过，最终完整Node **6898/6898 PASS**，零skip/cancel。见 [Round357](evidence/round357/README.md)。
 
