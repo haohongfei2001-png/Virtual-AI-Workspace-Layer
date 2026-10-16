@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round288）
+## 最新正式检查点（2026-10-16，原本地目录，Round289）
+
+同一主体/context/profile允许主备认证来源双向续期，保留scope与界面身份，新冻结证明记录实际来源；旧在途观察在来源不一致时拒绝，同来源续期保持。独立16反例与完整Node **5692/5692 PASS**；快速来源往返ABA另行审查中，未计通过。
+
+真实headless MV3通过两个真实tab前后台切换：isolated→worker→isolated均verified，HELLO/REFRESH始终各1，原frames/mount/草稿保留；源码与fixture稳定，见[Round289](evidence/round289/README.md)。Round288正常push低速失败，本地成果保存后继续普通同步。完整81/G/U/冷启动/100k仍未完成，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round288）
 
 隔离主体可使用重新认证的worker回读完成ACK：保留主体真实来源，metadata/acceptance仍仅worker且身份/context/profile/有效期一致；私有readback记录原来源并前后复核，校准仍无ACK能力。独立41反例和完整Node **5676/5676 PASS**。
 

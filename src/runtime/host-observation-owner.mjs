@@ -163,14 +163,20 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
   if(typeof work!=='function')throw Error('invalid-body-reader');
   const entry=[...bodies.values()].find(item=>item.proofId===proofId);
   if(!entry||!entry.current())throw Error('stale-body-proof');
-  const attempt={entry,active:true,abort:new AbortController(),started:elapsedNow()};reads.add(attempt);
-  const guard=()=>attempt.active&&!attempt.abort.signal.aborted&&elapsedNow()>=attempt.started&&elapsedNow()-attempt.started<6000&&entry.current();
+  const attempt={entry,active:true,abort:new AbortController(),started:elapsedNow()};reads.add(attempt);let principalSource=null;
+  const guard=()=>{
+   if(!attempt.active||attempt.abort.signal.aborted||elapsedNow()<attempt.started||elapsedNow()-attempt.started>=6000||!entry.current())return false;
+   if(!principalSource)return true;
+   const principal=authority.peek(entry.frame).grant?.principal;
+   return principal?.transport===principalSource.transport&&principal?.providerProfile===principalSource.providerProfile;
+  };
   const check=()=>{if(!guard())throw Error('stale-body-proof');};
   try{return await withRequestDeadline(async()=>{
    if(!await handshake.verify(entry.proposal,entry.sender))throw Error('stale-body-proof');check();
    const actual=await getFrame({tabId:entry.frame.tabId,frameId:0});check();
    if(!handshake.matchesFrame(entry.proposal,entry.sender,actual)||actual.url!==entry.frame.actualURL)throw Error('stale-body-proof');
    const principal=authority.peek(entry.frame).grant.principal;
+   principalSource=Object.freeze({transport:principal.transport,providerProfile:principal.providerProfile});check();
    const result=await work(Object.freeze({scope:Object.freeze({...entry.scope}),tabId:entry.frame.tabId,browserDocumentId:entry.frame.documentId,scopeGrantId:entry.grantId,scopeEpoch:entry.scopeEpoch,providerProfile:principal.providerProfile,providerTransport:principal.transport,documentToken:entry.proposal.documentToken,producerToken:entry.proposal.producerToken,routeEpoch:entry.proposal.routeEpoch,conversationId:entry.claim.conversationId,messageIds:Object.freeze([...entry.claim.messageIds]),bodyEpoch:entry.bodyEpoch,evidenceClass:'dom-observed',guard,signal:attempt.abort.signal}));
    if(!await handshake.verify(entry.proposal,entry.sender))throw Error('stale-body-proof');check();return result;
   },{now:elapsedNow,schedule,cancel});}finally{attempt.active=false;attempt.abort.abort();reads.delete(attempt);}

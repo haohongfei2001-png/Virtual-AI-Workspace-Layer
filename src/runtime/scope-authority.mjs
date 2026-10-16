@@ -77,10 +77,10 @@ export function createScopeAuthority({provider,profile,readIdentity=null,context
   }),aborted]),{timeoutMs:6000,now:elapsedNow,schedule,cancel}).then(({identity,contextReceipt})=>{
    if(!current()||entry.contextReceipt&&contextReceipt!==entry.contextReceipt)throw Error('stale-scope-refresh');
    const {time,expiry,scope,principalKey}=inspectIdentity(identity,started,contextReceipt);
-   if(!scope||scope.key!==original.scopeKey||principalKey!==original.principal.principalKey||scope.organizationId!==original.context.contextKey||profile.id!==entry.bindingProfile||identity.providerProfile!==original.principal.providerProfile||identity.transport!==original.principal.transport)throw Error('scope-identity-changed');
+   if(!scope||scope.key!==original.scopeKey||principalKey!==original.principal.principalKey||scope.organizationId!==original.context.contextKey||profile.id!==entry.bindingProfile||identity.providerProfile!==original.principal.providerProfile)throw Error('scope-identity-changed');
    const receipt=makeId();if(!tokenOK(receipt)||receipt===original.id||receipt===original.principal.id)throw Error('invalid-scope-proof-id');
    const until=Math.min(expiry,time+proofTTL,...(contextReceipt?[contextReceipt.wall+60000]:[])),expiresAt=new Date(until).toISOString(),verifiedAt=new Date(time).toISOString();
-   const principal=Object.freeze({...original.principal,id:receipt,verifiedAt,expiresAt});
+   const principal=Object.freeze({...original.principal,id:receipt,transport:identity.transport,verifiedAt,expiresAt});
    const context=Object.freeze({...original.context,...(entry.contextReceipt?{authorizedContextReceiptId:receipt}:{rosterReceiptId:receipt})});
    if(!current())throw Error('stale-scope-refresh');
    entry.until=until;entry.grant=Object.freeze({...original,principal,context,expiresAt});
