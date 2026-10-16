@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round297）
+## 最新正式检查点（2026-10-16，原本地目录，Round298）
+
+已fetch并正常push6019b47，API确认原Draft PR16/base不变；dot与Pro提交保留。新增独立30s有界摄取准备验收路径，保留即时失败、完整ID/member审计与测量前后同revision；补齐只读审计超时取消，生产预算不变。
+
+定向Node **176/176 PASS**。隔离MV3：1k精确1000refs且测量版本稳定，但成员全UNKNOWN、仅单次样本；最终10k持续增长至5427/10000，完整审计FAIL，性能NOT_RUN。见[Round298](evidence/round298/README.md)。继续剩余正确性验收；完整Free仍 **NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round297）
 
 现有UI owner按scope固定100ms合并后台目录空数据提示，重复不延后；combined当前观察与ACK立即通知、nativePublished同步保持。单mount提示不吞其他mount更新，撤权/旧timer/容量回退均有独立反例。
 

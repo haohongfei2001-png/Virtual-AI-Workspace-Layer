@@ -1,3 +1,4 @@
+import {prepareHostScaleAdmission} from './fixtures/host-scale-admission-preparation.mjs';
 import {observeHostScaleAdmission} from './fixtures/host-scale-admission-observation.mjs';
 import {hostScaleFailureProgress} from './fixtures/host-scale-progress.mjs';
 import {createScaleTracePackage,verifyScaleTracePackage,appendScaleTrace,collectScaleWorkerTrace} from './host-scale-trace.mjs';
@@ -32,7 +33,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
  const traceEnabled=process.env.FREE_HOST_SCALE_TRACE==='1',traceThroughReturn=traceEnabled&&process.env.FREE_HOST_SCALE_TRACE_RETURN==='1';
  if(traceEnabled)report.traceRange=traceThroughReturn?'through-native-return':'initial-ingestion';
  let server,context,manifest,manifestPath,manifestHash,directory,activePage,loadedExtensionId,tracePackage;
- const sourceFiles=['host-scale-package-browser.mjs','host-scale-trace.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-admission-observation.mjs','fixtures/host-scale-progress-sampler.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
+ const sourceFiles=['host-scale-package-browser.mjs','host-scale-trace.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-admission-observation.mjs','fixtures/host-scale-admission-preparation.mjs','fixtures/host-scale-progress-sampler.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sourceFiles.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -118,10 +119,14 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   // Dynamic module import belongs in an existing extension page, not an MV3 worker.
   const auditFrameURL=`chrome-extension://${id}/workspace.html`;
   const currentAuditFrame=()=>{const frames=page.frames().filter(frame=>frame.url()===auditFrameURL&&!frame.isDetached());return frames.length===1?frames[0]:null;};
-  const audit=async()=>{
+  const audit=async({signal,remainingMs}={})=>{
    report.phase=report.measurementStarted?'post-measurement-audit':'pre-measurement-audit';
-   const auditFrame=await observeCurrentFrame(currentAuditFrame,frame=>frame.evaluate(()=>document.readyState!=='loading'),{parentAlive:()=>!page.isClosed(),timeout:15000});
-   const snapshot=await auditFrame.evaluate(auditHostScaleIndex,{size:scenario.size,distribution:scenario.distribution,requireProjectMembership:scenario.distribution==='single-project',limit:500});
+   const deadline=Number.isFinite(remainingMs)?performance.now()+remainingMs:null;
+   const remaining=()=>{if(signal?.aborted)throw Error('request-timeout');const ms=deadline===null?null:deadline-performance.now();if(ms!==null&&ms<=0)throw Error('request-timeout');return ms;};
+   const auditFrame=await observeCurrentFrame(currentAuditFrame,frame=>frame.evaluate(()=>document.readyState!=='loading'),{parentAlive:()=>!page.isClosed()&&!signal?.aborted,timeout:Math.min(15000,remaining()??15000)});
+   const budget=remaining();
+   const snapshot=await auditFrame.evaluate(auditHostScaleIndex,{size:scenario.size,distribution:scenario.distribution,requireProjectMembership:scenario.distribution==='single-project',limit:500,...(budget===null?{}:{timeoutMs:budget})});
+   remaining();
    assert(!page.isClosed()&&!auditFrame.isDetached()&&currentAuditFrame()===auditFrame,'audit frame changed; snapshot not accepted');return snapshot;
   };
   report.ingestionObservationMs=performance.now()-ingestionStarted;
@@ -132,6 +137,17 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    report.diagnosticIndexAudit=await audit();
   }
   if((traceEnabled||process.env.FREE_HOST_SCALE_PROGRESS==='1'||process.env.FREE_HOST_SCALE_ADMISSION_OBSERVE==='1')){report.measurement={status:'NOT_RUN_DIAGNOSTIC_INGESTION_OBSERVATION',samples:null,acceptance:'NOT_ESTABLISHED'};throw Error('diagnostic-progress-run-cannot-produce-scale-timing');}
+  if(process.env.FREE_HOST_SCALE_ADMISSION_PREPARE==='1'){
+   report.admissionPath='EXPLICIT_BOUNDED_PREPARATION_NOT_IMMEDIATE_INDEX';
+   report.immediateIndexAudit=await audit();
+   report.admissionPreparation=await prepareHostScaleAdmission({initialAudit:report.immediateIndexAudit,
+    read:({remainingMs})=>hostScaleFailureProgress(page,id,{timeout:Math.min(1000,remainingMs)}),audit});
+   if(!report.admissionPreparation.ready){
+    report.indexAudit=report.admissionPreparation.finalAudit??report.immediateIndexAudit;
+    report.measurement={status:'NOT_RUN_ADMISSION_PREPARATION_INCOMPLETE',samples:null,acceptance:'NOT_ESTABLISHED'};
+    throw Error('host-scale-admission-preparation-'+report.admissionPreparation.status);
+   }
+  }
   report.measurement=await measureAtAdmittedScale({audit,measure:async()=>{
    report.phase='local-search-pagination-measurement';report.measurementStarted=true;
    // Actual existing local-search/pagination UI, no native navigation or injected RPC.
