@@ -69,7 +69,11 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
   // onClear may synchronously start or stop a newer lifecycle. The outer
   // start must not overwrite its port/listeners or share its epoch.
   if(epoch!==run)return false;active=true;
-  appearanceListener=event=>{if(!active||epoch!==run||event.source!==doc.defaultView.parent||event.origin!==parentOrigin)return;const data=event.data;if(!exactHostRecord(data,['type','role','appearance'])||data.type!=='VAIWL_UI_APPEARANCE'||data.role!==role)return;try{const value=validateFrameAppearance(data.appearance),key=JSON.stringify(value);if(key===appearanceKey)return;appearance?.apply(value);appearanceKey=key;onAppearance(value);}catch{/* Cosmetic input cannot change authority or restart the client. */}};
+  appearanceListener=event=>{if(!active||epoch!==run||event.source!==doc.defaultView.parent||event.origin!==parentOrigin)return;const data=event.data;
+   // Parent presentation messages may only remove authority. A later session
+   // still needs start() and the full private two-channel grant exchange.
+   if(exactHostRecord(data,['type','role'])&&data.type==='VAIWL_UI_IDLE'&&data.role===role){stop('ui-idle');return;}
+   if(!exactHostRecord(data,['type','role','appearance'])||data.type!=='VAIWL_UI_APPEARANCE'||data.role!==role)return;try{const value=validateFrameAppearance(data.appearance),key=JSON.stringify(value);if(key===appearanceKey)return;appearance?.apply(value);appearanceKey=key;onAppearance(value);}catch{/* Cosmetic input cannot change authority or restart the client. */}};
   doc.defaultView.addEventListener?.('message',appearanceListener);
   abort=new AbortController();const signal=abort.signal;
   try{

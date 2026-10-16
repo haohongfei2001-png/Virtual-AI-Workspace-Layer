@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round349）
+## 最新本地检查点（2026-10-17，Round351）
+
+积压三个commit已精确SHA同步原Draft PR16至8197cf1，base保持，核对本地/origin0/0。新增UI frame单向IDLE撤权端点：严格父窗口/origin/role/消息结构，清私人投影并停止续租，迟到join/renew不能复活。相关14文件 **247/247 Node PASS**。见 [Round351](evidence/round351/README.md)。
+
+自动待命尚未接通：隐藏时必须先证明没有尚未持久化的发送意图/ACK，不能直接abort丢确认；当前只有frame端点，父controller仍沿旧SUSPEND处理，**不是UI-11通过**。自然休眠、正式profile及完整Free继续NOT_RELEASE_READY。
+
+## 前一本地检查点（2026-10-17，Round349）
 
 修复UI frame两项已独立复现的生命周期问题：expiry timer延迟时迟到续租ACK不得复活旧grant；start清理回调重入时旧启动不得覆盖新port或泄漏监听器。正常短lease续租与exit重入保持。最终13文件 **237/237 Node PASS**，独立审查无阻断；未运行新浏览器。见 [Round349](evidence/round349/README.md)。
 
