@@ -2,7 +2,7 @@
 
 ## 最新正式检查点（2026-10-16，隔离云环境）
 
-原分支 / Draft PR16 当前正式提交18ff563（Round254）。CI50 Node5065/5065及12个guard变异通过，两个browser job失败。新Evidence恢复真实UI首步已证明旧来源撤销、原事件/ACK/已完成continuation/人工资产/草稿保持及当前活动归空；后续原生333历史链接未加载而超时，新认证恢复与重绑仍未获S结论，测试候选改用现有真实原生搜索并精确href点击。J2及SYS05旧只读测试oracle漏传新版完整sources map，已完成并独审通过保持原断言的测试合同同步；不是放宽产品授权。1k单项目reading可见旅程再次完整前后1000 PROJECT、零UNKNOWN/错归属/缺失/重复且revision105稳定，42.17/86.43/125.89ms仍仅单样本。独立cold20s再次失败，CI49单次全绿没有关闭间歇问题。原失败报告与精确hash核验见[Round255](evidence/round255/README.md)，CI49原证据保留[Round254](evidence/round254/README.md)。完整81、SYS04/SYS05、J4、G/U与发布条件仍未完成。
+原分支 / Draft PR16 当前正式提交7e0299b（Round255）。CI51三个job全绿，Node5076/5076及12个guard变异通过。J4原19步加4个Evidence恢复步骤连续23步实际PASS：真实UI修复保旧源撤销/资产/草稿，新认证当前正文历史产生_r1，真实新send产生ACK_r1，重绑完整Evidence字节与Team隔离保持；仅该窄恢复切片闭合，pending修复/完整J4仍未覆盖。J2真实8步与两个就绪后SYS05恢复通过；SYS05保守可见上界229ms仍单样本。1k单项目前后完整1000 PROJECT、零UNKNOWN/错归属/缺失/重复且revision104稳定，33.94/86.73/114.82ms仍非p95。独立cold本次通过，CI50及历史间歇失败保留。下一现行矩阵唯一scale槽改10k单项目，完整逐ID/projectId前后审计与原预算不变，结果尚待新CI。详见[Round256](evidence/round256/README.md)。完整81、SYS04/SYS05、UI、G/U与发布条件仍未完成。
 
 ## 历史正式检查点（Round219，保留原记录）
 
