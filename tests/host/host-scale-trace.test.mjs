@@ -188,3 +188,30 @@ test('classic trace rebuild follows instrumented source and rejects stale or for
   const missing={...trace,changes:trace.changes.filter(row=>row.path!=='extension/classic-runtime.js')};await assert.rejects(verifyScaleTracePackage(missing),/manifest-missing-generated/);
  }finally{await rm(dir,{recursive:true,force:true});}
 });
+
+test('publication cause anchors reject omission and duplication',async()=>{
+ for(const [index,anchor]of [[2,'  requestScan(owned);'],[2,'  if(surfaceChanged)requestScan();else schedule();'],[2,"failedKey.delete('current-object');requestScan(true);return true;"],[2,'     if(!surfaceScanning){for(const cache'],[5,'   let result;'],[5,'   if(!result.ok)return result.reason']]){
+  const source=await readFile(join(root,TRACE_PATHS[index]),'utf8');for(const replacement of ['',anchor+anchor])assert.throws(()=>instrumentScaleSource(TRACE_PATHS[index],source.replace(anchor,replacement)),/anchor-mismatch/);
+ }
+});
+test('actual page decision distinguishes equal facts from detached forced publication without exposing keys',async()=>{
+ const out=await actual(2),hook=out.match(/try\{__scaleEmit\("surface-page-decision",\{[^\n]+?catch\{\}/)[0];
+ for(const [equal,detached,published]of [[true,0,false],[true,1,true],[false,0,true]]){
+  const c=vm.createContext({TextEncoder,Date,performance,__scaleAdapter:3,__scaleStats:{producer:4},surfacePageKey:7,surfaceKey:'PRIVATE_KEY',surfaceAccepted:new Map([[7,equal?'PRIVATE_KEY':'OTHER_PRIVATE']]),source:{payload:{detachedHandles:Array(detached).fill('PRIVATE_HANDLE')}},surfaceParts:published?[{private:'PRIVATE_PAYLOAD'}]:[]});
+  vm.runInContext(recorder+hook,c);const row=c.__vaiwlScaleTrace.events[0];assert.equal(row.equalAcceptedKey,equal);assert.equal(row.detachedCount,detached);assert.equal(row.publishDecision,published);assert.equal(row.pageOrdinal,7);assert(!JSON.stringify(row).includes('PRIVATE'));assert.equal(c.surfaceParts.length,published?1:0);
+ }
+});
+test('actual scan cause callsites preserve request count and argument',async()=>{
+ const out=await actual(2);
+ for(const [name,tail]of [['renewalCause','requestScan(true);return true;'],['toggleCause','requestScan(owned);'],['mutationCause','requestScan();'],['initialCause','requestScan(true);']]){
+  const re=new RegExp("__scaleEmit\\('scan-cause',\\{adapterOrdinal:__scaleAdapter,"+name+"[^;]+;"),emit=out.match(re)?.[0];assert(emit);assert(out.includes(emit+tail));
+  let calls=0,arg;const c=vm.createContext({TextEncoder,Date,performance,__scaleAdapter:3,owned:true,requestScan:value=>{calls++;arg=value;}});vm.runInContext(recorder+'(()=>{'+emit+tail+'})()',c);assert.equal(calls,1);assert.equal(arg,name==='mutationCause'?undefined:true);assert.equal(c.__vaiwlScaleTrace.events[0][name],true);
+ }
+});
+test('owner publication and result report only existing semantic flags and numbers',async()=>{
+ const out=await actual(5),before=out.match(/const __scalePublication=__scaleOrdinal\(\);[^\n]+?let result;/)[0],after=out.match(/try\{__scaleEmit\("owner-result",[^\n]+?catch\{\}/)[0];
+ for(const changed of [false,true]){const c=vm.createContext({TextEncoder,Date,performance,previous:changed?{}:undefined,nativeChanged:changed,revalidating:!changed,combined:changed?{private:'PRIVATE'}:null,batch:{projects:[{id:'PRIVATE'}],refs:[{title:'PRIVATE'}],membership:[]}});vm.runInContext(recorder+before+'result={ok:true,revision:123,private:"PRIVATE"};'+after,c);const [a,b]=c.__vaiwlScaleTrace.events;assert.equal(a.nativeChanged,changed);assert.equal(a.revalidating,!changed);assert.equal(a.combined,changed);assert.equal(a.refsCount,1);assert.equal(a.projectsCount,1);assert.equal(a.membershipCount,0);assert.equal(b.revision,123);assert.equal(a.producer,b.producer);assert(!JSON.stringify(c.__vaiwlScaleTrace).includes('PRIVATE'));const target={events:[],bytes:0,dropped:0};appendScaleTrace(target,a);appendScaleTrace(target,b);assert.equal(target.events.length,2);}
+});
+test('adapter lifecycle uses anonymous distinct starts and does not invent stop reasons',async()=>{
+ const out=await actual(2),start=out.match(/__scaleAdapter=__scaleOrdinal\(\);__scaleEmit\("adapter-start",[^;]+;/)[0],stop=out.match(/__scaleEmit\('adapter-stop',\{[^;]+;/)[0];const c=vm.createContext({TextEncoder,Date,performance,__scaleAdapter:0,stopped:true});vm.runInContext(recorder+stop,c);c.stopped=false;vm.runInContext(start+stop+start,c);const rows=c.__vaiwlScaleTrace.events;assert.equal(rows[0].wasLive,false);assert.equal(rows[2].wasLive,true);assert.equal(rows[1].adapterOrdinal,rows[2].adapterOrdinal);assert.notEqual(rows[1].adapterOrdinal,rows[3].adapterOrdinal);assert(rows.every(row=>Number.isFinite(row.at)));assert(rows.every(row=>!Object.hasOwn(row,'reason')));
+});

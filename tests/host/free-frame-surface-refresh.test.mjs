@@ -61,3 +61,28 @@ test('explicit projection requests remain available on closed surfaces',async t=
 test('known closed GET state cannot suppress authorized initial bootstrap',async t=>{
  const f=fixture();t.after(()=>f.client.stop());f.setSurfaceGet(async()=>({ok:true,surface:{revision:1,visible:false}}));await f.client.start();await drain();assert.equal(f.views,1);assert.equal(f.pages.length,1);hint(f);await drain();assert.equal(f.views,1);
 });
+
+for(const role of ['workspace','sidebar'])for(const hidden of ['surface','document'])test(`${role}: same-grant renewal while ${hidden} hidden refreshes authority and hint without starting VIEW`,async t=>{
+ const f=fixture(role);t.after(()=>f.client.stop());await f.client.start();await drain();
+ const before=f.views,gets=f.calls.filter(m=>m.type==='HOST_UI_SURFACE_STATE_GET').length,calibrations=calibrationCount(f);
+ if(hidden==='surface')surface(f,7,false);else f.visibility('hidden');
+ for(let i=0;i<5;i++)hint(f);
+ await f.advance(10000);
+ assert.equal(f.calls.filter(m=>m.type==='HOST_UI_RENEW').length,1);
+ assert.equal(f.calls.filter(m=>m.type==='HOST_UI_SURFACE_STATE_GET').length,gets+1);
+ assert.equal(f.views,before,'authority renewal is not an explicit projection request');
+ assert.equal(f.stops,0);assert.equal(f.parentMessages.filter(p=>p.message.type==='VAIWL_UI_SUSPEND').length,0);
+ hint(f);await drain();assert.equal(f.views,before);
+ if(hidden==='surface'){surface(f,8,true);await drain();assert.equal(calibrationCount(f),calibrations);}else{f.visibility('visible');await drain();}
+ assert.equal(f.views,before+1,'real reappearance consumes accumulated dirty work once');
+});
+for(const role of ['workspace','sidebar'])test(`${role}: visible same-grant renewal retains normal fresh VIEW`,async t=>{
+ const f=fixture(role);t.after(()=>f.client.stop());await f.client.start();await drain();surface(f,1,true);const before=f.views;
+ await f.advance(10000);assert.equal(f.views,before+1);assert.equal(f.stops,0);
+});
+for(const terminal of ['expiry','disconnect'])test(`closed surface still clears immediately on ${terminal}`,async t=>{
+ const f=fixture();t.after(()=>f.client.stop());await f.client.start();await drain();surface(f,1,false);const before=f.views;
+ if(terminal==='expiry')await f.advance(20000);else{f.disconnect();await drain();}
+ assert.equal(f.stops,1);assert.equal(f.privateRoot.children.length,0);assert(f.parentMessages.some(p=>p.message.type==='VAIWL_UI_SUSPEND'));
+ surface(f,2,true);hint(f);await drain();assert.equal(f.views,before);
+});

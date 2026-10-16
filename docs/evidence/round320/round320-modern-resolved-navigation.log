@@ -1,0 +1,1 @@
+{"status":"FAIL","error":"page.waitForFunction: Timeout 20000ms exceeded.\n    at workspace (/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/resolved-navigation-package-browser.mjs:21:10)\n    at /Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/resolved-navigation-package-browser.mjs:37:97","results":[]}
