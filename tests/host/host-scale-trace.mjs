@@ -1,3 +1,4 @@
+import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
 import {cp,readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -118,12 +119,20 @@ export function instrumentScaleSource(path,source){
 export async function createScaleTracePackage(source,destination){
  await cp(source,destination,{recursive:true,errorOnExist:true,force:false});const changes=[];
  for(const path of TRACE_PATHS){const original=await readFile(join(source,path),'utf8'),instrumented=instrumentScaleSource(path,original);await writeFile(join(destination,path),instrumented);changes.push({path,originalSha256:hash(original),instrumentedSha256:hash(instrumented)});}
+ const compiled=compileClassicWorker(destination);
+ for(const [path,instrumented] of [['extension/worker.mjs',compiled.entry],['extension/classic-runtime.js',compiled.runtime]]){
+  const original=await readFile(join(source,path),'utf8');await writeFile(join(destination,path),instrumented);
+  changes.push({path,originalSha256:hash(original),instrumentedSha256:hash(instrumented)});
+ }
  return {unpacked:destination,kind:'DIAGNOSTIC_ONLY_INSTRUMENTED_COPY',limit:1024,maxBytes:131072,changes,authorityChanged:false,originalPackageUntouched:true};
 }
 export async function verifyScaleTracePackage(trace){
  const info=JSON.parse(await readFile(join(trace.unpacked,'build-manifest.json'),'utf8'));
+ for(const path of ['extension/worker.mjs','extension/classic-runtime.js'])if(!Object.hasOwn(info.files,path)||trace.changes.filter(row=>row.path===path).length!==1)throw Error('scale-trace-manifest-missing-generated');
  for(const [path,expected]of Object.entries(info.files)){const changed=trace.changes.find(row=>row.path===path);if(changed&&changed.originalSha256!==expected)throw Error('scale-trace-original-hash-mismatch');if(hash(await readFile(join(trace.unpacked,path)))!==(changed?.instrumentedSha256??expected))throw Error('scale-trace-package-changed');}
- if(TRACE_PATHS.some(path=>!Object.hasOwn(info.files,path)))throw Error('scale-trace-manifest-missing-source');return true;
+ if(TRACE_PATHS.some(path=>!Object.hasOwn(info.files,path)))throw Error('scale-trace-manifest-missing-source');
+ const compiled=compileClassicWorker(trace.unpacked);if(await readFile(join(trace.unpacked,'extension/worker.mjs'),'utf8')!==compiled.entry||await readFile(join(trace.unpacked,'extension/classic-runtime.js'),'utf8')!==compiled.runtime)throw Error('scale-trace-worker-build-mismatch');
+ return true;
 }
 /** Validate console / worker rows again before adding to the report. */
 export function appendScaleTrace(target,row){

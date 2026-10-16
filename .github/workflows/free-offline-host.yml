@@ -29,6 +29,8 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
+      - name: Install locked Host build tool
+        run: npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
       - name: Complete Node contracts including historical writer compatibility
         run: node --test --test-concurrency=2 $(find tests -name '*.test.mjs' -not -path '*/node_modules/*' | sort)
       - name: Twelve isolated guard mutation contracts
@@ -47,6 +49,8 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
+      - name: Install locked Host build tool
+        run: npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
       - name: Install locked test tools and isolated Chromium
         run: |
           npm ci --prefix tests/b1/tooling --ignore-scripts
@@ -119,6 +123,8 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
+      - name: Install locked Host build tool
+        run: npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
       - name: Install locked test tools and isolated Chromium
         run: |
           npm ci --prefix tests/b1/tooling --ignore-scripts

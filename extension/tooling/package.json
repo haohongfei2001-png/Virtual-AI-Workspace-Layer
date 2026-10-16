@@ -1,0 +1,8 @@
+{
+  "name": "vaiwl-host-build-tooling",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "esbuild": "0.25.12"
+  }
+}

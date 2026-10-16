@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round310）
+## 最新正式检查点（2026-10-16，原本地目录，Round311）
+
+正式构建接入可复现双段classic worker，先注册原唯一C2 owner再加载私有runtime；锁定工具依赖、生成字节核对、CI安装和测试副本重编译同时接通。完整Node **6017/6017 PASS**。未插桩正式包与独立诊断副本均通过实际隔离冷启动：原20秒双surface挂载，随后15秒标题/独立team scope核验，全程单GET，实际加载哈希/清理均通过。
+
+详见[Round311](evidence/round311/README.md)。5fc4d25已推送并API确认原Draft PR16/base。本次仅证明指定离线C2切片；真实profile仍fail-closed，完整81/规模/J4/G/U等未完成，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round310）
 
 两段classic worker临时包通过严格隔离MV3冷启动：唯一原C2监听器先注册，再加载runtime；精确worker ID/实际manifest/加载脚本SHA256与完整时序均核验，原20秒双surface挂载门槛通过，随后独立标题/team scope核验通过，全程单GET（标题仍是单独15秒期限）。首份缺执行证据报告不计通过；完整原件见[Round310](evidence/round310/README.md)。生产构建尚未切换，此结果仅为候选验证，不冒称生产冷启动已完成。
 

@@ -1,3 +1,5 @@
+import {createHash} from 'node:crypto';
+import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';
 import {readFile,mkdtemp,writeFile,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join,resolve} from 'node:path';import {fileURLToPath} from 'node:url';import {execFileSync} from 'node:child_process';
 import {TRACE_RECORDER,TRACE_PATHS,instrumentScaleSource,createScaleTracePackage,verifyScaleTracePackage,appendScaleTrace,collectScaleWorkerTrace} from './host-scale-trace.mjs';
@@ -164,4 +166,25 @@ test('freePage observation cannot invoke selected array accessors or precede nat
 test('freePage anchors and report boundary reject altered instrumentation and unsafe page fields',async()=>{
  const source=await readFile(join(root,TRACE_PATHS[4]),'utf8'),anchor='        const {state}=context,knownState=';for(const replacement of ['',anchor+anchor])assert.throws(()=>instrumentScaleSource(TRACE_PATHS[4],source.replace(anchor,replacement)),/anchor-mismatch/);
  const c=vm.createContext({TextEncoder,Date,performance});vm.runInContext(recorder+`;__scaleEmit('page-terminal',{pageReadsMs:null,pageProjectionMs:Infinity,selectedRefsCount:5,selectedProjectsCount:1,query:'PRIVATE',scope:'PRIVATE'});`,c);const target={events:[],bytes:0,dropped:0};appendScaleTrace(target,c.__vaiwlScaleTrace.events[0]);assert.equal(target.events.length,1);assert.equal(target.events[0].pageReadsMs,null);assert.equal(target.events[0].selectedRefsCount,5);assert.equal(target.events[0].pageProjectionMs,undefined);assert(!JSON.stringify(target).includes('PRIVATE'));for(const value of ['PRIVATE',null,Infinity,-1])appendScaleTrace(target,{kind:'page-terminal',at:1,selectedRefsCount:value});assert.equal(target.dropped,4);
+});
+
+test('classic trace rebuild follows instrumented source and rejects stale or forged generated files',async()=>{
+ const {buildHost}=await import(join(root,'extension/build.mjs')),dir=await mkdtemp(join(tmpdir(),'classic-trace-rebuild-'));
+ try{
+  const original=join(dir,'original');buildHost(original,{offlineOrigin:'http://127.0.0.1:3210'});
+  const trace=await createScaleTracePackage(original,join(dir,'copy')),compiled=compileClassicWorker(trace.unpacked);
+  for(const [path,expected]of [['extension/worker.mjs',compiled.entry],['extension/classic-runtime.js',compiled.runtime]]){
+   assert.equal(await readFile(join(trace.unpacked,path),'utf8'),expected);assert(trace.changes.some(row=>row.path===path));
+   const file=join(trace.unpacked,path),row=trace.changes.find(row=>row.path===path),saved=row.instrumentedSha256;
+   await writeFile(file,expected+'\n/* altered */');await assert.rejects(verifyScaleTracePackage(trace),/package-changed/);
+   row.instrumentedSha256=createHash('sha256').update(expected+'\n/* altered */').digest('hex');await assert.rejects(verifyScaleTracePackage(trace),/worker-build-mismatch/);
+   await writeFile(file,expected);row.instrumentedSha256=saved;
+  }
+  const sourcePath='src/runtime/free-read-service.mjs',file=join(trace.unpacked,sourcePath),modified=await readFile(file,'utf8')+'\nglobalThis.__classicTraceSourceSentinel="CLASSIC_TRACE_SOURCE_SENTINEL";';
+  assert.notEqual(await readFile(join(trace.unpacked,'extension/classic-runtime.js'),'utf8'),await readFile(join(original,'extension/classic-runtime.js'),'utf8'));
+  await writeFile(file,modified);trace.changes.find(row=>row.path===sourcePath).instrumentedSha256=createHash('sha256').update(modified).digest('hex');
+  const changed=compileClassicWorker(trace.unpacked);assert.notEqual(changed.runtime,compiled.runtime);assert(changed.runtime.includes('CLASSIC_TRACE_SOURCE_SENTINEL'));
+  await assert.rejects(verifyScaleTracePackage(trace),/worker-build-mismatch/);
+  const missing={...trace,changes:trace.changes.filter(row=>row.path!=='extension/classic-runtime.js')};await assert.rejects(verifyScaleTracePackage(missing),/manifest-missing-generated/);
+ }finally{await rm(dir,{recursive:true,force:true});}
 });

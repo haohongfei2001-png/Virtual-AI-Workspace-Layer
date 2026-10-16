@@ -1,3 +1,4 @@
+import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
 import {cp,readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -37,15 +38,22 @@ export async function createColdTracePackage(source,destination){
   const original=await readFile(join(source,path),'utf8'),instrumented=instrumentColdSource(path,original);
   await writeFile(join(destination,path),instrumented);changes.push({path,originalSha256:hash(original),instrumentedSha256:hash(instrumented)});
  }
+ const compiled=compileClassicWorker(destination);
+ for(const [path,instrumented] of [['extension/worker.mjs',compiled.entry],['extension/classic-runtime.js',compiled.runtime]]){
+  const original=await readFile(join(source,path),'utf8');await writeFile(join(destination,path),instrumented);
+  changes.push({path,originalSha256:hash(original),instrumentedSha256:hash(instrumented)});
+ }
  return {unpacked:destination,kind:'PASSIVE_OFFLINE_PACKAGE_COPY',limit:160,changes,authorityChanged:false,originalPackageUntouched:true};
 }
 
 export async function verifyColdTracePackage(trace){
  const info=JSON.parse(await readFile(join(trace.unpacked,'build-manifest.json'),'utf8'));
+ for(const path of ['extension/worker.mjs','extension/classic-runtime.js'])if(!Object.hasOwn(info.files,path)||trace.changes.filter(row=>row.path===path).length!==1)throw Error('cold-trace-manifest-missing-generated');
  for(const [path,expected] of Object.entries(info.files)){
   const changed=trace.changes.find(row=>row.path===path);
   if(changed&&changed.originalSha256!==expected)throw Error('cold-trace-original-hash-mismatch');
   if(hash(await readFile(join(trace.unpacked,path)))!==(changed?.instrumentedSha256??expected))throw Error('cold-trace-package-changed:'+path);
  }
+ const compiled=compileClassicWorker(trace.unpacked);if(await readFile(join(trace.unpacked,'extension/worker.mjs'),'utf8')!==compiled.entry||await readFile(join(trace.unpacked,'extension/classic-runtime.js'),'utf8')!==compiled.runtime)throw Error('cold-trace-worker-build-mismatch');
  return true;
 }

@@ -6,7 +6,7 @@ import {mkdtempSync,rmSync,readFileSync,realpathSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,relative} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
-import {registerHooks} from 'node:module';
+import {runInThisContext} from 'node:vm';
 import {MockIDBFactory} from '../b23/mock-idb.mjs';
 import {createHostBrowserBootstrap} from '../../src/runtime/host-browser-bootstrap.mjs';
 import {createHostWorkerRuntime} from '../../src/runtime/host-worker-runtime.mjs';
@@ -116,20 +116,20 @@ for(const failure of ['service','repository'])test(failure+' construction failur
  const f=fixture(t);await f.finish(await f.send());assert.throws(()=>f.start(failure==='service'?{serviceFactory:()=>{throw Error('expected-service-failure');}}:{indexedDB:null}),failure==='service'?/expected-service-failure/:/indexeddb-unavailable/);assert(Object.values(f.events).every(e=>e.listeners.size===0));assert.equal(await f.owner.verify(frame),null);
 });
 
-for(const enabled of [true,false])test('packaged static module evaluation registers early before heavy graph; C2 enabled='+enabled,async t=>{
+for(const enabled of [true,false])test('packaged classic bootstrap registers before runtime loading; C2 enabled='+enabled,async t=>{
  const dir=realpathSync(mkdtempSync(join(tmpdir(),'vaiwl-bootstrap-evaluation-')));t.after(()=>rmSync(dir,{recursive:true,force:true}));const out=join(dir,'package'),info=buildHost(out,enabled?{offlineOrigin:origin,offlineContext:true}:{}),record=[];
  const f=fixture(t,{enabled:false});f.bootstrap.stop();for(const [name,e]of Object.entries(f.events)){const add=e.addListener;e.addListener=(...args)=>{record.push('listener:'+name);return add(...args);};}
- const globals=['chrome','indexedDB','__hostEvaluation','__hostEvaluatedRuntime'],prior=Object.fromEntries(globals.map(name=>[name,Object.getOwnPropertyDescriptor(globalThis,name)]));
+ const globals=['chrome','indexedDB','importScripts','__hostEvaluatedRuntime','__vaiwlHostBootstrap'],prior=Object.fromEntries(globals.map(name=>[name,Object.getOwnPropertyDescriptor(globalThis,name)]));
  t.after(()=>{globalThis.__hostEvaluatedRuntime?.stop();for(const name of globals)if(prior[name])Object.defineProperty(globalThis,name,prior[name]);else delete globalThis[name];});
- globalThis.chrome=f.chrome;globalThis.indexedDB=f.indexedDB;globalThis.__hostEvaluation=path=>record.push(path);
- const hooks=registerHooks({load(url,context,nextLoad){const result=nextLoad(url,context);if(!url.startsWith(pathToFileURL(out+'/').href)||!url.endsWith('.mjs'))return result;const path=relative(out,fileURLToPath(url));let source=String(result.source);if(path==='extension/worker.mjs')source=source.replace('createHostWorkerRuntime({','globalThis.__hostEvaluatedRuntime=createHostWorkerRuntime({');return {...result,source:'globalThis.__hostEvaluation('+JSON.stringify(path)+');\n'+source};}});t.after(()=>hooks.deregister());
- await import(pathToFileURL(join(out,'extension/worker.mjs')).href);hooks.deregister();
- const firstHeavy=record.findIndex(path=>path.startsWith('src/')&&!['src/b1/identity.mjs','src/data/request-deadline.mjs','src/runtime/browser-request-context.mjs','src/runtime/host-browser-bootstrap.mjs'].includes(path));assert(firstHeavy>=0);assert(record.indexOf('listener:onCommitted')<firstHeavy);assert(record.indexOf('listener:onMessage')>firstHeavy);
+ globalThis.chrome=f.chrome;globalThis.indexedDB=f.indexedDB;
+ globalThis.importScripts=path=>{assert.equal(path,'classic-runtime.js');record.push('runtime-import');let source=readFileSync(join(out,'extension',path),'utf8');const anchor='createHostWorkerRuntime({ chrome, indexedDB,';assert.equal(source.split(anchor).length,2);source=source.replace(anchor,'globalThis.__hostEvaluatedRuntime='+anchor);runInThisContext(source);};
+ runInThisContext(readFileSync(join(out,'extension/worker.mjs'),'utf8'));
+ const firstHeavy=record.indexOf('runtime-import');assert(firstHeavy>=0);assert(record.indexOf('listener:onCommitted')<firstHeavy);assert(record.indexOf('listener:onMessage')>firstHeavy);
  assert.equal(record.filter(x=>x==='listener:onSendHeaders').length,enabled?1:0);if(enabled)assert(record.indexOf('listener:onSendHeaders')<firstHeavy);
  for(const name of ['onCommitted','onHistoryStateUpdated','onRemoved','onMessage','onConnect'])assert.equal(record.filter(x=>x==='listener:'+name).length,1,name);
  const manifest=JSON.parse(readFileSync(join(out,'manifest.json'),'utf8'));
- for(const path of ['extension/browser-bootstrap.mjs','src/runtime/host-browser-bootstrap.mjs','src/runtime/browser-request-context.mjs']){assert(info.files[path]);assert(!manifest.web_accessible_resources[0].resources.includes(path),path+' is worker-only');}
- assert.deepEqual(manifest.permissions,enabled?['webNavigation','webRequest']:['webNavigation']);assert.equal(verifyHost(out).status,info.status);globalThis.__hostEvaluatedRuntime.stop();assert(Object.values(f.events).every(e=>e.listeners.size===0));
+ for(const path of ['extension/browser-bootstrap.mjs','src/runtime/host-browser-bootstrap.mjs','src/runtime/browser-request-context.mjs','extension/classic-runtime.js']){assert(info.files[path]);assert(!manifest.web_accessible_resources[0].resources.includes(path),path+' is worker-only');}
+ assert.deepEqual(manifest.permissions,enabled?['webNavigation','webRequest']:['webNavigation']);assert.equal(verifyHost(out).status,info.status);assert.equal(globalThis.__vaiwlHostBootstrap,undefined);globalThis.__hostEvaluatedRuntime.stop();assert(Object.values(f.events).every(e=>e.listeners.size===0));
 });
 
 test('trusted history event revokes tab authorization without losing a genuine new-route pending GET',async t=>{
