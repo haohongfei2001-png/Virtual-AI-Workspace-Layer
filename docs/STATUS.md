@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round292）
+## 最新正式检查点（2026-10-16，原本地目录，Round293）
+
+实际诊断确认原生history零高触发安全退出；保留此护栏，新增同节点/route/region/授权仍有效时的短暂几何暂停。关闭双surface/释放mask且不续原期限，安全恢复仅提供唯一阅读返回；旧续期跨暂停失效，退出/撤权仍立即终止。位置变化继续更新，同值style不反复写入。
+
+独立18控制器/28真实adapter/4mount反例及完整Node **5756/5756 PASS**；实际隔离MV3在200%高度缩减→恢复后原frame/mount/草稿保持，用户点击才重开双surface，见[Round293](evidence/round293/README.md)。这不替代600×380完整UI10，原FAIL保留。远端25d89a6已正常push并API确认Draft/base不变。完整81/G/U/冷启动/100k仍未完成，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round292）
 
 修复自有设置条窄屏溢出、时间范围select不继承字号，以及32px箭头负37px边距造成的5px横滚。实际ShadowRoot renderer六组宽度/字号/操作全PASS（仅WEB_MECHANISM_ONLY），完整Node **5706/5706 PASS**。
 

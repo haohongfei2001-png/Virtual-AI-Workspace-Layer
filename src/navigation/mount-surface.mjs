@@ -16,7 +16,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     if(protectedNodes.some(node=>{const r=node.getBoundingClientRect();return r.width>0&&r.height>0&&rect.x<r.right&&rect.x+rect.width>r.left&&rect.y<r.bottom&&rect.y+rect.height>r.top;}))throw Error('unsafe-mask-geometry');
    }
    // Validate the complete layout before changing either owned surface.
-   for(const {surface,rect}of updates)Object.assign(surface.node.style,{left:rect.x+'px',top:rect.y+'px',width:rect.width+'px',height:rect.height+'px'});
+   for(const {surface,rect}of updates)for(const [key,value]of Object.entries({left:rect.x+'px',top:rect.y+'px',width:rect.width+'px',height:rect.height+'px'}))if(surface.node.style[key]!==value)surface.node.style[key]=value;
    return true;
   }catch{surrender(m);return false;}
  };

@@ -33,13 +33,32 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   try{if(surface.refreshGeometry(state.handle,adapter.inspect())===true)return true;}catch{}
   if(current===state)stop('native-geometry-changed');return false;
  }
+ function geometryContinuity(state){
+  return current===state&&state.epoch===epoch&&state.registered&&doc.location.href===state.url&&Date.parse(state.context.binding.expiresAt)>now()&&state.grants.size===2&&[...state.grants.values()].every(g=>Date.parse(g.expiresAt)>now())&&state.frames.every(({frame,window})=>frame.isConnected&&frame.ownerDocument===doc&&frame.contentWindow===window)&&adapter.isSameNativeRegions?.(state.inspection)===true;
+ }
+ function reconcileGeometry(state){
+  if(current!==state)return false;
+  if(!valid(state)){
+   if(adapter.inspect()?.reason==='unsafe-native-geometry'&&geometryContinuity(state)){
+    if(!state.geometryPaused){state.geometryPaused=true;state.geometryRevision++;state.intentEpoch++;}
+    cancel(state.renewTimer);state.renewTimer=null;state.mode='suspended';removeReturn(state);surface.suspend(state.handle,'temporary-native-geometry');return false;
+   }
+   stop('native-region-changed');return false;
+  }
+  if(state.geometryPaused){
+   if(!geometryContinuity(state)){stop('native-region-changed');return false;}
+   if(!refreshGeometry(state))return false;
+   state.geometryPaused=false;state.mode='reading';ensureReturn(state);arm(state);return true;
+  }
+  return refreshGeometry(state);
+ }
  function watchGeometry(state){
   if(typeof surface.refreshGeometry!=='function')return;
-  state.geometryChanged=()=>{if(current!==state)return;if(!valid(state)){stop('native-region-changed');return;}refreshGeometry(state);};
+  state.geometryChanged=()=>{if(!reconcileGeometry(state))return;if(state.mode==='reading'||state.mode==='suspended')ensureReturn(state);};
   win.addEventListener('resize',state.geometryChanged);win.visualViewport?.addEventListener?.('resize',state.geometryChanged);
   if(win.ResizeObserver){state.geometryObserver=new win.ResizeObserver(state.geometryChanged);for(const node of new Set([state.inspection.reading,...state.inspection.historyMaskRoots,state.inspection.header,state.inspection.composer,...state.inspection.protectedRegions]))state.geometryObserver.observe(node);}
  }
- function authorized(state){return valid(state)&&Date.parse(state.context.binding.expiresAt)>now()&&state.frames.every(({role})=>{const grant=state.grants.get(role);return grant&&Date.parse(grant.expiresAt)>now();});}
+ function authorized(state){return !state.geometryPaused&&valid(state)&&Date.parse(state.context.binding.expiresAt)>now()&&state.frames.every(({role})=>{const grant=state.grants.get(role);return grant&&Date.parse(grant.expiresAt)>now();});}
  function showWorkspace(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}if(!refreshGeometry(state)||surface.showWorkspace(state.handle)===false)return false;removeReturn(state);state.mode='workspace';return true;}
  function ensureReturn(state){
   if(!authorized(state)||adapter.hasNativeLayer()){removeReturn(state);return false;}
@@ -47,27 +66,28 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(!slot?.isConnected||slot!==state.inspection.navigationSlot){removeReturn(state);return false;}
   if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.textContent='▦';button.addEventListener('click',event=>{if(current!==state||event?.isTrusted!==true||!showWorkspace())return;try{Promise.resolve(bridge.workspaceEntered?.({mountId:state.handle.id})).catch(()=>{});}catch{/* Entering the visible workspace never waits for a private notification. */}});slot.append(button);state.button=button;}return true;
  }
- function nativeSurrender(state,event){if(current!==state||state.mode==='waiting')return;if(event?.reason!=='native-reading'||state.mode!=='reading')state.intentEpoch++;state.mode='reading';if(!authorized(state))return;if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}
+ function nativeSurrender(state,event){if(current!==state||state.mode==='waiting'||state.geometryPaused)return;if(event?.reason!=='native-reading'||state.mode!=='reading')state.intentEpoch++;state.mode='reading';if(!authorized(state))return;if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}
  function showReading(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}surface.showReading(state.handle);state.mode='reading';return ensureReturn(state);}
  function showNativeReading(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state)||adapter.hasNativeLayer())return false;surface.suspend(state.handle);state.mode='reading';return ensureReturn(state);}
  function suspend(reason='native-layer'){const state=current;if(state)state.intentEpoch++;if(!state?.handle)return;removeReturn(state);surface.suspend(state.handle,reason);state.mode='suspended';}
- function arm(state){cancel(state.timer);const until=Math.min(Date.parse(state.context.binding.expiresAt),...Array.from(state.grants.values(),g=>Date.parse(g.expiresAt)));state.timer=schedule(()=>{if(current===state)stop('ui-grant-expired');},Math.max(0,until-now()));if(typeof bridge.renewSession==='function'&&state.grants.size===2&&!state.renewing&&state.renewTimer===null)state.renewTimer=schedule(()=>{state.renewTimer=null;void renewSession(state);},Math.max(1,Math.min(10000,(until-now())/2)));}
+ function arm(state){cancel(state.timer);const until=Math.min(Date.parse(state.context.binding.expiresAt),...Array.from(state.grants.values(),g=>Date.parse(g.expiresAt)));state.timer=schedule(()=>{if(current===state)stop('ui-grant-expired');},Math.max(0,until-now()));if(!state.geometryPaused&&typeof bridge.renewSession==='function'&&state.grants.size===2&&!state.renewing&&state.renewTimer===null)state.renewTimer=schedule(()=>{state.renewTimer=null;void renewSession(state);},Math.max(1,Math.min(10000,(until-now())/2)));}
  async function renewSession(state){
+  if(state.geometryPaused)return;const geometryRevision=state.geometryRevision;
   if(!authorized(state)){if(current===state)stop('stale-session-renewal');return;}state.renewing=true;
   try{
    const raw=await withRequestDeadline(()=>bridge.renewSession({handle:state.handle,binding:state.context.binding}),{timeoutMs:6000,now:elapsedNow,schedule,cancel});
-   if(current!==state)return;if(!authorized(state))throw Error('stale-session-renewal');
+   if(current!==state||state.geometryRevision!==geometryRevision)return;if(!authorized(state))throw Error('stale-session-renewal');
    const ack=structuredClone(raw),binding=ack?.binding,keys=['documentToken','producerToken','browserDocumentId','routeEpoch','origin'];
    const future=value=>Number.isFinite(Date.parse(value))&&Date.parse(value)>now()&&Date.parse(value)<=now()+20000;
    if(ack?.ok!==true||!binding||Object.keys(binding).sort().join(',')!==[...keys,'expiresAt'].sort().join(',')||keys.some(k=>binding[k]!==state.context.binding[k])||!future(binding.expiresAt)||!Array.isArray(ack.grants)||ack.grants.length!==2)throw Error('invalid-session-renewal');
    const next=new Map();for(const grant of ack.grants){const previous=state.grants.get(grant?.role);if(!previous||next.has(grant.role)||['id','mountId','role','parentDocumentId','uiDocumentId','scopeGrantId'].some(k=>grant[k]!==previous[k])||!future(grant.expiresAt))throw Error('invalid-session-renewal');next.set(grant.role,Object.freeze({...grant}));}
    if(adapter.updateBinding(binding)!==true)throw Error('invalid-binding-renewal');
    state.context={...state.context,binding:Object.freeze({...binding})};state.grants=next;
-  }catch{if(current===state)stop('session-renew-failed');}
+  }catch{if(current===state&&state.geometryRevision===geometryRevision)stop('session-renew-failed');}
   finally{state.renewing=false;if(current===state)arm(state);}
  }
  async function start(options){
-  stop('surface-restart');const run=epoch,state={epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),mode:'waiting'};current=state;
+  stop('surface-restart');const run=epoch,state={epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),mode:'waiting',geometryPaused:false,geometryRevision:0};current=state;
   try{
    state.context=await adapter.start(options);if(current!==state)return null;
    state.inspection=adapter.inspect();if(!state.inspection?.ok||!state.inspection.navigationSlot?.isConnected)throw Error('invalid-return-slot');
@@ -77,7 +97,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    const ack=await bridge.registerMount({handle:state.handle});if(current!==state)return null;if(ack?.ok!==true)throw Error('mount-registration-denied');state.registered=true;
    if(!valid(state))throw Error('stale-mount-registration');
    state.nativeToggle=event=>{if(event.newState==='open'&&!event.target.closest?.('[data-va-owned]'))suspend('native-layer');};doc.addEventListener?.('beforetoggle',state.nativeToggle,true);
-   state.changed=()=>{if(current!==state)return;if(!valid(state)){stop('native-region-changed');return;}if(adapter.hasNativeLayer())suspend('native-layer');else if(state.mode==='reading'||state.mode==='suspended')ensureReturn(state);};
+   state.changed=()=>{if(!reconcileGeometry(state))return;if(adapter.hasNativeLayer())suspend('native-layer');else if(state.mode==='reading'||state.mode==='suspended')ensureReturn(state);};
    state.pagehide=()=>{if(current===state)stop('page-hidden');};win.addEventListener('pagehide',state.pagehide);doc.addEventListener?.('toggle',state.changed,true);
    win.addEventListener('popstate',state.changed);win.addEventListener('hashchange',state.changed);
    if(win.MutationObserver){state.observer=new win.MutationObserver(state.changed);state.observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class','aria-modal']});}
@@ -85,11 +105,11 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   }catch{if(current===state)stop('mount-unavailable');return null;}
  }
  async function receive(state,event){
-  if(!valid(state,false)||event.origin!==trustedOrigin)return;
+  if(current!==state||state.epoch!==epoch||doc.location.href!==state.url||event.origin!==trustedOrigin)return;
   const data=event.data;if(!data||Object.getPrototypeOf(data)!==Object.prototype)return;
-  const target=state.frames.find(x=>x.role===data.role);if(!target||!target.frame.isConnected||event.source!==target.window||target.frame.contentWindow!==target.window)return;
+  const target=state.frames.find(x=>x.role===data.role);if(!target||!target.frame.isConnected||target.frame.ownerDocument!==doc||event.source!==target.window||target.frame.contentWindow!==target.window)return;
   if(exactHostRecord(data,['role','type'])&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(data.type)){stop(data.type==='VAIWL_UI_EXIT'?'ui-user-exit':'ui-frame-suspended');return;}
-  if(Object.keys(data).sort().join(',')!=='nonce,role,type'||data.type!=='VAIWL_UI_JOIN'||!tokenOK(data.nonce)||state.pending.has(data.role)||state.grants.has(data.role))return;
+  if(!valid(state,false)||Object.keys(data).sort().join(',')!=='nonce,role,type'||data.type!=='VAIWL_UI_JOIN'||!tokenOK(data.nonce)||state.pending.has(data.role)||state.grants.has(data.role))return;
   if(!state.registered){if(!state.earlyJoins.has(data.role))state.earlyJoins.set(data.role,{origin:event.origin,source:event.source,data:{type:data.type,role:data.role,nonce:data.nonce}});return;}
   state.pending.add(data.role);
   try{
