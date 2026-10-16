@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round294）
+## 最新正式检查点（2026-10-16，原本地目录，Round295）
+
+真实归档Host通过原备份UI写入六类人工资产，再同ID/同库v3→v4升级；原生导航前独立逐行核对八表18记录完全保持。实际降级旧owner的open/list/invalidate均VersionError且原始记录不变，再升级恢复界面与资产。实际加载模块版本4/3/4及哈希均核对。
+
+最终隔离headless Chrome **5/5阶段PASS**，定向Node **20/20 PASS**，独立审查通过；生产未变，沿用Round294完整5767结果，不累计冒充新全套。见[Round295](evidence/round295/README.md)。正常push21b0d4c超时，成果本地保全继续普通同步。完整SYS03/J4/81、冷启动、规模及真实G/U仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round294）
 
 已fetch/API核对本地与远端0402a2a一致，dot d1872d9及Pro72ca068均保留，Draft/base不变。修复自有popover开关重置目录有限扫描：仅当前mount精确节点保留游标，原生变化仍重扫，正文与外部读取继续失效核验。
 
