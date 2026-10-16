@@ -20,7 +20,7 @@ import {freeEvidenceKey,evidenceRecord} from '../../src/data/free-evidence-parti
 const NOW='2026-10-16T00:04:23.000Z',OLD='2026-07-18T00:04:20.000Z',C='33333333-3333-4333-8333-333333333333',origin='http://127.0.0.1:1234';
 const scope=normalizedScope({verified:true,provider:'chatgpt',accountId:'principal_'+digest(['chatgpt-principal-v1','user-host-fixture']),organizationId:'context_'+digest(['chatgpt-context-v1','user-host-fixture','account-host-personal'])});
 const runners=[
- {file:'j2-package-journey.mjs',start:'return f.evaluate(',end:'\n });}',options:{offlineFirstSend:true,offlineHistory:true,offlineOldSendTerminal:true}},
+ {file:'j2-package-journey.mjs',start:'return f.evaluate(',end:'\n },{scope:readScope});}',options:{offlineFirstSend:true,offlineHistory:true,offlineOldSendTerminal:true}},
  {file:'j2-fast-retry-package.mjs',start:'return f.evaluate(',end:'\n });}',options:{offlineFirstSend:true,offlineHistory:true,offlineOldSendTerminal:true}},
  {file:'j3-package-journey.mjs',start:'const projection=await reader.evaluate(',end:'\n },facts);',options:{offlineSnippets:true,offlineHistory:true}},
  {file:'sys05-stream-package-journey.mjs',start:'return f.evaluate(',end:'\n  },{scope:expected',options:{offlineContext:true,offlineExistingSend:true,offlineHistory:true}},

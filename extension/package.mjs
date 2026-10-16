@@ -18,7 +18,7 @@ export function verifyHost(unpacked){
  for(const name of expected){if(name.startsWith('/')||name.split('/').includes('..')||name.includes('\\')||!name)throw Error('invalid-host-package-path');if(sha(readFileSync(join(root,name)))!==info.files[name])throw Error('host-package-hash-mismatch:'+name);}
  const offline=info.status==='OFFLINE_HOST_RECONSTRUCTION',origin=new URL(info.origin);
  if(offline?(origin.origin!==info.origin||origin.protocol!=='http:'||origin.hostname!=='127.0.0.1'):info.origin!=='https://chatgpt.com')throw Error('invalid-host-package-origin');
- if(Object.hasOwn(info,'offlineOldSendTerminal')&&(info.offlineOldSendTerminal!==true||!info.offlineFirstSend))throw Error('invalid-old-send-terminal-profile');
+ if(Object.hasOwn(info,'offlineOldSendTerminal')&&(info.offlineOldSendTerminal!==true||!offline||!(info.offlineFirstSend||info.offlineExistingSend)))throw Error('invalid-old-send-terminal-profile');
  if(Object.hasOwn(info,'offlineFirstSend')&&(info.offlineFirstSend!==true||!offline||info.offlineContext))throw Error('invalid-host-first-send-profile');
  if(Object.hasOwn(info,'offlineExistingSend')&&(info.offlineExistingSend!==true||!offline||!info.offlineContext||info.offlineFirstSend))throw Error('invalid-host-existing-send-profile');
  if(Object.hasOwn(info,'offlineProjectContext')&&(info.offlineProjectContext!==true||!offline||!info.offlineContext))throw Error('invalid-host-project-context-profile');

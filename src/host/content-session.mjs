@@ -157,8 +157,8 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    try{reply(s.plans.plan({targets:m.targets}));}catch{reply(null);}
   };runtime.onMessage.addListener(s.listener);
   try{
-   const hello=await rpc(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq});if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
-   const auth=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});if(auth?.state!=='verified')throw Error('scope-not-verified');s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
+   const hello=await rpc(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq});if(contextRecovery===true&&exactHostRecord(hello,['ok','reason'])&&hello.ok===false&&hello.reason==='invalidated-during-check')throw Error('context-handshake-superseded');if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
+   const auth=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});if(auth?.state!=='verified')throw Error('scope-not-verified');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
    if(learnedScope!==s.scopeKey||learnedDocument!==s.binding.browserDocumentId)clearLearned();learnedScope=s.scopeKey;learnedDocument=s.binding.browserDocumentId;
    let surface;const adapter=s.adapter=adapterFactory({document:doc,onOldSendOperation:intent=>{if(!live(s)||!s.ready)return;void runtime.sendMessage({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:intent=>{if(!live(s)||!s.ready||s.url!==origin+'/')return;void runtime.sendMessage({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,authorize:async command=>{if(s.candidates?.authorize(command)!==true&&s.plans?.authorize(command)!==true)return false;const result=await rpc(s,{v:1,type:'HOST_NATIVE_AUTHORIZE',...bindingFields(s.binding),command});return result?.ok===true&&(s.candidates?.authorize(command)===true||s.plans?.authorize(command)===true);},beforeDispatch:plan=>plan?.mode==='same-target'||s.plans?.beforeDispatch?.(plan)===true?undefined:s.candidates?.beforeDispatch(),onNativeDispatch:event=>{if(event.plan.target.kind!=='live-control'||!s.scopeKey)return;const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;clearUpgrade();upgradeIdentity=identity;upgradeDisplay=s.candidates?.displayFor(event.command)??null;for(const type of ['pointerdown','keydown'])doc.addEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.addEventListener(type,upgradeRoute);upgrade.propose({actionId:event.actionId,identity,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,originalURL:s.url,expiresAt:now()+6000});upgradeTimer=schedule(clearUpgrade,6000);},onNativeDispatchCancelled:event=>{if(upgrade.cancel(event.actionId))clearUpgrade();},onRebindNeeded:()=>rebind(s)});
    s.candidates=createContentCandidates({adapter,streaming:true,current:()=>live(s)&&s.ready&&Date.parse(s.binding.expiresAt)>now(),showReading:()=>s.controller?.showReading()===true,
@@ -237,13 +237,14 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // before the adapter has installed its route listeners. The old reply
     // remains unusable; bind the new route instead of disabling the document.
     // Same-route failures still stop, and replaced/stopped sessions cannot retry.
-    if(enabled&&doc.location.href!==s.url)rebind(s);else if(contextRecovery===true&&contextResumeAllowed&&error?.message==='scope-not-verified')contextPending();else stop();
+    if(enabled&&doc.location.href!==s.url)rebind(s);else if(contextRecovery===true&&contextResumeAllowed&&['scope-not-verified','context-handshake-superseded'].includes(error?.message))contextPending();else stop();
    }
    return null;
   }
  }
  function contextPending(){
   if(contextRecovery!==true||!contextResumeAllowed){stop();return;}
+  const readyPending=current?.contextReadyPending===true;
   // Withdraw every live capability immediately. Only document-local UI intent
   // and the existing bounded candidate correlation survive a context wait.
   // They still require the new handshake's scope/document checks; no old grant,
@@ -257,9 +258,13 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   contextResumeURL=doc.location.href;
   enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();
   doc.defaultView.addEventListener('pagehide',pagehide);
+  // A receipt notification can precede the stale REFRESH response. Consume
+  // that one signal with a new handshake; never reuse the old authority.
+  if(readyPending){const run=rebindRun;queueMicrotask(()=>{if(run===rebindRun)void contextReady();});}
  }
  function contextReady(){
-  if(contextRecovery!==true||!contextResumeAllowed||enabled)return Promise.resolve(null);
+  if(contextRecovery!==true||!contextResumeAllowed)return Promise.resolve(null);
+  if(enabled){if(current&&!current.scopeKey&&!current.ready)current.contextReadyPending=true;return Promise.resolve(null);}
   if(contextResumeURL!==null&&doc.location.href!==contextResumeURL){contextResumeMode='reading';if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();}
   contextResumeURL=doc.location.href;
   enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;

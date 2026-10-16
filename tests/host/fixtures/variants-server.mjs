@@ -1,3 +1,6 @@
+import {createJ2SendFixture,J2_C} from './j2-send.mjs';
+import {j2ModernNative,j2ModernDetail} from './j2-modern.mjs';
+import {j3ModernPage,j3ModernMessages,j3ModernMetadata,j3ModernNative} from './j3-modern.mjs';
 import {j1CandidatePage,j1NativeProjects} from './j1-candidate-page.mjs';
 import {applyUi10ConversationTitle} from './ui10-conversation-title.mjs';
 import {createJ4InterruptionFixture,j4InterruptionNative,J4_SEND_C} from './j4-interruption.mjs';
@@ -9,15 +12,18 @@ const C1='11111111-1111-4111-8111-111111111111',C2='22222222-2222-4222-8222-2222
 const faults=['auth-failure','unsafe-reading','forged-scope','csp','iframe-destroy','stale-response','rate-limit','corrupt','unknown-protocol'];
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
-export async function createVariantHostFixtureServer({profile,journey=null,interruption=false,variant='positive',fault='auth-failure',principalId='user-host-fixture',accounts=null,now=()=>Date.now(),ui10ConversationTitle=null}={}){
+export async function createVariantHostFixtureServer({profile,journey=null,j3Layout='direct',interruption=false,variant='positive',fault='auth-failure',principalId='user-host-fixture',accounts=null,now=()=>Date.now(),ui10ConversationTitle=null}={}){
  if(typeof interruption!=='boolean'||interruption&&(journey!=='J4'||profile!=='MODERN'))throw Error('unsupported-j4-interruption');
- if(journey!==null&&(!['J1','J4'].includes(journey)||profile!=='MODERN'))throw Error('unsupported-variant-journey');
+ if(journey!==null&&(!['J1','J2','J3','J4'].includes(journey)||profile!=='MODERN'))throw Error('unsupported-variant-journey');
  if(!['MODERN','PARTIAL','FAULT'].includes(profile))throw Error('fixture-profile-not-implemented');
  if(!['positive','missing','conflict','neighbor'].includes(variant))throw Error('fixture-variant-not-implemented');
  if(profile==='FAULT'&&!faults.includes(fault))throw Error('fixture-fault-not-implemented');
+ if(!['direct','app-root'].includes(j3Layout)||j3Layout!=='direct'&&journey!=='J3')throw Error('invalid-modern-j3-layout');
+ const historySentAt=new Date(now()-45*86400000).toISOString().replace(/\.\d{3}Z$/,'Z');
  let identity=principalId;
  let roster=structuredClone(accounts??(profile==='MODERN'?[{account_id:'account-host-personal',name:'Personal',plan_type:'free',structure:'personal'},{account_id:'account-host-team',name:'Team',plan_type:'team',structure:'workspace'}]:[{account_id:'account-host-personal',name:'Personal',plan_type:'free',structure:'personal'}]));
  let selectedContext=profile==='MODERN'?'account-host-team':'account-host-personal';
+ const j2=journey==='J2'?createJ2SendFixture({principal:()=>identity,accounts:()=>roster,selectedContext:()=>selectedContext,now}):null;
  const interrupted=interruption?createJ4InterruptionFixture({principal:()=>identity,now,onTitle:title=>{conversations.get(J4_SEND_C).title=title;}}):null;
  const cookie=randomBytes(24).toString('hex'),token=`fixture-only-${randomBytes(24).toString('hex')}`;
  const projects=new Map([[P1,{id:P1,name:'Research'}],[P2,{id:P2,name:'Research'}]]);
@@ -32,6 +38,7 @@ export async function createVariantHostFixtureServer({profile,journey=null,inter
  const pending=new Set();let heldOnce=false,projectNumber=100,newConversationNumber=0,pageRevision=0;
  const bytes=await Promise.all(['legacy.html','native.css','native.mjs','variants-native.mjs','variants-server.mjs'].map(name=>readFile(new URL(name,import.meta.url))));
  let html=bytes[0].toString();
+ if(journey==='J3'){html=j3ModernPage(html,{layout:j3Layout});bytes.push(await readFile(new URL('./j3-modern.mjs',import.meta.url)));}
  if(journey==='J1'){html=j1CandidatePage(html);bytes.push(await readFile(new URL('./j1-candidate-page.mjs',import.meta.url)));}
  const history=`<nav aria-label="Chat history"><h2>Chats</h2>${initial.map(c=>`<a href="/c/${c.id}">${escapeHTML(c.title)}</a>`).join('')}</nav>`;
  html=html.replace(/<nav aria-label="Chat history">[\s\S]*?<\/nav>/,history);
@@ -47,8 +54,9 @@ export async function createVariantHostFixtureServer({profile,journey=null,inter
  if(profile==='FAULT'&&fault==='iframe-destroy')faultScript="new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes)if(node.nodeType===1){if(node.matches('iframe'))node.remove();else node.querySelectorAll('iframe').forEach(frame=>frame.remove());}}).observe(document.body,{childList:true,subtree:true});";
  if(faultScript)html=html.replace('</body>','<script src="/fault-native.mjs"></script></body>');
  let nativeScript=profile==='FAULT'&&fault==='unsafe-reading'?bytes[2].toString().replace('reading.replaceChildren();',"reading.querySelectorAll(':scope > :not(#composer)').forEach(node=>node.remove());"):bytes[2];
+ if(j2){nativeScript=j2ModernNative(nativeScript.toString());bytes.push(await readFile(new URL('./j2-send.mjs',import.meta.url)),await readFile(new URL('./j2-modern.mjs',import.meta.url)));}
  if(interrupted)nativeScript=j4InterruptionNative(nativeScript.toString());
- const assets=new Map([['/',{body:html,mime:'text/html; charset=utf-8'}],['/native.css',{body:css,mime:'text/css; charset=utf-8'}],['/native.mjs',{body:nativeScript,mime:'text/javascript; charset=utf-8'}],['/variants-native.mjs',{body:bytes[3],mime:'text/javascript; charset=utf-8'}],['/fault-native.mjs',{body:faultScript,mime:'text/javascript; charset=utf-8'}]]);
+ const assets=new Map([['/',{body:html,mime:'text/html; charset=utf-8'}],['/native.css',{body:css,mime:'text/css; charset=utf-8'}],['/native.mjs',{body:nativeScript,mime:'text/javascript; charset=utf-8'}],['/variants-native.mjs',{body:journey==='J3'?j3ModernNative(bytes[3].toString()):j2?j2ModernDetail(bytes[3].toString()):bytes[3],mime:'text/javascript; charset=utf-8'}],['/fault-native.mjs',{body:faultScript,mime:'text/javascript; charset=utf-8'}]]);
  if(journey==='J4'){const script=await readFile(new URL('./j4-native-context.mjs',import.meta.url));html=html.replace('src="/variants-native.mjs"','src="/j4-native-context.mjs"');assets.get('/').body=html;assets.set('/j4-native-context.mjs',{body:script,mime:'text/javascript; charset=utf-8'});bytes.push(script);if(interrupted)bytes.push(await readFile(new URL('./j4-interruption.mjs',import.meta.url)));}
  const authenticated=req=>(req.headers.cookie??'').split(';').some(item=>item.trim()===`host_fixture_session=${cookie}`);
  const json=(res,status,value,headers={})=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers});res.end(JSON.stringify(value));};
@@ -56,10 +64,12 @@ export async function createVariantHostFixtureServer({profile,journey=null,inter
   if(path==='/')return{title:'New chat',text:'How can I help?',conversationId:null};
   const p=/^\/g\/([^/]+)\/project$/.exec(path),c=/^\/c\/([^/]+)$/.exec(path);
   if(p&&projects.has(p[1]))return{title:projects.get(p[1]).name,project:structuredClone(projects.get(p[1])),conversations:[...conversations.values()].filter(c=>c.project===p[1]).map(({id,title})=>({id,title,href:`/c/${id}`}))};
-  if(c&&conversations.has(c[1]))return{title:conversations.get(c[1]).title,conversationId:c[1],text:'Offline native conversation.'};
+  if(c&&conversations.has(c[1]))return{...(j2&&c[1]===J2_C?j2.view():{}),title:conversations.get(c[1]).title,conversationId:c[1],text:'Offline native conversation.',...(journey==='J3'?{messages:j3ModernMessages(c[1])}:{})};
   return null;
  };
  function metadata(c){
+  if(j2&&c.id===J2_C)return j2.detail();
+  if(journey==='J3')return j3ModernMetadata({conversationId:c.id,principalId:identity,sentAt:historySentAt});
   const mapping={
    'node-self':{id:'node-self',parent:null,children:['node-assistant'],message:{id:'msg-self',author:{role:'user',id:identity},create_time:1700000000,content:{content_type:'text',parts:['Offline sample']}}},
    'node-assistant':{id:'node-assistant',parent:'node-self',children:['node-incomplete'],message:{id:'msg-assistant',author:{role:'assistant'},create_time:1700000300,content:{content_type:'text',parts:['Offline reply']}}},
@@ -78,6 +88,7 @@ export async function createVariantHostFixtureServer({profile,journey=null,inter
   }
   if(url.pathname==='/api/auth/session'&&req.method==='GET')return json(res,!identity||!authenticated(req)||profile==='FAULT'&&fault==='auth-failure'?401:200,!identity||!authenticated(req)||profile==='FAULT'&&fault==='auth-failure'?{error:'unauthenticated'}:{user:{id:identity},expires:new Date(now()+3600000).toISOString(),accessToken:token});
   if(!authenticated(req)||!identity)return json(res,401,{error:'unauthenticated'});
+  if(j2?.handle(req,res,url,json))return;
   if(interrupted&&url.pathname==='/native/j4/send'&&req.method==='POST')return interrupted.accept(req,res,json);
   if(url.pathname==='/backend-api/accounts/check/v4-2023-04-27'&&req.method==='GET')return req.headers.authorization===`Bearer ${token}`?json(res,200,{accounts:Object.fromEntries(roster.map(account=>[account.account_id,{account:structuredClone(account)}])),account_order:roster.map(account=>account.account_id)}):json(res,401,{error:'unauthenticated'});
   if(journey==='J4'&&url.pathname==='/native/context'&&req.method==='POST'){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>1000)return json(res,413,{error:'too-large'});}let body;try{body=JSON.parse(raw);}catch{return json(res,400,{error:'invalid-json'});}if(!roster.some(a=>a.account_id===body.account_id))return json(res,403,{error:'unknown-context'});selectedContext=body.account_id;actions['context-switch']=(actions['context-switch']??0)+1;return json(res,200,{ok:true});}
@@ -107,6 +118,10 @@ export async function createVariantHostFixtureServer({profile,journey=null,inter
   if(detail&&req.method==='GET'){
    const c=conversations.get(detail[1]);if(!c)return json(res,404,{error:'not-found'});
    nativeRequests.push({path:url.pathname,context:req.headers['chatgpt-account-id']??null});
+   if(j2&&detail[1]===J2_C){
+    if(req.headers.authorization&&req.headers.authorization!==`Bearer ${token}`)return json(res,401,{error:'unauthenticated'});
+    if(req.headers['chatgpt-account-id']!==selectedContext||roster.filter(a=>a.account_id===selectedContext).length!==1)return json(res,403,{error:'context-mismatch'});
+   }
    if(interrupted&&detail[1]===J4_SEND_C){if(req.headers.authorization&&req.headers.authorization!==`Bearer ${token}`)return json(res,401,{error:'unauthenticated'});return interrupted.respond(res,json,{authenticatedWorker:req.headers.authorization===`Bearer ${token}`});}
    if(profile==='FAULT'&&fault==='rate-limit')return json(res,429,{error:'rate-limit'},{'Retry-After':'60'});
    if(profile==='FAULT'&&fault==='corrupt'){res.writeHead(200,{'Content-Type':'application/json'});res.end('{"mapping":');return;}
@@ -119,7 +134,7 @@ export async function createVariantHostFixtureServer({profile,journey=null,inter
   }
   if(url.pathname==='/native/action'&&req.method==='POST'){
    let body='';for await(const chunk of req){body+=chunk;if(body.length>4096)return json(res,413,{error:'body-too-large'});}const input=JSON.parse(body);
-   if(!['navigate','new-chat','open-project-button','search','new-project','create-project','new-project-chat','model','tools','account','send-intent'].includes(input.kind))return json(res,400,{error:'invalid-action'});
+   if(!['navigate','new-chat','open-project-button','search','new-project','create-project','new-project-chat','model','tools','account','send-intent',...(journey==='J3'?['permission-allow','permission-deny','editor-mode']:[])].includes(input.kind))return json(res,400,{error:'invalid-action'});
    actions[input.kind]=(actions[input.kind]??0)+1;
    if(input.kind==='open-project-button')return json(res,200,{href:`/g/${P2}/project`});
    if(input.kind==='create-project'){if(typeof input.name!=='string'||!input.name.trim()||input.name.length>200)return json(res,400,{error:'invalid-name'});const id=`g-p-${String(++projectNumber).padStart(32,'0')}`;projects.set(id,{id,name:input.name});return json(res,200,{href:`/g/${id}/project`});}
@@ -131,5 +146,5 @@ export async function createVariantHostFixtureServer({profile,journey=null,inter
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
  const origin=`http://127.0.0.1:${server.address().port}`,oracle=await readFile(new URL(`../expected/${profile.toLowerCase()}.mjs`,import.meta.url));
  const releaseStaleResponses=()=>{const count=pending.size;for(const release of [...pending])release();return count;};
- return{origin,url:`${origin}/`,manifest:Object.freeze({journey,...(interruption?{interruption:true}:{}),fixtureId:`chatgpt-host-${profile.toLowerCase()}-reconstruction-v1`,profile,...(ui10ConversationTitle!==null?{ui10ConversationTitle}:{}) ,variant,fault:profile==='FAULT'?fault:null,reconstruction:true,source:'VA-HOST/1.1 structure reconstruction, not real captured DOM',sourceCommit:null,sourceBlob:null,fixtureHash:createHash('sha256').update(Buffer.concat(bytes)).update(html).update(css).update(faultScript).update(JSON.stringify({profile,variant,fault:profile==='FAULT'?fault:null,...(ui10ConversationTitle!==null?{ui10ConversationTitle}:{})})).digest('hex'),expectedWorldFile:`tests/host/expected/${profile.toLowerCase()}.mjs`,oracleHash:createHash('sha256').update(oracle).digest('hex'),exposedFields:['loaded navigation links','current object metadata','native selected menu','fixed session','fixed account roster'],supportedCapabilities:profile==='FAULT'?['native-fallback-under-designated-fault']:['native-navigation','native-search','native-create','partial-observed-list','current-message-metadata','native-move-menu']}),snapshot:()=>structuredClone({actions,requests,nativeRequests,conversationCount:conversations.size,projectCount:projects.size,pendingResponses:pending.size,...(interrupted?{interruption:interrupted.snapshot()}:{})}),setPrincipal:(id,{accounts:next=roster}={})=>{identity=id;roster=structuredClone(next);},releaseInterruption:()=>interrupted?.release()??0,setSelectedContext:id=>{selectedContext=id;},releaseStaleResponses,close:()=>new Promise((resolve,reject)=>{releaseStaleResponses();interrupted?.release();server.close(error=>error?reject(error):resolve());server.closeAllConnections();})};
+ return{origin,url:`${origin}/`,manifest:Object.freeze({journey,...(journey==='J3'?{j3Layout,journeyEvidence:'S_RECONSTRUCTION_NOT_REAL_PERMISSION'}:{}),...(interruption?{interruption:true}:{}),fixtureId:`chatgpt-host-${profile.toLowerCase()}-reconstruction-v1`,profile,...(ui10ConversationTitle!==null?{ui10ConversationTitle}:{}) ,variant,fault:profile==='FAULT'?fault:null,reconstruction:true,source:'VA-HOST/1.1 structure reconstruction, not real captured DOM',sourceCommit:null,sourceBlob:null,fixtureHash:createHash('sha256').update(Buffer.concat(bytes)).update(html).update(css).update(faultScript).update(JSON.stringify({profile,variant,fault:profile==='FAULT'?fault:null,...(ui10ConversationTitle!==null?{ui10ConversationTitle}:{})})).digest('hex'),expectedWorldFile:`tests/host/expected/${profile.toLowerCase()}.mjs`,oracleHash:createHash('sha256').update(oracle).digest('hex'),exposedFields:['loaded navigation links','current object metadata','native selected menu','fixed session','fixed account roster'],supportedCapabilities:profile==='FAULT'?['native-fallback-under-designated-fault']:['native-navigation','native-search','native-create','partial-observed-list','current-message-metadata','native-move-menu']}),snapshot:()=>structuredClone({actions,requests,nativeRequests,...(j2?{j2:j2.snapshot()}:{}),conversationCount:conversations.size,projectCount:projects.size,pendingResponses:pending.size,...(interrupted?{interruption:interrupted.snapshot()}:{})}),setPrincipal:(id,{accounts:next=roster}={})=>{identity=id;roster=structuredClone(next);},releaseInterruption:()=>interrupted?.release()??0,setSelectedContext:id=>{selectedContext=id;},releaseStaleResponses,close:()=>new Promise((resolve,reject)=>{releaseStaleResponses();interrupted?.release();server.close(error=>error?reject(error):resolve());server.closeAllConnections();})};
 }

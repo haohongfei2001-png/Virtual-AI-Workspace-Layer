@@ -11,7 +11,7 @@ function closure(entries){const found=new Map();function visit(path){if(found.ha
 /** Builds production code or an explicitly loopback-only offline test package. */
 export function buildHost(output,{offlineOrigin=null,offlineSnippets=false,offlineContext=false,offlineProjectContext=false,offlineFirstSend=false,offlineHistory=false,offlineExistingSend=false,offlineOldSendTerminal=false}={}){
  const out=resolve(output);if(existsSync(out))throw Error('output-must-be-new');if(out===root||out.startsWith(root+'/src/'))throw Error('unsafe-host-output');
- if(typeof offlineOldSendTerminal!=='boolean'||offlineOldSendTerminal&&(!offlineFirstSend||!offlineOrigin))throw Error('old-send-terminal-offline-c3-only');
+ if(typeof offlineOldSendTerminal!=='boolean'||offlineOldSendTerminal&&(!(offlineFirstSend||offlineExistingSend)||!offlineOrigin))throw Error('old-send-terminal-offline-send-only');
  if(typeof offlineExistingSend!=='boolean'||offlineExistingSend&&(offlineOrigin===null||!offlineContext||offlineFirstSend))throw Error('existing-send-profile-offline-c2-only');
  if(typeof offlineFirstSend!=='boolean'||offlineFirstSend&&(offlineOrigin===null||offlineContext))throw Error('first-send-profile-offline-c3-only');
  if(typeof offlineProjectContext!=='boolean'||offlineProjectContext&&(!offlineContext||offlineOrigin===null))throw Error('project-context-profile-offline-c2-only');

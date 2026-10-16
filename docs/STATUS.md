@@ -2907,3 +2907,15 @@ CI44 at486693b passes4890/4892 Node tests; two older first-Host revision/staged-
 ## Round328 — validated intermediate root capture
 
 Removed the discarded legacy-root checksum during shared-directory mutation while retaining full validation and the actual stored root checksum. Independent new contracts 11/11 and affected storage/recovery regression 286/286 pass; independent review passes. No browser performance improvement claimed. Authorized branch recovery and external cleanup stash remain preserved. MODERN J3 immediate startup, 100k and full Free remain incomplete / NOT_RELEASE_READY. See [Round328](evidence/round328/README.md).
+
+## Round329 — MODERN journey integration; cold-start failure retained
+
+J3 independent Team runner and diagnostic evidence preserve three formal immediate-load failures; instrumented run reaches five steps but is not acceptance. J3-only stable history nodes retain the original UI06 oracle; browser verification remains pending. J2 now supports selected Team fixture, exact failure terminal and the unchanged eight-step runner plus Personal-scope isolation; actual MODERN J2 pending. Full Node 6360/6361 with one obsolete error-name assertion; corrected affected package group 5/5. See [Round329](evidence/round329/README.md). Cold handshake investigation continues; full Free/100k remain NOT_RELEASE_READY.
+
+## Round330 — bounded cold-context recovery and MODERN J3
+
+Independent READY/REFRESH and invalidated-HELLO races repaired with one-shot recovery through full reauthorization. Related final tests 72/72 and independent review pass. Formal MODERN J3 passes original16 steps on candidate before the final verified-scope flag-clear line; that line has separate Node coverage. MODERN J2 ran about5 minutes without report and was boundedly terminated (143); no journey pass claimed. Three independently proven unbounded lifecycle diagnostic reads now have deadlines (3/3), but the aborted-run stage remains unknown. See [Round330](evidence/round330/README.md). FullFree/100k and remaining profile/live gates remain NOT_RELEASE_READY.
+
+Round330 final full Node regression: **6376/6376 PASS**, zero skips, terminal exit0.
+
+Round330 final-version formal MODERN J3 again FAILS initial15s/0 of16 with stable hashes. Earlier candidate16/16 remains single-run evidence; **cold startup remains unresolved**, not certified. No additional browser rerun this checkpoint.
