@@ -89,7 +89,10 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
    if(!p){if(!surfaceParts.length&&(surfaceScanning||surfaceWanted)){
      if(!surfaceScanning){surfaceWanted=false;surfaceCursor=null;surfacePage=0;surfaceScanning=true;}
      const source=proposal(true);surfacePageKey=surfacePage++;surfaceSequence=source.localSeq;surfaceKey=publicationKey(source);
-     if(source.payload.detachedHandles.length||surfaceKey!==surfaceAccepted.get(surfacePageKey)&&surfaceKey!==surfaceFailed.get(surfacePageKey))surfaceParts=splitSurfacePayload(source.payload,source);
+     // Retain the initial empty-surface handshake; only continuation pages
+     // without facts or detached handles can drain locally.
+     const hasObservation=surfacePageKey===0||source.payload.candidates.length||source.payload.membershipClaims.length||source.payload.detachedHandles.length;
+     if(hasObservation&&(source.payload.detachedHandles.length||surfaceKey!==surfaceAccepted.get(surfacePageKey)&&surfaceKey!==surfaceFailed.get(surfacePageKey)))surfaceParts=splitSurfacePayload(source.payload,source);
      if(!surfaceScanning){for(const cache of [surfaceAccepted,surfaceFailed])for(const index of cache.keys())if(index>=surfacePage)cache.delete(index);}
      if(!surfaceParts.length&&!surfaceScanning)finishPass('end');if(!surfaceParts.length&&(surfaceScanning||surfaceWanted))schedule();
     }

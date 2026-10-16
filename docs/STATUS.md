@@ -1,6 +1,16 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，隔离云环境）
+## 最新正式检查点（2026-10-16，恢复原本地目录，Round261）
+
+按用户要求核对 dot 成果：fetch 后本地/远端/原 Draft PR16 均为8fe97c9，零分叉，旧72ca068与本地d1872d9均已保留在祖先链；无需重复merge或重放旧206修改。PR base不变。原目录未跟踪副本（含不同内容及占位文件）全部保留，未混入本轮提交；本地隔离测试权限按本线程最新持续开发授权执行。
+
+修复大型原生Project扫描的重复纯父项目尾包，并在adapter跳过无事实/无detached的空续页；初始握手、真实成员页父项目、失败后的部分观察、CAS与coverage不变。独立审查后未采用仅首页发parent的更宽改法。最终完整Node **5205/5205 PASS，0 skip**；首轮3项失败为Mac临时路径真实化和源码匹配断言，已保留原失败并修复测试适配，未放宽产品校验。
+
+当前修改树实际隔离MV3单次10k/单Project通过限定旅程：原生tail、10000成员渲染、返回及测量前后精确逐ID审计均成功，10000正确成员、0漏项/重复/错误/UNKNOWN。同revision994，单次search/page样本不是p95或完整SYS04。Mac Chrome155与CI156不同，不以本地一次成功解释或抹除CI超时；原报告sourceCommit=null但完整包/源码hash稳定并归档。
+
+CI56（8fe97c9）已终态FAIL：J3跨document焦点快照变化，10k初始30s超时。相同正式J3本地反向与关闭恢复通过，open-forward64键仍FAIL；静态iframe、透明focus调用和双RAF诊断未解决，正式oracle与mount未改。完整81/UI/SYS02/J4/SYS04/SYS05、冷启动可靠性、继承mask可见性及G/U保持开放，**Free NOT_RELEASE_READY**。详情与原始证据见[Round261](evidence/round261/README.md)。继续唯一DEVELOPMENT_PLAN。
+
+## 前一正式检查点（2026-10-16，隔离云环境，Round260）
 
 原分支 / Draft PR16 最近正式提交913753b（Round259），CI55已终态。Node5180/5180、零跳过及12个guard通过；原J4连续23步、两个就绪后SYS05、兼容性与native-IDB切片通过。原cold20s与独立插桩cold本次均通过，但历史间歇未闭合。
 

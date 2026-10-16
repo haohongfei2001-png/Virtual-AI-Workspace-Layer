@@ -18,4 +18,7 @@ for(const [name,change] of [
  ['membership',x=>x.payload.membershipClaims=[{conversationId:'C',projectId:'P'}]],['coverage',x=>x.payload.coverage.kind='complete']
 ])test(`publication preserves ${name} changes`,()=>{const a=fixture(),b=structuredClone(a);change(b);assert.notEqual(key(a),key(b));});
 test('IDless live-control handle remains publication identity',()=>{const a=fixture();a.payload.candidates[0].target={kind:'live-control',control:{id:'old',entity:'project'},navigationURL:null};const b=structuredClone(a);b.payload.candidates[0].target.control.id='new';assert.notEqual(key(a),key(b));});
-test('detached handles retain explicit forced publication branch',()=>{assert.match(source,/if\(source\.payload\.detachedHandles\.length\|\|surfaceKey!==surfaceAccepted\.get\(surfacePageKey\)/);});
+test('detached handles retain explicit forced publication branch',()=>{
+ assert.match(source,/const hasObservation=surfacePageKey===0\|\|source\.payload\.candidates\.length\|\|source\.payload\.membershipClaims\.length\|\|source\.payload\.detachedHandles\.length/);
+ assert.match(source,/if\(hasObservation&&\(source\.payload\.detachedHandles\.length\|\|surfaceKey!==surfaceAccepted\.get\(surfacePageKey\)/);
+});

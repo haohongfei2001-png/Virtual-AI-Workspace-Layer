@@ -138,6 +138,10 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       else if(!claims.has(conversationId)) claims.set(conversationId,{conversationId,asserted:'UNKNOWN',projectId:null,reason:'membership-not-observed',evidence:evidence(regionKind)});
     }
 
+    // Keep the parent alongside actual member observations (including after a
+    // failed earlier packet). A continuation that only traversed already-seen
+    // history has no new observation to publish; do not rewrite its parent.
+    if(cursor&&currentProjectId&&candidates.length===1&&candidates[0].renderKey===`project:${currentProjectId}`&&claims.size===0)candidates.length=0;
     const menu=roots.get('moveMenu');
     if(!candidateOnly&&route.kind==='conversation'&&menu&&visible(menu)&&menu.getAttribute(profile.menuConversationIdAttribute)===route.conversationId) {
       const checked=[...menu.querySelectorAll('input[type="radio"]:checked')];

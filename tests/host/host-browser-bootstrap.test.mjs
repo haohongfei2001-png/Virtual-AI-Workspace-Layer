@@ -2,7 +2,7 @@
  * initial-install C2 success is inferred from these deterministic doubles. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,rmSync,readFileSync} from 'node:fs';
+import {mkdtempSync,rmSync,readFileSync,realpathSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,relative} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
@@ -117,7 +117,7 @@ for(const failure of ['service','repository'])test(failure+' construction failur
 });
 
 for(const enabled of [true,false])test('packaged static module evaluation registers early before heavy graph; C2 enabled='+enabled,async t=>{
- const dir=mkdtempSync(join(tmpdir(),'vaiwl-bootstrap-evaluation-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));const out=join(dir,'package'),info=buildHost(out,enabled?{offlineOrigin:origin,offlineContext:true}:{}),record=[];
+ const dir=realpathSync(mkdtempSync(join(tmpdir(),'vaiwl-bootstrap-evaluation-')));t.after(()=>rmSync(dir,{recursive:true,force:true}));const out=join(dir,'package'),info=buildHost(out,enabled?{offlineOrigin:origin,offlineContext:true}:{}),record=[];
  const f=fixture(t,{enabled:false});f.bootstrap.stop();for(const [name,e]of Object.entries(f.events)){const add=e.addListener;e.addListener=(...args)=>{record.push('listener:'+name);return add(...args);};}
  const globals=['chrome','indexedDB','__hostEvaluation','__hostEvaluatedRuntime'],prior=Object.fromEntries(globals.map(name=>[name,Object.getOwnPropertyDescriptor(globalThis,name)]));
  t.after(()=>{globalThis.__hostEvaluatedRuntime?.stop();for(const name of globals)if(prior[name])Object.defineProperty(globalThis,name,prior[name]);else delete globalThis[name];});
