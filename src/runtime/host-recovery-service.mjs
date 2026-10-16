@@ -5,7 +5,9 @@ const kinds=['workspace','native','evidence'];
 /** Explicit repair façade. Plans are short-lived RAM comparisons, not authority. */
 export function createHostRecoveryService({ui,readService,workspaceRepository,onRecovered=null,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID(),planTTL=20000,maxPlans=64}={}){
  if(typeof ui?.withScope!=='function'||typeof readService?.freeRecoveryStatus!=='function'||typeof readService?.freeRecover!=='function'||!['read','recoveryStatus','recover'].every(k=>typeof workspaceRepository?.[k]==='function')||onRecovered!==null&&typeof onRecovered!=='function'||!Number.isInteger(planTTL)||planTTL<1||planTTL>20000||!Number.isInteger(maxPlans)||maxPlans<1||maxPlans>256)throw Error('invalid-host-recovery-service');
- const plans=new Map(),attempts=new Set();let stopped=false;
+ const plans=new Map(),attempts=new Set();let stopped=false,scopeWork=0;
+ // The RPC deadline may settle before authorization or repository work does.
+ async function trackScope(work){scopeWork++;try{return await work();}finally{scopeWork--;}}
  const failure=()=>({ok:false,reason:'recovery-unavailable'});
  function stop(){if(stopped)return;stopped=true;plans.clear();for(const attempt of attempts){attempt.active=false;attempt.abort.abort();}attempts.clear();}
  async function handle(input,sender){
@@ -15,7 +17,7 @@ export function createHostRecoveryService({ui,readService,workspaceRepository,on
   if(!exactHostRecord(message,status?keys:[...keys,'kind','planId','operationId'])||message.v!==1||!tokenOK(message.grantId)||!tokenOK(message.mountId)||!status&&(message.type!=='HOST_UI_RECOVER'||!kinds.includes(message.kind)||!tokenOK(message.planId)||!tokenOK(message.operationId)))return {ok:false,reason:'invalid-recovery-request'};
   const attempt={active:true,abort:new AbortController(),started:elapsedNow()};attempts.add(attempt);
   const live=()=>!stopped&&attempt.active&&!attempt.abort.signal.aborted&&elapsedNow()>=attempt.started&&elapsedNow()-attempt.started<6000;
-  try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+  try{return await withRequestDeadline(()=>trackScope(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    const guard=()=>live()&&context.isCurrent(),check=()=>{if(!guard())throw Error('recovery-authority-expired');};check();
    const options={guard,signal:attempt.abort.signal};
    const matches=p=>p.scopeKey===context.scope.key&&p.scopeGrantId===context.scopeGrantId&&p.grantId===message.grantId&&p.mountId===message.mountId;
@@ -43,7 +45,9 @@ export function createHostRecoveryService({ui,readService,workspaceRepository,on
     plans.delete(message.planId);try{await onRecovered?.(context.scope.key);}catch{}check();return {ok:true,kind:plan.kind};
    }catch(error){plans.delete(message.planId);throw error;}})();
    return await plan.pending;
-  }),{timeoutMs:6000,now:elapsedNow,schedule,cancel});}catch{return failure();}finally{attempt.active=false;attempt.abort.abort();attempts.delete(attempt);for(const [id,plan]of plans)if(plan.attempt===attempt)plans.delete(id);}
+  })),{timeoutMs:6000,now:elapsedNow,schedule,cancel});}catch{return failure();}finally{attempt.active=false;attempt.abort.abort();attempts.delete(attempt);for(const [id,plan]of plans)if(plan.attempt===attempt)plans.delete(id);}
  }
- return Object.freeze({handle,stop});
+ // Local quietness only; retained user work blocks even after its TTL.
+ function isIdle(){return !stopped&&scopeWork===0&&attempts.size===0&&plans.size===0;}
+ return Object.freeze({handle,stop,isIdle});
 }

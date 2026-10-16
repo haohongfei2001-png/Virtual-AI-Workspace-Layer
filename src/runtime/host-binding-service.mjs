@@ -32,6 +32,8 @@ import {exactHostRecord} from '../host/contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Zero-seed identity composition. Existing repository/broker owners remain unchanged. */
 export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,contextObserver=null,isolatedIdentityDispatch=null,identityOrigin=null,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,firstSendOrigin=null,oldSendTerminalOrigin=null,readBudget=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,navigationURLPolicy=null,candidateBridge=null,dispatchCurrent=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+ const activity={requests:0,background:0};
+ async function track(kind,work){activity[kind]++;try{return await work();}finally{activity[kind]--;}}
  const handshake=createHostDocumentHandshake({extensionId,getFrame,allowedURL,now,makeId,elapsedNow,schedule,cancel});
  const identityOwner=isolatedIdentityDispatch?createIsolatedSessionOwner({extensionId,handshake,getFrame,dispatch:isolatedIdentityDispatch,origin:identityOrigin,now,makeId,elapsedNow,schedule,cancel}):null;
  const readIdentity=identityOwner?async(frame,attempt)=>{
@@ -59,7 +61,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  if(ackProfile&&(!currentMetadataReadEnabled||!sendCandidatesEnabled||!workspaceRepository||!freeEvidenceRepository||!(surfaceProfiles instanceof Map)||!surfaceProfiles.size||surfaceProfiles.has(ackProfile.id)))throw Error('invalid-send-ack-composition');
  const continuationProfileFor=id=>id===historyProfile?.id?historyProfile:id===ackProfile?.id?ackProfile:surfaceProfiles?.get(id);
  let sendCandidates=null,ackOwner=null,recoveryProfileCursor=0;
- const observations=surfaceProfiles?createHostObservationOwner({handshake,authority,getFrame,profiles:surfaceProfiles,foregroundReadPending:scopeKey=>views?.isForegroundReadPending(scopeKey)===true,onAccepted:(scope,publication)=>{views?.nativePublished(scope.key);if(publication.background===true)ui?.notifyBackground(scope.key);else ui?.notifyScope(scope.key);},onSendIntent:async(proof,intent)=>{const result=await sendCandidates?.intent(proof,intent);if(result?.stage==='intent')await oldSendTerminal?.intentAccepted(proof,intent.intentId);return result;},ackAdmission:(scope,request)=>ackOwner?.gate(scope,request),onNativeDelta:async proof=>{await oldSendTerminal?.observe(proof);if(firstSend)await firstSend.observe(proof);await sendCandidates?.observe(proof);},now,makeId,elapsedNow,schedule,cancel}):null;
+ const observations=surfaceProfiles?createHostObservationOwner({handshake,authority,getFrame,profiles:surfaceProfiles,foregroundReadPending:scopeKey=>views?.isForegroundReadPending(scopeKey)===true,onAccepted:(scope,publication)=>{views?.nativePublished(scope.key);if(publication.background===true)ui?.notifyBackground(scope.key);else ui?.notifyScope(scope.key);},onSendIntent:(proof,intent)=>track('background',async()=>{const result=await sendCandidates?.intent(proof,intent);if(result?.stage==='intent')await oldSendTerminal?.intentAccepted(proof,intent.intentId);return result;}),ackAdmission:(scope,request)=>ackOwner?.gate(scope,request),onNativeDelta:proof=>track('background',async()=>{await oldSendTerminal?.observe(proof);if(firstSend)await firstSend.observe(proof);await sendCandidates?.observe(proof);}),now,makeId,elapsedNow,schedule,cancel}):null;
  const historyOwner=historyProfile?createHostHistoricalSendOwner({evidenceRepository:()=>freeEvidenceRepository,profileFor:continuationProfileFor,now}):null;
  const currentMetadata=observations?createCurrentMetadataReader({observations,provider,enabled:currentMetadataReadEnabled,now,onHistorical:historyOwner?async input=>{await historyOwner.consume(input);input.guard();ui?.notifyScope(input.context.scope.key);}:null}):null;
 
@@ -82,7 +84,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const commands={};if(readService)for(const name of ['snapshot','command','undo','history','saveView','exportBackup','previewRestore','restoreBackup','recoveryStatus','recover'])if(typeof workspaceRepository[name]==='function')commands[name]=workspaceRepository[name].bind(workspaceRepository);
  const broker=createDocumentBindingBroker({extensionId,getFrame,allowedURL,repository,workspaceRepository:readService?{...readService,...commands}:workspaceRepository,freeRuntime,now,makeId,hostHandshake:handshake,resolveScope:({currentFrame,sender})=>authority.scopeFor(asFrame(currentFrame,sender))});
  const sequences=new Map(),refreshAttempts=new Set();let serviceActive=true;
- async function handle(message,sender){
+ async function handleWork(message,sender){
   if(message?.type==='HOST_OLD_SEND_OPERATION')return {ok:oldSendTerminal?await oldSendTerminal.intent(message,sender):false};
   if(message?.type==='HOST_FIRST_SEND_INTENT')return firstSend?firstSend.intent(message,sender):{ok:false};
   if(!serviceActive)return {ok:false,reason:'host-service-stopped'};
@@ -112,7 +114,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(['vaiwl-host-observation/1','vaiwl-host-observation/2'].includes(message?.protocol)){
    if(!observations)return {state:'rejected',localSeq:message.localSeq,reason:'host-observations-unavailable'};
    const result=await observations.ingest(message,sender,nativeRepository);
-   if(message.kind==='current-object'&&result.bodyProofId&&['accepted','duplicate'].includes(result.state)){await oldSendTerminal?.observe(result.bodyProofId);if(firstSend)void firstSend.observe(result.bodyProofId).then(()=>sendCandidates?.observe(result.bodyProofId)).catch(()=>{});else sendCandidates?.observe(result.bodyProofId).catch(()=>{});}
+   if(message.kind==='current-object'&&result.bodyProofId&&['accepted','duplicate'].includes(result.state)){await oldSendTerminal?.observe(result.bodyProofId);void track('background',async()=>{if(firstSend)await firstSend.observe(result.bodyProofId);await sendCandidates?.observe(result.bodyProofId);}).catch(()=>{});}
    return result;
   }
   if(!['HOST_REFRESH','HOST_FOCUS'].includes(message?.type))return broker.handle(message,sender);
@@ -175,6 +177,12 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  function tabClosed(tabId){ingestionPasses?.invalidateTab(tabId);oldSendTerminal?.invalidateTab(tabId);firstSend?.invalidateTab(tabId);observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
  function stop(){if(!serviceActive)return;serviceActive=false;identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
  // Internal worker composition only; no page RPC exposes metadata or accepts proof IDs.
- const readCurrentMetadata=proofId=>currentMetadata?currentMetadata.read(proofId):Promise.reject(Error('current-metadata-unavailable'));
- return Object.freeze({oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
+ const readCurrentMetadata=proofId=>track('requests',()=>currentMetadata?currentMetadata.read(proofId):Promise.reject(Error('current-metadata-unavailable')));
+ const handle=(message,sender)=>track('requests',()=>handleWork(message,sender));
+ // A conservative local snapshot only; not a document close/admission permit.
+ function isIdle(){
+  if(!serviceActive||activity.requests||activity.background||refreshAttempts.size)return false;
+  return [sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
+ }
+ return Object.freeze({isIdle,oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
 }

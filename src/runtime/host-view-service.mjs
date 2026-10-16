@@ -16,7 +16,12 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
 export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,nativeWritePending=()=>false,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof nativeWritePending!=='function'||typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
- const views=new Map(),resumes=new Map(),readWindows=new Map();
+ const views=new Map(),resumes=new Map(),readWindows=new Map();let stopped=false,refreshes=0,reads=0;
+ // A cancelled owner refresh can settle before its underlying read does.
+ // Count both without changing the original deadlines or cancellation guards.
+ const ownerReadService=Object.fromEntries(['freeHeader','freePage','version'].map(name=>[name,async(...args)=>{reads++;try{return await readService[name](...args);}finally{reads--;}}]));
+ async function refreshOwner(entry,...args){refreshes++;try{return await entry.owner.refresh(...args);}finally{refreshes--;}}
+ const isIdle=()=>!stopped&&refreshes===0&&reads===0&&![...views.values()].some(entry=>entry.pending||entry.autoReading||entry.retryTimer!=null||entry.deferPreparation!=null);
  // A bounded local scheduling opportunity, never snapshot authority. All mounts
  // of a scope share one deadline; a committed publication must precede renewal.
  function liveWindow(scopeKey){
@@ -91,7 +96,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   const run=()=>{
    if(!current())return;
    reserveRead(entry);
-   entry.owner.refresh().then(()=>{if(!current()||entry.checkPreparation?.())return;completed();entry.pending=false;entry.awaitingDelivery=true;if(elapsedNow()-started>=30000)entry.error='read-budget-exhausted';},error=>{
+   refreshOwner(entry).then(()=>{if(!current()||entry.checkPreparation?.())return;completed();entry.pending=false;entry.awaitingDelivery=true;if(elapsedNow()-started>=30000)entry.error='read-budget-exhausted';},error=>{
     if(!current()||entry.checkPreparation?.())return;
     if(['snapshot-revision-changed','stale-free-page'].includes(error?.message)&&retries<2&&elapsedNow()-started<29950){retries++;entry.deferPreparation=queueRetry;queueRetry();return;}
     releaseRead(entry);completed();entry.pending=false;entry.error=reason(error);
@@ -124,7 +129,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    if(!entry){
     if(views.size>=maxViews)throw Error('free-view-capacity');
     entry={scopeKey:context.scope.key,scopeGrantId:context.scopeGrantId,parentFrame:context.parentFrame,isCurrent:context.isCurrent,pending:false,error:null,presentation:{revision:0,intent:{kind:'show-workspace'}},
-     owner:createFreeViewOwner({readService,scope:context.scope,guard:context.isCurrent,clock,elapsedNow,schedule,cancel,initialSession:(resumeFor(context,'workspace')?.query.segment??0)>0?resumeFor(context,'workspace').session:null})};
+     owner:createFreeViewOwner({readService:ownerReadService,scope:context.scope,guard:context.isCurrent,clock,elapsedNow,schedule,cancel,initialSession:(resumeFor(context,'workspace')?.query.segment??0)>0?resumeFor(context,'workspace').session:null})};
     views.set(message.mountId,entry);begin(entry);
    }
    if(entry.currentEntryPending&&context.role==='workspace'&&((message.query.segment??0)!==0||message.query.search!==undefined||message.query.workingSet!==undefined))entry.currentEntryEligible=false;
@@ -203,7 +208,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     if(version.nativeRevision!==snapshot.revision||version.revision!==snapshot.workspaceRevision||version.evidenceRevision!==snapshot.evidenceRevision||version.viewRevision!==snapshot.viewRevision)throw Error('snapshot-revision-changed');
     let policyCommit,autoChange;
     if(workspaceRepository&&snapshot.preferences?.freeTimePolicy?.value?.mode==='auto'){
-     let fresh;entry.autoReading=true;try{fresh=await entry.owner.refresh({now:clock()});}finally{entry.autoReading=false;}
+     let fresh;entry.autoReading=true;try{fresh=await refreshOwner(entry,{now:clock()});}finally{entry.autoReading=false;}
      if(!active||elapsedNow()-started>=6000||!context.isCurrent()||views.get(message.mountId)!==entry||entry.pending||!entry.currentEntryEligible||entry.owner.current()!==fresh)throw Error('ui-current-entry-expired');
      current=fresh;snapshot=fresh.snapshot;
      if(snapshot.workspaceRevision!==message.expectedRevision)throw Error('revision-conflict');
@@ -218,7 +223,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
        autoChange={id:globalThis.crypto.randomUUID(),previousH:proposal.previousPolicy.H,H:proposal.policy.H,policyRevision:proposal.policy.revision,workspaceRevision:result.revision,expiresAt:new Date(Date.parse(clock())+15000).toISOString()};
        entry.autoUndo={...autoChange,policy:proposal.policy,deadline:elapsedNow()+15000};
       }
-      let committed;entry.autoReading=true;try{committed=await entry.owner.refresh({now:clock()});}finally{entry.autoReading=false;}
+      let committed;entry.autoReading=true;try{committed=await refreshOwner(entry,{now:clock()});}finally{entry.autoReading=false;}
       if(!active||elapsedNow()-started>=6000||!context.isCurrent()||views.get(message.mountId)!==entry||entry.pending||!entry.currentEntryEligible||entry.owner.current()!==committed)throw Error('ui-current-entry-expired');
       current=committed;snapshot=committed.snapshot;
       if(snapshot.workspaceRevision!==result.revision)throw Error('revision-conflict');
@@ -348,5 +353,5 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  function confirmScope(frame,scopeKey){for(const [key,value]of resumes)if(value.tabId===frame.tabId&&value.documentId===frame.documentId&&value.scopeKey!==scopeKey)resumes.delete(key);}
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId,{preserveDocumentId=null}={}){for(const [key,value]of resumes)if(value.tabId===tabId&&(!preserveDocumentId||value.documentId!==preserveDocumentId))resumes.delete(key);for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent()&&!retryableRead(entry.error))begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({isIdle,handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent()&&!retryableRead(entry.error))begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){stopped=true;readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
 }

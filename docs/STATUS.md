@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round353）
+## 最新本地检查点（2026-10-17，Round354）
+
+正式开发分支与整理stash42c8877保全，PR16远端核对无新增差异。本轮接入服务请求/后台观察链、view准备与迟到读取、备份transfer/恢复plan的内部idle状态。独立审查补出deadline先返回但底层尚未结束的14项反例并修复；最终相关 **518/518 Node PASS**，无skip/cancel。见 [Round354](evidence/round354/README.md)。
+
+仍是局部内部快照，同producer冻结、同步关闭复核与实际自然休眠恢复未接通；**不构成UI-11通过**。本轮无浏览器验收，完整Free继续NOT_RELEASE_READY。
+
+## 前一本地检查点（2026-10-17，Round353）
 
 同轮继续补first-send和old-terminal局部idle检查：early浏览器事件、pending/inflight、await前空表窗口、queued读取及保留关联均阻止误判空闲；不清理记录/续时限/改预算。最终相关21文件 **285/285 Node PASS**，独立审查无阻断。见 [Round353](evidence/round353/README.md)。
 

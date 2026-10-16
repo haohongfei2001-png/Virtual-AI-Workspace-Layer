@@ -6,7 +6,9 @@ const extras=[[],['transferId','index'],['byteLength'],['transferId','index','da
 /** User-driven human-asset transfer. All bundles/plans stay in bounded worker RAM. */
 export function createHostBackupService({ui,workspaceRepository,onRestored=null,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(typeof ui?.withScope!=='function'||!['exportBackup','previewRestore','restoreBackup'].every(k=>typeof workspaceRepository?.[k]==='function')||onRestored!==null&&typeof onRestored!=='function')throw Error('invalid-host-backup-service');
- const transfers=new Map(),attempts=new Set();let stopped=false;
+ const transfers=new Map(),attempts=new Set();let stopped=false,scopeWork=0;
+ // The RPC deadline may settle before authorization or repository work does.
+ async function trackScope(work){scopeWork++;try{return await work();}finally{scopeWork--;}}
  const failure=()=>({ok:false,reason:'backup-unavailable'});
  function liveTransfer(t){const now=elapsedNow();try{return !stopped&&transfers.get(t.id)===t&&Number.isFinite(now)&&now>=t.created&&now<t.until&&t.isCurrent()===true;}catch{return false;}}
  function info(t){return {ok:true,transferId:t.id,byteLength:t.length,chunkBytes:BACKUP_CHUNK_BYTES,chunkCount:Math.ceil(t.length/BACKUP_CHUNK_BYTES)};}
@@ -16,7 +18,7 @@ export function createHostBackupService({ui,workspaceRepository,onRestored=null,
   const kind=BACKUP_TYPES.indexOf(m?.type),base=['v','type','grantId','mountId'];if(kind<0||!exactHostRecord(m,[...base,...extras[kind]])||m.v!==1||!tokenOK(m.grantId)||!tokenOK(m.mountId)||extras[kind].includes('transferId')&&!tokenOK(m.transferId)||kind===2&&!backupByteLengthOK(m.byteLength)||[1,3].includes(kind)&&(!Number.isSafeInteger(m.index)||m.index<0)||kind===5&&(!tokenOK(m.planId)||!tokenOK(m.operationId)))return failure();
   const a={active:true,abort:new AbortController(),started:elapsedNow(),created:null};attempts.add(a);
   const active=()=>!stopped&&a.active&&!a.abort.signal.aborted&&Number.isFinite(elapsedNow())&&elapsedNow()>=a.started&&elapsedNow()-a.started<6000;
-  try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:m.grantId,mountId:m.mountId},async c=>{
+  try{return await withRequestDeadline(()=>trackScope(()=>ui.withScope({sender,grantId:m.grantId,mountId:m.mountId},async c=>{
    const guard=()=>active()&&c.isCurrent()===true,check=()=>{if(!guard())throw Error('backup-expired');};check();
    for(const [id,t]of transfers)if(!liveTransfer(t))transfers.delete(id);
    const matches=t=>t.scopeKey===c.scope.key&&t.scopeGrantId===c.scopeGrantId&&t.grantId===m.grantId&&t.mountId===m.mountId;
@@ -42,7 +44,9 @@ export function createHostBackupService({ui,workspaceRepository,onRestored=null,
    if(t.pending){if(t.operationId!==m.operationId||!(t.pending instanceof Promise))throw Error('restore-conflict');const result=await t.pending;check();return result;}
    t.operationId=m.operationId;const plan=t.plan;t.restoreAttempt=a;
    t.pending=(async()=>{try{const result=await workspaceRepository.restoreBackup(c.scope,{operationId:m.operationId,expectedRevision:plan.expectedRevision,bundle:plan.bundle,planHash:plan.planHash},{guard:transferGuard,signal:a.abort.signal});fence();if(result?.ok!==true)throw Error('restore-failed');transfers.delete(t.id);try{await onRestored?.(c.scope.key);}catch{}check();return {ok:true};}catch(error){transfers.delete(t.id);throw error;}})();return await t.pending;
-  }),{timeoutMs:6000,now:elapsedNow,schedule,cancel});}catch{return failure();}finally{a.active=false;a.abort.abort();attempts.delete(a);if(a.created)transfers.delete(a.created.id);for(const [id,t]of transfers)if(t.restoreAttempt===a)transfers.delete(id);}
+  })),{timeoutMs:6000,now:elapsedNow,schedule,cancel});}catch{return failure();}finally{a.active=false;a.abort.abort();attempts.delete(a);if(a.created)transfers.delete(a.created.id);for(const [id,t]of transfers)if(t.restoreAttempt===a)transfers.delete(id);}
  }
- return Object.freeze({handle,stop});
+ // Local quietness only; retained user work blocks even after its TTL.
+ function isIdle(){return !stopped&&scopeWork===0&&attempts.size===0&&transfers.size===0;}
+ return Object.freeze({handle,stop,isIdle});
 }
