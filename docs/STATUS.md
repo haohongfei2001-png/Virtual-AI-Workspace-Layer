@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round306）
+## 最新正式检查点（2026-10-16，原本地目录，Round307）
+
+8a8df62隐藏刷新修复后重跑原普通10k单Project：仍30秒成员期限FAIL，截止快照5865refs/rev170，不是完整成员验收或性能通过。源码/fixture/manifest稳定，隔离目录已清理，见[Round307](evidence/round307/README.md)。生产未再改变，沿用Round306完整5973PASS与真实双tab证据，不重复累计。
+
+8a8df62普通push网络低速超时，本地检查点保留；最后API确认远端c0152fe，原Draft PR16/base不变。**Free NOT_RELEASE_READY**，目标保持完整范围。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round306）
 
 隐藏UI文档的普通数据通知改为合并待刷新标记，回前台读取；在途完成不链式重读。初始/显式读取、特殊面板冲突、撤权和期限保持。独立15项反例、定向234项及完整Node **5973/5973 PASS**。实际双tab三次原生Project更名提交时，隐藏workspace/sidebar VIEW数不变；切回显示最新原生名，scope/编辑器/草稿保持。
 
