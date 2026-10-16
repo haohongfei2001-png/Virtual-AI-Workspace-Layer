@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round296）
+## 最新正式检查点（2026-10-16，原本地目录，Round297）
+
+现有UI owner按scope固定100ms合并后台目录空数据提示，重复不延后；combined当前观察与ACK立即通知、nativePublished同步保持。单mount提示不吞其他mount更新，撤权/旧timer/容量回退均有独立反例。
+
+最终完整Node **5801/5801 PASS**，实际隔离MV3唯一发送ACK持久化回归PASS。100k诊断32提交/27准备、708refs，仍非完整摄取或性能通过；原FAIL保留。详见[Round297](evidence/round297/README.md)。cbef4f6已push/API确认原Draft/base。完整81/规模/冷启动/J4及真实G/U未闭合，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round296）
 
 原生导航批量解析只查询一次根节点，逐项保留连接/文档/父节点/指纹/epoch校验；公共派发入口仍重新查询。200目标根查询804→4，逐项指纹200次保持；独立16反例及审查通过。
 

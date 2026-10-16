@@ -130,7 +130,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    producers.set(proposal.producerToken,{isBound:producerCurrent,scopeKey:scope.key,grantId:grant.id,scopeEpoch:grant.scopeEpoch,seq:proposal.localSeq,fingerprint:semanticFingerprint,receiptId,...(combined?{bodyProofId:bodyEntry?.proofId??null,bodyRegionEpoch:body.regionEpoch}:{}),bodyEpoch:batchBodyEpoch??bodyEntry?.bodyEpoch??previous?.bodyEpoch??0,...(!combined&&previous?.bodyRegionEpoch!==undefined?{bodyRegionEpoch:previous.bodyRegionEpoch}:{}),until:Math.min(Date.parse(grant.expiresAt),time+20000)});
    // Notify with the already verified scope inside the guarded owner turn.
    // Transport notification failure must not turn a committed write into a retry.
-   try{onAccepted?.(scope);}catch{}
+   try{onAccepted?.(scope,{background:!combined&&!isBody&&!isSend});}catch{}
    batchCommitted=true;if(combined)failedBatches.delete(proposal.producerToken);return {state:'accepted',localSeq:proposal.localSeq,receiptId,...(combined?{bodyProofId:bodyEntry?.proofId??null,bodyEpoch:batchBodyEpoch??bodyEntry?.bodyEpoch??0}:{})};
   }catch{return rejected('invalid-host-observation');}
   finally{if(request)admissions.delete(request);if(newBatchProof&&!batchCommitted){failedBatches.set(newBatchProof.producerToken,newBatchProof);if(bodies.get(newBatchProof.producerToken)?.proofId===newBatchProof.proofId)discardBody(newBatchProof.producerToken);}}

@@ -6,6 +6,7 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,getContexts=null,handshake,authority,now=Date.now,makeId=()=>crypto.randomUUID(),maxPending=128,maxPorts=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const grants=createUiGrants({extensionId,uiURL,uiURLs,getFrame,getContexts,peekScope:frame=>authority.peek(frame),now,makeId});
  let revocationEpoch=0;
+ const backgroundHints=new Map();
  const pending=new Map(),registrations=new Map(),ports=new Map(),uiDocuments=new Map(),inFlight=new Set();
  if(!Number.isInteger(maxPorts)||maxPorts<1||maxPorts>512)throw Error('invalid-ui-port-capacity');
  if(!Number.isInteger(maxPending)||maxPending<1||maxPending>512)throw Error('invalid-ui-pending-capacity');
@@ -158,7 +159,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   // too, so a late parent confirmation cannot resurrect it after this request.
   for(const attempt of inFlight)if(attempt.sender?.tab?.id===tabId)grants.revokeDocument(attempt.sender.documentId);
   for(const entry of [...registrations.values()])if(entry.tabId===tabId)revokeDocument(entry.documentId);for(const [id,entry]of [...uiDocuments])if(entry.sender.tab.id===tabId)revokeDocument(id);for(const [port,entry]of [...ports])if(entry.sender.tab.id===tabId)disconnectPort(port);}
- function revokeAll(){revocationEpoch++;invalidateAttempts(()=>true);grants.revokeAll();registrations.clear();uiDocuments.clear();for(const port of [...ports.keys()])disconnectPort(port);for(const key of [...pending.keys()])deliver(key,null);}
+ function revokeAll(){for(const entry of backgroundHints.values())cancel(entry.timer);backgroundHints.clear();revocationEpoch++;invalidateAttempts(()=>true);grants.revokeAll();registrations.clear();uiDocuments.clear();for(const port of [...ports.keys()])disconnectPort(port);for(const key of [...pending.keys()])deliver(key,null);}
  function notify(scopeKey,mountId,type){
   if(typeof scopeKey!=='string'||!scopeKey)return 0;
   let delivered=0;
@@ -179,7 +180,24 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   }
   return delivered;
  }
- function notifyScope(scopeKey,mountId=null){return notify(scopeKey,mountId,'VAIWL_UI_DATA_CHANGED');}
+ function notifyScope(scopeKey,mountId=null){
+  // A mount-local notification cannot consume updates owed to sibling mounts.
+  if(mountId===null){const entry=backgroundHints.get(scopeKey);if(entry){backgroundHints.delete(scopeKey);cancel(entry.timer);}}
+  return notify(scopeKey,mountId,'VAIWL_UI_DATA_CHANGED');
+ }
+ function notifyBackground(scopeKey){
+  if(typeof scopeKey!=='string'||!scopeKey||!ports.size)return 0;
+  if(backgroundHints.has(scopeKey))return 0;
+  if(backgroundHints.size>=maxPorts)return notifyScope(scopeKey);
+  const entry={timer:null};backgroundHints.set(scopeKey,entry);
+  // Fixed trailing cadence: later publications cannot postpone this hint.
+  // No projection, scope grant or pending read is retained by this timer.
+  entry.timer=schedule(()=>{
+   if(backgroundHints.get(scopeKey)!==entry)return;
+   backgroundHints.delete(scopeKey);notify(scopeKey,null,'VAIWL_UI_DATA_CHANGED');
+  },100);
+  return 0;
+ }
  function notifyMount(id){const mount=registrations.get(id);if(!mount)return 0;const scope=authority.scopeFor({tabId:mount.tabId,frameId:0,documentId:mount.documentId,actualURL:mount.url,documentLifecycle:'active',incognito:false});return scope?notifyScope(scope.key,id):0;}
  async function withScope(args,work){
   const sender=structuredClone(args.sender),grant=await validate({...args,sender}),mount=registrations.get(grant.mountId);
@@ -196,5 +214,5 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   const result=await work(Object.freeze({scope,parentFrame:frame,binding:mount.binding,scopeGrantId:grant.scopeGrantId,role:grant.role,isCurrent:current}));
   await validate({...args,sender});if(!current())throw Error('ui-scope-changed');return result;
  }
- return Object.freeze({handle,validate,withScope,notifyScope,notifyMount,connectPort,revokeDocument,revokeMount,revokeTab,revokeAll});
+ return Object.freeze({handle,validate,withScope,notifyScope,notifyBackground,notifyMount,connectPort,revokeDocument,revokeMount,revokeTab,revokeAll});
 }

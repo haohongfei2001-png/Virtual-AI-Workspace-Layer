@@ -49,3 +49,15 @@ test('current body and send causality bypass background scheduling without nativ
  const send={...f.proposal,localSeq:2,bodyProofId:accepted.bodyProofId,kind:'send-candidate',payload:{intentId:'intent_2',conversationId:C,messageId:null,operationId:null,stage:'intent',observedAt:new Date(1000).toISOString(),evidence:evidence(['native-send-intent'])}};
  const result=await owner.ingest(send,f.sender,f.repository);assert.equal(result.state,'accepted',JSON.stringify(result));assert.equal(f.sends,1);assert.equal(f.yieldCalls,0);assert.equal(f.calls.page,0);assert.equal(f.calls.apply,0);
 });
+
+test('notification classification is owner-derived: surface background, combined current observation immediate',async()=>{
+ for(const combined of [false,true]){
+  const f=fixture(),notices=[];f.dependencies.onAccepted=(scope,publication)=>notices.push({scope:scope.key,...publication});const owner=f.start();
+  let proposal=f.proposal;
+  if(combined){f.setPending(f.scope.key);proposal={...proposal,protocol:'vaiwl-host-observation/2',kind:'current-observation',payload:{surface:proposal.payload,body:{conversationId:'33333333-3333-4333-8333-333333333333',messageIds:['m1'],association:'explicit-body-id',regionEpoch:1,evidence:{profileId:'test',profileVersion:1,sourceKind:'native-dom',regionEpoch:1,fieldPaths:['current-body-explicit-id','current-body-message-ids'],receiptId:null}}}};}
+  assert.equal((await owner.ingest(proposal,f.sender,f.repository)).state,'accepted');
+  assert.deepEqual(notices,[{scope:f.scope.key,background:!combined}]);
+  assert.equal((await owner.ingest(proposal,f.sender,f.repository)).state,'duplicate');assert.equal(notices.length,1);
+  assert.equal((await owner.ingest({...proposal,background:!combined,localSeq:2},f.sender,f.repository)).state,'rejected');assert.equal(notices.length,1,'page cannot supply internal notification classification');owner.stop();
+ }
+});
