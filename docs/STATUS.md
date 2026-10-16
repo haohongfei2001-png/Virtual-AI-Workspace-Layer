@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round271）
+## 最新正式检查点（2026-10-16，原本地目录，Round272）
+
+承接8e3729f；正式代码与依赖未变。原20秒cold门槛仍FAIL；被动trace确认首原生GET早于C2监听注册36ms，后续HELLO成功但缺receipt，作用域正确拒绝。临时合并121模块的离线包仍FAIL，已撤回实验改动，不采用无效优化。
+
+独立cold-recovery真实MV3通过：首次失败无私有界面残留，原生阅读/输入可用；显式原生历史导航后正确绑定第二/team context并恢复投影，草稿保留。该恢复PASS不替代immediateColdSupport=FAIL。源码/runner完整性保持，36项定向合同PASS。见[Round272](evidence/round272/README.md)。继续100k渐进摄取/可见性问题及其他Free项；完整81、冷启动、规模可靠性及真实G/U仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round271）
 
 承接db0d9da，修复J3实际片段保存根因：可选metadata的read-budget-exhausted不再阻止原生事实未变化时的合法body ACK；仅容忍该确切错误，且fresh handshake前后复核scope/body。账户变化及其他错误仍拒绝，claimed joint提交失败不得fallback。独立红测转绿；首次全套暴露宽catch的principal反例，已收窄并保留失败记录。
 
