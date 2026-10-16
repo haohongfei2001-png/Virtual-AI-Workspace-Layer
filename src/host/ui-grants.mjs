@@ -116,5 +116,5 @@ export function createUiGrants({extensionId,uiURL=null,uiURLs=null,getFrame,getC
   const task=renewOnce({...args,sender}).finally(()=>{if(renewing.get(args.grantId)===task)renewing.delete(args.grantId);});
   renewing.set(args.grantId,task);return task;
  }
- return Object.freeze({registerMount,renew,joinUI,confirmParent,validate,current,currentGrant,revokeMount,revokeDocument,revokeAll});
+ return Object.freeze({validateMount:id=>{liveMount(id);},registerMount,renew,joinUI,confirmParent,validate,current,currentGrant,revokeMount,revokeDocument,revokeAll});
 }

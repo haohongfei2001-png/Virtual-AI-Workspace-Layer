@@ -2,12 +2,12 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {createHostUiOwner} from '../../src/runtime/host-ui-owner.mjs';
 const tick=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
-function fixture(){let time=0,id=0,delay=null,bound=true,proof={state:'verified',grant:{id:'scope',scopeKey:'scope-key',scopeEpoch:1,expiresAt:new Date(100000).toISOString()}};const timers=new Map();const parent={id:'ext',tab:{id:1,incognito:false},frameId:0,documentId:'parent',documentLifecycle:'active',url:'https://chatgpt.com/'},ui={...parent,frameId:2,documentId:'ui',url:'chrome-extension://ext/ui.html'};
+function fixture(){let time=0,id=0,delay=null,frameHook=null,bound=true,proof={state:'verified',grant:{id:'scope',scopeKey:'scope-key',scopeEpoch:1,expiresAt:new Date(100000).toISOString()}};const timers=new Map();const parent={id:'ext',tab:{id:1,incognito:false},frameId:0,documentId:'parent',documentLifecycle:'active',url:'https://chatgpt.com/'},ui={...parent,frameId:2,documentId:'ui',url:'chrome-extension://ext/ui.html'};
  const sidebar={...ui,frameId:3,documentId:'sidebar'},frames=new Map();
- const getFrame=async({frameId})=>{if(delay)await delay;const s=frames.get(frameId)??(frameId===0?parent:frameId===3?sidebar:ui);return {documentId:s.documentId,url:s.url,documentLifecycle:'active',parentFrameId:frameId===0?-1:0};};
- const owner=createHostUiOwner({extensionId:'ext',uiURL:ui.url,getFrame,handshake:{isBound:()=>bound,verify:async(m,s)=>s.documentId===parent.documentId&&m.documentToken==='doc'&&m.producerToken==='producer'&&m.routeEpoch===1,matchesFrame:(m,s,f)=>f.documentId===s.documentId&&f.url===s.url},authority:{peek:()=>proof},now:()=>time,elapsedNow:()=>time,makeId:()=>`grant_${++id}`,maxPending:1,schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key)});
+ const getFrame=async({frameId})=>{if(delay)await delay;if(frameHook)await frameHook(frameId);const s=frames.get(frameId)??(frameId===0?parent:frameId===3?sidebar:ui);return {documentId:s.documentId,url:s.url,documentLifecycle:'active',parentFrameId:frameId===0?-1:0};};
+ const owner=createHostUiOwner({extensionId:'ext',uiURL:ui.url,getFrame,handshake:{isBound:()=>bound,verify:async(m,s)=>s.documentId===parent.documentId&&m.documentToken==='doc'&&m.producerToken==='producer'&&m.routeEpoch===1,matchesFrame:(m,s,f)=>f.documentId===s.documentId&&f.url===s.url},authority:{peek:()=>proof,scopeFor:()=>bound&&proof?.state==='verified'&&Date.parse(proof.grant.expiresAt)>time?{key:proof.grant.scopeKey}:null},now:()=>time,elapsedNow:()=>time,makeId:()=>`grant_${++id}`,maxPending:1,schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key)});
  const binding={documentToken:'doc',producerToken:'producer',routeEpoch:1};const msg=(type,extra={})=>({v:1,type,...extra});
- return {owner,parent,ui,sidebar,frames,timers,setBound:v=>bound=v,setProof:v=>proof=v,async mount(){assert.equal((await owner.handle(msg('HOST_UI_MOUNT',{...binding,mountId:'mount',regionEpoch:1}),parent)).ok,true);},confirm:(nonce='nonce',extra={})=>owner.handle(msg('HOST_UI_CONFIRM',{...binding,mountId:'mount',regionEpoch:1,nonce,role:'workspace',...extra}),parent),join:(nonce='nonce',extra={},sender=ui)=>owner.handle(msg('HOST_UI_JOIN',{nonce,role:'workspace',...extra}),sender),release:()=>owner.handle(msg('HOST_UI_RELEASE',{...binding,mountId:'mount'}),parent),renew:grant=>owner.handle(msg('HOST_UI_RENEW',{grantId:grant.id,mountId:'mount'}),ui),block(){let resolve;delay=new Promise(r=>resolve=r);return ()=>{delay=null;resolve();};},async advance(ms){time+=ms;for(const [key,t]of [...timers])if(t.at<=time){timers.delete(key);t.fn();}await tick();}};
+ return {owner,parent,ui,sidebar,frames,timers,setFrameHook:hook=>frameHook=hook,setBound:v=>bound=v,setProof:v=>proof=v,async mount(){assert.equal((await owner.handle(msg('HOST_UI_MOUNT',{...binding,mountId:'mount',regionEpoch:1}),parent)).ok,true);},confirm:(nonce='nonce',extra={})=>owner.handle(msg('HOST_UI_CONFIRM',{...binding,mountId:'mount',regionEpoch:1,nonce,role:'workspace',...extra}),parent),join:(nonce='nonce',extra={},sender=ui)=>owner.handle(msg('HOST_UI_JOIN',{nonce,role:'workspace',...extra}),sender),release:()=>owner.handle(msg('HOST_UI_RELEASE',{...binding,mountId:'mount'}),parent),renew:grant=>owner.handle(msg('HOST_UI_RENEW',{grantId:grant.id,mountId:'mount'}),ui),block(){let resolve;delay=new Promise(r=>resolve=r);return ()=>{delay=null;resolve();};},async advance(ms){time+=ms;for(const [key,t]of [...timers])if(t.at<=time){timers.delete(key);t.fn();}await tick();}};
 }
 for(const order of ['parent','ui'])test(`MOCK dual channel ${order} first gets identical grant and renew/release`,async()=>{const f=fixture();await f.mount();const first=order==='parent'?f.confirm():f.join();await tick();const second=order==='parent'?f.join():f.confirm();const [a,b]=await Promise.all([first,second]);assert(a.ok&&b.ok,JSON.stringify([a,b]));assert.deepEqual(a.grant,b.grant);assert.equal((await f.renew(a.grant)).ok,true);assert.equal((await f.release()).ok,true);await assert.rejects(f.owner.validate({sender:f.ui,grantId:a.grant.id,mountId:'mount'}));assert.equal(f.timers.size,0);});
 test('MOCK wrong WAR role binding and mount fail closed',async()=>{const f=fixture();await f.mount();assert.equal((await f.join('a',{}, {...f.ui,url:'chrome-extension://ext/other.html'})).ok,false);assert.equal((await f.join('b',{role:'invalid'})).ok,false);assert.equal((await f.confirm('c',{documentToken:'wrong'})).ok,false);assert.equal((await f.confirm('d',{mountId:'unknown'})).ok,false);assert.equal(f.timers.size,0);});
@@ -121,4 +121,96 @@ test('MOCK expired or unbound parent cannot deliver a workspace-entry hint',asyn
   await f.owner.handle({v:1,type:'HOST_UI_WORKSPACE_ENTERED',documentToken:'doc',producerToken:'producer',routeEpoch:1,mountId:'selected'},{id:'ext',tab:{id:1,incognito:false},frameId:0,documentId:'parent_1',documentLifecycle:'active',url:'https://chatgpt.com/'});
   for(const port of Object.values(f.ports.selected))assert.deepEqual(port.messages,[]);f.owner.revokeAll();
  }
+});
+
+const surfaceMessage=(extra={})=>({v:1,type:'HOST_UI_SURFACE_STATE',documentToken:'doc',producerToken:'producer',routeEpoch:1,mountId:'mount',revision:1,workspace:false,sidebar:true,...extra});
+const surfaceGet=(grant,extra={})=>({v:1,type:'HOST_UI_SURFACE_STATE_GET',grantId:grant.id,mountId:'mount',...extra});
+test('MOCK surface state private ports and GET use each validated role, including nullable unknown',async()=>{
+ const f=fixture(),workspace=mockPort(f.ui),sidebar=mockPort(f.sidebar),unpaired=mockPort({...f.ui,frameId:9,documentId:'unpaired'});
+ for(const port of [workspace,sidebar,unpaired])f.owner.connectPort(port);
+ const grants=await pairBoth(f);
+ assert.deepEqual(await f.owner.handle(surfaceGet(grants[0]),f.ui),{ok:true,surface:null});
+ assert.deepEqual(await f.owner.handle(surfaceMessage(),f.parent),{ok:true});
+ assert.deepEqual(workspace.messages,[{type:'VAIWL_UI_SURFACE_STATE',revision:1,visible:false}]);
+ assert.deepEqual(sidebar.messages,[{type:'VAIWL_UI_SURFACE_STATE',revision:1,visible:true}]);
+ assert.deepEqual(unpaired.messages,[]);
+ for(const [i,sender,visible]of [[0,f.ui,false],[1,f.sidebar,true]])assert.deepEqual(await f.owner.handle(surfaceGet(grants[i]),sender),{ok:true,surface:{revision:1,visible}});
+ assert.deepEqual(await f.owner.handle(surfaceMessage({revision:2,workspace:null,sidebar:null}),f.parent),{ok:true});
+ for(const [i,sender,port]of [[0,f.ui,workspace],[1,f.sidebar,sidebar]]){
+  assert.deepEqual(port.messages.at(-1),{type:'VAIWL_UI_SURFACE_STATE',revision:2,visible:null});
+  assert.deepEqual(await f.owner.handle(surfaceGet(grants[i]),sender),{ok:true,surface:{revision:2,visible:null}});
+ }
+ f.owner.revokeAll();
+});
+test('MOCK surface revision is a strict high water mark across duplicates, old messages and grant renewal',async()=>{
+ const f=fixture(),grant=await pair(f),port=mockPort(f.ui);f.owner.connectPort(port);
+ await f.owner.handle(surfaceMessage({revision:7}),f.parent);
+ for(const revision of [7,6,1])assert.equal((await f.owner.handle(surfaceMessage({revision,workspace:true}),f.parent)).ok,true);
+ assert.equal(port.messages.length,1);
+ await f.advance(1000);assert.equal((await f.renew(grant)).ok,true);
+ assert.deepEqual(await f.owner.handle(surfaceGet(grant),f.ui),{ok:true,surface:{revision:7,visible:false}});
+ await f.owner.handle(surfaceMessage({revision:8,workspace:true}),f.parent);
+ assert.deepEqual(port.messages.at(-1),{type:'VAIWL_UI_SURFACE_STATE',revision:8,visible:true});
+ assert.equal(port.messages.length,2);f.owner.revokeAll();
+});
+test('MOCK surface SET rejects malformed revision, booleans, extra fields and forged parent binding',async()=>{
+ const f=fixture(),grant=await pair(f),port=mockPort(f.ui);f.owner.connectPort(port);
+ const patches=[...[0,-1,1.5,NaN,Infinity,Number.MAX_SAFE_INTEGER+1,'1',null].map(revision=>({revision})),{workspace:0},{sidebar:'false'},{workspace:undefined},{verified:true},{scopeKey:'forged'},{documentToken:'wrong'},{producerToken:'wrong'},{routeEpoch:2},{mountId:'missing'}];
+ for(const patch of patches)assert.equal((await f.owner.handle(surfaceMessage(patch),f.parent)).ok,false,JSON.stringify(patch));
+ for(const sender of [f.ui,{...f.parent,documentId:'other'},{...f.parent,tab:{id:2,incognito:false}}])assert.equal((await f.owner.handle(surfaceMessage(),sender)).ok,false);
+ assert.deepEqual(port.messages,[]);assert.deepEqual(await f.owner.handle(surfaceGet(grant),f.ui),{ok:true,surface:null});f.owner.revokeAll();
+});
+test('MOCK surface GET rejects extra fields, wrong mount, wrong grant and the sibling role sender',async()=>{
+ const f=fixture(),grants=await pairBoth(f);await f.owner.handle(surfaceMessage(),f.parent);
+ for(const patch of [{mountId:'wrong'},{grantId:'wrong'},{visible:true},{role:'sidebar'},{documentToken:'doc'}])assert.equal((await f.owner.handle(surfaceGet(grants[0],patch),f.ui)).ok,false);
+ assert.equal((await f.owner.handle(surfaceGet(grants[0]),f.sidebar)).ok,false);
+ assert.equal((await f.owner.handle(surfaceGet(grants[0]),f.parent)).ok,false);f.owner.revokeAll();
+});
+for(const [name,invalidate]of [
+ ['revoked',f=>f.owner.revokeMount('mount')],['expired',f=>f.advance(20000)],['unbound',f=>f.setBound(false)],
+ ['unverified',f=>f.setProof({state:'unverified'})],
+ ['wrong-scope',f=>f.setProof({state:'verified',grant:{id:'new-scope',scopeKey:'other-scope',scopeEpoch:2,expiresAt:new Date(100000).toISOString()}})]
+])test(`MOCK surface GET and private notification reject ${name} authority`,async()=>{
+ const f=fixture(),grant=await pair(f),port=mockPort(f.ui);f.owner.connectPort(port);
+ await f.owner.handle(surfaceMessage(),f.parent);port.messages.length=0;await invalidate(f);
+ assert.equal((await f.owner.handle(surfaceGet(grant),f.ui)).ok,false);
+ await f.owner.handle(surfaceMessage({revision:2}),f.parent);assert.deepEqual(port.messages,[]);f.owner.revokeAll();
+});
+test('MOCK surface SET rejects unavailable scope and a replaced actual parent',async()=>{
+ for(const invalidate of [f=>f.setProof({state:'unverified'}),f=>f.frames.set(0,{...f.parent,documentId:'replacement'}),f=>f.owner.revokeMount('mount')]){
+  const f=fixture();await pair(f);invalidate(f);assert.equal((await f.owner.handle(surfaceMessage(),f.parent)).ok,false);f.owner.revokeAll();
+ }
+});
+test('MOCK surface SET awaiting parent cannot mutate a replacement mount with the same id',async()=>{
+ const f=fixture();await pair(f);const resume=f.block(),pending=f.owner.handle(surfaceMessage({revision:99}),f.parent);await tick();
+ f.owner.revokeMount('mount');const replacement=f.mount();resume();await replacement;
+ assert.equal((await pending).ok,false);
+ const a=f.confirm('replacement');await tick();const [,reply]=await Promise.all([a,f.join('replacement')]);assert.equal(reply.ok,true);
+ assert.deepEqual(await f.owner.handle(surfaceGet(reply.grant),f.ui),{ok:true,surface:null});f.owner.revokeAll();
+});
+test('MOCK surface GET checks current authority both before and after its snapshot work',async()=>{
+ // Each validate checks the parent in grants.validate and again in checkDocument.
+ // Checks 3 and 4 therefore occur after withScope has produced its snapshot.
+ for(const invalidateAt of [1,3,4]){
+  const f=fixture(),grant=await pair(f);await f.owner.handle(surfaceMessage(),f.parent);let parentChecks=0;
+  f.setFrameHook(frameId=>{if(frameId===0&&++parentChecks===invalidateAt)f.owner.revokeMount('mount');});
+  assert.equal((await f.owner.handle(surfaceGet(grant),f.ui)).ok,false);assert.equal(parentChecks,invalidateAt);f.owner.revokeAll();
+ }
+});
+
+for(const patch of [{scopeKey:'other-key'},{id:'other-grant'},{scopeEpoch:2}])test(`MOCK surface SET rejects nonempty replacement ${Object.keys(patch)[0]} without advancing state`,async()=>{
+ const original={id:'scope',scopeKey:'scope-key',scopeEpoch:1,expiresAt:new Date(100000).toISOString()};
+  const f=fixture(),grant=await pair(f),port=mockPort(f.ui);f.owner.connectPort(port);
+  assert.equal((await f.owner.handle(surfaceMessage({revision:3}),f.parent)).ok,true);
+  f.setProof({state:'verified',grant:{...original,...patch}});
+  const rejected=await f.owner.handle(surfaceMessage({revision:99,workspace:true,sidebar:false}),f.parent);
+  assert.equal(rejected.ok,false,JSON.stringify(patch));
+  assert.deepEqual(port.messages,[{type:'VAIWL_UI_SURFACE_STATE',revision:3,visible:false}]);
+  // Restore the original authority to inspect RAM through the public validated GET.
+  // A refused replacement-scope update must not poison the original high water mark.
+  f.setProof({state:'verified',grant:{...original}});
+  assert.deepEqual(await f.owner.handle(surfaceGet(grant),f.ui),{ok:true,surface:{revision:3,visible:false}});
+  assert.equal((await f.owner.handle(surfaceMessage({revision:4,workspace:true}),f.parent)).ok,true);
+  assert.deepEqual(port.messages.at(-1),{type:'VAIWL_UI_SURFACE_STATE',revision:4,visible:true});
+  assert.equal(port.messages.length,2);f.owner.revokeAll();
 });

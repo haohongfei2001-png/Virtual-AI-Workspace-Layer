@@ -206,3 +206,33 @@ test('appearance queued for replaced frame window or retired mount cannot reach 
  await f.controller.start({});await f.both();sent.length=0;theme='dark';observers[1].fn();f.frames[0].frame.contentWindow={postMessage:()=>assert.fail('replacement frame received appearance')};f.tick(0);assert.deepEqual(sent,['sidebar']);
  f.controller.stop();theme='light';observers[1].fn();f.tick(0);assert.deepEqual(sent,['sidebar']);
 });
+
+function publishingFixture(){
+ const f=fixture(),sent=[],events=new Map();let visible=null;
+ f.doc.addEventListener=(type,fn)=>events.set(type,fn);f.doc.removeEventListener=(type,fn)=>{if(events.get(type)===fn)events.delete(type);};
+ f.surface.visibility=()=>visible===null?null:{...visible};
+ f.surface.showWorkspace=()=>{f.calls.show++;visible={workspace:true,sidebar:true};return true;};
+ f.surface.showReading=()=>{f.calls.reading++;visible={workspace:false,sidebar:visible?.sidebar??false};};
+ f.surface.suspend=()=>{f.calls.suspend++;visible={workspace:false,sidebar:false};};
+ f.bridge.surfaceState=async value=>{sent.push(value);return {ok:true};};
+ return {...f,sent,events,actual:value=>{visible=value;},toggle:()=>events.get('toggle')?.({})};
+}
+test('private state samples both actual popovers; unknown is not false, revisions increase and equal values deduplicate',async()=>{
+ const f=publishingFixture();await f.controller.start({});f.toggle();await drain();assert.deepEqual(f.sent,[{mountId:'mount',revision:1,workspace:null,sidebar:null}]);
+ await f.both();assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:2,workspace:true,sidebar:true});f.toggle();f.controller.showWorkspace();await drain();assert.equal(f.sent.length,2);
+ f.controller.showReading();assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:3,workspace:false,sidebar:true});f.controller.showReading();assert.equal(f.sent.length,3);
+ f.actual({workspace:true,sidebar:false});f.toggle();assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:4,workspace:true,sidebar:false});f.controller.suspend();assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:5,workspace:false,sidebar:false});f.controller.stop();
+});
+test('native surrender immediately publishes actual closure without awaiting later toggle',async()=>{
+ const f=publishingFixture();await f.controller.start({});await f.both();f.actual({workspace:false,sidebar:false});f.surrender({reason:'native-input'});assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:2,workspace:false,sidebar:false});f.controller.stop();
+});
+test('failed show publishes sampled state rather than requested workspace mode',async()=>{
+ const f=publishingFixture();await f.controller.start({});await f.both();f.surface.showWorkspace=()=>{f.actual({workspace:false,sidebar:false});return false;};assert.equal(f.controller.showWorkspace(),false);assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:2,workspace:false,sidebar:false});f.controller.stop();
+});
+test('unreadable surface becomes unknown and failed publication retries with higher revision',async()=>{
+ const f=publishingFixture();await f.controller.start({});await f.both();f.surface.visibility=()=>{throw Error('unreadable-parent');};f.toggle();assert.deepEqual(f.sent.at(-1),{mountId:'mount',revision:2,workspace:null,sidebar:null});
+ f.bridge.surfaceState=async value=>{f.sent.push(value);return {ok:false};};f.surface.visibility=()=>({workspace:false,sidebar:true});f.toggle();await drain();f.toggle();await drain();assert.deepEqual(f.sent.slice(-2).map(x=>x.revision),[3,4]);f.controller.stop();
+});
+test('expired binding, retired mount callback and stopped controller cannot publish',async()=>{
+ const f=publishingFixture();await f.controller.start({});await f.both();const oldToggle=f.events.get('toggle');await f.controller.start({});await f.both();const before=f.sent.length;oldToggle({});assert.equal(f.sent.length,before);f.tick(60000);f.actual({workspace:false,sidebar:false});f.toggle();f.controller.suspend();assert.equal(f.sent.length,before);f.controller.stop();oldToggle({});assert.equal(f.sent.length,before);
+});

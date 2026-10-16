@@ -59,23 +59,33 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(win.ResizeObserver){state.geometryObserver=new win.ResizeObserver(state.geometryChanged);for(const node of new Set([state.inspection.reading,...state.inspection.historyMaskRoots,state.inspection.header,state.inspection.composer,...state.inspection.protectedRegions]))state.geometryObserver.observe(node);}
  }
  function authorized(state){return !state.geometryPaused&&valid(state)&&Date.parse(state.context.binding.expiresAt)>now()&&state.frames.every(({role})=>{const grant=state.grants.get(role);return grant&&Date.parse(grant.expiresAt)>now();});}
- function showWorkspace(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}if(!refreshGeometry(state)||surface.showWorkspace(state.handle)===false)return false;removeReturn(state);state.mode='workspace';return true;}
+ // A private scheduling hint sampled from owned popovers, never authority.
+ function publishSurface(state){
+  if(!state||current!==state||!state.registered||doc.location.href!==state.url||Date.parse(state.context.binding.expiresAt)<=now()||typeof bridge.surfaceState!=='function'||typeof surface.visibility!=='function')return;
+  let value;try{value=surface.visibility(state.handle);}catch{}
+  const snapshot=value&&['workspace','sidebar'].every(role=>typeof value[role]==='boolean')?{workspace:value.workspace,sidebar:value.sidebar}:{workspace:null,sidebar:null};
+  const key=JSON.stringify(snapshot);if(state.surfaceKey===key)return;
+  const revision=state.surfaceRevision+1;if(!Number.isSafeInteger(revision))return;state.surfaceRevision=revision;state.surfaceKey=key;
+  const failed=()=>{if(current===state&&state.surfaceRevision===revision)state.surfaceKey=null;};
+  try{Promise.resolve(bridge.surfaceState({mountId:state.handle.id,revision,...snapshot})).then(result=>{if(result?.ok!==true)failed();},failed);}catch{failed();}
+ }
+ function showWorkspace(){const state=current;try{if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}if(!refreshGeometry(state)||surface.showWorkspace(state.handle)===false)return false;removeReturn(state);state.mode='workspace';return true;}finally{publishSurface(state);}}
  function ensureReturn(state){
   if(!authorized(state)||adapter.hasNativeLayer()){removeReturn(state);return false;}
   const inspection=adapter.inspect(),slot=inspection.navigationSlot;
   if(!slot?.isConnected||slot!==state.inspection.navigationSlot){removeReturn(state);return false;}
   if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.textContent='▦';button.addEventListener('click',event=>{if(current!==state||event?.isTrusted!==true||!showWorkspace())return;try{Promise.resolve(bridge.workspaceEntered?.({mountId:state.handle.id})).catch(()=>{});}catch{/* Entering the visible workspace never waits for a private notification. */}});slot.append(button);state.button=button;}return true;
  }
- function nativeSurrender(state,event){if(current!==state||state.geometryPaused)return;if(state.mode==='waiting'){if(event?.reason==='native-input'){state.pendingNativeInput=true;state.intentEpoch++;}return;}if(event?.reason!=='native-reading'||state.mode!=='reading')state.intentEpoch++;state.mode='reading';if(!authorized(state))return;if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}
+ function nativeSurrender(state,event){try{if(current!==state||state.geometryPaused)return;if(state.mode==='waiting'){if(event?.reason==='native-input'){state.pendingNativeInput=true;state.intentEpoch++;}return;}if(event?.reason!=='native-reading'||state.mode!=='reading')state.intentEpoch++;state.mode='reading';if(!authorized(state))return;if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}finally{publishSurface(state);}}
  function hasProtectedFocus(state){
   const roots=[state.inspection.composer,state.inspection.header,...(state.inspection.protectedRegions??[])];
   for(let active=doc.activeElement;active?.isConnected&&active.ownerDocument===doc;active=active.shadowRoot?.activeElement){
    if(roots.some(node=>node?.isConnected&&node.ownerDocument===doc&&(node===active||node.contains?.(active))))return true;
   }return false;
  }
- function showReading(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}surface.showReading(state.handle);state.mode='reading';return ensureReturn(state);}
- function showNativeReading(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state)||adapter.hasNativeLayer())return false;surface.suspend(state.handle);state.mode='reading';return ensureReturn(state);}
- function suspend(reason='native-layer'){const state=current;if(state)state.intentEpoch++;if(!state?.handle)return;removeReturn(state);surface.suspend(state.handle,reason);state.mode='suspended';}
+ function showReading(){const state=current;try{if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}surface.showReading(state.handle);state.mode='reading';return ensureReturn(state);}finally{publishSurface(state);}}
+ function showNativeReading(){const state=current;try{if(state)state.intentEpoch++;if(!state||!authorized(state)||adapter.hasNativeLayer())return false;surface.suspend(state.handle);state.mode='reading';return ensureReturn(state);}finally{publishSurface(state);}}
+ function suspend(reason='native-layer'){const state=current;try{if(state)state.intentEpoch++;if(!state?.handle)return;removeReturn(state);surface.suspend(state.handle,reason);state.mode='suspended';}finally{publishSurface(state);}}
  function arm(state){cancel(state.timer);const until=Math.min(Date.parse(state.context.binding.expiresAt),...Array.from(state.grants.values(),g=>Date.parse(g.expiresAt)));state.timer=schedule(()=>{if(current===state)stop('ui-grant-expired');},Math.max(0,until-now()));if(!state.geometryPaused&&typeof bridge.renewSession==='function'&&state.grants.size===2&&!state.renewing&&state.renewTimer===null)state.renewTimer=schedule(()=>{state.renewTimer=null;void renewSession(state);},Math.max(1,Math.min(10000,(until-now())/2)));}
  async function renewSession(state){
   if(state.geometryPaused)return;const geometryRevision=state.geometryRevision;
@@ -90,10 +100,10 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    if(adapter.updateBinding(binding)!==true)throw Error('invalid-binding-renewal');
    state.context={...state.context,binding:Object.freeze({...binding})};state.grants=next;
   }catch{if(current===state&&state.geometryRevision===geometryRevision)stop('session-renew-failed');}
-  finally{state.renewing=false;if(current===state)arm(state);}
+  finally{state.renewing=false;if(current===state){arm(state);publishSurface(state);}}
  }
  async function start(options){
-  stop('surface-restart');const run=epoch,state={epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),mode:'waiting',geometryPaused:false,geometryRevision:0};current=state;
+  stop('surface-restart');const run=epoch,state={epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),surfaceKey:null,surfaceRevision:0,mode:'waiting',geometryPaused:false,geometryRevision:0};current=state;
   try{
    state.context=await adapter.start(options);if(current!==state)return null;
    state.inspection=adapter.inspect();if(!state.inspection?.ok||!state.inspection.navigationSlot?.isConnected)throw Error('invalid-return-slot');
@@ -103,7 +113,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    const ack=await bridge.registerMount({handle:state.handle});if(current!==state)return null;if(ack?.ok!==true)throw Error('mount-registration-denied');state.registered=true;
    if(!valid(state))throw Error('stale-mount-registration');
    state.nativeToggle=event=>{if(event.newState==='open'&&!event.target.closest?.('[data-va-owned]'))suspend('native-layer');};doc.addEventListener?.('beforetoggle',state.nativeToggle,true);
-   state.changed=()=>{if(!reconcileGeometry(state))return;if(adapter.hasNativeLayer())suspend('native-layer');else if(state.mode==='reading'||state.mode==='suspended')ensureReturn(state);};
+   state.changed=()=>{try{if(!reconcileGeometry(state))return;if(adapter.hasNativeLayer())suspend('native-layer');else if(state.mode==='reading'||state.mode==='suspended')ensureReturn(state);}finally{publishSurface(state);}};
    state.pagehide=()=>{if(current===state)stop('page-hidden');};win.addEventListener('pagehide',state.pagehide);doc.addEventListener?.('toggle',state.changed,true);
    win.addEventListener('popstate',state.changed);win.addEventListener('hashchange',state.changed);
    if(win.MutationObserver){state.observer=new win.MutationObserver(state.changed);state.observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class','aria-modal']});}

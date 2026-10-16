@@ -128,6 +128,27 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
     records.forEach((record,index)=>remember(record.sender,renewed[index]));
     return {ok:true,grants:renewed};
    }
+   if(message.type==='HOST_UI_SURFACE_STATE_GET'){
+    if(!schema(message,['grantId','mountId']))throw Error('invalid-ui-surface-query');
+    const result=await withScope({sender,grantId:message.grantId,mountId:message.mountId},context=>{
+     const state=registrations.get(message.mountId)?.surfaceState;
+     return {ok:true,surface:state?{revision:state.revision,visible:state[context.role]}:null};
+    });check();return result;
+   }
+   if(message.type==='HOST_UI_SURFACE_STATE'){
+    if(!schema(message,[...bindingKeys,'mountId','revision','workspace','sidebar'])||!Number.isSafeInteger(message.revision)||message.revision<1||!['workspace','sidebar'].every(role=>message[role]===null||typeof message[role]==='boolean'))throw Error('invalid-ui-surface-state');
+    sender=await parent(message,sender);check();
+    const mount=registrations.get(message.mountId);
+    if(mount?.tabId!==sender.tab.id||mount?.documentId!==sender.documentId||mount.url!==sender.url||bindingKeys.some(key=>mount.binding[key]!==message[key]))throw Error('ui-mount-mismatch');
+    const scope=authority.scopeFor({tabId:mount.tabId,frameId:0,documentId:mount.documentId,actualURL:mount.url,documentLifecycle:'active',incognito:false});
+    if(!scope)throw Error('ui-scope-changed');
+    grants.validateMount(message.mountId);
+    if(message.revision>(mount.surfaceState?.revision??0)){
+     mount.surfaceState=Object.freeze({revision:message.revision,workspace:message.workspace,sidebar:message.sidebar});
+     notify(scope.key,message.mountId,'VAIWL_UI_SURFACE_STATE');
+    }
+    return {ok:true};
+   }
    if(message.type==='HOST_UI_WORKSPACE_ENTERED'){
     if(!schema(message,[...bindingKeys,'mountId']))throw Error('invalid-ui-workspace-entry');
     sender=await parent(message,sender);check();
@@ -175,7 +196,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
     if(proof?.state!=='verified'||proof.grant?.scopeKey!==scopeKey||proof.grant.id!==grant.scopeGrantId||Date.parse(proof.grant.expiresAt)<=now()||handshake.isBound?.(mount.binding,sender)!==true)continue;
     // A dirty hint contains no identity or projection. The next read still
     // performs full current browser/document/grant validation.
-    port.postMessage({type});delivered++;
+    port.postMessage(type==='VAIWL_UI_SURFACE_STATE'?{type,revision:mount.surfaceState.revision,visible:mount.surfaceState[grant.role]}:{type});delivered++;
    }catch{revokeDocument(entry.sender.documentId);}
   }
   return delivered;

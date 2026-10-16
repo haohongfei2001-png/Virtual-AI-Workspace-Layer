@@ -101,6 +101,11 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
   showReading(handle){const m=lookup(handle);for(const s of m.surfaces)if(s.role==='workspace'&&s.node.matches(':popover-open'))s.node.hidePopover();},
   suspend(handle){hide(lookup(handle));},
   frames(handle){return lookup(handle).surfaces.map(({role,frame})=>({role,frame}));},
+  visibility(handle){
+   const m=lookup(handle);
+   if(m.surfaces.length!==2||m.surfaces.some(({node,frame})=>!node.isConnected||node.ownerDocument!==doc||node.dataset.vaOwned!==handle.id||!frame.isConnected||frame.parentElement!==node))return null;
+   return Object.fromEntries(m.surfaces.map(({role,node})=>[role,node.matches(':popover-open')]));
+  },
   dispose(handle){const m=lookup(handle);m.cleanup();hide(m);for(const s of m.surfaces)s.node.remove();m.style.remove();for(const {root,attr,previous} of m.markers)if(root.getAttribute(attr)===handle.id){if(previous===null)root.removeAttribute(attr);else root.setAttribute(attr,previous);}mounts.delete(handle.id);},
  };
 }
