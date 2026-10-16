@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round300）
+## 最新正式检查点（2026-10-16，原本地目录，Round301）
+
+在真实自然进入恢复后，连续执行完J4后续证据幂等/校准、六类人工资产保全、真实worker退出、实际disable/uninstall及卸载后原生操作。25步骤含23PASS、1窄自然进入PASS、1原始FAIL，原peer上下文超时与原生导航恢复诊断保留，未提升为默认J4通过。
+
+定向J4合同 **172/172 PASS**，源码/fixture稳定，预期原生发送总数严格3。见[Round301](evidence/round301/README.md)。生产未改；83f3098正常push仍网络低速失败，本地保存。完整Free **NOT_RELEASE_READY**，继续剩余功能/验收。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round300）
 
 已正常push并API确认af9ad16在原Draft PR16/base。实际隔离MV3复现默认J4的12/12预算超时后，等待原窗口自然到期；同document/editor/URL一次返回操作恢复唯一原始历史事件，无原生重发。原FAIL保留，新增步骤仅PASS_NATURAL_ENTRY_ONLY。
 
