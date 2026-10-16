@@ -20,7 +20,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  if(!document?.defaultView)throw Error('invalid-host-document');
  inputRisk=inputRisk??createNativeInputRisk({document,profile});
  let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[],surfaceParts=[],surfaceKey=null,surfaceSequence=null,surfaceWanted=true,surfaceScanning=false,surfaceCursor=null,surfacePage=0,surfacePageKey=null,surfaceEpoch=0,surfaceSnapshotEpoch=0;const surfaceAccepted=new Map(),surfaceFailed=new Map();
- let ingestionPass=null,pass=null,passSequence=0;
+ let ingestionPass=null,pass=null,passSequence=0,cursorRestarts=0;
  // A pass brackets the finite private traversal (including its initial body
  // packet), never an individual transaction gap or a completeness assertion.
  const passMessage=(entry,phase)=>({passSeq:entry.seq,phase,profileId:profile.id,profileVersion:profile.revision});
@@ -97,7 +97,17 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
      if(!surfaceParts.length&&!surfaceScanning)finishPass('end');if(!surfaceParts.length&&(surfaceScanning||surfaceWanted))schedule();
     }
     if(surfaceParts.length){const localSeq=surfaceSequence??++seq;surfaceSequence=null;p={protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta',payload:surfaceParts[0]};key=surfaceKey;}}
-if(!p)return;}catch{finishPass('cancel');surfaceScanning=false;surfaceCursor=null;if(surfaceWanted)schedule();return;}
+if(!p)return;}catch(error){
+   if(run!==generation)return;
+   const restart=error?.message==='stale-surface-cursor'&&cursorRestarts<1&&live()&&document.location.href===url;
+   surfaceParts=[];surfaceSequence=null;surfaceScanning=false;surfaceCursor=null;
+   if(restart){
+    // Replace the pending pass atomically; a cancel/start gap would falsely
+    // advertise a drained directory. Never reuse the rejected cursor.
+    cursorRestarts++;pass=null;surfaceWanted=true;schedule();
+   }else{finishPass('cancel');if(surfaceWanted)schedule();}
+   return;
+  }
   busy=true;const started=elapsedNow(),proofExpiry=binding.expiresAt;let attempts=0;
   const finish=reason=>{if(run!==generation)return;if(reason){finishPass('cancel',true);failedKey.set(p.kind==='current-observation'?'current-object':p.kind,key);if(p.kind==='surface-delta'){surfaceParts=[];surfaceFailed.set(surfacePageKey,key);}dirty=true;issue(reason);}busy=false;if(dirty)schedule();};
   const send=async()=>{
@@ -119,6 +129,7 @@ if(!p)return;}catch{finishPass('cancel');surfaceScanning=false;surfaceCursor=nul
  }
  function schedule(){if(!live())return;dirty=true;if(busy||queued)return;queued=true;queueMicrotask(pump);}
  function requestScan(preserveProducerCursor=false){
+  if(preserveProducerCursor!==true)cursorRestarts=0;
   // Same-identity renewal invalidates independent loaded reads, but must not
   // starve the private finite directory pass. Never consume a pending real DOM
   // invalidation: that pass still resets before its next bounded packet.
@@ -152,7 +163,7 @@ if(!p)return;}catch{finishPass('cancel');surfaceScanning=false;surfaceCursor=nul
   return {ok:true,reason:null,profileId:profile.id,history,header,reading,navigationSlot,composer,protectedRegions,historyMaskRoots:[history],returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch};
  }
  const api={kind:'chatgpt',async start(options){
-  stop();const b=options?.binding;if(!b||typeof options.emit!=='function'||typeof b.documentToken!=='string'||typeof b.producerToken!=='string'||typeof b.browserDocumentId!=='string'||!Number.isSafeInteger(b.routeEpoch)||b.routeEpoch<0||b.origin!==new URL(document.location.href).origin||!Number.isFinite(Date.parse(b.expiresAt))||now()>=Date.parse(b.expiresAt))throw Error('invalid-host-binding');
+  stop();cursorRestarts=0;const b=options?.binding;if(!b||typeof options.emit!=='function'||typeof b.documentToken!=='string'||typeof b.producerToken!=='string'||typeof b.browserDocumentId!=='string'||!Number.isSafeInteger(b.routeEpoch)||b.routeEpoch<0||b.origin!==new URL(document.location.href).origin||!Number.isFinite(Date.parse(b.expiresAt))||now()>=Date.parse(b.expiresAt))throw Error('invalid-host-binding');
   binding=Object.freeze({...b});emit=options.emit;ingestionPass=typeof options.ingestionPass==='function'?options.ingestionPass:null;epoch=b.routeEpoch;seq=0;surfaceSnapshotEpoch=surfaceEpoch;url=document.location.href;stopped=false;
   discovery=createSurfaceDiscovery({document,binding,urlPolicy,profile,isOwnedMask,elapsedNow});bodyDiscovery=profile.currentBody?createCurrentBodyDiscovery({document,urlPolicy,profile,isOwnedMask}):null;const actionGeneration=generation;actions=createNativeActions({discovery,urlPolicy,currentURL:()=>document.location.href,bodyProof,inputRisk,authorize:async c=>{if(!live()||actionGeneration!==generation)return false;const allowed=await authorize(c);return live()&&actionGeneration===generation&&allowed===true;},beforeDispatch,onNativeDispatch:event=>{if(!live()||actionGeneration!==generation)throw Error('stale-host-binding');const result=onNativeDispatch(event);if(!live()||actionGeneration!==generation)throw Error('stale-host-binding');return result;},onNativeDispatchCancelled,now:elapsedNow});
   const snippetGuard=()=>{if(!live()||actionGeneration!==generation)return false;try{syncRoute();return true;}catch{return false;}};
