@@ -1,0 +1,21 @@
+✔ post-failure collector reads real closure state without owner calls or sensitive output (28.700708ms)
+✔ bounded timeout still releases object group and detaches (5.990791ms)
+✔ invalid limit fails closed before heap inspection and still cleans up (0.323291ms)
+✔ failure inspection chooses exact isolated extension world and exact worker; releases both (1.455ms)
+✔ missing isolated world and unsupported nested transport record unavailable without fallback (0.247833ms)
+✔ nested transport works with real inspector and rejects non-inspection methods (0.635ms)
+✔ nested timeout is bounded and cleanup removes outstanding listener (6.387834ms)
+✔ multiple extension worlds expose top-frame metadata but are never arbitrarily selected (0.605375ms)
+✔ two to four worlds use separate sessions and exact IDs without choosing an owner (0.695917ms)
+✔ more than four worlds retain only metadata and no per-world calls (0.153ms)
+✔ one removed world does not suppress independent next world or worker cleanup (0.229625ms)
+✔ hung context calls are bounded and late session acquisition is detached (78.165833ms)
+✔ total per-context deadline closes transport and cleanup rejection cannot hide later worlds (72.31525ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 200.977375

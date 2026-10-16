@@ -17,7 +17,25 @@ export async function inspectJ3Failure({context,page,browser,extensionId,timeout
   try{const tree=await bounded(pageSession.send('Page.getFrameTree'),timeoutMs);report.topFrameId=token(tree.frameTree?.frame?.id);}catch{report.topFrameId=null;}
   report.topFrameMatchingContextCount=report.topFrameId===null?null:report.matchingContexts.filter(c=>c.frameId===report.topFrameId).length;
   pageSession.off('Runtime.executionContextCreated',created);
-  if(selected.length!==1)report.page={error:'isolated-context-unavailable'};
+  if(selected.length!==1){
+   report.page={error:'isolated-context-unavailable'};
+   // Diagnostic snapshots only: no selection, merging, or current-owner claim.
+   if(selected.length>=2&&selected.length<=4){
+    report.pageContexts=[];
+    for(const value of report.matchingContexts){
+     const row={contextId:value.id,frameId:value.frameId};report.pageContexts.push(row);
+     if(value.id===null){row.inspection={error:'invalid-existing-context'};continue;}
+     let isolated,closed=false;
+     const detach=async()=>{if(closed)return;closed=true;if(isolated)try{await bounded(isolated.detach(),timeoutMs);}catch{}};
+     try{
+      isolated=await acquire(()=>context.newCDPSession(page),timeoutMs);
+      const session={send:(method,params)=>closed?Promise.reject(Error('inspection-closed')):isolated.send(method,params),detach};
+      row.inspection=await bounded(collectJ3FailureClosures(session,{executionContextId:value.id,timeoutMs}),Math.min(6000,timeoutMs*4));
+     }catch{row.inspection={error:'context-inspection-unavailable'};}
+     finally{await detach();}
+    }
+   }
+  }
   else{pageDelegated=true;report.page=await collectJ3FailureClosures(pageSession,{executionContextId:selected[0].id,timeoutMs});}
  }catch{report.page={error:'page-inspection-unavailable'};}
  finally{if(pageSession&&!pageDelegated){pageSession.off('Runtime.executionContextCreated',created);try{await bounded(pageSession.detach(),timeoutMs);}catch{}}}

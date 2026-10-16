@@ -1,0 +1,27 @@
+✔ before-evidence codec is explicit, unprepared and cannot silently alter default or after-evidence mode (0.418542ms)
+✔ codec before-evidence requires absence both before replacement and after restoration, then one stable genuine receipt (0.9795ms)
+✔ historical codec retains full eight-table equality and all old-owner write fences for both boundaries (0.238625ms)
+✔ J4 closure inspection is failure-only and never replaces original failure or steps (0.5255ms)
+✔ missing target or unavailable CDP never masks J4 original failure (0.075875ms)
+✔ runner calls diagnosis only after failed step recording and hashes both collector sources (1.189417ms)
+✔ portable J4 assets cover all manual asset classes without authority or evidence (2.372917ms)
+✔ same asset bundle cannot be restored into other authenticated context (0.284ms)
+✔ J4 native context switch is opt-in authenticated roster-validated service (19.334417ms)
+✔ continuous segment never claims missing atomic/schema/profile acceptance (0.103417ms)
+✔ runner uses production file import and actual lifecycle APIs without business-state injection or synthetic grants (1.471417ms)
+✔ repair fault touches only checksum of an existing production root and remains explicit (0.631458ms)
+✔ repaired UNKNOWN route uses stable identity and never expects revoked native title (0.143208ms)
+✔ recovered link oracle requires the original route, enabled UNKNOWN identity and redacted title (0.58125ms)
+✔ lifecycle order trace exact anchors src/runtime/browser-request-context.mjs (1.28875ms)
+✔ lifecycle order trace exact anchors src/runtime/host-browser-bootstrap.mjs (0.246125ms)
+✔ recorder bounds events and records only short hash rather than native request ID (1.467958ms)
+✔ diagnostic package verifies formal source first and recompiles both classic worker chunks (324.569875ms)
+✔ runner diagnostic retains full original journey and rereads current worker after failure/restart (0.220416ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 371.56325

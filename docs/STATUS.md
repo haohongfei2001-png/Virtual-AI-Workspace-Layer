@@ -1,6 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round337）
+## 最新本地检查点（2026-10-17，Round338）
+
+实际诊断锁定re-enable竞态：新文档有效GET先到，0.2ms后同document的onCommitted清除pending，随后complete找不到请求。修复为严格保留一次同doc/route、当前epoch、未冲突且6秒内的pending；原grant/已完成receipt仍撤销，时钟不续期，完成仍需原frame/tab/body/context核验。独立审查发现并修正旧epoch复活反例。未改schema/hash/预算。[Round338原始证据](evidence/round338/README.md)。
+
+独立事件顺序/安全13/13、最终完整Node **6481/6481 PASS**。修复后正式未插桩BEFORE_EVIDENCE **26/26连续步骤PASS**，exit2仍PARTIAL_J4_NOT_ACCEPTED，源码/构建哈希未漂移、errors为空。旧失败保留，完成receipt先于commit等其他排列不冒称已修复；静默C2、其他冷启动稳定性、100k、完整81/profile/J4及G/U继续开放，Free **NOT_RELEASE_READY**。
+
+上轮6e87d66已正常推送原PR16、本地远端0/0；原整理stash和副本保全。本轮检查点继续原分支非强制推送。
+
+## 前一本地检查点（2026-10-17，Round337）
 
 J4 BEFORE_EVIDENCE真实旧包往返连续旅程 **26/26 PASS**，exit2仍为PARTIAL_J4_NOT_ACCEPTED：旧包三入口VersionError、原八存储/缺失receipt保持，当前包恢复后新授权补写一次、再次加载幂等，Pro资产与Team隔离保持，后续撤权/disable/uninstall在同旅程执行。仅失败后只读诊断不改变原步骤/预算。[Round337](evidence/round337/README.md)。
 

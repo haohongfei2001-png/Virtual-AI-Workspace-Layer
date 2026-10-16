@@ -24,6 +24,16 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
  const frameMatches=(frame,entry)=>frame?.documentId===entry.documentId&&frame.frameType==='outermost_frame'&&frame.documentLifecycle==='active'&&target(frame.url)===targetOf(entry)&&(!entry.actualURL||frame.url===entry.actualURL)&&(!entry.historyTargetURL||frame.url===entry.historyTargetURL);
  function drop(document,reason){document.receipt=null;document.epoch=++epoch;document.reason=reason;notify(onInvalidate,{tabId:document.tabId,documentId:document.documentId});}
  function invalidateTab(tabId){for(const [k,d]of documents)if(d.tabId===tabId){drop(d,'navigation');documents.delete(k);}for(const [id,r]of requests)if(r.tabId===tabId)requests.delete(id);}
+ function invalidateCommitted(details){
+  const valid=Number.isSafeInteger(details?.tabId)&&details.tabId>=0&&details.frameId===0&&details?.frameType==='outermost_frame'&&details?.documentLifecycle==='active'&&tokenOK(details?.documentId)&&target(details?.url);
+  const keep=new Set();
+  // webRequest and webNavigation have no cross-API delivery order. Retain
+  // only a still-pending GET for this exact new document, never its old grant
+  // or a completed receipt. Its original deadline and final checks survive.
+  if(valid)for(const r of requests.values())if(r.tabId===details.tabId&&r.documentId===details.documentId&&targetOf(r)===target(details.url)&&(!r.actualURL||r.actualURL===details.url)&&!r.document.receipt&&r.epoch===r.document.epoch&&!r.conflicted&&!r.commitRetained&&clockOK(r,6000))keep.add(r);
+  for(const [k,d]of documents)if(d.tabId===details?.tabId){drop(d,'navigation');if(![...keep].some(r=>r.document===d))documents.delete(k);}
+  for(const [id,r]of requests)if(r.tabId===details?.tabId){if(keep.has(r)){r.commitRetained=true;r.historyTargetURL=details.url;r.epoch=r.document.epoch;}else requests.delete(id);}
+ }
  function invalidateHistory(details){
   const nextTarget=target(details?.url),valid=details?.frameId===0&&details?.frameType==='outermost_frame'&&details?.documentLifecycle==='active'&&tokenOK(details?.documentId)&&nextTarget;
   const keep=new Set();
@@ -112,5 +122,5 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
  const listeners=[[webRequest.onSendHeaders,send,['requestHeaders']],[webRequest.onCompleted,complete],[webRequest.onErrorOccurred,fail],[webRequest.onBeforeRedirect,fail]];
  for(const [event,listener,extra]of listeners)extra?event.addListener(listener,filter,extra):event.addListener(listener,filter);
  function stop(){if(!active)return;active=false;for(const [event,listener]of listeners)event.removeListener(listener);requests.clear();closedRequests.clear();documents.clear();}
- return Object.freeze({verify,isCurrent,invalidateTab,invalidateHistory,stop});
+ return Object.freeze({verify,isCurrent,invalidateTab,invalidateCommitted,invalidateHistory,stop});
 }
