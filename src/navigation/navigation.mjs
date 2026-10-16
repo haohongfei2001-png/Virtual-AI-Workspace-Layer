@@ -230,7 +230,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(!frameProjection||typeof onProjectionRequest!=='function')return;
     const scope=frameProjection.scope,run=++projectionRequest;
     const query={role:surface.role,segment:view.segment,offset:frameProjection.groups.offset,limit:frameProjection.groups.limit,...partial};
-    try{Promise.resolve(onProjectionRequest(query)).then(dto=>{if(dto&&run===projectionRequest&&!stopped&&frameProjection?.scope===scope&&dto.scope===scope)applyFrameProjection(dto,safeCurrentEntry?{scope,run}:null);}).catch(()=>{});}catch{}
+    try{Promise.resolve(onProjectionRequest(query)).then(dto=>{if(dto&&run===projectionRequest&&!stopped&&frameProjection?.scope===scope&&dto.scope===scope){applyFrameProjection(dto,safeCurrentEntry?{scope,run}:null);if(Object.hasOwn(partial,'segment'))calibrationEntry();}}).catch(()=>{});}catch{}
   }
   async function requestHorizon(value){
     const H=value==='auto'?'auto':Number(value);if(!frameProjection||surface.role!=='workspace'||typeof onHorizonRequest!=='function'||horizonPending||H!=='auto'&&![7,14,30,60,90].includes(H))return;

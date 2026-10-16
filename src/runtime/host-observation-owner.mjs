@@ -145,6 +145,14 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
   if(!turn.result?.ok)throw Error(turn.result?.reason??'joint-native-apply-failed');
   return {...turn.result,nativeOperationId:turn.request.operationId};
  }
+ // Worker-only lookup from a freshly validated UI parent; serialized IDs never select a body.
+ function currentProofForParent(context){
+  if(stopped||context?.isCurrent?.()!==true)return null;
+  const {parentFrame:frame,binding,scope,scopeGrantId}=context;
+  if(!frame||!binding||!scope||typeof scopeGrantId!=='string')return null;
+  const matches=[...bodies.values()].filter(entry=>entry.current()&&entry.frame.tabId===frame.tabId&&entry.frame.documentId===frame.documentId&&entry.frame.actualURL===frame.actualURL&&entry.scope.key===scope.key&&entry.grantId===scopeGrantId&&entry.proposal.documentToken===binding.documentToken&&entry.proposal.producerToken===binding.producerToken&&entry.proposal.routeEpoch===binding.routeEpoch);
+  return matches.length===1?matches[0].proofId:null;
+ }
  async function withCurrent(proofId,work){
   if(typeof work!=='function')throw Error('invalid-body-reader');
   const entry=[...bodies.values()].find(item=>item.proofId===proofId);
@@ -164,5 +172,5 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
  function invalidateDocument(documentId){for(const [key,entry]of bodies)if(entry.frame.documentId===documentId)discardBody(key);}
  function invalidateTab(tabId){for(const [key,entry]of bodies)if(entry.frame.tabId===tabId)discardBody(key);}
  function stop(){stopped=true;busy&&(busy.active=false,busy.abort.abort());bodies.clear();producers.clear();failedBatches.clear();for(const attempt of reads){attempt.active=false;attempt.abort.abort();}reads.clear();}
- return Object.freeze({isNativeWritePending(scopeKey){try{return typeof scopeKey==='string'&&scopeKey.length>0&&!stopped&&busy?.active===true&&busy.nativeWriteScope===scopeKey&&busy.nativeWriteGuard?.()===true;}catch{return false;}},commitAcknowledged,isCurrentProof:proofId=>[...bodies.values()].some(entry=>entry.proofId===proofId&&entry.current()),isCurrentProducer:producerToken=>bodies.get(producerToken)?.current()===true,gate,ingest,withCurrent,invalidateDocument,invalidateTab,stop});
+ return Object.freeze({isNativeWritePending(scopeKey){try{return typeof scopeKey==='string'&&scopeKey.length>0&&!stopped&&busy?.active===true&&busy.nativeWriteScope===scopeKey&&busy.nativeWriteGuard?.()===true;}catch{return false;}},commitAcknowledged,isCurrentProof:proofId=>[...bodies.values()].some(entry=>entry.proofId===proofId&&entry.current()),isCurrentProducer:producerToken=>bodies.get(producerToken)?.current()===true,gate,ingest,withCurrent,currentProofForParent,invalidateDocument,invalidateTab,stop});
 }

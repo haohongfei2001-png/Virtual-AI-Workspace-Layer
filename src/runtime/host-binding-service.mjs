@@ -1,3 +1,4 @@
+import {createHostEntryCalibration} from './host-entry-calibration.mjs';
 import {createHostIngestionPassOwner} from './host-ingestion-pass-owner.mjs';
 import {createHostOldSendTerminal} from './host-old-send-terminal.mjs';
 import {createOldSendTerminalReadback} from './old-send-terminal-readback.mjs';
@@ -46,6 +47,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const historyOwner=historyProfile?createHostHistoricalSendOwner({evidenceRepository:()=>freeEvidenceRepository,profileFor:continuationProfileFor,now}):null;
  const currentMetadata=observations?createCurrentMetadataReader({observations,provider,enabled:currentMetadataReadEnabled,now,onHistorical:historyOwner?async input=>{await historyOwner.consume(input);input.guard();ui?.notifyScope(input.context.scope.key);}:null}):null;
 
+ const entryCalibration=ui&&historyOwner&&currentMetadata?createHostEntryCalibration({ui,observations,reader:currentMetadata,elapsedNow,schedule,cancel}):null;
  const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:observations.gate,prepareInitialHostIndex:true,clock:()=>new Date(now()).toISOString()}):null;
  const continuations=nativeRepository&&typeof freeEvidenceRepository?.applyContinuation==='function'?createHostContinuationOwner({nativeRepository,evidenceRepository:freeEvidenceRepository,profileFor:continuationProfileFor}):null;
  if(ackProfile&&nativeRepository&&continuations)ackOwner=createHostSendAckOwner({evidenceRepository:()=>freeEvidenceRepository,profileFor:continuationProfileFor,commitNative:input=>observations.commitAcknowledged(input),drain:input=>continuations.drain(input),now});
@@ -84,6 +86,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(message?.type==='HOST_UI_WORKING_SET')return views?views.setWorkingSet(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_SET_HORIZON')return views?views.setHorizon(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_UNDO_AUTO_HORIZON')return views?views.undoAutoHorizon(message,sender):{ok:false,reason:'host-view-unavailable'};
+  if(message?.type==='HOST_UI_CALIBRATION_ENTRY')return entryCalibration?entryCalibration.handle(message,sender):{ok:false,state:'unavailable'};
   if(message?.type==='HOST_UI_CURRENT_ENTRY')return views?views.enterCurrent(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_PRESENT')return views?views.present(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(['HOST_UI_RESUME','HOST_UI_SAVE_VIEW'].includes(message?.type))return views?views.resume(message,sender):{ok:false,reason:'host-view-unavailable'};
@@ -153,7 +156,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  }
  function invalidate({tabId,frameId=0,documentId,firstSendNavigation=null,preserveViewDocumentId=null}={}){oldSendTerminal?.invalidateTab(tabId);if(firstSendNavigation)firstSend?.navigate({tabId,...firstSendNavigation});else firstSend?.invalidateTab(tabId);broker.invalidate({tabId,frameId});if(documentId){ingestionPasses?.invalidateDocument(documentId);observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{ingestionPasses?.invalidateTab(tabId);observations?.invalidateTab(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId,{preserveDocumentId:preserveViewDocumentId});}}
  function tabClosed(tabId){ingestionPasses?.invalidateTab(tabId);oldSendTerminal?.invalidateTab(tabId);firstSend?.invalidateTab(tabId);observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
- function stop(){if(!serviceActive)return;serviceActive=false;ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
+ function stop(){if(!serviceActive)return;serviceActive=false;entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
  // Internal worker composition only; no page RPC exposes metadata or accepts proof IDs.
  const readCurrentMetadata=proofId=>currentMetadata?currentMetadata.read(proofId):Promise.reject(Error('current-metadata-unavailable'));
  return Object.freeze({oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});

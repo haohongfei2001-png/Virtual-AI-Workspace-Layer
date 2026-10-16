@@ -32,18 +32,25 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
  const readCurrent=enabled?provider.readCurrentConversation.bind(provider):null;
  const acceptanceFor=enabled&&typeof provider.acceptanceFor==='function'?provider.acceptanceFor.bind(provider):null,readbacks=new WeakMap();
  let stopped=false,busy=null;
- function read(proofId,{budgetWindow}={}){
+ function read(proofId,options={}){return startRead(proofId,options,null);}
+ function readCalibration(proofId,{isCurrent,signal}={}){
+  if(typeof isCurrent!=='function'||!(signal instanceof AbortSignal))return Promise.reject(Error('invalid-calibration-reader'));
+  return startRead(proofId,{}, {isCurrent,signal});
+ }
+ function startRead(proofId,{budgetWindow}={},calibration){
   if(budgetWindow!==undefined&&(!Number.isFinite(budgetWindow)||budgetWindow<0))return Promise.reject(Error('invalid-read-budget-window'));
   if(stopped)return Promise.reject(Error('current-metadata-stopped'));
   if(!enabled)return Promise.reject(Error('current-metadata-disabled'));
   if(!id(proofId))return Promise.reject(Error('invalid-body-proof'));
-  if(busy)return busy.proofId===proofId&&busy.budgetWindow===budgetWindow?busy.promise:Promise.reject(Error('current-metadata-busy'));
-  const attempt={proofId,budgetWindow,abort:new AbortController(),promise:null};busy=attempt;
-  const check=()=>{if(stopped||busy!==attempt||attempt.abort.signal.aborted)throw Error('current-metadata-stopped');};
+  if(busy&&busy.calibration&&!calibration){busy.abort.abort();busy=null;}
+  if(busy)return !calibration&&!busy.calibration&&busy.proofId===proofId&&busy.budgetWindow===budgetWindow?busy.promise:Promise.reject(Error('current-metadata-busy'));
+  const attempt={proofId,budgetWindow,calibration,abort:new AbortController(),promise:null};busy=attempt;
+  const check=()=>{if(stopped||busy!==attempt||attempt.abort.signal.aborted)throw Error('current-metadata-stopped');if(calibration&&(calibration.signal.aborted||calibration.isCurrent()!==true))throw Error('stale-calibration-entry');};
   attempt.promise=Promise.resolve().then(()=>observations.withCurrent(proofId,async context=>{
    check();requireValue(context&&typeof context.guard==='function'&&context.signal&&id(context.conversationId)&&Number.isSafeInteger(context.bodyEpoch)&&context.bodyEpoch>=0&&denseList(context.messageIds,256)&&context.messageIds.every(id)&&new Set(context.messageIds).size===context.messageIds.length);
-   const currentGuard=context.guard,currentSignal=context.signal;
+   const currentGuard=context.guard,currentSignal=calibration?AbortSignal.any([context.signal,calibration.signal,attempt.abort.signal]):context.signal;
    const guard=()=>{check();if(currentSignal.aborted||currentGuard()!==true)throw Error('stale-body-proof');};guard();
+   if(calibration)context=Object.freeze({...context,guard:()=>{guard();return true;},signal:currentSignal});
    const conversationId=context.conversationId,bodyEpoch=context.bodyEpoch,wanted=new Set(context.messageIds);
    let acceptance=null,history=null;
    let metadata={protocol:'vaiwl-conversation-metadata-candidate/1',conversationId,state:'candidate',messages:[],gaps:[],coverage:'observed-only'};
@@ -64,7 +71,7 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
     const selected=history.messages.filter(m=>wanted.has(m.messageId)&&metadata.messages.some(observed=>observed.messageId===m.messageId&&'lineage_'+observed.lineage?.fingerprint===m.branchId));
     if(selected.length)await onHistorical({history:{...history,messages:selected},context,guard});guard();
    }
-   if(acceptance&&metadata.state==='candidate'&&!metadata.gaps.length)readbacks.set(value,{acceptance,proofId,documentToken:context.documentToken,producerToken:context.producerToken,routeEpoch:context.routeEpoch,scopeKey:context.scope?.key});
+   if(!calibration&&acceptance&&metadata.state==='candidate'&&!metadata.gaps.length)readbacks.set(value,{acceptance,proofId,documentToken:context.documentToken,producerToken:context.producerToken,routeEpoch:context.routeEpoch,scopeKey:context.scope?.key});
    return freeze(value);
   })).then(result=>{check();return result;}).finally(()=>{attempt.abort.abort();if(busy===attempt)busy=null;});
   return attempt.promise;
@@ -82,5 +89,5 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
    const result=await work({profile:a.profile,readback,context,guard});guard();return result;
   });
  }
- return Object.freeze({read,stop,withReadback});
+ return Object.freeze({read,readCalibration,stop,withReadback});
 }

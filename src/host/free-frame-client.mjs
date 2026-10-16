@@ -18,7 +18,7 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
  * in either frame; parent messages remain the lifecycle's public join/suspend. */
 export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,onPresentationRequest=()=>{},onState=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeNonce,navigationFactory=createNavigation,recoveryFactory=createFreeFrameRecovery,backupFactory=createFreeFrameBackup,snippetsFactory=createFreeFrameSnippets}={}){
  const policy=createURLPolicy({origin:parentOrigin});
- let dispatchEpoch=0,dispatchPending=null,queuedDispatchView=null;
+ let dispatchEpoch=0,dispatchPending=null,queuedDispatchView=null,calibrationPending=null;
  let navigation=null,root=null,plans=new Map(),projectPlans=new Map(),grant=null,grantCurrent=()=>false,serial=0,activeRead=null,activeLocation=null,query={segment:0,offset:0,limit:8},closed=true,splits=0,dirty=false,currentNativeURL='',presentationRevision=0,presentationIntent='',workspaceRevision=null,viewSession=null,projectionScope=null,projectionVersion=null,horizonPending=false;
  let wasHidden=false,visibilityAttached=false,candidates=null,candidateRoot=null,candidateRun=0,candidateOffset=0;
  let candidateRestore=null,candidateMigrationId=null,candidateMigrationProject=null,migrationListening=false,workspaceEntered=false,workspaceModePending=false;
@@ -31,7 +31,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  const recoverable=reason=>isFreeRecoveryReason(reason)||['corrupt-record','invalid-partition-manifest','invalid-partition-piece'].includes(reason);
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function clear(){calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function ensureCandidates(){
   if(!candidates){candidateRoot=doc.createElement('div');candidateRoot.setAttribute('data-vaiwl-candidate-root','');if(typeof root?.before==='function')root.before(candidateRoot);else privateRoot.append(candidateRoot);candidates=createFreeFrameCandidates({document:doc,container:candidateRoot,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
     const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
@@ -207,6 +207,12 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(result?.ok!==true)throw Error('presentation-unavailable');applyPresentation(result.presentation);invalidate();
   }catch{if(!closed&&navigation===renderer)state({state:'ready',reason:'presentation-unavailable'});}
  }
+ async function calibrateEntry({kind}={}){
+  if(role!=='workspace'||!['foreground','history'].includes(kind)||closed||calibrationPending||backup||recovery||snippets||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;
+  const current=grant,attempt={};calibrationPending=attempt;
+  try{await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_CALIBRATION_ENTRY',grantId:current.id,mountId:current.mountId,kind}),{now:elapsedNow,schedule,cancel});}catch{}
+  finally{if(calibrationPending===attempt)calibrationPending=null;}
+ }
  async function enterCurrent(){
   if(role!=='workspace'||closed||horizonPending||recovery||backup||!grantCurrent()||!viewSession||!Number.isSafeInteger(workspaceRevision)||(query.segment??0)!==0||query.search||query.workingSet)return {ok:false,reason:'current-entry-unavailable'};
   horizonPending=true;const current=grant,renderer=navigation,expectedRevision=workspaceRevision,old=viewSession,ticket=serial,entryQuery=structuredClone(query);
@@ -309,7 +315,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   wasHidden=false;
   // Keep a chosen backup file/preview intact. Other reads reuse the existing
   // single-flight and deadline budget; returning does not enter a new segment.
-  if(!closed&&!backup&&grantCurrent()&&Date.parse(grant?.expiresAt)>now())invalidate();
+  if(!closed&&!backup&&grantCurrent()&&Date.parse(grant?.expiresAt)>now()){invalidate();void calibrateEntry({kind:'foreground'});}
  }
  async function dispatchCurrent(command){
   if(!exactHostRecord(command,['actionId','uiGrantId','mountId','planRevision','targetKey'])||closed||!grantCurrent()||backup||recovery||snippets||command.uiGrantId!==grant?.id||command.mountId!==grant?.mountId)return {state:'blocked'};
@@ -326,11 +332,11 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;
   if(!navigation){wasHidden=doc.visibilityState==='hidden';doc.addEventListener?.('visibilitychange',foreground);visibilityAttached=true;root=doc.createElement('div');root.setAttribute('data-vaiwl-frame-root','');privateRoot.append(root);
-   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),projectNavigationPlan:group=>projectPlans.get(group.id),status(){}},onExit:()=>lifecycle.exit(),onDispatch:dispatchCurrent,onViewChange:saveResumeView,onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onCurrentWorkspaceEntry:enterCurrent,onUndoTimePolicyRequest:undoAutoHorizon,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup,onSnippetsRequest:openSnippets,onSnippetLocateRequest:locateSearchSnippet});
+   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),projectNavigationPlan:group=>projectPlans.get(group.id),status(){}},onExit:()=>lifecycle.exit(),onDispatch:dispatchCurrent,onViewChange:saveResumeView,onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onCurrentWorkspaceEntry:enterCurrent,onCalibrationEntry:calibrateEntry,onUndoTimePolicyRequest:undoAutoHorizon,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup,onSnippetsRequest:openSnippets,onSnippetLocateRequest:locateSearchSnippet});
    void bootstrapResume();return;
   }
   if(!backup)invalidate();
  }
- const lifecycle=createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant,onAppearance:()=>navigation?.layout?.(),onClear:clear,onInvalidate:invalidate,onWorkspaceEntry:()=>{dispatchEpoch++;workspaceEntered=true;workspaceModePending=navigation?.workspaceEntered?.()!==true;void enterCurrent();applyCandidateMigration();if(migrationListening)void refreshCandidates();},privateRoot,now,elapsedNow,schedule,cancel,...(makeNonce?{makeNonce}:{})});
+ const lifecycle=createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant,onAppearance:()=>navigation?.layout?.(),onClear:clear,onInvalidate:invalidate,onWorkspaceEntry:()=>{dispatchEpoch++;workspaceEntered=true;workspaceModePending=navigation?.workspaceEntered?.()!==true;void enterCurrent();void calibrateEntry({kind:'foreground'});applyCandidateMigration();if(migrationListening)void refreshCandidates();},privateRoot,now,elapsedNow,schedule,cancel,...(makeNonce?{makeNonce}:{})});
  return Object.freeze({start:()=>lifecycle.start(),stop:()=>lifecycle.stop('frame-view-stopped')});
 }

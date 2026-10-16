@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round266）
+## 最新正式检查点（2026-10-16，原本地目录，Round267）
+
+承接fad7326，B2.F3/C3正式Free frame已接入workspace/foreground进入及成功历史区间切换后的当前正文校准。仅workspace角色触发，UI不携带proof/聊天ID；worker按真实父文档、route/producer、scope/grant选唯一当前证明。复用metadata/history owner与持久GET预算，单次低优先读取、无新增重试；current/send可取消校准，撤权guard和signal贯穿历史事务，校准不签发ACK readback。
+
+最终完整Node **5322/5322 PASS，零skip**。实际隔离MV3原生失败→立即重试精确ACK通过（本轮124ms），源码稳定；只是J2 fast-retry切片，不是完整J2或新增入口写入闭环的浏览器认证。见[Round267](evidence/round267/README.md)。下一步补入口到历史证据的直接离线浏览器oracle，再继续未完成Free项。旧51d9ef2 CI终态FAIL保留，fad7326上次查询仍运行；规模可靠性、完整81与真实G/U继续开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round266）
 
 承接51d9ef2，生产代码不变。现有有界trace可选择延续至原生导航返回，始终在性能测量之前停止；匿名窗口事件与版本重启事件经过原函数/插桩函数对照验证。实际隔离10k返回完成，状态为 **DIAGNOSTIC_ONLY_RETURN_COMPLETE**，不是性能验收。保留尾部显示末次读取约26秒完成，早期2451条及报告合并102条丢弃已明示，不能据缺失事件推断根因。
 
