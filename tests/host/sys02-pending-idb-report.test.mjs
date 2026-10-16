@@ -4,7 +4,7 @@ import {mkdtemp,readFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
-import {finalizeSys02Report,runSys02Browser} from './sys02-pending-idb-browser.mjs';
+import {finalizeSys02Report,runSys02Browser,sys02CaseResult} from './sys02-pending-idb-browser.mjs';
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const report=()=>({status:'PASS',errors:['prior diagnostic'],sourceHashes:{first:sha('one'),second:sha('two')},results:[{name:'prior result',status:'PASS'}]});
 test('SYS02 context close failure still checks every source and saves failed report',async()=>{
@@ -35,4 +35,11 @@ test('SYS02 unknown suite fails closed before package or browser access',async()
  const directory=await mkdtemp(join(tmpdir(),'sys02-report-suite-')),output=join(directory,'report.json');let built=false;
  const result=await runSys02Browser({output,prepareOnly:true,suite:'unsupported',buildPackage:async()=>{built=true;return {};}});
  assert.equal(built,false);assert.equal(result.status,'FAIL');assert.equal(result.evidence,'NOT_RUN');assert.deepEqual(result.results,[]);assert(result.errors.some(error=>error.includes('unknown SYS02 suite')));
+});
+
+test('SYS02 preserves verified asset details without turning returned failure into PASS',()=>{
+ const details={status:'PASS',manualAssets:{unchanged:true,contentHash:'verified'},foreignScope:{unchanged:true}};
+ assert.deepEqual(sys02CaseResult('assets',details,12),{name:'assets',status:'PASS',elapsedMs:12,details});
+ assert.deepEqual(sys02CaseResult('legacy',undefined,3),{name:'legacy',status:'PASS',elapsedMs:3});
+ for(const invalid of [null,{status:'FAIL'},{status:'NOT_RUN'},{}])assert.throws(()=>sys02CaseResult('assets',invalid,12),/nonpassing/);
 });

@@ -47,6 +47,10 @@ export async function finalizeSys02Report(report,{close=async()=>{},readSource=p
  catch(error){report.reportWriteSucceeded=false;fail('report-write',error);}
  return report;
 }
+export function sys02CaseResult(name,details,elapsedMs){
+ if(details!==undefined)assert.equal(details?.status,'PASS','SYS02 case returned a nonpassing result');
+ return {name,status:'PASS',elapsedMs,...(details===undefined?{}:{details})};
+}
 export async function runSys02Browser({output=resolve('sys02-pending-idb-report.json'),prepareOnly=false,buildPackage=buildSys02Package,suite='pending'}={}){
  const report={suite,status:'NOT_RUN',evidence:'NOT_RUN',requestedEvidence:'D_REAL_EXTENSION_ORIGIN_INDEXEDDB_TEST_ONLY_COMPOSITION',mv3Composition:'TEST_ONLY',productionHostS:'NOT_RUN',liveAccount:'NOT_RUN',physicalDiskExhaustion:'NOT_RUN',wholeProcessCrash:'NOT_RUN',injection:'TEST_ONLY_ABORT_AFTER_SUCCESSFUL_PUT_REQUEST',authority:'EXPLICIT_OFFLINE_V1_CAPACITY_AND_EXISTING_JOINT_V2_FAULT_FIXTURE',sourceHashes:{},results:[],errors:[]};
  let context;
@@ -69,7 +73,7 @@ export async function runSys02Browser({output=resolve('sys02-pending-idb-report.
    for(let i=0;i<names.length;i++){
     // Run independently so a failed case never hides unexecuted subcases.
     const started=Date.now();
-    try{await page.evaluate(async index=>{await sys02Cases[index].run();},i);report.results[i]={name:names[i],status:'PASS',elapsedMs:Date.now()-started};}
+    try{const details=await page.evaluate(async index=>sys02Cases[index].run(),i);report.results[i]=sys02CaseResult(names[i],details,Date.now()-started);}
     catch(error){report.results[i]={name:names[i],status:'FAIL',elapsedMs:Date.now()-started,error:error.message};}
     await writeFile(output,JSON.stringify(report,null,2)+'\n');
    }

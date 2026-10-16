@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round268）
+## 最新正式检查点（2026-10-16，原本地目录，Round269）
+
+承接033c803，生产代码/schema不变。扩展现有SYS02完成标记写入中断→重启/修复两用例：通过真实备份预览/恢复与人工命令加入human ref、workspace、锁定DisplayIdentity/Placement、工作集及片段；完整内容在ingest、中断、repair、重开和重复drain后保持。第二principal/context共享同库，通过真实owner生成非空Native/ACK及独立人工标题，恢复A后B三仓库完整内容不变。
+
+实际隔离扩展origin原生IndexedDB **2/2 PASS**，报告保留资产类别/数量及完整内容hash，sourceIntegrity PASS。普通分支exactly-once完成，repair分支source-revoked安全退休，旧receipt/anchor保持。明确为D/test-only，不升级完整Host S/SYS02/J4或物理崩溃。最终完整Node **5325/5325 PASS，零skip**，相关owner93例与报告7例通过。见[Round269](evidence/round269/README.md)。完整81、规模/冷启动可靠性及真实G/U仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round268）
 
 承接3dc82cf，新增真实隔离MV3入口校准oracle：服务端原始时间恢复但正文/route不变，实际返回四格入口发出27ms校准RPC，期间唯一GET形成正确作者/来源的严格事件，旧观察锚不变；文档timeOrigin/history及原生节点身份保持。临时drop-entry变异在指定校准阶段因无GET/无event超时，未把任意退出失败当作检出。该入口浏览器证据对应修改共享窗口前的base源码，hash保留。
 
