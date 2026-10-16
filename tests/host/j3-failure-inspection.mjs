@@ -12,6 +12,10 @@ export async function inspectJ3Failure({context,page,browser,extensionId,timeout
   await bounded(pageSession.send('Runtime.enable'),timeoutMs);
   const selected=contexts.filter(c=>c.auxData?.isDefault===false&&(c.origin===origin||c.name===origin));
   report.isolatedContextCount=selected.length;
+  const token=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(value)?value:null;
+  report.matchingContexts=selected.map(c=>({id:Number.isSafeInteger(c.id)?c.id:null,name:typeof c.name==='string'?c.name.slice(0,160):null,origin:typeof c.origin==='string'?c.origin.slice(0,160):null,frameId:token(c.auxData?.frameId),type:['isolated','default','worker'].includes(c.auxData?.type)?c.auxData.type:null}));
+  try{const tree=await bounded(pageSession.send('Page.getFrameTree'),timeoutMs);report.topFrameId=token(tree.frameTree?.frame?.id);}catch{report.topFrameId=null;}
+  report.topFrameMatchingContextCount=report.topFrameId===null?null:report.matchingContexts.filter(c=>c.frameId===report.topFrameId).length;
   pageSession.off('Runtime.executionContextCreated',created);
   if(selected.length!==1)report.page={error:'isolated-context-unavailable'};
   else{pageDelegated=true;report.page=await collectJ3FailureClosures(pageSession,{executionContextId:selected[0].id,timeoutMs});}

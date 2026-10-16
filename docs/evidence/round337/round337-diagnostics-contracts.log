@@ -1,0 +1,22 @@
+✔ post-failure collector reads real closure state without owner calls or sensitive output (32.006625ms)
+✔ bounded timeout still releases object group and detaches (6.003834ms)
+✔ invalid limit fails closed before heap inspection and still cleans up (0.334791ms)
+✔ failure inspection chooses exact isolated extension world and exact worker; releases both (1.728917ms)
+✔ missing isolated world and unsupported nested transport record unavailable without fallback (0.274208ms)
+✔ nested transport works with real inspector and rejects non-inspection methods (0.592292ms)
+✔ nested timeout is bounded and cleanup removes outstanding listener (5.471334ms)
+✔ multiple extension worlds expose top-frame metadata but are never arbitrarily selected (0.415583ms)
+✔ before-evidence codec is explicit, unprepared and cannot silently alter default or after-evidence mode (0.415875ms)
+✔ codec before-evidence requires absence both before replacement and after restoration, then one stable genuine receipt (1.026583ms)
+✔ historical codec retains full eight-table equality and all old-owner write fences for both boundaries (0.235667ms)
+✔ J4 closure inspection is failure-only and never replaces original failure or steps (0.517417ms)
+✔ missing target or unavailable CDP never masks J4 original failure (0.075583ms)
+✔ runner calls diagnosis only after failed step recording and hashes both collector sources (1.123916ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 76.281292

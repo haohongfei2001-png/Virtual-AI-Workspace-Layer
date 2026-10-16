@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round336）
+## 最新本地检查点（2026-10-17，Round337）
+
+J4 BEFORE_EVIDENCE真实旧包往返连续旅程 **26/26 PASS**，exit2仍为PARTIAL_J4_NOT_ACCEPTED：旧包三入口VersionError、原八存储/缺失receipt保持，当前包恢复后新授权补写一次、再次加载幂等，Pro资产与Team隔离保持，后续撤权/disable/uninstall在同旅程执行。仅失败后只读诊断不改变原步骤/预算。[Round337](evidence/round337/README.md)。
+
+此前两次前置re-enable fresh-grant失败保留；首诊断多world拒绝盲选，空Map缺active证据不能归因为活跃owner漏GET。最终诊断/codec定向14/14；完整6453/6453属Round336，未重复计数。静默C2、冷启动/重启稳定性、100k、全81/profile/J4及G/U仍开放，Free **NOT_RELEASE_READY**。a003ac5已保存；首次正常push低速超时，继续原PR16非强制同步，整理stash/副本保留。
+
+## 前一本地检查点（2026-10-17，Round336）
 
 共享目录私有构造复用已核验输入，去除重复路由/校验和工作；冷读和变更字节仍完整核验，未改hash/schema/预算。独立反例14/14、目录120/120、完整Node **6453/6453 PASS**。原100k CPU1/30秒门槛优化前后仍FAIL；18470→19381仅截止快照，不代表稳定吞吐或规模通过。[Round336原始证据](evidence/round336/README.md)。
 

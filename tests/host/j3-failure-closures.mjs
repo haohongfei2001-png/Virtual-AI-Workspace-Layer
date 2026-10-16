@@ -19,7 +19,7 @@ export async function collectJ3FailureClosures(session,{executionContextId,timeo
    for(const scope of scopes.result.filter(p=>/^\d+$/.test(p.name)).slice(0,12)){
     if(!scope.value?.objectId)continue;const vars=await properties(scope.value.objectId);
     for(const prop of vars.result.slice(0,128)){
-     if(['enabled','contextResumeAllowed'].includes(prop.name)&&prop.value?.type==='boolean')row[prop.name]=prop.value.value;
+     if(['active','enabled','contextResumeAllowed'].includes(prop.name)&&prop.value?.type==='boolean')row[prop.name]=prop.value.value;
      if(prop.name==='current'){
       row.currentPresent=prop.value?.subtype!=='null'&&!!prop.value?.objectId;
       if(row.currentPresent){const fields=await properties(prop.value.objectId);row.currentReady=fields.result.find(p=>p.name==='ready')?.value?.value===true;const scopeValue=fields.result.find(p=>p.name==='scopeKey')?.value;row.currentHasScope=!!scopeValue&&scopeValue.type!=='undefined'&&scopeValue.subtype!=='null';}
