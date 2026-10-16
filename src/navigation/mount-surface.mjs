@@ -49,7 +49,9 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
     // on immediate re-entry. Closed surfaces remain invisible and inert; the
     // browser's popover state alone continues to control each native mask.
     style.textContent+=`#${node.id}:not(:popover-open){display:flex;flex-direction:column;visibility:hidden;interactivity:inert;}\n`;
-    style.textContent+=`#${node.id}:popover-open{display:flex;flex-direction:column}#${node.id}>button{flex:none;align-self:flex-start}\n`;
+    // The declarative exit belongs to this surface. Host-wide button typography
+    // and padding must not consume the small native history rectangle.
+    style.textContent+=`#${node.id}:popover-open{display:flex;flex-direction:column}#${node.id}>button{flex:none;align-self:flex-start;box-sizing:border-box;max-width:100%;min-height:24px;margin:0;padding:2px 6px;border:1px solid ButtonBorder;font:12px/18px system-ui;color:ButtonText;background:ButtonFace;overflow-wrap:anywhere}\n`;
     style.textContent+=`${allowed}:has(#${node.id}:popover-open) [data-va-mask-${role}="${id}"]{visibility:hidden;interactivity:inert;}body:has(${nativeOpen}) #${node.id}{visibility:hidden;interactivity:inert;}\n`;
    }
    const m={handle,surfaces,markers,style,styleText:style.textContent,onSurrender,inspection:{...inspection,historyMaskRoots:[...inspection.historyMaskRoots],protectedRegions:[...inspection.protectedRegions]}};mounts.set(id,m);
