@@ -35,7 +35,7 @@ try{
     base.close();raw=await new Promise((resolve,reject)=>{const q=indexedDB.open(name);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
     const actual=await dump(raw),newStores=['native_states','native_operations'].filter(store=>raw.objectStoreNames.contains(store)),sameRows=JSON.stringify(actual)===JSON.stringify(expected);
     Object.assign(result,{opened,reason,version:raw.version,allSixStoresUnchanged:sameRows,newStores});
-    if(scenario.mode==='valid'){assertion(opened&&raw.version===3&&sameRows&&newStores.length===2,'valid control must upgrade preserving all rows');}
+    if(scenario.mode==='valid'){assertion(opened&&raw.version===4&&sameRows&&newStores.length===2,'valid control must upgrade preserving all rows');}
     else assertion(!opened&&raw.version===2&&sameRows&&newStores.length===0,'malformed same-name index must reject atomically');
     result.status='PASS';
    }catch(error){result.error=error.stack;}finally{base.close();raw?.close();}

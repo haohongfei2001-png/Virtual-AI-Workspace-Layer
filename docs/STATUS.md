@@ -1,6 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round278）
+## 最新正式检查点（2026-10-16，原本地目录，Round279）
+
+同库schema v3→v4已实现：升级事务内先校验八表/索引元数据，旧真实ScopeRepository由VersionError隔离；不重写记录，损坏v3原子回滚。此前旧invalidate可写反例已由实际旧owner拒绝覆盖。修复本地synthetic站点缺少两个共享导航依赖的404，未扩大Host接口暴露。
+
+最终Node **5469/5469 PASS**，真实Chrome IDB **26/26 PASS**，实际synthetic MV3升级 **4/4 PASS**。真实旧Host往返变体 **27/27已实施步骤PASS**，旧open/list/invalidate均VersionError、全表摘要不变，当前包恢复pending/ACK/receipt及人工资产无损，仍PARTIAL_J4_NOT_ACCEPTED。中间reenable grant和fixture FAIL保留，见[Round279](evidence/round279/README.md)。
+
+原PR16仍Draft/base不变，122800f已正常推送。继续真实v3在途旧事务/多owner升级边界及其余Free任务；冷启动/reenable可靠性、100k、完整81与真实G/U仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round278）
 
 codec变体通过原生菜单显式恢复Team/Personal偏好与各自fresh grant，空草稿/零文件、原URL及人工资产保护保持。实际隔离Chrome已实施27/27步骤PASS，仍PARTIAL_J4_NOT_ACCEPTED；55项定向合同PASS，源码/构建稳定、零浏览器错误。两次中间FAIL完整保留，见[Round278](evidence/round278/README.md)。
 

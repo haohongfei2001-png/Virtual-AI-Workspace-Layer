@@ -1,3 +1,4 @@
+import { DATABASE_VERSION } from '../../src/data/schema.mjs';
 import { ScopeRepository } from '../../src/b1/scope-repository.mjs';
 import { WorkspaceRepository } from '../../src/data/repository.mjs';
 import { NativeRepository } from '../../src/data/native-repository.mjs';
@@ -46,7 +47,7 @@ export async function runNativeContracts() {
       });
       let closed = false;
       old.onversionchange = () => { closed = true; old.close(); };
-      check((await base.open()).version === 3 && closed, 'versionchange-not-observed');
+      check((await base.open()).version === DATABASE_VERSION && closed, 'versionchange-not-observed');
       check(digest((await legacy.read(scope)).state) === digest(seed), 'legacy-root-changed');
       const denied = await new Promise(resolve => {
         const request = indexedDB.open(name, 2);

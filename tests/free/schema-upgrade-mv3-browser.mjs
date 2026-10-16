@@ -1,4 +1,4 @@
-/** Real extension-origin IndexedDB schema v2 -> v3, with an actually blocked connection. */
+/** Real extension-origin IndexedDB schema v2 -> v4, with an actually blocked connection. */
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,readFile,writeFile,readdir} from 'node:fs/promises';
 import {spawn} from 'node:child_process';
@@ -42,11 +42,11 @@ try{
  await run('A live old connection really blocks owner upgrade and preserves all old records',async()=>probe.evaluate(async()=>{
   const c=schemaCase;c.base=new c.ScopeRepository({indexedDB,databaseName:'vaiwl-hf-synthetic-v1'});let reason;
   try{await c.base.open();throw Error('upgrade-was-not-blocked');}catch(e){reason=e.message;}
-  c.check(reason==='idb-open-blocked',reason);c.check(c.old.version===2,'old-version-mutated');c.check(JSON.stringify(await c.dump(c.old))===JSON.stringify(c.expected),'blocked-mutated-old-rows');c.check(c.events.some(e=>e.trusted&&e.oldVersion===2&&e.newVersion===3),'missing-real-versionchange');
+  c.check(reason==='idb-open-blocked',reason);c.check(c.old.version===2,'old-version-mutated');c.check(JSON.stringify(await c.dump(c.old))===JSON.stringify(c.expected),'blocked-mutated-old-rows');c.check(c.events.some(e=>e.trusted&&e.oldVersion===2&&e.newVersion===4),'missing-real-versionchange');
   return {reason,events:c.events,allSixStoresUnchanged:true};
  }));
  await run('Normal old connection close permits retry, adds native stores and preserves every old row',async()=>probe.evaluate(async()=>{
-  const c=schemaCase;c.old.close();const db=await c.base.open();c.check(db.version===3,'retry-not-v3');
+  const c=schemaCase;c.old.close();const db=await c.base.open();c.check(db.version===4,'retry-not-v4');
   for(const name of ['native_states','native_operations'])c.check(db.objectStoreNames.contains(name),'missing-new-store:'+name);
   c.check(JSON.stringify(await c.dump(db))===JSON.stringify(c.expected),'schema-upgrade-mutated-old-rows');
   const workspace=new c.WorkspaceRepository({baseRepository:c.base}),read=await workspace.read(c.scope);c.check(read.state.identities.T0.title==='schema升级保留人工标题','lost-human-title');c.check(read.view.value.scroll===300,'lost-view');c.check(read.state.preferences.workingSet.value.refs.join(',')==='T0,T1','lost-working-set');
@@ -54,7 +54,7 @@ try{
   return {databaseVersion:db.version,oldReader:rejected,allSixStoresByteForByte:true,humanTitle:true,workingSet:true,view:true};
  }));
  await run('Installed content script and worker read Free after schema upgrade with native draft intact',async()=>{
-  page=await context.newPage();page.on('pageerror',e=>report.pageErrors.push(e.message));await page.goto(origin+'/hf/A/c/T0?mode=mv3');await page.getByRole('textbox',{name:'消息输入',exact:true}).fill('schema升级后的未发送草稿');await page.evaluate(()=>{globalThis.schemaComposer=document.querySelector('textarea[aria-label="消息输入"]');});
+  page=await context.newPage();page.on('pageerror',e=>report.pageErrors.push(e.message));await page.goto(origin+'/hf/A/c/T0?mode=mv3');await page.waitForFunction(()=>document.documentElement.dataset.vaiwlHfState==='ACTIVE');if(await page.locator('[data-vaiwl-return]').isVisible())await page.locator('[data-vaiwl-return]').click();await page.getByRole('textbox',{name:'消息输入',exact:true}).fill('schema升级后的未发送草稿');await page.evaluate(()=>{globalThis.schemaComposer=document.querySelector('textarea[aria-label="消息输入"]');});
   await page.waitForFunction(()=>document.documentElement.dataset.vaiwlHfState==='ACTIVE',null,{timeout:30000});
   assert.equal(await page.evaluate(()=>schemaComposer===document.querySelector('textarea[aria-label="消息输入"]')),true);assert.equal(await page.getByRole('textbox',{name:'消息输入',exact:true}).inputValue(),'schema升级后的未发送草稿');assert.equal(await page.getByRole('button',{name:'工具',exact:true}).count(),1);
   const persisted=await probe.evaluate(async()=>{const c=schemaCase,workspace=new c.WorkspaceRepository({baseRepository:c.base}),read=await workspace.read(c.scope);const {NativeRepository}=await import('/src/data/native-repository.mjs');const native=await new NativeRepository({baseRepository:c.base}).read(c.scope);c.check(read.state.identities.T0.title==='schema升级保留人工标题','runtime-lost-human-title');c.check(read.state.preferences.workingSet.value.refs.join(',')==='T0,T1','runtime-lost-workset');c.check(Object.keys(native.refs).length>0,'no-free-native-facts');c.check(native.refs.T0.nativeTitle!=='schema升级保留人工标题','Pro-title-became-native');c.base.close();return {nativeRefCount:Object.keys(native.refs).length,manualTitle:read.state.identities.T0.title};});

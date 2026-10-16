@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MockIDBFactory } from '../b23/mock-idb.mjs';
 import { ScopeRepository } from '../../src/b1/scope-repository.mjs';
-import { B23_STORES } from '../../src/data/schema.mjs';
+import { B23_STORES, DATABASE_VERSION } from '../../src/data/schema.mjs';
 import { NativeRepository } from '../../src/data/native-repository.mjs';
 import { scopeOf } from '../../simulator/data.mjs';
 
@@ -28,7 +28,7 @@ test('MOCK_IDB v2 upgrade preserves roots, partitions and human logs; old reader
   const base = new ScopeRepository({indexedDB: factory, databaseName: 'free_migration'});
   try {
     const database = await base.open();
-    assert.equal(database.version, 3);
+    assert.equal(database.version, DATABASE_VERSION);
     assert(versionChanged);
     for (const name of B23_STORES) {
       const row = await new Promise(resolve => {
