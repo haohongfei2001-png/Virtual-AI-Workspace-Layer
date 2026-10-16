@@ -55,7 +55,7 @@ export function createScopeAuthority({provider,profile,readIdentity=null,context
    const principal=Object.freeze({id:receipt,principalKey,sessionGeneration:entry.epoch,providerProfile:identity.providerProfile,transport:identity.transport,verifiedAt:issuedAt,expiresAt});
    const context=Object.freeze(contextReceipt?{kind:'browser-request-context',requestReceiptId:contextReceipt.id,authorizedContextReceiptId:receipt,pageAssociationReceiptId:associationId,contextKey:scope.organizationId,documentId:entry.frame.documentId,selectionEpoch:contextReceipt.selectionEpoch}:{kind:'single-personal-context',rosterReceiptId:receipt,bindingProfile:profile.id,contextKey:scope.organizationId,documentId:entry.frame.documentId,selectionEpoch:entry.epoch});
    entry.contextReceipt=contextReceipt;entry.bindingProfile=profile.id;
-   entry.scope=scope;entry.until=until;entry.grant=Object.freeze({id:grantId,scopeKey:scope.key,principal,context,scopeEpoch:entry.epoch,issuedAt,expiresAt});
+   entry.sourceToken=Object.freeze({});entry.scope=scope;entry.until=until;entry.grant=Object.freeze({id:grantId,scopeKey:scope.key,principal,context,scopeEpoch:entry.epoch,issuedAt,expiresAt});
    return {state:'verified',grant:entry.grant};
   }).catch(error=>{const result=unverified(current()?(error?.message==='invalid-context-roster'?'invalid-context-roster':'scope-provider-unavailable'):'stale-scope-refresh');if(states.get(k)===entry){entry.result=result;entry.grant=null;entry.scope=null;abort.abort();}return result;}).finally(()=>{signal?.removeEventListener('abort',cancelRefresh);abort.signal.removeEventListener('abort',onAbort);if(states.get(k)===entry)entry.pending=null;});
   entry.pending=task;return task;
@@ -83,6 +83,7 @@ export function createScopeAuthority({provider,profile,readIdentity=null,context
    const principal=Object.freeze({...original.principal,id:receipt,transport:identity.transport,verifiedAt,expiresAt});
    const context=Object.freeze({...original.context,...(entry.contextReceipt?{authorizedContextReceiptId:receipt}:{rosterReceiptId:receipt})});
    if(!current())throw Error('stale-scope-refresh');
+   if(identity.transport!==original.principal.transport)entry.sourceToken=Object.freeze({});
    entry.until=until;entry.grant=Object.freeze({...original,principal,context,expiresAt});
    return {state:'verified',grant:entry.grant};
   }).catch(error=>{
@@ -91,8 +92,10 @@ export function createScopeAuthority({provider,profile,readIdentity=null,context
   }).finally(()=>{signal?.removeEventListener('abort',cancelRefresh);entry.abort.signal.removeEventListener('abort',onAbort);if(entry.rechecking===task)entry.rechecking=null;});
   entry.rechecking=task;return task;
  }
+ // RAM-only identity changes on source transitions, never on same-source renewal.
+ function sourceFor(frame){return peek(frame).state==='verified'?states.get(key(frame)).sourceToken:null;}
  function scopeFor(frame){const result=peek(frame);return result.state==='verified'?states.get(key(frame)).scope:null;}
  function invalidateTab(tabId){for(const [k,entry]of states)if(entry.frame.tabId===tabId){entry.abort.abort();states.delete(k);}}
  function invalidateAll(){for(const entry of states.values())entry.abort?.abort();states.clear();}
- return Object.freeze({peek,refresh,revalidate,invalidate,invalidateTab,invalidateAll,scopeFor});
+ return Object.freeze({peek,refresh,revalidate,invalidate,invalidateTab,invalidateAll,scopeFor,sourceFor});
 }

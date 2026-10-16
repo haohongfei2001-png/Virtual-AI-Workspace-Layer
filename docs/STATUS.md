@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round289）
+## 最新正式检查点（2026-10-16，原本地目录，Round290）
+
+修复认证来源快速A→B→A令旧观察/回读能力复活：authority私有RAM token只在来源变化时换新，observation及readback前后核对对象身份，同来源正常续期保持；不增加持久或wire字段。独立9反例从7FAIL转全PASS，完整Node **5701/5701 PASS**，审查无阻塞。
+
+实际headless MV3双向来源续期再次PASS，原frames/mount/草稿完整、HELLO/REFRESH各1；ABA拒绝为真实owner Node证据，不冒充浏览器ABA。见[Round290](evidence/round290/README.md)。已正常fetch/push并API确认远端7f14432、Draft/base不变。继续剩余Free离线实现；完整81/G/U/冷启动/100k仍未完成，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round289）
 
 同一主体/context/profile允许主备认证来源双向续期，保留scope与界面身份，新冻结证明记录实际来源；旧在途观察在来源不一致时拒绝，同来源续期保持。独立16反例与完整Node **5692/5692 PASS**；快速来源往返ABA另行审查中，未计通过。
 
