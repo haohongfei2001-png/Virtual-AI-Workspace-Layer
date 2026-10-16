@@ -1,6 +1,7 @@
 /** One continuous offline J3 journey. Missing fixture surfaces are explicit
  * NOT_COVERED requirements, never fabricated by injecting editor/message DOM. */
 import assert from 'node:assert/strict';
+import {runUI06KeyboardAX} from './ui06-keyboard-ax.mjs';
 import {waitForHistoryControl} from './j3-control-wait.mjs';
 import {tmpdir} from 'node:os';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
@@ -11,10 +12,11 @@ import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {createHostFixtureServer} from './fixtures/server.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 const hash=x=>createHash('sha256').update(x).digest('hex'),script=fileURLToPath(import.meta.url),scriptHash=hash(await readFile(script));
+const ui06Path=fileURLToPath(new URL('./ui06-keyboard-ax.mjs',import.meta.url)),ui06HelperHash=hash(await readFile(ui06Path));
 const server=await createHostFixtureServer({journey:'J3'}),dir=await mkdtemp(join(tmpdir(),'vaiwl-j3-journey-')),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineSnippets:true,offlineHistory:true});
 const manifestPath=join(built.unpacked,'build-manifest.json'),manifestBytes=await readFile(manifestPath),manifest=JSON.parse(manifestBytes);
 const output=process.argv[2]??join(tmpdir(),'free-j3-package-journey.json');
-const report={requirement:'VA-HOST/1.1 J3',evidence:'SINGLE_CONTINUOUS_REAL_HEADLESS_PACKAGED_MV3_OFFLINE_JOURNEY',realChatGPT:'NOT_RUN',physicalIME:'NOT_RUN',productionSnippetProfile:'DISABLED_NOT_CERTIFIED',permissions:'OFFLINE_APPLICATION_PERMISSION_ONLY_NOT_SYSTEM_PERMISSION',fixture:server.manifest,scriptHash,sourceHashes:manifest.sourceHashes,buildManifestHash:hash(manifestBytes),steps:[],errors:[],status:'NOT_RUN',fullV27Acceptance:'NOT_ESTABLISHED'};
+const report={requirement:'VA-HOST/1.1 J3',evidence:'SINGLE_CONTINUOUS_REAL_HEADLESS_PACKAGED_MV3_OFFLINE_JOURNEY',realChatGPT:'NOT_RUN',physicalIME:'NOT_RUN',productionSnippetProfile:'DISABLED_NOT_CERTIFIED',permissions:'OFFLINE_APPLICATION_PERMISSION_ONLY_NOT_SYSTEM_PERMISSION',fixture:server.manifest,scriptHash,ui06HelperHash,sourceHashes:manifest.sourceHashes,buildManifestHash:hash(manifestBytes),steps:[],errors:[],status:'NOT_RUN',fullV27Acceptance:'NOT_ESTABLISHED'};
 let context,page,worker,extensionId,documentMarker;
 const record=(name,status,details={})=>report.steps.push({order:report.steps.length+1,name,status,...details});
 // Read-only oracle. The production worker is solely responsible for ingestion.
@@ -68,6 +70,7 @@ try{
  await page.locator('[data-j3-editor=plain]').fill('J3_UNSENT_PLAIN_DRAFT');await continuity();
  await page.getByRole('button',{name:'Use contenteditable',exact:true}).click();await page.locator('#prompt-textarea[data-j3-editor=rich]').waitFor({state:'visible'});await page.locator('[data-j3-editor=rich]').fill('J3_UNSENT_RICH_DRAFT');await draft();
  await page.getByRole('button',{name:'Use textarea',exact:true}).click();await page.locator('#prompt-textarea[data-j3-editor=plain]').waitFor({state:'visible'});await draft('plain');await page.getByRole('button',{name:'Use contenteditable',exact:true}).click();await page.locator('#prompt-textarea[data-j3-editor=rich]').waitFor({state:'visible'});await draft();record('native-editor-switch-independent-drafts-original-two-nodes','PASS',{active:'rich',inactivePlainRetained:true});
+ report.ui06={};await runUI06KeyboardAX({page,context,extensionId,workspace,nativeReading,draft,snapshotActions:()=>server.snapshot().actions,trace:report.ui06});record('UI06-parent-AX-trusted-keyboard-and-continuity','PASS',{scope:'J3_SUBCASE_NOT_FULL_UI06_ACCEPTANCE'});
  // Native history controls execute the fixture SPA, keeping the same document.
  await page.locator('aside nav[aria-label="Chat history"] a').filter({hasText:'Membership not loaded'}).click();await page.waitForURL(server.origin+'/c/44444444-4444-4444-8444-444444444444');await page.waitForFunction(()=>document.querySelector('#reading')?.dataset.conversationId==='44444444-4444-4444-8444-444444444444');await draft();
  await page.goBack();await page.waitForFunction(()=>document.querySelector('#reading')?.dataset.conversationId==='33333333-3333-4333-8333-333333333333');await draft();
@@ -98,5 +101,5 @@ try{
  assert.equal(server.snapshot().actions['send-intent']??0,0);for(const kind of ['permission-allow','permission-deny'])assert.equal(server.snapshot().actions[kind],1);assert.equal(server.snapshot().actions['editor-mode'],3);assert.deepEqual(report.errors,[]);assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');report.screenshot=join(dir,'j3-end.png');await page.screenshot({path:report.screenshot});report.browserVersion=context.browser().version();report.nativeActions=server.snapshot().actions;
  report.status=report.steps.some(s=>s.status==='NOT_COVERED')?'PARTIAL_NOT_J3_ACCEPTED':'PASS';if(report.status!=='PASS')process.exitCode=2;
 }catch(error){report.status='FAIL';report.error=error.stack;process.exitCode=1;try{if(page){try{report.historyFailureDiagnostics=await historyDiagnostics();}catch(diagnosticError){report.historyDiagnosticError=String(diagnosticError);}report.openPageURLs=context.pages().map(p=>p.url());report.failureState=await page.evaluate(()=>({url:location.href,state:document.documentElement.dataset.vaiwlState,reason:document.documentElement.dataset.vaiwlReason,owned:document.querySelectorAll('[data-va-owned]').length,lifecycle:globalThis.j3Lifecycle}));report.failureScreenshot=join(dir,'j3-failure.png');await page.screenshot({path:report.failureScreenshot});}}catch{}}
-finally{await context?.close();await server.close();report.sourceChangedDuringRun=(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);report.scriptChangedDuringRun=hash(await readFile(script))!==scriptHash;report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;if(report.sourceChangedDuringRun||report.scriptChangedDuringRun||!report.buildManifestUnchanged){report.status='FAIL';report.error=(report.error??'')+' source-or-package-changed';process.exitCode=1;}await writeFile(output,JSON.stringify(report,null,2)+'\n');}
+finally{await context?.close();await server.close();report.sourceChangedDuringRun=(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);report.ui06HelperChangedDuringRun=hash(await readFile(ui06Path))!==ui06HelperHash;report.scriptChangedDuringRun=hash(await readFile(script))!==scriptHash;report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;if(report.sourceChangedDuringRun||report.scriptChangedDuringRun||report.ui06HelperChangedDuringRun||!report.buildManifestUnchanged){report.status='FAIL';report.error=(report.error??'')+' source-or-package-changed';process.exitCode=1;}await writeFile(output,JSON.stringify(report,null,2)+'\n');}
 console.log(JSON.stringify({status:report.status,steps:report.steps,error:report.error}));

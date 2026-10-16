@@ -1,3 +1,20 @@
+## Development probe feasibility hold (after CI54)
+
+The automatic browser schedule is withdrawn, not accepted or skipped as PASS.
+CI53 and CI54 failed before their second native send; both original reports are
+retained. Real-owner L studies show a normal independent surface scan advances
+the native source witness both after rebind and in the same worker. Subsequent
+Evidence repair therefore safely retires the original operation as
+`needs-revalidation/source-changed`, as permitted by FINAL §8.4.4. This does not
+satisfy this probe’s stricter unchanged-native-witness/source-revoked branch.
+That branch and full SYS02 remain NOT_ESTABLISHED; no product defect is inferred.
+
+CI now invokes only the existing non-browser plan writer and checks explicit
+NOT_RUN/NOT_ESTABLISHED/NOT_RELEASE_READY fields. The executable probe and all
+strict assertions below remain available for future independently justified
+development. A green metadata step is never S acceptance. No prior valid
+Canonical gate was removed. See docs/evidence/round259.
+
 # Existing-source pending repair S slice
 
 Candidate only. Targeted L/oracle/callback checks are not S. No browser result is
@@ -21,7 +38,8 @@ existing locked Playwright/Chrome dependencies:
 FREE_SOURCE_COMMIT=$(git rev-parse HEAD) node tests/host/existing-source-pending-repair-journey.mjs /tmp/pending-repair-S.json --execute-browser
 ```
 
-No CI job or pre-existing test is changed or replaced by this candidate.
+Original J4 and other established browser slices are unchanged; automatic CI
+records this unresolved development plan only.
 FREE_SOURCE_COMMIT records the integrated source; FREE_DIRTY_PATCH_HASH may carry
 an independently measured dirty diff hash. The runner does not infer repository
 cleanliness. Its runner-content hash is separately labeled, not a dirty diff.

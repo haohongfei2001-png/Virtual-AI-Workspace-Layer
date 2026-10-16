@@ -2,9 +2,11 @@
 
 ## 最新正式检查点（2026-10-16，隔离云环境）
 
-原分支 / Draft PR16 当前正式提交420d19e（Round257）。CI53的Node5131/5131及12个guard全过，journeys成功，原J4连续23步、两个就绪后SYS05和兼容性切片通过。新增pending-repair S在第二次发送前失败，真实send-intent仅1、无pending，不能归因Evidence退休产品逻辑；本候选仅调整真实workspace旧grant取证到原生让位之前，并增加固定阶段标签，双fresh grant与原native witness/source-revoked门槛不变。49条轻合同与独立缺frame/错scope/ref/缺grant反例通过，真实S尚待下一CI。原FAIL完整保留。
+原分支 / Draft PR16 最近已执行正式提交3eaac14（Round258）。CI54的Node5134/5134及12个guard通过；原J4连续23步、两个就绪后SYS05和兼容性切片通过。新增pending-repair S仍在第二次发送前的workspace前置失败，只有一次真实send且无pending，不构成Evidence退休产品缺陷。原cold20s本次通过，但独立插桩cold诊断仍失败，历史间歇问题未闭合。
 
-10k单项目仍在tab0原30秒准备截止失败，末态诊断inventory9212/revision182，不构成完整接纳/Project成员/计时证据；未继续猜改性能或放宽门槛。上一1k完整1000 PROJECT、稳定revision104及单样本结果不能覆盖10k。独立cold本次通过但历史间歇失败仍保留。详见[Round258](evidence/round258/README.md)；既有Evidence恢复23步S见[Round256](evidence/round256/README.md)。完整81、SYS02/J4、SYS04/SYS05、UI、G/U与发布条件仍未完成。
+三项真实owner/provider的轻量L研究已说明额外测试前提问题：同一Personal窗口3/6/9GET与1/2/3attempt可满足两次发送，固定30秒等待不是必要前提；但正常重绑或同worker的独立surface重扫均可推进原native witness，随后Evidence修复安全退休为source-changed，符合FINAL §8.4.4。它不能通过该probe额外要求的“witness始终不变且精确source-revoked”。该特定S和完整SYS02保持NOT_ESTABLISHED，停止针对该分支的试错；保留runner、严格oracle与CI53/54原FAIL，自动CI仅记录其明确NOT_RUN计划，不将其改名通过或修改产品。原此前有效门槛不删。
+
+10k单项目仍在tab0原30秒准备截止失败，末态诊断inventory9468/revision187，不构成完整接纳、Project成员或计时证据；未继续猜改性能或放宽门槛。上一1k完整1000 PROJECT、稳定revision104及单样本结果不能覆盖10k。详见[Round259](evidence/round259/README.md)；既有Evidence恢复23步S见[Round256](evidence/round256/README.md)。本轮新增现行UI-06正式J3真实键盘/父AX开闭候选，保原15步，产品与fixture不改；整合76条轻测试和独立7正/27负oracle通过，实际S仍待CI，不预设产品缺陷。完整81、SYS02/J4、SYS04/SYS05、UI、G/U与发布条件仍未完成。
 
 ## 历史正式检查点（Round219，保留原记录）
 
