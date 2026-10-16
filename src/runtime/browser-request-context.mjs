@@ -69,7 +69,9 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
   if(overlap.length){request.conflicted=true;for(const r of overlap)r.conflicted=true;drop(document,'concurrent-context-conflict');}
   requests.set(request.requestId,request);
   request.prepared=Promise.resolve().then(()=>Promise.all([getFrame({tabId:request.tabId,frameId:0}),getTab(request.tabId)])).then(([frame,tab])=>{
-   if(request.conflicted||tab?.id!==request.tabId||tab.incognito!==false||!active||requests.get(request.requestId)!==request||documents.get(key(request))!==document||!clockOK(request,6000)||!frameMatches(frame,request))return false;
+   // Delayed browser lookups cannot adopt an epoch revoked while they awaited.
+   // Authorized navigation retention updates the pending epoch explicitly.
+   if(request.conflicted||request.epoch!==document.epoch||tab?.id!==request.tabId||tab.incognito!==false||!active||requests.get(request.requestId)!==request||documents.get(key(request))!==document||!clockOK(request,6000)||!frameMatches(frame,request))return false;
    request.actualURL=frame.url;
    const concurrent=[...requests.values()].some(r=>r!==request&&r.document===document&&r.accepted&&r.contextId!==contextId);
    if(concurrent){drop(document,'concurrent-context-conflict');return false;}

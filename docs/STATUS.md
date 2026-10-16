@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round343）
+## 最新本地检查点（2026-10-17，Round344）
+
+已重新fetch确认838961a与远端0/0，正式开发分支、整理stash42c8877及副本保全。独立反例确认异步browser查询可跨A请求失败撤销，让B重新采用新epoch；prepared回调现在先检查epoch，不复活旧选择凭据。旧代码2PASS/2FAIL，定向17文件 **291/291 PASS**，首次并发/失败后fresh请求及原commit/history保留路径通过。[Round344证据](evidence/round344/README.md)。
+
+本轮未运行新浏览器/完整套，不把Node反例提升为MV3验收。100k完整库存、静默context、其余81/profile/J1–J4/G/U仍开放，Free **NOT_RELEASE_READY**。遮罩下未知成员不凭根节点信任升级；继续按原计划推进。
+
+## 前一本地检查点（2026-10-17，Round343）
 
 已fetch确认原开发分支与远端0/0，整理stash42c8877及副本保留。新增同scope/document、双时钟30秒且不续期的RAM检查顺序提示，来源为匹配ACK或离开已认证且绑定未过期的严格C路由；只优先扫描新P的真实可见成员链接，不由URL生成成员/正文证明/时间/授权。独立旧版11PASS/4FAIL→15/15，scope/文档/迟到响应/双时钟/重复/隐藏/冲突节点反例保持。[Round343证据](evidence/round343/README.md)。
 
