@@ -78,3 +78,45 @@ test('partial initial baseline settles waiting intent as absent without fetching
 test('private exact failure settle leaves newer retry pending and preserves baseline',async()=>{const f=fixture();await f.service.observe('p1');await f.service.intent('p1',send);await f.service.intent('p1',{...send,intentId:'retry'});assert.equal((await f.service.pendingIntent('p1','i1')).intentId,'i1');assert.equal(await f.service.settle('p1',{intentId:'missing',stage:'failed'}),null);assert.equal((await f.service.settle('p1',{intentId:'i1',stage:'failed'})).stage,'failed');const candidates=await f.service.observe(f.next());assert.equal(candidates.length,1);assert.equal(candidates[0].intentId,'retry');});
 
 test('fresh append proof settles exact old pending failure before observing the successful retry',async()=>{const f=fixture();await f.service.observe('p1');await f.service.intent('p1',send);await f.service.intent('p1',{...send,intentId:'retry'});const next=f.next();assert.equal((await f.service.settle(next,{intentId:'i1',stage:'failed'})).stage,'failed');const candidates=await f.service.observe(next);assert.equal(candidates.length,1);assert.equal(candidates[0].intentId,'retry');});
+
+test('idle predicate blocks queued baseline and accepted intent without extra reads',async()=>{
+ const f=fixture();assert.equal(f.service.isIdle(),true);const release=f.hold(),baseline=f.service.observe('p1');assert.equal(f.service.isIdle(),false);
+ const intent=f.service.intent('p1',send);assert.equal(f.service.isIdle(),false);release();await baseline;await intent;
+ assert.equal(f.service.isIdle(),false);assert.equal(f.calls,1);assert.equal((await f.service.pendingIntent('p1','i1')).observedAt,new Date(1000).toISOString());
+ await f.service.settle('p1',{intentId:'i1',stage:'cancelled'});assert.equal(f.service.isIdle(),true);f.service.stop();assert.equal(f.service.isIdle(),false);
+});
+test('idle cannot treat correlated but pending ACK as settled',async()=>{
+ let available=false,commits=0;const timers=scheduler(),f=ackFixture(()=>{commits++;},()=>available,timers);
+ await f.service.observe('p1');assert.equal(f.service.isIdle(),true);await f.service.intent('p1',send);await f.service.observe(f.next());
+ assert.equal(f.service.isIdle(),false);assert.equal(commits,0);const before=f.calls;
+ for(let i=0;i<20;i++)assert.equal(f.service.isIdle(),false);assert.equal(f.calls,before);assert.equal(timers.tasks.size,1);
+ available=true;f.tick(1000);await timers.run();assert.equal(commits,1);assert.equal(f.service.isIdle(),true);f.service.stop();
+});
+test('idle remains false through ACK consumer persistence even after correlator consumed intent',async()=>{
+ let release,entered;const gate=new Promise(r=>release=r),began=new Promise(r=>entered=r),f=ackFixture(async()=>{entered();await gate;});
+ await f.service.observe('p1');await f.service.intent('p1',send);const reading=f.service.observe(f.next());await began;
+ assert.equal(f.service.isIdle(),false);release();await reading;assert.equal(f.service.isIdle(),true);f.service.stop();
+});
+test('idle blocks intent and terminal access before asynchronous owner callback begins',async()=>{
+ for(const kind of ['intent','lookup','settle']){
+  const f=fixture();await f.service.observe('p1');const original=f.observations.withCurrent;let release;const gate=new Promise(r=>release=r);
+  f.observations.withCurrent=async(...args)=>{await gate;return original(...args);};
+  const pending=kind==='intent'?f.service.intent('p1',send):kind==='lookup'?f.service.pendingIntent('p1','absent'):f.service.settle('p1',{intentId:'absent',stage:'failed'});
+  assert.equal(f.service.isIdle(),false,kind+' callback has not started');release();await pending;
+  assert.equal(f.service.isIdle(),kind!=='intent');f.service.stop();
+ }
+});
+test('idle check does not restart a disabled owner or renew the original intent window',async()=>{
+ const disabled=createHostSendCandidates({observations:{withCurrent(){assert.fail('no read');},isCurrentProof:()=>false,isCurrentProducer:()=>false}});
+ assert.equal(disabled.isIdle(),true);disabled.stop();assert.equal(disabled.isIdle(),false);
+ const f=fixture();await f.service.observe('p1');await f.service.intent('p1',send);f.tick(29999);assert.equal(f.service.isIdle(),false);f.tick(1);assert.equal(f.service.isIdle(),true);
+ assert.equal(await f.service.intent('p1',send),null,'used intent remains non-replayable');assert.equal(f.calls,1);f.service.stop();
+});
+test('idle access bookkeeping releases after owner throws or rejects',async()=>{
+ for(const kind of ['intent','lookup','settle'])for(const asyncReject of [false,true]){
+  const f=fixture();await f.service.observe('p1');
+  f.observations.withCurrent=()=>{if(asyncReject)return Promise.reject(Error('owner-failed'));throw Error('owner-failed');};
+  const call=kind==='intent'?()=>f.service.intent('p1',send):kind==='lookup'?()=>f.service.pendingIntent('p1','absent'):()=>f.service.settle('p1',{intentId:'absent',stage:'failed'});
+  await assert.rejects(call,/owner-failed/);assert.equal(f.service.isIdle(),true);f.service.stop();
+ }
+});

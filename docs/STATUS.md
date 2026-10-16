@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round351）
+## 最新本地检查点（2026-10-17，Round352）
+
+增加发送correlator/候选owner的私有同步空闲检查：pending intent、入口异步访问、metadata读取、pending ACK/retry和持久化回调未完成时均拒绝idle；不续期、不额外读取、不清重放记录。相关19文件270/270通过，追加异常释放反例后最终3文件86/86通过，独立审查无阻断。见 [Round352](evidence/round352/README.md)。
+
+尚未把局部isIdle接成自动休眠许可；其他持有者与同producer关闭栅栏继续实施，不用狭窄predicate冒充UI11通过。完整Free仍 **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round351）
 
 积压三个commit已精确SHA同步原Draft PR16至8197cf1，base保持，核对本地/origin0/0。新增UI frame单向IDLE撤权端点：严格父窗口/origin/role/消息结构，清私人投影并停止续租，迟到join/renew不能复活。相关14文件 **247/247 Node PASS**。见 [Round351](evidence/round351/README.md)。
 

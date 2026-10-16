@@ -8,7 +8,7 @@ export function createHostSendCandidates({observations,reader,enabled=false,now=
  if((schedule!==null||cancel!==null)&&(typeof schedule!=='function'||typeof cancel!=='function'))throw Error('invalid-send-ack-scheduler');
  if(onAcknowledged!==null&&(typeof onAcknowledged!=='function'||typeof reader?.withReadback!=='function'))throw Error('invalid-send-ack-consumer');
  if(typeof observations?.withCurrent!=='function'||typeof observations?.isCurrentProof!=='function'||typeof observations?.isCurrentProducer!=='function'||typeof enabled!=='boolean'||enabled&&typeof reader?.read!=='function'||typeof now!=='function'||onCandidate!==null&&typeof onCandidate!=='function'||!Number.isInteger(maxBindings)||maxBindings<1||maxBindings>128)throw Error('invalid-host-send-candidates');
- const entries=new Map(),inflight=new Map();let stopped=false,settled=Promise.resolve();
+ const entries=new Map(),inflight=new Map();let stopped=false,settled=Promise.resolve(),accesses=0;
  function clearRetry(entry){if(entry.retry!==null){cancel?.(entry.retry);entry.retry=null;}}
  function armRetry(entry){
   if(!entry)return;clearRetry(entry);
@@ -66,7 +66,7 @@ export function createHostSendCandidates({observations,reader,enabled=false,now=
   })).then(candidates=>{active();if(observations.isCurrentProof(proofId)!==true)throw Error('stale-send-proof');if(entries.get(context.producerToken)!==entry||generation!==undefined&&entry.generation!==generation)throw Error('stale-send-observation');return publish(candidates);}).catch(error=>{if(entry&&generation!==undefined&&entry.generation===generation){entry.baseline=false;entry.proof=null;entry.correlator.invalidate();entries.forEach((value,key)=>{if(value===entry)entries.delete(key);});}throw error;}).finally(()=>{if(inflight.get(proofId)===pending)inflight.delete(proofId);armRetry(entry);});
   settled=pending.catch(()=>{});inflight.set(proofId,pending);return pending;
  }
- async function intent(proofId,value){
+ async function intentWork(proofId,value){
   active();if(!tokenOK(proofId))throw Error('invalid-body-proof');if(!exactHostRecord(value,['intentId','kind','isComposing'])||!tokenOK(value.intentId)||value.kind!=='send'||value.isComposing!==false)return null;const input={intentId:value.intentId,kind:'send',isComposing:false};
   // Only join a read that already existed when the intent arrived. Never fetch
   // a retroactive baseline, and re-enter withCurrent after the wait.
@@ -78,5 +78,14 @@ export function createHostSendCandidates({observations,reader,enabled=false,now=
  // immediately before the synchronous correlator mutation; a post-check cannot
  // restore an intent already consumed by a revoked terminal read.
  async function terminalAccess(proofId,intentId,stage=null,terminalGuard=()=>{}){active();if(!tokenOK(proofId)||!tokenOK(intentId))return null;return observations.withCurrent(proofId,current=>{check(current);const entry=entries.get(current.producerToken);if(!entry||entry.signature!==JSON.stringify(binding(current)))return null;if(stage===null)return entry.correlator.pendingIntent(intentId);if(typeof terminalGuard!=='function')return null;terminalGuard();return entry.correlator.settle({intentId,stage});});}
- return Object.freeze({observe,intent,pendingIntent:(proofId,intentId)=>terminalAccess(proofId,intentId),settle:(proofId,{intentId,stage}={},terminalGuard)=>['failed','cancelled'].includes(stage)?terminalAccess(proofId,intentId,stage,terminalGuard):Promise.resolve(null),stop});
+ // This is only a local scheduling predicate, never a scope or idle permit.
+ // Count entry before any await, including waiting for an existing baseline.
+ async function access(work){accesses++;try{return await work();}finally{accesses--;}}
+ function isIdle(){
+  if(stopped||accesses||inflight.size)return false;
+  if(!enabled)return true;
+  for(const entry of entries.values())if(entry.retry!==null||entry.pendingAcks.size||entry.correlator.isIdle()!==true)return false;
+  return true;
+ }
+ return Object.freeze({isIdle,observe,intent:(proofId,value)=>access(()=>intentWork(proofId,value)),pendingIntent:(proofId,intentId)=>access(()=>terminalAccess(proofId,intentId)),settle:(proofId,{intentId,stage}={},terminalGuard)=>['failed','cancelled'].includes(stage)?access(()=>terminalAccess(proofId,intentId,stage,terminalGuard)):Promise.resolve(null),stop});
 }
