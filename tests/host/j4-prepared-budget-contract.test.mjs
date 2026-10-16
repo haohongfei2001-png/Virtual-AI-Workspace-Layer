@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {j4AfterEvidenceScenario} from './j4-package-journey.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {runJ4EvidenceInterruption} from './j4-evidence-interruption.mjs';
@@ -32,5 +33,5 @@ for(const row of ['missing','corrupt'])test('prepared budget '+row+' record fail
 test('runner labels prepared afterEvidence separately and opt-in does not relabel default J4',async()=>{
  const source=await readFile(new URL('./j4-package-journey.mjs',import.meta.url),'utf8');
  const assignment=source.match(/report\.preparationScenario=([^;]+);/);assert(assignment);
- const evaluate=new Function('process','return '+assignment[1]);assert.equal(evaluate({env:{}}),'DEFAULT_J4');assert.equal(evaluate({env:{FREE_J4_AFTER_EVIDENCE:'0'}}),'DEFAULT_J4');assert.equal(evaluate({env:{FREE_J4_AFTER_EVIDENCE:'1'}}),'PREPARED_BUDGET_AFTER_EVIDENCE_NOT_DEFAULT_J4');
+ const readAssignment=new Function('afterEvidenceScenario','return '+assignment[1]),evaluate=({env})=>readAssignment(j4AfterEvidenceScenario(env));assert.equal(evaluate({env:{}}),'DEFAULT_J4');assert.equal(evaluate({env:{FREE_J4_AFTER_EVIDENCE:'0'}}),'DEFAULT_J4');assert.equal(evaluate({env:{FREE_J4_AFTER_EVIDENCE:'1'}}),'PREPARED_BUDGET_AFTER_EVIDENCE_NOT_DEFAULT_J4');
 });

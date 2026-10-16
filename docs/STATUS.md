@@ -1,6 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round346）
+## 最新本地检查点（2026-10-17，Round347）
+
+已正常推送此前7499f8d/084449d至原PR16，核对本地/origin0/0，整理stash/副本保留。将J4 after-Evidence断点与baseline前预算准备分离：新增明确unprepared模式，原默认/旧flag保持；未改生产。[Round347证据](evidence/round347/README.md)。
+
+实际无额外准备的MODERN多tab J4 **23/23连续PASS**：Evidence已commit、complete前真实worker停止，原ACK/receipt字节保持，恢复complete且二次读取幂等、无send重放、Team/Pro保持；后续修复/新发送/撤权/disable/reenable/uninstall同旅程完成。正常exit2仍PARTIAL_J4_NOT_ACCEPTED，源码/构建无漂移、errors为空。后续既有30秒窗口等待未删除。
+
+最终相关Node **292/292 PASS**；最初旧标签eval的271PASS/1FAIL保留并修正。单次组合通过不等于全部profile/lifecycle稳定；原cold context、100k、其余81/J1–J4/G/U继续开放，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round346）
 
 新增J3显式registered-worker前置，复用已有只读exact worker/JS listener检查；默认immediate不变，注册不是context授权。最终单一15秒绝对预算覆盖注册→导航→首workspace（实际491ms）。MODERN × app-root 原16步实际连续 **16/16 PASS**，包含双surface、原生草稿/文件、AX键盘、Back/Forward、200%缩放、历史/UNKNOWN、片段与原生搜索；worker外网阻断、源码/fixture/构建无漂移。72/72定向Node通过。[Round346证据](evidence/round346/README.md)。
 
