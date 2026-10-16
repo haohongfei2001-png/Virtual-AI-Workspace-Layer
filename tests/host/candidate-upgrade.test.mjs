@@ -19,3 +19,5 @@ test('preview is read-only, exact-context and never commits project identity or 
 test('preview cannot certify original route, cancelled or changed project correlation',()=>{
  const f=fixture();f.state.propose(f.proposal);assert.equal(f.state.preview(f.result),null);f.state.navigate({url:f.result.url});assert(f.state.resolve(f.result));assert.equal(f.state.preview({...f.result,projectId:'other'}),null);assert(f.state.preview(f.result));f.state.cancel('action');assert.equal(f.state.preview(f.result),null);
 });
+
+test('same-target rebind correlation requires prior navigation and keeps its original deadline',()=>{const f=fixture();f.state.propose(f.proposal);assert.equal(f.state.isTarget({url:f.proposal.originalURL}),false);f.state.navigate({url:f.result.url});assert.equal(f.state.isTarget({url:f.result.url}),true);assert.equal(f.state.isTarget({url:f.proposal.originalURL}),false);assert.equal(f.state.isTarget({url:f.result.url,extra:true}),false);f.setTime(6999);assert.equal(f.state.isTarget({url:f.result.url}),true);f.setTime(7000);assert.equal(f.state.isTarget({url:f.result.url}),false);assert.equal(f.state.resolve(f.result),null);});

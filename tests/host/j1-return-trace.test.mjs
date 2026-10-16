@@ -26,7 +26,15 @@ test('J1 diagnostic click failures do not throw into the native event',()=>{
 });
 test('J1 finalization attempts every check and report despite close failure',async()=>{
  const code=source.slice(source.lastIndexOf('finally{')+8,source.lastIndexOf('}console.log'));
- const stages=[],report={error:'original failure',status:'FAIL',sourceHashes:{}},world={report,context:{async close(){stages.push('browser');throw Error('close failed');}},server:{async close(){stages.push('server');throw Error('server failed');}},process:{argv:[],exitCode:1},manifest:{sourceHashes:{}},fixtureSourceHashes:{},hash:v=>v,readFile:async p=>{stages.push(p);throw Error('check failed');},script:'script',scriptHash:'original',manifestPath:'manifest',join:(...v)=>v.join('/'),tmpdir:()=>'/tmp',writeFile:async(p,body)=>{stages.push('report');assert.equal(JSON.parse(body).error,'original failure');}};
+ const stages=[],report={error:'original failure',status:'FAIL',sourceHashes:{}},world={upgradeTrace:null,report,context:{async close(){stages.push('browser');throw Error('close failed');}},server:{async close(){stages.push('server');throw Error('server failed');}},process:{argv:[],exitCode:1},manifest:{sourceHashes:{}},fixtureSourceHashes:{},hash:v=>v,readFile:async p=>{stages.push(p);throw Error('check failed');},script:'script',scriptHash:'original',manifestPath:'manifest',join:(...v)=>v.join('/'),tmpdir:()=>'/tmp',writeFile:async(p,body)=>{stages.push('report');assert.equal(JSON.parse(body).error,'original failure');}};
  await vm.runInNewContext('(async()=>{'+code.replaceAll('import.meta.url',"'file:///fixture/'")+'})()',world);
  assert.deepEqual(stages,['browser','server','script','manifest','report']);assert.equal(report.error,'original failure');assert.equal(report.status,'FAIL_FINALIZATION');assert.equal(report.finalizationErrors.length,4);
+});
+
+test('J1 port diagnostics preserve connection and callbacks and bound notification output',()=>{
+ const logs=[],listeners=[],port={onMessage:{addListener:fn=>listeners.push(fn)}};let argument;
+ const world={location:{protocol:'chrome-extension:',href:'chrome-extension://fixture/workspace.html'},chrome:{runtime:{sendMessage(){},connect(value){argument=value;return port;}}},crypto:{randomUUID:()=> 'frame'},console:{log:s=>logs.push(JSON.parse(s.slice(16)))}};
+ vm.runInNewContext('('+source.slice(start,end)+')',world)();const request={name:'vaiwl-ui'};assert.equal(world.chrome.runtime.connect(request),port);assert.equal(argument,request);let delivered=0;port.onMessage.addListener(()=>delivered++);
+ for(let i=0;i<150;i++)for(const listener of listeners)listener({type:'VAIWL_UI_WORKSPACE_ENTERED',private:'NEVER_RECORD'});
+ assert.equal(delivered,150);assert.equal(logs.length,128);assert(logs.every(r=>r.phase==='port-message'&&r.type==='VAIWL_UI_WORKSPACE_ENTERED'));assert(!JSON.stringify(logs).includes('NEVER_RECORD'));
 });

@@ -25,6 +25,9 @@ export function createCandidateUpgrade({now=Date.now}={}){
   if(state.targetURL===null){if(value.url===state.originalURL)return true;state.targetURL=value.url;return true;}
   if(value.url!==state.targetURL){clear();return false;}return true;
  }
+ // A replacement binding may retain only an already-correlated target.
+ // This is presentation correlation, never authority, and cannot renew expiry.
+ function isTarget(value){const state=current();return !!state&&exactHostRecord(value,['url'])&&urlOK(value.url)&&state.targetURL!==null&&value.url===state.targetURL;}
  // Read-only prediction for a private scan. It is neither a grant nor a
  // committed upgrade; resolve must repeat every check at publication.
  function preview(value){
@@ -40,5 +43,5 @@ export function createCandidateUpgrade({now=Date.now}={}){
   if(value.url!==state.targetURL||state.projectId!==null&&state.projectId!==value.projectId){clear();return null;}
   state.projectId=value.projectId;return Object.freeze({projectId:state.projectId,identity:state.identity,actionId:state.actionId});
  }
- return Object.freeze({propose,cancel,navigate,preview,resolve,clear});
+ return Object.freeze({propose,cancel,navigate,isTarget,preview,resolve,clear});
 }

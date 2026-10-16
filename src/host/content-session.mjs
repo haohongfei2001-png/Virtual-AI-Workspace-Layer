@@ -61,7 +61,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function rebind(s,initialMode=null){
   if(!enabled||current!==s||rebindQueued)return;
   if(initialMode===null)initialMode=s.controller?.presentationMode?.()==='workspace'?'workspace':'reading';
-  if(doc.location.href!==s.url){upgrade.navigate({url:doc.location.href});initialMode='reading';}else clearUpgrade();
+  if(doc.location.href!==s.url){upgrade.navigate({url:doc.location.href});initialMode='reading';}else if(!upgrade.isTarget({url:doc.location.href}))clearUpgrade();
   rebindQueued=true;const run=++rebindRun;reset();doc.defaultView.addEventListener('pagehide',pagehide);
   // Collapse a burst into one replacement. Only external events can request a
   // subsequent attempt; failures never schedule their own recovery loop.

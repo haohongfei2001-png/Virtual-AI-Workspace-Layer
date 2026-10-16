@@ -243,3 +243,35 @@ test('early return focuses only once across repeated candidate scans',async()=>{
   assert.deepEqual(f.focusCalls,['workspace']);
  }finally{f.client.stop();}
 });
+
+async function activationBeforeFirstUpgradeScan(){
+ const f=fixture();await f.client.start();const candidate=(await f.list('workspace')).items.find(row=>row.renderKey==='clicked'),oldBinding=f.binding();
+ await f.activate(candidate,{role:'workspace',presentation:{offset:32,scrollTop:137,focused:true}});await drain();assert(f.calls.some(row=>row.type==='HOST_NATIVE_AUTHORIZE'));
+ assert.equal(f.document.location.href,URL);assert.notEqual(f.binding().producerToken,oldBinding.producerToken);
+ return {f,candidate,oldBinding};
+}
+test('pending activation survives same-target authorization rebind before its first matching scan',async()=>{
+ const {f,candidate,oldBinding}=await activationBeforeFirstUpgradeScan();try{
+  const targetBinding=f.binding();f.setTime(2000);await f.spa(URL);assert.notEqual(f.binding().producerToken,targetBinding.producerToken);
+  const authorizations=f.calls.filter(row=>row.type==='HOST_NATIVE_AUTHORIZE').length;let staleReply=null;
+  f.listener()({type:'HOST_CANDIDATES',documentToken:oldBinding.documentToken,producerToken:oldBinding.producerToken,routeEpoch:oldBinding.routeEpoch,phase:'activate',candidate,actionId:'replayed-old-grant',uiGrantId:'grant',mountId:'mount',expiresAt:new Date(7000).toISOString(),display:{role:'workspace',presentation:{offset:32,scrollTop:137,focused:true}}},{id:'extension'},value=>staleReply=value);await drain();
+  assert.deepEqual(staleReply,{ok:false});assert.equal(f.calls.filter(row=>row.type==='HOST_NATIVE_AUTHORIZE').length,authorizations);
+  const result=await f.list('workspace');assert.equal(result.total,1);assert.equal(result.migration?.id,'realAction');assert.equal(result.migration.projectId,P);assert.deepEqual(result.migration.presentation,{offset:32,scrollTop:137,focused:true});
+ }finally{f.client.stop();}
+});
+for(const reason of ['scope','document','deadline','second-route'])test('same-target pending rebind does not preserve activation across '+reason,async()=>{
+ const {f}=await activationBeforeFirstUpgradeScan();try{
+  if(reason==='scope')await f.spa(URL,{newScope:'scopeB'});
+  if(reason==='document')await f.spa(URL,{newDocument:'other-browser-document'});
+  if(reason==='deadline'){f.setTime(7000);await f.spa(URL);}
+  if(reason==='second-route'){await f.spa(C);await f.spa(URL);}
+  const result=await f.list('workspace');assert.equal(result.total,2);assert.equal(result.migration,undefined);assert.deepEqual(f.focusCalls,[]);
+ }finally{f.client.stop();}
+});
+test('same-URL rebind before any target navigation cannot preserve a proposed upgrade',async()=>{
+ const f=fixture();await f.client.start();try{
+  f.options.onNativeDispatch({actionId:'not-navigated',plan:{target:{kind:'live-control'},control:{id:'clicked'}}});
+  await f.spa('https://chatgpt.com/');await f.spa(URL);
+  const result=await f.list('workspace');assert.equal(result.total,2);assert.equal(result.migration,undefined);assert.deepEqual(f.focusCalls,[]);
+ }finally{f.client.stop();}
+});
