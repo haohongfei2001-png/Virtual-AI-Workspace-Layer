@@ -5,10 +5,16 @@ import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {createHostFixtureServer} from './fixtures/server.mjs';
+import {createVariantHostFixtureServer} from './fixtures/variants-server.mjs';
+import {disableStatesProfile} from './disable-states-profile.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 const hash=b=>createHash('sha256').update(b).digest('hex'),script='tests/host/uninstall-states-package-mv3-browser.mjs',scriptHash=hash(await readFile(script));
-const server=await createHostFixtureServer(),dir=await mkdtemp('/private/tmp/vaiwl-uninstall-states-'),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin}),manifestPath=join(built.unpacked,'build-manifest.json'),manifestBytes=await readFile(manifestPath),info=JSON.parse(manifestBytes),output=process.argv[2]??'/private/tmp/free-uninstall-states-package-mv3.json';
-const report={evidence:'REAL_HEADLESS_PACKAGED_MV3_UNINSTALL_FOUR_STATES_OFFLINE',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',package:built,sourceHashes:info.sourceHashes,buildManifestHash:hash(manifestBytes),scriptHash,results:[],errors:[],blockedExternal:[]};let context,page,extensionId;
+const selected=disableStatesProfile(process.env.FREE_UNINSTALL_PROFILE??'LEGACY');
+const server=selected.modern?await createVariantHostFixtureServer({profile:'MODERN'}):await createHostFixtureServer();
+const dir=await mkdtemp('/private/tmp/vaiwl-uninstall-states-'),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,...selected.packageOptions}),manifestPath=join(built.unpacked,'build-manifest.json'),manifestBytes=await readFile(manifestPath),info=JSON.parse(manifestBytes),output=process.argv[2]??'/private/tmp/free-uninstall-states-package-mv3.json';
+const fixturePaths=['disable-states-profile.mjs','expected/legacy.mjs','expected/modern.mjs','fixtures/server.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html'];
+const fixtureSourceHashes=Object.fromEntries(await Promise.all(fixturePaths.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
+const report={profile:selected.profile,expectedScope:selected.scope,fixture:server.manifest,fixtureSourceHashes,evidence:'REAL_HEADLESS_PACKAGED_MV3_UNINSTALL_FOUR_STATES_OFFLINE',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',package:built,sourceHashes:info.sourceHashes,buildManifestHash:hash(manifestBytes),scriptHash,results:[],errors:[],blockedExternal:[]};let context,page,extensionId;
 async function inspectPrivate(frames){
  const states=[];
  for(const frame of frames){
@@ -24,13 +30,16 @@ try{
  assert.equal((JSON.parse(await readFile(join(built.unpacked,'manifest.json'),'utf8')).permissions??[]).includes('management'),false);
  context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
  await context.route('**/*',r=>{const url=r.request().url();if(url.startsWith(server.origin+'/')||extensionId&&url.startsWith('chrome-extension://'+extensionId+'/'))return r.continue();report.blockedExternal.push(url);return r.abort();});
+ if(selected.modern)await context.addInitScript(()=>{if(location.protocol!=='chrome-extension:'||!globalThis.chrome?.runtime?.sendMessage)return;globalThis.uninstallStatesScope=null;const send=chrome.runtime.sendMessage.bind(chrome.runtime);chrome.runtime.sendMessage=async m=>{const r=await send(m);if(m?.type==='HOST_UI_VIEW'&&r?.ok===true&&r.page?.scope)globalThis.uninstallStatesScope=r.page.scope;return r;};});
  const cdp=await context.browser().newBrowserCDPSession();
  for(const mode of ['both-open','workspace-only','sidebar-only','both-closed']){
   ({id:extensionId}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked}));report.activeCase=mode;
-  page=await context.newPage();page.on('pageerror',error=>report.errors.push({mode,message:error.message}));await page.goto(server.url);
+  const nativeRequestStart=selected.modern?server.snapshot().nativeRequests.length:0;
+  page=await context.newPage();page.on('pageerror',error=>report.errors.push({mode,message:error.message}));await page.goto(selected.modern?server.origin+selected.entryPath:server.url);
   const urls=['workspace','sidebar'].map(role=>`chrome-extension://${extensionId}/${role}.html`);
   await page.frameLocator('iframe[title="工作空间"]').getByText('Ordinary conversation',{exact:true}).waitFor({state:'attached',timeout:15000});
   const oldFrames=urls.map(url=>page.frames().find(f=>f.url()===url));assert(oldFrames.every(Boolean));
+  if(selected.modern){assert.equal(await oldFrames[0].evaluate(()=>globalThis.uninstallStatesScope),selected.scopeKey,'MODERN UI must use independently selected nonfirst Team');const native=server.snapshot().nativeRequests.slice(nativeRequestStart);assert(native.some(r=>r.path==='/backend-api/conversation/'+selected.conversationId&&r.context===selected.contextId),'native account-bound current-conversation request required');}
   const positive=await inspectPrivate(oldFrames);assert.equal(positive.privateProjectionAbsent,false,'detector must see shadow private text even before hidden-state tests');
   const worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${extensionId}/`));assert(worker);assert.equal(await worker.evaluate(async()=>{try{await fetch('https://example.com/');return false;}catch{return true;}}),true);
   await page.locator('textarea').fill('UNINSTALL_STATES_DRAFT');await page.evaluate(()=>{globalThis.uninstallEditor=document.querySelector('textarea');globalThis.uninstallDocument=document;globalThis.uninstallPageHides=0;addEventListener('pagehide',()=>uninstallPageHides++);});
@@ -59,5 +68,5 @@ try{
  }
  assert.deepEqual(report.errors,[]);assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');report.browser=context.browser().version();report.status='PASS';
 }catch(error){report.status='FAIL';report.error=error.stack;process.exitCode=1;try{if(page){report.failureScreenshot=join(dir,'failure.png');await page.screenshot({path:report.failureScreenshot});report.diagnostic=await page.evaluate(()=>({url:location.href,dataset:{...document.documentElement.dataset},owned:[...document.querySelectorAll('[data-va-owned]')].map(n=>({tag:n.tagName,id:n.id,open:n.matches(':popover-open'),visibility:getComputedStyle(n).visibility,interactivity:getComputedStyle(n).interactivity})),frames:[...document.querySelectorAll('iframe')].map(n=>n.src)}));report.frames=await Promise.all(page.frames().map(async f=>({url:f.url(),detached:f.isDetached(),state:await f.evaluate(()=>({readyState:document.readyState,body:document.body?.innerText?.slice(0,1000)})).catch(e=>({inspectionError:e.message}))})));}report.fixtureSnapshot=server.snapshot();}catch(diagnosticError){report.diagnosticError=diagnosticError.message;}}
-finally{await context?.close();await server.close();report.sourceChangedDuringRun=(await Promise.all(Object.entries(info.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);report.scriptChangedDuringRun=hash(await readFile(script))!==scriptHash;report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;if(report.sourceChangedDuringRun||report.scriptChangedDuringRun||!report.buildManifestUnchanged){report.status='FAIL';report.error=(report.error??'')+' source-or-package-changed';process.exitCode=1;}await writeFile(output,JSON.stringify(report,null,2)+'\n');}
+finally{await context?.close();await server.close();report.fixtureChangedDuringRun=(await Promise.all(Object.entries(fixtureSourceHashes).map(async([p,h])=>hash(await readFile(new URL(p,import.meta.url)))!==h))).some(Boolean);report.sourceChangedDuringRun=(await Promise.all(Object.entries(info.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);report.scriptChangedDuringRun=hash(await readFile(script))!==scriptHash;report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;if(report.fixtureChangedDuringRun||report.sourceChangedDuringRun||report.scriptChangedDuringRun||!report.buildManifestUnchanged){report.status='FAIL';report.error=(report.error??'')+' source-or-package-changed';process.exitCode=1;}await writeFile(output,JSON.stringify(report,null,2)+'\n');}
 console.log(JSON.stringify({status:report.status,error:report.error,results:report.results}));

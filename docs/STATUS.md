@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round333）
+## 最新本地检查点（2026-10-17，Round334）
+
+在原生产代码上补齐MODERN UI-13两个离线切片：真实disable/re-enable **3/3 PASS**，原页面不刷新时不复活私有frame，后续原生目的地文档取得新grant/mount/UI文档，原端点接受新授权并拒绝旧授权；实际uninstall四开关组合 **4/4 PASS**，无需手动关闭便清除私有投影/遮罩，原document/editor/draft与后续原生导航保持。独立Team scope及native GET确认、worker外网阻断、source/fixture哈希均通过。见[Round334](evidence/round334/README.md)。
+
+本轮仅测试runner及对应合同，定向 **5/5 PASS**；上轮完整6431/6431不冒充新全套。更新/旧reader资产场景、全J4、冷启动、J2静默恢复、规模及G/U仍开放，**Free NOT_RELEASE_READY**。GitHub connector本轮亦Transport closed，最新远端未新确认；本地成果及原整理stash保全。
+
+## 前一本地检查点（2026-10-17，Round333）
 
 在803dcbf生产代码上新增实际离线生命周期证据：MODERN真实管理disable原5模式 **5/5 PASS**，包含双surface四种开关组合与本地模拟生成；原生可用/私有投影消失/布局清理均成立，原document/editor/草稿保持。仅本地生成，不冒称真实ChatGPT生成或全J4。
 
