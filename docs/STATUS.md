@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round299）
+## 最新正式检查点（2026-10-16，原本地目录，Round300）
+
+已正常push并API确认af9ad16在原Draft PR16/base。实际隔离MV3复现默认J4的12/12预算超时后，等待原窗口自然到期；同document/editor/URL一次返回操作恢复唯一原始历史事件，无原生重发。原FAIL保留，新增步骤仅PASS_NATURAL_ENTRY_ONLY。
+
+最终定向J4合同 **156/156 PASS**；初始测试oracle误判generation类型已修正且失败原件保留，源码/fixture稳定。见[Round300](evidence/round300/README.md)。生产未改，继续后续恢复/生命周期验收；完整Free仍 **NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round299）
 
 连续默认J4实测通过双tab作用域、六类人工资产恢复和实际disable原生保全；reenable新grant成功，但12/12共享预算内的原始历史恢复仍15s超时，原FAIL保留。新增自然窗口到期后新前台/历史进入合同，证明新proof可读取、旧请求不复活；定向 **40/40 PASS**，仅MockIDB合同，不冒称浏览器恢复通过。
 
