@@ -1,7 +1,7 @@
 import {waitForBudgetExpiry} from './fixtures/budget-expiry-wait.mjs';
 import {installJ2TerminalDiagnostics} from './j2-terminal-diagnostics.mjs';
 /** Entry calibration: native body unchanged, upstream original timestamp becomes available. */
-import assert from 'node:assert/strict';import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';import {createHash} from 'node:crypto';import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';import {createHostFixtureServer} from './fixtures/server.mjs';import {J2_C} from './fixtures/j2-send.mjs';import {packageHost,verifyHost} from '../../extension/package.mjs';
+import assert from 'node:assert/strict';import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';import {createHash} from 'node:crypto';import {createHostFixtureServer} from './fixtures/server.mjs';import {J2_C} from './fixtures/j2-send.mjs';import {packageHost,verifyHost} from '../../extension/package.mjs';
 
 import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
 const hash=x=>createHash('sha256').update(x).digest('hex');
@@ -29,6 +29,7 @@ async function mode(value){await page.getByRole('button',{name:'J2 mode '+value,
 async function send(){await page.locator('#prompt-textarea').fill('J2 native send');await page.getByRole('button',{name:'Send',exact:true}).click();}
 async function reopen(){const before=server.snapshot().requests['/backend-api/conversation/'+J2_C]??0;await page.reload();await poll(()=>frame());return poll(async()=>{const s=await facts();return s&&events(s).some(e=>e.messageId==='j2_old')&&(server.snapshot().requests['/backend-api/conversation/'+J2_C]??0)>before?s:null;});}
 try{
+ const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
  server=await createHostFixtureServer({journey:'J2'});dir=await mkdtemp(join(tmpdir(),'vaiwl-entry-'));built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineFirstSend:true,offlineHistory:true,offlineOldSendTerminal:true});manifest=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));fixtureHashes=Object.fromEntries(await Promise.all(fixturePaths.map(async p=>[p,hash(await readFile(p))])));report.sourceHashes=manifest.sourceHashes;report.fixtureHashes=fixtureHashes;
  assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');
  const mutation=process.env.ENTRY_CALIBRATION_MUTATION??null;assert(mutation===null||mutation==='drop-entry');report.mutation=mutation;

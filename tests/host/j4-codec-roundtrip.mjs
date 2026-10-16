@@ -1,3 +1,4 @@
+import {verifyLoadedWorkerBytes} from './loaded-worker-bytes.mjs';
 import {DATABASE_VERSION} from '../../src/data/schema.mjs';
 import {ensureUpdatedRuntime} from './historical-host-runtime.mjs';
 import assert from 'node:assert/strict';
@@ -9,7 +10,7 @@ import {historicalSource,replaceDisabledPackage,directoryDigest,OLD_HOST_COMMIT}
 const hash=value=>createHash('sha256').update(value).digest('hex');
 /** TEST ONLY: real archived reader, same isolated extension ID and database.
  * Archived owners must fail at database open; raw inspectors never authorize them. */
-export async function probeJ4HistoricalCodec({context,cdp,controller,id,slot,root,origin,scope,pending,committedReceipt,closeProbe,assets,preserved,record}){
+export async function probeJ4HistoricalCodec({debugEndpoint,context,cdp,controller,id,slot,root,origin,scope,pending,committedReceipt,closeProbe,assets,preserved,record}){
  assert.equal(pending.format,'vaiwl-native-continuation-v2');assert(committedReceipt);
  const saved=join(root,'codec-current-package'),frozen=join(root,'codec-old-source');
  await cp(slot,saved,{recursive:true});const currentDigest=await directoryDigest(saved);
@@ -28,6 +29,7 @@ export async function probeJ4HistoricalCodec({context,cdp,controller,id,slot,roo
   slotTouched=true;await replaceDisabledPackage(old.unpacked,slot,{disabled,root});
   assert.equal((await cdp.send('Extensions.loadUnpacked',{path:slot})).id,id);await enable(true);await runtime(permissions,runtimeUpdates.old);
   probe=await context.newPage();await probe.goto(`chrome-extension://${id}/workspace.html`);
+  runtimeUpdates.old.loadedWorker=await verifyLoadedWorkerBytes({debugEndpoint,extensionId:id,packagePath:old.unpacked});
   assert.equal(hash(await probe.evaluate(async()=>await(await fetch(chrome.runtime.getURL('build-manifest.json'))).text())),oldManifestHash);
   const result=await probe.evaluate(async({scope,pending,committedReceipt,expectedVersion})=>{
    const [{ScopeRepository},{NativeRepository},{digest}]=await Promise.all([import(chrome.runtime.getURL('src/b1/scope-repository.mjs')),import(chrome.runtime.getURL('src/data/native-repository.mjs')),import(chrome.runtime.getURL('src/data/hash.mjs'))]);
@@ -58,6 +60,7 @@ export async function probeJ4HistoricalCodec({context,cdp,controller,id,slot,roo
    // acknowledgement failed. Never replace an ambiguously enabled package.
    await enable(false);await replaceDisabledPackage(saved,slot,{disabled,root});assert.equal(await directoryDigest(slot),currentDigest);assert.equal((await cdp.send('Extensions.loadUnpacked',{path:slot})).id,id);await enable(true);
    await runtime(JSON.parse(await readFile(join(saved,'manifest.json'),'utf8')),runtimeUpdates.current);
+   runtimeUpdates.current.loadedWorker=await verifyLoadedWorkerBytes({debugEndpoint,extensionId:id,packagePath:saved});
   }catch(error){cleanupErrors.push(error);}
   if(cleanupErrors.length)primaryError=new AggregateError([...(primaryError?[primaryError]:[]),...cleanupErrors],'codec-roundtrip-or-restoration-failed');
  }

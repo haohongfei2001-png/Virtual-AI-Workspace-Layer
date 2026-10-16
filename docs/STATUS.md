@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round311）
+## 最新正式检查点（2026-10-17，原本地目录，Round312）
+
+补全classic worker的实际加载字节核验及中断断点兼容。实际旧Host schema3→4→3→4五阶段通过，原8表/6类人工资产保留、旧owner拒写。实际J4 prepared-budget codec变体27个步骤通过，包含原ACK恢复与disable/uninstall，但仍为PARTIAL_J4_NOT_ACCEPTED，不能替代默认连续J4。定向合同108/108通过；CI纯Node错误已定位并以禁用浏览器依赖的2项合同修复。测试副本构建依赖补齐，复制/完整性12项通过；实际浏览器/IDB变异4/4正确击杀且全部基线通过。
+
+b6e797d已正常推送/API确认原Draft PR16/base；远端CI失败如实保留。证据及限制见[Round312](evidence/round312/README.md)。生产实现未改，完整规模/81/G/U仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round311）
 
 正式构建接入可复现双段classic worker，先注册原唯一C2 owner再加载私有runtime；锁定工具依赖、生成字节核对、CI安装和测试副本重编译同时接通。完整Node **6017/6017 PASS**。未插桩正式包与独立诊断副本均通过实际隔离冷启动：原20秒双surface挂载，随后15秒标题/独立team scope核验，全程单GET，实际加载哈希/清理均通过。
 

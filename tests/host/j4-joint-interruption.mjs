@@ -3,6 +3,8 @@ import {connectJ4Debugger} from './j4-debugger-transport.mjs';
 import {ensureJ4Workspace} from './j4-evidence-interruption.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {join} from 'node:path';
+import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
 import {J4_SEND_C,J4_MIXED_TITLE} from './fixtures/j4-interruption.mjs';
 const poll=async(read,label)=>{const end=Date.now()+20000;let last;while(Date.now()<end){last=await read();if(last)return last;await new Promise(r=>setTimeout(r,50));}throw Error('J4-joint-timeout:'+label);};
 // Read only the currently attached extension frame. A prior frame's cached grant
@@ -137,7 +139,25 @@ export async function waitJ4GrantWithDiagnostic(page,id,scopeKey,options,diagnos
 }
 // Debugger only suspends an existing production call. No JS evaluation, owner
 // hooks, serialized grants, database writes or package edits establish authority.
-export async function pauseJointDrain(cdp,id,{expectedTargetId=null,afterEvidence=false}={}){
+export function locateClassicJointBoundaries(source,{afterEvidence=false}={}){
+ const lines=source.split('\n');
+ const unique=(text,label)=>{const found=lines.flatMap((line,i)=>line.includes(text)?[i]:[]);assert.equal(found.length,1,'J4-classic-'+label+'-unique-anchor-required');return found[0];};
+ const method=afterEvidence?'markContinuationComplete':'applyContinuation',owner=unique(afterEvidence?'const completed = await nativeRepository.markContinuationComplete(':'result = await evidenceRepository.applyContinuation(','owner-call');
+ const entry=unique(afterEvidence?'markContinuationComplete(scope, input, options = {}) {':'async applyContinuation(scope, request, options = {}) {','repository-entry')+1;
+ assert(lines[entry].includes(afterEvidence?'return this.#markContinuation(scope, input, options, "complete");':'const normalized = this.base.scopeOrThrow(scope)'), 'J4-classic-repository-first-statement-required');
+ return {owner,ownerColumn:lines[owner].indexOf(method+'('),entry,entryColumn:afterEvidence?lines[entry].indexOf('return this.#markContinuation'):0,entryLastColumn:lines[entry].indexOf(afterEvidence?'#markContinuation':'.scopeOrThrow(')};
+}
+export async function pauseJointDrain(cdp,id,{packageRoot,expectedTargetId=null,afterEvidence=false}={}){
+ assert.equal(typeof packageRoot,'string','J4-classic-package-root-required');
+ const compiled=compileClassicWorker(packageRoot),entry=await readFile(join(packageRoot,'extension/worker.mjs'),'utf8'),runtime=await readFile(join(packageRoot,'extension/classic-runtime.js'),'utf8');
+ assert.equal(entry,compiled.entry,'J4-classic-entry-build-mismatch');assert.equal(runtime,compiled.runtime,'J4-classic-runtime-build-mismatch');
+ assert.deepEqual(JSON.parse(await readFile(join(packageRoot,'manifest.json'),'utf8')).background,{service_worker:'extension/worker.mjs'},'J4-classic-background-required');
+ return pauseJointDrainCore(cdp,id,{expectedTargetId,afterEvidence,classicSource:runtime});
+}
+// Explicit Node unit-fixture adapter only. Formal browser callers never use this
+// ESM source oracle; it retains the independent real-V8 original-boundary tests.
+export function pauseJointDrainModuleFixture(cdp,id,options={}){return pauseJointDrainCore(cdp,id,options);}
+async function pauseJointDrainCore(cdp,id,{expectedTargetId=null,afterEvidence=false,classicSource=null}={}){
  await cdp.send('Target.setDiscoverTargets',{discover:true});
  const {targetInfos}=await cdp.send('Target.getTargets'),matches=targetInfos.filter(t=>t.type==='service_worker'&&t.url===`chrome-extension://${id}/extension/worker.mjs`);assert.equal(matches.length,1,'J4-unique-worker-target-required');const target=matches[0];if(expectedTargetId!==null)assert.equal(target.targetId,expectedTargetId,'J4-worker-lifecycle-target-mismatch');
  const {sessionId}=await cdp.send('Target.attachToTarget',{targetId:target.targetId,flatten:false});let sequence=0,paused=null;const requests=new Map(),scripts=[],resolutions=[],lifecycle=[];let detached=false,failure=null;const trace=(method,detail={})=>{lifecycle.push({at:Date.now(),method,...detail});if(lifecycle.length>32)lifecycle.shift();};
@@ -146,7 +166,7 @@ export async function pauseJointDrain(cdp,id,{expectedTargetId=null,afterEvidenc
  const destroyed=e=>{if(e.targetId===target.targetId){detached=true;failure='J4-debug-target-destroyed';trace('Target.targetDestroyed',{targetId:e.targetId});}};
  cdp.on('Target.targetDestroyed',destroyed);cdp.on('Target.detachedFromTarget',detach);cdp.on('transportClosed',transportClose);
  const cleanup=()=>{cdp.off('Target.targetDestroyed',destroyed);cdp.off('Target.receivedMessageFromTarget',receive);cdp.off('Target.detachedFromTarget',detach);cdp.off('transportClosed',transportClose);};
- const receive=e=>{if(e.sessionId!==sessionId)return;const m=JSON.parse(e.message);if(m.id){const pending=requests.get(m.id);if(pending){requests.delete(m.id);m.error?pending.reject(Error(m.error.message)):pending.resolve(m.result);}}else if(m.method==='Debugger.paused'){paused=m.params;trace(m.method,{hitBreakpoints:m.params.hitBreakpoints});}else if(m.method==='Debugger.resumed'){paused=null;trace(m.method);}else if(m.method==='Inspector.detached'){detached=true;failure='J4-debug-inspector-detached';trace(m.method,{reason:m.params.reason});}else if(m.method==='Runtime.executionContextsCleared')trace(m.method);else if(m.method==='Debugger.scriptParsed'&&['/src/runtime/host-continuation-owner.mjs','/src/data/free-evidence-repository.mjs','/src/data/native-repository.mjs'].some(path=>m.params.url.endsWith(path)))scripts.push({scriptId:m.params.scriptId,url:m.params.url});else if(m.method==='Debugger.breakpointResolved')resolutions.push(m.params);};
+ const receive=e=>{if(e.sessionId!==sessionId)return;const m=JSON.parse(e.message);if(m.id){const pending=requests.get(m.id);if(pending){requests.delete(m.id);m.error?pending.reject(Error(m.error.message)):pending.resolve(m.result);}}else if(m.method==='Debugger.paused'){paused=m.params;trace(m.method,{hitBreakpoints:m.params.hitBreakpoints});}else if(m.method==='Debugger.resumed'){paused=null;trace(m.method);}else if(m.method==='Inspector.detached'){detached=true;failure='J4-debug-inspector-detached';trace(m.method,{reason:m.params.reason});}else if(m.method==='Runtime.executionContextsCleared')trace(m.method);else if(m.method==='Debugger.scriptParsed'&&(classicSource?['/extension/classic-runtime.js']:['/src/runtime/host-continuation-owner.mjs','/src/data/free-evidence-repository.mjs','/src/data/native-repository.mjs']).some(path=>m.params.url.endsWith(path)))scripts.push({scriptId:m.params.scriptId,url:m.params.url});else if(m.method==='Debugger.breakpointResolved')resolutions.push(m.params);};
  cdp.on('Target.receivedMessageFromTarget',receive);
  const send=(method,params={})=>new Promise((resolve,reject)=>{const n=++sequence;requests.set(n,{resolve,reject});cdp.send('Target.sendMessageToTarget',{sessionId,message:JSON.stringify({id:n,method,params})}).catch(reject);});
  let result,location,lineNumber,repositoryBoundary;
@@ -154,12 +174,12 @@ export async function pauseJointDrain(cdp,id,{expectedTargetId=null,afterEvidenc
   await send('Debugger.enable');
   await send('Debugger.setSkipAllPauses',{skip:false});
   await send('Debugger.setBreakpointsActive',{active:true});
-  const url=`chrome-extension://${id}/src/runtime/host-continuation-owner.mjs`,matches=scripts.filter(s=>s.url===url);
+  const url=`chrome-extension://${id}/`+(classicSource?'extension/classic-runtime.js':'src/runtime/host-continuation-owner.mjs'),matches=scripts.filter(s=>s.url===url);
   assert.equal(matches.length,1,'J4-production-drain-script-required');
   const scriptId=matches[0].scriptId,{scriptSource}=await send('Debugger.getScriptSource',{scriptId});
-  const source=await readFile(new URL('../../src/runtime/host-continuation-owner.mjs',import.meta.url),'utf8');
+  const source=classicSource??await readFile(new URL('../../src/runtime/host-continuation-owner.mjs',import.meta.url),'utf8');
   assert.equal(scriptSource,source,'J4-production-drain-source-mismatch');
-  const lines=source.split('\n'),method=afterEvidence?'markContinuationComplete':'applyContinuation';lineNumber=lines.findIndex(l=>l.includes(afterEvidence?'const completed=await nativeRepository.markContinuationComplete(':'result=await evidenceRepository.applyContinuation('));assert(lineNumber>=0);
+  const classic=classicSource?locateClassicJointBoundaries(classicSource,{afterEvidence}):null,lines=source.split('\n'),method=afterEvidence?'markContinuationComplete':'applyContinuation';lineNumber=classic?.owner??lines.findIndex(l=>l.includes(afterEvidence?'const completed=await nativeRepository.markContinuationComplete(':'result=await evidenceRepository.applyContinuation('));assert(lineNumber>=0);
   const columnNumber=lines[lineNumber].indexOf(method+'('),possible=await send('Debugger.getPossibleBreakpoints',{start:{scriptId,lineNumber,columnNumber},end:{scriptId,lineNumber,columnNumber:columnNumber+method.length},restrictToFunction:true});
   location=possible.locations?.find(p=>p.type==='call'&&p.scriptId===scriptId&&p.lineNumber===lineNumber&&p.columnNumber===columnNumber);
   assert(location,'J4-production-drain-breakpoint-unresolved');
@@ -172,20 +192,20 @@ export async function pauseJointDrain(cdp,id,{expectedTargetId=null,afterEvidenc
   // synchronous statement, before scope/gate lookup and before mutate opens IDB.
   // Keep the owner callsite as a diagnostic control; neither creates data.
   if(!afterEvidence){
-  const repositoryURL=`chrome-extension://${id}/src/data/free-evidence-repository.mjs`,repositoryScripts=scripts.filter(s=>s.url===repositoryURL);assert.equal(repositoryScripts.length,1,'J4-evidence-repository-script-required');
+  const repositoryURL=classicSource?url:`chrome-extension://${id}/src/data/free-evidence-repository.mjs`,repositoryScripts=scripts.filter(s=>s.url===repositoryURL);assert.equal(repositoryScripts.length,1,'J4-evidence-repository-script-required');
   const repositoryScriptId=repositoryScripts[0].scriptId,{scriptSource:repositorySource}=await send('Debugger.getScriptSource',{scriptId:repositoryScriptId});
-  assert.equal(repositorySource,await readFile(new URL('../../src/data/free-evidence-repository.mjs',import.meta.url),'utf8'),'J4-evidence-repository-source-mismatch');
-  const repositoryLines=repositorySource.split('\n'),entryLine=repositoryLines.findIndex(l=>l.trim()==='async applyContinuation(scope,request,options={}){')+1;assert(entryLine>0,'J4-evidence-repository-entry-required');
+  assert.equal(repositorySource,classicSource??await readFile(new URL('../../src/data/free-evidence-repository.mjs',import.meta.url),'utf8'),'J4-evidence-repository-source-mismatch');
+  const repositoryLines=repositorySource.split('\n'),entryLine=classic?.entry??(repositoryLines.findIndex(l=>l.trim()==='async applyContinuation(scope,request,options={}){')+1);assert(entryLine>0,'J4-evidence-repository-entry-required');
   const entryLocations=await send('Debugger.getPossibleBreakpoints',{start:{scriptId:repositoryScriptId,lineNumber:entryLine,columnNumber:0},end:{scriptId:repositoryScriptId,lineNumber:entryLine+1,columnNumber:0},restrictToFunction:true});
   const entryLocation=entryLocations.locations?.filter(l=>l.scriptId===repositoryScriptId&&l.lineNumber===entryLine).sort((a,b)=>a.columnNumber-b.columnNumber)[0];assert(entryLocation&&entryLocation.columnNumber<=repositoryLines[entryLine].indexOf('.scopeOrThrow('),'J4-evidence-repository-entry-unresolved');
   const exactEntry={scriptId:repositoryScriptId,lineNumber:entryLine,columnNumber:entryLocation.columnNumber},installed=await send('Debugger.setBreakpoint',{location:exactEntry});assert.deepEqual(installed.actualLocation,exactEntry,'J4-evidence-repository-breakpoint-moved');repositoryBoundary={kind:'evidence-repository-continuation-entry',breakpointId:installed.breakpointId,location:exactEntry};
   }else{
    // Some Chromium builds do not pause on the async owner's callsite. The
    // actual synchronous completion method is the same durable boundary.
-   const repositoryURL=`chrome-extension://${id}/src/data/native-repository.mjs`,matches=scripts.filter(s=>s.url===repositoryURL);assert.equal(matches.length,1,'J4-native-repository-script-required');
+   const repositoryURL=classicSource?url:`chrome-extension://${id}/src/data/native-repository.mjs`,matches=scripts.filter(s=>s.url===repositoryURL);assert.equal(matches.length,1,'J4-native-repository-script-required');
    const scriptId=matches[0].scriptId,{scriptSource}=await send('Debugger.getScriptSource',{scriptId});
-   assert.equal(scriptSource,await readFile(new URL('../../src/data/native-repository.mjs',import.meta.url),'utf8'),'J4-native-repository-source-mismatch');
-   const lines=scriptSource.split('\n'),lineNumber=lines.findIndex(line=>line.includes('markContinuationComplete(scope,input,options={}){return this.#markContinuation('));assert(lineNumber>=0,'J4-native-completion-entry-required');
+   assert.equal(scriptSource,classicSource??await readFile(new URL('../../src/data/native-repository.mjs',import.meta.url),'utf8'),'J4-native-repository-source-mismatch');
+   const lines=scriptSource.split('\n'),lineNumber=classic?.entry??lines.findIndex(line=>line.includes('markContinuationComplete(scope,input,options={}){return this.#markContinuation('));assert(lineNumber>=0,'J4-native-completion-entry-required');
    const columnNumber=lines[lineNumber].indexOf('return this.#markContinuation'),possible=await send('Debugger.getPossibleBreakpoints',{start:{scriptId,lineNumber,columnNumber},end:{scriptId,lineNumber:lineNumber+1,columnNumber:0},restrictToFunction:true});
    const entry=possible.locations?.filter(p=>p.scriptId===scriptId&&p.lineNumber===lineNumber&&p.columnNumber>=columnNumber&&p.columnNumber<=lines[lineNumber].indexOf('#markContinuation')).sort((a,b)=>a.columnNumber-b.columnNumber)[0];assert(entry,'J4-native-completion-entry-unresolved');
    const exact={scriptId,lineNumber,columnNumber:entry.columnNumber},installed=await send('Debugger.setBreakpoint',{location:exact});assert.deepEqual(installed.actualLocation,exact,'J4-native-completion-breakpoint-moved');repositoryBoundary={kind:'native-repository-completion-entry',breakpointId:installed.breakpointId,location:exact};
@@ -200,7 +220,7 @@ export async function pauseJointDrain(cdp,id,{expectedTargetId=null,afterEvidenc
   await poll(()=>{if(failure)throw Error(failure);return paused===null;},'debugger-control-resumed');trace('controlResumeVerified');
  },wait:async()=>{const hit=await poll(()=>{if(failure)throw Error(failure);return paused;},'production-joint-drain-breakpoint');const boundary=repositoryBoundary&&hit.hitBreakpoints?.includes(repositoryBoundary.breakpointId)?repositoryBoundary:hit.hitBreakpoints?.includes(result.breakpointId)?{kind:afterEvidence?'continuation-owner-complete-call':'continuation-owner-call',location:result.actualLocation}:null;assert(boundary,'J4-production-drain-unrelated-pause');assert.deepEqual(hit.callFrames?.[0]?.location,boundary.location,'J4-production-drain-wrong-callsite');return {...hit,boundary:boundary.kind};},async close(){cleanup();try{await cdp.send('Target.detachFromTarget',{sessionId});}catch{}}};
 }
-export async function runJ4JointInterruption({a,b,id,server,cdp,debugEndpoint,context,inspector,assets,preserved,personal,team,scopeOf,mounted,record,diagnostic=()=>{},afterEvidence=false,codecRoundTrip=null}){
+export async function runJ4JointInterruption({a,b,id,server,cdp,debugEndpoint,packageRoot,context,inspector,assets,preserved,personal,team,scopeOf,mounted,record,diagnostic=()=>{},afterEvidence=false,codecRoundTrip=null}){
  const key=s=>JSON.stringify([s.provider,s.accountId,s.organizationId]),teamAssets=await assets(team);
  async function captureDrain(stage,pause){
   const facts={stage,at:Date.now(),breakpoint:pause.diagnostics(),nativeAccepts:server.snapshot().interruption.accepts,authenticatedReads:server.snapshot().interruption.reads,nativeRequests:server.snapshot().nativeRequests.slice(-64)};
@@ -226,7 +246,7 @@ export async function runJ4JointInterruption({a,b,id,server,cdp,debugEndpoint,co
  const waitedForFormalBudgetMs=await budgetWindow();await a.bringToFront();await a.locator('#model-button').click();await a.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();await a.locator(`aside nav[aria-label="Chat history"] a[href="/c/${J4_SEND_C}"]`).click();await a.waitForURL(server.origin+'/c/'+J4_SEND_C);await a.locator('[data-message-id="j4_original_old"]').first().waitFor();
  const before=await poll(async()=>{const v=await inspect();return v.ref?.nativeTitle==='Membership not loaded'?v:null;},'original-current-native-title');assert.equal(before.pending.length,0);const acceptsBefore=server.snapshot().interruption.accepts;assert.equal(acceptsBefore,1);
  const lifecycle=await context.newCDPSession(await inspector()),versions=[];lifecycle.on('ServiceWorker.workerVersionUpdated',e=>versions.push(...e.versions));await lifecycle.send('ServiceWorker.enable');const running=await poll(()=>versions.find(v=>v.scriptURL===`chrome-extension://${id}/extension/worker.mjs`&&v.runningStatus==='running'),'worker-running');
- const {grant:oldGrant}=await waitJ4GrantWithDiagnostic(a,id,key(personal),{},facts=>diagnostic({...facts,requests:server.snapshot().nativeRequests.slice(-64),nativeAccepts:server.snapshot().interruption.accepts}));assert(running.targetId,'J4-worker-lifecycle-target-required');const debuggerCDP=await connectJ4Debugger(debugEndpoint);let pause;try{pause=await pauseJointDrain(debuggerCDP,id,{expectedTargetId:running.targetId,afterEvidence});await pause.verifyControl();}catch(error){if(pause){diagnostic({stage:'joint-debugger-control-failed',reason:error.message,breakpoint:pause.diagnostics()});await pause.close();}debuggerCDP.close();throw error;}let sent,pending,traceBoundary,committedHints,committedReceipt;
+ const {grant:oldGrant}=await waitJ4GrantWithDiagnostic(a,id,key(personal),{},facts=>diagnostic({...facts,requests:server.snapshot().nativeRequests.slice(-64),nativeAccepts:server.snapshot().interruption.accepts}));assert(running.targetId,'J4-worker-lifecycle-target-required');const debuggerCDP=await connectJ4Debugger(debugEndpoint);let pause;try{pause=await pauseJointDrain(debuggerCDP,id,{packageRoot,expectedTargetId:running.targetId,afterEvidence});await pause.verifyControl();}catch(error){if(pause){diagnostic({stage:'joint-debugger-control-failed',reason:error.message,breakpoint:pause.diagnostics()});await pause.close();}debuggerCDP.close();throw error;}let sent,pending,traceBoundary,committedHints,committedReceipt;
  try{
   await captureDrain('joint-before-native-send',pause);
   await a.bringToFront();await a.locator('#j4-rename-on-send').check();await a.locator('textarea').fill('J4 explicit native mixed send');await a.locator('button[type="submit"]').click();await a.locator('#composer output').getByText('J4 native send accepted',{exact:true}).waitFor();const hit=await pause.wait();traceBoundary=hit.boundary;
