@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round265）
+## 最新正式检查点（2026-10-16，原本地目录，Round266）
+
+承接51d9ef2，生产代码不变。现有有界trace可选择延续至原生导航返回，始终在性能测量之前停止；匿名窗口事件与版本重启事件经过原函数/插桩函数对照验证。实际隔离10k返回完成，状态为 **DIAGNOSTIC_ONLY_RETURN_COMPLETE**，不是性能验收。保留尾部显示末次读取约26秒完成，早期2451条及报告合并102条丢弃已明示，不能据缺失事件推断根因。
+
+完整Node **5256/5256 PASS，零skip**，trace独立27例通过。见[Round266](evidence/round266/README.md)。下一功能切片为B2.F3/C3界面进入校准，复用当前正文授权及既有metadata/history owner，不向UI暴露proof或开放任意历史读取。规模可靠性、完整81与真实G/U仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round265）
 
 承接a1ffd86，修复pass全段阻挡已提交部分索引的读取：只避让真实native存储准备/写，existing strict loader可渐进读取。按scope共享一次1000ms RAM窗口，已验证background surface沿原retry50让步；current/send/combined优先，CAS/版本/两重试/30秒准备及6秒transport不变。窗口不可因多surface/retry/remount续期，必须先有真实publication；迟到RPC只释放捕获代次，所有记录有界，撤权/停止不复活。
 

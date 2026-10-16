@@ -11,7 +11,7 @@ test('worker snapshot only touches unique existing exact worker, bounded and no 
 test('runner opt-in selects verified copy, retains original deadlines and cannot produce timing samples',async()=>{const s=await readFile(new URL('./host-scale-package-browser.mjs',import.meta.url),'utf8');assert(s.includes("FREE_HOST_SCALE_TRACE==='1'"));assert(s.includes('path:tracePackage?.unpacked??built.unpacked'));assert(s.includes('timeout:30000'));assert(s.includes("status:'NOT_RUN_DIAGNOSTIC_INGESTION_OBSERVATION',samples:null"));assert(s.indexOf('diagnostic-progress-run-cannot-produce-scale-timing')<s.indexOf('report.measurement=await measureAtAdmittedScale'));assert(s.includes('verifyScaleTracePackage(tracePackage)'));});
 test('actual instrumented drained hook distinguishes pending last ACK and dedup or empty completion',async()=>{const out=instrumentScaleSource(TRACE_PATHS[2],await readFile(join(root,TRACE_PATHS[2]),'utf8'));const hook=out.match(/if\(!surfaceParts.length&&!surfaceScanning\)__scaleEmit\("pass-drained",\{[^;]+;/)?.[0];assert(hook);for(const [surfaceParts,surfaceScanning,expected]of [[[],false,1],[[],true,0],[[{}],false,0]]){const events=[];vm.runInNewContext(hook,{surfaceParts,surfaceScanning,__scaleEmit:(...x)=>events.push(x),__scalePass:1,surfacePage:4,__scaleFragments:2,__scaleCandidates:50});assert.equal(events.length,expected);if(expected){assert.equal(events[0][0],'pass-drained');assert.equal(events[0][1].fragments,2);assert.equal(events[0][1].ok,undefined);}}});
 test('actual instrumented view removal records stop without retaining mount identity',async()=>{const out=instrumentScaleSource(TRACE_PATHS[1],await readFile(join(root,TRACE_PATHS[1]),'utf8'));const hook=out.match(/__scaleEmit\("view-stop",\{[^;]+;/)?.[0];assert(hook);const events=[];vm.runInNewContext(hook,{entry:{prepareGeneration:3,pending:true,error:'snapshot-revision-changed',scopeKey:'PRIVATE'},__scaleError:x=>x,__scaleEmit:(...x)=>events.push(x)});assert.equal(events.length,1);assert.equal(events[0][1].generation,3);assert.equal(events[0][1].pending,true);assert(!JSON.stringify(events).includes('PRIVATE'));});
-test('diagnostic ends after both initial surfaces before unrelated native tail actions',async()=>{const s=await readFile(new URL('./host-scale-package-browser.mjs',import.meta.url),'utf8'),at=s.indexOf("throw Error('diagnostic-initial-ingestion-complete')");assert(at>s.indexOf('for(let tab=0;tab<2;tab++)'));assert(at<s.indexOf("report.phase='native-tail-ingestion'"));assert(s.slice(at-180,at).includes('if(traceEnabled)'));assert(s.includes("?'DIAGNOSTIC_ONLY_INGESTION_COMPLETE':context?'FAIL'"));});
+test('diagnostic ends after both initial surfaces before unrelated native tail actions',async()=>{const s=await readFile(new URL('./host-scale-package-browser.mjs',import.meta.url),'utf8'),at=s.indexOf("throw Error('diagnostic-initial-ingestion-complete')");assert(at>s.indexOf('for(let tab=0;tab<2;tab++)'));assert(at<s.indexOf("report.phase='native-tail-ingestion'"));assert(s.slice(at-220,at).includes('if(traceEnabled&&!traceThroughReturn)'));assert(s.includes("?'DIAGNOSTIC_ONLY_INGESTION_COMPLETE':context?'FAIL'"));});
 const recorder=TRACE_RECORDER.replace('__SCALE_REALM__','worker').replace('__SCALE_CONSOLE__','');
 async function actual(index){return instrumentScaleSource(TRACE_PATHS[index],await readFile(join(root,TRACE_PATHS[index]),'utf8'));}
 test('missing native phases survive both producer and report as null; unsafe values do not',()=>{const context=vm.createContext({TextEncoder,Date,performance});vm.runInContext(recorder+`;__scaleEmit('native-abort',{txMs:1,rootMs:null,saveMs:null,reduceMs:null,sharedMs:null,publishMs:null,queuedMs:null,scanMs:Infinity});`,context);const row=context.__vaiwlScaleTrace.events[0],target={events:[],bytes:0,dropped:0};appendScaleTrace(target,row);assert.equal(target.events.length,1);assert.equal(row.rootMs,null);assert.equal(row.queuedMs,null);assert.equal(row.scanMs,undefined);appendScaleTrace(target,{kind:'native-abort',at:1,producer:null});assert.equal(target.dropped,1);});
@@ -29,3 +29,68 @@ test('actual pass lifecycle excludes body, clears idle/new start and dirty cance
  assert(out.includes("function stop(){finishPass('cancel');__scaleStats=null;__scaleStatsOwner=null;"));
 });
 test('native terminal and phase offsets share monotonic clock despite wall clock jump',async()=>{const out=await actual(0),hook=out.match(/__scaleEmit\("native-commit",\{[^;]+;/)[0];let t=20;const c=vm.createContext({TextEncoder,Date:{now:()=>1},performance:{now:()=>t},__scaleStages:{queuedMs:5},__scaleMono:10,__scaleProducer:1,result:{revision:2,ok:true},expectedRevision:1});vm.runInContext(recorder+hook,c);assert.equal(c.__vaiwlScaleTrace.events[0].elapsed,10);assert.equal(c.__vaiwlScaleTrace.events[0].at,1);assert.equal(c.__vaiwlScaleTrace.events[0].elapsed-c.__vaiwlScaleTrace.events[0].queuedMs,5);});
+
+test('return trace stays opt-in and exits before admitted-scale measurement with no samples',async()=>{
+ const s=await readFile(new URL('./host-scale-package-browser.mjs',import.meta.url),'utf8');
+ assert(s.includes("traceThroughReturn=traceEnabled&&process.env.FREE_HOST_SCALE_TRACE_RETURN==='1'"));
+ const initial=s.split('\n').find(line=>line.includes("throw Error('diagnostic-initial-ingestion-complete')"));
+ const guard=s.split('\n').find(line=>line.includes("throw Error('diagnostic-progress-run-cannot-produce-scale-timing')"));
+ assert(initial&&guard);assert(s.indexOf(initial)<s.indexOf("report.phase='native-tail-ingestion'"));assert(s.indexOf(guard)>s.indexOf("report.phase='return-workspace-local-search'"));assert(s.indexOf(guard)<s.indexOf('report.measurement=await measureAtAdmittedScale'));
+ for(const through of [false,true]){
+  const report={},context=vm.createContext({traceEnabled:true,traceThroughReturn:through,report,process:{env:{}}});
+  if(!through)assert.throws(()=>vm.runInContext(initial,context),/diagnostic-initial-ingestion-complete/);
+  else {vm.runInContext(initial,context);assert.equal(report.measurement,undefined);assert.throws(()=>vm.runInContext(guard,context),/diagnostic-progress-run-cannot-produce-scale-timing/);}
+  assert.equal(report.measurement.samples,null);assert.equal(report.measurement.acceptance,'NOT_ESTABLISHED');
+ }
+ assert(s.includes("traceThroughReturn&&error.message==='diagnostic-progress-run-cannot-produce-scale-timing'?'DIAGNOSTIC_ONLY_RETURN_COMPLETE'"));
+});
+
+async function windowHarness(instrumented,{maxViews=2}={}){
+ const source=await readFile(join(root,TRACE_PATHS[1]),'utf8'),out=instrumented?instrumentScaleSource(TRACE_PATHS[1],source):source;
+ const code=out.slice(out.indexOf('const views=new Map()'),out.indexOf(' const resumeKey='));
+ let time=0;const c=vm.createContext({TextEncoder,Date,performance,elapsedNow:()=>time,maxViews});
+ vm.runInContext((instrumented?recorder:'')+code+';globalThis.api={views,readWindows,liveWindow,reserveRead,releaseRead};',c);
+ return {api:c.api,time:value=>time=value,events:()=>c.__vaiwlScaleTrace?.events??[]};
+}
+const windowEntry=(scope='PRIVATE_SCOPE',generation=1)=>({scopeKey:scope,prepareGeneration:generation,pending:true,awaitingDelivery:true,isCurrent:()=>true});
+test('instrumented scope window shares exact identity and stale generation or identity release never mutates it',async()=>{
+ for(const instrumented of [false,true]){
+  const h=await windowHarness(instrumented),a=windowEntry(),b=windowEntry();h.api.views.set('PRIVATE_MOUNT_A',a);h.api.views.set('PRIVATE_MOUNT_B',b);h.api.reserveRead(a);const window=a.readWindow;h.time(40);h.api.reserveRead(b);
+  assert.equal(a.readWindow,b.readWindow);assert.equal(window.until,1000);assert.equal(window.active,true);
+  a.prepareGeneration=2;h.api.releaseRead(a,window,1);assert.equal(window.active,true);assert.equal(a.awaitingDelivery,true);
+  const stale={active:true};h.api.releaseRead(a,stale,2);assert.equal(stale.active,true);assert.equal(window.active,true);
+  h.api.releaseRead(a,window,2);assert.equal(window.active,false);assert.equal(a.awaitingDelivery,false);
+  if(instrumented){const events=h.events();assert.deepEqual(Array.from(events,e=>e.kind),['window-reserve','window-reserve','window-release','window-release','window-release']);assert.equal(events[0].window,events[1].window);assert.equal(events[1].shared,true);assert.equal(events[2].ok,false);assert.equal(events[2].generation,1);assert.equal(events[3].ok,false);assert.equal(events[4].ok,true);assert(!JSON.stringify(events).includes('PRIVATE'));}
+ }
+});
+for(const [mode,code]of [['deadline',2],['rollback',1],['nonfinite',1],['no-reader',3]])test('instrumented window '+mode+' expiry preserves original result and blocks reuse',async()=>{
+ for(const instrumented of [false,true]){
+  const h=await windowHarness(instrumented),entry=windowEntry();h.api.views.set('mount',entry);h.api.reserveRead(entry);const window=entry.readWindow;
+  if(mode==='deadline')h.time(1000);else if(mode==='rollback')h.time(-1);else if(mode==='nonfinite')h.time(NaN);else entry.isCurrent=()=>false;
+  assert.equal(h.api.liveWindow(entry.scopeKey),false);assert.equal(window.active,false);h.time(1001);h.api.reserveRead(entry);assert.equal(entry.readWindow,window);assert.equal(window.active,false);
+  if(instrumented){const expired=h.events().find(e=>e.kind==='window-expire'),refused=h.events().find(e=>e.kind==='window-refused');assert.equal(expired.refusal,code);assert.equal(refused.refusal,1);assert.equal(expired.window,refused.window);}
+ }
+});
+test('instrumented window used/cap/nonfinite refusal preserves original no-reservation behavior',async()=>{
+ for(const instrumented of [false,true]){
+  const h=await windowHarness(instrumented,{maxViews:1}),a=windowEntry(),b=windowEntry('PRIVATE_OTHER');h.api.views.set('a',a);h.api.views.set('b',b);h.api.reserveRead(a);h.api.reserveRead(b);assert.equal(b.readWindow,undefined);assert.equal(h.api.readWindows.size,1);
+  if(instrumented)assert.equal(h.events().at(-1).refusal,2);
+  const fresh=await windowHarness(instrumented),e=windowEntry();fresh.time(Infinity);fresh.api.reserveRead(e);assert.equal(e.readWindow,undefined);assert.equal(fresh.api.readWindows.size,0);if(instrumented)assert.equal(fresh.events().at(-1).refusal,3);
+ }
+});
+test('instrumented revision restart emits only changed-version booleans and calls original begin once',async()=>{
+ const source=await readFile(join(root,TRACE_PATHS[1]),'utf8');
+ for(const changed of ['none','freshness','native','workspace','evidence','view'])for(const instrumented of [false,true]){
+  const out=instrumented?instrumentScaleSource(TRACE_PATHS[1],source):source,hook=out.split('\n').find(line=>line.includes('if(freshnessChanged||version.nativeRevision'));
+  assert(hook);let calls=0;const entry={readWindow:{},prepareGeneration:7,scopeKey:'PRIVATE'},version={nativeRevision:1,revision:2,evidenceRevision:3,viewRevision:4},value={revision:1,workspaceRevision:2,evidenceRevision:3,viewRevision:4};
+  if(changed!=='none'&&changed!=='freshness')version[{native:'nativeRevision',workspace:'revision',evidence:'evidenceRevision',view:'viewRevision'}[changed]]++;
+  const c=vm.createContext({TextEncoder,Date,performance,entry,version,value,freshnessChanged:changed==='freshness',__scaleWindow:()=>8,begin:arg=>{assert.equal(arg,entry);calls++;}});
+  const result=vm.runInContext((instrumented?recorder:'')+'(()=>{'+hook+'return null;})()',c);assert.equal(calls,changed==='none'?0:1);assert.equal(result?.state??null,changed==='none'?null:'preparing');
+  if(instrumented&&changed!=='none'){const row=c.__vaiwlScaleTrace.events[0];assert.equal(row.kind,'view-version-restart');for(const key of ['native','workspace','evidence','view','freshness'])assert.equal(row[key+'Changed'],key===changed);assert.equal(row.generation,7);assert(!JSON.stringify(row).includes('PRIVATE'));}
+ }
+});
+test('window diagnostic recorder and report enforce fixed numeric/boolean fields without scope identity',()=>{
+ const c=vm.createContext({TextEncoder,Date,performance});vm.runInContext(recorder+`;__scaleEmit('window-release',{window:3,generation:9,ok:false,scope:'PRIVATE_SCOPE',mountId:'PRIVATE_MOUNT',grant:'PRIVATE_GRANT'});`,c);
+ const row=c.__vaiwlScaleTrace.events[0],target={events:[],bytes:0,dropped:0};appendScaleTrace(target,row);assert.equal(target.events.length,1);assert.equal(row.window,3);assert.equal(row.generation,9);assert.equal(row.ok,false);assert(!JSON.stringify(target).includes('PRIVATE'));
+ for(const patch of [{scope:'PRIVATE'},{window:'PRIVATE'},{generation:Infinity},{refusal:'used'}])appendScaleTrace(target,{...row,...patch});assert.equal(target.events.length,1);assert.equal(target.dropped,4);
+});
