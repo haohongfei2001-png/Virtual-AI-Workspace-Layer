@@ -24,6 +24,8 @@ import {measureAtAdmittedScale} from './fixtures/host-scale-measurement.mjs';
 import {waitHostScaleSurfaces,hostScaleFailureFacts} from './fixtures/host-scale-surfaces.mjs';
 import {observeCurrentFrame} from './observe-current-frame.mjs';
 import {waitHostScaleMemberProgress} from './fixtures/host-scale-member-progress.mjs';
+import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
+import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
 const output=process.argv[2]??join(tmpdir(),'vaiwl-host-scale.json');
 if(process.env.HOST_SCALE_RUN!=='1'){
  const plan=hostScalePlan();await writeFile(output,JSON.stringify(plan,null,2)+'\n');console.log(JSON.stringify({status:plan.status,report:output,scenarios:plan.scenarios.length}));
@@ -33,8 +35,8 @@ if(process.env.HOST_SCALE_RUN!=='1'){
  const report={sourceCommit:process.env.FREE_SOURCE_COMMIT??null,requirement:'SYS-04 / original F1',status:'NOT_RUN',acceptance:'NOT_ESTABLISHED',realChatGPT:'NOT_RUN',scenario,expected:hostScaleExpected(scenario),remaining:[...HOST_SCALE_GAPS],ingestion:[],errors:[],rpc:[],rpcTraceDropped:0};
  const traceEnabled=process.env.FREE_HOST_SCALE_TRACE==='1',traceThroughReturn=traceEnabled&&process.env.FREE_HOST_SCALE_TRACE_RETURN==='1';
  if(traceEnabled)report.traceRange=traceThroughReturn?'through-native-return':'initial-ingestion';
- let server,context,manifest,manifestPath,manifestHash,directory,activePage,loadedExtensionId,tracePackage;
- const sourceFiles=['host-scale-package-browser.mjs','host-scale-trace.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-project-card-oracle.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-admission-observation.mjs','fixtures/host-scale-admission-preparation.mjs','fixtures/host-scale-progress-sampler.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
+ let server,context,browserHandle,browserLaunchAttempted=false,networkGuard,manifest,manifestPath,manifestHash,directory,activePage,loadedExtensionId,tracePackage;
+ const sourceFiles=['host-scale-package-browser.mjs','native-visibility-browser.mjs','historical-network-guard.mjs','host-scale-trace.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-project-card-oracle.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-admission-observation.mjs','fixtures/host-scale-admission-preparation.mjs','fixtures/host-scale-progress-sampler.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sourceFiles.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -46,7 +48,10 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   if(traceEnabled){tracePackage=await createScaleTracePackage(built.unpacked,join(directory,'instrumented-package'));await verifyScaleTracePackage(tracePackage);report.instrumentation=tracePackage;report.trace={events:[],bytes:0,dropped:0};report.timingUse='DIAGNOSTIC_ONLY_INSTRUMENTED_PACKAGE';}
   manifestPath=join(built.unpacked,'build-manifest.json');const bytes=await readFile(manifestPath);manifest=JSON.parse(bytes);manifestHash=hash(bytes);report.sourceHashes=manifest.sourceHashes;report.buildManifestHash=manifestHash;
   const permissions=JSON.parse(await readFile(join(built.unpacked,'manifest.json')));assert.deepEqual(permissions.host_permissions,['http://127.0.0.1/*']);assert.equal(permissions.content_security_policy.extension_pages,`script-src 'self'; object-src 'none'; connect-src ${server.origin}`);report.workerNetworkPolicy='PACKAGED_EXACT_ORIGIN_CONNECT_SRC';
-  context=await chromium.launchPersistentContext(join(directory,'profile'),{headless:true,viewport:{width:1440,height:900},executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium'),ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
+  networkGuard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
+  browserLaunchAttempted=true;
+  browserHandle=await launchNativeVisibilityBrowser({chromium,profileDir:join(directory,'profile'),headed:false,historicalNetworkGuard:networkGuard.config,executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium')});
+  context=browserHandle.context;report.browserPrecondition=browserHandle.diagnostic;
   context.setDefaultTimeout(15000);
   await context.route('**/*',route=>{const url=new URL(route.request().url());return url.origin===server.origin||url.protocol==='chrome-extension:'?route.continue():route.abort();});
   await context.addInitScript(()=>{
@@ -64,6 +69,8 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:tracePackage?.unpacked??built.unpacked});loadedExtensionId=id;report.browserVersion=context.browser().version();
   await context.addInitScript(({extensionId,nativeOrigin})=>{
    if(location.origin!==nativeOrigin)return;
+   globalThis.hostScaleVisibilityEvents=[];
+   for(const type of ['focus','blur','visibilitychange'])addEventListener(type,event=>{const rows=globalThis.hostScaleVisibilityEvents;if(rows.length===32)rows.shift();rows.push({type,trusted:event.isTrusted,visibility:document.visibilityState,focused:document.hasFocus(),at:Date.now()});});
    addEventListener('message',event=>{try{
     if(event.origin!==`chrome-extension://${extensionId}`||!event.source)return;
     let directChild=false;for(let i=0;i<Math.min(window.length,16);i++)if(window[i]===event.source){directChild=true;break;}if(!directChild)return;
@@ -76,7 +83,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    return waitHostScaleSurfaces(page,{extensionId:id,timeout:30000,deadline,onObservation:value=>{report.surfaceWait??=[];report.surfaceWait.push({phase:report.phase,...value});if(report.surfaceWait.length>16)report.surfaceWait.shift();sampler?.observe({remainingMs:value.remainingMs,preparing:report.rpc.some(row=>row.tab===0&&row.state==='preparing')});}}).finally(()=>sampler?.stop());};
   const pages=[],ingestionStarted=performance.now();
   for(let tab=0;tab<2;tab++){
-   const page=await context.newPage();activePage=page;report.phase=`tab-${tab}-native-navigation`;pages.push(page);page.on('pageerror',e=>report.errors.push(e.message));page.on('console',message=>{const text=message.text();if(text.startsWith('HOST_SCALE_LIFECYCLE ')){try{const value=JSON.parse(text.slice(21));if(['/workspace.html','/sidebar.html'].includes(value.role)&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(value.type)&&Number.isSafeInteger(value.at)&&value.at>=0){report.uiLifecycle??=[];if(report.uiLifecycle.length<128)report.uiLifecycle.push({tab,role:value.role,type:value.type,at:value.at});else report.uiLifecycleDropped=(report.uiLifecycleDropped??0)+1;}}catch{}return;}if(traceEnabled&&text.startsWith('HOST_SCALE_TRACE ')){try{appendScaleTrace(report.trace,{...JSON.parse(text.slice(17)),realmOrdinal:tab+1});}catch{report.trace.dropped++;}return;}if(text.startsWith('HOST_SCALE_RPC ')){if(report.rpc.length<4096)report.rpc.push({tab,...JSON.parse(text.slice(15))});else report.rpcTraceDropped++;}});
+   const page=await context.newPage();await page.setViewportSize({width:1440,height:900});await page.bringToFront();activePage=page;report.phase=`tab-${tab}-native-navigation`;pages.push(page);page.on('pageerror',e=>report.errors.push(e.message));page.on('console',message=>{const text=message.text();if(text.startsWith('HOST_SCALE_LIFECYCLE ')){try{const value=JSON.parse(text.slice(21));if(['/workspace.html','/sidebar.html'].includes(value.role)&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(value.type)&&Number.isSafeInteger(value.at)&&value.at>=0){report.uiLifecycle??=[];if(report.uiLifecycle.length<128)report.uiLifecycle.push({tab,role:value.role,type:value.type,at:value.at});else report.uiLifecycleDropped=(report.uiLifecycleDropped??0)+1;}}catch{}return;}if(traceEnabled&&text.startsWith('HOST_SCALE_TRACE ')){try{appendScaleTrace(report.trace,{...JSON.parse(text.slice(17)),realmOrdinal:tab+1});}catch{report.trace.dropped++;}return;}if(text.startsWith('HOST_SCALE_RPC ')){if(report.rpc.length<4096)report.rpc.push({tab,...JSON.parse(text.slice(15))});else report.rpcTraceDropped++;}});
    const session=await context.newCDPSession(page);await session.send('Emulation.setCPUThrottlingRate',{rate:scenario.cpuRate});
    const start=performance.now();await page.goto(server.url,{waitUntil:'domcontentloaded',timeout:60000});report.phase=`tab-${tab}-initial-surfaces`;const frames=await surfaces(page);
    report.ingestion.push({scaleBasis:'NATIVE_WORLD_NOT_PROVEN_ADMITTED_AT_SAMPLE',tab,coldProfile:tab===0,initialSurfacesMs:performance.now()-start,nativeHistoryLinks:await page.locator('nav[aria-label="Chat history"] a').count(),surfaces:frames.map(f=>f.url())});
@@ -87,6 +94,13 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   }
   if(traceEnabled&&!traceThroughReturn){report.measurement={status:'NOT_RUN_DIAGNOSTIC_INGESTION_OBSERVATION',samples:null,acceptance:'NOT_ESTABLISHED'};throw Error('diagnostic-initial-ingestion-complete');}
   const page=pages[1];
+  const visibilitySnapshot=()=>Promise.all(pages.map((value,tab)=>value.evaluate(tab=>({tab,visibility:document.visibilityState,focused:document.hasFocus(),events:globalThis.hostScaleVisibilityEvents??[]}),tab)));
+  report.nativeVisibilityBeforeMember=await visibilitySnapshot();
+  assert.equal(report.nativeVisibilityBeforeMember[0].visibility,'hidden','native background peer must really be hidden');
+  assert.equal(report.nativeVisibilityBeforeMember[0].focused,false);
+  assert.equal(report.nativeVisibilityBeforeMember[1].visibility,'visible');
+  assert.equal(report.nativeVisibilityBeforeMember[1].focused,true);
+  assert(report.nativeVisibilityBeforeMember[0].events.some(event=>event.type==='visibilitychange'&&event.visibility==='hidden'&&event.trusted),'background transition must be native');
   report.phase='native-tail-ingestion';
   // Native tail navigation is ingestion/reachability, never the admitted-index sample.
   const tail=await readHostScaleNativeTail(page,{id:report.expected.last,size:scenario.size,longTitles:scenario.longTitles});
@@ -109,6 +123,9 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    await page.evaluate(()=>{globalThis.scaleProjectEditor=document.querySelector('textarea');globalThis.scaleProjectDocument=document;});
    report.nativeProjectMembersRendered=await page.locator('#reading nav[aria-label="Project conversations"] a').count();
    report.phase='visible-native-member-progress';
+   report.nativeVisibilityAtMember=await visibilitySnapshot();
+   assert.equal(report.nativeVisibilityAtMember[0].visibility,'hidden');assert.equal(report.nativeVisibilityAtMember[0].focused,false);
+   assert.equal(report.nativeVisibilityAtMember[1].visibility,'visible');assert.equal(report.nativeVisibilityAtMember[1].focused,true);memberReturnRemaining();
    report.nativeMemberProgress=await waitHostScaleMemberProgress({page,extensionId:id,url:server.origin+projectPath,projectId:projectPath.split('/')[2],id:tail.id,deadline:memberReturnDeadline});
    report.nativeMemberProgress.scenario='VISIBLE_NATIVE_READING_BEFORE_RETURN_NOT_IMMEDIATE_RETURN';
    // Tail progress is not completeness: the unchanged full ID audit follows.
@@ -234,7 +251,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
  }catch(error){const {hostScaleFailureProgress}=await import('./fixtures/host-scale-progress.mjs');report.nativeIndexProgress=await hostScaleFailureProgress(activePage,loadedExtensionId).catch(()=>({status:'DIAGNOSTIC_UNAVAILABLE',acceptance:'NOT_ESTABLISHED'}));report.status=traceThroughReturn&&error.message==='diagnostic-progress-run-cannot-produce-scale-timing'?'DIAGNOSTIC_ONLY_RETURN_COMPLETE':traceEnabled&&error.message==='diagnostic-initial-ingestion-complete'?'DIAGNOSTIC_ONLY_INGESTION_COMPLETE':context?'FAIL':'NOT_RUN_BROWSER_OR_PACKAGE_STARTUP';report.error=error.stack;report.failure={phase:report.phase,rpcCount:report.rpc.length,rpcTail:report.rpc.slice(-16),facts:await hostScaleFailureFacts(activePage).catch(failure=>({captureError:failure.message}))};process.exitCode=1;}
  finally{
   if(traceEnabled){report.workerTrace=await collectScaleWorkerTrace(context,loadedExtensionId).catch(()=>({status:'UNAVAILABLE'}));if(report.trace){const rows=[...report.trace.events,...(report.workerTrace.events??[]).map(row=>({...row,realmOrdinal:0}))].sort((a,b)=>a.at-b.at);report.trace.events=[];report.trace.bytes=0;for(const row of rows)appendScaleTrace(report.trace,row);}if(report.workerTrace.events)delete report.workerTrace.events;}
-  const cleaned=await cleanupHostScaleRun({report,context,server,directory,verify:async()=>{
+  const cleaned=await cleanupHostScaleRun({report,context,browserHandle,browserLaunchAttempted,networkGuard,server,directory,verify:async()=>{
   if(tracePackage){await verifyScaleTracePackage(tracePackage);assert.equal((await import('../../extension/package.mjs')).verifyHost(report.package.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');}
   report.sourceChangedDuringRun=manifest?(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean):null;
   report.fixtureChangedDuringRun=(await Promise.all(Object.entries(report.fixtureSourceHashes).map(async([p,h])=>hash(await readFile(new URL(p,import.meta.url)))!==h))).some(Boolean);
