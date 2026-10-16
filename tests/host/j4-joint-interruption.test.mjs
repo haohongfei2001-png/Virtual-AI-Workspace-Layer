@@ -86,8 +86,9 @@ test('joint tail uses real peer foreground and current proof, then restores orig
  assert(tail.indexOf('await waitJ4PeerScope(b,id,key(team))')<tail.lastIndexOf('await a.bringToFront()'));
  const codecStart=tail.indexOf('if(codecRoundTrip){'),codecEnd=tail.indexOf("try{assert.equal(await waitJ4PeerScope(b,id,key(team))",codecStart);assert(codecStart>=0&&codecEnd>codecStart);
  const codec=tail.slice(codecStart,codecEnd),ordinary=tail.slice(0,codecStart)+tail.slice(codecEnd);
- assert(!ordinary.includes('.reload('));assert.equal((codec.match(/\.reload\(/g)??[]).length,1);
- assert(codec.indexOf('codec-peer-reload-requires-empty-fixture-draft')<codec.indexOf('await b.reload()'));assert(codec.indexOf('codec-peer-reload-requires-no-files')<codec.indexOf('await b.reload()'));assert(codec.includes("automaticReattachment:'NOT_ESTABLISHED'"));assert(codec.includes('await assets(team),teamAssets'));
+ assert(!ordinary.includes('.reload('));assert(!codec.includes('.reload('));assert(codec.includes("name:'Switch to Team',exact:true"));assert(codec.includes('const navigation=b.waitForNavigation()'));assert(codec.includes('await navigation;await waitJ4GrantWithDiagnostic'));
+ assert(codec.indexOf('codec-peer-reload-requires-empty-fixture-draft')<codec.indexOf("await b.locator('#account-button').click()"));assert(codec.indexOf('codec-peer-reload-requires-no-files')<codec.indexOf("await b.locator('#account-button').click()"));assert(codec.includes("automaticReattachment:'NOT_ESTABLISHED'"));assert(codec.includes('await assets(team),teamAssets'));
+ assert(codec.includes("name:'Switch to Personal',exact:true"));assert(codec.includes('previousGrant:previousPrimaryGrant'));assert(codec.indexOf('codec-primary-switch-requires-empty-fixture-draft')<codec.indexOf("await a.locator('#account-button').click()"));assert(codec.indexOf('codec-primary-switch-requires-no-files')<codec.indexOf("await a.locator('#account-button').click()"));
  assert(tail.includes('await scopeOf(a),key(personal)'));assert(tail.includes('await assets(personal),preserved'));
 });
 

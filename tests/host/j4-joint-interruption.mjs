@@ -244,12 +244,25 @@ export async function runJ4JointInterruption({a,b,id,server,cdp,debugEndpoint,co
  await a.bringToFront();await a.locator('#model-button').click();await a.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();await a.locator('aside nav[aria-label="Chat history"] a[href="/c/33333333-3333-4333-8333-333333333333"]').click();await a.waitForURL(server.origin+'/c/33333333-3333-4333-8333-333333333333');await ensureJ4Workspace(a,mounted);assert.equal(await scopeOf(a),key(personal));await b.bringToFront();let foregroundRecovered=false;
  if(codecRoundTrip){
   // Package disable/replacement invalidates old content worlds; SPA navigation
-  // cannot reinject them. This variant explicitly reloads a fixture tab only
-  // after proving it has no draft or selected files. It is not auto recovery.
+  // cannot reinject them. Native preferences are shared across fixture tabs,
+  // so reselect Team through its native menu before the native reload.
+  // Require an empty draft and no files; this is not auto recovery.
   assert.equal(await b.locator('textarea').inputValue(),'','codec-peer-reload-requires-empty-fixture-draft');
   assert.equal(await b.locator('input[type="file"]').evaluateAll(nodes=>nodes.reduce((n,node)=>n+(node.files?.length??0),0)),0,'codec-peer-reload-requires-no-files');
-  const originalURL=b.url();await b.reload();await waitJ4Grant(b,id,key(team),{expectedCurrentRef:originalURL.split('/').at(-1)});assert.equal(b.url(),originalURL);assert.deepEqual(await assets(team),teamAssets);
-  record('codec-peer-explicit-empty-draft-reload-establishes-fresh-team-context',{nativeURL:originalURL,draftWasEmpty:true,selectedFiles:0,assetDigest:teamAssets.hash,automaticReattachment:'NOT_ESTABLISHED'});
+  const originalURL=b.url();await b.locator('#account-button').click();const navigation=b.waitForNavigation();await b.locator('#native-dialog').getByRole('button',{name:'Switch to Team',exact:true}).click();await navigation;await waitJ4GrantWithDiagnostic(b,id,key(team),{expectedCurrentRef:originalURL.split('/').at(-1)},diagnostic);assert.equal(b.url(),originalURL);assert.deepEqual(await assets(team),teamAssets);
+  record('codec-peer-explicit-empty-draft-native-context-switch-establishes-fresh-team-context',{nativeContextAction:'Switch to Team',nativeURL:originalURL,draftWasEmpty:true,selectedFiles:0,assetDigest:teamAssets.hash,automaticReattachment:'NOT_ESTABLISHED'});
+  // Restore the shared native preference explicitly, retaining B's live Team
+  // document. Later A reloads must be authenticated as Personal, not inferred
+  // from the scope cached by its previous document.
+  await a.bringToFront();
+  assert.equal(await a.locator('textarea').inputValue(),'','codec-primary-switch-requires-empty-fixture-draft');
+  assert.equal(await a.locator('input[type="file"]').evaluateAll(nodes=>nodes.reduce((n,node)=>n+(node.files?.length??0),0)),0,'codec-primary-switch-requires-no-files');
+  const primaryURL=a.url(),{grant:previousPrimaryGrant}=await waitJ4Grant(a,id,key(personal));
+  await a.locator('#account-button').click();const primaryNavigation=a.waitForNavigation();await a.locator('#native-dialog').getByRole('button',{name:'Switch to Personal',exact:true}).click();await primaryNavigation;
+  await waitJ4GrantWithDiagnostic(a,id,key(personal),{previousGrant:previousPrimaryGrant,expectedCurrentRef:primaryURL.split('/').at(-1)},diagnostic);assert.equal(a.url(),primaryURL);assert.deepEqual(await assets(personal),preserved);
+  record('codec-native-personal-preference-restored-with-fresh-primary-grant',{nativeContextAction:'Switch to Personal',nativeURL:primaryURL,draftWasEmpty:true,selectedFiles:0,assetDigest:preserved.hash});
+  await b.bringToFront();
+
  }
 
  try{assert.equal(await waitJ4PeerScope(b,id,key(team)),key(team));foregroundRecovered=true;}

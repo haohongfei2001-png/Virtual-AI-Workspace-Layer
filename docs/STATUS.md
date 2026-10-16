@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round277）
+## 最新正式检查点（2026-10-16，原本地目录，Round278）
+
+codec变体通过原生菜单显式恢复Team/Personal偏好与各自fresh grant，空草稿/零文件、原URL及人工资产保护保持。实际隔离Chrome已实施27/27步骤PASS，仍PARTIAL_J4_NOT_ACCEPTED；55项定向合同PASS，源码/构建稳定、零浏览器错误。两次中间FAIL完整保留，见[Round278](evidence/round278/README.md)。
+
+补证旧continuation terminal writer拒写且全表不变；另实际确认旧普通invalidate仍能撤销v2 pending的source，是未关闭的兼容性缺口。下一步同库v3→v4版本隔离，升级事务先校验结构、损坏库原子回滚，验证真实旧ScopeRepository拒绝与数据无损。Pro/dot祖先及远端6f8ccd7核对一致。完整Free仍NOT_RELEASE_READY。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round277）
 
 定位并修复隔离codec测试包切换顺序：disabled slot先loadUnpacked确认同ID、再enable。实际未插桩旅程已通过旧v1拒绝→当前包fresh grant→同一pending完成→原ACK/receipt不变→重复恢复幂等，生产代码未改。后续peer旧文档SPA不重新注入仍FAIL；增加仅codec变体、空草稿/零文件前提下的显式重载，其复验在更早的禁用重启grant阶段失败，新增peer步骤尚未获浏览器认证。
 

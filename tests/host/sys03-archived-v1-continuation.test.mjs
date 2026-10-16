@@ -34,10 +34,24 @@ for(const afterEvidence of [false,true])test('SYS03 L/D actual archived Host v1 
  assert.deepEqual(await databaseContents(h.base),before,'all durable tables unchanged after actual old reader refusal');
  assert.deepEqual(await h.native.listContinuations(h.scope),pending,'current reader still sees original authenticated v2 witnesses');
  assert.deepEqual(await h.free.read(h.scope),evidenceBefore,'failed old list cannot apply or revoke committed evidence');
+ // These are actual archived readwrite entry points, not validation-only calls.
+ // Explicit offline guard permits reaching the codec check; it grants no live authority.
+ const terminalInput={operationId:pending[0].operationId,expectedPayloadDigest:pending[0].payloadDigest};
+ for(const method of ['markContinuationComplete','markContinuationNeedsRevalidation']){
+  const input={...terminalInput,...(method==='markContinuationComplete'?{evidenceRevision:afterEvidence?evidenceBefore.revision:1}:{})},originalInput=structuredClone(input);
+  assert.deepEqual(await old[method](h.scope,input,{guard:()=>true}),{ok:false,reason:'invalid-native-continuation-schema'},method+' refuses the actual v2 pending record');
+  assert.deepEqual(input,originalInput,method+' preserves caller input');
+  const after=await databaseContents(h.base);
+  assert.deepEqual(after,before,method+' leaves every durable table unchanged');
+  assert.equal(JSON.stringify(after),JSON.stringify(before),method+' preserves serialized stored values');
+  assert.deepEqual(after.native_operations.find(row=>row.key===receiptKey)?.value,evidenceReceipt,method+' preserves the original evidence receipt or its absence');
+  assert.deepEqual(await h.native.listContinuations(h.scope),pending,method+' leaves the original v2 witnesses recoverable');
+  assert.deepEqual(await h.free.read(h.scope),evidenceBefore,method+' cannot apply or revoke evidence');
+ }
  h.base.close();assert.equal((await h.recover()).state,'complete');assert.deepEqual(await h.native.listContinuations(h.scope),[]);
  const evidence=await h.free.read(h.scope);
  if(afterEvidence){assert.deepEqual(evidence,evidenceBefore,'current recovery reuses durable evidence without another revision or anchor');const after=await databaseContents(h.base);assert.deepEqual(after.native_operations.find(row=>row.key===receiptKey)?.value,evidenceReceipt,'current completion preserves exact prior evidence receipt');}assert.equal(evidence.revision,1);assert.equal(Object.keys(evidence.hints).length,1);
  const expected=pending[0].evidence.batch.hints[0],actual=Object.values(evidence.hints)[0];for(const [key,value]of Object.entries(expected))assert.deepEqual(actual[key],value,'recovered anchor '+key);
  assert.equal((await h.recover()).state,'idle');assert.deepEqual(await h.free.read(h.scope),evidence,'current recovery remains exactly once');
- t.diagnostic(JSON.stringify({evidence:'L_D_ARCHIVED_MODULE_MOCK_IDB',afterEvidence,evidenceReceiptReused:afterEvidence,historicalCommit:receipt.commit,archiveHash:receipt.archiveHash,historicalValidator:'REJECTED_V2',historicalRepository:'REJECTED_V2',storageUnchanged:true,currentRecovery:'COMPLETE_ONCE',actualMV3:'NOT_RUN'}));
+ t.diagnostic(JSON.stringify({evidence:'L_D_ARCHIVED_MODULE_MOCK_IDB',afterEvidence,evidenceReceiptReused:afterEvidence,historicalCommit:receipt.commit,archiveHash:receipt.archiveHash,historicalValidator:'REJECTED_V2',historicalRepository:'REJECTED_V2',historicalTerminalWriters:{markContinuationComplete:'REJECTED_V2',markContinuationNeedsRevalidation:'REJECTED_V2'},allHistoricalWriters:'NOT_ESTABLISHED',storageUnchanged:true,currentRecovery:'COMPLETE_ONCE',actualMV3:'NOT_RUN'}));
 });
