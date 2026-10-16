@@ -35,7 +35,13 @@ async function historyDiagnostics(){
   const [provider,accountId,organizationId]=JSON.parse(native.scopeKey),scope={verified:true,provider,accountId,organizationId},now=new Date().toISOString(),session=createFreeViewSession({now,timeZone:'UTC',H:30}),admit=createHostActivitySourceAdmission(HOST_CONFIG),sources=Object.fromEntries(Object.entries(evidence.sources).filter(([,s])=>admit(scope,s,{store:'evidence',sources:evidence.sources}))),snapshot=projectFreeActivity(freeProjection(native,{scope,now}),{...evidence,sources},session,now);
   return {diagnosticOnly:true,session,admittedSourceIds:Object.keys(sources),decisions:snapshot.refs.map(r=>({id:r.id,membership:r.membership,activity:r.activityDecision}))};
  },facts);
- return {controls,facts,projection};
+ const snippets=await reader.evaluate(async scopeKey=>{
+  const {ScopeRepository}=await import(chrome.runtime.getURL('src/b1/scope-repository.mjs')),{WorkspaceRepository}=await import(chrome.runtime.getURL('src/data/repository.mjs'));
+  const [provider,accountId,organizationId]=JSON.parse(scopeKey),base=new ScopeRepository({indexedDB});
+  try{const state=(await new WorkspaceRepository({baseRepository:base}).read({verified:true,provider,accountId,organizationId})).state;return {workspaceRevision:state.revision,savedSnippetCount:state.preferences.savedSnippets?.value?.length??0};}finally{base.close();}
+ },facts.native.scopeKey);
+ const side=page.frames().find(f=>f.url()===`chrome-extension://${extensionId}/sidebar.html`);snippets.panelText=side?await side.getByRole('region',{name:'片段管理',exact:true}).allTextContents():[];
+ return {controls,facts,projection,snippets};
 }
 async function waitHistory(check){const deadline=Date.now()+15000;while(Date.now()<deadline){const value=await historyFacts();if(check(value))return value;await page.waitForTimeout(50);}throw Error('J3-historical-evidence-deadline');}
 
