@@ -66,7 +66,13 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(!slot?.isConnected||slot!==state.inspection.navigationSlot){removeReturn(state);return false;}
   if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.textContent='▦';button.addEventListener('click',event=>{if(current!==state||event?.isTrusted!==true||!showWorkspace())return;try{Promise.resolve(bridge.workspaceEntered?.({mountId:state.handle.id})).catch(()=>{});}catch{/* Entering the visible workspace never waits for a private notification. */}});slot.append(button);state.button=button;}return true;
  }
- function nativeSurrender(state,event){if(current!==state||state.mode==='waiting'||state.geometryPaused)return;if(event?.reason!=='native-reading'||state.mode!=='reading')state.intentEpoch++;state.mode='reading';if(!authorized(state))return;if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}
+ function nativeSurrender(state,event){if(current!==state||state.geometryPaused)return;if(state.mode==='waiting'){if(event?.reason==='native-input'){state.pendingNativeInput=true;state.intentEpoch++;}return;}if(event?.reason!=='native-reading'||state.mode!=='reading')state.intentEpoch++;state.mode='reading';if(!authorized(state))return;if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}
+ function hasProtectedFocus(state){
+  const roots=[state.inspection.composer,state.inspection.header,...(state.inspection.protectedRegions??[])];
+  for(let active=doc.activeElement;active?.isConnected&&active.ownerDocument===doc;active=active.shadowRoot?.activeElement){
+   if(roots.some(node=>node?.isConnected&&node.ownerDocument===doc&&(node===active||node.contains?.(active))))return true;
+  }return false;
+ }
  function showReading(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}surface.showReading(state.handle);state.mode='reading';return ensureReturn(state);}
  function showNativeReading(){const state=current;if(state)state.intentEpoch++;if(!state||!authorized(state)||adapter.hasNativeLayer())return false;surface.suspend(state.handle);state.mode='reading';return ensureReturn(state);}
  function suspend(reason='native-layer'){const state=current;if(state)state.intentEpoch++;if(!state?.handle)return;removeReturn(state);surface.suspend(state.handle,reason);state.mode='suspended';}
@@ -116,7 +122,11 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    const ack=await bridge.confirmParent({mountId:state.handle.id,documentToken:state.handle.documentToken,regionEpoch:state.handle.regionEpoch,nonce:data.nonce,role:data.role});
    if(!valid(state)||event.source!==target.window||target.frame.contentWindow!==target.window)return;
    const grant=ack?.grant;if(ack?.ok!==true||!tokenOK(grant?.id)||grant.mountId!==state.handle.id||grant.role!==data.role||grant.parentDocumentId!==state.context.binding.browserDocumentId||!tokenOK(grant.uiDocumentId)||!tokenOK(grant.scopeGrantId)||!Number.isFinite(Date.parse(grant.expiresAt))||Date.parse(grant.expiresAt)<=now())return;
-   state.grants.set(data.role,Object.freeze({...grant}));publishAppearance(state,data.role);arm(state);if(state.mode==='waiting'&&authorized(state)){if(initialMode==='reading')showReading();else showWorkspace();}
+   state.grants.set(data.role,Object.freeze({...grant}));publishAppearance(state,data.role);arm(state);if(state.mode==='waiting'&&authorized(state)){
+    // Native input can precede listener installation or the second grant. Preserve
+    // that intent without exposing a surface or return entry before authorization.
+    if(adapter.hasNativeLayer())suspend('native-layer');else if(state.pendingNativeInput||hasProtectedFocus(state))showNativeReading();else if(initialMode==='reading')showReading();else showWorkspace();
+   }
   }catch{/* A failed public join never authorizes a surface. */}finally{state.pending.delete(data.role);}
  }
  return Object.freeze({start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,showReading,showNativeReading,focusFrame(role){const state=current;if(!state||state.mode!=='workspace'||!authorized(state)||adapter.hasNativeLayer())return false;const target=state.frames.find(x=>x.role===role);if(!target?.frame?.focus)return false;target.frame.focus({preventScroll:true});let active=doc.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;return active===target.frame;},isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});

@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round301）
+## 最新正式检查点（2026-10-16，原本地目录，Round302）
+
+修复初始双surface授权期间忽略原生输入的竞态：授权前保留原生意图，授权后保持原生阅读和唯一返回；预先打开弹层、shadow焦点、撤权/过期边界均覆盖。实际隔离MV3完成单Project 1000聊天精确成员核对、卡片5→17展开、原生目标新标签导航与唯一返回闭环，原标签document/editor不变。
+
+最终完整Node **5937/5937 PASS**；首次tar EPIPE及所有浏览器失败原件保留。最终源码/fixture/build稳定。见[Round302](evidence/round302/README.md)。c9decb8已正常推送且PR16保持原Draft/base，dot/Pro祖先完整。1k正确性不替代完整规模/冷启动/81/G/U验收；Free仍 **NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round301）
 
 在真实自然进入恢复后，连续执行完J4后续证据幂等/校准、六类人工资产保全、真实worker退出、实际disable/uninstall及卸载后原生操作。25步骤含23PASS、1窄自然进入PASS、1原始FAIL，原peer上下文超时与原生导航恢复诊断保留，未提升为默认J4通过。
 

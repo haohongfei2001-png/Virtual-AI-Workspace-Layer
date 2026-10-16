@@ -1,3 +1,4 @@
+import {checkHostScaleProjectCard} from './fixtures/host-scale-project-card-oracle.mjs';
 import {prepareHostScaleAdmission} from './fixtures/host-scale-admission-preparation.mjs';
 import {observeHostScaleAdmission} from './fixtures/host-scale-admission-observation.mjs';
 import {hostScaleFailureProgress} from './fixtures/host-scale-progress.mjs';
@@ -33,7 +34,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
  const traceEnabled=process.env.FREE_HOST_SCALE_TRACE==='1',traceThroughReturn=traceEnabled&&process.env.FREE_HOST_SCALE_TRACE_RETURN==='1';
  if(traceEnabled)report.traceRange=traceThroughReturn?'through-native-return':'initial-ingestion';
  let server,context,manifest,manifestPath,manifestHash,directory,activePage,loadedExtensionId,tracePackage;
- const sourceFiles=['host-scale-package-browser.mjs','host-scale-trace.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-admission-observation.mjs','fixtures/host-scale-admission-preparation.mjs','fixtures/host-scale-progress-sampler.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
+ const sourceFiles=['host-scale-package-browser.mjs','host-scale-trace.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-project-card-oracle.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-admission-observation.mjs','fixtures/host-scale-admission-preparation.mjs','fixtures/host-scale-progress-sampler.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sourceFiles.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -104,6 +105,8 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    const projectPath='/g/g-p-00000000000000000000000000000001/project';
    await page.locator(`aside section[aria-label="Projects"] a[href="${projectPath}"]`).click({timeout:memberReturnRemaining()});await page.waitForURL(server.origin+projectPath,{timeout:memberReturnRemaining()});
    await page.waitForFunction(size=>document.querySelectorAll('#reading nav[aria-label="Project conversations"] a').length===size,scenario.size,{timeout:memberReturnRemaining()});
+   report.nativeProjectName=await page.locator('h1').textContent();
+   await page.evaluate(()=>{globalThis.scaleProjectEditor=document.querySelector('textarea');globalThis.scaleProjectDocument=document;});
    report.nativeProjectMembersRendered=await page.locator('#reading nav[aria-label="Project conversations"] a').count();
    report.phase='visible-native-member-progress';
    report.nativeMemberProgress=await waitHostScaleMemberProgress({page,extensionId:id,url:server.origin+projectPath,projectId:projectPath.split('/')[2],id:tail.id,deadline:memberReturnDeadline});
@@ -113,6 +116,22 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   report.phase='return-workspace-local-search';
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click(memberReturnDeadline===null?{}:{timeout:memberReturnRemaining()});
   const [workspace,sidebar]=await surfaces(page,{deadline:memberReturnDeadline});
+  if(scenario.distribution==='single-project'){
+   report.phase='project-card-member-rendering';const projectId='g-p-00000000000000000000000000000001';
+   const card=workspace.locator(`.card[data-theme-id="${projectId}"]`);
+   await card.locator('.theme-name').waitFor({timeout:memberReturnRemaining()});
+   const readCard=()=>card.evaluate(node=>({name:node.querySelector('.theme-name')?.textContent,createHref:node.querySelector('.card-head a[aria-label^="打开项目以新建聊天"]')?.getAttribute('href'),rows:[...node.querySelectorAll('.members a[data-ref-id]')].map(row=>({id:row.getAttribute('data-ref-id'),title:row.querySelector('.window-title')?.textContent,href:row.getAttribute('href')}))}));
+   await card.locator('.members a[data-ref-id]').nth(4).waitFor({timeout:memberReturnRemaining()});
+   const first=await readCard();assert.equal(first.name,report.nativeProjectName);assert.equal(first.rows.length,5);
+   const firstIds=checkHostScaleProjectCard({card:first,expectedProjectId:projectId,size:scenario.size,nativeOrigin:server.origin,longTitles:scenario.longTitles});
+   await card.getByRole('button',{name:'显示更多待核对窗口',exact:true}).click({timeout:memberReturnRemaining()});
+   await card.locator('.members a[data-ref-id]').nth(16).waitFor({timeout:memberReturnRemaining()});
+   const expanded=await readCard();assert.equal(expanded.rows.length,17);
+   const expandedIds=checkHostScaleProjectCard({card:expanded,expectedProjectId:projectId,size:scenario.size,nativeOrigin:server.origin,longTitles:scenario.longTitles,previousIds:firstIds});
+   assert.equal(page.url(),server.origin+'/g/'+projectId+'/project');
+   assert(await page.evaluate(()=>document===scaleProjectDocument&&document.querySelector('textarea')===scaleProjectEditor));memberReturnRemaining();
+   report.projectCardMembers={status:'PASS_RENDERED_MEMBER_SAMPLE',nativeName:first.name,firstMember:first.rows[0],firstIds,expandedIds,nativeRouteAndEditorUnchanged:true,membershipAcceptance:'REQUIRES_FOLLOWING_FULL_PROJECT_AUDIT',activity:'UNDATED_NOT_MEMBERSHIP_UNKNOWN'};
+  }
   await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
   const localSearch=workspace.getByRole('searchbox',{name:'已知聊天查找输入'});await localSearch.waitFor();
   const nativeRouteBeforeMeasurement=page.url();
@@ -174,6 +193,43 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   report.firstSchemaPreparing=report.rpc.some(r=>r.state==='preparing')?'OBSERVED_NOT_CERTIFIED':'NOT_OBSERVED';
   report.rpcObservation=report.rpc.length?{scope:'INGESTION_AND_MEASUREMENT_DIAGNOSTIC',count:report.rpc.length,maxMs:Math.max(...report.rpc.map(r=>r.elapsedMs)),over6000:report.rpc.filter(r=>r.elapsedMs>6000).length}: 'NOT_OBSERVED';
   assert.equal(report.measurement.status,'MEASURED_AT_STABLE_ADMITTED_INDEX','scale measurement not established: '+report.measurement.status);
+  if(scenario.distribution==='single-project'){
+   report.phase='project-card-native-navigation-closure';const targetId=report.projectCardMembers.firstIds[0];
+   const target=report.projectCardMembers.firstMember;
+   const navigationDeadline=performance.now()+15000,remaining=()=>{const value=navigationDeadline-performance.now();assert(value>0,'project-card-navigation-deadline');return value;};
+   await workspace.getByRole('button',{name:'关闭派生查找',exact:true}).click({timeout:remaining()});
+   const member=workspace.locator(`.card .members a[data-ref-id="${targetId}"]`);await member.waitFor({timeout:remaining()});
+   assert.equal(await member.getAttribute('href'),server.origin+'/c/'+targetId);
+   const delegated=await member.getAttribute('data-native-plan-control')!==null;
+   assert.notEqual(await member.getAttribute('aria-disabled'),'true');
+   let nativePage=page;
+   try{
+   if(delegated)await member.click({timeout:remaining()});
+   else{
+    assert.equal(await member.getAttribute('target'),'_blank');
+    [nativePage]=await Promise.all([context.waitForEvent('page',{timeout:remaining()}),member.click({timeout:remaining()})]);
+    nativePage.on('pageerror',error=>report.errors.push(error.message));assert.notEqual(nativePage,page);
+   }
+   await nativePage.waitForURL(server.origin+'/c/'+targetId,{timeout:remaining()});
+   await nativePage.waitForFunction(({id,title})=>document.querySelector('#reading')?.getAttribute('data-conversation-id')===id&&document.querySelector('h1')?.textContent===title,{id:targetId,title:target.title},{timeout:remaining()});
+   assert(await page.evaluate(()=>document===scaleProjectDocument&&document.querySelector('textarea')===scaleProjectEditor));
+   if(!delegated)assert.equal(page.url(),nativeRouteBeforeMeasurement);
+   await nativePage.locator('textarea').focus({timeout:remaining()});
+   await nativePage.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===0,null,{timeout:remaining()});
+   const back=nativePage.getByRole('button',{name:'返回工作空间',exact:true});await back.waitFor({timeout:remaining()});assert.equal(await back.count(),1);await back.click({timeout:remaining()});
+   await nativePage.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:remaining()});remaining();
+   assert(await page.evaluate(()=>document===scaleProjectDocument&&document.querySelector('textarea')===scaleProjectEditor));assert.equal(nativePage.url(),server.origin+'/c/'+targetId);
+   report.projectCardNavigation={status:'PASS_NATIVE_MEMBER_AND_UNIQUE_RETURN',mode:delegated?'NATIVE_CONTROL':'HREF_NEW_TAB_PRESERVE_CURRENT',targetId,nativeTitle:target.title,originalDocumentAndEditorPreserved:true,measurement:'SEPARATE_CORRECTNESS_AFTER_STABLE_INDEX_TIMING'};
+   if(nativePage!==page)await nativePage.close();
+   }catch(error){
+    report.projectCardNavigationFailure={mode:delegated?'NATIVE_CONTROL':'HREF_NEW_TAB_PRESERVE_CURRENT',targetId,facts:await hostScaleFailureFacts(nativePage)};
+    report.projectCardNavigationFailure.budgets=await workspace.evaluate(async()=>{
+     const info=(await indexedDB.databases()).find(row=>row.name==='vaiwl-b1-v1');if(!info)return [];
+     const db=await new Promise((resolve,reject)=>{const q=indexedDB.open(info.name,info.version);q.onupgradeneeded=()=>{q.transaction.abort();reject(Error('diagnostic-refuses-upgrade'));};q.onerror=()=>reject(q.error);q.onsuccess=()=>resolve(q.result);});
+     try{return await new Promise((resolve,reject)=>{const tx=db.transaction('b23_views','readonly'),q=tx.objectStore('b23_views').openCursor(),rows=[];q.onsuccess=()=>{const c=q.result;if(!c)return;if(typeof c.key==='string'&&c.key.startsWith('host-read-budget:')){const p=c.value.payload;rows.push({requests:p.requests,startedAt:p.startedAt,lastAt:p.lastAt,ageMs:Date.now()-p.startedAt});}c.continue();};tx.oncomplete=()=>resolve(rows);tx.onabort=()=>reject(tx.error);});}finally{db.close();}
+    }).catch(error=>({unavailable:error.message}));throw error;
+   }
+  }
   assert.deepEqual(report.errors,[]);report.status='PARTIAL_SYS04_NOT_ACCEPTED';process.exitCode=2;
  }catch(error){const {hostScaleFailureProgress}=await import('./fixtures/host-scale-progress.mjs');report.nativeIndexProgress=await hostScaleFailureProgress(activePage,loadedExtensionId).catch(()=>({status:'DIAGNOSTIC_UNAVAILABLE',acceptance:'NOT_ESTABLISHED'}));report.status=traceThroughReturn&&error.message==='diagnostic-progress-run-cannot-produce-scale-timing'?'DIAGNOSTIC_ONLY_RETURN_COMPLETE':traceEnabled&&error.message==='diagnostic-initial-ingestion-complete'?'DIAGNOSTIC_ONLY_INGESTION_COMPLETE':context?'FAIL':'NOT_RUN_BROWSER_OR_PACKAGE_STARTUP';report.error=error.stack;report.failure={phase:report.phase,rpcCount:report.rpc.length,rpcTail:report.rpc.slice(-16),facts:await hostScaleFailureFacts(activePage).catch(failure=>({captureError:failure.message}))};process.exitCode=1;}
  finally{
