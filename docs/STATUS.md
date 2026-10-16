@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round286）
+## 最新正式检查点（2026-10-16，原本地目录，Round287）
+
+修复隔离主体后的显式当前对象校准：允许进入已恢复worker固定读取，但重新核对principal/context/profile/expiry，原scope与新读取各保留真实transport。合法历史继续原owner/codec2/CAS，不授本次发送ACK。独立26反例、审查及完整Node **5634/5634 PASS**。
+
+实际MV3通过断网下校准unavailable保留草稿→网络恢复后原生唯一返回checked-current→原45天历史事件持久化；八表无观察发送锚/ACK，零真实发送。初始测试oracle realm FAIL已修复并保留，见[Round287](evidence/round287/README.md)。远端API仍b71f667/Draft/base未变，前两轮普通push低速失败，本地成果完整保存，将继续非强制同步。完整81/G/U/冷启动/100k/备用主体ACK恢复仍未完成，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round286）
 
 实际MV3备用认证C2通过：worker断网后，isolated主体/roster结合原生请求收据，仅绑定第二项Team context，原始scope目录、聊天/双surface/草稿/返回一致。另真实成功＋accounts畸形响应隐私旅程通过：导航前worker被动观察、真实成功/opaque失败终态、八表原始值与UI零凭证/正文/草稿命中；失败保留原生页面。见[Round286](evidence/round286/README.md)。
 

@@ -52,22 +52,25 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
    const guard=()=>{check();if(currentSignal.aborted||currentGuard()!==true)throw Error('stale-body-proof');};guard();
    if(calibration)context=Object.freeze({...context,guard:()=>{guard();return true;},signal:currentSignal});
    const conversationId=context.conversationId,bodyEpoch=context.bodyEpoch,wanted=new Set(context.messageIds);
-   let acceptance=null,history=null;
+   let acceptance=null,history=null,readExpiry=null;
    let metadata={protocol:'vaiwl-conversation-metadata-candidate/1',conversationId,state:'candidate',messages:[],gaps:[],coverage:'observed-only'};
    if(wanted.size){
-    const principal=context.scope?.accountId,account=context.scope?.organizationId,profile=context.providerProfile,transport=context.providerTransport;
-    requireValue(typeof principal==='string'&&/^principal_[0-9a-f]{64}$/.test(principal)&&typeof account==='string'&&/^context_[0-9a-f]{64}$/.test(account)&&id(profile)&&transport==='worker-fixed-fetch');
+    const principal=context.scope?.accountId,account=context.scope?.organizationId,profile=context.providerProfile,principalTransport=context.providerTransport,transport='worker-fixed-fetch';
+    requireValue(typeof principal==='string'&&/^principal_[0-9a-f]{64}$/.test(principal)&&typeof account==='string'&&/^context_[0-9a-f]{64}$/.test(account)&&id(profile)&&(principalTransport==='worker-fixed-fetch'||calibration&&principalTransport==='isolated-fixed-fetch'));
+    // A fallback principal can request explicit calibration after worker recovery.
+    // The new authenticated read retains its own worker transport provenance;
+    // neither the existing scope proof nor send-ACK authority is relabelled.
     const signal=AbortSignal.any([currentSignal,attempt.abort.signal]);
     let onAbort;const cancelled=new Promise((_,reject)=>{onAbort=()=>reject(Error('current-metadata-aborted'));signal.addEventListener('abort',onAbort,{once:true});if(signal.aborted)onAbort();});
     let result;try{result=await Promise.race([readCurrent({conversationId,expectedPrincipalKey:principal,expectedContextKey:account,signal,...(budgetWindow===undefined?{}:{budgetWindow})}),cancelled]);}finally{signal.removeEventListener('abort',onAbort);}
     guard();const checkedAt=now();requireValue(exactHostRecord(result,['principalKey','contextKey','expiresAt','providerProfile','transport','metadata'])&&result.principalKey===principal&&result.contextKey===account&&result.providerProfile===profile&&result.transport===transport&&instant(result.expiresAt)!==null&&Number.isFinite(checkedAt)&&instant(result.expiresAt)>checkedAt);
-    metadata=reduceMetadata(result.metadata,conversationId,wanted);
+    metadata=reduceMetadata(result.metadata,conversationId,wanted);readExpiry=result.expiresAt;
     acceptance=acceptanceFor?.(result)??null;history=historyFor?.(result)??null;
     if(acceptance)requireValue(acceptance.conversationId===conversationId&&acceptance.principalKey===principal&&acceptance.contextKey===account&&acceptance.providerProfile===profile&&acceptance.transport===transport&&acceptance.expiresAt===result.expiresAt);
    }
    guard();const value={state:metadata.state,conversationId,bodyEpoch,metadata};requireValue(new TextEncoder().encode(JSON.stringify(value)).length<=65536);
    guard();if(history&&onHistorical&&metadata.state==='candidate'&&!metadata.gaps.length){
-    requireValue(history.conversationId===conversationId&&history.principalKey===context.scope.accountId&&history.contextKey===context.scope.organizationId&&history.providerProfile===context.providerProfile&&history.transport===context.providerTransport);
+    requireValue(history.conversationId===conversationId&&history.principalKey===context.scope.accountId&&history.contextKey===context.scope.organizationId&&history.providerProfile===context.providerProfile&&history.transport==='worker-fixed-fetch'&&history.expiresAt===readExpiry&&instant(history.expiresAt)!==null&&Number.isFinite(now())&&instant(history.expiresAt)>now());
     const selected=history.messages.filter(m=>wanted.has(m.messageId)&&metadata.messages.some(observed=>observed.messageId===m.messageId&&'lineage_'+observed.lineage?.fingerprint===m.branchId));
     if(selected.length)await onHistorical({history:{...history,messages:selected},context,guard});guard();
    }
