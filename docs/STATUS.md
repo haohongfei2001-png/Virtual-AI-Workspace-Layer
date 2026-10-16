@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round339）
+## 最新本地检查点（2026-10-17，Round340）
+
+共享mutation仅移除较早的重复root校验；保留输入遍历之后、写入之前及外部writer之后的完整校验。独立计数2→1且输出/checksum/delta窗口完全相同，畸形输入、getter及callback篡改拒绝。新11/11、现有共享目录180/180、真实IndexedDB生命周期/批量/回收21项通过；不累加重叠测试，不冒称新全套或MV3通过。[Round340](evidence/round340/README.md)。
+
+原100k失败继续开放，未为此小改反复运行规模测试。静默多context恢复缺少已证实、绑定document/selection epoch的C1来源；隔离session备选仅principal/roster，不能补当前context。禁止延TTL/猜账户。完整Free仍 **NOT_RELEASE_READY**。8d89eba普通push低速超时exit128，远端未确认；本地检查点及整理stash/副本完整保留。
+
+## 前一本地检查点（2026-10-17，Round339）
 
 保留旧分片回收的完整读取/校验，利用已验证bucket直接读前后两代，避免对相同成员重复路由。独立旧/新模块计数4→0，删除集合一致；缺失/损坏前后代均整事务回滚。定向16/16、真实IndexedDB生命周期/批量/回收21项、完整Node **6486/6486 PASS**。真实IDB runner支持既有FREE_CHROME_EXECUTABLE，始终headless。[Round339证据](evidence/round339/README.md)。
 

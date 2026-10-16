@@ -28,11 +28,14 @@ export function sharedMutationManifest(root,scope,refs,records){
  * No migration, garbage collection, or permission to delete native facts.
  */
 export function saveSharedDirectoryMutation(tx,root,scope,storage,current,next,patch,actor,saveLegacy){
- const s=normalizedScope(scope);validateSharedDirectoryRoot(root,scope);
+ const s=normalizedScope(scope);
  if(!s||s.key!==root.scopeKey||next.revision!==root.revision+1)throw Error('shared-directory-revision-conflict');
  if(typeof saveLegacy!=='function')throw Error('shared-directory-legacy-writer-required');
  const ids=changedRefs(patch),records=storage.directoryRecords,byKey=new Map(records.map(row=>[row.key,row]));
  if(byKey.size!==records.length)throw Error('duplicate-shared-directory-record');
+ // Validate the complete root at the bounded-view boundary before any write.
+ // Revalidating it above would encode the same change suffix twice; keep this
+ // later validation after input traversal, and the post-writer check below.
  const bounded=sharedMutationManifest(root,scope,[...Object.keys(current.refs),...ids],records);
  // The existing writer needs original old pieces for aggregate unit deltas.
  for(const ref of ids)if(Object.hasOwn(bounded.refVersions,ref)&&!storage.pieces.has(ref))throw Error('missing-shared-mutation-piece');
