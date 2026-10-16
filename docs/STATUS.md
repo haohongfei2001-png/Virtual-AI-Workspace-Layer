@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round287）
+## 最新正式检查点（2026-10-16，原本地目录，Round288）
+
+隔离主体可使用重新认证的worker回读完成ACK：保留主体真实来源，metadata/acceptance仍仅worker且身份/context/profile/有效期一致；私有readback记录原来源并前后复核，校准仍无ACK能力。独立41反例和完整Node **5676/5676 PASS**。
+
+实际MV3以一次isolated认证、一次HELLO/REFRESH完成Team原生fixture发送→固定worker回读→唯一codec1 ACK持久化，无sentAt、无Personal泄漏；重复只读不续起点。首轮遮罩可见性测试错误与最终PASS均保留，见[Round288](evidence/round288/README.md)。上一轮c8add30已正常推送并API确认。继续同主体来源切换续期及旧在途读取失效；完整81/G/U/冷启动/100k仍未完成，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round287）
 
 修复隔离主体后的显式当前对象校准：允许进入已恢复worker固定读取，但重新核对principal/context/profile/expiry，原scope与新读取各保留真实transport。合法历史继续原owner/codec2/CAS，不授本次发送ACK。独立26反例、审查及完整Node **5634/5634 PASS**。
 

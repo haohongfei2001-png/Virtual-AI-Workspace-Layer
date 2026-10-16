@@ -20,3 +20,9 @@ test('scope key must canonically bind the same ChatGPT principal and account con
 test('standalone ACK profile validation copies and deeply freezes configuration without authority',()=>{
  const profile=input().profile,result=validateSendAckProfile(profile);assert.deepEqual(result,profile);assert.notEqual(result,profile);assert.notEqual(result.ack.acceptedStates,profile.ack.acceptedStates);assert(Object.isFrozen(result)&&Object.isFrozen(result.ack)&&Object.isFrozen(result.ack.acceptedStates));profile.ack.acceptedStates[0]='changed';assert.equal(result.ack.acceptedStates[0],'fixture-accepted');
 });
+
+test('isolated principal proof and fresh worker readback keep distinct provenance',()=>{
+ const x=input();x.context.providerTransport='isolated-fixed-fetch';const before=structuredClone(x),out=prepareSendAckAdmission(x);assert.deepEqual(x,before);assert.equal(out.actorScopeKey,x.context.scopeKey);assert.equal(out.ackWitness.kind,'authenticated-message-readback');
+ for(const transport of ['isolated-fixed-fetch','page-claimed','unknown']){x.readback.transport=transport;assert.throws(()=>prepareSendAckAdmission(x));}
+ x.readback.transport='worker-fixed-fetch';x.context.providerTransport='unknown';assert.throws(()=>prepareSendAckAdmission(x));
+});

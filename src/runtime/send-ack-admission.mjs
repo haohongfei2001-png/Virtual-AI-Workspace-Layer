@@ -31,13 +31,14 @@ export function prepareSendAckAdmission(input){
  const {profile,context,candidate,readback,intentAt,observedAt}=input;
  const accepted=validateSendAckProfile(profile).ack.acceptedStates;
  record(context,['proofId','conversationId','bodyEpoch','scopeKey','principalKey','contextKey','providerProfile','providerTransport']);
- requireValue(id(context.proofId)&&id(context.conversationId)&&epoch(context.bodyEpoch)&&typeof context.scopeKey==='string'&&context.scopeKey.length>0&&context.scopeKey.length<=4096&&principal(context.principalKey)&&account(context.contextKey)&&context.providerProfile===profile.providerProfile&&context.providerTransport==='worker-fixed-fetch');
+ requireValue(id(context.proofId)&&id(context.conversationId)&&epoch(context.bodyEpoch)&&typeof context.scopeKey==='string'&&context.scopeKey.length>0&&context.scopeKey.length<=4096&&principal(context.principalKey)&&account(context.contextKey)&&context.providerProfile===profile.providerProfile&&['worker-fixed-fetch','isolated-fixed-fetch'].includes(context.providerTransport));
  requireValue(context.scopeKey===normalizedScope({verified:true,provider:'chatgpt',accountId:context.principalKey,organizationId:context.contextKey})?.key);
  record(candidate,['protocol','intentId','conversationId','messageId','operationId','stage','observedAt']);
  requireValue(candidate.protocol==='vaiwl-send-candidate/1'&&id(candidate.intentId)&&candidate.conversationId===context.conversationId&&id(candidate.messageId)&&candidate.operationId===null&&candidate.stage==='correlated'&&candidate.observedAt===intentAt);
  record(readback,['proofId','conversationId','bodyEpoch','principalKey','contextKey','providerProfile','transport','expiresAt','message']);
  for(const key of ['proofId','conversationId','bodyEpoch','principalKey','contextKey','providerProfile'])requireValue(readback[key]===context[key]);
- requireValue(readback.transport===context.providerTransport);
+ // Principal proof provenance and authenticated readback provenance are distinct.
+ requireValue(readback.transport==='worker-fixed-fetch');
  const message=record(readback.message,['messageId','mappingNodeId','role','authorPrincipalKey','lineage','acceptanceState']);
  requireValue(message.messageId===candidate.messageId&&id(message.mappingNodeId)&&message.role==='user'&&message.authorPrincipalKey===context.principalKey&&accepted.includes(message.acceptanceState));
  const lineage=record(message.lineage,['kind','nodeIds','fingerprint']),nodes=list(lineage.nodeIds,32);

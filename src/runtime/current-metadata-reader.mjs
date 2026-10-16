@@ -51,15 +51,15 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
    const currentGuard=context.guard,currentSignal=calibration?AbortSignal.any([context.signal,calibration.signal,attempt.abort.signal]):context.signal;
    const guard=()=>{check();if(currentSignal.aborted||currentGuard()!==true)throw Error('stale-body-proof');};guard();
    if(calibration)context=Object.freeze({...context,guard:()=>{guard();return true;},signal:currentSignal});
-   const conversationId=context.conversationId,bodyEpoch=context.bodyEpoch,wanted=new Set(context.messageIds);
+   const conversationId=context.conversationId,bodyEpoch=context.bodyEpoch,principalTransport=context.providerTransport,wanted=new Set(context.messageIds);
    let acceptance=null,history=null,readExpiry=null;
    let metadata={protocol:'vaiwl-conversation-metadata-candidate/1',conversationId,state:'candidate',messages:[],gaps:[],coverage:'observed-only'};
    if(wanted.size){
-    const principal=context.scope?.accountId,account=context.scope?.organizationId,profile=context.providerProfile,principalTransport=context.providerTransport,transport='worker-fixed-fetch';
-    requireValue(typeof principal==='string'&&/^principal_[0-9a-f]{64}$/.test(principal)&&typeof account==='string'&&/^context_[0-9a-f]{64}$/.test(account)&&id(profile)&&(principalTransport==='worker-fixed-fetch'||calibration&&principalTransport==='isolated-fixed-fetch'));
-    // A fallback principal can request explicit calibration after worker recovery.
+    const principal=context.scope?.accountId,account=context.scope?.organizationId,profile=context.providerProfile,transport='worker-fixed-fetch';
+    requireValue(typeof principal==='string'&&/^principal_[0-9a-f]{64}$/.test(principal)&&typeof account==='string'&&/^context_[0-9a-f]{64}$/.test(account)&&id(profile)&&['worker-fixed-fetch','isolated-fixed-fetch'].includes(principalTransport));
+    // Either principal proof can request a fresh fixed worker read after recovery.
     // The new authenticated read retains its own worker transport provenance;
-    // neither the existing scope proof nor send-ACK authority is relabelled.
+    // the scope proof is not relabelled and ACK still requires private acceptance.
     const signal=AbortSignal.any([currentSignal,attempt.abort.signal]);
     let onAbort;const cancelled=new Promise((_,reject)=>{onAbort=()=>reject(Error('current-metadata-aborted'));signal.addEventListener('abort',onAbort,{once:true});if(signal.aborted)onAbort();});
     let result;try{result=await Promise.race([readCurrent({conversationId,expectedPrincipalKey:principal,expectedContextKey:account,signal,...(budgetWindow===undefined?{}:{budgetWindow})}),cancelled]);}finally{signal.removeEventListener('abort',onAbort);}
@@ -74,7 +74,7 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
     const selected=history.messages.filter(m=>wanted.has(m.messageId)&&metadata.messages.some(observed=>observed.messageId===m.messageId&&'lineage_'+observed.lineage?.fingerprint===m.branchId));
     if(selected.length)await onHistorical({history:{...history,messages:selected},context,guard});guard();
    }
-   if(!calibration&&acceptance&&metadata.state==='candidate'&&!metadata.gaps.length)readbacks.set(value,{acceptance,proofId,documentToken:context.documentToken,producerToken:context.producerToken,routeEpoch:context.routeEpoch,scopeKey:context.scope?.key});
+   if(!calibration&&acceptance&&metadata.state==='candidate'&&!metadata.gaps.length)readbacks.set(value,{acceptance,proofId,principalTransport,documentToken:context.documentToken,producerToken:context.producerToken,routeEpoch:context.routeEpoch,scopeKey:context.scope?.key});
    return freeze(value);
   })).then(result=>{check();return result;}).finally(()=>{attempt.abort.abort();if(busy===attempt)busy=null;});
   return attempt.promise;
@@ -84,7 +84,7 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
   const saved=readbacks.get(value);if(stopped||!enabled||!saved||saved.proofId!==proofId||!id(messageId)||typeof work!=='function')throw Error('unavailable-send-readback');
   return observations.withCurrent(proofId,async context=>{
    const a=saved.acceptance;
-   const guard=()=>{const at=now();if(stopped||context.documentToken!==saved.documentToken||context.producerToken!==saved.producerToken||context.routeEpoch!==saved.routeEpoch||context.scope?.key!==saved.scopeKey||context.signal?.aborted||context.guard?.()!==true||context.conversationId!==value.conversationId||context.bodyEpoch!==value.bodyEpoch||context.scope?.accountId!==a.principalKey||context.scope?.organizationId!==a.contextKey||context.providerProfile!==a.providerProfile||context.providerTransport!==a.transport||!Array.isArray(context.messageIds)||!context.messageIds.includes(messageId)||!Number.isFinite(at)||instant(a.expiresAt)<=at){readbacks.delete(value);throw Error('stale-send-readback');}};
+   const guard=()=>{const at=now();if(stopped||context.documentToken!==saved.documentToken||context.producerToken!==saved.producerToken||context.routeEpoch!==saved.routeEpoch||context.scope?.key!==saved.scopeKey||context.signal?.aborted||context.guard?.()!==true||context.conversationId!==value.conversationId||context.bodyEpoch!==value.bodyEpoch||context.scope?.accountId!==a.principalKey||context.scope?.organizationId!==a.contextKey||context.providerProfile!==a.providerProfile||context.providerTransport!==saved.principalTransport||!['worker-fixed-fetch','isolated-fixed-fetch'].includes(saved.principalTransport)||a.transport!=='worker-fixed-fetch'||!Array.isArray(context.messageIds)||!context.messageIds.includes(messageId)||!Number.isFinite(at)||instant(a.expiresAt)<=at){readbacks.delete(value);throw Error('stale-send-readback');}};
    guard();const observed=value.metadata.messages.find(m=>m.messageId===messageId),message=a.messages.find(m=>m.messageId===messageId);
    requireValue(observed&&context.messageIds.includes(messageId));if(!message)throw Error('pending-send-ack');
    requireValue(observed.mappingNodeId===message.mappingNodeId&&observed.lineage?.fingerprint===message.lineage?.fingerprint);

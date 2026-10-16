@@ -41,7 +41,7 @@ test('isolated principal can calibrate via fresh worker authentication and exist
  await assert.rejects(f.reader.withReadback(value,'proof','m',()=>assert.fail('calibration cannot create live send ACK authority')));
  const before=JSON.stringify(events);f.tick(1000);await f.calibrate();assert.equal(JSON.stringify(await f.events()),before,'repeat calibration cannot renew original historical evidence');
 });
-test('isolated non-calibration ACK reader remains blocked before any network',async t=>{const f=fixture(t);await assert.rejects(f.reader.read('proof'));assert.equal(f.calls.length,0);assert.deepEqual(await f.events(),[]);});
+test('isolated foreground read reauthenticates but history-only provider cannot authorize ACK',async t=>{const f=fixture(t),value=await f.reader.read('proof');assert.equal(f.calls.length,3);assert.equal((await f.events()).length,1);await assert.rejects(f.reader.withReadback(value,'proof','m',()=>assert.fail('history-only provider has no ACK provenance')));});
 for(const [field,value]of [['principalKey','principal_'+'f'.repeat(64)],['contextKey','context_'+'e'.repeat(64)],['providerProfile','foreign'],['transport','isolated-fixed-fetch'],['expiresAt',new Date(NOW).toISOString()]])test('fresh worker result rejects mismatched '+field,async t=>{
  const f=fixture(t,{mutateResult:result=>result[field]=value});await assert.rejects(f.calibrate());assert.equal(f.calls.length,3,'result rejection must follow actual worker read');assert.deepEqual(await f.events(),[]);assert.equal(f.consumed.length,0);
 });
