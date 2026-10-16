@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round334）
+## 最新本地检查点（2026-10-17，Round335）
+
+MODERN正式J3单次原16步 **16/16 PASS**，源码/fixture/package校验无漂移，原冷启动失败尚不能据此消除。历史Host同ID schema3→4→3→4保留原5阶段，**5/5 PASS**；新增更新时原native页面不刷新断言通过：同document/editor/URL/draft、零pagehide、旧私有frame清除、遮罩自动释放、原生继续输入。原八存储逐行一致、六类人工资产摘要、旧writer三入口VersionError及真实已加载worker字节验证均保持。见[Round335](evidence/round335/README.md)。
+
+本轮未改生产代码/数据库；只补已有升级流程的活页场景，未重复实现资产迁移。完整Free仍NOT_RELEASE_READY；静默C2/worker恢复、冷启动稳定性、规模、完整profile/81/J4与G/U继续开放。
+
+## 前一本地检查点（2026-10-17，Round334）
 
 在原生产代码上补齐MODERN UI-13两个离线切片：真实disable/re-enable **3/3 PASS**，原页面不刷新时不复活私有frame，后续原生目的地文档取得新grant/mount/UI文档，原端点接受新授权并拒绝旧授权；实际uninstall四开关组合 **4/4 PASS**，无需手动关闭便清除私有投影/遮罩，原document/editor/draft与后续原生导航保持。独立Team scope及native GET确认、worker外网阻断、source/fixture哈希均通过。见[Round334](evidence/round334/README.md)。
 
