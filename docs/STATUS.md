@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round285）
+## 最新正式检查点（2026-10-16，原本地目录，Round286）
+
+实际MV3备用认证C2通过：worker断网后，isolated主体/roster结合原生请求收据，仅绑定第二项Team context，原始scope目录、聊天/双surface/草稿/返回一致。另真实成功＋accounts畸形响应隐私旅程通过：导航前worker被动观察、真实成功/opaque失败终态、八表原始值与UI零凭证/正文/草稿命中；失败保留原生页面。见[Round286](evidence/round286/README.md)。
+
+生产未改，沿用Round285完整Node5608PASS，不重复全套。c0bce20本地已保存，首轮正常push因GitHub低速超时失败，将在检查点继续普通同步。下一项修复隔离主体之后worker恢复时的显式当前对象校准，ACK边界仍独立；完整81/G/U/冷启动/100k未完成，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round285）
 
 生产隔离认证回退已实际接入worker/service/content：仅transport失败触发，一次文档challenge、真实runtime sender与前后epoch校验；最小主体/roster仍须独立C2/C3。完整6秒覆盖前置浏览器校验与主备读取；修复续期transport binding时序、挑战长期容量及无效UTF8误分类。凭证仅短期隔离闭包，打包README明确边界。
 
