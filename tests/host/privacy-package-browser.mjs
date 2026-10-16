@@ -16,7 +16,7 @@ const built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offline
 const manifest=JSON.parse(await readFile(join(built.unpacked,'manifest.json'),'utf8'));
 const build=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8'));
 const sentinels={...server.privacySentinels(),draft:'PRIVACY_NATIVE_DRAFT_63892'};
-const report={evidence:'REAL_HEADLESS_PRODUCTION_PACKAGE_OFFLINE_PRIVACY',status:'NOT_RUN',realAccount:'NOT_RUN',fallbackAuth:'NOT_IMPLEMENTED_NOT_TESTED',sys07:'PARTIAL_MAIN_AUTH_METADATA_FAILURE',sourceHashes:build.sourceHashes,evidenceHashes,observationScope:'Post-initial-mount authenticated metadata failure; continuous content world, worker and existing UI frames only',checks:{}};
+const report={evidence:'REAL_HEADLESS_PRODUCTION_PACKAGE_OFFLINE_PRIVACY',status:'NOT_RUN',realAccount:'NOT_RUN',fallbackAuth:'NOT_EXERCISED_BY_THIS_JOURNEY',sys07:'PARTIAL_MAIN_AUTH_METADATA_FAILURE',sourceHashes:build.sourceHashes,evidenceHashes,observationScope:'Post-initial-mount authenticated metadata failure; continuous content world, worker and existing UI frames only',checks:{}};
 const guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
 let handle,phase='launch',probeHits=0;
 const probe=createServer((_req,res)=>{probeHits++;res.end('loopback-probe');});

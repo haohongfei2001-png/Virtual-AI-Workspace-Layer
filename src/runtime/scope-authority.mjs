@@ -2,8 +2,8 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {digest} from '../data/hash.mjs';
 import {normalizedScope,tokenOK} from '../b1/identity.mjs';
 /** Owner-only identity snapshots. The page cannot call the fixed provider or supply proofs. */
-export function createScopeAuthority({provider,profile,contextObserver=null,now=Date.now,makeId=()=>crypto.randomUUID(),proofTTL=60000,maxDocuments=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,allowedURL=value=>{try{const u=new URL(value);return u.origin==='https://chatgpt.com'&&!u.username&&!u.password;}catch{return false;}}}={}){
- if(typeof provider?.read!=='function'||!tokenOK(profile?.id)||typeof profile.singlePersonalDefault!=='boolean'||!Number.isInteger(proofTTL)||proofTTL<1000||proofTTL>300000||!Number.isInteger(maxDocuments)||maxDocuments<1||maxDocuments>512)throw Error('invalid-scope-authority');
+export function createScopeAuthority({provider,profile,readIdentity=null,contextObserver=null,now=Date.now,makeId=()=>crypto.randomUUID(),proofTTL=60000,maxDocuments=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,allowedURL=value=>{try{const u=new URL(value);return u.origin==='https://chatgpt.com'&&!u.username&&!u.password;}catch{return false;}}}={}){
+ if(readIdentity!==null&&typeof readIdentity!=='function'||typeof provider?.read!=='function'||!tokenOK(profile?.id)||typeof profile.singlePersonalDefault!=='boolean'||!Number.isInteger(proofTTL)||proofTTL<1000||proofTTL>300000||!Number.isInteger(maxDocuments)||maxDocuments<1||maxDocuments>512)throw Error('invalid-scope-authority');
  const states=new Map();let epoch=0;
  const valid=f=>f&&Number.isSafeInteger(f.tabId)&&f.tabId>=0&&f.frameId===0&&tokenOK(f.documentId)&&f.documentLifecycle==='active'&&f.incognito===false&&typeof f.actualURL==='string'&&allowedURL(f.actualURL);
  const key=f=>`${f.tabId}:${f.documentId}`;
@@ -44,7 +44,7 @@ export function createScopeAuthority({provider,profile,contextObserver=null,now=
   states.set(k,entry);const cancelRefresh=()=>abort.abort();signal?.addEventListener('abort',cancelRefresh,{once:true});
   const current=()=>states.get(k)===entry&&!abort.signal.aborted;
   let onAbort;const aborted=new Promise((_,reject)=>{onAbort=()=>reject(Error('scope-refresh-aborted'));abort.signal.addEventListener('abort',onAbort,{once:true});});
-  const task=withRequestDeadline(()=>Promise.race([Promise.resolve().then(async()=>{const identity=await provider.read({signal:abort.signal});if(!current())throw Error('stale-scope-refresh');const contextReceipt=profile.browserRequestContext===true?await contextObserver?.verify(entry.frame,{signal:abort.signal}):null;return {identity,contextReceipt};}),aborted]),{timeoutMs:6000,now:elapsedNow,schedule,cancel}).then(({identity,contextReceipt})=>{
+  const task=withRequestDeadline(()=>Promise.race([Promise.resolve().then(async()=>{const identity=await (readIdentity?readIdentity(entry.frame,{signal:abort.signal,isCurrent:current,authorityEpoch:entry.epoch,remainingMs:()=>6000-(elapsedNow()-entry.elapsedStarted)}):provider.read({signal:abort.signal}));if(!current())throw Error('stale-scope-refresh');const contextReceipt=profile.browserRequestContext===true?await contextObserver?.verify(entry.frame,{signal:abort.signal}):null;return {identity,contextReceipt};}),aborted]),{timeoutMs:6000,now:elapsedNow,schedule,cancel}).then(({identity,contextReceipt})=>{
    if(contextReceipt&&contextObserver.isCurrent(entry.frame,contextReceipt)!==true)return unverified('context-receipt-stale');
    if(!current())return unverified('stale-scope-refresh');
    const {time,expiry,scope,principalKey}=inspectIdentity(identity,entry.elapsedStarted,contextReceipt);
@@ -73,7 +73,7 @@ export function createScopeAuthority({provider,profile,contextObserver=null,now=
   signal?.addEventListener('abort',cancelRefresh,{once:true});
   let onAbort;const aborted=new Promise((_,reject)=>{onAbort=()=>reject(Error('scope-refresh-aborted'));entry.abort.signal.addEventListener('abort',onAbort,{once:true});});
   const task=withRequestDeadline(()=>Promise.race([Promise.resolve().then(async()=>{
-   if(!current())throw Error('stale-scope-refresh');const identity=await provider.read({signal:entry.abort.signal});if(!current())throw Error('stale-scope-refresh');const contextReceipt=profile.browserRequestContext===true?await contextObserver?.verify(frame,{signal:entry.abort.signal}):null;return {identity,contextReceipt};
+   if(!current())throw Error('stale-scope-refresh');const identity=await (readIdentity?readIdentity(entry.frame,{signal:entry.abort.signal,isCurrent:current,authorityEpoch:entry.epoch,remainingMs:()=>6000-(elapsedNow()-started)}):provider.read({signal:entry.abort.signal}));if(!current())throw Error('stale-scope-refresh');const contextReceipt=profile.browserRequestContext===true?await contextObserver?.verify(frame,{signal:entry.abort.signal}):null;return {identity,contextReceipt};
   }),aborted]),{timeoutMs:6000,now:elapsedNow,schedule,cancel}).then(({identity,contextReceipt})=>{
    if(!current()||entry.contextReceipt&&contextReceipt!==entry.contextReceipt)throw Error('stale-scope-refresh');
    const {time,expiry,scope,principalKey}=inspectIdentity(identity,started,contextReceipt);

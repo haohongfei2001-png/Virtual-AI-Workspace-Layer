@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round284）
+## 最新正式检查点（2026-10-16，原本地目录，Round285）
+
+生产隔离认证回退已实际接入worker/service/content：仅transport失败触发，一次文档challenge、真实runtime sender与前后epoch校验；最小主体/roster仍须独立C2/C3。完整6秒覆盖前置浏览器校验与主备读取；修复续期transport binding时序、挑战长期容量及无效UTF8误分类。凭证仅短期隔离闭包，打包README明确边界。
+
+完整Node **5608/5608 PASS**；最终真实headless MV3在worker请求实际断网后，isolated session/accounts各一次，原生聊天/双surface/草稿/返回 **PASS**。证据见[Round285](evidence/round285/README.md)。metadata/ACK仍worker-only，不放宽来源证明；真实G/U、备用隐私全矩阵、冷启动/100k/完整81仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round284）
 
 新增生产包SYS07窄隐私旅程：真实已认证metadata故障后，等待唯一返回触发的校准请求明确失败终态，再扫八表38原始记录、content/worker与两个既有UI消息及DOM，凭证/正文/草稿零命中；56公开WAR成功、3私有资源拒绝，外域隔离阻断。最终真实Chrome PASS，仍PARTIAL_MAIN_AUTH_METADATA_FAILURE；首轮源码变化/selector失败及中间弱证据均保留，见[Round284](evidence/round284/README.md)。
 

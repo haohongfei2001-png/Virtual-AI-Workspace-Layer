@@ -1,3 +1,4 @@
+import {createIsolatedSessionOwner} from './isolated-session-owner.mjs';
 import {createHostEntryCalibration} from './host-entry-calibration.mjs';
 import {createHostIngestionPassOwner} from './host-ingestion-pass-owner.mjs';
 import {createHostOldSendTerminal} from './host-old-send-terminal.mjs';
@@ -30,9 +31,24 @@ import {createScopeAuthority} from './scope-authority.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Zero-seed identity composition. Existing repository/broker owners remain unchanged. */
-export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,contextObserver=null,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,firstSendOrigin=null,oldSendTerminalOrigin=null,readBudget=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,navigationURLPolicy=null,candidateBridge=null,dispatchCurrent=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,contextObserver=null,isolatedIdentityDispatch=null,identityOrigin=null,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,firstSendOrigin=null,oldSendTerminalOrigin=null,readBudget=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,navigationURLPolicy=null,candidateBridge=null,dispatchCurrent=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const handshake=createHostDocumentHandshake({extensionId,getFrame,allowedURL,now,makeId,elapsedNow,schedule,cancel});
- const authority=createScopeAuthority({provider,profile,contextObserver,allowedURL,now,makeId,elapsedNow,schedule,cancel});
+ const identityOwner=isolatedIdentityDispatch?createIsolatedSessionOwner({extensionId,handshake,getFrame,dispatch:isolatedIdentityDispatch,origin:identityOrigin,now,makeId,elapsedNow,schedule,cancel}):null;
+ const readIdentity=identityOwner?async(frame,attempt)=>{
+  try{return await provider.read({signal:attempt.signal});}
+  catch(error){
+   if(error?.message!=='session-transport-failed'||!serviceActive||!attempt.isCurrent()||attempt.signal.aborted)throw error;
+   const binding=handshake.captureDeparture({tabId:frame.tabId,documentId:frame.documentId});
+   const producer=binding&&sequences.get(binding.producerToken);
+   // Authentication shares the outer RPC budget, including browser checks that
+   // ran before ScopeAuthority started. No fallback receives a fresh deadline.
+   const parents=[...refreshAttempts].filter(p=>p.active&&!p.abort.signal.aborted&&p.producer===producer&&p.frame?.documentId===frame.documentId&&p.frame?.tabId===frame.tabId&&p.frame?.actualURL===frame.actualURL);
+   const remainingMs=parents.length?Math.min(attempt.remainingMs(),...parents.map(p=>6000-(elapsedNow()-p.started))):0;
+   if(!binding||binding.url!==frame.actualURL||!producer||producer.denied||!handshake.isBound(producer.binding,producer.sender)||!Number.isFinite(remainingMs)||remainingMs<=0)throw Error('isolated-session-unavailable');
+   return identityOwner.read({frame,binding,sender:producer.sender,authorityEpoch:attempt.authorityEpoch,signal:attempt.signal,isCurrent:()=>serviceActive&&attempt.isCurrent()&&sequences.get(binding.producerToken)===producer&&!producer.denied&&handshake.isBound(producer.binding,producer.sender),remainingMs});
+  }
+ }:null;
+ const authority=createScopeAuthority({provider,profile,readIdentity,contextObserver,allowedURL,now,makeId,elapsedNow,schedule,cancel});
  const asFrame=(doc,sender)=>({tabId:doc.tabId,frameId:0,documentId:doc.documentId,parentDocumentId:null,actualURL:doc.url,documentLifecycle:'active',incognito:sender.tab?.incognito===true});
 
  const ingestionPasses=surfaceProfiles?createHostIngestionPassOwner({handshake,authority,getFrame,profiles:surfaceProfiles,now,elapsedNow,schedule,cancel}):null;
@@ -70,6 +86,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(message?.type==='HOST_OLD_SEND_OPERATION')return {ok:oldSendTerminal?await oldSendTerminal.intent(message,sender):false};
   if(message?.type==='HOST_FIRST_SEND_INTENT')return firstSend?firstSend.intent(message,sender):{ok:false};
   if(!serviceActive)return {ok:false,reason:'host-service-stopped'};
+  if(message?.type==='HOST_IDENTITY_RESULT')return identityOwner?identityOwner.handle(message,sender):{ok:false};
   if(message?.type==='HOST_INGESTION_PASS')return ingestionPasses?ingestionPasses.handle(message,sender):{ok:false};
   if(message?.type==='HOST_NATIVE_AUTHORIZE'){
    if((!candidates&&!currentNavigation)||!exactHostRecord(message,['v','type','documentToken','producerToken','routeEpoch','command'])||message.v!==1||!await handshake.verify(message,sender))return {ok:false};
@@ -156,7 +173,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  }
  function invalidate({tabId,frameId=0,documentId,firstSendNavigation=null,preserveViewDocumentId=null}={}){oldSendTerminal?.invalidateTab(tabId);if(firstSendNavigation)firstSend?.navigate({tabId,...firstSendNavigation});else firstSend?.invalidateTab(tabId);broker.invalidate({tabId,frameId});if(documentId){ingestionPasses?.invalidateDocument(documentId);observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{ingestionPasses?.invalidateTab(tabId);observations?.invalidateTab(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId,{preserveDocumentId:preserveViewDocumentId});}}
  function tabClosed(tabId){ingestionPasses?.invalidateTab(tabId);oldSendTerminal?.invalidateTab(tabId);firstSend?.invalidateTab(tabId);observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
- function stop(){if(!serviceActive)return;serviceActive=false;entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
+ function stop(){if(!serviceActive)return;serviceActive=false;identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
  // Internal worker composition only; no page RPC exposes metadata or accepts proof IDs.
  const readCurrentMetadata=proofId=>currentMetadata?currentMetadata.read(proofId):Promise.reject(Error('current-metadata-unavailable'));
  return Object.freeze({oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});

@@ -1,3 +1,4 @@
+import {readSessionJSON,sessionCredentials,sessionContexts} from '../host/session-identity.mjs';
 import {validateHistoricalSendProfile,extractHistoricalSends} from './historical-send-profile.mjs';
 import {digest} from '../data/hash.mjs';
 import {parseConversationMetadata} from '../host/conversation-metadata.mjs';
@@ -26,28 +27,17 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
   const json=async(path,token,{raw=false,contextId=null}={})=>{
    check();if(current&&readBudget){const reservation=await readBudget.reserve({principalKey:current.expectedPrincipalKey,contextKey:current.expectedContextKey,sourceDomain:origin,attemptKey:path==='/api/auth/session'?'conversation:'+current.conversationId:null,windowStartedAt:budgetWindow,signal:combined});budgetWindow=reservation.windowStartedAt;check();}
    const target=origin+path,response=await fetch(target,{method:'GET',credentials:'include',cache:'no-store',redirect:'error',signal:combined,headers:{Accept:'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(contextId&&contextHeader?{'ChatGPT-Account-ID':contextId}:{})}});check();
-   if(response.status===401||response.status===403)throw Error('session-unauthorized');
-   if(response.status!==200||response.redirected||response.url!==target)throw Error('invalid-session-response');
-   if(!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')??''))throw Error('invalid-session-mime');
-   const limit=raw?8*1024*1024:path==='/api/auth/session'?256*1024:1024*1024,length=response.headers.get('content-length');if(length!==null&&(!/^\d+$/.test(length)||Number(length)>limit))throw Error('session-response-too-large');
-   if(!response.body?.getReader)throw Error('missing-session-body');
-   const reader=response.body.getReader(),decoder=new TextDecoder('utf-8',{fatal:true});let bytes=0,text='';
-   try{while(true){check();const chunk=await reader.read();check();if(chunk.done)break;if(!(chunk.value instanceof Uint8Array))throw Error('invalid-session-body');bytes+=chunk.value.byteLength;if(bytes>limit)throw Error('session-response-too-large');text+=decoder.decode(chunk.value,{stream:true});}text+=decoder.decode();if(raw)return text;try{return JSON.parse(text);}catch{throw Error('invalid-session-json');}}finally{try{await reader.cancel();}catch{}reader.releaseLock();}
+   return readSessionJSON(response,{target,raw,limit:raw?8*1024*1024:path==='/api/auth/session'?256*1024:1024*1024,check});
   };
   let onAbort;const cancelled=new Promise((_,reject)=>{onAbort=()=>reject(Error('session-aborted'));combined.addEventListener('abort',onAbort,{once:true});if(combined.aborted)onAbort();});
   try{return await withRequestDeadline(()=>Promise.race([cancelled,(async()=>{
    const session=await json('/api/auth/session');
-   if(!record(session)||!record(session.user)||!identifier(session.user.id)||typeof session.expires!=='string'||instant(session.expires)===null||instant(session.expires)<=now()||typeof session.accessToken!=='string'||!session.accessToken||session.accessToken.length>16384||!/^[\x21-\x7e]+$/.test(session.accessToken))throw Error('invalid-session-schema');
-   const principalId=session.user.id,expiresAt=session.expires;let token=session.accessToken;delete session.accessToken;
+   const credentials=sessionCredentials(session,now()),{principalId,expiresAt}=credentials;let token=credentials.token;credentials.token=null;
    try{
    const principalKey='principal_'+digest(['chatgpt-principal-v1',principalId]);
    if(current&&principalKey!==current.expectedPrincipalKey)throw Error('conversation-principal-conflict');
    const accounts=await json('/backend-api/accounts/check/v4-2023-04-27',token);
-   if(!record(accounts)||!record(accounts.accounts)||Object.keys(accounts.accounts).length>1000)throw Error('invalid-accounts-schema');
-   const contexts=[],seen=new Set();for(const [key,value]of Object.entries(accounts.accounts)){
-    const account=value?.account;if(!identifier(key)||!record(account)||!identifier(account.account_id)||key!==account.account_id||typeof account.structure!=='string'||account.structure.length>128||seen.has(account.account_id))throw Error('invalid-accounts-schema');
-    seen.add(account.account_id);contexts.push({id:account.account_id,kind:structures.get(account.structure)??'unknown'});
-   }
+   const contexts=sessionContexts(accounts,structures);
    check();if(instant(expiresAt)<=now())throw Error('session-expired');
    if(current){
     const selected=contexts.filter(c=>c.kind!=='unknown'&&'context_'+digest(['chatgpt-context-v1',principalId,c.id])===current.expectedContextKey);

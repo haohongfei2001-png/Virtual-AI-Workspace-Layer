@@ -1,3 +1,4 @@
+import {createIsolatedSessionReader} from './isolated-session-reader.mjs';
 import {createCandidateUpgrade} from './candidate-upgrade.mjs';
 import {createContentCandidates} from './content-candidates.mjs';
 import {waitForSnippetCapture} from './snippet-capture-wait.mjs';
@@ -13,8 +14,9 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 
 /** Isolated content composition. The entry must restrict supported hosts; this
  * module never exposes its runtime bridge or authority on the page window. */
-export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,contextRecovery=false,surfaceFactory=createMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
+export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,identityReader=null,contextRecovery=false,surfaceFactory=createMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(!doc?.defaultView||new URL(origin).origin!==origin||doc.location.origin!==origin||!['http:','https:'].includes(new URL(origin).protocol)||!tokenOK(runtime?.id)||typeof runtime.sendMessage!=='function'||typeof runtime.getURL!=='function'||!runtime.onMessage?.addListener)throw Error('invalid-content-session');
+ const isolatedReader=identityReader??createIsolatedSessionReader({origin,now,elapsedNow});if(typeof isolatedReader?.read!=='function')throw Error('invalid-identity-reader');
  const upgrade=createCandidateUpgrade({now});let upgradeIdentity=null,upgradeDisplay=null,upgradeTimer=null;
  // Learned identities are document-local facts, never reusable handles or grants.
  let learned=[],learnedScope=null,learnedDocument=null;
@@ -67,7 +69,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  }
  async function start(){contextResumeAllowed=contextRecovery===true;clearLearned();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  async function begin(rebinding=false,initialMode='workspace'){
-  reset();const s={run:epoch,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
+  reset();const s={run:epoch,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
   let foregroundArmed=doc.visibilityState==='hidden',foregroundPending=false;
   s.blur=()=>{foregroundArmed=true;};
   s.focus=()=>{
@@ -81,6 +83,28 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   doc.addEventListener?.('visibilitychange',s.visibility);doc.defaultView.addEventListener('focus',s.focus);doc.defaultView.addEventListener('blur',s.blur);
   s.listener=(m,sender,reply)=>{
    if(current!==s||!enabled||sender?.id!==runtime.id)return;
+   if(m?.type==='HOST_IDENTITY_CHALLENGE'){
+    const wall=now(),started=elapsedNow(),until=Date.parse(m.expiresAt);
+    const fields=['type','challenge','providerId','documentToken','producerToken','routeEpoch','authorityEpoch','actualURL','expiresAt','timeoutMs'];
+    if(Number.isFinite(wall))for(const [challenge,expiry]of s.identityChallenges)if(expiry<=wall)s.identityChallenges.delete(challenge);
+    if(sender.tab!==undefined||doc.defaultView.top!==doc.defaultView||!exactHostRecord(m,fields)||!tokenOK(m.challenge)||m.providerId!=='chatgpt-session-v1'||!s.binding||!live(s)||!Number.isFinite(wall)||!Number.isFinite(started)||typeof m.expiresAt!=='string'||!Number.isFinite(until)||until<=wall||until>wall+6000||until>Date.parse(s.binding.expiresAt)||typeof m.timeoutMs!=='number'||!Number.isFinite(m.timeoutMs)||m.timeoutMs<=0||m.timeoutMs>6000||!Number.isSafeInteger(m.authorityEpoch)||m.authorityEpoch<1||m.authorityEpoch<s.identityAuthority||m.actualURL!==s.url||Object.entries(bindingFields(s.binding)).some(([k,v])=>m[k]!==v)||s.identityPending||s.identityChallenges.has(m.challenge)||s.identityChallenges.size>=128){reply({ok:false});return;}
+    const command={...m},binding=s.binding,budget=Math.min(m.timeoutMs,until-wall);let lastWall=wall,lastElapsed=started;
+    s.identityChallenges.set(command.challenge,until);s.identityPending=true;s.identityAuthority=command.authorityEpoch;
+    const valid=()=>{const time=now(),elapsed=elapsedNow();if(!live(s)||s.binding!==binding||s.identityAuthority!==command.authorityEpoch||!Number.isFinite(time)||!Number.isFinite(elapsed)||time<lastWall||elapsed<lastElapsed||time>=until||elapsed-started>=budget||Date.parse(binding.expiresAt)<=time)return false;lastWall=time;lastElapsed=elapsed;return true;};
+    // Dispatch acknowledgements deliberately contain no identity. Only the
+    // separately verified runtime result can settle the worker challenge.
+    reply({ok:true});
+    void (async()=>{
+     let identity,ok=false;
+     try{if(!valid())return;identity=await isolatedReader.read({signal:s.abort.signal,timeoutMs:budget});if(!valid())return;
+      const identifier=v=>typeof v==='string'&&v.length>0&&v.length<=256&&!/[\s\u0000-\u001f\u007f]/.test(v)&&!['__proto__','constructor','prototype'].includes(v);
+      const ids=new Set();ok=exactHostRecord(identity,['principalId','expiresAt','contexts','providerProfile','transport'])&&identifier(identity.principalId)&&typeof identity.expiresAt==='string'&&Number.isFinite(Date.parse(identity.expiresAt))&&Date.parse(identity.expiresAt)>now()&&identity.providerProfile===command.providerId&&identity.transport==='isolated-fixed-fetch'&&Array.isArray(identity.contexts)&&identity.contexts.length<=256&&Reflect.ownKeys(identity.contexts).length===identity.contexts.length+1&&Reflect.ownKeys(identity.contexts).every(key=>key==='length'||typeof key==='string'&&/^(0|[1-9][0-9]*)$/.test(key)&&Number(key)<identity.contexts.length)&&identity.contexts.every(row=>{if(!exactHostRecord(row,['id','kind'])||!identifier(row.id)||ids.has(row.id)||!['personal','organization','unknown'].includes(row.kind))return false;ids.add(row.id);return true;});
+     }catch{/* Transport diagnostics and credentials never enter messages. */}
+     if(!valid())return;
+     const result={type:'HOST_IDENTITY_RESULT',challenge:command.challenge,...bindingFields(binding),authorityEpoch:command.authorityEpoch,ok,...(ok?{identity}:{})};
+     try{await runtime.sendMessage(result);}catch{/* Worker interruption has no automatic replay. */}
+    })().finally(()=>{s.identityPending=false;});return;
+   }
    if(exactHostRecord(m,['type'])&&m.type==='HOST_DOCUMENT_INVALIDATED'){rebind(s);return;}
    if(m?.type==='HOST_CANDIDATES'){
     const fields=m.phase==='list'?['type','documentToken','producerToken','routeEpoch','phase',...(Object.hasOwn(m,'offset')?['offset']:[])]:['type','documentToken','producerToken','routeEpoch','phase','candidate','actionId','uiGrantId','mountId','expiresAt',...(Object.hasOwn(m,'display')?['display']:[])];if(Object.hasOwn(m,'role'))fields.push('role');
@@ -194,7 +218,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     confirmParent:v=>rpc(s,{v:1,type:'HOST_UI_CONFIRM',...v,...bindingFields(s.binding)}),
     workspaceEntered:({mountId})=>{s.returned=true;s.returnFocusGuard=s.controller.intentGuard?.()??(()=>false);liveMigration(s);if(s.migration&&adapter.matchesCandidateIdentity?.(s.upgraded.identity,s.migration.handle)!==true)clearMigration(s);if(s.migration){s.migration.ready=true;if(s.migration.display.presentation.focused&&s.migration.focusAllowed)s.migration.focusAllowed=s.controller.focusFrame?.(s.migration.display.role)===true;}return rpc(s,{v:1,type:'HOST_UI_WORKSPACE_ENTERED',...bindingFields(s.binding),mountId});},
     revokeMount:({mountId})=>{if(s.binding)void withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_RELEASE',...bindingFields(s.binding),mountId}),{now:elapsedNow,schedule,cancel}).catch(()=>{});},
-    renewSession:async({handle,binding})=>{if(!bindingOK(binding,s.binding))throw Error('stale-content-binding');const started=elapsedNow();const renewed=await rpc(s,{v:1,type:'HOST_DOCUMENT_RENEW',clientId,seq:++seq,...bindingFields(binding)});if(renewed?.ok!==true||!bindingOK(renewed.binding,s.binding))throw Error('invalid-host-binding');const remaining=()=>{const budget=6000-(elapsedNow()-started);if(budget<=0)throw Error('request-timeout');return budget;};const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());if(authority?.state!=='verified'||authority.scopeKey!==s.scopeKey){s.recoveryDenied=true;throw Error('scope-not-verified');}const status=await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining());if(status?.ok===true)s.binding=Object.freeze({...renewed.binding});return {...status,binding:renewed.binding};}
+    renewSession:async({handle,binding})=>{if(!bindingOK(binding,s.binding))throw Error('stale-content-binding');const started=elapsedNow();const renewed=await rpc(s,{v:1,type:'HOST_DOCUMENT_RENEW',clientId,seq:++seq,...bindingFields(binding)});if(renewed?.ok!==true||!bindingOK(renewed.binding,s.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...renewed.binding});const remaining=()=>{const budget=6000-(elapsedNow()-started);if(budget<=0)throw Error('request-timeout');return budget;};const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());if(authority?.state!=='verified'||authority.scopeKey!==s.scopeKey){s.recoveryDenied=true;throw Error('scope-not-verified');}const status=await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining());return {...status,binding:renewed.binding};}
    };
    s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onTerminated:(reason,presentation)=>{
     // Intentional exit ends this document session, including late recovery callbacks.
