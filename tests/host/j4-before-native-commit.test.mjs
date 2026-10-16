@@ -62,3 +62,17 @@ test('database removed between enumeration and open: abort upgrade, close and re
 });
 test('blocked open rejects and closes a subsequent success handle',async()=>{const f=rawIDB({mode:'blocked'});await assert.rejects(readJ4NativeRawBrowser({indexedDB:f.indexedDB,expectedVersion:4}),/open-blocked/);await new Promise(r=>setImmediate(r));assert.equal(f.calls.closes,1);assert.deepEqual(f.calls.transactions,[]);});
 for(const [options,pattern]of [[{mode:'error'},/open-error/],[{version:5},/open-version-mismatch/],[{stores:['native_states']},/eight-stores-required/],[{txFailure:true},/snapshot-aborted/]])test('raw snapshot failure cleanup '+JSON.stringify(options),async()=>{const f=rawIDB(options);await assert.rejects(readJ4NativeRawBrowser({indexedDB:f.indexedDB,expectedVersion:4}),pattern);assert.equal(f.calls.closes,options.mode==='error'?0:1);});
+
+
+test('before-native mode explicitly excludes every other interruption, preparation and diagnostic mode',async()=>{
+ const {j4BeforeNativeCommitScenario,j4CodecScenario}=await import('./j4-package-journey.mjs');assert.equal(j4BeforeNativeCommitScenario({}),false);assert.equal(j4BeforeNativeCommitScenario({FREE_J4_BEFORE_NATIVE_COMMIT:'1'}),true);assert.equal(j4CodecScenario({}),null);
+ for(const key of ['FREE_J4_CODEC_ROUNDTRIP','FREE_J4_CODEC_BEFORE_EVIDENCE','FREE_J4_AFTER_EVIDENCE','FREE_J4_SCOPE_TRACE','FREE_J4_READ_BUDGET_TRACE','FREE_J4_LIFECYCLE_ORDER_TRACE','FREE_J4_NATURAL_ENTRY_RECOVERY','FREE_J4_CONTINUE_AFTER_NATURAL_ENTRY'])assert.throws(()=>j4BeforeNativeCommitScenario({FREE_J4_BEFORE_NATIVE_COMMIT:'1',[key]:'1'}),/exclusive-journey/);
+});
+test('integration keeps one mixed send, reads raw after confirmed stop and completes the original later journey',async()=>{
+ const joint=await readFile(new URL('./j4-joint-interruption.mjs',import.meta.url),'utf8'),runner=await readFile(new URL('./j4-package-journey.mjs',import.meta.url),'utf8');
+ assert.equal(joint.split("fill('J4 explicit native mixed send')").length-1,1);
+ const stopped=joint.indexOf("'worker-stopped');workerStopped=true"),raw=joint.indexOf('rawAfter=await readJ4NativeRawSnapshot'),rollback=joint.indexOf('rollback=assertJ4NativeCommitRollback'),reload=joint.indexOf("await a.reload();await a.locator('[data-message-id=",raw);
+ assert(stopped>0&&raw>stopped&&rollback>raw&&reload>rollback);
+ for(const token of ['if(beforeNativeCommit){uncommittedFacts=hit.facts','J4-recovered-native-operation-not-unique','stopped.pending.length,0','stopped.ref.nativeTitle,before.ref.nativeTitle','beforeNativeCommit||codecRoundTrip&&!afterEvidence','assert.deepEqual(await assets(team),teamAssets)'])assert(joint.includes(token),token);
+ assert(runner.includes("'j4-before-native-commit.mjs'"));assert(runner.includes('runJ4JointInterruption({beforeNativeCommit,'));assert(runner.indexOf('report.evidenceRecovery=await runJ4EvidenceRecovery')>runner.indexOf('await runJ4JointInterruption'));assert(runner.includes("await cdp.send('Extensions.uninstall',{id})"));
+});

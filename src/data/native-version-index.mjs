@@ -37,19 +37,33 @@ export function verifyNativeIndexPiece(record,root,kind,bucket){
  return indexPieceValidation.read(record,context,()=>validateIndexPiece(record,root,kind,bucket,pointer));
 }
 function validateIndexPiece(record,root,kind,bucket,pointer){
- const payload=nativeUnpack(record);exact(payload,['scopeKey','kind','bucket','revision','versions','ordinals']);
+ return validateIndexPayload(nativeUnpack(record),root,kind,bucket,pointer);
+}
+function validateIndexPayload(payload,root,kind,bucket,pointer,routingVerified=false){
+ exact(payload,['scopeKey','kind','bucket','revision','versions','ordinals']);
  if(payload.scopeKey!==root.scopeKey||payload.kind!==kind||payload.bucket!==bucket||payload.revision!==pointer.revision)throw Error('native-index-context-mismatch');
  const rows=payload.versions;if(!rows||typeof rows!=='object'||Array.isArray(rows))throw Error('invalid-native-index-rows');
  const keys=Object.keys(rows);if(keys.length!==pointer.count)throw Error('native-index-count-mismatch');
  const ordinals=payload.ordinals,seen=new Set();if(!Array.isArray(ordinals)||ordinals.length!==keys.length||Object.keys(ordinals).length!==keys.length)throw Error('invalid-native-index-order');
- for(let i=0;i<keys.length;i++){const key=keys[i],ordinal=ordinals[i];if(!Object.hasOwn(ordinals,i)||!Number.isSafeInteger(ordinal)||ordinal<0||ordinal>=maxCount||seen.has(ordinal))throw Error('invalid-native-index-order');seen.add(ordinal);if(nativeIndexBucket(key)!==bucket)throw Error('native-index-routing-mismatch');version(rows[key],pointer.revision);}
+ for(let i=0;i<keys.length;i++){const key=keys[i],ordinal=ordinals[i];if(!Object.hasOwn(ordinals,i)||!Number.isSafeInteger(ordinal)||ordinal<0||ordinal>=maxCount||seen.has(ordinal))throw Error('invalid-native-index-order');seen.add(ordinal);if(!routingVerified&&nativeIndexBucket(key)!==bucket)throw Error('native-index-routing-mismatch');version(rows[key],pointer.revision);}
  if(stable(payload).length>16*1024*1024)throw Error('native-record-too-large');return payload;
+}
+// Private constructor: old members came from verified pieces and every new key
+// was routed before grouping. Certify these newly checksummed bytes without
+// hashing their routes again; fresh/mutated storage reads keep the full validator.
+function makeIndexBucket(root,kind,bucket,versions,ordinals){
+ const keys=Object.keys(versions),pointer={revision:root.revision,count:keys.length};
+ root[kind][bucket]=pointer;
+ const record=nativeRecord(nativeIndexKey(root.scopeKey,kind,bucket,root.revision),{scopeKey:root.scopeKey,kind,bucket,revision:root.revision,versions,ordinals:keys.map(key=>ordinals[key])});
+ const context=JSON.stringify([root.scopeKey,kind,bucket,pointer.revision,pointer.count]);
+ indexPieceValidation.read(record,context,()=>validateIndexPayload(record.payload,root,kind,bucket,pointer,true));
+ return record;
 }
 /** Pure migration builder. The owner must publish all pieces and root atomically. */
 export function buildNativeVersionIndex(manifest,scope){
  validateNativeManifest(manifest,scope);const root={...manifest,format:NATIVE_INDEX_FORMAT,projects:{},refs:{}},records=[];
  for(const kind of kinds){const groups=new Map();let ordinal=0;for(const key of Object.keys(manifest[kind])){const bucket=nativeIndexBucket(key);if(!groups.has(bucket))groups.set(bucket,{versions:{},ordinals:{}});groups.get(bucket).versions[key]=manifest[kind][key];groups.get(bucket).ordinals[key]=ordinal++;}
-  for(const [bucket,{versions,ordinals}] of groups){root[kind][bucket]={revision:root.revision,count:Object.keys(versions).length};const payload={scopeKey:root.scopeKey,kind,bucket,revision:root.revision,versions,ordinals:Object.keys(versions).map(key=>ordinals[key])};records.push(nativeRecord(nativeIndexKey(root.scopeKey,kind,bucket,root.revision),payload));}
+  for(const [bucket,{versions,ordinals}] of groups)records.push(makeIndexBucket(root,kind,bucket,versions,ordinals));
  }
  validateNativeIndexRoot(root,scope);return {root,records};
 }
@@ -82,12 +96,14 @@ export function updateNativeVersionIndex(root,scope,revision,updates,records){
    if(rows[key]!==revision)throw Error('invalid-native-index-update-version');const bucket=nativeIndexBucket(key);
    if(!groups.has(bucket)){
     const pointer=root[kind][bucket];let versions={},ordinals={};
-    if(pointer){const physicalKey=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision),piece=verifyNativeIndexPiece(byKey.get(physicalKey),root,kind,bucket);versions={...piece.versions};ordinals=Object.fromEntries(Object.keys(piece.versions).map((key,i)=>[key,piece.ordinals[i]]));consumed.add(physicalKey);}
+    // Consume only the exact getter-free snapshot that passed byte validation.
+    if(pointer){const physicalKey=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision),piece=verifyNativeIndexPiece(structuredClone(byKey.get(physicalKey)),root,kind,bucket);versions={...piece.versions};ordinals=Object.fromEntries(Object.keys(piece.versions).map((key,i)=>[key,piece.ordinals[i]]));consumed.add(physicalKey);}
     groups.set(bucket,{versions,ordinals});
    }
    const group=groups.get(bucket);if(!Object.hasOwn(group.versions,key))group.ordinals[key]=nextOrdinal++;group.versions[key]=revision;
   }
-  for(const [bucket,{versions,ordinals}] of groups){next[kind][bucket]={revision,count:Object.keys(versions).length};written.push(nativeRecord(nativeIndexKey(root.scopeKey,kind,bucket,revision),{scopeKey:root.scopeKey,kind,bucket,revision,versions,ordinals:Object.keys(versions).map(key=>ordinals[key])}));}
+  if(nextOrdinal>maxCount)throw Error('native-index-capacity');
+  for(const [bucket,{versions,ordinals}] of groups)written.push(makeIndexBucket(next,kind,bucket,versions,ordinals));
  }
  if(consumed.size!==byKey.size)throw Error('unexpected-native-index-record');validateNativeIndexRoot(next,scope);return {root:next,records:written};
 }

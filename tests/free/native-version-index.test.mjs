@@ -28,3 +28,8 @@ test('empty inventories roundtrip without creating phantom buckets or membership
 
 test('warm index validation rechecks all bytes even with unchanged checksum and physical identity',()=>{const b=buildNativeVersionIndex(manifest(),scope),r=b.records.find(r=>r.payload.kind==='refs'),bucket=r.payload.bucket;verifyNativeIndexPiece(r,b.root,'refs',bucket);const changed=structuredClone(r);changed.payload.versions[Object.keys(changed.payload.versions)[0]]=99;assert.throws(()=>verifyNativeIndexPiece(changed,b.root,'refs',bucket));const fresh=structuredClone(r);assert.equal(verifyNativeIndexPiece(fresh,b.root,'refs',bucket),fresh.payload,'cache returns current read, never retained facts');});
 test('warm index validation cannot reuse a different directory revision or scope',()=>{const b=buildNativeVersionIndex(manifest(),scope),r=b.records.find(r=>r.payload.kind==='refs'),bucket=r.payload.bucket;verifyNativeIndexPiece(r,b.root,'refs',bucket);const changed=structuredClone(b.root);changed.refs[bucket].revision++;assert.throws(()=>verifyNativeIndexPiece(r,changed,'refs',bucket));assert.throws(()=>verifyNativeIndexPiece(r,{...b.root,scopeKey:'different'},'refs',bucket));});
+test('100001st reference preserves the capacity error before certifying new ordinals',()=>{
+ const built=buildNativeVersionIndex(manifest(100000),scope),updates={projects:{},refs:{overflow:2}},before=structuredClone(built.root);
+ assert.throws(()=>updateNativeVersionIndex(built.root,scope,2,updates,touched(built.root,built.records,updates)),{message:'native-index-capacity'});
+ assert.deepEqual(built.root,before);
+});

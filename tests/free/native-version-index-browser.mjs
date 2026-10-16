@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 const files=['src/data/native-version-index.mjs','src/data/native-partitions.mjs','src/data/hash.mjs','src/data/schema.mjs'];
 const hashes=async()=>Object.fromEntries(await Promise.all(files.map(async f=>[f,createHash('sha256').update(await readFile(f)).digest('hex')]))),sourceHashes=await hashes();
 const server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
-try{browser=await chromium.launch({headless:true});const page=await browser.newPage();await page.goto(`http://127.0.0.1:${server.address().port}/hf/A/c/T0?mode=native`);
+try{browser=await chromium.launch({headless:true,...(process.env.FREE_CHROME_EXECUTABLE?{executablePath:process.env.FREE_CHROME_EXECUTABLE}:{})});const page=await browser.newPage();await page.goto(`http://127.0.0.1:${server.address().port}/hf/A/c/T0?mode=native`);
 const result=await page.evaluate(async()=>{
  const {ScopeRepository}=await import('/src/b1/scope-repository.mjs'),{scopeOf}=await import('/simulator/data.mjs'),{emptyNativeFacts}=await import('/src/data/native-facts.mjs'),{nativeRecord,nativeUnpack,NATIVE_PARTITION_FORMAT}=await import('/src/data/native-partitions.mjs'),index=await import('/src/data/native-version-index.mjs');
  const scope=scopeOf('A'),scopeKey=emptyNativeFacts(scope).scopeKey,base=new ScopeRepository({indexedDB,databaseName:'index-primitive-synthetic'}),db=await base.open(),checks=[];

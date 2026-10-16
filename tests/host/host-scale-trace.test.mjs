@@ -39,7 +39,7 @@ test('return trace stays opt-in and exits before admitted-scale measurement with
  const guard=s.split('\n').find(line=>line.includes("throw Error('diagnostic-progress-run-cannot-produce-scale-timing')"));
  assert(initial&&guard);assert(s.indexOf(initial)<s.indexOf("report.phase='native-tail-ingestion'"));assert(s.indexOf(guard)>s.indexOf("report.phase='return-workspace-local-search'"));assert(s.indexOf(guard)<s.indexOf('report.measurement=await measureAtAdmittedScale'));
  for(const through of [false,true]){
-  const report={},context=vm.createContext({traceEnabled:true,traceThroughReturn:through,report,process:{env:{}}});
+  const report={},context=vm.createContext({cpuProfileEnabled:false,traceEnabled:true,traceThroughReturn:through,report,process:{env:{}}});
   if(!through)assert.throws(()=>vm.runInContext(initial,context),/diagnostic-initial-ingestion-complete/);
   else {vm.runInContext(initial,context);assert.equal(report.measurement,undefined);assert.throws(()=>vm.runInContext(guard,context),/diagnostic-progress-run-cannot-produce-scale-timing/);}
   assert.equal(report.measurement.samples,null);assert.equal(report.measurement.acceptance,'NOT_ESTABLISHED');
