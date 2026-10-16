@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round302）
+## 最新正式检查点（2026-10-16，原本地目录，Round303）
+
+修复已有真实C2 receipt/challenge先于原生body渲染时的一次扫描拒绝：在原challenge有界期限内等待固定profile元数据，保留单等待者/重复不续期/替换与撤权清理，原scope总6秒预算仍独立生效。不新增网络、认证或原生动作。
+
+同一明确延迟body的隔离instrumented MV3 fixture由15秒无挂载FAIL转为正确聊天双surface PASS；原冷启动漏首请求问题仍保留。完整Node **5949/5949 PASS**，定向80/80与独立审查通过；全部原件见[Round303](evidence/round303/README.md)。9cb35c3已推送/API确认原Draft PR16/base。完整Free仍 **NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round302）
 
 修复初始双surface授权期间忽略原生输入的竞态：授权前保留原生意图，授权后保持原生阅读和唯一返回；预先打开弹层、shadow焦点、撤权/过期边界均覆盖。实际隔离MV3完成单Project 1000聊天精确成员核对、卡片5→17展开、原生目标新标签导航与唯一返回闭环，原标签document/editor不变。
 
