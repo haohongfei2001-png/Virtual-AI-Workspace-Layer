@@ -6,7 +6,7 @@ a82cac9已正常推送并确认原Draft PR16/base；本次fetch确认本地/远�
 
 最终完整Node **6302/6302 PASS**。隔离实际headless MV3故障诊断 **4/4 PASS**：文档/输入框/授权保留、续期不重读、workspace双击只一次重试、sidebar退出恢复原生；仅DIAGNOSTIC_ONLY，不算完整81验收。10k原用例成员展示通过，但全量审计8999条时UNSTABLE_REVISION，仍无有效性能样本。全部原失败/诊断及范围说明见[Round323](evidence/round323/README.md)。完整规模/81/profile/J1–J4/G/U仍开放，**Free NOT_RELEASE_READY**。
 
-087fca8已正常推送并API确认原Draft PR16/base。既有10k有界准备变体仍FAIL：25秒六次快照均10000refs，revision217→298，最终全量审计5499条时版本变化。未观测旧snapshot终态循环，继续区分合法扫描/成员入库与source witness重复刷新；不把快照或准备等待当性能通过。[Round324原件](evidence/round324/README.md)。
+087fca8已正常推送并API确认原Draft PR16/base。既有10k有界准备变体仍FAIL：25秒六次快照均10000refs，revision217→298，最终全量审计5499条时版本变化。未观测旧snapshot终态循环，继续区分合法扫描/成员入库与source witness重复刷新；不把快照或准备等待当性能通过。[Round324原件](evidence/round324/README.md)。 补充3/3纯DOM特征测试复现一次遮罩切换导致的有限重复发布，下一次同状态扫描不重发；仅adapter/surfaceBatch与Map观察，不冒称真实IDB或10k机制已认证。
 
 ## 前一正式检查点（2026-10-17，原本地目录，Round322）
 
