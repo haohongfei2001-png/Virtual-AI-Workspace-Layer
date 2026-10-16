@@ -2,11 +2,13 @@
 
 ## 最新正式检查点（2026-10-16，隔离云环境）
 
-原分支 / Draft PR16 最近已执行正式提交3eaac14（Round258）。CI54的Node5134/5134及12个guard通过；原J4连续23步、两个就绪后SYS05和兼容性切片通过。新增pending-repair S仍在第二次发送前的workspace前置失败，只有一次真实send且无pending，不构成Evidence退休产品缺陷。原cold20s本次通过，但独立插桩cold诊断仍失败，历史间歇问题未闭合。
+原分支 / Draft PR16 最近正式提交913753b（Round259），CI55已终态。Node5180/5180、零跳过及12个guard通过；原J4连续23步、两个就绪后SYS05、兼容性与native-IDB切片通过。原cold20s与独立插桩cold本次均通过，但历史间歇未闭合。
 
-三项真实owner/provider的轻量L研究已说明额外测试前提问题：同一Personal窗口3/6/9GET与1/2/3attempt可满足两次发送，固定30秒等待不是必要前提；但正常重绑或同worker的独立surface重扫均可推进原native witness，随后Evidence修复安全退休为source-changed，符合FINAL §8.4.4。它不能通过该probe额外要求的“witness始终不变且精确source-revoked”。该特定S和完整SYS02保持NOT_ESTABLISHED，停止针对该分支的试错；保留runner、严格oracle与CI53/54原FAIL，自动CI仅记录其明确NOT_RUN计划，不将其改名通过或修改产品。原此前有效门槛不删。
+新UI-06正式J3在原前五步之后失败：closed/open父页面AX的原生阅读/历史隐藏及恢复、composer保留、iframe入口正反断言通过；64次trusted Tab在530ms内反复遍历workspace/sidebar，未到原生composer。文档/draft/File保持，反向及关闭后键盘段尚未执行。iframe位于body尾，纯forward到前方composer涉及document末尾与browser chrome焦点回绕，存在自动化边界风险但根因未证，不能据此宣称产品已正确或已有确定trap。原FAIL保留，后续候选先完成原反向/关闭路径、原forward仍严格执行；不把局部证据升级完整UI06。
 
-10k单项目仍在tab0原30秒准备截止失败，末态诊断inventory9468/revision187，不构成完整接纳、Project成员或计时证据；未继续猜改性能或放宽门槛。上一1k完整1000 PROJECT、稳定revision104及单样本结果不能覆盖10k。详见[Round259](evidence/round259/README.md)；既有Evidence恢复23步S见[Round256](evidence/round256/README.md)。本轮新增现行UI-06正式J3真实键盘/父AX开闭候选，保原15步，产品与fixture不改；整合76条轻测试和独立7正/27负oracle通过，实际S仍待CI，不预设产品缺陷。完整81、SYS02/J4、SYS04/SYS05、UI、G/U与发布条件仍未完成。
+10k单项目本轮初始双tab准备25.902s/22.218s成功，真实tail导航和Project10000个DOM成员渲染后，精确tail成员观察到revision601；返回workspace仍在原30s截止失败。末态root inventory10000refs/1P/revision681只作诊断；尚未完整逐ID/projectId前后审计或计时，不能以tail见证或1k旧通过代替。无新猜测性性能改动。
+
+新增existing-source pending-repair probe的自动CI步骤明确NOT_RUN/零步骤，严格runner及CI53/54失败仍保存。真实owner L只支持正常surface改变后source-changed安全退休，不能证明其额外不变witness前提的S；完整SYS02/J4继续NOT_ESTABLISHED。详见[Round260](evidence/round260/README.md)、[Round259](evidence/round259/README.md)和既有Evidence恢复S[Round256](evidence/round256/README.md)。完整81、SYS02/J4、SYS04/SYS05、UI、G/U及发布条件均未完成。
 
 ## 历史正式检查点（Round219，保留原记录）
 
