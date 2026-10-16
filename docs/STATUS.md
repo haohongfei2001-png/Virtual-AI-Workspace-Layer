@@ -1,6 +1,10 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round275）
+## 最新正式检查点（2026-10-16，原本地目录，Round276）
+
+实际隔离旧Host codec读取拒绝通过：真实v2 pending及已提交evidence保留，同ID历史包读取拒绝且原记录/receipt/人工资产不变；恢复当前包digest及实际manifest通过。但再升级fresh界面grant在原期限内未建立，整段往返FAIL，SYS03不标完成。63项定向合同PASS，包含真实历史模块在evidence前后两种窗口的无写拒绝与当前幂等恢复。见[Round276](evidence/round276/README.md)。下一步直接定位同slot升级后的重新挂载/context receipt，不重做计划。完整Free仍**NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round275）
 
 J4新增真实worker退出窗口：evidence已提交、continuation未complete。精确断点与独立持久receipt核验后真实stop，fresh grant恢复只补complete；原ACK/receipt字节不变、无send重放，Pro资产与peer context保持。明确prepared-budget变体24/24已实施步骤PASS，仍PARTIAL_J4_NOT_ACCEPTED；默认无准备前置阶段因12/12预算未到期的两次FAIL、首次prepared断点未命中FAIL全部保留，未清零预算或延长原截止。
 
