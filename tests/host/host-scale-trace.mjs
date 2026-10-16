@@ -2,9 +2,9 @@ import {cp,readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 const hash=value=>createHash('sha256').update(value).digest('hex');
-export const TRACE_PATHS=['src/data/native-repository.mjs','src/runtime/host-view-service.mjs','src/host/chatgpt-adapter.mjs'];
-export const TRACE_KINDS=['native-start','native-root','native-commit','native-abort','view-begin','view-run','view-error','view-retry','view-terminal','view-stop','pass-start','pass-complete','pass-drained','pass-summary','migration-start','migration-end','window-reserve','window-expire','window-release','window-refused','view-version-restart'];
-const phaseFields=['elapsed','txMs','rootMs','saveMs','reduceMs','sharedMs','publishMs','queuedMs','scanCount','scanMs','scanMaxMs','splitCount','splitMs','splitMaxMs','emitCount','emitMs','emitMaxMs','accepted','duplicate','retry','rejected','samples'];
+export const TRACE_PATHS=['src/data/native-repository.mjs','src/runtime/host-view-service.mjs','src/host/chatgpt-adapter.mjs','src/runtime/free-view-owner.mjs'];
+export const TRACE_KINDS=['native-start','native-root','native-commit','native-abort','view-begin','view-run','view-error','view-retry','view-terminal','view-stop','pass-start','pass-complete','pass-drained','pass-summary','migration-start','migration-end','window-reserve','window-expire','window-release','window-refused','view-version-restart','replica-terminal'];
+const phaseFields=['headerMs','pagesMs','assembleMs','snapshotMs','indexMs','versionMs','elapsed','txMs','rootMs','saveMs','reduceMs','sharedMs','publishMs','queuedMs','scanCount','scanMs','scanMaxMs','splitCount','splitMs','splitMaxMs','emitCount','emitMs','emitMaxMs','accepted','duplicate','retry','rejected','samples'];
 const fields=['window','refusal','shared','nativeChanged','workspaceChanged','evidenceChanged','viewChanged','freshnessChanged','realmOrdinal','dropped','waitCount','waitFirstMs','waitLastMs','producer','generation','attempt','elapsed','revision','expectedRevision','refsCount','pages','fragments','candidates','busy','pending','ok','replayed','format','error',...phaseFields];
 // Ring retains latest events; dropped counts disclose missing early history.
 // Fixed schema; no arbitrary string fields, identifiers, URLs or thrown text.
@@ -94,6 +94,17 @@ export function instrumentScaleSource(path,source){
   add('terminal:false};pass=entry;', 'terminal:false};__scaleStats=null;__scaleStatsOwner=null;pass=entry;');
   add("function stop(){finishPass('cancel');", "function stop(){finishPass('cancel');__scaleStats=null;__scaleStatsOwner=null;");
   add('  if(entry.terminal)return;entry.terminal=true;', "  if(entry.terminal)return;entry.terminal=true;if(__scaleStats&&__scaleStatsOwner===entry){__scaleEmit('pass-summary',{...__scaleStats,ok:phase==='end'});__scaleStats=null;__scaleStatsOwner=null;}");
+ }else if(path===TRACE_PATHS[3]){
+  // Monotonic cumulative offsets, not CPU times. Null means a phase was not
+  // reached (including the compatible-snapshot path); one terminal per refresh.
+  add('  budget.begin();','  const __scaleReplica=__scaleOrdinal(),__scaleReplicaStart=__scaleNow(),__scaleReplicaStages={headerMs:null,pagesMs:null,assembleMs:null,snapshotMs:null,indexMs:null,versionMs:null};let __scaleReplicaOK=false;budget.begin();');
+  add('   const header=reply.header,plan=planFreeReplica(replica,header);','   __scaleReplicaStages.headerMs=__scaleDelta(__scaleReplicaStart);const header=reply.header,plan=planFreeReplica(replica,header);');
+  add('   check();let candidate=replica,snapshot,index=published?.index??cachedIndex;','   __scaleReplicaStages.pagesMs=__scaleDelta(__scaleReplicaStart);check();let candidate=replica,snapshot,index=published?.index??cachedIndex;');
+  add('candidate=await assembleFreeReplicaAsync(replica,header,pages,plan,valid);snapshot=freeNavigationSnapshot(candidate.snapshot);','candidate=await assembleFreeReplicaAsync(replica,header,pages,plan,valid);__scaleReplicaStages.assembleMs=__scaleDelta(__scaleReplicaStart);snapshot=freeNavigationSnapshot(candidate.snapshot);__scaleReplicaStages.snapshotMs=__scaleDelta(__scaleReplicaStart);');
+  add('index=(!plan.full&&index?await index.rebindCompatibleAsync(snapshot,snapshot.groups,valid):null)??await currentIndexAsync(snapshot,snapshot.groups,valid,!plan.full?index:null);','index=(!plan.full&&index?await index.rebindCompatibleAsync(snapshot,snapshot.groups,valid):null)??await currentIndexAsync(snapshot,snapshot.groups,valid,!plan.full?index:null);__scaleReplicaStages.indexMs=__scaleDelta(__scaleReplicaStart);');
+  add('   check();const version=await request(()=>readService.version(bound,options));check();','   if(__scaleReplicaStages.snapshotMs===null)__scaleReplicaStages.snapshotMs=__scaleDelta(__scaleReplicaStart);check();const version=await request(()=>readService.version(bound,options));check();__scaleReplicaStages.versionMs=__scaleDelta(__scaleReplicaStart);');
+  add('published=Object.freeze({snapshot,index});return published;','published=Object.freeze({snapshot,index});__scaleReplicaOK=true;return published;');
+  add('}).finally(()=>{budget.complete();','}).finally(()=>{__scaleEmit("replica-terminal",{...__scaleReplicaStages,producer:__scaleReplica,ok:__scaleReplicaOK,elapsed:__scaleDelta(__scaleReplicaStart)});budget.complete();');
  }else throw Error('unknown-scale-trace-source');
  return TRACE_RECORDER.replace('__SCALE_REALM__',path===TRACE_PATHS[2]?'content':'worker').replace('__SCALE_CONSOLE__',path===TRACE_PATHS[2]?'console.log("HOST_SCALE_TRACE "+encoded);':'')+out;
 }

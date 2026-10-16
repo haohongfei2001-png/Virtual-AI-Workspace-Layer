@@ -95,3 +95,37 @@ test('window diagnostic recorder and report enforce fixed numeric/boolean fields
  const row=c.__vaiwlScaleTrace.events[0],target={events:[],bytes:0,dropped:0};appendScaleTrace(target,row);assert.equal(target.events.length,1);assert.equal(row.window,3);assert.equal(row.generation,9);assert.equal(row.ok,false);assert(!JSON.stringify(target).includes('PRIVATE'));
  for(const patch of [{scope:'PRIVATE'},{window:'PRIVATE'},{generation:Infinity},{refusal:'used'}])appendScaleTrace(target,{...row,...patch});assert.equal(target.events.length,1);assert.equal(target.dropped,4);
 });
+
+async function replicaHarness(instrumented,{failure=null,holdHeader=false,fast=false}={}){
+ const source=await readFile(join(root,TRACE_PATHS[3]),'utf8'),out=instrumented?instrumentScaleSource(TRACE_PATHS[3],source):source;
+ let time=0,resolveHeader,refreshes=0;const calls=[],error=Error('PRIVATE_FAILURE'),snapshot={scope:'PRIVATE_SCOPE',groups:[]},index={};
+ const step=(name,ms,value)=>{calls.push(name);time+=ms;if(failure===name)throw error;return value;};
+ const header={revision:1,workspaceRevision:2,evidenceRevision:3,viewRevision:4,viewSession:{H:30,T:1,Z:'UTC',policyRevision:0}};
+ const c=vm.createContext({TextEncoder,Date,performance:{now:()=>time},AbortController,setTimeout,clearTimeout,Intl,
+  normalizedScope:()=>({key:'PRIVATE_SCOPE'}),instant:()=>1,
+  createReadRecoveryBudget:()=>({begin(){},check(){},complete(){}}),withRequestDeadline:work=>work(),
+  loadFreeHeader:async({load})=>load(),loadFreePages:async({load})=>{if(failure==='pages')return step('pages',20);return [await load({refs:['PRIVATE_REF']})];},
+  planFreeReplica:()=>({full:!fast||refreshes++===0,rebuild:false,projects:[],refs:[]}),freeReplicaRequests:()=>[{}],
+  assembleFreeReplicaAsync:async()=>step('assemble',30,{snapshot}),freeNavigationSnapshot:()=>step('snapshot',40,snapshot),
+  currentIndexAsync:async()=>step('index',50,index),rebindPreparedFreeSnapshot:()=>step('compatible',5,snapshot),
+  readService:{freeHeader:async()=>{step('header',10);if(holdHeader)await new Promise(r=>resolveHeader=r);return header;},freePage:async()=>step('pages',20,{scope:'PRIVATE_SCOPE'}),version:async()=>step('version',60,{nativeRevision:1,revision:2,evidenceRevision:3,viewRevision:4})}});
+ vm.runInContext(out.replace(/^import .*;\n/gm,'').replace('export function createFreeViewOwner','function createFreeViewOwner')+';globalThis.owner=createFreeViewOwner({readService,scope:{},timeZone:"UTC"});',c);
+ return {owner:c.owner,calls,error,index,snapshot,release:()=>resolveHeader?.(),events:()=>c.__vaiwlScaleTrace?.events??[]};
+}
+test('replica instrumentation preserves exact calls and published values; offsets are cumulative',async()=>{
+ for(const instrumented of [false,true]){const h=await replicaHarness(instrumented),result=await h.owner.refresh();assert.equal(result.snapshot,h.snapshot);assert.equal(result.index,h.index);assert.deepEqual(h.calls,['header','pages','assemble','snapshot','index','version']);if(instrumented){const [row]=h.events();assert.equal(h.events().length,1);assert.equal(row.kind,'replica-terminal');assert.equal(row.ok,true);for(const [key,value]of Object.entries({headerMs:10,pagesMs:30,assembleMs:60,snapshotMs:100,indexMs:150,versionMs:210,elapsed:210}))assert.equal(row[key],value);assert(!JSON.stringify(row).includes('PRIVATE'));}h.owner.stop();}
+});
+for(const failure of ['header','pages','assemble','snapshot','index','version'])test('replica '+failure+' error preserves identity and emits one incomplete terminal',async()=>{
+ for(const instrumented of [false,true]){const h=await replicaHarness(instrumented,{failure});await assert.rejects(h.owner.refresh(),e=>e===h.error);assert.equal(h.owner.current(),null);if(instrumented){assert.equal(h.events().length,1);const row=h.events()[0];assert.equal(row.ok,false);assert.equal(row[failure==='header'?'headerMs':failure+'Ms'],null);assert.equal(row.versionMs,null);assert(!JSON.stringify(row).includes('PRIVATE'));}h.owner.stop();}
+});
+test('cancelled replica emits once and late header cannot refill terminal stages or publish',async()=>{
+ for(const instrumented of [false,true]){const h=await replicaHarness(instrumented,{holdHeader:true}),promise=h.owner.refresh();await Promise.resolve();h.owner.stop();await assert.rejects(promise,/stale-free-view/);const before=JSON.stringify(h.events());h.release();for(let i=0;i<20;i++)await Promise.resolve();assert.equal(h.owner.current(),null);assert.deepEqual(h.calls,['header']);assert.equal(JSON.stringify(h.events()),before);if(instrumented){assert.equal(h.events().length,1);assert.equal(h.events()[0].headerMs,null);assert.equal(h.events()[0].ok,false);}}
+});
+test('compatible replica path leaves unused assemble/index stages null',async()=>{
+ const h=await replicaHarness(true,{fast:true});await h.owner.refresh();await h.owner.refresh();const row=h.events()[1];assert.equal(row.ok,true);assert.equal(row.assembleMs,null);assert.equal(row.indexMs,null);assert.equal(row.snapshotMs,35);assert.equal(row.versionMs,95);assert.equal(h.events().length,2);h.owner.stop();
+});
+test('replica trace strong anchors reject missing or duplicate phase and fixed schema rejects unsafe phase values',async()=>{
+ const source=await readFile(join(root,TRACE_PATHS[3]),'utf8'),anchor='   const header=reply.header,plan=planFreeReplica(replica,header);';
+ for(const replacement of ['',anchor+anchor])assert.throws(()=>instrumentScaleSource(TRACE_PATHS[3],source.replace(anchor,replacement)),/anchor-mismatch/);
+ const c=vm.createContext({TextEncoder,Date,performance});vm.runInContext(recorder+`;__scaleEmit('replica-terminal',{headerMs:null,pagesMs:2,assembleMs:Infinity,snapshotMs:-1,indexMs:'PRIVATE',versionMs:1e16,body:'PRIVATE',ok:false});`,c);const target={events:[],bytes:0,dropped:0};appendScaleTrace(target,c.__vaiwlScaleTrace.events[0]);assert.equal(target.events.length,1);assert.equal(target.events[0].headerMs,null);assert.equal(target.events[0].pagesMs,2);for(const key of ['assembleMs','snapshotMs','indexMs','versionMs','body'])assert.equal(target.events[0][key],undefined);for(const value of ['PRIVATE',Infinity,-1])appendScaleTrace(target,{kind:'replica-terminal',at:1,headerMs:value});assert.equal(target.dropped,3);
+});

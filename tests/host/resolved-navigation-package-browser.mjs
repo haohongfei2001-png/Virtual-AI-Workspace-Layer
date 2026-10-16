@@ -47,10 +47,32 @@ try{
   report.results.push({name:spec.entity+'-old-action-command-replay-rejected-after-route-rebind',status:'PASS',replay});context.off('page',onPage);
  }
  // Browser modifier behavior belongs to the real anchor, with no native delegation RPC.
- await page.close();page=await context.newPage();await page.goto(server.origin+'/');frame=await workspace(page);const link=frame.getByRole('link',{name:'Ordinary conversation',exact:true}).first();await link.waitFor({timeout:15000});await settle(frame);
+ await page.close();page=await context.newPage();await page.goto(server.origin+'/');frame=await workspace(page);const link=frame.getByRole('link',{name:'Ordinary conversation',exact:true}).first();await link.waitFor({timeout:15000});await settle(frame);await page.evaluate(()=>{globalThis.modifierOriginalDocument=document;});
  const start=report.trace.length,before=count();const popupPromise=context.waitForEvent('page',{timeout:10000});await link.click({modifiers:['Meta']});const popup=await popupPromise;await popup.waitForURL(server.origin+'/c/'+conversation,{timeout:15000});await page.waitForTimeout(150);
  assert.equal(report.trace.slice(start).filter(x=>x.phase==='request'&&['HOST_UI_DISPATCH_NATIVE','HOST_UI_DISPATCH_CURRENT'].includes(x.message.type)).length,0);assert.equal(count(),before);assert.deepEqual(await page.evaluate(()=>nativeClicks),[]);assert.equal(page.url(),server.origin+'/');
- report.results.push({name:'modifier-real-href-default-opens-new-tab-with-zero-delegation-and-original-native-clicks',status:'PASS',popupURL:popup.url()});await popup.close();
+ await popup.waitForFunction(id=>document.querySelector('#reading')?.dataset.conversationId===id&&document.querySelector('h1')?.textContent==='Ordinary conversation',conversation,{timeout:15000});
+ assert(await page.evaluate(()=>modifierOriginalDocument===document&&originalEditor===document.querySelector('textarea')&&originalEditor.value===''));
+ report.results.push({name:'modifier-real-href-default-opens-new-tab-with-zero-delegation-and-original-native-clicks',status:'PASS',popupURL:popup.url(),nativeBodyId:conversation});await popup.close();
+ // Keep each additional browser gesture independent, with an actual native draft.
+ // Playwright sends mouse/keyboard input; no synthetic dispatch or target rewrite.
+ for(const gesture of [{name:'shift',click:{modifiers:['Shift']}},{name:'middle',click:{button:'middle'}}]){
+  await page.close();page=await context.newPage();await page.goto(server.origin+'/');frame=await workspace(page);
+  const draft='MODIFIER_NATIVE_DRAFT_'+gesture.name;
+  await page.locator('textarea').fill(draft);await page.evaluate(()=>{globalThis.modifierOriginalDocument=document;});frame=await workspace(page);
+  const target=frame.getByRole('link',{name:'Ordinary conversation',exact:true}).first();await target.waitFor({timeout:15000});await settle(frame);
+  assert.equal(await target.getAttribute('href'),server.origin+'/c/'+conversation);assert.notEqual(await target.getAttribute('aria-disabled'),'true');
+  const start=report.trace.length,before=count(),pagesBefore=context.pages().length;let opened=0;const onPage=()=>opened++;context.on('page',onPage);
+  const [openedPage]=await Promise.all([context.waitForEvent('page',{timeout:10000}),target.click(gesture.click)]);
+  await openedPage.waitForURL(server.origin+'/c/'+conversation,{timeout:15000});
+  await openedPage.waitForFunction(id=>document.querySelector('#reading')?.dataset.conversationId===id&&document.querySelector('h1')?.textContent==='Ordinary conversation',conversation,{timeout:15000});await page.waitForTimeout(150);
+  assert.equal(opened,1);assert.equal(context.pages().length,pagesBefore+1);
+  assert.equal(report.trace.slice(start).filter(x=>x.phase==='request'&&['HOST_UI_DISPATCH_NATIVE','HOST_UI_DISPATCH_CURRENT'].includes(x.message.type)).length,0);
+  assert.equal(count(),before);assert.equal(page.url(),server.origin+'/');
+  const native=await page.evaluate(()=>({documentSame:modifierOriginalDocument===document,editorSame:originalEditor===document.querySelector('textarea'),draft:originalEditor.value,clicks:nativeClicks}));
+  assert.equal(native.documentSame,true);assert.equal(native.editorSame,true);assert.equal(native.draft,draft);assert.deepEqual(native.clicks,[]);
+  report.results.push({name:gesture.name+'-real-href-default-opens-target-once-with-zero-delegation-and-retained-native-draft',status:'PASS',popupURL:openedPage.url(),nativeBodyId:conversation,newPages:opened,native});
+  context.off('page',onPage);await openedPage.close();
+ }
  assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');report.browserVersion=context.browser().version();report.status='PASS';
 }catch(e){report.status='FAIL';report.error=e.stack;process.exitCode=1;report.frames=await Promise.all((page?.frames()??[]).map(async f=>{try{return {url:f.url(),state:await f.evaluate(()=>({text:document.body?.innerText,clicks:globalThis.nativeClicks,open:document.querySelectorAll('[data-va-owned]:popover-open').length}))};}catch(error){return {url:f.url(),error:String(error)};}}));if(page)try{report.failureScreenshot=join(dir,'failure.png');await page.screenshot({path:report.failureScreenshot});}catch{}}
 finally{await context?.close();await server.close();report.sourceChangedDuringRun=(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);report.scriptChangedDuringRun=hash(await readFile(scriptPath))!==scriptHash;if(report.sourceChangedDuringRun||report.scriptChangedDuringRun){report.status='FAIL';report.error=(report.error??'')+' source-or-script-changed';process.exitCode=1;}await writeFile(process.argv[2]??'/private/tmp/free-resolved-navigation-package.json',JSON.stringify(report,null,2)+'\n');}console.log(JSON.stringify({status:report.status,error:report.error,results:report.results}));

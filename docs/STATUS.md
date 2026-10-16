@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round307）
+## 最新正式检查点（2026-10-16，原本地目录，Round308）
+
+补齐UI-03真实Shift/中键默认导航：正确目标URL/body/title、唯一新页面、零重复委托、原document/editor/草稿保持。实际隔离MV3导航 **7/7 PASS**，定向合同56/56；生产未改。测试包阶段计时新增37/37反例，通过固定schema/强anchor/语义等价验证。
+
+原10k诊断仍期限FAIL，保留尾段明确主要耗时在pages，尚不能归因具体仓库或放宽freshness。原件见[Round308](evidence/round308/README.md)。生产沿用5973PASS，不冒称新全套；03d8204普通push再次网络超时，本地保全。**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round307）
 
 8a8df62隐藏刷新修复后重跑原普通10k单Project：仍30秒成员期限FAIL，截止快照5865refs/rev170，不是完整成员验收或性能通过。源码/fixture/manifest稳定，隔离目录已清理，见[Round307](evidence/round307/README.md)。生产未再改变，沿用Round306完整5973PASS与真实双tab证据，不重复累计。
 
