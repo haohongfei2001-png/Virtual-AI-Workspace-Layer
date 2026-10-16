@@ -5,15 +5,15 @@ import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
 import {verifyHost} from '../../extension/package.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const path='src/runtime/host-view-service.mjs';
-export const READ_ERROR_ANCHOR='entry.owner.refresh().then(';
+export const READ_ERROR_ANCHOR='return await entry.owner.refresh(...args);';
 const recorder=`
 // DIAGNOSTIC_ONLY: first three attempts per real view owner fail at the refresh boundary.
 const __readErrorOwners=new WeakMap();let __readErrorOwnerSequence=0;globalThis.__vaiwlReadErrorTrace=[];
-const __readErrorRefresh=owner=>{let state=__readErrorOwners.get(owner);if(!state){state={id:++__readErrorOwnerSequence,attempt:0};__readErrorOwners.set(owner,state);}state.attempt++;const injected=state.attempt<=3;const row={kind:'DIAGNOSTIC_ONLY',owner:state.id,attempt:state.attempt,injected};if(globalThis.__vaiwlReadErrorTrace.length<128)globalThis.__vaiwlReadErrorTrace.push(row);console.log('READ_ERROR_ATTEMPT '+JSON.stringify(row));return injected?Promise.reject(Error('snapshot-revision-changed')):owner.refresh();};
+const __readErrorRefresh=(owner,args)=>{if(args.length)return owner.refresh(...args);let state=__readErrorOwners.get(owner);if(!state){state={id:++__readErrorOwnerSequence,attempt:0};__readErrorOwners.set(owner,state);}state.attempt++;const injected=state.attempt<=3;const row={kind:'DIAGNOSTIC_ONLY',owner:state.id,attempt:state.attempt,injected};if(globalThis.__vaiwlReadErrorTrace.length<128)globalThis.__vaiwlReadErrorTrace.push(row);console.log('READ_ERROR_ATTEMPT '+JSON.stringify(row));return injected?Promise.reject(Error('snapshot-revision-changed')):owner.refresh(...args);};
 `;
 export function instrumentReadErrorSource(source){
  if(typeof source!=='string'||source.includes('__readErrorRefresh')||source.split(READ_ERROR_ANCHOR).length!==2)throw Error('read-error-injection-anchor-mismatch');
- return recorder+source.replace(READ_ERROR_ANCHOR,'__readErrorRefresh(entry.owner).then(');
+ return recorder+source.replace(READ_ERROR_ANCHOR,'return await __readErrorRefresh(entry.owner,args);');
 }
 export async function createReadErrorPackage(source,destination){
  if(verifyHost(source).status!=='OFFLINE_HOST_RECONSTRUCTION')throw Error('read-error-offline-package-required');

@@ -31,7 +31,11 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
  const historyFor=enabled&&typeof provider.historyFor==='function'?provider.historyFor.bind(provider):null;
  const readCurrent=enabled?provider.readCurrentConversation.bind(provider):null;
  const acceptanceFor=enabled&&typeof provider.acceptanceFor==='function'?provider.acceptanceFor.bind(provider):null,readbacks=new WeakMap();
- let stopped=false,busy=null;
+ let stopped=false,busy=null,activeWork=0;
+ async function track(work){activeWork++;try{return await work();}finally{activeWork--;}}
+ // Owner cancellation and provider abort races can settle before their work.
+ function withCurrent(proofId,work){return track(()=>observations.withCurrent(proofId,context=>track(()=>work(context))));}
+ const isIdle=()=>!stopped&&busy===null&&activeWork===0;
  function read(proofId,options={}){return startRead(proofId,options,null);}
  function readCalibration(proofId,{isCurrent,signal}={}){
   if(typeof isCurrent!=='function'||!(signal instanceof AbortSignal))return Promise.reject(Error('invalid-calibration-reader'));
@@ -46,7 +50,7 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
   if(busy)return !calibration&&!busy.calibration&&busy.proofId===proofId&&busy.budgetWindow===budgetWindow?busy.promise:Promise.reject(Error('current-metadata-busy'));
   const attempt={proofId,budgetWindow,calibration,abort:new AbortController(),promise:null};busy=attempt;
   const check=()=>{if(stopped||busy!==attempt||attempt.abort.signal.aborted)throw Error('current-metadata-stopped');if(calibration&&(calibration.signal.aborted||calibration.isCurrent()!==true))throw Error('stale-calibration-entry');};
-  attempt.promise=Promise.resolve().then(()=>observations.withCurrent(proofId,async context=>{
+  attempt.promise=Promise.resolve().then(()=>withCurrent(proofId,async context=>{
    check();requireValue(context&&typeof context.guard==='function'&&context.signal&&id(context.conversationId)&&Number.isSafeInteger(context.bodyEpoch)&&context.bodyEpoch>=0&&denseList(context.messageIds,256)&&context.messageIds.every(id)&&new Set(context.messageIds).size===context.messageIds.length);
    const currentGuard=context.guard,currentSignal=calibration?AbortSignal.any([context.signal,calibration.signal,attempt.abort.signal]):context.signal;
    const guard=()=>{check();if(currentSignal.aborted||currentGuard()!==true)throw Error('stale-body-proof');};guard();
@@ -62,7 +66,7 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
     // the scope proof is not relabelled and ACK still requires private acceptance.
     const signal=AbortSignal.any([currentSignal,attempt.abort.signal]);
     let onAbort;const cancelled=new Promise((_,reject)=>{onAbort=()=>reject(Error('current-metadata-aborted'));signal.addEventListener('abort',onAbort,{once:true});if(signal.aborted)onAbort();});
-    let result;try{result=await Promise.race([readCurrent({conversationId,expectedPrincipalKey:principal,expectedContextKey:account,signal,...(budgetWindow===undefined?{}:{budgetWindow})}),cancelled]);}finally{signal.removeEventListener('abort',onAbort);}
+    let result;try{result=await Promise.race([track(()=>readCurrent({conversationId,expectedPrincipalKey:principal,expectedContextKey:account,signal,...(budgetWindow===undefined?{}:{budgetWindow})})),cancelled]);}finally{signal.removeEventListener('abort',onAbort);}
     guard();const checkedAt=now();requireValue(exactHostRecord(result,['principalKey','contextKey','expiresAt','providerProfile','transport','metadata'])&&result.principalKey===principal&&result.contextKey===account&&result.providerProfile===profile&&result.transport===transport&&instant(result.expiresAt)!==null&&Number.isFinite(checkedAt)&&instant(result.expiresAt)>checkedAt);
     metadata=reduceMetadata(result.metadata,conversationId,wanted);readExpiry=result.expiresAt;
     acceptance=acceptanceFor?.(result)??null;history=historyFor?.(result)??null;
@@ -82,7 +86,7 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
  function stop(){if(stopped)return;stopped=true;busy?.abort.abort();}
  async function withReadback(value,proofId,messageId,work){
   const saved=readbacks.get(value);if(stopped||!enabled||!saved||saved.proofId!==proofId||!id(messageId)||typeof work!=='function')throw Error('unavailable-send-readback');
-  return observations.withCurrent(proofId,async context=>{
+  return withCurrent(proofId,async context=>{
    const a=saved.acceptance;
    const guard=()=>{const at=now();if(stopped||context.documentToken!==saved.documentToken||context.producerToken!==saved.producerToken||context.routeEpoch!==saved.routeEpoch||context.scope?.key!==saved.scopeKey||context.signal?.aborted||context.guard?.()!==true||context.conversationId!==value.conversationId||context.bodyEpoch!==value.bodyEpoch||context.scope?.accountId!==a.principalKey||context.scope?.organizationId!==a.contextKey||context.providerProfile!==a.providerProfile||context.providerTransport!==saved.principalTransport||context.principalSource!==saved.principalSource||!['worker-fixed-fetch','isolated-fixed-fetch'].includes(saved.principalTransport)||a.transport!=='worker-fixed-fetch'||!Array.isArray(context.messageIds)||!context.messageIds.includes(messageId)||!Number.isFinite(at)||instant(a.expiresAt)<=at){readbacks.delete(value);throw Error('stale-send-readback');}};
    guard();const observed=value.metadata.messages.find(m=>m.messageId===messageId),message=a.messages.find(m=>m.messageId===messageId);
@@ -92,5 +96,5 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
    const result=await work({profile:a.profile,readback,context,guard});guard();return result;
   });
  }
- return Object.freeze({read,readCalibration,stop,withReadback});
+ return Object.freeze({isIdle,read,readCalibration,stop,withReadback});
 }

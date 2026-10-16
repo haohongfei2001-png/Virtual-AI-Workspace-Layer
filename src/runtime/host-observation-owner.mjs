@@ -10,7 +10,8 @@ import {digest} from '../data/hash.mjs';
 /** Privileged owner; the gate recognizes request object identity, never serialized labels. */
 export function createHostObservationOwner({handshake,authority,getFrame,profiles,onAccepted=null,foregroundReadPending=()=>false,onSendIntent=null,onNativeDelta=null,ackAdmission=null,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(!handshake?.verify||!handshake?.isBound||!handshake?.matchesFrame||!authority?.peek||!authority?.scopeFor||typeof getFrame!=='function'||!(profiles instanceof Map))throw Error('invalid-host-observation-owner');
- const admissions=new WeakMap(),producers=new Map(),failedBatches=new Map(),bodies=new Map(),reads=new Set();let busy=null,stopped=false,joint=null;
+ const admissions=new WeakMap(),producers=new Map(),failedBatches=new Map(),bodies=new Map(),reads=new Set();let busy=null,stopped=false,joint=null,runs=0;
+ async function track(work){runs++;try{return await work();}finally{runs--;}}
  function discardBody(key){const entry=bodies.get(key);if(!entry)return;bodies.delete(key);for(const read of reads)if(read.entry===entry){read.active=false;read.abort.abort();}}
  function gate(scope,request){const entry=admissions.get(request);return entry&&entry.scopeKey===scope.key&&entry.guard()?entry:null;}
  async function ingest(proposal,sender,repository){
@@ -18,7 +19,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
   if(stopped)return rejected('host-observation-stopped');
   if(busy)return {state:'retry-after',localSeq:proposal?.localSeq??0,delayMs:50};
   const attempt={active:true,abort:new AbortController(),started:elapsedNow()};busy=attempt;
-  try{return await withRequestDeadline(()=>run(proposal,sender,repository,attempt),{now:elapsedNow,schedule,cancel});}
+  try{return await withRequestDeadline(()=>track(()=>run(proposal,sender,repository,attempt)),{now:elapsedNow,schedule,cancel});}
   catch{return rejected('host-observation-timeout');}
   finally{attempt.active=false;attempt.abort.abort();if(busy===attempt)busy=null;}
  }
@@ -152,7 +153,8 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
   }catch{return rejected('invalid-host-observation');}
   finally{if(request)admissions.delete(request);if(newBatchProof&&!batchCommitted){failedBatches.set(newBatchProof.producerToken,newBatchProof);if(bodies.get(newBatchProof.producerToken)?.proofId===newBatchProof.proofId)discardBody(newBatchProof.producerToken);}}
  }
- async function commitAcknowledged({context,evidenceRequest,guard:ackGuard}){
+ const commitAcknowledged=input=>track(()=>commitAcknowledgedWork(input));
+ async function commitAcknowledgedWork({context,evidenceRequest,guard:ackGuard}){
   const turn=joint;if(!turn)return null;
   if(context.scope?.key!==turn.scope.key||context.producerToken!==turn.proposal.producerToken||context.documentToken!==turn.proposal.documentToken||context.routeEpoch!==turn.proposal.routeEpoch||context.conversationId!==turn.bodyEntry.claim.conversationId||context.bodyEpoch!==turn.bodyEntry.bodyEpoch)return null;
   const witness=ackAdmission?.(turn.scope,evidenceRequest);
@@ -188,7 +190,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    return principal?.transport===principalSource.transport&&principal?.providerProfile===principalSource.providerProfile&&authority.sourceFor?.(entry.frame)===principalSource.token;
   };
   const check=()=>{if(!guard())throw Error('stale-body-proof');};
-  try{return await withRequestDeadline(async()=>{
+  try{return await withRequestDeadline(()=>track(async()=>{
    if(!await handshake.verify(entry.proposal,entry.sender))throw Error('stale-body-proof');check();
    const actual=await getFrame({tabId:entry.frame.tabId,frameId:0});check();
    if(!handshake.matchesFrame(entry.proposal,entry.sender,actual)||actual.url!==entry.frame.actualURL)throw Error('stale-body-proof');
@@ -196,10 +198,10 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    principalSource=Object.freeze({transport:principal.transport,providerProfile:principal.providerProfile,token:authority.sourceFor?.(entry.frame)});check();
    const result=await work(Object.freeze({scope:Object.freeze({...entry.scope}),tabId:entry.frame.tabId,browserDocumentId:entry.frame.documentId,scopeGrantId:entry.grantId,scopeEpoch:entry.scopeEpoch,providerProfile:principal.providerProfile,providerTransport:principal.transport,principalSource:principalSource.token,documentToken:entry.proposal.documentToken,producerToken:entry.proposal.producerToken,routeEpoch:entry.proposal.routeEpoch,conversationId:entry.claim.conversationId,messageIds:Object.freeze([...entry.claim.messageIds]),bodyEpoch:entry.bodyEpoch,evidenceClass:'dom-observed',guard,signal:attempt.abort.signal}));
    if(!await handshake.verify(entry.proposal,entry.sender))throw Error('stale-body-proof');check();return result;
-  },{now:elapsedNow,schedule,cancel});}finally{attempt.active=false;attempt.abort.abort();reads.delete(attempt);}
+  }),{now:elapsedNow,schedule,cancel});}finally{attempt.active=false;attempt.abort.abort();reads.delete(attempt);}
  }
  function invalidateDocument(documentId){for(const [key,entry]of bodies)if(entry.frame.documentId===documentId)discardBody(key);}
  function invalidateTab(tabId){for(const [key,entry]of bodies)if(entry.frame.tabId===tabId)discardBody(key);}
  function stop(){stopped=true;busy&&(busy.active=false,busy.abort.abort());bodies.clear();producers.clear();failedBatches.clear();for(const attempt of reads){attempt.active=false;attempt.abort.abort();}reads.clear();}
- return Object.freeze({isNativeWritePending(scopeKey){try{return typeof scopeKey==='string'&&scopeKey.length>0&&!stopped&&busy?.active===true&&busy.nativeWriteScope===scopeKey&&busy.nativeWriteGuard?.()===true;}catch{return false;}},commitAcknowledged,isCurrentProof:proofId=>[...bodies.values()].some(entry=>entry.proofId===proofId&&entry.current()),isCurrentProducer:producerToken=>bodies.get(producerToken)?.current()===true,gate,ingest,withCurrent,currentProofForParent,invalidateDocument,invalidateTab,stop});
+ return Object.freeze({isIdle:()=>!stopped&&runs===0&&busy===null&&reads.size===0,isNativeWritePending(scopeKey){try{return typeof scopeKey==='string'&&scopeKey.length>0&&!stopped&&busy?.active===true&&busy.nativeWriteScope===scopeKey&&busy.nativeWriteGuard?.()===true;}catch{return false;}},commitAcknowledged,isCurrentProof:proofId=>[...bodies.values()].some(entry=>entry.proofId===proofId&&entry.current()),isCurrentProducer:producerToken=>bodies.get(producerToken)?.current()===true,gate,ingest,withCurrent,currentProofForParent,invalidateDocument,invalidateTab,stop});
 }

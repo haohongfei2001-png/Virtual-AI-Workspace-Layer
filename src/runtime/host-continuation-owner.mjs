@@ -5,7 +5,7 @@ const sourceFailures=new Set(['native-continuation-missing-source','native-conti
 /** One owner-authorized recovery step. Persisted admission is data, never authority. */
 export function createHostContinuationOwner({nativeRepository,evidenceRepository,profileFor=null}={}){
  if(!['listContinuations','markContinuationComplete','markContinuationNeedsRevalidation'].every(k=>typeof nativeRepository?.[k]==='function')||!['version','applyContinuation'].every(k=>typeof evidenceRepository?.[k]==='function')||(profileFor!==null&&typeof profileFor!=='function'))throw Error('invalid-host-continuation-owner');
- const admissions=new WeakMap(),cursors=new Map();let busy=null;
+ const admissions=new WeakMap(),cursors=new Map();let busy=null,runs=0;
  function admission(scope,request){const entry=admissions.get(request);return entry&&normalizedScope(scope)?.key===entry.scopeKey&&entry.guard()?entry:null;}
  async function drain({scope,guard,signal,profileId,profileVersion,verify=null}={}){
   if(busy)return {state:'busy'};
@@ -52,12 +52,13 @@ export function createHostContinuationOwner({nativeRepository,evidenceRepository
    }
   }
   try{
-   const work=run();
+   // Abort releases busy, but the underlying repository work may still run.
+   runs++;const work=run().finally(()=>{runs--;});
    if(!signal)return await work;
    const aborted=new Promise((_,reject)=>{abortListener=()=>{attempt.active=false;reject(Error('stale-continuation-authority'));};signal.addEventListener('abort',abortListener,{once:true});if(signal.aborted)abortListener();});
    return await Promise.race([work,aborted]);
   }catch(error){return {state:current()?'pending':'cancelled',reason:error?.message??'continuation-failed'};}
   finally{attempt.active=false;if(abortListener)signal.removeEventListener('abort',abortListener);if(busy===attempt)busy=null;}
  }
- return Object.freeze({admission,drain});
+ return Object.freeze({isIdle:()=>busy===null&&runs===0,admission,drain});
 }

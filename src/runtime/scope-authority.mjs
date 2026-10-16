@@ -4,7 +4,10 @@ import {normalizedScope,tokenOK} from '../b1/identity.mjs';
 /** Owner-only identity snapshots. The page cannot call the fixed provider or supply proofs. */
 export function createScopeAuthority({provider,profile,readIdentity=null,contextObserver=null,now=Date.now,makeId=()=>crypto.randomUUID(),proofTTL=60000,maxDocuments=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,allowedURL=value=>{try{const u=new URL(value);return u.origin==='https://chatgpt.com'&&!u.username&&!u.password;}catch{return false;}}}={}){
  if(readIdentity!==null&&typeof readIdentity!=='function'||typeof provider?.read!=='function'||!tokenOK(profile?.id)||typeof profile.singlePersonalDefault!=='boolean'||!Number.isInteger(proofTTL)||proofTTL<1000||proofTTL>300000||!Number.isInteger(maxDocuments)||maxDocuments<1||maxDocuments>512)throw Error('invalid-scope-authority');
- const states=new Map();let epoch=0;
+ const states=new Map();let epoch=0,identityRuns=0;
+ // Count the actual identity/context chain, not its abort/deadline race.
+ function identityWork(work){identityRuns++;return Promise.resolve().then(work).finally(()=>{identityRuns--;});}
+ const isIdle=()=>identityRuns===0&&![...states.values()].some(entry=>entry.pending||entry.rechecking);
  const valid=f=>f&&Number.isSafeInteger(f.tabId)&&f.tabId>=0&&f.frameId===0&&tokenOK(f.documentId)&&f.documentLifecycle==='active'&&f.incognito===false&&typeof f.actualURL==='string'&&allowedURL(f.actualURL);
  const key=f=>`${f.tabId}:${f.documentId}`;
  const unverified=reason=>({state:'unverified',reason});
@@ -44,7 +47,7 @@ export function createScopeAuthority({provider,profile,readIdentity=null,context
   states.set(k,entry);const cancelRefresh=()=>abort.abort();signal?.addEventListener('abort',cancelRefresh,{once:true});
   const current=()=>states.get(k)===entry&&!abort.signal.aborted;
   let onAbort;const aborted=new Promise((_,reject)=>{onAbort=()=>reject(Error('scope-refresh-aborted'));abort.signal.addEventListener('abort',onAbort,{once:true});});
-  const task=withRequestDeadline(()=>Promise.race([Promise.resolve().then(async()=>{const identity=await (readIdentity?readIdentity(entry.frame,{signal:abort.signal,isCurrent:current,authorityEpoch:entry.epoch,remainingMs:()=>6000-(elapsedNow()-entry.elapsedStarted)}):provider.read({signal:abort.signal}));if(!current())throw Error('stale-scope-refresh');const contextReceipt=profile.browserRequestContext===true?await contextObserver?.verify(entry.frame,{signal:abort.signal}):null;return {identity,contextReceipt};}),aborted]),{timeoutMs:6000,now:elapsedNow,schedule,cancel}).then(({identity,contextReceipt})=>{
+  const task=withRequestDeadline(()=>Promise.race([identityWork(async()=>{const identity=await (readIdentity?readIdentity(entry.frame,{signal:abort.signal,isCurrent:current,authorityEpoch:entry.epoch,remainingMs:()=>6000-(elapsedNow()-entry.elapsedStarted)}):provider.read({signal:abort.signal}));if(!current())throw Error('stale-scope-refresh');const contextReceipt=profile.browserRequestContext===true?await contextObserver?.verify(entry.frame,{signal:abort.signal}):null;return {identity,contextReceipt};}),aborted]),{timeoutMs:6000,now:elapsedNow,schedule,cancel}).then(({identity,contextReceipt})=>{
    if(contextReceipt&&contextObserver.isCurrent(entry.frame,contextReceipt)!==true)return unverified('context-receipt-stale');
    if(!current())return unverified('stale-scope-refresh');
    const {time,expiry,scope,principalKey}=inspectIdentity(identity,entry.elapsedStarted,contextReceipt);
@@ -72,7 +75,7 @@ export function createScopeAuthority({provider,profile,readIdentity=null,context
   const cancelRefresh=()=>{if(states.get(k)===entry)invalidate(frame.documentId);};
   signal?.addEventListener('abort',cancelRefresh,{once:true});
   let onAbort;const aborted=new Promise((_,reject)=>{onAbort=()=>reject(Error('scope-refresh-aborted'));entry.abort.signal.addEventListener('abort',onAbort,{once:true});});
-  const task=withRequestDeadline(()=>Promise.race([Promise.resolve().then(async()=>{
+  const task=withRequestDeadline(()=>Promise.race([identityWork(async()=>{
    if(!current())throw Error('stale-scope-refresh');const identity=await (readIdentity?readIdentity(entry.frame,{signal:entry.abort.signal,isCurrent:current,authorityEpoch:entry.epoch,remainingMs:()=>6000-(elapsedNow()-started)}):provider.read({signal:entry.abort.signal}));if(!current())throw Error('stale-scope-refresh');const contextReceipt=profile.browserRequestContext===true?await contextObserver?.verify(frame,{signal:entry.abort.signal}):null;return {identity,contextReceipt};
   }),aborted]),{timeoutMs:6000,now:elapsedNow,schedule,cancel}).then(({identity,contextReceipt})=>{
    if(!current()||entry.contextReceipt&&contextReceipt!==entry.contextReceipt)throw Error('stale-scope-refresh');
@@ -97,5 +100,5 @@ export function createScopeAuthority({provider,profile,readIdentity=null,context
  function scopeFor(frame){const result=peek(frame);return result.state==='verified'?states.get(key(frame)).scope:null;}
  function invalidateTab(tabId){for(const [k,entry]of states)if(entry.frame.tabId===tabId){entry.abort.abort();states.delete(k);}}
  function invalidateAll(){for(const entry of states.values())entry.abort?.abort();states.clear();}
- return Object.freeze({peek,refresh,revalidate,invalidate,invalidateTab,invalidateAll,scopeFor,sourceFor});
+ return Object.freeze({isIdle,peek,refresh,revalidate,invalidate,invalidateTab,invalidateAll,scopeFor,sourceFor});
 }

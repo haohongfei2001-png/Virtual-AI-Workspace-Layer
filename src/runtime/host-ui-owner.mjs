@@ -5,7 +5,8 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 /** UI transport is separate from the unchanged top-frame repository broker. */
 export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,getContexts=null,handshake,authority,now=Date.now,makeId=()=>crypto.randomUUID(),maxPending=128,maxPorts=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const grants=createUiGrants({extensionId,uiURL,uiURLs,getFrame,getContexts,peekScope:frame=>authority.peek(frame),now,makeId});
- let revocationEpoch=0;
+ let revocationEpoch=0,activeWork=0;
+ async function track(work){activeWork++;try{return await work();}finally{activeWork--;}}
  const backgroundHints=new Map();
  const pending=new Map(),registrations=new Map(),ports=new Map(),uiDocuments=new Map(),inFlight=new Set();
  if(!Number.isInteger(maxPorts)||maxPorts<1||maxPorts>512)throw Error('invalid-ui-port-capacity');
@@ -50,7 +51,8 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   await parent(mount.binding,{id:extensionId,tab:{id:mount.tabId,incognito:false},frameId:0,documentId:mount.documentId,documentLifecycle:'active',url:mount.url});
   if(registrations.get(mountId)!==mount)throw Error('ui-mount-revoked');
  }
- async function validate(args){
+ const validate=args=>track(()=>validateWork(args));
+ async function validateWork(args){
   const epoch=revocationEpoch,mount=registrations.get(args.mountId),sender=structuredClone(args.sender);
   await grants.validate({...args,sender});await checkDocument(args.mountId);
   if(epoch!==revocationEpoch||registrations.get(args.mountId)!==mount)throw Error('ui-authority-invalidated');
@@ -79,7 +81,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
    revokeDocument(sender.documentId);
   };
   let joined=null;
-  try{return await withRequestDeadline(async()=>{
+  try{return await withRequestDeadline(()=>track(async()=>{
    if(message.type==='HOST_UI_MOUNT'){
     if(!schema(message,[...bindingKeys,'mountId','regionEpoch']))throw Error('invalid-ui-mount');
     sender=await parent(message,sender);check();
@@ -165,7 +167,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
     revokeMount(message.mountId);return {ok:true};
    }
    return {ok:false,reason:'unsupported-ui-command'};
-  },{now:elapsedNow,schedule,cancel});}catch{return publicFailure();}
+  }),{now:elapsedNow,schedule,cancel});}catch{return publicFailure();}
   finally{attempt.active=false;inFlight.delete(attempt);if(joined&&pending.get(joined.nonce)===joined.entry)deliver(joined.nonce,null);}
  }
  function revokeDocument(id){
@@ -220,7 +222,8 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   return 0;
  }
  function notifyMount(id){const mount=registrations.get(id);if(!mount)return 0;const scope=authority.scopeFor({tabId:mount.tabId,frameId:0,documentId:mount.documentId,actualURL:mount.url,documentLifecycle:'active',incognito:false});return scope?notifyScope(scope.key,id):0;}
- async function withScope(args,work){
+ const withScope=(args,work)=>track(()=>withScopeWork(args,work));
+ async function withScopeWork(args,work){
   const sender=structuredClone(args.sender),grant=await validate({...args,sender}),mount=registrations.get(grant.mountId);
   if(!mount||typeof work!=='function')throw Error('ui-mount-revoked');
   const frame=Object.freeze({tabId:mount.tabId,frameId:0,documentId:mount.documentId,actualURL:mount.url,documentLifecycle:'active',incognito:false});
@@ -235,5 +238,5 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   const result=await work(Object.freeze({scope,parentFrame:frame,binding:mount.binding,scopeGrantId:grant.scopeGrantId,role:grant.role,isCurrent:current}));
   await validate({...args,sender});if(!current())throw Error('ui-scope-changed');return result;
  }
- return Object.freeze({handle,validate,withScope,notifyScope,notifyBackground,notifyMount,connectPort,revokeDocument,revokeMount,revokeTab,revokeAll});
+ return Object.freeze({isIdle:()=>activeWork===0&&inFlight.size===0&&pending.size===0,handle,validate,withScope,notifyScope,notifyBackground,notifyMount,connectPort,revokeDocument,revokeMount,revokeTab,revokeAll});
 }

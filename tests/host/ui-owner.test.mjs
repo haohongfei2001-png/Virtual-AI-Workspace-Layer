@@ -214,3 +214,15 @@ for(const patch of [{scopeKey:'other-key'},{id:'other-grant'},{scopeEpoch:2}])te
   assert.deepEqual(port.messages.at(-1),{type:'VAIWL_UI_SURFACE_STATE',revision:4,visible:true});
   assert.equal(port.messages.length,2);f.owner.revokeAll();
 });
+
+test('MOCK idle tracks underlying renewal after deadline and revocation',async()=>{
+ const f=fixture(),grant=await pair(f);assert.equal(f.owner.isIdle(),true);const unblock=f.block(),pending=f.renew(grant);await tick();assert.equal(f.owner.isIdle(),false);await f.advance(6000);assert.equal((await pending).ok,false);f.owner.revokeAll();assert.equal(f.owner.isIdle(),false);unblock();await tick();assert.equal(f.owner.isIdle(),true);
+});
+for(const fail of [false,true])test('MOCK idle retains scoped user work through revocation '+fail,async()=>{
+ const f=fixture(),grant=await pair(f);let release,entered=false;const gate=new Promise(r=>release=r);
+ const work=f.owner.withScope({sender:f.ui,grantId:grant.id,mountId:'mount'},async()=>{entered=true;await gate;if(fail)throw Error('late-work');return 1;});
+ const checked=assert.rejects(work);await tick();assert.equal(entered,true);assert.equal(f.owner.isIdle(),false);f.owner.revokeAll();assert.equal(f.owner.isIdle(),false);release();await checked;assert.equal(f.owner.isIdle(),true);
+});
+test('MOCK idle includes direct validation before it settles',async()=>{
+ const f=fixture(),grant=await pair(f),unblock=f.block(),work=f.owner.validate({sender:f.ui,grantId:grant.id,mountId:'mount'});assert.equal(f.owner.isIdle(),false);unblock();await work;assert.equal(f.owner.isIdle(),true);
+});

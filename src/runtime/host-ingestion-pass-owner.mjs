@@ -5,7 +5,8 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
  * establish completeness, or replace the reader's snapshot/CAS checks. */
 export function createHostIngestionPassOwner({handshake,authority,getFrame,profiles,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,maxProducers=128}={}){
  if(!handshake?.verify||!handshake?.isBound||!handshake?.matchesFrame||!authority?.peek||!authority?.scopeFor||typeof getFrame!=='function'||!(profiles instanceof Map)||!Number.isInteger(maxProducers)||maxProducers<1||maxProducers>128)throw Error('invalid-host-ingestion-owner');
- const producers=new Map(),requests=new Set();let stopped=false;
+ const producers=new Map(),requests=new Set();let stopped=false,runs=0;
+ async function track(work){runs++;try{return await work();}finally{runs--;}}
  function bound(entry){try{return !stopped&&handshake.isBound(entry.message,entry.sender);}catch{return false;}}
  function current(entry){
   try{
@@ -22,7 +23,7 @@ export function createHostIngestionPassOwner({handshake,authority,getFrame,profi
   if(stopped||!exactHostRecord(message,['v','type','documentToken','producerToken','routeEpoch','profileId','profileVersion','passSeq','phase'])||message.v!==1||message.type!=='HOST_INGESTION_PASS'||!['documentToken','producerToken','profileId'].every(key=>tokenOK(message[key]))||!Number.isSafeInteger(message.routeEpoch)||message.routeEpoch<1||!Number.isSafeInteger(message.profileVersion)||message.profileVersion<1||!Number.isSafeInteger(message.passSeq)||message.passSeq<1||!['start','end','cancel'].includes(message.phase)||requests.size>=maxProducers)return deny();
   const attempt={sender,active:true,started:elapsedNow(),time:now()};requests.add(attempt);
   const live=()=>!stopped&&attempt.active&&Number.isFinite(elapsedNow())&&elapsedNow()>=attempt.started&&elapsedNow()-attempt.started<6000&&Number.isFinite(now())&&now()>=attempt.time;
-  try{return await withRequestDeadline(async()=>{
+  try{return await withRequestDeadline(()=>track(async()=>{
    if(!await handshake.verify(message,sender)||!live())return deny();
    const actual=await getFrame({tabId:sender.tab.id,frameId:0});
    if(!live()||!handshake.matchesFrame(message,sender,actual)||!await handshake.verify(message,sender)||!live())return deny();
@@ -42,8 +43,8 @@ export function createHostIngestionPassOwner({handshake,authority,getFrame,profi
    const entry={message,sender,frame,profile,scopeKey:scope.key,grantId:resolution.grant.id,scopeEpoch:resolution.grant.scopeEpoch,startedTime:attempt.time,startedElapsed:attempt.started,lastTime:attempt.time,lastElapsed:attempt.started,terminal:message.phase!=='start'};
    producers.set(message.producerToken,entry);
    return {ok:message.phase!=='start'||current(entry)};
-  },{now:elapsedNow,schedule,cancel});}catch{return deny();}finally{attempt.active=false;requests.delete(attempt);}
+  }),{now:elapsedNow,schedule,cancel});}catch{return deny();}finally{attempt.active=false;requests.delete(attempt);}
  }
  function invalidate(predicate){for(const entry of producers.values())if(predicate(entry.frame))entry.terminal=true;for(const attempt of requests)if(predicate({tabId:attempt.sender.tab?.id,documentId:attempt.sender.documentId}))attempt.active=false;}
- return Object.freeze({handle,isPending(scopeKey){if(typeof scopeKey!=='string'||!scopeKey||stopped)return false;prune();let pending=false;for(const entry of producers.values())if(entry.scopeKey===scopeKey&&current(entry))pending=true;return pending;},invalidateDocument:documentId=>invalidate(frame=>frame.documentId===documentId),invalidateTab:tabId=>invalidate(frame=>frame.tabId===tabId),stop(){stopped=true;for(const request of requests)request.active=false;requests.clear();producers.clear();}});
+ return Object.freeze({isIdle:()=>!stopped&&runs===0&&requests.size===0&&![...producers.values()].some(entry=>!entry.terminal),handle,isPending(scopeKey){if(typeof scopeKey!=='string'||!scopeKey||stopped)return false;prune();let pending=false;for(const entry of producers.values())if(entry.scopeKey===scopeKey&&current(entry))pending=true;return pending;},invalidateDocument:documentId=>invalidate(frame=>frame.documentId===documentId),invalidateTab:tabId=>invalidate(frame=>frame.tabId===tabId),stop(){stopped=true;for(const request of requests)request.active=false;requests.clear();producers.clear();}});
 }

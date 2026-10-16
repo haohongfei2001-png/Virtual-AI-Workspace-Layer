@@ -125,7 +125,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   const revokeFocus=()=>{if(!focus||!attempt.frame||!handshake.isBound(message,sender))return;const grant=authority.peek(attempt.frame).grant;if(grant&&grant.id!==attempt.scopeGrantId)return;ingestionPasses?.invalidateDocument(attempt.frame.documentId);observations?.invalidateDocument(attempt.frame.documentId);ui?.revokeDocument(attempt.frame.documentId);views?.revokeDocument(attempt.frame.documentId);};
   const denyFocus=()=>{if(focus&&attempt.producer&&sequences.get(message.producerToken)===attempt.producer)attempt.producer.denied=true;};
   const check=()=>{if(!serviceActive||!attempt.active||attempt.producer?.denied||elapsedNow()-attempt.started>=6000)throw Error('host-refresh-expired');};
-  try{const result=await withRequestDeadline(async()=>{
+  try{const result=await withRequestDeadline(()=>track('background',async()=>{
   if(!await handshake.verify(message,sender))return {ok:false,reason:'invalid-host-document'};check();
   const prior=sequences.get(message.producerToken);if(prior?.denied)return {ok:false,reason:'scope-not-verified'};if(focus&&!prior?.verified)return {ok:false,reason:'scope-not-verified'};if(prior&&message.seq<=prior.seq)return {ok:false,reason:'replayed-sequence'};
   const time=now();for(const [key,value]of sequences)if(value.denied?!handshake.isBound(value.binding,value.sender):value.until<=time)sequences.delete(key);
@@ -157,7 +157,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
     // Validated durable data selects among current trusted profiles; it never
     // creates authority. Select before fresh observations advance source epochs.
     const cancelled=new Promise((_,reject)=>{abortSelection=()=>reject(Error('stale-continuation-authority'));drainAbort.signal.addEventListener('abort',abortSelection,{once:true});if(drainAbort.signal.aborted)abortSelection();});
-    const rows=await Promise.race([nativeRepository.listContinuations(scope,{guard,signal:drainAbort.signal}),cancelled]);if(!guard())throw Error('stale-continuation-authority');
+    const rows=await Promise.race([track('background',()=>nativeRepository.listContinuations(scope,{guard,signal:drainAbort.signal})),cancelled]);if(!guard())throw Error('stale-continuation-authority');
     const queued=recoveryProfiles.filter(profile=>rows.some(row=>row.state==='pending-evidence'&&row.admission.profileId===profile.id)),eligible=queued.length?queued:recoveryProfiles;
     const activeProfile=eligible[recoveryProfileCursor++%eligible.length];
     return continuations.drain({scope,guard,verify:()=>handshake.verify(message,sender),signal:drainAbort.signal,profileId:activeProfile.id,profileVersion:activeProfile.revision});
@@ -168,7 +168,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   }
   if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant&&sequences.get(message.producerToken)===producer)producer.verified=true;
   return {ok:true,v:1,type:'HOST_SCOPE_STATUS',state:resolution.state,...(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant?{scopeKey:authority.scopeFor(frame)?.key}:{}),...(resolution.reason?{reason:resolution.reason}:{})};
-  },{timeoutMs:6000,now:elapsedNow,schedule,cancel});attempt.completed=true;return result;}catch{return {ok:false,reason:'host-refresh-unavailable'};}
+  }),{timeoutMs:6000,now:elapsedNow,schedule,cancel});attempt.completed=true;return result;}catch{return {ok:false,reason:'host-refresh-unavailable'};}
   finally{refreshAttempts.delete(attempt);attempt.active=false;attempt.abort.abort();if(!attempt.completed){denyFocus();revokeFocus();}
   if(!attempt.completed&&attempt.frame)firstSend?.invalidateTab(attempt.frame.tabId);
   if(!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);}
@@ -182,7 +182,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  // A conservative local snapshot only; not a document close/admission permit.
  function isIdle(){
   if(!serviceActive||activity.requests||activity.background||refreshAttempts.size)return false;
-  return [sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
+  return [authority,continuations,ui,observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
  }
  return Object.freeze({isIdle,oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
 }

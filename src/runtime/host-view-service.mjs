@@ -16,12 +16,14 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
 export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,nativeWritePending=()=>false,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof nativeWritePending!=='function'||typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
- const views=new Map(),resumes=new Map(),readWindows=new Map();let stopped=false,refreshes=0,reads=0;
+ const views=new Map(),resumes=new Map(),readWindows=new Map();let stopped=false,refreshes=0,reads=0,scopeWork=0;
  // A cancelled owner refresh can settle before its underlying read does.
  // Count both without changing the original deadlines or cancellation guards.
  const ownerReadService=Object.fromEntries(['freeHeader','freePage','version'].map(name=>[name,async(...args)=>{reads++;try{return await readService[name](...args);}finally{reads--;}}]));
  async function refreshOwner(entry,...args){refreshes++;try{return await entry.owner.refresh(...args);}finally{refreshes--;}}
- const isIdle=()=>!stopped&&refreshes===0&&reads===0&&![...views.values()].some(entry=>entry.pending||entry.autoReading||entry.retryTimer!=null||entry.deferPreparation!=null);
+ // Keep the entire scoped operation counted after its RPC deadline returns.
+ async function withScope(...args){scopeWork++;try{return await ui.withScope(...args);}finally{scopeWork--;}}
+ const isIdle=()=>!stopped&&scopeWork===0&&refreshes===0&&reads===0&&![...views.values()].some(entry=>entry.pending||entry.autoReading||entry.retryTimer!=null||entry.deferPreparation!=null);
  // A bounded local scheduling opportunity, never snapshot authority. All mounts
  // of a scope share one deadline; a committed publication must precede renewal.
  function liveWindow(scopeKey){
@@ -53,7 +55,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  }
  async function resume(input,sender){
   let m,active=true;const started=elapsedNow();try{m=structuredClone(input);const write=m?.type==='HOST_UI_SAVE_VIEW';if(!['HOST_UI_RESUME','HOST_UI_SAVE_VIEW'].includes(m?.type)||!exactHostRecord(m,write?['v','type','grantId','mountId','view','expectedQuery']:['v','type','grantId','mountId'])||m.v!==1)throw Error('invalid-view-resume');if(write){m.view=validateFrameResumeView(m.view);m.expectedQuery=validateResumeQuery(m.expectedQuery);}
-   return await withRequestDeadline(()=>ui.withScope({sender,grantId:m.grantId,mountId:m.mountId},context=>{
+   return await withRequestDeadline(()=>withScope({sender,grantId:m.grantId,mountId:m.mountId},context=>{
     if(!active||elapsedNow()-started<0||elapsedNow()-started>=6000)throw Error('expired-view-resume');
     const old=resumeFor(context);if(!context.isCurrent())throw Error('stale-view-resume');
     if(!write)return {ok:true,resume:old?{query:structuredClone(old.query),view:old.view?structuredClone(old.view):null}:null};
@@ -116,7 +118,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   if(message.query.search!==undefined&&message.query.workingSet!==undefined)return {ok:false,reason:'invalid-ui-view'};
   let active=true,delivery=null;const started=elapsedNow();
   const check=()=>{if(!active||elapsedNow()-started>=6000)throw Error('ui-view-expired');};
-  try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+  try{return await withRequestDeadline(()=>withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    check();for(const [id,entry]of views)if(!entry.isCurrent())remove(id);
    let entry=views.get(message.mountId);
    if(entry&&(entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)){remove(message.mountId);entry=null;}
@@ -188,7 +190,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-current-entry'};}
   if(!exactHostRecord(message,['v','type','grantId','mountId','expectedRevision','viewSession'])||message.v!==1||message.type!=='HOST_UI_CURRENT_ENTRY'||!Number.isSafeInteger(message.expectedRevision)||message.expectedRevision<0||!exactHostRecord(message.viewSession,['H','T','Z','policyRevision']))return {ok:false,reason:'invalid-ui-current-entry'};
   let active=true;const started=elapsedNow(),abort=new AbortController();
-  try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+  try{return await withRequestDeadline(()=>withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    if(!active||elapsedNow()-started>=6000)throw Error('ui-current-entry-expired');
    const entry=views.get(message.mountId);let current=entry?.owner.current();
    if(context.role!=='workspace'||!current||entry.pending||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId||!entry.currentEntryEligible)throw Error('free-current-entry-unavailable');
@@ -243,7 +245,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-auto-undo'};}
   if(!exactHostRecord(message,['v','type','grantId','mountId','operationId','expectedRevision','id'])||message.v!==1||message.type!=='HOST_UI_UNDO_AUTO_HORIZON'||typeof message.operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(message.operationId)||typeof message.id!=='string'||message.id.length<1||message.id.length>128||!Number.isSafeInteger(message.expectedRevision)||message.expectedRevision<0)return {ok:false,reason:'invalid-ui-auto-undo'};
   let active=true;const started=elapsedNow(),abort=new AbortController();
-  try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+  try{return await withRequestDeadline(()=>withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    const entry=views.get(message.mountId),current=entry?.owner.current(),decision=entry?.autoUndo;
    if(!workspaceRepository||context.role!=='workspace'||!current||entry.pending||!entry.currentEntryEligible||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId||!decision||decision.id!==message.id||decision.workspaceRevision!==message.expectedRevision||current.snapshot.workspaceRevision!==message.expectedRevision)throw Error('auto-undo-unavailable');
    if(entry.horizonPending||entry.workingSetPending||entry.currentEntryPending)throw Error('preference-change-in-progress');
@@ -264,7 +266,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-horizon'};}
   if(!exactHostRecord(message,['v','type','grantId','mountId','operationId','expectedRevision','H','segment','anchorRefId'])||message.v!==1||message.type!=='HOST_UI_SET_HORIZON'||typeof message.operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(message.operationId)||!Number.isSafeInteger(message.expectedRevision)||message.expectedRevision<0||(message.H!=='auto'&&!FREE_HORIZONS.includes(message.H))||!Number.isSafeInteger(message.segment)||message.segment<0||message.segment>1000000||!(message.anchorRefId===null||typeof message.anchorRefId==='string'&&message.anchorRefId.length>0&&message.anchorRefId.length<=128))return {ok:false,reason:'invalid-ui-horizon'};
   let active=true;const started=elapsedNow(),abort=new AbortController();
-  try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+  try{return await withRequestDeadline(()=>withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    const entry=views.get(message.mountId),current=entry?.owner.current();
    if(!workspaceRepository||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)throw Error('free-view-not-ready');
    if(entry.currentEntryPending)throw Error('preference-change-in-progress');
@@ -294,7 +296,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-working-set'};}
   if(!exactHostRecord(message,['v','type','grantId','mountId','operationId','expectedRevision','action','refId'])||message.v!==1||message.type!=='HOST_UI_WORKING_SET'||typeof message.operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(message.operationId)||!Number.isSafeInteger(message.expectedRevision)||message.expectedRevision<0||!['add','remove','move-up'].includes(message.action)||typeof message.refId!=='string'||message.refId.length<1||message.refId.length>128||['__proto__','constructor','prototype'].includes(message.refId))return {ok:false,reason:'invalid-ui-working-set'};
   let active=true;const started=elapsedNow(),abort=new AbortController();
-  try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+  try{return await withRequestDeadline(()=>withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    const entry=views.get(message.mountId),current=entry?.owner.current();
    if(!workspaceRepository||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)throw Error('free-view-not-ready');
    if(entry.currentEntryPending)throw Error('preference-change-in-progress');
@@ -330,7 +332,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-presentation'};}
   const intent=message?.intent,kind=intent?.kind;
   if(!exactHostRecord(message,['v','type','grantId','mountId','intent'])||message.v!==1||message.type!=='HOST_UI_PRESENT'||!exactHostRecord(intent,kind==='search-known'?['kind','themeId']:['kind'])||!['show-workspace','enter-reading','show-native-page','search-known','show-working-set'].includes(kind)||kind==='search-known'&&intent.themeId!==null&&(typeof intent.themeId!=='string'||intent.themeId.length<1||intent.themeId.length>128))return {ok:false,reason:'invalid-ui-presentation'};
-  let active=true;try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+  let active=true;try{return await withRequestDeadline(()=>withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    const entry=views.get(message.mountId),current=entry?.owner.current();
    if(!entry||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)throw Error('free-view-not-ready');
    if(kind==='search-known'&&intent.themeId!==null&&!current.snapshot.groups.some(group=>group.id===intent.themeId))throw Error('free-search-project-unavailable');

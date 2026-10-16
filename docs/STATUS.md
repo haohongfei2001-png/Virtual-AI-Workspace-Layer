@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round354）
+## 最新本地检查点（2026-10-17，Round355）
+
+补齐view/UI授权、identity/context、continuation、metadata与原生观察/摄取中deadline或abort先返回后的实际在途计数，接入服务内部聚合；不改预算、授权、数据库或清理记录。独立反例与审查完成。首次完整Node6856PASS/15FAIL为诊断锚点漂移，精确更新并保留篡改/唯一匹配断言后，最终482文件 **6873/6873 PASS**，零skip/cancel。见 [Round355](evidence/round355/README.md)。
+
+尚未接入同producer原子冻结/关闭及controller dormant；保守残留关联可能阻止idle，当前信号不能作为关闭许可。无新增浏览器验收，UI-11及完整Free仍NOT_RELEASE_READY，原100k/真实profile/G/U门槛保留。
+
+## 前一本地检查点（2026-10-17，Round354）
 
 正式开发分支与整理stash42c8877保全，PR16远端核对无新增差异。本轮接入服务请求/后台观察链、view准备与迟到读取、备份transfer/恢复plan的内部idle状态。独立审查补出deadline先返回但底层尚未结束的14项反例并修复；最终相关 **518/518 Node PASS**，无skip/cancel。见 [Round354](evidence/round354/README.md)。
 
