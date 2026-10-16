@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round290）
+## 最新正式检查点（2026-10-16，原本地目录，Round291）
+
+实际备用认证在途disable通过：真实accounts已认证200但挂起交付时禁用，私有frame消失、原生document/editor/草稿可用；迟到响应不恢复旧投影。重新启用新worker，旧文档无旧授权；一次新文档导航取得新身份并在原20秒内恢复双surface。八表20记录及本次捕获消息/日志零凭证/正文/草稿命中。该worker-ready样本不代表通用cold/reenable可靠性。
+
+新增在途abort/stop/deadline独立 **5/5 PASS**；生产未变，沿用Round290完整5701PASS，不相加冒充新全套。见[Round291](evidence/round291/README.md)。e99097d两次正常push超时，API最后确认7f14432，成果已本地保存继续普通同步。完整81/G/U/冷启动/100k仍未完成，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round290）
 
 修复认证来源快速A→B→A令旧观察/回读能力复活：authority私有RAM token只在来源变化时换新，observation及readback前后核对对象身份，同来源正常续期保持；不增加持久或wire字段。独立9反例从7FAIL转全PASS，完整Node **5701/5701 PASS**，审查无阻塞。
 
