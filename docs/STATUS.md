@@ -2,7 +2,7 @@
 
 ## 最新正式检查点（2026-10-15，隔离云环境）
 
-原分支 / Draft PR16 当前正式提交fab65ecd（Round252）。CI48 Node4966/4966及12个guard变异全过；两个SYS05就绪后行为切片实际通过，默认6400次token与真实ACK/title、单样本保守可见上界212ms，诊断token-only前缀目录/peer/额外detail读取为0。独立cold仍FAIL，未宣称冷启动修复。1k单项目完整审计已有1000引用/1项目，但112 PROJECT、888 UNKNOWN，故原完整成员前置FAIL、计时未运行；实际报告保留。Canonical允许有界部分观察，立即返回产生mask会中断尚未采集成员，不是错误归属。下一独立正常旅程保持真实reading可见，单一原30s内观察精确尾成员后返回；尾成员不是完整覆盖，原全量逐ID/projectId前后审计仍必过。无产品返回延迟或隐藏证据豁免。详见[Round253](evidence/round253/README.md)。完整81、SYS04/SYS05、G/U与发布条件仍未完成。
+原分支 / Draft PR16 当前正式提交544942b（Round253）。CI49三个job全绿，Node5010/5010与12个guard变异通过。1k单项目独立reading可见旅程首次完整前后审计1000 PROJECT、零UNKNOWN/错归属/缺失/重复，revision105稳定；搜索/首屏/下一页35.84/85.12/121.11ms仅单样本。CI48立即返回112/888失败保留，未改产品返回语义。两个就绪后SYS05切片再次通过，默认6400token/真实ACK/title保守可见上界224ms，诊断前缀目录/peer/额外detail读取0。本次独立cold也通过，但历史间歇失败未闭合。正式scale172、SYS05各168、cold153源码/fixture哈希匹配。另已独立复现并实现Evidence持久撤销后新真实认证见证的owner incarnation修复，旧source/ACK不复活，原3红转绿且57+7独审通过；尚不能借CI49认证此后候选。详见[Round254](evidence/round254/README.md)。完整81、SYS04/SYS05、G/U与发布条件仍未完成。
 
 ## 历史正式检查点（Round219，保留原记录）
 

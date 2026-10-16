@@ -88,7 +88,10 @@ export function createFreeReadService({repository,workspaces,native,evidence,clo
     // exposing only sources explicitly admitted by this privileged composition.
     // Admission is bound to a store and its own source before combining rows.
     // A restored shared row cannot borrow a same-ID evidence source's authority.
-    const admitted=(table,store)=>Object.fromEntries(Object.entries(table??{}).filter(([,source])=>admitActivitySource(scope,source,{store})===true));
+    const admitted=(table,store)=>{
+      const origin={store,sources:table??{}},allow=typeof admitActivitySource.forSources==='function'?admitActivitySource.forSources(scope,origin):source=>admitActivitySource(scope,source,origin);
+      return Object.fromEntries(Object.entries(table??{}).filter(([,source])=>allow(source)===true));
+    };
     const sharedSources=admitted(state.sources,'shared'),storedSources=admitted(stored.sources,'evidence');
     // Independently admitted but inconsistent same-ID sources are ambiguous.
     // Refuse their activity only; neither persisted store is changed.

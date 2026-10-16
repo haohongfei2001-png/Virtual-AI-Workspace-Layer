@@ -1,3 +1,4 @@
+import {evidenceSourceIncarnation} from './evidence-source-incarnation.mjs';
 import {normalizedScope} from '../b1/identity.mjs';
 import {digest} from '../data/hash.mjs';
 /** Internal consumer only; never expose this owner through an extension message. */
@@ -13,20 +14,19 @@ export function createHostSendAckOwner({evidenceRepository,profileFor,commitNati
   const profileFingerprint=digest(profile),intentAt=Date.parse(snapshot.candidateInterval?.from),firstAt=Date.parse(snapshot.firstObservedAt);
   if(!Number.isFinite(intentAt)||!Number.isFinite(firstAt))throw Error('invalid-send-ack-owner-time');
   let active=true;
-  const current=()=>{try{const clock=now();if(stopped||!active||signal?.aborted||profileFor(profile.id)!==profile||digest(profile)!==profileFingerprint||!Number.isFinite(clock)||clock<firstAt||clock-intentAt>=30000)return false;guard();return true;}catch{return false;}};
+  const current=()=>{try{const clock=now();if(stopped||!active||signal?.aborted||profileFor(profile.id)!==profile||digest(profile)!==profileFingerprint||!Number.isFinite(clock)||clock<firstAt||clock-intentAt>=30000)return false;if(guard()===false)return false;return true;}catch{return false;}};
   const check=()=>{if(!current())throw Error('stale-send-ack-owner');};
   const at=now();if(!Number.isFinite(at)||Date.parse(snapshot.firstObservedAt)>at||at-Date.parse(snapshot.candidateInterval?.from)>=30000)throw Error('expired-send-ack-owner');
   const observedAt=new Date(at).toISOString(),validUntil=new Date(at+60000).toISOString();
-  const sourceId='host_ack_'+digest(profile.id).slice(0,32),generation='profile_'+profile.revision;
   const eventKey='send_'+digest([scope.key,snapshot.conversationId,snapshot.messageId]).slice(0,48);
-  const operationId='ack_'+digest([scope.key,profile.id,profile.revision,snapshot.conversationId,snapshot.messageId,ack.semanticFingerprint]).slice(0,48);
   const repository=evidenceRepository();
   try{for(let attempt=0;attempt<2;attempt++){
    check();const page=await repository.page(scope,{ids:[snapshot.conversationId],limit:1},{guard:current,signal});check();
-   const sourceRevision=(page.evidence.sources[sourceId]?.sourceRevision??0)+1;
+   const {sourceId,generation,sourceRevision}=evidenceSourceIncarnation(page.evidence.sources,profile,1);
+   const operationId='ack_'+digest([scope.key,profile.id,profile.revision,snapshot.conversationId,snapshot.messageId,ack.semanticFingerprint,sourceId,generation]).slice(0,48);
    const evidence={sources:[{id:sourceId,generation,sourceRevision,observedAt,validUntil,channel:'host-evidence',codecVersion:1,profileId:profile.id,profileVersion:profile.revision}],events:[],coverage:[],hints:[{...snapshot,id:eventKey,sourceId,generation,sourceRevision,observedAt,eventKey,hintType:'observed-self-send',anchorVersion:1,calibrationDueAt:validUntil}]};
    const prior=page.evidence.hints[eventKey];
-   if(prior){if(prior.revoked||prior.conversationId!==snapshot.conversationId||prior.messageId!==snapshot.messageId||prior.actorScopeKey!==scope.key||digest(prior.ackWitness)!==digest(ack))throw Error('send-ack-existing-conflict');return {ok:true,replayed:true,revision:page.revision};}
+   if(prior){if(prior.revoked||prior.sourceId!==sourceId||prior.generation!==generation||page.evidence.sources[sourceId]?.revoked!==false||prior.conversationId!==snapshot.conversationId||prior.messageId!==snapshot.messageId||prior.actorScopeKey!==scope.key||digest(prior.ackWitness)!==digest(ack))throw Error('send-ack-existing-conflict');return {ok:true,replayed:true,revision:page.revision};}
    const request={operationId,expectedRevision:page.revision,batch:evidence};
    if(commitNative){
     gates.set(request,{scopeKey:scope.key,channel:'host-evidence',sourceId,generation,guard:current,profileId:profile.id,profileVersion:profile.revision});
