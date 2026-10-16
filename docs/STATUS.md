@@ -1,6 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round267）
+## 最新正式检查点（2026-10-16，原本地目录，Round268）
+
+承接3dc82cf，新增真实隔离MV3入口校准oracle：服务端原始时间恢复但正文/route不变，实际返回四格入口发出27ms校准RPC，期间唯一GET形成正确作者/来源的严格事件，旧观察锚不变；文档timeOrigin/history及原生节点身份保持。临时drop-entry变异在指定校准阶段因无GET/无event超时，未把任意退出失败当作检出。该入口浏览器证据对应修改共享窗口前的base源码，hash保留。
+
+另外修复同scope不同mount共享窗口过早释放：先完成者只退出自身参与，不关闭仍被其他当前读取使用的窗口；原1000ms绝对截止、generation/identity防迟到释放及publication前不可续期保持。两个真实独立授权mount红测试转绿，完整Node **5324/5324 PASS，零skip**。
+
+修正后实际10k/单Project完整旅程到原生返回、精确审计及测量通过：前后均10000正确成员，零遗漏/重复/UNKNOWN/错误归属，同revision792；仅单样本，仍 **PARTIAL_SYS04_NOT_ACCEPTED**。源码和构建稳定、临时目录清理。见[Round268](evidence/round268/README.md)。旧51d9ef2 CI首屏deadline FAIL保留；完整81、规模可靠性/p95、真实G/U和发布门槛仍开放，**Free NOT_RELEASE_READY**。继续当前计划剩余任务。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round267）
 
 承接fad7326，B2.F3/C3正式Free frame已接入workspace/foreground进入及成功历史区间切换后的当前正文校准。仅workspace角色触发，UI不携带proof/聊天ID；worker按真实父文档、route/producer、scope/grant选唯一当前证明。复用metadata/history owner与持久GET预算，单次低优先读取、无新增重试；current/send可取消校准，撤权guard和signal贯穿历史事务，校准不签发ACK readback。
 

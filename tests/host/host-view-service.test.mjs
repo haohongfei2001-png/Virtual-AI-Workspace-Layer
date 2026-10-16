@@ -30,13 +30,22 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBr
  }
  const grants={};
  async function mount(){const auth={documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch};assert.equal((await service.handle({v:1,type:'HOST_UI_MOUNT',...auth,mountId:'mount',regionEpoch:1},sender)).ok,true);for(const role of ['workspace','sidebar']){const joined=service.handle({v:1,type:'HOST_UI_JOIN',nonce:'nonce_'+role,role},children[role]);const confirmed=await service.handle({v:1,type:'HOST_UI_CONFIRM',...auth,mountId:'mount',regionEpoch:1,nonce:'nonce_'+role,role},sender);assert.equal(confirmed.ok,true,JSON.stringify(confirmed));const result=await joined;assert.equal(result.ok,true,JSON.stringify(result));grants[role]=result.grant;}}
+ async function additionalMount(mountId){
+  const auth={documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch};
+  const child={...children.workspace,frameId:3,documentId:'ui_'+mountId};children[mountId]=child;
+  assert.equal((await service.handle({v:1,type:'HOST_UI_MOUNT',...auth,mountId,regionEpoch:1},sender)).ok,true);
+  const nonce='nonce_'+mountId,joined=service.handle({v:1,type:'HOST_UI_JOIN',nonce,role:'workspace'},child);
+  const confirmed=await service.handle({v:1,type:'HOST_UI_CONFIRM',...auth,mountId,regionEpoch:1,nonce,role:'workspace'},sender);assert.equal(confirmed.ok,true,JSON.stringify(confirmed));
+  const result=await joined;assert.equal(result.ok,true,JSON.stringify(result));
+  return {grant:result.grant,view:()=>service.handle({v:1,type:'HOST_UI_VIEW',grantId:result.grant.id,mountId,query:{}},child)};
+ }
  const view=(role='workspace',query={},patch={},as=children[role])=>service.handle({v:1,type:'HOST_UI_VIEW',grantId:grants[role].id,mountId:'mount',query,...patch},as);
  const present=(role,intent,patch={},as=children[role])=>service.handle({v:1,type:'HOST_UI_PRESENT',grantId:grants[role].id,mountId:'mount',intent,...patch},as);
  const enterCurrent=(role,extra={},as=children[role])=>service.handle({v:1,type:'HOST_UI_CURRENT_ENTRY',grantId:grants[role].id,mountId:'mount',...extra},as);
  const horizon=(role,extra={},as=children[role])=>service.handle({v:1,type:'HOST_UI_SET_HORIZON',grantId:grants[role].id,mountId:'mount',operationId:'set_horizon',expectedRevision:0,H:14,segment:0,anchorRefId:null,...extra},as);
  async function renew(){const auth={documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch};const doc=await request('HOST_DOCUMENT_RENEW',auth);assert.equal(doc.ok,true,JSON.stringify(doc));binding=doc.binding;const refresh=await request('HOST_REFRESH',auth);const status=await service.handle({v:1,type:'HOST_UI_STATUS',...auth,mountId:'mount'},sender);return {refresh,status};}
  const pass=(phase='start',passSeq=1,patch={})=>service.handle({v:1,type:'HOST_INGESTION_PASS',documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,profileId:profile.id,profileVersion:profile.revision,passSeq,phase,...patch},sender);
- return{pass,enterCurrent,renew,get providerReads(){return providerReads;},horizon,present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
+ return{additionalMount,pass,enterCurrent,renew,get providerReads(){return providerReads;},horizon,present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
 }
 const drain=()=>new Promise(resolve=>setImmediate(resolve));
 async function ready(h,role='workspace'){
@@ -570,4 +579,28 @@ test('MOCK_IDB last mount revoke and authenticated remount cannot renew a spent 
  assert.equal((await h.view()).state,'preparing');assert.equal(pending(),false,'last mount removal retains the used scheduling tombstone');
  assert.equal((await ready(h)).state,'ready');assert.equal(pending(),false);
  assert.equal((await h.observe(['p1','after-remount-publication'],{raw:true})).state,'accepted');assert.equal((await h.view()).state,'preparing');assert.equal(pending(),true,'only a committed publication allows renewal');assert.equal((await ready(h)).state,'ready');
+});
+
+for(const ending of ['delivery','expiry'])test('MOCK_IDB distinct mounts retain shared scope read window after first delivery until second '+ending,async t=>{
+ const clock=preparationClock(),h=await fixture(t,{elapsedNow:clock.now,schedule:clock.schedule,cancel:clock.cancel});
+ let release;const held=new Promise(resolve=>release=resolve);t.after(()=>{release();h.service.stop();});
+ await h.bind();await h.observe();await h.mount();const second=await h.additionalMount('mount_second');
+ assert.notEqual(second.grant.mountId,h.grants.workspace.mountId);assert.notEqual(second.grant.uiDocumentId,h.grants.workspace.uiDocumentId);
+ assert.equal(second.grant.scopeGrantId,h.grants.workspace.scopeGrantId,'independently authenticated mounts share scope');
+ assert.equal((await h.view()).state,'preparing');for(let i=0;i<40;i++)await drain();
+ const native=h.service.nativeRepository,original=native.page.bind(native);let entered=false;
+ native.page=async(...args)=>{if(args[1]?.limit!==512){entered=true;await held;}return original(...args);};
+ clock.advance(100);assert.equal((await second.view()).state,'preparing');for(let i=0;i<100&&!entered;i++)await drain();assert.equal(entered,true,'second mount owns a separate pending preparation');
+ const scope=h.bound.scope,revision=(await native.read(workspaceScope(h))).revision;
+ assert.equal(h.service.views.isForegroundReadPending(scope),true);
+ assert.equal((await ready(h)).state,'ready','first mount delivers while second is held');
+ const proposal=await h.observe(['p1','must-wait-for-second'],{raw:true});
+ assert.equal(proposal.state,'retry-after','first delivery must not release another mount pending read');assert.equal(proposal.delayMs,50);
+ assert.equal((await native.read(workspaceScope(h))).revision,revision,'yielded proposal cannot write');
+ assert.equal(h.service.views.isForegroundReadPending(scope),true);
+ if(ending==='expiry'){
+  clock.advance(899);assert.equal(h.service.views.isForegroundReadPending(scope),true);
+  clock.advance(1);assert.equal(h.service.views.isForegroundReadPending(scope),false,'second mount cannot extend first reservation absolute deadline');
+ }
+ release();assert.equal((await ready(second)).state,'ready');assert.equal(h.service.views.isForegroundReadPending(scope),false);
 });

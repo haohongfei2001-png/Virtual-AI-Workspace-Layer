@@ -30,7 +30,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   if(!window?.active){if(!window&&readWindows.size>=maxViews)return;const at=elapsedNow();if(!Number.isFinite(at))return;window={used:true,active:true,last:at,until:at+1000};readWindows.set(entry.scopeKey,window);}
   entry.readWindow=window;
  }
- function releaseRead(entry,window=entry.readWindow,generation=entry.prepareGeneration){if(entry.prepareGeneration!==generation||entry.readWindow!==window)return;entry.awaitingDelivery=false;if(window)window.active=false;}
+ function releaseRead(entry,window=entry.readWindow,generation=entry.prepareGeneration){if(entry.prepareGeneration!==generation||entry.readWindow!==window)return;entry.awaitingDelivery=false;entry.readWindow=null;liveWindow(entry.scopeKey);}
 
  // Presentation belongs to the authorized document/scope/role, not its SPA route.
  // Every read still obtains a fresh current grant through withScope; no page data or grant is resumed.

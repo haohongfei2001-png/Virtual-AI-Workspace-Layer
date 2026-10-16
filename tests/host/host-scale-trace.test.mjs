@@ -59,8 +59,9 @@ test('instrumented scope window shares exact identity and stale generation or id
   assert.equal(a.readWindow,b.readWindow);assert.equal(window.until,1000);assert.equal(window.active,true);
   a.prepareGeneration=2;h.api.releaseRead(a,window,1);assert.equal(window.active,true);assert.equal(a.awaitingDelivery,true);
   const stale={active:true};h.api.releaseRead(a,stale,2);assert.equal(stale.active,true);assert.equal(window.active,true);
-  h.api.releaseRead(a,window,2);assert.equal(window.active,false);assert.equal(a.awaitingDelivery,false);
-  if(instrumented){const events=h.events();assert.deepEqual(Array.from(events,e=>e.kind),['window-reserve','window-reserve','window-release','window-release','window-release']);assert.equal(events[0].window,events[1].window);assert.equal(events[1].shared,true);assert.equal(events[2].ok,false);assert.equal(events[2].generation,1);assert.equal(events[3].ok,false);assert.equal(events[4].ok,true);assert(!JSON.stringify(events).includes('PRIVATE'));}
+  h.api.releaseRead(a,window,2);assert.equal(window.active,true);assert.equal(a.awaitingDelivery,false);assert.equal(a.readWindow,null);
+  h.api.releaseRead(b,window,1);assert.equal(window.active,false);assert.equal(b.readWindow,null);
+  if(instrumented){const events=h.events();assert.deepEqual(Array.from(events,e=>e.kind),['window-reserve','window-reserve','window-release','window-release','window-release','window-release','window-expire']);assert.equal(events[0].window,events[1].window);assert.equal(events[1].shared,true);assert.equal(events[2].ok,false);assert.equal(events[2].generation,1);assert.equal(events[3].ok,false);assert.equal(events[4].ok,true);assert(!JSON.stringify(events).includes('PRIVATE'));}
  }
 });
 for(const [mode,code]of [['deadline',2],['rollback',1],['nonfinite',1],['no-reader',3]])test('instrumented window '+mode+' expiry preserves original result and blocks reuse',async()=>{
