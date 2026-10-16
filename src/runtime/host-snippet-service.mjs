@@ -45,7 +45,7 @@ export function createHostSnippetService({ui,workspaceRepository,resolveView,sel
      if(old.length>=100)throw Error('snippet-capacity');ref=view.index?.byId(m.id);
      if(!ref||ref.id!==m.id||ref.scope!==context.scope.key||ref.available===false||typeof ref.nativeUrl!=='string'||!ref.nativeUrl)throw Error('unavailable-ref');
      ref=Object.freeze({...ref});
-     const captured=await selectionBridge({context,ref,phase:'capture'});
+     const captured=await selectionBridge({context,ref,phase:'capture',guard,remainingMs:Math.max(0,6000-(elapsedNow()-attempt.started))});
      // Retain only a valid opaque handle for best-effort release, even if the
      // deadline expired while the capture was in flight.
      if(token(captured?.selectionId))selectionId=captured.selectionId;check();

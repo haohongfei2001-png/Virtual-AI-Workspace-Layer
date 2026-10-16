@@ -1,5 +1,6 @@
 import {createCandidateUpgrade} from './candidate-upgrade.mjs';
 import {createContentCandidates} from './content-candidates.mjs';
+import {waitForSnippetCapture} from './snippet-capture-wait.mjs';
 import {createSnippetSelectionSession} from './snippet-selection-session.mjs';
 import {createChatGPTAdapter} from './chatgpt-adapter.mjs';
 import {createURLPolicy} from './url-policy.mjs';
@@ -46,7 +47,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function clearMigration(s){const prior=s.migration;s.migration=null;if(prior?.leaseOwner)try{s.adapter?.releaseLoadedHandles?.(prior.leaseOwner);}catch{}for(const type of ['pointerdown','keydown','wheel','focusin'])doc.removeEventListener?.(type,s.migrationInterrupt,true);}
  function liveMigration(s){const m=s.migration;if(!m)return null;const time=now(),elapsed=elapsedNow();if(!Number.isFinite(time)||time<m.lastTime||time>=m.createdAt+30000||!Number.isFinite(elapsed)||elapsed<m.lastElapsed||elapsed>=m.elapsedDeadline){clearMigration(s);return null;}m.lastTime=time;m.lastElapsed=elapsed;return m;}
  function retainMigration(s,handle){const m=liveMigration(s);if(!m)return false;try{if(typeof s.adapter?.retainLoadedHandles==='function'&&s.adapter.retainLoadedHandles(m.leaseOwner,[handle],m.elapsedDeadline)!==true){clearMigration(s);return false;}}catch{clearMigration(s);return false;}m.handle=handle;return true;}
- function dispose(s){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
+ function dispose(s){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.capturePending?.cancel();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
  function reset(){epoch++;const s=current;current=null;dispose(s);}
  function stop(){contextResumeAllowed=false;clearLearned();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function pagehide(event){
@@ -106,12 +107,16 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     try{if(s.controller?.showReading()!==true){finish(false);return;}readingCurrent=s.controller.readingGuard?.()??(()=>true);s.restorePending=abort;for(const type of events)doc.addEventListener?.(type,interrupted,true);restore();}catch{finish(false);}return true;
    }
    if(m?.type==='HOST_SNIPPET_SELECTION'){
-    const allowed=exactHostRecord(m,['type','documentToken','producerToken','routeEpoch','scopeGrantId','phase','ref','selectionId'])&&s.ready&&s.binding&&live(s)&&Date.parse(s.binding.expiresAt)>now()&&Object.entries(bindingFields(s.binding)).every(([k,v])=>m[k]===v)&&tokenOK(m.scopeGrantId)&&['capture','validate','release'].includes(m.phase)&&exactHostRecord(m.ref,['id','nativeUrl'])&&tokenOK(m.ref.id)&&typeof m.ref.nativeUrl==='string'&&m.ref.nativeUrl.length<=2048&&(m.phase==='capture'?m.selectionId===null:tokenOK(m.selectionId));
+    const allowed=exactHostRecord(m,['type','documentToken','producerToken','routeEpoch','scopeGrantId','phase','ref','selectionId',...(m.phase==='capture'?['expiresAt']:[])])&&s.ready&&s.binding&&live(s)&&Date.parse(s.binding.expiresAt)>now()&&Object.entries(bindingFields(s.binding)).every(([k,v])=>m[k]===v)&&tokenOK(m.scopeGrantId)&&['capture','validate','release'].includes(m.phase)&&exactHostRecord(m.ref,['id','nativeUrl'])&&tokenOK(m.ref.id)&&typeof m.ref.nativeUrl==='string'&&m.ref.nativeUrl.length<=2048&&(m.phase==='capture'?m.selectionId===null&&typeof m.expiresAt==='string'&&Number.isFinite(Date.parse(m.expiresAt))&&Date.parse(m.expiresAt)>now()&&Date.parse(m.expiresAt)<=now()+6000:tokenOK(m.selectionId));
     if(!allowed||!s.snippets){reply({ok:false});return;}
     try{
      if(m.phase==='capture'){
-      s.snippetScopeGrant=m.scopeGrantId;s.snippetRef=Object.freeze({...m.ref});const id=s.snippets.capture(s.snippetRef),anchor=id&&s.snippets.read(id,s.snippetRef);
-      if(!anchor){reply({ok:false});return;}reply({ok:true,selectionId:id,anchor});return;
+      s.capturePending?.cancel();s.snippetScopeGrant=m.scopeGrantId;s.snippetRef=Object.freeze({...m.ref});const ref=s.snippetRef,pending={cancel:()=>{}};s.capturePending=pending;
+      pending.cancel=waitForSnippetCapture({document:doc,timeoutMs:Date.parse(m.expiresAt)-now(),now:elapsedNow,schedule,cancel,
+       isCurrent:()=>Date.parse(m.expiresAt)>now()&&current===s&&live(s)&&s.ready&&s.binding&&Date.parse(s.binding.expiresAt)>now()&&Object.entries(bindingFields(s.binding)).every(([k,v])=>m[k]===v)&&s.snippetScopeGrant===m.scopeGrantId&&s.snippetRef===ref&&s.adapter?.hasNativeLayer?.()!==true,
+       ready:()=>typeof s.adapter?.snippetReady!=='function'||s.adapter.snippetReady(ref)===true,
+       capture:()=>{const id=s.snippets.capture(ref),anchor=id&&s.snippets.read(id,ref);return anchor?{ok:true,selectionId:id,anchor}:{ok:false};},
+       reply:value=>{if(s.capturePending===pending)s.capturePending=null;reply(value);}});return true;
      }
      if(m.scopeGrantId!==s.snippetScopeGrant||(m.ref.id!==s.snippetRef?.id||m.ref.nativeUrl!==s.snippetRef?.nativeUrl)){reply({ok:false});return;}
      if(m.phase==='release'){reply({ok:s.snippets.consume(m.selectionId)});return;}

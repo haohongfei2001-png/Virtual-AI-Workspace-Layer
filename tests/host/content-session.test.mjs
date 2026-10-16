@@ -93,7 +93,7 @@ function snippetFixture(){
  const anchor={refId:'C',messageId:'M',branchId:'B',text:'selected',bodyHash:'a'.repeat(64)};
  const client=createHostContentSession({...f.options,adapterFactory:()=>({inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,selectionEpoch:()=>epoch,selectedSnippet:()=>{reads++;return {...anchor};}})});
  const message={type:'HOST_SNIPPET_SELECTION',documentToken:'doc',producerToken:'producer',routeEpoch:1,scopeGrantId:'scope-grant',phase:'capture',ref:{id:'C',nativeUrl:'https://chatgpt.com/c/C'},selectionId:null};
- const request=(patch={},sender={id:'extension'})=>{let reply;[...f.listeners][0]?.({...message,...patch},sender,value=>reply=value);return reply;};
+ const request=(patch={},sender={id:'extension'})=>{let reply;[...f.listeners][0]?.({...message,...((patch.phase??message.phase)==='capture'?{expiresAt:new Date(7000).toISOString()}:{}),...patch},sender,value=>reply=value);return reply;};
  return {...f,client,message,request,anchor,setEpoch:value=>epoch=value,get reads(){return reads;}};
 }
 test('private content selection capture validates and releases one scope-bound ticket',async()=>{

@@ -22,10 +22,11 @@ test('stop detaches all listeners, closes views once and suppresses late service
 test('stop before queued microtasks prevents late service execution and document notifications',async t=>{const f=fixture(t);f.events[0].emit({type:'HOST_HELLO'}, {},()=>assert.fail('late reply'));f.events[2].emit({tabId:7,frameId:0,documentId:'doc',url:'https://chatgpt.com/'});f.runtime.stop();await flush();assert.deepEqual(f.calls.handled,[]);assert.deepEqual(f.calls.sent,[]);});
 test('throwing port admission fails closed and disconnects rejected port',t=>{const f=fixture(t);let disconnected=0;f.service.connectPort=()=>{throw Error('admission-failed');};assert.doesNotThrow(()=>f.events[1].emit({disconnect(){disconnected++;}}));assert.equal(disconnected,1);});
 test('snippet bridge uses owner parent document and strips all unrelated ref data',async t=>{
- const f=fixture(t),anchor={refId:'C',messageId:'M',branchId:'B',text:'chosen',bodyHash:'a'.repeat(64)},context={parentFrame:{tabId:9,documentId:'actual-parent'},binding:{documentToken:'d',producerToken:'p',routeEpoch:2},scopeGrantId:'scope'};
+ const f=fixture(t),anchor={refId:'C',messageId:'M',branchId:'B',text:'chosen',bodyHash:'a'.repeat(64)},context={parentFrame:{tabId:9,documentId:'actual-parent'},binding:{documentToken:'d',producerToken:'p',routeEpoch:2},scopeGrantId:'scope',isCurrent:()=>true};
  f.chrome.tabs.sendMessage=async(...args)=>{f.calls.sent.push(args);return {ok:true,selectionId:'selection',anchor};};
- assert.deepEqual(await f.config.selectionBridge({context,ref:{id:'C',nativeUrl:'https://chatgpt.com/c/C',private:'never'},phase:'capture'}),{selectionId:'selection',anchor});
- assert.deepEqual(f.calls.sent[0],[9,{type:'HOST_SNIPPET_SELECTION',...context.binding,scopeGrantId:'scope',phase:'capture',ref:{id:'C',nativeUrl:'https://chatgpt.com/c/C'},selectionId:null},{documentId:'actual-parent'}]);
+ assert.deepEqual(await f.config.selectionBridge({context,ref:{id:'C',nativeUrl:'https://chatgpt.com/c/C',private:'never'},phase:'capture',guard:()=>true,remainingMs:500}),{selectionId:'selection',anchor});
+ assert.deepEqual(f.calls.sent[0],[9,{type:'HOST_SNIPPET_SELECTION',...context.binding,scopeGrantId:'scope',phase:'capture',ref:{id:'C',nativeUrl:'https://chatgpt.com/c/C'},selectionId:null,expiresAt:f.calls.sent[0][1].expiresAt},{documentId:'actual-parent'}]);
+ assert(Date.parse(f.calls.sent[0][1].expiresAt)>Date.now());assert(Date.parse(f.calls.sent[0][1].expiresAt)<=Date.now()+500);
  f.chrome.tabs.sendMessage=async()=>({ok:false,anchor});assert.equal(await f.config.selectionBridge({context,ref:{id:'C',nativeUrl:'url'},phase:'capture'}),null);
 });
 test('snippet restore and reveal is one expiring parent command; late reply cannot send another action',async t=>{

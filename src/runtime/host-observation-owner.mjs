@@ -117,7 +117,13 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
     // A failed joint commit must never fall back to a native-only write.
     if(turn.claimed&&!result?.ok)return rejected('host-joint-apply-failed');
    }
-   if(combined&&!nativeChanged){if(onNativeDelta&&bodyEntry?.current())await onNativeDelta(bodyEntry.proofId);if(!revalidating)result={ok:true};}
+   if(combined&&!nativeChanged){
+    // Optional metadata availability does not authorize the DOM body claim.
+    // Budget exhaustion cannot revoke an otherwise current body ACK;
+    // authority loss still rejects, and claimed joint writes above never fall back.
+    if(onNativeDelta&&bodyEntry?.current())try{await onNativeDelta(bodyEntry.proofId);}catch(error){if(error?.message!=='read-budget-exhausted'||!guard()||!bodyEntry.current()||!await handshake.verify(proposal,sender)||!guard()||!bodyEntry.current())throw error;}
+    if(!revalidating)result={ok:true};
+   }
    if(!result){attempt.nativeWriteScope=scope.key;attempt.nativeWriteGuard=guard;try{result=await repository.apply(scope,request,{guard,signal:attempt.abort.signal});}finally{attempt.nativeWriteScope=null;attempt.nativeWriteGuard=null;}}
    if(!result.ok)return result.reason==='revision-conflict'?{state:'retry-after',localSeq:proposal.localSeq,delayMs:50}:rejected('host-native-apply-failed');
    if(!guard())return rejected('stale-host-scope');

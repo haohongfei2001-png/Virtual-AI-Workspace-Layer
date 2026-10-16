@@ -1,6 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round270）
+## 最新正式检查点（2026-10-16，原本地目录，Round271）
+
+承接db0d9da，修复J3实际片段保存根因：可选metadata的read-budget-exhausted不再阻止原生事实未变化时的合法body ACK；仅容忍该确切错误，且fresh handshake前后复核scope/body。账户变化及其他错误仍拒绝，claimed joint提交失败不得fallback。独立红测转绿；首次全套暴露宽catch的principal反例，已收窄并保留失败记录。
+
+增加仅原显式选区的有界ACK等待，沿worker剩余截止而非重启六秒；锁定RAM Range/端点/祖先/文本，取消和最终期限复核保持。最终未插桩实际MV3 J3 **16/16 PASS**，含保存→搜索→原生定位→原生搜索，源码/构建稳定、零浏览器错误。完整Node **5397/5397 PASS，零skip**。见[Round271](evidence/round271/README.md)。完整81、规模/冷启动、真实G/U及发布门槛仍开放，**Free NOT_RELEASE_READY**。
+
+同步状态：本轮正常push仍因Git低速传输错误失败；GitHub API复核远端仍0e51d65，两个本地检查点待正常推送。已保全全部成果，不改远端/分支管理方式。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round270）
 
 承接0e51d65；GitHub API核对远端同SHA，既有dot成果已在共同历史，无新增分歧。修复片段LIST被通知打断后至多一次合并补读，不重放写入；保存失败提示持续保留，后续LIST或其他片段定位/删除成功不会擦掉它。独立审查与14项定向回归通过，完整Node **5332/5332 PASS，零skip**。
 
