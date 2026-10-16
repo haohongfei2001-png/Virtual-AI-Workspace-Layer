@@ -65,5 +65,7 @@ export function createHostFirstSend({origin,handshake,authority,getFrame,observa
   }
  })).catch(()=>{}).finally(()=>{if(inflight.get(proofId)===next)inflight.delete(proofId);});work=next;inflight.set(proofId,next);return next;}
  function invalidateTab(tabId){epochs.set(tabId,epoch(tabId)+1);departures.delete(tabId);chain.invalidate({tabId});for(const [k,r]of early)if(r.event.tabId===tabId)early.delete(k);for(const [op,r]of pending)if(r.context.tabId===tabId)pending.delete(op);for(const k of proofs.keys())if(k.startsWith(tabId+':'))proofs.delete(k);}
- return Object.freeze({intent,submit,observe,navigate,invalidateTab,stop(){stopped=true;chain.stop();pending.clear();proofs.clear();inflight.clear();early.clear();epochs.clear();departures.clear();}});
+ // Necessary local quietness only: no pruning, authority or lease is produced.
+ function isIdle(){return !stopped&&pending.size===0&&inflight.size===0&&early.size===0;}
+ return Object.freeze({isIdle,intent,submit,observe,navigate,invalidateTab,stop(){stopped=true;chain.stop();pending.clear();proofs.clear();inflight.clear();early.clear();epochs.clear();departures.clear();}});
 }

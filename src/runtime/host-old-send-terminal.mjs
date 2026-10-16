@@ -6,7 +6,7 @@ import {tokenOK} from '../b1/identity.mjs';
 export function createHostOldSendTerminal({origin,handshake,observations,sendCandidates,readOperation,readBudget,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  createOldSendTerminalProfile(origin);
  if(!handshake?.verify||!observations?.withCurrent||!sendCandidates?.settle||!sendCandidates?.pendingIntent||typeof readOperation!=='function'||!readBudget?.reserve)throw Error('invalid-old-send-terminal');
- const rows=new Map(),events=new Map(),accepted=new Map(),waiters=new Set(),used=new Set();let stopped=false,queued=0,work=Promise.resolve();
+ const rows=new Map(),events=new Map(),accepted=new Map(),waiters=new Set(),used=new Set();let stopped=false,queued=0,accesses=0,work=Promise.resolve();
  const identity=c=>JSON.stringify([c.tabId,c.browserDocumentId,c.scope.key,c.scopeGrantId,c.scopeEpoch,c.documentToken,c.producerToken,c.routeEpoch,c.bodyEpoch,c.conversationId]);
  const key=e=>JSON.stringify([e.tabId,e.browserDocumentId,e.operationId]);
  const fresh=r=>{const w=now()-r.at,e=elapsedNow()-r.elapsed;return w>=0&&e>=0&&w<30000&&e<30000;};
@@ -25,7 +25,7 @@ export function createHostOldSendTerminal({origin,handshake,observations,sendCan
    const result=await sendCandidates.settle(r.proofId,{intentId:r.intentId,stage:event.stage},check);check();used.add(k);rows.delete(k);events.delete(k);return result?.stage===event.stage;
   });
  }).catch(()=>false).finally(()=>{queued--;});work=result.then(()=>{});return result;}
- async function intent(message,sender){
+ async function intentWork(message,sender){
   try{message=structuredClone(message);sender=structuredClone(sender);}catch{return false;}
   prune();if(stopped||rows.size>=32||used.size>=256||!exactHostRecord(message,['type','documentToken','producerToken','routeEpoch','bodyProofId','intentId','operationId','messageId','observedAt'])||message.type!=='HOST_OLD_SEND_OPERATION'||!['bodyProofId','intentId','operationId','messageId'].every(k=>tokenOK(message[k])))return false;
   const intentAt=Date.parse(message.observedAt);if(!Number.isFinite(intentAt)||intentAt>now()||now()-intentAt>=30000||!await handshake.verify(message,sender))return false;
@@ -43,8 +43,8 @@ export function createHostOldSendTerminal({origin,handshake,observations,sendCan
   const k=key(event);if(used.has(k))return Promise.resolve(false);if(events.has(k)){if(JSON.stringify(events.get(k).event)!==JSON.stringify(event)){used.add(k);events.delete(k);rows.delete(k);}return Promise.resolve(false);}
   events.set(k,{event:Object.freeze({...event}),at:now(),elapsed:elapsedNow()});return join(k);
  }
- async function intentAccepted(proofId,intentId){prune();if(stopped||accepted.size>=32||accepted.has(intentId))return;await observations.withCurrent(proofId,c=>{accepted.set(intentId,{intentId,originalProof:proofId,proofId,identity:identity(c),tabId:c.tabId,browserDocumentId:c.browserDocumentId,at:now(),elapsed:elapsedNow()});for(const [k,r]of rows)if(r.intentId===intentId&&r.identity===identity(c))void join(k);}).catch(()=>{});}
- async function observe(proofId){
+ async function intentAcceptedWork(proofId,intentId){prune();if(stopped||accepted.size>=32||accepted.has(intentId))return;await observations.withCurrent(proofId,c=>{accepted.set(intentId,{intentId,originalProof:proofId,proofId,identity:identity(c),tabId:c.tabId,browserDocumentId:c.browserDocumentId,at:now(),elapsed:elapsedNow()});for(const [k,r]of rows)if(r.intentId===intentId&&r.identity===identity(c))void join(k);}).catch(()=>{});}
+ async function observeWork(proofId){
   prune();if(stopped)return;const context=await observations.withCurrent(proofId,c=>({identity:identity(c),tabId:c.tabId,browserDocumentId:c.browserDocumentId})).catch(()=>null);if(!context)return;
   for(const r of accepted.values())if(r.identity===context.identity)r.proofId=proofId;
   // Browser completion and content IPC can arrive in either order. Only an
@@ -54,5 +54,9 @@ export function createHostOldSendTerminal({origin,handshake,observations,sendCan
   if(missing()&&waiters.size<32)await new Promise(resolve=>{let timer;const done=()=>{waiters.delete(done);cancel(timer);resolve();};waiters.add(done);timer=schedule(done,6000);});
   const keys=await observations.withCurrent(proofId,c=>{const matches=[];for(const [k,r]of rows)if(identity(c)===r.identity){r.proofId=proofId;matches.push(k);}return matches;}).catch(()=>[]);for(const k of keys)await join(k);
  }
- return Object.freeze({intent,intentAccepted,terminal,observe,drain:()=>work,invalidateTab(tabId){for(const done of waiters)done();for(const [k,r]of accepted)if(r.tabId===tabId)accepted.delete(k);for(const [k,r]of rows)if(r.tabId===tabId){rows.delete(k);used.add(k);}for(const [k,r]of events)if(r.event.tabId===tabId){events.delete(k);used.add(k);}},stop(){stopped=true;for(const done of waiters)done();accepted.clear();rows.clear();events.clear();used.clear();}});
+ // Private local predicate only. Empty maps during an awaited entry do not
+ // establish quiescence, and retained associations are not pruned for sleep.
+ async function access(task){accesses++;try{return await task();}finally{accesses--;}}
+ const isIdle=()=>!stopped&&accesses===0&&queued===0&&rows.size===0&&events.size===0&&accepted.size===0&&waiters.size===0;
+ return Object.freeze({isIdle,intent:(...args)=>access(()=>intentWork(...args)),intentAccepted:(...args)=>access(()=>intentAcceptedWork(...args)),terminal,observe:(...args)=>access(()=>observeWork(...args)),drain:()=>work,invalidateTab(tabId){for(const done of waiters)done();for(const [k,r]of accepted)if(r.tabId===tabId)accepted.delete(k);for(const [k,r]of rows)if(r.tabId===tabId){rows.delete(k);used.add(k);}for(const [k,r]of events)if(r.event.tabId===tabId){events.delete(k);used.add(k);}},stop(){stopped=true;for(const done of waiters)done();accepted.clear();rows.clear();events.clear();used.clear();}});
 }

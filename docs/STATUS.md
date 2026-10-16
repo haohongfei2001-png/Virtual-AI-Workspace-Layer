@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round352）
+## 最新本地检查点（2026-10-17，Round353）
+
+同轮继续补first-send和old-terminal局部idle检查：early浏览器事件、pending/inflight、await前空表窗口、queued读取及保留关联均阻止误判空闲；不清理记录/续时限/改预算。最终相关21文件 **285/285 Node PASS**，独立审查无阻断。见 [Round353](evidence/round353/README.md)。
+
+三个发送owner的局部状态已具备；总服务/人工UI操作及同producer冻结复核尚未接通，**不是自动休眠或UI11通过**。完整Free继续NOT_RELEASE_READY。
+
+## 前一本地检查点（2026-10-17，Round352）
 
 增加发送correlator/候选owner的私有同步空闲检查：pending intent、入口异步访问、metadata读取、pending ACK/retry和持久化回调未完成时均拒绝idle；不续期、不额外读取、不清重放记录。相关19文件270/270通过，追加异常释放反例后最终3文件86/86通过，独立审查无阻断。见 [Round352](evidence/round352/README.md)。
 
