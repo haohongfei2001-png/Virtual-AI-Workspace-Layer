@@ -1,6 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round262）
+## 最新正式检查点（2026-10-16，原本地目录，Round263）
+
+承接已正常推送的6715249。生产代码不变，补齐嵌套app-root的实际正式包J3：16/16步通过，原64键/15秒断言未改，open反向7键、closed7/7、open正向24键；草稿/File、AX、历史、真实200%缩放及原生功能保持。独立静态direct/nested八路径只记机制证据，不升级完整UI06/UI10/v2.7。
+
+新增completion写入中断后再Evidence修复交叉用例：普通重启exactly-once；修复后旧receipt/anchor保留但source撤销，fresh drain严格needs-revalidation/source-revoked，重复idle。实际扩展origin IndexedDB **2/2 PASS**（D/test-only，非完整Host S/J4），人工workspace保持、空scope B未受污染；不扩大至全部Pro资产或非空scope B。默认SYS02原13项不变。
+
+最终完整Node **5214/5214 PASS，零skip**。本轮仅fixture/tests与证据，见[Round263](evidence/round263/README.md)。dot成果和原PR16/base完整保留；上一CI仍运行，未代填通过。继承mask、规模/冷启动、81项剩余及真实G/U门槛继续开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round262）
 
 承接已正常推送的f6ac8a2（Round261）。仅调整owned双manual surface的DOM插入位置：从native文档末尾移到composer所在body顶层区域之前，原生节点parent/order/handler不移动，geometry/mask/授权/退出保持，不拦截Tab、不写正tabindex、不调用composer.focus。原body-tail布局使正向遍历必须先越过浏览器页面末尾焦点边界，旧失败及诊断保留。
 

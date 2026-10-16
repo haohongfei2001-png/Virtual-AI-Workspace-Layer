@@ -9,9 +9,11 @@ import {tmpdir} from 'node:os';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
-const ENTRY='tests/host/sys02-pending-idb-cases.mjs';
+const SUITES={pending:{entry:'tests/host/sys02-pending-idb-cases.mjs',factory:'createSys02PendingCases',count:13},'completion-repair':{entry:'tests/host/sys02-completion-repair-cases.mjs',factory:'createSys02CompletionRepairCases',count:2}};
+function suiteSpec(suite){assert(Object.hasOwn(SUITES,suite),'unknown SYS02 suite');return SUITES[suite];}
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-export async function buildSys02Package(directory){
+export async function buildSys02Package(directory,{suite='pending'}={}){
+ const {entry}=suiteSpec(suite);
  const files=new Map();
  async function visit(path){
   if(files.has(path))return;
@@ -20,7 +22,7 @@ export async function buildSys02Package(directory){
   const specs=[...source.matchAll(/\b(?:import|export)\s+(?:\{[^}]*\}|\*\s*(?:as\s+\w+)?|[\w$]+)\s+from\s*['"]([^'"]+)['"]/g),...source.matchAll(/\bimport\s*['"]([^'"]+)['"]/g),...source.matchAll(/\bimport\s*\(\s*['"]([^'"]+)['"]/g)];
   for(const [,spec] of specs){assert(spec.startsWith('.'),'SYS02 nonlocal module '+spec);await visit(relative(ROOT,resolve(ROOT,dirname(path),spec)).split(sep).join('/'));}
  }
- await visit(ENTRY);
+ await visit(entry);
  for(const [path,source] of files){await mkdir(dirname(join(directory,path)),{recursive:true});await writeFile(join(directory,path),source);}
  const manifest={manifest_version:3,name:'VAIWL SYS02 TEST ONLY IndexedDB',version:'0.0.1',background:{service_worker:'sys02-worker.mjs',type:'module'},content_security_policy:{extension_pages:"script-src 'self'; object-src 'none'; connect-src 'none'"}};
  await writeFile(join(directory,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
@@ -45,12 +47,13 @@ export async function finalizeSys02Report(report,{close=async()=>{},readSource=p
  catch(error){report.reportWriteSucceeded=false;fail('report-write',error);}
  return report;
 }
-export async function runSys02Browser({output=resolve('sys02-pending-idb-report.json'),prepareOnly=false,buildPackage=buildSys02Package}={}){
- const report={status:'NOT_RUN',evidence:'NOT_RUN',requestedEvidence:'D_REAL_EXTENSION_ORIGIN_INDEXEDDB_TEST_ONLY_COMPOSITION',mv3Composition:'TEST_ONLY',productionHostS:'NOT_RUN',liveAccount:'NOT_RUN',physicalDiskExhaustion:'NOT_RUN',wholeProcessCrash:'NOT_RUN',injection:'TEST_ONLY_ABORT_AFTER_SUCCESSFUL_PUT_REQUEST',authority:'EXPLICIT_OFFLINE_V1_CAPACITY_AND_EXISTING_JOINT_V2_FAULT_FIXTURE',sourceHashes:{},results:[],errors:[]};
+export async function runSys02Browser({output=resolve('sys02-pending-idb-report.json'),prepareOnly=false,buildPackage=buildSys02Package,suite='pending'}={}){
+ const report={suite,status:'NOT_RUN',evidence:'NOT_RUN',requestedEvidence:'D_REAL_EXTENSION_ORIGIN_INDEXEDDB_TEST_ONLY_COMPOSITION',mv3Composition:'TEST_ONLY',productionHostS:'NOT_RUN',liveAccount:'NOT_RUN',physicalDiskExhaustion:'NOT_RUN',wholeProcessCrash:'NOT_RUN',injection:'TEST_ONLY_ABORT_AFTER_SUCCESSFUL_PUT_REQUEST',authority:'EXPLICIT_OFFLINE_V1_CAPACITY_AND_EXISTING_JOINT_V2_FAULT_FIXTURE',sourceHashes:{},results:[],errors:[]};
  let context;
  try{
+  const spec=suiteSpec(suite);
   const scratch=await mkdtemp(join(tmpdir(),'vaiwl-sys02-idb-')),extension=join(scratch,'extension');report.temporaryPackage=extension;await mkdir(extension);
-  Object.assign(report,await buildPackage(extension));
+  Object.assign(report,await buildPackage(extension,{suite}));
   if(!prepareOnly){
    const {chromium}=await import(process.env.FREE_PLAYWRIGHT_MODULE??'../b1/tooling/node_modules/playwright/index.mjs');
    context=await chromium.launchPersistentContext(join(scratch,'profile'),{headless:process.env.FREE_HEADED!=='1',...(process.env.FREE_CHROME_EXECUTABLE?{executablePath:process.env.FREE_CHROME_EXECUTABLE}:{}),ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging','--disable-background-networking']});
@@ -61,8 +64,8 @@ export async function runSys02Browser({output=resolve('sys02-pending-idb-report.
    await page.goto(`chrome-extension://${id}/sys02.html`);
    const environment=await page.evaluate(()=>({origin:location.origin,extensionId:chrome.runtime.id,nativeIndexedDB:Object.prototype.toString.call(indexedDB),secureContext:isSecureContext}));
    assert.equal(environment.origin,`chrome-extension://${id}`);assert.equal(environment.extensionId,id);assert.equal(environment.nativeIndexedDB,'[object IDBFactory]');assert.equal(environment.secureContext,true);report.environment=environment;report.evidence=report.requestedEvidence;
-   const names=await page.evaluate(async()=>{const {createSys02PendingCases}=await import('./tests/host/sys02-pending-idb-cases.mjs');globalThis.sys02Cases=createSys02PendingCases(indexedDB);return sys02Cases.map(item=>item.name);});
-   assert.equal(names.length,13,'SYS02 case denominator changed');report.results=names.map(name=>({name,status:'NOT_RUN'}));
+   const names=await page.evaluate(async({entry,factory})=>{const module=await import('./'+entry);globalThis.sys02Cases=module[factory](indexedDB);return sys02Cases.map(item=>item.name);},spec);
+   assert.equal(names.length,spec.count,'SYS02 case denominator changed');report.results=names.map(name=>({name,status:'NOT_RUN'}));
    for(let i=0;i<names.length;i++){
     // Run independently so a failed case never hides unexecuted subcases.
     const started=Date.now();
@@ -81,5 +84,5 @@ export async function runSys02Browser({output=resolve('sys02-pending-idb-report.
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url){
  const prepareOnly=process.argv.includes('--prepare-only'),output=process.argv.slice(2).find(arg=>!arg.startsWith('--'));
- const report=await runSys02Browser({prepareOnly,...(output?{output:resolve(output)}:{})});console.log(JSON.stringify(report));if(report.status==='FAIL')process.exitCode=1;
+ const report=await runSys02Browser({prepareOnly,suite:process.env.SYS02_SUITE??'pending',...(output?{output:resolve(output)}:{})});console.log(JSON.stringify(report));if(report.status==='FAIL')process.exitCode=1;
 }

@@ -20,7 +20,8 @@ const clone = (value) => structuredClone(value);
  * Authentication and expected results never come from page-supplied verified flags.
  * LEGACY keeps its original behavior; other profiles use their own reconstruction.
  */
-export async function createHostFixtureServer({profile = 'LEGACY', principalId = 'user-host-fixture', accounts = null, now = () => Date.now(), variant = 'positive', fault, journey = null} = {}) {
+export async function createHostFixtureServer({profile = 'LEGACY', principalId = 'user-host-fixture', accounts = null, now = () => Date.now(), variant = 'positive', fault, journey = null, j3Layout = 'direct'} = {}) {
+  if(!['direct','app-root'].includes(j3Layout)||j3Layout!=='direct'&&(profile!=='LEGACY'||journey!=='J3'))throw Error('invalid-fixture-j3-layout');
   if(journey!==null&&(!['J1','J2','J3','FIRST_SEND'].includes(journey)||profile!=='LEGACY'))throw Error('invalid-fixture-journey');
   if (profile !== 'LEGACY') return createVariantHostFixtureServer({profile,principalId,accounts,now,variant,fault});
   const files = Object.fromEntries(await Promise.all([
@@ -32,6 +33,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
   if(journey==='FIRST_SEND')files['/native.mjs'].body=Buffer.from(firstSendNative(files['/native.mjs'].body.toString()));
   if(journey==='J1')files['/'].body=Buffer.from(j1CandidatePage(files['/'].body.toString()));
   if(journey==='J3')files['/'].body=Buffer.from(files['/'].body.toString().replace('<textarea id="prompt-textarea"','<textarea data-j3-editor="plain" id="prompt-textarea"').replace('<!-- J3_EDITOR -->','<button type="button" id="editor-mode">Use contenteditable</button><div id="j3-contenteditable" data-j3-editor="rich" contenteditable="true" role="textbox" aria-label="Rich message ChatGPT" hidden></div>').replace('<!-- J3_PERMISSION -->','<dialog id="permission-dialog" aria-label="Fixture tool permission"><p>Offline reconstruction permission, not a system permission.</p><button id="permission-allow">Allow fixture tool</button><button id="permission-deny">Deny fixture tool</button><output id="permission-result" aria-live="polite"></output></dialog>'));
+  if(j3Layout==='app-root')files['/'].body=Buffer.from(files['/'].body.toString().replace('<body>','<body><div id="native-app-root" style="display:flex;width:100%;height:100vh">').replace('<script type="module" src="/native.mjs">','</div><script type="module" src="/native.mjs">'));
   const oracleBytes = await readFile(new URL('../expected/legacy.mjs', import.meta.url));
   const sourceBytes = await readFile(new URL('./server.mjs', import.meta.url));
   // Original dates belong to this local service's fixed historical records, not a backup or UI injection.
@@ -153,7 +155,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
   const origin = `http://127.0.0.1:${server.address().port}`;
   return {
     origin,url:`${origin}/`,
-    manifest: Object.freeze({fixtureId:'chatgpt-host-legacy-reconstruction-v1',profile,...(journey?{journey,journeyEvidence:journey==='J3'?'S_RECONSTRUCTION_NOT_REAL_PERMISSION':'S_RECONSTRUCTION_NATIVE_PENDING_CONTROLS'}:{}),reconstruction:true,source:'VA-HOST/1.1 structure reconstruction; not a real DOM snapshot',sourceCommit:null,sourceBlob:null,fixtureHash:createHash('sha256').update(sourceBytes).update(Buffer.concat(Object.values(files).map((f) => f.body))).digest('hex'),expectedWorldFile:'tests/host/expected/legacy.mjs',oracleHash:createHash('sha256').update(oracleBytes).digest('hex'),supportedCapabilities:['principal','personal-context-candidate','project-identity','idless-native-control','conversation-identity','native-move-menu','native-navigation','native-search','native-create','independent-regions','draft-preservation']}),
+    manifest: Object.freeze({fixtureId:'chatgpt-host-legacy-reconstruction-v1',profile,j3Layout,...(journey?{journey,journeyEvidence:journey==='J3'?'S_RECONSTRUCTION_NOT_REAL_PERMISSION':'S_RECONSTRUCTION_NATIVE_PENDING_CONTROLS'}:{}),reconstruction:true,source:'VA-HOST/1.1 structure reconstruction; not a real DOM snapshot',sourceCommit:null,sourceBlob:null,fixtureHash:createHash('sha256').update(sourceBytes).update(Buffer.concat(Object.values(files).map((f) => f.body))).digest('hex'),expectedWorldFile:'tests/host/expected/legacy.mjs',oracleHash:createHash('sha256').update(oracleBytes).digest('hex'),supportedCapabilities:['principal','personal-context-candidate','project-identity','idless-native-control','conversation-identity','native-move-menu','native-navigation','native-search','native-create','independent-regions','draft-preservation']}),
     snapshot: () => clone({actions:counts,requests,fixedGetTrace,...(j2?{j2:j2.snapshot()}:{}),...(firstSend?{firstSends:firstSend.snapshot()}:{}),projectCount:projects.size,conversationCount:conversations.size}),
     // Test-process controls only; not HTTP endpoints, not page-visible authority.
     setPrincipal: (id,{accounts: nextAccounts = roster} = {}) => { identity = id; roster = clone(nextAccounts); },

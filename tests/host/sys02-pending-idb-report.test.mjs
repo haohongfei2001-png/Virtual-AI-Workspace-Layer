@@ -31,3 +31,8 @@ test('SYS02 prepare-only success remains NOT_RUN for native D',async()=>{
  const directory=await mkdtemp(join(tmpdir(),'sys02-report-prepare-')),output=join(directory,'report.json');
  await runSys02Browser({output,prepareOnly:true,buildPackage:async()=>({sourceHashes:{},moduleCount:0})});const saved=JSON.parse(await readFile(output,'utf8'));assert.equal(saved.status,'NOT_RUN');assert.equal(saved.evidence,'NOT_RUN');assert.deepEqual(saved.results,[]);
 });
+test('SYS02 unknown suite fails closed before package or browser access',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'sys02-report-suite-')),output=join(directory,'report.json');let built=false;
+ const result=await runSys02Browser({output,prepareOnly:true,suite:'unsupported',buildPackage:async()=>{built=true;return {};}});
+ assert.equal(built,false);assert.equal(result.status,'FAIL');assert.equal(result.evidence,'NOT_RUN');assert.deepEqual(result.results,[]);assert(result.errors.some(error=>error.includes('unknown SYS02 suite')));
+});
