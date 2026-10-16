@@ -22,7 +22,7 @@ export function instrumentJ3ContextSource(path,source,{ramOnly=false}={}){
    out=once(out,' function contextPending(){',' function contextPending(){__j3ContextTrace("content-pending",{enabled,allowed:contextResumeAllowed});');
    out=once(out,' function contextReady(){',' function contextReady(){__j3ContextTrace("content-ready",{enabled,allowed:contextResumeAllowed});');
   }else{
-  out=once(out,'return runtime.sendMessage(message);','__j3ContextTrace("content-request",{type:message.type});return runtime.sendMessage(message).then(result=>{__j3ContextTrace("content-response",{type:message.type,state:result?.state,binding:!!result?.binding,ok:result?.ok===true});return result;});');
+  out=once(out,'return send(message);','__j3ContextTrace("content-request",{type:message.type});return send(message).then(result=>{__j3ContextTrace("content-response",{type:message.type,state:result?.state,binding:!!result?.binding,ok:result?.ok===true});return result;});');
   }
   out=once(out,'  }catch(error){\n   if(current===s){','  }catch(error){\n   __j3ContextTrace("content-begin-error",{reason:error?.message,sameSession:current===s,routeSame:doc.location.href===s.url});if(current===s){');
  }else throw Error('j3-context-trace-path');

@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round358）
+## 最新本地检查点（2026-10-17，Round359）
+
+content聚合原始IPC/完整逻辑链与adapter/身份读取准备；跨reset迟到任务仍阻止idle，listener/show同步重入与依赖检查前后变化也拒绝准备。实际native dispatch授权等待纳入adapter计数。独立审查与反例完成。完整回归6919/6921，两项J3诊断旧锚点已修正、106相关通过；最终27文件 **715/715 PASS**，不将重叠结果相加为全套。见 [Round359](evidence/round359/README.md)。
+
+尚未启用跨进程原子关闭、frame清空ACK或自动待命恢复；休眠后首个原生发送意图保留仍需闭合。无新浏览器验收，UI-11/完整Free继续NOT_RELEASE_READY。
+
+## 前一本地检查点（2026-10-17，Round358）
 
 身份读取新增可撤销局部准备：deadline/abort已返回但实际fetch/流读取/cancel未结束时仍拒绝idle，新read使旧快照永久失效。独立6项与审查通过；最终相关11文件 **265/265 PASS**，原API key测试失败及精确修正保留。见 [Round358](evidence/round358/README.md)。
 

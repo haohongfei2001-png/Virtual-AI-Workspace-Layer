@@ -81,3 +81,13 @@ test('preparing does not remove native send observer or discard a subsequent int
  const candidate=f.emitted.at(-1);assert.equal(candidate.kind,'send-candidate');assert.equal(candidate.payload.stage,'intent');assert.equal(candidate.bodyProofId,'accepted-body-proof');
  send.resolve(bodyAck(candidate));await settle();assert.ok(f.adapter.prepareIdle());assert.equal(token.isCurrent(),false);assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,1);
 });
+
+test('native dispatch awaiting authorization stays pending across adapter restart',async t=>{
+ const authorization=deferred();const f=bodyFixture({authorize:()=>authorization.promise});t.after(()=>f.adapter.stop());
+ await f.start(async p=>bodyAck(p));await settle();const token=f.adapter.prepareIdle();assert.ok(token);
+ const plan=f.adapter.planNavigation({kind:'resolved',entity:'conversation',nativeId:C,navigationURL:`https://chatgpt.com/c/${C}`,liveHandle:null});assert.equal(plan.mode,'same-target');
+ const pending=f.adapter.dispatchNative({actionId:'idle-native-action',uiGrantId:'grant',mountId:'mount',planRevision:plan.planRevision,targetKey:f.adapter.planKey(plan)});
+ await settle();assert.equal(token.isCurrent(),false);assert.equal(f.adapter.prepareIdle(),null);
+ f.adapter.stop();await f.start(async p=>bodyAck(p));await settle();assert.equal(f.adapter.prepareIdle(),null);
+ authorization.resolve(false);assert.equal((await pending).state,'blocked');await settle();assert.ok(f.adapter.prepareIdle());assert.equal(token.isCurrent(),false);
+});
