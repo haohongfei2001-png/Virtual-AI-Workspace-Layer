@@ -82,7 +82,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     entry.retryTimer=null;entry.deferPreparation=null;
     const elapsed=elapsedNow()-started;
     if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=30000){entry.pending=false;entry.error='read-budget-exhausted';return;}
-    if(nativeWritePending(entry.scopeKey)){entry.deferPreparation=queueRetry;queueRetry();return;}
+    if(nativeWritePending(entry.scopeKey)){reserveRead(entry);entry.deferPreparation=queueRetry;queueRetry();return;}
     run();
    },Math.min(50,30000-elapsed));
   };
@@ -94,7 +94,12 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     if(['snapshot-revision-changed','stale-free-page'].includes(error?.message)&&retries<2&&elapsedNow()-started<29950){retries++;entry.deferPreparation=queueRetry;queueRetry();return;}
     releaseRead(entry);completed();entry.pending=false;entry.error=reason(error);
    });
-  };if(nativeWritePending(entry.scopeKey)===true){entry.deferPreparation=queueRetry;queueRetry();}else run();
+  };if(nativeWritePending(entry.scopeKey)===true){
+   // Reserve the existing bounded scope window while the accepted write drains.
+   // Otherwise each next directory publication can postpone the first read.
+   // This does not cancel that write or defer current-body/send observations.
+   reserveRead(entry);entry.deferPreparation=queueRetry;queueRetry();
+  }else run();
  }
  async function handle(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-view'};}

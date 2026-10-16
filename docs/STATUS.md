@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round280）
+## 最新正式检查点（2026-10-16，原本地目录，Round281）
+
+修复首个界面准备撞上在途原生写入时未预留读取机会的饥饿窗口；沿用scope共享1秒窗口、30秒准备/6秒RPC与原重试，当前body/send优先及旧写入完成保持。独立红测转绿、审查无阻塞；最终完整Node **5474/5474 PASS**。见[Round281](evidence/round281/README.md)。
+
+实际100k隔离诊断双tab双surface约3.07s/4.09s，原生尾部导航与返回完成；但额外有界观察后完整基数仍FAIL（1732/100000 refs、1000P），不能宣称规模/性能完成。此前初始30秒FAIL和fixture失败均保留。PR16 API确认c56342d及Draft/base不变。继续目录渐进吞吐与剩余Free任务，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round280）
 
 真实扩展源IDB补齐在途旧事务与三个新owner升级边界：versionchange后旧事务先完成，随后三个owner打开v4；旧连接拒绝新事务、旧open3为VersionError。八表仅保留精确预期差异，人工数据保持；旧revision CAS拒绝、最新revision CAS成功且无旁路改写。实际synthetic MV3同次 **5/5 PASS**，源码稳定、零错误，生产代码未改，见[Round280](evidence/round280/README.md)。
 

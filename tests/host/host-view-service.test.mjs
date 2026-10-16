@@ -6,19 +6,22 @@ import {WorkspaceRepository} from '../../src/data/repository.mjs';
 import {FreeEvidenceRepository} from '../../src/data/free-evidence-repository.mjs';
 import {createHostBindingService} from '../../src/runtime/host-binding-service.mjs';
 import {reduceCommand} from '../../src/data/state.mjs';
+import {digest} from '../../src/data/hash.mjs';
+import {validateCurrentBodyProposal} from '../../src/host/current-body-claim.mjs';
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const NOW='2026-10-14T00:00:00Z',url='https://chatgpt.com/';
 // Mock IndexedDB and explicitly authored provider response; no browser auth claim.
-async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBridge=null,documentURL=url,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBridge=null,documentURL=url,priorityProof=false,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'host-read-binding'});t.after(()=>base.close());
  const workspaces=new WorkspaceRepository({baseRepository:base,clock:()=>NOW});
  const evidence=new FreeEvidenceRepository({baseRepository:base,clock:()=>NOW});
  let n=0,seq=0,principal='fixture-principal',time=Date.parse(NOW),providerReads=0;
  const sender={id:'extension',tab:{id:1,incognito:false},frameId:0,documentId:'document',documentLifecycle:'active',url:documentURL};
  const profile={id:'read-binding-reconstruction',revision:1,urlPolicy:createURLPolicy({profile:{conversationId:value=>value,projectId:({container})=>container}})};
+ if(priorityProof)Object.assign(profile,{currentBody:{rootSelector:'main',conversationIdAttribute:'data-id',messageSelector:'article',messageIdAttribute:'data-id'},sendIntent:{formSelector:'form',editorSelector:'textarea',sendButtonSelector:'button'}});
  const uiURLs={workspace:'chrome-extension://extension/workspace.html',sidebar:'chrome-extension://extension/sidebar.html'};
  const children=Object.fromEntries(Object.entries(uiURLs).map(([role,url],i)=>[role,{...sender,frameId:i+1,documentId:'ui_'+role,url}]));
- const service=createHostBindingService({elapsedNow,schedule,cancel,extensionId:'extension',prepareNavigation,presentSurface,selectionBridge,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{read:async()=>{providerReads++;return {principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
+ const service=createHostBindingService({currentMetadataReadEnabled:priorityProof,sendCandidatesEnabled:priorityProof,elapsedNow,schedule,cancel,extensionId:'extension',prepareNavigation,presentSurface,selectionBridge,uiURLs,getContexts:async({documentIds})=>Object.values(children).filter(c=>documentIds.includes(c.documentId)).map(c=>({contextType:'TAB',documentId:c.documentId,frameId:c.frameId,tabId:1,incognito:false,documentUrl:c.url,documentOrigin:'chrome-extension://extension'})),getFrame:async()=>({documentId:'document',documentLifecycle:'active',url:documentURL}),allowedURL:value=>value===documentURL,repository:base,workspaceRepository:workspaces,freeEvidenceRepository:evidence,provider:{readCurrentConversation:async()=>({principalKey:'principal_'+digest(['chatgpt-principal-v1',principal]),contextKey:'context_'+digest(['chatgpt-context-v1',principal,'personal']),expiresAt:'2026-10-14T01:00:00Z',providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch',metadata:{protocol:'vaiwl-conversation-metadata-candidate/1',conversationId:'c1',state:'candidate',messages:[],gaps:[],coverage:'observed-only'}}),read:async()=>{providerReads++;return {principalId:principal,expiresAt:'2026-10-14T01:00:00Z',contexts:[{id:'personal',kind:'personal'}],providerProfile:'explicit-test-provider',transport:'worker-fixed-fetch'};}},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:new Map([[profile.id,profile]]),now:()=>time,makeId:()=>`token_${++n}`});
  const request=(type,extra={})=>service.handle({v:1,type,clientId:'client',seq:++seq,...extra},sender);
  let binding,bound;
  async function bind(){const hello=await request('HOST_HELLO');assert.equal(hello.ok,true);binding=hello.binding;const {documentToken,producerToken,routeEpoch}=binding;assert.equal((await request('HOST_REFRESH',{documentToken,producerToken,routeEpoch})).state,'verified');bound=await request('BIND');assert.equal(bound.ok,true,JSON.stringify(bound));return bound;}
@@ -45,7 +48,14 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBr
  const horizon=(role,extra={},as=children[role])=>service.handle({v:1,type:'HOST_UI_SET_HORIZON',grantId:grants[role].id,mountId:'mount',operationId:'set_horizon',expectedRevision:0,H:14,segment:0,anchorRefId:null,...extra},as);
  async function renew(){const auth={documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch};const doc=await request('HOST_DOCUMENT_RENEW',auth);assert.equal(doc.ok,true,JSON.stringify(doc));binding=doc.binding;const refresh=await request('HOST_REFRESH',auth);const status=await service.handle({v:1,type:'HOST_UI_STATUS',...auth,mountId:'mount'},sender);return {refresh,status};}
  const pass=(phase='start',passSeq=1,patch={})=>service.handle({v:1,type:'HOST_INGESTION_PASS',documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,profileId:profile.id,profileVersion:profile.revision,passSeq,phase,...patch},sender);
- return{additionalMount,pass,enterCurrent,renew,get providerReads(){return providerReads;},horizon,present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
+ async function priorityObservation(kind,bodyProofId=null){
+  const evidence={profileId:profile.id,profileVersion:1,sourceKind:'native-dom',regionEpoch:1,fieldPaths:kind==='current-object'?['current-body-explicit-id','current-body-message-ids']:['native-send-intent'],receiptId:null};
+  const payload=kind==='current-object'?{conversationId:'c1',messageIds:[],association:'explicit-body-id',regionEpoch:1,evidence}:{intentId:'priority-send',conversationId:'c1',messageId:null,operationId:null,stage:'intent',observedAt:NOW,evidence};
+  const proposal={protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,localSeq:++observationSeq,profileId:profile.id,profileVersion:1,bodyProofId,kind,payload};
+  if(kind==='current-object')validateCurrentBodyProposal(proposal,{profile,actualURL:documentURL});
+  return service.handle(proposal,sender);
+ }
+ return{priorityObservation,additionalMount,pass,enterCurrent,renew,get providerReads(){return providerReads;},horizon,present,base,workspaces,evidence,service,request,bind,observe,mount,view,grants,sender,children,setTime:value=>{time=value;},get bound(){return bound;},switchPrincipal(value){principal=value;service.invalidate({tabId:1,documentId:'document'});}};
 }
 const drain=()=>new Promise(resolve=>setImmediate(resolve));
 async function ready(h,role='workspace'){
@@ -603,4 +613,28 @@ for(const ending of ['delivery','expiry'])test('MOCK_IDB distinct mounts retain 
   clock.advance(1);assert.equal(h.service.views.isForegroundReadPending(scope),false,'second mount cannot extend first reservation absolute deadline');
  }
  release();assert.equal((await ready(second)).state,'ready');assert.equal(h.service.views.isForegroundReadPending(scope),false);
+});
+
+for(const boundary of ['page','apply'])test('MOCK_IDB preparation reserves scope foreground opportunity before waiting for in-flight native '+boundary,async t=>{
+ const clock=preparationClock(),h=await fixture(t,{priorityProof:true,documentURL:'https://chatgpt.com/c/c1',elapsedNow:clock.now,schedule:clock.schedule,cancel:clock.cancel});
+ await h.bind();await h.observe();await h.mount();
+ const native=h.service.nativeRepository,original=native[boundary].bind(native);let entered=false,release,settled=false;
+ const held=new Promise(resolve=>release=resolve);
+ native[boundary]=async(...args)=>{if(!entered&&(boundary==='apply'||args[1]?.limit===512)){entered=true;await held;}return original(...args);};
+ const write=h.observe(['p1','inflight']).then(result=>{settled=true;return result;});
+ t.after(async()=>{release();await write;h.service.stop();});
+ for(let i=0;i<100&&!entered;i++)await drain();assert(entered,'actual background writer reaches held boundary');
+ assert.equal(h.service.observations.isNativeWritePending(h.bound.scope),true);
+ assert.equal((await h.view()).state,'preparing');assert.equal((await h.view('sidebar')).state,'preparing');
+ assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),true,'preparing must reserve before the existing writer drains');
+ assert.equal(settled,false,'reservation cannot cancel or complete an in-flight native write');
+ release();assert.equal((await write).state,'accepted');
+ const revision=(await native.read(workspaceScope(h))).revision;
+ assert.equal((await h.observe(['p1','must-yield'],{raw:true})).state,'retry-after','next directory packet yields to already waiting UI');
+ assert.equal((await native.read(workspaceScope(h))).revision,revision);
+ const body=await h.priorityObservation('current-object');assert.equal(body.state,'accepted',JSON.stringify(body));assert.equal(typeof body.bodyProofId,'string');
+ const send=await h.priorityObservation('send-candidate',body.bodyProofId);assert.equal(send.state,'accepted',JSON.stringify(send));
+ assert.equal((await native.read(workspaceScope(h))).revision,revision,'current body/send acceptance does not fabricate native facts');
+ clock.advance(50);const result=await ready(h);assert.equal(result.state,'ready',JSON.stringify(result));assert(result.page.groups.items.some(row=>row.id==='inflight'));assert.equal(result.page.groups.items.some(row=>row.id==='must-yield'),false);
+ assert.equal((await h.view('sidebar')).state,'ready');assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),false);
 });
