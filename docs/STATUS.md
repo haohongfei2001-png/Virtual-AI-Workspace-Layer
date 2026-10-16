@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round355）
+## 最新本地检查点（2026-10-17，Round356）
+
+新增controller私有待命转换：撤回旧UI权限/计时，保留原iframe与唯一fresh-wake返回入口；拒绝可见surface、在途renew/join和缺少wake回调。通知失败清理、原生slot占用退让、迟到expiry/public消息不复活旧授权。最终相关11文件 **215/215 Node PASS**，独立7项及4PASS/3FAIL变异反例保留。见 [Round356](evidence/round356/README.md)。
+
+生产content尚未自动调用该接口；同producer冻结、首个发送意图不丢失、iframe清空ACK和实际自然worker退出/恢复仍待完成。无新MV3结果，UI-11和完整Free继续NOT_RELEASE_READY。
+
+## 前一本地检查点（2026-10-17，Round355）
 
 补齐view/UI授权、identity/context、continuation、metadata与原生观察/摄取中deadline或abort先返回后的实际在途计数，接入服务内部聚合；不改预算、授权、数据库或清理记录。独立反例与审查完成。首次完整Node6856PASS/15FAIL为诊断锚点漂移，精确更新并保留篡改/唯一匹配断言后，最终482文件 **6873/6873 PASS**，零skip/cancel。见 [Round355](evidence/round355/README.md)。
 

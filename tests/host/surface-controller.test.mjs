@@ -4,7 +4,7 @@ import {createSurfaceController} from '../../src/host/surface-controller.mjs';
 const drain=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
 // Isolated DOM/lifecycle mocks: these contracts do not certify actual Chrome masks.
-function fixture(){
+function fixture(options={}){
  const listeners=new Map(),timers=new Map();let time=1000,n=0,layer=false,region=1,observer,surrender;
  const calls={terminations:[],updates:[],show:0,reading:0,suspend:0,dispose:0,confirm:[],register:0,stop:0};
  const win={addEventListener:(k,fn)=>{if(!listeners.has(k))listeners.set(k,new Set());listeners.get(k).add(fn);},removeEventListener:(k,fn)=>listeners.get(k)?.delete(fn),MutationObserver:class{constructor(fn){observer=fn;}observe(){}disconnect(){}}};
@@ -15,10 +15,10 @@ function fixture(){
  const adapter={updateBinding:next=>{calls.updates.push(next);return true;},start:async()=>({binding}),stop:()=>{calls.stop++;},inspect:()=>({ok:true,regionEpoch:region,navigationSlot:slot}),hasNativeLayer:()=>layer};
  const surface={mount:async(c,i,o)=>(surrender=o.onSurrender,{id:'mount',documentToken:'token',regionEpoch:region}),frames:()=>frames,showWorkspace:()=>{calls.show++;},showReading:()=>{calls.reading++;},suspend:()=>{calls.suspend++;},dispose:()=>{calls.dispose++;}};
  const bridge={registerMount:async()=>{calls.register++;return {ok:true};},confirmParent:async value=>{calls.confirm.push(value);return {ok:true,grant:{id:`grant_${value.role}`,mountId:'mount',role:value.role,parentDocumentId:'parent',uiDocumentId:`ui_${value.role}`,scopeGrantId:'scope',expiresAt:new Date(21000).toISOString()}};}};
- const controller=createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://extension',onTerminated:(reason,presentation)=>calls.terminations.push({reason,presentation}),now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++n;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
+ const controller=createSurfaceController({onWake:()=>false,...options,document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://extension',onTerminated:(reason,presentation)=>calls.terminations.push({reason,presentation}),now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++n;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
  const message=(role='workspace',patch={})=>{const event={source:frames.find(x=>x.role===role).frame.contentWindow,origin:'chrome-extension://extension',data:{type:'VAIWL_UI_JOIN',role,nonce:`nonce_${role}`},...patch};for(const fn of listeners.get('message')??[])fn(event);};
  const both=async()=>{message();message('sidebar');await drain();};
- return {renewAck:()=>({ok:true,binding:{...binding,expiresAt:new Date(time+20000).toISOString()},grants:['workspace','sidebar'].map(role=>({id:`grant_${role}`,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:`ui_${role}`,scopeGrantId:'scope',expiresAt:new Date(time+20000).toISOString()}))}),surrender:event=>surrender?.(event),pagehide:()=>{for(const fn of listeners.get('pagehide')??[])fn();},controller,bridge,adapter,surface,doc,slot,frames,binding,calls,message,both,change:()=>observer?.(),layer:value=>{layer=value;},region:()=>{region++;},tick:ms=>{time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
+ return {timers,renewAck:()=>({ok:true,binding:{...binding,expiresAt:new Date(time+20000).toISOString()},grants:['workspace','sidebar'].map(role=>({id:`grant_${role}`,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:`ui_${role}`,scopeGrantId:'scope',expiresAt:new Date(time+20000).toISOString()}))}),surrender:event=>surrender?.(event),pagehide:()=>{for(const fn of listeners.get('pagehide')??[])fn();},controller,bridge,adapter,surface,doc,slot,frames,binding,calls,message,both,change:()=>observer?.(),layer:value=>{layer=value;},region:()=>{region++;},tick:ms=>{time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
 }
 test('owner registration and both UiGrant ACKs gate initial dual-surface show',async()=>{const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const start=f.controller.start({});await drain();f.message();assert.equal(f.calls.confirm.length,0);assert.equal(f.controller.showWorkspace(),false);held.resolve({ok:true});await start;f.message();await drain();assert.equal(f.calls.show,0);f.message('sidebar');await drain();assert.equal(f.calls.show,1);assert.deepEqual(Object.keys(f.calls.confirm[0]).sort(),['documentToken','mountId','nonce','regionEpoch','role']);});
 test('origin, original contentWindow, connectedness and public join shape are mandatory',async()=>{for(const mutate of [f=>f.message('workspace',{origin:'https://chatgpt.com'}),f=>f.message('workspace',{source:{}}),f=>{f.frames[0].frame.isConnected=false;f.message();},f=>f.message('workspace',{data:{type:'VAIWL_UI_JOIN',role:'workspace',nonce:'n',scope:'forged'}})]){const f=fixture();await f.controller.start({});mutate(f);await drain();assert.equal(f.calls.confirm.length,0);assert.equal(f.calls.show,0);}});
@@ -236,3 +236,28 @@ test('unreadable surface becomes unknown and failed publication retries with hig
 test('expired binding, retired mount callback and stopped controller cannot publish',async()=>{
  const f=publishingFixture();await f.controller.start({});await f.both();const oldToggle=f.events.get('toggle');await f.controller.start({});await f.both();const before=f.sent.length;oldToggle({});assert.equal(f.sent.length,before);f.tick(60000);f.actual({workspace:false,sidebar:false});f.toggle();f.controller.suspend();assert.equal(f.sent.length,before);f.controller.stop();oldToggle({});assert.equal(f.sent.length,before);
 });
+
+function idleSurface(f){const messages=[];f.surface.visibility=()=>({workspace:false,sidebar:false});for(const item of f.frames)item.frame.contentWindow.postMessage=(data,origin)=>messages.push({data,origin});return messages;}
+test('dormant UI retains frames and one wake entry while revoking all old presentation guards',async()=>{
+ const f=fixture(),messages=idleSurface(f);await f.controller.start({});await f.both();f.controller.showNativeReading();const before=[...f.frames],guard=f.controller.intentGuard(),reading=f.controller.readingGuard();
+ assert.equal(f.controller.enterDormant(),true);assert.equal(guard(),false);assert.equal(reading(),false);assert.equal(f.controller.showWorkspace(),false);assert.equal(f.controller.showReading(),false);assert.equal(f.calls.dispose,0);assert.equal(f.slot.children.length,1);assert.deepEqual(f.frames,before);
+ assert.deepEqual(messages.map(x=>x.data),[{type:'VAIWL_UI_IDLE',role:'workspace'},{type:'VAIWL_UI_IDLE',role:'sidebar'}]);assert(messages.every(x=>x.origin==='chrome-extension://extension'));
+ const confirms=f.calls.confirm.length;f.message();f.message('sidebar',{data:{type:'VAIWL_UI_SUSPEND',role:'sidebar'}});await drain();f.tick(100000);f.change();assert.equal(f.calls.confirm.length,confirms);assert.equal(f.calls.dispose,0);assert.equal(f.slot.children.length,1);
+ f.controller.stop();assert.equal(f.calls.dispose,1);assert.equal(f.slot.children.length,0);
+});
+test('dormant return only requests fresh owner wake once per in-flight trusted click',async()=>{
+ const gate=deferred();let wakes=0;const f=fixture({onWake:()=>{wakes++;return gate.promise;}});idleSurface(f);await f.controller.start({});await f.both();f.controller.showNativeReading();assert.equal(f.controller.enterDormant(),true);
+ const button=f.slot.children[0],shown=f.calls.show;button.events.click({isTrusted:false});assert.equal(wakes,0);button.events.click({isTrusted:true});button.events.click({isTrusted:true});assert.equal(wakes,1);assert.equal(f.calls.show,shown);assert.equal(f.calls.dispose,0);gate.resolve(false);await drain();assert.equal(f.controller.showWorkspace(),false);
+});
+test('dormant entry refuses visible surfaces and renewal in flight',async()=>{
+ const f=fixture();idleSurface(f);const renewal=deferred();f.bridge.renewSession=()=>renewal.promise;await f.controller.start({});await f.both();assert.equal(f.controller.enterDormant(),false);f.controller.showNativeReading();f.surface.visibility=()=>({workspace:false,sidebar:true});assert.equal(f.controller.enterDormant(),false);f.surface.visibility=()=>({workspace:false,sidebar:false});f.tick(10000);await drain();assert.equal(f.controller.enterDormant(),false);renewal.resolve(f.renewAck());await drain();assert.equal(f.controller.enterDormant(),true);f.tick(100000);assert.equal(f.calls.dispose,0);
+});
+test('dormant pagehide and changed document still dispose the old frames',async()=>{
+ for(const change of [f=>f.pagehide(),f=>{f.doc.location.href+='c/next';f.change();}]){const f=fixture();idleSurface(f);await f.controller.start({});await f.both();f.controller.showNativeReading();assert.equal(f.controller.enterDormant(),true);change(f);assert.equal(f.calls.dispose,1);assert.equal(f.slot.children.length,0);}
+});
+
+test('already queued expiry callback cannot dispose dormant frames',async()=>{
+ const f=fixture();idleSurface(f);await f.controller.start({});await f.both();f.controller.showNativeReading();const expired=[...f.timers.values()].find(t=>t.at===21000);assert(expired);assert.equal(f.controller.enterDormant(),true);expired.fn();assert.equal(f.calls.dispose,0);assert.equal(f.slot.children.length,1);
+});
+
+test('dormant entry requires an explicit owner wake path',async()=>{const f=fixture({onWake:null});idleSurface(f);await f.controller.start({});await f.both();f.controller.showNativeReading();assert.equal(f.controller.enterDormant(),false);assert.equal(f.controller.showWorkspace(),true);});
