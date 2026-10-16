@@ -102,7 +102,8 @@ export class PartitionedState {
  saveSharedMutation(tx,storage,scope,current,next,patch,actor='human'){
   return saveSharedDirectoryMutation(tx,storage.manifest,scope,storage,current,next,patch,actor,this.saveMutation.bind(this));
  }
- saveMutation(tx,storage,current,next,patch,actor='human'){
+ saveMutation(tx,storage,current,next,patch,actor='human',captureRoot){
+  if(captureRoot!==undefined&&typeof captureRoot!=='function')throw Error('invalid-root-capture');
   const m=storage.manifest,n={...m,revision:next.revision,channel:next.channel,sources:next.sources,workspaces:next.workspaces,preferences:next.preferences,refVersions:{...m.refVersions}};
   const ids=affected(patch),store=tx.objectStore('b23_states');
   for(const refId of ids){const old=storage.pieces.get(refId);if(old)n.units-=stable(old).length;
@@ -113,7 +114,11 @@ export class PartitionedState {
   n.humanRefs=[...new Set([...m.humanRefs,...(actor==='human'?ids:[])])].filter(k=>Object.hasOwn(n.refVersions,k));n.changes=[...m.changes,{revision:n.revision,refs:ids}].slice(-64);
   // The transaction owner preserves its verified old envelope before mutation;
   // recovery instead checkpoints the newly recovered root after this returns.
-  const rootRecord=manifestRecord(n.scopeKey,n);store.put(rootRecord);return n;
+  // Directory mutations consume this validated payload and publish their own root.
+  // Keep every manifest check, but avoid hashing an envelope that is discarded.
+  if(captureRoot){checkManifest(n,n.scopeKey);captureRoot(n);}
+  else store.put(manifestRecord(n.scopeKey,n));
+  return n;
  }
  async page(scope,{revision=null,offset=0,ids=null},options={}){
   const s=normalizedScope(scope);if(!s)throw Error('unverified-scope');if(!Number.isSafeInteger(offset)||offset<0||offset>MAX_REFS||ids&&(!Array.isArray(ids)||ids.length>PAGE_SIZE))throw Error('invalid-partition-page');

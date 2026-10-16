@@ -2903,3 +2903,7 @@ CI44 at486693b passes4890/4892 Node tests; two older first-Host revision/staged-
 ## Round252：10k精确基数通过，推进实际成员与就绪后流式验收
 
 见[evidence/round252](evidence/round252/README.md)。保留默认SYS05启动与cold失败；不将工作诊断或单次规模样本升级为完整验收。
+
+## Round328 — validated intermediate root capture
+
+Removed the discarded legacy-root checksum during shared-directory mutation while retaining full validation and the actual stored root checksum. Independent new contracts 11/11 and affected storage/recovery regression 286/286 pass; independent review passes. No browser performance improvement claimed. Authorized branch recovery and external cleanup stash remain preserved. MODERN J3 immediate startup, 100k and full Free remain incomplete / NOT_RELEASE_READY. See [Round328](evidence/round328/README.md).

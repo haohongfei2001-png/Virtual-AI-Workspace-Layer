@@ -37,11 +37,12 @@ export function saveSharedDirectoryMutation(tx,root,scope,storage,current,next,p
  // The existing writer needs original old pieces for aggregate unit deltas.
  for(const ref of ids)if(Object.hasOwn(bounded.refVersions,ref)&&!storage.pieces.has(ref))throw Error('missing-shared-mutation-piece');
  const legacyStorage={manifest:bounded,pieces:storage.pieces};let captured=null;
+ const captureRoot=payload=>{if(captured)throw Error('duplicate-shared-root-write');captured={payload};};
  const store=tx.objectStore('b23_states'),proxy={objectStore:name=>name==='b23_states'?{put:row=>{
-  if(row.key===root.scopeKey){if(captured)throw Error('duplicate-shared-root-write');captured=row;return;}
+  if(row.key===root.scopeKey){captureRoot(row.payload);return;}
   return store.put(row);
  }}:tx.objectStore(name)};
- const legacy=saveLegacy(proxy,legacyStorage,current,next,patch,actor);
+ const legacy=saveLegacy(proxy,legacyStorage,current,next,patch,actor,captureRoot);
  if(!captured||captured.payload!==legacy)throw Error('missing-shared-root-write');
  const updates=Object.fromEntries(ids.map(ref=>[ref,Object.hasOwn(legacy.refVersions,ref)?next.revision:null]));
  const touched=new Set(ids.map(sharedRefBucket)),selected=[];
