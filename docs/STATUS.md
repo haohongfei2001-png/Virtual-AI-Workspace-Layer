@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round345）
+## 最新本地检查点（2026-10-17，Round346）
+
+新增J3显式registered-worker前置，复用已有只读exact worker/JS listener检查；默认immediate不变，注册不是context授权。最终单一15秒绝对预算覆盖注册→导航→首workspace（实际491ms）。MODERN × app-root 原16步实际连续 **16/16 PASS**，包含双surface、原生草稿/文件、AX键盘、Back/Forward、200%缩放、历史/UNKNOWN、片段与原生搜索；worker外网阻断、源码/fixture/构建无漂移。72/72定向Node通过。[Round346证据](evidence/round346/README.md)。
+
+这只证明已注册worker前置下的嵌套功能旅程；Round345即时安装后导航缺send失败未修复，coldStartAcceptance明确NOT_TESTED，不把两次16步相加。未改生产或降低原断言。完整100k、静默context及其余81/profile/J1–J4/G/U仍开放，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round345）
 
 补公共input-risk窄selector的附件覆盖：读取前后检查真实form内file input唯一且与选中节点一致，隐藏/额外输入、读取中变更保持unknown，不读文件名/内容。独立旧代码9PASS/10FAIL，最终相关17文件 **241/241 PASS**；实际headless DOM **12/12 PASS**，仅WEB_MECHANISM_ONLY，原节点/内容/源码保持。[Round345证据](evidence/round345/README.md)。
 

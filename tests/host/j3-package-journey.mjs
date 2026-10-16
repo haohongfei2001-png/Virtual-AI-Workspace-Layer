@@ -1,3 +1,4 @@
+import {createSys05StartupDeadline,waitForSys05Worker} from './sys05-startup-precondition.mjs';
 import {inspectJ3Failure} from './j3-failure-inspection.mjs';
 import {createJ3ContextTracePackage,verifyJ3ContextTracePackage} from './j3-context-trace.mjs';
 /** One continuous offline J3 journey. Missing fixture surfaces are explicit
@@ -17,16 +18,19 @@ import {createHostFixtureServer} from './fixtures/server.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 const hash=x=>createHash('sha256').update(x).digest('hex'),script=fileURLToPath(import.meta.url),scriptHash=hash(await readFile(script));
 const ui06Path=fileURLToPath(new URL('./ui06-keyboard-ax.mjs',import.meta.url)),ui06HelperHash=hash(await readFile(ui06Path));
+const startupMode=process.env.J3_STARTUP??'immediate';
+if(!['immediate','registered-worker'].includes(startupMode))throw Error('invalid-j3-startup-mode');
 const j3Layout=process.env.J3_LAYOUT??'direct',selected=j3JourneyProfile(process.env.FREE_J3_PROFILE??'LEGACY');
-const fixturePaths=['./j3-failure-inspection.mjs','./j3-failure-closures.mjs','./j3-context-trace.mjs','./j3-journey-profile.mjs','./j3-control-wait.mjs','./expected/legacy.mjs','./expected/modern.mjs','./fixtures/server.mjs','./fixtures/variants-server.mjs','./fixtures/variants-native.mjs','./fixtures/j3-modern.mjs','./fixtures/native.mjs','./fixtures/native.css','./fixtures/legacy.html'];
+const fixturePaths=['./sys05-startup-precondition.mjs','./j3-failure-inspection.mjs','./j3-failure-closures.mjs','./j3-context-trace.mjs','./j3-journey-profile.mjs','./j3-control-wait.mjs','./expected/legacy.mjs','./expected/modern.mjs','./fixtures/server.mjs','./fixtures/variants-server.mjs','./fixtures/variants-native.mjs','./fixtures/j3-modern.mjs','./fixtures/native.mjs','./fixtures/native.css','./fixtures/legacy.html'];
 const fixtureSourceHashes=Object.fromEntries(await Promise.all(fixturePaths.map(async path=>[path,hash(await readFile(new URL(path,import.meta.url)))])));
 const server=selected.modern?await createVariantHostFixtureServer({profile:'MODERN',journey:'J3',j3Layout}):await createHostFixtureServer({journey:'J3',j3Layout}),dir=await mkdtemp(join(tmpdir(),'vaiwl-j3-journey-')),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineSnippets:true,offlineHistory:true,...(selected.modern?{offlineContext:true,offlineProjectContext:true}:{})});
 const manifestPath=join(built.unpacked,'build-manifest.json'),manifestBytes=await readFile(manifestPath),manifest=JSON.parse(manifestBytes);
 const contextTrace=process.env.J3_CONTEXT_TRACE==='1'?await createJ3ContextTracePackage(built.unpacked,join(dir,'context-trace')):null;
 const output=process.argv[2]??join(tmpdir(),'free-j3-package-journey.json');
 const report={requirement:'VA-HOST/1.1 J3',evidence:'SINGLE_CONTINUOUS_REAL_HEADLESS_PACKAGED_MV3_OFFLINE_JOURNEY',realChatGPT:'NOT_RUN',physicalIME:'NOT_RUN',profile:selected.profile,expectedScope:selected.scope,fixtureSourceHashes,productionSnippetProfile:'DISABLED_NOT_CERTIFIED',permissions:'OFFLINE_APPLICATION_PERMISSION_ONLY_NOT_SYSTEM_PERMISSION',fixture:server.manifest,scriptHash,ui06HelperHash,sourceHashes:manifest.sourceHashes,buildManifestHash:hash(manifestBytes),steps:[],errors:[],status:'NOT_RUN',fullV27Acceptance:'NOT_ESTABLISHED'};
+report.startup={mode:startupMode,coldStartAcceptance:startupMode==='immediate'?'ATTEMPTED':'NOT_TESTED',registrationIsContextAuthority:false};
 if(contextTrace){report.evidence='DIAGNOSTIC_ONLY_J3_CONTEXT_TIMING';report.contextTrace=contextTrace;report.contextEvents=[];}
-let context,page,worker,extensionId,documentMarker;
+let context,page,worker,extensionId,documentMarker,startupDeadline;
 const record=(name,status,details={})=>report.steps.push({order:report.steps.length+1,name,status,...details});
 // Read-only oracle. The production worker is solely responsible for ingestion.
 async function historyFacts(){const reader=page.frames().find(f=>f.url()===`chrome-extension://${extensionId}/workspace.html`);if(!reader)throw Error('missing-history-inspection-frame');return reader.evaluate(async scope=>{
@@ -71,10 +75,14 @@ try{
  context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,viewport:{width:1440,height:1000},executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
  await context.route('**/*',r=>r.request().url().startsWith(server.origin+'/')||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());
  const cdp=await context.browser().newBrowserCDPSession();({id:extensionId}=await cdp.send('Extensions.loadUnpacked',{path:contextTrace?.unpacked??built.unpacked}));
+ if(startupMode==='registered-worker'){startupDeadline=createSys05StartupDeadline({timeoutMs:15000});report.startup.budgetMs=15000;report.startup.worker=await waitForSys05Worker(context,extensionId,startupDeadline);}
+ const openFirstWorkspace=async()=>{
  await context.addInitScript(()=>{globalThis.j3Lifecycle=[];const record=kind=>{j3Lifecycle.push({kind,at:performance.now(),url:location.href,state:document.documentElement?.dataset.vaiwlState,reason:document.documentElement?.dataset.vaiwlReason,owned:document.querySelectorAll('[data-va-owned]').length});if(j3Lifecycle.length>150)j3Lifecycle.shift();};addEventListener('popstate',()=>record('popstate'));addEventListener('pagehide',e=>record('pagehide:'+e.persisted));addEventListener('pageshow',e=>record('pageshow:'+e.persisted));addEventListener('DOMContentLoaded',()=>{record('dom');new MutationObserver(records=>{if(records.some(r=>r.type==='attributes'&&r.target===document.documentElement))record('adapter-status');}).observe(document.documentElement,{attributes:true});});});
  page=await context.newPage();if(contextTrace)page.on('console',message=>{const text=message.text();if(text.startsWith('J3_CONTEXT_TRACE ')&&report.contextEvents.length<128)try{report.contextEvents.push(JSON.parse(text.slice(17)));}catch{}});page.on('pageerror',error=>report.errors.push(error.message));await page.goto(server.origin+'/c/33333333-3333-4333-8333-333333333333');
  documentMarker=await page.evaluate(()=>{globalThis.j3DocumentMarker=crypto.randomUUID();globalThis.j3OriginalDocument=document;globalThis.j3OriginalPlain=document.querySelector('[data-j3-editor=plain]');globalThis.j3OriginalRich=document.querySelector('[data-j3-editor=rich]');globalThis.j3OriginalFileInput=document.querySelector('#composer input[type=file]');return j3DocumentMarker;});report.documentMarker=documentMarker;
- let frames=await workspace();worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${extensionId}/`));assert(worker);
+ return workspace();
+ };
+ let frames=await (startupDeadline?startupDeadline.run(openFirstWorkspace,'j3-initial-native-context-and-workspace'):openFirstWorkspace());if(startupDeadline)report.startup.elapsedMs=startupDeadline.elapsedMs();worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${extensionId}/`));assert(worker);
  report.workerExternalNetworkBlocked=await worker.evaluate(async()=>{try{await fetch('https://example.com/');return false;}catch{return true;}});assert(report.workerExternalNetworkBlocked);
  // Positive NONE comes from the real fixture menu; no database seeding.
  await nativeReading();await page.locator('#move-button').click();await page.locator('#move-dialog[open]').waitFor();await waitHistory(s=>s.native.membership['33333333-3333-4333-8333-333333333333']?.state==='NONE');await page.locator('#move-dialog').getByRole('button',{name:'Close',exact:true}).click();frames=await workspace();
