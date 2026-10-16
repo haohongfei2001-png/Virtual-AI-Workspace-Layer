@@ -35,7 +35,10 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function ensureCandidates(){
   if(!candidates){candidateRoot=doc.createElement('div');candidateRoot.setAttribute('data-vaiwl-candidate-root','');if(typeof root?.before==='function')root.before(candidateRoot);else privateRoot.append(candidateRoot);candidates=createFreeFrameCandidates({document:doc,container:candidateRoot,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
     const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
-    return withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_ACTIVATE_CANDIDATE',grantId:active.id,mountId:active.mountId,renderKey,presentation,actionId:doc.defaultView.crypto.randomUUID()}),{now:elapsedNow,schedule,cancel});
+    const actionId=doc.defaultView.crypto.randomUUID();if(!migration.beginActivation(actionId))migration.interrupt();
+    candidateRun++;candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;
+    if(activeLocation){activeLocation.cancelled=true;activeRead?.abort();}
+    return withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_ACTIVATE_CANDIDATE',grantId:active.id,mountId:active.mountId,renderKey,presentation,actionId}),{now:elapsedNow,schedule,cancel});
    }});}
  }
  function candidateReadFailed(offset){

@@ -124,3 +124,19 @@ for(const invalidation of ['scope','backup','stop'])test('candidate retry after 
 test('late failed candidate reply after scope replacement cannot recreate retry surface',async()=>{
  const f=fixture(),held=deferred();f.list(()=>held.promise);await f.start();f.viewReply(async()=>({ok:true,state:'ready',nativeCandidates:false,page:f.published.at(-1),navigation:[]}));await f.renewScope();held.resolve({ok:false});await drain();assert.equal(f.buttons().length,0);assert.equal(f.calls.some(m=>m.type==='HOST_UI_ACTIVATE_CANDIDATE'),false);f.client.stop();
 });
+
+for(const interruptedAfter of [false,true])test('fresh trusted candidate action supersedes earlier UI interruption, later input cancels='+interruptedAfter,async()=>{
+ const f=fixture();let actionId=null;f.activate(async m=>{actionId=m.actionId;return {ok:true,state:'dispatched'};});await f.start();f.interrupt(true,'wheel');await f.buttons()[0].handlers.click({isTrusted:true});assert(actionId);
+ if(interruptedAfter)f.interrupt(true,'pointerdown');f.list(async()=>({ok:true,items:[],migration:migration({id:actionId,ready:true,focusAllowed:true})}));f.emit();await drain();assert.equal(f.revealed.length,interruptedAfter?0:1);if(!interruptedAfter)assert.equal(f.revealed[0].focus,true);f.client.stop();
+});
+test('LIST started before a new candidate action cannot revoke its later exact migration',async()=>{
+ const f=fixture(),held=deferred();let actionId=null;await f.start();f.list(()=>held.promise);f.emit();await drain();f.activate(async m=>{actionId=m.actionId;return {ok:true,state:'dispatched'};});await f.buttons()[0].handlers.click({isTrusted:true});assert(actionId);
+ held.resolve({ok:true,items:[],migration:migration({id:'obsolete',ready:true,focusAllowed:true})});await drain();assert.equal(f.revealed.length,0);
+ f.list(async()=>({ok:true,items:[],migration:migration({id:actionId,ready:true,focusAllowed:true})}));f.emit();await drain();assert.equal(f.revealed.length,1);f.client.stop();
+});
+
+test('migration tombstone capacity never blocks explicit native candidate activation',async()=>{
+ const f=fixture();let actionId=null;f.activate(async m=>{actionId=m.actionId;return {ok:true,state:'dispatched'};});await f.start();
+ for(let i=0;i<34;i++){await f.buttons()[0].handlers.click({isTrusted:true});assert.equal(f.calls.filter(m=>m.type==='HOST_UI_ACTIVATE_CANDIDATE').length,i+1);f.list(async()=>({ok:true,items:[f.item('one')],migration:migration({id:actionId,ready:true,focusAllowed:true})}));f.emit();await drain();}
+ assert.equal(f.revealed.length,32);f.client.stop();
+});
