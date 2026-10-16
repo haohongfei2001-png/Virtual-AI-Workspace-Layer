@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round282）
+## 最新正式检查点（2026-10-16，原本地目录，Round283）
+
+独立document_start transport-only唤醒候选：40项build/bootstrap及4项无授权副作用合同PASS，但实际隔离cold原20秒门槛仍FAIL；只有一次自然GET，零私有surface。未将无效候选加入生产，build/package逐字恢复d213dc5，实验源码/差异/失败证据完整保留，见[Round283](evidence/round283/README.md)。
+
+继续SYS07主认证及metadata失败后的生产包隐私验证；当前缺原始八表、消息/日志和实际WAR检查，尚未确认产品泄漏。备用认证通道未实施，不以主通道替代。现有完整Free验收仍未完成，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round282）
 
 修复双surface旧version回包重复begin并延后30秒准备截止的竞态；await后复核代次、pending与快照身份，旧回包不交付旧page或释放新window。撤权与后续真实publication反例保持；独立审查通过，完整Node **5478/5478 PASS**。见[Round282](evidence/round282/README.md)。
 

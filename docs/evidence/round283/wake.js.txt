@@ -1,0 +1,3 @@
+// Transport wake only. No identity, page observation, receipt or scope authority.
+// The normal document_idle session still performs HELLO and verified binding.
+try { void chrome.runtime.sendMessage({type:'HOST_WORKER_WAKE'}).catch(()=>{}); } catch {}
