@@ -2,7 +2,9 @@
 
 ## 最新正式检查点（2026-10-16，隔离云环境）
 
-原分支 / Draft PR16 当前正式提交7e0299b（Round255）。CI51三个job全绿，Node5076/5076及12个guard变异通过。J4原19步加4个Evidence恢复步骤连续23步实际PASS：真实UI修复保旧源撤销/资产/草稿，新认证当前正文历史产生_r1，真实新send产生ACK_r1，重绑完整Evidence字节与Team隔离保持；仅该窄恢复切片闭合，pending修复/完整J4仍未覆盖。J2真实8步与两个就绪后SYS05恢复通过；SYS05保守可见上界229ms仍单样本。1k单项目前后完整1000 PROJECT、零UNKNOWN/错归属/缺失/重复且revision104稳定，33.94/86.73/114.82ms仍非p95。独立cold本次通过，CI50及历史间歇失败保留。下一现行矩阵唯一scale槽改10k单项目，完整逐ID/projectId前后审计与原预算不变，结果尚待新CI。详见[Round256](evidence/round256/README.md)。完整81、SYS04/SYS05、UI、G/U与发布条件仍未完成。
+原分支 / Draft PR16 当前正式提交15339a8（Round256）。CI52的原J4连续23步、两个就绪后SYS05及兼容性切片通过；Node5072/5076的4个失败为仍期待旧1k调度的静态断言，本候选精确同步10k并保原门槛。10k单项目在tab0初始准备原30秒截止失败，尚未进入Project成员观察、完整审计或计时；末态root inventory10000不替代这些前置。上一CI51的1k完整1000 PROJECT、零UNKNOWN、稳定revision104与三项单样本仍有效，但不能覆盖10k。独立cold历史间歇失败仍保留。
+
+本候选另外准备一个独立SYS02/J4已有ACK源pending修复场景：真实第二次发送联合提交后、Evidence提交前中断，以原校验和故障及真实UI修复验证同operation因source-revoked安全退休。它不替换原23步，也不称为成功续接。另8个独立L用例区分“从未持久的首个ACK源”可按完整未撤销见证首次续接与“已存在源被撤销”必须退休；轻测试不代替S。新浏览器结果尚未产生。详见[Round257](evidence/round257/README.md)，上一完整Evidence恢复S见[Round256](evidence/round256/README.md)。完整81、SYS04/SYS05、UI、G/U与发布条件仍未完成。
 
 ## 历史正式检查点（Round219，保留原记录）
 

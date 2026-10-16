@@ -163,6 +163,12 @@ jobs:
           set -e
           test "$result" -eq 1
           node -e "const r=require(process.env.RUNNER_TEMP+'/joint-observation-mutant.json'); if(r.status!=='FAIL'||r.mutation!=='DROP_NATIVE_CONTINUATION'||r.sourceChanged!==false||!r.error?.includes('AssertionError')||!r.error.includes('SYS01_NATIVE_PENDING_ATOMIC')) process.exit(1); console.log('Designated joint atomicity mutation killed; explicit offline authority only')"
+      - name: Existing ACK source pending retirement after real Evidence repair
+        if: ${{ !cancelled() }}
+        timeout-minutes: 5
+        run: |
+          node tests/host/existing-source-pending-repair-journey.mjs "$RUNNER_TEMP/existing-source-pending-repair.json" --execute-browser
+          node -e "const r=require(process.env.RUNNER_TEMP+'/existing-source-pending-repair.json'); if(r.status!=='PASS_NARROW_EXISTING_SOURCE_PENDING_REPAIR'||r.S!=='REAL_PACKAGED_MV3_EXISTING_SOURCE_PENDING_REPAIR_ONLY'||r.sourceCommit!==process.env.GITHUB_SHA||r.fullSYS02!=='NOT_ESTABLISHED'||r.fullJ4!=='NOT_ESTABLISHED'||r.sourceChangedDuringRun!==false||r.nativeSends!==2||r.finalSummary?.state!=='needs-revalidation'||r.finalSummary?.reason!=='source-revoked'||r.errors?.length!==0||r.cleanupErrors?.length) process.exit(1)"
       - name: Native IndexedDB pending capacity and transaction fault slice
         if: ${{ !cancelled() }}
         run: node tests/host/sys02-pending-idb-browser.mjs "$RUNNER_TEMP/sys02-pending-idb.json"
@@ -202,6 +208,6 @@ jobs:
         run: |
           echo "Source commit: $GITHUB_SHA"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          for name in native-visibility j2-j4 j4-journey j4-scope-trace guard-browser joint-observation joint-observation-mutant sys02-pending-idb historical-host historical-pro sys05-stream sys05-work host-scale-10k-project visibility-probe; do
+          for name in native-visibility j2-j4 j4-journey j4-scope-trace guard-browser joint-observation joint-observation-mutant existing-source-pending-repair sys02-pending-idb historical-host historical-pro sys05-stream sys05-work host-scale-10k-project visibility-probe; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done

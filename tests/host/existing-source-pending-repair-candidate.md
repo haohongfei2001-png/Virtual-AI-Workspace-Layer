@@ -1,0 +1,101 @@
+# Existing-source pending repair S slice
+
+Candidate only. Targeted L/oracle/callback checks are not S. No browser result is
+provided by this change. Full SYS-02, J4, supported-profile matrices, G/U and
+Free/release acceptance remain unestablished.
+
+## Execution
+
+The default command only writes a NOT_RUN plan. It imports neither Playwright nor
+starts a fixture, network guard or Chrome process:
+
+```
+node --test tests/host/existing-source-pending-repair.test.mjs
+node tests/host/existing-source-pending-repair-journey.mjs /tmp/pending-repair-plan.json
+```
+
+When scheduled separately in an already authorized isolated environment with its
+existing locked Playwright/Chrome dependencies:
+
+```
+FREE_SOURCE_COMMIT=$(git rev-parse HEAD) node tests/host/existing-source-pending-repair-journey.mjs /tmp/pending-repair-S.json --execute-browser
+```
+
+No CI job or pre-existing test is changed or replaced by this candidate.
+FREE_SOURCE_COMMIT records the integrated source; FREE_DIRTY_PATCH_HASH may carry
+an independently measured dirty diff hash. The runner does not infer repository
+cleanliness. Its runner-content hash is separately labeled, not a dirty diff.
+
+## Exact two-send input and fault
+
+The unchanged MODERN/J4 native fixture and formal package use offlineContext,
+offlineExistingSend and offlineHistory. Actual account-menu selection establishes
+Personal while a peer retains Team. Existing human-asset backup bytes are imported
+through the real preview/confirmation UI; inspection checks preview is read-only.
+
+1. Send once without rename. Release the existing fixture response hold while the
+   same worker and intent remain alive. Require one actual authenticated ACK and
+   its persisted source. The title is still `Membership not loaded`.
+2. Send once with rename. The fixture's fixed title now represents its first real
+   native delta. The unchanged production continuation call/entry breakpoint
+   must fire before the Evidence writer opens its transaction. Require the
+   atomic native delta and one genuine pending v2 continuation, whose ACK source
+   already existed before this send. No second-message ACK is yet committed.
+3. While paused, reuse the existing checksum-only fault against the existing
+   valid Evidence root. No payload, shadow, source, receipt or grant is inserted.
+   Then stop the actual worker and require a subsequent stopped lifecycle event.
+4. Reload normally. A fresh actual UI/scope grant and production recovery-status
+   response must exist; every Evidence root/piece/index/operation byte remains as
+   after the fault, and the same pending payload survives. Click the real
+   `修复活跃度记录` button. Preserve the same draft node/value and human-asset hash.
+5. Repair only notifies views; a normal same-URL reload and new grant trigger the
+   existing refresh drain. The exact operation becomes needs-revalidation with
+   reason source-revoked. Its native source must still match the original live
+   nativeWitness; source-changed is a failure, not an alternative success.
+6. A second normal rebind preserves the summary and old witness bytes, adds no
+   ACK for the interrupted message, keeps Team isolated and leaves exactly two
+   real native sends. Fresh legitimate original-time history is allowed; it is
+   not a replay of the retired pending ACK.
+
+## Boundaries and falsifiability
+
+- Reuses the existing same-package, real debugger, checksum-fault and UI repair
+  paths. No product, fixture or original 23-step J4 source is edited.
+- The independent oracle never imports a production reducer, admission or
+  continuation transition to compute its expected answer. Mock callback tests
+  verify mechanics only. They cannot certify real Chrome timing or durability.
+- Actual UI replies are passively observed. Original arguments, receiver,
+  Promise, errors and response are preserved, but wrapper identity/overhead
+  change. Opaque grant IDs stay in frame RAM and are not reported. No business
+  RPC, grant, owner callback, native fact or source is injected.
+- Native-source profile/version, generation, sourceRevision and semantic
+  fingerprint are checked while paused, while corrupt, after repair and after
+  terminal recovery. If ordinary remounting changes them, this narrow case fails
+  rather than manufacturing a stable witness or weakening its expected reason.
+- Original 6-second RPC, 30-second/12-GET read window, three attempts and 20-second
+  debugger lifetime remain. Waiting for the existing persisted window to expire
+  does not clear or reset its budget. Startup is an explicit worker-ready
+  functional precondition, not immediate-cold evidence.
+- The existing disposable Chrome reject-proxy guard and exact-origin packaged
+  CSP cover the test browser/worker URL-network policy. This is not a system or
+  OS firewall and does not touch a user profile or computer configuration.
+- Missing initial ACK source, Evidence-committed/completion-interrupted,
+  quota/capacity/retention/GC stress, fresh successor sends, full J4/profile
+  combinations, physical crashes/devices, live ChatGPT and PAIA are not covered.
+- Cleanup phases, including network-guard snapshot and close, run independently
+  with a six-second deadline each and retain the original failure. Setup failure
+  also reaches report writing. Source, fixture and build hashes are checked after
+  shutdown. A cleanup/integrity error prevents acceptance; report-write failure
+  gives a nonzero CLI exit and bounded stderr. Neither retries browser work nor
+  widens product budgets.
+- On failure, an already-open inspector gets one read-only attempt with an
+  independent one-second absolute deadline. It does not open/focus a page. The
+  report keeps only bounded native-witness/source/continuation scalar summaries,
+  including the original reason unchanged; no body, full payload or grant.
+  Unavailable/late inspection cannot replace the original error or stop cleanup.
+- Error collections cap at 16 entries, messages at 512 UTF-8 bytes and stacks at
+  1024 bytes, with dropped/truncated markers and safe accessor reads. Assertion
+  diffs are omitted so values such as grants or pending payloads cannot leak
+  through failed comparisons. Final
+  authenticated-read and worker-lifecycle summaries cap at 64 entries with
+  truncation markers. These diagnostics are not acceptance evidence.
