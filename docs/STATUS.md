@@ -1,6 +1,10 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round347）
+## 最新本地检查点（2026-10-17，Round348）
+
+核对正式分支、stash/副本仍保留；fetch 成功且 Pro 72ca068 已整合。新增不附加 worker debugger 的实际隔离 headless idle 观察：60 秒内原 worker 未退出，原文档/草稿/双 frame 保持；UI-11 自然休眠仍 NOT_ESTABLISHED，不把强停恢复当作通过。源码/构建/执行 runner 无漂移，正常 exit2、cleanup 无错误。详见 [Round348](evidence/round348/README.md)。正常推送连接 github.com:443 失败（exit128），保留本地检查点。Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round347）
 
 已正常推送此前7499f8d/084449d至原PR16，核对本地/origin0/0，整理stash/副本保留。将J4 after-Evidence断点与baseline前预算准备分离：新增明确unprepared模式，原默认/旧flag保持；未改生产。[Round347证据](evidence/round347/README.md)。
 
