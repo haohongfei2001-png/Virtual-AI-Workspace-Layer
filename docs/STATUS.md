@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round356）
+## 最新本地检查点（2026-10-17，Round357）
+
+新增adapter可撤销观察准备：保留原生发送监听/队列，实际emit、摄取通知、重试及挂起iterator未结束时拒绝准备；新输入/扫描/绑定变化使旧快照失效。独立12项与审查通过，最终完整Node **6898/6898 PASS**，零skip/cancel。见 [Round357](evidence/round357/README.md)。
+
+尚非冻结/关闭许可，content实际IPC及其底层任务计数、自动待命接线和自然worker恢复继续实施。本轮无新MV3验收，UI-11及完整Free仍NOT_RELEASE_READY。整理stash和原PR16/base保持。
+
+## 前一本地检查点（2026-10-17，Round356）
 
 新增controller私有待命转换：撤回旧UI权限/计时，保留原iframe与唯一fresh-wake返回入口；拒绝可见surface、在途renew/join和缺少wake回调。通知失败清理、原生slot占用退让、迟到expiry/public消息不复活旧授权。最终相关11文件 **215/215 Node PASS**，独立7项及4PASS/3FAIL变异反例保留。见 [Round356](evidence/round356/README.md)。
 
