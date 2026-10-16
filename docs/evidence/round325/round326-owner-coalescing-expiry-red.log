@@ -1,0 +1,39 @@
+✔ MOCK_IDB coalescing unchanged active rows ACK without renewing persisted source or row witnesses (9.81575ms)
+✔ MOCK_IDB coalescing masked UNKNOWN preserves exact PROJECT witness and fresh producer cannot renew it (1.94925ms)
+✔ MOCK_IDB coalescing must persist rename (2.101209ms)
+✔ MOCK_IDB coalescing must persist new-ref (1.763875ms)
+✔ MOCK_IDB coalescing must persist membership (1.506208ms)
+✔ MOCK_IDB coalescing expired source still refreshes explicitly observed rows through real apply (1.4265ms)
+✔ MOCK_IDB coalescing fresh source does not hide an expired individual row witness (1.892625ms)
+✔ MOCK_IDB coalescing source revocation requires a new incarnation and only observed rows revalidate (2.153125ms)
+✔ MOCK_IDB coalescing revision movement before no-op ACK retries without consuming producer sequence (1.42725ms)
+✔ MOCK_IDB coalescing authority loss during final version fence cannot ACK or persist (1.257209ms)
+✔ MOCK_IDB coalescing initial empty surface still establishes a durable partial source (0.308541ms)
+✖ MOCK_IDB coalescing row expiry during asynchronous version fence must persist its still-valid fresh observation (1.102958ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 11
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 78.096541
+
+✖ failing tests:
+
+test at tests/host/observation-owner-coalescing.test.mjs:67:1
+✖ MOCK_IDB coalescing row expiry during asynchronous version fence must persist its still-valid fresh observation (1.102958ms)
+  AssertionError [ERR_ASSERTION]: TTL decision made before await cannot authorize a stale no-op
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/observation-owner-coalescing.test.mjs:72:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

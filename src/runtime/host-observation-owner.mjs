@@ -1,3 +1,4 @@
+import {nativeWitnessActive} from '../data/native-facts.mjs';
 import {nativeSourceIncarnation} from './native-source-incarnation.mjs';
 import {splitCurrentObservation,validateCurrentSurfaceRelation,CURRENT_OBSERVATION_PROTOCOL} from '../host/current-observation-batch.mjs';
 import {continuationSemanticFingerprint} from '../data/native-observation-continuation.mjs';
@@ -108,6 +109,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    const changed=(rows,table,fields)=>rows.some(row=>!table[row.id]||fields.some(key=>row[key]!==table[row.id][key]));
    const nativeChanged=changed(batch.projects,page.facts.projects,['nativeName','nativeUrl','availability'])||changed(batch.refs,page.facts.refs,['nativeTitle','nativeUrl','availability'])||changed(batch.membership,page.facts.membership,['state','projectId']);
    const revalidating=['projects','refs','membership'].some(table=>batch[table].some(row=>page.facts[table][row.id]?.sourceId!==sourceId||page.facts[table][row.id]?.generation!==generation));
+   let coalesced=false;
    let result;
    const bodyEntry=bodies.get(proposal.producerToken);
    if(nativeChanged&&onNativeDelta&&bodyEntry?.current()&&batch.refs.some(r=>r.id===bodyEntry.claim.conversationId)){
@@ -124,13 +126,28 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
     if(onNativeDelta&&bodyEntry?.current())try{await onNativeDelta(bodyEntry.proofId);}catch(error){if(error?.message!=='read-budget-exhausted'||!guard()||!bodyEntry.current()||!await handshake.verify(proposal,sender)||!guard()||!bodyEntry.current())throw error;}
     if(!revalidating)result={ok:true};
    }
+   if(!combined&&!nativeChanged&&!revalidating){
+    // A second visible region or owned-mask rescan may repeat the same facts.
+    // Reuse only currently active witnesses; acknowledging a repeat never
+    // extends their timestamps or revives an expired/revoked row.
+    const source=page.facts.sources[sourceId];
+    const witnessed=()=>{const currentTime=new Date(now()).toISOString();return source&&nativeWitnessActive({...source,sourceId},page.facts,currentTime)&&JSON.stringify(source.inventory)===JSON.stringify(batch.inventory)&&['projects','refs','membership'].every(table=>batch[table].every(row=>nativeWitnessActive(page.facts[table][row.id],page.facts,currentTime)));};
+    if(witnessed()){
+     const revision=await repository.version(scope,{guard,signal:attempt.abort.signal});
+     if(!await handshake.verify(proposal,sender)||!guard())return rejected('stale-host-document');
+     if(revision!==page.revision)return {state:'retry-after',localSeq:proposal.localSeq,delayMs:50};
+     if(witnessed()){result={ok:true};coalesced=true;}
+    }
+   }
    if(!result){attempt.nativeWriteScope=scope.key;attempt.nativeWriteGuard=guard;try{result=await repository.apply(scope,request,{guard,signal:attempt.abort.signal});}finally{attempt.nativeWriteScope=null;attempt.nativeWriteGuard=null;}}
    if(!result.ok)return result.reason==='revision-conflict'?{state:'retry-after',localSeq:proposal.localSeq,delayMs:50}:rejected('host-native-apply-failed');
    if(!guard())return rejected('stale-host-scope');
    producers.set(proposal.producerToken,{isBound:producerCurrent,scopeKey:scope.key,grantId:grant.id,scopeEpoch:grant.scopeEpoch,seq:proposal.localSeq,fingerprint:semanticFingerprint,receiptId,...(combined?{bodyProofId:bodyEntry?.proofId??null,bodyRegionEpoch:body.regionEpoch}:{}),bodyEpoch:batchBodyEpoch??bodyEntry?.bodyEpoch??previous?.bodyEpoch??0,...(!combined&&previous?.bodyRegionEpoch!==undefined?{bodyRegionEpoch:previous.bodyRegionEpoch}:{}),until:Math.min(Date.parse(grant.expiresAt),time+20000)});
    // Notify with the already verified scope inside the guarded owner turn.
    // Transport notification failure must not turn a committed write into a retry.
-   try{onAccepted?.(scope,{background:!combined&&!isBody&&!isSend});}catch{}
+   // IDless controls and detached handles also drive live candidate UI.
+   const liveControlsChanged=surfaceProposal.payload.detachedHandles.length>0||surfaceProposal.payload.candidates.some(candidate=>candidate.target.kind==='live-control');
+   try{if(!coalesced||liveControlsChanged)onAccepted?.(scope,{background:!combined&&!isBody&&!isSend});}catch{}
    batchCommitted=true;if(combined)failedBatches.delete(proposal.producerToken);return {state:'accepted',localSeq:proposal.localSeq,receiptId,...(combined?{bodyProofId:bodyEntry?.proofId??null,bodyEpoch:batchBodyEpoch??bodyEntry?.bodyEpoch??0}:{})};
   }catch{return rejected('invalid-host-observation');}
   finally{if(request)admissions.delete(request);if(newBatchProof&&!batchCommitted){failedBatches.set(newBatchProof.producerToken,newBatchProof);if(bodies.get(newBatchProof.producerToken)?.proofId===newBatchProof.proofId)discardBody(newBatchProof.producerToken);}}

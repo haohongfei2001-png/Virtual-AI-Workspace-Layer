@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-17，原本地目录，Round323–324）
+## 最新正式检查点（2026-10-17，原本地目录，Round325）
+
+1bce716已正常推送并API确认原Draft PR16/base。普通原生surface重复提案在源/行证据仍有效、字段/成员/库存不变且版本/授权再次核验时复用，不续期witness；过期/撤销/变化仍走原CAS，combined路径不变。纯resolved无变化不再反复通知重绘，IDless/失效句柄仍通知候选UI。独立17反例及最终完整Node **6322/6322 PASS**，复审无阻断。
+
+实际隔离headless原10k single-project CPU1、无准备/插桩、原门槛：两次完整审计同revision211、10000refs与10000PROJECT；两页查找及原生成员导航/唯一返回通过，文档/输入框保持。单次搜索/翻页约85/184/223ms，仅单样本非p95。首轮按钮重绘FAIL保留；最终仍 **PARTIAL_SYS04_NOT_ACCEPTED**，不冒称全规模/全F1。证据见[Round325](evidence/round325/README.md)。完整81/profile/J1–J4/G/U及其他规模仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-17，原本地目录，Round323–324）
 
 a82cac9已正常推送并确认原Draft PR16/base；本次fetch确认本地/远端一致，外部整理stash42c8877仍保留。读取冲突耗尽后改为局部停止、清旧投影/计划并保留当前授权；明确点击才消费同mount/scope一次性凭据重试，不自动重绑定/重放或修复数据库。原30秒/两次重试预算不变。异步迟到结果与严格错误DTO反例已补，独立复审无阻断。
 

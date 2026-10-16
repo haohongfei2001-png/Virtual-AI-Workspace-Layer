@@ -1,0 +1,47 @@
+✔ actual owners commit real ref and independent ACK v2 then complete; no NONE invention (15.781208ms)
+✔ after-native cut retains v2 payload across reopen and fresh drain completes exactly once (3.830333ms)
+✔ before-native quota failure leaves neither native nor ACK/pending (1.472167ms)
+✔ before-native guard failure leaves neither native nor ACK/pending (0.476959ms)
+✔ pending v2 native-profile invalidation cannot replay ACK (2.642709ms)
+✔ pending v2 ack-profile invalidation cannot replay ACK (1.736958ms)
+✔ pending v2 source-revision invalidation cannot replay ACK (3.387084ms)
+✔ pending v2 scope invalidation cannot replay ACK (1.2215ms)
+✔ pure ACK uses evidence only and duplicate surface does not create a joint record (2.066667ms)
+✔ authenticated provider and strict correlator enter native joint owner before commit (16.369042ms)
+✔ frozen old reader fails closed on v2; current codec requires both witnesses and protects terminal identity (2.247ms)
+✔ evidence commit followed by completion interruption recovers without duplicate ACK (3.53825ms)
+✔ joint public-shaped ACK cannot replace exact ACK owner request authority (0.438959ms)
+✔ designated SYS01 oracle detects dropped native continuation before evidence (1.404625ms)
+✔ unavailable ACK read does not block independently valid native surface (0.642042ms)
+✔ joint CAS rejection cannot fall back to a native-only transaction (0.738542ms)
+✔ same-semantics surface refresh never opens a mixed window (0.526792ms)
+✔ later pure ACK with same reserved source revision cannot strand or renew original joint anchor (3.141875ms)
+✔ joint native transaction exposes only a live same-scope scheduling hint and clears it after commit (5.513541ms)
+✔ mock document A→B→A cannot admit A observations into B scope (2.05825ms)
+✔ mock duplicate ACK is scoped to scope key, grant ID and epoch (1.780625ms)
+✔ mock permanent getFrame settles at 6 seconds; late completion cannot retain admission (0.55275ms)
+✔ mock permanent page settles at 6 seconds; late completion cannot retain admission (0.932875ms)
+✔ mock permanent apply settles at 6 seconds; late completion cannot retain admission (0.794042ms)
+✔ MOCK_IDB zero-seed Host → owner gate → existing native projection survives reopen with honest source admission (11.097042ms)
+✔ serialized batch or verified marker cannot bypass owner gate (0.628625ms)
+✔ scope switch denies old producer and keeps namespaces separate (2.945ms)
+✔ renewed HELLO invalidates old producer; UNKNOWN update retains positive membership (2.683042ms)
+✔ expired binding cannot mutate storage (0.29325ms)
+✔ fresh owner observation after persisted revocation revalidates only observed rows and survives renewed producer (4.54975ms)
+✔ isolated-fixed-fetch ABA rejects old in-flight observation (intermediate guard sampled=false) (3.450542ms)
+✔ isolated-fixed-fetch ABA rejects old in-flight observation (intermediate guard sampled=true) (0.73075ms)
+✔ worker-fixed-fetch ABA rejects old in-flight observation (intermediate guard sampled=false) (0.891666ms)
+✔ worker-fixed-fetch ABA rejects old in-flight observation (intermediate guard sampled=true) (0.416875ms)
+✔ same-source repeated receipt renewal keeps observation valid (0.396959ms)
+✔ isolated-fixed-fetch saved metadata capability cannot survive source ABA between read and withReadback (13.093458ms)
+✔ worker-fixed-fetch saved metadata capability cannot survive source ABA between read and withReadback (1.168167ms)
+✔ metadata readback rejects source ABA during its async callback (1.151916ms)
+✔ same-source repeated receipt renewal preserves saved metadata capability (0.549541ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 123.110542
