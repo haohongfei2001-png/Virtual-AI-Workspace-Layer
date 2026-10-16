@@ -1,3 +1,4 @@
+import {tokenOK} from '../b1/identity.mjs';
 import {isCurrentNavigationPlan,isResolvedControlNavigationPlan} from '../host/current-navigation-plan.mjs';
 import {locateFreeProject} from './free-project-location.mjs';
 import {validateFrameResumeView,validateResumeQuery} from '../host/frame-resume-state.mjs';
@@ -57,10 +58,11 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    }),{now:elapsedNow,schedule,cancel});
   }catch{return {ok:false,reason:'view-resume-unavailable'};}finally{active=false;}
  }
+ const retryableRead=error=>['snapshot-revision-changed','stale-free-page'].includes(error);
  const reason=error=>/^[a-z0-9-]{1,80}$/.test(error?.message)?error.message:'free-view-unavailable';
  function remove(id){const entry=views.get(id);if(entry){entry.prepareGeneration=(entry.prepareGeneration??0)+1;cancel(entry.retryTimer);cancel(entry.prepareTimer);entry.checkPreparation=null;entry.deferPreparation=null;entry.owner.stop();views.delete(id);liveWindow(entry.scopeKey);}}
  function begin(entry){
-  cancel(entry.prepareTimer);cancel(entry.retryTimer);entry.retryTimer=null;entry.deferPreparation=null;entry.error=null;entry.pending=true;entry.awaitingDelivery=false;
+  cancel(entry.prepareTimer);cancel(entry.retryTimer);entry.retryTimer=null;entry.deferPreparation=null;entry.error=null;entry.retryToken=null;entry.pending=true;entry.awaitingDelivery=false;
   const generation=entry.prepareGeneration=(entry.prepareGeneration??0)+1,started=elapsedNow();let retries=0;
   const current=()=>entry.prepareGeneration===generation&&entry.isCurrent();
   const completed=()=>{cancel(entry.prepareTimer);entry.prepareTimer=null;entry.checkPreparation=null;};
@@ -103,7 +105,8 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  }
  async function handle(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-view'};}
-  if(!exactHostRecord(message,['v','type','grantId','mountId','query',...(Object.hasOwn(message??{},'locateProjectId')?['locateProjectId']:[])])||message.v!==1||message.type!=='HOST_UI_VIEW'||!message.query||Object.getPrototypeOf(message.query)!==Object.prototype||Reflect.ownKeys(message.query).some(k=>!['segment','offset','limit','groupId','list','rowOffset','rowLimit','search','workingSet'].includes(k)))return {ok:false,reason:'invalid-ui-view'};
+  if(!exactHostRecord(message,['v','type','grantId','mountId','query',...(Object.hasOwn(message??{},'locateProjectId')?['locateProjectId']:[]),...(Object.hasOwn(message??{},'retryToken')?['retryToken']:[])])||message.v!==1||message.type!=='HOST_UI_VIEW'||!message.query||Object.getPrototypeOf(message.query)!==Object.prototype||Reflect.ownKeys(message.query).some(k=>!['segment','offset','limit','groupId','list','rowOffset','rowLimit','search','workingSet'].includes(k)))return {ok:false,reason:'invalid-ui-view'};
+  if(Object.hasOwn(message,'retryToken')&&(!tokenOK(message.retryToken)||Object.hasOwn(message,'locateProjectId')))return {ok:false,reason:'invalid-ui-view'};
   if(Object.hasOwn(message,'locateProjectId')&&(message.query.search!==undefined||message.query.workingSet!==undefined))return {ok:false,reason:'invalid-ui-view'};
   if(message.query.search!==undefined&&message.query.workingSet!==undefined)return {ok:false,reason:'invalid-ui-view'};
   let active=true,delivery=null;const started=elapsedNow();
@@ -112,6 +115,12 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    check();for(const [id,entry]of views)if(!entry.isCurrent())remove(id);
    let entry=views.get(message.mountId);
    if(entry&&(entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)){remove(message.mountId);entry=null;}
+   if(Object.hasOwn(message,'retryToken')){
+    if(!entry||!retryableRead(entry.error)||entry.retryToken!==message.retryToken)return {ok:false,reason:'stale-view-retry'};
+    // Consume before starting work: another frame or replay cannot renew this
+    // attempt's original 30-second lifetime or its two internal retries.
+    begin(entry);
+   }
    if(!entry){
     if(views.size>=maxViews)throw Error('free-view-capacity');
     entry={scopeKey:context.scope.key,scopeGrantId:context.scopeGrantId,parentFrame:context.parentFrame,isCurrent:context.isCurrent,pending:false,error:null,presentation:{revision:0,intent:{kind:'show-workspace'}},
@@ -121,7 +130,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    if(entry.currentEntryPending&&context.role==='workspace'&&((message.query.segment??0)!==0||message.query.search!==undefined||message.query.workingSet!==undefined))entry.currentEntryEligible=false;
    entry.checkPreparation?.();
    if(entry.pending||entry.autoReading)return {ok:true,state:'preparing',retryAfterMs:50};
-   if(entry.error)return {ok:false,reason:entry.error};
+   if(entry.error){if(retryableRead(entry.error)&&!entry.retryToken)entry.retryToken=crypto.randomUUID();return {ok:false,reason:entry.error,...(retryableRead(entry.error)?{retryToken:entry.retryToken}:{})};}
    delivery={entry,window:entry.readWindow,generation:entry.prepareGeneration};
    const current=entry.owner.current(),generation=entry.prepareGeneration;if(!current)throw Error('stale-free-view');
    const version=await readService.version(context.scope,{guard:()=>active&&context.isCurrent()});check();
@@ -339,5 +348,5 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  function confirmScope(frame,scopeKey){for(const [key,value]of resumes)if(value.tabId===frame.tabId&&value.documentId===frame.documentId&&value.scopeKey!==scopeKey)resumes.delete(key);}
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId,{preserveDocumentId=null}={}){for(const [key,value]of resumes)if(value.tabId===tabId&&(!preserveDocumentId||value.documentId!==preserveDocumentId))resumes.delete(key);for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent()&&!retryableRead(entry.error))begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
 }

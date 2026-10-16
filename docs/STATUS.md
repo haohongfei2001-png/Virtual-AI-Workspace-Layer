@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-17，原本地目录，Round322）
+## 最新正式检查点（2026-10-17，原本地目录，Round323）
+
+a82cac9已正常推送并确认原Draft PR16/base；本次fetch确认本地/远端一致，外部整理stash42c8877仍保留。读取冲突耗尽后改为局部停止、清旧投影/计划并保留当前授权；明确点击才消费同mount/scope一次性凭据重试，不自动重绑定/重放或修复数据库。原30秒/两次重试预算不变。异步迟到结果与严格错误DTO反例已补，独立复审无阻断。
+
+最终完整Node **6302/6302 PASS**。隔离实际headless MV3故障诊断 **4/4 PASS**：文档/输入框/授权保留、续期不重读、workspace双击只一次重试、sidebar退出恢复原生；仅DIAGNOSTIC_ONLY，不算完整81验收。10k原用例成员展示通过，但全量审计8999条时UNSTABLE_REVISION，仍无有效性能样本。全部原失败/诊断及范围说明见[Round323](evidence/round323/README.md)。完整规模/81/profile/J1–J4/G/U仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-17，原本地目录，Round322）
 
 c332789已正常推送并API确认原Draft PR16/base。MODERN C2连续J1接入原分页/候选原生fixture与独立Team oracle，保留原9断言；首跑揭示context pending完整stop丢阅读/候选关联，已修复为撤下旧能力、只保留有界RAM意图并重新完整授权。等待期间换路由、暂时ambiguous、重复READY和pagehide/显式退出反例已覆盖，不续期候选、不补满恢复预算。
 

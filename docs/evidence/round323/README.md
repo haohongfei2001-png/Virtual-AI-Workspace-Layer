@@ -1,0 +1,13 @@
+# Round323 — local read termination and explicit retry
+
+Baseline a82cac9d4f62eb9237608bb083418b081bfd5b1e was confirmed equal to the fetched original development branch. External cleanup stash42c887720b672c53c2a29232685d848d2a0bc319 remains preserved. No branch, remote, parent PR or main changes.
+
+Exhausted snapshot-revision-changed/stale-free-page reads now remove stale projection/navigation and display a local retry/exit panel while retaining current authorization and expiry. Notifications, same-grant renewal and reappearance cannot automatically restart terminal reads. A current mount/scope-bound one-shot token permits explicit retry; original 30-second deadline and two internal retries remain. No database repair or native action replay is introduced. Async presentation/working-set completions are fenced across terminal/retry by a read epoch. Error DTOs are exact checked.
+
+Independent review initially found missing async fences; they were fixed and re-reviewed without remaining blockers. Worker red tests reproduced five missing-token failures; worker suite94/94 PASS. Final targeted UI47/47 PASS; final full Node6302/6302 PASS, zero skips, process exit0.
+
+Actual isolated headless MV3 fault injection4/4 PASS. A verified official offline package was copied and only its refresh boundary fault-injected for three attempts, then classic worker rebuilt and hashes verified. Original document/editor and dual-frame grants survived; natural grant renewal caused no new VIEW; trusted workspace double-click sent one retry and restored native names/lists; stale button was inert; terminal sidebar exit restored native UI. This is DIAGNOSTIC_ONLY, not full81 acceptance. Ordinary notifications were not observed (0); Node covers those. Original sandbox startup failure is preserved. The second passing browser run only corrected evidence wording and overlapped final Node; it establishes functionality, not performance. The first passing report and exact corresponding script are also preserved; avoid repeating runs for wording changes.
+
+Separate uninstrumented10k single-project CPU1 run, original deadlines, no admission preparation: member display passed, but full-index audit failed UNSTABLE_REVISION after8999 distinct refs at revision249. No timing samples accepted. Source/fixture/manifest unchanged and temporary directory removed. This FAIL remains open; the retry fix does not establish scale performance.
+
+Free remains NOT_RELEASE_READY. Continue stable10k/100k audit and remaining81/profile/J1–J4 requirements; real ChatGPT/PAIA/physical IME/cross-device G/U remain unverified. No private accounts, paid service, deployment or publication accessed.

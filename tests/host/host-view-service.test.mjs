@@ -40,7 +40,7 @@ async function fixture(t,{prepareNavigation=null,presentSurface=null,selectionBr
   const nonce='nonce_'+mountId,joined=service.handle({v:1,type:'HOST_UI_JOIN',nonce,role:'workspace'},child);
   const confirmed=await service.handle({v:1,type:'HOST_UI_CONFIRM',...auth,mountId,regionEpoch:1,nonce,role:'workspace'},sender);assert.equal(confirmed.ok,true,JSON.stringify(confirmed));
   const result=await joined;assert.equal(result.ok,true,JSON.stringify(result));
-  return {grant:result.grant,view:()=>service.handle({v:1,type:'HOST_UI_VIEW',grantId:result.grant.id,mountId,query:{}},child)};
+  return {grant:result.grant,view:(patch={})=>service.handle({v:1,type:'HOST_UI_VIEW',grantId:result.grant.id,mountId,query:{},...(patch&&typeof patch==='object'?patch:{})},child)};
  }
  const view=(role='workspace',query={},patch={},as=children[role])=>service.handle({v:1,type:'HOST_UI_VIEW',grantId:grants[role].id,mountId:'mount',query,...patch},as);
  const present=(role,intent,patch={},as=children[role])=>service.handle({v:1,type:'HOST_UI_PRESENT',grantId:grants[role].id,mountId:'mount',intent,...patch},as);
@@ -696,4 +696,61 @@ test('MOCK_IDB coalesced old surface check cannot hide a publication after its s
  assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),true,'new committed publication permits a fresh bounded opportunity');
  const current=await ready(h,'sidebar');assert.equal(current.state,'ready');assert(current.page.groups.items.some(row=>row.id==='later-publication'));assert.equal(headers,2);
  const workspace=await h.view();assert.equal(workspace.state,'ready');assert(workspace.page.groups.items.some(row=>row.id==='later-publication'));assert.equal(h.service.views.isForegroundReadPending(h.bound.scope),false);
+});
+
+
+async function snapshotRetryTerminal(t){
+ const h=await fixture(t);t.after(()=>h.service.stop());await h.bind();await h.observe();await h.mount();
+ const native=h.service.nativeRepository,original=native.page.bind(native);let pages=0,conflicts=true,hold=null;
+ native.page=async(...args)=>{
+  pages++;if(hold)await hold;const result=await original(...args);
+  if(conflicts){const scope=workspaceScope(h),state=(await h.workspaces.read(scope)).state;assert.equal((await h.workspaces.command(scope,{operationId:'terminal_race_'+pages,expectedRevision:state.revision,command:{type:'SET_PREFERENCE',id:'compactRows',value:pages%2===0}})).ok,true);}
+  return result;
+ };
+ const settle=async(view=()=>h.view())=>{for(let i=0;i<200;i++){const result=await view();if(result.state!=='preparing')return result;await new Promise(resolve=>setTimeout(resolve,5));}assert.fail('snapshot retry did not reach a bounded result');};
+ const terminal=await settle();assert.equal(terminal.ok,false);assert(['snapshot-revision-changed','stale-free-page'].includes(terminal.reason));assert.equal(pages,3,'one initial read and exactly two automatic retries');
+ return {h,terminal,settle,get pages(){return pages;},set conflicts(value){conflicts=value;},set hold(value){hold=value;}};
+}
+function assertSnapshotRetryToken(value){assert.equal(typeof value.retryToken,'string','retryable terminal must carry a worker-issued token');assert.match(value.retryToken,/^[A-Za-z0-9_-]{1,128}$/);assert.equal(value.page,undefined);assert.equal(value.navigation,undefined);}
+test('MOCK_IDB explicit snapshot retry terminal keeps one token across VIEW and background notifications',async t=>{
+ const f=await snapshotRetryTerminal(t),{h,terminal}=f;assertSnapshotRetryToken(terminal);
+ f.conflicts=false;
+ for(let i=0;i<4;i++){
+  h.service.views.nativePublished(h.bound.scope);h.service.views.refreshScope(h.bound.scope);h.service.ui.notifyScope(h.bound.scope);await drain();
+  for(const role of ['workspace','sidebar']){const result=await h.view(role);assert.equal(result.reason,terminal.reason);assert.equal(result.retryToken,terminal.retryToken);assert.equal(result.page,undefined);}
+ }
+ assert.equal(f.pages,3,'ordinary reads and notifications cannot start a fourth preparation');
+});
+test('MOCK_IDB explicit snapshot retry consumes token once and duplicate cannot replace its pending read',async t=>{
+ const f=await snapshotRetryTerminal(t),{h,terminal}=f;assertSnapshotRetryToken(terminal);f.conflicts=false;
+ let release;f.hold=new Promise(resolve=>release=resolve);t.after(()=>release());
+ const first=await h.view('workspace',{}, {retryToken:terminal.retryToken});assert.equal(first.state,'preparing',JSON.stringify(first));
+ for(let i=0;i<100&&f.pages<4;i++)await drain();assert.equal(f.pages,4);
+ const duplicate=await h.view('workspace',{}, {retryToken:terminal.retryToken});assert.equal(duplicate.ok,false);assert.equal(duplicate.page,undefined);assert.equal(f.pages,4);
+ release();f.hold=null;const result=await f.settle();assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(result.retryToken,undefined);assert.equal(f.pages,4);
+ const replay=await h.view('sidebar',{}, {retryToken:terminal.retryToken});assert.equal(replay.ok,false);assert.equal(replay.page,undefined);assert.equal(f.pages,4);
+ assert.equal((await h.view()).state,'ready','replayed token cannot destroy the current completed projection');
+});
+test('MOCK_IDB explicit snapshot retry has a new bounded failure token and rejects its predecessor',async t=>{
+ const f=await snapshotRetryTerminal(t),{h,terminal}=f;assertSnapshotRetryToken(terminal);
+ assert.equal((await h.view('workspace',{}, {retryToken:terminal.retryToken})).state,'preparing');
+ const second=await f.settle();assertSnapshotRetryToken(second);assert.notEqual(second.retryToken,terminal.retryToken);assert.equal(f.pages,6,'explicit retry has only its own initial read and two automatic retries');
+ assert.equal((await h.view('workspace',{}, {retryToken:terminal.retryToken})).ok,false);assert.equal(f.pages,6);
+ const still=await h.view();assert.equal(still.retryToken,second.retryToken);assert.equal(f.pages,6);
+});
+test('MOCK_IDB explicit snapshot retry refuses malformed token and locate combinations without consuming terminal',async t=>{
+ const f=await snapshotRetryTerminal(t),{h,terminal}=f;assertSnapshotRetryToken(terminal);
+ for(const retryToken of [null,true,1,{},[],'','bad token','x'.repeat(129),'__proto__'])assert.equal((await h.view('workspace',{}, {retryToken})).ok,false);
+ assert.equal((await h.view('workspace',{}, {retryToken:terminal.retryToken,locateProjectId:'p1'})).ok,false);
+ assert.equal((await h.view('workspace',{}, {retryToken:'invented_token'})).ok,false);
+ assert.equal((await h.view()).retryToken,terminal.retryToken);assert.equal(f.pages,3);
+});
+test('MOCK_IDB explicit snapshot retry token cannot cross mount or newly authenticated scope',async t=>{
+ const f=await snapshotRetryTerminal(t),{h,terminal}=f;assertSnapshotRetryToken(terminal);
+ const other=await h.additionalMount('other_mount');
+ const cross=await other.view({retryToken:terminal.retryToken});assert.equal(cross.ok,false);assert.equal(cross.page,undefined);assert.equal(f.pages,3,'cross-mount token must be rejected before creating an owner');
+ assert.equal((await h.view()).retryToken,terminal.retryToken);
+ h.switchPrincipal('different-retry-principal');f.conflicts=false;await h.bind();await h.mount();
+ const stale=await h.view('workspace',{}, {retryToken:terminal.retryToken});assert.equal(stale.ok,false);assert.equal(stale.page,undefined);assert.equal(f.pages,3,'old scope token must not initialize a replacement owner');
+ assert.equal((await f.settle()).state,'ready','new authority retains its independent normal initial read');assert.equal(f.pages,3,'new empty scope must not read pages from the old scope');
 });
