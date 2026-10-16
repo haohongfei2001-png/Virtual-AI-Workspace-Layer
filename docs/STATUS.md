@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round279）
+## 最新正式检查点（2026-10-16，原本地目录，Round280）
+
+真实扩展源IDB补齐在途旧事务与三个新owner升级边界：versionchange后旧事务先完成，随后三个owner打开v4；旧连接拒绝新事务、旧open3为VersionError。八表仅保留精确预期差异，人工数据保持；旧revision CAS拒绝、最新revision CAS成功且无旁路改写。实际synthetic MV3同次 **5/5 PASS**，源码稳定、零错误，生产代码未改，见[Round280](evidence/round280/README.md)。
+
+b166840已正常推送原PR16。继续原有渐进摄取/100k及剩余Free任务；完整81/所有profile、冷启动与reenable可靠性、真实G/U仍开放，**Free NOT_RELEASE_READY**。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round279）
 
 同库schema v3→v4已实现：升级事务内先校验八表/索引元数据，旧真实ScopeRepository由VersionError隔离；不重写记录，损坏v3原子回滚。此前旧invalidate可写反例已由实际旧owner拒绝覆盖。修复本地synthetic站点缺少两个共享导航依赖的404，未扩大Host接口暴露。
 

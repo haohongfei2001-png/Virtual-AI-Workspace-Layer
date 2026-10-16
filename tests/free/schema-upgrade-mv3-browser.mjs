@@ -1,3 +1,4 @@
+import {schemaInflightCase} from './schema-inflight-case.mjs';
 /** Real extension-origin IndexedDB schema v2 -> v4, with an actually blocked connection. */
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,readFile,writeFile,readdir} from 'node:fs/promises';
@@ -9,7 +10,7 @@ import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {createServer} from '../../simulator/server.mjs';
 import {packageSynthetic,verifyUnpacked} from '../../simulator/package.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
-async function hashes(){const result={};for(const dir of ['src/b1','src/data','src/navigation','simulator'])for(const name of await readdir(dir))if(name.endsWith('.mjs'))result[dir+'/'+name]=hash(await readFile(dir+'/'+name));result['tests/free/schema-upgrade-mv3-browser.mjs']=hash(await readFile('tests/free/schema-upgrade-mv3-browser.mjs'));return result;}
+async function hashes(){const result={};for(const dir of ['src/b1','src/data','src/navigation','simulator'])for(const name of await readdir(dir))if(name.endsWith('.mjs'))result[dir+'/'+name]=hash(await readFile(dir+'/'+name));result['tests/free/schema-inflight-case.mjs']=hash(await readFile('tests/free/schema-inflight-case.mjs'));result['tests/free/schema-upgrade-mv3-browser.mjs']=hash(await readFile('tests/free/schema-upgrade-mv3-browser.mjs'));return result;}
 const before=await hashes(),dir=await mkdtemp(join(tmpdir(),'vaiwl-schema-mv3-')),artifact=packageSynthetic(join(dir,'package')),extension=join(dir,'package','extension'),profile=join(dir,'profile');await mkdir(profile);
 const verification=verifyUnpacked(extension),server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`;
 const receipt=process.argv[2]??'/private/tmp/free-schema-upgrade-mv3.json',report={evidence:'REAL_HEADLESS_INSTALLED_MV3_EXTENSION_ORIGIN_SCHEMA_UPGRADE',realChatGPT:'NOT_RUN',headless:true,sourceHashes:before,artifact,verification,results:[],pageErrors:[]};
@@ -60,5 +61,6 @@ try{
   const persisted=await probe.evaluate(async()=>{const c=schemaCase,workspace=new c.WorkspaceRepository({baseRepository:c.base}),read=await workspace.read(c.scope);const {NativeRepository}=await import('/src/data/native-repository.mjs');const native=await new NativeRepository({baseRepository:c.base}).read(c.scope);c.check(read.state.identities.T0.title==='schema升级保留人工标题','runtime-lost-human-title');c.check(read.state.preferences.workingSet.value.refs.join(',')==='T0,T1','runtime-lost-workset');c.check(Object.keys(native.refs).length>0,'no-free-native-facts');c.check(native.refs.T0.nativeTitle!=='schema升级保留人工标题','Pro-title-became-native');c.base.close();return {nativeRefCount:Object.keys(native.refs).length,manualTitle:read.state.identities.T0.title};});
   return {...persisted,nativeInputSameNode:true,nativeDraftPreserved:true,documentReloaded:false};
  });
+ await run('Existing v3 transaction commits before v4 multi-owner open without lost records',()=>probe.evaluate(schemaInflightCase));
  assert.deepEqual(report.pageErrors,[]);assert.deepEqual(verifyUnpacked(extension),verification);report.sourceChangedDuringRun=JSON.stringify(await hashes())!==JSON.stringify(before);assert.equal(report.sourceChangedDuringRun,false);await save();
 }catch(error){report.failure=error.stack;await save();throw error;}finally{await save();await browser?.close();chromeProcess?.kill('SIGTERM');await new Promise(r=>server.close(r));}
