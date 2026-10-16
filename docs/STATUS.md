@@ -1,6 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round340）
+## 最新本地检查点（2026-10-17，Round341）
+
+已fetch核对远端无遗漏提交，并正常推送6e87d66→29b0399，检查点本地/origin为0/0。保持原PR16/分支，整理stash和副本保留。
+
+实际隔离100k worker CPU采样10秒取得6761 samples：SHA自身17.32%、stable9.81%、strictJSON5.07%、GC11.99%、idle17.03%；不将inclusive相加或idle归因为IDB。原成员deadline仍FAIL，未延期；source/fixture/manifest无漂移，清理完成。仅诊断，非性能验收。新增精确worker、超时/退出清理保护与诊断禁止timing门槛。[Round341](evidence/round341/README.md)。
+
+补J4 native CAS提交前的精确断点及只读八表回滚oracle，缺库/升级拒绝；目前仅33项纯合同准备，尚未接入实际连续浏览器旅程，不宣称S通过。合并新/受影响Node99/99 PASS；未改生产。完整Free仍 **NOT_RELEASE_READY**，规模/静默context/完整81/profile/J1–J4/G/U继续开放。
+
+## 前一本地检查点（2026-10-17，Round340）
 
 共享mutation仅移除较早的重复root校验；保留输入遍历之后、写入之前及外部writer之后的完整校验。独立计数2→1且输出/checksum/delta窗口完全相同，畸形输入、getter及callback篡改拒绝。新11/11、现有共享目录180/180、真实IndexedDB生命周期/批量/回收21项通过；不累加重叠测试，不冒称新全套或MV3通过。[Round340](evidence/round340/README.md)。
 

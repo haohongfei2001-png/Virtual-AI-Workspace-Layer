@@ -1,3 +1,5 @@
+import {startHostScaleCPUProfile} from './host-scale-cpu-profile.mjs';
+import {connectJ4Debugger} from './j4-debugger-transport.mjs';
 import {checkHostScaleProjectCard} from './fixtures/host-scale-project-card-oracle.mjs';
 import {prepareHostScaleAdmission} from './fixtures/host-scale-admission-preparation.mjs';
 import {observeHostScaleAdmission} from './fixtures/host-scale-admission-observation.mjs';
@@ -33,10 +35,12 @@ if(process.env.HOST_SCALE_RUN!=='1'){
  const scenario=hostScaleScenario({size:Number(process.env.HOST_SCALE_SIZE??1000),distribution:process.env.HOST_SCALE_DISTRIBUTION??'project-mixed',cpuRate:Number(process.env.HOST_SCALE_CPU_RATE??1)});
  const hash=x=>createHash('sha256').update(x).digest('hex');
  const report={sourceCommit:process.env.FREE_SOURCE_COMMIT??null,requirement:'SYS-04 / original F1',status:'NOT_RUN',acceptance:'NOT_ESTABLISHED',realChatGPT:'NOT_RUN',scenario,expected:hostScaleExpected(scenario),remaining:[...HOST_SCALE_GAPS],ingestion:[],errors:[],rpc:[],rpcTraceDropped:0};
+ const cpuProfileEnabled=process.env.FREE_HOST_SCALE_CPU_PROFILE==='1';
+ if(cpuProfileEnabled&&(scenario.distribution!=='single-project'||['FREE_HOST_SCALE_TRACE','FREE_HOST_SCALE_PROGRESS','FREE_HOST_SCALE_ADMISSION_OBSERVE','FREE_HOST_SCALE_ADMISSION_PREPARE'].some(k=>process.env[k]==='1')))throw Error('cpu-profile-requires-unprepared-single-project');
  const traceEnabled=process.env.FREE_HOST_SCALE_TRACE==='1',traceThroughReturn=traceEnabled&&process.env.FREE_HOST_SCALE_TRACE_RETURN==='1';
  if(traceEnabled)report.traceRange=traceThroughReturn?'through-native-return':'initial-ingestion';
- let server,context,browserHandle,browserLaunchAttempted=false,networkGuard,manifest,manifestPath,manifestHash,directory,activePage,loadedExtensionId,tracePackage;
- const sourceFiles=['host-scale-package-browser.mjs','native-visibility-browser.mjs','historical-network-guard.mjs','host-scale-trace.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-project-card-oracle.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-admission-observation.mjs','fixtures/host-scale-admission-preparation.mjs','fixtures/host-scale-progress-sampler.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
+ let server,context,browserHandle,browserLaunchAttempted=false,networkGuard,manifest,manifestPath,manifestHash,directory,activePage,loadedExtensionId,tracePackage,cpuTransport,cpuProfile;
+ const sourceFiles=['host-scale-cpu-profile.mjs','j4-debugger-transport.mjs','host-scale-package-browser.mjs','native-visibility-browser.mjs','historical-network-guard.mjs','host-scale-trace.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-project-card-oracle.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-admission-observation.mjs','fixtures/host-scale-admission-preparation.mjs','fixtures/host-scale-progress-sampler.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sourceFiles.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -126,6 +130,14 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    report.nativeVisibilityAtMember=await visibilitySnapshot();
    assert.equal(report.nativeVisibilityAtMember[0].visibility,'hidden');assert.equal(report.nativeVisibilityAtMember[0].focused,false);
    assert.equal(report.nativeVisibilityAtMember[1].visibility,'visible');assert.equal(report.nativeVisibilityAtMember[1].focused,true);memberReturnRemaining();
+   if(cpuProfileEnabled){
+    report.timingUse='DIAGNOSTIC_ONLY_WORKER_CPU_SAMPLING';
+    try{
+     cpuTransport=await connectJ4Debugger(browserHandle.debugEndpoint);
+     cpuProfile=await startHostScaleCPUProfile({transport:cpuTransport,extensionId:id});
+     cpuProfile.finished.then(value=>{report.workerCPUProfile=value;cpuTransport.close();},()=>cpuTransport.close());
+    }catch{report.workerCPUProfile={kind:'DIAGNOSTIC_ONLY_HOST_SCALE_WORKER_CPU',status:'UNAVAILABLE',reason:'setup-failed'};cpuTransport?.close();}
+   }
    report.nativeMemberProgress=await waitHostScaleMemberProgress({page,extensionId:id,url:server.origin+projectPath,projectId:projectPath.split('/')[2],id:tail.id,deadline:memberReturnDeadline});
    report.nativeMemberProgress.scenario='VISIBLE_NATIVE_READING_BEFORE_RETURN_NOT_IMMEDIATE_RETURN';
    // Tail progress is not completeness: the unchanged full ID audit follows.
@@ -172,7 +184,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    report.admissionObservation=await observeHostScaleAdmission({read:()=>hostScaleFailureProgress(page,id,{timeout:1000})});
    report.diagnosticIndexAudit=await audit();
   }
-  if((traceEnabled||process.env.FREE_HOST_SCALE_PROGRESS==='1'||process.env.FREE_HOST_SCALE_ADMISSION_OBSERVE==='1')){report.measurement={status:'NOT_RUN_DIAGNOSTIC_INGESTION_OBSERVATION',samples:null,acceptance:'NOT_ESTABLISHED'};throw Error('diagnostic-progress-run-cannot-produce-scale-timing');}
+  if((cpuProfileEnabled||traceEnabled||process.env.FREE_HOST_SCALE_PROGRESS==='1'||process.env.FREE_HOST_SCALE_ADMISSION_OBSERVE==='1')){report.measurement={status:'NOT_RUN_DIAGNOSTIC_INGESTION_OBSERVATION',samples:null,acceptance:'NOT_ESTABLISHED'};throw Error('diagnostic-progress-run-cannot-produce-scale-timing');}
   if(process.env.FREE_HOST_SCALE_ADMISSION_PREPARE==='1'){
    report.admissionPath='EXPLICIT_BOUNDED_PREPARATION_NOT_IMMEDIATE_INDEX';
    report.immediateIndexAudit=await audit();
@@ -250,6 +262,8 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   assert.deepEqual(report.errors,[]);report.status='PARTIAL_SYS04_NOT_ACCEPTED';process.exitCode=2;
  }catch(error){const {hostScaleFailureProgress}=await import('./fixtures/host-scale-progress.mjs');report.nativeIndexProgress=await hostScaleFailureProgress(activePage,loadedExtensionId).catch(()=>({status:'DIAGNOSTIC_UNAVAILABLE',acceptance:'NOT_ESTABLISHED'}));report.status=traceThroughReturn&&error.message==='diagnostic-progress-run-cannot-produce-scale-timing'?'DIAGNOSTIC_ONLY_RETURN_COMPLETE':traceEnabled&&error.message==='diagnostic-initial-ingestion-complete'?'DIAGNOSTIC_ONLY_INGESTION_COMPLETE':context?'FAIL':'NOT_RUN_BROWSER_OR_PACKAGE_STARTUP';report.error=error.stack;report.failure={phase:report.phase,rpcCount:report.rpc.length,rpcTail:report.rpc.slice(-16),facts:await hostScaleFailureFacts(activePage).catch(failure=>({captureError:failure.message}))};process.exitCode=1;}
  finally{
+  if(cpuProfile){try{report.workerCPUProfile=await cpuProfile.finish();}finally{cpuTransport?.close();}}else cpuTransport?.close();
+  if(cpuProfileEnabled){report.acceptance='NOT_ESTABLISHED';report.measurement={status:'NOT_RUN_DIAGNOSTIC_WORKER_CPU',samples:null,acceptance:'NOT_ESTABLISHED'};}
   if(traceEnabled){report.workerTrace=await collectScaleWorkerTrace(context,loadedExtensionId).catch(()=>({status:'UNAVAILABLE'}));if(report.trace){const rows=[...report.trace.events,...(report.workerTrace.events??[]).map(row=>({...row,realmOrdinal:0}))].sort((a,b)=>a.at-b.at);report.trace.events=[];report.trace.bytes=0;for(const row of rows)appendScaleTrace(report.trace,row);}if(report.workerTrace.events)delete report.workerTrace.events;}
   const cleaned=await cleanupHostScaleRun({report,context,browserHandle,browserLaunchAttempted,networkGuard,server,directory,verify:async()=>{
   if(tracePackage){await verifyScaleTracePackage(tracePackage);assert.equal((await import('../../extension/package.mjs')).verifyHost(report.package.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');}

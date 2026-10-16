@@ -4,13 +4,13 @@ import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {measureAtAdmittedScale} from './fixtures/host-scale-measurement.mjs';
 const source=await readFile(new URL('./host-scale-package-browser.mjs',import.meta.url),'utf8');
-const gateStart=source.indexOf("  if((traceEnabled||process.env.FREE_HOST_SCALE_PROGRESS");
+const gateStart=source.indexOf("  if((cpuProfileEnabled||traceEnabled||process.env.FREE_HOST_SCALE_PROGRESS");
 const measureStart=source.indexOf('  report.measurement=await measureAtAdmittedScale');
 assert(gateStart>=0&&measureStart>gateStart);
 const branch=source.slice(gateStart,measureStart);
 const complete=revision=>({status:'PASS_INDEX_AUDIT_ONLY',revision,requestedRefs:1000,distinctRefs:1000,distinctProjects:1,missingRefs:0,unexpectedRefs:0,duplicateRefs:0,projectMembership:1000,nativeNoneObserved:0,unknownMembership:0,wrongProjectMembership:0,wrongNoneMembership:0});
-async function execute({env={},traceEnabled=false,audits=[complete(12),complete(12)],prepared={ready:true,status:'READY_AFTER_PREPARATION',finalAudit:complete(12)}}={}){
- const calls=[],report={},context={process:{env},traceEnabled,report,page:{},id:'test-extension',Math,
+async function execute({env={},traceEnabled=false,cpuProfileEnabled=false,audits=[complete(12),complete(12)],prepared={ready:true,status:'READY_AFTER_PREPARATION',finalAudit:complete(12)}}={}){
+ const calls=[],report={},context={process:{env},traceEnabled,cpuProfileEnabled,report,page:{},id:'test-extension',Math,
   audit:async()=>{calls.push('audit');assert(audits.length,'unexpected audit');return audits.shift();},
   prepareHostScaleAdmission:async options=>{calls.push('prepare');context.initialAudit=options.initialAudit;assert.equal(options.audit,context.audit);return prepared;},
   hostScaleFailureProgress:()=>assert.fail('preparation stub must not fabricate progress'),
@@ -29,7 +29,7 @@ test('incomplete preparation emits no samples and never enters measurement',asyn
  const initial={...complete(2),status:'FAIL_INDEX_CARDINALITY'},final={...initial,revision:3};for(const finalAudit of [null,final]){const result=await execute({env:{FREE_HOST_SCALE_ADMISSION_PREPARE:'1'},audits:[initial],prepared:{ready:false,status:'TIMED_OUT',finalAudit}});assert.match(result.error?.message??'',/host-scale-admission-preparation-TIMED_OUT/);assert.deepEqual(result.calls,['audit','prepare']);assert.equal(result.report.indexAudit,finalAudit??initial);assert.equal(result.report.measurement.samples,null);assert.equal(result.report.measurement.acceptance,'NOT_ESTABLISHED');}
 });
 test('each diagnostic mode exits before opt-in preparation and measurement',async()=>{
- for(const mode of ['trace','FREE_HOST_SCALE_PROGRESS','FREE_HOST_SCALE_ADMISSION_OBSERVE']){const result=await execute({traceEnabled:mode==='trace',env:{FREE_HOST_SCALE_ADMISSION_PREPARE:'1',...(mode==='trace'?{}:{[mode]:'1'})},audits:[]});assert.match(result.error?.message??'',/diagnostic-progress-run-cannot-produce-scale-timing/);assert.deepEqual(result.calls,[]);assert.equal(result.report.measurement.samples,null);assert.equal(result.report.measurement.acceptance,'NOT_ESTABLISHED');assert.equal(result.report.admissionPreparation,undefined);}
+ for(const mode of ['cpu','trace','FREE_HOST_SCALE_PROGRESS','FREE_HOST_SCALE_ADMISSION_OBSERVE']){const result=await execute({cpuProfileEnabled:mode==='cpu',traceEnabled:mode==='trace',env:{FREE_HOST_SCALE_ADMISSION_PREPARE:'1',...(mode==='trace'?{}:{[mode]:'1'})},audits:[]});assert.match(result.error?.message??'',/diagnostic-progress-run-cannot-produce-scale-timing/);assert.deepEqual(result.calls,[]);assert.equal(result.report.measurement.samples,null);assert.equal(result.report.measurement.acceptance,'NOT_ESTABLISHED');assert.equal(result.report.admissionPreparation,undefined);}
 });
 test('prepared readiness cannot bypass fresh admission or stable post-measurement audit',async()=>{
  const initial=complete(2),failed={...complete(12),status:'FAIL_PROJECT_MEMBERSHIP'};
