@@ -182,8 +182,13 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     }
     return true;
   }
-  function getNode(handle,{forDispatch=false}={}) {
+  function getNode(handle,options={}) {
     if(stopped)return null;refreshRoute();refreshRoots();
+    return checkedNode(handle,options);
+  }
+  // Private synchronous batch helper. Root discovery runs once before the
+  // batch; every handle still validates live node, parent and fingerprint.
+  function checkedNode(handle,{forDispatch=false}={}) {
     const entry=byId.get(typeof handle==='string'?handle:handle?.id);
     if(!entry)return null;
     if(!valid(entry)){byId.delete(entry.handle.id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(entry.handle.id);return null;}
@@ -214,7 +219,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     for(const entry of byId.values()){
       const result=wanted.get(entry.resolvedKey);if(!result)continue;
       // Reuse the ordinary handle gate; no new node/locator lookup or dispatch.
-      if(entry.handle.documentToken!==binding.documentToken||!getNode(entry.handle))continue;
+      if(entry.handle.documentToken!==binding.documentToken||!checkedNode(entry.handle))continue;
       result.count++;result.handle=result.count===1?entry.handle:null;
     }
     return keys.map(key=>{const result=wanted.get(key);return result.count===1?{...result.handle}:null;});
