@@ -15,7 +15,23 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
  * Preparation is polled in bounded RPCs; a pending read is never an empty view. */
 export function createHostViewService({ui,readService,workspaceRepository=null,prepareNavigation=null,registerCurrentNavigation=null,nativeCandidatesEnabled=false,presentSurface=null,nativeWritePending=()=>false,clock=()=>new Date().toISOString(),maxViews=32,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof nativeWritePending!=='function'||typeof ui?.withScope!=='function'||!readService||!Number.isInteger(maxViews)||maxViews<1||maxViews>128)throw Error('invalid-host-view-service');
- const views=new Map(),resumes=new Map();
+ const views=new Map(),resumes=new Map(),readWindows=new Map();
+ // A bounded local scheduling opportunity, never snapshot authority. All mounts
+ // of a scope share one deadline; a committed publication must precede renewal.
+ function liveWindow(scopeKey){
+  const window=readWindows.get(scopeKey);if(!window?.active)return false;
+  const at=elapsedNow();
+  if(!Number.isFinite(at)||at<window.last||at>=window.until||![...views.values()].some(entry=>entry.scopeKey===scopeKey&&entry.readWindow===window&&entry.isCurrent()&&(entry.pending||entry.awaitingDelivery))){window.active=false;return false;}
+  window.last=at;return true;
+ }
+ function reserveRead(entry){
+  let window=readWindows.get(entry.scopeKey);
+  if(window?.used&&!liveWindow(entry.scopeKey))return;
+  if(!window?.active){if(!window&&readWindows.size>=maxViews)return;const at=elapsedNow();if(!Number.isFinite(at))return;window={used:true,active:true,last:at,until:at+1000};readWindows.set(entry.scopeKey,window);}
+  entry.readWindow=window;
+ }
+ function releaseRead(entry,window=entry.readWindow,generation=entry.prepareGeneration){if(entry.prepareGeneration!==generation||entry.readWindow!==window)return;entry.awaitingDelivery=false;if(window)window.active=false;}
+
  // Presentation belongs to the authorized document/scope/role, not its SPA route.
  // Every read still obtains a fresh current grant through withScope; no page data or grant is resumed.
  const resumeKey=(context,role=context.role)=>JSON.stringify([context.parentFrame.tabId,context.parentFrame.documentId,context.scope.key,role]);
@@ -42,15 +58,15 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   }catch{return {ok:false,reason:'view-resume-unavailable'};}finally{active=false;}
  }
  const reason=error=>/^[a-z0-9-]{1,80}$/.test(error?.message)?error.message:'free-view-unavailable';
- function remove(id){const entry=views.get(id);if(entry){entry.prepareGeneration=(entry.prepareGeneration??0)+1;cancel(entry.retryTimer);cancel(entry.prepareTimer);entry.checkPreparation=null;entry.deferPreparation=null;entry.owner.stop();views.delete(id);}}
+ function remove(id){const entry=views.get(id);if(entry){entry.prepareGeneration=(entry.prepareGeneration??0)+1;cancel(entry.retryTimer);cancel(entry.prepareTimer);entry.checkPreparation=null;entry.deferPreparation=null;entry.owner.stop();views.delete(id);liveWindow(entry.scopeKey);}}
  function begin(entry){
-  cancel(entry.prepareTimer);cancel(entry.retryTimer);entry.retryTimer=null;entry.deferPreparation=null;entry.error=null;entry.pending=true;
+  cancel(entry.prepareTimer);cancel(entry.retryTimer);entry.retryTimer=null;entry.deferPreparation=null;entry.error=null;entry.pending=true;entry.awaitingDelivery=false;
   const generation=entry.prepareGeneration=(entry.prepareGeneration??0)+1,started=elapsedNow();let retries=0;
   const current=()=>entry.prepareGeneration===generation&&entry.isCurrent();
   const completed=()=>{cancel(entry.prepareTimer);entry.prepareTimer=null;entry.checkPreparation=null;};
   entry.checkPreparation=()=>{
    const elapsed=elapsedNow()-started;if(Number.isFinite(elapsed)&&elapsed>=0&&elapsed<30000)return false;
-   if(current()){entry.prepareGeneration++;cancel(entry.retryTimer);entry.retryTimer=null;entry.deferPreparation=null;entry.pending=false;entry.error='read-budget-exhausted';completed();entry.owner.invalidate();}
+   if(current()){entry.prepareGeneration++;cancel(entry.retryTimer);entry.retryTimer=null;entry.deferPreparation=null;entry.pending=false;entry.error='read-budget-exhausted';releaseRead(entry);completed();entry.owner.invalidate();}
    return true;
   };
   entry.prepareTimer=schedule(()=>{if(current())entry.checkPreparation?.();},30000);
@@ -72,10 +88,11 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   };
   const run=()=>{
    if(!current())return;
-   entry.owner.refresh().then(()=>{if(!current()||entry.checkPreparation?.())return;completed();entry.pending=false;if(elapsedNow()-started>=30000)entry.error='read-budget-exhausted';},error=>{
+   reserveRead(entry);
+   entry.owner.refresh().then(()=>{if(!current()||entry.checkPreparation?.())return;completed();entry.pending=false;entry.awaitingDelivery=true;if(elapsedNow()-started>=30000)entry.error='read-budget-exhausted';},error=>{
     if(!current()||entry.checkPreparation?.())return;
     if(['snapshot-revision-changed','stale-free-page'].includes(error?.message)&&retries<2&&elapsedNow()-started<29950){retries++;entry.deferPreparation=queueRetry;queueRetry();return;}
-    completed();entry.pending=false;entry.error=reason(error);
+    releaseRead(entry);completed();entry.pending=false;entry.error=reason(error);
    });
   };if(nativeWritePending(entry.scopeKey)===true){entry.deferPreparation=queueRetry;queueRetry();}else run();
  }
@@ -84,7 +101,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
   if(!exactHostRecord(message,['v','type','grantId','mountId','query',...(Object.hasOwn(message??{},'locateProjectId')?['locateProjectId']:[])])||message.v!==1||message.type!=='HOST_UI_VIEW'||!message.query||Object.getPrototypeOf(message.query)!==Object.prototype||Reflect.ownKeys(message.query).some(k=>!['segment','offset','limit','groupId','list','rowOffset','rowLimit','search','workingSet'].includes(k)))return {ok:false,reason:'invalid-ui-view'};
   if(Object.hasOwn(message,'locateProjectId')&&(message.query.search!==undefined||message.query.workingSet!==undefined))return {ok:false,reason:'invalid-ui-view'};
   if(message.query.search!==undefined&&message.query.workingSet!==undefined)return {ok:false,reason:'invalid-ui-view'};
-  let active=true;const started=elapsedNow();
+  let active=true,delivery=null;const started=elapsedNow();
   const check=()=>{if(!active||elapsedNow()-started>=6000)throw Error('ui-view-expired');};
   try{return await withRequestDeadline(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    check();for(const [id,entry]of views)if(!entry.isCurrent())remove(id);
@@ -100,6 +117,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    entry.checkPreparation?.();
    if(entry.pending||entry.autoReading)return {ok:true,state:'preparing',retryAfterMs:50};
    if(entry.error)return {ok:false,reason:entry.error};
+   delivery={entry,window:entry.readWindow,generation:entry.prepareGeneration};
    const current=entry.owner.current();if(!current)throw Error('stale-free-view');
    const version=await readService.version(context.scope,{guard:()=>active&&context.isCurrent()});check();
    const value=current.snapshot;
@@ -142,7 +160,7 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    check();if(!context.isCurrent())throw Error('stale-view-resume');if(!locating)rememberResume(context,effectiveQuery,current.snapshot.viewSession);
    registerCurrentNavigation?.({context,grantId:message.grantId,mountId:message.mountId,navigation:navigation.filter(item=>['same-target','native-control'].includes(item.plan.mode))});
    return result;
-  }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;}
+  }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;if(delivery)releaseRead(delivery.entry,delivery.window,delivery.generation);}
  }
  async function enterCurrent(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-current-entry'};}
@@ -313,5 +331,5 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  function confirmScope(frame,scopeKey){for(const [key,value]of resumes)if(value.tabId===frame.tabId&&value.documentId===frame.documentId&&value.scopeKey!==scopeKey)resumes.delete(key);}
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId,{preserveDocumentId=null}={}){for(const [key,value]of resumes)if(value.tabId===tabId&&(!preserveDocumentId||value.documentId!==preserveDocumentId))resumes.delete(key);for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({handle,resume,present,confirmScope,nativePublished(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){resumes.clear();for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent())begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
 }

@@ -7,7 +7,7 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {surfaceBatch} from '../host/surface-batch.mjs';
 import {digest} from '../data/hash.mjs';
 /** Privileged owner; the gate recognizes request object identity, never serialized labels. */
-export function createHostObservationOwner({handshake,authority,getFrame,profiles,onAccepted=null,onSendIntent=null,onNativeDelta=null,ackAdmission=null,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
+export function createHostObservationOwner({handshake,authority,getFrame,profiles,onAccepted=null,foregroundReadPending=()=>false,onSendIntent=null,onNativeDelta=null,ackAdmission=null,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(!handshake?.verify||!handshake?.isBound||!handshake?.matchesFrame||!authority?.peek||!authority?.scopeFor||typeof getFrame!=='function'||!(profiles instanceof Map))throw Error('invalid-host-observation-owner');
  const admissions=new WeakMap(),producers=new Map(),failedBatches=new Map(),bodies=new Map(),reads=new Set();let busy=null,stopped=false,joint=null;
  function discardBody(key){const entry=bodies.get(key);if(!entry)return;bodies.delete(key);for(const read of reads)if(read.entry===entry){read.active=false;read.abort.abort();}}
@@ -89,6 +89,10 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
     if(!combined){producers.set(proposal.producerToken,{isBound:producerCurrent,scopeKey:scope.key,grantId:grant.id,scopeEpoch:grant.scopeEpoch,seq:proposal.localSeq,fingerprint:semanticFingerprint,receiptId,bodyProofId:proofId,bodyEpoch,bodyRegionEpoch:body.regionEpoch,until:Math.min(Date.parse(grant.expiresAt),time+20000)});
     return {state:'accepted',localSeq:proposal.localSeq,receiptId,bodyProofId:proofId,bodyEpoch};}
    }
+   // Only background directory packets yield; current body/send causality keeps
+   // priority. No sequence, receipt or persistent fact is accepted on this path.
+   if(!combined&&!isBody&&!isSend&&foregroundReadPending(scope.key)===true)return {state:'retry-after',localSeq:proposal.localSeq,delayMs:50};
+   attempt.nativeWriteScope=scope.key;attempt.nativeWriteGuard=guard;
    const surfaceProposal=combined?.surface??proposal;
    const projectIds=[...new Set([...batch.projects.map(p=>p.id),...surfaceProposal.payload.membershipClaims.filter(c=>c.asserted==='PROJECT').map(c=>c.projectId)])];
    const page=await repository.page(scope,{ids:{projects:projectIds,refs:batch.refs.map(r=>r.id)},limit:512},{guard,signal:attempt.abort.signal});

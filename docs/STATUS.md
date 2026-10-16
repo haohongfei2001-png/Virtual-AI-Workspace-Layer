@@ -1,6 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-16，原本地目录，Round264）
+## 最新正式检查点（2026-10-16，原本地目录，Round265）
+
+承接a1ffd86，修复pass全段阻挡已提交部分索引的读取：只避让真实native存储准备/写，existing strict loader可渐进读取。按scope共享一次1000ms RAM窗口，已验证background surface沿原retry50让步；current/send/combined优先，CAS/版本/两重试/30秒准备及6秒transport不变。窗口不可因多surface/retry/remount续期，必须先有真实publication；迟到RPC只释放捕获代次，所有记录有界，撤权/停止不复活。
+
+实际最终候选1k完整旅程通过：首屏300/809ms，测量前后精确1000正确Project成员。首轮10k首屏399ms/22.201s通过，但返回workspace仍原30秒超时；该FAIL发生在窗口清理修正之前，不冒充最终源码通过。完整SYS04/10k可靠性仍开放。
+
+最终完整Node **5247/5247 PASS，零skip**；首轮4个插桩anchor失败已按新源码更新，原失败保留。新增真实binding红转绿、作用域/序号/优先发送/窗口公平性/迟到释放反例通过。证据见[Round265](evidence/round265/README.md)。下一步沿既有trace区分10k窗口到期、慢refresh与版本重启；不放宽deadline。**Free NOT_RELEASE_READY**，完整81及真实G/U等门槛保持开放。
+
+## 前一正式检查点（2026-10-16，原本地目录，Round264）
 
 承接e5270a4，生产代码不变。修复离线验收采样：J3跨进程读取要求连续两次完整稳定快照，至多8轮、共享原15秒deadline、64键及累计安全事件不变；真实J3 **16/16 PASS**。J4等待持久化预算到期改为早醒后重查真实边界，单调截止不延长原生产30秒预算；实际连续旅程 **23/23已实施步PASS，仍PARTIAL_J4_NOT_ACCEPTED**，含后继ACK与disable/uninstall。源码/构建hash稳定。
 
