@@ -57,12 +57,18 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
  }
  async function renew(run){
   if(epoch!==run||!grant||!abort)return;const previous=grant,signal=abort.signal;
+  // Timer delivery may lag behind expiry. A renewal is valid only while the
+  // local prior lease is still live, even if the worker issued its ACK earlier.
+  if(!(now()<Date.parse(previous.expiresAt))){stop('ui-grant-expired');return;}
   try{const ack=await request({v:1,type:'HOST_UI_RENEW',grantId:previous.id,mountId:previous.mountId},signal);
-   if(epoch!==run)return;if(ack?.ok!==true||!valid(ack.grant,previous)){stop('ui-renew-failed');return;}await publish(ack.grant,run);
+   if(epoch!==run)return;if(!(now()<Date.parse(previous.expiresAt))){stop('ui-grant-expired');return;}if(ack?.ok!==true||!valid(ack.grant,previous)){stop('ui-renew-failed');return;}await publish(ack.grant,run);
   }catch{if(epoch===run)stop('ui-renew-failed');}
  }
  async function start(){
-  stop('ui-starting');active=true;const run=epoch;
+  const run=epoch+1;stop('ui-starting');
+  // onClear may synchronously start or stop a newer lifecycle. The outer
+  // start must not overwrite its port/listeners or share its epoch.
+  if(epoch!==run)return false;active=true;
   appearanceListener=event=>{if(!active||epoch!==run||event.source!==doc.defaultView.parent||event.origin!==parentOrigin)return;const data=event.data;if(!exactHostRecord(data,['type','role','appearance'])||data.type!=='VAIWL_UI_APPEARANCE'||data.role!==role)return;try{const value=validateFrameAppearance(data.appearance),key=JSON.stringify(value);if(key===appearanceKey)return;appearance?.apply(value);appearanceKey=key;onAppearance(value);}catch{/* Cosmetic input cannot change authority or restart the client. */}};
   doc.defaultView.addEventListener?.('message',appearanceListener);
   abort=new AbortController();const signal=abort.signal;

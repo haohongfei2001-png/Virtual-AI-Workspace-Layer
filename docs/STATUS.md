@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round348）
+## 最新本地检查点（2026-10-17，Round349）
+
+修复UI frame两项已独立复现的生命周期问题：expiry timer延迟时迟到续租ACK不得复活旧grant；start清理回调重入时旧启动不得覆盖新port或泄漏监听器。正常短lease续租与exit重入保持。最终13文件 **237/237 Node PASS**，独立审查无阻断；未运行新浏览器。见 [Round349](evidence/round349/README.md)。
+
+自然休眠待命机制尚未实现，UI-11继续NOT_ESTABLISHED。正常推送45秒无完成后有界终止，远端结果待核实；本地/stash/副本保留。完整Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round348）
 
 核对正式分支、stash/副本仍保留；fetch 成功且 Pro 72ca068 已整合。新增不附加 worker debugger 的实际隔离 headless idle 观察：60 秒内原 worker 未退出，原文档/草稿/双 frame 保持；UI-11 自然休眠仍 NOT_ESTABLISHED，不把强停恢复当作通过。源码/构建/执行 runner 无漂移，正常 exit2、cleanup 无错误。详见 [Round348](evidence/round348/README.md)。正常推送连接 github.com:443 失败（exit128），保留本地检查点。Free **NOT_RELEASE_READY**。
 
