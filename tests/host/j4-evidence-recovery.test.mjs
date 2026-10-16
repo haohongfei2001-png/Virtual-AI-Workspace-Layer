@@ -136,3 +136,46 @@ test('additive J4 wiring preserves original two sends and all old step names wit
  assert(source.includes("'j4-evidence-recovery.mjs','j4-joint-interruption.mjs'"));
  assert(source.includes("return steps.some(s=>s.status==='FAIL')?'FAIL':'PARTIAL_J4_NOT_ACCEPTED'"));assert(source.includes("release:'NOT_RELEASE_READY'"));
 });
+
+import {modernExpectedWorld} from './expected/modern.mjs';
+import {J4_REF} from './fixtures/j4-assets.mjs';
+import {createVariantHostFixtureServer} from './fixtures/variants-server.mjs';
+async function actualRecoveryNavigation(page,server){
+ const source=await readFile(new URL('./j4-evidence-recovery.mjs',import.meta.url),'utf8'),start=source.indexOf(' async function navigate(ref){'),end=source.indexOf('\n async function body()',start);
+ assert(start>=0&&end>start,'actual-recovery-navigation-boundaries');
+ return Function('a','native','server','modernExpectedWorld','J4_SEND_C','J4_REF','assert','return ('+source.slice(start,end).trim()+');')(page,async()=>page.calls.push('native-controls'),server,modernExpectedWorld,J4_SEND_C,J4_REF,assert);
+}
+async function navigationFixture(t){
+ const server=await createVariantHostFixtureServer({profile:'MODERN',journey:'J4',interruption:true});t.after(()=>server.close());
+ const visit=await fetch(server.url),headers={Cookie:visit.headers.get('set-cookie').split(';')[0]};
+ const windowed=await(await fetch(server.origin+'/backend-api/conversations?offset=2&limit=25',{headers})).json();assert.equal(windowed.windowed,true);
+ assert.deepEqual(windowed.items.map(row=>row.id),modernExpectedWorld.afterScrollIds);assert(!windowed.items.some(row=>[J4_REF,J4_SEND_C].includes(row.id)));
+ // Exercise the unchanged native search input callback and its real local
+ // server response; DOM/Playwright actions remain explicit Node test doubles.
+ const nodes=[],results={replaceChildren(){nodes.length=0;},append(node){nodes.push(node);}},input={},dialog={close(){}};
+ const native=await readFile(new URL('./fixtures/native.mjs',import.meta.url),'utf8'),start=native.indexOf("$('#search-dialog input').oninput = "),end=native.indexOf("\n$('#new-project')",start);assert(start>=0&&end>start);
+ const $=selector=>({'#search-dialog input':input,'#search-dialog .results':results,'#search-dialog':dialog})[selector];
+ Function('$','fetch','document',native.slice(start,end))($,path=>fetch(server.origin+path,{headers}),{createElement:()=>({})});
+ const page={calls:[],url:null,locator(selector){return {
+  async click(){page.calls.push(['click',selector]);if(selector==='#search-button')return;if(selector.startsWith('aside '))throw Error('native-history-target-unloaded');const path=/^#search-dialog a\[href="([^"]+)"\]$/.exec(selector)?.[1];assert(path,'only-native-search-link');const matches=nodes.filter(n=>n.href===path);assert.equal(matches.length,1,'unique-existing-native-search-href');matches[0].onclick();const response=await fetch(server.origin+'/native/route?path='+encodeURIComponent(path),{headers}),route=await response.json();assert.equal(route.conversationId,path.slice(3));page.url=server.origin+path;},
+  async fill(value){assert.equal(selector,'#search-dialog input');page.calls.push(['fill',value]);await input.oninput({target:{value}});},
+ };},async waitForURL(url){page.calls.push(['waitForURL',url]);assert.equal(page.url,url);}};
+ return {server,page,headers,nodes};
+}
+test('actual Evidence recovery navigation uses existing native search links when MODERN has unloaded both history targets',async t=>{
+ const h=await navigationFixture(t),navigate=await actualRecoveryNavigation(h.page,h.server);
+ const response=await fetch(h.server.origin+'/native/j4/send',{method:'POST',headers:{...h.headers,'Content-Type':'application/json'},body:JSON.stringify({text:'Node fixture title change',rename:true})});assert.equal(response.status,200);const renamed=await response.json();assert.notEqual(renamed.title,modernExpectedWorld.conversations.find(row=>row.id===J4_SEND_C).title);
+ await navigate(J4_REF);await navigate(J4_SEND_C);
+ assert.deepEqual(h.page.calls.filter(row=>Array.isArray(row)&&row[0]==='fill').map(row=>row[1]),[modernExpectedWorld.conversations.find(row=>row.id===J4_REF).title,renamed.title]);
+ assert.deepEqual(h.page.calls.filter(row=>Array.isArray(row)&&row[0]==='waitForURL').map(row=>row[1]),[h.server.origin+'/c/'+J4_REF,h.server.origin+'/c/'+J4_SEND_C]);
+ assert.equal(h.server.snapshot().interruption.accepts,1,'navigation creates no extra native send');
+});
+test('actual Evidence recovery navigation rejects missing titles and unknown targets without falling back or creating links',async t=>{
+ const h=await navigationFixture(t);
+ for(const title of [undefined,null,'',' ',{},'x'.repeat(201)]){h.page.calls.length=0;const server={origin:h.server.origin,snapshot:()=>({interruption:{title}})},navigate=await actualRecoveryNavigation(h.page,server);await assert.rejects(navigate(J4_SEND_C),/native-search-title/);assert(!h.page.calls.some(row=>Array.isArray(row)));}
+ const navigate=await actualRecoveryNavigation(h.page,h.server);await assert.rejects(navigate('unknown-ref'),/native-search-target/);
+});
+test('actual Evidence recovery navigation refuses an incorrect current title rather than using a stale expected name',async t=>{
+ const h=await navigationFixture(t),server={origin:h.server.origin,snapshot:()=>({interruption:{title:'Wrong native title'}})},navigate=await actualRecoveryNavigation(h.page,server);
+ await assert.rejects(navigate(J4_SEND_C),/unique-existing-native-search-href/);assert.equal(h.page.url,null);assert.equal(h.nodes.length,0);assert(!h.page.calls.some(row=>Array.isArray(row)&&row[0]==='waitForURL'));
+});

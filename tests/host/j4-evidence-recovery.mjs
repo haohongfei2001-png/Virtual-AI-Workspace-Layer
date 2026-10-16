@@ -1,3 +1,4 @@
+import {modernExpectedWorld} from './expected/modern.mjs';
 import assert from 'node:assert/strict';
 import {J4_SEND_C,J4_MIXED_TITLE} from './fixtures/j4-interruption.mjs';
 import {J4_REF} from './fixtures/j4-assets.mjs';
@@ -153,7 +154,15 @@ export async function runJ4EvidenceRecovery({a,id,server,inspector,assets,preser
   assert(Date.now()>budget.startedAt+30000);return {budget,waitedForFormalBudgetMs:waited};
  }
  async function native(){await a.bringToFront();await a.locator('#model-button').click();await a.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();}
- async function navigate(ref){await native();await a.locator(`aside nav[aria-label="Chat history"] a[href="/c/${ref}"]`).click();await a.waitForURL(server.origin+'/c/'+ref);}
+ async function navigate(ref){
+  assert([J4_REF,J4_SEND_C].includes(ref),'J4-evidence-native-search-target');
+  const title=ref===J4_SEND_C?server.snapshot().interruption?.title:modernExpectedWorld.conversations.find(row=>row.id===ref)?.title;
+  assert(typeof title==='string'&&title.trim().length>0&&title.length<=200,'J4-evidence-native-search-title');
+  // MODERN windowing removes history anchors. Use native search and its exact
+  // existing href, including the current native title after the joint rename.
+  await native();await a.locator('#search-button').click();await a.locator('#search-dialog input').fill(title);
+  await a.locator(`#search-dialog a[href="/c/${ref}"]`).click();await a.waitForURL(server.origin+'/c/'+ref);
+ }
  async function body(){return a.evaluate(()=>({conversationId:document.querySelector('#reading')?.getAttribute('data-conversation-id'),messageIds:[...new Set([...document.querySelectorAll('#reading [data-message-id]')].map(n=>n.getAttribute('data-message-id')))]}));}
  async function readyView(revision,segment){
   await ensureJ4Workspace(a,mounted);

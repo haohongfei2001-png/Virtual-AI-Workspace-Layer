@@ -1,8 +1,8 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新正式检查点（2026-10-15，隔离云环境）
+## 最新正式检查点（2026-10-16，隔离云环境）
 
-原分支 / Draft PR16 当前正式提交544942b（Round253）。CI49三个job全绿，Node5010/5010与12个guard变异通过。1k单项目独立reading可见旅程首次完整前后审计1000 PROJECT、零UNKNOWN/错归属/缺失/重复，revision105稳定；搜索/首屏/下一页35.84/85.12/121.11ms仅单样本。CI48立即返回112/888失败保留，未改产品返回语义。两个就绪后SYS05切片再次通过，默认6400token/真实ACK/title保守可见上界224ms，诊断前缀目录/peer/额外detail读取0。本次独立cold也通过，但历史间歇失败未闭合。正式scale172、SYS05各168、cold153源码/fixture哈希匹配。另已独立复现并实现Evidence持久撤销后新真实认证见证的owner incarnation修复，旧source/ACK不复活，原3红转绿且57+7独审通过；尚不能借CI49认证此后候选。详见[Round254](evidence/round254/README.md)。完整81、SYS04/SYS05、G/U与发布条件仍未完成。
+原分支 / Draft PR16 当前正式提交18ff563（Round254）。CI50 Node5065/5065及12个guard变异通过，两个browser job失败。新Evidence恢复真实UI首步已证明旧来源撤销、原事件/ACK/已完成continuation/人工资产/草稿保持及当前活动归空；后续原生333历史链接未加载而超时，新认证恢复与重绑仍未获S结论，测试候选改用现有真实原生搜索并精确href点击。J2及SYS05旧只读测试oracle漏传新版完整sources map，已完成并独审通过保持原断言的测试合同同步；不是放宽产品授权。1k单项目reading可见旅程再次完整前后1000 PROJECT、零UNKNOWN/错归属/缺失/重复且revision105稳定，42.17/86.43/125.89ms仍仅单样本。独立cold20s再次失败，CI49单次全绿没有关闭间歇问题。原失败报告与精确hash核验见[Round255](evidence/round255/README.md)，CI49原证据保留[Round254](evidence/round254/README.md)。完整81、SYS04/SYS05、J4、G/U与发布条件仍未完成。
 
 ## 历史正式检查点（Round219，保留原记录）
 
