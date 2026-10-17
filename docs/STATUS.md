@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round380）
+## 最新本地检查点（2026-10-17，Round381）
+
+修复长标题触发 64 KiB 自动缩页后真实“显示更多”按钮循环停留第一页的问题。私有分页上限绑定 scope/viewSession/区间/列表，旧延迟响应重新核验代际。独立真实按钮 L 回归遍历长/短标题各603聊天及返回前页，延迟反例通过；针对性 **3/3 PASS**、最终完整 Node **7205/7205 PASS**，独立审查通过。见 [Round381](evidence/round381/README.md)。
+
+已核对本地与 PR16 在上一检查点一致，原整理 stash 保留。Round380手工 offset 的 client 分页证据不等于真实按钮认证；本轮补齐该 L 缺口，无新增 Chrome MV3 S。100k原FAIL及其余未完成验收不变，Free仍 **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round380）
 
 修复确切owned mask切换导致有限目录游标从头扫描：一次标记只保留结构未变的遍历位置，成员证据仍实时核验。L真实owner/repository/Free client验证603持久refs、255PROJECT/348UNKNOWN、同库重开及自动缩页完整可达；独立审查通过，完整Node **7202/7202 PASS**。见 [Round380](evidence/round380/README.md)。
 

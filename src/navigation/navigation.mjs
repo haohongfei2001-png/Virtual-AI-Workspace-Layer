@@ -24,7 +24,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(navigationFeedback.nativeReturn){const feedback=navigationFeedback,source=frameProjection,control=node(doc,'button',{type:'button','aria-label':'返回原生页面'},'返回原生页面');control.dataset.focusKey='navigation-native-return';control.addEventListener('click',()=>{if(!stopped&&frameProjection===source&&navigationFeedback===feedback&&snapshot?.scope===feedback.scope&&adapter.currentURL()===feedback.url){enterReading(false);onPresentationRequest({kind:'show-native-page'});}});notice.append(control);}parent.append(notice);
   }
   let settingsOpen=false,timePolicyNotice=null,timePolicyNoticeTimer=null,lastTimePolicyNotice=null;
-  let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,projectionRequest=0,horizonPending=null,horizonError=null,workingSetPending=null,workingSetError=null,snippetLocatePending=null,resumeLayout=null;
+  let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,frameRowPaging=null,projectionRequest=0,horizonPending=null,horizonError=null,workingSetPending=null,workingSetError=null,snippetLocatePending=null,resumeLayout=null;
   // Keep the original event target alive until its click, drop, or composition
   // completes. Coalesce updates instead of extending a debounce on each change.
   const pointers=new Set(),keys=new Set(),win=doc.defaultView??globalThis;
@@ -37,7 +37,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const presentation=pendingPresentation;pendingPresentation=null;
     const args=pendingUpdate;pendingUpdate=null;
     const paint=pendingRender;pendingRender=false;
-    if(args){const [value,now,timeZone,preparedIndex,alreadyPrepared,currentEntry]=args;if(alreadyPrepared==='frame')applyFrameProjection(value,currentEntry);else if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
+    if(args){const [value,now,timeZone,preparedIndex,alreadyPrepared,currentEntry,requestContext]=args;if(alreadyPrepared==='frame')applyFrameProjection(value,currentEntry,requestContext);else if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
     if(presentation&&!stopped&&snapshot?.scope===presentation.scope)present(presentation.intent);
     else if(!args&&paint)render();
   }
@@ -230,7 +230,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(!frameProjection||typeof onProjectionRequest!=='function')return;
     const scope=frameProjection.scope,run=++projectionRequest;
     const query={role:surface.role,segment:view.segment,offset:frameProjection.groups.offset,limit:frameProjection.groups.limit,...partial};
-    try{Promise.resolve(onProjectionRequest(query)).then(dto=>{if(dto&&run===projectionRequest&&!stopped&&frameProjection?.scope===scope&&dto.scope===scope){applyFrameProjection(dto,safeCurrentEntry?{scope,run}:null);if(Object.hasOwn(partial,'segment'))calibrationEntry();}}).catch(()=>{});}catch{}
+    const requestContext={scope,run,session:JSON.stringify(frameProjection.viewSession),segment:frameProjection.segment,query};
+    try{Promise.resolve(onProjectionRequest(query)).then(dto=>{if(dto&&run===projectionRequest&&!stopped&&frameProjection?.scope===scope&&dto.scope===scope){applyFrameProjection(dto,safeCurrentEntry?{scope,run}:null,requestContext);if(Object.hasOwn(partial,'segment'))calibrationEntry();}}).catch(()=>{});}catch{}
   }
   async function requestHorizon(value){
     const H=value==='auto'?'auto':Number(value);if(!frameProjection||surface.role!=='workspace'||typeof onHorizonRequest!=='function'||horizonPending||H!=='auto'&&![7,14,30,60,90].includes(H))return;
@@ -250,7 +251,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function requestFrameWorkingSet(offset=0){frameWorkingSetOffset=offset;frameWorkingSetWaiting=true;requestFrame({workingSet:{offset,limit:24}});}
   function closeFrameWorkingSet(){view.worksetOpen=false;frameWorkingSetWaiting=false;projectionRequest++;render();requestFrame();onPresentationRequest({kind:'show-workspace'});}
   function frameRows(groupId,list){const selected=frameProjection.selection;if(selected&&selected.groupId===groupId&&selected.list===list)return selected;return groupId===null?frameProjection.entries[list]:frameProjection.groups.items.find(g=>g.id===groupId)?.lists[list];}
-  function moreFrame(page,groupId,list){requestFrame({...(groupId===null?{}:{groupId}),list,rowOffset:page.limit<200?page.offset:page.offset+page.limit,rowLimit:page.limit<200?Math.min(200,page.limit+12):200});}
+  // A successful byte-limited response establishes only a presentation cap.
+  // Keep one context-bound cap in RAM; it conveys no inventory or authority.
+  function rowPagingKey(dto,groupId,list){return JSON.stringify([dto.scope,dto.viewSession,dto.segment,groupId,list]);}
+  function frameIsPaged(page,groupId,list){return page.limit>=Math.min(200,frameRowPaging?.key===rowPagingKey(frameProjection,groupId,list)?frameRowPaging.limit:200);}
+  function moreFrame(page,groupId,list){const paged=frameIsPaged(page,groupId,list);requestFrame({...(groupId===null?{}:{groupId}),list,rowOffset:paged?page.offset+page.items.length:page.offset,rowLimit:paged?page.limit:Math.min(200,page.limit+12)});}
+
   function frameMembers(group,parent,side){
     const key=(side?'side:':'home:')+group.id;
     for(const kind of ['current','old','unknown']){
@@ -259,7 +265,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         const open=view.oldOpen.has(key),toggle=button('展开旧窗口 '+group.name,()=>{view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();if(view.oldOpen.has(key))requestFrame({groupId:group.id,list:'old',rowOffset:0,rowLimit:5});},'','square old');toggle.innerHTML=chevron;toggle.setAttribute('aria-expanded',String(open));parent.append(toggle);if(!open)continue;list=node(doc,'div',{class:'old-list'});parent.append(list);
       }
       for(const ref of page.items)list.append(row(ref,key));
-      if(page.hasMore)list.append(button(kind==='old'?'显示更多旧窗口 '+group.name:kind==='unknown'?'显示更多待核对窗口':'显示更多近期窗口',()=>moreFrame(page,group.id,kind),page.limit<200?'显示更多':'下一页','more'));
+      if(page.hasMore)list.append(button(kind==='old'?'显示更多旧窗口 '+group.name:kind==='unknown'?'显示更多待核对窗口':'显示更多近期窗口',()=>moreFrame(page,group.id,kind),frameIsPaged(page,group.id,kind)?'下一页':'显示更多','more'));
       if(page.offset>0)list.append(button('返回前页 '+group.name,()=>requestFrame({groupId:group.id,list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more'));
     }
   }
@@ -279,7 +285,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(side){const active=current().inGroup?.(group);if(active&&!parent.querySelector('[data-ref-id="'+active.id+'"]')){const context=node(doc,'div',{class:'current-context'});context.append(row(active,key));parent.append(context);}}
   }
   function appendFreeList(parent,kind,segment,side=false){
-    if(frameProjection){const page=frameRows(null,kind),label=kind==='noProject'?'无项目聊天':'归属待核对',list=node(doc,'section',{class:'free-list '+(side?'':'search'),'data-free-list':kind,'aria-label':label});list.append(node(doc,'h2',{},label));for(const ref of page.items)list.append(row(ref,kind));if(page.total===0)list.append(node(doc,'p',{},frameProjection.entries[kind].inventoryTotal>0?'此区间没有记录；其他区间仍可达。':'暂无已知记录。'));if(page.hasMore)list.append(button('显示更多'+label,()=>moreFrame(page,null,kind),page.limit<200?'显示更多':'下一页','more'));if(page.offset>0)list.append(button('返回前页'+label,()=>requestFrame({list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more'));parent.append(list);return;}
+    if(frameProjection){const page=frameRows(null,kind),label=kind==='noProject'?'无项目聊天':'归属待核对',list=node(doc,'section',{class:'free-list '+(side?'':'search'),'data-free-list':kind,'aria-label':label});list.append(node(doc,'h2',{},label));for(const ref of page.items)list.append(row(ref,kind));if(page.total===0)list.append(node(doc,'p',{},frameProjection.entries[kind].inventoryTotal>0?'此区间没有记录；其他区间仍可达。':'暂无已知记录。'));if(page.hasMore)list.append(button('显示更多'+label,()=>moreFrame(page,null,kind),frameIsPaged(page,null,kind)?'下一页':'显示更多','more'));if(page.offset>0)list.append(button('返回前页'+label,()=>requestFrame({list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more'));parent.append(list);return;}
     const rows=freeListRows(snapshot,kind,segment);if(!rows.length)return;
     const key=(side?'side:':'home:')+kind,cap=view.capacities.get(key)??(side?5:12),label=kind==='noProject'?'无项目聊天':'归属待核对';
     const list=node(doc,'section',{class:'free-list '+(side?'':'search'),'data-free-list':kind,'aria-label':label});list.append(node(doc,'h2',{},label));
@@ -408,7 +414,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function applyUpdate(value,now,timeZone,preparedIndex=null,alreadyPrepared=false){
     if(stopped)return;
     if(snapshot?.scope===value.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[value,now,timeZone,preparedIndex,alreadyPrepared];return;}
-    if(snapshot?.scope!==value.scope)settingsOpen=false;frameProjection=null;projectionRequest++;resetInteraction(true);sidebarDirty=true;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free'&&!alreadyPrepared)value=freeNavigationSnapshot(value);snapshot=value;
+    if(snapshot?.scope!==value.scope)settingsOpen=false;frameProjection=null;frameRowPaging=null;projectionRequest++;resetInteraction(true);sidebarDirty=true;remember();const priorSession=snapshot?.scope===value.scope?snapshot?.viewSession:null;if(value.viewMode==='free'&&!alreadyPrepared)value=freeNavigationSnapshot(value);snapshot=value;
     if(!views.has(value.scope)){
       const initial=initialView(),v=value.view;
       if(v)Object.assign(initial,{segment:v.segment,oldOpen:new Set(v.oldOpen),sidebarOpen:new Set(v.sidebarOpen),capacities:new Map(v.capacities),scroll:v.scroll,sidebarVisible:v.sidebarVisible});
@@ -419,7 +425,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     layout();render();layout();locateAnchor();
   }
   function updateFrameProjection(dto){return applyFrameProjection(dto);}
-  function applyFrameProjection(dto,currentEntry=null){
+  function applyFrameProjection(dto,currentEntry=null,requestContext=null){
+    if(requestContext&&(requestContext.run!==projectionRequest||frameProjection?.scope!==requestContext.scope||JSON.stringify(frameProjection?.viewSession)!==requestContext.session||frameProjection?.segment!==requestContext.segment))return;
     if(currentEntry&&(currentEntry.run!==projectionRequest||frameProjection?.scope!==currentEntry.scope))return;
     if(stopped)return;if(!framed||dto?.protocol!=='vaiwl-free-frame/1'||dto.role!==surface.role||dto.completeSnapshot!==false||typeof dto.scope!=='string'||!dto.navigation||!Number.isSafeInteger(dto.segment)||dto.segment<0)throw Error('invalid-frame-projection');
     const policy=dto.timePolicy;if(policy!==undefined&&(!policy||typeof policy!=='object'||Array.isArray(policy)||Object.keys(policy).sort().join(',')!=='H,mode,revision'||!['fixed','auto'].includes(policy.mode)||![7,14,30,60,90].includes(policy.H)||!Number.isSafeInteger(policy.revision)||policy.revision<0))throw Error('invalid-frame-time-policy');
@@ -435,7 +442,11 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(dto.search!==undefined&&dto.workingSet!==undefined)throw Error('conflicting-frame-lists');
     if(snapshot?.scope===dto.scope&&dto.workingSet&&(!view.worksetOpen||searchQuery!==null||dto.workingSet.offset!==frameWorkingSetOffset))return;
     if(snapshot?.scope===dto.scope&&dto.search&&(searchQuery===null||dto.search.query!==searchQuery||dto.search.projectId!==searchTheme||dto.search.offset!==frameSearchOffset))return;
-    if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame',currentEntry];return;}
+    if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame',currentEntry,requestContext];return;}
+    const selection=dto.selection,key=selection?rowPagingKey(dto,selection.groupId,selection.list):null;
+    if(frameRowPaging?.key!==key)frameRowPaging=null;
+    const query=requestContext?.query;
+    if(selection&&query&&dto.scope===requestContext.scope&&JSON.stringify(dto.viewSession)===requestContext.session&&dto.segment===query.segment&&selection.groupId===(query.groupId??null)&&selection.list===query.list&&selection.offset===(query.rowOffset??0)&&Number.isSafeInteger(query.rowLimit)&&selection.limit<query.rowLimit)frameRowPaging={key,limit:selection.limit};
     const scopeChanged=snapshot?.scope!==dto.scope;const copy=structuredClone(dto);if(scopeChanged||navigationFeedback?.url!==adapter.currentURL())clearNavigationFeedback();resetInteraction(true);sidebarDirty=true;remember();
     if(snapshot?.scope!==copy.scope){horizonPending=null;horizonError=null;detach();searchQuery=null;searchTheme=null;projectionRequest++;}
     if(copy.segment!==0||copy.search||copy.workingSet)clearTimePolicyNotice(false);
@@ -450,7 +461,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function update(value,now,timeZone,preparedIndex=null){if(value?.protocol==='vaiwl-free-frame/1')throw Error('frame-projection-requires-explicit-consumer');return applyUpdate(value,now,timeZone,preparedIndex);}
   function updatePreparedFree(value,now,timeZone,preparedIndex=null){assertPreparedFreeSnapshot(value);return applyUpdate(value,now,timeZone,preparedIndex,true);}
-  function invalidate(reason='binding-invalidated'){advanceNavigationIntent();clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
+  function invalidate(reason='binding-invalidated'){advanceNavigationIntent();clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;frameRowPaging=null;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
   function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);for(const[type,handler]of Object.entries(interactionHandlers))doc.removeEventListener(type,handler,true);win.removeEventListener?.('blur',windowBlur);win.removeEventListener?.('resize',windowResize);if(!framed)restoreFocus();status={state:'STOPPED'};adapter.status(status);}
   function needsNativeProject(projectId){
     if(stopped||!framed||!frameProjection||!view||view.mode!=='workspace'||searchQuery!==null||view.worksetOpen||interacting()||updateTimer!==null||typeof projectId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(projectId)||['__proto__','prototype','constructor'].includes(projectId)||groups.some(group=>group.id===projectId))return false;
