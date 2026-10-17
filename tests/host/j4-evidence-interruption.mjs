@@ -46,7 +46,7 @@ export async function runJ4EvidenceInterruption({a,b,id,server,controller,inspec
   facts.frames=[];for(const f of a.frames().filter(f=>f.url()===`chrome-extension://${id}/workspace.html`)){try{facts.frames.push(await f.evaluate(()=>({scopeKnown:typeof globalThis.j4LastScope==='string',grantPresent:typeof globalThis.j4Grant==='string'})));}catch(e){facts.frames.push({error:e.name});}}
   try{facts.scopeLifecycle=traceWorker?await traceWorker.evaluate(j4ScopeTrace,{mode:'read'}):null;}catch(e){facts.scopeTraceError=e.name;}
   if(readBudgetDiagnostic)await readBudgetDiagnostic(stage);
-  diagnostic(facts);return facts;
+  await diagnostic(facts);return facts;
  }
  const teamPreserved=await assets(team);
  const events=s=>Object.values(s.events),native=async page=>{await page.bringToFront();await page.locator('#model-button').click();await page.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();};

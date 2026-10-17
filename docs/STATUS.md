@@ -33,6 +33,8 @@ J1现场已取回：IDless提升后定位VIEW返回offset32含目标，但其返
 
 真实核验取得最小进展：通过获授权浏览器的现有tab接口读取一个聊天URL/ID及标题，未读取正文或保存凭证。网络元字段观察建立超时，后续原tab绑定返回not found，尚未取得context/request关联；生产context保持未验证。只保存脱敏断言，无原始ID/标题入库。此轮只跑受影响260项及实际65秒替换旅程，未重复全部Node矩阵；新源码完整CI结果另行记录。
 
+J4远端早期失败已区分：4067762 CI39025114564前三步PASS，随后baseline-original-history等待超时；原生正文可见、frames为空、唯一nativeGET未成为认证worker读取、预算不前进/accepts=0，失败发生在scope/producer启动前，不能归因发送证据持久化或peer恢复。已补现有离线时序诊断的request/document/target短hash与queued/prepared/history关联。首次本地23步通过但最终uninstall后快照为空，暴露观察器丢证据；现于原有capture边界await保存，最多16快照、每worker前192事件/history最多8pending，不改生产和旅程断言。修复后同源码23步诊断完成，两个baseline快照各50事件，确证本地history→queued→prepared→complete→receipt；未复现远端失败排序，不关闭J4。源码/包未漂移，6项定向helper检查通过。当前7f40fde CI39025855152已确认Node通过、10k失败，其余job仍待最终结果；原优化没有关闭跨环境关口。
+
 下一阻塞：可靠10k摄取、J1/冷启动时序与合法worker/peer context重新获取及自动待命返回；完整旅程/全部适用81项、100k与p95、真实G/U/PAIA/物理IME/跨端及发布准备仍未达到。已有Pro资产和整理stash保留。
 
 ## 历史本地检查点（2026-10-17，Round386）
