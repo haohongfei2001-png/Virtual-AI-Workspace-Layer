@@ -27,7 +27,7 @@ for(const throwAfterRetire of [false,true])test('first-send consumer retirement'
  const f=fixture({retireAt:'first-consumer',throwAfterRetire});t.after(()=>f.stop());f.emit();assert.equal(f.first.length,1);assert.equal(f.first[0].generation,'old');assert.deepEqual(f.intents,[]);assert.equal(f.listeners.size,0);
 });
 test('first-send callback can replace observer but the current gesture cannot leak into either general consumer',t=>{
- const f=fixture({retireAt:'first-consumer',restart:true});t.after(()=>f.stop());const retained=f.listeners.get('click');f.emit();assert.equal(f.first.length,1);assert.deepEqual(f.intents,[]);assert.equal(f.listeners.size,6);
+ const f=fixture({retireAt:'first-consumer',restart:true});t.after(()=>f.stop());const retained=f.listeners.get('click');f.emit();assert.equal(f.first.length,1);assert.deepEqual(f.intents,[]);assert.deepEqual([...f.listeners.keys()].sort(),['click','keydown','compositionstart','compositionend','focusin','pointerdown','input'].sort());
  retained(f.event());assert.equal(f.first.length,1);assert.deepEqual(f.intents,[]);
  f.emit();assert.deepEqual(f.first.map(item=>item.generation),['old','new']);assert.deepEqual(f.intents.map(item=>item.generation),['new']);
 });

@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round382）
+## 最新本地检查点（2026-10-17，Round383）
+
+接入已聚焦原生编辑器的可信input准备链，沿用既有reading恢复/正文重读和预算；不读取草稿、不生成发送意图。独立三红转绿，最终针对性 **56/56 PASS**、完整 Node **7218/7218 PASS**。实际隔离MV3仅input1、pointer/focus0触发partial→full一次重读，后续原生发送确切观察锚，**2项S子检查PASS**；源码/fixture/runner稳定，独立审查通过。见 [Round383](evidence/round383/README.md)。
+
+未覆盖预填草稿冷启动第一下Enter、完整休眠或物理IME；最终ACK可来自firstSend，不能单独归因sendCandidates。100k与其余81/G/U继续开放，Free仍 **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round382）
 
 实际隔离 headless Chrome MV3 双列表分页子链通过：真实按钮遍历 Project80＋UNKNOWN920＝1000个互斥合法ID，独立原名/目标URL核验，自动缩页后继续至末页，两类返回前页均通过；原document/editor/草稿保持。source/fixture/manifest稳定、清理成功，独立审查完成。见 [Round382](evidence/round382/README.md)。
 

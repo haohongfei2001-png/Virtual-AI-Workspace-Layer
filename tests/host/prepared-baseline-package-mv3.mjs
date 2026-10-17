@@ -11,11 +11,13 @@ import {cleanupIsolatedBrowser,cleanupOwnedResources} from './isolated-browser-c
 import {J2_C} from './fixtures/j2-send.mjs';
 import {j2JourneyProfile} from './j2-journey-profile.mjs';
 import {packageHost} from '../../extension/package.mjs';
+const prepareMode=process.env.FREE_BASELINE_PREPARE_MODE??'pointer';
+if(!['pointer','input'].includes(prepareMode))throw Error('invalid-baseline-prepare-mode');
 const hash=b=>createHash('sha256').update(b).digest('hex'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const runner=new URL(import.meta.url),runnerHash=hash(await readFile(runner));
 const fixturePaths=['tests/host/fixtures/server.mjs','tests/host/fixtures/j2-send.mjs','tests/host/fixtures/native.mjs','tests/host/fixtures/legacy.html','tests/host/fixtures/native.css','tests/host/j2-journey-profile.mjs','tests/host/historical-network-guard.mjs','tests/host/native-visibility-browser.mjs','tests/host/isolated-browser-cleanup.mjs'];
 const fixtureHashes=Object.fromEntries(await Promise.all(fixturePaths.map(async path=>[path,hash(await readFile(path))])));
-const report={requirement:'B2 native preparation baseline recovery',evidence:'S_OFFLINE_PACKAGED_MV3_PARTIAL_BASELINE_SEGMENT',profile:'LEGACY_J2_OFFLINE',realChatGPT:'NOT_RUN',fullJ2:'NOT_ESTABLISHED',release:'NOT_RELEASE_READY',status:'NOT_RUN',workerDebuggerAttached:false,productionTimersModified:false,productionInstrumentation:false,fixtureHashes,limitations:['Offline reconstructed native app only','Authenticated detail responses do not independently identify worker reader ownership; final ACK may come from firstSend','No automatic dormancy, first home-send, transport-error or complete J2 acceptance'],results:[]};
+const report={prepareMode,requirement:'B2 native preparation baseline recovery',evidence:'S_OFFLINE_PACKAGED_MV3_PARTIAL_BASELINE_SEGMENT',profile:'LEGACY_J2_OFFLINE',realChatGPT:'NOT_RUN',fullJ2:'NOT_ESTABLISHED',release:'NOT_RELEASE_READY',status:'NOT_RUN',workerDebuggerAttached:false,productionTimersModified:false,productionInstrumentation:false,fixtureHashes,limitations:['Offline reconstructed native app only','Authenticated detail responses do not independently identify worker reader ownership; final ACK may come from firstSend','No automatic dormancy, first home-send, transport-error or complete J2 acceptance'],results:[]};
 let server,guard,child,socket,profileDir,seq=0,ready=false;const pending=new Map(),events=[],contexts=[];let eventOverflow=false;
 function command(method,params={},sessionId,timeoutMs=6000){
  if(!ready)return Promise.reject(Error('CDP-not-ready'));
@@ -50,9 +52,15 @@ try{
  // This is the production one-second explicit-prepare interval, not a lease,
  // timeout or retry-budget override. No new DOM observation is manufactured.
  await sleep(1100);const before=server.snapshot(),beforeDetails=detailCount();assert(beforeDetails>=1&&beforeDetails<3,'initial partial exhausted per-proof read allowance');
- server.setConversationMetadataPartial(J2_C,false);const recoveryAt=Date.now();await click('#prompt-textarea');
+ server.setConversationMetadataPartial(J2_C,false);const recoveryAt=Date.now();
+ if(prepareMode==='input'){
+  assert(await evaluate(sessionId,"document.activeElement===baselineOriginal.editor"),'editor stays focused before keyboard-only preparation');
+  await evaluate(sessionId,"globalThis.prepareGestures={input:0,pointerdown:0,focusin:0};for(const type of Object.keys(prepareGestures))document.addEventListener(type,event=>{if(event.isTrusted&&event.target===baselineOriginal.editor)prepareGestures[type]++;},{capture:true,passive:true});true");
+  await command('Input.insertText',{text:'OFFLINE_INPUT_PREPARATION'},sessionId);
+ }else await click('#prompt-textarea');
  await poll(()=>server.snapshot().j2DetailResponses.full>before.j2DetailResponses.full,'same-body-explicit-prepare-reread',6000);assert.equal(server.snapshot().j2DetailResponses.full,before.j2DetailResponses.full+1);assert.equal(server.snapshot().j2DetailResponses.partial,before.j2DetailResponses.partial);assert.equal(detailCount(),beforeDetails+1,'one explicit prepare produces one bounded detail read');
  report.afterRecovery=await checkInvariant();const after=server.snapshot();
+ if(prepareMode==='input'){report.prepareGestures=await evaluate(sessionId,'prepareGestures');assert.deepEqual(report.prepareGestures,{input:1,pointerdown:0,focusin:0});assert.equal(after.actions['send-intent']??0,0,'editing is not a send');}
  for(const path of ['/api/auth/session','/backend-api/accounts/check/v4-2023-04-27'])assert.equal(after.requests[path]??0,(before.requests[path]??0)+1,'the fixed metadata reader revalidates session and accounts once');
  report.results.push({name:'unchanged-native-body-explicit-prepare-retries-authenticated-partial',status:'PASS',initialReads:beforeDetails,recoveryReads:detailCount()-beforeDetails,recoveryAt,responsesBefore:before.j2DetailResponses,responsesAfter:after.j2DetailResponses});
  // A native mode button and genuine native submit are the sole send path.

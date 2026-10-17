@@ -36,11 +36,13 @@ export function createNativeSendIntentObserver({document:doc,profile,onIntent,on
   // A native rerender can remove/disable Send before compositionend. End only
   // the tracked editor's composition; this grants no intent or body authority.
   if(event.type==='compositionend'){if(composing&&(composing.target===event.target||editorTarget(composing.editor,event.target)))composing=null;return;}
-  const preparing=event.type==='focusin'||event.type==='pointerdown';
+  const preparing=event.type==='focusin'||event.type==='pointerdown'||event.type==='input';
   const b=boundary(event.type==='compositionstart'||preparing);if(stopped||!b)return;const inEditor=editorTarget(b.editor,event.target);
   if(event.type==='compositionstart'){if(inEditor)composing={editor:b.editor,target:event.target};return;}
   if(composing?.editor===b.editor||event.isComposing===true||event.keyCode===229||event.defaultPrevented||event.shiftKey||event.ctrlKey||event.metaKey||event.altKey)return;
-  if(preparing){if((inEditor||available(b.button)&&(b.button===event.target||b.button.contains(event.target)))&&(event.type!=='pointerdown'||event.button===0)){try{if(!stopped)onPrepare?.();}catch{/* Preparation cannot interfere with native focus or input. */}}return;}
+  // Editing can prepare an already-focused composer, but never grants a send.
+  // Do not read InputEvent.data or the native draft.
+  if(preparing){if((inEditor||event.type!=='input'&&available(b.button)&&(b.button===event.target||b.button.contains(event.target)))&&(event.type!=='pointerdown'||event.button===0)){try{if(!stopped)onPrepare?.();}catch{/* Preparation cannot interfere with native focus or input. */}}return;}
   if(event.type==='keydown'){if(config.enterSends!==true||!inEditor||event.key!=='Enter'||event.repeat)return;}else if(event.type==='click'){if(event.button!==0||!(b.button===event.target||b.button.contains(event.target)))return;}else return;
   const time=now();if(stopped||!Number.isFinite(time))return;const observedAt=new Date(time).toISOString();
   // Enter can activate the same native send button. Consume just its following click;
@@ -59,7 +61,7 @@ export function createNativeSendIntentObserver({document:doc,profile,onIntent,on
   if(stopped)return;
   try{onIntent(Object.freeze({intentId,kind:'send',isComposing:false,observedAt,...(operation?{operation}: {})}));}catch{/* Candidate consumer cannot interfere with the host gesture. */}
  }catch{/* Unsupported or changing native DOM fails closed. */}}
- if(config)for(const type of ['click','keydown','compositionstart','compositionend',...(onPrepare?['focusin','pointerdown']:[])]){doc.addEventListener(type,handle,{capture:true,passive:true});listeners.push(type);}
+ if(config)for(const type of ['click','keydown','compositionstart','compositionend',...(onPrepare?['focusin','pointerdown','input']:[])]){doc.addEventListener(type,handle,{capture:true,passive:true});listeners.push(type);}
  function stop(){if(stopped)return;stopped=true;for(const type of listeners)doc.removeEventListener(type,handle,true);listeners.length=0;composing=null;last=null;}
  return Object.freeze({stop});
 }
