@@ -12,3 +12,14 @@ refreshButton.addEventListener('click',async()=>{if(refreshButton.disabled)retur
 document.querySelector('#composer').before(refreshButton);
 `;
 }
+
+/** Two independent native refresh controls permit overlapping network requests. */
+export function withNativeConcurrentRefresh(source){
+ const refreshed=withNativeCurrentRefresh(source),anchor="document.querySelector('#composer').before(refreshButton);";
+ if(refreshed.split(anchor).length!==2)throw Error('native-concurrent-refresh-source-mismatch');
+ return refreshed.replace(anchor,anchor+`
+const secondRefresh=document.createElement('button');secondRefresh.type='button';secondRefresh.id='native-current-refresh-second';secondRefresh.textContent='Refresh current conversation again';
+secondRefresh.addEventListener('click',async()=>{if(secondRefresh.disabled)return;secondRefresh.disabled=true;try{await loadCurrentMessages(true);secondRefresh.dataset.completed=String(Number(secondRefresh.dataset.completed??0)+1);}finally{secondRefresh.disabled=false;}});
+document.querySelector('#composer').before(secondRefresh);
+`);
+}

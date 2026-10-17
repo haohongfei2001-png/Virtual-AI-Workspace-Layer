@@ -4,6 +4,10 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **旧HTTP失败竞态已有实际MV3正反证据**：63aeab8生产代码不变；专用本地native刷新控件依次发起old/new GET，old挂起、new200建立新reading frame后old503。正常包四步通过，原document/editor/draft/Range、唯一返回及非首位Team scope保留；仅恢复旧fail guard并重编译实际classic worker的指定变异准确在旧503后以new-projection-revoked-by-stale-terminal失败。两次source/fixture hash、[200,200,503]顺序和nativeOrder一致，清理/源码检查通过。只闭HTTP失败窄分支，expiry/网络错误仍仅Node，不认证全部J4。新增CI同输入正反验证，既有runner/timeout/cache/upload不变；23项定向合同与YAML解析通过，既有fixture回归30项通过，未重复完整Node。
+
+- **CI39038713907的新失败现场保留**：63aeab8正式J4前三步通过，随后baseline原历史事件15秒等待失败，尚未到peer；failure-only诊断23步通过仍不抵消正式FAIL。10k在原30秒共享期限耗尽时第一完整audit已运行约3.81秒且未完成；tail rev217/total10001，auditAttempts1、无stableRevision/measurement，失败后root库存10000refs/1P不算通过。下一项检查观察器audit每次逐key cursor扫描整个native_states的成本；任何优化必须仍扫全部键、拒多scope、完整逐ID成员与两次稳定审计，不延长期限或降样本。
+
 - **已修复旧请求尾事件误撤销新C2 receipt**：独立最小复现seed→older/newer同context GET→newer先200，older随后error/redirect/HTTP503或清理过期，会错误撤销新的成功receipt。新增8项反例中4项在原源码RED，4项当前epoch撤权对照通过。修复只保护已安装的新receipt免受旧epoch尾事件影响；没有receipt时仍poison pending。首版单纯epoch判断使既有bootstrap提交顺序反例失败，原FAIL保留，未修改断言；收窄后101项定向与独立审查通过，最终完整Node7392/7392、零skip、73.27秒。原6秒/TTL/历史/冲突/真实认证边界不变；不宣称已解释原CI peer全部失败。同源码隔离Chrome正式J4既有23步全部PASS，sourceChangedDuringRun=false、buildManifestUnchanged=true；结果仍PARTIAL_J4_NOT_ACCEPTED，peer通过新原生导航恢复，自动foreground恢复未证明。10k与完整Free门槛仍OPEN。
 
 - **停止低收益的checkpoint缓存微调**：68bb3e5源码核对后，既有worker CPU栈将一部分hash成本定位到shared current/checkpoint读取，但同事务两次unpack是不同revision/字节，不是重复读。直接复用两条普通LRU仍抖动；仅临时副本测试同容量cold-history策略，保留完整字节/checksum/schema、无生产改动。真实IDB三对AB/BA/AB、每次50+199×50=10k，native/shared最终事实摘要全部一致，中位5262.5→5218.2ms（约0.8%），不采纳。源码完整性检查通过，原失败保留。后续不再把此类缓存微调作为10k主修复，转查64KiB分片逐次提交的固定成本；完整Host/远端10k仍未通过。原始脚本和结果见既有free-delivery证据目录。
