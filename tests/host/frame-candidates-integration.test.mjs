@@ -89,11 +89,11 @@ test('repeated preparing cannot renew the six-second logical location deadline',
  const f=locatingFixture();let tries=0;f.viewReply(async m=>{if(m.locateProjectId){tries++;return {ok:true,state:'preparing',retryAfterMs:50};}return locationReply(m);});await f.start();await f.advance(5900);assert.ok(tries>=2);await f.advance(100);const after=tries;await f.advance(1000);assert.equal(tries,after);assert.equal(f.published.at(-1).groups.offset,0);assert.equal(f.revealed.some(r=>r.rendered&&r.focus),false);f.workspaceEntry();await drain();assert.equal(tries,after);f.client.stop();
 });
 
-for(const changed of [false,true])test('cancelled location retries only after changed complete projection version '+changed,async()=>{
- const f=locatingFixture(),held=deferred();let revision=1,attempts=0;f.viewReply(async m=>{const r=locationReply(m);r.page.revision=revision;if(m.locateProjectId&&++attempts===1)return held.promise;return r;});await f.start();assert.equal(attempts,1);if(changed)revision++;f.emit();await drain();assert.equal(attempts,changed?2:1);assert.equal(f.published.at(-1).groups.offset,changed?24:0);held.resolve(locationReply({query:{segment:0,offset:0,limit:8},locateProjectId:'project-one'}));await drain();assert.equal(attempts,changed?2:1);f.client.stop();
+for(const changed of [false,true])test('hint-cancelled location retries within its original budget even with unchanged projection version '+changed,async()=>{
+ const f=locatingFixture(),held=deferred();let revision=1,attempts=0;f.viewReply(async m=>{const r=locationReply(m);r.page.revision=revision;if(m.locateProjectId&&++attempts===1)return held.promise;return r;});await f.start();assert.equal(attempts,1);if(changed)revision++;f.emit();await drain();assert.equal(attempts,2);assert.equal(f.published.at(-1).groups.offset,24);held.resolve(locationReply({query:{segment:0,offset:0,limit:8},locateProjectId:'project-one'}));await drain();assert.equal(attempts,2);f.client.stop();
 });
-test('changed versions cannot exceed three location attempts for one migration',async()=>{
- const f=locatingFixture(),held=[];let revision=1;f.viewReply(async m=>{const r=locationReply(m);r.page.revision=revision;if(m.locateProjectId){const d=deferred();held.push(d);return d.promise;}return r;});await f.start();assert.equal(held.length,1);for(let i=0;i<5;i++){revision++;f.emit();await drain();assert.equal(held.length,Math.min(3,i+2));}assert.equal(f.published.at(-1).groups.offset,0);f.client.stop();for(const h of held)h.resolve({ok:false});await drain();
+for(const changed of [false,true])test('hint cancellations cannot exceed three location attempts '+changed,async()=>{
+ const f=locatingFixture(),held=[];let revision=1;f.viewReply(async m=>{const r=locationReply(m);r.page.revision=revision;if(m.locateProjectId){const d=deferred();held.push(d);return d.promise;}return r;});await f.start();assert.equal(held.length,1);for(let i=0;i<5;i++){if(changed)revision++;f.emit();await drain();assert.equal(held.length,Math.min(3,i+2));}assert.equal(f.published.at(-1).groups.offset,0);f.client.stop();for(const h of held)h.resolve({ok:false});await drain();
 });
 test('current-entry calibration completes before ready missing Project location can start',async()=>{
  const f=locatingFixture(),held=deferred();let calibrated=false;f.currentEntryReply(()=>held.promise);f.viewReply(async m=>{if(m.locateProjectId)assert.equal(calibrated,true,'location may not compete with current-entry');const r=locationReply(m);if(calibrated)r.page.viewSession={...locationSession,T:locationSession.T+1};return r;});await f.start(false);f.workspaceEntry();await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_UI_CURRENT_ENTRY').length,1);assert.equal(f.calls.some(m=>m.locateProjectId),false);calibrated=true;held.resolve({ok:true,segment:0,workspaceRevision:0,viewSession:{...locationSession,T:locationSession.T+1}});await drain();assert.equal(f.calls.filter(m=>m.locateProjectId).length,1);assert.equal(f.published.at(-1).groups.offset,24);assert.equal(f.published.at(-1).viewSession.T,locationSession.T+1);f.client.stop();
@@ -139,4 +139,25 @@ test('migration tombstone capacity never blocks explicit native candidate activa
  const f=fixture();let actionId=null;f.activate(async m=>{actionId=m.actionId;return {ok:true,state:'dispatched'};});await f.start();
  for(let i=0;i<34;i++){await f.buttons()[0].handlers.click({isTrusted:true});assert.equal(f.calls.filter(m=>m.type==='HOST_UI_ACTIVATE_CANDIDATE').length,i+1);f.list(async()=>({ok:true,items:[f.item('one')],migration:migration({id:actionId,ready:true,focusAllowed:true})}));f.emit();await drain();}
  assert.equal(f.revealed.length,32);f.client.stop();
+});
+
+for(const changed of [false,true])test('hint-cancelled location keeps its first six-second deadline '+changed,async()=>{
+ const f=locatingFixture(),held=[];let revision=1;
+ f.viewReply(async m=>{const r=locationReply(m);r.page.revision=revision;if(m.locateProjectId){const d=deferred();held.push(d);return d.promise;}return r;});
+ await f.start();assert.equal(held.length,1);f.jump(5900);if(changed)revision++;f.emit();await drain();assert.equal(held.length,2);
+ f.jump(101);held[1].resolve(locationReply({query:{segment:0,offset:0,limit:8},locateProjectId:'project-one'}));await drain();
+ assert.equal(f.published.at(-1).groups.offset,0);assert.equal(f.revealed.some(r=>r.rendered&&r.focus),false);
+ if(changed)revision++;f.emit();await drain();assert.equal(held.length,2);f.client.stop();held[0].resolve({ok:false});await drain();
+});
+
+for(const returnToOld of [false,true])test('new query revokes hint-cancelled migration retry even after returning '+returnToOld,async()=>{
+ const f=locatingFixture(),locate=deferred(),hint=deferred();let holding=false,attempts=0,oldRequest;
+ f.viewReply(async m=>{if(m.locateProjectId){attempts++;oldRequest=m;return locate.promise;}if(holding)return hint.promise;return locationReply(m);});
+ await f.start();assert.equal(attempts,1);holding=true;f.emit();await drain();holding=false;
+ await f.nav.onProjectionRequest({segment:1,offset:0,limit:8});await drain();
+ if(returnToOld){await f.nav.onProjectionRequest({segment:0,offset:0,limit:8});await drain();}
+ assert.equal(attempts,1,'new user query must consume the old retry permission');
+ f.emit();await drain();assert.equal(attempts,1);
+ locate.resolve(locationReply(oldRequest));hint.resolve(locationReply({query:{segment:0,offset:0,limit:8}}));await drain();
+ assert.equal(f.published.at(-1).segment,returnToOld?0:1);assert.equal(f.published.at(-1).groups.offset,0);assert.equal(f.revealed.some(r=>r.rendered&&r.focus),false);f.client.stop();
 });

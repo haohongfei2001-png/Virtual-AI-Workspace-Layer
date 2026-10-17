@@ -64,9 +64,14 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   if(migration.apply()===true)return;
   const id=candidateMigrationId,projectId=candidateMigrationProject;
   if(!id||!projectId||!migration.isPending(id)||activeRead||horizonPending||query.search||query.workingSet||!viewSession||navigation?.needsNativeProject?.(projectId)!==true)return;
-  const prior=locatedMigrations.get(id);if(prior?prior.count>=3||!prior.retry||prior.version===projectionVersion:locatedMigrations.size>=32)return;
-  locatedMigrations.set(id,{count:(prior?.count??0)+1,version:projectionVersion,retry:false});
-  const attempt={id,projectId,started:elapsedNow(),cancelled:false,scope:projectionScope,query:JSON.stringify(query),session:JSON.stringify(viewSession),renderer:navigation,grantId:grant?.id,mountId:grant?.mountId,scopeGrantId:grant?.scopeGrantId};
+  const prior=locatedMigrations.get(id);if(prior?prior.count>=3||!prior.retry:locatedMigrations.size>=32)return;
+  // A data hint can cancel a valid location without changing the projection.
+  // Retry only that recorded cancellation, within the FIRST attempt's deadline;
+  // neither an unchanged version nor a fresh hint may renew its budget.
+  const started=prior?.started??elapsedNow(),elapsed=elapsedNow()-started;
+  if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=6000)return;
+  locatedMigrations.set(id,{count:(prior?.count??0)+1,version:projectionVersion,retry:false,started});
+  const attempt={id,projectId,started,cancelled:false,scope:projectionScope,query:JSON.stringify(query),session:JSON.stringify(viewSession),renderer:navigation,grantId:grant?.id,mountId:grant?.mountId,scopeGrantId:grant?.scopeGrantId};
   void read(query,true,attempt);
  }
  function locationCurrent(attempt){const elapsed=elapsedNow()-attempt.started;return !attempt.cancelled&&Number.isFinite(elapsed)&&elapsed>=0&&elapsed<6000&&workspaceEntered&&!closed&&!backup&&!recovery&&!snippets&&!horizonPending&&navigation===attempt.renderer&&grant?.id===attempt.grantId&&grant?.mountId===attempt.mountId&&grant?.scopeGrantId===attempt.scopeGrantId&&grantCurrent()&&Date.parse(grant.expiresAt)>now()&&candidateMigrationId===attempt.id&&candidateMigrationProject===attempt.projectId&&migration.isPending(attempt.id)&&JSON.stringify(query)===attempt.query&&JSON.stringify(viewSession)===attempt.session&&!query.search&&!query.workingSet;}
@@ -149,7 +154,14 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   if(readTerminal||recovery||backup||location&&!locationCurrent(location))return null;
   // A ready VIEW replaces this role's issued native plans. Do not replace them
   // between the two native authorizations; keep only the latest requested read.
-  const requested=boundedQuery(value);if(dispatchPending){
+  const requested=boundedQuery(value);
+  // New view intent permanently consumes any cancelled migration's retry,
+  // including while transport is queued behind a native dispatch.
+  if(!location&&JSON.stringify(query)!==JSON.stringify(requested)){
+   for(const record of locatedMigrations.values())record.retry=false;
+   if(activeLocation)activeLocation.cancelled=true;
+  }
+  if(dispatchPending){
    // Coalesce transport only. A different query is a new user intent now,
    // so its predecessor's late acknowledgement cannot restore the old view.
    if(JSON.stringify(query)!==JSON.stringify(requested))dispatchEpoch++;

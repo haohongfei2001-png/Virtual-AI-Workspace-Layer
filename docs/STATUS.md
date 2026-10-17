@@ -25,7 +25,7 @@
 
 已关闭异步checkpoint撤权漏回滚：native-index-writer把check失败与旧checkpoint损坏共用catch导致已有写入可提交，末尾才报stale-after-commit。现将guard失败交给事务fail，坏checkpoint仅跳过GC。普通guard（无AbortSignal）精确回调窗口先红后绿；相关62项通过、真实隔离headless IndexedDB六表完整回滚与CAS/恢复/Pro资产/5001行反例10项通过，冻结完整Node7282/7282通过（153.54s，concurrency=2）。此修复不等于worker自动scope恢复或10k完成。
 
-J1现场已取回：IDless提升后定位VIEW返回offset32含目标，但其返回前普通offset0 VIEW已发起，目标页被丢弃；后续未再次定位。只有前三步PASS。正在复现同版本失效提示取消定位后被retry条件永久阻断的窗口，尚未宣布修复。
+J1现场已取回：IDless提升后定位VIEW返回offset32含目标，但其返回前普通offset0 VIEW已发起，目标页被丢弃；后续未再次定位，原CI只有前三步PASS。根因是失效提示取消定位后，同projectionVersion禁止重试。现只允许已记录取消的重试，共享首次6秒与3次总上限；新query立即撤销旧retry（包含dispatch排队），返回旧query也不复活。相同/变化版本、期限及新query组合均先红后绿，214项定向通过；最终源码隔离headless MV3 J1现有9步PASS，源码/fixture未变，仍PARTIAL_J1_NOT_ACCEPTED，不认证其他profile/81项/G/U。最终同源码完整Node7287/7287通过、0skip、93.18秒。前一候选7285项55.02秒记录保留；两者源码/机器负载不同，不作为优化速度比。214项定向163ms用于开发反馈，稳定候选才执行完整回归。
 
 下一阻塞：可靠10k摄取、J1/冷启动时序与合法worker/peer context重新获取及自动待命返回；完整旅程/全部适用81项、100k与p95、真实G/U/PAIA/物理IME/跨端及发布准备仍未达到。已有Pro资产和整理stash保留。
 
