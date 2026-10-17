@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round379）
+## 最新本地检查点（2026-10-17，Round380）
+
+修复确切owned mask切换导致有限目录游标从头扫描：一次标记只保留结构未变的遍历位置，成员证据仍实时核验。L真实owner/repository/Free client验证603持久refs、255PROJECT/348UNKNOWN、同库重开及自动缩页完整可达；独立审查通过，完整Node **7202/7202 PASS**。见 [Round380](evidence/round380/README.md)。
+
+原100k gate仍 **FAIL**：4151refs、255PROJECT、3896UNKNOWN、95849missing，性能样本未建立；源码/fixture稳定。未声称性能提升、D/S持久分页认证或完整Free交付，仍 **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round379）
 
 未插桩生产包隔离 headless MV3 的 partial metadata→同正文原生准备重读→真实发送持久锚，单次 **2 项 S 子检查 PASS**。仅禁用临时包 prepare 重读的反向变异在发送前明确 FAIL（partial1/full0、无发送）；正反源码/fixture/hash稳定，独立审查通过。最终完整 Node **7186/7186 PASS**。见 [Round379](evidence/round379/README.md)。
 

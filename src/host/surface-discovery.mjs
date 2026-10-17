@@ -59,7 +59,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     // ingestion and every actual handle lookup retain the full live checks.
     if(!cursor)for(const [id,entry] of byId.entries()) if((!candidateOnly||entry.regionKind==='projects')&&!valid(entry)) { byId.delete(id);const node=entry.node.deref();if(node)byNode.delete(node);detached.add(id); }
     const route=urlPolicy.parse(document.location.href),candidates=[],claims=new Map();
-    let currentConversationId=null,currentProjectId=null;
+    let currentConversationId=null,currentProjectId=null,contextNodes=[],contextValue=null;
     const visible=node=>{
       if(!node?.isConnected||!node.getClientRects().length)return false;
       for(let parent=node;parent;parent=parent.parentElement){const style=document.defaultView.getComputedStyle(parent);if(parent.hidden||parent.getAttribute('aria-hidden')==='true'||style.display==='none'||style.visibility==='hidden'&&isOwnedMask(parent)!==true||style.visibility==='collapse')return false;}
@@ -79,6 +79,9 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const oneVisible=selector=>{const nodes=selector?[...document.querySelectorAll(selector)].filter(visible):[];return nodes.length===1?nodes[0]:null;};
     if(!candidateOnly&&route.kind==='conversation'&&profile.currentConversationIdAttribute){
       const reading=oneVisible(profile.currentConversationReading),heading=oneVisible(profile.currentConversationHeader);
+      const rawReading=unique(profile.currentConversationReading),rawHeading=unique(profile.currentConversationHeader);
+      contextNodes=[rawReading,rawHeading,rawReading?.parentElement,rawHeading?.parentElement,rawHeading?.parentElement?.parentElement];
+      contextValue=JSON.stringify([rawReading?.getAttribute(profile.currentConversationIdAttribute),rawHeading?.textContent]);
       // URL alone cannot bind an old reading surface during an SPA transition.
       // This profile requires a native-rendered current-object association.
       if(reading&&heading&&heading.parentElement?.parentElement===reading.parentElement&&reading.getAttribute(profile.currentConversationIdAttribute)===route.conversationId){
@@ -106,6 +109,8 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const members=roots.get('members');
     if(!candidateOnly&&route.kind==='project'&&members&&members.getAttribute(profile.memberProjectIdAttribute)===route.projectId&&profile.currentProjectTitle&&profile.currentProjectHeader){
       const heading=unique(profile.currentProjectTitle),header=unique(profile.currentProjectHeader);
+      contextNodes=[members,members.parentNode,heading,heading?.parentNode,header,header?.parentNode];
+      contextValue=JSON.stringify([members.getAttribute(profile.memberProjectIdAttribute),heading?.textContent,header?.textContent]);
       if(heading&&header&&visible(heading)&&visible(header)&&visible(members)&&heading.parentNode===members.parentNode&&heading.textContent.trim()===header.textContent.trim()){
         // The confirmed current title wins over a sidebar label that may lag a rename.
         currentProjectId=route.projectId;
@@ -117,8 +122,15 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     let page=cursor&&pages.get(cursor);
     if(cursor){
       pages.delete(cursor);
-      if(!page||page.candidateOnly!==candidateOnly||page.routeEpoch!==routeEpoch||page.regionEpoch!==regionEpoch||page.currentProjectId!==currentProjectId||page.currentConversationId!==currentConversationId)throw Error('stale-surface-cursor');
-    }else page={candidateOnly,routeEpoch,regionEpoch,currentProjectId,currentConversationId,memberIds:new Set(),region:0,regions:order.map(kind=>({kind,root:roots.get(kind),walker:null,finished:false}))};
+      if(!page||page.candidateOnly!==candidateOnly||page.routeEpoch!==routeEpoch||page.regionEpoch!==regionEpoch)throw Error('stale-surface-cursor');
+      const changed=page.currentProjectId!==currentProjectId||page.currentConversationId!==currentConversationId;
+      if(page.presentationChange){
+        // This witness preserves traversal only. Every claim below still checks
+        // current visibility; old Project/body identity never supplies authority.
+        if(page.contextValue!==contextValue||page.contextNodes.length!==contextNodes.length||page.contextNodes.some((node,i)=>node!==contextNodes[i]))throw Error('stale-surface-cursor');
+      }else if(changed)throw Error('stale-surface-cursor');
+      page.presentationChange=false;page.currentProjectId=currentProjectId;page.currentConversationId=currentConversationId;
+    }else page={candidateOnly,routeEpoch,regionEpoch,currentProjectId,currentConversationId,contextNodes,contextValue,presentationChange:false,memberIds:new Set(),region:0,regions:order.map(kind=>({kind,root:roots.get(kind),walker:null,finished:false}))};
     // Walk loaded DOM lazily: never allocate a whole-region NodeList. Each page
     // bounds inspected elements, including non-controls, and rechecks identity.
     if(cursor&&candidates.length>=limit){candidates.length=0;claims.clear();}
@@ -173,6 +185,10 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     // A visible DOM slice is not an account-wide or terminal snapshot.
     let next=null;if(page.region<page.regions.length||detached.size){next=Object.freeze(Object.create(null));pages.set(next,page);}
     return {payload:{candidates,membershipClaims:[...claims.values()],coverageClaims:[],detachedHandles},cursor:next};
+  }
+  function preservePresentationCursor(cursor){
+    const page=cursor&&pages.get(cursor);if(stopped||!page||page.candidateOnly||page.routeEpoch!==routeEpoch||page.regionEpoch!==regionEpoch||document.location.href!==routeURL)return false;
+    page.presentationChange=true;return true;
   }
   const scanPage=cursor=>scanPageCore(cursor,false);
   const scanCandidatePage=cursor=>scanPageCore(cursor,true);
@@ -263,7 +279,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const entry=candidateEntry(handle);if(!entry)return false;
     return identity.document.deref()===document&&identity.profileId===profile.id&&identity.profileVersion===profile.revision&&identity.node.deref()===entry.node.deref()&&identity.root.deref()===entry.root.deref()&&identity.parent.deref()===entry.parent.deref()&&identity.fingerprint===entry.fingerprint;
   }
-  return Object.freeze({scan,scanPage,scanCandidatePage,affectsSurface,getNode,resolveLoadedTargets,retainHandles(owner,handles,deadline){if(stopped||!Array.isArray(handles)||handles.length>256||handles.some(handle=>!getNode(handle)))return false;return byId.retain(owner,handles.map(handle=>handle.id),deadline);},releaseHandles:owner=>byId.release(owner),handleStats:()=>({...byId.stats(),detached:detached.size,lookupComplete}),captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
+  return Object.freeze({scan,scanPage,scanCandidatePage,preservePresentationCursor,affectsSurface,getNode,resolveLoadedTargets,retainHandles(owner,handles,deadline){if(stopped||!Array.isArray(handles)||handles.length>256||handles.some(handle=>!getNode(handle)))return false;return byId.retain(owner,handles.map(handle=>handle.id),deadline);},releaseHandles:owner=>byId.release(owner),handleStats:()=>({...byId.stats(),detached:detached.size,lookupComplete}),captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
     if(stopped)return;routeEpoch=Number.isSafeInteger(nextEpoch)&&nextEpoch>routeEpoch?nextEpoch:routeEpoch+1;clearHandles();roots.clear();routeURL=document.location.href;
   },stop() {stopped=true;clearHandles();roots.clear();}});
 }

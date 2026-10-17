@@ -172,6 +172,7 @@ if(!p)return;}catch(error){
   // Only an exact live mount node may preserve the finite directory cursor.
   // Recheck body visibility and invalidate external reads even for our masks.
   let owned=false;try{owned=!!event?.target&&isOwnedSurface(event.target)===true;}catch{}
+  if(owned&&surfaceEpoch===surfaceSnapshotEpoch&&surfaceCursor)discovery?.preservePresentationCursor(surfaceCursor);
   requestScan(owned);
  }
  function mutations(records){
