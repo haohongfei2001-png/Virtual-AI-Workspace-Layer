@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round361）
+## 最新本地检查点（2026-10-17，Round362）
+
+新增完整性受限的原挂载rebind和controller resumeDormant：原frame保留、旧handle失效，新producer同文档、6秒注册、await后完整性复核，再走新双授权；失败不显示旧投影。独立测试及审查发现的native属性/await窗口/slot缺口已修复。完整Node **6998/6998 PASS**；末尾slot guard后最终相关 **512/512 PASS**，不冒充另一次全套。见 [Round362](evidence/round362/README.md)。
+
+仍待content自动调用、新scope校验及休眠首个发送因果闭环。无新浏览器结果；UI-11及完整Free继续NOT_RELEASE_READY。
+
+## 前一本地检查点（2026-10-17，Round361）
 
 frame清空后的精确一次性wake入口接入原start：新nonce/连接/JOIN，新grant前保持空私有根和无权限。stop/exit/重启撤销旧入口，重复wake不重复启动。独立8项与审查通过，最终 **428/428 Node PASS**；实际headless跨源双frame连续 **5项PASS / WEB_MECHANISM_ONLY**。见 [Round361](evidence/round361/README.md)。
 

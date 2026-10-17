@@ -57,3 +57,42 @@ for(const kind of ['route','frame'])test('a confirmed dormant pair becomes inval
  for(const role of ['workspace','sidebar'])f.message(role,'VAIWL_UI_IDLE_ACK',{requestId});assert.equal(f.controller.dormantReady(),true);
  if(kind==='route')f.doc.location.href+='c/changed';else f.frames[0].frame.contentWindow={};assert.equal(f.controller.dormantReady(),false);f.controller.stop();
 });
+
+async function dormantForResume(){
+ const f=fixture();await f.ready();f.controller.enterDormant();const requestId=f.calls.messages.find(x=>x.data.type==='VAIWL_UI_IDLE').data.requestId;
+ for(const role of ['workspace','sidebar'])f.message(role,'VAIWL_UI_IDLE_ACK',{requestId});
+ f.adapter.start=async options=>({binding:options.binding});let rebinds=0;
+ f.surface.rebind=(handle,context,inspection)=>{rebinds++;assert.equal(inspection.navigationSlot,f.slot);return Object.freeze({...handle,documentToken:context.binding.documentToken});};
+ f.fresh={documentToken:'fresh-doc',producerToken:'fresh-producer',browserDocumentId:'parent',routeEpoch:1,origin:'https://chatgpt.com',expiresAt:new Date(21000).toISOString()};
+ f.surface.isRebindCurrent=()=>true;f.rebinds=()=>rebinds;return f;
+}
+test('dormant resume registers fresh binding on original frames before starting new joins',async()=>{
+ const f=await dormantForResume(),original=f.frames.map(x=>x.frame),shown=f.calls.shown;let register;
+ f.bridge.registerMount=()=>new Promise(r=>register=r);const pending=f.controller.resumeDormant({binding:f.fresh});await flush();
+ assert.equal(f.rebinds(),1);assert.equal(f.calls.messages.filter(x=>x.data.type==='VAIWL_UI_WAKE').length,0);assert.equal(f.controller.showWorkspace(),false);
+ assert.equal(await f.controller.resumeDormant({binding:f.fresh}),null);register({ok:true});const handle=await pending;assert.equal(handle.documentToken,'fresh-doc');assert.equal(f.controller.showWorkspace(),false);
+ const wake=f.calls.messages.filter(x=>x.data.type==='VAIWL_UI_WAKE');assert.equal(wake.length,2);assert(wake.every(x=>x.data.requestId===f.calls.messages.find(y=>y.data.type==='VAIWL_UI_IDLE').data.requestId));assert.equal(f.calls.shown,shown);
+ f.message('workspace');await flush();assert.equal(f.controller.showWorkspace(),false);f.message('sidebar');await flush();assert.equal(f.controller.showWorkspace(),true);assert.deepEqual(f.frames.map(x=>x.frame),original);assert.equal(f.calls.disposed,0);f.controller.stop();
+});
+for(const bad of ['producerToken','browserDocumentId','origin','expiresAt'])test('resume rejects invalid fresh '+bad+' without waking frames',async()=>{
+ const f=await dormantForResume(),values={producerToken:'producer',browserDocumentId:'other',origin:'https://other.test',expiresAt:new Date(0).toISOString()};
+ assert.equal(await f.controller.resumeDormant({binding:{...f.fresh,[bad]:values[bad]}}),null);assert.equal(f.calls.messages.filter(x=>x.data.type==='VAIWL_UI_WAKE').length,0);assert.equal(f.calls.disposed,1);
+});
+for(const reason of ['route','frame','stop','registration-denied'])test('pending resume rejects '+reason+' and never sends wake',async()=>{
+ const f=await dormantForResume();let resolve;f.bridge.registerMount=()=>new Promise(r=>resolve=r);const pending=f.controller.resumeDormant({binding:f.fresh});await flush();
+ if(reason==='route')f.doc.location.href+='c/change';if(reason==='frame')f.frames[0].frame.contentWindow={};if(reason==='stop')f.controller.stop();resolve({ok:reason!=='registration-denied'});
+ assert.equal(await pending,null);assert.equal(f.calls.messages.filter(x=>x.data.type==='VAIWL_UI_WAKE').length,0);assert.equal(f.calls.disposed,1);
+});
+test('resume registration retains original six second deadline',async()=>{
+ const f=await dormantForResume();let resolve;f.bridge.registerMount=()=>new Promise(r=>resolve=r);const pending=f.controller.resumeDormant({binding:f.fresh});await flush();f.advance(6000);assert.equal(await pending,null);
+ resolve({ok:true});await flush();assert.equal(f.calls.messages.filter(x=>x.data.type==='VAIWL_UI_WAKE').length,0);assert.equal(f.calls.disposed,1);
+});
+
+test('resume revalidates closed surface integrity after asynchronous registration',async()=>{
+ const f=await dormantForResume();let resolve,intact=true,checks=0;f.surface.isRebindCurrent=()=>{checks++;return intact;};f.bridge.registerMount=()=>new Promise(r=>resolve=r);
+ const pending=f.controller.resumeDormant({binding:f.fresh});await flush();intact=false;resolve({ok:true});assert.equal(await pending,null);assert.equal(checks,1);assert.equal(f.calls.messages.filter(x=>x.data.type==='VAIWL_UI_WAKE').length,0);assert.equal(f.calls.disposed,1);
+});
+test('resume can keep reading after fresh joins without opening old projection',async()=>{
+ const f=await dormantForResume(),shown=f.calls.shown;assert.ok(await f.controller.resumeDormant({binding:f.fresh},{mode:'reading'}));
+ f.message('workspace');f.message('sidebar');await flush();assert.equal(f.calls.shown,shown);assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.slot.children.length,1);f.controller.stop();
+});

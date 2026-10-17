@@ -78,7 +78,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(state.dormant&&([...slot.children].some(node=>node!==state.button)||[...(slot.childNodes??[])].some(node=>node.nodeType===3&&node.textContent.trim()))){removeReturn(state);return false;}
   if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.textContent='▦';button.addEventListener('click',event=>{if(current!==state||event?.isTrusted!==true)return;if(state.dormant){if(state.waking||doc.location.href!==state.url||adapter.hasNativeLayer())return;state.waking=true;try{Promise.resolve(onWake()).catch(()=>{}).finally(()=>{state.waking=false;});}catch{state.waking=false;}return;}if(!showWorkspace())return;try{Promise.resolve(bridge.workspaceEntered?.({mountId:state.handle.id})).catch(()=>{});}catch{/* Entering the visible workspace never waits for a private notification. */}});slot.append(button);state.button=button;}return true;
  }
- function nativeSurrender(state,event){try{if(current!==state||state.dormant||state.geometryPaused)return;if(state.mode==='waiting'){if(event?.reason==='native-input'){state.pendingNativeInput=true;state.intentEpoch++;}return;}if(event?.reason!=='native-reading'||state.mode!=='reading')state.intentEpoch++;state.mode='reading';if(!authorized(state))return;if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}finally{publishSurface(state);}}
+ function nativeSurrender(state,event){try{if(current===state&&state.resuming&&event?.reason==='native-input')state.pendingNativeInput=true;if(current!==state||state.dormant||state.geometryPaused)return;if(state.mode==='waiting'){if(event?.reason==='native-input'){state.pendingNativeInput=true;state.intentEpoch++;}return;}if(event?.reason!=='native-reading'||state.mode!=='reading')state.intentEpoch++;state.mode='reading';if(!authorized(state))return;if(adapter.hasNativeLayer()){suspend('native-layer');return;}ensureReturn(state);}finally{publishSurface(state);}}
  function hasProtectedFocus(state){
   const roots=[state.inspection.composer,state.inspection.header,...(state.inspection.protectedRegions??[])];
   for(let active=doc.activeElement;active?.isConnected&&active.ownerDocument===doc;active=active.shadowRoot?.activeElement){
@@ -141,7 +141,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    state.grants.set(data.role,Object.freeze({...grant}));publishAppearance(state,data.role);arm(state);if(state.mode==='waiting'&&authorized(state)){
     // Native input can precede listener installation or the second grant. Preserve
     // that intent without exposing a surface or return entry before authorization.
-    if(adapter.hasNativeLayer())suspend('native-layer');else if(state.pendingNativeInput||hasProtectedFocus(state))showNativeReading();else if(initialMode==='reading')showReading();else showWorkspace();
+    if(adapter.hasNativeLayer())suspend('native-layer');else if(state.pendingNativeInput||hasProtectedFocus(state))showNativeReading();else if((state.resumeMode??initialMode)==='reading')showReading();else showWorkspace();
    }
   }catch{/* A failed public join never authorizes a surface. */}finally{state.pending.delete(data.role);}
  }
@@ -160,9 +160,31 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   for(const target of state.frames){try{if(typeof target.window.postMessage!=='function')throw Error('idle-frame-unavailable');target.window.postMessage({type:'VAIWL_UI_IDLE',role:target.role,requestId:state.idleRequestId},trustedOrigin);}catch{if(current===state)stop('idle-frame-unavailable');return false;}if(current!==state)return false;}
   ensureReturn(state);return true;
  }
+ // The caller supplies a newly verified binding; existing frames still need
+ // their normal private JOIN/parent confirmation before any surface can open.
+ async function resumeDormant(options,{mode='workspace'}={}){
+  const state=current;if(!['workspace','reading'].includes(mode)||!dormantReady()||state.resuming||typeof surface.rebind!=='function'||typeof surface.isRebindCurrent!=='function')return null;
+  state.resuming=true;state.pendingNativeInput=false;state.intentEpoch++;
+  const previous=state.context.binding,requestId=state.idleRequestId;
+  const intact=()=>current===state&&state.dormant&&state.epoch===epoch&&doc.location.href===state.url&&state.frames.every(({frame,window})=>frame.isConnected&&frame.ownerDocument===doc&&frame.contentWindow===window);
+  try{
+   const context=await adapter.start(options);if(!intact())throw Error('stale-dormant-resume');
+   const binding=context?.binding;
+   if(!binding||binding.browserDocumentId!==previous.browserDocumentId||binding.origin!==previous.origin||binding.producerToken===previous.producerToken||!tokenOK(binding.producerToken)||!tokenOK(binding.documentToken)||!(Date.parse(binding.expiresAt)>now()))throw Error('fresh-binding-required');
+   const inspection=adapter.inspect();if(!inspection?.ok||inspection.navigationSlot!==state.inspection.navigationSlot||!inspection.navigationSlot?.isConnected)throw Error('invalid-return-slot');
+   const handle=surface.rebind(state.handle,context,inspection);
+   state.handle=handle;state.context=context;state.inspection=inspection;
+   const ack=await withRequestDeadline(()=>bridge.registerMount({handle}),{now:elapsedNow,schedule,cancel});
+   if(!intact()||ack?.ok!==true||surface.isRebindCurrent(state.handle,adapter.inspect())!==true)throw Error('mount-registration-denied');
+   state.dormant=false;state.resuming=false;state.registered=true;state.mode='waiting';state.resumeMode=mode;state.surfaceKey=null;state.idleAcks.clear();removeReturn(state);
+   if(!valid(state))throw Error('stale-mount-registration');arm(state);
+   for(const target of state.frames){target.window.postMessage({type:'VAIWL_UI_WAKE',role:target.role,requestId},trustedOrigin);if(current!==state)throw Error('stale-dormant-resume');}
+   return handle;
+  }catch{if(current===state)stop('dormant-resume-failed');return null;}
+ }
  function dormantReady(){
   const state=current;
   return !!state&&state.dormant&&state.epoch===epoch&&doc.location.href===state.url&&state.frames.length===2&&state.frames.every(({frame,window,role})=>state.idleAcks.has(role)&&frame.isConnected&&frame.ownerDocument===doc&&frame.contentWindow===window);
  }
- return Object.freeze({enterDormant,dormantReady,start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,showReading,showNativeReading,focusFrame(role){const state=current;if(!state||state.mode!=='workspace'||!authorized(state)||adapter.hasNativeLayer())return false;const target=state.frames.find(x=>x.role===role);if(!target?.frame?.focus)return false;target.frame.focus({preventScroll:true});let active=doc.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;return active===target.frame;},isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
+ return Object.freeze({enterDormant,dormantReady,resumeDormant,start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,showReading,showNativeReading,focusFrame(role){const state=current;if(!state||state.mode!=='workspace'||!authorized(state)||adapter.hasNativeLayer())return false;const target=state.frames.find(x=>x.role===role);if(!target?.frame?.focus)return false;target.frame.focus({preventScroll:true});let active=doc.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;return active===target.frame;},isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
 }

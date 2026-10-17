@@ -20,8 +20,21 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    return true;
   }catch{surrender(m);return false;}
  };
+ const rebindCurrent=(m,inspection)=>{
+  const handle=m.handle,prior=m.inspection,same=(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.every((node,i)=>node===b[i]);
+  return !!inspection?.ok&&inspection.viewMask==='declarative-css'&&inspection.regionEpoch===handle.regionEpoch&&inspection.navigationSlot===prior.navigationSlot&&['reading','header','composer'].every(key=>inspection[key]===prior[key])&&same(inspection.historyMaskRoots,prior.historyMaskRoots)&&same(inspection.protectedRegions,prior.protectedRegions)&&m.surfaces.length===2&&m.style.isConnected&&m.style.ownerDocument===doc&&m.style.dataset.vaOwned===handle.id&&m.style.textContent===m.styleText&&m.surfaces.every(({node,frame})=>node.isConnected&&node.ownerDocument===doc&&node.dataset.vaOwned===handle.id&&!node.matches(':popover-open')&&frame.isConnected&&frame.ownerDocument===doc&&frame.parentElement===node)&&[inspection.navigationSlot,inspection.reading,inspection.header,inspection.composer,...inspection.historyMaskRoots,...inspection.protectedRegions].every(node=>node?.isConnected&&node.ownerDocument===doc)&&m.markers.every(({root,attr,nativeClass,nativeStyle,nativeHidden,nativeAriaHidden})=>root.getAttribute(attr)===handle.id&&root.getAttribute('class')===nativeClass&&root.getAttribute('style')===nativeStyle&&root.getAttribute('hidden')===nativeHidden&&root.getAttribute('aria-hidden')===nativeAriaHidden);
+ };
  return {
   refreshGeometry(handle,inspection){return refreshGeometry(lookup(handle),inspection);},
+  isRebindCurrent(handle,inspection){try{return rebindCurrent(lookup(handle),inspection);}catch{return false;}},
+  // Reuse only a fully closed, intact local surface. This replaces no authority;
+  // its owner must register the returned handle under a fresh binding and rejoin.
+  rebind(handle,context,inspection){
+   const m=lookup(handle),token=context?.binding?.documentToken;
+   if(typeof token!=='string'||!token||token.length>128||!/^[A-Za-z0-9_-]+$/.test(token)||!rebindCurrent(m,inspection))throw Error('invalid-mount-rebind');
+   if(!refreshGeometry(m,inspection))throw Error('invalid-mount-rebind');
+   const next=Object.freeze({id:handle.id,documentToken:token,regionEpoch:inspection.regionEpoch});m.handle=next;return next;
+  },
   async mount(context,inspection,{onSurrender=()=>{}}={}){
    const win=doc.defaultView;if(!win.CSS?.supports('interactivity','inert')||!win.HTMLElement.prototype.showPopover)throw Error('unsupported-mount-surface');
    if(!inspection?.ok||inspection.viewMask!=='declarative-css'||!context?.binding?.documentToken)throw Error('invalid-mount-inspection');
