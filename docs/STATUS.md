@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **10k观察器干扰已做同源码对照**：9ae11b3生产源码，隔离真实IDB三轮AB/BA/AB、50预置＋199×50长UUID/标题提交，最终全部10000 native/shared事实hash一致。无观察器中位4950.3ms，原策略每次新连接/新repository完整tail读取为5102.6ms（约3.1%开销；每轮44–46次读取）；事务耗时包含排队，不能全算独占阻塞。该有限模型不含首次scope发现或完整Host调度，仅MEASURED_NOT_HOST_ACCEPTANCE，未证明远端开销上界。证据不支持降低原观察频率或省略检查，故保留观察器、30秒期限及双完整审计；跨环境10k仍OPEN，下一步继续定位生产提交链。 同生产源码随后10秒worker采样记录sha256约1816ms、GC1356ms、stable886ms、strictJSON711ms；调用栈仍含旧native root在reader重复完整编码，尚待最小计数归因。此诊断完成10000成员双审计rev213、余15.81秒，源码/fixture/manifest不变；runner按设计拒绝输出性能验收并退出1，不能当正式旅程或p95通过。
+
 - **4e73643冻结CI最终结果**：CI39033411366整体FAIL；Node、导航与J4通过原有partial门槛。J4实际23步、源码/manifest未变，但原peer偶发失败与自动foreground恢复未关闭。10k原期限仅6850 refs/revision150，最后tail6796/rev149、auditAttempts=0；仍是摄取未完成，不能称完整审计通过，14%提交链改善未关闭跨环境关口。
 - **peer生命周期证据保存修正**：旧trace最终才读取worker，正常uninstall后无记录，无法解释peer hop。现在仅在已有await的成功/失败hop判定之后采集，正式模式无新增worker读取，暂停事务和自然导航前不采集；无worker明确unavailable，原1500ms/容量/旅程时限保留。11项定向通过；同生产源码本地隔离trace23步完成、源码/fixture包稳定，两个peer hop快照37/45事件明确history→queued/prepared→complete→receipt。最终卸载后unavailable如实记录；仍DIAGNOSTIC_ONLY，没有复现旧失败排序，不能宣称race修复。下一10k定位同时区分观察器readonly事务本身占用和等writer时间：当前133轮tail读取并非133次全库扫描，尚不能将其全部耗时归因观察器。
 
