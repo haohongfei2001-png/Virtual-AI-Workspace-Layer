@@ -4,6 +4,9 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **dbde527远端矩阵已结束，10k仍阻塞**：CI39041506627的Node、offline-journeys、独立J4成功，durability在正式10k单Project成员样本失败；该job此前启动、IDB反例、联合提交、pending容量、历史资产/Pro兼容和流式窄场景均通过各自既定门槛。四job实测170/246/286/172秒（Node/导航/J4/耐久），不同版本失败位置不可用作受控提速比。尚未取得此次完整失败日志，不推断已摄取数量或审计阶段；不得以job成功替代完整Free验收。
+- **真实宿主只读权限已明确，连接仍阻塞**：用户确认截图Profile，并允许该Profile所有现有Project/Conversation的ID、标题及context元字段核验；无需再索取样本许可。授权Profile的标签元数据读取成功；限定导航DOM的只读调用在12秒工具期限超时并重置连接，未取得账户/context认证证据。未读取正文、凭证或执行原生写入，未开启生产scope。最小外部条件是该已授权Profile的页面读取通道可用；标签可见不等于LIVE_VERIFIED。
+
 - **启动注册等待期间SUSPEND恢复缺口已修复**：真实surface-controller已安装owned-frame listener但仍await registerMount时，合法SUSPEND会同步清frame并onTerminated；content仍ready=false，原gate丢弃一次新授权恢复，旧start返回null后停止整session。真实content的三个正向/隔离反例原RED、EXIT/stop对照PASS，另真实controller四项证明合法两个role可达、foreign origin/window拒绝和late注册不能复活。现在仅已verified scope后的初次controller.start期间设置mountStarting，finally只清旧session；原one-shot、scope拒绝、live、busy、reason白名单保持，dormant wake不设置此标志。94定向、surface56项与独立审查通过；最终完整Node7420/7420、零skip、72.35秒。该窗口独立复现，尚不能归因旧J2远端偶发失败。
 - **当前同源码正式LEGACY J2八步通过**：真实墙钟等待校准到期、worker停止/新running、相同provisional锚恢复、晚到原始时间校准与重开幂等、他人/旧分支拒绝全部完成，原预算/等待保持，sourceChangedDuringRun=false、errors=[]、包verify通过。不是MODERN/J4或完整Free认证。本次只补受影响J2与全Node，不重复无关10k性能样本。
 - **93785df远端最终矩阵**：CI39040626535整体FAIL，Node/导航/J4成功；10k仍在visible-native-member-progress耗尽原期限，lastTail rev175/total7906，库存7905refs/1P、auditAttempts=0。与此前6485不同是单次不同版本现场，不作因果提速；完整摄取跨环境仍OPEN。旧825ba0e的J2到期后stop前仍有双frame/返回入口，stop后SUSPEND清除且无新握手，failureFacts=null不证明锚丢失。一次本地临时termination诊断八步行为走完、flags正常，未复现旧失败；原包hash验证正确拒绝插桩副本，该结果仅DIAGNOSTIC_ONLY，原件保留。未因该未复现结果猜改权限/恢复预算。
