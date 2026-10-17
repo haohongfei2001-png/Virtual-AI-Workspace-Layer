@@ -9,7 +9,7 @@
 - **worker/peer未关闭**：旧观察器可能接受旧frame grant/scope缓存。现要求stop后新grant、其对应VIEW请求及响应、未过期与原doc/editor/draft。实际默认J4完成现有23步，原生导航可重新认证；仅foreground仍发生`J4-peer-current-scope-timeout`，自动恢复 **NOT_ESTABLISHED**。C2 browser receipt在worker内存丢失后必须重新取得合法上下文证据，不持久旧授权或伪造scope。
 - **休眠忙碌返回**：隔离MV3真实第二tab HTTP在途使原worker拒绝release；原producer续租、双新grant、reading及可信返回通过，原frames/editor/draft保持。这是显式close插桩子链，非自动休眠完成。
 - **验证调度**：J4前置→完整J4→诊断已迁入独立CI job，独立runner/profile/output；原内部顺序、同SHA、退出码、门槛均保留，不开cache/upload。旧实际CI耐久job384s，其中J4正式187s、前置56s；同源码439bd34的CI39022694571已结束：J4独立job295s，耐久159s、journeys209s、Node223s；最长job从384s变295s（减少89s），但代码/失败位置不同，不视为纯调度加速比。Node和J4 job通过既定partial门槛；完整矩阵FAIL，10k与cold immediate均失败。旧10k3.712s为提前失败，新完整旅程45.464s（含清理），两者不可作为性能加速比。候选搜索/翻页单样本80.6/181.3/213.0ms。
-- **真实宿主**：用户已授权指定账户的只读session/accounts/context元字段及指定P/C的ID/标题，不含正文/凭证保存或原生写入。用户另确认截图就是授权Profile；此前连接读取超时，本次原标签已失效且可连接浏览器无该首页标签，未取得字段/关联证据；P/C样本尚未指定。生产`chatgpt-context-unverified`保持，C1字段语义/C2正常请求与文档关联/C3默认personal语义均未真实验证。
+- **真实宿主**：用户已授权指定账户的只读session/accounts/context元字段及指定P/C的ID/标题，不含正文/凭证保存或原生写入。用户另确认截图就是授权Profile，并明确所有现有P/C均可选作上述只读样本。此前连接读取超时/首页标签失效；最新浏览器目录恢复返回ChatGPT聊天URL与标题，尚未读取正文、认证字段或请求关联。多个Chrome Profile存在，标签目录本身不认证账户/context；样本权限已不阻塞，仍需完成获授权Profile与生产context关联核验。生产`chatgpt-context-unverified`保持，C1字段语义/C2正常请求与文档关联/C3默认personal语义均未真实验证。
 
 最终冻结完整Node回归通过（7278项、0 skip、39.06秒）。首次回归诊断插桩锚点失配的11项失败保留，精确更新锚点后通过，未放宽功能断言。
 
