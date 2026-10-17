@@ -52,6 +52,8 @@ B1–B5、C1–C5可独立部分及F1已有代码与原范围的合成Chrome/IDB
 
 延续下述同一A–G/Free关口，当前集中关闭完整索引/成员审计与worker/peer scope恢复，按启动→工作空间识别→导航→活动→休眠恢复→返回组织候选。10k须完整ID与成员审计，priority tail仅为进度，不可替代完成；worker恢复须stop后新授权及实际VIEW，不接受frame旧缓存。定向回归稳定后一次冻结矩阵；J4在独立runner/profile/output中保持内部顺序，与其他CI任务并行，不启用缓存/产物上传。真实宿主只在用户指定的只读范围内核验，不打开未经验证的scope开关。实际已关/未关、同源码证据与耗时仅见STATUS，历史失败保留；这些是既有任务的执行校正，不改变验收标准或新建路线。
 
+J4定位必须区分主tab与失败peer的证据归属；独立GET200/旧reason/其他tab ready不能代替该peer新receipt、新grant与VIEW。现有失败后检查选择实际失败目标，保持原旅程和认证边界；当前实测与未闭合窗口见STATUS。
+
 B2.F2取消重发按“浏览器未确认终态→有界认证operation读回→仅已确认failed/cancelled解除旧intent”继续验证；网络ERR_FAILED自身不证明取消，不授权重发或ACK。此loopback重建机制不自动开放生产profile。
 
 当前恢复子关口已加入同一C2 runner的待命拒绝→新原生GET/READY→阅读返回正例及旧stop变异反例；只认证明确故障链，不扩大为自动scope恢复/完整J4。10k跨环境完整摄取仍是未关闭关口，状态及同源码证据继续记录于STATUS。
