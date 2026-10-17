@@ -4,6 +4,11 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **初次无receipt的重复prepare竞态已修复**：A已prepare、B稍后同context/route prepare时，旧实现因receipt为空再次drop，导致A的200无效。独立正例原RED、五项安全对照PASS；现在仅另一个仍在requests中且accepted、同document/current epoch/context/URL/target、未冲突且原六秒有效的pending省略重复drop。原epoch guard先执行，失败poison、history/commit、body/scope认证和期限均不变；不重标旧请求或刷新时钟。27项定向、独立审查通过，最终完整Node7411/7411、零skip、73.91秒。此只闭staggered pending窗口，不宣称解释所有冷启动或simultaneous问题。
+- **最终候选同源码闭环**：实际隔离J4既有23步全部PASS，仍PARTIAL_J4_NOT_ACCEPTED且peer依赖新原生导航；自动foreground恢复未证明。随后同165项生产hash的10k完整双审计revision212，10000确证PROJECT、零UNKNOWN/遗漏/重复/错属，原30秒余17.76秒，原生成员导航/编辑器/唯一返回保持，source/fixture/manifest均未变。摄取观察14.722秒，对前一候选15.534秒是不同版本单样本，不作因果提速或p95声明。当前源码的新并发窗口仅Node直接复现，完整J4不是该窗口的指定MV3变异证明；完整Free/跨环境10k仍未验收。
+- **上一个检查点远端仍有失败**：825ba0e的CI39039949968最终Node与J4成功，journeys与durability失败。10k仍停在native-before，lastTail rev147/total6486、库存6485refs/1P，auditAttempts=0；本次未进入完整审计。正式cold recovery在原生跳C444后mounted20秒超时；正式J2在worker stop/restart后recover-provisional-anchor超时。指定joint/stale旧实现变异的预期FAIL不算额外产品失败。日志/解析已保留，不能把观察器批量化或本地J4标成远端修复。
+
+
 - **完整审计scope扫描已批量化，非10k主根因**：只改观察器，原同一readonly事务改为512键一批，扫描所有键/末批、多scope拒绝、原IDB key类型、原deadline与后续完整分页/双revision均保留。独立审查、91项相关测试通过。真实IDB三对AB/BA/AB，10k全部键摘要与root一致，回调10001→20，中位35.60→14.70ms；仅节省20.9ms，不能解释远端3.81秒完整audit等待。511/512/513/1024、最后批第二scope、混合key与真实abort通过；初次启动/CSP/提前timer观察abort的诊断失败均保留，后者改为等待真实事务terminal事件。当前同生产63aeab8源码、本地实际10k完整旅程：10000确证PROJECT、零UNKNOWN/遗漏/重复/错属、两次revision237审计，原30秒余17.03秒，摄取观察15.534秒，原document/editor/原生成员导航/唯一返回通过，source/fixture/manifest不变。仍PARTIAL_SYS04_NOT_ACCEPTED，不是跨环境、100k或p95通过；未重跑无关完整Node/J4。
 
 - **63aeab8远端矩阵已终结**：CI39038713907整体FAIL，Node与导航成功，J4与耐久失败；job实测220/245/300/143秒（Node/导航/J4/耐久）。J4正式失败后运行完整诊断，不能以诊断23步消除原baseline15秒失败；旧调度另一版本最长248秒、本次300秒为不同失败位置的跨版本事实，不宣称提速。旧HTTP503的实际MV3正常/指定变异证据已随0d7b6fa推送，原PR16仍Draft、base不变。

@@ -75,7 +75,11 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
    request.actualURL=frame.url;
    const concurrent=[...requests.values()].some(r=>r!==request&&r.document===document&&r.accepted&&r.contextId!==contextId);
    if(concurrent){drop(document,'concurrent-context-conflict');return false;}
-   if(document.contextId!==contextId||document.receipt?.actualURL!==request.actualURL){drop(document,'context-selection-pending');document.contextId=contextId;}
+   // Before the first successful receipt, a second independently prepared GET
+   // for this exact live selection must not invalidate the first one's epoch.
+   // Never revive a stale request: the epoch guard above still runs first.
+   const preparedSelection=!document.receipt&&[...requests.values()].some(r=>r!==request&&r.document===document&&r.epoch===document.epoch&&r.accepted&&!r.conflicted&&r.contextId===contextId&&r.actualURL===request.actualURL&&targetOf(r)===targetOf(request)&&clockOK(r,6000));
+   if(document.contextId!==contextId||(document.receipt?.actualURL!==request.actualURL&&!preparedSelection)){drop(document,'context-selection-pending');document.contextId=contextId;}
    request.epoch=document.epoch;request.accepted=true;return true;
   }).catch(()=>false);
  }
