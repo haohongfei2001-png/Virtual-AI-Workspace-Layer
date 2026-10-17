@@ -20,7 +20,8 @@ const clone = (value) => structuredClone(value);
  * Authentication and expected results never come from page-supplied verified flags.
  * LEGACY keeps its original behavior; other profiles use their own reconstruction.
  */
-export async function createHostFixtureServer({profile = 'LEGACY', principalId = 'user-host-fixture', accounts = null, now = () => Date.now(), variant = 'positive', fault, journey = null, j3Layout = 'direct'} = {}) {
+export async function createHostFixtureServer({profile = 'LEGACY', principalId = 'user-host-fixture', accounts = null, now = () => Date.now(), variant = 'positive', fault, journey = null, j3Layout = 'direct', originalHistoryAvailable = true} = {}) {
+  if(typeof originalHistoryAvailable!=='boolean'||!originalHistoryAvailable&&(profile!=='LEGACY'||journey!=='J3'))throw Error('invalid-fixture-original-history-availability');
   if(!['direct','app-root'].includes(j3Layout)||j3Layout!=='direct'&&(profile!=='LEGACY'||journey!=='J3'))throw Error('invalid-fixture-j3-layout');
   if(journey!==null&&(!['J1','J2','J3','FIRST_SEND'].includes(journey)||profile!=='LEGACY'))throw Error('invalid-fixture-journey');
   if (profile !== 'LEGACY') return createVariantHostFixtureServer({profile,principalId,accounts,now,variant,fault});
@@ -115,7 +116,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
         const authorId = identity;
         if(detailHold) await detailHold.promise;
         if(res.destroyed) return;
-        if(journey==='J3'){const messageId='j3_'+conversation.id.replaceAll('-','')+'_message';return json(res,200,{conversation_id:conversation.id,history_semantics:'fixture-original-self-send/1',mapping:{j3_node:{id:'j3_node',parent:null,message:{id:messageId,author:{role:'user',id:principalId},original_send:{author_id:principalId,conversation_id:conversation.id,kind:'new-send',state:'committed',precision:'second',sent_at:historySentAt},content:{parts:['Offline prefix uniquely selected fixture words suffix.']}}}}});}
+        if(journey==='J3'){const messageId='j3_'+conversation.id.replaceAll('-','')+'_message';return json(res,200,{conversation_id:conversation.id,history_semantics:'fixture-original-self-send/1',mapping:{j3_node:{id:'j3_node',parent:null,message:{id:messageId,author:{role:'user',id:principalId},...(originalHistoryAvailable?{original_send:{author_id:principalId,conversation_id:conversation.id,kind:'new-send',state:'committed',precision:'second',sent_at:historySentAt}}:{}),content:{parts:['Offline prefix uniquely selected fixture words suffix.']}}}}});}
         // Deliberate offline metadata reconstruction; never a live API capture or ACK.
         return json(res,200,{conversation_id:conversation.id,mapping:Object.fromEntries(['fixture_m1','fixture_m2','fixture_not_current',...(detailAppends.get(conversation.id)??[])].map((id,i)=>['node_'+i,{id:'node_'+i,parent:i?'node_'+(i-1):null,message:{id,...(detailAcceptances.get(conversation.id)?.has(id)?{status:'fixture-accepted'}:{}),author:{role:i===1?'assistant':'user',id:authorId},create_time:1700000000+i,content:{parts:['SYNTHETIC_BODY_MUST_NOT_ESCAPE']}}}]))});
       }
@@ -164,6 +165,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
     manifest: Object.freeze({fixtureId:'chatgpt-host-legacy-reconstruction-v1',profile,j3Layout,...(journey?{journey,journeyEvidence:journey==='J3'?'S_RECONSTRUCTION_NOT_REAL_PERMISSION':'S_RECONSTRUCTION_NATIVE_PENDING_CONTROLS'}:{}),reconstruction:true,source:'VA-HOST/1.1 structure reconstruction; not a real DOM snapshot',sourceCommit:null,sourceBlob:null,fixtureHash:createHash('sha256').update(sourceBytes).update(Buffer.concat(Object.values(files).map((f) => f.body))).digest('hex'),expectedWorldFile:'tests/host/expected/legacy.mjs',oracleHash:createHash('sha256').update(oracleBytes).digest('hex'),supportedCapabilities:['principal','personal-context-candidate','project-identity','idless-native-control','conversation-identity','native-move-menu','native-navigation','native-search','native-create','independent-regions','draft-preservation']}),
     snapshot: () => clone({actions:counts,requests,fixedGetTrace,...(j2?{j2:j2.snapshot()}:{}),...(firstSend?{firstSends:firstSend.snapshot()}:{}),projectCount:projects.size,conversationCount:conversations.size}),
     // Test-process controls only; not HTTP endpoints, not page-visible authority.
+    publishOriginalHistory: () => { if(journey!=='J3')throw Error('original-history-requires-j3');originalHistoryAvailable=true; },
     privacySentinels: () => ({token,cookie,body:'SYNTHETIC_BODY_MUST_NOT_ESCAPE'}),
     failNextAuthenticatedMetadata: () => { if(privacyFailureArmed)throw Error('privacy-failure-already-armed');privacyFailureArmed=true; },
     privacyFailureStatus: () => ({armed:privacyFailureArmed,authenticatedFailures:privacyFailures}),

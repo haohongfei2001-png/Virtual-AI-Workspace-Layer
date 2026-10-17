@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round368）
+## 最新本地检查点（2026-10-17，Round369）
+
+真实隔离MV3延迟历史证据恢复一次 **4项子检查PASS**：关闭前evidence为空；双ACK关闭、无附着窗口原worker销毁；服务端公开同一消息固定原始时间后，首次可信返回恢复新worker并在真实IndexedDB落入唯一strict历史event，hints/nativeActions为空，草稿/原frame保留。两次前置失败、各版本runner与原始报告均保留，相关Node **48/48 PASS**。见 [Round369](evidence/round369/README.md)。
+
+本轮是LEGACY_OFFLINE插桩S子链，不证明workspaceEntered是唯一校准触发源；未认证第二次返回校准完成、自然休眠原因、自动策略、休眠首发或live原始时间profile。完整Free仍 **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round368）
 
 修复可信 dormant 四格恢复漏发 workspaceEntered：双新授权且实际打开后恰好一次，原生输入/弹层及同步重入撤销意图。独立两轮红测转绿；护栏前完整 Node **7106/7106 PASS**，最终相关 **170/170 PASS**。最终源码隔离 MV3 关闭恢复一次 **3项子检查PASS**，原 worker 销毁后新 worker/原双frame/草稿及内容恢复。见 [Round368](evidence/round368/README.md)。
 

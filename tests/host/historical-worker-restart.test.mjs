@@ -10,7 +10,7 @@ import {MockIDBFactory} from '../b23/mock-idb.mjs';
 import {normalizedScope} from '../../src/b1/identity.mjs';
 import {digest} from '../../src/data/hash.mjs';
 
-// L/D only: replacing worker-owned objects over the same repositories is a
+// L only (MockIDBFactory): replacing worker-owned objects over the same repositories is a
 // restart analogue, not Chrome service-worker termination or live host proof.
 const C='33333333-3333-4333-8333-333333333333',NOW=Date.parse('2026-10-15T00:00:00Z');
 const principal='offline_self',account='personal',OLD='2026-08-31T00:00:00Z',NEW='2026-10-14T23:00:00Z';
@@ -44,7 +44,7 @@ function assertStrictEvidence(evidence,expected){
  assert(events.every(e=>e.actorVerified===true&&e.actorScopeKey===scope.key));assert.equal(Object.keys(evidence.hints).length,0);assert.equal(Object.keys(evidence.coverage).length,0);
  assert(!JSON.stringify(evidence).includes('PRIVATE_'));assert(Object.values(evidence.sources).every(source=>source.codecVersion===2));
 }
-test('L/D replacement worker preserves immutable history and adds freshly authenticated original send exactly once',async t=>{
+test('L replacement worker preserves immutable history and adds freshly authenticated original send exactly once',async t=>{
  const f=harness(t),first=f.start([['old_message',OLD]]);await first.reader.read('old_proof');const saved=await f.page(),oldEvent=structuredClone(Object.values(saved.evidence.events)[0]);first.stop();f.tick(120000);
  const second=f.start([['old_message',OLD],['fresh_message',NEW]]);assert.notEqual(second.owner,first.owner);assert.notEqual(second.provider,first.provider);assert.notEqual(second.reader,first.reader);
  const result=await second.reader.read('fresh_proof'),after=await f.page();assertStrictEvidence(after.evidence,[['old_message',OLD],['fresh_message',NEW]]);assert.deepEqual(after.evidence.events[oldEvent.id],oldEvent);
@@ -53,14 +53,14 @@ test('L/D replacement worker preserves immutable history and adds freshly authen
  for(let i=0;i<3;i++){f.tick(120000);await second.reader.read('fresh_proof');}
  const repeated=await f.page();assert.deepEqual(repeated.evidence.events,immutable,'reopening cannot renew observedAt, duplicate identity, or overwrite original time');assert.equal(repeated.revision,revision);assertStrictEvidence(repeated.evidence,[['old_message',OLD],['fresh_message',NEW]]);
 });
-test('L/D stopped worker late authenticated response cannot write beside its fresh replacement',async t=>{
+test('L stopped worker late authenticated response cannot write beside its fresh replacement',async t=>{
  const f=harness(t),first=f.start([['old_message',OLD]]);await first.reader.read('old_proof');const old=structuredClone((await f.page()).evidence.events);
  const barrier=deferred();first.setData([['old_message',OLD],['stale_message',NEW]]);first.hold(barrier.promise);const pending=first.reader.read('old_proof'),rejected=assert.rejects(pending);for(let i=0;i<10&&first.conversationRequests<2;i++)await settle();assert.equal(first.conversationRequests,2);
  first.stop();await rejected;f.tick(1000);const replacement=f.start([['old_message',OLD],['fresh_message',NEW]]);await replacement.reader.read('fresh_proof');const beforeLate=await f.page();
  barrier.resolve();for(let i=0;i<5;i++)await settle();const afterLate=await f.page();assert.deepEqual(afterLate,beforeLate);assertStrictEvidence(afterLate.evidence,[['old_message',OLD],['fresh_message',NEW]]);for(const [id,event]of Object.entries(old))assert.deepEqual(afterLate.evidence.events[id],event);
  await assert.rejects(first.reader.read('old_proof'),/stopped/);
 });
-test('L/D old private historical authority and retired context cannot be replayed after restart',async t=>{
+test('L old private historical authority and retired context cannot be replayed after restart',async t=>{
  const f=harness(t),first=f.start([['old_message',OLD]]);await first.reader.read('old_proof');first.setData([['old_message',OLD],['stale_message',NEW]]);
  const result=await first.provider.readCurrentConversation({conversationId:C,expectedPrincipalKey:scope.accountId,expectedContextKey:scope.organizationId}),history=first.provider.historyFor(result);assert(history);first.stop();
  const second=f.start([['old_message',OLD],['fresh_message',NEW]]);await second.reader.read('fresh_proof');const before=await f.page();
@@ -68,7 +68,7 @@ test('L/D old private historical authority and retired context cannot be replaye
  await assert.rejects(second.owner.consume({history,context:first.context,guard:first.context.guard}),/stale-historical/);
  assert.equal(second.provider.historyFor(result),null,'private provider authority cannot transfer to replacement object');assert.equal(second.provider.historyFor(structuredClone(result)),null);assert.deepEqual(await f.page(),before);
 });
-test('L/D restart with different authenticated principal cannot alter persisted original-scope history',async t=>{
+test('L restart with different authenticated principal cannot alter persisted original-scope history',async t=>{
  const f=harness(t),first=f.start([['old_message',OLD]]);await first.reader.read('old_proof');const before=await f.page();first.stop();
  const second=f.start([['old_message',OLD],['fresh_message',NEW]],{authPrincipal:'other_account'});await assert.rejects(second.reader.read('fresh_proof'));assert.deepEqual(await f.page(),before);assert.equal(second.conversationRequests,0,'principal mismatch must fail before conversation read');
 });
