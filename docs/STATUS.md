@@ -5,6 +5,11 @@
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
 
+- **6122340 CI39078312525已终结：10k稳定性仍OPEN**：Node、journeys、J4原门禁通过；durability仅正式10k失败。原30秒内全10000 refs/1P/rev206，首轮21页完整审计通过（3028.390ms），第二轮仍在途至原deadline。源未撤销、frames仍在，167生产与26fixture SHA逐项匹配；失败后双CPU/phase CAPTURED且cleanup成功，不能抵消原FAIL或代表失败的extension全量审计。J4实际23步PASS仍PARTIAL，worker-memory-loss peer自动foreground未建立；本次cold正式/passive均通过，旧GET早于listener反例保留。742的单次双审计PASS仍为真实历史样本，不能转写当前稳定通过。[本次CI事实](evidence/free-delivery-2026-10-17/cloud-ci-39078312525-summary.json)。
+
+- **本批交接复现与精确变异补证已整理**：612源码上的75专项干净基线通过，逐一移除两reader成功/错误guard、把failed早退放在guard前、移除两owner接线的8个精准变异全部KILLED；每次75实际测试、零取消/跳过，不替代原12 guard变异或浏览器证据。按唯一DEVELOPMENT_PLAN映射的[本地验收接手记录](evidence/free-delivery-2026-10-17/cloud-local-acceptance-handoff.md)列明原10k/cold/warm/J4复现与G/Profile、真实设备、跨端/日常剩余；未形成第二计划，不代表已HANDOFF_READY或本地已同步。[精确变异](evidence/free-delivery-2026-10-17/cloud-obsolete-bucket-authority-mutations.json)。
+
+
 - **已排队旧 bucket 回调的提交前撤权已补齐**：Native 与 Shared 的旧 bucket 损坏可以安全容忍，但不能吞掉后续授权失效。原 reader 在首个损坏后设置 failed，后续已排队响应会在 owner 校验前直接返回；现在每个成功/错误回调先执行原 owner guard，再处理 failed/数据容错，撤权独立走原事务 abort。纯旧数据损坏仍保守保留且允许合法写入/replay，current/prior fresh 校验、逐删除检查、六 store 回滚与真正提交后 stale 语义保持。原742基线75项中39项RED，未发布的首版wrapper仍23项RED；最终75专项及独立75复核全部通过。冻结完整Node **8169/8169、0 fail/skip/cancel、183.274秒**，原12/12 guard变异KILLED，1104个输入文件运行前后SHA一致。仅L级合成 owner/MockIDB，新增提交真实CI待跑。[修复与验证](evidence/free-delivery-2026-10-17/cloud-obsolete-bucket-authority-validation.json)。
 
 - **742968e CI39077084574四job通过，正式10k本次完整双审计PASS**：原30秒内10000 refs、1 Project、rev216完成两轮21页全量审计，stableSamples=2、尚余6223.385ms；零缺失/重复/UNKNOWN/错属。其后实际测量前后全量审计仍同rev216，原生项目导航与原文档/editor保持通过。exact尾部/首屏/次页单样本91.420/189.692/238.969ms，非p95；runner仍为PARTIAL_SYS04_NOT_ACCEPTED、exit2，原workflow仅认可这一场景门槛。167生产与26fixture hash逐项匹配742，失败后CPU未运行；Node、journeys、J4均过原门槛。J4仍PARTIAL，worker失去内存后peer自动foreground仍NOT_ESTABLISHED；本次cold正式及passive副本通过，不抹掉此前GET早于listener失败。该一次PASS不认证跨环境稳定、SYS04或Free发布。[本次CI原始事实](evidence/free-delivery-2026-10-17/cloud-ci-39077084574-summary.json)。
