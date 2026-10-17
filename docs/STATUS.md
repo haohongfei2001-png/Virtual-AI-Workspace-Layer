@@ -29,6 +29,10 @@ J1现场已取回：IDless提升后定位VIEW返回offset32含目标，但其返
 
 本次消除同事务索引GC重复读取：prior/current指向同kind/bucket/revision/count时，复用该事务已验证的version；不同指针仍完整读取，check和损坏checkpoint护栏保留。独立R/N两bucket反例先红（同物理key读2次）后绿（1次），同时证实R1回收/R2与最新N保留；43项定向、真实IDB10项通过。未插桩正式10k本地再次完成10000/10000正确PROJECT、零UNKNOWN/遗漏/错属、两次同revision204完整审计，原30秒窗口余11.18秒，原生导航/唯一返回通过；源码/fixture/manifest稳定，仍PARTIAL_SYS04_NOT_ACCEPTED。摄取观察22.069秒，先前本地成功为26.858秒；代码及运行时序不同，不能把4.789秒差值归因于本优化，也未证明跨环境稳定。最终同源码完整Node7288/7288通过、0skip、79.87秒。上一生产4067762的CI39025114564：Node/journeys通过，10k及J4 lifecycle失败；本优化尚待远端矩阵，原FAIL不关闭。
 
+前台失去认证后的阅读恢复缺陷已修复：旧catch执行stop清空reading意图，合法READY后误回workspace。现复用contextPending即时撤销旧监听/controller/adapter/RPC，仅保存文档RAM阅读意图；新握手仍需HELLO/REFRESH，不复用grant。reading×ambiguous/transport两反例先红后绿，相关260项通过（268ms）；独立审查通过。真实隔离MV3 context replacement四步通过：一次用户原生GET替换旧receipt，越过原receipt实际65秒期限后仍保持新selection，原document/editor/draft/Range及唯一返回保持。此为窄离线替换验证，不是foreground无receipt自动恢复；该C2-only fixture没有focus原生GET，规范要求保持ambiguous。
+
+真实核验取得最小进展：通过获授权浏览器的现有tab接口读取一个聊天URL/ID及标题，未读取正文或保存凭证。网络元字段观察建立超时，后续原tab绑定返回not found，尚未取得context/request关联；生产context保持未验证。只保存脱敏断言，无原始ID/标题入库。此轮只跑受影响260项及实际65秒替换旅程，未重复全部Node矩阵；新源码完整CI结果另行记录。
+
 下一阻塞：可靠10k摄取、J1/冷启动时序与合法worker/peer context重新获取及自动待命返回；完整旅程/全部适用81项、100k与p95、真实G/U/PAIA/物理IME/跨端及发布准备仍未达到。已有Pro资产和整理stash保留。
 
 ## 历史本地检查点（2026-10-17，Round386）

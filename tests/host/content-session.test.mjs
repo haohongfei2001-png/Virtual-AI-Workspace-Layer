@@ -269,3 +269,14 @@ test('same route hint departure cannot renew its original deadline',async()=>{
  const f=recentFixture();f.document.location.href+='c/'+recentRouteId;await f.client.start();await f.send(recentRouteId);await f.advance(15000);
  f.document.location.href='https://chatgpt.com/projects';f.adapter.onRebindNeeded();await drain();assert.equal(f.adapter.priorityConversationId(),recentRouteId);await f.advance(15000);assert.equal(f.adapter.priorityConversationId(),null);f.client.stop();
 });
+
+for(const mode of ['reading','workspace'])for(const failure of ['ambiguous','transport'])test('foreground '+failure+' retains '+mode+' intent until fresh context handshake',async()=>{
+ const f=c2PresentationFixture();try{
+  f.document.visibilityState='visible';await f.client.start();if(mode==='reading')f.client.showReading();
+  f.setResponse(m=>{if(m.type==='HOST_FOCUS'){if(failure==='transport')throw Error('worker-lost');return {state:'ambiguous'};}return m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified'}:{ok:true,grants:[]};});
+  f.events.get('blur')();f.events.get('focus')();await drain();assert.equal(f.client.showReading(),false);assert.equal(f.listeners.size,0);
+  const before=f.calls.length;await f.advance(1000);assert.equal(f.calls.length,before);
+  await f.client.contextReady();assert.deepEqual(f.modes,['workspace',mode]);
+  assert.deepEqual(f.calls.slice(before).filter(m=>['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT'].includes(m.type)).map(m=>m.type),['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT']);
+ }finally{f.client.stop();}
+});
