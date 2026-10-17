@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round381）
+## 最新本地检查点（2026-10-17，Round382）
+
+实际隔离 headless Chrome MV3 双列表分页子链通过：真实按钮遍历 Project80＋UNKNOWN920＝1000个互斥合法ID，独立原名/目标URL核验，自动缩页后继续至末页，两类返回前页均通过；原document/editor/草稿保持。source/fixture/manifest稳定、清理成功，独立审查完成。见 [Round382](evidence/round382/README.md)。
+
+保留初版oracle失败和单项目缺UNKNOWN的场景失败。仅LEGACY离线 S 分页子证据，不是完整membership/原生兼容认证；生产未改，针对性3/3通过，最近完整回归仍Round381的7205。100k与其余81/G/U未完成，Free仍 **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round381）
 
 修复长标题触发 64 KiB 自动缩页后真实“显示更多”按钮循环停留第一页的问题。私有分页上限绑定 scope/viewSession/区间/列表，旧延迟响应重新核验代际。独立真实按钮 L 回归遍历长/短标题各603聊天及返回前页，延迟反例通过；针对性 **3/3 PASS**、最终完整 Node **7205/7205 PASS**，独立审查通过。见 [Round381](evidence/round381/README.md)。
 
