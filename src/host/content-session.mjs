@@ -162,7 +162,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    const handle=await s.controller.resumeDormant(adapterOptions(s,s.binding),{mode});
    if(!handle||!live(s)||(s.wakeRevision??0)!==revision)throw Error('dormant-resume-failed');
    s.ready=true;return handle;
-  });}catch{if(current===s)stop();return null;}finally{s.wakePending=false;s.wakePrior=null;}
+  });}catch(error){if(current===s){if(error?.message==='scope-not-verified')contextPending();else stop();}return null;}finally{s.wakePending=false;s.wakePrior=null;}
  }
  const bindingFields=b=>({documentToken:b.documentToken,producerToken:b.producerToken,routeEpoch:b.routeEpoch});
  function live(s){return current===s&&!s.abort.signal.aborted&&doc.location.href===s.url;}
@@ -411,7 +411,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  }
  function contextReady(){
   if(contextRecovery!==true||!contextResumeAllowed)return Promise.resolve(null);
-  if(enabled){if(current&&!current.scopeKey&&!current.ready)current.contextReadyPending=true;return Promise.resolve(null);}
+  if(enabled){if(current&&!current.ready&&(!current.scopeKey||current.wakePending))current.contextReadyPending=true;return Promise.resolve(null);}
   if(contextResumeURL!==null&&doc.location.href!==contextResumeURL){contextResumeMode='reading';if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();}
   contextResumeURL=doc.location.href;
   enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;

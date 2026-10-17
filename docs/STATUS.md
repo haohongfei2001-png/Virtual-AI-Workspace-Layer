@@ -4,6 +4,9 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **当前恢复修复与验收**：休眠wake的暂态scope拒绝原来执行stop，永久清除恢复意图；已有scope时提前READY也被丢弃。现仅scope-not-verified转既有contextPending即时撤旧能力，READY需新HELLO/REFRESH；显式stop/非法binding/transport仍fail-closed，reading意图保留。48项定向与独立审查通过；完整Node7317/7317、0skip、73.86秒。随后仅runner/CI整合变更，相关58项79.89ms通过，未重复全套。真实隔离C2同源码/fixture故障注入六步通过：实际close→确认worker停止且旧frame仍在→可信返回被拒并撤旧投影→一次原生GET/READY→新reading frame→唯一返回/正确非首项team，document/editor/draft/Range保持。恢复旧stop缺陷的变异包在相同GET后无法重挂，原15秒观察窗FAIL，证明场景检出根因；默认65秒replacement场景未改变。另LEGACY显式close观察60秒内worker销毁后原frames/编辑器/双view恢复，仍不认证自动休眠或完整C2。原始证据为free-wake-*；同生产源码，不把变异失败当产品失败或把窄PASS当完整Free。
+- **最新远端结论**：f39738b CI39029422207整体FAIL；Node/导航/J4通过既定门槛，10k原期限仅6540 refs/revision139，最后tail OBSERVED_TAIL_ONLY/6431、auditAttempts=0。新诊断明确本次摄取未完整，并非完整审计太慢；优先成员调度修复未关闭跨环境吞吐关口。四job实测134/201/285/174秒（Node/导航/J4/耐久）；旧串行关键job384秒对本次最长285秒仅跨版本描述，非受控加速比。已有J4分离及no cache/upload保留；本次C2正/变异加入现有导航runner任务，新增CI尚待执行。
+
 - **已关闭的具体缺陷**：失败surface页分片在后续独立重读仍被整页失败缓存跳过。现在独立全读允许恢复未发送/失败片，成功页去重、当前尝试预算及普通mutation不重放保持。独立四项原失败转绿。
 - **10k观察器根因已修正**：优先tail早到不代表目录完整；旧测试立即返回并遮住剩余成员。现在在原30秒总窗口内保持native reading，独立枚举完整ID/成员两次同revision后返回，返回后原审计保留。实际10k为10000 refs/10000正确PROJECT、0 UNKNOWN/遗漏/重复/错属，reading和测量前后revision213，原窗口剩余6030ms；原生导航/编辑器/返回通过。只认证本场景单次闭环，非所有规模/p95或提前返回完整性。随后同源码CI在原30秒期限仅5775 refs，完整索引跨环境关口仍OPEN；本地一次PASS不能关闭它。
 - **worker/peer未关闭**：旧观察器可能接受旧frame grant/scope缓存。现要求stop后新grant、其对应VIEW请求及响应、未过期与原doc/editor/draft。实际默认J4完成现有23步，原生导航可重新认证；仅foreground仍发生`J4-peer-current-scope-timeout`，自动恢复 **NOT_ESTABLISHED**。C2 browser receipt在worker内存丢失后必须重新取得合法上下文证据，不持久旧授权或伪造scope。
@@ -11,7 +14,7 @@
 - **验证调度**：J4前置→完整J4→诊断已迁入独立CI job，独立runner/profile/output；原内部顺序、同SHA、退出码、门槛均保留，不开cache/upload。旧实际CI耐久job384s，其中J4正式187s、前置56s；同源码439bd34的CI39022694571已结束：J4独立job295s，耐久159s、journeys209s、Node223s；最长job从384s变295s（减少89s），但代码/失败位置不同，不视为纯调度加速比。Node和J4 job通过既定partial门槛；完整矩阵FAIL，10k与cold immediate均失败。旧10k3.712s为提前失败，新完整旅程45.464s（含清理），两者不可作为性能加速比。候选搜索/翻页单样本80.6/181.3/213.0ms。
 - **真实宿主**：用户已授权指定账户的只读session/accounts/context元字段及指定P/C的ID/标题，不含正文/凭证保存或原生写入。用户另确认截图就是授权Profile，并明确所有现有P/C均可选作上述只读样本。此前连接读取超时/首页标签失效；最新浏览器目录恢复返回ChatGPT聊天URL与标题，尚未读取正文、认证字段或请求关联。多个Chrome Profile存在，标签目录本身不认证账户/context；样本权限已不阻塞，仍需完成获授权Profile与生产context关联核验。生产`chatgpt-context-unverified`保持，C1字段语义/C2正常请求与文档关联/C3默认personal语义均未真实验证。
 
-最终冻结完整Node回归通过（7278项、0 skip、39.06秒）。首次回归诊断插桩锚点失配的11项失败保留，精确更新锚点后通过，未放宽功能断言。
+较早候选冻结完整Node回归通过（7278项、0 skip、39.06秒）。首次回归诊断插桩锚点失配的11项失败保留，精确更新锚点后通过，未放宽功能断言。
 
 同候选10k与J4的165项生产source hash逐项相同，实际执行期间源码/fixture不漂移。原始失败、候选结果、耗时及hash保存在 [本次原始证据](evidence/free-delivery-2026-10-17/)，没有新建开发计划。忙碌close已在最终候选重跑通过，165项生产hash与10k/J4完全相同；前一版本fb0f5d4的试验也保留。
 
