@@ -6,8 +6,9 @@ import {ScopeRepository} from '../../src/b1/scope-repository.mjs';
 import {createHostBindingService} from '../../src/runtime/host-binding-service.mjs';
 const origin='https://chatgpt.com',url=origin+'/c/33333333-3333-4333-8333-333333333333';
 const flush=()=>new Promise(r=>setImmediate(r));
-async function fixture(t,{c2=false,autoReply=true,originalURL=url,primaryError='session-transport-failed',primaryDelay=0}={}){
- let time=1000,elapsed=0,n=0,principal='A',reads=0,frameCost=0;const timers=new Map(),commands=[],acks=[];
+async function fixture(t,{c2=false,receiptLostAfterPolicy=false,autoReply=true,originalURL=url,primaryError='session-transport-failed',primaryDelay=0}={}){
+ let time=1000,elapsed=0,n=0,principal='A',reads=0,frameCost=0,contextReads=0;const timers=new Map(),commands=[],acks=[];
+ const contextReceipt=Object.freeze({id:'context_receipt',documentId:'document',selectionEpoch:1,wall:1000});
  let actual={documentId:'document',url,documentLifecycle:'active',frameType:'outermost_frame',parentFrameId:-1};
  const sender={id:'extension',tab:{id:1,incognito:false},frameId:0,documentId:'document',documentLifecycle:'active',url:originalURL};
  const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'fallback-service'});
@@ -15,7 +16,7 @@ async function fixture(t,{c2=false,autoReply=true,originalURL=url,primaryError='
  const result=c=>({type:'HOST_IDENTITY_RESULT',challenge:c.challenge,documentToken:c.documentToken,producerToken:c.producerToken,routeEpoch:c.routeEpoch,authorityEpoch:c.authorityEpoch,ok:true,identity:identity('isolated-fixed-fetch')});
  const service=createHostBindingService({extensionId:'extension',getFrame:async()=>{elapsed+=frameCost;time+=frameCost;frameCost=0;return {...actual};},allowedURL:u=>new URL(u).origin===origin,repository:base,identityOrigin:origin,
   provider:{read:async()=>{reads++;elapsed+=primaryDelay;time+=primaryDelay;if(primaryError)throw Error(primaryError);return identity('worker-fixed-fetch');}},
-  profile:{id:'test-profile',singlePersonalDefault:!c2,browserRequestContext:c2},contextObserver:c2?{verify:async()=>null,isCurrent:()=>false}:null,
+  profile:{id:'test-profile',singlePersonalDefault:!c2,browserRequestContext:c2},contextObserver:c2?{verify:async()=>++contextReads===1&&receiptLostAfterPolicy?contextReceipt:null,isCurrent:(_frame,receipt)=>receiptLostAfterPolicy&&contextReads===1&&receipt===contextReceipt}:null,
   isolatedIdentityDispatch:async(frame,command)=>{commands.push({frame,command});if(autoReply)acks.push(await service.handle(result(command),sender));return identity('isolated-fixed-fetch');},
   now:()=>time,elapsedNow:()=>elapsed,makeId:()=> 'identity_'+(++n),schedule:(fn,ms)=>{const id=++n;timers.set(id,{fn,at:elapsed+ms});return id;},cancel:id=>timers.delete(id)});
  t.after(()=>{service.stop();base.close();});
@@ -31,8 +32,11 @@ test('MOCK successful primary does not invoke isolated reader',async t=>{const f
 for(const error of ['session-unauthorized','invalid-session-schema','invalid-accounts-schema','request-timeout','session-aborted','invalid-session-json','invalid-session-response'])test('MOCK primary '+error+' never triggers auth fallback',async t=>{
  const f=await fixture(t,{primaryError:error});assert.notEqual((await f.request()).state,'verified');assert.equal(f.commands.length,0);assert.equal(f.service.authority.scopeFor(f.frame),null);
 });
-test('MOCK isolated principal/roster cannot substitute for missing C2 context receipt',async t=>{
- const f=await fixture(t,{c2:true});const response=await f.request();assert.equal(f.commands.length,1);assert.equal(response.state,'ambiguous');assert.equal(response.reason,'current-context-unproven');assert.equal(f.service.authority.scopeFor(f.frame),null);
+test('MOCK isolated principal/roster cannot substitute for C2 receipt lost after policy admission',async t=>{
+ const f=await fixture(t,{c2:true,receiptLostAfterPolicy:true});const response=await f.request();assert.equal(f.commands.length,1);assert.equal(f.reads,1);assert.deepEqual(f.acks,[{ok:true}]);assert.equal(response.state,'ambiguous');assert.equal(response.reason,'current-context-unproven');assert.equal(f.service.authority.scopeFor(f.frame),null);assert.equal(f.timers.size,0);
+});
+test('MOCK missing C2 settles before primary or isolated identity work',async t=>{
+ const f=await fixture(t,{c2:true});const response=await f.request();assert.equal(f.commands.length,0);assert.equal(f.reads,0);assert.equal(response.state,'ambiguous');assert.equal(response.reason,'current-context-unproven');assert.equal(f.service.authority.scopeFor(f.frame),null);assert.equal(f.timers.size,0);
 });
 test('MOCK fallback retains original SPA sender while browser current route owns command',async t=>{
  const f=await fixture(t,{originalURL:origin+'/'});assert.equal((await f.request()).state,'verified');assert.equal(f.commands[0].command.actualURL,url);assert.equal(f.sender.url,origin+'/');

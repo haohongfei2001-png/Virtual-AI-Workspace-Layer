@@ -1,3 +1,4 @@
+import {createNoReceiptContextRecovery} from './context-recovery/no-receipt-recovery.mjs';
 import {createIsolatedSessionOwner} from './isolated-session-owner.mjs';
 import {createHostEntryCalibration} from './host-entry-calibration.mjs';
 import {createHostIngestionPassOwner} from './host-ingestion-pass-owner.mjs';
@@ -51,6 +52,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   }
  }:null;
  const authority=createScopeAuthority({provider,profile,readIdentity,contextObserver,allowedURL,now,makeId,elapsedNow,schedule,cancel});
+ const contextRecovery=profile.browserRequestContext===true&&contextObserver?createNoReceiptContextRecovery({profile,contextObserver,authority,now,elapsedNow,schedule,cancel}):null;
  const asFrame=(doc,sender)=>({tabId:doc.tabId,frameId:0,documentId:doc.documentId,parentDocumentId:null,actualURL:doc.url,documentLifecycle:'active',incognito:sender.tab?.incognito===true});
 
  const ingestionPasses=surfaceProfiles?createHostIngestionPassOwner({handshake,authority,getFrame,profiles:surfaceProfiles,now,elapsedNow,schedule,cancel}):null;
@@ -83,6 +85,22 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const backup=ui&&['exportBackup','previewRestore','restoreBackup'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostBackupService({ui,workspaceRepository,onRestored:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
  const commands={};if(readService)for(const name of ['snapshot','command','undo','history','saveView','exportBackup','previewRestore','restoreBackup','recoveryStatus','recover'])if(typeof workspaceRepository[name]==='function')commands[name]=workspaceRepository[name].bind(workspaceRepository);
  const broker=createDocumentBindingBroker({extensionId,getFrame,allowedURL,repository,workspaceRepository:readService?{...readService,...commands}:workspaceRepository,freeRuntime,now,makeId,hostHandshake:handshake,resolveScope:({currentFrame,sender})=>authority.scopeFor(asFrame(currentFrame,sender))});
+ // Claims last only through concurrent service delivery, not the grant lifetime.
+ // A failed subscriber cannot revoke a sibling's completed or pending delivery.
+ const resolutionClaims=new WeakMap();
+ function claimResolution(attempt,resolution){
+  if(resolution?.state!=='verified')return;
+  let claim=resolutionClaims.get(resolution.grant);
+  if(!claim){claim={grant:resolution.grant,users:new Set(),delivered:false};resolutionClaims.set(claim.grant,claim);}
+  claim.users.add(attempt);attempt.resolutionClaim=claim;
+ }
+ function releaseResolution(attempt){
+  const claim=attempt.resolutionClaim;if(!claim)return;
+  claim.users.delete(attempt);
+  if(claim.users.size)return;
+  resolutionClaims.delete(claim.grant);
+  if(!claim.delivered&&attempt.frame&&authority.peek(attempt.frame).grant===claim.grant)authority.invalidate(attempt.frame.documentId);
+ }
  const sequences=new Map(),refreshAttempts=new Set();let serviceActive=true;
  async function handleWork(message,sender){
   if(message?.type==='HOST_OLD_SEND_OPERATION')return {ok:oldSendTerminal?await oldSendTerminal.intent(message,sender):false};
@@ -140,11 +158,16 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   // Ordinary renewals keep the existing bounded revalidation/single-flight path.
   const firstFresh=!producer.verified&&!producer.freshStarted;
   if(firstFresh){producer.freshStarted=true;ingestionPasses?.invalidateDocument(frame.documentId);observations?.invalidateDocument(frame.documentId);ui?.revokeDocument(frame.documentId);views?.revokeDocument(frame.documentId);}
-  const resolution=await (focus?authority.revalidate(frame,attempt.abort.signal,{force:true}):!producer.verified?authority.refresh(frame,firstFresh?'auth-change':'focus',attempt.abort.signal):authority.peek(frame).state==='verified'?authority.revalidate(frame,attempt.abort.signal):authority.refresh(frame,'bind',attempt.abort.signal));attempt.resolution=resolution;
+  const authorize=({signal})=>focus?authority.revalidate(frame,signal,{force:true}):!producer.verified?authority.refresh(frame,firstFresh?'auth-change':'focus',signal):authority.peek(frame).state==='verified'?authority.revalidate(frame,signal):authority.refresh(frame,'bind',signal);
+  const resolution=await (contextRecovery&&!focus&&!producer.verified&&(contextRecovery.ownsFlight(frame,producer)||contextRecovery.ownsDelivery(frame,producer)||!['verified','pending'].includes(authority.peek(frame).state))?contextRecovery.run(frame,{
+   attemptOwner:producer,signal:attempt.abort.signal,remainingMs:()=>6000-(elapsedNow()-attempt.started),
+   isCurrent:()=>serviceActive&&attempt.active&&!producer.denied&&sequences.get(message.producerToken)===producer&&handshake.isBound(message,sender),
+   authorize
+  }):authorize({signal:attempt.abort.signal}));attempt.resolution=resolution;if(!focus)claimResolution(attempt,resolution);
   if(resolution.state!=='verified')firstSend?.invalidateTab(frame.tabId);
   if(focus&&resolution.state!=='verified'){denyFocus();revokeFocus();}check();
   const verified=await handshake.verify(message,sender);check();
-  if(!verified){firstSend?.invalidateTab(frame.tabId);if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant)authority.invalidate(frame.documentId);revokeFocus();return {ok:false,reason:'stale-host-document'};}
+  if(!verified){firstSend?.invalidateTab(frame.tabId);if(focus&&resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant)authority.invalidate(frame.documentId);revokeFocus();return {ok:false,reason:'stale-host-document'};}
   if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant){const scope=authority.scopeFor(frame);if(scope)views?.confirmScope(frame,scope.key);}
   const recoveryProfiles=[...(surfaceProfiles?.size===1?[surfaceProfiles.values().next().value]:[]),...(ackProfile&&resolution.grant?.principal?.providerProfile===ackProfile.providerProfile?[ackProfile]:[])];
   if(!focus&&resolution.state==='verified'&&continuations&&recoveryProfiles.length&&elapsedNow()-attempt.started<4500){
@@ -167,16 +190,23 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
    const stillVerified=await handshake.verify(message,sender);check();
    if(!stillVerified||authority.peek(frame).grant!==resolution.grant)return {ok:false,reason:'stale-host-document'};
   }
-  if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant&&sequences.get(message.producerToken)===producer)producer.verified=true;
+  if(resolution.state==='verified'&&(authority.peek(frame).grant!==resolution.grant||sequences.get(message.producerToken)!==producer))return {ok:false,reason:'stale-host-document'};
   return {ok:true,v:1,type:'HOST_SCOPE_STATUS',state:resolution.state,...(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant?{scopeKey:authority.scopeFor(frame)?.key}:{}),...(resolution.reason?{reason:resolution.reason}:{})};
-  }),{timeoutMs:6000,now:elapsedNow,schedule,cancel});attempt.completed=true;return result;}catch{return {ok:false,reason:'host-refresh-unavailable'};}
+  }),{timeoutMs:6000,now:elapsedNow,schedule,cancel});
+  if(result.ok===true&&result.state==='verified'){
+   check();
+   if(!attempt.frame||authority.peek(attempt.frame).grant!==attempt.resolution?.grant||sequences.get(message.producerToken)!==attempt.producer||!handshake.isBound(message,sender))return {ok:false,reason:'stale-host-document'};
+   attempt.producer.verified=true;
+   if(attempt.resolutionClaim){attempt.resolutionClaim.delivered=true;contextRecovery?.confirmDelivery(attempt.frame,attempt.producer,attempt.resolutionClaim.grant);}
+  }
+  attempt.completed=true;return result;}catch{return {ok:false,reason:'host-refresh-unavailable'};}
   finally{refreshAttempts.delete(attempt);attempt.active=false;attempt.abort.abort();if(!attempt.completed){denyFocus();revokeFocus();}
   if(!attempt.completed&&attempt.frame)firstSend?.invalidateTab(attempt.frame.tabId);
-  if(!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);}
+  if(focus&&!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);releaseResolution(attempt);}
  }
- function invalidate({tabId,frameId=0,documentId,firstSendNavigation=null,preserveViewDocumentId=null}={}){oldSendTerminal?.invalidateTab(tabId);if(firstSendNavigation)firstSend?.navigate({tabId,...firstSendNavigation});else firstSend?.invalidateTab(tabId);broker.invalidate({tabId,frameId});if(documentId){ingestionPasses?.invalidateDocument(documentId);observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{ingestionPasses?.invalidateTab(tabId);observations?.invalidateTab(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId,{preserveDocumentId:preserveViewDocumentId});}}
- function tabClosed(tabId){ingestionPasses?.invalidateTab(tabId);oldSendTerminal?.invalidateTab(tabId);firstSend?.invalidateTab(tabId);observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
- function stop(){if(!serviceActive)return;serviceActive=false;identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
+ function invalidate({tabId,frameId=0,documentId,firstSendNavigation=null,preserveViewDocumentId=null}={}){contextRecovery?.invalidate({tabId,documentId});oldSendTerminal?.invalidateTab(tabId);if(firstSendNavigation)firstSend?.navigate({tabId,...firstSendNavigation});else firstSend?.invalidateTab(tabId);broker.invalidate({tabId,frameId});if(documentId){ingestionPasses?.invalidateDocument(documentId);observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{ingestionPasses?.invalidateTab(tabId);observations?.invalidateTab(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId,{preserveDocumentId:preserveViewDocumentId});}}
+ function tabClosed(tabId){contextRecovery?.forgetTab(tabId);ingestionPasses?.invalidateTab(tabId);oldSendTerminal?.invalidateTab(tabId);firstSend?.invalidateTab(tabId);observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
+ function stop(){if(!serviceActive)return;serviceActive=false;contextRecovery?.stop();identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
  // Internal worker composition only; no page RPC exposes metadata or accepts proof IDs.
  const readCurrentMetadata=proofId=>track('requests',()=>currentMetadata?currentMetadata.read(proofId):Promise.reject(Error('current-metadata-unavailable')));
  const handle=(message,sender)=>track('requests',()=>handleWork(message,sender));
@@ -191,7 +221,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   return quiet()&&ownersIdle(true)&&quiet();
  }
  function ownersIdle(excludeUi=false){
-  return [authority,continuations,...(excludeUi?[]:[ui]),observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
+  return [authority,contextRecovery,continuations,...(excludeUi?[]:[ui]),observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
  }
  return Object.freeze({isIdle,oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
 }
