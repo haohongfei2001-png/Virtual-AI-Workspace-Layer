@@ -165,7 +165,9 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    const ack=await bridge.confirmParent({mountId:state.handle.id,documentToken:state.handle.documentToken,regionEpoch:state.handle.regionEpoch,nonce:data.nonce,role:data.role});
    if(!valid(state)||event.source!==target.window||target.frame.contentWindow!==target.window)return;
    const grant=ack?.grant;if(ack?.ok!==true||!tokenOK(grant?.id)||grant.mountId!==state.handle.id||grant.role!==data.role||grant.parentDocumentId!==state.context.binding.browserDocumentId||!tokenOK(grant.uiDocumentId)||!tokenOK(grant.scopeGrantId)||!Number.isFinite(Date.parse(grant.expiresAt))||Date.parse(grant.expiresAt)<=now())return;
-   state.grants.set(data.role,Object.freeze({...grant}));publishAppearance(state,data.role);arm(state);if(state.mode==='waiting'&&authorized(state)){
+   state.grants.set(data.role,Object.freeze({...grant}));publishAppearance(state,data.role);arm(state);
+   if(state.cancelCloseJoining&&authorized(state)){state.cancelCloseJoining=false;bridge.cancelledCloseReady?.();}
+   if(state.mode==='waiting'&&authorized(state)){
     // Native input can precede listener installation or the second grant. Preserve
     // that intent without exposing a surface or return entry before authorization.
     const entered=state.pendingWakeEntry===true,entryEpoch=state.intentEpoch+1;state.pendingWakeEntry=false;
@@ -206,7 +208,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  // Failure leaves the native reading surface and fresh-wake entry available.
  async function settleDormant({isCurrent,timeoutMs=6000}={}){
   const state=current;if(!state?.dormant||state.settling||typeof isCurrent!=='function'||typeof bridge.releaseIdleMount!=='function'||!Number.isFinite(timeoutMs)||timeoutMs<=0||timeoutMs>6000)return false;
-  const started=elapsedNow();state.settling=true;state.releaseBusy=false;
+  const started=elapsedNow();state.settling=true;state.releaseBusy=false;state.cancelCloseReady=false;
   const remaining=()=>{const elapsed=elapsedNow()-started;if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=timeoutMs)throw Error('idle-release-timeout');return timeoutMs-elapsed;};
   const check=()=>current===state&&state.dormant&&dormantReady()&&isCurrent()===true;
   try{
@@ -228,8 +230,23 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    if(!intact())return false;const ack=structuredClone(raw),binding=ack?.binding,expiry=Date.parse(binding?.expiresAt);
    if(ack?.ok!==true||!binding||Object.keys(binding).sort().join(',')!==[...keys,'expiresAt'].sort().join(',')||keys.some(k=>binding[k]!==prior[k])||!Number.isFinite(expiry)||expiry<=now()||expiry>now()+20000)return false;
    if(adapter.updateBinding(binding)!==true||!intact())return false;
-   state.context={...state.context,binding:Object.freeze({...binding})};return true;
+   state.context={...state.context,binding:Object.freeze({...binding})};state.cancelCloseReady=true;return true;
   }catch{return false;}finally{state.renewing=false;}
+ }
+ // A confirmed busy release did not retire the mount. Cancel that close with
+ // the original producer; cleared UI grants must still be acquired anew.
+ function cancelDormantClose(){
+  const state=current;
+  if(!dormantReady()||state.cancelCloseReady!==true||state.settling||state.resuming||state.renewing||state.pending.size||Date.parse(state.context.binding.expiresAt)<=now())return false;
+  const inspection=adapter.inspect();
+  if(!inspection?.ok||inspection.regionEpoch!==state.handle.regionEpoch||inspection.navigationSlot!==state.inspection.navigationSlot||!inspection.navigationSlot?.isConnected)return false;
+  const requestId=state.idleRequestId;state.cancelCloseReady=false;
+  state.dormant=false;state.registered=true;state.mode='waiting';state.resumeMode='reading';state.cancelCloseJoining=true;state.surfaceKey=null;state.pendingWakeEntry=false;state.intentEpoch++;state.idleAcks.clear();removeReturn(state);
+  try{
+   if(!valid(state))throw Error('stale-close-cancellation');arm(state);
+   for(const target of state.frames){target.window.postMessage({type:'VAIWL_UI_WAKE',role:target.role,requestId},trustedOrigin);if(current!==state)throw Error('stale-close-cancellation');}
+   return true;
+  }catch{if(current===state)stop('close-cancellation-failed');return false;}
  }
  // The caller supplies a newly verified binding; existing frames still need
  // their normal private JOIN/parent confirmation before any surface can open.
@@ -257,5 +274,5 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   const state=current;
   return !!state&&state.dormant&&state.epoch===epoch&&doc.location.href===state.url&&state.frames.length===2&&state.frames.every(({frame,window,role})=>state.idleAcks.has(role)&&frame.isConnected&&frame.ownerDocument===doc&&frame.contentWindow===window);
  }
- return Object.freeze({renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,showReading,showNativeReading,focusFrame(role){const state=current;if(!state||state.mode!=='workspace'||!authorized(state)||adapter.hasNativeLayer())return false;const target=state.frames.find(x=>x.role===role);if(!target?.frame?.focus)return false;target.frame.focus({preventScroll:true});let active=doc.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;return active===target.frame;},isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
+ return Object.freeze({cancelDormantClose,renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,showReading,showNativeReading,focusFrame(role){const state=current;if(!state||state.mode!=='workspace'||!authorized(state)||adapter.hasNativeLayer())return false;const target=state.frames.find(x=>x.role===role);if(!target?.frame?.focus)return false;target.frame.focus({preventScroll:true});let active=doc.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;return active===target.frame;},isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
 }

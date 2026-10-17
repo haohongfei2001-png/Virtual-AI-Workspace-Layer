@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round385）
+## 最新本地检查点（2026-10-17，Round386）
+
+明确busy的关闭在同producer续租后取消休眠，保留mount/frames，以新JOIN/CONFIRM恢复reading；双授权完成前禁止新HELLO及自动重绑，原生弹层不阻断完成通知。针对性 **60/60 L PASS**、冻结源码完整Node **7261/7261 PASS**，独立审查修正两个窗口。见 [Round386](evidence/round386/README.md)。
+
+本轮无新S；授权到期仍stop/revoke，不声称失败后pending observer保全。未知release结果、恢复失败后返回与自动休眠仍开放，100k及其余81/G/U未完成，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round385）
 
 最终release exact busy后接一次同producer transport＋same-scope认证续期，复用原6秒剩余预算；不HELLO/start、不恢复UI grants或WAKE，busy机会一次消费。原lease在await期间过期的提交窗口经独立审查修复；身份/TTL/迟到/范围反例通过。最终针对性 **102/102 L PASS**、完整Node **7249/7249 PASS**，独立复核完成。见 [Round385](evidence/round385/README.md)。
 

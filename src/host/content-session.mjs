@@ -102,9 +102,13 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    closing.entered=true;
    let settled=false;try{settled=await s.controller.settleDormant?.({isCurrent:intact,timeoutMs:remaining()})===true;}catch{/* An incomplete clear cannot leave an unusable return entry. */}
    if(!settled&&intact()&&activeWork===0&&rawIPC===0&&s.controller.dormantReady?.()!==true){rebind(s,'reading',s.scopeKey);return false;}
-   if(!settled&&intact()&&s.controller.idleReleaseBusy?.()===true)await s.controller.renewDormantLease?.({timeoutMs:remaining()});
+   if(settled)s.busyClose=false;
+   if(!settled&&intact()&&s.controller.idleReleaseBusy?.()===true){
+    s.busyClose=true;
+    if(await s.controller.renewDormantLease?.({timeoutMs:remaining()})===true&&enabled&&live(s)&&!s.recoveryDenied&&s.controller.cancelDormantClose?.()===true){closing.cancelled=true;}
+   }
    return settled&&intact();
-  }catch{return false;}finally{if(live(s)&&closing.entered)s.incompleteClose=s.controller.dormantReady?.()!==true;if(s.closing===closing)s.closing=null;}
+  }catch{return false;}finally{if(live(s)&&closing.entered)s.incompleteClose=!closing.cancelled&&s.controller.dormantReady?.()!==true;if(s.closing===closing)s.closing=null;}
  }
  // Each adapter generation owns its transport callbacks, including late cancel.
  function adapterOptions(s,binding){return {binding,ingestionPass:async pass=>{
@@ -132,7 +136,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  }
  async function wake(s,mode='workspace'){
   const quiet=()=>enabled&&live(s)&&s.ready&&!s.wakePending&&!s.closing&&(s.controller?.dormantReady?.()||s.incompleteClose===true)&&typeof s.scopeKey==='string'&&!!s.scopeKey&&!activeWork&&!rawIPC&&!rebindQueued&&!restoreArmed&&!s.identityPending&&!s.capturePending&&!s.restorePending&&upgradeTimer===null&&upgradeIdentity===null;
-  if(!quiet())return null;
+  if(!quiet()||s.busyClose===true)return null;
   const preparedRevision=workRevision;
   const adapter=s.adapter?.prepareRecovery?.(),reader=isolatedReader.prepareIdle?.();
   if(!adapter?.isCurrent?.()||!reader?.isCurrent?.()||preparedRevision!==workRevision||!quiet())return null;
@@ -184,7 +188,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  }
  function pageshow(event){if(event?.persisted!==true||!enabled||!restoreArmed)return;restoreArmed=false;void begin();}
  function rebind(s,initialMode=null,expectedScope=null){
-  if(!enabled||current!==s||rebindQueued)return;
+  if(!enabled||current!==s||rebindQueued||s.busyClose===true&&doc.location.href===s.url)return;
   if(initialMode===null)initialMode=s.controller?.presentationMode?.()==='workspace'?'workspace':'reading';
   if(doc.location.href!==s.url){rememberDepartingRoute(s);upgrade.navigate({url:doc.location.href});initialMode='reading';}else if(!upgrade.isTarget({url:doc.location.href}))clearUpgrade();
   rebindQueued=true;const run=++rebindRun;reset();doc.defaultView.addEventListener('pagehide',pagehide);
@@ -343,6 +347,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    s.plans=plansFactory({adapter,showNativeReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showNativeReading?.()===true,captureIntent:()=>s.controller?.intentGuard?.()??(()=>false),showReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showReading()===true,now,elapsedNow,schedule,cancel,bindingCurrent:()=>live(s)&&Date.parse(s.binding.expiresAt)>now()&&adapter.inspect().ok?s.binding.documentToken+':'+s.binding.producerToken+':'+s.binding.routeEpoch:false});
    surface=surfaceFactory({document:doc,createFrameURL:({role})=>runtime.getURL(role+'.html'),hasNativeLayer:()=>adapter.hasNativeLayer()});
    const bridge={
+    cancelledCloseReady:()=>{if(enabled&&live(s)&&s.ready&&!s.recoveryDenied)s.busyClose=false;},
     renewDormantBinding:({binding,timeoutMs})=>track(async()=>{
      if(!bindingOK(binding,s.binding)||s.controller?.dormantReady?.()!==true)throw Error('stale-dormant-binding');
      const prior=s.binding,scope=s.scopeKey,started=elapsedNow();
@@ -368,7 +373,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     if(current===s&&reason==='ui-user-exit'){stop();return;}
     // One fresh authorization attempt per explicit content start. A failed
     // replacement never schedules another loop or revives an old grant.
-    if(!enabled||!s.ready||!live(s)||s.recoveryDenied||recoveryRemaining<1||!['ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason))return;
+    if(!enabled||!s.ready||!live(s)||s.busyClose===true||s.recoveryDenied||recoveryRemaining<1||!['ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason))return;
     recoveryRemaining--;rebind(s,presentation?.mode==='workspace'?'workspace':'reading');
    },now,elapsedNow,schedule,cancel});
    s.surface=surface;const handle=await s.controller.start(adapterOptions(s,s.binding));if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;return handle;
