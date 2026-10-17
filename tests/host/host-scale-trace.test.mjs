@@ -28,7 +28,7 @@ test('actual pass lifecycle excludes body, clears idle/new start and dirty cance
  const old={producer:1,emitCount:3},owner={terminal:false};const c=vm.createContext({TextEncoder,Date,performance,__scaleStats:old,__scaleStatsOwner:owner,entry:owner,phase:'end',p:{kind:'current-observation'}});vm.runInContext(recorder,c);assert.equal(vm.runInContext('(()=>{'+capture+'return __scaleSendStats;})()',c),null);vm.runInContext('(()=>{'+terminal+'})()',c);assert.equal(c.__scaleStats,null);assert.equal(c.__vaiwlScaleTrace.events.length,1);
  c.__scaleStats=old;c.__scaleStatsOwner=owner;c.entry={terminal:false};vm.runInContext(beginClear,c);assert.equal(vm.runInContext('(()=>{'+capture+'return __scaleSendStats;})()',c),null);c.phase='cancel';vm.runInContext('(()=>{'+terminal+'})()',c);assert.equal(c.__vaiwlScaleTrace.events.length,1,'begin registration failure must not emit old stats');
  Object.assign(c,{__scaleStats:{producer:2},__scaleStatsOwner:{},surfaceEpoch:2,surfaceSnapshotEpoch:1,pass:{},surfaceParts:[{}],surfaceScanning:true,surfaceCursor:{}});vm.runInContext(reset,c);assert.equal(c.__scaleStats,null);assert.equal(c.__scaleStatsOwner,null);assert.equal(c.__vaiwlScaleTrace.events.length,2);assert.equal(c.__vaiwlScaleTrace.events[1].producer,2);assert.equal(c.__vaiwlScaleTrace.events[1].ok,false);
- assert(out.includes("function stop(){nativePrepareAt=null;idleRevision++;finishPass('cancel');__scaleStats=null;__scaleStatsOwner=null;"));
+ assert(out.includes("function stop(){surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');__scaleStats=null;__scaleStatsOwner=null;"));
 });
 test('native terminal and phase offsets share monotonic clock despite wall clock jump',async()=>{const out=await actual(0),hook=out.match(/__scaleEmit\("native-commit",\{[^;]+;/)[0];let t=20;const c=vm.createContext({TextEncoder,Date:{now:()=>1},performance:{now:()=>t},__scaleStages:{queuedMs:5},__scaleMono:10,__scaleProducer:1,result:{revision:2,ok:true},expectedRevision:1});vm.runInContext(recorder+hook,c);assert.equal(c.__vaiwlScaleTrace.events[0].elapsed,10);assert.equal(c.__vaiwlScaleTrace.events[0].at,1);assert.equal(c.__vaiwlScaleTrace.events[0].elapsed-c.__vaiwlScaleTrace.events[0].queuedMs,5);});
 
@@ -190,7 +190,7 @@ test('classic trace rebuild follows instrumented source and rejects stale or for
 });
 
 test('publication cause anchors reject omission and duplication',async()=>{
- for(const [index,anchor]of [[2,'  requestScan(owned);'],[2,'  if(surfaceChanged)requestScan();else schedule();'],[2,"failedKey.delete('current-object');requestScan(true);return true;"],[2,'     if(!surfaceScanning){for(const cache'],[5,'   let result;'],[5,'   if(!result.ok)return result.reason']]){
+ for(const [index,anchor]of [[2,'  requestScan(owned,true);'],[2,'  if(surfaceChanged)requestScan();else schedule();'],[2,"failedKey.delete('current-object');requestScan(true,true);return true;"],[2,'     if(!surfaceScanning){for(const cache'],[5,'   let result;'],[5,'   if(!result.ok)return result.reason']]){
   const source=await readFile(join(root,TRACE_PATHS[index]),'utf8');for(const replacement of ['',anchor+anchor])assert.throws(()=>instrumentScaleSource(TRACE_PATHS[index],source.replace(anchor,replacement)),/anchor-mismatch/);
  }
 });
@@ -203,7 +203,7 @@ test('actual page decision distinguishes equal facts from detached forced public
 });
 test('actual scan cause callsites preserve request count and argument',async()=>{
  const out=await actual(2);
- for(const [name,tail]of [['renewalCause','requestScan(true);return true;'],['toggleCause','requestScan(owned);'],['mutationCause','requestScan();'],['initialCause','requestScan(true);']]){
+ for(const [name,tail]of [['renewalCause','requestScan(true,true);return true;'],['toggleCause','requestScan(owned,true);'],['mutationCause','requestScan();'],['initialCause','requestScan(true);']]){
   const re=new RegExp("__scaleEmit\\('scan-cause',\\{adapterOrdinal:__scaleAdapter,"+name+"[^;]+;"),emit=out.match(re)?.[0];assert(emit);assert(out.includes(emit+tail));
   let calls=0,arg;const c=vm.createContext({TextEncoder,Date,performance,__scaleAdapter:3,owned:true,requestScan:value=>{calls++;arg=value;}});vm.runInContext(recorder+'(()=>{'+emit+tail+'})()',c);assert.equal(calls,1);assert.equal(arg,name==='mutationCause'?undefined:true);assert.equal(c.__vaiwlScaleTrace.events[0][name],true);
  }

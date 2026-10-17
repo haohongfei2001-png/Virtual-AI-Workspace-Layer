@@ -134,28 +134,6 @@ jobs:
         id: native_visibility
         if: ${{ !cancelled() }}
         run: FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/native-visibility-smoke.mjs "$RUNNER_TEMP/native-visibility.json"
-      - name: J2 and J4 prerequisites (partial coverage only)
-        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
-        run: |
-          command -v xvfb-run
-          set +e
-          FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j2-j4-package-prerequisites.mjs "$RUNNER_TEMP/j2-j4.json"
-          result=$?
-          set -e
-          test "$result" -eq 2
-          node -e "const r=require(process.env.RUNNER_TEMP+'/j2-j4.json'); if(r.status!=='PARTIAL_J2_J4_NOT_ACCEPTED') process.exit(1); console.log(r.status)"
-      - name: Continuous J4 context assets and lifecycle slice
-        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
-        run: |
-          set +e
-          FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j4-package-journey.mjs "$RUNNER_TEMP/j4-journey.json"
-          result=$?
-          set -e
-          test "$result" -eq 2
-          node -e "const r=require(process.env.RUNNER_TEMP+'/j4-journey.json'); if(r.status!=='PARTIAL_J4_NOT_ACCEPTED') process.exit(1); console.log(r.status)"
-      - name: Separate instrumented J4 scope baseline diagnostic
-        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
-        run: FREE_J4_SCOPE_TRACE=1 FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j4-package-journey.mjs "$RUNNER_TEMP/j4-scope-trace.json"
       - name: Real browser and IDB guard mutation counterexamples
         if: ${{ !cancelled() }}
         run: FREE_SOURCE_COMMIT="$GITHUB_SHA" node tests/host/guard-mutations-browser.runner.mjs "$RUNNER_TEMP/guard-browser.json"
@@ -213,6 +191,62 @@ jobs:
         run: |
           echo "Source commit: $GITHUB_SHA"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          for name in native-visibility j2-j4 j4-journey j4-scope-trace guard-browser joint-observation joint-observation-mutant existing-source-pending-repair sys02-pending-idb historical-host historical-pro sys05-stream sys05-work host-scale-10k-project visibility-probe; do
+          for name in native-visibility guard-browser joint-observation joint-observation-mutant existing-source-pending-repair sys02-pending-idb historical-host historical-pro sys05-stream sys05-work host-scale-10k-project visibility-probe; do
+            if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
+          done
+
+  offline-j4-lifecycle:
+    # Public repository + standard GitHub-hosted runner only. No paid runner,
+    # artifact/cache upload, credentials, deployment or private host access.
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Install locked Host build tool
+        run: npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
+      - name: Install locked test tools and isolated Chromium
+        run: |
+          npm ci --prefix tests/b1/tooling --ignore-scripts
+          tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
+          node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
+      - name: J4 native visibility startup prerequisite
+        id: native_visibility
+        if: ${{ !cancelled() }}
+        run: FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/native-visibility-smoke.mjs "$RUNNER_TEMP/native-visibility.json"
+      - name: J2 and J4 prerequisites (partial coverage only)
+        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
+        run: |
+          command -v xvfb-run
+          set +e
+          FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j2-j4-package-prerequisites.mjs "$RUNNER_TEMP/j2-j4.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node -e "const r=require(process.env.RUNNER_TEMP+'/j2-j4.json'); if(r.status!=='PARTIAL_J2_J4_NOT_ACCEPTED') process.exit(1); console.log(r.status)"
+      - name: Continuous J4 context assets and lifecycle slice
+        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
+        run: |
+          set +e
+          FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j4-package-journey.mjs "$RUNNER_TEMP/j4-journey.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node -e "const r=require(process.env.RUNNER_TEMP+'/j4-journey.json'); if(r.status!=='PARTIAL_J4_NOT_ACCEPTED') process.exit(1); console.log(r.status)"
+      - name: Separate instrumented J4 scope baseline diagnostic
+        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
+        run: FREE_J4_SCOPE_TRACE=1 FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j4-package-journey.mjs "$RUNNER_TEMP/j4-scope-trace.json"
+      - name: Publish bounded text evidence to logs only
+        if: ${{ !cancelled() }}
+        run: |
+          echo "Source commit: $GITHUB_SHA"
+          echo 'Independent J4 runner; original journey order and gates retained.'
+          for name in native-visibility j2-j4 j4-journey j4-scope-trace; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done

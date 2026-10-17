@@ -138,9 +138,9 @@ if(process.env.HOST_SCALE_RUN!=='1'){
      cpuProfile.finished.then(value=>{report.workerCPUProfile=value;cpuTransport.close();},()=>cpuTransport.close());
     }catch{report.workerCPUProfile={kind:'DIAGNOSTIC_ONLY_HOST_SCALE_WORKER_CPU',status:'UNAVAILABLE',reason:'setup-failed'};cpuTransport?.close();}
    }
-   report.nativeMemberProgress=await waitHostScaleMemberProgress({page,extensionId:id,url:server.origin+projectPath,projectId:projectPath.split('/')[2],id:tail.id,deadline:memberReturnDeadline});
+   report.nativeMemberProgress=await waitHostScaleMemberProgress({page,extensionId:id,url:server.origin+projectPath,projectId:projectPath.split('/')[2],id:tail.id,size:scenario.size,distribution:scenario.distribution,deadline:memberReturnDeadline});
    report.nativeMemberProgress.scenario='VISIBLE_NATIVE_READING_BEFORE_RETURN_NOT_IMMEDIATE_RETURN';
-   // Tail progress is not completeness: the unchanged full ID audit follows.
+   // Full same-revision reading audit precedes return; the unchanged post-return audit follows.
   }
   report.phase='return-workspace-local-search';
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click(memberReturnDeadline===null?{}:{timeout:memberReturnRemaining()});

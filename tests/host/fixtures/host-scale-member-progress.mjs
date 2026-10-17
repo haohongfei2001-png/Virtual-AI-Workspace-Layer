@@ -1,3 +1,4 @@
+import {auditHostScaleIndex} from './host-scale-audit.mjs';
 /** Test-only exact-tail progress, never full membership or performance proof.
  * This function is self-contained for an existing exact extension frame.
  * Optional readers are pure test doubles and are never sent to the Host.
@@ -46,16 +47,17 @@ export function hostScaleMemberReadingVisible({url,projectId}){
 /** One caller-owned deadline covers this prerequisite and the later return.
  * Replaced readonly frames may be observed anew; no UI action is retried here.
  */
-export async function waitHostScaleMemberProgress({page,extensionId,url,projectId,id,deadline,now=()=>performance.now(),pause=ms=>new Promise(r=>setTimeout(r,ms))}){
+export async function waitHostScaleMemberProgress({page,extensionId,url,projectId,id,size=null,distribution=null,deadline,now=()=>performance.now(),pause=ms=>new Promise(r=>setTimeout(r,ms))}){
+ if(size!==null&&(![1000,10000,100000].includes(size)||distribution!=='single-project'))throw Error('invalid-member-complete-audit');
  if(!Number.isFinite(deadline)||deadline<=now())throw Error('host-scale-member-deadline');
  const frameURL=`chrome-extension://${extensionId}/workspace.html`,current=()=>{const frames=page.frames().filter(frame=>frame.url()===frameURL&&!frame.isDetached());if(frames.length>1)throw Error('member-progress-ambiguous-frame');return frames[0]??null;};
- let scopeSelector=null,scopeFrame=null,attempts=0;
+ let scopeSelector=null,scopeFrame=null,attempts=0,stableRevision=null;
  const remaining=()=>{const value=deadline-now();if(!(value>0))throw Error('host-scale-member-deadline');return value;};
  const bounded=async operation=>{const duration=remaining();let timer;try{return await Promise.race([Promise.resolve().then(()=>{remaining();return operation();}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('host-scale-member-deadline')),duration);})]);}finally{clearTimeout(timer);}};
  const native=async()=>{if(page.isClosed())throw Error('native-parent-closed');const visible=await bounded(()=>page.evaluate(hostScaleMemberReadingVisible,{url,projectId}));if(page.isClosed())throw Error('native-parent-closed');if(!visible)throw Error('member-progress-native-reading-not-visible');remaining();};
  while(now()<deadline){
   await native();const frame=current();
-  if(frame!==scopeFrame){scopeSelector=null;scopeFrame=frame;}
+  if(frame!==scopeFrame){scopeSelector=null;scopeFrame=frame;stableRevision=null;}
   if(frame){
    let result;
    try{const ready=await bounded(()=>frame.evaluate(()=>document.readyState!=='loading'));if(ready&&current()===frame&&!frame.isDetached())result=await bounded(()=>frame.evaluate(readHostScaleMemberProgress,{id,projectId,scopeSelector}));}
@@ -63,8 +65,26 @@ export async function waitHostScaleMemberProgress({page,extensionId,url,projectI
    remaining();await native();
    if(result&&!frame.isDetached()&&current()===frame){
     attempts++;scopeSelector=result.scopeSelector??scopeSelector;
-    if(result.status==='OBSERVED_TAIL_ONLY')return {status:result.status,revision:result.revision,attempts,remainingMs:remaining(),acceptance:'NOT_ESTABLISHED'};
-    if(!['PENDING_INDEX','PENDING_MEMBER'].includes(result.status))throw Error('invalid-member-progress-result');
+    if(result.status==='OBSERVED_TAIL_ONLY'){
+     if(size===null)return {status:result.status,revision:result.revision,attempts,remainingMs:remaining(),acceptance:'NOT_ESTABLISHED'};
+     // Priority tails arrive before the middle of the native list. Keep reading
+     // visible until independently enumerated facts pass twice at one revision.
+     let audit;
+     try{audit=await bounded(()=>frame.evaluate(auditHostScaleIndex,{size,distribution,requireProjectMembership:true,limit:500,timeoutMs:Math.min(30000,remaining())}));}
+     catch(error){if(page.isClosed()||!frame.isDetached()&&current()===frame||error.message==='host-scale-member-deadline')throw error;stableRevision=null;continue;}
+     remaining();await native();
+     if(frame.isDetached()||current()!==frame){stableRevision=null;continue;}
+     if(audit.status==='PASS_INDEX_AUDIT_ONLY'){
+      if(!Number.isSafeInteger(audit.revision)||audit.revision<0)throw Error('invalid-member-audit-revision');
+      if(stableRevision===audit.revision)return {status:'OBSERVED_COMPLETE_INDEX',revision:audit.revision,audit,stableSamples:2,attempts,remainingMs:remaining(),acceptance:'NOT_ESTABLISHED'};
+      stableRevision=audit.revision;
+     }else{
+      stableRevision=null;
+      if(!['NOT_RUN_INDEX_ABSENT','UNSTABLE_REVISION','FAIL_INDEX_CARDINALITY','FAIL_PROJECT_MEMBERSHIP'].includes(audit.status))throw Error('member-progress-index-audit-failed:'+audit.status);
+     }
+    }
+    if(result.status!=='OBSERVED_TAIL_ONLY')stableRevision=null;
+    if(!['PENDING_INDEX','PENDING_MEMBER','OBSERVED_TAIL_ONLY'].includes(result.status))throw Error('invalid-member-progress-result');
    }
   }
   await pause(Math.min(100,remaining()));

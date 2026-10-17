@@ -34,7 +34,7 @@ test('tail PROJECT cannot certify a genuinely hidden middle member or trigger ti
  assert.equal(result.status,'NOT_RUN_INDEX_NOT_READY');assert.equal(result.before.status,'FAIL_PROJECT_MEMBERSHIP');assert.equal(result.before.projectMembership,999);assert.equal(result.before.unknownMembership,1);assert.equal(result.samples,null);assert.equal(measured,0);
 });
 test('return surfaces consume the caller deadline rather than resetting thirty seconds',async()=>{let time=29950,observations=0;const page={isClosed:()=>false,frames:()=>[],locator:()=>({count:async()=>0})};await assert.rejects(waitHostScaleSurfaces(page,{extensionId,deadline:30000,timeout:30000,now:()=>time,pause:async ms=>time+=ms,onObservation:()=>observations++}),/surfaces-deadline/);assert.equal(time,30000);assert.equal(observations,1);});
-test('runner hashes helper and retains full audit; no acceptance by tail or repeated audit loop',async()=>{const runner=await readFile(new URL('./host-scale-package-browser.mjs',import.meta.url),'utf8'),helper=await readFile(new URL('./fixtures/host-scale-member-progress.mjs',import.meta.url),'utf8');assert(runner.includes("'fixtures/host-scale-member-progress.mjs'"));assert(runner.includes('memberReturnDeadline=performance.now()+30000'));assert(runner.includes('surfaces(page,{deadline:memberReturnDeadline})'));assert(runner.includes('measureAtAdmittedScale({audit,measure:async()=>'));assert(runner.includes("requireProjectMembership:scenario.distribution==='single-project'"));assert(helper.includes('member-progress-refuses-write-transaction'));assert(helper.includes('member-progress-refuses-schema-upgrade'));assert(!helper.includes('.count('));assert(!helper.includes('auditHostScaleIndex'));assert(!helper.includes('hostObservationGate:'));});
+test('runner hashes helper and retains full audit; no acceptance by tail and preserves independent post-return audit',async()=>{const runner=await readFile(new URL('./host-scale-package-browser.mjs',import.meta.url),'utf8'),helper=await readFile(new URL('./fixtures/host-scale-member-progress.mjs',import.meta.url),'utf8');assert(runner.includes("'fixtures/host-scale-member-progress.mjs'"));assert(runner.includes('memberReturnDeadline=performance.now()+30000'));assert(runner.includes('surfaces(page,{deadline:memberReturnDeadline})'));assert(runner.includes('measureAtAdmittedScale({audit,measure:async()=>'));assert(runner.includes("requireProjectMembership:scenario.distribution==='single-project'"));assert(helper.includes('member-progress-refuses-write-transaction'));assert(helper.includes('member-progress-refuses-schema-upgrade'));assert(!helper.includes('.count('));assert(helper.includes('frame.evaluate(auditHostScaleIndex'));assert(runner.includes('size:scenario.size,distribution:scenario.distribution,deadline:memberReturnDeadline'));assert(!helper.includes('hostObservationGate:'));});
 
 function nativeFixture(){
  const node=parent=>({parentElement:parent,isConnected:true,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:key=>key==='data-project-id'?projectId:null});
@@ -52,3 +52,31 @@ test('a replaced frame cannot reuse a selector from its predecessor pending read
 });
 
 test('parent closure during the post-read native observation rejects before accepting tail',async()=>{const f=waiting({results:['OBSERVED_TAIL_ONLY']});let checks=0;f.page.evaluate=async()=>{if(++checks===2)f.close();return true;};await assert.rejects(waitHostScaleMemberProgress(f.args),/native-parent-closed/);assert.equal(f.state().reads,1);});
+
+function completeWaiting(audits){
+ const f=waiting({results:Array(10).fill('OBSERVED_TAIL_ONLY')});let auditReads=0;const original=f.frame.evaluate;
+ f.frame.evaluate=async(fn,input)=>{if(fn!==auditHostScaleIndex)return original(fn,input);auditReads++;assert.equal(input.size,10000);assert.equal(input.distribution,'single-project');assert.equal(input.requireProjectMembership,true);assert(input.timeoutMs<=f.args.deadline-f.state().time);return audits.shift()??{status:'UNSTABLE_REVISION',revision:99};};
+ Object.assign(f.args,{size:10000,distribution:'single-project'});return {...f,auditReads:()=>auditReads};
+}
+const complete=revision=>({status:'PASS_INDEX_AUDIT_ONLY',revision,distinctRefs:10000,projectMembership:10000,missingRefs:0,wrongProjectMembership:0,unknownMembership:0});
+test('priority tail cannot finish scale preparation before complete exact membership stabilizes',async()=>{
+ const f=completeWaiting([{status:'FAIL_INDEX_CARDINALITY',revision:1,distinctRefs:765,projectMembership:255,unknownMembership:510},complete(2),complete(2)]);
+ const result=await waitHostScaleMemberProgress(f.args);assert.equal(f.auditReads(),3);assert.equal(result.status,'OBSERVED_COMPLETE_INDEX');assert.equal(result.revision,2);assert.equal(result.remainingMs,29800);assert.equal(result.acceptance,'NOT_ESTABLISHED');
+});
+test('unstable or constantly changing complete audits never authorize return',async()=>{
+ const f=completeWaiting([complete(1),{status:'UNSTABLE_REVISION',revision:1},complete(2),complete(3)]);f.args.deadline=350;
+ await assert.rejects(waitHostScaleMemberProgress(f.args),/member-deadline/);assert.equal(f.auditReads(),4);assert.equal(f.state().time,350);
+});
+test('complete scale gate leaves only caller remaining time for return surfaces',async()=>{
+ const f=completeWaiting([complete(2),complete(2)]);f.args.deadline=150;const result=await waitHostScaleMemberProgress(f.args);assert.equal(result.remainingMs,50);
+ const page={isClosed:()=>false,frames:()=>[],locator:()=>({count:async()=>0})};await assert.rejects(waitHostScaleSurfaces(page,{extensionId,deadline:f.args.deadline,now:()=>f.state().time,pause:async ms=>f.setTime(f.state().time+ms)}),/surfaces-deadline/);assert.equal(f.state().time,150);
+});
+
+test('full count with wrong or UNKNOWN membership never satisfies complete scale readiness',async()=>{
+ const f=completeWaiting([{status:'FAIL_PROJECT_MEMBERSHIP',revision:1,distinctRefs:10000,projectMembership:9999,unknownMembership:1},{status:'FAIL_PROJECT_MEMBERSHIP',revision:2,distinctRefs:10000,projectMembership:10000,wrongProjectMembership:1}]);f.args.deadline=150;
+ await assert.rejects(waitHostScaleMemberProgress(f.args),/member-deadline/);assert.equal(f.auditReads(),2);
+});
+test('a complete audit arriving after the absolute deadline cannot authorize return',async()=>{
+ const f=completeWaiting([complete(1)]),original=f.frame.evaluate;f.frame.evaluate=async(fn,input)=>{const result=await original(fn,input);if(fn===auditHostScaleIndex)f.setTime(30000);return result;};
+ await assert.rejects(waitHostScaleMemberProgress(f.args),/member-deadline/);assert.equal(f.auditReads(),1);
+});

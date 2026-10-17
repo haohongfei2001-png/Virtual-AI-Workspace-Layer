@@ -11,23 +11,27 @@ import {J4_SEND_C,J4_MIXED_TITLE} from './fixtures/j4-interruption.mjs';
 const poll=async(read,label)=>{const end=Date.now()+20000;let last;while(Date.now()<end){last=await read();if(last)return last;await new Promise(r=>setTimeout(r,50));}throw Error('J4-joint-timeout:'+label);};
 // Read only the currently attached extension frame. A prior frame's cached grant
 // cannot establish readiness after route replacement or worker restart.
-export async function currentJ4Grant(page,id,scopeKey,{previousGrant=null,expectedCurrentRef=null}={}){
+export async function currentJ4Grant(page,id,scopeKey,{previousGrant=null,expectedCurrentRef=null,afterTime=null,now=Date.now}={}){
  const url=`chrome-extension://${id}/workspace.html`,frame=page.frames().find(f=>!f.isDetached()&&f.url()===url);
  if(!frame)return null;
  let value;
- try{value=await frame.evaluate(()=>({grant:globalThis.j4Grant??null,scope:globalThis.j4LastScope??null,currentRef:globalThis.j4LastCurrentRef??null}));}
+ try{value=await frame.evaluate(()=>({grant:globalThis.j4Grant??null,scope:globalThis.j4LastScope??null,currentRef:globalThis.j4LastCurrentRef??null,freshness:globalThis.j4Freshness??null}));}
  catch(error){if(frame.isDetached()||!page.frames().includes(frame)||/Execution context was destroyed/.test(error.message))return null;throw error;}
  if(frame.isDetached()||frame.url()!==url||!page.frames().includes(frame)||typeof value?.grant!=='string'||!value.grant||value.grant===previousGrant||value.scope!==scopeKey||(expectedCurrentRef!==null&&value.currentRef!==expectedCurrentRef))return null;
+ if(afterTime!==null){
+  const f=value.freshness,time=now();
+  if(!Number.isFinite(afterTime)||!Number.isFinite(time)||!f||f.grantId!==value.grant||f.viewGrantId!==value.grant||![f.grantRequestedAt,f.grantReceivedAt,f.viewRequestedAt,f.viewReceivedAt,f.expiresAt].every(Number.isFinite)||f.grantRequestedAt<=afterTime||f.grantReceivedAt<f.grantRequestedAt||f.viewRequestedAt<f.grantReceivedAt||f.viewRequestedAt<=afterTime||f.viewReceivedAt<f.viewRequestedAt||f.viewReceivedAt>time||f.expiresAt<=time)return null;
+ }
  return {frame,grant:value.grant};
 }
 export function waitJ4Grant(page,id,scopeKey,options){return poll(()=>currentJ4Grant(page,id,scopeKey,options),'current-authorized-frame-grant');}
 // A background peer may have surrendered its frame after the real worker stop.
 // Foregrounding is a real browser action; this read only waits for its current proof.
-export async function waitJ4PeerScope(page,id,scopeKey,{previousGrant=null,expectedCurrentRef=null,now=Date.now,sleep=ms=>new Promise(r=>setTimeout(r,ms))}={}){
+export async function waitJ4PeerScope(page,id,scopeKey,{previousGrant=null,expectedCurrentRef=null,afterTime=null,now=Date.now,sleep=ms=>new Promise(r=>setTimeout(r,ms))}={}){
  const expectedURL=page.url(),deadline=now()+15000;
  while(now()<deadline){
   assert.equal(page.url(),expectedURL,'J4-peer-native-URL-changed');
-  const current=await currentJ4Grant(page,id,scopeKey,{previousGrant,expectedCurrentRef});
+  const current=await currentJ4Grant(page,id,scopeKey,{previousGrant,expectedCurrentRef,...(afterTime===null?{}:{afterTime,now})});
   assert.equal(page.url(),expectedURL,'J4-peer-native-URL-changed');
   if(current&&now()<deadline)return scopeKey;
   if(now()<deadline)await sleep(Math.min(50,deadline-now()));
@@ -250,6 +254,8 @@ export async function runJ4JointInterruption({a,b,id,server,cdp,debugEndpoint,pa
  const waitedForFormalBudgetMs=await budgetWindow();await a.bringToFront();await a.locator('#model-button').click();await a.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();await a.locator(`aside nav[aria-label="Chat history"] a[href="/c/${J4_SEND_C}"]`).click();await a.waitForURL(server.origin+'/c/'+J4_SEND_C);await a.locator('[data-message-id="j4_original_old"]').first().waitFor();
  const before=await poll(async()=>{const v=await inspect();return v.ref?.nativeTitle==='Membership not loaded'?v:null;},'original-current-native-title');assert.equal(before.pending.length,0);const acceptsBefore=server.snapshot().interruption.accepts;assert.equal(acceptsBefore,1);
  const lifecycle=await context.newCDPSession(await inspector()),versions=[];lifecycle.on('ServiceWorker.workerVersionUpdated',e=>versions.push(...e.versions));await lifecycle.send('ServiceWorker.enable');const running=await poll(()=>versions.find(v=>v.scriptURL===`chrome-extension://${id}/extension/worker.mjs`&&v.runningStatus==='running'),'worker-running');
+ const peerBefore=await currentJ4Grant(b,id,key(team));assert(peerBefore,'J4-peer-before-stop-grant-required');
+ const peerNativeBefore=await b.evaluate(()=>{globalThis.j4PeerStopDocument=document;globalThis.j4PeerStopEditor=document.querySelector('textarea');return {url:location.href,draft:globalThis.j4PeerStopEditor.value};});let peerStoppedAt=null;
  const {grant:oldGrant}=await waitJ4GrantWithDiagnostic(a,id,key(personal),{},facts=>diagnostic({...facts,requests:server.snapshot().nativeRequests.slice(-64),nativeAccepts:server.snapshot().interruption.accepts}));assert(running.targetId,'J4-worker-lifecycle-target-required');const debuggerCDP=await connectJ4Debugger(debugEndpoint);let pause;try{pause=beforeNativeCommit?await pauseJ4BeforeNativeCommit(debuggerCDP,id,{packageRoot,expectedTargetId:running.targetId}):await pauseJointDrain(debuggerCDP,id,{packageRoot,expectedTargetId:running.targetId,afterEvidence});await pause.verifyControl();}catch(error){if(pause){diagnostic({stage:'joint-debugger-control-failed',reason:error.message,breakpoint:pause.diagnostics()});await pause.close();}debuggerCDP.close();throw error;}let sent,pending,traceBoundary,committedHints,committedReceipt,uncommittedFacts,entryFacts,rawBefore,rawEntry,rawAfter,workerStopped=false;
  try{
   await captureDrain('joint-before-native-send',pause);
@@ -261,7 +267,7 @@ export async function runJ4JointInterruption({a,b,id,server,cdp,debugEndpoint,pa
   if(beforeNativeCommit){uncommittedFacts=hit.facts;assert.equal(uncommittedFacts.scopeKey,key(personal));}
   else {const durable=await inspect();pending=durable.pending.find(r=>r.nativeWitness&&r.evidence.batch.hints.some(h=>h.messageId===sent.id));assert(pending,'SYS01_REAL_PACKAGE_NATIVE_PENDING_ATOMIC');assert.equal(pending.state,'pending-evidence');assert.equal(durable.ref.nativeTitle,J4_MIXED_TITLE);committedHints=Object.values(durable.evidence.hints).filter(h=>h.messageId===sent.id);assert.equal(committedHints.length,afterEvidence?1:0);if(afterEvidence){committedReceipt=await evidenceReceipt(pending);assert(committedReceipt.payload.revision<=durable.evidence.revision);const original=pending.evidence.batch.hints.find(h=>h.messageId===sent.id);assert.equal(committedHints[0].firstObservedAt,original.firstObservedAt);assert.deepEqual(committedHints[0].ackWitness,original.ackWitness);}assert.notEqual(pending.nativeWitness.profileId,pending.admission.profileId);assert.deepEqual(await assets(personal),preserved);
   record('same-J4-native-send-renames-current-C-and-authenticated-ACK-commits-real-joint-pending',{messageId:sent.id,nativeTitle:durable.ref.nativeTitle,nativeOperationId:pending.operationId,payloadDigest:pending.payloadDigest,nativeWitness:pending.nativeWitness,ackAdmission:pending.admission,pauseBoundary:afterEvidence?'UNMODIFIED_PRODUCTION_AFTER_EVIDENCE_BEFORE_COMPLETE':'UNMODIFIED_PRODUCTION_DRAIN_BEFORE_EVIDENCE_APPLY',breakpointBoundary:traceBoundary,waitedForFormalBudgetMs});}
-  const stopIndex=versions.length;await lifecycle.send('ServiceWorker.stopWorker',{versionId:running.versionId});await poll(()=>versions.slice(stopIndex).some(v=>v.versionId===running.versionId&&v.runningStatus==='stopped'),'worker-stopped');workerStopped=true;
+  const stopIndex=versions.length;await lifecycle.send('ServiceWorker.stopWorker',{versionId:running.versionId});await poll(()=>versions.slice(stopIndex).some(v=>v.versionId===running.versionId&&v.runningStatus==='stopped'),'worker-stopped');workerStopped=true;peerStoppedAt=Date.now();
  }catch(error){if(beforeNativeCommit)diagnostic({stage:'before-native-interruption-failed',reason:error.message,breakpoint:pause.diagnostics(),entryFacts,triggerBefore:rawBefore,transactionEntry:rawEntry});else await captureDrain('joint-interruption-failed',pause);throw error;}finally{await pause.close();debuggerCDP.close();}
  if(beforeNativeCommit){
   rawAfter=await readJ4NativeRawSnapshot(await inspector());
@@ -314,7 +320,9 @@ let recovered;try{recovered=await poll(async()=>{const v=await inspect(),matches
 
  }
 
- try{assert.equal(await waitJ4PeerScope(b,id,key(team)),key(team));foregroundRecovered=true;}
+ try{assert.equal(await waitJ4PeerScope(b,id,key(team),{previousGrant:peerBefore.grant,afterTime:peerStoppedAt}),key(team));
+  if(!codecRoundTrip){const peerNativeAfter=await b.evaluate(()=>({sameDocument:document===globalThis.j4PeerStopDocument,sameEditor:document.querySelector('textarea')===globalThis.j4PeerStopEditor,url:location.href,draft:document.querySelector('textarea').value}));assert.deepEqual(peerNativeAfter,{sameDocument:true,sameEditor:true,...peerNativeBefore});}
+  foregroundRecovered=true;}
  catch(error){try{diagnostic({stage:'joint-peer-scope-after-real-worker-stop',status:'FAIL',reason:error.message,...await j4ReadinessFacts(b,id)});}catch{}if(error.message!=='J4-peer-current-scope-timeout')throw error;}
  if(!foregroundRecovered){const recovery=await recoverJ4PeerByNativeNavigation({page:b,id,scopeKey:key(team),server,assets,scope:team,preserved:teamAssets,onHop:diagnostic});record('peer-real-native-navigation-establishes-new-C2-after-worker-memory-loss',{...recovery,automaticForegroundRecovery:'NOT_ESTABLISHED',foregroundFailure:'J4-peer-current-scope-timeout',authority:'NEW_NATIVE_REQUEST_AND_FRESH_AUTHENTICATION'});}
  await a.bringToFront();assert.equal(await waitJ4PeerScope(a,id,key(personal)),key(personal));assert.deepEqual(await assets(personal),preserved);

@@ -19,7 +19,7 @@ const publicationKey=source=>sha256(JSON.stringify([source.routeEpoch,{...source
 export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,priorityConversationId=()=>null,isOwnedSurface=()=>false,snippetsFactory=createNativeSnippets,bodyProof=null,inputRisk=null,authorize=()=>false,beforeDispatch=()=>{},onNativeDispatch=()=>{},onNativeDispatchCancelled=()=>{},onRebindNeeded=()=>{},onSurfaceChange=()=>{},onObservationIssue=()=>{},onFirstSendIntent=null,onOldSendOperation=null,onNativePrepare=null,now=Date.now,elapsedNow=()=>performance.now(),scheduleRetry=(fn,ms)=>setTimeout(fn,ms),cancelRetry=id=>clearTimeout(id)}={}){
  if(!document?.defaultView)throw Error('invalid-host-document');
  inputRisk=inputRisk??createNativeInputRisk({document,profile});
- let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[],surfaceParts=[],surfaceKey=null,surfaceSequence=null,surfaceWanted=true,surfaceScanning=false,surfaceCursor=null,surfacePage=0,surfacePageKey=null,surfaceEpoch=0,surfaceSnapshotEpoch=0;const surfaceAccepted=new Map(),surfaceFailed=new Map();
+ let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[],surfaceParts=[],surfaceKey=null,surfaceSequence=null,surfaceWanted=true,surfaceScanning=false,surfaceCursor=null,surfacePage=0,surfacePageKey=null,surfaceEpoch=0,surfaceSnapshotEpoch=0,surfaceRetryWanted=false;const surfaceAccepted=new Map(),surfaceFailed=new Map();
  let ingestionPass=null,pass=null,passSequence=0,cursorRestarts=0,activeWork=0,loadedReads=0,idleRevision=0,nativePrepareAt=null;
  async function track(work){activeWork++;try{return await work();}finally{activeWork--;}}
  // A revocable observation-readiness snapshot, never a freeze or close permit.
@@ -60,7 +60,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
   const keys=['documentToken','producerToken','browserDocumentId','routeEpoch','origin'];
   if(!next||Object.keys(next).sort().join(',')!==[...keys,'expiresAt'].sort().join(',')||keys.some(key=>next[key]!==binding[key]))throw Error('invalid-host-binding-renewal');
   const expiry=Date.parse(next.expiresAt),time=now();if(!Number.isFinite(expiry)||expiry<=time||expiry>time+20000)throw Error('invalid-host-binding-renewal');
-  binding=Object.freeze({...next});last.delete('current-object');failedKey.delete('current-object');requestScan(true);return true;
+  binding=Object.freeze({...next});last.delete('current-object');failedKey.delete('current-object');requestScan(true,true);return true;
  }
  function proposal(page=false){if(!live())throw Error('stale-host-binding');syncRoute();const found=page?discovery.scanPage(surfaceCursor):null,payload=found?found.payload:discovery.scan();if(found){surfaceCursor=found.cursor;surfaceScanning=found.cursor!==null;}return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'surface-delta',payload};}
  // Private content-side iterator yields bounded packets without aggregating them. This does not fetch unmounted history or authorize any native action.
@@ -109,7 +109,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  function bounded(p){if(p.kind==='send-candidate')return new TextEncoder().encode(JSON.stringify(p)).length<=65536;if(p.kind==='current-object')return p.payload.messageIds.length<=256&&new TextEncoder().encode(JSON.stringify(p)).length<=65536;return p.payload.candidates.length<=256&&p.payload.membershipClaims.length<=256&&p.payload.detachedHandles.length<=512&&new TextEncoder().encode(JSON.stringify(p)).length<=65536;}
  function issue(reason){try{onObservationIssue({reason});}catch{/* Diagnostics cannot authorize a retry. */}}
  async function pump(){
-  queued=false;if(!live()||busy)return;if(surfaceEpoch!==surfaceSnapshotEpoch){pass=null;surfaceParts=[];surfaceScanning=false;surfaceCursor=null;surfaceSnapshotEpoch=surfaceEpoch;}dirty=false;const run=generation;let p,key,intentItem=null;
+  queued=false;if(!live()||busy)return;if(surfaceRetryWanted){surfaceFailed.clear();surfaceRetryWanted=false;}if(surfaceEpoch!==surfaceSnapshotEpoch){pass=null;surfaceParts=[];surfaceScanning=false;surfaceCursor=null;surfaceSnapshotEpoch=surfaceEpoch;}dirty=false;const run=generation;let p,key,intentItem=null;
   if(ingestionPass&&!pass&&(surfaceScanning||surfaceWanted)){busy=true;await beginPass();if(run!==generation)return;busy=false;if(!live())return;if(surfaceEpoch!==surfaceSnapshotEpoch){schedule();return;}}
   try{while(intents.length&&!p){intentItem=intents.shift();if(!intentCurrent(intentItem))continue;p=intentProposal(intentItem);key=JSON.stringify([p.routeEpoch,p.payload]);}for(const candidate of p?[]:[...(bodyDiscovery?[bodyProposal()]:[])]){if(!candidate)continue;if(!bounded(candidate)){issue('host-proposal-too-large');continue;}const fingerprint=JSON.stringify([candidate.routeEpoch,candidate.payload]);if(fingerprint===last.get(candidate.kind)||fingerprint===failedKey.get(candidate.kind))continue;try{p=currentObservation(candidate,currentSurfaceSlice(discovery.scan(),candidate.payload.conversationId));}catch{failedKey.set(candidate.kind,fingerprint);issue('host-proposal-too-large');continue;}key=fingerprint;break;}
    if(!p){if(!surfaceParts.length&&(surfaceScanning||surfaceWanted)){
@@ -154,7 +154,7 @@ if(!p)return;}catch(error){
   await send();
  }
  function schedule(){idleRevision++;if(!live())return;dirty=true;if(busy||queued)return;queued=true;queueMicrotask(pump);}
- function requestScan(preserveProducerCursor=false){
+ function requestScan(preserveProducerCursor=false,retryFailures=false){
   if(preserveProducerCursor!==true)cursorRestarts=0;
   // Same-identity renewal invalidates independent loaded reads, but must not
   // starve the private finite directory pass. Never consume a pending real DOM
@@ -166,14 +166,17 @@ if(!p)return;}catch(error){
   surfaceEpoch++;if(preserve)surfaceSnapshotEpoch=surfaceEpoch;
   // The active pass is already fresh observation; renewal alone must not queue
   // another full pass behind it. Preserve any separately requested real scan.
-  if(!continuing)surfaceWanted=true;schedule();
+  // Suppress exhausted packets only for their current finite attempt. A later
+  // independent full read must be able to recover unchanged missing fragments;
+  // successful pages remain deduplicated and an active cursor keeps its budget.
+  if(!continuing){surfaceWanted=true;if(retryFailures)surfaceRetryWanted=true;}schedule();
  }
  function surfaceToggle(event){
   // Only an exact live mount node may preserve the finite directory cursor.
   // Recheck body visibility and invalidate external reads even for our masks.
   let owned=false;try{owned=!!event?.target&&isOwnedSurface(event.target)===true;}catch{}
   if(owned&&surfaceEpoch===surfaceSnapshotEpoch&&surfaceCursor)discovery?.preservePresentationCursor(surfaceCursor);
-  requestScan(owned);
+  requestScan(owned,true);
  }
  function mutations(records){
   if(!live())return;
@@ -183,7 +186,7 @@ if(!p)return;}catch(error){
   // an unrelated directory cursor or its pending bounded fragments.
   if(surfaceChanged)requestScan();else schedule();
  }
- function stop(){nativePrepareAt=null;idleRevision++;finishPass('cancel');ingestionPass=null;generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('toggle',surfaceToggle,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();}
+ function stop(){surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');ingestionPass=null;generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('toggle',surfaceToggle,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();}
  function isSameNativeRegions(inspection){
   if(!live()||document.location.href!==url||inspection?.regionEpoch!==regionEpoch)return false;
   const nodes=[one(profile.regions.history),one('main > header'),one('main > section[aria-label="Conversation"]'),one('main > form#composer'),one('main > header > .navigation-slot')];
