@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round374）
+## 最新本地检查点（2026-10-17，Round375）
+
+生产adapter原生准备事件接入content休眠恢复：同文档/producer且静稳才fresh HELLO/REFRESH同scope，以reading模式恢复，不打开workspace或重放发送。修复HELLO后REFRESH等待窗口的重复准备误触旧scan；独立红测转绿，最终相关 **73/73 L PASS**、完整Node **7159/7159 PASS**。见 [Round375](evidence/round375/README.md)。
+
+本轮尚无新增实际Chrome S；自动休眠未启用，立即发送/已聚焦Enter的前置body因果及完整UI11仍未闭合。其余81项/100k/G/U继续开放，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round374）
 
 真实扩展源IndexedDB补齐首次ACK source缺席后的修复恢复：原来源不变则原pending完成；原生来源撤销/ACK profile变化则安全退休，原始观察时间/来源记录与人工workspace保持。最终隔离headless **3/3 D PASS**，相关Node **27/27 PASS**，独立审查与初始化失败清理修复完成。见 [Round374](evidence/round374/README.md)。
 

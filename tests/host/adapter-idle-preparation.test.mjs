@@ -22,7 +22,7 @@ function fixture(options={}){
 const settle=async()=>{for(let i=0;i<100;i++)await Promise.resolve();};
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};
 function bodyFixture(options={}){const f=fixture({profile:LEGACY_SURFACE_PROFILE,...options}),root=f.reading;root.ownerDocument=f.document;root.parentElement=null;root.attrs={'data-conversation-id':C};root.style={display:'block',visibility:'visible'};root.getAttribute=k=>root.attrs[k]??null;root.getClientRects=()=>[{}];f.document.defaultView.getComputedStyle=n=>n.style;const makeMessage=id=>({ownerDocument:f.document,isConnected:true,parentElement:root,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:key=>key==='data-message-id'?id:null,get textContent(){throw Error('message-body-read');},get value(){throw Error('draft-read');}});root.children=[makeMessage('M1')];root.querySelectorAll=selector=>selector==='[data-message-id]'?root.children:[];root.contains=n=>{for(let current=n;current;current=current.parentNode??current.parentElement)if(current===root)return true;return false;};f.selectors.set('main > #reading',[root]);return {...f,makeMessage};}
-function sendFixture(){const f=bodyFixture(),editor={tagName:'TEXTAREA'},button={tagName:'BUTTON',type:'submit'};for(const node of [f.composer,editor,button])Object.assign(node,{ownerDocument:f.document,isConnected:true,parentElement:null,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:()=>null,matches:()=>false});f.composer.tagName='FORM';editor.form=button.form=f.composer;editor.parentElement=button.parentElement=f.composer;f.composer.contains=n=>n===editor||n===button;editor.contains=button.contains=()=>false;for(const n of [editor,button])for(const key of ['value','textContent','files'])Object.defineProperty(n,key,{get(){throw Error('private-native-content-read');}});f.selectors.set('#prompt-textarea',[editor]);f.selectors.set('main > form#composer > button[type="submit"]',[button]);return {...f,editor,button,click(){f.documentListeners.get('click')?.({type:'click',isTrusted:true,target:button,button:0,detail:1});}};}
+function sendFixture(options={}){const f=bodyFixture(options),editor={tagName:'TEXTAREA'},button={tagName:'BUTTON',type:'submit'};for(const node of [f.composer,editor,button])Object.assign(node,{ownerDocument:f.document,isConnected:true,parentElement:null,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:()=>null,matches:()=>false});f.composer.tagName='FORM';editor.form=button.form=f.composer;editor.parentElement=button.parentElement=f.composer;f.composer.contains=n=>n===editor||n===button;editor.contains=button.contains=()=>false;for(const n of [editor,button])for(const key of ['value','textContent','files'])Object.defineProperty(n,key,{get(){throw Error('private-native-content-read');}});f.selectors.set('#prompt-textarea',[editor]);f.selectors.set('main > form#composer > button[type="submit"]',[button]);return {...f,editor,button,click(){f.documentListeners.get('click')?.({type:'click',isTrusted:true,target:button,button:0,detail:1});}};}
 function bodyAck(p){return {state:'accepted',localSeq:p.localSeq,receiptId:'unit-receipt',...(p.kind==='current-observation'?{bodyProofId:'accepted-body-proof',bodyEpoch:7}:{})};}
 
 // Offline DOM doubles: preparation observes readiness, never grants close or suspends listeners.
@@ -90,4 +90,23 @@ test('native dispatch awaiting authorization stays pending across adapter restar
  await settle();assert.equal(token.isCurrent(),false);assert.equal(f.adapter.prepareIdle(),null);
  f.adapter.stop();await f.start(async p=>bodyAck(p));await settle();assert.equal(f.adapter.prepareIdle(),null);
  authorization.resolve(false);assert.equal((await pending).state,'blocked');await settle();assert.ok(f.adapter.prepareIdle());assert.equal(token.isCurrent(),false);
+});
+
+for(const consumed of [false,true])test('native prepare recovery callback preserves pending wake or ordinary scan: '+consumed,async t=>{
+ const calls=[],f=sendFixture({onNativePrepare:b=>{calls.push(b);return consumed;}});t.after(()=>f.adapter.stop());await f.start(async p=>bodyAck(p));await settle();
+ const token=f.adapter.prepareRecovery();assert(token?.isCurrent());
+ f.documentListeners.get('focusin')({type:'focusin',isTrusted:true,target:f.editor});
+ assert.equal(calls.length,1);assert.deepEqual(calls[0],f.binding);
+ assert.equal(token.isCurrent(),consumed);await settle();
+});
+test('expired adapter can request native preparation without renewing old body or producer',async t=>{
+ const calls=[],f=sendFixture({onNativePrepare:b=>{calls.push(b);return true;}});t.after(()=>f.adapter.stop());await f.start(async p=>bodyAck(p));await settle();f.setTime(100001);
+ const token=f.adapter.prepareRecovery();assert(token?.isCurrent());
+ f.documentListeners.get('pointerdown')({type:'pointerdown',isTrusted:true,target:f.editor,button:0});
+ assert.equal(calls.length,1);assert.deepEqual(calls[0],f.binding);assert(token.isCurrent());assert.equal(f.adapter.prepareIdle(),null);
+});
+test('native prepare callback retiring adapter cannot schedule its old producer',async()=>{
+ let calls=0;const f=sendFixture({onNativePrepare:()=>{calls++;f.adapter.stop();return false;}});await f.start(async p=>bodyAck(p));await settle();
+ const old=f.documentListeners.get('focusin');old({type:'focusin',isTrusted:true,target:f.editor});await settle();
+ assert.equal(calls,1);assert.equal(f.adapter.prepareRecovery(),null);old({type:'focusin',isTrusted:true,target:f.editor});assert.equal(calls,1);
 });

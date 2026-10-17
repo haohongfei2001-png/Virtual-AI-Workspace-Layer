@@ -117,7 +117,16 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   rememberRecent(s,p,result);if(['accepted','duplicate'].includes(result?.state)&&['surface-delta','current-observation'].includes(p.kind))for(const row of (p.kind==='current-observation'?p.payload.surface:p.payload).candidates)if(row.entity==='project'&&row.target?.kind==='resolved'&&row.evidence?.fieldPaths?.includes('current-project-route'))s.ackProjects.add(row.target.nativeId);return result;
  }};}
  function sameProducer(a,b){return !!a&&!!b&&['documentToken','producerToken','routeEpoch'].every(k=>a[k]===b[k]);}
- async function wake(s){
+ // A trusted native preparation offers recovery, never send/body authority.
+ function nativePrepare(s,producer){
+  if(!live(s))return false;
+  // HELLO replaces the content binding before the old adapter is restarted.
+  // Consume only that still-owned observer's repeat preparation in this gap.
+  if(s.wakePending)return sameProducer(producer,s.wakePrior);
+  if(!sameProducer(producer,s.binding)||!s.ready||!(s.controller?.dormantReady?.()||s.incompleteClose===true))return false;
+  void wake(s,'reading').catch(()=>{});return s.wakePending===true;
+ }
+ async function wake(s,mode='workspace'){
   const quiet=()=>enabled&&live(s)&&s.ready&&!s.wakePending&&!s.closing&&(s.controller?.dormantReady?.()||s.incompleteClose===true)&&typeof s.scopeKey==='string'&&!!s.scopeKey&&!activeWork&&!rawIPC&&!rebindQueued&&!restoreArmed&&!s.identityPending&&!s.capturePending&&!s.restorePending&&upgradeTimer===null&&upgradeIdentity===null;
   if(!quiet())return null;
   const preparedRevision=workRevision;
@@ -133,7 +142,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   const prior=s.binding,scope=s.scopeKey,revision=s.wakeRevision??0,started=elapsedNow();
   const remaining=()=>{const elapsed=elapsedNow()-started;if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=6000)throw Error('request-timeout');return 6000-elapsed;};
   const check=()=>{remaining();if(!enabled||!live(s)||(s.wakeRevision??0)!==revision||!s.controller.dormantReady()||!adapter.isCurrent())throw Error('stale-dormant-recovery');};
-  s.wakePending=true;s.ready=false;
+  s.wakePending=true;s.wakePrior=prior;s.ready=false;
   try{return await track(async()=>{
    check();const hello=await rpc(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq},remaining());check();
    if(!reader.isCurrent()||!bindingOK(hello?.binding)||hello.binding.producerToken===prior.producerToken||hello.binding.browserDocumentId!==prior.browserDocumentId||hello.binding.origin!==prior.origin)throw Error('invalid-host-binding');
@@ -142,10 +151,10 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    if(s.identityTask)await withRequestDeadline(()=>s.identityTask,{timeoutMs:remaining(),now:elapsedNow,schedule,cancel});check();
    if(auth?.state!=='verified'||auth.scopeKey!==scope||s.identityPending||!isolatedReader.prepareIdle?.()?.isCurrent?.())throw Error('scope-not-verified');
    clearMigration(s);s.snippetRef=null;s.snippetScopeGrant=null;s.upgraded=null;
-   const handle=await s.controller.resumeDormant(adapterOptions(s,s.binding));
+   const handle=await s.controller.resumeDormant(adapterOptions(s,s.binding),{mode});
    if(!handle||!live(s)||(s.wakeRevision??0)!==revision)throw Error('dormant-resume-failed');
    s.ready=true;return handle;
-  });}catch{if(current===s)stop();return null;}finally{s.wakePending=false;}
+  });}catch{if(current===s)stop();return null;}finally{s.wakePending=false;s.wakePrior=null;}
  }
  const bindingFields=b=>({documentToken:b.documentToken,producerToken:b.producerToken,routeEpoch:b.routeEpoch});
  function live(s){return current===s&&!s.abort.signal.aborted&&doc.location.href===s.url;}
@@ -275,7 +284,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    const auth=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});if(auth?.state!=='verified')throw Error('scope-not-verified');if(expectedScope!==null&&auth.scopeKey!==expectedScope)throw Error('recovery-scope-changed');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
    if(learnedScope!==s.scopeKey||learnedDocument!==s.binding.browserDocumentId)clearLearned();learnedScope=s.scopeKey;learnedDocument=s.binding.browserDocumentId;
    recentId(s);
-   let surface;const adapter=s.adapter=adapterFactory({document:doc,priorityConversationId:()=>recentId(s),onOldSendOperation:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding))return;void send({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding)||s.url!==origin+'/')return;void send({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,authorize:async command=>{if(s.candidates?.authorize(command)!==true&&s.plans?.authorize(command)!==true)return false;const result=await rpc(s,{v:1,type:'HOST_NATIVE_AUTHORIZE',...bindingFields(s.binding),command});return result?.ok===true&&(s.candidates?.authorize(command)===true||s.plans?.authorize(command)===true);},beforeDispatch:plan=>plan?.mode==='same-target'||s.plans?.beforeDispatch?.(plan)===true?undefined:s.candidates?.beforeDispatch(),onNativeDispatch:event=>{if(event.plan.target.kind!=='live-control'||!s.scopeKey)return;const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;clearUpgrade();upgradeIdentity=identity;upgradeDisplay=s.candidates?.displayFor(event.command)??null;for(const type of ['pointerdown','keydown'])doc.addEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.addEventListener(type,upgradeRoute);upgrade.propose({actionId:event.actionId,identity,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,originalURL:s.url,expiresAt:now()+6000});upgradeTimer=schedule(clearUpgrade,6000);},onNativeDispatchCancelled:event=>{if(upgrade.cancel(event.actionId))clearUpgrade();},onRebindNeeded:()=>rebind(s)});
+   let surface;const adapter=s.adapter=adapterFactory({document:doc,onNativePrepare:producer=>nativePrepare(s,producer),priorityConversationId:()=>recentId(s),onOldSendOperation:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding))return;void send({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding)||s.url!==origin+'/')return;void send({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,authorize:async command=>{if(s.candidates?.authorize(command)!==true&&s.plans?.authorize(command)!==true)return false;const result=await rpc(s,{v:1,type:'HOST_NATIVE_AUTHORIZE',...bindingFields(s.binding),command});return result?.ok===true&&(s.candidates?.authorize(command)===true||s.plans?.authorize(command)===true);},beforeDispatch:plan=>plan?.mode==='same-target'||s.plans?.beforeDispatch?.(plan)===true?undefined:s.candidates?.beforeDispatch(),onNativeDispatch:event=>{if(event.plan.target.kind!=='live-control'||!s.scopeKey)return;const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;clearUpgrade();upgradeIdentity=identity;upgradeDisplay=s.candidates?.displayFor(event.command)??null;for(const type of ['pointerdown','keydown'])doc.addEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.addEventListener(type,upgradeRoute);upgrade.propose({actionId:event.actionId,identity,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,originalURL:s.url,expiresAt:now()+6000});upgradeTimer=schedule(clearUpgrade,6000);},onNativeDispatchCancelled:event=>{if(upgrade.cancel(event.actionId))clearUpgrade();},onRebindNeeded:()=>rebind(s)});
    s.candidates=createContentCandidates({adapter,streaming:true,current:()=>live(s)&&s.ready&&Date.parse(s.binding.expiresAt)>now(),showReading:()=>s.controller?.showReading()===true,
     beginScan:()=>{
      // Only fixed-size document identities are staged. Visiting a row cannot
