@@ -4,8 +4,12 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **4e73643冻结CI最终结果**：CI39033411366整体FAIL；Node、导航与J4通过原有partial门槛。J4实际23步、源码/manifest未变，但原peer偶发失败与自动foreground恢复未关闭。10k原期限仅6850 refs/revision150，最后tail6796/rev149、auditAttempts=0；仍是摄取未完成，不能称完整审计通过，14%提交链改善未关闭跨环境关口。
+- **peer生命周期证据保存修正**：旧trace最终才读取worker，正常uninstall后无记录，无法解释peer hop。现在仅在已有await的成功/失败hop判定之后采集，正式模式无新增worker读取，暂停事务和自然导航前不采集；无worker明确unavailable，原1500ms/容量/旅程时限保留。11项定向通过；同生产源码本地隔离trace23步完成、源码/fixture包稳定，两个peer hop快照37/45事件明确history→queued/prepared→complete→receipt。最终卸载后unavailable如实记录；仍DIAGNOSTIC_ONLY，没有复现旧失败排序，不能宣称race修复。下一10k定位同时区分观察器readonly事务本身占用和等writer时间：当前133轮tail读取并非133次全库扫描，尚不能将其全部耗时归因观察器。
+
+
 - **共享root校验抖动根因与修复**：当前root、旧checkpoint和新root的结构缓存context只有scope，交替revision会互相替换同一条目。独立最小反例原实现产生24次额外重验；现仅对正safe-integer自身data revision按scope＋revision区分现有条目，保留8条/16MiB上限、每次完整strictJSON、checksum和schema。非法revision沿用原路径，不提前执行getter/toJSON。6项独立反例及相关182项通过，独立审查通过；真实IDB生命周期7项、批量4项及retention11项通过，覆盖CAS/回滚/恢复/人工资产/5001缺失件/跨scope。
-- **同最终生产候选未插桩10k闭环**：完整10000 ID、10000确证PROJECT，零UNKNOWN/遗漏/重复/错属，两次同revision219独立审计，原30秒窗口剩余17.49秒；导航/原生编辑器/唯一返回通过，源码/fixture/manifest未漂移。摄取观察14.929秒，上一不同版本17.206秒仅单样本描述，不作因果速度比；本地仍PARTIAL_SYS04_NOT_ACCEPTED，远端跨环境关口和p95保持OPEN。最终安全实现三轮真实IDB A/B（新context，AB/BA/AB，50预置＋199×50提交、长UUID/标题、最终10000事实hash全部相同）中位5854.9→5034.5ms，减少14.0%；仅该提交链对照，不代表完整Host/p95或跨设备。此前直接revision原型的5783→4989ms及脚本导入错误保留，最终采用安全descriptor实现。最终同源码完整Node7349/7349、零skip、74.31秒通过；本候选远端矩阵尚待执行，原CI失败仍保留。
+- **同最终生产候选未插桩10k闭环**：完整10000 ID、10000确证PROJECT，零UNKNOWN/遗漏/重复/错属，两次同revision219独立审计，原30秒窗口剩余17.49秒；导航/原生编辑器/唯一返回通过，源码/fixture/manifest未漂移。摄取观察14.929秒，上一不同版本17.206秒仅单样本描述，不作因果速度比；本地仍PARTIAL_SYS04_NOT_ACCEPTED，远端跨环境关口和p95保持OPEN。最终安全实现三轮真实IDB A/B（新context，AB/BA/AB，50预置＋199×50提交、长UUID/标题、最终10000事实hash全部相同）中位5854.9→5034.5ms，减少14.0%；仅该提交链对照，不代表完整Host/p95或跨设备。此前直接revision原型的5783→4989ms及脚本导入错误保留，最终采用安全descriptor实现。最终同源码完整Node7349/7349、零skip、74.31秒通过；本候选远端矩阵已结束FAIL，见顶部最新结论；原CI失败仍保留。
 
 
 - **本次闭环证据补齐与观察器修复**：a651f24的Linux CI取消重发实际记录ERR_FAILED，一次认证operation读回后原生连续重发的exact ACK通过（retry-to-observation143ms），补齐此前只在本地ERR_ABORTED成功的真实分支覆盖；仅该窄J2子链关闭，不是完整J2/J4。C2休眠恢复六步与旧stop反向变异亦通过原CI门槛，Linux tmpdir启动缺陷已关闭。相同CI job实测Node224s/导航248s/J4230s/耐久169s；旧串行384s与当前最长248s为跨版本描述，非受控性能加速比。
