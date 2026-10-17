@@ -80,6 +80,20 @@ jobs:
           set -e
           test "$result" -eq 1
           node -e "const r=require(process.env.RUNNER_TEMP+'/context-dormant-mutant.json'); if(r.status!=='FAIL'||r.mutation!=='RESTORE_PERMANENT_STOP_AFTER_DENIED_WAKE'||r.requests.length!==2||!r.requests.every(q=>q.method==='GET'&&q.status===200)||r.errors.length!==0||r.phase!=='await-fresh-frame-after-native-GET'||r.results.at(-1)?.name!=='denied-wake-withdraws-old-projection-preserves-native-draft'||r.sourceChangedDuringRun!==false||r.cleanupErrors?.length||!r.error?.includes('J2-observation-timeout')) process.exit(1);"
+      - name: Foreground expired document transport with genuine live C2 receipt
+        if: ${{ !cancelled() }}
+        run: |
+          node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-transport-expiry.json" transport-expiry
+          node -e "const r=require(process.env.RUNNER_TEMP+'/context-transport-expiry.json'); if(r.status!=='PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY'||r.sourceChangedDuringRun!==false||r.cleanupErrors?.length||r.errors.length||r.requests.length!==1||r.requests[0].method!=='GET'||r.requests[0].status!==200||r.nativeRequestStarts.length!==1||r.forcedWorkerStop!==false||r.foregroundRecovery?.newGrant!==true||r.foregroundRecovery?.actualPostFocusVIEW!==true||r.foregroundRecovery?.sameWorker!==true||r.results.at(-1)?.name!=='new-projection-same-nonfirst-team-no-personal-writes') process.exit(1);"
+      - name: Reject stale foreground transport without a fresh handshake
+        if: ${{ !cancelled() }}
+        run: |
+          set +e
+          node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-transport-expiry-mutant.json" transport-expiry-mutant
+          result=$?
+          set -e
+          test "$result" -eq 1
+          node -e "const a=require(process.env.RUNNER_TEMP+'/context-transport-expiry.json'),r=require(process.env.RUNNER_TEMP+'/context-transport-expiry-mutant.json'); if(r.status!=='FAIL'||r.mutation!=='REMOVE_EXACT_FOREGROUND_INVALID_DOCUMENT_RECOVERY'||r.phase!=='await-fresh-foreground-grant-and-VIEW'||!r.error?.includes('J4-peer-current-scope-timeout')||r.results.at(-1)?.name!=='real-dormant-document-lease-expires-with-live-C2-no-renewal-or-native-GET'||r.transportOwner?.workerClosed!==false||!Number.isFinite(r.transportOwner?.focusedAt)||!Number.isFinite(r.transportOwner?.observationEndedAt)||r.transportOwner.observationEndedAt<=r.transportOwner.focusedAt||!r.transport?.some(t=>t.type==='HOST_FOCUS'&&t.requestedAt>r.transportOwner.focusedAt&&t.ok===false&&t.reason==='invalid-host-document')||r.transport?.some(t=>t.type==='HOST_HELLO'&&t.requestedAt>r.transportOwner.focusedAt)||r.sourceChangedDuringRun!==false||r.cleanupErrors?.length||r.errors.length||r.requests.length!==1||r.requests[0].method!=='GET'||r.requests[0].status!==200||r.nativeRequestStarts.length!==1||r.forcedWorkerStop!==false) process.exit(1); for(const k of ['sourceHashes','fixtureHashes']) if(JSON.stringify(a[k])!==JSON.stringify(r[k])) process.exit(1);"
       - name: C2 stale native failure preserves newer receipt with exact guard mutation
         if: ${{ !cancelled() }}
         run: |
@@ -128,7 +142,7 @@ jobs:
         run: |
           echo "Source commit: $GITHUB_SHA"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          for name in context-package context-cold context-cold-trace context-cold-recovery context-dormant context-dormant-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix; do
+          for name in context-package context-cold context-cold-trace context-cold-recovery context-dormant context-dormant-mutant context-transport-expiry context-transport-expiry-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done
   offline-durability-compat:
@@ -196,6 +210,7 @@ jobs:
           node tests/host/sys05-stream-package-journey.mjs "$RUNNER_TEMP/sys05-work.json" --execute-browser --observe-work
           node -e "const r=require(process.env.RUNNER_TEMP+'/sys05-work.json'); if(r.status!=='PASS_NARROW_DIAGNOSTIC_SYS05_SLICE'||r.S!=='NARROW_INSTRUMENTED_BROWSER_OBSERVED'||r.sourceCommit!==process.env.GITHUB_SHA||r.fullSYS05!=='NOT_ESTABLISHED'||r.workInstrumentation!==true||r.F1!=='DIAGNOSTIC_ONLY_NOT_ACCEPTED') process.exit(1)"
       - name: Formal Host 10k single-project membership sample
+        id: formal_host_10k
         if: ${{ !cancelled() }}
         timeout-minutes: 5
         run: |
@@ -205,6 +220,16 @@ jobs:
           set -e
           test "$result" -eq 2
           node -e "const r=require(process.env.RUNNER_TEMP+'/host-scale-10k-project.json'); if(r.status!=='PARTIAL_SYS04_NOT_ACCEPTED'||r.sourceCommit!==process.env.GITHUB_SHA||r.scenario.size!==10000||r.scenario.distribution!=='single-project'||r.measurement?.before?.projectMembership!==10000||r.measurement?.after?.projectMembership!==10000||r.measurement?.status!=='MEASURED_AT_STABLE_ADMITTED_INDEX') process.exit(1); console.log('One admitted 10k exact-project membership sample; no p95 or SYS04 acceptance claim')"
+      - name: Failure-only existing 10k worker CPU diagnostic (not acceptance)
+        if: ${{ !cancelled() && steps.formal_host_10k.outcome == 'failure' }}
+        timeout-minutes: 5
+        run: |
+          set +e
+          FREE_HOST_SCALE_CPU_PROFILE=1 HOST_SCALE_RUN=1 HOST_SCALE_SIZE=10000 HOST_SCALE_DISTRIBUTION=single-project HOST_SCALE_CPU_RATE=1 node tests/host/host-scale-package-browser.mjs "$RUNNER_TEMP/host-scale-10k-cpu-diagnostic.json"
+          result=$?
+          set -e
+          test "$result" -eq 1
+          node -e "const r=require(process.env.RUNNER_TEMP+'/host-scale-10k-cpu-diagnostic.json'); if(r.status!=='FAIL'||r.cleanupErrors?.length||r.temporaryDirectoryRemoved!==true||r.sourceCommit!==process.env.GITHUB_SHA||r.acceptance!=='NOT_ESTABLISHED'||r.measurement?.status!=='NOT_RUN_DIAGNOSTIC_WORKER_CPU'||r.workerCPUProfile?.kind!=='DIAGNOSTIC_ONLY_HOST_SCALE_WORKER_CPU'||r.workerCPUProfile?.status!=='CAPTURED'||!r.workerCPUProfile.profile?.samples?.length||r.sourceChangedDuringRun!==false||r.fixtureChangedDuringRun!==false||r.manifestChangedDuringRun!==false) process.exit(1); console.log('Diagnostic sampled a separate existing worker; formal 10k FAIL remains unchanged')"
       - name: Isolated visibility proposal experiment (not production)
         if: ${{ !cancelled() }}
         run: node tests/host/experiments/native-visibility/probe-browser.mjs "$RUNNER_TEMP/visibility-probe.json"
@@ -213,7 +238,7 @@ jobs:
         run: |
           echo "Source commit: $GITHUB_SHA"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          for name in native-visibility guard-browser joint-observation joint-observation-mutant existing-source-pending-repair sys02-pending-idb historical-host historical-pro sys05-stream sys05-work host-scale-10k-project visibility-probe; do
+          for name in native-visibility guard-browser joint-observation joint-observation-mutant existing-source-pending-repair sys02-pending-idb historical-host historical-pro sys05-stream sys05-work host-scale-10k-project host-scale-10k-cpu-diagnostic visibility-probe; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done
 

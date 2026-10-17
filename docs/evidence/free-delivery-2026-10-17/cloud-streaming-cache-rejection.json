@@ -1,0 +1,3191 @@
+{
+  "evidence": "NODE_ISOLATED_CACHE_MICROBENCHMARK_NOT_BROWSER_OR_HOST_ACCEPTANCE",
+  "node": "v24.19.0",
+  "baselineHash": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+  "variants": {
+    "stream0": "c3a8ef7eefc458df97956bfb781b5e96b1d7dbf1334eb1458e841f31cbb8b8fa",
+    "stream512": "f46d4208726b4dd90d480f30f71cde15572915650d7f7924f086a999509939f5",
+    "stream1024": "92e03b530f30636581136c4e82784f758609b5c0d4270d26834bc81eb703f1f7",
+    "stream4096": "47b77382fb4545b4110393a65088b24d819400950bfd073775532b2054ccd8b4",
+    "streaminline0": "3d2c079cdb8694d55b8d5bc33d161e31c83dc060abddea035c0086d755206cc5",
+    "streaminline512": "d8000800e1abc537bf41ca61aacef71b0441db3551547d5eeddf7835dadaf2ac",
+    "streaminline1024": "611bcfa9e373b22ea439695aca7bebd27433b87068eecf2e08b7b6ba88a30502",
+    "streaminline4096": "02204a2b048207a248da3578cfea29d7e5e26034e6a3ca0d057dc0fdbac965af"
+  },
+  "method": "same actual owner payloads, warmed caches, alternating AB/BA across 6 rounds, 12 reads per sample, GC only before timed sample; no verifier work timed",
+  "checks": [
+    "1000-vaiwl-native-version-index-v1-complete-hit-and-tail-rejection",
+    "1000-vaiwl-shared-ref-directory-v1-complete-hit-and-tail-rejection",
+    "5000-vaiwl-native-version-index-v1-complete-hit-and-tail-rejection",
+    "5000-vaiwl-shared-ref-directory-v1-complete-hit-and-tail-rejection",
+    "10000-vaiwl-native-version-index-v1-complete-hit-and-tail-rejection",
+    "10000-vaiwl-shared-ref-directory-v1-complete-hit-and-tail-rejection",
+    "control-10000-numeric-same-complete-hit-and-tail-rejection",
+    "control-10000-numeric-mixed-complete-hit-and-tail-rejection",
+    "control-10000-numeric-unique-complete-hit-and-tail-rejection"
+  ],
+  "summary": [
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "chars": 44234,
+      "medians": {
+        "baseline": 0.2156864166666684,
+        "stream0": 0.529036708333334,
+        "stream512": 0.45154091666666335,
+        "stream1024": 0.4308930416666641,
+        "stream4096": 0.4960437083333341,
+        "streaminline0": 0.5808224999999988,
+        "streaminline512": 0.4989255833333269,
+        "streaminline1024": 0.46618133333333367,
+        "streaminline4096": 0.4360902083333353
+      },
+      "ratioToBaseline": {
+        "stream0": 2.4528049401967276,
+        "stream512": 2.0935065065524974,
+        "stream1024": 1.9977755128297476,
+        "stream4096": 2.299837495561636,
+        "streaminline0": 2.6929025433142053,
+        "streaminline512": 2.3131989072097627,
+        "streaminline1024": 2.161384757269121,
+        "streaminline4096": 2.021871451493809
+      }
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "chars": 48527,
+      "medians": {
+        "baseline": 0.261653750000003,
+        "stream0": 0.535232499999997,
+        "stream512": 0.45868395833332914,
+        "stream1024": 0.4430078333333256,
+        "stream4096": 0.4481152083333342,
+        "streaminline0": 0.5503477083333337,
+        "streaminline512": 0.520007458333339,
+        "streaminline1024": 0.47143050000000153,
+        "streaminline4096": 0.5034938333333325
+      },
+      "ratioToBaseline": {
+        "stream0": 2.045575498153536,
+        "stream512": 1.7530188592111668,
+        "stream1024": 1.6931071438239296,
+        "stream4096": 1.712626737944054,
+        "streaminline0": 2.103343477146142,
+        "streaminline512": 1.987387753217116,
+        "streaminline1024": 1.801734162036646,
+        "streaminline4096": 1.9242752428861682
+      }
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "chars": 136203,
+      "medians": {
+        "baseline": 0.550763375000012,
+        "stream0": 0.9494516249999947,
+        "stream512": 0.8162788750000043,
+        "stream1024": 0.8942921250000022,
+        "stream4096": 0.9484901666666683,
+        "streaminline0": 1.121565291666665,
+        "streaminline512": 0.7585370833333325,
+        "streaminline1024": 0.7505502083333415,
+        "streaminline4096": 0.7374539166666711
+      },
+      "ratioToBaseline": {
+        "stream0": 1.723883010557799,
+        "stream512": 1.482086340617668,
+        "stream1024": 1.623732015586517,
+        "stream4096": 1.7221373274260432,
+        "streaminline0": 2.03638321387409,
+        "streaminline512": 1.377246777408385,
+        "streaminline1024": 1.3627453138715426,
+        "streaminline4096": 1.3389668778659347
+      }
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "chars": 138089,
+      "medians": {
+        "baseline": 0.5839762916666587,
+        "stream0": 1.0952027916666793,
+        "stream512": 0.9834931249999954,
+        "stream1024": 0.9481672083333212,
+        "stream4096": 0.979253958333345,
+        "streaminline0": 1.2400351666666627,
+        "streaminline512": 0.8479027083333222,
+        "streaminline1024": 0.8052912083333202,
+        "streaminline4096": 0.7288511249999867
+      },
+      "ratioToBaseline": {
+        "stream0": 1.8754233815571326,
+        "stream512": 1.6841319400024313,
+        "stream1024": 1.623639900906367,
+        "stream4096": 1.6768727982750302,
+        "streaminline0": 2.123434092037577,
+        "streaminline512": 1.4519471431167554,
+        "streaminline1024": 1.3789792836196013,
+        "streaminline4096": 1.248083416057624
+      }
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "chars": 136477,
+      "medians": {
+        "baseline": 0.5176501666666695,
+        "stream0": 0.9477390000000128,
+        "stream512": 0.8687112499999898,
+        "stream1024": 0.9311853333333602,
+        "stream4096": 0.8430527916666696,
+        "streaminline0": 1.038321499999976,
+        "streaminline512": 0.8123540833333133,
+        "streaminline1024": 0.7900203333333213,
+        "streaminline4096": 0.7659475833333431
+      },
+      "ratioToBaseline": {
+        "stream0": 1.8308484397925258,
+        "stream512": 1.6781821120505485,
+        "stream1024": 1.798869957542153,
+        "stream4096": 1.6286149333156432,
+        "streaminline0": 2.005836309656947,
+        "streaminline512": 1.56931096644737,
+        "streaminline1024": 1.5261664811595417,
+        "streaminline4096": 1.479662584222753
+      }
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "chars": 138549,
+      "medians": {
+        "baseline": 0.5622710000000097,
+        "stream0": 1.094818875000025,
+        "stream512": 0.9210998333333009,
+        "stream1024": 0.9465734583333187,
+        "stream4096": 0.9046910000000328,
+        "streaminline0": 1.0694324999999858,
+        "streaminline512": 0.8396515416666641,
+        "streaminline1024": 0.8969319999999925,
+        "streaminline4096": 0.7499439166666662
+      },
+      "ratioToBaseline": {
+        "stream0": 1.947137367924019,
+        "stream512": 1.6381777351726925,
+        "stream1024": 1.6834826237406915,
+        "stream4096": 1.6089945951329823,
+        "streaminline0": 1.9019876536402682,
+        "streaminline512": 1.4933217997489636,
+        "streaminline1024": 1.5951951994678313,
+        "streaminline4096": 1.333776624913348
+      }
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "chars": 410010,
+      "medians": {
+        "baseline": 2.5852902083333142,
+        "stream0": 3.9938563333333077,
+        "stream512": 3.0003630833333164,
+        "stream1024": 2.995895041666661,
+        "stream4096": 3.067313000000013,
+        "streaminline0": 4.048962916666673,
+        "streaminline512": 2.962778916666669,
+        "streaminline1024": 2.8745697083333352,
+        "streaminline4096": 2.7813748750000213
+      },
+      "ratioToBaseline": {
+        "stream0": 1.5448386879197087,
+        "stream512": 1.1605517530148353,
+        "stream1024": 1.1588234976521479,
+        "stream4096": 1.1864482332052961,
+        "streaminline0": 1.5661541221234732,
+        "streaminline512": 1.1460140556431822,
+        "streaminline1024": 1.111894401281361,
+        "streaminline4096": 1.0758462883720583
+      }
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "chars": 424610,
+      "medians": {
+        "baseline": 2.390431250000044,
+        "stream0": 4.064988666666674,
+        "stream512": 2.9814076249999744,
+        "stream1024": 3.0188078333333124,
+        "stream4096": 3.060459416666693,
+        "streaminline0": 3.9721907916666623,
+        "streaminline512": 2.9714899583333745,
+        "streaminline1024": 2.9630215416666488,
+        "streaminline4096": 2.9604263333333165
+      },
+      "ratioToBaseline": {
+        "stream0": 1.7005252364679382,
+        "stream512": 1.2472258405256036,
+        "stream1024": 1.262871640141609,
+        "stream4096": 1.2802959368384415,
+        "streaminline0": 1.6617046784619256,
+        "streaminline512": 1.2430769378258921,
+        "streaminline1024": 1.239534306484068,
+        "streaminline4096": 1.2384486411534579
+      }
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "chars": 438904,
+      "medians": {
+        "baseline": 2.5260278333333495,
+        "stream0": 4.3389714166666336,
+        "stream512": 3.2670172500000563,
+        "stream1024": 3.1985179583333925,
+        "stream4096": 3.2921352083333204,
+        "streaminline0": 4.507354749999952,
+        "streaminline512": 3.372148833333388,
+        "streaminline1024": 3.1166287083332613,
+        "streaminline4096": 3.1742141666666157
+      },
+      "ratioToBaseline": {
+        "stream0": 1.7177053076810012,
+        "stream512": 1.2933417466302801,
+        "stream1024": 1.2662243527667802,
+        "stream4096": 1.3032854052083087,
+        "streaminline0": 1.7843646417989154,
+        "streaminline512": 1.3349610755806662,
+        "streaminline1024": 1.2338061628642287,
+        "streaminline4096": 1.2566030052320993
+      }
+    }
+  ],
+  "rows": [
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "baseline",
+      "ms": 0.2850760833333344
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "stream0",
+      "ms": 0.5237978333333331
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "stream512",
+      "ms": 0.4067255000000003
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "stream1024",
+      "ms": 0.4626201666666674
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "stream4096",
+      "ms": 0.572825916666666
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "streaminline0",
+      "ms": 0.5768624166666664
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "streaminline512",
+      "ms": 0.5392011666666671
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "streaminline1024",
+      "ms": 0.5345174166666666
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "streaminline4096",
+      "ms": 0.5559799166666674
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "streaminline4096",
+      "ms": 0.3641250833333345
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "streaminline1024",
+      "ms": 0.484624249999996
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "streaminline512",
+      "ms": 0.544886500000004
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "streaminline0",
+      "ms": 0.589807833333334
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "stream4096",
+      "ms": 0.4391871666666655
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "stream1024",
+      "ms": 0.4559625833333314
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "stream512",
+      "ms": 0.47793258333333216
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "stream0",
+      "ms": 0.7668795000000017
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "baseline",
+      "ms": 0.22935500000000295
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "baseline",
+      "ms": 0.2551232499999969
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "stream0",
+      "ms": 0.45447024999999996
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "stream512",
+      "ms": 0.44875416666666484
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "stream1024",
+      "ms": 0.4238280000000003
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "stream4096",
+      "ms": 0.5114345833333308
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "streaminline0",
+      "ms": 0.4079599166666649
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "streaminline512",
+      "ms": 0.3278280833333345
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "streaminline1024",
+      "ms": 0.38080091666666743
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "streaminline4096",
+      "ms": 0.3883716666666667
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "streaminline4096",
+      "ms": 0.48380875000000384
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "streaminline1024",
+      "ms": 0.444847333333333
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "streaminline512",
+      "ms": 0.432396583333329
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "streaminline0",
+      "ms": 0.47144558333333464
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "stream4096",
+      "ms": 0.48430866666666833
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "stream1024",
+      "ms": 0.4314952500000023
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "stream512",
+      "ms": 0.528807999999998
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "stream0",
+      "ms": 0.5262044166666678
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "baseline",
+      "ms": 0.20201783333333387
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "baseline",
+      "ms": 0.18453349999999583
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "stream0",
+      "ms": 0.6272459166666616
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "stream512",
+      "ms": 0.4482792500000035
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "stream1024",
+      "ms": 0.4302908333333259
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "stream4096",
+      "ms": 0.4268539166666585
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "streaminline0",
+      "ms": 0.6546545833333349
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "streaminline512",
+      "ms": 0.49182266666665936
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "streaminline1024",
+      "ms": 0.5070968333333402
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "streaminline4096",
+      "ms": 0.5042291666666662
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "streaminline4096",
+      "ms": 0.2660150000000006
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "streaminline1024",
+      "ms": 0.4477384166666714
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "streaminline512",
+      "ms": 0.5060284999999946
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "streaminline0",
+      "ms": 0.5847825833333312
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "stream4096",
+      "ms": 0.50777875
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "stream1024",
+      "ms": 0.4274415000000052
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "stream512",
+      "ms": 0.45432766666666186
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "stream0",
+      "ms": 0.5318690000000004
+    },
+    {
+      "fixture": "1000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "baseline",
+      "ms": 0.19383949999999572
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "baseline",
+      "ms": 0.26247041666667315
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "stream0",
+      "ms": 0.7573427500000017
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "stream512",
+      "ms": 0.47214583333333354
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "stream1024",
+      "ms": 0.5036098333333333
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "stream4096",
+      "ms": 0.5241655
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "streaminline0",
+      "ms": 0.48673150000000004
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "streaminline512",
+      "ms": 0.4920688333333298
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "streaminline1024",
+      "ms": 0.43778650000000613
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "streaminline4096",
+      "ms": 0.4657777500000009
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "streaminline4096",
+      "ms": 0.5412099166666641
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "streaminline1024",
+      "ms": 0.46711808333334187
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "streaminline512",
+      "ms": 0.5398612500000013
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "streaminline0",
+      "ms": 0.5514681666666661
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "stream4096",
+      "ms": 0.43796091666665876
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "stream1024",
+      "ms": 0.4153504999999977
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "stream512",
+      "ms": 0.45303233333333043
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "stream0",
+      "ms": 0.6003914166666675
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "baseline",
+      "ms": 0.26083708333333294
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "baseline",
+      "ms": 0.25877391666666466
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "stream0",
+      "ms": 0.5344012499999925
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "stream512",
+      "ms": 0.466826000000007
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "stream1024",
+      "ms": 0.4528279166666683
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "stream4096",
+      "ms": 0.4508114166666625
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "streaminline0",
+      "ms": 0.7647407499999966
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "streaminline512",
+      "ms": 0.6201993333333368
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "streaminline1024",
+      "ms": 0.5587317500000021
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "streaminline4096",
+      "ms": 0.5845814166666704
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "streaminline4096",
+      "ms": 0.33659816666666603
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "streaminline1024",
+      "ms": 0.7489907500000091
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "streaminline512",
+      "ms": 0.5851823333333357
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "streaminline0",
+      "ms": 0.6058573333333376
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "stream4096",
+      "ms": 0.44541900000000584
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "stream1024",
+      "ms": 0.43318774999998294
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "stream512",
+      "ms": 0.46433558333332786
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "stream0",
+      "ms": 0.47859574999999194
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "baseline",
+      "ms": 0.2674697500000131
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "baseline",
+      "ms": 0.2361075833333454
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "stream0",
+      "ms": 0.5066861666666682
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "stream512",
+      "ms": 0.4456945000000019
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "stream1024",
+      "ms": 0.4127690833333304
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "stream4096",
+      "ms": 0.461981916666673
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "streaminline0",
+      "ms": 0.45989291666666077
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "streaminline512",
+      "ms": 0.378458083333328
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "streaminline1024",
+      "ms": 0.47574291666666113
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "streaminline4096",
+      "ms": 0.43362600000000384
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "streaminline4096",
+      "ms": 0.5664378333333389
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "streaminline1024",
+      "ms": 0.4550003333333166
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "streaminline512",
+      "ms": 0.5001536666666766
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "streaminline0",
+      "ms": 0.5492272500000013
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "stream4096",
+      "ms": 0.40328875000000153
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "stream1024",
+      "ms": 0.4573974166666706
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "stream512",
+      "ms": 0.41813558333334794
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "stream0",
+      "ms": 0.5360637500000015
+    },
+    {
+      "fixture": "1000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "baseline",
+      "ms": 0.36221325000000587
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "baseline",
+      "ms": 0.5304443333333401
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "stream0",
+      "ms": 0.9758784166666601
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "stream512",
+      "ms": 0.7576581666666774
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "stream1024",
+      "ms": 0.8925715833333356
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "stream4096",
+      "ms": 1.0613951666666708
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "streaminline0",
+      "ms": 0.946758750000015
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "streaminline512",
+      "ms": 0.7326590833333361
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "streaminline1024",
+      "ms": 0.699581749999993
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "streaminline4096",
+      "ms": 0.745586416666678
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "streaminline4096",
+      "ms": 0.7293214166666644
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "streaminline1024",
+      "ms": 0.7011415833333482
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "streaminline512",
+      "ms": 0.7464544166666656
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "streaminline0",
+      "ms": 1.1164554166666676
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "stream4096",
+      "ms": 0.8937559166666725
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "stream1024",
+      "ms": 0.8960126666666687
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "stream512",
+      "ms": 0.9151562500000144
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "stream0",
+      "ms": 0.7931826666666666
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "baseline",
+      "ms": 0.5985919999999965
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "baseline",
+      "ms": 0.5167316666666769
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "stream0",
+      "ms": 1.025394166666653
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "stream512",
+      "ms": 0.7444188333333462
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "stream1024",
+      "ms": 0.9177810833333334
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "stream4096",
+      "ms": 0.9338189166666666
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "streaminline0",
+      "ms": 1.15624225000001
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "streaminline512",
+      "ms": 0.8545340833333436
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "streaminline1024",
+      "ms": 0.911091666666664
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "streaminline4096",
+      "ms": 0.6623454999999959
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "streaminline4096",
+      "ms": 0.6220805000000004
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "streaminline1024",
+      "ms": 0.8374763333333325
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "streaminline512",
+      "ms": 0.7706197499999993
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "streaminline0",
+      "ms": 1.0977901666666792
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "stream4096",
+      "ms": 0.9631614166666699
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "stream1024",
+      "ms": 0.7058863333333344
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "stream512",
+      "ms": 0.8748995833333311
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "stream0",
+      "ms": 0.9663395833333274
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "baseline",
+      "ms": 0.5710824166666839
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "baseline",
+      "ms": 0.5983083333333449
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "stream0",
+      "ms": 0.932563666666662
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "stream512",
+      "ms": 0.7572726666666654
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "stream1024",
+      "ms": 0.8637774166666645
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "stream4096",
+      "ms": 1.027767916666657
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "streaminline0",
+      "ms": 1.1266751666666626
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "streaminline512",
+      "ms": 1.2152183333333255
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "streaminline1024",
+      "ms": 0.799958833333335
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "streaminline4096",
+      "ms": 0.9132557499999999
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "streaminline4096",
+      "ms": 0.795649833333338
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "streaminline1024",
+      "ms": 0.6619732499999978
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "streaminline512",
+      "ms": 0.7458868333333347
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "streaminline0",
+      "ms": 1.145160999999992
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "stream4096",
+      "ms": 0.9176824999999932
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "stream1024",
+      "ms": 1.185144833333311
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "stream512",
+      "ms": 1.0920254166666912
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "stream0",
+      "ms": 0.931576416666644
+    },
+    {
+      "fixture": "5000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "baseline",
+      "ms": 0.5244760000000118
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "baseline",
+      "ms": 0.5224003333333181
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "stream0",
+      "ms": 1.0388665000000021
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "stream512",
+      "ms": 0.9933876666666492
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "stream1024",
+      "ms": 1.11012658333334
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "stream4096",
+      "ms": 0.9331662499999993
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "streaminline0",
+      "ms": 1.162610250000019
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "streaminline512",
+      "ms": 0.7777430833333104
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "streaminline1024",
+      "ms": 0.8095952499999916
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "streaminline4096",
+      "ms": 0.721789916666656
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "streaminline4096",
+      "ms": 0.6672430833333465
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "streaminline1024",
+      "ms": 0.7437627500000114
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "streaminline512",
+      "ms": 1.0187281666666952
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "streaminline0",
+      "ms": 1.243067749999985
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "stream4096",
+      "ms": 0.915371499999992
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "stream1024",
+      "ms": 0.9205252500000066
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "stream512",
+      "ms": 0.9735985833333416
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "stream0",
+      "ms": 1.1466033333333219
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "baseline",
+      "ms": 0.5813989999999952
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "baseline",
+      "ms": 0.5865535833333221
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "stream0",
+      "ms": 1.0201361666666646
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "stream512",
+      "ms": 0.7411938333333031
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "stream1024",
+      "ms": 0.9512298333333243
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "stream4096",
+      "ms": 0.9624661666666725
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "streaminline0",
+      "ms": 1.291930083333303
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "streaminline512",
+      "ms": 0.6705697499999891
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "streaminline1024",
+      "ms": 0.8009871666666489
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "streaminline4096",
+      "ms": 1.1304385000000063
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "streaminline4096",
+      "ms": 0.8253685833333293
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "streaminline1024",
+      "ms": 0.843401333333342
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "streaminline512",
+      "ms": 0.9042794999999918
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "streaminline0",
+      "ms": 1.0536796666666912
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "stream4096",
+      "ms": 0.9960417500000176
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "stream1024",
+      "ms": 1.185968583333344
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "stream512",
+      "ms": 0.9164164166666827
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "stream0",
+      "ms": 1.1042808333333294
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "baseline",
+      "ms": 0.6519086666666757
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "baseline",
+      "ms": 0.5719770833333087
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "stream0",
+      "ms": 1.0861247500000293
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "stream512",
+      "ms": 1.3991801666666863
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "stream1024",
+      "ms": 0.8930865833333049
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "stream4096",
+      "ms": 1.020452499999995
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "streaminline0",
+      "ms": 1.2461942500000305
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "streaminline512",
+      "ms": 1.408530333333336
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "streaminline1024",
+      "ms": 0.8852695833333352
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "streaminline4096",
+      "ms": 0.7359123333333173
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "streaminline4096",
+      "ms": 0.6108140000000049
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "streaminline1024",
+      "ms": 0.6823745833333609
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "streaminline512",
+      "ms": 0.7915259166666525
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "streaminline0",
+      "ms": 1.2370025833333405
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "stream4096",
+      "ms": 1.0186814166666334
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "stream1024",
+      "ms": 0.9451045833333183
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "stream512",
+      "ms": 1.0311897499999911
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "stream0",
+      "ms": 1.1243208333333239
+    },
+    {
+      "fixture": "5000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "baseline",
+      "ms": 0.942947833333316
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "baseline",
+      "ms": 0.5020658333333282
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "stream0",
+      "ms": 0.9606750833333612
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "stream512",
+      "ms": 0.8898273333333387
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "stream1024",
+      "ms": 1.0172685000000001
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "stream4096",
+      "ms": 0.7015781666666877
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "streaminline0",
+      "ms": 0.9904582499999984
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "streaminline512",
+      "ms": 0.8202716666666371
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "streaminline1024",
+      "ms": 0.8597095833333318
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 0,
+      "variant": "streaminline4096",
+      "ms": 0.7553163333333259
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "streaminline4096",
+      "ms": 0.7300300833333419
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "streaminline1024",
+      "ms": 0.8016022499999735
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "streaminline512",
+      "ms": 0.7810090000000022
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "streaminline0",
+      "ms": 1.050826499999971
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "stream4096",
+      "ms": 1.4586537500000152
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "stream1024",
+      "ms": 0.9502991666666958
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "stream512",
+      "ms": 0.9723596666666859
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "stream0",
+      "ms": 0.8389451666666901
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 1,
+      "variant": "baseline",
+      "ms": 0.5400182500000028
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "baseline",
+      "ms": 0.4862457500000043
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "stream0",
+      "ms": 0.9738134999999678
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "stream512",
+      "ms": 1.4472700833333267
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "stream1024",
+      "ms": 0.9893749166666718
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "stream4096",
+      "ms": 0.7281688333333326
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "streaminline0",
+      "ms": 1.2539751666666537
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "streaminline512",
+      "ms": 0.7596988333333456
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "streaminline1024",
+      "ms": 0.7488414166666644
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 2,
+      "variant": "streaminline4096",
+      "ms": 0.6542514999999867
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "streaminline4096",
+      "ms": 0.8440280833333418
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "streaminline1024",
+      "ms": 0.7263794166666836
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "streaminline512",
+      "ms": 0.9004077499999994
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "streaminline0",
+      "ms": 1.0686563333333652
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "stream4096",
+      "ms": 0.8572107499999978
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "stream1024",
+      "ms": 0.7489498333333131
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "stream512",
+      "ms": 0.8475951666666409
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "stream0",
+      "ms": 0.8469925833333036
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 3,
+      "variant": "baseline",
+      "ms": 0.6168683333333244
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "baseline",
+      "ms": 0.522442083333317
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "stream0",
+      "ms": 0.9348029166666644
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "stream512",
+      "ms": 0.7563420000000178
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "stream1024",
+      "ms": 0.9120715000000246
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "stream4096",
+      "ms": 0.8288948333333414
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "streaminline0",
+      "ms": 0.9485882499999813
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "streaminline512",
+      "ms": 0.8918170833333458
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "streaminline1024",
+      "ms": 0.8767089166666816
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 4,
+      "variant": "streaminline4096",
+      "ms": 0.8421585000000201
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "streaminline4096",
+      "ms": 0.7765788333333603
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "streaminline1024",
+      "ms": 0.7784384166666692
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "streaminline512",
+      "ms": 0.8044364999999895
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "streaminline0",
+      "ms": 1.025816499999981
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "stream4096",
+      "ms": 1.1622539166666759
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "stream1024",
+      "ms": 0.7209678333333235
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "stream512",
+      "ms": 0.8376457500000166
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "stream0",
+      "ms": 0.9995896666666795
+    },
+    {
+      "fixture": "10000-vaiwl-native-version-index-v1",
+      "round": 5,
+      "variant": "baseline",
+      "ms": 0.512858250000022
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "baseline",
+      "ms": 0.5357407500000212
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "stream0",
+      "ms": 0.9560079166666734
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "stream512",
+      "ms": 0.9779982500000036
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "stream1024",
+      "ms": 1.0300721666666657
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "stream4096",
+      "ms": 0.9219199166666764
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "streaminline0",
+      "ms": 1.0601766666666208
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "streaminline512",
+      "ms": 0.748536750000009
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "streaminline1024",
+      "ms": 1.033795416666635
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 0,
+      "variant": "streaminline4096",
+      "ms": 0.74391799999997
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "streaminline4096",
+      "ms": 0.5826434166666937
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "streaminline1024",
+      "ms": 0.877319000000019
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "streaminline512",
+      "ms": 0.9893139999999979
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "streaminline0",
+      "ms": 1.173847500000041
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "stream4096",
+      "ms": 0.9916700833333228
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "stream1024",
+      "ms": 0.9008116666667169
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "stream512",
+      "ms": 0.9267572499999611
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "stream0",
+      "ms": 1.1765274166666586
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 1,
+      "variant": "baseline",
+      "ms": 0.5665154166666374
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "baseline",
+      "ms": 0.5513354166666128
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "stream0",
+      "ms": 1.0849554166666924
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "stream512",
+      "ms": 0.9154424166666407
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "stream1024",
+      "ms": 0.9233679166666207
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "stream4096",
+      "ms": 0.8926058333333913
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "streaminline0",
+      "ms": 1.0101574999999532
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "streaminline512",
+      "ms": 0.8933269166666378
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "streaminline1024",
+      "ms": 0.8577123333333626
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 2,
+      "variant": "streaminline4096",
+      "ms": 1.0522353333333285
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "streaminline4096",
+      "ms": 1.0899514166666602
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "streaminline1024",
+      "ms": 0.8102420833333023
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "streaminline512",
+      "ms": 0.7859761666666903
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "streaminline0",
+      "ms": 1.3171770833333387
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "stream4096",
+      "ms": 0.9167761666666744
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "stream1024",
+      "ms": 0.9697790000000168
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "stream512",
+      "ms": 0.9291877499999828
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "stream0",
+      "ms": 1.1046823333333577
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 3,
+      "variant": "baseline",
+      "ms": 0.9496523333333092
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "baseline",
+      "ms": 0.5580265833333821
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "stream0",
+      "ms": 0.9946420833333226
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "stream512",
+      "ms": 0.8566015000000485
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "stream1024",
+      "ms": 1.0910853333333155
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "stream4096",
+      "ms": 0.8873335833333537
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "streaminline0",
+      "ms": 1.078688333333351
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "streaminline512",
+      "ms": 0.7831130833333191
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "streaminline1024",
+      "ms": 1.0675354166667148
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 4,
+      "variant": "streaminline4096",
+      "ms": 0.7559698333333623
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "streaminline4096",
+      "ms": 0.5956809166667275
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "streaminline1024",
+      "ms": 0.9165449999999661
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "streaminline512",
+      "ms": 0.9106768333333548
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "streaminline0",
+      "ms": 1.0173910833332986
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "stream4096",
+      "ms": 0.8141063333333326
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "stream1024",
+      "ms": 0.7324788333333648
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "stream512",
+      "ms": 0.8585536666666181
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "stream0",
+      "ms": 1.2094436666667054
+    },
+    {
+      "fixture": "10000-vaiwl-shared-ref-directory-v1",
+      "round": 5,
+      "variant": "baseline",
+      "ms": 0.5796605833333311
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 0,
+      "variant": "baseline",
+      "ms": 2.591577333333286
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 0,
+      "variant": "stream0",
+      "ms": 3.976883583333271
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 0,
+      "variant": "stream512",
+      "ms": 3.0083781666666405
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 0,
+      "variant": "stream1024",
+      "ms": 3.0488604166666087
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 0,
+      "variant": "stream4096",
+      "ms": 3.0661015833333445
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 0,
+      "variant": "streaminline0",
+      "ms": 3.95166116666663
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 0,
+      "variant": "streaminline512",
+      "ms": 2.7745892499999627
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 0,
+      "variant": "streaminline1024",
+      "ms": 2.9049078333333305
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 0,
+      "variant": "streaminline4096",
+      "ms": 2.8025825000000473
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 1,
+      "variant": "streaminline4096",
+      "ms": 2.5566669166666998
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 1,
+      "variant": "streaminline1024",
+      "ms": 2.7592075000000023
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 1,
+      "variant": "streaminline512",
+      "ms": 2.9610788333333553
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 1,
+      "variant": "streaminline0",
+      "ms": 4.236728250000017
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 1,
+      "variant": "stream4096",
+      "ms": 3.2456739999999322
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 1,
+      "variant": "stream1024",
+      "ms": 3.100739166666699
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 1,
+      "variant": "stream512",
+      "ms": 3.6242204166666547
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 1,
+      "variant": "stream0",
+      "ms": 4.582402333333296
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 1,
+      "variant": "baseline",
+      "ms": 2.6244577499999955
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 2,
+      "variant": "baseline",
+      "ms": 2.8697941666666793
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 2,
+      "variant": "stream0",
+      "ms": 4.106592916666689
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 2,
+      "variant": "stream512",
+      "ms": 2.9356595000000048
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 2,
+      "variant": "stream1024",
+      "ms": 2.9297471666667056
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 2,
+      "variant": "stream4096",
+      "ms": 2.8807619166666427
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 2,
+      "variant": "streaminline0",
+      "ms": 4.083988583333394
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 2,
+      "variant": "streaminline512",
+      "ms": 2.964478999999983
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 2,
+      "variant": "streaminline1024",
+      "ms": 2.8442315833333396
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 2,
+      "variant": "streaminline4096",
+      "ms": 2.853718416666652
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 3,
+      "variant": "streaminline4096",
+      "ms": 2.452929500000058
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 3,
+      "variant": "streaminline1024",
+      "ms": 2.7971343333333607
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 3,
+      "variant": "streaminline512",
+      "ms": 2.8683105833333684
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 3,
+      "variant": "streaminline0",
+      "ms": 4.013937249999951
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 3,
+      "variant": "stream4096",
+      "ms": 2.908841250000023
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 3,
+      "variant": "stream1024",
+      "ms": 2.8274736666666436
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 3,
+      "variant": "stream512",
+      "ms": 2.978751499999968
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 3,
+      "variant": "stream0",
+      "ms": 3.914104166666675
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 3,
+      "variant": "baseline",
+      "ms": 2.530294333333283
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 4,
+      "variant": "baseline",
+      "ms": 2.4649853333333644
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 4,
+      "variant": "stream0",
+      "ms": 3.835531499999964
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 4,
+      "variant": "stream512",
+      "ms": 2.9923479999999927
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 4,
+      "variant": "stream1024",
+      "ms": 2.942929666666714
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 4,
+      "variant": "stream4096",
+      "ms": 3.068524416666681
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 4,
+      "variant": "streaminline0",
+      "ms": 3.9261766666666063
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 4,
+      "variant": "streaminline512",
+      "ms": 2.9835120833333804
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 4,
+      "variant": "streaminline1024",
+      "ms": 2.9218418333333225
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 4,
+      "variant": "streaminline4096",
+      "ms": 2.760167249999995
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 5,
+      "variant": "streaminline4096",
+      "ms": 2.865467083333366
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 5,
+      "variant": "streaminline1024",
+      "ms": 3.005888500000007
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 5,
+      "variant": "streaminline512",
+      "ms": 3.0118100000000445
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 5,
+      "variant": "streaminline0",
+      "ms": 4.188212583333325
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 5,
+      "variant": "stream4096",
+      "ms": 3.135745583333346
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 5,
+      "variant": "stream1024",
+      "ms": 3.1692410000000564
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 5,
+      "variant": "stream512",
+      "ms": 3.072209500000023
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 5,
+      "variant": "stream0",
+      "ms": 4.010829083333344
+    },
+    {
+      "fixture": "control-10000-numeric-same",
+      "round": 5,
+      "variant": "baseline",
+      "ms": 2.5790030833333426
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 0,
+      "variant": "baseline",
+      "ms": 2.6522060000000542
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 0,
+      "variant": "stream0",
+      "ms": 4.089279166666681
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 0,
+      "variant": "stream512",
+      "ms": 2.9860400833332883
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 0,
+      "variant": "stream1024",
+      "ms": 3.0582874166666443
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 0,
+      "variant": "stream4096",
+      "ms": 3.237661833333353
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 0,
+      "variant": "streaminline0",
+      "ms": 3.937461833333297
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 0,
+      "variant": "streaminline512",
+      "ms": 2.9808839166666985
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 0,
+      "variant": "streaminline1024",
+      "ms": 3.014347583333347
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 0,
+      "variant": "streaminline4096",
+      "ms": 2.962706916666624
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 1,
+      "variant": "streaminline4096",
+      "ms": 3.1485955833333414
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 1,
+      "variant": "streaminline1024",
+      "ms": 3.1626220000001317
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 1,
+      "variant": "streaminline512",
+      "ms": 2.96209600000005
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 1,
+      "variant": "streaminline0",
+      "ms": 3.97436074999996
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 1,
+      "variant": "stream4096",
+      "ms": 2.964663249999982
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 1,
+      "variant": "stream1024",
+      "ms": 3.2421103333332817
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 1,
+      "variant": "stream512",
+      "ms": 3.1435586666666495
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 1,
+      "variant": "stream0",
+      "ms": 4.135624666666597
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 1,
+      "variant": "baseline",
+      "ms": 2.5082473333333533
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 2,
+      "variant": "baseline",
+      "ms": 2.38689000000007
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 2,
+      "variant": "stream0",
+      "ms": 4.040698166666668
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 2,
+      "variant": "stream512",
+      "ms": 3.7454764166667096
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 2,
+      "variant": "stream1024",
+      "ms": 3.2427007499998886
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 2,
+      "variant": "stream4096",
+      "ms": 3.13854850000007
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 2,
+      "variant": "streaminline0",
+      "ms": 3.9965104999999617
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 2,
+      "variant": "streaminline512",
+      "ms": 3.31259399999999
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 2,
+      "variant": "streaminline1024",
+      "ms": 2.874148916666703
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 2,
+      "variant": "streaminline4096",
+      "ms": 3.189611666666527
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 3,
+      "variant": "streaminline4096",
+      "ms": 2.801565333333201
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 3,
+      "variant": "streaminline1024",
+      "ms": 3.061896250000094
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 3,
+      "variant": "streaminline512",
+      "ms": 3.0975382500000705
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 3,
+      "variant": "streaminline0",
+      "ms": 4.358821583333338
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 3,
+      "variant": "stream4096",
+      "ms": 2.9823703333333165
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 3,
+      "variant": "stream1024",
+      "ms": 2.9204731666667008
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 3,
+      "variant": "stream512",
+      "ms": 2.9767751666666604
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 3,
+      "variant": "stream0",
+      "ms": 4.495035000000068
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 3,
+      "variant": "baseline",
+      "ms": 2.303237833333393
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 4,
+      "variant": "baseline",
+      "ms": 2.250083916666578
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 4,
+      "variant": "stream0",
+      "ms": 3.8213382499999775
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 4,
+      "variant": "stream512",
+      "ms": 2.9210423333333893
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 4,
+      "variant": "stream1024",
+      "ms": 2.9551946666667086
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 4,
+      "variant": "stream4096",
+      "ms": 2.970032249999955
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 4,
+      "variant": "streaminline0",
+      "ms": 3.970020833333365
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 4,
+      "variant": "streaminline512",
+      "ms": 2.9512476666665557
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 4,
+      "variant": "streaminline1024",
+      "ms": 2.9116954999999507
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 4,
+      "variant": "streaminline4096",
+      "ms": 2.8199685000001105
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 5,
+      "variant": "streaminline4096",
+      "ms": 2.9581457500000092
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 5,
+      "variant": "streaminline1024",
+      "ms": 2.8564000833333316
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 5,
+      "variant": "streaminline512",
+      "ms": 2.941965166666705
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 5,
+      "variant": "streaminline0",
+      "ms": 3.941577333333347
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 5,
+      "variant": "stream4096",
+      "ms": 3.181680333333285
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 5,
+      "variant": "stream1024",
+      "ms": 2.9793282499999805
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 5,
+      "variant": "stream512",
+      "ms": 2.9724485000000036
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 5,
+      "variant": "stream0",
+      "ms": 4.0143360833333945
+    },
+    {
+      "fixture": "control-10000-numeric-mixed",
+      "round": 5,
+      "variant": "baseline",
+      "ms": 2.393972500000018
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 0,
+      "variant": "baseline",
+      "ms": 2.5145119166666823
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 0,
+      "variant": "stream0",
+      "ms": 4.226181083333358
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 0,
+      "variant": "stream512",
+      "ms": 3.075959416666592
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 0,
+      "variant": "stream1024",
+      "ms": 3.240485250000044
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 0,
+      "variant": "stream4096",
+      "ms": 3.2519737500000097
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 0,
+      "variant": "streaminline0",
+      "ms": 5.186676749999909
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 0,
+      "variant": "streaminline512",
+      "ms": 3.152175166666742
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 0,
+      "variant": "streaminline1024",
+      "ms": 3.264760833333336
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 0,
+      "variant": "streaminline4096",
+      "ms": 3.3598971666666935
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 1,
+      "variant": "streaminline4096",
+      "ms": 6.300505333333301
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 1,
+      "variant": "streaminline1024",
+      "ms": 3.0996740833334115
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 1,
+      "variant": "streaminline512",
+      "ms": 3.6864277499998934
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 1,
+      "variant": "streaminline0",
+      "ms": 4.405372833333331
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 1,
+      "variant": "stream4096",
+      "ms": 3.4544595000000604
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 1,
+      "variant": "stream1024",
+      "ms": 3.211864000000029
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 1,
+      "variant": "stream512",
+      "ms": 3.433069249999941
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 1,
+      "variant": "stream0",
+      "ms": 4.453801083333322
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 1,
+      "variant": "baseline",
+      "ms": 2.5375437500000166
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 2,
+      "variant": "baseline",
+      "ms": 2.5105316666666417
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 2,
+      "variant": "stream0",
+      "ms": 4.4924169166667225
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 2,
+      "variant": "stream512",
+      "ms": 3.54114033333326
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 2,
+      "variant": "stream1024",
+      "ms": 3.131581166666668
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 2,
+      "variant": "stream4096",
+      "ms": 3.3855097500001343
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 2,
+      "variant": "streaminline0",
+      "ms": 4.608177333333363
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 2,
+      "variant": "streaminline512",
+      "ms": 3.2570230833333276
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 2,
+      "variant": "streaminline1024",
+      "ms": 3.1166090833332114
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 2,
+      "variant": "streaminline4096",
+      "ms": 3.047535083333211
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 3,
+      "variant": "streaminline4096",
+      "ms": 3.3008932500000205
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 3,
+      "variant": "streaminline1024",
+      "ms": 3.1166483333333113
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 3,
+      "variant": "streaminline512",
+      "ms": 3.3025527500000558
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 3,
+      "variant": "streaminline0",
+      "ms": 4.726764249999936
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 3,
+      "variant": "stream4096",
+      "ms": 3.303013500000058
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 3,
+      "variant": "stream1024",
+      "ms": 3.241021999999854
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 3,
+      "variant": "stream512",
+      "ms": 3.175014250000004
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 3,
+      "variant": "stream0",
+      "ms": 4.19970808333331
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 3,
+      "variant": "baseline",
+      "ms": 2.7887594999998933
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 4,
+      "variant": "baseline",
+      "ms": 2.699252166666762
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 4,
+      "variant": "stream0",
+      "ms": 4.271624833333287
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 4,
+      "variant": "stream512",
+      "ms": 3.2182154166666805
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 4,
+      "variant": "stream1024",
+      "ms": 3.1452946666666626
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 4,
+      "variant": "stream4096",
+      "ms": 3.0367985833333173
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 4,
+      "variant": "streaminline0",
+      "ms": 4.044772749999993
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 4,
+      "variant": "streaminline512",
+      "ms": 3.5455546666667033
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 4,
+      "variant": "streaminline1024",
+      "ms": 3.0979087499999878
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 4,
+      "variant": "streaminline4096",
+      "ms": 3.0269710833334407
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 5,
+      "variant": "streaminline4096",
+      "ms": 2.8978501666667094
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 5,
+      "variant": "streaminline1024",
+      "ms": 3.4391000833332632
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 5,
+      "variant": "streaminline512",
+      "ms": 3.441744916666721
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 5,
+      "variant": "streaminline0",
+      "ms": 4.406532166666541
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 5,
+      "variant": "stream4096",
+      "ms": 3.281256916666583
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 5,
+      "variant": "stream1024",
+      "ms": 3.185171916666756
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 5,
+      "variant": "stream512",
+      "ms": 3.3158190833334324
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 5,
+      "variant": "stream0",
+      "ms": 4.40631799999998
+    },
+    {
+      "fixture": "control-10000-numeric-unique",
+      "round": 5,
+      "variant": "baseline",
+      "ms": 2.4281139999999746
+    }
+  ],
+  "validity": "VALID_SCOPED_NODE_COMPARISON_NO_CONCURRENT_TEST_RUN",
+  "wallSeconds": 13.431,
+  "decision": "REJECT_ALL_STREAM_CANDIDATES_NO_PRODUCTION_CHANGE",
+  "limits": [
+    "Node-only cache warm-hit microbenchmark; no browser, IndexedDB duration, end-to-end, p95 or acceptance claim",
+    "Actual NativeRepository and WorkspaceRepository inputs generated in MockIDB; no real account/profile data",
+    "Capturing/freezing/checksum/schema verifier cost excluded from timed warm hits",
+    "The earlier concurrent full-Node benchmark is retained but invalid for performance decisions"
+  ],
+  "medianDefinition": "Arithmetic mean of the third and fourth ordered per-read sample values in six rounds",
+  "baselineSourceCommit": "3c8a33dae36ca0de11841570ac6fb44d4331dd5a",
+  "productionDecision": "REJECT_ALL_CANDIDATES_KEEP_ORIGINAL_STRICT_JSON",
+  "semanticTests": {
+    "existing": 32,
+    "new": 21,
+    "perCandidatePass": 53,
+    "note": "Per-candidate semantic cases are not additive coverage; no test-only patch integrated."
+  },
+  "inputProvenance": "Real NativeRepository and WorkspaceRepository over MOCK_IDB, 200 batches of 50 refs; 10000 PROJECT members at revision201. Captured 1000/5000/10000-member roots."
+}

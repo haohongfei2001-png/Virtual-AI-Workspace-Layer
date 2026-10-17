@@ -205,6 +205,9 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    if(doc.visibilityState!=='visible'||!foregroundArmed||!s.ready||!live(s))return;
    if(foregroundPending)return;foregroundArmed=false;foregroundPending=true;
    void track(()=>rpc(s,{v:1,type:'HOST_FOCUS',clientId,seq:++seq,...bindingFields(s.binding)}).then(result=>{
+    if(enabled&&live(s)&&exactHostRecord(result,['ok','reason'])&&result.ok===false&&result.reason==='invalid-host-document'&&typeof s.scopeKey==='string'&&s.scopeKey&&!s.recoveryDenied&&s.busyClose!==true&&recoveryRemaining>0){
+     recoveryRemaining--;rebind(s,null,s.scopeKey);return;
+    }
     if(result?.ok!==true||result.state!=='verified'||result.scopeKey!==s.scopeKey)throw Error('foreground-scope-unverified');
    }).catch(()=>{if(live(s)){s.recoveryDenied=true;contextPending();}}).finally(()=>{foregroundPending=false;s.focus();})).catch(()=>{});
   };
