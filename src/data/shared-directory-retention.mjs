@@ -30,10 +30,18 @@ export function prepareSharedDirectoryRetention(tx,scope,prior,check,fail){
      // both retained generations from storage with their full validators,
      // without rerouting and regrouping the same refs twice.
      const versionAt=(value,ref)=>value&&Object.hasOwn(value.versions,ref)?value.versions[ref]:undefined;
-     retained.readBucket(bucket,before=>current.readBucket(bucket,after=>{try{
-      check();for(const ref of refs){const version=piece.versions[ref];if(version!==versionAt(before,ref)&&version!==versionAt(after,ref)){check();store.delete(manifest_partitionKey(old.scopeKey,ref,version,old.generation));}}
-      check();store.delete(sharedRefDirectoryKey(old.scopeKey,old.generation,bucket,pointer.revision));
-     }catch(error){fail(error);}}));
+     retained.readBucket(bucket,before=>{
+      const finish=after=>{try{
+       check();for(const ref of refs){const version=piece.versions[ref];if(version!==versionAt(before,ref)&&version!==versionAt(after,ref)){check();store.delete(manifest_partitionKey(old.scopeKey,ref,version,old.generation));}}
+       check();store.delete(sharedRefDirectoryKey(old.scopeKey,old.generation,bucket,pointer.revision));
+      }catch(error){fail(error);}};
+      // Private roots and this callback belong to the same transaction. No
+      // external consumer can mutate the verified bucket before reuse. Both
+      // physical identity and all validation context must remain compatible.
+      const retainedPointer=previous.refDirectory[bucket],currentPointer=next.refDirectory[bucket];
+      if(before&&retainedPointer&&currentPointer&&retainedPointer.revision===currentPointer.revision&&retainedPointer.count===currentPointer.count&&retainedPointer.units===currentPointer.units&&next.nextOrdinal>=previous.nextOrdinal)finish(before);
+      else current.readBucket(bucket,finish);
+     });
     });
    }
   }catch(error){fail(error);}

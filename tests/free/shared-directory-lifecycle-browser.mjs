@@ -27,6 +27,6 @@ try{
    },{file,fn});results[name]=run.value;prefetchMetrics[name]=run.metrics;
   }finally{await context.close();}
  }
- assert(prefetchMetrics.batch.keyPages>0&&prefetchMetrics.batch.valuePages>0,'batch migration must exercise real bounded prefetch');assert.equal(results.retention.length,10);assert(results.retention.every(r=>r.status==='PASS'),JSON.stringify(results.retention));assert.equal(results.lifecycle.checks.length,7);assert.equal(results.batch.length,4);assert(results.batch.every(r=>r.status==='PASS'),JSON.stringify(results.batch));assert.deepEqual(await hashes(),sourceHashes);
+ assert(prefetchMetrics.batch.keyPages>0&&prefetchMetrics.batch.valuePages>0,'batch migration must exercise real bounded prefetch');assert.equal(results.retention.length,11);assert(results.retention.every(r=>r.status==='PASS'),JSON.stringify(results.retention));assert.equal(results.lifecycle.checks.length,7);assert.equal(results.batch.length,4);assert(results.batch.every(r=>r.status==='PASS'),JSON.stringify(results.batch));assert.deepEqual(await hashes(),sourceHashes);
  await writeFile(process.argv[2]??'/private/tmp/free-shared-directory-lifecycle.json',JSON.stringify({evidence:'REAL_IDB_SYNTHETIC_SHARED_DIRECTORY_LIFECYCLE',browser:browser.version(),sourceHashes,results,prefetchMetrics},null,2)+'\n');console.log(JSON.stringify(results));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

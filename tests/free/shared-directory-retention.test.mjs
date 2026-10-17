@@ -5,6 +5,6 @@ import {runSharedRetentionContracts} from './shared-directory-retention-contract
 
 test('shared directory retention portable contracts',async t=>{
  const results=await runSharedRetentionContracts(new MockIDBFactory());
- assert.equal(results.length,10);
+ assert.equal(results.length,11);
  for(const result of results)await t.test(result.name,()=>assert.equal(result.status,'PASS',result.error));
 });

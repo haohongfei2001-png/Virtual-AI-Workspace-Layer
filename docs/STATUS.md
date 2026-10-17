@@ -39,6 +39,8 @@ J4远端早期失败已区分：4067762 CI39025114564前三步PASS，随后basel
 
 最新8abed45完整CI39027033735已结束FAIL：Node和J4通过既定门槛，正式10k在原期限仅6795 refs/revision146；cold immediate 20秒无mount，J1/J2/J3本次通过。10k失败已证实索引未完整，不是完整数据被审计误判；上一快照优化不关闭跨环境关口。冷启动正式失败缺少receipt/content现场，而随后独立trace成功，因此不能归因初始化或授权竞态。现复用既有闭包检查，仅在原FAIL及page/native快照之后附着精确扩展，记录现存content/worker状态；不提前附着、不造world、不改20秒/exit1，并核验helper hashes与清理。23项相关检查通过，最终候选本地隔离cold单次通过且源码/runner/helper未漂移；失败后分支的真实Chrome现场仍待实际失败触发，不宣称冷启动已修复。生产源码未改变，不为该观察器改动重跑完整矩阵；既有CI失败与本地成功原件均保留。
 
+共享目录回收路径现已消除同事务同物理bucket的重复读：previous/current的scope/generation一致、revision/count/units相等且ordinal上限不缩小时，复用刚验证且未外露的bucket；否则仍完整读取当前bucket，删除前guard保留。最小跨bucket更新反例先红2次→绿1次，旧片删除/当前片与人工资产保留。72项定向与独立审查通过；真实IDB生命周期7项、批处理4项、回收11项通过。首次真实IDB计数5次是重复包装同objectStore的观察器缺陷，已按对象去重并保留原失败日志。最终未插桩10k双完整审计revision204为10000/10000正确PROJECT、零UNKNOWN/遗漏/错属，原窗口剩余13.47秒，导航/唯一返回通过，源码/fixture/manifest稳定。摄取观察19.294秒，上一候选18.653秒，未证明耗时改善或跨环境关口关闭；仍PARTIAL_SYS04_NOT_ACCEPTED。 最终同源码完整Node 7299/7299通过、0skip、78.50秒。
+
 下一阻塞：可靠10k摄取、J1/冷启动时序与合法worker/peer context重新获取及自动待命返回；完整旅程/全部适用81项、100k与p95、真实G/U/PAIA/物理IME/跨端及发布准备仍未达到。已有Pro资产和整理stash保留。
 
 ## 历史本地检查点（2026-10-17，Round386）
