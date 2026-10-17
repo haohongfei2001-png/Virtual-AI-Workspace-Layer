@@ -12,10 +12,13 @@ export function createBrowserOldSendTerminal({webRequest,origin,onTerminal,now=D
   pending.set(d.requestId,{tabId:d.tabId,browserDocumentId:d.documentId,requestId:d.requestId,operationId,messageId,startedAt:d.timeStamp,wall,elapsed});
  }
  function fail(d){const r=pending.get(d?.requestId);if(r){pending.delete(d.requestId);closed.add(d.requestId);}}
- function complete(d){const r=pending.get(d?.requestId);if(!r)return;fail(d);const wall=now(),elapsed=elapsedNow();if(!valid(d)||d.tabId!==r.tabId||d.documentId!==r.browserDocumentId||!(Number.isInteger(d.statusCode)&&d.statusCode>=400&&d.statusCode<=599||d.error==='net::ERR_ABORTED')||d.fromCache===true||!Number.isFinite(wall)||!Number.isFinite(elapsed)||wall<r.wall||elapsed<r.elapsed||wall-r.wall>=6000||elapsed-r.elapsed>=6000)return;
-  try{Promise.resolve(onTerminal(Object.freeze({tabId:r.tabId,browserDocumentId:r.browserDocumentId,requestId:r.requestId,operationId:r.operationId,messageId:r.messageId,startedAt:r.startedAt,stage:d.error==='net::ERR_ABORTED'?'cancelled':'failed'}))).catch(()=>{});}catch{}
+ function complete(d,errorEvent=false){const r=pending.get(d?.requestId);if(!r)return;fail(d);const wall=now(),elapsed=elapsedNow();if(!valid(d)||d.tabId!==r.tabId||d.documentId!==r.browserDocumentId||!(!errorEvent&&Number.isInteger(d.statusCode)&&d.statusCode>=400&&d.statusCode<=599||errorEvent&&['net::ERR_ABORTED','net::ERR_FAILED'].includes(d.error))||d.fromCache===true||!Number.isFinite(wall)||!Number.isFinite(elapsed)||wall<r.wall||elapsed<r.elapsed||wall-r.wall>=6000||elapsed-r.elapsed>=6000)return;
+  try{Promise.resolve(onTerminal(Object.freeze({tabId:r.tabId,browserDocumentId:r.browserDocumentId,requestId:r.requestId,operationId:r.operationId,messageId:r.messageId,startedAt:r.startedAt,stage:errorEvent?(d.error==='net::ERR_ABORTED'?'cancelled':'unresolved'):'failed'}))).catch(()=>{});}catch{}
  }
+ // A body abort may surface as ERR_FAILED. It grants only a bounded operation
+ // readback candidate, never a failed/cancelled assertion or message ACK.
+ const error=d=>complete(d,true);
  const filter={urls:[origin+profile.submitPath],types:['xmlhttprequest']};
- webRequest.onSendHeaders.addListener(send,filter,['requestHeaders']);webRequest.onCompleted.addListener(complete,filter);webRequest.onErrorOccurred.addListener(complete,filter);webRequest.onBeforeRedirect.addListener(fail,filter);
- return Object.freeze({invalidateTab(tabId){for(const [id,r]of pending)if(r.tabId===tabId)fail({requestId:id});},stop(){stopped=true;pending.clear();closed.clear();for(const [event,fn]of [[webRequest.onSendHeaders,send],[webRequest.onCompleted,complete],[webRequest.onErrorOccurred,complete],[webRequest.onBeforeRedirect,fail]])event.removeListener(fn);}});
+ webRequest.onSendHeaders.addListener(send,filter,['requestHeaders']);webRequest.onCompleted.addListener(complete,filter);webRequest.onErrorOccurred.addListener(error,filter);webRequest.onBeforeRedirect.addListener(fail,filter);
+ return Object.freeze({invalidateTab(tabId){for(const [id,r]of pending)if(r.tabId===tabId)fail({requestId:id});},stop(){stopped=true;pending.clear();closed.clear();for(const [event,fn]of [[webRequest.onSendHeaders,send],[webRequest.onCompleted,complete],[webRequest.onErrorOccurred,error],[webRequest.onBeforeRedirect,fail]])event.removeListener(fn);}});
 }

@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
+import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {createVariantHostFixtureServer} from './fixtures/variants-server.mjs';
@@ -13,7 +14,7 @@ const dormantMutant=process.argv[3]==='dormant-recovery-mutant',dormantRecovery=
 const hash=v=>createHash('sha256').update(v).digest('hex');
 const paths=['tests/host/context-replacement-package-browser.mjs','tests/host/fixtures/variants-server.mjs','tests/host/fixtures/variants-native.mjs','tests/host/fixtures/native-current-refresh.mjs','tests/host/fixtures/native.mjs','tests/host/expected/modern.mjs','tests/host/j2-journey-profile.mjs','tests/host/j2-runner-bounds.mjs','tests/host/isolated-browser-cleanup.mjs'];
 const fixtureHashes=Object.fromEntries(await Promise.all(paths.map(async p=>[p,hash(await readFile(p))])));
-const server=await createVariantHostFixtureServer({profile:'MODERN',nativeCurrentRefresh:true}),dir=await mkdtemp('/private/tmp/vaiwl-context-replacement-'),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineContext:true}),manifest=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));
+const server=await createVariantHostFixtureServer({profile:'MODERN',nativeCurrentRefresh:true}),dir=await mkdtemp(join(tmpdir(),'vaiwl-context-replacement-')),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineContext:true}),manifest=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));
 let instrumentedEntry,mutantSession;
 if(dormantRecovery){
  const path=join(built.unpacked,'extension/content-entry.mjs'),original=await readFile(path,'utf8'),anchor=' void session.start();';assert.equal(original.split(anchor).length,2);

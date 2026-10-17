@@ -4,6 +4,9 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **取消即时重发的实际根因**：849c3ab CI的原取消fixture在body abort后产生net::ERR_FAILED，浏览器owner直接丢弃，因此没有operation读回，旧intent未终止，第二次原生成功也不能唯一归因。只拦外部URL的本地诊断仍复现相同失败，已排除“必然由Playwright loopback中转造成”的假设，原网络策略和fixture均保留。现在仅loopback明确配对的ERR_FAILED成为unresolved候选，仍使用既有6秒deadline、共享12 GET/最多三次读取和完整principal/context/operation/message/C读回；只有认证failed/cancelled才能settle，accepted/unknown/异常不解除intent，明确browser stage不匹配仍拒绝，无原生重发/ACK升级。94项定向与独立审查通过；最终同生产源码完整Node7341/7341、0skip、72.09秒。包含早晚顺序、预算、跨文档、expiry、redirect、异步撤权和真实correlator冲突。相同生产/fixture的HTTP失败及原取消立即重发真实MV3通过；成功取消实际均ERR_ABORTED，不能写成ERR_FAILED分支真实覆盖。新分支真实Chrome证据仍待CI，不因此宣称完整J2关闭。
+- **CI runner与性能定位**：849c3ab CI39030359427整体FAIL，Node/J4通过既定门槛；新C2两步在Linux浏览器启动前因硬编码/private/tmp失败，现改用系统tmpdir，本地原六步再次通过，Linux待新CI。10k期限仅6430 refs/revision146，auditAttempts=0。849c3ab生产源的真实IDB同输入A/B（50条预置+199次50条提交，最终完整10k）三轮中位1584.8→1568.9ms；三读预排仅约1%，不采纳该生产改动。另一交替诊断native owner约1598.5ms、加共享目录约4195.1ms，仍不能解释完整宿主耗时；仅成本定位，非Host/SYS04/p95验收，不再盲目追加数据库微优化。原失败、无收益实验及脚本均保留。
+
 - **当前恢复修复与验收**：休眠wake的暂态scope拒绝原来执行stop，永久清除恢复意图；已有scope时提前READY也被丢弃。现仅scope-not-verified转既有contextPending即时撤旧能力，READY需新HELLO/REFRESH；显式stop/非法binding/transport仍fail-closed，reading意图保留。48项定向与独立审查通过；完整Node7317/7317、0skip、73.86秒。随后仅runner/CI整合变更，相关58项79.89ms通过，未重复全套。真实隔离C2同源码/fixture故障注入六步通过：实际close→确认worker停止且旧frame仍在→可信返回被拒并撤旧投影→一次原生GET/READY→新reading frame→唯一返回/正确非首项team，document/editor/draft/Range保持。恢复旧stop缺陷的变异包在相同GET后无法重挂，原15秒观察窗FAIL，证明场景检出根因；默认65秒replacement场景未改变。另LEGACY显式close观察60秒内worker销毁后原frames/编辑器/双view恢复，仍不认证自动休眠或完整C2。原始证据为free-wake-*；同生产源码，不把变异失败当产品失败或把窄PASS当完整Free。
 - **最新远端结论**：f39738b CI39029422207整体FAIL；Node/导航/J4通过既定门槛，10k原期限仅6540 refs/revision139，最后tail OBSERVED_TAIL_ONLY/6431、auditAttempts=0。新诊断明确本次摄取未完整，并非完整审计太慢；优先成员调度修复未关闭跨环境吞吐关口。四job实测134/201/285/174秒（Node/导航/J4/耐久）；旧串行关键job384秒对本次最长285秒仅跨版本描述，非受控加速比。已有J4分离及no cache/upload保留；本次C2正/变异加入现有导航runner任务，新增CI尚待执行。
 

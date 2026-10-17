@@ -21,8 +21,9 @@ export function createHostOldSendTerminal({origin,handshake,observations,sendCan
    if(!await sendCandidates.pendingIntent(r.proofId,r.intentId))return false;check();
    r.attempts++;const reservation=await readBudget.reserve({principalKey:c.scope.accountId,contextKey:c.scope.organizationId,sourceDomain:origin,attemptKey:'old-send-terminal:'+r.operationId,windowStartedAt:r.budgetWindow,signal:c.signal});r.budgetWindow=reservation.windowStartedAt;check();
    const v=await readOperation({operationId:r.operationId,principalKey:c.scope.accountId,contextKey:c.scope.organizationId,signal:c.signal});check();
-   if(v?.operationId!==r.operationId||v.messageId!==r.messageId||v.conversationId!==r.conversationId||v.acceptanceState!==event.stage||!['failed','cancelled'].includes(v.acceptanceState)){used.add(k);rows.delete(k);events.delete(k);return false;}
-   const result=await sendCandidates.settle(r.proofId,{intentId:r.intentId,stage:event.stage},check);check();used.add(k);rows.delete(k);events.delete(k);return result?.stage===event.stage;
+   const terminalStage=v?.acceptanceState;
+   if(v?.operationId!==r.operationId||v.messageId!==r.messageId||v.conversationId!==r.conversationId||(event.stage!=='unresolved'&&terminalStage!==event.stage)||!['failed','cancelled'].includes(terminalStage)){used.add(k);rows.delete(k);events.delete(k);return false;}
+   const result=await sendCandidates.settle(r.proofId,{intentId:r.intentId,stage:terminalStage},check);check();used.add(k);rows.delete(k);events.delete(k);return result?.stage===terminalStage;
   });
  }).catch(()=>false).finally(()=>{queued--;});work=result.then(()=>{});return result;}
  async function intentWork(message,sender){
@@ -39,7 +40,7 @@ export function createHostOldSendTerminal({origin,handshake,observations,sendCan
   }).catch(()=>false);
  }
  function terminal(event){
-  prune();if(stopped||events.size>=32||used.size>=256||!exactHostRecord(event,['tabId','browserDocumentId','requestId','operationId','messageId','startedAt','stage'])||!Number.isSafeInteger(event.tabId)||event.tabId<0||!['browserDocumentId','requestId','operationId','messageId'].every(k=>tokenOK(event[k]))||!['failed','cancelled'].includes(event.stage)||!Number.isFinite(event.startedAt)||Math.floor(event.startedAt)>now()||now()-event.startedAt>=30000)return Promise.resolve(false);
+  prune();if(stopped||events.size>=32||used.size>=256||!exactHostRecord(event,['tabId','browserDocumentId','requestId','operationId','messageId','startedAt','stage'])||!Number.isSafeInteger(event.tabId)||event.tabId<0||!['browserDocumentId','requestId','operationId','messageId'].every(k=>tokenOK(event[k]))||!['failed','cancelled','unresolved'].includes(event.stage)||!Number.isFinite(event.startedAt)||Math.floor(event.startedAt)>now()||now()-event.startedAt>=30000)return Promise.resolve(false);
   const k=key(event);if(used.has(k))return Promise.resolve(false);if(events.has(k)){if(JSON.stringify(events.get(k).event)!==JSON.stringify(event)){used.add(k);events.delete(k);rows.delete(k);}return Promise.resolve(false);}
   events.set(k,{event:Object.freeze({...event}),at:now(),elapsed:elapsedNow()});return join(k);
  }
