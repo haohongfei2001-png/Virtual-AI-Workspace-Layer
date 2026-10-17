@@ -48,7 +48,7 @@ test('raw RPC remains pending across timeout and restart until the original send
 });
 for(const [callback,type] of [['onFirstSendIntent','HOST_FIRST_SEND_INTENT'],['onOldSendOperation','HOST_OLD_SEND_OPERATION']])test(callback+' raw send blocks readiness while listener remains active',async t=>{
  const f=fixture(),hold=deferred();t.after(()=>f.client.stop());await f.client.start();await drain();const token=f.client.prepareIdle();assert.ok(token);
- f.setResponse(m=>m.type===type?hold.promise:normal(f)(m));f.adapterOptions[callback]({intentId:'intent',observedAt:new Date(1000).toISOString()});await drain();
+ f.setResponse(m=>m.type===type?hold.promise:normal(f)(m));f.adapterOptions[callback]({intentId:'intent',observedAt:new Date(1000).toISOString()},f.context.binding);await drain();
  assert.equal(f.calls.at(-1).type,type);assert.equal(token.isCurrent(),false);assert.equal(f.client.prepareIdle(),null);assert.equal(f.listeners.size,1);
  hold.resolve({ok:true});await drain();assert.ok(f.client.prepareIdle());assert.equal(token.isCurrent(),false);
 });
