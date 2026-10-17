@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round367）
+## 最新本地检查点（2026-10-17，Round368）
+
+修复可信 dormant 四格恢复漏发 workspaceEntered：双新授权且实际打开后恰好一次，原生输入/弹层及同步重入撤销意图。独立两轮红测转绿；护栏前完整 Node **7106/7106 PASS**，最终相关 **170/170 PASS**。最终源码隔离 MV3 关闭恢复一次 **3项子检查PASS**，原 worker 销毁后新 worker/原双frame/草稿及内容恢复。见 [Round368](evidence/round368/README.md)。
+
+历史 owner 替换4项使用MockIDB，仅L；新增进入校准→历史持久化的真实S断言仍待完成。自然休眠原因、自动策略、休眠首发及完整UI-11/G/U未认证，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round367）
 
 真实隔离headless MV3显式关闭/四格恢复最终一次运行 **3项子检查PASS**：双ACK后worker释放；无附着60秒窗口观察原worker约30秒销毁；真实点击后新worker接管，原document/editor/草稿/双iframe保留且两界面Shadow DOM项目内容恢复。临时包仅测试入口补丁，原失败和各版本hash保留，独立复核完成。见 [Round367](evidence/round367/README.md)。
 
