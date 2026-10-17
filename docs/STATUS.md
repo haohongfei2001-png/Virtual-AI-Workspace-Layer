@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round370）
+## 最新本地检查点（2026-10-17，Round371）
+
+修复缺ACK关闭被rawIPC/adapter任务打断后四格永久无效：任务自然结束不自恢复，后续明确点击且全部静稳才单次既有rebind到reading，重新核验同scope；异scope在新adapter/controller前拒绝，不清pending或重放发送。完整ACK原帧恢复保持。独立4红转绿，相关53/53、最终完整Node **7121/7121 PASS**。见 [Round371](evidence/round371/README.md)。
+
+异常恢复先重建扩展reading入口，下一次明确点击进入工作区；本轮仅L，缺ACK场景真实Chrome重建及native草稿验证待补。完整UI-11/自动策略/首发/81/G/U未完成，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round370）
 
 修复showWorkspace同步原生中断后误提交workspace状态/留下第二surface：显示前后复核同state/handle/intent/授权，冲突只关闭当前残留并保留reading或弹层状态；旧尝试不触新挂载。独立4红转绿，最终相关 **144/144 PASS**；实际隔离MV3测试编排beforetoggle→原editor.focus，**4项子检查PASS**，open0/唯一返回/原草稿与frame保留，第二次明确点击恢复双面及内容。见 [Round370](evidence/round370/README.md)。
 

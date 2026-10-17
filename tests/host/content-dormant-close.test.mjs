@@ -95,3 +95,27 @@ for(const interference of ['first-send raw IPC','adapter pending'])test('missing
  assert.equal(f.controllers,1);assert.equal(f.adapters,1);assert.equal(f.stops,0);assert.equal(f.calls.filter(message=>message.type==='HOST_HELLO').length,1);assert.equal(closes(f).length,0);assert.equal(f.listeners.size,1);
  send.resolve({ok:true});f.setAdapterReady(true);for(let i=0;i<3;i++)await drain();assert.equal(f.controllers,1,'late drain cannot revive abandoned close fallback');assert.equal(f.stops,0);
 });
+
+for(const interference of ['raw IPC','adapter work'])for(const changedScope of [false,true])test('explicit wake after incomplete close waits for '+interference+' and '+(changedScope?'rejects changed scope':'recovers once in reading'),async t=>{
+ const f=fixture(),ack=deferred(),send=deferred();t.after(()=>f.client.stop());await ready(f);
+ f.setSettleHook(async()=>{await ack.promise;f.setDormant(false);throw Error('missing-frame-ack');});
+ f.setResponse(message=>message.type==='HOST_FIRST_SEND_INTENT'?send.promise:f.normal(message));const closing=f.client.enterDormant();await drain();
+ if(interference==='raw IPC')f.adapterOptions.onFirstSendIntent({intentId:'one_native_send',operationId:'operation',messageId:'message',observedAt:new Date(1000).toISOString()},f.context.binding);else f.setAdapterReady(false);
+ await drain();ack.resolve();assert.equal(await closing,false);await drain();const wake=f.controllerOptions.onWake;
+ await wake();await drain();assert.equal(f.controllers,1);assert.equal(f.adapters,1);assert.equal(f.stops,0);assert.equal(f.calls.filter(message=>message.type==='HOST_HELLO').length,1,'explicit click during work must not reset active native tasks');
+ send.resolve({ok:true});f.setAdapterReady(true);for(let i=0;i<3;i++)await drain();assert.equal(f.controllers,1);assert.equal(f.stops,0);assert.equal(f.calls.filter(message=>message.type==='HOST_HELLO').length,1,'draining work cannot automatically recover');
+ if(changedScope)f.setScope('scope_B');const before=f.calls.length;await Promise.all([wake(),wake(),wake()]);for(let i=0;i<4;i++)await drain();
+ assert.equal(f.calls.filter(message=>message.type==='HOST_HELLO').length,2,'only one fresh handshake may run');
+ assert.deepEqual(f.calls.slice(before).filter(message=>['HOST_HELLO','HOST_REFRESH'].includes(message.type)).map(message=>message.type),['HOST_HELLO','HOST_REFRESH']);
+ assert.equal(f.resumed.length,0,'incomplete frame ACK cannot use dormant resume');assert.equal(closes(f).length,0);
+ if(changedScope){assert.equal(f.controllers,1,'different scope must be denied before constructing replacement UI');assert.equal(f.adapters,1);assert.equal(f.listeners.size,0);}else{assert.equal(f.controllers,2);assert.equal(f.adapters,2);assert.equal(f.controllerOptions.initialMode,'reading');assert.equal(f.stops,1);}
+ assert.equal(f.calls.filter(message=>message.type==='HOST_FIRST_SEND_INTENT').length,interference==='raw IPC'?1:0,'recovery cannot replay a prior native intent');
+ for(let i=0;i<3;i++)await drain();assert.equal(f.calls.filter(message=>message.type==='HOST_HELLO').length,2);
+});
+for(const refusedClose of [false,true])test('non-dormant wake without an entered incomplete close remains inert'+(refusedClose?' after refused entry':''),async t=>{
+ const f=fixture();t.after(()=>f.client.stop());await ready(f);if(refusedClose){f.setEnterAllowed(false);assert.equal(await f.client.enterDormant(),false);}
+ const count=f.calls.length;await f.controllerOptions.onWake();await drain();assert.equal(f.calls.length,count);assert.equal(f.controllers,1);assert.equal(f.stops,0);assert.equal(f.resumed.length,0);
+});
+test('complete ACK close retains same-controller fresh-authority resume path',async t=>{
+ const f=fixture();t.after(()=>f.client.stop());await ready(f);assert.equal(await f.client.enterDormant(),true);await f.controllerOptions.onWake();await drain();assert.equal(f.resumed.length,1);assert.equal(f.controllers,1);assert.equal(f.adapters,1);assert.equal(f.stops,0);assert.equal(f.resumed[0].binding.producerToken,'producer_2');
+});

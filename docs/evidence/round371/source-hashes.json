@@ -1,0 +1,7 @@
+{
+  "base": "866a1a2473d3699017a0179eb9c0d3f8f198a04c",
+  "files": {
+    "src/host/content-session.mjs": "d55998ab0d6ab404e6f53ff498de1ceddd5f592a2873af886016ceab5f28b2a4",
+    "tests/host/content-dormant-close.test.mjs": "3d8c3a3404c15fcc128bb0dae20638d207b4bc5188857f5433f6aedd0edfd039"
+  }
+}
