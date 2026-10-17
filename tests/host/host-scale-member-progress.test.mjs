@@ -80,3 +80,18 @@ test('a complete audit arriving after the absolute deadline cannot authorize ret
  const f=completeWaiting([complete(1)]),original=f.frame.evaluate;f.frame.evaluate=async(fn,input)=>{const result=await original(fn,input);if(fn===auditHostScaleIndex)f.setTime(30000);return result;};
  await assert.rejects(waitHostScaleMemberProgress(f.args),/member-deadline/);assert.equal(f.auditReads(),1);
 });
+
+// A cheap admitted count may defer expensive audits, but never certifies membership.
+test('incomplete admitted total defers inventory audit while preserving the final two full audits',async()=>{
+ const f=completeWaiting([complete(9),complete(9)]),original=f.frame.evaluate;let reads=0;
+ f.frame.evaluate=async(fn,input)=>{const r=await original(fn,input);if(fn===readHostScaleMemberProgress)return {...r,total:++reads<4?765:10001};return r;};
+ const result=await waitHostScaleMemberProgress(f.args);assert.equal(reads,5);assert.equal(f.auditReads(),2);assert.equal(result.status,'OBSERVED_COMPLETE_INDEX');assert.equal(result.remainingMs,29600);
+});
+test('an incomplete admitted total cannot pass by tail before the original deadline',async()=>{
+ const f=completeWaiting([complete(9),complete(9)]),original=f.frame.evaluate;f.args.deadline=250;
+ f.frame.evaluate=async(fn,input)=>{const r=await original(fn,input);return fn===readHostScaleMemberProgress?{...r,total:765}:r;};
+ await assert.rejects(waitHostScaleMemberProgress(f.args),/member-deadline/);assert.equal(f.auditReads(),0);assert.equal(f.state().time,250);
+});
+test('tail progress exposes the repository total only as a necessary audit prerequisite',async()=>{
+ const result=await readHostScaleMemberProgress(input,{page:async()=>({...pageResult(),total:765})});assert.equal(result.total,765);assert.equal(result.status,'OBSERVED_TAIL_ONLY');
+});

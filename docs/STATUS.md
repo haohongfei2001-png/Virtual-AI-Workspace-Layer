@@ -5,15 +5,17 @@
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
 - **已关闭的具体缺陷**：失败surface页分片在后续独立重读仍被整页失败缓存跳过。现在独立全读允许恢复未发送/失败片，成功页去重、当前尝试预算及普通mutation不重放保持。独立四项原失败转绿。
-- **10k观察器根因已修正**：优先tail早到不代表目录完整；旧测试立即返回并遮住剩余成员。现在在原30秒总窗口内保持native reading，独立枚举完整ID/成员两次同revision后返回，返回后原审计保留。实际10k为10000 refs/10000正确PROJECT、0 UNKNOWN/遗漏/重复/错属，reading和测量前后revision213，原窗口剩余6030ms；原生导航/编辑器/返回通过。只认证本场景单次闭环，非所有规模/p95或提前返回完整性。
+- **10k观察器根因已修正**：优先tail早到不代表目录完整；旧测试立即返回并遮住剩余成员。现在在原30秒总窗口内保持native reading，独立枚举完整ID/成员两次同revision后返回，返回后原审计保留。实际10k为10000 refs/10000正确PROJECT、0 UNKNOWN/遗漏/重复/错属，reading和测量前后revision213，原窗口剩余6030ms；原生导航/编辑器/返回通过。只认证本场景单次闭环，非所有规模/p95或提前返回完整性。随后同源码CI在原30秒期限仅5775 refs，完整索引跨环境关口仍OPEN；本地一次PASS不能关闭它。
 - **worker/peer未关闭**：旧观察器可能接受旧frame grant/scope缓存。现要求stop后新grant、其对应VIEW请求及响应、未过期与原doc/editor/draft。实际默认J4完成现有23步，原生导航可重新认证；仅foreground仍发生`J4-peer-current-scope-timeout`，自动恢复 **NOT_ESTABLISHED**。C2 browser receipt在worker内存丢失后必须重新取得合法上下文证据，不持久旧授权或伪造scope。
 - **休眠忙碌返回**：隔离MV3真实第二tab HTTP在途使原worker拒绝release；原producer续租、双新grant、reading及可信返回通过，原frames/editor/draft保持。这是显式close插桩子链，非自动休眠完成。
-- **验证调度**：J4前置→完整J4→诊断已迁入独立CI job，独立runner/profile/output；原内部顺序、同SHA、退出码、门槛均保留，不开cache/upload。旧实际CI耐久job384s，其中J4正式187s、前置56s；新job实测尚待远端执行，不能宣称加速。旧10k3.712s为提前失败，新完整旅程45.464s（含清理），两者不可作为性能加速比。候选搜索/翻页单样本80.6/181.3/213.0ms。
-- **真实宿主**：用户已授权指定账户的只读session/accounts/context元字段及指定P/C的ID/标题，不含正文/凭证保存或原生写入。截图对应首页标签已定位，但两次连接读取超时，未取得字段/关联证据；样本尚未指定。生产`chatgpt-context-unverified`保持，C1字段语义/C2正常请求与文档关联/C3默认personal语义均未真实验证。
+- **验证调度**：J4前置→完整J4→诊断已迁入独立CI job，独立runner/profile/output；原内部顺序、同SHA、退出码、门槛均保留，不开cache/upload。旧实际CI耐久job384s，其中J4正式187s、前置56s；同源码439bd34的CI39022694571已结束：J4独立job295s，耐久159s、journeys209s、Node223s；最长job从384s变295s（减少89s），但代码/失败位置不同，不视为纯调度加速比。Node和J4 job通过既定partial门槛；完整矩阵FAIL，10k与cold immediate均失败。旧10k3.712s为提前失败，新完整旅程45.464s（含清理），两者不可作为性能加速比。候选搜索/翻页单样本80.6/181.3/213.0ms。
+- **真实宿主**：用户已授权指定账户的只读session/accounts/context元字段及指定P/C的ID/标题，不含正文/凭证保存或原生写入。用户另确认截图就是授权Profile；此前连接读取超时，本次原标签已失效且可连接浏览器无该首页标签，未取得字段/关联证据；P/C样本尚未指定。生产`chatgpt-context-unverified`保持，C1字段语义/C2正常请求与文档关联/C3默认personal语义均未真实验证。
 
 最终冻结完整Node回归通过（7278项、0 skip、39.06秒）。首次回归诊断插桩锚点失配的11项失败保留，精确更新锚点后通过，未放宽功能断言。
 
-同候选10k与J4的165项生产source hash逐项相同，实际执行期间源码/fixture不漂移。原始失败、候选结果、耗时及hash保存在 [本次原始证据](evidence/free-delivery-2026-10-17/)，没有新建开发计划。忙碌close证据对应前一生产版本fb0f5d4，不冒称与本候选同版本。
+同候选10k与J4的165项生产source hash逐项相同，实际执行期间源码/fixture不漂移。原始失败、候选结果、耗时及hash保存在 [本次原始证据](evidence/free-delivery-2026-10-17/)，没有新建开发计划。忙碌close已在最终候选重跑通过，165项生产hash与10k/J4完全相同；前一版本fb0f5d4的试验也保留。
+
+观察器后续定向改进：复用exact-ID PAGE已有total，在总量不足10001时不反复全目录审计；计数仅为必要条件，最终两次同revision完整ID/成员审计和30秒deadline不变。三个反例先红后绿，相关61项通过。真实同生产源码重跑47.250s仍FAIL，期限时9490 refs/revision203；不宣称性能提升或根因已全部修复。CI冷启动失败为20秒内无mount，正常原生导航恢复仍通过；须继续区分启动时C2捕获和worker恢复的共同边界。
 
 下一阻塞：合法worker/peer context重新获取与自动待命返回；完整旅程/全部适用81项、100k与p95、真实G/U/PAIA/物理IME/跨端及发布准备仍未达到。已有Pro资产和整理stash保留。
 

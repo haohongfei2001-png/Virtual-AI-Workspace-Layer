@@ -28,7 +28,7 @@ export async function readHostScaleMemberProgress({id,projectId,scopeSelector=nu
   const ref=page.facts.refs[id],membership=page.facts.membership[id];
   if(!ref||!membership||membership.state==='UNKNOWN')return {status:'PENDING_MEMBER',revision:page.revision,scopeSelector};
   if(ref.id!==id||membership.id!==id||membership.state!=='PROJECT'||membership.projectId!==projectId||page.facts.projects[projectId]?.id!==projectId)throw Error('member-progress-wrong-membership');
-  return {status:'OBSERVED_TAIL_ONLY',revision:page.revision,scopeSelector};
+  return {status:'OBSERVED_TAIL_ONLY',revision:page.revision,scopeSelector,total:page.total};
  }finally{database?.close();}
 }
 
@@ -65,7 +65,13 @@ export async function waitHostScaleMemberProgress({page,extensionId,url,projectI
    remaining();await native();
    if(result&&!frame.isDetached()&&current()===frame){
     attempts++;scopeSelector=result.scopeSelector??scopeSelector;
-    if(result.status==='OBSERVED_TAIL_ONLY'){
+    // The exact-ID read already returns admitted cardinality. A smaller total
+    // cannot pass the full audit; avoid repeatedly enumerating growing IDB
+    // inventories during ingestion. Missing totals keep the original audit.
+    // Counts never prove membership: both final full audits remain mandatory.
+    const incompleteTotal=size!==null&&Number.isSafeInteger(result.total)&&result.total>=0&&result.total<size+1;
+    if(incompleteTotal)stableRevision=null;
+    if(result.status==='OBSERVED_TAIL_ONLY'&&!incompleteTotal){
      if(size===null)return {status:result.status,revision:result.revision,attempts,remainingMs:remaining(),acceptance:'NOT_ESTABLISHED'};
      // Priority tails arrive before the middle of the native list. Keep reading
      // visible until independently enumerated facts pass twice at one revision.
