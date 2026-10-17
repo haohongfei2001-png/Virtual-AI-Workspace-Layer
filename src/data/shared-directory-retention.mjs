@@ -17,7 +17,9 @@ export function prepareSharedDirectoryRetention(tx,scope,prior,check,fail){
    // A format/generation transition is not authority to purge older assets.
    if(old.generation!==previous.generation||old.generation!==next.generation||old.revision>previous.revision)return;
    if(next.revision!==previous.revision+1)throw Error('shared-retention-revision-conflict');
-   const older=createSharedDirectoryReader(store,old,scope,()=>{});
+   // Old-bucket corruption grants no deletion authority. It must not hide
+   // revocation that happened after the checkpoint's earlier guard check.
+   const older=createSharedDirectoryReader(store,old,scope,()=>{},{check,fail});
    const retained=createSharedDirectoryReader(store,previous,scope,fail);
    const current=createSharedDirectoryReader(store,next,scope,fail);
    for(const [bucket,pointer] of Object.entries(old.refDirectory)){

@@ -4,10 +4,13 @@ import {id} from './state.mjs';
 /** Callback-only reader: all requests belong to one live IDB transaction/root.
  * Unloaded directory claims do not certify inventory or shared contents.
  */
-export function createSharedDirectoryReader(store,root,scope,fail){
+export function createSharedDirectoryReader(store,root,scope,fail,ownerGuard=null){
  validateSharedDirectoryRoot(root,scope);
  const records=new Map(),pending=new Map();let failed=false;
  const reject=error=>{if(failed)return;failed=true;pending.clear();fail(error);};
+ // Guard every queued reply, including replies after a corrupt old bucket
+ // abandoned this reader. Data tolerance must not swallow owner revocation.
+ const checkOwner=()=>{if(!ownerGuard)return true;try{ownerGuard.check();return true;}catch(error){ownerGuard.fail(error);return false;}};
  function readBucket(bucket,done){
   if(failed)return;
   try{
@@ -18,14 +21,14 @@ export function createSharedDirectoryReader(store,root,scope,fail){
    if(pending.has(key)){pending.get(key).push(done);return;}
    pending.set(key,[done]);
    const request=store.get(key);
-   request.onsuccess=()=>{if(failed)return;try{
+   request.onsuccess=()=>{if(!checkOwner()||failed)return;try{
     const record=request.result,verified=verifySharedDirectoryPiece(record,root,bucket);records.set(key,record);
     const callbacks=pending.get(key);pending.delete(key);
     // No external callback intervenes before the first consumer. Every later
     // consumer rechecks fresh bytes and the current root ordinal ceiling.
     for(let i=0;i<callbacks.length;i++){if(failed)break;callbacks[i](i===0?verified:verifySharedDirectoryPiece(record,root,bucket));}
    }catch(error){reject(error);}};
-   request.onerror=()=>reject(request.error??Error('shared-directory-read-failed'));
+   request.onerror=()=>{if(checkOwner())reject(request.error??Error('shared-directory-read-failed'));};
   }catch(error){reject(error);}
  }
  function lookup(ref,done){

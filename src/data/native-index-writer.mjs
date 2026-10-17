@@ -25,7 +25,7 @@ export function saveIndexedNativePieces(store,scope,next,storage,command,reader,
   // abort the queued write, not masquerade as a tolerable missing checkpoint.
   let old;try{old=verifyCheckpoint(request.result);}catch{return;}
   if(!isNativePartitioned(old)&&old?.format!==NATIVE_INDEX_FORMAT)return;
-  const newer=createNativeIndexReader(store,built.root,scope,fail),older=old.format===NATIVE_INDEX_FORMAT?createNativeIndexReader(store,old,scope,()=>{}):null;
+  const newer=createNativeIndexReader(store,built.root,scope,fail),older=old.format===NATIVE_INDEX_FORMAT?createNativeIndexReader(store,old,scope,()=>{},{check,fail}):null;
   const lookupOld=(kind,key,done)=>older?older.lookup(kind,key,done):done(old[kind][key]);
   const retire=(kind,key)=>lookupOld(kind,key,version=>{if(!version)return;reader.lookup(kind,key,previousVersion=>{
    const finish=currentVersion=>{try{check();if(version!==previousVersion&&version!==currentVersion)store.delete(nativePartitionKey(next.scopeKey,kind,key,version));}catch(error){fail(error);}};

@@ -4,6 +4,11 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+
+- **已排队旧 bucket 回调的提交前撤权已补齐**：Native 与 Shared 的旧 bucket 损坏可以安全容忍，但不能吞掉后续授权失效。原 reader 在首个损坏后设置 failed，后续已排队响应会在 owner 校验前直接返回；现在每个成功/错误回调先执行原 owner guard，再处理 failed/数据容错，撤权独立走原事务 abort。纯旧数据损坏仍保守保留且允许合法写入/replay，current/prior fresh 校验、逐删除检查、六 store 回滚与真正提交后 stale 语义保持。原742基线75项中39项RED，未发布的首版wrapper仍23项RED；最终75专项及独立75复核全部通过。冻结完整Node **8169/8169、0 fail/skip/cancel、183.274秒**，原12/12 guard变异KILLED，1104个输入文件运行前后SHA一致。仅L级合成 owner/MockIDB，新增提交真实CI待跑。[修复与验证](evidence/free-delivery-2026-10-17/cloud-obsolete-bucket-authority-validation.json)。
+
+- **742968e CI39077084574四job通过，正式10k本次完整双审计PASS**：原30秒内10000 refs、1 Project、rev216完成两轮21页全量审计，stableSamples=2、尚余6223.385ms；零缺失/重复/UNKNOWN/错属。其后实际测量前后全量审计仍同rev216，原生项目导航与原文档/editor保持通过。exact尾部/首屏/次页单样本91.420/189.692/238.969ms，非p95；runner仍为PARTIAL_SYS04_NOT_ACCEPTED、exit2，原workflow仅认可这一场景门槛。167生产与26fixture hash逐项匹配742，失败后CPU未运行；Node、journeys、J4均过原门槛。J4仍PARTIAL，worker失去内存后peer自动foreground仍NOT_ESTABLISHED；本次cold正式及passive副本通过，不抹掉此前GET早于listener失败。该一次PASS不认证跨环境稳定、SYS04或Free发布。[本次CI原始事实](evidence/free-delivery-2026-10-17/cloud-ci-39077084574-summary.json)。
+
 - **Native 旧格式 GC 的提交前撤权与重复工作单已修**：旧分片 writer 的 checkpoint 异步回调现使用原 owner 的 check/abort；入口校验独立于坏 checkpoint 容错，每次删除前再次校验，撤权、取消或删除异常在可中止阶段回滚 Native/Shared 六个 store；真正提交后才失权仍保留 stale-after-commit/committed:true。另两种 Native 格式只在当前 revision 工作单恰好一条时使用它，缺失或重复均走已有完整旧 checkpoint 对账，关闭合法旧格式重复行导致的永久旧 piece 遗留；不改变单条语义不完整工作单的既有边界。旧64行 schema/完整 bytes/checksum、真实 prior raw checkpoint、当前/前一存活 piece、receipt/replay 和 Shared 保留。原基线重复反例10项与提交前撤权2项实际RED，新85专项、最终42专项与独审7个精准变异通过；冻结完整Node **8094/8094、0 fail/skip/cancel、184.506秒**，原12/12 guard变异KILLED；1100个源码/测试/fixture/workflow文件运行前后SHA完全一致。环境恢复后重新核字节、重跑RED/GREEN；31条重复工作单测试按新hash重新独审，不冒充丢失副本的原字节。[修复与验证](evidence/free-delivery-2026-10-17/cloud-native-gc-safety-validation.json)。
 
 - **2f9905e CI39074537965达到10000与首轮完整审计，但正式10k仍FAIL**：原30秒内全10000 refs、1 Project、rev222；首轮21页全量审计通过（10000 PROJECT、零UNKNOWN/缺失/错属，3104.027ms），第二轮已开始但未在原期限内结束。Node及J4原门禁通过；J4仍PARTIAL，worker失去内存后的peer自动foreground未建立。journeys的未插桩cold正式步骤通过，独立cold passive副本失败：唯一原生GET比listener注册早29ms，未捕获receipt，REFRESH安全拒绝current-context-unproven。失败后双CPU/phase采样CAPTURED且清理成功，均不抵消正式失败。完整双审计、30秒、G/Profile边界保持。[本次CI事实](evidence/free-delivery-2026-10-17/cloud-ci-39074537965-summary.json)。
