@@ -173,6 +173,20 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    }
   }catch{/* A failed public join never authorizes a surface. */}finally{state.pending.delete(data.role);}
  }
+ // Advisory only: a busy worker must leave the current leases and frames intact.
+ // Final release still repeats the guard after both frames acknowledge clearing.
+ async function checkIdle({isCurrent,timeoutMs=6000}={}){
+  const state=current;
+  const intact=()=>current===state&&!!state&&!state.dormant&&!state.renewing&&state.pending.size===0&&['reading','suspended'].includes(state.mode)&&authorized(state)&&isCurrent()===true;
+  if(typeof isCurrent!=='function'||typeof bridge.checkIdleMount!=='function'||!Number.isFinite(timeoutMs)||timeoutMs<=0||timeoutMs>6000)return false;
+  try{
+   if(!intact())return false;
+   const visible=surface.visibility?.(state.handle);if(visible?.workspace!==false||visible?.sidebar!==false)return false;
+   const result=await withRequestDeadline(()=>bridge.checkIdleMount({handle:state.handle,timeoutMs}),{timeoutMs,now:elapsedNow,schedule,cancel});
+   const after=surface.visibility?.(state.handle);
+   return result?.ok===true&&intact()&&after?.workspace===false&&after?.sidebar===false;
+  }catch{return false;}
+ }
  // Caller must freeze its producer and obtain worker admission first. This
  // local transition only relinquishes UI authority; it does not grant idle permission.
  function enterDormant(){
@@ -227,5 +241,5 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   const state=current;
   return !!state&&state.dormant&&state.epoch===epoch&&doc.location.href===state.url&&state.frames.length===2&&state.frames.every(({frame,window,role})=>state.idleAcks.has(role)&&frame.isConnected&&frame.ownerDocument===doc&&frame.contentWindow===window);
  }
- return Object.freeze({enterDormant,settleDormant,dormantReady,resumeDormant,start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,showReading,showNativeReading,focusFrame(role){const state=current;if(!state||state.mode!=='workspace'||!authorized(state)||adapter.hasNativeLayer())return false;const target=state.frames.find(x=>x.role===role);if(!target?.frame?.focus)return false;target.frame.focus({preventScroll:true});let active=doc.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;return active===target.frame;},isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
+ return Object.freeze({checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,showReading,showNativeReading,focusFrame(role){const state=current;if(!state||state.mode!=='workspace'||!authorized(state)||adapter.hasNativeLayer())return false;const target=state.frames.find(x=>x.role===role);if(!target?.frame?.focus)return false;target.frame.focus({preventScroll:true});let active=doc.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;return active===target.frame;},isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
 }

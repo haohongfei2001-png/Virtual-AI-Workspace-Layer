@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round383）
+## 最新本地检查点（2026-10-17，Round384）
+
+真实关闭流程新增worker只读空闲预检，busy时保留现有grant/frame/续租；最终release仍重验，预检和清理共原6秒预算。独立service/controller/content回归 **95/95 PASS**，最终完整Node **7232/7232 PASS**。隔离插桩MV3显式关闭/旧worker销毁观察/fresh恢复 **3项S子检查PASS**，source/runner/manifest稳定，原frame/editor/草稿保持。见 [Round384](evidence/round384/README.md)。
+
+保留首次单次close=false原报告；未精确归因其原因。自动触发仍未启用：预检后新工作导致最终release拒绝时的lease维持与草稿风险门槛尚未闭合。naturalWorkerSleep NOT_ESTABLISHED，100k及其他81/G/U继续开放，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round383）
 
 接入已聚焦原生编辑器的可信input准备链，沿用既有reading恢复/正文重读和预算；不读取草稿、不生成发送意图。独立三红转绿，最终针对性 **56/56 PASS**、完整 Node **7218/7218 PASS**。实际隔离MV3仅input1、pointer/focus0触发partial→full一次重读，后续原生发送确切观察锚，**2项S子检查PASS**；源码/fixture/runner稳定，独立审查通过。见 [Round383](evidence/round383/README.md)。
 

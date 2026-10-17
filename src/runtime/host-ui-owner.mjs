@@ -170,7 +170,8 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
     if(!scope)throw Error('ui-scope-changed');
     notify(scope.key,message.mountId,'VAIWL_UI_WORKSPACE_ENTERED');return {ok:true};
    }
-   if(message.type==='HOST_UI_RELEASE'){
+   if(message.type==='HOST_UI_RELEASE'||message.type==='HOST_UI_IDLE_CHECK'){
+    if(message.type==='HOST_UI_IDLE_CHECK'&&releaseGuard===null)throw Error('idle-check-requires-worker-guard');
     if(!schema(message,[...bindingKeys,'mountId']))throw Error('invalid-ui-release');
     sender=await parent(message,sender);check();
     const mount=registrations.get(message.mountId);if(mount?.tabId!==sender.tab.id||mount?.documentId!==sender.documentId)throw Error('ui-mount-mismatch');
@@ -181,6 +182,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
      const quiet=()=>activeWork===1&&inFlight.size===1&&pending.size===0;
      if(!quiet()||releaseGuard()!==true||!quiet())return {ok:false,reason:'ui-release-busy'};check();
     }
+    if(message.type==='HOST_UI_IDLE_CHECK')return {ok:true};
     revokeMount(message.mountId);return {ok:true};
    }
    return {ok:false,reason:'unsupported-ui-command'};

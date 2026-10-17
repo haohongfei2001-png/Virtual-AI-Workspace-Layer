@@ -113,3 +113,32 @@ for(const result of [{ok:false},{ok:true}])test('settlement singleflight and pos
  const f=fixture();await f.ready();let resolve,current=true,releases=0;f.bridge.releaseIdleMount=()=>{releases++;return new Promise(r=>resolve=r);};f.controller.enterDormant();acknowledgeIdle(f,'workspace');acknowledgeIdle(f,'sidebar');
  const pending=f.controller.settleDormant({isCurrent:()=>current});await flush();assert.equal(await f.controller.settleDormant({isCurrent:()=>true}),false);assert.equal(releases,1);current=false;resolve(result);assert.equal(await pending,false);assert.equal(f.calls.disposed,0);f.controller.stop();
 });
+
+for(const result of ['busy','reject'])test('idle preflight '+result+' preserves renewal timers and current grants',async t=>{
+ const f=fixture();t.after(()=>f.controller.stop());
+ f.bridge.renewSession=async()=>{assert.fail('renewal must not run during immediate preflight');};
+ await f.ready();const timers=[...f.timers.keys()],messages=f.calls.messages.length,suspended=f.calls.suspended;
+ assert(timers.length>=2,'expiry and renewal are armed');
+ f.bridge.checkIdleMount=async()=>{if(result==='reject')throw Error('worker unavailable');return {ok:false};};
+ assert.equal(await f.controller.checkIdle({isCurrent:()=>true}),false);
+ assert.deepEqual([...f.timers.keys()],timers);assert.equal(f.calls.messages.length,messages);assert.equal(f.calls.suspended,suspended);assert.equal(f.calls.disposed,0);
+ assert.equal(f.controller.showWorkspace(),true,'original grants still authorize presentation');
+});
+test('successful controller preflight does not clear frames and settlement still requires both ACKs',async t=>{
+ const f=fixture();t.after(()=>f.controller.stop());await f.ready();let checks=0,releases=0;
+ f.bridge.checkIdleMount=async({handle,timeoutMs})=>{assert.equal(handle.id,'mount');assert.equal(timeoutMs,4321);checks++;return {ok:true};};
+ f.bridge.releaseIdleMount=async()=>{releases++;return {ok:true};};
+ const before=f.calls.messages.length,timers=[...f.timers.keys()];
+ assert.equal(await f.controller.checkIdle({isCurrent:()=>true,timeoutMs:4321}),true);assert.equal(checks,1);assert.equal(f.calls.messages.length,before);assert.deepEqual([...f.timers.keys()],timers);assert.equal(f.controller.dormantReady(),false);
+ assert.equal(f.controller.enterDormant(),true);const pending=f.controller.settleDormant({isCurrent:()=>true});await flush();assert.equal(releases,0);
+ acknowledgeIdle(f,'workspace');await flush();assert.equal(releases,0);assert.equal(f.controller.dormantReady(),false);
+ acknowledgeIdle(f,'sidebar');assert.equal(await pending,true);assert.equal(releases,1);
+});
+for(const change of ['scope','guard','visible','route','stop'])test('late successful idle preflight rejects changed '+change,async t=>{
+ const f=fixture();t.after(()=>f.controller.stop());await f.ready();let resolve,current=true,scope='scope';
+ f.bridge.checkIdleMount=()=>new Promise(done=>resolve=done);
+ const pending=f.controller.checkIdle({isCurrent:()=>current&&scope==='scope'});await flush();assert.equal(typeof resolve,'function');
+ if(change==='scope')scope='replacement';if(change==='guard')current=false;if(change==='visible')f.surface.visibility=()=>({workspace:true,sidebar:false});if(change==='route')f.doc.location.href+='c/other';if(change==='stop')f.controller.stop();
+ resolve({ok:true});assert.equal(await pending,false);assert.equal(f.calls.messages.filter(m=>m.data.type==='VAIWL_UI_IDLE').length,0);
+ if(['scope','guard','visible'].includes(change)){assert.equal(f.calls.disposed,0);assert.equal(f.controller.showWorkspace(),true);}
+});

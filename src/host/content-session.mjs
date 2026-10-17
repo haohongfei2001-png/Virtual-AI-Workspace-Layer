@@ -94,10 +94,13 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   const binding=s.binding,closing={interfered:false};s.closing=closing;
   const intact=()=>enabled&&live(s)&&s.binding===binding&&s.closing===closing&&!closing.interfered&&s.ready&&Date.parse(binding.expiresAt)>now()&&adapter.isCurrent()&&reader.isCurrent();
   closing.isCurrent=intact;
+  const started=elapsedNow(),remaining=()=>{const elapsed=elapsedNow()-started;if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=6000)throw Error('idle-close-deadline');return 6000-elapsed;};
   try{
+   if(s.controller.dormantReady?.()!==true&&await s.controller.checkIdle?.({isCurrent:intact,timeoutMs:remaining()})!==true)return false;
+   remaining();
    if(!intact()||s.controller.dormantReady?.()!==true&&s.controller.enterDormant?.()!==true)return false;
    closing.entered=true;
-   let settled=false;try{settled=await s.controller.settleDormant?.({isCurrent:intact,timeoutMs:6000})===true;}catch{/* An incomplete clear cannot leave an unusable return entry. */}
+   let settled=false;try{settled=await s.controller.settleDormant?.({isCurrent:intact,timeoutMs:remaining()})===true;}catch{/* An incomplete clear cannot leave an unusable return entry. */}
    if(!settled&&intact()&&activeWork===0&&rawIPC===0&&s.controller.dormantReady?.()!==true){rebind(s,'reading',s.scopeKey);return false;}
    return settled&&intact();
   }catch{return false;}finally{if(live(s)&&closing.entered)s.incompleteClose=s.controller.dormantReady?.()!==true;if(s.closing===closing)s.closing=null;}
@@ -339,6 +342,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    s.plans=plansFactory({adapter,showNativeReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showNativeReading?.()===true,captureIntent:()=>s.controller?.intentGuard?.()??(()=>false),showReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showReading()===true,now,elapsedNow,schedule,cancel,bindingCurrent:()=>live(s)&&Date.parse(s.binding.expiresAt)>now()&&adapter.inspect().ok?s.binding.documentToken+':'+s.binding.producerToken+':'+s.binding.routeEpoch:false});
    surface=surfaceFactory({document:doc,createFrameURL:({role})=>runtime.getURL(role+'.html'),hasNativeLayer:()=>adapter.hasNativeLayer()});
    const bridge={
+    checkIdleMount:({handle,timeoutMs})=>{const closing=s.closing;if(!closing?.isCurrent())return Promise.resolve({ok:false});return rpc(s,{v:1,type:'HOST_UI_IDLE_CHECK',...bindingFields(s.binding),mountId:handle.id},timeoutMs,closing);},
     releaseIdleMount:({handle,timeoutMs})=>{const closing=s.closing;if(!closing?.isCurrent())return Promise.resolve({ok:false});return rpc(s,{v:1,type:'HOST_UI_IDLE_RELEASE',...bindingFields(s.binding),mountId:handle.id},timeoutMs,closing);},
     registerMount:({handle})=>rpc(s,{v:1,type:'HOST_UI_MOUNT',...bindingFields(s.binding),mountId:handle.id,regionEpoch:handle.regionEpoch}),
     confirmParent:v=>rpc(s,{v:1,type:'HOST_UI_CONFIRM',...v,...bindingFields(s.binding)}),

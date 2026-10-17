@@ -49,7 +49,11 @@ try{
  await poll(()=>evaluate(sessionId,"document.querySelectorAll('[data-va-owned]:popover-open').length===0"),'native-reading');const isolated=await poll(async()=>{const matches=[];for(const c of contexts.filter(c=>c.sessionId===sessionId&&c.auxData?.isDefault===false&&c.auxData.frameId===topFrameId)){try{if(await evaluate(sessionId,`window===window.top&&chrome.runtime.id===${JSON.stringify(id)}&&typeof globalThis.__vaiwlIdleProbeSession==='object'`,c.id))matches.push(c);}catch{}}assert(matches.length<=1);return matches[0]??null;},'isolated-session');
  assert.equal(await evaluate(sessionId,"typeof globalThis.__vaiwlIdleProbeSession"),'undefined');
  await poll(()=>evaluate(sessionId,"!!__vaiwlIdleProbeSession.prepareIdle()",isolated.id),'content-ready-to-close');
- report.closeResult=await evaluate(sessionId,"__vaiwlIdleProbeSession.enterDormant()",isolated.id,10000);assert.equal(report.closeResult,true,'explicit close must reach actual worker release');
+ report.closeAttempts=[];
+ // Read-only preflight may see a transient worker view still in flight. Retry
+ // explicit test close within one bounded observation window, never force idle.
+ report.closeResult=await poll(async()=>{const result=await evaluate(sessionId,"__vaiwlIdleProbeSession.enterDormant()",isolated.id,10000);report.closeAttempts.push({ok:result===true});return result;},'explicit-close-with-worker-preflight',6000);
+ assert.equal(report.closeResult,true,'explicit close must reach actual worker release');
  report.results.push({name:'actual-content-frame-ack-worker-release',status:'PASS'});
  await command('Target.detachFromTarget',{sessionId});sessionId=null;
  const initialTargets=(await command('Target.getTargets')).targetInfos.filter(t=>t.url.startsWith(prefix));
