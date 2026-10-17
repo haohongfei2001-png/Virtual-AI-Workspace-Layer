@@ -70,7 +70,30 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   const failed=()=>{if(current===state&&state.surfaceRevision===revision)state.surfaceKey=null;};
   try{Promise.resolve(bridge.surfaceState({mountId:state.handle.id,revision,...snapshot})).then(result=>{if(result?.ok!==true)failed();},failed);}catch{failed();}
  }
- function showWorkspace(){const state=current;try{if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}if(!refreshGeometry(state)||surface.showWorkspace(state.handle)===false)return false;removeReturn(state);state.mode='workspace';return true;}finally{publishSurface(state);}}
+ function showWorkspace(){
+  const state=current;if(!state)return false;
+  const handle=state.handle,intent=++state.intentEpoch;
+  const same=()=>current===state&&state.handle===handle;
+  const fresh=()=>same()&&state.intentEpoch===intent&&authorized(state)&&same()&&state.intentEpoch===intent;
+  try{
+   if(!fresh())return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}
+   if(!refreshGeometry(state)||!fresh())return false;
+   const shown=surface.showWorkspace(handle);
+   if(!same())return false;
+   // showPopover can synchronously surrender to native input or a native layer.
+   // The mount loop may then open its other surface: close that residue without
+   // disposing frames or committing the superseded workspace intent.
+   if(!fresh()||adapter.hasNativeLayer()){
+    surface.suspend(handle);if(!same())return false;
+    state.pendingWakeEntry=false;
+    if(adapter.hasNativeLayer()){state.mode='suspended';removeReturn(state);}
+    else{state.mode='reading';ensureReturn(state);}
+    return false;
+   }
+   if(shown===false)return false;
+   removeReturn(state);state.mode='workspace';return true;
+  }finally{publishSurface(state);}
+ }
  function workspaceEntered(state){
   if(current!==state||state.mode!=='workspace'||!authorized(state))return;
   try{Promise.resolve(bridge.workspaceEntered?.({mountId:state.handle.id})).catch(()=>{});}catch{/* Presentation never waits for the private entry notification. */}

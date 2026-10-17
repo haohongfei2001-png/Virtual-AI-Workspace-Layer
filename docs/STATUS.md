@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round369）
+## 最新本地检查点（2026-10-17，Round370）
+
+修复showWorkspace同步原生中断后误提交workspace状态/留下第二surface：显示前后复核同state/handle/intent/授权，冲突只关闭当前残留并保留reading或弹层状态；旧尝试不触新挂载。独立4红转绿，最终相关 **144/144 PASS**；实际隔离MV3测试编排beforetoggle→原editor.focus，**4项子检查PASS**，open0/唯一返回/原草稿与frame保留，第二次明确点击恢复双面及内容。见 [Round370](evidence/round370/README.md)。
+
+仅上述同步焦点S反例，不代表全部原生兼容/物理IME、自然休眠原因、生产自动策略或UI-11全项；完整Free继续 **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round369）
 
 真实隔离MV3延迟历史证据恢复一次 **4项子检查PASS**：关闭前evidence为空；双ACK关闭、无附着窗口原worker销毁；服务端公开同一消息固定原始时间后，首次可信返回恢复新worker并在真实IndexedDB落入唯一strict历史event，hints/nativeActions为空，草稿/原frame保留。两次前置失败、各版本runner与原始报告均保留，相关Node **48/48 PASS**。见 [Round369](evidence/round369/README.md)。
 
