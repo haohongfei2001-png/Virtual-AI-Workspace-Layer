@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round376）
+## 最新本地检查点（2026-10-17，Round377）
+
+修复首次 metadata partial 后相同正文永远被 adapter 去重的问题：后续真实原生准备可在原授权/代际内触发每秒一次的有界重读，保留失败去重、worker 预算与 intent 优先，不追认旧手势。最终相关 **93/93 L PASS**、全量 **7169/7169 PASS**；诊断锚失配的首次失败保留，独立审查通过。见 [Round377](evidence/round377/README.md)。
+
+最终源码隔离 headless MV3 休眠恢复回归单次 **4 项子检查 PASS**，原 editor/草稿/frame 保持；不是同正文 partial 重读的完整 S 认证。自动进入、立即首发基线、UI11/81/100k/G/U 仍未闭合，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round376）
 
 原生pointer→休眠reading恢复的实际隔离headless MV3单次 **4项子检查PASS**：双frame独立确认已清空，无附着观察窗原worker销毁；真实点击原editor后新worker/原frame内容恢复，原焦点与草稿保持、open事件0；明确四格返回后两surface正常显示且open事件2。源码/runner无漂移，独立审查完成。见 [Round376](evidence/round376/README.md)。
 

@@ -20,7 +20,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  if(!document?.defaultView)throw Error('invalid-host-document');
  inputRisk=inputRisk??createNativeInputRisk({document,profile});
  let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[],surfaceParts=[],surfaceKey=null,surfaceSequence=null,surfaceWanted=true,surfaceScanning=false,surfaceCursor=null,surfacePage=0,surfacePageKey=null,surfaceEpoch=0,surfaceSnapshotEpoch=0;const surfaceAccepted=new Map(),surfaceFailed=new Map();
- let ingestionPass=null,pass=null,passSequence=0,cursorRestarts=0,activeWork=0,loadedReads=0,idleRevision=0;
+ let ingestionPass=null,pass=null,passSequence=0,cursorRestarts=0,activeWork=0,loadedReads=0,idleRevision=0,nativePrepareAt=null;
  async function track(work){activeWork++;try{return await work();}finally{activeWork--;}}
  // A revocable observation-readiness snapshot, never a freeze or close permit.
  // Keep native listeners and queues intact so new input invalidates preparation.
@@ -84,6 +84,17 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  const loadedCandidatePages=signal=>loadedPageStream(signal,true);
  function bodyProposal(){if(!live())throw Error('stale-host-binding');syncRoute();if(bodyDiscovery.isPresentationMasked())return null;return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:null,kind:'current-object',payload:bodyDiscovery.scan()};}
  function intentProposal(item){return {protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:item.proofId,kind:'send-candidate',payload:item.payload};}
+ // Trusted native preparation can retry a partial metadata baseline without
+ // changing the body proof. The worker retains its per-proof/shared read budgets.
+ function prepareNativeBody(run){
+  if(!live()||run!==generation||busy||!last.has('current-object'))return;
+  if(!acknowledgedBody())return;
+  const at=elapsedNow();
+  if(!Number.isFinite(at)||at<0||nativePrepareAt!==null&&at-nativePrepareAt<1000)return;
+  // DOM/clock hooks may synchronously retire this adapter while checking readiness.
+  if(!live()||run!==generation||busy)return;
+  nativePrepareAt=at;last.delete('current-object');
+ }
  function captureIntent(intent,producer=binding){
   if(producer.producerToken!==binding?.producerToken)return;
   idleRevision++;
@@ -171,7 +182,7 @@ if(!p)return;}catch(error){
   // an unrelated directory cursor or its pending bounded fragments.
   if(surfaceChanged)requestScan();else schedule();
  }
- function stop(){idleRevision++;finishPass('cancel');ingestionPass=null;generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('toggle',surfaceToggle,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();}
+ function stop(){nativePrepareAt=null;idleRevision++;finishPass('cancel');ingestionPass=null;generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('toggle',surfaceToggle,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();}
  function isSameNativeRegions(inspection){
   if(!live()||document.location.href!==url||inspection?.regionEpoch!==regionEpoch)return false;
   const nodes=[one(profile.regions.history),one('main > header'),one('main > section[aria-label="Conversation"]'),one('main > form#composer'),one('main > header > .navigation-slot')];
@@ -199,7 +210,7 @@ if(!p)return;}catch(error){
   snippets=snippetsFactory({document,urlPolicy,profile,isOwnedMask,guard:snippetGuard,
    current:()=>{const body=snippetBody();return body?{conversationId:body.conversationId,regionEpoch:body.regionEpoch}:null;},
    proof:()=>{const body=snippetBody();return body?{bodyProofId:acceptedBody.proofId,conversationId:body.conversationId,regionEpoch:body.regionEpoch,messageIds:[...body.messageIds]}:null;}});
-  sendObserver=profile.sendIntent?createNativeSendIntentObserver({document,profile,onIntent:intent=>captureIntent(intent,b),onFirstIntent:typeof onFirstSendIntent==='function'?intent=>{idleRevision++;return onFirstSendIntent(intent,b);}:onFirstSendIntent,onPrepare:()=>{if(stopped||actionGeneration!==generation||document.location.href!==url)return;let recovering=false;try{recovering=onNativePrepare?.(b)===true;}catch{/* Preparation never blocks the native gesture. */}if(!stopped&&actionGeneration===generation&&!recovering)schedule();},now}):null;
+  sendObserver=profile.sendIntent?createNativeSendIntentObserver({document,profile,onIntent:intent=>captureIntent(intent,b),onFirstIntent:typeof onFirstSendIntent==='function'?intent=>{idleRevision++;return onFirstSendIntent(intent,b);}:onFirstSendIntent,onPrepare:()=>{if(stopped||actionGeneration!==generation||document.location.href!==url)return;let recovering=false;try{recovering=onNativePrepare?.(b)===true;}catch{/* Preparation never blocks the native gesture. */}if(!stopped&&actionGeneration===generation&&!recovering){prepareNativeBody(actionGeneration);if(!stopped&&actionGeneration===generation)schedule();}},now}):null;
   if(ingestionPass){await beginPass();if(actionGeneration!==generation||!live())throw Error('stale-host-binding');}
   observer=new document.defaultView.MutationObserver(mutations);observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});document.addEventListener('toggle',surfaceToggle,true);document.defaultView.addEventListener('popstate',requestScan);document.defaultView.addEventListener('hashchange',requestScan);requestScan(true);
   const route=urlPolicy.parse(url),proof=bodyProof();const body=route.kind==='conversation'&&proof?.conversationId===route.conversationId&&typeof proof.bodyProofId==='string'&&Number.isSafeInteger(proof.bodyEpoch)?{state:'bound',proofId:proof.bodyProofId,conversationId:proof.conversationId,bodyEpoch:proof.bodyEpoch}:{state:'unbound',reason:'body-proof-unavailable'};

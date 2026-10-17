@@ -1,0 +1,154 @@
+✔ idle preparation is unavailable before start and while first emission is pending (4.674833ms)
+✔ a new scan permanently revokes a token even when its unchanged work drains (0.539917ms)
+✔ renewal revokes old preparation without stopping native observation (0.427666ms)
+✔ preparation rejects expiry (0.292458ms)
+✔ preparation rejects route (0.262375ms)
+✔ preparation rejects stop (0.221833ms)
+✔ ingestion start and late terminal notification must settle before preparation (0.663666ms)
+✔ retry keeps preparation unavailable until acknowledgement and queue drain (0.251792ms)
+✔ loadedPages iterator blocks preparation until explicitly closed (0.382ms)
+✔ loadedCandidatePages iterator blocks preparation until explicitly closed (0.352291ms)
+✔ late old emission remains pending across restart until its underlying promise settles (0.304166ms)
+✔ preparing does not remove native send observer or discard a subsequent intent (1.232417ms)
+✔ native dispatch awaiting authorization stays pending across adapter restart (0.939875ms)
+✔ native prepare recovery callback preserves pending wake or ordinary scan: false (0.24875ms)
+✔ native prepare recovery callback preserves pending wake or ordinary scan: true (0.179083ms)
+✔ expired adapter can request native preparation without renewing old body or producer (0.182625ms)
+✔ native prepare callback retiring adapter cannot schedule its old producer (0.166875ms)
+✖ unchanged acknowledged body gets native prepare reread with one-second elapsed throttle (0.58075ms)
+✔ consumed recovery prepare leaves unchanged acknowledged body and proof untouched (0.52525ms)
+✖ native preparation does not clear failed observation fingerprint for automatic replay (0.276584ms)
+✖ busy native send does not consume the prepare reread interval (0.386ms)
+✖ native prepare rejects invalid or regressed elapsed clock NaN (0.239042ms)
+✖ native prepare rejects invalid or regressed elapsed clock Infinity (0.2115ms)
+✖ native prepare rejects invalid or regressed elapsed clock -1 (0.182834ms)
+✖ already queued native intent retains priority over same-tick preparation reread (0.554584ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 18
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 57.705209
+
+✖ failing tests:
+
+test at tests/host/adapter-idle-preparation.test.mjs:116:1
+✖ unchanged acknowledged body gets native prepare reread with one-second elapsed throttle (0.58075ms)
+  AssertionError [ERR_ASSERTION]: focus retries unchanged body metadata
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/adapter-idle-preparation.test.mjs:119:79)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/adapter-idle-preparation.test.mjs:135:1
+✖ native preparation does not clear failed observation fingerprint for automatic replay (0.276584ms)
+  AssertionError [ERR_ASSERTION]: first explicitly requested reobservation reaches owner
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/adapter-idle-preparation.test.mjs:138:41)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/adapter-idle-preparation.test.mjs:143:1
+✖ busy native send does not consume the prepare reread interval (0.386ms)
+  AssertionError [ERR_ASSERTION]: same elapsed instant remains eligible after actual send settles
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/adapter-idle-preparation.test.mjs:148:41)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/adapter-idle-preparation.test.mjs:150:40
+✖ native prepare rejects invalid or regressed elapsed clock NaN (0.239042ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/adapter-idle-preparation.test.mjs:152:119)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/adapter-idle-preparation.test.mjs:150:40
+✖ native prepare rejects invalid or regressed elapsed clock Infinity (0.2115ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/adapter-idle-preparation.test.mjs:152:119)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/adapter-idle-preparation.test.mjs:150:40
+✖ native prepare rejects invalid or regressed elapsed clock -1 (0.182834ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/adapter-idle-preparation.test.mjs:152:119)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/adapter-idle-preparation.test.mjs:157:1
+✖ already queued native intent retains priority over same-tick preparation reread (0.554584ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/adapter-idle-preparation.test.mjs:161:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

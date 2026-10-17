@@ -110,3 +110,53 @@ test('native prepare callback retiring adapter cannot schedule its old producer'
  const old=f.documentListeners.get('focusin');old({type:'focusin',isTrusted:true,target:f.editor});await settle();
  assert.equal(calls,1);assert.equal(f.adapter.prepareRecovery(),null);old({type:'focusin',isTrusted:true,target:f.editor});assert.equal(calls,1);
 });
+
+const nativePrepare=(f,type='focusin')=>f.documentListeners.get(type)({type,isTrusted:true,target:f.editor,button:0});
+const bodyPackets=f=>f.emitted.filter(p=>p.kind==='current-observation');
+test('unchanged acknowledged body gets native prepare reread with one-second elapsed throttle',async t=>{
+ let elapsed=0;const f=sendFixture({elapsedNow:()=>elapsed});t.after(()=>f.adapter.stop());
+ await f.start(async p=>{f.emitted.push(p);return bodyAck(p);});await settle();
+ assert.equal(bodyPackets(f).length,1);nativePrepare(f);await settle();assert.equal(bodyPackets(f).length,2,'focus retries unchanged body metadata');
+ const original=bodyPackets(f)[0];assert.deepEqual(bodyPackets(f)[1].payload,original.payload);assert(bodyPackets(f)[1].localSeq>original.localSeq);
+ elapsed=999;nativePrepare(f,'pointerdown');await settle();assert.equal(bodyPackets(f).length,2);
+ elapsed=1000;nativePrepare(f,'pointerdown');await settle();assert.equal(bodyPackets(f).length,3);
+ nativePrepare(f);await settle();assert.equal(bodyPackets(f).length,3);
+ assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0,'preparation cannot synthesize a send');
+ f.click();await settle();const send=f.emitted.filter(p=>p.kind==='send-candidate');assert.equal(send.length,1);assert.equal(send[0].bodyProofId,'accepted-body-proof');
+ elapsed=2000;nativePrepare(f);await settle();assert.equal(bodyPackets(f).length,4);assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,1,'reobservation does not replay accepted intent');
+ f.setTime(100000);elapsed=100000;nativePrepare(f);f.click();await settle();assert.equal(bodyPackets(f).length,4);assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,1,'preparation never extends old binding/body validity');
+});
+test('consumed recovery prepare leaves unchanged acknowledged body and proof untouched',async t=>{
+ let elapsed=0;const f=sendFixture({elapsedNow:()=>elapsed,onNativePrepare:()=>true});t.after(()=>f.adapter.stop());
+ await f.start(async p=>{f.emitted.push(p);return bodyAck(p);});await settle();const count=f.emitted.length,token=f.adapter.prepareRecovery();
+ for(elapsed=0;elapsed<=2000;elapsed+=1000){nativePrepare(f);await settle();}
+ assert.equal(f.emitted.length,count);assert.equal(token.isCurrent(),true);
+});
+test('native preparation does not clear failed observation fingerprint for automatic replay',async t=>{
+ let elapsed=0,bodies=0;const f=sendFixture({elapsedNow:()=>elapsed});t.after(()=>f.adapter.stop());
+ await f.start(async p=>{f.emitted.push(p);return p.kind==='current-observation'&&++bodies>1?{state:'rejected',localSeq:p.localSeq}:bodyAck(p);});await settle();
+ nativePrepare(f);await settle();assert.equal(bodyPackets(f).length,2,'first explicitly requested reobservation reaches owner');
+ elapsed=1000;nativePrepare(f);await settle();assert.equal(bodyPackets(f).length,2,'rejected identical observation stays suppressed');
+ assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);
+});
+
+test('busy native send does not consume the prepare reread interval',async t=>{
+ let elapsed=0;const held=deferred(),f=sendFixture({elapsedNow:()=>elapsed});t.after(()=>f.adapter.stop());
+ await f.start(p=>{f.emitted.push(p);return p.kind==='send-candidate'?held.promise:Promise.resolve(bodyAck(p));});await settle();
+ f.click();await settle();nativePrepare(f);await settle();assert.equal(bodyPackets(f).length,1,'inflight send must not provoke body resend');
+ held.resolve(bodyAck(f.emitted.at(-1)));await settle();assert.equal(bodyPackets(f).length,1,'busy prepare must not queue a delayed resend');
+ nativePrepare(f);await settle();assert.equal(bodyPackets(f).length,2,'same elapsed instant remains eligible after actual send settles');
+});
+for(const invalid of [NaN,Infinity,-1])test('native prepare rejects invalid or regressed elapsed clock '+String(invalid),async t=>{
+ let elapsed=1000;const f=sendFixture({elapsedNow:()=>elapsed});t.after(()=>f.adapter.stop());
+ await f.start(async p=>{f.emitted.push(p);return bodyAck(p);});await settle();nativePrepare(f);await settle();assert.equal(bodyPackets(f).length,2);
+ elapsed=invalid;nativePrepare(f);await settle();assert.equal(bodyPackets(f).length,2,'invalid clock cannot authorize another body read');
+ elapsed=1999;nativePrepare(f);await settle();assert.equal(bodyPackets(f).length,2,'invalid clock cannot reset prior interval');
+ elapsed=2000;nativePrepare(f);await settle();assert.equal(bodyPackets(f).length,3);
+});
+test('already queued native intent retains priority over same-tick preparation reread',async t=>{
+ const f=sendFixture({elapsedNow:()=>0});t.after(()=>f.adapter.stop());await f.start(async p=>{f.emitted.push(p);return bodyAck(p);});await settle();const before=f.emitted.length;
+ f.click();nativePrepare(f);await settle();
+ assert.equal(f.emitted[before].kind,'send-candidate');assert.equal(f.emitted.slice(before).filter(p=>p.kind==='send-candidate').length,1);
+ assert.equal(bodyPackets(f).length,2);assert.equal(f.emitted[before].bodyProofId,'accepted-body-proof');
+});
