@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **停止低收益的checkpoint缓存微调**：68bb3e5源码核对后，既有worker CPU栈将一部分hash成本定位到shared current/checkpoint读取，但同事务两次unpack是不同revision/字节，不是重复读。直接复用两条普通LRU仍抖动；仅临时副本测试同容量cold-history策略，保留完整字节/checksum/schema、无生产改动。真实IDB三对AB/BA/AB、每次50+199×50=10k，native/shared最终事实摘要全部一致，中位5262.5→5218.2ms（约0.8%），不采纳。源码完整性检查通过，原失败保留。后续不再把此类缓存微调作为10k主修复，转查64KiB分片逐次提交的固定成本；完整Host/远端10k仍未通过。原始脚本和结果见既有free-delivery证据目录。
+
 - **J4验证调度已收口到失败现场**：原CI每次额外运行scope baseline诊断，仅观察启动、不能捕获后段peer。现原formal step只新增id，命令/partial门槛/失败均保留；仅formal outcome=failure且未取消时，同一隔离job运行一次完整lifecycle trace，诊断不能替代或抹去原FAIL。日志保留两份报告，不加缓存/upload/runner/timeout。11项定向合同和YAML解析、独立审查通过；未为此触发重复远端全矩阵。已有CI39033411366的J4 job实测formal186秒、旧baseline5秒；新调度尚无远端后测，不宣称实测提速。下一次正式失败将携带完整peer内容代际观察，原10k/peer产品关口仍OPEN。
 
 - **peer内容脚本顺序证据已接通，竞态仍OPEN**：仅离线复制包记录PENDING/READY、session run/epoch、认证/mount/stop布尔状态及document短hash；192条tail/dropped，无token/正文/身份。原hop判定后采集，worker/content共用1500ms总期限、最多16快照，正式模式零采集。首次实际23步诊断发现同top扩展存在两个isolated realms，旧“唯一realm”假设导致内容记录不可用，原件保留；现2–4realm独立记录并明确ambiguous，不合序列、不选当前owner，>4拒读、超时保留完成项且迟到不改证据。44项定向及独立审查通过。修正后实际J4仍23步DIAGNOSTIC_ONLY，源码/manifest/插桩包未变；两次peer边界分别取得同一realm13/24条、零drop，含PENDING→READY→run6/11认证及mount，另一个realm无记录如实unavailable；worker37/45事件分别保存。此关闭观察器证据缺口，不证明原peer失败根因，也不认证自动foreground恢复；未重复完整Node/CI矩阵。
