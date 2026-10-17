@@ -95,3 +95,30 @@ test('an incomplete admitted total cannot pass by tail before the original deadl
 test('tail progress exposes the repository total only as a necessary audit prerequisite',async()=>{
  const result=await readHostScaleMemberProgress(input,{page:async()=>({...pageResult(),total:765})});assert.equal(result.total,765);assert.equal(result.status,'OBSERVED_TAIL_ONLY');
 });
+
+test('deadline retains last observed membership failure without performing another audit',async()=>{
+ const f=completeWaiting([{status:'FAIL_PROJECT_MEMBERSHIP',revision:7,distinctRefs:10000,projectMembership:9999,unknownMembership:1}]);f.args.deadline=50;
+ await assert.rejects(waitHostScaleMemberProgress(f.args),error=>{const d=error.memberProgressDiagnostic;assert(d);assert.equal(d.stage,'pause');assert.equal(d.auditAttempts,1);assert.equal(d.audits[0].unknownMembership,1);assert.equal(d.audits[0].revision,7);assert.equal(d.stableRevision,null);return true;});assert.equal(f.auditReads(),1);
+});
+test('changing complete revisions are recorded but never accepted as a stable pair',async()=>{
+ const f=completeWaiting([complete(4),complete(5)]);f.args.deadline=150;
+ await assert.rejects(waitHostScaleMemberProgress(f.args),error=>{assert.deepEqual(error.memberProgressDiagnostic.audits.map(a=>a.revision),[4,5]);assert.equal(error.memberProgressDiagnostic.stableRevision,5);return true;});assert.equal(f.auditReads(),2);
+});
+test('stalled audit retains in-flight state and late result cannot change failure snapshot',async()=>{
+ const f=completeWaiting([]);let resolveAudit;const original=f.frame.evaluate;
+ f.frame.evaluate=(fn,input)=>fn===auditHostScaleIndex?new Promise(resolve=>{resolveAudit=resolve;}):original(fn,input);
+ f.args.deadline=20;let captured;
+ await assert.rejects(waitHostScaleMemberProgress(f.args),error=>{captured=error.memberProgressDiagnostic;assert.equal(captured.stage,'audit');assert.equal(captured.inFlight,true);assert.equal(captured.auditAttempts,1);assert.deepEqual(captured.audits,[]);return true;});
+ const before=JSON.stringify(captured);resolveAudit(complete(8));await new Promise(r=>setImmediate(r));assert.equal(JSON.stringify(captured),before);
+});
+test('incomplete tail count at timeout records zero audits and no manufactured membership result',async()=>{
+ const f=completeWaiting([]),original=f.frame.evaluate;f.args.deadline=50;f.frame.evaluate=async(fn,input)=>{const r=await original(fn,input);return fn===readHostScaleMemberProgress?{...r,total:765}:r;};
+ await assert.rejects(waitHostScaleMemberProgress(f.args),error=>{const d=error.memberProgressDiagnostic;assert.equal(d.lastTail.total,765);assert.equal(d.auditAttempts,0);assert.deepEqual(d.audits,[]);return true;});assert.equal(f.auditReads(),0);
+});
+test('rejected audit is settled, while diagnostic failure cannot replace original error',async()=>{
+ for(const frozen of [false,true]){
+  const f=completeWaiting([]),original=f.frame.evaluate,error=Error('actual-audit-failure');if(frozen)Object.freeze(error);
+  f.frame.evaluate=(fn,input)=>fn===auditHostScaleIndex?Promise.reject(error):original(fn,input);
+  await assert.rejects(waitHostScaleMemberProgress(f.args),actual=>{assert.equal(actual,error);if(!frozen){assert.equal(actual.memberProgressDiagnostic.stage,'audit');assert.equal(actual.memberProgressDiagnostic.inFlight,false);}return true;});
+ }
+});

@@ -52,17 +52,20 @@ export async function waitHostScaleMemberProgress({page,extensionId,url,projectI
  if(!Number.isFinite(deadline)||deadline<=now())throw Error('host-scale-member-deadline');
  const frameURL=`chrome-extension://${extensionId}/workspace.html`,current=()=>{const frames=page.frames().filter(frame=>frame.url()===frameURL&&!frame.isDetached());if(frames.length>1)throw Error('member-progress-ambiguous-frame');return frames[0]??null;};
  let scopeSelector=null,scopeFrame=null,attempts=0,stableRevision=null;
+ const started=now(),diagnostic={stage:'initial',stageStarted:started,inFlight:false,frameGeneration:0,auditAttempts:0,lastTail:null,audits:[]};
+ const stage=value=>{diagnostic.stage=value;diagnostic.stageStarted=now();diagnostic.inFlight=false;};
+ const summary=value=>Object.fromEntries(['status','revision','total','pages','distinctRefs','projectMembership','unknownMembership','missingRefs','wrongProjectMembership'].filter(key=>typeof value?.[key]==='number'||typeof value?.[key]==='string').map(key=>[key,typeof value[key]==='string'?value[key].slice(0,100):value[key]]));
  const remaining=()=>{const value=deadline-now();if(!(value>0))throw Error('host-scale-member-deadline');return value;};
- const bounded=async operation=>{const duration=remaining();let timer;try{return await Promise.race([Promise.resolve().then(()=>{remaining();return operation();}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('host-scale-member-deadline')),duration);})]);}finally{clearTimeout(timer);}};
- const native=async()=>{if(page.isClosed())throw Error('native-parent-closed');const visible=await bounded(()=>page.evaluate(hostScaleMemberReadingVisible,{url,projectId}));if(page.isClosed())throw Error('native-parent-closed');if(!visible)throw Error('member-progress-native-reading-not-visible');remaining();};
- while(now()<deadline){
-  await native();const frame=current();
-  if(frame!==scopeFrame){scopeSelector=null;scopeFrame=frame;stableRevision=null;}
+ const bounded=async(operation,label)=>{stage(label);const duration=remaining();diagnostic.inFlight=true;let timer;try{const result=await Promise.race([Promise.resolve().then(()=>{remaining();return operation();}).then(value=>({value}),error=>({failed:true,error})),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('host-scale-member-deadline')),duration);})]);diagnostic.inFlight=false;if(result.failed)throw result.error;return result.value;}finally{clearTimeout(timer);}};
+ const native=async(label)=>{if(page.isClosed())throw Error('native-parent-closed');const visible=await bounded(()=>page.evaluate(hostScaleMemberReadingVisible,{url,projectId}),label);if(page.isClosed())throw Error('native-parent-closed');if(!visible)throw Error('member-progress-native-reading-not-visible');remaining();};
+ try{while(now()<deadline){
+  await native('native-before');const frame=current();
+  if(frame!==scopeFrame){diagnostic.frameGeneration++;scopeSelector=null;scopeFrame=frame;stableRevision=null;}
   if(frame){
    let result;
-   try{const ready=await bounded(()=>frame.evaluate(()=>document.readyState!=='loading'));if(ready&&current()===frame&&!frame.isDetached())result=await bounded(()=>frame.evaluate(readHostScaleMemberProgress,{id,projectId,scopeSelector}));}
+   try{const ready=await bounded(()=>frame.evaluate(()=>document.readyState!=='loading'),'frame-ready');if(ready&&current()===frame&&!frame.isDetached())result=await bounded(()=>frame.evaluate(readHostScaleMemberProgress,{id,projectId,scopeSelector}),'tail-read');if(result)diagnostic.lastTail={...summary(result),frameGeneration:diagnostic.frameGeneration};}
    catch(error){if(page.isClosed()||!frame.isDetached()&&current()===frame||error.message==='host-scale-member-deadline')throw error;}
-   remaining();await native();
+   remaining();await native('native-after-tail');
    if(result&&!frame.isDetached()&&current()===frame){
     attempts++;scopeSelector=result.scopeSelector??scopeSelector;
     // The exact-ID read already returns admitted cardinality. A smaller total
@@ -75,10 +78,10 @@ export async function waitHostScaleMemberProgress({page,extensionId,url,projectI
      if(size===null)return {status:result.status,revision:result.revision,attempts,remainingMs:remaining(),acceptance:'NOT_ESTABLISHED'};
      // Priority tails arrive before the middle of the native list. Keep reading
      // visible until independently enumerated facts pass twice at one revision.
-     let audit;
-     try{audit=await bounded(()=>frame.evaluate(auditHostScaleIndex,{size,distribution,requireProjectMembership:true,limit:500,timeoutMs:Math.min(30000,remaining())}));}
+     let audit;diagnostic.auditAttempts++;const auditStarted=now();
+     try{audit=await bounded(()=>frame.evaluate(auditHostScaleIndex,{size,distribution,requireProjectMembership:true,limit:500,timeoutMs:Math.min(30000,remaining())}),'audit');diagnostic.audits.push({...summary(audit),elapsedMs:now()-auditStarted,frameGeneration:diagnostic.frameGeneration});if(diagnostic.audits.length>2)diagnostic.audits.shift();}
      catch(error){if(page.isClosed()||!frame.isDetached()&&current()===frame||error.message==='host-scale-member-deadline')throw error;stableRevision=null;continue;}
-     remaining();await native();
+     remaining();await native('native-after-audit');
      if(frame.isDetached()||current()!==frame){stableRevision=null;continue;}
      if(audit.status==='PASS_INDEX_AUDIT_ONLY'){
       if(!Number.isSafeInteger(audit.revision)||audit.revision<0)throw Error('invalid-member-audit-revision');
@@ -93,7 +96,13 @@ export async function waitHostScaleMemberProgress({page,extensionId,url,projectI
     if(!['PENDING_INDEX','PENDING_MEMBER','OBSERVED_TAIL_ONLY'].includes(result.status))throw Error('invalid-member-progress-result');
    }
   }
-  await pause(Math.min(100,remaining()));
+  stage('pause');await pause(Math.min(100,remaining()));
  }
  throw Error('host-scale-member-deadline');
+ }catch(error){
+  // Capture only existing observations. Never read again or await a late audit.
+  try{const snapshot=structuredClone({...diagnostic,attempts,stableRevision,elapsedMs:now()-started,stageElapsedMs:now()-diagnostic.stageStarted});
+  if(snapshot.lastTail)Object.freeze(snapshot.lastTail);snapshot.audits.forEach(Object.freeze);Object.freeze(snapshot.audits);Object.freeze(snapshot);
+  Object.defineProperty(error,'memberProgressDiagnostic',{value:snapshot,enumerable:true});}catch{}throw error;
+ }
 }

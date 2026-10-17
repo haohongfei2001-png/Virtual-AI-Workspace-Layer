@@ -43,6 +43,10 @@ J4远端早期失败已区分：4067762 CI39025114564前三步PASS，随后basel
 
 最终root构造重复编码已收敛：实际MockIDB indexed owner在64批×50 IDs后的一笔写入原有18次编码遍历/889019字符；新writer入口先clone并校验完整sources/units/changes，再验证最终root，用同一canonical字节执行16MiB限制和原SHA-256，减少为15次/739136字符。公共update和prior、GC、撤权/回滚校验保持，不接受外部预计算hash或跳检标志。相同输出/校验和、非法metadata、getter单次取值、聚合超限反例与相关71项通过；独立审查、真实IDB写入恢复10项通过。未插桩同源码10k双完整审计revision212为10000/10000正确PROJECT、零UNKNOWN/遗漏/错属，原期限剩余13.62秒，导航/返回通过，源码/fixture/manifest稳定；摄取18.709秒对前一19.294秒仍仅单样本，不认证因果加速/p95。前一adfa8c7 CI39028044103正式10k仍FAIL，失败后root为10000/revision224，数量不能替代完整成员审计；须继续区分成员摄取和审计过程。 最终同源码完整Node7306/7306通过、0skip、77.95秒；前一CI的Node/journeys/J4均通过既定门槛，整体因10k保持FAIL。
 
+10k超时现场现在保留原流程的最后tail、最近两次已完成审计和等待阶段（固定大小冻结快照），不新增读取、不等迟到结果、不改变30秒或两次同revision要求；50项诊断/76项相关检查通过，独立审查通过。生产98e4936实际本地FAIL首次明确：root10000/revision383、最后tail PENDING_MEMBER、227次尝试、auditAttempts=0，证明该次尚未进入完整审计，并非审计太慢。后续插桩诊断成功只作定位，不替代该FAIL。相同生产CI39028521175整体FAIL：Node/journeys/J4通过既定门槛，10k期限时7105 refs/revision155。
+
+已确定复现并修复相关产品调度缺口：masked Project新pass选择history优先，owned presentation恢复reading时只保留cursor却不调整未完成region，priority tail又仅首page检查。现在只有结构未变且新可见Project证据成立时，将未完成members提前，保留所有既有walker/历史位置；tail仍重新核验可见原生link，UNKNOWN不自动升级。另修复同pass更换priority后原节点重复提交，以WeakSet记住已实际优先处理的节点、不强持有DOM。两反例先红后绿，84项定向及独立审查通过；不声称反复mask期间已按UNKNOWN消费的成员会立即重新取证，也未证明此为远端所有超时的唯一根因。最终组合源码未插桩10k完整双审计revision201为10000/10000正确PROJECT、零UNKNOWN/遗漏/重复/错属，原期限余15.14秒，原生导航/唯一返回保持，源码/fixture/manifest稳定；摄取观察17.206秒对前一18.709秒仅单样本。跨环境与全部性能关口仍OPEN。 最终同源码完整Node7314/7314通过、0skip、88.08秒。首次完整回归仅旧失败诊断入口字符串锚点失配，精确更新为快照→原诊断导入顺序后通过，原失败保留；未放宽行为断言。
+
 下一阻塞：可靠10k摄取、J1/冷启动时序与合法worker/peer context重新获取及自动待命返回；完整旅程/全部适用81项、100k与p95、真实G/U/PAIA/物理IME/跨端及发布准备仍未达到。已有Pro资产和整理stash保留。
 
 ## 历史本地检查点（2026-10-17，Round386）

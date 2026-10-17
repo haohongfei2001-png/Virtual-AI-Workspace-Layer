@@ -119,7 +119,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     }
     // A confirmed open Project must not lose its member evidence to a full sidebar.
     const order=candidateOnly?['projects']:currentProjectId?['members','projects','history']:['projects','history','members'];
-    let page=cursor&&pages.get(cursor);
+    let page=cursor&&pages.get(cursor),prioritizeMembers=!cursor;
     if(cursor){
       pages.delete(cursor);
       if(!page||page.candidateOnly!==candidateOnly||page.routeEpoch!==routeEpoch||page.regionEpoch!==regionEpoch)throw Error('stale-surface-cursor');
@@ -129,6 +129,15 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
         // current visibility; old Project/body identity never supplies authority.
         if(page.contextValue!==contextValue||page.contextNodes.length!==contextNodes.length||page.contextNodes.some((node,i)=>node!==contextNodes[i]))throw Error('stale-surface-cursor');
       }else if(changed)throw Error('stale-surface-cursor');
+      if(page.presentationChange&&!page.currentProjectId&&currentProjectId){
+        // A mask may have started this pass with history first. Fresh visible
+        // Project evidence now permits prioritizing its still-unread members;
+        // retain every existing walker instead of restarting the directory.
+        const memberIndex=page.regions.findIndex((region,index)=>index>=page.region&&region.kind==='members'&&!region.finished);
+        if(memberIndex>=page.region){
+          const [memberRegion]=page.regions.splice(memberIndex,1);page.regions.splice(page.region,0,memberRegion);prioritizeMembers=true;
+        }
+      }
       page.presentationChange=false;page.currentProjectId=currentProjectId;page.currentConversationId=currentConversationId;
     }else page={candidateOnly,routeEpoch,regionEpoch,currentProjectId,currentConversationId,contextNodes,contextValue,presentationChange:false,memberIds:new Set(),region:0,regions:order.map(kind=>({kind,root:roots.get(kind),walker:null,finished:false}))};
     // Walk loaded DOM lazily: never allocate a whole-region NodeList. Each page
@@ -137,9 +146,9 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     let inspected=0;
     // The hint only changes inspection order. Membership still comes from a
     // currently visible link inside the independently confirmed Project root.
-    if(!cursor&&!candidateOnly&&currentProjectId&&candidates.length<limit){
+    if(prioritizeMembers&&!candidateOnly&&currentProjectId&&candidates.length<limit){
       const id=priorityConversationId();
-      if(typeof id==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(id)){
+      if(typeof id==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(id)&&!page.memberIds.has(id)){
         const node=members.querySelector?.(`a[href$="/c/${id}"]`);
         if(node){
           inspected++;
@@ -148,7 +157,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
             const item=candidate(node,members,'members','conversation');
             if(item?.target.kind==='resolved'){
               claims.set(id,{conversationId:id,asserted:'PROJECT',projectId:currentProjectId,upstreamRevision:null,evidence:evidence('members','current-project-route')});
-              page.memberIds.add(id);page.priorityNode=new WeakRef(node);
+              page.memberIds.add(id);(page.priorityNodes??=new WeakSet()).add(node);
             }
           }
         }
@@ -161,7 +170,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       const node=region.walker.nextNode();
       if(!node){region.finished=true;region.walker=null;page.region++;continue;}
       inspected++;
-      if(node===page.priorityNode?.deref())continue;
+      if(page.priorityNodes?.has(node))continue;
       if(!node.matches(regionKind==='projects'?profile.controls:profile.conversationControls))continue;
       if(!root?.contains(node)||!sampleable(node))continue;
       if(regionKind==='history'&&page.memberIds.size){const parsed=urlPolicy.parse(node.getAttribute('href'));if(parsed.kind==='conversation'&&page.memberIds.has(parsed.conversationId))continue;}

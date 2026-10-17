@@ -4,19 +4,21 @@ import {randomUUID} from 'node:crypto';
 import {createSurfaceDiscovery,LEGACY_SURFACE_PROFILE as profile} from '../../src/host/surface-discovery.mjs';
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 // L-only DOM double: cursor retention is traversal state, never member authority.
-function fixture({candidateButtons=0}={}){
+function fixture({candidateButtons=0,historyCount=0,priority=null}={}){
  let masked=false;const visited=[];
  const document={location:{href:'https://chatgpt.com/g/p1/project'}};
  function node(tag='DIV',text='',attrs={},parent=null){const n={tagName:tag,textContent:text,attrs,parentNode:parent,parentElement:parent,isConnected:true,ownerDocument:document,children:[],style:{display:'block'},getAttribute(k){return this.attrs[k]??null;},getClientRects(){return [{}];},contains(other){for(let p=other;p;p=p.parentElement)if(p===this)return true;return false;},querySelectorAll(){return this.children;},matches(s){return s==='a[href],button'?this.tagName==='A'||this.tagName==='BUTTON':s==='a[href]'&&this.tagName==='A';}};parent?.children.push(n);return n;}
  const main=node(),reading=node('SECTION','',{},main),members=node('NAV','',{'data-project-id':'p1'},reading),heading=node('H2','Native project',{},reading),headerRoot=node('HEADER','',{},main),header=node('H1','Native project',{},headerRoot),projects=node(),history=node();
  for(let i=0;i<603;i++)node('A','Member '+i,{href:'/c/m'+i},members);
+ members.querySelector=selector=>members.children.find(n=>selector===`a[href$="${n.attrs.href}"]`)??null;
+ for(let i=0;i<historyCount;i++)node('A','History '+i,{href:'/c/h'+i},history);
  for(let i=0;i<candidateButtons;i++)node('BUTTON','Unresolved '+i,{},projects);
  const selectors=new Map([[profile.regions.projects,[projects]],[profile.regions.history,[history]],[profile.regions.members,[members]],[profile.currentProjectTitle,[heading]],[profile.currentProjectHeader,[header]],[profile.currentConversationReading,[reading]]]);
  document.querySelectorAll=s=>selectors.get(s)??[];
  document.defaultView={crypto:{randomUUID},getComputedStyle(n){let visibility;for(let p=n;p&&!visibility;p=p.parentElement){visibility=p.style.visibility;if(!visibility&&masked&&p===reading)visibility='hidden';}return {display:n.style.display,visibility:visibility??'visible'};}};
  document.createTreeWalker=root=>{let i=0;return {nextNode(){const n=root.children[i++]??null;if(n)visited.push(n);return n;}};};
- const discovery=createSurfaceDiscovery({document,binding:{documentToken:'doc',routeEpoch:1},profile,isOwnedMask:n=>masked&&n===reading,urlPolicy:createURLPolicy({profile:{projectId:({container})=>container,conversationId:id=>id}})});
- return {document,discovery,visited,selectors,reading,members,heading,header,projects,node,mask:()=>masked=true};
+ const discovery=createSurfaceDiscovery({document,binding:{documentToken:'doc',routeEpoch:1},profile,priorityConversationId:()=>priority,isOwnedMask:n=>masked&&n===reading,urlPolicy:createURLPolicy({profile:{projectId:({container})=>container,conversationId:id=>id}})});
+ return {document,discovery,visited,selectors,reading,members,heading,header,projects,node,history,setPriority:value=>priority=value,mask:()=>masked=true,unmask:()=>masked=false};
 }
 const mark=(f,p)=>{assert.equal(typeof f.discovery.preservePresentationCursor,'function');assert.equal(f.discovery.preservePresentationCursor(p.cursor),true);};
 test('marked owned mask retains 603-member traversal without revisiting the first 255 or granting hidden membership',()=>{
@@ -59,4 +61,26 @@ test('consumed foreign and candidate-only cursors cannot receive presentation pr
  assert.equal(f.discovery.preservePresentationCursor({}),false);assert.equal(f.discovery.preservePresentationCursor(null),false);assert.equal(f.discovery.preservePresentationCursor(foreign.cursor),false);
  assert.equal(f.discovery.preservePresentationCursor(candidate.cursor),false);assert.equal(f.discovery.scanCandidatePage(candidate.cursor).payload.candidates.length,44,'rejected marking must not consume candidate cursor');
  f.discovery.scanPage(first.cursor);assert.equal(f.discovery.preservePresentationCursor(first.cursor),false,'consumed cursor cannot be revived');
+});
+
+test('newly visible confirmed Project prioritizes members and tail without restarting retained history',()=>{
+ const f=fixture({historyCount:603,priority:'m602'});f.mask();const first=f.discovery.scanPage();assert(first.cursor);assert(first.payload.membershipClaims.every(c=>c.asserted==='UNKNOWN'));
+ const firstHistory=first.payload.candidates.map(c=>c.target.nativeId);mark(f,first);f.unmask();let p=f.discovery.scanPage(first.cursor);
+ assert(p.payload.membershipClaims.some(c=>c.conversationId==='m602'&&c.asserted==='PROJECT'),'fresh visible priority member must not wait for history drain');
+ assert(p.payload.membershipClaims.every(c=>c.asserted==='PROJECT'),'confirmed members precede remaining unrelated history');
+ const packets=[p.payload];while(p.cursor){p=f.discovery.scanPage(p.cursor);packets.push(p.payload);assert(packets.length<12);}
+ const claims=packets.flatMap(p=>p.membershipClaims),members=claims.filter(c=>c.asserted==='PROJECT');assert.equal(members.length,603);assert.equal(new Set(members.map(c=>c.conversationId)).size,603);
+ const history=claims.filter(c=>c.conversationId.startsWith('h')).map(c=>c.conversationId);assert.equal(history.length,603-firstHistory.length);assert(history.every(id=>!firstHistory.includes(id)));
+});
+
+test('repeated presentation changes never emit the already confirmed priority member twice',()=>{
+ const f=fixture({historyCount:603,priority:'m602'});f.mask();let p=f.discovery.scanPage();mark(f,p);f.unmask();p=f.discovery.scanPage(p.cursor);assert(p.payload.membershipClaims.some(c=>c.conversationId==='m602'));
+ mark(f,p);f.mask();p=f.discovery.scanPage(p.cursor);assert(p.cursor);mark(f,p);f.unmask();p=f.discovery.scanPage(p.cursor);
+ assert(!p.payload.membershipClaims.some(c=>c.conversationId==='m602'));assert(p.payload.membershipClaims.some(c=>c.asserted==='PROJECT'));
+});
+
+test('a changed priority hint does not repeat an earlier injected node later in the walker',()=>{
+ const f=fixture({historyCount:603,priority:'m602'});f.mask();let p=f.discovery.scanPage();mark(f,p);f.unmask();p=f.discovery.scanPage(p.cursor);assert(p.payload.membershipClaims.some(c=>c.conversationId==='m602'));
+ mark(f,p);f.mask();p=f.discovery.scanPage(p.cursor);mark(f,p);f.setPriority('m601');f.unmask();p=f.discovery.scanPage(p.cursor);
+ assert(p.payload.membershipClaims.some(c=>c.conversationId==='m601'));assert(!p.payload.membershipClaims.some(c=>c.conversationId==='m602'));
 });
