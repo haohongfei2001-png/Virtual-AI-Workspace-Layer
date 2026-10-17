@@ -1,5 +1,6 @@
 import {VerifiedRecordCache} from './verified-record-cache.mjs';
 import {digest,stable} from './hash.mjs';
+import {sha256} from './hash.mjs';
 import {id,exact} from './state.mjs';
 import {validateNativeManifest,NATIVE_PARTITION_FORMAT,nativeRecord,nativeUnpack} from './native-partitions.mjs';
 
@@ -19,11 +20,14 @@ function directory(rows,revision){
  * Directory counts are claims until the requested immutable buckets are checked.
  */
 export function validateNativeIndexRoot(root,scope){
+ checkNativeIndexRoot(root,scope);
+ if(stable(root).length>16*1024*1024)throw Error('native-manifest-too-large');return root;
+}
+function checkNativeIndexRoot(root,scope){
  exact(root,['format','scopeKey','revision','sources','projects','refs','units','changes']);
  if(root.format!==NATIVE_INDEX_FORMAT)throw Error('invalid-native-index-format');
  for(const kind of kinds)directory(root[kind],root.revision);
  validateNativeManifest({...root,format:NATIVE_PARTITION_FORMAT,projects:{},refs:{}},scope);
- if(stable(root).length>16*1024*1024)throw Error('native-manifest-too-large');return root;
 }
 // Bounded byte-validation cache only: each newly read payload is fully encoded
 // and compared. Scope, physical identity and directory count remain contextual.
@@ -101,6 +105,19 @@ export function materializeNativeVersionIndex(root,scope,records){
  * No caller-provided count is trusted. No deletes: native known refs remain reachable.
  */
 export function updateNativeVersionIndex(root,scope,revision,updates,records){
+ const built=updateIndexPieces(root,scope,revision,updates,records);validateNativeIndexRoot(built.root,scope);return built;
+}
+/** Build the final writer root before validation; no caller-supplied proof or hash.
+ * The same canonical bytes enforce the size bound and produce the checksum.
+ */
+export function buildNativeIndexUpdateRecord(root,scope,revision,updates,records,metadata){
+ const captured=structuredClone(metadata);exact(captured,['sources','units','changes']);
+ const built=updateIndexPieces(root,scope,revision,updates,records);
+ Object.assign(built.root,captured);checkNativeIndexRoot(built.root,scope);
+ const encoded=stable(built.root);if(encoded.length>16*1024*1024)throw Error('native-manifest-too-large');
+ return {...built,rootRecord:{key:built.root.scopeKey,payload:built.root,checksum:sha256(encoded)}};
+}
+function updateIndexPieces(root,scope,revision,updates,records){
  validateNativeIndexRoot(root,scope);version(revision,Number.MAX_SAFE_INTEGER);if(revision!==root.revision+1)throw Error('native-index-revision-conflict');
  exact(updates,['projects','refs']);const next={...root,revision,projects:{...root.projects},refs:{...root.refs}},byKey=new Map(),written=[];
  for(const record of records){if(byKey.has(record.key))throw Error('duplicate-native-index-record');byKey.set(record.key,record);}
@@ -121,5 +138,5 @@ export function updateNativeVersionIndex(root,scope,revision,updates,records){
   if(nextOrdinal>maxCount)throw Error('native-index-capacity');
   for(const [bucket,{versions,ordinals}] of groups)written.push(makeIndexBucket(next,kind,bucket,versions,ordinals));
  }
- if(consumed.size!==byKey.size)throw Error('unexpected-native-index-record');validateNativeIndexRoot(next,scope);return {root:next,records:written};
+ if(consumed.size!==byKey.size)throw Error('unexpected-native-index-record');return {root:next,records:written};
 }

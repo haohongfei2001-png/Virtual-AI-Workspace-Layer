@@ -1,4 +1,4 @@
-import {NATIVE_INDEX_FORMAT,updateNativeVersionIndex,validateNativeIndexRoot,nativeIndexBucket,nativeIndexKey} from './native-version-index.mjs';
+import {NATIVE_INDEX_FORMAT,buildNativeIndexUpdateRecord,nativeIndexBucket,nativeIndexKey} from './native-version-index.mjs';
 import {createNativeIndexReader} from './native-index-reader.mjs';
 import {nativeRecord,nativePartitionKey,nativeRecoveryKey,nativeCheckpointKey,isNativePartitioned} from './native-partitions.mjs';
 
@@ -13,10 +13,11 @@ export function saveIndexedNativePieces(store,scope,next,storage,command,reader,
   const piece={scopeKey:next.scopeKey,kind,id:key,revision:next.revision,row:next[kind][key],...(kind==='refs'?{membership:next.membership[key]??null}:{})};
   if(!piece.row)throw Error('orphan-native-membership');units+=JSON.stringify(piece).length;check();store.put(nativeRecord(nativePartitionKey(next.scopeKey,kind,key,next.revision),piece));
  }
- const built=updateNativeVersionIndex(prior,scope,next.revision,updates,[...reader.records.values()].filter(r=>wanted.has(r.key)));
- built.root.sources=next.sources;built.root.units=units;built.root.changes=[...prior.changes,{revision:next.revision,projects:changed.projects.slice(0,10000),refs:changed.refs.slice(0,10000)}].slice(-64);
- validateNativeIndexRoot(built.root,scope);for(const record of built.records){check();store.put(record);}
- const rootRecord=nativeRecord(next.scopeKey,built.root);
+ const built=buildNativeIndexUpdateRecord(prior,scope,next.revision,updates,[...reader.records.values()].filter(r=>wanted.has(r.key)),{
+  sources:next.sources,units,changes:[...prior.changes,{revision:next.revision,projects:changed.projects.slice(0,10000),refs:changed.refs.slice(0,10000)}].slice(-64)
+ });
+ for(const record of built.records){check();store.put(record);}
+ const rootRecord=built.rootRecord;
  // Queue the superseded checkpoint read before the owner stores the prior root.
  const request=store.get(nativeCheckpointKey(next.scopeKey));request.onsuccess=()=>{
   try{check();}catch(error){fail(error);return;}

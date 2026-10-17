@@ -41,6 +41,8 @@ J4远端早期失败已区分：4067762 CI39025114564前三步PASS，随后basel
 
 共享目录回收路径现已消除同事务同物理bucket的重复读：previous/current的scope/generation一致、revision/count/units相等且ordinal上限不缩小时，复用刚验证且未外露的bucket；否则仍完整读取当前bucket，删除前guard保留。最小跨bucket更新反例先红2次→绿1次，旧片删除/当前片与人工资产保留。72项定向与独立审查通过；真实IDB生命周期7项、批处理4项、回收11项通过。首次真实IDB计数5次是重复包装同objectStore的观察器缺陷，已按对象去重并保留原失败日志。最终未插桩10k双完整审计revision204为10000/10000正确PROJECT、零UNKNOWN/遗漏/错属，原窗口剩余13.47秒，导航/唯一返回通过，源码/fixture/manifest稳定。摄取观察19.294秒，上一候选18.653秒，未证明耗时改善或跨环境关口关闭；仍PARTIAL_SYS04_NOT_ACCEPTED。 最终同源码完整Node 7299/7299通过、0skip、78.50秒。
 
+最终root构造重复编码已收敛：实际MockIDB indexed owner在64批×50 IDs后的一笔写入原有18次编码遍历/889019字符；新writer入口先clone并校验完整sources/units/changes，再验证最终root，用同一canonical字节执行16MiB限制和原SHA-256，减少为15次/739136字符。公共update和prior、GC、撤权/回滚校验保持，不接受外部预计算hash或跳检标志。相同输出/校验和、非法metadata、getter单次取值、聚合超限反例与相关71项通过；独立审查、真实IDB写入恢复10项通过。未插桩同源码10k双完整审计revision212为10000/10000正确PROJECT、零UNKNOWN/遗漏/错属，原期限剩余13.62秒，导航/返回通过，源码/fixture/manifest稳定；摄取18.709秒对前一19.294秒仍仅单样本，不认证因果加速/p95。前一adfa8c7 CI39028044103正式10k仍FAIL，失败后root为10000/revision224，数量不能替代完整成员审计；须继续区分成员摄取和审计过程。 最终同源码完整Node7306/7306通过、0skip、77.95秒；前一CI的Node/journeys/J4均通过既定门槛，整体因10k保持FAIL。
+
 下一阻塞：可靠10k摄取、J1/冷启动时序与合法worker/peer context重新获取及自动待命返回；完整旅程/全部适用81项、100k与p95、真实G/U/PAIA/物理IME/跨端及发布准备仍未达到。已有Pro资产和整理stash保留。
 
 ## 历史本地检查点（2026-10-17，Round386）
