@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round373）
+## 最新本地检查点（2026-10-17，Round374）
+
+真实扩展源IndexedDB补齐首次ACK source缺席后的修复恢复：原来源不变则原pending完成；原生来源撤销/ACK profile变化则安全退休，原始观察时间/来源记录与人工workspace保持。最终隔离headless **3/3 D PASS**，相关Node **27/27 PASS**，独立审查与初始化失败清理修复完成。见 [Round374](evidence/round374/README.md)。
+
+该测试组合使用真实HELLO/REFRESH但合成frame/HTTP事实，不是生产Host S、整worker冷启动或完整J4；原S未覆盖项继续保留。100k、即时cold context、剩余81项/G/U仍未完成，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round373）
 
 补齐无额外预算准备的 after-Evidence→旧版拒写→再升级连续入口；实际隔离 headless MV3 单次 **26/26 步骤 PASS**，旧 owner 三操作 VersionError、八表/原 ACK/receipt 保持，当前包新授权恢复，后续修复/撤权/disable/reenable/uninstall 同趟通过。全部 J4 相关 Node **311/311 PASS**。见 [Round373](evidence/round373/README.md)。
 

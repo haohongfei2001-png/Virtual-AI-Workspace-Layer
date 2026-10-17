@@ -9,7 +9,7 @@ import {tmpdir} from 'node:os';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
-const SUITES={pending:{entry:'tests/host/sys02-pending-idb-cases.mjs',factory:'createSys02PendingCases',count:13},'completion-repair':{entry:'tests/host/sys02-completion-repair-cases.mjs',factory:'createSys02CompletionRepairCases',count:2}};
+const SUITES={pending:{entry:'tests/host/sys02-pending-idb-cases.mjs',factory:'createSys02PendingCases',count:13},'completion-repair':{entry:'tests/host/sys02-completion-repair-cases.mjs',factory:'createSys02CompletionRepairCases',count:2},'initial-ack-repair':{entry:'tests/host/initial-ack-idb-cases.mjs',factory:'createInitialAckRepairCases',count:3,injection:'TEST_ONLY_BLOCK_FIRST_CONTINUATION_APPLY_AND_CHECKSUM_FAULT',authority:'REAL_HELLO_REFRESH_WITH_SYNTHETIC_FRAME_AND_HTTP'}};
 function suiteSpec(suite){assert(Object.hasOwn(SUITES,suite),'unknown SYS02 suite');return SUITES[suite];}
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 export async function buildSys02Package(directory,{suite='pending'}={}){
@@ -56,6 +56,7 @@ export async function runSys02Browser({output=resolve('sys02-pending-idb-report.
  let context;
  try{
   const spec=suiteSpec(suite);
+  if(spec.injection)report.injection=spec.injection;if(spec.authority)report.authority=spec.authority;
   const scratch=await mkdtemp(join(tmpdir(),'vaiwl-sys02-idb-')),extension=join(scratch,'extension');report.temporaryPackage=extension;await mkdir(extension);
   Object.assign(report,await buildPackage(extension,{suite}));
   if(!prepareOnly){
