@@ -43,7 +43,13 @@ function validateRootStructure(root,scope){
 const rootValidation=new VerifiedRecordCache({maxEntries:8,maxChars:16*1024*1024});
 export function validateSharedDirectoryRoot(root,scope){
  const key=scopeKey(scope);
- return rootValidation.read({key,payload:root,checksum:'shared-directory-structure-v1'},key,()=>validateRootStructure(root,scope));
+ // Current and retained checkpoint revisions must not evict one another's
+ // structure proof. Every read still compares all bytes within the same budget.
+ // Inspect a data descriptor only: an invalid value must not run toJSON or an
+ // extra getter before the original strict validator sees it.
+ const revision=Object.getOwnPropertyDescriptor(root??{},'revision')?.value;
+ const context=Number.isSafeInteger(revision)&&revision>0?JSON.stringify([key,revision]):key;
+ return rootValidation.read({key,payload:root,checksum:'shared-directory-structure-v1'},context,()=>validateRootStructure(root,scope));
 }
 const pieceValidation=new VerifiedRecordCache({maxEntries:512,maxChars:8*1024*1024});
 export function verifySharedDirectoryPiece(record,root,bucket){

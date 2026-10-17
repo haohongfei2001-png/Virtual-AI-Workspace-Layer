@@ -4,6 +4,10 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **共享root校验抖动根因与修复**：当前root、旧checkpoint和新root的结构缓存context只有scope，交替revision会互相替换同一条目。独立最小反例原实现产生24次额外重验；现仅对正safe-integer自身data revision按scope＋revision区分现有条目，保留8条/16MiB上限、每次完整strictJSON、checksum和schema。非法revision沿用原路径，不提前执行getter/toJSON。6项独立反例及相关182项通过，独立审查通过；真实IDB生命周期7项、批量4项及retention11项通过，覆盖CAS/回滚/恢复/人工资产/5001缺失件/跨scope。
+- **同最终生产候选未插桩10k闭环**：完整10000 ID、10000确证PROJECT，零UNKNOWN/遗漏/重复/错属，两次同revision219独立审计，原30秒窗口剩余17.49秒；导航/原生编辑器/唯一返回通过，源码/fixture/manifest未漂移。摄取观察14.929秒，上一不同版本17.206秒仅单样本描述，不作因果速度比；本地仍PARTIAL_SYS04_NOT_ACCEPTED，远端跨环境关口和p95保持OPEN。最终安全实现三轮真实IDB A/B（新context，AB/BA/AB，50预置＋199×50提交、长UUID/标题、最终10000事实hash全部相同）中位5854.9→5034.5ms，减少14.0%；仅该提交链对照，不代表完整Host/p95或跨设备。此前直接revision原型的5783→4989ms及脚本导入错误保留，最终采用安全descriptor实现。最终同源码完整Node7349/7349、零skip、74.31秒通过；本候选远端矩阵尚待执行，原CI失败仍保留。
+
+
 - **本次闭环证据补齐与观察器修复**：a651f24的Linux CI取消重发实际记录ERR_FAILED，一次认证operation读回后原生连续重发的exact ACK通过（retry-to-observation143ms），补齐此前只在本地ERR_ABORTED成功的真实分支覆盖；仅该窄J2子链关闭，不是完整J2/J4。C2休眠恢复六步与旧stop反向变异亦通过原CI门槛，Linux tmpdir启动缺陷已关闭。相同CI job实测Node224s/导航248s/J4230s/耐久169s；旧串行384s与当前最长248s为跨版本描述，非受控性能加速比。
 - **J4观察器目标已修正**：peer超时后旧collector固定读主tab，因而此前currentReady=true不属于失败peer；worker的context-selection-pending也是历史reason，receipt存在不能据此归属peer。现在仅确切peer timeout选择peer，其余失败仍主tab，失败后才检查、不改变原失败或预算。14项定向通过。修正runner的本地隔离生命周期诊断23步走完，源码/manifest/插桩包未漂移，但本地未复现CI故障且仅DIAGNOSTIC_ONLY；failure-only peer分支真实触发仍待后续复现，不能关闭竞态。现有trace只保留baseline，未采到peer hop处生命周期顺序，不以此声称根因确定。下一最小窗口为同文档history/GET跨API交错及PENDING/READY/rebind顺序，保持新HELLO/REFRESH和旧grant撤销边界。
 - **共享提交重复遍历已量化**：纯Node真实registerNativeReferences调用链（MockIDB仅承载，不认证IDB时间），3200长UUID＋64×50 change suffix＋50新ref：同rev65对象严格编码6次、同字节clone2次；新rev66及clone共3次。脚本与完整调用栈归档；尚不能据此将30ms归因某一段，不引入新缓存或删除校验。10k可靠完整摄取与peer实际根因仍OPEN。
