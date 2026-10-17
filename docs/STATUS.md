@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round365）
+## 最新本地检查点（2026-10-17，Round366）
+
+content显式关闭已接controller双frame清空等待与真实HOST_UI_IDLE_RELEASE，同一六秒预算；自身RPC与外部干扰区分，原生监听保留。busy可复用ACK显式重试，纯未齐ACK失败只在无干扰/无在途任务时安全重建阅读界面。完整 **7092/7092 Node PASS**；最后fallback护栏后相关 **1804/1804 PASS**，独立反例与复核完成。见 [Round366](evidence/round366/README.md)。
+
+尚未运行该新链的真实MV3或启用生产自动进入；自然退出、生产首个发送恢复及UI-11/完整Free仍NOT_RELEASE_READY。
+
+## 前一本地检查点（2026-10-17，Round365）
 
 worker新增HOST_UI_IDLE_RELEASE，在完成浏览器鉴权后、同步撤销前核验原mount/binding及所有实际在途工作，只豁免当前请求。busy保留UI/view；deadline先返回但底层未结束仍阻止释放。独立9项与root5项反例及审查通过，最终相关 **1493/1493 Node PASS**。见 [Round365](evidence/round365/README.md)。
 

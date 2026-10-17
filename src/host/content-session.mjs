@@ -70,13 +70,14 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  const clientId=makeId();if(!tokenOK(clientId))throw Error('invalid-content-client');
  let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0,contextResumeAllowed=false,contextResumeMode='workspace',contextResumeURL=null;
  let activeWork=0,rawIPC=0,workRevision=0;
- function sync(work){workRevision++;activeWork++;try{return work();}finally{activeWork--;}}
- async function track(work){workRevision++;activeWork++;try{return await work();}finally{activeWork--;}}
- async function send(message){workRevision++;rawIPC++;try{return await runtime.sendMessage(message);}finally{rawIPC--;}}
+ function interfere(owner){if(current?.closing&&owner!==current.closing)current.closing.interfered=true;}
+ function sync(work){interfere();workRevision++;activeWork++;try{return work();}finally{activeWork--;}}
+ async function track(work,owner=null){interfere(owner);workRevision++;activeWork++;try{return await work();}finally{activeWork--;}}
+ async function send(message,owner=null){interfere(owner);workRevision++;rawIPC++;try{return await runtime.sendMessage(message);}finally{rawIPC--;}}
  // Revocable local preparation; the controller/worker still own final closure.
  function prepareIdle(){
   const s=current;
-  const quiet=()=>enabled&&current===s&&!!s&&live(s)&&s.ready&&Date.parse(s.binding?.expiresAt)>now()&&!rebindQueued&&!restoreArmed&&!activeWork&&!rawIPC&&!s.identityPending&&!s.capturePending&&!s.restorePending&&upgradeTimer===null&&upgradeIdentity===null;
+  const quiet=()=>enabled&&current===s&&!!s&&live(s)&&s.ready&&!s.closing&&Date.parse(s.binding?.expiresAt)>now()&&!rebindQueued&&!restoreArmed&&!activeWork&&!rawIPC&&!s.identityPending&&!s.capturePending&&!s.restorePending&&upgradeTimer===null&&upgradeIdentity===null;
   if(!quiet())return null;
   const revision=workRevision,binding=s.binding,run=epoch,rebind=rebindRun;
   const unchanged=()=>revision===workRevision&&binding===s.binding&&run===epoch&&rebind===rebindRun&&quiet();
@@ -84,6 +85,21 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   if(!adapter?.isCurrent?.()||!identity?.isCurrent?.())return null;
   const token=Object.freeze({isCurrent:()=>unchanged()&&adapter.isCurrent()&&identity.isCurrent()&&unchanged()});
   return token.isCurrent()?token:null;
+ }
+ async function enterDormant(){
+  const s=current;if(!s||s.closing||s.wakePending)return false;
+  const prepared=prepareIdle();if(!prepared?.isCurrent())return false;
+  const adapter=s.adapter.prepareIdle?.(),reader=isolatedReader.prepareIdle?.();
+  if(!adapter?.isCurrent?.()||!reader?.isCurrent?.()||!prepared.isCurrent())return false;
+  const binding=s.binding,closing={interfered:false};s.closing=closing;
+  const intact=()=>enabled&&live(s)&&s.binding===binding&&s.closing===closing&&!closing.interfered&&s.ready&&Date.parse(binding.expiresAt)>now()&&adapter.isCurrent()&&reader.isCurrent();
+  closing.isCurrent=intact;
+  try{
+   if(!intact()||s.controller.dormantReady?.()!==true&&s.controller.enterDormant?.()!==true)return false;
+   let settled=false;try{settled=await s.controller.settleDormant?.({isCurrent:intact,timeoutMs:6000})===true;}catch{/* An incomplete clear cannot leave an unusable return entry. */}
+   if(!settled&&intact()&&activeWork===0&&rawIPC===0&&s.controller.dormantReady?.()!==true){rebind(s,'reading');return false;}
+   return settled&&intact();
+  }catch{return false;}finally{if(s.closing===closing)s.closing=null;}
  }
  // Each adapter generation owns its transport callbacks, including late cancel.
  function adapterOptions(s,binding){return {binding,ingestionPass:async pass=>{
@@ -101,7 +117,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  }};}
  function sameProducer(a,b){return !!a&&!!b&&['documentToken','producerToken','routeEpoch'].every(k=>a[k]===b[k]);}
  async function wake(s){
-  if(!enabled||!live(s)||!s.ready||s.wakePending||!s.controller?.dormantReady?.()||typeof s.scopeKey!=='string'||!s.scopeKey||activeWork||rawIPC||rebindQueued||restoreArmed||s.identityPending||s.capturePending||s.restorePending||upgradeTimer!==null||upgradeIdentity!==null)return null;
+  if(!enabled||!live(s)||!s.ready||s.wakePending||s.closing||!s.controller?.dormantReady?.()||typeof s.scopeKey!=='string'||!s.scopeKey||activeWork||rawIPC||rebindQueued||restoreArmed||s.identityPending||s.capturePending||s.restorePending||upgradeTimer!==null||upgradeIdentity!==null)return null;
   const preparedRevision=workRevision;
   const adapter=s.adapter?.prepareRecovery?.(),reader=isolatedReader.prepareIdle?.();
   if(!adapter?.isCurrent?.()||!reader?.isCurrent?.()||preparedRevision!==workRevision||!live(s)||!s.ready||activeWork||rawIPC||s.wakePending)return null;
@@ -125,11 +141,11 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  const bindingFields=b=>({documentToken:b.documentToken,producerToken:b.producerToken,routeEpoch:b.routeEpoch});
  function live(s){return current===s&&!s.abort.signal.aborted&&doc.location.href===s.url;}
  function bindingOK(b,prior){return exactHostRecord(b,['documentToken','producerToken','browserDocumentId','routeEpoch','origin','expiresAt'])&&['documentToken','producerToken','browserDocumentId'].every(k=>tokenOK(b[k]))&&Number.isSafeInteger(b.routeEpoch)&&b.routeEpoch>=0&&b.origin===origin&&Date.parse(b.expiresAt)>now()&&Date.parse(b.expiresAt)<=now()+20000&&(!prior||['documentToken','producerToken','browserDocumentId','routeEpoch','origin'].every(k=>b[k]===prior[k]));}
- function rpc(s,message,timeoutMs=6000){return track(()=>rpcInner(s,message,timeoutMs));}
- async function rpcInner(s,message,timeoutMs){
+ function rpc(s,message,timeoutMs=6000,owner=null){return track(()=>rpcInner(s,message,timeoutMs,owner),owner);}
+ async function rpcInner(s,message,timeoutMs,owner){
   if(!live(s))throw Error('stale-content-session');let abort;
   const cancelled=new Promise((_,reject)=>{abort=()=>reject(Error('stale-content-session'));s.abort.signal.addEventListener('abort',abort,{once:true});});
-  try{const result=await withRequestDeadline(()=>Promise.race([Promise.resolve().then(()=>{if(!live(s))throw Error('stale-content-session');return send(message);}),cancelled]),{timeoutMs,now:elapsedNow,schedule,cancel});if(!live(s))throw Error('stale-content-session');return result;}
+  try{const result=await withRequestDeadline(()=>Promise.race([Promise.resolve().then(()=>{if(!live(s))throw Error('stale-content-session');return send(message,owner);}),cancelled]),{timeoutMs,now:elapsedNow,schedule,cancel});if(!live(s))throw Error('stale-content-session');return result;}
   finally{s.abort.signal.removeEventListener('abort',abort);}
  }
  function clearMigration(s){const prior=s.migration;s.migration=null;if(prior?.leaseOwner)try{s.adapter?.releaseLoadedHandles?.(prior.leaseOwner);}catch{}for(const type of ['pointerdown','keydown','wheel','focusin'])doc.removeEventListener?.(type,s.migrationInterrupt,true);}
@@ -305,6 +321,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    s.plans=plansFactory({adapter,showNativeReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showNativeReading?.()===true,captureIntent:()=>s.controller?.intentGuard?.()??(()=>false),showReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showReading()===true,now,elapsedNow,schedule,cancel,bindingCurrent:()=>live(s)&&Date.parse(s.binding.expiresAt)>now()&&adapter.inspect().ok?s.binding.documentToken+':'+s.binding.producerToken+':'+s.binding.routeEpoch:false});
    surface=surfaceFactory({document:doc,createFrameURL:({role})=>runtime.getURL(role+'.html'),hasNativeLayer:()=>adapter.hasNativeLayer()});
    const bridge={
+    releaseIdleMount:({handle,timeoutMs})=>{const closing=s.closing;if(!closing?.isCurrent())return Promise.resolve({ok:false});return rpc(s,{v:1,type:'HOST_UI_IDLE_RELEASE',...bindingFields(s.binding),mountId:handle.id},timeoutMs,closing);},
     registerMount:({handle})=>rpc(s,{v:1,type:'HOST_UI_MOUNT',...bindingFields(s.binding),mountId:handle.id,regionEpoch:handle.regionEpoch}),
     confirmParent:v=>rpc(s,{v:1,type:'HOST_UI_CONFIRM',...v,...bindingFields(s.binding)}),
     surfaceState:value=>rpc(s,{v:1,type:'HOST_UI_SURFACE_STATE',...value,...bindingFields(s.binding)}),
@@ -362,5 +379,5 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   doc.defaultView.addEventListener('pageshow',pageshow);
   return begin(true,contextResumeMode);
  }
- return Object.freeze({start,stop,contextPending,contextReady,prepareIdle,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
+ return Object.freeze({start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
 }

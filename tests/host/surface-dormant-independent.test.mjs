@@ -96,3 +96,20 @@ test('resume can keep reading after fresh joins without opening old projection',
  const f=await dormantForResume(),shown=f.calls.shown;assert.ok(await f.controller.resumeDormant({binding:f.fresh},{mode:'reading'}));
  f.message('workspace');f.message('sidebar');await flush();assert.equal(f.calls.shown,shown);assert.equal(f.controller.presentationMode(),'reading');assert.equal(f.slot.children.length,1);f.controller.stop();
 });
+
+function acknowledgeIdle(f,role){const requestId=f.calls.messages.find(x=>x.data.type==='VAIWL_UI_IDLE').data.requestId;f.message(role,'VAIWL_UI_IDLE_ACK',{requestId});}
+test('settlement waits for both exact frame ACKs and passes remaining deadline to worker',async()=>{
+ const f=fixture();await f.ready();let released=[];f.bridge.releaseIdleMount=async value=>{released.push(value);return {ok:true};};assert(f.controller.enterDormant());
+ const pending=f.controller.settleDormant({isCurrent:()=>true});await flush();assert.equal(released.length,0);acknowledgeIdle(f,'workspace');await flush();assert.equal(released.length,0);
+ f.advance(4000);acknowledgeIdle(f,'sidebar');assert.equal(await pending,true);assert.equal(released.length,1);assert.equal(released[0].timeoutMs,2000);assert.equal(f.calls.disposed,0);assert.equal(f.slot.children.length,1);f.controller.stop();
+});
+for(const interruption of ['guard','stop','route','frame','deadline'])test('settlement refuses '+interruption+' before worker release',async()=>{
+ const f=fixture();await f.ready();let releases=0,current=true;f.bridge.releaseIdleMount=async()=>{releases++;return {ok:true};};f.controller.enterDormant();const pending=f.controller.settleDormant({isCurrent:()=>current});
+ if(interruption==='guard')current=false;if(interruption==='stop')f.controller.stop();if(interruption==='route')f.doc.location.href+='c/other';if(interruption==='frame')f.frames[0].frame.contentWindow={};if(interruption==='deadline')f.advance(6000);
+ acknowledgeIdle(f,'workspace');acknowledgeIdle(f,'sidebar');if(['route','frame'].includes(interruption))f.advance(6000);
+ assert.equal(await pending,false);assert.equal(releases,0);f.controller.stop();
+});
+for(const result of [{ok:false},{ok:true}])test('settlement singleflight and post-release guard '+result.ok,async()=>{
+ const f=fixture();await f.ready();let resolve,current=true,releases=0;f.bridge.releaseIdleMount=()=>{releases++;return new Promise(r=>resolve=r);};f.controller.enterDormant();acknowledgeIdle(f,'workspace');acknowledgeIdle(f,'sidebar');
+ const pending=f.controller.settleDormant({isCurrent:()=>current});await flush();assert.equal(await f.controller.settleDormant({isCurrent:()=>true}),false);assert.equal(releases,1);current=false;resolve(result);assert.equal(await pending,false);assert.equal(f.calls.disposed,0);f.controller.stop();
+});

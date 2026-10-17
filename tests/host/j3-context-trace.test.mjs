@@ -3,5 +3,5 @@ for(const path of J3_CONTEXT_PATHS)test('J3 passive timing trace retains actual 
 for(const path of J3_CONTEXT_PATHS)test('RAM-only J3 diagnostics do not wrap RPC promises or log to console: '+path,async()=>{
  const original=await readFile(path,'utf8'),modified=instrumentJ3ContextSource(path,original,{ramOnly:true});
  assert(!modified.includes("console.log('J3_CONTEXT_TRACE '"));
- if(path.endsWith('content-session.mjs')){assert(modified.includes('return send(message);'));assert(!modified.includes('send(message).then'));assert(modified.includes('content-hello'));assert(modified.includes('content-auth'));}
+ if(path.endsWith('content-session.mjs')){assert(modified.includes('return send(message,owner);'));assert(!modified.includes('send(message,owner).then'));assert(modified.includes('content-hello'));assert(modified.includes('content-auth'));}
 });
