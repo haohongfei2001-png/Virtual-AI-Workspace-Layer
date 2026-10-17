@@ -7,6 +7,8 @@ export function createSendCorrelator({now=Date.now,windowMs=30000,maxPending=32}
  if(typeof now!=='function'||!Number.isInteger(windowMs)||windowMs<1||windowMs>30000||!Number.isInteger(maxPending)||maxPending<1||maxPending>32)throw Error('invalid-send-correlator');
  let binding=null,baseline=null,lastTime=null,stopped=false;const pending=new Map(),used=new Set();
  function invalidate(){binding=null;baseline=null;lastTime=null;pending.clear();used.clear();}
+ // Retire causal state without erasing the binding replay ledger or clock.
+ function invalidateBaseline(){baseline=null;pending.clear();return !stopped&&binding!==null;}
  function clock(){const t=now();if(!Number.isFinite(t)||lastTime!==null&&t<lastTime){invalidate();throw Error('send-clock-invalid');}lastTime=t;for(const [id,v]of pending)if(t-v.at>=windowMs)pending.delete(id);return t;}
  function bind(value){
   if(stopped)throw Error('send-correlator-stopped');
@@ -49,5 +51,5 @@ export function createSendCorrelator({now=Date.now,windowMs=30000,maxPending=32}
  function pendingIntent(intentId){if(stopped||!binding)return null;clock();const row=pending.get(intentId);return row?candidate(row,'intent'):null;}
  // Private scheduling state only; sampling never creates a send proof or extends an intent.
  function isIdle(){if(stopped||!binding)return false;try{clock();return pending.size===0;}catch{return false;}}
- return Object.freeze({bind,observe,intent,settle,pendingIntent,invalidate,stop,isIdle});
+ return Object.freeze({bind,observe,intent,settle,pendingIntent,invalidate,invalidateBaseline,isBound:()=>!stopped&&binding!==null,stop,isIdle});
 }
