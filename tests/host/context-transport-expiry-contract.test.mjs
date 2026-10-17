@@ -32,3 +32,13 @@ test('transport owner observation ends before owned browser cleanup rather than 
  assert(candidate.includes("worker.on('close',closed)"));assert(candidate.includes("worker.off('close',closed);report.transportOwner.observationEndedAt=Date.now()"));
  assert(candidate.includes('finally{endTransportOwnerObservation?.();const clean=await cleanupOwnedResources(report,'));
 });
+
+test('real foreground transport modes use noDefaults native visibility and own both browser and profile cleanup',async()=>{
+ const helper=await readFile(new URL('./native-visibility-browser.mjs',import.meta.url),'utf8'),workflow=await readFile(new URL('../../.github/workflows/free-offline-host.yml',import.meta.url),'utf8');
+ assert(candidate.includes('if(transportExpiry){browserHandle=await launchNativeVisibilityBrowser('));assert(candidate.includes('report.browserPrecondition=browserHandle.diagnostic'));
+ assert(candidate.includes('else context=await chromium.launchPersistentContext('),'legacy modes keep their existing launch path');
+ assert(helper.includes('chromium.connectOverCDP(endpoint,{noDefaults:true})'));assert(candidate.includes('browserHandle?browserHandle.close():context?.close()'));
+ assert(candidate.includes("assert.equal(await page.evaluate(()=>document.hasFocus()),false,'genuine browser foreground edge required')"),'real foreground assertion is not relaxed');
+ assert.equal(workflow.split("r.browserPrecondition?.focusEmulation!=='NOT_ENABLED_BY_PLAYWRIGHT'").length-1,2);
+ assert.doesNotMatch(candidate,/setFocusEmulationEnabled|setWebLifecycleState|Object.defineProperty\(document.*(?:hasFocus|visibilityState)/);
+});
