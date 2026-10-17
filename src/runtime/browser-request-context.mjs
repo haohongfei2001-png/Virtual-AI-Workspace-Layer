@@ -44,7 +44,7 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
   for(const [k,d]of documents)if(d.tabId===details?.tabId){drop(d,'navigation');if(![...keep].some(r=>r.document===d))documents.delete(k);}
   for(const [id,r]of requests)if(r.tabId===details?.tabId){if(keep.has(r)){r.historyRetained=true;r.historyTargetURL=details.url;r.epoch=r.document.epoch;}else requests.delete(id);}
  }
- function cleanup(){for(const [id,r]of closedRequests)if(!clockOK(r,ttl))closedRequests.delete(id);for(const [id,r]of requests)if(!clockOK(r,6000)){requests.delete(id);if(documents.get(key(r))===r.document)drop(r.document,'request-expired');}for(const [k,d]of documents)if(!clockOK(d,ttl)&&!Array.from(requests.values()).some(r=>r.document===d)){drop(d,'context-expired');documents.delete(k);}}
+ function cleanup(){for(const [id,r]of closedRequests)if(!clockOK(r,ttl))closedRequests.delete(id);for(const [id,r]of requests)if(!clockOK(r,6000)){requests.delete(id);if((!r.document.receipt||r.epoch===r.document.epoch)&&documents.get(key(r))===r.document)drop(r.document,'request-expired');}for(const [k,d]of documents)if(!clockOK(d,ttl)&&!Array.from(requests.values()).some(r=>r.document===d)){drop(d,'context-expired');documents.delete(k);}}
  function send(details){
   if(!validDetails(details))return;
   const conversationId=requestConversation(details.url),projectId=project(details.url,true);if(!conversationId&&!projectId)return;
@@ -79,7 +79,9 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
    request.epoch=document.epoch;request.accepted=true;return true;
   }).catch(()=>false);
  }
- function fail(details){const r=requests.get(details?.requestId);if(!r)return;requests.delete(r.requestId);closedRequests.set(r.requestId,r);if(r.accepted&&documents.get(key(r))===r.document)drop(r.document,'request-failed');}
+ // Protect only an installed receipt from a newer successful native request.
+ // Without one, a failed old request must still poison pending preparations.
+ function fail(details){const r=requests.get(details?.requestId);if(!r)return;requests.delete(r.requestId);closedRequests.set(r.requestId,r);if(r.accepted&&(!r.document.receipt||r.epoch===r.document.epoch)&&documents.get(key(r))===r.document)drop(r.document,'request-failed');}
  function complete(details){
   const r=requests.get(details?.requestId);if(!r)return;
   if(!validDetails(details)||details.url!==r.url||details.documentId!==r.documentId||details.tabId!==r.tabId||details.statusCode!==200||details.fromCache===true){fail(details);return;}

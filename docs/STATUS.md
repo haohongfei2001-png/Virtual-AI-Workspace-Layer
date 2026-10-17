@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **已修复旧请求尾事件误撤销新C2 receipt**：独立最小复现seed→older/newer同context GET→newer先200，older随后error/redirect/HTTP503或清理过期，会错误撤销新的成功receipt。新增8项反例中4项在原源码RED，4项当前epoch撤权对照通过。修复只保护已安装的新receipt免受旧epoch尾事件影响；没有receipt时仍poison pending。首版单纯epoch判断使既有bootstrap提交顺序反例失败，原FAIL保留，未修改断言；收窄后101项定向与独立审查通过，最终完整Node7392/7392、零skip、73.27秒。原6秒/TTL/历史/冲突/真实认证边界不变；不宣称已解释原CI peer全部失败。同源码隔离Chrome正式J4既有23步全部PASS，sourceChangedDuringRun=false、buildManifestUnchanged=true；结果仍PARTIAL_J4_NOT_ACCEPTED，peer通过新原生导航恢复，自动foreground恢复未证明。10k与完整Free门槛仍OPEN。
+
 - **停止低收益的checkpoint缓存微调**：68bb3e5源码核对后，既有worker CPU栈将一部分hash成本定位到shared current/checkpoint读取，但同事务两次unpack是不同revision/字节，不是重复读。直接复用两条普通LRU仍抖动；仅临时副本测试同容量cold-history策略，保留完整字节/checksum/schema、无生产改动。真实IDB三对AB/BA/AB、每次50+199×50=10k，native/shared最终事实摘要全部一致，中位5262.5→5218.2ms（约0.8%），不采纳。源码完整性检查通过，原失败保留。后续不再把此类缓存微调作为10k主修复，转查64KiB分片逐次提交的固定成本；完整Host/远端10k仍未通过。原始脚本和结果见既有free-delivery证据目录。
 
 - **J4验证调度已收口到失败现场**：原CI每次额外运行scope baseline诊断，仅观察启动、不能捕获后段peer。现原formal step只新增id，命令/partial门槛/失败均保留；仅formal outcome=failure且未取消时，同一隔离job运行一次完整lifecycle trace，诊断不能替代或抹去原FAIL。日志保留两份报告，不加缓存/upload/runner/timeout。11项定向合同和YAML解析、独立审查通过；未为此触发重复远端全矩阵。已有CI39033411366的J4 job实测formal186秒、旧baseline5秒；新调度尚无远端后测，不宣称实测提速。下一次正式失败将携带完整peer内容代际观察，原10k/peer产品关口仍OPEN。
