@@ -4,6 +4,11 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **完整审计scope扫描已批量化，非10k主根因**：只改观察器，原同一readonly事务改为512键一批，扫描所有键/末批、多scope拒绝、原IDB key类型、原deadline与后续完整分页/双revision均保留。独立审查、91项相关测试通过。真实IDB三对AB/BA/AB，10k全部键摘要与root一致，回调10001→20，中位35.60→14.70ms；仅节省20.9ms，不能解释远端3.81秒完整audit等待。511/512/513/1024、最后批第二scope、混合key与真实abort通过；初次启动/CSP/提前timer观察abort的诊断失败均保留，后者改为等待真实事务terminal事件。当前同生产63aeab8源码、本地实际10k完整旅程：10000确证PROJECT、零UNKNOWN/遗漏/重复/错属、两次revision237审计，原30秒余17.03秒，摄取观察15.534秒，原document/editor/原生成员导航/唯一返回通过，source/fixture/manifest不变。仍PARTIAL_SYS04_NOT_ACCEPTED，不是跨环境、100k或p95通过；未重跑无关完整Node/J4。
+
+- **63aeab8远端矩阵已终结**：CI39038713907整体FAIL，Node与导航成功，J4与耐久失败；job实测220/245/300/143秒（Node/导航/J4/耐久）。J4正式失败后运行完整诊断，不能以诊断23步消除原baseline15秒失败；旧调度另一版本最长248秒、本次300秒为不同失败位置的跨版本事实，不宣称提速。旧HTTP503的实际MV3正常/指定变异证据已随0d7b6fa推送，原PR16仍Draft、base不变。
+
+
 - **旧HTTP失败竞态已有实际MV3正反证据**：63aeab8生产代码不变；专用本地native刷新控件依次发起old/new GET，old挂起、new200建立新reading frame后old503。正常包四步通过，原document/editor/draft/Range、唯一返回及非首位Team scope保留；仅恢复旧fail guard并重编译实际classic worker的指定变异准确在旧503后以new-projection-revoked-by-stale-terminal失败。两次source/fixture hash、[200,200,503]顺序和nativeOrder一致，清理/源码检查通过。只闭HTTP失败窄分支，expiry/网络错误仍仅Node，不认证全部J4。新增CI同输入正反验证，既有runner/timeout/cache/upload不变；23项定向合同与YAML解析通过，既有fixture回归30项通过，未重复完整Node。
 
 - **CI39038713907的新失败现场保留**：63aeab8正式J4前三步通过，随后baseline原历史事件15秒等待失败，尚未到peer；failure-only诊断23步通过仍不抵消正式FAIL。10k在原30秒共享期限耗尽时第一完整audit已运行约3.81秒且未完成；tail rev217/total10001，auditAttempts1、无stableRevision/measurement，失败后root库存10000refs/1P不算通过。下一项检查观察器audit每次逐key cursor扫描整个native_states的成本；任何优化必须仍扫全部键、拒多scope、完整逐ID成员与两次稳定审计，不延长期限或降样本。

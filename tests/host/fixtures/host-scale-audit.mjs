@@ -18,7 +18,26 @@ export async function auditHostScaleIndex(input,readers=null){
    if(!info){report.status='NOT_RUN_INDEX_ABSENT';return report;}
    database=await new Promise((resolve,reject)=>{const request=indexedDB.open(info.name,info.version);request.onupgradeneeded=()=>{request.transaction.abort();reject(Error('audit-refuses-schema-upgrade'));};request.onerror=()=>reject(request.error);request.onsuccess=()=>{try{check();resolve(request.result);}catch(error){request.result.close();reject(error);}};});
    check();if(!database.objectStoreNames.contains('native_states')){report.status='NOT_RUN_INDEX_ABSENT';return report;}
-   const roots=await new Promise((resolve,reject)=>{const found=[],tx=track(database.transaction('native_states','readonly')),store=tx.objectStore('native_states'),request=store.openKeyCursor();request.onsuccess=()=>{try{check();}catch(error){reject(error);try{tx.abort();}catch{}return;}const cursor=request.result;if(!cursor)return;const storedKey=cursor.key;let key;try{key=JSON.parse(storedKey);}catch{}if(Array.isArray(key)&&key.length===3&&key.every(v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(v))){const row=store.get(storedKey);row.onsuccess=()=>{if(!expired&&row.result?.payload?.scopeKey===storedKey)found.push(key);};}cursor.continue();};tx.oncomplete=()=>resolve(found);tx.onabort=()=>reject(tx.error);});
+   const roots=await new Promise((resolve,reject)=>{
+    const found=[],tx=track(database.transaction('native_states','readonly')),store=tx.objectStore('native_states');
+    const fail=error=>{reject(error);try{tx.abort();}catch{}};
+    const batch=range=>{
+     const request=store.getAllKeys(range,512);
+     request.onsuccess=()=>{try{
+      check();const keys=request.result;
+      for(const storedKey of keys){
+       check();let key;try{key=JSON.parse(storedKey);}catch{}
+       if(Array.isArray(key)&&key.length===3&&key.every(v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(v))){
+        const row=store.get(storedKey);row.onsuccess=()=>{try{check();if(row.result?.payload?.scopeKey===storedKey)found.push(key);}catch(error){fail(error);}};
+       }
+      }
+      // Scan every key, including later scopes; preserve the original IDB key type.
+      if(keys.length===512)batch(IDBKeyRange.lowerBound(keys.at(-1),true));
+     }catch(error){fail(error);}};
+    };
+    tx.oncomplete=()=>resolve(found);tx.onabort=()=>reject(tx.error??Error('audit-transaction-aborted'));
+    batch(undefined);
+   });
    check();if(roots.length!==1){report.status=roots.length?'FAIL_AMBIGUOUS_SCOPE':'NOT_RUN_INDEX_ABSENT';return report;}
    const [{NativeRepository},{normalizedScope}]=await Promise.all([import(chrome.runtime.getURL('src/data/native-repository.mjs')),import(chrome.runtime.getURL('src/b1/identity.mjs'))]);
    check();const [provider,accountId,organizationId]=roots[0],scope={verified:true,provider,accountId,organizationId};

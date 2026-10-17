@@ -38,9 +38,9 @@ test('invalid paging rejects; browser adapter cannot upgrade schema or open writ
  const source=await readFile(new URL('./fixtures/host-scale-audit.mjs',import.meta.url),'utf8');assert(source.includes('audit-refuses-write-transaction'));assert(source.includes('audit-refuses-schema-upgrade'));assert(!source.includes('.count('));assert(!source.includes('observationGate:'));assert(!source.includes('hostObservationGate:'));assert(source.includes("database.transaction(names,'readonly')"));
 });
 
-test('audit is evaluated only in the current exact extension frame and freezes cursor keys',async()=>{
+test('audit is evaluated only in the current exact extension frame and binds each batched key independently',async()=>{
  const runner=await readFile(new URL('./host-scale-package-browser.mjs',import.meta.url),'utf8'),audit=await readFile(new URL('./fixtures/host-scale-audit.mjs',import.meta.url),'utf8');
  assert(!runner.includes('worker.evaluate'));assert(!runner.includes('serviceWorkers()'));assert(runner.includes('auditFrame.evaluate(auditHostScaleIndex'));
  assert(runner.includes('frame.url()===auditFrameURL&&!frame.isDetached()'));assert(runner.includes('currentAuditFrame()===auditFrame'));
- assert(audit.includes('const storedKey=cursor.key'));assert(audit.includes('store.get(storedKey)'));assert(audit.includes('payload?.scopeKey===storedKey'));assert(!audit.includes('payload?.scopeKey===cursor.key'));
+ assert(audit.includes('for(const storedKey of keys)'));assert(audit.includes('store.getAllKeys(range,512)'));assert(audit.includes('IDBKeyRange.lowerBound(keys.at(-1),true)'));assert(audit.includes('store.get(storedKey)'));assert(audit.includes('payload?.scopeKey===storedKey'));assert(!audit.includes('payload?.scopeKey===cursor.key'));
 });
