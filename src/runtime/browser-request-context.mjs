@@ -37,7 +37,7 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
  function invalidateHistory(details){
   const nextTarget=target(details?.url),valid=details?.frameId===0&&details?.frameType==='outermost_frame'&&details?.documentLifecycle==='active'&&tokenOK(details?.documentId)&&nextTarget;
   const keep=new Set();
-  if(valid)for(const r of requests.values())if(r.tabId===details.tabId&&r.documentId===details.documentId&&targetOf(r)===nextTarget&&!r.accepted&&r.actualURL===null&&!r.conflicted&&!r.historyRetained&&r.document.receipt&&r.document.receipt.actualURL!==details.url&&clockOK(r,6000))keep.add(r);
+  if(valid)for(const r of requests.values())if(r.tabId===details.tabId&&r.documentId===details.documentId&&targetOf(r)===nextTarget&&!r.accepted&&r.actualURL===null&&!r.conflicted&&!r.historyRetained&&r.document.receipt&&r.document.receipt.actualURL!==details.url&&r.epoch===r.document.epoch&&clockOK(r,6000)){keep.add(r);r.historyPriorURL=r.document.receipt.actualURL;}
   // History delivery may follow the real new-route GET. Revoke every old grant
   // now, but do not erase that still-unprepared, independently verified request.
   // Its original six-second clock and later frame/tab/body checks are unchanged.
@@ -68,10 +68,14 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
   const overlap=[...requests.values()].filter(r=>r.document===document&&targetOf(r)===objectKey&&r.contextId!==contextId);
   if(overlap.length){request.conflicted=true;for(const r of overlap)r.conflicted=true;drop(document,'concurrent-context-conflict');}
   requests.set(request.requestId,request);
-  request.prepared=Promise.resolve().then(()=>Promise.all([getFrame({tabId:request.tabId,frameId:0}),getTab(request.tabId)])).then(([frame,tab])=>{
+  request.prepare=()=>Promise.resolve().then(()=>Promise.all([getFrame({tabId:request.tabId,frameId:0}),getTab(request.tabId)])).then(([frame,tab])=>{
    // Delayed browser lookups cannot adopt an epoch revoked while they awaited.
    // Authorized navigation retention updates the pending epoch explicitly.
-   if(request.conflicted||request.epoch!==document.epoch||tab?.id!==request.tabId||tab.incognito!==false||!active||requests.get(request.requestId)!==request||documents.get(key(request))!==document||!clockOK(request,6000)||!frameMatches(frame,request))return false;
+   if(request.conflicted||request.epoch!==document.epoch||tab?.id!==request.tabId||tab.incognito!==false||!active||requests.get(request.requestId)!==request||documents.get(key(request))!==document||!clockOK(request,6000))return false;
+   if(!frameMatches(frame,request)){
+    request.priorLookupURL=frame?.documentId===request.documentId&&frame.frameType==='outermost_frame'&&frame.documentLifecycle==='active'&&target(frame.url)&&target(frame.url)!==targetOf(request)?frame.url:null;
+    return false;
+   }
    request.actualURL=frame.url;
    const concurrent=[...requests.values()].some(r=>r!==request&&r.document===document&&r.accepted&&r.contextId!==contextId);
    if(concurrent){drop(document,'concurrent-context-conflict');return false;}
@@ -82,6 +86,7 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
    if(document.contextId!==contextId||(document.receipt?.actualURL!==request.actualURL&&!preparedSelection)){drop(document,'context-selection-pending');document.contextId=contextId;}
    request.epoch=document.epoch;request.accepted=true;return true;
   }).catch(()=>false);
+  request.prepared=request.prepare();
  }
  // Protect only an installed receipt from a newer successful native request.
  // Without one, a failed old request must still poison pending preparations.
@@ -90,7 +95,14 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
   const r=requests.get(details?.requestId);if(!r)return;
   if(!validDetails(details)||details.url!==r.url||details.documentId!==r.documentId||details.tabId!==r.tabId||details.statusCode!==200||details.fromCache===true){fail(details);return;}
   void (async()=>{try{
-   if(!await r.prepared||r.conflicted||!active||requests.get(r.requestId)!==r||documents.get(key(r))!==r.document||r.epoch!==r.document.epoch||!clockOK(r,6000))return;
+   let prepared=await r.prepared;
+   // The trusted history event retained this still-unprepared request. Only a
+   // first browser lookup of that exact prior route may be rechecked once at
+   // successful completion; revocation, failures and other mismatches cannot.
+   if(!prepared&&r.historyRetained&&!r.accepted&&!r.reprepareUsed&&r.priorLookupURL&&r.priorLookupURL===r.historyPriorURL&&!r.conflicted&&active&&requests.get(r.requestId)===r&&documents.get(key(r))===r.document&&r.epoch===r.document.epoch&&clockOK(r,6000)){
+    r.reprepareUsed=true;prepared=await r.prepare();
+   }
+   if(!prepared||r.conflicted||!active||requests.get(r.requestId)!==r||documents.get(key(r))!==r.document||r.epoch!==r.document.epoch||!clockOK(r,6000))return;
    const [frame,tab]=await Promise.all([getFrame({tabId:r.tabId,frameId:0}),getTab(r.tabId)]);
    if(r.conflicted||tab?.id!==r.tabId||tab.incognito!==false||!active||requests.get(r.requestId)!==r||r.epoch!==r.document.epoch||!clockOK(r,6000)||!frameMatches(frame,r))return;
    const prior=r.document.receipt;
