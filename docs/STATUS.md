@@ -23,6 +23,10 @@
 
 最新5f03d4c CI39023489987最终FAIL：Node/J4 job通过既定门槛，10k仍FAIL，journeys本次失败项为J1；cold本次通过。原cold失败保留，J1失败尚待精确现场归因，不能凭另一次通过关闭竞态。
 
+已关闭异步checkpoint撤权漏回滚：native-index-writer把check失败与旧checkpoint损坏共用catch导致已有写入可提交，末尾才报stale-after-commit。现将guard失败交给事务fail，坏checkpoint仅跳过GC。普通guard（无AbortSignal）精确回调窗口先红后绿；相关62项通过、真实隔离headless IndexedDB六表完整回滚与CAS/恢复/Pro资产/5001行反例10项通过，冻结完整Node7282/7282通过（153.54s，concurrency=2）。此修复不等于worker自动scope恢复或10k完成。
+
+J1现场已取回：IDless提升后定位VIEW返回offset32含目标，但其返回前普通offset0 VIEW已发起，目标页被丢弃；后续未再次定位。只有前三步PASS。正在复现同版本失效提示取消定位后被retry条件永久阻断的窗口，尚未宣布修复。
+
 下一阻塞：可靠10k摄取、J1/冷启动时序与合法worker/peer context重新获取及自动待命返回；完整旅程/全部适用81项、100k与p95、真实G/U/PAIA/物理IME/跨端及发布准备仍未达到。已有Pro资产和整理stash保留。
 
 ## 历史本地检查点（2026-10-17，Round386）

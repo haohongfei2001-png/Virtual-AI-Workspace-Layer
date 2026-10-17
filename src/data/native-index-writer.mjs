@@ -19,7 +19,10 @@ export function saveIndexedNativePieces(store,scope,next,storage,command,reader,
  const rootRecord=nativeRecord(next.scopeKey,built.root);
  // Queue the superseded checkpoint read before the owner stores the prior root.
  const request=store.get(nativeCheckpointKey(next.scopeKey));request.onsuccess=()=>{
-  let old;try{check();old=verifyCheckpoint(request.result);}catch{return;}
+  try{check();}catch(error){fail(error);return;}
+  // Corrupt prior checkpoints grant no GC authority; revocation above must
+  // abort the queued write, not masquerade as a tolerable missing checkpoint.
+  let old;try{old=verifyCheckpoint(request.result);}catch{return;}
   if(!isNativePartitioned(old)&&old?.format!==NATIVE_INDEX_FORMAT)return;
   const newer=createNativeIndexReader(store,built.root,scope,fail),older=old.format===NATIVE_INDEX_FORMAT?createNativeIndexReader(store,old,scope,()=>{}):null;
   const lookupOld=(kind,key,done)=>older?older.lookup(kind,key,done):done(old[kind][key]);
