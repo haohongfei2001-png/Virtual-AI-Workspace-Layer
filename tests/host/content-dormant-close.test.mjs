@@ -130,3 +130,22 @@ test('preflight shares the original close deadline and stale completion cannot c
  const f=fixture();t.after(()=>f.client.stop());await ready(f);const gate=deferred();
  f.setResponse(m=>m.type==='HOST_UI_IDLE_CHECK'?gate.promise:f.normal(m));const closing=f.client.enterDormant();await drain();await f.advance(6000);gate.resolve({ok:true});await drain();assert.equal(await closing,false);assert.equal(f.closeEntries.length,0);assert.equal(closes(f).length,0);
 });
+
+test('dormant binding renewal uses original transport and verified scope without UI grants or HELLO',async t=>{
+ const f=fixture();t.after(()=>f.client.stop());await ready(f);f.setDormant(true);const prior=f.context.binding,start=f.calls.length;
+ f.setResponse(m=>m.type==='HOST_DOCUMENT_RENEW'?{ok:true,binding:{...prior,expiresAt:new Date(21000).toISOString()}}:f.normal(m));
+ const result=await f.bridge.renewDormantBinding({binding:prior,timeoutMs:6000});assert.equal(result.ok,true);assert.equal(result.binding.producerToken,prior.producerToken);assert.deepEqual(f.calls.slice(start).map(m=>m.type),['HOST_DOCUMENT_RENEW','HOST_REFRESH']);assert.equal(f.controllers,1);assert.equal(f.adapters,1);assert.equal(f.stops,0);
+});
+test('dormant lease scope change and elapsed deadline cannot return a renewed binding',async t=>{
+ for(const failure of ['scope','deadline']){
+  const f=fixture();t.after(()=>f.client.stop());await ready(f);f.setDormant(true);const prior=f.context.binding;
+  f.setResponse(async m=>{if(m.type==='HOST_DOCUMENT_RENEW')return {ok:true,binding:prior};if(m.type==='HOST_REFRESH'){if(failure==='deadline')await f.advance(6000);return {state:'verified',scopeKey:failure==='scope'?'foreign':'scope_A'};}return f.normal(m);});
+  await assert.rejects(f.bridge.renewDormantBinding({binding:prior,timeoutMs:6000}));assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,1);assert.equal(f.resumed.length,0);
+ }
+});
+
+test('original dormant lease expiry during scope refresh cannot publish a renewed binding',async t=>{
+ const f=fixture();t.after(()=>f.client.stop());await ready(f);f.setDormant(true);const prior=f.context.binding;await f.advance(19000);
+ f.setResponse(async m=>{if(m.type==='HOST_DOCUMENT_RENEW')return {ok:true,binding:{...prior,expiresAt:new Date(40000).toISOString()}};if(m.type==='HOST_REFRESH'){await f.advance(1001);return {state:'verified',scopeKey:'scope_A'};}return f.normal(m);});
+ await assert.rejects(f.bridge.renewDormantBinding({binding:prior,timeoutMs:6000}),/stale-dormant-binding/);assert.equal(f.resumed.length,0);
+});

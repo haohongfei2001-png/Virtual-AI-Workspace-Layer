@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round384）
+## 最新本地检查点（2026-10-17，Round385）
+
+最终release exact busy后接一次同producer transport＋same-scope认证续期，复用原6秒剩余预算；不HELLO/start、不恢复UI grants或WAKE，busy机会一次消费。原lease在await期间过期的提交窗口经独立审查修复；身份/TTL/迟到/范围反例通过。最终针对性 **102/102 L PASS**、完整Node **7249/7249 PASS**，独立复核完成。见 [Round385](evidence/round385/README.md)。
+
+仅单次续期，不是持续hold；same scope不等于同grant lineage，updateBinding仍重新观察。定时维护、pending期间wake保护与自动休眠仍未完成，本轮无新S。100k及其余81/G/U继续开放，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round384）
 
 真实关闭流程新增worker只读空闲预检，busy时保留现有grant/frame/续租；最终release仍重验，预检和清理共原6秒预算。独立service/controller/content回归 **95/95 PASS**，最终完整Node **7232/7232 PASS**。隔离插桩MV3显式关闭/旧worker销毁观察/fresh恢复 **3项S子检查PASS**，source/runner/manifest稳定，原frame/editor/草稿保持。见 [Round384](evidence/round384/README.md)。
 

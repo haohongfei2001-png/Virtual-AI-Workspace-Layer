@@ -102,6 +102,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    closing.entered=true;
    let settled=false;try{settled=await s.controller.settleDormant?.({isCurrent:intact,timeoutMs:remaining()})===true;}catch{/* An incomplete clear cannot leave an unusable return entry. */}
    if(!settled&&intact()&&activeWork===0&&rawIPC===0&&s.controller.dormantReady?.()!==true){rebind(s,'reading',s.scopeKey);return false;}
+   if(!settled&&intact()&&s.controller.idleReleaseBusy?.()===true)await s.controller.renewDormantLease?.({timeoutMs:remaining()});
    return settled&&intact();
   }catch{return false;}finally{if(live(s)&&closing.entered)s.incompleteClose=s.controller.dormantReady?.()!==true;if(s.closing===closing)s.closing=null;}
  }
@@ -342,6 +343,17 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    s.plans=plansFactory({adapter,showNativeReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showNativeReading?.()===true,captureIntent:()=>s.controller?.intentGuard?.()??(()=>false),showReading:()=>s.adapter?.hasNativeLayer?.()!==true&&s.controller?.showReading()===true,now,elapsedNow,schedule,cancel,bindingCurrent:()=>live(s)&&Date.parse(s.binding.expiresAt)>now()&&adapter.inspect().ok?s.binding.documentToken+':'+s.binding.producerToken+':'+s.binding.routeEpoch:false});
    surface=surfaceFactory({document:doc,createFrameURL:({role})=>runtime.getURL(role+'.html'),hasNativeLayer:()=>adapter.hasNativeLayer()});
    const bridge={
+    renewDormantBinding:({binding,timeoutMs})=>track(async()=>{
+     if(!bindingOK(binding,s.binding)||s.controller?.dormantReady?.()!==true)throw Error('stale-dormant-binding');
+     const prior=s.binding,scope=s.scopeKey,started=elapsedNow();
+     const remaining=()=>{const elapsed=elapsedNow()-started;if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=timeoutMs)throw Error('request-timeout');return timeoutMs-elapsed;};
+     const check=()=>{remaining();if(!live(s)||s.binding!==prior||!bindingOK(prior)||s.scopeKey!==scope||!s.ready||s.controller?.dormantReady?.()!==true)throw Error('stale-dormant-binding');};
+     check();const result=await rpc(s,{v:1,type:'HOST_DOCUMENT_RENEW',clientId,seq:++seq,...bindingFields(prior)},remaining());check();
+     if(result?.ok!==true||!bindingOK(result.binding,prior))throw Error('invalid-host-binding');
+     const auth=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(prior)},remaining());check();
+     if(auth?.state!=='verified'||auth.scopeKey!==scope){s.recoveryDenied=true;throw Error('scope-not-verified');}
+     s.binding=Object.freeze({...result.binding});return {ok:true,binding:s.binding};
+    }),
     checkIdleMount:({handle,timeoutMs})=>{const closing=s.closing;if(!closing?.isCurrent())return Promise.resolve({ok:false});return rpc(s,{v:1,type:'HOST_UI_IDLE_CHECK',...bindingFields(s.binding),mountId:handle.id},timeoutMs,closing);},
     releaseIdleMount:({handle,timeoutMs})=>{const closing=s.closing;if(!closing?.isCurrent())return Promise.resolve({ok:false});return rpc(s,{v:1,type:'HOST_UI_IDLE_RELEASE',...bindingFields(s.binding),mountId:handle.id},timeoutMs,closing);},
     registerMount:({handle})=>rpc(s,{v:1,type:'HOST_UI_MOUNT',...bindingFields(s.binding),mountId:handle.id,regionEpoch:handle.regionEpoch}),

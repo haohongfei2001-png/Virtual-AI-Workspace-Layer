@@ -206,14 +206,30 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  // Failure leaves the native reading surface and fresh-wake entry available.
  async function settleDormant({isCurrent,timeoutMs=6000}={}){
   const state=current;if(!state?.dormant||state.settling||typeof isCurrent!=='function'||typeof bridge.releaseIdleMount!=='function'||!Number.isFinite(timeoutMs)||timeoutMs<=0||timeoutMs>6000)return false;
-  const started=elapsedNow();state.settling=true;
+  const started=elapsedNow();state.settling=true;state.releaseBusy=false;
   const remaining=()=>{const elapsed=elapsedNow()-started;if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=timeoutMs)throw Error('idle-release-timeout');return timeoutMs-elapsed;};
   const check=()=>current===state&&state.dormant&&dormantReady()&&isCurrent()===true;
   try{
    if(await withRequestDeadline(()=>state.idleReady,{timeoutMs:remaining(),now:elapsedNow,schedule,cancel})!==true||!check())return false;
    const result=await withRequestDeadline(()=>bridge.releaseIdleMount({handle:state.handle,timeoutMs:remaining()}),{timeoutMs:remaining(),now:elapsedNow,schedule,cancel});
+   if(result?.ok===false&&result.reason==='ui-release-busy'&&check())state.releaseBusy=true;
    return result?.ok===true&&check();
   }catch{return false;}finally{state.settling=false;}
+ }
+ // Preserve only the original producer lease after a busy final release.
+ // Cleared frame grants are never restored by this transport-only renewal.
+ async function renewDormantLease({timeoutMs=6000}={}){
+  const state=current;if(!dormantReady()||state.releaseBusy!==true||state.settling||state.resuming||state.renewing||typeof bridge.renewDormantBinding!=='function'||!Number.isFinite(timeoutMs)||timeoutMs<=0||timeoutMs>6000)return false;
+  const prior=state.context.binding,keys=['documentToken','producerToken','browserDocumentId','routeEpoch','origin'];
+  const intact=()=>current===state&&state.context.binding===prior&&dormantReady()&&Date.parse(prior.expiresAt)>now();
+  if(!intact())return false;state.releaseBusy=false;state.renewing=true;
+  try{
+   const raw=await withRequestDeadline(()=>bridge.renewDormantBinding({handle:state.handle,binding:prior,timeoutMs}),{timeoutMs,now:elapsedNow,schedule,cancel});
+   if(!intact())return false;const ack=structuredClone(raw),binding=ack?.binding,expiry=Date.parse(binding?.expiresAt);
+   if(ack?.ok!==true||!binding||Object.keys(binding).sort().join(',')!==[...keys,'expiresAt'].sort().join(',')||keys.some(k=>binding[k]!==prior[k])||!Number.isFinite(expiry)||expiry<=now()||expiry>now()+20000)return false;
+   if(adapter.updateBinding(binding)!==true||!intact())return false;
+   state.context={...state.context,binding:Object.freeze({...binding})};return true;
+  }catch{return false;}finally{state.renewing=false;}
  }
  // The caller supplies a newly verified binding; existing frames still need
  // their normal private JOIN/parent confirmation before any surface can open.
@@ -241,5 +257,5 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   const state=current;
   return !!state&&state.dormant&&state.epoch===epoch&&doc.location.href===state.url&&state.frames.length===2&&state.frames.every(({frame,window,role})=>state.idleAcks.has(role)&&frame.isConnected&&frame.ownerDocument===doc&&frame.contentWindow===window);
  }
- return Object.freeze({checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,showReading,showNativeReading,focusFrame(role){const state=current;if(!state||state.mode!=='workspace'||!authorized(state)||adapter.hasNativeLayer())return false;const target=state.frames.find(x=>x.role===role);if(!target?.frame?.focus)return false;target.frame.focus({preventScroll:true});let active=doc.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;return active===target.frame;},isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
+ return Object.freeze({renewDormantLease,idleReleaseBusy:()=>current?.releaseBusy===true&&dormantReady(),checkIdle,enterDormant,settleDormant,dormantReady,resumeDormant,start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,showReading,showNativeReading,focusFrame(role){const state=current;if(!state||state.mode!=='workspace'||!authorized(state)||adapter.hasNativeLayer())return false;const target=state.frames.find(x=>x.role===role);if(!target?.frame?.focus)return false;target.frame.focus({preventScroll:true});let active=doc.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;return active===target.frame;},isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
 }
