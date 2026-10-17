@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round366）
+## 最新本地检查点（2026-10-17，Round367）
+
+真实隔离headless MV3显式关闭/四格恢复最终一次运行 **3项子检查PASS**：双ACK后worker释放；无附着60秒窗口观察原worker约30秒销毁；真实点击后新worker接管，原document/editor/草稿/双iframe保留且两界面Shadow DOM项目内容恢复。临时包仅测试入口补丁，原失败和各版本hash保留，独立复核完成。见 [Round367](evidence/round367/README.md)。
+
+证据为LEGACY_OFFLINE的S_INSTRUMENTED_MV3_EXPLICIT_CLOSE_WAKE，naturalWorkerSleep仍NOT_ESTABLISHED，不代表生产自动进入/休眠首发/UI-11全项；完整Free继续NOT_RELEASE_READY。
+
+## 前一本地检查点（2026-10-17，Round366）
 
 content显式关闭已接controller双frame清空等待与真实HOST_UI_IDLE_RELEASE，同一六秒预算；自身RPC与外部干扰区分，原生监听保留。busy可复用ACK显式重试，纯未齐ACK失败只在无干扰/无在途任务时安全重建阅读界面。完整 **7092/7092 Node PASS**；最后fallback护栏后相关 **1804/1804 PASS**，独立反例与复核完成。见 [Round366](evidence/round366/README.md)。
 
