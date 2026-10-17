@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round375）
+## 最新本地检查点（2026-10-17，Round376）
+
+原生pointer→休眠reading恢复的实际隔离headless MV3单次 **4项子检查PASS**：双frame独立确认已清空，无附着观察窗原worker销毁；真实点击原editor后新worker/原frame内容恢复，原焦点与草稿保持、open事件0；明确四格返回后两surface正常显示且open事件2。源码/runner无漂移，独立审查完成。见 [Round376](evidence/round376/README.md)。
+
+仅LEGACY_OFFLINE插桩S子链，naturalWorkerSleep仍NOT_ESTABLISHED。自动进入、首发baseline、其他UI11/81/G/U与100k继续未完成，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round375）
 
 生产adapter原生准备事件接入content休眠恢复：同文档/producer且静稳才fresh HELLO/REFRESH同scope，以reading模式恢复，不打开workspace或重放发送。修复HELLO后REFRESH等待窗口的重复准备误触旧scan；独立红测转绿，最终相关 **73/73 L PASS**、完整Node **7159/7159 PASS**。见 [Round375](evidence/round375/README.md)。
 
