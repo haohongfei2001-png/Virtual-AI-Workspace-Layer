@@ -15,7 +15,7 @@ function fixture({onWake=()=>false}={}){
  const surface={mount:async()=>({id:'mount',documentToken:'doc',regionEpoch:1}),frames:()=>frames,showWorkspace(){calls.shown++;},showReading(){},suspend(){calls.suspended++;},dispose(){calls.disposed++;},visibility:()=>({workspace:false,sidebar:false})};
  const bridge={registerMount:async()=>({ok:true}),confirmParent:async({role})=>{calls.confirmed++;return {ok:true,grant:{id:'grant_'+role,mountId:'mount',role,parentDocumentId:'parent',uiDocumentId:'ui_'+role,scopeGrantId:'scope',expiresAt:new Date(21000).toISOString()}};}};
  const controller=createSurfaceController({document:doc,adapter,surface,bridge,extensionOrigin:'chrome-extension://ext',onWake,onTerminated:reason=>calls.ended.push(reason),now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++next;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
- const message=(role,type='VAIWL_UI_JOIN')=>{const event={origin:'chrome-extension://ext',source:frames.find(x=>x.role===role).frame.contentWindow,data:{type,role,...(type==='VAIWL_UI_JOIN'?{nonce:'nonce_'+role}:{})}};for(const fn of events.get('message')??[])fn(event);};
+ const message=(role,type='VAIWL_UI_JOIN',extra={},overrides={})=>{const event={origin:'chrome-extension://ext',source:frames.find(x=>x.role===role).frame.contentWindow,data:{type,role,...(type==='VAIWL_UI_JOIN'?{nonce:'nonce_'+role}:{}),...extra},...overrides};for(const fn of events.get('message')??[])fn(event);};
  return {controller,adapter,surface,bridge,calls,slot,frames,doc,timers,message,layer(v){layer=v;},occupied(v){occupied=v;},mutate(){for(const fn of mutations)fn();},async ready(){await controller.start({});message('workspace');message('sidebar');await flush();controller.showNativeReading();},advance(ms){time+=ms;for(const [id,t]of [...timers])if(t.at<=time){timers.delete(id);t.fn();}}};
 }
 for(const role of ['workspace','sidebar'])test('failed '+role+' idle dispatch cannot claim dormant success with a live unrevoked client',async()=>{
@@ -36,4 +36,24 @@ test('a replaced frame window during dormant state triggers complete cleanup',as
 });
 test('wake callback failure leaves no old-grant route back to the workspace',async()=>{
  let woke=0;const f=fixture({onWake:()=>{woke++;throw Error('fresh-auth-denied');}});await f.ready();assert.equal(f.controller.enterDormant(),true);f.slot.children[0].events.click({isTrusted:true});await flush();assert.equal(woke,1);assert.equal(f.controller.showWorkspace(),false);assert.equal(f.calls.shown,1);assert.equal(f.calls.disposed,0);
+});
+
+test('dormant readiness requires both exact frame clearing receipts',async()=>{
+ const f=fixture();await f.ready();assert.equal(f.controller.dormantReady(),false);assert.equal(f.controller.enterDormant(),true);assert.equal(f.controller.dormantReady(),false);
+ const requestId=f.calls.messages.find(x=>x.data.type==='VAIWL_UI_IDLE').data.requestId;
+ f.message('workspace','VAIWL_UI_IDLE_ACK',{requestId});assert.equal(f.controller.dormantReady(),false);
+ f.message('workspace','VAIWL_UI_IDLE_ACK',{requestId});assert.equal(f.controller.dormantReady(),false);
+ f.message('sidebar','VAIWL_UI_IDLE_ACK',{requestId});assert.equal(f.controller.dormantReady(),true);
+ f.controller.stop();assert.equal(f.controller.dormantReady(),false);
+});
+for(const kind of ['request','origin','source','extra'])test('dormant readiness rejects mismatched '+kind+' receipt',async()=>{
+ const f=fixture();await f.ready();f.controller.enterDormant();const requestId=f.calls.messages.find(x=>x.data.type==='VAIWL_UI_IDLE').data.requestId;
+ const extra={requestId:kind==='request'?'wrong':requestId,...(kind==='extra'?{ok:true}:{})},override=kind==='origin'?{origin:'https://chatgpt.com'}:kind==='source'?{source:{}}:{};
+ for(const role of ['workspace','sidebar'])f.message(role,'VAIWL_UI_IDLE_ACK',extra,override);
+ assert.equal(f.controller.dormantReady(),false);f.controller.stop();
+});
+for(const kind of ['route','frame'])test('a confirmed dormant pair becomes invalid after '+kind+' changes',async()=>{
+ const f=fixture();await f.ready();f.controller.enterDormant();const requestId=f.calls.messages.find(x=>x.data.type==='VAIWL_UI_IDLE').data.requestId;
+ for(const role of ['workspace','sidebar'])f.message(role,'VAIWL_UI_IDLE_ACK',{requestId});assert.equal(f.controller.dormantReady(),true);
+ if(kind==='route')f.doc.location.href+='c/changed';else f.frames[0].frame.contentWindow={};assert.equal(f.controller.dormantReady(),false);f.controller.stop();
 });

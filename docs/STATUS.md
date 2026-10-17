@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round359）
+## 最新本地检查点（2026-10-17，Round360）
+
+双frame待命增加精确清空回执：旧渲染完全settle并再次清私有根后ACK，重入/重启取消旧回执；controller核对两实际frame/source/origin/requestId后才报告局部dormantReady。最终 **420/420 Node PASS**，独立审查通过。实际隔离headless跨源frame **3项PASS / WEB_MECHANISM_ONLY**，无源码漂移；非MV3或自然休眠验收。见 [Round360](evidence/round360/README.md)。
+
+休眠首个发送仍不能靠事后baseline或过期proof补造；未启用自动关闭，UI-11及完整Free继续NOT_RELEASE_READY。原PR16/base/分支和整理stash保持。
+
+## 前一本地检查点（2026-10-17，Round359）
 
 content聚合原始IPC/完整逻辑链与adapter/身份读取准备；跨reset迟到任务仍阻止idle，listener/show同步重入与依赖检查前后变化也拒绝准备。实际native dispatch授权等待纳入adapter计数。独立审查与反例完成。完整回归6919/6921，两项J3诊断旧锚点已修正、106相关通过；最终27文件 **715/715 PASS**，不将重叠结果相加为全套。见 [Round359](evidence/round359/README.md)。
 

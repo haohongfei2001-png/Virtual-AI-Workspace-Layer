@@ -1,0 +1,11 @@
+{
+  "baseCommit": "4709ac1c84ffe0e74420ab1fc7bbe0967005a204",
+  "sha256": {
+    "src/host/ui-frame-client.mjs": "5a645c44195bae1c02886b4065a113ac96d00ce3d3ca58b2bc81fb44b89de03d",
+    "src/host/surface-controller.mjs": "ae70a2353488d5d2500c8ad4b1e0e6d8c7f49bf4e82e41ec1beaeab7adc8f5ef",
+    "tests/host/ui-idle-ack.test.mjs": "befd14912336654a10ca25073d0f12f5ee80910887bcd7acea15b02ecb8683e5",
+    "tests/host/ui-idle-ack-browser.mjs": "8151fb9643e02eeb01ec102f956c899014ee160be042c020f2e81905990c5ba6",
+    "tests/host/surface-controller.test.mjs": "4ee46df885d824f87e54b42c2db07201c62b6888240c28c06eb3a10056cc3cfa",
+    "tests/host/surface-dormant-independent.test.mjs": "b73ddbc719b42eef26f7d3839b18e657ad5f74b012c50b0366ecf0fed5d17fec"
+  }
+}

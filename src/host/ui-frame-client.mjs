@@ -9,10 +9,19 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
  const parsed=new URL(parentOrigin);
  if(!['workspace','sidebar'].includes(role)||!doc?.defaultView?.parent||!privateRoot||typeof privateRoot.replaceChildren!=='function'||typeof runtime?.connect!=='function'||typeof runtime.sendMessage!=='function'||parsed.origin!==parentOrigin||!['https:','http:'].includes(parsed.protocol))throw Error('invalid-ui-frame-client');
  const appearance=doc.documentElement?.style?createFrameAppearance({document:doc}):null;
- let appearanceListener=null,appearanceKey=null;
+ let appearanceListener=null,appearanceKey=null,idleAck=null;
  let active=false,epoch=0,grant=null,port=null,expiryTimer=null,renewTimer=null,abort=null,disconnect=null,messageListener=null,rendering=false,desired=null;
  const clear=(reason,notify=true)=>{privateRoot.replaceChildren();try{if(notify)onClear(reason);}catch{/* Cleanup cannot restore authority. */}};
+ function finishIdle(){
+  const pending=idleAck;if(!pending||active||rendering||epoch!==pending.epoch)return;
+  // A late renderer may have written after stop; clear only after it settles.
+  try{clear('ui-idle',false);}catch{return;}
+  if(idleAck!==pending||active||rendering||epoch!==pending.epoch)return;
+  idleAck=null;
+  try{doc.defaultView.parent.postMessage({type:'VAIWL_UI_IDLE_ACK',role,requestId:pending.requestId},parentOrigin);}catch{}
+ }
  function stop(reason='ui-stopped',userExit=false){
+  idleAck=null;
   const wasActive=active;active=false;if(appearanceListener){doc.defaultView.removeEventListener?.('message',appearanceListener);appearanceListener=null;}appearance?.clear();appearanceKey=null;if(desired){desired.resolve(false);desired=null;}epoch++;grant=null;cancel(expiryTimer);cancel(renewTimer);expiryTimer=renewTimer=null;abort?.abort();abort=null;
   const previous=port;port=null;if(previous){try{previous.onDisconnect.removeListener(disconnect);}catch{}try{previous.onMessage?.removeListener(messageListener);}catch{}}
   clear(reason,false);
@@ -44,7 +53,7 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
    if(!renderCurrent(entry)){clear('ui-stale-render',false);entry.resolve(false);}
    else if(failure){stop('ui-renderer-failed');entry.resolve(false);}
    else entry.resolve(true);
-  }}finally{rendering=false;}
+  }}finally{rendering=false;finishIdle();}
  }
  function publish(value,run){
   grant=Object.freeze({...value});cancel(expiryTimer);cancel(renewTimer);
@@ -72,7 +81,13 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
   appearanceListener=event=>{if(!active||epoch!==run||event.source!==doc.defaultView.parent||event.origin!==parentOrigin)return;const data=event.data;
    // Parent presentation messages may only remove authority. A later session
    // still needs start() and the full private two-channel grant exchange.
-   if(exactHostRecord(data,['type','role'])&&data.type==='VAIWL_UI_IDLE'&&data.role===role){stop('ui-idle');return;}
+   if(data?.type==='VAIWL_UI_IDLE'&&data.role===role){
+    const acknowledged=exactHostRecord(data,['type','role','requestId'])&&tokenOK(data.requestId);
+    if(!acknowledged&&!exactHostRecord(data,['type','role']))return;
+    const stoppedEpoch=epoch+1;stop('ui-idle');
+    if(acknowledged&&!active&&epoch===stoppedEpoch){idleAck={epoch:stoppedEpoch,requestId:data.requestId};finishIdle();}
+    return;
+   }
    if(!exactHostRecord(data,['type','role','appearance'])||data.type!=='VAIWL_UI_APPEARANCE'||data.role!==role)return;try{const value=validateFrameAppearance(data.appearance),key=JSON.stringify(value);if(key===appearanceKey)return;appearance?.apply(value);appearanceKey=key;onAppearance(value);}catch{/* Cosmetic input cannot change authority or restart the client. */}};
   doc.defaultView.addEventListener?.('message',appearanceListener);
   abort=new AbortController();const signal=abort.signal;

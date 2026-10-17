@@ -241,7 +241,7 @@ function idleSurface(f){const messages=[];f.surface.visibility=()=>({workspace:f
 test('dormant UI retains frames and one wake entry while revoking all old presentation guards',async()=>{
  const f=fixture(),messages=idleSurface(f);await f.controller.start({});await f.both();f.controller.showNativeReading();const before=[...f.frames],guard=f.controller.intentGuard(),reading=f.controller.readingGuard();
  assert.equal(f.controller.enterDormant(),true);assert.equal(guard(),false);assert.equal(reading(),false);assert.equal(f.controller.showWorkspace(),false);assert.equal(f.controller.showReading(),false);assert.equal(f.calls.dispose,0);assert.equal(f.slot.children.length,1);assert.deepEqual(f.frames,before);
- assert.deepEqual(messages.map(x=>x.data),[{type:'VAIWL_UI_IDLE',role:'workspace'},{type:'VAIWL_UI_IDLE',role:'sidebar'}]);assert(messages.every(x=>x.origin==='chrome-extension://extension'));
+ assert.equal(typeof messages[0].data.requestId,'string');assert(messages[0].data.requestId.length>0);assert.deepEqual(messages.map(x=>x.data),[{type:'VAIWL_UI_IDLE',role:'workspace',requestId:messages[0].data.requestId},{type:'VAIWL_UI_IDLE',role:'sidebar',requestId:messages[0].data.requestId}]);assert(messages.every(x=>x.origin==='chrome-extension://extension'));
  const confirms=f.calls.confirm.length;f.message();f.message('sidebar',{data:{type:'VAIWL_UI_SUSPEND',role:'sidebar'}});await drain();f.tick(100000);f.change();assert.equal(f.calls.confirm.length,confirms);assert.equal(f.calls.dispose,0);assert.equal(f.slot.children.length,1);
  f.controller.stop();assert.equal(f.calls.dispose,1);assert.equal(f.slot.children.length,0);
 });

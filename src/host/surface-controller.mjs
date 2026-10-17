@@ -126,7 +126,10 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(current!==state||state.epoch!==epoch||doc.location.href!==state.url||event.origin!==trustedOrigin)return;
   const data=event.data;if(!data||Object.getPrototypeOf(data)!==Object.prototype)return;
   const target=state.frames.find(x=>x.role===data.role);if(!target||!target.frame.isConnected||target.frame.ownerDocument!==doc||event.source!==target.window||target.frame.contentWindow!==target.window)return;
-  if(state.dormant)return;
+  if(state.dormant){
+   if(exactHostRecord(data,['type','role','requestId'])&&data.type==='VAIWL_UI_IDLE_ACK'&&data.requestId===state.idleRequestId)state.idleAcks.add(data.role);
+   return;
+  }
   if(exactHostRecord(data,['role','type'])&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(data.type)){stop(data.type==='VAIWL_UI_EXIT'?'ui-user-exit':'ui-frame-suspended');return;}
   if(!valid(state,false)||Object.keys(data).sort().join(',')!=='nonce,role,type'||data.type!=='VAIWL_UI_JOIN'||!tokenOK(data.nonce)||state.pending.has(data.role)||state.grants.has(data.role))return;
   if(!state.registered){if(!state.earlyJoins.has(data.role))state.earlyJoins.set(data.role,{origin:event.origin,source:event.source,data:{type:data.type,role:data.role,nonce:data.nonce}});return;}
@@ -148,13 +151,18 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   const state=current;if(typeof onWake!=='function'||!state||!['reading','suspended'].includes(state.mode)||state.renewing||state.pending.size||!authorized(state)||typeof surface.visibility!=='function')return false;
   let visible;try{visible=surface.visibility(state.handle);}catch{return false;}
   if(visible?.workspace!==false||visible?.sidebar!==false||current!==state||state.frames.some(({frame,window})=>frame.contentWindow!==window))return false;
+  state.idleRequestId=crypto.randomUUID();state.idleAcks=new Set();
   state.dormant=true;state.mode='reading';state.intentEpoch++;state.geometryRevision++;state.registered=false;
   for(const key of ['timer','renewTimer','appearanceTimer']){cancel(state[key]);state[key]=null;}
   state.grants.clear();state.earlyJoins.clear();state.appearanceKeys.clear();
   try{surface.suspend(state.handle,'ui-idle');}catch{if(current===state)stop('idle-suspend-failed');return false;}
   if(current!==state)return false;
-  for(const target of state.frames){try{if(typeof target.window.postMessage!=='function')throw Error('idle-frame-unavailable');target.window.postMessage({type:'VAIWL_UI_IDLE',role:target.role},trustedOrigin);}catch{if(current===state)stop('idle-frame-unavailable');return false;}if(current!==state)return false;}
+  for(const target of state.frames){try{if(typeof target.window.postMessage!=='function')throw Error('idle-frame-unavailable');target.window.postMessage({type:'VAIWL_UI_IDLE',role:target.role,requestId:state.idleRequestId},trustedOrigin);}catch{if(current===state)stop('idle-frame-unavailable');return false;}if(current!==state)return false;}
   ensureReturn(state);return true;
  }
- return Object.freeze({enterDormant,start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,showReading,showNativeReading,focusFrame(role){const state=current;if(!state||state.mode!=='workspace'||!authorized(state)||adapter.hasNativeLayer())return false;const target=state.frames.find(x=>x.role===role);if(!target?.frame?.focus)return false;target.frame.focus({preventScroll:true});let active=doc.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;return active===target.frame;},isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
+ function dormantReady(){
+  const state=current;
+  return !!state&&state.dormant&&state.epoch===epoch&&doc.location.href===state.url&&state.frames.length===2&&state.frames.every(({frame,window,role})=>state.idleAcks.has(role)&&frame.isConnected&&frame.ownerDocument===doc&&frame.contentWindow===window);
+ }
+ return Object.freeze({enterDormant,dormantReady,start,presentationMode:()=>current?.mode==='workspace'?'workspace':'reading',showWorkspace,showReading,showNativeReading,focusFrame(role){const state=current;if(!state||state.mode!=='workspace'||!authorized(state)||adapter.hasNativeLayer())return false;const target=state.frames.find(x=>x.role===role);if(!target?.frame?.focus)return false;target.frame.focus({preventScroll:true});let active=doc.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;return active===target.frame;},isFrameTarget(role,node){return !!current&&authorized(current)&&current.frames.some(x=>x.role===role&&x.frame===node);},isReturnTarget:node=>!!current&&current.button===node&&authorized(current),intentGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&authorized(state)&&!adapter.hasNativeLayer();},readingGuard(){const state=current,revision=state?.intentEpoch;return ()=>!!state&&current===state&&state.intentEpoch===revision&&state.mode==='reading'&&authorized(state)&&!adapter.hasNativeLayer();},suspend,stop,revoke:()=>stop('ui-authority-revoked')});
 }
