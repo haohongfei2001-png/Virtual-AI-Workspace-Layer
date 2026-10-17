@@ -1,0 +1,59 @@
+{
+  "kind": "MOCK_HOST_GATE_COUNTS_NOT_BROWSER_PERFORMANCE",
+  "migrations": 0,
+  "directories": 0,
+  "format": "MONOLITHIC_SCHEMA_2",
+  "nativeRefs": 80,
+  "sharedRefs": 80,
+  "humanAssetsPreserved": true,
+  "rows": [
+    {
+      "batch": 0,
+      "sharedCloneRefs": [
+        0
+      ]
+    },
+    {
+      "batch": 1,
+      "sharedCloneRefs": [
+        10
+      ]
+    },
+    {
+      "batch": 2,
+      "sharedCloneRefs": [
+        20
+      ]
+    },
+    {
+      "batch": 3,
+      "sharedCloneRefs": [
+        30
+      ]
+    },
+    {
+      "batch": 4,
+      "sharedCloneRefs": [
+        40
+      ]
+    },
+    {
+      "batch": 5,
+      "sharedCloneRefs": [
+        50
+      ]
+    },
+    {
+      "batch": 6,
+      "sharedCloneRefs": [
+        60
+      ]
+    },
+    {
+      "batch": 7,
+      "sharedCloneRefs": [
+        70
+      ]
+    }
+  ]
+}

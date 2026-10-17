@@ -1,0 +1,99 @@
+{
+  "sourceCommit": "3c8a33dae36ca0de11841570ac6fb44d4331dd5a",
+  "workflowRun": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39062870639",
+  "conclusion": "failure",
+  "jobs": [
+    {
+      "id": 117484269985,
+      "name": "node-contracts",
+      "conclusion": "success"
+    },
+    {
+      "id": 117484270150,
+      "name": "offline-journeys",
+      "conclusion": "success"
+    },
+    {
+      "id": 117484270169,
+      "name": "offline-j4-lifecycle",
+      "conclusion": "success"
+    },
+    {
+      "id": 117484270221,
+      "name": "offline-durability-compat",
+      "conclusion": "failure",
+      "failedStep": "Formal Host 10k single-project membership sample"
+    }
+  ],
+  "durabilityLogSHA256": "62e8a59d2526af97053f2c1a50f931dae85abed3e488301f69fed3e34afd7be8",
+  "formal10k": {
+    "status": "FAIL",
+    "acceptance": "NOT_ESTABLISHED",
+    "scenario": {
+      "size": 10000,
+      "distribution": "single-project",
+      "cpuRate": 1,
+      "longTitles": true,
+      "profile": "LEGACY_LOOPBACK_RECONSTRUCTION",
+      "throttleScope": "NATIVE_PAGE_RENDERER_ONLY_NOT_WORKER_OR_PHYSICAL_DEVICE",
+      "rpcBudgetMs": 6000,
+      "acceptance": "NOT_ESTABLISHED"
+    },
+    "phase": "visible-native-member-progress",
+    "nativeMemberProgressDiagnostic": {
+      "stage": "native-before",
+      "stageStarted": 35313.971007,
+      "inFlight": true,
+      "frameGeneration": 1,
+      "auditAttempts": 0,
+      "lastTail": {
+        "status": "OBSERVED_TAIL_ONLY",
+        "revision": 202,
+        "total": 9236,
+        "frameGeneration": 1
+      },
+      "audits": [],
+      "attempts": 148,
+      "stableRevision": null,
+      "elapsedMs": 29150.761222999998,
+      "stageElapsedMs": 2.0064629999978933
+    },
+    "nativeIndexProgress": {
+      "acceptance": "NOT_ESTABLISHED",
+      "evidence": "DIAGNOSTIC_ROOT_INVENTORY_ONLY",
+      "status": "POINT_IN_TIME_ROOT_SNAPSHOT",
+      "consistency": "SINGLE_READONLY_TRANSACTION_NOT_INTERVAL_STABILITY",
+      "format": "VERSION_INDEX",
+      "revision": 203,
+      "inventoryRefs": 9290,
+      "inventoryProjects": 1,
+      "sources": 1,
+      "revokedSources": 0,
+      "sourceRevisionMin": 202,
+      "sourceRevisionMax": 202,
+      "continuationWitness": false,
+      "queueState": "NOT_READ"
+    },
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "manifestChangedDuringRun": false
+  },
+  "failureBoundary": "host-scale-member-deadline; original 30-second shared deadline; complete audit had not begun",
+  "frameFacts": [
+    {
+      "role": "workspace.html",
+      "detached": false
+    },
+    {
+      "role": "sidebar.html",
+      "detached": false
+    }
+  ],
+  "tailTransport": {
+    "count": 16,
+    "allOK": true
+  },
+  "interpretation": "One candidate run reached 9290 refs but failed full 10000-member ingestion. Different-version endpoints are not controlled performance measurements. Root mechanism count reductions do not establish browser throughput or SYS04.",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

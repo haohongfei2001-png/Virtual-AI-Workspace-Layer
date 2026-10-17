@@ -1,0 +1,96 @@
+✔ production composition sequences HELLO REFRESH and mount with no page bridge; restart seq is monotonic (1.981291ms)
+✔ native plans require real extension sender and exact current binding, no mutation path (0.370541ms)
+✔ stop cancels pending HELLO; late result cannot create surfaces or listeners (0.205375ms)
+✖ unverified scope and invalid binding fail closed before surface; pagehide tears down live session (0.404584ms)
+✖ pending RPC deadline is six seconds and cannot revive after late response (0.180875ms)
+✔ document renewal and scope revalidation precede UI status with one six-second budget (0.437667ms)
+✔ SPA adapter rebind withdraws old surface and remounts without modifying native draft (0.348875ms)
+✔ same-URL invalidation after replacement HELLO revokes it; old-listener bursts coalesce (0.381958ms)
+✔ pagehide or explicit stop during queued rebind prevents automatic revival (0.260834ms)
+✖ failed replacement stops without self-retry (0.216125ms)
+✔ trusted surface presentation dispatches only the two modes without native plans or writes (0.112083ms)
+✔ presentation rejects wrong sender, extra fields, invalid mode/binding and stale route, expiry or stop (0.502375ms)
+✔ old session presentation cannot act on replacement even with identical binding fields (0.084833ms)
+✔ renewal checks scope before exposing renewed UI and refuses unverified authority (0.11225ms)
+✔ slow scope revalidation consumes the remaining renewal budget (0.188417ms)
+✔ workspace entered bridge uses current private binding and bounded RPC; stopped bridge cannot send (0.139666ms)
+✔ private content selection capture validates and releases one scope-bound ticket (0.369708ms)
+✔ content selection rejects untrusted sender extra fields route mismatch and absent node epoch before reading (0.146667ms)
+✔ content ticket expires on node replacement elapsed six seconds route change or stop (0.277916ms)
+✔ expired queued snippet restore cannot scroll or switch native reading (0.181084ms)
+✔ native reading reveals first and waits for acknowledged body before one scroll (2.5605ms)
+✔ unready proof expires within six seconds without scrolling or reopening (2.669625ms)
+✔ pending proof cannot scroll after stop (0.254958ms)
+✔ pending proof cannot scroll after route (0.188292ms)
+✔ failed native restore is attempted only once even while command remains live (1.12375ms)
+✔ native modal cancels pending proof even when ACK becomes ready, and closing cannot revive scroll (0.199333ms)
+✔ trusted pointerdown cancels pending restore and removes all temporary handlers (0.154041ms)
+✔ trusted focusin cancels pending restore and removes all temporary handlers (0.099666ms)
+✔ trusted keydown cancels pending restore and removes all temporary handlers (0.108625ms)
+✔ trusted wheel cancels pending restore and removes all temporary handlers (0.126333ms)
+✔ trusted beforetoggle cancels pending restore and removes all temporary handlers (0.110333ms)
+✔ untrusted events and closing toggle do not cancel; success removes handlers (0.114875ms)
+✔ elapsed clock rollback rejects while wall deadline is still valid (0.104292ms)
+✔ expired reading guard terminates command permanently even if reading becomes valid again (0.105917ms)
+✔ stop removes pending handlers immediately and replacement restore aborts old command once (0.128583ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 32
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 49.427667
+
+✖ failing tests:
+
+test at tests/host/content-session.test.mjs:27:1
+✖ unverified scope and invalid binding fail closed before surface; pagehide tears down live session (0.404584ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  1 !== 0
+
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/content-session.test.mjs:28:281)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/content-session.test.mjs:31:1
+✖ pending RPC deadline is six seconds and cannot revive after late response (0.180875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  1 !== 0
+
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/content-session.test.mjs:32:166)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/content-session.test.mjs:51:1
+✖ failed replacement stops without self-retry (0.216125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  1 !== 0
+
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/content-session.test.mjs:52:353)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

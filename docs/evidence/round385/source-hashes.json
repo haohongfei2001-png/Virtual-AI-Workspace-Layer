@@ -1,0 +1,6 @@
+{
+  "src/host/content-session.mjs": "70cbb187921cdb191fbbe8d831de15e79bbfe96cce8b3a19a0e6bf8a1be8585e",
+  "src/host/surface-controller.mjs": "78c0954500e62639ea606c267157ef69eb879e5368874c85fffe8407d84393cb",
+  "tests/host/content-dormant-close.test.mjs": "2bb90d679030455b33ec17ae2be723c641a47e73630b98e482d54d52cea6c724",
+  "tests/host/dormant-lease-renewal.test.mjs": "7e6f29cc56ed95b046054d729239e2d420848be637f1efbb5e00bcec87b217bb"
+}

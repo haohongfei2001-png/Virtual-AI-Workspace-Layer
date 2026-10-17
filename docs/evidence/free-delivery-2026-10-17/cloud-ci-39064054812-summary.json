@@ -1,0 +1,133 @@
+{
+  "sourceCommit": "a9e6e661f126e24556e881b8fb51d983069a693e",
+  "workflowRun": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39064054812",
+  "conclusion": "failure",
+  "jobs": [
+    {
+      "id": 117487850632,
+      "name": "node-contracts",
+      "conclusion": "success"
+    },
+    {
+      "id": 117487851001,
+      "name": "offline-j4-lifecycle",
+      "conclusion": "success"
+    },
+    {
+      "id": 117487850827,
+      "name": "offline-durability-compat",
+      "conclusion": "failure",
+      "failedStep": "Formal Host 10k single-project membership sample",
+      "failureOnlyWorkerCPU": "success"
+    },
+    {
+      "id": 117487850902,
+      "name": "offline-journeys",
+      "conclusion": "failure",
+      "failedSteps": [
+        "Separate cold safety boundary and genuine native navigation recovery",
+        "Dormant document transport expiry recovers by fresh foreground authorization",
+        "Old foreground document transport branch cannot pass the fresh-grant oracle"
+      ]
+    }
+  ],
+  "logSHA256": {
+    "durability": "1db0557ee95144940492b5c4441568e5fd904ba79808aa644ed0aa9825b741c2",
+    "journeys": "c8bccae78697e5c3e35503e7edfba167e416496e447d92e6af9c11075a32bc02"
+  },
+  "formal10k": {
+    "status": "FAIL",
+    "acceptance": "NOT_ESTABLISHED",
+    "scenario": {
+      "size": 10000,
+      "distribution": "single-project",
+      "cpuRate": 1,
+      "longTitles": true,
+      "profile": "LEGACY_LOOPBACK_RECONSTRUCTION",
+      "throttleScope": "NATIVE_PAGE_RENDERER_ONLY_NOT_WORKER_OR_PHYSICAL_DEVICE",
+      "rpcBudgetMs": 6000,
+      "acceptance": "NOT_ESTABLISHED"
+    },
+    "phase": "visible-native-member-progress",
+    "nativeMemberProgressDiagnostic": {
+      "stage": "audit",
+      "stageStarted": 33525.962529,
+      "inFlight": true,
+      "frameGeneration": 1,
+      "auditAttempts": 2,
+      "lastTail": {
+        "status": "OBSERVED_TAIL_ONLY",
+        "revision": 232,
+        "total": 10001,
+        "frameGeneration": 1
+      },
+      "audits": [
+        {
+          "status": "PASS_INDEX_AUDIT_ONLY",
+          "revision": 232,
+          "pages": 21,
+          "distinctRefs": 10000,
+          "projectMembership": 10000,
+          "unknownMembership": 0,
+          "missingRefs": 0,
+          "wrongProjectMembership": 0,
+          "elapsedMs": 3528.9889619999994,
+          "frameGeneration": 1
+        }
+      ],
+      "attempts": 121,
+      "stableRevision": 232,
+      "elapsedMs": 29389.376084,
+      "stageElapsedMs": 892.3087950000045
+    },
+    "nativeIndexProgress": {
+      "acceptance": "NOT_ESTABLISHED",
+      "evidence": "DIAGNOSTIC_ROOT_INVENTORY_ONLY",
+      "status": "POINT_IN_TIME_ROOT_SNAPSHOT",
+      "consistency": "SINGLE_READONLY_TRANSACTION_NOT_INTERVAL_STABILITY",
+      "format": "VERSION_INDEX",
+      "revision": 232,
+      "inventoryRefs": 10000,
+      "inventoryProjects": 1,
+      "sources": 1,
+      "revokedSources": 0,
+      "sourceRevisionMin": 231,
+      "sourceRevisionMax": 231,
+      "continuationWitness": false,
+      "queueState": "NOT_READ"
+    },
+    "error": "Error: host-scale-member-deadline\n    at Timeout.<anonymous> (file:///home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/fixtures/host-scale-member-progress.mjs:59:320)\n    at listOnTimeout (node:internal/timers:685:17)\n    at process.processTimers (node:internal/timers:618:7)",
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "manifestChangedDuringRun": false,
+    "temporaryDirectoryRemoved": true
+  },
+  "workerCPU": {
+    "file": "cloud-ci-39064054812-worker-cpu.json.gz",
+    "sha256": "9415457e5561bbbd90bc62dee0ffd3d89c94ceb7e4bc1ee66aeb2d135ae55b76",
+    "compressedBytes": 52002,
+    "status": "CAPTURED",
+    "nodes": 1342,
+    "samples": 9207,
+    "sampleTimeDeltaMs": 10182.754,
+    "observedSampleMs": 10030.787125,
+    "acceptance": "NOT_ESTABLISHED",
+    "boundary": "Failure-only new isolated run; worker ingestion sample does not profile extension renderer complete audits; original formal failure remains."
+  },
+  "transportExpiry": {
+    "positive": "FAIL_BEFORE_RECOVERY",
+    "exactMutant": "FAIL_BEFORE_RECOVERY_NOT_KILLED",
+    "failure": "genuine browser foreground edge required",
+    "observed": "document.hasFocus() remained true after another page was brought to front",
+    "reviewedCause": "Playwright default context enables focus emulation; native-visibility helper noDefaults mode is required for this real-focus scenario",
+    "pending": "Rerun both exact modes with native focus and unchanged original false assertion, expiry, grant/VIEW and no-new-GET gates."
+  },
+  "coldRecovery": {
+    "status": "FAIL",
+    "failure": "mounted wait timed out after native C444 route recovery",
+    "facts": "Current bootstrap ready with scope and mounted owner; independent owner reproduction enters reading after genuine native navigation. Driver correction is pending; browser recovery is not established."
+  },
+  "interpretation": "Complete ingestion and one full correct member audit do not satisfy the original two-full-audits/shared-deadline gate. No timing threshold or member assertion changed. Different-version single runs are not controlled performance measurements.",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

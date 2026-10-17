@@ -1,0 +1,47 @@
+✔ lookup returns aligned version and size and reads only its bucket (3.637625ms)
+✔ concurrent existing and absent lookups coalesce one bucket request (2.056ms)
+✔ absent directory bucket performs no guessed reads (1.248791ms)
+✔ all after lookup reconstructs exact insertion order and reuses transaction requests (0.983625ms)
+✔ empty all and lookupMany return empty results without requests (0.151125ms)
+✔ lookupMany coalesces duplicate refs across buckets and omits missing refs (2.077625ms)
+✔ piece missing fails once without successful publication (0.477375ms)
+✔ piece checksum fails once without successful publication (0.421334ms)
+✔ piece scope fails once without successful publication (0.734875ms)
+✔ piece key fails once without successful publication (0.514084ms)
+✔ request error suppresses queued other-bucket and later successes (0.825ms)
+✔ cross-scope construction and invalid lookup refs reject without requests (0.788917ms)
+✔ exposed records mutation is revalidated by lookup (0.526334ms)
+✔ exposed records mutation is revalidated by lookupMany (0.361417ms)
+✔ exposed records mutation is revalidated by all (0.525541ms)
+✔ exposed records mutation is revalidated by readBucket (0.313875ms)
+✔ mutation by first coalesced consumer prevents second consumer observing unverified payload (0.343291ms)
+✔ all rejects valid-checksum cross-bucket ordinal collisions (0.76875ms)
+✔ all rejects extraneous records inserted into public map (0.95575ms)
+✔ overridden exposed records.set cannot mutate bytes after the first verification (0.453875ms)
+✔ MOCK_IDB directory repository indexed full, metadata, explicit and offset reads retain evidence (10.200875ms)
+✔ MOCK_IDB directory indexed stale writes and intact root recovery refuse format downgrade (1.87425ms)
+✔ MOCK_IDB directory indexed metadata still checks marker, requested revision and guard (0.889666ms)
+✔ MOCK_IDB directory missing directory bucket aborts page full read and compatible header (1.864583ms)
+✔ MOCK_IDB directory signed evidence with mismatched directory size remains rejected (1.0115ms)
+✔ MOCK_IDB directory every global index ref is verified even when a different row would be requested (1.316792ms)
+✔ explicit migration atomically preserves evidence and aligns root shadow marker receipt (10.834959ms)
+✔ migration is CAS protected across connections, replayed, then noop without writes (2.378042ms)
+✔ stale migration CAS leaves all stores unchanged (1.178666ms)
+✔ missing evidence piece migration rolls back and does not publish directory or receipt (1.071292ms)
+✔ migration quota failure rolls back and same operation can retry (1.010375ms)
+✔ migration guard cancellation leaves original format and receipt unchanged (0.592375ms)
+✔ directory apply pairs new piece size and version, preserves old reference and replay (2.041667ms)
+✔ directory writes are CAS protected and quota failure leaves every receipt and piece unchanged (1.487041ms)
+✔ directory revoke is durable and old observations cannot restore source authority (2.731625ms)
+✔ directory recovery increments revision revokes all sources and retains evidence without regrant (2.331084ms)
+✔ directory recovery with missing referenced piece refuses without root or receipt changes (0.957625ms)
+✔ migration and subsequent directory writes preserve Pro state and another account (140.682958ms)
+✔ repeated directory updates leave root and recovery fully resolvable through GC (4.625542ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 246.567375

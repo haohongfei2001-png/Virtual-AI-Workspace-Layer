@@ -1,0 +1,86 @@
+{
+  "kind": "PUBLIC_CI_FACTS_NOT_RELEASE_ACCEPTANCE",
+  "sourceCommit": "14f5e94165ad6e98474ac918001ff91257adf1d6",
+  "run": 39071149871,
+  "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39071149871",
+  "conclusion": "failure",
+  "jobs": {
+    "node-contracts": "success",
+    "offline-journeys": "success",
+    "offline-j4-lifecycle": "success",
+    "offline-durability-compat": "failure"
+  },
+  "onlyFailedStep": "Formal Host 10k single-project membership sample",
+  "formal10k": {
+    "status": "FAIL",
+    "phase": "visible-native-member-progress",
+    "error": "Error: host-scale-member-deadline\n    at Timeout.<anonymous> (file:///home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/fixtures/host-scale-member-progress.mjs:59:320)\n    at listOnTimeout (node:internal/timers:685:17)\n    at process.processTimers (node:internal/timers:618:7)",
+    "originalDeadlineMs": 30000,
+    "requiredCompleteAudits": 2,
+    "progress": {
+      "stage": "native-before",
+      "stageStarted": 35423.884481,
+      "inFlight": true,
+      "frameGeneration": 1,
+      "auditAttempts": 0,
+      "lastTail": {
+        "status": "OBSERVED_TAIL_ONLY",
+        "revision": 192,
+        "total": 9091,
+        "frameGeneration": 1
+      },
+      "audits": [],
+      "attempts": 161,
+      "stableRevision": null,
+      "elapsedMs": 29178.845383,
+      "stageElapsedMs": 0.6613060000017867
+    },
+    "postFailureInventory": {
+      "acceptance": "NOT_ESTABLISHED",
+      "evidence": "DIAGNOSTIC_ROOT_INVENTORY_ONLY",
+      "status": "POINT_IN_TIME_ROOT_SNAPSHOT",
+      "consistency": "SINGLE_READONLY_TRANSACTION_NOT_INTERVAL_STABILITY",
+      "format": "VERSION_INDEX",
+      "revision": 193,
+      "inventoryRefs": 9145,
+      "inventoryProjects": 1,
+      "sources": 1,
+      "revokedSources": 0,
+      "sourceRevisionMin": 192,
+      "sourceRevisionMax": 192,
+      "continuationWitness": false,
+      "queueState": "NOT_READ"
+    },
+    "inventoryIsAcceptance": false,
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "manifestChangedDuringRun": false,
+    "temporaryDirectoryRemoved": true
+  },
+  "failureOnlyDiagnostic": {
+    "acceptance": "NOT_ESTABLISHED",
+    "status": "FAIL",
+    "workerCPU": "CAPTURED",
+    "nativePageCPU": "CAPTURED",
+    "phaseSnapshot": "CAPTURED",
+    "cleanup": {
+      "status": "SUCCEEDED"
+    },
+    "instrumentedPackageUnchanged": true,
+    "formalFailurePreserved": true
+  },
+  "j4": {
+    "status": "PARTIAL_J4_NOT_ACCEPTED",
+    "steps": 23,
+    "allStepsPass": true,
+    "peerAutomaticForegroundRecovery": "NOT_ESTABLISHED",
+    "peerRecoveryAuthority": "NEW_NATIVE_REQUEST_AND_FRESH_AUTHENTICATION"
+  },
+  "publicJobLogSHA256": {
+    "durability": "e325883d893a4b9f2e109b650e3bc3257d42bd4f1ad797767181748b6fa77186",
+    "j4": "08b627b108d5021ab5b4b259544ff9a1acac722fa8e38f8423cd5afe0a27bd2d",
+    "journeys": "e92c699097082500cf67cae0b53c28874a3ff0db2121aaee8b99a6d25e21a60b"
+  },
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

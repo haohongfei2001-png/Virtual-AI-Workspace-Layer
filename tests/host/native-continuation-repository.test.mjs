@@ -1,0 +1,163 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {MockIDBFactory} from '../b23/mock-idb.mjs';
+import {harness,A,B} from '../b23/contracts.mjs';
+import {NativeRepository} from '../../src/data/native-repository.mjs';
+import {continuationSemanticFingerprint} from '../../src/data/native-observation-continuation.mjs';
+import {digest} from '../../src/data/hash.mjs';
+const NOW='2026-10-13T12:00:00Z';
+// Explicit MOCK_IDB owner admissions; no browser ACK or live account certification.
+async function setup(t){
+ const h=await harness(new MockIDBFactory()),gates=new WeakMap();t.after(()=>h.close());
+ const native=new NativeRepository({baseRepository:h.base,workspaceRepository:h.repo,clock:()=>NOW,hostObservationGate:(scope,request)=>scope.key===h.base.scopeOrThrow(A).key?gates.get(request):undefined});
+ function make(operationId='native_ack',expectedRevision=0){
+  const scopeKey=h.base.scopeOrThrow(A).key,sourceId='host_ack',generation='generation_one';
+  const request={operationId,expectedRevision,batch:{scopeKey,sourceRevision:expectedRevision+1,observedAt:NOW,validUntil:'2026-10-14T00:00:00Z',projects:[],refs:[{id:'continuation_ref',nativeTitle:'Native title',nativeUrl:'https://vaiwl-hf.test/hf/A/c/continuation_ref',availability:'available'}],membership:[{id:'continuation_ref',state:'NONE',projectId:null}],inventory:{projects:'partial',conversations:'partial',cursor:null}}};
+  const batch={sources:[{id:sourceId,generation,sourceRevision:1,observedAt:NOW,validUntil:'2026-10-14T00:00:00Z',channel:'host-evidence',codecVersion:1,profileId:'profile_one',profileVersion:1}],events:[],coverage:[],hints:[{id:'anchor_one',sourceId,generation,sourceRevision:1,observedAt:NOW,conversationId:'continuation_ref',eventKey:'ref_message',hintType:'observed-self-send',anchorVersion:1,messageId:'message_one',firstObservedAt:NOW,candidateInterval:{from:'2026-10-13T11:59:59Z',through:NOW},clockBasis:'local-bounded',calibrationDueAt:'2026-10-13T12:01:00Z',actorVerified:true,actorScopeKey:scopeKey,ackWitness:{kind:'authenticated-message-readback',profileId:'profile_one',profileVersion:1,semanticFingerprint:digest(['continuation_ref','message_one'])}}]};
+  const admission={profileId:'profile_one',profileVersion:1,evidenceClass:'surface',semanticFingerprint:digest(request.batch),acceptedAt:NOW};
+  const gate={channel:'host-dom',sourceId,generation,guard:()=>true,admission,continuation:{evidenceOperationId:'evidence_ack',expectedEvidenceRevision:0,batch},continuationAdmission:{...admission,evidenceClass:'observed-self-send',semanticFingerprint:continuationSemanticFingerprint(batch)}};
+  gates.set(request,gate);return {request,gate};
+ }
+ return {...h,native,make,gates};
+}
+async function empty(h){assert.equal((await h.native.read(A)).revision,0);assert.deepEqual(await h.native.listContinuations(A),[]);assert.equal((await h.repo.read(A)).state.refs.continuation_ref,undefined);}
+test('MOCK_IDB native, shared anchor and pending evidence commit together; replay remains single and scoped',async t=>{
+ const h=await setup(t),before=(await h.repo.read(A)).state,{request,gate}=h.make();
+ assert.equal((await h.native.apply(A,request)).ok,true);const rows=await h.native.listContinuations(A);assert.equal(rows.length,1);assert.equal(rows[0].operationId,request.operationId);assert.equal(rows[0].nativeRevision,1);assert.equal(rows[0].admission.acceptedAt,NOW);assert.deepEqual(rows[0].evidence,{operationId:'evidence_ack',expectedRevision:0,batch:gate.continuation.batch});assert.equal((await h.native.read(A)).refs.continuation_ref.nativeTitle,'Native title');
+ const after=(await h.repo.read(A)).state;assert(after.refs.continuation_ref);for(const key of ['workspaces','identities','placements','preferences'])assert.deepEqual(after[key],before[key]);assert.equal(h.factory.databasesMap.size,1);
+ assert.equal((await h.native.apply(A,request)).replayed,true);assert.deepEqual(await h.native.listContinuations(A),rows);assert.deepEqual(await h.native.listContinuations(B),[]);
+ gate.continuation.batch.hints[0].calibrationDueAt='2026-10-13T12:02:00Z';assert.equal((await h.native.apply(A,request)).reason,'operation-replay-conflict');assert.deepEqual(await h.native.listContinuations(A),rows);
+ request.batch.refs[0].nativeTitle='Different payload';assert.equal((await h.native.apply(A,request)).reason,'operation-replay-conflict');assert.deepEqual(await h.native.listContinuations(A),rows);
+});
+test('MOCK_IDB CAS and shared writer failure leave no native or continuation receipt',async t=>{
+ const h=await setup(t),bad=h.make('cas',1);assert.equal((await h.native.apply(A,bad.request)).reason,'revision-conflict');await empty(h);
+ const register=h.repo.registerNativeReferences.bind(h.repo);h.repo.registerNativeReferences=(tx,scope,refs,operation,check,done,fail)=>fail(Error('injected-shared-failure'));
+ const {request}=h.make();assert.equal((await h.native.apply(A,request)).reason,'injected-shared-failure');await empty(h);h.repo.registerNativeReferences=register;assert.equal((await h.native.apply(A,request)).ok,true);
+});
+test('MOCK_IDB guard loss after enqueued writes aborts shared, native and directory atomically',async t=>{
+ const h=await setup(t),db=await h.base.open(),transaction=db.transaction.bind(db),{request,gate}=h.make();let allowed=true,puts=0;gate.guard=()=>allowed;
+ db.transaction=(...args)=>{const tx=transaction(...args),objectStore=tx.objectStore.bind(tx);if(args[1]==='readwrite')tx.objectStore=name=>{const store=objectStore(name),put=store.put.bind(store);store.put=value=>{const result=put(value);puts++;allowed=false;return result;};return store;};return tx;};
+ const result=await h.native.apply(A,request);db.transaction=transaction;assert(puts>0);assert.equal(result.ok,false);await empty(h);allowed=true;assert.equal((await h.native.apply(A,request)).ok,true);
+});
+test('MOCK_IDB serialized continuation and absent exact-object authority cannot authorize',async t=>{
+ const h=await setup(t),{request,gate}=h.make();await assert.rejects(h.native.apply(A,structuredClone(request)),/untrusted/);request.continuation=gate.continuation;await assert.rejects(h.native.apply(A,request),/untrusted-native-continuation/);delete request.continuation;await assert.rejects(h.native.apply(B,request),/untrusted/);await empty(h);
+});
+test('MOCK_IDB continuation source, generation, profile and admission commitment mismatches reject before persistence',async t=>{
+ const mutations=[g=>g.continuation.batch.sources[0].id='other',g=>g.continuation.batch.sources[0].generation='other',g=>g.continuation.batch.sources[0].profileId='other',g=>g.continuationAdmission.profileVersion=2,g=>g.continuationAdmission.semanticFingerprint='f'.repeat(64),g=>g.continuationAdmission.acceptedAt='2026-10-13T12:00:01Z'];
+ for(const change of mutations){const h=await setup(t),{request,gate}=h.make();change(gate);await assert.rejects(h.native.apply(A,request),/continuation/);await empty(h);}
+});
+test('MOCK_IDB native and owner continuation are captured before db.open; identical original replay succeeds',async t=>{
+ const h=await setup(t),{request,gate}=h.make(),originalRequest=structuredClone(request),originalGate={...gate,admission:structuredClone(gate.admission),continuation:structuredClone(gate.continuation),continuationAdmission:structuredClone(gate.continuationAdmission)},open=h.base.open.bind(h.base);let entered=false,release;const held=new Promise(resolve=>release=resolve);
+ h.base.open=async()=>{entered=true;await held;return open();};const pending=h.native.apply(A,request);for(let i=0;i<40&&!entered;i++)await Promise.resolve();assert(entered);
+ request.batch.refs[0].nativeTitle='Mutated';gate.continuation.batch.sources[0].id='forged';gate.continuation.batch.hints[0].ackWitness.semanticFingerprint='f'.repeat(64);gate.continuation.batch.hints[0].candidateInterval.from='2026-10-13T11:59:40Z';gate.continuationAdmission.acceptedAt='2026-10-13T11:59:00Z';release();const result=await pending;h.base.open=open;assert.equal(result.ok,true,JSON.stringify(result));assert.equal((await h.native.read(A)).refs.continuation_ref.nativeTitle,'Native title');assert.deepEqual((await h.native.listContinuations(A))[0].evidence.batch,originalGate.continuation.batch);
+ h.gates.set(originalRequest,originalGate);assert.equal((await h.native.apply(A,originalRequest)).replayed,true);assert.equal((await h.native.listContinuations(A)).length,1);
+});
+
+test('MOCK_IDB quota failure cannot leave pending continuation or consume operation identity',async t=>{const h=await setup(t),{request}=h.make();h.factory.failNextPut=true;assert.equal((await h.native.apply(A,request)).ok,false);await empty(h);assert.equal((await h.native.apply(A,request)).ok,true);assert.equal((await h.native.listContinuations(A)).length,1);});
+async function damage(h,edit){const db=await h.base.open();await new Promise((resolve,reject)=>{const tx=db.transaction('native_operations','readwrite'),store=tx.objectStore('native_operations');edit(store);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});}
+function rewrite(store,key,transform){const q=store.get(key);q.onsuccess=()=>{assert(q.result);const row=structuredClone(q.result);transform(row.payload);row.checksum=digest(row.payload);store.put(row);};}
+test('MOCK_IDB deleting either directory half fails closed rather than returning empty pending work',async t=>{
+ for(const half of ['directory','marker']){const h=await setup(t),{request}=h.make();assert.equal((await h.native.apply(A,request)).ok,true);const key=JSON.stringify([h.base.scopeOrThrow(A).key,'native-continuations',half]);await damage(h,s=>s.delete(key));await assert.rejects(h.native.listContinuations(A),/missing-native-continuation-directory/);assert.equal((await h.native.read(A)).revision,1);}
+});
+test('MOCK_IDB pending receipt tampering and signed directory size mismatch cannot hide damaged work',async t=>{
+ for(const mode of ['receipt','size']){const h=await setup(t),{request}=h.make();assert.equal((await h.native.apply(A,request)).ok,true);const scope=h.base.scopeOrThrow(A).key;
+  await damage(h,store=>{if(mode==='receipt')rewrite(store,JSON.stringify([scope,request.operationId]),payload=>{payload.continuation.evidence.batch.hints[0].calibrationDueAt='2026-10-13T12:03:00Z';});else{const dirKey=JSON.stringify([scope,'native-continuations','directory']),markerKey=JSON.stringify([scope,'native-continuations','marker']);const q=store.get(dirKey);q.onsuccess=()=>{const row=structuredClone(q.result);row.payload.entries[request.operationId]++;row.checksum=digest(row.payload);store.put(row);rewrite(store,markerKey,marker=>{marker.directoryDigest=digest(row.payload);});rewrite(store,scope,marker=>{marker.continuations.directoryDigest=digest(row.payload);});};}});
+  await assert.rejects(h.native.listContinuations(A),/invalid-native-continuation-digest|native-continuation-directory-conflict/);assert.equal((await h.native.read(A)).revision,1);
+ }
+});
+
+test('MOCK_IDB root witness detects simultaneous queue directory and marker loss on read and append',async t=>{
+ const h=await setup(t),first=h.make();assert.equal((await h.native.apply(A,first.request)).ok,true);const scope=h.base.scopeOrThrow(A).key;
+ await damage(h,store=>{for(const suffix of ['directory','marker'])store.delete(JSON.stringify([scope,'native-continuations',suffix]));});
+ await assert.rejects(h.native.listContinuations(A),/missing-native-continuation-directory/);
+ const next=h.make('after_loss',1);assert.equal((await h.native.apply(A,next.request)).reason,'missing-native-continuation-directory');assert.equal((await h.native.read(A)).revision,1);
+});
+test('MOCK_IDB ordinary native writes, source revocation and index migration retain root continuation witness',async t=>{
+ const h=await setup(t),first=h.make();assert.equal((await h.native.apply(A,first.request)).ok,true);const pending=await h.native.listContinuations(A);
+ const next=h.make('ordinary_native',1);delete next.gate.continuation;delete next.gate.continuationAdmission;assert.equal((await h.native.apply(A,next.request)).ok,true);assert.deepEqual(await h.native.listContinuations(A),pending);
+ assert.equal((await h.native.invalidate(A,{operationId:'revoke_source',expectedRevision:2,sourceId:'host_ack'})).ok,true);assert.deepEqual(await h.native.listContinuations(A),pending);
+ const migration=await h.native.migrateVersionIndex(A,{operationId:'index_migration',expectedRevision:3});assert.equal(migration.ok,true,JSON.stringify(migration));assert.deepEqual(await h.native.listContinuations(A),pending);assert.equal((await h.native.read(A)).sources.host_ack.revoked,true);
+});
+
+async function allRows(h){const db=await h.base.open(),names=Array.from(db.objectStoreNames);return new Promise((resolve,reject)=>{const tx=db.transaction(names),rows={};for(const name of names){rows[name]=[];const q=tx.objectStore(name).openCursor();q.onsuccess=()=>{if(q.result){rows[name].push(q.result.value);q.result.continue();}};}tx.oncomplete=()=>resolve(rows);tx.onabort=()=>reject(tx.error);});}
+async function completion(h,patch={}){const pending=(await h.native.listContinuations(A))[0],scope=h.base.scopeOrThrow(A),{continuationEvidenceFingerprint}=await import('../../src/data/native-observation-continuation.mjs'),{freeEvidenceKey}=await import('../../src/data/free-evidence-partitions.mjs');const payload={kind:'OBSERVE_HOST_CONTINUATION',operationId:pending.evidence.operationId,fingerprint:continuationEvidenceFingerprint(pending,A),revision:3,...patch};await damage(h,s=>s.put({key:JSON.stringify([freeEvidenceKey(scope.key),pending.evidence.operationId]),payload,checksum:digest(payload)}));return {operationId:pending.operationId,expectedPayloadDigest:pending.payloadDigest,evidenceRevision:3};}
+test('MOCK_IDB completion consumes actual evidence receipt and preserves fact revision and native replay identity',async t=>{const h=await setup(t),{request}=h.make();assert.equal((await h.native.apply(A,request)).ok,true);const args=await completion(h),before=await allRows(h);assert.deepEqual(await h.native.markContinuationComplete(A,args,{guard:()=>true}),{ok:true,replayed:false,operationId:request.operationId,evidenceRevision:3});assert.deepEqual(await h.native.listContinuations(A),[]);const after=await allRows(h);assert.deepEqual(after.native_states,before.native_states);for(const key of Object.keys(before).filter(k=>k!=='native_operations'))assert.deepEqual(after[key],before[key]);const op=JSON.stringify([h.base.scopeOrThrow(A).key,request.operationId]),old=before.native_operations.find(r=>r.key===op).payload,next=after.native_operations.find(r=>r.key===op).payload;assert.equal(next.continuation.state,'complete');assert.equal(next.continuation.evidence,undefined);for(const field of ['fingerprint','revision','admission'])assert.deepEqual(next[field],old[field]);assert.equal((await h.native.markContinuationComplete(A,args,{guard:()=>true})).replayed,true);assert.equal((await h.native.apply(A,request)).replayed,true);assert.equal((await h.native.read(A)).revision,1);});
+test('MOCK_IDB completion requires explicit live guard and rejects caller assertion without evidence receipt',async t=>{const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const p=(await h.native.listContinuations(A))[0],args={operationId:p.operationId,expectedPayloadDigest:p.payloadDigest,evidenceRevision:3},before=await allRows(h);await assert.rejects(h.native.markContinuationComplete(A,args),/guard-required/);await assert.rejects(h.native.markContinuationComplete(A,args,{guard:()=>false}),/stale-binding/);assert.equal((await h.native.markContinuationComplete(A,args,{guard:()=>true})).ok,false);assert.deepEqual(await allRows(h),before);});
+test('MOCK_IDB wrong evidence kind fingerprint revision and wrong payload leave all stores unchanged',async t=>{for(const patch of [{kind:'OTHER'},{fingerprint:'f'.repeat(64)},{revision:4}]){const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const args=await completion(h,patch),before=await allRows(h);assert.equal((await h.native.markContinuationComplete(A,args,{guard:()=>true})).ok,false);assert.deepEqual(await allRows(h),before);}const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const args=await completion(h),before=await allRows(h);args.expectedPayloadDigest='f'.repeat(64);assert.equal((await h.native.markContinuationComplete(A,args,{guard:()=>true})).ok,false);assert.deepEqual(await allRows(h),before);});
+test('MOCK_IDB completion guard loss after first put aborts terminal directory and witness atomically',async t=>{const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const args=await completion(h),before=await allRows(h),db=await h.base.open(),transaction=db.transaction.bind(db);let allowed=true;db.transaction=(...args)=>{const tx=transaction(...args),objectStore=tx.objectStore.bind(tx);if(args[1]==='readwrite')tx.objectStore=name=>{const store=objectStore(name),put=store.put.bind(store);store.put=value=>{const result=put(value);allowed=false;return result;};return store;};return tx;};const result=await h.native.markContinuationComplete(A,args,{guard:()=>allowed});db.transaction=transaction;assert.equal(result.ok,false);assert.deepEqual(await allRows(h),before);});
+test('MOCK_IDB terminal replay refuses changed evidence revision and directory corruption',async t=>{const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const args=await completion(h);assert((await h.native.markContinuationComplete(A,args,{guard:()=>true})).ok);const before=await allRows(h);assert.equal((await h.native.markContinuationComplete(A,{...args,evidenceRevision:4},{guard:()=>true})).ok,false);assert.deepEqual(await allRows(h),before);await damage(h,s=>s.delete(JSON.stringify([h.base.scopeOrThrow(A).key,'native-continuations','marker'])));assert.equal((await h.native.markContinuationComplete(A,args,{guard:()=>true})).ok,false);});
+test('MOCK_IDB completed replay still requires actual same evidence receipt operationId',async t=>{for(const mode of ['missing','wrong-operation']){const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const args=await completion(h);assert((await h.native.markContinuationComplete(A,args,{guard:()=>true})).ok);const scope=h.base.scopeOrThrow(A).key,key=JSON.stringify([JSON.stringify([scope,'free-evidence']),'evidence_ack']);await damage(h,s=>mode==='missing'?s.delete(key):rewrite(s,key,p=>p.operationId='other'));const before=await allRows(h);assert.equal((await h.native.markContinuationComplete(A,args,{guard:()=>true})).ok,false);assert.deepEqual(await allRows(h),before);}});
+test('MOCK_IDB pending completion rejects mismatched evidence operationId',async t=>{const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const args=await completion(h,{operationId:'other'}),before=await allRows(h);assert.equal((await h.native.markContinuationComplete(A,args,{guard:()=>true})).ok,false);assert.deepEqual(await allRows(h),before);});
+test('MOCK_IDB defer requires explicit guard and refuses healthy source regardless of caller reason or TTL',async t=>{const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const p=(await h.native.listContinuations(A))[0],args={operationId:p.operationId,expectedPayloadDigest:p.payloadDigest},before=await allRows(h);await assert.rejects(h.native.markContinuationNeedsRevalidation(A,args),/guard-required/);await assert.rejects(h.native.markContinuationNeedsRevalidation(A,{...args,reason:'source-revoked'},{guard:()=>true}),/invalid/);h.native.clock=()=> '2027-10-13T12:00:00Z';assert.equal((await h.native.markContinuationNeedsRevalidation(A,args,{guard:()=>true})).reason,'native-continuation-source-still-valid');assert.deepEqual(await allRows(h),before);});
+test('MOCK_IDB actual source revocation defers to minimal target without changing fact revision or restoring pending',async t=>{const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const p=(await h.native.listContinuations(A))[0],args={operationId:p.operationId,expectedPayloadDigest:p.payloadDigest};assert((await h.native.invalidate(A,{operationId:'revoke',expectedRevision:1,sourceId:'host_ack'})).ok);const before=await allRows(h),result=await h.native.markContinuationNeedsRevalidation(A,args,{guard:()=>true});assert.equal(result.reason,'source-revoked');assert(result.ok);const rows=await h.native.listContinuations(A);assert.equal(rows[0].state,'needs-revalidation');assert.equal(rows[0].evidence,undefined);assert.deepEqual(rows[0].targets,['continuation_ref']);assert.deepEqual((await allRows(h)).native_states,before.native_states);assert.equal((await h.native.read(A)).revision,2);assert.equal((await h.native.markContinuationNeedsRevalidation(A,args,{guard:()=>true})).ok,false);assert.equal((await h.native.markContinuationComplete(A,{...args,evidenceRevision:3},{guard:()=>true})).ok,false);});
+test('MOCK_IDB defer quota failure rolls back summary directory and native witness',async t=>{const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const p=(await h.native.listContinuations(A))[0],args={operationId:p.operationId,expectedPayloadDigest:p.payloadDigest};await h.native.invalidate(A,{operationId:'revoke',expectedRevision:1,sourceId:'host_ack'});const before=await allRows(h);h.factory.failNextPut=true;assert.equal((await h.native.markContinuationNeedsRevalidation(A,args,{guard:()=>true})).ok,false);assert.deepEqual(await allRows(h),before);});
+test('MOCK_IDB defer derives missing generation and profile reasons from stored root only',async t=>{for(const [reason,change]of [['missing-source',p=>delete p.sources.host_ack],['source-changed',p=>p.sources.host_ack.generation='generation_two'],['profile-changed',p=>p.sources.host_ack.admission.profileVersion=2]]){const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const p=(await h.native.listContinuations(A))[0],db=await h.base.open();await new Promise((resolve,reject)=>{const tx=db.transaction('native_states','readwrite');rewrite(tx.objectStore('native_states'),h.base.scopeOrThrow(A).key,change);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});const result=await h.native.markContinuationNeedsRevalidation(A,{operationId:p.operationId,expectedPayloadDigest:p.payloadDigest},{guard:()=>true});assert.equal(result.ok,true,JSON.stringify(result));assert.equal(result.reason,reason);}});
+test('MOCK_IDB terminal methods snapshot guard function before open await',async t=>{for(const mode of ['complete','defer']){const h=await setup(t),{request}=h.make();await h.native.apply(A,request);let args;if(mode==='complete')args=await completion(h);else{const p=(await h.native.listContinuations(A))[0];args={operationId:p.operationId,expectedPayloadDigest:p.payloadDigest};await h.native.invalidate(A,{operationId:'revoke',expectedRevision:1,sourceId:'host_ack'});}const before=await allRows(h),open=h.base.open.bind(h.base);let release,entered=false,allowed=true;h.base.open=async()=>{entered=true;await new Promise(r=>release=r);return open();};const options={guard:()=>allowed};const pending=mode==='complete'?h.native.markContinuationComplete(A,args,options):h.native.markContinuationNeedsRevalidation(A,args,options);assert(entered);allowed=false;options.guard=()=>true;release();await assert.rejects(pending,/stale-binding/);h.base.open=open;assert.deepEqual(await allRows(h),before);}});
+
+// SYS-01: a current owner profile can retire an old admission before any new native delta.
+import {createHostContinuationOwner} from '../../src/runtime/host-continuation-owner.mjs';
+function retirementOwner(h,profileFor,extra={}){return createHostContinuationOwner({nativeRepository:h.native,profileFor,evidenceRepository:{version:async()=>{throw Error('unexpected-evidence-read');},applyContinuation:async()=>{throw Error('unexpected-evidence-write');}},...extra});}
+const retireArgs=()=>({scope:A,guard:()=>true,profileId:'profile_one',profileVersion:2});
+test('MOCK_IDB runtime-only profile upgrade retires pending atomically without native/evidence replay',async t=>{
+ const h=await setup(t),{request}=h.make();assert((await h.native.apply(A,request)).ok);const before=await allRows(h),owner=retirementOwner(h,()=>({id:'profile_one',revision:2}));
+ assert.deepEqual(await owner.drain(retireArgs()),{state:'needs-revalidation',attempts:0,reason:'profile-changed'});
+ const rows=await h.native.listContinuations(A);assert.equal(rows[0].state,'needs-revalidation');assert.equal(rows[0].evidence,undefined);assert.deepEqual(rows[0].targets,['continuation_ref']);
+ const after=await allRows(h);for(const name of Object.keys(before))if(name!=='native_operations')assert.deepEqual(after[name],before[name]);
+ assert.equal((await h.native.read(A)).revision,1);assert.equal((await h.native.read(A)).sources.host_ack.admission.profileVersion,1);assert.equal((await owner.drain(retireArgs())).state,'idle');
+ assert.equal((await h.native.apply(A,request)).replayed,true);assert.equal((await h.native.listContinuations(A))[0].state,'needs-revalidation');
+});
+test('MOCK_IDB equal current profile cannot retire a valid pending continuation',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const row=(await h.native.listContinuations(A))[0],before=await allRows(h);
+ const result=await h.native.markContinuationNeedsRevalidation(A,{operationId:row.operationId,expectedPayloadDigest:row.payloadDigest},{guard:()=>true,currentProfile:()=>({id:'profile_one',revision:1})});
+ assert.equal(result.reason,'native-continuation-source-still-valid');assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB runtime profile change during terminal open cancels retirement',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const before=await allRows(h);let profile={id:'profile_one',revision:2};
+ const mark=h.native.markContinuationNeedsRevalidation.bind(h.native),open=h.base.open.bind(h.base);
+ h.native.markContinuationNeedsRevalidation=(...args)=>{h.base.open=async()=>{profile={id:'profile_one',revision:3};return open();};return mark(...args);};
+ const result=await retirementOwner(h,()=>profile).drain(retireArgs());h.base.open=open;assert.equal(result.state,'cancelled');assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB runtime profile change after queued retirement writes rolls back every record',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const before=await allRows(h),db=await h.base.open(),transaction=db.transaction.bind(db);let profile={id:'profile_one',revision:2},puts=0;
+ db.transaction=(...args)=>{const tx=transaction(...args),objectStore=tx.objectStore.bind(tx);if(args[1]==='readwrite')tx.objectStore=name=>{const store=objectStore(name),put=store.put.bind(store);store.put=value=>{const result=put(value);puts++;profile={id:'profile_one',revision:3};return result;};return store;};return tx;};
+ const result=await retirementOwner(h,()=>profile).drain(retireArgs());db.transaction=transaction;assert(puts>0);assert.equal(result.state,'cancelled');assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB runtime profile retirement quota failure preserves pending and can retry',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const before=await allRows(h),owner=retirementOwner(h,()=>({id:'profile_one',revision:2}));h.factory.failNextPut=true;
+ assert.equal((await owner.drain(retireArgs())).state,'pending');assert.deepEqual(await allRows(h),before);assert.equal((await owner.drain(retireArgs())).state,'needs-revalidation');
+});
+test('MOCK_IDB profile retirement rejects serialized witness and malformed live profile',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const row=(await h.native.listContinuations(A))[0],args={operationId:row.operationId,expectedPayloadDigest:row.payloadDigest},before=await allRows(h);
+ await assert.rejects(h.native.markContinuationNeedsRevalidation(A,{...args,currentProfile:{id:'profile_one',revision:2}},{guard:()=>true}),/invalid-continuation-completion/);
+ await assert.rejects(h.native.markContinuationNeedsRevalidation(A,args,{guard:()=>true,currentProfile:{id:'profile_one',revision:2}}),/invalid-continuation-current-profile/);
+ for(const profile of [null,{id:'profile_one',revision:0},{id:'profile_one',revision:2.5},Promise.resolve({id:'profile_one',revision:2})]){
+  assert.equal((await h.native.markContinuationNeedsRevalidation(A,args,{guard:()=>true,currentProfile:()=>profile})).reason,'invalid-continuation-current-profile');
+ }
+ assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB profile retirement retains payload CAS and scope isolation',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const row=(await h.native.listContinuations(A))[0],args={operationId:row.operationId,expectedPayloadDigest:row.payloadDigest},before=await allRows(h),options={guard:()=>true,currentProfile:()=>({id:'profile_one',revision:2})};
+ assert.equal((await h.native.markContinuationNeedsRevalidation(A,{...args,expectedPayloadDigest:'f'.repeat(64)},options)).reason,'native-continuation-completion-conflict');
+ assert.equal((await h.native.markContinuationNeedsRevalidation(B,args,options)).ok,false);assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB retirement snapshots the live callback before open, not its profile value',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const row=(await h.native.listContinuations(A))[0],before=await allRows(h),open=h.base.open.bind(h.base);let release,entered=false,profile={id:'profile_one',revision:2};
+ h.base.open=async()=>{entered=true;await new Promise(r=>release=r);return open();};const options={guard:()=>true,currentProfile:()=>profile};
+ const pending=h.native.markContinuationNeedsRevalidation(A,{operationId:row.operationId,expectedPayloadDigest:row.payloadDigest},options);assert(entered);profile={id:'profile_one',revision:1};options.currentProfile=()=>({id:'profile_one',revision:2});release();
+ assert.equal((await pending).reason,'native-continuation-source-still-valid');h.base.open=open;assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB concurrently supported profile rotation preserves other profile pending payload',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const before=await allRows(h),profiles={profile_one:{id:'profile_one',revision:1},profile_two:{id:'profile_two',revision:1}};
+ const owner=retirementOwner(h,id=>profiles[id]);
+ assert.deepEqual(await owner.drain({...retireArgs(),profileId:'profile_two',profileVersion:1}),{state:'pending',attempts:0,reason:'native-continuation-source-still-valid'});
+ assert.deepEqual(await allRows(h),before);assert.equal((await h.native.listContinuations(A))[0].state,'pending-evidence');
+});
+test('MOCK_IDB foreign runtime profile witness cannot retire healthy stored profile',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);const row=(await h.native.listContinuations(A))[0],before=await allRows(h);
+ for(const revision of [1,2])assert.equal((await h.native.markContinuationNeedsRevalidation(A,{operationId:row.operationId,expectedPayloadDigest:row.payloadDigest},{guard:()=>true,currentProfile:()=>({id:'profile_two',revision})})).reason,'native-continuation-source-still-valid');
+ assert.deepEqual(await allRows(h),before);
+});
+test('MOCK_IDB foreign current profile can still retire an actually revoked persisted source',async t=>{
+ const h=await setup(t),{request}=h.make();await h.native.apply(A,request);assert((await h.native.invalidate(A,{operationId:'profile_rotation_revoke',expectedRevision:1,sourceId:'host_ack'})).ok);
+ const owner=retirementOwner(h,id=>({id,revision:1}));assert.deepEqual(await owner.drain({...retireArgs(),profileId:'profile_two',profileVersion:1}),{state:'needs-revalidation',attempts:0,reason:'source-revoked'});
+});

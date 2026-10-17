@@ -1,0 +1,86 @@
+{
+  "status": "PASS_NODE_AND_GUARD_CONTRACTS_BROWSER_PENDING",
+  "baselineSourceCommit": "3c8a33dae36ca0de11841570ac6fb44d4331dd5a",
+  "productionChange": "On exact invalid-host-document from a live foreground session, spend only the existing one-shot recovery budget and run the existing fresh same-scope handshake. Recheck enabled/live at the outer completion boundary.",
+  "provedScope": "Original document transport expiry with a still-valid genuine browser-request C2 receipt; explicit worker-bootstrap state model with a new genuine receipt.",
+  "notProved": [
+    "Chrome scheduling of new receipt before worker service attach",
+    "Recovery after complete loss of all genuine C2 evidence",
+    "Real ChatGPT profile semantics",
+    "Full J4 or Free acceptance"
+  ],
+  "newOwnerRegressionTests": {
+    "cases": 24,
+    "pass": 24,
+    "includes": [
+      "original document binding expiry without new native GET",
+      "no receipt / expired receipt / invalid new GET rejection",
+      "principal / context / browser document replacement",
+      "stop / pagehide / explicit EXIT / late HELLO / original deadline",
+      "pending old snippet restore abort without replay",
+      "one automatic recovery and no duplicate focus retries",
+      "two exact old-reply settlement gaps cannot consume replacement recovery budget"
+    ]
+  },
+  "originalBaselineNewSuite": {
+    "tests": 22,
+    "pass": 6,
+    "fail": 16,
+    "note": "Includes two positive missing-recovery reproductions plus new checks of the required fresh-handshake control path; failures are preserved, not existing regressions."
+  },
+  "preservedCandidateFailures": [
+    {
+      "tests": 7474,
+      "pass": 7469,
+      "fail": 5,
+      "duration_ms": 188790.971951,
+      "cause": "Workflow static contracts had not yet been extended for the two new transport modes and separate failure-only CPU diagnostic",
+      "repair": "Keep all original formal assertions; distinguish exactly one formal invocation from one failure-only diagnostic, add strict diagnostic/cleanup/source contracts and new modes to exact step and output lists"
+    },
+    {
+      "exitCode": 130,
+      "cause": "Second full pass intentionally interrupted before completion to finish independent test-runner cleanup review",
+      "notAcceptance": true
+    }
+  ],
+  "browserModes": [
+    "transport-expiry",
+    "transport-expiry-mutant"
+  ],
+  "browserOracle": "Real wall-clock document lease expiry, original live C2 owner, no new native GET, current attached fresh grant and actual post-focus VIEW, same scope and original document/editor/draft/Range. Mutant must fail only after exact post-focus invalid-host-document, no new HELLO and original worker still alive at observation end.",
+  "cpuDiagnostic": "Existing separate 10-second sampling mode only after formal 10k failure; original formal failure remains mandatory and cannot be replaced by the diagnostic.",
+  "localBrowser": "NOT_RUN_ENVIRONMENT_BROWSER_STARTUP_RESTRICTION",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "node": "v24.19.0",
+  "completeNode": {
+    "tests": 7476,
+    "pass": 7476,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "duration_ms": 162693.628727
+  },
+  "sourceChangedDuringRun": false,
+  "sourceManifestSHA256": "972fc8294cdb0d6fc385423f27cd866be34c18480a0dfdfcc87d121a48953031",
+  "sourceManifestScope": "src/tests/extension/simulator/.github excluding node_modules/dist",
+  "completeNodeLogSHA256": "3fa25cc655069941855f98cabd4e8f01833df9555574fc6a1efc3874fee55e02",
+  "guardMutations": {
+    "selected": 12,
+    "killed": 12,
+    "pass": true,
+    "inputUnchanged": true,
+    "inputHashes": {
+      "src": "2deee0cc9eaa7755d3e5e9227379cd6a7eed54efa3001b9396d694687ebc1cfd",
+      "tests": "94b9f75d9d838ba0ab343b909d9d23efb1bb4b0d8824bccb3af51f288b15adb5",
+      "simulator": "ac28ff64c62b94b96eb21eb8b51489548b37c8c13d9214171cacf64975711ef6"
+    }
+  },
+  "reviewedFiles": {
+    "src/host/content-session.mjs": "6e0069a3534bd686857f36a20c4502992dc7ae43a3cd18aa38fc5ec4fd35f350",
+    "tests/host/context-replacement-package-browser.mjs": "7923cc85b5cca556eb2c994f6e1e056b878b36556e4ac34186d6a6741f5a79e7",
+    ".github/workflows/free-offline-host.yml": "634447cde56ea83f57f49cd226486df684dd695223e5c156e664719c312dbd19"
+  },
+  "independentReview": "PASS after adding stale-session budget fence and separating scenario worker liveness from normal browser cleanup"
+}

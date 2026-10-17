@@ -1,0 +1,139 @@
+{
+  "status": "REVIEWED_DIAGNOSTIC_CANDIDATE_NOT_BROWSER_VERIFIED",
+  "applyCheckAgainstHead": "3276ab8b1b71d4851672322756355ba70f079342",
+  "sequentialPatchApplyVerified": true,
+  "productionChanged": false,
+  "browserRun": false,
+  "fullNodeRun": false,
+  "basePatch": {
+    "sha256": "62f170980ef14fa1571320d7e77a87462b13007db072bed5ff18663379848888",
+    "tests": {
+      "total": 81,
+      "pass": 81,
+      "fail": 0,
+      "skip": 0
+    },
+    "file": "base-native-renderer-cpu-discovery.patch"
+  },
+  "overlayPatch": {
+    "sha256": "c45ba2613e1facbe577146c3547a8b2dfbbb23746a06d546001aaeb1b24aa688",
+    "testsCombined": {
+      "total": 161,
+      "pass": 161,
+      "fail": 0,
+      "skip": 0
+    },
+    "file": "cpu-trace-clock-overlay.patch"
+  },
+  "preservedOldPatchSHA256": "63b8911eaf9b2859fc033814e762e7a8d2e2334f302f72f25d77cf8f7c27e039",
+  "clockBoundary": "Runner-side Profiler start/stop requested and acknowledged times are CDP command bounds, not actual sample instants. CDP profile microsecond epoch remains unmapped. Each trace realm emits its own timeOrigin+now sum alongside existing Date.now. Cross-realm synchronization is not established. No subtraction of bare performance.now between realms.",
+  "auditBoundary": "Original member-progress failure stage snapshot is preserved by reference; only that existing runner stageStarted is mapped with runner timeOrigin. This is not continuous audit-stage observation or exclusive CPU/IDB timing.",
+  "discoveryBoundary": "Page helper enables connection-scoped discovery before target selection with page and service_worker inclusion plus final exclusion, preserving shared getTargets visibility. Existing default worker API commands unchanged. Protocol-aware fake suppresses info notifications until discovery and rejects away-and-back.",
+  "formalGate": "Original formal step and 30-second budget remain unchanged; combined diagnostic still FAIL, cannot replace formal FAIL.",
+  "traceLimits": {
+    "events": 1024,
+    "bytes": 131072,
+    "dropDisclosed": true,
+    "newEventKinds": false
+  },
+  "hashBoundary": "Original package source/fixture/manifest checks retained. Instrumented copy checks every file and rebuilt classic artifacts; combined mode also pins copied build-manifest bytes.",
+  "files": {
+    ".github/workflows/free-offline-host.yml": {
+      "base": "76bbfbf01aebbf4eabfe00600ada8a469d248a2d4143970f588fff268533067f",
+      "afterBase": "4d33d24325370a6e56c2634a96e7414bb6c7846c94e0aa570c00e4cfef811839",
+      "afterOverlay": "536a69b235dfa0c01040f6e051cacac819b0c34a6423203420f3b2676c4d3bdc"
+    },
+    "tests/host/host-scale-cpu-profile.mjs": {
+      "base": "15d827dc8300a6fc5f5990a93c0d752bcee36555bbf208d18821e9131b6db970",
+      "afterBase": "3bd8b73998f0ff2276fb390d6abb7f52e4dedb6f4aacf7d8c42118fb278821dc",
+      "afterOverlay": "e4049ccf68c5a5cf24f3cd94bc6b094239b9c5f013a422107b8439a3644b4cf0"
+    },
+    "tests/host/host-scale-cpu-profile.test.mjs": {
+      "base": "67c1ffc78ca1c14c98a3d3864a2262b62f1407bbac7630c8fd5ebbbc848383b9",
+      "afterBase": "e828191e9d0e55dda374c07de810e5c49a03dd088779aca7f7f975e37320624c",
+      "afterOverlay": "aee38906be389b550a88e84c4567bba849c78f242b3ccafd70de9183bbee37b8"
+    },
+    "tests/host/host-scale-cpu-runner-contract.test.mjs": {
+      "base": null,
+      "afterBase": "62d4ca9493a93186c234ec4874b6404a0b716bacdfe7a398d6a718927b2fba2b",
+      "afterOverlay": "cf8c04a51a89fe7d7ac3192431e1d1c466e8d6d3144e7a5a1d0d31c0a6d35e94"
+    },
+    "tests/host/host-scale-package-browser.mjs": {
+      "base": "e4f787bbc7f4f1e81ce25c8d39fcdf8876843d8ce585a698348be2c424fa3375",
+      "afterBase": "a9476ca667c05dc1fbc9b14ab7f13991d5c0c99d005fac283e075307051b5822",
+      "afterOverlay": "f1051a97c7bc440b3bde817a7a449f0dd2a18b564e150c317028c4f3cd7378c7"
+    },
+    "tests/host/host-scale-trace.mjs": {
+      "base": "2b1a9e40eefc1060eb5eff4e268a1c140edf962431691c837dc4f2e39f30761a",
+      "afterBase": "2b1a9e40eefc1060eb5eff4e268a1c140edf962431691c837dc4f2e39f30761a",
+      "afterOverlay": "dd07836814629749c807ed77c5a2e230251f1b94ad40f4f019246982a65b26aa"
+    },
+    "tests/host/host-scale-trace.test.mjs": {
+      "base": "3bfda5d043697c1b635070d934ac51d6e9c327619b27adcf2f24d80624feaeb1",
+      "afterBase": "3bfda5d043697c1b635070d934ac51d6e9c327619b27adcf2f24d80624feaeb1",
+      "afterOverlay": "bd3ceff48d82f3b57be1c3e3ed3b6df52cc2572be0d378e1f6a3be512db72ed8"
+    },
+    "tests/host/offline-ci-partition.test.mjs": {
+      "base": "681fc5c7b7262f08ae85aa58f702a6b935b651316b3e7f622273f0b60dde2886",
+      "afterBase": "259605df399511ceb15b4aa60faef911a2290520232641632bb52faab36b222f",
+      "afterOverlay": "5e1e30ccc4aca3c6f036750a1fa239e19c84a73d5fcd25cb63d0e2b6afb7d897"
+    }
+  },
+  "currentIntegrationValidation": {
+    "command": "node --test tests/host/host-scale-cpu-profile.test.mjs tests/host/host-scale-cpu-runner-contract.test.mjs tests/host/host-scale-trace.test.mjs tests/host/host-scale-progress.test.mjs tests/host/offline-ci-partition.test.mjs",
+    "tests": 191,
+    "pass": 191,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 2639.898609,
+    "logSha256": "33b35f157e61302f364dabb368573a44ae2285dfd414d48820ba88cdbc3bbb2d"
+  },
+  "review": {
+    "status": "CLEAN_FIXED_DIAGNOSTIC_BYTES",
+    "tests": 191,
+    "pass": 191,
+    "fail": 0,
+    "skip": 0,
+    "logSha256": "1efc22c976579b689224ca41cf49bf5d7c0e4f24c962b16d5de17557ef39b0da"
+  },
+  "priorCandidate": {
+    "approval": "WITHDRAWN_BEFORE_PUBLICATION",
+    "reason": "Manually emitted target-info test events did not establish that connection-scoped Target discovery was enabled; replacement enables it before target selection and tests away-and-back with protocol-aware event suppression."
+  },
+  "snapshotPatch": {
+    "file": "cpu-phase-snapshot-overlay.patch",
+    "sha256": "f4c21bfe123230d8da2cf311c10b1e07be78e186edec7a83e32e99501b21690b",
+    "tests": {
+      "total": 182,
+      "pass": 182,
+      "fail": 0,
+      "skip": 0
+    }
+  },
+  "finalSourceHashes": {
+    ".github/workflows/free-offline-host.yml": "bf98d54686f37210f819f01b1dfb238b2dfc2d3d4f71940c6a6b8c0ae1ebbcf3",
+    "tests/host/host-scale-cpu-profile.mjs": "e4049ccf68c5a5cf24f3cd94bc6b094239b9c5f013a422107b8439a3644b4cf0",
+    "tests/host/host-scale-cpu-profile.test.mjs": "aee38906be389b550a88e84c4567bba849c78f242b3ccafd70de9183bbee37b8",
+    "tests/host/host-scale-cpu-runner-contract.test.mjs": "1368952f45458c81cc038c2f98891c3ffbd4ffddf94b9766f789b2427ff8d5a3",
+    "tests/host/host-scale-package-browser.mjs": "30ec1ddf55ad13c6921e39b5e90e30cf31185758e4645cee84ae07317590b80e",
+    "tests/host/host-scale-progress.test.mjs": "607022b10887833506c3683802a92581f1239beda1a7a194044e76dbffde677c",
+    "tests/host/host-scale-trace.mjs": "7bf9c2d57da9bf08e17552f25a8719153221a6b54911a92c31b1e1b42355f459",
+    "tests/host/host-scale-trace.test.mjs": "e98f318b88c1dc0e7d96d88889ca53c066eb75299e8659636ea124c31803b6fe",
+    "tests/host/offline-ci-partition.test.mjs": "94ca3d9a136af7b04247549feabaa6ae868ff298a6e683862498f7b76fc0fb54"
+  },
+  "snapshotBoundary": "After both existing profile finished promises settle, close their transport, synchronously copy the bounded content ring, and make one bounded 1000ms existing-worker RAM read. Preserve the independent final trace. Report source/merge drops and retained epoch-span intersections with command bounds, never continuous/synchronized coverage. Missing or failed snapshot rejects the diagnostic, original FAIL/error remain.",
+  "historicalFullRun": {
+    "base": "3276ab8b1b71d4851672322756355ba70f079342",
+    "scope": "Intermediate diagnostic candidate plus separate context-recovery candidate; not this pure diagnostic tree",
+    "total": 7686,
+    "pass": 7684,
+    "fail": 2,
+    "skip": 0,
+    "durationMs": 169694.003162,
+    "logSha256": "ed51dce86e673012a0db5bf1963a1cfdb396437e662c30e1f39619348294c230",
+    "failures": [
+      "Existing exact-text catch contract did not recognize the added opt-in clock block; replaced with execution of the actual failure block, retaining original diagnostic object, FAIL, stack, exit 1 and 30-second assertion even when both diagnostic readers reject.",
+      "Separate context-recovery candidate short-circuits identity work for missing C2, so the historical fallback invocation count requires separate missing-before and lost-after-admission cases. No context-recovery source/test is in this diagnostic commit."
+    ]
+  }
+}

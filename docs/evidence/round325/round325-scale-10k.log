@@ -1,0 +1,1 @@
+{"status":"FAIL","error":"AssertionError [ERR_ASSERTION]: scale measurement not established: FAIL_MEASUREMENT_ACTION\n+ actual - expected\n\n+ 'FAIL_MEASUREMENT_ACTION'\n- 'MEASURED_AT_STABLE_ADMITTED_INDEX'\n\n    at file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-scale-package-browser.mjs:212:10","report":"/private/tmp/round325-scale-10k.json"}

@@ -1,0 +1,40 @@
+{
+  "evidence": "NARROW_REAL_MV3_MOUNT_LIFECYCLE_OFFLINE_NOT_J1",
+  "uiGrant": "NOT_IMPLEMENTED",
+  "sourceHash": "f92c59b92df235c2bef0d1cabfefe22c27ee4389e668899341aab321d35175ec",
+  "results": [
+    {
+      "operation": "disable",
+      "before": {
+        "masked": true,
+        "bothOpen": true,
+        "noNativeInert": true
+      },
+      "declarativeClose": true,
+      "portalSuspend": true,
+      "nativeOperable": false,
+      "cleanLayout": false,
+      "draft": "UNSENT_DRAFT",
+      "open": 2,
+      "privateProjectionAbsent": false
+    },
+    {
+      "operation": "uninstall",
+      "before": {
+        "masked": true,
+        "bothOpen": true,
+        "noNativeInert": true
+      },
+      "declarativeClose": true,
+      "portalSuspend": true,
+      "nativeOperable": false,
+      "cleanLayout": false,
+      "draft": "UNSENT_DRAFT",
+      "open": 2,
+      "privateProjectionAbsent": false
+    }
+  ],
+  "browser": "Chrome/155.0.8059.40",
+  "workerNetworkBlocked": true,
+  "pass": false
+}

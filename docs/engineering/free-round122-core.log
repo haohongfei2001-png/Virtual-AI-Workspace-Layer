@@ -1,0 +1,161 @@
+✔ actual lifecycle composition sends bounded VIEW without role and keeps one renderer across grant renewal (2.494625ms)
+✔ preparing is not empty; bounded retry eventually publishes owner page (0.37125ms)
+✔ page query strips role and installs synchronous href plans before returning DTO (0.536958ms)
+✔ oversize responses halve bounded limit then rowLimit within the same finite read (0.432042ms)
+✔ disconnect stops navigation synchronously and late ready never renders (0.335625ms)
+✔ VIEW RPC is limited to six seconds (0.244459ms)
+✔ preparing total budget does not restart with renewed grant (2.02625ms)
+✔ invalidation bursts coalesce to one follow-up and retain current query and renderer (0.757542ms)
+✔ queued notification is discarded on scope rejection and late old port response (0.288375ms)
+✔ burst and renew during preparation retain the original thirty-second budget (1.970333ms)
+✔ owner current URL drives adapter matching and is erased on clear or legacy page (0.404917ms)
+✔ malformed owner current fails closed null (0.144416ms)
+✔ malformed owner current fails closed {"nativeUrl":"https://evil.test/","refId":null,"projectId":null} (0.161667ms)
+✔ malformed owner current fails closed {"nativeUrl":"https://chatgpt.com/","refId":22,"projectId":null} (0.1525ms)
+✔ malformed owner current fails closed {"nativeUrl":"https://chatgpt.com/","refId":null,"projectId":null,"title":"private"} (0.097958ms)
+✔ presentation bridge sends current grant and self echo does not erase typed search (0.328917ms)
+✔ shared presentation revisions and identical intent do not repeatedly reset search (0.245917ms)
+✔ presentation denial reports once without retry or stopping authorized frame (0.429417ms)
+✔ late presentation reply after stop cannot present or refresh (0.133292ms)
+✔ late presentation reply after scope-change cannot present or refresh (0.14125ms)
+✔ working set query survives renewal and shared close clears it (0.3365ms)
+✔ working set oversize refines bounded rows without changing offset (0.135125ms)
+✔ simultaneous search and working set is rejected before privileged read (0.206458ms)
+✔ manual horizon writes once using current revision and relocates before refreshing (1.235375ms)
+✔ automatic mode keeps frozen horizon and history query while writing only the selection (0.151292ms)
+✔ automatic selection rejects a response which changes the frozen horizon (0.088ms)
+✔ another frame horizon change relocates existing date interval before publishing (0.131333ms)
+✔ denied horizon never retries or changes query; late success after stop cannot publish (0.105708ms)
+✔ current ref cannot mismatch owner current identity (1.656333ms)
+✔ working-set mutation uses fresh private operation identity and resets only working-set page (0.275583ms)
+✔ working-set mutation excludes concurrent horizon/working writes and coalesces dirty signals (0.172833ms)
+✔ working-set rejects caller authority fields and CAS denial never replays (0.101125ms)
+✔ working-set committed response does not report success when follow-up read fails or frame stops (0.228292ms)
+✔ working-set update preserves current search and six-second request deadline (0.179125ms)
+✔ horizon in flight excludes working-set writes; successful working-set add preserves search (0.154375ms)
+✔ explicit recovery invalidates navigation but keeps grant and attaches it to recovery requests (0.145625ms)
+✔ storage read corruption enters recovery while protocol and permission failures stop lifecycle (1.229ms)
+✔ grant renew and data-changed bursts preserve recovery panel without VIEW reads or stale painting (0.191708ms)
+✔ recovery resume rereads preserved query and keeps existing renderer (0.127084ms)
+✔ stop or scope replacement clears recovery and fences delayed replies and resume (0.244041ms)
+✔ committed workset follow-up corruption still opens recovery after write mutex clears (0.148041ms)
+✔ committed horizon follow-up corruption still opens recovery after write mutex clears (0.095042ms)
+✔ closing panel during repair leaves one resumed query and rejects late repair reply (0.14375ms)
+✔ backup opens once, attaches current authority, and preserves panel through grant renewal (0.305916ms)
+✔ backup return reuses renderer and query while late export gets bounded owner cleanup (0.176542ms)
+✔ scope change clears backup and denies late chunks without resuming old private view (0.149417ms)
+✔ backup allocation arriving after client deadline is closed under the still-current grant (0.322334ms)
+✔ backup allocation is also closed when an overdue reply beats a delayed timer callback (0.151875ms)
+✔ project and conversation plans with identical IDs remain separate and revoke together (0.185625ms)
+✔ project navigation rejects wrong-entity (0.125917ms)
+✔ project navigation rejects wrong-url (0.096458ms)
+✔ project navigation rejects unknown-project (0.095625ms)
+✔ project navigation rejects both-ids (0.094708ms)
+✔ project navigation rejects same-tab (0.0885ms)
+✔ project navigation rejects duplicate (0.108584ms)
+✔ oversize search refines its own page and preserves query, project and history: true (0.136917ms)
+✔ oversize search refines its own page and preserves query, project and history: false (0.771959ms)
+✔ permanently oversize search stops after bounded refinement without publishing a partial page (0.194875ms)
+✔ real search projection with long Unicode native titles remains reachable through smaller pages (2.944541ms)
+✔ safe current entry alone sends frozen authority and adopts returned session before a current-page read (7.753ms)
+✔ safe current entry does not run for sidebar history search working set or expired grant (0.498583ms)
+✔ late current entry response cannot overwrite stopped disconnected changed-scope or later history view (0.441792ms)
+✔ current entry and horizon changes share a single mutation mutex in both directions (0.430667ms)
+✔ malformed current-entry responses never change session or trigger projection reads (0.533792ms)
+✔ current-entry RPC expires at six seconds and a late success cannot publish (0.159792ms)
+✔ snippet panel uses current route and owner authority, prepares view before list and restores original query (0.364875ms)
+✔ scope replacement clears snippet panel and rejects late selected-asset reply (0.271042ms)
+✔ owner search finds historical rows outside first frame page and keeps NONE/UNKNOWN reachable (1.456875ms)
+✔ native project names and aliases search members without merging same-name projects (0.223791ms)
+✔ explicit saved excerpts reuse knownMatches and deduplicate ref results without exposing anchors (0.380334ms)
+✔ query and pagination contracts reject unsafe shape, bounds and absent project (0.322583ms)
+✔ search DTO rejects UTF8 overflow without clipping original native title (0.194ms)
+✔ title-first hit still retains every matching snippet in saved manual order (0.081542ms)
+✔ all matching snippets aggregate before ref pagination and previews stop at 160 code units (0.121125ms)
+✔ nonmatching saved text does not add snippet affordance to native title match (0.071042ms)
+✔ each matching snippet has a separate preview and current-conversation locate action (3.614833ms)
+✔ locate is bounded single-flight and reports failure without losing native row (0.356708ms)
+✖ other conversation remains a normal native link and never gets locate actions (0.557083ms)
+✖ late locate result cannot overwrite changed query (0.698083ms)
+✔ late locate result cannot overwrite changed route (0.376458ms)
+✔ late locate result cannot overwrite changed scope (0.625ms)
+✖ late locate result cannot overwrite changed stop (0.196542ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,anchor:{}}) (0.1915ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,messageId:'m'}) (0.090667ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,bodyHash:'a'.repeat(64)}) (0.101833ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,preview:'x'.repeat(161)}) (0.076292ms)
+✔ snippet DTO rejects extra authority fields and invalid bounds r=>({...r,id:''}) (0.059666ms)
+✔ one hundred snippets of 160 characters fit, one hundred and one rejects (0.984125ms)
+ℹ tests 88
+ℹ suites 0
+ℹ pass 85
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 92.914833
+
+✖ failing tests:
+
+test at tests/host/search-snippets-renderer.test.mjs:41:1
+✖ other conversation remains a normal native link and never gets locate actions (0.557083ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + null
+  - 'https://chatgpt.com/c/C'
+
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/search-snippets-renderer.test.mjs:41:289)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 'https://chatgpt.com/c/C',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/search-snippets-renderer.test.mjs:42:54
+✖ late locate result cannot overwrite changed query (0.698083ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  ... Skipped lines
+
+    ' \n' +
+      ":host{font:13px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink,#202123);--focus:#3877ba}\n" +
+      '*{box-sizing:border-box}[hidden]{display:none!important}button,a,input{font:inherit;color:inherit}button{cursor:pointer;border:0;background:transparent}button:hover,a:hover{background:var(--hover,#eee)}button:disabled{opacity:.35;cursor:default}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}a{text-decoration:none}svg{display:block;pointer-events:none}button{transition:background .14s ease} .square{width:34px;height:34px;border-radius:9px;display:inline-grid;place-items:center;flex:none}\n' +
+      '.toolbar{display:flex;align-items:center;gap:1px;color:var(--muted,#6e6e76);font-size:12px;padding:12px 4px 8px}.toolbar strong{font-weight:500;margin-right:auto}.themes{max-height:340px;overflow:auto;scrollbar-width:thin;padding:2px 3px 5px}.group{padding:2px 0}.theme-toggle{display:flex;gap:9px;align-items:center;padding:9px 8px;border-radius:9px;width:100%;text-align:left;font-weight:550;min-width:0}.theme-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.theme-glyph{width:22px;min-height:22px;display:inline-grid;place-items:center;flex:none;color:var(--muted,#6e6e76);font-size:18px;font-weight:400}.children{margin-left:18px;padding-left:7px;border-left:1px solid var(--line,#e8e8e8)}.row{display:block;padding:8px 10px;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}.row[aria-current=page]{background:var(--hover,#eee)}.row[aria-disabled=true]{opacity:.5}.old{display:grid;margin:6px 0 0 2px;color:var(--muted,#6e6e76);text-align:left}.old svg{transition:transform .16s ease}.old[aria-expanded=true] svg{transform:rotate(90deg)}.old-list{border-left:1px solid var(--line,#e8e8e8);margin:3px 0 0 18px;padding-left:7px}.more{font-size:12px;color:var(--muted,#6e6e76);padding:8px 10px;min-height:34px;border-radius:8px;text-align:left}.current-context{margin-top:8px;border-top:1px solid var(--line,#e8e8e8);padding-top:8px}\n' +
+      '.workspace{height:100%;overflow:auto;padding:32px 56px 36px 32px;background:var(--surface,#fff);scrollbar-width:thin;position:relative;container-type:inline-size}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:20px;align-items:start;padding-bottom:28px;max-width:1400px;margin:0 auto}.card{border:1px solid var(--line,#e8e8e8);border-radius:18px;padding:16px 12px 12px;background:var(--surface,#fff);min-width:0}.card-head{display:flex;align-items:center;gap:4px;position:relative;padding:0 4px 9px}.card h2{font-size:15px;line-height:1.5;margin:0;font-weight:600;display:flex;gap:10px;align-items:center;min-width:0;flex:1;letter-spacing:-.015em}.card h2 .theme-glyph{background:var(--bubble,#f4f4f4);width:32px;height:32px;border-radius:9px}.card .row{font-size:13px;padding:9px 12px}.card .members{margin-left:15px;border-left:1px solid var(--line,#e8e8e8);padding-left:8px}.card .old{margin-left:2px}.card .old-list{margin-left:18px}.card .more{padding-left:12px}.card-actions{color:var(--muted,#6e6e76)}.arrows{position:sticky;top:0;float:right;margin-right:-44px;display:grid;gap:6px;z-index:2;background:var(--surface,#fff);border:1px solid var(--line,#e8e8e8);border-radius:12px;padding:2px;box-shadow:0 2px 8px #00000004}.empty{color:var(--muted,#6e6e76);padding:80px 16px;text-align:center;grid-column:1/-1}.empty svg{margin:0 auto 16px}.empty p{margin:6px 0;font-size:13px}.empty strong{font-weight:500;color:var(--ink,#202123)}\n' +
+  ...
+      '.snippet-preview{display:block;font-size:12px;color:var(--muted,#646464);white-space:normal;max-height:3em;overflow:hidden;margin-left:8px;flex:1}.anchor-feedback{font-size:12px;color:var(--muted,#646464);padding:8px}.working-set .row{margin:3px 0}.toolbar .square{width:30px;height:32px}\n' +
+  +   '     查找已知项目与聊天   查找已知项目、聊天与已保存片段。原生搜索独立保留。    Native C  First preview  定位未确认，可使用原生搜索。  Second preview  '
+  -   '     查找已知项目与聊天   查找已知项目、聊天与已保存片段。原生搜索独立保留。    Native C  First preview  正在定位…  Second preview  '
+
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/search-snippets-renderer.test.mjs:42:582)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: ` \n:host{font:13px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink,#202123);--focus:#3877ba}\n*{box-sizing:border-box}[hidden]{display:none!important}button,a,input{font:inherit;color:inherit}button{cursor:pointer;border:0;background:transparent}button:hover,a:hover{background:var(--hover,#eee)}button:disabled{opacity:.35;cursor:default}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}a{text-decoration:none}svg{display:block;pointer-events:none}button{transition:background .14s ease} .square{width:34px;height:34px;border-radius:9px;display:inline-grid;place-items:center;flex:none}\n.toolbar{display:flex;align-items:center;gap:1px;color:var(--muted,#6e6e76);font-size:12px;padding:12px 4px 8px}.toolbar strong{font-weight:500;margin-right:auto}.themes{max-height:340px;overflow:auto;scrollbar-width:thin;padding:2px 3px 5px}.group{padding:2px 0}.theme-toggle{display:flex;gap:9px;align-items:center;padding:9px 8px;border-radius:9px;width:100%;text-align:left;font-weight:550;min-width:0}.theme-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.theme-glyph{width:22px;min-height:22px;display:inline-grid;place-items:center;flex:none;color:var(--muted,#6e6e76);font-size:18px;font-weight:400}.children{margin-left:18px;padding-left:7px;border-left:1px solid var(--line,#e8e8e8)}.row{display:block;padding:8px 10px;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}.row[aria-current=page]{background:var(--hover,#eee)}.row[aria-disabled=true]{opacity:.5}.old{display:grid;margin:6px 0 0 2px;color:var(--muted,#6e6e76);text-align:left}.old svg{transition:transform .16s ease}.old[aria-expanded=true] svg{transform:rotate(90deg)}.old-list{border-left:1px solid var(--line,#e8e8e8);margin:3px 0 0 18px;padding-left:7px}.more{font-size:12px;color:var(--muted,#6e6e76);padding:8px 10px;min-height:34px;border-radius:8px;text-align:left}.current-context{margin-top:8px;border-top:1px solid var(--line,#e8e8e8);padding-top:8px}\n.workspace{height:100%;overflow:auto;padding:32px 56px 36px 32px;background:var(--surface,#fff);scrollbar-width:thin;position:relative;container-type:inline-size}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:20px;align-items:start;padding-bottom:28px;max-width:1400px;margin:0 auto}.card{border:1px solid var(--line,#e8e8e8);border-radius:18px;padding:16px 12px 12px;background:var(--surface,#fff);min-width:0}.card-head{display:flex;align-items:center;gap:4px;position:relative;padding:0 4px 9px}.card h2{font-size:15px;line-height:1.5;margin:0;font-weight:600;display:flex;gap:10px;align-items:center;min-width:0;flex:1;letter-spacing:-.015em}.card h2 .theme-glyph{background:var(--bubble,#f4f4f4);width:32px;height:32px;border-radius:9px}.card .row{font-size:13px;padding:9px 12px}.card .members{margin-left:15px;border-left:1px solid var(--line,#e8e8e8);padding-left:8px}.card .old{margin-left:2px}.card .old-list{margin-left:18px}.card .more{padding-left:12px}.card-actions{color:var(--muted,#6e6e76)}.arrows{position:sticky;top:0;float:right;margin-right:-44px;display:grid;gap:6px;z-index:2;background:var(--surface,#fff);border:1px solid var(--line,#e8e8e8);border-radius:12px;padding:2px;box-shadow:0 2px 8px #00000004}.empty{color:var(--muted,#6e6e76);padding:80px 16px;text-align:center;grid-column:1/-1}.empty svg{margin:0 auto 16px}.empty p{margin:6px 0;font-size:13px}.empty strong{font-weight:500;color:var(--ink,#202123)}\n.search{max-width:780px;margin:0 auto;border:1px solid var(--line,#e8e8e8);border-radius:18px;padding:20px;position:relative}.search-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}.search-top strong{font-size:15px;font-weight:550;flex:1}.search input{background:var(--bubble,#f4f4f4);color:inherit;border:1px solid var(--line,#e8e8e8);border-radius:11px;padding:12px 14px;width:100%;outline-offset:2px}.search p{font-size:12px;color:var(--muted,#6e6e76);margin:12px 0 18px}.search-results{border-top:1px solid var(--line,#e8e8e8);padding-top:8px}.search .row{font-size:13px;padding:11px 12px}.search .no-results{padding:28px 12px;text-align:center;color:var(--muted,#6e6e76)}\n.menu{position:absolute;right:4px;top:42px;background:var(--surface,#fff);color:var(--ink,#202123);border:1px solid var(--line,#e8e8e8);border-radius:12px;padding:5px;min-width:156px;box-shadow:0 8px 24px #00000018;z-index:4}.menu button{display:block;width:100%;text-align:left;font-size:13px;padding:9px 12px;border-radius:7px}.card-head:has(.menu){z-index:3}.card:has(.menu){z-index:3}\n:host([data-vaiwl-compact="false"]) .row{padding-top:13px;padding-bottom:13px}@media(max-width:700px){.workspace{padding:20px 48px 24px 16px}.arrows{margin-right:-40px}.cards{gap:14px;grid-template-columns:1fr}.card{border-radius:15px}.search{padding:16px}}@media(prefers-reduced-motion:reduce){button,.old svg{transition:none}}\n\n/* Match the approved v2.7 core; all rules remain within owned shadow roots. */\n:host{font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif}\n.workspace{padding:24px 70px 36px 24px}.cards{gap:18px;max-width:1148px;margin:0}\n.card{border-radius:13px;padding:0;overflow:visible}.card-head{background:var(--bubble,#f4f4f4);border-bottom:1px solid var(--line,#e5e5e5);border-radius:12px 12px 0 0;min-height:48px;padding:10px 11px 10px 15px;gap:10px}\n.card h2{gap:11px;font-size:15px;line-height:22px;letter-spacing:0}.card h2 .theme-glyph{width:25px;height:25px;border-radius:7px;background:color-mix(in srgb,var(--bubble,#f4f4f4) 88%,var(--ink,#171717) 12%);color:inherit}.card .members{margin:8px 10px 9px 28px;padding-left:9px;border-color:var(--line,#d8d8d8)}\n.row{display:flex;align-items:center;gap:8px;min-width:0}.window-glyph{display:inline-flex;flex:none;color:var(--muted,#646464)}.window-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}\n.card .row{overflow:visible;position:relative;font-size:14px;line-height:22px;min-height:36px;padding:7px 6px 7px 9px;gap:8px}.card .row::before{content:"";position:absolute;left:-10px;top:18px;width:7px;border-top:1px solid var(--line,#d8d8d8);pointer-events:none}\n.card-actions{width:28px;height:28px;opacity:0}.card:hover .card-actions,.card:focus-within .card-actions{opacity:1}.card .old{width:30px;height:30px;margin:3px 0 0 2px}.card .old-list{margin:3px 0 0 -9px;padding:6px 0 0 9px;border-top:1px solid var(--line,#e5e5e5);border-left:0}.card .more{padding:5px 9px}\n.arrows{margin-right:-46px;background:transparent;border:0;box-shadow:none;padding:0;border-radius:0;top:0}.arrows button{width:32px;height:32px}\n.themes{max-height:340px}.theme-toggle{font-size:14px;min-height:39px;padding:8px}.theme-glyph{width:17px;min-height:17px}.theme-name{flex:1}.theme-disclosure{margin-left:auto}.theme-disclosure svg{width:12px;height:12px}.theme-toggle[aria-expanded=true] .theme-disclosure svg{transform:rotate(90deg)}.children .row{font-size:13px;min-height:34px;padding:5px;gap:6px}.children .window-glyph svg{width:12px;height:12px}\n@media(max-width:760px){.workspace{padding:15px 46px 24px 9px}.arrows{margin-right:-37px}.card-head{padding-left:11px}.card h2{gap:8px}.card-actions{opacity:1}.card{border-radius:13px}}\n@media(pointer:coarse){.card-actions{opacity:1}.card .row{min-height:44px}.old,.arrows button{min-height:40px}}\n.snippet-preview{display:block;font-size:12px;color:var(--muted,#646464);white-space:normal;max-height:3em;overflow:hidden;margin-left:8px;flex:1}.anchor-feedback{font-size:12px;color:var(--muted,#646464);padding:8px}.working-set .row{margin:3px 0}.toolbar .square{width:30px;height:32px}\n     查找已知项目与聊天   查找已知项目、聊天与已保存片段。原生搜索独立保留。    Native C  First preview  定位未确认，可使用原生搜索。  Second preview  `,
+    expected: ` \n:host{font:13px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink,#202123);--focus:#3877ba}\n*{box-sizing:border-box}[hidden]{display:none!important}button,a,input{font:inherit;color:inherit}button{cursor:pointer;border:0;background:transparent}button:hover,a:hover{background:var(--hover,#eee)}button:disabled{opacity:.35;cursor:default}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}a{text-decoration:none}svg{display:block;pointer-events:none}button{transition:background .14s ease} .square{width:34px;height:34px;border-radius:9px;display:inline-grid;place-items:center;flex:none}\n.toolbar{display:flex;align-items:center;gap:1px;color:var(--muted,#6e6e76);font-size:12px;padding:12px 4px 8px}.toolbar strong{font-weight:500;margin-right:auto}.themes{max-height:340px;overflow:auto;scrollbar-width:thin;padding:2px 3px 5px}.group{padding:2px 0}.theme-toggle{display:flex;gap:9px;align-items:center;padding:9px 8px;border-radius:9px;width:100%;text-align:left;font-weight:550;min-width:0}.theme-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.theme-glyph{width:22px;min-height:22px;display:inline-grid;place-items:center;flex:none;color:var(--muted,#6e6e76);font-size:18px;font-weight:400}.children{margin-left:18px;padding-left:7px;border-left:1px solid var(--line,#e8e8e8)}.row{display:block;padding:8px 10px;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}.row[aria-current=page]{background:var(--hover,#eee)}.row[aria-disabled=true]{opacity:.5}.old{display:grid;margin:6px 0 0 2px;color:var(--muted,#6e6e76);text-align:left}.old svg{transition:transform .16s ease}.old[aria-expanded=true] svg{transform:rotate(90deg)}.old-list{border-left:1px solid var(--line,#e8e8e8);margin:3px 0 0 18px;padding-left:7px}.more{font-size:12px;color:var(--muted,#6e6e76);padding:8px 10px;min-height:34px;border-radius:8px;text-align:left}.current-context{margin-top:8px;border-top:1px solid var(--line,#e8e8e8);padding-top:8px}\n.workspace{height:100%;overflow:auto;padding:32px 56px 36px 32px;background:var(--surface,#fff);scrollbar-width:thin;position:relative;container-type:inline-size}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:20px;align-items:start;padding-bottom:28px;max-width:1400px;margin:0 auto}.card{border:1px solid var(--line,#e8e8e8);border-radius:18px;padding:16px 12px 12px;background:var(--surface,#fff);min-width:0}.card-head{display:flex;align-items:center;gap:4px;position:relative;padding:0 4px 9px}.card h2{font-size:15px;line-height:1.5;margin:0;font-weight:600;display:flex;gap:10px;align-items:center;min-width:0;flex:1;letter-spacing:-.015em}.card h2 .theme-glyph{background:var(--bubble,#f4f4f4);width:32px;height:32px;border-radius:9px}.card .row{font-size:13px;padding:9px 12px}.card .members{margin-left:15px;border-left:1px solid var(--line,#e8e8e8);padding-left:8px}.card .old{margin-left:2px}.card .old-list{margin-left:18px}.card .more{padding-left:12px}.card-actions{color:var(--muted,#6e6e76)}.arrows{position:sticky;top:0;float:right;margin-right:-44px;display:grid;gap:6px;z-index:2;background:var(--surface,#fff);border:1px solid var(--line,#e8e8e8);border-radius:12px;padding:2px;box-shadow:0 2px 8px #00000004}.empty{color:var(--muted,#6e6e76);padding:80px 16px;text-align:center;grid-column:1/-1}.empty svg{margin:0 auto 16px}.empty p{margin:6px 0;font-size:13px}.empty strong{font-weight:500;color:var(--ink,#202123)}\n.search{max-width:780px;margin:0 auto;border:1px solid var(--line,#e8e8e8);border-radius:18px;padding:20px;position:relative}.search-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}.search-top strong{font-size:15px;font-weight:550;flex:1}.search input{background:var(--bubble,#f4f4f4);color:inherit;border:1px solid var(--line,#e8e8e8);border-radius:11px;padding:12px 14px;width:100%;outline-offset:2px}.search p{font-size:12px;color:var(--muted,#6e6e76);margin:12px 0 18px}.search-results{border-top:1px solid var(--line,#e8e8e8);padding-top:8px}.search .row{font-size:13px;padding:11px 12px}.search .no-results{padding:28px 12px;text-align:center;color:var(--muted,#6e6e76)}\n.menu{position:absolute;right:4px;top:42px;background:var(--surface,#fff);color:var(--ink,#202123);border:1px solid var(--line,#e8e8e8);border-radius:12px;padding:5px;min-width:156px;box-shadow:0 8px 24px #00000018;z-index:4}.menu button{display:block;width:100%;text-align:left;font-size:13px;padding:9px 12px;border-radius:7px}.card-head:has(.menu){z-index:3}.card:has(.menu){z-index:3}\n:host([data-vaiwl-compact="false"]) .row{padding-top:13px;padding-bottom:13px}@media(max-width:700px){.workspace{padding:20px 48px 24px 16px}.arrows{margin-right:-40px}.cards{gap:14px;grid-template-columns:1fr}.card{border-radius:15px}.search{padding:16px}}@media(prefers-reduced-motion:reduce){button,.old svg{transition:none}}\n\n/* Match the approved v2.7 core; all rules remain within owned shadow roots. */\n:host{font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif}\n.workspace{padding:24px 70px 36px 24px}.cards{gap:18px;max-width:1148px;margin:0}\n.card{border-radius:13px;padding:0;overflow:visible}.card-head{background:var(--bubble,#f4f4f4);border-bottom:1px solid var(--line,#e5e5e5);border-radius:12px 12px 0 0;min-height:48px;padding:10px 11px 10px 15px;gap:10px}\n.card h2{gap:11px;font-size:15px;line-height:22px;letter-spacing:0}.card h2 .theme-glyph{width:25px;height:25px;border-radius:7px;background:color-mix(in srgb,var(--bubble,#f4f4f4) 88%,var(--ink,#171717) 12%);color:inherit}.card .members{margin:8px 10px 9px 28px;padding-left:9px;border-color:var(--line,#d8d8d8)}\n.row{display:flex;align-items:center;gap:8px;min-width:0}.window-glyph{display:inline-flex;flex:none;color:var(--muted,#646464)}.window-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}\n.card .row{overflow:visible;position:relative;font-size:14px;line-height:22px;min-height:36px;padding:7px 6px 7px 9px;gap:8px}.card .row::before{content:"";position:absolute;left:-10px;top:18px;width:7px;border-top:1px solid var(--line,#d8d8d8);pointer-events:none}\n.card-actions{width:28px;height:28px;opacity:0}.card:hover .card-actions,.card:focus-within .card-actions{opacity:1}.card .old{width:30px;height:30px;margin:3px 0 0 2px}.card .old-list{margin:3px 0 0 -9px;padding:6px 0 0 9px;border-top:1px solid var(--line,#e5e5e5);border-left:0}.card .more{padding:5px 9px}\n.arrows{margin-right:-46px;background:transparent;border:0;box-shadow:none;padding:0;border-radius:0;top:0}.arrows button{width:32px;height:32px}\n.themes{max-height:340px}.theme-toggle{font-size:14px;min-height:39px;padding:8px}.theme-glyph{width:17px;min-height:17px}.theme-name{flex:1}.theme-disclosure{margin-left:auto}.theme-disclosure svg{width:12px;height:12px}.theme-toggle[aria-expanded=true] .theme-disclosure svg{transform:rotate(90deg)}.children .row{font-size:13px;min-height:34px;padding:5px;gap:6px}.children .window-glyph svg{width:12px;height:12px}\n@media(max-width:760px){.workspace{padding:15px 46px 24px 9px}.arrows{margin-right:-37px}.card-head{padding-left:11px}.card h2{gap:8px}.card-actions{opacity:1}.card{border-radius:13px}}\n@media(pointer:coarse){.card-actions{opacity:1}.card .row{min-height:44px}.old,.arrows button{min-height:40px}}\n.snippet-preview{display:block;font-size:12px;color:var(--muted,#646464);white-space:normal;max-height:3em;overflow:hidden;margin-left:8px;flex:1}.anchor-feedback{font-size:12px;color:var(--muted,#646464);padding:8px}.working-set .row{margin:3px 0}.toolbar .square{width:30px;height:32px}\n     查找已知项目与聊天   查找已知项目、聊天与已保存片段。原生搜索独立保留。    Native C  First preview  正在定位…  Second preview  `,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/search-snippets-renderer.test.mjs:42:54
+✖ late locate result cannot overwrite changed stop (0.196542ms)
+  TypeError: Cannot read properties of null (reading 'workspace')
+      at Object.pane (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/search-snippets-renderer.test.mjs:35:448)
+      at Object.text (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/search-snippets-renderer.test.mjs:38:485)
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/search-snippets-renderer.test.mjs:42:535)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

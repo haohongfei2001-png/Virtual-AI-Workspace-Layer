@@ -1,0 +1,147 @@
+{
+  "evidence": "S_REAL_OLD_HOST_TO_CURRENT_HOST_SAME_EXTENSION_ID",
+  "compatibility": "OLD_HOST_ASSETS_ONLY_NOT_SCHEMA_2_MIGRATION",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "steps": [
+    {
+      "name": "archived-Host-real-backup-UI-preview-and-human-asset-import",
+      "status": "PASS",
+      "assets": {
+        "database": "vaiwl-b1-v1",
+        "version": 3,
+        "assetHash": "661827c079ee82af88bf62880c1617fc015bae72b4b0697db2df73f881501b9e",
+        "identities": 1,
+        "snippets": 1,
+        "workspaces": 1,
+        "placements": 1,
+        "workingSet": 1,
+        "humanRefs": 1
+      }
+    }
+  ],
+  "limitations": [
+    "Historical Host already uses schema 3; this route does not prove schema-2 migration",
+    "Synthetic Pro schema compatibility is a separate evidence route"
+  ],
+  "sourceCommit": "e4e464f09da02ab640874f94b94633948e76460c",
+  "runnerFixtureHashes": {
+    "historical-host-upgrade.mjs": "6cab085c3ad55abe87245b79c942924ff2ffbd5d80780625a40bbeb638ba2170",
+    "historical-host-runtime.mjs": "9adc37ae04aa30548d3623465b436acfa2ecc4b4c9bcb65a7a2ed24af5735c1e",
+    "historical-package.mjs": "2dbd70e9ff7e759c0d3c6358bc553296b8d86581ff121656ca3b89a2719c9262",
+    "native-visibility-browser.mjs": "9661985c6ee149033b9653957e1e45d89b45feed6d67b1f8346838d187a9830a",
+    "isolated-browser-cleanup.mjs": "c3d4a053d485efbd86a487ac1e4257849120b30939e63be346ceceaaea2fafb0",
+    "historical-network-guard.mjs": "e38719134f6087c3efbc66044922967262a6c2e585c11a7ee69b5016b22dc416",
+    "fixtures/j4-assets.mjs": "12e97fd7b3b9819039a28b404d071608953ce6bcbb91b4047c7ba8495c029bdd",
+    "fixtures/server.mjs": "dbc6d2e56fd3e2f0cf7d8867389c35c258d9b7937a449fddf5197f6380fde3d5"
+  },
+  "oldSource": {
+    "commit": "a8addaa9e014f22704a459d6ee126e8f80ead571",
+    "archiveHash": "2e62167a777672ae074b18dd95144d76f0a9d2a3823167fbba76a943174b8483",
+    "paths": [
+      "src",
+      "simulator",
+      "extension"
+    ]
+  },
+  "oldBuild": {
+    "archive": "2ecc6f85eef59ed62350cfe93fb62121f4b224bf5fe5b9aaf4c079901864f6c5",
+    "manifest": "13bab52aafb631dc246fb661b4545702b71c93623b1593e7e2d04c873d74c879"
+  },
+  "currentBuild": {
+    "archive": "78f4d94070e633849a3902decc8a85cd204837420ecb040708725256577ac669",
+    "manifest": "d1eab2c75d60c037248a52141ab07ff3d793178f2a670c89876f5f6389f6841e"
+  },
+  "browserPrecondition": {
+    "transport": "isolated-loopback-CDP",
+    "noDefaults": true,
+    "headed": true,
+    "focusEmulation": "NOT_ENABLED_BY_PLAYWRIGHT",
+    "source": "Playwright connectOverCDP noDefaults public option; native Chromium capturer is session-owned"
+  },
+  "extensionId": "edndimlfiogmapmfihdcnljplgpicmnj",
+  "updatedSlotHash": "8f6fee76e0293559d389896953a1a0a4928ece1444b8855b7a12e5f0f9589b86",
+  "runtimeUpdate": {
+    "scope": "CRITICAL_RUNTIME_MANIFEST_CONTRACT_NOT_ALL_MANIFEST_BYTES",
+    "api": "chrome.runtime.reload",
+    "documentation": "https://developer.chrome.com/docs/extensions/reference/api/runtime#method-reload",
+    "before": {
+      "manifest_version": 3,
+      "version": "0.3.0",
+      "permissions": [
+        "webNavigation"
+      ],
+      "host_permissions": [
+        "http://127.0.0.1/*"
+      ],
+      "background": {
+        "service_worker": "extension/worker.mjs",
+        "type": "module"
+      },
+      "content_scripts": [
+        {
+          "all_frames": false,
+          "js": [
+            "content.js"
+          ],
+          "matches": [
+            "http://127.0.0.1/*"
+          ],
+          "run_at": "document_idle"
+        }
+      ],
+      "web_accessible_resources": [
+        {
+          "matches": [
+            "http://127.0.0.1/*"
+          ],
+          "resources": [
+            "extension/config.mjs",
+            "extension/content-entry.mjs",
+            "extension/sidebar.mjs",
+            "extension/workspace.mjs",
+            "sidebar.html",
+            "src/b1/identity.mjs",
+            "src/data/cooperate.mjs",
+            "src/data/free-time-policy.mjs",
+            "src/data/read-recovery-budget.mjs",
+            "src/data/request-deadline.mjs",
+            "src/host/backup-transfer.mjs",
+            "src/host/chatgpt-adapter.mjs",
+            "src/host/content-session.mjs",
+            "src/host/contract.mjs",
+            "src/host/current-body-discovery.mjs",
+            "src/host/frame-native-plans.mjs",
+            "src/host/free-frame-backup.mjs",
+            "src/host/free-frame-client.mjs",
+            "src/host/free-frame-recovery.mjs",
+            "src/host/native-actions.mjs",
+            "src/host/native-send-intent.mjs",
+            "src/host/surface-controller.mjs",
+            "src/host/surface-discovery.mjs",
+            "src/host/ui-frame-client.mjs",
+            "src/host/url-policy.mjs",
+            "src/navigation/current-index.mjs",
+            "src/navigation/free-recovery.mjs",
+            "src/navigation/free-view.mjs",
+            "src/navigation/icons.mjs",
+            "src/navigation/mount-surface.mjs",
+            "src/navigation/navigation.mjs",
+            "src/navigation/projection.mjs",
+            "src/navigation/search.mjs",
+            "src/navigation/styles.mjs",
+            "workspace.html"
+          ]
+        }
+      ],
+      "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:36987"
+      }
+    },
+    "reloadRequested": true,
+    "lastReadError": "page.goto: net::ERR_BLOCKED_BY_CLIENT at chrome-extension://edndimlfiogmapmfihdcnljplgpicmnj/workspace.html\nCall log:\n  - navigating to \"chrome-extension://edndimlfiogmapmfihdcnljplgpicmnj/workspace.html\", waiting until \"load\"\n"
+  },
+  "status": "FAIL",
+  "error": "Error: historical-host-runtime-unavailable\n    at ensureUpdatedRuntime (file:///home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/historical-host-runtime.mjs:8:18)\n    at async file:///home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/historical-host-upgrade.mjs:21:2",
+  "failurePresentation": null
+}

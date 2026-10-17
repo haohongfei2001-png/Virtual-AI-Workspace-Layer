@@ -1,0 +1,98 @@
+{
+  "evidence": "REAL_HEADLESS_MV3_UI_GRANT_FIXED_PROBE_NOT_J1",
+  "liveChatGPT": "NOT_RUN",
+  "renderer": "FIXED_SYNTHETIC_MARKER_AFTER_REAL_GRANT",
+  "sourceHashes": {
+    "src/host/ui-frame-client.mjs": "c15461f28139d345c2d31a05f160f223708a656910c9244ffd8afa3fbeb3c1d7",
+    "src/host/surface-controller.mjs": "d4898875cdf0160e7c655a4d3ae593ec7d3b44eb19ae49c76027e02a8717f3da",
+    "src/navigation/mount-surface.mjs": "d8ed4ee322a55df4a8498c7065f61b6d0ebd709a8c2a2febba142fcc21900c35",
+    "src/runtime/host-ui-owner.mjs": "fcaa243424e69e76de4c2f419ac5be0f8f60091848cc2936078e63cdec329d16",
+    "src/runtime/host-binding-service.mjs": "033c8cbed58ba72231c43dbb9e8ebf1edc5af17bbb5834b62cbc3737e90d8486",
+    "src/host/ui-grants.mjs": "095790e5508d775889a96301cd034fa5d3a00c87e1413daead54f3d1216ffaba",
+    "src/host/chatgpt-adapter.mjs": "44fb724b6ad0bcdf04d5e10cd27403c6d595f618c9bd4cdcd2aa60a1eef0181b"
+  },
+  "results": [
+    {
+      "name": "real-dual-role-grants-foreign-WAR-denied-native-input-manual-return-dialog",
+      "status": "PASS"
+    }
+  ],
+  "lifecycle": [
+    {
+      "operation": "invalidate",
+      "jsMode": "OWNER_DOCUMENT_INVALIDATION",
+      "draft": true,
+      "readingVisible": true,
+      "popoverCount": 0,
+      "frames": [
+        {
+          "unreachable": true,
+          "privateVisible": false
+        },
+        {
+          "unreachable": true,
+          "privateVisible": false
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "operation": "disconnect",
+      "jsMode": "NORMAL_JS_PORT_DISCONNECT",
+      "draft": true,
+      "readingVisible": true,
+      "popoverCount": 0,
+      "frames": [
+        {
+          "unreachable": true,
+          "privateVisible": false
+        },
+        {
+          "unreachable": true,
+          "privateVisible": false
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "operation": "disable",
+      "jsMode": "ACTUAL_EXTENSION_LIFECYCLE_NOT_PROCESS_HARD_KILL",
+      "draft": true,
+      "readingVisible": true,
+      "popoverCount": 0,
+      "frames": [
+        {
+          "unreachable": true,
+          "privateVisible": false
+        },
+        {
+          "unreachable": true,
+          "privateVisible": false
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "operation": "uninstall",
+      "jsMode": "ACTUAL_EXTENSION_LIFECYCLE_NOT_PROCESS_HARD_KILL",
+      "draft": true,
+      "readingVisible": true,
+      "popoverCount": 0,
+      "frames": [
+        {
+          "unreachable": true,
+          "privateVisible": false
+        },
+        {
+          "unreachable": true,
+          "privateVisible": false
+        }
+      ],
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "temporaryPackage": "/private/tmp/vaiwl-host-ui-cApnr7/extension",
+  "status": "PASS",
+  "sourceChangedDuringRun": false
+}

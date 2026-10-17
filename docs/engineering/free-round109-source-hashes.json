@@ -1,0 +1,20 @@
+{
+  "src/host/content-session.mjs": "7977b1fe066ba46f73fb16aa453ba53bd94392467085a026b3a3f96072dbcdbe",
+  "src/host/free-frame-client.mjs": "f4bde77f6d746a27d7c7fa934bc532da8257f6337c33707eaee70dd6d4ca269e",
+  "src/host/surface-controller.mjs": "54d5b7e988b779471f2773374c9e588f7d5636483b72fd282019cd5a6729de6f",
+  "src/host/ui-frame-client.mjs": "8eb7e144853fa78d8f9ec1142f6fe50e5495738961a9d1e4d74539210d50d9e8",
+  "src/navigation/navigation.mjs": "55e7e1898032b3ace04f6863672b302e15c9096813d4287e228256455b03b6c1",
+  "src/runtime/free-view-owner.mjs": "7624b78d28a799cc8523717c96578d3d3c7fcf65ceb1ac8a70ef02ca1074ab36",
+  "src/runtime/host-binding-service.mjs": "fba57a58da845e03171db0245b9dd0d656029c0cedda034633db0c63b4ade882",
+  "src/runtime/host-ui-owner.mjs": "f14e79068b0050606a9d39da7e44b3ba7d0b6b021e5ab12dbe9116afc1120c29",
+  "src/runtime/host-view-service.mjs": "87122df354b05c6e64abd417c4bbccbdb90d72a978c4c54ffda3d25ee39fc5d1",
+  "tests/host/content-session.test.mjs": "e4dd1faf2e7f810163fab5f78b416c2d4104bc71e5af596e1b188f94ebd18f38",
+  "tests/host/frame-projection-renderer.test.mjs": "317eb04c745d1674b29e6ac48505fadb263f2c7d98db260578b56139f2c4c05f",
+  "tests/host/free-frame-client.test.mjs": "648957e13aa8c68b17344e87fb903ff4d2636dd450b92c09c4dab14f8b739975",
+  "tests/host/free-view-owner.test.mjs": "ea651241bef28bd3ea64769464d94d32d7d931a95f2cfeb97f7eb6ac33b61bb5",
+  "tests/host/host-view-service.test.mjs": "255466a8b6b92bc7f05b64cb385deadafa8a3b4568bb74ecd4120496ba82e23b",
+  "tests/host/package-mv3-browser.mjs": "03cdb816a8c5fc9e311444bf811709617dcb43883a3c2967fc3f28f625e3b417",
+  "tests/host/surface-controller.test.mjs": "cc01b7a328ac71c86f3a3cf66acd8c70cb172c52433d0db550fa2efa1152dad0",
+  "tests/host/ui-frame-client.test.mjs": "93739b4b48410173a146321035c788fa7f17e8dc945477bd99ed273fe8a935e0",
+  "tests/host/ui-owner.test.mjs": "23abc589f40d0a4a386e912933559683d75c41696da9257a9f8e42d58839d06c"
+}

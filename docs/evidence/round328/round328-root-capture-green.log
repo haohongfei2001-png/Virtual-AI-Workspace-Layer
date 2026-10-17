@@ -1,0 +1,19 @@
+✔ default legacy writer still publishes checksummed root and reference piece (3.256958ms)
+✔ internal capture receives one validated naked payload without publishing a legacy root (0.478541ms)
+✔ capture validates illegal metadata before calling the callback or publishing root (0.39975ms)
+✔ capture preserves invalid manifest size metadata rejection (0.225333ms)
+✔ capture retains the actual 16 MiB manifest boundary with otherwise valid change rows (37.299625ms)
+✔ capture callback errors propagate to the transaction owner (0.318833ms)
+✔ directory rejects missing internal root capture (0.402875ms)
+✔ directory rejects duplicate internal root capture (0.1725ms)
+✔ directory rejects different-return internal root capture (0.178958ms)
+✔ directory capture publishes only its actual checksummed root and preserves the piece (0.4455ms)
+✔ directory owner writes remain recoverable after captured-root mutation and checksum corruption (9.313458ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 107.602708

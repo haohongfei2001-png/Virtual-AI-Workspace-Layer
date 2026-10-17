@@ -1,0 +1,8 @@
+{
+  "src/host/free-frame-client.mjs": "e11cdabbfff754d92156269be6cac4d6ee4f4991624d9638b3893abba8069621",
+  "src/host/surface-discovery.mjs": "1a452fecdc4363d101c64e47922e7a5ee56eb34e68f279c953d1eefaab1b03ff",
+  "src/runtime/host-send-candidates.mjs": "7a5c4cae0aa89403bcc2427454780ece38e139bb1cd73fd445387e30ca8efcc0",
+  "tests/host/free-frame-client.test.mjs": "fc77ca57f8da5b32d6eea2507f1f9121178324b08cf55db8542dc96f8e0d4514",
+  "tests/host/host-send-candidates.test.mjs": "5e9b21374ec0fb9123c37738c49571cc6d68a7d7c8cdcfb7e113d72999a028a3",
+  "tests/host/surface-discovery-browser.mjs": "569b3cf46057fa37f41d82957f1fd2ea6686f7455bf9f0d9cdfa654243613aca"
+}

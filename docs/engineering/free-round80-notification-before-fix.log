@@ -1,0 +1,47 @@
+✔ MOCK service only accepted observations notify; duplicate and rejected carry no new data hint (8.873167ms)
+✔ MOCK accepted other-scope observation never notifies prior-scope frame (1.21125ms)
+✔ MOCK expired document binding suppresses dirty hint even if UI grant was renewed (0.758ms)
+✖ MOCK accepted SPA observation uses current verified frame scope rather than stale sender URL (1.480834ms)
+✔ host-dom TTL boundary retains native names, empty Projects and known membership without current completeness (2.16425ms)
+✔ synthetic TTL behavior remains unchanged (0.337083ms)
+✔ source-only partial update cannot extend old row freshness or member completeness (0.323083ms)
+✔ expired source cannot leave a longer-lived row current (0.182208ms)
+✔ explicit source revocation and unavailable native objects never revive as last-known (0.2565ms)
+✔ future observations cannot acquire last-known names or relationships (0.146208ms)
+✔ invalid admission, cross-scope and orphan generation cannot be rescued by last-known projection (0.360208ms)
+✔ fresh explicit UNKNOWN supersedes an old host membership (0.203334ms)
+✔ fresh explicit NONE supersedes an old host membership (0.31125ms)
+✔ fresh explicit PROJECT supersedes an old host membership (0.237666ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 13
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 66.20575
+
+✖ failing tests:
+
+test at tests/host/host-binding-service.test.mjs:11:1
+✖ MOCK accepted SPA observation uses current verified frame scope rather than stale sender URL (1.480834ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + []
+  - [
+  -   {
+  -     type: 'VAIWL_UI_DATA_CHANGED'
+  -   }
+  - ]
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-binding-service.test.mjs:11:280)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ { type: 'VAIWL_UI_DATA_CHANGED' } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

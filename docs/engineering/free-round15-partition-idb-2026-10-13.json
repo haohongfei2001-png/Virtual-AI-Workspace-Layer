@@ -1,0 +1,95 @@
+{
+  "evidence": "REAL_BROWSER_INDEXEDDB_SYNTHETIC_PARTITION_CONTRACTS",
+  "headless": true,
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "src/data/partitioned.mjs": "fe9d60797cff1604280a67886019c6c90f76013d1284333c7cd8be3bd088787a",
+    "src/data/repository.mjs": "f90209e978c050f5d63a6f7c026d572c4321b92dc82e6d1ed06f6c7b3275c3a4",
+    "tests/f1/native-partition-cases.mjs": "b4d707cd427b256868bc4d2b6f0f25db457ee2f60812cc8b5f377894a6022d2b"
+  },
+  "sourceChangedDuringRun": false,
+  "results": [
+    {
+      "name": "PART01 bounded storage preserves all original 120/604 projections and canonical refs",
+      "status": "PASS"
+    },
+    {
+      "name": "PART02 the original CAS/idempotence transaction has one winner across connections",
+      "status": "PASS"
+    },
+    {
+      "name": "PART03 far-reference move and targeted undo use original human patches",
+      "status": "PASS"
+    },
+    {
+      "name": "PART04 repeated initialization cannot overwrite immutable live human pieces",
+      "status": "PASS"
+    },
+    {
+      "name": "PART05 mixed revisions and incomplete view replicas are rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "PART06 revocation updates all evidence projections without rewriting reference pieces",
+      "status": "PASS"
+    },
+    {
+      "name": "PART07 damaged view leaves intact assets and unknown scope is rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "PART08 A/B same ref IDs remain distinct",
+      "status": "PASS"
+    },
+    {
+      "name": "PART09 checkpoint retains previous immutable pieces and latest manual assets recover",
+      "status": "PASS"
+    },
+    {
+      "name": "PART10 v2 storage migration preserves latest human revision and revoked sources",
+      "status": "PASS"
+    },
+    {
+      "name": "PART11 asset backup includes latest manual references and preferences, dry-run is read-only",
+      "status": "PASS"
+    },
+    {
+      "name": "PART12 checkpoint plus latest workset preference restores reference dependencies safely",
+      "status": "PASS"
+    },
+    {
+      "name": "PART13 ingestion cannot reuse a global evidence ID in another reference partition",
+      "status": "PASS"
+    },
+    {
+      "name": "PART14 native quota failure cannot publish a manifest or success receipt",
+      "status": "PASS"
+    },
+    {
+      "name": "PART15 revocation after native put aborts pieces, checkpoint and receipt together",
+      "status": "PASS"
+    },
+    {
+      "name": "PART16 incremental replicas preserve canonical reference order and exact projection semantics",
+      "status": "PASS"
+    },
+    {
+      "name": "PART17 affected-theme projection matches full reads across membership, order, preferences and source revocation",
+      "status": "PASS"
+    },
+    {
+      "name": "PART18 a missing published root with trusted history is corruption, never an empty workspace",
+      "status": "PASS"
+    },
+    {
+      "name": "PART19 synchronous and yielding manifests keep the original 16Mi JSON guard",
+      "status": "PASS"
+    },
+    {
+      "name": "PART20 damaged immutable evidence piece fails closed without erasing intact human assets",
+      "status": "PASS"
+    }
+  ],
+  "pass": 20,
+  "fail": 0
+}

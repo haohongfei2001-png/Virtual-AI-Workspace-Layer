@@ -1,0 +1,47 @@
+{
+  "evidence": "REAL_HEADLESS_DOM_CLIENT_BROKER_SYNTHETIC_OWNER_VIRTUAL_CLOCK",
+  "realChatGPT": "NOT_RUN",
+  "persistenceCertification": "NOT_CLAIMED",
+  "sourceHashes": {
+    "simulator/client.mjs": "761c1ca8e789eb71abeb47799682b205b3145ac8d1642f8074fb6fc5fa9c5a56",
+    "src/b1/document-binding-broker.mjs": "1f57e9524fc10455cee1e96f402e7147e99dabd859e845e41c22eba3301b5607",
+    "src/navigation/free-editor.mjs": "189c1c0d6355ca53a18ead419d9007f75c82f9504c06955707d33647e6425b6b",
+    "src/data/read-recovery-budget.mjs": "7c7948a740dcc37f9a2a6b25babe8c29cd2d84441299c1429c7e524402cc8c51",
+    "tests/free/read-budget-scope-browser.mjs": "e9f6acdec663cbe6a25ce62b3daa1d96ce4bb355693ff8571645493adc5cba44"
+  },
+  "timeout": {
+    "status": {
+      "state": "WAITING",
+      "reason": "read-budget-exhausted"
+    },
+    "oldConnected": false,
+    "feedback": "工作空间加载超时，原生聊天仍可使用。重新连接派生工作空间",
+    "requests": 8
+  },
+  "accountB": {
+    "urlUnchanged": true,
+    "oldConnected": false,
+    "settingsPresent": false,
+    "bodyLeaksFile": false,
+    "sameInput": true,
+    "draft": "跨账户仍未提交的原生草稿"
+  },
+  "freshB": {
+    "differentDialog": true,
+    "differentFile": true,
+    "fileCount": 0
+  },
+  "returnA": {
+    "urlUnchanged": true,
+    "oldConnected": false,
+    "settingsPresent": false,
+    "sameInput": true,
+    "draft": "跨账户仍未提交的原生草稿"
+  },
+  "freshA": {
+    "differentDialog": true,
+    "fileCount": 0
+  },
+  "sourceChangedDuringRun": false,
+  "result": "PASS"
+}

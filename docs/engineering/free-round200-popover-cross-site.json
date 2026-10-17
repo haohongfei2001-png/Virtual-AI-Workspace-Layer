@@ -1,0 +1,285 @@
+{
+  "evidence": "WEB_MECHANISM_ONLY_MINIMAL_MANUAL_POPOVER_EXPERIMENT",
+  "scope": "No VAIWL source, renderer, extension or worker. OOPIF is reported only when CDP confirms a matching iframe target; cross-origin alone does not prove OOPIF. No MV3 equivalence claimed.",
+  "scriptHash": "3267d3fedb8149397d7f79ad37da691f239290cf4bb5f4fc11130e6c33957b7d",
+  "cases": [
+    {
+      "popover": true,
+      "crossOrigin": true,
+      "crossSite": true,
+      "originCase": "cross-site",
+      "mode": "FRESH_PAGE_IMMEDIATE_NO_ADDED_WAIT",
+      "iframeTargets": [
+        {
+          "targetId": "98CB918B94AC865B6E3C602BADC9CBCF",
+          "type": "iframe",
+          "url": "http://localhost:58316/"
+        },
+        {
+          "targetId": "4917B8465A979AC8E3B07FF4B807EB1A",
+          "type": "iframe",
+          "url": "http://localhost:58316/"
+        }
+      ],
+      "oopifConfirmed": true,
+      "processClassification": "OOPIF_TARGET_CONFIRMED",
+      "actualChildURL": "http://localhost:58316/",
+      "before": {
+        "rect": {
+          "x": 50,
+          "y": 80,
+          "width": 120,
+          "height": 40,
+          "top": 80,
+          "right": 170,
+          "bottom": 120,
+          "left": 50
+        },
+        "connected": true,
+        "hit": "target"
+      },
+      "clicked": 1,
+      "childEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021660530.9001,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021660531,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021660531.1,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021660531.1,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021660531.1,
+          "x": 110,
+          "y": 100
+        }
+      ],
+      "parentEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021660494.5,
+          "x": 358.75,
+          "y": 70
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021660494.6,
+          "x": 358,
+          "y": 70
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021660494.6,
+          "x": 358.75,
+          "y": 70
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021660494.6,
+          "x": 358,
+          "y": 70
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021660494.6,
+          "x": 358,
+          "y": 70
+        }
+      ],
+      "state": {
+        "workspaceOpen": false,
+        "sidebarOpen": true
+      },
+      "screenshot": "/private/tmp/manual-popover-hit-fLogKu/popover-cross-site.png",
+      "status": "OBSERVED_SUCCESS_NOT_MV3_ACCEPTANCE"
+    },
+    {
+      "popover": false,
+      "crossOrigin": true,
+      "crossSite": true,
+      "originCase": "cross-site",
+      "mode": "FRESH_PAGE_IMMEDIATE_NO_ADDED_WAIT",
+      "iframeTargets": [
+        {
+          "targetId": "EAD76A441DD2DB6B95F3DBDDC825FABE",
+          "type": "iframe",
+          "url": "http://localhost:58316/"
+        },
+        {
+          "targetId": "819AFC414678376BF43EB62E1C152302",
+          "type": "iframe",
+          "url": "http://localhost:58316/"
+        }
+      ],
+      "oopifConfirmed": true,
+      "processClassification": "OOPIF_TARGET_CONFIRMED",
+      "actualChildURL": "http://localhost:58316/",
+      "before": {
+        "rect": {
+          "x": 50,
+          "y": 80,
+          "width": 120,
+          "height": 40,
+          "top": 80,
+          "right": 170,
+          "bottom": 120,
+          "left": 50
+        },
+        "connected": true,
+        "hit": "target"
+      },
+      "clicked": 1,
+      "childEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021660741.1,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021660741.2,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021660741.2,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021660741.2,
+          "x": 110,
+          "y": 100
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "target",
+          "trusted": true,
+          "epochMs": 1792021660741.2,
+          "x": 110,
+          "y": 100
+        }
+      ],
+      "parentEvents": [
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021660703.5999,
+          "x": 358.75,
+          "y": 70
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021660703.7,
+          "x": 358,
+          "y": 70
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021660703.7,
+          "x": 358.75,
+          "y": 70
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021660703.8,
+          "x": 358,
+          "y": 70
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "close",
+          "trusted": true,
+          "epochMs": 1792021660703.8,
+          "x": 358,
+          "y": 70
+        }
+      ],
+      "state": {
+        "workspaceOpen": false,
+        "sidebarOpen": true
+      },
+      "screenshot": "/private/tmp/manual-popover-hit-fLogKu/plain-cross-site.png",
+      "status": "OBSERVED_SUCCESS_NOT_MV3_ACCEPTANCE"
+    }
+  ],
+  "blockedExternal": [],
+  "browserVersion": "155.0.8059.40",
+  "status": "MECHANISM_CASES_SUCCEEDED_NOT_CERTIFIED",
+  "scriptChangedDuringRun": false
+}

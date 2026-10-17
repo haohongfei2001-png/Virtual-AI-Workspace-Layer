@@ -1,0 +1,115 @@
+✖ MOCK_IDB explicit snapshot retry terminal keeps one token across VIEW and background notifications (136.793459ms)
+✖ MOCK_IDB explicit snapshot retry consumes token once and duplicate cannot replace its pending read (111.302083ms)
+✖ MOCK_IDB explicit snapshot retry has a new bounded failure token and rejects its predecessor (108.717292ms)
+✖ MOCK_IDB explicit snapshot retry refuses malformed token and locate combinations without consuming terminal (108.59825ms)
+✖ MOCK_IDB explicit snapshot retry token cannot cross mount or newly authenticated scope (108.816291ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 634.818333
+
+✖ failing tests:
+
+test at tests/host/host-view-service.test.mjs:715:1
+✖ MOCK_IDB explicit snapshot retry terminal keeps one token across VIEW and background notifications (136.793459ms)
+  AssertionError [ERR_ASSERTION]: retryable terminal must carry a worker-issued token
+  + actual - expected
+  
+  + 'undefined'
+  - 'string'
+  
+      at assertSnapshotRetryToken (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-view-service.test.mjs:714:49)
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-view-service.test.mjs:716:56)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'string',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/host-view-service.test.mjs:724:1
+✖ MOCK_IDB explicit snapshot retry consumes token once and duplicate cannot replace its pending read (111.302083ms)
+  AssertionError [ERR_ASSERTION]: retryable terminal must carry a worker-issued token
+  + actual - expected
+  
+  + 'undefined'
+  - 'string'
+  
+      at assertSnapshotRetryToken (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-view-service.test.mjs:714:49)
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-view-service.test.mjs:725:56)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'string',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/host-view-service.test.mjs:734:1
+✖ MOCK_IDB explicit snapshot retry has a new bounded failure token and rejects its predecessor (108.717292ms)
+  AssertionError [ERR_ASSERTION]: retryable terminal must carry a worker-issued token
+  + actual - expected
+  
+  + 'undefined'
+  - 'string'
+  
+      at assertSnapshotRetryToken (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-view-service.test.mjs:714:49)
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-view-service.test.mjs:735:56)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'string',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/host-view-service.test.mjs:741:1
+✖ MOCK_IDB explicit snapshot retry refuses malformed token and locate combinations without consuming terminal (108.59825ms)
+  AssertionError [ERR_ASSERTION]: retryable terminal must carry a worker-issued token
+  + actual - expected
+  
+  + 'undefined'
+  - 'string'
+  
+      at assertSnapshotRetryToken (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-view-service.test.mjs:714:49)
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-view-service.test.mjs:742:56)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'string',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/host/host-view-service.test.mjs:748:1
+✖ MOCK_IDB explicit snapshot retry token cannot cross mount or newly authenticated scope (108.816291ms)
+  AssertionError [ERR_ASSERTION]: retryable terminal must carry a worker-issued token
+  + actual - expected
+  
+  + 'undefined'
+  - 'string'
+  
+      at assertSnapshotRetryToken (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-view-service.test.mjs:714:49)
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/host-view-service.test.mjs:749:56)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'string',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

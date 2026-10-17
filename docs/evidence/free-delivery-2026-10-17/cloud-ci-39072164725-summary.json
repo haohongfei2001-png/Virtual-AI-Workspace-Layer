@@ -1,0 +1,175 @@
+{
+  "kind": "PUBLIC_CI_FACTS_NOT_RELEASE_ACCEPTANCE",
+  "sourceCommit": "23385f1f960061385e883365bb421120bf8e222e",
+  "run": 39072164725,
+  "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39072164725",
+  "conclusion": "failure",
+  "jobs": {
+    "node-contracts": "success",
+    "offline-journeys": "failure",
+    "offline-j4-lifecycle": "success",
+    "offline-durability-compat": "failure"
+  },
+  "formal10k": {
+    "status": "FAIL",
+    "phase": "visible-native-member-progress",
+    "error": "Error: host-scale-member-deadline\n    at Timeout.<anonymous> (file:///home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/fixtures/host-scale-member-progress.mjs:59:320)\n    at listOnTimeout (node:internal/timers:685:17)\n    at process.processTimers (node:internal/timers:618:7)",
+    "originalDeadlineMs": 30000,
+    "requiredCompleteAudits": 2,
+    "progress": {
+      "stage": "native-before",
+      "stageStarted": 35884.673963,
+      "inFlight": true,
+      "frameGeneration": 1,
+      "auditAttempts": 0,
+      "lastTail": {
+        "status": "PENDING_MEMBER",
+        "revision": 212,
+        "frameGeneration": 1
+      },
+      "audits": [],
+      "attempts": 147,
+      "stableRevision": null,
+      "elapsedMs": 29317.841370000002,
+      "stageElapsedMs": 0.8635480000011739
+    },
+    "postFailureInventory": {
+      "acceptance": "NOT_ESTABLISHED",
+      "evidence": "DIAGNOSTIC_ROOT_INVENTORY_ONLY",
+      "status": "POINT_IN_TIME_ROOT_SNAPSHOT",
+      "consistency": "SINGLE_READONLY_TRANSACTION_NOT_INTERVAL_STABILITY",
+      "format": "VERSION_INDEX",
+      "revision": 213,
+      "inventoryRefs": 5871,
+      "inventoryProjects": 1,
+      "sources": 1,
+      "revokedSources": 0,
+      "sourceRevisionMin": 212,
+      "sourceRevisionMax": 212,
+      "continuationWitness": false,
+      "queueState": "NOT_READ"
+    },
+    "inventoryIsAcceptance": false,
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "manifestChangedDuringRun": false,
+    "temporaryDirectoryRemoved": true
+  },
+  "failureOnlyDiagnostic": {
+    "acceptance": "NOT_ESTABLISHED",
+    "status": "FAIL",
+    "workerCPU": "CAPTURED",
+    "nativePageCPU": "CAPTURED",
+    "phaseSnapshot": "CAPTURED",
+    "cleanup": {
+      "status": "SUCCEEDED"
+    },
+    "instrumentedPackageUnchanged": true,
+    "formalFailurePreserved": true
+  },
+  "j4": {
+    "status": "PARTIAL_J4_NOT_ACCEPTED",
+    "steps": 23,
+    "allStepsPass": true,
+    "peerAutomaticForegroundRecovery": "NOT_ESTABLISHED",
+    "peerRecoveryAuthority": "NEW_NATIVE_REQUEST_AND_FRESH_AUTHENTICATION"
+  },
+  "publicJobLogSHA256": {
+    "durability": "a5285cf73da8c7d8ff8e3664466d94d60d3c7efd3e26021a8eb777e434ce84a0",
+    "j4": "f8ecc266d035e40382ce5a2a7b6294fbc0a24e7d0713366af054db395b4111de",
+    "journeys": "ec38296067fc33d4ef68641ff4738cbf727ffeed82fd5ff14cc55dc5dffb60dd"
+  },
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY",
+  "failedSteps": [
+    "Formal Host 10k single-project membership sample",
+    "C2 cold passive diagnostic copy (not package acceptance)"
+  ],
+  "coldPassiveDiagnostic": {
+    "status": "FAIL",
+    "error": "page.waitForFunction: Timeout 20000ms exceeded.\n    at waitMounted (/home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/context-package-mv3-browser.mjs:33:42)\n    at /home/runner/work/Virtual-AI-Workspace-Layer/Virtual-AI-Workspace-Layer/tests/host/context-package-mv3-browser.mjs:51:14",
+    "formalPackageAcceptance": false,
+    "nativeRequestStarts": [
+      {
+        "at": 1792273470117,
+        "event": "native-request",
+        "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333"
+      }
+    ],
+    "passiveTrace": [
+      {
+        "seq": 0,
+        "at": 1792273470241,
+        "stage": "listeners-registered"
+      },
+      {
+        "seq": 1,
+        "at": 1792273470336,
+        "stage": "incoming",
+        "type": "HOST_HELLO",
+        "documentId": "766EF454DEFD9AAEA0C0EE5F223D0C88"
+      },
+      {
+        "seq": 2,
+        "at": 1792273470339,
+        "stage": "incoming-result",
+        "type": "HOST_HELLO",
+        "state": null,
+        "reason": null,
+        "ok": true
+      },
+      {
+        "seq": 3,
+        "at": 1792273470341,
+        "stage": "incoming",
+        "type": "HOST_REFRESH",
+        "documentId": "766EF454DEFD9AAEA0C0EE5F223D0C88"
+      },
+      {
+        "seq": 4,
+        "at": 1792273470342,
+        "stage": "verify-enter",
+        "documentId": "766EF454DEFD9AAEA0C0EE5F223D0C88",
+        "hasReceipt": false,
+        "aborted": false
+      },
+      {
+        "seq": 5,
+        "at": 1792273470343,
+        "stage": "incoming-result",
+        "type": "HOST_REFRESH",
+        "state": "ambiguous",
+        "reason": "current-context-unproven",
+        "ok": true
+      }
+    ],
+    "workerReceiptState": {
+      "kind": "POST_FAILURE_READ_ONLY_CLOSURES",
+      "functions": [
+        {
+          "documents": {
+            "size": 0,
+            "truncated": false,
+            "rows": []
+          },
+          "requests": {
+            "size": 0,
+            "truncated": false,
+            "rows": []
+          },
+          "closedRequests": {
+            "size": 0,
+            "truncated": false,
+            "rows": []
+          },
+          "active": true
+        }
+      ],
+      "truncated": false
+    },
+    "facts": "The only native request began 124ms before passive listener registration. No receipt existed. HOST_REFRESH returned current-context-unproven. This does not authorize fabricated evidence or a timer refetch.",
+    "sameRunUninstrumentedCold": "PASS",
+    "cleanupErrors": [],
+    "sourceChangedDuringRun": false
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "evidence": "HEADLESS_SYNTHETIC_REAL_IDB_TEST_SCHEDULING_SEAM",
+  "results": [
+    {
+      "mode": "scope",
+      "hooked": true,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "B23_FREE_PAGE",
+        "ASSEMBLY_START",
+        "CHECK"
+      ],
+      "status": {
+        "state": "WAITING",
+        "reason": "stale-client-response"
+      },
+      "candidateVisible": false
+    },
+    {
+      "mode": "revision",
+      "hooked": true,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "B23_FREE_PAGE",
+        "ASSEMBLY_START",
+        "CHECK"
+      ],
+      "status": {
+        "state": "WAITING",
+        "reason": "snapshot-revision-changed"
+      },
+      "candidateVisible": false
+    },
+    {
+      "mode": "hidden",
+      "hooked": true,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "B23_FREE_PAGE",
+        "ASSEMBLY_START"
+      ],
+      "status": {
+        "state": "WAITING",
+        "reason": "validating-binding"
+      },
+      "candidateVisible": false
+    },
+    {
+      "mode": "cancel",
+      "hooked": true,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "B23_FREE_PAGE",
+        "ASSEMBLY_START"
+      ],
+      "status": {
+        "state": "STOPPED"
+      },
+      "candidateVisible": false
+    },
+    {
+      "mode": "reuse",
+      "hooked": false,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "CHECK"
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+      },
+      "candidateVisible": false
+    },
+    {
+      "mode": "empty",
+      "hooked": false,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "ASSEMBLY_START",
+        "CHECK"
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+      },
+      "candidateVisible": false
+    },
+    {
+      "mode": "renew",
+      "hooked": true,
+      "timeline": [
+        "BIND",
+        "B23_FREE_HEADER",
+        "B23_FREE_PAGE",
+        "BIND",
+        "ASSEMBLY_START",
+        "CHECK"
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+      },
+      "candidateVisible": true
+    }
+  ],
+  "fail": 0
+}

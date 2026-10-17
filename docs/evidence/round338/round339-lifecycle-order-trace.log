@@ -1,0 +1,14 @@
+✔ lifecycle order trace exact anchors src/runtime/browser-request-context.mjs (1.249417ms)
+✔ lifecycle order trace exact anchors src/runtime/host-browser-bootstrap.mjs (0.231459ms)
+✔ recorder bounds events and records only short hash rather than native request ID (1.337042ms)
+✔ diagnostic package verifies formal source first and recompiles both classic worker chunks (321.339333ms)
+✔ runner diagnostic retains full original journey and rereads current worker after failure/restart (0.22025ms)
+✔ new commit diagnostics preserve exact API call and never refresh retained request clocks (0.209ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 364.646833

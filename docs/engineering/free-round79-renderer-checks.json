@@ -1,0 +1,25 @@
+{
+  "provenance": "Subagent executed tool stdout summary; not original complete logs",
+  "node": {
+    "passed": 81,
+    "chunk": "4a02f3",
+    "stdoutTruncated": true
+  },
+  "frameRenderer": {
+    "passed": 1,
+    "chunk": "93d0d0"
+  },
+  "preparedNavigation": {
+    "passedChecks": 9,
+    "chunk": "35538d",
+    "exitConfirmation": "e77291"
+  },
+  "sidebarCache": {
+    "passedChecks": 8,
+    "chunk": "a51660"
+  },
+  "postCopyRenderer": {
+    "passed": 7,
+    "chunk": "f5ce82"
+  }
+}

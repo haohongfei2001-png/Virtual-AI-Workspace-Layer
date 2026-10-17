@@ -1,0 +1,17 @@
+{
+  "evidence": "HEADLESS_SYNTHETIC_SERVICE_REAL_IDB",
+  "browser": "154.0.8037.99",
+  "result": {
+    "status": {
+      "state": "ACTIVE",
+      "mode": "reading",
+      "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+    },
+    "pages": 0,
+    "ownerContains": false
+  },
+  "remainingLinks": 0,
+  "errors": [],
+  "draftRetained": true,
+  "fail": 0
+}

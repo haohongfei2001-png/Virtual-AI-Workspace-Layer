@@ -1,0 +1,190 @@
+✖ MOCK_IDB v1 rejects refs wrong-path index without altering any old records (1.014875ms)
+✖ MOCK_IDB v1 rejects refs array-path index without altering any old records (0.165375ms)
+✖ MOCK_IDB v1 rejects refs unique index without altering any old records (0.139375ms)
+✖ MOCK_IDB v1 rejects refs multi-entry index without altering any old records (0.112792ms)
+✖ MOCK_IDB v2 rejects refs wrong-path index without altering any old records (0.159125ms)
+✖ MOCK_IDB v2 rejects refs array-path index without altering any old records (0.384417ms)
+✖ MOCK_IDB v2 rejects refs unique index without altering any old records (0.140958ms)
+✖ MOCK_IDB v2 rejects refs multi-entry index without altering any old records (0.100958ms)
+✖ MOCK_IDB v2 rejects b23_operations wrong-path index without altering any old records (0.125083ms)
+✖ MOCK_IDB v2 rejects b23_operations array-path index without altering any old records (0.124875ms)
+✖ MOCK_IDB v2 rejects b23_operations unique index without altering any old records (0.104667ms)
+✖ MOCK_IDB v2 rejects b23_operations multi-entry index without altering any old records (0.094084ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 0
+ℹ fail 12
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 45.071417
+
+✖ failing tests:
+
+test at tests/free/schema-index.test.mjs:8:2
+✖ MOCK_IDB v1 rejects refs wrong-path index without altering any old records (1.014875ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/schema-index.test.mjs:24:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /AbortError/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/schema-index.test.mjs:8:2
+✖ MOCK_IDB v1 rejects refs array-path index without altering any old records (0.165375ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/schema-index.test.mjs:24:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /AbortError/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/schema-index.test.mjs:8:2
+✖ MOCK_IDB v1 rejects refs unique index without altering any old records (0.139375ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/schema-index.test.mjs:24:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /AbortError/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/schema-index.test.mjs:8:2
+✖ MOCK_IDB v1 rejects refs multi-entry index without altering any old records (0.112792ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/schema-index.test.mjs:24:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /AbortError/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/schema-index.test.mjs:8:2
+✖ MOCK_IDB v2 rejects refs wrong-path index without altering any old records (0.159125ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/schema-index.test.mjs:24:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /AbortError/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/schema-index.test.mjs:8:2
+✖ MOCK_IDB v2 rejects refs array-path index without altering any old records (0.384417ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/schema-index.test.mjs:24:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /AbortError/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/schema-index.test.mjs:8:2
+✖ MOCK_IDB v2 rejects refs unique index without altering any old records (0.140958ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/schema-index.test.mjs:24:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /AbortError/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/schema-index.test.mjs:8:2
+✖ MOCK_IDB v2 rejects refs multi-entry index without altering any old records (0.100958ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/schema-index.test.mjs:24:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /AbortError/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/schema-index.test.mjs:8:2
+✖ MOCK_IDB v2 rejects b23_operations wrong-path index without altering any old records (0.125083ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/schema-index.test.mjs:24:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /AbortError/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/schema-index.test.mjs:8:2
+✖ MOCK_IDB v2 rejects b23_operations array-path index without altering any old records (0.124875ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/schema-index.test.mjs:24:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /AbortError/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/schema-index.test.mjs:8:2
+✖ MOCK_IDB v2 rejects b23_operations unique index without altering any old records (0.104667ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/schema-index.test.mjs:24:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /AbortError/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/free/schema-index.test.mjs:8:2
+✖ MOCK_IDB v2 rejects b23_operations multi-entry index without altering any old records (0.094084ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/schema-index.test.mjs:24:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /AbortError/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

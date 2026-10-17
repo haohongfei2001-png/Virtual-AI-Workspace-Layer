@@ -1,0 +1,14 @@
+✔ MOCK_IDB migration v1 to current preserves old records (0.817209ms)
+✔ MOCK_IDB malformed v1 schema rolls back atomic upgrade (0.2235ms)
+✔ MOCK_IDB blocked upgrade closes eventual abandoned connection (1.0335ms)
+✔ MOCK_IDB injected quota error rolls back state and receipt (139.3955ms)
+✔ MOCK_IDB fresh B1 connection shares upgraded DB with B23 (52.161375ms)
+✔ MOCK_IDB v2 upgrade preserves roots, partitions and human logs; old reader cannot reopen v2 (1.532334ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 246.046875

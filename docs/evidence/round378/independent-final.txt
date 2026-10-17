@@ -1,0 +1,23 @@
+✔ reader rejection preserves same-proof one-second cooldown (1.757541ms)
+✔ three thrown reads exhaust the same proof while a genuinely new proof has its own budget (2.32025ms)
+✔ failed append retires prior baseline and intent; later complete read establishes only a fresh baseline (1.078875ms)
+✔ concurrent retry after failure stays singleflight and revoked completion grants no baseline (0.285458ms)
+✔ reader failure cannot erase used intent IDs when the same binding later establishes a fresh baseline (0.5055ms)
+✔ clock rollback via intent seals only the old binding until real producerToken changes (0.465209ms)
+✔ clock rollback via intent seals only the old binding until real bodyEpoch changes (0.292292ms)
+✔ clock rollback via observation seals only the old binding until real producerToken changes (0.346625ms)
+✔ clock rollback via observation seals only the old binding until real bodyEpoch changes (0.593041ms)
+✔ clock rollback via idle seals only the old binding until real producerToken changes (0.2065ms)
+✔ clock rollback via idle seals only the old binding until real bodyEpoch changes (0.188458ms)
+✔ clock rollback via pendingIntent seals only the old binding until real producerToken changes (0.233042ms)
+✔ clock rollback via pendingIntent seals only the old binding until real bodyEpoch changes (0.185166ms)
+✔ clock rollback via settle seals only the old binding until real producerToken changes (0.22175ms)
+✔ clock rollback via settle seals only the old binding until real bodyEpoch changes (0.171542ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 53.71675

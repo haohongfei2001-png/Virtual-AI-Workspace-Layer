@@ -1,0 +1,503 @@
+{
+  "sourceHashes": {
+    "simulator/client.mjs": "3b9ae97b818786cc915899527e7029d44d4848d056828ac5f95d07511f1e1a96",
+    "src/b1/document-binding-broker.mjs": "cd57fe684bc79ac7620b320f6640ec126c90f7b0e7249b95834504a696239d1e"
+  },
+  "evidence": "REAL_HEADLESS_DOM_REAL_BROKER_SYNTHETIC_OWNER_SMALL_REPOSITORY",
+  "browser": "156.0.8078.4",
+  "results": [
+    {
+      "mode": "retry",
+      "pass": true,
+      "writes": [],
+      "trace": [
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "account": "A"
+        },
+        {
+          "type": "BIND",
+          "account": "B"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "B"
+        },
+        {
+          "type": "CHECK",
+          "account": "B"
+        },
+        {
+          "type": "B23_SAVE_VIEW",
+          "account": "B"
+        }
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"synthetic_fixture\",\"B\",\"test_org\"]"
+      }
+    },
+    {
+      "mode": "cold",
+      "pass": true,
+      "writes": [],
+      "trace": [
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "B"
+        },
+        {
+          "type": "CHECK",
+          "account": "B"
+        },
+        {
+          "type": "B23_SAVE_VIEW",
+          "account": "B"
+        }
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"synthetic_fixture\",\"B\",\"test_org\"]"
+      }
+    },
+    {
+      "mode": "document",
+      "pass": true,
+      "writes": [],
+      "trace": [
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "account": "A"
+        },
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "B23_SAVE_VIEW",
+          "account": "A"
+        }
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"synthetic_fixture\",\"A\",\"test_org\"]"
+      }
+    },
+    {
+      "mode": "hidden",
+      "pass": true,
+      "writes": [],
+      "trace": [
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "B23_SAVE_VIEW",
+          "account": "A"
+        }
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"synthetic_fixture\",\"A\",\"test_org\"]"
+      }
+    },
+    {
+      "mode": "expired",
+      "pass": true,
+      "writes": [],
+      "trace": [
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "B23_SAVE_VIEW",
+          "account": "A"
+        }
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"synthetic_fixture\",\"A\",\"test_org\"]"
+      }
+    },
+    {
+      "mode": "same-scope-spa",
+      "pass": true,
+      "writes": [
+        {
+          "account": "A",
+          "messageId": "same_scope_new_chat",
+          "projectId": null
+        }
+      ],
+      "trace": [
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "B23_SAVE_VIEW",
+          "account": "A"
+        }
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"synthetic_fixture\",\"A\",\"test_org\"]"
+      }
+    },
+    {
+      "mode": "project-spa",
+      "pass": true,
+      "writes": [
+        {
+          "account": "A",
+          "messageId": "same_scope_new_chat",
+          "projectId": "P1"
+        }
+      ],
+      "trace": [
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "B23_SAVE_VIEW",
+          "account": "A"
+        }
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"synthetic_fixture\",\"A\",\"test_org\"]"
+      }
+    },
+    {
+      "mode": "two-pending",
+      "pass": true,
+      "writes": [
+        {
+          "account": "A",
+          "messageId": "same_scope_new_chat",
+          "projectId": null
+        },
+        {
+          "account": "A",
+          "messageId": "second_pending",
+          "projectId": null
+        }
+      ],
+      "trace": [
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "B23_SAVE_VIEW",
+          "account": "A"
+        }
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"synthetic_fixture\",\"A\",\"test_org\"]"
+      }
+    },
+    {
+      "mode": "free-recovery",
+      "pass": true,
+      "writes": [
+        {
+          "account": "A",
+          "messageId": "fresh_after_repair",
+          "projectId": null
+        }
+      ],
+      "trace": [
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_RECOVERY_STATUS",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_RECOVER",
+          "account": "A"
+        },
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        }
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"synthetic_fixture\",\"A\",\"test_org\"]"
+      },
+      "repairCount": 1
+    },
+    {
+      "mode": "asset-recovery",
+      "pass": true,
+      "writes": [
+        {
+          "account": "A",
+          "messageId": "fresh_after_repair",
+          "projectId": null
+        }
+      ],
+      "trace": [
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "B23_RECOVERY_STATUS",
+          "account": "A"
+        },
+        {
+          "type": "B23_RECOVER_ASSETS",
+          "account": "A"
+        },
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "BIND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "account": "A"
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "account": "A"
+        },
+        {
+          "type": "CHECK",
+          "account": "A"
+        }
+      ],
+      "status": {
+        "state": "ACTIVE",
+        "mode": "reading",
+        "scope": "[\"synthetic_fixture\",\"A\",\"test_org\"]"
+      },
+      "repairCount": 1
+    }
+  ]
+}

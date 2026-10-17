@@ -1,0 +1,169 @@
+{
+  "kind": "NATIVE_CURRENT_GC_WORKLIST_VALIDATION_NOT_PERFORMANCE_ACCEPTANCE",
+  "baseCommit": "9a9ea59fa48000a25b55e243a1a400adcab5a573",
+  "patchSha256": "04ac691e084895c77f34f7a425f7394ef1d207f14ed5f4b91afea76302c2920c",
+  "productionChange": "Only two Native writer expressions stop carrying older GC work-list rows into new roots; the complete current bounded work list remains. Shared delta history is unchanged.",
+  "files": {
+    "src/data/native-index-writer.mjs": "efb5d51f300249664341589756f6af4a04921ef49cbb5a3a4696fb66840b191a",
+    "src/data/native-partitions.mjs": "8da67abc94f1745e01fa686f63615edce5e8b619bf2d6c0f382a9b5a18447d8b",
+    "tests/free/native-current-gc-hint.test.mjs": "58a4ec169edf44d2aad1add072b097ff83affdf6c51e9045a1521e41f3721705",
+    "tests/free/native-current-gc-independent.test.mjs": "e6ba6b1b89f80b4c6315e2cc724beb984927771de542a97d36f0f67c5f735f62",
+    "tests/free/partition-edge.test.mjs": "a1c9a18b0848b13a408c38c735322be09100246b34dfccc8c6dbd4e0361241d7"
+  },
+  "consumerReview": [
+    "Only two Native GC consumers select prior.revision work list",
+    "No Native replica/delta reader found; current runtime header does not consume changes",
+    "Index migration already publishes one empty row and recovery clears rows",
+    "Absent current hint preserves full old-checkpoint reconciliation"
+  ],
+  "preserved": [
+    "Old 0..64-row schema and full fresh byte/checksum validation",
+    "Exact prior raw checkpoint envelope, including legacy changes",
+    "Operation receipts, replay and continuations",
+    "Live facts, membership, dependencies, source authority and TTL",
+    "CAS, rollback and existing GC retain-current-and-prior decisions",
+    "All Shared history and replica consumers",
+    "Original formal 30s deadline and two full membership audits"
+  ],
+  "validation": {
+    "inheritedAndAuthor": {
+      "pass": 40,
+      "fail": 0,
+      "skip": 0
+    },
+    "independentDifferential": {
+      "pass": 20,
+      "fail": 0,
+      "skip": 0
+    },
+    "portableIndependent": {
+      "pass": 20,
+      "fail": 0,
+      "skip": 0,
+      "originalBoundContractRed": 12
+    },
+    "integratedTargeted": {
+      "pass": 29,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 403.650851
+    },
+    "countCaveat": "Separate executions are not accumulated as unique tests; original REDs assert the new bound, not historical data corruption",
+    "historicalEnvironmentPreflight": {
+      "pass": 54,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 2886.286174
+    },
+    "firstFullAttempt": {
+      "tests": 8049,
+      "pass": 8038,
+      "fail": 11,
+      "skip": 0,
+      "durationMs": 172544.337119,
+      "environmentSetupFailures": 10,
+      "formatContractFailure": 1,
+      "environmentRemediation": "Independent copied Git metadata with unchanged historical objects; no shared refs, alternates or fabricated history",
+      "contractAdaptation": "Only the obsolete 64-row length assertion becomes complete current revision70/b and actual checkpoint69/a work-list deepEqual; all 70 commits, piece reachability, live facts and retirement assertions remain",
+      "logSHA256": "89e2aeccf5f066a4a67940af81737652201007bfdcd9f72fc65a3b6748fb84bc"
+    },
+    "fullNode": {
+      "tests": 8052,
+      "pass": 8052,
+      "fail": 0,
+      "cancelled": 0,
+      "skip": 0,
+      "durationMs": 156001.700971,
+      "logSHA256": "e3576d8bddec0fde9b2a200e70afa61988f3e13123afc9b250465b670074d857"
+    },
+    "guardMutations": {
+      "selected": 12,
+      "killed": 12,
+      "pass": true,
+      "inputUnchanged": true,
+      "reportSHA256": "18bec7863b918236af1816d6ecef4714fe3be9e82afc27e66884d2daf07506c0"
+    },
+    "frozenSourceTestsFixtureWorkflowUnchanged": true
+  },
+  "mechanism": {
+    "baseline": {
+      "kind": "ACTUAL_OWNER_MOCK_IDB_ROOT_BYTES_NOT_TIMING",
+      "refs": 3780,
+      "batches": 70,
+      "sizes": {
+        "native": {
+          "format": "vaiwl-native-version-index-v1",
+          "revision": 71,
+          "rootChars": 146295,
+          "changesChars": 137471,
+          "changeRows": 64,
+          "retainedRefs": 3456,
+          "latestOnlyChars": 10973,
+          "latestOnlyReduction": 0.924994018934345
+        },
+        "shared": {
+          "format": "vaiwl-shared-ref-directory-v1",
+          "revision": 71,
+          "rootChars": 147931,
+          "changesChars": 136383,
+          "changeRows": 64,
+          "retainedRefs": 3456,
+          "latestOnlyChars": 13680,
+          "latestOnlyReduction": 0.9075244539684042
+        }
+      }
+    },
+    "candidate": {
+      "fullNativeFactsAudit": {
+        "refs": 3780,
+        "memberships": 3780,
+        "projects": 1,
+        "allExpectedIds": true
+      },
+      "kind": "ACTUAL_OWNER_MOCK_IDB_ROOT_BYTES_NOT_TIMING",
+      "refs": 3780,
+      "batches": 70,
+      "sizes": {
+        "native": {
+          "format": "vaiwl-native-version-index-v1",
+          "revision": 71,
+          "rootChars": 10973,
+          "changesChars": 2149,
+          "changeRows": 1,
+          "retainedRefs": 54,
+          "latestOnlyChars": 10973,
+          "latestOnlyReduction": 0
+        },
+        "shared": {
+          "format": "vaiwl-shared-ref-directory-v1",
+          "revision": 71,
+          "rootChars": 147931,
+          "changesChars": 136383,
+          "changeRows": 64,
+          "retainedRefs": 3456,
+          "latestOnlyChars": 13680,
+          "latestOnlyReduction": 0.9075244539684042
+        }
+      }
+    },
+    "meaning": "Actual owner plus MockIDB root JSON character counts and full Native facts audit, not a timing or browser sample",
+    "nativeRootCharacterReductionPct": 92.499,
+    "sharedChanged": false
+  },
+  "independentReview": {
+    "verdict": "CLEAN_TWO_EXPRESSIONS_ONLY",
+    "reportSha256": "bc0b9ff9d58229d306dc0b7c6fb10434dc12104b98158419388f8b0fe387d1f7",
+    "mixedOldNewWriters": "PASS",
+    "repairAndFallback": "PASS",
+    "pureWriter10001ExistingRefMetadataBoundary": "PASS_NOT_FULL_10K_OWNER_AUDIT",
+    "gc70ContractDelta": "CLEAN: exact current/prior work lists; all original behavior assertions retained"
+  },
+  "existingLimits": [
+    "A schema-valid duplicate current hint with an incomplete first row can retain an orphan older piece in both original and candidate; not repaired here",
+    "The existing 10000-ID work-list cap and ordinary update capacity remain unchanged",
+    "Corrupt checkpoints still conservatively retain pieces instead of authorizing deletion"
+  ],
+  "browser": "PENDING_NEW_CI",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

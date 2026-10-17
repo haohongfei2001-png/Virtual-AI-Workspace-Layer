@@ -1,0 +1,21 @@
+✔ shared service lifecycle contracts in mock IDB (not real browser evidence) (2324.618417ms)
+▶ shared directory retention portable contracts
+  ✔ repeated reference writes retain only current/checkpoint versions and keep journals (0.217041ms)
+  ✔ A B A updates retire old untouched B pieces without deleting retained A version (0.032875ms)
+  ✔ GC retains undo inverse and checkpoint human recovery (0.027208ms)
+  ✔ corrupt obsolete checkpoint bucket grants no deletion authority (0.024083ms)
+  ✔ abort after GC delete request rolls back root checkpoint receipt and reclaimed pieces (0.022208ms)
+  ✔ A directory retention leaves B roots pieces checkpoints and history untouched (0.019833ms)
+  ✔ same bucket untouched ref remains reachable while obsolete neighbour versions retire (0.018041ms)
+  ✔ cross-generation obsolete checkpoint cannot authorize deletion (0.022375ms)
+  ✔ missing newly current bucket causes retention verification to abort entire owner write (0.0365ms)
+  ✔ guard denial in old-checkpoint callback aborts rather than treating authority loss as corrupt checkpoint (0.041167ms)
+✔ shared directory retention portable contracts (61.163458ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2379.290083

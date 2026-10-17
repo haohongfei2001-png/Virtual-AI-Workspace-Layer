@@ -1,0 +1,28 @@
+{
+  "parent": "4cb0e80f6900cf08fd9db3adab870a6cd7bcb57e",
+  "sourceHashes": {
+    "src/host/chatgpt-adapter.mjs": "cabad1c986938a2fa085d96d690754a7db05caf53f8ee93bed615bc3b499b9b0",
+    "src/host/content-session.mjs": "100f36d882ee2307310ec654d6d74a9bb8b0eb040098b582ed989a6857ef87d8",
+    "src/host/free-frame-client.mjs": "065e9cd07a23696e52a82a37eafbe9a15a642a89cc778d9ff6516c7cc341ec40",
+    "src/host/surface-discovery.mjs": "9bf4a2d19845cec7893ab8ba0f2910c2dac888badc1b29dec03426c10b233c74",
+    "src/navigation/mount-surface.mjs": "e05df208ad0711237d41779addbd2b0447e0fdcd836e564caef1f5831e76f59f",
+    "src/navigation/navigation.mjs": "3633b80bf81200a96cd382e28a4ec2917f9d1a0b1ddc54f6c527a360326ebef7",
+    "src/runtime/free-frame-projection.mjs": "ff42fcb87317baf8f7e2b7e04ca3cb05b0070583cc137f2217c49957773dea8d",
+    "src/runtime/host-view-service.mjs": "bd19e5c24ce430bc88072830d39f206aa4f5a3afdd74fd16a8541c8204969617",
+    "src/runtime/session-provider.mjs": "6b141bc15867cd10656cc99a90407bcf369ae6e0d6444011d7c8703f958430e2",
+    "tests/host/fixtures/native.mjs": "78bedec13771bc2ad3e52a8e9335cd0862e7779e6de05f42a1ec88d7485e02d1",
+    "tests/host/frame-projection-renderer.test.mjs": "ac80f9af2cdc0c5a6d0cd6fe0555ead3f54e1ab34639841f96a987894eba97c7",
+    "tests/host/free-frame-client.test.mjs": "f94113bdc586a783082f8c4d2cbbacdd5749df5407334ab7e1dae02e8908bcd1",
+    "tests/host/host-view-service.test.mjs": "b582af2a57f6d640ccba1c2fe92c2046d63da7f5498538087e95cf805a41e7a1",
+    "tests/host/mount-surrender.test.mjs": "5e467e073a6d43e30163f50bf13e72d8436d38a75ac2f18aa984163c65f59f1a",
+    "tests/host/session-provider.test.mjs": "15cdde2da6441ea5eadea5aac00c681ae03efe9344531c1c2322e33b9a517fe6",
+    "tests/host/surface-discovery-browser.mjs": "001f548b6d49b0c032840edb8e9b8065716f8e009361cdeda7556f25bab3dcb4",
+    "src/host/conversation-metadata.mjs": "744afe2228882a5ebff1ffd8f1294ecd80697d63b44af60640e3ff4d3a63410e",
+    "tests/host/conversation-metadata.test.mjs": "324f1b4228b8ee2fa1f25aac20c876689a6b02478de77f17855dc8f177ba533c",
+    "tests/host/partial-package-mv3-browser.mjs": "b58296ffa989ca8323778934c751523f60108a97120d0164a3321c45591430cf"
+  },
+  "nodeTests": 1763,
+  "evidence": "PACKAGED_OFFLINE_CURRENT_CONVERSATION_MASK_AND_BOUNDED_METADATA",
+  "realChatGPT": "NOT_RUN",
+  "release": "NOT_RELEASE_READY"
+}

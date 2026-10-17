@@ -1,0 +1,48 @@
+{
+  "baseHead": "230f856",
+  "sourceHashes": {
+    "src/data/free-evidence-repository.mjs": "8958fd1127f8790d7d0323f5250cc3a2873c4dbb9b36c6b218ff2db2892ecd65",
+    "simulator/service.mjs": "bf6a78387c8ff63df77138538f403c7f9bfce67c77d6c29b5e95ba5394d7fc52",
+    "tests/free/evidence-version.test.mjs": "c0f015d83c220f8d3d8629eb1e38397a3e0221e21704d430034df8659ff767ce",
+    "tests/free/service-pagination.test.mjs": "a487e78983481a3be193572596f26bceb3575ff60c2ef259381f6e7b8e72cd36",
+    "tests/free/version-parallel-read.test.mjs": "f4a1c7f92d99799044e2f0b120adf84b924072c53ac10a47fff229dd08a3065e",
+    "tests/free/send-scale-browser.mjs": "c09d1e1d22ab4ea6dc8c42750d496625cac508ba249bba33b3925c4fdb9a0d8e",
+    "tests/free/evidence-directory-upgrade-browser.mjs": "24a6db8d8ad8d5ab6ea73eefaa3397e43c66c683eacf94eed11b247ff1c85ec2"
+  },
+  "fullNode": {
+    "pass": 930,
+    "fail": 0,
+    "skip": 0,
+    "logTail": "e browser bundle compiles the same actual navigation and broker modules (7.338041ms)\n✔ actual Node HTTP host serves app and rejects unsafe/unrelated paths (30.295417ms)\n✔ 120 contiguous 30-local-day segments Asia/Shanghai (16.306666ms)\n✔ 120 contiguous 30-local-day segments America/New_York (2.066875ms)\n✔ 120 contiguous 30-local-day segments Europe/Berlin (2.069459ms)\n✔ 120 contiguous 30-local-day segments Pacific/Kiritimati (1.065584ms)\n✔ 120 contiguous 30-local-day segments Pacific/Honolulu (0.850958ms)\n✔ current segment includes exactly today and preceding 29 local days (0.465958ms)\n✔ DST is calendar-based, not 720 hours (0.060542ms)\n✔ leap day included (0.105542ms)\n✔ invalid zone and negative segment rejected (0.19075ms)\n✔ future and naive times remain unknown (0.087167ms)\n✔ single latest theme segment; old children stay parent (0.849458ms)\n✔ current positive observation does not require full old coverage (0.487625ms)\n✔ old snapshot cannot assert no recent input (0.920583ms)\n✔ old child with a coverage gap is unknown, not forcibly historical (0.761084ms)\n✔ visit/update/assistant/edit timestamps never activate (0.128833ms)\n✔ duplicate events idempotent, conflicting times quarantined (0.093375ms)\n✔ scope collision rejected even for same native ID/title (0.263042ms)\n✔ theme scope mismatch rejected (0.085916ms)\n✔ time-zone projection does not mutate source (1.941208ms)\n✔ 120 themes and all 604 references accounted for (10.624625ms)\n✔ cross-Project references aggregate without native mutation (0.525125ms)\n✔ only explicit synthetic origins and paths accepted (0.26025ms)\n✔ impossible calendar instants are unknown rather than normalized into a different day (0.056416ms)\nℹ tests 930\nℹ suites 0\nℹ pass 930\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 16309.183583\n"
+  },
+  "MV3": 9,
+  "actualPackageUpgradeSteps": 4,
+  "package": {
+    "status": "SYNTHETIC_ONLY",
+    "releaseStatus": "NOT_RELEASE_READY",
+    "files": 50,
+    "workerModules": 43,
+    "unpacked": "/private/tmp/vaiwl-free-delivery-round46-20261013/extension",
+    "archive": "/private/tmp/vaiwl-free-delivery-round46-20261013/vaiwl-free-synthetic-only.zip",
+    "archiveSha256": "145471c98318d0166e5bf04fcb1a8a9602366031123febaf32b48edf09ab7641",
+    "sourceManifestSha256": "baf9acdb6207d147c1f18be3dad2ae4996622634f3b2e4f13ea1d1ec49eaba30"
+  },
+  "normalSend": {
+    "1000": [
+      59.8,
+      47.8,
+      47
+    ],
+    "10000": [
+      138.3,
+      98.2,
+      99.3
+    ],
+    "100000": [
+      764.8,
+      846.2,
+      813.4
+    ]
+  },
+  "realAccount": "NOT_RUN"
+}

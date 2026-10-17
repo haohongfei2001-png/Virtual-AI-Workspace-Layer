@@ -1,0 +1,28 @@
+✔ frame shell bytes participate in the live source drift check and package digest (201.804042ms)
+✔ formal development build defaults to unverified context without simulator or seed modules (187.345209ms)
+✔ offline build accepts only exact IPv4 loopback origin and limits manifest to loopback (119.778541ms)
+✔ every shipped static import/re-export resolves inside module closure and WAR excludes worker-only code (117.298ms)
+✔ host development ZIP and SHA256SUMS reproduce byte-for-byte (403.856333ms)
+✔ host verifier rejects extra package mutation (116.289333ms)
+✔ host verifier rejects bytes package mutation (113.320625ms)
+✔ host verifier rejects symlink package mutation (103.950084ms)
+✔ rehashed config cannot enable unverified production C3 while claiming fail-closed (117.490625ms)
+✔ rehashed offline package rejects mixed production origin boundary (118.232542ms)
+✔ rehashed offline package rejects mixed production csp boundary (112.431458ms)
+✔ rehashed offline package rejects mixed production war boundary (111.467041ms)
+✔ snippet reconstruction profile is explicit loopback-only and cannot enable production (184.995042ms)
+✔ historical grammar is explicit offline-only package configuration (287.476208ms)
+✔ explicit existing-C ACK composition requires loopback C2 and never enables first-send observer (381.89175ms)
+✔ package verifier rejects forged existing-send composition even with rewritten config file hash (295.223417ms)
+✔ explicit loopback Project C2 package round-trips and rejects changed context configuration (198.776875ms)
+✔ Project profile cannot escape explicit offline C2 {"offlineProjectContext":true} (0.486375ms)
+✔ Project profile cannot escape explicit offline C2 {"offlineOrigin":"http://127.0.0.1:8123","offlineProjectContext":true} (0.347625ms)
+✔ Project profile cannot escape explicit offline C2 {"offlineOrigin":"https://chatgpt.com","offlineContext":true,"offlineProjectContext":true} (0.302875ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3258.273583

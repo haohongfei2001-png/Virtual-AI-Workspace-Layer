@@ -1,0 +1,40 @@
+{
+  "evidence": "ISOLATED_HEADLESS_COMPUTE_CANDIDATE_NOT_PRODUCT_ACCEPTANCE",
+  "browser": "156.0.8078.4",
+  "baseHash": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+  "candidate": "export async function finishAsync(iterator,guard=()=>true){let step,began=performance.now();do{if(guard()!==true)throw Error('stale-client-response');step=iterator.next();if(!step.done&&performance.now()-began>=4){if(globalThis.scheduler?.postTask)await globalThis.scheduler.postTask(()=>{}, {priority:'user-visible'});else await new Promise(resolve=>setTimeout(resolve,0));began=performance.now();}}while(!step.done);if(guard()!==true)throw Error('stale-client-response');return step.value;}",
+  "results": [
+    {
+      "variant": "baseline",
+      "buildMs": 155.19999999925494,
+      "buildTasks": 195,
+      "rebindMs": 4.300000000745058,
+      "rebindTasks": 195,
+      "latest": true
+    },
+    {
+      "variant": "budget",
+      "buildMs": 153,
+      "buildTasks": 34,
+      "rebindMs": 3.400000002235174,
+      "rebindTasks": 0,
+      "latest": true
+    },
+    {
+      "variant": "baseline",
+      "buildMs": 151.30000000074506,
+      "buildTasks": 195,
+      "rebindMs": 3.600000001490116,
+      "rebindTasks": 195,
+      "latest": true
+    },
+    {
+      "variant": "budget",
+      "buildMs": 161.19999999925494,
+      "buildTasks": 36,
+      "rebindMs": 3,
+      "rebindTasks": 0,
+      "latest": true
+    }
+  ]
+}

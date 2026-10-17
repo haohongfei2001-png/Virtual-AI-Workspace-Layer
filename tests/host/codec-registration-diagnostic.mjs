@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,mkdir,writeFile,readFile,cp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';import {join} from 'node:path';import {fileURLToPath,pathToFileURL} from 'node:url';
+import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
+import {createHostFixtureServer} from './fixtures/server.mjs';
+import {packageHost} from '../../extension/package.mjs';
+import {historicalSource,OLD_HOST_COMMIT,replaceDisabledPackage} from './historical-package.mjs';
+const root=await mkdtemp(join(tmpdir(),'vaiwl-codec-registration-')),server=await createHostFixtureServer(),report={status:'DIAGNOSTIC_ONLY',stages:[],acceptance:'NOT_ESTABLISHED'};let context;
+try{
+ const archived=join(root,'archive');report.archive=await historicalSource(fileURLToPath(new URL('../..',import.meta.url)),OLD_HOST_COMMIT,archived);
+ const oldModule=await import(pathToFileURL(join(archived,'extension/package.mjs'))),old=oldModule.packageHost(join(root,'old'),{offlineOrigin:server.origin}),current=packageHost(join(root,'current'),{offlineOrigin:server.origin,offlineContext:true,offlineExistingSend:true,offlineHistory:true}),slot=join(root,'slot');await cp(current.unpacked,slot,{recursive:true});
+ context=await chromium.launchPersistentContext(join(root,'profile'),{headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
+ await context.route('**/*',route=>{const u=new URL(route.request().url());return u.origin===server.origin||u.protocol==='chrome-extension:'?route.continue():route.abort();});
+ const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:slot});
+ const ctl=join(root,'controller');await mkdir(ctl);await writeFile(join(ctl,'manifest.json'),JSON.stringify({manifest_version:3,name:'Isolated diagnostic controller',version:'0.0.1',permissions:['management'],content_security_policy:{extension_pages:"script-src 'self'; connect-src 'none'"}}));await writeFile(join(ctl,'index.html'),'<script src="control.js"></script>');await writeFile(join(ctl,'control.js'),`const target=${JSON.stringify(id)};globalThis.targetState=async()=>{const x=await chrome.management.get(target);return {enabled:x.enabled,disabledReason:x.disabledReason,version:x.version};};globalThis.enable=async v=>chrome.management.setEnabled(target,v);`);
+ const {id:ctlId}=await cdp.send('Extensions.loadUnpacked',{path:ctl}),controller=await context.newPage();await controller.goto(`chrome-extension://${ctlId}/index.html`);
+ const page=await context.newPage(),session=await context.newCDPSession(page),contexts=[];session.on('Runtime.executionContextCreated',({context:c})=>contexts.push({origin:c.origin,name:c.name,type:c.auxData?.type}));await session.send('Runtime.enable');const exceptions=[],scripts=[];session.on('Debugger.scriptParsed',event=>{if(event.url.includes('/content.js')||event.url.includes('/extension/content-entry.mjs')||event.url.includes('/extension/config.mjs'))scripts.push({url:event.url,scriptId:event.scriptId});});session.on('Debugger.paused',event=>{if(exceptions.length<24)exceptions.push({reason:event.reason,description:event.data?.description??null,url:event.callFrames?.[0]?.url??null});void session.send('Debugger.resume');});await session.send('Debugger.enable');await session.send('Debugger.setPauseOnExceptions',{state:'all'});
+ const observe=async label=>{contexts.length=0;exceptions.length=0;scripts.length=0;await page.goto(server.url,{waitUntil:'networkidle',timeout:20000});await page.waitForTimeout(1000);report.stages.push({label,management:await controller.evaluate(()=>targetState()),contexts:[...contexts],exceptions:[...exceptions],scripts:await Promise.all(scripts.map(async s=>({...s,source:(await session.send('Debugger.getScriptSource',{scriptId:s.scriptId})).scriptSource.slice(0,1500)}))),frames:page.frames().map(f=>f.url()),owned:await page.locator('[data-va-owned]').count()});};
+ await observe('initial-current');
+ for(const [label,source]of [['old',old.unpacked],['restored-current',current.unpacked]]){
+  await controller.evaluate(()=>enable(false));await replaceDisabledPackage(source,slot,{disabled:true,root});if(process.env.CODEC_LOAD_BEFORE_ENABLE==='1'){assert.equal((await cdp.send('Extensions.loadUnpacked',{path:slot})).id,id);await controller.evaluate(()=>enable(true));}else{await controller.evaluate(()=>enable(true));assert.equal((await cdp.send('Extensions.loadUnpacked',{path:slot})).id,id);}await observe(label);
+ }
+} catch(error){report.status='FAIL_DIAGNOSTIC';report.error=error.stack;process.exitCode=1;}finally{await context?.close();await server.close();await rm(root,{recursive:true,force:true});await writeFile(process.argv[2],JSON.stringify(report,null,2));}
+console.log(JSON.stringify(report));

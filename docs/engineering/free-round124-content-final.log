@@ -1,0 +1,48 @@
+✔ persisted pagehide revokes old mount and adapter; pageshow starts fresh HELLO REFRESH (1.895917ms)
+✔ late pre-suspension HELLO never publishes mount after restored new handshake (0.547417ms)
+✔ nonpersisted pagehide and explicit stop never automatically restart (0.399666ms)
+✔ duplicate persisted pageshow during handshake and after success cannot start twice (0.277958ms)
+✔ nonpersisted pageshow cannot resume cached session (0.13675ms)
+✔ production composition sequences HELLO REFRESH and mount with no page bridge; restart seq is monotonic (2.087709ms)
+✔ native plans require real extension sender and exact current binding, no mutation path (0.444958ms)
+✔ stop cancels pending HELLO; late result cannot create surfaces or listeners (0.260041ms)
+✔ unverified scope and invalid binding fail closed before surface; pagehide tears down live session (0.337125ms)
+✔ pending RPC deadline is six seconds and cannot revive after late response (0.1505ms)
+✔ document renewal and scope revalidation precede UI status with one six-second budget (0.473459ms)
+✔ SPA adapter rebind withdraws old surface and remounts without modifying native draft (0.245833ms)
+✔ same-URL invalidation after replacement HELLO revokes it; old-listener bursts coalesce (0.339ms)
+✔ pagehide or explicit stop during queued rebind prevents automatic revival (0.1965ms)
+✔ failed replacement stops without self-retry (0.142792ms)
+✔ trusted surface presentation dispatches only the two modes without native plans or writes (0.106375ms)
+✔ presentation rejects wrong sender, extra fields, invalid mode/binding and stale route, expiry or stop (0.65925ms)
+✔ old session presentation cannot act on replacement even with identical binding fields (0.076667ms)
+✔ renewal checks scope before exposing renewed UI and refuses unverified authority (0.111ms)
+✔ slow scope revalidation consumes the remaining renewal budget (0.207ms)
+✔ workspace entered bridge uses current private binding and bounded RPC; stopped bridge cannot send (0.145625ms)
+✔ private content selection capture validates and releases one scope-bound ticket (0.387666ms)
+✔ content selection rejects untrusted sender extra fields route mismatch and absent node epoch before reading (0.115584ms)
+✔ content ticket expires on node replacement elapsed six seconds route change or stop (0.296209ms)
+✔ expired queued snippet restore cannot scroll or switch native reading (0.197125ms)
+✔ native reading reveals first and waits for acknowledged body before one scroll (3.081458ms)
+✔ unready proof expires within six seconds without scrolling or reopening (2.774542ms)
+✔ pending proof cannot scroll after stop (0.267792ms)
+✔ pending proof cannot scroll after route (0.174ms)
+✔ failed native restore is attempted only once even while command remains live (1.238125ms)
+✔ native modal cancels pending proof even when ACK becomes ready, and closing cannot revive scroll (0.1815ms)
+✔ trusted pointerdown cancels pending restore and removes all temporary handlers (0.147ms)
+✔ trusted focusin cancels pending restore and removes all temporary handlers (0.099208ms)
+✔ trusted keydown cancels pending restore and removes all temporary handlers (0.122125ms)
+✔ trusted wheel cancels pending restore and removes all temporary handlers (0.134458ms)
+✔ trusted beforetoggle cancels pending restore and removes all temporary handlers (0.104375ms)
+✔ untrusted events and closing toggle do not cancel; success removes handlers (0.11825ms)
+✔ elapsed clock rollback rejects while wall deadline is still valid (0.161583ms)
+✔ expired reading guard terminates command permanently even if reading becomes valid again (0.177417ms)
+✔ stop removes pending handlers immediately and replacement restore aborts old command once (0.153459ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 55.798042

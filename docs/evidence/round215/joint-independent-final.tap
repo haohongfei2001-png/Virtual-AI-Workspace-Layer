@@ -1,0 +1,78 @@
+✔ MOCK_IDB late continuation keeps original anchor timing and Pro assets (630.808099ms)
+✔ MOCK_IDB continuation CAS can retry and stable receipt ignores retry CAS (302.142606ms)
+✔ MOCK_IDB continuation needs exact object, purpose, binding and scope admission (356.494307ms)
+✔ MOCK_IDB native source revocation denies pending continuation (295.586974ms)
+✔ MOCK_IDB continuation guard loss rolls back evidence and receipt (232.260432ms)
+✔ MOCK_IDB continuation request is captured before waiting for db.open (236.489457ms)
+✔ MOCK_IDB current native source profile or generation change cannot inherit old admission (428.601944ms)
+✔ MOCK_IDB completed native record permits existing evidence receipt only, never a new write (533.08022ms)
+✔ MOCK_IDB continuation from a native revision ahead of current root cannot write evidence (312.89252ms)
+✔ MOCK_IDB re-signed evidence receipt with wrong operation ID or future revision cannot replay (550.759046ms)
+✔ MOCK_IDB replacing caller options guard while open waits cannot bypass the original revoked guard (277.095258ms)
+✔ historical older admission adds original anchor while preserving newer source and input (8.450741ms)
+✔ normal apply still rejects historical source and equal revision differing source still rejects (1.530188ms)
+✔ historical absent or equal original source can initialize/replay without time renewal (1.473173ms)
+✔ historical rejects revoked, different generation/profile/channel and reversed source observation ordering (4.353268ms)
+✔ historical original source is mandatory and witness cannot borrow newer revision or observedAt (0.605393ms)
+✔ historical acceptedAt validates original TTL and future evidence, not newer source TTL (1.246751ms)
+✔ historical cannot authorize synthetic, revoke, events, coverage or old hint variants (1.950843ms)
+✔ historical duplicate event cannot change message or ACK identity and cannot revive revoked anchor (1.150886ms)
+✔ review: upgraded profile can retire a revoked old-profile pending without evidence authority (25.266062ms)
+✔ review: abort frees global busy for another scope and late old list cannot write (1.714116ms)
+✔ review: authority object retained by a late rejected writer is revoked after abort (2.256204ms)
+✔ MOCK owner drains at most one record with exact-object private admission (13.88526ms)
+✔ MOCK owner CAS refresh is bounded to two attempts (3.0555ms)
+✔ MOCK owner restarts after evidence commit and replays without a second write (2.035462ms)
+✔ MOCK owner does not borrow profile authorization from pending records (4.997821ms)
+✔ MOCK owner revoked source transitions once and arbitrary errors leave pending (2.940126ms)
+✔ MOCK owner guard loss after version prevents write and rejects retained admission (1.277818ms)
+✔ MOCK owner abort releases busy while late work cannot acquire authority (1.072288ms)
+✔ MOCK owner retains one current profile resolver across async work (1.118778ms)
+✔ MOCK owner skips existing revalidation records and expires captured request authority after completion (2.311407ms)
+✔ MOCK owner rechecks actual document after list/version and before each evidence or terminal write (6.388139ms)
+✔ MOCK owner scope cursor advances past poisoned pending and never grants foreign profile (4.468923ms)
+✔ MOCK owner mismatched profile only asks repository to verify terminal source state (1.405681ms)
+✔ actual owners commit real ref and independent ACK v2 then complete; no NONE invention (75.543435ms)
+✔ after-native cut retains v2 payload across reopen and fresh drain completes exactly once (19.651871ms)
+✔ before-native quota failure leaves neither native nor ACK/pending (5.527431ms)
+✔ before-native guard failure leaves neither native nor ACK/pending (2.205468ms)
+✔ pending v2 native-profile invalidation cannot replay ACK (11.358878ms)
+✔ pending v2 ack-profile invalidation cannot replay ACK (8.866838ms)
+✔ pending v2 source-revision invalidation cannot replay ACK (13.887614ms)
+✔ pending v2 scope invalidation cannot replay ACK (9.323427ms)
+✔ pure ACK uses evidence only and duplicate surface does not create a joint record (9.336426ms)
+✔ authenticated provider and strict correlator enter native joint owner before commit (45.351076ms)
+✔ frozen old reader fails closed on v2; current codec requires both witnesses and protects terminal identity (6.888794ms)
+✔ evidence commit followed by completion interruption recovers without duplicate ACK (22.1628ms)
+✔ joint public-shaped ACK cannot replace exact ACK owner request authority (2.311538ms)
+✔ designated SYS01 oracle detects dropped native continuation before evidence (5.10955ms)
+✔ unavailable ACK read does not block independently valid native surface (2.773615ms)
+✔ joint CAS rejection cannot fall back to a native-only transaction (1.801789ms)
+✔ same-semantics surface refresh never opens a mixed window (3.783849ms)
+✔ later pure ACK with same reserved source revision cannot strand or renew original joint anchor (19.226209ms)
+REVOKED_ACK { state: 'needs-revalidation', attempts: 1, reason: 'source-revoked' }
+DUPLICATE_ACK { state: 'complete', attempts: 1, replayed: false }
+MULTI_ACK {
+  state: 'accepted',
+  localSeq: 2,
+  receiptId: 'dom_005fe7d521b8e61350fb017942d9e53ef87b4fc114009605'
+}
+✔ audit joint pending ACK-source revocation retires payload (80.892311ms)
+✔ audit repeat exact authenticated ACK before drain remains idempotent (17.183526ms)
+✔ audit repeat ACK in one native delta callback does not reject committed surface (4.82524ms)
+✔ terminal transaction rechecks ack revocation after evidence commit (12.152646ms)
+✔ terminal transaction rechecks native revocation after evidence commit (17.187322ms)
+✔ same-revision later pure ACK with conflicting immutable witness is not swallowed (13.261325ms)
+✔ two different authenticated ACKs in a native turn preserve both without second native commit (11.140509ms)
+✔ v2 completion retains payload when committed evidence both-missing (11.236323ms)
+✔ v2 completion retains payload when committed evidence marker-missing (18.608828ms)
+✔ v2 completion retains payload when committed evidence root-rollback (7.175747ms)
+✔ v2 completion retains payload when committed evidence source-missing (7.836293ms)
+ℹ tests 63
+ℹ suites 0
+ℹ pass 63
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4374.539913

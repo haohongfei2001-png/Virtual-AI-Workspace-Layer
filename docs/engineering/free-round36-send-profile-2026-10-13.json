@@ -1,0 +1,534 @@
+{
+  "evidence": "REAL_BROWSER_SYNTHETIC_LOCAL_SEND_PAGE_TRANSPORT",
+  "realChatGPT": "NOT_RUN",
+  "results": [
+    {
+      "kind": "existing",
+      "eventToDOMMs": 1674.6999999955297,
+      "knownRef": "T0",
+      "membership": "NONE",
+      "sendEvents": 1,
+      "nativeUserMessages": 1,
+      "storedUserEvents": 1,
+      "storedHints": 1,
+      "reading": true,
+      "draftPreserved": true,
+      "counts": {
+        "native.read": 0,
+        "native.snapshot": 0,
+        "native.page": 2,
+        "native.header": 2,
+        "evidence.read": 0,
+        "evidence.page": 3,
+        "evidence.header": 2,
+        "workspace.read": 0,
+        "workspace.snapshot": 0
+      },
+      "rpc": [
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "start": 36205.5,
+          "at": 37135.20000000298,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "start": 37135.20000000298,
+          "at": 37554.5,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_PAGE",
+          "start": 37570.89999999851,
+          "at": 37693.20000000298,
+          "ok": true
+        },
+        {
+          "type": "CHECK",
+          "start": 37756.80000000447,
+          "at": 37866,
+          "ok": true
+        },
+        {
+          "type": "B23_SAVE_VIEW",
+          "start": 37869.89999999851,
+          "at": 37870.70000000298,
+          "ok": true
+        }
+      ],
+      "repositoryOperations": [
+        {
+          "method": "workspace.partitioned.partialContext",
+          "start": 36205.60000000149,
+          "at": 36269.60000000149
+        },
+        {
+          "method": "native.page",
+          "start": 36269.60000000149,
+          "at": 36308.30000000447
+        },
+        {
+          "method": "workspace.ingest",
+          "start": 36308.39999999851,
+          "at": 36481.10000000149
+        },
+        {
+          "method": "evidence.page",
+          "start": 36481.10000000149,
+          "at": 36537.39999999851
+        },
+        {
+          "method": "evidence.apply",
+          "start": 36537.39999999851,
+          "at": 36793.10000000149
+        },
+        {
+          "method": "native.apply",
+          "start": 36793.10000000149,
+          "at": 37135
+        },
+        {
+          "method": "native.page",
+          "start": 37571,
+          "at": 37614.5
+        },
+        {
+          "method": "evidence.page",
+          "start": 37614.5,
+          "at": 37692.70000000298
+        },
+        {
+          "method": "workspace.partitioned.partialContext",
+          "start": 37614.5,
+          "at": 37692.80000000447
+        }
+      ]
+    },
+    {
+      "kind": "new-none",
+      "eventToDOMMs": 1511.8999999985099,
+      "knownRef": "new-26950e04-5bee-4f99-bbdc-f143a1572e7e",
+      "membership": "NONE",
+      "sendEvents": 1,
+      "nativeUserMessages": 1,
+      "storedUserEvents": 1,
+      "storedHints": 1,
+      "reading": true,
+      "draftPreserved": true,
+      "counts": {
+        "native.read": 0,
+        "native.snapshot": 0,
+        "native.page": 2,
+        "native.header": 2,
+        "evidence.read": 0,
+        "evidence.page": 3,
+        "evidence.header": 2,
+        "workspace.read": 0,
+        "workspace.snapshot": 0
+      },
+      "rpc": [
+        {
+          "type": "BIND",
+          "start": 38312.80000000447,
+          "at": 38312.80000000447,
+          "ok": true
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "start": 38312.80000000447,
+          "at": 39096.60000000149,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "start": 39096.60000000149,
+          "at": 39425.60000000149,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_PAGE",
+          "start": 39439.39999999851,
+          "at": 39546.70000000298,
+          "ok": true
+        },
+        {
+          "type": "CHECK",
+          "start": 39703.5,
+          "at": 39806.30000000447,
+          "ok": true
+        }
+      ],
+      "repositoryOperations": [
+        {
+          "method": "workspace.partitioned.partialContext",
+          "start": 38312.89999999851,
+          "at": 38341.30000000447
+        },
+        {
+          "method": "native.page",
+          "start": 38341.30000000447,
+          "at": 38370.5
+        },
+        {
+          "method": "workspace.ingest",
+          "start": 38370.60000000149,
+          "at": 38523.80000000447
+        },
+        {
+          "method": "evidence.page",
+          "start": 38523.80000000447,
+          "at": 38568.10000000149
+        },
+        {
+          "method": "evidence.apply",
+          "start": 38571.10000000149,
+          "at": 38795.20000000298
+        },
+        {
+          "method": "native.apply",
+          "start": 38795.30000000447,
+          "at": 39096.60000000149
+        },
+        {
+          "method": "native.page",
+          "start": 39439.39999999851,
+          "at": 39473.10000000149
+        },
+        {
+          "method": "evidence.page",
+          "start": 39473.10000000149,
+          "at": 39546.5
+        },
+        {
+          "method": "workspace.partitioned.partialContext",
+          "start": 39473.10000000149,
+          "at": 39546.5
+        }
+      ]
+    },
+    {
+      "kind": "new-project",
+      "eventToDOMMs": 1596.6000000014901,
+      "knownRef": "new-0e49969b-14db-485a-bebb-fe882e444d3b",
+      "membership": "PROJECT",
+      "sendEvents": 1,
+      "nativeUserMessages": 1,
+      "storedUserEvents": 1,
+      "storedHints": 1,
+      "reading": true,
+      "draftPreserved": true,
+      "counts": {
+        "native.read": 0,
+        "native.snapshot": 0,
+        "native.page": 2,
+        "native.header": 2,
+        "evidence.read": 0,
+        "evidence.page": 3,
+        "evidence.header": 2,
+        "workspace.read": 0,
+        "workspace.snapshot": 0
+      },
+      "rpc": [
+        {
+          "type": "BIND",
+          "start": 40262.30000000447,
+          "at": 40262.30000000447,
+          "ok": true
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "start": 40262.30000000447,
+          "at": 41081.60000000149,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "start": 41081.60000000149,
+          "at": 41413.10000000149,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_PAGE",
+          "start": 41426.5,
+          "at": 41539.20000000298,
+          "ok": true
+        },
+        {
+          "type": "CHECK",
+          "start": 41698.60000000149,
+          "at": 41834.20000000298,
+          "ok": true
+        }
+      ],
+      "repositoryOperations": [
+        {
+          "method": "workspace.partitioned.partialContext",
+          "start": 40262.39999999851,
+          "at": 40291
+        },
+        {
+          "method": "native.page",
+          "start": 40291,
+          "at": 40323.60000000149
+        },
+        {
+          "method": "workspace.ingest",
+          "start": 40323.70000000298,
+          "at": 40477.30000000447
+        },
+        {
+          "method": "evidence.page",
+          "start": 40477.30000000447,
+          "at": 40521.80000000447
+        },
+        {
+          "method": "evidence.apply",
+          "start": 40521.89999999851,
+          "at": 40747.39999999851
+        },
+        {
+          "method": "native.apply",
+          "start": 40747.39999999851,
+          "at": 41081.5
+        },
+        {
+          "method": "native.page",
+          "start": 41426.5,
+          "at": 41461.5
+        },
+        {
+          "method": "evidence.page",
+          "start": 41461.5,
+          "at": 41539
+        },
+        {
+          "method": "workspace.partitioned.partialContext",
+          "start": 41461.5,
+          "at": 41539
+        }
+      ]
+    }
+  ],
+  "sourceHashes": {
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/free-activity.mjs": "0a3c86c6f7bf5d9ffabc03112586feb6293f7479d65298601d78ca44bf12b615",
+    "src/data/free-calibration.mjs": "f680455d6468e1c7f60fac7826180357038cbf7f633be1236cf58900a87ed8d4",
+    "src/data/free-evidence-partitions.mjs": "5f4f4cb66130b787e8503ee3f5b1aba081f4ffb5a5b06feee382588fbbbe96de",
+    "src/data/free-evidence-repository.mjs": "e058f17b2c7c41769d4f6fd752d3464daa14dea2c70fe4096bbfa334b62dacd0",
+    "src/data/free-evidence.mjs": "cef8880f69556f8ea9c9c1333f16a3c6d7d4d7fc198430aabac99aabf0b3d624",
+    "src/data/free-page-loader.mjs": "c4339dfa76cfab89aa1f16b40129ee9f7c779233d5d03ff2134f551a8f9b0d65",
+    "src/data/free-projection.mjs": "fe912d0224c6f874843b46e30610723ed666d9e26e245068e61977bd64d80acd",
+    "src/data/free-recovery-status.mjs": "38e505e1c617977939f8b6e5a28f4689343a2100e618bcf7841f494594907c8d",
+    "src/data/free-replica.mjs": "c1a6329f3766d72bb4c511db7cc30f42eabd78a483e50ef444c9591c81176a0b",
+    "src/data/free-runtime-service.mjs": "76ba9afaebd649f18f5bc968a39c3d09d2d0fa6f449d2650bd85307a2665f14a",
+    "src/data/free-runtime.mjs": "f6636970124df4f440b7e2c6b295ebbe7e12f0c6f79d993505359aea52440b97",
+    "src/data/free-time-policy.mjs": "08192e4f8b809a3bb7ad759bc30a644bbc11a8b36bfe5cd3f412751f0c7ef64b",
+    "src/data/hash.mjs": "8fcd95aca608fb4d4ef94855e0d101ce3d560e830733f96d9ec88068a81eaab3",
+    "src/data/known-anchor-backfill.mjs": "ac37f09dcd992c454c142f11a9e3f3897c3c785908f5a27f8de8ec422b0031df",
+    "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+    "src/data/native-facts.mjs": "af195ecccd63e2dd6730c832cb6648a8517826127d1f385e4b4ce5d5cd558dd8",
+    "src/data/native-partitions.mjs": "71145bc7150abe2f87f502517e5c7d11102b219c07ef0f7a98ca0555675cc8cc",
+    "src/data/native-repository.mjs": "3a26ed05b63c77704e363ac424843426a4b5b5b83d03558bdfa7c467686ce052",
+    "src/data/partitioned.mjs": "efbd6a84604da32fbe582a9823f7e8117c367610224530888de2a1fa6ec4c0f1",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/replica.mjs": "a79882d912cae17ca5777a2ac5a8f8ff0d4d4b11585cdcbe4671628de098befc",
+    "src/data/repository.mjs": "9764bb242a70731f3c2b16f7015a4188e92dc89b9639e67b6b6e13895e7734b6",
+    "src/data/schema.mjs": "9db57336e5d79ec002ef6308100d18008140292bcf1385899524b0a6972ebad6",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+    "src/b1/document-binding-broker.mjs": "9a404d0e773c507ca0f14fe580435ddb2a50ecc13a5dab163aa3859ef07017bd",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "2415f70ab46da554003eb1732e82dfc0764a7165476cf4ebe914ea2eeebe2c10",
+    "src/navigation/current-index.mjs": "c0ad9e1fca5f689539280e1bd95efceb75572cdcf1a06a371211647856813f82",
+    "src/navigation/free-editor.mjs": "189c1c0d6355ca53a18ead419d9007f75c82f9504c06955707d33647e6425b6b",
+    "src/navigation/free-recovery.mjs": "6da71d19e296066a4fcd9f56eb64b8a33127bd4733334f5d3de1e5e84bc3aaac",
+    "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/navigation.mjs": "bd50f3251e625e44eaf4edd87b8cb087a36ce18b7d2e7cf6b88ed76ee008498e",
+    "src/navigation/projection.mjs": "8d4b2d85dceb27b4965cd82842fec37ecdbddedae3e6a1c763720dbec35e3a4b",
+    "src/navigation/search.mjs": "a93da18f3018a6267af7634986fdf7cfca4ed72eeaa6bb982340e9b0031c85d6",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc",
+    "simulator/adapter.mjs": "ac64ab9c228fa3939cb1e6f6a8a7ca902e111772ebdab07a28ef6fb7a793870d",
+    "simulator/build.mjs": "4e150a13bfb956c8eb02a7b18e3ef3cec7527d81854e6367e1fb32589ba5cef0",
+    "simulator/client.mjs": "3b9ae97b818786cc915899527e7029d44d4848d056828ac5f95d07511f1e1a96",
+    "simulator/content-entry.mjs": "0925da0746fdc1e6a5f831a11423ca3d6cc426dc377dc463f092894e7ab860fb",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/editor-style.mjs": "18197a2a89d8e83986b56e464c506c9bb8e08005d07f97c46959f5e9cfabf2ce",
+    "simulator/editor.mjs": "3b4a1239781cf2574973132752e2c46140be36f885d9e180422d965d00e650e2",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.mjs": "f4906fa02d94ad6c7f8d3f475a25253f3365a8405efc46cdfa90794aa1d8cd0d",
+    "simulator/main.mjs": "a3334e661a4c87c814d5e35e26edaab2849a6ea7307fc9162855ec5f3eb1afbe",
+    "simulator/native-seed.mjs": "8a1a64f9acbc2c1555049dbff8398d209d835a65723b5c349dedf6321c83f752",
+    "simulator/package.mjs": "4cce0589b4ba75fd0a4081fe152348f6f2782eca03aec6289eca02a46e484030",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/service.mjs": "9eebe3304362cc7ee680b8f228e3fd5d0cf8252bea341df727fcd7f4cced4a93",
+    "simulator/worker.mjs": "a970e35d86f516b0b131bfbf3de0afc80b63e73fbd9bd4bb9dc046877c974597",
+    "tests/free/send-scale-browser.mjs": "c40ebd4f496466bf211a1c20375dc1bc66068225af61f731acb66492c02d7620"
+  },
+  "browser": "156.0.8078.4",
+  "measurement": "DIAGNOSTIC_PROFILING_NOT_LATENCY_CERTIFICATION",
+  "initialRefs": 99998,
+  "requestedScale": 100000,
+  "profile": {
+    "file": "/private/tmp/free-round36-send-profile.existing.cpuprofile",
+    "durationMs": 1799.311,
+    "topSelfCPU": [
+      {
+        "functionName": "strictJSON",
+        "url": "http://127.0.0.1:58395/src/data/verified-record-cache.mjs",
+        "line": 2,
+        "selfMs": 281.273
+      },
+      {
+        "functionName": "(program)",
+        "url": "",
+        "line": 0,
+        "selfMs": 153.217
+      },
+      {
+        "functionName": "(garbage collector)",
+        "url": "",
+        "line": 0,
+        "selfMs": 144.983
+      },
+      {
+        "functionName": "sha256",
+        "url": "http://127.0.0.1:58395/src/data/hash.mjs",
+        "line": 10,
+        "selfMs": 140.245
+      },
+      {
+        "functionName": "saveEvidencePieces",
+        "url": "http://127.0.0.1:58395/src/data/free-evidence-partitions.mjs",
+        "line": 58,
+        "selfMs": 113.833
+      },
+      {
+        "functionName": "(anonymous)",
+        "url": "http://127.0.0.1:58395/src/data/hash.mjs",
+        "line": 6,
+        "selfMs": 107.607
+      },
+      {
+        "functionName": "root.onsuccess",
+        "url": "http://127.0.0.1:58395/src/data/free-evidence-repository.mjs",
+        "line": 39,
+        "selfMs": 82.726
+      },
+      {
+        "functionName": "saveNativePieces",
+        "url": "http://127.0.0.1:58395/src/data/native-partitions.mjs",
+        "line": 101,
+        "selfMs": 63.639
+      },
+      {
+        "functionName": "sr.onsuccess",
+        "url": "http://127.0.0.1:58395/src/data/repository.mjs",
+        "line": 78,
+        "selfMs": 41.352
+      },
+      {
+        "functionName": "saveMutation",
+        "url": "http://127.0.0.1:58395/src/data/partitioned.mjs",
+        "line": 97,
+        "selfMs": 39.901
+      },
+      {
+        "functionName": "freeHeader",
+        "url": "http://127.0.0.1:58395/simulator/service.mjs",
+        "line": 79,
+        "selfMs": 37.007
+      },
+      {
+        "functionName": "id",
+        "url": "http://127.0.0.1:58395/src/data/state.mjs",
+        "line": 8,
+        "selfMs": 36.954
+      },
+      {
+        "functionName": "manifestSize",
+        "url": "http://127.0.0.1:58395/src/data/partitioned.mjs",
+        "line": 33,
+        "selfMs": 34.827
+      },
+      {
+        "functionName": "checkEvidenceManifestStructure",
+        "url": "http://127.0.0.1:58395/src/data/free-evidence-partitions.mjs",
+        "line": 14,
+        "selfMs": 33.508
+      },
+      {
+        "functionName": "(idle)",
+        "url": "",
+        "line": 0,
+        "selfMs": 33.424
+      },
+      {
+        "functionName": "q.onsuccess",
+        "url": "http://127.0.0.1:58395/src/data/partitioned.mjs",
+        "line": 121,
+        "selfMs": 30.132
+      },
+      {
+        "functionName": "request.onsuccess",
+        "url": "http://127.0.0.1:58395/src/data/native-repository.mjs",
+        "line": 116,
+        "selfMs": 30.034
+      },
+      {
+        "functionName": "request.onsuccess",
+        "url": "http://127.0.0.1:58395/src/data/native-repository.mjs",
+        "line": 82,
+        "selfMs": 27.569
+      },
+      {
+        "functionName": "assemble",
+        "url": "http://127.0.0.1:58395/src/data/free-replica.mjs",
+        "line": 35,
+        "selfMs": 26.802
+      },
+      {
+        "functionName": "r.onsuccess",
+        "url": "http://127.0.0.1:58395/src/data/partitioned.mjs",
+        "line": 79,
+        "selfMs": 26.375
+      },
+      {
+        "functionName": "publish",
+        "url": "http://127.0.0.1:58395/src/data/native-repository.mjs",
+        "line": 287,
+        "selfMs": 25.994
+      },
+      {
+        "functionName": "validateEvidenceManifest",
+        "url": "http://127.0.0.1:58395/src/data/free-evidence-partitions.mjs",
+        "line": 33,
+        "selfMs": 23.889
+      },
+      {
+        "functionName": "root.onsuccess",
+        "url": "http://127.0.0.1:58395/src/data/free-evidence-repository.mjs",
+        "line": 132,
+        "selfMs": 21.351
+      },
+      {
+        "functionName": "checkNativeManifestStructure",
+        "url": "http://127.0.0.1:58395/src/data/native-partitions.mjs",
+        "line": 22,
+        "selfMs": 20.703
+      },
+      {
+        "functionName": "#read",
+        "url": "http://127.0.0.1:58395/src/data/verified-record-cache.mjs",
+        "line": 38,
+        "selfMs": 20.109
+      }
+    ]
+  },
+  "finalRefs": 100000,
+  "sourceChangedDuringRun": false
+}

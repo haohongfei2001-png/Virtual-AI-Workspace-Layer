@@ -1,0 +1,9 @@
+{
+  "baseCommit": "19d24ba56d92151e829ebec0ba5ea948d600a125",
+  "sha256": {
+    "src/host/chatgpt-adapter.mjs": "481d60b713407de632bf7267a19c966eb03a10ec4bce87b62282f4981280ca21",
+    "tests/host/adapter-idle-preparation.test.mjs": "3af7d0a704bff57fa8acc78d7a259b655fbca1454a56e35ebb7a25e2ea4c33ab",
+    "tests/host/host-scale-trace.mjs": "49fa966324090ab25a227adbe68fdfd916e59ccd4801ae0f263d1a6626947b6c",
+    "tests/host/host-scale-trace.test.mjs": "f5898503c64997032650a699f4647c82c0fc7883abd5ef990203d1be3d27be26"
+  }
+}

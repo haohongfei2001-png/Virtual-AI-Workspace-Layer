@@ -1,0 +1,7 @@
+{
+  "baseCommit": "f6ac8a25894ce1e65567ef917b877f086128b689",
+  "sourceHashes": {
+    "src/navigation/mount-surface.mjs": "196c3a8e71b3c009dd29ecc78dd6e267067ef8d513ed5032d52537ad9fbe2dd4",
+    "tests/host/mount-keyboard-placement.test.mjs": "5b9a03f54d8ff276b12c3cc29e0ac917e3dd7e276a6038939619c7729abda4cf"
+  }
+}

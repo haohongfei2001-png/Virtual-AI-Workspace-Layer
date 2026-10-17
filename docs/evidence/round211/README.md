@@ -1,0 +1,9 @@
+# Round 211 — source-scoped CI corrections and J2 candidate
+
+Baseline 9a9163c: sixth CI 38669737693 completed **FAIL**. Node 4165/4165 and 12 L guard mutations passed. Warm and cold C2 passed. J1 failed on a detached old extension iframe, J3 observed a nonexistent shallow DOM root, J4 natural authentication expiry passed but foreground prerequisite still failed. Firstsend recorded its first real native operation/message/new-C ACK in 295ms; second-home presentation timed out. These failures are preserved here; no whole-journey pass is inferred.
+
+Changes: read-only J1 observation reacquires only a detached current iframe; J3 reuses its real role locator; firstsend uses the existing genuine return control on the second homepage. Native visibility starts an isolated loopback Chromium with public noDefaults CDP attachment, avoiding Playwright's session-owned focus emulation. A separate startup smoke must pass before J2/J4 prerequisites execute.
+
+J2 adds real failed/successful native sends, actual calibration deadline waiting, worker stop/restart, original-time readback/deduplication and other-author/old-branch negatives. Original-time projection supersedes the same message's observation estimate; conflicting originals quarantine that message. Legacy branch and host-original keys have separate namespaces. Independent 29/29 audit and integrated targeted 50/50 pass. This is not a browser pass; fast-failure retry remains explicitly uncovered in the candidate report.
+
+Four new real-browser/IDB guard mutation candidates require baseline success and designated assertion failures. Page close during actual IDB transaction is not represented as whole-browser/process crash. Existing 12 L mutations remain separate. All new browser results are pending; S/D, J1–J4/81 full acceptance, performance, compatibility and real G/U are not upgraded. Production defaults unchanged, NOT_RELEASE_READY.

@@ -1,0 +1,314 @@
+{
+  "evidence": "MINIMAL_MV3_MECHANISM_NOT_PRODUCT_ACCEPTANCE",
+  "productAcceptance": "NOT_CERTIFIED",
+  "scope": "Temporary static extension with no VAIWL renderer, broker or production code; formal reading immediate exit FAIL remains independent.",
+  "scriptHash": "6fab0286b51205b25bfa4b0d53a93c1de4e5592bdc746e469f5c7e2f40df92e5",
+  "sourceHashes": {
+    "manifest.json": "c621e589e8cd6590773e2cf1734928558eb2594e7a1c988c253b61d774e28f79",
+    "worker.js": "e69b1a1801e3390fbfb8f2aa904df7b0fd2ae201fcf160c9445b7c805ddcdfc8",
+    "child.html": "896c3bf28f56800fb40d228397fc4608ff9ea9abe25d7987b2491b2acfe606bc",
+    "child.js": "0032f76c81a1240b9019deeb5b6bbfe503e67d6780eaca56a02643a00d7a5519"
+  },
+  "mountMode": "production-cycle",
+  "mountSourceHash": "bf018042ed0e057abaaaa2e17f0a55725e6e7812b75915bef858f1d3f49ba0b9",
+  "extension": "/private/tmp/manual-extension-popover-1Q5ndC/extension",
+  "cases": [
+    {
+      "popover": true,
+      "mode": "FRESH_PAGE_IMMEDIATE_NO_ADDED_WAIT",
+      "iframeTargets": [
+        {
+          "type": "iframe",
+          "url": "chrome-extension://gaphemdjofncdjipeoccfdkagepggnik/child.html",
+          "targetId": "D9F19100CF084B9A3DE94D337661145E"
+        },
+        {
+          "type": "iframe",
+          "url": "chrome-extension://gaphemdjofncdjipeoccfdkagepggnik/child.html",
+          "targetId": "BE43C8D1284F9D150FC97590B8310991"
+        }
+      ],
+      "oopifConfirmed": true,
+      "classification": "EXTENSION_IFRAME_TARGET_CONFIRMED",
+      "afterNativeInput": {
+        "open": 0,
+        "editorSame": true,
+        "draft": "NATIVE_CYCLE_DRAFT"
+      },
+      "afterNativeReturn": {
+        "open": 2,
+        "draft": "NATIVE_CYCLE_DRAFT"
+      },
+      "before": {
+        "rect": {
+          "x": 50,
+          "y": 80,
+          "width": 120,
+          "height": 40,
+          "top": 80,
+          "right": 170,
+          "bottom": 120,
+          "left": 50
+        },
+        "hit": "target"
+      },
+      "clicked": 0,
+      "childEvents": [],
+      "parentEvents": [
+        {
+          "type": "input",
+          "target": "TEXTAREA",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022354930.7
+        },
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022354967.6
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022354967.7
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022354967.8
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022354967.8
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "native-return",
+          "trusted": true,
+          "epochMs": 1792022354967.8
+        },
+        {
+          "type": "pointerdown",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022355001.1
+        },
+        {
+          "type": "mousedown",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022355001.2
+        },
+        {
+          "type": "pointerup",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022355001.2
+        },
+        {
+          "type": "mouseup",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022355001.3
+        },
+        {
+          "type": "click",
+          "target": "BUTTON",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022355001.3
+        },
+        {
+          "type": "pointerdown",
+          "target": "IFRAME",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022355035.5
+        },
+        {
+          "type": "mousedown",
+          "target": "IFRAME",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022355035.5
+        },
+        {
+          "type": "pointerup",
+          "target": "IFRAME",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022355035.6
+        },
+        {
+          "type": "mouseup",
+          "target": "IFRAME",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022355035.6
+        },
+        {
+          "type": "click",
+          "target": "IFRAME",
+          "id": "",
+          "trusted": true,
+          "epochMs": 1792022355035.6
+        }
+      ],
+      "state": {
+        "workspaceOpen": false,
+        "sidebarOpen": true
+      },
+      "status": "OBSERVED_FAILURE",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 1\n\n    at file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/manual-extension-popover-hit-browser.mjs:27:580",
+      "frames": [
+        {
+          "url": "http://127.0.0.1:59692/?popover=1",
+          "events": [
+            {
+              "type": "input",
+              "target": "TEXTAREA",
+              "id": "",
+              "trusted": true,
+              "epochMs": 1792022354930.7
+            },
+            {
+              "type": "pointerdown",
+              "target": "BUTTON",
+              "id": "native-return",
+              "trusted": true,
+              "epochMs": 1792022354967.6
+            },
+            {
+              "type": "mousedown",
+              "target": "BUTTON",
+              "id": "native-return",
+              "trusted": true,
+              "epochMs": 1792022354967.7
+            },
+            {
+              "type": "pointerup",
+              "target": "BUTTON",
+              "id": "native-return",
+              "trusted": true,
+              "epochMs": 1792022354967.8
+            },
+            {
+              "type": "mouseup",
+              "target": "BUTTON",
+              "id": "native-return",
+              "trusted": true,
+              "epochMs": 1792022354967.8
+            },
+            {
+              "type": "click",
+              "target": "BUTTON",
+              "id": "native-return",
+              "trusted": true,
+              "epochMs": 1792022354967.8
+            },
+            {
+              "type": "pointerdown",
+              "target": "BUTTON",
+              "id": "",
+              "trusted": true,
+              "epochMs": 1792022355001.1
+            },
+            {
+              "type": "mousedown",
+              "target": "BUTTON",
+              "id": "",
+              "trusted": true,
+              "epochMs": 1792022355001.2
+            },
+            {
+              "type": "pointerup",
+              "target": "BUTTON",
+              "id": "",
+              "trusted": true,
+              "epochMs": 1792022355001.2
+            },
+            {
+              "type": "mouseup",
+              "target": "BUTTON",
+              "id": "",
+              "trusted": true,
+              "epochMs": 1792022355001.3
+            },
+            {
+              "type": "click",
+              "target": "BUTTON",
+              "id": "",
+              "trusted": true,
+              "epochMs": 1792022355001.3
+            },
+            {
+              "type": "pointerdown",
+              "target": "IFRAME",
+              "id": "",
+              "trusted": true,
+              "epochMs": 1792022355035.5
+            },
+            {
+              "type": "mousedown",
+              "target": "IFRAME",
+              "id": "",
+              "trusted": true,
+              "epochMs": 1792022355035.5
+            },
+            {
+              "type": "pointerup",
+              "target": "IFRAME",
+              "id": "",
+              "trusted": true,
+              "epochMs": 1792022355035.6
+            },
+            {
+              "type": "mouseup",
+              "target": "IFRAME",
+              "id": "",
+              "trusted": true,
+              "epochMs": 1792022355035.6
+            },
+            {
+              "type": "click",
+              "target": "IFRAME",
+              "id": "",
+              "trusted": true,
+              "epochMs": 1792022355035.6
+            }
+          ]
+        },
+        {
+          "url": "chrome-extension://gaphemdjofncdjipeoccfdkagepggnik/child.html",
+          "events": []
+        },
+        {
+          "url": "chrome-extension://gaphemdjofncdjipeoccfdkagepggnik/child.html",
+          "events": []
+        }
+      ],
+      "screenshot": "/private/tmp/manual-extension-popover-1Q5ndC/popover.png"
+    }
+  ],
+  "blockedExternal": [],
+  "workerNetworkBlocked": true,
+  "browserVersion": "155.0.8059.40",
+  "status": "MECHANISM_FAILURE_OBSERVED",
+  "scriptChangedDuringRun": false,
+  "mountSourceChangedDuringRun": false,
+  "fixtureSourceChangedDuringRun": false
+}

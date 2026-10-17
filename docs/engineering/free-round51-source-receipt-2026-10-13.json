@@ -1,0 +1,26 @@
+{
+  "baseHead": "0600133fb88ae1e133062173a1b31d02a4f05ebd",
+  "git": "UNCOMMITTED_CONTINUATION_OF_ROUNDS49_50",
+  "sourceHashes": {
+    "src/data/repository.mjs": "c103a0d7fdb70e925a609ff129b6c65cf2aa9f9e61e1b757366c8f8942632164",
+    "src/data/partitioned.mjs": "521f4bc0943527b26f1a37856bc01e320e42e7cce7a361ab99ed0b728b463e58",
+    "src/data/shared-directory-writer.mjs": "8b2fd950abe60c8ca00d4ceaaf4680b44ad9741c3fb35cc578613668d253bf6e",
+    "src/data/shared-ref-directory.mjs": "5fc522a2f93f0923b0b5839e8b964103c0edc96de45d7f6c295023a5e269f099",
+    "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+    "tests/free/shared-directory-owner-write.test.mjs": "c7efec9a020a6a96adadb1ac4102af2a9c482ab1a0137cd45ba3a77a67a42389",
+    "tests/free/shared-directory-mutation-load.test.mjs": "eac8df9720c4fbf984928e8866625a9312cbae449c5c6562fea8e61954df5a47",
+    "tests/free/shared-directory-read-contracts.mjs": "31ac939d70b63a39ea3241249e53b928a5d424d14dbe5973a58e6df4e203030d"
+  },
+  "fullNode": {
+    "pass": 1023,
+    "fail": 0,
+    "skip": 0
+  },
+  "ownerWriteContracts": 6,
+  "loadAndNativeAnchorContracts": 6,
+  "realIDBAndMV3": "NOT_RUN_APPROVAL_REVIEW_USAGE_LIMIT",
+  "automaticMigration": "NOT_IMPLEMENTED",
+  "directoryRecovery": "STILL_EXPLICITLY_REFUSED",
+  "normalSendPerformance": "NOT_RUN_LAST_MIXED100K_ROUND47_FAIL",
+  "package": "SYNTHETIC_ONLY_NOT_RELEASE_READY"
+}

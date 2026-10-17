@@ -1,0 +1,38 @@
+✔ budget retains the newest contiguous whole rows and never mutates input (8.537875ms)
+✔ one exact 20000-reference row survives and older rows cannot be partially kept (0.667541ms)
+✔ row cap applies independently to zero-reference revisions (0.080542ms)
+✔ old replicas fall back to full validation while recent deltas remain complete (4.083542ms)
+✖ directory owner write bounds old hints without dropping facts human assets checkpoints or journal (369.148167ms)
+✔ oversized row terminates the suffix rather than skipping a gap or slicing refs (1.262667ms)
+✔ explicit migration bounds legacy hints but preserves audited facts and existing human journal (145.029542ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 583.4155
+
+✖ failing tests:
+
+test at tests/free/shared-directory-change-budget.test.mjs:30:1
+✖ directory owner write bounds old hints without dropping facts human assets checkpoints or journal (369.148167ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'kept',
+  +   'Manual R'
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/shared-directory-change-budget.test.mjs:43:67)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'kept', 'Manual R' ],
+    expected: [ 'kept' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

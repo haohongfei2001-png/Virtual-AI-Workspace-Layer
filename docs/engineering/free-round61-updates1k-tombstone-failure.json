@@ -1,0 +1,672 @@
+{
+  "evidence": "REAL_BROWSER_SYNTHETIC_LOCAL_SEND_PAGE_TRANSPORT",
+  "realChatGPT": "NOT_RUN",
+  "distribution": "project-mixed",
+  "cpuRate": 1,
+  "longTitles": false,
+  "throttleScope": "page-renderer-after-seed-before-first-render; page-transport-repositories-share-renderer; not-physical-device-or-MV3-worker",
+  "results": [
+    {
+      "kind": "existing",
+      "eventToDOMMs": 72.30000001192093,
+      "knownRef": "T0",
+      "membership": "NONE",
+      "sendEvents": 1,
+      "nativeUserMessages": 1,
+      "storedUserEvents": 1,
+      "storedHints": 1,
+      "reading": true,
+      "draftPreserved": true,
+      "counts": {
+        "native.read": 0,
+        "native.snapshot": 0,
+        "native.page": 2,
+        "native.header": 1,
+        "evidence.read": 0,
+        "evidence.page": 3,
+        "evidence.header": 1,
+        "workspace.read": 0,
+        "workspace.snapshot": 0
+      },
+      "rpc": [
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "start": 511,
+          "at": 548.7000000029802,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "start": 548.7000000029802,
+          "at": 561.5999999940395,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_PAGE",
+          "start": 562,
+          "at": 564.2999999970198,
+          "ok": true
+        },
+        {
+          "type": "CHECK",
+          "start": 565.0999999940395,
+          "at": 566.3999999910593,
+          "ok": true
+        }
+      ]
+    },
+    {
+      "kind": "new-none",
+      "eventToDOMMs": 48,
+      "knownRef": "new-4e330475-f3b3-44c1-a91a-be6cdda507bf",
+      "membership": "NONE",
+      "sendEvents": 1,
+      "nativeUserMessages": 1,
+      "storedUserEvents": 1,
+      "storedHints": 1,
+      "reading": true,
+      "draftPreserved": true,
+      "counts": {
+        "native.read": 0,
+        "native.snapshot": 0,
+        "native.page": 2,
+        "native.header": 1,
+        "evidence.read": 0,
+        "evidence.page": 3,
+        "evidence.header": 1,
+        "workspace.read": 0,
+        "workspace.snapshot": 0
+      },
+      "rpc": [
+        {
+          "type": "BIND",
+          "start": 700.7999999970198,
+          "at": 700.7999999970198,
+          "ok": true
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "start": 700.8999999910593,
+          "at": 714.3999999910593,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "start": 714.3999999910593,
+          "at": 727.7999999970198,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_PAGE",
+          "start": 728.0999999940395,
+          "at": 730.0999999940395,
+          "ok": true
+        },
+        {
+          "type": "CHECK",
+          "start": 731,
+          "at": 731.5999999940395,
+          "ok": true
+        }
+      ]
+    },
+    {
+      "kind": "new-project",
+      "eventToDOMMs": 48.80000001192093,
+      "knownRef": "new-ddb995a8-a99c-40f7-914c-2819597fc3d4",
+      "membership": "PROJECT",
+      "sendEvents": 1,
+      "nativeUserMessages": 1,
+      "storedUserEvents": 1,
+      "storedHints": 1,
+      "reading": true,
+      "draftPreserved": true,
+      "counts": {
+        "native.read": 0,
+        "native.snapshot": 0,
+        "native.page": 2,
+        "native.header": 1,
+        "evidence.read": 0,
+        "evidence.page": 3,
+        "evidence.header": 1,
+        "workspace.read": 0,
+        "workspace.snapshot": 0
+      },
+      "rpc": [
+        {
+          "type": "BIND",
+          "start": 849.0999999940395,
+          "at": 849.0999999940395,
+          "ok": true
+        },
+        {
+          "type": "B23_SYNTHETIC_SEND",
+          "start": 849.2000000029802,
+          "at": 862.2999999970198,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_HEADER",
+          "start": 862.2999999970198,
+          "at": 874.2000000029802,
+          "ok": true
+        },
+        {
+          "type": "B23_FREE_PAGE",
+          "start": 874.5,
+          "at": 876.5999999940395,
+          "ok": true
+        },
+        {
+          "type": "CHECK",
+          "start": 877.5999999940395,
+          "at": 878.2999999970198,
+          "ok": true
+        }
+      ]
+    }
+  ],
+  "sourceHashes": {
+    "src/data/backup.mjs": "bb0a8639d02e2169ae15e866a464f1531b7e80e40afd7c8a4b35e99d70928396",
+    "src/data/cooperate.mjs": "ce494a33280143e1e2a2227a72413da792330311de12642a9a56b13704f2f3b4",
+    "src/data/evidence-directory-migration.mjs": "5ba7a597c10a814d135f54339f307b597511319627047de907aa3e817f45290d",
+    "src/data/evidence-directory-reader.mjs": "b94684c7e3824a0b6bc832d308cda077e37aca1c77c0517591a3df13cd6449e1",
+    "src/data/evidence-directory-writer.mjs": "0656a92e6016dcfc07f04c0014a3ea01e4fbe95dd74a4848900ae1f688747062",
+    "src/data/evidence-ref-directory.mjs": "1001abca8b849e7c73390acaa730a1639efc9cc621898ca97f3d538b30832b08",
+    "src/data/evidence.mjs": "f84032c9a2fc08455480652b60de6fb9394a70e82a7ace8729186ff097b26238",
+    "src/data/free-activity.mjs": "0a3c86c6f7bf5d9ffabc03112586feb6293f7479d65298601d78ca44bf12b615",
+    "src/data/free-calibration.mjs": "f680455d6468e1c7f60fac7826180357038cbf7f633be1236cf58900a87ed8d4",
+    "src/data/free-evidence-partitions.mjs": "dbecbc2418d79c84c8e7efd8b07db98794b5355989865c891dc551a84b5df4d5",
+    "src/data/free-evidence-repository.mjs": "8958fd1127f8790d7d0323f5250cc3a2873c4dbb9b36c6b218ff2db2892ecd65",
+    "src/data/free-evidence.mjs": "cef8880f69556f8ea9c9c1333f16a3c6d7d4d7fc198430aabac99aabf0b3d624",
+    "src/data/free-header-loader.mjs": "76abb31e4f65d87849810f876dc143d6c4f4744770c0caa8f8447add70145d35",
+    "src/data/free-page-loader.mjs": "c4339dfa76cfab89aa1f16b40129ee9f7c779233d5d03ff2134f551a8f9b0d65",
+    "src/data/free-projection.mjs": "fe912d0224c6f874843b46e30610723ed666d9e26e245068e61977bd64d80acd",
+    "src/data/free-recovery-status.mjs": "50e3ab800c17ab190dbdc9c33d2630a7d8806889fe6c126c67068ace09a282e5",
+    "src/data/free-replica.mjs": "c1a6329f3766d72bb4c511db7cc30f42eabd78a483e50ef444c9591c81176a0b",
+    "src/data/free-runtime-service.mjs": "76ba9afaebd649f18f5bc968a39c3d09d2d0fa6f449d2650bd85307a2665f14a",
+    "src/data/free-runtime.mjs": "f6636970124df4f440b7e2c6b295ebbe7e12f0c6f79d993505359aea52440b97",
+    "src/data/free-time-policy.mjs": "08192e4f8b809a3bb7ad759bc30a644bbc11a8b36bfe5cd3f412751f0c7ef64b",
+    "src/data/hash.mjs": "ba845d5f13e7d3db8d8c747d1e711f210717e3a29ea9539a3477bbe8bc38e964",
+    "src/data/known-anchor-backfill.mjs": "dd58e613da9564668fc7963135dd98caccf3bd6930e532864e68d9ff6afd55ca",
+    "src/data/known-anchor-key.mjs": "e5d91c902e04440be924ef0506ff688bbbccd83150610f50199b518bcb298df3",
+    "src/data/native-facts.mjs": "af195ecccd63e2dd6730c832cb6648a8517826127d1f385e4b4ce5d5cd558dd8",
+    "src/data/native-index-migration.mjs": "1f681e0c0049d91b37394bb26313caa8dfeba1d2ede97833c9b3321fc61a4923",
+    "src/data/native-index-reader.mjs": "f359a28b189dec9605dad356d3c19d474132fff2ab3a94425367997047c96c4a",
+    "src/data/native-index-writer.mjs": "b24b74a4470602b8196c5ee9559aaa8d5f53454c034b02aeb84b2652532a2808",
+    "src/data/native-partitions.mjs": "df08b215677fa72bdef9523a327ff26432b076b1f61e39ca39d7ca926a996628",
+    "src/data/native-repository.mjs": "dc584933af87370baeada2d6cf566293b26677fe946a4d86c58379b8652ea806",
+    "src/data/native-version-index.mjs": "03089b0dddfa9f948087823af1e1ad7b43fc765a6631c40647e1e4b201cd7211",
+    "src/data/partition-manifest.mjs": "e9363342a5b44f14fcf3c12b7a65e0838e3376c250bd6d1e5978915c58ae7ef6",
+    "src/data/partitioned.mjs": "da639429c7a46b05dd4cc380e6ba1d62b118e2622b7a497efe96aa8c96367757",
+    "src/data/preferences.mjs": "1fb8395c5dfe23d64c91095b71a1c117b9762b3ccec68e262aaf73744b12c9d7",
+    "src/data/replica.mjs": "a79882d912cae17ca5777a2ac5a8f8ff0d4d4b11585cdcbe4671628de098befc",
+    "src/data/repository.mjs": "093aba679acff36dd2c40063b7bb2124e96cedc25cd1f92cbfe87a69458b737a",
+    "src/data/schema.mjs": "9db57336e5d79ec002ef6308100d18008140292bcf1385899524b0a6972ebad6",
+    "src/data/shared-directory-migration.mjs": "0cd415f9a871b93613c3d9f3e301982cda2d1891dc847d983397f87dc2dcf0df",
+    "src/data/shared-directory-reader.mjs": "e4abac50e4cc282e16469861009a48893a10fd76652c208791834f50678c7672",
+    "src/data/shared-directory-recovery.mjs": "e04870124d9cd873a8af8b3643fd3d2fa5bdb33c69809e7bbf667bb2aa4727cf",
+    "src/data/shared-directory-retention.mjs": "3bc27b2a71994f8f0857056c8309c47107251372f25c021368d3d06248e7cbc9",
+    "src/data/shared-directory-writer.mjs": "4a060d7467d6e55a9fb2d54cd3d7099bc976c2228cf010cc97db03976a8ff8dd",
+    "src/data/shared-partition-audit.mjs": "b52d12777aa3639919e416732a8aac768af2582f71834ee5ced3ef03ceb81b4b",
+    "src/data/shared-ref-directory.mjs": "9d1f099d7c5e5019ba023b0d84c57779e968a55ad6397d2ee20825e0d471fa44",
+    "src/data/state.mjs": "df0eaff00a7f050c37653f0e740b8fabe19bce571c5e37f4ce437d180984c62a",
+    "src/data/verified-record-cache.mjs": "9b7b3c13abdd37f2b6d4fad48b85707a9815538fd793cad537f8e87b8f08cde0",
+    "src/b1/document-binding-broker.mjs": "1f57e9524fc10455cee1e96f402e7147e99dabd859e845e41c22eba3301b5607",
+    "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+    "src/b1/scope-repository.mjs": "2415f70ab46da554003eb1732e82dfc0764a7165476cf4ebe914ea2eeebe2c10",
+    "src/navigation/current-index.mjs": "23f13e4d9556715bb029ad6724b8a3731ba87251d6ddfd8e95939085ebfab21e",
+    "src/navigation/free-editor.mjs": "189c1c0d6355ca53a18ead419d9007f75c82f9504c06955707d33647e6425b6b",
+    "src/navigation/free-recovery.mjs": "6da71d19e296066a4fcd9f56eb64b8a33127bd4733334f5d3de1e5e84bc3aaac",
+    "src/navigation/free-view.mjs": "ef0f8d6b798789539d16bdc3ae1d8cc66ccf5fc32f472b83ca2c475863946aaa",
+    "src/navigation/icons.mjs": "14195d8a7a21a029278ff6f9bf0bb1add2d679b37666108d80cfadabe312d2fd",
+    "src/navigation/navigation.mjs": "bd50f3251e625e44eaf4edd87b8cb087a36ce18b7d2e7cf6b88ed76ee008498e",
+    "src/navigation/projection.mjs": "36334b5da4bd8e89718bf45b69723f4a657d46797c03c653298aaa3392399f24",
+    "src/navigation/search.mjs": "a93da18f3018a6267af7634986fdf7cfca4ed72eeaa6bb982340e9b0031c85d6",
+    "src/navigation/styles.mjs": "3acd56606be4653a1391a7725d21649c376b7ded6d8acb8e5b6f5c0a80c213bc",
+    "simulator/adapter.mjs": "ac64ab9c228fa3939cb1e6f6a8a7ca902e111772ebdab07a28ef6fb7a793870d",
+    "simulator/build.mjs": "a1e424caa74c31c27f3b8427d716be5594b124c81302b252b536cd48cbe5411a",
+    "simulator/client.mjs": "b41103af3b4916366f5240467fe6c6d4d2325b2c37920b1475c8220f315e2f99",
+    "simulator/content-entry.mjs": "0925da0746fdc1e6a5f831a11423ca3d6cc426dc377dc463f092894e7ab860fb",
+    "simulator/control.mjs": "1aecf9cc6f938dddb4477060f5901af6d852d89353dcd145c834564042e14355",
+    "simulator/data.mjs": "a1e77db2bd6b16b5a2142c9068d717e8a109424f3f89a87d641160ce532d0845",
+    "simulator/editor-style.mjs": "18197a2a89d8e83986b56e464c506c9bb8e08005d07f97c46959f5e9cfabf2ce",
+    "simulator/editor.mjs": "3b4a1239781cf2574973132752e2c46140be36f885d9e180422d965d00e650e2",
+    "simulator/environment.mjs": "ac3f0f1ab2edb0fcf466f3fd1b7015ab948794c672fa4d65076789a3da897039",
+    "simulator/host.mjs": "f4906fa02d94ad6c7f8d3f475a25253f3365a8405efc46cdfa90794aa1d8cd0d",
+    "simulator/main.mjs": "a3334e661a4c87c814d5e35e26edaab2849a6ea7307fc9162855ec5f3eb1afbe",
+    "simulator/native-seed.mjs": "8a1a64f9acbc2c1555049dbff8398d209d835a65723b5c349dedf6321c83f752",
+    "simulator/package.mjs": "4cce0589b4ba75fd0a4081fe152348f6f2782eca03aec6289eca02a46e484030",
+    "simulator/persistent-seed.mjs": "de5208b63e2d35b58268adefc4e1a05848f069f57948976974b2bf33ee139e68",
+    "simulator/server.mjs": "d59a1812d5cccf6213340c7d2c1b0a3f3fdb3a6327503fb220f5cf813d27f6cd",
+    "simulator/service.mjs": "37f7ed680c7cf79516fb179626d69c3e294ac30be68b4d15bd20b564241468e0",
+    "simulator/worker.mjs": "a970e35d86f516b0b131bfbf3de0afc80b63e73fbd9bd4bb9dc046877c974597",
+    "tests/free/send-scale-browser.mjs": "1b4b7b9f9d63c858faea6ff4b1fe81540278d402b3432c5c987bac275aa61305",
+    "tests/free/native-update-scale-contracts.mjs": "35255e8a97a9afa6d585d17d453157771f8928a7672bfa9e49b6c44069437bdc"
+  },
+  "browser": "156.0.8078.4",
+  "initialRenderMs": 250.70020799999998,
+  "initialRPC": [
+    {
+      "type": "BIND",
+      "start": 201.09999999403954,
+      "at": 203.20000000298023,
+      "ok": true
+    },
+    {
+      "type": "B23_FREE_HEADER",
+      "start": 203.5,
+      "at": 237.70000000298023,
+      "ok": true,
+      "preparing": "native-index"
+    },
+    {
+      "type": "B23_FREE_HEADER",
+      "start": 237.70000000298023,
+      "at": 275.70000000298023,
+      "ok": true,
+      "preparing": "shared-directory"
+    },
+    {
+      "type": "B23_FREE_HEADER",
+      "start": 275.70000000298023,
+      "at": 319.3999999910593,
+      "ok": true,
+      "preparing": "evidence-directory"
+    },
+    {
+      "type": "B23_FREE_HEADER",
+      "start": 319.3999999910593,
+      "at": 349.79999999701977,
+      "ok": true
+    },
+    {
+      "type": "B23_FREE_PAGE",
+      "start": 349.8999999910593,
+      "at": 437.79999999701977,
+      "ok": true
+    },
+    {
+      "type": "CHECK",
+      "start": 441.20000000298023,
+      "at": 442.20000000298023,
+      "ok": true
+    }
+  ],
+  "initialRefs": 1000,
+  "requestedScale": 1000,
+  "finalRefs": 1002,
+  "projectCount": 10,
+  "sampledMembership": {
+    "c1": {
+      "id": "c1",
+      "state": "PROJECT",
+      "projectId": "P1",
+      "sourceId": "native_fixture_v1",
+      "generation": "fixture_generation_v1",
+      "sourceRevision": 1,
+      "observedAt": "2026-10-11T04:00:00Z",
+      "validUntil": "2026-10-12T04:00:00Z"
+    },
+    "c5": {
+      "id": "c5",
+      "state": "NONE",
+      "projectId": null,
+      "sourceId": "native_fixture_v1",
+      "generation": "fixture_generation_v1",
+      "sourceRevision": 1,
+      "observedAt": "2026-10-11T04:00:00Z",
+      "validUntil": "2026-10-12T04:00:00Z"
+    }
+  },
+  "nativeStorageFormat": "vaiwl-native-version-index-v1",
+  "evidenceStorageFormat": "vaiwl-free-evidence-directory-v1",
+  "failure": "Error: unavailable owner fact/tombstone missing\n    at check (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/native-update-scale-contracts.mjs:3:56)\n    at Module.runNativeUpdateScale (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/native-update-scale-contracts.mjs:52:159)\n    at async file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/free/send-scale-browser.mjs:30:63",
+  "debug": {
+    "status": {
+      "state": "ACTIVE",
+      "mode": "reading",
+      "scope": "[\"hf_synthetic_only\",\"A\",\"fixture_org\"]"
+    },
+    "events": [
+      {
+        "conversationId": "T0",
+        "messageId": "sent-1791904224153",
+        "projectId": null,
+        "nativeTitle": "从哪里开始",
+        "at": 510.8999999910593
+      },
+      {
+        "conversationId": "new-4e330475-f3b3-44c1-a91a-be6cdda507bf",
+        "messageId": "sent-1791904224330",
+        "projectId": null,
+        "nativeTitle": "合成发送 new-none",
+        "at": 686.5
+      },
+      {
+        "conversationId": "new-ddb995a8-a99c-40f7-914c-2819597fc3d4",
+        "messageId": "sent-1791904224478",
+        "projectId": "P1",
+        "nativeTitle": "合成发送 new-project",
+        "at": 834.3999999910593
+      }
+    ],
+    "trace": [
+      {
+        "type": "BIND",
+        "start": 201.09999999403954,
+        "at": 203.20000000298023,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 203.5,
+        "at": 237.70000000298023,
+        "ok": true,
+        "preparing": "native-index"
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 237.70000000298023,
+        "at": 275.70000000298023,
+        "ok": true,
+        "preparing": "shared-directory"
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 275.70000000298023,
+        "at": 319.3999999910593,
+        "ok": true,
+        "preparing": "evidence-directory"
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 319.3999999910593,
+        "at": 349.79999999701977,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_PAGE",
+        "start": 349.8999999910593,
+        "at": 437.79999999701977,
+        "ok": true
+      },
+      {
+        "type": "CHECK",
+        "start": 441.20000000298023,
+        "at": 442.20000000298023,
+        "ok": true
+      },
+      {
+        "type": "B23_SYNTHETIC_SEND",
+        "start": 511,
+        "at": 548.7000000029802,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 548.7000000029802,
+        "at": 561.5999999940395,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_PAGE",
+        "start": 562,
+        "at": 564.2999999970198,
+        "ok": true
+      },
+      {
+        "type": "CHECK",
+        "start": 565.0999999940395,
+        "at": 566.3999999910593,
+        "ok": true
+      },
+      {
+        "type": "BIND",
+        "start": 632.5,
+        "at": 632.5,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 632.5999999940395,
+        "at": 644.8999999910593,
+        "ok": true
+      },
+      {
+        "type": "CHECK",
+        "start": 645.2999999970198,
+        "at": 646.5999999940395,
+        "ok": true
+      },
+      {
+        "type": "BIND",
+        "start": 700.7999999970198,
+        "at": 700.7999999970198,
+        "ok": true
+      },
+      {
+        "type": "B23_SYNTHETIC_SEND",
+        "start": 700.8999999910593,
+        "at": 714.3999999910593,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 714.3999999910593,
+        "at": 727.7999999970198,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_PAGE",
+        "start": 728.0999999940395,
+        "at": 730.0999999940395,
+        "ok": true
+      },
+      {
+        "type": "CHECK",
+        "start": 731,
+        "at": 731.5999999940395,
+        "ok": true
+      },
+      {
+        "type": "BIND",
+        "start": 783.5999999940395,
+        "at": 783.7000000029802,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 783.7000000029802,
+        "at": 795.0999999940395,
+        "ok": true
+      },
+      {
+        "type": "CHECK",
+        "start": 795.5,
+        "at": 796.2000000029802,
+        "ok": true
+      },
+      {
+        "type": "BIND",
+        "start": 849.0999999940395,
+        "at": 849.0999999940395,
+        "ok": true
+      },
+      {
+        "type": "B23_SYNTHETIC_SEND",
+        "start": 849.2000000029802,
+        "at": 862.2999999970198,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 862.2999999970198,
+        "at": 874.2000000029802,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_PAGE",
+        "start": 874.5,
+        "at": 876.5999999940395,
+        "ok": true
+      },
+      {
+        "type": "CHECK",
+        "start": 877.5999999940395,
+        "at": 878.2999999970198,
+        "ok": true
+      },
+      {
+        "type": "BIND",
+        "start": 905.2999999970198,
+        "at": 905.3999999910593,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 905.3999999910593,
+        "at": 922.2999999970198,
+        "ok": true
+      },
+      {
+        "type": "CHECK",
+        "start": 922.5999999940395,
+        "at": 923.2999999970198,
+        "ok": true
+      },
+      {
+        "type": "BIND",
+        "start": 943.2999999970198,
+        "at": 943.3999999910593,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 943.3999999910593,
+        "at": 955.7999999970198,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_PAGE",
+        "start": 956,
+        "at": 966,
+        "ok": true
+      },
+      {
+        "type": "CHECK",
+        "start": 967,
+        "at": 967.7000000029802,
+        "ok": true
+      },
+      {
+        "type": "BIND",
+        "start": 992.7999999970198,
+        "at": 992.7999999970198,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 992.7999999970198,
+        "at": 1004.2000000029802,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_PAGE",
+        "start": 1004.5,
+        "at": 1006.3999999910593,
+        "ok": true
+      },
+      {
+        "type": "CHECK",
+        "start": 1007.2000000029802,
+        "at": 1007.7999999970198,
+        "ok": true
+      },
+      {
+        "type": "BIND",
+        "start": 1024.8999999910593,
+        "at": 1025,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 1025,
+        "at": 1036.0999999940395,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_PAGE",
+        "start": 1036.5,
+        "at": 1038.2000000029802,
+        "ok": true
+      },
+      {
+        "type": "CHECK",
+        "start": 1038.7999999970198,
+        "at": 1039.3999999910593,
+        "ok": true
+      },
+      {
+        "type": "BIND",
+        "start": 1057.7000000029802,
+        "at": 1057.7999999970198,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 1057.7999999970198,
+        "at": 1071.7000000029802,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_PAGE",
+        "start": 1071.8999999910593,
+        "at": 1081.5999999940395,
+        "ok": true
+      },
+      {
+        "type": "CHECK",
+        "start": 1082.2999999970198,
+        "at": 1083.5999999940395,
+        "ok": true
+      },
+      {
+        "type": "BIND",
+        "start": 1110.2000000029802,
+        "at": 1110.2999999970198,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_HEADER",
+        "start": 1110.2999999970198,
+        "at": 1121.5999999940395,
+        "ok": true
+      },
+      {
+        "type": "B23_FREE_PAGE",
+        "start": 1121.8999999910593,
+        "at": 1123.7000000029802,
+        "ok": true
+      },
+      {
+        "type": "CHECK",
+        "start": 1124.3999999910593,
+        "at": 1125.3999999910593,
+        "ok": true
+      }
+    ],
+    "counts": {
+      "native.read": 0,
+      "native.snapshot": 0,
+      "native.page": 24,
+      "native.header": 21,
+      "evidence.read": 0,
+      "evidence.page": 15,
+      "evidence.header": 14,
+      "workspace.read": 0,
+      "workspace.snapshot": 0
+    },
+    "side": "\n:host{font:13px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink,#202123);--focus:#3877ba}\n*{box-sizing:border-box}[hidden]{display:none!important}button,a,input{font:inherit;color:inherit}button{cursor:pointer;border:0;background:transparent}button:hover,a:hover{background:var(--hover,#eee)}button:disabled{opacity:.35;cursor:default}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}a{text-decoration:none}svg{display:block;pointer-events:none}button{transition:background .14s ease} .square{width:34px;height:34px;border-radius:9px;display:inline-grid;place-items:center;flex:none}\n.toolbar{display:flex;align-items:center;gap:1px;color:var(--muted,#6e6e76);font-size:12px;padding:12px 4px 8px}.toolbar strong{font-weight:500;margin-right:auto}.themes{max-height:340px;overflow:auto;scrollbar-width:thin;padding:2px 3px 5px}.group{padding:2px 0}.theme-toggle{display:flex;gap:9px;align-items:center;padding:9px 8px;border-radius:9px;width:100%;text-align:left;font-weight:550;min-width:0}.theme-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.theme-glyph{width:22px;min-height:22px;display:inline-grid;place-items:center;flex:none;color:var(--muted,#6e6e76);font-size:18px;font-weight:400}.children{margin-left:18px;padding-left:7px;border-left:1px solid var(--line,#e8e8e8)}.row{display:block;padding:8px 10px;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}.row[aria-current=page]{background:var(--hover,#eee)}.row[aria-disabled=true]{opacity:.5}.old{display:grid;margin:6px 0 0 2px;color:var(--muted,#6e6e76);text-align:left}.old svg{transition:transform .16s ease}.old[aria-expanded=true] svg{transform:rotate(90deg)}.old-list{border-left:1px solid var(--line,#e8e8e8);margin:3px 0 0 18px;padding-left:7px}.more{font-size:12px;color:var(--muted,#6e6e76);padding:8px 10px;min-height:34px;border-radius:8px;text-align:left}.current-context{margin-top:8px;border-top:1px solid var(--line,#e8e8e8);padding-top:8px}\n.workspace{height:100%;overflow:auto;padding:32px 56px 36px 32px;background:var(--surface,#fff);scrollbar-width:thin;position:relative;container-type:inline-size}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:20px;align-items:start;padding-bottom:28px;max-width:1400px;margin:0 auto}.card{border:1px solid var(--line,#e8e8e8);border-radius:18px;padding:16px 12px 12px;background:var(--surface,#fff);min-width:0}.card-head{display:flex;align-items:center;gap:4px;position:relative;padding:0 4px 9px}.card h2{font-size:15px;line-height:1.5;margin:0;font-weight:600;display:flex;gap:10px;align-items:center;min-width:0;flex:1;letter-spacing:-.015em}.card h2 .theme-glyph{background:var(--bubble,#f4f4f4);width:32px;height:32px;border-radius:9px}.card .row{font-size:13px;padding:9px 12px}.card .members{margin-left:15px;border-left:1px solid var(--line,#e8e8e8);padding-left:8px}.card .old{margin-left:2px}.card .old-list{margin-left:18px}.card .more{padding-left:12px}.card-actions{color:var(--muted,#6e6e76)}.arrows{position:sticky;top:0;float:right;margin-right:-44px;display:grid;gap:6px;z-index:2;background:var(--surface,#fff);border:1px solid var(--line,#e8e8e8);border-radius:12px;padding:2px;box-shadow:0 2px 8px #00000004}.empty{color:var(--muted,#6e6e76);padding:80px 16px;text-align:center;grid-column:1/-1}.empty svg{margin:0 auto 16px}.empty p{margin:6px 0;font-size:13px}.empty strong{font-weight:500;color:var(--ink,#202123)}\n.search{max-width:780px;margin:0 auto;border:1px solid var(--line,#e8e8e8);border-radius:18px;padding:20px;position:relative}.search-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}.search-top strong{font-size:15px;font-weight:550;flex:1}.search input{background:var(--bubble,#f4f4f4);color:inherit;border:1px solid var(--line,#e8e8e8);border-radius:11px;padding:12px 14px;width:100%;outline-offset:2px}.search p{font-size:12px;color:var(--muted,#6e6e76);margin:12px 0 18px}.search-results{border-top:1px solid var(--line,#e8e8e8);padding-top:8px}.search .row{font-size:13px;padding:11px 12px}.search .no-results{padding:28px 12px;text-align:center;color:var(--muted,#6e6e76)}\n.menu{position:absolute;right:4px;top:42px;background:var(--surface,#fff);color:var(--ink,#202123);border:1px solid var(--line,#e8e8e8);border-radius:12px;padding:5px;min-width:156px;box-shadow:0 8px 24px #00000018;z-index:4}.menu button{display:block;width:100%;text-align:left;font-size:13px;padding:9px 12px;border-radius:7px}.card-head:has(.menu){z-index:3}.card:has(.menu){z-index:3}\n:host([data-vaiwl-compact=\"false\"]) .row{padding-top:13px;padding-bottom:13px}@media(max-width:700px){.workspace{padding:20px 48px 24px 16px}.arrows{margin-right:-40px}.cards{gap:14px;grid-template-columns:1fr}.card{border-radius:15px}.search{padding:16px}}@media(prefers-reduced-motion:reduce){button,.old svg{transition:none}}\n\n/* Match the approved v2.7 core; all rules remain within owned shadow roots. */\n:host{font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif}\n.workspace{padding:24px 70px 36px 24px}.cards{gap:18px;max-width:1148px;margin:0}\n.card{border-radius:13px;padding:0;overflow:visible}.card-head{background:var(--bubble,#f4f4f4);border-bottom:1px solid var(--line,#e5e5e5);border-radius:12px 12px 0 0;min-height:48px;padding:10px 11px 10px 15px;gap:10px}\n.card h2{gap:11px;font-size:15px;line-height:22px;letter-spacing:0}.card h2 .theme-glyph{width:25px;height:25px;border-radius:7px;background:color-mix(in srgb,var(--bubble,#f4f4f4) 88%,var(--ink,#171717) 12%);color:inherit}.card .members{margin:8px 10px 9px 28px;padding-left:9px;border-color:var(--line,#d8d8d8)}\n.row{display:flex;align-items:center;gap:8px;min-width:0}.window-glyph{display:inline-flex;flex:none;color:var(--muted,#646464)}.window-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}\n.card .row{overflow:visible;position:relative;font-size:14px;line-height:22px;min-height:36px;padding:7px 6px 7px 9px;gap:8px}.card .row::before{content:\"\";position:absolute;left:-10px;top:18px;width:7px;border-top:1px solid var(--line,#d8d8d8);pointer-events:none}\n.card-actions{width:28px;height:28px;opacity:0}.card:hover .card-actions,.card:focus-within .card-actions{opacity:1}.card .old{width:30px;height:30px;margin:3px 0 0 2px}.card .old-list{margin:3px 0 0 -9px;padding:6px 0 0 9px;border-top:1px solid var(--line,#e5e5e5);border-left:0}.card .more{padding:5px 9px}\n.arrows{margin-right:-46px;background:transparent;border:0;box-shadow:none;padding:0;border-radius:0;top:0}.arrows button{width:32px;height:32px}\n.themes{max-height:340px}.theme-toggle{font-size:14px;min-height:39px;padding:8px}.theme-glyph{width:17px;min-height:17px}.theme-name{flex:1}.theme-disclosure{margin-left:auto}.theme-disclosure svg{width:12px;height:12px}.theme-toggle[aria-expanded=true] .theme-disclosure svg{transform:rotate(90deg)}.children .row{font-size:13px;min-height:34px;padding:5px;gap:6px}.children .window-glyph svg{width:12px;height:12px}\n@media(max-width:760px){.workspace{padding:15px 46px 24px 9px}.arrows{margin-right:-37px}.card-head{padding-left:11px}.card h2{gap:8px}.card-actions{opacity:1}.card{border-radius:13px}}\n@media(pointer:coarse){.card-actions{opacity:1}.card .row{min-height:44px}.old,.arrows button{min-height:40px}}\n.snippet-preview{display:block;font-size:12px;color:var(--muted,#646464);white-space:normal;max-height:3em;overflow:hidden;margin-left:8px;flex:1}.anchor-feedback{font-size:12px;color:var(--muted,#646464);padding:8px}.working-set .row{margin:3px 0}.toolbar .square{width:30px;height:32px}\n项目◇最终原生项目名称合成发送 new-project无项目聊天从哪里开始合成发送 new-none"
+  }
+}

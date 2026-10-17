@@ -1,0 +1,4 @@
+{
+  "src/navigation/navigation.mjs": "eed9d2d3c1bc2954299a66b9eca9d07bcfda1072d1d08dbf2fe73ae3c8369f95",
+  "tests/host/working-set-pointer-race.test.mjs": "2fa14a5e64af37f6830c53679ad784b44c2b374f42ca2421a7fb08cd38d9c073"
+}

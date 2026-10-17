@@ -1,0 +1,36 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {fixture,flush,deferred,ORIGIN,C,expectedScope} from './retained-history-binding-fixture.mjs';
+const OLD='88888888-8888-4888-8888-888888888888';
+async function recovered(t,{context='fixture-team'}={}){
+ const h=await fixture(t),tab=h.tabs.get(1);tab.contextId=context;tab.url=ORIGIN+'/c/'+OLD;tab.bodyId=OLD;
+ await h.native({url:ORIGIN+'/backend-api/conversation/'+OLD});const prior=await h.observer.verify(h.frameFor());assert(prior);h.clock.instant(91);
+ const first=deferred(),snapshot=h.browserFrame({tabId:1}),r=h.details();let once=true;
+ h.frameReader=q=>{if(once){once=false;return first.promise;}return h.browserFrame(q);};
+ h.webRequest.onSendHeaders.emit(r);await flush();tab.url=ORIGIN+'/c/'+C;tab.bodyId=C;h.observer.invalidateHistory({tabId:1,frameId:0,...h.browserFrame({tabId:1})});
+ await h.hello();const waiting=await h.refresh();assert.equal(waiting.state,'ambiguous');assert.equal(h.identity.reads,0);assert.equal(h.service.authority.scopeFor(h.frameFor()),null);
+ first.resolve(snapshot);await flush();h.webRequest.onCompleted.emit({...r,statusCode:200,fromCache:false});await flush();h.frameReader=null;
+ const receipt=await h.observer.verify(h.frameFor());assert.equal(receipt?.contextId,context);assert.notEqual(receipt,prior);assert.equal(h.identity.reads,0);assert.equal((await h.refresh()).ok,false,'reprepare revoked prior HELLO; READY must acquire a fresh binding');assert.equal(h.identity.reads,0);await h.hello();return {h,tab,receipt};
+}
+test('B without receipt repeatedly waits, forged browser-looking data never triggers identity',async t=>{const h=await fixture(t);await h.hello();for(let i=0;i<4;i++){const r=await h.refresh();assert.equal(r.state,'ambiguous');}const fake=await h.request('HOST_REFRESH',{...h.packet(),receipt:{verified:true,contextId:'fixture-team'},scopeKey:expectedScope('fixture-team')});assert.notEqual(fake.state,'verified');assert.equal(h.identity.reads,0);assert.equal((await h.view()).ok,false);});
+test('recovered browser receipt alone cannot select absent roster context or fall back to first personal row',async t=>{const {h}=await recovered(t,{context:'unrostered-context'});const r=await h.refresh();assert.notEqual(r.state,'verified');assert.equal(h.service.authority.scopeFor(h.frameFor()),null);assert.equal((await h.view()).ok,false);assert.equal(h.identity.reads,1);});
+test('recovered receipt with stale body must wait without an identity read',async t=>{const {h,tab}=await recovered(t);tab.bodyId=OLD;const r=await h.refresh();assert.notEqual(r.state,'verified');assert.equal(h.identity.reads,0);assert.equal((await h.view()).ok,false);});
+test('fresh retained receipt enters real identity, grant and VIEW for the non-first team row',async t=>{const {h,tab}=await recovered(t);const r=await h.refresh();assert.equal(r.state,'verified');assert.equal(r.scopeKey,expectedScope(tab.contextId));assert.equal(h.identity.reads,1);await h.observe('INDEPENDENT_TEAM_ONLY');await h.mount();const view=await h.ready();assert.equal(view.ok,true);assert(JSON.stringify(view).includes('INDEPENDENT_TEAM_ONLY'));assert.equal(h.identity.reads,1);});
+test('shared pending delivery success survives failed sibling, but later history still revokes VIEW',async t=>{const {h,tab}=await recovered(t),gate=deferred();let held=false;
+ h.frameReader=q=>{if(!held&&h.service.authority.peek(h.frameFor()).state==='verified'){held=true;return gate.promise;}return h.browserFrame(q);};
+ const first=h.refresh();await flush();assert(held);const grant=h.service.authority.peek(h.frameFor()).grant;assert.equal((await h.refresh()).state,'verified');gate.resolve(null);assert.equal((await first).ok,false);assert.equal(h.service.authority.peek(h.frameFor()).grant,grant);assert.equal(h.identity.reads,1);
+ h.frameReader=null;await h.observe('CLAIMED_TEAM_ONLY');await h.mount();assert.equal((await h.ready()).ok,true);
+ tab.url=ORIGIN+'/c/'+OLD;tab.bodyId=OLD;h.observer.invalidateHistory({tabId:1,frameId:0,...h.browserFrame({tabId:1})});assert.equal(h.service.authority.scopeFor(h.frameFor()),null);assert.equal((await h.view()).ok,false);
+});
+test('all sibling deliveries rejected consume receipt and cannot refund authentication',async t=>{const {h}=await recovered(t),gates=[];
+ h.frameReader=q=>{if(h.service.authority.peek(h.frameFor()).state==='verified'){const d=deferred();gates.push(d);return d.promise;}return h.browserFrame(q);};
+ const first=h.refresh();await flush();const second=h.refresh();await flush();assert.equal(gates.length,2);assert.equal(h.identity.reads,1);for(const d of gates)d.resolve(null);assert.equal((await first).ok,false);assert.equal((await second).ok,false);assert.equal(h.service.authority.scopeFor(h.frameFor()),null);h.frameReader=null;assert.notEqual((await h.refresh()).state,'verified');assert.equal(h.identity.reads,1);assert.equal((await h.view()).ok,false);
+});
+for(const mode of ['six-second-boundary','receipt-expiry','new-document','service-stop','explicit-invalidation'])test('pending B delivery cannot bypass '+mode,async t=>{const {h,tab}=await recovered(t),gate=deferred();let held=false;
+ h.frameReader=q=>{if(!held&&h.service.authority.peek(h.frameFor()).state==='verified'){held=true;return gate.promise;}return h.browserFrame(q);};
+ const r=h.refresh();await flush();assert(held);if(mode==='six-second-boundary')await h.clock.advance(6000);if(mode==='receipt-expiry')await h.clock.advance(60000);if(mode==='new-document'){tab.sender.documentId='new_document';h.observer.invalidateCommitted({tabId:1,frameId:0,...h.browserFrame({tabId:1})});}if(mode==='service-stop')h.service.stop();if(mode==='explicit-invalidation')h.service.invalidate({tabId:1,documentId:h.frameFor().documentId});gate.resolve(h.browserFrame({tabId:1}));assert.equal((await r).ok,false);assert.equal(h.service.authority.scopeFor(h.frameFor()),null);assert.equal((await h.view()).ok,false);assert.equal(h.identity.reads,1);
+});
+test('late B identity cannot authorize revoked team receipt after a new personal native selection',async t=>{const {h,tab}=await recovered(t),identity=deferred();h.identity.reader=()=>identity.promise;const old=h.refresh();await flush();assert.equal(h.identity.reads,1);
+ tab.contextId='fixture-personal';h.clock.instant(1);await h.native();const next=await h.observer.verify(h.frameFor());assert.equal(next?.contextId,'fixture-personal');identity.resolve(h.makeIdentity());const denied=await old;assert.notEqual(denied.state,'verified');assert.equal(h.service.authority.scopeFor(h.frameFor()),null);assert.equal((await h.view()).ok,false);
+ h.identity.reader=null;await h.hello();const fresh=await h.refresh();assert.equal(fresh.state,'verified');assert.equal(fresh.scopeKey,expectedScope('fixture-personal'));assert.equal(h.identity.reads,2);
+});

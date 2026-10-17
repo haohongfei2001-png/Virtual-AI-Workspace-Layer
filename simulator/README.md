@@ -1,5 +1,14 @@
 # VAIWL High-Fidelity ChatGPT Host Simulator
 
+## 当前Free合成开发入口（2026-10-13）
+
+默认 `?mode=page` / `?mode=mv3` 展示Free原生Project、NONE/UNKNOWN、原名与活动分段；历史Pro展示加 `&view=pro`。运行和构建仍沿用本页命令，manifest版本0.2.0，仅匹配loopback。这个包可以在隔离Chrome加载，**不能用于真实ChatGPT账户，也不是已发布产品**。
+
+本次Node/真实IDB/Headless MV3证据和准确源码版本见[STATUS](../docs/STATUS.md)及[恢复检查点](../docs/engineering/FREE_RESUME_CHECKPOINT_2026_10_13.md)。Free专项：`node --test tests/free/*.test.mjs`；浏览器入口为 `tests/free/ui-browser.mjs`、`mv3-browser.mjs`、`session-browser.mjs`、`auto-policy-browser.mjs`，默认无界面临时profile。历史测试若断言虚拟主题，请显式进入Pro视图；不删除其旧断言。
+
+以下为0.1原型和早期追补说明；旧测试结果仅对应其原始源码，不能解释为当前Free或生产来源已验收。
+
+
 > **2026-10-11 Mac隔离环境追补：** 已在macOS27 / Chrome154真正加载MV3并验证：页面模式4/4、MV3模式8/8、Node39/39通过。云端环境原先的管理员阻塞仍是该环境下的历史事实；不是登录态ChatGPT通过。完整变更及原始证据见 [Mac MV3验证报告](../docs/engineering/hf-results/mac-mv3-2026-10-11/REPORT.md)。实际启动需从Playwright默认参数中移除`--disable-extensions`，并使用CSP兼容的locator等待。
 
 可交互、纯合成、离线本机测试宿主。不是 OpenAI 服务、登录页或替代聊天产品。当前实现版本 `0.1.0`；设计仍以仓库 v2.7 为准，不另建产品 Canonical。
