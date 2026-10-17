@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **J4验证调度已收口到失败现场**：原CI每次额外运行scope baseline诊断，仅观察启动、不能捕获后段peer。现原formal step只新增id，命令/partial门槛/失败均保留；仅formal outcome=failure且未取消时，同一隔离job运行一次完整lifecycle trace，诊断不能替代或抹去原FAIL。日志保留两份报告，不加缓存/upload/runner/timeout。11项定向合同和YAML解析、独立审查通过；未为此触发重复远端全矩阵。已有CI39033411366的J4 job实测formal186秒、旧baseline5秒；新调度尚无远端后测，不宣称实测提速。下一次正式失败将携带完整peer内容代际观察，原10k/peer产品关口仍OPEN。
+
 - **peer内容脚本顺序证据已接通，竞态仍OPEN**：仅离线复制包记录PENDING/READY、session run/epoch、认证/mount/stop布尔状态及document短hash；192条tail/dropped，无token/正文/身份。原hop判定后采集，worker/content共用1500ms总期限、最多16快照，正式模式零采集。首次实际23步诊断发现同top扩展存在两个isolated realms，旧“唯一realm”假设导致内容记录不可用，原件保留；现2–4realm独立记录并明确ambiguous，不合序列、不选当前owner，>4拒读、超时保留完成项且迟到不改证据。44项定向及独立审查通过。修正后实际J4仍23步DIAGNOSTIC_ONLY，源码/manifest/插桩包未变；两次peer边界分别取得同一realm13/24条、零drop，含PENDING→READY→run6/11认证及mount，另一个realm无记录如实unavailable；worker37/45事件分别保存。此关闭观察器证据缺口，不证明原peer失败根因，也不认证自动foreground恢复；未重复完整Node/CI矩阵。
 
 - **旧native root重复验证复现及未采纳候选**：650ff2d源码真实owner→NativeRepository、MockIDB仅承载，140×50长ID/标题，末两片每片旧root4次结构验证/5次stable，新root1/2、checkpoint1/1，约109万字符编码；不同事务对象不能直接复用。仅临时模块将cache miss中的checksum与reader构造合并，完整校验不变、无新cache或skip参数；独立审查无安全阻塞，编码降至约95.6万字符。真实IDB三对AB/BA/AB（199次targeted50 page→native/shared apply，完整10k事实hash均一致）中位5315.9→5200.2ms，仅约2.2%，不支持将其作为主要修复，因此未改生产源码。所有原失败保留；下一关口转向peer内容脚本PENDING/READY/run顺序，现有worker生命周期trace不足以证明该顺序，不能凭假设修产品。

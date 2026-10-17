@@ -243,6 +243,7 @@ jobs:
           test "$result" -eq 2
           node -e "const r=require(process.env.RUNNER_TEMP+'/j2-j4.json'); if(r.status!=='PARTIAL_J2_J4_NOT_ACCEPTED') process.exit(1); console.log(r.status)"
       - name: Continuous J4 context assets and lifecycle slice
+        id: j4_journey
         if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
         run: |
           set +e
@@ -251,14 +252,20 @@ jobs:
           set -e
           test "$result" -eq 2
           node -e "const r=require(process.env.RUNNER_TEMP+'/j4-journey.json'); if(r.status!=='PARTIAL_J4_NOT_ACCEPTED') process.exit(1); console.log(r.status)"
-      - name: Separate instrumented J4 scope baseline diagnostic
-        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
-        run: FREE_J4_SCOPE_TRACE=1 FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j4-package-journey.mjs "$RUNNER_TEMP/j4-scope-trace.json"
+      - name: J4 failure-only full lifecycle diagnostic (not acceptance)
+        if: ${{ !cancelled() && steps.j4_journey.outcome == 'failure' }}
+        run: |
+          set +e
+          FREE_J4_LIFECYCLE_ORDER_TRACE=1 FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j4-package-journey.mjs "$RUNNER_TEMP/j4-lifecycle-trace.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node -e "const r=require(process.env.RUNNER_TEMP+'/j4-lifecycle-trace.json'); if(r.status!=='DIAGNOSTIC_ONLY_J4_LIFECYCLE_ORDER'||r.sourceCommit!==process.env.GITHUB_SHA) process.exit(1); console.log(r.status)"
       - name: Publish bounded text evidence to logs only
         if: ${{ !cancelled() }}
         run: |
           echo "Source commit: $GITHUB_SHA"
           echo 'Independent J4 runner; original journey order and gates retained.'
-          for name in native-visibility j2-j4 j4-journey j4-scope-trace; do
+          for name in native-visibility j2-j4 j4-journey j4-lifecycle-trace; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done
