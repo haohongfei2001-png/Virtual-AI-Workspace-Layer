@@ -1,0 +1,57 @@
+{
+  "baselineCommit": "8f146ea99297d6f82739b5792d704577fa65416e",
+  "change": "Reuse existing native index piece proof only when both exact root and piece are private captured immutable snapshots.",
+  "originalRegression": {
+    "tests": 14,
+    "pass": 13,
+    "fail": 1,
+    "failure": "A full materialization repeated one byte traversal after the same piece was already freshly validated."
+  },
+  "independentReviewCorrection": "An absent WeakMap entry must not compare equal to undefined returned by an external scopeKey getter. Explicit rootSnapshots.has(root) is required before the equality checks; dedicated regression retained.",
+  "mechanism": {
+    "kind": "SMALL_REAL_OWNER_MOCK_IDB_MECHANISM_NOT_PERFORMANCE",
+    "refs": 108,
+    "pages": 5,
+    "physicalBuckets": 85,
+    "baselineFullByteTraversals": 850,
+    "candidateFullByteTraversals": 425,
+    "completePageOutputsIdentical": true,
+    "outputBytes": 74486,
+    "outputSHA256": "06bc11bd1c80e18bbd267e762da74f5eba2ed518038be642cda9284a0d55b476"
+  },
+  "preserved": [
+    "Every fresh IDB bucket is still read and fully byte/schema/checksum validated.",
+    "No new cache, exported proof, generation shortcut or skipped source guard.",
+    "Mutable/accessor roots, cloned/manually frozen records and custom prototypes retain the original full validator.",
+    "Scope/kind/bucket/revision/count, duplicate/missing records, global ordinal gaps/duplicates and final manifest checks remain."
+  ],
+  "focusedValidation": {
+    "relatedTests": 247,
+    "finalSnapshotTests": 15,
+    "status": "PASS",
+    "fullNode": {
+      "status": "PASS",
+      "tests": 7513,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 195588.231157,
+      "boundary": "Frozen production + cold-recovery driver candidate before the later independent foreground-driver precondition adjustment."
+    }
+  },
+  "browserAcceptance": "NOT_ESTABLISHED",
+  "release": "NOT_RELEASE_READY",
+  "sourceAndFixturesUnchangedDuringFullNode": true,
+  "guardMutations": {
+    "selected": 12,
+    "killed": 12,
+    "sourceUnchanged": true
+  },
+  "finalDriverOnlyIncrement": {
+    "tests": 71,
+    "status": "PASS",
+    "productionUnchanged": true,
+    "scope": "Real native heading click before dormant transport probe; both positive and negative CI require composer focus isolation.",
+    "independentReview": "PASS",
+    "nativeFocusRaceTests": 4
+  }
+}

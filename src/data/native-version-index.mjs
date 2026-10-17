@@ -86,6 +86,9 @@ export function verifyNativeIndexPiece(record,root,kind,bucket){
  const pointer=root[kind][bucket];if(!pointer)throw Error('missing-native-index-pointer');
  if(record?.key!==nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision))throw Error('native-index-key-mismatch');
  const context=JSON.stringify([root.scopeKey,kind,bucket,pointer.revision,pointer.count]);
+ // Full readers just validated each fresh IDB row. Reuse only both private,
+ // getter-free snapshots; ordinary roots/records still traverse their bytes.
+ if(rootSnapshots.has(root)&&rootSnapshots.get(root)===root.scopeKey&&indexSnapshots.get(record)===context)return record.payload;
  return indexPieceValidation.read(record,context,()=>validateIndexPiece(record,root,kind,bucket,pointer));
 }
 function validateIndexPiece(record,root,kind,bucket,pointer){

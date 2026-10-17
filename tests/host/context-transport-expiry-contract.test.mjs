@@ -42,3 +42,15 @@ test('real foreground transport modes use noDefaults native visibility and own b
  assert.equal(workflow.split("r.browserPrecondition?.focusEmulation!=='NOT_ENABLED_BY_PLAYWRIGHT'").length-1,2);
  assert.doesNotMatch(candidate,/setFocusEmulationEnabled|setWebLifecycleState|Object.defineProperty\(document.*(?:hasFocus|visibilityState)/);
 });
+
+
+test('foreground-only probe really leaves the composer without weakening stale-transport attribution',async()=>{
+ const workflow=await readFile(new URL('../../.github/workflows/free-offline-host.yml',import.meta.url),'utf8');
+ const heading=candidate.indexOf("await page.locator('main > header > h1').click()"),idle=candidate.indexOf("await poll(()=>evaluate('__vaiwlIdleProbeSession.prepareIdle()',isolated))");
+ assert(heading>0&&heading<idle);assert(candidate.includes("document.querySelector('#composer').contains(document.activeElement)"));
+ assert(candidate.includes("assert.equal(composerFocused,false,'foreground probe must leave the native composer');await continuity()"));
+ assert.equal(workflow.split('r.foregroundFocusIsolation?.nativeHeadingClicked!==true').length-1,2);
+ assert.equal(workflow.split('r.foregroundFocusIsolation?.composerFocused!==false').length-1,2);
+ assert(workflow.includes("t.type==='HOST_FOCUS'&&t.requestedAt>r.transportOwner.focusedAt&&t.ok===false&&t.reason==='invalid-host-document'"));
+ assert(workflow.includes("r.transport?.some(t=>t.type==='HOST_HELLO'&&t.requestedAt>r.transportOwner.focusedAt)"));
+});

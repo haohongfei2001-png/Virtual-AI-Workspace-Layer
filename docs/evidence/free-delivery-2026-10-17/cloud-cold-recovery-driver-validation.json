@@ -1,0 +1,68 @@
+{
+  "baselineCommit": "8f146ea99297d6f82739b5792d704577fa65416e",
+  "change": "Correct cold native-navigation recovery interaction to reading then explicit return, with stronger current grant and actual VIEW evidence.",
+  "originalFailureRun": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39064054812",
+  "contract": [
+    "VA-HOST/1.1 FINAL sections 7.2, 7.3 and 7.4: native navigation/composer may enter reading; one reading return restores workspace.",
+    "Existing content route-reading preservation predates the foreground transport fix."
+  ],
+  "reproduction": {
+    "composition": "Real bootstrap/browser request context/worker provider/content and real surface controller with explicit Chrome-event/DOM/MockIDB doubles.",
+    "priorAndCurrentProductionSame": true,
+    "foregroundCalls": 0,
+    "nativeGETs": [
+      "C333",
+      "C444"
+    ],
+    "newAuthenticatedContext": true,
+    "afterNavigation": {
+      "mode": "reading",
+      "openPopovers": 0,
+      "returnButtons": 1
+    },
+    "afterTrustedReturn": {
+      "mode": "workspace",
+      "openPopovers": 2,
+      "returnButtons": 0
+    },
+    "originalTwoOpenPredicate": "RED: 0 != 2",
+    "boundary": "L mechanism evidence; original CI lacked grant/VIEW fields and is not retrospectively accepted."
+  },
+  "preserved": [
+    "Initial cold 20-second timeout and missing-receipt safety result.",
+    "Original 20-second mount recovery budget shared by fresh proof, continuity and explicit return.",
+    "No attached prior workspace frame; observer installed only for future frames after cold timeout.",
+    "New current same-scope/currentRef grant plus actual post-navigation VIEW; original document/editor/draft and visible reading/composer.",
+    "Unique return, real click, original exact two-open final assertion, title, unique scope and exact two conversation GETs."
+  ],
+  "validation": {
+    "oracleTests": 27,
+    "existingRelatedTests": 149,
+    "status": "PASS",
+    "independentReview": "PASS",
+    "fullNode": {
+      "status": "PASS",
+      "tests": 7513,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 195588.231157,
+      "boundary": "Frozen production + cold-recovery driver candidate before the later independent foreground-driver precondition adjustment."
+    }
+  },
+  "browserAcceptance": "PENDING; most recent CI immediate cold passed, so native fallback was NOT_COVERED_THIS_RUN.",
+  "release": "NOT_RELEASE_READY",
+  "sourceAndFixturesUnchangedDuringFullNode": true,
+  "guardMutations": {
+    "selected": 12,
+    "killed": 12,
+    "sourceUnchanged": true
+  },
+  "finalDriverOnlyIncrement": {
+    "tests": 71,
+    "status": "PASS",
+    "productionUnchanged": true,
+    "scope": "Real native heading click before dormant transport probe; both positive and negative CI require composer focus isolation.",
+    "independentReview": "PASS",
+    "nativeFocusRaceTests": 4
+  }
+}

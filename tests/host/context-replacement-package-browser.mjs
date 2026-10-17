@@ -73,6 +73,12 @@ try{
  let renewed;
  if(transportExpiry){
   const initialProof=await poll(()=>currentJ4Grant(page,id,scopeKey,{expectedCurrentRef:C}));assert(initialProof,'initial real grant and VIEW required');
+  // A real native heading click leaves the composer before quiescence, so
+  // foreground restoration cannot compete with dormant native editing wake.
+  await page.locator('main > header > h1').click();
+  const composerFocused=await page.evaluate(()=>document.querySelector('#composer').contains(document.activeElement));
+  assert.equal(composerFocused,false,'foreground probe must leave the native composer');await continuity();
+  report.foregroundFocusIsolation={nativeHeadingClicked:true,composerFocused};
   const session=await context.newCDPSession(page),worlds=[];session.on('Runtime.executionContextCreated',e=>worlds.push(e.context));await session.send('Runtime.enable');
   const evaluate=async(expression,contextId)=>{const r=await within('transport-content-read',()=>session.send('Runtime.evaluate',{expression,contextId,returnByValue:true,awaitPromise:true}));assert.equal(r.exceptionDetails,undefined);return r.result.value;};
   const isolated=await poll(async()=>{for(const world of worlds.filter(w=>w.auxData?.isDefault===false)){try{if(await evaluate(`window===window.top&&chrome.runtime.id===${JSON.stringify(id)}&&typeof __vaiwlIdleProbeSession==='object'&&Array.isArray(__vaiwlTransportExpiryTrace)`,world.id))return world.id;}catch{}}return null;});

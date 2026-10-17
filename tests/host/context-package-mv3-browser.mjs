@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import {inspectJ3Failure} from './j3-failure-inspection.mjs';
+import {installJ4GrantObserver} from './j4-grant-observer.mjs';
+import {verifyColdNativeRecovery} from './context-cold-recovery-oracle.mjs';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -14,7 +16,7 @@ import {cleanupOwnedResources} from './isolated-browser-cleanup.mjs';
 const C='33333333-3333-4333-8333-333333333333',server=await createVariantHostFixtureServer({profile:'MODERN'}),dir=await mkdtemp(join(tmpdir(),'vaiwl-c2-package-')),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineContext:true});
 const info=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8')),hash=v=>createHash('sha256').update(v).digest('hex');
 const script=new URL(import.meta.url),scriptHash=hash(await readFile(script)),boundaryHelper=new URL('./context-cold-boundary.mjs',import.meta.url),boundaryHelperHash=hash(await readFile(boundaryHelper)),projectionOracle=new URL('./expected/modern.mjs',import.meta.url),projectionOracleHash=hash(await readFile(projectionOracle));
-const inspectionFiles=['j3-failure-inspection.mjs','j3-failure-closures.mjs'];
+const inspectionFiles=['j3-failure-inspection.mjs','j3-failure-closures.mjs','j4-grant-observer.mjs','j4-joint-interruption.mjs','context-cold-recovery-oracle.mjs'];
 const inspectionHashes=Object.fromEntries(await Promise.all(inspectionFiles.map(async name=>[name,hash(await readFile(new URL(name,import.meta.url)))])));
 const report={inspectionHashes,scriptHash,boundaryHelperHash,projectionOracleHash,startupMode:['cold','cold-trace','cold-recovery'].includes(process.argv[3])?'COLD_IMMEDIATE_AFTER_LOAD_UNPACKED':'WORKER_READY_PRECONDITION',evidence:'REAL_HEADLESS_PACKAGED_MV3_OFFLINE_C2',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',profileScope:'CONVERSATION_GET_ONLY_NOT_FULL_MODERN_ACCEPTANCE',package:built,fixture:server.manifest,sourceHashes:info.sourceHashes,results:[],errors:[]};let context,page,worker,extensionId;
 try{
@@ -28,15 +30,21 @@ try{
  await worker.evaluate(()=>{globalThis.__offlineDiagnostic=[];const record=x=>{if(__offlineDiagnostic.length<40)__offlineDiagnostic.push(x);};for(const name of ['onSendHeaders','onCompleted','onErrorOccurred'])chrome.webRequest[name].addListener(d=>{record({event:name,requestId:d.requestId,tabId:d.tabId,frameId:d.frameId,documentId:d.documentId,documentLifecycle:d.documentLifecycle,initiator:d.initiator,type:d.type,method:d.method,url:d.url,statusCode:d.statusCode,fromCache:d.fromCache});void chrome.webNavigation.getFrame({tabId:d.tabId,frameId:0}).then(frame=>record({event:'getFrame',frame}));void chrome.tabs.get(d.tabId).then(tab=>record({event:'getTab',id:tab.id,incognito:tab.incognito}));},{urls:['http://127.0.0.1/*/conversation/*','http://127.0.0.1/backend-api/conversation/*']});chrome.runtime.onMessage.addListener((m,sender)=>{record({event:'content-command',type:m?.type,documentId:sender.documentId});});});
  }
  page=await context.newPage();report.requestTimeline=[];page.on('request',r=>{const u=new URL(r.url());if(u.origin===server.origin&&u.pathname.startsWith('/backend-api/conversation/')&&report.requestTimeline.length<16)report.requestTimeline.push({at:Date.now(),event:'native-request',path:u.pathname});});page.on('pageerror',error=>report.errors.push(error.message));await page.goto(server.origin+'/c/'+C);
- const waitMounted=()=>page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout:20000});
+ const waitMounted=(timeout=20000)=>page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2,null,{timeout});
  if(process.argv[3]==='cold-recovery'){
   report.coldBoundary=await observeColdBoundary({waitMounted,snapshot:()=>page.evaluate(()=>({owned:document.querySelectorAll('[data-va-owned]').length,nativeReading:!!document.querySelector('#reading'),nativeComposer:!!document.querySelector('#prompt-textarea')}))});
   report.coldBoundary.nativeBeforeNavigation=server.snapshot().nativeRequests;
   assert.equal(report.coldBoundary.nativeBeforeNavigation.length,1,'one initial native request only');
   if(report.coldBoundary.initialProjection==='TIMEOUT'){
+  const priorFrames=page.frames().filter(f=>!f.isDetached()&&f.url()===`chrome-extension://${id}/workspace.html`);assert.equal(priorFrames.length,0,'initial no-private-surface boundary must have no attached workspace frame');
+  const previousGrant=null;report.coldBoundary.beforeNavigation={attachedWorkspaceFrames:0,previousGrantPresent:false};
+  await context.addInitScript(installJ4GrantObserver); // Only future frames, after the original cold observation.
   const editor=page.locator('#prompt-textarea'),draft='offline cold recovery draft';await editor.click();await editor.fill(draft);
-  const nativeLink=page.locator('aside nav[aria-label="Chat history"] a[href="/c/44444444-4444-4444-8444-444444444444"]');await nativeLink.click();
-  await page.waitForURL(server.origin+'/c/44444444-4444-4444-8444-444444444444',{timeout:20000});await waitMounted();
+  await page.evaluate(()=>{globalThis.c2ColdDocument=document;globalThis.c2ColdEditor=document.querySelector('#prompt-textarea');});
+  const recoveryScope=JSON.stringify(['chatgpt','principal_'+digest(['chatgpt-principal-v1','user-host-fixture']),'context_'+digest(['chatgpt-context-v1','user-host-fixture','account-host-team'])]);
+  const nativeLink=page.locator('aside nav[aria-label="Chat history"] a[href="/c/44444444-4444-4444-8444-444444444444"]');const navigatedAt=Date.now();await nativeLink.click();
+  await page.waitForURL(server.origin+'/c/44444444-4444-4444-8444-444444444444',{timeout:20000});
+  report.coldBoundary.recovery=await verifyColdNativeRecovery({page,id,scopeKey:recoveryScope,currentRef:'44444444-4444-4444-8444-444444444444',afterTime:navigatedAt,previousGrant,expectedDraft:draft,waitMounted});
   assert.equal(await editor.inputValue(),draft);const allRequests=server.snapshot().nativeRequests,requests=coldConversationRequests(allRequests);report.coldBoundary.nativeAfterNavigation=allRequests;assert.equal(requests.length,2);assert.equal(requests[1].path,'/backend-api/conversation/44444444-4444-4444-8444-444444444444');
   report.coldBoundary.nativeNavigationRecovery='PASS';report.coldBoundary.originalDraftRetained=true;
   }else report.coldBoundary.nativeNavigationRecovery='NOT_COVERED_THIS_RUN';
@@ -51,7 +59,7 @@ try{
  assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');assert.deepEqual(report.errors,[]);report.browserVersion=context.browser().version();report.status='PASS';
  }catch(error){
  report.status=context?'FAIL':'NOT_RUN_BROWSER_STARTUP';report.error=error.stack;process.exitCode=1;report.diagnosticErrors=[];
- try{report.failure=await page?.evaluate(()=>({url:location.href,state:document.documentElement.dataset.vaiwlState,reason:document.documentElement.dataset.vaiwlReason,owned:document.querySelectorAll('[data-va-owned]').length,body:document.querySelector('#reading')?.outerHTML}));}catch(e){report.diagnosticErrors.push({stage:'page',error:String(e)});}
+ try{report.failure=await page?.evaluate(()=>({url:location.href,state:document.documentElement.dataset.vaiwlState,reason:document.documentElement.dataset.vaiwlReason,owned:document.querySelectorAll('[data-va-owned]').length,open:document.querySelectorAll('[data-va-owned]:popover-open').length,returns:document.querySelectorAll('button[data-va-owned][aria-label="返回工作空间"]').length,body:document.querySelector('#reading')?.outerHTML}));}catch(e){report.diagnosticErrors.push({stage:'page',error:String(e)});}
  try{report.native=server.snapshot();}catch(e){report.diagnosticErrors.push({stage:'native',error:String(e)});}
  // Attach only after the original failure. Never warm the cold worker or create a world.
  if(context&&page&&extensionId)try{report.failureInspection=await inspectJ3Failure({context,page,browser:context.browser(),extensionId});}catch{report.failureInspection={error:'failure-inspection-unavailable'};}
