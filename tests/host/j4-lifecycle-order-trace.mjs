@@ -1,9 +1,12 @@
 import {cp,readFile,writeFile} from 'node:fs/promises';import {join} from 'node:path';import {createHash} from 'node:crypto';
 import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';import {verifyHost} from '../../extension/package.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
-export const J4_ORDER_PATHS=['src/runtime/browser-request-context.mjs','src/runtime/host-browser-bootstrap.mjs'];
+export const J4_ORDER_PATHS=['src/runtime/browser-request-context.mjs','src/runtime/host-browser-bootstrap.mjs','src/host/context-association.mjs','src/host/content-session.mjs'];
 const recorder=`const __j4Order=(stage,fields={})=>{try{const rows=globalThis.__vaiwlJ4LifecycleOrder??=[];if(rows.length<192)rows.push({stage,at:Date.now(),elapsed:performance.now(),...fields});}catch{}};
 const __j4RequestHash=value=>{if(typeof value!=='string')return null;let h=2166136261;for(let i=0;i<Math.min(value.length,256);i++)h=Math.imul(h^value.charCodeAt(i),16777619);return (h>>>0).toString(16).padStart(8,'0');};\n`;
+// Isolated-world RAM only. Explicit fields prevent accidental capability/body logging.
+const contentRecorder=`const __j4Order=(stage,fields={})=>{try{const trace=globalThis.__vaiwlJ4ContentLifecycle??={rows:[],sequence:0,dropped:0};const row={stage,sequence:++trace.sequence};for(const key of ['run','epoch','routeEpoch'])row[key]=Number.isSafeInteger(fields[key])?fields[key]:null;for(const key of ['enabled','ready','scopePresent','readyPending','resumeAllowed','active','associationPending'])row[key]=fields[key]===true;row.document=typeof fields.document==='string'&&/^[0-9a-f]{8}$/.test(fields.document)?fields.document:null;if(trace.rows.length===192){trace.rows.shift();trace.dropped++;}trace.rows.push(row);}catch{}};
+const __j4DocumentHash=value=>{if(typeof value!=='string')return null;let h=2166136261;for(let i=0;i<Math.min(value.length,256);i++)h=Math.imul(h^value.charCodeAt(i),16777619);return (h>>>0).toString(16).padStart(8,'0');};\n`;
 function once(source,from,to){if(source.split(from).length!==2)throw Error('j4-order-anchor-mismatch');return source.replace(from,to);}
 export function instrumentJ4LifecycleOrderSource(path,source){
  if(source.includes('__j4Order'))throw Error('j4-order-already-instrumented');let out=source;
@@ -22,8 +25,18 @@ export function instrumentJ4LifecycleOrderSource(path,source){
   inject('for(const [event,listener,extra]of listeners)extra?event.addListener(listener,filter,extra):event.addListener(listener,filter);','for(const [event,listener,extra]of listeners)extra?event.addListener(listener,filter,extra):event.addListener(listener,filter);__j4Order("listeners-registered",{active});');
  }else if(path===J4_ORDER_PATHS[1]){
   inject('if(replacement)contextObserver?.invalidateCommitted(details);','if(replacement){__j4Order("committed",{top:details.frameId===0});contextObserver?.invalidateCommitted(details);}');
+ }else if(path===J4_ORDER_PATHS[2]){
+  inject("{abort();onPending();return;}","{__j4Order('delivery-pending',{active,associationPending:!!pending});abort();onPending();return;}");
+  inject("{onReady();return;}","{__j4Order('delivery-ready',{active,associationPending:!!pending});onReady();return;}");
+ }else if(path===J4_ORDER_PATHS[3]){
+  inject(' function dispose(s){'," function __j4State(stage){try{__j4Order(stage,{epoch,run:current?.run,routeEpoch:current?.binding?.routeEpoch,document:__j4DocumentHash(current?.binding?.browserDocumentId),enabled,ready:current?.ready===true,scopePresent:!!current?.scopeKey,readyPending:current?.contextReadyPending===true,resumeAllowed:contextResumeAllowed});}catch{}}\n function dispose(s){");
+  for(const [anchor,stage]of [["function stop(){contextResumeAllowed=false;",'stop'],["function rebind(s,initialMode=null,expectedScope=null){",'rebind'],["function contextPending(){",'context-pending'],["function contextReady(){",'context-ready']])inject(anchor,anchor.startsWith('function stop')?"function stop(){__j4State('stop');contextResumeAllowed=false;":anchor+"__j4State('"+stage+"');");
+  inject('current=s;doc.defaultView.addEventListener',"current=s;__j4State('begin');doc.defaultView.addEventListener");
+  inject('s.scopeKey=auth.scopeKey;s.ackProjects',"s.scopeKey=auth.scopeKey;__j4State('auth-verified');s.ackProjects");
+  inject("if(exactHostRecord(m,['type'])&&m.type==='HOST_DOCUMENT_INVALIDATED'){rebind(s);return;}","if(exactHostRecord(m,['type'])&&m.type==='HOST_DOCUMENT_INVALIDATED'){__j4State('delivery-invalidated');rebind(s);return;}");
+  inject("if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;return handle;","if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;__j4State('mount-ready');return handle;");
  }else throw Error('j4-order-path');
- return recorder+out;
+ return (J4_ORDER_PATHS.indexOf(path)>=2?contentRecorder:recorder)+out;
 }
 export async function createJ4LifecycleOrderTracePackage(source,destination,{ramOnly=false}={}){
  if(verifyHost(source).status!=='OFFLINE_HOST_RECONSTRUCTION')throw Error('j4-lifecycle-order-trace-offline-only');await cp(source,destination,{recursive:true,force:false,errorOnExist:true});const changes=[];

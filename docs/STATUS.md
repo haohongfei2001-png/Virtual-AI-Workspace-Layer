@@ -4,6 +4,10 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **peer内容脚本顺序证据已接通，竞态仍OPEN**：仅离线复制包记录PENDING/READY、session run/epoch、认证/mount/stop布尔状态及document短hash；192条tail/dropped，无token/正文/身份。原hop判定后采集，worker/content共用1500ms总期限、最多16快照，正式模式零采集。首次实际23步诊断发现同top扩展存在两个isolated realms，旧“唯一realm”假设导致内容记录不可用，原件保留；现2–4realm独立记录并明确ambiguous，不合序列、不选当前owner，>4拒读、超时保留完成项且迟到不改证据。44项定向及独立审查通过。修正后实际J4仍23步DIAGNOSTIC_ONLY，源码/manifest/插桩包未变；两次peer边界分别取得同一realm13/24条、零drop，含PENDING→READY→run6/11认证及mount，另一个realm无记录如实unavailable；worker37/45事件分别保存。此关闭观察器证据缺口，不证明原peer失败根因，也不认证自动foreground恢复；未重复完整Node/CI矩阵。
+
+- **旧native root重复验证复现及未采纳候选**：650ff2d源码真实owner→NativeRepository、MockIDB仅承载，140×50长ID/标题，末两片每片旧root4次结构验证/5次stable，新root1/2、checkpoint1/1，约109万字符编码；不同事务对象不能直接复用。仅临时模块将cache miss中的checksum与reader构造合并，完整校验不变、无新cache或skip参数；独立审查无安全阻塞，编码降至约95.6万字符。真实IDB三对AB/BA/AB（199次targeted50 page→native/shared apply，完整10k事实hash均一致）中位5315.9→5200.2ms，仅约2.2%，不支持将其作为主要修复，因此未改生产源码。所有原失败保留；下一关口转向peer内容脚本PENDING/READY/run顺序，现有worker生命周期trace不足以证明该顺序，不能凭假设修产品。
+
 - **10k观察器干扰已做同源码对照**：9ae11b3生产源码，隔离真实IDB三轮AB/BA/AB、50预置＋199×50长UUID/标题提交，最终全部10000 native/shared事实hash一致。无观察器中位4950.3ms，原策略每次新连接/新repository完整tail读取为5102.6ms（约3.1%开销；每轮44–46次读取）；事务耗时包含排队，不能全算独占阻塞。该有限模型不含首次scope发现或完整Host调度，仅MEASURED_NOT_HOST_ACCEPTANCE，未证明远端开销上界。证据不支持降低原观察频率或省略检查，故保留观察器、30秒期限及双完整审计；跨环境10k仍OPEN，下一步继续定位生产提交链。 同生产源码随后10秒worker采样记录sha256约1816ms、GC1356ms、stable886ms、strictJSON711ms；调用栈仍含旧native root在reader重复完整编码，尚待最小计数归因。此诊断完成10000成员双审计rev213、余15.81秒，源码/fixture/manifest不变；runner按设计拒绝输出性能验收并退出1，不能当正式旅程或p95通过。
 
 - **4e73643冻结CI最终结果**：CI39033411366整体FAIL；Node、导航与J4通过原有partial门槛。J4实际23步、源码/manifest未变，但原peer偶发失败与自动foreground恢复未关闭。10k原期限仅6850 refs/revision150，最后tail6796/rev149、auditAttempts=0；仍是摄取未完成，不能称完整审计通过，14%提交链改善未关闭跨环境关口。
