@@ -1,0 +1,5 @@
+{
+  "tests/host/prepared-baseline-package-mv3.mjs": "d8b90ef98422442c5fdb4a92458a3329e7bd25b504c2e515d4254c43d4f572e0",
+  "tests/host/fixtures/server.mjs": "e35e700e1f3f1795ebc59f1ecde7ee01c52a8a9354437c544522e8112cc94b1e",
+  "tests/host/fixture-partial-baseline.test.mjs": "c7b471d473e4c6872be4adb9c0c5c91f8821bba634e24802c5914c75b545a002"
+}

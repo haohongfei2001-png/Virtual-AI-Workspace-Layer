@@ -45,7 +45,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
   const token = `fixture-only-${randomBytes(24).toString('hex')}`;
   const counts = Object.create(null), requests = Object.create(null), fixedGetTrace = [];
   let projectCounter = 0, newConversationCounter = 0;
-  let detailHold = null;
+  let detailHold = null, j2MetadataPartial = false;const j2DetailResponses={partial:0,full:0};
   let privacyFailureArmed=false,privacyFailures=0;
   const detailAppends = new Map(), detailAcceptances = new Map();
   const projects = new Map([[PROJECT_ONE,{id:PROJECT_ONE,name:'Research'}],[PROJECT_TWO,{id:PROJECT_TWO,name:'Research'}]]);
@@ -112,7 +112,7 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
           res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});
           return res.end('{"content":"SYNTHETIC_BODY_MUST_NOT_ESCAPE","broken":');
         }
-        if(j2&&conversation.id===J2_C)return json(res,200,j2.detail());
+        if(j2&&conversation.id===J2_C){const detail=j2.detail();if(j2MetadataPartial)detail.mapping.j2_old.parent='missing_fixture_parent';json(res,200,detail);j2DetailResponses[j2MetadataPartial?'partial':'full']++;return;}
         const authorId = identity;
         if(detailHold) await detailHold.promise;
         if(res.destroyed) return;
@@ -163,9 +163,10 @@ export async function createHostFixtureServer({profile = 'LEGACY', principalId =
   return {
     origin,url:`${origin}/`,
     manifest: Object.freeze({fixtureId:'chatgpt-host-legacy-reconstruction-v1',profile,j3Layout,...(journey?{journey,journeyEvidence:journey==='J3'?'S_RECONSTRUCTION_NOT_REAL_PERMISSION':'S_RECONSTRUCTION_NATIVE_PENDING_CONTROLS'}:{}),reconstruction:true,source:'VA-HOST/1.1 structure reconstruction; not a real DOM snapshot',sourceCommit:null,sourceBlob:null,fixtureHash:createHash('sha256').update(sourceBytes).update(Buffer.concat(Object.values(files).map((f) => f.body))).digest('hex'),expectedWorldFile:'tests/host/expected/legacy.mjs',oracleHash:createHash('sha256').update(oracleBytes).digest('hex'),supportedCapabilities:['principal','personal-context-candidate','project-identity','idless-native-control','conversation-identity','native-move-menu','native-navigation','native-search','native-create','independent-regions','draft-preservation']}),
-    snapshot: () => clone({actions:counts,requests,fixedGetTrace,...(j2?{j2:j2.snapshot()}:{}),...(firstSend?{firstSends:firstSend.snapshot()}:{}),projectCount:projects.size,conversationCount:conversations.size}),
+    snapshot: () => clone({actions:counts,requests,fixedGetTrace,...(j2?{j2:j2.snapshot(),j2DetailResponses}:{}),...(firstSend?{firstSends:firstSend.snapshot()}:{}),projectCount:projects.size,conversationCount:conversations.size}),
     // Test-process controls only; not HTTP endpoints, not page-visible authority.
     publishOriginalHistory: () => { if(journey!=='J3')throw Error('original-history-requires-j3');originalHistoryAvailable=true; },
+    setConversationMetadataPartial: (conversationId,value) => { if(!j2||conversationId!==J2_C||typeof value!=='boolean')throw Error('invalid-fixture-metadata-partial');j2MetadataPartial=value; },
     privacySentinels: () => ({token,cookie,body:'SYNTHETIC_BODY_MUST_NOT_ESCAPE'}),
     failNextAuthenticatedMetadata: () => { if(privacyFailureArmed)throw Error('privacy-failure-already-armed');privacyFailureArmed=true; },
     privacyFailureStatus: () => ({armed:privacyFailureArmed,authenticatedFailures:privacyFailures}),

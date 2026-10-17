@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round378）
+## 最新本地检查点（2026-10-17，Round379）
+
+未插桩生产包隔离 headless MV3 的 partial metadata→同正文原生准备重读→真实发送持久锚，单次 **2 项 S 子检查 PASS**。仅禁用临时包 prepare 重读的反向变异在发送前明确 FAIL（partial1/full0、无发送）；正反源码/fixture/hash稳定，独立审查通过。最终完整 Node **7186/7186 PASS**。见 [Round379](evidence/round379/README.md)。
+
+本轮仅该离线子链；最终锚可能来自 firstSend，不单独归因 sendCandidates。自动休眠、即时首发、完整 J2/UI11/81/100k/G/U 继续未完成，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round378）
 
 修复 metadata 读取异常删除 entry 导致本地限频/次数及已用 intent 防重放记录重置：失败清因果状态但保留原预算账；所有 clock 解绑入口封存旧绑定，真实签名变化才重建。独立三红转绿，最终 **15/15 L**、相关 **210/210**、完整 Node **7184/7184 PASS**，独立审查通过。见 [Round378](evidence/round378/README.md)。
 
