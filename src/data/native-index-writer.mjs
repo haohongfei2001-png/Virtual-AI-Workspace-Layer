@@ -35,7 +35,7 @@ export function saveIndexedNativePieces(store,scope,next,storage,command,reader,
    if(before&&after&&before.revision===after.revision&&before.count===after.count)finish(previousVersion);
    else newer.lookup(kind,key,finish);
   });});
-  const change=prior.changes.find(row=>row.revision===prior.revision);
+  const matches=prior.changes.filter(row=>row.revision===prior.revision),change=matches.length===1?matches[0]:null;
   if(change){for(const kind of ['projects','refs'])for(const key of change[kind])retire(kind,key);}
   else if(older)older.all(manifest=>{for(const kind of ['projects','refs'])for(const key of Object.keys(manifest[kind]))retire(kind,key);});
   else for(const kind of ['projects','refs'])for(const key of Object.keys(old[kind]))retire(kind,key);

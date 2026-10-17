@@ -119,7 +119,7 @@ export function loadNativePieces(store, manifest, scope, wanted, done, fail, loo
   launching = false; finish();
 }
 
-export function saveNativePieces(store, scope, current, next, storage, command, verifyCheckpoint = null) {
+export function saveNativePieces(store, scope, current, next, storage, command, verifyCheckpoint = null, check = () => {}, fail = error => { throw error; }) {
   const prior = storage?.manifest;
   const projectIds = prior ? (command.batch?.projects ?? []).map(row => row.id) : Object.keys(next.projects);
   const refIds = prior ? [...new Set([...(command.batch?.refs ?? []).map(row => row.id),
@@ -141,6 +141,9 @@ export function saveNativePieces(store, scope, current, next, storage, command, 
   if (prior) {
     const oldCheckpoint = store.get(nativeCheckpointKey(next.scopeKey));
     oldCheckpoint.onsuccess = () => {
+      // Authorization loss while this transaction can still abort is not a
+      // tolerable corrupt checkpoint and must reach the owner's abort path.
+      try { check(); } catch (error) { fail(error); return; }
       // Only retire pieces superseded before the checkpoint being retained.
       // An unverifiable older checkpoint must not authorize deleting its pieces.
       let old;
@@ -149,15 +152,18 @@ export function saveNativePieces(store, scope, current, next, storage, command, 
         if (!isNativePartitioned(old)) return;
         if (!verifyCheckpoint) validateNativeManifest(old, scope);
       } catch { return; }
-      const changed = prior.changes.find(change => change.revision === prior.revision);
-      // Recovery deliberately clears change history. Reconcile the older
-      // checkpoint once in that case, so its superseded pieces cannot leak.
-      for (const kind of ['projects', 'refs']) for (const key of changed?.[kind] ?? Object.keys(old[kind])) {
-        const version = old[kind][key];
-        if (version && version !== prior[kind][key] && version !== manifest[kind][key]) {
-          store.delete(nativePartitionKey(next.scopeKey, kind, key, version));
+      const matches = prior.changes.filter(change => change.revision === prior.revision), changed = matches.length === 1 ? matches[0] : null;
+      // Missing or ambiguous current work lists require full reconciliation.
+      // Recovery deliberately clears history; old formats can repeat rows.
+      try {
+        for (const kind of ['projects', 'refs']) for (const key of changed?.[kind] ?? Object.keys(old[kind])) {
+          const version = old[kind][key];
+          if (version && version !== prior[kind][key] && version !== manifest[kind][key]) {
+            check();
+            store.delete(nativePartitionKey(next.scopeKey, kind, key, version));
+          }
         }
-      }
+      } catch (error) { fail(error); }
     };
   }
   // Both atomic roots contain the exact same immutable payload. Hash it once;

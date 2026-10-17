@@ -469,7 +469,7 @@ export class NativeRepository {
                       check();
                       const publishNow=(directory=null)=>{
                         try {check();if(indexReader)saveIndexedNativePieces(states,normalized,next,storage,command,indexReader,row=>this.#verifyCheckpoint(row,normalized),check,failure=>abort(failure.message));
-                          else saveNativePieces(states, normalized, partial, next, storage, command,row=>this.#verifyCheckpoint(row,normalized));
+                          else saveNativePieces(states, normalized, partial, next, storage, command,row=>this.#verifyCheckpoint(row,normalized),check,failure=>abort(failure.message));
                           // This exact envelope was verified above in the same CAS transaction.
                           // The reducer clones its input; only rekey the unchanged prior payload.
                           // saveNativePieces queued the older checkpoint GC read before this put.
