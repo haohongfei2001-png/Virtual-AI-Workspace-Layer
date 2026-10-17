@@ -37,6 +37,8 @@ J4远端早期失败已区分：4067762 CI39025114564前三步PASS，随后basel
 
 10k重复字节遍历已精确修复：reader首次clone、完整验证并深冻结record/payload/versions/ordinals；模块私有WeakMap仅记录该对象对应完整context，不强持有record、不扩512项/8MiB字节缓存。update对该不可变同context快照不再二次strictJSON遍历；普通输入、克隆副本和新IDB读仍全检，hash算法与guard不变。计数反例先红（额外1次）后绿（0次），输出逐字相同；嵌套篡改、克隆篡改、context及getter换值反例保留，72项定向通过，独立审查及真实IDB10项通过。本地未插桩10k完成10000/10000正确PROJECT、零UNKNOWN/遗漏/错属、两次同revision206完整审计及原生返回；原期限剩余14.13秒。摄取观察18.653秒，前一候选22.069秒，仅单样本描述，不视为可归因加速比/p95；源码/fixture/manifest未变。仍PARTIAL_SYS04_NOT_ACCEPTED，最终同源码完整Node7298/7298通过、0skip、52.93秒；跨环境期限关口待新CI，不能用本地PASS关闭既有CI失败。
 
+最新8abed45完整CI39027033735已结束FAIL：Node和J4通过既定门槛，正式10k在原期限仅6795 refs/revision146；cold immediate 20秒无mount，J1/J2/J3本次通过。10k失败已证实索引未完整，不是完整数据被审计误判；上一快照优化不关闭跨环境关口。冷启动正式失败缺少receipt/content现场，而随后独立trace成功，因此不能归因初始化或授权竞态。现复用既有闭包检查，仅在原FAIL及page/native快照之后附着精确扩展，记录现存content/worker状态；不提前附着、不造world、不改20秒/exit1，并核验helper hashes与清理。23项相关检查通过，最终候选本地隔离cold单次通过且源码/runner/helper未漂移；失败后分支的真实Chrome现场仍待实际失败触发，不宣称冷启动已修复。生产源码未改变，不为该观察器改动重跑完整矩阵；既有CI失败与本地成功原件均保留。
+
 下一阻塞：可靠10k摄取、J1/冷启动时序与合法worker/peer context重新获取及自动待命返回；完整旅程/全部适用81项、100k与p95、真实G/U/PAIA/物理IME/跨端及发布准备仍未达到。已有Pro资产和整理stash保留。
 
 ## 历史本地检查点（2026-10-17，Round386）
