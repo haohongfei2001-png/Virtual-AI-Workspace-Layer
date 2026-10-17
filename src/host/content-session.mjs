@@ -373,10 +373,15 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     if(current===s&&reason==='ui-user-exit'){stop();return;}
     // One fresh authorization attempt per explicit content start. A failed
     // replacement never schedules another loop or revives an old grant.
-    if(!enabled||!s.ready||!live(s)||s.busyClose===true||s.recoveryDenied||recoveryRemaining<1||!['ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason))return;
+    if(!enabled||(!s.ready&&!s.mountStarting)||!live(s)||s.busyClose===true||s.recoveryDenied||recoveryRemaining<1||!['ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason))return;
     recoveryRemaining--;rebind(s,presentation?.mode==='workspace'?'workspace':'reading');
    },now,elapsedNow,schedule,cancel});
-   s.surface=surface;const handle=await s.controller.start(adapterOptions(s,s.binding));if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;return handle;
+   // Owned frames may suspend while mount registration is still awaiting its
+   // reply. Permit the same one-shot fresh handshake in that narrow interval;
+   // dormant wake and failed scope checks never acquire this startup flag.
+   s.surface=surface;s.mountStarting=true;let handle;
+   try{handle=await s.controller.start(adapterOptions(s,s.binding));}finally{s.mountStarting=false;}
+   if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;return handle;
   }catch(error){
    if(current===s){
     // A native route can change while HELLO, REFRESH or mount is pending,

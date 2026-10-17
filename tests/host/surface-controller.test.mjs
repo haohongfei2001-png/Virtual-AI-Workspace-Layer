@@ -261,3 +261,17 @@ test('already queued expiry callback cannot dispose dormant frames',async()=>{
 });
 
 test('dormant entry requires an explicit owner wake path',async()=>{const f=fixture({onWake:null});idleSurface(f);await f.controller.start({});await f.both();f.controller.showNativeReading();assert.equal(f.controller.enterDormant(),false);assert.equal(f.controller.showWorkspace(),true);});
+
+for(const role of ['workspace','sidebar'])test('registered owned '+role+' SUSPEND synchronously terminates pending start and late registration returns no handle',async()=>{
+ const f=fixture({initialMode:'reading'}),held=deferred(),released=[];let entered=false;
+ f.bridge.registerMount=()=>{entered=true;return held.promise;};f.bridge.revokeMount=value=>released.push(value);
+ const starting=f.controller.start({});await drain();assert.equal(entered,true);assert.equal(f.calls.dispose,0);
+ f.message(role,{data:{type:'VAIWL_UI_SUSPEND',role}});
+ assert.equal(f.calls.dispose,1);assert.equal(f.calls.suspend,1);assert.deepEqual(f.calls.terminations,[{reason:'ui-frame-suspended',presentation:{mode:'reading'}}]);assert.deepEqual(released,[{mountId:'mount'}]);assert.equal(f.controller.showWorkspace(),false);
+ held.resolve({ok:true});assert.equal(await starting,null);await drain();assert.equal(f.calls.dispose,1);assert.equal(f.calls.terminations.length,1);assert.equal(f.calls.show,0);assert.equal(f.calls.confirm.length,0);
+});
+for(const patch of [{origin:'https://chatgpt.com'},{source:{}}])test('foreign '+Object.keys(patch)[0]+' SUSPEND cannot terminate pending registration',async()=>{
+ const f=fixture(),held=deferred();f.bridge.registerMount=()=>held.promise;const starting=f.controller.start({});await drain();
+ f.message('workspace',{...patch,data:{type:'VAIWL_UI_SUSPEND',role:'workspace'}});assert.equal(f.calls.dispose,0);assert.deepEqual(f.calls.terminations,[]);
+ held.resolve({ok:true});assert.equal((await starting)?.id,'mount');await f.both();assert.equal(f.calls.show,1);assert.deepEqual(f.calls.terminations,[]);f.controller.stop();
+});

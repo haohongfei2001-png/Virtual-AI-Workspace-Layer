@@ -56,7 +56,7 @@ J4定位必须区分主tab与失败peer的证据归属；独立GET200/旧reason/
 
 B2.F2取消重发按“浏览器未确认终态→有界认证operation读回→仅已确认failed/cancelled解除旧intent”继续验证；网络ERR_FAILED自身不证明取消，不授权重发或ACK。此loopback重建机制不自动开放生产profile。
 
-当前恢复子关口已加入同一C2 runner的待命拒绝→新原生GET/READY→阅读返回正例及旧stop变异反例；只认证明确故障链，不扩大为自动scope恢复/完整J4。10k跨环境完整摄取仍是未关闭关口，状态及同源码证据继续记录于STATUS。
+当前恢复子关口已加入同一C2 runner的待命拒绝→新原生GET/READY→阅读返回正例及旧stop变异反例；只认证明确故障链，不扩大为自动scope恢复/完整J4。 初次mount注册等待期间的合法owned-frame终止属于同一一次新授权恢复窗口，必须保持旧start晚返回隔离及EXIT/权限拒绝/第二次中断不循环；实际J2结果不扩充为MODERN或全Free验收。10k跨环境完整摄取仍是未关闭关口，状态及同源码证据继续记录于STATUS。
 
 ## 3. Free执行顺序与原关口
 
