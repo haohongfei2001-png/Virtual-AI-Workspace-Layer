@@ -4,6 +4,10 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **a651f24远端冻结矩阵**：CI39031892904整体FAIL；Node与offline-journeys通过既定门槛，J4/耐久未通过。10k在原期限仅6485 refs/revision137，仍是未完成摄取，不是完整索引审计通过。J4前10步含联合提交后实际worker停止、幂等恢复与隔离通过，随后peer原生导航收到正确team GET200但无新界面授权，`J4-peer-current-scope-timeout`；原doc/editor保持。此处不能因主tab恢复而关闭peer关口，继续定位导航/通知顺序。
+- **同生产源码阶段定位**：仅临时包新增owner累计阶段诊断，64项定向通过；真实10k诊断完成返回，仍DIAGNOSTIC_ONLY，不计正式验收。源码/fixture/manifest未漂移。环丢弃早期记录，保留末尾10次真实提交：frame累计中位0.4ms、page区间7.3ms、第二核验0.5ms、apply60.9ms、publication0.1ms；apply内部shared→publish30.1ms、publish→queued11.1ms、queued→commit15.6ms。不能把大量后续coalesced/no-op行混入真实提交均值，也不能把累计阶段相加；该证据不支持删减认证或通知护栏。诊断不新增缓存/联网/预算，原失败保留。
+
+
 - **取消即时重发的实际根因**：849c3ab CI的原取消fixture在body abort后产生net::ERR_FAILED，浏览器owner直接丢弃，因此没有operation读回，旧intent未终止，第二次原生成功也不能唯一归因。只拦外部URL的本地诊断仍复现相同失败，已排除“必然由Playwright loopback中转造成”的假设，原网络策略和fixture均保留。现在仅loopback明确配对的ERR_FAILED成为unresolved候选，仍使用既有6秒deadline、共享12 GET/最多三次读取和完整principal/context/operation/message/C读回；只有认证failed/cancelled才能settle，accepted/unknown/异常不解除intent，明确browser stage不匹配仍拒绝，无原生重发/ACK升级。94项定向与独立审查通过；最终同生产源码完整Node7341/7341、0skip、72.09秒。包含早晚顺序、预算、跨文档、expiry、redirect、异步撤权和真实correlator冲突。相同生产/fixture的HTTP失败及原取消立即重发真实MV3通过；成功取消实际均ERR_ABORTED，不能写成ERR_FAILED分支真实覆盖。新分支真实Chrome证据仍待CI，不因此宣称完整J2关闭。
 - **CI runner与性能定位**：849c3ab CI39030359427整体FAIL，Node/J4通过既定门槛；新C2两步在Linux浏览器启动前因硬编码/private/tmp失败，现改用系统tmpdir，本地原六步再次通过，Linux待新CI。10k期限仅6430 refs/revision146，auditAttempts=0。849c3ab生产源的真实IDB同输入A/B（50条预置+199次50条提交，最终完整10k）三轮中位1584.8→1568.9ms；三读预排仅约1%，不采纳该生产改动。另一交替诊断native owner约1598.5ms、加共享目录约4195.1ms，仍不能解释完整宿主耗时；仅成本定位，非Host/SYS04/p95验收，不再盲目追加数据库微优化。原失败、无收益实验及脚本均保留。
 
