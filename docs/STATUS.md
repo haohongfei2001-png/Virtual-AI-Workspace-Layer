@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round364）
+## 最新本地检查点（2026-10-17，Round365）
+
+worker新增HOST_UI_IDLE_RELEASE，在完成浏览器鉴权后、同步撤销前核验原mount/binding及所有实际在途工作，只豁免当前请求。busy保留UI/view；deadline先返回但底层未结束仍阻止释放。独立9项与root5项反例及审查通过，最终相关 **1493/1493 Node PASS**。见 [Round365](evidence/round365/README.md)。
+
+content自动收束尚未调用此RPC，双frame ACK后的完整协调/自然退出仍待接线；本轮无新浏览器结果，生产首个发送恢复及UI-11/完整Free仍NOT_RELEASE_READY。
+
+## 前一本地检查点（2026-10-17，Round364）
 
 修复已退役send observer同步重入后继续交付旧手势，以及实际HOST_UI_RELEASE未退休view准备计时器的问题。view与UI撤销在同一同步步骤完成，非法释放、兄弟mount、同id重建、清理异常和递归均有反例；独立审查通过。最终相关 **1467/1467 Node PASS**，红测及拔线变异保留。见 [Round364](evidence/round364/README.md)。
 

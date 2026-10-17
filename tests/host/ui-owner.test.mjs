@@ -235,3 +235,22 @@ test('mount cleanup runs once and cannot recursively re-enter itself',async()=>{
  let f,calls=0;f=fixture({onRevokeMount:id=>{calls++;f.owner.revokeMount(id);}});const port=mockPort(f.ui);assert(f.owner.connectPort(port));await pair(f);
  assert.equal((await f.release()).ok,true);assert.equal(calls,1);assert.equal(port.disconnects,1);f.owner.revokeMount('mount');assert.equal(calls,1);
 });
+
+function guardedRelease(f,releaseGuard){return f.owner.handle({v:1,type:'HOST_UI_RELEASE',documentToken:'doc',producerToken:'producer',routeEpoch:1,mountId:'mount'},f.parent,{releaseGuard});}
+for(const mode of ['busy','throws'])test('private idle release guard '+mode+' preserves existing UI authority',async()=>{
+ const f=fixture(),port=mockPort(f.ui);assert(f.owner.connectPort(port));const grant=await pair(f);
+ const result=await guardedRelease(f,()=>{if(mode==='throws')throw Error('busy');return false;});assert.equal(result.ok,false);assert.equal(port.disconnects,0);assert(await f.owner.validate({sender:f.ui,grantId:grant.id,mountId:'mount'}));
+ f.owner.revokeAll();
+});
+test('private idle release waits for browser checks and only then evaluates the guard',async()=>{
+ const f=fixture(),port=mockPort(f.ui);assert(f.owner.connectPort(port));await pair(f);const unblock=f.block();let calls=0;
+ const released=guardedRelease(f,()=>{calls++;return true;});await tick();assert.equal(calls,0);assert.equal(port.disconnects,0);unblock();assert.equal((await released).ok,true);assert.equal(calls,1);assert.equal(port.disconnects,1);
+});
+test('private idle release cannot bypass another pending UI join',async()=>{
+ const f=fixture();await pair(f);const pending=f.join('other');await tick();let calls=0;
+ assert.equal((await guardedRelease(f,()=>{calls++;return true;})).ok,false);assert.equal(calls,0);f.owner.revokeAll();await pending;
+});
+test('private release guard reentrant validation remains counted through revocation point',async()=>{
+ const f=fixture(),port=mockPort(f.ui);assert(f.owner.connectPort(port));const grant=await pair(f);let pending;
+ const result=await guardedRelease(f,()=>{pending=f.owner.validate({sender:f.ui,grantId:grant.id,mountId:'mount'});return true;});assert.equal(result.ok,false);await pending;assert.equal(port.disconnects,0);f.owner.revokeAll();
+});

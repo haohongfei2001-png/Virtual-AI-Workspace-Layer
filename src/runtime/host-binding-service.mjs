@@ -110,6 +110,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(message?.type==='HOST_UI_PRESENT')return views?views.present(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(['HOST_UI_RESUME','HOST_UI_SAVE_VIEW'].includes(message?.type))return views?views.resume(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_VIEW')return views?views.handle(message,sender):{ok:false,reason:'host-view-unavailable'};
+  if(message?.type==='HOST_UI_IDLE_RELEASE')return ui?ui.handle({...message,type:'HOST_UI_RELEASE'},sender,{releaseGuard:canReleaseIdleMount}):{ok:false,reason:'host-ui-unavailable'};
   if(typeof message?.type==='string'&&message.type.startsWith('HOST_UI_'))return ui?ui.handle(message,sender):{ok:false,reason:'host-ui-unavailable'};
   if(['vaiwl-host-observation/1','vaiwl-host-observation/2'].includes(message?.protocol)){
    if(!observations)return {state:'rejected',localSeq:message.localSeq,reason:'host-observations-unavailable'};
@@ -182,7 +183,15 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  // A conservative local snapshot only; not a document close/admission permit.
  function isIdle(){
   if(!serviceActive||activity.requests||activity.background||refreshAttempts.size)return false;
-  return [authority,continuations,ui,observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
+  return ownersIdle();
+ }
+ // Exclude exactly this request and its UI handler, not unrelated in-flight work.
+ function canReleaseIdleMount(){
+  const quiet=()=>serviceActive&&activity.requests===1&&activity.background===0&&refreshAttempts.size===0;
+  return quiet()&&ownersIdle(true)&&quiet();
+ }
+ function ownersIdle(excludeUi=false){
+  return [authority,continuations,...(excludeUi?[]:[ui]),observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
  }
  return Object.freeze({isIdle,oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
 }

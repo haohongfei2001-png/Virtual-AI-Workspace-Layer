@@ -73,7 +73,8 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
    for(const [port,entry]of [...ports])if(entry.binding?.grant.mountId===id)disconnectPort(port);
   }
  }
- async function handle(input,sender){
+ async function handle(input,sender,{releaseGuard=null}={}){
+  if(releaseGuard!==null&&typeof releaseGuard!=='function')return publicFailure();
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return publicFailure();}
   if(inFlight.size>=maxPending*2+maxPorts)return publicFailure();
   const attempt={active:true,started:elapsedNow(),epoch:revocationEpoch,sender,mountId:message?.mountId,mount:registrations.get(message?.mountId),nonce:null,invalidated:false};
@@ -173,6 +174,13 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
     if(!schema(message,[...bindingKeys,'mountId']))throw Error('invalid-ui-release');
     sender=await parent(message,sender);check();
     const mount=registrations.get(message.mountId);if(mount?.tabId!==sender.tab.id||mount?.documentId!==sender.documentId)throw Error('ui-mount-mismatch');
+    // The guard is supplied only by the worker composition, never the message.
+    // Recheck at the synchronous revocation point, after all browser awaits.
+    if(releaseGuard!==null){
+     if(mount.url!==sender.url||bindingKeys.some(key=>mount.binding[key]!==message[key]))throw Error('ui-mount-mismatch');
+     const quiet=()=>activeWork===1&&inFlight.size===1&&pending.size===0;
+     if(!quiet()||releaseGuard()!==true||!quiet())return {ok:false,reason:'ui-release-busy'};check();
+    }
     revokeMount(message.mountId);return {ok:true};
    }
    return {ok:false,reason:'unsupported-ui-command'};

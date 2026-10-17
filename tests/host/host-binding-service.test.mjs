@@ -205,3 +205,47 @@ test('MOCK denied producer survives ordinary sequence TTL while document remains
  f.advance(6000);await f.bind(2);const reads=f.providerReads;
  assert.notEqual((await f.service.handle({...focusPacket(f,5),type:'HOST_REFRESH'},f.parent.sender)).state,'verified');assert.equal(f.providerReads,reads);
 });
+
+const idleReleaseMessage=f=>({v:1,type:'HOST_UI_IDLE_RELEASE',...f.parent.packet,mountId:'mount'});
+const assertPairedUiCurrent=async f=>assert.equal(await f.service.ui.withScope({sender:f.ui,grantId:f.grant.id,mountId:'mount'},context=>context.isCurrent()),true);
+test('MOCK atomic idle release retires only an authenticated idle mount',async t=>{
+ const f=await fixture(t);assert.equal(f.service.isIdle(),true);const reply=await f.service.handle(idleReleaseMessage(f),f.parent.sender);assert.equal(reply.ok,true,JSON.stringify(reply));
+ await assert.rejects(f.service.ui.withScope({sender:f.ui,grantId:f.grant.id,mountId:'mount'},()=>assert.fail('idle-released grant cannot read')));
+});
+test('MOCK atomic idle release rejects forged sender binding and schema without revoking UI',async t=>{
+ const f=await fixture(t),message=idleReleaseMessage(f);
+ for(const [packet,sender]of [[message,{...f.parent.sender,id:'foreign'}],[message,f.ui],[message,{...f.parent.sender,documentId:'other'}],[message,{...f.parent.sender,tab:{id:9,incognito:false}}],[{...message,producerToken:'forged'},f.parent.sender],[{...message,mountId:'other'},f.parent.sender],[{...message,idle:true},f.parent.sender]]){
+  assert.equal((await f.service.handle(packet,sender)).ok,false);await assertPairedUiCurrent(f);
+ }
+ assert.equal((await f.service.handle(message,f.parent.sender)).ok,true);
+});
+for(const otherTab of [false,true])for(const late of [false,true])test('MOCK atomic idle release waits for '+(otherTab?'other-tab':'same-tab')+' request'+(late?' raw work after deadline':'')+' then succeeds',async t=>{
+ const f=await fixture(t),parent=otherTab?await f.bind(2):f.parent,mountId=otherTab?'other_mount':'mount';
+ if(otherTab)assert.equal((await f.service.handle({v:1,type:'HOST_UI_MOUNT',...parent.packet,mountId,regionEpoch:1},parent.sender)).ok,true);
+ const original=f.frames.get.bind(f.frames);let release,held=false;
+ f.frames.get=key=>{if(key===parent.sender.tab.id+':0'&&!held){held=true;return new Promise(resolve=>release=()=>resolve(original(key)));}return original(key);};
+ const pending=f.service.handle({v:1,type:'HOST_UI_STATUS',...parent.packet,mountId},parent.sender);t.after(async()=>{release?.();await pending;});await flushTasks();assert.equal(typeof release,'function');
+ assert.equal((await f.service.handle(idleReleaseMessage(f),f.parent.sender)).ok,false,'parallel request must block the atomic release');await assertPairedUiCurrent(f);
+ if(late){f.advance(5900);f.flushHints();await flushTasks();assert.equal((await pending).ok,false);assert.equal((await f.service.handle(idleReleaseMessage(f),f.parent.sender)).ok,false,'public deadline cannot erase underlying browser work');await assertPairedUiCurrent(f);}
+ release();await pending;await flushTasks();assert.equal((await f.service.handle(idleReleaseMessage(f),f.parent.sender)).ok,true,'settled work permits a new atomic release request');
+});
+test('MOCK ordinary UI RELEASE still revokes immediately while other request is pending',async t=>{
+ const f=await fixture(t),original=f.frames.get.bind(f.frames);let release,held=false;
+ f.frames.get=key=>{if(key==='1:0'&&!held){held=true;return new Promise(resolve=>release=()=>resolve(original(key)));}return original(key);};
+ const pending=f.service.handle({v:1,type:'HOST_UI_STATUS',...f.parent.packet,mountId:'mount'},f.parent.sender);t.after(async()=>{release?.();await pending;});await flushTasks();assert.equal(typeof release,'function');
+ assert.equal((await f.service.handle({...idleReleaseMessage(f),type:'HOST_UI_RELEASE'},f.parent.sender)).ok,true);release();assert.equal((await pending).ok,false);
+});
+test('MOCK atomic idle release cannot mistake timed-out native repository work for a quiet owner',async t=>{
+ const f=await fixture(t),native=f.service.nativeRepository,apply=native.apply.bind(native);let release,entered=false;
+ const barrier=new Promise(resolve=>release=resolve);native.apply=async(...args)=>{entered=true;await barrier;return apply(...args);};
+ const pending=f.service.handle(f.proposal(),f.parent.sender);t.after(async()=>{release();await pending;});
+ for(let i=0;i<50&&!entered;i++)await new Promise(resolve=>setImmediate(resolve));assert.equal(entered,true);
+ assert.equal((await f.service.handle(idleReleaseMessage(f),f.parent.sender)).ok,false);await assertPairedUiCurrent(f);
+ f.advance(5900);f.flushHints();await flushTasks();assert.equal((await pending).state,'rejected');assert.equal(f.service.observations.isIdle(),false);
+ assert.equal((await f.service.handle(idleReleaseMessage(f),f.parent.sender)).ok,false,'owner guard must retain underlying work after request count falls');await assertPairedUiCurrent(f);
+ release();for(let i=0;i<50&&!f.service.observations.isIdle();i++)await new Promise(resolve=>setImmediate(resolve));assert.equal(f.service.observations.isIdle(),true);
+ assert.equal((await f.service.handle(idleReleaseMessage(f),f.parent.sender)).ok,true);
+});
+test('MOCK authenticated other-tab binding cannot idle-release this mount',async t=>{
+ const f=await fixture(t),other=await f.bind(2);assert.equal((await f.service.handle({v:1,type:'HOST_UI_IDLE_RELEASE',...other.packet,mountId:'mount'},other.sender)).ok,false);await assertPairedUiCurrent(f);assert.equal((await f.service.handle(idleReleaseMessage(f),f.parent.sender)).ok,true);
+});
