@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round360）
+## 最新本地检查点（2026-10-17，Round361）
+
+frame清空后的精确一次性wake入口接入原start：新nonce/连接/JOIN，新grant前保持空私有根和无权限。stop/exit/重启撤销旧入口，重复wake不重复启动。独立8项与审查通过，最终 **428/428 Node PASS**；实际headless跨源双frame连续 **5项PASS / WEB_MECHANISM_ONLY**。见 [Round361](evidence/round361/README.md)。
+
+尚未自动接content/controller的mount新授权与休眠发送核验；无MV3/自然休眠通过声明，完整Free继续NOT_RELEASE_READY。
+
+## 前一本地检查点（2026-10-17，Round360）
 
 双frame待命增加精确清空回执：旧渲染完全settle并再次清私有根后ACK，重入/重启取消旧回执；controller核对两实际frame/source/origin/requestId后才报告局部dormantReady。最终 **420/420 Node PASS**，独立审查通过。实际隔离headless跨源frame **3项PASS / WEB_MECHANISM_ONLY**，无源码漂移；非MV3或自然休眠验收。见 [Round360](evidence/round360/README.md)。
 

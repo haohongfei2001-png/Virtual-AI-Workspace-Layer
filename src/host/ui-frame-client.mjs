@@ -9,7 +9,7 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
  const parsed=new URL(parentOrigin);
  if(!['workspace','sidebar'].includes(role)||!doc?.defaultView?.parent||!privateRoot||typeof privateRoot.replaceChildren!=='function'||typeof runtime?.connect!=='function'||typeof runtime.sendMessage!=='function'||parsed.origin!==parentOrigin||!['https:','http:'].includes(parsed.protocol))throw Error('invalid-ui-frame-client');
  const appearance=doc.documentElement?.style?createFrameAppearance({document:doc}):null;
- let appearanceListener=null,appearanceKey=null,idleAck=null;
+ let appearanceListener=null,appearanceKey=null,idleAck=null,wakeListener=null;
  let active=false,epoch=0,grant=null,port=null,expiryTimer=null,renewTimer=null,abort=null,disconnect=null,messageListener=null,rendering=false,desired=null;
  const clear=(reason,notify=true)=>{privateRoot.replaceChildren();try{if(notify)onClear(reason);}catch{/* Cleanup cannot restore authority. */}};
  function finishIdle(){
@@ -18,10 +18,19 @@ export function createUiFrameClient({document:doc,runtime,role,parentOrigin,onGr
   try{clear('ui-idle',false);}catch{return;}
   if(idleAck!==pending||active||rendering||epoch!==pending.epoch)return;
   idleAck=null;
+  wakeListener=event=>{
+   if(active||epoch!==pending.epoch||event.source!==doc.defaultView.parent||event.origin!==parentOrigin)return;
+   const data=event.data;
+   if(!exactHostRecord(data,['type','role','requestId'])||data.type!=='VAIWL_UI_WAKE'||data.role!==role||data.requestId!==pending.requestId)return;
+   // This signal only starts a new two-channel join; it carries no grant.
+   doc.defaultView.removeEventListener?.('message',wakeListener);wakeListener=null;
+   void start();
+  };
+  doc.defaultView.addEventListener?.('message',wakeListener);
   try{doc.defaultView.parent.postMessage({type:'VAIWL_UI_IDLE_ACK',role,requestId:pending.requestId},parentOrigin);}catch{}
  }
  function stop(reason='ui-stopped',userExit=false){
-  idleAck=null;
+  idleAck=null;if(wakeListener){doc.defaultView.removeEventListener?.('message',wakeListener);wakeListener=null;}
   const wasActive=active;active=false;if(appearanceListener){doc.defaultView.removeEventListener?.('message',appearanceListener);appearanceListener=null;}appearance?.clear();appearanceKey=null;if(desired){desired.resolve(false);desired=null;}epoch++;grant=null;cancel(expiryTimer);cancel(renewTimer);expiryTimer=renewTimer=null;abort?.abort();abort=null;
   const previous=port;port=null;if(previous){try{previous.onDisconnect.removeListener(disconnect);}catch{}try{previous.onMessage?.removeListener(messageListener);}catch{}}
   clear(reason,false);

@@ -15,7 +15,8 @@ const server=http.createServer(async(req,res)=>{try{
  import {createUiFrameClient} from '/src/host/ui-frame-client.mjs';
  const role=${JSON.stringify(url.searchParams.get('role'))},privateRoot=document.querySelector('#private');
  let release;const held=new Promise(r=>release=r);globalThis.releaseRender=release;
- const event={addListener(){},removeListener(){}},runtime={connect:()=>({onMessage:event,onDisconnect:event,disconnect(){}}),sendMessage:async()=>({ok:true,grant:{id:'grant',mountId:'mount',parentDocumentId:'parent',uiDocumentId:'ui_'+role,scopeGrantId:'scope',role,expiresAt:new Date(Date.now()+20000).toISOString()}})};
+ let releaseJoin;const joinHeld=new Promise(r=>releaseJoin=r);globalThis.releaseJoin=releaseJoin;globalThis.joins=[];globalThis.connections=0;
+ const event={addListener(){},removeListener(){}},runtime={connect:()=>{connections++;return {onMessage:event,onDisconnect:event,disconnect(){}};},sendMessage:async message=>{joins.push(message);if(joins.length>1)await joinHeld;return {ok:true,grant:{id:'grant_'+joins.length,mountId:'mount',parentDocumentId:'parent',uiDocumentId:'ui_'+role,scopeGrantId:'scope',role,expiresAt:new Date(Date.now()+20000).toISOString()}};}};
  globalThis.client=createUiFrameClient({document,runtime,privateRoot,role,parentOrigin:${JSON.stringify(parentOrigin)},onGrant:async()=>{privateRoot.textContent='OFFLINE_PRIVATE_BEFORE';globalThis.renderStarted=true;await held;privateRoot.textContent='OFFLINE_PRIVATE_LATE';}});
  globalThis.starting=client.start();
  </script>`;
@@ -36,7 +37,12 @@ try{
  await frames.sidebar.evaluate(()=>releaseRender());await page.waitForFunction(()=>receipts.length===2);
  for(const role of ['workspace','sidebar']){assert.equal(await frames[role].evaluate(()=>starting),false);assert.equal(await frames[role].locator('#private').textContent(),'');}
  const receipts=await page.evaluate(()=>receipts);assert.deepEqual(receipts.map(r=>r.role).sort(),['sidebar','workspace']);for(const r of receipts){assert.equal(r.origin,frameOrigin);assert.deepEqual(r.data,{type:'VAIWL_UI_IDLE_ACK',role:r.role,requestId:'browser_idle_1'});}
- report.checks.push('both-exact-cross-origin-receipts-after-private-dom-clear');assert.deepEqual(errors,[]);report.errors=errors;report.browserVersion=context.browser().version();report.status='PASS';
+ report.checks.push('both-exact-cross-origin-receipts-after-private-dom-clear');
+ await page.evaluate(origin=>{for(const frame of document.querySelectorAll('iframe'))for(let i=0;i<3;i++)frame.contentWindow.postMessage({type:'VAIWL_UI_WAKE',role:frame.dataset.role,requestId:'browser_idle_1'},origin);},frameOrigin);
+ for(const role of ['workspace','sidebar']){await frames[role].waitForFunction(()=>joins.length===2);assert.equal(await frames[role].evaluate(()=>client.isAuthorized()),false);assert.equal(await frames[role].locator('#private').textContent(),'');const state=await frames[role].evaluate(()=>({connections,joins}));assert.equal(state.connections,2);assert.notEqual(state.joins[0].nonce,state.joins[1].nonce);assert(state.joins.every(m=>m.type==='HOST_UI_JOIN'));}
+ report.checks.push('wake-new-nonce-port-singleflight-and-no-old-grant-while-join-pending');
+ for(const role of ['workspace','sidebar']){await frames[role].evaluate(()=>releaseJoin());await frames[role].waitForFunction(()=>client.isAuthorized()&&document.querySelector('#private').textContent==='OFFLINE_PRIVATE_LATE');assert.equal(await frames[role].evaluate(()=>joins.length),2);}
+ report.checks.push('fresh-private-join-restores-original-frame-only-after-grant');assert.deepEqual(errors,[]);report.errors=errors;report.browserVersion=context.browser().version();report.status='PASS';
 }catch(error){report.status='FAIL';report.error=error.stack;process.exitCode=1;}
 finally{await context?.close();await new Promise(r=>{server.close(r);server.closeAllConnections();});report.sourceHashes=Object.fromEntries(sources);report.sourceChangedDuringRun=false;for(const [path,digest]of sources)if(hash(await readFile(resolve(root,'.'+path)))!==digest)report.sourceChangedDuringRun=true;report.scriptChangedDuringRun=hash(await readFile(new URL(import.meta.url)))!==report.scriptHash;if(report.sourceChangedDuringRun||report.scriptChangedDuringRun){report.status='FAIL';process.exitCode=1;}await writeFile(process.argv[2]??'/private/tmp/ui-idle-ack-browser.json',JSON.stringify(report,null,2)+'\n');}
 console.log(JSON.stringify({status:report.status,evidence:report.evidence,checks:report.checks,error:report.error}));
