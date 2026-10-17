@@ -1,4 +1,5 @@
 import {VerifiedRecordCache} from './verified-record-cache.mjs';
+import {captureJSONSnapshot} from './capture-json-snapshot.mjs';
 import {normalizedScope} from '../b1/identity.mjs';
 import {id,exact} from './state.mjs';
 import {stable,digest} from './hash.mjs';
@@ -8,7 +9,13 @@ const PARTITION_FORMAT=manifest_PARTITION_FORMAT,checkManifest=manifest_checkMan
 export const SHARED_DIRECTORY_FORMAT='vaiwl-shared-ref-directory-v1';
 const MAX_REFS=100000,MAX_RECORD=16*1024*1024;
 const metadata=['generation','scopeKey','revision','channel','sources','workspaces','preferences','humanRefs','units','changes'];
-const scopeKey=scope=>{const s=normalizedScope(scope);if(!s)throw Error('unverified-scope');return s.key;};
+const rootScope=scope=>{const s=normalizedScope(scope);if(!s)throw Error('unverified-scope');return s;};
+const scopeKey=scope=>rootScope(scope).key;
+const rootSnapshots=new WeakMap();
+function freezeRoot(root,scope){
+ const freeze=value=>{if(value&&typeof value==='object'&&!Object.isFrozen(value)){for(const key of Object.keys(value))freeze(value[key]);Object.freeze(value);}};
+ freeze(root);rootSnapshots.set(root,scope.key);return root;
+}
 const bucketId=b=>{if(typeof b!=='string'||!/^[0-9a-f]{2}$/.test(b))throw Error('invalid-shared-directory-bucket');};
 const version=(v,max)=>{if(!Number.isSafeInteger(v)||v<1||v>max)throw Error('invalid-shared-directory-version');};
 export const sharedRefBucket=ref=>{id(ref);return digest(ref).slice(0,2);};
@@ -42,14 +49,35 @@ function validateRootStructure(root,scope){
 // full, including large change lists; no mutable object identity is trusted.
 const rootValidation=new VerifiedRecordCache({maxEntries:8,maxChars:16*1024*1024});
 export function validateSharedDirectoryRoot(root,scope){
- const key=scopeKey(scope);
+ const normalized=rootScope(scope),key=normalized.key;
+ if(rootSnapshots.get(root)===key)return root;
  // Current and retained checkpoint revisions must not evict one another's
  // structure proof. Every read still compares all bytes within the same budget.
  // Inspect a data descriptor only: an invalid value must not run toJSON or an
  // extra getter before the original strict validator sees it.
  const revision=Object.getOwnPropertyDescriptor(root??{},'revision')?.value;
  const context=Number.isSafeInteger(revision)&&revision>0?JSON.stringify([key,revision]):key;
- return rootValidation.read({key,payload:root,checksum:'shared-directory-structure-v1'},context,()=>validateRootStructure(root,scope));
+ return rootValidation.read({key,payload:root,checksum:'shared-directory-structure-v1'},context,()=>validateRootStructure(root,normalized));
+}
+/** Only a private capture can receive a reusable proof. Object.freeze by itself
+ * and serialization cannot confer it; source permissions remain the owner's job.
+ */
+export function snapshotSharedDirectoryRoot(root,scope){
+ const normalized=rootScope(scope);if(rootSnapshots.get(root)===normalized.key)return root;
+ const copy=captureJSONSnapshot(root);
+ validateSharedDirectoryRoot(copy,normalized);return freezeRoot(copy,normalized);
+}
+/** Fresh rows retain their original key/checksum and undergo full byte comparison.
+ * Cache hits never return prior facts or carry proof across storage reads.
+ */
+export function createSharedDirectoryRootRecordReader(){
+ const validation=new VerifiedRecordCache({maxEntries:2,maxChars:8*1024*1024});
+ return (record,scope,expectedKey)=>{
+  const normalized=rootScope(scope),key=expectedKey===undefined?normalized.key:expectedKey,copy=captureJSONSnapshot(record);
+  if(typeof key!=='string'||!key.length||copy?.key!==key)throw Error('shared-directory-key-mismatch');
+  const root=validation.read(copy,normalized.key,()=>validateSharedDirectoryRoot(partitionUnpack(copy),normalized));
+  return freezeRoot(root,normalized);
+ };
 }
 const pieceValidation=new VerifiedRecordCache({maxEntries:512,maxChars:8*1024*1024});
 export function verifySharedDirectoryPiece(record,root,bucket){

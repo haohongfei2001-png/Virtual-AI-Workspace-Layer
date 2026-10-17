@@ -1,14 +1,14 @@
 import {createSharedDirectoryReader} from './shared-directory-reader.mjs';
-import {validateSharedDirectoryRoot,sharedRefDirectoryKey} from './shared-ref-directory.mjs';
-import {manifest_partitionUnpack,manifest_partitionKey} from './partition-manifest.mjs';
+import {validateSharedDirectoryRoot,snapshotSharedDirectoryRoot,createSharedDirectoryRootRecordReader,sharedRefDirectoryKey} from './shared-ref-directory.mjs';
+import {manifest_partitionKey} from './partition-manifest.mjs';
+const readCheckpointRoot=createSharedDirectoryRootRecordReader();
 
 /** Capture the superseded checkpoint BEFORE its replacement is enqueued.
  * Returned callback accepts the newly written root. All reads/deletes remain
  * in the owner's transaction. Journals, locators and reference anchors survive.
  */
 export function prepareSharedDirectoryRetention(tx,scope,prior,check,fail){
- const previous=structuredClone(prior),store=tx.objectStore('b23_states');
- validateSharedDirectoryRoot(previous,scope);
+ const previous=snapshotSharedDirectoryRoot(prior,scope),store=tx.objectStore('b23_states');
  let old=null,ready=false,next=null,started=false;
  const start=()=>{
   if(!ready||!next||!old||started)return;started=true;
@@ -48,10 +48,9 @@ export function prepareSharedDirectoryRetention(tx,scope,prior,check,fail){
  };
  const request=tx.objectStore('b23_checkpoints').get(previous.scopeKey);
  request.onsuccess=()=>{try{check();}catch(error){fail(error);return;}try{
-  const row=request.result;if(row?.key!==previous.scopeKey)return;
-  const candidate=manifest_partitionUnpack(row);validateSharedDirectoryRoot(candidate,scope);old=candidate;
+  old=readCheckpointRoot(request.result,scope);
  }catch{ /* A corrupt/missing checkpoint grants no deletion authority. */ }
  finally{ready=true;start();}};
  request.onerror=()=>fail(request.error??Error('shared-retention-checkpoint-read-failed'));
- return root=>{next=structuredClone(root);start();};
+ return root=>{next=snapshotSharedDirectoryRoot(root,scope);start();};
 }

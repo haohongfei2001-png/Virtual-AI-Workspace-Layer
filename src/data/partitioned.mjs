@@ -1,6 +1,6 @@
 import {recoverSharedDirectory} from './shared-directory-recovery.mjs';
 import {sharedMutationManifest,saveSharedDirectoryMutation} from './shared-directory-writer.mjs';
-import {SHARED_DIRECTORY_FORMAT,validateSharedDirectoryRoot} from './shared-ref-directory.mjs';
+import {SHARED_DIRECTORY_FORMAT,createSharedDirectoryRootRecordReader} from './shared-ref-directory.mjs';
 import {createSharedDirectoryReader} from './shared-directory-reader.mjs';
 import {VerifiedRecordCache} from './verified-record-cache.mjs';
 import { createBackup, recoverAssets } from './backup.mjs';
@@ -39,7 +39,7 @@ function affected(patch){const refs=new Set();for(const p of patch){if(['refs','
  */
 export class PartitionedState {
  #manifestCache=new VerifiedRecordCache();
- #directoryCache=new VerifiedRecordCache();
+ #readDirectoryRoot=createSharedDirectoryRootRecordReader();
  // Full inventory reads preserve the legacy manifest interface.
  readManifest(tx,row,scope,done,fail){try{
   if(!isSharedDirectory(row?.payload)){done(this.verifiedManifest(row,scope.key));return;}
@@ -47,7 +47,7 @@ export class PartitionedState {
   createSharedDirectoryReader(tx.objectStore('b23_states'),root,scope,fail).all(done);
  }catch(error){fail(error);}}
 
- verifiedDirectory(row,scope){if(row?.key!==scope.key)throw Error('shared-directory-key-mismatch');return this.#directoryCache.read(row,scope.key,(payload,record)=>{partitionUnpack(record);validateSharedDirectoryRoot(payload,scope);});}
+ verifiedDirectory(row,scope){return this.#readDirectoryRoot(row,scope);}
  verifiedManifest(row,scopeKey){return this.#manifestCache.read(row,scopeKey,(payload,record)=>{partitionUnpack(record);checkManifest(payload,scopeKey);});}
  constructor(owner){this.owner=owner;}
  // Revision metadata only: does not certify unloaded directory inventory.

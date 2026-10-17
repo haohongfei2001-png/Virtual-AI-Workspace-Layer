@@ -4,7 +4,7 @@ import {freeEvidenceKey} from './free-evidence-partitions.mjs';
 import {createNativeContinuation,validateNativeContinuation,continuationDirectoryKey,emptyContinuationDirectory,validateContinuationDirectory,updateContinuationDirectory,finishNativeContinuation,deferNativeContinuation,transitionContinuationDirectory,continuationEvidenceFingerprint} from './native-observation-continuation.mjs';
 import {migrateNativeVersionIndex,prepareNativeVersionIndex} from './native-index-migration.mjs';
 import {saveIndexedNativePieces} from './native-index-writer.mjs';
-import {NATIVE_INDEX_FORMAT,validateNativeIndexRoot} from './native-version-index.mjs';
+import {NATIVE_INDEX_FORMAT,validateNativeIndexRoot,createNativeIndexRootRecordReader} from './native-version-index.mjs';
 import {createNativeIndexReader} from './native-index-reader.mjs';
 import {VerifiedRecordCache} from './verified-record-cache.mjs';
 import { isNativePartitioned, validateNativeManifest, loadNativePieces, saveNativePieces, nativeHeader, nativeRecoveryKey, nativeCheckpointKey, nativeRecord } from './native-partitions.mjs';
@@ -43,12 +43,16 @@ export function validateNativeRootRecord(record,scope){
 
 export class NativeRepository {
   #rootCache=new VerifiedRecordCache({maxEntries:3});
+  #readIndexRoot=createNativeIndexRootRecordReader();
   #validateRoot(_payload,record,scope){return validateNativeRootRecord(record,scope);}
   #rootContext(row,scope){
     if(typeof row?.checksum!=='string'||!/^[0-9a-f]{64}$/.test(row.checksum))throw Error('corrupt-native-record');
     return JSON.stringify([scope.key,row.checksum]);
   }
-  verifiedRoot(row,scope){return this.#rootCache.read(row,this.#rootContext(row,scope),(payload,record)=>this.#validateRoot(payload,record,scope));}
+  verifiedRoot(row,scope){
+    if(row?.payload?.format===NATIVE_INDEX_FORMAT)return this.#readIndexRoot(row,scope);
+    return this.#rootCache.read(row,this.#rootContext(row,scope),(payload,record)=>this.#validateRoot(payload,record,scope));
+  }
   #rootWithCounts(row,scope){return this.#rootCache.readWithCounts(row,this.#rootContext(row,scope),(payload,record)=>this.#validateRoot(payload,record,scope),['projects','refs']);}
   #verifyCheckpoint(row,scope){
     if(row?.key!==nativeCheckpointKey(scope.key))throw Error('invalid-native-checkpoint-key');

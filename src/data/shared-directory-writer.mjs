@@ -1,5 +1,5 @@
 import {normalizedScope} from '../b1/identity.mjs';
-import {validateSharedDirectoryRoot,updateSharedRefDirectory,sharedRefBucket,sharedRefDirectoryKey,verifySharedDirectoryPiece} from './shared-ref-directory.mjs';
+import {validateSharedDirectoryRoot,snapshotSharedDirectoryRoot,updateSharedRefDirectory,sharedRefBucket,sharedRefDirectoryKey,verifySharedDirectoryPiece} from './shared-ref-directory.mjs';
 import {manifest_PARTITION_FORMAT,manifest_checkManifest,manifest_partitionRecord} from './partition-manifest.mjs';
 
 /** Delta hints are a bounded contiguous suffix, never the human journal.
@@ -53,5 +53,6 @@ export function saveSharedDirectoryMutation(tx,root,scope,storage,current,next,p
  const humans=[...new Set([...root.humanRefs,...(actor==='human'?ids:[])])].filter(ref=>!Object.hasOwn(updates,ref)||updates[ref]!==null);
  const built=updateSharedRefDirectory(root,scope,next.revision,updates,selected,{metadata:{channel:legacy.channel,sources:legacy.sources,workspaces:legacy.workspaces,preferences:legacy.preferences,humanRefs:humans,units:legacy.units,changes:boundedSharedChanges(legacy.changes)}});
  for(const row of built.records)store.put(row);
- store.put(manifest_partitionRecord(root.scopeKey,built.root));return built.root;
+ const writtenRoot=snapshotSharedDirectoryRoot(built.root,scope);
+ store.put(manifest_partitionRecord(root.scopeKey,writtenRoot));return writtenRoot;
 }

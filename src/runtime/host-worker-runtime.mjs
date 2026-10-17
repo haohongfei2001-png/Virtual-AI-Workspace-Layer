@@ -14,7 +14,17 @@ import {createSessionProvider} from './session-provider.mjs';
 export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgpt.com',scopeProfile={id:'chatgpt-context-unverified',singlePersonalDefault:false},provider=null,sessionProfile={},currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,offlineFirstSend=false,offlineOldSendTerminal=false,browserBootstrap=null,serviceFactory=createHostBindingService}={}){
  const policy=createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}});
  if(!chrome?.runtime?.id||typeof chrome.runtime.getContexts!=='function'||typeof chrome.webNavigation?.getFrame!=='function')throw Error('host-browser-unavailable');
- const allowedURL=value=>{try{return new URL(value).origin===origin&&policy.nativeHref(value)!==null;}catch{return false;}};
+ // Only the packaged, immutable URL grammar is memoized. A hit carries no
+ // document, scope, grant, epoch or expiry; every caller retains its live fence.
+ // Key by the original string so URL normalization cannot bless a rejected alias.
+ const urlClassifications=new Map();
+ const allowedURL=value=>{
+  if(typeof value!=='string'||value.length===0||value.length>8192)return false;
+  if(urlClassifications.has(value)){const result=urlClassifications.get(value);urlClassifications.delete(value);urlClassifications.set(value,result);return result;}
+  let result=false;try{result=new URL(value).origin===origin&&policy.nativeHref(value)!==null;}catch{}
+  if(urlClassifications.size===4)urlClassifications.delete(urlClassifications.keys().next().value);
+  urlClassifications.set(value,result);return result;
+ };
  let service,repository,oldSendObserver=null,firstSendObserver=null,active=true;const listeners=[];
  const bootstrap=browserBootstrap??createHostBrowserBootstrap({chrome,origin,scopeProfile}),browserOwner=bootstrap.claim({chrome,origin,scopeProfile}),contextObserver=browserOwner.contextObserver;
  try{
@@ -73,5 +83,5 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
   onContextReady:({tabId,documentId})=>chrome.tabs.sendMessage(tabId,{type:'HOST_CONTEXT_READY'},{documentId})});
  return Object.freeze({service,stop});
  }catch(error){stop();throw error;}
- function stop(){if(!active)return;active=false;oldSendObserver?.stop();firstSendObserver?.stop();browserOwner.stop();service?.stop?.();for(const [event,listener]of listeners)event.removeListener(listener);service?.ui?.revokeAll();service?.views?.stop();repository?.close();}
+ function stop(){if(!active)return;active=false;urlClassifications.clear();oldSendObserver?.stop();firstSendObserver?.stop();browserOwner.stop();service?.stop?.();for(const [event,listener]of listeners)event.removeListener(listener);service?.ui?.revokeAll();service?.views?.stop();repository?.close();}
 }

@@ -1,4 +1,6 @@
 import {VerifiedRecordCache} from './verified-record-cache.mjs';
+import {captureJSONSnapshot} from './capture-json-snapshot.mjs';
+import {normalizedScope} from '../b1/identity.mjs';
 import {digest,stable} from './hash.mjs';
 import {sha256} from './hash.mjs';
 import {id,exact} from './state.mjs';
@@ -6,6 +8,12 @@ import {validateNativeManifest,NATIVE_PARTITION_FORMAT,nativeRecord,nativeUnpack
 
 export const NATIVE_INDEX_FORMAT='vaiwl-native-version-index-v1';
 const kinds=['projects','refs'],maxCount=100000;
+const rootSnapshots=new WeakMap();
+const rootScope=scope=>{const normalized=normalizedScope(scope);if(!normalized)throw Error('unverified-scope');return normalized;};
+function freezeRoot(root,scope){
+ const freeze=value=>{if(value&&typeof value==='object'&&!Object.isFrozen(value)){for(const key of Object.keys(value))freeze(value[key]);Object.freeze(value);}};
+ freeze(root);rootSnapshots.set(root,scope.key);return root;
+}
 export const nativeIndexBucket=key=>{id(key);return digest(key).slice(0,2);};
 export const nativeIndexKey=(scope,kind,bucket,revision)=>JSON.stringify([scope,'native-version-index',kind,bucket,revision]);
 const bucketId=b=>{if(typeof b!=='string'||!/^[0-9a-f]{2}$/.test(b))throw Error('invalid-native-index-bucket');};
@@ -20,8 +28,32 @@ function directory(rows,revision){
  * Directory counts are claims until the requested immutable buckets are checked.
  */
 export function validateNativeIndexRoot(root,scope){
- checkNativeIndexRoot(root,scope);
+ const normalized=rootScope(scope);
+ if(rootSnapshots.get(root)===normalized.key)return root;
+ checkNativeIndexRoot(root,normalized);
  if(stable(root).length>16*1024*1024)throw Error('native-manifest-too-large');return root;
+}
+/** Capture before validating: getters run once and caller-owned objects remain mutable.
+ * Only this exact getter-free, deeply frozen object can reuse its schema proof.
+ * This proof says nothing about current source permissions or stored envelopes.
+ */
+export function snapshotNativeIndexRoot(root,scope){
+ const normalized=rootScope(scope);if(rootSnapshots.get(root)===normalized.key)return root;
+ const copy=captureJSONSnapshot(root);
+ validateNativeIndexRoot(copy,normalized);return freezeRoot(copy,normalized);
+}
+/** Each new IDB row is captured and fully byte-compared. The bounded cache retains
+ * encodings only; callers always receive their current read's immutable payload.
+ */
+export function createNativeIndexRootRecordReader(){
+ const validation=new VerifiedRecordCache({maxEntries:3,maxChars:8*1024*1024});
+ return (record,scope,expectedKey)=>{
+  const normalized=rootScope(scope),key=expectedKey===undefined?normalized.key:expectedKey,copy=captureJSONSnapshot(record);
+  if(typeof key!=='string'||!key.length||copy?.key!==key)throw Error('native-index-key-mismatch');
+  if(typeof copy.checksum!=='string'||!/^[0-9a-f]{64}$/.test(copy.checksum))throw Error('corrupt-native-record');
+  const root=validation.read(copy,JSON.stringify([normalized.key,copy.checksum]),()=>validateNativeIndexRoot(nativeUnpack(copy),normalized));
+  return freezeRoot(root,normalized);
+ };
 }
 function checkNativeIndexRoot(root,scope){
  exact(root,['format','scopeKey','revision','sources','projects','refs','units','changes']);
@@ -111,10 +143,12 @@ export function updateNativeVersionIndex(root,scope,revision,updates,records){
  * The same canonical bytes enforce the size bound and produce the checksum.
  */
 export function buildNativeIndexUpdateRecord(root,scope,revision,updates,records,metadata){
- const captured=structuredClone(metadata);exact(captured,['sources','units','changes']);
- const built=updateIndexPieces(root,scope,revision,updates,records);
- Object.assign(built.root,captured);checkNativeIndexRoot(built.root,scope);
+ const normalized=rootScope(scope);
+ const captured=captureJSONSnapshot(metadata);exact(captured,['sources','units','changes']);
+ const built=updateIndexPieces(root,normalized,revision,updates,records);
+ Object.assign(built.root,captured);built.root=captureJSONSnapshot(built.root);checkNativeIndexRoot(built.root,normalized);
  const encoded=stable(built.root);if(encoded.length>16*1024*1024)throw Error('native-manifest-too-large');
+ freezeRoot(built.root,normalized);
  return {...built,rootRecord:{key:built.root.scopeKey,payload:built.root,checksum:sha256(encoded)}};
 }
 function updateIndexPieces(root,scope,revision,updates,records){

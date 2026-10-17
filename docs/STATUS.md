@@ -4,6 +4,9 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **8d372e0最新远端基线已精确取证**：CI39042201576的Node、offline-journeys、独立J4成功，durability仅正式10k单Project成员样本失败。原30秒在visible-native-member-progress耗尽，末态revision146/6995 refs/1 Project，auditAttempts=0；双frame仍attached、尾段renew/state均成功，source未撤销。此现场证明完整摄取未达标，不能归因于尚未开始的完整审计，也不能单凭末态排除此前停顿。旧失败与门槛保留。
+- **摄取热路径首批代码修复，正式10k仍待远端验证**：worker仅缓存固定URL grammar的原始string分类，4项、每项不超过原8192 code units；每次document/context/epoch/expiry/权限检查不变。Native/Shared owner把当前读取捕获为严格JSON、深冻结的私有root snapshot，仅相同对象与重新normalized scope可复用schema证明；每个fresh IDB envelope仍检查物理key、checksum与全部字节。构造root、读者及同事务retention共享此证明，通用mutable-reader反例与删除前guard保留。旧synthetic显式构建表已补新增helper；首次完整Node的4个缺模块失败如实记录，修正后同冻结源码完整Node **7445/7445、0 skip、170.981秒**，12/12指定guard变异KILLED，源码未变，独立审查通过。相关[验收边界](evidence/free-delivery-2026-10-17/cloud-root-snapshot-validation.json)与[机制计数](evidence/free-delivery-2026-10-17/cloud-root-snapshot-mechanism.json)保留；MOCK_IDB的完整10k逐ID/成员一致只证明逻辑，计入的编码遍历减少45.8%不包含capture成本，不是浏览器速度或SYS04通过。当前云执行环境在Chromium启动时拒绝Unix socket，未形成新浏览器样本；须由原CI正式门槛验证，真实ChatGPT/profile和完整Free仍未验收。
+
 - **dbde527远端矩阵已结束，10k仍阻塞**：CI39041506627的Node、offline-journeys、独立J4成功，durability在正式10k单Project成员样本失败；该job此前启动、IDB反例、联合提交、pending容量、历史资产/Pro兼容和流式窄场景均通过各自既定门槛。四job实测170/246/286/172秒（Node/导航/J4/耐久），不同版本失败位置不可用作受控提速比。尚未取得此次完整失败日志，不推断已摄取数量或审计阶段；不得以job成功替代完整Free验收。
 - **真实宿主只读权限已明确，连接仍阻塞**：用户确认截图Profile，并允许该Profile所有现有Project/Conversation的ID、标题及context元字段核验；无需再索取样本许可。授权Profile的标签元数据读取成功；限定导航DOM的只读调用在12秒工具期限超时并重置连接，未取得账户/context认证证据。未读取正文、凭证或执行原生写入，未开启生产scope。最小外部条件是该已授权Profile的页面读取通道可用；标签可见不等于LIVE_VERIFIED。
 
