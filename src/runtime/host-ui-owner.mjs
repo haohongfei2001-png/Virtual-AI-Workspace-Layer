@@ -3,7 +3,8 @@ import {createUiGrants} from '../host/ui-grants.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 /** UI transport is separate from the unchanged top-frame repository broker. */
-export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,getContexts=null,handshake,authority,now=Date.now,makeId=()=>crypto.randomUUID(),maxPending=128,maxPorts=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,getContexts=null,handshake,authority,onRevokeMount=()=>{},now=Date.now,makeId=()=>crypto.randomUUID(),maxPending=128,maxPorts=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+ if(typeof onRevokeMount!=='function')throw Error('invalid-mount-revocation');
  const grants=createUiGrants({extensionId,uiURL,uiURLs,getFrame,getContexts,peekScope:frame=>authority.peek(frame),now,makeId});
  let revocationEpoch=0,activeWork=0;
  async function track(work){activeWork++;try{return await work();}finally{activeWork--;}}
@@ -63,7 +64,15 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
  function invalidateAttempts(matches){
   for(const attempt of inFlight)if(matches(attempt)){attempt.invalidated=true;if(attempt.nonce)deliver(attempt.nonce,null);}
  }
- function revokeMount(id){invalidateAttempts(attempt=>attempt.mountId===id);grants.revokeMount(id);registrations.delete(id);for(const [doc,entry]of [...uiDocuments])if(entry.grant.mountId===id)revokeDocument(doc);for(const [port,entry]of [...ports])if(entry.binding?.grant.mountId===id)disconnectPort(port);}
+ function revokeMount(id){
+  invalidateAttempts(attempt=>attempt.mountId===id);grants.revokeMount(id);const removed=registrations.delete(id);
+  // Retire the view before any port-disconnect callback can register a replacement.
+  // A local cleanup error must not leave the old UI documents or ports alive.
+  try{if(removed)onRevokeMount(id);}finally{
+   for(const [doc,entry]of [...uiDocuments])if(entry.grant.mountId===id)revokeDocument(doc);
+   for(const [port,entry]of [...ports])if(entry.binding?.grant.mountId===id)disconnectPort(port);
+  }
+ }
  async function handle(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return publicFailure();}
   if(inFlight.size>=maxPending*2+maxPorts)return publicFailure();

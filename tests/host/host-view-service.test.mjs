@@ -754,3 +754,34 @@ test('MOCK_IDB explicit snapshot retry token cannot cross mount or newly authent
  const stale=await h.view('workspace',{}, {retryToken:terminal.retryToken});assert.equal(stale.ok,false);assert.equal(stale.page,undefined);assert.equal(f.pages,3,'old scope token must not initialize a replacement owner');
  assert.equal((await f.settle()).state,'ready','new authority retains its independent normal initial read');assert.equal(f.pages,3,'new empty scope must not read pages from the old scope');
 });
+
+function releasePacket(h,mountId='mount'){
+ const binding=h.service.handshake.captureDeparture({tabId:h.sender.tab.id,documentId:h.sender.documentId});assert(binding);
+ return {v:1,type:'HOST_UI_RELEASE',documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,mountId};
+}
+test('MOCK_IDB authenticated UI RELEASE retires pending view and cancels its preparation timer',async t=>{
+ const {h,clock,release,pending}=await foregroundWindowFixture(t);
+ assert.equal(pending(),true);assert(clock.timers.some(timer=>timer.at===30000));
+ const result=await h.service.handle(releasePacket(h),h.sender);assert.equal(result.ok,true);assert.equal(pending(),false);assert.equal(clock.timers.some(timer=>timer.at===30000),false);
+ assert.equal((await h.view()).ok,false);assert.equal((await h.view('sidebar')).ok,false);
+ release();for(let i=0;i<30&&!h.service.views.isIdle();i++)await drain();assert.equal(h.service.views.isIdle(),true,'retired owner must not keep preparing after its raw page settles');
+});
+test('MOCK_IDB denied UI RELEASE leaves original and sibling view owners intact',async t=>{
+ const {h,clock,release,pending}=await foregroundWindowFixture(t),other=await h.additionalMount('release_sibling');assert.equal((await other.view()).state,'preparing');
+ for(let i=0;i<20;i++)await drain();const packet=releasePacket(h),preparationTimers=clock.timers.filter(timer=>timer.at===30000).length;assert(preparationTimers>=2);
+ for(const [message,sender]of [[{...packet,producerToken:'forged'},h.sender],[{...packet,mountId:'absent_mount'},h.sender],[{...packet,extra:true},h.sender],[packet,h.children.workspace],[packet,{...h.sender,documentId:'unrelated_document'}]]){
+  assert.equal((await h.service.handle(message,sender)).ok,false);assert.equal(pending(),true);assert.equal(clock.timers.filter(timer=>timer.at===30000).length,preparationTimers);
+ }
+ release();assert.equal((await ready(h)).state,'ready');assert.equal((await ready(other)).state,'ready');
+});
+test('MOCK_IDB UI RELEASE cancels only its mount preparation while sibling still owns the scope window',async t=>{
+ const {h,clock,release,pending}=await foregroundWindowFixture(t),originalTimers=clock.timers.filter(timer=>timer.at===30000),other=await h.additionalMount('release_survivor');assert.equal((await other.view()).state,'preparing');for(let i=0;i<20;i++)await drain();
+ const siblingTimers=clock.timers.filter(timer=>timer.at===30000&&!originalTimers.includes(timer));assert(siblingTimers.length>0);assert.equal((await h.service.handle(releasePacket(h),h.sender)).ok,true);
+ assert(originalTimers.every(timer=>!clock.timers.includes(timer)));assert(siblingTimers.every(timer=>clock.timers.includes(timer)));assert.equal(pending(),true);assert.equal((await h.view()).ok,false);
+ release();assert.equal((await ready(other)).state,'ready');assert.equal(pending(),false);
+});
+test('MOCK_IDB released view late completion cannot retire a fresh registration with the same mount ID',async t=>{
+ const {h,clock,release}=await foregroundWindowFixture(t);assert.equal((await h.service.handle(releasePacket(h),h.sender)).ok,true);assert.equal(clock.timers.some(timer=>timer.at===30000),false);
+ clock.advance(100);await h.mount();assert.equal((await h.view()).state,'preparing');for(let i=0;i<20;i++)await drain();assert(clock.timers.some(timer=>timer.at===30100));
+ release();const result=await ready(h);assert.equal(result.state,'ready');assert.equal(result.page.groups.items[0].nativeName,'Native Project');assert.equal((await h.view('sidebar')).state,'ready');
+});

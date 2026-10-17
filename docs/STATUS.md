@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round363）
+## 最新本地检查点（2026-10-17，Round364）
+
+修复已退役send observer同步重入后继续交付旧手势，以及实际HOST_UI_RELEASE未退休view准备计时器的问题。view与UI撤销在同一同步步骤完成，非法释放、兄弟mount、同id重建、清理异常和递归均有反例；独立审查通过。最终相关 **1467/1467 Node PASS**，红测及拔线变异保留。见 [Round364](evidence/round364/README.md)。
+
+自动休眠收束及首个发送因果仍待闭合；本轮无新浏览器结果，UI-11与完整Free继续NOT_RELEASE_READY。
+
+## 前一本地检查点（2026-10-17，Round363）
 
 content已接入双frame清空后的单飞fresh HELLO/同scope REFRESH与原controller恢复；旧producer回调隔离，过期adapter仅允许无在途工作的恢复准备。修复身份epoch重启、回包乱序及准备同步重入，六秒预算不重置。独立审查通过，最终完整Node **7032/7032 PASS**，零skip/cancel；首次两项失败及修复证据保留。见 [Round363](evidence/round363/README.md)。
 

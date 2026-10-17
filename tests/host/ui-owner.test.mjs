@@ -2,10 +2,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {createHostUiOwner} from '../../src/runtime/host-ui-owner.mjs';
 const tick=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
-function fixture(){let time=0,id=0,delay=null,frameHook=null,bound=true,proof={state:'verified',grant:{id:'scope',scopeKey:'scope-key',scopeEpoch:1,expiresAt:new Date(100000).toISOString()}};const timers=new Map();const parent={id:'ext',tab:{id:1,incognito:false},frameId:0,documentId:'parent',documentLifecycle:'active',url:'https://chatgpt.com/'},ui={...parent,frameId:2,documentId:'ui',url:'chrome-extension://ext/ui.html'};
+function fixture({onRevokeMount=()=>{}}={}){let time=0,id=0,delay=null,frameHook=null,bound=true,proof={state:'verified',grant:{id:'scope',scopeKey:'scope-key',scopeEpoch:1,expiresAt:new Date(100000).toISOString()}};const timers=new Map();const parent={id:'ext',tab:{id:1,incognito:false},frameId:0,documentId:'parent',documentLifecycle:'active',url:'https://chatgpt.com/'},ui={...parent,frameId:2,documentId:'ui',url:'chrome-extension://ext/ui.html'};
  const sidebar={...ui,frameId:3,documentId:'sidebar'},frames=new Map();
  const getFrame=async({frameId})=>{if(delay)await delay;if(frameHook)await frameHook(frameId);const s=frames.get(frameId)??(frameId===0?parent:frameId===3?sidebar:ui);return {documentId:s.documentId,url:s.url,documentLifecycle:'active',parentFrameId:frameId===0?-1:0};};
- const owner=createHostUiOwner({extensionId:'ext',uiURL:ui.url,getFrame,handshake:{isBound:()=>bound,verify:async(m,s)=>s.documentId===parent.documentId&&m.documentToken==='doc'&&m.producerToken==='producer'&&m.routeEpoch===1,matchesFrame:(m,s,f)=>f.documentId===s.documentId&&f.url===s.url},authority:{peek:()=>proof,scopeFor:()=>bound&&proof?.state==='verified'&&Date.parse(proof.grant.expiresAt)>time?{key:proof.grant.scopeKey}:null},now:()=>time,elapsedNow:()=>time,makeId:()=>`grant_${++id}`,maxPending:1,schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key)});
+ const owner=createHostUiOwner({onRevokeMount,extensionId:'ext',uiURL:ui.url,getFrame,handshake:{isBound:()=>bound,verify:async(m,s)=>s.documentId===parent.documentId&&m.documentToken==='doc'&&m.producerToken==='producer'&&m.routeEpoch===1,matchesFrame:(m,s,f)=>f.documentId===s.documentId&&f.url===s.url},authority:{peek:()=>proof,scopeFor:()=>bound&&proof?.state==='verified'&&Date.parse(proof.grant.expiresAt)>time?{key:proof.grant.scopeKey}:null},now:()=>time,elapsedNow:()=>time,makeId:()=>`grant_${++id}`,maxPending:1,schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key)});
  const binding={documentToken:'doc',producerToken:'producer',routeEpoch:1};const msg=(type,extra={})=>({v:1,type,...extra});
  return {owner,parent,ui,sidebar,frames,timers,setFrameHook:hook=>frameHook=hook,setBound:v=>bound=v,setProof:v=>proof=v,async mount(){assert.equal((await owner.handle(msg('HOST_UI_MOUNT',{...binding,mountId:'mount',regionEpoch:1}),parent)).ok,true);},confirm:(nonce='nonce',extra={})=>owner.handle(msg('HOST_UI_CONFIRM',{...binding,mountId:'mount',regionEpoch:1,nonce,role:'workspace',...extra}),parent),join:(nonce='nonce',extra={},sender=ui)=>owner.handle(msg('HOST_UI_JOIN',{nonce,role:'workspace',...extra}),sender),release:()=>owner.handle(msg('HOST_UI_RELEASE',{...binding,mountId:'mount'}),parent),renew:grant=>owner.handle(msg('HOST_UI_RENEW',{grantId:grant.id,mountId:'mount'}),ui),block(){let resolve;delay=new Promise(r=>resolve=r);return ()=>{delay=null;resolve();};},async advance(ms){time+=ms;for(const [key,t]of [...timers])if(t.at<=time){timers.delete(key);t.fn();}await tick();}};
 }
@@ -225,4 +225,13 @@ for(const fail of [false,true])test('MOCK idle retains scoped user work through 
 });
 test('MOCK idle includes direct validation before it settles',async()=>{
  const f=fixture(),grant=await pair(f),unblock=f.block(),work=f.owner.validate({sender:f.ui,grantId:grant.id,mountId:'mount'});assert.equal(f.owner.isIdle(),false);unblock();await work;assert.equal(f.owner.isIdle(),true);
+});
+
+test('mount cleanup failure still revokes grants and disconnects old ports without claiming success',async()=>{
+ const f=fixture({onRevokeMount:()=>{throw Error('view-cleanup-failed');}}),port=mockPort(f.ui);assert(f.owner.connectPort(port));const grant=await pair(f);
+ assert.equal((await f.release()).ok,false);assert.equal(port.disconnects,1);await assert.rejects(f.owner.validate({sender:f.ui,grantId:grant.id,mountId:'mount'}));
+});
+test('mount cleanup runs once and cannot recursively re-enter itself',async()=>{
+ let f,calls=0;f=fixture({onRevokeMount:id=>{calls++;f.owner.revokeMount(id);}});const port=mockPort(f.ui);assert(f.owner.connectPort(port));await pair(f);
+ assert.equal((await f.release()).ok,true);assert.equal(calls,1);assert.equal(port.disconnects,1);f.owner.revokeMount('mount');assert.equal(calls,1);
 });

@@ -37,22 +37,26 @@ export function createNativeSendIntentObserver({document:doc,profile,onIntent,on
   // the tracked editor's composition; this grants no intent or body authority.
   if(event.type==='compositionend'){if(composing&&(composing.target===event.target||editorTarget(composing.editor,event.target)))composing=null;return;}
   const preparing=event.type==='focusin'||event.type==='pointerdown';
-  const b=boundary(event.type==='compositionstart'||preparing);if(!b)return;const inEditor=editorTarget(b.editor,event.target);
+  const b=boundary(event.type==='compositionstart'||preparing);if(stopped||!b)return;const inEditor=editorTarget(b.editor,event.target);
   if(event.type==='compositionstart'){if(inEditor)composing={editor:b.editor,target:event.target};return;}
   if(composing?.editor===b.editor||event.isComposing===true||event.keyCode===229||event.defaultPrevented||event.shiftKey||event.ctrlKey||event.metaKey||event.altKey)return;
-  if(preparing){if((inEditor||available(b.button)&&(b.button===event.target||b.button.contains(event.target)))&&(event.type!=='pointerdown'||event.button===0)){try{onPrepare?.();}catch{/* Preparation cannot interfere with native focus or input. */}}return;}
+  if(preparing){if((inEditor||available(b.button)&&(b.button===event.target||b.button.contains(event.target)))&&(event.type!=='pointerdown'||event.button===0)){try{if(!stopped)onPrepare?.();}catch{/* Preparation cannot interfere with native focus or input. */}}return;}
   if(event.type==='keydown'){if(config.enterSends!==true||!inEditor||event.key!=='Enter'||event.repeat)return;}else if(event.type==='click'){if(event.button!==0||!(b.button===event.target||b.button.contains(event.target)))return;}else return;
-  const time=now();if(!Number.isFinite(time))return;const observedAt=new Date(time).toISOString();
+  const time=now();if(stopped||!Number.isFinite(time))return;const observedAt=new Date(time).toISOString();
   // Enter can activate the same native send button. Consume just its following click;
   // independent repeated clicks or Enter presses are not collapsed into one intent.
   if(event.type==='click'&&event.detail===0&&last?.form===b.form&&last.type==='keydown'&&time>=last.time&&time-last.time<=500){last=null;return;}
-  const intentId=makeId();if(!tokenOK(intentId))return;last={form:b.form,type:event.type,time};
+  const intentId=makeId();if(stopped||!tokenOK(intentId))return;last={form:b.form,type:event.type,time};
   const first=profile?.firstSend;
   if(onFirstIntent&&first&&doc.location?.origin===first.origin&&doc.location?.href===first.origin+'/'){
    const operationId=b.form.getAttribute(first.operationAttribute),messageId=b.form.getAttribute(first.messageAttribute);
-   if(tokenOK(operationId)&&tokenOK(messageId))try{onFirstIntent(Object.freeze({intentId,operationId,messageId,observedAt}));}catch{}
+   if(!stopped&&tokenOK(operationId)&&tokenOK(messageId))try{onFirstIntent(Object.freeze({intentId,operationId,messageId,observedAt}));}catch{}
   }
+  if(stopped)return;
   const terminal=profile?.oldSendTerminal;let operation=null;if(terminal&&doc.location?.origin===terminal.origin&&doc.location?.pathname?.startsWith('/c/')){const operationId=b.form.getAttribute(terminal.operationAttribute),messageId=b.form.getAttribute(terminal.messageAttribute);if(tokenOK(operationId)&&tokenOK(messageId))operation=Object.freeze({operationId,messageId});}
+  // DOM reads and the first-send consumer may synchronously retire this observer.
+  // A retired gesture cannot cross into the replacement producer.
+  if(stopped)return;
   try{onIntent(Object.freeze({intentId,kind:'send',isComposing:false,observedAt,...(operation?{operation}: {})}));}catch{/* Candidate consumer cannot interfere with the host gesture. */}
  }catch{/* Unsupported or changing native DOM fails closed. */}}
  if(config)for(const type of ['click','keydown','compositionstart','compositionend',...(onPrepare?['focusin','pointerdown']:[])]){doc.addEventListener(type,handle,{capture:true,passive:true});listeners.push(type);}
