@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round372）
+## 最新本地检查点（2026-10-17，Round373）
+
+补齐无额外预算准备的 after-Evidence→旧版拒写→再升级连续入口；实际隔离 headless MV3 单次 **26/26 步骤 PASS**，旧 owner 三操作 VersionError、八表/原 ACK/receipt 保持，当前包新授权恢复，后续修复/撤权/disable/reenable/uninstall 同趟通过。全部 J4 相关 Node **311/311 PASS**。见 [Round373](evidence/round373/README.md)。
+
+codec 后 peer 使用明确的原生 context 切换，自动重新附着仍未建立；报告 PARTIAL_J4_NOT_ACCEPTED。即时 cold context、100k、剩余81项/G/U继续开放，Free **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round372）
 
 实际隔离MV3缺sidebar ACK+显式本地干扰一次 **4项子检查PASS**：真实6秒关闭失败、双frame私有root清空且旧frame不自动重建；第一次可信点击fresh reading重建旧frame并保留原document/editor/草稿；第二次明确点击打开新双frame及Research内容，nativeActions为空。精确两处测试补丁/hash及实际报告归档，见 [Round372](evidence/round372/README.md)。
 
