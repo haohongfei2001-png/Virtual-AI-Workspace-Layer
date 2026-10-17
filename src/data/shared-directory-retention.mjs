@@ -30,18 +30,24 @@ export function prepareSharedDirectoryRetention(tx,scope,prior,check,fail){
      // both retained generations from storage with their full validators,
      // without rerouting and regrouping the same refs twice.
      const versionAt=(value,ref)=>value&&Object.hasOwn(value.versions,ref)?value.versions[ref]:undefined;
-     retained.readBucket(bucket,before=>{
-      const finish=after=>{try{
-       check();for(const ref of refs){const version=piece.versions[ref];if(version!==versionAt(before,ref)&&version!==versionAt(after,ref)){check();store.delete(manifest_partitionKey(old.scopeKey,ref,version,old.generation));}}
-       check();store.delete(sharedRefDirectoryKey(old.scopeKey,old.generation,bucket,pointer.revision));
-      }catch(error){fail(error);}};
-      // Private roots and this callback belong to the same transaction. No
-      // external consumer can mutate the verified bucket before reuse. Both
-      // physical identity and all validation context must remain compatible.
-      const retainedPointer=previous.refDirectory[bucket],currentPointer=next.refDirectory[bucket];
-      if(before&&retainedPointer&&currentPointer&&retainedPointer.revision===currentPointer.revision&&retainedPointer.count===currentPointer.count&&retainedPointer.units===currentPointer.units&&next.nextOrdinal>=previous.nextOrdinal)finish(before);
-      else current.readBucket(bucket,finish);
-     });
+     const finish=(before,after)=>{try{
+      check();for(const ref of refs){const version=piece.versions[ref];if(version!==versionAt(before,ref)&&version!==versionAt(after,ref)){check();store.delete(manifest_partitionKey(old.scopeKey,ref,version,old.generation));}}
+      check();store.delete(sharedRefDirectoryKey(old.scopeKey,old.generation,bucket,pointer.revision));
+     }catch(error){fail(error);}};
+     // Private roots and this callback belong to the same transaction. Reuse
+     // only identical physical and validation contexts, as before.
+     const retainedPointer=previous.refDirectory[bucket],currentPointer=next.refDirectory[bucket];
+     if(retainedPointer&&currentPointer&&retainedPointer.revision===currentPointer.revision&&retainedPointer.count===currentPointer.count&&retainedPointer.units===currentPointer.units&&next.nextOrdinal>=previous.nextOrdinal){
+      retained.readBucket(bucket,before=>finish(before,before));
+     }else{
+      // Both keys are already known. Queue independent fresh reads together,
+      // but do not authorize deletion until BOTH validators have succeeded.
+      // A null result is a verified absent pointer, not an unfinished read.
+      let before,after,beforeReady=false,afterReady=false;
+      const complete=()=>{if(beforeReady&&afterReady)finish(before,after);};
+      retained.readBucket(bucket,value=>{before=value;beforeReady=true;complete();});
+      current.readBucket(bucket,value=>{after=value;afterReady=true;complete();});
+     }
     });
    }
   }catch(error){fail(error);}
