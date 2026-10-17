@@ -17,7 +17,13 @@
 
 观察器后续定向改进：复用exact-ID PAGE已有total，在总量不足10001时不反复全目录审计；计数仅为必要条件，最终两次同revision完整ID/成员审计和30秒deadline不变。三个反例先红后绿，相关61项通过。真实同生产源码重跑47.250s仍FAIL，期限时9490 refs/revision203；不宣称性能提升或根因已全部修复。CI冷启动失败为20秒内无mount，正常原生导航恢复仍通过；须继续区分启动时C2捕获和worker恢复的共同边界。
 
-下一阻塞：合法worker/peer context重新获取与自动待命返回；完整旅程/全部适用81项、100k与p95、真实G/U/PAIA/物理IME/跨端及发布准备仍未达到。已有Pro资产和整理stash保留。
+同生产源码5f03d4c的后续有界定位：现有trace模式完成10000/10000成员双审计及返回（剩余15.87s），但仅DIAGNOSTIC_ONLY_RETURN_COMPLETE；记录环丢弃234项，不能外推完整早期事件。保留的末次pass统计79页、196个接受片、3次retry、0拒绝，DOM scan222.5ms、split126.5ms、emit等待11732.5ms，未出现该pass重启。另一趟10秒worker CPU采样也完成审计（剩余13.14s），仅定位证据；采样self-time约SHA2561589ms、GC1462ms、stable编码1167ms、strictJSON585ms。两趟源码/fixture/manifest未漂移，附着及插桩改变时序，均不替代正式FAIL或认证性能。当前证据将下一定位缩小到逐片持久提交的校验/分配成本，尚未证明其为全部失败根因；不改hash算法、不扩大缓存或预算。
+
+冷启动独立审查：现有classic入口已同步注册轻量webRequest bootstrap再加载runtime，attach复用同一receipt owner；正式cold失败和随后trace成功不能证明监听内部竞态。下一复现需区分worker JS尚未执行即发生send，与已注册后配对/正文关联/READY交错；缺send不能追认授权。
+
+最新5f03d4c CI39023489987最终FAIL：Node/J4 job通过既定门槛，10k仍FAIL，journeys本次失败项为J1；cold本次通过。原cold失败保留，J1失败尚待精确现场归因，不能凭另一次通过关闭竞态。
+
+下一阻塞：可靠10k摄取、J1/冷启动时序与合法worker/peer context重新获取及自动待命返回；完整旅程/全部适用81项、100k与p95、真实G/U/PAIA/物理IME/跨端及发布准备仍未达到。已有Pro资产和整理stash保留。
 
 ## 历史本地检查点（2026-10-17，Round386）
 
