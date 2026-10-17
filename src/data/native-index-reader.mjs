@@ -1,4 +1,4 @@
-import {validateNativeIndexRoot,verifyNativeIndexPiece,materializeNativeVersionIndex,nativeIndexBucket,nativeIndexKey} from './native-version-index.mjs';
+import {validateNativeIndexRoot,snapshotNativeIndexPiece,materializeNativeVersionIndex,nativeIndexBucket,nativeIndexKey} from './native-version-index.mjs';
 import {NATIVE_PARTITION_FORMAT} from './native-partitions.mjs';
 import {id} from './state.mjs';
 /** One live IDB transaction, one validated root. Nothing survives this reader.
@@ -16,7 +16,7 @@ export function createNativeIndexReader(store,root,scope,fail){
   if(pending.has(key)){pending.get(key).push(done);return;}
   pending.set(key,[done]);
   try{const request=store.get(key);request.onsuccess=()=>{if(failed)return;try{
-   const record=request.result,piece=verifyNativeIndexPiece(record,root,kind,bucketId);
+   const record=snapshotNativeIndexPiece(request.result,root,kind,bucketId),piece=record.payload;
    // Targeted consumers resolve versions through lookup. Full consumers
    // receive the complete ordered maps from all(); do not build a second,
    // unordered inventory here only to discard it during materialization.

@@ -29,6 +29,22 @@ export function validateNativeIndexRoot(root,scope){
 // and compared. Scope, physical identity and directory count remain contextual.
 // No facts, IDB records or source permissions survive a read through this cache.
 const indexPieceValidation=new VerifiedRecordCache({maxEntries:512,maxChars:8*1024*1024});
+// Proof belongs only to a fully verified, getter-free, deeply frozen snapshot.
+// Weak keys neither retain records nor extend the bounded byte cache's lifetime.
+const indexSnapshots=new WeakMap();
+export function snapshotNativeIndexPiece(record,root,kind,bucket){
+ const pointer=root[kind]?.[bucket],contextRoot={scopeKey:root.scopeKey,[kind]:{[bucket]:pointer?{revision:pointer.revision,count:pointer.count}:undefined}};
+ const copy=structuredClone(record),piece=verifyNativeIndexPiece(copy,contextRoot,kind,bucket);
+ Object.freeze(piece.versions);Object.freeze(piece.ordinals);Object.freeze(piece);Object.freeze(copy);
+ const verified=contextRoot[kind][bucket];
+ indexSnapshots.set(copy,JSON.stringify([contextRoot.scopeKey,kind,bucket,verified.revision,verified.count]));
+ return copy;
+}
+function updateIndexPiece(record,root,kind,bucket){
+ const pointer=root[kind][bucket],context=JSON.stringify([root.scopeKey,kind,bucket,pointer.revision,pointer.count]);
+ if(indexSnapshots.get(record)===context)return record.payload;
+ return verifyNativeIndexPiece(structuredClone(record),root,kind,bucket);
+}
 export function verifyNativeIndexPiece(record,root,kind,bucket){
  if(!kinds.includes(kind))throw Error('invalid-native-index-kind');bucketId(bucket);
  const pointer=root[kind][bucket];if(!pointer)throw Error('missing-native-index-pointer');
@@ -97,7 +113,7 @@ export function updateNativeVersionIndex(root,scope,revision,updates,records){
    if(!groups.has(bucket)){
     const pointer=root[kind][bucket];let versions={},ordinals={};
     // Consume only the exact getter-free snapshot that passed byte validation.
-    if(pointer){const physicalKey=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision),piece=verifyNativeIndexPiece(structuredClone(byKey.get(physicalKey)),root,kind,bucket);versions={...piece.versions};ordinals=Object.fromEntries(Object.keys(piece.versions).map((key,i)=>[key,piece.ordinals[i]]));consumed.add(physicalKey);}
+    if(pointer){const physicalKey=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision),piece=updateIndexPiece(byKey.get(physicalKey),root,kind,bucket);versions={...piece.versions};ordinals=Object.fromEntries(Object.keys(piece.versions).map((key,i)=>[key,piece.ordinals[i]]));consumed.add(physicalKey);}
     groups.set(bucket,{versions,ordinals});
    }
    const group=groups.get(bucket);if(!Object.hasOwn(group.versions,key))group.ordinals[key]=nextOrdinal++;group.versions[key]=revision;

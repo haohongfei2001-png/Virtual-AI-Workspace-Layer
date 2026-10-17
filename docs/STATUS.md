@@ -35,6 +35,8 @@ J1现场已取回：IDless提升后定位VIEW返回offset32含目标，但其返
 
 J4远端早期失败已区分：4067762 CI39025114564前三步PASS，随后baseline-original-history等待超时；原生正文可见、frames为空、唯一nativeGET未成为认证worker读取、预算不前进/accepts=0，失败发生在scope/producer启动前，不能归因发送证据持久化或peer恢复。已补现有离线时序诊断的request/document/target短hash与queued/prepared/history关联。首次本地23步通过但最终uninstall后快照为空，暴露观察器丢证据；现于原有capture边界await保存，最多16快照、每worker前192事件/history最多8pending，不改生产和旅程断言。修复后同源码23步诊断完成，两个baseline快照各50事件，确证本地history→queued→prepared→complete→receipt；未复现远端失败排序，不关闭J4。源码/包未漂移，6项定向helper检查通过。当前7f40fde CI39025855152已确认Node通过、10k失败，其余job仍待最终结果；原优化没有关闭跨环境关口。
 
+10k重复字节遍历已精确修复：reader首次clone、完整验证并深冻结record/payload/versions/ordinals；模块私有WeakMap仅记录该对象对应完整context，不强持有record、不扩512项/8MiB字节缓存。update对该不可变同context快照不再二次strictJSON遍历；普通输入、克隆副本和新IDB读仍全检，hash算法与guard不变。计数反例先红（额外1次）后绿（0次），输出逐字相同；嵌套篡改、克隆篡改、context及getter换值反例保留，72项定向通过，独立审查及真实IDB10项通过。本地未插桩10k完成10000/10000正确PROJECT、零UNKNOWN/遗漏/错属、两次同revision206完整审计及原生返回；原期限剩余14.13秒。摄取观察18.653秒，前一候选22.069秒，仅单样本描述，不视为可归因加速比/p95；源码/fixture/manifest未变。仍PARTIAL_SYS04_NOT_ACCEPTED，最终同源码完整Node7298/7298通过、0skip、52.93秒；跨环境期限关口待新CI，不能用本地PASS关闭既有CI失败。
+
 下一阻塞：可靠10k摄取、J1/冷启动时序与合法worker/peer context重新获取及自动待命返回；完整旅程/全部适用81项、100k与p95、真实G/U/PAIA/物理IME/跨端及发布准备仍未达到。已有Pro资产和整理stash保留。
 
 ## 历史本地检查点（2026-10-17，Round386）
