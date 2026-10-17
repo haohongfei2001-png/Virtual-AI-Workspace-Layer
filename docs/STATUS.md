@@ -1,6 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最新本地检查点（2026-10-17，Round371）
+## 最新本地检查点（2026-10-17，Round372）
+
+实际隔离MV3缺sidebar ACK+显式本地干扰一次 **4项子检查PASS**：真实6秒关闭失败、双frame私有root清空且旧frame不自动重建；第一次可信点击fresh reading重建旧frame并保留原document/editor/草稿；第二次明确点击打开新双frame及Research内容，nativeActions为空。精确两处测试补丁/hash及实际报告归档，见 [Round372](evidence/round372/README.md)。
+
+本轮仅该故障注入S，不是raw发送在途/账户变化故障S，也未观察自然worker退出或认证生产自动策略/首发。完整UI-11/81/G/U与Free继续 **NOT_RELEASE_READY**。
+
+## 前一本地检查点（2026-10-17，Round371）
 
 修复缺ACK关闭被rawIPC/adapter任务打断后四格永久无效：任务自然结束不自恢复，后续明确点击且全部静稳才单次既有rebind到reading，重新核验同scope；异scope在新adapter/controller前拒绝，不清pending或重放发送。完整ACK原帧恢复保持。独立4红转绿，相关53/53、最终完整Node **7121/7121 PASS**。见 [Round371](evidence/round371/README.md)。
 
