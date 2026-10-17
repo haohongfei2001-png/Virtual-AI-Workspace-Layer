@@ -27,6 +27,8 @@
 
 J1现场已取回：IDless提升后定位VIEW返回offset32含目标，但其返回前普通offset0 VIEW已发起，目标页被丢弃；后续未再次定位，原CI只有前三步PASS。根因是失效提示取消定位后，同projectionVersion禁止重试。现只允许已记录取消的重试，共享首次6秒与3次总上限；新query立即撤销旧retry（包含dispatch排队），返回旧query也不复活。相同/变化版本、期限及新query组合均先红后绿，214项定向通过；最终源码隔离headless MV3 J1现有9步PASS，源码/fixture未变，仍PARTIAL_J1_NOT_ACCEPTED，不认证其他profile/81项/G/U。最终同源码完整Node7287/7287通过、0skip、93.18秒。前一候选7285项55.02秒记录保留；两者源码/机器负载不同，不作为优化速度比。214项定向163ms用于开发反馈，稳定候选才执行完整回归。
 
+本次消除同事务索引GC重复读取：prior/current指向同kind/bucket/revision/count时，复用该事务已验证的version；不同指针仍完整读取，check和损坏checkpoint护栏保留。独立R/N两bucket反例先红（同物理key读2次）后绿（1次），同时证实R1回收/R2与最新N保留；43项定向、真实IDB10项通过。未插桩正式10k本地再次完成10000/10000正确PROJECT、零UNKNOWN/遗漏/错属、两次同revision204完整审计，原30秒窗口余11.18秒，原生导航/唯一返回通过；源码/fixture/manifest稳定，仍PARTIAL_SYS04_NOT_ACCEPTED。摄取观察22.069秒，先前本地成功为26.858秒；代码及运行时序不同，不能把4.789秒差值归因于本优化，也未证明跨环境稳定。最终同源码完整Node7288/7288通过、0skip、79.87秒。上一生产4067762的CI39025114564：Node/journeys通过，10k及J4 lifecycle失败；本优化尚待远端矩阵，原FAIL不关闭。
+
 下一阻塞：可靠10k摄取、J1/冷启动时序与合法worker/peer context重新获取及自动待命返回；完整旅程/全部适用81项、100k与p95、真实G/U/PAIA/物理IME/跨端及发布准备仍未达到。已有Pro资产和整理stash保留。
 
 ## 历史本地检查点（2026-10-17，Round386）

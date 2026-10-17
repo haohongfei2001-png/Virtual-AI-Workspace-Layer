@@ -26,7 +26,14 @@ export function saveIndexedNativePieces(store,scope,next,storage,command,reader,
   if(!isNativePartitioned(old)&&old?.format!==NATIVE_INDEX_FORMAT)return;
   const newer=createNativeIndexReader(store,built.root,scope,fail),older=old.format===NATIVE_INDEX_FORMAT?createNativeIndexReader(store,old,scope,()=>{}):null;
   const lookupOld=(kind,key,done)=>older?older.lookup(kind,key,done):done(old[kind][key]);
-  const retire=(kind,key)=>lookupOld(kind,key,version=>{if(!version)return;reader.lookup(kind,key,previousVersion=>newer.lookup(kind,key,currentVersion=>{try{check();if(version!==previousVersion&&version!==currentVersion)store.delete(nativePartitionKey(next.scopeKey,kind,key,version));}catch(error){fail(error);}}));});
+  const retire=(kind,key)=>lookupOld(kind,key,version=>{if(!version)return;reader.lookup(kind,key,previousVersion=>{
+   const finish=currentVersion=>{try{check();if(version!==previousVersion&&version!==currentVersion)store.delete(nativePartitionKey(next.scopeKey,kind,key,version));}catch(error){fail(error);}};
+   // Both roots belong to this transaction. An unchanged physical bucket and
+   // count have exactly the same verified versions; do not read it twice.
+   const bucket=nativeIndexBucket(key),before=prior[kind][bucket],after=built.root[kind][bucket];
+   if(before&&after&&before.revision===after.revision&&before.count===after.count)finish(previousVersion);
+   else newer.lookup(kind,key,finish);
+  });});
   const change=prior.changes.find(row=>row.revision===prior.revision);
   if(change){for(const kind of ['projects','refs'])for(const key of change[kind])retire(kind,key);}
   else if(older)older.all(manifest=>{for(const kind of ['projects','refs'])for(const key of Object.keys(manifest[kind]))retire(kind,key);});

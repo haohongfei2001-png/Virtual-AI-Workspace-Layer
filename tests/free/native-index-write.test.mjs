@@ -40,3 +40,19 @@ test('guard loss at asynchronous checkpoint read aborts queued indexed writes wi
   assert.equal(observed,true);assert.equal(result.ok,false);assert.notEqual(result.committed,true,'revocation detected inside the transaction must roll back');assert.deepEqual(await state(h),before);
  }finally{restore();h.close();}
 });
+
+test('GC shares same-transaction lookup when retained and current index pointers are identical',async()=>{
+ const h=await setup();let restore=()=>{};
+ try{
+  assert.notEqual(nativeIndexBucket('R'),nativeIndexBucket('N'));
+  assert.equal((await h.native.apply(A,request(2))).ok,true);
+  const db=await h.base.open(),original=db.transaction.bind(db),reads=new Map();
+  db.transaction=(...args)=>{const tx=original(...args),objectStore=tx.objectStore.bind(tx);tx.objectStore=name=>{const store=objectStore(name),get=store.get.bind(store);store.get=key=>{if(name==='native_states'&&args[1]==='readwrite')reads.set(key,(reads.get(key)??0)+1);return get(key);};return store;};return tx;};restore=()=>{db.transaction=original;};
+  const next=request(3);next.batch.refs[0].id='N';next.batch.refs[0].nativeUrl='https://fixture.test/c/N';next.batch.membership=[{id:'N',state:'NONE',projectId:null}];
+  assert.equal((await h.native.apply(A,next)).ok,true);restore();
+  assert.equal(reads.get(nativeIndexKey(scopeKey,'refs',nativeIndexBucket('R'),2)),1,'same physical bucket must not be reread for the unchanged current pointer');
+  assert.equal(await raw(h,nativePartitionKey(scopeKey,'refs','R',1)),undefined);
+  assert(await raw(h,nativePartitionKey(scopeKey,'refs','R',2)));
+  const facts=await h.native.read(A);assert.equal(facts.refs.R.nativeTitle,'Title 2');assert.equal(facts.refs.N.nativeTitle,'Title 3');
+ }finally{restore();h.close();}
+});
