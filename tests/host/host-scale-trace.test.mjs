@@ -2,7 +2,7 @@ import {createHash} from 'node:crypto';
 import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';
 import {readFile,mkdtemp,writeFile,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join,resolve} from 'node:path';import {fileURLToPath} from 'node:url';import {execFileSync} from 'node:child_process';
-import {TRACE_RECORDER,TRACE_PATHS,instrumentScaleSource,createScaleTracePackage,verifyScaleTracePackage,appendScaleTrace,collectScaleWorkerTrace} from './host-scale-trace.mjs';
+import {TRACE_RECORDER,TRACE_PATHS,instrumentScaleSource,createScaleTracePackage,verifyScaleTracePackage,appendScaleTrace,collectScaleWorkerTrace,collectScaleCPUPhaseTrace} from './host-scale-trace.mjs';
 const root=process.env.VAIWL_SOURCE_ROOT??fileURLToPath(new URL('../../',import.meta.url));
 test('all real production anchors match once and instrumented modules parse',async()=>{const dir=await mkdtemp(join(tmpdir(),'scale-trace-check-'));try{for(const path of TRACE_PATHS){const source=await readFile(join(root,path),'utf8'),out=instrumentScaleSource(path,source);const file=join(dir,path.split('/').at(-1));await writeFile(file,out);execFileSync(process.execPath,['--check',file]);assert(out.includes('Date.now()'));assert.throws(()=>instrumentScaleSource(path,out),/anchor-mismatch/);}assert.throws(()=>instrumentScaleSource('other',''),/unknown/);}finally{await rm(dir,{recursive:true,force:true});}});
 test('recorder has enum-only strings, numeric bounds, bounded bytes and count with drops',()=>{const context=vm.createContext({TextEncoder,Date});vm.runInContext(TRACE_RECORDER.replace('__SCALE_REALM__','worker').replace('__SCALE_CONSOLE__','')+`;for(let i=0;i<2000;i++)__scaleEmit('native-start',{producer:i,expectedRevision:i,refsCount:50,grant:'SECRET',format:'SECRET',error:'SECRET',elapsed:Infinity});`,context);const s=context.__vaiwlScaleTrace;assert(s.events.length<=1024);assert(s.bytes<=131072);assert(s.dropped>0);assert.equal(s.events.at(-1).producer,1999);assert(!JSON.stringify(s).includes('SECRET'));assert.equal(s.events.at(-1).error,'other');assert.equal(s.events.at(-1).elapsed,undefined);});
@@ -219,3 +219,94 @@ test('owner offsets retain unreached stages and do not disclose proposal data',a
  const out=await actual(5),init=out.match(/const __scaleOwner=__scaleOrdinal\(\),__scaleOwnerStart=__scaleNow\(\),__scaleOwnerPhases=\{[^;]+;/)[0],terminal=out.match(/__scaleEmit\("owner-terminal",\{[^;]+;/)[0];
  for(const reached of [false,true]){let clock=10;const c=vm.createContext({TextEncoder,Date,performance:{now:()=>clock},batchCommitted:reached,proposal:{private:'PRIVATE_PROPOSAL'}});vm.runInContext(recorder+init,c);if(reached){clock=13;vm.runInContext('__scaleOwnerPhases.ownerFirstVerifyMs=__scaleDelta(__scaleOwnerStart);',c);clock=18;vm.runInContext('__scaleOwnerPhases.ownerFrameMs=__scaleDelta(__scaleOwnerStart);',c);}clock=20;vm.runInContext(terminal,c);const row=c.__vaiwlScaleTrace.events[0];assert.equal(row.elapsed,10);assert.equal(row.ownerFirstVerifyMs,reached?3:null);assert.equal(row.ownerFrameMs,reached?8:null);for(const key of ['ownerPageMs','ownerSecondVerifyMs','ownerApplyMs','ownerPublishedMs'])assert.equal(row[key],null);assert.equal(row.ok,reached);assert(!JSON.stringify(row).includes('PRIVATE'));const target={events:[],bytes:0,dropped:0};appendScaleTrace(target,row);assert.equal(target.events.length,1);}
 });
+test('combined clock recorder keeps wall time and per-realm epoch sums without subtracting bare realm clocks',async()=>{
+ const source=await readFile(join(root,TRACE_PATHS[0]),'utf8'),plain=instrumentScaleSource(TRACE_PATHS[0],source),aligned=instrumentScaleSource(TRACE_PATHS[0],source,{clockAlignment:true});
+ assert.equal(instrumentScaleSource(TRACE_PATHS[0],source,{clockAlignment:false}),plain);
+ assert(!plain.includes('row.clockEpochMs='));assert(aligned.includes('row.clockEpochMs=epoch'));
+ const prefix=aligned.slice(0,aligned.indexOf('\nimport '));assert(prefix.includes('__scaleEmit'));
+ const rows=[];
+ for(const [origin,now,wall]of [[1000,10,900],[500,510,1]]){
+  const c=vm.createContext({TextEncoder,Date:{now:()=>wall},performance:{timeOrigin:origin,now:()=>now}});vm.runInContext(prefix+`;__scaleEmit('native-commit',{elapsed:5,queuedMs:3,clockEpochMs:999999,grant:'PRIVATE'});`,c);
+  const row=c.__vaiwlScaleTrace.events[0];rows.push(row);assert.equal(row.clockEpochMs,1010);assert.equal(row.at,wall);assert.equal(row.elapsed-row.queuedMs,2);assert(!JSON.stringify(row).includes('PRIVATE'));
+  const report={events:[],bytes:0,dropped:0};appendScaleTrace(report,row);assert.equal(report.events.length,1);
+ }
+ assert.equal(rows[0].clockEpochMs,rows[1].clockEpochMs);assert.notEqual(rows[0].at,rows[1].at);
+});
+test('aligned recorder preserves original ring limits, privacy and drop disclosure',async()=>{
+ const aligned=instrumentScaleSource(TRACE_PATHS[0],await readFile(join(root,TRACE_PATHS[0]),'utf8'),{clockAlignment:true}),prefix=aligned.slice(0,aligned.indexOf('\nimport '));
+ const c=vm.createContext({TextEncoder,Date,performance});vm.runInContext(prefix+`;for(let i=0;i<3000;i++)__scaleEmit('native-commit',{producer:i,refsCount:50,txMs:1,rootMs:2,saveMs:3,reduceMs:4,sharedMs:5,publishMs:6,queuedMs:7,elapsed:8,private:'PRIVATE'});`,c);
+ const trace=c.__vaiwlScaleTrace;assert(trace.events.length<=1024);assert(trace.bytes<=131072);assert(trace.dropped>0);assert.equal(trace.events.at(-1).producer,2999);assert(trace.events.every(e=>Number.isFinite(e.clockEpochMs)));assert(!JSON.stringify(trace).includes('PRIVATE'));
+ const target={events:[],bytes:0,dropped:0};for(const row of trace.events)appendScaleTrace(target,row);assert.equal(target.events.length,trace.events.length);assert(target.bytes<=131072);
+ for(const value of [null,-1,Infinity,NaN,'PRIVATE',1e16])appendScaleTrace(target,{kind:'native-start',at:1,clockEpochMs:value});assert.equal(target.dropped,6);
+});
+test('missing or hostile performance clock cannot change the original trace operation',async()=>{
+ const aligned=instrumentScaleSource(TRACE_PATHS[0],await readFile(join(root,TRACE_PATHS[0]),'utf8'),{clockAlignment:true}),prefix=aligned.slice(0,aligned.indexOf('\nimport '));
+ for(const p of [undefined,{now:()=>1,timeOrigin:NaN},{now:()=>-1,timeOrigin:1000},{get now(){throw Error('PRIVATE');}}]){
+  const c=vm.createContext({TextEncoder,Date,performance:p});vm.runInContext(prefix+`;__scaleEmit('native-start',{refsCount:1});`,c);assert.equal(c.__vaiwlScaleTrace.events.length,1);assert.equal(c.__vaiwlScaleTrace.events[0].clockEpochMs,undefined);
+ }
+});
+test('combined instrumented package closes original, generated, source and manifest hashes',async()=>{
+ const {buildHost}=await import(join(root,'extension/build.mjs')),dir=await mkdtemp(join(tmpdir(),'aligned-trace-package-'));
+ try{
+  const original=join(dir,'original');buildHost(original,{offlineOrigin:'http://127.0.0.1:3210'});const before=await readFile(join(original,'build-manifest.json'));
+  const trace=await createScaleTracePackage(original,join(dir,'copy'),{clockAlignment:true});assert.equal(trace.clockAlignment,true);assert.equal(trace.buildManifestSha256,createHash('sha256').update(before).digest('hex'));assert(await verifyScaleTracePackage(trace));
+  assert.deepEqual(await readFile(join(original,'build-manifest.json')),before);
+  assert.equal(trace.limit,1024);assert.equal(trace.maxBytes,131072);assert.equal(trace.authorityChanged,false);
+  const path=join(trace.unpacked,'build-manifest.json'),changed=JSON.parse(before);changed.clockTamper='PRIVATE';await writeFile(path,JSON.stringify(changed));await assert.rejects(verifyScaleTracePackage(trace),/manifest-changed/);
+  await writeFile(path,before);assert(await verifyScaleTracePackage(trace));const file=join(trace.unpacked,TRACE_PATHS[0]);await writeFile(file,(await readFile(file,'utf8'))+'\n/* changed */');await assert.rejects(verifyScaleTracePackage(trace),/package-changed/);
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
+test('clock options reject without copying a package or weakening source anchor checks',async()=>{
+ const source=await readFile(join(root,TRACE_PATHS[0]),'utf8');for(const clockAlignment of [1,'true',null,{}]){
+  assert.throws(()=>instrumentScaleSource(TRACE_PATHS[0],source,{clockAlignment}),/invalid-scale-trace-clock-options/);
+  await assert.rejects(createScaleTracePackage('/not-read','/not-created',{clockAlignment}),/invalid-scale-trace-clock-options/);
+ }
+ assert.throws(()=>instrumentScaleSource(TRACE_PATHS[0],source.replace('    command=structuredClone(command);',''),{clockAlignment:true}),/anchor-mismatch/);
+});
+test('all combined-clock source anchors still match exact production and generated modules parse',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'clock-trace-anchors-'));
+ try{for(const path of TRACE_PATHS){const source=await readFile(join(root,path),'utf8'),out=instrumentScaleSource(path,source,{clockAlignment:true}),file=join(dir,path.split('/').at(-1));await writeFile(file,out);execFileSync(process.execPath,['--check',file]);assert(out.includes('row.clockEpochMs=epoch'));assert.throws(()=>instrumentScaleSource(path,out,{clockAlignment:true}),/anchor-mismatch/);}}finally{await rm(dir,{recursive:true,force:true});}
+});
+const phaseStamp=epochMs=>({epochMs}),phaseProfiles=(first=100,last=200)=>Object.fromEntries(['workerCPUProfile','nativePageCPUProfile'].map(key=>[key,{clockCorrelation:{startRequested:phaseStamp(first),startAcknowledged:phaseStamp(first+1),stopRequested:phaseStamp(last-1),stopAcknowledged:phaseStamp(last)}}]));
+const phaseRow=(realm,epoch,realmOrdinal=realm==='worker'?0:2)=>({kind:realm==='worker'?'native-start':'pass-start',at:epoch,clockEpochMs:epoch,realm,realmOrdinal,dropped:0});
+const phaseRing=rows=>{const ring={events:[],bytes:0,dropped:0};for(const row of rows)appendScaleTrace(ring,row);return ring;};
+function phaseFixture({content=[phaseRow('content',120)],worker=[phaseRow('worker',130)]}={}){
+ let reads=0;const existing={url:()=> 'chrome-extension://id/extension/worker.mjs',evaluate:async()=>{reads++;return {status:'RAM_SNAPSHOT',events:worker,dropped:7,producers:2};}};
+ return {trace:phaseRing(content),context:{serviceWorkers:()=>[existing]},extensionId:'id',profiles:phaseProfiles(),existing,reads:()=>reads};
+}
+test('CPU phase snapshot freezes content before one worker RAM read and stays independent of final trace',async()=>{
+ const f=phaseFixture();f.trace.dropped=3;let resolve;f.existing.evaluate=()=>new Promise(r=>{resolve=r;});const pending=collectScaleCPUPhaseTrace(f);
+ const original=f.trace.events[0];original.clockEpochMs=999;appendScaleTrace(f.trace,phaseRow('content',1000));f.trace.dropped=99;
+ resolve({status:'RAM_SNAPSHOT',events:[phaseRow('worker',130)],dropped:7,producers:2});const s=await pending;
+ assert.equal(s.status,'CAPTURED');assert.equal(s.content.dropped,3);assert.equal(s.worker.producerDropped,7);assert.equal(s.worker.dropped,0);assert.equal(s.events.length,2);assert.equal(s.events.find(r=>r.realm==='content').clockEpochMs,120);assert.equal(s.dropped,0);assert.equal(s.profileRanges.nativePageCPUProfile.realmOrdinal,2);
+ const before=JSON.stringify(s);appendScaleTrace(f.trace,phaseRow('content',2000));f.trace.events=[];await collectScaleWorkerTrace(f.context,'id',{timeout:1});assert.equal(JSON.stringify(s),before);
+ for(const c of Object.values(s.snapshotClock)){assert(Number.isFinite(c.wallTimeMs));assert.equal(c.epochMs,c.timeOriginMs+c.monotonicMs);}assert(s.snapshotClock.completed.monotonicMs>=s.snapshotClock.requested.monotonicMs);
+ assert.equal(s.snapshotBoundary,'CONTENT_COPY_THEN_ONE_EXISTING_WORKER_READ_NOT_ATOMIC');assert.equal(s.coverageMeaning,'RECORDED_EVENT_RANGE_INTERSECTION_ONLY_NOT_CONTINUOUS_OR_SYNCHRONIZED');
+});
+test('CPU phase snapshot takes one existing worker read and no other target action',async()=>{
+ const f=phaseFixture(),s=await collectScaleCPUPhaseTrace(f);assert.equal(f.reads(),1);assert.equal(s.status,'CAPTURED');assert.deepEqual(s.profileRanges.workerCPUProfile,{realm:'worker',realmOrdinal:0,retainedEvents:1,commandRangeEpochMs:{first:100,last:200},retainedEventRangeEpochMs:{first:130,last:130},intersectsCommandBounds:true});
+});
+test('CPU phase correlation excludes the background page and other realms, discloses absent and disjoint ranges',async()=>{
+ const f=phaseFixture({content:[phaseRow('content',0,1),phaseRow('content',1000,1),phaseRow('content',300,2)],worker:[phaseRow('worker',150)]}),s=await collectScaleCPUPhaseTrace(f);
+ assert.deepEqual(s.profileRanges.nativePageCPUProfile.retainedEventRangeEpochMs,{first:300,last:300});assert.equal(s.profileRanges.nativePageCPUProfile.intersectsCommandBounds,false);assert.equal(s.profileRanges.workerCPUProfile.intersectsCommandBounds,true);
+ f.trace=phaseRing([phaseRow('content',0,1),phaseRow('content',1000,1)]);const missing=await collectScaleCPUPhaseTrace(f);assert.equal(missing.profileRanges.nativePageCPUProfile.retainedEvents,0);assert.equal(missing.profileRanges.nativePageCPUProfile.retainedEventRangeEpochMs,null);assert.equal(missing.profileRanges.nativePageCPUProfile.intersectsCommandBounds,null);
+});
+test('CPU phase epoch ranges do not follow wall-clock ordering and sparse/drop spans claim only intersection',async()=>{
+ const a={...phaseRow('content',250),at:1},b={...phaseRow('content',50),at:9999},f=phaseFixture({content:[a,b]});f.trace.dropped=17;const s=await collectScaleCPUPhaseTrace(f);
+ assert.deepEqual(s.profileRanges.nativePageCPUProfile.retainedEventRangeEpochMs,{first:50,last:250});assert.equal(s.profileRanges.nativePageCPUProfile.intersectsCommandBounds,true);assert.equal(s.content.dropped,17);assert(!Object.hasOwn(s,'complete'));assert(!Object.hasOwn(s,'continuousCoverage'));assert.match(s.dropDisclosure,/NOT_A_COMPLETE_LOSS_COUNT/);
+});
+test('CPU phase merge keeps original limits and separate source/producer/merge drops',async()=>{
+ const f=phaseFixture({content:Array.from({length:1024},(_,i)=>phaseRow('content',i)),worker:Array.from({length:1024},(_,i)=>phaseRow('worker',i+0.5))}),s=await collectScaleCPUPhaseTrace(f);
+ assert.equal(s.status,'CAPTURED');assert(s.events.length<=1024);assert(s.bytes<=131072);assert(s.dropped>0);assert.equal(s.content.dropped,f.trace.dropped);assert.equal(s.worker.producerDropped,7);assert.equal(s.worker.dropped,0);
+ for(const [key,realm]of [['workerCPUProfile','worker'],['nativePageCPUProfile','content']]){const rows=s.events.filter(r=>r.realm===realm);assert.equal(s.profileRanges[key].retainedEvents,rows.length);assert.equal(s.profileRanges[key].retainedEventRangeEpochMs.first,Math.min(...rows.map(r=>r.clockEpochMs)));}
+ assert.equal(s.bytes,s.events.reduce((n,r)=>n+new TextEncoder().encode(JSON.stringify(r)).length,0));
+});
+test('CPU phase invalid content, missing profile clock and worker failure remain unavailable',async()=>{
+ const f=phaseFixture();assert.equal((await collectScaleCPUPhaseTrace({...f,trace:null})).status,'UNAVAILABLE');assert.equal(f.reads(),0);
+ assert.equal((await collectScaleCPUPhaseTrace({...f,profiles:{}})).status,'UNAVAILABLE');
+ f.existing.evaluate=async()=>{throw Error('PRIVATE');};const s=await collectScaleCPUPhaseTrace(f);assert.equal(s.status,'UNAVAILABLE');assert.equal(s.worker.status,'UNAVAILABLE');assert(s.snapshotClock.completed);assert(!JSON.stringify(s).includes('PRIVATE'));
+});
+test('CPU phase worker timeout is bounded and late result cannot mutate the completed snapshot',async()=>{
+ const f=phaseFixture();let resolve;f.existing.evaluate=()=>new Promise(r=>{resolve=r;});const s=await collectScaleCPUPhaseTrace({...f,timeout:5});assert.equal(s.status,'UNAVAILABLE');assert(s.snapshotClock.completed);const before=JSON.stringify(s);resolve({status:'RAM_SNAPSHOT',events:[phaseRow('worker',130)],dropped:0,producers:1});await new Promise(r=>setImmediate(r));assert.equal(JSON.stringify(s),before);
+});
+for(const timeout of [0,-1,1001,Infinity,NaN,'1000',null])test('CPU phase rejects invalid timeout '+timeout,async()=>{const f=phaseFixture();await assert.rejects(collectScaleCPUPhaseTrace({...f,timeout}),/invalid-cpu-phase-trace-timeout/);assert.equal(f.reads(),0);});

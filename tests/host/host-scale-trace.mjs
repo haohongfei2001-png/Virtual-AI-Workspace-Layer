@@ -41,7 +41,8 @@ function once(source,from,to){if(source.split(from).length!==2)throw Error('scal
 // a terminal can mean pre-transaction failure or an unfinished operation.
 // Pass summaries cover the private surface scan/hash/split and emit await only;
 // body discovery, transport, owner admission, and scheduling remain separate gaps.
-export function instrumentScaleSource(path,source){
+export function instrumentScaleSource(path,source,{clockAlignment=false}={}){
+ if(typeof clockAlignment!=='boolean')throw Error('invalid-scale-trace-clock-options');
  if(source.includes('const __scaleKinds='))throw Error('scale-trace-anchor-mismatch');
  let out=source;const add=(a,b)=>{out=once(out,a,b);};
  if(path===TRACE_PATHS[0]){
@@ -135,20 +136,26 @@ export function instrumentScaleSource(path,source){
   add('   let result;','   const __scalePublication=__scaleOrdinal();try{__scaleEmit("owner-publication",{producer:__scalePublication,nativeChanged,revalidating,combined:!!combined,previousProducerKnown:previous!==undefined,projectsCount:batch.projects.length,refsCount:batch.refs.length,membershipCount:batch.membership.length});}catch{}let result;');
   add('if(!result.ok)return result.reason', 'try{__scaleEmit("owner-result",{producer:__scalePublication,ok:result.ok===true,revision:result.revision});}catch{}if(!result.ok)return result.reason');
  }else throw Error('unknown-scale-trace-source');
- return TRACE_RECORDER.replace('__SCALE_REALM__',path===TRACE_PATHS[2]?'content':'worker').replace('__SCALE_CONSOLE__',path===TRACE_PATHS[2]?'console.log("HOST_SCALE_TRACE "+encoded);':'')+out;
+ // Optional combined-diagnostic clock uses an epoch sum within each realm.
+ // Existing local stage offsets remain local; bare performance.now is not cross-realm time.
+ const recorder=clockAlignment?once(TRACE_RECORDER,'dropped:s.dropped};',`dropped:s.dropped};try{const now=performance.now(),origin=performance.timeOrigin,epoch=origin+now;if(Number.isFinite(now)&&now>=0&&Number.isFinite(origin)&&origin>=0&&Number.isFinite(epoch)&&epoch>=0&&epoch<=1e15)row.clockEpochMs=epoch;}catch{}`):TRACE_RECORDER;
+ return recorder.replace('__SCALE_REALM__',path===TRACE_PATHS[2]?'content':'worker').replace('__SCALE_CONSOLE__',path===TRACE_PATHS[2]?'console.log("HOST_SCALE_TRACE "+encoded);':'')+out;
 }
-export async function createScaleTracePackage(source,destination){
+export async function createScaleTracePackage(source,destination,{clockAlignment=false}={}){
+ if(typeof clockAlignment!=='boolean')throw Error('invalid-scale-trace-clock-options');
  await cp(source,destination,{recursive:true,errorOnExist:true,force:false});const changes=[];
- for(const path of TRACE_PATHS){const original=await readFile(join(source,path),'utf8'),instrumented=instrumentScaleSource(path,original);await writeFile(join(destination,path),instrumented);changes.push({path,originalSha256:hash(original),instrumentedSha256:hash(instrumented)});}
+ for(const path of TRACE_PATHS){const original=await readFile(join(source,path),'utf8'),instrumented=instrumentScaleSource(path,original,{clockAlignment});await writeFile(join(destination,path),instrumented);changes.push({path,originalSha256:hash(original),instrumentedSha256:hash(instrumented)});}
  const compiled=compileClassicWorker(destination);
  for(const [path,instrumented] of [['extension/worker.mjs',compiled.entry],['extension/classic-runtime.js',compiled.runtime]]){
   const original=await readFile(join(source,path),'utf8');await writeFile(join(destination,path),instrumented);
   changes.push({path,originalSha256:hash(original),instrumentedSha256:hash(instrumented)});
  }
- return {unpacked:destination,kind:'DIAGNOSTIC_ONLY_INSTRUMENTED_COPY',limit:1024,maxBytes:131072,changes,authorityChanged:false,originalPackageUntouched:true};
+ return {unpacked:destination,kind:'DIAGNOSTIC_ONLY_INSTRUMENTED_COPY',limit:1024,maxBytes:131072,changes,authorityChanged:false,originalPackageUntouched:true,...clockAlignment?{clockAlignment:true,buildManifestSha256:hash(await readFile(join(destination,'build-manifest.json')))}:{}};
 }
 export async function verifyScaleTracePackage(trace){
- const info=JSON.parse(await readFile(join(trace.unpacked,'build-manifest.json'),'utf8'));
+ const manifestBytes=await readFile(join(trace.unpacked,'build-manifest.json'));
+ if(trace.clockAlignment===true&&hash(manifestBytes)!==trace.buildManifestSha256)throw Error('scale-trace-manifest-changed');
+ const info=JSON.parse(manifestBytes);
  for(const path of ['extension/worker.mjs','extension/classic-runtime.js'])if(!Object.hasOwn(info.files,path)||trace.changes.filter(row=>row.path===path).length!==1)throw Error('scale-trace-manifest-missing-generated');
  for(const [path,expected]of Object.entries(info.files)){const changed=trace.changes.find(row=>row.path===path);if(changed&&changed.originalSha256!==expected)throw Error('scale-trace-original-hash-mismatch');if(hash(await readFile(join(trace.unpacked,path)))!==(changed?.instrumentedSha256??expected))throw Error('scale-trace-package-changed');}
  if(TRACE_PATHS.some(path=>!Object.hasOwn(info.files,path)))throw Error('scale-trace-manifest-missing-source');
@@ -158,7 +165,7 @@ export async function verifyScaleTracePackage(trace){
 /** Validate console / worker rows again before adding to the report. */
 export function appendScaleTrace(target,row){
  try{if(!row||!TRACE_KINDS.includes(row.kind)||!Number.isFinite(row.at)||row.at<0||row.at>1e15)throw Error();
-  for(const [key,value]of Object.entries(row)){if(['kind','at'].includes(key))continue;if(key==='realm'){if(!['worker','content'].includes(value))throw Error();continue;}if(!fields.includes(key))throw Error();if(value===null&&phaseFields.includes(key))continue;if(key==='format'){if(!['ABSENT','FACTS','PARTITIONED','VERSION_INDEX'].includes(value))throw Error();}else if(key==='error'){if(!['snapshot-revision-changed','stale-free-page','revision-conflict','read-budget-exhausted','stale-binding','other'].includes(value))throw Error();}else if(typeof value!=='boolean'&&!(typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=1e15))throw Error();}
+  for(const [key,value]of Object.entries(row)){if(['kind','at'].includes(key))continue;if(key==='clockEpochMs'){if(!Number.isFinite(value)||value<0||value>1e15)throw Error();continue;}if(key==='realm'){if(!['worker','content'].includes(value))throw Error();continue;}if(!fields.includes(key))throw Error();if(value===null&&phaseFields.includes(key))continue;if(key==='format'){if(!['ABSENT','FACTS','PARTITIONED','VERSION_INDEX'].includes(value))throw Error();}else if(key==='error'){if(!['snapshot-revision-changed','stale-free-page','revision-conflict','read-budget-exhausted','stale-binding','other'].includes(value))throw Error();}else if(typeof value!=='boolean'&&!(typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=1e15))throw Error();}
   const bytes=new TextEncoder().encode(JSON.stringify(row)).length;while(target.events.length&&(target.events.length>=1024||target.bytes+bytes>131072)){target.bytes-=new TextEncoder().encode(JSON.stringify(target.events.shift())).length;target.dropped++;}target.events.push(row);target.bytes+=bytes;
  }catch{target.dropped++;}
 }
@@ -169,4 +176,37 @@ export async function collectScaleWorkerTrace(context,extensionId,{timeout=1000}
   const result=await Promise.race([workers[0].evaluate(()=>{const s=globalThis.__vaiwlScaleTrace;return s?{status:'RAM_SNAPSHOT',events:s.events,dropped:s.dropped,bytes:s.bytes,producers:s.producers}:{status:'TRACE_NOT_PRESENT'};}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error()),Math.max(0,deadline-performance.now()));})]);
   if(performance.now()>=deadline)return {status:'DEADLINE'};const clean={status:result?.status==='RAM_SNAPSHOT'?'RAM_SNAPSHOT':'TRACE_NOT_PRESENT',events:[],bytes:0,dropped:0};if(result?.status==='RAM_SNAPSHOT'){for(const row of (Array.isArray(result.events)?result.events:[]).slice(-1024))appendScaleTrace(clean,row);clean.producerDropped=Number.isSafeInteger(result.dropped)&&result.dropped>=0&&result.dropped<=1e9?result.dropped:0;clean.producers=Number.isSafeInteger(result.producers)&&result.producers>=0&&result.producers<=1e9?result.producers:0;}return clean;
  }catch{return {status:'UNAVAILABLE'};}finally{clearTimeout(timer);}
+}
+
+/** One bounded CPU-end snapshot. Independent of the later failure/final trace.
+ * Epoch ranges support correlation only: no synchronized/continuous coverage claim.
+ * Content is copied synchronously before the one existing-worker RAM read.
+ */
+export async function collectScaleCPUPhaseTrace({trace,context,extensionId,profiles,timeout=1000}={}){
+ if(!Number.isFinite(timeout)||timeout<=0||timeout>1000)throw Error('invalid-cpu-phase-trace-timeout');
+ const stamp=()=>{const monotonicMs=performance.now(),timeOriginMs=performance.timeOrigin;return {wallTimeMs:Date.now(),monotonicMs,timeOriginMs,epochMs:timeOriginMs+monotonicMs};};
+ const requested=stamp(),deadline=requested.monotonicMs+timeout;
+ const result={kind:'DIAGNOSTIC_ONLY_CPU_PHASE_TRACE',acceptance:'NOT_ESTABLISHED',status:'UNAVAILABLE',limit:1024,maxBytes:131072,timeoutMs:timeout,snapshotClock:{requested},snapshotBoundary:'CONTENT_COPY_THEN_ONE_EXISTING_WORKER_READ_NOT_ATOMIC',coverageMeaning:'RECORDED_EVENT_RANGE_INTERSECTION_ONLY_NOT_CONTINUOUS_OR_SYNCHRONIZED',dropDisclosure:'SOURCE_COUNTERS_AND_RETAINED_ROW_COUNTERS_NOT_A_COMPLETE_LOSS_COUNT',events:[],bytes:0,dropped:0};
+ try{
+  if(!Array.isArray(trace?.events)||!Number.isSafeInteger(trace.dropped)||trace.dropped<0||trace.events.length>1024||!Number.isSafeInteger(trace.bytes)||trace.bytes<0||trace.bytes>131072)throw Error();
+  result.content={status:'RAM_SNAPSHOT',dropped:trace.dropped,bytes:trace.bytes};
+  for(const row of trace.events)appendScaleTrace(result,{...row});
+  const remaining=deadline-performance.now();if(remaining<=0){result.status='DEADLINE';return result;}
+  const worker=await collectScaleWorkerTrace(context,extensionId,{timeout:remaining});
+  const {events,...workerInfo}=worker;result.worker=workerInfo;
+  if(worker.status!=='RAM_SNAPSHOT')return result;
+  const rows=[...result.events,...events.map(row=>({...row,realmOrdinal:0}))].sort((a,b)=>a.clockEpochMs-b.clockEpochMs);
+  result.events=[];result.bytes=0;for(const row of rows)appendScaleTrace(result,row);
+  result.profileRanges={};
+  for(const [key,realm,realmOrdinal]of [['workerCPUProfile','worker',0],['nativePageCPUProfile','content',2]]){
+   const bounds=profiles?.[key]?.clockCorrelation,commands=['startRequested','startAcknowledged','stopRequested','stopAcknowledged'].map(k=>bounds?.[k]?.epochMs);
+   const retained=result.events.filter(row=>row.realm===realm&&row.realmOrdinal===realmOrdinal).map(row=>row.clockEpochMs);
+   if(!commands.every(Number.isFinite)||!result.events.every(row=>Number.isFinite(row.clockEpochMs)))throw Error();
+   const commandRangeEpochMs={first:Math.min(...commands),last:Math.max(...commands)},retainedEventRangeEpochMs=retained.length?{first:Math.min(...retained),last:Math.max(...retained)}:null;
+   result.profileRanges[key]={realm,realmOrdinal,retainedEvents:retained.length,commandRangeEpochMs,retainedEventRangeEpochMs,intersectsCommandBounds:retainedEventRangeEpochMs?retainedEventRangeEpochMs.first<=commandRangeEpochMs.last&&retainedEventRangeEpochMs.last>=commandRangeEpochMs.first:null};
+  }
+  result.status=performance.now()<deadline?'CAPTURED':'DEADLINE';
+ }catch{result.status='UNAVAILABLE';}
+ finally{result.snapshotClock.completed=stamp();}
+ return result;
 }

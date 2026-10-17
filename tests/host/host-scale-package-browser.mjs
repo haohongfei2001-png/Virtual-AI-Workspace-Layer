@@ -1,10 +1,10 @@
-import {startHostScaleCPUProfile} from './host-scale-cpu-profile.mjs';
+import {startHostScaleCPUProfile,startHostScalePageCPUProfile} from './host-scale-cpu-profile.mjs';
 import {connectJ4Debugger} from './j4-debugger-transport.mjs';
 import {checkHostScaleProjectCard} from './fixtures/host-scale-project-card-oracle.mjs';
 import {prepareHostScaleAdmission} from './fixtures/host-scale-admission-preparation.mjs';
 import {observeHostScaleAdmission} from './fixtures/host-scale-admission-observation.mjs';
 import {hostScaleFailureProgress} from './fixtures/host-scale-progress.mjs';
-import {createScaleTracePackage,verifyScaleTracePackage,appendScaleTrace,collectScaleWorkerTrace} from './host-scale-trace.mjs';
+import {createScaleTracePackage,verifyScaleTracePackage,appendScaleTrace,collectScaleWorkerTrace,collectScaleCPUPhaseTrace} from './host-scale-trace.mjs';
 import {createHostScaleProgressSampler} from './fixtures/host-scale-progress-sampler.mjs';
 /** Opt-in packaged production Host, fresh profile, native application-owned world.
  * Default invocation is a cheap NOT_RUN plan; never silently launches 100k.
@@ -35,11 +35,15 @@ if(process.env.HOST_SCALE_RUN!=='1'){
  const scenario=hostScaleScenario({size:Number(process.env.HOST_SCALE_SIZE??1000),distribution:process.env.HOST_SCALE_DISTRIBUTION??'project-mixed',cpuRate:Number(process.env.HOST_SCALE_CPU_RATE??1)});
  const hash=x=>createHash('sha256').update(x).digest('hex');
  const report={sourceCommit:process.env.FREE_SOURCE_COMMIT??null,requirement:'SYS-04 / original F1',status:'NOT_RUN',acceptance:'NOT_ESTABLISHED',realChatGPT:'NOT_RUN',scenario,expected:hostScaleExpected(scenario),remaining:[...HOST_SCALE_GAPS],ingestion:[],errors:[],rpc:[],rpcTraceDropped:0};
- const cpuProfileEnabled=process.env.FREE_HOST_SCALE_CPU_PROFILE==='1';
- if(cpuProfileEnabled&&(scenario.distribution!=='single-project'||['FREE_HOST_SCALE_TRACE','FREE_HOST_SCALE_PROGRESS','FREE_HOST_SCALE_ADMISSION_OBSERVE','FREE_HOST_SCALE_ADMISSION_PREPARE'].some(k=>process.env[k]==='1')))throw Error('cpu-profile-requires-unprepared-single-project');
+ const cpuProfileEnabled=process.env.FREE_HOST_SCALE_CPU_PROFILE==='1',cpuTraceEnabled=process.env.FREE_HOST_SCALE_CPU_TRACE==='1';
  const traceEnabled=process.env.FREE_HOST_SCALE_TRACE==='1',traceThroughReturn=traceEnabled&&process.env.FREE_HOST_SCALE_TRACE_RETURN==='1';
+ if(cpuTraceEnabled&&(!cpuProfileEnabled||!traceThroughReturn))throw Error('cpu-trace-requires-explicit-through-return-cpu-diagnostic');
+ if(cpuProfileEnabled&&(scenario.distribution!=='single-project'||traceEnabled&&!cpuTraceEnabled||['FREE_HOST_SCALE_PROGRESS','FREE_HOST_SCALE_ADMISSION_OBSERVE','FREE_HOST_SCALE_ADMISSION_PREPARE'].some(k=>process.env[k]==='1')))throw Error('cpu-profile-requires-unprepared-single-project');
+ if(cpuTraceEnabled)report.diagnosticClock={kind:'COMMAND_BOUNDS_AND_RECORDED_STAGE_CORRELATION_ONLY',runnerTimeOriginMs:performance.timeOrigin,wallTimeMs:Date.now(),epochMs:performance.timeOrigin+performance.now(),cpuClock:'CDP_COMMAND_BOUNDS_NOT_ACTUAL_SAMPLE_INSTANTS',traceClock:'PER_REALM_TIME_ORIGIN_PLUS_NOW',crossRealmClock:'CORRELATION_ONLY_NOT_PROVEN_SYNCHRONIZED',stageClock:'ORIGINAL_RUNNER_STAGE_PLUS_TIME_ORIGIN'};
  if(traceEnabled)report.traceRange=traceThroughReturn?'through-native-return':'initial-ingestion';
- let server,context,browserHandle,browserLaunchAttempted=false,networkGuard,manifest,manifestPath,manifestHash,directory,activePage,loadedExtensionId,tracePackage,cpuTransport,cpuProfile;
+ let server,context,browserHandle,browserLaunchAttempted=false,networkGuard,manifest,manifestPath,manifestHash,directory,activePage,loadedExtensionId,tracePackage,cpuTransport,nativeCPUPageSession,cpuProfilesFinished;
+ const cpuProfiles=[];
+ const closeCPUTransport=()=>{try{cpuTransport?.close();report.cpuProfileCleanup={status:'SUCCEEDED'};}catch{report.cpuProfileCleanup={status:'UNAVAILABLE',reason:'transport-close-failed'};}};
  const sourceFiles=['host-scale-cpu-profile.mjs','j4-debugger-transport.mjs','host-scale-package-browser.mjs','native-visibility-browser.mjs','historical-network-guard.mjs','host-scale-trace.mjs','isolated-browser-cleanup.mjs','observe-current-frame.mjs','fixtures/host-scale-cleanup.mjs','fixtures/host-scale-project-card-oracle.mjs','fixtures/host-scale-audit.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-progress.mjs','fixtures/host-scale-admission-observation.mjs','fixtures/host-scale-admission-preparation.mjs','fixtures/host-scale-progress-sampler.mjs','fixtures/host-scale-measurement.mjs','fixtures/host-scale-ui-oracle.mjs','fixtures/host-scale-native-tail.mjs','fixtures/host-scale-world.mjs','fixtures/host-scale-plan.mjs','fixtures/host-scale-server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sourceFiles.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
@@ -49,7 +53,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   server=await createHostScaleServer(scenario);
   directory=await mkdtemp(join(tmpdir(),'vaiwl-host-scale-'));const built=packageHost(join(directory,'package'),{offlineOrigin:server.origin});
   report.package=built;assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');
-  if(traceEnabled){tracePackage=await createScaleTracePackage(built.unpacked,join(directory,'instrumented-package'));await verifyScaleTracePackage(tracePackage);report.instrumentation=tracePackage;report.trace={events:[],bytes:0,dropped:0};report.timingUse='DIAGNOSTIC_ONLY_INSTRUMENTED_PACKAGE';}
+  if(traceEnabled){tracePackage=await createScaleTracePackage(built.unpacked,join(directory,'instrumented-package'),cpuTraceEnabled?{clockAlignment:true}:{});await verifyScaleTracePackage(tracePackage);report.instrumentation=tracePackage;report.trace={events:[],bytes:0,dropped:0};report.timingUse='DIAGNOSTIC_ONLY_INSTRUMENTED_PACKAGE';}
   manifestPath=join(built.unpacked,'build-manifest.json');const bytes=await readFile(manifestPath);manifest=JSON.parse(bytes);manifestHash=hash(bytes);report.sourceHashes=manifest.sourceHashes;report.buildManifestHash=manifestHash;
   const permissions=JSON.parse(await readFile(join(built.unpacked,'manifest.json')));assert.deepEqual(permissions.host_permissions,['http://127.0.0.1/*']);assert.equal(permissions.content_security_policy.extension_pages,`script-src 'self'; object-src 'none'; connect-src ${server.origin}`);report.workerNetworkPolicy='PACKAGED_EXACT_ORIGIN_CONNECT_SRC';
   networkGuard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
@@ -89,6 +93,7 @@ if(process.env.HOST_SCALE_RUN!=='1'){
   for(let tab=0;tab<2;tab++){
    const page=await context.newPage();await page.setViewportSize({width:1440,height:900});await page.bringToFront();activePage=page;report.phase=`tab-${tab}-native-navigation`;pages.push(page);page.on('pageerror',e=>report.errors.push(e.message));page.on('console',message=>{const text=message.text();if(text.startsWith('HOST_SCALE_LIFECYCLE ')){try{const value=JSON.parse(text.slice(21));if(['/workspace.html','/sidebar.html'].includes(value.role)&&['VAIWL_UI_SUSPEND','VAIWL_UI_EXIT'].includes(value.type)&&Number.isSafeInteger(value.at)&&value.at>=0){report.uiLifecycle??=[];if(report.uiLifecycle.length<128)report.uiLifecycle.push({tab,role:value.role,type:value.type,at:value.at});else report.uiLifecycleDropped=(report.uiLifecycleDropped??0)+1;}}catch{}return;}if(traceEnabled&&text.startsWith('HOST_SCALE_TRACE ')){try{appendScaleTrace(report.trace,{...JSON.parse(text.slice(17)),realmOrdinal:tab+1});}catch{report.trace.dropped++;}return;}if(text.startsWith('HOST_SCALE_RPC ')){if(report.rpc.length<4096)report.rpc.push({tab,...JSON.parse(text.slice(15))});else report.rpcTraceDropped++;}});
    const session=await context.newCDPSession(page);await session.send('Emulation.setCPUThrottlingRate',{rate:scenario.cpuRate});
+   if(cpuProfileEnabled&&tab===1)nativeCPUPageSession=session;
    const start=performance.now();await page.goto(server.url,{waitUntil:'domcontentloaded',timeout:60000});report.phase=`tab-${tab}-initial-surfaces`;const frames=await surfaces(page);
    report.ingestion.push({scaleBasis:'NATIVE_WORLD_NOT_PROVEN_ADMITTED_AT_SAMPLE',tab,coldProfile:tab===0,initialSurfacesMs:performance.now()-start,nativeHistoryLinks:await page.locator('nav[aria-label="Chat history"] a').count(),surfaces:frames.map(f=>f.url())});
    assert.equal(report.ingestion.at(-1).nativeHistoryLinks,scenario.size);
@@ -131,12 +136,26 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    assert.equal(report.nativeVisibilityAtMember[0].visibility,'hidden');assert.equal(report.nativeVisibilityAtMember[0].focused,false);
    assert.equal(report.nativeVisibilityAtMember[1].visibility,'visible');assert.equal(report.nativeVisibilityAtMember[1].focused,true);memberReturnRemaining();
    if(cpuProfileEnabled){
-    report.timingUse='DIAGNOSTIC_ONLY_WORKER_CPU_SAMPLING';
+    report.timingUse=cpuTraceEnabled?'DIAGNOSTIC_ONLY_INSTRUMENTED_WORKER_AND_NATIVE_PAGE_CPU_SAMPLING':'DIAGNOSTIC_ONLY_WORKER_AND_NATIVE_PAGE_CPU_SAMPLING';
+    const unavailable=kind=>({kind:`DIAGNOSTIC_ONLY_HOST_SCALE_${kind}_CPU`,acceptance:'NOT_ESTABLISHED',status:'UNAVAILABLE',reason:'setup-failed'});
+    report.workerCPUProfile=unavailable('WORKER');report.nativePageCPUProfile=unavailable('NATIVE_PAGE');
+    if(cpuTraceEnabled)report.cpuPhaseTrace={status:'UNAVAILABLE',acceptance:'NOT_ESTABLISHED',reason:'profiles-not-finished'};
     try{
+     // This is the same page session used above, not a URL-selected or new page.
+     let timer,targetInfo;
+     try{({targetInfo}=await Promise.race([nativeCPUPageSession.send('Target.getTargetInfo'),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('native-target-info-timeout')),1500);})]));}finally{clearTimeout(timer);}
      cpuTransport=await connectJ4Debugger(browserHandle.debugEndpoint);
-     cpuProfile=await startHostScaleCPUProfile({transport:cpuTransport,extensionId:id});
-     cpuProfile.finished.then(value=>{report.workerCPUProfile=value;cpuTransport.close();},()=>cpuTransport.close());
-    }catch{report.workerCPUProfile={kind:'DIAGNOSTIC_ONLY_HOST_SCALE_WORKER_CPU',status:'UNAVAILABLE',reason:'setup-failed'};cpuTransport?.close();}
+     const starts=await Promise.allSettled([
+      startHostScaleCPUProfile({transport:cpuTransport,extensionId:id,...cpuTraceEnabled?{clockAlignment:true}:{}}),
+      startHostScalePageCPUProfile({transport:cpuTransport,targetId:targetInfo?.targetId,expectedURL:server.origin+projectPath,...cpuTraceEnabled?{clockAlignment:true}:{}}),
+     ]);
+     for(const [index,key]of ['workerCPUProfile','nativePageCPUProfile'].entries())if(starts[index].status==='fulfilled')cpuProfiles.push({key,profile:starts[index].value});
+     // Each helper owns only its session. Never let the first result close the peer.
+     cpuProfilesFinished=Promise.allSettled(cpuProfiles.map(async({key,profile})=>{report[key]=await profile.finished;})).then(async()=>{
+      closeCPUTransport();
+      if(cpuTraceEnabled)try{report.cpuPhaseTrace=await collectScaleCPUPhaseTrace({trace:report.trace,context,extensionId:id,profiles:report,timeout:1000});}catch{report.cpuPhaseTrace={status:'UNAVAILABLE',acceptance:'NOT_ESTABLISHED',reason:'snapshot-failed'};}
+     });
+    }catch{closeCPUTransport();}
    }
    report.nativeMemberProgress=await waitHostScaleMemberProgress({page,extensionId:id,url:server.origin+projectPath,projectId:projectPath.split('/')[2],id:tail.id,size:scenario.size,distribution:scenario.distribution,deadline:memberReturnDeadline});
    report.nativeMemberProgress.scenario='VISIBLE_NATIVE_READING_BEFORE_RETURN_NOT_IMMEDIATE_RETURN';
@@ -260,13 +279,13 @@ if(process.env.HOST_SCALE_RUN!=='1'){
    }
   }
   assert.deepEqual(report.errors,[]);report.status='PARTIAL_SYS04_NOT_ACCEPTED';process.exitCode=2;
- }catch(error){if(error.memberProgressDiagnostic)report.nativeMemberProgressDiagnostic=error.memberProgressDiagnostic;const {hostScaleFailureProgress}=await import('./fixtures/host-scale-progress.mjs');report.nativeIndexProgress=await hostScaleFailureProgress(activePage,loadedExtensionId).catch(()=>({status:'DIAGNOSTIC_UNAVAILABLE',acceptance:'NOT_ESTABLISHED'}));report.status=traceThroughReturn&&error.message==='diagnostic-progress-run-cannot-produce-scale-timing'?'DIAGNOSTIC_ONLY_RETURN_COMPLETE':traceEnabled&&error.message==='diagnostic-initial-ingestion-complete'?'DIAGNOSTIC_ONLY_INGESTION_COMPLETE':context?'FAIL':'NOT_RUN_BROWSER_OR_PACKAGE_STARTUP';report.error=error.stack;report.failure={phase:report.phase,rpcCount:report.rpc.length,rpcTail:report.rpc.slice(-16),facts:await hostScaleFailureFacts(activePage).catch(failure=>({captureError:failure.message}))};process.exitCode=1;}
+ }catch(error){if(error.memberProgressDiagnostic){report.nativeMemberProgressDiagnostic=error.memberProgressDiagnostic;if(cpuTraceEnabled)report.nativeMemberProgressClock={stage:error.memberProgressDiagnostic.stage,stageStartedEpochMs:performance.timeOrigin+error.memberProgressDiagnostic.stageStarted,observedWallTimeMs:Date.now(),observedEpochMs:performance.timeOrigin+performance.now(),interpretation:'ORIGINAL_RUNNER_STAGE_NOT_EXCLUSIVE_CPU_OR_IDB_TIME'};}const {hostScaleFailureProgress}=await import('./fixtures/host-scale-progress.mjs');report.nativeIndexProgress=await hostScaleFailureProgress(activePage,loadedExtensionId).catch(()=>({status:'DIAGNOSTIC_UNAVAILABLE',acceptance:'NOT_ESTABLISHED'}));report.status=!cpuProfileEnabled&&traceThroughReturn&&error.message==='diagnostic-progress-run-cannot-produce-scale-timing'?'DIAGNOSTIC_ONLY_RETURN_COMPLETE':traceEnabled&&error.message==='diagnostic-initial-ingestion-complete'?'DIAGNOSTIC_ONLY_INGESTION_COMPLETE':context?'FAIL':'NOT_RUN_BROWSER_OR_PACKAGE_STARTUP';report.error=error.stack;report.failure={phase:report.phase,rpcCount:report.rpc.length,rpcTail:report.rpc.slice(-16),facts:await hostScaleFailureFacts(activePage).catch(failure=>({captureError:failure.message}))};process.exitCode=1;}
  finally{
-  if(cpuProfile){try{report.workerCPUProfile=await cpuProfile.finish();}finally{cpuTransport?.close();}}else cpuTransport?.close();
-  if(cpuProfileEnabled){report.acceptance='NOT_ESTABLISHED';report.measurement={status:'NOT_RUN_DIAGNOSTIC_WORKER_CPU',samples:null,acceptance:'NOT_ESTABLISHED'};}
+  if(cpuProfileEnabled){try{await Promise.allSettled(cpuProfiles.map(({profile})=>profile.finish()));await cpuProfilesFinished;}catch{report.cpuProfileCleanup={status:'UNAVAILABLE',reason:'profile-cleanup-failed'};}finally{if(!cpuProfilesFinished)closeCPUTransport();}}
+  if(cpuProfileEnabled){report.acceptance='NOT_ESTABLISHED';report.measurement={status:'NOT_RUN_DIAGNOSTIC_WORKER_AND_NATIVE_PAGE_CPU',samples:null,acceptance:'NOT_ESTABLISHED'};}
   if(traceEnabled){report.workerTrace=await collectScaleWorkerTrace(context,loadedExtensionId).catch(()=>({status:'UNAVAILABLE'}));if(report.trace){const rows=[...report.trace.events,...(report.workerTrace.events??[]).map(row=>({...row,realmOrdinal:0}))].sort((a,b)=>a.at-b.at);report.trace.events=[];report.trace.bytes=0;for(const row of rows)appendScaleTrace(report.trace,row);}if(report.workerTrace.events)delete report.workerTrace.events;}
   const cleaned=await cleanupHostScaleRun({report,context,browserHandle,browserLaunchAttempted,networkGuard,server,directory,verify:async()=>{
-  if(tracePackage){await verifyScaleTracePackage(tracePackage);assert.equal((await import('../../extension/package.mjs')).verifyHost(report.package.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');}
+  if(tracePackage){await verifyScaleTracePackage(tracePackage);assert.equal((await import('../../extension/package.mjs')).verifyHost(report.package.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');if(cpuTraceEnabled)report.instrumentedPackageUnchanged=true;}
   report.sourceChangedDuringRun=manifest?(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean):null;
   report.fixtureChangedDuringRun=(await Promise.all(Object.entries(report.fixtureSourceHashes).map(async([p,h])=>hash(await readFile(new URL(p,import.meta.url)))!==h))).some(Boolean);
   report.manifestChangedDuringRun=manifestPath?hash(await readFile(manifestPath))!==manifestHash:null;
