@@ -15,7 +15,7 @@ async function edit(base,operation){const db=await base.open();return new Promis
 test('MOCK_IDB native GC retains every current and checkpoint piece across 70 interleaved updates',async()=>{
  const h=await setup();try{
   for(let revision=1;revision<=70;revision++){const id=revision%2?'a':'b';assert.equal((await h.native.apply(scope,{operationId:'update_'+revision,expectedRevision:revision-1,batch:batch(revision,id)})).ok,true);}
-  const [root,checkpoint]=await rows(h.base,[scopeKey,nativeCheckpointKey(scopeKey)]);const current=nativeUnpack(root),prior=nativeUnpack(checkpoint);assert.equal(current.changes.length,64);assert.equal(prior.revision,69);
+  const [root,checkpoint]=await rows(h.base,[scopeKey,nativeCheckpointKey(scopeKey)]);const current=nativeUnpack(root),prior=nativeUnpack(checkpoint);assert.deepEqual(current.changes,[{revision:70,projects:[],refs:['b']}]);assert.equal(prior.revision,69);assert.deepEqual(prior.changes,[{revision:69,projects:[],refs:['a']}]);
   for(const manifest of [current,prior])for(const kind of ['projects','refs'])for(const [id,revision] of Object.entries(manifest[kind])){const [piece]=await rows(h.base,[nativePartitionKey(scopeKey,kind,id,revision)]);assert.equal(nativeUnpack(piece).revision,revision);}
   const facts=await h.native.read(scope);assert.equal(facts.refs.a.nativeTitle,'原名 69');assert.equal(facts.refs.b.nativeTitle,'原名 70');
   const [retired]=await rows(h.base,[nativePartitionKey(scopeKey,'refs','a',1)]);assert.equal(retired,undefined);

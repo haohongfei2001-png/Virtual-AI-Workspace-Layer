@@ -126,7 +126,7 @@ export function saveNativePieces(store, scope, current, next, storage, command, 
     ...(command.batch?.membership ?? []).map(row => row.id)])] : Object.keys(next.refs);
   const manifest = {format: NATIVE_PARTITION_FORMAT, scopeKey: next.scopeKey, revision: next.revision,
     sources: next.sources, projects: {...prior?.projects}, refs: {...prior?.refs}, units: prior?.units ?? 0,
-    changes: [...(prior?.changes ?? []), {revision: next.revision, projects: projectIds.slice(0, 10000), refs: refIds.slice(0, 10000)}].slice(-64)};
+    changes: [{revision: next.revision, projects: projectIds.slice(0, 10000), refs: refIds.slice(0, 10000)}]};
   for (const [kind, keys] of [['projects', projectIds], ['refs', refIds]]) for (const key of keys) {
     const old = storage?.pieces.get(JSON.stringify([kind, key]));
     if (old) manifest.units -= JSON.stringify(old).length;

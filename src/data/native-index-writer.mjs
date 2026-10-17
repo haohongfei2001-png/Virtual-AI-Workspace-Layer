@@ -14,7 +14,7 @@ export function saveIndexedNativePieces(store,scope,next,storage,command,reader,
   if(!piece.row)throw Error('orphan-native-membership');units+=JSON.stringify(piece).length;check();store.put(nativeRecord(nativePartitionKey(next.scopeKey,kind,key,next.revision),piece));
  }
  const built=buildNativeIndexUpdateRecord(prior,scope,next.revision,updates,[...reader.records.values()].filter(r=>wanted.has(r.key)),{
-  sources:next.sources,units,changes:[...prior.changes,{revision:next.revision,projects:changed.projects.slice(0,10000),refs:changed.refs.slice(0,10000)}].slice(-64)
+  sources:next.sources,units,changes:[{revision:next.revision,projects:changed.projects.slice(0,10000),refs:changed.refs.slice(0,10000)}]
  });
  for(const record of built.records){check();store.put(record);}
  const rootRecord=built.rootRecord;

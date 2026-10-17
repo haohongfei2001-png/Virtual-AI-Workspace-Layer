@@ -4,6 +4,10 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **Native 当前 GC 工作单已收窄，旧格式仍全量校验**：两处 Native writer 只把当前 revision 的完整有界候选 ID 工作单写进新 root/recovery root，不再复制只供旧 GC 选候选且无人消费的历史行；Shared 的连续 delta 历史完全保留。旧 0–64 行根仍按原 schema、fresh bytes/checksum 校验，真实前一 raw root 原样成为 checkpoint；缺当前工作单仍完整对账，原 CAS、receipt、replay、continuation 与权限不变。作者/既有 40 项和独立 20 项通过；新旧 writer 交替、旧64行损坏、恢复与全量 fallback 已覆盖。真实 owner＋MockIDB 的3780 refs/70批中 Native root JSON字符数146295→10973，Shared147931不变，完整3780成员逐ID一致；这是体积机制证据，未宣称浏览器提速或正式10k通过。首次隔离完整测试10个历史Git环境错误和1个旧64行格式断言失败如实保留；独立复制真实Git历史后54预检通过，70轮GC合同仅改为完整current/prior工作单断言，所有piece/事实/旧piece回收断言保留并独审通过。修复验证环境和精确格式合同后，冻结完整Node **8052/8052、0 skip、156.002秒**，12/12原guard变异KILLED，运行前后源码/测试/workflow不变。[边界与验证](evidence/free-delivery-2026-10-17/cloud-native-current-gc-worklist-validation.json)。
+
+- **9a9ea59 CI39073528950完成，正式10k仍未过**：Node、journeys及J4原门禁通过；冷启动与独立cold passive副本本次通过，不抹掉23385记录的GET先于listener竞态。J4全部23步通过但仍PARTIAL，peer在worker失去内存后仍靠新原生GET重新认证，自动foreground仍未建立。durability唯一失败为正式10k：原30秒8125 refs/rev180、audit0、源仍活；失败后双CPU与phase采样CAPTURED、清理成功，不抵消原失败。10k阈值、完整双审计、G/Profile阻塞均保留。[本次CI事实](evidence/free-delivery-2026-10-17/cloud-ci-39073528950-summary.json)。
+
 - **保留原生请求的history恢复与旧epoch隔离已修**：可信history保留的新路线GET若首次浏览器metadata仍是精确旧路线，原实现不会在真实200完成时重新核验而漏READY；现在仅这一受限情形允许一次metadata重查，原6秒、document/request/epoch、最终frame/tab/body核验均保留，零新原生请求。另关闭history保留把已过期epoch请求重新标为当前的安全缺陷，原team/personal两反例均RED→GREEN。作者315专项、独立79新增+245既有共324通过，独立原版和删除epoch guard变异各4项精确RED；新79条已入库。与下项manifest冻结完整Node **8026/8026、0 skip、162.044秒**，12/12原guard变异KILLED、输入hash不变。旧CI失败具体因果仍未建立，新浏览器验收待本批CI。[边界与证据](evidence/free-delivery-2026-10-17/cloud-retained-history-recovery-validation.json)。
 
 - **包manifest权限与公开资源边界补齐**：verifyHost独立于builder校验manifest形状、执行入口和WAR；整个src/runtime以及worker/bootstrap/compiled runtime保持私有，保守拒绝含糊路径，不宣称每种拒绝形式都是Chrome可利用绕过。旧v2补丁重新独审并修订后308专项通过；以23385生产源码为固定基线，37个合法profile的ZIP逐字节不变，另810私有路径拒绝、240合法public路径与13个重算hash权限扩张反例通过。后续J4生产变化不包含在该ZIP相同声明内。[包边界验证](evidence/free-delivery-2026-10-17/cloud-manifest-boundary-validation.json)。
