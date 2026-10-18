@@ -9,7 +9,7 @@ export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
  currentBody:CHATGPT_SELECTION_CURRENT_BODY,
  nativeLayout:Object.freeze({
   header:'[data-app-shell-titlebar]',navigationSlot:'[data-app-shell-main-titlebar]',
-  readingViewport:'[data-app-action-timeline-scroll]',
+  readingViewport:'[data-app-action-timeline-scroll]',viewportFocus:'native-scroll-region',
   reading:'[data-app-action-timeline-scroll] > :not([data-thread-scroll-footer])',
   composer:'[data-app-action-timeline-scroll] > [data-thread-scroll-footer]',
   historyList:'nav:not([data-app-navigation-rail]) [data-app-action-sidebar-section] > div > div[aria-hidden]:has([data-sidebar-chatgpt-conversation-key])',

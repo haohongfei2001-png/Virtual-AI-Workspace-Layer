@@ -29,7 +29,20 @@ try{
   out.viewportReadingBackground=ok();root.style.visibility='hidden';masked=true;out.maskedViewportBackground=ok();
   const nativeExtra=document.createElement('div');viewport.append(nativeExtra);out.viewportExtraChildRejected=!ok();nativeExtra.remove();
   viewport.setAttribute('tabindex','0');out.interactiveViewportRejected=!ok();viewport.removeAttribute('tabindex');
+  viewport.setAttribute('role','region');viewport.setAttribute('tabindex','0');out.regionWithoutProfileRejected=!ok();args.viewportFocus='native-scroll-region';out.explicitScrollRegionAllowed=ok();
+  viewport.focus();out.nativeRegionFocusRetained=document.activeElement===viewport&&ok();
+  viewport.setAttribute('role','button');out.actionRoleRejected=!ok();viewport.setAttribute('role','region');
+  viewport.setAttribute('tabindex','1');out.positiveTabOrderRejected=!ok();viewport.setAttribute('tabindex','0');
+  viewport.setAttribute('contenteditable','false');out.editableAttributeRejected=!ok();viewport.removeAttribute('contenteditable');
+  viewport.style.overflow='visible';out.nonScrollingRegionRejected=!ok();viewport.style.overflow='auto';
+  args.viewportFocus='unknown';out.unknownFocusPolicyRejected=!ok();args.viewportFocus='native-scroll-region';
+  root.style.visibility='';masked=false;out.nativeReadingRegionAllowed=ok();root.style.visibility='hidden';masked=true;
+  viewport.removeAttribute('role');viewport.removeAttribute('tabindex');delete args.viewportFocus;
   viewport.style.setProperty('--unused','1');const viewportPaint=document.createElement('style');viewport.id='viewport';viewportPaint.textContent='#viewport::before{content:"";position:fixed;left:234px;top:14px;width:2px;height:2px;background:red}';document.head.append(viewportPaint);out.viewportGeneratedPaintRejected=!ok();viewportPaint.remove();
   root.style.visibility='';masked=false;viewport.replaceWith(root);delete args.readingViewport;return out;
- });assert(Object.values(checks).every(Boolean),JSON.stringify(checks));console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',checks}));
+ });
+ await page.evaluate(()=>{const root=document.querySelector('#reading'),v=document.createElement('div');v.id='keyboard-viewport';v.setAttribute('role','region');v.tabIndex=0;v.style.cssText='height:300px;overflow:auto';root.replaceWith(v);v.append(root);v.focus();});
+ await page.keyboard.press('ArrowDown');await page.waitForFunction(()=>document.querySelector('#keyboard-viewport').scrollTop>0,null,{timeout:1000});
+ checks.nativeKeyboardScroll=await page.evaluate(()=>document.activeElement===document.querySelector('#keyboard-viewport'));
+ assert(Object.values(checks).every(Boolean),JSON.stringify(checks));console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',checks}));
 }finally{await browser.close();}

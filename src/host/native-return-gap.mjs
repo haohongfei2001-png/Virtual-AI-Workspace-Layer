@@ -1,6 +1,6 @@
 // Explicit presentation variant for the observed pointer-transparent titlebar.
 // This proves an empty rectangle; it never supplies account or scope evidence.
-export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=null,readingViewport=null,isOwnedMask=()=>false,button=null,excluded=[],excludedRects=[]}){
+export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=null,readingViewport=null,viewportFocus=null,isOwnedMask=()=>false,button=null,excluded=[],excludedRects=[]}){
  try{
   const win=document.defaultView,rect=n=>n.getBoundingClientRect(),overlap=(a,b)=>a.x<b.x+b.width&&b.x<a.x+a.width&&a.y<b.y+b.height&&b.y<a.y+a.height;
   if(!header||!slot||!hitRoot||header===slot||!header.contains(slot)||![header,slot,hitRoot,...excluded].every(n=>n.isConnected&&n.ownerDocument===document))return null;
@@ -12,8 +12,14 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
   // When the reading mask opens, its scroll container becomes the native hit
   // background. Accept only the explicitly configured, noninteractive parent
   // with no other content except geometrically excluded native branches.
+  if(viewportFocus!==null&&viewportFocus!=='native-scroll-region')return null;
+  if(viewportFocus!==null&&!readingViewport)return null;
   if(readingViewport){
-   if(!readingRoot||readingViewport===hitRoot||readingRoot.parentElement!==readingViewport||!readingViewport.isConnected||readingViewport.ownerDocument!==document||!hitRoot.contains(readingViewport)||readingViewport.tagName!=='DIV'||readingViewport.matches('[role],[tabindex],[contenteditable]')||readingViewport.shadowRoot||[...readingViewport.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||[...readingViewport.children].some(n=>n!==readingRoot&&!excluded.includes(n)))return null;
+   // An explicit native scroll region keeps its own tab stop and keyboard
+   // behavior. Only the reading child is masked; never the viewport itself.
+   const scrollRegion=viewportFocus==='native-scroll-region'&&readingViewport.getAttribute('role')==='region'&&readingViewport.getAttribute('tabindex')==='0'&&!readingViewport.hasAttribute('contenteditable')&&['auto','scroll'].includes(win.getComputedStyle(readingViewport).overflowY);
+   if(viewportFocus==='native-scroll-region'&&!scrollRegion)return null;
+   if(!readingRoot||readingViewport===hitRoot||readingRoot.parentElement!==readingViewport||!readingViewport.isConnected||readingViewport.ownerDocument!==document||!hitRoot.contains(readingViewport)||readingViewport.tagName!=='DIV'||!scrollRegion&&readingViewport.matches('[role],[tabindex],[contenteditable]')||readingViewport.shadowRoot||[...readingViewport.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||[...readingViewport.children].some(n=>n!==readingRoot&&!excluded.includes(n)))return null;
    for(const pseudo of ['::before','::after'])if(!['none','normal'].includes(win.getComputedStyle(readingViewport,pseudo).content))return null;
    let n=readingViewport,depth=0;for(;n;n=n.parentElement){const style=win.getComputedStyle(n);if(++depth>128||n.hidden||n.inert||n.getAttribute('aria-hidden')==='true'||style.display==='none'||style.visibility!=='visible'||Number(style.opacity)===0)return null;}
   }

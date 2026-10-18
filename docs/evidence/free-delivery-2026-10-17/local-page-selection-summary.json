@@ -3763,5 +3763,54 @@
         "ci39117794114-dormant-precondition-failure.json.gz"
       ]
     }
+  },
+  "nativeScrollRegion20261018": {
+    "baseHead": "3f287f88d2073f5d40bcde3db0fe48521fb041b6",
+    "status": "FIXED_GEOMETRY_CANDIDATE_NOT_LIVE_VERIFIED",
+    "rootCause": "Observed native viewport DIV role=region tabindex=0 overflow-y:auto rejected by noninteractive geometry rule. Authentication worker session/accounts returned 200 in bounded prior observation.",
+    "fix": "Explicit native-scroll-region layout variant retains viewport identity, role and focus; only reading child mask. Other role/tabindex/contenteditable and non-scroll variants fail closed.",
+    "tests": {
+      "targeted": 186,
+      "package": 184,
+      "skipped": 0,
+      "mechanism": "PASS_WEB_MECHANISM_ONLY including unmounted native keyboard scroll; not installed keyboard acceptance",
+      "oldFixture": "RED assertion; preceding sandbox browser startup NOT_RUN"
+    },
+    "real": {
+      "sameExtensionId": true,
+      "configUnchanged": true,
+      "oldCandidateBackup": "local-only",
+      "dualFramesObserved": true,
+      "nativeRowsObserved": 5,
+      "uniqueReturnAndWorkspaceEntry": true,
+      "currentChatMapped": true,
+      "fullJourney": "NOT_PASSED",
+      "observerCorrection": "_blank fallback alone cannot reject delegated same-target navigation. Incorrect early observation retained.",
+      "correctedJourney": "Return entry wait failed before click; later passive frame count zero. Cause of later withdrawal remains OPEN, no retry or widened budget.",
+      "bodyOrCredentialsSaved": false,
+      "nativeWrites": 0
+    },
+    "sourceSha256": {
+      "src/host/native-return-gap.mjs": "8f39d0a1df99e908fb8b15f3017f402f180c6df1e7541769e42dac750ea602f7",
+      "src/host/chatgpt-adapter.mjs": "cfc520c1046610f1db7ea4f7eb73d6cda6c0a25da26e9d9a82bf5d65d504b9ce",
+      "src/host/chatgpt-observed-profile.mjs": "388443d34ca683f92cab184557b669da5d04587271542243a7a3018d10105ac2"
+    },
+    "evidence": [
+      "vaiwl-authorized-worker-context-followup.json.gz",
+      "vaiwl-authorized-mount-reason.json.gz",
+      "vaiwl-authorized-viewport-semantics.json.gz",
+      "vaiwl-authorized-gap-reason.json.gz",
+      "vaiwl-scroll-region-red.log.gz",
+      "vaiwl-scroll-region-green.log.gz",
+      "vaiwl-scroll-region-unit.tap.gz",
+      "vaiwl-scroll-region-package.tap.gz",
+      "vaiwl-scroll-region-installed-state.json.gz",
+      "vaiwl-scroll-region-current-journey.json.gz",
+      "vaiwl-scroll-region-continuous-journey.json.gz",
+      "vaiwl-scroll-region-delegated-journey.json.gz",
+      "vaiwl-ci39118346794-final-jobs.json.gz",
+      "vaiwl-ci39118346794-idle-traces.json.gz"
+    ],
+    "ci": "39118346794 SUCCESS on parent source only; historical Linux idle refusal cause remains OPEN, J4 partial, scale DEFERRED"
   }
 }

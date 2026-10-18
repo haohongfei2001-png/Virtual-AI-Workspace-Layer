@@ -450,7 +450,7 @@ for(const kind of ['missing','ambiguous','occupied','overlap','bad-selector','ou
  if(kind==='bad-selector')f.document.querySelectorAll=()=>{throw Error('invalid selector');};
  assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();
 });
-for(const nativeLayout of [null,{}, {...explicitLayout,extra:'#other'},{...explicitLayout,composer:''},{...explicitLayout,reading:42}])test('invalid explicit native layout cannot fall back to legacy '+JSON.stringify(nativeLayout),()=>{
+for(const nativeLayout of [null,{}, {...explicitLayout,extra:'#other'},{...explicitLayout,composer:''},{...explicitLayout,reading:42},{...explicitLayout,viewportFocus:'native-scroll-region'},{...explicitLayout,readingViewport:'#viewport',viewportFocus:'unknown'},{...explicitLayout,readingViewport:'#viewport',viewportFocus:'native-scroll-region'}])test('invalid explicit native layout cannot fall back to legacy '+JSON.stringify(nativeLayout),()=>{
  assert.throws(()=>fixture({profile:{...LEGACY_SURFACE_PROFILE,nativeLayout}}),/invalid-native-layout-profile/);
 });
 

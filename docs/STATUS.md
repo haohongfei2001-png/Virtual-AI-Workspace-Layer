@@ -4,6 +4,10 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **真实滚动区域误拒绝已修候选，完整旅程仍未通过**：本次合法worker session/accounts均200，旧403不再代表该次结果。实际失败为viewport的`role=region/tabindex=0`触发返回槽非交互检查。新增显式native-scroll-region，保留原生焦点、角色和reading-only mask，其余交互/非滚动形态拒绝；旧反例RED，新186定向及184包边界PASS/0skip，headless键盘滚动仅机制证据，独审无阻断。原专用Profile同扩展ID/config更新后实际双frame、5条原生聊天、唯一返回入口、工作空间与当前聊天映射成立。原诊断误以链接_blank否定委托导航，已纠正，不算产品缺陷；纠正后的连续旅程在返回入口等待阶段失败，随后frame0，后续撤回根因OPEN，阅读/返回/搜索/安全恢复不可写PASS。未保存正文/凭据、未原生写入。证据nativeScrollRegion20261018；10k/100k DEFERRED。
+
+- **父版本CI39118346794四job SUCCESS**：精确3f287f8；两种idle正例CHECK/RELEASE均成功，指定变异按原oracle被杀。仅增加观察器后一次成功不能解释历史Linux前置拒绝；无新context的J4仍PARTIAL，规模跳过不计通过。此CI不包含本次滚动区域修复。
+
 - **CI前台过期恢复失败定位到休眠前置，根因仍OPEN**：CI39117386458实际prepared=true/entered=false，尚未等待lease到期；旧trace仅HELLO/verified REFRESH，不能区分worker忙、状态干扰或传输问题。现只给既有被动观察器补IDLE_CHECK/RELEASE响应类型，首次拒绝仍FAIL、不增请求/时间/重试。当前一次本地原旅程PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY，捕获CHECK/RELEASE成功及invalid-host-document后的新HELLO/verified REFRESH，源码未漂移；不以此覆盖Linux失败。原失败与本地报告存证transportIdleObservation20261018；生产、真实/规模边界未改。 后续CI39117794114 Node/耐久/J4局部门槛通过，journeys仅普通休眠正例同一prepared=true/entered=false前置失败；指定变异已被正确杀死。现两种模式共用被动响应记录，本地普通正例窄PASS/源码未漂移；Linux拒绝原因仍OPEN，不能升级稳定性。
 
 - **休眠permanent-stop变异注入点已修**：CI39116867367原日志证实浏览器尚未启动即旧catch文本匹配数失败，JSON不存在；不是变异存活。现精确匹配当前分支，只把明确scope拒绝改为stop，保留transport-unavailable待命。生产、workflow oracle和期限均未改；隔离MV3在原await-fresh-frame-after-native-GET阶段以J2-observation-timeout失败，前四步通过、GET恰好2次且200、草稿保持、源码未漂移，原CI判定完整通过，17相关合同PASS/0skip/45.818ms。此仅指定变异被杀，不认证真实宿主/完整J4；原失败保留，规模DEFERRED。证据dormantMutationAnchor20261018。
