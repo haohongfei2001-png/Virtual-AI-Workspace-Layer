@@ -109,3 +109,5 @@ node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-tr
 2026-10-18 连续本地候选：仅隐藏目录让行与成功mount/wake后的armed foreground消费；稳定RED及修复原件保留。原版/候选同环境10k均完成双审计与返回，摄取17.120→18.391秒，不能宣称改善。Linux10k、自动peer恢复仍待真实结果，真实Profile连接/IME/PAIA/跨端缺口不变。
 
 本批冻结结果：Node8227/8227/108.45秒、12护栏变异全KILLED，输入未漂移；首次诊断锚点3FAIL保留并修复。最终10k双审计rev203/10000正确PROJECT/零UNKNOWN、原窗口剩12.93秒，导航返回通过；Node并行下总观察48.61秒不作速度比。J4仍23步PARTIAL，自动foreground失败，新原生GET恢复不替代。见[本批证据](local-ci39086077996-scheduling-summary.json)。
+
+48dd920远端CI39087927722终态FAIL：Node/导航通过；J4原门禁通过仍PARTIAL、自动foreground失败。正式10k双审计rev206/10000正确PROJECT后只余819ms，在project-card-member-rendering超时；诊断双审计rev205后余58ms返回失败。门槛不变，未进入measurement。见[本次CI原证据](local-ci39087927722-summary.json)。C2-only的worker receipt丢失不能用fresh roster/旧cache恢复peer scope；需合法当前context证明，真实Profile连接仍是对应缺口。
