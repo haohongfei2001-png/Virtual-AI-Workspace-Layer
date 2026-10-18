@@ -4,6 +4,10 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **0b0bd46 / CI39095650759：关闭返回竞态跨环境片段闭环通过**：Linux原六项片段检查PASS，源码未漂移，Node与导航job通过；这不代表完整真实Host。正式10k在rev206首轮完整审计在途3423ms时截止，完整审计0；失败后10000库存仅为点时快照。原FAIL保留，后续按用户决定DEFERRED。J4仍23步PARTIAL。新Profile排障已证实浏览器可开HTTP首页，原生AX可读登录菜单，但DOM/截图及只读Page.getFrameTree诊断均超时；工具重置后浏览器数字ID会重排，后续按稳定扩展实例选择，不能仅按名称/数字ID认定专用目录或可信scope。没有取得合法workspace context；尚未认证真实Project闭环。
+
+- **用户执行顺序调整：规模验收DEFERRED，真实闭环优先**：暂停反复执行/优化10k、100k及single-project成员返回30秒联合门禁，保留源码、原阈值和所有历史FAIL；CI自动规模步骤停止，不将跳过写成通过。先解决获授权专用Profile页面读取超时和真实账户/当前空间证据，再完成Project/聊天映射、打开、返回、搜索及安全恢复。小回归、构建、权限/撤权/数据/草稿和基本导航继续，生产预算不变。C2-only无新context应安全等待。受限本人试用准备不代表正式发布就绪。分段计时口径见原DEVELOPMENT_PLAN；尚无新的分段性能认证。此次CI调度与原断言保留的定向检查74/74通过（113.61ms），独立审查无阻断；未重跑规模门禁或完整矩阵。
+
 - **7e3f116 / CI39094526488 已终结FAIL；原生返回竞态修复候选**：正式10k rev205/10000正确PROJECT，首轮完整审计3786.12ms通过，第二轮在途211.73ms时原30秒耗尽，未measurement；J4仍23步PARTIAL、automatic foreground NOT_ESTABLISHED。片段旅程被动日志首次确证可信关闭原workspace后同节点立即重开，queued toggle合并open→open，原监听漏失关闭；日志未直接标记重开调用者，独立owner挂起RPC反例确认旧current-entry可晚到重开。现current-entry只读检查当前真实呈现/授权/原WindowProxy，beforetoggle同步撤旧意图，实际closed再发布状态与建唯一返回；不改显式展示、阈值或原生handler。260定向通过，冻结完整Node8332/8332、零fail/skip/cancel、232.44秒，输入无漂移（上批130.53秒，未证明流程提速）；独立审查无阻断；最终候选隔离Mac Chrome156六项原片段旅程通过，源码/包稳定，12护栏变异KILLED。Linux新候选待验，不关闭10k/J4/100k或真实宿主关口。原失败与新反例均保留。[证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
 
 - **Shared最终根重复编码已合并，后续Linux仍FAIL**：已确认的摄取CPU热点链中，同一新根旧路径4次完整编码；现capture一次并保全部旧root/bucket、metadata/ordinal、原manifest容量校验，用最终同份canonical bytes做16Mi界限与原SHA256，冻结后在原事务写入。没有缓存新IDB字节或授权，也未改schema/hash算法/耐久。3200+50与64×50 changes纯函数全records/root/checksum字节一致，完整root编码4→1；无插桩真实IDB固定AB/BA/AB登记中位33.5→32.2ms，仅约3.9%局部收益，六次完整3250 facts摘要一致，不宣称Host提速。212相关/16独立反例通过；冻结完整Node8321/8321、零fail/skip/cancel、130.53秒且输入未漂移；12护栏变异KILLED，独立审查无阻断。旧导入锚点失败保留并恢复兼容；未重复本地100k挑绿，后续CI39094526488仍未通过10k/J4/返回转换，不能以局部收益关闭关口。[精确来源](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。

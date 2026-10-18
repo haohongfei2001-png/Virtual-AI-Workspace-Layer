@@ -1018,7 +1018,30 @@
       "buildManifestUnchanged": true,
       "evidence": "local-reading-race-browser.json.gz"
     },
-    "linuxCandidate": "NOT_RUN",
+    "linuxCandidate": {
+      "run": 39095650759,
+      "sourceCommit": "0b0bd46b9eaea151f283b1de24c6546f39866803",
+      "overall": "FAIL",
+      "node": "PASS",
+      "journeys": "PASS",
+      "snippets": {
+        "status": "PASS",
+        "checks": 6,
+        "sourceChangedDuringRun": false
+      },
+      "formal10k": {
+        "status": "FAIL",
+        "stage": "first complete audit in flight at original deadline",
+        "revision": 206,
+        "auditAttempts": 1,
+        "completedAudits": 0,
+        "inFlightMs": 3423.042712999999,
+        "pointInTimeInventoryAfterFailure": 10000,
+        "pointInTimeInventoryIsNotAcceptance": true
+      },
+      "j4": "PARTIAL_J4_NOT_ACCEPTED,23steps",
+      "subsequentScalePriority": "DEFERRED by user; original failures unchanged"
+    },
     "remaining": [
       "10k full journey original30s FAIL",
       "100k complete inventory FAIL",
