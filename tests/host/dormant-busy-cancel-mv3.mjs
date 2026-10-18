@@ -55,6 +55,11 @@ try{
  // Prewarm a second authorized home tab before the first close budget starts.
  const second=await command('Target.createTarget',{url:server.url,background:true});report.busyTarget=second.targetId;
  const secondSession=await command('Target.attachToTarget',{targetId:second.targetId,flatten:true});await command('Runtime.enable',{},secondSession.sessionId);
+ // The production adapter intentionally defers directory scans while hidden.
+ // Foreground this owned headless tab before requiring prepared/idle state;
+ // pointer dispatch to a background target does not change its visibility.
+ await command('Page.bringToFront',{},secondSession.sessionId);
+ report.secondPreparationVisibility=await evaluate(secondSession.sessionId,'document.visibilityState');assert.equal(report.secondPreparationVisibility,'visible');
  const secondTop=(await command('Page.getFrameTree',{},secondSession.sessionId)).frameTree.frame.id;
  await poll(()=>evaluate(secondSession.sessionId,"document.querySelectorAll('[data-va-owned] iframe').length===2"),'second-authorized-frames');
  const secondEditor=await evaluate(secondSession.sessionId,"(()=>{const r=document.querySelector('textarea').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()");

@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **partial busy-close恢复交接候选，专用MV3仍未通过**：确定性证实取消关闭后缺一侧JOIN会保留busyClose并阻断同route恢复；现先销毁两frame，只有原lease有效、本地排空、原worker原子IDLE_RELEASE成功才消费既有一次同scope新握手，失败不循环。旧63例52PASS/11FAIL；新195定向PASS/0skip/139.336ms，含实际content/controller联合L、释放先于HELLO、忙/超时/干扰/撤权反例，独审无安全阻断。同源码导航MV3 11检查PASS/1731.264ms；专用busy runner先因隐藏第二tab等待目录排空失败，改为隔离headless前台后又在successful-preflight-gated超时，尚未执行新交接路径，两次FAIL均保留，不宣称浏览器修复已验收。下一阻塞是该前置RPC实际结果及真实partial JOIN时序。原J2/J4不改判。授权真实Profile仅被动状态读取：页面complete/editor存在、扩展frame0，无刷新/请求/正文/凭据读取；旧403未重测。规模DEFERRED。见原证据busyCancelledCloseHandoff20261018。
+
 - **休眠返回传输失败后丢弃READY已修**：沿用初始握手的传输分类，wake的HELLO/REFRESH失败撤回能力并被动等待新可信context；无定时重试、旧授权复用或预算放宽。原35例31PASS/4FAIL，修后178定向PASS/0skip/286.706ms，含HELLO4秒+REFRESH2秒总预算、迟到成功、明确拒绝与退出防复活。首轮MV3在iframe插入早于frame导航提交的即时观察断言失败，原证据保留；改用原10秒行等待后11检查PASS/1369.698ms，原阈值/旧frame销毁/新frame身份/内容/草稿检查均保留。独审通过。同源码legacy隔离休眠探针在原60.002秒窗口观察到非强制worker销毁并返回新授权视图，三检查通过且原frame/editor/草稿保持；instrumented，naturalWorkerSleep仍NOT_ESTABLISHED。原J2/J4不改判，真实accounts403未复测、规模DEFERRED。见原证据dormantTransportRecovery20261018。
 
 - **前台传输失败与C2冷启动READY丢弃已修**：HOST_FOCUS端口拒绝/超时不再混同明确scope拒绝，仅使用既有一次同scope重新握手。隔离MV3实际捕获HELLO在worker启动时报接收端不存在，content清除恢复许可后18ms才收到合法receipt/READY；现HELLO/REFRESH传输失败先撤能力，被动等真实READY，无循环/旧receipt/预算放宽。旧版定向10例6FAIL/4PASS；冻结128定向PASS/0skip/265.725ms，含超时边界、不同principal、无receipt、迟到响应、两通知顺序及REFRESH失败。原13.481秒MV3失败保留，修后完整11检查PASS/1724.137ms/源码未漂移；包括原导航/返回/搜索、worker退出撤旧界面、真正新GET后重建并保留草稿。仅C2_FRESH_REQUEST_ONLY_NOT_J4，原CI39101646460 J2因缺启动时序仍OPEN，不据frame缺失断言anchor丢失。独审通过；真实accounts403未复测，规模DEFERRED、Free未完成。见原证据contextTransportRecovery20261018。

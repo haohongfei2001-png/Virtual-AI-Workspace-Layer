@@ -57,3 +57,52 @@ test('native layer during cancellation cannot strand successful dual grant notif
  const shown=f.calls.shown;f.message('workspace');await flush();assert.equal(ready,0);
  f.message('sidebar');await flush();assert.equal(ready,1);assert.equal(f.calls.shown,shown);assert.equal(f.controller.showWorkspace(),false);
 });
+
+for(const joined of [null,'workspace','sidebar'])test('partial cancelled close destroys both frames before one guarded handoff '+joined,async t=>{
+ const f=await renewable(t);let release=0,revoked=0,heldResolve;const held=new Promise(r=>heldResolve=r);
+ f.surface.dispose=()=>{f.calls.disposed++;for(const item of f.frames)item.frame.isConnected=false;};
+ f.bridge.revokeMount=()=>{revoked++;};f.bridge.releaseCancelledClose=async request=>{release++;assert.equal(request.isCurrent(),true);assert(f.frames.every(x=>!x.frame.isConnected));assert.equal(f.calls.disposed,1);assert.equal(revoked,0);await held;return true;};
+ assert.equal(f.controller.cancelDormantClose(),true);if(joined){f.message(joined);await flush();}
+ f.message(joined??'workspace','VAIWL_UI_SUSPEND');await flush();assert.equal(release,1);assert.equal(revoked,0);assert.equal(f.controller.showWorkspace(),false);assert.equal(f.slot.children.length,0);
+ heldResolve();await flush();assert.equal(revoked,1);f.controller.stop();await flush();assert.equal(release,1);
+});
+for(const cause of ['connected-frame','user-exit','lease-expired'])test('cancelled close does not offer unsafe handoff '+cause,async t=>{
+ const f=await renewable(t);let release=0,revoked=0;
+ if(cause!=='connected-frame')f.surface.dispose=()=>{for(const item of f.frames)item.frame.isConnected=false;};
+ f.bridge.revokeMount=()=>revoked++;f.bridge.releaseCancelledClose=()=>{release++;return true;};assert.equal(f.controller.cancelDormantClose(),true);
+ if(cause==='lease-expired')f.advance(20000);else f.message('workspace',cause==='user-exit'?'VAIWL_UI_EXIT':'VAIWL_UI_SUSPEND');await flush();
+ assert.equal(release,0);assert.equal(revoked,1);assert.equal(f.controller.showWorkspace(),false);
+});
+
+// L integration: actual content and controller, explicit Chrome/DOM/worker
+// doubles. Unlike the layer tests, the real callback and RPC counters interact.
+test('partial JOIN termination hands the original mount through guarded release into one fresh session',async t=>{
+ const {createHostContentSession}=await import('../../src/host/content-session.mjs');
+ const f=fixture();f.controller.stop();f.doc.location.origin='https://chatgpt.com';
+ const calls=[];let hello=0,releases=0,controller,options;
+ const bound=()=>({documentToken:'doc',producerToken:'producer_'+hello,browserDocumentId:'parent',routeEpoch:1,origin:'https://chatgpt.com',expiresAt:new Date(21000).toISOString()});
+ const runtime={id:'ext',getURL:p=>'chrome-extension://ext/'+p,onMessage:{addListener(){},removeListener(){}},sendMessage:async m=>{
+  calls.push(m);
+  if(m.type==='HOST_HELLO'){hello++;return {binding:bound()};}
+  if(m.type==='HOST_REFRESH')return {state:'verified',scopeKey:'scope'};
+  if(m.type==='HOST_DOCUMENT_RENEW')return {ok:true,binding:bound()};
+  if(m.type==='HOST_UI_IDLE_RELEASE')return ++releases===1?{ok:false,reason:'ui-release-busy'}:{ok:true};
+  if(m.type==='HOST_UI_CONFIRM')return {ok:true,grant:{id:'grant_'+m.role,mountId:'mount',role:m.role,parentDocumentId:'parent',uiDocumentId:'ui_'+m.role,scopeGrantId:'scope',expiresAt:new Date(21000).toISOString()}};
+  return {ok:true};
+ }};
+ f.adapter.start=async o=>({binding:o.binding});f.adapter.prepareIdle=f.adapter.prepareRecovery=()=>({isCurrent:()=>true});
+ const mount=f.surface.mount;f.surface.mount=async(...args)=>{for(const x of f.frames)x.frame.isConnected=true;return mount(...args);};
+ f.surface.dispose=()=>{f.calls.disposed++;for(const x of f.frames)x.frame.isConnected=false;};
+ const session=createHostContentSession({document:f.doc,runtime,now:()=>1000,elapsedNow:()=>1000,makeId:()=> 'client',identityReader:{read:async()=>({}),prepareIdle:()=>({isCurrent:()=>true})},adapterFactory:()=>f.adapter,surfaceFactory:()=>f.surface,plansFactory:()=>({}),controllerFactory:o=>{options=o;controller=createSurfaceController({...o,now:()=>1000,elapsedNow:()=>1000});return controller;}});
+ t.after(()=>session.stop());await session.start();f.message('workspace');f.message('sidebar');await flush();session.showReading();
+ const closing=session.enterDormant();await flush();
+ const idle=f.calls.messages.find(x=>x.data.type==='VAIWL_UI_IDLE').data.requestId;
+ f.message('workspace','VAIWL_UI_IDLE_ACK',{requestId:idle});f.message('sidebar','VAIWL_UI_IDLE_ACK',{requestId:idle});
+ await closing;await flush();assert.equal(releases,1);assert.equal(hello,1);assert.equal(controller.showWorkspace(),false);
+ f.message('workspace');await flush();assert.equal(controller.showWorkspace(),false);
+ f.message('sidebar','VAIWL_UI_SUSPEND');for(let i=0;i<4;i++)await flush();
+ assert.equal(releases,2);assert.equal(hello,2);assert.equal(options.initialMode,'reading');assert.equal(f.calls.disposed,1);
+ const releaseIndex=calls.findLastIndex(m=>m.type==='HOST_UI_IDLE_RELEASE'),helloIndex=calls.findLastIndex(m=>m.type==='HOST_HELLO');assert(releaseIndex<helloIndex);
+ assert.equal(calls[releaseIndex].producerToken,'producer_1');assert.equal(calls.filter(m=>m.type==='HOST_REFRESH').at(-1).producerToken,'producer_2');
+ f.message('workspace');f.message('sidebar');await flush();assert.equal(controller.showWorkspace(),true);
+});

@@ -190,3 +190,19 @@ test('prepared probe shares an in-flight close across delayed driver observation
  assert.equal(f.calls.filter(m=>m.type==='HOST_UI_IDLE_CHECK').length,1);held.resolve({ok:true});
  assert.deepEqual(await first,{prepared:true,entered:true});assert.deepEqual(await second,{prepared:true,entered:true});assert.equal(f.closeEntries.length,1);
 });
+
+for(const outcome of ['released','busy','transport','scope-change','stop','interference','expired'])test('partial cancellation guarded release '+outcome+' controls producer replacement',async t=>{
+ const f=fixture(),held=deferred();t.after(()=>f.client.stop());await ready(f);
+ f.controller.idleReleaseBusy=()=>true;f.controller.renewDormantLease=async()=>true;f.controller.cancelDormantClose=()=>{f.setDormant(false);return true;};
+ f.setResponse(m=>m.type==='HOST_UI_IDLE_RELEASE'?{ok:false,reason:'ui-release-busy'}:f.normal(m));assert.equal(await f.client.enterDormant(),false);await drain();
+ const bridge=f.bridge,old=f.context,before=f.calls.length;assert.equal(typeof bridge.releaseCancelledClose,'function');
+ f.setResponse(m=>m.type==='HOST_UI_IDLE_RELEASE'?held.promise:f.normal(m));
+ const pending=bridge.releaseCancelledClose({handle:{id:'mount'},binding:old.binding,isCurrent:()=>true});await drain();
+ assert.equal(f.calls.slice(before).filter(m=>m.type==='HOST_UI_IDLE_RELEASE').length,1);assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,1);
+ if(outcome==='scope-change')f.setScope('scope_B');if(outcome==='stop')f.client.stop();if(outcome==='interference')f.client.showReading();if(outcome==='expired')await f.advance(20000);
+ if(outcome==='transport')held.resolve(Promise.reject(Error('port-lost')));else held.resolve(outcome==='busy'?{ok:false,reason:'ui-release-busy'}:{ok:true});
+ await pending;await drain();
+ assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,['released','scope-change'].includes(outcome)?2:1);
+ assert.equal(f.controllers,outcome==='released'?2:1);if(outcome==='released')assert.equal(f.controllerOptions.initialMode,'reading');
+ const count=f.calls.length;await bridge.releaseCancelledClose({handle:{id:'mount'},binding:old.binding,isCurrent:()=>true});await drain();assert.equal(f.calls.length,count,'old failure cannot loop or reuse release success');
+});

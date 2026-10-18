@@ -380,6 +380,19 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    surface=surfaceFactory({document:doc,createFrameURL:({role})=>runtime.getURL(role+'.html'),hasNativeLayer:()=>adapter.hasNativeLayer()});
    const bridge={
     cancelledCloseReady:()=>{if(enabled&&live(s)&&s.ready&&!s.recoveryDenied)s.busyClose=false;},
+    releaseCancelledClose:async({handle,binding,isCurrent})=>{
+     const quiet=()=>enabled&&live(s)&&s.ready&&s.busyClose===true&&!s.recoveryDenied&&!s.cancelReleaseAttempted&&recoveryRemaining>0&&!s.closing&&!s.wakePending&&!activeWork&&!rawIPC&&!s.identityPending&&!s.capturePending&&!s.restorePending&&!rebindQueued&&!restoreArmed&&upgradeTimer===null&&upgradeIdentity===null;
+     if(!quiet()||typeof isCurrent!=='function'||!isCurrent()||!bindingOK(binding,s.binding)||typeof s.scopeKey!=='string'||!s.scopeKey)return false;
+     s.cancelReleaseAttempted=true;const prior=s.binding,scope=s.scopeKey,closing={interfered:false};s.closing=closing;
+     const intact=()=>enabled&&live(s)&&s.ready&&s.busyClose===true&&!s.recoveryDenied&&s.binding===prior&&s.closing===closing&&!closing.interfered&&bindingOK(prior)&&isCurrent();
+     try{
+      // Only the worker's atomic guarded release permits replacing a producer
+      // that previously reported busy. CHECK/transport failure never suffice.
+      const result=await rpc(s,{v:1,type:'HOST_UI_IDLE_RELEASE',...bindingFields(prior),mountId:handle.id},6000,closing);
+      if(!exactHostRecord(result,['ok'])||result.ok!==true||!intact()||activeWork||rawIPC||recoveryRemaining<1)return false;
+      s.busyClose=false;recoveryRemaining--;rebind(s,'reading',scope);return true;
+     }catch{return false;}finally{if(s.closing===closing)s.closing=null;}
+    },
     renewDormantBinding:({binding,timeoutMs})=>track(async()=>{
      if(!bindingOK(binding,s.binding)||s.controller?.dormantReady?.()!==true)throw Error('stale-dormant-binding');
      const prior=s.binding,scope=s.scopeKey,started=elapsedNow();

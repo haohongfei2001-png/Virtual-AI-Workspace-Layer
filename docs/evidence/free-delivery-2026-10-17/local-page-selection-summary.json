@@ -3218,5 +3218,63 @@
       "tests/host/observed-candidate-mv3-browser.mjs": "dc324485c66160701867512cf5c75d442af095e25d56f312085b4f16750fd984"
     },
     "boundary": "Real profile NOT_RUN this batch; last accounts 403 remains blocker. J2 original failure OPEN; J4 without fresh context NOT_ESTABLISHED. Legacy close/wake test is instrumented and unforced destruction is not natural sleep certification. Scale DEFERRED, Free NOT_RELEASE_READY."
+  },
+  "busyCancelledCloseHandoff20261018": {
+    "base": "d6f19e4c652cb107ad1071171d8ee28179692ef9",
+    "rootCause": "Cancelled busy close waits for both JOIN grants to clear busyClose. Partial JOIN plus surface termination strands same-route recovery. Original CI J2 has insufficient evidence to identify this as its cause.",
+    "fix": "On partial-cancellation suspension destroy both owned frames and stop adapter, retain original worker mount only for one private handoff. Require original live lease, no local work/interference and actual atomic guarded IDLE_RELEASE success before spending existing one-shot budget on fresh same-scope handshake. CHECK, port failure and stale binding never substitute for release.",
+    "before": {
+      "tests": 63,
+      "pass": 52,
+      "fail": 11,
+      "durationMs": 75.275916
+    },
+    "after": {
+      "tests": 195,
+      "pass": 195,
+      "skip": 0,
+      "durationMs": 139.335542,
+      "integration": "L actual content/controller/RPC counters with explicit DOM/runtime/worker doubles; single-side JOIN then suspension, release-before-HELLO ordering, same-scope fresh reading mount"
+    },
+    "mv3Navigation": {
+      "status": "PASS",
+      "checks": {
+        "noScopeBeforeNativeRequest": true,
+        "canonicalSecondContext": true,
+        "nativeRequestToScopeAndDualFrame": true,
+        "nativeTitleVisible": true,
+        "noAutomaticDetailReads": true,
+        "draftPreserved": true,
+        "readingAndUniqueReturn": true,
+        "knownSearch": true,
+        "coldWorkerClearsOldPrivateFrames": true,
+        "noSyntheticContextRecovery": true,
+        "freshNativeContextRebinds": true
+      },
+      "durationMs": 1731.2643750000002,
+      "sourceChangedDuringRun": false
+    },
+    "busyMV3": {
+      "status": "FAIL_BEFORE_HANDOFF_NOT_VERIFIED",
+      "firstFailure": "second-prepared-reading timeout: background target cannot finish intentionally deferred directory scan",
+      "testFix": "Bring only second isolated headless target foreground and assert visible; original deadlines unchanged",
+      "secondFailure": "successful-preflight-gated timeout; original busy release and new handoff not reached. No root claim without transport diagnostics.",
+      "sameFailureReruns": 0
+    },
+    "limitations": [
+      "Expired lease or remaining local JOIN RPC refuses handoff without polling or retry.",
+      "Real failed JOIN timing still requires dedicated MV3 verification.",
+      "J2 historical failure and J4 remain OPEN/NOT_ESTABLISHED.",
+      "Authorized passive live check sees complete native page/editor, no VAIWL frames; zero requests/body/credentials read. Previous accounts403 not retested.",
+      "10k/100k DEFERRED; Free NOT_RELEASE_READY."
+    ],
+    "review": "Independent read-only review of product, joint L test and visibility correction: no identified safety blocker.",
+    "sourceHashes": {
+      "src/host/content-session.mjs": "7ad42ec3ee41c84f4bcad288383480ae5a23d801ddd51d012d81502025971191",
+      "src/host/surface-controller.mjs": "3084f956a6697c95c0f5afc23b196343867f3283eba734773354bb6a329fff76",
+      "tests/host/content-dormant-close.test.mjs": "b517b9d33d2db4e52abf1d0fa449434abdc4a0e91f527ed164aea61ce9ba010d",
+      "tests/host/dormant-close-cancel.test.mjs": "44e4208e4c763761ede58a311991497d7b5e8d2cd27440ff825cc93ac0bf7f50",
+      "tests/host/dormant-busy-cancel-mv3.mjs": "72191bebedebca1e54f8065f39bb0b4ce7cfdd8d8cbceb867ded9c015d07297e"
+    }
   }
 }
