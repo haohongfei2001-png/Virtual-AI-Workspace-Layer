@@ -125,7 +125,8 @@
     "local-shared-piece-idb-candidate-2.json.gz": "cadeff151b20cdae1875477431b104712f43ef06b38ab2979e5c6b1a36d74f9c",
     "local-shared-piece-idb-candidate-3.json.gz": "292af92e91c51a90db0bd3cab4e142f8fc4eec3758a5f9b7f7a87b063deb63e8",
     "local-shared-snapshot-full-node.tap.gz": "fac93ee08b32b1ad71251fd498fe2c1a126041e467f3bfc8ccf959a8f0ee49b2",
-    "local-shared-snapshot-full-node-integrity.json.gz": "f42913afee49e273f9bde3ceb19757957bce0bbb33d0d70794fda21358786582"
+    "local-shared-snapshot-full-node-integrity.json.gz": "f42913afee49e273f9bde3ceb19757957bce0bbb33d0d70794fda21358786582",
+    "local-shared-snapshot-host10k.json.gz": "accfd0b17f938495519b29bb96ab75476c0dd9fab98079855064d8b5dbfbcc1c"
   },
   "followup100k": {
     "sourceCommit": "7c676ecd2e583feb734a6cfc367a3fe43b65961c",
@@ -413,7 +414,7 @@
     }
   },
   "sharedPieceCandidate": {
-    "state": "FULL_NODE_VERIFIED_HOST_CANDIDATE_PENDING",
+    "state": "LOCAL_VERIFIED_LINUX_PENDING",
     "baseline": "a61aee3",
     "mechanism": "Private fully verified deep-frozen bucket snapshot paired only with a private verified root and identical scope/generation/bucket/revision/count/units; every current nextOrdinal checked. Fresh read objects still fully encoded and verified. No authority cached.",
     "realIDB": {
@@ -449,6 +450,101 @@
       "fullPassed": 8305,
       "fullWallSeconds": 249.66543150000507,
       "inputDrift": false
-    }
+    },
+    "sourceCommit": "d96d3453550677814b5d0f8c4c92cdf8bb9e1c64",
+    "host10k": {
+      "status": "PARTIAL_SYS04_NOT_ACCEPTED",
+      "nativeMemberProgress": {
+        "status": "OBSERVED_COMPLETE_INDEX",
+        "revision": 206,
+        "audit": {
+          "status": "PASS_INDEX_AUDIT_ONLY",
+          "requestedRefs": 10000,
+          "distinctRefs": 10000,
+          "distinctProjects": 1,
+          "missingRefs": 0,
+          "unexpectedRefs": 0,
+          "duplicateRefs": 0,
+          "projectMembership": 10000,
+          "nativeNoneObserved": 0,
+          "unknownMembership": 0,
+          "wrongProjectMembership": 0,
+          "wrongNoneMembership": 0,
+          "pages": 21,
+          "revision": 206,
+          "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+          "performanceAcceptance": "NOT_ESTABLISHED"
+        },
+        "stableSamples": 2,
+        "attempts": 137,
+        "remainingMs": 4354.038457999995,
+        "acceptance": "NOT_ESTABLISHED",
+        "scenario": "VISIBLE_NATIVE_READING_BEFORE_RETURN_NOT_IMMEDIATE_RETURN"
+      },
+      "ingestionObservationMs": 32333.043665999998,
+      "projectCardNavigation": {
+        "status": "PASS_NATIVE_MEMBER_AND_UNIQUE_RETURN",
+        "mode": "HREF_NEW_TAB_PRESERVE_CURRENT",
+        "targetId": "60000000-0000-4000-8000-000000000000",
+        "nativeTitle": "原生压力聊天 000000 · 长中文标题与 English mixed 内容用于尾部原名检索及实际可达验证，不代表真实聊天。",
+        "originalDocumentAndEditorPreserved": true,
+        "measurement": "SEPARATE_CORRECTNESS_AFTER_STABLE_INDEX_TIMING"
+      },
+      "measurement": {
+        "status": "MEASURED_AT_STABLE_ADMITTED_INDEX",
+        "performanceAcceptance": "NOT_ESTABLISHED",
+        "samples": {
+          "localExactTailSearchMs": 90.48487499999464,
+          "localBroadSearchFirstScreenMs": 306.396084,
+          "localNextPageMs": 345.1423330000034,
+          "firstPageRefs": 24,
+          "secondPageRefs": 24,
+          "kind": "HOST_LOCAL_SEARCH_AND_PAGINATION_SINGLE_SAMPLES_NOT_P95",
+          "coverage": "TWO_CORRECT_PAGES_NOT_FULL_SEARCH_COVERAGE_OR_ORDER_CERTIFICATION",
+          "timing": "PLAYWRIGHT_WALL_CLOCK_INCLUDING_AUTOMATION_OVERHEAD"
+        },
+        "before": {
+          "status": "PASS_INDEX_AUDIT_ONLY",
+          "requestedRefs": 10000,
+          "distinctRefs": 10000,
+          "distinctProjects": 1,
+          "missingRefs": 0,
+          "unexpectedRefs": 0,
+          "duplicateRefs": 0,
+          "projectMembership": 10000,
+          "nativeNoneObserved": 0,
+          "unknownMembership": 0,
+          "wrongProjectMembership": 0,
+          "wrongNoneMembership": 0,
+          "pages": 21,
+          "revision": 206,
+          "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+          "performanceAcceptance": "NOT_ESTABLISHED"
+        },
+        "after": {
+          "status": "PASS_INDEX_AUDIT_ONLY",
+          "requestedRefs": 10000,
+          "distinctRefs": 10000,
+          "distinctProjects": 1,
+          "missingRefs": 0,
+          "unexpectedRefs": 0,
+          "duplicateRefs": 0,
+          "projectMembership": 10000,
+          "nativeNoneObserved": 0,
+          "unknownMembership": 0,
+          "wrongProjectMembership": 0,
+          "wrongNoneMembership": 0,
+          "pages": 21,
+          "revision": 206,
+          "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+          "performanceAcceptance": "NOT_ESTABLISHED"
+        },
+        "revision": 206
+      },
+      "sourceChangedDuringRun": false,
+      "fixtureChangedDuringRun": false,
+      "manifestChangedDuringRun": false
+    },
+    "hostTimingLimit": "Single current-source correctness sample; 32.33s total ingestion observation does not demonstrate whole Host speedup."
   }
 }

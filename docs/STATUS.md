@@ -4,7 +4,7 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
-- **Shared同事务重复编码候选已验证，Host待验**：真实登记链同一bucket原先至少四次完整编码；采用已有Native的私有不可变快照方式，仍要求私有root与scope/generation/bucket/revision/count/units全匹配、每次检查当前ordinal，新IDB行完整校验，无授权缓存。实际IDB3200+50条完整引用不变，编码220→88；固定AB/BA/AB登记环节中位28.8→25.2ms，六次facts摘要一致，只属局部计数/时间。196定向、20独立快照反例、12护栏变异通过，冻结完整Node8305/8305、零fail/skip/cancel、249.67秒且输入未漂移；独立审查无阻断。首次不可变记录断言及missing-record错误差异已修，失败原件保留；完整Host/Linux/100k尚未由本候选认证。[同版本证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
+- **Shared同事务重复编码候选d96d345本地验证，Linux待验**：真实登记链同一bucket原先至少四次完整编码；采用已有Native的私有不可变快照方式，仍要求私有root与scope/generation/bucket/revision/count/units全匹配、每次检查当前ordinal，新IDB行完整校验，无授权缓存。实际IDB3200+50条完整引用不变，编码220→88；固定AB/BA/AB登记环节中位28.8→25.2ms，六次facts摘要一致，只属局部计数/时间。196定向、20独立快照反例、12护栏变异通过，冻结完整Node8305/8305、零fail/skip/cancel、249.67秒且输入未漂移；独立审查无阻断。首次不可变记录断言及missing-record错误差异已修，失败原件保留；同提交本地原10k双审计rev206/10000正确PROJECT、零UNKNOWN/遗漏/重复/错属，原窗口剩4354ms、测量前后同revision、成员展开与原生返回通过；源/fixture/manifest未漂移。总摄取观察32.33秒，不证明整体Host提速；完整F1/Linux/100k仍待验。[同版本证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
 
 - **a8752ff已正常推送，CI39091870975已完成**：Node及durability job通过；正式10k双完整审计rev207、10000正确PROJECT且零UNKNOWN/遗漏/重复/错属，原窗口剩8058.97ms，17成员展开、测量前后同revision与原生返回通过。总摄取观察26724.09ms，仍单例PARTIAL_SYS04_NOT_ACCEPTED，不作p95或完整Free认证；四job均成功；J4实际23步仍PARTIAL，automaticForegroundRecovery未建立/current-scope-timeout，不能以门禁绿色关闭该关口。100k新诊断仍FAIL，保留尾项7251、完整审计0；128次emit累计18450.8ms，仅1次retry，scan+split约679ms。保留owner样本apply分段约84%，下一定位为共享引用登记回调及排队后事务收尾，不能把累计offset当独立耗时。CPU页采样失败已定位setSamplingInterval超时，跨realm快照UNAVAILABLE且记录有丢弃，不作完整吞吐结论。[同源码原件](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
 
