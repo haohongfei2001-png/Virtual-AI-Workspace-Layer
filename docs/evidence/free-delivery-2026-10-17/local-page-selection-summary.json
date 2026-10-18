@@ -3455,5 +3455,94 @@
     },
     "limit": "Exact previously authorized dedicated target only. Empty composer/no visible generating or attachment guard before single normal reload. Page accounts200 does not prove worker provider success, trusted context, membership, or LIVE_VERIFIED. No response body/token/cookie read or persisted. Previous worker403 remains historical; current worker network not observed. No repeated reload.",
     "next": "Observe actual worker authentication/context path on a bounded authorized opportunity before installing latest candidate or claiming real navigation."
+  },
+  "ingestionIdleExpiry20261018": {
+    "base": "c7f9bf23e972f4037739ec501a3d3fc14e173874",
+    "rootCause": "isIdle consulted only terminal bits. A start without end/cancel could remain busy after the original 30s or scope/profile invalidation unless another isPending call retired it. This is a scheduling hint, not pending IO.",
+    "fix": "After stopped/runs/requests guards, reuse current(entry) for nonterminal hints. Keep tombstones and existing current semantics; no reset of deadline, no cancellation of actual requests, no scope authorization.",
+    "before": {
+      "tests": 10,
+      "pass": 3,
+      "fail": 7,
+      "durationMs": 67.068083
+    },
+    "after": {
+      "tests": 103,
+      "pass": 103,
+      "skip": 0,
+      "durationMs": 89.842458
+    },
+    "package": {
+      "tests": 184,
+      "pass": 184,
+      "skip": 0,
+      "durationMs": 3118.770917
+    },
+    "mv3": {
+      "file": "ingestion-idle-partial.json.gz",
+      "status": "PASS",
+      "sourceChangedDuringRun": false,
+      "elapsedBeforeCleanupMs": 11554.804166,
+      "closeAttemptDriverMs": 162.93433299999924,
+      "scope": "S_INSTRUMENTED LEGACY_OFFLINE foreground partial JOIN recovery; no natural sleep/J4/live certification"
+    },
+    "review": "Independent readonly review accepted; historical expectation that isPending must run first was inconsistent with existing 30s hint validity. Underlying timed-out getFrame remains busy until settled.",
+    "live": {
+      "file": "authorized-worker-context.json.gz",
+      "observation": {
+        "kind": "AUTHORIZED_EXACT_TARGET_WORKER_CONTEXT_DIAGNOSTIC",
+        "bodyRead": false,
+        "credentialsRead": false,
+        "nativeWrites": 0,
+        "refreshed": true,
+        "network": [
+          {
+            "kind": "accounts",
+            "status": 200,
+            "source": "page"
+          },
+          {
+            "kind": "session",
+            "status": 403,
+            "mime": "text/html",
+            "source": "worker"
+          }
+        ],
+        "before": {
+          "ready": true,
+          "conversation": true,
+          "editor": true,
+          "draftEmpty": true,
+          "generating": false,
+          "attachments": false,
+          "frames": 0
+        },
+        "status": "CONTEXT_OR_MOUNT_UNRESOLVED",
+        "workerMessages": [
+          {
+            "type": "HOST_HELLO"
+          },
+          {
+            "type": "HOST_REFRESH"
+          },
+          {
+            "type": "HOST_HELLO"
+          },
+          {
+            "type": "HOST_REFRESH"
+          }
+        ],
+        "after": {
+          "readyState": "complete",
+          "editor": true,
+          "frames": 0,
+          "open": 0,
+          "returnControls": 0
+        }
+      },
+      "conclusion": "Same guarded reload: page accounts200 versus worker session403 HTML. HELLO/REFRESH present, no frames. Current blocker is actual worker fixed session refusal, not merely unobserved account state. Keep explicit unauthorized rejection; no fallback by relabeling403. Request type-only listener removed, worker detached; no response body/token/Cookie read.",
+      "installedCandidate": "Existing viewport-gap candidate; not this new offline idle fix."
+    },
+    "remaining": "Real native Project/conversation navigation/return/search and recovery, original J2/J4/device/manual conditions OPEN; scale DEFERRED."
   }
 }

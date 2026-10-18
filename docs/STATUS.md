@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **过期摄取提示永久占忙已修；真实worker拒绝已定位**：isIdle原先只检查terminal，30秒到期或scope/profile失效后必须另有isPending才能释放调度提示。现先保留stopped/runs/requests硬检查，再复用原current有效性；保留tombstone、同序号不能重开，不取消实际工作或扩大授权。旧10例3PASS/7FAIL；新103定向PASS/0skip/89.842ms，184构建/包边界PASS/3118.771ms；同源码隔离partial恢复PASS、源码未漂移、cleanup前11554.8ms，独审无阻断。当前专用Profile一次草稿保护刷新，准确匹配授权tab并只记录协议type/网络状态：page accounts200，worker session403 HTML，HELLO/REFRESH存在但frame0。明确拒绝不能改称transport失败启用fallback；临时listener已移除，未读正文/凭据、未发送内容。真实context与完整导航仍BLOCKED，原J2/J4/自然休眠未认证，规模DEFERRED。见原证据ingestionIdleExpiry20261018。
+
 - **真实专用Profile最新窄核验：page accounts200，挂载仍未成立**：严格匹配先前授权target；页面complete且原生编辑器为空、无可见生成/附件后仅一次正常刷新。页面accounts返回200，之后原生编辑器仍在、扩展frame/open/return均0。未读响应正文、token、Cookie或保存私人ID/标题；未发送/创建内容。此为page通道，未观察worker认证结果，不能据此关闭原worker403/context问题或宣称LIVE_VERIFIED；也不再笼统称当前所有accounts请求403。原安装候选未更新为最新离线代码。下一关口是区分worker认证/context与挂载阶段，再走真实阅读/返回/搜索/Project闭环。证据authorizedContextRecheck20261018。
 
 - **partial busy-close前台恢复已取得隔离MV3窄证据**：产品代码保持3864d39。定位并修复driver前置条件：content ready不涵盖frame延后RPC（实际捕获UI activeWork=4）；隐藏页目录摄取按设计暂停（最终只剩ingestionPasses忙）；OOPIF须由其根frame.parentId匹配主tab。现等待实际frame读取/恢复写入与worker排空，先完成第二tab导航，再回主tab完成其摄取；不冻结/取消工作，真实CHECK仍可拒绝且不重复close。最终同runner标准和partial两路径PASS/源码未漂移：partial验证真实忙→丢弃一次parent CONFIRM→实际sidebar退出→旧双frame全销毁→原worker原子RELEASE成功→新producer HELLO/verified REFRESH/双新grant→唯一返回；原document/editor/草稿保持。63定向PASS/0skip/70.395ms，独审无阻断。partial准备11119.3ms、close驱动216.7ms、cleanup前总计11551.8ms；标准对应20924.5/216.4/21181.6ms。原6秒产品期限不变；此前无可比计时，不宣称提速。仅LEGACY_OFFLINE/S_INSTRUMENTED前台故障恢复，不认证后台自动恢复/自然休眠/真实宿主/J4；全部中间FAIL保留，原J2不改判。真实accounts403未重测、Project/IME/PAIA等仍OPEN，规模DEFERRED。见原证据busyOwnerForegroundRecovery20261018。

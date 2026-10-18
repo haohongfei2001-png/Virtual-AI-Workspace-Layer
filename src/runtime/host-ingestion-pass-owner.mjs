@@ -46,5 +46,8 @@ export function createHostIngestionPassOwner({handshake,authority,getFrame,profi
   }),{now:elapsedNow,schedule,cancel});}catch{return deny();}finally{attempt.active=false;requests.delete(attempt);}
  }
  function invalidate(predicate){for(const entry of producers.values())if(predicate(entry.frame))entry.terminal=true;for(const attempt of requests)if(predicate({tabId:attempt.sender.tab?.id,documentId:attempt.sender.documentId}))attempt.active=false;}
- return Object.freeze({isIdle:()=>!stopped&&runs===0&&requests.size===0&&![...producers.values()].some(entry=>!entry.terminal),handle,isPending(scopeKey){if(typeof scopeKey!=='string'||!scopeKey||stopped)return false;prune();let pending=false;for(const entry of producers.values())if(entry.scopeKey===scopeKey&&current(entry))pending=true;return pending;},invalidateDocument:documentId=>invalidate(frame=>frame.documentId===documentId),invalidateTab:tabId=>invalidate(frame=>frame.tabId===tabId),stop(){stopped=true;for(const request of requests)request.active=false;requests.clear();producers.clear();}});
+ // A bounded scheduling hint cannot hold idle forever merely because no view
+ // asks isPending again. Retire it through the same validity check, keeping its
+ // tombstone; actual in-flight work above still blocks even after RPC timeout.
+ return Object.freeze({isIdle:()=>!stopped&&runs===0&&requests.size===0&&![...producers.values()].some(entry=>!entry.terminal&&current(entry)),handle,isPending(scopeKey){if(typeof scopeKey!=='string'||!scopeKey||stopped)return false;prune();let pending=false;for(const entry of producers.values())if(entry.scopeKey===scopeKey&&current(entry))pending=true;return pending;},invalidateDocument:documentId=>invalidate(frame=>frame.documentId===documentId),invalidateTab:tabId=>invalidate(frame=>frame.tabId===tabId),stop(){stopped=true;for(const request of requests)request.active=false;requests.clear();producers.clear();}});
 }

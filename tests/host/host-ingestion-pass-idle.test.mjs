@@ -15,7 +15,24 @@ const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve
 for(const outcome of ['resolve','reject'])test('ingestion deadline preserves underlying frame wait '+outcome,async()=>{
  const f=fixture(),g=deferred();f.setFrameRead(()=>g.promise);const p=f.send();await drain();assert.equal(f.owner.isIdle(),false);await f.advance(6000);assert.equal((await p).ok,false);f.owner.invalidateDocument('document_1');assert.equal(f.owner.isIdle(),false);g[outcome](outcome==='resolve'?f.frames.get(1):Error('late'));await drain();assert.equal(f.owner.isIdle(),true);
 });
-test('unfinished ingestion pass blocks idle without pruning expired records',async()=>{
- const f=fixture();assert.equal(f.owner.isIdle(),true);assert.equal((await f.send()).ok,true);assert.equal(f.owner.isIdle(),false);await f.advance(30001);assert.equal(f.owner.isIdle(),false);assert.equal(f.owner.isPending('scope_a'),false);assert.equal(f.owner.isIdle(),true);assert.equal((await f.send('start',2)).ok,true);f.owner.invalidateTab(1);assert.equal(f.owner.isIdle(),true);assert.equal((await f.send('start',3)).ok,true);await f.send('end',3);assert.equal(f.owner.isIdle(),true);f.owner.stop();assert.equal(f.owner.isIdle(),false);
+test('expired scheduling hint releases idle without another pending reader or deleting tombstone',async()=>{
+ const f=fixture();assert.equal(f.owner.isIdle(),true);assert.equal((await f.send()).ok,true);assert.equal(f.owner.isIdle(),false);await f.advance(29999);assert.equal(f.owner.isIdle(),false);await f.advance(1);assert.equal(f.owner.isIdle(),true);assert.equal((await f.send()).ok,false);assert.equal(f.owner.isIdle(),true);assert.equal((await f.send('start',2)).ok,true);f.owner.invalidateTab(1);assert.equal(f.owner.isIdle(),true);assert.equal((await f.send('start',3)).ok,true);await f.send('end',3);assert.equal(f.owner.isIdle(),true);f.owner.stop();assert.equal(f.owner.isIdle(),false);
 });
 test('stopped ingestion never reports idle after pending work settles',async()=>{const f=fixture(),g=deferred();f.setFrameRead(()=>g.promise);const p=f.send();await drain();f.owner.stop();assert.equal(f.owner.isIdle(),false);g.resolve(f.frames.get(1));await p;assert.equal(f.owner.isIdle(),false);});
+
+for(const change of ['grant','scope','profile','lost-binding','elapsed-rollback'])test('idle retires invalid scheduling hint without isPending query: '+change,async()=>{
+ const f=fixture();await f.send();await f.advance(10);assert.equal(f.owner.isIdle(),false);
+ if(change==='grant')f.grants.get(1).id='replacement';
+ else if(change==='scope')f.grants.get(1).scopeKey='replacement';
+ else if(change==='profile')f.profiles.set('surface',{id:'surface',revision:1});
+ else if(change==='lost-binding')f.lost.add(1);
+ else await f.advance(-1,{wall:false});
+ assert.equal(f.owner.isIdle(),true);
+});
+test('one expired hint cannot hide another live pass or an underlying timed-out request',async()=>{
+ const f=fixture();await f.send();await f.advance(20000);await f.send('start',1,2);await f.advance(10000);
+ assert.equal(f.owner.isIdle(),false);await f.send('end',1,2);assert.equal(f.owner.isIdle(),true);
+ const held=deferred();f.setFrameRead(()=>held.promise);const pending=f.send('start',2);await drain();
+ await f.advance(6000);assert.equal((await pending).ok,false);assert.equal(f.owner.isIdle(),false);
+ held.resolve(f.frames.get(1));await drain();assert.equal(f.owner.isIdle(),true);assert.equal((await f.send()).ok,false);
+});
