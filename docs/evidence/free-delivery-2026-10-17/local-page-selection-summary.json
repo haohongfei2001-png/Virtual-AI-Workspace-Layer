@@ -1,0 +1,101 @@
+{
+  "baseCommit": "f3af526bec213caf4df9edc4e4b60af7920ac5fe",
+  "candidateIdentity": "Exact production hashes in browser and A/B JSON; all frozen test inputs in integrity JSON",
+  "rootCause": "Offset page rebuilt and serialized the entire ordered manifest for every page. New selector still reads and verifies every bucket and ordinal, but builds only requested IDs and computes the exact full manifest JSON length; numeric object-key ordering falls back to legacy materialization.",
+  "rejectedAlternative": "header+IDs reduced reads but missed same-revision cross-bucket ordinal corruption. Not used. Original full offset audit, thresholds and double same-revision audits unchanged.",
+  "operationCounts": {
+    "pages": 21,
+    "indexBucketReadsBoth": 5397,
+    "factReadsBoth": 10021,
+    "transactionsBoth": 23,
+    "oldFullManifestEncodings": 21,
+    "oldFullManifestEncodedChars": 16811424,
+    "newFullManifestEncodings": 0,
+    "newStillEncodesIndividualKeys": true,
+    "factsMembershipOrderEqual": true
+  },
+  "actualIDB": {
+    "status": "MEASURED_NOT_HOST_ACCEPTANCE",
+    "browser": "156.0.8078.4",
+    "order": "AB/BA/AB",
+    "baselineMedianMs": 918.9999999403954,
+    "candidateMedianMs": 744.8999999761581,
+    "reductionPercent": 18.944504893963984,
+    "allSeedAndFactsMembershipOrderHashesEqual": true,
+    "scope": "Original 21 offset pages in deterministic 10k IDB; no Host scheduling or writer contention; not Linux/p95 acceptance"
+  },
+  "validation": {
+    "targetedPassed": 82,
+    "fullPassed": 8277,
+    "fullWallSeconds": 191.7591305829701,
+    "previousFullWallSeconds": 204.80550458299695,
+    "inputDrift": false,
+    "guardMutationsKilled": 12,
+    "redMeaning": "Missing new API on baseline; not a semantic defect RED"
+  },
+  "localHost": {
+    "status": "PARTIAL_SYS04_NOT_ACCEPTED",
+    "nativeMemberProgress": {
+      "status": "OBSERVED_COMPLETE_INDEX",
+      "revision": 207,
+      "audit": {
+        "status": "PASS_INDEX_AUDIT_ONLY",
+        "requestedRefs": 10000,
+        "distinctRefs": 10000,
+        "distinctProjects": 1,
+        "missingRefs": 0,
+        "unexpectedRefs": 0,
+        "duplicateRefs": 0,
+        "projectMembership": 10000,
+        "nativeNoneObserved": 0,
+        "unknownMembership": 0,
+        "wrongProjectMembership": 0,
+        "wrongNoneMembership": 0,
+        "pages": 21,
+        "revision": 207,
+        "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+        "performanceAcceptance": "NOT_ESTABLISHED"
+      },
+      "stableSamples": 2,
+      "attempts": 110,
+      "remainingMs": 7876.126625000004,
+      "acceptance": "NOT_ESTABLISHED",
+      "scenario": "VISIBLE_NATIVE_READING_BEFORE_RETURN_NOT_IMMEDIATE_RETURN"
+    },
+    "ingestionObservationMs": 29044.273167,
+    "projectCardNavigation": {
+      "status": "PASS_NATIVE_MEMBER_AND_UNIQUE_RETURN",
+      "mode": "HREF_NEW_TAB_PRESERVE_CURRENT",
+      "targetId": "60000000-0000-4000-8000-000000000000",
+      "nativeTitle": "原生压力聊天 000000 · 长中文标题与 English mixed 内容用于尾部原名检索及实际可达验证，不代表真实聊天。",
+      "originalDocumentAndEditorPreserved": true,
+      "measurement": "SEPARATE_CORRECTNESS_AFTER_STABLE_INDEX_TIMING"
+    },
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "manifestChangedDuringRun": false
+  },
+  "localHostTimingLimit": "Targeted Node validation overlapped initial seconds; no before/after Host speedup claim.",
+  "remaining": [
+    "Current candidate Linux verification pending.",
+    "One f3af526 Linux10k pass does not close historical instability or full F1.",
+    "J4 peer auto recovery lacks credible current context after worker receipt loss.",
+    "Real Profile connection, physical IME, PAIA, cross-device and full G/U gates remain incomplete."
+  ],
+  "rawSHA256": {
+    "local-selection-native-pagination-comparison.mjs.gz": "55ed2a2ce21fbda589fc59e693bf8a93e16e95d84737ee797e0272a40b5884f1",
+    "local-selection-native-pagination-comparison.json.gz": "addde03eb6a87be48f6fea2e4eabce689459a1a1e39d23f394397044f786316e",
+    "local-selection-page-selector-count.mjs.gz": "42c90a4c0646b4568969c0d64e6dad9ed958078346d730761217a73aa06af296",
+    "local-selection-page-old-count.json.gz": "126d9738ba7588c4421610c41ac0f5889dcc229c7ea9fa9c19356b46a864b855",
+    "local-selection-page-new-count.json.gz": "0c5dad8a4cf7e3aeee93d51c81b78cf42bf2ddc641f24b655b8157d2bc79e610",
+    "local-selection-free-native-selector-idb-ab.mjs.gz": "c87c85f411367aa6697429ec3ad9fbb8cfe00aacedd60692d51f6fabe09951cf",
+    "local-selection-free-native-selector-idb-ab.json.gz": "879fff159f89c0bb7f4d235662d13fa4874acf5e2caa30b37ab65859d26521bc",
+    "local-selection-page-selection-10k.json.gz": "2d866af66d15c9ab8a223c1f156d88500885f75bb309ecaae47d6d484d838526",
+    "local-selection-page-selection-final-targeted.tap.gz": "6b271a2a80f5e7bb5312775d9c3be3c0b804a0a78fa7e040143d1f98b6a8055a",
+    "local-selection-page-selection-guards.json.gz": "3c65c86a9b0a8499bffb087be25002cb98b4eae3474058aa5052981ddf7548e8",
+    "local-selection-native-index-page-selection-red.tap.gz": "f300db3d8b4d02caee5d57332cb0a3ea9cfcc4ae408177c281d872ea8c9fdd4b",
+    "local-selection-native-index-page-selection-green.tap.gz": "2e4886f17bcc641e063f79d571044b14492d481caead7a6e35dac6db61f3a50e",
+    "local-selection-full-node.tap.gz": "ad9bf78cd4cade505c02e2fee04f618177ec426df5022a73a9cb1312c20e4cc0",
+    "local-selection-full-node-integrity.json.gz": "7e41a26378f2e825d42486fdfc799ffe9a953535d8022af9f863271600d1203b"
+  }
+}

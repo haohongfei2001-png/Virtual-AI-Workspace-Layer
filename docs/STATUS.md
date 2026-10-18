@@ -4,6 +4,10 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **原offset全审计成本已减少，门槛不变**：每页保留全部bucket、scope/root/marker、跨bucket ordinal、容量与完整manifest尺寸校验，仅避免构造/编码整个目录；numeric合法ID回退旧顺序。header＋IDs捷径在同revision损坏反例中漏检，已否决。实际10k读取次数不减，21次完整目录编码降至0（仍逐key算尺寸）；所有facts/成员/顺序一致。隔离真实IDB AB/BA/AB中位919.0→744.9ms，约18.9%改善，仅该读取环节，非Host/p95/Linux认证。冻结Node8277/8277、191.76秒、输入未漂移，12护栏变异全KILLED；本地原10k完整双审计rev207/10000正确PROJECT、剩7876ms，展开/测量前后同revision/原生返回通过。此候选远端待验，不覆盖f3af526或历史FAIL。[同源码证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
+
+- **f3af526 CI39089811164原正式10k完成一例Linux闭环**：四job通过；10000正确PROJECT、零UNKNOWN/遗漏/重复/错属，双审计rev206后原窗口剩8387.63ms，17成员展开、测量前后同revision、原生导航与唯一返回通过；总摄取观察26947.92ms。未降低门槛、未重跑挑绿。仍PARTIAL_SYS04_NOT_ACCEPTED，单例不证明稳定性/p95/完整F1，原FAIL保留。J4仍23步PARTIAL、automatic foreground NOT_ESTABLISHED/current-scope-timeout；原门禁绿色不冒充恢复通过。此CI不含后续分页候选。[原证据](evidence/free-delivery-2026-10-17/local-ci39089811164-summary.json)。
+
 - **B4.F/UI-11自动关闭闭环候选已落地**：原有休眠release/wake引擎缺少产品自动入口；现复用原链，在已证明C3配置、双surface关闭ACK、队列排空与明确clear输入风险后提供一次机会。busy/失败不循环重试，默认真实profile和C2-only不启用；无scope扩权。独立RED同时发现风险token观察失效后可复活，现永久锁存失效。冻结Node8256/8256、零fail/skip/cancel，实测204.81秒（上批108.45秒，不声称提速），输入未漂移；12护栏变异全KILLED。隔离Chrome156自动路径不用测试关闭API，清空两frame私有根，脱离调试的60秒窗口内原worker销毁，唯一返回后新worker与原frame/editor恢复，3项观察通过；naturalWorkerSleep仍NOT_ESTABLISHED，真实宿主NOT_RUN，不等于完整UI-11/J4或Free验收。[精确证据](evidence/free-delivery-2026-10-17/local-automatic-dormancy-summary.json)。
 
 - **48dd920新CI39087927722已结束FAIL**：Node/导航旅程通过，J4原门禁通过但仍23步PARTIAL，自动foreground失败、新原生hop恢复通过。正式10k已完成rev206/10000正确PROJECT双完整审计、零UNKNOWN/遗漏，但原总窗口仅剩819ms，随后project-card-member-rendering超时，未进入measurement；诊断rev205双审计后仅剩58ms、返回阶段失败，不替代正式结果。不同于上次PENDING_MEMBER/audit0，本次已收齐并审计，但整个旅程仍未过；下一步减少摄取/审计/返回链实际耗时，不延长预算。[本次原证据](evidence/free-delivery-2026-10-17/local-ci39087927722-summary.json)。

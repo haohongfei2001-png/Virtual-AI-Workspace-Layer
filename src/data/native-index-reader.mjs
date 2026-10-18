@@ -1,4 +1,4 @@
-import {validateNativeIndexRoot,snapshotNativeIndexPiece,materializeNativeVersionIndex,nativeIndexBucket,nativeIndexKey} from './native-version-index.mjs';
+import {validateNativeIndexRoot,snapshotNativeIndexPiece,materializeNativeVersionIndex,selectNativeVersionIndexPage,nativeIndexBucket,nativeIndexKey} from './native-version-index.mjs';
 import {NATIVE_PARTITION_FORMAT} from './native-partitions.mjs';
 import {id} from './state.mjs';
 /** One live IDB transaction, one validated root. Nothing survives this reader.
@@ -30,11 +30,13 @@ export function createNativeIndexReader(store,root,scope,fail,ownerGuard=null){
  function lookup(kind,key,done){
   if(failed)return;try{if(!['projects','refs'].includes(kind))throw Error('invalid-native-index-kind');id(key);bucket(kind,nativeIndexBucket(key),piece=>done(piece?.versions[key]));}catch(error){reject(error);}
  }
- function all(done){
+ function collect(done){
   if(failed)return;const entries=['projects','refs'].flatMap(kind=>Object.keys(root[kind]).map(key=>[kind,key]));let remaining=entries.length;
-  const finish=()=>{if(failed)return;try{const complete=materializeNativeVersionIndex(root,scope,[...records.values()]);manifest.projects=complete.projects;manifest.refs=complete.refs;done(manifest);}catch(error){reject(error);}};
+  const finish=()=>{if(failed)return;try{done([...records.values()]);}catch(error){reject(error);}};
   if(!remaining){finish();return;}
   for(const [kind,key] of entries)bucket(kind,key,()=>{if(!--remaining)finish();});
  }
- return {root,manifest,records,lookup,all,readBucket:bucket};
+ function all(done){collect(rows=>{const complete=materializeNativeVersionIndex(root,scope,rows);manifest.projects=complete.projects;manifest.refs=complete.refs;done(manifest);});}
+ function select(offset,limit,done){collect(rows=>done(selectNativeVersionIndexPage(root,scope,rows,offset,limit)));}
+ return {root,manifest,records,lookup,all,select,readBucket:bucket};
 }

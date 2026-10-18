@@ -54,6 +54,8 @@ B1–B5、C1–C5可独立部分及F1已有代码与原范围的合成Chrome/IDB
 
 J4定位必须区分主tab与失败peer的证据归属；独立GET200/旧reason/其他tab ready不能代替该peer新receipt、新grant与VIEW。现有失败后检查选择实际失败目标，保持原旅程和认证边界；当前实测与未闭合窗口见STATUS。 已确证的旧HTTP尾事件只关闭对应receipt竞态，不等同peer自动恢复。完整审计的scope键扫描可在同事务分批，但不得提前选scope或减少全成员/双revision检查；小幅观察器节省不作为跨环境10k关口完成依据。
 
+B1/F1 offset分页优化必须逐页保留全目录bucket和跨bucket ordinal校验、完整尺寸上限与原顺序，不能用只在首次HEADER验证替代后续完整性。仅减少重复目录构造，原完整成员审计及30秒总窗口不变；真实IDB局部改善不外推Host/p95，数值ID保持legacy Object.keys兼容。
+
 B4.F/UI-11自动关闭继续复用现有prepare→worker检查→双frame清空ACK→release→新授权wake链。只在已有C3能力配置且非C2-only、已确认open→closed、明确clear输入风险与队列排空时提供一次机会；busy/失败消耗机会，不新增周期重试或scope开关。真实未知风险保持拒绝，离线销毁/唤醒观察不等于自然休眠原因、真实Profile或完整UI-11认证。
 
 B2.F2取消重发按“浏览器未确认终态→有界认证operation读回→仅已确认failed/cancelled解除旧intent”继续验证；网络ERR_FAILED自身不证明取消，不授权重发或ACK。此loopback重建机制不自动开放生产profile。

@@ -174,7 +174,7 @@ export class NativeRepository {
               if(JSON.stringify(result).length>16*1024*1024)fail(Error('native-page-too-large'));
             },fail,lookup);
             if(ids)load(reader.manifest,ids.projects,ids.refs,reader.lookup);
-            else reader.all(manifest=>{const projects=Object.keys(manifest.projects),refs=Object.keys(manifest.refs);load(manifest,projects.slice(offset,offset+limit),refs.slice(Math.max(0,offset-projects.length),Math.max(0,offset+limit-projects.length)));});
+            else reader.select(offset,limit,selected=>load(reader.manifest,selected.projects,selected.refs,reader.lookup));
             return;
           }
           if (!isNativePartitioned(payload)) {

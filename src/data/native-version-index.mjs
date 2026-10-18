@@ -136,6 +136,40 @@ export function materializeNativeVersionIndex(root,scope,records){
 
  if(byKey.size!==expected)throw Error('unexpected-native-index-record');validateNativeManifest(manifest,scope);return manifest;
 }
+/** Offset-page selection still validates every directory bucket and ordinal.
+ * Avoid constructing/stringifying the entire legacy manifest for each page.
+ * Numeric object keys retain their historical Object.keys ordering via fallback.
+ */
+export function selectNativeVersionIndexPage(root,scope,records,offset,limit){
+ if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>5000)throw Error('invalid-native-page');
+ root=snapshotNativeIndexRoot(root,scope);
+ const byKey=new Map();for(const record of records){if(byKey.has(record.key))throw Error('duplicate-native-index-record');byKey.set(record.key,record);}
+ const selected={projects:[],refs:[]};let expected=0,base=0,numeric=false;
+ // Empty maps retain the exact remaining manifest fields. All valid versions
+ // are positive safe integers, so their JSON representation is String(version).
+ let length=JSON.stringify({...root,format:NATIVE_PARTITION_FORMAT,projects:{},refs:{}}).length;
+ for(const kind of kinds){
+  const buckets=Object.keys(root[kind]),count=buckets.reduce((sum,b)=>sum+root[kind][b].count,0),seen=new Uint8Array(count);
+  const start=Math.min(count,Math.max(0,offset-base)),end=Math.min(count,Math.max(0,offset+limit-base));
+  selected[kind]=new Array(Math.max(0,end-start));length+=Math.max(0,count-1);
+  for(const bucket of buckets){
+   expected++;const pointer=root[kind][bucket],physicalKey=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision);
+   const piece=verifyNativeIndexPiece(byKey.get(physicalKey),root,kind,bucket),names=Object.keys(piece.versions);
+   for(let i=0;i<names.length;i++){
+    const key=names[i],ordinal=piece.ordinals[i];
+    if(ordinal>=count||seen[ordinal])throw Error('invalid-native-index-order');seen[ordinal]=1;
+    const n=Number(key);if(Number.isInteger(n)&&n>=0&&n<4294967295&&String(n)===key)numeric=true;
+    length+=JSON.stringify(key).length+1+String(piece.versions[key]).length;
+    if(ordinal>=start&&ordinal<end)selected[kind][ordinal-start]=key;
+   }
+  }
+  if(seen.some(value=>value!==1))throw Error('invalid-native-index-order');base+=count;
+ }
+ if(byKey.size!==expected)throw Error('unexpected-native-index-record');
+ if(length>16*1024*1024)throw Error('native-manifest-too-large');
+ if(numeric){const manifest=materializeNativeVersionIndex(root,scope,records),projects=Object.keys(manifest.projects),refs=Object.keys(manifest.refs);return {projects:projects.slice(offset,offset+limit),refs:refs.slice(Math.max(0,offset-projects.length),Math.max(0,offset+limit-projects.length))};}
+ return selected;
+}
 /** Copy-on-write replacement of touched buckets only. Unchanged pointers survive.
  * No caller-provided count is trusted. No deletes: native known refs remain reachable.
  */
