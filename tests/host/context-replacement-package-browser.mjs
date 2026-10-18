@@ -44,7 +44,7 @@ if(dormantMutant){
 }
 if(transportMutant){
  const path=join(built.unpacked,'src/host/content-session.mjs'),original=await readFile(path,'utf8');
- const anchor="    if(enabled&&live(s)&&exactHostRecord(result,['ok','reason'])&&result.ok===false&&result.reason==='invalid-host-document'&&typeof s.scopeKey==='string'&&s.scopeKey&&!s.recoveryDenied&&s.busyClose!==true&&recoveryRemaining>0){\n     recoveryRemaining--;rebind(s,null,s.scopeKey);return;\n    }\n";
+ const anchor="    if(exactHostRecord(result,['ok','reason'])&&result.ok===false&&result.reason==='invalid-host-document'&&recoverTransport())return;\n";
  assert.equal(original.split(anchor).length,2,'transport recovery mutation must remove exactly its production branch');mutantSession=original.replace(anchor,'');await writeFile(path,mutantSession);
 }
 const C='33333333-3333-4333-8333-333333333333',scope=j2JourneyProfile('MODERN').scope,scopeKey=JSON.stringify([scope.provider,scope.accountId,scope.organizationId]);

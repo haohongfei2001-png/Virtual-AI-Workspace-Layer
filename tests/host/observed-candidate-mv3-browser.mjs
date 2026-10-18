@@ -45,6 +45,23 @@ try{
  const sidebar=page.frames().find(f=>f.url()==='chrome-extension://'+id+'/sidebar.html');await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
  await workspace.getByRole('searchbox',{name:'已知聊天查找输入'}).fill('Native A');await workspace.locator('a[data-ref-id]').filter({hasText:'Native A'}).waitFor({timeout:10000});report.checks.knownSearch=true;
  assert.equal(await page.locator('textarea').inputValue(),'fixture draft');assert.equal(report.requests.filter(r=>r.path==='/backend-api/conversations/'+C).length,1);
+ // C2-only cold recovery must wait for fresh native context. This is not J4
+ // automatic foreground recovery and must never be counted as that gate.
+ const oldFrames=page.frames().filter(f=>f.url().startsWith('chrome-extension://'+id+'/'));
+ const versions=[],lifecycle=await context.newCDPSession(page);lifecycle.on('ServiceWorker.workerVersionUpdated',e=>versions.push(...(e.versions??[])));
+ await lifecycle.send('ServiceWorker.enable');
+ const waitVersion=async(predicate)=>{const end=performance.now()+10000;while(performance.now()<end){const v=versions.find(predicate);if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('observed-worker-version-timeout');};
+ const running=await waitVersion(v=>v.scriptURL==='chrome-extension://'+id+'/extension/worker.mjs'&&v.runningStatus==='running');const start=versions.length;
+ await lifecycle.send('ServiceWorker.stopWorker',{versionId:running.versionId});await waitVersion((v,i)=>i>=start&&v.versionId===running.versionId&&v.runningStatus==='stopped');
+ await page.waitForFunction(()=>document.querySelectorAll('iframe[src^="chrome-extension:"]').length===0,null,{timeout:12000});
+ assert(oldFrames.every(f=>f.isDetached()));assert.equal(await page.locator('textarea').inputValue(),'fixture draft');assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);
+ report.checks.coldWorkerClearsOldPrivateFrames=true;
+ assert.equal(report.requests.filter(r=>r.path==='/backend-api/conversations/'+C).length,1);report.checks.noSyntheticContextRecovery=true;
+ await page.evaluate(async c=>{await fetch('/backend-api/conversations/'+c+'?num_turns=10&include_has_versions=true',{headers:{'ChatGPT-Account-Id':'account-host-team'}});},C);
+ await page.waitForFunction(()=>document.querySelectorAll('iframe[src^="chrome-extension:"]').length===2,null,{timeout:12000});
+ const replacement=page.frames().find(f=>f.url()==='chrome-extension://'+id+'/workspace.html');assert(replacement&&!oldFrames.includes(replacement));
+ await replacement.getByText('Native A',{exact:true}).waitFor({state:'attached',timeout:10000});assert.equal(await page.locator('textarea').inputValue(),'fixture draft');
+ report.checks.freshNativeContextRebinds=true;report.recoveryQualification='C2_FRESH_REQUEST_ONLY_NOT_J4';
  report.status='PASS';
 }catch(error){report.status='FAIL';report.error=String(error.stack);process.exitCode=1;}
 finally{

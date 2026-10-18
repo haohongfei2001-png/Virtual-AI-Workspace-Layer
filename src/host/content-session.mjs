@@ -219,11 +219,18 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   s.focus=()=>{
    if(doc.visibilityState!=='visible'||!foregroundArmed||!s.ready||!live(s))return;
    if(foregroundPending)return;foregroundArmed=false;foregroundPending=true;
+   const recoverTransport=()=>{
+    if(!enabled||!live(s)||typeof s.scopeKey!=='string'||!s.scopeKey||s.recoveryDenied||s.busyClose===true||recoveryRemaining<1)return false;
+    recoveryRemaining--;rebind(s,null,s.scopeKey);return true;
+   };
    void track(()=>rpc(s,{v:1,type:'HOST_FOCUS',clientId,seq:++seq,...bindingFields(s.binding)}).then(result=>{
-    if(enabled&&live(s)&&exactHostRecord(result,['ok','reason'])&&result.ok===false&&result.reason==='invalid-host-document'&&typeof s.scopeKey==='string'&&s.scopeKey&&!s.recoveryDenied&&s.busyClose!==true&&recoveryRemaining>0){
-     recoveryRemaining--;rebind(s,null,s.scopeKey);return;
-    }
+    if(exactHostRecord(result,['ok','reason'])&&result.ok===false&&result.reason==='invalid-host-document'&&recoverTransport())return;
     if(result?.ok!==true||result.state!=='verified'||result.scopeKey!==s.scopeKey)throw Error('foreground-scope-unverified');
+   },()=>{
+    // A lost port is not an identity decision. Discard the old session and use
+    // the existing one-shot HELLO + fresh same-scope authorization path. No
+    // stored receipt, old grant or extra retry budget is made authoritative.
+    if(!recoverTransport())throw Error('foreground-transport-unavailable');
    }).catch(()=>{if(live(s)){s.recoveryDenied=true;contextPending();}}).finally(()=>{foregroundPending=false;s.focus();})).catch(()=>{});
   };
   s.visibility=()=>{if(doc.visibilityState==='hidden')foregroundArmed=true;else s.focus();};
@@ -306,8 +313,12 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    });
   };runtime.onMessage.addListener(s.listener);
   try{
-   const hello=await rpc(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq});if(contextRecovery===true&&exactHostRecord(hello,['ok','reason'])&&hello.ok===false&&hello.reason==='invalidated-during-check')throw Error('context-handshake-superseded');if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
-   const auth=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});if(auth?.state!=='verified')throw Error('scope-not-verified');if(expectedScope!==null&&auth.scopeKey!==expectedScope)throw Error('recovery-scope-changed');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
+   // A C2 transport failure withdraws capabilities but keeps the passive
+   // context listener eligible for a later genuine native READY notification.
+   // This helper neither retries nor handles explicit negative responses.
+   const handshake=message=>rpc(s,message).catch(()=>{throw Error('context-handshake-transport-unavailable');});
+   const hello=await handshake({v:1,type:'HOST_HELLO',clientId,seq:++seq});if(contextRecovery===true&&exactHostRecord(hello,['ok','reason'])&&hello.ok===false&&hello.reason==='invalidated-during-check')throw Error('context-handshake-superseded');if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
+   const auth=await handshake({v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});if(auth?.state!=='verified')throw Error('scope-not-verified');if(expectedScope!==null&&auth.scopeKey!==expectedScope)throw Error('recovery-scope-changed');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
    if(learnedScope!==s.scopeKey||learnedDocument!==s.binding.browserDocumentId)clearLearned();learnedScope=s.scopeKey;learnedDocument=s.binding.browserDocumentId;
    recentId(s);
    let surface;const adapter=s.adapter=adapterFactory({document:doc,onIdleHint:()=>requestAutomaticIdle(s),onNativePrepare:producer=>nativePrepare(s,producer),priorityConversationId:()=>recentId(s),onOldSendOperation:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding))return;void send({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding)||s.url!==origin+'/')return;void send({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,
@@ -419,7 +430,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // before the adapter has installed its route listeners. The old reply
     // remains unusable; bind the new route instead of disabling the document.
     // Same-route failures still stop, and replaced/stopped sessions cannot retry.
-    if(enabled&&doc.location.href!==s.url)rebind(s);else if(contextRecovery===true&&contextResumeAllowed&&['scope-not-verified','context-handshake-superseded'].includes(error?.message))contextPending();else stop();
+    if(enabled&&doc.location.href!==s.url)rebind(s);else if(contextRecovery===true&&contextResumeAllowed&&['scope-not-verified','context-handshake-superseded','context-handshake-transport-unavailable'].includes(error?.message))contextPending();else stop();
    }
    return null;
   }

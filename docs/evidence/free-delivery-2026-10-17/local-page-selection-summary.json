@@ -3071,5 +3071,69 @@
     ],
     "scale": "10k/100k DEFERRED",
     "release": "NOT_RELEASE_READY"
+  },
+  "contextTransportRecovery20261018": {
+    "rootCauses": [
+      "HOST_FOCUS transport rejection or timeout incorrectly marked recoveryDenied, blocking existing one-shot same-scope fresh HELLO.",
+      "Actual isolated MV3 cold HELLO failed at worker attachment with Receiving end does not exist. begin.catch stopped the content and cleared contextResumeAllowed; 18ms later matching native GET receipt emitted READY but content ignored it."
+    ],
+    "fix": [
+      "Only RPC transport rejection uses original one-shot same-scope fresh verification; explicit identity denial stays terminal.",
+      "C2 HELLO/REFRESH transport rejection withdraws all capabilities and passively awaits a genuine native READY; no timer retry, old grant reuse, fake receipt or budget increase."
+    ],
+    "before": {
+      "targetedTests": 10,
+      "fail": 6,
+      "pass": 4,
+      "mv3FailDurationMs": 13480.651292,
+      "failedStage": "fresh-native-context-rebind"
+    },
+    "after": {
+      "tests": 128,
+      "pass": 128,
+      "skip": 0,
+      "durationMs": 265.725333,
+      "mv3": {
+        "status": "PASS",
+        "checks": {
+          "noScopeBeforeNativeRequest": true,
+          "canonicalSecondContext": true,
+          "nativeRequestToScopeAndDualFrame": true,
+          "nativeTitleVisible": true,
+          "noAutomaticDetailReads": true,
+          "draftPreserved": true,
+          "readingAndUniqueReturn": true,
+          "knownSearch": true,
+          "coldWorkerClearsOldPrivateFrames": true,
+          "noSyntheticContextRecovery": true,
+          "freshNativeContextRebinds": true
+        },
+        "durationMs": 1724.1369160000002,
+        "sourceChangedDuringRun": false,
+        "recoveryQualification": "C2_FRESH_REQUEST_ONLY_NOT_J4"
+      }
+    },
+    "sourceHashes": {
+      "src/host/content-session.mjs": "ec2db1e71a5f7d5107f76696942a72e5fb95fe11dc546767d3077edeee3659e3",
+      "tests/host/content-foreground-document-recovery.test.mjs": "8a6b942243544e54656ecb86c353d052ee014ef487a845989f8a4a289f2cc3ff",
+      "tests/host/observed-candidate-mv3-browser.mjs": "792be1564f5b9220e6cd14e9a990283db9f23915e6b07d026e63af086d97c33c",
+      "tests/host/content-foreground-native-focus-race.test.mjs": "8ffe57f7d6ca50a31fd886e66c36e306d81f05477525f007183b3bcf6cb0e887",
+      "tests/host/context-replacement-package-browser.mjs": "fa163d464cfa5bc58b7fb9a9fed36e7dddbe9a211b307528d7ad942c48c94638"
+    },
+    "diagnosticBoundary": "Temporary isolated package enum traces only; no startup evaluation to wake new worker. Failed original timing/threshold retained. Diagnostic instrumentation is not a release candidate.",
+    "review": "Independent review passed. Added REFRESH rejection counterexample requested by reviewer. Mutation negative controls preserved.",
+    "history": "Original CI39101646460 J2 remains OPEN: missing startup evidence does not establish same cause or anchor loss. Earlier node harness failed because exact mutation anchor moved; updated same negative-control branch without deleting assertions.",
+    "live": "NOT_RUN: prior real accounts endpoint403 remains unresolved; no repeated private-profile requests this slice.",
+    "J4": "NOT_ESTABLISHED; C2 fresh-native-GET recovery is explicitly not automatic foreground recovery without new context.",
+    "evidence": [
+      "context-port-original.tap.gz",
+      "context-port-final.tap.gz",
+      "observed-cold-recovery-fail.json.gz",
+      "observed-cold-recovery-diagnostic.json.gz",
+      "observed-cold-recovery-diagnostic.mjs.gz",
+      "observed-cold-recovery-final.json.gz"
+    ],
+    "scale": "10k/100k DEFERRED",
+    "release": "NOT_RELEASE_READY"
   }
 }

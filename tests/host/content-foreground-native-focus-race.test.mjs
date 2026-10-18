@@ -25,7 +25,7 @@ const {sendFixture,bodyAck,settle}=await fixtureModule('./adapter-recovery-prepa
 
 // Apply exactly the browser negative control's one-branch mutation in memory.
 const sessionURL=new URL('../../src/host/content-session.mjs',import.meta.url),original=await readFile(sessionURL,'utf8');
-const anchor="    if(enabled&&live(s)&&exactHostRecord(result,['ok','reason'])&&result.ok===false&&result.reason==='invalid-host-document'&&typeof s.scopeKey==='string'&&s.scopeKey&&!s.recoveryDenied&&s.busyClose!==true&&recoveryRemaining>0){\n     recoveryRemaining--;rebind(s,null,s.scopeKey);return;\n    }\n";
+const anchor="    if(exactHostRecord(result,['ok','reason'])&&result.ok===false&&result.reason==='invalid-host-document'&&recoverTransport())return;\n";
 assert.equal(original.split(anchor).length,2,'remove exactly the foreground invalid-document recovery branch');
 const {createHostContentSession:mutantFactory}=await importSource(original.replace(anchor,''),sessionURL);
 

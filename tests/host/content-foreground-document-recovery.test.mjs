@@ -17,7 +17,7 @@ async function fixture(t,{nativeAfterRestart=true,clocked=false,contentClock=fal
  const e=Object.fromEntries(['onMessage','onConnect','onCommitted','onHistoryStateUpdated','onRemoved','onSendHeaders','onCompleted','onErrorOccurred','onBeforeRedirect'].map(n=>[n,event()]));
  const contentEvents=event(),windowEvents=new Map(),docEvents=new Map(),calls=[],sent=[],fetches=[],controllers=[];
  const sender={id:'ext',tab:{id:7,incognito:false},frameId:0,documentId:'doc',documentLifecycle:'active',url};
- let restoreCalls=0,snippetReady=false;let actual={documentId:'doc',url,documentLifecycle:'active',frameType:'outermost_frame',parentFrameId:-1},worker,bootstrap,requestId=0,principal='offline_self',nativeContext='team',completionPatch={},holdFocus=null,holdHello=null,afterFocus=null;
+ let restoreCalls=0,snippetReady=false;let actual={documentId:'doc',url,documentLifecycle:'active',frameType:'outermost_frame',parentFrameId:-1},worker,bootstrap,requestId=0,principal='offline_self',nativeContext='team',completionPatch={},holdFocus=null,holdHello=null,holdRefresh=null,afterFocus=null;
  const document={visibilityState:'visible',location:{origin,href:url},draft:'UNSENT',addEventListener:(n,f)=>docEvents.set(n,f),removeEventListener:(n,f)=>{if(docEvents.get(n)===f)docEvents.delete(n);},defaultView:{addEventListener:(n,f)=>windowEvents.set(n,f),removeEventListener:(n,f)=>{if(windowEvents.get(n)===f)windowEvents.delete(n);}}};
  const chrome={runtime:{id:'ext',getURL:p=>'chrome-extension://ext/'+p,getContexts:async()=>[],onMessage:e.onMessage,onConnect:e.onConnect},webNavigation:{getFrame:async()=>actual,onCommitted:e.onCommitted,onHistoryStateUpdated:e.onHistoryStateUpdated},tabs:{get:async id=>({id,incognito:false}),onRemoved:e.onRemoved,sendMessage:async(tab,m,target)=>{sent.push(m.type);assert.equal(target.documentId,'doc');if(m.type==='HOST_CONTEXT_ASSOCIATE')return {challenge:m.challenge,actualURL:m.actualURL,conversationId:m.conversationId,association:'explicit-body-id'};if(m.type==='HOST_CONTEXT_PENDING')session.contextPending();if(m.type==='HOST_CONTEXT_READY')void session.contextReady();return {ok:true};}},webRequest:Object.fromEntries(['onSendHeaders','onCompleted','onErrorOccurred','onBeforeRedirect'].map(n=>[n,e[n]]))};
  const indexedDB=new MockIDBFactory();
@@ -25,11 +25,11 @@ async function fixture(t,{nativeAfterRestart=true,clocked=false,contentClock=fal
  const nativeGET=async()=>{const d={tabId:7,frameId:0,documentId:actual.documentId,documentLifecycle:'active',initiator:origin,type:'xmlhttprequest',method:'GET',requestId:'request_'+(++requestId),url:origin+'/backend-api/conversation/'+C,requestHeaders:[{name:'Chatgpt-Account-Id',value:nativeContext}]};e.onSendHeaders.emit(d);await settle();e.onCompleted.emit({...d,statusCode:200,fromCache:false,...completionPatch});await settle();};
  const makeBootstrap=()=>bootstrap=createHostBrowserBootstrap({chrome,origin,scopeProfile:profile});
  const startWorker=()=>worker=createHostWorkerRuntime({chrome,indexedDB,origin,scopeProfile:profile,browserBootstrap:bootstrap,provider:provider()});
- const runtime={id:'ext',getURL:chrome.runtime.getURL,onMessage:contentEvents,sendMessage:async m=>{const response=await worker.service.handle(m,sender);calls.push({type:m.type,response});if(m.type==='HOST_FOCUS'&&holdFocus){await holdFocus;}if(m.type==='HOST_HELLO'&&holdHello){await holdHello;}if(m.type==='HOST_FOCUS'&&afterFocus)afterFocus();return response;}};
+ const runtime={id:'ext',getURL:chrome.runtime.getURL,onMessage:contentEvents,sendMessage:async m=>{const response=await worker.service.handle(m,sender);calls.push({type:m.type,response});if(m.type==='HOST_FOCUS'&&holdFocus){await holdFocus;}if(m.type==='HOST_HELLO'&&holdHello){await holdHello;}if(m.type==='HOST_REFRESH'&&holdRefresh){await holdRefresh;}if(m.type==='HOST_FOCUS'&&afterFocus)afterFocus();return response;}};
  const session=createHostContentSession({document,runtime,contextRecovery:true,...contentTiming,adapterFactory:()=>({inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,snippetReady:()=>snippetReady,restoreSnippet:()=>{restoreCalls++;return {ok:true};}}),surfaceFactory:()=>({}),plansFactory:()=>({}),controllerFactory:options=>{let active=false;const c={options,start:async context=>{c.binding=context.binding;const r=await options.bridge.registerMount({handle:{id:'mount_'+controllers.length,regionEpoch:1}});assert.equal(r.ok,true,JSON.stringify(r));active=true;return {id:'mount_'+controllers.length};},stop(){active=false;},presentationMode:()=>options.initialMode,showWorkspace:()=>active,showReading:()=>active};controllers.push(c);return c;}});
  t.after(()=>{session.stop();worker?.stop();bootstrap?.stop();});
  makeBootstrap();await nativeGET();startWorker();assert(await session.start());assert.equal(session.showWorkspace(),true);const initialScope=worker.service.authority.scopeFor({tabId:7,frameId:0,documentId:'doc',actualURL:url,documentLifecycle:'active',incognito:false});assert(initialScope);
- return {setAfterFocus:f=>afterFocus=f,session,document,calls,sent,fetches,controllers,initialScope,windowEvents,nativeGET,contentEvents,restoreCalls:()=>restoreCalls,setSnippetReady:v=>snippetReady=v,scope:()=>worker.service.authority.scopeFor({tabId:7,frameId:0,documentId:'doc',actualURL:url,documentLifecycle:'active',incognito:false}),setPrincipal:v=>principal=v,setNativeContext:v=>nativeContext=v,setCompletion:v=>completionPatch=v,holdFocus:p=>holdFocus=p,holdHello:p=>holdHello=p,advance:ms=>{wall+=ms;for(const[id,timer]of [...timers])if(timer.at<=wall){timers.delete(id);timer.fn();}},setActual:v=>actual=v,async restart(){worker.stop();makeBootstrap();if(nativeAfterRestart)await nativeGET();const n=sent.length;startWorker();assert.equal(sent.length,n,'bootstrap attach must not replay old READY');},async foreground(){windowEvents.get('blur')?.();windowEvents.get('focus')?.();await settle();},hellos:()=>calls.filter(c=>c.type==='HOST_HELLO').length};
+ return {setAfterFocus:f=>afterFocus=f,session,document,calls,sent,fetches,controllers,initialScope,windowEvents,nativeGET,contentEvents,restoreCalls:()=>restoreCalls,setSnippetReady:v=>snippetReady=v,scope:()=>worker.service.authority.scopeFor({tabId:7,frameId:0,documentId:'doc',actualURL:url,documentLifecycle:'active',incognito:false}),setPrincipal:v=>principal=v,setNativeContext:v=>nativeContext=v,setCompletion:v=>completionPatch=v,holdFocus:p=>holdFocus=p,holdHello:p=>holdHello=p,holdRefresh:p=>holdRefresh=p,advance:ms=>{wall+=ms;for(const[id,timer]of [...timers])if(timer.at<=wall){timers.delete(id);timer.fn();}},setActual:v=>actual=v,async restart(){worker.stop();makeBootstrap();if(nativeAfterRestart)await nativeGET();const n=sent.length;startWorker();assert.equal(sent.length,n,'bootstrap attach must not replay old READY');},async foreground(){windowEvents.get('blur')?.();windowEvents.get('focus')?.();await settle();},hellos:()=>calls.filter(c=>c.type==='HOST_HELLO').length};
 }
 test('foreground must perform one fresh handshake when restarted worker already owns a genuine current native receipt',async t=>{
  const f=await fixture(t);await f.restart();await f.foreground();
@@ -114,4 +114,35 @@ for(const turns of [6,7])test('settled old foreground reply cannot spend replace
  await f.restart();await f.foreground();
  assert.equal(f.hellos(),3,'the old reply must not spend the explicit replacement session recovery budget');assert.equal(f.session.showWorkspace(),true);assert.equal(f.scope().key,f.initialScope.key);
  await f.restart();await f.foreground();assert.equal(f.hellos(),3,'replacement still owns only one automatic recovery');assert.equal(f.session.showWorkspace(),false);
+});
+
+for(const mode of ['fresh-context','no-context','changed-principal'])test('foreground transport rejection performs only a fresh same-scope check: '+mode,async t=>{
+ const f=await fixture(t,{nativeAfterRestart:mode!=='no-context'});await f.restart();if(mode==='changed-principal')f.setPrincipal('other_self');
+ let reject;f.holdFocus(new Promise((_,r)=>reject=r));await f.foreground();reject(Error('extension-port-closed'));await settle();
+ assert.equal(f.hellos(),2);assert.equal(f.session.showWorkspace(),mode==='fresh-context');assert.equal(f.document.draft,'UNSENT');
+ if(mode==='fresh-context')assert.equal(f.scope().key,f.initialScope.key);
+ for(let i=0;i<3;i++)await f.foreground();assert.equal(f.hellos(),2,'transport failure cannot acquire another recovery attempt');
+});
+test('foreground transport timeout uses original deadline then one fresh handshake without accepting late result',async t=>{
+ const f=await fixture(t,{clocked:true,contentClock:true});await f.restart();let finish;f.holdFocus(new Promise(r=>finish=r));await f.foreground();
+ f.advance(5999);await settle();assert.equal(f.hellos(),1);f.advance(1);await settle();assert.equal(f.hellos(),2);assert.equal(f.session.showWorkspace(),true);
+ finish();await settle();assert.equal(f.hellos(),2);assert.equal(f.scope().key,f.initialScope.key);assert.equal(f.document.draft,'UNSENT');
+});
+for(const mode of ['stop','pagehide','user-exit'])test('late foreground transport rejection cannot revive after '+mode,async t=>{
+ const f=await fixture(t);await f.restart();let reject;f.holdFocus(new Promise((_,r)=>reject=r));await f.foreground();
+ if(mode==='stop')f.session.stop();else if(mode==='pagehide')f.windowEvents.get('pagehide')?.({persisted:false});else f.controllers[0].options.onTerminated('ui-user-exit');
+ reject(Error('extension-port-closed'));await settle();assert.equal(f.hellos(),1);assert.equal(f.session.showWorkspace(),false);assert.equal(f.document.draft,'UNSENT');
+});
+for(const phase of ['reject-then-ready','ready-before-reject'])test('C2 handshake port loss waits for genuine context notification: '+phase,async t=>{
+ const f=await fixture(t,{nativeAfterRestart:false});await f.restart();let reject;f.holdHello(new Promise((_,r)=>reject=r));await f.foreground();assert.equal(f.hellos(),2);assert.equal(f.session.showWorkspace(),false);
+ f.holdHello(null);if(phase==='ready-before-reject')await f.nativeGET();
+ reject(Error('Could not establish connection. Receiving end does not exist.'));await settle();
+ if(phase==='reject-then-ready'){assert.equal(f.hellos(),2);assert.equal(f.session.showWorkspace(),false);await f.nativeGET();await settle();}
+ assert.equal(f.hellos(),3);assert.equal(f.session.showWorkspace(),true);assert.equal(f.scope().key,f.initialScope.key);assert.equal(f.document.draft,'UNSENT');
+});
+
+test('C2 REFRESH transport loss after a new binding withdraws until a fresh native READY',async t=>{
+ const f=await fixture(t);await f.restart();let reject;f.holdRefresh(new Promise((_,r)=>reject=r));await f.foreground();assert.equal(f.hellos(),2);assert.equal(f.session.showWorkspace(),false);
+ f.holdRefresh(null);reject(Error('extension-port-closed'));await settle();assert.equal(f.session.showWorkspace(),false);assert.equal(f.hellos(),2);
+ await f.nativeGET();await settle();assert.equal(f.hellos(),3);assert.equal(f.session.showWorkspace(),true);assert.equal(f.scope().key,f.initialScope.key);assert.equal(f.document.draft,'UNSENT');
 });
