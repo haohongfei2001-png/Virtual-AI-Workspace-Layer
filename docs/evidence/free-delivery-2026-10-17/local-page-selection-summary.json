@@ -1119,5 +1119,73 @@
       "authority": "NO_EXTENSION_RECEIPT_NO_SCOPE_ENABLEMENT",
       "retryPolicy": "STOP_AUTOMATIC_RELOADS_WAIT_FOR_NORMAL_USER_BROWSER_CHECK"
     }
+  },
+  "modernNativeCompatibility20261018": {
+    "baseCommit": "d342be6de0d713f2256721bdca9dc767db600c89",
+    "sourceHashes": {
+      "src/host/session-identity.mjs": "96bd4985e5ee36668df5acc8586c021e622d96638d35d513d782493aa601f4fa",
+      "src/runtime/browser-request-context.mjs": "c6bea770cd4368629ce082bcd7c47b47548e0cb8039e69190c825d9336f85578",
+      "src/runtime/host-browser-bootstrap.mjs": "5a7e89e900643d7c8e9c1d5f1b4573e4d6d6bf11dfe9fc296e12a62ed38e36e3",
+      "tests/host/session-roster-alias.test.mjs": "ff321f9e3adce1393a31e513b6a64e67e256b8b6ed3f2f3868ee2a2f3c8e99db",
+      "tests/host/browser-request-context.test.mjs": "3daa7a3a409e1d1387e3c85b61ae788bb2b5a5a698ab6c44eec493bdf82dfdb4",
+      "tests/host/host-browser-bootstrap.test.mjs": "7805b46e0feedc3b7f6adfb09beedd08335c2ec1100ff4c2c940c6218a03def9",
+      "tests/host/session-provider.test.mjs": "0588b2fbc462a19f948231f8de82d451a3dc0d962b959098dddc502957e808ba",
+      "tests/host/isolated-session-reader.test.mjs": "e3e9ee6921025bfde55f7e24b8c7eb1f9d1e833405f3d49afd9daebb78655975"
+    },
+    "nativeObservations": {
+      "readChannel": "authorized application-profile CDP",
+      "browserCheck": "transient alert later clears without a recorded manual action; immediate reload is not reliable evidence of persistent denial",
+      "roster": {
+        "canonicalEntries": 2,
+        "defaultAliasEntries": 1,
+        "defaultEntryDeepEqualsCanonical": true,
+        "canonicalStructures": [
+          "workspace",
+          "personal"
+        ],
+        "workspaceDeactivated": true,
+        "personalDeactivated": false,
+        "sessionAccessFlags": true
+      },
+      "conversationRequestPathObserved": "/backend-api/conversations/<id>",
+      "status": 200,
+      "contextHeaderPresent": true,
+      "requestBodyRead": false,
+      "conversationResponseBodyRead": false,
+      "nativeWritesDispatched": false,
+      "existingNonemptyEditor": "preserved; navigation stopped on that owned tab"
+    },
+    "changes": [
+      "Only identical full-entry default alias with an own canonical account key is folded",
+      "Explicit deactivated or session-denied contexts excluded; malformed flags rejected",
+      "Plural conversation detail observer is opt-in with exact single-path filter and matcher",
+      "Bootstrap claim pins request dialect; no automatic fallback"
+    ],
+    "validation": {
+      "targeted": {
+        "passed": 470,
+        "failed": 0,
+        "skipped": 0,
+        "cancelled": 0,
+        "durationMs": 2951.817667,
+        "evidence": "local-modern-context-final.tap.gz"
+      },
+      "aliasAgainstOldParser": {
+        "passed": 6,
+        "failed": 6,
+        "evidence": "local-roster-alias-red.tap.gz"
+      },
+      "pluralBeforeFix": "local-plural-context-red.tap.gz",
+      "independentReview": "no blockers found",
+      "liveMV3NewProfile": "NOT_RUN",
+      "scale": "DEFERRED"
+    },
+    "limits": [
+      "Production config remains UNVERIFIED_FAIL_CLOSED",
+      "Current authenticated detail reader still uses singular endpoint",
+      "CDP observation does not become a production extension receipt",
+      "Real Project mapping, current body association, restore and complete Free journey not established",
+      "No private IDs, titles, body, tokens or cookies retained"
+    ]
   }
 }

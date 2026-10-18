@@ -6,9 +6,12 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
  * Current conversation GETs and an explicitly loopback-only Project profile
  * are supported; list/prefetch reads never select a context.
  */
-export function createBrowserRequestContext({webRequest,getFrame,getTab,associatePage,origin,projectRequestContext=null,now=Date.now,elapsedNow=()=>performance.now(),makeId=()=>crypto.randomUUID(),onInvalidate=()=>{},onReady=()=>{},ttl=60000,maxDocuments=128,maxRequests=128}={}){
+export function createBrowserRequestContext({webRequest,getFrame,getTab,associatePage,origin,projectRequestContext=null,conversationRequestContext=null,now=Date.now,elapsedNow=()=>performance.now(),makeId=()=>crypto.randomUUID(),onInvalidate=()=>{},onReady=()=>{},ttl=60000,maxDocuments=128,maxRequests=128}={}){
  const base=new URL(origin);
  if(base.origin!==origin||!['https:','http:'].includes(base.protocol)||typeof getFrame!=='function'||typeof getTab!=='function'||typeof associatePage!=='function'||!['onSendHeaders','onCompleted','onErrorOccurred','onBeforeRedirect'].every(k=>typeof webRequest?.[k]?.addListener==='function')||!Number.isInteger(ttl)||ttl<1000||ttl>60000||![maxDocuments,maxRequests].every(n=>Number.isInteger(n)&&n>0&&n<=512))throw Error('invalid-browser-context-owner');
+ if(conversationRequestContext!==null&&conversationRequestContext!=='conversation-detail-plural-v1')throw Error('invalid-conversation-context-profile');
+ const conversationEndpoint=conversationRequestContext===null?'conversation':'conversations';
+ const conversationPattern=new RegExp('^/backend-api/'+conversationEndpoint+'/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$','i');
  const projects=projectRequestContext==='loopback-project-v1';
  if(projectRequestContext!==null&&(!projects||base.protocol!=='http:'||base.hostname!=='127.0.0.1'))throw Error('invalid-project-context-profile');
  const documents=new Map(),requests=new Map(),closedRequests=new Map(),clocks=new WeakMap(),expired=new WeakSet();let active=true,epoch=0;
@@ -16,7 +19,7 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
  const notify=(fn,value)=>{try{Promise.resolve(fn(value)).catch(()=>{});}catch{}};
  const clockOK=(entry,limit)=>{const wall=now(),elapsed=elapsedNow(),prior=clocks.get(entry)??{wall:entry.wall,elapsed:entry.elapsed};if(expired.has(entry)||!Number.isFinite(wall)||!Number.isFinite(elapsed)||wall<prior.wall||elapsed<prior.elapsed||wall-entry.wall>=limit||elapsed-entry.elapsed>=limit){expired.add(entry);return false;}clocks.set(entry,{wall,elapsed});return true;};
  const conversation=url=>{try{const u=new URL(url);if(u.origin!==origin||u.username||u.password||u.search||u.hash)return null;return /^\/c\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.exec(u.pathname)?.[1]??null;}catch{return null;}};
- const requestConversation=url=>{try{const u=new URL(url);if(u.origin!==origin||u.username||u.password||u.search||u.hash)return null;return /^\/backend-api\/conversation\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.exec(u.pathname)?.[1]??null;}catch{return null;}};
+ const requestConversation=url=>{try{const u=new URL(url);if(u.origin!==origin||u.username||u.password||u.search||u.hash)return null;return conversationPattern.exec(u.pathname)?.[1]??null;}catch{return null;}};
  const project=(url,request=false)=>{if(!projects)return null;try{const u=new URL(url);if(u.origin!==origin||u.username||u.password||u.search||u.hash)return null;return (request?/^\/backend-api\/projects\/(g-p-[0-9a-f]{32})$/:/^\/g\/(g-p-[0-9a-f]{32})\/project$/).exec(u.pathname)?.[1]??null;}catch{return null;}};
  const target=url=>{const id=conversation(url);return id?'c:'+id:project(url)?'p:'+project(url):null;};
  const targetOf=entry=>entry.projectId?'p:'+entry.projectId:'c:'+entry.conversationId;
@@ -138,7 +141,7 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
   })()]),{timeoutMs:6000,now:elapsedNow});}catch{return null;}finally{finished=true;signal?.removeEventListener('abort',onAbort);}
  }
 
- const filter={urls:[origin+'/backend-api/conversation/*',...(projects?[origin+'/backend-api/projects/*']:[])],types:['xmlhttprequest']};
+ const filter={urls:[origin+'/backend-api/'+conversationEndpoint+'/*',...(projects?[origin+'/backend-api/projects/*']:[])],types:['xmlhttprequest']};
  const listeners=[[webRequest.onSendHeaders,send,['requestHeaders']],[webRequest.onCompleted,complete],[webRequest.onErrorOccurred,fail],[webRequest.onBeforeRedirect,fail]];
  for(const [event,listener,extra]of listeners)extra?event.addListener(listener,filter,extra):event.addListener(listener,filter);
  function stop(){if(!active)return;active=false;for(const [event,listener]of listeners)event.removeListener(listener);requests.clear();closedRequests.clear();documents.clear();}

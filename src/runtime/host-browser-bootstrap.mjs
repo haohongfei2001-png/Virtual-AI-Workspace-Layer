@@ -5,14 +5,14 @@ import {createBrowserRequestContext} from './browser-request-context.mjs';
  * receipts; no browser events, headers or notifications are queued for replay.
  */
 export function createHostBrowserBootstrap({chrome,origin='https://chatgpt.com',scopeProfile={}}={}){
- const enabled=scopeProfile.browserRequestContext===true,projectRequestContext=scopeProfile.projectRequestContext??null;
+ const enabled=scopeProfile.browserRequestContext===true,projectRequestContext=scopeProfile.projectRequestContext??null,conversationRequestContext=scopeProfile.conversationRequestContext??null;
  const lifecycle=[chrome?.webNavigation?.onCommitted,chrome?.webNavigation?.onHistoryStateUpdated,chrome?.tabs?.onRemoved];
  if(!chrome?.runtime?.id||typeof chrome.runtime.getContexts!=='function'||typeof chrome.webNavigation?.getFrame!=='function'||lifecycle.some(event=>typeof event?.addListener!=='function'||typeof event?.removeListener!=='function'))throw Error('host-browser-unavailable');
  let active=true,claimed=false,handlers=null,contextObserver=null;const listeners=[];
  const dispatch=(name,...args)=>active&&handlers?handlers[name](...args):undefined;
  function stop(){if(!active)return;active=false;handlers=null;contextObserver?.stop();for(const [event,listener]of listeners)event.removeListener(listener);}
  try{
-  contextObserver=enabled?createBrowserRequestContext({webRequest:chrome.webRequest,getTab:id=>chrome.tabs.get(id),getFrame:query=>chrome.webNavigation.getFrame(query),origin,projectRequestContext,
+  contextObserver=enabled?createBrowserRequestContext({webRequest:chrome.webRequest,getTab:id=>chrome.tabs.get(id),getFrame:query=>chrome.webNavigation.getFrame(query),origin,projectRequestContext,conversationRequestContext,
    // Before service attachment even a valid browser receipt cannot complete
    // the body association bridge or authorize a scope.
    associatePage:({tabId,documentId,...query})=>active&&handlers?chrome.tabs.sendMessage(tabId,{type:'HOST_CONTEXT_ASSOCIATE',...query},{documentId}):null,
@@ -28,7 +28,7 @@ export function createHostBrowserBootstrap({chrome,origin='https://chatgpt.com',
  }catch(error){stop();throw error;}
  function claim({chrome:targetChrome,origin:targetOrigin,scopeProfile:targetProfile}={}){
   if(!active||claimed)throw Error('host-browser-bootstrap-not-available');
-  if(targetChrome!==chrome||targetOrigin!==origin||(targetProfile?.browserRequestContext===true)!==enabled||(targetProfile?.projectRequestContext??null)!==projectRequestContext)throw Error('host-browser-bootstrap-config-mismatch');
+  if(targetChrome!==chrome||targetOrigin!==origin||(targetProfile?.browserRequestContext===true)!==enabled||(targetProfile?.projectRequestContext??null)!==projectRequestContext||(targetProfile?.conversationRequestContext??null)!==conversationRequestContext)throw Error('host-browser-bootstrap-config-mismatch');
   // Reserve ownership before service construction. A failed second runtime
   // cannot acquire cleanup authority over another runtime's live observer.
   claimed=true;

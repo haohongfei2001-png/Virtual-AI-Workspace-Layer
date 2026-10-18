@@ -140,3 +140,13 @@ test('trusted history event revokes tab authorization without losing a genuine n
 });
 
 test('bootstrap claim cannot introduce Project context into conversation-only owner',t=>{const f=fixture(t);assert.throws(()=>f.bootstrap.claim({chrome:f.chrome,origin,scopeProfile:{...scopeProfile,projectRequestContext:'loopback-project-v1'}}),/config-mismatch/);assert(f.bootstrap.claim({chrome:f.chrome,origin,scopeProfile}));});
+
+test('bootstrap pins the conversation request dialect across claim in both directions',t=>{
+ const f=fixture(t),plural={...scopeProfile,conversationRequestContext:'conversation-detail-plural-v1'};
+ assert.throws(()=>f.bootstrap.claim({chrome:f.chrome,origin,scopeProfile:plural}),/config-mismatch/);
+ f.bootstrap.stop();
+ const modern=createHostBrowserBootstrap({chrome:f.chrome,origin,scopeProfile:plural});t.after(()=>modern.stop());
+ assert(f.order.some(row=>row[0]==='registered'&&row[1]==='onSendHeaders'&&row[2][0].urls.includes(origin+'/backend-api/conversations/*')));
+ assert.throws(()=>modern.claim({chrome:f.chrome,origin,scopeProfile}),/config-mismatch/);
+ assert(modern.claim({chrome:f.chrome,origin,scopeProfile:plural}));
+});

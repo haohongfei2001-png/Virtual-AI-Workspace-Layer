@@ -66,3 +66,23 @@ test('history cannot revive accepted or conflicted work, rolled-back clocks, or 
  if(mode==='accepted')await flush();if(mode==='conflict')f.webRequest.onSendHeaders.emit({...next,requestId:'conflicting',requestHeaders:[{name:'Chatgpt-Account-Id',value:'personal'}]});if(mode==='rollback')f.rollback();
  f.owner.invalidateHistory({tabId:7,frameId:0,documentId:'doc',documentLifecycle:'active',frameType:'outermost_frame',url:origin+'/c/'+D});if(mode==='stop')f.owner.stop();if(mode==='wrong-final-route')f.current={...browserFrame};await f.finish(next);assert.equal(await f.owner.verify({...frame,actualURL:origin+'/c/'+D}),null,mode);}
 });
+
+test('plural native detail is opt-in and retains exact current-object receipt guards',async t=>{
+ const url=origin+'/backend-api/conversations/'+C;
+ const legacy=fixture(t);await legacy.finish(await legacy.send({url}));assert.equal(await legacy.owner.verify(frame),null);
+ const f=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1'});
+ assert.deepEqual(f.webRequest.onSendHeaders.listeners[0].args[0].urls,[origin+'/backend-api/conversations/*']);
+ await f.finish(await f.send({url}));const receipt=await f.owner.verify(frame);assert.equal(receipt?.conversationId,C);assert.equal(receipt?.contextId,'team');
+ f.current={...browserFrame,url:origin+'/c/'+D};assert.equal(await f.owner.verify(frame),null);
+});
+for(const [label,patch] of Object.entries({legacy:{url:origin+'/backend-api/conversation/'+C},list:{url:origin+'/backend-api/conversations'},query:{url:origin+'/backend-api/conversations/'+C+'?prefetch=1'},suffix:{url:origin+'/backend-api/conversations/'+C+'/messages'},foreign:{url:'https://example.test/backend-api/conversations/'+C},prefetch:{requestHeaders:[{name:'chatgpt-account-id',value:'team'},{name:'purpose',value:'prefetch'}]},post:{method:'POST'},wrongObject:{url:origin+'/backend-api/conversations/'+D}}))test('plural context rejects '+label,async t=>{
+ const f=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1'});await f.finish(await f.send({url:origin+'/backend-api/conversations/'+C,...patch}));assert.equal(await f.owner.verify(frame),null);
+});
+test('unknown request context profile fails rather than widening the native endpoint whitelist',async t=>{assert.throws(()=>fixture(t,{conversationRequestContext:'all-conversations'}),/invalid-conversation-context-profile/);});
+for(const [label,patch] of Object.entries({cached:{fromCache:true},crossDialect:{url:origin+'/backend-api/conversation/'+C},failed:{statusCode:403}}))test('plural completion refuses '+label,async t=>{
+ const f=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1'}),d=await f.send({url:origin+'/backend-api/conversations/'+C});f.webRequest.onCompleted.emit({...d,statusCode:200,fromCache:false,...patch});await flush();assert.equal(await f.owner.verify(frame),null);
+});
+test('plural receipt expires and still requires the independent matching body association',async t=>{
+ const f=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1'});await f.finish(await f.send({url:origin+'/backend-api/conversations/'+C}));const receipt=await f.owner.verify(frame);assert(receipt);f.advance(60000);assert.equal(await f.owner.verify(frame),null);assert.equal(f.owner.isCurrent(frame,receipt),false);
+ const g=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1'});await g.finish(await g.send({url:origin+'/backend-api/conversations/'+C}));g.answer={challenge:'wrong',actualURL:frame.actualURL,conversationId:C,association:'explicit-body-id'};assert.equal(await g.owner.verify(frame),null);
+});

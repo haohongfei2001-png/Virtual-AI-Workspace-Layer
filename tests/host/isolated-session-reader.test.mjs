@@ -25,3 +25,8 @@ test('streamed bytes are bounded independently of Content-Length',async()=>{let 
 for(const badClock of [NaN,Infinity,-Infinity])test('invalid session wall clock fails before bearer request '+String(badClock),async()=>{const f=fixture((_s,n,clock)=>{if(n===1)clock.wall(badClock);});await assert.rejects(f.reader.read(),{message:'invalid-session-schema'});assert.equal(f.calls.length,1);});
 test('token longer than 16KiB prevents bearer request',async()=>{const f=fixture((s,n)=>{if(n===1)s.body.accessToken='T'.repeat(16385);});await assert.rejects(f.reader.read(),{message:'invalid-session-schema'});assert.equal(f.calls.length,1);});
 test('roster greater than 1000 contexts is rejected, not truncated',async()=>{const f=fixture((s,n)=>{if(n===2)s.body.accounts=Object.fromEntries(Array.from({length:1001},(_,i)=>['P'+i,{account:{account_id:'P'+i,structure:'personal'}}]));});await assert.rejects(f.reader.read(),{message:'invalid-accounts-schema'});assert.equal(f.calls.length,2);});
+
+test('isolated fallback shares strict default-alias normalization and excludes denied accounts',async()=>{
+ const f=fixture((s,n)=>{if(n!==2)return;const p={account:{account_id:'P',structure:'personal'},can_access_with_session:true};s.body={accounts:{O:{account:{account_id:'O',structure:'team'},can_access_with_session:false},default:structuredClone(p),P:p}};});
+ const identity=await f.reader.read();assert.deepEqual(identity.contexts,[{id:'P',kind:'personal'}]);assert.equal(identity.activeContext,undefined);assert.equal(f.calls.length,2);assert(!JSON.stringify(identity).includes('PRIVATE'));
+});

@@ -1,4 +1,5 @@
 import {instant} from '../navigation/projection.mjs';
+import {stable} from '../data/hash.mjs';
 const record=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
 const identifier=v=>typeof v==='string'&&v.length>0&&v.length<=256&&!/[\s\u0000-\u001f\u007f]/.test(v)&&!['__proto__','constructor','prototype'].includes(v);
 /** Shared fixed-provider decoding. No URLs, proofs or credentials come from DOM. */
@@ -20,8 +21,21 @@ export function sessionCredentials(session,time){
 export function sessionContexts(accounts,structures){
  if(!record(accounts)||!record(accounts.accounts)||Object.keys(accounts.accounts).length>1000)throw Error('invalid-accounts-schema');
  const contexts=[],seen=new Set();for(const [key,value]of Object.entries(accounts.accounts)){
-  const account=value?.account;if(!identifier(key)||!record(account)||!identifier(account.account_id)||key!==account.account_id||typeof account.structure!=='string'||account.structure.length>128||seen.has(account.account_id))throw Error('invalid-accounts-schema');
-  seen.add(account.account_id);contexts.push({id:account.account_id,kind:structures.get(account.structure)??'unknown'});
+  const account=value?.account;
+  if(!identifier(key)||!record(value)||!record(account)||!identifier(account.account_id)||typeof account.structure!=='string'||account.structure.length>128)throw Error('invalid-accounts-schema');
+  for(const [object,field]of [[account,'is_deactivated'],[value,'can_access_with_session']])if(Object.hasOwn(object,field)&&typeof object[field]!=='boolean')throw Error('invalid-accounts-schema');
+  if(key!==account.account_id){
+   // The native default entry repeats a canonical account. It is never a
+   // selected-context witness, and must not create another authorized ID.
+   const canonical=Object.hasOwn(accounts.accounts,account.account_id)?accounts.accounts[account.account_id]:null;
+   if(key!=='default'||!canonical)throw Error('invalid-accounts-schema');
+   try{if(stable(value)!==stable(canonical))throw Error('alias-conflict');}catch{throw Error('invalid-accounts-schema');}
+   continue;
+  }
+  if(seen.has(account.account_id))throw Error('invalid-accounts-schema');
+  seen.add(account.account_id);
+  if(account.is_deactivated===true||value.can_access_with_session===false)continue;
+  contexts.push({id:account.account_id,kind:structures.get(account.structure)??'unknown'});
  }
  return contexts;
 }
