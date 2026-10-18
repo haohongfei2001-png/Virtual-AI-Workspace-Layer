@@ -78,3 +78,12 @@ for(const value of [999,NaN,Infinity])test('dispatch backwards/nonfinite time af
  let f,event;const cancelled=[];f=fixture({onNativeDispatch:dispatchEvent=>{event=dispatchEvent;f.clock(value);},onNativeDispatchCancelled:value=>cancelled.push(value)});const plan=f.plan();f.clock(1000);const command=f.command(plan);
  assert.equal((await f.actions.dispatchNative(command)).state,'blocked');assert.equal(f.clicks,0);assert.deepEqual(cancelled,[event]);f.clock(1001);assert.equal((await f.actions.dispatchNative(command)).reason,'action-already-used');assert.equal(cancelled.length,1);
 });
+
+test('planning a 17-row inventory probes only the current conversation and revalidates at dispatch',async()=>{
+ let probes=0,proof={conversationId:C,bodyProofId:'fresh'};
+ const actions=createNativeActions({discovery:{getNode:()=>null},urlPolicy:createURLPolicy(),currentURL:()=> 'https://chatgpt.com/c/'+C,inputRisk:()=>({state:'unknown',flags:[]}),bodyProof:()=>{probes++;return proof;},authorize:()=>true});
+ const target=nativeId=>({kind:'resolved',entity:'conversation',nativeId,navigationURL:'https://chatgpt.com/c/'+nativeId,liveHandle:null});
+ for(let i=0;i<16;i++){const other=String(i).padStart(8,'0')+'-bbbb-4ccc-8ddd-eeeeeeeeeeee';assert.equal(actions.planNavigation(target(other)).mode,'href');}
+ assert.equal(probes,0);const current=actions.planNavigation(target(C));assert.equal(current.mode,'same-target');assert.equal(probes,1);
+ proof=null;assert.equal((await actions.dispatchNative({actionId:'a',uiGrantId:'g',mountId:'m',targetKey:actions.planKey(current),planRevision:current.planRevision})).reason,'stale-navigation-plan');assert.equal(probes,2);
+});
