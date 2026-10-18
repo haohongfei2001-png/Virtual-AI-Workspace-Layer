@@ -4,6 +4,9 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **本地已安全接手bdab510，原10k Linux失败未被本地PASS覆盖**：fetch后本地/远端一致，2258副本备份并逐字节保留、stash不动。原CI正式JSON确认双完整审计后第17条仍preparing且预算不足；同生产/fixture、同Chrome156原HEAD本地完整通过，候选也完整通过，跨环境根因仍OPEN。修复同成员展开旅程的独立排队旧paint竞争：不再作废较新click请求，跨scope/session/segment安全边界保留。原两反例RED→GREEN、独审10项及相关295项通过；冻结完整Node8179/8179、零fail/skip/cancel、85.51秒，输入摘要不变；不归因该修复到原CI失败、不宣称提速。真实Profile/IME/PAIA/跨端与peer无receipt自动foreground仍未验收。见[现有交接记录](evidence/free-delivery-2026-10-17/cloud-local-acceptance-handoff.md)。
+
+
 
 - **6122340 CI39078312525已终结：10k稳定性仍OPEN**：Node、journeys、J4原门禁通过；durability仅正式10k失败。原30秒内全10000 refs/1P/rev206，首轮21页完整审计通过（3028.390ms），第二轮仍在途至原deadline。源未撤销、frames仍在，167生产与26fixture SHA逐项匹配；失败后双CPU/phase CAPTURED且cleanup成功，不能抵消原FAIL或代表失败的extension全量审计。J4实际23步PASS仍PARTIAL，worker-memory-loss peer自动foreground未建立；本次cold正式/passive均通过，旧GET早于listener反例保留。742的单次双审计PASS仍为真实历史样本，不能转写当前稳定通过。[本次CI事实](evidence/free-delivery-2026-10-17/cloud-ci-39078312525-summary.json)。
 

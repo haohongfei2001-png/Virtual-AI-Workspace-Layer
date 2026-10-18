@@ -79,3 +79,17 @@ node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-tr
 ## 6. 交接记录边界
 
 最终 HEAD、最后实际 CI、已完成文件与剩余问题由 PR #16 的 `VAIWL_HANDOFF_READY` 评论确认。此文档准备完成不表示云端已停止，也不表示本地已同步、Free 完成或批准发布。
+
+## 本地接手实测（2026-10-18）
+
+已读取正式交接评论6243137598并fetch，实际本地/远端均为bdab510，无分叉、无已跟踪未提交修改；8d372e0为祖先。2258个未跟踪副本逐文件SHA256、tar及工作区清单已保存在本机临时检查点，原件未修改，后验全部一致；既有stash保留。
+
+原CI39078898821日志与提取JSON归档为 `local-takeover-ci*`：两次10000/21页/rev207完整审计、余1748.308ms；等待第17条时1371.615ms超时，RPC尾部仍preparing，未进入measurement。不是丢成员，也尚无证据证明renderer race造成该次FAIL。
+
+本机原HEAD先因未安装的1248路径启动失败（保留原件），已安装的Chrome153原速及4x各一例完整旅程通过；随后安装锁定Chrome156，与CI版本一致，原HEAD原速完整旅程仍通过，双审计后余21247.783ms。167生产/26fixture hash与CI完全相同；不能把本地PASS抵消Linux FAIL。4x仅为既定runner页CPU节流，不宣称整机/worker弱设备认证。
+
+成员展开另发现确定性renderer竞态：pointerdown期间排队旧5条DTO，pointerup后click发17条请求，旧flush推进请求代际，后来ready被错误丢弃。独立两正例原RED、三安全对照PASS；现在只丢同scope/session/segment中已被新请求超越的排队paint；新scope/session/segment与即时背景fence保持。独审补Enter/Space、reply先于timer、pendingRender等后10/10通过，相关295项通过。此为L层直接反例，完整MV3旅程不是该竞态的指定变异证明。
+
+候选同Chrome156原10k完整闭环通过，revision201、10000 PROJECT、零UNKNOWN/缺失/重复/错属，双审计后余19878.934ms，17成员展开、测量前后同revision、原生导航与唯一返回通过。唯一生产差异为navigation.mjs，fixture相同，源/fixture/manifest运行中无漂移、隔离目录清理成功。报告sourceCommit为基线bdab510，候选精确源码以local-takeover-validation.json及各报告sourceHashes为准，不冒充未修改的bdab510。原HEAD/候选摄取观察21145.232/19357.654ms仅单次描述，双审计余量并未改善，不宣称性能提速。Linux预算根因及跨环境稳定性仍OPEN。
+
+冻结候选完整Node8179/8179、0 fail/skip/cancel，85.510秒；548测试文件，既有tracked输入运行前后摘要一致，新反例文件摘要另列于local-takeover-validation.json。未修改共享schema、恢复/授权栅栏或包公开边界。

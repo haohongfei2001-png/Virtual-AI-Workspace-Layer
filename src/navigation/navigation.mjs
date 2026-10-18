@@ -35,7 +35,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function flushUpdate(){
     clearUpdateTimer();if(interacting()||stopped)return;
     const presentation=pendingPresentation;pendingPresentation=null;
-    const args=pendingUpdate;pendingUpdate=null;
+    let args=pendingUpdate;pendingUpdate=null;
+    // An older deferred paint must not cancel a request made by the click that
+    // ended this interaction. Scope/session/segment changes still fence it.
+    if(args?.[4]==='frame'&&args[7]!==projectionRequest&&args[0].scope===frameProjection?.scope&&args[0].segment===frameProjection?.segment&&JSON.stringify(args[0].viewSession)===JSON.stringify(frameProjection?.viewSession))args=null;
     const paint=pendingRender;pendingRender=false;
     if(args){const [value,now,timeZone,preparedIndex,alreadyPrepared,currentEntry,requestContext]=args;if(alreadyPrepared==='frame')applyFrameProjection(value,currentEntry,requestContext);else if(alreadyPrepared)updatePreparedFree(value,now,timeZone,preparedIndex);else update(value,now,timeZone,preparedIndex);}
     if(presentation&&!stopped&&snapshot?.scope===presentation.scope)present(presentation.intent);
@@ -442,7 +445,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(dto.search!==undefined&&dto.workingSet!==undefined)throw Error('conflicting-frame-lists');
     if(snapshot?.scope===dto.scope&&dto.workingSet&&(!view.worksetOpen||searchQuery!==null||dto.workingSet.offset!==frameWorkingSetOffset))return;
     if(snapshot?.scope===dto.scope&&dto.search&&(searchQuery===null||dto.search.query!==searchQuery||dto.search.projectId!==searchTheme||dto.search.offset!==frameSearchOffset))return;
-    if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame',currentEntry,requestContext];return;}
+    if(snapshot?.scope===dto.scope&&(interacting()||updateTimer!==null)){pendingUpdate=[dto,null,null,null,'frame',currentEntry,requestContext,projectionRequest];return;}
     const selection=dto.selection,key=selection?rowPagingKey(dto,selection.groupId,selection.list):null;
     if(frameRowPaging?.key!==key)frameRowPaging=null;
     const query=requestContext?.query;
