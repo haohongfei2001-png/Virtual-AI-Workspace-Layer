@@ -4,7 +4,7 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
-- **a8752ff已正常推送，CI39091870975进行中**：Node及durability job通过；正式10k双完整审计rev207、10000正确PROJECT且零UNKNOWN/遗漏/重复/错属，原窗口剩8058.97ms，17成员展开、测量前后同revision与原生返回通过。总摄取观察26724.09ms，仍单例PARTIAL_SYS04_NOT_ACCEPTED，不作p95或完整Free认证；J4/其余旅程等待同一运行结束。100k新诊断仍FAIL，保留尾项7251、完整审计0；128次emit累计18450.8ms，仅1次retry，scan+split约679ms。保留owner样本apply分段约84%，下一定位为共享引用登记回调及排队后事务收尾，不能把累计offset当独立耗时。CPU页采样失败已定位setSamplingInterval超时，跨realm快照UNAVAILABLE且记录有丢弃，不作完整吞吐结论。[同源码原件](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
+- **a8752ff已正常推送，CI39091870975已完成**：Node及durability job通过；正式10k双完整审计rev207、10000正确PROJECT且零UNKNOWN/遗漏/重复/错属，原窗口剩8058.97ms，17成员展开、测量前后同revision与原生返回通过。总摄取观察26724.09ms，仍单例PARTIAL_SYS04_NOT_ACCEPTED，不作p95或完整Free认证；四job均成功；J4实际23步仍PARTIAL，automaticForegroundRecovery未建立/current-scope-timeout，不能以门禁绿色关闭该关口。100k新诊断仍FAIL，保留尾项7251、完整审计0；128次emit累计18450.8ms，仅1次retry，scan+split约679ms。保留owner样本apply分段约84%，下一定位为共享引用登记回调及排队后事务收尾，不能把累计offset当独立耗时。CPU页采样失败已定位setSamplingInterval超时，跨realm快照UNAVAILABLE且记录有丢弃，不作完整吞吐结论。[同源码原件](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
 
 - **当前只读宿主阻塞已细化**：已授权Profile的浏览器标签元数据可访问，但后台visibility控制不支持；单次首页创建超时后，元数据确认首页实际建立，随后读取同一首页状态再次超时。未取得页面/context证据，未读聊天正文或凭据，未作原生写入，不把标签存在当scope证明。当前需要恢复该Profile的页面只读连接，不需要重复授予已有数据权限。独立审查同时否决跨target复用risk/inspect结果：这些检查围住同步重入和DOM替换；现有CPU样本不足以安全删除它们。生产代码未因此改变，未重复跑验收矩阵。
 

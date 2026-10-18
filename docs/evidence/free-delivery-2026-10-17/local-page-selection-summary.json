@@ -104,7 +104,10 @@
     "local-selection-cpu-stage-tests.tap.gz": "8395bf5166595a4c20213e3c52fa8dc9044d46d396a08435509d17706c7c52ca",
     "local-selection-100k-phase.json.gz": "daa7c4565f061190eb213d0b5bb49b9eb30d34821fa2b18b611c1abb3b12fdf9",
     "local-ci39091870975-durability.log.gz": "ff8f0468518c34ab882f8d458e86be9f8edd2fd7f0bc81afa61c59b94a5d8448",
-    "local-ci39091870975-formal10k.json.gz": "3b40bb80b75f3733670c8df618bb364e4327a0672b3dea221e0d7da1677301ae"
+    "local-ci39091870975-formal10k.json.gz": "3b40bb80b75f3733670c8df618bb364e4327a0672b3dea221e0d7da1677301ae",
+    "local-ci39091870975-meta.json.gz": "38b2019bd2bf67ee6e5c1e5fbf258c2ffc8f048be2baf2cc08f833ab1326feac",
+    "local-ci39091870975-j4.log.gz": "41e0506e2c7b12a8f77c46b341d178c38d553f398c40c679f8626e196eba7fcb",
+    "local-ci39091870975-j4.json.gz": "ef202cfb497eb78050259ce393d8175bef348828451a9695a212ea33a1e43a8c"
   },
   "followup100k": {
     "sourceCommit": "7c676ecd2e583feb734a6cfc367a3fe43b65961c",
@@ -271,7 +274,7 @@
   "candidateLinux": {
     "run": 39091870975,
     "head": "a8752ffca02ceb4f120f36455dbacbf586f33df6",
-    "overall": "IN_PROGRESS",
+    "overall": "COMPLETED_SUCCESS_ORIGINAL_GATES_ONLY",
     "durabilityJob": "SUCCESS",
     "nodeJob": "SUCCESS",
     "formal10k": {
@@ -365,6 +368,30 @@
       },
       "sourceChangedDuringRun": false
     },
-    "limit": "Single formal sample; J4 and journeys not yet terminal. Not p95 or full Free acceptance."
+    "limit": "One current-source formal10k sample, not p95/stability or full F1. J4 original gate success does not establish automatic recovery.",
+    "jobs": [
+      {
+        "name": "offline-journeys",
+        "conclusion": "success"
+      },
+      {
+        "name": "offline-j4-lifecycle",
+        "conclusion": "success"
+      },
+      {
+        "name": "node-contracts",
+        "conclusion": "success"
+      },
+      {
+        "name": "offline-durability-compat",
+        "conclusion": "success"
+      }
+    ],
+    "j4": {
+      "status": "PARTIAL_J4_NOT_ACCEPTED",
+      "steps": 23,
+      "automaticForegroundRecovery": "NOT_ESTABLISHED",
+      "foregroundFailure": "J4-peer-current-scope-timeout"
+    }
   }
 }

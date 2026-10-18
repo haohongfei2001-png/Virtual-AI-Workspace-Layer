@@ -121,3 +121,5 @@ node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-tr
 - **7c676ec原100k混合场景仍FAIL，不能用10k或局部加速外推**：原即时返回旅程在pre-measurement-audit仅有1000 Project/138 refs（138 UNKNOWN）、99862 missing，rev16，性能samples=null；总摄取观察21420.80ms。源/fixture/manifest稳定、隔离目录已清理；没有放宽时间/缩样本/提升UNKNOWN。瓶颈关口在完整原生库存尚未摄取，未进入完整索引分页性能测量；并非上述真实IDB21页读取改善已解决100k。原失败继续保留。[同源码失败原件](local-page-selection-summary.json)。
 
 100k单项目原可见成员场景亦FAIL于30秒共享窗口，未启动任何完整审计。最后tail rev91/total4081，仅代表尾项已观察；失败后root rev93/4190refs不是预算内完成。成员观察段记录12.257秒，整个共享窗口此前已消耗约17.74秒于导航/原生呈现及检查，尚不能把这些时间全归因某一产品函数。两场景均不构成完整100k/p95验收；不重复原样运行挑绿，下一步须有具体摄取/阶段成本证据再改代码。
+
+2026-10-18 当前分页候选a8752ff已正常推送并完成CI39091870975：四job成功；原正式10k双完整审计rev207/10000正确PROJECT，原窗口剩8058.97ms，展开/测量前后同revision/原生返回通过。J4仍23步PARTIAL、自动foreground未建立，不以新原生GET恢复替代。完整F1/p95、100k、真实Profile/IME/PAIA/跨环境关口仍开放。100k阶段诊断将后续定位缩小到共享引用登记回调与事务收尾，原失败和丢弃记录说明见[当前证据](local-page-selection-summary.json)。
