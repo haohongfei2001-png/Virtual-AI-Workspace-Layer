@@ -141,7 +141,19 @@
     "local-snippets-presentation-diagnostic.json.gz": "39356f0443d16962ab808c6c362f0722f7a197f90e0b2f2609963e19ed68547a",
     "local-snippets-presentation-diagnostic.mjs.gz": "9f0d209a9808e698229ecba54bd0e68f96bf1539dd2fe7694b5c97e31cf1eaca",
     "local-snippets-probe-targeted-initial.tap.gz": "decf0fee1f93b6e5d758a3f07a19782d7222e442cffc7139981d1adc896de094",
-    "local-snippets-probe-targeted-final.tap.gz": "a65805e7d553fe7d31ee1c7c6d7d1d88e55a78096202cd0c382d6921031d8707"
+    "local-snippets-probe-targeted-final.tap.gz": "a65805e7d553fe7d31ee1c7c6d7d1d88e55a78096202cd0c382d6921031d8707",
+    "local-shared-final-root-count.mjs.gz": "a24a9b6bcd0cc69bf22c21e64a6e196267ccca47ea3582dd986eadfe0a7f6b8c",
+    "local-shared-final-root-count.json.gz": "044ec97404bc575d8affa4df5c11fde432514f398fe3236d5de7d0349726db39",
+    "local-shared-final-builder-initial.tap.gz": "8db642ad2f7e6bffba6230d67d8fe77fde0b3d4d9e081b7627204671e831d6d9",
+    "local-shared-final-builder-targeted.tap.gz": "7bd4c4487c125cb1bff12fc1627ab59994925590cc9a734b403ca711076dd759",
+    "local-shared-final-owner-targeted.tap.gz": "17795478aa9651a59e7cee3696d90cca8ce4f2a133e03cd81372a543fbd92c90",
+    "local-shared-directory-final-record-red.tap.gz": "31a7df2c7827de63eb761528f76ab0af713ea5c3a47a4b9422b613847b319398",
+    "local-shared-directory-final-record-green.tap.gz": "7de9436d28bae8efd14f9b8d0e3a9350e964e34cd3420bce5835018b1e759a49",
+    "local-shared-final-root-idb-ab.json.gz": "2556e4cdfdd96afc8608b004447913fdf6dc89beedf4302bf8378e05be034b64",
+    "local-shared-final-root-idb-ab.mjs.gz": "e95dc0fc2b7b0c1a47402b6a0962d9128c66aff5a008985886689d277d3557f0",
+    "local-shared-final-root-full-node.tap.gz": "ac283ab03d4a990786b254ebba1fa262ab00ba261973ef64cd4d87a0fb7769bc",
+    "local-shared-final-root-full-node-integrity.json.gz": "25e573a18c28410cd62f1b35e143a319292b8eeda04a449c3272155399379d9e",
+    "local-shared-final-root-guards.json.gz": "6713c2e715a9231821d9408266c22af697389cd0159712dba860464d849ddfaa"
   },
   "followup100k": {
     "sourceCommit": "7c676ecd2e583feb734a6cfc367a3fe43b65961c",
@@ -729,7 +741,19 @@
     "local-snippets-presentation-diagnostic.json.gz": "archive-bytes",
     "local-snippets-presentation-diagnostic.mjs.gz": "archive-bytes",
     "local-snippets-probe-targeted-initial.tap.gz": "archive-bytes",
-    "local-snippets-probe-targeted-final.tap.gz": "archive-bytes"
+    "local-snippets-probe-targeted-final.tap.gz": "archive-bytes",
+    "local-shared-final-root-count.mjs.gz": "archive-bytes",
+    "local-shared-final-root-count.json.gz": "archive-bytes",
+    "local-shared-final-builder-initial.tap.gz": "archive-bytes",
+    "local-shared-final-builder-targeted.tap.gz": "archive-bytes",
+    "local-shared-final-owner-targeted.tap.gz": "archive-bytes",
+    "local-shared-directory-final-record-red.tap.gz": "archive-bytes",
+    "local-shared-directory-final-record-green.tap.gz": "archive-bytes",
+    "local-shared-final-root-idb-ab.json.gz": "archive-bytes",
+    "local-shared-final-root-idb-ab.mjs.gz": "archive-bytes",
+    "local-shared-final-root-full-node.tap.gz": "archive-bytes",
+    "local-shared-final-root-full-node-integrity.json.gz": "archive-bytes",
+    "local-shared-final-root-guards.json.gz": "archive-bytes"
   },
   "archiveSHA256": {
     "local-selection-native-pagination-comparison.mjs.gz": "6cb54e5a2e673adef34ec6f8f4c3a8a2523b442801674f4c28e82ac48d024db0",
@@ -790,7 +814,109 @@
     "local-snippets-presentation-diagnostic.json.gz": "39356f0443d16962ab808c6c362f0722f7a197f90e0b2f2609963e19ed68547a",
     "local-snippets-presentation-diagnostic.mjs.gz": "9f0d209a9808e698229ecba54bd0e68f96bf1539dd2fe7694b5c97e31cf1eaca",
     "local-snippets-probe-targeted-initial.tap.gz": "decf0fee1f93b6e5d758a3f07a19782d7222e442cffc7139981d1adc896de094",
-    "local-snippets-probe-targeted-final.tap.gz": "a65805e7d553fe7d31ee1c7c6d7d1d88e55a78096202cd0c382d6921031d8707"
+    "local-snippets-probe-targeted-final.tap.gz": "a65805e7d553fe7d31ee1c7c6d7d1d88e55a78096202cd0c382d6921031d8707",
+    "local-shared-final-root-count.mjs.gz": "a24a9b6bcd0cc69bf22c21e64a6e196267ccca47ea3582dd986eadfe0a7f6b8c",
+    "local-shared-final-root-count.json.gz": "044ec97404bc575d8affa4df5c11fde432514f398fe3236d5de7d0349726db39",
+    "local-shared-final-builder-initial.tap.gz": "8db642ad2f7e6bffba6230d67d8fe77fde0b3d4d9e081b7627204671e831d6d9",
+    "local-shared-final-builder-targeted.tap.gz": "7bd4c4487c125cb1bff12fc1627ab59994925590cc9a734b403ca711076dd759",
+    "local-shared-final-owner-targeted.tap.gz": "17795478aa9651a59e7cee3696d90cca8ce4f2a133e03cd81372a543fbd92c90",
+    "local-shared-directory-final-record-red.tap.gz": "31a7df2c7827de63eb761528f76ab0af713ea5c3a47a4b9422b613847b319398",
+    "local-shared-directory-final-record-green.tap.gz": "7de9436d28bae8efd14f9b8d0e3a9350e964e34cd3420bce5835018b1e759a49",
+    "local-shared-final-root-idb-ab.json.gz": "2556e4cdfdd96afc8608b004447913fdf6dc89beedf4302bf8378e05be034b64",
+    "local-shared-final-root-idb-ab.mjs.gz": "e95dc0fc2b7b0c1a47402b6a0962d9128c66aff5a008985886689d277d3557f0",
+    "local-shared-final-root-full-node.tap.gz": "ac283ab03d4a990786b254ebba1fa262ab00ba261973ef64cd4d87a0fb7769bc",
+    "local-shared-final-root-full-node-integrity.json.gz": "25e573a18c28410cd62f1b35e143a319292b8eeda04a449c3272155399379d9e",
+    "local-shared-final-root-guards.json.gz": "6713c2e715a9231821d9408266c22af697389cd0159712dba860464d849ddfaa"
   },
-  "hashNote": "Historical rawSHA256 entries used both decompressed and archive bytes. Values preserved; explicit per-file basis and uniform archiveSHA256 added after verifying both, no evidence payload changed."
+  "hashNote": "Historical rawSHA256 entries used both decompressed and archive bytes. Values preserved; explicit per-file basis and uniform archiveSHA256 added after verifying both, no evidence payload changed.",
+  "sharedFinalRootCandidate": {
+    "baseCommit": "af58a31",
+    "status": "LOCAL_VALIDATED_PENDING_LINUX_HOST",
+    "rootCause": "Same newly constructed Shared root encoded four times across update validation, snapshot validation and final record. Capture final root once; preserve all root structure and old manifest bounds; reuse final canonical bytes for unchanged checksum and final size. No change to fresh IDB validation, schema, authority or transaction durability.",
+    "pureCount": {
+      "evidence": "PURE_FUNCTION_ENCODING_COUNT_NOT_IDB_OR_HOST_PERFORMANCE",
+      "refs": 3200,
+      "newRefs": 50,
+      "changeRows": 64,
+      "changeRefs": 3200,
+      "canonicalBytesEqual": true,
+      "old": {
+        "calls": [
+          {
+            "kind": "strictJSON",
+            "revision": 66,
+            "chars": 137898
+          },
+          {
+            "kind": "stable",
+            "revision": 66,
+            "chars": 137898
+          },
+          {
+            "kind": "strictJSON",
+            "revision": 66,
+            "chars": 137898
+          },
+          {
+            "kind": "stable",
+            "revision": 66,
+            "chars": 137898
+          }
+        ],
+        "encodingCount": 4,
+        "encodedChars": 551592
+      },
+      "candidate": {
+        "calls": [
+          {
+            "kind": "stable",
+            "revision": 66,
+            "chars": 137898
+          }
+        ],
+        "encodingCount": 1,
+        "encodedChars": 137898
+      }
+    },
+    "validation": {
+      "sharedTests": 212,
+      "independentTests": 16,
+      "redMeaning": "Missing new API only, not semantic RED.",
+      "initialFailure": "Existing instrumented import anchor mismatch; retained original import with separate sha256 import, all previous route corruption tests now pass.",
+      "fullNode": {
+        "passed": 8321,
+        "failed": 0,
+        "skipped": 0,
+        "cancelled": 0,
+        "wallSeconds": 130.52984575001756,
+        "inputsUnchanged": true
+      },
+      "guardMutationsKilled": 12,
+      "guardCommitProvenance": "Caller supplied af58a31 is baseline; exact candidate inputHashes in guard JSON are authoritative.",
+      "review": "Independent root/piece/capacity/encoding review found no blocker."
+    },
+    "scope": "Actual writer integrated, no Host or Linux speedup established; unchanged original acceptance.",
+    "actualIDB": {
+      "order": "AB/BA/AB",
+      "baselineMs": [
+        46.8,
+        33.5,
+        30.9
+      ],
+      "candidateMs": [
+        40.7,
+        32.2,
+        30.8
+      ],
+      "baselineMedianMs": 33.5,
+      "candidateMedianMs": 32.2,
+      "browserVersion": "156.0.8078.4",
+      "allSixCompleteFactsDigestsEqual": true,
+      "scope": "Uninstrumented registration segment only; 3200+50 refs,64 change rows/3200 change refs. Not Host/Linux/p95 acceptance."
+    },
+    "productionHashes": {
+      "src/data/shared-ref-directory.mjs": "995be9ccc613720e97b807d8a98ed80a336ec79ebb13b4521316548848f10626",
+      "src/data/shared-directory-writer.mjs": "9e933860ea5b331ee78f3df09431b65925e3930e22ee55b11b692c9c764bf1b8"
+    }
+  }
 }

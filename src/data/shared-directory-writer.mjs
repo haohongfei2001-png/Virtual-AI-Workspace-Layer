@@ -1,6 +1,6 @@
 import {normalizedScope} from '../b1/identity.mjs';
-import {validateSharedDirectoryRoot,snapshotSharedDirectoryRoot,updateSharedRefDirectory,sharedRefBucket,sharedRefDirectoryKey,verifySharedDirectoryPiece} from './shared-ref-directory.mjs';
-import {manifest_PARTITION_FORMAT,manifest_checkManifest,manifest_partitionRecord} from './partition-manifest.mjs';
+import {validateSharedDirectoryRoot,buildSharedDirectoryUpdateRecord,sharedRefBucket,sharedRefDirectoryKey,verifySharedDirectoryPiece} from './shared-ref-directory.mjs';
+import {manifest_PARTITION_FORMAT,manifest_checkManifest} from './partition-manifest.mjs';
 
 /** Delta hints are a bounded contiguous suffix, never the human journal.
  * A replica older than this suffix must use its existing full-read fallback.
@@ -51,8 +51,7 @@ export function saveSharedDirectoryMutation(tx,root,scope,storage,current,next,p
  const touched=new Set(ids.map(sharedRefBucket)),selected=[];
  for(const bucket of touched){const pointer=root.refDirectory[bucket];if(pointer){const key=sharedRefDirectoryKey(root.scopeKey,root.generation,bucket,pointer.revision);if(!byKey.has(key))throw Error('missing-shared-directory-record');selected.push(byKey.get(key));}}
  const humans=[...new Set([...root.humanRefs,...(actor==='human'?ids:[])])].filter(ref=>!Object.hasOwn(updates,ref)||updates[ref]!==null);
- const built=updateSharedRefDirectory(root,scope,next.revision,updates,selected,{metadata:{channel:legacy.channel,sources:legacy.sources,workspaces:legacy.workspaces,preferences:legacy.preferences,humanRefs:humans,units:legacy.units,changes:boundedSharedChanges(legacy.changes)}});
+ const built=buildSharedDirectoryUpdateRecord(root,scope,next.revision,updates,selected,{metadata:{channel:legacy.channel,sources:legacy.sources,workspaces:legacy.workspaces,preferences:legacy.preferences,humanRefs:humans,units:legacy.units,changes:boundedSharedChanges(legacy.changes)}});
  for(const row of built.records)store.put(row);
- const writtenRoot=snapshotSharedDirectoryRoot(built.root,scope);
- store.put(manifest_partitionRecord(root.scopeKey,writtenRoot));return writtenRoot;
+ store.put(built.rootRecord);return built.root;
 }

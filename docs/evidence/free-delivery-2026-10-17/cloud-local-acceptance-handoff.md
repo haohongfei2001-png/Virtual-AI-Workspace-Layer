@@ -131,3 +131,5 @@ node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-tr
 CI39093078440正式10k FAIL：rev206/10000正确PROJECT，首轮21页完整审计3877.35ms，第二轮在途390.56ms耗尽原30秒，未进入measurement；源码/fixture/manifest不漂移。本地d96d345原10k通过仅为同生产代码Mac单例，不能覆盖此Linux失败。Node通过，J4原门禁通过但23步PARTIAL且peer自动foreground未建立；journeys片段场景在返回原生阅读之后、首项片段操作之前超时；draft保留但reading不可见，后续renew/view仍ready，需定位界面转换。failure-only诊断与正式证据分开存档，不重新运行挑绿。
 
 同生产代码原100k FAIL，最后预算内tail rev233/11131、完整审计0；失败后rev234/11185不是预算内完成。私有真实IDB阶段探针发现operation等待仅2.5ms，占本次新增50条register→done的9.84%；既有50条无需该查询，故拒绝未经收益证明的提前查询改动。详见既有local-page-selection-summary.json及其原件SHA256，不改变原计划和验收。
+
+Shared最终根候选复用原Native最终记录构造方式，保持所有校验及原事务：完整root编码4→1，全部写入字节一致；实际IDB登记中位33.5→32.2ms只为局部结果。冻结Node8321/8321、130.53秒、输入无漂移，12护栏变异KILLED；仍需新候选Linux Host验证，不能覆盖CI39093078440的10k和返回转换失败。返回转换运行器已有128事件上限的被动证据接线，原点击/等待/checksum断言保留，Mac诊断未复现不作为修复证据。

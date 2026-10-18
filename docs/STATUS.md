@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **Shared最终根重复编码已合并，Linux/Host待验**：已确认的摄取CPU热点链中，同一新根旧路径4次完整编码；现capture一次并保全部旧root/bucket、metadata/ordinal、原manifest容量校验，用最终同份canonical bytes做16Mi界限与原SHA256，冻结后在原事务写入。没有缓存新IDB字节或授权，也未改schema/hash算法/耐久。3200+50与64×50 changes纯函数全records/root/checksum字节一致，完整root编码4→1；无插桩真实IDB固定AB/BA/AB登记中位33.5→32.2ms，仅约3.9%局部收益，六次完整3250 facts摘要一致，不宣称Host提速。212相关/16独立反例通过；冻结完整Node8321/8321、零fail/skip/cancel、130.53秒且输入未漂移；12护栏变异KILLED，独立审查无阻断。旧导入锚点失败保留并恢复兼容；未重复本地100k挑绿，现有10k/J4/返回转换FAIL等待新候选Linux证据。[精确来源](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
+
 - **返回转换诊断接线，未宣称修复**：Mac Chrome156单次隔离被动诊断未复现Linux片段旅程失败：可信关闭按钮指向原workspace，open→closed后reading与唯一返回可见，12事件零丢弃，随后六项原检查通过；不能覆盖Linux FAIL。现有runner接入最多128事件及有限节点身份快照，不读正文、不改点击/等待/超时，原旅程去除精确诊断包围后的checksum保持。46项相关生命周期/CI测试通过，初次导入与checksum测试适配失败保留；独立审查无阻断。下一次Linux执行取得转换事件前不猜因，不因此重复全矩阵。
 
 - **62e476e / CI39093078440 已终结FAIL，不能以局部收益关闭10k**：正式10k已收齐rev206/10000正确PROJECT，首轮21页完整审计3877.35ms通过、零UNKNOWN/遗漏/错属；第二轮在途390.56ms时耗尽原30秒，未进入measurement。源/fixture/manifest稳定，本地同生产代码通过不覆盖Linux失败。failure-only诊断另为rev207、首审3704.31ms、第二审超限；保留owner样本apply分段7099ms/page887ms，原生页面约8962/10156ms idle，继续定位worker提交链，不能把CPU自耗样本当完整阶段。Node通过；J4原门禁成功但实际23步PARTIAL，自动foreground仍NOT_ESTABLISHED。journeys片段场景在点击返回原生阅读后等返回工作空间超时，0项片段操作完成；draft保留、原生reading不可见，后续renew/view仍ready，根因未确证。原100k同d96d345亦FAIL：预算内最后tail11131、完整审计0；失败后11185库存不倒算为预算内完成。小型真实IDB诊断排除提前operation读取：只占新增登记样本2.5ms/9.84%，无新增路径反而增加请求，未实施推测性小改。所有原预算/规模/授权边界不变。[原始证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。

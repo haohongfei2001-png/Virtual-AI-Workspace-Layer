@@ -3,6 +3,7 @@ import {captureJSONSnapshot} from './capture-json-snapshot.mjs';
 import {normalizedScope} from '../b1/identity.mjs';
 import {id,exact} from './state.mjs';
 import {stable,digest} from './hash.mjs';
+import {sha256} from './hash.mjs';
 import {manifest_PARTITION_FORMAT,manifest_checkManifest,manifest_partitionRecord,manifest_partitionUnpack} from './partition-manifest.mjs';
 const PARTITION_FORMAT=manifest_PARTITION_FORMAT,checkManifest=manifest_checkManifest,partitionRecord=manifest_partitionRecord,partitionUnpack=manifest_partitionUnpack;
 
@@ -33,7 +34,7 @@ function countDirectory(root){
 /** Root validation checks metadata syntax, not the existence of human/preference
  * targets. Those claims require verified buckets and full legacy validation.
  */
-function validateRootStructure(root,scope){
+function checkRootStructure(root,scope){
  exact(root,['format',...metadata,'refDirectory','nextOrdinal']);if(root.format!==SHARED_DIRECTORY_FORMAT)throw Error('invalid-shared-directory-format');
  const count=countDirectory(root),refs={};
  // Reuse the original metadata validators with explicit target claims only.
@@ -42,7 +43,10 @@ function validateRootStructure(root,scope){
  const claimed=[...root.humanRefs,...(root.preferences?.workingSet?.value?.refs??[]),...(root.preferences?.savedSnippets?.value??[]).map(row=>row.refId)];
  for(const ref of claimed){id(ref);refs[ref]=1;}
  if(Object.keys(refs).length>count)throw Error('orphan-shared-directory-metadata');
- checkManifest(legacy(root,refs),scopeKey(scope));if(stable(root).length>MAX_RECORD)throw Error('state-too-large');return root;
+ checkManifest(legacy(root,refs),scopeKey(scope));return root;
+}
+function validateRootStructure(root,scope){
+ checkRootStructure(root,scope);if(stable(root).length>MAX_RECORD)throw Error('state-too-large');return root;
 }
 // This cache certifies structure only. Owners separately verify the stored
 // envelope checksum. Every caller's fresh object is encoded and compared in
@@ -143,6 +147,20 @@ export function materializeSharedRefDirectory(root,scope,records){
  * atomically; old immutable records remain available to its checkpoint/GC policy.
  */
 export function updateSharedRefDirectory(root,scope,revision,updates,records,options={}){
+ const built=updateDirectoryPieces(root,scope,revision,updates,records,options);
+ validateSharedDirectoryRoot(built.root,scope);return built;
+}
+/** Final writer record, not a storage-read shortcut. Capture the constructed
+ * root once and use its canonical bytes for BOTH the size bound and checksum.
+ * Old roots and pieces still pass the original validators in the builder. */
+export function buildSharedDirectoryUpdateRecord(root,scope,revision,updates,records,options={}){
+ const normalized=rootScope(scope),built=updateDirectoryPieces(root,normalized,revision,updates,records,options);
+ built.root=captureJSONSnapshot(built.root);checkRootStructure(built.root,normalized);
+ const encoded=stable(built.root);if(encoded.length>MAX_RECORD)throw Error('state-too-large');
+ freezeRoot(built.root,normalized);
+ return {...built,rootRecord:{key:built.root.scopeKey,payload:built.root,checksum:sha256(encoded)}};
+}
+function updateDirectoryPieces(root,scope,revision,updates,records,options){
  exact(options,[],['metadata']);const metadataPatch=options.metadata===undefined?{}:options.metadata;exact(metadataPatch,[],['channel','sources','workspaces','preferences','humanRefs','units','changes']);
  validateSharedDirectoryRoot(root,scope);version(revision,Number.MAX_SAFE_INTEGER);if(revision!==root.revision+1)throw Error('shared-directory-revision-conflict');
  if(!updates||typeof updates!=='object'||Array.isArray(updates)||Object.keys(updates).length>20000)throw Error('invalid-shared-directory-updates');
@@ -157,5 +175,5 @@ export function updateSharedRefDirectory(root,scope,revision,updates,records,opt
  }
  if(used.size!==byKey.size)throw Error('unexpected-shared-directory-record');if(count>MAX_REFS)throw Error('shared-directory-capacity');
  for(const [bucket,g] of groups){if(Object.keys(g.versions).length)written.push(makeBucket(next,bucket,g.versions,g.ordinals));else delete next.refDirectory[bucket];}
- Object.assign(next,metadataPatch);validateSharedDirectoryRoot(next,scope);return {root:next,records:written};
+ Object.assign(next,metadataPatch);return {root:next,records:written};
 }
