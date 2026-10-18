@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **2026-10-19用户已手动刷新、未出现验证；21a200e已原位更新但403仍在**：原授权tab无草稿/生成/附件后，旧版正常流程page accounts200、worker session403且challenge=true；按原路径/同扩展ID装入已过CI的21a200e，保留旧包、不卸载、不触碰Profile存储，权限/配置完全相同。新版一次正常流程仍page accounts200、约6秒后worker session403 HTML且`cf-mitigated=challenge`，frame0、原生编辑器保留。每次只观察到一次worker session请求，不能据续期放大修复宣称启动挑战解决。停止要求用户反复刷新/清Cookie/重登；服务端触发规则未知，需要服务提供方确认该扩展请求的支持/挑战原因。仅保存脱敏状态，未读正文/凭据/私人ID。原证据manualRefreshAndCandidateUpdate20261019；真实闭环仍未通过。
+
 - **2026-10-19已修复成功续期无期限进展导致的请求放大**：真实controller+authority离线链复现最后10秒7次额外续期；旧3例2PASS/1RED。现成功ACK若最早binding/UI grant绝对期限未延长，则不再按剩余一半重排；原到期撤回、6秒请求、scope边界不变，新producer重新计算。128定向PASS/0skip/126.407ms，194包检查PASS/0skip/2762.218ms；覆盖固定/缩短期限与C2 receipt60秒封顶。实际隔离MV3原66秒保持同frames、query、H7和草稿，session/roster各初次+临期一次，源码未漂移、worker外网阻断。旧浏览器脚本未打开设置导致30秒前置FAIL已保留；修正真实设置入口，未放宽任何断言。独审无阻断。不据此归因或宣称解决Cloudflare403；真实Profile未新增请求/未更新安装包，等用户验证结果。证据nonextendingRenewal20261019。
 
 - **2026-10-19真实403原因分类已查明，尚未解决**：确认使用本地投递专用Profile及原获授权当前tab。页面session一次200 JSON；唤醒worker后单独session一次200 JSON；正常扩展刷新流程随后仍返回403 HTML，且响应头`cf-mitigated=challenge`、server=cloudflare。这是挑战页，不能仅据现有`session-unauthorized`枚举认定登录已失效；触发规则和请求差异根因尚未知。两次正常刷新均先确认无草稿/生成/附件，原生编辑器保留、frame0。仅保存脱敏状态/响应头布尔值，取消响应body，不读凭据/正文、不做原生写入。用户需在同一专用Profile手动刷新一次并在出现时完成人机验证；未收到操作结果前停止主动复测。生产403拒绝和备用认证边界不改，未声明恢复；原证据workerChallengeDiagnosis20261019。

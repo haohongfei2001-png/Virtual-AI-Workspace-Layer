@@ -4748,5 +4748,181 @@
     },
     "priorFailure": "Old existing browser driver attempted hidden horizon control without opening settings; failed before measurement. Added actual settings activation; original 66s and request counts unchanged. Added worker-covering reject proxy for disposable profile.",
     "independentReview": "No blocking defect; C2 receipt producer is a test double, not live evidence."
+  },
+  "manualRefreshAndCandidateUpdate20261019": {
+    "userResult": "Manually refreshed the dedicated Profile; no verification appeared.",
+    "source": "21a200e020d120655ca6fc8e0953e7d6b73c889a",
+    "observations": {
+      "vaiwl-after-human-refresh-20261019.json": {
+        "kind": "AUTHORIZED_CURRENT_TAB_RECOVERY",
+        "bodyRead": false,
+        "credentialsRead": false,
+        "nativeWrites": 0,
+        "network": [
+          {
+            "kind": "accounts",
+            "status": 200,
+            "mime": "application/json"
+          },
+          {
+            "source": "worker",
+            "kind": "session",
+            "status": 403,
+            "mime": "text/html",
+            "challenge": true,
+            "cloudflare": true
+          }
+        ],
+        "timing": [
+          {
+            "phase": "request",
+            "source": "page",
+            "kind": "accounts",
+            "ms": 1318,
+            "method": "GET",
+            "accept": "other",
+            "initiator": "script"
+          },
+          {
+            "phase": "response",
+            "source": "page",
+            "kind": "accounts",
+            "ms": 2126,
+            "status": 200
+          },
+          {
+            "phase": "request",
+            "source": "worker",
+            "kind": "session",
+            "ms": 6110,
+            "method": "GET",
+            "accept": "json",
+            "initiator": "script"
+          },
+          {
+            "phase": "response",
+            "source": "worker",
+            "kind": "session",
+            "ms": 6320,
+            "status": 403
+          }
+        ],
+        "before": {
+          "ready": true,
+          "conversation": true,
+          "editor": true,
+          "draftEmpty": true,
+          "generating": false,
+          "attachments": false,
+          "frames": 0,
+          "returnControls": 0
+        },
+        "reloaded": true,
+        "after": {
+          "ready": true,
+          "conversation": true,
+          "editor": true,
+          "draftEmpty": true,
+          "generating": false,
+          "attachments": false,
+          "frames": 0,
+          "returnControls": 0
+        }
+      },
+      "vaiwl-installed-21a200e-receipt.json": {
+        "source": "21a200e",
+        "sameExtensionId": true,
+        "originalPath": true,
+        "oldPackagePreserved": true,
+        "uninstall": false,
+        "profileStorageTouched": false,
+        "at": "2026-10-18T18:26:40.228Z"
+      },
+      "vaiwl-updated-candidate-recovery-20261019.json": {
+        "kind": "AUTHORIZED_CURRENT_TAB_RECOVERY",
+        "bodyRead": false,
+        "credentialsRead": false,
+        "nativeWrites": 0,
+        "network": [
+          {
+            "kind": "accounts",
+            "status": 200,
+            "mime": "application/json"
+          },
+          {
+            "source": "worker",
+            "kind": "session",
+            "status": 403,
+            "mime": "text/html",
+            "challenge": true,
+            "cloudflare": true
+          }
+        ],
+        "timing": [
+          {
+            "phase": "request",
+            "source": "page",
+            "kind": "accounts",
+            "ms": 1126,
+            "method": "GET",
+            "accept": "other",
+            "initiator": "script"
+          },
+          {
+            "phase": "response",
+            "source": "page",
+            "kind": "accounts",
+            "ms": 1945,
+            "status": 200
+          },
+          {
+            "phase": "request",
+            "source": "worker",
+            "kind": "session",
+            "ms": 5969,
+            "method": "GET",
+            "accept": "json",
+            "initiator": "script"
+          },
+          {
+            "phase": "response",
+            "source": "worker",
+            "kind": "session",
+            "ms": 6163,
+            "status": 403
+          }
+        ],
+        "before": {
+          "ready": true,
+          "conversation": true,
+          "editor": true,
+          "draftEmpty": true,
+          "generating": false,
+          "attachments": false,
+          "frames": 0,
+          "returnControls": 0
+        },
+        "reloaded": true,
+        "after": {
+          "ready": true,
+          "conversation": true,
+          "editor": true,
+          "draftEmpty": true,
+          "generating": false,
+          "attachments": false,
+          "frames": 0,
+          "returnControls": 0
+        }
+      }
+    },
+    "permissionsAndConfigUnchanged": true,
+    "limits": [
+      "Same extension ID and original install path; previous package preserved; no uninstall or profile storage change.",
+      "Still 403 HTML with challenge header in normal flow, one observed worker session request per reload.",
+      "No proof that renewal amplification caused this startup challenge; new code did not remove it.",
+      "No more refresh/relogin requests to user; service-side challenge trigger remains unknown.",
+      "No challenge solving, alternate transport fallback or grant changes."
+    ],
+    "status": "UPDATED_CANDIDATE_INSTALLED_CHALLENGE_UNRESOLVED"
   }
 }
