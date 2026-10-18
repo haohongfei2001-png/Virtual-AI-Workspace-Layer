@@ -150,9 +150,10 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function showReading(){const state=current;try{if(state)state.intentEpoch++;if(!state||!authorized(state))return false;if(adapter.hasNativeLayer()){suspend('native-layer');return false;}surface.showReading(state.handle);state.mode='reading';return ensureReturn(state);}finally{publishSurface(state);}}
  function showNativeReading(){const state=current;try{if(state)state.intentEpoch++;if(!state||!authorized(state)||adapter.hasNativeLayer())return false;surface.suspend(state.handle);state.mode='reading';return ensureReturn(state);}finally{publishSurface(state);}}
  function suspend(reason='native-layer'){const state=current;if(state)state.pendingWakeEntry=false;if(state?.dormant){removeReturn(state);return;}try{if(state)state.intentEpoch++;if(!state?.handle)return;removeReturn(state);surface.suspend(state.handle,reason);state.mode='suspended';}finally{publishSurface(state);}}
- function arm(state){if(state.dormant)return;cancel(state.timer);const until=Math.min(Date.parse(state.context.binding.expiresAt),...Array.from(state.grants.values(),g=>Date.parse(g.expiresAt)));state.timer=schedule(()=>{if(current===state&&!state.dormant)stop('ui-grant-expired');},Math.max(0,until-now()));if(!state.geometryPaused&&typeof bridge.renewSession==='function'&&state.grants.size===2&&!state.renewing&&state.renewTimer===null)state.renewTimer=schedule(()=>{state.renewTimer=null;void renewSession(state);},Math.max(1,Math.min(10000,(until-now())/2)));}
+ const leaseUntil=state=>Math.min(Date.parse(state.context.binding.expiresAt),...Array.from(state.grants.values(),g=>Date.parse(g.expiresAt)));
+ function arm(state){if(state.dormant)return;cancel(state.timer);const until=leaseUntil(state);state.timer=schedule(()=>{if(current===state&&!state.dormant)stop('ui-grant-expired');},Math.max(0,until-now()));if((state.renewalCeiling===null||until>state.renewalCeiling)&&!state.geometryPaused&&typeof bridge.renewSession==='function'&&state.grants.size===2&&!state.renewing&&state.renewTimer===null)state.renewTimer=schedule(()=>{state.renewTimer=null;void renewSession(state);},Math.max(1,Math.min(10000,(until-now())/2)));}
  async function renewSession(state){
-  if(state.dormant||state.geometryPaused)return;const geometryRevision=state.geometryRevision;
+  if(state.dormant||state.geometryPaused)return;const geometryRevision=state.geometryRevision,priorUntil=leaseUntil(state);
   if(!authorized(state)){if(current===state)stop('stale-session-renewal');return;}state.renewing=true;
   try{
    const raw=await withRequestDeadline(()=>bridge.renewSession({handle:state.handle,binding:state.context.binding}),{timeoutMs:6000,now:elapsedNow,schedule,cancel});
@@ -163,11 +164,15 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    const next=new Map();for(const grant of ack.grants){const previous=state.grants.get(grant?.role);if(!previous||next.has(grant.role)||['id','mountId','role','parentDocumentId','uiDocumentId','scopeGrantId'].some(k=>grant[k]!==previous[k])||!future(grant.expiresAt))throw Error('invalid-session-renewal');next.set(grant.role,Object.freeze({...grant}));}
    if(adapter.updateBinding(binding)!==true)throw Error('invalid-binding-renewal');
    state.context={...state.context,binding:Object.freeze({...binding})};state.grants=next;
+   // A successful read may still be capped by the original session/context expiry.
+   // Do not halve the remaining interval repeatedly when no lease time was gained.
+   // Keep the absolute expiry timer: this never extends authority or retries a denial.
+   state.renewalCeiling=leaseUntil(state)<=priorUntil?priorUntil:null;
   }catch{if(current===state&&!state.dormant&&state.geometryRevision===geometryRevision)stop('session-renew-failed');}
   finally{state.renewing=false;if(current===state&&!state.dormant){arm(state);publishSurface(state);}}
  }
  async function start(options){
-  stop('surface-restart');const run=epoch,state={epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),surfaceKey:null,surfaceRevision:0,mode:'waiting',dormant:false,waking:false,geometryPaused:false,geometryRevision:0};current=state;
+  stop('surface-restart');const run=epoch,state={epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,renewalCeiling:null,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),surfaceKey:null,surfaceRevision:0,mode:'waiting',dormant:false,waking:false,geometryPaused:false,geometryRevision:0};current=state;
   try{
    state.context=await adapter.start(options);if(current!==state)return null;
    state.inspection=adapter.inspect();if(!state.inspection?.ok||!state.inspection.navigationSlot?.isConnected)throw Error('invalid-return-slot');
@@ -296,7 +301,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
    if(!binding||binding.browserDocumentId!==previous.browserDocumentId||binding.origin!==previous.origin||binding.producerToken===previous.producerToken||!tokenOK(binding.producerToken)||!tokenOK(binding.documentToken)||!(Date.parse(binding.expiresAt)>now()))throw Error('fresh-binding-required');
    const inspection=adapter.inspect();if(!inspection?.ok||inspection.navigationSlot!==state.inspection.navigationSlot||!inspection.navigationSlot?.isConnected)throw Error('invalid-return-slot');
    const handle=surface.rebind(state.handle,context,inspection);
-   state.handle=handle;state.context=context;state.inspection=inspection;
+   state.handle=handle;state.context=context;state.inspection=inspection;state.renewalCeiling=null;
    const ack=await withRequestDeadline(()=>bridge.registerMount({handle}),{now:elapsedNow,schedule,cancel});
    if(!intact()||ack?.ok!==true||surface.isRebindCurrent(state.handle,adapter.inspect())!==true)throw Error('mount-registration-denied');
    state.dormant=false;state.resuming=false;state.registered=true;state.mode='waiting';state.resumeMode=mode;state.surfaceKey=null;state.idleAcks.clear();removeReturn(state);
