@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **f29443a Linux CI39086077996：片段修复跨环境闭环成立，10k仍FAIL**：Node与journeys通过，新增原六场景片段旅程Linux全部通过，与Mac生产/runner摘要完全一致。J4原门禁通过、23步完成但JSON仍PARTIAL：自动foreground失败、两次新原生导航恢复通过。正式10k截止最后tail为rev310/PENDING_MEMBER、audit0；失败后rev311/10000库存不能倒推预算内完成。独立诊断rev209首轮完整审计3081ms、第二轮inFlight超时，不抵消正式FAIL。无变化重复packet已有零写路径，不能用其数量解释额外revision；继续区分首次分包与语义变更，未归因或放宽预算。[同源码CI原证据](evidence/free-delivery-2026-10-17/local-ci39086077996-summary.json)。
+
 - **CI39083660931 原失败已核对，发布关口仍开放**：同 e1b0bfd、Chrome156，Linux Node24/Ubuntu24.04.5 正式10k已取得10000 refs/rev234，第一轮21页完整审计3034.55ms通过，第二轮仍inFlight时耗尽原30秒；这次不是旧CI的第17成员等待失败，也不是缺会话。本地原候选完整通过不能覆盖该FAIL。Linux正式J4在peer新原生导航后仍scope超时；同HEAD本地23步完成但为PARTIAL，自动foreground仍失败，两个新原生导航恢复通过不替代它。原日志、正式JSON和诊断分别保存。[原始证据索引](evidence/free-delivery-2026-10-17/local-ci39083660931-evidence-index.json)。
 - **关闭禁用发送识别误伤body观察的真实缺陷**：PR18运行器安全整合后，原片段MV3旅程实际暴露保存拒绝。逐层诊断确认capture授权通过、当前新增消息与旧body proof不一致；worker实际异常为host-send-candidates-disabled。现在只在发送识别已启用时调用自动observe，不开启任何配置，不吞启用路径错误。独立集成原版3PASS/1RED→候选4PASS（同标题新消息精确反例、标题变化、启用认证读取、耗尽预算）；343相关回归通过，原六场景真实隔离headless MV3全部通过，草稿/选区/改文拒绝边界保留。PR18路径移植和失败清理保留，另补worker外网阻断；六场景加入既有journeys job，仅文本证据，无缓存/产物上传。冻结完整Node8214/8214、0 fail/skip/cancel、100.88秒，源码/测试输入未变，原12护栏变异全KILLED；首轮完整回归因新增CI场景未登记清单而1FAIL的证据保留，修正清单后完整复验通过。上一批85.51秒，本批不声称提速；定向343项实测0.716秒。未用片段通过关闭10k/J4。
 - **真实宿主仍未认证**：本轮确认授权的“您的 Chrome”与现有ChatGPT标签元数据，受限DOM只读查询超时；未取得当前context字段，不读取正文/凭据、不保存私人标题或URL，不扩大生产scope。物理IME、实际PAIA、真实跨端及其余人工验收仍NOT_RUN/BLOCKED；缺口是可用的受限浏览器读取连接及真实设备验收证据，不是重新请求已给权限。

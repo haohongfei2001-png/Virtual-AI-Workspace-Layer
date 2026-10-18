@@ -103,3 +103,5 @@ node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-tr
 本轮真实Profile受限读取连接超时，当前context仍未验证。没有新增私人数据上传或原生写入。保留2258数字副本与原stash，继续原本地目录/Free分支/PR16。
 
 最终冻结完整Node8214/8214（100.88秒，0 fail/skip/cancel）、12/12护栏变异KILLED，输入摘要不变。首轮95.86秒含一项CI场景清单遗漏FAIL，修正后复验；上一批85.51秒，仅报告实测、不宣称加速。原片段浏览器生产/runner摘要与最终候选完全一致。
+
+同源码f29443a的CI39086077996已结束：Linux片段六场景通过、生产与runner摘要同本地；Node/journeys通过。J4仅原门禁通过，仍PARTIAL；正式10k tail待定/audit0超时，失败后库存10000不冒充预算内完成。原JSON及日志见[本次CI证据](local-ci39086077996-summary.json)。
