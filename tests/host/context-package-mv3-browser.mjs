@@ -63,9 +63,9 @@ try{
  try{report.native=server.snapshot();}catch(e){report.diagnosticErrors.push({stage:'native',error:String(e)});}
  // Attach only after the original failure. Never warm the cold worker or create a world.
  if(context&&page&&extensionId)try{report.failureInspection=await inspectJ3Failure({context,page,browser:context.browser(),extensionId});}catch{report.failureInspection={error:'failure-inspection-unavailable'};}
- try{worker??=context?.serviceWorkers().find(w=>w.url()===`chrome-extension://${extensionId}/extension/worker.mjs`);report.diagnostics=await worker?.evaluate(()=>({warm:globalThis.__offlineDiagnostic??null,cold:globalThis.__vaiwlColdTrace??null}));}catch(e){report.diagnosticErrors.push({stage:'worker',error:String(e)});}
+ try{worker??=context?.serviceWorkers().find(w=>w.url()===`chrome-extension://${extensionId}/extension/worker.mjs`);report.diagnostics=await worker?.evaluate(()=>({warm:globalThis.__offlineDiagnostic??null,cold:globalThis.__vaiwlColdTrace??null,coldDropped:globalThis.__vaiwlColdTraceDropped??0}));}catch(e){report.diagnosticErrors.push({stage:'worker',error:String(e)});}
 }finally{
- if(worker&&!report.diagnostics)try{report.diagnostics=await worker.evaluate(()=>({warm:globalThis.__offlineDiagnostic??null,cold:globalThis.__vaiwlColdTrace??null}));}catch{}
+ if(worker&&!report.diagnostics)try{report.diagnostics=await worker.evaluate(()=>({warm:globalThis.__offlineDiagnostic??null,cold:globalThis.__vaiwlColdTrace??null,coldDropped:globalThis.__vaiwlColdTraceDropped??0}));}catch{}
  const clean=await cleanupOwnedResources(report,[['browser',()=>context?.close()],['instrumentation',()=>report.instrumentation?verifyColdTracePackage(report.instrumentation):undefined],['package',()=>verifyHost(built.unpacked)],['fixture',()=>server.close()],['source-integrity',async()=>{
   report.sourceChangedDuringRun=(await Promise.all(Object.entries(info.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);
   report.scriptChangedDuringRun=hash(await readFile(script))!==scriptHash||hash(await readFile(boundaryHelper))!==boundaryHelperHash||hash(await readFile(projectionOracle))!==projectionOracleHash;

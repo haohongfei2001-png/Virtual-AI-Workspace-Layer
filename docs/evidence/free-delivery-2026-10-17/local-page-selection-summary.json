@@ -8276,6 +8276,230 @@
           "rawSha256": "4e60741df28d2927b5d8c5f8fc296079453e7f2a6664fc7f34fb6b5574bff74c"
         }
       }
+    },
+    "contextChainFollowup20261019": {
+      "productionHead": "9a3f5cce57f2b61a8f2284c71d3fc24c7fe4715d",
+      "productionChanges": false,
+      "githubSynchronization": "9a3f5cc normally pushed to original branch after standard HTTPS recovered; no remote/proxy/DNS/credential configuration changes",
+      "dotResearch": {
+        "comment": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6255834144",
+        "adoption": "Research found no direct publicly supported substitute satisfying existing principal/document boundaries. No new identity source or permission enabled. Latest real chain already isolates session challenge; no further challenge replay."
+      },
+      "realProjectSample": {
+        "readOnly": true,
+        "visibleProjectsHeadingExpanded": true,
+        "existingProjectPageLinkConfirmed": false,
+        "confirmedExistingProjectAction": false,
+        "createControlObserved": true,
+        "createControlActivated": false,
+        "candidateAttribute": "data-sidebar-project-container-id also occurs on ordinary navigation groups and did not match native project grammar; not promoted to native identity or membership",
+        "accountWideProjectAbsence": "NOT_INFERRED",
+        "privateIdsTitlesURLsBodyCredentialsSaved": false,
+        "requiredHumanStep": "User replied that they will open an existing Project in the already authorized job-application Profile. Subsequent metadata-only check still found conversation routes, no Project page; no refresh/login or native write requested."
+      },
+      "coldInvestigation": {
+        "originalCI39170416769": "FAIL unchanged; precise lost-event stage unproven",
+        "excludedInference": "Completed GET then same-document commit does not explain empty closedRequests in the same owner inside TTL. Existing revocation guard preserved.",
+        "newInstrumentation": "Only offline test copy: original rejection branches, committed/history, prior-receipt boolean, stop and bounded dropped counter. No extra clock fence, browser query, request, wait or retry.",
+        "parity": "Ten controlled event sequences match original module receipt, browser calls and stateful clock calls. Does not certify all schedules or explain prior CI.",
+        "targeted": {
+          "pass": 71,
+          "fail": 0,
+          "skip": 0,
+          "durationMs": 1509.282458
+        },
+        "singleColdDiagnostic": {
+          "status": "PASS",
+          "traceDropped": 0,
+          "sourceChangedDuringRun": false,
+          "scriptChangedDuringRun": false,
+          "historicalFailureCause": "NOT_ESTABLISHED_BY_THIS_SEPARATE_PASS"
+        },
+        "review": "NO_BLOCKING_FINDINGS"
+      },
+      "ci39172016377": {
+        "head": "9a3f5cce57f2b61a8f2284c71d3fc24c7fe4715d",
+        "status": "COMPLETED",
+        "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39172016377",
+        "conclusion": "SUCCESS",
+        "jobs": [
+          {
+            "conclusion": "success",
+            "failed": [],
+            "id": 117806889175,
+            "name": "offline-durability-compat",
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "failed": [],
+            "id": 117806889274,
+            "name": "offline-j4-lifecycle",
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "failed": [],
+            "id": 117806889304,
+            "name": "offline-journeys",
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "failed": [],
+            "id": 117806889317,
+            "name": "node-contracts",
+            "status": "completed"
+          }
+        ],
+        "contextCases": [
+          {
+            "container": false,
+            "startup": "WORKER_READY_PRECONDITION",
+            "status": "PASS",
+            "sourceHashesMatch": true,
+            "runnerMatchesCommitted9a": true,
+            "sourceChanged": false,
+            "scriptChanged": false,
+            "inspectionChanged": false,
+            "results": [
+              {
+                "name": "C2-native-request-authenticated-roster-second-context-to-native-Free-UI",
+                "status": "PASS",
+                "scopeCount": 1
+              }
+            ],
+            "coldBoundary": null,
+            "evidence": "REAL_HEADLESS_PACKAGED_MV3_OFFLINE_C2"
+          },
+          {
+            "container": true,
+            "startup": "WORKER_READY_PRECONDITION",
+            "status": "PASS",
+            "sourceHashesMatch": true,
+            "runnerMatchesCommitted9a": true,
+            "sourceChanged": false,
+            "scriptChanged": false,
+            "inspectionChanged": false,
+            "results": [
+              {
+                "name": "C2-native-request-authenticated-roster-second-context-to-native-Free-UI",
+                "status": "PASS",
+                "scopeCount": 1
+              }
+            ],
+            "coldBoundary": null,
+            "evidence": "REAL_HEADLESS_PACKAGED_MV3_OFFLINE_C2"
+          },
+          {
+            "container": false,
+            "startup": "COLD_IMMEDIATE_AFTER_LOAD_UNPACKED",
+            "status": "PASS",
+            "sourceHashesMatch": true,
+            "runnerMatchesCommitted9a": true,
+            "sourceChanged": false,
+            "scriptChanged": false,
+            "inspectionChanged": false,
+            "results": [
+              {
+                "name": "C2-native-request-authenticated-roster-second-context-to-native-Free-UI",
+                "status": "PASS",
+                "scopeCount": 1
+              }
+            ],
+            "coldBoundary": null,
+            "evidence": "REAL_HEADLESS_PACKAGED_MV3_OFFLINE_C2"
+          },
+          {
+            "container": false,
+            "startup": "COLD_IMMEDIATE_AFTER_LOAD_UNPACKED",
+            "status": "PASS",
+            "sourceHashesMatch": true,
+            "runnerMatchesCommitted9a": true,
+            "sourceChanged": false,
+            "scriptChanged": false,
+            "inspectionChanged": false,
+            "results": [
+              {
+                "name": "C2-native-request-authenticated-roster-second-context-to-native-Free-UI",
+                "status": "PASS",
+                "scopeCount": 1
+              }
+            ],
+            "coldBoundary": null,
+            "evidence": "REAL_HEADLESS_INSTRUMENTED_PACKAGE_COPY_OFFLINE_C2"
+          },
+          {
+            "container": false,
+            "startup": "COLD_IMMEDIATE_AFTER_LOAD_UNPACKED",
+            "status": "PASS",
+            "sourceHashesMatch": true,
+            "runnerMatchesCommitted9a": true,
+            "sourceChanged": false,
+            "scriptChanged": false,
+            "inspectionChanged": false,
+            "results": [
+              {
+                "name": "C2-native-request-authenticated-roster-second-context-to-native-Free-UI",
+                "status": "PASS",
+                "scopeCount": 1
+              }
+            ],
+            "coldBoundary": {
+              "initialProjection": "PASS",
+              "missingReceiptSafety": "NOT_COVERED_THIS_RUN",
+              "immediateColdSupport": "NOT_ESTABLISHED_BY_THIS_RECOVERY_CASE",
+              "nativeBeforeNavigation": [
+                {
+                  "path": "/backend-api/conversation/33333333-3333-4333-8333-333333333333",
+                  "context": "account-host-team"
+                }
+              ],
+              "nativeNavigationRecovery": "NOT_COVERED_THIS_RUN"
+            },
+            "evidence": "REAL_HEADLESS_PACKAGED_MV3_OFFLINE_C2"
+          }
+        ],
+        "j4": "PARTIAL_J4_NOT_ACCEPTED",
+        "j4SourceHashesMatch": true,
+        "historicalColdFailure": "CI39170416769 FAIL unchanged; current success does not establish original failure cause",
+        "scale": "10k/100k DEFERRED unchanged"
+      },
+      "scope": "Current full Free/identity/Project membership/self-send/J4/G/U remain unaccepted. 10k/100k DEFERRED. No comparable end-to-end speedup claim.",
+      "artifacts": {
+        "targeted": {
+          "path": "docs/evidence/free-delivery-2026-10-17/context-cold-rejection-targeted.log.gz",
+          "rawSha256": "683098b491d087195dc35e151317d6f8ac3a9b3cd8f0b6cdb8024dc878b078c8"
+        },
+        "mv3": {
+          "path": "docs/evidence/free-delivery-2026-10-17/context-cold-rejection-mv3.json.gz",
+          "rawSha256": "35a2da405f7da0a906ba248d22e62d2326aa4759ed198eb32a3c1138446f066c"
+        },
+        "visibleProjectArea": {
+          "path": "docs/evidence/free-delivery-2026-10-17/context-current-project-area.json.gz",
+          "rawSha256": "955e4a450b4d1eff222303a2f1b3da62282f591ccf1ff36e0fd10233bc780445"
+        },
+        "nativeControlShape": {
+          "path": "docs/evidence/free-delivery-2026-10-17/context-current-project-control.json.gz",
+          "rawSha256": "0558ddb0cd1c562ce7469943eac8816310fa8acb1b1db84f694aac3299237275"
+        },
+        "containerCounterexample": {
+          "path": "docs/evidence/free-delivery-2026-10-17/context-current-project-containers.json.gz",
+          "rawSha256": "33481cd18a0491c663560b6d67cadb7a89beacbfbe7f84771e947a97791e0a73"
+        },
+        "ciMetadata": {
+          "path": "docs/evidence/free-delivery-2026-10-17/context-ci39172016377-metadata.json.gz",
+          "rawSha256": "9bda7ba9bdc4668b7191e58a0a32d354a734d632e973242986509266b825faa3"
+        },
+        "ciJourneys": {
+          "path": "docs/evidence/free-delivery-2026-10-17/context-ci39172016377-journeys.log.gz",
+          "rawSha256": "4c6db47c10ef2c6e528f267cde5b0daf3699ba41f55c0b07e4263fe2f80feddf"
+        },
+        "ciJ4": {
+          "path": "docs/evidence/free-delivery-2026-10-17/context-ci39172016377-j4.log.gz",
+          "rawSha256": "4fa215abf83acf3013f9d0c2420470f43452bcc3d7663f2ef83065541dd9f4c0"
+        }
+      }
     }
   }
 }
