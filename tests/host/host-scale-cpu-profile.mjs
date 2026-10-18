@@ -19,7 +19,7 @@ async function startProfile({transport,sampleMs,commandTimeoutMs,clockAlignment,
  // instant. CDP profile microseconds retain their original unmapped clock.
  if(clockAlignment)report.clockCorrelation={kind:'RUNNER_CDP_COMMAND_BOUNDS_NOT_ACTUAL_SAMPLE_INSTANTS',profileClock:'UNMAPPED_CDP_MICROSECONDS'};
  const clock=()=>{const wallTimeMs=Date.now(),monotonicMs=performance.now(),timeOriginMs=performance.timeOrigin;return {wallTimeMs,monotonicMs,timeOriginMs,epochMs:timeOriginMs+monotonicMs};};
- let sessionId,targetId,sequence=0,broken=false,closing=false,started=false,startAttempted=false,sampleTimer,ending,resolveFinished,startedAt;
+ let sessionId,targetId,sequence=0,broken=false,closing=false,started=false,startAttempted=false,sampleTimer,ending,resolveFinished,startedAt,setupStage;
  const pending=new Map(),finished=new Promise(resolve=>{resolveFinished=resolve;});
  const bounded=async(task,ms=commandTimeoutMs)=>{let timer;try{return await Promise.race([task,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('command-timeout')),ms);})]);}finally{clearTimeout(timer);}};
  const fail=reason=>{broken=true;report.reason??=reason;for(const p of pending.values())p.reject(Error(reason));pending.clear();};
@@ -44,17 +44,17 @@ async function startProfile({transport,sampleMs,commandTimeoutMs,clockAlignment,
   // Target info notifications require discovery. Keep the worker type eligible
   // because getTargets inherits this connection's discovery filter when omitted.
   // This only observes targets; it never auto-attaches or creates/navigates one.
-  if(identity){await setup(transport.send('Target.setDiscoverTargets',{discover:true,filter:[{type:'page'},{type:'service_worker'},{exclude:true}]}));if(ending||broken)throw Error('setup-deadline');}
-  const result=await setup(transport.send('Target.getTargets'));
+  if(identity){setupStage='Target.setDiscoverTargets';await setup(transport.send('Target.setDiscoverTargets',{discover:true,filter:[{type:'page'},{type:'service_worker'},{exclude:true}]}));if(ending||broken)throw Error('setup-deadline');}
+  setupStage='Target.getTargets';const result=await setup(transport.send('Target.getTargets'));
   if(ending||broken)throw Error('setup-deadline');const matches=result.targetInfos?.filter(matchesTarget);
   if(matches?.length!==1||typeof matches[0].targetId!=='string')throw Error(identity?'exact-existing-page-required':'unique-existing-worker-required');targetId=matches[0].targetId;
-  const attach=Promise.resolve(transport.send('Target.attachToTarget',{targetId,flatten:true}));let attached;
+  setupStage='Target.attachToTarget';const attach=Promise.resolve(transport.send('Target.attachToTarget',{targetId,flatten:true}));let attached;
   try{attached=await setup(attach);}catch(error){void attach.then(r=>r?.sessionId?bounded(transport.send('Target.detachFromTarget',{sessionId:r.sessionId})):null).catch(()=>{});throw error;}
   if(ending||broken){if(attached?.sessionId)try{await bounded(transport.send('Target.detachFromTarget',{sessionId:attached.sessionId}));}catch{}throw Error('setup-deadline');}
   sessionId=attached?.sessionId;if(typeof sessionId!=='string'||!sessionId)throw Error('invalid-session');
-  if(identity)await setup(verifyIdentity());
-  for(const [method,params]of [['Profiler.enable',{}],['Profiler.setSamplingInterval',{interval:1000}],['Profiler.start',{}]]){if(performance.now()>=until||ending)throw Error('setup-deadline');if(method==='Profiler.start'){startAttempted=true;if(clockAlignment)report.clockCorrelation.startRequested=clock();}await setup(send(method,params));if(method==='Profiler.start'&&clockAlignment)report.clockCorrelation.startAcknowledged=clock();}
+  if(identity){setupStage='Target.getTargetInfo';await setup(verifyIdentity());}
+  for(const [method,params]of [['Profiler.enable',{}],['Profiler.setSamplingInterval',{interval:1000}],['Profiler.start',{}]]){setupStage=method;if(performance.now()>=until||ending)throw Error('setup-deadline');if(method==='Profiler.start'){startAttempted=true;if(clockAlignment)report.clockCorrelation.startRequested=clock();}await setup(send(method,params));if(method==='Profiler.start'&&clockAlignment)report.clockCorrelation.startAcknowledged=clock();}
   if(ending||broken)throw Error('setup-deadline');started=true;startedAt=performance.now();sampleTimer=setTimeout(()=>{void finish();},sampleMs);
- }catch(error){fail(['unique-existing-worker-required','exact-existing-page-required','target-identity-changed','invalid-session','setup-deadline'].includes(error.message)?error.message:'setup-unavailable');await finish();}
+ }catch(error){report.setupFailureStage=setupStage;report.setupFailureKind=['command-timeout','profiler-command-failed'].includes(error.message)?error.message:'setup-rejected';fail(['unique-existing-worker-required','exact-existing-page-required','target-identity-changed','invalid-session','setup-deadline'].includes(error.message)?error.message:'setup-unavailable');await finish();}
  return Object.freeze({finish,finished});
 }

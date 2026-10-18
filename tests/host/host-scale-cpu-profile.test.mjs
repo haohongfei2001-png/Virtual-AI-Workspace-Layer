@@ -207,3 +207,16 @@ test('late discovery response after bounded setup and owner close cannot attach 
  const pending=startHostScalePageCPUProfile({...f.options,commandTimeoutMs:5});await waiting;const h=await pending,r=await h.finished;assert.equal(r.status,'UNAVAILABLE');pageCleaned(f);
  f.transport.close();release();await new Promise(resolve=>setImmediate(resolve));assert.equal(f.discovery(),false);assert(!f.calls.some(c=>['Target.getTargets','Target.attachToTarget','Target.sendMessageToTarget'].includes(c.method)));assert.equal(r.status,'UNAVAILABLE');
 });
+
+for(const phase of ['Target.setDiscoverTargets','Target.getTargets','Target.attachToTarget','Target.getTargetInfo','Profiler.enable','Profiler.setSamplingInterval','Profiler.start'])test('setup diagnostics identify bounded failure without retaining raw transport error '+phase,async()=>{
+ for(const mode of ['hang','fail']){
+  const f=pageFixture({[mode]:phase}),h=await startHostScalePageCPUProfile(f.options),r=await h.finished;
+  assert.equal(r.status,'UNAVAILABLE');assert.equal(r.reason,'setup-unavailable');assert.equal(r.setupFailureStage,phase);
+  assert.equal(r.setupFailureKind,mode==='hang'?'command-timeout':phase.startsWith('Profiler.')?'profiler-command-failed':'setup-rejected');
+  assert.equal(r.profile,undefined);assert(!JSON.stringify(r).includes('failure'));pageCleaned(f);
+ }
+});
+test('successful capture has no invented setup failure',async()=>{
+ const f=pageFixture(),h=await startHostScalePageCPUProfile(f.options),r=await h.finish();
+ assert.equal(r.status,'CAPTURED');assert.equal(r.setupFailureStage,undefined);assert.equal(r.setupFailureKind,undefined);pageCleaned(f);
+});

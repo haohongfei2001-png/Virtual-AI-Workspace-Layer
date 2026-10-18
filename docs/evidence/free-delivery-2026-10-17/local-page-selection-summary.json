@@ -98,7 +98,10 @@
     "local-selection-full-node.tap.gz": "ad9bf78cd4cade505c02e2fee04f618177ec426df5022a73a9cb1312c20e4cc0",
     "local-selection-full-node-integrity.json.gz": "7e41a26378f2e825d42486fdfc799ffe9a953535d8022af9f863271600d1203b",
     "local-page-selection-100k.json.gz": "f180ce31494e7e2ba2400e63f87d795ee5f5550caf46b984214c490427c3f6aa",
-    "local-page-selection-100k-single.json.gz": "dd4020e15da761cd28fd3f044c83ea1949deb8aacd0da7ab480a463aca527cf1"
+    "local-page-selection-100k-single.json.gz": "dd4020e15da761cd28fd3f044c83ea1949deb8aacd0da7ab480a463aca527cf1",
+    "local-selection-100k-cpu-before.json.gz": "b59c282b31c14fa757076d91daeea428c5bcad367aab0390cf4f1660592050a8",
+    "local-selection-100k-cpu-stage.json.gz": "98392f57697a4516db168339fed9d38e263152f8ee0ff296d2c22164651b4c1b",
+    "local-selection-cpu-stage-tests.tap.gz": "8395bf5166595a4c20213e3c52fa8dc9044d46d396a08435509d17706c7c52ca"
   },
   "followup100k": {
     "sourceCommit": "7c676ecd2e583feb734a6cfc367a3fe43b65961c",
@@ -194,5 +197,47 @@
     "manifestChangedDuringRun": false,
     "temporaryDirectoryRemoved": true,
     "limit": "Original30s shared window exhausted before the first full audit. Diagnostic root after failure is not admitted-at-deadline proof."
+  },
+  "cpuDiagnostic": {
+    "sourceCommit": "7c676ecd2e583feb734a6cfc367a3fe43b65961c",
+    "acceptance": "NOT_ESTABLISHED",
+    "original100kStatus": "FAIL",
+    "phase": "visible-native-member-progress",
+    "lastTail": {
+      "status": "OBSERVED_TAIL_ONLY",
+      "revision": 183,
+      "total": 8726,
+      "frameGeneration": 1
+    },
+    "auditAttempts": 0,
+    "nativePageSelfMs": {
+      "(idle)": 6812.197,
+      "(program)": 1615.87,
+      "querySelectorAll": 1351.318,
+      "(garbage collector)": 80.936,
+      "getComputedStyle": 29.337,
+      "visible": 27.986,
+      "sha256": 26.256,
+      "splitSurfacePayload": 24.24
+    },
+    "workerSelfMs": {
+      "(idle)": 5584.678,
+      "(garbage collector)": 593.128,
+      "sha256": 369.461,
+      "stable": 359.429,
+      "": 314.008,
+      "strictJSON": 298.715,
+      "put": 182.871,
+      "loadPieces": 172.991
+    },
+    "observerChange": "Fixed-enum setup failure stage and sanitized class only; unchanged sample and command deadlines. A setup-deadline stage denotes the next attempted stage, not proof its command was sent.",
+    "firstCapture": "Native unavailable with unspecific setup-unavailable; worker captured. Raw failure retained.",
+    "nextCapture": "Native and worker captured; product still FAIL. No cause inferred for earlier transient setup failure.",
+    "validation": {
+      "targetedPassed": 72,
+      "wallMs": 570.940542,
+      "independentReview": "No blocking issue"
+    },
+    "limit": "CPU sampling is diagnostic-only and perturbs the journey. Native querySelectorAll self time includes both production and observer; no full bottleneck or speedup conclusion. Input hashes stable; isolated profile removed."
   }
 }

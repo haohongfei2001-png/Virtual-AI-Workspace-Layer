@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **100k定位证据新增，验收仍FAIL**：同7c676ec生产代码，首次原生CPU采样setup-unavailable；补固定枚举失败阶段/类别后定向72通过、独立审查无阻断，原采样和命令期限不变。下一诊断取得原生与worker样本，最后tail rev183/8726、完整审计0；不作为验收绿例。原生querySelectorAll约1351ms，调用栈多数来自产品导航/风险/边界检查，观察器约86ms；页面idle约6812ms、worker idle约5585ms，尚不支持单一CPU瓶颈或收益结论。早先采样失败原因仍未确证，原始失败保留；继续按调用链定位，不改授权检查或放宽门槛。[同源码诊断](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
+
 - **7c676ec原100k混合场景仍FAIL，不能用10k或局部加速外推**：原即时返回旅程在pre-measurement-audit仅有1000 Project/138 refs（138 UNKNOWN）、99862 missing，rev16，性能samples=null；总摄取观察21420.80ms。源/fixture/manifest稳定、隔离目录已清理；没有放宽时间/缩样本/提升UNKNOWN。瓶颈关口在完整原生库存尚未摄取，未进入完整索引分页性能测量；并非上述真实IDB21页读取改善已解决100k。原失败继续保留。[同源码失败原件](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
 
 100k单项目原可见成员场景亦FAIL于30秒共享窗口，未启动任何完整审计。最后tail rev91/total4081，仅代表尾项已观察；失败后root rev93/4190refs不是预算内完成。成员观察段记录12.257秒，整个共享窗口此前已消耗约17.74秒于导航/原生呈现及检查，尚不能把这些时间全归因某一产品函数。两场景均不构成完整100k/p95验收；不重复原样运行挑绿，下一步须有具体摄取/阶段成本证据再改代码。
