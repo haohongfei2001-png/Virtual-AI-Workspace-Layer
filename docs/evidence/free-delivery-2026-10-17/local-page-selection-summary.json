@@ -101,7 +101,10 @@
     "local-page-selection-100k-single.json.gz": "dd4020e15da761cd28fd3f044c83ea1949deb8aacd0da7ab480a463aca527cf1",
     "local-selection-100k-cpu-before.json.gz": "b59c282b31c14fa757076d91daeea428c5bcad367aab0390cf4f1660592050a8",
     "local-selection-100k-cpu-stage.json.gz": "98392f57697a4516db168339fed9d38e263152f8ee0ff296d2c22164651b4c1b",
-    "local-selection-cpu-stage-tests.tap.gz": "8395bf5166595a4c20213e3c52fa8dc9044d46d396a08435509d17706c7c52ca"
+    "local-selection-cpu-stage-tests.tap.gz": "8395bf5166595a4c20213e3c52fa8dc9044d46d396a08435509d17706c7c52ca",
+    "local-selection-100k-phase.json.gz": "daa7c4565f061190eb213d0b5bb49b9eb30d34821fa2b18b611c1abb3b12fdf9",
+    "local-ci39091870975-durability.log.gz": "ff8f0468518c34ab882f8d458e86be9f8edd2fd7f0bc81afa61c59b94a5d8448",
+    "local-ci39091870975-formal10k.json.gz": "3b40bb80b75f3733670c8df618bb364e4327a0672b3dea221e0d7da1677301ae"
   },
   "followup100k": {
     "sourceCommit": "7c676ecd2e583feb734a6cfc367a3fe43b65961c",
@@ -239,5 +242,129 @@
       "independentReview": "No blocking issue"
     },
     "limit": "CPU sampling is diagnostic-only and perturbs the journey. Native querySelectorAll self time includes both production and observer; no full bottleneck or speedup conclusion. Input hashes stable; isolated profile removed."
+  },
+  "phaseDiagnostic": {
+    "status": "FAIL_DIAGNOSTIC_ONLY",
+    "sourceCommit": "a8752ffca02ceb4f120f36455dbacbf586f33df6",
+    "nativeCPUFailure": {
+      "stage": "Profiler.setSamplingInterval",
+      "kind": "command-timeout"
+    },
+    "lastTail": {
+      "revision": 155,
+      "total": 7251
+    },
+    "auditAttempts": 0,
+    "passCumulative": {
+      "emitCount": 128,
+      "emitMs": 18450.8,
+      "scanMs": 450.9,
+      "splitMs": 228.1,
+      "retry": 1
+    },
+    "retainedOwnerSamples": 81,
+    "retainedOwnerTotalMs": 7031.5,
+    "retainedOwnerApplySegmentMs": 5904.3,
+    "nextLocalization": "shared.registerNativeReferences callback and subsequent queued writer/GC until transaction complete",
+    "limits": "Dropped records and non-atomic CPU phase snapshot; cumulative offsets were differenced, not summed as durations. These are retained sample diagnostics, not complete throughput or acceptance."
+  },
+  "candidateLinux": {
+    "run": 39091870975,
+    "head": "a8752ffca02ceb4f120f36455dbacbf586f33df6",
+    "overall": "IN_PROGRESS",
+    "durabilityJob": "SUCCESS",
+    "nodeJob": "SUCCESS",
+    "formal10k": {
+      "status": "PARTIAL_SYS04_NOT_ACCEPTED",
+      "nativeMemberProgress": {
+        "status": "OBSERVED_COMPLETE_INDEX",
+        "revision": 207,
+        "audit": {
+          "status": "PASS_INDEX_AUDIT_ONLY",
+          "requestedRefs": 10000,
+          "distinctRefs": 10000,
+          "distinctProjects": 1,
+          "missingRefs": 0,
+          "unexpectedRefs": 0,
+          "duplicateRefs": 0,
+          "projectMembership": 10000,
+          "nativeNoneObserved": 0,
+          "unknownMembership": 0,
+          "wrongProjectMembership": 0,
+          "wrongNoneMembership": 0,
+          "pages": 21,
+          "revision": 207,
+          "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+          "performanceAcceptance": "NOT_ESTABLISHED"
+        },
+        "stableSamples": 2,
+        "attempts": 102,
+        "remainingMs": 8058.970182000001,
+        "acceptance": "NOT_ESTABLISHED",
+        "scenario": "VISIBLE_NATIVE_READING_BEFORE_RETURN_NOT_IMMEDIATE_RETURN"
+      },
+      "ingestionObservationMs": 26724.08987,
+      "projectCardNavigation": {
+        "status": "PASS_NATIVE_MEMBER_AND_UNIQUE_RETURN",
+        "mode": "HREF_NEW_TAB_PRESERVE_CURRENT",
+        "targetId": "60000000-0000-4000-8000-000000000000",
+        "nativeTitle": "原生压力聊天 000000 · 长中文标题与 English mixed 内容用于尾部原名检索及实际可达验证，不代表真实聊天。",
+        "originalDocumentAndEditorPreserved": true,
+        "measurement": "SEPARATE_CORRECTNESS_AFTER_STABLE_INDEX_TIMING"
+      },
+      "measurement": {
+        "status": "MEASURED_AT_STABLE_ADMITTED_INDEX",
+        "performanceAcceptance": "NOT_ESTABLISHED",
+        "samples": {
+          "localExactTailSearchMs": 94.14504300000044,
+          "localBroadSearchFirstScreenMs": 188.79515799999717,
+          "localNextPageMs": 233.0479950000008,
+          "firstPageRefs": 24,
+          "secondPageRefs": 24,
+          "kind": "HOST_LOCAL_SEARCH_AND_PAGINATION_SINGLE_SAMPLES_NOT_P95",
+          "coverage": "TWO_CORRECT_PAGES_NOT_FULL_SEARCH_COVERAGE_OR_ORDER_CERTIFICATION",
+          "timing": "PLAYWRIGHT_WALL_CLOCK_INCLUDING_AUTOMATION_OVERHEAD"
+        },
+        "before": {
+          "status": "PASS_INDEX_AUDIT_ONLY",
+          "requestedRefs": 10000,
+          "distinctRefs": 10000,
+          "distinctProjects": 1,
+          "missingRefs": 0,
+          "unexpectedRefs": 0,
+          "duplicateRefs": 0,
+          "projectMembership": 10000,
+          "nativeNoneObserved": 0,
+          "unknownMembership": 0,
+          "wrongProjectMembership": 0,
+          "wrongNoneMembership": 0,
+          "pages": 21,
+          "revision": 207,
+          "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+          "performanceAcceptance": "NOT_ESTABLISHED"
+        },
+        "after": {
+          "status": "PASS_INDEX_AUDIT_ONLY",
+          "requestedRefs": 10000,
+          "distinctRefs": 10000,
+          "distinctProjects": 1,
+          "missingRefs": 0,
+          "unexpectedRefs": 0,
+          "duplicateRefs": 0,
+          "projectMembership": 10000,
+          "nativeNoneObserved": 0,
+          "unknownMembership": 0,
+          "wrongProjectMembership": 0,
+          "wrongNoneMembership": 0,
+          "pages": 21,
+          "revision": 207,
+          "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+          "performanceAcceptance": "NOT_ESTABLISHED"
+        },
+        "revision": 207
+      },
+      "sourceChangedDuringRun": false
+    },
+    "limit": "Single formal sample; J4 and journeys not yet terminal. Not p95 or full Free acceptance."
   }
 }
