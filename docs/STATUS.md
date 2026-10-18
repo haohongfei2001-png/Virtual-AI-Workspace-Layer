@@ -4,6 +4,11 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **CI39121293783休眠失败已定位到worker空闲前置**：235847f的Node/耐久/J4通过，仅journeys FAIL。普通dormant在worker-stop前prepared=true/entered=false；唯一CHECK返回ui-release-busy，无RELEASE，不能归因新GET后恢复或终结清理。具体繁忙owner仍未知。离线driver现先被动读取实际service.isIdle，再进入原one-shot close；与原15秒共用窗口，第一次false/异常锁存、不增加close重试，真实CHECK仍可拒绝。只在测试包加入getter并核验重编译散列，生产护栏/预算不变。独审另发现通用poll吞终态异常，现仅为本probe包装后原样抛出，保留同一窗口；95定向PASS、0skip、82.098ms。本地原六步恢复PASS、源码未漂移；原永久停止变异仍在新GET后等待新frame阶段被杀死，源/fixture一致。不能据本地通过关闭Linux稳定性或J4无新context恢复，原CI失败存证。
+
+- **状态面板明确一次性快照**：实际脚本旧文案9项反例RED；现说明打开时状态、重新打开查看最新结果，不新增轮询/认证。259状态/生命周期/包边界PASS、0skip、2821.842ms。合批证据workerReadinessPrecondition20261018；无完整旅程可比前后耗时，不宣称提速。真实403未重复探测，Free仍未完成，规模DEFERRED。
+
+
 - **新增只读扩展状态入口；片段搜索误定位已修复**：工具栏固定私有popup仅查询当前tab的本地枚举，区分连接/等待/休眠/未接入；不读URL/标题/正文，不请求认证、不刷新、不新增权限/第二返回入口。精确popup sender、topframe及严格shape限定，popup资源不公开；状态不代表首个VIEW完成或真实验收。实际隔离MV3验证连接与未接入文案、无操作按钮、草稿保持、其他扩展页冒充拒绝，源码未漂移。真实Profile未重读，最新worker403仍阻塞。片段定位旧2例FAIL、实际headless Enter请求错片段；按scope/ref/snippet稳定键修正，原定位有效性护栏不变。独审无阻断。
 
 - **本批验证与保留失败**：组合346项345PASS/1FAIL，唯一FAIL为新增CI步骤尚未加入精确allowlist；补该条后受影响17项全PASS、51.661ms，原组合2861.824ms失败日志保留。不把两次计数相加冒充新全套。首次MV3沙箱启动SIGABRT，未开始功能测试；获准隔离headless执行后PASS。新增MV3检查接入原CI job，无缓存/产物上传。上个b8a77bb的CI39120679401四jobSUCCESS；本批CI待结果。证据localStatusAndSnippet20261018；暂无完整旅程前后可比耗时，不宣称提速。真实闭环/J4/真实IME/PAIA与跨端仍未完成，规模DEFERRED。

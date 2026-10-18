@@ -1,4 +1,5 @@
-import {createPreparedDormancyProbe} from './prepared-dormancy-probe.mjs';
+import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
+import {createPreparedDormancyProbe,createWorkerPreparedDormancyProbe,observeWorkerPreparedDormancy} from './prepared-dormancy-probe.mjs';
 /** Narrow same-route C2 replacement; no silent-expiry/J2 or live-account claim. */
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
@@ -47,11 +48,20 @@ if(transportMutant){
  const anchor="    if(exactHostRecord(result,['ok','reason'])&&result.ok===false&&result.reason==='invalid-host-document'&&recoverTransport())return;\n";
  assert.equal(original.split(anchor).length,2,'transport recovery mutation must remove exactly its production branch');mutantSession=original.replace(anchor,'');await writeFile(path,mutantSession);
 }
+// Test-package-only, read-only worker readiness. Never supplied by content,
+// never closes/releases a mount, and never changes a production owner or clock.
+const workerReadinessHashes={};
+if(dormantRecovery){
+ const path='src/runtime/host-worker-runtime.mjs',original=await readFile(join(built.unpacked,path),'utf8'),anchor=' return Object.freeze({service,stop});';assert.equal(original.split(anchor).length,2);
+ const source=original.replace(anchor," globalThis.__vaiwlFixtureWorkerIdle=()=>service.isIdle()===true;\n"+anchor);await writeFile(join(built.unpacked,path),source);workerReadinessHashes[path]=hash(source);
+ const compiled=compileClassicWorker(built.unpacked);
+ for(const [path,source]of [['extension/worker.mjs',compiled.entry],['extension/classic-runtime.js',compiled.runtime]]){await writeFile(join(built.unpacked,path),source);workerReadinessHashes[path]=hash(source);}
+}
 const C='33333333-3333-4333-8333-333333333333',scope=j2JourneyProfile('MODERN').scope,scopeKey=JSON.stringify([scope.provider,scope.accountId,scope.organizationId]);
 const report={status:'NOT_RUN',evidence:'OFFLINE_C2_RECEIPT_REPLACEMENT_NARROW',startupMode:'WORKER_READY_PRECONDITION_NOT_COLD_ACCEPTANCE',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',sourceHashes:manifest.sourceHashes,fixtureHashes,fixture:server.manifest,results:[],requests:[],errors:[]};let context,page,id,browserHandle,readTransportExpiryTrace,endTransportOwnerObservation;
-if(dormantRecovery){report.evidence='OFFLINE_C2_INSTRUMENTED_DORMANT_SCOPE_RECOVERY';report.instrumentation={path:'extension/content-entry.mjs',after:hash(instrumentedEntry),exposes:['attempt']};report.mutation=dormantMutant?'RESTORE_PERMANENT_STOP_AFTER_DENIED_WAKE':null;report.forcedWorkerStop=true;report.naturalWorkerSleep='NOT_ESTABLISHED';}
+if(dormantRecovery){report.evidence='OFFLINE_C2_INSTRUMENTED_DORMANT_SCOPE_RECOVERY';report.instrumentation={path:'extension/content-entry.mjs',after:hash(instrumentedEntry),exposes:['attempt']};report.mutation=dormantMutant?'RESTORE_PERMANENT_STOP_AFTER_DENIED_WAKE':null;report.forcedWorkerStop=true;report.naturalWorkerSleep='NOT_ESTABLISHED';report.workerReadiness={kind:'PASSIVE_TEST_PACKAGE_IS_IDLE_ONLY',hashes:workerReadinessHashes,samples:[],totalSamples:0};}
 if(transportExpiry){report.evidence='OFFLINE_C2_DORMANT_TRANSPORT_EXPIRY_FOREGROUND_RECOVERY';report.instrumentation={path:'extension/content-entry.mjs',after:hash(instrumentedEntry),exposes:['attempt'],passiveContentTransport:true,passiveFrameGrantAndView:true};report.mutation=transportMutant?'REMOVE_EXACT_FOREGROUND_INVALID_DOCUMENT_RECOVERY':null;report.forcedWorkerStop=false;report.naturalWorkerSleep='NOT_TESTED';report.nativeRequestStarts=[];report.transportOwner={workerClosed:false,focusedAt:null};}
-async function verifyPackage(){if(!idleProbe){assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');return;}for(const [path,expected] of Object.entries(manifest.files))assert.equal(hash(await readFile(join(built.unpacked,path))),path==='extension/content-entry.mjs'?hash(instrumentedEntry):(dormantMutant||transportMutant)&&path==='src/host/content-session.mjs'?hash(mutantSession):expected);}
+async function verifyPackage(){if(!idleProbe){assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');return;}for(const [path,expected] of Object.entries(manifest.files))assert.equal(hash(await readFile(join(built.unpacked,path))),path==='extension/content-entry.mjs'?hash(instrumentedEntry):(dormantMutant||transportMutant)&&path==='src/host/content-session.mjs'?hash(mutantSession):(workerReadinessHashes[path]??expected));}
 const poll=fn=>j2Poll(fn,15000),within=(name,fn,ms=5000)=>j2Within(name,fn,ms);
 const frame=()=>page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);
 const step=(name,detail={})=>report.results.push({name,status:'PASS',...detail});
@@ -109,7 +119,8 @@ try{
   assert.equal(await page.evaluate(()=>typeof globalThis.__vaiwlIdleProbeSession),'undefined');
   assert.equal(await page.evaluate(()=>typeof globalThis.__vaiwlTransportExpiryTrace),'undefined');
   readTransportExpiryTrace=()=>evaluate('globalThis.__vaiwlTransportExpiryTrace.slice(-128)',isolated);
-  report.idlePrecondition=await poll(()=>evaluate('__vaiwlIdleProbeSession.attempt()',isolated));
+  const preparedProbe=createWorkerPreparedDormancyProbe({workerIdle:async()=>{const ready=await worker.evaluate(()=>globalThis.__vaiwlFixtureWorkerIdle());report.workerReadiness.totalSamples++;if(report.workerReadiness.samples.length<32)report.workerReadiness.samples.push({at:Date.now(),idle:ready});return ready;},attempt:()=>evaluate('__vaiwlIdleProbeSession.attempt()',isolated)});
+  report.idlePrecondition=await observeWorkerPreparedDormancy(poll,preparedProbe);
   assert.deepEqual(report.idlePrecondition,{prepared:true,entered:true});step('actual-dormant-close-before-worker-loss');
   const running=await poll(()=>versions.find(v=>v.scriptURL===`chrome-extension://${id}/extension/worker.mjs`&&v.runningStatus==='running'));const start=versions.length;
   await session.send('ServiceWorker.stopWorker',{versionId:running.versionId});await poll(()=>versions.slice(start).some(v=>v.versionId===running.versionId&&v.runningStatus==='stopped'));assert.equal(oldFrame.isDetached(),false);assert.equal(frame(),oldFrame);assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);await continuity();step('worker-stop-confirmed-no-receipt-replay');
