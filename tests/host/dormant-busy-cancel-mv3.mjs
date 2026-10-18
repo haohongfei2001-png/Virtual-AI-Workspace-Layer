@@ -1,3 +1,4 @@
+import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
 import {createPreparedDormancyProbe} from './prepared-dormancy-probe.mjs';
 /** Instrumented MV3 close/wake probe. Test-only isolated session handle; no worker debugger or timer override. */
 import assert from 'node:assert/strict';
@@ -11,9 +12,10 @@ import {nativeBrowserArgs,endpointFromActivePort} from './native-visibility-brow
 import {cleanupIsolatedBrowser,cleanupOwnedResources} from './isolated-browser-cleanup.mjs';
 import {packageHost} from '../../extension/package.mjs';
 const hash=b=>createHash('sha256').update(b).digest('hex'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const partialJoin=process.env.FREE_BUSY_PARTIAL_JOIN==='1';
+const partialJoin=process.env.FREE_BUSY_PARTIAL_JOIN==='1',idleDiagnostics=process.env.FREE_BUSY_IDLE_DIAGNOSTICS==='1';
+const runStarted=performance.now();
 const runner=new URL(import.meta.url),runnerHash=hash(await readFile(runner));
-const report={requirement:'UI-11',evidence:'S_INSTRUMENTED_MV3_REAL_HTTP_BUSY_CANCEL',profile:'LEGACY_OFFLINE',realChatGPT:'NOT_RUN',naturalWorkerSleep:'NOT_ESTABLISHED',status:'NOT_RUN',partialJoin,forcedWorkerStop:false,workerDebuggerAttached:false,productionTimersModified:false,results:[]};
+const report={requirement:'UI-11',evidence:'S_INSTRUMENTED_MV3_REAL_HTTP_BUSY_CANCEL',profile:'LEGACY_OFFLINE',realChatGPT:'NOT_RUN',naturalWorkerSleep:'NOT_ESTABLISHED',status:'NOT_RUN',partialJoin,idleDiagnostics,forcedWorkerStop:false,workerDebuggerAttached:false,productionTimersModified:false,results:[]};
 let server,guard,child,socket,profileDir,seq=0,ready=false;const pending=new Map(),events=[],contexts=[];let eventOverflow=false,primaryDiagnostics=null;
 function command(method,params={},sessionId,timeoutMs=6000){
  if(!ready)return Promise.reject(Error('CDP-not-ready'));
@@ -28,14 +30,54 @@ try{
  const entryPath=join(built.unpacked,'extension/content-entry.mjs'),entry=await readFile(entryPath,'utf8'),anchor=' void session.start();';
  const runtimeAnchor='const session=createHostContentSession({document,runtime:chrome.runtime,origin:HOST_CONFIG.origin';assert.equal(entry.split(runtimeAnchor).length,2);assert.equal(entry.split(anchor).length,2);
  const probeCode=`const busyProbe={armed:false,gated:false,released:false,log:[],release:null,confirmFault:false};
- const runtimeProbe=new Proxy(chrome.runtime,{get(target,key){if(key==='sendMessage')return async message=>{const result=await chrome.runtime.sendMessage(message);if(['HOST_HELLO','HOST_UI_CONFIRM','HOST_UI_IDLE_CHECK','HOST_UI_IDLE_RELEASE','HOST_DOCUMENT_RENEW','HOST_REFRESH'].includes(message.type))busyProbe.log.push({type:message.type,ok:result?.ok===true,state:result?.state??null,reason:result?.reason??null,producer:message.producerToken??result?.binding?.producerToken??null,role:message.role??null,grant:result?.grant?.id??null});if(${partialJoin}&&message.type==='HOST_UI_CONFIRM'&&message.role==='sidebar'&&busyProbe.released&&!busyProbe.confirmFault){busyProbe.confirmFault=true;return {ok:false,reason:'fixture-parent-confirm-loss'};}if(message.type==='HOST_UI_IDLE_CHECK'&&result?.ok===true&&busyProbe.armed){busyProbe.armed=false;busyProbe.gated=true;await new Promise(resolve=>busyProbe.release=()=>{busyProbe.released=true;resolve();});}return result;};const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}});
+ const runtimeProbe=new Proxy(chrome.runtime,{get(target,key){if(key==='sendMessage')return async message=>{const result=await chrome.runtime.sendMessage(message);if(['HOST_HELLO','HOST_UI_CONFIRM','HOST_UI_IDLE_CHECK','HOST_UI_IDLE_RELEASE','HOST_DOCUMENT_RENEW','HOST_REFRESH'].includes(message.type))busyProbe.log.push({type:message.type,ok:result?.ok===true,state:result?.state??null,reason:result?.reason??null,producer:message.producerToken??result?.binding?.producerToken??null,role:message.role??null,grant:result?.grant?.id??null,...result?.fixtureIdleDiagnostic?{fixtureIdleDiagnostic:result.fixtureIdleDiagnostic}:{}});if(${partialJoin}&&message.type==='HOST_UI_CONFIRM'&&message.role==='sidebar'&&busyProbe.released&&!busyProbe.confirmFault){busyProbe.confirmFault=true;return {ok:false,reason:'fixture-parent-confirm-loss'};}if(message.type==='HOST_UI_IDLE_CHECK'&&result?.ok===true&&busyProbe.armed){busyProbe.armed=false;busyProbe.gated=true;await new Promise(resolve=>busyProbe.release=()=>{busyProbe.released=true;resolve();});}return result;};const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}});
  `;
- const instrumented=entry.replace(' const session=createHostContentSession(',probeCode+' const session=createHostContentSession(').replace(runtimeAnchor,'const session=createHostContentSession({document,runtime:runtimeProbe,origin:HOST_CONFIG.origin').replace(anchor,' globalThis.__vaiwlIdleProbeSession=Object.freeze({prepareIdle:()=>!!session.prepareIdle(),attempt:('+createPreparedDormancyProbe.toString()+')(session),arm:()=>{busyProbe.armed=true;},release:()=>busyProbe.release?.(),snapshot:()=>({gated:busyProbe.gated,released:busyProbe.released,confirmFault:busyProbe.confirmFault,log:busyProbe.log.slice()})});\n'+anchor);
+ const instrumented=entry.replace(' const session=createHostContentSession(',probeCode+' const session=createHostContentSession(').replace(runtimeAnchor,'const session=createHostContentSession({document,runtime:runtimeProbe,origin:HOST_CONFIG.origin').replace(anchor,' globalThis.__vaiwlIdleProbeSession=Object.freeze({prepareIdle:()=>!!session.prepareIdle(),workerIdle:async()=>busyProbe.lastIdle=await runtimeProbe.sendMessage({v:1,type:"FIXTURE_WORKER_IDLE"}),attempt:('+createPreparedDormancyProbe.toString()+')(session),arm:()=>{busyProbe.armed=true;},release:()=>busyProbe.release?.(),snapshot:()=>({lastIdle:busyProbe.lastIdle??null,gated:busyProbe.gated,released:busyProbe.released,confirmFault:busyProbe.confirmFault,log:busyProbe.log.slice()})});\n'+anchor);
  await writeFile(entryPath,instrumented);report.instrumentation={path:'extension/content-entry.mjs',before:hash(entry),after:hash(instrumented),patch:'Expose existing one-shot prepared close and hold one successful real preflight reply; record actual RPC results. No forged worker work, idle guards or timer replacement',originalArchiveIsInstrumented:false,productionAutomaticEntry:false};
- let sidebarOriginal=null;const sidebarPath=join(built.unpacked,'extension/sidebar.mjs');
- if(partialJoin){sidebarOriginal=await readFile(sidebarPath,'utf8');await writeFile(sidebarPath,sidebarOriginal+'\nglobalThis.__vaiwlFixtureStop=()=>client.stop();\n');report.instrumentation.partialFault='Discard one real parent CONFIRM reply after busy cancellation; stop the actual sidebar client after worker work drains. No grants or successful release forged.';}
+ // Optional synthetic-profile diagnostics. Preserve the guard expression and
+ // evaluate it exactly once; collect only counts/owner-idle booleans on refusal.
+ const diagnosticHashes={};
+ if(idleDiagnostics){
+  const patches=[['src/runtime/host-binding-service.mjs',
+   'return Object.freeze({isIdle,oldSendTerminal',
+   'return Object.freeze({fixtureIdleSnapshot:()=>({requests:activity.requests,background:activity.background,refreshes:refreshAttempts.size,owners:Object.fromEntries(Object.entries({authority,contextRecovery,continuations,observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views,ui}).map(([name,owner])=>[name,owner===null||owner.isIdle?.()===true])),views:views?.fixtureIdleSnapshot?.(),ui:ui?.fixtureIdleSnapshot?.()}),isIdle,oldSendTerminal'],
+   ['src/runtime/host-view-service.mjs',
+   'return Object.freeze({isIdle,handle,resume',
+   'return Object.freeze({fixtureIdleSnapshot:()=>({stopped,scopeWork,refreshes,reads,entries:[...views.values()].map(entry=>({pending:!!entry.pending,autoReading:!!entry.autoReading,retry:entry.retryTimer!=null,defer:entry.deferPreparation!=null}))}),isIdle,handle,resume'],
+   ['src/runtime/host-ui-owner.mjs',
+   'return Object.freeze({isIdle:()=>activeWork',
+   'return Object.freeze({fixtureIdleSnapshot:()=>({activeWork,inFlight:inFlight.size,pending:pending.size}),isIdle:()=>activeWork'],
+   ['src/runtime/host-binding-service.mjs',
+   'return quiet()&&ownersIdle(true)&&quiet();',
+   `const allowed=quiet()&&ownersIdle(true)&&quiet();globalThis.__vaiwlFixtureIdle=allowed?null:{requests:activity.requests,background:activity.background,refreshes:refreshAttempts.size,owners:Object.fromEntries(Object.entries({authority,contextRecovery,continuations,observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views}).map(([name,owner])=>[name,owner===null||owner.isIdle?.()===true]))};return allowed;`],
+   ['src/runtime/host-ui-owner.mjs',
+   "if(!quiet()||releaseGuard()!==true||!quiet())return {ok:false,reason:'ui-release-busy'};check();",
+   "globalThis.__vaiwlFixtureIdle=null;if(!quiet()||releaseGuard()!==true||!quiet())return {ok:false,reason:'ui-release-busy',fixtureIdleDiagnostic:{ui:{activeWork,inFlight:inFlight.size,pending:pending.size},binding:globalThis.__vaiwlFixtureIdle}};check();"]];
+  for(const [path,from,to]of patches){const target=join(built.unpacked,path),original=await readFile(target,'utf8');assert.equal(original.split(from).length,2);const patched=original.replace(from,to);await writeFile(target,patched);diagnosticHashes[path]=hash(patched);}
+  report.instrumentation.idleDiagnostics='Only counts and owner booleans on real busy rejection; original guard expression and result unchanged, no worker debugger, no idle override';
+ }
+ // Frame-created and parent-confirmed are not read-complete. Observe queued
+ // resume writes and real frame RPCs too, without cancelling or flushing them.
+ const frameClientPath='src/host/free-frame-client.mjs',frameClientFile=join(built.unpacked,frameClientPath),frameClientSource=await readFile(frameClientFile,'utf8');
+ const frameAnchor="return Object.freeze({start:()=>lifecycle.start(),stop:()=>lifecycle.stop('frame-view-stopped')});";assert.equal(frameClientSource.split(frameAnchor).length,2);
+ const framePatched=frameClientSource.replace(frameAnchor,"return Object.freeze({fixturePrepared:()=>!closed&&grantCurrent()&&!activeRead&&!bootstrapping&&resumeTimer===null&&!resumeWriting&&!resumeQueued&&!dispatchPending&&!queuedDispatchView&&!calibrationPending&&!horizonPending&&(!dirty||!backgroundRefreshAllowed()),start:()=>lifecycle.start(),stop:()=>lifecycle.stop('frame-view-stopped')});");await writeFile(frameClientFile,framePatched);diagnosticHashes[frameClientPath]=hash(framePatched);
+ for(const role of ['workspace','sidebar']){
+  const path='extension/'+role+'.mjs',file=join(built.unpacked,path),source=await readFile(file,'utf8');assert.equal(source.split('document,runtime:chrome.runtime,role:').length,2);
+  const patch='let fixturePending=0,fixtureState=null;const fixtureRuntime=new Proxy(chrome.runtime,{get(target,key){if(key==="sendMessage")return async message=>{fixturePending++;try{return await chrome.runtime.sendMessage(message);}finally{fixturePending--;}};const value=Reflect.get(target,key);return typeof value==="function"?value.bind(target):value;}});\n';
+  const result=source.replace('const client=',patch+'const client=').replace('document,runtime:chrome.runtime,role:','document,runtime:fixtureRuntime,onState:value=>fixtureState=value.state,role:')+'\nglobalThis.__vaiwlFixtureFrameReady=()=>fixtureState==="ready"&&fixturePending===0&&client.fixturePrepared();\n'+(partialJoin&&role==='sidebar'?'globalThis.__vaiwlFixtureStop=()=>client.stop();\n':'');
+  await writeFile(file,result);diagnosticHashes[path]=hash(result);
+ }
+ if(partialJoin)report.instrumentation.partialFault='Discard one real parent CONFIRM reply after busy cancellation; stop the actual sidebar client after worker work drains. No grants or successful release forged.';
+ // Test-only synchronous readiness snapshot: not a close request or permit.
+ // It observes the actual service without attaching a debugger or adding work.
+ const runtimePath='src/runtime/host-worker-runtime.mjs',runtimeFile=join(built.unpacked,runtimePath),runtimeOriginal=await readFile(runtimeFile,'utf8');
+ const messageAnchor='const message=(value,sender,reply)=>{if(!active)return;';assert.equal(runtimeOriginal.split(messageAnchor).length,2);
+ const runtimeInstrumented=runtimeOriginal.replace(messageAnchor,messageAnchor+"if(value?.type==='FIXTURE_WORKER_IDLE'&&sender.id===chrome.runtime.id){reply({idle:service.isIdle()===true,diagnostic:service.fixtureIdleSnapshot?.()??null});return;}");await writeFile(runtimeFile,runtimeInstrumented);diagnosticHashes[runtimePath]=hash(runtimeInstrumented);
+ const compiled=compileClassicWorker(built.unpacked);await writeFile(join(built.unpacked,'extension/classic-runtime.js'),compiled.runtime);diagnosticHashes['extension/classic-runtime.js']=hash(compiled.runtime);assert.equal(hash(compiled.entry),manifest.files['extension/worker.mjs']);
+ report.instrumentation.modifiedHashes=diagnosticHashes;
+ report.instrumentation.workerReadiness='Test-only isIdle snapshot before unique close and before partial frame stop; does not close, authorize, pause work, or override final atomic release';
  const changed=[];for(const [path,expected] of Object.entries(manifest.files))if(hash(await readFile(join(built.unpacked,path)))!==expected)changed.push(path);
- assert.deepEqual(changed.sort(),['extension/content-entry.mjs',...(partialJoin?['extension/sidebar.mjs']:[])].sort());report.loadedPackageChanges=changed;
+ assert.deepEqual(changed.sort(),['extension/content-entry.mjs',...Object.keys(diagnosticHashes)].sort());report.loadedPackageChanges=changed;
  child=spawn(process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',nativeBrowserArgs(profileDir,{headed:false,historicalNetworkGuard:guard.config}),{stdio:['ignore','ignore','pipe']});let launchError;child.on('error',e=>{launchError=e;});child.stderr.on('data',value=>{report.browserStderr=((report.browserStderr??'')+value.toString()).slice(-4000);});
  const endpoint=await poll(async()=>{if(launchError)throw launchError;if(child.exitCode!==null)throw Error('chrome-exited');try{return endpointFromActivePort(await readFile(join(profileDir,'DevToolsActivePort'),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;return null;}},'browser');
  socket=new WebSocket(endpoint);socket.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.id){const q=pending.get(m.id);if(q){pending.delete(m.id);clearTimeout(q.timer);if(m.error)q.reject(Error(m.error.message));else q.resolve(m.result);}}else if(m.method==='Runtime.executionContextCreated'){contexts.push({sessionId:m.sessionId,...m.params.context});}else if(m.method?.startsWith('Target.')){if(events.length<512)events.push({at:performance.now(),method:m.method,params:m.params});else eventOverflow=true;}});
@@ -71,7 +113,20 @@ try{
  await command('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...secondEditor},secondSession.sessionId);await command('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...secondEditor},secondSession.sessionId);
  const secondIsolated=await poll(async()=>{for(const c of contexts.filter(c=>c.sessionId===secondSession.sessionId&&c.auxData?.isDefault===false&&c.auxData.frameId===secondTop)){try{if(await evaluate(secondSession.sessionId,'typeof __vaiwlIdleProbeSession===\'object\'&&__vaiwlIdleProbeSession.prepareIdle()',c.id))return c;}catch{}}return null;},'second-prepared-reading');
  await poll(()=>evaluate(secondSession.sessionId,"document.querySelectorAll('[data-va-owned]:popover-open').length===0"),'second-reading');
+ await poll(async()=>{
+  const first=await evaluate(sessionId,'__vaiwlIdleProbeSession.snapshot()',isolated.id),second=await evaluate(secondSession.sessionId,'__vaiwlIdleProbeSession.snapshot()',secondIsolated.id);
+  return [first,second].every(value=>['workspace','sidebar'].every(role=>value.log.some(x=>x.type==='HOST_UI_CONFIRM'&&x.ok&&x.role===role)));
+ },'both-tabs-parent-confirmed',6000);
+ const frameSessions=[];
+ try{
+  const targets=(await command('Target.getTargets')).targetInfos.filter(t=>t.type==='iframe'&&['workspace','sidebar'].some(role=>t.url===prefix+role+'.html'));assert.equal(targets.length,4);
+  for(const target of targets)frameSessions.push((await command('Target.attachToTarget',{targetId:target.targetId,flatten:true})).sessionId);
+  await poll(async()=>{const values=await Promise.all(frameSessions.map(id=>evaluate(id,'globalThis.__vaiwlFixtureFrameReady?.()===true')));return values.every(Boolean);},'four-frame-reads-and-resume-writes-drained',6000);
+ }finally{for(const id of frameSessions)await command('Target.detachFromTarget',{sessionId:id});}
+ await poll(()=>evaluate(sessionId,'__vaiwlIdleProbeSession.workerIdle().then(value=>value.idle)',isolated.id),'worker-initial-work-drained',6000);
  await poll(()=>evaluate(sessionId,'__vaiwlIdleProbeSession.prepareIdle()',isolated.id),'first-still-ready');
+ report.preparationMs=performance.now()-runStarted;
+ const closeStarted=performance.now();
  const before=await evaluate(sessionId,'__vaiwlIdleProbeSession.snapshot()',isolated.id);report.before=before;
  const detailPath='/backend-api/conversation/33333333-3333-4333-8333-333333333333';const detailBefore=server.snapshot().requests[detailPath]??0;
  server.holdConversationDetails();
@@ -92,6 +147,7 @@ try{
  await poll(()=>((server.snapshot().requests[detailPath]??0)>detailBefore),'actual-second-tab-detail-request',4000);report.heldRequest={path:detailPath,before:detailBefore,after:server.snapshot().requests[detailPath],mechanism:'fixture holds actual HTTP response; worker guards unchanged'};
  await evaluate(sessionId,'__vaiwlIdleProbeSession.release();true',isolated.id);
  await poll(()=>evaluate(sessionId,'busyCloseDone',isolated.id),'close-cancelled-after-real-busy',6000);
+ report.closeAttemptDriverMs=performance.now()-closeStarted;
  report.closeResult=await evaluate(sessionId,'busyCloseResult',isolated.id);report.rpc=await evaluate(sessionId,'__vaiwlIdleProbeSession.snapshot()',isolated.id);
  assert.equal(report.closeResult,false,'busy close must not claim successful release');
  const post=report.rpc.log.slice(before.log.length);assert(post.some(x=>x.type==='HOST_UI_IDLE_RELEASE'&&!x.ok&&x.reason==='ui-release-busy'),'real worker must return exact busy');
@@ -99,12 +155,21 @@ try{
  await poll(async()=>{const value=await evaluate(sessionId,'__vaiwlIdleProbeSession.snapshot()',isolated.id);return value.log.slice(before.log.length).filter(x=>x.type==='HOST_UI_CONFIRM'&&x.ok).length===2;},'two-new-parent-confirmations',6000);
  if(partialJoin){
   assert.equal((await evaluate(sessionId,'__vaiwlIdleProbeSession.snapshot()',isolated.id)).confirmFault,true);
-  await poll(()=>evaluate(sessionId,'__vaiwlIdleProbeSession.prepareIdle()',isolated.id),'partial-local-drained',6000);
+  await poll(()=>evaluate(secondSession.sessionId,'__vaiwlIdleProbeSession.prepareIdle()',secondIsolated.id),'second-navigation-ingestion-drained',6000);
+  // Cancellation renews the adapter's ingestion pass. Directory traversal is
+  // intentionally deferred while this tab is hidden; model the user returning
+  // before testing foreground failure/recovery, without cancelling that work.
+  await command('Page.bringToFront',{},sessionId);
+  report.partialPreparationVisibility=await evaluate(sessionId,'document.visibilityState');assert.equal(report.partialPreparationVisibility,'visible');
+  await poll(()=>evaluate(sessionId,'__vaiwlIdleProbeSession.workerIdle().then(value=>value.idle)',isolated.id),'partial-worker-drained',6000);
   const target=await poll(async()=>{
-   const {frameTree}=await command('Page.getFrameTree',{},sessionId);
-   const frames=[];const visit=node=>{if(node.frame.url===prefix+'sidebar.html')frames.push(node.frame.id);for(const child of node.childFrames??[])visit(child);};visit(frameTree);
-   const matches=(await command('Target.getTargets')).targetInfos.filter(t=>t.type==='iframe'&&t.url===prefix+'sidebar.html'&&frames.includes(t.targetId));
-   return matches.length===1?matches[0]:null;
+   const targets=(await command('Target.getTargets')).targetInfos.filter(t=>t.type==='iframe'&&t.url===prefix+'sidebar.html');
+   const matches=[];report.sidebarParents=[];
+   for(const target of targets){const attached=await command('Target.attachToTarget',{targetId:target.targetId,flatten:true});try{
+    const {frameTree}=await command('Page.getFrameTree',{},attached.sessionId);
+    const owned=frameTree.frame.parentId===topFrameId;report.sidebarParents.push({primaryParent:owned,hasParent:!!frameTree.frame.parentId});if(owned)matches.push(target);
+   }finally{await command('Target.detachFromTarget',{sessionId:attached.sessionId});}}
+   assert(matches.length<=1);return matches[0]??null;
   },'partial-owned-sidebar',6000);
   const attached=await command('Target.attachToTarget',{targetId:target.targetId,flatten:true});
   try{await evaluate(attached.sessionId,'__vaiwlFixtureStop();true');}finally{try{await command('Target.detachFromTarget',{sessionId:attached.sessionId});}catch{}}
@@ -125,7 +190,7 @@ try{
  await poll(()=>evaluate(sessionId,"document.querySelectorAll('[data-va-owned]:popover-open').length===2"),'trusted-return-dual-surfaces',6000);
  const workers=(await command('Target.getTargets')).targetInfos.filter(t=>t.type==='service_worker'&&t.url===prefix+'extension/worker.mjs');assert.equal(workers.length,1);assert.equal(workers[0].attached,false);
  report.nativeActions=server.snapshot().actions;assert.deepEqual(report.nativeActions,{navigate:1});report.results.push({name:partialJoin?'real-http-busy-partial-join-release-before-new-producer-and-trusted-return':'real-http-busy-cancel-same-producer-fresh-grants-and-trusted-return',status:'PASS'});report.status='PASS';
- assert.equal(hash(await readFile(entryPath)),report.instrumentation.after);for(const [path,expected] of Object.entries(manifest.files))assert.equal(hash(await readFile(join(built.unpacked,path))),path==='extension/content-entry.mjs'?report.instrumentation.after:path==='extension/sidebar.mjs'&&partialJoin?hash(sidebarOriginal+'\nglobalThis.__vaiwlFixtureStop=()=>client.stop();\n'):expected);
+ assert.equal(hash(await readFile(entryPath)),report.instrumentation.after);for(const [path,expected] of Object.entries(manifest.files))assert.equal(hash(await readFile(join(built.unpacked,path))),path==='extension/content-entry.mjs'?report.instrumentation.after:diagnosticHashes[path]??expected);
 
  report.sourceChangedDuringRun=(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;assert.equal(report.sourceChangedDuringRun,false);assert.equal(report.buildManifestUnchanged,true);
 }catch(error){report.status='FAIL';report.error=error.stack;report.fixtureSnapshot=server?.snapshot();process.exitCode=1;
@@ -134,6 +199,7 @@ try{
  if(ready)try{const targets=(await command('Target.getTargets')).targetInfos;report.failureTargets=targets.map(t=>({type:t.type,url:t.url,attached:t.attached}));const host=targets.find(t=>t.type==='page'&&t.url.startsWith(server.origin));if(host){const attached=await command('Target.attachToTarget',{targetId:host.targetId,flatten:true});try{report.failureHost=await evaluate(attached.sessionId,"({readyState:document.readyState,state:document.documentElement.dataset.vaiwlState,reason:document.documentElement.dataset.vaiwlReason,owned:document.querySelectorAll('[data-va-owned]').length,open:document.querySelectorAll('[data-va-owned]:popover-open').length,frames:[...document.querySelectorAll('[data-va-owned] iframe')].map(f=>({src:f.src,connected:f.isConnected})),returnCount:document.querySelectorAll('[aria-label=\"返回工作空间\"]').length})");}finally{await command('Target.detachFromTarget',{sessionId:attached.sessionId});}}}catch(diagnostic){report.diagnosticError=String(diagnostic.message);}
 }
 finally{
+ report.elapsedBeforeCleanupMs=performance.now()-runStarted;
  report.networkGuard=guard?.snapshot();
  const cleaned=await cleanupOwnedResources(report,[['socket',async()=>{if(socket){socket.close();ready=false;for(const q of pending.values()){clearTimeout(q.timer);q.reject(Error('probe-cleanup'));}pending.clear();}}],['browser',async()=>{if(child)await cleanupIsolatedBrowser({child,profileDir});}],['server',()=>{server?.releaseConversationDetails();return server?.close();}],['networkGuard',()=>guard?.close()]]);
  if(cleaned===false)process.exitCode=1;

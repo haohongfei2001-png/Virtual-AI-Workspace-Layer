@@ -3310,5 +3310,112 @@
     "limits": "No threshold/timer/auth/budget changes, no retry after close refusal. Earlier standard-mode PASS has distinct runner hash and cannot certify final partial mode. No comparable browser elapsed timing was recorded; no performance improvement claim.",
     "live": "NOT_RUN this increment; previous dedicated-profile accounts403 remains unresolved; no additional private response read.",
     "scale": "10k/100k DEFERRED, original failures unchanged"
+  },
+  "busyOwnerForegroundRecovery20261018": {
+    "base": "3864d39c0b85f8fa5ade02a657046c44e69fc4b9",
+    "productionChanged": false,
+    "runnerHash": "3bd55852f8979235eefa2571881e06c80a0eb6294e84e5268944c9246dfae321",
+    "records": [
+      {
+        "file": "busy-owner-owner-diagnostic.json.gz",
+        "status": "FAIL",
+        "runnerHash": "325640ebbcc54bbb4879a4f0e66a15cedc39757fb66764a2dc0501f445b6dd40",
+        "error": "Error: page-evaluation-failed",
+        "elapsedBeforeCleanupMs": null
+      },
+      {
+        "file": "busy-owner-owner-compiled.json.gz",
+        "status": "FAIL",
+        "runnerHash": "8d192335f48d6c3b1bf41da6474c29cfac6c23ced6e10bd622d5af37350f855e",
+        "error": "Error: probe-timeout:partial-local-drained",
+        "elapsedBeforeCleanupMs": null
+      },
+      {
+        "file": "busy-owner-drained-partial.json.gz",
+        "status": "FAIL",
+        "runnerHash": "ba59413e2e4d6a88fbf432a0cf0f395cc3c33c74ce846dad110d09a9cf3cd78a",
+        "error": "Error: probe-timeout:partial-worker-drained",
+        "elapsedBeforeCleanupMs": null
+      },
+      {
+        "file": "busy-owner-drain-owner.json.gz",
+        "status": "FAIL",
+        "runnerHash": "49f5891286a9c5b6667ce36d49599a07728e83d69580353fdef945748f607678",
+        "error": "Error: probe-timeout:partial-worker-drained",
+        "elapsedBeforeCleanupMs": null
+      },
+      {
+        "file": "busy-owner-foreground-partial.json.gz",
+        "status": "FAIL",
+        "runnerHash": "858386136899a732d1b84ce36d98d34eaf88a6e4c7f265794466536da9dff6ab",
+        "error": "Error: probe-timeout:partial-worker-drained",
+        "elapsedBeforeCleanupMs": null
+      },
+      {
+        "file": "busy-owner-two-tabs-drained.json.gz",
+        "status": "FAIL",
+        "runnerHash": "70d6b9fc0ce6d787de72839911cb69635a4c488d2f7adeb3f3a19a5f4d89d732",
+        "error": "Error: page-evaluation-failed",
+        "elapsedBeforeCleanupMs": null
+      },
+      {
+        "file": "busy-owner-frame-drained.json.gz",
+        "status": "FAIL",
+        "runnerHash": "876214a61fa75cccf86272f87fddcf19dde6aec0071d68ea6c0dfb564d3cb2a0",
+        "error": "Error: probe-timeout:four-frame-reads-and-resume-writes-drained",
+        "elapsedBeforeCleanupMs": 17084.328166
+      },
+      {
+        "file": "busy-owner-frame-deferred.json.gz",
+        "status": "FAIL",
+        "runnerHash": "3e1c99bce36542a1c067494b765c3ae97a76a500ffe675baec5b10317856ebda",
+        "error": "Error: probe-timeout:partial-owned-sidebar",
+        "elapsedBeforeCleanupMs": 17514.839
+      },
+      {
+        "file": "busy-owner-parent-frame.json.gz",
+        "status": "PASS",
+        "runnerHash": "3bd55852f8979235eefa2571881e06c80a0eb6294e84e5268944c9246dfae321",
+        "error": "",
+        "elapsedBeforeCleanupMs": 11551.827959
+      },
+      {
+        "file": "busy-owner-final-standard.json.gz",
+        "status": "PASS",
+        "runnerHash": "3bd55852f8979235eefa2571881e06c80a0eb6294e84e5268944c9246dfae321",
+        "error": "",
+        "elapsedBeforeCleanupMs": 21181.599041
+      }
+    ],
+    "rootCauses": [
+      "Local content preparation omits frame queued resume writes and worker operations; actual initial refusal observed UI activeWork=4 despite earlier worker idle snapshot. Final driver waits actual frame RPC/read/resume work, then worker idle; real CHECK may still refuse and never retries close.",
+      "After cancellation hidden tabs intentionally defer directory ingestion; only ingestionPasses remained nonidle while requests/background/UI/views were all idle. Complete second-tab navigation while foreground then return primary tab and allow its pass to finish.",
+      "CDP iframe target identity cannot be assumed equal to main-frame-tree child id; select by each iframe root parentId with exactly one match."
+    ],
+    "fix": "Only test preconditions/diagnostics changed. Original production busy guard, single close and 6s elapsed deadline unchanged. Readiness does not authorize or freeze work. Diagnostic changes compiled into actual temporary classic worker and hashed; original package archive remains uninstrumented.",
+    "final": {
+      "partial": {
+        "status": "PASS",
+        "preparationMs": 11119.250084000001,
+        "closeAttemptDriverMs": 216.66883400000006,
+        "elapsedBeforeCleanupMs": 11551.827959,
+        "path": "Real busy rejection -> partial parent confirmation -> foreground/drained -> real sidebar client.stop -> both old frames detached -> original producer atomic RELEASE success -> new HELLO + verified scope + fresh dual JOIN -> trusted return; native document/editor/draft unchanged"
+      },
+      "standard": {
+        "status": "PASS",
+        "preparationMs": 20924.477166,
+        "closeAttemptDriverMs": 216.35429099999965,
+        "elapsedBeforeCleanupMs": 21181.599041,
+        "path": "Real busy rejection -> same producer cancellation and fresh dual grants -> trusted return; original frames/document/editor/draft preserved"
+      },
+      "targeted": {
+        "tests": 63,
+        "pass": 63,
+        "skip": 0,
+        "durationMs": 70.3945
+      }
+    },
+    "limits": "S_INSTRUMENTED LEGACY_OFFLINE foreground recovery only. Polling keeps worker active; not natural sleep/J4/real-host certification. Historical initial timeout is not retroactively reclassified. Intermediate FAILs retained; first diagnostic patched unexecuted modules without rebuilding classic bundle and cannot identify owners. Earlier elapsed values absent or different failing phases; no before/after speedup claim. Driver close timing starts before setup RPC and is not internal deadline instrumentation.",
+    "next": "Authorized real Profile accounts/context recovery then native reading/return/search and Project membership; original J2/J4 and manual/device gates remain OPEN. 10k/100k DEFERRED."
   }
 }
