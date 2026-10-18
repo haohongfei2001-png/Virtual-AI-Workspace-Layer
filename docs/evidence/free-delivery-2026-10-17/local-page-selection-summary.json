@@ -3812,5 +3812,68 @@
       "vaiwl-ci39118346794-idle-traces.json.gz"
     ],
     "ci": "39118346794 SUCCESS on parent source only; historical Linux idle refusal cause remains OPEN, J4 partial, scale DEFERRED"
+  },
+  "renewalContextWait20261018": {
+    "baseHead": "556cda0453bc5e6b48d4b56cf86b633f4fd32f9d",
+    "status": "OFFLINE_FIX_NOT_REAL_STARTUP_RESOLUTION",
+    "rootCause": "Renewal denial marked recoveryDenied and stopped controller but left content enabled/ready, swallowing later READY. Early READY during renewal was also lost.",
+    "fix": "Existing contextPending after denied renewal withdrawal; one in-flight READY bit consumed only by rejection; success clears it. No automatic denied-scope retry or old receipt reuse.",
+    "red": {
+      "tests": 9,
+      "pass": 2,
+      "fail": 7,
+      "ms": 55.39
+    },
+    "finalRegression": {
+      "tests": 691,
+      "pass": 691,
+      "skipped": 0,
+      "ms": 3197.03625
+    },
+    "finalMv3": {
+      "status": "PASS_NARROW_OFFLINE_DORMANT_RECOVERY",
+      "sourceChanged": false,
+      "errors": [],
+      "limit": "Existing dormant recovery regression, not browser-injected renewal rejection; new race proven by content state machine with controller double."
+    },
+    "layoutCompatibility": {
+      "ci": "39119275013 original observed-profile unsafe-native-geometry reproduced locally",
+      "fix": "Explicit scroll-region admission supplements original safe noninteractive parent, does not require every viewport to be a region.",
+      "final": "All original six layout commands passed, observed fixture runs both shapes with explicit initial shape and identity assertions; WEB_MECHANISM_ONLY.",
+      "privateNativeKeyboard": "NOT_RUN"
+    },
+    "real": {
+      "exactAuthorizedTarget": true,
+      "bodyRead": false,
+      "credentialsRead": false,
+      "nativeWrites": 0,
+      "nativeAccountsAndCurrentConversation": 200,
+      "refreshResults": [
+        "ambiguous/current-context-unproven",
+        "unverified/scope-provider-unavailable"
+      ],
+      "frames": 0,
+      "classification": "Current startup scope unavailable; no controller/renewal in trace. Cannot attribute this actual failure to independent renewal bug.",
+      "fullJourney": "NOT_PASSED",
+      "installedCandidate": "556cda0; temporary enum diagnostics restored on disk; this new offline renewal fix not yet installed"
+    },
+    "timing": "No equivalent before/after full journey duration; no speedup claim.",
+    "sourceSha256": {
+      "src/host/content-session.mjs": "9a4b915959aa0fafaefa9b509babcd7b330b2aaf38eef28949f6d3382e93364e",
+      "src/host/native-return-gap.mjs": "83cb702f871048c1c59027d4179de3b59935229248d93c1edab8736fecd354a0",
+      "tests/host/content-renewal-context-recovery.test.mjs": "da1ab3b8be5590b1781f977e429f7bdfd2ccd9a9e6f64cf643a19a177c67fa99",
+      "tests/host/observed-profile-browser.mjs": "bc8d6426abdd5c8e174dcdf122a8f8394831fc5d4783ce906523c6bb95e8d82f"
+    },
+    "evidence": [
+      "vaiwl-renewal-context-red.log.gz",
+      "vaiwl-renewal-final-regression.tap.gz",
+      "vaiwl-renewal-final-mv3.json.gz",
+      "vaiwl-renewal-final-layout-tail.log.gz",
+      "vaiwl-scroll-region-legacy-red.log.gz",
+      "vaiwl-withdrawal-diagnostic.json.gz",
+      "vaiwl-startup-scope-reason.json.gz",
+      "vaiwl-ci39119275013-final-jobs.json.gz",
+      "vaiwl-ci39119275013-idle-traces.json.gz"
+    ]
   }
 }

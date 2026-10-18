@@ -29,6 +29,7 @@ try{
   out.viewportReadingBackground=ok();root.style.visibility='hidden';masked=true;out.maskedViewportBackground=ok();
   const nativeExtra=document.createElement('div');viewport.append(nativeExtra);out.viewportExtraChildRejected=!ok();nativeExtra.remove();
   viewport.setAttribute('tabindex','0');out.interactiveViewportRejected=!ok();viewport.removeAttribute('tabindex');
+  args.viewportFocus='native-scroll-region';out.originalNoninteractiveViewportAllowed=ok();delete args.viewportFocus;
   viewport.setAttribute('role','region');viewport.setAttribute('tabindex','0');out.regionWithoutProfileRejected=!ok();args.viewportFocus='native-scroll-region';out.explicitScrollRegionAllowed=ok();
   viewport.focus();out.nativeRegionFocusRetained=document.activeElement===viewport&&ok();
   viewport.setAttribute('role','button');out.actionRoleRejected=!ok();viewport.setAttribute('role','region');

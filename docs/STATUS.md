@@ -4,6 +4,10 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **续期拒绝后的新context恢复死路已修；当前真实失败属启动阶段**：独立最小反例9中7FAIL，旧controller撤回后content仍ready，吞掉后续/在途READY。现明确scope拒绝转既有安全等待，在途READY只合并一次，成功清除；旧owner/stop/过期/无证据均拒绝，无自动重试或旧receipt。冻结候选691定向/包测试PASS、0skip、3197ms；原隔离MV3 dormant回归PASS/源码未漂移，新增续期竞态由真实content+controller double证明，不冒充浏览器已注入该场景。独审通过。真实精确授权tab的只读enum诊断：page账户/当前聊天200，但refresh为ambiguous/current-context-unproven随后unverified/scope-provider-unavailable，未到controller，frame0；不归因续期修复，完整导航/搜索/恢复仍未过。未读正文/凭据、未发送内容；真实安装仍556cda0，临时诊断源已恢复。
+
+- **CI39119275013布局兼容失败已原样复现修正**：唯一FAIL为observed-profile原无role/tabindex的安全容器被新flag强制region拒绝；其余Node/耐久/J4 job成功、两种idle正例及变异oracle通过。现flag只额外接纳精确原生滚动区域，旧安全形态保留；原六项布局命令全部通过，observed fixture两形态分别校验初值和节点身份，均仅WEB_MECHANISM_ONLY。未改fixture来绕过原失败、未放宽交互护栏。父CI原FAIL保留，历史Linux idle前置根因仍OPEN；10k/100k DEFERRED。两项合批证据renewalContextWait20261018；无可比完整旅程前后耗时，不宣称提速。
+
 - **真实滚动区域误拒绝已修候选，完整旅程仍未通过**：本次合法worker session/accounts均200，旧403不再代表该次结果。实际失败为viewport的`role=region/tabindex=0`触发返回槽非交互检查。新增显式native-scroll-region，保留原生焦点、角色和reading-only mask，其余交互/非滚动形态拒绝；旧反例RED，新186定向及184包边界PASS/0skip，headless键盘滚动仅机制证据，独审无阻断。原专用Profile同扩展ID/config更新后实际双frame、5条原生聊天、唯一返回入口、工作空间与当前聊天映射成立。原诊断误以链接_blank否定委托导航，已纠正，不算产品缺陷；纠正后的连续旅程在返回入口等待阶段失败，随后frame0，后续撤回根因OPEN，阅读/返回/搜索/安全恢复不可写PASS。未保存正文/凭据、未原生写入。证据nativeScrollRegion20261018；10k/100k DEFERRED。
 
 - **父版本CI39118346794四job SUCCESS**：精确3f287f8；两种idle正例CHECK/RELEASE均成功，指定变异按原oracle被杀。仅增加观察器后一次成功不能解释历史Linux前置拒绝；无新context的J4仍PARTIAL，规模跳过不计通过。此CI不包含本次滚动区域修复。

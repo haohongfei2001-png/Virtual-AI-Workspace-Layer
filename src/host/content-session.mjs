@@ -420,11 +420,32 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     },
     workspaceEntered:({mountId})=>{s.returned=true;s.returnFocusGuard=s.controller.intentGuard?.()??(()=>false);liveMigration(s);if(s.migration&&adapter.matchesCandidateIdentity?.(s.upgraded.identity,s.migration.handle)!==true)clearMigration(s);if(s.migration){s.migration.ready=true;if(s.migration.display.presentation.focused&&s.migration.focusAllowed)s.migration.focusAllowed=s.controller.focusFrame?.(s.migration.display.role)===true;}return rpc(s,{v:1,type:'HOST_UI_WORKSPACE_ENTERED',...bindingFields(s.binding),mountId});},
     revokeMount:({mountId})=>{if(s.binding)void withRequestDeadline(()=>send({v:1,type:'HOST_UI_RELEASE',...bindingFields(s.binding),mountId}),{now:elapsedNow,schedule,cancel}).catch(()=>{});},
-    renewSession:({handle,binding})=>track(async()=>{if(!bindingOK(binding,s.binding))throw Error('stale-content-binding');const started=elapsedNow();const renewed=await rpc(s,{v:1,type:'HOST_DOCUMENT_RENEW',clientId,seq:++seq,...bindingFields(binding)});if(renewed?.ok!==true||!bindingOK(renewed.binding,s.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...renewed.binding});const remaining=()=>{const budget=6000-(elapsedNow()-started);if(budget<=0)throw Error('request-timeout');return budget;};const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());if(authority?.state!=='verified'||authority.scopeKey!==s.scopeKey){s.recoveryDenied=true;throw Error('scope-not-verified');}const status=await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining());return {...status,binding:renewed.binding};})
+    renewSession:({handle,binding})=>track(async()=>{
+     if(!bindingOK(binding,s.binding))throw Error('stale-content-binding');
+     const started=elapsedNow();s.renewContextPending=true;
+     try{
+      const renewed=await rpc(s,{v:1,type:'HOST_DOCUMENT_RENEW',clientId,seq:++seq,...bindingFields(binding)});
+      if(renewed?.ok!==true||!bindingOK(renewed.binding,s.binding))throw Error('invalid-host-binding');
+      s.binding=Object.freeze({...renewed.binding});
+      const remaining=()=>{const budget=6000-(elapsedNow()-started);if(budget<=0)throw Error('request-timeout');return budget;};
+      const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());
+      if(authority?.state!=='verified'||authority.scopeKey!==s.scopeKey){s.recoveryDenied=true;throw Error('scope-not-verified');}
+      const status=await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining());
+      return {...status,binding:renewed.binding};
+     }finally{
+      s.renewContextPending=false;
+      // Only a rejected scope may consume the in-flight READY through the
+      // existing safe wait. A successful renewal never banks a future retry.
+      if(!s.recoveryDenied)s.contextReadyPending=false;
+     }
+    })
    };
    s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onWake:()=>wake(s),onTerminated:(reason,presentation)=>{
     // Intentional exit ends this document session, including late recovery callbacks.
     if(current===s&&reason==='ui-user-exit'){stop();return;}
+    // The controller has withdrawn the old mount. Do not leave ready=true
+    // swallowing future C2 READY signals; wait without retrying denied scope.
+    if(current===s&&reason==='session-renew-failed'&&s.recoveryDenied){contextPending();return;}
     // One fresh authorization attempt per explicit content start. A failed
     // replacement never schedules another loop or revives an old grant.
     if(!enabled||(!s.ready&&!s.mountStarting)||!live(s)||s.busyClose===true||s.recoveryDenied||recoveryRemaining<1||!['ui-frame-suspended','session-renew-failed','ui-grant-expired','stale-session-renewal'].includes(reason))return;
@@ -473,7 +494,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  }
  function contextReady(){
   if(contextRecovery!==true||!contextResumeAllowed)return Promise.resolve(null);
-  if(enabled){if(current&&!current.ready&&(!current.scopeKey||current.wakePending))current.contextReadyPending=true;return Promise.resolve(null);}
+  if(enabled){if(current&&(current.renewContextPending===true||!current.ready&&(!current.scopeKey||current.wakePending)))current.contextReadyPending=true;return Promise.resolve(null);}
   if(contextResumeURL!==null&&doc.location.href!==contextResumeURL){contextResumeMode='reading';if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();}
   contextResumeURL=doc.location.href;
   enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;

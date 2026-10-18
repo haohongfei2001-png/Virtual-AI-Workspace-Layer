@@ -10,7 +10,8 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
   if(button){const style=win.getComputedStyle(button);if(button.hidden||button.inert||button.disabled||style.display==='none'||style.visibility!=='visible'||Number(style.opacity)!==1||style.pointerEvents==='none')return null;const b=rect(button);if(button.parentElement!==document.body||![b.x-r.x,b.y-r.y,b.width-r.width,b.height-r.height].every(v=>Math.abs(v)<0.01))return null;}
   if(hitRoot.tagName!=='DIV'||hitRoot.matches('[role],[tabindex],[contenteditable]')||[...hitRoot.childNodes].some(c=>c.nodeType===3&&c.textContent.trim()))return null;
   // When the reading mask opens, its scroll container becomes the native hit
-  // background. Accept only the explicitly configured, noninteractive parent
+  // background. Keep the original noninteractive parent valid; the profile may
+  // additionally admit an exact native scroll region
   // with no other content except geometrically excluded native branches.
   if(viewportFocus!==null&&viewportFocus!=='native-scroll-region')return null;
   if(viewportFocus!==null&&!readingViewport)return null;
@@ -18,7 +19,6 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
    // An explicit native scroll region keeps its own tab stop and keyboard
    // behavior. Only the reading child is masked; never the viewport itself.
    const scrollRegion=viewportFocus==='native-scroll-region'&&readingViewport.getAttribute('role')==='region'&&readingViewport.getAttribute('tabindex')==='0'&&!readingViewport.hasAttribute('contenteditable')&&['auto','scroll'].includes(win.getComputedStyle(readingViewport).overflowY);
-   if(viewportFocus==='native-scroll-region'&&!scrollRegion)return null;
    if(!readingRoot||readingViewport===hitRoot||readingRoot.parentElement!==readingViewport||!readingViewport.isConnected||readingViewport.ownerDocument!==document||!hitRoot.contains(readingViewport)||readingViewport.tagName!=='DIV'||!scrollRegion&&readingViewport.matches('[role],[tabindex],[contenteditable]')||readingViewport.shadowRoot||[...readingViewport.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||[...readingViewport.children].some(n=>n!==readingRoot&&!excluded.includes(n)))return null;
    for(const pseudo of ['::before','::after'])if(!['none','normal'].includes(win.getComputedStyle(readingViewport,pseudo).content))return null;
    let n=readingViewport,depth=0;for(;n;n=n.parentElement){const style=win.getComputedStyle(n);if(++depth>128||n.hidden||n.inert||n.getAttribute('aria-hidden')==='true'||style.display==='none'||style.visibility!=='visible'||Number(style.opacity)===0)return null;}
