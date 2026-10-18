@@ -125,7 +125,7 @@ HostSourceInbox 是 reducer 的小型有界队列，不另建同步引擎。权�
 ### 3.1 初始化无环
 
 1. 顶层隔离脚本通过严格 `HOST_HELLO` 完成 browser sender/document/origin 验证，得到 DocumentBinding 与 producerToken。它不是原 `BIND` 的放宽版本，不可读取账户库存。
-2. `adapter.start({binding, emit})` 注册列表/路由/元字段 observer，可产生当前文档提案；授权前仅有界 RAM 缓冲，不持久化任何账户数据。
+2. `adapter.start({binding, phase:'observation'})` 先注册列表/路由/元字段 observer；只保留当前文档的有界 RAM 候选，不接 emit/ingestion、发送/片段或原生操作，不持久化账户数据。当前实现最多256个候选/元字段ID、64KiB快照，复用有界DOM cursor在6秒内让出批次，不读未挂载历史、不建立可操作handle登记。身份拒绝不等于撤权：初次拒绝可观察到原document binding到期（最长20秒），不续认证；撤权/route/pagehide/stop立即清空。独立身份成功后清空候选，再用 `adapter.start({binding, emit})` 经原controller重扫。
 3. ScopeAuthority 独立建立 principal/context；成功后使用现有 scope BIND/lease 才开放该 scope 的仓库和 UI。获取 context 所需的有限控制元信息走 HELLO 允许的白名单，不要求先有账户缓存。
 4. 新 grant 不能接纳旧 document/producer/selection epoch 的缓存提案。重扫当前表面比把旧数据贴到新账户更优先。
 

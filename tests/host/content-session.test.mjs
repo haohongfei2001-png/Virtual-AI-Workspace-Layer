@@ -8,7 +8,7 @@ function fixture(overrides={}){
  const binding=()=>({documentToken:'doc',producerToken:'producer',browserDocumentId:'browser',routeEpoch:1,origin:document.location.origin,expiresAt:new Date(time+20000).toISOString()});
  let respond=m=>m.type==='HOST_HELLO'?{binding:binding()}:m.type==='HOST_REFRESH'?{state:'verified'}:m.type==='HOST_DOCUMENT_RENEW'?{ok:true,binding:binding()}:{ok:true,grants:[]};
  const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},sendMessage:async m=>{calls.push(m);return respond(m);}};
- const options={document,runtime,makeId:()=> 'client',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),adapterFactory:o=>(adapterOptions=o,{inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false}),surfaceFactory:()=>({}),plansFactory:({bindingCurrent})=>({plan:()=>{assert.ok(bindingCurrent());planned++;return ['plan'];}}),controllerFactory:o=>{bridge=o.bridge;return {start:async c=>{context=c;await bridge.registerMount({handle:{id:'mount',regionEpoch:1}});return {id:'mount'};},stop:()=>{stops++;bridge.revokeMount({mountId:'mount'});},showWorkspace:()=>{presentations.push('workspace');return true;},showReading:()=>{presentations.push('reading');return true;},showNativeReading:()=>{presentations.push('native-page');return true;}};}};
+ const options={document,runtime,makeId:()=> 'client',now:()=>time,elapsedNow:()=>time,schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:time+ms});return key;},cancel:key=>timers.delete(key),adapterFactory:o=>(adapterOptions=o,{start:async()=>({}),inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false}),surfaceFactory:()=>({}),plansFactory:({bindingCurrent})=>({plan:()=>{assert.ok(bindingCurrent());planned++;return ['plan'];}}),controllerFactory:o=>{bridge=o.bridge;return {start:async c=>{context=c;await bridge.registerMount({handle:{id:'mount',regionEpoch:1}});return {id:'mount'};},stop:()=>{stops++;bridge.revokeMount({mountId:'mount'});},showWorkspace:()=>{presentations.push('workspace');return true;},showReading:()=>{presentations.push('reading');return true;},showNativeReading:()=>{presentations.push('native-page');return true;}};}};
  const client=createHostContentSession({...options,...overrides});
  return {presentations,get adapterOptions(){return adapterOptions;},client,options,runtime,document,binding,calls,listeners,events,setResponse:f=>{respond=f;},get bridge(){return bridge;},get context(){return context;},get stops(){return stops;},get planned(){return planned;},async advance(ms){time+=ms;for(const [key,t]of [...timers])if(t.at<=time){timers.delete(key);t.fn();}await drain();}};
 }
@@ -25,7 +25,7 @@ test('stop cancels pending HELLO; late result cannot create surfaces or listener
  const f=fixture();let resolve;f.setResponse(()=>new Promise(r=>resolve=r));const started=f.client.start();await drain();f.client.stop();assert.equal(await started,null);resolve({binding:f.binding()});await drain();assert.equal(f.listeners.size,0);assert.equal(f.calls.length,1);assert.equal(f.stops,0);
 });
 test('unverified scope and invalid binding fail closed before surface; pagehide tears down live session',async()=>{
- for(const mode of ['scope','binding']){const f=fixture();f.setResponse(m=>m.type==='HOST_HELLO'?{binding:{...f.binding(),...(mode==='binding'?{origin:'https://other.test'}:{})}}:{state:'unknown'});assert.equal(await f.client.start(),null);assert.equal(f.listeners.size,0);assert.equal(f.events.size,0);}
+ for(const mode of ['scope','binding']){const f=fixture();f.setResponse(m=>m.type==='HOST_HELLO'?{binding:{...f.binding(),...(mode==='binding'?{origin:'https://other.test'}:{})}}:{state:'unknown'});assert.equal(await f.client.start(),null);assert.equal(f.client.showWorkspace(),false);assert.equal(f.listeners.size,mode==='scope'?1:0);f.client.stop();assert.equal(f.listeners.size,0);assert.equal(f.events.size,0);}
  const f=fixture();await f.client.start();f.events.get('pagehide')();assert.equal(f.listeners.size,0);assert.equal(f.client.showReading(),false);assert.equal(f.stops,1);
 });
 test('pending RPC deadline is six seconds and cannot revive after late response',async()=>{
@@ -103,7 +103,7 @@ test('workspace entered bridge uses current private binding and bounded RPC; sto
 function snippetFixture(){
  const f=fixture();let epoch='node-1',reads=0;
  const anchor={refId:'C',messageId:'M',branchId:'B',text:'selected',bodyHash:'a'.repeat(64)};
- const client=createHostContentSession({...f.options,adapterFactory:()=>({inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,selectionEpoch:()=>epoch,selectedSnippet:()=>{reads++;return {...anchor};}})});
+ const client=createHostContentSession({...f.options,adapterFactory:()=>({start:async()=>({}),inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,selectionEpoch:()=>epoch,selectedSnippet:()=>{reads++;return {...anchor};}})});
  const message={type:'HOST_SNIPPET_SELECTION',documentToken:'doc',producerToken:'producer',routeEpoch:1,scopeGrantId:'scope-grant',phase:'capture',ref:{id:'C',nativeUrl:'https://chatgpt.com/c/C'},selectionId:null};
  const request=(patch={},sender={id:'extension'})=>{let reply;[...f.listeners][0]?.({...message,...((patch.phase??message.phase)==='capture'?{expiresAt:new Date(7000).toISOString()}:{}),...patch},sender,value=>reply=value);return reply;};
  return {...f,client,message,request,anchor,setEpoch:value=>epoch=value,get reads(){return reads;}};
@@ -126,7 +126,7 @@ test('content ticket expires on node replacement elapsed six seconds route chang
  }
 });
 test('expired queued snippet restore cannot scroll or switch native reading',async()=>{
- const f=fixture();let restores=0;const client=createHostContentSession({...f.options,adapterFactory:()=>({inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,restoreSnippet:()=>{assert.deepEqual(f.presentations,['reading']);restores++;return {ok:true};}})});await client.start();
+ const f=fixture();let restores=0;const client=createHostContentSession({...f.options,adapterFactory:()=>({start:async()=>({}),inspect:()=>({ok:true}),stop(){},hasNativeLayer:()=>false,restoreSnippet:()=>{assert.deepEqual(f.presentations,['reading']);restores++;return {ok:true};}})});await client.start();
  const message={type:'HOST_SNIPPET_RESTORE',documentToken:'doc',producerToken:'producer',routeEpoch:1,scopeGrantId:'scope',ref:{id:'C',nativeUrl:'https://chatgpt.com/c/C'},anchor:{refId:'C',messageId:'M',branchId:'B',text:'selected',bodyHash:'a'.repeat(64)},expiresAt:new Date(1500).toISOString()},replies=[];
  const listener=[...f.listeners][0];for(const patch of [{expiresAt:new Date(1000).toISOString()},{expiresAt:new Date(8000).toISOString()},{routeEpoch:9}])listener({...message,...patch},{id:'extension'},r=>replies.push(r));assert.equal(restores,0);assert.deepEqual(f.presentations,[]);
  listener(message,{id:'extension'},r=>replies.push(r));assert.equal(restores,1);assert.deepEqual(f.presentations,['reading']);await f.advance(501);listener(message,{id:'extension'},r=>replies.push(r));assert.equal(restores,1);assert.equal(replies.at(-1).ok,false);client.stop();
@@ -291,4 +291,33 @@ for(const mode of ['reading','workspace'])for(const failure of ['ambiguous','tra
   await f.client.contextReady();assert.deepEqual(f.modes,['workspace',mode]);
   assert.deepEqual(f.calls.slice(before).filter(m=>['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT'].includes(m.type)).map(m=>m.type),['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT']);
  }finally{f.client.stop();}
+});
+
+for(const contextRecovery of [false,true])test(`HELLO starts observation before unresolved identity and denial retains only RAM (C2=${contextRecovery})`,async()=>{
+ const f=fixture(),phases=[];let resolve,stopped=0;
+ const client=createHostContentSession({...f.options,contextRecovery,adapterFactory:()=>({start:async o=>{phases.push(o);},stop:()=>stopped++,inspect:()=>({ok:true})})});
+ f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:new Promise(r=>resolve=r));
+ const started=client.start();await drain();
+ assert.equal(phases.length,1);assert.equal(phases[0].phase,'observation');assert.deepEqual(Object.keys(phases[0]).sort(),['binding','phase']);
+ assert.deepEqual(f.calls.map(m=>m.type),['HOST_HELLO','HOST_REFRESH']);assert.equal(client.showWorkspace(),false);
+ resolve({state:'unverified'});assert.equal(await started,null);assert.equal(stopped,0);assert.equal(client.localStatus(),'waiting');
+ // In particular C3 must clear retained RAM on persisted pagehide too.
+ f.events.get('pagehide')({persisted:true});assert.equal(stopped,1);assert.equal(client.showWorkspace(),false);client.stop();
+});
+test('verified promotion discards preauth observation before controller and never sends provisional packets',async()=>{
+ const f=fixture(),order=[];const client=createHostContentSession({...f.options,adapterFactory:()=>({start:async o=>order.push(o.phase),stop:()=>order.push('discard'),inspect:()=>({ok:true})}),controllerFactory:()=>({start:async o=>{order.push('controller');assert.equal(typeof o.emit,'function');return {};},stop(){}})});
+ await client.start();assert.deepEqual(order,['observation','discard','controller']);assert.deepEqual(f.calls.map(m=>m.type),['HOST_HELLO','HOST_REFRESH']);client.stop();
+});
+test('denied observation expires without retry, and genuine later READY creates fresh HELLO',async()=>{
+ const f=fixture(),order=[];const client=createHostContentSession({...f.options,contextRecovery:true,adapterFactory:()=>({start:async()=>order.push('observe'),stop:()=>order.push('discard'),inspect:()=>({ok:true})})});
+ f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:{state:'unverified'});await client.start();assert.deepEqual(order,['observe']);
+ await f.advance(20000);assert.deepEqual(order,['observe','discard']);assert.equal(f.calls.length,2);assert.equal(client.localStatus(),'waiting');
+ await client.contextReady();assert.deepEqual(order,['observe','discard','observe']);assert.deepEqual(f.calls.map(m=>m.type),['HOST_HELLO','HOST_REFRESH','HOST_HELLO','HOST_REFRESH']);
+ client.contextPending();assert.equal(order.at(-1),'discard');client.stop();
+});
+test('exact document invalidation clears retained observer without starting identity',async()=>{
+ const f=fixture();let stops=0;const client=createHostContentSession({...f.options,contextRecovery:true,adapterFactory:()=>({start:async()=>{},stop:()=>stops++,inspect:()=>({ok:true})})});
+ f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:{state:'unverified'});await client.start();const listener=[...f.listeners][0];
+ listener({type:'HOST_DOCUMENT_INVALIDATED'},{id:'other'});listener({type:'HOST_DOCUMENT_INVALIDATED',extra:true},{id:'extension'});assert.equal(stops,0);
+ listener({type:'HOST_DOCUMENT_INVALIDATED'},{id:'extension'});assert.equal(stops,1);assert.equal(f.calls.length,2);client.stop();
 });

@@ -19,7 +19,7 @@ export function instrumentJ3ContextSource(path,source,{ramOnly=false}={}){
   if(ramOnly){
    out=once(out,"if(contextRecovery===true&&exactHostRecord(hello",'__j3ContextTrace("content-hello",{binding:!!hello?.binding,ok:hello?.ok===true,superseded:hello?.reason==="invalidated-during-check"});if(contextRecovery===true&&exactHostRecord(hello');
    out=once(out,"if(auth?.state!=='verified')",'__j3ContextTrace("content-auth",{state:auth?.state});if(auth?.state!=="verified")');
-   out=once(out,' function contextPending(){',' function contextPending(){__j3ContextTrace("content-pending",{enabled,allowed:contextResumeAllowed});');
+   out=once(out,' function contextPending(preserveObservation=false){',' function contextPending(preserveObservation=false){__j3ContextTrace("content-pending",{enabled,allowed:contextResumeAllowed});');
    out=once(out,' function contextReady(){',' function contextReady(){__j3ContextTrace("content-ready",{enabled,allowed:contextResumeAllowed});');
   }else{
   out=once(out,"if(!live(s))throw Error('stale-content-session');return send(message,owner);","if(!live(s))throw Error('stale-content-session');"+'__j3ContextTrace("content-request",{type:message.type});return send(message,owner).then(result=>{__j3ContextTrace("content-response",{type:message.type,state:result?.state,binding:!!result?.binding,ok:result?.ok===true});return result;});');

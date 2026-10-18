@@ -10,7 +10,7 @@ function fixture(){
  const binding={documentToken:'doc',producerToken:'producer',browserDocumentId:'browser',routeEpoch:1,origin:document.location.origin,expiresAt:new Date(21000).toISOString()};
  responder=m=>m.type==='HOST_HELLO'?{ok:true,binding}:m.type==='HOST_REFRESH'?{state:'verified',scopeKey:'scope'}:{ok:true};
  const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},sendMessage:async m=>{calls.push(m);return responder(m);}};
- const client=createHostContentSession({document,runtime,contextRecovery:true,now:()=>1000,elapsedNow:()=>1000,makeId:()=> 'client',adapterFactory:()=>({inspect:()=>({ok:true}),stop(){}}),surfaceFactory:()=>({}),plansFactory:()=>({}),controllerFactory:()=>({start:async()=>{mounts++;return {id:'mount'};},stop(){},showWorkspace:()=>true})});
+ const client=createHostContentSession({document,runtime,contextRecovery:true,now:()=>1000,elapsedNow:()=>1000,makeId:()=> 'client',adapterFactory:()=>({start:async()=>({}),inspect:()=>({ok:true}),stop(){}}),surfaceFactory:()=>({}),plansFactory:()=>({}),controllerFactory:()=>({start:async()=>{mounts++;return {id:'mount'};},stop(){},showWorkspace:()=>true})});
  return {client,calls,document,binding,events,setResponder:f=>{responder=f;},get mounts(){return mounts;}};
 }
 test('READY arriving before stale ambiguous REFRESH response remains a single recovery signal',async t=>{

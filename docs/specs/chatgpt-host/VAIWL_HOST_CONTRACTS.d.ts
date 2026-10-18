@@ -408,10 +408,17 @@ export interface PublicAdapterStatus {
   profileId: ProfileId | null;
   // No private titles, IDs, raw account scope or credentials in host DOM/status logs.
 }
-export interface AdapterStartOptions {
+export type AdapterStartOptions = {
   binding: DocumentBinding; // document handshake happens BEFORE adapter start
+} & ({
+  // Local bounded observation only; no ACK, transport, action or account cache.
+  // Discard on expiry/revocation and restart without this phase after verified.
+  phase: 'observation';
+  emit?: never;
+} | {
+  phase?: never;
   emit: (proposal: ObservationProposal) => Promise<ObservationAck>;
-}
+});
 export interface HostAdapter {
   readonly kind: 'synthetic' | 'chatgpt';
   start(options: AdapterStartOptions): Promise<HostContext>;

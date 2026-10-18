@@ -4,7 +4,7 @@ import {installTemporaryNativeNavigation} from '../../src/host/temporary-native-
 const origin='https://chatgpt.com',id=n=>'00000000-0000-4000-8000-'+String(n).padStart(12,'0');
 const link=(n,title='Chat '+n,extra={})=>({isConnected:true,innerText:title,attrs:{href:'/c/'+id(n)},parentElement:null,closest:()=>null,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute(k){return this.attrs[k]??null;},...extra});
 function fixture(nodes=[]){let listener,callback,reads=0,disconnected=0,takes=0;const events=new Map(),sent=[];
- const root={closest:()=>null,querySelectorAll:()=>nodes,contains:n=>nodes.includes(n)},sidebar={closest:()=>null,querySelectorAll:()=>[root]},win={getComputedStyle:n=>n.style??{display:'block',visibility:'visible'},addEventListener:(k,f)=>events.set(k,f),removeEventListener:k=>events.delete(k),MutationObserver:class{constructor(fn){callback=fn;}observe(){}takeRecords(){takes++;return [];}disconnect(){disconnected++;}}};win.top=win;
+ const root={closest:()=>null,querySelectorAll:()=>nodes,contains:n=>nodes.includes(n)},sidebar={isConnected:true,getClientRects:()=>[{}],getAttribute:()=>null,closest:()=>null,querySelectorAll:()=>[root]},win={getComputedStyle:n=>n.style??{display:'block',visibility:'visible'},addEventListener:(k,f)=>events.set(k,f),removeEventListener:k=>events.delete(k),MutationObserver:class{constructor(fn){callback=fn;}observe(){}takeRecords(){takes++;return [];}disconnect(){disconnected++;}}};win.top=win;
  const document={defaultView:win,location:{origin,href:origin+'/'},documentElement:{},querySelectorAll:()=>{reads++;return [sidebar];},addEventListener:(k,f)=>events.set(k,f),removeEventListener:k=>events.delete(k)};
  const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,sendMessage:m=>{sent.push(m);return Promise.resolve();},onMessage:{addListener:f=>{listener=f;},removeListener:f=>{if(listener===f)listener=null;}}};
  const stop=installTemporaryNativeNavigation({document,runtime,origin,profile:{id:'chatgpt-zh-desktop-observed-20261018',regions:{projects:'nav',history:'nav'}}});
@@ -22,3 +22,36 @@ test('reading links never have their text read, and ambiguous sidebar fails clos
 test('ancestor visibility changes invalidate snapshots',()=>{const f=fixture([link(1)]);f.request();f.mutate({contains:n=>n===f.root},'attributes');assert.equal(f.sent.length,1);f.stop();});
 
 test('browser-hidden disclosure link is excluded before its title is read even with layout boxes',()=>{const hidden=link(2,{toString(){throw Error('hidden-title-read');}});hidden.checkVisibility=options=>{assert.deepEqual(options,{checkOpacity:true,checkVisibilityCSS:true,contentVisibilityAuto:true});return false;};Object.defineProperty(hidden,'innerText',{get(){throw Error('hidden-title-read');}});const f=fixture([link(1),hidden]),r=f.request();assert.deepEqual(r.items.map(n=>n.title),['Chat 1']);assert.equal(r.partial,false);f.stop();});
+
+test('observed narrow native sidebar replaces hidden desktop boundary without reading hidden links',()=>{
+ const f=fixture([link(1)]),desktop={...f.sidebar,checkVisibility:()=>false,querySelectorAll:()=>{throw Error('hidden-desktop-read');}};
+ f.document.querySelectorAll=selector=>{assert(selector.includes('div[role="dialog"][aria-modal="true"][data-state="open"] [data-sidebar-navigation-root]'));return [desktop,f.sidebar];};
+ assert.equal(f.request().items.length,1);f.mutate({contains:n=>n===f.sidebar},'attributes');assert.equal(f.sent.length,1);f.stop();
+});
+test('no visible sidebar and multiple visible native sidebar roots fail closed before titles',()=>{
+ for(const mode of ['hidden','ambiguous']){const f=fixture([link(1)]);if(mode==='hidden')f.sidebar.checkVisibility=()=>false;else f.document.querySelectorAll=()=>[f.sidebar,{...f.sidebar}];assert.equal(f.request().unavailable,true);f.stop();}
+});
+test('sibling native sidebar appearance, replacement and removal invalidate without reading titles',()=>{
+ for(const direction of ['desktop-to-narrow','narrow-to-desktop'])for(const change of ['show','insert','replace','remove']){
+  const f=fixture([link(1)]);let otherVisible=false;
+  const other={...f.sidebar,checkVisibility:()=>otherVisible,querySelectorAll:()=>{throw Error('sibling-title-read');}};
+  let boundaries=change==='insert'?[f.sidebar]:[f.sidebar,other];
+  f.document.querySelectorAll=()=>direction==='desktop-to-narrow'?boundaries:[...boundaries].reverse();
+  assert.equal(f.request().items.length,1);
+  if(change==='insert')boundaries.push(other);
+  if(change==='remove')boundaries=[];else otherVisible=true;
+  if(change==='replace')f.sidebar.checkVisibility=()=>false;
+  f.mutate({contains:()=>false},change==='show'?'attributes':'childList');
+  assert.equal(f.sent.length,1,`${direction}:${change}`);f.mutate(f.root);assert.equal(f.sent.length,1);f.stop();
+ }
+});
+test('unrelated mutations neither read titles nor invalidate unchanged sidebar boundaries',()=>{
+ const node=link(1),f=fixture([node]);f.request();Object.defineProperty(node,'innerText',{get(){throw Error('unrequested-title-read');}});
+ f.mutate({contains:()=>false},'attributes');assert.equal(f.sent.length,0);f.stop();
+});
+test('CSS-only viewport changes clear a snapshot without scanning or reading hidden titles',()=>{
+ const node=link(1),f=fixture([node]);f.request();const reads=f.reads();f.sidebar.checkVisibility=()=>false;
+ Object.defineProperty(node,'innerText',{get(){throw Error('hidden-title-read');}});
+ f.events.get('resize')();f.events.get('resize')();assert.equal(f.sent.length,1);assert.equal(f.reads(),reads);
+ f.stop();assert.equal(f.events.size,0);
+});

@@ -506,3 +506,54 @@ test('explicit slot moved over composer rejects inspection and dormant geometry 
  f.slot.getBoundingClientRect=()=>({x:220,y:490,width:40,height:40});assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();assert.equal(f.adapter.isReturnSlotCurrent(first),false);
  f.slot.getBoundingClientRect=()=>({x:220,y:0,width:40,height:40});assert.equal(f.adapter.isReturnSlotCurrent(first),true);assert.equal(f.adapter.inspect().ok,false,'presentation geometry cannot revive stopped binding');
 });
+
+test('preauthorization adapter observes bounded current metadata without transport or privileged subsystems',async()=>{
+ const c=retryClock();let snippets=0,passes=0;const f=fixture({...c.options,snippetsFactory:()=>{snippets++;throw Error('not permitted');}});f.binding.expiresAt=new Date(20000).toISOString();
+ await f.start(()=>assert.fail('preauth emit'),{phase:'observation',ingestionPass:()=>{passes++;}});await tick();
+ assert.equal(f.adapter.observationStatus().state,'observing');assert.ok(f.adapter.observationStatus().bytes>0);assert.ok(f.adapter.observationStatus().bytes<=65536);
+ assert.equal(snippets,0);assert.equal(passes,0);assert.equal(f.adapter.inspect().ok,false);assert.equal(f.adapter.prepareIdle(),null);assert.equal(f.adapter.prepareRecovery(),null);
+ assert.equal((await f.adapter.dispatchNative({})).state,'blocked');assert.equal(f.adapter.planNavigation({}).mode,'unavailable');await assert.rejects(f.adapter.readLoaded({}),/stale-host-binding/);
+ assert.throws(()=>f.adapter.updateBinding(f.binding),/stale-host-binding/);assert.equal(f.adapter.captureCandidateIdentity({}),null);
+ f.adapter.stop();assert.deepEqual(f.adapter.observationStatus(),{state:'stopped',candidates:0,messageIds:0,bytes:0});assert.equal(c.timers.size,0);
+});
+test('preauth mutation observation survives absent identity but expires on both clocks with active RAM cleanup',async()=>{
+ for(const clock of ['timer','wall','elapsed','route']){
+  const c=retryClock(),f=fixture(c.options);f.binding.expiresAt=new Date(20000).toISOString();await f.start(undefined,{phase:'observation'});await tick();
+  for(let i=0;i<100;i++)f.trigger();await tick();assert.equal(f.emitted.length,0);assert.equal(f.adapter.observationStatus().state,'observing');
+  if(clock==='timer')await c.advance(20000);else if(clock==='wall')f.setTime(20000);else if(clock==='elapsed'){c.options.elapsedNow=()=>20000;await c.advance(20000);}else f.document.location.href='https://chatgpt.com/';
+  assert.equal(f.adapter.observationStatus().bytes,0);assert.equal(f.observer().closed,true);assert.equal(c.timers.size,0);f.adapter.stop();
+ }
+});
+test('verified restart rescans current metadata and discards preauth snapshot and queued pump',async()=>{
+ const f=fixture();f.binding.expiresAt=new Date(20000).toISOString();await f.start(undefined,{phase:'observation'});await tick();f.trigger();
+ await f.start();await tick();assert.equal(f.adapter.observationStatus().bytes,0);assert.equal(f.emitted.length,1);assert.equal(f.emitted[0].localSeq,1);assert.equal(f.adapter.inspect().ok,true);f.adapter.stop();
+});
+
+test('preauth RAM includes current chat metadata, is bounded, and does not read message body or draft',async()=>{
+ const f=bodyFixture();f.binding.expiresAt=new Date(20000).toISOString();const d=sys05Directory(f,300);
+ await f.start(undefined,{phase:'observation'});await tick();const first=f.adapter.observationStatus();assert(first.candidates>0);assert(first.candidates<=256);assert(first.candidates+first.messageIds<=256);assert(first.bytes<=65536);assert.equal(f.emitted.length,0);
+ d.nodes.length=1;f.trigger();await tick();const next=f.adapter.observationStatus();assert.equal(next.candidates,1);assert.equal(next.messageIds,1);assert(next.bytes<first.bytes);assert.equal(f.adapter.selectedSnippet({}),null);f.adapter.stop();
+});
+
+test('preauth finite scan continues past container-only first page without fetching or retaining actionable handles',async()=>{
+ const c=retryClock(),f=fixture(c.options);f.binding.expiresAt=new Date(20000).toISOString();const d=sys05Directory(f,1),link=d.nodes[0];
+ d.nodes.splice(0,1,...Array.from({length:300},()=>({...link,tagName:'DIV',textContent:'',getAttribute:()=>null})),link);
+ await f.start(undefined,{phase:'observation'});await tick();assert.equal(f.adapter.observationStatus().candidates,0);
+ await c.advance(0);assert.equal(f.adapter.observationStatus().candidates,1);assert.equal(f.emitted.length,0);assert.equal(f.adapter.resolveLoadedTargets([{}])[0],null);
+ f.adapter.stop();assert.equal(c.timers.size,0);
+});
+
+test('late cancelled preauth continuation cannot detach the new authorized retry timer',async()=>{
+ const c=retryClock(),f=fixture(c.options);f.binding.expiresAt=new Date(20000).toISOString();const d=sys05Directory(f,1),link=d.nodes[0];
+ d.nodes.splice(0,1,...Array.from({length:300},()=>({...link,tagName:'DIV',textContent:'',getAttribute:()=>null})),link);
+ await f.start(undefined,{phase:'observation'});await tick();const old=[...c.timers.values()].find(t=>t.at===0);assert(old);
+ await f.start(async p=>({state:'retry-after',localSeq:p.localSeq,delayMs:50}));await tick();assert.equal(c.timers.size,1);
+ old.fn();f.adapter.stop();assert.equal(c.timers.size,0,'old callback must not clear ownership of the new retry timer');
+});
+
+test('preauth cursor does not retain or read an unobserved raw heading fingerprint',async()=>{
+ const f=bodyFixture();f.binding.expiresAt=new Date(20000).toISOString();sys05Directory(f,1);
+ const hidden={...visibleDirectoryNode(f.document),isConnected:true,getClientRects:()=>[],get textContent(){throw Error('unobserved-heading-fingerprint');}};
+ f.selectors.set(LEGACY_SURFACE_PROFILE.currentConversationHeader,[hidden]);
+ await f.start(undefined,{phase:'observation'});await tick();assert.equal(f.adapter.observationStatus().candidates,1);assert.equal(f.adapter.observationStatus().messageIds,1);f.adapter.stop();
+});

@@ -7532,5 +7532,281 @@
       "prerequisite-activation-targeted.tap.gz": "0a92cc7ea4e70db30034ddb1dcefda04841cb5330e5873885ec26b7e18893094",
       "prerequisite-activation-full.json.gz": "dac60a10c57806a647794eaace7d1f8cd8d80f1447407915555baec89bfa5eb8"
     }
+  },
+  "preauthorizationObservation20261019": {
+    "status": "OBSERVATION_AND_TEMPORARY_CHAT_VERIFIED_NOT_FREE_ACCEPTED",
+    "parentHead": "a107ad69749662639fb834b31fc31233dc727378",
+    "rootCauses": [
+      "content-session constructed the observer adapter only after HOST_REFRESH verified; identity denial destroyed independent page observation",
+      "one bounded initial DOM scan could contain only containers; finite continuation was needed before concluding the pass",
+      "the real 746px native window uses a visible sidebar dialog and may remove the desktop sidebar; temporary navigation and its old live driver only recognized desktop"
+    ],
+    "changes": [
+      "HELLO then observation-only adapter start before independent identity/context",
+      "preauthorization RAM <=256 candidate/message IDs and <=65536 bytes, original binding <=20s, finite DOM pass <=6s; no ingestion/send/snippet/action authority",
+      "denial retains only observation until original deadline; revoke/pagehide/route/stop invalidate it; verified discards all provisional data and rescans through original BIND/storage/UI",
+      "temporary mode accepts exactly one visible desktop or observed narrow native sidebar; sibling topology and CSS resize invalidate without text reads or automatic retries"
+    ],
+    "sourceHashes": {
+      "src/host/content-session.mjs": "d817359bd840d061715b1ec9eac86d75cfd811695a94ac796b14d391f1034014",
+      "src/host/chatgpt-adapter.mjs": "6fed8f0c5581440aa474db1f7c676d6b0fa65ebe31ebad094c73ad4effd8ba3b",
+      "src/host/surface-discovery.mjs": "38453320294f9a4aac7dbe5de97332e4bdb8486cec9a4353fb036eddfec1100d",
+      "src/host/temporary-native-navigation.mjs": "e0b768520df245e16da989738640177f8d3405e407fdc1e02ddcc31a1b49f5e1",
+      "tests/host/preauthorization-package-browser.mjs": "f134eb6f9dc7deb905318a1e841ffe50338e432f52df243d26e95cfea03194af"
+    },
+    "verification": {
+      "minimumOldSourceRed": "2 failures, observer absent while identity unresolved in both C2 and non-C2 starts",
+      "candidateRegression": {
+        "pass": 1352,
+        "fail": 0,
+        "skip": 0,
+        "durationMs": 5237.0
+      },
+      "laterCoreGuards": {
+        "pass": 12,
+        "fail": 0,
+        "skip": 0
+      },
+      "finalSidebarGuards": {
+        "pass": 22,
+        "fail": 0,
+        "skip": 0,
+        "durationMs": 132.201458
+      },
+      "ciPartition": {
+        "pass": 18,
+        "fail": 0,
+        "skip": 0
+      },
+      "countsAreSeparateRunsNotAdditive": true,
+      "finalMv3": {
+        "status": "PASS",
+        "elapsedMs": 21727.157833,
+        "stages": [
+          {
+            "name": "current-page-observed-while-session-unresolved",
+            "state": "observing",
+            "candidates": 4,
+            "messageIds": 0,
+            "bytes": 2822,
+            "localStatus": "connecting",
+            "elapsedMs": 1107.9636659999999
+          },
+          {
+            "name": "after-denial-current-surface-change-observed",
+            "state": "observing",
+            "candidates": 3,
+            "messageIds": 0,
+            "bytes": 2128,
+            "localStatus": "verification-required",
+            "elapsedMs": 1158.411041
+          },
+          {
+            "name": "original-expiry-clears-ram-without-auth-retry",
+            "elapsedMs": 21103.320791000002
+          },
+          {
+            "name": "fresh-authorized-document-enters-existing-free-ui",
+            "elapsedMs": 21679.036958
+          }
+        ],
+        "instrumentation": {
+          "path": "extension/content-entry.mjs",
+          "original": "f8b274724f39fad961c731f1b8aae1f0382f155109b66d23edd987025448e00b",
+          "instrumented": "8d357f007bd229c69999869f75ad97a24c874e65db62ebea3f2a2f39813d0f49"
+        },
+        "sourceHashesMatchCurrent": true,
+        "realHost": false
+      },
+      "normalNavigation": {
+        "status": "PASS",
+        "uninstrumentedPackage": true,
+        "originalDraftAndSingleReturn": true,
+        "sourceDifferenceFromFinal": [
+          "temporary-native-navigation.mjs only; normal branch unused"
+        ]
+      },
+      "temporaryMv3": {
+        "status": "PASS_TEMPORARY_MV3_POPUP",
+        "elapsedMs": 3236.281292,
+        "faultPhaseMs": 1053.798833,
+        "sourceHashesMatchCurrent": true,
+        "scopeAuthRequests": 0,
+        "databaseEmpty": true,
+        "draftPreserved": true
+      },
+      "timeComparison": "Old initialization fails before observing; no successful old complete journey elapsed time. New MV3 includes the original 20s lifetime wait. Do not claim a speedup.",
+      "independentReview": "read-only review fixed stale continuation timer ownership, unbounded raw heading retention, sibling sidebar invalidation and CSS-only resize; no remaining blocking finding in scoped final review",
+      "finalPackageRegression": {
+        "pass": 319,
+        "fail": 0,
+        "skip": 0,
+        "durationMs": 3873.628292
+      }
+    },
+    "realProfile": {
+      "access": "existing authorized job-application dedicated Profile; original extension ID/path/permissions retained, old package verified backup",
+      "normalObservation": {
+        "status": "REAL_PAGE_OBSERVATION_VERIFIED",
+        "candidates": 10,
+        "messageIds": 5,
+        "bytes": 7571,
+        "localStatus": "waiting",
+        "authorityVerified": false,
+        "workerResponses": [],
+        "limit": "diagnostic exposed counts only in extension isolated world; before final timer/heading hardening, exact earlier hashes preserved; no new 403 observation established by this probe"
+      },
+      "installedTemporaryPackage": {
+        "verified": true,
+        "sameId": true,
+        "permissionsUnchanged": true,
+        "sourceHashesMatchCurrent": true,
+        "newDocumentConfirmed": true
+      },
+      "temporaryJourney": {
+        "mode": "TEMPORARY_NOT_FREE_ACCEPTED",
+        "bodyRead": false,
+        "credentialsRead": false,
+        "workerRequests": 0,
+        "original": {
+          "editor": true,
+          "draftEmpty": true,
+          "projectDisclosureButtons": 0
+        },
+        "wokeWorker": true,
+        "popupReadiness": [
+          [
+            {
+              "state": "LOADING",
+              "rows": 0,
+              "disabled": true,
+              "elapsedMs": 2.303208000000012
+            },
+            {
+              "state": "READY",
+              "rows": 18,
+              "disabled": false,
+              "elapsedMs": 103.47737500000002
+            }
+          ],
+          [
+            {
+              "state": "LOADING",
+              "rows": 0,
+              "disabled": true,
+              "elapsedMs": 3.2403750000000855
+            },
+            {
+              "state": "READY",
+              "rows": 18,
+              "disabled": false,
+              "elapsedMs": 106.17025000000012
+            }
+          ]
+        ],
+        "list": {
+          "projects": 0,
+          "chats": 18,
+          "temporaryNotice": true
+        },
+        "search": true,
+        "chatOpenedCorrectURL": true,
+        "chosenProjectContainerConversation": true,
+        "opened": {
+          "editor": true,
+          "openerNull": true
+        },
+        "returnedFresh": true,
+        "originalPreserved": true,
+        "status": "LIVE_TEMPORARY_CHAT_PASS"
+      },
+      "projectControl": {
+        "visibleExistingProjectsButton": 1,
+        "expanded": true,
+        "projectPageLinks": 0,
+        "projectOpen": "NOT_RUN"
+      },
+      "bodyOrCredentialsSaved": false
+    },
+    "failureAccounting": [
+      "first MV3 driver observed frame DOM before committed frame URL; fixed same original deadline, first FAIL retained",
+      "real restored popup INVALIDATED and later hidden desktop 0 rows retained; fixed actual narrow sidebar selector",
+      "post-install live driver waited removed desktop root; actual page complete/editor true/desktop0/mobile1; changed driver to unique visible native sidebar, no refresh or product deadline extension",
+      "foreground transport test used setImmediate to imply newer receipt timestamp; deterministic clock advance makes freshness explicit; historical failure timestamp absent, not retroactively assigned a cause"
+    ],
+    "remainingGates": {
+      "principalAndCurrentContext": "NOT_VERIFIED; prior challenge evidence remains; no new identity source",
+      "realProjectAndPositiveMembership": "NOT_RUN/UNKNOWN; visible Project button expanded but no native Project page link",
+      "ownSendActivity": "NOT_VERIFIED; page reads do not imply self-send",
+      "peerRecoveryWithoutNewContext": "SAFE_WAIT_NOT_ACCEPTED",
+      "completeInstallIMEPAIACrossDeviceV27": "NOT_ACCEPTED",
+      "10k": "DEFERRED original thresholds and failures retained",
+      "100k": "DEFERRED",
+      "freeAccepted": false,
+      "releaseReady": false,
+      "newLinuxCandidate": "NOT_RUN_BEFORE_PUSH"
+    },
+    "artifacts": {
+      "oldInitializationRed": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-parent-red.log.gz",
+        "rawSha256": "1ef5e3716bc54572c2db650c6086ef326901224f9fcf59b90d993239f3785af4"
+      },
+      "candidateRegression": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-candidate-tests.log.gz",
+        "rawSha256": "ede1fc5a4ecc11b8c5af08f35738c35e7838ffd286d96cf4fba2cdad0e525614"
+      },
+      "finalCoreGuards": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-final-guards.log.gz",
+        "rawSha256": "a34a319630410084a9f170dcf4a81a033af0b9a72a5c00a1893da04b3b6bbc8d"
+      },
+      "finalSidebarGuards": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-final-topology-tests.log.gz",
+        "rawSha256": "c60a24a8293609fe13cdd4ffc85cf9a85d8f477b7e125b2ea8d6e30f7e672d69"
+      },
+      "ciPartition": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-ci-contract.log.gz",
+        "rawSha256": "7a9cbffc24103c3f382cb2651afa4c6f41413a20d73242877f1531c0e171a097"
+      },
+      "firstMv3Failure": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-mv3.json.gz",
+        "rawSha256": "78879051f1127a5746da49ac1cc99098b8cc58d1eceb2df22c3315d6bcdcf97e"
+      },
+      "finalMv3": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-final-mv3.json.gz",
+        "rawSha256": "e289c9cb8924d4716dac5edce418c12c7300c6ae34f73c694d00f334eb98c6dc"
+      },
+      "normalNavigation": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-guarded-navigation.json.gz",
+        "rawSha256": "1c95e388ad5e345516a34c53b30e706db6819e6fdaf93fc9d77e3877f9fadab8"
+      },
+      "finalTemporaryMv3": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-resize-temporary-mv3.json.gz",
+        "rawSha256": "03cebbaa744df10be9a6c7a5d71841442f50fd352971fdb57f04d4388d60d43e"
+      },
+      "temporaryFirstRestoredFailure": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-restored-temporary-live.json.gz",
+        "rawSha256": "18884478175979d586aa27d21047823bb4c1f2666613333832894adf782c416b"
+      },
+      "temporaryHiddenSidebarFailure": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-temporary-invalidation-diagnostic.json.gz",
+        "rawSha256": "e079b11c7a12ba90e541f1d288ac5d9d8131d01bb2dfe6533532e898752d0ae5"
+      },
+      "temporaryDriverDesktopWaitFailure": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-final-temporary-live.json.gz",
+        "rawSha256": "fd80c8d0e34e8aaf52c6315c212105155cfc79a37ac852d12d6a74f1c11a49c9"
+      },
+      "realNarrowJourney": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-narrow-journey.json.gz",
+        "rawSha256": "79a26871482230cb039ae037df09f767e5377c3c617c251103561d1d00d1bbd4"
+      },
+      "realObservation": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-real-observation-redacted.json.gz",
+        "rawSha256": "11be58f9da86efd6954fba3d905040b4eebf0ca7c46ed15580ca7328a2dc227c"
+      },
+      "finalPackageRegression": {
+        "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-final-package-tests.log.gz",
+        "rawSha256": "73623bade4da73a8331c94cc60d0fd1a3589c1f2141e58a8bcdd1d1ad96db27c"
+      }
+    }
   }
 }

@@ -70,7 +70,17 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  const upgradeRoute=()=>{if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();};
  const clientId=makeId();if(!tokenOK(clientId))throw Error('invalid-content-client');
  let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0,contextResumeAllowed=false,contextResumeMode='workspace',contextResumeURL=null,verificationWaitURL=null;
- let activeWork=0,rawIPC=0,workRevision=0;
+ let activeWork=0,rawIPC=0,workRevision=0,observation=null;
+ function stopObservation(){const prior=observation;observation=null;if(!prior)return;cancel(prior.timer);runtime.onMessage.removeListener(prior.invalidate);prior.adapter.stop();}
+ async function startObservation(s){
+  const adapter=s.adapter,entry={adapter,owner:s,timer:null,invalidate:null};observation=entry;
+  entry.invalidate=(m,sender)=>{if(observation===entry&&sender?.id===runtime.id&&exactHostRecord(m,['type'])&&m.type==='HOST_DOCUMENT_INVALIDATED')stopObservation();};
+  runtime.onMessage.addListener(entry.invalidate);
+  entry.timer=schedule(()=>{if(observation===entry)stopObservation();},Math.max(0,Date.parse(s.binding.expiresAt)-now()));
+  await adapter.start({binding:s.binding,phase:'observation'});
+  if(!live(s)||observation!==entry||Date.parse(s.binding.expiresAt)<=now())throw Error('stale-content-session');
+ }
+
  function interfere(owner){if(current?.closing&&owner!==current.closing)current.closing.interfered=true;}
  function sync(work){interfere();workRevision++;activeWork++;try{return work();}finally{activeWork--;requestAutomaticIdle(current);}}
  async function track(work,owner=null){interfere(owner);workRevision++;activeWork++;try{return await work();}finally{activeWork--;requestAutomaticIdle(current);}}
@@ -197,10 +207,11 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function clearMigration(s){const prior=s.migration;s.migration=null;if(prior?.leaseOwner)try{s.adapter?.releaseLoadedHandles?.(prior.leaseOwner);}catch{}for(const type of ['pointerdown','keydown','wheel','focusin'])doc.removeEventListener?.(type,s.migrationInterrupt,true);}
  function liveMigration(s){const m=s.migration;if(!m)return null;const time=now(),elapsed=elapsedNow();if(!Number.isFinite(time)||time<m.lastTime||time>=m.createdAt+30000||!Number.isFinite(elapsed)||elapsed<m.lastElapsed||elapsed>=m.elapsedDeadline){clearMigration(s);return null;}m.lastTime=time;m.lastElapsed=elapsed;return m;}
  function retainMigration(s,handle){const m=liveMigration(s);if(!m)return false;try{if(typeof s.adapter?.retainLoadedHandles==='function'&&s.adapter.retainLoadedHandles(m.leaseOwner,[handle],m.elapsedDeadline)!==true){clearMigration(s);return false;}}catch{clearMigration(s);return false;}m.handle=handle;return true;}
- function dispose(s){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.capturePending?.cancel();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
- function reset(){epoch++;const s=current;current=null;dispose(s);}
+ function dispose(s,keepObservation=false){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.capturePending?.cancel();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{if(!keepObservation||observation?.adapter!==s.adapter)s.adapter?.stop();}catch{}}
+ function reset(keepObservation=false){if(!keepObservation)stopObservation();epoch++;const s=current;current=null;dispose(s,keepObservation);}
  function stop(){verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function pagehide(event){
+  stopObservation();
   if(!enabled&&contextResumeAllowed){stop();return;}
   if(event?.persisted!==true){stop();return;}if(!enabled)return;
   clearLearned();clearRecent();clearUpgrade();restoreArmed=true;rebindQueued=false;rebindRun++;reset();
@@ -323,11 +334,16 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    // context listener eligible for a later genuine native READY notification.
    // This helper neither retries nor handles explicit negative responses.
    const hello=await handshake(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq});if(contextRecovery===true&&exactHostRecord(hello,['ok','reason'])&&hello.ok===false&&hello.reason==='invalidated-during-check')throw Error('context-handshake-superseded');if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
+   let surface;const adapter=s.adapter=adapterFactory({document:doc,onIdleHint:()=>requestAutomaticIdle(s),onNativePrepare:producer=>nativePrepare(s,producer),priorityConversationId:()=>recentId(s),onOldSendOperation:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding))return;void send({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding)||s.url!==origin+'/')return;void send({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,
+    withNativeReading:read=>live(s)?s.controller?.withNativeReading?.(read)??null:null,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,authorize:async command=>{if(s.candidates?.authorize(command)!==true&&s.plans?.authorize(command)!==true)return false;const result=await rpc(s,{v:1,type:'HOST_NATIVE_AUTHORIZE',...bindingFields(s.binding),command});return result?.ok===true&&(s.candidates?.authorize(command)===true||s.plans?.authorize(command)===true);},beforeDispatch:plan=>plan?.mode==='same-target'||s.plans?.beforeDispatch?.(plan)===true?undefined:s.candidates?.beforeDispatch(),onNativeDispatch:event=>{if(event.plan.target.kind!=='live-control'||!s.scopeKey)return;const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;clearUpgrade();upgradeIdentity=identity;upgradeDisplay=s.candidates?.displayFor(event.command)??null;for(const type of ['pointerdown','keydown'])doc.addEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.addEventListener(type,upgradeRoute);upgrade.propose({actionId:event.actionId,identity,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,originalURL:s.url,expiresAt:now()+6000});upgradeTimer=schedule(clearUpgrade,6000);},onNativeDispatchCancelled:event=>{if(upgrade.cancel(event.actionId))clearUpgrade();},onRebindNeeded:()=>{if(observation?.adapter===s.adapter)stopObservation();rebind(s);}});
+   await startObservation(s);
    const auth=await handshake(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});noteScopeStatus(s,auth);if(auth?.state!=='verified')throw Error('scope-not-verified');if(expectedScope!==null&&auth.scopeKey!==expectedScope)throw Error('recovery-scope-changed');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
    if(learnedScope!==s.scopeKey||learnedDocument!==s.binding.browserDocumentId)clearLearned();learnedScope=s.scopeKey;learnedDocument=s.binding.browserDocumentId;
    recentId(s);
-   let surface;const adapter=s.adapter=adapterFactory({document:doc,onIdleHint:()=>requestAutomaticIdle(s),onNativePrepare:producer=>nativePrepare(s,producer),priorityConversationId:()=>recentId(s),onOldSendOperation:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding))return;void send({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding)||s.url!==origin+'/')return;void send({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,
-    withNativeReading:read=>live(s)?s.controller?.withNativeReading?.(read)??null:null,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,authorize:async command=>{if(s.candidates?.authorize(command)!==true&&s.plans?.authorize(command)!==true)return false;const result=await rpc(s,{v:1,type:'HOST_NATIVE_AUTHORIZE',...bindingFields(s.binding),command});return result?.ok===true&&(s.candidates?.authorize(command)===true||s.plans?.authorize(command)===true);},beforeDispatch:plan=>plan?.mode==='same-target'||s.plans?.beforeDispatch?.(plan)===true?undefined:s.candidates?.beforeDispatch(),onNativeDispatch:event=>{if(event.plan.target.kind!=='live-control'||!s.scopeKey)return;const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;clearUpgrade();upgradeIdentity=identity;upgradeDisplay=s.candidates?.displayFor(event.command)??null;for(const type of ['pointerdown','keydown'])doc.addEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.addEventListener(type,upgradeRoute);upgrade.propose({actionId:event.actionId,identity,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,originalURL:s.url,expiresAt:now()+6000});upgradeTimer=schedule(clearUpgrade,6000);},onNativeDispatchCancelled:event=>{if(upgrade.cancel(event.actionId))clearUpgrade();},onRebindNeeded:()=>rebind(s)});
+   // Authentication never adopts provisional candidates: destroy the RAM
+   // snapshot/handles, then the existing controller starts a fresh producer scan.
+   if(Date.parse(s.binding.expiresAt)<=now()||s.adapter.observationStatus?.().state==='stopped')throw Error('stale-content-session');
+   stopObservation();
    s.candidates=createContentCandidates({adapter,streaming:true,current:()=>live(s)&&s.ready&&Date.parse(s.binding.expiresAt)>now(),showReading:()=>s.controller?.showReading()===true,
     beginScan:()=>{
      // Only fixed-size document identities are staged. Visiting a row cannot
@@ -469,14 +485,15 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // before the adapter has installed its route listeners. The old reply
     // remains unusable; bind the new route instead of disabling the document.
     // Same-route failures still stop, and replaced/stopped sessions cannot retry.
-    if(enabled&&doc.location.href!==s.url)rebind(s);else if(contextRecovery===true&&contextResumeAllowed&&['scope-not-verified','context-handshake-superseded','context-handshake-transport-unavailable'].includes(error?.message))contextPending();else stop();
+    if(enabled&&doc.location.href!==s.url)rebind(s);else if(error?.message==='scope-not-verified'||contextRecovery===true&&contextResumeAllowed&&['context-handshake-superseded','context-handshake-transport-unavailable'].includes(error?.message))contextPending(true);else stop();
    }
    return null;
   }
  }
- function contextPending(){
+ function contextPending(preserveObservation=false){
   clearRecent();
-  if(contextRecovery!==true||!contextResumeAllowed){stop();return;}
+  const keepObservation=preserveObservation===true&&!!observation&&observation.owner===current&&!current?.ready&&live(current)&&Date.parse(current.binding.expiresAt)>now();
+  if(!keepObservation&&(contextRecovery!==true||!contextResumeAllowed)){stop();return;}
   const readyPending=current?.contextReadyPending===true;
   // Withdraw every live capability immediately. Only document-local UI intent
   // and the existing bounded candidate correlation survive a context wait.
@@ -489,7 +506,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   }
   if(contextResumeURL!==null&&doc.location.href!==contextResumeURL){contextResumeMode='reading';if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();}
   contextResumeURL=doc.location.href;
-  enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();
+  enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset(keepObservation);
   doc.defaultView.addEventListener('pagehide',pagehide);
   // A receipt notification can precede the stale REFRESH response. Consume
   // that one signal with a new handshake; never reuse the old authority.
@@ -504,6 +521,6 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   doc.defaultView.addEventListener('pageshow',pageshow);
   return begin(true,contextResumeMode);
  }
- function localStatus(){if(!enabled)return contextResumeAllowed?(verificationWaitURL===doc.location.href?'verification-required':'waiting'):'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';return current.controller?.localStatus?.()??'unavailable';}
+ function localStatus(){if(!enabled)return contextResumeAllowed||observation?(verificationWaitURL===doc.location.href?'verification-required':'waiting'):'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';return current.controller?.localStatus?.()??'unavailable';}
  return Object.freeze({localStatus,start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
 }

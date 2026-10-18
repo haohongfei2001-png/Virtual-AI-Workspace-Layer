@@ -7,7 +7,7 @@ import {installTemporaryNativeNavigation} from '../../src/host/temporary-native-
 function fixture({empty=false}={}) {
  const origin='https://chatgpt.com';let listener,callback,options,visible=true;
  const sent=[];
- const element=(parent=null)=>({parentElement:parent,isConnected:true,hidden:false,closest:()=>null,getAttribute:()=>null,contains(other){for(let n=other;n;n=n.parentElement)if(n===this)return true;return false;}});
+ const element=(parent=null)=>({parentElement:parent,isConnected:true,getClientRects:()=>[{}],hidden:false,closest:()=>null,getAttribute:()=>null,contains(other){for(let n=other;n;n=n.parentElement)if(n===this)return true;return false;}});
  const documentElement=element(),sidebar=element(documentElement),disclosure=element(sidebar),bodyContent=element(documentElement);
  const link=element();Object.assign(link,{innerText:'Native Project',getAttribute:k=>k==='href'?'/g/g-p-'+ '1'.repeat(32)+'/project':null,getClientRects:()=>visible?[{}]:[]});
  const newNav=()=>{const nav=element(disclosure);nav.querySelectorAll=()=>[link];link.parentElement=nav;return nav;};

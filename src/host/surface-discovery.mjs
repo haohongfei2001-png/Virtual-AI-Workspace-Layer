@@ -16,7 +16,7 @@ export const LEGACY_SURFACE_PROFILE = Object.freeze({
   controls:'a[href],button',conversationControls:'a[href]',noneLabel:'No project',maxCandidates:256,
 });
 
-export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,priorityConversationId=()=>null,elapsedNow=()=>performance.now()}={}) {
+export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,priorityConversationId=()=>null,retainControls=true,elapsedNow=()=>performance.now()}={}) {
   if(!document?.defaultView || typeof binding?.documentToken !== 'string' || !Number.isSafeInteger(binding.routeEpoch) || typeof urlPolicy?.parse !== 'function') throw Error('invalid-surface-discovery-context');
   const instance=document.defaultView.crypto.randomUUID();
   let stopped=false,routeEpoch=binding.routeEpoch,regionEpoch=0,sequence=0;
@@ -42,6 +42,9 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     return node&&root&&node.isConnected&&root.isConnected&&node.ownerDocument===document&&root.contains(node)&&node.parentNode===entry.parent.deref()&&entry.handle.routeEpoch===routeEpoch&&entry.handle.regionEpoch===regionEpoch&&fingerprint(node)===entry.fingerprint&&roots.get(entry.regionKind)===root;
   }
   function control(node,root,regionKind,controlKind,resolvedKey=null) {
+    // Observation-only candidates never enter the actionable handle registry or
+    // retain raw DOM fingerprints. A later authorized start discovers new handles.
+    if(!retainControls)return {id:`live-${instance}-${++sequence}`,documentToken:binding.documentToken,routeEpoch,regionEpoch,controlKind};
     let entry=byNode.get(node);
     if(entry&&!valid(entry)) { detached.add(entry.handle.id);byId.delete(entry.handle.id);entry=null; }
     if(!entry) {
@@ -81,7 +84,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       const reading=oneVisible(profile.currentConversationReading),heading=oneVisible(profile.currentConversationHeader);
       const rawReading=unique(profile.currentConversationReading),rawHeading=unique(profile.currentConversationHeader);
       contextNodes=[rawReading,rawHeading,rawReading?.parentElement,rawHeading?.parentElement,rawHeading?.parentElement?.parentElement];
-      contextValue=JSON.stringify([rawReading?.getAttribute(profile.currentConversationIdAttribute),rawHeading?.textContent]);
+      contextValue=retainControls?JSON.stringify([rawReading?.getAttribute(profile.currentConversationIdAttribute),rawHeading?.textContent]):null;
       // URL alone cannot bind an old reading surface during an SPA transition.
       // This profile requires a native-rendered current-object association.
       if(reading&&heading&&heading.parentElement?.parentElement===reading.parentElement&&reading.getAttribute(profile.currentConversationIdAttribute)===route.conversationId){
@@ -204,8 +207,9 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
   const scan=()=>scanPage().payload;
   function watchSurface(){
     const selectors=[...Object.values(profile.regions),profile.currentConversationHeader,profile.currentProjectTitle,profile.currentProjectHeader].filter(Boolean);
-    const next=selectors.flatMap(selector=>[...document.querySelectorAll(selector)]);
-    const reading=profile.currentConversationReading?[...document.querySelectorAll(profile.currentConversationReading)]:[];
+    const watchedMatches=selector=>{const nodes=document.querySelectorAll(selector);return retainControls?[...nodes]:Array.from({length:Math.min(2,nodes.length)},(_,i)=>nodes[i]);};
+    const next=selectors.flatMap(watchedMatches);
+    const reading=profile.currentConversationReading?watchedMatches(profile.currentConversationReading):[];
     const prior=watched;watched=[...next.map(node=>({node,subtree:true})),...reading.map(node=>({node,subtree:false}))];return [...prior,...watched];
   }
   function affectsSurface(records){
