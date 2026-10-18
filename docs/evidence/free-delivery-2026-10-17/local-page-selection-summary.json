@@ -3641,5 +3641,34 @@
       "recovery-batch-j4-link-wait-20261018.json.gz",
       "recovery-batch-j4-link-wait-targeted-20261018.tap.gz"
     ]
+  },
+  "freeListVisual20261018": {
+    "baseCommit": "df0784669b19d2bd52eab08a7b970de29e538f6e",
+    "problem": "Free NONE/UNKNOWN headings fell through to browser default h2 size; adjacent workspace sections had no gap and inherited centered search width, unlike approved v2.7 hierarchy.",
+    "fix": "Scoped Free list heading scale (workspace15px/sidebar12px), text spacing, 18px section separation,13px radius and aligned1148px content width. Existing font scaling and theme tokens retained; no item, navigation or membership changes.",
+    "visualReference": "design/approved/v2.7/VAIWL_v2.7/validation/final/v27-daily.png (1440x1000); native fixture and dataset differ, not pixel parity.",
+    "browser": {
+      "status": "PASS_LAYOUT_SUBCONTRACT_ONLY",
+      "profile": "LEGACY",
+      "steps": 24,
+      "sourceChangedDuringRun": false,
+      "buildManifestUnchanged": true,
+      "workerExternalNetworkBlocked": true,
+      "errors": []
+    },
+    "targeted": {
+      "pass": 30,
+      "skip": 0,
+      "durationMs": 191.008583
+    },
+    "limits": "Local inventory typography only, not full v2.7 acceptance/physical IME/real host. Realworker403, J4 and G/U remain open; scale DEFERRED. No comparable duration/speedup claim.",
+    "artifacts": [
+      "free-list-visual-before-20261018.json.gz",
+      "free-list-visual-after-20261018.json.gz",
+      "free-list-style-targeted-20261018.tap.gz",
+      "free-list-desktop-before-20261018.png",
+      "free-list-desktop-after-20261018.png",
+      "free-list-narrow-dark-after-20261018.png"
+    ]
   }
 }

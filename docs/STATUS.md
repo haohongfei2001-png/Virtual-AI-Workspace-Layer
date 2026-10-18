@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **Free库存列表视觉缺口已修**：对照批准v2.7 1440×1000原图与当前隔离MV3截图，NONE/UNKNOWN标题落到UA默认h2、区块紧贴且继承居中搜索宽度。仅在自有shadow CSS补齐主区15px/侧栏12px标题、字体缩放/主题token、18px区块间隔与内容左对齐；无数据/导航/成员变化。原LEGACY矩阵24个连续布局观察通过，源码/构建无漂移、外网阻断、errors空；30包/布局合同PASS/0skip/191.009ms，桌面前后及窄屏深色截图已保存。不同fixture/数据不做像素一致声明，完整v2.7仍未认证；真实worker403/J4/G/U保持未完成，规模DEFERRED。见freeListVisual20261018。
+
 - **J4恢复后UNKNOWN观察时序已修，连续片段走完但仍PARTIAL**：原729d0ba首次在17步后失败，修复索引后的UNKNOWN行href正确但aria-disabled仍true；frame read到finally期间导航保留pending护栏，行出现不等于可用。仅runner改为出现与启用共享原15000ms，最终ID/URL/脱敏名/启用断言全部保留，永久禁用或迟到仍FAIL；生产无改动。14定向PASS/0skip/112.994ms，独审通过；同生产/最终runner原连续23步完成、errors空、源码/构建无漂移，包含实际disable/uninstall、草稿和Pro资产保持。结果明确PARTIAL_J4_NOT_ACCEPTED，peer无新context自动恢复仍未成立；原失败保留，未采集可比总耗时，不宣称提速。真实worker403及G/U仍BLOCKED/NOT_RUN，规模DEFERRED。证据recoveryBatchJ420261018。
 
 - **恢复合批后MODERN原J3兼容旅程通过**：冻结2ca77e3，app-root嵌套/immediate冷启动，原连续16步PASS，源码/fixture/runner/构建无漂移，errors为空。双surface、原生模型/文件、两类编辑器草稿、AX键盘、前进返回、200%缩放、较早/UNKNOWN历史、片段保存搜索原生定位及原生搜索均在同一旅程成立。原runner未记录端到端耗时，不宣称提速；未放宽期限。物理IME/系统权限NOT_RUN、完整v2.7外观NOT_ESTABLISHED；未新增真实Profile读取，worker403/真实全链/J4仍开放，规模DEFERRED。证据recoveryBatchJ320261018。

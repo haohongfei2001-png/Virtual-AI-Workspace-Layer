@@ -9,6 +9,13 @@ export const css=`
 .menu{position:absolute;right:4px;top:42px;background:var(--surface,#fff);color:var(--ink,#202123);border:1px solid var(--line,#e8e8e8);border-radius:12px;padding:5px;min-width:156px;box-shadow:0 8px 24px #00000018;z-index:4}.menu button{display:block;width:100%;text-align:left;font-size:calc(13px * var(--vaiwl-font-scale,1));padding:9px 12px;border-radius:7px}.card-head > .menu{top:var(--vaiwl-card-menu-top,42px)}.card-head:has(.menu){z-index:3}.card:has(.menu){z-index:3}
 :host([data-vaiwl-compact="false"]) .row{padding-top:13px;padding-bottom:13px}@media(max-width:700px){.workspace{padding:20px 48px 24px 16px}.arrows{margin-right:-40px}.cards{gap:14px;grid-template-columns:1fr}.card{border-radius:15px}.search{padding:16px}}@media(prefers-reduced-motion:reduce){button,.old svg{transition:none}}
 
+/* Free inventory lists share the approved heading scale instead of UA h2 sizing.
+ * They remain separate from Project cards: UNKNOWN never implies membership. */
+.free-list h2{font-size:calc(15px * var(--vaiwl-font-scale,1));line-height:calc(22px * var(--vaiwl-font-scale,1));font-weight:600;margin:0 0 8px;overflow-wrap:anywhere}
+.free-list p{font-size:calc(12px * var(--vaiwl-font-scale,1));color:var(--muted,#6e6e76);margin:8px 0}
+.workspace .free-list{max-width:1148px;margin:0 0 18px;border-radius:13px;padding:12px}
+.themes .free-list{margin-top:16px}
+.themes .free-list h2{font-size:calc(12px * var(--vaiwl-font-scale,1));line-height:1.5;font-weight:500;color:var(--muted,#6e6e76);margin:0 8px 4px}
 /* Match the approved v2.7 core; all rules remain within owned shadow roots. */
 :host{font:calc(14px * var(--vaiwl-font-scale,1))/1.5 var(--vaiwl-font-family,-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif)}
 .workspace{padding:24px 70px 36px 24px}.cards{gap:18px;max-width:1148px;margin:0}
