@@ -142,3 +142,13 @@ for(const change of ['scope','guard','visible','route','stop'])test('late succes
  resolve({ok:true});assert.equal(await pending,false);assert.equal(f.calls.messages.filter(m=>m.data.type==='VAIWL_UI_IDLE').length,0);
  if(['scope','guard','visible'].includes(change)){assert.equal(f.calls.disposed,0);assert.equal(f.controller.showWorkspace(),true);}
 });
+
+test('dormant return rechecks current slot geometry before observer and never wakes from stale position',async()=>{
+ let woke=0;const f=fixture({onWake:()=>{woke++;return false;}});let safe=true;f.adapter.isReturnSlotCurrent=()=>safe;
+ await f.ready();assert.equal(f.controller.enterDormant(),true);const button=f.slot.children[0];safe=false;button.events.click({isTrusted:true});assert.equal(woke,0);assert.equal(f.slot.children.length,0);f.mutate();assert.equal(f.slot.children.length,0);
+ safe=true;f.mutate();assert.equal(f.slot.children.length,1);assert.equal(f.controller.showWorkspace(),false);assert.equal(f.calls.shown,1);f.controller.stop();
+});
+
+test('native slot occupation blocks dormant click before mutation delivery',async()=>{
+ let woke=0;const f=fixture({onWake:()=>{woke++;}});await f.ready();assert.equal(f.controller.enterDormant(),true);const button=f.slot.children[0],native={};f.slot.children.push(native);button.events.click({isTrusted:true});assert.equal(woke,0);assert.deepEqual(f.slot.children,[native]);f.controller.stop();
+});

@@ -98,12 +98,13 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   if(current!==state||state.mode!=='workspace'||!authorized(state))return;
   try{Promise.resolve(bridge.workspaceEntered?.({mountId:state.handle.id})).catch(()=>{});}catch{/* Presentation never waits for the private entry notification. */}
  }
+ const slotOccupied=(state,slot)=>[...slot.children].some(node=>node!==state.button)||[...(slot.childNodes??[])].some(node=>node.nodeType===3&&node.textContent.trim());
  function ensureReturn(state){
   if((!state.dormant&&!authorized(state))||adapter.hasNativeLayer()){removeReturn(state);return false;}
   const inspection=state.dormant?state.inspection:adapter.inspect(),slot=inspection.navigationSlot;
-  if(!slot?.isConnected||slot!==state.inspection.navigationSlot){removeReturn(state);return false;}
-  if(state.dormant&&([...slot.children].some(node=>node!==state.button)||[...(slot.childNodes??[])].some(node=>node.nodeType===3&&node.textContent.trim()))){removeReturn(state);return false;}
-  if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.textContent='▦';button.addEventListener('click',event=>{if(current!==state||event?.isTrusted!==true)return;if(state.dormant){if(state.waking||doc.location.href!==state.url||adapter.hasNativeLayer())return;state.waking=true;state.pendingWakeEntry=true;try{Promise.resolve(onWake()).catch(()=>{state.pendingWakeEntry=false;}).finally(()=>{state.waking=false;if(state.dormant)state.pendingWakeEntry=false;});}catch{state.waking=false;state.pendingWakeEntry=false;}return;}if(!showWorkspace())return;workspaceEntered(state);});slot.append(button);state.button=button;}return true;
+  if(!slot?.isConnected||slot!==state.inspection.navigationSlot||adapter.isReturnSlotCurrent?.(inspection)===false){removeReturn(state);return false;}
+  if(state.dormant&&slotOccupied(state,slot)){removeReturn(state);return false;}
+  if(!state.button){const button=doc.createElement('button');button.type='button';button.dataset.vaOwned=state.handle.id;button.setAttribute('aria-label','返回工作空间');button.textContent='▦';button.addEventListener('click',event=>{if(current!==state||event?.isTrusted!==true)return;if(state.dormant){if(slotOccupied(state,slot)||adapter.isReturnSlotCurrent?.(state.inspection)===false){removeReturn(state);return;}if(state.waking||doc.location.href!==state.url||adapter.hasNativeLayer())return;state.waking=true;state.pendingWakeEntry=true;try{Promise.resolve(onWake()).catch(()=>{state.pendingWakeEntry=false;}).finally(()=>{state.waking=false;if(state.dormant)state.pendingWakeEntry=false;});}catch{state.waking=false;state.pendingWakeEntry=false;}return;}if(!showWorkspace())return;workspaceEntered(state);});slot.append(button);state.button=button;}return true;
  }
  function nativeSurrender(state,event){
   // beforetoggle closes synchronously but still reports the old visibility.

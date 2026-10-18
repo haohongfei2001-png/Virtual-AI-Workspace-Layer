@@ -1596,5 +1596,88 @@
     "j2AuthenticatedJourney": "success",
     "formal10k": "skipped/DEFERRED",
     "limits": "J4 job success is not full J4 acceptance. New viewport candidate not covered by this run."
+  },
+  "returnSlotSafety20261018": {
+    "baseHead": "39744db9c75872ed20c78a94aeef66e44193401c",
+    "status": "LOCAL_CANDIDATE_REVIEWED",
+    "rootCause": "Explicit slot topology and minimum dimensions accepted slot moved over composer, hidden or covered; dormant presentation reused saved slot without synchronous current geometry/occupancy check before wake.",
+    "fix": "Read-only presentation verifier: same document/connected/header bounds/screen/visibility, bounded 256 header descendants plus hit tests, protected geometry. Dormant geometry can be checked while stopped but never renews binding/grant; exact native occupation checked synchronously before wake. Legacy default preserved.",
+    "red": {
+      "base": "39744db",
+      "tests": 1,
+      "failed": 1,
+      "assertion": "slot moved over composer returned true instead of false",
+      "log": "return-slot-red-20261018.tap.gz"
+    },
+    "validation": {
+      "tests": 314,
+      "passed": 314,
+      "skipped": 0,
+      "durationMs": 2082.04025,
+      "log": "return-slot-green-20261018.tap.gz",
+      "browser": {
+        "result": "PASS_WEB_MECHANISM_ONLY",
+        "checks": {
+          "initial": true,
+          "movedRejected": true,
+          "hiddenRejected": true,
+          "sampleHitsClear": true,
+          "smallSiblingRejected": true,
+          "restored": true,
+          "dormantGeometryOnly": true,
+          "draftPreserved": true
+        }
+      },
+      "viewportRegression": {
+        "result": "PASS_WEB_MECHANISM_ONLY",
+        "initial": {
+          "contentOffscreen": true,
+          "top": 52,
+          "bottom": 620,
+          "footerTop": 620,
+          "rootMasked": true,
+          "viewportUnmasked": true,
+          "inputVisible": true,
+          "noHTMLInert": true
+        },
+        "resized": {
+          "refreshed": true,
+          "bottom": 540,
+          "footerTop": 540,
+          "draftPreserved": true
+        },
+        "closed": {
+          "restored": true,
+          "inputVisible": true,
+          "workspaceClosed": true
+        },
+        "unknownSiblingRejected": true,
+        "ownedRemoved": true
+      },
+      "initialIntegrationFailure": "headless reading-viewport-browser failed unsafe-native-geometry: raw scrolled content rect crosses header although viewport clips it; corrected exclusions to verified clipped readingRect with same viewport identity/topology.",
+      "review": "Independent review including clipped reading rect and synchronous native occupation: no blocker."
+    },
+    "sourceHashes": {
+      "src/host/native-return-slot.mjs": "a2c19a6d7e082a8ff82ab8f8c5c4b5adaa4188f21b8c31ab95dfd5826b97f803",
+      "src/host/chatgpt-adapter.mjs": "9b2c92e471aa951103c5b6f1bc57131356382ff179a6ccadc8e3f7025224b6a5",
+      "src/host/surface-controller.mjs": "11d9533420937888a2145cf19ee1093ab25f4d50722967470e6a4e52a75bedcc",
+      "tests/host/native-return-slot.test.mjs": "6786e5e4274c0c13d29c163acd0e1505eea84b3f9b19d90f72a16cbe8eeb35ba",
+      "tests/host/chatgpt-adapter.test.mjs": "f8d0dbbb705cfb0258b4dcc05f579db4ea7c3bb64aa3f2c03d49fa6c346563f3",
+      "tests/host/surface-dormant-independent.test.mjs": "8cdb057e05d4f7fc383fc3e36987bb874a26314640aaf5637825f5e90a575a4a",
+      "tests/host/return-slot-browser.mjs": "6ced82cb6f084505232a38127be96059038499087ae945d8b3512dafc89ec7d7"
+    },
+    "liveReadOnlyStructure": {
+      "bodyRead": false,
+      "nativeWrites": false,
+      "historySectionChildren": "heading controls and separate aria-hidden list wrapper",
+      "historyRows": "data-sidebar-cycle-item with one native /c link and two row buttons",
+      "membershipClaim": "NONE_NOT_INFERRED"
+    },
+    "limits": [
+      "No real geometry gap return implementation or profile enabled",
+      "Pure history mask validation remains open; discovery root must not be blindly masked",
+      "WEB_MECHANISM_ONLY browser checks, not complete MV3 or live acceptance",
+      "10k/100k remain DEFERRED; no latency improvement claimed across different test selections"
+    ]
   }
 }

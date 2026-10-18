@@ -5,6 +5,9 @@
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
 
+- **返回槽错位/遮挡与休眠同步窗口已修候选**：旧39744db实测反例中，header子槽移至composer上方仍inspect=true。新增显式profile只读槽位核验：同文档/connected、屏幕与header矩形、可见性、256节点有界header遮挡和命中检查；休眠return的几何及精确原生占槽均在onWake前复核，不复活binding/grant。旧反例1 FAIL保留；314定向/构建全过、0 skip、2082.040ms；独立审查无阻断。真实headless验证错位、hidden、五点之间小控件遮挡、安全恢复与草稿保留，仅WEB_MECHANISM_ONLY。初次组合viewport回归因原始滚动内容rect穿过header误拒绝，现改用已核验的裁剪readingRect并保持viewport身份/拓扑，原viewport闭环再次通过。真实profile的几何空位返回仍待实施，不能将此安全修复当真实返回验收。只读结构已区分history heading与列表wrapper，后续分离摄取root和纯列表mask，UNKNOWN不升NONE；未读正文或原生写入。规模DEFERRED，Free未完成。
+
+
 - **滚动阅读视口与输入区分离候选**：真实只读结构确认timeline仅有阅读内容和完整composer footer两个分支，旧content rect随滚动离屏。新增显式readingViewport只计算几何，mask仍仅施加独立reading；严格双分支/直接文本/同文档/connected核验，按屏幕、header、footer裁切，未知结构和缩放平移拒绝。viewport加入epoch、连续性、MountSurface重绑及resize/scroll观察。旧版13反例均拒绝新配置；冻结351/351定向及包构建通过、0 skip、2107.317ms。隔离headless实际验证离屏内容、footer增长、草稿保留、纯reading mask、声明式关闭与清理，结果仅WEB_MECHANISM_ONLY；控制器自动事件链为合同double，不冒充MV3。独审无本diff阻断。真实返回槽（含可见性/几何护栏）与纯history边界仍OPEN，生产profile关闭，真实Project/导航/搜索/返回/恢复未认证。未再次读正文或操作原生内容，规模仍DEFERRED。证据见原local-page-selection-summary.json的readingViewport20261018。
 
 - **710b26e / CI39103528777原小型矩阵通过**：四job SUCCESS，J2 authenticated journey实际SUCCESS；正式10k和失败诊断实际SKIPPED/DEFERRED。不追溯改判39101646460 J2失败、不关闭其未确认根因或完整J4。此CI不包含上项新viewport代码。

@@ -429,6 +429,7 @@ function layoutFixture(){
  for(const [old,key] of [['main > header','header'],['main > section[aria-label="Conversation"]','reading'],['main > form#composer','composer'],['main > header > .navigation-slot','navigationSlot']]){f.selectors.set(explicitLayout[key],f.selectors.get(old));f.selectors.delete(old);}
  f.selectors.get(explicitLayout.header)[0].contains=n=>n===f.slot;
  for(const nodes of f.selectors.values())for(const n of nodes)n.ownerDocument=f.document;
+ f.document.defaultView.innerWidth=1000;f.document.defaultView.innerHeight=600;f.document.elementFromPoint=()=>f.slot;
  return {...f,profile};
 }
 test('explicit native layout binds the same production inspection and continuity path',async()=>{
@@ -467,6 +468,7 @@ function viewportFixture(){
  f.reading.parentElement=f.composer.parentElement=viewport;f.selectors.set('#native-viewport',[viewport]);
  for(const nodes of f.selectors.values())for(const n of nodes)n.ownerDocument=f.document;
  f.document.defaultView.innerWidth=1000;f.document.defaultView.innerHeight=600;
+ f.document.elementFromPoint=()=>f.slot;
  return {...f,viewport,header};
 }
 test('scrolling content uses an independent viewport above protected footer without masking the viewport',async()=>{
@@ -497,4 +499,10 @@ for(const kind of ['missing','ambiguous','extra-child','reading-reparented','foo
 });
 test('viewport topology changes invalidate continuity even with identical nodes',async()=>{
  const f=viewportFixture();await f.start();const first=f.adapter.inspect();assert.equal(first.ok,true);f.viewport.children.push({});assert.equal(f.adapter.isSameNativeRegions(first),false);f.adapter.stop();
+});
+
+test('explicit slot moved over composer rejects inspection and dormant geometry without reviving adapter',async()=>{
+ const f=layoutFixture();await f.start();const first=f.adapter.inspect();assert.equal(first.ok,true);assert.equal(f.adapter.isReturnSlotCurrent(first),true);
+ f.slot.getBoundingClientRect=()=>({x:220,y:490,width:40,height:40});assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();assert.equal(f.adapter.isReturnSlotCurrent(first),false);
+ f.slot.getBoundingClientRect=()=>({x:220,y:0,width:40,height:40});assert.equal(f.adapter.isReturnSlotCurrent(first),true);assert.equal(f.adapter.inspect().ok,false,'presentation geometry cannot revive stopped binding');
 });
