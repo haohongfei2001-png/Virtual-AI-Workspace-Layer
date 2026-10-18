@@ -7744,7 +7744,7 @@
       "100k": "DEFERRED",
       "freeAccepted": false,
       "releaseReady": false,
-      "newLinuxCandidate": "NOT_RUN_BEFORE_PUSH"
+      "newLinuxCandidate": "2e9fe2d product/browser journeys PASS; original full CI FAIL due to stale trace anchors. Fixed anchors local PASS; next Linux result pending."
     },
     "artifacts": {
       "oldInitializationRed": {
@@ -7806,6 +7806,120 @@
       "finalPackageRegression": {
         "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-final-package-tests.log.gz",
         "rawSha256": "73623bade4da73a8331c94cc60d0fd1a3589c1f2141e58a8bcdd1d1ad96db27c"
+      }
+    },
+    "ci39169739763": {
+      "head": "2e9fe2dd9361d436e99f4e3f917382dec88d2489",
+      "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39169739763",
+      "status": "FAIL",
+      "jobs": {
+        "node-contracts": "FAIL",
+        "offline-journeys": "SUCCESS",
+        "offline-j4-lifecycle": "SUCCESS",
+        "offline-durability-compat": "SUCCESS"
+      },
+      "node": {
+        "pass": 8856,
+        "fail": 13,
+        "skip": 0,
+        "durationMs": 169802.549824,
+        "rootCause": "All 13 are scale-trace-anchor-mismatch at exact stop() prefix; new preauthorization cleanup changed the prefix. Not a 10k execution or threshold failure.",
+        "fix": "Update two unique trace insertion anchors inside stop; remove inserted trace fragments and compare entire production stop body byte-for-byte, including RAM and timer cleanup.",
+        "targetedAfterFix": {
+          "pass": 84,
+          "fail": 0,
+          "skip": 0,
+          "durationMs": 1482.091917
+        },
+        "independentReview": "No production change or guard weakening",
+        "newLinuxResult": "PENDING_NEXT_PUSH"
+      },
+      "linuxPreauthorization": {
+        "status": "PASS",
+        "elapsedMs": 21413.251567,
+        "stages": [
+          {
+            "name": "current-page-observed-while-session-unresolved",
+            "state": "observing",
+            "candidates": 4,
+            "messageIds": 0,
+            "bytes": 2822,
+            "localStatus": "connecting",
+            "elapsedMs": 929.971347
+          },
+          {
+            "name": "after-denial-current-surface-change-observed",
+            "state": "observing",
+            "candidates": 3,
+            "messageIds": 0,
+            "bytes": 2128,
+            "localStatus": "verification-required",
+            "elapsedMs": 1027.067873
+          },
+          {
+            "name": "original-expiry-clears-ram-without-auth-retry",
+            "elapsedMs": 20881.414722999998
+          },
+          {
+            "name": "fresh-authorized-document-enters-existing-free-ui",
+            "elapsedMs": 21340.624186
+          }
+        ],
+        "sourceAndTestHashesMatchLocal": true,
+        "entryOnlyInstrumentation": true,
+        "scopeNotReal": true
+      },
+      "linuxTemporary": {
+        "status": "PASS_TEMPORARY_MV3_POPUP",
+        "elapsedMs": 4490.323524,
+        "sourceHashesMatchLocal": true
+      },
+      "j4Acceptance": "PARTIAL_J4_NOT_ACCEPTED",
+      "prerequisiteAcceptance": "PARTIAL_J2_J4_NOT_ACCEPTED",
+      "localGuards": {
+        "selected": 12,
+        "killed": 12,
+        "pass": true,
+        "sourceCommitProvenance": "production source 2e9fe2d; test tree includes only the two trace-anchor fixes, exact input hashes in report"
+      },
+      "scale": "DEFERRED not rerun",
+      "artifacts": {
+        "ciMetadata": {
+          "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-ci.json.gz",
+          "rawSha256": "b43b86cfdba742edea052a3346231ff21bd5f0620308008fd9eafe8e769738d4"
+        },
+        "nodeFailureLog": {
+          "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-ci-node.log.gz",
+          "rawSha256": "a47e9578e71252a60926634b29e9d0e1f64137d25a328cdcef7bff8e60520cf1"
+        },
+        "localAnchorRed": {
+          "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-trace-anchor-red.log.gz",
+          "rawSha256": "8119a4183fe905e012f8055e7ffbd526708f60fa4ce2a4a274f9a4cbedc74304"
+        },
+        "localAnchorFixed": {
+          "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-trace-anchor-final.log.gz",
+          "rawSha256": "59e81233375089de889c4c3d0f39453219417ed935670d830429242d5b56f8e9"
+        },
+        "guardMutations": {
+          "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-guards.json.gz",
+          "rawSha256": "298fde80031f0d862ec9ab91be36275c20a3d5e08bed699ed8c49c457597f5cc"
+        },
+        "linuxPreauthorization": {
+          "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-linux-preauthorization.json.gz",
+          "rawSha256": "faf859fde5f2364c95e5be9283f39f662a2aed55b732939fb35a88630ccc7706"
+        },
+        "linuxTemporary": {
+          "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-linux-temporary.json.gz",
+          "rawSha256": "85870cc38dce293a5578c8fcb944fd057033c524fd6007aa8ff38584c6cf7f2b"
+        },
+        "linuxJ4": {
+          "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-linux-j4-0.json.gz",
+          "rawSha256": "d9884f4bfcf964dcbe8d467a05846c19b6c384f4c57ebb6ed052d5dc89334219"
+        },
+        "linuxPrerequisites": {
+          "path": "docs/evidence/free-delivery-2026-10-17/preauthorization-linux-j4-1.json.gz",
+          "rawSha256": "f8dc7e100c703a8d4beb56c3644e3193f1f1a78a78520af4e282c4bbb71364d3"
+        }
       }
     }
   }
