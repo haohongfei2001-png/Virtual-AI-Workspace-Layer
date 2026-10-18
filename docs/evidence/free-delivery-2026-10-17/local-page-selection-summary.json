@@ -1415,6 +1415,19 @@
     "limitations": [
       "not live profile or MV3 acceptance",
       "J2 original log unavailable: cache permission then HTTP2 GOAWAY; bounded job-only request timed out"
-    ]
+    ],
+    "liveReadonlyRecheck": {
+      "sourceHash": "12ba0ff6226fba1b24eec667f48ff929a867a07d39ee1cdedb1e3fe2c3bb4e35",
+      "association": "explicit-body-id",
+      "messageCount": 5,
+      "conversationMatchesRoute": true,
+      "bodyTextRead": false,
+      "scopeGranted": false,
+      "projectLinksObserved": 0,
+      "projectCreateControlVisible": true,
+      "alert": false,
+      "composerPresent": true,
+      "limitations": "No account-wide project absence claim; no live MV3 authorization or navigation acceptance"
+    }
   }
 }
