@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **2026-10-19同源码CI39156126409已通过**：精确HEAD `4b3bc4b1ed16e1d08daf6e1e6bb1a2bb37a94b7a` 的四job全部SUCCESS；Node8681/8681、0fail/skip、156943.977ms，12指定guard变异全KILLED，原失败诊断与前台恢复变异、新挑战状态及现有连续旅程均通过原CI要求。关闭本批CI回归，不追溯改判39155331740，不等于完整81项/J4、自然休眠、真实宿主或发布验收。正式10k及其诊断实际SKIPPED/DEFERRED。真实Profile未新增访问、挑战仍未解决。证据挂在ciObserverRepair20261019原入口；本次仅归档结果，后续文档提交skip CI避免同产品重复矩阵。
+
 - **2026-10-19 CI39155331740失败已定位并修测试接线，待新CI**：56f1073的J4/耐久job成功，Node与journeys失败；新挑战提示实际Linux MV3已PASS。Node8679项8676PASS/3FAIL/165474.391ms均为J4被动stop诊断旧精确前缀失配；现保持记录位置及两项清除，缺失/重复anchor继续拒绝。前台授权变异原JSON只有CHECK ui-release-busy、entered=false，未到foreground；原worker空闲前置仅覆盖另一休眠模式，现统一两种idleProbe，原15秒共享窗口、单次close与拒绝终态不变，完整核对插桩源和编译产物。33定向PASS/0skip/585.210ms，正常/指定变异实际headless配对通过原CI两个oracle、同source/fixture；变异在要求的foreground阶段被杀死，无新HELLO。生产代码未修改，独审无阻断。全部原CI与RED失败保留，不改判原运行；不将此插桩前置当自然休眠/真实恢复或性能改进。真实403仍阻塞、规模DEFERRED。见原证据ciObserverRepair20261019。
 
 - **2026-10-19挑战故障提示已修，真实403未解决**：精确403+`cf-mitigated: challenge`不再混同登录失效，转固定未验证原因与仅当前route/RAM的C2被动提示；不读响应body、不发scope、不触发备用认证或重试。726定向PASS/0skip/462.177ms、185包检查PASS/2946.894ms、17 CI分区PASS/46.716ms。隔离MODERN C2实际MV3在worker就绪前置下验证原生详情GET一次、session一次/accounts零、无frame、草稿保留、重复被动查询不增请求及离开页面失效，耗时910.232ms，源码未漂移；独审无阻断。先前异步观察器过早完成、fixture缺C2上下文/C3退出路径及立即冷启动session0失败全部保留；不据修正runner关闭冷启动关口。原10秒观察窗口、生产预算与安全拒绝不变；接入原CI步骤，无缓存/上传。当前真实Profile仍安装21a200e，本批未访问或更新真实Profile。真实挑战及完整导航/恢复、IME/PAIA/跨端仍开放，规模DEFERRED。无完整真实旅程前后耗时可比，不宣称提速。见原证据challengeFaultStatus20261019。
