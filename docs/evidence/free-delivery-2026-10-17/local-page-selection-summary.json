@@ -3576,5 +3576,24 @@
     },
     "review": "Independent readonly review found no blocker; only terminal work awaited, original quiet/rawIPC and worker guards decide all remaining work.",
     "limits": "No real Profile reads this increment. Latest worker session403 remains BLOCKED; J2/J4/natural sleep/real full journey unproven, 10k/100k DEFERRED."
+  },
+  "recoveryBatchJ220261018": {
+    "sourceCommit": "591ffc0ee9f804c95f2fe0b79c8530c3e9f5956c",
+    "status": "PASS_OFFLINE_J2_JOURNEY",
+    "profile": "LEGACY",
+    "sourceChangedDuringRun": false,
+    "steps": 8,
+    "errors": [],
+    "elapsedBrowserLaunchThroughReportMs": 128243,
+    "realExpiryWaitMs": 60182,
+    "timingComparison": "No same-environment before measurement; not a speedup claim. Includes original real wall-clock expiry and negative observation waits.",
+    "startupAttempt": "NOT_RUN_BROWSER_STARTUP: runner default /usr/bin/chromium absent on Mac; retained. Only executable path corrected via existing FREE_CHROME_EXECUTABLE; no test/threshold/source change.",
+    "coverage": "Authenticated ACK provisional anchor survives real expiry and worker stop/new-running; later original time resolves exact event without duplicate/renewal; failed send, other principal and old branch remain negative.",
+    "limits": "Local LEGACY offline MV3 only; historical Linux J2 failure cause remains OPEN, J4/no-new-context/natural sleep and real navigation not certified. Latest real worker session403 BLOCKED. 10k/100k DEFERRED.",
+    "artifacts": [
+      "recovery-batch-j2-startup-20261018.json.gz",
+      "recovery-batch-j2-mac-20261018.json.gz",
+      "recovery-batch-j2-progress-20261018.jsonl.gz"
+    ]
   }
 }
