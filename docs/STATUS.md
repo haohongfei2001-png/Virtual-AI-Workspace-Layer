@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **临时Project导航的快照失效已修，真实Project仍未验收**：独立旧版7例5FAIL，根因是过滤掉展开属性、只监听旧nav而漏掉新增/空列表区域；现监听已验证sidebar内结构及祖先变化，重读清旧订阅。实际CFT156还确认closed details有布局框但不可见，现标题读取前用浏览器checkVisibility拒绝。新MV3旅程覆盖Project精确搜索、折叠清空/展开重读、新增区域、Project与聊天各自新标签打开及返回，原文档/草稿完整、认证请求0、空IDB；正常3.439s、丢ACK观察器probe3.267s（各自不含清理，非提速比较），产品/测试hash一致稳定。60定向PASS/0skip，独审无阻断。保留首次隐藏状态FAIL及展开后尚未绘制时过早读取的FAIL；后者改为实际可见前置，原6秒点击窗口未延长。真实当前4条g-p路径均为聊天，不是Project页面链接；不造Project或成员。当前安装包尚待本批原位更新，Linux CI待验；403、完整Free/G/U及规模DEFERRED均不改判。证据temporaryReadOnlyNavigation20261019.projectDisclosure。
+
 - **e245d80 / CI39162946494已完成**：同一源码四job均SUCCESS。Linux临时导航实际`PASS_TEMPORARY_MV3_POPUP`，单次native-open ACK、正确新页1个，172.366ms；显示→搜索→原生打开→返回/重新读取→边界拒绝完整离线闭环2163.453ms（不含清理），无认证请求、数据库为空、原草稿保留，产品及测试source hashes与本地一致且未漂移。独立挑战状态检查PASS，403仍安全拒绝且被动读取不重试；不等同真实403恢复。J4原JSON仍`PARTIAL_J4_NOT_ACCEPTED`，10k实际SKIPPED/DEFERRED，100k未运行。原CI39161638280 FAIL不改判。此次仅记录已有CI，不重新触发完整矩阵；真实Profile与已安装包保持不动。证据在原temporaryReadOnlyNavigation20261019.ci39162946494。
 
 - **CI39161638280保留FAIL，已修临时导航观察器**：同0cf3249的Node、耐久/兼容、J4 job成功；Linux Ubuntu24.04.5/CFT156的临时popup在native-open等`Input.dispatchMouseEvent`回执超时，后续挑战状态命令未执行。原CI漏输出临时JSON，无法证明原失败时是否已打开新页，不能追溯改判。Mac同CFT156正常PASS；稳定反例仅丢弃观察器的一次mouseup ACK，真实popup明确detached/destroyed且正确新页已出现，旧观察器仍6秒FAIL。现一次press/release、原6秒绝对总窗口，收到ACK或有精确关闭见证的typed终态后，仍须正确URL/opener为空/原文档编辑器草稿完整；未知超时、仅关闭、错误或观察完成前重复新页仍FAIL。30定向通过；同产品和测试源码的正常/丢ACK实际MV3分别1.474s/1.219s闭环通过，非产品提速、非真实BFCache/新Linux验收。拆开原三个CI命令的步骤并补现有文本日志JSON输出，未增加job/缓存/上传。独审无阻断；产品与已安装真实包未改、未重读真实Profile。后续Linux结果见上项CI39162946494，原证据temporaryReadOnlyNavigation20261019.inputObserverRepair。

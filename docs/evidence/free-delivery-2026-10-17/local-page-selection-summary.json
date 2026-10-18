@@ -6397,6 +6397,145 @@
         "temporary-ci39162946494-challenge-status.json.gz": "e2518bd16071bca04c5a72eb73702662dd633058ba35958c5619306971221c53",
         "temporary-ci39162946494-j4.json.gz": "2b5032050ff8c179d90f4e98531f895ee4264c9da219b1a9475dba71a5131dc0"
       }
+    },
+    "projectDisclosure": {
+      "baseHead": "7b3852c3740dc6fc49a88bb667e00b4111b75585",
+      "sourceHashes": {
+        "src/host/temporary-native-navigation.mjs": "7e880b35ccf2704221d0781eb06abeab759d4a82b8582ad9027635cd72eb7d7a",
+        "extension/temporary-navigation.mjs": "f0f0ba05e8fd997155ddc1dafaf3eb6fd2e8cefd7c8e6cd3307e56beef3bf22b"
+      },
+      "rootCause": "Attribute filter missed disclosure state; nav-only invalidation missed new regions and empty snapshots. Native closed details may retain layout boxes/computed visible styles, so boxes alone cannot prove displayed links.",
+      "fix": "Observe attributes structurally within validated sidebar/roots or their ancestors; retain verified sidebar even with zero nav roots; clear old subscription before each scan. Browser checkVisibility rejects hidden disclosure/opacity/content-visibility before reading href/title; existing ancestor and URL/quantity/byte guards retained.",
+      "oldProductRegression": {
+        "tests": 7,
+        "passed": 2,
+        "failed": 5
+      },
+      "nativeBrowserCounterexample": {
+        "rectCount": 1,
+        "checkVisibility": false,
+        "display": "inline",
+        "visibility": "visible",
+        "innerTextEmpty": true
+      },
+      "testObserverPrecondition": "CFT156 open attribute can become true before content is displayed (immediate and first rAF invisible, second visible). First new normal journey attempted reread before that native display and failed; require actual checkVisibility before one reread. Original 6000ms click budget and assertions unchanged. First hidden-details and later prepaint FAILs retained.",
+      "targeted": {
+        "tests": 60,
+        "passed": 60,
+        "failed": 0,
+        "skipped": 0,
+        "durationMs": 1416.201917
+      },
+      "normal": {
+        "status": "PASS_TEMPORARY_MV3_POPUP",
+        "elapsedMs": 3439.237458,
+        "nativeJourneys": [
+          {
+            "kind": "project",
+            "nativeInput": {
+              "pageCount": 1,
+              "inputAcknowledgement": "ACK",
+              "elapsedMs": 278.52549999999974
+            },
+            "observedNewPages": [
+              {
+                "createdAt": 2780.404417,
+                "exactURL": true
+              }
+            ]
+          },
+          {
+            "kind": "conversation",
+            "nativeInput": {
+              "pageCount": 1,
+              "inputAcknowledgement": "ACK",
+              "elapsedMs": 430.5269159999998
+            },
+            "observedNewPages": [
+              {
+                "createdAt": 3331.754084,
+                "exactURL": true
+              }
+            ]
+          }
+        ],
+        "sourceStable": true,
+        "testSourcesStable": true,
+        "testHashes": {
+          "tests/host/temporary-navigation-package-browser.mjs": "efe9d0bc9258f14e58a837a7287cacf25bf4c723fa671f4dc0b42a1eb8bcf04e",
+          "tests/host/temporary-native-open-observer.mjs": "b736b1a914f885823a5cc6cb24be2da626e8d6d82a6916b93e8053354b9ad2ba"
+        },
+        "projectDisclosureClearsSnapshot": true,
+        "projectReopenVisibleBeforeRead": true,
+        "addedProjectRegionClearsSnapshot": true,
+        "databaseEmpty": true,
+        "draftPreserved": true,
+        "projectSearchMatches": true
+      },
+      "ackLossProbe": {
+        "status": "PASS_TEMPORARY_INPUT_OBSERVER_PROBE",
+        "elapsedMs": 3267.296291,
+        "nativeJourneys": [
+          {
+            "kind": "project",
+            "nativeInput": {
+              "pageCount": 1,
+              "inputAcknowledgement": "UNAVAILABLE_TARGET_CLOSED",
+              "elapsedMs": 112.43879199999992
+            },
+            "observedNewPages": [
+              {
+                "createdAt": 2815.0555,
+                "exactURL": true
+              }
+            ]
+          },
+          {
+            "kind": "conversation",
+            "nativeInput": {
+              "pageCount": 1,
+              "inputAcknowledgement": "UNAVAILABLE_TARGET_CLOSED",
+              "elapsedMs": 133.44408300000032
+            },
+            "observedNewPages": [
+              {
+                "createdAt": 3004.867625,
+                "exactURL": true
+              }
+            ]
+          }
+        ],
+        "sourceStable": true,
+        "testSourcesStable": true,
+        "testHashes": {
+          "tests/host/temporary-navigation-package-browser.mjs": "efe9d0bc9258f14e58a837a7287cacf25bf4c723fa671f4dc0b42a1eb8bcf04e",
+          "tests/host/temporary-native-open-observer.mjs": "b736b1a914f885823a5cc6cb24be2da626e8d6d82a6916b93e8053354b9ad2ba"
+        },
+        "projectDisclosureClearsSnapshot": true,
+        "projectReopenVisibleBeforeRead": true,
+        "addedProjectRegionClearsSnapshot": true,
+        "databaseEmpty": true,
+        "draftPreserved": true,
+        "projectSearchMatches": true
+      },
+      "timing": "3.439s normal and 3.267s observer fault probe include expanded Project and conversation journeys before cleanup; earlier 2.163s CI journey covered conversation only and is not a comparable speed baseline.",
+      "review": "Independent review found no blocking issue; native visibility evidence limited to tested CFT156, no older Chrome certification.",
+      "realProfile": "Read-only route-shape inspection confirmed approved dedicated Profile and four visible g-p container conversation links, zero Project page links; never infer Project identity/membership or create sample. Existing installed package not yet updated with this repair.",
+      "remaining": "real Project NOT_RUN; authenticated 403 unresolved; full G/U/J4 and Free acceptance open; 10k/100k DEFERRED; current repair Linux CI pending",
+      "receiptsUncompressedSha256": {
+        "temporary-project-disclosure-red.tap.gz": "358f8a64b03867314133e87485b8b99f3355bfecab2d6193605190529c490946",
+        "temporary-project-disclosure-first-runner.mjs.gz": "c55e6723a72d656f3dccbb86a59cde6f41319ea54323d76489a7b852ef371cd0",
+        "temporary-project-disclosure-first-fail.json.gz": "c6a3c316b97e10c946662eb8865bfd3ae61440b9d7d91d7abff9ea3bae70a1f4",
+        "temporary-project-details-visibility.json.gz": "ece7e39c7b36ec3f13ffb0e94ef712e2ac906b9b61b28e7934c5a288a134e1a6",
+        "temporary-project-details-open-paint.json.gz": "57a483cf71ec7d0ad1f4f52e0cc97dfe3b32d543ac7f76f3614269172c53ff03",
+        "temporary-project-disclosure-prepaint-runner.mjs.gz": "fbb908fde8799e119ede86a1085977c3ac277765b30bcfac15f6063e8ffc5385",
+        "temporary-project-disclosure-prepaint-fail.json.gz": "d32e7a2484c36aa9172591a4b2534dd10230b7129d504d1bfbdb56ae3671d9b1",
+        "temporary-project-disclosure-prepaint-probe.json.gz": "c1cc7d3f51dbb3a28710f33bfcbf5ebd91e5a5626a402a4df6701cb5128e112f",
+        "temporary-project-disclosure-final.json.gz": "658f4d642db642b5f765e14a349cb1fd8b4e22c52a07f57104f5e7dcabddb1e3",
+        "temporary-project-disclosure-ackprobe.json.gz": "bf985f42ba5a427ea6529be45748c3fdd6f825a662390bb055847c6933afa2b4",
+        "temporary-project-disclosure-targeted.tap.gz": "5e00499195c3328e13881be5678d99331afb033e0574fee19b487017cb779db2",
+        "temporary-project-project-link-shape.json.gz": "1e068f134be3fcde051a31a38a2c99f356fdb75d96bd87af357dab11d06e2ac5"
+      }
     }
   }
 }
