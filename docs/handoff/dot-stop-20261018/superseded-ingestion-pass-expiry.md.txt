@@ -1,0 +1,52 @@
+# Ingestion scheduling-hint expiry: superseded unpublished candidate
+
+**Do not publish or apply to current Free without a new decision.** Before delivery, the sole writer independently fixed the same missing-terminal mechanism in `8e8a97aac165dfa75dd34f8c8d170d7fc5229781`, using existing `current(entry)` during idle queries rather than a timer. The seven implementation-independent actual-service functional cases also pass on that exact new owner (151.076 ms, zero skips). No additional authorization, true-work accounting or deadline regression was established. The timer candidate below remains an archived alternative, not a pending production fix. No remote branch/comment was created for this candidate.
+
+Base: `3864d39c0b85f8fa5ade02a657046c44e69fc4b9`. This handoff contains an **unapplied** patch, an independent integration regression and this note. Adding these files alone does not change production. It does not touch the local content-session, controller or adapter owners.
+
+## Confirmed gap and contract
+
+`HOST_INGESTION_PASS start` records a private scheduling hint with an original dual-clock 30-second validity window (`host-ingestion-pass-owner.mjs:11–16,41–43`). Terminal messages and invalidation retire it, but merely reaching that deadline has no driver. `isPending()` can retire it, yet current production code has no caller of that method. `isIdle()` correctly remains a pure local snapshot; a lost terminal IPC can therefore leave its unfinished hint busy indefinitely with no actual request still running.
+
+The actual binding/UI/ingestion service regression starts a pass successfully, renews the real document transport at 15 seconds, then delivers no end/cancel. At 29,999 ms the service correctly denies idle; at 30,000 ms the baseline still denies it. The candidate expires the RAM hint and allows the otherwise-idle authenticated preflight. Replay of the same start stays denied. This is not a synthesized end, completed ingestion, inventory coverage, authorization or idle permit for other work.
+
+Round355 explicitly left conservative residual records as later lifecycle work while requiring idle queries not to read clocks or clean up. The patch preserves that query contract and the existing validity window. It does not discard recovery plans, backup transfers, send evidence or user confirmation work.
+
+## Bounded implementation
+
+- At most one expiry timer per retained producer, within the existing 128-producer bound.
+- Remaining delay comes from the original request-entry wall/elapsed timestamps, including time spent validating the start. Duplicate start and document renewal do not restart it.
+- The original current/clock/authority guard terminates the hint. Early firing may reschedule only the original remaining time.
+- Timer marker and exact producer-entry identity reject cancelled/late callbacks. End/cancel, newer pass, invalidation, producer pruning and stop cancel owned timers. Tombstones remain.
+- `runs` and `requests` are unchanged; a real underlying browser wait still blocks idle after both hint expiry and the six-second RPC timeout, until it actually settles.
+- No new network/read, persistent state, retry of terminal IPC, grant reuse, expanded deadline or idle-query mutation.
+
+The unapplied patch also adds `runTimers:false` to the existing idle-test clock helper and uses it in the old pure-query test. All original assertions remain: with the expiry callback paused, querying idle still cannot retire a stale record. The new integration cases separately execute the timer.
+
+## Reproduce and apply
+
+```sh
+# Baseline: 10 FAIL / 2 PASS. Five failures assert the new timer lifecycle;
+# these are regression obligations, not ten distinct product defects.
+node --test tests/runtime/ingestion-pass-expiry.repro.mjs
+
+# Reconcile against the sole writer's latest owner before applying.
+git apply --check tests/runtime/ingestion-pass-expiry.patch
+git apply tests/runtime/ingestion-pass-expiry.patch
+node --test tests/runtime/ingestion-pass-expiry.repro.mjs \
+  tests/host/host-ingestion-pass-owner.test.mjs \
+  tests/host/host-ingestion-pass-idle.test.mjs \
+  tests/host/ui-idle-preflight.test.mjs \
+  tests/host/host-binding-idle.test.mjs
+```
+
+Actual result: **49 PASS, 0 FAIL, 0 SKIP**, 214.982 ms; includes all 12 new integration cases. Cases cover missing terminal, duplicate/renewal, end/cancel, slow validation, old timer versus newer pass, outstanding raw work resolving/rejecting after timeout, document/tab invalidation, tab close and stop.
+
+No browser/CI/real-account execution was performed for this patch. This establishes an independent missing-terminal lifecycle gap, not a diagnosis of the earlier partial JOIN MV3 failure. Before delivery, Free advanced to `c7f9bf23e972f4037739ec501a3d3fc14e173874`; this owner and the existing idle test are byte-identical to the source base. Local now records both standard and partial foreground busy-close recovery PASS after draining real frame work and foregrounding the paused second-tab ingestion. This patch must not bypass legitimate in-flight work and was not used for those passes. The dedicated-profile recheck separately records page-channel accounts 200 with worker authorization unobserved and extension frames 0; this patch makes no claim about that mounting boundary.
+
+SHA-256:
+
+- Base owner: `2e2e25cd32cadbae243a156d8d4078ce918756ebf36de597a9fe10757711fd3d`
+- Patched owner: `3f1d862b7b1d7ae46f840358ec314a2a6058f1039c1d8f5ecc5c0537bd51df98`
+- Patch: `e3b1feee657076a76336ce9e63dc5cec8ec7c2b28c047e18820ca6f7f51a65f3`
+- Regression: `d4da4a627ba0577dd912906728adc91b7c92fb8b4b16f01a3f11512da64cf492`

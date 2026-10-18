@@ -1,0 +1,75 @@
+--- a/src/runtime/host-ingestion-pass-owner.mjs
++++ b/src/runtime/host-ingestion-pass-owner.mjs
+@@ -8,15 +8,29 @@
+  const producers=new Map(),requests=new Set();let stopped=false,runs=0;
+  async function track(work){runs++;try{return await work();}finally{runs--;}}
+  function bound(entry){try{return !stopped&&handshake.isBound(entry.message,entry.sender);}catch{return false;}}
++ function finish(entry){entry.terminal=true;if(entry.expiry!==null){cancel(entry.expiry.id);entry.expiry=null;}}
++ // The hint expires on its original deadline even when the terminal IPC is lost.
++ // Keep the tombstone; this is not completion evidence or an idle permit.
++ function armExpiry(entry){
++  if(!current(entry))return false;
++  const marker={id:null};entry.expiry=marker;
++  const remaining=Math.min(entry.startedTime+30000-entry.lastTime,entry.startedElapsed+30000-entry.lastElapsed);
++  marker.id=schedule(()=>{
++   if(entry.expiry!==marker)return;entry.expiry=null;
++   if(stopped||producers.get(entry.message.producerToken)!==entry||entry.terminal)return;
++   armExpiry(entry);
++  },Math.max(1,remaining));
++  return true;
++ }
+  function current(entry){
+   try{
+    const time=now(),elapsed=elapsedNow(),resolution=authority.peek(entry.frame);
+    const valid=bound(entry)&&profiles.get(entry.profile.id)===entry.profile&&entry.profile.revision===entry.message.profileVersion&&resolution.state==='verified'&&resolution.grant?.id===entry.grantId&&resolution.grant?.scopeEpoch===entry.scopeEpoch&&authority.scopeFor(entry.frame)?.key===entry.scopeKey&&Number.isFinite(time)&&time>=entry.lastTime&&Number.isFinite(elapsed)&&elapsed>=entry.lastElapsed&&time<entry.startedTime+30000&&elapsed<entry.startedElapsed+30000;
+-   if(valid){entry.lastTime=time;entry.lastElapsed=elapsed;}else entry.terminal=true;
++   if(valid){entry.lastTime=time;entry.lastElapsed=elapsed;}else finish(entry);
+    return valid&&!entry.terminal;
+-  }catch{entry.terminal=true;return false;}
++  }catch{finish(entry);return false;}
+  }
+- function prune(){for(const [key,entry]of producers)if(!bound(entry))producers.delete(key);}
++ function prune(){for(const [key,entry]of producers)if(!bound(entry)){finish(entry);producers.delete(key);}}
+  async function handle(input,sender){
+   const deny=()=>({ok:false});let message;
+   try{message=structuredClone(input);sender=structuredClone(sender);}catch{return deny();}
+@@ -36,15 +50,15 @@
+    if(previous&&message.passSeq===previous.message.passSeq){
+     // A terminal message that validates first is a tombstone even when start
+     // is still awaiting getFrame. Duplicate starts cannot renew any deadline.
+-    if(message.phase!=='start'){previous.terminal=true;return {ok:true};}
++    if(message.phase!=='start'){finish(previous);return {ok:true};}
+     return {ok:current(previous)};
+    }
+    if(!previous&&producers.size>=maxProducers)return deny();
+-   const entry={message,sender,frame,profile,scopeKey:scope.key,grantId:resolution.grant.id,scopeEpoch:resolution.grant.scopeEpoch,startedTime:attempt.time,startedElapsed:attempt.started,lastTime:attempt.time,lastElapsed:attempt.started,terminal:message.phase!=='start'};
+-   producers.set(message.producerToken,entry);
+-   return {ok:message.phase!=='start'||current(entry)};
++   const entry={message,sender,frame,profile,scopeKey:scope.key,grantId:resolution.grant.id,scopeEpoch:resolution.grant.scopeEpoch,startedTime:attempt.time,startedElapsed:attempt.started,lastTime:attempt.time,lastElapsed:attempt.started,terminal:message.phase!=='start',expiry:null};
++   if(previous)finish(previous);producers.set(message.producerToken,entry);
++   return {ok:message.phase!=='start'||armExpiry(entry)};
+   }),{now:elapsedNow,schedule,cancel});}catch{return deny();}finally{attempt.active=false;requests.delete(attempt);}
+  }
+- function invalidate(predicate){for(const entry of producers.values())if(predicate(entry.frame))entry.terminal=true;for(const attempt of requests)if(predicate({tabId:attempt.sender.tab?.id,documentId:attempt.sender.documentId}))attempt.active=false;}
+- return Object.freeze({isIdle:()=>!stopped&&runs===0&&requests.size===0&&![...producers.values()].some(entry=>!entry.terminal),handle,isPending(scopeKey){if(typeof scopeKey!=='string'||!scopeKey||stopped)return false;prune();let pending=false;for(const entry of producers.values())if(entry.scopeKey===scopeKey&&current(entry))pending=true;return pending;},invalidateDocument:documentId=>invalidate(frame=>frame.documentId===documentId),invalidateTab:tabId=>invalidate(frame=>frame.tabId===tabId),stop(){stopped=true;for(const request of requests)request.active=false;requests.clear();producers.clear();}});
++ function invalidate(predicate){for(const entry of producers.values())if(predicate(entry.frame))finish(entry);for(const attempt of requests)if(predicate({tabId:attempt.sender.tab?.id,documentId:attempt.sender.documentId}))attempt.active=false;}
++ return Object.freeze({isIdle:()=>!stopped&&runs===0&&requests.size===0&&![...producers.values()].some(entry=>!entry.terminal),handle,isPending(scopeKey){if(typeof scopeKey!=='string'||!scopeKey||stopped)return false;prune();let pending=false;for(const entry of producers.values())if(entry.scopeKey===scopeKey&&current(entry))pending=true;return pending;},invalidateDocument:documentId=>invalidate(frame=>frame.documentId===documentId),invalidateTab:tabId=>invalidate(frame=>frame.tabId===tabId),stop(){stopped=true;for(const request of requests)request.active=false;requests.clear();for(const entry of producers.values())finish(entry);producers.clear();}});
+ }
+--- a/tests/host/host-ingestion-pass-idle.test.mjs
++++ b/tests/host/host-ingestion-pass-idle.test.mjs
+@@ -9,13 +9,13 @@
+  const message=(phase='start',passSeq=1,tab=1)=>({v:1,type:'HOST_INGESTION_PASS',documentToken:'doc_'+tab,producerToken:'producer_'+tab,routeEpoch:tab,profileId:'surface',profileVersion:1,passSeq,phase});
+  const bound=(m,s)=>s?.id==='extension'&&s?.frameId===0&&s?.documentLifecycle==='active'&&!s?.tab?.incognito&&!lost.has(s.tab.id)&&m.documentToken==='doc_'+s.tab.id&&m.producerToken==='producer_'+s.tab.id&&m.routeEpoch===s.tab.id&&s.documentId===frames.get(s.tab.id)?.documentId&&s.url===frames.get(s.tab.id)?.url;
+  const owner=createHostIngestionPassOwner({maxProducers,profiles,handshake:{verify:async(m,s)=>bound(m,s),isBound:bound,matchesFrame:(m,s,f)=>bound(m,s)&&f?.documentId===s.documentId&&f?.url===s.url&&f.documentLifecycle==='active'},authority:{peek:frame=>grants.has(frame.tabId)?{state:'verified',grant:grants.get(frame.tabId)}:{state:'unknown'},scopeFor:frame=>grants.has(frame.tabId)?{key:grants.get(frame.tabId).scopeKey}:null},getFrame:async({tabId})=>frameRead?frameRead(tabId):frames.get(tabId),now:()=>time,elapsedNow:()=>elapsed,schedule:(fn,ms)=>{const id=++next;timers.set(id,{fn,at:elapsed+ms});return id;},cancel:id=>timers.delete(id)});
+- return {owner,profiles,grants,frames,lost,message,sender,send:(phase='start',seq=1,tab=1)=>owner.handle(message(phase,seq,tab),sender(tab)),setFrameRead:value=>frameRead=value,async advance(ms,{wall=true}={}){elapsed+=ms;if(wall)time+=ms;for(const [id,timer]of [...timers])if(timer.at<=elapsed&&timers.delete(id))timer.fn();await drain();}};
++ return {owner,profiles,grants,frames,lost,message,sender,send:(phase='start',seq=1,tab=1)=>owner.handle(message(phase,seq,tab),sender(tab)),setFrameRead:value=>frameRead=value,async advance(ms,{wall=true,runTimers=true}={}){elapsed+=ms;if(wall)time+=ms;if(runTimers)for(const [id,timer]of [...timers])if(timer.at<=elapsed&&timers.delete(id))timer.fn();await drain();}};
+ }
+ const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};};
+ for(const outcome of ['resolve','reject'])test('ingestion deadline preserves underlying frame wait '+outcome,async()=>{
+  const f=fixture(),g=deferred();f.setFrameRead(()=>g.promise);const p=f.send();await drain();assert.equal(f.owner.isIdle(),false);await f.advance(6000);assert.equal((await p).ok,false);f.owner.invalidateDocument('document_1');assert.equal(f.owner.isIdle(),false);g[outcome](outcome==='resolve'?f.frames.get(1):Error('late'));await drain();assert.equal(f.owner.isIdle(),true);
+ });
+ test('unfinished ingestion pass blocks idle without pruning expired records',async()=>{
+- const f=fixture();assert.equal(f.owner.isIdle(),true);assert.equal((await f.send()).ok,true);assert.equal(f.owner.isIdle(),false);await f.advance(30001);assert.equal(f.owner.isIdle(),false);assert.equal(f.owner.isPending('scope_a'),false);assert.equal(f.owner.isIdle(),true);assert.equal((await f.send('start',2)).ok,true);f.owner.invalidateTab(1);assert.equal(f.owner.isIdle(),true);assert.equal((await f.send('start',3)).ok,true);await f.send('end',3);assert.equal(f.owner.isIdle(),true);f.owner.stop();assert.equal(f.owner.isIdle(),false);
++ const f=fixture();assert.equal(f.owner.isIdle(),true);assert.equal((await f.send()).ok,true);assert.equal(f.owner.isIdle(),false);await f.advance(30001,{runTimers:false});assert.equal(f.owner.isIdle(),false);assert.equal(f.owner.isPending('scope_a'),false);assert.equal(f.owner.isIdle(),true);assert.equal((await f.send('start',2)).ok,true);f.owner.invalidateTab(1);assert.equal(f.owner.isIdle(),true);assert.equal((await f.send('start',3)).ok,true);await f.send('end',3);assert.equal(f.owner.isIdle(),true);f.owner.stop();assert.equal(f.owner.isIdle(),false);
+ });
+ test('stopped ingestion never reports idle after pending work settles',async()=>{const f=fixture(),g=deferred();f.setFrameRead(()=>g.promise);const p=f.send();await drain();f.owner.stop();assert.equal(f.owner.isIdle(),false);g.resolve(f.frames.get(1));await p;assert.equal(f.owner.isIdle(),false);});
