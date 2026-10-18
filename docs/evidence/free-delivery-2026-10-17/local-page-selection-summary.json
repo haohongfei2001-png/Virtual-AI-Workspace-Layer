@@ -1464,5 +1464,44 @@
       "tests/host/j2-lifecycle-diagnostics.mjs": "4a345ac2079ea4aaa2a2d443bcc5cbdd0ce3fb38dad996963f7c2542abd0c6a2",
       "tests/host/j2-lifecycle-diagnostics.test.mjs": "16feeaea735ec5667bc6a8847463c0aed35ba84e9b79b752d3e1b59d46823e8a"
     }
+  },
+  "nativeLayoutProfile20261018": {
+    "status": "LOCAL_CANDIDATE_REVIEWED",
+    "problem": "inspect and isSameNativeRegions hardcode legacy boundaries despite configured body profile",
+    "change": "exact four-key nativeLayout snapshotted; same inspection/continuity path; invalid profile rejects, no legacy fallback",
+    "tests": {
+      "old": {
+        "tests": 11,
+        "failed": 7
+      },
+      "candidate": {
+        "tests": 154,
+        "passed": 154,
+        "durationMs": 2046.522333
+      }
+    },
+    "logs": {
+      "red": "native-layout-red-20261018.tap.gz",
+      "green": "native-layout-green-20261018.tap.gz"
+    },
+    "sourceHashes": {
+      "src/host/chatgpt-adapter.mjs": "21da42c19127595a6141b18cf7f0a8a7fcfa9b54c0253606a00dda407e18fc5e",
+      "tests/host/chatgpt-adapter.test.mjs": "d735252fe6cfd3b198c2c095a8104eede9e615d016a037f626a2649623a63c5f"
+    },
+    "liveStructuralObservation": {
+      "bodyTextRead": false,
+      "nativeWrite": false,
+      "messageContainerOutsideViewport": true,
+      "timelineScrollContainsComposer": true,
+      "headerSlotsOccupiedOrZeroWidth": true
+    },
+    "limits": [
+      "no new production scope",
+      "no verified modern full layout yet",
+      "do not mask timeline container including composer",
+      "live navigation/search/return not passed"
+    ],
+    "reviewFix": "Explicit slot belongs to header, is not header itself, never within reading/history/composer; shared topology guard used by inspect and same-node continuity after reparent",
+    "independentReview": "topology issue fixed including reparent continuity; no remaining blocker in this diff"
   }
 }

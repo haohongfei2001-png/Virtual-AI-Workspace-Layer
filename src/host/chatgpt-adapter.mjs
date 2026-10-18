@@ -8,7 +8,7 @@ import {createCurrentBodyDiscovery} from './current-body-discovery.mjs';
 import {createURLPolicy} from './url-policy.mjs';
 import {createSurfaceDiscovery,LEGACY_SURFACE_PROFILE} from './surface-discovery.mjs';
 import {createNativeActions} from './native-actions.mjs';
-import {publicAdapterStatus} from './contract.mjs';
+import {publicAdapterStatus,exactHostRecord} from './contract.mjs';
 const rect=node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
 const overlaps=(a,b)=>a.x<b.x+b.width&&b.x<a.x+a.width&&a.y<b.y+b.height&&b.y<a.y+a.height;
 // Resolved native identity is its exact URL/ID, not a bounded-cache handle.
@@ -18,6 +18,13 @@ const publicationKey=source=>sha256(JSON.stringify([source.routeEpoch,{...source
 /** Isolated-world composition. DOM observations remain proposals, never scope proof. */
 export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,priorityConversationId=()=>null,isOwnedSurface=()=>false,snippetsFactory=createNativeSnippets,bodyProof=null,inputRisk=null,authorize=()=>false,beforeDispatch=()=>{},onNativeDispatch=()=>{},onNativeDispatchCancelled=()=>{},onRebindNeeded=()=>{},onSurfaceChange=()=>{},onObservationIssue=()=>{},onIdleHint=()=>{},onFirstSendIntent=null,onOldSendOperation=null,onNativePrepare=null,now=Date.now,elapsedNow=()=>performance.now(),scheduleRetry=(fn,ms)=>setTimeout(fn,ms),cancelRetry=id=>clearTimeout(id)}={}){
  if(!document?.defaultView)throw Error('invalid-host-document');
+ const layoutKeys=['header','reading','composer','navigationSlot'];
+ const explicitLayout=Object.hasOwn(profile,'nativeLayout');
+ const configuredLayout=explicitLayout?profile.nativeLayout:{header:'main > header',reading:'main > section[aria-label="Conversation"]',composer:'main > form#composer',navigationSlot:'main > header > .navigation-slot'};
+ if(!exactHostRecord(configuredLayout,layoutKeys)||!layoutKeys.every(k=>typeof configuredLayout[k]==='string'&&configuredLayout[k].trim().length>0&&configuredLayout[k].length<=256))throw Error('invalid-native-layout-profile');
+ // Package-owned selectors choose boundaries, never grant authority or relax geometry.
+ const nativeLayout=Object.freeze({...configuredLayout});
+
  inputRisk=inputRisk??createNativeInputRisk({document,profile});
  let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[],surfaceParts=[],surfaceKey=null,surfaceSequence=null,surfaceWanted=true,surfaceScanning=false,surfaceCursor=null,surfacePage=0,surfacePageKey=null,surfaceEpoch=0,surfaceSnapshotEpoch=0,surfaceRetryWanted=false;const surfaceAccepted=new Map(),surfaceFailed=new Map();
  let ingestionPass=null,pass=null,passSequence=0,cursorRestarts=0,activeWork=0,loadedReads=0,idleRevision=0,nativePrepareAt=null;
@@ -60,7 +67,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
   try{const reply=await track(()=>entry.notify(passMessage(entry,'start')));if(run!==generation||!live()||pass!==entry||entry.terminal)return;if(reply?.ok!==true){finishPass('cancel',true);issue('host-ingestion-pass-unavailable');}}
   catch{if(pass===entry){finishPass('cancel',true);issue('host-ingestion-pass-unavailable');}}
  }
- const one=selector=>{const nodes=document.querySelectorAll(selector);return nodes.length===1?nodes[0]:null;};
+ const one=selector=>{try{const nodes=document.querySelectorAll(selector);return nodes.length===1?nodes[0]:null;}catch{return null;}};
  const live=()=>!stopped&&now()<Date.parse(binding.expiresAt);
  function acknowledgedBody(){
   if(!live()||!acceptedBody||now()>=Date.parse(acceptedBody.validUntil)||!bodyDiscovery)return null;
@@ -205,16 +212,18 @@ if(!p){notifyIdle();return;}}catch(error){
   if(surfaceChanged)requestScan();else schedule();
  }
  function stop(){surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');ingestionPass=null;generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('toggle',surfaceToggle,true);document.removeEventListener('visibilitychange',visibilityChanged);document.removeEventListener('focusout',schedule,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();}
+ function nativeTopologyOK(history,header,reading,composer,slot){return !explicitLayout||header!==slot&&header.contains(slot)&&![history,reading,composer].some(node=>node===slot||node.contains(slot));}
  function isSameNativeRegions(inspection){
   if(!live()||document.location.href!==url||inspection?.regionEpoch!==regionEpoch)return false;
-  const nodes=[one(profile.regions.history),one('main > header'),one('main > section[aria-label="Conversation"]'),one('main > form#composer'),one('main > header > .navigation-slot')];
+  const nodes=[one(profile.regions.history),one(nativeLayout.header),one(nativeLayout.reading),one(nativeLayout.composer),one(nativeLayout.navigationSlot)];
   const original=[inspection.history,inspection.header,inspection.reading,inspection.composer,inspection.navigationSlot];
-  return nodes.every((node,i)=>node&&node===original[i]&&node===priorNodes[i]&&node.isConnected&&node.ownerDocument===document);
+  return nodes.every((node,i)=>node&&node===original[i]&&node===priorNodes[i]&&node.isConnected&&node.ownerDocument===document)&&nativeTopologyOK(...nodes);
  }
  function inspect(){
   const fail=reason=>({ok:false,reason,profileId:profile.id});if(!live())return fail('stale-host-binding');try{syncRoute();}catch{return fail('host-rebind-required');}if(urlPolicy.parse(url).kind==='unsupported')return fail('unsupported-host-route');
-  const history=one(profile.regions.history),header=one('main > header'),reading=one('main > section[aria-label="Conversation"]'),composer=one('main > form#composer'),navigationSlot=one('main > header > .navigation-slot');
+  const history=one(profile.regions.history),header=one(nativeLayout.header),reading=one(nativeLayout.reading),composer=one(nativeLayout.composer),navigationSlot=one(nativeLayout.navigationSlot);
   if(!history||!header||!reading||!composer||!navigationSlot)return fail('missing-or-ambiguous-native-boundary');
+  if(!nativeTopologyOK(history,header,reading,composer,navigationSlot))return fail('return-slot-outside-native-header');
   const protectedRegions=[header,composer];if(protectedRegions.some(n=>reading.contains(n)||history.contains(n))||reading.contains(history)||history.contains(reading))return fail('overlapping-native-boundary');
   if(([...navigationSlot.children].length===0&&navigationSlot.textContent.trim())||[...navigationSlot.children].some(n=>!n.hasAttribute('data-va-owned')&&!n.hasAttribute('data-vaiwl-owned'))||[...(navigationSlot.childNodes??[])].some(n=>n.nodeType===3&&n.textContent.trim()))return fail('native-content-occupies-return-slot');
   const readingRect=rect(reading),sidebarRect=rect(history),returnSlot=rect(navigationSlot),protectedRects=protectedRegions.map(rect);

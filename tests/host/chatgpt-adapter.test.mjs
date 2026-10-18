@@ -422,3 +422,39 @@ test('same producer renewal retains the finite pass and a reused adapter starts 
  const ingestionPass=async m=>{events.push(m);return {ok:true};};await f.start(p=>{f.emitted.push(p);if(++packets===2){f.setTime(10000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()});}return Promise.resolve(bodyAck(p));},{ingestionPass});for(let i=0;i<100;i++)await tick();assert.deepEqual(events.map(m=>m.phase),['start','end']);assert.equal(new Set(f.emitted.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,1000);
  d.nodes[0].textContent='Changed before restart';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[0],parentElement:d.nodes[0]}}]);f.adapter.stop();events.length=0;await f.start(null,{ingestionPass});for(let i=0;i<100;i++)await tick();assert.deepEqual(events.map(m=>m.phase),['start','end']);
 });
+
+const explicitLayout={header:'#native-header',reading:'#native-reading',composer:'#native-composer',navigationSlot:'#native-return-slot'};
+function layoutFixture(){
+ const profile={...LEGACY_SURFACE_PROFILE,currentBody:undefined,nativeLayout:{...explicitLayout}},f=fixture({profile});
+ for(const [old,key] of [['main > header','header'],['main > section[aria-label="Conversation"]','reading'],['main > form#composer','composer'],['main > header > .navigation-slot','navigationSlot']]){f.selectors.set(explicitLayout[key],f.selectors.get(old));f.selectors.delete(old);}
+ f.selectors.get(explicitLayout.header)[0].contains=n=>n===f.slot;
+ for(const nodes of f.selectors.values())for(const n of nodes)n.ownerDocument=f.document;
+ return {...f,profile};
+}
+test('explicit native layout binds the same production inspection and continuity path',async()=>{
+ const f=layoutFixture();await f.start();const result=f.adapter.inspect();assert.equal(result.ok,true);assert.equal(result.reading,f.reading);assert.equal(result.composer,f.composer);assert.equal(result.navigationSlot,f.slot);assert.equal(f.adapter.isSameNativeRegions(result),true);
+ f.profile.nativeLayout.reading='#changed';assert.equal(f.adapter.inspect().ok,true,'package layout is snapshotted');
+ f.selectors.set(explicitLayout.reading,[{...f.reading}]);assert.equal(f.adapter.isSameNativeRegions(result),false);assert(f.adapter.inspect().regionEpoch>result.regionEpoch);f.adapter.stop();
+});
+for(const kind of ['missing','ambiguous','occupied','overlap','bad-selector','outside-header','slot-is-header','slot-in-composer','slot-in-reading'])test('explicit layout preserves boundary refusal: '+kind,async()=>{
+ const f=layoutFixture();await f.start();
+ if(kind==='missing')f.selectors.delete(explicitLayout.composer);
+ if(kind==='ambiguous')f.selectors.set(explicitLayout.composer,[f.composer,f.composer]);
+ if(kind==='occupied')f.slot.textContent='native control';
+ if(kind==='outside-header')f.selectors.get(explicitLayout.header)[0].contains=()=>false;
+ if(kind==='slot-is-header')f.selectors.set(explicitLayout.navigationSlot,f.selectors.get(explicitLayout.header));
+ if(kind==='slot-in-composer')f.composer.contains=n=>n===f.slot;
+ if(kind==='slot-in-reading')f.reading.contains=n=>n===f.slot;
+ if(kind==='overlap')f.composer.getBoundingClientRect=()=>({x:220,y:100,width:700,height:90});
+ if(kind==='bad-selector')f.document.querySelectorAll=()=>{throw Error('invalid selector');};
+ assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();
+});
+for(const nativeLayout of [null,{}, {...explicitLayout,extra:'#other'},{...explicitLayout,composer:''},{...explicitLayout,reading:42}])test('invalid explicit native layout cannot fall back to legacy '+JSON.stringify(nativeLayout),()=>{
+ assert.throws(()=>fixture({profile:{...LEGACY_SURFACE_PROFILE,nativeLayout}}),/invalid-native-layout-profile/);
+});
+
+test('explicit layout continuity rejects same slot node reparented out of header',async()=>{
+ const f=layoutFixture();await f.start();const first=f.adapter.inspect();assert.equal(first.ok,true);assert.equal(f.adapter.isSameNativeRegions(first),true);
+ f.selectors.get(explicitLayout.header)[0].contains=()=>false;f.composer.contains=n=>n===f.slot;
+ assert.equal(f.adapter.isSameNativeRegions(first),false);assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();
+});
