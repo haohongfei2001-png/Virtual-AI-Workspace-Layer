@@ -6520,8 +6520,8 @@
       },
       "timing": "3.439s normal and 3.267s observer fault probe include expanded Project and conversation journeys before cleanup; earlier 2.163s CI journey covered conversation only and is not a comparable speed baseline.",
       "review": "Independent review found no blocking issue; native visibility evidence limited to tested CFT156, no older Chrome certification.",
-      "realProfile": "Read-only route-shape inspection confirmed approved dedicated Profile and four visible g-p container conversation links, zero Project page links; never infer Project identity/membership or create sample. Existing installed package not yet updated with this repair.",
-      "remaining": "real Project NOT_RUN; authenticated 403 unresolved; full G/U/J4 and Free acceptance open; 10k/100k DEFERRED; current repair Linux CI pending",
+      "realProfile": "Approved dedicated Profile; source-matched installed repair. After explicit ready18 observation, one complete real popup search / project-container Conversation open / return succeeded. Initial incomplete result retained; zero observed worker requests, no body/credentials read, no Project identity/membership inferred. Real Project page still NOT_RUN.",
+      "remaining": "Real Project page NOT_RUN; initial real popup readiness cause unknown (ready-state journey only); authenticated403 unresolved; fullG/U/J4 and Free acceptance open; 10k/100k DEFERRED.",
       "receiptsUncompressedSha256": {
         "temporary-project-disclosure-red.tap.gz": "358f8a64b03867314133e87485b8b99f3355bfecab2d6193605190529c490946",
         "temporary-project-disclosure-first-runner.mjs.gz": "c55e6723a72d656f3dccbb86a59cde6f41319ea54323d76489a7b852ef371cd0",
@@ -6534,7 +6534,140 @@
         "temporary-project-disclosure-final.json.gz": "658f4d642db642b5f765e14a349cb1fd8b4e22c52a07f57104f5e7dcabddb1e3",
         "temporary-project-disclosure-ackprobe.json.gz": "bf985f42ba5a427ea6529be45748c3fdd6f825a662390bb055847c6933afa2b4",
         "temporary-project-disclosure-targeted.tap.gz": "5e00499195c3328e13881be5678d99331afb033e0574fee19b487017cb779db2",
-        "temporary-project-project-link-shape.json.gz": "1e068f134be3fcde051a31a38a2c99f356fdb75d96bd87af357dab11d06e2ac5"
+        "temporary-project-project-link-shape.json.gz": "1e068f134be3fcde051a31a38a2c99f356fdb75d96bd87af357dab11d06e2ac5",
+        "temporary-project-installed.json.gz": "6a964e7b26f470ec8607a217cfae32511a50ac40f80fccbd0ee6f621074b0259",
+        "temporary-project-live.json.gz": "d396fe7d0cd0ab1bb2f9171d407ff5da7f9f7852a75f1cb62134fdca754ac799",
+        "temporary-project-popup-ready.json.gz": "ca259d559117975a1ac49483e56ccc9f7ca43b78f078b2794d76169474221ac5",
+        "temporary-project-exact-sync.json.gz": "db7c8676d5a2b982819cdb70413667b2868dd104efa4a308b865d3802c3a795d",
+        "temporary-project-ci39164557162-run.json.gz": "b5fd672b5c0f630cae80c1cec1ec98ba1d472bf3cfc455987301f718210773a4",
+        "temporary-project-ci39164557162-journeys.log.gz": "2f681f269575e3c967175cd12a13e10df91061c4ffc961350002e93776c65a07",
+        "temporary-project-ci39164557162-temporary.json.gz": "96df1c776e10b0d5c856943890786c55841324275b3f6c148863787e3942ccb1",
+        "temporary-project-ci39164557162-challenge.json.gz": "73188acbc194335c5b440eb1100c9765d432eec121e14452a42022c7eec662cf",
+        "temporary-project-ci39164557162-j4.json.gz": "6a90d54b45fac82acb0c9b3b70d346bad79c16604316b3b40f024f43b282e9d4"
+      },
+      "implementationHead": "5371e5c7dc736ec42149e8744d8646eae8dda6d0",
+      "installation": {
+        "status": "INSTALLED_TEMPORARY",
+        "sameExtensionId": true,
+        "permissionsUnchanged": true,
+        "backupVerified": true,
+        "backup": "/private/tmp/vaiwl-temporary-approved-5o5Bgc/previous-installed-package",
+        "guardedReloadCount": 1,
+        "manifestSha256": "f30f62929e6a38e4b8c2f0280fb216b0b5cdda1ba217848a6a801616c14b8b98",
+        "sourceHashesMatchCurrent": true
+      },
+      "firstRealCheck": {
+        "source": "actual tool output from first live check; later script reused its temporary result path",
+        "status": "LIVE_TEMPORARY_INCOMPLETE",
+        "reason": "popup-not-ready",
+        "workerRequests": 0,
+        "editor": true,
+        "draftEmpty": true,
+        "popupUnavailable": false,
+        "limitation": "Initial popup-readiness cause not established. Subsequent popup-open diagnostics saw worker sleep/no popup, then ready18. No claim that succeeding ready-state journey establishes initial startup stability."
+      },
+      "realReadyJourney": {
+        "mode": "TEMPORARY_NOT_FREE_ACCEPTED",
+        "bodyRead": false,
+        "credentialsRead": false,
+        "workerRequests": 0,
+        "original": {
+          "editor": true,
+          "draftEmpty": true,
+          "projectDisclosureButtons": 1
+        },
+        "list": {
+          "projects": 0,
+          "chats": 18,
+          "temporaryNotice": true
+        },
+        "search": true,
+        "chatOpenedCorrectURL": true,
+        "chosenProjectContainerConversation": true,
+        "opened": {
+          "editor": true,
+          "openerNull": true
+        },
+        "returnedFresh": true,
+        "originalPreserved": true,
+        "status": "LIVE_TEMPORARY_CHAT_PASS"
+      },
+      "transport": {
+        "normalPush": "FAIL_LOW_SPEED_TIMEOUT",
+        "firstFullTreeAPI": "FAIL_HTTP_422_INPUT_TREE_TIMEOUT",
+        "resolved": "Incremental base_tree difference transport verified exact Git object and commit SHAs, expected old branch and force:false; remote and local tracking updated to 5371e5c."
+      },
+      "ci39164557162": {
+        "head": "5371e5c7dc736ec42149e8744d8646eae8dda6d0",
+        "status": "success",
+        "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39164557162",
+        "jobs": {
+          "offline-journeys": "success",
+          "node-contracts": "success",
+          "offline-durability-compat": "success",
+          "offline-j4-lifecycle": "success"
+        },
+        "temporary": {
+          "status": "PASS_TEMPORARY_MV3_POPUP",
+          "elapsedMs": 1998.3681530000003,
+          "nativeJourneys": [
+            {
+              "kind": "project",
+              "nativeInput": {
+                "pageCount": 1,
+                "inputAcknowledgement": "UNAVAILABLE_TARGET_CLOSED",
+                "elapsedMs": 115.05223500000011
+              },
+              "observedNewPages": [
+                {
+                  "createdAt": 1593.785661,
+                  "exactURL": true
+                }
+              ]
+            },
+            {
+              "kind": "conversation",
+              "nativeInput": {
+                "pageCount": 1,
+                "inputAcknowledgement": "ACK",
+                "elapsedMs": 146.94433400000003
+              },
+              "observedNewPages": [
+                {
+                  "createdAt": 1813.879944,
+                  "exactURL": true
+                }
+              ]
+            }
+          ],
+          "projectDisclosureClearsSnapshot": true,
+          "addedProjectRegionClearsSnapshot": true,
+          "projectSearchMatches": true,
+          "projectReopenVisibleBeforeRead": true,
+          "sourceStable": true,
+          "testSourcesStable": true,
+          "testHashes": {
+            "tests/host/temporary-navigation-package-browser.mjs": "efe9d0bc9258f14e58a837a7287cacf25bf4c723fa671f4dc0b42a1eb8bcf04e",
+            "tests/host/temporary-native-open-observer.mjs": "b736b1a914f885823a5cc6cb24be2da626e8d6d82a6916b93e8053354b9ad2ba"
+          },
+          "databaseEmpty": true,
+          "draftPreserved": true
+        },
+        "challenge": {
+          "status": "PASS",
+          "results": {
+            "exactChallengeMessage": true,
+            "noGrantedFrames": true,
+            "nativeDraftPreserved": true,
+            "sessionReads": 1,
+            "accountsReads": 0,
+            "passiveSnapshotsNoRetry": true,
+            "unrelatedPageUnavailable": true
+          }
+        },
+        "j4Status": "PARTIAL_J4_NOT_ACCEPTED",
+        "sourceHashesMatchLocal": true,
+        "scale": "10k actual SKIPPED/DEFERRED; 100k NOT_RUN/DEFERRED"
       }
     }
   }
