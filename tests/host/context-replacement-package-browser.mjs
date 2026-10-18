@@ -28,7 +28,7 @@ function installTransportExpiryObserver(){
  chrome.runtime.sendMessage=function(...args){
   const request=args[0],requestedAt=Date.now(),result=send(...args);
   if(result?.then)result.then(response=>{try{
-   if(!['HOST_HELLO','HOST_DOCUMENT_RENEW','HOST_FOCUS','HOST_REFRESH'].includes(request?.type))return;
+   if(!['HOST_HELLO','HOST_DOCUMENT_RENEW','HOST_FOCUS','HOST_REFRESH','HOST_UI_IDLE_CHECK','HOST_UI_IDLE_RELEASE'].includes(request?.type))return;
    rows.push({type:request.type,requestedAt,receivedAt:Date.now(),ok:response?.ok===true,state:typeof response?.state==='string'?response.state:null,reason:typeof response?.reason==='string'?response.reason:null,bindingExpiresAt:typeof response?.binding?.expiresAt==='string'?Date.parse(response.binding.expiresAt):null});
    if(rows.length>128)rows.shift();
   }catch{}},()=>{}).catch(()=>{});
@@ -37,7 +37,7 @@ function installTransportExpiryObserver(){
 }
 if(idleProbe){
  const path=join(built.unpacked,'extension/content-entry.mjs'),original=await readFile(path,'utf8'),anchor=' void session.start();';assert.equal(original.split(anchor).length,2);
- instrumentedEntry=original.replace(anchor,(transportExpiry?' ('+installTransportExpiryObserver.toString()+')();\n':'')+' globalThis.__vaiwlIdleProbeSession=Object.freeze({attempt:('+createPreparedDormancyProbe.toString()+')(session)});\n'+anchor);await writeFile(path,instrumentedEntry);
+ instrumentedEntry=original.replace(anchor,' ('+installTransportExpiryObserver.toString()+')();\n'+' globalThis.__vaiwlIdleProbeSession=Object.freeze({attempt:('+createPreparedDormancyProbe.toString()+')(session)});\n'+anchor);await writeFile(path,instrumentedEntry);
 }
 if(dormantMutant){
  const path=join(built.unpacked,'src/host/content-session.mjs'),original=await readFile(path,'utf8'),anchor="if(['scope-not-verified','context-handshake-transport-unavailable'].includes(error?.message))contextPending();else stop();";assert.equal(original.split(anchor).length,2,'denied wake mutation must match exactly one production branch');mutantSession=original.replace(anchor,"if(error?.message==='context-handshake-transport-unavailable')contextPending();else stop();");await writeFile(path,mutantSession);
@@ -107,6 +107,8 @@ try{
   const evaluate=async(expression,contextId)=>{const r=await session.send('Runtime.evaluate',{expression,contextId,returnByValue:true,awaitPromise:true});assert.equal(r.exceptionDetails,undefined);return r.result.value;};
   const isolated=await poll(async()=>{for(const world of worlds.filter(w=>w.auxData?.isDefault===false)){try{if(await evaluate(`window===window.top&&chrome.runtime.id===${JSON.stringify(id)}&&typeof __vaiwlIdleProbeSession==='object'`,world.id))return world.id;}catch{}}return null;});
   assert.equal(await page.evaluate(()=>typeof globalThis.__vaiwlIdleProbeSession),'undefined');
+  assert.equal(await page.evaluate(()=>typeof globalThis.__vaiwlTransportExpiryTrace),'undefined');
+  readTransportExpiryTrace=()=>evaluate('globalThis.__vaiwlTransportExpiryTrace.slice(-128)',isolated);
   report.idlePrecondition=await poll(()=>evaluate('__vaiwlIdleProbeSession.attempt()',isolated));
   assert.deepEqual(report.idlePrecondition,{prepared:true,entered:true});step('actual-dormant-close-before-worker-loss');
   const running=await poll(()=>versions.find(v=>v.scriptURL===`chrome-extension://${id}/extension/worker.mjs`&&v.runningStatus==='running'));const start=versions.length;
@@ -114,7 +116,7 @@ try{
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
   await poll(()=>oldFrame.isDetached());await continuity();assert.equal(await page.locator('[data-va-owned]').count(),0);assert.equal(report.requests.length,1);step('denied-wake-withdraws-old-projection-preserves-native-draft');
   await page.getByRole('button',{name:'Refresh current conversation',exact:true}).click();await poll(()=>report.requests.length===before+1);assert.equal(report.requests.at(-1).status,200);assert.equal(report.requests.at(-1).method,'GET');
-  report.phase='await-fresh-frame-after-native-GET';await poll(()=>frame()&&frame()!==oldFrame);report.phase='fresh-frame-observed';renewed=frame();await page.getByRole('button',{name:'返回工作空间',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);await continuity();step('fresh-native-GET-READY-rebinds-in-reading');await session.detach();
+  report.phase='await-fresh-frame-after-native-GET';await poll(()=>frame()&&frame()!==oldFrame);report.phase='fresh-frame-observed';renewed=frame();await page.getByRole('button',{name:'返回工作空间',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);await continuity();step('fresh-native-GET-READY-rebinds-in-reading');report.transport=await readTransportExpiryTrace();await session.detach();readTransportExpiryTrace=null;
  }else{
  // One user-triggered refresh midway through the real old receipt lifetime.
  // No periodic requests, fake clock, worker keepalive or owner hooks.

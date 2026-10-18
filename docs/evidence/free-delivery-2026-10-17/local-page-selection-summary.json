@@ -3730,5 +3730,38 @@
       "dormant-mutant-anchor-20261018.json.gz",
       "dormant-mutant-targeted-20261018.tap.gz"
     ]
+  },
+  "transportIdleObservation20261018": {
+    "baseCommit": "ee5d4dd17e7398b77eccb7f143eb56d07d47c403",
+    "remoteFailure": "CI39117386458 transport expiry failed before expiry: prepared true, entered false. Existing trace only HELLO and verified REFRESH; no idle response reasons. Cannot infer worker busy vs interference vs transport.",
+    "change": "Existing passive isolated observer now includes HOST_UI_IDLE_CHECK/RELEASE responses. Same returned promise, no request/timer/authority changes; first close refusal still fails.",
+    "local": {
+      "status": "PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY",
+      "idleCheck": true,
+      "idleRelease": true,
+      "expiredFocus": "invalid-host-document",
+      "freshHello": true,
+      "freshRefresh": "verified",
+      "sourceChangedDuringRun": false
+    },
+    "limits": "Local success does not close Linux precondition failure. Actual refusal cause still OPEN. No extra retry or widened deadline; no production change, realworker403/J4/G/U remain incomplete, scale DEFERRED.",
+    "artifacts": [
+      "ci39117386458-transport-precondition-failure.json.gz",
+      "transport-idle-response-local-20261018.json.gz"
+    ],
+    "followup": {
+      "run": 39117794114,
+      "head": "ee5d4dd17e7398b77eccb7f143eb56d07d47c403",
+      "result": "Node/durability/J4 local gates passed; journeys failed only ordinary dormant recovery precondition. Designated mutations correctly killed.",
+      "samePrecondition": "prepared true/entered false before worker stop, no evidence of recovered-scope defect. Actual refusal cause still OPEN.",
+      "change": "Reuse passive response observer for both idle modes; capture on error before close; no preflight retry, request, authority or clock changes.",
+      "local": "PASS_NARROW_OFFLINE_DORMANT_RECOVERY",
+      "sourceChangedDuringRun": false,
+      "artifacts": [
+        "dormant-idle-response-local-20261018.json.gz",
+        "ci39117794114-final-jobs.json.gz",
+        "ci39117794114-dormant-precondition-failure.json.gz"
+      ]
+    }
   }
 }

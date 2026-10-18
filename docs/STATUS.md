@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **CI前台过期恢复失败定位到休眠前置，根因仍OPEN**：CI39117386458实际prepared=true/entered=false，尚未等待lease到期；旧trace仅HELLO/verified REFRESH，不能区分worker忙、状态干扰或传输问题。现只给既有被动观察器补IDLE_CHECK/RELEASE响应类型，首次拒绝仍FAIL、不增请求/时间/重试。当前一次本地原旅程PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY，捕获CHECK/RELEASE成功及invalid-host-document后的新HELLO/verified REFRESH，源码未漂移；不以此覆盖Linux失败。原失败与本地报告存证transportIdleObservation20261018；生产、真实/规模边界未改。 后续CI39117794114 Node/耐久/J4局部门槛通过，journeys仅普通休眠正例同一prepared=true/entered=false前置失败；指定变异已被正确杀死。现两种模式共用被动响应记录，本地普通正例窄PASS/源码未漂移；Linux拒绝原因仍OPEN，不能升级稳定性。
+
 - **休眠permanent-stop变异注入点已修**：CI39116867367原日志证实浏览器尚未启动即旧catch文本匹配数失败，JSON不存在；不是变异存活。现精确匹配当前分支，只把明确scope拒绝改为stop，保留transport-unavailable待命。生产、workflow oracle和期限均未改；隔离MV3在原await-fresh-frame-after-native-GET阶段以J2-observation-timeout失败，前四步通过、GET恰好2次且200、草稿保持、源码未漂移，原CI判定完整通过，17相关合同PASS/0skip/45.818ms。此仅指定变异被杀，不认证真实宿主/完整J4；原失败保留，规模DEFERRED。证据dormantMutationAnchor20261018。
 
 - **CI Node两项维护失败已复现修正**：读取CI39115889594原日志；当前6b43d4a本地全量8539中8537PASS/2FAIL/0skip/78.768s，同为finishPass旧截取锚失效导致SyntaxError、CI步骤清单遗漏已存在布局回归。前者改为截取完整实际函数并提供终结通知测试依赖，生命周期/旧producer断言保留；后者补精确清单，workflow与测试步骤不删改。101受影响定向PASS/0skip/1.319s；修后未重跑完整矩阵，不能写全套通过。当前CI39116867367最终FAIL：Node失败、耐久与J4既定局部门槛成功，journeys仅permanent-stop休眠变异失败；该浏览器失败尚待对应原日志，未据Node修复改判。证据ciContractMaintenance20261018；真实/规模边界不变。
