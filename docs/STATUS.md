@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **4a4d37f / CI39097198183 已完成**：四job成功；正式10k及失败诊断均实际SKIPPED，按用户决定记DEFERRED而非PASS。J4原JSON仍为PARTIAL_J4_NOT_ACCEPTED、automaticForegroundRecovery=NOT_ESTABLISHED、J4-peer-current-scope-timeout；不以job成功覆盖缺口。源码未漂移、build manifest未变。生产context/真实Project闭环仍未取得。此项仅记录既有运行，无重复触发验收。
+
 - **0b0bd46 / CI39095650759：关闭返回竞态跨环境片段闭环通过**：Linux原六项片段检查PASS，源码未漂移，Node与导航job通过；这不代表完整真实Host。正式10k在rev206首轮完整审计在途3423ms时截止，完整审计0；失败后10000库存仅为点时快照。原FAIL保留，后续按用户决定DEFERRED。J4仍23步PARTIAL。新Profile排障已证实浏览器可开HTTP首页，原生AX可读登录菜单，但DOM/截图及只读Page.getFrameTree诊断均超时；工具重置后浏览器数字ID会重排，后续按稳定扩展实例选择，不能仅按名称/数字ID认定专用目录或可信scope。没有取得合法workspace context；尚未认证真实Project闭环。
 
 - **用户执行顺序调整：规模验收DEFERRED，真实闭环优先**：暂停反复执行/优化10k、100k及single-project成员返回30秒联合门禁，保留源码、原阈值和所有历史FAIL；CI自动规模步骤停止，不将跳过写成通过。先解决获授权专用Profile页面读取超时和真实账户/当前空间证据，再完成Project/聊天映射、打开、返回、搜索及安全恢复。小回归、构建、权限/撤权/数据/草稿和基本导航继续，生产预算不变。C2-only无新context应安全等待。受限本人试用准备不代表正式发布就绪。分段计时口径见原DEVELOPMENT_PLAN；尚无新的分段性能认证。此次CI调度与原断言保留的定向检查74/74通过（113.61ms），独立审查无阻断；未重跑规模门禁或完整矩阵。
