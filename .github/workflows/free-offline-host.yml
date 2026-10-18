@@ -137,12 +137,15 @@ jobs:
       - name: Packaged profile layout theme and viewport subcontracts
         if: ${{ !cancelled() }}
         run: node tests/host/ui10-package-matrix-browser.mjs "$RUNNER_TEMP/ui10-matrix.json"
+      - name: Packaged native snippet save search locate and removal
+        if: ${{ !cancelled() }}
+        run: node tests/host/snippets-package-mv3-browser.mjs "$RUNNER_TEMP/snippets-package.json"
       - name: Publish bounded text evidence to logs only
         if: ${{ !cancelled() }}
         run: |
           echo "Source commit: $GITHUB_SHA"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          for name in context-package context-cold context-cold-trace context-cold-recovery context-dormant context-dormant-mutant context-transport-expiry context-transport-expiry-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix; do
+          for name in context-package context-cold context-cold-trace context-cold-recovery context-dormant context-dormant-mutant context-transport-expiry context-transport-expiry-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix snippets-package; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done
   offline-durability-compat:

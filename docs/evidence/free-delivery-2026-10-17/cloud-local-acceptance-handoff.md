@@ -93,3 +93,13 @@ node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-tr
 候选同Chrome156原10k完整闭环通过，revision201、10000 PROJECT、零UNKNOWN/缺失/重复/错属，双审计后余19878.934ms，17成员展开、测量前后同revision、原生导航与唯一返回通过。唯一生产差异为navigation.mjs，fixture相同，源/fixture/manifest运行中无漂移、隔离目录清理成功。报告sourceCommit为基线bdab510，候选精确源码以local-takeover-validation.json及各报告sourceHashes为准，不冒充未修改的bdab510。原HEAD/候选摄取观察21145.232/19357.654ms仅单次描述，双审计余量并未改善，不宣称性能提速。Linux预算根因及跨环境稳定性仍OPEN。
 
 冻结候选完整Node8179/8179、0 fail/skip/cancel，85.510秒；548测试文件，既有tracked输入运行前后摘要一致，新反例文件摘要另列于local-takeover-validation.json。未修改共享schema、恢复/授权栅栏或包公开边界。
+
+## 2026-10-18 本地持续实施（e1b0bfd 后续候选）
+
+已读取 CI39083660931 正式10k/J4原日志与JSON，比较同HEAD/Chrome156的本地结果。Linux10k首轮审计完成、第二轮超时；J4 peer新原生导航仍失败。本地J423步通过但仍PARTIAL，自动foreground未建立。原失败没有改判；详见 [证据索引](local-ci39083660931-evidence-index.json) 和当前 STATUS。
+
+吸收PR18的3文件运行器增量并补worker网络隔离；真实运行发现禁用send候选对象仍被普通body观察调用的产品缺陷。两处自动observe按原配置守卫，未启用send/metadata权限。独立原实现反例失败，候选4项和343相关测试通过，原片段保存→搜索→原生返回定位→改文拒绝→删除六场景通过。新测试进入现有journeys job，不增runner、不启缓存/上传。该修复不宣称解释Linux10k或J4。
+
+本轮真实Profile受限读取连接超时，当前context仍未验证。没有新增私人数据上传或原生写入。保留2258数字副本与原stash，继续原本地目录/Free分支/PR16。
+
+最终冻结完整Node8214/8214（100.88秒，0 fail/skip/cancel）、12/12护栏变异KILLED，输入摘要不变。首轮95.86秒含一项CI场景清单遗漏FAIL，修正后复验；上一批85.51秒，仅报告实测、不宣称加速。原片段浏览器生产/runner摘要与最终候选完全一致。
