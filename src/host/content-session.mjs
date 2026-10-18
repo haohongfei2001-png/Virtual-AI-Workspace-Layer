@@ -167,21 +167,24 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   const check=()=>{remaining();if(!enabled||!live(s)||(s.wakeRevision??0)!==revision||!s.controller.dormantReady()||!adapter.isCurrent())throw Error('stale-dormant-recovery');};
   s.autoIdleOpportunity=false;s.autoSurfaceOpen=false;s.wakePending=true;s.wakePrior=prior;s.ready=false;
   try{return await track(async()=>{
-   check();const hello=await rpc(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq},remaining());check();
+   check();const hello=await handshake(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq},remaining());check();
    if(!reader.isCurrent()||!bindingOK(hello?.binding)||hello.binding.producerToken===prior.producerToken||hello.binding.browserDocumentId!==prior.browserDocumentId||hello.binding.origin!==prior.origin)throw Error('invalid-host-binding');
    s.binding=Object.freeze({...hello.binding});s.identityChallenges.clear();s.identityAuthority=0;
-   const auth=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)},remaining());
+   const auth=await handshake(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)},remaining());
    if(s.identityTask)await withRequestDeadline(()=>s.identityTask,{timeoutMs:remaining(),now:elapsedNow,schedule,cancel});check();
    if(auth?.state!=='verified'||auth.scopeKey!==scope||s.identityPending||!isolatedReader.prepareIdle?.()?.isCurrent?.())throw Error('scope-not-verified');
    clearMigration(s);s.snippetRef=null;s.snippetScopeGrant=null;s.upgraded=null;
    const handle=await s.controller.resumeDormant(adapterOptions(s,s.binding),{mode});
    if(!handle||!live(s)||(s.wakeRevision??0)!==revision)throw Error('dormant-resume-failed');
    s.ready=true;return handle;
-  });}catch(error){if(current===s){if(error?.message==='scope-not-verified')contextPending();else stop();}return null;}finally{s.wakePending=false;s.wakePrior=null;if(s.ready&&live(s))s.focus();}
+  });}catch(error){if(current===s){if(['scope-not-verified','context-handshake-transport-unavailable'].includes(error?.message))contextPending();else stop();}return null;}finally{s.wakePending=false;s.wakePrior=null;if(s.ready&&live(s))s.focus();}
  }
  const bindingFields=b=>({documentToken:b.documentToken,producerToken:b.producerToken,routeEpoch:b.routeEpoch});
  function live(s){return current===s&&!s.abort.signal.aborted&&doc.location.href===s.url;}
  function bindingOK(b,prior){return exactHostRecord(b,['documentToken','producerToken','browserDocumentId','routeEpoch','origin','expiresAt'])&&['documentToken','producerToken','browserDocumentId'].every(k=>tokenOK(b[k]))&&Number.isSafeInteger(b.routeEpoch)&&b.routeEpoch>=0&&b.origin===origin&&Date.parse(b.expiresAt)>now()&&Date.parse(b.expiresAt)<=now()+20000&&(!prior||['documentToken','producerToken','browserDocumentId','routeEpoch','origin'].every(k=>b[k]===prior[k]));}
+ // Classify only transport rejection. Binding/scope validation remains outside
+ // this wrapper, and a dormant handshake keeps its original elapsed budget.
+ function handshake(s,message,timeoutMs=6000){return rpc(s,message,timeoutMs).catch(()=>{throw Error('context-handshake-transport-unavailable');});}
  function rpc(s,message,timeoutMs=6000,owner=null){return track(()=>rpcInner(s,message,timeoutMs,owner),owner);}
  async function rpcInner(s,message,timeoutMs,owner){
   if(!live(s))throw Error('stale-content-session');let abort;
@@ -316,9 +319,8 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    // A C2 transport failure withdraws capabilities but keeps the passive
    // context listener eligible for a later genuine native READY notification.
    // This helper neither retries nor handles explicit negative responses.
-   const handshake=message=>rpc(s,message).catch(()=>{throw Error('context-handshake-transport-unavailable');});
-   const hello=await handshake({v:1,type:'HOST_HELLO',clientId,seq:++seq});if(contextRecovery===true&&exactHostRecord(hello,['ok','reason'])&&hello.ok===false&&hello.reason==='invalidated-during-check')throw Error('context-handshake-superseded');if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
-   const auth=await handshake({v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});if(auth?.state!=='verified')throw Error('scope-not-verified');if(expectedScope!==null&&auth.scopeKey!==expectedScope)throw Error('recovery-scope-changed');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
+   const hello=await handshake(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq});if(contextRecovery===true&&exactHostRecord(hello,['ok','reason'])&&hello.ok===false&&hello.reason==='invalidated-during-check')throw Error('context-handshake-superseded');if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
+   const auth=await handshake(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});if(auth?.state!=='verified')throw Error('scope-not-verified');if(expectedScope!==null&&auth.scopeKey!==expectedScope)throw Error('recovery-scope-changed');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
    if(learnedScope!==s.scopeKey||learnedDocument!==s.binding.browserDocumentId)clearLearned();learnedScope=s.scopeKey;learnedDocument=s.binding.browserDocumentId;
    recentId(s);
    let surface;const adapter=s.adapter=adapterFactory({document:doc,onIdleHint:()=>requestAutomaticIdle(s),onNativePrepare:producer=>nativePrepare(s,producer),priorityConversationId:()=>recentId(s),onOldSendOperation:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding))return;void send({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding)||s.url!==origin+'/')return;void send({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,

@@ -134,3 +134,39 @@ for(const early of [false,true])test('denied dormant scope can recover only afte
 test('explicit stop after denied dormant scope disarms later READY',async()=>{
  const f=fixture({contextRecovery:true});await ready(f);f.setResponse(m=>m.type==='HOST_REFRESH'?{state:'ambiguous'}:f.normal(m));await f.controllerOptions.onWake();await drain();f.client.stop();const before=f.calls.length;await f.client.contextReady();assert.equal(f.calls.length,before);assert.equal(f.controllers,1);
 });
+
+for(const stage of ['HOST_HELLO','HOST_REFRESH'])for(const early of [false,true])test('C2 dormant '+stage+' transport loss waits for fresh READY '+early,async t=>{
+ const f=fixture({contextRecovery:true});t.after(()=>f.client.stop());await ready(f);const old=f.context;let failed=false;
+ f.setResponse(message=>{if(message.type===stage&&!failed){failed=true;if(early)void f.client.contextReady();throw Error('Receiving end does not exist');}return f.normal(message);});
+ await f.controllerOptions.onWake();await drain();assert.equal(f.resumed.length,0,'lost transport cannot resume old mount');assert(f.stops>0);
+ if(!early){assert.equal(f.controllers,1);const count=f.calls.length;await f.advance(1000);assert.equal(f.calls.length,count,'transport failure does not schedule another request');await f.client.contextReady();await drain();}
+ assert.equal(f.controllers,2,'a later genuine context notification must remain usable');assert.equal(f.controllerOptions.initialMode,'reading');
+ assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,3);assert.equal(f.calls.filter(m=>m.type==='HOST_REFRESH').length,stage==='HOST_HELLO'?2:3);
+ await assert.rejects(old.emit({}),/stale-content-session/);
+});
+for(const mode of ['stop','pagehide','user-exit'])test('C2 dormant transport loss cannot bypass '+mode,async t=>{
+ const f=fixture({contextRecovery:true}),held=deferred();t.after(()=>f.client.stop());await ready(f);const old=f.controllerOptions;
+ f.setResponse(m=>m.type==='HOST_HELLO'?held.promise.then(()=>{throw Error('port closed');}):f.normal(m));const pending=old.onWake();await drain();
+ if(mode==='stop')f.client.stop();else if(mode==='pagehide')f.events.get('pagehide')?.({persisted:false});else old.onTerminated('ui-user-exit');
+ held.resolve();await pending;await drain();const count=f.calls.length;await f.client.contextReady();await drain();assert.equal(f.calls.length,count);assert.equal(f.controllers,1);assert.equal(f.resumed.length,0);
+});
+for(const stage of ['HOST_HELLO','HOST_REFRESH'])test('C2 dormant '+stage+' timeout preserves six-second total budget and rejects late success',async t=>{
+ const f=fixture({contextRecovery:true}),held=deferred();t.after(()=>f.client.stop());await ready(f);
+ let captured;f.setResponse(m=>{if(m.type===stage){captured=m;return held.promise;}return f.normal(m);});
+ const pending=f.controllerOptions.onWake();await drain();await f.advance(5999);assert.equal(f.stops,0);assert.equal(f.resumed.length,0);
+ await f.advance(1);await pending;assert.equal(f.controllers,1);assert(f.stops>0);assert.equal(f.resumed.length,0);
+ held.resolve(f.normal(captured));await drain();assert.equal(f.controllers,1);assert.equal(f.resumed.length,0);
+ f.setResponse(f.normal);await f.client.contextReady();await drain();assert.equal(f.controllers,2);assert.equal(f.controllerOptions.initialMode,'reading');
+});
+for(const response of [{ok:false,reason:'invalid-host-document'},{binding:{}},null])test('C2 dormant malformed/negative HELLO remains terminal '+JSON.stringify(response),async t=>{
+ const f=fixture({contextRecovery:true});t.after(()=>f.client.stop());await ready(f);f.setResponse(m=>m.type==='HOST_HELLO'?response:f.normal(m));
+ await f.controllerOptions.onWake();await drain();assert(f.stops>0);const count=f.calls.length;f.setResponse(f.normal);await f.client.contextReady();await drain();assert.equal(f.calls.length,count);assert.equal(f.controllers,1);assert.equal(f.resumed.length,0);
+});
+test('C2 dormant HELLO four seconds leaves only two seconds for REFRESH transport',async t=>{
+ const f=fixture({contextRecovery:true}),hello=deferred(),refresh=deferred();t.after(()=>f.client.stop());await ready(f);
+ f.setResponse(m=>m.type==='HOST_HELLO'?hello.promise:m.type==='HOST_REFRESH'?refresh.promise:f.normal(m));
+ const pending=f.controllerOptions.onWake();await drain();await f.advance(4000);hello.resolve({binding:{...f.binding(),producerToken:'fresh_producer'}});await drain();
+ assert.equal(f.calls.filter(m=>m.type==='HOST_REFRESH').length,2);await f.advance(1999);assert.equal(f.stops,0);await f.advance(1);await pending;
+ assert(f.stops>0);assert.equal(f.resumed.length,0);refresh.resolve({state:'verified',scopeKey:'scope_A'});await drain();assert.equal(f.resumed.length,0);
+ f.setResponse(f.normal);await f.client.contextReady();await drain();assert.equal(f.controllers,2);assert.equal(f.controllerOptions.initialMode,'reading');
+});

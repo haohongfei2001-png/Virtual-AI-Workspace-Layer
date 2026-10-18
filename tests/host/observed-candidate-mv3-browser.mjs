@@ -59,8 +59,12 @@ try{
  assert.equal(report.requests.filter(r=>r.path==='/backend-api/conversations/'+C).length,1);report.checks.noSyntheticContextRecovery=true;
  await page.evaluate(async c=>{await fetch('/backend-api/conversations/'+c+'?num_turns=10&include_has_versions=true',{headers:{'ChatGPT-Account-Id':'account-host-team'}});},C);
  await page.waitForFunction(()=>document.querySelectorAll('iframe[src^="chrome-extension:"]').length===2,null,{timeout:12000});
+ // DOM iframe insertion precedes Playwright's committed frame URL. Use the
+ // existing row deadline to await that navigation, not an immediate frames()
+ // snapshot. The detached-old-frame and new-generation assertions remain.
+ await page.frameLocator('iframe[src="chrome-extension://'+id+'/workspace.html"]').getByText('Native A',{exact:true}).waitFor({state:'attached',timeout:10000});
  const replacement=page.frames().find(f=>f.url()==='chrome-extension://'+id+'/workspace.html');assert(replacement&&!oldFrames.includes(replacement));
- await replacement.getByText('Native A',{exact:true}).waitFor({state:'attached',timeout:10000});assert.equal(await page.locator('textarea').inputValue(),'fixture draft');
+ assert.equal(await page.locator('textarea').inputValue(),'fixture draft');
  report.checks.freshNativeContextRebinds=true;report.recoveryQualification='C2_FRESH_REQUEST_ONLY_NOT_J4';
  report.status='PASS';
 }catch(error){report.status='FAIL';report.error=String(error.stack);process.exitCode=1;}

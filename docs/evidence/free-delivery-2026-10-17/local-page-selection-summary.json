@@ -3135,5 +3135,88 @@
     ],
     "scale": "10k/100k DEFERRED",
     "release": "NOT_RELEASE_READY"
+  },
+  "dormantTransportRecovery20261018": {
+    "base": "f8e5acfb885c431e835cee5af3dfc0c0622dabd3",
+    "rootCause": "Dormant wake HELLO/REFRESH transport rejection called stop and disabled subsequent legitimate C2 READY. Both notification orders reproduced; explicit identity/binding failures remain separately validated.",
+    "fix": "Share initial-handshake transport classifier with dormant wake. Withdraw capabilities and passively wait for fresh context; keep original 6-second total budget, no timer retry or old receipt/grant reuse.",
+    "before": {
+      "tests": 35,
+      "pass": 31,
+      "fail": 4,
+      "durationMs": 77.213791,
+      "testSnapshot": "dormant-transport-before-test.mjs.gz"
+    },
+    "after": {
+      "tests": 178,
+      "pass": 178,
+      "skip": 0,
+      "durationMs": 286.705666,
+      "checks": [
+        "HELLO/REFRESH rejection and both READY orders",
+        "5999/6000 boundary and late success",
+        "HELLO 4000ms plus REFRESH 2000ms shared deadline",
+        "negative/malformed HELLO terminal",
+        "stop/pagehide/user-exit fence"
+      ]
+    },
+    "observerCorrection": {
+      "failure": "iframe src count reached two before Playwright committed replacement frame URL; immediate frames snapshot was empty. Failure finally saw correct URLs but no text, so not proof of product recovery.",
+      "failDurationMs": 1546.65975,
+      "fix": "Existing 10-second row wait uses frameLocator then checks replacement identity. Original 12-second iframe count, detached old frames, exact content and draft assertions retained."
+    },
+    "mv3": {
+      "status": "PASS",
+      "checks": {
+        "noScopeBeforeNativeRequest": true,
+        "canonicalSecondContext": true,
+        "nativeRequestToScopeAndDualFrame": true,
+        "nativeTitleVisible": true,
+        "noAutomaticDetailReads": true,
+        "draftPreserved": true,
+        "readingAndUniqueReturn": true,
+        "knownSearch": true,
+        "coldWorkerClearsOldPrivateFrames": true,
+        "noSyntheticContextRecovery": true,
+        "freshNativeContextRebinds": true
+      },
+      "durationMs": 1369.6982090000001,
+      "sourceChangedDuringRun": false,
+      "recoveryQualification": "C2_FRESH_REQUEST_ONLY_NOT_J4"
+    },
+    "dormantCloseWake": {
+      "status": "UNFORCED_WORKER_DESTRUCTION_AND_WAKE_OBSERVED",
+      "results": [
+        {
+          "name": "actual-content-frame-ack-worker-release",
+          "status": "PASS"
+        },
+        {
+          "name": "trusted-return-original-frames-fresh-wake",
+          "status": "PASS"
+        },
+        {
+          "name": "new-worker-and-fresh-fixture-views",
+          "status": "PASS"
+        }
+      ],
+      "naturalWorkerSleep": "NOT_ESTABLISHED",
+      "sourceChangedDuringRun": false,
+      "runnerChangedDuringRun": false,
+      "wake": {
+        "sameFrames": true,
+        "sameEditor": true,
+        "draft": "NATURAL_IDLE_LOCAL_DRAFT",
+        "open": 2
+      }
+    },
+    "dormantObservationMs": 60002.13770800001,
+    "review": "Independent read-only review passed for product and observer. Requested 4+2 second budget counterexample added.",
+    "sourceHashes": {
+      "src/host/content-session.mjs": "7feda25988b83468e7a47d5133de3e712a12b5aa9fd23e546fcacc25f2967f45",
+      "tests/host/content-dormant-resume.test.mjs": "179b63ac45c6c560d80a2418f3f4cea522ae919d05b5938bd255293293f906fd",
+      "tests/host/observed-candidate-mv3-browser.mjs": "dc324485c66160701867512cf5c75d442af095e25d56f312085b4f16750fd984"
+    },
+    "boundary": "Real profile NOT_RUN this batch; last accounts 403 remains blocker. J2 original failure OPEN; J4 without fresh context NOT_ESTABLISHED. Legacy close/wake test is instrumented and unforced destruction is not natural sleep certification. Scale DEFERRED, Free NOT_RELEASE_READY."
   }
 }
