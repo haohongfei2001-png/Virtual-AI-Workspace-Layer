@@ -4,7 +4,9 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
-- **Shared最终根重复编码已合并，Linux/Host待验**：已确认的摄取CPU热点链中，同一新根旧路径4次完整编码；现capture一次并保全部旧root/bucket、metadata/ordinal、原manifest容量校验，用最终同份canonical bytes做16Mi界限与原SHA256，冻结后在原事务写入。没有缓存新IDB字节或授权，也未改schema/hash算法/耐久。3200+50与64×50 changes纯函数全records/root/checksum字节一致，完整root编码4→1；无插桩真实IDB固定AB/BA/AB登记中位33.5→32.2ms，仅约3.9%局部收益，六次完整3250 facts摘要一致，不宣称Host提速。212相关/16独立反例通过；冻结完整Node8321/8321、零fail/skip/cancel、130.53秒且输入未漂移；12护栏变异KILLED，独立审查无阻断。旧导入锚点失败保留并恢复兼容；未重复本地100k挑绿，现有10k/J4/返回转换FAIL等待新候选Linux证据。[精确来源](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
+- **7e3f116 / CI39094526488 已终结FAIL；原生返回竞态修复候选**：正式10k rev205/10000正确PROJECT，首轮完整审计3786.12ms通过，第二轮在途211.73ms时原30秒耗尽，未measurement；J4仍23步PARTIAL、automatic foreground NOT_ESTABLISHED。片段旅程被动日志首次确证可信关闭原workspace后同节点立即重开，queued toggle合并open→open，原监听漏失关闭；日志未直接标记重开调用者，独立owner挂起RPC反例确认旧current-entry可晚到重开。现current-entry只读检查当前真实呈现/授权/原WindowProxy，beforetoggle同步撤旧意图，实际closed再发布状态与建唯一返回；不改显式展示、阈值或原生handler。260定向通过，冻结完整Node8332/8332、零fail/skip/cancel、232.44秒，输入无漂移（上批130.53秒，未证明流程提速）；独立审查无阻断；最终候选隔离Mac Chrome156六项原片段旅程通过，源码/包稳定，12护栏变异KILLED。Linux新候选待验，不关闭10k/J4/100k或真实宿主关口。原失败与新反例均保留。[证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
+
+- **Shared最终根重复编码已合并，后续Linux仍FAIL**：已确认的摄取CPU热点链中，同一新根旧路径4次完整编码；现capture一次并保全部旧root/bucket、metadata/ordinal、原manifest容量校验，用最终同份canonical bytes做16Mi界限与原SHA256，冻结后在原事务写入。没有缓存新IDB字节或授权，也未改schema/hash算法/耐久。3200+50与64×50 changes纯函数全records/root/checksum字节一致，完整root编码4→1；无插桩真实IDB固定AB/BA/AB登记中位33.5→32.2ms，仅约3.9%局部收益，六次完整3250 facts摘要一致，不宣称Host提速。212相关/16独立反例通过；冻结完整Node8321/8321、零fail/skip/cancel、130.53秒且输入未漂移；12护栏变异KILLED，独立审查无阻断。旧导入锚点失败保留并恢复兼容；未重复本地100k挑绿，后续CI39094526488仍未通过10k/J4/返回转换，不能以局部收益关闭关口。[精确来源](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
 
 - **返回转换诊断接线，未宣称修复**：Mac Chrome156单次隔离被动诊断未复现Linux片段旅程失败：可信关闭按钮指向原workspace，open→closed后reading与唯一返回可见，12事件零丢弃，随后六项原检查通过；不能覆盖Linux FAIL。现有runner接入最多128事件及有限节点身份快照，不读正文、不改点击/等待/超时，原旅程去除精确诊断包围后的checksum保持。46项相关生命周期/CI测试通过，初次导入与checksum测试适配失败保留；独立审查无阻断。下一次Linux执行取得转换事件前不猜因，不因此重复全矩阵。
 

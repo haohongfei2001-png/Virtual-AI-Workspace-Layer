@@ -56,6 +56,18 @@ test('ordinary workspace and reading presentation remain distinct without native
  for(const mode of ['workspace','reading'])listener({type:'HOST_PRESENT_SURFACE',documentToken:'doc',producerToken:'producer',routeEpoch:1,mode},{id:'extension'},r=>replies.push(r));
  assert.deepEqual(replies,[{ok:true},{ok:true}]);assert.deepEqual(f.presentations,['workspace','reading']);assert.equal(f.calls.length,before);assert.equal(f.planned,0);f.client.stop();
 });
+test('current workspace check is read-only and keeps exact session authorization',async()=>{
+ const f=fixture(),factory=f.options.controllerFactory;let checks=0,visible=true;
+ f.options.controllerFactory=options=>({...factory(options),isWorkspacePresented:()=>{checks++;return visible;}});
+ // Recreate with the wrapped controller before starting a session.
+ const client=createHostContentSession(f.options);await client.start();
+ const listener=[...f.listeners][0],message={type:'HOST_PRESENT_SURFACE',documentToken:'doc',producerToken:'producer',routeEpoch:1,mode:'workspace-current'},replies=[];
+ listener(message,{id:'extension'},r=>replies.push(r));visible=false;listener(message,{id:'extension'},r=>replies.push(r));
+ assert.deepEqual(replies,[{ok:true},{ok:false}]);assert.equal(checks,2);assert.deepEqual(f.presentations,[]);
+ for(const patch of [{producerToken:'wrong'},{extra:true},{routeEpoch:2}])listener({...message,...patch},{id:'extension'},r=>assert.deepEqual(r,{ok:false}));
+ listener(message,{id:'other'},()=>assert.fail('wrong sender replied'));assert.equal(checks,2);
+ client.stop();listener(message,{id:'extension'},()=>{});assert.equal(checks,2);assert.deepEqual(f.presentations,[]);
+});
 test('presentation rejects wrong sender, extra fields, invalid mode/binding and stale route, expiry or stop',async()=>{
  const message={type:'HOST_PRESENT_SURFACE',documentToken:'doc',producerToken:'producer',routeEpoch:1,mode:'workspace'};
  const f=fixture();await f.client.start();const listener=[...f.listeners][0],replies=[];

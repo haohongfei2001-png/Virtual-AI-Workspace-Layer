@@ -69,19 +69,24 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    }
    const m={handle,surfaces,markers,style,styleText:style.textContent,onSurrender,inspection:{...inspection,historyMaskRoots:[...inspection.historyMaskRoots],protectedRegions:[...inspection.protectedRegions]}};mounts.set(id,m);
    const workspace=surfaces.find(s=>s.role==='workspace')?.node;
+   // toggle is queued and can merge close/reopen into open→open. Invalidate
+   // old presentation intent at the synchronous, non-cancellable close edge.
+   // The owner must not hide/reopen surfaces from this notification.
+   let closing=false;
+   const workspaceClosing=e=>{if(closing||e.target!==workspace||e.oldState!=='open'||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||!workspace.matches(':popover-open'))return;closing=true;try{onSurrender({reason:'native-reading',phase:'closing'});}catch{}finally{closing=false;}};
    const workspaceClosed=e=>{if(e.target!==workspace||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||workspace.matches(':popover-open'))return;try{onSurrender({reason:'native-reading'});}catch{}};
    // Match the reading-before-composer keyboard order without relocating any
    // native node. Appending both frames after the native document puts forward
    // traversal through browser chrome before it can reach the composer.
    let before=inspection.composer;
    while(before?.parentElement&&before.parentElement!==doc.body)before=before.parentElement;
-   workspace?.addEventListener('toggle',workspaceClosed);doc.head.append(style);
+   workspace?.addEventListener('beforetoggle',workspaceClosing);workspace?.addEventListener('toggle',workspaceClosed);doc.head.append(style);
    for(const s of surfaces)if(before?.parentElement===doc.body)doc.body.insertBefore(s.node,before);else doc.body.append(s.node);
    const inspectLayer=()=>{if(hasNativeLayer()||doc.querySelector(nativeOpen)||markers.some(({root,nativeClass,nativeStyle,nativeHidden,nativeAriaHidden})=>!root.isConnected||root.ownerDocument!==doc||root.getAttribute('class')!==nativeClass||root.getAttribute('style')!==nativeStyle||root.getAttribute('hidden')!==nativeHidden||root.getAttribute('aria-hidden')!==nativeAriaHidden))surrender(m);};
    const observer=new win.MutationObserver(inspectLayer);observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class','style','hidden','aria-hidden','aria-expanded']});
    const beforeToggle=e=>{if(e.newState==='open'&&!e.target.closest?.('[data-va-owned]'))hide(m);};doc.addEventListener('beforetoggle',beforeToggle,true);
    const nativeInput=e=>{if(protectedNodes.some(n=>n===e.target||n.contains(e.target))){hide(m);try{onSurrender({reason:'native-input'});}catch{}}};doc.addEventListener('pointerdown',nativeInput,true);doc.addEventListener('focusin',nativeInput,true);
-   m.cleanup=()=>{workspace?.removeEventListener('toggle',workspaceClosed);observer.disconnect();doc.removeEventListener('beforetoggle',beforeToggle,true);doc.removeEventListener('pointerdown',nativeInput,true);doc.removeEventListener('focusin',nativeInput,true);};return handle;
+   m.cleanup=()=>{workspace?.removeEventListener('beforetoggle',workspaceClosing);workspace?.removeEventListener('toggle',workspaceClosed);observer.disconnect();doc.removeEventListener('beforetoggle',beforeToggle,true);doc.removeEventListener('pointerdown',nativeInput,true);doc.removeEventListener('focusin',nativeInput,true);};return handle;
   },
   // Only directory-relevant records reach this method from the adapter. Release
   // an affected mask before discovery; never treat cached visibility as evidence.

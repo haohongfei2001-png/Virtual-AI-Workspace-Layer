@@ -201,7 +201,9 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    const valid=()=>active&&elapsedNow()-started<6000&&context.isCurrent()&&views.get(message.mountId)===entry&&entry.owner.current()===current&&!entry.pending&&entry.currentEntryEligible;
    try{
     if(!presentSurface)throw Error('host-presentation-unavailable');
-    const shown=await presentSurface({parentFrame:context.parentFrame,binding:context.binding,mode:'workspace'});
+    // Entry calibration follows a workspace the user already opened. A delayed
+    // request must not reopen it after a newer native-reading exit.
+    const shown=await presentSurface({parentFrame:context.parentFrame,binding:context.binding,mode:'workspace-current'});
     if(!valid())throw Error('ui-current-entry-expired');
     if(shown?.ok!==true)throw Error('host-presentation-unavailable');
     const version=await readService.version(context.scope,{guard:valid});

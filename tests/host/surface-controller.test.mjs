@@ -275,3 +275,50 @@ for(const patch of [{origin:'https://chatgpt.com'},{source:{}}])test('foreign '+
  f.message('workspace',{...patch,data:{type:'VAIWL_UI_SUSPEND',role:'workspace'}});assert.equal(f.calls.dispose,0);assert.deepEqual(f.calls.terminations,[]);
  held.resolve({ok:true});assert.equal((await starting)?.id,'mount');await f.both();assert.equal(f.calls.show,1);assert.deepEqual(f.calls.terminations,[]);f.controller.stop();
 });
+
+test('native-reading closing invalidates intent without DOM writes; actual closed creates one return',async()=>{
+ const f=fixture();let open=true;const published=[];
+ f.surface.visibility=()=>({workspace:open,sidebar:true});f.bridge.surfaceState=value=>{published.push(value);return {ok:true};};
+ await f.controller.start({});await f.both();const original=f.controller.intentGuard(),before={...f.calls},publicationCount=published.length;
+ assert.equal(original(),true);assert.equal(f.controller.isWorkspacePresented(),true);
+ f.surrender({reason:'native-reading',phase:'closing'});
+ assert.equal(original(),false);assert.equal(f.controller.isWorkspacePresented(),false);
+ assert.equal(f.slot.children.length,0,'beforetoggle must not create the return while the browser still reports open');
+ for(const key of ['show','reading','suspend','dispose'])assert.equal(f.calls[key],before[key],key);
+ assert.equal(published.length,publicationCount,'old open visibility is not published as a completed close');
+ const reading=f.controller.readingGuard();assert.equal(reading(),true);
+ f.surrender({reason:'native-reading',phase:'closing'});assert.equal(reading(),true,'duplicate close intent cannot invalidate the new reading guard');
+ open=false;f.surrender({reason:'native-reading'});assert.equal(f.slot.children.length,1);const button=f.slot.children[0];
+ assert.equal(reading(),true);assert.equal(published.at(-1).workspace,false);
+ f.surrender({reason:'native-reading'});assert.equal(f.slot.children.length,1);assert.equal(f.slot.children[0],button);assert.equal(reading(),true);
+ for(const key of ['show','reading','suspend','dispose'])assert.equal(f.calls[key],before[key],key);
+ f.controller.stop();
+});
+
+test('isWorkspacePresented is read-only and rejects missing authority, closed surface, portal and stale document',async()=>{
+ const absent=fixture();assert.equal(absent.controller.isWorkspacePresented(),false);await absent.controller.start({});
+ absent.surface.visibility=()=>({workspace:true,sidebar:true});absent.message();await drain();assert.equal(absent.controller.isWorkspacePresented(),false);assert.equal(absent.calls.show,0);absent.controller.stop();
+ for(const [index,mutate] of [
+  f=>{f.surface.visibility=()=>({workspace:false,sidebar:true});},
+  f=>{f.surface.visibility=()=>null;},
+  f=>{f.surface.visibility=()=>{throw Error('invalid-handle');};},
+  f=>f.layer(true),
+  f=>{f.binding.expiresAt=new Date(0).toISOString();},
+  f=>{f.doc.location.href+='c/replaced';},
+  f=>f.region(),
+  f=>{f.frames[0].frame.contentWindow={};},
+  f=>{f.frames[0].frame.isConnected=false;}
+ ].entries()){
+  const f=fixture();f.surface.visibility=()=>({workspace:true,sidebar:true});await f.controller.start({});await f.both();
+  assert.equal(f.controller.isWorkspacePresented(),true);const before={...f.calls};mutate(f);
+  assert.equal(f.controller.isWorkspacePresented(),false,`case ${index}`);assert.equal(f.slot.children.length,0);
+  for(const key of ['show','reading','suspend','dispose'])assert.equal(f.calls[key],before[key],key);
+  f.controller.stop();
+ }
+});
+
+test('isWorkspacePresented rejects a synchronous close during its visibility read',async()=>{
+ const f=fixture();await f.controller.start({});await f.both();const before=f.calls.show;
+ f.surface.visibility=()=>{f.surrender({reason:'native-reading',phase:'closing'});return {workspace:true,sidebar:true};};
+ assert.equal(f.controller.isWorkspacePresented(),false);assert.equal(f.calls.show,before);assert.equal(f.slot.children.length,0);f.controller.stop();
+});

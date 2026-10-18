@@ -133,3 +133,11 @@ CI39093078440正式10k FAIL：rev206/10000正确PROJECT，首轮21页完整审�
 同生产代码原100k FAIL，最后预算内tail rev233/11131、完整审计0；失败后rev234/11185不是预算内完成。私有真实IDB阶段探针发现operation等待仅2.5ms，占本次新增50条register→done的9.84%；既有50条无需该查询，故拒绝未经收益证明的提前查询改动。详见既有local-page-selection-summary.json及其原件SHA256，不改变原计划和验收。
 
 Shared最终根候选复用原Native最终记录构造方式，保持所有校验及原事务：完整root编码4→1，全部写入字节一致；实际IDB登记中位33.5→32.2ms只为局部结果。冻结Node8321/8321、130.53秒、输入无漂移，12护栏变异KILLED；仍需新候选Linux Host验证，不能覆盖CI39093078440的10k和返回转换失败。返回转换运行器已有128事件上限的被动证据接线，原点击/等待/checksum断言保留，Mac诊断未复现不作为修复证据。
+
+## 2026-10-18：原生关闭与晚到current-entry呈现收口
+
+CI39094526488（7e3f116）正式10k仍在第二轮审计途中耗尽原30秒；J4自动foreground仍未建立。片段失败的被动事件显示原workspace可信关闭后立即重开、toggle合并；独立延迟RPC反例确认current-entry原实现能重开已关闭的界面。修复将其改为经过原授权检查的只读确认，并在beforetoggle同步撤销旧意图，实际closed后再报告visibility及建立唯一返回。保留显式呈现与原生行为。
+
+260定向测试通过；Mac隔离实际MV3原六项片段检查通过且源码/包稳定，12护栏变异检出；新Linux候选仍待验。原CI、RED与候选原始证据归入同目录local-reading-race-*及local-ci39094526488-*，具体源码摘要见local-page-selection-summary.json。真实Profile只读连接尚未取得context证据，物理IME/PAIA/跨端未运行；不以模拟或新native GET冒充相应验收。
+
+本批冻结完整Node8332/8332、零fail/skip/cancel、232.44秒，输入摘要未变化；上批130.53秒，不能据不同负载作提速结论。所有证据使用精确源码哈希，caller sourceCommit为测试前7e3f116，不冒充候选已提交SHA。

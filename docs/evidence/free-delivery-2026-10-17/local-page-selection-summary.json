@@ -153,7 +153,14 @@
     "local-shared-final-root-idb-ab.mjs.gz": "e95dc0fc2b7b0c1a47402b6a0962d9128c66aff5a008985886689d277d3557f0",
     "local-shared-final-root-full-node.tap.gz": "ac283ab03d4a990786b254ebba1fa262ab00ba261973ef64cd4d87a0fb7769bc",
     "local-shared-final-root-full-node-integrity.json.gz": "25e573a18c28410cd62f1b35e143a319292b8eeda04a449c3272155399379d9e",
-    "local-shared-final-root-guards.json.gz": "6713c2e715a9231821d9408266c22af697389cd0159712dba860464d849ddfaa"
+    "local-shared-final-root-guards.json.gz": "6713c2e715a9231821d9408266c22af697389cd0159712dba860464d849ddfaa",
+    "local-ci39094526488-durability.log.gz": "7a013f4ead35fddf19aeb605d7914e196c48383ad09e03404893ebd2bbc29e3c",
+    "local-ci39094526488-formal10k.json.gz": "91e5c8b53c8bf60da98736b2dd91899359cfd76cb896ccd7a24e5a825465a2fd",
+    "local-ci39094526488-diagnostic10k.json.gz": "538b022515977e817c024730817521e41a370d1d678545151ad0637db325a33f",
+    "local-ci39094526488-j4.log.gz": "f059a664cb8eb9064faae0bbbc1f509511a6fdd19f541c0e458b1dea5eedcc21",
+    "local-ci39094526488-j4.json.gz": "866533c669369df51150bb2441b681e4c2d58fc5fc76dac10efaba39264e5f73",
+    "local-ci39094526488-meta.json.gz": "aaeca7446824847636ebea42c6ade6ba53fcbcc7a7688ec891cf120e82225ee7",
+    "local-ci39094526488-journeys.log.gz": "5934e23a7e1924483f5d6101470b88b5a9d46e1db0056db1b6a4893c75079c75"
   },
   "followup100k": {
     "sourceCommit": "7c676ecd2e583feb734a6cfc367a3fe43b65961c",
@@ -753,7 +760,14 @@
     "local-shared-final-root-idb-ab.mjs.gz": "archive-bytes",
     "local-shared-final-root-full-node.tap.gz": "archive-bytes",
     "local-shared-final-root-full-node-integrity.json.gz": "archive-bytes",
-    "local-shared-final-root-guards.json.gz": "archive-bytes"
+    "local-shared-final-root-guards.json.gz": "archive-bytes",
+    "local-ci39094526488-durability.log.gz": "archive-bytes",
+    "local-ci39094526488-formal10k.json.gz": "archive-bytes",
+    "local-ci39094526488-diagnostic10k.json.gz": "archive-bytes",
+    "local-ci39094526488-j4.log.gz": "archive-bytes",
+    "local-ci39094526488-j4.json.gz": "archive-bytes",
+    "local-ci39094526488-meta.json.gz": "archive-bytes",
+    "local-ci39094526488-journeys.log.gz": "archive-bytes"
   },
   "archiveSHA256": {
     "local-selection-native-pagination-comparison.mjs.gz": "6cb54e5a2e673adef34ec6f8f4c3a8a2523b442801674f4c28e82ac48d024db0",
@@ -826,12 +840,19 @@
     "local-shared-final-root-idb-ab.mjs.gz": "e95dc0fc2b7b0c1a47402b6a0962d9128c66aff5a008985886689d277d3557f0",
     "local-shared-final-root-full-node.tap.gz": "ac283ab03d4a990786b254ebba1fa262ab00ba261973ef64cd4d87a0fb7769bc",
     "local-shared-final-root-full-node-integrity.json.gz": "25e573a18c28410cd62f1b35e143a319292b8eeda04a449c3272155399379d9e",
-    "local-shared-final-root-guards.json.gz": "6713c2e715a9231821d9408266c22af697389cd0159712dba860464d849ddfaa"
+    "local-shared-final-root-guards.json.gz": "6713c2e715a9231821d9408266c22af697389cd0159712dba860464d849ddfaa",
+    "local-ci39094526488-durability.log.gz": "7a013f4ead35fddf19aeb605d7914e196c48383ad09e03404893ebd2bbc29e3c",
+    "local-ci39094526488-formal10k.json.gz": "91e5c8b53c8bf60da98736b2dd91899359cfd76cb896ccd7a24e5a825465a2fd",
+    "local-ci39094526488-diagnostic10k.json.gz": "538b022515977e817c024730817521e41a370d1d678545151ad0637db325a33f",
+    "local-ci39094526488-j4.log.gz": "f059a664cb8eb9064faae0bbbc1f509511a6fdd19f541c0e458b1dea5eedcc21",
+    "local-ci39094526488-j4.json.gz": "866533c669369df51150bb2441b681e4c2d58fc5fc76dac10efaba39264e5f73",
+    "local-ci39094526488-meta.json.gz": "aaeca7446824847636ebea42c6ade6ba53fcbcc7a7688ec891cf120e82225ee7",
+    "local-ci39094526488-journeys.log.gz": "5934e23a7e1924483f5d6101470b88b5a9d46e1db0056db1b6a4893c75079c75"
   },
   "hashNote": "Historical rawSHA256 entries used both decompressed and archive bytes. Values preserved; explicit per-file basis and uniform archiveSHA256 added after verifying both, no evidence payload changed.",
   "sharedFinalRootCandidate": {
     "baseCommit": "af58a31",
-    "status": "LOCAL_VALIDATED_PENDING_LINUX_HOST",
+    "status": "LOCAL_VALIDATED_LINUX_FORMAL10K_FAIL",
     "rootCause": "Same newly constructed Shared root encoded four times across update validation, snapshot validation and final record. Capture final root once; preserve all root structure and old manifest bounds; reuse final canonical bytes for unchanged checksum and final size. No change to fresh IDB validation, schema, authority or transaction durability.",
     "pureCount": {
       "evidence": "PURE_FUNCTION_ENCODING_COUNT_NOT_IDB_OR_HOST_PERFORMANCE",
@@ -917,6 +938,103 @@
     "productionHashes": {
       "src/data/shared-ref-directory.mjs": "995be9ccc613720e97b807d8a98ed80a336ec79ebb13b4521316548848f10626",
       "src/data/shared-directory-writer.mjs": "9e933860ea5b331ee78f3df09431b65925e3930e22ee55b11b692c9c764bf1b8"
+    },
+    "linux": {
+      "run": 39094526488,
+      "sourceCommit": "7e3f116f7e2d5a86f48ff2fd45051e8011259074",
+      "status": "FAIL",
+      "phase": "visible-native-member-progress",
+      "memberProgressDiagnostic": {
+        "stage": "audit",
+        "stageStarted": 35276.86182,
+        "inFlight": true,
+        "frameGeneration": 1,
+        "auditAttempts": 2,
+        "lastTail": {
+          "status": "OBSERVED_TAIL_ONLY",
+          "revision": 205,
+          "total": 10001,
+          "frameGeneration": 1
+        },
+        "audits": [
+          {
+            "status": "PASS_INDEX_AUDIT_ONLY",
+            "revision": 205,
+            "pages": 21,
+            "distinctRefs": 10000,
+            "projectMembership": 10000,
+            "unknownMembership": 0,
+            "missingRefs": 0,
+            "wrongProjectMembership": 0,
+            "elapsedMs": 3786.1222700000035,
+            "frameGeneration": 1
+          }
+        ],
+        "attempts": 178,
+        "stableRevision": 205,
+        "elapsedMs": 29004.667498000003,
+        "stageElapsedMs": 211.7346250000046
+      },
+      "diagnosticSeparate": {
+        "stage": "audit",
+        "stageStarted": 32640.007138,
+        "inFlight": true,
+        "frameGeneration": 1,
+        "auditAttempts": 1,
+        "lastTail": {
+          "status": "OBSERVED_TAIL_ONLY",
+          "revision": 205,
+          "total": 10001,
+          "frameGeneration": 1
+        },
+        "audits": [],
+        "attempts": 183,
+        "stableRevision": null,
+        "elapsedMs": 28846.179208999998,
+        "stageElapsedMs": 3188.7514569999985
+      },
+      "sourceChangedDuringRun": false,
+      "fixtureChangedDuringRun": false,
+      "manifestChangedDuringRun": false,
+      "measurement": "NOT_ENTERED",
+      "j4": "23 steps PARTIAL; automaticForegroundRecovery NOT_ESTABLISHED / current-scope-timeout",
+      "comparisonLimit": "Previous formal first audit3877.35ms vs current3786.12ms is not controlled speedup evidence; both fail second full audit in flight at original deadline."
+    }
+  },
+  "nativeReadingRaceCandidate": {
+    "baseCommit": "7e3f116f7e2d5a86f48ff2fd45051e8011259074",
+    "linuxFailure": "CI39094526488: trusted close original workspace node1, beforetoggle open->closed at659.3ms then closed->open661.3ms; queued toggle open->open670.6ms; caller not directly traced",
+    "rootCauseReproduction": "Independent owner test holds current-entry presentation RPC then closes workspace: old implementation reopens. Mount listener waiting for coalesced toggle loses close intent.",
+    "fix": "Current-entry uses read-only authenticated current-workspace check; synchronous beforetoggle invalidates intent, actual toggle close publishes state and creates return. Exact captured WindowProxy checked. Explicit presentation unchanged.",
+    "targeted": {
+      "passed": 260,
+      "failed": 0,
+      "seconds": 3.111313583
+    },
+    "browser": {
+      "status": "PASS",
+      "checks": 6,
+      "sourceChangedDuringRun": false,
+      "buildManifestUnchanged": true,
+      "evidence": "local-reading-race-browser.json.gz"
+    },
+    "linuxCandidate": "NOT_RUN",
+    "remaining": [
+      "10k full journey original30s FAIL",
+      "100k complete inventory FAIL",
+      "J4 worker-loss automatic foreground NOT_ESTABLISHED",
+      "real Profile context, physical IME, actual PAIA and cross-device NOT_RUN"
+    ],
+    "fullNode": {
+      "passed": 8332,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "seconds": 232.440101084,
+      "unchanged": true,
+      "previousBatchSeconds": 130.52984575,
+      "comparison": "Different candidate and concurrent workload; no speedup claim",
+      "evidence": "local-native-reading-race-full-node-integrity.json.gz"
     }
   }
 }
