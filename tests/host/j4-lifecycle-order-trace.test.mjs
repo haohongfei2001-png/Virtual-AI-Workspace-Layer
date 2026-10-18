@@ -42,3 +42,12 @@ test('actual content session preserves rebind generations and pending-ready tran
  const mounts=globalThis.__vaiwlJ4ContentLifecycle.rows.filter(r=>r.stage==='mount-ready');assert.equal(mounts.length,2);assert(mounts[1].run>first.run);
  client.contextPending();await client.contextReady();assert.equal(calls.filter(x=>x==='HOST_HELLO').length,3);client.stop();const before=calls.length;await client.contextReady();assert.equal(calls.length,before);assert(!JSON.stringify(globalThis.__vaiwlJ4ContentLifecycle).includes('SECRET'));assert(!JSON.stringify(globalThis.__vaiwlJ4ContentLifecycle).includes('PRIVATE'));
 });
+
+test('stop diagnostic retains challenge hint clearing and rejects absent or duplicate exact anchor',async()=>{
+ const path=J4_ORDER_PATHS[3],source=await readFile(path,'utf8'),anchor='function stop(){verificationWaitURL=null;contextResumeAllowed=false;';
+ assert.equal(source.split(anchor).length,2);
+ const modified=instrumentJ4LifecycleOrderSource(path,source);
+ assert(modified.includes("function stop(){__j4State('stop');verificationWaitURL=null;contextResumeAllowed=false;"),'passive stop trace precedes original clearing operations');
+ assert.throws(()=>instrumentJ4LifecycleOrderSource(path,source.replace(anchor,'function stop(){contextResumeAllowed=false;')),/j4-order-anchor-mismatch/);
+ assert.throws(()=>instrumentJ4LifecycleOrderSource(path,source+'\n'+anchor),/j4-order-anchor-mismatch/);
+});

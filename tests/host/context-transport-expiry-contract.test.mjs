@@ -46,11 +46,22 @@ test('real foreground transport modes use noDefaults native visibility and own b
 
 test('foreground-only probe really leaves the composer without weakening stale-transport attribution',async()=>{
  const workflow=await readFile(new URL('../../.github/workflows/free-offline-host.yml',import.meta.url),'utf8');
- const heading=candidate.indexOf("await page.locator('main > header > h1').click()"),idle=candidate.indexOf("await poll(()=>evaluate('__vaiwlIdleProbeSession.attempt()',isolated))");
+ const heading=candidate.indexOf("await page.locator('main > header > h1').click()"),idle=candidate.indexOf("const preparedProbe=createWorkerPreparedDormancyProbe(");
  assert(heading>0&&heading<idle);assert(candidate.includes("document.querySelector('#composer').contains(document.activeElement)"));
  assert(candidate.includes("assert.equal(composerFocused,false,'foreground probe must leave the native composer');await continuity()"));
  assert.equal(workflow.split('r.foregroundFocusIsolation?.nativeHeadingClicked!==true').length-1,2);
  assert.equal(workflow.split('r.foregroundFocusIsolation?.composerFocused!==false').length-1,2);
  assert(workflow.includes("t.type==='HOST_FOCUS'&&t.requestedAt>r.transportOwner.focusedAt&&t.ok===false&&t.reason==='invalid-host-document'"));
  assert(workflow.includes("r.transport?.some(t=>t.type==='HOST_HELLO'&&t.requestedAt>r.transportOwner.focusedAt)"));
+});
+
+
+test('transport expiry normal and mutant share worker readiness before their one-shot close',()=>{
+ const block=between(candidate,'const workerReadinessHashes={};','const C=');
+ assert(block.includes('if(idleProbe){'),'worker readiness must cover both idle probe modes');
+ const branch=between(candidate,' if(transportExpiry){\n  const initialProof=',' }else if(dormantRecovery){');
+ assert(branch.includes('createWorkerPreparedDormancyProbe({workerIdle:'));
+ assert(branch.includes('report.idlePrecondition=await observeWorkerPreparedDormancy(poll,preparedProbe)'));
+ assert(!branch.includes("await poll(()=>evaluate('__vaiwlIdleProbeSession.attempt()',isolated))"));
+ assert(candidate.includes('const poll=fn=>j2Poll(fn,15000)'),'the original shared observation budget remains 15 seconds');
 });

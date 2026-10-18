@@ -5200,5 +5200,92 @@
       "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-challenge-status-browser-c2-ready.json.gz",
       "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-challenge-status-browser-verified.json.gz"
     ]
+  },
+  "ciObserverRepair20261019": {
+    "status": "LOCAL_VERIFIED_CI_PENDING",
+    "failedCI": {
+      "run": 39155331740,
+      "head": "56f10734ea29ab6d8d3efffdecfe6f7797eceaf0",
+      "node": {
+        "tests": 8679,
+        "pass": 8676,
+        "fail": 3,
+        "elapsedMs": 165474.391254
+      },
+      "jobs": {
+        "node-contracts": "FAIL",
+        "offline-journeys": "FAIL",
+        "offline-j4-lifecycle": "SUCCESS",
+        "offline-durability-compat": "SUCCESS"
+      },
+      "challengeStatusBrowser": "PASS exactChallengeMessage / session1 accounts0 / draft / no frames / passive snapshots"
+    },
+    "rootCauses": [
+      "J4 passive stop diagnostic used pre-change exact prefix and failed before execution; updated exact prefix preserves both original clearing operations and prior trace position.",
+      "Transport-expiry mutant checked content prepared then attempted close while worker busy; one actual CHECK rejected ui-release-busy before foreground. The existing worker-ready prerequisite covered dormantRecovery only."
+    ],
+    "fix": "Use the same passive worker isIdle prerequisite for both idleProbe modes, original 15s total observation and terminal one-shot close; production code unchanged. Verify instrumented runtime and both compiled chunks.",
+    "targeted": {
+      "pass": 33,
+      "fail": 0,
+      "skip": 0,
+      "elapsedMs": 585.210416
+    },
+    "pairOracle": {
+      "status": "PASS_EXACT_EXISTING_CI_NORMAL_AND_MUTANT_ORACLES",
+      "sourceHashesEqual": true,
+      "fixtureHashesEqual": true,
+      "normal": "PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY",
+      "mutantPhase": "await-fresh-foreground-grant-and-VIEW",
+      "mutantError": "Error: J4-peer-current-scope-timeout",
+      "normalReadiness": {
+        "kind": "PASSIVE_TEST_PACKAGE_IS_IDLE_ONLY",
+        "hashes": {
+          "src/runtime/host-worker-runtime.mjs": "d9abee0d64368de06420fa69da81280a120588c461869746091387bedc0513b9",
+          "extension/worker.mjs": "531a9566b419bf8683cc10ddda45703f1831b1edc19a5f45976cb8d40d733136",
+          "extension/classic-runtime.js": "7f70d51e85d74db5c18adfefc1e2d39245e7697b9c31d57ea99f673da4e204c3"
+        },
+        "samples": [
+          {
+            "at": 1792349294192,
+            "idle": true
+          }
+        ],
+        "totalSamples": 1
+      },
+      "mutantReadiness": {
+        "kind": "PASSIVE_TEST_PACKAGE_IS_IDLE_ONLY",
+        "hashes": {
+          "src/runtime/host-worker-runtime.mjs": "d9abee0d64368de06420fa69da81280a120588c461869746091387bedc0513b9",
+          "extension/worker.mjs": "98b1648bf517da38e8f7c8b41e9be09e375b07e4a80114e907c7e9987158f6ec",
+          "extension/classic-runtime.js": "d160eb725326e97381bdabc0fd1900eb84820370910586a1fa99b7971a4dd60b"
+        },
+        "samples": [
+          {
+            "at": 1792349340669,
+            "idle": true
+          }
+        ],
+        "totalSamples": 1
+      }
+    },
+    "independentReview": "No blocking findings; exact unchanged workflow normal and designated mutant oracles passed.",
+    "scope": "Offline instrumented test readiness; not natural worker sleep, real host, or full J4 acceptance.",
+    "realHost": "BLOCKED challenge unchanged; no new real profile access",
+    "scale": "DEFERRED",
+    "evidence": [
+      "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-ci39155331740-summary.json.gz",
+      "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-ci39155331740-node.log.gz",
+      "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-ci39155331740-journeys.log.gz",
+      "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-ci39155331740-normal.json.gz",
+      "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-ci39155331740-mutant.json.gz",
+      "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-j4-lifecycle-anchor-red.log.gz",
+      "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-j4-lifecycle-anchor-green.log.gz",
+      "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-transport-worker-precondition-red.tap.gz",
+      "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-ci-observer-fixes-targeted.tap.gz",
+      "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-transport-ready-normal.json.gz",
+      "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-transport-ready-mutant.json.gz",
+      "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-transport-ready-pair-oracle.json.gz"
+    ]
   }
 }
