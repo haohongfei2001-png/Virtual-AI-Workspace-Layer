@@ -1,0 +1,100 @@
+{
+  "kind": "L_SYNTHETIC_PEER_HISTORY_ORDER_DIAGNOSTIC",
+  "acceptance": "NOT_ESTABLISHED",
+  "ciCause": "NOT_ESTABLISHED",
+  "ownerSourceSha256": "314525a55616261333e5cc98535ba5205a6f161f44d798f91226da112623d066",
+  "scope": "Original owner; explicit browser event/frame/body doubles; no browser, profile, network or owner modifications",
+  "rows": [
+    {
+      "priorReceipt": false,
+      "order": "history-first",
+      "lookup": "current",
+      "fault": null,
+      "newSelectionVerified": true,
+      "oldReceiptStillCurrent": false,
+      "signals": [
+        "PENDING",
+        "READY"
+      ],
+      "bodyAssociations": 1,
+      "classification": "NEW_NATIVE_RECEIPT",
+      "listenersReleased": true
+    },
+    {
+      "priorReceipt": false,
+      "order": "send-first",
+      "lookup": "current",
+      "fault": null,
+      "newSelectionVerified": false,
+      "oldReceiptStillCurrent": false,
+      "signals": [
+        "PENDING"
+      ],
+      "bodyAssociations": 0,
+      "classification": "NO_RECEIPT_FAIL_CLOSED",
+      "listenersReleased": true
+    },
+    {
+      "priorReceipt": false,
+      "order": "send-first",
+      "lookup": "old",
+      "fault": null,
+      "newSelectionVerified": false,
+      "oldReceiptStillCurrent": false,
+      "signals": [
+        "PENDING"
+      ],
+      "bodyAssociations": 0,
+      "classification": "NO_RECEIPT_FAIL_CLOSED",
+      "listenersReleased": true
+    },
+    {
+      "priorReceipt": true,
+      "order": "history-first",
+      "lookup": "current",
+      "fault": null,
+      "newSelectionVerified": true,
+      "oldReceiptStillCurrent": false,
+      "signals": [
+        "PENDING",
+        "PENDING",
+        "READY"
+      ],
+      "bodyAssociations": 1,
+      "classification": "NEW_NATIVE_RECEIPT",
+      "listenersReleased": true
+    },
+    {
+      "priorReceipt": true,
+      "order": "send-first",
+      "lookup": "current",
+      "fault": null,
+      "newSelectionVerified": true,
+      "oldReceiptStillCurrent": false,
+      "signals": [
+        "PENDING",
+        "PENDING",
+        "READY"
+      ],
+      "bodyAssociations": 1,
+      "classification": "NEW_NATIVE_RECEIPT",
+      "listenersReleased": true
+    },
+    {
+      "priorReceipt": true,
+      "order": "send-first",
+      "lookup": "old",
+      "fault": null,
+      "newSelectionVerified": true,
+      "oldReceiptStillCurrent": false,
+      "signals": [
+        "PENDING",
+        "PENDING",
+        "READY"
+      ],
+      "bodyAssociations": 1,
+      "classification": "NEW_NATIVE_RECEIPT",
+      "listenersReleased": true
+    }
+  ]
+}
