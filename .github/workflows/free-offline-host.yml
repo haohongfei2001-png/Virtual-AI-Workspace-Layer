@@ -138,7 +138,9 @@ jobs:
         run: J2_TERMINAL_MODE=cancelled node tests/host/j2-fast-retry-package.mjs "$RUNNER_TEMP/j2-fast-cancelled.json"
       - name: Packaged profile layout theme and viewport subcontracts
         if: ${{ !cancelled() }}
-        run: node tests/host/ui10-package-matrix-browser.mjs "$RUNNER_TEMP/ui10-matrix.json"
+        run: |
+          node tests/host/ui10-package-matrix-browser.mjs "$RUNNER_TEMP/ui10-matrix.json"
+          node tests/host/visible-actions-package-browser.mjs "$RUNNER_TEMP/visible-actions.json"
       - name: Passive local extension status (isolated MV3)
         if: ${{ !cancelled() }}
         run: |

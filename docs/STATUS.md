@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **2026-10-19实际可见入口与人工资产面板已修**：发现侧栏片段、设置片段/备份/恢复/关闭及搜索定位只有aria-label、没有文字或图标；旧9项6RED，实际MV3准确复现空入口。现补显式文字与可伸缩按钮，并将备份/恢复从UA裸样式改为扩展内15px标题及原视觉token。最终309定向PASS/0skip/3130.877ms；同源码隔离MV3在1440/420明暗下贯通设置→片段/备份/恢复→返回，原文档/编辑器/草稿/File及原生动作计数不变，6.765s（不含清理），源码/包/测试hash稳定；独审无阻断。截图是观察，不是新golden；原RED/首次sandbox启动失败保留。新版J3可见定位断言待CI，不声称加总测试或前后提速。完整v2.7仍开放，新增明确缺口为并列列表展开容量17→5回退；不改64KiB/200条边界。真实Profile未访问/更新，403仍未解、规模DEFERRED。见原证据visibleActions20261019。
+
 - **2026-10-19同源码CI39156126409已通过**：精确HEAD `4b3bc4b1ed16e1d08daf6e1e6bb1a2bb37a94b7a` 的四job全部SUCCESS；Node8681/8681、0fail/skip、156943.977ms，12指定guard变异全KILLED，原失败诊断与前台恢复变异、新挑战状态及现有连续旅程均通过原CI要求。关闭本批CI回归，不追溯改判39155331740，不等于完整81项/J4、自然休眠、真实宿主或发布验收。正式10k及其诊断实际SKIPPED/DEFERRED。真实Profile未新增访问、挑战仍未解决。证据挂在ciObserverRepair20261019原入口；本次仅归档结果，后续文档提交skip CI避免同产品重复矩阵。
 
 - **2026-10-19 CI39155331740失败已定位并修测试接线，待新CI**：56f1073的J4/耐久job成功，Node与journeys失败；新挑战提示实际Linux MV3已PASS。Node8679项8676PASS/3FAIL/165474.391ms均为J4被动stop诊断旧精确前缀失配；现保持记录位置及两项清除，缺失/重复anchor继续拒绝。前台授权变异原JSON只有CHECK ui-release-busy、entered=false，未到foreground；原worker空闲前置仅覆盖另一休眠模式，现统一两种idleProbe，原15秒共享窗口、单次close与拒绝终态不变，完整核对插桩源和编译产物。33定向PASS/0skip/585.210ms，正常/指定变异实际headless配对通过原CI两个oracle、同source/fixture；变异在要求的foreground阶段被杀死，无新HELLO。生产代码未修改，独审无阻断。全部原CI与RED失败保留，不改判原运行；不将此插桩前置当自然休眠/真实恢复或性能改进。真实403仍阻塞、规模DEFERRED。见原证据ciObserverRepair20261019。

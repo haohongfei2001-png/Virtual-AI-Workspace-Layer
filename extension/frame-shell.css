@@ -27,3 +27,39 @@ main > div { min-width: 0; min-height: 0; box-sizing: border-box; }
 }
 body { color: var(--ink); background: var(--surface); font: calc(14px * var(--vaiwl-font-scale, 1))/1.5 var(--vaiwl-font-family, system-ui); }
 button, input, select, textarea { font: inherit; color: inherit; }
+
+/* Manual-asset panels use the same type scale and spacing as saved snippets.
+   Restrict these rules to extension-owned containers, never native controls. */
+:is([data-vaiwl-frame-backup], [data-vaiwl-frame-recovery]) > section {
+  box-sizing: border-box; max-width: 780px; margin: 0 auto; padding: 16px;
+  overflow-wrap: anywhere;
+}
+:is([data-vaiwl-frame-backup], [data-vaiwl-frame-recovery]) h2 {
+  font-size: calc(15px * var(--vaiwl-font-scale, 1)); font-weight: 600; margin: 0 0 12px;
+}
+:is([data-vaiwl-frame-backup], [data-vaiwl-frame-recovery]) h3 {
+  font-size: calc(14px * var(--vaiwl-font-scale, 1)); font-weight: 550; margin: 0 0 6px;
+}
+:is([data-vaiwl-frame-backup], [data-vaiwl-frame-recovery]) p {
+  color: var(--muted); margin: 8px 0 12px;
+}
+[data-vaiwl-frame-recovery] > section > section {
+  border: 1px solid var(--line); border-radius: 13px; padding: 12px; margin: 12px 0;
+}
+:is([data-vaiwl-frame-backup], [data-vaiwl-frame-recovery]) :is(button, a) {
+  box-sizing: border-box; display: inline-block; max-width: 100%; min-height: 34px;
+  padding: 6px 10px; margin: 2px 6px 2px 0; border: 1px solid var(--line);
+  border-radius: 8px; color: inherit; background: var(--bubble);
+  text-decoration: none; overflow-wrap: anywhere; cursor: pointer;
+}
+:is([data-vaiwl-frame-backup], [data-vaiwl-frame-recovery]) [hidden] { display: none; }
+:is([data-vaiwl-frame-backup], [data-vaiwl-frame-recovery]) :is(button, a):hover { background: var(--hover); }
+:is([data-vaiwl-frame-backup], [data-vaiwl-frame-recovery]) :is(button, a, input):focus-visible {
+  outline: 2px solid var(--focus); outline-offset: 2px;
+}
+:is([data-vaiwl-frame-backup], [data-vaiwl-frame-recovery]) button:disabled { opacity: .4; cursor: default; }
+[data-vaiwl-frame-backup] input[type=file] { box-sizing: border-box; max-width: 100%; min-width: 0; margin: 4px 0; }
+@media (max-width: 360px) {
+  :is([data-vaiwl-frame-backup], [data-vaiwl-frame-recovery]) > section { padding: 10px; }
+  [data-vaiwl-frame-recovery] > section > section { padding: 10px; }
+}
