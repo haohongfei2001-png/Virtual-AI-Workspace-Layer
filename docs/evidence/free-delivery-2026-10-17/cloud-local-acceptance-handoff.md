@@ -111,3 +111,5 @@ node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-tr
 本批冻结结果：Node8227/8227/108.45秒、12护栏变异全KILLED，输入未漂移；首次诊断锚点3FAIL保留并修复。最终10k双审计rev203/10000正确PROJECT/零UNKNOWN、原窗口剩12.93秒，导航返回通过；Node并行下总观察48.61秒不作速度比。J4仍23步PARTIAL，自动foreground失败，新原生GET恢复不替代。见[本批证据](local-ci39086077996-scheduling-summary.json)。
 
 48dd920远端CI39087927722终态FAIL：Node/导航通过；J4原门禁通过仍PARTIAL、自动foreground失败。正式10k双审计rev206/10000正确PROJECT后只余819ms，在project-card-member-rendering超时；诊断双审计rev205后余58ms返回失败。门槛不变，未进入measurement。见[本次CI原证据](local-ci39087927722-summary.json)。C2-only的worker receipt丢失不能用fresh roster/旧cache恢复peer scope；需合法当前context证明，真实Profile连接仍是对应缺口。
+
+2026-10-18 自动休眠入口实施：**B4.F/UI-11自动关闭闭环候选已落地**：原有休眠release/wake引擎缺少产品自动入口；现复用原链，在已证明C3配置、双surface关闭ACK、队列排空与明确clear输入风险后提供一次机会。busy/失败不循环重试，默认真实profile和C2-only不启用；无scope扩权。独立RED同时发现风险token观察失效后可复活，现永久锁存失效。冻结Node8256/8256、零fail/skip/cancel，实测204.81秒（上批108.45秒，不声称提速），输入未漂移；12护栏变异全KILLED。隔离Chrome156自动路径不用测试关闭API，清空两frame私有根，脱离调试的60秒窗口内原worker销毁，唯一返回后新worker与原frame/editor恢复，3项观察通过；naturalWorkerSleep仍NOT_ESTABLISHED，真实宿主NOT_RUN，不等于完整UI-11/J4或Free验收。[精确证据](local-automatic-dormancy-summary.json)。

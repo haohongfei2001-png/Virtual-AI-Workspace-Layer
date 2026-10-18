@@ -10,8 +10,10 @@ import {nativeBrowserArgs,endpointFromActivePort} from './native-visibility-brow
 import {cleanupIsolatedBrowser,cleanupOwnedResources} from './isolated-browser-cleanup.mjs';
 import {packageHost} from '../../extension/package.mjs';
 const hash=b=>createHash('sha256').update(b).digest('hex'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const automatic=process.env.FREE_AUTOMATIC_DORMANCY==='1';
+const expectedDraft=automatic?'':'NATURAL_IDLE_LOCAL_DRAFT';
 const runner=new URL(import.meta.url),runnerHash=hash(await readFile(runner));
-const report={requirement:'UI-11',evidence:'S_INSTRUMENTED_MV3_EXPLICIT_CLOSE_WAKE',profile:'LEGACY_OFFLINE',realChatGPT:'NOT_RUN',naturalWorkerSleep:'NOT_ESTABLISHED',status:'NOT_RUN',windowMs:60000,forcedWorkerStop:false,workerDebuggerAttached:false,productionTimersModified:false,results:[]};
+const report={requirement:'UI-11',evidence:automatic?'S_INSTRUMENTED_MV3_AUTOMATIC_CLOSE_WAKE':'S_INSTRUMENTED_MV3_EXPLICIT_CLOSE_WAKE',automaticDormancy:automatic,profile:'LEGACY_OFFLINE',realChatGPT:'NOT_RUN',naturalWorkerSleep:'NOT_ESTABLISHED',status:'NOT_RUN',windowMs:60000,forcedWorkerStop:false,workerDebuggerAttached:false,productionTimersModified:false,results:[]};
 let server,guard,child,socket,profileDir,seq=0,ready=false;const pending=new Map(),events=[],contexts=[];let eventOverflow=false;
 function command(method,params={},sessionId,timeoutMs=6000){
  if(!ready)return Promise.reject(Error('CDP-not-ready'));
@@ -21,12 +23,12 @@ const evaluate=async(sessionId,expression,contextId,timeoutMs=6000)=>{const r=aw
 async function poll(read,label,ms=15000){const deadline=performance.now()+ms;while(performance.now()<deadline){const value=await read();if(value&&performance.now()<deadline)return value;await sleep(50);}throw Error('probe-timeout:'+label);}
 try{
  server=await createHostFixtureServer();guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});const dir=await mkdtemp('/private/tmp/vaiwl-natural-idle-');profileDir=join(dir,'profile');await mkdir(profileDir);
- const built=packageHost(join(dir,'package'),{offlineOrigin:server.origin}),manifestPath=join(built.unpacked,'build-manifest.json'),manifestBytes=await readFile(manifestPath),manifest=JSON.parse(manifestBytes);report.sourceHashes=manifest.sourceHashes;report.buildManifestHash=hash(manifestBytes);report.runnerHash=runnerHash;report.package=built;report.fixture=server.manifest;
+ const built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,...(automatic?{offlineFirstSend:true}: {})}),manifestPath=join(built.unpacked,'build-manifest.json'),manifestBytes=await readFile(manifestPath),manifest=JSON.parse(manifestBytes);report.sourceHashes=manifest.sourceHashes;report.buildManifestHash=hash(manifestBytes);report.runnerHash=runnerHash;report.package=built;report.fixture=server.manifest;
  // A single test-only API exposure in the extension's isolated world. No timer,
  // grant, producer, body, adapter or controller behavior is replaced.
  const entryPath=join(built.unpacked,'extension/content-entry.mjs'),entry=await readFile(entryPath,'utf8'),anchor=' void session.start();';
- assert.equal(entry.split(anchor).length,2);const instrumented=entry.replace(anchor,' globalThis.__vaiwlIdleProbeSession=Object.freeze({prepareIdle:()=>!!session.prepareIdle(),enterDormant:()=>session.enterDormant()});\n'+anchor);
- await writeFile(entryPath,instrumented);report.instrumentation={path:'extension/content-entry.mjs',before:hash(entry),after:hash(instrumented),patch:'Expose only boolean readiness and explicit close in isolated world',originalArchiveIsInstrumented:false,productionAutomaticEntry:false};
+ assert.equal(entry.split(anchor).length,2);const probe=automatic?' globalThis.__vaiwlIdleProbeSession=Object.freeze({prepareIdle:()=>!!session.prepareIdle()});\n':' globalThis.__vaiwlIdleProbeSession=Object.freeze({prepareIdle:()=>!!session.prepareIdle(),enterDormant:()=>session.enterDormant()});\n';const instrumented=entry.replace(anchor,probe+anchor);
+ await writeFile(entryPath,instrumented);report.instrumentation={path:'extension/content-entry.mjs',before:hash(entry),after:hash(instrumented),patch:automatic?'Expose only read-only boolean readiness in isolated world':'Expose only boolean readiness and explicit close in isolated world',originalArchiveIsInstrumented:false,productionAutomaticEntry:automatic};
  const changed=[];for(const [path,expected] of Object.entries(manifest.files))if(hash(await readFile(join(built.unpacked,path)))!==expected)changed.push(path);
  assert.deepEqual(changed,['extension/content-entry.mjs']);report.loadedPackageChanges=changed;
  child=spawn(process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',nativeBrowserArgs(profileDir,{headed:false,historicalNetworkGuard:guard.config}),{stdio:['ignore','ignore','pipe']});let launchError;child.on('error',e=>{launchError=e;});child.stderr.resume();
@@ -45,9 +47,38 @@ try{
  await poll(()=>evaluate(sessionId,"document.querySelectorAll('[data-va-owned]:popover-open').length===2"),'dual-surfaces-after-user-entry');
  report.initialSurfaces=await evaluate(sessionId,"({open:document.querySelectorAll('[data-va-owned]:popover-open').length,frames:[...document.querySelectorAll('[data-va-owned] iframe')].map(n=>n.src)})");assert.equal(report.initialSurfaces.frames.length,2);
  report.externalRejected=await evaluate(sessionId,"fetch('https://example.com/').then(()=>false,()=>true)");assert(report.externalRejected);assert(guard.snapshot().denied>0);
- await evaluate(sessionId,"globalThis.idleOriginal={document,editor:document.querySelector('textarea'),frames:[...document.querySelectorAll('[data-va-owned] iframe')]};idleOriginal.editor.focus();true");await command('Input.insertText',{text:'NATURAL_IDLE_LOCAL_DRAFT'},sessionId);
+ await evaluate(sessionId,"globalThis.idleOriginal={document,editor:document.querySelector('textarea'),frames:[...document.querySelectorAll('[data-va-owned] iframe')]};true");
+ if(automatic){
+  const point=await evaluate(sessionId,"(()=>{const r=idleOriginal.editor.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()");
+  await command('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...point},sessionId);await command('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...point},sessionId);
+ }else await evaluate(sessionId,"idleOriginal.editor.focus();true");
+ await command('Input.insertText',{text:'NATURAL_IDLE_LOCAL_DRAFT'},sessionId);
+ if(automatic){
+  // Only the owned fixture draft is edited. The deletion is a real browser
+  // input event; no session close method or product clock is invoked.
+  await evaluate(sessionId,"idleOriginal.editor.select();true");
+  await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Backspace',code:'Backspace',windowsVirtualKeyCode:8,nativeVirtualKeyCode:8},sessionId);
+  await command('Input.dispatchKeyEvent',{type:'keyUp',key:'Backspace',code:'Backspace',windowsVirtualKeyCode:8,nativeVirtualKeyCode:8},sessionId);
+  const point=await evaluate(sessionId,"(()=>{const r=document.querySelector('main h1').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()");
+  await command('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...point},sessionId);await command('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...point},sessionId);
+  report.automaticNativePreparation=await evaluate(sessionId,"({draftEmpty:idleOriginal.editor.value==='',nativeNonControlFocus:document.activeElement!==idleOriginal.editor&&!document.activeElement.closest('input,textarea,button,a,select,[contenteditable],iframe,[data-va-owned]')})");
+  assert.deepEqual(report.automaticNativePreparation,{draftEmpty:true,nativeNonControlFocus:true});
+ }
  await poll(()=>evaluate(sessionId,"document.querySelectorAll('[data-va-owned]:popover-open').length===0"),'native-reading');const isolated=await poll(async()=>{const matches=[];for(const c of contexts.filter(c=>c.sessionId===sessionId&&c.auxData?.isDefault===false&&c.auxData.frameId===topFrameId)){try{if(await evaluate(sessionId,`window===window.top&&chrome.runtime.id===${JSON.stringify(id)}&&typeof globalThis.__vaiwlIdleProbeSession==='object'`,c.id))matches.push(c);}catch{}}assert(matches.length<=1);return matches[0]??null;},'isolated-session');
  assert.equal(await evaluate(sessionId,"typeof globalThis.__vaiwlIdleProbeSession"),'undefined');
+ if(automatic){
+  assert.deepEqual(await evaluate(sessionId,"Object.keys(__vaiwlIdleProbeSession)",isolated.id),['prepareIdle']);
+  report.closeAttempts=[];
+  report.clearedViews=[];
+  for(const role of ['workspace','sidebar']){
+   const target=await poll(async()=>{const matches=(await command('Target.getTargets')).targetInfos.filter(t=>t.type==='iframe'&&t.url===prefix+role+'.html');assert(matches.length<=1);return matches[0];},'automatic-clear-target-'+role);
+   const attached=await command('Target.attachToTarget',{targetId:target.targetId,flatten:true});
+   try{await poll(()=>evaluate(attached.sessionId,"document.querySelector('main')?.childElementCount===0"),'automatic-private-root-clear-'+role);report.clearedViews.push({role,children:0});}finally{await command('Target.detachFromTarget',{sessionId:attached.sessionId});}
+  }
+  // Empty original frames prove clearing, not worker release by themselves.
+  // The detached observation and fresh return below must also succeed.
+  report.results.push({name:'automatic-original-frame-private-roots-cleared',status:'PASS'});
+ }else{
  await poll(()=>evaluate(sessionId,"!!__vaiwlIdleProbeSession.prepareIdle()",isolated.id),'content-ready-to-close');
  report.closeAttempts=[];
  // Read-only preflight may see a transient worker view still in flight. Retry
@@ -55,6 +86,7 @@ try{
  report.closeResult=await poll(async()=>{const result=await evaluate(sessionId,"__vaiwlIdleProbeSession.enterDormant()",isolated.id,10000);report.closeAttempts.push({ok:result===true});return result;},'explicit-close-with-worker-preflight',6000);
  assert.equal(report.closeResult,true,'explicit close must reach actual worker release');
  report.results.push({name:'actual-content-frame-ack-worker-release',status:'PASS'});
+ }
  await command('Target.detachFromTarget',{sessionId});sessionId=null;
  const initialTargets=(await command('Target.getTargets')).targetInfos.filter(t=>t.url.startsWith(prefix));
  assert(initialTargets.some(t=>t.targetId===worker.targetId),'original worker must exist at window start');
@@ -67,16 +99,17 @@ try{
  assert.equal(eventOverflow,false,'bounded event log overflow invalidates observation');
  assert(!windowEvents.some(e=>e.params.targetInfo?.url?.startsWith(prefix)&&e.params.targetInfo.attached),'extension target attached during observation');
  const stopped=windowEvents.some(e=>e.method==='Target.targetDestroyed'&&e.params.targetId===worker.targetId);
+ if(automatic)assert.equal(stopped,true,'automatic close must permit original worker destruction in the unchanged detached window');
  const extensionTargets=new Map(initialTargets.map(t=>[t.targetId,{type:t.type,url:t.url,attached:t.attached}]));
  for(const e of windowEvents){const t=e.params.targetInfo;if(t?.url?.startsWith(prefix))extensionTargets.set(t.targetId,{type:t.type,url:t.url,attached:t.attached});}
  report.observation={elapsedMs,initialWorkerDestroyed:stopped,extensionTargets:[...extensionTargets.values()],targetEvents:events.slice(startEvent).filter(e=>e.method==='Target.targetDestroyed'||e.method==='Target.targetCreated'||e.method==='Target.targetCrashed').map(e=>({at:e.at-started,method:e.method,targetId:e.params.targetId??e.params.targetInfo?.targetId,type:e.params.targetInfo?.type??null})),hostSessionDetached:true};
- ({sessionId}=await command('Target.attachToTarget',{targetId,flatten:true}));report.native=await evaluate(sessionId,"({sameDocument:document===idleOriginal.document,sameEditor:document.querySelector('textarea')===idleOriginal.editor,draft:idleOriginal.editor.value,originalFramesConnected:idleOriginal.frames.map(f=>f.isConnected),open:document.querySelectorAll('[data-va-owned]:popover-open').length,returnCount:document.querySelectorAll('[aria-label=\"返回工作空间\"]').length})");assert.equal(report.native.sameDocument,true);assert.equal(report.native.sameEditor,true);assert.equal(report.native.draft,'NATURAL_IDLE_LOCAL_DRAFT');assert.equal(report.native.open,0);
+ ({sessionId}=await command('Target.attachToTarget',{targetId,flatten:true}));report.native=await evaluate(sessionId,"({sameDocument:document===idleOriginal.document,sameEditor:document.querySelector('textarea')===idleOriginal.editor,draft:idleOriginal.editor.value,originalFramesConnected:idleOriginal.frames.map(f=>f.isConnected),open:document.querySelectorAll('[data-va-owned]:popover-open').length,returnCount:document.querySelectorAll('[aria-label=\"返回工作空间\"]').length})");assert.equal(report.native.sameDocument,true);assert.equal(report.native.sameEditor,true);assert.equal(report.native.draft,expectedDraft);assert.equal(report.native.open,0);
  assert.equal(report.native.returnCount,1);assert.deepEqual(report.native.originalFramesConnected,[true,true]);
  const point=await evaluate(sessionId,"(()=>{const r=document.querySelector('[aria-label=\"返回工作空间\"]').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()");
  await command('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...point},sessionId);await command('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...point},sessionId);
  await poll(()=>evaluate(sessionId,"document.querySelectorAll('[data-va-owned]:popover-open').length===2"),'fresh-wake-dual-surfaces');
  report.wake=await evaluate(sessionId,"({sameFrames:idleOriginal.frames.every(f=>f.isConnected&&[...document.querySelectorAll('[data-va-owned] iframe')].includes(f)),sameEditor:idleOriginal.editor===document.querySelector('textarea'),draft:idleOriginal.editor.value,open:document.querySelectorAll('[data-va-owned]:popover-open').length})");
- assert.equal(report.wake.sameFrames,true);assert.equal(report.wake.sameEditor,true);assert.equal(report.wake.draft,'NATURAL_IDLE_LOCAL_DRAFT');report.results.push({name:'trusted-return-original-frames-fresh-wake',status:'PASS'});
+ assert.equal(report.wake.sameFrames,true);assert.equal(report.wake.sameEditor,true);assert.equal(report.wake.draft,expectedDraft);report.results.push({name:'trusted-return-original-frames-fresh-wake',status:'PASS'});
  const afterTargets=(await command('Target.getTargets')).targetInfos;
  const workers=afterTargets.filter(t=>t.type==='service_worker'&&t.url===prefix+'extension/worker.mjs');assert.equal(workers.length,1);assert.equal(workers[0].attached,false);if(stopped)assert.notEqual(workers[0].targetId,worker.targetId);report.recoveredWorker={targetId:workers[0].targetId,newTarget:workers[0].targetId!==worker.targetId};
  assert(!windowEvents.some(e=>e.method==='Target.targetCrashed'&&e.params.targetId===worker.targetId),'worker crash is not idle');

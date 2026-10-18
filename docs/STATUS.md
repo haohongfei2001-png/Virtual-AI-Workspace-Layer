@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **B4.F/UI-11自动关闭闭环候选已落地**：原有休眠release/wake引擎缺少产品自动入口；现复用原链，在已证明C3配置、双surface关闭ACK、队列排空与明确clear输入风险后提供一次机会。busy/失败不循环重试，默认真实profile和C2-only不启用；无scope扩权。独立RED同时发现风险token观察失效后可复活，现永久锁存失效。冻结Node8256/8256、零fail/skip/cancel，实测204.81秒（上批108.45秒，不声称提速），输入未漂移；12护栏变异全KILLED。隔离Chrome156自动路径不用测试关闭API，清空两frame私有根，脱离调试的60秒窗口内原worker销毁，唯一返回后新worker与原frame/editor恢复，3项观察通过；naturalWorkerSleep仍NOT_ESTABLISHED，真实宿主NOT_RUN，不等于完整UI-11/J4或Free验收。[精确证据](evidence/free-delivery-2026-10-17/local-automatic-dormancy-summary.json)。
+
 - **48dd920新CI39087927722已结束FAIL**：Node/导航旅程通过，J4原门禁通过但仍23步PARTIAL，自动foreground失败、新原生hop恢复通过。正式10k已完成rev206/10000正确PROJECT双完整审计、零UNKNOWN/遗漏，但原总窗口仅剩819ms，随后project-card-member-rendering超时，未进入measurement；诊断rev205双审计后仅剩58ms、返回阶段失败，不替代正式结果。不同于上次PENDING_MEMBER/audit0，本次已收齐并审计，但整个旅程仍未过；下一步减少摄取/审计/返回链实际耗时，不延长预算。[本次原证据](evidence/free-delivery-2026-10-17/local-ci39087927722-summary.json)。
 
 - **前后台调度与恢复同旅程修复候选**：隐藏文档只暂停下一目录片段，保留游标、在途请求、body/send和原30秒pass期限，暂停不冒充drained。独立原版4RED→修复通过，真实owner到期不续验证通过。挂载/休眠恢复等待期间的foreground原先被记下但未在ready后消费，两个独立RED确认；现在成功ready后走原FOCUS授权/单飞，失败或stop不触发。497相关回归通过，旧焦点竞争反例现检查补验证及mutant差异。原10k同环境单次对照：原版17.120秒/rev216，目录候选18.391秒/rev207；均10000正确PROJECT、双审计、原期限内导航/返回通过，**没有证明提速，不关闭Linux FAIL**。最终冻结Node8227/8227、零fail/skip/cancel、108.45秒，输入摘要一致，12护栏变异全KILLED；首次完整回归3项诊断锚点失配已修，原失败保留。最终同生产源码10k双审计rev203/10000正确PROJECT、原窗口剩12.93秒、导航返回通过；与Node并行时总摄取观察48.61秒，不作速度比。J4仍23步PARTIAL、自动foreground FAIL、新原生导航PASS，未关闭主关口。[本批原证据](evidence/free-delivery-2026-10-17/local-ci39086077996-scheduling-summary.json)。
