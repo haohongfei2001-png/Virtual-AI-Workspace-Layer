@@ -2,7 +2,7 @@
 // manifest must not add privileges, execution entry points, or page-world code.
 // Keep this policy independent of buildHost, so the verifier checks the package
 // actually supplied by its caller rather than trusting a builder-produced flag.
-const requiredKeys=['manifest_version','name','version','minimum_chrome_version','permissions','host_permissions','background','content_scripts','web_accessible_resources','content_security_policy'];
+const requiredKeys=['action','manifest_version','name','version','minimum_chrome_version','permissions','host_permissions','background','content_scripts','web_accessible_resources','content_security_policy'];
 // These informational fields do not add an execution or permission surface.
 // Chrome still validates their values. In particular, update_url is not here.
 const metadataKeys=['description','short_name','version_name','author','homepage_url','icons','default_locale','key'];
@@ -25,13 +25,14 @@ function publicResource(path){
  return target.length>0&&!/[\\%*?#:\x00-\x20\x7f]/.test(target)&&
   !target.split('/').some(part=>part===''||part.endsWith('.'))&&
   !privateTarget.startsWith('src/runtime/')&&privateTarget!=='extension/browser-bootstrap.mjs'&&
-  privateTarget!=='extension/worker.mjs'&&privateTarget!=='extension/classic-runtime.js';
+  !['status.html','extension/status.html','extension/status.mjs','extension/status.css'].includes(privateTarget)&&privateTarget!=='extension/worker.mjs'&&privateTarget!=='extension/classic-runtime.js';
 }
 
 /** Structural checks complementary to verifyHost's exact origin, permission,
  * config, CSP-value, file-hash and compiled-worker checks. No package is edited. */
 export function assertHostManifestBoundary(manifest){
  if(!shape(manifest,requiredKeys,metadataKeys))throw Error('invalid-host-package-manifest-boundary');
+ if(!shape(manifest.action,['default_popup'])||manifest.action.default_popup!=='status.html')throw Error('invalid-host-package-manifest-boundary');
  if(!shape(manifest.background,['service_worker']))throw Error('invalid-host-package-manifest-boundary');
  if(!Array.isArray(manifest.content_scripts)||manifest.content_scripts.length!==1)throw Error('invalid-host-package-content-script');
  const script=manifest.content_scripts[0];

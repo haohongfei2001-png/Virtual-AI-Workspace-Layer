@@ -501,5 +501,6 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   doc.defaultView.addEventListener('pageshow',pageshow);
   return begin(true,contextResumeMode);
  }
- return Object.freeze({start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
+ function localStatus(){if(!enabled)return contextResumeAllowed?'waiting':'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';return current.controller?.localStatus?.()??'unavailable';}
+ return Object.freeze({localStatus,start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
 }

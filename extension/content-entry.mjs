@@ -1,3 +1,4 @@
+import {installLocalStatus} from '../src/host/local-status.mjs';
 import {selectHostSurfaceProfile} from '../src/host/chatgpt-observed-profile.mjs';
 import {createIsolatedSessionReader} from '../src/host/isolated-session-reader.mjs';
 import {createOldSendTerminalProfile} from '../src/host/old-send-terminal-profile.mjs';
@@ -20,5 +21,7 @@ if(window===window.top&&location.origin===HOST_CONFIG.origin){
   const bridge=createContextAssociationBridge({document,runtime:chrome.runtime,origin:HOST_CONFIG.origin,profile:HOST_CONFIG.scopeProfile.projectRequestContext==='loopback-project-v1'?{...profile,urlPolicy:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}:profile,isOwnedMask:session.isOwnedMask,onPending:session.contextPending,onReady:()=>{void session.contextReady();}});
   window.addEventListener('pagehide',event=>{if(!event.persisted)bridge.stop();});
  }
+ const removeStatus=installLocalStatus({runtime:chrome.runtime,readState:session.localStatus});
+ window.addEventListener('pagehide',event=>{if(!event.persisted)removeStatus();});
  void session.start();
 }

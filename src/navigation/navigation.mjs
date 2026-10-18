@@ -369,7 +369,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
                 if(stopped||snippetLocatePending)return;const attempt={projection:frameProjection,query:searchQuery,theme:searchTheme,offset:frameSearchOffset,run:projectionRequest};snippetLocatePending=attempt;locate.disabled=true;feedback.textContent='正在定位…';
                 const valid=()=>!stopped&&snippetLocatePending===attempt&&frameProjection===attempt.projection&&searchQuery===attempt.query&&searchTheme===attempt.theme&&frameSearchOffset===attempt.offset&&projectionRequest===attempt.run;
                 try{const result=await onSnippetLocateRequest({id:snippet.id});if(valid())feedback.textContent=result?.ok===true?'已定位片段。':'定位未确认，可使用原生搜索。';}catch{if(valid())feedback.textContent='定位未确认，可使用原生搜索。';}finally{if(snippetLocatePending===attempt){const active=valid();snippetLocatePending=null;if(active)locate.disabled=false;}}
-              });detail.append(locate,feedback);
+              });locate.dataset.focusKey=JSON.stringify(['free-snippet',frameProjection.scope,ref.id,snippet.id]);detail.append(locate,feedback);
             }else detail.append(node(doc,'p',{},'打开原聊天后，可从已保存片段定位。'));
             results.append(detail);
           }

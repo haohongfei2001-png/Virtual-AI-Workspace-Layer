@@ -4,6 +4,11 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **新增只读扩展状态入口；片段搜索误定位已修复**：工具栏固定私有popup仅查询当前tab的本地枚举，区分连接/等待/休眠/未接入；不读URL/标题/正文，不请求认证、不刷新、不新增权限/第二返回入口。精确popup sender、topframe及严格shape限定，popup资源不公开；状态不代表首个VIEW完成或真实验收。实际隔离MV3验证连接与未接入文案、无操作按钮、草稿保持、其他扩展页冒充拒绝，源码未漂移。真实Profile未重读，最新worker403仍阻塞。片段定位旧2例FAIL、实际headless Enter请求错片段；按scope/ref/snippet稳定键修正，原定位有效性护栏不变。独审无阻断。
+
+- **本批验证与保留失败**：组合346项345PASS/1FAIL，唯一FAIL为新增CI步骤尚未加入精确allowlist；补该条后受影响17项全PASS、51.661ms，原组合2861.824ms失败日志保留。不把两次计数相加冒充新全套。首次MV3沙箱启动SIGABRT，未开始功能测试；获准隔离headless执行后PASS。新增MV3检查接入原CI job，无缓存/产物上传。上个b8a77bb的CI39120679401四jobSUCCESS；本批CI待结果。证据localStatusAndSnippet20261018；暂无完整旅程前后可比耗时，不宣称提速。真实闭环/J4/真实IME/PAIA与跨端仍未完成，规模DEFERRED。
+
+
 - **最新真实阻塞已确证为 worker 登录拒绝**：精确授权当前tab页面accounts 200，但worker `/api/auth/session` 403/text/html，scope错误`session-unauthorized`，frame0。本次未读正文/凭据、无原生写入；停止重复刷新，不将403改判网络失败或启用绕过。旧200样本仍属历史，不代表当前可用。安装候选仍556cda0；当前聊天临时响应提取ID授权已收到，未据此扩大到其他聊天。
 
 - **同名Project焦点错位已修复**：原生展示名被用作恢复焦点身份，展开/翻页会选到另一同名项目或列表。现内部键包含scope、surface、原生group ID、列表和动作，原生名不改。旧最小7项全FAIL；冻结候选205定向/包边界PASS、0skip、2652.352ms；真实headless DOM旧版展开/翻页错位，新版两者通过，侧栏及scope隔离另有回归。仅WEB_MECHANISM_ONLY，不冒充真实宿主/MV3完整旅程。初始paging fixture仅展开一列表导致反例不成立，已保留观察器更正记录。证据duplicateProjectFocus20261018；无完整旅程前后可比耗时，不宣称提速。

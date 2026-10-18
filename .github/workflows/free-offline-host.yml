@@ -139,6 +139,9 @@ jobs:
       - name: Packaged profile layout theme and viewport subcontracts
         if: ${{ !cancelled() }}
         run: node tests/host/ui10-package-matrix-browser.mjs "$RUNNER_TEMP/ui10-matrix.json"
+      - name: Passive local extension status (isolated MV3)
+        if: ${{ !cancelled() }}
+        run: node tests/host/local-status-package-browser.mjs
       - name: Layout mechanism regressions (not MV3 acceptance)
         if: ${{ !cancelled() }}
         run: |
