@@ -1101,6 +1101,23 @@
       "No private IDs, titles, response bodies, cookies or tokens persisted"
     ],
     "nativeSurfaceAlert": "浏览器检查未能完成。请重新加载此页面重试",
-    "nextCondition": "User completes normal first-party browser check; no automated challenge bypass or repeated reload"
+    "nextCondition": "User completes normal first-party browser check; no automated challenge bypass or repeated reload",
+    "subsequentObservation": {
+      "nativeBrowserAlertTemporarilyCleared": true,
+      "editorTemporarilyPresent": true,
+      "nativeAccountsStatus": 200,
+      "nativeAccountsMime": "application/json",
+      "nativeAccountsCount": 3,
+      "nativeHeaderMatchesRosterKey": true,
+      "nativeOptimizedAccountsStatus": 200,
+      "nativeMeStatus": 200,
+      "stableSupport": "NOT_ESTABLISHED",
+      "currentConversationGET": "NOT_OBSERVED",
+      "nativeBrowserAlertReturned": true,
+      "foregroundSingleNormalReload": "SAME_BROWSER_CHECK_FAILURE",
+      "editorAfterForegroundReload": false,
+      "authority": "NO_EXTENSION_RECEIPT_NO_SCOPE_ENABLEMENT",
+      "retryPolicy": "STOP_AUTOMATIC_RELOADS_WAIT_FOR_NORMAL_USER_BROWSER_CHECK"
+    }
   }
 }

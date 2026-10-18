@@ -4,7 +4,7 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
-- **真实投递专用Profile读取已恢复，账户列表403阻塞**：用户明确允许现有Playwright/CDP后，核对运行进程的user-data-dir与投递系统配置一致，并通过原9333连接在自有标签读取ChatGPT（首次1.845秒）；原生聊天链接导航仅确认URL到达，不计VAIWL旅程。原生me=200 JSON且principal ID存在，accounts/check/v4-2023-04-27与accounts/optimized/check均403 HTML；虽观察到chatgpt-account-id头，仍无认证roster/current-context证明，生产scope保持关闭。预期conversation detail GET未观察到，存在tbo/by-thread元请求，不能直接认定兼容。未读取聊天正文/凭据，未写入原生内容，未保存私人ID/标题/响应正文。旧“读取超时”是原工具通道历史，此次已解除；后续只读role=alert确认原生提示“浏览器检查未能完成。请重新加载此页面重试”；无登录入口/编辑器，不把403直接归因为账户权限。待本人完成正常浏览器检查，不绕过挑战或循环请求。[脱敏事实](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
+- **真实投递专用Profile读取已恢复，账户列表403阻塞**：用户明确允许现有Playwright/CDP后，核对运行进程的user-data-dir与投递系统配置一致，并通过原9333连接在自有标签读取ChatGPT（首次1.845秒）；原生聊天链接导航仅确认URL到达，不计VAIWL旅程。原生me=200 JSON且principal ID存在，accounts/check/v4-2023-04-27与accounts/optimized/check均403 HTML；虽观察到chatgpt-account-id头，仍无认证roster/current-context证明，生产scope保持关闭。预期conversation detail GET未观察到，存在tbo/by-thread元请求，不能直接认定兼容。未读取聊天正文/凭据，未写入原生内容，未保存私人ID/标题/响应正文。旧“读取超时”是原工具通道历史，此次已解除；后续只读role=alert确认原生提示“浏览器检查未能完成。请重新加载此页面重试”；无登录入口/编辑器，不把403直接归因为账户权限。后续曾短暂恢复：输入区出现、accounts=200 JSON/3项且请求头匹配roster键，但未观察到当前聊天详情GET；随后原提示与无输入区复现，一次无草稿前台正常刷新亦未解除。记录为浏览器检查间歇失败，不是永久403或稳定支持；未产生扩展receipt，未开启scope。停止自动刷新，待本人完成正常浏览器检查，不绕过挑战。[脱敏事实](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
 
 - **4a4d37f / CI39097198183 已完成**：四job成功；正式10k及失败诊断均实际SKIPPED，按用户决定记DEFERRED而非PASS。J4原JSON仍为PARTIAL_J4_NOT_ACCEPTED、automaticForegroundRecovery=NOT_ESTABLISHED、J4-peer-current-scope-timeout；不以job成功覆盖缺口。源码未漂移、build manifest未变。生产context/真实Project闭环仍未取得。此项仅记录既有运行，无重复触发验收。
 
