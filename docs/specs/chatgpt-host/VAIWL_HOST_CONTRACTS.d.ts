@@ -452,3 +452,13 @@ export interface LegacyNavigationAdapter {
   restoreSnippet(ref: NativeRef, anchor: SnippetAnchor): AnchorResult;
   status(value: LegacyNavigationStatus): void;
 }
+
+/** Explicit user-approved 2026-10-19 temporary mode. Never an authority/Host DTO. */
+export type TemporaryNativeListRequest = { v: 1; type: 'HOST_TEMPORARY_NATIVE_LIST' };
+export type TemporaryNativeInvalidation = { v: 1; type: 'HOST_TEMPORARY_NATIVE_INVALIDATED' };
+export type TemporaryNativeListResponse =
+  | { v: 1; mode: 'temporary-native-navigation'; unavailable: true }
+  | { v: 1; mode: 'temporary-native-navigation'; route: string; partial: boolean;
+      items: Array<{ kind: 'project' | 'conversation'; title: string; href: string }> };
+// Exact private status.html sender, topframe, current document/route and URL checks
+// remain runtime requirements. No scope/receipt/membership, body or persistence.

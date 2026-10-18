@@ -2,6 +2,8 @@
 
 **VA-HOST/1 · 修订 1.1 FINAL · 2026-10-13。** 本文替换原交接，配套同目录 `VAIWL_CHATGPT_HOST_SPEC.md`、`VAIWL_OFFLINE_ACCEPTANCE.md`、`VAIWL_HOST_CONTRACTS.d.ts`。这是原A–G任务的实施细化，不是新计划或另一个产品。
 
+2026-10-19用户批准的临时只读导航例外见同目录Host规格新增节：单独记录私有popup、可见导航读取、搜索、新标签打开/返回、失效与隐私边界证据；不替代本文件正常完整Host要求，原81项/J1–J4/真实账户及人工验收不因此改判。默认包、403安全拒绝和完整Free目标保持。
+
 ## 1. 立即继续原工程，保存正在进行的成果
 
 仓库 `haohongfei2001-png/Virtual-AI-Workspace-Layer`；原目录 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`；原工作树/分支 `codex/vaiwl-free-first-20261013`；继续现有Draft PR #16，base仍为计划PR #15。

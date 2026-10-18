@@ -25,7 +25,7 @@ function publicResource(path){
  return target.length>0&&!/[\\%*?#:\x00-\x20\x7f]/.test(target)&&
   !target.split('/').some(part=>part===''||part.endsWith('.'))&&
   !privateTarget.startsWith('src/runtime/')&&privateTarget!=='extension/browser-bootstrap.mjs'&&
-  !['status.html','extension/status.html','extension/status.mjs','extension/status.css'].includes(privateTarget)&&privateTarget!=='extension/worker.mjs'&&privateTarget!=='extension/classic-runtime.js';
+  !['status.html','extension/status.html','extension/status.mjs','extension/status.css','extension/temporary-navigation.mjs'].includes(privateTarget)&&privateTarget!=='extension/worker.mjs'&&privateTarget!=='extension/classic-runtime.js';
 }
 
 /** Structural checks complementary to verifyHost's exact origin, permission,
