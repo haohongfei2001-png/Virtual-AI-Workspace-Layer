@@ -82,3 +82,32 @@ test('fixed worker provider admits canonical active roster through a native defa
  const f=fixture((s,n)=>{if(n!==2)return;const p={account:{account_id:'P',structure:'personal',is_deactivated:false},can_access_with_session:true};s.body={accounts:{O:{account:{account_id:'O',structure:'team',is_deactivated:true},can_access_with_session:true},default:structuredClone(p),P:p}};});
  const identity=await f.provider.read();assert.deepEqual(identity.contexts,[{id:'P',kind:'personal'}]);assert.equal(identity.activeContext,undefined);assert.equal(f.calls.length,2);assert(!JSON.stringify(identity).includes('SECRET'));
 });
+
+const pluralProfile={currentConversationReadEnabled:true,currentConversationContextHeader:true,conversationRequestContext:'conversation-detail-plural-v1'};
+test('explicit plural fixed reader uses only selected endpoint and retains private candidate result',async()=>{
+ const f=currentFixture(()=>{},pluralProfile),result=await f.provider.readCurrentConversation(currentOptions);
+ assert.equal(f.calls.length,3);assert.equal(f.calls[2].url,origin+'/backend-api/conversations/'+C);
+ assert.equal(f.calls[2].options.headers['ChatGPT-Account-ID'],'P');assert.equal(result.metadata.conversationId,C);
+ assert(!/SECRET|PRIVATE_CONVERSATION_BODY/.test(JSON.stringify(result)));
+});
+for(const dialect of ['plural','conversation-detail-plural-v2','https://evil.test/',true,{}])test('unknown fixed reader dialect fails before any request '+JSON.stringify(dialect),()=>{
+ assert.throws(()=>currentFixture(()=>{},{...pluralProfile,conversationRequestContext:dialect}),/conversation-context-profile/);
+});
+for(const [label,change,reason]of [
+ ['403',s=>s.status=403,'session-unauthorized'],
+ ['legacy response URL',s=>s.url=origin+'/backend-api/conversation/'+C,'invalid-session-response'],
+ ['wrong conversation',s=>s.body.conversation_id='other','invalid-conversation-metadata'],
+ ['HTML',s=>s.mime='text/html','invalid-session-mime']
+])test('plural fixed reader rejects '+label+' without fallback or extra requests',async()=>{
+ const f=currentFixture((s,n)=>{if(n===3)change(s);},pluralProfile);
+ await assert.rejects(f.provider.readCurrentConversation(currentOptions),new RegExp(reason));assert.equal(f.calls.length,3);
+ assert.equal(f.calls[2].url,origin+'/backend-api/conversations/'+C);
+});
+test('plural dialect alone never enables a current read',async()=>{
+ const f=currentFixture(()=>{},{conversationRequestContext:pluralProfile.conversationRequestContext});
+ await assert.rejects(f.provider.readCurrentConversation(currentOptions),/disabled/);assert.equal(f.calls.length,0);
+});
+test('plural fixed reader preserves the six second chain deadline',async()=>{
+ const f=currentFixture((s,n,late)=>{if(n===2)late();},pluralProfile);
+ await assert.rejects(f.provider.readCurrentConversation(currentOptions),/request-timeout/);assert.equal(f.calls.length,2);
+});

@@ -23,7 +23,7 @@ export function instrumentColdSource(path,source){
   inject('for(const [event,listener,extra]of listeners)extra?event.addListener(listener,filter,extra):event.addListener(listener,filter);','for(const [event,listener,extra]of listeners)extra?event.addListener(listener,filter,extra):event.addListener(listener,filter);__c2Trace("listeners-registered");');
  }else if(['src/runtime/host-worker-runtime.mjs','src/runtime/host-browser-bootstrap.mjs'].includes(path)){
   out=out.replaceAll('chrome.tabs.sendMessage(', '__c2Send(');
-  const anchor=path.endsWith('/host-browser-bootstrap.mjs')?' const enabled=scopeProfile.browserRequestContext===true,projectRequestContext=scopeProfile.projectRequestContext??null;':' const policy=createURLPolicy(';
+  const anchor=path.endsWith('/host-browser-bootstrap.mjs')?' const enabled=scopeProfile.browserRequestContext===true,projectRequestContext=scopeProfile.projectRequestContext??null,conversationRequestContext=scopeProfile.conversationRequestContext??null;':' const policy=createURLPolicy(';
   inject(anchor,' const __c2Send=(...args)=>{const type=args[1]?.type;__c2Trace("outgoing",{type});const p=chrome.tabs.sendMessage(...args);p.then(r=>__c2Trace("outgoing-result",{type,hasResult:r!=null,association:r?.association,ok:r?.ok}),()=>__c2Trace("outgoing-rejected",{type}));return p;};\n'+anchor);
   if(path.endsWith('/host-browser-bootstrap.mjs'))return recorder+out;
   inject('const message=(value,sender,reply)=>{','const message=(value,sender,reply)=>{__c2Trace("incoming",{type:value?.type,documentId:sender?.documentId});');

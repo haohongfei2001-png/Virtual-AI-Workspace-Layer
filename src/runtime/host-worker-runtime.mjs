@@ -12,6 +12,8 @@ import {createSessionProvider} from './session-provider.mjs';
 
 /** Zero-seed worker composition. Configuration is packaged code, never page input. */
 export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgpt.com',scopeProfile={id:'chatgpt-context-unverified',singlePersonalDefault:false},provider=null,sessionProfile={},currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,offlineFirstSend=false,offlineOldSendTerminal=false,browserBootstrap=null,serviceFactory=createHostBindingService}={}){
+ const conversationRequestContext=scopeProfile.conversationRequestContext??null;
+ if(Object.hasOwn(sessionProfile,'conversationRequestContext')&&(sessionProfile.conversationRequestContext??null)!==conversationRequestContext)throw Error('host-conversation-profile-mismatch');
  const policy=createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}});
  if(!chrome?.runtime?.id||typeof chrome.runtime.getContexts!=='function'||typeof chrome.webNavigation?.getFrame!=='function')throw Error('host-browser-unavailable');
  // Only the packaged, immutable URL grammar is memoized. A hit carries no
@@ -30,7 +32,7 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
  try{
  repository=new ScopeRepository({indexedDB});const workspaceRepository=new WorkspaceRepository({baseRepository:repository}),freeEvidenceRepository=new FreeEvidenceRepository({baseRepository:repository,hostObservationGate:(scope,request)=>service?.ackAdmission?.(scope,request)??service?.continuations?.admission(scope,request)});
  const readBudget=createSharedHostReadBudget({repository});
- service=serviceFactory({readBudget,extensionId:chrome.runtime.id,repository,workspaceRepository,freeEvidenceRepository,allowedURL,contextObserver,provider:provider??createSessionProvider({origin,readBudget,profile:{...sessionProfile,currentConversationReadEnabled:currentMetadataReadEnabled,...(sendAckProfile?{sendAckProfile}:{} ),...(historicalSendProfile?{historicalSendProfile}:{})}}),currentMetadataReadEnabled,sendCandidatesEnabled,sendAckProfile,historicalSendProfile,firstSendOrigin:offlineFirstSend?origin:null,oldSendTerminalOrigin:offlineOldSendTerminal?origin:null,profile:scopeProfile,
+ service=serviceFactory({readBudget,extensionId:chrome.runtime.id,repository,workspaceRepository,freeEvidenceRepository,allowedURL,contextObserver,provider:provider??createSessionProvider({origin,readBudget,profile:{...sessionProfile,conversationRequestContext,currentConversationReadEnabled:currentMetadataReadEnabled,...(sendAckProfile?{sendAckProfile}:{} ),...(historicalSendProfile?{historicalSendProfile}:{})}}),currentMetadataReadEnabled,sendCandidatesEnabled,sendAckProfile,historicalSendProfile,firstSendOrigin:offlineFirstSend?origin:null,oldSendTerminalOrigin:offlineOldSendTerminal?origin:null,profile:scopeProfile,
   identityOrigin:origin,isolatedIdentityDispatch:(frame,command)=>chrome.tabs.sendMessage(frame.tabId,command,{documentId:frame.documentId}),
   navigationURLPolicy:policy,surfaceProfiles:new Map([[LEGACY_SURFACE_PROFILE.id,{...LEGACY_SURFACE_PROFILE,urlPolicy:policy}]]),
   uiURLs:Object.fromEntries(['workspace','sidebar'].map(role=>[role,chrome.runtime.getURL(role+'.html')])),

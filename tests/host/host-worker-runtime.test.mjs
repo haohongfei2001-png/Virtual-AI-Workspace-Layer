@@ -1,3 +1,4 @@
+import {digest} from '../../src/data/hash.mjs';
 /** Worker composition contract with explicit browser/service doubles and MOCK_IDB. No seed or account access. */
 import test from 'node:test';
 import {createScopeAuthority} from '../../src/runtime/scope-authority.mjs';
@@ -93,4 +94,23 @@ test('warmed pure URL result never extends or revives actual authority',async t=
  assert(f.config.allowedURL(frame.actualURL));const first=await a.refresh(frame,'bind');assert.equal(first.state,'verified');for(let i=0;i<1000;i++)assert.equal(a.peek(frame).grant,first.grant);
  now+=60000;assert(f.config.allowedURL(frame.actualURL));assert.equal(a.peek(frame).state,'unverified');
  assert.equal((await a.refresh(frame,'expiry')).state,'verified');a.invalidateAll();assert(f.config.allowedURL(frame.actualURL));assert.equal(a.peek(frame).state,'unverified');assert.equal(a.scopeFor(frame),null);
+});
+
+test('worker composition refuses contradictory conversation dialects before starting',t=>{
+ for(const options of [
+  {scopeProfile:{conversationRequestContext:'conversation-detail-plural-v1'},sessionProfile:{conversationRequestContext:null}},
+  {sessionProfile:{conversationRequestContext:'conversation-detail-plural-v1'}}
+ ])assert.throws(()=>fixture(t,options),/host-conversation-profile-mismatch/);
+});
+test('worker fixed reader inherits the packaged scope dialect with shared durable budget',async t=>{
+ const C='12345678-1234-4234-8234-123456789abc',calls=[];
+ t.mock.method(globalThis,'fetch',async(url,options)=>{
+  calls.push({url,options});const n=calls.length;
+  const body=n===1?{user:{id:'runtime-user'},expires:new Date(Date.now()+60000).toISOString(),accessToken:'SECRET'}:n===2?{accounts:{P:{account:{account_id:'P',structure:'personal'}}}}:{conversation_id:C,mapping:{}};
+  const result=new Response(JSON.stringify(body),{headers:{'content-type':'application/json'}});Object.defineProperty(result,'url',{value:url});return result;
+ });
+ const f=fixture(t,{scopeProfile:{id:'explicit-plural-candidate',singlePersonalDefault:false,conversationRequestContext:'conversation-detail-plural-v1'},currentMetadataReadEnabled:true});
+ const result=await f.config.provider.readCurrentConversation({conversationId:C,expectedPrincipalKey:'principal_'+digest(['chatgpt-principal-v1','runtime-user']),expectedContextKey:'context_'+digest(['chatgpt-context-v1','runtime-user','P'])});
+ assert.equal(calls.length,3);assert.equal(calls[2].url,'https://chatgpt.com/backend-api/conversations/'+C);assert.equal(result.metadata.conversationId,C);
+ assert(f.opens()>0);assert(!JSON.stringify(result).includes('SECRET'));assert.equal(f.config.profile.singlePersonalDefault,false);
 });

@@ -1187,5 +1187,84 @@
       "Real Project mapping, current body association, restore and complete Free journey not established",
       "No private IDs, titles, body, tokens or cookies retained"
     ]
+  },
+  "pluralFixedReader20261018": {
+    "baseHead": "e3053bcf103f48f2b7c8ab97eca0478edb3f8602",
+    "sourceSHA256": {
+      "src/runtime/session-provider.mjs": "e5aee08a1ea0e9f1ec2093b3b34c9e2507f991198b765e8122e08907e8709c70",
+      "src/runtime/host-worker-runtime.mjs": "7fe7248408632dcf88e7cbd1bd5797dfa34a03de32e721f99b073c1232e78744",
+      "tests/host/session-provider.test.mjs": "31003da4883bccfa187953a0ec047ba36d816c2e965164131de8574b7d8db5d1",
+      "tests/host/host-worker-runtime.test.mjs": "8032e94ff3903f7a022569ed29235c3d126ada399b39d4c1fa6dbc46af0440a1",
+      "tests/host/cold-context-trace.mjs": "3f085e002e66ed83eff060f77e5bfbee813efe4132d2e2c8c927abdc9ab4c5e4"
+    },
+    "change": "Explicit fixed detail endpoint inherits scope dialect; contradictory session dialect rejected; default remains singular and production disabled; no retry/fallback or budget change.",
+    "red": {
+      "tests": 55,
+      "pass": 45,
+      "fail": 10
+    },
+    "targeted": {
+      "tests": 352,
+      "pass": 352,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 2782.710958
+    },
+    "liveObservation": {
+      "activeCanonicalRosterCount": 1,
+      "method": "GET",
+      "pathShape": "/backend-api/conversations/<UUID>",
+      "routeMatches": true,
+      "status": 403,
+      "mime": "text/html; charset=UTF-8",
+      "contextHeaderInActiveCanonicalRoster": true,
+      "finalNativeTargetReached": false,
+      "conversationBodyRead": false,
+      "credentialsRead": false,
+      "draftTabsUnchanged": true
+    },
+    "limits": [
+      "No authenticated detail schema established",
+      "No real MV3 receipt or Project journey",
+      "Production configuration still unverified fail closed",
+      "10k and 100k DEFERRED",
+      "CI39100121619 base candidate FAILED; independent log review pending"
+    ],
+    "review": "Independent review found no blocker; runtime test title corrected to packaged scope inheritance, not live observer integration.",
+    "liveStructuralObservation": {
+      "mainCount": 1,
+      "legacyReadingCount": 0,
+      "conversationIdAttributeCount": 0,
+      "messageIdAttributeCount": 0,
+      "editorPresent": true,
+      "alertPresent": false,
+      "nativeNavigationPresent": true,
+      "bodyTextRead": false,
+      "attributeValuesRead": false,
+      "limit": "Only observed current page; no body binding proof and no universal host grammar claim."
+    },
+    "ciBaseFailure": {
+      "runId": 39100121619,
+      "node": {
+        "tests": 8362,
+        "pass": 8360,
+        "fail": 2,
+        "durationMs": 210195.75,
+        "cause": "cold-trace-anchor-mismatch: bootstrap declaration changed in e3053bc; exact diagnostic anchor stale"
+      },
+      "repair": "Updated exact whole declaration anchor; replaceOnce guard unchanged",
+      "localReproduction": {
+        "tests": 3,
+        "pass": 1,
+        "fail": 2
+      },
+      "localRepair": {
+        "tests": 3,
+        "pass": 3,
+        "fail": 0,
+        "durationMs": 1304.473916
+      },
+      "remaining": "journey failure correlation pending; no full CI pass claimed"
+    }
   }
 }
