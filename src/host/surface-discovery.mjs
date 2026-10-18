@@ -1,4 +1,4 @@
-import {profileElement} from './native-surface-boundary.mjs';
+import {profileElement,observedProjectListTitle} from './native-surface-boundary.mjs';
 import {createBoundedHandleRegistry} from './bounded-handle-registry.mjs';
 import {exactHostRecord} from './contract.mjs';
 
@@ -25,8 +25,13 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
   let byNode=new WeakMap(),lookupComplete=true;const detached=new Set();
   const byId=createBoundedHandleRegistry({now:elapsedNow,onEvict:(_id,entry)=>{const node=entry.node.deref();if(node&&byNode.get(node)===entry)byNode.delete(node);lookupComplete=false;}});
   const roots=new Map(),pages=new WeakMap();let watched=[];
-  const unique = selector => profileElement(document,profile,selector);
-  const fingerprint = (node) => JSON.stringify([node.tagName,node.getAttribute('href'),node.getAttribute('aria-label'),node.getAttribute('role'),node.textContent,node.disabled===true]);
+  const unique = selector => profileElement(document,profile,selector,urlPolicy.parse(document.location.href));
+  const isProjectList=regionKind=>!!profile.projectListBoundary&&regionKind==='members';
+  const hasMemberAssociation=!profile.projectListBoundary&&typeof profile.memberProjectIdAttribute==='string'&&profile.memberProjectIdAttribute.length>0;
+  const fingerprint = (node,root,regionKind) => {
+    if(isProjectList(regionKind)){const label=observedProjectListTitle(document,node,root);return label?JSON.stringify([node.tagName,node.getAttribute('href'),node.getAttribute('role'),label.nativeTitle,node.disabled===true]):null;}
+    return JSON.stringify([node.tagName,node.getAttribute('href'),node.getAttribute('aria-label'),node.getAttribute('role'),node.textContent,node.disabled===true]);
+  };
   const title = (node) => { const text=(node.textContent??'').trim();return text.length>200?{nativeTitle:null,titleState:'over-limit'}:text?{nativeTitle:text,titleState:'exact'}:{nativeTitle:null,titleState:'unavailable'}; };
   const evidence = (...fieldPaths) => ({profileId:profile.id,profileVersion:profile.revision,sourceKind:'native-dom',regionEpoch,fieldPaths,receiptId:null});
   function clearHandles() { for(const id of byId.keys()) detached.add(id);byId.clear();byNode=new WeakMap();lookupComplete=true;regionEpoch++; }
@@ -40,7 +45,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
   }
   function valid(entry) {
     const node=entry.node.deref(),root=entry.root.deref();
-    return node&&root&&node.isConnected&&root.isConnected&&node.ownerDocument===document&&root.contains(node)&&node.parentNode===entry.parent.deref()&&entry.handle.routeEpoch===routeEpoch&&entry.handle.regionEpoch===regionEpoch&&fingerprint(node)===entry.fingerprint&&roots.get(entry.regionKind)===root;
+    return node&&root&&node.isConnected&&root.isConnected&&node.ownerDocument===document&&root.contains(node)&&node.parentNode===entry.parent.deref()&&entry.handle.routeEpoch===routeEpoch&&entry.handle.regionEpoch===regionEpoch&&fingerprint(node,root,entry.regionKind)===entry.fingerprint&&roots.get(entry.regionKind)===root;
   }
   function control(node,root,regionKind,controlKind,resolvedKey=null) {
     // Observation-only candidates never enter the actionable handle registry or
@@ -50,7 +55,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     if(entry&&!valid(entry)) { detached.add(entry.handle.id);byId.delete(entry.handle.id);entry=null; }
     if(!entry) {
       const handle={id:`live-${instance}-${++sequence}`,documentToken:binding.documentToken,routeEpoch,regionEpoch,controlKind};
-      entry={handle,node:new WeakRef(node),root:new WeakRef(root),parent:new WeakRef(node.parentNode),regionKind,fingerprint:fingerprint(node),resolvedKey};
+      entry={handle,node:new WeakRef(node),root:new WeakRef(root),parent:new WeakRef(node.parentNode),regionKind,fingerprint:fingerprint(node,root,regionKind),resolvedKey};
       byNode.set(node,entry);byId.set(handle.id,entry);
     }
     return {...entry.handle};
@@ -103,15 +108,16 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       if(!parsed&&!(entity==='project'&&node.tagName==='BUTTON')) return null;
       const id=parsed?.kind===entity?(entity==='project'?parsed.projectId:parsed.conversationId):null;
       if(candidateOnly&&id)return null;
+      const label=isProjectList(regionKind)?observedProjectListTitle(document,node,root):title(node);if(!label)return null;
       const handle=control(node,root,regionKind,entity,id?JSON.stringify([entity,id,parsed.navigationURL]):null);
       const target=id?{kind:'resolved',entity,nativeId:id,navigationURL:parsed.navigationURL,liveHandle:handle}:{kind:'live-control',control:handle,navigationURL:null};
-      const result={renderKey:id?`${entity}:${id}`:`candidate:${handle.id}`,entity,...title(node),target,evidence:evidence(regionKind,'textContent',href?'href':'button')};
+      const result={renderKey:id?`${entity}:${id}`:`candidate:${handle.id}`,entity,...label,target,evidence:evidence(regionKind,isProjectList(regionKind)?'title-leaf':'textContent',href?'href':'button')};
       candidates.push(result);return result;
     }
     // A canonical current Project needs route identity and the explicitly scoped
     // member surface; an IDless sidebar label never supplies that identity.
     const members=roots.get('members');
-    if(!candidateOnly&&route.kind==='project'&&members&&members.getAttribute(profile.memberProjectIdAttribute)===route.projectId&&profile.currentProjectTitle&&profile.currentProjectHeader){
+    if(!candidateOnly&&route.kind==='project'&&hasMemberAssociation&&members&&members.getAttribute(profile.memberProjectIdAttribute)===route.projectId&&profile.currentProjectTitle&&profile.currentProjectHeader){
       const heading=unique(profile.currentProjectTitle),header=unique(profile.currentProjectHeader);
       contextNodes=[members,members.parentNode,heading,heading?.parentNode,header,header?.parentNode];
       contextValue=JSON.stringify([members.getAttribute(profile.memberProjectIdAttribute),heading?.textContent,header?.textContent]);
@@ -122,7 +128,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       }
     }
     // A confirmed open Project must not lose its member evidence to a full sidebar.
-    const order=candidateOnly?['projects']:currentProjectId?['members','projects','history']:['projects','history','members'];
+    const order=candidateOnly?['projects']:currentProjectId||isProjectList('members')&&members?['members','projects','history']:['projects','history','members'];
     let page=cursor&&pages.get(cursor),prioritizeMembers=!cursor;
     if(cursor){
       pages.delete(cursor);
@@ -181,7 +187,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       const item=candidate(node,root,regionKind,regionKind==='projects'?'project':'conversation');
       if(regionKind==='projects'||!item||item.target.kind!=='resolved')continue;
       const conversationId=item.target.nativeId;
-      if(regionKind==='members'&&visible(root)&&visible(node)&&route.kind==='project'&&root.getAttribute(profile.memberProjectIdAttribute)===route.projectId){claims.set(conversationId,{conversationId,asserted:'PROJECT',projectId:route.projectId,upstreamRevision:null,evidence:evidence('members','current-project-route')});if(currentProjectId===route.projectId)page.memberIds.add(conversationId);}
+      if(regionKind==='members'&&hasMemberAssociation&&visible(root)&&visible(node)&&route.kind==='project'&&root.getAttribute(profile.memberProjectIdAttribute)===route.projectId){claims.set(conversationId,{conversationId,asserted:'PROJECT',projectId:route.projectId,upstreamRevision:null,evidence:evidence('members','current-project-route')});if(currentProjectId===route.projectId)page.memberIds.add(conversationId);}
       else if(!claims.has(conversationId)) claims.set(conversationId,{conversationId,asserted:'UNKNOWN',projectId:null,reason:'membership-not-observed',evidence:evidence(regionKind)});
     }
 
@@ -207,13 +213,14 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
   const scanCandidatePage=cursor=>scanPageCore(cursor,true);
   const scan=()=>scanPage().payload;
   function watchSurface(){
-    const selectors=[...Object.values(profile.regions),profile.sidebarBoundary,profile.currentConversationHeader,profile.currentProjectTitle,profile.currentProjectHeader].filter(Boolean);
+    const selectors=[...Object.values(profile.regions),profile.sidebarBoundary,profile.projectListBoundary,profile.currentConversationHeader,profile.currentProjectTitle,profile.currentProjectHeader].filter(Boolean);
     const watchedMatches=selector=>{
       // A body nav must not invalidate the sidebar on every streamed token.
       // Watch explicit sidebar shells too, so a hidden sibling becoming visible
       // still invalidates the previous unique-root observation and handles.
+      if(profile.projectListBoundary&&selector===profile.regions.members){const node=unique(selector);return node?[node]:[];}
       if(profile.sidebarBoundary&&[profile.regions.projects,profile.regions.history].includes(selector)){const node=unique(selector);return node?[node]:[];}
-      const nodes=document.querySelectorAll(selector),limit=selector===profile.sidebarBoundary?9:retainControls?nodes.length:2;
+      const nodes=document.querySelectorAll(selector),limit=[profile.sidebarBoundary,profile.projectListBoundary].includes(selector)?9:retainControls?nodes.length:2;
       return Array.from({length:Math.min(limit,nodes.length)},(_,i)=>nodes[i]);
     };
     const next=selectors.flatMap(watchedMatches);

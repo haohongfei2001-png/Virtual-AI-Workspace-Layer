@@ -82,7 +82,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
   try{const reply=await track(()=>entry.notify(passMessage(entry,'start')));if(run!==generation||!live()||pass!==entry||entry.terminal)return;if(reply?.ok!==true){finishPass('cancel',true);issue('host-ingestion-pass-unavailable');}}
   catch{if(pass===entry){finishPass('cancel',true);issue('host-ingestion-pass-unavailable');}}
  }
- const one=selector=>profileElement(document,profile,selector);
+ const one=selector=>profileElement(document,profile,selector,urlPolicy.parse(document.location.href));
  const live=()=>!stopped&&now()<Date.parse(binding.expiresAt);
  const active=()=>live()&&!observationOnly;
  function observationCurrent(){

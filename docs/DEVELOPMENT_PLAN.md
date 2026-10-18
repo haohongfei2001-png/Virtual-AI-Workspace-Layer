@@ -2,6 +2,8 @@
 
 ## 0. 正式采用与唯一执行入口
 
+当前增量（2026-10-19）：真实Project可见列表的纯标题观察已接入原adapter，标题与句柄指纹只读首个标题叶，保持UNKNOWN、无Project卡/覆盖声明。已有界RAM、存储/搜索/UI合同沿用；下一步先核验已获单次授权的当前列表响应之正向关联字段与Project标题身份关联，再接原成员归约/现有FreeUI；合法principal/roster仍是持久映射的前置。列表200不等于身份或成员已证。临时模式保持，完整目标与10k/100k DEFERRED及原阈值不变；详细实测只记STATUS和原证据入口。
+
 用户已正式批准将 **VA-HOST/1.1 FINAL** 完整纳入本计划。原 A–G、原任务 ID、Free/Pro 范围和批准 v2.7 产品目标全部保留；`.F`、`.P`仍只是原任务内的切片，不另建 Host、Free、Pro 三套计划。
 
 正式开发位置仍为原目录 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer`、分支 `codex/vaiwl-free-first-20261013`、现有 Draft PR #16；base 保持计划 PR #15 的 `docs/vaiwl-v28-core-mechanisms-20261012`。本次整合核对代码至 `570a90638e5e7c73fb97a63626d7fd79c4deb8d5`；实施时使用当时最新 HEAD 和已有工作区成果，不回退至此提交或附件的历史审查基线。

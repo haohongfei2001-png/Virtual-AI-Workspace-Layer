@@ -102,7 +102,7 @@ export function instrumentScaleSource(path,source,{clockAlignment=false}={}){
   add("surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');__scaleStats=null;__scaleStatsOwner=null;", "surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');__scaleStats=null;__scaleStatsOwner=null;__scaleEmit('adapter-stop',{adapterOrdinal:__scaleAdapter,wasLive:!stopped});");
   add('  requestScan(owned,true);', "  __scaleEmit('scan-cause',{adapterOrdinal:__scaleAdapter,toggleCause:true,ownedToggle:owned});requestScan(owned,true);");
   add('  if(surfaceChanged)requestScan();else schedule();', "  if(surfaceChanged){__scaleEmit('scan-cause',{adapterOrdinal:__scaleAdapter,mutationCause:true});requestScan();}else schedule();");
-  add("document.defaultView.addEventListener('hashchange',requestScan);requestScan(true);", "document.defaultView.addEventListener('hashchange',requestScan);__scaleEmit('scan-cause',{adapterOrdinal:__scaleAdapter,initialCause:true});requestScan(true);");
+  add("document.defaultView.addEventListener('hashchange',requestScan);if(profile.sidebarBoundary)document.defaultView.addEventListener('resize',requestScan);requestScan(true);", "document.defaultView.addEventListener('hashchange',requestScan);if(profile.sidebarBoundary)document.defaultView.addEventListener('resize',requestScan);__scaleEmit('scan-cause',{adapterOrdinal:__scaleAdapter,initialCause:true});requestScan(true);");
  }else if(path===TRACE_PATHS[3]){
   // Monotonic cumulative offsets, not CPU times. Null means a phase was not
   // reached (including the compatible-snapshot path); one terminal per refresh.

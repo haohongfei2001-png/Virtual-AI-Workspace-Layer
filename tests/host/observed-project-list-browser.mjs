@@ -1,0 +1,74 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {execFileSync} from 'node:child_process';
+import {observedDesktopHTML} from './fixtures/observed-desktop.mjs';
+import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
+const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
+const baseline=process.env.FREE_PROJECT_BASELINE_REF;
+const plugins=baseline?[{name:'saved-baseline',setup(build){build.onLoad({filter:/src\/host\/(native-surface-boundary|surface-discovery|chatgpt-observed-profile|chatgpt-adapter)\.mjs$/},args=>({contents:execFileSync('git',['show',`${baseline}:${args.path.slice(process.cwd().length+1)}`],{encoding:'utf8'}),loader:'js'}));}}]:[];
+const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {createSurfaceDiscovery} from './src/host/surface-discovery.mjs';export {createURLPolicy} from './src/host/url-policy.mjs';export {CHATGPT_OBSERVED_PROFILE} from './src/host/chatgpt-observed-profile.mjs';",resolveDir:process.cwd()},plugins,bundle:true,write:false,format:'iife',globalName:'observedModule'});
+const project='g-p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',cid='44444444-4444-4444-8444-444444444444';
+const projectHTML=`<main data-app-shell-main-surface><div data-app-shell-main-content-layout style="position:static"><div role="main"><h1><button>Native Project</button></h1><div role="tabpanel"><section><ol><li><a href="/g/${project}/c/${cid}"><div><div>Member title</div><div>DO NOT READ PREVIEW</div></div></a><div>Native actions</div></li></ol></section></div></div></div></main>`;
+const browser=await chromium.launch({headless:true}),results=[];
+try{
+ for(const mode of ['baseline','hidden-old-root','two-visible-roots','two-visible-panels','title-missing','title-hidden','title-complex','title-empty','title-over-limit','changed-title','changed-href','replace-root','leave-project','other-project-stale-list','preview-change','sidebar-conflict','editable-title','editable-panel','fake-member-attribute']){
+  const page=await browser.newPage({viewport:{width:1000,height:800}}),url='https://chatgpt.com/g/'+project+'/project';
+  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedDesktopHTML('33333333-3333-4333-8333-333333333333')+projectHTML}):r.abort());
+  await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
+  const result=await page.evaluate(async({mode,cid})=>{
+   const {createSurfaceDiscovery,createURLPolicy,createChatGPTAdapter,CHATGPT_OBSERVED_PROFILE:profile}=observedModule;
+   const policy=createURLPolicy({profile:{projectId:({container})=>/^g-p-[a-f0-9]{32}$/.test(container)?container:null}}),binding={documentToken:'fixture',producerToken:'fixture',browserDocumentId:'fixture',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+   const main=document.querySelector('main[data-app-shell-main-surface]'),panel=main.querySelector('[role="tabpanel"]'),a=panel.querySelector('a'),leaf=a.firstElementChild.firstElementChild,preview=a.firstElementChild.lastElementChild;
+   let forbiddenReads=0;
+   function guard(node){for(const name of ['textContent','innerText'])Object.defineProperty(node,name,{configurable:true,get(){forbiddenReads++;throw Error('preview-or-whole-row-read')}});}
+   guard(a);guard(a.firstElementChild);guard(preview);
+   const discovery=createSurfaceDiscovery({document,binding,profile,urlPolicy:policy}),first=discovery.scan(),handle=first.candidates.find(c=>c.target.nativeId===cid)?.target.liveHandle;
+   if(mode==='hidden-old-root'||mode==='two-visible-roots'){const clone=main.cloneNode(true);if(mode==='hidden-old-root')clone.hidden=true;main.before(clone);for(const n of clone.querySelectorAll('a, a > div, a > div > div'))guard(n);}
+   if(mode==='two-visible-panels')panel.after(panel.cloneNode(true));
+   if(mode==='editable-title'){leaf.contentEditable='true';guard(leaf);}
+   if(mode==='editable-panel'){panel.contentEditable='true';guard(leaf);}
+   if(mode==='fake-member-attribute')panel.setAttribute('undefined',location.pathname.split('/')[2]);
+   if(mode==='title-missing')leaf.remove();
+   if(mode==='title-hidden')leaf.hidden=true;
+   if(mode==='title-complex')leaf.append(document.createElement('span'));
+   if(mode==='title-empty')leaf.replaceChildren();
+   if(mode==='title-over-limit')leaf.replaceChildren('x'.repeat(201));
+   if(mode==='changed-title')leaf.replaceChildren('Renamed title');
+   if(mode==='changed-href')a.href='/c/55555555-5555-4555-8555-555555555555';
+   if(mode==='replace-root')main.replaceWith(main.cloneNode(true));
+   if(mode==='leave-project')history.pushState({},'', '/c/33333333-3333-4333-8333-333333333333');
+   if(mode==='other-project-stale-list')history.pushState({},'', '/g/g-p-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/project');
+   if(mode==='preview-change')preview.replaceChildren('CHANGED PREVIEW DO NOT READ');
+   if(mode==='sidebar-conflict'){const link=document.createElement('a');link.href='/c/'+cid;link.textContent='Conflicting sidebar title';document.querySelector('nav').append(link);}
+   const all=discovery.scan(),members=all.candidates.filter(c=>c.evidence.fieldPaths.includes('members'));
+   const expected=['two-visible-roots','two-visible-panels','title-missing','title-hidden','title-complex','title-empty','title-over-limit','leave-project','editable-title','editable-panel'].includes(mode)?0:1;
+   const shouldKeepHandle=['baseline','hidden-old-root','preview-change','sidebar-conflict','fake-member-attribute'].includes(mode);
+   const oldHandleValid=handle?!!discovery.getNode(handle):false;
+   const labelsOK=members.every(c=>c.nativeTitle===(mode==='changed-title'?'Renamed title':'Member title'));
+   const adapter=createChatGPTAdapter({document,profile,urlPolicy:policy});let emissions=0;
+   await adapter.start({binding,phase:'observation',emit:()=>{emissions++;throw Error('preauthorization-emission')}});for(let i=0;i<40;i++)await Promise.resolve();
+   const snapshot=adapter.observationStatus();await adapter.stop();const cleared=adapter.observationStatus();discovery.stop();
+   return {mode,expected,members:members.length,labelsOK,oldHandleValid,shouldKeepHandle,forbiddenReads,unknownOnly:all.membershipClaims.every(c=>c.asserted==='UNKNOWN'&&c.projectId===null),noProject:all.candidates.every(c=>c.entity!=='project'),noCoverage:all.coverageClaims.length===0,sidebarPreserved:all.candidates.some(c=>c.nativeTitle==='Native A'),conflictPreserved:mode!=='sidebar-conflict'||all.candidates.filter(c=>c.target.nativeId===cid).length===2,preauthNoEmission:emissions===0,preauthCount:snapshot.candidates,expectedPreauth:expected+1,preauthCleared:cleared.candidates===0};
+  },{mode,cid}).catch(e=>({mode,error:e.message}));
+  result.passed=result.members===result.expected&&result.labelsOK&&result.oldHandleValid===result.shouldKeepHandle&&result.forbiddenReads===0&&result.unknownOnly&&result.noProject&&result.noCoverage&&result.sidebarPreserved&&result.conflictPreserved&&result.preauthNoEmission&&result.preauthCount===result.expectedPreauth&&result.preauthCleared;
+  results.push(result);await page.close();
+ }
+ {
+  const page=await browser.newPage({viewport:{width:1000,height:800}}),url='https://chatgpt.com/g/'+project+'/project';
+  await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:observedDesktopHTML('33333333-3333-4333-8333-333333333333')+projectHTML}):r.abort());
+  await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
+  await page.evaluate(async()=>{const {createChatGPTAdapter,createURLPolicy,CHATGPT_OBSERVED_PROFILE:profile}=observedModule;globalThis.projectAdapter=createChatGPTAdapter({document,profile,urlPolicy:createURLPolicy({profile:{projectId:({container})=>/^g-p-[a-f0-9]{32}$/.test(container)?container:null}})});await projectAdapter.start({binding:{documentToken:'fixture',producerToken:'fixture',browserDocumentId:'fixture',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()},phase:'observation'});});
+  await page.waitForFunction(()=>projectAdapter.observationStatus().candidates===2,null,{timeout:1000});
+  await page.evaluate(()=>document.querySelector('main[data-app-shell-main-surface]').hidden=true);
+  await page.waitForFunction(()=>projectAdapter.observationStatus().candidates===1,null,{timeout:1000});
+  await page.evaluate(()=>document.querySelector('main[data-app-shell-main-surface]').hidden=false);
+  await page.waitForFunction(()=>projectAdapter.observationStatus().candidates===2,null,{timeout:1000});
+  await page.evaluate(()=>{const root=document.querySelector('main[data-app-shell-main-surface]');root.after(root.cloneNode(true));});
+  await page.waitForFunction(()=>projectAdapter.observationStatus().candidates===1,null,{timeout:1000});
+  await page.evaluate(()=>document.querySelectorAll('main[data-app-shell-main-surface]')[1].remove());
+  await page.waitForFunction(()=>projectAdapter.observationStatus().candidates===2,null,{timeout:1000});
+  await page.evaluate(async()=>{await projectAdapter.stop();delete globalThis.projectAdapter;});
+  results.push({mode:'preauthorization-root-hide-show-and-ambiguity',passed:true});await page.close();
+ }
+ console.log(JSON.stringify({status:results.every(r=>r.passed)?'PASS_WEB_MECHANISM_ONLY':'FAIL',baseline:baseline??null,results}));assert(results.every(r=>r.passed));
+}finally{await browser.close();}
