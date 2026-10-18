@@ -1396,5 +1396,25 @@
       "Production profile remains unverified fail closed",
       "10k/100k DEFERRED"
     ]
+  },
+  "partialNativeMessageIdentity20261018": {
+    "status": "PASS_SYNTHETIC_DOM_ONLY",
+    "before": "both missing-attribute variants incorrectly explicit-body-id",
+    "after": "both unproven; full pair restored explicit-body-id",
+    "network": "all browser routes aborted",
+    "targetedTests": 67,
+    "sourceHashes": {
+      "src/host/current-body-discovery.mjs": "12ba0ff6226fba1b24eec667f48ff929a867a07d39ee1cdedb1e3fe2c3bb4e35",
+      "tests/host/message-element-selector-browser.mjs": "bfb1a1828e9dae68eb461467146d57b5d958e4cf75e57dc3d1b07c7b73afcb50"
+    },
+    "logs": {
+      "selector-red": "selector-red-20261018.log.gz",
+      "selector-green": "selector-green-20261018.log.gz",
+      "selector-targeted": "selector-targeted-20261018.log.gz"
+    },
+    "limitations": [
+      "not live profile or MV3 acceptance",
+      "J2 original log unavailable: cache permission then HTTP2 GOAWAY; bounded job-only request timed out"
+    ]
   }
 }

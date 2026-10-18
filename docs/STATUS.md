@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **原生消息部分身份选择器已修复**：真实headless DOM反例确认旧交集选择器漏掉缺少任一ID属性的消息，仍错误返回explicit-body-id；现并集选中后逐项校验，缺一侧均unproven，恢复完整属性才成立。旧版实际RED、同fixture新版GREEN；67定向回归通过。仅隔离合成DOM、全网络拦截，不计MV3或LIVE_VERIFIED。证据与源码hash见现有local-page-selection-summary.json。J2原日志读取依次遇缓存权限、HTTP2 GOAWAY、单job下载45秒超时，根因仍未确认；未重跑CI或降低门槛。
+
 - **当前本地检查点：新版平铺消息解析待独审/构建**。获授权当前单条聊天在确认原生composer为空后正常刷新，原生两次GET均200，响应C与route一致、账户头匹配活跃canonical roster；仅记录字段结构/数量/布尔断言，无正文/凭据/私人ID落盘。实际为308条平铺messages、无mapping，不能推断父链。新增显式message-list-v1解析及reader接线，保持256条/原请求预算、observed-only/partial与lineage-unavailable；不造mappingNodeId，禁用该格式与ACK/history配置混用，默认生产配置不变。170定向测试全过、0跳过、106.341ms；后续包构建/manifest边界、send correlator和acceptance相关198项全过、0跳过、2620.067ms；另补真实flat parser→send correlator组合反例：partial清除旧intent且后续完整baseline不复活它，18项通过、45.159ms；独立审查尚未完成，不能认定LIVE_VERIFIED。并行审查因额度耗尽、另一任务因网络权限撤回终止。6270a34的CI39101646460最终FAIL：J2 authenticated ACK旅程失败，其余三个job成功；原日志定位仍待完成，不重跑挑绿。10k/100k仍DEFERRED，真实Project/导航/返回/搜索/安全恢复仍未通过。
 
 - **真实消息元素身份已接入候选发现链**：真实页另有明确selection conversation/message属性，新增显式message-elements profile，唯一可见reading内有界选中消息必须非空、ID有效唯一且C全部一致；仍是native-dom/explicit-body-id，不伪造response证据。原challenge、节点epoch、scope与默认配置保持；新增message ID属性变化观察。实际候选模块在获授权当前页只读得到5条ID、C与route一致，不读正文、不授予scope。独立旧版17项5 FAIL；当前472定向全过（2.536秒）、独审无阻断。获新增当前单条响应内存读取许可后，宿主自行403×4再200，响应C与当前聊天、账户头与活跃roster均一致；无旧mapping，固定详情schema仍待适配。未保存私人ID/正文/凭据，未完成真实MV3/Project闭环；规模仍DEFERRED。[同源码与脱敏证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。

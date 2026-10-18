@@ -1,6 +1,6 @@
 import {tokenOK} from '../b1/identity.mjs';
 // Observed native selection metadata grammar; not a scope or complete surface profile.
-export const CHATGPT_SELECTION_CURRENT_BODY=Object.freeze({rootSelector:'main [data-chatgpt-conversation-selection-target]',conversationIdAttribute:'data-chatgpt-selection-conversation-id',messageSelector:'[data-chatgpt-selection-conversation-id][data-chatgpt-selection-message-id]',messageIdAttribute:'data-chatgpt-selection-message-id',conversationIdSource:'message-elements'});
+export const CHATGPT_SELECTION_CURRENT_BODY=Object.freeze({rootSelector:'main [data-chatgpt-conversation-selection-target]',conversationIdAttribute:'data-chatgpt-selection-conversation-id',messageSelector:'[data-chatgpt-selection-conversation-id], [data-chatgpt-selection-message-id]',messageIdAttribute:'data-chatgpt-selection-message-id',conversationIdSource:'message-elements'});
 /** Profile-scoped DOM candidate only. No body text, author, receipt or ACK is read. */
 export function createCurrentBodyDiscovery({document:doc,urlPolicy,profile,isOwnedMask=()=>false}={}){
  if(!doc?.defaultView||typeof urlPolicy?.parse!=='function'||!tokenOK(profile?.id)||!Number.isSafeInteger(profile.revision)||profile.revision<1||typeof isOwnedMask!=='function')throw Error('invalid-current-body-discovery');
