@@ -125,3 +125,9 @@ node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-tr
 2026-10-18 当前分页候选a8752ff已正常推送并完成CI39091870975：四job成功；原正式10k双完整审计rev207/10000正确PROJECT，原窗口剩8058.97ms，展开/测量前后同revision/原生返回通过。J4仍23步PARTIAL、自动foreground未建立，不以新原生GET恢复替代。完整F1/p95、100k、真实Profile/IME/PAIA/跨环境关口仍开放。100k阶段诊断将后续定位缩小到共享引用登记回调与事务收尾，原失败和丢弃记录说明见[当前证据](local-page-selection-summary.json)。
 
 当前后续生产候选d96d345：Shared同事务私有不可变bucket证明，完整字节编码220→88，局部登记AB/BA/AB中位28.8→25.2ms，完整facts一致；冻结Node8305通过、12护栏变异检出、独立审查无阻断。同提交本地正式10k完整双审计/展开/测量/返回通过，原窗口剩4.35秒；总摄取观察32.33秒，不声称整体Host提速。Linux候选待验；2258个原副本摘要及3个stash完整保留。
+
+## 当前候选62e476e的Linux与100k失败（2026-10-18）
+
+CI39093078440正式10k FAIL：rev206/10000正确PROJECT，首轮21页完整审计3877.35ms，第二轮在途390.56ms耗尽原30秒，未进入measurement；源码/fixture/manifest不漂移。本地d96d345原10k通过仅为同生产代码Mac单例，不能覆盖此Linux失败。Node通过，J4原门禁通过但23步PARTIAL且peer自动foreground未建立；journeys片段场景在返回原生阅读之后、首项片段操作之前超时；draft保留但reading不可见，后续renew/view仍ready，需定位界面转换。failure-only诊断与正式证据分开存档，不重新运行挑绿。
+
+同生产代码原100k FAIL，最后预算内tail rev233/11131、完整审计0；失败后rev234/11185不是预算内完成。私有真实IDB阶段探针发现operation等待仅2.5ms，占本次新增50条register→done的9.84%；既有50条无需该查询，故拒绝未经收益证明的提前查询改动。详见既有local-page-selection-summary.json及其原件SHA256，不改变原计划和验收。
