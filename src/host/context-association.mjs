@@ -43,7 +43,7 @@ export function createContextAssociationBridge({document,runtime,origin,profile,
     if(!valid(state)){finish(state);return;}if(state.scanTimer!==null)return;
     state.scanTimer=schedule(()=>{state.scanTimer=null;scan(state);},Math.min(100,state.until-now(),state.budget-(elapsedNow()-state.started)));
    });
-   state.observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:[isProject?profile.memberProjectIdAttribute:profile.currentBody.conversationIdAttribute,'hidden','aria-hidden','class','style']});
+   state.observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:[isProject?profile.memberProjectIdAttribute:profile.currentBody.conversationIdAttribute,...(!isProject?[profile.currentBody.messageIdAttribute]:[]),'hidden','aria-hidden','class','style']});
    for(const event of ['popstate','hashchange','pagehide'])win.addEventListener?.(event,state.leave);
    state.timer=schedule(()=>finish(state),Math.min(state.until-now(),state.budget-(elapsedNow()-state.started)));
    // Recheck after observer installation, including an elapsed deadline.

@@ -8,16 +8,17 @@ import {digest} from '../../src/data/hash.mjs';
 const origin='https://chatgpt.com',C='11111111-1111-4111-8111-111111111111',D='22222222-2222-4222-8222-222222222222';
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function event(){const listeners=new Set();return {addListener:fn=>listeners.add(fn),removeListener:fn=>listeners.delete(fn),emit:value=>{for(const fn of listeners)fn(value);}};}
-function fixture(t,{providerDelay=0}={}){
- let wall=1000,elapsed=1000,sequence=0,present=false,bodyId=C,hidden=false,reads=0;
+function fixture(t,{providerDelay=0,messageMode=false}={}){
+ let wall=1000,elapsed=1000,sequence=0,present=false,bodyId=C,hidden=false,reads=0,messageId=null;
  const timers=new Map(),observers=new Set(),listeners=new Set(),challenges=[],replies=[];
  const schedule=(fn,ms)=>{const id=++sequence;timers.set(id,{fn,at:elapsed+ms});return id;},cancel=id=>timers.delete(id);
- class MutationObserver {constructor(fn){this.fn=fn;}observe(){observers.add(this);}disconnect(){observers.delete(this);}}
+ class MutationObserver {constructor(fn){this.fn=fn;}observe(target,options){this.options=options;observers.add(this);}disconnect(){observers.delete(this);}}
  const document={location:{href:origin+'/c/'+C},defaultView:{MutationObserver,getComputedStyle:()=>({display:'block',visibility:'visible'})},querySelectorAll:()=>{reads++;return present?[root]:[];}};
- const root={nodeType:1,isConnected:true,ownerDocument:document,parentElement:null,get hidden(){return hidden;},getAttribute:name=>name==='data-c'?bodyId:null,getClientRects:()=>[{}],querySelectorAll:()=>[],contains:node=>node===root,get textContent(){throw Error('association-must-not-read-body-text');}};
+ const root={nodeType:1,isConnected:true,ownerDocument:document,parentElement:null,get hidden(){return hidden;},getAttribute:name=>name==='data-c'&&!messageMode?bodyId:null,getClientRects:()=>[{}],querySelectorAll:()=>messageMode?[message]:[],contains:node=>node===root||node===message,get textContent(){throw Error('association-must-not-read-body-text');}};
+ const message={isConnected:true,ownerDocument:document,parentElement:root,getClientRects:()=>[{}],getAttribute:name=>name==='data-c'?bodyId:name==='data-message'?messageId:null,get textContent(){throw Error('must-not-read-message');}};
  document.documentElement={nodeType:1,isConnected:true,ownerDocument:document,contains:()=>true};
  const runtime={id:'ext',onMessage:{addListener:fn=>listeners.add(fn),removeListener:fn=>listeners.delete(fn)}};
- const bridge=createContextAssociationBridge({document,runtime,origin,profile:{id:'fixed',revision:1,currentBody:{rootSelector:'#reading',conversationIdAttribute:'data-c',messageSelector:'[data-message]',messageIdAttribute:'data-message'}},now:()=>wall,elapsedNow:()=>elapsed,schedule,cancel});
+ const bridge=createContextAssociationBridge({document,runtime,origin,profile:{id:'fixed',revision:1,currentBody:{rootSelector:'#reading',conversationIdAttribute:'data-c',messageSelector:'[data-message]',messageIdAttribute:'data-message',...(messageMode?{conversationIdSource:'message-elements'}:{})}},now:()=>wall,elapsedNow:()=>elapsed,schedule,cancel});
  const call=(message,reply)=>{for(const fn of listeners)fn(message,{id:'ext'},reply);};
  const frame={tabId:7,frameId:0,documentId:'doc',documentLifecycle:'active',incognito:false,actualURL:document.location.href};
  const webRequest=Object.fromEntries(['onSendHeaders','onCompleted','onErrorOccurred','onBeforeRedirect'].map(name=>[name,event()]));
@@ -27,7 +28,7 @@ function fixture(t,{providerDelay=0}={}){
  async function advance(ms,{wallDelta=ms}={}){elapsed+=ms;wall+=wallDelta;for(let i=0;i<20;i++){const due=[...timers].filter(([,timer])=>timer.at<=elapsed);if(!due.length)break;for(const [id,timer]of due){if(timers.delete(id))timer.fn();}await flush();}await flush();}
  function render(id=C){present=true;bodyId=id;for(const observer of [...observers])observer.fn([{type:'childList',target:document.documentElement,addedNodes:[root],removedNodes:[]}]);}
  async function nativeGET(){const details={tabId:7,frameId:0,documentId:'doc',documentLifecycle:'active',initiator:origin,type:'xmlhttprequest',method:'GET',requestId:'native-request',url:origin+'/backend-api/conversation/'+C,requestHeaders:[{name:'Chatgpt-Account-Id',value:'team'}]};webRequest.onSendHeaders.emit(details);await flush();webRequest.onCompleted.emit({...details,statusCode:200,fromCache:false,requestHeaders:undefined});await flush();}
- return {auth,frame,bridge,owner,document,challenges,replies,timers,render,advance,nativeGET,call,get reads(){return reads;},hide(){hidden=true;}};
+ return {auth,frame,bridge,owner,document,challenges,replies,timers,render,advance,nativeGET,call,setMessageId(id){messageId=id;for(const observer of [...observers])if(observer.options.attributeFilter.includes('data-message'))observer.fn([{type:'attributes',target:message,attributeName:'data-message'}]);},get reads(){return reads;},hide(){hidden=true;}};
 }
 
 test('successful native GET plus late matching body establishes actual C2 authority within the original challenge',async t=>{
@@ -76,4 +77,15 @@ test('provider latency consumes the original scope deadline even when the later 
  await f.advance(500);assert.notEqual((await pending).state,'verified');assert.equal(f.auth.scopeFor(f.frame),null);
  f.render();await f.advance(100);assert.equal(f.auth.scopeFor(f.frame),null,'late body cannot resurrect expired refresh');
  assert.equal(f.challenges.length,1);
+});
+
+test('native message identity arriving after container creation completes the original C2 challenge',async t=>{
+ const f=fixture(t,{messageMode:true});await f.nativeGET();const pending=f.auth.refresh(f.frame,'bind');await flush();
+ f.render();await f.advance(100);assert.equal(f.replies.length,0,'container and route alone do not prove identity');
+ f.setMessageId('native-message');await f.advance(100);
+ assert.equal((await pending).state,'verified');assert.equal(f.challenges.length,1);assert.equal(f.replies.length,1);
+});
+test('message identity mode cannot authenticate without a real completed native request',async t=>{
+ const f=fixture(t,{messageMode:true});f.render();f.setMessageId('native-message');await f.advance(100);
+ assert.notEqual((await f.auth.refresh(f.frame,'bind')).state,'verified');assert.equal(f.challenges.length,0);
 });

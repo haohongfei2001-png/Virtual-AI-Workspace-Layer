@@ -1325,6 +1325,76 @@
       "j4Job": "SUCCESS_NOT_FULL_ACCEPTANCE",
       "journeyFailedStep": "Reject permanent-stop dormant recovery mutation",
       "rootCause": "NOT_YET_INSPECTED"
+    },
+    "candidateCI": {
+      "runId": 39101115283,
+      "head": "c45dd4c",
+      "jobs": "4 SUCCESS",
+      "foregroundPositive": "completed SUCCESS",
+      "foregroundMutant": "completed SUCCESS",
+      "permanentStopMutant": "completed SUCCESS",
+      "formal10k": "SKIPPED_DEFERRED",
+      "fullJ4Accepted": false
     }
+  },
+  "nativeMessageElementBody20261018": {
+    "baseHead": "c45dd4c983650f9b35b6c0fe11941d754f8cf449",
+    "sourceSHA256": {
+      "src/host/current-body-discovery.mjs": "00d06d7f8ddc9e74f127a85c85e4ed83edfa10e5088a393108ecdead71c8edae",
+      "src/host/current-body-claim.mjs": "e082ed353a0bb81c7762a65ffa258a375391ca3194618f2a9888fee0c357e13a",
+      "src/host/context-association.mjs": "ce6486651a5fd28c1a6de95b63aa7d4db5820bf19539097d15fa8919f40b5451",
+      "tests/host/message-element-body.test.mjs": "26f9ccf6ea75084ac6f7ef0206dd37b2abc26f21a38a65cdf62789737c036360",
+      "tests/host/context-association-delayed-body.test.mjs": "e7d70df26271925487e98b1554af2e46bee67f12b66784d988984708d8f507d9"
+    },
+    "implementation": "Explicit message-elements profile; bounded selected visible DOM metadata all agree on C, nonempty distinct message IDs; existing explicit-body-id and native-dom evidence, no response witness fabricated. Default profile unchanged.",
+    "limits": "Observed-only selected nodes; selector requires both native attributes, so excluded missing-attribute nodes are not a completeness claim. More than 256 selected nodes fail closed.",
+    "independentRed": {
+      "tests": 17,
+      "pass": 12,
+      "fail": 5
+    },
+    "targeted": {
+      "tests": 472,
+      "pass": 472,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 2535.529834
+    },
+    "review": "Independent review no blocker; exact scope/challenge/epoch/receipt fences preserved.",
+    "liveModuleProbe": {
+      "association": "explicit-body-id",
+      "messageCount": 5,
+      "conversationMatchesRoute": true,
+      "sourceKind": "native-dom",
+      "bodyTextRead": false,
+      "scopeGranted": false
+    },
+    "authorizedCurrentResponse": {
+      "permission": "User allowed current one conversation response in transient memory; extract IDs only, discard remaining; no private values saved.",
+      "sameCurrentConversation": true,
+      "nativeStatuses": [
+        403,
+        403,
+        403,
+        403,
+        200
+      ],
+      "nativeRetries": "Host-issued requests, no extension replay or manual fetch",
+      "finalMime": "application/json",
+      "responseIdsMatch": true,
+      "mappingPresent": false,
+      "contextHeaderInActiveCanonicalRoster": true,
+      "activeCanonicalRosterCount": 1,
+      "rawResponseSaved": false,
+      "bodyTextReturned": false,
+      "credentialsReturned": false
+    },
+    "remaining": [
+      "Current modern detail schema lacks legacy mapping; fixed reader remains unsupported",
+      "No live packaged MV3 scope grant",
+      "No complete native Project/navigation/search/return journey",
+      "Production profile remains unverified fail closed",
+      "10k/100k DEFERRED"
+    ]
   }
 }

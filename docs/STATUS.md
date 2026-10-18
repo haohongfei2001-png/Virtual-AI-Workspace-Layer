@@ -4,6 +4,10 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **真实消息元素身份已接入候选发现链**：真实页另有明确selection conversation/message属性，新增显式message-elements profile，唯一可见reading内有界选中消息必须非空、ID有效唯一且C全部一致；仍是native-dom/explicit-body-id，不伪造response证据。原challenge、节点epoch、scope与默认配置保持；新增message ID属性变化观察。实际候选模块在获授权当前页只读得到5条ID、C与route一致，不读正文、不授予scope。独立旧版17项5 FAIL；当前472定向全过（2.536秒）、独审无阻断。获新增当前单条响应内存读取许可后，宿主自行403×4再200，响应C与当前聊天、账户头与活跃roster均一致；无旧mapping，固定详情schema仍待适配。未保存私人ID/正文/凭据，未完成真实MV3/Project闭环；规模仍DEFERRED。[同源码与脱敏证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
+
+- **c45dd4c / CI39101115283通过原小型门禁**：四job成功；foreground正向、缺新握手变异、permanent-stop变异均completed SUCCESS，原前置失败未再挡住本次窄旅程。正式10k与诊断实际SKIPPED，仍DEFERRED；不据job绿色关闭完整J4、真实宿主或发布关口。
+
 - **休眠前置观察窗口已收口（测试驱动）**：原CI两次CDP间存在prepare令牌失效窗口，确切异步拒绝分支未记录，不宣称产品无缺陷。现同turn准备/启动并锁定第一次Promise，未准备才等待、真正false/异常终态失败，观察超时不重新close；产品与原预算/门槛未变。62定向通过、独审无阻断；隔离headless Mac原旅程PASS，删除恢复分支变异在原grant/VIEW阶段失败，原CI两套oracle均通过，源码/fixture一致、GET各1、草稿/页面保持。首次沙箱启动NOT_RUN原件保留。上批ae0b92e/CI39100670059的Node/耐久/J4 job成功，journeys仅permanent-stop变异失败，具体阶段仍核对；本批Linux待验证，worker内存丢失后自动恢复和真实Project仍未完成；10k/100k仍DEFERRED。[原失败及当前证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
 
 - **显式复数详情读取接线候选**：worker固定reader继承scope的精确路径profile，session显式冲突直接拒绝；不双路径重试，默认单数/生产关闭及原认证、6秒与持久共享预算保持。旧实现55项中10 FAIL，新组合352/352、零fail/skip、2.783秒；含组合reader实际MockIDB预算与包边界。真实只读新标签确认请求ID对应当前route、账户头属于唯一活跃canonical账户，但详情GET为403 HTML、最终未到原目标，不能认证schema或开启scope；原含草稿标签未动。当前页只读结构检查见原生editor/nav且无alert，但legacy reading与conversation/message ID属性均缺失，因此body关联仍未成立，不把正常页面等同已支持profile。独立审查无阻断。上批e3053bc的CI39100121619实际FAIL（Node、cold passive诊断、foreground变异），Node原8362/8360/2 FAIL已定位为新增配置后诊断器整行锚点过时，本地3项复现2 FAIL；精确锚点更新后3/3通过（1.304秒），保留exact-once及漂移拒绝。journey失败仍核对，本地通过不覆盖CI。规模仍DEFERRED，完整Free仍未完成。[同源证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
