@@ -3705,5 +3705,30 @@
       "J4": "success within existing partial gate, not full J4",
       "journeys": "failure: Reject permanent-stop dormant recovery mutation"
     }
+  },
+  "dormantMutationAnchor20261018": {
+    "baseCommit": "f02ba020a3ccb78136c4ff531ab4c035ad52c441",
+    "rootCause": "CI39116867367 mutation setup failed before browser launch: expected old scope-only catch literal no longer existed after transport classification was added. No report produced; not a survived mutant.",
+    "fix": "Match exactly one current wake catch branch; mutate scope denial to permanent stop while preserving transport-unavailable contextPending handling. Production code and CI oracle unchanged.",
+    "validation": {
+      "browserExit": 1,
+      "oraclePassed": true,
+      "phase": "await-fresh-frame-after-native-GET",
+      "expectedError": "J2-observation-timeout",
+      "nativeGETs": 2,
+      "bothStatus200": true,
+      "sourceChangedDuringRun": false,
+      "browserErrors": [],
+      "lastSuccessfulStep": "denied-wake-withdraws-old-projection-preserves-native-draft",
+      "targetedPass": 17,
+      "targetedSkip": 0,
+      "targetedDurationMs": 45.81775
+    },
+    "limits": "Designated mutation killed in isolated MV3 only; no actual host/J4 certification, no scale execution, no performance comparison.",
+    "artifacts": [
+      "ci39116867367-journeys-20261018.log.gz",
+      "dormant-mutant-anchor-20261018.json.gz",
+      "dormant-mutant-targeted-20261018.tap.gz"
+    ]
   }
 }

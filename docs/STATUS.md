@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **休眠permanent-stop变异注入点已修**：CI39116867367原日志证实浏览器尚未启动即旧catch文本匹配数失败，JSON不存在；不是变异存活。现精确匹配当前分支，只把明确scope拒绝改为stop，保留transport-unavailable待命。生产、workflow oracle和期限均未改；隔离MV3在原await-fresh-frame-after-native-GET阶段以J2-observation-timeout失败，前四步通过、GET恰好2次且200、草稿保持、源码未漂移，原CI判定完整通过，17相关合同PASS/0skip/45.818ms。此仅指定变异被杀，不认证真实宿主/完整J4；原失败保留，规模DEFERRED。证据dormantMutationAnchor20261018。
+
 - **CI Node两项维护失败已复现修正**：读取CI39115889594原日志；当前6b43d4a本地全量8539中8537PASS/2FAIL/0skip/78.768s，同为finishPass旧截取锚失效导致SyntaxError、CI步骤清单遗漏已存在布局回归。前者改为截取完整实际函数并提供终结通知测试依赖，生命周期/旧producer断言保留；后者补精确清单，workflow与测试步骤不删改。101受影响定向PASS/0skip/1.319s；修后未重跑完整矩阵，不能写全套通过。当前CI39116867367最终FAIL：Node失败、耐久与J4既定局部门槛成功，journeys仅permanent-stop休眠变异失败；该浏览器失败尚待对应原日志，未据Node修复改判。证据ciContractMaintenance20261018；真实/规模边界不变。
 
 - **Free库存列表视觉缺口已修**：对照批准v2.7 1440×1000原图与当前隔离MV3截图，NONE/UNKNOWN标题落到UA默认h2、区块紧贴且继承居中搜索宽度。仅在自有shadow CSS补齐主区15px/侧栏12px标题、字体缩放/主题token、18px区块间隔与内容左对齐；无数据/导航/成员变化。原LEGACY矩阵24个连续布局观察通过，源码/构建无漂移、外网阻断、errors空；30包/布局合同PASS/0skip/191.009ms，桌面前后及窄屏深色截图已保存。不同fixture/数据不做像素一致声明，完整v2.7仍未认证；真实worker403/J4/G/U保持未完成，规模DEFERRED。见freeListVisual20261018。

@@ -40,7 +40,7 @@ if(idleProbe){
  instrumentedEntry=original.replace(anchor,(transportExpiry?' ('+installTransportExpiryObserver.toString()+')();\n':'')+' globalThis.__vaiwlIdleProbeSession=Object.freeze({attempt:('+createPreparedDormancyProbe.toString()+')(session)});\n'+anchor);await writeFile(path,instrumentedEntry);
 }
 if(dormantMutant){
- const path=join(built.unpacked,'src/host/content-session.mjs'),original=await readFile(path,'utf8'),anchor="if(error?.message==='scope-not-verified')contextPending();else stop();";assert.equal(original.split(anchor).length,2);mutantSession=original.replace(anchor,'stop();');await writeFile(path,mutantSession);
+ const path=join(built.unpacked,'src/host/content-session.mjs'),original=await readFile(path,'utf8'),anchor="if(['scope-not-verified','context-handshake-transport-unavailable'].includes(error?.message))contextPending();else stop();";assert.equal(original.split(anchor).length,2,'denied wake mutation must match exactly one production branch');mutantSession=original.replace(anchor,"if(error?.message==='context-handshake-transport-unavailable')contextPending();else stop();");await writeFile(path,mutantSession);
 }
 if(transportMutant){
  const path=join(built.unpacked,'src/host/content-session.mjs'),original=await readFile(path,'utf8');
