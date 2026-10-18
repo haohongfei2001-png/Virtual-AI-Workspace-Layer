@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **恢复合批后MODERN原J3兼容旅程通过**：冻结2ca77e3，app-root嵌套/immediate冷启动，原连续16步PASS，源码/fixture/runner/构建无漂移，errors为空。双surface、原生模型/文件、两类编辑器草稿、AX键盘、前进返回、200%缩放、较早/UNKNOWN历史、片段保存搜索原生定位及原生搜索均在同一旅程成立。原runner未记录端到端耗时，不宣称提速；未放宽期限。物理IME/系统权限NOT_RUN、完整v2.7外观NOT_ESTABLISHED；未新增真实Profile读取，worker403/真实全链/J4仍开放，规模DEFERRED。证据recoveryBatchJ320261018。
+
 - **恢复修复合批后原J2本地完整旅程通过**：冻结591ffc0，LEGACY隔离打包MV3原8步全过、errors为空、源码未漂移；真实等待60182ms后活动锚仍保留，worker stop/new-running后恢复，后续原始时间精确归并且不重复/续期，失败发送/他人/旧分支负例通过。browser-launch到report-write共128243ms（包含原等待），无同环境旧耗时，不宣称提速。首次默认/usr/bin/chromium在Mac不存在，NOT_RUN原件保留；仅用既有环境变量指定Mac Chrome后执行，无门槛或源码修改。本结果不追溯改判历史Linux J2失败，也不认证J4/自然休眠/真实导航；当前真实worker session403仍BLOCKED，规模DEFERRED。见recoveryBatchJ220261018。
 
 - **partial恢复被自身cancel通知抢先拒绝已修**：adapter.stop原会启动终结通知raw IPC，controller下一microtask唯一handoff因此被quiet拒绝，之后通知完成也无恢复机会。联合content/controller最小反例旧17例16PASS/1FAIL；现立即销毁双frame，仅等待已有终结通知，重复stop保留在途清理，清理与原子release共用stop开始的6秒窗口；4秒清理只余2秒release，其他work仍由原quiet/worker护栏拒绝。316定向PASS/0skip/597.573ms，184构建/包边界PASS/2959.772ms，独审通过；同源码既有隔离partial前台恢复回归PASS/源码未漂移/cleanup前11553.7ms。新增cancel延迟竞态由联合L和adapter测试证明，浏览器未单独注入该延迟，不扩大其证明范围。真实Profile本次未重复读取，最新worker session403仍BLOCKED；原J2/J4/自然休眠未认证，规模DEFERRED。证据cancelTerminalDrain20261018。

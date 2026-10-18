@@ -3595,5 +3595,22 @@
       "recovery-batch-j2-mac-20261018.json.gz",
       "recovery-batch-j2-progress-20261018.jsonl.gz"
     ]
+  },
+  "recoveryBatchJ320261018": {
+    "sourceCommit": "2ca77e31aef5aa0723396d150ce6a5009abfcd57",
+    "status": "PASS",
+    "profile": "MODERN",
+    "layout": "app-root",
+    "startup": "immediate",
+    "steps": 16,
+    "errors": [],
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "scriptChangedDuringRun": false,
+    "buildManifestUnchanged": true,
+    "timing": "End-to-end timing not collected by original runner; no speedup claim. Original deadlines unchanged.",
+    "coverage": "Single continuous original J3: both surfaces, model/file and fixture permissions, textarea/contenteditable drafts, AX keyboard, Back/Forward, 200% zoom, older/UNKNOWN history, explicit Range snippet save/search/native locate, native search.",
+    "limits": "Offline only. Physical IME and system permission NOT_RUN; full v2.7 acceptance NOT_ESTABLISHED. No real Profile reads. Worker session403 remains BLOCKED; J4/no-new-context and historical Linux failures not closed; 10k/100k DEFERRED.",
+    "artifact": "recovery-batch-j3-modern-20261018.json.gz"
   }
 }
