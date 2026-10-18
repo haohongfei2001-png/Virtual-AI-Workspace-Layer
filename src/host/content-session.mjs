@@ -162,7 +162,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    const handle=await s.controller.resumeDormant(adapterOptions(s,s.binding),{mode});
    if(!handle||!live(s)||(s.wakeRevision??0)!==revision)throw Error('dormant-resume-failed');
    s.ready=true;return handle;
-  });}catch(error){if(current===s){if(error?.message==='scope-not-verified')contextPending();else stop();}return null;}finally{s.wakePending=false;s.wakePrior=null;}
+  });}catch(error){if(current===s){if(error?.message==='scope-not-verified')contextPending();else stop();}return null;}finally{s.wakePending=false;s.wakePrior=null;if(s.ready&&live(s))s.focus();}
  }
  const bindingFields=b=>({documentToken:b.documentToken,producerToken:b.producerToken,routeEpoch:b.routeEpoch});
  function live(s){return current===s&&!s.abort.signal.aborted&&doc.location.href===s.url;}
@@ -384,7 +384,10 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    // dormant wake and failed scope checks never acquire this startup flag.
    s.surface=surface;s.mountStarting=true;let handle;
    try{handle=await s.controller.start(adapterOptions(s,s.binding));}finally{s.mountStarting=false;}
-   if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;return handle;
+   if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;
+   // A real foreground transition may arrive while mount is awaiting its reply.
+   // Consume the armed transition through the existing live/single-flight gate.
+   s.focus();return handle;
   }catch(error){
    if(current===s){
     // A native route can change while HELLO, REFRESH or mount is pending,

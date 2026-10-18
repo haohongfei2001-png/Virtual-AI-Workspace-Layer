@@ -34,7 +34,7 @@ export function instrumentJ4LifecycleOrderSource(path,source){
   inject('current=s;doc.defaultView.addEventListener',"current=s;__j4State('begin');doc.defaultView.addEventListener");
   inject('s.scopeKey=auth.scopeKey;s.ackProjects',"s.scopeKey=auth.scopeKey;__j4State('auth-verified');s.ackProjects");
   inject("if(exactHostRecord(m,['type'])&&m.type==='HOST_DOCUMENT_INVALIDATED'){rebind(s);return;}","if(exactHostRecord(m,['type'])&&m.type==='HOST_DOCUMENT_INVALIDATED'){__j4State('delivery-invalidated');rebind(s);return;}");
-  inject("if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;return handle;","if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;__j4State('mount-ready');return handle;");
+  inject("if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;","if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;__j4State('mount-ready');");
  }else throw Error('j4-order-path');
  return (J4_ORDER_PATHS.indexOf(path)>=2?contentRecorder:recorder)+out;
 }

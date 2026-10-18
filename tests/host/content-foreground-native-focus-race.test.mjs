@@ -45,12 +45,12 @@ async function prepare(t,mutant){
  const before=f.calls.length;
  return {f,adapter,before,types:()=>f.calls.slice(before).map(m=>m.type).filter(t=>['HOST_FOCUS','HOST_HELLO','HOST_REFRESH'].includes(t))};
 }
-for(const mutant of [false,true])test(`editor focusin before window focus bypasses foreground branch (mutant=${mutant})`,async t=>{
+for(const mutant of [false,true])test(`editor focusin before window focus drains foreground after wake (mutant=${mutant})`,async t=>{
  const {f,adapter,types}=await prepare(t,mutant);
  adapter.documentListeners.get('focusin')({type:'focusin',isTrusted:true,target:adapter.editor});
  adapter.windowListeners.get('focus')();
  await drain();await settle();
- assert.deepEqual(types(),['HOST_HELLO','HOST_REFRESH']);
+ assert.deepEqual(types(),mutant?['HOST_HELLO','HOST_REFRESH','HOST_FOCUS']:['HOST_HELLO','HOST_REFRESH','HOST_FOCUS','HOST_HELLO','HOST_REFRESH']);
  assert.equal(f.resumed.length,1);assert.deepEqual(f.resumed[0].mode,{mode:'reading'});
 });
 for(const mutant of [false,true])test(`non-composer heading focus cannot prepare; window focus hits exact branch (mutant=${mutant})`,async t=>{

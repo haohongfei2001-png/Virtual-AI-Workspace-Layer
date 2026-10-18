@@ -1,8 +1,10 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 当前交付关口（2026-10-17，集中索引与恢复闭环）
+## 当前交付关口（2026-10-18，集中索引与恢复闭环）
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
+
+- **前后台调度与恢复同旅程修复候选**：隐藏文档只暂停下一目录片段，保留游标、在途请求、body/send和原30秒pass期限，暂停不冒充drained。独立原版4RED→修复通过，真实owner到期不续验证通过。挂载/休眠恢复等待期间的foreground原先被记下但未在ready后消费，两个独立RED确认；现在成功ready后走原FOCUS授权/单飞，失败或stop不触发。497相关回归通过，旧焦点竞争反例现检查补验证及mutant差异。原10k同环境单次对照：原版17.120秒/rev216，目录候选18.391秒/rev207；均10000正确PROJECT、双审计、原期限内导航/返回通过，**没有证明提速，不关闭Linux FAIL**。最终冻结Node8227/8227、零fail/skip/cancel、108.45秒，输入摘要一致，12护栏变异全KILLED；首次完整回归3项诊断锚点失配已修，原失败保留。最终同生产源码10k双审计rev203/10000正确PROJECT、原窗口剩12.93秒、导航返回通过；与Node并行时总摄取观察48.61秒，不作速度比。J4仍23步PARTIAL、自动foreground FAIL、新原生导航PASS，未关闭主关口。[本批原证据](evidence/free-delivery-2026-10-17/local-ci39086077996-scheduling-summary.json)。
 
 - **f29443a Linux CI39086077996：片段修复跨环境闭环成立，10k仍FAIL**：Node与journeys通过，新增原六场景片段旅程Linux全部通过，与Mac生产/runner摘要完全一致。J4原门禁通过、23步完成但JSON仍PARTIAL：自动foreground失败、两次新原生导航恢复通过。正式10k截止最后tail为rev310/PENDING_MEMBER、audit0；失败后rev311/10000库存不能倒推预算内完成。独立诊断rev209首轮完整审计3081ms、第二轮inFlight超时，不抵消正式FAIL。无变化重复packet已有零写路径，不能用其数量解释额外revision；继续区分首次分包与语义变更，未归因或放宽预算。[同源码CI原证据](evidence/free-delivery-2026-10-17/local-ci39086077996-summary.json)。
 

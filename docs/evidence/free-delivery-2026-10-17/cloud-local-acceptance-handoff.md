@@ -105,3 +105,7 @@ node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-tr
 最终冻结完整Node8214/8214（100.88秒，0 fail/skip/cancel）、12/12护栏变异KILLED，输入摘要不变。首轮95.86秒含一项CI场景清单遗漏FAIL，修正后复验；上一批85.51秒，仅报告实测、不宣称加速。原片段浏览器生产/runner摘要与最终候选完全一致。
 
 同源码f29443a的CI39086077996已结束：Linux片段六场景通过、生产与runner摘要同本地；Node/journeys通过。J4仅原门禁通过，仍PARTIAL；正式10k tail待定/audit0超时，失败后库存10000不冒充预算内完成。原JSON及日志见[本次CI证据](local-ci39086077996-summary.json)。
+
+2026-10-18 连续本地候选：仅隐藏目录让行与成功mount/wake后的armed foreground消费；稳定RED及修复原件保留。原版/候选同环境10k均完成双审计与返回，摄取17.120→18.391秒，不能宣称改善。Linux10k、自动peer恢复仍待真实结果，真实Profile连接/IME/PAIA/跨端缺口不变。
+
+本批冻结结果：Node8227/8227/108.45秒、12护栏变异全KILLED，输入未漂移；首次诊断锚点3FAIL保留并修复。最终10k双审计rev203/10000正确PROJECT/零UNKNOWN、原窗口剩12.93秒，导航返回通过；Node并行下总观察48.61秒不作速度比。J4仍23步PARTIAL，自动foreground失败，新原生GET恢复不替代。见[本批证据](local-ci39086077996-scheduling-summary.json)。
