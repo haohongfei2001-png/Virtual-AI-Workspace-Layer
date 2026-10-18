@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {createSendCorrelator} from '../../src/host/send-correlator.mjs';
-import {parseConversationMetadata} from '../../src/host/conversation-metadata.mjs';
+import {parseConversationMetadata,parseConversationMessageListMetadata} from '../../src/host/conversation-metadata.mjs';
 const binding={scopeKey:'scopeA',documentToken:'docA',producerToken:'producerA',routeEpoch:1,bodyEpoch:1,conversationId:'c1'};
 const node=(id,parent=null,patch={})=>({id,parent,message:{id:'m_'+id,author:{role:'user',id:'principal'},content:{parts:['PRIVATE_BODY']},...patch}});
 const metadata=mapping=>parseConversationMetadata({conversationId:'c1',principalId:'principal',payload:JSON.stringify({conversation_id:'c1',mapping})});
@@ -18,3 +18,11 @@ test('pending and replay capacities are bounded without evicting replay protecti
 
 test('new-ID sibling edit/branch is not an append send candidate',()=>{const h=fixture();h.intent();assert.deepEqual(h.c.observe(metadata({a:node('a'),b:node('b')})),[]);});
 test('metadata edit consumes old intent before a later append',()=>{const h=fixture();h.intent();h.c.observe(metadata({a:node('a',null,{create_time:2})}));assert.deepEqual(h.c.observe(metadata({a:node('a',null,{create_time:2}),b:node('b','a')})),[]);});
+
+test('real flat-list parser retires pending legacy intent and cannot authorize a send',()=>{
+ const h=fixture();assert(h.intent());
+ const flat=parseConversationMessageListMetadata({conversationId:'c1',principalId:'principal',payload:JSON.stringify({conversation_id:'c1',messages:[node('a').message,node('b').message],current_node:'m_b'})});
+ assert.deepEqual(h.c.observe(flat),[]);assert.equal(h.c.pendingIntent('i1'),null);assert.equal(h.intent('i2'),null);
+ assert.deepEqual(h.c.observe(metadata({a:node('a'),b:node('b','a')})),[]);
+ assert.equal(h.c.pendingIntent('i1'),null);assert.equal(h.intent('i1'),null);
+});
