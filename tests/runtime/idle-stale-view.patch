@@ -1,0 +1,27 @@
+--- a/src/runtime/host-view-service.mjs
++++ b/src/runtime/host-view-service.mjs
+@@ -71,7 +71,14 @@
+  function begin(entry){
+   cancel(entry.prepareTimer);cancel(entry.retryTimer);entry.retryTimer=null;entry.deferPreparation=null;entry.error=null;entry.retryToken=null;entry.pending=true;entry.awaitingDelivery=false;
+   const generation=entry.prepareGeneration=(entry.prepareGeneration??0)+1,started=elapsedNow();let retries=0;
+-  const current=()=>entry.prepareGeneration===generation&&entry.isCurrent();
++  // Retire only this invalid preparation, at an existing completion/timer
++  // checkpoint. Raw reads remain counted independently until they settle.
++  const current=()=>{
++   if(entry.prepareGeneration!==generation)return false;
++   if(entry.isCurrent())return true;
++   if(views.get(entry.mountId)===entry)remove(entry.mountId);
++   return false;
++  };
+   const completed=()=>{cancel(entry.prepareTimer);entry.prepareTimer=null;entry.checkPreparation=null;};
+   entry.checkPreparation=()=>{
+    const elapsed=elapsedNow()-started;if(Number.isFinite(elapsed)&&elapsed>=0&&elapsed<30000)return false;
+@@ -130,7 +137,7 @@
+    }
+    if(!entry){
+     if(views.size>=maxViews)throw Error('free-view-capacity');
+-    entry={scopeKey:context.scope.key,scopeGrantId:context.scopeGrantId,parentFrame:context.parentFrame,isCurrent:context.isCurrent,pending:false,error:null,presentation:{revision:0,intent:{kind:'show-workspace'}},
++    entry={mountId:message.mountId,scopeKey:context.scope.key,scopeGrantId:context.scopeGrantId,parentFrame:context.parentFrame,isCurrent:context.isCurrent,pending:false,error:null,presentation:{revision:0,intent:{kind:'show-workspace'}},
+      owner:createFreeViewOwner({readService:ownerReadService,scope:context.scope,guard:context.isCurrent,clock,elapsedNow,schedule,cancel,initialSession:(resumeFor(context,'workspace')?.query.segment??0)>0?resumeFor(context,'workspace').session:null})};
+     views.set(message.mountId,entry);begin(entry);
+    }
