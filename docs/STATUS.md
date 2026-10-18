@@ -4,6 +4,11 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+
+- **滚动阅读视口与输入区分离候选**：真实只读结构确认timeline仅有阅读内容和完整composer footer两个分支，旧content rect随滚动离屏。新增显式readingViewport只计算几何，mask仍仅施加独立reading；严格双分支/直接文本/同文档/connected核验，按屏幕、header、footer裁切，未知结构和缩放平移拒绝。viewport加入epoch、连续性、MountSurface重绑及resize/scroll观察。旧版13反例均拒绝新配置；冻结351/351定向及包构建通过、0 skip、2107.317ms。隔离headless实际验证离屏内容、footer增长、草稿保留、纯reading mask、声明式关闭与清理，结果仅WEB_MECHANISM_ONLY；控制器自动事件链为合同double，不冒充MV3。独审无本diff阻断。真实返回槽（含可见性/几何护栏）与纯history边界仍OPEN，生产profile关闭，真实Project/导航/搜索/返回/恢复未认证。未再次读正文或操作原生内容，规模仍DEFERRED。证据见原local-page-selection-summary.json的readingViewport20261018。
+
+- **710b26e / CI39103528777原小型矩阵通过**：四job SUCCESS，J2 authenticated journey实际SUCCESS；正式10k和失败诊断实际SKIPPED/DEFERRED。不追溯改判39101646460 J2失败、不关闭其未确认根因或完整J4。此CI不包含上项新viewport代码。
+
 - **原生布局profile接线候选**：修复adapter.inspect/连续性检查仍硬编码legacy边界的问题；新增明确四字段nativeLayout并冻结快照，缺项/额外字段/非法配置拒绝，默认legacy保持，唯一性/重叠/返回槽空闲与尺寸护栏不变。旧版11反例7 FAIL；候选最终154定向/包构建全过、2046.522ms。独审指出新selector丢失旧槽位拓扑隐含约束，现检查槽属于header且不位于reading/history/composer，并在inspect/原节点连续性中共用；同节点reparent反例已覆盖，末轮独审确认拓扑阻断关闭，无新增阻断项。真实只读结构确认消息marker处于滚动内容，timeline外层包含composer，header已有槽被占用或零宽；不能直接采用整块遮罩或宣称现代布局认证，生产scope保持关闭。未读正文、未改原生内容；下一关口是符合原生输入与唯一返回要求的实际布局及完整profile。
 
 - **J2恢复反例收窄，观察盲区已显式标记**：独审确认新worker诊断直到重启后checkpoint才安装，原SUSPEND至checkpoint至少106ms；空trace不能推出未发送HELLO。补每代发现/安装起止/重启观察时间与startupCoverage=NOT_OBSERVED，保持监听调度、原产品及验收不变。确定性VM反例证明产品已接收HELLO而诊断为空，旧版缺覆盖标记实际FAIL；12诊断测试通过。1406cb3本地原J2隔离headless完整8步PASS、sourceChanged=false、耗时128884ms，本次未复现Linux失败，不追溯改判。真实宿主与C2-only自动恢复仍未认证；206af45最新CI的J2步骤成功但journeys job取消，不能算全矩阵通过。
@@ -12,7 +17,7 @@
 
 - **原生消息部分身份选择器已修复**：真实headless DOM反例确认旧交集选择器漏掉缺少任一ID属性的消息，仍错误返回explicit-body-id；现并集选中后逐项校验，缺一侧均unproven，恢复完整属性才成立。旧版实际RED、同fixture新版GREEN；67定向回归通过。隔离反例全网络拦截；随后同源发现模块在授权真实页只读复核仍得到5条ID且C与route一致，无正文读取/scope授权。页面无alert且composer存在，但可识别Project链接为0、仅创建入口可见，不能据此认定账户无Project。不计MV3或LIVE_VERIFIED。证据与源码hash见现有local-page-selection-summary.json。J2原日志读取依次遇缓存权限、HTTP2 GOAWAY、单job下载45秒超时，根因仍未确认；未重跑CI或降低门槛。
 
-- **当前本地检查点：新版平铺消息解析待独审/构建**。获授权当前单条聊天在确认原生composer为空后正常刷新，原生两次GET均200，响应C与route一致、账户头匹配活跃canonical roster；仅记录字段结构/数量/布尔断言，无正文/凭据/私人ID落盘。实际为308条平铺messages、无mapping，不能推断父链。新增显式message-list-v1解析及reader接线，保持256条/原请求预算、observed-only/partial与lineage-unavailable；不造mappingNodeId，禁用该格式与ACK/history配置混用，默认生产配置不变。170定向测试全过、0跳过、106.341ms；后续包构建/manifest边界、send correlator和acceptance相关198项全过、0跳过、2620.067ms；另补真实flat parser→send correlator组合反例：partial清除旧intent且后续完整baseline不复活它，18项通过、45.159ms；消息列表三处改动独立只读审查完成，无阻断问题；前256条外当前消息仍missing/partial，不能认定LIVE_VERIFIED。并行审查因额度耗尽、另一任务因网络权限撤回终止。6270a34的CI39101646460最终FAIL：J2 authenticated ACK旅程失败，其余三个job成功；原日志定位仍待完成，不重跑挑绿。10k/100k仍DEFERRED，真实Project/导航/返回/搜索/安全恢复仍未通过。
+- **历史切片：新版平铺消息解析（后续已独审/构建）**。获授权当前单条聊天在确认原生composer为空后正常刷新，原生两次GET均200，响应C与route一致、账户头匹配活跃canonical roster；仅记录字段结构/数量/布尔断言，无正文/凭据/私人ID落盘。实际为308条平铺messages、无mapping，不能推断父链。新增显式message-list-v1解析及reader接线，保持256条/原请求预算、observed-only/partial与lineage-unavailable；不造mappingNodeId，禁用该格式与ACK/history配置混用，默认生产配置不变。170定向测试全过、0跳过、106.341ms；后续包构建/manifest边界、send correlator和acceptance相关198项全过、0跳过、2620.067ms；另补真实flat parser→send correlator组合反例：partial清除旧intent且后续完整baseline不复活它，18项通过、45.159ms；消息列表三处改动独立只读审查完成，无阻断问题；前256条外当前消息仍missing/partial，不能认定LIVE_VERIFIED。并行审查因额度耗尽、另一任务因网络权限撤回终止。6270a34的CI39101646460最终FAIL：J2 authenticated ACK旅程失败，其余三个job成功；原日志定位仍待完成，不重跑挑绿。10k/100k仍DEFERRED，真实Project/导航/返回/搜索/安全恢复仍未通过。
 
 - **真实消息元素身份已接入候选发现链**：真实页另有明确selection conversation/message属性，新增显式message-elements profile，唯一可见reading内有界选中消息必须非空、ID有效唯一且C全部一致；仍是native-dom/explicit-body-id，不伪造response证据。原challenge、节点epoch、scope与默认配置保持；新增message ID属性变化观察。实际候选模块在获授权当前页只读得到5条ID、C与route一致，不读正文、不授予scope。独立旧版17项5 FAIL；当前472定向全过（2.536秒）、独审无阻断。获新增当前单条响应内存读取许可后，宿主自行403×4再200，响应C与当前聊天、账户头与活跃roster均一致；无旧mapping，固定详情schema仍待适配。未保存私人ID/正文/凭据，未完成真实MV3/Project闭环；规模仍DEFERRED。[同源码与脱敏证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
 

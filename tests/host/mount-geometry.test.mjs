@@ -19,7 +19,7 @@ test('safe resize updates only owned geometry while preserving exact frame objec
 for(const role of ['readingRect','sidebarRect'])for(const invalid of [{width:0},{height:-1},{x:NaN},{y:Infinity},{x:0,y:290,width:100,height:50}])test(`${role} unsafe ${JSON.stringify(invalid)} closes both masks without partial geometry writes`,async()=>{
  const f=await fixture();try{const old=styles(f),native=snapshot(f),next=f.next();Object.assign(next[role],invalid);assert.equal(f.surface.refreshGeometry(f.handle,next),false);assert.deepEqual(styles(f),old);assert(f.nodes.every(n=>!n.open));assert.equal(f.surface.isMasked(f.reading),false);assert.equal(f.surface.isMasked(f.history),false);assert.deepEqual(snapshot(f),native);}finally{f.surface.dispose(f.handle);}
 });
-for(const field of ['reading','historyMaskRoots','composer','header','protectedRegions','regionEpoch'])test(`refresh refuses replaced ${field} authority boundary`,async()=>{
+for(const field of ['reading','readingViewport','historyMaskRoots','composer','header','protectedRegions','regionEpoch'])test(`refresh refuses replaced ${field} authority boundary`,async()=>{
  const f=await fixture();try{const next=f.next(),old=styles(f);next[field]=field==='regionEpoch'?2:['historyMaskRoots','protectedRegions'].includes(field)?[f.element()]:f.element();assert.equal(f.surface.refreshGeometry(f.handle,next),false);assert.deepEqual(styles(f),old);assert(f.nodes.every(n=>!n.open));}finally{f.surface.dispose(f.handle);}
 });
 test('refresh rejects failed inspection and missing sidebar rectangle without partially moving workspace',async()=>{

@@ -1503,5 +1503,98 @@
     ],
     "reviewFix": "Explicit slot belongs to header, is not header itself, never within reading/history/composer; shared topology guard used by inspect and same-node continuity after reparent",
     "independentReview": "topology issue fixed including reparent continuity; no remaining blocker in this diff"
+  },
+  "readingViewport20261018": {
+    "baseHead": "710b26e64fd5141d5399072fffbce151da654637",
+    "status": "LOCAL_CANDIDATE_REVIEWED",
+    "problem": "Native reading content scrolls offscreen; its scroll viewport also contains composer. Neither content rect nor masking entire viewport supplies safe workspace geometry.",
+    "change": "Optional explicit readingViewport separates geometry from independent reading mask. Exact two direct element branches (reading and full composer footer), no nonempty direct text, same document and connected nodes; screen/header/footer clipping; unknown geometry, zoom/pan fail closed. Viewport participates in continuity, epoch, mount refresh/rebind, resize and scroll.",
+    "validation": {
+      "red": {
+        "tests": 13,
+        "failed": 13,
+        "reason": "old profile rejects unsupported viewport field",
+        "log": "reading-viewport-red-20261018.tap.gz"
+      },
+      "frozen": {
+        "tests": 351,
+        "passed": 351,
+        "failed": 0,
+        "skipped": 0,
+        "durationMs": 2107.317458,
+        "log": "reading-viewport-green-20261018.tap.gz"
+      },
+      "browser": {
+        "result": "PASS_WEB_MECHANISM_ONLY",
+        "initial": {
+          "contentOffscreen": true,
+          "top": 52,
+          "bottom": 620,
+          "footerTop": 620,
+          "rootMasked": true,
+          "viewportUnmasked": true,
+          "inputVisible": true,
+          "noHTMLInert": true
+        },
+        "resized": {
+          "refreshed": true,
+          "bottom": 540,
+          "footerTop": 540,
+          "draftPreserved": true
+        },
+        "closed": {
+          "restored": true,
+          "inputVisible": true,
+          "workspaceClosed": true
+        },
+        "unknownSiblingRejected": true,
+        "ownedRemoved": true
+      },
+      "initialBrowserLaunch": "NOT_RUN: sandbox MachPort permission denied; isolated headless retry outside sandbox succeeded",
+      "independentReview": "No new blocker in bounded disabled capability; added controller event-chain doubles after review. Real MV3 lifecycle is not covered."
+    },
+    "sourceHashes": {
+      "src/host/chatgpt-adapter.mjs": "8b8f4a3da9461a3da8bcfc54db119ca36e8c701965615a7d2a32fc312978d601",
+      "src/host/surface-controller.mjs": "0b910842d72e06b914c313954322d2fbc6bf77d5ed418ac2f3e5a1d2bb2fa2a4",
+      "src/navigation/mount-surface.mjs": "84cd883d8b995acb05fa3cf7971b57c48417240fd4425e875c938da3e726131d",
+      "tests/host/chatgpt-adapter.test.mjs": "41d4a1ad866c983a1edbb1701c2951e29366c0cf61ccadcff9c04a3dd4ffdb7f",
+      "tests/host/temporary-geometry-recovery.test.mjs": "5dd9cf866bb956915a6d5045fd9e4144415edaf98f3e364a6f067e1a16003a77",
+      "tests/host/mount-geometry.test.mjs": "3f98ba62efb68dc7f034cb076e093d3de14bfce3d4545f265cabac1f5b2837ab",
+      "tests/host/mount-rebind.test.mjs": "c05bd38635eface8a66409cc1f8c20e2138bf077b0bae903628b9cb5f3c83a63",
+      "tests/host/reading-viewport-browser.mjs": "fa7ebee87986e672957088d1d6fe4e16b61b136d056e8d4a0f3cdf10eccad7d4"
+    },
+    "liveObservation": {
+      "profile": "authorized application-system dedicated profile",
+      "sameOwnedTab": true,
+      "responseBodyReadThisBatch": false,
+      "nativeMutation": false,
+      "timelineChildren": 2,
+      "readingOffscreen": true,
+      "footerContainsComposer": true,
+      "footerHeight": 76,
+      "viewportHeight": 871
+    },
+    "open": [
+      "No verified real safe return slot; existing slot geometry/visibility checks require hardening",
+      "Pure native history boundary not yet verified",
+      "No production profile enabled; no actual Project/navigation/search/return acceptance",
+      "J2 historical Linux failure root still open; later pass does not rewrite failure",
+      "J4 automatic peer foreground recovery, real IME and cross-environment remain unverified",
+      "10k/100k DEFERRED, original thresholds unchanged"
+    ],
+    "performance": "No before/after product latency claim. Old candidate rejects configuration; targeted batch timing is not comparable to full matrices."
+  },
+  "ci39103528777": {
+    "head": "710b26e64fd5141d5399072fffbce151da654637",
+    "conclusion": "success",
+    "jobs": {
+      "node-contracts": "success",
+      "offline-durability-compat": "success",
+      "offline-j4-lifecycle": "success",
+      "offline-journeys": "success"
+    },
+    "j2AuthenticatedJourney": "success",
+    "formal10k": "skipped/DEFERRED",
+    "limits": "J4 job success is not full J4 acceptance. New viewport candidate not covered by this run."
   }
 }

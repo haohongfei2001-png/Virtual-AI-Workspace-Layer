@@ -458,3 +458,43 @@ test('explicit layout continuity rejects same slot node reparented out of header
  f.selectors.get(explicitLayout.header)[0].contains=()=>false;f.composer.contains=n=>n===f.slot;
  assert.equal(f.adapter.isSameNativeRegions(first),false);assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();
 });
+
+function viewportFixture(){
+ const profile={...LEGACY_SURFACE_PROFILE,currentBody:undefined,nativeLayout:{...explicitLayout,readingViewport:'#native-viewport'}},f=fixture({profile});
+ for(const [old,key] of [['main > header','header'],['main > section[aria-label="Conversation"]','reading'],['main > form#composer','composer'],['main > header > .navigation-slot','navigationSlot']]){f.selectors.set(explicitLayout[key],f.selectors.get(old));f.selectors.delete(old);}
+ const header=f.selectors.get(explicitLayout.header)[0];header.contains=n=>n===f.slot;
+ const viewport={isConnected:true,ownerDocument:f.document,children:[f.reading,f.composer],contains:n=>n===f.reading||n===f.composer,getBoundingClientRect:()=>({x:220,y:60,width:700,height:510})};
+ f.reading.parentElement=f.composer.parentElement=viewport;f.selectors.set('#native-viewport',[viewport]);
+ for(const nodes of f.selectors.values())for(const n of nodes)n.ownerDocument=f.document;
+ f.document.defaultView.innerWidth=1000;f.document.defaultView.innerHeight=600;
+ return {...f,viewport,header};
+}
+test('scrolling content uses an independent viewport above protected footer without masking the viewport',async()=>{
+ const f=viewportFixture();await f.start();f.reading.getBoundingClientRect=()=>({x:220,y:-6029,width:700,height:1282});
+ const first=f.adapter.inspect();assert.equal(first.ok,true);assert.deepEqual(first.readingRect,{x:220,y:60,width:700,height:420});assert.equal(first.reading,f.reading);assert.equal(first.readingViewport,f.viewport);assert.equal(f.adapter.isSameNativeRegions(first),true);
+ f.composer.getBoundingClientRect=()=>({x:220,y:400,width:700,height:170});assert.deepEqual(f.adapter.inspect().readingRect,{x:220,y:60,width:700,height:340});
+ const replacement={...f.viewport};f.selectors.set('#native-viewport',[replacement]);assert.equal(f.adapter.isSameNativeRegions(first),false);f.adapter.stop();
+});
+for(const kind of ['missing','ambiguous','extra-child','reading-reparented','footer-reparented','viewport-is-reading','viewport-has-header','nonfinite','no-reading-space','footer-outside','viewport-detached','text-sibling','foreign-reading','detached-footer','panned-viewport','zoomed-viewport'])test('viewport profile rejects unsafe native structure: '+kind,async()=>{
+ const f=viewportFixture();await f.start();
+ if(kind==='missing')f.selectors.delete('#native-viewport');
+ if(kind==='ambiguous')f.selectors.set('#native-viewport',[f.viewport,f.viewport]);
+ if(kind==='extra-child')f.viewport.children.push({});
+ if(kind==='reading-reparented')f.reading.parentElement=null;
+ if(kind==='footer-reparented')f.composer.parentElement=null;
+ if(kind==='viewport-is-reading')f.selectors.set('#native-viewport',[f.reading]);
+ if(kind==='viewport-has-header')f.viewport.contains=()=>true;
+ if(kind==='nonfinite')f.viewport.getBoundingClientRect=()=>({x:NaN,y:60,width:700,height:510});
+ if(kind==='no-reading-space')f.composer.getBoundingClientRect=()=>({x:220,y:20,width:700,height:550});
+ if(kind==='footer-outside')f.composer.getBoundingClientRect=()=>({x:930,y:480,width:60,height:90});
+ if(kind==='viewport-detached')f.viewport.isConnected=false;
+ if(kind==='text-sibling')f.viewport.childNodes=[{nodeType:3,textContent:'Native status'}];
+ if(kind==='foreign-reading')f.reading.ownerDocument={};
+ if(kind==='detached-footer')f.composer.isConnected=false;
+ if(kind==='panned-viewport')f.document.defaultView.visualViewport={scale:1,offsetLeft:10,offsetTop:0};
+ if(kind==='zoomed-viewport')f.document.defaultView.visualViewport={scale:2,offsetLeft:0,offsetTop:0};
+ assert.equal(f.adapter.inspect().ok,false);f.adapter.stop();
+});
+test('viewport topology changes invalidate continuity even with identical nodes',async()=>{
+ const f=viewportFixture();await f.start();const first=f.adapter.inspect();assert.equal(first.ok,true);f.viewport.children.push({});assert.equal(f.adapter.isSameNativeRegions(first),false);f.adapter.stop();
+});

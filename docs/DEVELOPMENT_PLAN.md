@@ -23,6 +23,8 @@
 
 原A–G目标和退出条件不变。优先B1.F/C2/C3/C4/B4真实本人闭环：排除已授权专用Profile页面连接超时→合法账户/当前空间证据→一个真实Project/聊天映射→打开/唯一返回/搜索→安全恢复。沿用已授权只读范围；原生写入、凭据与私人正文不扩权。C2-only缺新可信context时安全等待，不恢复旧receipt、不伪造scope或无限重试。
 
+当前布局实施顺序：先将独立reading遮罩与滚动viewport几何分离，随后验证阅读左上唯一返回槽和纯history列表边界，再组装真实profile闭环。任何一项未证实不打开生产scope；离线机制通过不代替真实MV3验收。实际结果只记STATUS及原证据入口。
+
 10k/100k规模门禁及优化暂记 **DEFERRED**，不阻塞独立功能和受限本人试用准备；暂停CI自动10k与其失败诊断，测试源码、single-project的`memberReturnDeadline=performance.now()+30000`及历史FAIL原样保留。DEFERRED不是PASS、FREE-ACCEPTED或RELEASE-READY。改动相关小回归、构建、权限/撤权、数据完整性、草稿保护、基本导航继续；生产6秒请求与30秒/12请求/2重试等预算不变。
 
 后续规模证据按以下边界分别记录，不替代或追溯改判原F1/SYS-04联合门禁：

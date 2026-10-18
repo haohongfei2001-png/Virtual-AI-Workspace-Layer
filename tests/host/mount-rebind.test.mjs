@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createMountSurface} from '../../src/navigation/mount-surface.mjs';
 // Structural geometry and ownership oracle; actual browser zoom remains separate.
-async function fixture(){
+async function fixture(withViewport=false){
  let doc;const element=()=>({ownerDocument:doc,isConnected:true,dataset:{},style:{},attrs:{},textContent:'',open:false,children:[],events:new Map(),rect:{left:0,top:0,right:0,bottom:0,width:0,height:0},addEventListener(k,f){this.events.set(k,f);},removeEventListener(k){this.events.delete(k);},contains(){return false;},getBoundingClientRect(){return this.rect;},setAttribute(k,v){this.attrs[k]=v;},getAttribute(k){return this.attrs[k]??null;},removeAttribute(k){delete this.attrs[k];},append(...v){for(const n of v){n.parentElement=this;n.parentNode=this;}this.children.push(...v);},matches(){return this.open;},showPopover(){this.open=true;},hidePopover(){this.open=false;},remove(){this.isConnected=false;}});
  doc={defaultView:{getComputedStyle:()=>({visibility:'visible',display:'block'}),CSS:{supports:()=>true},HTMLElement:{prototype:{showPopover(){}}},crypto:{randomUUID:()=> 'unique'},MutationObserver:class{observe(){}disconnect(){}}},createElement:element,querySelector:()=>null,addEventListener(){},removeEventListener(){}};doc.head=element();doc.body=element();
  const reading=element(),history=element(),composer=element(),header=element(),events=[];composer.rect={left:0,top:300,right:800,bottom:400,width:800,height:100};header.rect={left:0,top:0,right:800,bottom:40,width:800,height:40};
  reading.attrs.class='native-reading';history.attrs.style='color:red';composer.attrs.role='textbox';composer.value='UNSENT DRAFT';
- const navigationSlot=element();const inspection={navigationSlot,ok:true,viewMask:'declarative-css',reading,historyMaskRoots:[history],composer,header,protectedRegions:[composer,header],regionEpoch:1,readingRect:{x:200,y:40,width:400,height:200},sidebarRect:{x:0,y:40,width:180,height:200}};
+ const navigationSlot=element();const inspection={...(withViewport?{readingViewport:element()}:{}),navigationSlot,ok:true,viewMask:'declarative-css',reading,historyMaskRoots:[history],composer,header,protectedRegions:[composer,header],regionEpoch:1,readingRect:{x:200,y:40,width:400,height:200},sidebarRect:{x:0,y:40,width:180,height:200}};
  const surface=createMountSurface({document:doc,createFrameURL:()=> 'chrome-extension://extension/ui.html'}),handle=await surface.mount({binding:{documentToken:'doc'}},inspection,{onSurrender:e=>events.push(e)});
  return {navigationSlot,doc,element,surface,handle,inspection,events,reading,history,composer,header,nodes:doc.body.children,next:()=>({...inspection,readingRect:{x:120,y:40,width:300,height:180},sidebarRect:{x:0,y:40,width:100,height:180}})};
 }
@@ -89,4 +89,12 @@ for(const mode of ['detached','other-document'])test('read-only rebind validity 
  const f=await fixture(),inspection=next(f),replacement=f.surface.rebind(f.handle,context(),inspection);
  if(mode==='detached')inspection.navigationSlot.isConnected=false;else inspection.navigationSlot.ownerDocument={};
  assert.equal(f.surface.isRebindCurrent(replacement,inspection),false);assert.throws(()=>f.surface.rebind(replacement,context(),inspection),/invalid-mount-rebind/);f.surface.dispose(replacement);
+});
+
+test('rebind refuses adding a different geometry viewport to an existing mount',async()=>{
+ const f=await fixture();rejectsRebind(f,{...next(f),readingViewport:f.element()});f.surface.dispose(f.handle);
+});
+
+test('same geometry viewport must remain connected for refresh and rebind',async()=>{
+ const f=await fixture(true);f.inspection.readingViewport.isConnected=false;assert.equal(f.surface.refreshGeometry(f.handle,next(f)),false);rejectsRebind(f);f.surface.dispose(f.handle);
 });

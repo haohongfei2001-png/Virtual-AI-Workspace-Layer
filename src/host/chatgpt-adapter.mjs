@@ -21,6 +21,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  const layoutKeys=['header','reading','composer','navigationSlot'];
  const explicitLayout=Object.hasOwn(profile,'nativeLayout');
  const configuredLayout=explicitLayout?profile.nativeLayout:{header:'main > header',reading:'main > section[aria-label="Conversation"]',composer:'main > form#composer',navigationSlot:'main > header > .navigation-slot'};
+ if(configuredLayout&&Object.hasOwn(configuredLayout,'readingViewport'))layoutKeys.push('readingViewport');
  if(!exactHostRecord(configuredLayout,layoutKeys)||!layoutKeys.every(k=>typeof configuredLayout[k]==='string'&&configuredLayout[k].trim().length>0&&configuredLayout[k].length<=256))throw Error('invalid-native-layout-profile');
  // Package-owned selectors choose boundaries, never grant authority or relax geometry.
  const nativeLayout=Object.freeze({...configuredLayout});
@@ -213,23 +214,40 @@ if(!p){notifyIdle();return;}}catch(error){
  }
  function stop(){surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');ingestionPass=null;generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('toggle',surfaceToggle,true);document.removeEventListener('visibilitychange',visibilityChanged);document.removeEventListener('focusout',schedule,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();}
  function nativeTopologyOK(history,header,reading,composer,slot){return !explicitLayout||header!==slot&&header.contains(slot)&&![history,reading,composer].some(node=>node===slot||node.contains(slot));}
+ // A scroll container is geometry only, never a mask root. This profile is
+ // deliberately limited to two direct branches: reading and protected footer.
+ function viewportTopologyOK(viewport,history,header,reading,composer){
+  return !!viewport&&viewport.isConnected&&viewport.ownerDocument===document&&viewport!==reading&&viewport!==composer&&[reading,composer].every(n=>n.isConnected&&n.ownerDocument===document&&n.parentElement===viewport)&&viewport.children.length===2&&![...(viewport.childNodes??[])].some(n=>n.nodeType===3&&n.textContent.trim())&&[...viewport.children].every(n=>n===reading||n===composer)&&!viewport.contains(header)&&!viewport.contains(history);
+ }
+ function viewportRect(viewport,header,composer){
+  const v=rect(viewport),h=rect(header),c=rect(composer),width=document.defaultView.innerWidth,height=document.defaultView.innerHeight;
+  const visual=document.defaultView.visualViewport;
+  if(visual&&(visual.scale!==1||visual.offsetLeft!==0||visual.offsetTop!==0))return null;
+  if(![...Object.values(v),...Object.values(h),...Object.values(c),width,height].every(Number.isFinite)||width<=0||height<=0||v.width<=0||v.height<=0||h.height<=0||c.width<=0||c.height<=0||c.x>=v.x+v.width||c.x+c.width<=v.x||c.y<v.y||c.y>=v.y+v.height)return null;
+  const x=Math.max(0,v.x),y=Math.max(0,v.y,h.y+h.height),right=Math.min(width,v.x+v.width),bottom=Math.min(height,v.y+v.height,c.y);
+  return {x,y,width:right-x,height:bottom-y};
+ }
  function isSameNativeRegions(inspection){
   if(!live()||document.location.href!==url||inspection?.regionEpoch!==regionEpoch)return false;
   const nodes=[one(profile.regions.history),one(nativeLayout.header),one(nativeLayout.reading),one(nativeLayout.composer),one(nativeLayout.navigationSlot)];
   const original=[inspection.history,inspection.header,inspection.reading,inspection.composer,inspection.navigationSlot];
-  return nodes.every((node,i)=>node&&node===original[i]&&node===priorNodes[i]&&node.isConnected&&node.ownerDocument===document)&&nativeTopologyOK(...nodes);
+  const viewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;
+  return nodes.every((node,i)=>node&&node===original[i]&&node===priorNodes[i]&&node.isConnected&&node.ownerDocument===document)&&nativeTopologyOK(...nodes)&&(!nativeLayout.readingViewport||viewport===inspection.readingViewport&&viewport===priorNodes[5]&&viewportTopologyOK(viewport,...nodes));
  }
  function inspect(){
   const fail=reason=>({ok:false,reason,profileId:profile.id});if(!live())return fail('stale-host-binding');try{syncRoute();}catch{return fail('host-rebind-required');}if(urlPolicy.parse(url).kind==='unsupported')return fail('unsupported-host-route');
   const history=one(profile.regions.history),header=one(nativeLayout.header),reading=one(nativeLayout.reading),composer=one(nativeLayout.composer),navigationSlot=one(nativeLayout.navigationSlot);
   if(!history||!header||!reading||!composer||!navigationSlot)return fail('missing-or-ambiguous-native-boundary');
   if(!nativeTopologyOK(history,header,reading,composer,navigationSlot))return fail('return-slot-outside-native-header');
+  const readingViewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;
+  if(nativeLayout.readingViewport&&!viewportTopologyOK(readingViewport,history,header,reading,composer))return fail('unsafe-native-reading-viewport');
   const protectedRegions=[header,composer];if(protectedRegions.some(n=>reading.contains(n)||history.contains(n))||reading.contains(history)||history.contains(reading))return fail('overlapping-native-boundary');
   if(([...navigationSlot.children].length===0&&navigationSlot.textContent.trim())||[...navigationSlot.children].some(n=>!n.hasAttribute('data-va-owned')&&!n.hasAttribute('data-vaiwl-owned'))||[...(navigationSlot.childNodes??[])].some(n=>n.nodeType===3&&n.textContent.trim()))return fail('native-content-occupies-return-slot');
-  const readingRect=rect(reading),sidebarRect=rect(history),returnSlot=rect(navigationSlot),protectedRects=protectedRegions.map(rect);
-  if([...Object.values(readingRect),...Object.values(sidebarRect),...Object.values(returnSlot)].some(v=>!Number.isFinite(v))||readingRect.width<=0||readingRect.height<=0||sidebarRect.width<=0||sidebarRect.height<=0||returnSlot.width<34||returnSlot.height<34||protectedRects.some(r=>overlaps(r,readingRect)||overlaps(r,sidebarRect))||overlaps(readingRect,sidebarRect))return fail('unsafe-native-geometry');
-  const nodes=[history,header,reading,composer,navigationSlot];if(nodes.some((n,i)=>n!==priorNodes[i])){regionEpoch++;priorNodes=nodes;}
-  return {ok:true,reason:null,profileId:profile.id,history,header,reading,navigationSlot,composer,protectedRegions,historyMaskRoots:[history],returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch};
+  const readingRect=readingViewport?viewportRect(readingViewport,header,composer):rect(reading),sidebarRect=rect(history),returnSlot=rect(navigationSlot),protectedRects=protectedRegions.map(rect);
+  if(!readingRect)return fail('unsafe-native-geometry');
+  if([...Object.values(readingRect),...Object.values(sidebarRect),...Object.values(returnSlot),...protectedRects.flatMap(Object.values)].some(v=>!Number.isFinite(v))||readingRect.width<=0||readingRect.height<=0||sidebarRect.width<=0||sidebarRect.height<=0||returnSlot.width<34||returnSlot.height<34||protectedRects.some(r=>overlaps(r,readingRect)||overlaps(r,sidebarRect))||overlaps(readingRect,sidebarRect))return fail('unsafe-native-geometry');
+  const nodes=[history,header,reading,composer,navigationSlot,...(readingViewport?[readingViewport]:[])];if(nodes.some((n,i)=>n!==priorNodes[i])){regionEpoch++;priorNodes=nodes;}
+  return {ok:true,reason:null,profileId:profile.id,history,header,reading,navigationSlot,composer,protectedRegions,...(readingViewport?{readingViewport}:{}),historyMaskRoots:[history],returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch};
  }
  const api={kind:'chatgpt',async start(options){
   stop();cursorRestarts=0;const b=options?.binding;if(!b||typeof options.emit!=='function'||typeof b.documentToken!=='string'||typeof b.producerToken!=='string'||typeof b.browserDocumentId!=='string'||!Number.isSafeInteger(b.routeEpoch)||b.routeEpoch<0||b.origin!==new URL(document.location.href).origin||!Number.isFinite(Date.parse(b.expiresAt))||now()>=Date.parse(b.expiresAt))throw Error('invalid-host-binding');
