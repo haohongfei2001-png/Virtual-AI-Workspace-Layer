@@ -96,6 +96,103 @@
     "local-selection-native-index-page-selection-red.tap.gz": "f300db3d8b4d02caee5d57332cb0a3ea9cfcc4ae408177c281d872ea8c9fdd4b",
     "local-selection-native-index-page-selection-green.tap.gz": "2e4886f17bcc641e063f79d571044b14492d481caead7a6e35dac6db61f3a50e",
     "local-selection-full-node.tap.gz": "ad9bf78cd4cade505c02e2fee04f618177ec426df5022a73a9cb1312c20e4cc0",
-    "local-selection-full-node-integrity.json.gz": "7e41a26378f2e825d42486fdfc799ffe9a953535d8022af9f863271600d1203b"
+    "local-selection-full-node-integrity.json.gz": "7e41a26378f2e825d42486fdfc799ffe9a953535d8022af9f863271600d1203b",
+    "local-page-selection-100k.json.gz": "f180ce31494e7e2ba2400e63f87d795ee5f5550caf46b984214c490427c3f6aa",
+    "local-page-selection-100k-single.json.gz": "dd4020e15da761cd28fd3f044c83ea1949deb8aacd0da7ab480a463aca527cf1"
+  },
+  "followup100k": {
+    "sourceCommit": "7c676ecd2e583feb734a6cfc367a3fe43b65961c",
+    "scenario": {
+      "size": 100000,
+      "distribution": "project-mixed",
+      "cpuRate": 1,
+      "longTitles": true,
+      "profile": "LEGACY_LOOPBACK_RECONSTRUCTION",
+      "throttleScope": "NATIVE_PAGE_RENDERER_ONLY_NOT_WORKER_OR_PHYSICAL_DEVICE",
+      "rpcBudgetMs": 6000,
+      "acceptance": "NOT_ESTABLISHED"
+    },
+    "status": "FAIL",
+    "phase": "pre-measurement-audit",
+    "indexAudit": {
+      "status": "FAIL_INDEX_CARDINALITY",
+      "requestedRefs": 100000,
+      "distinctRefs": 138,
+      "distinctProjects": 1000,
+      "missingRefs": 99862,
+      "unexpectedRefs": 0,
+      "duplicateRefs": 0,
+      "projectMembership": 0,
+      "nativeNoneObserved": 0,
+      "unknownMembership": 138,
+      "wrongProjectMembership": 0,
+      "wrongNoneMembership": 0,
+      "pages": 3,
+      "revision": 16,
+      "scopeSelection": "READ_ONLY_EXISTING_ROOT_NOT_A_WRITE_GRANT",
+      "performanceAcceptance": "NOT_ESTABLISHED"
+    },
+    "measurementStatus": "NOT_RUN_INDEX_NOT_READY",
+    "samples": null,
+    "ingestionObservationMs": 21420.7965,
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "manifestChangedDuringRun": false,
+    "temporaryDirectoryRemoved": true,
+    "limit": "Original immediate-return project-mixed scenario has not admitted the complete native inventory. This is not a complete-index paging performance sample; UNKNOWN remains UNKNOWN."
+  },
+  "followup100kSingle": {
+    "sourceCommit": "7c676ecd2e583feb734a6cfc367a3fe43b65961c",
+    "scenario": {
+      "size": 100000,
+      "distribution": "single-project",
+      "cpuRate": 1,
+      "longTitles": true,
+      "profile": "LEGACY_LOOPBACK_RECONSTRUCTION",
+      "throttleScope": "NATIVE_PAGE_RENDERER_ONLY_NOT_WORKER_OR_PHYSICAL_DEVICE",
+      "rpcBudgetMs": 6000,
+      "acceptance": "NOT_ESTABLISHED"
+    },
+    "status": "FAIL",
+    "phase": "visible-native-member-progress",
+    "nativeMemberProgressDiagnostic": {
+      "stage": "tail-read",
+      "stageStarted": 60897.94425,
+      "inFlight": true,
+      "frameGeneration": 1,
+      "auditAttempts": 0,
+      "lastTail": {
+        "status": "OBSERVED_TAIL_ONLY",
+        "revision": 91,
+        "total": 4081,
+        "frameGeneration": 1
+      },
+      "audits": [],
+      "attempts": 59,
+      "stableRevision": null,
+      "elapsedMs": 12257.386583,
+      "stageElapsedMs": 25.803790999998455
+    },
+    "nativeIndexProgress": {
+      "acceptance": "NOT_ESTABLISHED",
+      "evidence": "DIAGNOSTIC_ROOT_INVENTORY_ONLY",
+      "status": "POINT_IN_TIME_ROOT_SNAPSHOT",
+      "consistency": "SINGLE_READONLY_TRANSACTION_NOT_INTERVAL_STABILITY",
+      "format": "VERSION_INDEX",
+      "revision": 93,
+      "inventoryRefs": 4190,
+      "inventoryProjects": 1,
+      "sources": 1,
+      "revokedSources": 0,
+      "sourceRevisionMin": 92,
+      "sourceRevisionMax": 92,
+      "continuationWitness": false,
+      "queueState": "NOT_READ"
+    },
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "manifestChangedDuringRun": false,
+    "temporaryDirectoryRemoved": true,
+    "limit": "Original30s shared window exhausted before the first full audit. Diagnostic root after failure is not admitted-at-deadline proof."
   }
 }

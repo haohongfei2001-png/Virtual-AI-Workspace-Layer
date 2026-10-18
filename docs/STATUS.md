@@ -4,6 +4,10 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **7c676ec原100k混合场景仍FAIL，不能用10k或局部加速外推**：原即时返回旅程在pre-measurement-audit仅有1000 Project/138 refs（138 UNKNOWN）、99862 missing，rev16，性能samples=null；总摄取观察21420.80ms。源/fixture/manifest稳定、隔离目录已清理；没有放宽时间/缩样本/提升UNKNOWN。瓶颈关口在完整原生库存尚未摄取，未进入完整索引分页性能测量；并非上述真实IDB21页读取改善已解决100k。原失败继续保留。[同源码失败原件](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
+
+100k单项目原可见成员场景亦FAIL于30秒共享窗口，未启动任何完整审计。最后tail rev91/total4081，仅代表尾项已观察；失败后root rev93/4190refs不是预算内完成。成员观察段记录12.257秒，整个共享窗口此前已消耗约17.74秒于导航/原生呈现及检查，尚不能把这些时间全归因某一产品函数。两场景均不构成完整100k/p95验收；不重复原样运行挑绿，下一步须有具体摄取/阶段成本证据再改代码。
+
 - **原offset全审计成本已减少，门槛不变**：每页保留全部bucket、scope/root/marker、跨bucket ordinal、容量与完整manifest尺寸校验，仅避免构造/编码整个目录；numeric合法ID回退旧顺序。header＋IDs捷径在同revision损坏反例中漏检，已否决。实际10k读取次数不减，21次完整目录编码降至0（仍逐key算尺寸）；所有facts/成员/顺序一致。隔离真实IDB AB/BA/AB中位919.0→744.9ms，约18.9%改善，仅该读取环节，非Host/p95/Linux认证。冻结Node8277/8277、191.76秒、输入未漂移，12护栏变异全KILLED；本地原10k完整双审计rev207/10000正确PROJECT、剩7876ms，展开/测量前后同revision/原生返回通过。此候选远端待验，不覆盖f3af526或历史FAIL。[同源码证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
 
 - **f3af526 CI39089811164原正式10k完成一例Linux闭环**：四job通过；10000正确PROJECT、零UNKNOWN/遗漏/重复/错属，双审计rev206后原窗口剩8387.63ms，17成员展开、测量前后同revision、原生导航与唯一返回通过；总摄取观察26947.92ms。未降低门槛、未重跑挑绿。仍PARTIAL_SYS04_NOT_ACCEPTED，单例不证明稳定性/p95/完整F1，原FAIL保留。J4仍23步PARTIAL、automatic foreground NOT_ESTABLISHED/current-scope-timeout；原门禁绿色不冒充恢复通过。此CI不含后续分页候选。[原证据](evidence/free-delivery-2026-10-17/local-ci39089811164-summary.json)。
