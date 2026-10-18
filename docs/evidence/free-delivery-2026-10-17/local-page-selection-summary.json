@@ -1059,5 +1059,46 @@
       "comparison": "Different candidate and concurrent workload; no speedup claim",
       "evidence": "local-native-reading-race-full-node-integrity.json.gz"
     }
+  },
+  "dedicatedProfileNativeRead20261018": {
+    "sourceCommit": "35f2c3336ebddf561c5a4c846e66716b400476cf",
+    "authorization": "User explicitly approved existing application-system Playwright/CDP connection and read-only ChatGPT metadata",
+    "profileIdentity": "Running Chrome process user-data-dir matches the application system configured directory; port 9333",
+    "transport": "Existing local Playwright/CDP, no browser restart or new profile",
+    "initialReadSeconds": 1.845,
+    "pageRead": "SUCCEEDED",
+    "nativeConversationLinkNavigation": "SUCCEEDED_URL_ONLY_NOT_PRODUCT_ACCEPTANCE",
+    "privateBodyRead": false,
+    "credentialsReadOrExported": false,
+    "nativeWritesDispatched": false,
+    "observations": {
+      "nativeMe": {
+        "status": 200,
+        "mime": "application/json",
+        "principalIdPresent": true
+      },
+      "nativeAccountsCheck": {
+        "status": 403,
+        "mime": "text/html; charset=UTF-8"
+      },
+      "nativeOptimizedAccountsCheck": {
+        "status": 403,
+        "mime": "text/html; charset=UTF-8"
+      },
+      "nativeContextHeaderPresent": true,
+      "expectedConversationDetailGET": "NOT_OBSERVED",
+      "threadMetadataRoute": "/backend-api/tbo/by-thread/<redacted>",
+      "projectLinksObserved": 0,
+      "editableComposerObserved": false
+    },
+    "contextAuthority": "NOT_ESTABLISHED_ROSTER_UNAVAILABLE",
+    "productionScopeEnabled": false,
+    "realFreeJourney": "NOT_ESTABLISHED",
+    "limits": [
+      "CDP metadata observations are not extension webRequest receipts",
+      "Header presence does not prove authenticated roster membership",
+      "403 cause not determined; no challenge bypass or repeated fetch",
+      "No private IDs, titles, response bodies, cookies or tokens persisted"
+    ]
   }
 }

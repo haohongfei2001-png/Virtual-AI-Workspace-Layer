@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **真实投递专用Profile读取已恢复，账户列表403阻塞**：用户明确允许现有Playwright/CDP后，核对运行进程的user-data-dir与投递系统配置一致，并通过原9333连接在自有标签读取ChatGPT（首次1.845秒）；原生聊天链接导航仅确认URL到达，不计VAIWL旅程。原生me=200 JSON且principal ID存在，accounts/check/v4-2023-04-27与accounts/optimized/check均403 HTML；虽观察到chatgpt-account-id头，仍无认证roster/current-context证明，生产scope保持关闭。预期conversation detail GET未观察到，存在tbo/by-thread元请求，不能直接认定兼容。未读取聊天正文/凭据，未写入原生内容，未保存私人ID/标题/响应正文。旧“读取超时”是原工具通道历史，此次已解除；403原因未确定，不绕过挑战或循环请求。[脱敏事实](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
+
 - **4a4d37f / CI39097198183 已完成**：四job成功；正式10k及失败诊断均实际SKIPPED，按用户决定记DEFERRED而非PASS。J4原JSON仍为PARTIAL_J4_NOT_ACCEPTED、automaticForegroundRecovery=NOT_ESTABLISHED、J4-peer-current-scope-timeout；不以job成功覆盖缺口。源码未漂移、build manifest未变。生产context/真实Project闭环仍未取得。此项仅记录既有运行，无重复触发验收。
 
 - **0b0bd46 / CI39095650759：关闭返回竞态跨环境片段闭环通过**：Linux原六项片段检查PASS，源码未漂移，Node与导航job通过；这不代表完整真实Host。正式10k在rev206首轮完整审计在途3423ms时截止，完整审计0；失败后10000库存仅为点时快照。原FAIL保留，后续按用户决定DEFERRED。J4仍23步PARTIAL。新Profile排障已证实浏览器可开HTTP首页，原生AX可读登录菜单，但DOM/截图及只读Page.getFrameTree诊断均超时；工具重置后浏览器数字ID会重排，后续按稳定扩展实例选择，不能仅按名称/数字ID认定专用目录或可信scope。没有取得合法workspace context；尚未认证真实Project闭环。
