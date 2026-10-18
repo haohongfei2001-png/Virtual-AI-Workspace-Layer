@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **partial恢复被自身cancel通知抢先拒绝已修**：adapter.stop原会启动终结通知raw IPC，controller下一microtask唯一handoff因此被quiet拒绝，之后通知完成也无恢复机会。联合content/controller最小反例旧17例16PASS/1FAIL；现立即销毁双frame，仅等待已有终结通知，重复stop保留在途清理，清理与原子release共用stop开始的6秒窗口；4秒清理只余2秒release，其他work仍由原quiet/worker护栏拒绝。316定向PASS/0skip/597.573ms，184构建/包边界PASS/2959.772ms，独审通过；同源码既有隔离partial前台恢复回归PASS/源码未漂移/cleanup前11553.7ms。新增cancel延迟竞态由联合L和adapter测试证明，浏览器未单独注入该延迟，不扩大其证明范围。真实Profile本次未重复读取，最新worker session403仍BLOCKED；原J2/J4/自然休眠未认证，规模DEFERRED。证据cancelTerminalDrain20261018。
+
 - **过期摄取提示永久占忙已修；真实worker拒绝已定位**：isIdle原先只检查terminal，30秒到期或scope/profile失效后必须另有isPending才能释放调度提示。现先保留stopped/runs/requests硬检查，再复用原current有效性；保留tombstone、同序号不能重开，不取消实际工作或扩大授权。旧10例3PASS/7FAIL；新103定向PASS/0skip/89.842ms，184构建/包边界PASS/3118.771ms；同源码隔离partial恢复PASS、源码未漂移、cleanup前11554.8ms，独审无阻断。当前专用Profile一次草稿保护刷新，准确匹配授权tab并只记录协议type/网络状态：page accounts200，worker session403 HTML，HELLO/REFRESH存在但frame0。明确拒绝不能改称transport失败启用fallback；临时listener已移除，未读正文/凭据、未发送内容。真实context与完整导航仍BLOCKED，原J2/J4/自然休眠未认证，规模DEFERRED。见原证据ingestionIdleExpiry20261018。
 
 - **真实专用Profile最新窄核验：page accounts200，挂载仍未成立**：严格匹配先前授权target；页面complete且原生编辑器为空、无可见生成/附件后仅一次正常刷新。页面accounts返回200，之后原生编辑器仍在、扩展frame/open/return均0。未读响应正文、token、Cookie或保存私人ID/标题；未发送/创建内容。此为page通道，未观察worker认证结果，不能据此关闭原worker403/context问题或宣称LIVE_VERIFIED；也不再笼统称当前所有accounts请求403。原安装候选未更新为最新离线代码。下一关口是区分worker认证/context与挂载阶段，再走真实阅读/返回/搜索/Project闭环。证据authorizedContextRecheck20261018。

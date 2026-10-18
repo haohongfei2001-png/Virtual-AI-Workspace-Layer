@@ -160,3 +160,12 @@ test('already queued native intent retains priority over same-tick preparation r
  assert.equal(f.emitted[before].kind,'send-candidate');assert.equal(f.emitted.slice(before).filter(p=>p.kind==='send-candidate').length,1);
  assert.equal(bodyPackets(f).length,2);assert.equal(f.emitted[before].bodyProofId,'accepted-body-proof');
 });
+
+for(const accepted of [true,false])test('stop returns existing terminal transport for repeated cleanup, accepted='+accepted,async()=>{
+ const f=fixture(),cancel=deferred(),phases=[];f.document.visibilityState='hidden';
+ await f.start(undefined,{ingestionPass:message=>{phases.push(message.phase);return message.phase==='start'?Promise.resolve({ok:true}):cancel.promise;}});await settle();
+ const first=f.adapter.stop(),second=f.adapter.stop();let firstDone=false,secondDone=false;
+ Promise.resolve(first).then(()=>firstDone=true);Promise.resolve(second).then(()=>secondDone=true);await settle();
+ assert.deepEqual(phases,['start','cancel']);assert.equal(firstDone,false);assert.equal(secondDone,false);assert.equal(f.observer().closed,true);
+ cancel.resolve({ok:accepted});assert.equal(await first,accepted);assert.equal(await second,accepted);assert.equal(f.adapter.prepareIdle(),null);
+});

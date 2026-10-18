@@ -3544,5 +3544,37 @@
       "installedCandidate": "Existing viewport-gap candidate; not this new offline idle fix."
     },
     "remaining": "Real native Project/conversation navigation/return/search and recovery, original J2/J4/device/manual conditions OPEN; scale DEFERRED."
+  },
+  "cancelTerminalDrain20261018": {
+    "base": "8e8a97aac165dfa75dd34f8c8d170d7fc5229781",
+    "rootCause": "Partial JOIN termination calls adapter.stop, which launches an existing pass cancel raw IPC. Controller offered the only release handoff on next microtask, when content quiet still saw rawIPC and rejected. Settling cancel later provided no new handoff.",
+    "fix": "Adapter tracks only existing terminal notifications and stop returns their completion as a fulfilled boolean. Repeated stop preserves pending cleanup. Controller destroys frames synchronously, waits this cleanup within original 6s measured before stop, then passes remaining time to the unchanged quiet/atomic release path. Other work is not drained or bypassed. Failed cleanup/deadline/route/epoch changes revoke old mount without retry.",
+    "before": {
+      "tests": 17,
+      "pass": 16,
+      "fail": 1,
+      "durationMs": 62.351917
+    },
+    "targeted": {
+      "tests": 316,
+      "pass": 316,
+      "skip": 0,
+      "durationMs": 597.5725,
+      "coverage": "Actual content/controller integration with held cancel RPC; adapter repeated-stop and rejected ACK; 4s cleanup leaves2s release; hanging/rejected cleanup, stop/route changes do not revive."
+    },
+    "package": {
+      "tests": 184,
+      "pass": 184,
+      "skip": 0,
+      "durationMs": 2959.771542
+    },
+    "mv3": {
+      "status": "PASS",
+      "sourceChangedDuringRun": false,
+      "elapsedBeforeCleanupMs": 11553.678791999999,
+      "scope": "Existing S_INSTRUMENTED foreground partial recovery regression passes. The newly held terminal-cancel timing is proven by joint L and adapter tests, not specifically injected by this browser runner."
+    },
+    "review": "Independent readonly review found no blocker; only terminal work awaited, original quiet/rawIPC and worker guards decide all remaining work.",
+    "limits": "No real Profile reads this increment. Latest worker session403 remains BLOCKED; J2/J4/natural sleep/real full journey unproven, 10k/100k DEFERRED."
   }
 }

@@ -76,13 +76,14 @@ for(const cause of ['connected-frame','user-exit','lease-expired'])test('cancell
 
 // L integration: actual content and controller, explicit Chrome/DOM/worker
 // doubles. Unlike the layer tests, the real callback and RPC counters interact.
-test('partial JOIN termination hands the original mount through guarded release into one fresh session',async t=>{
+for(const cleanup of ['quiet','pending-cancel'])test('partial JOIN termination hands original mount through guarded release after '+cleanup,async t=>{
  const {createHostContentSession}=await import('../../src/host/content-session.mjs');
  const f=fixture();f.controller.stop();f.doc.location.origin='https://chatgpt.com';
- const calls=[];let hello=0,releases=0,controller,options;
+ const calls=[];let hello=0,releases=0,controller,options,adapterStart,cancelOnStop=false,resolveCancel;const cancelDone=new Promise(resolve=>resolveCancel=resolve);
  const bound=()=>({documentToken:'doc',producerToken:'producer_'+hello,browserDocumentId:'parent',routeEpoch:1,origin:'https://chatgpt.com',expiresAt:new Date(21000).toISOString()});
  const runtime={id:'ext',getURL:p=>'chrome-extension://ext/'+p,onMessage:{addListener(){},removeListener(){}},sendMessage:async m=>{
   calls.push(m);
+  if(m.type==='HOST_INGESTION_PASS'&&m.phase==='cancel')return cancelDone;
   if(m.type==='HOST_HELLO'){hello++;return {binding:bound()};}
   if(m.type==='HOST_REFRESH')return {state:'verified',scopeKey:'scope'};
   if(m.type==='HOST_DOCUMENT_RENEW')return {ok:true,binding:bound()};
@@ -90,7 +91,7 @@ test('partial JOIN termination hands the original mount through guarded release 
   if(m.type==='HOST_UI_CONFIRM')return {ok:true,grant:{id:'grant_'+m.role,mountId:'mount',role:m.role,parentDocumentId:'parent',uiDocumentId:'ui_'+m.role,scopeGrantId:'scope',expiresAt:new Date(21000).toISOString()}};
   return {ok:true};
  }};
- f.adapter.start=async o=>({binding:o.binding});f.adapter.prepareIdle=f.adapter.prepareRecovery=()=>({isCurrent:()=>true});
+ f.adapter.start=async o=>{adapterStart=o;return {binding:o.binding};};f.adapter.stop=()=>{if(cancelOnStop){cancelOnStop=false;return adapterStart.ingestionPass({phase:'cancel',passSeq:1,profileId:'surface',profileVersion:1});}};f.adapter.prepareIdle=f.adapter.prepareRecovery=()=>({isCurrent:()=>true});
  const mount=f.surface.mount;f.surface.mount=async(...args)=>{for(const x of f.frames)x.frame.isConnected=true;return mount(...args);};
  f.surface.dispose=()=>{f.calls.disposed++;for(const x of f.frames)x.frame.isConnected=false;};
  const session=createHostContentSession({document:f.doc,runtime,now:()=>1000,elapsedNow:()=>1000,makeId:()=> 'client',identityReader:{read:async()=>({}),prepareIdle:()=>({isCurrent:()=>true})},adapterFactory:()=>f.adapter,surfaceFactory:()=>f.surface,plansFactory:()=>({}),controllerFactory:o=>{options=o;controller=createSurfaceController({...o,now:()=>1000,elapsedNow:()=>1000});return controller;}});
@@ -100,9 +101,24 @@ test('partial JOIN termination hands the original mount through guarded release 
  f.message('workspace','VAIWL_UI_IDLE_ACK',{requestId:idle});f.message('sidebar','VAIWL_UI_IDLE_ACK',{requestId:idle});
  await closing;await flush();assert.equal(releases,1);assert.equal(hello,1);assert.equal(controller.showWorkspace(),false);
  f.message('workspace');await flush();assert.equal(controller.showWorkspace(),false);
+ if(cleanup==='pending-cancel')cancelOnStop=true;
  f.message('sidebar','VAIWL_UI_SUSPEND');for(let i=0;i<4;i++)await flush();
+ if(cleanup==='pending-cancel'){assert.equal(releases,1);assert.equal(hello,1);assert(f.frames.every(x=>!x.frame.isConnected));resolveCancel({ok:true});for(let i=0;i<4;i++)await flush();}
  assert.equal(releases,2);assert.equal(hello,2);assert.equal(options.initialMode,'reading');assert.equal(f.calls.disposed,1);
  const releaseIndex=calls.findLastIndex(m=>m.type==='HOST_UI_IDLE_RELEASE'),helloIndex=calls.findLastIndex(m=>m.type==='HOST_HELLO');assert(releaseIndex<helloIndex);
  assert.equal(calls[releaseIndex].producerToken,'producer_1');assert.equal(calls.filter(m=>m.type==='HOST_REFRESH').at(-1).producerToken,'producer_2');
  f.message('workspace');f.message('sidebar');await flush();assert.equal(controller.showWorkspace(),true);
+});
+
+for(const outcome of ['complete','deadline','reject','route','stop'])test('partial cleanup retains original six-second total and cannot revive after '+outcome,async t=>{
+ const f=await renewable(t);let finish,reject,release=0,revoke=0,remaining;
+ const pending=new Promise((resolve,fail)=>{finish=resolve;reject=fail;});
+ f.adapter.stop=()=>pending;f.surface.dispose=()=>{for(const x of f.frames)x.frame.isConnected=false;};
+ f.bridge.revokeMount=()=>revoke++;f.bridge.releaseCancelledClose=async request=>{release++;remaining=request.timeoutMs;return true;};
+ assert.equal(f.controller.cancelDormantClose(),true);f.message('sidebar','VAIWL_UI_SUSPEND');await flush();
+ assert(f.frames.every(x=>!x.frame.isConnected));assert.equal(release,0);assert.equal(revoke,0);
+ if(outcome==='deadline'){f.advance(6000);await flush();assert.equal(revoke,1);finish(true);}
+ else if(outcome==='reject')reject(Error('cleanup-failed'));
+ else {f.advance(4000);if(outcome==='route')f.doc.location.href+='changed';if(outcome==='stop')f.controller.stop();finish(true);}
+ await flush();assert.equal(release,outcome==='complete'?1:0);if(outcome==='complete')assert.equal(remaining,2000);assert.equal(revoke,1);
 });

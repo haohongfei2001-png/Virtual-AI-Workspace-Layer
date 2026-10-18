@@ -11,15 +11,22 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function removeReturn(state){state.button?.remove();state.button=null;state.returnStyle=null;adapter.setReturnControl?.(null);}
  function dispose(state,reason,retainMount=false){if(!state)return;state.resolveIdle?.(false);cancel(state.timer);cancel(state.renewTimer);cancel(state.appearanceTimer);state.geometryObserver?.disconnect();win.removeEventListener('resize',state.geometryChanged);win.removeEventListener('scroll',state.geometryChanged,true);win.visualViewport?.removeEventListener?.('resize',state.geometryChanged);win.visualViewport?.removeEventListener?.('scroll',state.geometryChanged);state.appearanceObserver?.disconnect();state.media?.removeEventListener?.('change',state.appearanceChanged);win.removeEventListener('resize',state.appearanceChanged);state.observer?.disconnect();win.removeEventListener('message',state.listener);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);doc.removeEventListener?.('toggle',state.changed,true);win.removeEventListener('pagehide',state.pagehide);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}if(!retainMount)try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
  function stop(reason='surface-stopped'){
-  epoch++;const run=epoch,prior=current;current=null;
+  const started=elapsedNow();epoch++;const run=epoch,prior=current;current=null;
   const handoff=prior?.cancelCloseJoining===true&&['ui-frame-suspended','ui-grant-expired'].includes(reason)&&typeof bridge.releaseCancelledClose==='function';
-  try{adapter.stop();}catch{/* Surface cleanup must still complete. */}dispose(prior,reason,handoff);
+  let cleanup;try{cleanup=adapter.stop();}catch{cleanup=false;}dispose(prior,reason,handoff);
   if(prior)try{onTerminated(reason,Object.freeze({mode:prior.mode==='workspace'?'workspace':'reading'}));}catch{/* Recovery notification cannot undo cleanup. */}
   if(handoff){
    // Destroy both frames before offering release; a partly rejoined frame may
    // already hold a grant. Never pretend that the old idle ACKs still apply.
    const isCurrent=()=>current===null&&epoch===run&&prior.frames.every(({frame})=>frame.isConnected===false)&&doc.location.href===prior.url&&Date.parse(prior.context.binding.expiresAt)>now();
-   void Promise.resolve().then(()=>isCurrent()?bridge.releaseCancelledClose({handle:prior.handle,binding:prior.context.binding,isCurrent}):false).catch(()=>false).finally(()=>{try{Promise.resolve(bridge.revokeMount?.({mountId:prior.handle.id})).catch(()=>{});}catch{}});
+   const remaining=()=>{const elapsed=elapsedNow()-started;if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=6000)throw Error('cancel-cleanup-deadline');return 6000-elapsed;};
+   void Promise.resolve().then(async()=>{
+    if(!isCurrent())return false;
+    // Await only adapter terminal cleanup already initiated by stop. It never
+    // proves idle; the original content and atomic worker guards still decide.
+    if(await withRequestDeadline(()=>cleanup,{timeoutMs:remaining(),now:elapsedNow,schedule,cancel})===false||!isCurrent())return false;
+    return bridge.releaseCancelledClose({handle:prior.handle,binding:prior.context.binding,isCurrent,timeoutMs:remaining()});
+   }).catch(()=>false).finally(()=>{try{Promise.resolve(bridge.revokeMount?.({mountId:prior.handle.id})).catch(()=>{});}catch{}});
   }
  }
  function valid(state,requireRegistered=true){
