@@ -1,3 +1,4 @@
+import {createPreparedDormancyProbe} from './prepared-dormancy-probe.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHostContentSession} from '../../src/host/content-session.mjs';
@@ -161,4 +162,31 @@ for(const mode of ['success','renew-failed','cancel-failed'])test('confirmed bus
  await f.controllerOptions.onWake();await drain();
  f.controllerOptions.onTerminated('ui-grant-expired',{mode:'reading'});await drain();
  assert.equal(f.calls.filter(message=>message.type==='HOST_HELLO').length,1);assert.equal(f.resumed.length,0);assert.equal(f.stops,0);assert.equal(f.controllers,1);
+});
+
+test('prepared probe starts close in the same turn; split observations can go stale',async t=>{
+ const f=fixture();t.after(()=>f.client.stop());await ready(f);
+ const prepared=f.client.prepareIdle();assert(prepared?.isCurrent());
+ // The browser driver returned from its first command before dispatching the second.
+ f.setAdapterReady(false);assert.equal(prepared.isCurrent(),false);
+ assert.equal(await f.client.enterDormant(),false);assert.equal(f.closeEntries.length,0);
+ assert.equal(await createPreparedDormancyProbe(f.client)(),null);assert.equal(f.closeEntries.length,0);
+ f.setAdapterReady(true);
+ assert.deepEqual(await createPreparedDormancyProbe(f.client)(),{prepared:true,entered:true});assert.equal(f.closeEntries.length,1);
+});
+test('prepared probe keeps asynchronous interference as a terminal refusal, never retries',async t=>{
+ const f=fixture(),held=deferred();t.after(()=>f.client.stop());await ready(f);
+ f.setResponse(m=>m.type==='HOST_UI_IDLE_CHECK'?held.promise:f.normal(m));
+ const probe=createPreparedDormancyProbe(f.client),pending=probe();await drain();
+ f.setAdapterReady(false);held.resolve({ok:true});
+ assert.deepEqual(await pending,{prepared:true,entered:false});assert.equal(f.closeEntries.length,0);
+ const calls=f.calls.length;f.setAdapterReady(true);assert.deepEqual(await probe(),{prepared:true,entered:false});assert.equal(f.calls.length,calls);
+});
+
+test('prepared probe shares an in-flight close across delayed driver observations',async t=>{
+ const f=fixture(),held=deferred();t.after(()=>f.client.stop());await ready(f);
+ f.setResponse(m=>m.type==='HOST_UI_IDLE_CHECK'?held.promise:f.normal(m));
+ const probe=createPreparedDormancyProbe(f.client),first=probe();await drain();const second=probe();await drain();
+ assert.equal(f.calls.filter(m=>m.type==='HOST_UI_IDLE_CHECK').length,1);held.resolve({ok:true});
+ assert.deepEqual(await first,{prepared:true,entered:true});assert.deepEqual(await second,{prepared:true,entered:true});assert.equal(f.closeEntries.length,1);
 });

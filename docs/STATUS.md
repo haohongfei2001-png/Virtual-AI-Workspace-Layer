@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **休眠前置观察窗口已收口（测试驱动）**：原CI两次CDP间存在prepare令牌失效窗口，确切异步拒绝分支未记录，不宣称产品无缺陷。现同turn准备/启动并锁定第一次Promise，未准备才等待、真正false/异常终态失败，观察超时不重新close；产品与原预算/门槛未变。62定向通过、独审无阻断；隔离headless Mac原旅程PASS，删除恢复分支变异在原grant/VIEW阶段失败，原CI两套oracle均通过，源码/fixture一致、GET各1、草稿/页面保持。首次沙箱启动NOT_RUN原件保留。上批ae0b92e/CI39100670059的Node/耐久/J4 job成功，journeys仅permanent-stop变异失败，具体阶段仍核对；本批Linux待验证，worker内存丢失后自动恢复和真实Project仍未完成；10k/100k仍DEFERRED。[原失败及当前证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
+
 - **显式复数详情读取接线候选**：worker固定reader继承scope的精确路径profile，session显式冲突直接拒绝；不双路径重试，默认单数/生产关闭及原认证、6秒与持久共享预算保持。旧实现55项中10 FAIL，新组合352/352、零fail/skip、2.783秒；含组合reader实际MockIDB预算与包边界。真实只读新标签确认请求ID对应当前route、账户头属于唯一活跃canonical账户，但详情GET为403 HTML、最终未到原目标，不能认证schema或开启scope；原含草稿标签未动。当前页只读结构检查见原生editor/nav且无alert，但legacy reading与conversation/message ID属性均缺失，因此body关联仍未成立，不把正常页面等同已支持profile。独立审查无阻断。上批e3053bc的CI39100121619实际FAIL（Node、cold passive诊断、foreground变异），Node原8362/8360/2 FAIL已定位为新增配置后诊断器整行锚点过时，本地3项复现2 FAIL；精确锚点更新后3/3通过（1.304秒），保留exact-once及漂移拒绝。journey失败仍核对，本地通过不覆盖CI。规模仍DEFERRED，完整Free仍未完成。[同源证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
 
 - **真实结构驱动的账户与请求路径修复候选**：原生浏览器检查提示后续可自行消失，不再将短时提示当永久阻塞；在正常加载完成的自有只读标签观察到复数`/backend-api/conversations/{id}` GET 200。账户响应含2个canonical条目及完全相同的default个人别名，旧parser错误拒绝；现仅严格全entry一致别名去重，停用/明确session拒绝账户不授权，冲突/非法标记拒绝。请求观察器新增显式plural profile，matcher/filter/启动claim一致，原scope/config保持关闭，原预算与body关联护栏不变。独立旧parser反例6 FAIL/6 PASS，合批470/470定向通过、零fail/skip/cancel、2.952秒，含主/隔离认证与包边界，独立审查无阻断。详情读取仍单数、真实body关联/MV3新profile/Project闭环未建立；不能以此宣称LIVE_VERIFIED。非空草稿标签保持不动，无私人正文/凭据留存；10k/100k仍DEFERRED。[源码与证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。

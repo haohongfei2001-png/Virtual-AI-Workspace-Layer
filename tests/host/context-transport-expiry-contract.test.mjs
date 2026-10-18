@@ -46,7 +46,7 @@ test('real foreground transport modes use noDefaults native visibility and own b
 
 test('foreground-only probe really leaves the composer without weakening stale-transport attribution',async()=>{
  const workflow=await readFile(new URL('../../.github/workflows/free-offline-host.yml',import.meta.url),'utf8');
- const heading=candidate.indexOf("await page.locator('main > header > h1').click()"),idle=candidate.indexOf("await poll(()=>evaluate('__vaiwlIdleProbeSession.prepareIdle()',isolated))");
+ const heading=candidate.indexOf("await page.locator('main > header > h1').click()"),idle=candidate.indexOf("await poll(()=>evaluate('__vaiwlIdleProbeSession.attempt()',isolated))");
  assert(heading>0&&heading<idle);assert(candidate.includes("document.querySelector('#composer').contains(document.activeElement)"));
  assert(candidate.includes("assert.equal(composerFocused,false,'foreground probe must leave the native composer');await continuity()"));
  assert.equal(workflow.split('r.foregroundFocusIsolation?.nativeHeadingClicked!==true').length-1,2);

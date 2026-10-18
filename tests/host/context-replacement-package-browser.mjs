@@ -1,3 +1,4 @@
+import {createPreparedDormancyProbe} from './prepared-dormancy-probe.mjs';
 /** Narrow same-route C2 replacement; no silent-expiry/J2 or live-account claim. */
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
@@ -16,7 +17,7 @@ import {currentJ4Grant,waitJ4PeerScope} from './j4-joint-interruption.mjs';
 const dormantMutant=process.argv[3]==='dormant-recovery-mutant',dormantRecovery=dormantMutant||process.argv[3]==='dormant-recovery';
 const transportMutant=process.argv[3]==='transport-expiry-mutant',transportExpiry=transportMutant||process.argv[3]==='transport-expiry',idleProbe=dormantRecovery||transportExpiry;
 const hash=v=>createHash('sha256').update(v).digest('hex');
-const paths=['tests/host/context-replacement-package-browser.mjs','tests/host/fixtures/variants-server.mjs','tests/host/fixtures/variants-native.mjs','tests/host/fixtures/native-current-refresh.mjs','tests/host/fixtures/native.mjs','tests/host/expected/modern.mjs','tests/host/j2-journey-profile.mjs','tests/host/j2-runner-bounds.mjs','tests/host/isolated-browser-cleanup.mjs',...(transportExpiry?['tests/host/j4-grant-observer.mjs','tests/host/j4-joint-interruption.mjs','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs']:[])];
+const paths=['tests/host/prepared-dormancy-probe.mjs','tests/host/context-replacement-package-browser.mjs','tests/host/fixtures/variants-server.mjs','tests/host/fixtures/variants-native.mjs','tests/host/fixtures/native-current-refresh.mjs','tests/host/fixtures/native.mjs','tests/host/expected/modern.mjs','tests/host/j2-journey-profile.mjs','tests/host/j2-runner-bounds.mjs','tests/host/isolated-browser-cleanup.mjs',...(transportExpiry?['tests/host/j4-grant-observer.mjs','tests/host/j4-joint-interruption.mjs','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs']:[])];
 const fixtureHashes=Object.fromEntries(await Promise.all(paths.map(async p=>[p,hash(await readFile(p))])));
 const server=await createVariantHostFixtureServer({profile:'MODERN',nativeCurrentRefresh:true}),dir=await mkdtemp(join(tmpdir(),'vaiwl-context-replacement-')),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineContext:true}),manifest=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));
 let instrumentedEntry,mutantSession;
@@ -36,7 +37,7 @@ function installTransportExpiryObserver(){
 }
 if(idleProbe){
  const path=join(built.unpacked,'extension/content-entry.mjs'),original=await readFile(path,'utf8'),anchor=' void session.start();';assert.equal(original.split(anchor).length,2);
- instrumentedEntry=original.replace(anchor,(transportExpiry?' ('+installTransportExpiryObserver.toString()+')();\n':'')+' globalThis.__vaiwlIdleProbeSession=Object.freeze({prepareIdle:()=>!!session.prepareIdle(),enterDormant:()=>session.enterDormant()});\n'+anchor);await writeFile(path,instrumentedEntry);
+ instrumentedEntry=original.replace(anchor,(transportExpiry?' ('+installTransportExpiryObserver.toString()+')();\n':'')+' globalThis.__vaiwlIdleProbeSession=Object.freeze({attempt:('+createPreparedDormancyProbe.toString()+')(session)});\n'+anchor);await writeFile(path,instrumentedEntry);
 }
 if(dormantMutant){
  const path=join(built.unpacked,'src/host/content-session.mjs'),original=await readFile(path,'utf8'),anchor="if(error?.message==='scope-not-verified')contextPending();else stop();";assert.equal(original.split(anchor).length,2);mutantSession=original.replace(anchor,'stop();');await writeFile(path,mutantSession);
@@ -48,8 +49,8 @@ if(transportMutant){
 }
 const C='33333333-3333-4333-8333-333333333333',scope=j2JourneyProfile('MODERN').scope,scopeKey=JSON.stringify([scope.provider,scope.accountId,scope.organizationId]);
 const report={status:'NOT_RUN',evidence:'OFFLINE_C2_RECEIPT_REPLACEMENT_NARROW',startupMode:'WORKER_READY_PRECONDITION_NOT_COLD_ACCEPTANCE',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',sourceHashes:manifest.sourceHashes,fixtureHashes,fixture:server.manifest,results:[],requests:[],errors:[]};let context,page,id,browserHandle,readTransportExpiryTrace,endTransportOwnerObservation;
-if(dormantRecovery){report.evidence='OFFLINE_C2_INSTRUMENTED_DORMANT_SCOPE_RECOVERY';report.instrumentation={path:'extension/content-entry.mjs',after:hash(instrumentedEntry),exposes:['prepareIdle','enterDormant']};report.mutation=dormantMutant?'RESTORE_PERMANENT_STOP_AFTER_DENIED_WAKE':null;report.forcedWorkerStop=true;report.naturalWorkerSleep='NOT_ESTABLISHED';}
-if(transportExpiry){report.evidence='OFFLINE_C2_DORMANT_TRANSPORT_EXPIRY_FOREGROUND_RECOVERY';report.instrumentation={path:'extension/content-entry.mjs',after:hash(instrumentedEntry),exposes:['prepareIdle','enterDormant'],passiveContentTransport:true,passiveFrameGrantAndView:true};report.mutation=transportMutant?'REMOVE_EXACT_FOREGROUND_INVALID_DOCUMENT_RECOVERY':null;report.forcedWorkerStop=false;report.naturalWorkerSleep='NOT_TESTED';report.nativeRequestStarts=[];report.transportOwner={workerClosed:false,focusedAt:null};}
+if(dormantRecovery){report.evidence='OFFLINE_C2_INSTRUMENTED_DORMANT_SCOPE_RECOVERY';report.instrumentation={path:'extension/content-entry.mjs',after:hash(instrumentedEntry),exposes:['attempt']};report.mutation=dormantMutant?'RESTORE_PERMANENT_STOP_AFTER_DENIED_WAKE':null;report.forcedWorkerStop=true;report.naturalWorkerSleep='NOT_ESTABLISHED';}
+if(transportExpiry){report.evidence='OFFLINE_C2_DORMANT_TRANSPORT_EXPIRY_FOREGROUND_RECOVERY';report.instrumentation={path:'extension/content-entry.mjs',after:hash(instrumentedEntry),exposes:['attempt'],passiveContentTransport:true,passiveFrameGrantAndView:true};report.mutation=transportMutant?'REMOVE_EXACT_FOREGROUND_INVALID_DOCUMENT_RECOVERY':null;report.forcedWorkerStop=false;report.naturalWorkerSleep='NOT_TESTED';report.nativeRequestStarts=[];report.transportOwner={workerClosed:false,focusedAt:null};}
 async function verifyPackage(){if(!idleProbe){assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');return;}for(const [path,expected] of Object.entries(manifest.files))assert.equal(hash(await readFile(join(built.unpacked,path))),path==='extension/content-entry.mjs'?hash(instrumentedEntry):(dormantMutant||transportMutant)&&path==='src/host/content-session.mjs'?hash(mutantSession):expected);}
 const poll=fn=>j2Poll(fn,15000),within=(name,fn,ms=5000)=>j2Within(name,fn,ms);
 const frame=()=>page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);
@@ -84,8 +85,8 @@ try{
   const isolated=await poll(async()=>{for(const world of worlds.filter(w=>w.auxData?.isDefault===false)){try{if(await evaluate(`window===window.top&&chrome.runtime.id===${JSON.stringify(id)}&&typeof __vaiwlIdleProbeSession==='object'&&Array.isArray(__vaiwlTransportExpiryTrace)`,world.id))return world.id;}catch{}}return null;});
   assert.equal(await page.evaluate(()=>typeof globalThis.__vaiwlIdleProbeSession),'undefined');assert.equal(await page.evaluate(()=>typeof globalThis.__vaiwlTransportExpiryTrace),'undefined');
   readTransportExpiryTrace=()=>evaluate('globalThis.__vaiwlTransportExpiryTrace.slice(-128)',isolated);
-  await poll(()=>evaluate('__vaiwlIdleProbeSession.prepareIdle()',isolated));
-  assert.equal(await evaluate('__vaiwlIdleProbeSession.enterDormant()',isolated),true);await continuity();
+  report.idlePrecondition=await poll(()=>evaluate('__vaiwlIdleProbeSession.attempt()',isolated));
+  assert.deepEqual(report.idlePrecondition,{prepared:true,entered:true});await continuity();
   const priorTrace=await readTransportExpiryTrace(),binding=priorTrace.findLast(row=>['HOST_HELLO','HOST_DOCUMENT_RENEW'].includes(row.type)&&row.ok&&Number.isFinite(row.bindingExpiresAt));assert(binding,'actual binding expiry required');
   assert.equal(report.nativeRequestStarts.length,1);const receiptStartedAt=report.nativeRequestStarts[0];
   const waitMs=Math.max(1,binding.bindingExpiresAt+1-Date.now());assert(waitMs<=20001,'document lease cannot be extended by driver');assert(Date.now()+waitMs+15000<receiptStartedAt+60000,'original C2 must remain valid for original recovery observation window');
@@ -106,8 +107,8 @@ try{
   const evaluate=async(expression,contextId)=>{const r=await session.send('Runtime.evaluate',{expression,contextId,returnByValue:true,awaitPromise:true});assert.equal(r.exceptionDetails,undefined);return r.result.value;};
   const isolated=await poll(async()=>{for(const world of worlds.filter(w=>w.auxData?.isDefault===false)){try{if(await evaluate(`window===window.top&&chrome.runtime.id===${JSON.stringify(id)}&&typeof __vaiwlIdleProbeSession==='object'`,world.id))return world.id;}catch{}}return null;});
   assert.equal(await page.evaluate(()=>typeof globalThis.__vaiwlIdleProbeSession),'undefined');
-  await poll(()=>evaluate('__vaiwlIdleProbeSession.prepareIdle()',isolated));
-  assert.equal(await evaluate('__vaiwlIdleProbeSession.enterDormant()',isolated),true);step('actual-dormant-close-before-worker-loss');
+  report.idlePrecondition=await poll(()=>evaluate('__vaiwlIdleProbeSession.attempt()',isolated));
+  assert.deepEqual(report.idlePrecondition,{prepared:true,entered:true});step('actual-dormant-close-before-worker-loss');
   const running=await poll(()=>versions.find(v=>v.scriptURL===`chrome-extension://${id}/extension/worker.mjs`&&v.runningStatus==='running'));const start=versions.length;
   await session.send('ServiceWorker.stopWorker',{versionId:running.versionId});await poll(()=>versions.slice(start).some(v=>v.versionId===running.versionId&&v.runningStatus==='stopped'));assert.equal(oldFrame.isDetached(),false);assert.equal(frame(),oldFrame);assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);await continuity();step('worker-stop-confirmed-no-receipt-replay');
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();

@@ -1266,5 +1266,65 @@
       },
       "remaining": "journey failure correlation pending; no full CI pass claimed"
     }
+  },
+  "preparedDormancyObservation20261018": {
+    "baseHead": "ae0b92ec7b5244ed8a2b730a596514993baf6af4",
+    "sourceSHA256": {
+      "tests/host/prepared-dormancy-probe.mjs": "525472d93c26f06d43f4cac8dbe1b1d828e4c66dc4e17d979dc6722dd8a2be2f",
+      "tests/host/context-replacement-package-browser.mjs": "b6674c326d1c288b6b451d8ced87fb08dc71d42fb06a572976b5907c97a5cc27",
+      "tests/host/content-dormant-close.test.mjs": "bf8b586cd593fa73d87acad04f0658acd41c7171792a10fb4f15101f77b0317f",
+      "tests/host/context-transport-expiry-contract.test.mjs": "b13ab5ae035406081687de793625aa2d4e932ddf4bbffade503bf3b591dcb759"
+    },
+    "rootCauseScope": "Split CDP prepare/enter has a revocable-preparation observation window; exact CI refusal branch not recorded. No claim all asynchronous refusal is a bug.",
+    "change": "One same-turn readiness and close; retain first attempt Promise; null only before attempting; false/throw terminal and not retried. Product unchanged.",
+    "targeted": {
+      "tests": 62,
+      "pass": 62,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 81.531583
+    },
+    "browser": {
+      "positive": "PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY",
+      "mutant": "KILLED_BY_ORIGINAL_CI_ORACLE",
+      "originalCIPositiveOracleExit": 0,
+      "originalCIMutationOracleExit": 0,
+      "sourceAndFixtureEqual": true,
+      "sourceChangedDuringRun": false,
+      "headless": true,
+      "noDefaults": true,
+      "nativeGETCountEach": 1,
+      "firstSandboxAttempt": "NOT_RUN_BROWSER_STARTUP; then same isolated runner outside sandbox"
+    },
+    "review": "Independent review: no production guard or observation budget weakened; CI exact asynchronous refusal cause remains unproven.",
+    "limits": [
+      "Linux candidate not run yet",
+      "Not worker-memory-loss automatic foreground acceptance",
+      "Real ChatGPT body association and Project journey unverified",
+      "10k/100k DEFERRED"
+    ],
+    "liveStructureClarification": {
+      "routeKind": "conversation",
+      "routeHasQuery": false,
+      "mainCount": 1,
+      "editorPresent": true,
+      "alertPresent": false,
+      "legacyReadingCount": 0,
+      "conversationIdAttributeCount": 0,
+      "messageIdAttributeCount": 0,
+      "nativeArticleCount": 0,
+      "messageBodyRead": false,
+      "scopeEnabled": false
+    },
+    "previousCandidateCI": {
+      "runId": 39100670059,
+      "head": "ae0b92e",
+      "status": "FAIL",
+      "node": "SUCCESS",
+      "durability": "SUCCESS",
+      "j4Job": "SUCCESS_NOT_FULL_ACCEPTANCE",
+      "journeyFailedStep": "Reject permanent-stop dormant recovery mutation",
+      "rootCause": "NOT_YET_INSPECTED"
+    }
   }
 }
