@@ -21,7 +21,7 @@
 
 ## 当前执行优先级调整（用户决定，2026-10-18）
 
-最新推进：真实scope启动诊断已收窄为`current-context-unproven`/`scope-provider-unavailable`（页面账户和当前聊天请求200不等于worker授权成立）；继续查合法provider/context链，不复活receipt。独立续期拒绝后新READY丢失已合批修复；滚动区域flag兼容旧安全形态已关闭CI明确回归。定向、原六布局机制与隔离dormant旅程通过，不代替真实打开/返回/搜索/恢复或J4无新证据验收，详见STATUS原入口。
+最新推进：精确授权当前tab的worker `/api/auth/session`已确证403/text/html、`session-unauthorized`，页面accounts 200不提供worker授权；停止重复刷新，保持安全等待，不以备用路径绕过拒绝。独立同名Project展开/翻页焦点错位已用scope/原生ID/列表/动作键修复，定向及headless机制验证通过。上个724f96d候选CI39119997674四job成功，不等同新差异或真实旅程通过。真实打开/返回/搜索/恢复及J4无新证据仍待合法上下文；10k/100k继续DEFERRED，详见STATUS原入口。
 
 当前同目标阅读/唯一返回/已知搜索已通过隔离完整MV3候选闭环；真实专用Profile已首装候选；原生query窄适配完成，滚动阅读返回空位与真实双frame挂载已取得窄证据；经现有返回入口后聊天投影可见；遮罩后滚动viewport命中缺陷已离线修复；最新只读诊断worker session/accounts均200，旧403保留历史。真实viewport新增role=region/tabindex=0被返回槽误拒绝已用显式滚动区域候选修正；同ID/config安装后双frame、唯一入口和当前聊天投影成立，但后续连续旅程入口消失/frame0，完整闭环仍未通过。先定位这次撤回并核验实际委托导航，不能用_blank备用属性推断缺少导航证明；不放宽认证/几何预算。下一关口为合法worker认证恢复后的当前聊天阅读/返回/搜索，以及Project成员证据；继续不依赖真实context的工程。 已关闭离线C2冷启动及休眠返回HELLO/REFRESH传输失败后忽略新READY的死路，仍须新上下文和新握手；无新context的J4仍不成立，历史J2原失败继续独立定位。 冻结591ffc0的原LEGACY离线J2八步本地通过（128243ms含原等待、源码未漂移）；仅关闭该候选本地旅程回归，不追溯解释Linux历史失败或升级J4。 同产品后续2ca77e3的MODERN/app-root/immediate原J3连续16步通过，源码与构建未漂移；真实IME/系统权限和完整v2.7外观仍未认证。 随后原J4修复UNKNOWN行观察器的出现/启用时序，仍共用原15秒；23步连续片段完成但PARTIAL，peer无新context自动恢复及其余组合未认证。批准v2.7同尺寸对照已定位并修复Free库存列表默认h2及间距，局部LEGACY布局通过，完整视觉对照仍未认证；真实成员/发送语义继续等待合法宿主证据。 partial busy-close原子释放后一次新握手已获联合L及隔离MV3前台故障恢复证据；自身cancel终结通知的清理竞态已在原6秒总预算内修复，等待不替代worker原子释放；driver已修复frame排队工作/隐藏摄取/OOPIF归属前置观察，真实guard与原期限不变，失败不重试。该证据不涵盖后台自动恢复或真实宿主，后续优先合法真实context后的完整导航闭环。隔离结果不升级LIVE_VERIFIED，原J2/J4及规模失败保留，10k/100k继续DEFERRED。
 

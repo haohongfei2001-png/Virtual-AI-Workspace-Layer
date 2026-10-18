@@ -4,6 +4,13 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **最新真实阻塞已确证为 worker 登录拒绝**：精确授权当前tab页面accounts 200，但worker `/api/auth/session` 403/text/html，scope错误`session-unauthorized`，frame0。本次未读正文/凭据、无原生写入；停止重复刷新，不将403改判网络失败或启用绕过。旧200样本仍属历史，不代表当前可用。安装候选仍556cda0；当前聊天临时响应提取ID授权已收到，未据此扩大到其他聊天。
+
+- **同名Project焦点错位已修复**：原生展示名被用作恢复焦点身份，展开/翻页会选到另一同名项目或列表。现内部键包含scope、surface、原生group ID、列表和动作，原生名不改。旧最小7项全FAIL；冻结候选205定向/包边界PASS、0skip、2652.352ms；真实headless DOM旧版展开/翻页错位，新版两者通过，侧栏及scope隔离另有回归。仅WEB_MECHANISM_ONLY，不冒充真实宿主/MV3完整旅程。初始paging fixture仅展开一列表导致反例不成立，已保留观察器更正记录。证据duplicateProjectFocus20261018；无完整旅程前后可比耗时，不宣称提速。
+
+- **上个候选CI已完成**：CI39119997674在724f96d四job均SUCCESS，关闭该版本已复现的布局兼容回归；不证明本次未提交焦点差异，不追溯解释历史Linux idle失败。真实完整闭环、J4无新context恢复仍OPEN，10k/100k继续DEFERRED。
+
+
 - **续期拒绝后的新context恢复死路已修；当前真实失败属启动阶段**：独立最小反例9中7FAIL，旧controller撤回后content仍ready，吞掉后续/在途READY。现明确scope拒绝转既有安全等待，在途READY只合并一次，成功清除；旧owner/stop/过期/无证据均拒绝，无自动重试或旧receipt。冻结候选691定向/包测试PASS、0skip、3197ms；原隔离MV3 dormant回归PASS/源码未漂移，新增续期竞态由真实content+controller double证明，不冒充浏览器已注入该场景。独审通过。真实精确授权tab的只读enum诊断：page账户/当前聊天200，但refresh为ambiguous/current-context-unproven随后unverified/scope-provider-unavailable，未到controller，frame0；不归因续期修复，完整导航/搜索/恢复仍未过。未读正文/凭据、未发送内容；真实安装仍556cda0，临时诊断源已恢复。
 
 - **CI39119275013布局兼容失败已原样复现修正**：唯一FAIL为observed-profile原无role/tabindex的安全容器被新flag强制region拒绝；其余Node/耐久/J4 job成功、两种idle正例及变异oracle通过。现flag只额外接纳精确原生滚动区域，旧安全形态保留；原六项布局命令全部通过，observed fixture两形态分别校验初值和节点身份，均仅WEB_MECHANISM_ONLY。未改fixture来绕过原失败、未放宽交互护栏。父CI原FAIL保留，历史Linux idle前置根因仍OPEN；10k/100k DEFERRED。两项合批证据renewalContextWait20261018；无可比完整旅程前后耗时，不宣称提速。

@@ -262,14 +262,17 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
 
   function frameMembers(group,parent,side){
     const key=(side?'side:':'home:')+group.id;
+    // Native names are presentation, never focus identity: two projects may
+    // have the same name, and each list can expose the same paging action.
+    const focusKey=(kind,action)=>JSON.stringify(['free-member',frameProjection.scope,side?'sidebar':'workspace',group.id,kind,action]);
     for(const kind of ['current','old','unknown']){
       const page=frameRows(group.id,kind);if(!page||page.total===0)continue;let list=parent;
       if(kind==='old'){
-        const open=view.oldOpen.has(key),toggle=button('展开旧窗口 '+group.name,()=>{view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();if(view.oldOpen.has(key))requestFrame({groupId:group.id,list:'old',rowOffset:0,rowLimit:5});},'','square old');toggle.innerHTML=chevron;toggle.setAttribute('aria-expanded',String(open));parent.append(toggle);if(!open)continue;list=node(doc,'div',{class:'old-list'});parent.append(list);
+        const open=view.oldOpen.has(key),toggle=button('展开旧窗口 '+group.name,()=>{view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();if(view.oldOpen.has(key))requestFrame({groupId:group.id,list:'old',rowOffset:0,rowLimit:5});},'','square old');toggle.innerHTML=chevron;toggle.dataset.focusKey=focusKey(kind,'toggle');toggle.setAttribute('aria-expanded',String(open));parent.append(toggle);if(!open)continue;list=node(doc,'div',{class:'old-list'});parent.append(list);
       }
       for(const ref of page.items)list.append(row(ref,key));
-      if(page.hasMore)list.append(button(kind==='old'?'显示更多旧窗口 '+group.name:kind==='unknown'?'显示更多待核对窗口':'显示更多近期窗口',()=>moreFrame(page,group.id,kind),frameIsPaged(page,group.id,kind)?'下一页':'显示更多','more'));
-      if(page.offset>0)list.append(button('返回前页 '+group.name,()=>requestFrame({groupId:group.id,list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more'));
+      if(page.hasMore){const more=button(kind==='old'?'显示更多旧窗口 '+group.name:kind==='unknown'?'显示更多待核对窗口':'显示更多近期窗口',()=>moreFrame(page,group.id,kind),frameIsPaged(page,group.id,kind)?'下一页':'显示更多','more');more.dataset.focusKey=focusKey(kind,'more');list.append(more);}
+      if(page.offset>0){const previous=button('返回前页 '+group.name,()=>requestFrame({groupId:group.id,list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more');previous.dataset.focusKey=focusKey(kind,'previous');list.append(previous);}
     }
   }
   function members(group,parent,side=false){

@@ -3875,5 +3875,41 @@
       "vaiwl-ci39119275013-final-jobs.json.gz",
       "vaiwl-ci39119275013-idle-traces.json.gz"
     ]
+  },
+  "duplicateProjectFocus20261018": {
+    "base": "724f96dca085b804cab629bc745ea71802d109b0",
+    "sourceSha256": {
+      "src/navigation/navigation.mjs": "a047a7a610b3bbe9e78b8092f05d4e8ed24393a8eb551673e1bb2f67a202a560",
+      "tests/host/free-duplicate-project-focus.test.mjs": "44f67914d047c57ebf11154e5859fb23cc37d2ad5a77bdf7bec0ee66bfba893a"
+    },
+    "evidence": [
+      "vaiwl-duplicate-project-focus-before.tap.gz",
+      "vaiwl-duplicate-focus-final.tap.gz",
+      "vaiwl-duplicate-focus-browser.json.gz",
+      "vaiwl-exact-provider-cause.json.gz",
+      "vaiwl-ci39119997674-final-status.json.gz"
+    ],
+    "rootCause": "Focus restoration used native display names shared by different projects and lists. Keys now include scope, surface, native group ID, list and action.",
+    "before": {
+      "tests": 7,
+      "failed": 7,
+      "durationMs": 57.467916
+    },
+    "final": {
+      "tests": 205,
+      "passed": 205,
+      "skipped": 0,
+      "durationMs": 2652.351542
+    },
+    "browser": "PASS_WEB_MECHANISM_ONLY; old/new disclosure and paging focus comparison; native names and cleanup retained",
+    "observerCorrection": "Initial paging fixture expanded only one old list, leaving one previous button; corrected to expand both before old/new comparison. No product pass inferred from initial fixture.",
+    "live": "Current exact authorized target: page accounts 200; worker session 403 text/html; session-unauthorized; frames 0. No body or credentials read, no native writes. Installed source remains 556cda0; no new-source live pass.",
+    "ci": "39119997674 on base 724f96d completed all four jobs successfully; not evidence for this working-tree change.",
+    "limits": [
+      "No comparable full-journey before/after timing; no speedup claimed",
+      "Full real navigation/search/recovery OPEN",
+      "J4 no-new-context recovery OPEN",
+      "10k/100k DEFERRED; original thresholds unchanged"
+    ]
   }
 }
