@@ -1,3 +1,4 @@
+import {nativeHistoryListOK} from './native-history-list.mjs';
 import {nativeReturnSlotRect} from './native-return-slot.mjs';
 import {currentObservation,currentSurfaceSlice} from './current-observation-batch.mjs';
 import {sha256} from '../data/hash.mjs';
@@ -22,7 +23,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  const layoutKeys=['header','reading','composer','navigationSlot'];
  const explicitLayout=Object.hasOwn(profile,'nativeLayout');
  const configuredLayout=explicitLayout?profile.nativeLayout:{header:'main > header',reading:'main > section[aria-label="Conversation"]',composer:'main > form#composer',navigationSlot:'main > header > .navigation-slot'};
- if(configuredLayout&&Object.hasOwn(configuredLayout,'readingViewport'))layoutKeys.push('readingViewport');
+ for(const key of ['readingViewport','historyList'])if(configuredLayout&&Object.hasOwn(configuredLayout,key))layoutKeys.push(key);
  if(!exactHostRecord(configuredLayout,layoutKeys)||!layoutKeys.every(k=>typeof configuredLayout[k]==='string'&&configuredLayout[k].trim().length>0&&configuredLayout[k].length<=256))throw Error('invalid-native-layout-profile');
  // Package-owned selectors choose boundaries, never grant authority or relax geometry.
  const nativeLayout=Object.freeze({...configuredLayout});
@@ -214,6 +215,11 @@ if(!p){notifyIdle();return;}}catch(error){
   if(surfaceChanged)requestScan();else schedule();
  }
  function stop(){surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');ingestionPass=null;generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('toggle',surfaceToggle,true);document.removeEventListener('visibilitychange',visibilityChanged);document.removeEventListener('focusout',schedule,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();}
+ function historyListCurrent(history,inspection=null){
+  if(!nativeLayout.historyList)return true;
+  const source=one(profile.regions.history);
+  return (!inspection||source===inspection.historySource)&&nativeHistoryListOK({document,source,root:history,urlPolicy,isOwnedMask});
+ }
  function nativeTopologyOK(history,header,reading,composer,slot){return !explicitLayout||header!==slot&&header.contains(slot)&&![history,reading,composer].some(node=>node===slot||node.contains(slot));}
  // A scroll container is geometry only, never a mask root. This profile is
  // deliberately limited to two direct branches: reading and protected footer.
@@ -232,8 +238,8 @@ if(!p){notifyIdle();return;}}catch(error){
   // Dormant presentation may recheck native geometry, but cannot revive binding.
   if(!explicitLayout)return true;
   if(!inspection||document.location.href!==url)return false;
-  const history=one(profile.regions.history),header=one(nativeLayout.header),reading=one(nativeLayout.reading),composer=one(nativeLayout.composer),slot=one(nativeLayout.navigationSlot);
-  if(history!==inspection.history||header!==inspection.header||reading!==inspection.reading||composer!==inspection.composer||slot!==inspection.navigationSlot||!nativeTopologyOK(history,header,reading,composer,slot))return false;
+  const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),reading=one(nativeLayout.reading),composer=one(nativeLayout.composer),slot=one(nativeLayout.navigationSlot);
+  if(!historyListCurrent(history,inspection)||history!==inspection.history||header!==inspection.header||reading!==inspection.reading||composer!==inspection.composer||slot!==inspection.navigationSlot||!nativeTopologyOK(history,header,reading,composer,slot))return false;
   const viewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;
   if(nativeLayout.readingViewport&&(viewport!==inspection.readingViewport||!viewportTopologyOK(viewport,history,header,reading,composer)))return false;
   const readingRect=viewport?viewportRect(viewport,header,composer):rect(reading);
@@ -241,15 +247,17 @@ if(!p){notifyIdle();return;}}catch(error){
  }
  function isSameNativeRegions(inspection){
   if(!live()||document.location.href!==url||inspection?.regionEpoch!==regionEpoch)return false;
-  const nodes=[one(profile.regions.history),one(nativeLayout.header),one(nativeLayout.reading),one(nativeLayout.composer),one(nativeLayout.navigationSlot)];
+  const nodes=[one(nativeLayout.historyList??profile.regions.history),one(nativeLayout.header),one(nativeLayout.reading),one(nativeLayout.composer),one(nativeLayout.navigationSlot)];
   const original=[inspection.history,inspection.header,inspection.reading,inspection.composer,inspection.navigationSlot];
   const viewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;
-  return nodes.every((node,i)=>node&&node===original[i]&&node===priorNodes[i]&&node.isConnected&&node.ownerDocument===document)&&nativeTopologyOK(...nodes)&&(!nativeLayout.readingViewport||viewport===inspection.readingViewport&&viewport===priorNodes[5]&&viewportTopologyOK(viewport,...nodes));
+  return nodes.every((node,i)=>node&&node===original[i]&&node===priorNodes[i]&&node.isConnected&&node.ownerDocument===document)&&historyListCurrent(nodes[0],inspection)&&nativeTopologyOK(...nodes)&&(!nativeLayout.readingViewport||viewport===inspection.readingViewport&&viewport===priorNodes[5]&&viewportTopologyOK(viewport,...nodes));
  }
  function inspect(){
   const fail=reason=>({ok:false,reason,profileId:profile.id});if(!live())return fail('stale-host-binding');try{syncRoute();}catch{return fail('host-rebind-required');}if(urlPolicy.parse(url).kind==='unsupported')return fail('unsupported-host-route');
-  const history=one(profile.regions.history),header=one(nativeLayout.header),reading=one(nativeLayout.reading),composer=one(nativeLayout.composer),navigationSlot=one(nativeLayout.navigationSlot);
+  const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),reading=one(nativeLayout.reading),composer=one(nativeLayout.composer),navigationSlot=one(nativeLayout.navigationSlot);
   if(!history||!header||!reading||!composer||!navigationSlot)return fail('missing-or-ambiguous-native-boundary');
+  if(!historyListCurrent(history))return fail('unsafe-native-history-list');
+  const historySource=nativeLayout.historyList?one(profile.regions.history):null;
   if(!nativeTopologyOK(history,header,reading,composer,navigationSlot))return fail('return-slot-outside-native-header');
   const readingViewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;
   if(nativeLayout.readingViewport&&!viewportTopologyOK(readingViewport,history,header,reading,composer))return fail('unsafe-native-reading-viewport');
@@ -258,8 +266,8 @@ if(!p){notifyIdle();return;}}catch(error){
   const readingRect=readingViewport?viewportRect(readingViewport,header,composer):rect(reading),sidebarRect=rect(history),returnSlot=rect(navigationSlot),protectedRects=protectedRegions.map(rect);
   if(!readingRect||explicitLayout&&!nativeReturnSlotRect({document,header,slot:navigationSlot,excluded:[history,composer],excludedRects:[readingRect]}))return fail('unsafe-native-geometry');
   if([...Object.values(readingRect),...Object.values(sidebarRect),...Object.values(returnSlot),...protectedRects.flatMap(Object.values)].some(v=>!Number.isFinite(v))||readingRect.width<=0||readingRect.height<=0||sidebarRect.width<=0||sidebarRect.height<=0||returnSlot.width<34||returnSlot.height<34||protectedRects.some(r=>overlaps(r,readingRect)||overlaps(r,sidebarRect))||overlaps(readingRect,sidebarRect))return fail('unsafe-native-geometry');
-  const nodes=[history,header,reading,composer,navigationSlot,...(readingViewport?[readingViewport]:[])];if(nodes.some((n,i)=>n!==priorNodes[i])){regionEpoch++;priorNodes=nodes;}
-  return {ok:true,reason:null,profileId:profile.id,history,header,reading,navigationSlot,composer,protectedRegions,...(readingViewport?{readingViewport}:{}),historyMaskRoots:[history],returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch};
+  const nodes=[history,header,reading,composer,navigationSlot,readingViewport,historySource];if(nodes.some((n,i)=>n!==priorNodes[i])){regionEpoch++;priorNodes=nodes;}
+  return {ok:true,reason:null,profileId:profile.id,history,...(historySource?{historySource}:{}),header,reading,navigationSlot,composer,protectedRegions,...(readingViewport?{readingViewport}:{}),historyMaskRoots:[history],returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch};
  }
  const api={isReturnSlotCurrent,kind:'chatgpt',async start(options){
   stop();cursorRestarts=0;const b=options?.binding;if(!b||typeof options.emit!=='function'||typeof b.documentToken!=='string'||typeof b.producerToken!=='string'||typeof b.browserDocumentId!=='string'||!Number.isSafeInteger(b.routeEpoch)||b.routeEpoch<0||b.origin!==new URL(document.location.href).origin||!Number.isFinite(Date.parse(b.expiresAt))||now()>=Date.parse(b.expiresAt))throw Error('invalid-host-binding');

@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
+const require=createRequire(new URL('../../extension/tooling/package.json',import.meta.url));
+const {outputFiles}=await require('esbuild').build({stdin:{contents:"export {createChatGPTAdapter} from './src/host/chatgpt-adapter.mjs';export {LEGACY_SURFACE_PROFILE} from './src/host/surface-discovery.mjs';export {createMountSurface} from './src/navigation/mount-surface.mjs';",resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'historyModule'});
+const browser=await chromium.launch({headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:1000,height:700}}),url='https://chatgpt.com/c/33333333-3333-4333-8333-333333333333';
+ await page.route('**/*',r=>r.request().url()===url?r.fulfill({contentType:'text/html',body:`<meta charset="utf-8"><style>body{margin:0}#header{position:fixed;left:220px;top:0;width:780px;height:52px}#slot{width:40px;height:40px}#source{position:fixed;left:0;top:52px;width:200px;height:648px}#heading{height:100px}#list{height:400px}#reading{position:fixed;left:220px;top:60px;width:780px;height:400px}#composer{position:fixed;left:220px;top:500px;width:780px;height:80px}</style><nav id="source"><div id="heading"><button id="search">Native search</button><button id="project-create">Create project</button></div><div id="list" aria-hidden="false"><div data-sidebar-chatgpt-conversation-key="opaque-marker-not-membership" role="listitem"><div data-sidebar-cycle-item role="group"><a href="/c/33333333-3333-4333-8333-333333333333"><span data-thread-title>Native A</span></a><button aria-label="聊天操作" aria-haspopup="menu">…</button><button aria-label="置顶聊天">Pin</button></div></div></div></nav><header id="header"><div id="slot"></div></header><section id="reading"></section><form id="composer"><textarea>fixture draft</textarea></form>`}):r.abort());
+ await page.goto(url);await page.addScriptTag({content:outputFiles[0].text});
+ const result=await page.evaluate(async()=>{
+  const {createChatGPTAdapter,LEGACY_SURFACE_PROFILE,createMountSurface}=historyModule,profile={...LEGACY_SURFACE_PROFILE,currentBody:undefined,regions:{...LEGACY_SURFACE_PROFILE.regions,history:'#source'},nativeLayout:{header:'#header',reading:'#reading',composer:'#composer',navigationSlot:'#slot',historyList:'#list'}};
+  let surface;const emitted=[],adapter=createChatGPTAdapter({document,profile,isOwnedMask:n=>surface?.isMasked(n)===true});const binding={documentToken:'fixture',producerToken:'fixture',browserDocumentId:'fixture',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+  await adapter.start({binding,emit:async p=>{emitted.push(p);return {state:'accepted',localSeq:p.localSeq,receiptId:'fixture'};}});for(let i=0;i<15;i++)await Promise.resolve();
+  const first=adapter.inspect();if(!first.ok)throw Error(first.reason);const source=document.querySelector('#source'),list=document.querySelector('#list'),row=list.firstElementChild;
+  surface=createMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});const handle=await surface.mount({binding},first);surface.showWorkspace(handle);
+  const initial={separateSource:first.historySource===source&&first.history===list&&first.historyMaskRoots[0]===list,sidebarStartsBelowHeading:first.sidebarRect.y===152,onlyListMasked:getComputedStyle(list).visibility==='hidden'&&getComputedStyle(document.querySelector('#heading')).visibility==='visible',inspectOwnMask:adapter.inspect().ok,discoveryTitle:emitted.some(p=>p.payload?.candidates?.some(c=>c.nativeTitle==='Native A')),onlyUnknownMembership:emitted.every(p=>(p.payload?.membershipClaims??[]).every(c=>c.asserted==='UNKNOWN'&&c.projectId===null))};
+  surface.suspend(handle);const variants={};
+  const mutate=(name,apply)=>{const undo=apply();variants[name]=!adapter.inspect().ok;undo();};
+  mutate('searchInsideList',()=>{const n=document.createElement('button');n.textContent='Search';list.append(n);return()=>n.remove();});
+  mutate('searchInsideRow',()=>{const n=document.createElement('button');n.setAttribute('aria-label','Search');row.append(n);return()=>n.remove();});
+  mutate('unknownNativeInput',()=>{const n=document.createElement('input');row.append(n);return()=>n.remove();});
+  mutate('svgNativeLink',()=>{const n=document.createElementNS('http://www.w3.org/2000/svg','svg');n.innerHTML='<a href="/projects"><path d="M0 0h10v10z"/></a>';row.append(n);return()=>n.remove();});
+  mutate('nativeSummary',()=>{const n=document.createElement('details');n.innerHTML='<summary>Native control</summary>';row.append(n);return()=>n.remove();});
+  for(const role of ['checkbox','radio','switch','slider','menuitem','group checkbox'])mutate('role-'+role,()=>{const n=document.createElement('div');n.setAttribute('role',role);row.append(n);return()=>n.remove();});
+  mutate('overlappingNativeHeading',()=>{list.style.cssText='position:relative;top:-100px';return()=>list.removeAttribute('style');});
+  mutate('duplicateConversation',()=>{const n=row.cloneNode(true);list.append(n);return()=>n.remove();});
+  mutate('unsupportedLink',()=>{const a=row.querySelector('a'),old=a.getAttribute('href');a.setAttribute('href','/projects');return()=>a.setAttribute('href',old);});
+  mutate('nonRowNativeText',()=>{const n=document.createTextNode('Native search heading');list.append(n);return()=>n.remove();});
+  mutate('hiddenList',()=>{list.setAttribute('aria-hidden','true');return()=>list.setAttribute('aria-hidden','false');});
+  mutate('outsideSource',()=>{list.style.cssText='position:relative;left:30px';return()=>list.removeAttribute('style');});
+  mutate('sourceInert',()=>{source.inert=true;return()=>{source.inert=false;};});
+  mutate('sourceHidden',()=>{source.setAttribute('aria-hidden','true');return()=>source.removeAttribute('aria-hidden');});
+  mutate('ambiguousList',()=>{const n=list.cloneNode(true);source.append(n);return()=>n.remove();});
+  const sourceClone=source.cloneNode(false);source.replaceWith(sourceClone);sourceClone.append(list);const sourceIdentityRejected=!adapter.isSameNativeRegions(first);sourceClone.replaceWith(source);source.append(list);
+  surface.showWorkspace(handle);const injected=document.createElement('button');injected.textContent='Native new control';list.append(injected);const changed=adapter.inspect(),surrendered=surface.refreshGeometry(handle,changed)===false;
+  const closed={invalid:!changed.ok,surrendered,listVisible:getComputedStyle(list).visibility==='visible',searchVisible:getComputedStyle(document.querySelector('#search')).visibility==='visible',draftPreserved:document.querySelector('textarea').value==='fixture draft'};
+  surface.dispose(handle);adapter.stop();return {initial,variants,sourceIdentityRejected,closed};
+ });
+ for(const [group,values]of Object.entries(result))if(typeof values==='object')for(const [key,value]of Object.entries(values))assert.equal(value,true,group+'.'+key);else assert.equal(values,true,group);
+ console.log(JSON.stringify({result:'PASS_WEB_MECHANISM_ONLY',checks:result}));
+}finally{await browser.close();}

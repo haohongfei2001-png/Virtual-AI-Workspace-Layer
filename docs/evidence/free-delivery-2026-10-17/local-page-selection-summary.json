@@ -1679,5 +1679,99 @@
       "WEB_MECHANISM_ONLY browser checks, not complete MV3 or live acceptance",
       "10k/100k remain DEFERRED; no latency improvement claimed across different test selections"
     ]
+  },
+  "pureHistoryList20261018": {
+    "baseHead": "3b06bf2db40c1a484d0a81aa02a23048f9fbfe29",
+    "status": "WEB_MECHANISM_ONLY_NOT_LIVE_VERIFIED",
+    "sourceSha256": {
+      "src/host/chatgpt-adapter.mjs": "d00e1bcbb1916cdeec258d36caceb9f1b88039c5f46fa18447deb1c6c8496b5c",
+      "src/host/native-history-list.mjs": "24cedfafbfb3f5c2ea5ee0116b3a24aa18d1b96e20612b4257e9351953f7ee65",
+      "tests/host/history-list-browser.mjs": "dcaadfe962d350e319af8238fd1201ced25a33f623a643ce1b8bcd3eb54e8399",
+      ".github/workflows/free-offline-host.yml": "e892902e934accf0cfe0191606f968d9c3f651355969aed3bc177231d85ee82c"
+    },
+    "targeted": {
+      "pass": 242,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 1983.936792
+    },
+    "browser": {
+      "result": "PASS_WEB_MECHANISM_ONLY",
+      "checks": {
+        "initial": {
+          "separateSource": true,
+          "sidebarStartsBelowHeading": true,
+          "onlyListMasked": true,
+          "inspectOwnMask": true,
+          "discoveryTitle": true,
+          "onlyUnknownMembership": true
+        },
+        "variants": {
+          "searchInsideList": true,
+          "searchInsideRow": true,
+          "unknownNativeInput": true,
+          "svgNativeLink": true,
+          "nativeSummary": true,
+          "role-checkbox": true,
+          "role-radio": true,
+          "role-switch": true,
+          "role-slider": true,
+          "role-menuitem": true,
+          "role-group checkbox": true,
+          "overlappingNativeHeading": true,
+          "duplicateConversation": true,
+          "unsupportedLink": true,
+          "nonRowNativeText": true,
+          "hiddenList": true,
+          "outsideSource": true,
+          "sourceInert": true,
+          "sourceHidden": true,
+          "ambiguousList": true
+        },
+        "sourceIdentityRejected": true,
+        "closed": {
+          "invalid": true,
+          "surrendered": true,
+          "listVisible": true,
+          "searchVisible": true,
+          "draftPreserved": true
+        }
+      }
+    },
+    "liveReadonly": {
+      "roots": 2,
+      "checks": [
+        {
+          "ok": false,
+          "rows": 0,
+          "links": 0,
+          "ariaHidden": "false"
+        },
+        {
+          "ok": true,
+          "rows": 10,
+          "links": 10,
+          "ariaHidden": "false"
+        }
+      ]
+    },
+    "observerCorrections": [
+      "Initial fixture lacked UTF-8 charset; corrected fixture, not host parser.",
+      "Existing discovery correctly emits UNKNOWN membership; corrected test expecting absent claims.",
+      "Sandbox Chromium launch denied before execution; isolated headless rerun outside sandbox."
+    ],
+    "reviewCounterexamples": [
+      "ARIA checkbox inside row accepted before role allowlist",
+      "List translated over native heading accepted before bounded geometry validation",
+      "Native source inert/aria-hidden accepted before ancestor-state validation",
+      "SVG lowercase a bypassed HTML link branch; non-HTML A/BUTTON now rejected"
+    ],
+    "boundaries": [
+      "Only observed Chinese row actions; other language profiles unverified.",
+      "No private text, IDs, titles, credentials or response bodies recorded.",
+      "No scope grant, production profile enablement or native mutation.",
+      "Original reading viewport and return slot browser regressions passed; mechanism only, not MV3.",
+      "10k/100k DEFERRED; real Project/navigation/return/search/recovery remain OPEN."
+    ]
   }
 }

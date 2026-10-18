@@ -139,6 +139,12 @@ jobs:
       - name: Packaged profile layout theme and viewport subcontracts
         if: ${{ !cancelled() }}
         run: node tests/host/ui10-package-matrix-browser.mjs "$RUNNER_TEMP/ui10-matrix.json"
+      - name: Layout mechanism regressions (not MV3 acceptance)
+        if: ${{ !cancelled() }}
+        run: |
+          node tests/host/reading-viewport-browser.mjs
+          node tests/host/return-slot-browser.mjs
+          node tests/host/history-list-browser.mjs
       - name: Packaged native snippet save search locate and removal
         if: ${{ !cancelled() }}
         run: node tests/host/snippets-package-mv3-browser.mjs "$RUNNER_TEMP/snippets-package.json"
