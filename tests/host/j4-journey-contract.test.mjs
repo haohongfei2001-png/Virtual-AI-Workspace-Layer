@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
-import {j4AssetBackup,J4_REF} from './fixtures/j4-assets.mjs';import {parseBackup,previewBackup} from '../../src/data/backup.mjs';import {emptyState} from '../../src/data/state.mjs';import {contextScope,j4Status,j4Remaining,assertRecoveredUnknownLink} from './j4-package-journey.mjs';import {createVariantHostFixtureServer} from './fixtures/variants-server.mjs';
+import {j4AssetBackup,J4_REF} from './fixtures/j4-assets.mjs';import {parseBackup,previewBackup} from '../../src/data/backup.mjs';import {emptyState} from '../../src/data/state.mjs';import {contextScope,j4Status,j4Remaining,assertRecoveredUnknownLink,waitForRecoveredUnknownLink} from './j4-package-journey.mjs';import {createVariantHostFixtureServer} from './fixtures/variants-server.mjs';
 test('portable J4 assets cover all manual asset classes without authority or evidence',()=>{const scope=contextScope('account-host-personal'),bundle=j4AssetBackup(scope,'http://127.0.0.1:1234'),state=parseBackup(bundle,scope);assert.equal(state.identities[J4_REF].owner,'human');assert.equal(Object.keys(state.workspaces).length,1);assert.equal(Object.keys(state.placements).length,1);assert.deepEqual(state.preferences.workingSet.value,{refs:[J4_REF],current:J4_REF});assert.equal(state.preferences.savedSnippets.value.length,1);assert.equal(state.channel,'none');for(const key of ['sources','events','coverage'])assert.deepEqual(state[key],{});const plan=previewBackup(emptyState(scope),bundle,scope);assert.equal(plan.evidenceImported,false);assert.equal(plan.next.identities[J4_REF].locked,true);});
 test('same asset bundle cannot be restored into other authenticated context',()=>{const personal=contextScope('account-host-personal'),team=contextScope('account-host-team');assert.notEqual(personal.organizationId,team.organizationId);assert.throws(()=>parseBackup(j4AssetBackup(personal,'http://127.0.0.1:1234'),team));});
 test('J4 native context switch is opt-in authenticated roster-validated service',async()=>{const normal=await createVariantHostFixtureServer({profile:'MODERN'}),server=await createVariantHostFixtureServer({profile:'MODERN',journey:'J4'});try{const response=await fetch(server.url),cookie=response.headers.get('set-cookie').split(';')[0],html=await response.text();assert(html.includes('/j4-native-context.mjs'));assert(!(await (await fetch(normal.url)).text()).includes('/j4-native-context.mjs'));const headers={'Cookie':cookie,'Content-Type':'application/json'},send=id=>fetch(server.origin+'/native/context',{method:'POST',headers,body:JSON.stringify({account_id:id})});assert.equal((await send('forged-context')).status,403);assert.equal((await send('account-host-personal')).status,200);assert.deepEqual(await (await fetch(server.origin+'/native/preferences',{headers})).json(),{account_id:'account-host-personal'});assert.equal(server.snapshot().actions['context-switch'],1);assert.equal((await fetch(server.origin+'/native/context',{method:'POST',body:'{}'})).status,401);}finally{await normal.close();await server.close();}});
@@ -14,4 +14,18 @@ test('recovered link oracle requires the original route, enabled UNKNOWN identit
  const expected={id:J4_REF,nativeUrl:'http://127.0.0.1:1234/c/'+J4_REF},link={id:J4_REF,href:expected.nativeUrl,disabled:null,text:'名称暂不可用'};
  assert.deepEqual(assertRecoveredUnknownLink(link,expected),link);
  for(const patch of [{id:'different-ref'},{href:'http://127.0.0.1:1234/c/wrong'},{disabled:'true'},{text:'Ordinary conversation'},{text:'J4 retained private human title'},{text:''}])assert.throws(()=>assertRecoveredUnknownLink({...link,...patch},expected));
+});
+
+test('recovered row waits for pending navigation within the original shared deadline',async()=>{
+ let time=0,reads=0;const expected={id:J4_REF,nativeUrl:'http://127.0.0.1/c/'+J4_REF},link={id:J4_REF,href:expected.nativeUrl,disabled:null,text:'名称暂不可用'};
+ const locator={waitFor:async({timeout})=>{assert.equal(timeout,15000);time=14900;},evaluate:async()=>({...link,disabled:++reads===1?'true':null})};
+ assert.deepEqual(await waitForRecoveredUnknownLink(locator,expected,{now:()=>time,pause:async ms=>{time+=ms;}}),link);assert.equal(time,14950);assert.equal(reads,2);
+});
+test('recovered row rejects permanently disabled and late enabled state without a second window',async()=>{
+ for(const late of [false,true]){let time=0;const locator={waitFor:async()=>{time=14990;},evaluate:async()=>{if(late)time=15000;return {disabled:late?null:'true'};}};
+ await assert.rejects(waitForRecoveredUnknownLink(locator,{}, {now:()=>time,pause:async ms=>{time+=ms;}}),/deadline|timeout/);assert.equal(time,15000);}
+});
+test('recovered enabled row still rejects a wrong native destination',async()=>{
+ const locator={waitFor:async()=>{},evaluate:async()=>({id:J4_REF,href:'http://127.0.0.1/wrong',disabled:null,text:'名称暂不可用'})};
+ await assert.rejects(waitForRecoveredUnknownLink(locator,{id:J4_REF,nativeUrl:'http://127.0.0.1/c/'+J4_REF}));
 });

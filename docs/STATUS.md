@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **J4恢复后UNKNOWN观察时序已修，连续片段走完但仍PARTIAL**：原729d0ba首次在17步后失败，修复索引后的UNKNOWN行href正确但aria-disabled仍true；frame read到finally期间导航保留pending护栏，行出现不等于可用。仅runner改为出现与启用共享原15000ms，最终ID/URL/脱敏名/启用断言全部保留，永久禁用或迟到仍FAIL；生产无改动。14定向PASS/0skip/112.994ms，独审通过；同生产/最终runner原连续23步完成、errors空、源码/构建无漂移，包含实际disable/uninstall、草稿和Pro资产保持。结果明确PARTIAL_J4_NOT_ACCEPTED，peer无新context自动恢复仍未成立；原失败保留，未采集可比总耗时，不宣称提速。真实worker403及G/U仍BLOCKED/NOT_RUN，规模DEFERRED。证据recoveryBatchJ420261018。
+
 - **恢复合批后MODERN原J3兼容旅程通过**：冻结2ca77e3，app-root嵌套/immediate冷启动，原连续16步PASS，源码/fixture/runner/构建无漂移，errors为空。双surface、原生模型/文件、两类编辑器草稿、AX键盘、前进返回、200%缩放、较早/UNKNOWN历史、片段保存搜索原生定位及原生搜索均在同一旅程成立。原runner未记录端到端耗时，不宣称提速；未放宽期限。物理IME/系统权限NOT_RUN、完整v2.7外观NOT_ESTABLISHED；未新增真实Profile读取，worker403/真实全链/J4仍开放，规模DEFERRED。证据recoveryBatchJ320261018。
 
 - **恢复修复合批后原J2本地完整旅程通过**：冻结591ffc0，LEGACY隔离打包MV3原8步全过、errors为空、源码未漂移；真实等待60182ms后活动锚仍保留，worker stop/new-running后恢复，后续原始时间精确归并且不重复/续期，失败发送/他人/旧分支负例通过。browser-launch到report-write共128243ms（包含原等待），无同环境旧耗时，不宣称提速。首次默认/usr/bin/chromium在Mac不存在，NOT_RUN原件保留；仅用既有环境变量指定Mac Chrome后执行，无门槛或源码修改。本结果不追溯改判历史Linux J2失败，也不认证J4/自然休眠/真实导航；当前真实worker session403仍BLOCKED，规模DEFERRED。见recoveryBatchJ220261018。

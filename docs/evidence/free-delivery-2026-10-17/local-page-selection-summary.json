@@ -3612,5 +3612,34 @@
     "coverage": "Single continuous original J3: both surfaces, model/file and fixture permissions, textarea/contenteditable drafts, AX keyboard, Back/Forward, 200% zoom, older/UNKNOWN history, explicit Range snippet save/search/native locate, native search.",
     "limits": "Offline only. Physical IME and system permission NOT_RUN; full v2.7 acceptance NOT_ESTABLISHED. No real Profile reads. Worker session403 remains BLOCKED; J4/no-new-context and historical Linux failures not closed; 10k/100k DEFERRED.",
     "artifact": "recovery-batch-j3-modern-20261018.json.gz"
+  },
+  "recoveryBatchJ420261018": {
+    "sourceCommit": "729d0ba686657fc0f2e215fe1f559dcc853e3327",
+    "productionChanged": false,
+    "before": "FAIL after native-root repair: UNKNOWN link existed with correct href but aria-disabled=true; 17 steps passed before assertion.",
+    "rootCause": "Observation readiness mismatch: free-frame-client read fences delegated navigation until finally; row visibility alone does not establish enabled navigation.",
+    "fix": "Only runner: same locator appearance and enabled state share original 15000ms deadline, including late-result check and bounded outer await; final original ID/href/disabled/title oracle unchanged. No extra window, request, native action or production budget change.",
+    "targeted": {
+      "pass": 14,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 112.993583
+    },
+    "review": "Independent readonly review found no deadline extension or assertion weakening.",
+    "after": {
+      "status": "PARTIAL_J4_NOT_ACCEPTED",
+      "steps": 23,
+      "errors": [],
+      "sourceChangedDuringRun": false,
+      "buildManifestUnchanged": true,
+      "scope": "Original continuous offline segment including actual disable/uninstall, repair/revocation, native drafts and Pro assets; NOT full J4."
+    },
+    "timing": "Original runner did not collect end-to-end duration. No comparable timing or speedup claim.",
+    "limits": "Peer foreground without fresh context still not established; real worker403 remains BLOCKED. Supported profile/lifecycle combinations and real G/U incomplete; 10k/100k DEFERRED.",
+    "artifacts": [
+      "recovery-batch-j4-before-20261018.json.gz",
+      "recovery-batch-j4-link-wait-20261018.json.gz",
+      "recovery-batch-j4-link-wait-targeted-20261018.tap.gz"
+    ]
   }
 }

@@ -1,3 +1,4 @@
+import {withRequestDeadline} from '../../src/data/request-deadline.mjs';
 import {collectJ4ContentLifecycle} from './j4-content-lifecycle-collector.mjs';
 import {installJ4GrantObserver} from './j4-grant-observer.mjs';
 import {createJ4LifecycleOrderTracePackage,verifyJ4LifecycleOrderTracePackage} from './j4-lifecycle-order-trace.mjs';
@@ -50,6 +51,19 @@ export function assertRecoveredUnknownLink(link,{id,nativeUrl}){
  assert.equal(link.id,id);assert.equal(link.href,nativeUrl);assert.notEqual(link.disabled,'true');
  assert.equal(link.text.trim(),'名称暂不可用');
  return link;
+}
+// A rendered row is not yet an enabled navigation plan: frame reads fence
+// delegated controls until their finalization. Share the original row deadline.
+export async function waitForRecoveredUnknownLink(locator,expected,{now=()=>performance.now(),pause=ms=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
+ const start=now(),remaining=()=>{const elapsed=now()-start;if(!Number.isFinite(elapsed)||elapsed<0||elapsed>=15000)throw Error('J4-recovered-link-deadline');return 15000-elapsed;};
+ return withRequestDeadline(async()=>{
+  await locator.waitFor({timeout:remaining()});remaining();
+  while(true){
+   const link=await locator.evaluate(el=>({id:el.getAttribute('data-ref-id'),href:el.getAttribute('href'),disabled:el.getAttribute('aria-disabled'),text:el.textContent??''}));remaining();
+   if(link.disabled!=='true')return assertRecoveredUnknownLink(link,expected);
+   await pause(Math.min(50,remaining()));
+  }
+ },{timeoutMs:15000,now});
 }
 export async function runJ4(output=join(tmpdir(),'free-j4-package-journey.json')){
  const afterEvidenceScenario=j4AfterEvidenceScenario(process.env);
@@ -136,8 +150,8 @@ export async function runJ4(output=join(tmpdir(),'free-j4-package-journey.json')
   await a.bringToFront();await mark(a,'J4_CONTINUOUS_NATIVE_DRAFT');await a.getByRole('button',{name:'返回工作空间',exact:true}).click();f=frame(a);await f.getByRole('button',{name:'工作空间设置',exact:true}).click();await f.getByRole('button',{name:'本地数据恢复',exact:true}).click();await f.getByText('选择需要修复的本地记录。',{exact:true}).waitFor();assert.equal(await f.getByText('未发现损坏。',{exact:true}).count(),3);assert.deepEqual(await assets(personal),preserved);record('healthy-production-recovery-inspection-preserves-imported-Pro-assets',{assetDigest:preserved.hash,damagedRepair:'NOT_RUN'});await a.bringToFront();await f.getByRole('button',{name:'返回工作空间',exact:true}).click();await mounted(a);
   const fault=await faultNativeRoot(personal);assert(fault.payloadUnchanged);assert.notEqual(fault.beforeRootDigest,fault.afterRootDigest);assert.deepEqual(await assets(personal),preserved);await a.bringToFront();const sidebar=a.frames().find(f=>f.url()===`chrome-extension://${id}/sidebar.html`);assert(sidebar);await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();f=frame(a);await f.getByRole('button',{name:'修复项目与聊天索引',exact:true}).waitFor({timeout:15000});assert.deepEqual(await assets(personal),preserved);await a.bringToFront();await f.getByRole('button',{name:'修复项目与聊天索引',exact:true}).click();await f.getByRole('button',{name:'关闭派生查找',exact:true}).waitFor({timeout:15000});const repaired=await repairedNative(personal);assert(repaired.refs>0&&repaired.sources>0&&repaired.allSourcesRevoked);assert.deepEqual(await assets(personal),preserved);assert(await a.evaluate(()=>document===j4Document&&document.querySelector('textarea')===j4Editor&&j4Editor.value==='J4_CONTINUOUS_NATIVE_DRAFT'));record('explicit-native-root-checksum-fault-and-real-UI-repair-preserve-assets-draft-and-revoke-source',{fault,repaired,assetDigest:preserved.hash});
   await a.bringToFront();await f.getByRole('button',{name:'关闭派生查找',exact:true}).click();
-  const unknownLink=f.locator('[data-free-list="unknown"]').locator(`a[data-ref-id="${J4_REF}"]`);await unknownLink.waitFor({timeout:15000});
-  const recoveredLink=assertRecoveredUnknownLink(await unknownLink.evaluate(el=>({id:el.getAttribute('data-ref-id'),href:el.getAttribute('href'),disabled:el.getAttribute('aria-disabled'),text:el.textContent??''})),{id:J4_REF,nativeUrl:server.origin+'/c/'+J4_REF});
+  const unknownLink=f.locator('[data-free-list="unknown"]').locator(`a[data-ref-id="${J4_REF}"]`);
+  const recoveredLink=await waitForRecoveredUnknownLink(unknownLink,{id:J4_REF,nativeUrl:server.origin+'/c/'+J4_REF});
   assert.equal(await f.getByText('Ordinary conversation',{exact:true}).count(),0);assert.equal(await f.getByText('J4 retained private human title',{exact:true}).count(),0);
   record('recovered-UNKNOWN-route-retains-identity-and-hides-revoked-titles',{link:recoveredLink,oldTitleRestoration:'not authorized; old source remains revoked'});
   const oldFrames=[...a.frames(),...b.frames()].filter(f=>f.url().startsWith(`chrome-extension://${id}/`));assert.equal((await privateState(oldFrames)).absent,false,'private-detector-positive-control');
