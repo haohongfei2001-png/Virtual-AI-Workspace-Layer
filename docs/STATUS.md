@@ -6,6 +6,8 @@
 
 
 
+- **同目标阅读阻塞已在隔离完整MV3关闭**：受控同步临时解除workspace自有mask，核验当前DOM与原ACK fingerprint后按原状态恢复；仅导航proof调用，后台send/snippet不触发。保留原proof/expiry，不续授权；intent/grant/节点变化、原生输入、取消打开、同步同ID节点替换、异步/嵌套reader均拒绝。独审3项已修；冻结291定向测试PASS/0 skip/2108.444ms，完整候选MV3的context→标题→当前阅读→唯一返回→已知搜索8检查PASS/958.401ms/sourceChanged=false，原10860.240ms导航FAIL保留，不改门槛。此为合成origin隔离Profile，真实专用Profile尚未安装验收；Project/恢复/IME/PAIA仍开放，10k/100k DEFERRED、Free NOT_RELEASE_READY。见原证据observedCandidateReadingProbe20261018。
+
 - **候选实际MV3暴露并修复摄取接线，完整旅程仍FAIL**：原worker白名单仅LEGACY，导致真实授权/双frame成功却拒绝现代观察、UI无记录；现worker/content共享精确包内Profile选择。现代body root位于reading mask后代，原精确根检测误判继承hidden为unproven；现64层有界查找精确自有mask，仅延迟观察、不续proof。188定向/包测试PASS、0 skip、2249.280ms，现代组合浏览器非空body/无误失效断言通过，独审无本diff阻断。新隔离Profile实际完整包/worker/IDB/frame链验证了C2原生GET→第二canonical context→双frame→UNKNOWN聊天标题，详情GET仅1次、草稿保留；拒绝本地代理与路由双屏障，无真实账户。冻结完整旅程10.860秒仍FAIL：点击当前聊天计划为href/_blank，未出现返回按钮；根因是acknowledgedBody对掩罩态返回null，不能生成same-target。下一步需要受控当下DOM重验，不复活缓存proof；已知搜索步骤未执行，不写通过。原空数据FAIL及当前导航FAIL均保留gzip，同源码无漂移。未装入真实Profile、规模DEFERRED、Free未完成。见原local-page-selection-summary.json的observedCandidateMV320261018。
 
 - **现代专用候选包已形成，尚未装入真实Profile**：统一observed surface profile，adapter和context bridge共享消息身份/现代布局/纯history/返回几何；显式observedChatGPTContext构建只允许真实origin且与全部offline选项互斥。候选接已有C2/plural请求方言及webRequest，builder/verifier精确一致；默认scope/权限不变，自动详情读取、send candidate/ACK/history均未启用。137定向/包边界PASS、0 skip、2036.160ms，独审22项通过；同现代profile组合发现→mask→几何的隔离浏览器通过，仅WEB_MECHANISM_ONLY。专用候选ZIP已生成并verify（172文件），不是LIVE_VERIFIED；实际浏览器Profile由安装位置限定，flag本身不认证Profile。下一关口为隔离实际MV3 receipt→document关联→scope→双frame，再在已授权专用Profile验证；Project成员、现代输入风险/发送语法仍缺证据，保持UNKNOWN与原生入口优先。规模DEFERRED，Free未完成。证据见原local-page-selection-summary.json的observedCandidatePackage20261018。

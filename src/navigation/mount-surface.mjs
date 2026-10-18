@@ -2,7 +2,7 @@
 export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=()=>false}){
  const mounts=new Map();
  const lookup=handle=>{const m=mounts.get(handle?.id);if(!m||m.handle!==handle)throw Error('stale-mount');return m;};
- const hide=m=>{for(const surface of m.surfaces)if(surface.node.matches(':popover-open'))surface.node.hidePopover();};
+ const hide=m=>{if(m.readingProbe)m.readingProbe.cancelled=true;for(const surface of m.surfaces)if(surface.node.matches(':popover-open'))surface.node.hidePopover();};
  const surrender=m=>{const opened=m.surfaces.some(surface=>surface.node.matches(':popover-open'));hide(m);if(opened)try{m.onSurrender({reason:'native-change'});}catch{/* Closure remains effective even if its consumer has stopped. */}};
  const refreshGeometry=(m,inspection)=>{
   try{
@@ -73,7 +73,7 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    // old presentation intent at the synchronous, non-cancellable close edge.
    // The owner must not hide/reopen surfaces from this notification.
    let closing=false;
-   const workspaceClosing=e=>{if(closing||e.target!==workspace||e.oldState!=='open'||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||!workspace.matches(':popover-open'))return;closing=true;try{onSurrender({reason:'native-reading',phase:'closing'});}catch{}finally{closing=false;}};
+   const workspaceClosing=e=>{if(m.readingProbe?.ownClosing&&e.target===workspace&&e.oldState==='open'&&e.newState==='closed'||m.readingProbe?.ownOpening&&e.target===workspace&&e.oldState==='closed'&&e.newState==='open')return;if(m.readingProbe)m.readingProbe.cancelled=true;if(closing||e.target!==workspace||e.oldState!=='open'||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||!workspace.matches(':popover-open'))return;closing=true;try{onSurrender({reason:'native-reading',phase:'closing'});}catch{}finally{closing=false;}};
    const workspaceClosed=e=>{if(e.target!==workspace||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||workspace.matches(':popover-open'))return;try{onSurrender({reason:'native-reading'});}catch{}};
    // Match the reading-before-composer keyboard order without relocating any
    // native node. Appending both frames after the native document puts forward
@@ -116,6 +116,25 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    if(markers.some(({root})=>!root.isConnected||root.ownerDocument!==doc||root.hidden||root.getAttribute('aria-hidden')==='true'||doc.defaultView.getComputedStyle(root).visibility!=='visible'||doc.defaultView.getComputedStyle(root).display==='none')){hide(m);return false;}
    for(const marker of markers){marker.nativeClass=marker.root.getAttribute('class');marker.nativeStyle=marker.root.getAttribute('style');marker.nativeHidden=marker.root.getAttribute('hidden');marker.nativeAriaHidden=marker.root.getAttribute('aria-hidden');marker.wasVisible=true;}
    for(const s of closed)s.node.showPopover();return true;},
+  // Synchronous visibility check only: no authority renewal, DOM replacement,
+  // sidebar reopening or asynchronous work is permitted inside this window.
+  withNativeReading(handle,read,guard){
+   const m=lookup(handle),workspace=m.surfaces.find(s=>s.role==='workspace')?.node;
+   if(m.readingProbe||typeof read!=='function'||typeof guard!=='function')return null;
+   const states=m.surfaces.map(s=>s.node.matches(':popover-open'));
+   const intact=()=>mounts.get(handle.id)===m&&m.handle===handle&&m.style.isConnected&&m.style.textContent===m.styleText&&m.surfaces.every(({node,frame},i)=>node.isConnected&&node.ownerDocument===doc&&node.dataset.vaOwned===handle.id&&frame.isConnected&&frame.parentElement===node&&(node===workspace||node.matches(':popover-open')===states[i]))&&m.markers.every(({root,attr,nativeClass,nativeStyle,nativeHidden,nativeAriaHidden})=>root.isConnected&&root.ownerDocument===doc&&root.getAttribute(attr)===handle.id&&root.getAttribute('class')===nativeClass&&root.getAttribute('style')===nativeStyle&&root.getAttribute('hidden')===nativeHidden&&root.getAttribute('aria-hidden')===nativeAriaHidden)&&!hasNativeLayer()&&!doc.querySelector('dialog[open]:not([data-va-owned]),[popover]:popover-open:not([data-va-owned])')&&guard();
+   if(!intact())return null;
+   const probe=m.readingProbe={cancelled:false,ownClosing:true};let value=null,ok=false;
+   const changes=new doc.defaultView.MutationObserver(()=>{probe.cancelled=true;});
+   changes.observe(doc.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});
+   try{
+    if(workspace.matches(':popover-open'))workspace.hidePopover();probe.ownClosing=false;
+    if(probe.cancelled||!intact())return null;
+    value=read();if(value?.then||probe.cancelled||!intact())return null;
+    if(states[m.surfaces.findIndex(s=>s.node===workspace)]){probe.ownOpening=true;workspace.showPopover();probe.ownOpening=false;}
+    ok=!probe.cancelled&&intact()&&changes.takeRecords().length===0&&m.surfaces.every((s,i)=>s.node.matches(':popover-open')===states[i]);return ok?value:null;
+   }catch{return null;}finally{changes.disconnect();m.readingProbe=null;if(!ok)surrender(m);}
+  },
   showReading(handle){const m=lookup(handle);for(const s of m.surfaces)if(s.role==='workspace'&&s.node.matches(':popover-open'))s.node.hidePopover();},
   suspend(handle){hide(lookup(handle));},
   frames(handle){return lookup(handle).surfaces.map(({role,frame})=>({role,frame}));},

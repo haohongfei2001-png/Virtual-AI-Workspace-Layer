@@ -19,7 +19,7 @@ const overlaps=(a,b)=>a.x<b.x+b.width&&b.x<a.x+a.width&&a.y<b.y+b.height&&b.y<a.
 // handle-identified. Detached handles still force publication below.
 const publicationKey=source=>sha256(JSON.stringify([source.routeEpoch,{...source.payload,detachedHandles:[],candidates:source.payload.candidates.map(row=>row.target.kind==='resolved'?{...row,target:{...row.target,liveHandle:null}}:row)}]));
 /** Isolated-world composition. DOM observations remain proposals, never scope proof. */
-export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,priorityConversationId=()=>null,isOwnedSurface=()=>false,snippetsFactory=createNativeSnippets,bodyProof=null,inputRisk=null,authorize=()=>false,beforeDispatch=()=>{},onNativeDispatch=()=>{},onNativeDispatchCancelled=()=>{},onRebindNeeded=()=>{},onSurfaceChange=()=>{},onObservationIssue=()=>{},onIdleHint=()=>{},onFirstSendIntent=null,onOldSendOperation=null,onNativePrepare=null,now=Date.now,elapsedNow=()=>performance.now(),scheduleRetry=(fn,ms)=>setTimeout(fn,ms),cancelRetry=id=>clearTimeout(id)}={}){
+export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,withNativeReading=()=>null,priorityConversationId=()=>null,isOwnedSurface=()=>false,snippetsFactory=createNativeSnippets,bodyProof=null,inputRisk=null,authorize=()=>false,beforeDispatch=()=>{},onNativeDispatch=()=>{},onNativeDispatchCancelled=()=>{},onRebindNeeded=()=>{},onSurfaceChange=()=>{},onObservationIssue=()=>{},onIdleHint=()=>{},onFirstSendIntent=null,onOldSendOperation=null,onNativePrepare=null,now=Date.now,elapsedNow=()=>performance.now(),scheduleRetry=(fn,ms)=>setTimeout(fn,ms),cancelRetry=id=>clearTimeout(id)}={}){
  if(!document?.defaultView)throw Error('invalid-host-document');
  const layoutKeys=['header','reading','composer','navigationSlot'];
  const explicitLayout=Object.hasOwn(profile,'nativeLayout');
@@ -77,11 +77,16 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  }
  const one=selector=>{try{const nodes=document.querySelectorAll(selector);return nodes.length===1?nodes[0]:null;}catch{return null;}};
  const live=()=>!stopped&&now()<Date.parse(binding.expiresAt);
- function acknowledgedBody(){
+ function acknowledgedBody(allowReadingProbe=false){
   if(!live()||!acceptedBody||now()>=Date.parse(acceptedBody.validUntil)||!bodyDiscovery)return null;
-  try{syncRoute();if(bodyDiscovery.isPresentationMasked())return null;const body=bodyDiscovery.scan();return body.association==='explicit-body-id'&&JSON.stringify(body)===acceptedBody.fingerprint?body:null;}catch{return null;}
+  try{
+   syncRoute();const accepted=acceptedBody,run=generation;
+   const scan=()=>{const body=bodyDiscovery.scan();return body.association==='explicit-body-id'&&JSON.stringify(body)===accepted.fingerprint?body:null;};
+   const body=bodyDiscovery.isPresentationMasked()?(allowReadingProbe?withNativeReading(scan):null):scan();
+   return live()&&run===generation&&acceptedBody===accepted&&now()<Date.parse(accepted.validUntil)?body:null;
+  }catch{return null;}
  }
- bodyProof=bodyProof??(()=>{const body=acknowledgedBody();return body&&Number.isSafeInteger(acceptedBody.bodyEpoch)&&acceptedBody.bodyEpoch>=0?{conversationId:body.conversationId,bodyProofId:acceptedBody.proofId,bodyEpoch:acceptedBody.bodyEpoch}:null;});
+ bodyProof=bodyProof??(()=>{const body=acknowledgedBody(true);return body&&Number.isSafeInteger(acceptedBody.bodyEpoch)&&acceptedBody.bodyEpoch>=0?{conversationId:body.conversationId,bodyProofId:acceptedBody.proofId,bodyEpoch:acceptedBody.bodyEpoch}:null;});
  function syncRoute(){if(document.location.href!==url){stop();onRebindNeeded({reason:'native-route-changed'});throw Error('host-rebind-required');}}
  function updateBinding(next){
   if(!live())throw Error('stale-host-binding');syncRoute();
