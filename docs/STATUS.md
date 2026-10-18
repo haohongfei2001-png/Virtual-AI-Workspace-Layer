@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **当前只读宿主阻塞已细化**：已授权Profile的浏览器标签元数据可访问，但后台visibility控制不支持；单次首页创建超时后，元数据确认首页实际建立，随后读取同一首页状态再次超时。未取得页面/context证据，未读聊天正文或凭据，未作原生写入，不把标签存在当scope证明。当前需要恢复该Profile的页面只读连接，不需要重复授予已有数据权限。独立审查同时否决跨target复用risk/inspect结果：这些检查围住同步重入和DOM替换；现有CPU样本不足以安全删除它们。生产代码未因此改变，未重复跑验收矩阵。
+
 - **100k定位证据新增，验收仍FAIL**：同7c676ec生产代码，首次原生CPU采样setup-unavailable；补固定枚举失败阶段/类别后定向72通过、独立审查无阻断，原采样和命令期限不变。下一诊断取得原生与worker样本，最后tail rev183/8726、完整审计0；不作为验收绿例。原生querySelectorAll约1351ms，调用栈多数来自产品导航/风险/边界检查，观察器约86ms；页面idle约6812ms、worker idle约5585ms，尚不支持单一CPU瓶颈或收益结论。早先采样失败原因仍未确证，原始失败保留；继续按调用链定位，不改授权检查或放宽门槛。[同源码诊断](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
 
 - **7c676ec原100k混合场景仍FAIL，不能用10k或局部加速外推**：原即时返回旅程在pre-measurement-audit仅有1000 Project/138 refs（138 UNKNOWN）、99862 missing，rev16，性能samples=null；总摄取观察21420.80ms。源/fixture/manifest稳定、隔离目录已清理；没有放宽时间/缩样本/提升UNKNOWN。瓶颈关口在完整原生库存尚未摄取，未进入完整索引分页性能测量；并非上述真实IDB21页读取改善已解决100k。原失败继续保留。[同源码失败原件](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
