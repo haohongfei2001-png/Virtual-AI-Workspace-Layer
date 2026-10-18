@@ -4,6 +4,10 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **2026-10-19真实403原因分类已查明，尚未解决**：确认使用本地投递专用Profile及原获授权当前tab。页面session一次200 JSON；唤醒worker后单独session一次200 JSON；正常扩展刷新流程随后仍返回403 HTML，且响应头`cf-mitigated=challenge`、server=cloudflare。这是挑战页，不能仅据现有`session-unauthorized`枚举认定登录已失效；触发规则和请求差异根因尚未知。两次正常刷新均先确认无草稿/生成/附件，原生编辑器保留、frame0。仅保存脱敏状态/响应头布尔值，取消响应body，不读凭据/正文、不做原生写入。用户需在同一专用Profile手动刷新一次并在出现时完成人机验证；未收到操作结果前停止主动复测。生产403拒绝和备用认证边界不改，未声明恢复；原证据workerChallengeDiagnosis20261019。
+
+- **最新源码CI确认**：b9ffe08的CI39122796470四job全SUCCESS，PR16已记录；此后仅诊断证据与文档更新，不冒充新产品代码验收。
+
 - **CI39122369116最终结果**：同一源码 `f1d5db7ea47bdc834ea458d3cbcd8331e2e9e9d2` 的 node-contracts、offline-durability-compat、offline-journeys、offline-j4-lifecycle 四 job 全部 SUCCESS。此次Linux休眠前置候选通过；保留CI39121293783原FAIL，不追溯改判，不将一次通过泛化为自然休眠或无新context peer恢复。后续包类别提示另属c6629bb的194项定向验证，不借此前CI冒充其全矩阵。
 
 - **受限试用包辨识与升级入口**：默认安全关闭包、专用 Profile 观察候选、离线包现由构建时固定文字区分；不从页面数据推断类别，不开启 observed 开关，不修改认证或权限。生成 README 明确先验证暂存包、保留旧包与数据备份、更新原加载目录并 reload/核对同一扩展 ID，不能以新目录加载或卸载重装替代原位升级。三类实际 build/verify 均通过；状态呈现与 package 定向194项全PASS、0skip，2907.732ms。真实 Profile 尚未更新此包，不能算真实闭环；CI39122369116仍运行，本地未提前改判。

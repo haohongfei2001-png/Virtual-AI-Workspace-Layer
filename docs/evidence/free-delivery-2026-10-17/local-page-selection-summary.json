@@ -4359,5 +4359,133 @@
       "Real worker 403 still blocked; 10k/100k deferred"
     ],
     "statusCopy": "Popup explicitly labels opening-time snapshot; reopen for new observation, no polling or auth. Old actual-module copy tests 9 RED; final package/regression pass."
+  },
+  "workerChallengeDiagnosis20261019": {
+    "repositoryHead": "b9ffe08928bc59a915f7b62f83966a807aebaa2d",
+    "installedCandidate": "556cda0 (previous installed candidate; not latest repository HEAD)",
+    "profileConfirmed": "dedicated application profile on CDP 9333; exact previously authorized target",
+    "observations": {
+      "vaiwl-session-channel-20261019.json": {
+        "kind": "AUTHORIZED_SESSION_RESPONSE_METADATA_ONLY",
+        "bodyRead": false,
+        "credentialRead": false,
+        "nativeWrites": 0,
+        "at": "2026-10-18T18:01:24.361Z",
+        "page": {
+          "status": 200,
+          "mime": "application/json",
+          "challenge": false,
+          "cloudflare": true,
+          "redirected": false,
+          "exactURL": true,
+          "elapsedMs": 302
+        },
+        "worker": {
+          "available": false
+        }
+      },
+      "vaiwl-session-worker-20261019.json": {
+        "kind": "AUTHORIZED_SESSION_RESPONSE_METADATA_ONLY",
+        "bodyRead": false,
+        "credentialRead": false,
+        "nativeWrites": 0,
+        "at": "2026-10-18T18:01:48.549Z",
+        "worker": {
+          "status": 200,
+          "mime": "application/json",
+          "challenge": false,
+          "cloudflare": true,
+          "redirected": false,
+          "exactURL": true,
+          "elapsedMs": 483
+        }
+      },
+      "vaiwl-current-recovery-20261019.json": {
+        "kind": "AUTHORIZED_CURRENT_TAB_RECOVERY",
+        "bodyRead": false,
+        "credentialsRead": false,
+        "nativeWrites": 0,
+        "network": [
+          {
+            "kind": "accounts",
+            "status": 200,
+            "mime": "application/json"
+          }
+        ],
+        "before": {
+          "ready": true,
+          "conversation": true,
+          "editor": true,
+          "draftEmpty": true,
+          "generating": false,
+          "attachments": false,
+          "frames": 0,
+          "returnControls": 0
+        },
+        "reloaded": true,
+        "after": {
+          "ready": true,
+          "conversation": true,
+          "editor": true,
+          "draftEmpty": true,
+          "generating": false,
+          "attachments": false,
+          "frames": 0,
+          "returnControls": 0
+        }
+      },
+      "vaiwl-worker-recovery-20261019.json": {
+        "kind": "AUTHORIZED_CURRENT_TAB_RECOVERY",
+        "bodyRead": false,
+        "credentialsRead": false,
+        "nativeWrites": 0,
+        "network": [
+          {
+            "kind": "accounts",
+            "status": 200,
+            "mime": "application/json"
+          },
+          {
+            "source": "worker",
+            "kind": "session",
+            "status": 403,
+            "mime": "text/html",
+            "challenge": true,
+            "cloudflare": true
+          }
+        ],
+        "before": {
+          "ready": true,
+          "conversation": true,
+          "editor": true,
+          "draftEmpty": true,
+          "generating": false,
+          "attachments": false,
+          "frames": 0,
+          "returnControls": 0
+        },
+        "reloaded": true,
+        "after": {
+          "ready": true,
+          "conversation": true,
+          "editor": true,
+          "draftEmpty": true,
+          "generating": false,
+          "attachments": false,
+          "frames": 0,
+          "returnControls": 0
+        }
+      }
+    },
+    "limits": [
+      "Metadata only; response bodies cancelled without parsing. No credentials, titles, private IDs or chat text saved.",
+      "First page probe found worker absent; worker was explicitly started before standalone probe.",
+      "First attempt to attach normal-flow worker observer found no live worker and did not reload; subsequently started worker and observed one guarded reload.",
+      "Standalone worker 200 does not establish production scope; later normal flow returned 403 HTML with cf-mitigated=challenge.",
+      "The triggering Cloudflare rule and why requests differ are unknown. No proven remedy yet.",
+      "Awaiting user manual refresh and any human verification in the same dedicated profile; no automatic challenge solving, fallback broadening or retry loop."
+    ],
+    "officialHeaderReference": "https://developers.cloudflare.com/cloudflare-challenges/challenge-types/challenge-pages/detect-response/",
+    "status": "CAUSE_CLASS_IDENTIFIED_NOT_RESOLVED"
   }
 }
