@@ -5730,5 +5730,215 @@
         "sha256": "61bed359ce696dc84caad9333f116815bd78d4bc299b56764e56098f127446b9"
       }
     }
+  },
+  "real403RequestComparison20261019": {
+    "status": "NOT_RESTORED_EXTERNAL_REVIEW_OR_APPROVED_MODE_CHANGE_REQUIRED",
+    "head": "75a351381ac51792264a7492f635c0e4da263f7c",
+    "priority": "Only real Profile403; unrelated functionality/scale work paused by latest user instruction.",
+    "browser": {
+      "product": "Chrome/155.0.8059.80",
+      "protocolVersion": "1.3"
+    },
+    "historicalSuccess": {
+      "at": "2026-10-18T18:01:48.549Z",
+      "status": 200,
+      "mime": "application/json",
+      "elapsedMs": 483
+    },
+    "currentOriginalScript": {
+      "kind": "SAME_WORKER_REQUEST_COMPARE",
+      "at": "2026-10-18T19:33:26.836Z",
+      "bodyRead": false,
+      "credentialsRead": false,
+      "nativeWrites": 0,
+      "reload": false,
+      "requests": [
+        {
+          "phase": "original-success-script",
+          "method": "GET",
+          "accept": "application/json",
+          "cacheControl": null,
+          "pragma": null,
+          "originKind": "absent",
+          "referrerKind": "strict-origin-when-cross-origin",
+          "initiator": "script",
+          "hasPostData": false
+        }
+      ],
+      "responses": [
+        {
+          "phase": "original-success-script",
+          "status": 403,
+          "mime": "text/html",
+          "challenge": true,
+          "ray": "a4c9f98c5a7b838f-SEA",
+          "fromServiceWorker": false,
+          "fromDiskCache": false,
+          "protocol": "h2"
+        }
+      ],
+      "page": {
+        "ready": true,
+        "editor": true,
+        "frames": 0
+      },
+      "wokeWorker": true,
+      "original-success-script": {
+        "status": 403,
+        "mime": "text/html",
+        "challenge": true,
+        "ray": "a4c9f98c5a7b838f-SEA",
+        "redirected": false,
+        "exactURL": true,
+        "elapsedMs": 265
+      },
+      "installed-provider-call": {
+        "failure": "evaluation-exception"
+      }
+    },
+    "currentInstalledProviderRequest": {
+      "kind": "SAME_WORKER_REQUEST_COMPARE",
+      "at": "2026-10-18T19:34:11.733Z",
+      "bodyRead": false,
+      "credentialsRead": false,
+      "nativeWrites": 0,
+      "reload": false,
+      "requests": [
+        {
+          "phase": "installed-provider-call",
+          "method": "GET",
+          "accept": "application/json",
+          "cacheControl": null,
+          "pragma": null,
+          "originKind": "absent",
+          "referrerKind": "strict-origin-when-cross-origin",
+          "initiator": "script",
+          "hasPostData": false
+        }
+      ],
+      "responses": [
+        {
+          "phase": "installed-provider-call",
+          "status": 403,
+          "mime": "text/html",
+          "challenge": true,
+          "ray": "a4c9faa43a14838f-SEA",
+          "fromServiceWorker": false,
+          "fromDiskCache": false,
+          "protocol": "h2"
+        }
+      ],
+      "page": {
+        "ready": true,
+        "editor": true,
+        "frames": 0
+      },
+      "providerMethod": "Exact installed source plus exact deadline source in diagnostic closure; intercept after response headers before any parser or followup endpoint",
+      "installed-provider-call": {
+        "status": 403,
+        "mime": "text/html",
+        "challenge": true,
+        "ray": "a4c9faa43a14838f-SEA",
+        "redirected": false,
+        "exactURL": true,
+        "elapsedMs": 212,
+        "parameters": {
+          "method": "GET",
+          "credentials": "include",
+          "cache": "no-store",
+          "redirect": "error",
+          "headerNames": [
+            "Accept"
+          ],
+          "accept": "application/json",
+          "signalAborted": false
+        }
+      }
+    },
+    "comparison": {
+      "equal": [
+        "Exact session URL",
+        "Same dedicated Profile and extension service worker origin",
+        "GET with no body",
+        "credentials include",
+        "cache no-store",
+        "redirect error",
+        "Accept application/json only; no Authorization or Account-ID on session request",
+        "requestWillBeSent method/Accept/referrer policy/initiator",
+        "Response HTML403 with cf-mitigated challenge, no redirect, no disk cache or first-party service-worker response"
+      ],
+      "different": [
+        "Original probe AbortSignal.timeout(6000) versus provider controller and shared 6s deadline",
+        "Timing and response-body handling: diagnostic cancels body immediately; production checks status before parsing. Neither is evidence explaining server403."
+      ],
+      "notObserved": [
+        "Cookie values or exact credential set (never read)",
+        "Server challenge rule, risk score or block rationale",
+        "A full normal startup in this batch; latest exact source request probed only through response headers"
+      ]
+    },
+    "diagnosticLimit": "Installed classic worker rejects direct dynamic module import in Runtime.evaluate. Provider comparison instead executes installed source and deadline in a diagnostic closure with fetch interception; parser references are forbidden stubs, response body cancelled before parser and followup accounts. Initial diagnostic execution exceptions made zero provider requests; successful compare made one. No package/runtime mutation, page reload, credentials/body or native writes.",
+    "conclusion": "Original formerly-successful script now also403; no reproducible HTTP option divergence found. Historical200 is not a dependable alternate path. Need website owner to locate these Ray IDs and confirm a supported extension identity channel/challenge policy; do not claim all environments permanently unsupported.",
+    "externalRequest": {
+      "recipient": "OpenAI/ChatGPT support (not sent)",
+      "request": "Please examine Cloudflare events for GET https://chatgpt.com/api/auth/session from an authenticated Chrome MV3 extension. The ordinary page remains usable; manual refresh presented no challenge. Identify the policy causing HTML403 cf-mitigated challenge and confirm whether this session endpoint supports extension use or provide a documented supported authentication/integration flow. No request to disable security globally.",
+      "rays": [
+        "a4c9f98c5a7b838f-SEA",
+        "a4c9faa43a14838f-SEA"
+      ],
+      "utcTimes": [
+        "2026-10-18T19:33:26.836Z",
+        "2026-10-18T19:34:11.733Z"
+      ],
+      "safeAttachments": "Only these sanitized statuses, options, version and Ray IDs; no HAR/cookies/tokens/body/private titles or IDs."
+    },
+    "proposalAwaitingApproval": {
+      "name": "Temporary document-only read-only native navigation",
+      "dependency": "No session/accounts endpoint, no credential or fabricated scope",
+      "implementation": "Reuse fixed native DOM parser/native activation and renderer appearance through a separately named no-scope presentation contract. Do not route to account-scoped database/Host UI grants or relax existing403 behavior. Volatile per-document metadata only; discard on document/route/context invalidation; no automatic cross-document restoration.",
+      "available": [
+        "Currently observed native Project/chat titles and existing links",
+        "Open via original native controls",
+        "Return within same surviving document",
+        "Search currently observed entries only"
+      ],
+      "disabled": [
+        "Persistent/account history and prior database exposure",
+        "Activity confirmation/calibration and adaptive H",
+        "Cross-tab/account recovery",
+        "Saved snippets/worksets/backup interface in this unverified mode"
+      ],
+      "limits": "Not full Free, not LIVE_VERIFIED, no inferred NONE membership or verified account. Existing Pro/manual assets remain untouched. Requires explicit approval of Host contract deviation; no implementation started."
+    },
+    "sources": [
+      "https://developers.cloudflare.com/cloudflare-challenges/challenge-types/challenge-pages/detect-response/",
+      "https://developers.cloudflare.com/cloudflare-challenges/challenge-types/challenge-pages/"
+    ],
+    "files": {
+      "vaiwl-session-worker-20261019.mjs": {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-session-worker-20261019.mjs.gz",
+        "sha256": "17f7f2910f42b01b87dd2a5ce7e550fe1c2bb18c6496229eb16130f366941d69"
+      },
+      "vaiwl-session-worker-20261019.json": {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-session-worker-20261019.json.gz",
+        "sha256": "95c686712f7362d54c64b96c6decc1106cc39fe572047c8635bbad0c58021316"
+      },
+      "vaiwl-403-request-compare.mjs": {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-403-request-compare.mjs.gz",
+        "sha256": "c19a53aa9e6800326537df12d5ad8b07696b0b7af5b10331c921f4cc27ba1723"
+      },
+      "vaiwl-403-request-compare.json": {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-403-request-compare.json.gz",
+        "sha256": "1a7a31ae372b71fd745ccdb09717efe1b0720b769afe5487c2c5c411d724da55"
+      },
+      "vaiwl-403-provider-compare.mjs": {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-403-provider-compare.mjs.gz",
+        "sha256": "62b3ef5bccddeb0982e738a0764a266d7c78df80281da0d8d2c01aa8ed5ddd66"
+      },
+      "vaiwl-403-provider-compare.json": {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-403-provider-compare.json.gz",
+        "sha256": "15508dd1c1d02f73703b19a6e38fe7505bcbae904420c07d46258833fbd9206b"
+      }
+    }
   }
 }
