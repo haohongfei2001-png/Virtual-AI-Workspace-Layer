@@ -3670,5 +3670,40 @@
       "free-list-desktop-after-20261018.png",
       "free-list-narrow-dark-after-20261018.png"
     ]
+  },
+  "ciContractMaintenance20261018": {
+    "baseCommit": "6b43d4afc2de67613e7440597d76ad649a72df86",
+    "remoteFailure": "CI39115889594 node-contracts: stale finishPass extraction produced SyntaxError; partition allowlist omitted existing Layout mechanism regressions step. Current CI39116867367 node job also failed; detailed current log not yet inspected.",
+    "localBefore": {
+      "tests": 8539,
+      "pass": 8537,
+      "fail": 2,
+      "skip": 0,
+      "durationMs": 78768.326042,
+      "sameTwoFailures": true
+    },
+    "fix": "Extract full actual finishPass with function boundaries and provide terminal transport harness; keep all lifecycle stats/old-producer assertions. Add existing layout step to exact CI allowlist without changing workflow or removing slices.",
+    "targetedAfter": {
+      "pass": 101,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 1318.779
+    },
+    "limits": "Test-only maintenance. No post-fix full suite or browser rerun; original CI J4/permanent-stop mutation failures remain unexplained. No scale run, no real Profile reads, Free not accepted.",
+    "artifacts": [
+      "ci39115889594-node-20261018.log.gz",
+      "ci-contracts-local-before-20261018.tap.gz",
+      "ci-contracts-targeted-after-20261018.tap.gz"
+    ],
+    "finalCurrentCI": {
+      "run": 39116867367,
+      "head": "6b43d4afc2de67613e7440597d76ad649a72df86",
+      "status": "completed",
+      "conclusion": "failure",
+      "node": "failure",
+      "durability": "success",
+      "J4": "success within existing partial gate, not full J4",
+      "journeys": "failure: Reject permanent-stop dormant recovery mutation"
+    }
   }
 }
