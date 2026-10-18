@@ -53,7 +53,12 @@ test('a report-write failure after a successful journey is nonzero with a fallba
 
 const runner=await readFile(new URL('./snippets-package-mv3-browser.mjs',import.meta.url),'utf8');
 test('the complete six-case browser journey and all its original assertions remain byte-identical',()=>{
- const core=runner.slice(runner.indexOf(' page=await context.newPage()'),runner.indexOf('},inspectFailure:'));
+ const probeStart=' await page.evaluate(installSnippetsPresentationProbe);\n try{\n';
+ const probeEnd=" }finally{\n  try{report.presentationDiagnostic=await page.evaluate(()=>globalThis.__vaiwlSnippetPresentationProbe.finish());}\n  catch{report.presentationDiagnostic={kind:'PASSIVE_PRESENTATION_DIAGNOSTIC_NOT_ACCEPTANCE',status:'UNAVAILABLE'};}\n }\n";
+ assert.equal(runner.split(probeStart).length,2);assert.equal(runner.split(probeEnd).length,2);
+ // Strip only the exact passive diagnostic envelope. The original clicks,
+ // waits, timeouts and six assertions must still match the original checksum.
+ const core=runner.slice(runner.indexOf(' page=await context.newPage()'),runner.indexOf('},inspectFailure:')).replace(probeStart,'').replace(probeEnd,'');
  assert.equal(createHash('sha256').update(core).digest('hex'),'35ae69a5d220476893f79f0ef215295eae2ffc36f228bf69fe58eecf612aaa0b');
  assert.equal((core.match(/report\.results\.push\(/g)??[]).length,6);
 });
@@ -71,7 +76,7 @@ async function runShell(fault){
   if(path==='source.mjs'){sourceReads++;if(fault==='source-final')fail(fault);return 'source';}
   return 'runner';
  };
- const shell=runner.replace(/^import .*;\n/m,'').replace("await import('../b1/tooling/node_modules/playwright/index.mjs')",'await loadChromium()');
+ const shell=runner.replace(/^import .*;\n/gm,'').replace("await import('../b1/tooling/node_modules/playwright/index.mjs')",'await loadChromium()');
  const fn=new AsyncFunction('createHistoricalNetworkGuard','historicalNetworkGuardArgs','assert','mkdtemp','readFile','join','tmpdir','createHash','createHostFixtureServer','packageHost','verifyHost','snippetsRunnerPaths','runSnippetsLifecycle','loadChromium','process','console',shell);
  const context={close:async()=>{calls.push('context-close');if(fault==='context-close')fail(fault);},route:async()=>fail('route-stop')};
  await fn(async()=>{calls.push('guard-open');if(fault==='guard-open')fail(fault);return {config:{fixtureOrigin:'http://127.0.0.1:1234',proxyPort:1235},snapshot:()=>({mode:'DISPOSABLE_CHROME_REJECT_PROXY'}),close:async()=>{calls.push('guard-close');if(fault==='guard-close')fail(fault);}};},()=>['--proxy-server=guard'],assert,async()=>{calls.push('mkdtemp');if(fault==='mkdtemp')fail(fault);return '/owned-new';},fakeRead,join,()=>'/system-temp',createHash,

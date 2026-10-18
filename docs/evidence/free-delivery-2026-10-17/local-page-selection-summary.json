@@ -137,7 +137,11 @@
     "local-ci39093078440-j4.json.gz": "0c51720080cfe8a2dc8111e0b51d5b2398b7b61bf690f31fed7aacac1c7a2881",
     "local-ci39093078440-meta.json.gz": "e936692dd1a61733f87c0070920acc49060b33dd78151eb91dce7b0c89214816",
     "local-ci39093078440-journeys.log.gz": "466ea69ce99d18b6d994452e8d623c66f75c3c435d4bb78dcdec71cfc281840d",
-    "local-ci39093078440-snippets.json.gz": "b899f2dbb43fc7b80c4cfaddc0b1062db66b9c54fedc87226548f0589d383f95"
+    "local-ci39093078440-snippets.json.gz": "b899f2dbb43fc7b80c4cfaddc0b1062db66b9c54fedc87226548f0589d383f95",
+    "local-snippets-presentation-diagnostic.json.gz": "39356f0443d16962ab808c6c362f0722f7a197f90e0b2f2609963e19ed68547a",
+    "local-snippets-presentation-diagnostic.mjs.gz": "9f0d209a9808e698229ecba54bd0e68f96bf1539dd2fe7694b5c97e31cf1eaca",
+    "local-snippets-probe-targeted-initial.tap.gz": "decf0fee1f93b6e5d758a3f07a19782d7222e442cffc7139981d1adc896de094",
+    "local-snippets-probe-targeted-final.tap.gz": "a65805e7d553fe7d31ee1c7c6d7d1d88e55a78096202cd0c382d6921031d8707"
   },
   "followup100k": {
     "sourceCommit": "7c676ecd2e583feb734a6cfc367a3fe43b65961c",
@@ -619,6 +623,16 @@
           "draftPreserved": true
         },
         "limit": "Not a snippet save failure: no snippet operation reached. Runtime renew/view remained ready; exact UI race unproven."
+      },
+      "snippetPresentationDiagnostic": {
+        "status": "LOCAL_NOT_REPRODUCED_NOT_ACCEPTANCE",
+        "browser": "156.0.8078.4",
+        "events": 12,
+        "dropped": 0,
+        "result": "Trusted original close button targets original workspace; open-to-closed toggle; native reading and unique return visible; six subsequent checks pass. Does not cover Linux FAIL.",
+        "runnerChange": "Passive bounded event and node-identity diagnostic around original return transition, no original click/assertion/timeout changes; original journey checksum remains asserted after removing exact diagnostic envelope.",
+        "validation": "46 affected runner/CI tests pass; initial fixture import/hash mismatch failure retained. No full matrix repeated for diagnostic-only change.",
+        "next": "Capture next Linux failure without unchanged rerun; current root cause still OPEN."
       }
     },
     "local100k": {
@@ -711,7 +725,11 @@
     "local-ci39093078440-j4.json.gz": "archive-bytes",
     "local-ci39093078440-meta.json.gz": "archive-bytes",
     "local-ci39093078440-journeys.log.gz": "archive-bytes",
-    "local-ci39093078440-snippets.json.gz": "archive-bytes"
+    "local-ci39093078440-snippets.json.gz": "archive-bytes",
+    "local-snippets-presentation-diagnostic.json.gz": "archive-bytes",
+    "local-snippets-presentation-diagnostic.mjs.gz": "archive-bytes",
+    "local-snippets-probe-targeted-initial.tap.gz": "archive-bytes",
+    "local-snippets-probe-targeted-final.tap.gz": "archive-bytes"
   },
   "archiveSHA256": {
     "local-selection-native-pagination-comparison.mjs.gz": "6cb54e5a2e673adef34ec6f8f4c3a8a2523b442801674f4c28e82ac48d024db0",
@@ -768,7 +786,11 @@
     "local-ci39093078440-j4.json.gz": "0c51720080cfe8a2dc8111e0b51d5b2398b7b61bf690f31fed7aacac1c7a2881",
     "local-ci39093078440-meta.json.gz": "e936692dd1a61733f87c0070920acc49060b33dd78151eb91dce7b0c89214816",
     "local-ci39093078440-journeys.log.gz": "466ea69ce99d18b6d994452e8d623c66f75c3c435d4bb78dcdec71cfc281840d",
-    "local-ci39093078440-snippets.json.gz": "b899f2dbb43fc7b80c4cfaddc0b1062db66b9c54fedc87226548f0589d383f95"
+    "local-ci39093078440-snippets.json.gz": "b899f2dbb43fc7b80c4cfaddc0b1062db66b9c54fedc87226548f0589d383f95",
+    "local-snippets-presentation-diagnostic.json.gz": "39356f0443d16962ab808c6c362f0722f7a197f90e0b2f2609963e19ed68547a",
+    "local-snippets-presentation-diagnostic.mjs.gz": "9f0d209a9808e698229ecba54bd0e68f96bf1539dd2fe7694b5c97e31cf1eaca",
+    "local-snippets-probe-targeted-initial.tap.gz": "decf0fee1f93b6e5d758a3f07a19782d7222e442cffc7139981d1adc896de094",
+    "local-snippets-probe-targeted-final.tap.gz": "a65805e7d553fe7d31ee1c7c6d7d1d88e55a78096202cd0c382d6921031d8707"
   },
   "hashNote": "Historical rawSHA256 entries used both decompressed and archive bytes. Values preserved; explicit per-file basis and uniform archiveSHA256 added after verifying both, no evidence payload changed."
 }

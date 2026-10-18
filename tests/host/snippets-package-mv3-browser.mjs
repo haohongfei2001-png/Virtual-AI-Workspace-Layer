@@ -1,6 +1,7 @@
 /** Actual immutable package, offline-only snippet profile. Message/branch DOM
  * below is explicit reconstruction data, never live ChatGPT or a production ACK. */
 import {createHistoricalNetworkGuard,historicalNetworkGuardArgs} from './historical-network-guard.mjs';import assert from 'node:assert/strict';import {mkdtemp,readFile} from 'node:fs/promises';import {join} from 'node:path';import {tmpdir} from 'node:os';import {createHash} from 'node:crypto';import {createHostFixtureServer} from './fixtures/server.mjs';import {packageHost,verifyHost} from '../../extension/package.mjs';import {snippetsRunnerPaths,runSnippetsLifecycle} from './snippets-runner-lifecycle.mjs';
+import {installSnippetsPresentationProbe} from './snippets-presentation-probe.mjs';
 const output=process.argv[2]??join(tmpdir(),'host-snippets-package-mv3.json'),hash=x=>createHash('sha256').update(x).digest('hex'),script='tests/host/snippets-package-mv3-browser.mjs';
 const report={evidence:'REAL_HEADLESS_PACKAGED_MV3_OFFLINE_SNIPPETS',fixture:'Synthetic message/body/branch nodes appended only to existing offline conversation root',productionSnippetProfile:'DISABLED_NOT_CERTIFIED',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',status:'NOT_RUN',results:[],errors:[],transport:[],sourceChangedDuringRun:null,buildManifestUnchanged:null};
 let context,page,server,built;const integrityChecks=[];
@@ -14,7 +15,7 @@ const outcome=await runSnippetsLifecycle({report,output,integrityChecks,execute:
  const manifestPath=join(built.unpacked,'build-manifest.json'),manifestBytes=await readFile(manifestPath),info=JSON.parse(manifestBytes);
  report.sourceHashes=info.sourceHashes;report.buildManifestHash=hash(manifestBytes);
  integrityChecks.push(['package-integrity',async()=>{report.buildManifestUnchanged=hash(await readFile(manifestPath))===report.buildManifestHash;if(!report.buildManifestUnchanged)throw Error('source-or-package-changed-during-run');}]);
- const runnerFiles=[script,'tests/host/snippets-runner-lifecycle.mjs','tests/host/isolated-browser-cleanup.mjs','tests/host/historical-network-guard.mjs'];
+ const runnerFiles=[script,'tests/host/snippets-presentation-probe.mjs','tests/host/snippets-runner-lifecycle.mjs','tests/host/isolated-browser-cleanup.mjs','tests/host/historical-network-guard.mjs'];
  report.runnerSourceHashes=Object.fromEntries(await Promise.all(runnerFiles.map(async p=>[p,hash(await readFile(p))])));report.scriptHash=report.runnerSourceHashes[script];
  integrityChecks.push(['source-integrity',async()=>{report.sourceChangedDuringRun=(await Promise.all(Object.entries({...info.sourceHashes,...report.runnerSourceHashes}).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);if(report.sourceChangedDuringRun)throw Error('source-or-package-changed-during-run');}]);
  const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -25,8 +26,14 @@ const outcome=await runSnippetsLifecycle({report,output,integrityChecks,execute:
  for(const frame of [workspace,sidebar])await frame.evaluate(()=>{const send=chrome.runtime.sendMessage.bind(chrome.runtime);chrome.runtime.sendMessage=async message=>{const result=await send(message);console.log('SNIPPET_PUBLIC_TRACE '+JSON.stringify({type:message.type,action:message.action,ok:result?.ok,state:result?.state,reason:result?.reason}));return result;};});
  await page.locator('textarea').fill('UNSENT_SNIPPET_NATIVE_DRAFT');await page.evaluate(()=>{globalThis.snippetOriginalInput=document.querySelector('textarea');const root=document.querySelector('main > #reading');if(!root)throw Error('missing-native-reading');const message=document.createElement('article');message.dataset.messageId='fixture-snippet-message';message.dataset.branchId='fixture-branch';const body=document.createElement('div');body.className='message-body';body.textContent='Offline prefix uniquely selected fixture words suffix.';message.append(body);root.append(message);});
  // Native composer focus legitimately surrendered both extension surfaces.
+ await page.evaluate(installSnippetsPresentationProbe);
+ try{
  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
  await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();await page.getByRole('button',{name:'返回工作空间',exact:true}).waitFor();await page.locator('#reading .message-body').waitFor({state:'visible'});
+ }finally{
+  try{report.presentationDiagnostic=await page.evaluate(()=>globalThis.__vaiwlSnippetPresentationProbe.finish());}
+  catch{report.presentationDiagnostic={kind:'PASSIVE_PRESENTATION_DIAGNOSTIC_NOT_ACCEPTANCE',status:'UNAVAILABLE'};}
+ }
  const draft=async()=>assert.equal(await page.evaluate(()=>document.querySelector('textarea')===snippetOriginalInput&&snippetOriginalInput.value==='UNSENT_SNIPPET_NATIVE_DRAFT'),true);
  const select=()=>page.evaluate(()=>{const body=document.querySelector('#reading .message-body'),text=body.firstChild,selected='uniquely selected fixture words',start=text.nodeValue.indexOf(selected),range=document.createRange();range.setStart(text,start);range.setEnd(text,start+selected.length);const selection=getSelection();selection.removeAllRanges();selection.addRange(range);return selection.toString()===selected;});
  assert.equal(await select(),true);await sidebar.getByRole('button',{name:'已保存片段',exact:true}).click();const panel=sidebar.getByRole('region',{name:'片段管理',exact:true});await panel.getByText('暂无已保存片段。',{exact:true}).waitFor({timeout:10000});

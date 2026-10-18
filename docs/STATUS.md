@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **返回转换诊断接线，未宣称修复**：Mac Chrome156单次隔离被动诊断未复现Linux片段旅程失败：可信关闭按钮指向原workspace，open→closed后reading与唯一返回可见，12事件零丢弃，随后六项原检查通过；不能覆盖Linux FAIL。现有runner接入最多128事件及有限节点身份快照，不读正文、不改点击/等待/超时，原旅程去除精确诊断包围后的checksum保持。46项相关生命周期/CI测试通过，初次导入与checksum测试适配失败保留；独立审查无阻断。下一次Linux执行取得转换事件前不猜因，不因此重复全矩阵。
+
 - **62e476e / CI39093078440 已终结FAIL，不能以局部收益关闭10k**：正式10k已收齐rev206/10000正确PROJECT，首轮21页完整审计3877.35ms通过、零UNKNOWN/遗漏/错属；第二轮在途390.56ms时耗尽原30秒，未进入measurement。源/fixture/manifest稳定，本地同生产代码通过不覆盖Linux失败。failure-only诊断另为rev207、首审3704.31ms、第二审超限；保留owner样本apply分段7099ms/page887ms，原生页面约8962/10156ms idle，继续定位worker提交链，不能把CPU自耗样本当完整阶段。Node通过；J4原门禁成功但实际23步PARTIAL，自动foreground仍NOT_ESTABLISHED。journeys片段场景在点击返回原生阅读后等返回工作空间超时，0项片段操作完成；draft保留、原生reading不可见，后续renew/view仍ready，根因未确证。原100k同d96d345亦FAIL：预算内最后tail11131、完整审计0；失败后11185库存不倒算为预算内完成。小型真实IDB诊断排除提前operation读取：只占新增登记样本2.5ms/9.84%，无新增路径反而增加请求，未实施推测性小改。所有原预算/规模/授权边界不变。[原始证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
 
 - **Shared同事务重复编码候选d96d345本地验证，Linux正式10k仍FAIL**：真实登记链同一bucket原先至少四次完整编码；采用已有Native的私有不可变快照方式，仍要求私有root与scope/generation/bucket/revision/count/units全匹配、每次检查当前ordinal，新IDB行完整校验，无授权缓存。实际IDB3200+50条完整引用不变，编码220→88；固定AB/BA/AB登记环节中位28.8→25.2ms，六次facts摘要一致，只属局部计数/时间。196定向、20独立快照反例、12护栏变异通过，冻结完整Node8305/8305、零fail/skip/cancel、249.67秒且输入未漂移；独立审查无阻断。首次不可变记录断言及missing-record错误差异已修，失败原件保留；同提交本地原10k双审计rev206/10000正确PROJECT、零UNKNOWN/遗漏/重复/错属，原窗口剩4354ms、测量前后同revision、成员展开与原生返回通过；源/fixture/manifest未漂移。总摄取观察32.33秒，不证明整体Host提速；完整F1仍未成立；当前Linux与100k失败见上方新增记录。[同版本证据](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)。
