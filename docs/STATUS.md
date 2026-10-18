@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **CI39122369116最终结果**：同一源码 `f1d5db7ea47bdc834ea458d3cbcd8331e2e9e9d2` 的 node-contracts、offline-durability-compat、offline-journeys、offline-j4-lifecycle 四 job 全部 SUCCESS。此次Linux休眠前置候选通过；保留CI39121293783原FAIL，不追溯改判，不将一次通过泛化为自然休眠或无新context peer恢复。后续包类别提示另属c6629bb的194项定向验证，不借此前CI冒充其全矩阵。
+
 - **受限试用包辨识与升级入口**：默认安全关闭包、专用 Profile 观察候选、离线包现由构建时固定文字区分；不从页面数据推断类别，不开启 observed 开关，不修改认证或权限。生成 README 明确先验证暂存包、保留旧包与数据备份、更新原加载目录并 reload/核对同一扩展 ID，不能以新目录加载或卸载重装替代原位升级。三类实际 build/verify 均通过；状态呈现与 package 定向194项全PASS、0skip，2907.732ms。真实 Profile 尚未更新此包，不能算真实闭环；CI39122369116仍运行，本地未提前改判。
 
 - **CI39121293783休眠失败已定位到worker空闲前置**：235847f的Node/耐久/J4通过，仅journeys FAIL。普通dormant在worker-stop前prepared=true/entered=false；唯一CHECK返回ui-release-busy，无RELEASE，不能归因新GET后恢复或终结清理。具体繁忙owner仍未知。离线driver现先被动读取实际service.isIdle，再进入原one-shot close；与原15秒共用窗口，第一次false/异常锁存、不增加close重试，真实CHECK仍可拒绝。只在测试包加入getter并核验重编译散列，生产护栏/预算不变。独审另发现通用poll吞终态异常，现仅为本probe包装后原样抛出，保留同一窗口；95定向PASS、0skip、82.098ms。本地原六步恢复PASS、源码未漂移；原永久停止变异仍在新GET后等待新frame阶段被杀死，源/fixture一致。不能据本地通过关闭Linux稳定性或J4无新context恢复，原CI失败存证。
