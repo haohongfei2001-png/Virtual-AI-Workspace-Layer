@@ -26,7 +26,8 @@ test('runner keeps independent natural and trusted-foreground observations',asyn
  const {readFile}=await import('node:fs/promises');const source=await readFile(new URL('./j2-j4-package-prerequisites.mjs',import.meta.url),'utf8');
  assert(source.includes('assertNaturalRevocation(natural)'));
  assert(source.indexOf('assertNaturalRevocation(natural)')<source.indexOf('const c=await context.newPage()'));
- assert(source.includes("await chrome.tabs.update(target[0].id,{active:true})"));
+ assert(source.includes("await page.bringToFront()"));
+ assert(!source.includes("chrome.tabs.query"));
  assert(source.includes("e.state==='visible'&&e.trusted"));assert(source.includes('polling:100'));
  assert(!source.includes('dispatchEvent('));assert(!source.includes('setDefaultTimeout('));
 });

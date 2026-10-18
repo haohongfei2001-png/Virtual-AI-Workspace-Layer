@@ -36,6 +36,10 @@ export function assertNaturalRevocation(sample){
  assert(Number.isFinite(sample.removedAfterProofStartMs)&&sample.removedAfterProofStartMs>=0,'missing natural revocation timestamp');
  assert(sample.removedAfterProofStartMs<=scopeLossTiming.proofTTL,'private projection survived conservative original proof deadline');
 }
+// The caller already owns an exact browser Page. A URL is not tab identity:
+// two documents may share it, so URL lookup does not preserve Page identity.
+// Playwright's Chromium implementation sends Page.bringToFront on that session.
+export async function activatePrerequisitePage(page){await page.bringToFront();}
 const hash=x=>createHash('sha256').update(x).digest('hex');
 export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequisites.json')}={}){
  const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -71,7 +75,7 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
   await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]').length===0,null,{timeout,polling:100});
   return page.evaluate(()=>globalThis.j4ScopeLoss??null);
  }
- async function activate(page){await worker.evaluate(async url=>{const tabs=await chrome.tabs.query({url}),target=tabs.filter(t=>t.url===url);if(target.length!==1)throw Error('ambiguous-fixture-tab');await chrome.tabs.update(target[0].id,{active:true});},page.url());}
+
  async function evidenceCounts(){
   return inspectionFrame.evaluate(async()=>{
    const {ScopeRepository}=await import(chrome.runtime.getURL('src/b1/scope-repository.mjs'));
@@ -121,11 +125,11 @@ export async function runPrerequisites({output=join(tmpdir(),'free-j2-j4-prerequ
   record('J4','normal-authentication-restoration-renders-without-replaying-unconfirmed-send',{nativeDispatches:1});
   // Independent foreground case starts with a freshly authorized document;
   // its activation cannot affect the already completed natural-renewal case.
-  const c=await context.newPage();c.on('pageerror',e=>report.errors.push(e.message));await c.goto(server.origin+'/c/44444444-4444-4444-8444-444444444444');await mounted(c);report.foregroundBrowserPrecondition={...browserHandle.diagnostic,activation:'chrome.tabs.update',syntheticVisibilityEvents:false};await activate(c);await c.waitForFunction(()=>document.visibilityState==='visible',null,{timeout:5000,polling:100});
+  const c=await context.newPage();c.on('pageerror',e=>report.errors.push(e.message));await c.goto(server.origin+'/c/44444444-4444-4444-8444-444444444444');await mounted(c);report.foregroundBrowserPrecondition={...browserHandle.diagnostic,activation:'Page.bringToFront exact Page session',syntheticVisibilityEvents:false};await activatePrerequisitePage(c);await c.waitForFunction(()=>document.visibilityState==='visible',null,{timeout:5000,polling:100});
   await c.locator('textarea').fill('J4_FOREGROUND_DRAFT');await c.evaluate(()=>{globalThis.j4OriginalDocument=document;globalThis.j4OriginalEditor=document.querySelector('textarea');});await observeLoss(c);
-  await activate(b);await c.waitForFunction(()=>document.visibilityState==='hidden',null,{timeout:5000,polling:100});
+  await activatePrerequisitePage(b);await c.waitForFunction(()=>document.visibilityState==='hidden',null,{timeout:5000,polling:100});
   server.setPrincipal(null);await b.reload();await removed(b,scopeLossTiming.foregroundTimeout);
-  const foregroundStart=await c.evaluate(()=>performance.now());await activate(c);
+  const foregroundStart=await c.evaluate(()=>performance.now());await activatePrerequisitePage(c);
   const foreground=await removed(c,scopeLossTiming.foregroundTimeout);report.foregroundRevocation={...foreground,elapsedSinceActivationMs:foreground.removedAfterProofStartMs-foregroundStart};
   assert(foreground.visibility.some(e=>e.state==='hidden'&&e.trusted));assert(foreground.visibility.some(e=>e.state==='visible'&&e.trusted));assert(report.foregroundRevocation.elapsedSinceActivationMs>=0,'revocation must follow real foreground activation');
   assert(await c.evaluate(()=>document===j4OriginalDocument&&document.querySelector('textarea')===j4OriginalEditor&&j4OriginalEditor.value==='J4_FOREGROUND_DRAFT'));

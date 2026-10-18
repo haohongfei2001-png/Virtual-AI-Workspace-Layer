@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {requiredGaps,resultStatus} from './j2-j4-package-prerequisites.mjs';
+import {requiredGaps,resultStatus,activatePrerequisitePage} from './j2-j4-package-prerequisites.mjs';
 test('passing prerequisites never certify J2 or J4',()=>{
  assert.equal(resultStatus([{status:'PASS'}]),'PARTIAL_J2_J4_NOT_ACCEPTED');
  assert.equal(resultStatus([]),'PARTIAL_J2_J4_NOT_ACCEPTED');
@@ -23,4 +23,13 @@ test('runner uses default packaged composition, never grants or seeded evidence'
 test('browser startup blocker is never reported as executed failure or success',()=>{
  assert.equal(resultStatus([{status:'NOT_RUN'}]),'NOT_RUN_BROWSER_STARTUP');
  assert.equal(resultStatus([{status:'NOT_RUN'},{status:'FAIL'}]),'FAIL');
+});
+
+test('foreground activation uses the exact page even when native routes are identical',async()=>{
+ const activated=[];const page=id=>({url:()=>{throw Error('URL is not identity');},bringToFront:async()=>activated.push(id)});
+ const a=page('a'),b=page('b');await activatePrerequisitePage(b);await activatePrerequisitePage(a);
+ assert.deepEqual(activated,['b','a']);
+});
+test('failed native activation is terminal and never switches to another page',async()=>{
+ let attempts=0;await assert.rejects(activatePrerequisitePage({bringToFront:async()=>{attempts++;throw Error('target-closed');}}),/target-closed/);assert.equal(attempts,1);
 });
