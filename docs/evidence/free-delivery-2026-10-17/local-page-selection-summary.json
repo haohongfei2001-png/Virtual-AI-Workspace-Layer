@@ -8951,6 +8951,228 @@
         "rawBodySaved": false,
         "privateValuesSaved": false
       }
+    },
+    "projectLayout20261019": {
+      "baseHead": "8439af629ad548fac11e697696a2a2f841d56685",
+      "status": "PROJECT_PRESENTATION_IMPLEMENTED_NOT_LIVE_VERIFIED",
+      "problem": "Project home places composer and native tabs above the list, without a chat timeline-scroll boundary. The old adapter refused mounting. Controller checks also exposed over-rejection of focus outlines and treating native-modal hit-test failure as permanent region loss.",
+      "fix": [
+        "Explicit observed Project presentation branch reuses existing mount/controller and masks only the selected conversation panel. All row links must parse as conversations; no scope, membership, Project card or activity is asserted.",
+        "Bounded geometry-only walk protects title/composer/tabs, ancestors, viewport clipping, native text/controls, pseudo boxes and the return slot. Exact observed rounded shell and composer decoration exceptions are local presentation proofs; arbitrary clips, masks, shadows and overlays refuse.",
+        "Node identity continuity is separate from full geometry approval, so the existing temporary geometry pause can restore one return after native modal/scroll recovery. Active mount and return always recheck full geometry and original binding/grants.",
+        "Workspace follows the native composer branch in keyboard order for Project, while the sidebar remains before it. Native nodes, input handlers and drafts are not relocated or replaced."
+      ],
+      "sourceHashes": {
+        "src/host/native-project-surface.mjs": "8751d9b248bba8dac316d40997ca0938dd57aa56173e228a1704ffbaf69f4a15",
+        "src/host/chatgpt-adapter.mjs": "fa2ee7751d5c7bf86aeeed253781895295b6e8ce2ec9bf5c821174d051884399",
+        "src/host/chatgpt-observed-profile.mjs": "3c4774adb195d40f26518d79e43efb8b969d5621e9db165e0705847a2399550a",
+        "src/host/native-return-gap.mjs": "1b837b5af6ca015780121388fc009d8e878ef453e97f818164ec3c984fd7698c",
+        "src/navigation/mount-surface.mjs": "b25ab416c7e76beb0eebe34c811f9241f3d848c3dc5d85640a456d19c0e0d311",
+        "tests/host/observed-project-layout-browser.mjs": "23a0a81f97abafeee3eb3356228fcd25bea7e755e392c029ab31cb1d9a610758",
+        "tests/host/fixtures/observed-project.mjs": "7a34fa5549bdc02e88eed2572fcd1b666e16ff4a5ac13f05ecc22e747c58abad",
+        ".github/workflows/free-offline-host.yml": "d38dc21debfcaf2c71ba087aaf123111b76be9d47983adb9db6f310390a7943a"
+      },
+      "verification": {
+        "original": {
+          "ref": "8439af6",
+          "status": "FAIL",
+          "reason": "missing-or-ambiguous-native-boundary",
+          "durationMs": 155.77087500000002
+        },
+        "browser": {
+          "status": "PASS_WEB_MECHANISM_ONLY",
+          "cases": 37,
+          "durationMs": 8066.524792000001,
+          "controllerCases": [
+            {
+              "mode": "controller-journey",
+              "passed": true,
+              "authorization": "SYNTHETIC_CONTROLLER_BRIDGE_NOT_MV3",
+              "fullHeight": true,
+              "uniqueReturnAndNativeInput": true,
+              "cleanup": true,
+              "durationMs": 223.47320900000022
+            },
+            {
+              "mode": "controller-scroll",
+              "passed": true,
+              "authorization": "SYNTHETIC_CONTROLLER_BRIDGE_NOT_MV3",
+              "fullHeight": true,
+              "automaticSurrender": true,
+              "explicitReturnAfterSafeGeometry": true,
+              "cleanup": true,
+              "durationMs": 141.75483299999996
+            },
+            {
+              "mode": "controller-route",
+              "passed": true,
+              "authorization": "SYNTHETIC_CONTROLLER_BRIDGE_NOT_MV3",
+              "fullHeight": true,
+              "automaticCleanup": true,
+              "cleanup": true,
+              "durationMs": 86.27579199999991
+            },
+            {
+              "mode": "controller-replace",
+              "passed": true,
+              "authorization": "SYNTHETIC_CONTROLLER_BRIDGE_NOT_MV3",
+              "fullHeight": true,
+              "automaticCleanup": true,
+              "cleanup": true,
+              "durationMs": 83.77483299999994
+            },
+            {
+              "mode": "controller-resize",
+              "passed": true,
+              "authorization": "SYNTHETIC_CONTROLLER_BRIDGE_NOT_MV3",
+              "fullHeight": true,
+              "automaticResize": true,
+              "cleanup": true,
+              "durationMs": 75.99950000000035
+            },
+            {
+              "mode": "controller-popup",
+              "passed": true,
+              "authorization": "SYNTHETIC_CONTROLLER_BRIDGE_NOT_MV3",
+              "fullHeight": true,
+              "nativePopupPriority": true,
+              "cleanup": true,
+              "durationMs": 143.6109580000002
+            },
+            {
+              "mode": "controller-expiry",
+              "passed": true,
+              "authorization": "SYNTHETIC_CONTROLLER_BRIDGE_NOT_MV3",
+              "fullHeight": true,
+              "expiredClean": true,
+              "cleanup": true,
+              "durationMs": 5090.548208
+            }
+          ],
+          "qualification": "WEB_MECHANISM_ONLY_SYNTHETIC_BRIDGE_NOT_MV3"
+        },
+        "node": {
+          "tests": 436,
+          "pass": 436,
+          "fail": 0,
+          "skipped": 0,
+          "durationMs": 1608.356875
+        },
+        "build": {
+          "tests": 209,
+          "pass": 209,
+          "fail": 0,
+          "skipped": 0,
+          "durationMs": 4065.902084
+        },
+        "chatRegression": "PASS_WEB_MECHANISM_ONLY_2_VARIANTS",
+        "returnRegression": "PASS_WEB_MECHANISM_ONLY",
+        "listRegression": "PASS_WEB_MECHANISM_ONLY_20_CASES",
+        "isolatedMV3": {
+          "status": "PASS",
+          "durationMs": 2460.84825,
+          "sourceChangedDuringRun": false,
+          "recoveryQualification": "C2_FRESH_REQUEST_ONLY_NOT_J4",
+          "checks": {
+            "noScopeBeforeNativeRequest": true,
+            "canonicalSecondContext": true,
+            "nativeRequestToScopeAndDualFrame": true,
+            "nativeTitleVisible": true,
+            "noAutomaticDetailReads": true,
+            "draftPreserved": true,
+            "readingAndUniqueReturn": true,
+            "knownSearch": true,
+            "coldWorkerClearsOldPrivateFrames": true,
+            "noSyntheticContextRecovery": true,
+            "freshNativeContextRebinds": true
+          }
+        },
+        "mv3Qualification": "ORIGINAL_CONVERSATION_C2_JOURNEY_NOT_PROJECT_MV3_OR_LIVE_ACCEPTANCE",
+        "review": "Read-only independent reviews found shadow/clip, missing controller journey, focus outline and modal continuity gaps. Final production review found no remaining blocker; final controller journey covers actual return clicks, native popup, scroll, replacement, route, resize and natural expiry.",
+        "performanceComparison": "No successful original Project journey exists. The 155ms failed refusal and 8.067s 37-case matrix (including a 5s expiry case) are not comparable user-latency measurements. No speedup claim."
+      },
+      "live": {
+        "state": "GEOMETRY_ONLY_PASS",
+        "readingRect": {
+          "x": 360.5,
+          "y": 252,
+          "width": 404.5,
+          "height": 925
+        },
+        "returnSlot": {
+          "x": 348,
+          "y": 8,
+          "width": 36,
+          "height": 36
+        },
+        "protected": 5,
+        "proofNodes": 23,
+        "networkRequests": 0,
+        "writes": 0,
+        "qualification": "PURE_READ_ONLY_GEOMETRY_ONLY_NO_MOUNT_NO_AUTHORIZATION",
+        "installedPackage": "UNCHANGED_APPROVED_TEMPORARY_MODE",
+        "responseBodyReads": 0,
+        "membership": "UNKNOWN",
+        "principal": "UNVERIFIED_PRIOR_SESSION_403_CHALLENGE",
+        "notes": "No session retry, request replay, new HTTP request, private title/ID/body/credential output or native write. The one authorized normal current-Project response remains uncaptured and unused."
+      },
+      "remaining": [
+        "Legitimate principal/roster and production Project context",
+        "Positive Project identity/member semantics and confirmed NONE",
+        "Reliable own-send source",
+        "Full Project MV3 and real installed journey, complete recovery/J4 and G/U",
+        "10k/100k DEFERRED, original source/thresholds/history unchanged"
+      ],
+      "artifacts": {
+        "baseline": {
+          "path": "docs/evidence/free-delivery-2026-10-17/project-layout-20261019-baseline.gz",
+          "sha256": "bf501f940e9509caae5fbf18d7c02c9e912da3c8ef72c314156da7aea3a1ad36"
+        },
+        "browser": {
+          "path": "docs/evidence/free-delivery-2026-10-17/project-layout-20261019-browser.gz",
+          "sha256": "d6c62922d8066d1fb5c10df55266cc11796637b9be745bf06c344ce0dcfc560f"
+        },
+        "node": {
+          "path": "docs/evidence/free-delivery-2026-10-17/project-layout-20261019-node.gz",
+          "sha256": "b47fb728bcf2fa83508672a40c726314dec215d1201fd5a01191cda98a0ff012"
+        },
+        "build": {
+          "path": "docs/evidence/free-delivery-2026-10-17/project-layout-20261019-build.gz",
+          "sha256": "6d28342ce12dd943ff30b7525f7c6eb4bf9320b5f8733732ee9386e6d575baf1"
+        },
+        "mv3": {
+          "path": "docs/evidence/free-delivery-2026-10-17/project-layout-20261019-mv3.gz",
+          "sha256": "a27ff515fa47bbba98b4e89cee04564fa3db5cf82fe3463f37c2fba73a87bf56"
+        },
+        "chatRegression": {
+          "path": "docs/evidence/free-delivery-2026-10-17/project-layout-20261019-chatRegression.gz",
+          "sha256": "f8ff0cbf5b79d88e4c0c395014009ca347c58a20f1daed2b7d13ee9683d87167"
+        },
+        "returnRegression": {
+          "path": "docs/evidence/free-delivery-2026-10-17/project-layout-20261019-returnRegression.gz",
+          "sha256": "10af03e973899c64fa18ea990841d308d20c7b9c035e710ea6d93c2889711d31"
+        },
+        "listRegression": {
+          "path": "docs/evidence/free-delivery-2026-10-17/project-layout-20261019-listRegression.gz",
+          "sha256": "99c0266c58303aced3bcad37780aa4f0e4dad5d750459bcbc52dbd37df3e63b8"
+        },
+        "liveGeometry": {
+          "path": "docs/evidence/free-delivery-2026-10-17/project-layout-20261019-liveGeometry.gz",
+          "sha256": "99e093dedebd6333bf359f9aa8c86d6bc9aa06b762a9a40672ee6b0af67e9387"
+        },
+        "initialFixtureRouteFailure": {
+          "path": "docs/evidence/free-delivery-2026-10-17/project-layout-20261019-initialFixtureRouteFailure.gz",
+          "sha256": "2a220dd06122edafbcbc3dee0dd365018442b844f623e909bfd08c7beadf4c7e"
+        },
+        "focusOutlineFailure": {
+          "path": "docs/evidence/free-delivery-2026-10-17/project-layout-20261019-focusOutlineFailure.gz",
+          "sha256": "8ab2e1dce4db43a7e61763e307e379f92ce4c984cfe32d535f70fc585047096a"
+        },
+        "modalContinuityFailure": {
+          "path": "docs/evidence/free-delivery-2026-10-17/project-layout-20261019-modalContinuityFailure.gz",
+          "sha256": "dc2bc2fe2e88080d7d268eeca45511c20768684425f618028a75851a4559abb2"
+        }
+      }
     }
   }
 }

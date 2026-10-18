@@ -1,6 +1,6 @@
 // Explicit presentation variant for the observed pointer-transparent titlebar.
 // This proves an empty rectangle; it never supplies account or scope evidence.
-export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=null,readingViewport=null,viewportFocus=null,isOwnedMask=()=>false,button=null,excluded=[],excludedRects=[]}){
+export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=null,readingViewport=null,viewportFocus=null,headerLayout=null,isOwnedMask=()=>false,button=null,excluded=[],excludedRects=[]}){
  try{
   const win=document.defaultView,rect=n=>n.getBoundingClientRect(),overlap=(a,b)=>a.x<b.x+b.width&&b.x<a.x+a.width&&a.y<b.y+b.height&&b.y<a.y+a.height;
   if(!header||!slot||!hitRoot||header===slot||!header.contains(slot)||![header,slot,hitRoot,...excluded].every(n=>n.isConnected&&n.ownerDocument===document))return null;
@@ -62,9 +62,15 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
    for(const pseudo of ['::before','::after'])if(!['none','normal','""'].includes(win.getComputedStyle(n,pseudo).content))return null;
   }
   let node=header.firstElementChild,count=0;
+  if(headerLayout!==null&&headerLayout!=='transparent-containers')return null;
+  const transparentContainer=n=>{
+   if(headerLayout!=='transparent-containers'||n.tagName!=='DIV'||n.shadowRoot||n.matches('[role],[tabindex],[contenteditable]')||[...n.childNodes].some(c=>c.nodeType===3&&c.length>0))return false;
+   const s=win.getComputedStyle(n);
+   return s.pointerEvents==='none'&&s.opacity==='1'&&s.backgroundColor==='rgba(0, 0, 0, 0)'&&s.backgroundImage==='none'&&s.mixBlendMode==='normal'&&['borderLeftWidth','borderRightWidth','borderTopWidth','borderBottomWidth'].every(k=>s[k]==='0px')&&['none','hidden'].includes(s.outlineStyle)&&['transform','translate','rotate','scale','filter','backdropFilter','boxShadow','textShadow','offsetPath','clipPath','maskImage'].every(k=>s[k]==='none')&&s.zoom==='1'&&['::before','::after'].every(p=>['none','normal'].includes(win.getComputedStyle(n,p).content));
+  };
   while(node){
    if(++count>256)return null;
-   if(node!==slot&&node!==button){const b=rect(node),style=win.getComputedStyle(node);if(style.display!=='none'&&!['hidden','collapse'].includes(style.visibility)&&b.width>0&&b.height>0&&overlap(r,b))return null;}
+   if(node!==slot&&node!==button){const b=rect(node),style=win.getComputedStyle(node);if(style.display!=='none'&&!['hidden','collapse'].includes(style.visibility)&&b.width>0&&b.height>0&&overlap(r,b)&&!transparentContainer(node))return null;}
    if(node.firstElementChild){node=node.firstElementChild;continue;}
    while(node!==header&&!node.nextElementSibling)node=node.parentElement;
    node=node===header?null:node.nextElementSibling;

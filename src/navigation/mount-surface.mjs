@@ -75,13 +75,14 @@ export function createMountSurface({document:doc,createFrameURL,hasNativeLayer=(
    let closing=false;
    const workspaceClosing=e=>{if(m.readingProbe?.ownClosing&&e.target===workspace&&e.oldState==='open'&&e.newState==='closed'||m.readingProbe?.ownOpening&&e.target===workspace&&e.oldState==='closed'&&e.newState==='open')return;if(m.readingProbe)m.readingProbe.cancelled=true;if(closing||e.target!==workspace||e.oldState!=='open'||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||!workspace.matches(':popover-open'))return;closing=true;try{onSurrender({reason:'native-reading',phase:'closing'});}catch{}finally{closing=false;}};
    const workspaceClosed=e=>{if(e.target!==workspace||e.newState!=='closed'||mounts.get(id)!==m||!workspace.isConnected||workspace.matches(':popover-open'))return;try{onSurrender({reason:'native-reading'});}catch{}};
-   // Match the reading-before-composer keyboard order without relocating any
-   // native node. Appending both frames after the native document puts forward
-   // traversal through browser chrome before it can reach the composer.
+   // Match the proved reading/composer order without relocating native nodes.
+   // Project home places reading below its composer; its workspace follows the
+   // native branch while the sidebar still precedes it. Chat keeps its order.
    let before=inspection.composer;
    while(before?.parentElement&&before.parentElement!==doc.body)before=before.parentElement;
+   const composerBox=inspection.composer.getBoundingClientRect(),afterComposer=inspection.readingRect.y>=composerBox.bottom;
    workspace?.addEventListener('beforetoggle',workspaceClosing);workspace?.addEventListener('toggle',workspaceClosed);doc.head.append(style);
-   for(const s of surfaces)if(before?.parentElement===doc.body)doc.body.insertBefore(s.node,before);else doc.body.append(s.node);
+   for(const s of surfaces)if(before?.parentElement===doc.body)doc.body.insertBefore(s.node,afterComposer&&s.role==='workspace'?before.nextSibling:before);else doc.body.append(s.node);
    const inspectLayer=()=>{if(hasNativeLayer()||doc.querySelector(nativeOpen)||markers.some(({root,nativeClass,nativeStyle,nativeHidden,nativeAriaHidden})=>!root.isConnected||root.ownerDocument!==doc||root.getAttribute('class')!==nativeClass||root.getAttribute('style')!==nativeStyle||root.getAttribute('hidden')!==nativeHidden||root.getAttribute('aria-hidden')!==nativeAriaHidden))surrender(m);};
    const observer=new win.MutationObserver(inspectLayer);observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class','style','hidden','aria-hidden','aria-expanded']});
    const beforeToggle=e=>{if(e.newState==='open'&&!e.target.closest?.('[data-va-owned]'))hide(m);};doc.addEventListener('beforetoggle',beforeToggle,true);

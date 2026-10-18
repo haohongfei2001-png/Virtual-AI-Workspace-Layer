@@ -166,6 +166,7 @@ jobs:
           node tests/host/observed-profile-browser.mjs
           node tests/host/observed-sidebar-browser.mjs
           node tests/host/observed-project-list-browser.mjs
+          node tests/host/observed-project-layout-browser.mjs
       - name: Packaged native snippet save search locate and removal
         if: ${{ !cancelled() }}
         run: node tests/host/snippets-package-mv3-browser.mjs "$RUNNER_TEMP/snippets-package.json"

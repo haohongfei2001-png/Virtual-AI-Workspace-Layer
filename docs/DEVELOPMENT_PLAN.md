@@ -2,7 +2,7 @@
 
 ## 0. 正式采用与唯一执行入口
 
-当前增量（2026-10-19）：真实Project可见列表的纯标题观察已接入原adapter，标题与句柄指纹只读首个标题叶，保持UNKNOWN、无Project卡/覆盖声明。已有界RAM、存储/搜索/UI合同沿用；下一步先核验已获单次授权的当前列表响应之正向关联字段与Project标题身份关联，再接原成员归约/现有FreeUI；合法principal/roster仍是持久映射的前置。列表200不等于身份或成员已证。临时模式保持，完整目标与10k/100k DEFERRED及原阈值不变；详细实测只记STATUS和原证据入口。
+当前增量（2026-10-19）：真实Project的纯标题观察保持UNKNOWN；其页面“标题/composer/标签栏在上、聊天列表在下”的生产布局分支已接原adapter/mount/controller，复用现有FreeUI与唯一返回。完整几何核验与节点连续性分离，原生输入、弹层、滚动恢复、到期清理均有隔离浏览器证据；真实仅只读几何通过，未在真实账户挂载或建立scope。下一步仍先补合法principal/roster/生产Project context，再取得正常原生列表的正向成员字段与Project标题关联、本人发送来源；单次列表读取许可未消耗，不主动重放请求。临时模式保留，完整目标与10k/100k DEFERRED及原阈值不变；具体结果及原失败见STATUS/原证据 `projectLayout20261019`。
 
 用户已正式批准将 **VA-HOST/1.1 FINAL** 完整纳入本计划。原 A–G、原任务 ID、Free/Pro 范围和批准 v2.7 产品目标全部保留；`.F`、`.P`仍只是原任务内的切片，不另建 Host、Free、Pro 三套计划。
 
@@ -27,7 +27,7 @@
 
 验收顺序：①真实当前页面标题/链接观察、搜索、打开、返回，保留已批准临时只读入口；②合法 principal/context（当前受挑战，观察不等于认证）；③正向原生项目归属（未知仍 UNKNOWN）；④本人发送事件与确证活动（读取时间不是发送时间）；⑤恢复、完整安装与既定性能。优先修复已有数据源接线，复用原模型/存储/搜索/UI。新增身份来源、扩大敏感响应读取或产品取舍需另行集中批准。PAIA 只借鉴被动响应支路、容量/时间约束与撤权清理，不照搬正文读取或身份语义。10k/100k 仍 DEFERRED，原指标/历史失败不改判；临时模式不计完整 Free。 当前9a3f5cc同源Linux CI四job成功，含普通/容器聊天C2；J4仍PARTIAL，历史冷启动失败不追溯改判。用户已打开现有Project，原只读核验得到可见项目标题与两条聊天标题/链接，首个标题节点与侧栏同ID一致；独立第二文本域不读取。接下来按已观察的Project选中面板/当前路由语义接入现有发现模型，不能整条anchor读成标题或由路径单独造成员。正常观察的侧栏区域已从全页面nav收窄到唯一可见原生侧栏，旧反例和验证见STATUS；身份与其他完整验收不因此通过。
 
-本批实际进展：初始化顺序与有限 RAM 生命周期已接实，拒绝期间继续观察、原期限清空、新合法文档进入原 FreeUI 的隔离旅程成立。真实正常包只证实未授权观察（10候选/5消息ID），没有取得新的身份核验。临时包补齐实际窄窗原生侧栏边界，最终真实18聊天搜索/原生打开/返回成立，原页/草稿保持；现有Project按钮已展开但无Project页面链接，不升级项目/成员验收。剩余来源缺口依次为合法 principal/current-context、正向 Project/Conversation membership、可靠本人 send；分别以可信来源、UNKNOWN/NONE区分和发送确认验收，观察时间不转 sentAt。原始失败、各次source hash与安装/旅程证据均在 STATUS 的原证据入口，后续继续原完整 Free 目标。 最新单次真实枚举诊断已贯通原生当前GET200→当前document/消息ID关联→自动AUTHORIZING，唯一session请求随后403/challenge；因此当前具体阻塞为合法principal入口，不能继续把这次waiting归为context缺失。已恢复临时包，不新增身份来源、不重放挑战；对外异步查证只在PR16进行。另修MAP-05容器聊天路径与导航解析不一致：只提取conversationId，禁止从容器hint推membership/scope；原普通及容器实际隔离MV3均进入既有FreeUI，真实Project归属仍缺。Linux原immediate冷启动20秒挂载FAIL独立保留，生产/runner与前次PASS相同、精确丢失阶段未证，不拿独立trace或未命中恢复分支的绿色结果替代。完整Free、正向成员、本人活动、恢复/安装及规模目标均未削减。 当前可见原生项目区域未提供可确认的现有Project入口，普通导航也带project-container属性，故不按属性名补身份/归属；真实Project验收等待用户自然打开一个现有样本。原冷启动FAIL继续记录，现只增强离线拒绝原因/截断诊断，不把单独PASS替代原失败，不改生产安全边界或指标。
+本批实际进展：初始化顺序与有限 RAM 生命周期已接实，拒绝期间继续观察、原期限清空、新合法文档进入原 FreeUI 的隔离旅程成立。真实正常包只证实未授权观察（10候选/5消息ID），没有取得新的身份核验。临时包补齐实际窄窗原生侧栏边界，最终真实18聊天搜索/原生打开/返回成立，原页/草稿保持；该临时包检查时尚无Project页面链接；后续真实Project样本已取得，见顶部，正向成员仍未认证。剩余来源缺口依次为合法 principal/current-context、正向 Project/Conversation membership、可靠本人 send；分别以可信来源、UNKNOWN/NONE区分和发送确认验收，观察时间不转 sentAt。原始失败、各次source hash与安装/旅程证据均在 STATUS 的原证据入口，后续继续原完整 Free 目标。 最新单次真实枚举诊断已贯通原生当前GET200→当前document/消息ID关联→自动AUTHORIZING，唯一session请求随后403/challenge；因此当前具体阻塞为合法principal入口，不能继续把这次waiting归为context缺失。已恢复临时包，不新增身份来源、不重放挑战；对外异步查证只在PR16进行。另修MAP-05容器聊天路径与导航解析不一致：只提取conversationId，禁止从容器hint推membership/scope；原普通及容器实际隔离MV3均进入既有FreeUI，真实Project归属仍缺。Linux原immediate冷启动20秒挂载FAIL独立保留，生产/runner与前次PASS相同、精确丢失阶段未证，不拿独立trace或未命中恢复分支的绿色结果替代。完整Free、正向成员、本人活动、恢复/安装及规模目标均未削减。 此前侧栏未提供可确认的现有Project入口，普通导航也带project-container属性，未据此补身份/归属；随后用户已自然打开现有Project，当前不再缺该页面样本，见顶部。原冷启动FAIL继续记录，现只增强离线拒绝原因/截断诊断，不把单独PASS替代原失败，不改生产安全边界或指标。
 
 以下为先前403与临时导航实施记录，保留失败及证据：
 

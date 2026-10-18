@@ -1,4 +1,5 @@
 import {profileElement} from './native-surface-boundary.mjs';
+import {inspectNativeProjectSurface} from './native-project-surface.mjs';
 import {nativeReturnGapRect} from './native-return-gap.mjs';
 import {nativeHistoryListOK} from './native-history-list.mjs';
 import {nativeReturnSlotRect} from './native-return-slot.mjs';
@@ -287,6 +288,7 @@ if(!p){notifyIdle();return;}}catch(error){
  function isReturnSlotCurrent(inspection){
   // Dormant presentation may recheck native geometry, but cannot revive binding.
   if(!explicitLayout)return true;
+  if(projectLayout())return !!currentProjectSurface(inspection);
   if(!inspection||document.location.href!==url||gapMode&&one(nativeLayout.returnHitRoot)!==inspection.returnHitRoot)return false;
   const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),reading=one(nativeLayout.reading),composer=one(nativeLayout.composer),slot=one(nativeLayout.navigationSlot);
   if(!historyListCurrent(history,inspection)||history!==inspection.history||header!==inspection.header||reading!==inspection.reading||composer!==inspection.composer||slot!==inspection.navigationSlot||!nativeTopologyOK(history,header,reading,composer,slot))return false;
@@ -297,13 +299,32 @@ if(!p){notifyIdle();return;}}catch(error){
  }
  function isSameNativeRegions(inspection){
   if(!live()||document.location.href!==url||inspection?.regionEpoch!==regionEpoch)return false;
+  if(projectLayout())return !!currentProjectSurface(inspection,false);
   const nodes=[one(nativeLayout.historyList??profile.regions.history),one(nativeLayout.header),one(nativeLayout.reading),one(nativeLayout.composer),one(nativeLayout.navigationSlot)];
   const original=[inspection.history,inspection.header,inspection.reading,inspection.composer,inspection.navigationSlot];
   const viewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;
   return nodes.every((node,i)=>node&&node===original[i]&&node===priorNodes[i]&&node.isConnected&&node.ownerDocument===document)&&(!gapMode||one(nativeLayout.returnHitRoot)===inspection.returnHitRoot)&&historyListCurrent(nodes[0],inspection)&&nativeTopologyOK(...nodes)&&(!nativeLayout.readingViewport||viewport===inspection.readingViewport&&viewport===priorNodes[5]&&viewportTopologyOK(viewport,...nodes));
  }
+ const projectProofs=new WeakMap();
+ const projectLayout=()=>profile.nativeProjectLayout==='panel-after-composer'&&urlPolicy.parse(document.location.href).kind==='project';
+ function projectSurface(geometry=true){
+  const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),slot=one(nativeLayout.navigationSlot);
+  if(!history||!header||!slot||!historyListCurrent(history))return null;
+  return inspectNativeProjectSurface({document,profile,urlPolicy,history,header,slot,button:returnControl,isOwnedMask,geometry});
+ }
+ function currentProjectSurface(inspection,geometry=true){
+  if(!inspection||document.location.href!==url)return null;
+  const proof=projectProofs.get(inspection),current=projectSurface(geometry);
+  return proof&&current&&proof.length===current.proofNodes.length&&proof.every((node,i)=>node===current.proofNodes[i]&&node===priorNodes[i])?current:null;
+ }
  function inspect(){
   const fail=reason=>({ok:false,reason,profileId:profile.id});if(!active())return fail('stale-host-binding');try{syncRoute();}catch{return fail('host-rebind-required');}if(urlPolicy.parse(url).kind==='unsupported')return fail('unsupported-host-route');
+  if(projectLayout()){
+   const found=projectSurface();if(!found)return fail(projectSurface(false)?'unsafe-native-geometry':'unsafe-native-project-layout');
+   const {proofNodes,...layout}=found;if(proofNodes.length!==priorNodes.length||proofNodes.some((node,i)=>node!==priorNodes[i])){regionEpoch++;priorNodes=proofNodes;}
+   const inspection={ok:true,reason:null,profileId:profile.id,...layout,historySource:one(profile.regions.history),historyMaskRoots:[found.history],returnPlacement:'header-gap',viewMask:'declarative-css',regionEpoch};
+   projectProofs.set(inspection,proofNodes);return inspection;
+  }
   const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),reading=one(nativeLayout.reading),composer=one(nativeLayout.composer),navigationSlot=one(nativeLayout.navigationSlot);
   if(!history||!header||!reading||!composer||!navigationSlot)return fail('missing-or-ambiguous-native-boundary');
   if(!historyListCurrent(history))return fail('unsafe-native-history-list');
@@ -320,6 +341,7 @@ if(!p){notifyIdle();return;}}catch(error){
   return {ok:true,reason:null,profileId:profile.id,history,...(historySource?{historySource}:{}),header,reading,navigationSlot,composer,protectedRegions,...(readingViewport?{readingViewport}:{}),historyMaskRoots:[history],...(gapMode?{returnPlacement:'header-gap',returnHitRoot:one(nativeLayout.returnHitRoot)}:{}),returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch};
  }
  const api={setReturnControl(node){returnControl=node;},getReturnControlRect(inspection){
+  if(projectLayout())return currentProjectSurface(inspection)?.returnSlot??null;
   if(!isReturnSlotCurrent(inspection))return null;
   const {history,header,reading,composer,navigationSlot:slot,readingViewport:viewport}=inspection;
   const readingRect=viewport?viewportRect(viewport,header,composer):rect(reading);

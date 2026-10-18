@@ -4,7 +4,8 @@ import {LEGACY_SURFACE_PROFILE} from './surface-discovery.mjs';
 // The observed Chinese desktop surface is a candidate, not an authority profile.
 // Unsupported membership/send/risk grammars stay absent; no synthetic NONE/ACK.
 export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
- id:'chatgpt-zh-desktop-observed-20261018',revision:3,reconstruction:false,liveVerified:false,
+ id:'chatgpt-zh-desktop-observed-20261018',revision:4,reconstruction:false,liveVerified:false,
+ nativeProjectLayout:'panel-after-composer',
  sidebarBoundary:CHATGPT_SIDEBAR_SELECTOR,
  projectListBoundary:'main[data-app-shell-main-surface] [data-app-shell-main-content-layout] [role="main"]:has(h1 > button):has([role="tabpanel"])',
  regions:Object.freeze({projects:'nav:not([data-app-navigation-rail])',history:'nav:not([data-app-navigation-rail])',members:'[role="tabpanel"]',moveMenu:':not(*)'}),
