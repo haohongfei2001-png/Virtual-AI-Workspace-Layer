@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **真实专用Profile最新窄核验：page accounts200，挂载仍未成立**：严格匹配先前授权target；页面complete且原生编辑器为空、无可见生成/附件后仅一次正常刷新。页面accounts返回200，之后原生编辑器仍在、扩展frame/open/return均0。未读响应正文、token、Cookie或保存私人ID/标题；未发送/创建内容。此为page通道，未观察worker认证结果，不能据此关闭原worker403/context问题或宣称LIVE_VERIFIED；也不再笼统称当前所有accounts请求403。原安装候选未更新为最新离线代码。下一关口是区分worker认证/context与挂载阶段，再走真实阅读/返回/搜索/Project闭环。证据authorizedContextRecheck20261018。
+
 - **partial busy-close前台恢复已取得隔离MV3窄证据**：产品代码保持3864d39。定位并修复driver前置条件：content ready不涵盖frame延后RPC（实际捕获UI activeWork=4）；隐藏页目录摄取按设计暂停（最终只剩ingestionPasses忙）；OOPIF须由其根frame.parentId匹配主tab。现等待实际frame读取/恢复写入与worker排空，先完成第二tab导航，再回主tab完成其摄取；不冻结/取消工作，真实CHECK仍可拒绝且不重复close。最终同runner标准和partial两路径PASS/源码未漂移：partial验证真实忙→丢弃一次parent CONFIRM→实际sidebar退出→旧双frame全销毁→原worker原子RELEASE成功→新producer HELLO/verified REFRESH/双新grant→唯一返回；原document/editor/草稿保持。63定向PASS/0skip/70.395ms，独审无阻断。partial准备11119.3ms、close驱动216.7ms、cleanup前总计11551.8ms；标准对应20924.5/216.4/21181.6ms。原6秒产品期限不变；此前无可比计时，不宣称提速。仅LEGACY_OFFLINE/S_INSTRUMENTED前台故障恢复，不认证后台自动恢复/自然休眠/真实宿主/J4；全部中间FAIL保留，原J2不改判。真实accounts403未重测、Project/IME/PAIA等仍OPEN，规模DEFERRED。见原证据busyOwnerForegroundRecovery20261018。
 
 - **关闭预检观察器修复；已捕获 worker 忙拒绝，partial MV3仍开放**：同一JS轮次检查本地prepared并发起一次close，缓存该Promise，拒绝后终止；仅失败时记录主tab RPC。未改产品源码或原6秒预算。旧驱动存在检查/操作间隙，但不能据此追溯解释旧FAIL。诊断版和原子探针版标准模式各PASS；新增partial故障模式首次运行在初始IDLE_CHECK收到ui-release-busy，gated/released/confirmFault全false，故障注入尚未发生。说明本地ready不能证明全worker空闲，具体busy owner仍待定位；不重试挑绿。最终补强新producer的HELLO→verified REFRESH→两角色新grant及旧双frame全部断开的断言，尚未运行到该路径，不能认证。47定向PASS/0skip/70.543ms；各runner hash单独存证，不把旧PASS套到最终runner。未采集可比较浏览器总耗时，不宣称提速。真实Profile本次未新增读取，原accounts403仍OPEN；10k/100k DEFERRED。见原证据busyPreflightObserver20261018。

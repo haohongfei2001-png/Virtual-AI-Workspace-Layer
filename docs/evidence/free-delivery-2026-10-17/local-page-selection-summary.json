@@ -3417,5 +3417,43 @@
     },
     "limits": "S_INSTRUMENTED LEGACY_OFFLINE foreground recovery only. Polling keeps worker active; not natural sleep/J4/real-host certification. Historical initial timeout is not retroactively reclassified. Intermediate FAILs retained; first diagnostic patched unexecuted modules without rebuilding classic bundle and cannot identify owners. Earlier elapsed values absent or different failing phases; no before/after speedup claim. Driver close timing starts before setup RPC and is not internal deadline instrumentation.",
     "next": "Authorized real Profile accounts/context recovery then native reading/return/search and Project membership; original J2/J4 and manual/device gates remain OPEN. 10k/100k DEFERRED."
+  },
+  "authorizedContextRecheck20261018": {
+    "sourceHead": "ebc6600bfa9577070f53f349a40b2ce9052b7e26",
+    "installedCandidate": "Existing viewport-gap candidate retained; not replaced by latest offline recovery code",
+    "evidence": "authorized-context-recheck.json.gz",
+    "observation": {
+      "kind": "AUTHORIZED_EXACT_TARGET_CONTEXT_RECHECK",
+      "bodyRead": false,
+      "credentialsRead": false,
+      "nativeWrites": 0,
+      "refreshed": true,
+      "network": [
+        {
+          "kind": "accounts",
+          "status": 200,
+          "source": "page"
+        }
+      ],
+      "before": {
+        "ready": true,
+        "conversation": true,
+        "editor": true,
+        "draftEmpty": true,
+        "generating": false,
+        "attachments": false,
+        "frames": 0
+      },
+      "status": "CONTEXT_OR_MOUNT_UNRESOLVED",
+      "after": {
+        "readyState": "complete",
+        "editor": true,
+        "frames": 0,
+        "open": 0,
+        "returnControls": 0
+      }
+    },
+    "limit": "Exact previously authorized dedicated target only. Empty composer/no visible generating or attachment guard before single normal reload. Page accounts200 does not prove worker provider success, trusted context, membership, or LIVE_VERIFIED. No response body/token/cookie read or persisted. Previous worker403 remains historical; current worker network not observed. No repeated reload.",
+    "next": "Observe actual worker authentication/context path on a bounded authorized opportunity before installing latest candidate or claiming real navigation."
   }
 }
