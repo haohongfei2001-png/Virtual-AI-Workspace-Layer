@@ -1443,6 +1443,26 @@
       "failureFacts null does not prove stored anchor loss"
     ],
     "rootCause": "OPEN: controller termination/rebind suppression not yet reproduced",
-    "logAcquisition": "GitHub connector fetched original job after CLI cache and network failures"
+    "logAcquisition": "GitHub connector fetched original job after CLI cache and network failures",
+    "observationCaveat": "Worker diagnostic listener installs only at checkpoint after restart; empty trace does not prove no HELLO. At least 106ms from first SUSPEND to checkpoint is outside that observation."
+  },
+  "j2RecoveryObservation20261018": {
+    "localHead": "1406cb3",
+    "localStatus": "PASS_OFFLINE_J2_JOURNEY",
+    "sourceChangedDuringRun": false,
+    "steps": 8,
+    "elapsedMs": 128884,
+    "evidence": "j2-local-1406cb3.json.gz",
+    "linuxFailureStillOpen": true,
+    "diagnosticChange": "Install start/completion, discovery, restart observation timestamps; startupCoverage NOT_OBSERVED; listener schedule unchanged",
+    "tests": {
+      "pass": 12,
+      "durationMs": 50.696125,
+      "oldSourceCounterexample": "FAIL: startupCoverage undefined"
+    },
+    "sourceHashes": {
+      "tests/host/j2-lifecycle-diagnostics.mjs": "4a345ac2079ea4aaa2a2d443bcc5cbdd0ce3fb38dad996963f7c2542abd0c6a2",
+      "tests/host/j2-lifecycle-diagnostics.test.mjs": "16feeaea735ec5667bc6a8847463c0aed35ba84e9b79b752d3e1b59d46823e8a"
+    }
   }
 }

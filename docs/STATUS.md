@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **J2恢复反例收窄，观察盲区已显式标记**：独审确认新worker诊断直到重启后checkpoint才安装，原SUSPEND至checkpoint至少106ms；空trace不能推出未发送HELLO。补每代发现/安装起止/重启观察时间与startupCoverage=NOT_OBSERVED，保持监听调度、原产品及验收不变。确定性VM反例证明产品已接收HELLO而诊断为空，旧版缺覆盖标记实际FAIL；12诊断测试通过。1406cb3本地原J2隔离headless完整8步PASS、sourceChanged=false、耗时128884ms，本次未复现Linux失败，不追溯改判。真实宿主与C2-only自动恢复仍未认证；206af45最新CI的J2步骤成功但journeys job取消，不能算全矩阵通过。
+
 - **CI39101646460 J2原失败阶段已取得**：GitHub连接器成功读取原job并提取JSON。6270a34在ACK/失败后立即重发通过、真实worker stop/new running确认后，recover-provisional-anchor原25秒观察超时；UI SUSPEND后frame从2变0，新worker已安装诊断但trace为空。failureFacts=null不证明锚点持久化丢失。当前沿controller终止→content重新握手链定位，根因仍OPEN；不延时/不复用旧授权/不重跑挑绿。原JSON压缩保存在既有证据目录。9d3c436的CI39102367568已cancelled，不计PASS；206af45的CI39102630407最近查询仍运行。
 
 - **原生消息部分身份选择器已修复**：真实headless DOM反例确认旧交集选择器漏掉缺少任一ID属性的消息，仍错误返回explicit-body-id；现并集选中后逐项校验，缺一侧均unproven，恢复完整属性才成立。旧版实际RED、同fixture新版GREEN；67定向回归通过。隔离反例全网络拦截；随后同源发现模块在授权真实页只读复核仍得到5条ID且C与route一致，无正文读取/scope授权。页面无alert且composer存在，但可识别Project链接为0、仅创建入口可见，不能据此认定账户无Project。不计MV3或LIVE_VERIFIED。证据与源码hash见现有local-page-selection-summary.json。J2原日志读取依次遇缓存权限、HTTP2 GOAWAY、单job下载45秒超时，根因仍未确认；未重跑CI或降低门槛。
