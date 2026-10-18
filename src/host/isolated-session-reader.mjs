@@ -3,7 +3,7 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {instant} from '../navigation/projection.mjs';
 const record=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
 const identifier=value=>typeof value==='string'&&value.length>0&&value.length<=256&&!/[\s\u0000-\u001f\u007f]/.test(value)&&!['__proto__','constructor','prototype'].includes(value);
-const errors=new Set(['request-timeout','session-aborted','session-unauthorized','invalid-session-response','invalid-session-mime','session-response-too-large','missing-session-body','invalid-session-body','invalid-session-json','invalid-session-schema','invalid-accounts-schema','session-expired']);
+const errors=new Set(['request-timeout','session-aborted','session-unauthorized','session-challenged','invalid-session-response','invalid-session-mime','session-response-too-large','missing-session-body','invalid-session-body','invalid-session-json','invalid-session-schema','invalid-accounts-schema','session-expired']);
 /** Packaged isolated-world fallback. Token never enters a message or returned result. */
 export function createIsolatedSessionReader({origin,fetch=globalThis.fetch,now=Date.now,elapsedNow=()=>performance.now(),profile={}}={}){
  let url;try{url=new URL(origin);}catch{throw Error('invalid-session-provider');}

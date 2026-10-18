@@ -69,7 +69,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  };
  const upgradeRoute=()=>{if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();};
  const clientId=makeId();if(!tokenOK(clientId))throw Error('invalid-content-client');
- let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0,contextResumeAllowed=false,contextResumeMode='workspace',contextResumeURL=null;
+ let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0,contextResumeAllowed=false,contextResumeMode='workspace',contextResumeURL=null,verificationWaitURL=null;
  let activeWork=0,rawIPC=0,workRevision=0;
  function interfere(owner){if(current?.closing&&owner!==current.closing)current.closing.interfered=true;}
  function sync(work){interfere();workRevision++;activeWork++;try{return work();}finally{activeWork--;requestAutomaticIdle(current);}}
@@ -170,7 +170,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    check();const hello=await handshake(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq},remaining());check();
    if(!reader.isCurrent()||!bindingOK(hello?.binding)||hello.binding.producerToken===prior.producerToken||hello.binding.browserDocumentId!==prior.browserDocumentId||hello.binding.origin!==prior.origin)throw Error('invalid-host-binding');
    s.binding=Object.freeze({...hello.binding});s.identityChallenges.clear();s.identityAuthority=0;
-   const auth=await handshake(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)},remaining());
+   const auth=await handshake(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)},remaining());noteScopeStatus(s,auth);
    if(s.identityTask)await withRequestDeadline(()=>s.identityTask,{timeoutMs:remaining(),now:elapsedNow,schedule,cancel});check();
    if(auth?.state!=='verified'||auth.scopeKey!==scope||s.identityPending||!isolatedReader.prepareIdle?.()?.isCurrent?.())throw Error('scope-not-verified');
    clearMigration(s);s.snippetRef=null;s.snippetScopeGrant=null;s.upgraded=null;
@@ -181,6 +181,8 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  }
  const bindingFields=b=>({documentToken:b.documentToken,producerToken:b.producerToken,routeEpoch:b.routeEpoch});
  function live(s){return current===s&&!s.abort.signal.aborted&&doc.location.href===s.url;}
+ // A document-local display hint, never an authority or retry signal.
+ function noteScopeStatus(s,result){if(live(s))verificationWaitURL=exactHostRecord(result,['ok','v','type','state','reason'])&&result.ok===true&&result.v===1&&result.type==='HOST_SCOPE_STATUS'&&result.state==='unverified'&&result.reason==='host-verification-required'?s.url:null;}
  function bindingOK(b,prior){return exactHostRecord(b,['documentToken','producerToken','browserDocumentId','routeEpoch','origin','expiresAt'])&&['documentToken','producerToken','browserDocumentId'].every(k=>tokenOK(b[k]))&&Number.isSafeInteger(b.routeEpoch)&&b.routeEpoch>=0&&b.origin===origin&&Date.parse(b.expiresAt)>now()&&Date.parse(b.expiresAt)<=now()+20000&&(!prior||['documentToken','producerToken','browserDocumentId','routeEpoch','origin'].every(k=>b[k]===prior[k]));}
  // Classify only transport rejection. Binding/scope validation remains outside
  // this wrapper, and a dormant handshake keeps its original elapsed budget.
@@ -197,7 +199,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function retainMigration(s,handle){const m=liveMigration(s);if(!m)return false;try{if(typeof s.adapter?.retainLoadedHandles==='function'&&s.adapter.retainLoadedHandles(m.leaseOwner,[handle],m.elapsedDeadline)!==true){clearMigration(s);return false;}}catch{clearMigration(s);return false;}m.handle=handle;return true;}
  function dispose(s){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.capturePending?.cancel();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{s.adapter?.stop();}catch{}}
  function reset(){epoch++;const s=current;current=null;dispose(s);}
- function stop(){contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
+ function stop(){verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function pagehide(event){
   if(!enabled&&contextResumeAllowed){stop();return;}
   if(event?.persisted!==true){stop();return;}if(!enabled)return;
@@ -214,7 +216,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   // subsequent attempt; failures never schedule their own recovery loop.
   queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode,expectedScope);});
  }
- async function start(){contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
+ async function start(){verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  async function begin(rebinding=false,initialMode='workspace',expectedScope=null){
   reset();const s={run:epoch,initialMode,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
   let foregroundArmed=doc.visibilityState==='hidden',foregroundPending=false;
@@ -227,6 +229,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     recoveryRemaining--;rebind(s,null,s.scopeKey);return true;
    };
    void track(()=>rpc(s,{v:1,type:'HOST_FOCUS',clientId,seq:++seq,...bindingFields(s.binding)}).then(result=>{
+    noteScopeStatus(s,result);
     if(exactHostRecord(result,['ok','reason'])&&result.ok===false&&result.reason==='invalid-host-document'&&recoverTransport())return;
     if(result?.ok!==true||result.state!=='verified'||result.scopeKey!==s.scopeKey)throw Error('foreground-scope-unverified');
    },()=>{
@@ -320,7 +323,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    // context listener eligible for a later genuine native READY notification.
    // This helper neither retries nor handles explicit negative responses.
    const hello=await handshake(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq});if(contextRecovery===true&&exactHostRecord(hello,['ok','reason'])&&hello.ok===false&&hello.reason==='invalidated-during-check')throw Error('context-handshake-superseded');if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
-   const auth=await handshake(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});if(auth?.state!=='verified')throw Error('scope-not-verified');if(expectedScope!==null&&auth.scopeKey!==expectedScope)throw Error('recovery-scope-changed');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
+   const auth=await handshake(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});noteScopeStatus(s,auth);if(auth?.state!=='verified')throw Error('scope-not-verified');if(expectedScope!==null&&auth.scopeKey!==expectedScope)throw Error('recovery-scope-changed');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
    if(learnedScope!==s.scopeKey||learnedDocument!==s.binding.browserDocumentId)clearLearned();learnedScope=s.scopeKey;learnedDocument=s.binding.browserDocumentId;
    recentId(s);
    let surface;const adapter=s.adapter=adapterFactory({document:doc,onIdleHint:()=>requestAutomaticIdle(s),onNativePrepare:producer=>nativePrepare(s,producer),priorityConversationId:()=>recentId(s),onOldSendOperation:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding))return;void send({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding)||s.url!==origin+'/')return;void send({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,
@@ -400,7 +403,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
      const check=()=>{remaining();if(!live(s)||s.binding!==prior||!bindingOK(prior)||s.scopeKey!==scope||!s.ready||s.controller?.dormantReady?.()!==true)throw Error('stale-dormant-binding');};
      check();const result=await rpc(s,{v:1,type:'HOST_DOCUMENT_RENEW',clientId,seq:++seq,...bindingFields(prior)},remaining());check();
      if(result?.ok!==true||!bindingOK(result.binding,prior))throw Error('invalid-host-binding');
-     const auth=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(prior)},remaining());check();
+     const auth=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(prior)},remaining());check();noteScopeStatus(s,auth);
      if(auth?.state!=='verified'||auth.scopeKey!==scope){s.recoveryDenied=true;throw Error('scope-not-verified');}
      s.binding=Object.freeze({...result.binding});return {ok:true,binding:s.binding};
     }),
@@ -428,7 +431,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
       if(renewed?.ok!==true||!bindingOK(renewed.binding,s.binding))throw Error('invalid-host-binding');
       s.binding=Object.freeze({...renewed.binding});
       const remaining=()=>{const budget=6000-(elapsedNow()-started);if(budget<=0)throw Error('request-timeout');return budget;};
-      const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());
+      const authority=await rpc(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(binding)},remaining());noteScopeStatus(s,authority);
       if(authority?.state!=='verified'||authority.scopeKey!==s.scopeKey){s.recoveryDenied=true;throw Error('scope-not-verified');}
       const status=await rpc(s,{v:1,type:'HOST_UI_STATUS',...bindingFields(binding),mountId:handle.id},remaining());
       return {...status,binding:renewed.binding};
@@ -501,6 +504,6 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   doc.defaultView.addEventListener('pageshow',pageshow);
   return begin(true,contextResumeMode);
  }
- function localStatus(){if(!enabled)return contextResumeAllowed?'waiting':'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';return current.controller?.localStatus?.()??'unavailable';}
+ function localStatus(){if(!enabled)return contextResumeAllowed?(verificationWaitURL===doc.location.href?'verification-required':'waiting'):'unavailable';if(!current||!live(current))return 'unavailable';if(!current.ready)return 'connecting';return current.controller?.localStatus?.()??'unavailable';}
  return Object.freeze({localStatus,start,stop,contextPending,contextReady,prepareIdle,enterDormant,isOwnedMask:node=>!!current&&live(current)&&current.surface?.isMasked?.(node)===true,showWorkspace:()=>sync(()=>current?.controller?.showWorkspace()??false),showReading:()=>sync(()=>current?.controller?.showReading()??false)});
 }

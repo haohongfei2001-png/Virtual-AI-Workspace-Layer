@@ -141,7 +141,9 @@ jobs:
         run: node tests/host/ui10-package-matrix-browser.mjs "$RUNNER_TEMP/ui10-matrix.json"
       - name: Passive local extension status (isolated MV3)
         if: ${{ !cancelled() }}
-        run: node tests/host/local-status-package-browser.mjs
+        run: |
+          node tests/host/local-status-package-browser.mjs
+          node tests/host/challenge-status-package-browser.mjs "$RUNNER_TEMP/challenge-status.json"
       - name: Layout mechanism regressions (not MV3 acceptance)
         if: ${{ !cancelled() }}
         run: |

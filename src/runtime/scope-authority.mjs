@@ -60,7 +60,7 @@ export function createScopeAuthority({provider,profile,readIdentity=null,context
    entry.contextReceipt=contextReceipt;entry.bindingProfile=profile.id;
    entry.sourceToken=Object.freeze({});entry.scope=scope;entry.until=until;entry.grant=Object.freeze({id:grantId,scopeKey:scope.key,principal,context,scopeEpoch:entry.epoch,issuedAt,expiresAt});
    return {state:'verified',grant:entry.grant};
-  }).catch(error=>{const result=unverified(current()?(error?.message==='invalid-context-roster'?'invalid-context-roster':'scope-provider-unavailable'):'stale-scope-refresh');if(states.get(k)===entry){entry.result=result;entry.grant=null;entry.scope=null;abort.abort();}return result;}).finally(()=>{signal?.removeEventListener('abort',cancelRefresh);abort.signal.removeEventListener('abort',onAbort);if(states.get(k)===entry)entry.pending=null;});
+  }).catch(error=>{const result=unverified(current()?(error?.message==='session-challenged'?'host-verification-required':error?.message==='invalid-context-roster'?'invalid-context-roster':'scope-provider-unavailable'):'stale-scope-refresh');if(states.get(k)===entry){entry.result=result;entry.grant=null;entry.scope=null;abort.abort();}return result;}).finally(()=>{signal?.removeEventListener('abort',cancelRefresh);abort.signal.removeEventListener('abort',onAbort);if(states.get(k)===entry)entry.pending=null;});
   entry.pending=task;return task;
  }
  function revalidate(frame,signal,{force=false}={}){
@@ -91,7 +91,7 @@ export function createScopeAuthority({provider,profile,readIdentity=null,context
    return {state:'verified',grant:entry.grant};
   }).catch(error=>{
    if(states.get(k)===entry)invalidate(frame.documentId);
-   return unverified(error?.message==='scope-identity-changed'?'scope-identity-changed':'scope-revalidation-failed');
+   return unverified(error?.message==='session-challenged'?'host-verification-required':error?.message==='scope-identity-changed'?'scope-identity-changed':'scope-revalidation-failed');
   }).finally(()=>{signal?.removeEventListener('abort',cancelRefresh);entry.abort.signal.removeEventListener('abort',onAbort);if(entry.rechecking===task)entry.rechecking=null;});
   entry.rechecking=task;return task;
  }

@@ -5,6 +5,7 @@ const identifier=v=>typeof v==='string'&&v.length>0&&v.length<=256&&!/[\s\u0000-
 /** Shared fixed-provider decoding. No URLs, proofs or credentials come from DOM. */
 export async function readSessionJSON(response,{target,limit,raw=false,check}={}){
  check();
+ if(response.status===403&&response.headers?.get?.('cf-mitigated')==='challenge')throw Error('session-challenged');
  if(response.status===401||response.status===403)throw Error('session-unauthorized');
  if(response.status!==200||response.redirected||response.url!==target)throw Error('invalid-session-response');
  if(!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')??''))throw Error('invalid-session-mime');

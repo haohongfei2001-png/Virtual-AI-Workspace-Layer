@@ -1,8 +1,10 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 当前交付关口（2026-10-18，集中索引与恢复闭环）
+## 当前交付关口（2026-10-19，真实宿主优先、规模验收暂缓）
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
+
+- **2026-10-19挑战故障提示已修，真实403未解决**：精确403+`cf-mitigated: challenge`不再混同登录失效，转固定未验证原因与仅当前route/RAM的C2被动提示；不读响应body、不发scope、不触发备用认证或重试。726定向PASS/0skip/462.177ms、185包检查PASS/2946.894ms、17 CI分区PASS/46.716ms。隔离MODERN C2实际MV3在worker就绪前置下验证原生详情GET一次、session一次/accounts零、无frame、草稿保留、重复被动查询不增请求及离开页面失效，耗时910.232ms，源码未漂移；独审无阻断。先前异步观察器过早完成、fixture缺C2上下文/C3退出路径及立即冷启动session0失败全部保留；不据修正runner关闭冷启动关口。原10秒观察窗口、生产预算与安全拒绝不变；接入原CI步骤，无缓存/上传。当前真实Profile仍安装21a200e，本批未访问或更新真实Profile。真实挑战及完整导航/恢复、IME/PAIA/跨端仍开放，规模DEFERRED。无完整真实旅程前后耗时可比，不宣称提速。见原证据challengeFaultStatus20261019。
 
 - **2026-10-19用户已手动刷新、未出现验证；21a200e已原位更新但403仍在**：原授权tab无草稿/生成/附件后，旧版正常流程page accounts200、worker session403且challenge=true；按原路径/同扩展ID装入已过CI的21a200e，保留旧包、不卸载、不触碰Profile存储，权限/配置完全相同。新版一次正常流程仍page accounts200、约6秒后worker session403 HTML且`cf-mitigated=challenge`，frame0、原生编辑器保留。每次只观察到一次worker session请求，不能据续期放大修复宣称启动挑战解决。停止要求用户反复刷新/清Cookie/重登；服务端触发规则未知，需要服务提供方确认该扩展请求的支持/挑战原因。仅保存脱敏状态，未读正文/凭据/私人ID。原证据manualRefreshAndCandidateUpdate20261019；真实闭环仍未通过。
 
@@ -10,7 +12,7 @@
 
 - **2026-10-19真实403原因分类已查明，尚未解决**：确认使用本地投递专用Profile及原获授权当前tab。页面session一次200 JSON；唤醒worker后单独session一次200 JSON；正常扩展刷新流程随后仍返回403 HTML，且响应头`cf-mitigated=challenge`、server=cloudflare。这是挑战页，不能仅据现有`session-unauthorized`枚举认定登录已失效；触发规则和请求差异根因尚未知。两次正常刷新均先确认无草稿/生成/附件，原生编辑器保留、frame0。仅保存脱敏状态/响应头布尔值，取消响应body，不读凭据/正文、不做原生写入。用户需在同一专用Profile手动刷新一次并在出现时完成人机验证；未收到操作结果前停止主动复测。生产403拒绝和备用认证边界不改，未声明恢复；原证据workerChallengeDiagnosis20261019。
 
-- **最新源码CI确认**：b9ffe08的CI39122796470四job全SUCCESS，PR16已记录；此后仅诊断证据与文档更新，不冒充新产品代码验收。
+- **最近已完成产品CI**：21a200e的CI39153391543四job全SUCCESS；此前b9ffe08的CI39122796470亦成功。本批挑战提示源码只完成上述本地验证，待新HEAD CI，不借旧结果认证新代码。
 
 - **CI39122369116最终结果**：同一源码 `f1d5db7ea47bdc834ea458d3cbcd8331e2e9e9d2` 的 node-contracts、offline-durability-compat、offline-journeys、offline-j4-lifecycle 四 job 全部 SUCCESS。此次Linux休眠前置候选通过；保留CI39121293783原FAIL，不追溯改判，不将一次通过泛化为自然休眠或无新context peer恢复。后续包类别提示另属c6629bb的194项定向验证，不借此前CI冒充其全矩阵。
 
