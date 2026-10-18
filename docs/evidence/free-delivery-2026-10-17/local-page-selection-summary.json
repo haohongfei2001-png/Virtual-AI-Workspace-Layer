@@ -1773,5 +1773,66 @@
       "Original reading viewport and return slot browser regressions passed; mechanism only, not MV3.",
       "10k/100k DEFERRED; real Project/navigation/return/search/recovery remain OPEN."
     ]
+  },
+  "headerGapReturn20261018": {
+    "baseHead": "a49560038f988c2b8c13b97e1880c5aaaba92f57",
+    "status": "WEB_MECHANISM_ONLY_NOT_LIVE_VERIFIED",
+    "sourceSha256": {
+      "src/host/native-return-gap.mjs": "aaa1de46d2625f64184ef0500a837ba07d9b9bd1336bb0a5213c8c1bcbd4d68f",
+      "src/host/chatgpt-adapter.mjs": "189b28ec2ffd52acb7e1b450ec89ecdbf490e829254cf8ce53a3b3d709815b19",
+      "src/host/surface-controller.mjs": "08a1c8fb9d85081e9de759e778323b0dcc95a8db1300a37ff0c6f5a9948efa34",
+      "tests/host/return-gap-browser.mjs": "a509a77373d9b9f5b768ef46245656fe82ce718d67a62ef32294e238e22fc183",
+      ".github/workflows/free-offline-host.yml": "98d0754a6aa993e40cd28c892d691e6460e3ee59ea6440d652be836b6454945b"
+    },
+    "targeted": {
+      "pass": 242,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 2004.765834
+    },
+    "browser": {
+      "result": "PASS_WEB_MECHANISM_ONLY",
+      "checks": {
+        "initial": true,
+        "ownedAccepted": true,
+        "movedOwnedRejected": true,
+        "hiddenOwnedRejected": true,
+        "tinyControlRejected": true,
+        "portalRejected": true,
+        "inertRejected": true,
+        "identityRejected": true,
+        "restored": true,
+        "dormant": true,
+        "dormantRejectsNewControl": true,
+        "draftPreserved": true
+      },
+      "controller": {
+        "workspaceOpened": true,
+        "returnRemoved": true,
+        "nativeSlotUnchanged": true,
+        "draftPreserved": true
+      },
+      "automaticGeometrySafety": true,
+      "bridge": "FIXTURE_NOT_MV3"
+    },
+    "liveReadonly": {
+      "available": true,
+      "rect": {
+        "x": 348,
+        "y": 8,
+        "width": 36,
+        "height": 36
+      }
+    },
+    "independentReview": "Reported owned-box geometry, clickability and style-change lifecycle issues fixed; no remaining blocker within diff review.",
+    "observerCorrection": "Initial disappearance wait could pass on grant expiry; replaced with next-event-turn assertion allowing safe withdrawal OR verified reposition. A disappearance-only assertion failed when actual button safely repositioned; this failure was test expectation, not ignored.",
+    "boundaries": [
+      "Only explicit observed pointer-transparent header layout at z-index 30; no generic z-index escalation or third popover.",
+      "Native control/header replacement, tiny obstacles, portal, inert, invalid owned geometry and clickability fail closed.",
+      "Body-owned return button uses existing controller and grants; fixture bridge does not certify MV3.",
+      "Native slot untouched; draft preserved. No live insertion or native writes; no body, private IDs or credentials read.",
+      "Production context-unverified config unchanged. Real Project, navigation, search and safe recovery still unaccepted.",
+      "10k/100k remain DEFERRED; original thresholds unchanged."
+    ]
   }
 }

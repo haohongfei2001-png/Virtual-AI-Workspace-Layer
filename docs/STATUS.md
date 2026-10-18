@@ -6,6 +6,8 @@
 
 
 
+- **真实标题栏空位返回已接入候选**：新增显式header-gap/returnHitRoot配置，复用原adapter/controller/grant，返回按钮挂于body且只在reading出现；不修改原生header子节点、不新增popover。针对已观察pointer-transparent标题栏，核验36×36空位、256节点原生遮挡、命中根身份、原生层级30、自有按钮实际尺寸/可点击性；休眠复核只管几何不复活授权。补样式/hidden/inert/aria-hidden观察及精确自有style回路过滤，下一事件轮撤回或安全重定位。独审已报项全部关闭；242定向/包构建PASS、0 skip、2004.766ms，四个headless布局机制回归通过。实际controller trusted click返回workspace成功，但桥为fixture，仅WEB_MECHANISM_ONLY。授权真实页只读同模块确认空位可用，未挂载真实扩展或修改宿主；生产profile仍关闭，完整真实Project/打开/返回/搜索/恢复尚未验收。初始等待按钮消失可能等到grant过期的观察器缺陷已修，后续只消失断言与合法重定位不符的失败保留说明。规模DEFERRED、Free NOT_RELEASE_READY。证据见原local-page-selection-summary.json的headerGapReturn20261018。
+
 - **纯历史列表与原生入口隔离候选**：新增可选historyList，摄取仍用原history source，mask只覆盖已核验聊天行；标题沿用原生链接、归属保持UNKNOWN。独审发现并修复行内ARIA控件、列表错位遮挡heading、祖先inert/aria-hidden及SVG链接命名空间反例；元素/角色白名单、2048节点预算、source/视口包含、原生保留区域分离及128祖先状态均失败关闭。242定向/包构建PASS、0 skip、1983.937ms；三个headless布局闭环通过，仅WEB_MECHANISM_ONLY，并接入原CI无缓存/上传。授权真实页只读识别10条已渲染聊天，排除项目创建区；仅当前中文变体，不授予scope、不读正文。保留初始UTF-8 fixture和UNKNOWN断言的观察器错误记录。真实header空位返回、生产profile及完整Project/导航/搜索/恢复仍OPEN；10k/100k DEFERRED、未发布就绪。证据见原local-page-selection-summary.json的pureHistoryList20261018。
 
 - **返回槽错位/遮挡与休眠同步窗口已修候选**：旧39744db实测反例中，header子槽移至composer上方仍inspect=true。新增显式profile只读槽位核验：同文档/connected、屏幕与header矩形、可见性、256节点有界header遮挡和命中检查；休眠return的几何及精确原生占槽均在onWake前复核，不复活binding/grant。旧反例1 FAIL保留；314定向/构建全过、0 skip、2082.040ms；独立审查无阻断。真实headless验证错位、hidden、五点之间小控件遮挡、安全恢复与草稿保留，仅WEB_MECHANISM_ONLY。初次组合viewport回归因原始滚动内容rect穿过header误拒绝，现改用已核验的裁剪readingRect并保持viewport身份/拓扑，原viewport闭环再次通过。真实profile的几何空位返回仍待实施，不能将此安全修复当真实返回验收。只读结构已区分history heading与列表wrapper，后续分离摄取root和纯列表mask，UNKNOWN不升NONE；未读正文或原生写入。规模DEFERRED，Free未完成。
