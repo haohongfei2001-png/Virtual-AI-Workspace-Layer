@@ -6313,7 +6313,7 @@
       },
       "comparison": "Old induced ACK-loss observer FAIL at original 6s despite real new page. Corrected probe completes full journey in 1.219s; normal 1.474s. These are observer-result timings, not product speedup or original Linux failure reclassification.",
       "review": "Independent read-only review found no blocking timing/threshold issue; test-source hashes added and duplicate-page claim limited to observation completion.",
-      "linuxResult": "PENDING_NEXT_CI",
+      "linuxResult": "PASS_TEMPORARY_MV3_POPUP on e245d80, CI39162946494; original CI39161638280 FAIL retained",
       "receiptsUncompressedSha256": {
         "temporary-ci39161638280-run.json.gz": "adcae1521497f1945203507e05433d0589e798325988f0d60891592ef05b996b",
         "temporary-ci39161638280-journeys.log.gz": "64a7c277cc2f1bf5e2f6cdef84e1b7753853b6b394e2fb431da1aaba8fc723bf",
@@ -6325,6 +6325,77 @@
         "temporary-ci39161638280-targeted.tap.gz": "d4b39453d459dfcf801e4b17f806ae6c80170aaafa96efc7947154fb5291907f",
         "temporary-ci39161638280-ci-log-old-anchor-fail.tap.gz": "998d11fea1b43407a38597f0f2554a925bacc5dc26ef6631efb2c93273739033",
         "temporary-ci39161638280-ci-step-old-anchor-fail.tap.gz": "ac7c6d845916b5fbb290ef10e5ae882590b7d472d40dc66772e754f4a1b6021b"
+      }
+    },
+    "ci39162946494": {
+      "head": "e245d80e44d96290b88ef7659e78ca7742aad150",
+      "status": "success",
+      "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39162946494",
+      "jobs": {
+        "offline-j4-lifecycle": "success",
+        "offline-durability-compat": "success",
+        "node-contracts": "success",
+        "offline-journeys": "success"
+      },
+      "temporaryNavigation": {
+        "status": "PASS_TEMPORARY_MV3_POPUP",
+        "mode": "TEMPORARY_NOT_FREE_ACCEPTED",
+        "nativeInput": {
+          "pageCount": 1,
+          "inputAcknowledgement": "ACK",
+          "elapsedMs": 172.36611799999991
+        },
+        "elapsedMs": 2163.4525989999997,
+        "sourceStable": true,
+        "testSourcesStable": true,
+        "testHashes": {
+          "tests/host/temporary-navigation-package-browser.mjs": "e39be3b05a12748bb99a7852ceb4fb47f467e5114951a0c14fda404a96a57369",
+          "tests/host/temporary-native-open-observer.mjs": "b736b1a914f885823a5cc6cb24be2da626e8d6d82a6916b93e8053354b9ad2ba"
+        },
+        "draftPreserved": true,
+        "databaseEmpty": true,
+        "newTabOpened": true,
+        "reopenedFresh": true,
+        "readingLinksExcluded": true,
+        "hiddenTextExcluded": true,
+        "persistedPagehideKeepsFreshReader": true
+      },
+      "challengeStatus": {
+        "status": "PASS",
+        "results": {
+          "exactChallengeMessage": true,
+          "noGrantedFrames": true,
+          "nativeDraftPreserved": true,
+          "sessionReads": 1,
+          "accountsReads": 0,
+          "passiveSnapshotsNoRetry": true,
+          "unrelatedPageUnavailable": true
+        },
+        "elapsedMs": 1143.402321,
+        "realChatGPT": "NOT_RUN"
+      },
+      "j4": {
+        "status": "PARTIAL_J4_NOT_ACCEPTED",
+        "realChatGPT": "NOT_RUN",
+        "release": "NOT_RELEASE_READY",
+        "sourceChangedDuringRun": false,
+        "buildManifestUnchanged": true,
+        "limitations": [
+          "SYS-01 default before-evidence continuous segment has scoped evidence; remaining combinations require separate actual records",
+          "SYS-03 old Host codec before/after-evidence roundtrips and standalone asset upgrades have scoped evidence; re-enable stability and remaining combinations remain open",
+          "Remaining supported-profile matrix and lifecycle surface combinations"
+        ]
+      },
+      "verifiedSourceHashesMatchLocal": true,
+      "scaleAcceptance": "10k actual SKIPPED/DEFERRED; 100k NOT_RUN/DEFERRED; original thresholds and failures retained",
+      "realProfile": "NOT_TOUCHED; installed 0cf3249 product unchanged; prior LIVE_TEMPORARY_CHAT_PASS only, real Project NOT_RUN, normal authentication 403 unresolved",
+      "timingBoundary": "temporaryNavigation elapsedMs covers startup and popup journey before cleanup; nativeInput shares original 6000ms absolute budget. No valid original Linux completed journey baseline; not product speedup.",
+      "receiptsUncompressedSha256": {
+        "temporary-ci39162946494-run.json.gz": "4f4fa8d12816bae784ce4a680fd76f660fb3522e23ea663f5ef7d7ab2a09cf65",
+        "temporary-ci39162946494-journeys.log.gz": "e69ff845764fa98e0a2f3b92a6cb98ff95af26c4db8d75615b302018de029b30",
+        "temporary-ci39162946494-temporary-navigation.json.gz": "1960ca9f0eb95efd94b20c9473007eb533e0b3b78fbb440b3b23a99e5daea31d",
+        "temporary-ci39162946494-challenge-status.json.gz": "e2518bd16071bca04c5a72eb73702662dd633058ba35958c5619306971221c53",
+        "temporary-ci39162946494-j4.json.gz": "2b5032050ff8c179d90f4e98531f895ee4264c9da219b1a9475dba71a5131dc0"
       }
     }
   }
