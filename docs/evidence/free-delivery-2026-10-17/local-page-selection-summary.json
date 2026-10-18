@@ -3276,5 +3276,39 @@
       "tests/host/dormant-close-cancel.test.mjs": "44e4208e4c763761ede58a311991497d7b5e8d2cd27440ff825cc93ac0bf7f50",
       "tests/host/dormant-busy-cancel-mv3.mjs": "72191bebedebca1e54f8065f39bb0b4ce7cfdd8d8cbceb867ded9c015d07297e"
     }
+  },
+  "busyPreflightObserver20261018": {
+    "base": "bbf0b36a9316d7dd780f0c97428ea5cc603b66d0",
+    "productionChanged": false,
+    "fix": "Use existing atomic prepared dormancy probe; local readiness and close entry share one JS turn, exactly one attempted close. Failure-only primary RPC diagnostics.",
+    "evidence": [
+      {
+        "file": "busy-preflight-diagnostic.json.gz",
+        "status": "PASS",
+        "runnerHash": "8191d30e0142c793bb371dece5ce5fb3b6184e98fdb71c56df8ffba895fce1fa"
+      },
+      {
+        "file": "busy-preflight-atomic.json.gz",
+        "status": "PASS",
+        "runnerHash": "10116bfcfe4da6ef9c966dcc3802eb4530b96e91301e7838f17fb784f6795fce"
+      },
+      {
+        "file": "busy-partial-join-preflight-fail.json.gz",
+        "status": "FAIL",
+        "runnerHash": "1d1098beaeb242773930a948b86db19dd0e29db725ee23b1af076be3fb6d810d"
+      }
+    ],
+    "finding": "Latest partial-mode attempt fails BEFORE fault injection: initial HOST_UI_IDLE_CHECK returns ui-release-busy; gated=false, released=false, confirmFault=false. Local prepared=true does not establish global worker idle. Specific busy owner not yet identified. Historical preflight timeout root remains OPEN.",
+    "partialJoinMV3": "NOT_ESTABLISHED; optional fault harness prepared but never reached injected fault. Final assertion strengthening not browser-run.",
+    "finalRunnerHash": "6eaa7bb359e54b528a6ba8600615bf659115e210ccccc240673716c13e7aaa7b",
+    "targeted": {
+      "tests": 47,
+      "pass": 47,
+      "skip": 0,
+      "durationMs": 70.542583
+    },
+    "limits": "No threshold/timer/auth/budget changes, no retry after close refusal. Earlier standard-mode PASS has distinct runner hash and cannot certify final partial mode. No comparable browser elapsed timing was recorded; no performance improvement claim.",
+    "live": "NOT_RUN this increment; previous dedicated-profile accounts403 remains unresolved; no additional private response read.",
+    "scale": "10k/100k DEFERRED, original failures unchanged"
   }
 }
