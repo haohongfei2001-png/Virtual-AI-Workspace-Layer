@@ -114,3 +114,10 @@ test('worker fixed reader inherits the packaged scope dialect with shared durabl
  assert.equal(calls.length,3);assert.equal(calls[2].url,'https://chatgpt.com/backend-api/conversations/'+C);assert.equal(result.metadata.conversationId,C);
  assert(f.opens()>0);assert(!JSON.stringify(result).includes('SECRET'));assert.equal(f.config.profile.singlePersonalDefault,false);
 });
+test('worker observation whitelist uses the same explicit packaged surface profile as content',t=>{
+ const id='chatgpt-zh-desktop-observed-20261018',f=fixture(t,{surfaceProfile:id});
+ assert.deepEqual([...f.config.surfaceProfiles.keys()],[id]);assert.equal(f.config.surfaceProfiles.get(id).currentBody.conversationIdSource,'message-elements');
+ assert.equal(f.config.currentMetadataReadEnabled,false);assert.equal(f.config.sendCandidatesEnabled,false);
+ assert.deepEqual([...fixture(t).config.surfaceProfiles.keys()],['chatgpt-legacy-reconstruction']);
+ assert.throws(()=>fixture(t,{surfaceProfile:'page-supplied-profile'}),/unsupported-host-surface-profile/);
+});

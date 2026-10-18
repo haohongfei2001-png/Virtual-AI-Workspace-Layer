@@ -48,7 +48,7 @@ export function createCurrentBodyDiscovery({document:doc,urlPolicy,profile,isOwn
  // Presentation-owned concealment is not a native empty-message observation.
  // Do not cache or return old message IDs; consumers defer new proposals until
  // native visibility returns. The existing proof retains its original expiry.
- function isPresentationMasked(){if(stopped||!config)return false;try{const roots=doc.querySelectorAll(config.rootSelector);return roots.length===1&&isOwnedMask(roots[0])===true;}catch{return false;}}
+ function isPresentationMasked(){if(stopped||!config)return false;try{const roots=doc.querySelectorAll(config.rootSelector);if(roots.length!==1)return false;let depth=0;for(let node=roots[0];node;node=node.parentElement){if(++depth>64||!node.isConnected||node.ownerDocument!==doc)return false;if(isOwnedMask(node)===true)return true;}return false;}catch{return false;}}
  function affectsBody(records){
   if(stopped||!config||!Array.isArray(records)||!records.length)return false;
   try{const roots=[lastRoot,...doc.querySelectorAll(config.rootSelector)].filter(Boolean),contains=(a,b)=>a===b||a?.contains?.(b)===true;

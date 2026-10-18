@@ -5,13 +5,14 @@ import {createHostBrowserBootstrap} from './host-browser-bootstrap.mjs';
 import {ScopeRepository} from '../b1/scope-repository.mjs';
 import {WorkspaceRepository} from '../data/repository.mjs';
 import {FreeEvidenceRepository} from '../data/free-evidence-repository.mjs';
-import {LEGACY_SURFACE_PROFILE} from '../host/surface-discovery.mjs';
+import {selectHostSurfaceProfile} from '../host/chatgpt-observed-profile.mjs';
 import {createURLPolicy} from '../host/url-policy.mjs';
 import {createHostBindingService} from './host-binding-service.mjs';
 import {createSessionProvider} from './session-provider.mjs';
 
 /** Zero-seed worker composition. Configuration is packaged code, never page input. */
-export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgpt.com',scopeProfile={id:'chatgpt-context-unverified',singlePersonalDefault:false},provider=null,sessionProfile={},currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,offlineFirstSend=false,offlineOldSendTerminal=false,browserBootstrap=null,serviceFactory=createHostBindingService}={}){
+export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgpt.com',scopeProfile={id:'chatgpt-context-unverified',singlePersonalDefault:false},provider=null,surfaceProfile=undefined,sessionProfile={},currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,offlineFirstSend=false,offlineOldSendTerminal=false,browserBootstrap=null,serviceFactory=createHostBindingService}={}){
+ const selectedSurfaceProfile=selectHostSurfaceProfile(surfaceProfile);
  const conversationRequestContext=scopeProfile.conversationRequestContext??null;
  if(Object.hasOwn(sessionProfile,'conversationRequestContext')&&(sessionProfile.conversationRequestContext??null)!==conversationRequestContext)throw Error('host-conversation-profile-mismatch');
  const policy=createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}});
@@ -34,7 +35,7 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
  const readBudget=createSharedHostReadBudget({repository});
  service=serviceFactory({readBudget,extensionId:chrome.runtime.id,repository,workspaceRepository,freeEvidenceRepository,allowedURL,contextObserver,provider:provider??createSessionProvider({origin,readBudget,profile:{...sessionProfile,conversationRequestContext,currentConversationReadEnabled:currentMetadataReadEnabled,...(sendAckProfile?{sendAckProfile}:{} ),...(historicalSendProfile?{historicalSendProfile}:{})}}),currentMetadataReadEnabled,sendCandidatesEnabled,sendAckProfile,historicalSendProfile,firstSendOrigin:offlineFirstSend?origin:null,oldSendTerminalOrigin:offlineOldSendTerminal?origin:null,profile:scopeProfile,
   identityOrigin:origin,isolatedIdentityDispatch:(frame,command)=>chrome.tabs.sendMessage(frame.tabId,command,{documentId:frame.documentId}),
-  navigationURLPolicy:policy,surfaceProfiles:new Map([[LEGACY_SURFACE_PROFILE.id,{...LEGACY_SURFACE_PROFILE,urlPolicy:policy}]]),
+  navigationURLPolicy:policy,surfaceProfiles:new Map([[selectedSurfaceProfile.id,{...selectedSurfaceProfile,urlPolicy:policy}]]),
   uiURLs:Object.fromEntries(['workspace','sidebar'].map(role=>[role,chrome.runtime.getURL(role+'.html')])),
   getContexts:filter=>chrome.runtime.getContexts(filter),getFrame:query=>chrome.webNavigation.getFrame(query),
   presentSurface:({parentFrame,binding,mode})=>chrome.tabs.sendMessage(parentFrame.tabId,{type:'HOST_PRESENT_SURFACE',...binding,mode},{documentId:parentFrame.documentId}),

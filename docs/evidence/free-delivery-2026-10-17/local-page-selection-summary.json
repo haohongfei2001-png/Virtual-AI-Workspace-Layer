@@ -1887,5 +1887,70 @@
       "Next: packaged isolated MV3 C2 chain, then authorized dedicated Profile; no live installation performed.",
       "10k/100k DEFERRED, NOT_RELEASE_READY."
     ]
+  },
+  "observedCandidateMV320261018": {
+    "baseHead": "9a0d978ee2b4d354350bf8d35f59ef657a541ca8",
+    "status": "PARTIAL_COMPLETE_JOURNEY_FAIL",
+    "sourceSha256": {
+      "src/runtime/host-worker-runtime.mjs": "fbedb5ad082fc3e95cca9ee92801bfdd46ac94828b6476ec91e7f9d46386b080",
+      "src/host/current-body-discovery.mjs": "a87cac08547947f2bac5fa156381f77640396e0bbf0f0b49f616cb28aaf034d3",
+      "tests/host/host-worker-runtime.test.mjs": "c0b54f1d4b10cb75a6fce4f0ce515dca6036464d3c19337f8c8d71fb4e7d0241",
+      "tests/host/observed-profile-browser.mjs": "4cb2ae63a54cc2fa18fdaa68df6a706d9c6f4b4aa5ca79650e448c4384088a76",
+      "tests/host/observed-candidate-mv3-browser.mjs": "b8300c50f25bdf9b3970a65f38bf0196610d9ac58ac813ba351fda9cb61aa9b0",
+      "tests/host/fixtures/observed-desktop.mjs": "6baa943115276c153126d1daf9d5a3191beb039ebbeb5ca23c0102841fbe8924"
+    },
+    "rootCausesClosed": [
+      "Worker whitelist ignored selected modern surfaceProfile; authenticated frames mounted but proposals rejected. Same explicit selector now used in worker/content.",
+      "Nested modern body root was not recognized under exact reading mask ancestor; inherited hidden incorrectly produced unproven. Bounded ancestor mask detection now defers observations without renewing proof."
+    ],
+    "targeted": {
+      "pass": 188,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 2249.279833
+    },
+    "webMechanism": {
+      "status": "PASS_WEB_MECHANISM_ONLY",
+      "checks": {
+        "bodyObservationPresent": true,
+        "noMaskedBodyInvalidation": true,
+        "profileSelected": true,
+        "bodyConfigured": true,
+        "nativeTitle": true,
+        "noFabricatedMembership": true,
+        "readingMasked": true,
+        "historyMasked": true,
+        "searchVisible": true,
+        "composerVisible": true,
+        "geometryStillValid": true,
+        "draftPreserved": true
+      },
+      "authorization": "FIXTURE_NOT_LIVE_SCOPE"
+    },
+    "actualMV3": {
+      "status": "FAIL",
+      "checks": {
+        "noScopeBeforeNativeRequest": true,
+        "canonicalSecondContext": true,
+        "nativeRequestToScopeAndDualFrame": true,
+        "nativeTitleVisible": true,
+        "noAutomaticDetailReads": true,
+        "draftPreserved": true
+      },
+      "durationMs": 10860.240124999998,
+      "sourceChangedDuringRun": false,
+      "evidence": "Fresh isolated Chrome profile, real package/worker/IDB/frame joins, synthetic HTTPS routes, rejecting local proxy. No live account.",
+      "detailsGETs": 1,
+      "rawFailure": "observed-candidate-navigation-fail.json.gz"
+    },
+    "originalFailure": "observed-candidate-empty-red.json.gz",
+    "openRootCause": "acknowledgedBody rejects own-mask state. Same-target plan lacks current proof and falls back to href/new-tab-preserve-current; current reading/return assertion fails. Safe revalidation needed, no cached-proof revival.",
+    "next": "Resolve same-target reading with fresh native identity validation, retain draft/proof budgets; search step remains NOT_RUN after failing return step.",
+    "boundaries": [
+      "No live Profile installation or LIVE_VERIFIED.",
+      "Correct second canonical context and native title in UNKNOWN list passed actual isolated MV3.",
+      "No production default, metadata, send, history, C1/C3, or budget changes.",
+      "Complete journey FAIL retained; 10k/100k DEFERRED."
+    ]
   }
 }
