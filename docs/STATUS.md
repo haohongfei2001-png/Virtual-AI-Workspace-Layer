@@ -1,5 +1,8 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **正常观察的侧栏边界已收窄，真实Project样本已取得**：旧全document唯一nav在正文/隐藏备用nav出现时丢聊天，侧栏不存在时还会读正文链接；隔离原版10场景6FAIL/4PASS（当前真实页单nav未触发此反例）。现observed profile revision2只在唯一可见原生侧栏内解析projects/history/纯history mask，其他边界和多根/多nav歧义拒绝保持；resize重建有界观察RAM，旧根替换使handle失效，正文nav文字变化不再触发侧栏重扫。624定向PASS/0skip（4.341s）、11真实浏览器边界场景及原两种viewport机制通过，独审无阻断；同源码隔离实际MV3完成启动→C2→FreeUI→阅读/返回/搜索→worker退出撤回→新GET恢复（1.885s），无源码漂移，仅C2_FRESH_REQUEST_ONLY_NOT_J4，不作提速或真实完整验收声明。
+- **Project适配下一步已有具体来源**：用户打开的真实Project页是标准g-p-32hex；实际content容器2个、可见1个，没有聊天页timeline-scroll。可见Project标题1个，选中面板两条聊天链接的首个DIV标题与侧栏同ID均一致；第二文本域未读，不能整条anchor.textContent当标题。当前observed profile仍关闭members，尚未接上此Project结构；不由路径单独确认归属。仅保存结构/计数断言，无正文/私人ID标题URL/凭据，无新增session探测，真实安装包未更改。Project样本不再缺失，下一关口是该结构的窄适配及合法principal/roster；403、本人活动、完整J4/G/U仍开放，规模DEFERRED。原证据 `preauthorizationObservation20261019.sidebarBoundary20261019`。
+
 - **检查点同步与真实Project样本缺口**：9a3f5cc已在标准Git HTTPS恢复后正常推送原分支/PR16，未改远端/系统网络/凭据；同9a3f5cc的CI39172016377四job均SUCCESS；原普通/新增容器C2与immediate cold通过，产品哈希及原提交runner哈希一致，无运行漂移。J4原JSON仍PARTIAL，conditional recovery本次初始即PASS，因此缺receipt后的恢复分支NOT_COVERED；历史cold FAIL不改判。已读取dot身份研究，未启用新身份源或权限。专用Profile仅自然打开已有侧栏、只读有限结构：项目标题已展开，发现创建按钮但未点击，未确认现有Project页面链接或打开控件；`data-sidebar-project-container-id`也存在于普通导航分组、值未符合原生Project语法，不能用于造卡/成员。用户已回复会在原专用Profile打开现有Project；后续只读元数据检查尚未见Project首页，未要求刷新/重登；不据当前可见区域推断账户无项目。
 - **冷启动原因记录补齐，原FAIL仍未解释**：生产保持9a3f5cc，只给既有离线诊断副本补原拒绝分支枚举、commit/history、撤销前receipt存在性、stop与160条封顶丢弃计数；不重复调用有状态clock、不加浏览器查询/请求/重试。10类固定事件序列中原模块与插桩的receipt、浏览器调用及状态时钟调用一致，71定向通过/0skip（1.509s）、独审无阻断。仅一次新冷启动诊断PASS、未截断且源码/runner未漂移，不能解释或覆盖CI39170416769原FAIL；原20秒与立即启动顺序不变。不以此认证真实恢复/J4；本批测试维护不再触发同产品完整矩阵。证据 `preauthorizationObservation20261019.contextChainFollowup20261019`。
 

@@ -1,3 +1,4 @@
+import {profileElement} from './native-surface-boundary.mjs';
 import {nativeReturnGapRect} from './native-return-gap.mjs';
 import {nativeHistoryListOK} from './native-history-list.mjs';
 import {nativeReturnSlotRect} from './native-return-slot.mjs';
@@ -81,7 +82,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
   try{const reply=await track(()=>entry.notify(passMessage(entry,'start')));if(run!==generation||!live()||pass!==entry||entry.terminal)return;if(reply?.ok!==true){finishPass('cancel',true);issue('host-ingestion-pass-unavailable');}}
   catch{if(pass===entry){finishPass('cancel',true);issue('host-ingestion-pass-unavailable');}}
  }
- const one=selector=>{try{const nodes=document.querySelectorAll(selector);return nodes.length===1?nodes[0]:null;}catch{return null;}};
+ const one=selector=>profileElement(document,profile,selector);
  const live=()=>!stopped&&now()<Date.parse(binding.expiresAt);
  const active=()=>live()&&!observationOnly;
  function observationCurrent(){
@@ -113,7 +114,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
   }catch{if(run===generation){observationRAM=null;observationRows=[];observationKeys.clear();observationCursor=null;observationScanning=false;}}
  }
  function observationStatus(){return observationCurrent()?{state:'observing',candidates:observationRAM?.candidates??0,messageIds:observationRAM?.messageIds??0,bytes:observationRAM?.bytes??0}:{state:'stopped',candidates:0,messageIds:0,bytes:0};}
- function listen(){observer=new document.defaultView.MutationObserver(mutations);observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});document.addEventListener('toggle',surfaceToggle,true);document.addEventListener('visibilitychange',visibilityChanged);document.addEventListener('focusout',schedule,true);document.defaultView.addEventListener('popstate',requestScan);document.defaultView.addEventListener('hashchange',requestScan);requestScan(true);}
+ function listen(){observer=new document.defaultView.MutationObserver(mutations);observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});document.addEventListener('toggle',surfaceToggle,true);document.addEventListener('visibilitychange',visibilityChanged);document.addEventListener('focusout',schedule,true);document.defaultView.addEventListener('popstate',requestScan);document.defaultView.addEventListener('hashchange',requestScan);if(profile.sidebarBoundary)document.defaultView.addEventListener('resize',requestScan);requestScan(true);}
 
  function acknowledgedBody(allowReadingProbe=false){
   if(!live()||!acceptedBody||now()>=Date.parse(acceptedBody.validUntil)||!bodyDiscovery)return null;
@@ -263,7 +264,7 @@ if(!p){notifyIdle();return;}}catch(error){
   // an unrelated directory cursor or its pending bounded fragments.
   if(surfaceChanged)requestScan();else schedule();
  }
- function stop(){if(observationExpiry!==null){cancelRetry(observationExpiry);observationExpiry=null;}observationRAM=null;observationRows=[];observationKeys.clear();observationCursor=null;observationScanning=false;observationOnly=false;surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');ingestionPass=null;generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('toggle',surfaceToggle,true);document.removeEventListener('visibilitychange',visibilityChanged);document.removeEventListener('focusout',schedule,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();return Promise.all([...terminalWork]).then(results=>results.every(Boolean));}
+ function stop(){if(observationExpiry!==null){cancelRetry(observationExpiry);observationExpiry=null;}observationRAM=null;observationRows=[];observationKeys.clear();observationCursor=null;observationScanning=false;observationOnly=false;surfaceRetryWanted=false;nativePrepareAt=null;idleRevision++;finishPass('cancel');ingestionPass=null;generation++;if(retryTimer!==null){cancelRetry(retryTimer);retryTimer=null;}stopped=true;snippets?.stop();snippets=null;snippetReady=()=>false;sendObserver?.stop();sendObserver=null;acceptedBody=null;intents=[];surfaceParts=[];surfaceKey=null;surfaceSequence=null;surfaceWanted=true;surfaceScanning=false;surfaceCursor=null;surfacePage=0;surfacePageKey=null;surfaceAccepted.clear();surfaceFailed.clear();observer?.disconnect();observer=null;document.removeEventListener('toggle',surfaceToggle,true);document.removeEventListener('visibilitychange',visibilityChanged);document.removeEventListener('focusout',schedule,true);document.defaultView.removeEventListener('popstate',requestScan);document.defaultView.removeEventListener('hashchange',requestScan);document.defaultView.removeEventListener('resize',requestScan);discovery?.stop();bodyDiscovery?.stop();bodyDiscovery=null;actions=null;dirty=false;queued=false;busy=false;last.clear();failedKey.clear();return Promise.all([...terminalWork]).then(results=>results.every(Boolean));}
  function historyListCurrent(history,inspection=null){
   if(!nativeLayout.historyList)return true;
   const source=one(profile.regions.history);

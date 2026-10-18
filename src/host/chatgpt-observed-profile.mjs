@@ -1,9 +1,11 @@
+import {CHATGPT_SIDEBAR_SELECTOR} from './native-surface-boundary.mjs';
 import {CHATGPT_SELECTION_CURRENT_BODY} from './current-body-discovery.mjs';
 import {LEGACY_SURFACE_PROFILE} from './surface-discovery.mjs';
 // The observed Chinese desktop surface is a candidate, not an authority profile.
 // Unsupported membership/send/risk grammars stay absent; no synthetic NONE/ACK.
 export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
- id:'chatgpt-zh-desktop-observed-20261018',revision:1,reconstruction:false,liveVerified:false,
+ id:'chatgpt-zh-desktop-observed-20261018',revision:2,reconstruction:false,liveVerified:false,
+ sidebarBoundary:CHATGPT_SIDEBAR_SELECTOR,
  regions:Object.freeze({projects:'nav:not([data-app-navigation-rail])',history:'nav:not([data-app-navigation-rail])',members:':not(*)',moveMenu:':not(*)'}),
  controls:'a[href]',conversationControls:'a[href]',maxCandidates:256,
  currentBody:CHATGPT_SELECTION_CURRENT_BODY,

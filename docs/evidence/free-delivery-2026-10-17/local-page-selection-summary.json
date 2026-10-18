@@ -8500,6 +8500,109 @@
           "rawSha256": "4fa215abf83acf3013f9d0c2420470f43452bcc3d7663f2ef83065541dd9f4c0"
         }
       }
+    },
+    "sidebarBoundary20261019": {
+      "baseHead": "c6cedc0039bbe21fb0f3b8147fd302afc2e96709",
+      "problem": "Document-global unique nav selection loses sidebar entries when a body or hidden backup nav exists, and can read body links if the sidebar is absent. Current real page had one nav; structural failures independently reproduced offline, not claimed as a live failure.",
+      "fix": "Packaged observed profile revision 2 resolves projects/history/historyList only within its unique visible explicit sidebar. Default profiles and other layout boundaries keep unique document selection; more than one visible sidebar or nav remains refused. Resize clears/rebuilds observation RAM; root replacement invalidates old handles. Temporary navigation uses the same unchanged selector constant. Sidebar observation watches selected nav and bounded explicit sidebar shells; body-nav character changes do not restart the directory pass.",
+      "tests": {
+        "before": {
+          "pass": 4,
+          "fail": 6,
+          "cases": 10
+        },
+        "targeted": {
+          "pass": 624,
+          "fail": 0,
+          "skip": 0,
+          "durationMs": 4341.445333
+        },
+        "browser": "11 cases PASS_WEB_MECHANISM_ONLY including real CSS viewport hide/restore; no title reads outside sidebar and no preauthorization emission",
+        "layout": "Both original viewport shapes PASS_WEB_MECHANISM_ONLY with mask/return/draft guards retained",
+        "mv3": {
+          "status": "PASS",
+          "durationMs": 1885.083583,
+          "sourceChangedDuringRun": false,
+          "qualification": "C2_FRESH_REQUEST_ONLY_NOT_J4",
+          "scope": "Isolated full package current chat, reading, unique return, known search, worker stop clears old frames, only fresh genuine native fixture GET rebinds."
+        },
+        "review": "No blocking findings in root selection and final watcher narrowing. Clone replacement tested, not a claim about all node-move variants."
+      },
+      "liveProjectSample": {
+        "status": "READ_ONLY_STRUCTURE_AND_TITLE_WITNESS_OBSERVED_NOT_LIVE_FREE_ACCEPTANCE",
+        "projectRouteGrammar": "standard g-p-32hex, no new grammar enabled",
+        "contentRootCount": 2,
+        "visibleContentRootCount": 1,
+        "visibleTimelineScrollCount": 0,
+        "projectTitleCount": 1,
+        "visibleConversationRows": 2,
+        "titlesMatchSameIDVisibleSidebar": 2,
+        "nativeMembershipAdapter": "NOT_IMPLEMENTED for this observed Project panel; path alone is not membership proof",
+        "privateValuesSaved": false,
+        "previewBodyRead": false,
+        "sessionRequestsInitiatedByProbe": 0,
+        "installedPackageChanged": false,
+        "next": "Use exact current Project title and selected native panel semantics; isolate first title DIV from the second text domain before connecting existing observation pipeline. Principal/roster remain blocked by session challenge."
+      },
+      "hashes": {
+        "src/host/native-surface-boundary.mjs": "a5e0978cf8e757ed4237b03db8627eb3e2e27bcf149551cd9ecb04241153bb44",
+        "src/host/chatgpt-observed-profile.mjs": "9bff77a1e66a607b1350e860a3f8decb224876f22e1f6b9eafcf93667658ae24",
+        "src/host/surface-discovery.mjs": "828e213fde1ebf9f9333b6a875eac13174233e098e11355ca42436e11d9f2cea",
+        "src/host/chatgpt-adapter.mjs": "b7827623074a30e8332724f9f29832078e74ec119c8d960414806ec6ded8d88c",
+        "src/host/temporary-native-navigation.mjs": "4167b282c0273bbb06bcd8a678968e5474b5feebb61540b202e4f863748c617e",
+        "tests/host/observed-sidebar-browser.mjs": "3389f430f898c64761aa2b5dcce0af5e9593f26d149fb58aa2a87d00771ba17a",
+        "tests/host/fixtures/observed-desktop.mjs": "a39fcd17a44ee8c9aee3bd7e3863b695573de56cc52ebe1b55e6bb7955c69cd7",
+        "tests/host/observed-profile-browser.mjs": "bc8d6426abdd5c8e174dcdf122a8f8394831fc5d4783ce906523c6bb95e8d82f",
+        "tests/host/observed-candidate-mv3-browser.mjs": "dc324485c66160701867512cf5c75d442af095e25d56f312085b4f16750fd984"
+      },
+      "scale": "10k/100k DEFERRED",
+      "acceptance": "Full Free/real identity/Project membership/self-send/J4/G/U remain unaccepted. No comparable end-to-end speedup claimed.",
+      "artifacts": {
+        "red": {
+          "path": "docs/evidence/free-delivery-2026-10-17/observed-sidebar-before.log.gz",
+          "rawSha256": "9f31c30bb0c6416c66311ffb8d1b7586b8dfd453ccd22814a4aeb831cf9d6b36"
+        },
+        "initialException": {
+          "path": "docs/evidence/free-delivery-2026-10-17/observed-sidebar-before-exception.log.gz",
+          "rawSha256": "b92385d97f3cf7ec3fe5040a2978ae33cbabbf61f93e1bf7f26163dbe29acbdc"
+        },
+        "browser": {
+          "path": "docs/evidence/free-delivery-2026-10-17/observed-sidebar-browser.log.gz",
+          "rawSha256": "1b7becf04fbfba56bf7f10dc7e7c30d60a89c3e7680d467f02d94d9f4059017c"
+        },
+        "layout": {
+          "path": "docs/evidence/free-delivery-2026-10-17/observed-sidebar-layout.log.gz",
+          "rawSha256": "17a05907329a624966224bb58980d806324ad2eaa7a8645236655cb43d877dc4"
+        },
+        "targeted": {
+          "path": "docs/evidence/free-delivery-2026-10-17/observed-sidebar-targeted.log.gz",
+          "rawSha256": "85527b673ddebc6776b4afdd12210bbd5536632e709bb31ae7387fdf4b108d9d"
+        },
+        "mv3": {
+          "path": "docs/evidence/free-delivery-2026-10-17/observed-sidebar-mv3.json.gz",
+          "rawSha256": "1b3277874a717b2f06678f3c028a2282bbf08d519a149d9805e1049f2b5d9a2a"
+        },
+        "realSidebarShape": {
+          "path": "docs/evidence/free-delivery-2026-10-17/observed-sidebar-real-shape.json.gz",
+          "rawSha256": "09ec81af4466b1786fa2c401fafe495b283ca7f2792c8f8f8b686f15011dfc6c"
+        },
+        "projectInitialStructure": {
+          "path": "docs/evidence/free-delivery-2026-10-17/observed-project-initial-shape.json.gz",
+          "rawSha256": "abb211c155a5a397560810f3c77a5b8ab0fd3e69fed0b0db494c7932a8011fc6"
+        },
+        "projectVisibleStructure": {
+          "path": "docs/evidence/free-delivery-2026-10-17/observed-project-visible-shape.json.gz",
+          "rawSha256": "60a5e890eead6a8efba8d40d075ec1995ded0b9583edcdf2b2305dce0f070b54"
+        },
+        "projectList": {
+          "path": "docs/evidence/free-delivery-2026-10-17/observed-project-list-shape.json.gz",
+          "rawSha256": "72a41f91511bd787f9ff5be997eaf13d29db96c98fa3f3cd83fabc1a9347f3b6"
+        },
+        "projectTitleWitness": {
+          "path": "docs/evidence/free-delivery-2026-10-17/observed-project-title-witness.json.gz",
+          "rawSha256": "00a9417913df2d7f537f283ddb0a50708eb3938c373f102d67bab6de0d8e83ce"
+        }
+      }
     }
   }
 }

@@ -1,3 +1,4 @@
+import {profileElement} from './native-surface-boundary.mjs';
 import {createBoundedHandleRegistry} from './bounded-handle-registry.mjs';
 import {exactHostRecord} from './contract.mjs';
 
@@ -24,7 +25,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
   let byNode=new WeakMap(),lookupComplete=true;const detached=new Set();
   const byId=createBoundedHandleRegistry({now:elapsedNow,onEvict:(_id,entry)=>{const node=entry.node.deref();if(node&&byNode.get(node)===entry)byNode.delete(node);lookupComplete=false;}});
   const roots=new Map(),pages=new WeakMap();let watched=[];
-  const unique = (selector) => { const nodes=document.querySelectorAll(selector);return nodes.length===1?nodes[0]:null; };
+  const unique = selector => profileElement(document,profile,selector);
   const fingerprint = (node) => JSON.stringify([node.tagName,node.getAttribute('href'),node.getAttribute('aria-label'),node.getAttribute('role'),node.textContent,node.disabled===true]);
   const title = (node) => { const text=(node.textContent??'').trim();return text.length>200?{nativeTitle:null,titleState:'over-limit'}:text?{nativeTitle:text,titleState:'exact'}:{nativeTitle:null,titleState:'unavailable'}; };
   const evidence = (...fieldPaths) => ({profileId:profile.id,profileVersion:profile.revision,sourceKind:'native-dom',regionEpoch,fieldPaths,receiptId:null});
@@ -206,8 +207,15 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
   const scanCandidatePage=cursor=>scanPageCore(cursor,true);
   const scan=()=>scanPage().payload;
   function watchSurface(){
-    const selectors=[...Object.values(profile.regions),profile.currentConversationHeader,profile.currentProjectTitle,profile.currentProjectHeader].filter(Boolean);
-    const watchedMatches=selector=>{const nodes=document.querySelectorAll(selector);return retainControls?[...nodes]:Array.from({length:Math.min(2,nodes.length)},(_,i)=>nodes[i]);};
+    const selectors=[...Object.values(profile.regions),profile.sidebarBoundary,profile.currentConversationHeader,profile.currentProjectTitle,profile.currentProjectHeader].filter(Boolean);
+    const watchedMatches=selector=>{
+      // A body nav must not invalidate the sidebar on every streamed token.
+      // Watch explicit sidebar shells too, so a hidden sibling becoming visible
+      // still invalidates the previous unique-root observation and handles.
+      if(profile.sidebarBoundary&&[profile.regions.projects,profile.regions.history].includes(selector)){const node=unique(selector);return node?[node]:[];}
+      const nodes=document.querySelectorAll(selector),limit=selector===profile.sidebarBoundary?9:retainControls?nodes.length:2;
+      return Array.from({length:Math.min(limit,nodes.length)},(_,i)=>nodes[i]);
+    };
     const next=selectors.flatMap(watchedMatches);
     const reading=profile.currentConversationReading?watchedMatches(profile.currentConversationReading):[];
     const prior=watched;watched=[...next.map(node=>({node,subtree:true})),...reading.map(node=>({node,subtree:false}))];return [...prior,...watched];

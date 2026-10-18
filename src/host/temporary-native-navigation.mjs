@@ -1,10 +1,11 @@
+import {CHATGPT_SIDEBAR_SELECTOR} from './native-surface-boundary.mjs';
 import {createURLPolicy} from './url-policy.mjs';
 const exact=(v,keys)=>v&&Object.getPrototypeOf(v)===Object.prototype&&Reflect.ownKeys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));
 /** Unauthenticated DOM navigation snapshot. Never a scope, membership or persistence source. */
 export function installTemporaryNativeNavigation({document:doc,runtime,origin,profile}){
  if(doc.defaultView!==doc.defaultView.top||doc.location.origin!==origin)throw Error('invalid-temporary-document');
  const win=doc.defaultView,policy=createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}});
- const sidebarSelector=profile.id==='chatgpt-zh-desktop-observed-20261018'?'aside[data-app-shell-left-panel-appearance] [data-sidebar-navigation-root] [data-slate-sidebar-content], div[role="dialog"][aria-modal="true"][data-state="open"] [data-sidebar-navigation-root]':profile.id==='chatgpt-legacy-reconstruction'&&new URL(origin).hostname==='127.0.0.1'?'body > aside[aria-label="Sidebar"]':null;
+ const sidebarSelector=profile.id==='chatgpt-zh-desktop-observed-20261018'?CHATGPT_SIDEBAR_SELECTOR:profile.id==='chatgpt-legacy-reconstruction'&&new URL(origin).hostname==='127.0.0.1'?'body > aside[aria-label="Sidebar"]':null;
  const excluded='main,[data-app-action-timeline-scroll],[data-thread-scroll-footer],[contenteditable],dialog';
  let stopped=false,subscribed=false,roots=[],sidebar=null;
  const visible=node=>{if(!node.isConnected||node.checkVisibility?.({checkOpacity:true,checkVisibilityCSS:true,contentVisibilityAuto:true})===false||!node.getClientRects().length)return false;let depth=0;for(let n=node;n;n=n.parentElement){if(++depth>64||n.hidden||n.getAttribute('aria-hidden')==='true')return false;const s=win.getComputedStyle(n);if(s.display==='none'||s.visibility==='hidden'||s.visibility==='collapse')return false;}return true;};
