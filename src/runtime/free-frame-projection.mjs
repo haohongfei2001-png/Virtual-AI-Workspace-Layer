@@ -1,3 +1,4 @@
+import {validateFrameRowWindows,frameRowWindowKey} from '../host/frame-row-windows.mjs';
 import {validateFreeTimePolicy} from '../data/free-time-policy.mjs';
 import {assertPreparedFreeSnapshot} from '../navigation/free-view.mjs';
 const integer=(n,max)=>Number.isSafeInteger(n)&&n>=0&&n<=max;
@@ -9,14 +10,16 @@ const countKeys=table=>{let n=0;for(const key in table??{})if(Object.hasOwn(tabl
 /** Bounded display DTO over the owner's existing prepared ordering. No authority or cursor. */
 export function projectFreeFrame(current,query){
  const snapshot=assertPreparedFreeSnapshot(current?.snapshot);
- const keys=['role','segment','offset','limit','groupId','list','rowOffset','rowLimit'];
+ const keys=['role','segment','offset','limit','groupId','list','rowOffset','rowLimit','rowWindows'];
  if(!query||Object.getPrototypeOf(query)!==Object.prototype||Reflect.ownKeys(query).some(k=>!keys.includes(k))||!['workspace','sidebar'].includes(query.role))throw Error('invalid-free-frame-query');
  const {role,segment=0,offset=0,limit=24,groupId=null,list=null,rowOffset=0,rowLimit=5}=query;
  if(!integer(segment,1000000)||!integer(offset,1000000)||!integer(limit,24)||limit===0||!integer(rowOffset,1000000)||!integer(rowLimit,200)||!(rowLimit===200||rowLimit>=5&&(rowLimit-5)%12===0)||groupId!==null&&(typeof groupId!=='string'||groupId.length<1||groupId.length>128)||list!==null&&!['current','old','unknown','noProject'].includes(list)||groupId!==null&&(!list||list==='noProject')||groupId===null&&['current','old'].includes(list))throw Error('invalid-free-frame-query');
- const groups=[];let total=0;for(const group of snapshot.groups){if(!included(group,segment))continue;if(total>=offset&&groups.length<limit)groups.push({id:group.id,nativeName:group.nativeName??null,name:group.name,freshness:group.freshness??null,nativeUrl:group.nativeUrl??null,segment:segmentOf(group),memberCount:group.members.length,lists:Object.fromEntries(['current','old','unknown'].map(kind=>[kind,pageRows(group[kind],segment,0,5,false)]))});total++;}
- const entries={};for(const kind of ['noProject','unknown']){const rows=snapshot[kind]??[],page=pageRows(rows,segment,0,5,true);entries[kind]={...page,inventoryTotal:rows.length};}
+ const rowWindows=validateFrameRowWindows(query.rowWindows??[]),windows=new Map(rowWindows.map(w=>[frameRowWindowKey(w),w]));
+ const windowPage=(rows,groupId,list,filter)=>{const w=query.list===list&&(query.groupId??null)===groupId?null:windows.get(frameRowWindowKey({groupId,list})),p=pageRows(rows,segment,w?.rowOffset??0,w?.rowLimit??5,filter);return w?.paged?{...p,paged:true}:p;};
+ const groups=[];let total=0;for(const group of snapshot.groups){if(!included(group,segment))continue;if(total>=offset&&groups.length<limit)groups.push({id:group.id,nativeName:group.nativeName??null,name:group.name,freshness:group.freshness??null,nativeUrl:group.nativeUrl??null,segment:segmentOf(group),memberCount:group.members.length,lists:Object.fromEntries(['current','old','unknown'].map(kind=>[kind,windowPage(group[kind],group.id,kind,false)]))});total++;}
+ const entries={};for(const kind of ['noProject','unknown']){const rows=snapshot[kind]??[],page=windowPage(rows,null,kind,true);entries[kind]={...page,inventoryTotal:rows.length};}
  let selection=null;
- if(list!==null){let rows;if(groupId!==null){const group=snapshot.groups.find(g=>g.id===groupId);if(!group||!included(group,segment))throw Error('free-frame-group-unavailable');rows=group[list];}else rows=snapshot[list]??[];selection={groupId,list,...pageRows(rows,segment,rowOffset,rowLimit,groupId===null)};}
+ if(list!==null){let rows;if(groupId!==null){const group=snapshot.groups.find(g=>g.id===groupId);if(!group||!included(group,segment))throw Error('free-frame-group-unavailable');rows=group[list];}else rows=snapshot[list]??[];const w=windows.get(frameRowWindowKey({groupId,list}));selection={groupId,list,...pageRows(rows,segment,rowOffset,rowLimit,groupId===null),...(w?.paged&&w.rowOffset===rowOffset&&w.rowLimit===rowLimit?{paged:true}:{})};}
  let maxSegment=0;for(const rows of [snapshot.groups,snapshot.refs])for(const row of rows){const value=segmentOf(row);if(Number.isSafeInteger(value)&&value>=0)maxSegment=Math.max(maxSegment,value);}
  const v=snapshot.viewSession,policy=snapshot.preferences?.freeTimePolicy?.value;
  if(policy)validateFreeTimePolicy(policy);

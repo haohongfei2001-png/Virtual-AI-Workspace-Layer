@@ -1,3 +1,4 @@
+import {validateFrameRowWindows} from './frame-row-windows.mjs';
 import {createFreeFrameReadError} from './free-frame-read-error.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 import {isCurrentNavigationPlan,isResolvedControlNavigationPlan} from './current-navigation-plan.mjs';
@@ -146,9 +147,9 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  function delay(ms,signal){let timer;return cancellable(()=>new Promise(resolve=>{timer=schedule(resolve,ms);}),signal).finally(()=>cancel(timer));}
  function boundedQuery(value){
-  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>!['role','segment','offset','limit','groupId','list','rowOffset','rowLimit','search','workingSet'].includes(k))||value.role!==undefined&&value.role!==role)throw Error('invalid-frame-query');
+  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>!['role','segment','offset','limit','groupId','list','rowOffset','rowLimit','rowWindows','search','workingSet'].includes(k))||value.role!==undefined&&value.role!==role)throw Error('invalid-frame-query');
   if(value.search!==undefined&&value.workingSet!==undefined)throw Error('invalid-frame-query');
-  const {role:ignored,...rest}=value;return structuredClone(rest);
+  const {role:ignored,...rest}=value;if(rest.rowWindows!==undefined)rest.rowWindows=validateFrameRowWindows(rest.rowWindows);return structuredClone(rest);
  }
  async function read(value,publish,location=null,retryToken=null){
   if(readTerminal||recovery||backup||location&&!locationCurrent(location))return null;
@@ -184,6 +185,9 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
      const limit=effective.limit??8,rowLimit=effective.rowLimit??5;
      const list=response.reason==='free-search-page-too-large'?'search':response.reason==='free-working-set-page-too-large'?'workingSet':null;
      if(list&&effective[list]&&(effective[list].limit??24)>1){effective={...effective,[list]:{...effective[list],limit:Math.max(1,Math.floor((effective[list].limit??24)/2))}};splits++;continue;}
+     // Retain the active list first. Other windows become explicit bounded
+     // pages in the same fresh response, never cached rows or old plans.
+     if(effective.rowWindows?.some(w=>w.rowLimit>5)){effective={...effective,rowWindows:effective.rowWindows.map(w=>w.rowLimit>5?{...w,rowLimit:5,paged:true}:w)};splits++;continue;}
      if(limit>1){effective={...effective,limit:Math.max(1,Math.floor(limit/2))};splits++;continue;}
      if(rowLimit>5){effective={...effective,rowLimit:5};splits++;continue;}
      if(effective.workingSet&&(effective.workingSet.limit??24)>1){effective={...effective,workingSet:{...effective.workingSet,limit:Math.max(1,Math.floor((effective.workingSet.limit??24)/2))}};splits++;continue;}

@@ -1,3 +1,4 @@
+import {validateFrameRowWindows,frameRowWindowKey} from '../host/frame-row-windows.mjs';
 import {isResolvedControlNavigationPlan} from '../host/current-navigation-plan.mjs';
 import {validateFrameResumeView} from '../host/frame-resume-state.mjs';
 import { freeNavigationSnapshot, freeListRows, assertPreparedFreeSnapshot } from './free-view.mjs';
@@ -229,10 +230,41 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const chevron='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
   const symbols={search:'M20 20l-5-5 M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0',up:'M6 15l6-6 6 6',down:'M6 9l6 6 6-6',more:'M5 12h.01 M12 12h.01 M19 12h.01',minus:'M5 12h14',plus:'M5 12h14 M12 5v14',close:'m6 6 12 12 M18 6 6 18'};
   function graphic(b,kind){if(kind==='more'){b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>';return b;}b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+symbols[kind]+'"/></svg>';return b;}
+  const windowPrefix='frame-row:';
+  function rememberedWindows(pageOffset){
+    const values=[];for(const [key,rowLimit]of view?.capacities??[]){if(!key.startsWith(windowPrefix))continue;try{const [groupId,list,rowOffset,paged,groupOffset]=JSON.parse(key.slice(windowPrefix.length));if(groupId!==null&&groupOffset!==pageOffset)continue;values.push(...validateFrameRowWindows([{groupId,list,rowOffset,rowLimit,...(paged?{paged:true}:{})}]));}catch{}}
+    return values;
+  }
+  function visibleWindows(partial){
+    if(partial.search||partial.workingSet||partial.segment!==undefined&&partial.segment!==view.segment)return [];
+    const primary=partial.list?frameRowWindowKey({groupId:partial.groupId??null,list:partial.list}):null,ids=new Set(frameProjection.groups.items.map(g=>g.id));
+    const pageOffset=partial.offset??frameProjection.groups.offset,pageChanged=pageOffset!==frameProjection.groups.offset;
+    return rememberedWindows(pageOffset).flatMap(w=>{
+      if(frameRowWindowKey(w)===primary)return w.paged?[{...w,rowOffset:partial.rowOffset??0,rowLimit:partial.rowLimit??5}]:[];
+      if(w.groupId===null)return [w];
+      if(!pageChanged&&!ids.has(w.groupId)||surface.role==='sidebar'&&!view.sidebarOpen.has(w.groupId))return [];
+      return w.list!=='old'||view.oldOpen.has((surface.role==='sidebar'?'side:':'home:')+w.groupId)?[w]:[];
+    }).slice(0,74);
+  }
+  function rememberWindowPages(dto){
+    if(dto.search||dto.workingSet)return;
+    const pages=new Map();for(const g of dto.groups.items)for(const [list,page]of Object.entries(g.lists))pages.set(frameRowWindowKey({groupId:g.id,list}),{groupId:g.id,list,page});
+    for(const [list,page]of Object.entries(dto.entries))pages.set(frameRowWindowKey({groupId:null,list}),{groupId:null,list,page});
+    if(dto.selection)pages.set(frameRowWindowKey(dto.selection),{...dto.selection,page:dto.selection});
+    for(const {groupId,list,page}of pages.values()){
+      const identity=frameRowWindowKey({groupId,list});
+      for(const key of [...view.capacities.keys()])if(key.startsWith(windowPrefix)){try{const [g,l]=JSON.parse(key.slice(windowPrefix.length));if(frameRowWindowKey({groupId:g,list:l})===identity)view.capacities.delete(key);}catch{view.capacities.delete(key);}}
+      const paged=page.paged===true||frameRowPaging?.key===rowPagingKey(dto,groupId,list)&&page.limit>=frameRowPaging.limit;
+      if(page.limit>5||page.offset>0||paged)view.capacities.set(windowPrefix+JSON.stringify([groupId,list,page.offset,paged?1:0,dto.groups.offset]),page.limit);
+    }
+    // Presentation descriptors share the existing resume cap, never retained rows.
+    while(view.capacities.size>256)view.capacities.delete(view.capacities.keys().next().value);
+  }
   function requestFrame(partial={},safeCurrentEntry=false){
     if(!frameProjection||typeof onProjectionRequest!=='function')return;
     const scope=frameProjection.scope,run=++projectionRequest;
-    const query={role:surface.role,segment:view.segment,offset:frameProjection.groups.offset,limit:frameProjection.groups.limit,...partial};
+    const rowWindows=visibleWindows(partial);
+    const query={role:surface.role,segment:view.segment,offset:frameProjection.groups.offset,limit:frameProjection.groups.limit,...(rowWindows.length?{rowWindows}:{}),...partial};
     const requestContext={scope,run,session:JSON.stringify(frameProjection.viewSession),segment:frameProjection.segment,query};
     try{Promise.resolve(onProjectionRequest(query)).then(dto=>{if(dto&&run===projectionRequest&&!stopped&&frameProjection?.scope===scope&&dto.scope===scope){applyFrameProjection(dto,safeCurrentEntry?{scope,run}:null,requestContext);if(Object.hasOwn(partial,'segment'))calibrationEntry();}}).catch(()=>{});}catch{}
   }
@@ -257,7 +289,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   // A successful byte-limited response establishes only a presentation cap.
   // Keep one context-bound cap in RAM; it conveys no inventory or authority.
   function rowPagingKey(dto,groupId,list){return JSON.stringify([dto.scope,dto.viewSession,dto.segment,groupId,list]);}
-  function frameIsPaged(page,groupId,list){return page.limit>=Math.min(200,frameRowPaging?.key===rowPagingKey(frameProjection,groupId,list)?frameRowPaging.limit:200);}
+  function frameIsPaged(page,groupId,list){return page.paged===true||page.limit>=Math.min(200,frameRowPaging?.key===rowPagingKey(frameProjection,groupId,list)?frameRowPaging.limit:200);}
   function moreFrame(page,groupId,list){const paged=frameIsPaged(page,groupId,list);requestFrame({...(groupId===null?{}:{groupId}),list,rowOffset:paged?page.offset+page.items.length:page.offset,rowLimit:paged?page.limit:Math.min(200,page.limit+12)});}
 
   function frameMembers(group,parent,side){
@@ -270,6 +302,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       if(kind==='old'){
         const open=view.oldOpen.has(key),toggle=button('展开旧窗口 '+group.name,()=>{view.oldOpen.has(key)?view.oldOpen.delete(key):view.oldOpen.add(key);render();if(view.oldOpen.has(key))requestFrame({groupId:group.id,list:'old',rowOffset:0,rowLimit:5});},'','square old');toggle.innerHTML=chevron;toggle.dataset.focusKey=focusKey(kind,'toggle');toggle.setAttribute('aria-expanded',String(open));parent.append(toggle);if(!open)continue;list=node(doc,'div',{class:'old-list'});parent.append(list);
       }
+      if(page.paged)list.append(node(doc,'p',{class:'row-page-notice'},'每页'+page.limit+'条；可继续翻页。'));
       for(const ref of page.items)list.append(row(ref,key));
       if(page.hasMore){const more=button(kind==='old'?'显示更多旧窗口 '+group.name:kind==='unknown'?'显示更多待核对窗口':'显示更多近期窗口',()=>moreFrame(page,group.id,kind),frameIsPaged(page,group.id,kind)?'下一页':'显示更多','more');more.dataset.focusKey=focusKey(kind,'more');list.append(more);}
       if(page.offset>0){const previous=button('返回前页 '+group.name,()=>requestFrame({groupId:group.id,list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more');previous.dataset.focusKey=focusKey(kind,'previous');list.append(previous);}
@@ -291,7 +324,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(side){const active=current().inGroup?.(group);if(active&&!parent.querySelector('[data-ref-id="'+active.id+'"]')){const context=node(doc,'div',{class:'current-context'});context.append(row(active,key));parent.append(context);}}
   }
   function appendFreeList(parent,kind,segment,side=false){
-    if(frameProjection){const page=frameRows(null,kind),label=kind==='noProject'?'无项目聊天':'归属待核对',list=node(doc,'section',{class:'free-list '+(side?'':'search'),'data-free-list':kind,'aria-label':label});list.append(node(doc,'h2',{},label));for(const ref of page.items)list.append(row(ref,kind));if(page.total===0)list.append(node(doc,'p',{},frameProjection.entries[kind].inventoryTotal>0?'此区间没有记录；其他区间仍可达。':'暂无已知记录。'));if(page.hasMore)list.append(button('显示更多'+label,()=>moreFrame(page,null,kind),frameIsPaged(page,null,kind)?'下一页':'显示更多','more'));if(page.offset>0)list.append(button('返回前页'+label,()=>requestFrame({list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more'));parent.append(list);return;}
+    if(frameProjection){const page=frameRows(null,kind),label=kind==='noProject'?'无项目聊天':'归属待核对',list=node(doc,'section',{class:'free-list '+(side?'':'search'),'data-free-list':kind,'aria-label':label});list.append(node(doc,'h2',{},label));if(page.paged)list.append(node(doc,'p',{class:'row-page-notice'},'每页'+page.limit+'条；可继续翻页。'));for(const ref of page.items)list.append(row(ref,kind));if(page.total===0)list.append(node(doc,'p',{},frameProjection.entries[kind].inventoryTotal>0?'此区间没有记录；其他区间仍可达。':'暂无已知记录。'));if(page.hasMore)list.append(button('显示更多'+label,()=>moreFrame(page,null,kind),frameIsPaged(page,null,kind)?'下一页':'显示更多','more'));if(page.offset>0)list.append(button('返回前页'+label,()=>requestFrame({list:kind,rowOffset:Math.max(0,page.offset-page.limit),rowLimit:page.limit}),'上一页','more'));parent.append(list);return;}
     const rows=freeListRows(snapshot,kind,segment);if(!rows.length)return;
     const key=(side?'side:':'home:')+kind,cap=view.capacities.get(key)??(side?5:12),label=kind==='noProject'?'无项目聊天':'归属待核对';
     const list=node(doc,'section',{class:'free-list '+(side?'':'search'),'data-free-list':kind,'aria-label':label});list.append(node(doc,'h2',{},label));
@@ -440,7 +473,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(c!==undefined&&(!c||typeof c!=='object'||Array.isArray(c)||Object.keys(c).sort().join(',')!=='nativeUrl,projectId,refId'||typeof c.nativeUrl!=='string'||!c.nativeUrl.length||c.nativeUrl.length>2048||!['refId','projectId'].every(k=>c[k]===null||typeof c[k]==='string'&&c[k].length>0&&c[k].length<=128&&!/[\s\x00-\x1f]/.test(c[k]))))throw Error('invalid-frame-current');
     const cr=dto.currentRef;
     if(cr!==undefined&&cr!==null&&(!cr||typeof cr!=='object'||Array.isArray(cr)||!c||cr.id!==c.refId||typeof cr.id!=='string'||typeof cr.displayTitle!=='string'||!(cr.nativeTitle===null||typeof cr.nativeTitle==='string')||!(cr.nativeUrl===null||typeof cr.nativeUrl==='string')||typeof cr.available!=='boolean'||!['PROJECT','NONE','UNKNOWN'].includes(cr.membership)||!(cr.projectId===null||typeof cr.projectId==='string')||(cr.membership==='PROJECT')!==(typeof cr.projectId==='string')||!(cr.segment===null||Number.isSafeInteger(cr.segment)&&cr.segment>=0)))throw Error('invalid-frame-current-ref');
-    const pageOK=p=>p&&Array.isArray(p.items)&&Number.isSafeInteger(p.total)&&Number.isSafeInteger(p.offset)&&Number.isSafeInteger(p.limit)&&p.total>=0&&p.offset>=0&&p.limit>0&&p.limit<=200&&p.items.length<=p.limit&&typeof p.hasMore==='boolean'&&p.hasMore===(p.offset+p.items.length<p.total);
+    const pageOK=p=>p&&Array.isArray(p.items)&&Number.isSafeInteger(p.total)&&Number.isSafeInteger(p.offset)&&Number.isSafeInteger(p.limit)&&p.total>=0&&p.offset>=0&&p.limit>0&&p.limit<=200&&p.items.length<=p.limit&&(!Object.hasOwn(p,'paged')||p.paged===true)&&typeof p.hasMore==='boolean'&&p.hasMore===(p.offset+p.items.length<p.total);
     if(!Number.isSafeInteger(dto.navigation.maxSegment)||dto.navigation.maxSegment<0||dto.navigation.hasNewer!==(dto.segment>0)||dto.navigation.hasOlder!==(dto.segment<dto.navigation.maxSegment)||!pageOK(dto.groups)||dto.groups.limit>24||!['noProject','unknown'].every(k=>pageOK(dto.entries?.[k]))||dto.groups.items.some(g=>!['current','old','unknown'].every(k=>pageOK(g.lists?.[k])))||dto.selection&&!pageOK(dto.selection)||new TextEncoder().encode(JSON.stringify(dto)).length>65536)throw Error('invalid-frame-projection');
     if(dto.search!==undefined&&(!pageOK(dto.search)||dto.search.limit>24||typeof dto.search.query!=='string'||dto.search.query.length>200||!(dto.search.projectId===null||typeof dto.search.projectId==='string'&&dto.search.projectId.length>0&&dto.search.projectId.length<=128)))throw Error('invalid-frame-search');
     if(dto.search){let count=0;const ids=new Set();for(const ref of dto.search.items){if(ref.snippetMatches===undefined)continue;if(!Array.isArray(ref.snippetMatches)||ref.snippetMatches.length<1||ref.snippetMatches.length>100)throw Error('invalid-frame-snippets');for(const value of ref.snippetMatches){if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).sort().join(',')!=='id,preview'||typeof value.id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(value.id)||['__proto__','constructor','prototype'].includes(value.id)||ids.has(value.id)||typeof value.preview!=='string'||value.preview.length>160||++count>100)throw Error('invalid-frame-snippets');ids.add(value.id);}}}
@@ -453,6 +486,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(frameRowPaging?.key!==key)frameRowPaging=null;
     const query=requestContext?.query;
     if(selection&&query&&dto.scope===requestContext.scope&&JSON.stringify(dto.viewSession)===requestContext.session&&dto.segment===query.segment&&selection.groupId===(query.groupId??null)&&selection.list===query.list&&selection.offset===(query.rowOffset??0)&&Number.isSafeInteger(query.rowLimit)&&selection.limit<query.rowLimit)frameRowPaging={key,limit:selection.limit};
+    const windowContextChanged=frameProjection&&(frameProjection.scope!==dto.scope||frameProjection.segment!==dto.segment||JSON.stringify(frameProjection.viewSession)!==JSON.stringify(dto.viewSession));
     const scopeChanged=snapshot?.scope!==dto.scope;const copy=structuredClone(dto);if(scopeChanged||navigationFeedback?.url!==adapter.currentURL())clearNavigationFeedback();resetInteraction(true);sidebarDirty=true;remember();
     if(snapshot?.scope!==copy.scope){horizonPending=null;horizonError=null;detach();searchQuery=null;searchTheme=null;projectionRequest++;}
     if(copy.segment!==0||copy.search||copy.workingSet)clearTimePolicyNotice(false);
@@ -461,6 +495,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     // and never enters the prepared Free snapshot or full-snapshot update path.
     snapshot={scope:copy.scope,viewMode:'free',viewSession:copy.viewSession,preferences:{}};
     if(!views.has(copy.scope))views.set(copy.scope,initialView());view=views.get(copy.scope);if(resumeLayout&&resumeLayout.segment===copy.segment){Object.assign(view,{...resumeLayout,oldOpen:new Set(resumeLayout.oldOpen),sidebarOpen:new Set(resumeLayout.sidebarOpen),capacities:new Map(resumeLayout.capacities)});}resumeLayout=null;view.segment=copy.segment;if(scopeChanged){view.worksetOpen=!!copy.workingSet;if(copy.workingSet)frameWorkingSetOffset=copy.workingSet.offset;if(copy.search){searchQuery=copy.search.query;searchTheme=copy.search.projectId;frameSearchOffset=copy.search.offset;}}
+    if(windowContextChanged)for(const key of [...view.capacities.keys()])if(key.startsWith(windowPrefix))view.capacities.delete(key);
+    rememberWindowPages(copy);
     groups=copy.groups.items.map(g=>({...g,current:g.lists.current.items,old:g.lists.old.items,unknown:g.lists.unknown.items}));index=null;
     layout();render();layout();
     if(currentEntry&&!stopped&&frameProjection?.scope===currentEntry.scope&&view.segment===0&&view.mode==='workspace')onCurrentWorkspaceEntry();

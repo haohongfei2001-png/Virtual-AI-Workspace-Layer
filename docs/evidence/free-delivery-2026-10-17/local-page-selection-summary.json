@@ -5664,6 +5664,71 @@
         "file": "docs/evidence/free-delivery-2026-10-17/visible-actions-15-20261019.png",
         "sha256": "8a8a158e95a78d35d53bbacf1be14180a497ee549346f101cf091828df65f57f"
       }
-    ]
+    ],
+    "ci": {
+      "head": "730f5903a206015f16a24acdeb4473665e1f6a5b",
+      "run": 39157905169,
+      "conclusion": "SUCCESS_ALL_FOUR_JOBS",
+      "evidence": {
+        "path": "docs/evidence/free-delivery-2026-10-17/visible-actions-ci-39157905169-20261019.gz",
+        "sha256": "61bed359ce696dc84caad9333f116815bd78d4bc299b56764e56098f127446b9"
+      }
+    }
+  },
+  "rowWindows20261019": {
+    "baseHead": "730f5903a206015f16a24acdeb4473665e1f6a5b",
+    "status": "FIXED_OFFLINE_FUNCTIONAL_SUBCHAIN_NOT_FREE_ACCEPTED",
+    "rootCause": "Only one selection window survived in a fresh DTO; subsequent list queries reset all other rows to five. Remembered capacities alone could not preserve actual row rendering or project page return. During implementation outer worker query allowlist initially omitted rowWindows and safely rejected it; actual MV3 exposed the missing integration.",
+    "change": "Bounded presentation-only rowWindows query materializes simultaneous lists and fresh navigation plans in the same owner response. Remember capacities by group/list and project-page offset. No cached rows/plans; existing 64KiB/200-target/8-split/32KiB resume limits unchanged. Excess window sizes become explicit paged five.",
+    "red": "Original renderer 3 tests: 1 PASS / 2 FAIL, 58.236ms. First MV3 candidate failed worker whitelist; second failed new observer incorrectly requiring zero open popovers (unique native return is itself an open popover). Both preserved; no thresholds increased.",
+    "verification": {
+      "targeted": "654 PASS / 0 fail / 0 skip / 3493.037167ms",
+      "mv3": {
+        "projectRows": 17,
+        "unknownRows": 17,
+        "readingReturn": true,
+        "originalDocumentEditorDraft": true,
+        "elapsedMs": 392.22625000000016
+      },
+      "sourceStable": true,
+      "fixtureStable": true,
+      "manifestStable": true,
+      "browser": "Fresh headless actual MV3 with native fixture reads; disposable reject proxy blocks worker external network. No DB seeds.",
+      "timingBoundary": "392.226ms starts after native member tail observation and initial workspace; covers expand Project17 + UNKNOWN17 + native reading + unique return, excludes cold startup and cleanup. No successful old journey timing to claim speedup.",
+      "scale": "1k fixture used for functional subchain only; no full audit or performance claim; 10k/100k DEFERRED"
+    },
+    "review": "Independent review checked intent-only bounds/scope and page return; actual MV3 found missed outer allowlist subsequently fixed with actual binding-service tests.",
+    "limits": [
+      "Retained presentation intentions only, bounded at 256 capacities and 74 windows; byte pressure can reduce to paged5.",
+      "Manual old-list collapse/reopen retains prior reset-to5 behavior.",
+      "No real Profile access/update this batch; installed 21a200e challenge403 unresolved.",
+      "Full v2.7, full81, real complete journey, natural peer recovery, physical IME/PAIA/cross-device remain unverified."
+    ],
+    "files": {
+      "vaiwl-frame-window-retention-before.tap": {
+        "path": "docs/evidence/free-delivery-2026-10-17/row-windows-before-20261019.gz",
+        "sha256": "64024385d2f7c98d475b9440b3044425836f4fda0043e4b2c0f91defe7069b01"
+      },
+      "vaiwl-row-windows-frozen.tap": {
+        "path": "docs/evidence/free-delivery-2026-10-17/row-windows-final-20261019.gz",
+        "sha256": "82229203485e6d1ac58de0e8d5a537d15e32be686073e640258a2aac4ef39ef4"
+      },
+      "vaiwl-window-retention-browser.json": {
+        "path": "docs/evidence/free-delivery-2026-10-17/row-windows-mv3-worker-reject-20261019.gz",
+        "sha256": "48c05efd8007c3b2b5b6161a83f8b5f31b9a505a6c0242b43eccb2fb9c36058f"
+      },
+      "vaiwl-window-retention-browser-fixed.json": {
+        "path": "docs/evidence/free-delivery-2026-10-17/row-windows-mv3-observer-fail-20261019.gz",
+        "sha256": "999b5a4cca9268ed0a427621ce195ef55e9fa0ab82a05cfb36d9775b10e8934e"
+      },
+      "vaiwl-window-retention-browser-final.json": {
+        "path": "docs/evidence/free-delivery-2026-10-17/row-windows-mv3-final-20261019.gz",
+        "sha256": "00d2852e177751e7e6a20715a80d4f8cf14094250bf07ac0500dab8c95725a17"
+      },
+      "vaiwl-visible-actions-ci-39157905169.json": {
+        "path": "docs/evidence/free-delivery-2026-10-17/visible-actions-ci-39157905169-20261019.gz",
+        "sha256": "61bed359ce696dc84caad9333f116815bd78d4bc299b56764e56098f127446b9"
+      }
+    }
   }
 }
