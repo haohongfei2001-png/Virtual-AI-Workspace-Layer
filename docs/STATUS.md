@@ -6,6 +6,8 @@
 
 
 
+- **现代专用候选包已形成，尚未装入真实Profile**：统一observed surface profile，adapter和context bridge共享消息身份/现代布局/纯history/返回几何；显式observedChatGPTContext构建只允许真实origin且与全部offline选项互斥。候选接已有C2/plural请求方言及webRequest，builder/verifier精确一致；默认scope/权限不变，自动详情读取、send candidate/ACK/history均未启用。137定向/包边界PASS、0 skip、2036.160ms，独审22项通过；同现代profile组合发现→mask→几何的隔离浏览器通过，仅WEB_MECHANISM_ONLY。专用候选ZIP已生成并verify（172文件），不是LIVE_VERIFIED；实际浏览器Profile由安装位置限定，flag本身不认证Profile。下一关口为隔离实际MV3 receipt→document关联→scope→双frame，再在已授权专用Profile验证；Project成员、现代输入风险/发送语法仍缺证据，保持UNKNOWN与原生入口优先。规模DEFERRED，Free未完成。证据见原local-page-selection-summary.json的observedCandidatePackage20261018。
+
 - **真实标题栏空位返回已接入候选**：新增显式header-gap/returnHitRoot配置，复用原adapter/controller/grant，返回按钮挂于body且只在reading出现；不修改原生header子节点、不新增popover。针对已观察pointer-transparent标题栏，核验36×36空位、256节点原生遮挡、命中根身份、原生层级30、自有按钮实际尺寸/可点击性；休眠复核只管几何不复活授权。补样式/hidden/inert/aria-hidden观察及精确自有style回路过滤，下一事件轮撤回或安全重定位。独审已报项全部关闭；242定向/包构建PASS、0 skip、2004.766ms，四个headless布局机制回归通过。实际controller trusted click返回workspace成功，但桥为fixture，仅WEB_MECHANISM_ONLY。授权真实页只读同模块确认空位可用，未挂载真实扩展或修改宿主；生产profile仍关闭，完整真实Project/打开/返回/搜索/恢复尚未验收。初始等待按钮消失可能等到grant过期的观察器缺陷已修，后续只消失断言与合法重定位不符的失败保留说明。规模DEFERRED、Free NOT_RELEASE_READY。证据见原local-page-selection-summary.json的headerGapReturn20261018。
 
 - **纯历史列表与原生入口隔离候选**：新增可选historyList，摄取仍用原history source，mask只覆盖已核验聊天行；标题沿用原生链接、归属保持UNKNOWN。独审发现并修复行内ARIA控件、列表错位遮挡heading、祖先inert/aria-hidden及SVG链接命名空间反例；元素/角色白名单、2048节点预算、source/视口包含、原生保留区域分离及128祖先状态均失败关闭。242定向/包构建PASS、0 skip、1983.937ms；三个headless布局闭环通过，仅WEB_MECHANISM_ONLY，并接入原CI无缓存/上传。授权真实页只读识别10条已渲染聊天，排除项目创建区；仅当前中文变体，不授予scope、不读正文。保留初始UTF-8 fixture和UNKNOWN断言的观察器错误记录。真实header空位返回、生产profile及完整Project/导航/搜索/恢复仍OPEN；10k/100k DEFERRED、未发布就绪。证据见原local-page-selection-summary.json的pureHistoryList20261018。

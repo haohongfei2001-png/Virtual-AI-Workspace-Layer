@@ -1,3 +1,4 @@
+import {selectHostSurfaceProfile} from '../src/host/chatgpt-observed-profile.mjs';
 import {createIsolatedSessionReader} from '../src/host/isolated-session-reader.mjs';
 import {createOldSendTerminalProfile} from '../src/host/old-send-terminal-profile.mjs';
 import {createLoopbackFirstSendProfile} from '../src/host/first-send-profile.mjs';
@@ -8,7 +9,8 @@ import {createHostContentSession} from '../src/host/content-session.mjs';
 import {HOST_CONFIG} from './config.mjs';
 if(window===window.top&&location.origin===HOST_CONFIG.origin){
  const offlineSnippets=HOST_CONFIG.offlineSnippets===true&&location.protocol==='http:'&&location.hostname==='127.0.0.1';
- const initialProfile=offlineSnippets?{...LEGACY_SURFACE_PROFILE,snippets:{enabled:true,rootSelector:'main > #reading',conversationIdAttribute:'data-conversation-id',messageSelector:'[data-message-id]',messageIdAttribute:'data-message-id',bodySelector:'.message-body',branchIdAttribute:'data-branch-id'}}:LEGACY_SURFACE_PROFILE;
+ const configuredProfile=selectHostSurfaceProfile(HOST_CONFIG.surfaceProfile);
+ const initialProfile=offlineSnippets?{...LEGACY_SURFACE_PROFILE,snippets:{enabled:true,rootSelector:'main > #reading',conversationIdAttribute:'data-conversation-id',messageSelector:'[data-message-id]',messageIdAttribute:'data-message-id',bodySelector:'.message-body',branchIdAttribute:'data-branch-id'}}:configuredProfile;
  const baseProfile=HOST_CONFIG.offlineFirstSend===true?{...initialProfile,firstSend:createLoopbackFirstSendProfile(HOST_CONFIG.origin)}:initialProfile;
  // This risk grammar is explicit only for the packaged loopback reconstruction.
  const offline=location.protocol==='http:'&&location.hostname==='127.0.0.1';

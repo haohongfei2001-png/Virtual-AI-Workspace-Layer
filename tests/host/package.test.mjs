@@ -113,3 +113,16 @@ test('explicit loopback Project C2 package round-trips and rejects changed conte
  assert.throws(()=>verifyHost(out),/invalid-host-package-context/);
 });
 for(const options of [{offlineProjectContext:true},{offlineOrigin:'http://127.0.0.1:8123',offlineProjectContext:true},{offlineOrigin:'https://chatgpt.com',offlineContext:true,offlineProjectContext:true}])test('Project profile cannot escape explicit offline C2 '+JSON.stringify(options),t=>{assert.throws(()=>buildHost(join(root(t),'invalid'),options));});
+test('observed ChatGPT C2 candidate is opt-in and never enables automatic body/send reads',async t=>{
+ const out=join(root(t),'observed'),info=buildHost(out,{observedChatGPTContext:true});
+ const {HOST_CONFIG:c}=await import(pathToFileURL(join(out,'extension/config.mjs')).href);
+ assert.equal(info.status,'HOST_IMPLEMENTATION_UNVERIFIED');assert.equal(info.contextSelection,'OBSERVED_C2_CANDIDATE_NOT_VERIFIED');assert.equal(info.realChatGPT,'NOT_RUN');
+ assert.equal(c.surfaceProfile,'chatgpt-zh-desktop-observed-20261018');assert.equal(c.scopeProfile.browserRequestContext,true);assert.equal(c.scopeProfile.singlePersonalDefault,false);
+ assert.equal(c.scopeProfile.conversationRequestContext,'conversation-detail-plural-v1');assert.equal(c.sessionProfile.conversationRequestContext,c.scopeProfile.conversationRequestContext);
+ for(const key of ['currentMetadataReadEnabled','sendCandidatesEnabled','sendAckProfile','historicalSendProfile'])assert.equal(Object.hasOwn(c,key),false);
+ assert.deepEqual(json(join(out,'manifest.json')).permissions,['webNavigation','webRequest']);assert.equal(verifyHost(out).releaseStatus,'NOT_RELEASE_READY');
+ for(const patch of [{offlineOrigin:'http://127.0.0.1:3456'},{offlineContext:true},{offlineHistory:true},{offlineSnippets:true},{offlineFirstSend:true}])assert.throws(()=>buildHost(join(root(t),'mixed'),{observedChatGPTContext:true,...patch}),/observed-context-candidate-production-origin-only/);
+ // Rehashed candidate metadata cannot silently turn on automatic body reads.
+ const configPath=join(out,'extension/config.mjs'),bad=readFileSync(configPath,'utf8').replace('"origin":','"currentMetadataReadEnabled":true,"origin":');writeFileSync(configPath,bad);info.files['extension/config.mjs']=sha(bad);writeFileSync(join(out,'build-manifest.json'),JSON.stringify(info));
+ assert.throws(()=>verifyHost(out),/invalid-host-package-context/);
+});

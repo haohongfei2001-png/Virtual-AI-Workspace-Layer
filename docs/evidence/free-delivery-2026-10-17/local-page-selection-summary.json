@@ -1834,5 +1834,58 @@
       "Production context-unverified config unchanged. Real Project, navigation, search and safe recovery still unaccepted.",
       "10k/100k remain DEFERRED; original thresholds unchanged."
     ]
+  },
+  "observedCandidatePackage20261018": {
+    "baseHead": "31c6fa3c4ebef8cda909d3e4d955ac1093467649",
+    "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+    "sourceSha256": {
+      "src/host/chatgpt-observed-profile.mjs": "db8d6414a8b749603b5030bd89ff7071aa878a4d9a328e7b5b1931699a245d67",
+      "extension/content-entry.mjs": "28975bab012358ac9915d11016bce7e2d314a61c694e1bf95e0519abaca2c13c",
+      "extension/build.mjs": "a3a25e7d15fd80c8f019c5ec1c2802e0ef342551ca1e81ce76fffe6876b79db5",
+      "extension/package.mjs": "996870a011479c72a086d3b8027365d9fd1f53ca7925eeda2d6225596d000197",
+      "tests/host/observed-profile.test.mjs": "4eb3f0f2bed5e475424b3b524fc8945f94b4d07da805adc9378cdb678ff90b9d",
+      "tests/host/observed-profile-browser.mjs": "6a63d631c8531f327004078c33d846bb8c147faf8799fc136e39c0a8116d4e38",
+      "tests/host/package.test.mjs": "ce56e430f58e9647bcd1fa4b8987a01e5468cf3cd618477c5935ac2ee2821c02",
+      ".github/workflows/free-offline-host.yml": "b68225ed236221c292f7fc6664d839f9c12d366ca902e84ef2598a1ffc785308"
+    },
+    "targeted": {
+      "pass": 137,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 2036.159542
+    },
+    "browser": {
+      "status": "PASS_WEB_MECHANISM_ONLY",
+      "checks": {
+        "profileSelected": true,
+        "bodyConfigured": true,
+        "nativeTitle": true,
+        "noFabricatedMembership": true,
+        "readingMasked": true,
+        "historyMasked": true,
+        "searchVisible": true,
+        "composerVisible": true,
+        "geometryStillValid": true,
+        "draftPreserved": true
+      },
+      "authorization": "FIXTURE_NOT_LIVE_SCOPE"
+    },
+    "package": {
+      "unpacked": "/private/tmp/vaiwl-observed-c2-candidate-20261018-1/extension",
+      "archiveSha256": "7bc48acf0f937aac32223f54055918d267aefddcfa94b6b1aa970738cf02f34e",
+      "files": 172,
+      "verified": true,
+      "installedInLiveProfile": false
+    },
+    "review": "Independent profile/package 22 PASS; no concrete blocker in diff.",
+    "boundaries": [
+      "Default scope and permissions unchanged. Candidate explicit opt-in, mutually exclusive with every offline profile.",
+      "Modern adapter and context bridge share one profile; no C1/C3, project context or synthetic receipt.",
+      "Automatic detail reads, send candidates, ACK and history-send remain disabled.",
+      "Project membership/input risk/send grammar unverified; no fake NONE or broad body-read permission.",
+      "Synthetic browser combines actual discovery, reading viewport, pure history mask and return geometry; scope bridge is not live verified.",
+      "Next: packaged isolated MV3 C2 chain, then authorized dedicated Profile; no live installation performed.",
+      "10k/100k DEFERRED, NOT_RELEASE_READY."
+    ]
   }
 }
