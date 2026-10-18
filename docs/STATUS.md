@@ -6,6 +6,8 @@
 
 
 
+- **真实候选首装与原生query根因已修，挂载仍BLOCKED**：已核对并使用本地投递专用chrome-profile/9333，同ID更新候选保留IDB。原生plural GET的num_turns=10/include_has_versions=true被旧query拒绝规则挡住；仅显式plural增加精确完整参数对（两种顺序），legacy/重复/未知/编码变体均拒绝，预算及scope/body护栏未变。旧版新增12案例中2 FAIL，修复130定向PASS/0 skip/2188.121ms，隔离完整MV3 PASS/1274.810ms/源码未漂移，独审通过。真实session/accounts 200并进入摄取阶段，但双frame仍0：标题栏返回空位实际命中滚动reading DIV而非配置背景DIV，原护栏安全拒绝；history识别与双分支viewport成立，下一步解决跨mask状态的真实空位证明。未读响应正文/导出凭据/原生写入；不标LIVE_VERIFIED。诊断worker未ready与重复listener记录已区分，不当产品失败或重试次数。原失败保留；10k/100k DEFERRED，Free NOT_RELEASE_READY。见原证据liveCandidateQuery20261018。
+
 - **同目标阅读阻塞已在隔离完整MV3关闭**：受控同步临时解除workspace自有mask，核验当前DOM与原ACK fingerprint后按原状态恢复；仅导航proof调用，后台send/snippet不触发。保留原proof/expiry，不续授权；intent/grant/节点变化、原生输入、取消打开、同步同ID节点替换、异步/嵌套reader均拒绝。独审3项已修；冻结291定向测试PASS/0 skip/2108.444ms，完整候选MV3的context→标题→当前阅读→唯一返回→已知搜索8检查PASS/958.401ms/sourceChanged=false，原10860.240ms导航FAIL保留，不改门槛。此为合成origin隔离Profile，真实专用Profile尚未安装验收；Project/恢复/IME/PAIA仍开放，10k/100k DEFERRED、Free NOT_RELEASE_READY。见原证据observedCandidateReadingProbe20261018。
 
 - **候选实际MV3暴露并修复摄取接线，完整旅程仍FAIL**：原worker白名单仅LEGACY，导致真实授权/双frame成功却拒绝现代观察、UI无记录；现worker/content共享精确包内Profile选择。现代body root位于reading mask后代，原精确根检测误判继承hidden为unproven；现64层有界查找精确自有mask，仅延迟观察、不续proof。188定向/包测试PASS、0 skip、2249.280ms，现代组合浏览器非空body/无误失效断言通过，独审无本diff阻断。新隔离Profile实际完整包/worker/IDB/frame链验证了C2原生GET→第二canonical context→双frame→UNKNOWN聊天标题，详情GET仅1次、草稿保留；拒绝本地代理与路由双屏障，无真实账户。冻结完整旅程10.860秒仍FAIL：点击当前聊天计划为href/_blank，未出现返回按钮；根因是acknowledgedBody对掩罩态返回null，不能生成same-target。下一步需要受控当下DOM重验，不复活缓存proof；已知搜索步骤未执行，不写通过。原空数据FAIL及当前导航FAIL均保留gzip，同源码无漂移。未装入真实Profile、规模DEFERRED、Free未完成。见原local-page-selection-summary.json的observedCandidateMV320261018。

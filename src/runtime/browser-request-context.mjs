@@ -19,7 +19,11 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
  const notify=(fn,value)=>{try{Promise.resolve(fn(value)).catch(()=>{});}catch{}};
  const clockOK=(entry,limit)=>{const wall=now(),elapsed=elapsedNow(),prior=clocks.get(entry)??{wall:entry.wall,elapsed:entry.elapsed};if(expired.has(entry)||!Number.isFinite(wall)||!Number.isFinite(elapsed)||wall<prior.wall||elapsed<prior.elapsed||wall-entry.wall>=limit||elapsed-entry.elapsed>=limit){expired.add(entry);return false;}clocks.set(entry,{wall,elapsed});return true;};
  const conversation=url=>{try{const u=new URL(url);if(u.origin!==origin||u.username||u.password||u.search||u.hash)return null;return /^\/c\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.exec(u.pathname)?.[1]??null;}catch{return null;}};
- const requestConversation=url=>{try{const u=new URL(url);if(u.origin!==origin||u.username||u.password||u.search||u.hash)return null;return conversationPattern.exec(u.pathname)?.[1]??null;}catch{return null;}};
+ // Only the two presentation parameters observed on the native current-chat
+ // GET are accepted, with their exact observed values. They never select an
+ // account, change the current object, or replace document/body verification.
+ const observedQuery=search=>conversationRequestContext==='conversation-detail-plural-v1'&&['?num_turns=10&include_has_versions=true','?include_has_versions=true&num_turns=10'].includes(search);
+ const requestConversation=url=>{try{const u=new URL(url);if(u.origin!==origin||u.username||u.password||u.search&&!observedQuery(u.search)||u.hash)return null;return conversationPattern.exec(u.pathname)?.[1]??null;}catch{return null;}};
  const project=(url,request=false)=>{if(!projects)return null;try{const u=new URL(url);if(u.origin!==origin||u.username||u.password||u.search||u.hash)return null;return (request?/^\/backend-api\/projects\/(g-p-[0-9a-f]{32})$/:/^\/g\/(g-p-[0-9a-f]{32})\/project$/).exec(u.pathname)?.[1]??null;}catch{return null;}};
  const target=url=>{const id=conversation(url);return id?'c:'+id:project(url)?'p:'+project(url):null;};
  const targetOf=entry=>entry.projectId?'p:'+entry.projectId:'c:'+entry.conversationId;

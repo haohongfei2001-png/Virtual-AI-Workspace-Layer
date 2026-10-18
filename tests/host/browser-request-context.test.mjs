@@ -86,3 +86,17 @@ test('plural receipt expires and still requires the independent matching body as
  const f=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1'});await f.finish(await f.send({url:origin+'/backend-api/conversations/'+C}));const receipt=await f.owner.verify(frame);assert(receipt);f.advance(60000);assert.equal(await f.owner.verify(frame),null);assert.equal(f.owner.isCurrent(frame,receipt),false);
  const g=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1'});await g.finish(await g.send({url:origin+'/backend-api/conversations/'+C}));g.answer={challenge:'wrong',actualURL:frame.actualURL,conversationId:C,association:'explicit-body-id'};assert.equal(await g.owner.verify(frame),null);
 });
+
+for(const query of ['?num_turns=10&include_has_versions=true','?include_has_versions=true&num_turns=10'])test('observed plural selection query retains current-body authorization: '+query,async t=>{
+ const f=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1'}),url=origin+'/backend-api/conversations/'+C+query;
+ await f.finish(await f.send({url}));assert.equal((await f.owner.verify(frame))?.conversationId,C);
+ f.answer={challenge:'wrong',actualURL:frame.actualURL,conversationId:C,association:'explicit-body-id'};assert.equal(await f.owner.verify(frame),null);
+ const legacy=fixture(t);await legacy.finish(await legacy.send({url:origin+'/backend-api/conversation/'+C+query}));assert.equal(await legacy.owner.verify(frame),null);
+});
+for(const query of ['?num_turns=10','?include_has_versions=true','?num_turns=11&include_has_versions=true','?num_turns=10&include_has_versions=false','?num_turns=10&include_has_versions=true&num_turns=10','?num_turns=10&include_has_versions=true&prefetch=1','?num_turns=010&include_has_versions=true','?%6eum_turns=10&include_has_versions=true','?num_turns=10&include_has_versions=true#fragment'])test('unobserved plural query remains rejected: '+query,async t=>{
+ const f=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1'});await f.finish(await f.send({url:origin+'/backend-api/conversations/'+C+query}));assert.equal(await f.owner.verify(frame),null);assert.equal(f.ready.length,0);
+});
+test('observed query completion must match exact sent URL',async t=>{
+ const f=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1'}),url=origin+'/backend-api/conversations/'+C+'?num_turns=10&include_has_versions=true',d=await f.send({url});
+ f.webRequest.onCompleted.emit({...d,url:origin+'/backend-api/conversations/'+C,statusCode:200,fromCache:false});await flush();assert.equal(await f.owner.verify(frame),null);
+});
