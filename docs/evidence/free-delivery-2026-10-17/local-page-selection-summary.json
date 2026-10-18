@@ -7129,6 +7129,117 @@
         "productAssertionReached": false,
         "note": "Template slash escaping, then missing IIFE parentheses; corrected diagnostic observes expanded=true and zero visible Project page links. Not product failures or navigation acceptance."
       }
+    },
+    "currentProjectList20261019": {
+      "baseHead": "695bcd03e65eef384794449cb8d6756a0e3e9a85",
+      "qualification": "LIVE_TEMPORARY_PROJECT_CHAT_ONLY_NOT_FREE_ACCEPTED",
+      "rootCause": "Temporary popup scanned only sidebar nav; recognized visible Project conversation rows outside sidebar were omitted. Main list rows contain previews, so whole-row text cannot be reused.",
+      "fix": "Reuse existing unique observed Project panel and pure first-title-leaf reader. Shared 256 rows/49152 bytes/2048 inspected links; current list first, exact ID dedup, conflicting titles removed; root/route/visibility changes clear snapshot. No h1/route Project construction, authority or membership promotion.",
+      "sourceHashes": {
+        "src/host/temporary-native-navigation.mjs": "b778ec2c049636d022e8883f6a185cc0325634fd40a8ed2ce206f95f91064388",
+        "src/host/native-surface-boundary.mjs": "da860ef75e1fbb560cd7155589576cdc5283df21fef366fb3e6ef33984daaa6a",
+        "src/host/chatgpt-observed-profile.mjs": "3c4774adb195d40f26518d79e43efb8b969d5621e9db165e0705847a2399550a",
+        "tests/host/temporary-project-list-browser.mjs": "d70b7beb81079c3477255688a54eef43657eb8bebdf8b5b07c087ecd4a5be33e",
+        "tests/host/temporary-project-mv3-browser.mjs": "7cfffa886578f3511ceba72397240b0d28709d2a3a5298ff442568e2d9adf978",
+        "tests/host/offline-ci-partition.test.mjs": "3bca216e03623184c27e8d12a303cbda064a7512a4b5dce0ad8fa4c94349e8bf",
+        ".github/workflows/free-offline-host.yml": "53a669e3171344b786b05e979c9998febf63024a41b37a7acd88945d6922afa3"
+      },
+      "artifacts": {
+        "temporary-project-20261019-browser-baseline.json.gz": {
+          "sha256": "c24f52cbcbf6ae7c95f4864070a7afe1b7652e1128748e85470b68fa9ce0fb6b",
+          "bytes": 3695
+        },
+        "temporary-project-20261019-browser-final.json.gz": {
+          "sha256": "bc461a709d19e66cd0353cd4f47820c39860c7a2f7cae5a84f0b6ef9d4633042",
+          "bytes": 3684
+        },
+        "temporary-project-20261019-mv3-final.json.gz": {
+          "sha256": "9403f621708c13bce980fb6c82e498452992e72d602a6e9b7ace219693754957",
+          "bytes": 22040
+        },
+        "temporary-project-20261019-original-mv3.json.gz": {
+          "sha256": "5aafa76a388ee19438d7645a8be7e0b46596e917dcedac40f0d1936d1955d6f6",
+          "bytes": 27408
+        },
+        "temporary-project-20261019-targeted.txt.gz": {
+          "sha256": "e444056e8e952fd5dce15aadfbd7cf6b5f84e49d3a116fc149e68c7f277a9a00",
+          "bytes": 17217
+        },
+        "temporary-project-20261019-ci-contract-fail.txt.gz": {
+          "sha256": "927e759910a52aeaecc0926b668033fe28c312a41d43eaa91657c061c1695cb1",
+          "bytes": 24600
+        },
+        "temporary-project-20261019-ci-contract-final.txt.gz": {
+          "sha256": "9f64b6344dc4a5d10c3343297cdb2f7d0807e0cc415035a2b793407d80193c86",
+          "bytes": 2160
+        },
+        "temporary-project-20261019-live.json.gz": {
+          "sha256": "1230afe742937f99a602b37d95298f38dc7519248b472f70dbefcc234fd52542",
+          "bytes": 483
+        },
+        "temporary-project-20261019-identity-shape.json.gz": {
+          "sha256": "97cf4c754c3a4e39ae9530e6550db05e2abe0b8cf897a0d37e8637569eaee9bb",
+          "bytes": 305
+        }
+      },
+      "validation": {
+        "oldSourceSameBrowserFixture": "FAIL_14_OF_17",
+        "finalBrowser": "PASS_17_WEB_MECHANISM_ONLY",
+        "targeted": "PASS_258_ZERO_SKIP_3976.288708ms",
+        "ciContract": "PASS_19_ZERO_SKIP_66.27025ms",
+        "projectMV3": {
+          "status": "PASS_TEMPORARY_PROJECT_MV3",
+          "elapsedMs": 1395.5828749999998,
+          "sourceStable": true,
+          "testSourcesStable": true,
+          "requestObservation": "worker-ready onward before page navigation; positive request witness; reject log saturation; zero API/detail attempts during journey"
+        },
+        "originalMV3": {
+          "status": "PASS_TEMPORARY_MV3_POPUP",
+          "elapsedMs": 3198.0934159999997,
+          "sourceStable": true
+        },
+        "review": "Production no blocker; worker observation and test source hashes added, silent-log truncation now refuses at capacity. No new private read."
+      },
+      "real": {
+        "status": "LIVE_TEMPORARY_PROJECT_CHAT_PASS",
+        "qualification": "LIVE_TEMPORARY_PROJECT_CHAT_ONLY",
+        "bodyReads": 0,
+        "credentialsRead": false,
+        "workerRequestsDuringJourney": 0,
+        "visibleProjectChats": 2,
+        "allObservedProjectChats": true,
+        "count": 18,
+        "projectCards": 0,
+        "search": true,
+        "correctNativeURL": true,
+        "releaseAcknowledged": true,
+        "nativePage": {
+          "editor": true,
+          "openerNull": true
+        },
+        "returnedFresh": true,
+        "originalPreserved": true
+      },
+      "installation": {
+        "status": "INSTALLED_TEMPORARY_PROJECT",
+        "permissionAndConfigUnchanged": true,
+        "sameExtensionId": true,
+        "backupVerified": true,
+        "installationReloads": 1,
+        "newDocument": true,
+        "ready": true,
+        "bodyReads": 0
+      },
+      "timing": "New complete isolated Project popup journey 1395.583ms (includes browser/package startup after packaging, excludes cleanup). Old same browser fixture failed missing rows; no successful comparable old complete journey, no speedup claim. Earlier 1780.232/1703.279 were review candidates, not accumulated evidence.",
+      "limits": [
+        "Temporary only; no canonical Project card, verified member/NONE, scope, history persistence or activity.",
+        "Actual title h1 has no matching object ID; no native Project link corroboration. Do not join stale title with new SPA route.",
+        "403 principal/roster and production Project context still unresolved; extra one-response body-read permission remains unused.",
+        "J4, real IME/PAIA/cross-environment/full installation acceptance open; 10k/100k DEFERRED.",
+        "New Linux CI NOT_RUN until normal push."
+      ],
+      "externalResearch": "PR16 issuecomment-6256687836 requests public source verification of Project ID/name/member response semantics; no new source enabled."
     }
   },
   "ciPrerequisiteActivation20261019": {

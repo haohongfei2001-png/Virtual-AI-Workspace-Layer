@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **当前 Project 的临时聊天导航已在真实专用 Profile 闭环**：原临时popup只查侧栏，遗漏仅在Project列表可见的聊天。现复用正常observer的唯一Project面板与首个纯标题叶，加入原搜索/原生链接导航；不读预览或h1、不拼Project卡、不提升成员。安装沿用原路径/同扩展ID/config/权限，旧包逐文件备份，仅一次安装reload，无响应体提取。实际当前2条聊天均匹配标题和href，搜索→正确原生新页/opener为空→返回原Project/新列表成立；原文档/输入节点及空草稿保持，旅程worker请求0。仅LIVE_TEMPORARY_PROJECT_CHAT_ONLY，不是正常Free账户接入。
+- **修复与证据边界**：合并来源共享原256项/49152字节/2048检查预算，ID冲突删除，根出现/消失/替换及route变化清快照。原源码同fixture缺行/失效反例FAIL保留；最终17浏览器边界及实际打包MV3闭环1.396s通过，原临时MV3回归亦通过。258定向/包、19 CI配置检查通过；CI旧精确日志列表断言失败已随新增原步骤输出修正，未增job/缓存/上传。独审补齐worker请求观察、测试源码哈希及日志截断拒绝；源码/安装包哈希一致，无可比成功旧完整旅程，不声称提速。原证据入口 `temporaryReadOnlyNavigation20261019.currentProjectList20261019`。
+- **正式 Project 数据来源仍有明确缺口**：当前真实h1仅SPAN标题，无同对象Project ID，侧栏无当前Project原生链接；不能把SPA新route与旧标题拼成命名卡。已在PR16留外侧成功响应语义查证问题，未启用新身份来源。403主体/roster、生产Project context、正向成员/NONE及本人活动、完整恢复/J4/G/U仍未完成；单次列表响应读取许可未消耗，10k/100k DEFERRED。此前695bcd0与8439af6仍保留，本批自然检查点再做普通Git同步；新Linux CI尚未运行，不将本地通过替代。
+
 - **当前 Project 的布局缺口已修，未提升真实账户验收**：原版只认识聊天页 timeline/下方composer，当前Project首页没有该结构，原HEAD8439af6最小对照明确拒绝挂载。现observed revision4增加精确Project分支，复用原双surface、搜索/UI与唯一返回；只mask聊天tabpanel，标题/原生输入/工具/标签栏受保护。原生链接须为conversation，成员保持UNKNOWN；不新增身份来源、不读旧库、不改安装中的临时包。
 - **关闭了同一旅程中的两处交互故障**：普通原生焦点轮廓不再误杀返回；按实际外扩范围核验，越界轮廓仍拒绝。原生弹层或暂时滚动造成命中不可用时，节点身份比较不再冒充几何批准，沿用既有geometryPaused挂起；恢复后只显示唯一返回，仍须合法binding/grants及完整几何。工作区键盘顺序适配上方composer，原生节点/草稿不移动。独审补闭阴影与clip/mask边界；只允许实测composer装饰和精确圆角shell的保守内部区域。
 - **冻结候选证据**：37个Project浏览器场景通过（8.067s，含原生控制器点击返回、输入、滚动、路由/节点替换、弹层、调整窗口尺寸及5秒自然到期），仅WEB_MECHANISM_ONLY/合成桥，不能计Project MV3。436受影响回归/0skip（1.608s）、209构建/包边界/0skip（4.066s）通过；原聊天/返回槽/Project纯标题观察回归通过。隔离实际MV3原聊天C2→双frame→阅读/唯一返回/搜索→worker退出撤回→新GET恢复PASS（2.461s），源码未漂移，仅C2_FRESH_REQUEST_ONLY_NOT_J4。原版拒绝不是可比较成功基线，不声称提速；原失败和测试配置/焦点/弹层中间失败均保留。

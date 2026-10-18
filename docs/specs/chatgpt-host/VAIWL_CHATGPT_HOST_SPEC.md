@@ -7,7 +7,7 @@
 
 用户明确批准在真实 session 接口挑战403期间提供 `temporaryReadOnly:true` 显式构建；默认/正常包仍严格执行以下完整合同。本例外仅用于受限本人试用，不是新计划、账户scope、LIVE_VERIFIED或完整Free替代。
 
-- 私有工具栏popup只向当前topframe请求一次当前文档原生导航；生产仅接受唯一已观察侧栏结构，排除阅读区、composer、dialog和隐藏文字。只取可见原生标题与同源合法Project/Conversation链接，未知结构不可读；不访问session/accounts、页面认证、原数据库或人工资产。
+- 私有工具栏popup只向当前topframe请求一次当前文档原生导航；生产接受唯一已观察侧栏结构，以及精确Project路线下唯一已观察主区/tabpanel中的聊天链接。后者复用正常observer的首个纯标题叶读取，禁止读取列表预览、整个anchor、Project页h1或用route与未关联标题造卡；仍须唯一可见侧栏。排除其他阅读区、composer、dialog和隐藏文字，只取可见原生标题与同源合法链接，未知结构不可读；不访问session/accounts、页面认证、原数据库或人工资产。
 - 数据仅本次popup RAM，最多256条/49152字节行数据；DOM/route/document变化清除，关闭丢弃。列表搜索仅过滤本次条目，不能宣称完整历史。聊天所属Project未核验，UNKNOWN不升级NONE。
 - 链接以`_blank`和`noopener noreferrer`交浏览器打开，保留原页与草稿；返回原页并再次点击扩展图标重新读列表。没有原生链接的按钮、未加载历史不能凭空造ID或推断成员。
 - 正常bootstrap/context observer/worker runtime不启动，不建立grant/receipt，不打开持久历史、活动校准、跨标签恢复或人工资产入口。保留旧包与旧数据库，退出此显式构建才能恢复正常合同；不得把临时通过记入原81项正常宿主分母。
