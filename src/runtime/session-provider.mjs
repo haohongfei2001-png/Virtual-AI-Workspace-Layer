@@ -1,7 +1,7 @@
 import {readSessionJSON,sessionCredentials,sessionContexts} from '../host/session-identity.mjs';
 import {validateHistoricalSendProfile,extractHistoricalSends} from './historical-send-profile.mjs';
 import {digest} from '../data/hash.mjs';
-import {parseConversationMetadata} from '../host/conversation-metadata.mjs';
+import {parseConversationMetadata,parseConversationMessageListMetadata} from '../host/conversation-metadata.mjs';
 import {extractConversationAcceptance} from '../host/conversation-acceptance.mjs';
 import {validateSendAckProfile} from './send-ack-admission.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
@@ -17,6 +17,9 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
  const conversationRequestContext=profile.conversationRequestContext??null;
  if(conversationRequestContext!==null&&conversationRequestContext!=='conversation-detail-plural-v1')throw Error('invalid-conversation-context-profile');
  const conversationEndpoint=conversationRequestContext===null?'conversation':'conversations';
+ const messageList=profile.conversationMetadataFormat==='message-list-v1';
+ if(profile.conversationMetadataFormat!==undefined&&(!messageList||conversationRequestContext!=='conversation-detail-plural-v1')||messageList&&(profile.sendAckProfile!==undefined||profile.historicalSendProfile!==undefined))throw Error('invalid-conversation-metadata-profile');
+ const parseMetadata=messageList?parseConversationMessageListMetadata:parseConversationMetadata;
  const currentEnabled=profile.currentConversationReadEnabled===true,contextHeader=profile.currentConversationContextHeader===true,rosterContext=profile.currentConversationRosterContext===true;
  const historicalProfile=profile.historicalSendProfile===undefined?null:validateHistoricalSendProfile(profile.historicalSendProfile),histories=new WeakMap();
  if(historicalProfile&&(!currentEnabled||historicalProfile.providerProfile!==providerProfile||!loopback))throw Error('invalid-session-history-profile');
@@ -46,7 +49,7 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
     const selected=contexts.filter(c=>c.kind!=='unknown'&&'context_'+digest(['chatgpt-context-v1',principalId,c.id])===current.expectedContextKey);
     if(selected.length!==1||!(rosterContext&&contextHeader)&&!(contexts.length===1&&selected[0].kind==='personal'))throw Error('conversation-context-conflict');
     const raw=await json('/backend-api/'+conversationEndpoint+'/'+encodeURIComponent(current.conversationId),token,{raw:true,contextId:selected[0].id});check();
-    let metadata;try{metadata=parseConversationMetadata({conversationId:current.conversationId,principalId,payload:raw});}catch{throw Error('invalid-conversation-metadata');}
+    let metadata;try{metadata=parseMetadata({conversationId:current.conversationId,principalId,payload:raw});}catch{throw Error('invalid-conversation-metadata');}
     check();if(instant(expiresAt)<=now())throw Error('session-expired');
     const result={principalKey,contextKey:current.expectedContextKey,expiresAt,providerProfile,transport:'worker-fixed-fetch',metadata};
     if(ackProfile){

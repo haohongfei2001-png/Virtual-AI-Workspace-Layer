@@ -111,3 +111,14 @@ test('plural fixed reader preserves the six second chain deadline',async()=>{
  const f=currentFixture((s,n,late)=>{if(n===2)late();},pluralProfile);
  await assert.rejects(f.provider.readCurrentConversation(currentOptions),/request-timeout/);assert.equal(f.calls.length,2);
 });
+
+const listProfile={...pluralProfile,conversationMetadataFormat:'message-list-v1'};
+test('explicit message-list reader binds scope and returns partial IDs without ACK or body',async()=>{
+ const f=currentFixture((s,n)=>{if(n===3)s.body={conversation_id:C,messages:[{id:'m',author:{role:'user',id:'user_7'},create_time:1700000000,content:{parts:['PRIVATE_CONVERSATION_BODY']}}],current_node:'m',page_info:{has_next_page:false}};},listProfile);
+ const r=await f.provider.readCurrentConversation(currentOptions);
+ assert.equal(f.calls.length,3);assert.equal(f.calls[2].url,origin+'/backend-api/conversations/'+C);
+ assert.equal(r.metadata.state,'partial');assert.equal(r.metadata.messages[0].messageId,'m');assert.equal(r.metadata.messages[0].lineage,null);assert.equal(r.metadata.messages[0].mappingNodeId,null);
+ assert.equal(f.provider.acceptanceFor(r),null);assert.equal(f.provider.historyFor(r),null);assert(!/SECRET|PRIVATE_CONVERSATION_BODY/.test(JSON.stringify(r)));
+});
+for(const patch of [{conversationRequestContext:null},{conversationMetadataFormat:'auto'},{sendAckProfile:{}},{historicalSendProfile:{}}])test('message-list configuration refuses unsupported or attribution profile '+JSON.stringify(patch),()=>{assert.throws(()=>currentFixture(()=>{},{...listProfile,...patch}),/invalid-conversation-metadata-profile/);});
+test('explicit list schema does not silently fall back to legacy mapping',async()=>{const f=currentFixture(()=>{},listProfile);await assert.rejects(f.provider.readCurrentConversation(currentOptions),/invalid-conversation-metadata/);assert.equal(f.calls.length,3);});

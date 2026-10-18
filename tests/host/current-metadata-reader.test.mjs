@@ -93,3 +93,15 @@ test('calibration provider failure makes one attempt and frees the foreground sl
  const reader=createCurrentMetadataReader({observations:f.observations,provider,enabled:true,now:()=>time});
  try{await assert.rejects(reader.readCalibration('proof',calibrationOptions()),e=>e===error);await settleCalibration();assert.equal(calls,1);await assert.rejects(reader.read('proof'),e=>e===error);assert.equal(calls,2);}finally{reader.stop();f.reader.stop();}
 });
+
+test('flat list partial identity stays observed-only through reader and cannot yield ACK',async()=>{
+ const f=fixture({ack:true});f.metadata.state='partial';f.metadata.gaps=[{reason:'lineage-unavailable'}];for(const m of f.metadata.messages){m.mappingNodeId=null;m.lineage=null;}
+ const value=await f.reader.read('proof');assert.deepEqual(value.metadata.messages.map(m=>m.messageId),['m1']);assert.equal(value.state,'partial');assert.equal(value.metadata.messages[0].mappingNodeId,null);
+ await assert.rejects(f.reader.withReadback(value,'proof','m1',()=>assert.fail('invented ACK')),/unavailable-send-readback/);
+});
+for(const kind of ['candidate','missing-gap','invented-lineage'])test('null mapping node rejects '+kind,async()=>{
+ const f=fixture();f.metadata.state='partial';f.metadata.gaps=[{reason:'lineage-unavailable'}];f.metadata.messages[0].mappingNodeId=null;
+ if(kind!=='invented-lineage')f.metadata.messages[0].lineage=null;
+ if(kind==='candidate')f.metadata.state='candidate';if(kind==='missing-gap')f.metadata.gaps=[];
+ await assert.rejects(f.reader.read('proof'),/invalid-current-metadata/);
+});

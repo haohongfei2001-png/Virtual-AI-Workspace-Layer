@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseConversationMetadata} from '../../src/host/conversation-metadata.mjs';
+import {parseConversationMetadata,parseConversationMessageListMetadata} from '../../src/host/conversation-metadata.mjs';
 const node=(id,parent=null,patch={})=>({id,parent,message:{id:'m_'+id,author:{role:'user',id:'principal'},create_time:1700000000,content:{parts:['SECRET_BODY']},...patch}});
 const parse=(mapping,extra={})=>parseConversationMetadata({conversationId:'c1',principalId:'principal',payload:JSON.stringify({conversation_id:'c1',mapping,...extra})});
 test('candidate metadata contains no body, sentAt or author verification; role alone is not self match',()=>{
@@ -54,4 +54,19 @@ test('unknown huge scalar arrays and wide objects hit shared visited/pending bud
 test('private or invalid time text is omitted and reported instead of copied into candidates',()=>{
  for(const time of ['PRIVATE_BODY_IN_TIME','2026-02-30T00:00:00Z','2026-10-14T24:00:00Z','yesterday','2026-10-14']){const result=parse({a:node('a',null,{create_time:time})});assert.equal(result.state,'partial');assert.equal(result.messages[0].rawCreateTime,null);assert.equal(result.messages[0].precisionCandidate,'unknown');assert(result.gaps.some(g=>g.reason==='invalid-create-time'));assert(!JSON.stringify(result).includes(time));}
  const valid=parse({a:node('a',null,{create_time:'2026-10-14T01:02:03.456+08:00'})});assert.equal(valid.messages[0].rawCreateTime,'2026-10-14T01:02:03.456+08:00');
+});
+
+const parseList=(messages,extra={})=>parseConversationMessageListMetadata({conversationId:'c1',principalId:'principal',payload:JSON.stringify({conversation_id:'c1',messages,...extra})});
+test('flat native list never invents mapping ancestry or confirmed sends',()=>{
+ const r=parseList([{id:'m1',author:{role:'user',id:'principal'},create_time:1700000000,content:{parts:['PRIVATE_BODY']}},{id:'m2'}],{current_node:'m2',page_info:{has_next_page:false}});
+ assert.equal(r.state,'partial');assert.equal(r.coverage,'observed-only');assert(r.gaps.some(g=>g.reason==='lineage-unavailable'));assert(r.messages.every(m=>m.mappingNodeId===null&&m.lineage===null));assert(!/PRIVATE_BODY|sentAt|actorVerified/.test(JSON.stringify(r)));
+ assert.deepEqual(parseList([{id:'m2'},{id:'m1'}]).messages.map(m=>m.lineage),[null,null]);
+});
+test('flat list rejects mixed schema and identity conflict',()=>{
+ for(const extra of [{mapping:{}},{conversation_id:'wrong'},{id:'wrong'}])assert.throws(()=>parseList([],extra));
+ for(const value of [null,{},'messages'])assert.throws(()=>parseList(value));
+});
+test('flat list excludes duplicate and foreign IDs with bounded partial output',()=>{
+ const r=parseList([{id:'same'},{id:'same'},{id:'foreign',conversation_id:'other'},{id:'bad id'},{id:'valid'}]);assert.deepEqual(r.messages.map(m=>m.messageId),['valid']);
+ const capped=parseList(Array.from({length:308},(_,i)=>({id:'m'+i})));assert.equal(capped.messages.length,256);assert(capped.gaps.some(g=>g.reason==='message-limit'));assert.equal(capped.state,'partial');
 });
