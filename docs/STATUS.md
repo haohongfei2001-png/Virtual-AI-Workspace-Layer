@@ -6,6 +6,8 @@
 
 
 
+- **真实双frame与返回后聊天投影成立，当前聊天阅读仍BLOCKED**：header-gap追加精确reading背景身份，完整有界元素/Text Range几何排除控件/文字，masked/unmasked同标准；仅允许严格包含在后代paddingbox内的空装饰，保留RTL/小数/运动路径/边框外溢、伪元素、shadow/custom及超限拒绝。216定向PASS/0 skip/2307.465ms；18浏览器安全检查、legacy/组合Profile通过；同源码隔离MV3完整8检查PASS/1543.241ms。真实纯函数空位可用13.2ms，更新同ID候选后双frame成功，但原10秒聊天行等待FAIL；随后只读IDB确认VERSION_INDEX refs17/project0，说明持久化已有数据，不能据此宣称首次UI刷新正常。追加按真实展示态执行：原生阅读时open=0，经现有返回入口后聊天行和当前聊天可见；原空行等待不能证明数据丢失，原失败保留。当前行plan仍为_blank，5秒click未完成且surface再次关闭；下一关口为当前body-proof与原生输入导致的展示撤回诊断，未标真实阅读/返回/搜索通过。首次fixture误删main失败保留，已恢复；独审指出边界均修复。仅当前light-DOM变体，不泛称closed shadow安全；未保存私人标题/ID/正文/凭据或执行原生写入。真实完整旅程/Project/J4/IME/PAIA仍未验收，规模DEFERRED、Free NOT_RELEASE_READY。见原证据readingBackgroundReturn20261018。
+
 - **真实候选首装与原生query根因已修，挂载仍BLOCKED**：已核对并使用本地投递专用chrome-profile/9333，同ID更新候选保留IDB。原生plural GET的num_turns=10/include_has_versions=true被旧query拒绝规则挡住；仅显式plural增加精确完整参数对（两种顺序），legacy/重复/未知/编码变体均拒绝，预算及scope/body护栏未变。旧版新增12案例中2 FAIL，修复130定向PASS/0 skip/2188.121ms，隔离完整MV3 PASS/1274.810ms/源码未漂移，独审通过。真实session/accounts 200并进入摄取阶段，但双frame仍0：标题栏返回空位实际命中滚动reading DIV而非配置背景DIV，原护栏安全拒绝；history识别与双分支viewport成立，下一步解决跨mask状态的真实空位证明。未读响应正文/导出凭据/原生写入；不标LIVE_VERIFIED。诊断worker未ready与重复listener记录已区分，不当产品失败或重试次数。原失败保留；10k/100k DEFERRED，Free NOT_RELEASE_READY。见原证据liveCandidateQuery20261018。
 
 - **同目标阅读阻塞已在隔离完整MV3关闭**：受控同步临时解除workspace自有mask，核验当前DOM与原ACK fingerprint后按原状态恢复；仅导航proof调用，后台send/snippet不触发。保留原proof/expiry，不续授权；intent/grant/节点变化、原生输入、取消打开、同步同ID节点替换、异步/嵌套reader均拒绝。独审3项已修；冻结291定向测试PASS/0 skip/2108.444ms，完整候选MV3的context→标题→当前阅读→唯一返回→已知搜索8检查PASS/958.401ms/sourceChanged=false，原10860.240ms导航FAIL保留，不改门槛。此为合成origin隔离Profile，真实专用Profile尚未安装验收；Project/恢复/IME/PAIA仍开放，10k/100k DEFERRED、Free NOT_RELEASE_READY。见原证据observedCandidateReadingProbe20261018。
