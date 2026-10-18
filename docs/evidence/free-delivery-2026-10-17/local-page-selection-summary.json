@@ -2982,5 +2982,94 @@
     ],
     "scale": "10k/100k DEFERRED",
     "release": "NOT_RELEASE_READY"
+  },
+  "readingViewportBackground20261018": {
+    "rootCause": "Observed-shaped viewport extends below transparent header; masking reading root changes hit to its exact parent viewport, rejected by prior allowlist. Stable maskedViewportBackground failed before fix.",
+    "fix": "Explicit exact reading parent only; reject interaction attributes, extra branches, direct text, pseudo content, shadow root and invisible ancestors. Original descendant geometry and excluded-native checks retained.",
+    "tests": {
+      "nodePass": 290,
+      "skip": 0,
+      "durationMs": 2214.291917,
+      "browser": {
+        "readingBackground": true,
+        "unknownHiddenRejected": true,
+        "ownedMaskUsesSameGeometry": true,
+        "tinyBetweenSamplesRejected": true,
+        "maskDoesNotExcuseObstacle": true,
+        "overflowTextRejected": true,
+        "generatedPaintRejected": true,
+        "containedDecorationAllowed": true,
+        "escapingDecorationRejected": true,
+        "rtlOverconstraintRejected": true,
+        "fractionalOverflowRejected": true,
+        "motionPathRejected": true,
+        "borderPaintOutsetRejected": true,
+        "shadowOverflowRejected": true,
+        "unknownCustomElementRejected": true,
+        "scanOverflowRejected": true,
+        "staleReadingRejected": true,
+        "restored": true,
+        "viewportReadingBackground": true,
+        "maskedViewportBackground": true,
+        "viewportExtraChildRejected": true,
+        "interactiveViewportRejected": true,
+        "viewportGeneratedPaintRejected": true
+      },
+      "mv3": {
+        "status": "PASS",
+        "checks": {
+          "noScopeBeforeNativeRequest": true,
+          "canonicalSecondContext": true,
+          "nativeRequestToScopeAndDualFrame": true,
+          "nativeTitleVisible": true,
+          "noAutomaticDetailReads": true,
+          "draftPreserved": true,
+          "readingAndUniqueReturn": true,
+          "knownSearch": true
+        },
+        "durationMs": 1342.747208,
+        "sourceChangedDuringRun": false
+      },
+      "legacy": "PASS",
+      "profile": "PASS"
+    },
+    "sourceHashes": {
+      "src/host/native-return-gap.mjs": "2df7da336d56459dac838ad4fdcc12d3479bcf4d69a087e105c87edd4bef2fcb",
+      "src/host/chatgpt-adapter.mjs": "4f5418edbb6ba07ab767f892840b025f9701e1449796d5d98728ace602cb50a7",
+      "tests/host/reading-return-gap-browser.mjs": "445378fe150b887be22ecccf25af6c17b18d1ecf4cb950117f0c329da8ef721c",
+      "tests/host/fixtures/observed-desktop.mjs": "69e1b9ed7744b0d084748032cb51fb49e65048057938208dc2bb59e891d1b892"
+    },
+    "live": {
+      "installed": "Verified same-ID candidate; temporary enum diagnostic code restored before candidate install",
+      "diagnostics": "Previous body ACK and explicit DOM fingerprint matched; no probe failure observed. Does not establish current plan freshness or actual close root cause.",
+      "status": "BLOCKED before dual frame",
+      "provider": [
+        {
+          "kind": "session",
+          "status": 200,
+          "mime": "application/json"
+        },
+        {
+          "kind": "accounts",
+          "status": 403,
+          "mime": "text/html"
+        }
+      ],
+      "privacy": "No private ID/title/body/credential saved; no native writes. No cached context or scope bypass."
+    },
+    "review": "Independent review: no blockers",
+    "next": "Legitimate provider response required for live current-chat reading/return/search; continue independent engineering.",
+    "evidence": [
+      "viewport-gap-before.log.gz",
+      "viewport-gap-boundaries.json.gz",
+      "viewport-gap-node.tap.gz",
+      "viewport-gap-mv3.json.gz",
+      "viewport-gap-live.json.gz",
+      "viewport-gap-context.json.gz",
+      "current-probe-live-diagnostics.json.gz",
+      "current-probe-live-geometry-diagnostics.json.gz"
+    ],
+    "scale": "10k/100k DEFERRED",
+    "release": "NOT_RELEASE_READY"
   }
 }

@@ -24,6 +24,12 @@ try{
   const custom=document.createElement('native-widget');root.append(custom);out.unknownCustomElementRejected=!ok();custom.remove();
   const many=document.createDocumentFragment();for(let i=0;i<2048;i++)many.append(document.createElement('span'));q('#text').append(many);out.scanOverflowRejected=!ok();q('#text').replaceChildren(document.createTextNode('Native content'));
   const replacement=root.cloneNode(true);root.replaceWith(replacement);out.staleReadingRejected=!ok();replacement.replaceWith(root);
-  out.restored=ok();return out;
+  out.restored=ok();
+  const viewport=document.createElement('div');viewport.style.cssText='position:fixed;left:220px;top:0;width:780px;height:700px;overflow:auto';root.replaceWith(viewport);viewport.append(root);args.readingViewport=viewport;
+  out.viewportReadingBackground=ok();root.style.visibility='hidden';masked=true;out.maskedViewportBackground=ok();
+  const nativeExtra=document.createElement('div');viewport.append(nativeExtra);out.viewportExtraChildRejected=!ok();nativeExtra.remove();
+  viewport.setAttribute('tabindex','0');out.interactiveViewportRejected=!ok();viewport.removeAttribute('tabindex');
+  viewport.style.setProperty('--unused','1');const viewportPaint=document.createElement('style');viewport.id='viewport';viewportPaint.textContent='#viewport::before{content:"";position:fixed;left:234px;top:14px;width:2px;height:2px;background:red}';document.head.append(viewportPaint);out.viewportGeneratedPaintRejected=!ok();viewportPaint.remove();
+  root.style.visibility='';masked=false;viewport.replaceWith(root);delete args.readingViewport;return out;
  });assert(Object.values(checks).every(Boolean),JSON.stringify(checks));console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',checks}));
 }finally{await browser.close();}

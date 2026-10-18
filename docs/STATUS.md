@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **阅读遮罩后滚动背景根因离线已修；真实账户接口403阻塞**：顶部延伸viewport在reading隐藏后成为空位命中根，旧版maskedViewportBackground稳定FAIL。新增精确显式parent背景验证，不接受任意祖先；原几何/控件/授权边界不变。290定向PASS/0skip/2214.292ms，23浏览器边界及legacy/profile通过；更新真实形状fixture的隔离MV3 8检查PASS/1342.747ms/源码未漂移，独审通过。真实脱敏诊断曾证实正文ACK与DOM指纹成立，并未见probe失败；不能宣称真实关闭根因已全部解决。最新同ID已验证候选未挂载：session=200，accounts=403 HTML，HOST_REFRESH无可信账户结果；保持安全等待，不复活旧context。临时枚举诊断代码已恢复，未保存正文/凭据/私人ID标题。真实阅读/返回/搜索/Project/恢复仍未认证，规模DEFERRED。见原证据readingViewportBackground20261018。
+
 - **非当前聊天不再触发阅读探针**：17行最小反例旧版发生16次无用probe，已改为仅当前conversation调用；点击时proof/时效/风险/授权复核原样保留。268定向PASS/0skip/560.447ms；同源码隔离MV3 8检查PASS/1477.985ms。首轮沙箱浏览器启动SIGABRT尚未执行断言，保留失败后以隔离headless获准运行通过。本增量未重装真实Profile，不能宣称解决真实current-row的_blank或surface撤回；该根因继续开放，10k/100k DEFERRED。见原证据currentOnlyReadingProbe20261018。
 
 

@@ -1,6 +1,6 @@
 // Explicit presentation variant for the observed pointer-transparent titlebar.
 // This proves an empty rectangle; it never supplies account or scope evidence.
-export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=null,isOwnedMask=()=>false,button=null,excluded=[],excludedRects=[]}){
+export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=null,readingViewport=null,isOwnedMask=()=>false,button=null,excluded=[],excludedRects=[]}){
  try{
   const win=document.defaultView,rect=n=>n.getBoundingClientRect(),overlap=(a,b)=>a.x<b.x+b.width&&b.x<a.x+a.width&&a.y<b.y+b.height&&b.y<a.y+a.height;
   if(!header||!slot||!hitRoot||header===slot||!header.contains(slot)||![header,slot,hitRoot,...excluded].every(n=>n.isConnected&&n.ownerDocument===document))return null;
@@ -9,6 +9,14 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
   if(![h.x,h.y,h.width,h.height,s.x,s.y,s.width,s.height,...Object.values(r)].every(Number.isFinite)||r.x<0||r.y<0||r.x+r.width>win.innerWidth||r.y+r.height>win.innerHeight||r.x<h.x||r.x+r.width>h.right||r.y<h.y||r.y+r.height>h.bottom||r.x<s.x||r.x+r.width>s.right||r.y<s.y||r.y+r.height>s.bottom)return null;
   if(button){const style=win.getComputedStyle(button);if(button.hidden||button.inert||button.disabled||style.display==='none'||style.visibility!=='visible'||Number(style.opacity)!==1||style.pointerEvents==='none')return null;const b=rect(button);if(button.parentElement!==document.body||![b.x-r.x,b.y-r.y,b.width-r.width,b.height-r.height].every(v=>Math.abs(v)<0.01))return null;}
   if(hitRoot.tagName!=='DIV'||hitRoot.matches('[role],[tabindex],[contenteditable]')||[...hitRoot.childNodes].some(c=>c.nodeType===3&&c.textContent.trim()))return null;
+  // When the reading mask opens, its scroll container becomes the native hit
+  // background. Accept only the explicitly configured, noninteractive parent
+  // with no other content except geometrically excluded native branches.
+  if(readingViewport){
+   if(!readingRoot||readingViewport===hitRoot||readingRoot.parentElement!==readingViewport||!readingViewport.isConnected||readingViewport.ownerDocument!==document||!hitRoot.contains(readingViewport)||readingViewport.tagName!=='DIV'||readingViewport.matches('[role],[tabindex],[contenteditable]')||readingViewport.shadowRoot||[...readingViewport.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||[...readingViewport.children].some(n=>n!==readingRoot&&!excluded.includes(n)))return null;
+   for(const pseudo of ['::before','::after'])if(!['none','normal'].includes(win.getComputedStyle(readingViewport,pseudo).content))return null;
+   let n=readingViewport,depth=0;for(;n;n=n.parentElement){const style=win.getComputedStyle(n);if(++depth>128||n.hidden||n.inert||n.getAttribute('aria-hidden')==='true'||style.display==='none'||style.visibility!=='visible'||Number(style.opacity)===0)return null;}
+  }
   if(readingRoot){
    if(readingRoot===hitRoot||!readingRoot.isConnected||readingRoot.ownerDocument!==document||!hitRoot.contains(readingRoot)||readingRoot.tagName!=='DIV'||readingRoot.matches('[role],[tabindex],[contenteditable]'))return null;
    let ancestor=readingRoot,depth=0;
@@ -58,7 +66,7 @@ export function nativeReturnGapRect({document,header,slot,hitRoot,readingRoot=nu
   for(const [x,y]of [[r.x+1,r.y+1],[r.x+35,r.y+1],[r.x+1,r.y+35],[r.x+35,r.y+35],[r.x+18,r.y+18]]){
    const hits=document.elementsFromPoint(x,y),top=hits[0];
    const background=top===button?hits.find(n=>n!==button):top;
-   if(button&&top!==button||background!==hitRoot&&background!==readingRoot)return null;
+   if(button&&top!==button||background!==hitRoot&&background!==readingRoot&&background!==readingViewport)return null;
   }
   // Match the observed header layer; never escalate above native dialogs.
   if(win.getComputedStyle(header).zIndex!=='30')return null;
