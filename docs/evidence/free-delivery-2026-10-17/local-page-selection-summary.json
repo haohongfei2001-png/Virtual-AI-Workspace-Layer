@@ -107,7 +107,25 @@
     "local-ci39091870975-formal10k.json.gz": "3b40bb80b75f3733670c8df618bb364e4327a0672b3dea221e0d7da1677301ae",
     "local-ci39091870975-meta.json.gz": "38b2019bd2bf67ee6e5c1e5fbf258c2ffc8f048be2baf2cc08f833ab1326feac",
     "local-ci39091870975-j4.log.gz": "41e0506e2c7b12a8f77c46b341d178c38d553f398c40c679f8626e196eba7fcb",
-    "local-ci39091870975-j4.json.gz": "ef202cfb497eb78050259ce393d8175bef348828451a9695a212ea33a1e43a8c"
+    "local-ci39091870975-j4.json.gz": "ef202cfb497eb78050259ce393d8175bef348828451a9695a212ea33a1e43a8c",
+    "local-shared-piece-idb-count.mjs.gz": "689bf23a1dd0d24433b1c08474a2575ce7e450f8ec01b311bddc8661d17e9894",
+    "local-shared-piece-idb-count.json.gz": "1b81e383a4babd566136e6287ff1b8bce176035a0c212df8c810374b78df6e38",
+    "local-shared-piece-idb-count-candidate.json.gz": "18e975943b3d9670936a2927a5e3c1dda4214e2b5836155709e5d6562fb0ae9e",
+    "local-shared-piece-idb-compare.mjs.gz": "13b8a616b72324516b1ca1ee3c150d78e1e5c96b5105c4b28167430bdefa020b",
+    "local-shared-directory-piece-snapshot-red.tap.gz": "c7c0946c850d0bd433245ac073a6e60d16f4c9f4a97960fcca91240d26179504",
+    "local-shared-directory-piece-snapshot-green.tap.gz": "51b103a9675b5b99c1be51671ac9bdcd7d9d8d67614e020a542adc5d58fa7b22",
+    "local-shared-snapshot-initial.tap.gz": "f1f42670b14b2eaab7595ce99fe8d7c68fd3a605848765988c73b56d95e3880c",
+    "local-shared-snapshot-targeted.tap.gz": "9d9032896aa792067762a29781fb8bf5c8c8f3de5560b6783661c6232e7e6820",
+    "local-shared-snapshot-targeted-final.tap.gz": "84e6b442628dde3066247f9026334252213f929d2fc28409ef065118d0140a3d",
+    "local-shared-snapshot-guards.json.gz": "4b3628e1c71a320c0751b05854500e9a94e0bcad5dc4051fd112a5e7359f6304",
+    "local-shared-piece-idb-baseline-1.json.gz": "a155d49ae90166909919286c8f6a2f01ccad4e451652238e37ae4e9eb5de6e68",
+    "local-shared-piece-idb-baseline-2.json.gz": "f382d2c413f6686e7300cf663849378d239a11293903eea111e231070b52b7a6",
+    "local-shared-piece-idb-baseline-3.json.gz": "1d21af8cab58b3485d9355b9c0b7ba68e182dc7dd13c4bad1e4b31a2222a0308",
+    "local-shared-piece-idb-candidate-1.json.gz": "8e6abbf2f7fe527f767bfa05e51fcc93c9689f2d4b7c76019bb6a598466ab703",
+    "local-shared-piece-idb-candidate-2.json.gz": "cadeff151b20cdae1875477431b104712f43ef06b38ab2979e5c6b1a36d74f9c",
+    "local-shared-piece-idb-candidate-3.json.gz": "292af92e91c51a90db0bd3cab4e142f8fc4eec3758a5f9b7f7a87b063deb63e8",
+    "local-shared-snapshot-full-node.tap.gz": "fac93ee08b32b1ad71251fd498fe2c1a126041e467f3bfc8ccf959a8f0ee49b2",
+    "local-shared-snapshot-full-node-integrity.json.gz": "f42913afee49e273f9bde3ceb19757957bce0bbb33d0d70794fda21358786582"
   },
   "followup100k": {
     "sourceCommit": "7c676ecd2e583feb734a6cfc367a3fe43b65961c",
@@ -392,6 +410,45 @@
       "steps": 23,
       "automaticForegroundRecovery": "NOT_ESTABLISHED",
       "foregroundFailure": "J4-peer-current-scope-timeout"
+    }
+  },
+  "sharedPieceCandidate": {
+    "state": "FULL_NODE_VERIFIED_HOST_CANDIDATE_PENDING",
+    "baseline": "a61aee3",
+    "mechanism": "Private fully verified deep-frozen bucket snapshot paired only with a private verified root and identical scope/generation/bucket/revision/count/units; every current nextOrdinal checked. Fresh read objects still fully encoded and verified. No authority cached.",
+    "realIDB": {
+      "browser": "155.0.8059.80",
+      "seedRefs": 3200,
+      "added": 50,
+      "completeRefsAfter": 3250,
+      "strictJSONCallsBefore": 220,
+      "strictJSONCallsAfter": 88,
+      "trialOrder": "AB/BA/AB",
+      "registrationMs": {
+        "baseline": [
+          28.80000001192093,
+          32.5,
+          27.900000035762787
+        ],
+        "candidate": [
+          25.200000047683716,
+          28.30000001192093,
+          25.100000023841858
+        ]
+      },
+      "allFactsHashesEqual": true,
+      "limit": "Instrumented isolated real IDB registration segment only; not whole Host, Linux or p95 acceptance."
+    },
+    "validation": {
+      "targetedPassed": 196,
+      "guardMutantsKilled": 12,
+      "independentSnapshotTests": 20,
+      "baselineRedMeaning": "new API missing only, not semantic regression",
+      "independentReview": "No blocker",
+      "initialFailures": "Immutable record mutation assertions updated to corrupt-clone replacement plus frozen-mutation refusal; missing record error class preserved before capture. Original failed logs retained.",
+      "fullPassed": 8305,
+      "fullWallSeconds": 249.66543150000507,
+      "inputDrift": false
     }
   }
 }

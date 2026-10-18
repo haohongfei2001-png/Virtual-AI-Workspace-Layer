@@ -80,11 +80,25 @@ export function createSharedDirectoryRootRecordReader(){
  };
 }
 const pieceValidation=new VerifiedRecordCache({maxEntries:512,maxChars:8*1024*1024});
+// Transaction-local immutable evidence, never authority or a shortcut for new
+// storage bytes. Only this private capture can confer an object-identity proof.
+const pieceSnapshots=new WeakMap();
+export function snapshotSharedDirectoryPiece(record,root,bucket){
+ bucketId(bucket);if(record==null)throw Error('shared-directory-key-mismatch');const pointer=root.refDirectory[bucket];
+ const contextRoot={scopeKey:root.scopeKey,generation:root.generation,nextOrdinal:root.nextOrdinal,refDirectory:{[bucket]:pointer?{revision:pointer.revision,count:pointer.count,units:pointer.units}:undefined}};
+ const copy=captureJSONSnapshot(record),piece=verifySharedDirectoryPiece(copy,contextRoot,bucket);
+ Object.freeze(piece.versions);Object.freeze(piece.ordinals);Object.freeze(piece);Object.freeze(copy);
+ const verified=contextRoot.refDirectory[bucket];
+ pieceSnapshots.set(copy,JSON.stringify([contextRoot.scopeKey,contextRoot.generation,bucket,verified.revision,verified.count,verified.units]));
+ return copy;
+}
+
 export function verifySharedDirectoryPiece(record,root,bucket){
  bucketId(bucket);const pointer=root.refDirectory[bucket];if(!pointer)throw Error('missing-shared-directory-pointer');
  if(record?.key!==sharedRefDirectoryKey(root.scopeKey,root.generation,bucket,pointer.revision))throw Error('shared-directory-key-mismatch');
  const context=JSON.stringify([root.scopeKey,root.generation,bucket,pointer.revision,pointer.count,pointer.units]);
- const piece=pieceValidation.read(record,context,()=>validatePiece(record,root,bucket,pointer));
+ const privatePair=rootSnapshots.get(root)===root.scopeKey&&pieceSnapshots.get(record)===context;
+ const piece=privatePair?record.payload:pieceValidation.read(record,context,()=>validatePiece(record,root,bucket,pointer));
  // Appending a ref changes this ceiling, not the bytes or routing of every
  // untouched bucket. Still check the CURRENT bound on every cached read.
  if(piece.ordinals.some(ordinal=>ordinal>=root.nextOrdinal))throw Error('invalid-shared-directory-order');

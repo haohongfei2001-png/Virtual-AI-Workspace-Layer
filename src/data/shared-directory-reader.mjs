@@ -1,4 +1,4 @@
-import {validateSharedDirectoryRoot,verifySharedDirectoryPiece,materializeSharedRefDirectory,sharedRefBucket,sharedRefDirectoryKey} from './shared-ref-directory.mjs';
+import {validateSharedDirectoryRoot,verifySharedDirectoryPiece,snapshotSharedDirectoryPiece,materializeSharedRefDirectory,sharedRefBucket,sharedRefDirectoryKey} from './shared-ref-directory.mjs';
 import {id} from './state.mjs';
 
 /** Callback-only reader: all requests belong to one live IDB transaction/root.
@@ -22,7 +22,7 @@ export function createSharedDirectoryReader(store,root,scope,fail,ownerGuard=nul
    pending.set(key,[done]);
    const request=store.get(key);
    request.onsuccess=()=>{if(!checkOwner()||failed)return;try{
-    const record=request.result,verified=verifySharedDirectoryPiece(record,root,bucket);records.set(key,record);
+    const record=snapshotSharedDirectoryPiece(request.result,root,bucket),verified=verifySharedDirectoryPiece(record,root,bucket);records.set(key,record);
     const callbacks=pending.get(key);pending.delete(key);
     // No external callback intervenes before the first consumer. Every later
     // consumer rechecks fresh bytes and the current root ordinal ceiling.
