@@ -1,3 +1,4 @@
+import {createURLPolicy} from '../host/url-policy.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 
@@ -18,7 +19,10 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
  const key=d=>`${d.tabId}:${d.documentId}`;
  const notify=(fn,value)=>{try{Promise.resolve(fn(value)).catch(()=>{});}catch{}};
  const clockOK=(entry,limit)=>{const wall=now(),elapsed=elapsedNow(),prior=clocks.get(entry)??{wall:entry.wall,elapsed:entry.elapsed};if(expired.has(entry)||!Number.isFinite(wall)||!Number.isFinite(elapsed)||wall<prior.wall||elapsed<prior.elapsed||wall-entry.wall>=limit||elapsed-entry.elapsed>=limit){expired.add(entry);return false;}clocks.set(entry,{wall,elapsed});return true;};
- const conversation=url=>{try{const u=new URL(url);if(u.origin!==origin||u.username||u.password||u.search||u.hash)return null;return /^\/c\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.exec(u.pathname)?.[1]??null;}catch{return null;}};
+ // Share native navigation's route grammar. A container identifies only the
+ // conversation; its hint never establishes Project membership or account scope.
+ const routePolicy=createURLPolicy({origin});
+ const conversation=url=>{const route=routePolicy.parse(url);return route.kind==='conversation'?route.conversationId:null;};
  // Only the two presentation parameters observed on the native current-chat
  // GET are accepted, with their exact observed values. They never select an
  // account, change the current object, or replace document/body verification.

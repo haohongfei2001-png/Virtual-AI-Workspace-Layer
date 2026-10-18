@@ -100,3 +100,29 @@ test('observed query completion must match exact sent URL',async t=>{
  const f=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1'}),url=origin+'/backend-api/conversations/'+C+'?num_turns=10&include_has_versions=true',d=await f.send({url});
  f.webRequest.onCompleted.emit({...d,url:origin+'/backend-api/conversations/'+C,statusCode:200,fromCache:false});await flush();assert.equal(await f.owner.verify(frame),null);
 });
+
+for(const container of ['g-p-0123456789abcdef0123456789abcdef','g-custom-assistant'])test('container chat establishes only conversation context: '+container,async t=>{
+ const f=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1'}),actualURL=origin+'/g/'+container+'/c/'+C,current={...frame,actualURL};
+ f.current={...browserFrame,url:actualURL};
+ await f.finish(await f.send({url:origin+'/backend-api/conversations/'+C+'?num_turns=10&include_has_versions=true'}));
+ const receipt=await f.owner.verify(current);assert.equal(receipt?.conversationId,C);assert.equal(receipt?.contextId,'team');assert.equal(receipt?.actualURL,actualURL);
+ assert.equal(Object.hasOwn(receipt,'projectId'),false);assert.equal(Object.hasOwn(receipt,'containerHint'),false);assert.equal(f.associated.length,1);assert.equal(Object.hasOwn(f.associated[0],'projectId'),false);
+ assert.equal(await f.owner.verify(frame),null,'plain alias cannot reuse container receipt');
+ f.current={...browserFrame,url:origin+'/g/g-other/c/'+C};assert.equal(await f.owner.verify(current),null,'same ID at different current URL fails final frame check');
+});
+test('container context still needs independently authenticated roster and matching body',async t=>{
+ const f=fixture(t),actualURL=origin+'/g/g-custom/c/'+C,current={...frame,actualURL};f.current={...browserFrame,url:actualURL};await f.finish(await f.send());
+ let identity={principalId:'user',contexts:[{id:'personal',kind:'personal'}],expiresAt:new Date(1000000).toISOString(),providerProfile:'session',transport:'worker-fixed-fetch'},n=0;
+ const auth=createScopeAuthority({provider:{read:async()=>identity},profile:{id:'c2',singlePersonalDefault:false,browserRequestContext:true},contextObserver:f.owner,now:()=>1000,elapsedNow:()=>1000,makeId:()=>`container_grant_${++n}`});
+ assert.notEqual((await auth.refresh(current,'bind')).state,'verified');assert.equal(auth.scopeFor(current),null);
+ identity={...identity,contexts:[{id:'team',kind:'organization'}]};assert.equal((await auth.refresh(current,'auth-change')).state,'verified');
+ f.answer={challenge:'wrong',actualURL,conversationId:D,association:'explicit-body-id'};assert.notEqual((await auth.revalidate(current,undefined,{force:true})).state,'verified');assert.equal(auth.scopeFor(current),null);
+});
+for(const route of ['/g/g-custom/c/'+D,'/g/g-custom/c/'+C+'?x=1','/g/g-custom/c/'+C+'#x','/g/g%2fcustom/c/'+C,'/g/constructor/c/'+C,'/g/g-custom/../g-custom/c/'+C,'/g/g-custom/c/'+C+'/','/g/g-p-0123456789abcdef0123456789abcdef/project'])test('unsupported or different container target never produces receipt: '+route,async t=>{
+ const f=fixture(t),actualURL=origin+route;f.current={...browserFrame,url:actualURL};await f.finish(await f.send());assert.equal(await f.owner.verify({...frame,actualURL}),null);assert.equal(f.ready.length,0);assert.equal(f.associated.length,0);
+});
+test('history switch from ordinary to container chat revokes old receipt and requires fresh native request',async t=>{
+ const f=fixture(t);await f.finish(await f.send());const old=await f.owner.verify(frame),actualURL=origin+'/g/g-custom/c/'+D,current={...frame,actualURL};f.current={...browserFrame,url:actualURL};
+ const next=f.details({requestId:'container-next',url:origin+'/backend-api/conversation/'+D});f.webRequest.onSendHeaders.emit(next);f.owner.invalidateHistory({tabId:7,frameId:0,documentId:'doc',documentLifecycle:'active',frameType:'outermost_frame',url:actualURL});
+ assert.equal(f.owner.isCurrent(frame,old),false);assert.equal(await f.owner.verify(current),null);await f.finish(next);const receipt=await f.owner.verify(current);assert.equal(receipt?.conversationId,D);assert.equal(Object.hasOwn(receipt,'projectId'),false);
+});
