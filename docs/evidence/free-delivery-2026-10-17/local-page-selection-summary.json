@@ -1429,5 +1429,20 @@
       "composerPresent": true,
       "limitations": "No account-wide project absence claim; no live MV3 authorization or navigation acceptance"
     }
+  },
+  "ci39101646460J2": {
+    "head": "6270a34",
+    "status": "FAIL",
+    "failedStage": "recover-provisional-anchor",
+    "sourceChangedDuringRun": false,
+    "evidence": "ci39101646460-j2-original.json.gz",
+    "findings": [
+      "ACK and fast failure retry passed before worker stop",
+      "real worker stop and new running confirmed",
+      "new worker captured zero messages; frame count dropped from two to zero",
+      "failureFacts null does not prove stored anchor loss"
+    ],
+    "rootCause": "OPEN: controller termination/rebind suppression not yet reproduced",
+    "logAcquisition": "GitHub connector fetched original job after CLI cache and network failures"
   }
 }

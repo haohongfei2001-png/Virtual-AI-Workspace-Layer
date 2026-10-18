@@ -4,6 +4,8 @@
 
 完整Free仍 **NOT_RELEASE_READY**。以下为当前事实；后续Round条目均为历史记录，不表示当前验收。
 
+- **CI39101646460 J2原失败阶段已取得**：GitHub连接器成功读取原job并提取JSON。6270a34在ACK/失败后立即重发通过、真实worker stop/new running确认后，recover-provisional-anchor原25秒观察超时；UI SUSPEND后frame从2变0，新worker已安装诊断但trace为空。failureFacts=null不证明锚点持久化丢失。当前沿controller终止→content重新握手链定位，根因仍OPEN；不延时/不复用旧授权/不重跑挑绿。原JSON压缩保存在既有证据目录。9d3c436的CI39102367568已cancelled，不计PASS；206af45的CI39102630407最近查询仍运行。
+
 - **原生消息部分身份选择器已修复**：真实headless DOM反例确认旧交集选择器漏掉缺少任一ID属性的消息，仍错误返回explicit-body-id；现并集选中后逐项校验，缺一侧均unproven，恢复完整属性才成立。旧版实际RED、同fixture新版GREEN；67定向回归通过。隔离反例全网络拦截；随后同源发现模块在授权真实页只读复核仍得到5条ID且C与route一致，无正文读取/scope授权。页面无alert且composer存在，但可识别Project链接为0、仅创建入口可见，不能据此认定账户无Project。不计MV3或LIVE_VERIFIED。证据与源码hash见现有local-page-selection-summary.json。J2原日志读取依次遇缓存权限、HTTP2 GOAWAY、单job下载45秒超时，根因仍未确认；未重跑CI或降低门槛。
 
 - **当前本地检查点：新版平铺消息解析待独审/构建**。获授权当前单条聊天在确认原生composer为空后正常刷新，原生两次GET均200，响应C与route一致、账户头匹配活跃canonical roster；仅记录字段结构/数量/布尔断言，无正文/凭据/私人ID落盘。实际为308条平铺messages、无mapping，不能推断父链。新增显式message-list-v1解析及reader接线，保持256条/原请求预算、observed-only/partial与lineage-unavailable；不造mappingNodeId，禁用该格式与ACK/history配置混用，默认生产配置不变。170定向测试全过、0跳过、106.341ms；后续包构建/manifest边界、send correlator和acceptance相关198项全过、0跳过、2620.067ms；另补真实flat parser→send correlator组合反例：partial清除旧intent且后续完整baseline不复活它，18项通过、45.159ms；独立审查尚未完成，不能认定LIVE_VERIFIED。并行审查因额度耗尽、另一任务因网络权限撤回终止。6270a34的CI39101646460最终FAIL：J2 authenticated ACK旅程失败，其余三个job成功；原日志定位仍待完成，不重跑挑绿。10k/100k仍DEFERRED，真实Project/导航/返回/搜索/安全恢复仍未通过。
