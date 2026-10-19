@@ -10886,6 +10886,15 @@
       "Worker/peer recovery without new context remains unestablished",
       "Real IME/coexistence/lifecycle and complete installation acceptance",
       "10k/100k DEFERRED"
-    ]
+    ],
+    "gitCheckpoint": {
+      "productHead": "bce071e3806026ea79eb3dc6692c631b1e2d1b51",
+      "push": "FAILED_CONNECT_GITHUB_443_75102MS",
+      "connectivityCheck": "FAILED_CONNECT_TIMEOUT_8005MS",
+      "lastSuccessfulFetchHead": "ce8ffb3d913eb2293a8607f16349724a0b3aca54",
+      "numericSuffixCopiesPreserved": 2258,
+      "stashesPreserved": 3,
+      "remoteOrNetworkConfigurationChanged": false
+    }
   }
 }
