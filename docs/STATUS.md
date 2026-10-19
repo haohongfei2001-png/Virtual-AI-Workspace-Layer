@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **搜索/工作集→阅读→唯一返回的容量回退已修**（2026-10-19）：独审复现17条退5条，根因是特殊页默认DTO覆盖RAM展示容量；实际MV3又发现四格返回走workspaceEntered，仅改mode，未退出搜索。现保留原有界展示描述到显式fresh owner读取，并把真实返回接入现有showWorkspace/owner presentation；不缓存旧行/授权，不扩大请求预算。原最小反例6PASS/3FAIL，部分修复的两次实际返回FAIL及sandbox启动/保守清理失败保留。最终同源码隔离MV3贯通项目与UNKNOWN各17→普通阅读返回→独立当前聊天页搜索/打开当前目标→唯一返回，两文档/编辑器/草稿保持、无额外新标签、外网阻断与清理确认；链耗时1051.227ms，不含初始摄取，无成功旧完整链可比，不称提速。373受影响检查0失败/跳过，scope/session/segment失效及原五条分页退让保持，独审通过。仅此同目标路径，不冒充换路重建、实机安装或完整Free；真实身份仍缺有效context，10k/100k DEFERRED。原证据searchReadingReturn20261019。
+
+- **上一源码CI已收口**：e9e41a35的39243821841四个原离线job均SUCCESS；只对应侧栏入口及该源码已有检查，不替代本次搜索返回新源码、完整J4或真实验收。正式10k仍DEFERRED，见sidebarProjectCreate20261019.ci。
+
 - **C2侧栏原生Project“＋”入口已补齐**（2026-10-19）：原INTERACTION_SPEC要求项目卡与侧栏都有入口，但原renderer仅给卡片调用已有projectCreateEntry，侧栏只有折叠。复用同一精确Project导航计划，将＋与折叠按钮并列，标题可收缩/按钮固定；不代发新聊天、不扩大授权或改草稿处理。原版最小反例4FAIL，修复后两surface的无计划/错误ID/失效/默认浏览器语义及折叠独立通过。实际隔离MV3 LEGACY/MODERN分别完成原生聊天/项目及新增侧栏项目→唯一返回→原发送frame旧动作拒绝，MODERN继续核对非首项空间；点击恰好一次、原编辑器/修饰键草稿保持、worker外网阻断、源码/fixture/runner稳定。独审发现初始重放用了workspace发送端，已修正并保留初始报告、不用它替代最终证据。226相关检查0失败/跳过；最终旅程5.000s/5.341s含启动、不含清理，无原完整侧栏基线，不称提速。真实安装包未改，真实身份/成员/活动/J4/GU/完整视觉仍未验收，10k/100k DEFERRED。原证据sidebarProjectCreate20261019。
 
 - **集中结构实机完成：返回空ID的default占位，当前路径不能建立空间身份**（2026-10-19）：用户重载后，Codex在已授权专用Profile新首页执行一次；51c7c80包返回finished/account-id，唯一条目default的account_id明确为null、id缺失，personal/未停用/会话访问true。结果前缀完整覆盖这些字段，AX后部截断未冒充全部读回；无私人值/原响应/截图入库。单次accounts/原6秒/1MiB、无me/session/重试，许可已消费。不是字段改名、空roster或已证登出；没有可授权的稳定context，不能用default或me ID兜底。源码对照：生产accounts带session-derived Bearer，本次仅Cookie；历史成功脚本旁路观察网页原生响应，不等于复现同一请求。认证差异是否导致占位尚未证实，不复制凭据或继续重读。已精确细分诊断default-null-context-id，原generic error/拒绝不变；相关回归确认有效me也不能补空间、不能发第三次或重试，独审通过。真实安装保留原51包，不为诊断原因再要求重载。下一关口是可信主体与有效roster/current-context来源；原session403未重测、完整Free NOT_RELEASE_READY、10k/100k DEFERRED。原证据accountsStructure20261019.liveResult20261019；本批135定向0失败/跳过、489.363ms，仅机制检查，不称真实修复或提速。独立导航审查未发现新增可复现故障，不追加推测补丁。

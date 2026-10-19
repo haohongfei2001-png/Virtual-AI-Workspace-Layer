@@ -57,3 +57,41 @@ test('successful paged five fallback survives another list then preserves next a
  control(f,'P2','显示更多近期窗口').click();await tick();assert.equal(calls.at(-1).rowOffset,5);assert.equal(calls.at(-1).rowLimit,5);assert.equal(rows(f,'P2','current')[0].getAttribute('data-ref-id'),'P2_current_5');
  control(f,'P2','返回前页 P2').click();await tick();assert.equal(calls.at(-1).rowOffset,0);assert.equal(calls.at(-1).rowLimit,5);assert.equal(control(f,'P2','显示更多近期窗口').textContent,'下一页');assert.equal(rows(f,'P2','current')[0].getAttribute('data-ref-id'),'P2_current_0');
 });
+
+// Search/workset pages deliberately omit unrelated expanded rows. Reading may
+// receive a normal five-row owner refresh before the user takes the sole return.
+for(const mode of ['search','workingSet'])for(const background of [false,true])test(`${mode} native reading return rematerializes expanded windows (background=${background})`,async t=>{
+ const calls=[];let stamp='before';
+ const f=fixture('workspace',q=>{
+  calls.push(structuredClone(q));const dto=response(q,'scopeA',stamp);
+  if(q.search)dto.search={...q.search,...page([row('P2_current_0')],1,0,24)};
+  if(q.workingSet)dto.workingSet={...page([row('P2_current_0')],1,0,24),currentRefId:'P2_current_0'};
+  return dto;
+ },null,null,{nativeHref:u=>u,navigationPlan:r=>({targetKey:'target',uiGrantId:'grant',mountId:'mount',plan:{mode:'same-target',planRevision:1,target:{kind:'resolved',entity:'conversation',nativeId:r.id,navigationURL:r.nativeUrl}}})},{onDispatch:async()=>({state:'already-current'})});
+ t.after(()=>f.nav.stop());f.nav.updateFrameProjection(response());await expandRecent(f,'P2');await expandRecent(f,'P1');
+ f.nav.present({kind:mode==='search'?'search-known':'show-working-set'});await tick();
+ assert.equal(calls.at(-1).rowWindows,undefined,'special pages must not fetch unrelated expanded rows');
+ f.pane().querySelector('[data-ref-id="P2_current_0"]').click();await tick();assert.equal(f.nav.view().mode,'reading');
+ if(background)f.nav.updateFrameProjection(response({},'scopeA','background'));
+ stamp='returned';assert.equal(f.nav.workspaceEntered(),true);await tick();
+ for(const id of ['P2','P1']){assert.equal(rows(f,id,'current').length,17);assert(rows(f,id,'current').every(n=>n.querySelector('.window-title').textContent.startsWith('returned')));}
+ assert.equal(calls.at(-1).search,undefined);assert.equal(calls.at(-1).workingSet,undefined);
+});
+
+for(const change of ['scope','segment','session'])test(`special-page window memory cannot survive changed ${change}`,async t=>{
+ const {f,calls}=setup(t);await expandRecent(f,'P2');f.nav.present({kind:'search-known'});await tick();f.nav.enterReading();
+ const dto=response({},change==='scope'?'scopeB':'scopeA','new-context');
+ if(change==='segment'){dto.segment=1;dto.navigation.hasNewer=true;}
+ if(change==='session')dto.viewSession={...dto.viewSession,T:dto.viewSession.T+1};
+ f.nav.updateFrameProjection(dto);const before=calls.length;f.nav.workspaceEntered();await tick();
+ assert.equal(rows(f,'P2','current').length,5);assert.equal(calls.length,before);assert.equal(f.nav.view().capacities.size,0);
+});
+test('special-page return still accepts the existing byte-bounded five-row pagination fallback',async t=>{
+ let search=false;const calls=[];
+ const f=fixture('workspace',q=>{calls.push(q);if(q.search){search=true;return {...response(),search:{...q.search,...page([],0,0,24)}};}
+  const effective=search?{...q,rowWindows:q.rowWindows?.map(w=>({...w,rowLimit:5,paged:true}))}:q;
+  return response(effective);
+ });t.after(()=>f.nav.stop());f.nav.updateFrameProjection(response());await expandRecent(f,'P2');f.nav.present({kind:'search-known'});await tick();f.nav.enterReading();f.nav.workspaceEntered();await tick();
+ assert.equal(rows(f,'P2','current').length,5);assert.equal(control(f,'P2','显示更多近期窗口').textContent,'下一页');
+ control(f,'P2','展开旧窗口 P2').click();await tick();assert.equal(calls.at(-1).rowWindows[0].rowLimit,5);assert.equal(calls.at(-1).rowWindows[0].paged,true);
+});

@@ -12987,6 +12987,86 @@
       "sidebar-project-create-initial-observer.json.gz": "46fba7474007e998a322f4264505ad819f8e6800140fbdbe2557f564b23faa05",
       "sidebar-project-create-legacy.json.gz": "2f57de97f052367d825fd5b529f48168ad3fa2e6215a55bfba11a2038671d94d",
       "sidebar-project-create-modern.json.gz": "99921135943015bbdb9b23c1ca154b8aadd6356b0455f523e7660fb82c625ca5"
+    },
+    "ci": {
+      "runId": 39243821841,
+      "head": "e9e41a35c7ec11a9362f29855486bb7021b5c898",
+      "status": "success",
+      "jobs": [
+        "offline-durability-compat",
+        "node-contracts",
+        "offline-j4-lifecycle",
+        "offline-journeys"
+      ],
+      "boundary": "Existing offline slices only; formal 10k DEFERRED; not complete J4, live or Free acceptance."
     }
+  },
+  "searchReadingReturn20261019": {
+    "baseHead": "e9e41a35c7ec11a9362f29855486bb7021b5c898",
+    "task": "C2/C3 original INTERACTION_SPEC section5 reading return restores expanded capacities",
+    "rootCauses": [
+      "Special-page default five-row DTOs overwrite saved expanded-window presentation descriptors during background reading refresh.",
+      "The real sole-return notification calls workspaceEntered, which only set mode and left search query/presentation active; a showWorkspace-only test missed this production path."
+    ],
+    "fix": "Suspend only bounded RAM window-descriptor updates while special pages are active; a current explicit owner response resumes tracking. Real workspace entry exits the special view through existing showWorkspace and notifies owner, including historical segments. All rows/plans are obtained fresh; no scope, grant, budget, persistence or native-write change.",
+    "red": {
+      "renderer": {
+        "tests": 9,
+        "pass": 6,
+        "fail": 3,
+        "durationMs": 64.345
+      },
+      "browser": "Initial partial fix still failed original 6-second return assertion; bounded synthetic transport trace showed search query remained active after already-current. Failures retained, not relabelled."
+    },
+    "targeted": {
+      "tests": 373,
+      "pass": 373,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 181.414333,
+      "coverage": "renderer/client/row-window/search/snippet/calibration/surface-entry/native-plan; includes scope/session/segment reset and byte-bounded five-row fallback"
+    },
+    "actualBrowser": {
+      "status": "PASS_OFFLINE_MV3_WINDOW_RETENTION",
+      "acceptance": "PARTIAL_S_NOT_FREE_ACCEPTED",
+      "realChatGPT": "NOT_RUN",
+      "journey": {
+        "projectRows": 17,
+        "unknownRows": 17,
+        "readingReturn": true,
+        "originalDocumentEditorDraft": true,
+        "elapsedMs": 1051.226666
+      },
+      "searchReturn": {
+        "alreadyCurrentOriginalTarget": true,
+        "uniqueReturn": true,
+        "projectRows": 17,
+        "unknownRows": 17,
+        "originalProjectDraftPreserved": true
+      },
+      "sourceChangedDuringRun": false,
+      "fixtureChangedDuringRun": false,
+      "manifestChangedDuringRun": false,
+      "temporaryDirectoryRemoved": true,
+      "traceDropped": 0
+    },
+    "evidence": [
+      "search-return-before.tap.gz",
+      "search-return-targeted.tap.gz",
+      "search-return-startup-failure.json.gz",
+      "search-return-initial-mv3-failure.json.gz",
+      "search-return-observed-failure.json.gz",
+      "search-return-mv3.json.gz"
+    ],
+    "limits": [
+      "1k local fixture functional subchain only, not scale acceptance.",
+      "Search opens already-current conversation and returns via original sole control; different-route frame reconstruction not proven by this subchain.",
+      "Original Project document/draft and current Conversation document/draft both retained; no draft cleared for easier navigation.",
+      "Observer records fixed bounded synthetic RPC structures without rewriting; no real Profile data.",
+      "Sandbox Chrome startup and conservative cleanup failure retained; final escalated isolated run cleanup confirmed.",
+      "No comparable complete old successful search-return journey; 1051.227ms is functional chain time after initial ingestion, including second local-page setup, not a performance improvement claim.",
+      "No real installation update or identity/context recovery; 10k/100k remain DEFERRED; NOT_RELEASE_READY."
+    ],
+    "review": "Independent read-only review confirmed production entry wiring, retained ordinary path, scope fences and existing single-flight; caught different-target draft precondition before final browser run."
   }
 }

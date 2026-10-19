@@ -30,6 +30,18 @@ else{
   browserHandle=await launchNativeVisibilityBrowser({chromium,profileDir:join(directory,'profile'),headed:false,historicalNetworkGuard:networkGuard.config,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
   context=browserHandle.context;context.setDefaultTimeout(6000);report.browserPrecondition=browserHandle.diagnostic;
   await context.route('**/*',route=>{const u=new URL(route.request().url());return u.origin===server.origin||u.protocol==='chrome-extension:'?route.continue():route.abort();});
+  // Bounded transport observation of this synthetic fixture only; no payload
+  // rewriting, private profile, native response body or timing changes.
+  report.trace=[];report.traceDropped=0;
+  await context.exposeBinding('observeWindowReturn',({frame},entry)=>{if(report.trace.length<400)report.trace.push({frame:frame.url(),...entry});else report.traceDropped++;});
+  await context.addInitScript(()=>{
+   if(location.protocol!=='chrome-extension:'||!globalThis.chrome?.runtime?.sendMessage)return;
+   const send=chrome.runtime.sendMessage.bind(chrome.runtime);
+   chrome.runtime.sendMessage=function(...args){const m=args[0],tracked=['HOST_UI_VIEW','HOST_UI_RESUME','HOST_UI_SAVE_VIEW','HOST_UI_DISPATCH_CURRENT','HOST_UI_PRESENT'].includes(m?.type),pending=send(...args);
+    if(tracked&&pending?.then)pending.then(r=>{const p=r?.page;globalThis.observeWindowReturn({type:m.type,query:m.query,expectedQuery:m.expectedQuery,capacities:m.view?.capacities,ok:r?.ok,state:r?.state,presentation:p?.presentation??r?.presentation,resume:r?.resume,counts:p?{search:!!p.search,workingSet:!!p.workingSet,groups:p.groups?.items.map(g=>({id:g.id,unknown:g.lists.unknown.items.length})),unknown:p.entries?.unknown.items.length,selection:p.selection?{groupId:p.selection.groupId,list:p.selection.list,limit:p.selection.limit}:null}:null});},()=>{});
+    return pending;
+   };
+  });
   const cdp=await context.browser().newBrowserCDPSession();extensionId=(await cdp.send('Extensions.loadUnpacked',{path:built.unpacked})).id;
   page=await context.newPage();await page.setViewportSize({width:1440,height:900});page.on('pageerror',e=>report.errors.push(e.message));
   report.phase='initial';await page.goto(server.url);await waitHostScaleSurfaces(page,{extensionId});
@@ -39,9 +51,9 @@ else{
   await page.waitForFunction(()=>document.querySelectorAll('#reading nav[aria-label="Project conversations"] a').length===80);
   await page.evaluate(()=>{globalThis.paginationEditor=document.querySelector('textarea');globalThis.paginationDocument=document;paginationEditor.value='preserved pagination draft';});
   report.phase='native-member-progress';report.memberProgress=await waitHostScaleMemberProgress({page,extensionId,url:server.origin+path,projectId:project,id:'60000000-0000-4000-8000-000000000062',deadline:performance.now()+30000});
-  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();const [workspace]=await waitHostScaleSurfaces(page,{extensionId});
+  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();let [workspace]=await waitHostScaleSurfaces(page,{extensionId});
   const started=performance.now();report.phase='expand-project';
-  const projectList=workspace.locator(`.card[data-theme-id="${project}"] .members`),unknown=workspace.locator('section[data-free-list="unknown"]');
+  let projectList=workspace.locator(`.card[data-theme-id="${project}"] .members`),unknown=workspace.locator('section[data-free-list="unknown"]');
   const ids=loc=>loc.locator('a[data-ref-id]').evaluateAll(ns=>ns.map(n=>n.getAttribute('data-ref-id')));
   async function waitRows(selector,count){await workspace.waitForFunction(({selector,count})=>{const roots=[document];for(let i=0;i<roots.length;i++)for(const n of roots[i].querySelectorAll('*'))if(n.shadowRoot)roots.push(n.shadowRoot);const list=roots.map(r=>r.querySelector(selector)).find(Boolean);return list?.querySelectorAll('a[data-ref-id]').length===count;},{selector,count},{timeout:6000});}
   await projectList.getByRole('button',{name:'显示更多待核对窗口',exact:true}).click();await waitRows(`.card[data-theme-id="${project}"] .members`,17);const first=await ids(projectList);
@@ -51,7 +63,33 @@ else{
   assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await waitHostScaleSurfaces(page,{extensionId});
   assert.deepEqual(await ids(projectList),first);assert.deepEqual(await ids(unknown),second);
-  assert(await page.evaluate(()=>document===paginationDocument&&document.querySelector('textarea')===paginationEditor&&paginationEditor.value==='preserved pagination draft'));assert.equal(page.url(),server.origin+path);assert.deepEqual(report.errors,[]);
+  // Use the real search surface and its issued native link, then the one return.
+  // Reading refreshes must not overwrite the expanded card descriptors with
+  // special-page defaults; the returned rows are read again from the owner.
+  assert(await page.evaluate(()=>document===paginationDocument&&document.querySelector('textarea')===paginationEditor&&paginationEditor.value==='preserved pagination draft'));assert.equal(page.url(),server.origin+path);
+  const originalPage=page;
+  // A separate local document starts at the target; neither journey clears a
+  // native draft to obtain an easier navigation plan.
+  report.phase='search-native-return';page=await context.newPage();await page.setViewportSize({width:1440,height:900});
+  await page.goto(server.origin+'/c/'+first[0]);[workspace]=await waitHostScaleSurfaces(page,{extensionId});
+  await page.evaluate(()=>{globalThis.paginationEditor=document.querySelector('textarea');globalThis.paginationDocument=document;paginationEditor.value='preserved search draft';});
+  projectList=workspace.locator(`.card[data-theme-id="${project}"] .members`);unknown=workspace.locator('section[data-free-list="unknown"]');
+  await projectList.getByRole('button',{name:'显示更多待核对窗口',exact:true}).click();await waitRows(`.card[data-theme-id="${project}"] .members`,17);
+  await unknown.getByRole('button',{name:'显示更多归属待核对',exact:true}).click();await waitRows('section[data-free-list="unknown"]',17);
+  const title=await projectList.locator('a[data-ref-id]').first().locator('.window-title').innerText();
+  const sidebar=page.frames().find(f=>f.url()===`chrome-extension://${extensionId}/sidebar.html`);assert(sidebar);
+  await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
+  await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(title);
+  const result=workspace.locator(`.search-results a[data-ref-id="${first[0]}"]`);await result.waitFor();
+  const target=await result.getAttribute('href');assert.equal(target,page.url());const pageCount=context.pages().length;await result.click();
+  await page.getByRole('button',{name:'返回工作空间',exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);
+  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await waitHostScaleSurfaces(page,{extensionId});
+  await waitRows(`.card[data-theme-id="${project}"] .members`,17);await waitRows('section[data-free-list="unknown"]',17);
+  assert.deepEqual(await ids(projectList),first);assert.deepEqual(await ids(unknown),second);
+  assert.equal(context.pages().length,pageCount);assert(await originalPage.evaluate(()=>document===paginationDocument&&document.querySelector('textarea')===paginationEditor&&paginationEditor.value==='preserved pagination draft'));
+  report.searchReturn={alreadyCurrentOriginalTarget:true,uniqueReturn:true,projectRows:17,unknownRows:17,originalProjectDraftPreserved:true};
+  assert(await page.evaluate(()=>document===paginationDocument&&document.querySelector('textarea')===paginationEditor&&paginationEditor.value==='preserved search draft'));assert.equal(page.url(),target);assert.deepEqual(report.errors,[]);
   report.status='PASS_OFFLINE_MV3_WINDOW_RETENTION';report.acceptance='PARTIAL_S_NOT_FREE_ACCEPTED';report.journey={projectRows:first.length,unknownRows:second.length,readingReturn:true,originalDocumentEditorDraft:true,elapsedMs:performance.now()-started};report.scaleAcceptance='NOT_RUN_1K_FIXTURE_FUNCTIONAL_SUBCHAIN_ONLY';
 
  }catch(error){report.status=context?'FAIL':'NOT_RUN_STARTUP';report.error=error.stack;report.failure=await hostScaleFailureFacts(page).catch(e=>({error:e.message}));process.exitCode=1;}
