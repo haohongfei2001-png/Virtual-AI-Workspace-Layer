@@ -54,7 +54,10 @@ export function createCurrentBodyDiscovery({document:doc,urlPolicy,profile,isOwn
   try{const roots=[lastRoot,...doc.querySelectorAll(config.rootSelector)].filter(Boolean),contains=(a,b)=>a===b||a?.contains?.(b)===true;
    return records.some(r=>roots.some(root=>{
     if(r.type==='attributes'&&['data-va-mask-workspace','data-va-mask-sidebar'].includes(r.attributeName))return false;
-    if(contains(root,r.target))return ['attributes','childList','characterData'].includes(r.type);
+    // Text updates do not change native message identity or structure. The
+    // adapter still schedules its bounded current-body recheck; no proof is renewed
+    // from hidden text, and native attribute/child changes still surrender.
+    if(contains(root,r.target))return ['attributes','childList'].includes(r.type);
     if(r.type==='attributes'&&contains(r.target,root))return true;
     return r.type==='childList'&&[...(r.addedNodes??[]),...(r.removedNodes??[])].some(n=>contains(n,root));
    }));

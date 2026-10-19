@@ -255,8 +255,8 @@ jobs:
         if: ${{ !cancelled() }}
         timeout-minutes: 3
         run: |
-          node tests/host/sys05-stream-package-journey.mjs "$RUNNER_TEMP/sys05-work.json" --execute-browser --observe-work --backpressure
-          node -e "const r=require(process.env.RUNNER_TEMP+'/sys05-work.json'); if(r.status!=='PASS_NARROW_DIAGNOSTIC_SYS05_SLICE'||r.S!=='NARROW_INSTRUMENTED_BROWSER_OBSERVED'||r.sourceCommit!==process.env.GITHUB_SHA||r.fullSYS05!=='NOT_ESTABLISHED'||r.workInstrumentation!==true||r.F1!=='DIAGNOSTIC_ONLY_NOT_ACCEPTED'||r.backpressureRequested!==true||r.backpressureVerdict!=='PASS_NARROW_REAL_OWNER_CONTENTION'||r.gapRecovery!=='NOT_RUN'||r.queueOverflow!=='NOT_RUN') process.exit(1)"
+          node tests/host/sys05-stream-package-journey.mjs "$RUNNER_TEMP/sys05-work.json" --execute-browser --observe-work --backpressure --gap-recovery
+          node -e "const r=require(process.env.RUNNER_TEMP+'/sys05-work.json'); if(r.status!=='PASS_NARROW_DIAGNOSTIC_SYS05_SLICE'||r.S!=='NARROW_INSTRUMENTED_BROWSER_OBSERVED'||r.sourceCommit!==process.env.GITHUB_SHA||r.fullSYS05!=='NOT_ESTABLISHED'||r.workInstrumentation!==true||r.F1!=='DIAGNOSTIC_ONLY_NOT_ACCEPTED'||r.backpressureRequested!==true||r.backpressureVerdict!=='PASS_NARROW_REAL_OWNER_CONTENTION'||r.directoryGapRequested!==true||r.gapRecovery!=='PASS_NARROW_UNDELIVERED_FRAGMENT_RETURN_RESCAN'||r.queueOverflow!=='NOT_RUN') process.exit(1)"
       - name: Formal Host 10k single-project membership sample
         id: formal_host_10k
         if: ${{ !cancelled() && env.FREE_SCALE_ACCEPTANCE != 'DEFERRED' }}

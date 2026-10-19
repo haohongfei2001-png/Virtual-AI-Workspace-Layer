@@ -263,7 +263,13 @@ if(!p){notifyIdle();return;}}catch(error){
  function mutations(records){
   if(!live())return;
   const bodyChanged=bodyDiscovery?.affectsBody(records),surfaceChanged=discovery?.affectsSurface(records);
-  if(bodyChanged||surfaceChanged)try{onSurfaceChange(records);}catch{/* A failed surrender never authorizes hidden native evidence. */}
+  if(bodyChanged||surfaceChanged)try{
+   // A mixed batch may contain a directory/header update and unrelated body
+   // tokens. Forward only relevant text records, so the latter cannot close
+   // the reading mask merely because another record changed the surface.
+   const relevant=records.filter(r=>r.type!=='characterData'||discovery?.affectsSurface([r]));
+   if(relevant.length)onSurfaceChange(relevant);
+  }catch{/* A failed surrender never authorizes hidden native evidence. */}
   // Body-only streaming still rechecks identity and visibility, but cannot discard
   // an unrelated directory cursor or its pending bounded fragments.
   if(surfaceChanged)requestScan();else schedule();

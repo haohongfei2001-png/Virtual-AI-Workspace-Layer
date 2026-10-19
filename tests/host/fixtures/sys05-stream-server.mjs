@@ -27,9 +27,10 @@ export function sys05UpstreamURL(requestPath,fixedOrigin){
  if(base.protocol!=='http:'||base.hostname!=='127.0.0.1'||base.origin!==fixedOrigin||typeof requestPath!=='string'||!requestPath.startsWith('/')||requestPath.startsWith('//')||/[\\\x00-\x20]/.test(requestPath))throw Error('sys05-fixed-fixture-path-required');
  const target=new URL(requestPath,base);if(target.origin!==base.origin)throw Error('sys05-fixed-fixture-origin-required');return target;
 }
-export async function createSys05StreamServer({backpressure=false}={}){
- const upstream=await createVariantHostFixtureServer({profile:'MODERN',journey:'J4',interruption:true,sys05Backpressure:backpressure});
+export async function createSys05StreamServer({backpressure=false,directoryGap=false}={}){
+ const upstream=await createVariantHostFixtureServer({profile:'MODERN',journey:'J4',interruption:true,sys05Backpressure:backpressure,sys05DirectoryGap:directoryGap});
  const stream=await readFile(new URL('./sys05-native-stream.mjs',import.meta.url));
+ const directoryScript=directoryGap?await readFile(new URL('./sys05-native-directory.mjs',import.meta.url)):null;
  const peerScript=backpressure?await readFile(new URL('./sys05-native-peer-rename.mjs',import.meta.url)):null;
  const reads=[];let dropped=0,holdState=null,releaseHeld=null;
  // Test-owned response barrier. Never creates a request, reply, grant or ACK.
@@ -39,6 +40,7 @@ export async function createSys05StreamServer({backpressure=false}={}){
   if(req.method==='GET'&&req.url==='/sys05-native-stream.mjs'){
    res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});res.end(stream);return;
   }
+  if(directoryScript&&req.method==='GET'&&req.url==='/sys05-native-directory.mjs'){res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});res.end(directoryScript);return;}
   if(peerScript&&req.method==='GET'&&req.url==='/sys05-native-peer-rename.mjs'){
    res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});res.end(peerScript);return;
   }
@@ -57,7 +59,7 @@ export async function createSys05StreamServer({backpressure=false}={}){
       holdState.heldAt=Date.now();holdState.hits++;holdState.request={receivedAt:row.at,acceptedAt:postSendAtRequest,path:row.path,context:row.context,authenticated:row.authenticated,status:row.status};releaseHeld=send;res.once('close',()=>{if(holdState.releasedAt===null){holdState.closedEarly=true;releaseHeld=null;}});
      }else send();}catch{res.writeHead(500);res.end('fixture-metadata-transform-failed');}});
    }else if(req.method==='GET'&&path==='/native.mjs'){
-    const chunks=[];response.on('data',c=>chunks.push(c));response.on('end',()=>{try{const body=addSys05NativeStream(Buffer.concat(chunks).toString())+(backpressure?"\nawait import('/sys05-native-peer-rename.mjs');\n":'');res.writeHead(response.statusCode,{'Content-Type':'text/javascript','Cache-Control':'no-store'});res.end(body);}catch{res.writeHead(500);res.end('fixture-transform-failed');}});
+    const chunks=[];response.on('data',c=>chunks.push(c));response.on('end',()=>{try{const body=addSys05NativeStream(Buffer.concat(chunks).toString())+(backpressure?"\nawait import('/sys05-native-peer-rename.mjs');\n":'')+(directoryGap?"\nawait import('/sys05-native-directory.mjs');\n":'');res.writeHead(response.statusCode,{'Content-Type':'text/javascript','Cache-Control':'no-store'});res.end(body);}catch{res.writeHead(500);res.end('fixture-transform-failed');}});
    }else{res.writeHead(response.statusCode,response.headers);response.pipe(res);}
   });
   forwarded.on('error',()=>{if(!res.headersSent)res.writeHead(502);res.end();});req.pipe(forwarded);

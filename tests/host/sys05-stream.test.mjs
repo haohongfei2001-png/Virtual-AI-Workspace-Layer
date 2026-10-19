@@ -12,7 +12,7 @@ import {createFreeViewSession} from '../../src/data/free-time-policy.mjs';
 import {OFFLINE_HISTORY_PROFILE,extractHistoricalSends} from '../../src/runtime/historical-send-profile.mjs';
 import {digest} from '../../src/data/hash.mjs';
 import {installSys05Observer} from './sys05-stream-observer.mjs';
-import {assertTokenOnlyWork,assertStreamOutcome,assertBackpressureOutcome,SYS05_LIMITS} from './sys05-stream-oracle.mjs';
+import {assertTokenOnlyWork,assertStreamOutcome,assertBackpressureOutcome,assertDirectoryGapOutcome,SYS05_LIMITS} from './sys05-stream-oracle.mjs';
 import {runSys05} from './sys05-stream-package-journey.mjs';
 const C='44444444-4444-4444-8444-444444444444';
 test('candidate defaults to NOT_RUN and never imports or launches browser',async()=>{
@@ -42,10 +42,11 @@ test('fixture insertion fails closed if original native joint boundary drifts',(
 function outcome(){
  const hint={messageId:'accepted-id',conversationId:C,firstObservedAt:'2026-01-01T00:00:00Z',hasAckWitness:true,hasSentAt:false};
  const counters={accepted:1,traceDropped:0,observerErrors:0,unknown:0,maxBytes:600,maxCandidates:2,maxMessageIds:3,directoryVisits:10};
- return {workInstrumentation:true,before:{personal:{originalOldEvent:{messageId:'j4_original_old',sentAt:'2025-10-01T00:00:00.000Z',precision:'millisecond',actorVerified:true},activity:{basis:'provisional',reason:'historical-anchor-incomplete',segment:3}}},beforeUI:{recentCurrentRows:0},native:{accepts:1,title:'J4 native jointly renamed conversation',rows:[{id:'accepted-id',author:'user-host-fixture'}]},stream:{realDescendant:true,sameReading:true,jointBatch:true,startedAt:1,jointAt:2,finishedAt:20,ticks:800,mutations:6400,running:false,jointToken:12,tokensAtDurable:20,tokensAtVisibleTitle:30},personal:{activity:{basis:'provisional',reason:'observed-self-send',segment:0},ref:{nativeTitle:'J4 native jointly renamed conversation'},hints:[hint],refIds:[C],projectIds:['p'],budget:{checksumValid:true,requests:12,attemptCounts:[3]}},team:{ref:{nativeTitle:'Membership not loaded'},hints:[],budget:{checksumValid:true,requests:2,attemptCounts:[1]}},ui:{currentRef:C,activityPlacement:'RECENT_LIST_ABSENT_TO_VISIBLE_NOT_CURRENT_CONTEXT',exactTitle:true,ackLatencyMs:100,titleLatencyMs:100,evidenceToVisibleTitleMs:100},work:{active:{counters:{...counters},packets:[{kind:'current-observation',jointTitle:true,messageIds:3,state:'accepted'}]},peer:{counters:{...counters,accepted:0},packets:[]}},loadedDirectoryNodes:10};
+ return {presentation:{topLevelOpen:true,tokenTicks:8},workInstrumentation:true,before:{personal:{originalOldEvent:{messageId:'j4_original_old',sentAt:'2025-10-01T00:00:00.000Z',precision:'millisecond',actorVerified:true},activity:{basis:'provisional',reason:'historical-anchor-incomplete',segment:3}}},beforeUI:{recentCurrentRows:0},native:{accepts:1,title:'J4 native jointly renamed conversation',rows:[{id:'accepted-id',author:'user-host-fixture'}]},stream:{realDescendant:true,sameReading:true,jointBatch:true,startedAt:1,jointAt:2,finishedAt:20,ticks:800,mutations:6400,running:false,jointToken:12,tokensAtDurable:20,tokensAtVisibleTitle:30},personal:{activity:{basis:'provisional',reason:'observed-self-send',segment:0},ref:{nativeTitle:'J4 native jointly renamed conversation'},hints:[hint],refIds:[C],projectIds:['p'],budget:{checksumValid:true,requests:12,attemptCounts:[3]}},team:{ref:{nativeTitle:'Membership not loaded'},hints:[],budget:{checksumValid:true,requests:2,attemptCounts:[1]}},ui:{currentRef:C,activityPlacement:'RECENT_LIST_ABSENT_TO_VISIBLE_NOT_CURRENT_CONTEXT',exactTitle:true,ackLatencyMs:100,titleLatencyMs:100,evidenceToVisibleTitleMs:100},work:{active:{counters:{...counters},packets:[{kind:'current-observation',jointTitle:true,messageIds:3,state:'accepted'}]},peer:{counters:{...counters,accepted:0},packets:[]}},loadedDirectoryNodes:10};
 }
 test('narrow oracle explicitly cannot establish full SYS05, p95 or forced gap',()=>{const value=assertStreamOutcome(outcome());assert.equal(value.fullSYS05,'NOT_ESTABLISHED');assert.equal(value.p95,'NOT_RUN');assert.equal(value.backpressureAndGapFault,'NOT_RUN');});
 const mutants={
+ 'closed top-level workspace':v=>v.presentation.topLevelOpen=false,'no continuing visible stream':v=>v.presentation.tokenTicks=0,
  'lost ACK':v=>v.personal.hints=[], 'duplicate ACK':v=>v.personal.hints.push({...v.personal.hints[0]}),
  'wrong self':v=>v.native.rows[0].author='other', 'cross scope ACK':v=>v.team.hints.push({...v.personal.hints[0]}),
  'cross scope title':v=>v.team.ref.nativeTitle=v.native.title, 'stopped tokens at durable':v=>v.stream.tokensAtDurable=v.stream.jointToken,
@@ -174,4 +175,52 @@ test('controlled barrier holds only one authenticated post-send response and pre
   assert.equal((await fetch(server.origin+'/native/sys05/rename-peer',{method:'POST',headers:{cookie}})).status,409);
   await fetch(server.origin+'/backend-api/conversation/'+C,{headers});assert.equal(server.snapshot().backpressure.hits,1);assert.equal(server.snapshot().backpressure.closedEarly,false);
  }finally{await server.close();}
+});
+
+function gapOutcome(){
+ const expected=Array.from({length:300},(_,i)=>({id:'88888888-8888-4888-8888-'+String(i+1).padStart(12,'0'),title:'Native '+i})),ids=expected.map(e=>e.id),base={refIds:[C],refTitles:{[C]:'Current'},projectIds:['p'],hints:[{eventKey:'original',firstObservedAt:'original'}]};
+ const packet=(from,to,props)=>({producer:1,kind:'surface-delta',localSeq:from+1,payloadSha256:'a'.repeat(64),directoryIds:ids.slice(from,to),fault:null,forwarded:true,...props});
+ const first=packet(0,50,{at:1000,finishedAt:1010,state:'accepted'}),failed=packet(50,100,{at:1020,finishedAt:1021,state:'unknown',forwarded:false,fault:'DROP_BEFORE_FORWARD'}),recovery=packet(50,300,{at:1100,finishedAt:1200,state:'accepted'});
+ const w={renewals:[],gap:{dropped:1},counters:{unknown:1,traceDropped:0,observerErrors:0},packets:[first,failed]};
+ return {directoryGapRequested:true,workInstrumentation:true,directoryGap:{kind:'ONE_PROPOSAL_NOT_DELIVERED_BEFORE_FORWARD',expected,before:base,faultWork:w,afterFault:{refTitles:{...base.refTitles,...Object.fromEntries(expected.slice(0,50).map(e=>[e.id,e.title]))},inventories:[{conversations:'partial'}]},actionAt:1050,completedAt:1300,elapsedMs:300,work:{...w,packets:[first,failed,recovery]},after:{...base,refIds:[C,...ids].sort(),refTitles:{...base.refTitles,...Object.fromEntries(expected.map(e=>[e.id,e.title]))}},peer:{refIds:[C]},actions:{'sys05-load-directory':1,'send-intent':1},draftPreserved:true,uniqueReturn:true,tail:{topLevelOpen:true,...expected.at(-1),href:'http://127.0.0.1/c/'+ids.at(-1)}}};
+}
+test('undelivered-fragment recovery oracle stays narrow and requires genuine gap',()=>{const r=assertDirectoryGapOutcome(gapOutcome());assert.equal(r.queueOverflow,'NOT_RUN');assert.equal(r.fullSYS05,'NOT_ESTABLISHED');});
+for(const [name,mutate]of Object.entries({
+ 'renewal healed gap':v=>v.directoryGap.work.renewals.push({at:1040,finishedAt:1150,state:'ok'}),
+ 'pending renewal':v=>v.directoryGap.work.renewals.push({at:1000,finishedAt:null,state:'pending'}),
+ 'no renewal trace':v=>delete v.directoryGap.work.renewals,
+ 'hidden tail search':v=>v.directoryGap.tail.topLevelOpen=false,
+ 'no fault':v=>v.directoryGap.faultWork={packets:[]},'delivered instead':v=>v.directoryGap.faultWork.packets[1].forwarded=true,
+ 'no persistent first ACK':v=>v.directoryGap.afterFault.refTitles={},
+ 'already healed before return':v=>v.directoryGap.afterFault.refTitles=v.directoryGap.after.refTitles,
+ 'all tail emitted':v=>v.directoryGap.faultWork.packets.push({directoryIds:v.directoryGap.expected.map(e=>e.id),state:'retry-after'}),
+ 'no fresh recovery':v=>v.directoryGap.work.packets.pop(),'extra error':v=>v.directoryGap.work.counters.unknown=2,
+ 'wrong exact set':v=>v.directoryGap.after.refIds.push('extra'), 'wrong native title':v=>v.directoryGap.after.refTitles[v.directoryGap.expected[299].id]='wrong',
+ 'cross scope':v=>v.directoryGap.peer.refIds.push(v.directoryGap.expected[0].id),'false complete':v=>v.directoryGap.afterFault.inventories[0].conversations='complete',
+ 'late chain':v=>v.directoryGap.elapsedMs=6000,'draft lost':v=>v.directoryGap.draftPreserved=false,'wrong navigation':v=>v.directoryGap.tail.href='http://127.0.0.1/c/wrong',
+ 'ACK renewed':v=>v.directoryGap.after.hints=[{firstObservedAt:'renewed'}]
+}))test('gap recovery rejects '+name,()=>{const value=gapOutcome();mutate(value);assert.throws(()=>assertDirectoryGapOutcome(value));});
+test('explicit transport fault drops only second distinct directory proposal and never fabricates acceptance',async()=>{
+ class Document{createTreeWalker(){}}class TreeWalker{nextNode(){}}class Element{querySelectorAll(){}}
+ const calls=[],runtime={sendMessage(message){const p=Promise.resolve({state:'accepted',localSeq:message.localSeq});calls.push({message,p});return p;}};
+ const sandbox={Document,TreeWalker,Element,chrome:{runtime},crypto:webcrypto,TextEncoder,Date},context=vm.createContext(sandbox);
+ vm.runInContext(`(${installSys05Observer.toString()})({directoryGap:true})`,context);sandbox.__sys05Observer.armDirectoryGap();
+ const proposal=seq=>({protocol:'vaiwl-host-observation/1',producerToken:'fixture-producer',kind:'surface-delta',localSeq:seq,payload:{candidates:[{target:{nativeId:'88888888-8888-4888-8888-000000000001'}}]}});
+ const other={...proposal(99),protocol:'unrelated'};await runtime.sendMessage(other);assert.equal(sandbox.__sys05Observer.snapshot().gap.dropped,0);calls.length=0;
+ const first=runtime.sendMessage(proposal(1));assert.equal(first,calls[0].p);await first;
+ await runtime.sendMessage(proposal(1));assert.equal(calls.length,2,'retry is same first distinct packet');
+ await assert.rejects(runtime.sendMessage(proposal(2)),/designated-proposal-not-delivered/);assert.equal(calls.length,2);
+ const recovered=runtime.sendMessage(proposal(3));assert.equal(recovered,calls[2].p);await recovered;
+ const snapshot=sandbox.__sys05Observer.snapshot();assert.equal(snapshot.gap.dropped,1);assert.equal(snapshot.counters.unknown,1);assert.equal(snapshot.packets.filter(p=>p.fault).length,1);assert.equal(snapshot.packets[2].forwarded,false);sandbox.__sys05Observer.close();
+});
+
+test('passive renewal trace preserves original promise and records pending overlap',async()=>{
+ class Document{createTreeWalker(){}}class TreeWalker{nextNode(){}}class Element{querySelectorAll(){}}
+ let release;const original=new Promise(r=>release=r),runtime={sendMessage:()=>original};
+ const sandbox={Document,TreeWalker,Element,chrome:{runtime},crypto:webcrypto,TextEncoder,Date},context=vm.createContext(sandbox);
+ vm.runInContext(`(${installSys05Observer.toString()})()`,context);
+ assert.equal(runtime.sendMessage({type:'HOST_DOCUMENT_RENEW'}),original);
+ assert.equal(sandbox.__sys05Observer.snapshot().renewals[0].state,'pending');
+ release({ok:true});await original;const row=sandbox.__sys05Observer.snapshot().renewals[0];
+ assert.equal(row.state,'ok');assert(row.finishedAt>=row.at);sandbox.__sys05Observer.close();
 });

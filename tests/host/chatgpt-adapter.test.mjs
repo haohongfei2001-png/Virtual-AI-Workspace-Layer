@@ -225,7 +225,7 @@ test('loaded candidate snapshot remains usable during unrelated body text change
 test('directory mutation requests native surrender before scanning while unrelated body text does not',async()=>{
  const changes=[],f=fixture({onSurfaceChange:records=>changes.push(records)});await f.start();await tick();
  f.observer().cb([{type:'characterData',target:{parentNode:f.reading}}]);await tick();assert.equal(changes.length,0);
- const records=[{type:'characterData',target:f.selectors.get(LEGACY_SURFACE_PROFILE.regions.history)[0]}];const callback=f.observer().cb;callback(records);assert.equal(changes.length,1);assert.equal(changes[0],records);f.adapter.stop();callback(records);assert.equal(changes.length,1);
+ const records=[{type:'characterData',target:f.selectors.get(LEGACY_SURFACE_PROFILE.regions.history)[0]}];const callback=f.observer().cb;callback(records);assert.equal(changes.length,1);assert.deepEqual(changes[0],records);f.adapter.stop();callback(records);assert.equal(changes.length,1);
 });
 
 for(const mode of ['plan-expiry','late-authorization'])test('adapter native action uses monotonic '+mode+' despite wall clock rollback',async()=>{
@@ -304,6 +304,32 @@ for(const mutation of ['childList','data-message-id'])test('masked native body '
  await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();const initial=f.emitted.find(p=>p.kind==='current-observation');masked=true;f.reading.style.visibility='hidden';const old=f.reading.children[0],next=f.makeMessage('M2');next.style.visibility='hidden';f.reading.children=[next];
  const record=mutation==='childList'?{type:'childList',target:f.reading,addedNodes:[next],removedNodes:[old]}:{type:'attributes',attributeName:'data-message-id',target:next};
  f.observer().cb([record]);assert.equal(masked,false);assert.equal(released,1);await settle();const latest=f.emitted.filter(p=>p.kind==='current-observation').at(-1);assert.notEqual(latest,initial);assert.deepEqual(latest.payload.body.messageIds,['M2']);f.adapter.stop();
+});
+
+test('masked current body text-only streaming preserves presentation and original body proof',async t=>{
+ let masked=false;const changes=[];
+ const f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading,onSurfaceChange:records=>changes.push(records)});t.after(()=>f.adapter.stop());
+ await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();
+ const initial=f.emitted.length,text={nodeType:3,parentNode:f.reading.children[0],parentElement:f.reading.children[0]};
+ masked=true;f.reading.style.visibility='hidden';
+ f.observer().cb([{type:'characterData',target:text}]);await settle();
+ assert.deepEqual(changes,[],'text alone must not surrender the workspace');
+ assert.equal(f.emitted.length,initial,'hidden text cannot renew the accepted body proof');
+ // A mixed batch must still release the mask for native identity changes.
+ const identity={type:'attributes',attributeName:'data-message-id',target:f.reading.children[0]};
+ f.observer().cb([{type:'characterData',target:text},identity]);assert.equal(changes.length,1);assert.deepEqual(changes[0],[identity]);
+});
+
+for(const source of ['header','directory'])test('mixed native '+source+' title and body token surrender only relevant records',async t=>{
+ const changes=[],f=bodyFixture({onSurfaceChange:records=>changes.push(records)});t.after(()=>f.adapter.stop());
+ const d=sys05Directory(f),heading={...visibleDirectoryNode(f.document),isConnected:true,textContent:'Current title',contains:n=>n===heading};
+ heading.parentElement={...visibleDirectoryNode(f.document),isConnected:true};
+ f.selectors.set(LEGACY_SURFACE_PROFILE.currentConversationHeader,[heading]);
+ await f.start(p=>{f.emitted.push(p);return bodyAck(p);});await settle();
+ const token={type:'characterData',target:{nodeType:3,parentNode:f.reading.children[0],parentElement:f.reading.children[0]}},title={type:'characterData',target:source==='header'?heading:d.nodes[0]};
+ title.target.textContent='Native updated title';f.observer().cb([token,title]);
+ assert.deepEqual(changes,[[title]]);await settle();
+ assert(f.emitted.some(p=>p.payload?.candidates?.some(c=>c.nativeTitle==='Native updated title')||p.payload?.surface?.candidates?.some(c=>c.nativeTitle==='Native updated title')));
 });
 
 // SYS05 deterministic mechanism probe only: no browser timings or real-S claim.
