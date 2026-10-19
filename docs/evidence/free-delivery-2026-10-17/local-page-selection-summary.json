@@ -11167,8 +11167,8 @@
     },
     "candidateChain20261019": {
       "authorization": "Explicit user reply approving candidate development and one bounded me/accounts/me verification; separate from consumed single-me permission",
-      "status": "INSTALLED_FILES_AWAITING_USER_RELOAD_AND_ONCE",
-      "attemptsConsumed": 0,
+      "status": "OFFLINE_MV3_VERIFIED_LIVE_RESULT_UNCONFIRMED",
+      "attemptsConsumed": null,
       "tests": {
         "kind": "NODE_AND_BUNDLED_VM_NOT_REAL_MV3",
         "passed": 45,
@@ -11211,6 +11211,176 @@
       "testLog": {
         "file": "native-me-candidate-targeted.tap.gz",
         "sha256": "4abf2fac32078a7feadfe948d8a7e1f29131b394ce1a55976db17771fdd28be7"
+      },
+      "agentIssuedLiveRequests": 0,
+      "liveExecution": "User reload/explicit one-shot requested; no result received. Consumption now unconfirmed; never automatically retry.",
+      "packagedMV3": {
+        "status": "PASS_PACKAGED_OFFLINE_CANDIDATE",
+        "browserVersion": "155.0.8059.80",
+        "elapsedMs": 9769.329334,
+        "timing": "Four fresh isolated profiles: includes startup, intentional original6s timeout, popup/reopen/read and cleanup. No comparable prior product journey or speedup claim.",
+        "results": [
+          {
+            "mode": "consistent",
+            "result": {
+              "state": "finished",
+              "stage": "after-me",
+              "requests": 3,
+              "status": 200,
+              "jsonMime": true,
+              "redirected": false,
+              "challenge": false,
+              "firstIdValid": true,
+              "lastIdValid": true,
+              "samePrincipal": true,
+              "rosterValid": true,
+              "contextCount": 1,
+              "unknownKindCount": 0,
+              "sourceExpiryKnown": false,
+              "localFreshnessMaxMs": 60000,
+              "identityEnabled": false,
+              "reason": "candidate-consistent-not-authorized"
+            },
+            "requestCount": 3,
+            "oldMarkerPreserved": true,
+            "reopenDisabled": true,
+            "readDidNotRequest": true,
+            "databaseCount": 0,
+            "draftPreserved": true,
+            "elapsedMs": 850.1230419999999
+          },
+          {
+            "mode": "accounts-challenge",
+            "result": {
+              "state": "finished",
+              "stage": "accounts",
+              "requests": 2,
+              "status": 403,
+              "jsonMime": false,
+              "redirected": false,
+              "challenge": true,
+              "firstIdValid": true,
+              "lastIdValid": false,
+              "samePrincipal": false,
+              "rosterValid": false,
+              "contextCount": 0,
+              "unknownKindCount": 0,
+              "sourceExpiryKnown": false,
+              "localFreshnessMaxMs": 60000,
+              "identityEnabled": false,
+              "reason": "session-challenged"
+            },
+            "requestCount": 2,
+            "oldMarkerPreserved": true,
+            "reopenDisabled": true,
+            "readDidNotRequest": true,
+            "databaseCount": 0,
+            "draftPreserved": true,
+            "elapsedMs": 893.5870839999998
+          },
+          {
+            "mode": "shared-deadline",
+            "result": {
+              "state": "finished",
+              "stage": "accounts",
+              "requests": 2,
+              "status": null,
+              "jsonMime": false,
+              "redirected": false,
+              "challenge": false,
+              "firstIdValid": true,
+              "lastIdValid": false,
+              "samePrincipal": false,
+              "rosterValid": false,
+              "contextCount": 0,
+              "unknownKindCount": 0,
+              "sourceExpiryKnown": false,
+              "localFreshnessMaxMs": 60000,
+              "identityEnabled": false,
+              "reason": "request-timeout"
+            },
+            "requestCount": 2,
+            "oldMarkerPreserved": true,
+            "reopenDisabled": true,
+            "readDidNotRequest": true,
+            "databaseCount": 0,
+            "draftPreserved": true,
+            "elapsedMs": 6834.364458
+          },
+          {
+            "mode": "route-changed",
+            "result": {
+              "state": "finished",
+              "stage": "accounts",
+              "requests": 2,
+              "status": null,
+              "jsonMime": false,
+              "redirected": false,
+              "challenge": false,
+              "firstIdValid": true,
+              "lastIdValid": false,
+              "samePrincipal": false,
+              "rosterValid": false,
+              "contextCount": 0,
+              "unknownKindCount": 0,
+              "sourceExpiryKnown": false,
+              "localFreshnessMaxMs": 60000,
+              "identityEnabled": false,
+              "reason": "document-changed"
+            },
+            "requestCount": 2,
+            "oldMarkerPreserved": true,
+            "reopenDisabled": true,
+            "readDidNotRequest": true,
+            "databaseCount": 0,
+            "draftPreserved": true,
+            "elapsedMs": 823.5167500000007
+          }
+        ],
+        "sourceCount": 187,
+        "sourceStable": true,
+        "runnerStable": true,
+        "receiptListedPackageFilesStable": true,
+        "runnerHash": "252f1b6c16daba2c4f090901575340531d71b73bf5195cdcadbe5d2e343b7479",
+        "baseReceiptSha256": "9dbedc1a32c424877a9b11982a0328a7b521cf0db067a027366214510a88f585",
+        "overlayReceiptSha256": "bd3ec7efa933d46117d992a402dd3e8fde81c3318122a56ca831f30dce783007",
+        "networkGuard": {
+          "mode": "DISPOSABLE_CHROME_REJECT_PROXY",
+          "closed": true,
+          "denied": 65,
+          "counts": {
+            "GET clients2.google.com": 4,
+            "CONNECT www.gstatic.com": 4,
+            "CONNECT www.google.com": 27,
+            "CONNECT accounts.google.com": 6,
+            "CONNECT update.googleapis.com": 4,
+            "CONNECT chatgpt.com": 8,
+            "CONNECT content-autofill.googleapis.com": 11,
+            "CONNECT android.clients.google.com": 1
+          }
+        },
+        "boundary": "Synthetic HTTPS responses only; no real cookies/account/roster semantics or production selection-authority epoch verification. Reject proxy covers unhandled worker traffic, not a claim of zero worker requests. Package hash check covers receipt-listed files, not extra-file detection.",
+        "review": "Unbounded test-only wait repaired with 8s observation deadline; merged base source hashes with diagnostic dependencies; final read-only review no blocker. Original6s product deadline unchanged.",
+        "artifacts": {
+          "native-me-candidate-mv3-startup-fail.json.gz": "888c59e21d77e7782d728d7a918cf4ac04be33f53b6bf973a0c32890aaef9b65",
+          "native-me-candidate-mv3-first.json.gz": "776b7723b99b40d8f57f95c1465708cbb149ab05796e0fe78b87994ba7210f61",
+          "native-me-candidate-mv3-final.json.gz": "7beb401ccfceeaaee87e7f98f5c1299a1138bf4dea8132d4ce6cffe0a61e5bbb"
+        }
+      },
+      "synchronization": {
+        "localCandidate": "a52af954d7238c481c53b7ad88e8ceb6d35a01fc",
+        "lastConfirmedRemote": "d2b444c450c8cc373789651ed2e5676099dd4d08",
+        "normalPushFailures": [
+          {
+            "exit": 128,
+            "stderr": "Operation too slow. Less than 1 bytes/sec transferred the last 15 seconds"
+          },
+          {
+            "exit": 128,
+            "stderr": "Failed to connect to github.com port 443 after 75028 ms: Could not connect to server"
+          }
+        ],
+        "config": "Per-command HTTP1.1/lowSpeedLimit1/lowSpeedTime15 only; no global config changes, force or API-ref workaround."
       }
     }
   }
