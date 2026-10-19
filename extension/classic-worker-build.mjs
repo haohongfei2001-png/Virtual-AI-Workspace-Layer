@@ -2,6 +2,13 @@ import {createRequire} from 'node:module';
 import {realpathSync} from 'node:fs';
 const require=createRequire(new URL('./tooling/package.json',import.meta.url));
 const TOOL_VERSION='0.25.12';
+/** Temporary DOM observation has no asynchronous module-registration gap. */
+export function compileTemporaryContent(unpackedRoot){
+ const esbuild=require('esbuild');
+ if(esbuild.version!==TOOL_VERSION)throw Error('host-build-tool-version-mismatch');
+ const root=realpathSync(unpackedRoot);
+ return esbuild.buildSync({absWorkingDir:root,entryPoints:['extension/temporary-content-entry.mjs'],bundle:true,format:'iife',platform:'browser',target:'chrome120',treeShaking:true,write:false,logLevel:'silent'}).outputFiles[0].text;
+}
 /** Reproducible private worker bundles. Read the supplied package, including
  * its generated configuration and any explicitly instrumented test sources. */
 export function compileClassicWorker(unpackedRoot){

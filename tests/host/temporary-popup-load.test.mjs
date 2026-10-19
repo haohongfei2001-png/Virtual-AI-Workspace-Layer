@@ -29,7 +29,7 @@ function fixture(){
  const status=()=>nodes.find(n=>n.tag==='p'&&n.textContent.startsWith('正在读取'))??nodes.filter(n=>n.tag==='p')[2];
  const button=()=>nodes.find(n=>n.tag==='button');
  const text=()=>{const walk=n=>n.textContent+n.children.map(walk).join('')+(n.shadow?walk(n.shadow):'');return walk(document.body);};
- return {calls,button,status,text,jump:ms=>{at+=ms;},click:()=>button().click(),invalidate:()=>events.get('history')?.({tabId:1,frameId:0}),close:()=>events.get('pagehide')?.(),async advance(ms){at+=ms;for(const [id,t]of [...timers])if(t.at<=at){timers.delete(id);t.fn();}await drain();},async resolve(index,value){calls[index].resolve(value);await drain();}};
+ return {calls,button,status,text,message:(documentId)=>events.get('message')?.({v:1,type:'HOST_TEMPORARY_NATIVE_INVALIDATED'},{id:'extension',tab:{id:1},frameId:0,documentId}),jump:ms=>{at+=ms;},click:()=>button().click(),invalidate:()=>events.get('history')?.({tabId:1,frameId:0}),close:()=>events.get('pagehide')?.(),async advance(ms){at+=ms;for(const [id,t]of [...timers])if(t.at<=at){timers.delete(id);t.fn();}await drain();},async resolve(index,value){calls[index].resolve(value);await drain();}};
 }
 async function reach(f,stage){await drain();if(stage>=1)await f.resolve(0,[{id:1}]);if(stage>=2)await f.resolve(1,frame);if(stage>=3)await f.resolve(2,reply('Old title'));}
 for(const [stage,name]of ['tabs.query','frame before send','sendMessage','frame after send'].entries())test(name+' pending expires within the same 1000 ms and late reply cannot continue',async()=>{
@@ -53,4 +53,10 @@ for(const stage of [0,1,2,3])test('overdue phase '+stage+' reply is rejected eve
 });
 test('obsolete load timer cannot clear or unlock newer explicit read',async()=>{
  const f=fixture();await reach(f,1);await f.advance(100);f.invalidate();f.click();await drain();assert.equal(f.calls.length,3);assert.equal(f.button().disabled,true);await f.advance(900);assert.equal(f.button().disabled,true);assert(f.status().textContent.includes('正在读取'));await f.resolve(2,[{id:1}]);await f.resolve(3,frame);await f.resolve(4,reply('Fresh title'));await f.resolve(5,frame);assert(f.text().includes('Fresh title'));assert.equal(f.button().disabled,false);await f.resolve(1,frame);assert.equal(f.calls.length,6);assert(f.text().includes('Fresh title'));
+});
+
+test('different-document invalidation clears before a delayed navigation event',async()=>{
+ const f=fixture();await reach(f,3);await f.resolve(3,frame);assert(f.text().includes('Old title'));
+ f.message('document-B');assert(!f.text().includes('Old title'));assert.equal(f.button().disabled,false);
+ f.invalidate();assert(!f.text().includes('Old title'));
 });
