@@ -5199,7 +5199,112 @@
       "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-challenge-status-browser-c2-modern.json.gz",
       "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-challenge-status-browser-c2-ready.json.gz",
       "docs/evidence/free-delivery-2026-10-17/20261019-vaiwl-challenge-status-browser-verified.json.gz"
-    ]
+    ],
+    "markerFollowup20261019": {
+      "baseCommit": "4cb550218bfd0e4e66ea777f928cd24c6e74126f",
+      "status": "PASS_OFFLINE_CHALLENGE_CLASSIFICATION_ONLY",
+      "rootCause": "Parser required status403 before recognizing cf-mitigated:challenge;200 and401 markers surfaced as invalid MIME or generic unavailable. Exact target/redirect now checked before classification; no identity accepted.",
+      "reference": "https://developers.cloudflare.com/cloudflare-challenges/challenge-types/challenge-pages/detect-response/",
+      "reviewComment": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6256852770",
+      "baseline": {
+        "pass": 11,
+        "fail": 12,
+        "total": 23,
+        "skip": 0,
+        "elapsedMs": 99.07425,
+        "sameFixture": true
+      },
+      "regression": {
+        "pass": 497,
+        "fail": 0,
+        "skip": 0,
+        "elapsedMs": 3504.043,
+        "scope": "Affected session providers, authority, fallback, local status and package tests; not full acceptance matrix"
+      },
+      "browser": {
+        "status": "PASS",
+        "startup": "WORKER_READY_PRECONDITION",
+        "profile": "MODERN_C2_CONVERSATION",
+        "kind": "OFFLINE_MV3_CHALLENGE_STATUS",
+        "realChatGPT": "NOT_RUN",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "elapsedMs": 2235.841583,
+        "statusCases": [
+          {
+            "status": 403,
+            "sessionReads": 1,
+            "accountsReads": 0,
+            "passiveSnapshotsNoRetry": true,
+            "elapsedMs": 579.0641669999998
+          },
+          {
+            "status": 200,
+            "sessionReads": 1,
+            "accountsReads": 0,
+            "passiveSnapshotsNoRetry": true,
+            "elapsedMs": 201.57166700000016
+          },
+          {
+            "status": 401,
+            "sessionReads": 1,
+            "accountsReads": 0,
+            "passiveSnapshotsNoRetry": true,
+            "elapsedMs": 180.2554580000001
+          }
+        ],
+        "results": {
+          "exactChallengeMessage": true,
+          "noGrantedFrames": true,
+          "nativeDraftPreserved": true,
+          "sessionReads": 3,
+          "accountsReads": 0,
+          "passiveSnapshotsNoRetry": true,
+          "unrelatedPageUnavailable": true
+        },
+        "runnerHash": "e47f483eb524b54611e9a1d75c0ca28a663dacf3ce56af96637415e9356b67f4",
+        "sourceChangedDuringRun": false
+      },
+      "timingBoundary": "Browser total starts after packaging and includes isolated headless launch and three independent documents; no comparable successful baseline and no speedup claimed.",
+      "noRetryEvidenceBoundary": "Parser/provider single fixed fetch plus passive popup status snapshots in each of three independent documents. Not a claim that fresh native context evidence or another document can never initiate a new refresh.",
+      "independentReview": "No blocking finding; corrected baseline to23 tests/12fail/11pass.",
+      "real": {
+        "requests": 0,
+        "responseBodies": 0,
+        "profileReloads": 0,
+        "installationChanged": false,
+        "installedTemporaryProduct": "97bc77e4e8abf5227cacf3dfdbcbbf3df3ecf16f",
+        "identity": "BLOCKED_SERVER_CHALLENGE_NOT_RESOLVED",
+        "currentProjectOneResponsePermit": "UNUSED"
+      },
+      "scale": "10k/100k DEFERRED; original thresholds and failures retained",
+      "sourceHashes": {
+        "src/host/session-identity.mjs": "edb50dc00971b181b5ffc6dd3c53520c9bee35ca605745f4c46260cc031ba163",
+        "tests/host/session-challenge-status.test.mjs": "89f1c0fe5cd17d923ae1056ff1e6167de65cd2231dc7451782f993ba5e70cf9e",
+        "tests/host/challenge-status-package-browser.mjs": "e47f483eb524b54611e9a1d75c0ca28a663dacf3ce56af96637415e9356b67f4"
+      },
+      "files": {
+        "baseline.txt": {
+          "path": "docs/evidence/free-delivery-2026-10-17/challenge-marker-20261019-baseline.txt.gz",
+          "rawSHA256": "8a7e99793a1e8b5be4738649b3c0d5c6fd21089430749f990c51a885e2ca35f6",
+          "archiveSHA256": "36d60b7db6635a3d93d5fe0b3f1fe4031d129d957abade3a36bc4942def36fe0"
+        },
+        "regression.txt": {
+          "path": "docs/evidence/free-delivery-2026-10-17/challenge-marker-20261019-regression.txt.gz",
+          "rawSHA256": "00aacad4740acb292a7038fffc8768edae7692dd81680e8097620a1fcadf6d85",
+          "archiveSHA256": "b78e695dca7e3a6d7daae930760b3463b21e15070ab0c23671cf8bd450489e75"
+        },
+        "mv3.json": {
+          "path": "docs/evidence/free-delivery-2026-10-17/challenge-marker-20261019-mv3.json.gz",
+          "rawSHA256": "fe719d89d5fd19e390de67a163e7ad20313422c4b92526fd9e9c198234821f8d",
+          "archiveSHA256": "560e4cef9524e7e1e9180419a3069b4ad1896c6d7610d491e05eb15d300c7645"
+        }
+      },
+      "contextEventReview": {
+        "result": "NO_CONFIRMED_DUPLICATE_OWNER_RECEIPT_DEFECT",
+        "scope": "Read-only owner/content/authority review and finite mock403 event sequence. Owner duplicate completion emits one READY; a genuinely newer receipt may start a new refresh. Direct manual contextReady is not evidence of duplicate native owner emission. No product change for this hypothesis.",
+        "notCovered": "Combined challenged multi-document, pending invalidation and late completion journey; no full no-retry or recovery certification."
+      }
+    }
   },
   "ciObserverRepair20261019": {
     "status": "PASS_SAME_HEAD_CI_NOT_RELEASE_ACCEPTANCE",

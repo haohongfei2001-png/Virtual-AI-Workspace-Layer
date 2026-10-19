@@ -9,19 +9,19 @@ import {createHostBindingService} from '../../src/runtime/host-binding-service.m
 import {ScopeRepository} from '../../src/b1/scope-repository.mjs';
 import {MockIDBFactory} from '../b23/mock-idb.mjs';
 const origin='https://chatgpt.com',target=origin+'/api/auth/session';
-function blockedResponse({status=403,mitigated='challenge'}={}){
- let bodyReads=0;const response={status,url:target,redirected:false,headers:new Headers({'content-type':'text/html',...(mitigated===null?{}:{'cf-mitigated':mitigated})}),get body(){bodyReads++;throw Error('PRIVATE_CHALLENGE_HTML_MUST_NOT_BE_READ');}};
+function blockedResponse({status=403,mitigated='challenge',url=target,redirected=false}={}){
+ let bodyReads=0;const response={status,url,redirected,headers:new Headers({'content-type':'text/html',...(mitigated===null?{}:{'cf-mitigated':mitigated})}),get body(){bodyReads++;throw Error('PRIVATE_CHALLENGE_HTML_MUST_NOT_BE_READ');}};
  return {response,bodyReads:()=>bodyReads};
 }
-for(const [options,expected] of [[{},'session-challenged'],[{mitigated:null},'session-unauthorized'],[{mitigated:'other'},'session-unauthorized'],[{status:401},'session-unauthorized']])test('parser distinguishes exact challenge without consuming response body '+JSON.stringify(options),async()=>{
+for(const [options,expected] of [[{},'session-challenged'],[{status:200},'session-challenged'],[{status:401},'session-challenged'],[{status:429},'session-challenged'],[{status:503},'session-challenged'],[{mitigated:null},'session-unauthorized'],[{status:401,mitigated:null},'session-unauthorized'],[{mitigated:'other'},'session-unauthorized'],[{status:200,mitigated:null},'invalid-session-mime'],[{status:503,mitigated:null},'invalid-session-response'],[{url:origin+'/other'},'invalid-session-response'],[{redirected:true},'invalid-session-response']])test('parser distinguishes exact challenge without consuming response body '+JSON.stringify(options),async()=>{
  const f=blockedResponse(options);await assert.rejects(readSessionJSON(f.response,{target,limit:262144,check(){}}),{message:expected});assert.equal(f.bodyReads(),0);
 });
-for(const factory of [createSessionProvider,createIsolatedSessionReader])test(factory.name+' retains challenge enum and performs one fixed fetch only',async()=>{
- const f=blockedResponse(),calls=[];const provider=factory({origin,now:()=>1000,elapsedNow:()=>1000,fetch:async(url,options)=>{calls.push({url,options});return f.response;}});
+for(const factory of [createSessionProvider,createIsolatedSessionReader])for(const status of [200,401,403])test(factory.name+' retains '+status+' challenge enum and performs one fixed fetch only',async()=>{
+ const f=blockedResponse({status}),calls=[];const provider=factory({origin,now:()=>1000,elapsedNow:()=>1000,fetch:async(url,options)=>{calls.push({url,options});return f.response;}});
  await assert.rejects(provider.read(),{message:'session-challenged'});assert.equal(calls.length,1);assert.equal(calls[0].url,target);assert.equal(calls[0].options.method,'GET');assert.equal(calls[0].options.credentials,'include');assert.equal(calls[0].options.cache,'no-store');assert.equal(calls[0].options.redirect,'error');assert.equal(f.bodyReads(),0);
 });
-test('real worker provider challenge becomes fixed unverified status without scope or retry',async()=>{
- const f=blockedResponse();let reads=0,id=0;const provider=createSessionProvider({origin,now:()=>1000,elapsedNow:()=>1000,fetch:async()=>{reads++;return f.response;}});
+for(const status of [200,401,403])test('real worker provider '+status+' challenge becomes fixed unverified status without scope or retry',async()=>{
+ const f=blockedResponse({status});let reads=0,id=0;const provider=createSessionProvider({origin,now:()=>1000,elapsedNow:()=>1000,fetch:async()=>{reads++;return f.response;}});
  const authority=createScopeAuthority({provider,profile:{id:'fixture',singlePersonalDefault:true},now:()=>1000,elapsedNow:()=>1000,makeId:()=> 'id'+(++id)});
  const frame={tabId:1,frameId:0,documentId:'document',documentLifecycle:'active',incognito:false,actualURL:origin+'/'};
  try{assert.deepEqual(await authority.refresh(frame,'bind'),{state:'unverified',reason:'host-verification-required'});assert.equal(authority.scopeFor(frame),null);assert.notEqual(authority.peek(frame).state,'verified');assert.equal(reads,1);assert.equal(f.bodyReads(),0);assert.equal(id,0,'challenge cannot issue proof IDs');}finally{authority.invalidateAll();}

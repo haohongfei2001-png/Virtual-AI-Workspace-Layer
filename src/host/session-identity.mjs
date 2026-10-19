@@ -5,9 +5,10 @@ const identifier=v=>typeof v==='string'&&v.length>0&&v.length<=256&&!/[\s\u0000-
 /** Shared fixed-provider decoding. No URLs, proofs or credentials come from DOM. */
 export async function readSessionJSON(response,{target,limit,raw=false,check}={}){
  check();
- if(response.status===403&&response.headers?.get?.('cf-mitigated')==='challenge')throw Error('session-challenged');
+ if(response.redirected||response.url!==target)throw Error('invalid-session-response');
+ if(response.headers?.get?.('cf-mitigated')==='challenge')throw Error('session-challenged');
  if(response.status===401||response.status===403)throw Error('session-unauthorized');
- if(response.status!==200||response.redirected||response.url!==target)throw Error('invalid-session-response');
+ if(response.status!==200)throw Error('invalid-session-response');
  if(!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')??''))throw Error('invalid-session-mime');
  const length=response.headers.get('content-length');if(length!==null&&(!/^\d+$/.test(length)||Number(length)>limit))throw Error('session-response-too-large');
  if(!response.body?.getReader)throw Error('missing-session-body');
