@@ -4,8 +4,17 @@ import {HOST_CONFIG} from './config.mjs';
 import {withRequestDeadline} from '../src/data/request-deadline.mjs';
 if(HOST_CONFIG.temporaryReadOnly!==true)throw Error('temporary-mode-not-enabled');
 document.title='VAIWL 临时只读导航';
-const root=document.createElement('div'),shadow=root.attachShadow({mode:'open'});document.body.replaceChildren(root);document.body.style.cssText='margin:0;width:570px;max-width:100vw;padding:0';
-const style=document.createElement('style');style.textContent=css+'\n:host{display:block;width:min(570px,100vw);font:14px/1.5 system-ui;color:CanvasText;background:Canvas}.workspace{height:550px;max-height:90vh;padding:20px}.cards{grid-template-columns:1fr;gap:10px}.toolbar{padding:0 0 12px}.notice{font-size:12px;color:var(--muted,#6e6e76)}input{width:100%;box-sizing:border-box;padding:10px;border:1px solid #8885;border-radius:9px;background:Canvas;color:CanvasText}.row{white-space:normal;overflow-wrap:anywhere}.card h2{margin:0 0 8px}';shadow.append(style);
+// Give Chrome an intrinsic popup size; only its inner scroller follows the
+// allocated viewport. A 90vh preferred height recursively shrinks native popups.
+const root=document.createElement('div'),shadow=root.attachShadow({mode:'open'});document.body.replaceChildren(root);document.body.style.cssText='margin:0;width:570px;height:550px;overflow:hidden;padding:0';
+// Same palette as the existing Free frame shell, without importing its layout
+// rules. This private popup follows browser appearance, not account/page data.
+const palette=`
+:host{--ink:#202123;--surface:#fff;--bubble:#f4f4f4;--line:#e5e5e5;--muted:#646464;--hover:#eee;--focus:#3877ba}
+@media(prefers-color-scheme:dark){:host{--ink:#ececec;--surface:#212121;--bubble:#2f2f2f;--line:#424242;--muted:#b4b4b4;--hover:#383838;--focus:#8ab4f8}}
+input::placeholder{color:var(--muted);opacity:1}
+`;
+const style=document.createElement('style');style.textContent=css+palette+'\n:host{display:block;position:fixed;inset:0;width:100vw;height:100vh;font:14px/1.5 system-ui;color:var(--ink);background:var(--surface)}.workspace{height:100%;padding:20px}.cards{grid-template-columns:1fr;gap:10px}.toolbar{padding:0 0 12px}.notice{font-size:12px;color:var(--muted,#6e6e76)}input{width:100%;box-sizing:border-box;padding:10px;border:1px solid #8885;border-radius:9px;background:var(--surface);color:var(--ink)}.row{white-space:normal;overflow-wrap:anywhere}.card h2{margin:0 0 8px}';shadow.append(style);
 const el=(tag,text='',className='')=>{const n=document.createElement(tag);n.textContent=text;if(className)n.className=className;return n;};
 const main=el('main','','workspace'),heading=el('h1','临时只读导航'),notice=el('p','仅当前页面已显示的原生链接；账户、项目成员和活动未核验。关闭此弹窗即丢弃列表。','notice'),detail=el('p','在新标签打开，保留原页与输入。再次点击扩展图标返回列表。未加载历史、片段、工作集与恢复功能不可用。','notice'),input=el('input'),status=el('p','正在读取当前页…','notice'),refresh=el('button','重新读取当前页','more'),lists=el('section','','cards');input.type='search';input.placeholder='搜索本次列表';input.setAttribute('aria-label','搜索本次列表');heading.style.fontSize='18px';main.append(heading,notice,detail,input,status,refresh,lists);shadow.append(main);
 let rows=[],tabId=null,serial=0,closed=false;

@@ -1,5 +1,6 @@
 /** Explicit temporary mode; actual MV3 popup, no authentication or database. */
 import assert from 'node:assert/strict';
+import {readTemporaryAppearance,assertTemporaryAppearance} from './temporary-popup-appearance.mjs';
 import {observeTemporaryNativeOpen} from './temporary-native-open-observer.mjs';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';import {tmpdir} from 'node:os';import {createHash} from 'node:crypto';
@@ -13,7 +14,7 @@ const output=process.argv[2]??join(tmpdir(),'vaiwl-temporary-browser.json'),repo
 let control,directory,server,networkGuard,browserHandle,context,browserLaunchAttempted=false,info;const hash=x=>createHash('sha256').update(x).digest('hex'),started=performance.now();
 try{
  if(process.env.FREE_TEMPORARY_ACK_PROBE!==undefined&&process.env.FREE_TEMPORARY_ACK_PROBE!=='drop-release-ack')throw Error('unsupported-observer-probe');
- report.testHashes=Object.fromEntries(await Promise.all(['tests/host/temporary-navigation-package-browser.mjs','tests/host/temporary-native-open-observer.mjs'].map(async p=>[p,hash(await readFile(p))])));
+ report.testHashes=Object.fromEntries(await Promise.all(['tests/host/temporary-navigation-package-browser.mjs','tests/host/temporary-native-open-observer.mjs','tests/host/temporary-popup-appearance.mjs'].map(async p=>[p,hash(await readFile(p))])));
  server=await createHostFixtureServer();directory=await mkdtemp(join(tmpdir(),'vaiwl-temporary-mv3-'));const built=packageHost(join(directory,'package'),{offlineOrigin:server.origin,temporaryReadOnly:true});verifyHost(built.unpacked);info=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));report.sourceHashes=info.sourceHashes;
  networkGuard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});browserLaunchAttempted=true;browserHandle=await launchNativeVisibilityBrowser({chromium,profileDir:join(directory,'profile'),headed:false,historicalNetworkGuard:networkGuard.config,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});context=browserHandle.context;context.setDefaultTimeout(6000);
  await context.route('**/*',r=>r.request().url().startsWith(server.origin)||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());
@@ -30,6 +31,35 @@ try{
  await page.evaluate(()=>{const hidden=document.createElement('span');hidden.hidden=true;hidden.textContent='HIDDEN_TEXT_MUST_NOT_BE_READ';document.querySelector('aside nav[aria-label="Chat history"] a').append(hidden);});
  report.phase='popup';await open();await wait("return !!root&&/本次读取 \\d+ 条原生链接/.test(root.textContent);");
  report.initial=await evaluate("return [...root.querySelectorAll('a.row')].map(n=>({title:n.textContent,href:n.href}));");assert(report.initial.some(r=>r.href.includes('/project')));assert(report.initial.some(r=>r.href.includes('/c/')));assert(!report.initial.some(r=>r.title.includes('READING_LINK_MUST_NOT_BE_READ')));report.readingLinksExcluded=true;assert(!report.initial.some(r=>r.title.includes('HIDDEN_TEXT_MUST_NOT_BE_READ')));report.hiddenTextExcluded=true;
+ report.phase='appearance';report.appearance=[];report.appearanceHover=[];
+ for(const scheme of ['light','dark']){
+  await control.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:scheme}]},popupSession);
+  await evaluate("return Promise.all([...root.querySelectorAll('*')].flatMap(n=>n.getAnimations()).map(a=>a.finished.catch(()=>{}))).then(()=>true);");
+  const snapshot=await evaluate('return ('+readTemporaryAppearance.toString()+')();');report.appearance.push({scheme,...snapshot});assert.equal(snapshot.dark,scheme==='dark');assertTemporaryAppearance(snapshot);
+  await evaluate("const n=root.querySelector('input');n.value='Research';n.dispatchEvent(new Event('input',{bubbles:true}));return true;");
+  assert.deepEqual(await evaluate("return [...root.querySelectorAll('a.row')].map(n=>n.textContent);"),['Research']);
+  const search=await evaluate('return ('+readTemporaryAppearance.toString()+')();');report.appearance.push({scheme,stage:'search',...search});assertTemporaryAppearance(search);
+  await evaluate("root.querySelector('input').focus();return true;");
+  for(const [tag,shift] of [['BUTTON',false],['A',false],['BUTTON',true],['INPUT',true]]){
+   for(const type of ['keyDown','keyUp'])await control.send('Input.dispatchKeyEvent',{type,key:'Tab',code:'Tab',windowsVirtualKeyCode:9,nativeVirtualKeyCode:9,modifiers:shift?8:0},popupSession);
+   const focus=await evaluate('return ('+readTemporaryAppearance.toString()+')();');report.appearance.push({scheme,stage:'keyboard',...focus});assertTemporaryAppearance(focus,{focusTag:tag});
+  }
+  for(const selector of ['a.row','button']){
+   const box=await evaluate(`const n=root.querySelector(${JSON.stringify(selector)});n.scrollIntoView({block:'center'});const b=n.getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2};`);
+   await control.send('Input.dispatchMouseEvent',{type:'mouseMoved',...box},popupSession);
+   report.appearanceHover.push(await evaluate(`const n=root.querySelector(${JSON.stringify(selector)});return {scheme:${JSON.stringify(scheme)},selector:${JSON.stringify(selector)},box:${JSON.stringify(box)},height:innerHeight,hover:n.matches(':hover'),background:getComputedStyle(n).backgroundColor};`));
+   await wait(`const n=root.querySelector(${JSON.stringify(selector)});return n.matches(':hover')&&getComputedStyle(n).backgroundColor===${JSON.stringify(scheme==='dark'?'rgb(56, 56, 56)':'rgb(238, 238, 238)')};`);
+   const hover=await evaluate('return ('+readTemporaryAppearance.toString()+')();');report.appearance.push({scheme,stage:'hover',target:selector,...hover});assertTemporaryAppearance(hover);
+  }
+  await evaluate("const n=root.querySelector('input');n.value='';n.dispatchEvent(new Event('input',{bubbles:true}));return true;");
+
+ }
+ for(const scheme of ['light','dark']){
+  await control.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:scheme},{name:'forced-colors',value:'active'}]},popupSession);
+  const forced=await evaluate('return ('+readTemporaryAppearance.toString()+')();');report.appearance.push({scheme,stage:'forced-colors',...forced});assert.equal(forced.forced,true);assertTemporaryAppearance(forced,{focusTag:'INPUT'});
+ }
+ await control.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'dark'},{name:'forced-colors',value:'none'}]},popupSession);
+ const screenshot=await control.send('Page.captureScreenshot',{format:'png'},popupSession);await writeFile(output+'.png',Buffer.from(screenshot.data,'base64'));report.appearanceScreenshot=output+'.png';
  report.phase='whole-read-deadline';const readFaultStarted=performance.now();
  await evaluate("globalThis.__query=chrome.tabs.query.bind(chrome.tabs);globalThis.__frame=chrome.webNavigation.getFrame.bind(chrome.webNavigation);globalThis.__send=chrome.tabs.sendMessage.bind(chrome.tabs);globalThis.__downstream=0;chrome.webNavigation.getFrame=(...args)=>{__downstream++;return __frame(...args);};chrome.tabs.sendMessage=(...args)=>{__downstream++;return __send(...args);};chrome.tabs.query=()=>new Promise(resolve=>{globalThis.__lateQuery=resolve;});return true;");
  await click('button');await wait("return !!root&&root.textContent.includes('当前页面未提供可读取的导航列表。')&&!root.querySelector('button').disabled;");
