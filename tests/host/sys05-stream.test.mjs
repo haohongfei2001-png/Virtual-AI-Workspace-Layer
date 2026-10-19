@@ -224,3 +224,50 @@ test('passive renewal trace preserves original promise and records pending overl
  release({ok:true});await original;const row=sandbox.__sys05Observer.snapshot().renewals[0];
  assert.equal(row.state,'ok');assert(row.finishedAt>=row.at);sandbox.__sys05Observer.close();
 });
+
+function lostAckOutcome(){
+ const value=gapOutcome(),g=value.directoryGap,fault=g.faultWork.packets[1];
+ value.lostAckRequested=true;g.kind='ONE_ACCEPTED_REPLY_NOT_DELIVERED';
+ fault.forwarded=true;fault.fault='DROP_AFTER_ACCEPT';fault.ownerReply={state:'accepted',localSeq:fault.localSeq,at:fault.finishedAt};
+ Object.assign(g.afterFault.refTitles,Object.fromEntries(g.expected.slice(50,100).map(e=>[e.id,e.title])));
+ return value;
+}
+test('committed lost ACK needs durable new facts and independently missing unsent tail',()=>{
+ const result=assertDirectoryGapOutcome(lostAckOutcome());
+ assert.equal(result.gapRecovery,'PASS_NARROW_COMMITTED_LOST_ACK_RETURN_RESCAN');assert.equal(result.fullSYS05,'NOT_ESTABLISHED');
+});
+for(const [name,mutate] of Object.entries({
+ 'not actually forwarded':g=>g.faultWork.packets[1].forwarded=false,
+ 'fabricated acceptance':g=>g.faultWork.packets[1].ownerReply.state='duplicate',
+ 'owner retry':g=>g.faultWork.packets[1].ownerReply.state='retry-after',
+ 'wrong sequence':g=>g.faultWork.packets[1].ownerReply.localSeq++,
+ 'reply before request':g=>g.faultWork.packets[1].ownerReply.at=0,
+ 'reply after consumer failure':g=>g.faultWork.packets[1].ownerReply.at++,
+ 'partial commit':g=>delete g.afterFault.refTitles[g.expected[99].id],
+ 'wrong committed title':g=>g.afterFault.refTitles[g.expected[50].id]='wrong',
+ 'preexisting receipt facts':g=>g.before.refTitles[g.expected[50].id]=g.expected[50].title,
+ 'tail already healed':g=>g.afterFault.refTitles={...g.after.refTitles},
+ 'renewal instead of return':g=>g.work.renewals.push({at:1040,finishedAt:1200,state:'ok'}),
+ 'old ACK modified':g=>g.after.hints=[],
+ 'lost draft':g=>g.draftPreserved=false,
+ 'late return':g=>g.elapsedMs=6000,
+}))test('committed lost ACK rejects '+name,()=>{const value=lostAckOutcome();mutate(value.directoryGap);assert.throws(()=>assertDirectoryGapOutcome(value));});
+
+test('lost ACK waits for the selected real acceptance across retry, never switches packet or drops twice',async()=>{
+ class Document{createTreeWalker(){}}class TreeWalker{nextNode(){}}class Element{querySelectorAll(){}}
+ const calls=[],runtime={sendMessage(message){let resolve;const promise=new Promise(r=>resolve=r);calls.push({message,promise,resolve});return promise;}};
+ const sandbox={Document,TreeWalker,Element,chrome:{runtime},crypto:webcrypto,TextEncoder,Date},context=vm.createContext(sandbox);
+ vm.runInContext(`(${installSys05Observer.toString()})({directoryGap:true,lostAck:true})`,context);sandbox.__sys05Observer.armDirectoryGap();
+ const proposal=seq=>({protocol:'vaiwl-host-observation/1',producerToken:'fixture',kind:'surface-delta',localSeq:seq,payload:{candidates:[{target:{nativeId:'88888888-8888-4888-8888-000000000001'}}]}});
+ async function reply(seq,state,replySeq=seq){const p=runtime.sendMessage(proposal(seq)),call=calls.at(-1);call.resolve({state,localSeq:replySeq});return p;}
+ await reply(1,'accepted');
+ assert.equal((await reply(2,'retry-after')).state,'retry-after');
+ await reply(3,'accepted');assert.equal(sandbox.__sys05Observer.snapshot().gap.dropped,0);
+ assert.equal((await reply(2,'accepted',99)).localSeq,99);assert.equal(sandbox.__sys05Observer.snapshot().gap.dropped,0);
+ const pending=runtime.sendMessage(proposal(2)),call=calls.at(-1);let settled=false;pending.then(()=>settled=true,()=>settled=true);await Promise.resolve();assert.equal(settled,false);assert.equal(calls.length,5);
+ call.resolve({state:'accepted',localSeq:2});await assert.rejects(pending,/accepted-reply-lost/);
+ await reply(2,'accepted');await reply(4,'accepted');
+ const result=sandbox.__sys05Observer.snapshot(),fault=result.packets.filter(p=>p.fault);
+ assert.equal(result.gap.dropped,1);assert.equal(result.counters.unknown,1);assert.equal(fault.length,1);assert.equal(fault[0].localSeq,2);assert.equal(fault[0].forwarded,true);assert.equal(fault[0].ownerReply.state,'accepted');assert.equal(fault[0].state,'unknown');assert.equal(calls.length,7);
+ sandbox.__sys05Observer.close();
+});

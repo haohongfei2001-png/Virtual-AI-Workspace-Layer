@@ -16,9 +16,10 @@ const scope=context=>({verified:true,provider:'chatgpt',accountId:'principal_'+s
 const scopeKey=s=>JSON.stringify([s.provider,s.accountId,s.organizationId]);
 const fixtureFiles=['sys05-stream-package-journey.mjs','sys05-startup-precondition.mjs','sys05-stream-oracle.mjs','sys05-stream-observer.mjs','fixtures/sys05-stream-server.mjs','fixtures/sys05-native-stream.mjs','fixtures/sys05-native-peer-rename.mjs','fixtures/sys05-native-directory.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/ui10-conversation-title.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','expected/modern.mjs'];
 async function poll(read,label,timeout=6000){const end=Date.now()+timeout;let result;while(Date.now()<end){result=await read();if(result&&Date.now()<end)return result;await sleep(50);}throw Error('sys05-timeout:'+label);}
-export async function runSys05(output,{execute=false,observeWork=false,backpressure=false,directoryGap=false}={}){
+export async function runSys05(output,{execute=false,observeWork=false,backpressure=false,directoryGap=false,lostAck=false}={}){
+ if(lostAck)directoryGap=true;
  if(backpressure||directoryGap)observeWork=true;
- const report={status:'NOT_RUN',requirement:'VA-HOST/1.1 SYS-05 narrow candidate',S:'NOT_RUN',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',fullSYS05:'NOT_ESTABLISHED',sourceCommit:process.env.FREE_SOURCE_COMMIT??null,workInstrumentation:observeWork,backpressureRequested:backpressure,directoryGapRequested:directoryGap,limits:SYS05_LIMITS,steps:[],errors:[],uncovered:['Forced backpressure/gap and queue overflow','Full supported-profile matrix','Full admitted inventory and large-scale token storms','Uninstrumented latency/p95 and physical-device performance','Actual ChatGPT G/U and PAIA']};
+ const report={status:'NOT_RUN',requirement:'VA-HOST/1.1 SYS-05 narrow candidate',S:'NOT_RUN',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',fullSYS05:'NOT_ESTABLISHED',sourceCommit:process.env.FREE_SOURCE_COMMIT??null,workInstrumentation:observeWork,backpressureRequested:backpressure,directoryGapRequested:directoryGap,lostAckRequested:lostAck,limits:SYS05_LIMITS,steps:[],errors:[],uncovered:['Forced backpressure/gap and queue overflow','Full supported-profile matrix','Full admitted inventory and large-scale token storms','Uninstrumented latency/p95 and physical-device performance','Actual ChatGPT G/U and PAIA']};
  if(!execute){await writeFile(output,JSON.stringify(report,null,2)+'\n');return report;}
  let server,handle,activeObserver,peerObserver,built,manifest,activePage;
  const dir=await mkdtemp(join(tmpdir(),'vaiwl-sys05-'));
@@ -58,7 +59,7 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   // No new budget or retry is created by the test. Wait out only an existing
   // depleted window, as the original J4 journey does, before the measured phase.
   if(report.before.personal.budget?.requests>=12){const wait=Math.max(0,report.before.personal.budget.startedAt+30001-Date.now());report.budgetWaitMs=wait;await sleep(wait);}
-  if(observeWork){activeObserver=await attachSys05Observer(context,a,id,{directoryGap});peerObserver=await attachSys05Observer(context,b,id);report.instrumentation=activeObserver.instrumentation;}else report.instrumentation={kind:'NONE',packageModified:false};
+  if(observeWork){activeObserver=await attachSys05Observer(context,a,id,{directoryGap,lostAck});peerObserver=await attachSys05Observer(context,b,id);report.instrumentation=activeObserver.instrumentation;}else report.instrumentation={kind:'NONE',packageModified:false};
   report.loadedDirectoryNodes=await a.evaluate(()=>[...document.querySelectorAll('aside section[aria-label="Projects"],aside nav[aria-label="Chat history"]')].reduce((n,root)=>n+root.querySelectorAll('*').length,0));
   await a.locator('#sys05-start').click();await poll(()=>a.evaluate(()=>sys05NativeStream.snapshot().ticks>=8),'stream-start');
   const prefixReads=server.snapshot().sys05Reads.filter(r=>r.authenticated&&r.path.startsWith('/backend-api/conversation/')).length;
@@ -97,7 +98,7 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   await poll(async()=>{assert(await presented(),'sys05-token-update-closed-workspace');const ticks=(await a.evaluate(()=>sys05NativeStream.snapshot())).ticks-visibleTick;report.presentation.tokenTicks=ticks;return ticks>=8;},'workspace-retained-through-token-updates');
   report.ui={exactTitle:title,currentRef:C,activityPlacement:'RECENT_LIST_ABSENT_TO_VISIBLE_NOT_CURRENT_CONTEXT',activityFromHint:true,qualifiedAdmissionAt:durable.hints.find(h=>h.messageId===sent.id).firstObservedAt,durableFirstSeenAt:durableAt,visibleFirstSeenAt:titleAt,timingBasis:'CONSERVATIVE_PRECOMMIT_AUTHENTICATED_ADMISSION_TO_VISIBLE_UI_UPPER_BOUND; includes automation and readonly polling; not exact commit timing or p95',ackLatencyMs:durableAt-actionAt,titleLatencyMs:titleAt-titleWaitAt,acceptanceToVisibleTitleMs:titleAt-Date.parse(sent.at),sendToQualifiedEvidenceMs:Date.parse(durable.hints.find(h=>h.messageId===sent.id).firstObservedAt)-actionAt,evidenceToVisibleTitleMs:titleAt-Date.parse(durable.hints.find(h=>h.messageId===sent.id).firstObservedAt)};
   if(directoryGap){
-   const phase=createSys05StartupDeadline({timeoutMs:6000}),gap={kind:'ONE_PROPOSAL_NOT_DELIVERED_BEFORE_FORWARD'};report.directoryGap=gap;
+   const phase=createSys05StartupDeadline({timeoutMs:6000}),gap={kind:lostAck?'ONE_ACCEPTED_REPLY_NOT_DELIVERED':'ONE_PROPOSAL_NOT_DELIVERED_BEFORE_FORWARD'};report.directoryGap=gap;
    gap.before=await phase.run(()=>facts(personal),'gap-before');
    await phase.run(()=>a.getByRole('button',{name:'返回原生阅读',exact:true}).click({timeout:phase.remaining('prepare-native-reading')}),'prepare-native-reading');
    await phase.run(()=>a.evaluate(()=>{globalThis.sys05GapDocument=document;globalThis.sys05GapEditor=document.querySelector('#prompt-textarea');sys05GapEditor.value='preserved directory recovery draft';}),'gap-native-draft');
@@ -106,7 +107,7 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
    await phase.poll(async()=>await a.locator('#sys05-load-directory').getAttribute('data-applied')==='true','native-directory-applied');
    gap.expected=server.snapshot().sys05Directory;
    assert.equal(gap.expected.length,300);
-   gap.faultWork=await phase.poll(async()=>{const w=await activeObserver.snapshot();return w.packets.some(p=>p.fault==='DROP_BEFORE_FORWARD'&&p.state==='unknown')&&w.packets.some(p=>p.directoryIds.length&&p.state==='accepted')?w:null;},'real-first-ACK-and-designated-loss');
+   gap.faultWork=await phase.poll(async()=>{const w=await activeObserver.snapshot();return w.packets.some(p=>p.fault===(lostAck?'DROP_AFTER_ACCEPT':'DROP_BEFORE_FORWARD')&&p.state==='unknown')&&w.packets.some(p=>p.directoryIds.length&&p.state==='accepted')?w:null;},'real-first-ACK-and-designated-loss');
    gap.afterFault=await phase.run(()=>facts(personal),'persistent-gap');
    assertDirectoryGapPrecondition(report);
    // No sleep/renewal pause: inspect the actual incomplete set immediately before
@@ -125,7 +126,7 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
    const last=gap.expected.at(-1),row=frame(a).locator('.search-results a[data-ref-id="'+last.id+'"]');
    gap.tail=await phase.poll(async()=>await presented()&&await row.count()===1&&await row.isVisible()?{topLevelOpen:true,id:last.id,title:await row.locator('.window-title').textContent(),href:await row.getAttribute('href')}:null,'tail-search-visible');
    gap.elapsedMs=phase.elapsedMs();report.directoryGap=gap;
-   report.steps.push('native-directory-first-commit-designated-unsent-fragment-real-gap-return-rescan-tail-search');
+   report.steps.push(lostAck?'native-directory-real-commit-lost-reply-tail-gap-return-rescan-tail-search':'native-directory-first-commit-designated-unsent-fragment-real-gap-return-rescan-tail-search');
   }
   await poll(()=>a.evaluate(()=>!sys05NativeStream.snapshot().running),'finite-stream-end',22000);
   report.stream={...await a.evaluate(()=>sys05NativeStream.snapshot()),tokensAtDurable,tokensAtVisibleTitle};
@@ -136,7 +137,7 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   report.work=observeWork?{active:await activeObserver.snapshot(),peer:await peerObserver.snapshot()}:{status:'NOT_RUN'};
   Object.assign(report,assertStreamOutcome(report));
   if(backpressure){report.peerAfter={personal:await facts(personal,PEER),team:await facts(team,PEER)};report.backpressure=server.snapshot().backpressure;report.backpressureNativeActions=server.snapshot().actions;report.peerRenameAt=server.snapshot().sys05PeerRenameAt;report.peerRenameApplied=await b.locator('#sys05-peer-rename').getAttribute('data-applied')==='true';Object.assign(report,assertBackpressureOutcome(report));report.uncovered[0]='Queue overflow, persistent gap and rescan recovery';}
-  if(directoryGap){Object.assign(report,assertDirectoryGapOutcome(report));report.uncovered[0]='General queue overflow and committed-but-lost ACK recovery';}
+  if(directoryGap){Object.assign(report,assertDirectoryGapOutcome(report));report.uncovered[0]=lostAck?'General queue overflow; existing undelivered-fragment evidence is separate':'General queue overflow and committed-but-lost ACK recovery';}
 assert.deepEqual(report.errors,[]);report.S=observeWork?'NARROW_INSTRUMENTED_BROWSER_OBSERVED':'NARROW_UNINSTRUMENTED_BROWSER_OBSERVED';report.browserVersion=browser.version();
  }catch(error){report.status=handle?'FAIL':'NOT_RUN_BROWSER_STARTUP';report.error=error.stack;}
  finally{
@@ -154,6 +155,6 @@ assert.deepEqual(report.errors,[]);report.S=observeWork?'NARROW_INSTRUMENTED_BRO
  return report;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
- const report=await runSys05(process.argv[2]??join(tmpdir(),'sys05-stream-not-run.json'),{execute:process.argv.includes('--execute-browser'),observeWork:process.argv.includes('--observe-work'),backpressure:process.argv.includes('--backpressure'),directoryGap:process.argv.includes('--gap-recovery')});
+ const report=await runSys05(process.argv[2]??join(tmpdir(),'sys05-stream-not-run.json'),{execute:process.argv.includes('--execute-browser'),observeWork:process.argv.includes('--observe-work'),backpressure:process.argv.includes('--backpressure'),directoryGap:process.argv.includes('--gap-recovery'),lostAck:process.argv.includes('--lost-ack-recovery')});
  console.log(JSON.stringify({status:report.status,S:report.S,fullSYS05:report.fullSYS05}));if(report.status.startsWith('FAIL')||report.status==='NOT_RUN_BROWSER_STARTUP')process.exitCode=1;
 }

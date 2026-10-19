@@ -13665,6 +13665,63 @@
         "root cause or fix for this CI failure"
       ],
       "nextEvidence": "Correlate receipt install/revoke, worker notification order, content delivery/handshake stage and failing reply generation in the same failing execution; no timeout change or rerun-to-green."
+    },
+    "committedLostAck20261019": {
+      "baseCommit": "1ad015009a8e896f365fef630b34ba4483ff06a9",
+      "productionChanged": false,
+      "status": "PASS_NARROW_COMMITTED_LOST_ACK_RETURN_RESCAN",
+      "boundary": "Second distinct proposal forwarded; only a real accepted matching reply is lost once. Selection survives retry-after. Durable new facts and missing never-emitted tail verified independently before normal return.",
+      "outcome": {
+        "completeDirectory": 300,
+        "faultPacketDurableRows": 55,
+        "elapsedMs": 556.3565840000001,
+        "budgetMs": 6000,
+        "draftPreserved": true,
+        "uniqueReturn": true,
+        "oldActivityUnchanged": true,
+        "streamTicks": 800,
+        "streamMutations": 6400,
+        "streamMs": 19980
+      },
+      "timingBoundary": "One diagnostic sample: before-facts/native directory/fault/readback/return/exact completeness/draft/tail search; no same-scenario prior measurement, not speedup or p95.",
+      "browser": "153.0.8010.12",
+      "sourceChangedDuringRun": false,
+      "workerNetworkPolicy": "PACKAGED_EXACT_ORIGIN_CONNECT_SRC",
+      "review": "Read-only independent review: no blockers; 124 related checks PASS. Additional unchanged CI partition contracts 24 PASS. No full rerun of unchanged product.",
+      "scheduling": "Opt-in --lost-ack-recovery on existing SYS05 runner; existing CI steps and before-forward gap mode unchanged; no extra job/cache/upload. Test/evidence-only commit skips full CI; same product 1ad CI recorded separately.",
+      "realHost": "No installation, real request, credential/body read, or native write. Existing consumed diagnostic remains consumed.",
+      "remaining": [
+        "General queue overflow",
+        "Complete SYS05/profile matrix",
+        "Valid real principal/current context",
+        "Positive real membership and self-send",
+        "Full J4/physical IME/PAIA/cross-environment/install/visual acceptance",
+        "10k/100k DEFERRED"
+      ],
+      "releaseStatus": "NOT_RELEASE_READY",
+      "artifacts": {
+        "sys05-lost-ack-mv3.json.gz": {
+          "sha256": "36faa4b4b8f0b408a51de69ce746cac0a7abd637432fa6cc740b64607fe414b3",
+          "uncompressedSha256": "4cf6d44de760ebe9bde16496b081ae33dab7b7e14b36f805cf135572ed92c8cd"
+        },
+        "sys05-lost-ack-tests.tap.gz": {
+          "sha256": "c46658d9a7cd38341c5808e294c54ad430b68922927eb4a6b2c8258bb4138320",
+          "uncompressedSha256": "bfbf05b3571beb11a6e3ef4b286486c9131d10f97e700e0cc76da4ce2085afbf"
+        },
+        "sys05-lost-ack-review.tap.gz": {
+          "sha256": "4c8cd724fc7853c0539eac7393d2cd46f76881528cb86588a46cdd3ad4650bb8",
+          "uncompressedSha256": "42ff32dc9198ab99c67715ffd2711ccaa6d4c7cc56239e3a4395eb016039566b"
+        },
+        "sys05-lost-ack-ci-contract.tap.gz": {
+          "sha256": "86e8b9382e2359e0f4f9ca45d1218c0d6e2e169276166ba2dfb4c332ee25510f",
+          "uncompressedSha256": "5a4cfe2eee168e073d4d00d91d55dd289d9846779c48ac7465de4dcf148dc11b"
+        }
+      },
+      "sourceManifest": {
+        "productFiles": 182,
+        "fixtureFiles": 17,
+        "exactHashes": "sys05-lost-ack-mv3.json.gz"
+      }
     }
   },
   "observationRetryDeadline20261019": {
@@ -14347,6 +14404,30 @@
       },
       "candidate-focus-final-mv3.json.gz": {
         "sha256": "89d532d16c2b63d1935f459053bb6afb26a0c2fb54d567d275616f8a201c773a"
+      }
+    },
+    "ci": {
+      "runId": 39259989461,
+      "head": "1ad015009a8e896f365fef630b34ba4483ff06a9",
+      "jobs": {
+        "offline-journeys": "success",
+        "offline-j4-lifecycle": "success",
+        "node-contracts": "success",
+        "offline-durability-compat": "success"
+      },
+      "formalJ4Status": "PARTIAL_J4_NOT_ACCEPTED",
+      "J4Steps": 23,
+      "automaticForegroundRecovery": "NOT_ESTABLISHED",
+      "priorFormalFailure": "CI39253912974 retained; later native-hop success does not establish its root cause fixed",
+      "artifacts": {
+        "ci39259989461-j4.log.gz": {
+          "sha256": "b8a7aceefa337b62d8fe06d10de9d58dfb44c3533b56f25c3f10cbfa18894de3",
+          "uncompressedSha256": "018214274b4f3c00e082400d16277741dc3702aba8abede577bb86f0046fa5dd"
+        },
+        "ci39259989461-j4.json.gz": {
+          "sha256": "6fad36aa47f956032798a6d4909d585cfea8be053f7c2391b6133f6bc37642af",
+          "uncompressedSha256": "34b0077f02f6a921ba35c723e2ba04d3b0fed87f73ffcf6fc040f4e1fecaea28"
+        }
       }
     }
   }

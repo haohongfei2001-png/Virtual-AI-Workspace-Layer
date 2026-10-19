@@ -1,5 +1,8 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **已提交但确认丢失的目录恢复已实测**（2026-10-19）：原SYS05增加互斥故障模式，固定第二个不同提案正常提交，仅真实匹配accepted后丢一次回复；retry-after不消费故障或换包。实际隔离MV3证明该片55个新ID先落库、未发尾片仍缺，唯一正常返回在原6秒内补齐全部300条原生ID/标题并搜索尾条，草稿/原ACK身份和时间/另一scope保持；子链556.357ms，流式19980ms/800ticks/6400变化。没有发现此场景新产品缺陷，产品源码不改；原未送达模式、失败及门槛保留。独审及相关124检查、原CI分区24检查通过。新增模式只在原runner按需运行，不新增CI/job/cache/upload；本次测试证据提交跳过完整CI，不冒充新提交全套通过。证据沿原sys05TokenGap20261019.committedLostAck20261019，完整SYS05队列溢出等未关闭，真实安装/请求未动，NOT_RELEASE_READY。
+- **1ad01500同源CI结果已核对**：CI39259989461四job成功；原J4 JSON仍23步PARTIAL_J4_NOT_ACCEPTED、无新context的peer自动恢复NOT_ESTABLISHED。正常新原生导航恢复不替代自动恢复、不改判39253912974历史FAIL；原日志/JSON沿candidatePagingFocus20261019.ci保留。真实身份/context、正向成员/本人活动与实机完整验收仍开放，10k/100k DEFERRED。
+
 - **候选项目键盘翻页闭环已修**（2026-10-19）：原加载时禁用焦点按钮，随后新页/错误面板重建只记候选行、不记分页/重试，键盘焦点掉回页面。最小反例28通过/2失败保留；现等待期间保留焦点与原单飞栅栏，只转移当前文档/当前面板仍拥有的控制焦点，页边界落可用内容或标题，不抢原生/另一frame焦点。152定向与独审通过；实际隔离MV3完成加载中重复Enter/Space仅一请求→失败→键盘重试→候选分页末端→项目提升/打开/唯一返回→草稿保护，整链5.056秒（含启动不含清理，无同场景旧耗时，不称提速）。worker外网亦由临时拒绝代理阻断，源码运行期间未变；未更新实机或重复真实诊断。真实身份/context、正向成员/本人活动、完整J4及实机验收仍开放，10k/100k DEFERRED，NOT_RELEASE_READY。证据沿原 `candidatePagingFocus20261019`，本提交CI待实际结果。
 
 - **同源码CI与J4诊断边界更新**（2026-10-19）：fba7038的CI39257029241四个原job均SUCCESS；J4原JSON仍23步PARTIAL_J4_NOT_ACCEPTED，新原生导航恢复本次成立，无新context的peer自动恢复仍NOT_ESTABLISHED。39253912974正式FAIL不改判、未证明根因已修。进一步审查确认旧receiptPresent仅说明对象存在，不证明epoch/route/TTL有效；现仅增强原失败后只读闭包检查，输出匹配布尔/年龄/TTL及关联bridge等待状态，不调用应用方法/请求、不改生产行为。getter不可读保持null，不能误报不存在；独审纠正该三值问题，376定向通过。新检查尚未实际Chrome失败触发，只有真实V8/CDP合同证据；原页面url缺失测试失败保留。生产源码不变，不为该诊断重跑整套或J4挑绿；原真实身份/成员/活动/完整恢复/安装关口、10k/100k DEFERRED与NOT_RELEASE_READY保持。证据沿原observationRetryDeadline20261019.finalCI/j4ReceiptInspection。

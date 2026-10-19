@@ -31,19 +31,23 @@ export function assertBackpressureOutcome(value){
 }
 export function assertDirectoryGapPrecondition(value){
  const g=value.directoryGap;assert(g&&value.workInstrumentation&&value.directoryGapRequested,'directory-gap-evidence-required');
- assert.equal(g.kind,'ONE_PROPOSAL_NOT_DELIVERED_BEFORE_FORWARD');
+ const lost=value.lostAckRequested===true;assert.equal(g.kind,lost?'ONE_ACCEPTED_REPLY_NOT_DELIVERED':'ONE_PROPOSAL_NOT_DELIVERED_BEFORE_FORWARD');
  assert.equal(g.expected.length,300);const ids=g.expected.map(e=>e.id),set=new Set(ids);assert.equal(set.size,300);
- const rows=g.faultWork.packets,failed=rows.filter(p=>p.fault==='DROP_BEFORE_FORWARD');assert.equal(failed.length,1);
- const fault=failed[0];assert.equal(fault.forwarded,false);assert.equal(fault.state,'unknown');assert(fault.directoryIds.length>0);
+ const rows=g.faultWork.packets,failed=rows.filter(p=>p.fault===(lost?'DROP_AFTER_ACCEPT':'DROP_BEFORE_FORWARD'));assert.equal(failed.length,1);
+ const fault=failed[0];assert.equal(fault.forwarded,lost);assert.equal(fault.state,'unknown');assert(fault.directoryIds.length>0);
  const accepted=rows.filter(p=>p.forwarded&&p.state==='accepted'&&p.directoryIds.length&&p.finishedAt<=fault.at&&rows.indexOf(p)<rows.indexOf(fault));
  assert(accepted.length>0,'earlier-real-owner-ACK-required');
  assert(accepted.some(p=>p.directoryIds.some(id=>Object.hasOwn(g.afterFault.refTitles,id))),'earlier-ACK-must-be-persistent');
- assert(fault.directoryIds.some(id=>!Object.hasOwn(g.afterFault.refTitles,id)),'designated-undelivered-ID-must-be-missing');
+ if(lost){
+  assert.equal(fault.ownerReply?.state,'accepted');assert.equal(fault.ownerReply.localSeq,fault.localSeq);
+  assert(fault.ownerReply.at>=fault.at&&fault.ownerReply.at<=fault.finishedAt,'actual-owner-reply-before-consumer-failure');
+  for(const id of fault.directoryIds){const expected=g.expected.find(e=>e.id===id);assert(expected);assert(!Object.hasOwn(g.before.refTitles,id),'new-ID-before-fault');assert.equal(g.afterFault.refTitles[id],expected.title,'accepted-packet-must-be-persistent-before-return');}
+ }else assert(fault.directoryIds.some(id=>!Object.hasOwn(g.afterFault.refTitles,id)),'designated-undelivered-ID-must-be-missing');
  const emitted=new Set(rows.flatMap(p=>p.directoryIds));assert(ids.some(id=>!emitted.has(id)&&!Object.hasOwn(g.afterFault.refTitles,id)),'never-emitted-tail-gap-required');
  return {fault};
 }
 export function assertDirectoryGapOutcome(value){
- const {fault}=assertDirectoryGapPrecondition(value),g=value.directoryGap,ids=g.expected.map(e=>e.id),set=new Set(ids),failed=g.faultWork.packets.filter(p=>p.fault==='DROP_BEFORE_FORWARD');
+ const {fault}=assertDirectoryGapPrecondition(value),g=value.directoryGap,ids=g.expected.map(e=>e.id),set=new Set(ids),failed=g.faultWork.packets.filter(p=>p.fault===(value.lostAckRequested?'DROP_AFTER_ACCEPT':'DROP_BEFORE_FORWARD'));
  assert(Array.isArray(g.work.renewals),'renewal-trace-required');
  assert(!g.work.renewals.some(r=>r.at<=g.completedAt&&(r.finishedAt===null||r.finishedAt>=fault.at)),'renewal-must-not-masquerade-as-return-rescan');
  assert(g.actionAt>fault.finishedAt&&g.completedAt>=g.actionAt&&g.elapsedMs<6000,'bounded-return-rescan-required');
@@ -60,7 +64,7 @@ export function assertDirectoryGapOutcome(value){
  assert.deepEqual(g.after.projectIds,g.before.projectIds);assert(g.peer.refIds.every(id=>!set.has(id)),'directory-cross-scope');
  assert.equal(g.actions['sys05-load-directory'],1);assert.equal(g.actions['send-intent'],1);assert.equal(g.draftPreserved,true);assert.equal(g.uniqueReturn,true);
  const tail=g.expected.at(-1);assert.equal(g.tail.topLevelOpen,true,'tail-search-parent-must-be-open');assert.equal(g.tail.id,tail.id);assert.equal(g.tail.title,tail.title);assert.equal(new URL(g.tail.href).pathname,'/c/'+tail.id);
- return {gapRecovery:'PASS_NARROW_UNDELIVERED_FRAGMENT_RETURN_RESCAN',queueOverflow:'NOT_RUN',fullSYS05:'NOT_ESTABLISHED'};
+ return {gapRecovery:value.lostAckRequested?'PASS_NARROW_COMMITTED_LOST_ACK_RETURN_RESCAN':'PASS_NARROW_UNDELIVERED_FRAGMENT_RETURN_RESCAN',queueOverflow:'NOT_RUN',fullSYS05:'NOT_ESTABLISHED'};
 }
 export function assertStreamOutcome(value){
  const {native,stream,personal,team,ui,work}=value,sent=native.rows.at(-1);
