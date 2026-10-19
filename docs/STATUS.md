@@ -1,5 +1,8 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **休眠界面丢失后的新上下文恢复已修**（2026-10-20）：实际content+controller复现双ACK/释放后frame断开或contentWindow替换，旧controller停止但content遗留ready，吞新READY；原3通过/2失败保留。现仅对dormant-document-changed进入既有安全等待，不自动请求/续旧grant。冻结隔离MV3完成休眠→丢真实frame→waiting→唯一新原生GET→新frame/唯一返回/草稿选区与同Team库保持，旧版变异在新GET前准确失败；子链249.355ms含休眠准备/状态查询，不称提速。880相关回归及独审通过，busy旧续约晚返回不影响新会话；测试基线误包含正常新SURFACE_STATE的失败保留。真实Profile最小DOM连接仍超时，未重发诊断或更新安装。证据沿原nativeRegionRecovery20261020.dormantFrameLoss20261020；完整身份/J4/GU与规模DEFERRED保持。
+- **33833b0同源CI结果已归入**：CI39285104774四job成功，但原J4仍23步PARTIAL_J4_NOT_ACCEPTED，无新context的peer自动恢复NOT_ESTABLISHED。原日志/JSON及预期变异失败保留，不能套用为当前新源码全矩阵通过；此前busy/J4失败不追溯改判。
+
 - **临时导航文字与原生弹窗尺寸已修**（2026-10-20）：原深色标题实际对比度1:1；原视窗依赖尺寸在隔离Chrome自动收缩至40×40，测试内去除限制恢复570×498、恢复旧规则再次缩小。现复用现有Free配色，外层提供固有尺寸、内部固定到浏览器分配空间滚动。冻结同源隔离MV3完成深浅色/强制颜色、键盘可见焦点、搜索→项目/聊天打开→返回/草稿保护；全链3.691秒含启动和原1秒故障等待，不是提速。85定向及独审通过；原失败和中间观察器错误保留。未改身份/预算/列表生命周期，未更新真实安装或重发诊断；不是完整Free。前一33833b0的CI39285104774仍运行/排队，仅Node已成功，本窄批不触发取消重跑、完整矩阵不借用。证据沿原 `temporaryAppearance20261020`；真实身份/归属/活动、完整J4/GU仍开放，10k/100k DEFERRED。
 
 - **原生阅读区域替换后的假就绪状态已修**（2026-10-20）：同URL换reading root或几何失效时，controller已停止adapter/移除界面，content却仍ready，后续单独READY被忽略。现进入既有contextPending，撤回旧能力、不自动请求身份；新真实READY再走HELLO→有界观察→REFRESH→新producer/mount。原最小13通过/4失败保留；633相关回归与实际content/controller联合验证通过。冻结隔离MV3完成根替换→私有状态waiting→一个正常原生GET→新frame/唯一返回/原文档、编辑器、选区和草稿保持，360.589ms（不含启动，含状态观察，非提速/p95），worker外网阻断。删除修复的变异包在同一状态断言失败；只看最终导航的旧观察器会漏检，原存活结果与其他失败全保留，最终后台状态页不切换焦点。具体同源码证据 `nativeRegionRecovery20261020`。仅关闭假就绪/新READY接线缺陷，不声称等待期间独立RAM观察、无新context自动恢复或历史J4竞态已解决；真实身份/成员/本人活动/安装仍开放，10k/100k DEFERRED、NOT_RELEASE_READY。专用Profile标签可读但本轮最小DOM读取仍超时，未重放诊断或更新实机。
