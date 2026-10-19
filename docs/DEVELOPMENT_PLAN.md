@@ -27,7 +27,7 @@
 
 真实接入补充：已按授权向官方支持发送既有最小403诊断并收到AI辅助回复；回复称session不是受支持的第三方扩展入口，尚无Ray级人工核验、具体规则或现有Project/聊天/current-workspace替代接口。有限真实启动代码联合检查未复现重复/旧READY放大认证，不据此反复重放真实挑战或新增永久latch。继续保留临时只读导航和完整Free目标；新的身份来源、权限或产品取舍仍需先给具体方案并获批，不能将通用API建议直接当作现有ChatGPT数据接入。当前具体外部关口、源码/失败与有限结论记录于STATUS及原real403RequestComparison20261019入口；不新增计划或以测试数量代替真实可用性。
 
-该替代建议已按官方[SIWC scope说明](https://developers.openai.com/siwc/quickstart)及[OSS注册边界](https://developers.openai.com/siwc/token-sharing-open-source)核对：登录/推理权限不包含既有聊天，注册时workspace不能直接证明当前宿主文档context。尚不采用SIWC作为新身份来源，也不搭建推理后端替换Free；先要求明确当前网页身份关联和原生元数据读取的受支持合同，新增外部跟进待用户许可。此为现有B1.F/B2.F1的来源条件澄清，不是新路线或削减目标。
+该替代建议已按官方[SIWC scope说明](https://developers.openai.com/siwc/quickstart)及[OSS注册边界](https://developers.openai.com/siwc/token-sharing-open-source)核对：登录/推理权限不包含既有聊天，注册时workspace不能直接证明当前宿主文档context。尚不采用SIWC作为新身份来源，也不搭建推理后端替换Free；先要求明确当前网页身份关联和原生元数据读取的受支持合同。用户追加许可后人工跟进已发同工单，自动回执称已转支持专员；未新增私人数据，未取得人工技术结论前不改判接入。此为现有B1.F/B2.F1的来源条件澄清，不是新路线或削减目标。
 
 同源检查点a30c8c8已确认同步原PR16，CI39182137924四个既有job成功；新增Project打包闭环和临时模式回归通过，J4原结果仍PARTIAL，10k/100k DEFERRED。下一真实关口仍为网站支持的合法principal/context及实际响应关联语义；新增离线候选接口不视为真实可用性进展。原规格/产品目标/权限均不变，当前源码及失败记录见STATUS原入口。
 

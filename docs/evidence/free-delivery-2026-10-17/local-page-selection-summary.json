@@ -6118,7 +6118,7 @@
           "Supported proof of the existing ChatGPT tab principal and current workspace, distinct from separate app sign-in.",
           "Supported user-authorized read-only IDs/titles/membership metadata for existing ChatGPT Projects/conversations; explicit limitation if none."
         ],
-        "followup": "Concrete same-ticket human-review reply prepared; new message awaits explicit user approval. No additional support message sent in this checkpoint.",
+        "followup": "Explicit user approval received for the complete prepared text. Sent once as a reply to the same official support thread and verified SENT/recipient/subject. No new private data, HAR, credentials or conversation body.",
         "scope": "No production source, install, authentication, permission, paid service or real Profile access changed. No repeated tests or scale runs.",
         "independentJourneyReview": {
           "result": "No new unconnected action found in this narrow inspection; not a complete acceptance audit.",
@@ -6129,6 +6129,15 @@
             "tests/host/frame-row-window-integration.test.mjs",
             "preauthorizationObservation20261019.projectLayout20261019.packagedDataClosure20261019.linuxCI20261019"
           ]
+        },
+        "followupStatus": "SENT_VERIFIED_ESCALATION_ACKNOWLEDGED_NOT_RESOLVED",
+        "reply": "AI-generated acknowledgement says the case was escalated to a support specialist, with response expected in coming days. No human technical finding, supported native-data contract or 403 resolution yet.",
+        "checkpointTransport": {
+          "commit": "b1155a037b67bea0335d54ea72b88c8ae6ea23d5",
+          "pushExit": 128,
+          "stderr": "Error in the HTTP2 framing layer",
+          "apiConfirmedRemoteHead": "b1155a037b67bea0335d54ea72b88c8ae6ea23d5",
+          "action": "Do not replay that commit; continue only with the newly authorized follow-up receipt checkpoint."
         }
       }
     },
