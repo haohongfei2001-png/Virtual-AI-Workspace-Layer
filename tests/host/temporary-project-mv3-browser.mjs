@@ -36,7 +36,20 @@ try{
  });
  control={send:(method,params={},sessionId)=>new Promise((resolve,reject)=>{const id=++serial,timer=setTimeout(()=>{pending.delete(id);reject(Error('cdp-deadline:'+method));},6000);pending.set(id,{resolve,reject,timer,sessionId});ws.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));})};
  await control.send('Target.setDiscoverTargets',{discover:true});
- async function open(){await worker.evaluate(()=>chrome.action.openPopup());const targets=(await cdp.send('Target.getTargets')).targetInfos.filter(t=>t.url==='chrome-extension://'+id+'/status.html');assert.equal(targets.length,1);popupTarget=targets[0].targetId;({sessionId:popupSession}=await control.send('Target.attachToTarget',{targetId:popupTarget,flatten:true}));}
+ async function open(){
+  // Closing an action popup can leave Linux Chrome without an active window.
+  // Restore only this runner's fixture tab before the one user-equivalent open.
+  await page.bringToFront();
+  const windowState=await worker.evaluate(async fixtureURL=>{
+   const tabs=(await chrome.tabs.query({active:true})).filter(tab=>tab.url===fixtureURL);
+   if(tabs.length!==1)throw Error('fixture-active-tab-not-unique');
+   const window=await chrome.windows.get(tabs[0].windowId);
+   if(window.type!=='normal'||window.focused!==true)throw Error('fixture-window-not-focused');
+   await chrome.action.openPopup({windowId:window.id});
+   return {fixtureTabUnique:true,windowFocused:window.focused,windowType:window.type};
+  },url);
+  (report.popupOpens??=[]).push({phase:report.phase,...windowState});
+  const targets=(await cdp.send('Target.getTargets')).targetInfos.filter(t=>t.url==='chrome-extension://'+id+'/status.html');assert.equal(targets.length,1);popupTarget=targets[0].targetId;({sessionId:popupSession}=await control.send('Target.attachToTarget',{targetId:popupTarget,flatten:true}));}
  async function evaluate(expression){const result=await control.send('Runtime.evaluate',{expression:`(()=>{const root=document.querySelector('body>div')?.shadowRoot;${expression}})()`,returnByValue:true,awaitPromise:true},popupSession);if(result.exceptionDetails)throw Error('popup-evaluate');return result.result.value;}
  async function wait(expression){const end=performance.now()+6000;while(performance.now()<end){const result=await evaluate(`const matched=(()=>{${expression}})();return {matched,state:{readyState:document.readyState,root:!!root,rows:root?.querySelectorAll('a.row').length??null,notice:root?.querySelector('main>p:nth-of-type(3)')?.textContent?.slice(0,160)??null,refreshDisabled:root?.querySelector('button')?.disabled??null}};`);const previous=report.popupStates.at(-1);if(report.popupStates.length<32&&(!previous||JSON.stringify(previous.state)!==JSON.stringify(result.state)))report.popupStates.push({phase:report.phase,elapsedMs:performance.now()-started,state:result.state});if(result.matched)return;await new Promise(r=>setTimeout(r,25));}throw Error('temporary-project-popup-timeout');}
  const hasRows="return !!root&&root.querySelectorAll('a.row').length===2;";

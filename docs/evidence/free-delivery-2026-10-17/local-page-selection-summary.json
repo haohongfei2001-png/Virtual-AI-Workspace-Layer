@@ -16289,5 +16289,32 @@
       "expectedMutants": "dormant/transport/stale negative controls failed as intended; excluded from actual regression list",
       "notRerun": true
     }
+  },
+  "popupOwnedWindow20261020": {
+    "baselineHead": "eadc1c0492732e77c4e50bf63c1b319f0bbfa4f9",
+    "priorFailure": "CI39289329767 temporary-project: openPopup no active browser window after closing prior popup",
+    "change": "Before each single popup open, activate only the owned fixture tab, require a unique active fixture URL and a focused normal window, then pass its windowId. No retry or deadline change.",
+    "result": "LOCAL_PASS_LINUX_NOT_RUN",
+    "journeyElapsedMs": 1494.583625,
+    "sourceStable": true,
+    "testSourcesStable": true,
+    "targeted": {
+      "pass": 28,
+      "fail": 0,
+      "skip": 0
+    },
+    "review": "Independent read-only review: runner precondition correction; retain native click, draft, invalidation, empty database and no auth request assertions.",
+    "layoutProbe": "Mac headless remains 570x498, root scrollHeight 550; controlled scrollbar/overflow variants did not reproduce Linux width585. Root cause not established; original max570 unchanged.",
+    "artifacts": {
+      "popup-owned-window-targeted.tap.gz": {
+        "sha256": "66b8b6ef325b2aea6ab6d938576cd1f494a30509105bbd098ae0a3e1debf51a3"
+      },
+      "popup-owned-window-browser.json.gz": {
+        "sha256": "e49c0394894155256b1e1f5f9a91ea170184dbdd393d442e742adc540de8a3cd"
+      },
+      "popup-layout-probe.json.gz": {
+        "sha256": "ac3e9a7603e7e9f3cdd7d90faf2d9c03c485743831d038f90480127a720c0f53"
+      }
+    }
   }
 }
