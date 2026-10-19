@@ -1,5 +1,8 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **403最小诊断已送达官方支持并收到AI辅助回复**：按用户明确授权，仅发送固定session GET的403/HTML/challenge、页面可用且手动刷新无挑战，以及既有两组UTC/Ray；无HAR、凭据、私人标题/ID或正文。回复称该session入口不是面向第三方扩展的受支持接口，但未核对Ray或给出具体阻断规则，也未提供现有ChatGPT Project/聊天/current-workspace的替代读取接口。不是人工工程结论或403修复；工单/邮件标识仅留用户私有记录。Work本地浏览器工具仍返回disabled，未绕限制；邮件通道已完成本次发送，无需用户再刷新/重登。下一外部关口是网站方确认受支持的身份/current-context来源；未自行启用新来源、付费API或修改产品目标。
+- **启动链重复认证假设已有限排除**：采纳dot6257381970，在真实bootstrap/request-owner→READY→content→binding/authority→session-provider联合链驱动原生事件，覆盖重复/较旧完成、新receipt、独立文档、同文档认证替换及旧响应三种跨文档完成次序。每个合法新receipt只发一次固定session请求；旧完成/旧响应不重试、不污染新代。认证前必要的DOM元字段关联与挑战正文读取分开；后者及accounts/fallback/授权/旧库打开均零。7场景及190受影响回归通过（0.653s，仅Node/MOCK_IDB），独审无阻断；初始fixture缺必需profile字段的失败保留，未发现本批生产缺陷，未修改产品/安装包。该结果不是实际MV3/真实403恢复，也不追溯归因历史所有请求。产品仍cb39c9a，最近Linux产品CI仍39182137924；本批测试随下一产品候选进入原矩阵，不重复全套。原证据入口`real403RequestComparison20261019.supportContact20261019`及`requestChain20261019`；10k/100k DEFERRED，完整Free仍NOT_RELEASE_READY。
+
 - **同步与 Linux 候选已核实（a30c8c8 / CI39182137924）**：GitHub PR/ref及本地tracking均为a30c8c8，ahead0/behind0，原8提交已到原分支；此前超时记录保留。本次四个既有job全部SUCCESS，新增Project实际MV3闭环20.985s、临时Project回归1.018s，三份关键JSON的181个产品源码hash逐一与本地相同。J4原报告仍PARTIAL，peer无新context自动恢复NOT_ESTABLISHED，不能用新GET替代；10k/100k仍DEFERRED，真实Profile未新访问/重装，完整Free仍NOT_RELEASE_READY。没有同环境成功基线，不宣称提速。原证据`projectLayout20261019.packagedDataClosure20261019.linuxCI20261019`。
 
 - **Project 正常界面的两处数据接线故障已修，实际 MV3 离线闭环通过**：同一聊天的普通/容器原生URL被误当冲突，连带整页不摄取；挂载后自身workspace mask又使列表标题和句柄判空。现仅页内同ID/原名/同identity的等价别名保留首个真实href，原冲突护栏不变；复用同步受保护的原生阅读探测，实际点击仍在恢复展示后核验，原生hidden/CSS/aria、根替换及probe失败继续拒绝。原1d最小反例和实际包FAIL保留；独审无阻断。

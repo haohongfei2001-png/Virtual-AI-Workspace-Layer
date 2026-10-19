@@ -6089,6 +6089,63 @@
         "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-403-provider-compare.json.gz",
         "sha256": "15508dd1c1d02f73703b19a6e38fe7505bcbae904420c07d46258833fbd9206b"
       }
+    },
+    "supportContact20261019": {
+      "status": "SENT_AI_ASSISTED_REPLY_RECEIVED_NOT_RESOLVED",
+      "authorizedPayload": "Existing fixed session GET challenge, usable page/manual refresh observation and two UTC/Cloudflare Ray pairs only. No HAR, cookies, tokens, private titles/IDs or conversation body.",
+      "channel": "Official support email; sent record and exact reply thread checked. Private mailbox/ticket identifiers intentionally not published.",
+      "browserTool": "User reported enabling local browser, but Work tool still reported disabled after one reset. No settings/control bypass.",
+      "replyQualification": "AI-assisted support, not a human investigation or a Ray-correlated rule finding.",
+      "replySummary": "Session is a web-app endpoint, not a documented/supported third-party-extension integration surface; extension requests may trigger a challenge while the interactive page works. Suggested API or applicable Sign in with ChatGPT, but supplied no existing ChatGPT Project/Conversation/current-workspace read interface.",
+      "externalCondition": "Provider-confirmed supported principal/current-context and existing native-data integration; no supported replacement has been verified.",
+      "engineeringBoundary": "Do not treat reply as a product fix, a confirmed specific server rule, or permission for new identity sources/paid API. No new real Profile request or reinstall."
+    },
+    "requestChain20261019": {
+      "status": "FINITE_CHAIN_NO_DUPLICATE_AUTH_REPRODUCED",
+      "baseCommit": "72105ea2251c1e9099d9117b91f830fc59b1bc9a",
+      "productSource": "cb39c9a3b14d0ffa225a5b34537ceda346972cb1",
+      "productFilesChanged": false,
+      "qualification": "NODE_MOCK_IDB_NOT_REAL_HOST_NOT_MV3",
+      "chain": "real createHostWorkerRuntime/bootstrap/request owner -> document READY -> content/context bridge -> binding/authority -> actual fixed session provider; Chrome, DOM, clock and fetch doubles",
+      "drive": "Native webRequest events only; no test calls to authority.refresh or session.contextReady. Receipt ownership never stubbed.",
+      "scenarios": [
+        "duplicate/older completion ignored; fresh receipt creates exactly one request",
+        "same-document new receipt aborts pending old authentication, old response before/after new challenge",
+        "independent document cannot wake challenged peer",
+        "document replacement while auth pending; old response before new READY, after READY, or after new challenge"
+      ],
+      "oracle": "Pre-auth metadata association required; challenge body/DOM text/accounts/fallback/scope grant/UI/old DB opens zero. Late reply cannot change new producer status; 30s virtual quiet interval adds no fetch/READY/association. Original production deadlines/thresholds unchanged.",
+      "final": {
+        "pass": 7,
+        "fail": 0,
+        "skip": 0,
+        "durationMs": 127.97875
+      },
+      "targeted": {
+        "command": "node --test tests/host/context-challenge-chain.test.mjs tests/host/session-challenge-status.test.mjs tests/host/host-browser-bootstrap.test.mjs tests/host/host-worker-runtime.test.mjs tests/host/content-session.test.mjs tests/host/context-association-delayed-body.test.mjs tests/host/browser-context-renewal.test.mjs",
+        "pass": 190,
+        "fail": 0,
+        "skip": 0,
+        "durationMs": 652.935041
+      },
+      "retainedFailure": {
+        "origin": "tool transcript",
+        "tests": 5,
+        "pass": 0,
+        "fail": 5,
+        "durationMs": 109.886083,
+        "error": "invalid-current-body-profile",
+        "cause": "Fixture omitted required messageSelector/messageIdAttribute; failure occurred before the chain. No product defect or production fix."
+      },
+      "independentReview": "No blocker after explicit terminal checks for caught callback assertions, unwanted requests/commands, verified replies and DOM/challenge body reads.",
+      "sourceHashCount": 181,
+      "sourceHashComparison": "All recorded CI39182137924 Project product sources unchanged",
+      "testHash": "5187ef97c006ef14480c974c2a9499247367997007343ad926dc6ca651dd930d",
+      "archive": "docs/evidence/free-delivery-2026-10-17/context-challenge-chain-20261019.json.gz",
+      "archiveSHA256": "e55dad226e1d955594d61ba2d7445ad122c28ca402639c2bbfc5817f0d9eccd6",
+      "timing": "Node suite elapsed only; not a real journey, optimization or comparable before/after speedup.",
+      "ci": "New tests join existing host glob on next product candidate; no full matrix rerun for test/docs-only checkpoint.",
+      "remaining": "Real403 unresolved; normal principal/context/membership/self-send, full recovery/J4/G/U open; 10k/100k DEFERRED."
     }
   },
   "temporaryReadOnlyNavigation20261019": {
