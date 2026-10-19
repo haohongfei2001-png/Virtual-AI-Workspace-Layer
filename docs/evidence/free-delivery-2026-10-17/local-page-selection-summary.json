@@ -9859,7 +9859,19 @@
             "sha256": "6b988174417f52a25db4f9063b0e15e40148bf02f9b57280935417dd7bce0916",
             "uncompressedSha256": "0c724b2e1ba27e35538a6ff50dec6e1712dd71a7456f1e8bea3175c9e6b16487"
           }
-        ]
+        ],
+        "productCommit": "cb39c9a3b14d0ffa225a5b34537ceda346972cb1",
+        "syncCheckpoint": {
+          "readOnlyEarlier": "ls-remote succeeded; anonymous receive-pack HTTP401 expected",
+          "normalFetch": "TIMEOUT_25S",
+          "push": "NOT_RUN_FETCH_PRECONDITION_FAILED",
+          "remoteAPIHead": "ebbde49194d2fe53c8e1c2e0bda434f9f91730b7",
+          "noGitChildrenLeft": true,
+          "configurationChanges": false,
+          "numericCopiesPreserved": 2258,
+          "stashesPreserved": 3,
+          "linuxNewCandidate": "NOT_RUN"
+        }
       }
     }
   }
