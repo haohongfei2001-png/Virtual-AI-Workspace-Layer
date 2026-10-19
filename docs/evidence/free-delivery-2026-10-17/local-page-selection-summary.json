@@ -13722,6 +13722,117 @@
         "fixtureFiles": 17,
         "exactHashes": "sys05-lost-ack-mv3.json.gz"
       }
+    },
+    "directoryPriority20261019": {
+      "baseCommit": "e1374228665d3f69926f81544bdfb7905682a068",
+      "status": "IMPLEMENTED_TARGETED_AND_PACKAGED_REGRESSION_VERIFIED_NOT_FULL_SYS05",
+      "rootCause": "The adapter kept its single busy slot during an explicitly refused directory retry. Subsequent native send intent and changed current body waited until the directory six-second budget expired.",
+      "repair": "Only matching explicit retry-after parks one directory proposal. Current-body/intent packets can run serially first; in-flight or unknown RPCs are not preempted. Resumption preserves original elapsed deadline and attempt count, uses a fresh sequence after overtaking, and reobserves invalidated metadata without writing old titles over newer facts. Same unchanged retry without overtaking retains object/sequence.",
+      "reviewDefect": "Fresh metadata can revert to an already accepted page and dedupe completely. The obsolete paused attempt previously survived with no timer and swallowed the next real title change. Retire it only after the finite fresh scan has no remaining work. Original failure and reviewer receipt retained.",
+      "unitTiming": {
+        "kind": "CONTROLLED_ELAPSED_CLOCK_MECHANISM_NOT_BROWSER_PERFORMANCE",
+        "beforeIntentAndBodyMs": 6000,
+        "afterIntentAndBodyMs": 0,
+        "directoryDeadlineMs": 6000,
+        "meaning": "Higher priority observation no longer waits for a refused directory; not actual throughput or end-to-end latency."
+      },
+      "validation": {
+        "targeted": {
+          "pass": 388,
+          "fail": 0,
+          "skip": 0
+        },
+        "fullNode": {
+          "pass": 9146,
+          "fail": 0,
+          "skip": 0,
+          "durationMs": 83226.565917
+        },
+        "firstFullNode": {
+          "pass": 9132,
+          "fail": 13,
+          "skip": 0,
+          "cause": "Exact diagnostic source hook for the directory epoch reset no longer matched; update preserves production paused invalidation and adds a VM assertion. No scale journey run."
+        },
+        "independentReview": "8 priority/budget/title/producer/timer/dedupe counterexamples pass, no remaining blocker identified"
+      },
+      "packagedBrowser": {
+        "browser": "153.0.8010.12",
+        "status": "PASS_NARROW_DIAGNOSTIC_SYS05_SLICE",
+        "gapRecovery": "PASS_NARROW_COMMITTED_LOST_ACK_RETURN_RESCAN",
+        "gapElapsedMs": 654.593167,
+        "gapBudgetMs": 6000,
+        "directoryRows": 300,
+        "streamTicks": 800,
+        "streamMutations": 6400,
+        "streamMs": 19977,
+        "sourceFiles": 182,
+        "fixtureFiles": 17,
+        "sourceChangedDuringRun": false,
+        "manifest": "Exact hashes in directory-priority-mv3-final.json.gz",
+        "workerNetworkPolicy": "PACKAGED_EXACT_ORIGIN_CONNECT_SRC",
+        "scope": "Affected real packaged flow regression; exact newly fixed priority timing is L mechanism evidence, not a new S timing acceptance."
+      },
+      "timingComparison": {
+        "priorSameLostAckMs": 556.3565840000001,
+        "finalLostAckMs": 654.593167,
+        "interpretation": "Single instrumented samples, no performance improvement claim. The fixed 20-second stream duration is not an optimization metric."
+      },
+      "realHost": "Existing authorized homepage tab selection timed out at 30 seconds; no new identity request, installation, body read or native write. This is browser control failure, not new HTTP403 evidence. Consumed diagnosis is not replayed.",
+      "scheduling": "One affected packaged regression before review fix and one final after concrete repair; targeted first, final whole Node suite after frozen changes. No 10k/100k run, new CI job/cache/upload or permission.",
+      "remaining": [
+        "Valid real principal/current context and positive membership/self activity",
+        "Full J4 automatic recovery and actual IME/PAIA/cross-environment/install/visual acceptance",
+        "Full SYS05 and overflow acceptance",
+        "10k/100k DEFERRED"
+      ],
+      "releaseStatus": "NOT_RELEASE_READY",
+      "artifacts": {
+        "directory-priority-before.tap.gz": {
+          "sha256": "72180764f6e54b50a97dcb510ffaff68918d50762514cb9ee3cbe388e8206847",
+          "uncompressedSha256": "088db0ac3b40f801c3b47f3424ed87f1db2cb92a81a0cb9cfc03edf8fff5fbf6"
+        },
+        "directory-priority-first.tap.gz": {
+          "sha256": "701eae18422a627dff229889b4184f7c174c74b2336fca134c103df46c19fd6b",
+          "uncompressedSha256": "c53d3801c215d37c750e9c4b9e2478ea299dc13204fffcd40441a82592a1d062"
+        },
+        "directory-priority-dedupe-before.tap.gz": {
+          "sha256": "c412ce6ff73e060dabe645ac61eeb78e275f5c3324a1b72aa7c4393515d36fed",
+          "uncompressedSha256": "09f5bdfcb9611d95ec769018a2ad89e1d732a3a403024cb5b3eb433d213b2549"
+        },
+        "directory-priority-full-node-before.tap.gz": {
+          "sha256": "f27c5b3d8d9de522c8b79ca7aee4070e9a335c5f811954709ec8f5fed7149545",
+          "uncompressedSha256": "80e9c2d26791f219852d565d341b8b0cc7bfe6694f6241fcf066bf8bfc4854a4"
+        },
+        "directory-priority-full-node-final.tap.gz": {
+          "sha256": "6736427910da797bbcc46eb646de7b7e33084ae3d511ef246d97a6a9b50f703a",
+          "uncompressedSha256": "4e01371a34a3334440b47efd0d69d815e9081f93b3fc2ae99767574b231312d6"
+        },
+        "directory-priority-targeted.tap.gz": {
+          "sha256": "4257e721e7755fddbd2c450cf1f50e2b3c459eb00f9402e9de52afe5b630f922",
+          "uncompressedSha256": "25fe22bae35c4c6acd1ddb7cb280720020f0b9421bdaf6bae8d65c512997cfbd"
+        },
+        "directory-priority-mv3-before-review-fix.json.gz": {
+          "sha256": "08017c4899402fbed6d904241a1b1c4ebbe5b39a8da2e3a909e642847a2e26e6",
+          "uncompressedSha256": "8d93519763b27969759d445d58596526a3a5f7a36e28994acb06bdaa05046860"
+        },
+        "directory-priority-mv3-final.json.gz": {
+          "sha256": "6b8cf15c0c202756b963623c7a94ac8fac6324ecc8b0697226b14d1f3da0a4a8",
+          "uncompressedSha256": "27a4409b78dc3443946aec7a9affb7fa01cc8dcbf795e144683ae2e5a724b952"
+        },
+        "directory-priority-independent-review.json.gz": {
+          "sha256": "a7e9f009dc9f0494411d36286d4bfa15b06eb9d5c43876336c2d486360114b49",
+          "uncompressedSha256": "96ccd34ed5bd275d05f9ac065cea5a02906269b453c142a987bbb9252aa4912d"
+        },
+        "directory-priority-dedupe-review.json.gz": {
+          "sha256": "d064e1741bee26c96718980590db0ac594ddb712886aa3770d56fb87e9660c7c",
+          "uncompressedSha256": "c2d26ec5f88a7d599e04f50bad3c3487ecf31f3996a9ec531f71fc71b5ed10bd"
+        },
+        "directory-priority-final-review.tap.gz": {
+          "sha256": "d0e7a6d7e140264ace0a58c728c1d32d19e8713e07f2b8199f4e19c5a646b9c6",
+          "uncompressedSha256": "e55a7f13cc1fab25cfca5c827c3bcc5ba3e1319ce42cd5b7cf77dfd97c8a4146"
+        }
+      }
     }
   },
   "observationRetryDeadline20261019": {

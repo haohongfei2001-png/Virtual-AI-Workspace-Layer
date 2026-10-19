@@ -58,7 +58,7 @@ test('pending body blocks surface concurrently and route stop discards its late 
 test('rejected body candidate does not starve the independent initial surface observation',async()=>{const f=bodyFixture();await f.start(async p=>{f.emitted.push(p);return {state:p.kind==='current-observation'?'rejected':'accepted',localSeq:p.localSeq};});await settle();assert.deepEqual(f.emitted.map(p=>p.kind),['current-observation','surface-delta']);f.adapter.stop();});
 
 // Passive trusted gestures below are explicit unit doubles, not browser/physical gesture evidence.
-function sendFixture(){const f=bodyFixture(),editor={tagName:'TEXTAREA'},button={tagName:'BUTTON',type:'submit'};for(const node of [f.composer,editor,button])Object.assign(node,{ownerDocument:f.document,isConnected:true,parentElement:null,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:()=>null,matches:()=>false});f.composer.tagName='FORM';editor.form=button.form=f.composer;editor.parentElement=button.parentElement=f.composer;f.composer.contains=n=>n===editor||n===button;editor.contains=button.contains=()=>false;for(const n of [editor,button])for(const key of ['value','textContent','files'])Object.defineProperty(n,key,{get(){throw Error('private-native-content-read');}});f.selectors.set('#prompt-textarea',[editor]);f.selectors.set('main > form#composer > button[type="submit"]',[button]);return {...f,editor,button,click(){f.documentListeners.get('click')?.({type:'click',isTrusted:true,target:button,button:0,detail:1});}};}
+function sendFixture(options={}){const f=bodyFixture(options),editor={tagName:'TEXTAREA'},button={tagName:'BUTTON',type:'submit'};for(const node of [f.composer,editor,button])Object.assign(node,{ownerDocument:f.document,isConnected:true,parentElement:null,style:{display:'block',visibility:'visible'},getClientRects:()=>[{}],getAttribute:()=>null,matches:()=>false});f.composer.tagName='FORM';editor.form=button.form=f.composer;editor.parentElement=button.parentElement=f.composer;f.composer.contains=n=>n===editor||n===button;editor.contains=button.contains=()=>false;for(const n of [editor,button])for(const key of ['value','textContent','files'])Object.defineProperty(n,key,{get(){throw Error('private-native-content-read');}});f.selectors.set('#prompt-textarea',[editor]);f.selectors.set('main > form#composer > button[type="submit"]',[button]);return {...f,editor,button,click(){f.documentListeners.get('click')?.({type:'click',isTrusted:true,target:button,button:0,detail:1});}};}
 function bodyAck(p){return {state:'accepted',localSeq:p.localSeq,receiptId:'unit-receipt',...(p.kind==='current-observation'?{bodyProofId:'accepted-body-proof',bodyEpoch:7}:{})};}
 test('trusted send queues exact intent-only candidate with accepted owner proof and shared sequence',async()=>{const f=sendFixture();await f.start(async p=>{f.emitted.push(p);return bodyAck(p);});await settle();f.click();await settle();assert.deepEqual(f.emitted.map(p=>p.kind),['current-observation','surface-delta','send-candidate']);const candidate=f.emitted.at(-1);assert.equal(candidate.bodyProofId,'accepted-body-proof');assert.equal(candidate.producerToken,f.binding.producerToken);assert.equal(candidate.routeEpoch,f.binding.routeEpoch);assert(candidate.localSeq>f.emitted.at(-2).localSeq);assert.deepEqual(Object.keys(candidate.payload).sort(),['conversationId','evidence','intentId','messageId','observedAt','operationId','stage']);assert.equal(candidate.payload.conversationId,C);assert.equal(candidate.payload.stage,'intent');assert.equal(candidate.payload.messageId,null);assert.equal(candidate.payload.operationId,null);assert.deepEqual(candidate.payload.evidence.fieldPaths,['native-send-intent']);assert.equal(candidate.payload.evidence.sourceKind,'native-dom');assert.equal(candidate.payload.evidence.receiptId,null);assert.equal(candidate.payload.ackWitness,undefined);f.trigger();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,1);f.adapter.stop();});
 test('click before accepted body proof is never backfilled into a later send',async()=>{const f=sendFixture();let release;await f.start(p=>{f.emitted.push(p);return p.kind==='current-observation'?new Promise(r=>release=()=>r(bodyAck(p))):Promise.resolve(bodyAck(p));});await settle();f.click();release();await settle();assert.equal(f.emitted.filter(p=>p.kind==='send-candidate').length,0);f.adapter.stop();});
@@ -604,4 +604,63 @@ for(const mode of ['clock-regressed-before-retry','nonfinite-clock-after-reply']
  if(mode==='nonfinite-clock-after-reply'){elapsed=NaN;release();}await pending;await settle();
  assert.equal(calls.filter(c=>c.p.kind==='current-observation').length,mode==='clock-regressed-before-retry'?1:2);
  assert.equal(issues[0]?.reason,'host-observation-retry-budget');assert.equal(snippet.proof(),null);
+});
+
+
+test('explicit directory backpressure yields to a new native intent and current body without renewing its budget',async t=>{
+ const c=retryClock(),f=sendFixture(c.options),calls=[];let allowDirectory=false;
+ t.after(()=>f.adapter.stop());
+ await f.start(async(p,budget)=>{calls.push({p,budget});return p.kind==='surface-delta'&&!allowDirectory?{state:'retry-after',localSeq:p.localSeq,delayMs:50}:bodyAck(p);});await settle();
+ const first=calls.find(x=>x.p.kind==='surface-delta');assert(first);
+ f.click();f.reading.children.push(f.makeMessage('M2'));f.trigger();await settle();
+ const intent=calls.find(x=>x.p.kind==='send-candidate'),body=calls.find(x=>x.p.kind==='current-observation'&&x.p.payload.body.messageIds.includes('M2'));
+ assert(intent,'directory retry must not block an already captured native intent');assert(body,'new body must run before a refused directory retry');
+ assert(intent.p.localSeq<body.p.localSeq);assert.equal(intent.p.payload.stage,'intent');
+ allowDirectory=true;await c.advance(50);await settle();
+ const resumed=calls.filter(x=>x.p.kind==='surface-delta').at(-1);
+ assert(resumed.p.localSeq>body.p.localSeq,'do not replay the old sequence after a higher-priority accepted proposal');
+ assert.deepEqual(resumed.p.payload,first.p.payload);assert.equal(resumed.budget.deadlineAt,first.budget.deadlineAt);
+ assert.equal(c.issues.length,0);assert.equal(c.timers.size,0);
+});
+
+for(const expired of [false,true])test('priority overtaking reobserves invalidated titles with the original directory deadline '+expired,async t=>{
+ const c=retryClock(),f=sendFixture(c.options),d=sys05Directory(f,2),calls=[];t.after(()=>f.adapter.stop());
+ const link=d.nodes[0];link.getAttribute=k=>k==='href'?'https://chatgpt.com/c/'+C:null;link.textContent='A';let accept=false;
+ await f.start(async(p,budget)=>{calls.push({p,budget});return p.kind==='surface-delta'&&!accept?{state:'retry-after',localSeq:p.localSeq,delayMs:50}:bodyAck(p);});await settle();
+ const original=calls.find(x=>x.p.kind==='surface-delta');assert(original.p.payload.candidates.some(v=>v.nativeTitle==='A'));
+ link.textContent='B';const message=f.makeMessage('M2');f.reading.children.push(message);
+ f.observer().cb([{type:'characterData',target:{nodeType:3,parentElement:link,parentNode:link}},{type:'childList',target:f.reading,addedNodes:[message],removedNodes:[]}]);await settle();
+ const current=calls.find(x=>x.p.kind==='current-observation'&&x.p.payload.body.messageIds.includes('M2'));assert(current);assert(current.p.payload.surface.candidates.some(v=>v.nativeTitle==='B'));
+ const boundary=calls.length;
+ if(expired){
+  for(let i=0;i<3;i++){link.textContent='B'+i;f.observer().cb([{type:'characterData',target:{nodeType:3,parentElement:link,parentNode:link}}]);await settle();await c.advance(1000);await settle();}
+  accept=true;await c.advance(3000);await settle();assert(c.issues.some(x=>x.reason==='host-observation-retry-budget'));
+  assert(calls.filter(x=>x.p.kind==='surface-delta').every(x=>x.budget.deadlineAt===original.budget.deadlineAt));
+  const count=calls.length;await c.advance(50);await settle();assert.equal(calls.length,count,'exhausted directory does not restart itself');
+ }else{accept=true;await c.advance(50);await settle();}
+ for(const x of calls.slice(boundary).filter(x=>x.p.kind==='surface-delta')){assert(!x.p.payload.candidates.some(v=>v.target.nativeId===C&&v.nativeTitle==='A'));assert(x.p.localSeq>current.p.localSeq);assert.equal(x.budget.deadlineAt,original.budget.deadlineAt);}
+ assert.equal(c.timers.size,0);
+});
+
+test('paused directory cannot be revived by an old timer after stop and a new producer',async t=>{
+ const c=retryClock(),f=sendFixture(c.options),calls=[];t.after(()=>f.adapter.stop());
+ await f.start(async p=>{calls.push(p);return p.kind==='surface-delta'?{state:'retry-after',localSeq:p.localSeq,delayMs:50}:bodyAck(p);});await settle();
+ const stale=[...c.timers.values()][0].fn;assert.equal(f.adapter.prepareIdle(),null);await f.adapter.stop();assert.equal(c.timers.size,0);
+ f.binding.producerToken='new-producer';await f.start(async p=>{calls.push(p);return bodyAck(p);});await settle();const count=calls.length;stale();await settle();assert.equal(calls.length,count);assert.equal(c.timers.size,0);
+});
+
+test('priority retry and parked directory timers remain serial and preserve both original deadlines',async t=>{
+ const c=retryClock(),f=bodyFixture(c.options),calls=[];let directoryReady=false,release;
+ t.after(()=>f.adapter.stop());await f.start(async(p,budget)=>{calls.push({p,budget});if(p.kind==='surface-delta'&&!directoryReady)return {state:'retry-after',localSeq:p.localSeq,delayMs:50};if(p.kind==='current-observation'&&p.payload.body.messageIds.includes('M2'))return new Promise(r=>release=()=>r(bodyAck(p)));return bodyAck(p);});await settle();
+ f.reading.children.push(f.makeMessage('M2'));f.trigger();await settle();assert(release);const count=calls.length;directoryReady=true;await c.advance(50);await settle();assert.equal(calls.length,count,'timer must not send concurrently with current-body RPC');release();await settle();assert.equal(calls.at(-1).p.kind,'surface-delta');assert.equal(calls.at(-1).budget.deadlineAt,6000);assert.equal(c.timers.size,0);
+});
+
+test('an invalidated refused directory already covered by accepted facts retires before the next real change',async t=>{
+ const c=retryClock(),f=bodyFixture(c.options),d=sys05Directory(f,1),calls=[];let refuse=false;t.after(()=>f.adapter.stop());
+ await f.start(async(p,budget)=>{calls.push({p,budget});return p.kind==='surface-delta'&&refuse?{state:'retry-after',localSeq:p.localSeq,delayMs:50}:bodyAck(p);});await settle();
+ const mutate=title=>{d.nodes[0].textContent=title;f.observer().cb([{type:'characterData',target:{nodeType:3,parentElement:d.nodes[0],parentNode:d.nodes[0]}}]);};
+ refuse=true;mutate('B');await settle();assert(calls.some(x=>x.p.kind==='surface-delta'&&x.p.payload.candidates.some(v=>v.nativeTitle==='B')));
+ mutate('Native 0');f.reading.children.push(f.makeMessage('M2'));f.trigger();await settle();await c.advance(50);await settle();
+ assert(f.adapter.prepareIdle(),'accepted unchanged directory must not leave a parked attempt with no timer');
+ refuse=false;await c.advance(6000);mutate('C');await settle();assert(calls.some(x=>x.p.kind==='surface-delta'&&x.p.payload.candidates.some(v=>v.nativeTitle==='C')));assert.equal(c.issues.length,0);
 });
