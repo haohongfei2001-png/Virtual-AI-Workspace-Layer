@@ -254,6 +254,9 @@ if(!p){notifyIdle();return;}}catch(error){
   // Only an exact live mount node may preserve the finite directory cursor.
   // Recheck body visibility and invalidate external reads even for our masks.
   let owned=false;try{owned=!!event?.target&&isOwnedSurface(event.target)===true;}catch{}
+  // Synchronous native-reading probes end in the same presentation. Their
+  // coalesced toggle must not enqueue another probe/pass indefinitely.
+  if(owned&&event.oldState===event.newState&&['open','closed'].includes(event.newState))return;
   if(owned&&surfaceEpoch===surfaceSnapshotEpoch&&surfaceCursor)discovery?.preservePresentationCursor(surfaceCursor);
   requestScan(owned,true);
  }
@@ -349,7 +352,7 @@ if(!p){notifyIdle();return;}}catch(error){
  },isReturnSlotCurrent,kind:'chatgpt',async start(options){
   stop();cursorRestarts=0;const b=options?.binding,observing=options?.phase==='observation';if(options?.phase!==undefined&&!observing)throw Error('invalid-adapter-phase');if(!b||!observing&&typeof options.emit!=='function'||typeof b.documentToken!=='string'||typeof b.producerToken!=='string'||typeof b.browserDocumentId!=='string'||!Number.isSafeInteger(b.routeEpoch)||b.routeEpoch<0||b.origin!==new URL(document.location.href).origin||!Number.isFinite(Date.parse(b.expiresAt))||now()>=Date.parse(b.expiresAt))throw Error('invalid-host-binding');
   binding=Object.freeze({...b});observationOnly=observing;emit=observing?null:options.emit;ingestionPass=!observing&&typeof options.ingestionPass==='function'?options.ingestionPass:null;epoch=b.routeEpoch;seq=0;surfaceSnapshotEpoch=surfaceEpoch;url=document.location.href;stopped=false;
-  discovery=createSurfaceDiscovery({document,binding,urlPolicy,profile,isOwnedMask,priorityConversationId,retainControls:!observing,elapsedNow});bodyDiscovery=profile.currentBody?createCurrentBodyDiscovery({document,urlPolicy,profile,isOwnedMask}):null;
+  discovery=createSurfaceDiscovery({document,binding,urlPolicy,profile,isOwnedMask,withNativeReading,priorityConversationId,retainControls:!observing,elapsedNow});bodyDiscovery=profile.currentBody?createCurrentBodyDiscovery({document,urlPolicy,profile,isOwnedMask}):null;
   if(observing){
    observationStarted=elapsedNow();observationLifetime=Date.parse(b.expiresAt)-now();
    if(!Number.isFinite(observationStarted)||observationLifetime<=0||observationLifetime>20000){stop();throw Error('invalid-host-binding');}

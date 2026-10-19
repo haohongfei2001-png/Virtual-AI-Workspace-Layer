@@ -1,9 +1,13 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **Project 正常界面的两处数据接线故障已修，实际 MV3 离线闭环通过**：同一聊天的普通/容器原生URL被误当冲突，连带整页不摄取；挂载后自身workspace mask又使列表标题和句柄判空。现仅页内同ID/原名/同identity的等价别名保留首个真实href，原冲突护栏不变；复用同步受保护的原生阅读探测，实际点击仍在恢复展示后核验，原生hidden/CSS/aria、根替换及probe失败继续拒绝。原1d最小反例和实际包FAIL保留；独审无阻断。
+- **本次真实工程结果**：新增严格loopback构建组合，把原Project布局接过实际worker/content/存储/双frame；fixture身份仅送context bridge，不给adapter成员语义。合法第二空间→2条UNKNOWN聊天→搜索/原生安全打开→阅读/输入/唯一返回→滚动挂起恢复→worker丢失撤回成立；错误Project、隐藏关联、旧文档及非roster账户拒绝。全旅程21.882s含3次原期限拒绝等待及清理；旧25.638s失败未完成，无同口径提速结论。原聊天和临时Project MV3同source hash回归通过，限定检查与10个遮罩反例、37个布局机制场景通过；不是完整81项/J4/G/U。
+- **真实接入与交付边界**：未访问或重装真实Profile，既有97bc77e临时聊天闭环保留；当前Project单次响应许可仍未消耗。403主体/roster、生产Project context、正向成员/NONE及本人活动仍未完成。C2 worker丢失后安全等待新证据，不冒充无新GET的peer恢复。10k/100k仍DEFERRED、完整Free仍NOT_RELEASE_READY。原证据`projectLayout20261019.packagedDataClosure20261019`；新候选Linux CI尚未运行，普通Git同步另记本次PR16检查点。
+
 - **挑战提示的状态码遗漏已修，真实身份仍受阻**：采纳dot6256852770的可复现项；旧解析器只在403识别`cf-mitigated=challenge`，200/401标记被误报为格式/登录类错误。现先核对固定目标与无重定向，再按精确marker拒绝；不读challenge正文、不调用accounts或备用通道、不产生scope。原源码同fixture23项12FAIL/11PASS保留，修复后受影响provider/隔离读取/authority/撤权/包回归通过；同源码实际MV3三个独立文档（403/200/401）均显示验证受阻，原生草稿保持，每文档session一次、accounts零、状态快照不重试。2.236s含隔离启动/三文档，不是提速对照；独审无阻断。仅离线分类与安全退出通过，没有重放真实403或重装专用Profile，原临时Project聊天闭环继续可用。新的原生context或另一文档可能启动新核验，“无重试”不泛化为永久禁止刷新。原证据`challengeFaultStatus20261019.markerFollowup20261019`。
 
 - **Project JSON模板已补齐，未启用生产来源**：读取dot6256881753所列固定公开源码后，新增同记录ID/名称/类型的纯RAM解析；复用原URL和标题边界，不复制预览、时间、账户或正文。缺cursor、显式null与重复cursor分开，coverage始终observed-only；冲突同ID候选撤回，目录参数/gizmo_id不产生PROJECT或NONE。初始fixture缺失值错误和同ID冲突遗漏的FAIL保留，已修；定向检查与独审通过，实际build依赖图与9b52bf9挑战候选完全一致，模板未进入安装包。当前真实wrapper/type及成员语义仍待核验，不能算Project身份或接入完成；没有增加tap、请求或权限。原证据`projectListObservation20261019.publicTemplate20261019`。
-- **Git交付仍待网络恢复**：分类修复已保全为9b52bf9，原2258数字副本/3stash保持。正常HTTP/2推送及仅单命令HTTP/1.1对照均低速超时，无法确认HTTP/2或凭据是根因；API确认远端仍ebbde49。没有改全局Git/系统网络/远端/凭据，不循环重试；本地新提交尚未同步，Linux新候选CI NOT_RUN。
+- **此前Git交付失败记录（本次同步以最新检查点为准）**：分类修复已保全为9b52bf9，原2258数字副本/3stash保持。正常HTTP/2推送及仅单命令HTTP/1.1对照均低速超时，无法确认HTTP/2或凭据是根因；API确认远端仍ebbde49。没有改全局Git/系统网络/远端/凭据，不循环重试；本地新提交尚未同步，Linux新候选CI NOT_RUN。
 
 - **当前 Project 的临时聊天导航已在真实专用 Profile 闭环**：原临时popup只查侧栏，遗漏仅在Project列表可见的聊天。现复用正常observer的唯一Project面板与首个纯标题叶，加入原搜索/原生链接导航；不读预览或h1、不拼Project卡、不提升成员。安装沿用原路径/同扩展ID/config/权限，旧包逐文件备份，仅一次安装reload，无响应体提取。实际当前2条聊天均匹配标题和href，搜索→正确原生新页/opener为空→返回原Project/新列表成立；原文档/输入节点及空草稿保持，旅程worker请求0。仅LIVE_TEMPORARY_PROJECT_CHAT_ONLY，不是正常Free账户接入。
 - **修复与证据边界**：合并来源共享原256项/49152字节/2048检查预算，ID冲突删除，根出现/消失/替换及route变化清快照。原源码同fixture缺行/失效反例FAIL保留；最终17浏览器边界及实际打包MV3闭环1.396s通过，原临时MV3回归亦通过。258定向/包、19 CI配置检查通过；CI旧精确日志列表断言失败已随新增原步骤输出修正，未增job/缓存/上传。独审补齐worker请求观察、测试源码哈希及日志截断拒绝；源码/安装包哈希一致，无可比成功旧完整旅程，不声称提速。原证据入口 `temporaryReadOnlyNavigation20261019.currentProjectList20261019`。

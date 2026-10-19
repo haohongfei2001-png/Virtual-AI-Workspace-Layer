@@ -17,7 +17,7 @@ export const LEGACY_SURFACE_PROFILE = Object.freeze({
   controls:'a[href],button',conversationControls:'a[href]',noneLabel:'No project',maxCandidates:256,
 });
 
-export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,priorityConversationId=()=>null,retainControls=true,elapsedNow=()=>performance.now()}={}) {
+export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGACY_SURFACE_PROFILE,isOwnedMask=()=>false,withNativeReading=()=>null,priorityConversationId=()=>null,retainControls=true,elapsedNow=()=>performance.now()}={}) {
   if(!document?.defaultView || typeof binding?.documentToken !== 'string' || !Number.isSafeInteger(binding.routeEpoch) || typeof urlPolicy?.parse !== 'function') throw Error('invalid-surface-discovery-context');
   const instance=document.defaultView.crypto.randomUUID();
   let stopped=false,routeEpoch=binding.routeEpoch,regionEpoch=0,sequence=0;
@@ -112,6 +112,11 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
       const handle=control(node,root,regionKind,entity,id?JSON.stringify([entity,id,parsed.navigationURL]):null);
       const target=id?{kind:'resolved',entity,nativeId:id,navigationURL:parsed.navigationURL,liveHandle:handle}:{kind:'live-control',control:handle,navigationURL:null};
       const result={renderKey:id?`${entity}:${id}`:`candidate:${handle.id}`,entity,...label,target,evidence:evidence(regionKind,isProjectList(regionKind)?'title-leaf':'textContent',href?'href':'button')};
+      // The same conversation may expose both ordinary and container routes.
+      // Keep the first actually observed href/handle; do not fabricate a URL or
+      // let equivalent aliases reject unrelated rows in the bounded page.
+      // Conflicting names or identity queries still reach the strict owner gate.
+      if(entity==='conversation'&&id&&label.titleState==='exact'&&candidates.some(prior=>prior.entity===entity&&prior.titleState==='exact'&&prior.nativeTitle===label.nativeTitle&&prior.target.kind==='resolved'&&prior.target.nativeId===id&&prior.target.navigationURL!==parsed.navigationURL&&typeof urlPolicy.sameTarget==='function'&&urlPolicy.sameTarget(prior.target.navigationURL,parsed.navigationURL)))return result;
       candidates.push(result);return result;
     }
     // A canonical current Project needs route identity and the explicitly scoped
@@ -209,8 +214,21 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const page=cursor&&pages.get(cursor);if(stopped||!page||page.candidateOnly||page.routeEpoch!==routeEpoch||page.regionEpoch!==regionEpoch||document.location.href!==routeURL)return false;
     page.presentationChange=true;return true;
   }
-  const scanPage=cursor=>scanPageCore(cursor,false);
-  const scanCandidatePage=cursor=>scanPageCore(cursor,true);
+  // Inspect native visibility with only our own workspace mask synchronously
+  // closed. Do not treat inherited hidden styles as evidence of native visibility.
+  function readSurface(read){
+    if(!stopped&&profile.nativeProjectLayout==='panel-after-composer'){
+      const roots=document.querySelectorAll(profile.regions.members);
+      if(roots.length===1&&isOwnedMask(roots[0])===true){
+        const result=withNativeReading(()=>({value:read()}));
+        if(result===null||result===undefined)throw Error('native-project-reading-probe-unavailable');
+        return result.value;
+      }
+    }
+    return read();
+  }
+  const scanPage=cursor=>readSurface(()=>scanPageCore(cursor,false));
+  const scanCandidatePage=cursor=>readSurface(()=>scanPageCore(cursor,true));
   const scan=()=>scanPage().payload;
   function watchSurface(){
     const selectors=[...Object.values(profile.regions),profile.sidebarBoundary,profile.projectListBoundary,profile.currentConversationHeader,profile.currentProjectTitle,profile.currentProjectHeader].filter(Boolean);
@@ -307,7 +325,7 @@ export function createSurfaceDiscovery({document,binding,urlPolicy,profile=LEGAC
     const entry=candidateEntry(handle);if(!entry)return false;
     return identity.document.deref()===document&&identity.profileId===profile.id&&identity.profileVersion===profile.revision&&identity.node.deref()===entry.node.deref()&&identity.root.deref()===entry.root.deref()&&identity.parent.deref()===entry.parent.deref()&&identity.fingerprint===entry.fingerprint;
   }
-  return Object.freeze({scan,scanPage,scanCandidatePage,preservePresentationCursor,affectsSurface,getNode,resolveLoadedTargets,retainHandles(owner,handles,deadline){if(stopped||!Array.isArray(handles)||handles.length>256||handles.some(handle=>!getNode(handle)))return false;return byId.retain(owner,handles.map(handle=>handle.id),deadline);},releaseHandles:owner=>byId.release(owner),handleStats:()=>({...byId.stats(),detached:detached.size,lookupComplete}),captureCandidateIdentity,matchesCandidateIdentity,invalidate({routeEpoch:nextEpoch}={}) {
+  return Object.freeze({scan,scanPage,scanCandidatePage,preservePresentationCursor,affectsSurface,getNode:(handle,options={})=>{const node=readSurface(()=>getNode(handle));return options.forDispatch&&!dispatchable(node)?null:node;},resolveLoadedTargets:targets=>readSurface(()=>resolveLoadedTargets(targets)),retainHandles(owner,handles,deadline){return readSurface(()=>{if(stopped||!Array.isArray(handles)||handles.length>256||handles.some(handle=>!getNode(handle)))return false;return byId.retain(owner,handles.map(handle=>handle.id),deadline);});},releaseHandles:owner=>byId.release(owner),handleStats:()=>({...byId.stats(),detached:detached.size,lookupComplete}),captureCandidateIdentity:handle=>readSurface(()=>captureCandidateIdentity(handle)),matchesCandidateIdentity:(...args)=>readSurface(()=>matchesCandidateIdentity(...args)),invalidate({routeEpoch:nextEpoch}={}) {
     if(stopped)return;routeEpoch=Number.isSafeInteger(nextEpoch)&&nextEpoch>routeEpoch?nextEpoch:routeEpoch+1;clearHandles();roots.clear();routeURL=document.location.href;
   },stop() {stopped=true;clearHandles();roots.clear();}});
 }
