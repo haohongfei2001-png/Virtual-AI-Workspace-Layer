@@ -468,6 +468,11 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onWake:()=>wake(s),onTerminated:(reason,presentation)=>{
     // Intentional exit ends this document session, including late recovery callbacks.
     if(current===s&&reason==='ui-user-exit'){stop();return;}
+    // A dormant controller can notice native navigation on resize before the
+    // adapter's queued route scan. Its stop cancels that scan, so carry the
+    // real URL change through the existing fresh handshake instead of losing
+    // the document in a same-route context wait. No old capability is reused.
+    if(current===s&&reason==='dormant-document-changed'&&doc.location.href!==s.url){rebind(s,'reading');return;}
     // Native region replacement or loss of an owned dormant frame destroys
     // the controller and its producer even
     // at the same URL. Drop ready/capabilities so a later genuine C2 READY can

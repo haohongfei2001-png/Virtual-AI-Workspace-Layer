@@ -6,7 +6,7 @@ const drain=async()=>{for(let i=0;i<100;i++)await Promise.resolve();};
 // Real content and surface lifecycle together; DOM/worker are explicit doubles.
 // Region replacement is delivered through the real controller's resize listener,
 // never by calling its termination callback or manufacturing a new grant locally.
-function fixture(t){
+function fixture(t,{contextRecovery=true}={}){
  let now=1000,id=0,generation=0,region=1,geometry=true,visible=true,respond=null,answer={state:'verified',scopeKey:'scope-A'};
  const calls=[],adapters=[],frames=[],timers=new Map(),events=new Map(),listeners=new Set();
  const on=(k,f)=>{if(!events.has(k))events.set(k,new Set());events.get(k).add(f);};
@@ -16,14 +16,14 @@ function fixture(t){
  const doc={defaultView:win,location:{origin:'https://chatgpt.com',href:'https://chatgpt.com/'},body:{},draft:'UNSENT',createElement:()=>({dataset:{},style:{},setAttribute(){},addEventListener(){},remove(){}})};
  const binding=()=>({documentToken:'doc'+generation,producerToken:'producer'+generation,browserDocumentId:'browser',routeEpoch:generation,origin:doc.location.origin,expiresAt:new Date(now+20000).toISOString()});
  const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},async sendMessage(m){calls.push(m);if(respond){const value=respond(m);if(value!==undefined)return await value;}if(m.type==='HOST_HELLO'){generation++;return {binding:binding()};}if(m.type==='HOST_REFRESH')return {...answer};if(m.type==='HOST_UI_CONFIRM')return {ok:true,grant:{id:'grant-'+generation+'-'+m.role,mountId:m.mountId,role:m.role,parentDocumentId:'browser',uiDocumentId:'ui-'+generation+'-'+m.role,scopeGrantId:answer.scopeKey,expiresAt:binding().expiresAt}};return {ok:true};}};
- const session=createHostContentSession({document:doc,runtime,contextRecovery:true,identityReader:{read:async()=>({}),prepareIdle:()=>({isCurrent:()=>true})},now:()=>now,elapsedNow:()=>now,makeId:()=> 'client',schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:now+ms});return key;},cancel:key=>timers.delete(key),plansFactory:()=>({}),adapterFactory:()=>{
-  const a={active:false,phases:[],async start(options){this.active=true;this.phases.push(options.phase??'authorized');return {binding:options.binding};},stop(){this.active=false;},prepareIdle(){return {isCurrent:()=>this.active};},inspect(){return this.active?{ok:true,regionEpoch:region,navigationSlot:slot,reading:{},historyMaskRoots:[],header:{},composer:{},protectedRegions:[]}:{ok:false};},hasNativeLayer:()=>false,risk:()=>({state:'unknown'})};adapters.push(a);return a;
+ const session=createHostContentSession({document:doc,runtime,contextRecovery,identityReader:{read:async()=>({}),prepareIdle:()=>({isCurrent:()=>true})},now:()=>now,elapsedNow:()=>now,makeId:()=> 'client',schedule:(fn,ms)=>{const key=++id;timers.set(key,{fn,at:now+ms});return key;},cancel:key=>timers.delete(key),plansFactory:()=>({}),adapterFactory:options=>{
+  const a={active:false,phases:[],routeChanged:options.onRebindNeeded,async start(options){this.active=true;this.phases.push(options.phase??'authorized');return {binding:options.binding};},stop(){this.active=false;},prepareIdle(){return {isCurrent:()=>this.active};},inspect(){return this.active?{ok:true,regionEpoch:region,navigationSlot:slot,reading:{},historyMaskRoots:[],header:{},composer:{},protectedRegions:[]}:{ok:false};},hasNativeLayer:()=>false,risk:()=>({state:'unknown'})};adapters.push(a);return a;
  },surfaceFactory:()=>{
   const pair=['workspace','sidebar'].map(role=>({role,frame:{isConnected:true,ownerDocument:doc,contentWindow:{postMessage(m){if(m.type==='VAIWL_UI_IDLE')queueMicrotask(()=>emit('message',{origin:'chrome-extension://extension',source:pair.find(x=>x.role===role).frame.contentWindow,data:{type:'VAIWL_UI_IDLE_ACK',role,requestId:m.requestId}}));}}}}));frames.push(pair);
   return {async mount(){return {id:'mount'+generation,regionEpoch:region};},frames:()=>pair,refreshGeometry:()=>geometry,showWorkspace(){visible=true;return true;},showReading(){visible=false;},suspend(){visible=false;},visibility:()=>({workspace:visible,sidebar:visible}),dispose(){for(const {frame}of pair)frame.isConnected=false;}};
  },controllerFactory:createSurfaceController});t.after(()=>session.stop());
  async function join(){for(const {role,frame}of frames.at(-1))emit('message',{origin:'chrome-extension://extension',source:frame.contentWindow,data:{type:'VAIWL_UI_JOIN',role,nonce:'nonce-'+role}});await drain();}
- return {session,calls,adapters,frames,doc,join,loseFrame(){frames.at(-1)[0].frame.isConnected=false;emit('resize');},replaceFrameWindow(){frames.at(-1)[0].frame.contentWindow={postMessage(){}};emit('resize');},ready:()=>session.contextReady(),respond:v=>{respond=v;},answer:v=>{answer=v;},replace(){region++;emit('resize');},unsafe(){geometry=false;emit('resize');geometry=true;},async start(){await session.start();await join();assert.equal(session.showWorkspace(),true);},async tick(ms){now+=ms;for(const [k,v]of [...timers])if(v.at<=now){timers.delete(k);v.fn();}await drain();}};
+ return {session,calls,adapters,frames,doc,join,resize:()=>emit('resize'),loseFrame(){frames.at(-1)[0].frame.isConnected=false;emit('resize');},replaceFrameWindow(){frames.at(-1)[0].frame.contentWindow={postMessage(){}};emit('resize');},ready:()=>session.contextReady(),respond:v=>{respond=v;},answer:v=>{answer=v;},replace(){region++;emit('resize');},unsafe(){geometry=false;emit('resize');geometry=true;},async start(){await session.start();await join();assert.equal(session.showWorkspace(),true);},async tick(ms){now+=ms;for(const [k,v]of [...timers])if(v.at<=now){timers.delete(k);v.fn();}await drain();}};
 }
 for(const change of ['replace','unsafe'])test('real controller '+change+' retires producer and fresh READY rebuilds isolated surfaces',async t=>{
  const f=fixture(t);await f.start();const old=f.frames[0];f[change]();await drain();
@@ -74,4 +74,30 @@ test('dormant frame loss during busy renewal cannot let late close touch the new
  f.respond(null);await f.ready();await f.join();assert.equal(f.frames.length,2);assert.equal(f.session.showWorkspace(),true);
  await drain();const count=f.calls.length;releaseRenewal({ok:true,binding:oldBinding});assert.equal(await closing,false);await drain();
  assert.equal(f.frames.length,2);assert.equal(f.calls.length,count,JSON.stringify(f.calls.slice(count)));assert.equal(f.session.showWorkspace(),true);assert.equal(f.doc.draft,'UNSENT');
+});
+
+for(const contextRecovery of [false,true])test('dormant native route before adapter scan gets a fresh handshake, contextRecovery='+contextRecovery,async t=>{
+ const f=fixture(t,{contextRecovery});await f.start();f.session.showReading();await drain();assert.equal(await f.session.enterDormant(),true);
+ const old=f.frames[0],oldAdapter=f.adapters[0];assert.equal(f.calls.filter(m=>m.type==='HOST_UI_IDLE_RELEASE').length,1);
+ f.doc.location.href='https://chatgpt.com/c/11111111-1111-4111-8111-111111111111';
+ // The real dormant controller checks the URL before adapter.inspect(). A
+ // resize can therefore retire the old mount before the queued route scan.
+ f.resize();oldAdapter.routeChanged({reason:'native-route-changed'});await drain();await f.join();
+ assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,2);
+ assert.equal(f.calls.filter(m=>m.type==='HOST_REFRESH').length,2);
+ assert(old.every(x=>!x.frame.isConnected));assert.equal(f.frames.length,2);assert.equal(f.adapters[1].active,true);
+ assert.equal(f.session.showReading(),true);assert.equal(f.doc.draft,'UNSENT');
+ const n=f.calls.length;oldAdapter.routeChanged({reason:'native-route-changed'});await drain();assert.equal(f.calls.length,n);assert.equal(f.adapters[1].active,true);
+});
+for(const contextRecovery of [false,true])test('dormant native route with unverified scope stays closed without retry, contextRecovery='+contextRecovery,async t=>{
+ const f=fixture(t,{contextRecovery});await f.start();f.session.showReading();await drain();assert.equal(await f.session.enterDormant(),true);
+ const oldAdapter=f.adapters[0];f.answer({state:'unknown'});f.doc.location.href='https://chatgpt.com/c/22222222-2222-4222-8222-222222222222';f.resize();oldAdapter.routeChanged({reason:'native-route-changed'});await drain();
+ assert.equal(f.calls.filter(m=>m.type==='HOST_REFRESH').length,2);assert.equal(f.frames.length,1);assert.equal(f.session.showWorkspace(),false);
+ const count=f.calls.length;await f.tick(60000);assert.equal(f.calls.length,count);f.session.stop();oldAdapter.routeChanged({reason:'native-route-changed'});await f.ready();assert.equal(f.calls.length,count);assert.equal(f.doc.draft,'UNSENT');
+});
+
+test('explicit stop before queued dormant route handshake cannot revive the document',async t=>{
+ const f=fixture(t,{contextRecovery:false});await f.start();f.session.showReading();await drain();assert.equal(await f.session.enterDormant(),true);
+ const old=f.adapters[0];f.doc.location.href='https://chatgpt.com/c/11111111-1111-4111-8111-111111111111';f.resize();f.session.stop();old.routeChanged({reason:'native-route-changed'});await drain();
+ assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,1);assert.equal(f.frames.length,1);assert.equal(f.session.showWorkspace(),false);
 });

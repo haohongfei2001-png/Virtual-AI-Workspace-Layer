@@ -16369,7 +16369,7 @@
     }
   },
   "popupRootScrollbar20261020": {
-    "status": "LOCAL_PASS_LINUX_PENDING",
+    "status": "LOCAL_AND_LINUX_SLICE_PASS_NOT_FULL_ACCEPTANCE",
     "rootCause": "Chrome156 autosize adds hypothetical vertical scrollbar thickness when preferred height550 exceeds available510, overrides overflow mode. Overlay Mac does not add15. CSS overflow alone cannot fix.",
     "primarySourceVersion": "156.0.8078.4",
     "primarySources": [
@@ -16389,7 +16389,6 @@
       "targetedFail": 0
     },
     "limitations": [
-      "Linux fixed candidate not yet run",
       "No live Profile/install or identity verification",
       "Historical failures retained; not full Free acceptance"
     ],
@@ -16414,6 +16413,12 @@
       },
       "popup-root-scrollbar-verified.tap.gz": {
         "sha256": "d1726d9746289d6938ed99280d9a0e260fd2524255ad9d3851727948a4f1e863"
+      },
+      "ci39295850258-navigation.json.gz": {
+        "sha256": "f6cab22a4e5cfed6254c3665838ca011910de228323a87e957f7a0ca788e4dba"
+      },
+      "ci39295850258-navigation.log.gz": {
+        "sha256": "8b00c9884f7ab140ea7ac9848a82e767ddba00eff274345f585cce1012e8cbcb"
       }
     },
     "finalLocalCandidate": {
@@ -16424,6 +16429,108 @@
       "windowPrecondition": "Same explicit owned-window activation as Linux-verified Project runner before every popup open",
       "artifact": "popup-root-scrollbar-candidate.json.gz",
       "sha256": "331a1e28efa285df3113cba17f36b72f6a75698659759d2d82f4508926952e27"
+    },
+    "linuxResult": {
+      "head": "3950481fa0db802b2487810e909600a2d8ee9fc6",
+      "run": 39295850258,
+      "job": 118208044382,
+      "status": "PASS_TEMPORARY_MV3_POPUP",
+      "elapsedMs": 4129.643603,
+      "timingBoundary": "Original complete runner including startup and original 1s read-fault wait; excludes cleanup. Not a performance improvement claim.",
+      "viewport": {
+        "width": 570,
+        "height": 510
+      },
+      "innerWheel": 250,
+      "bottom": 708,
+      "bottomMax": 708,
+      "bothEdgeOuterScrollTop": 0,
+      "sourceStable": true,
+      "testSourcesStable": true,
+      "gitHashVerification": {
+        "sourceFiles": 182,
+        "testFiles": 3,
+        "mismatches": 0
+      },
+      "otherJobs": "NOT_SELECTED_NOT_MATRIX_ACCEPTANCE"
+    }
+  },
+  "dormantRouteOrdering20261020": {
+    "status": "NARROW_INSTRUMENTED_MV3_PASS_NOT_J1_ACCEPTED",
+    "baseline": "3950481fa0db802b2487810e909600a2d8ee9fc6",
+    "rootCause": "Dormant controller sees changed native URL on geometry before adapter route scan, stops adapter and cancels queued scan; onTerminated sent changed route into same-route context wait/stop, losing rebind.",
+    "fix": "Only dormant-document-changed with actual URL change invokes existing fresh rebind in reading mode; same-URL loss still waits, unknown scope never mounts, explicit stop and old callbacks cannot revive.",
+    "minimalRed": {
+      "pass": 7,
+      "fail": 4
+    },
+    "targeted": {
+      "contentPass": 178,
+      "ownerControllerPass": 79,
+      "fail": 0
+    },
+    "browser": {
+      "status": "PASS_NARROW_DORMANT_NATIVE_ROUTE",
+      "elapsedMs": 2033.61375,
+      "timingBoundary": "Includes packaging/browser startup and state observations; excludes cleanup; not interaction latency or speedup",
+      "profile": "Fresh isolated headless Chromium156 LEGACY loopback fixture, worker reject proxy",
+      "fault": "Native fixture emits synchronous resize immediately after its own pushState; no driver route write or scope injection",
+      "journey": "Verified launch → native reading/draft → two frame ACKs and worker idle release → one native history navigation → new binding/auth → unique reading return → workspace",
+      "draftAndSelectionPreserved": true,
+      "newAuthenticationAndBothFramesUseLatestBinding": true,
+      "newC2GET": "NOT_USED_LEGACY",
+      "naturalWorkerSleep": "NOT_TESTED"
+    },
+    "observerCorrection": "Initial total HELLO=2 assertion was incorrect: real history invalidation arrives after the synchronous route rebind and revokes that first binding. Trace proves 1 initial + 1 pre-revocation + 1 post-revocation HELLO, only initial/final REFRESH, both target frames use latest binding. Original observer failures retained; no production budget or invalidation suppressed.",
+    "mutant": {
+      "mutation": "REMOVE_DORMANT_NATIVE_ROUTE_REBIND",
+      "expectedStatus": "FAIL",
+      "phase": "fresh-reading-return",
+      "prepared": true,
+      "entered": true,
+      "nativeTargetURLAndBody": true,
+      "resizeCount": 1,
+      "error": "J2-observation-timeout",
+      "sameProductAndFixtureHashes": true
+    },
+    "review": "Independent readonly review; final REFRESH and both UI_CONFIRM tokens explicitly matched to post-invalidation HELLO.",
+    "limitations": [
+      "Controlled ordering proof only; historical Linux J1 cause not established",
+      "No live installation/profile/current identity acceptance",
+      "C2 absent fresh evidence remains safe waiting; peer memory-loss recovery not established",
+      "10k/100k DEFERRED, original thresholds/failures retained"
+    ],
+    "artifacts": {
+      "dormant-route-red.tap.gz": {
+        "sha256": "a7ddc9bf5493b63f586b0b134524521839a43a653df58ec024fb61143417dcb4"
+      },
+      "dormant-route-targeted.tap.gz": {
+        "sha256": "be7ba4f292b9ffa07ffcb61fe36d0ca7c0fda96422f5715a6cbd7a46da5f168f"
+      },
+      "dormant-route-targeted-final.tap.gz": {
+        "sha256": "30977d49f1f805f7696d0b9feef7a605e2589eb3fedd0bf2f5edcbc9d3a97eb8"
+      },
+      "dormant-route-owner-controller.tap.gz": {
+        "sha256": "968caa81ac071f9f4bd87c5948ad9a40da224b02041bcb3d820eed27c30d314d"
+      },
+      "dormant-route-browser.json.gz": {
+        "sha256": "60de74ff3a7c80dcac5ded76f03a21a0f415b8b2c9e9ec567948339c1e738b77"
+      },
+      "dormant-route-browser-trace.json.gz": {
+        "sha256": "d1e76cf9796068d9144ca2bc8c06e892532f17eef6c5752f7970edff8e9c1a3a"
+      },
+      "dormant-route-browser-final.json.gz": {
+        "sha256": "8cbf47ff5405e8f40da7e7f593ed171ac347f5d7bd0b2530c035e6b9e4b32114"
+      },
+      "dormant-route-browser-mutant.json.gz": {
+        "sha256": "6ff961fbcec7dc6af77fc297056e094c1e25782be9f7c0de0b3c675affa0832f"
+      },
+      "dormant-route-browser-reviewed.json.gz": {
+        "sha256": "6f40275839352580bce0fc7c2c962687abe5fe9a07ecc9b3118ff8ee4106d28b"
+      },
+      "dormant-route-browser-reviewed-mutant.json.gz": {
+        "sha256": "72a902620d1f9097a8952f84ae05046780830fa9aeac527dda0252c936835949"
+      }
     }
   }
 }
