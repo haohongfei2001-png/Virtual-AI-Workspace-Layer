@@ -1,6 +1,6 @@
 /** Actual packed MV3 candidate; disposable headless profiles; all HTTP replies synthetic. */
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
+import {mkdtemp,readFile,writeFile,cp} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';
@@ -12,6 +12,7 @@ import {createHostFixtureServer} from './fixtures/server.mjs';
 import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
 import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
 const output=process.argv[2]??join(tmpdir(),'vaiwl-native-me-candidate-browser.json');
+const modes=process.argv[3]==='legacy-receiver'?['legacy-receiver']:['consistent','accounts-challenge','shared-deadline','route-changed'];
 const started=performance.now(),directory=await mkdtemp(join(tmpdir(),'vaiwl-me-chain-mv3-'));
 const hash=v=>createHash('sha256').update(v).digest('hex');
 const report={kind:'PACKAGED_HEADLESS_MV3_SYNTHETIC_HTTPS_RESPONSES',realProfile:'NOT_RUN',livePermissionConsumed:false,release:'NOT_RELEASE_READY',results:[],status:'RUNNING',runnerHash:hash(await readFile(new URL(import.meta.url)))};
@@ -24,7 +25,7 @@ function protocol(endpoint){
 try{
  server=await createHostFixtureServer();guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
  const base=join(directory,'base');bundle=join(directory,'candidate');buildHost(base,{observedChatGPTContext:true,temporaryReadOnly:true});receipt=buildProbe(base,bundle,0,{candidateChain:true});const baseInfo=JSON.parse(await readFile(join(base,'build-manifest.json')));report.sourceHashes={...baseInfo.sourceHashes,...receipt.sourceHashes};report.baseReceiptSha256=receipt.baseReceiptSha256;report.overlayReceiptSha256=hash(await readFile(join(bundle,'native-me-probe-manifest.json')));
- for(const mode of ['consistent','accounts-challenge','shared-deadline','route-changed']){
+ for(const mode of modes){
   report.mode=mode;const runStarted=performance.now(),requests=[],unexpected=[],errors=[];let releaseAccounts,accountSeen;
   const observedAccounts=new Promise(r=>accountSeen=r);
   handle=await launchNativeVisibilityBrowser({chromium,profileDir:join(directory,'profile-'+mode),headed:false,historicalNetworkGuard:guard.config,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
@@ -41,7 +42,12 @@ try{
    if(mode==='shared-deadline'||mode==='route-changed')await new Promise(r=>releaseAccounts=r);
    try{await route.fulfill({contentType:'application/json',body:JSON.stringify({accounts:{'fixture-private-space':{account:{account_id:'fixture-private-space',structure:'personal'}}}})});}catch{ /* Aborted synthetic request after deadline/navigation. */ }
   });
-  const cdp=await browser.newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:bundle});
+  const loadedBundle=mode==='legacy-receiver'?join(directory,'legacy'):bundle;
+  if(mode==='legacy-receiver')buildProbe(base,loadedBundle,0);
+  const cdp=await browser.newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:loadedBundle});
+  // Reproduce an in-place unpacked update without reloading the extension.
+  // Popup files update while Chrome retains the registered content-script source.
+  if(mode==='legacy-receiver')await cp(bundle,loadedBundle,{recursive:true});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto('https://chatgpt.com/');
   const worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`))??await context.waitForEvent('serviceworker');
   control=protocol(handle.debugEndpoint);await control.ready;let session,target;
@@ -52,7 +58,18 @@ try{
   await open();await evaluate("localStorage.setItem('vaiwl-native-me-probe-20261019-consumed','consumed')");assert.equal(requests.length,0);
   await click('#run');
   if(mode==='route-changed'){await withRequestDeadline(()=>observedAccounts,{timeoutMs:8000});await page.evaluate(()=>{history.pushState({},'', '/c/11111111-1111-4111-8111-111111111111');dispatchEvent(new PopStateEvent('popstate'));});}
-  const result=await waitResult();releaseAccounts?.();assert.equal(result.state,'finished');
+  const result=await waitResult();releaseAccounts?.();
+  if(mode==='legacy-receiver'){
+   assert.equal(result.state,'legacy-receiver-reload-required-no-request');assert.equal(requests.length,0);
+   assert.equal(await evaluate("localStorage.getItem('vaiwl-native-me-candidate-20261019-consumed')"),null);
+   assert.equal(await evaluate("localStorage.getItem('vaiwl-native-me-probe-20261019-consumed')"),'consumed');
+   assert.equal(await evaluate('document.querySelector("#run").disabled'),false);
+   assert.equal(await page.locator('textarea').inputValue(),'UNSENT_FIXTURE_DRAFT');assert.deepEqual(unexpected,[]);assert.deepEqual(errors,[]);
+   const databases=await worker.evaluate(async()=> (await indexedDB.databases()).length);assert.equal(databases,0);
+   report.results.push({mode,result,requestCount:0,oldMarkerPreserved:true,candidateMarkerAbsent:true,databaseCount:databases,draftPreserved:true,elapsedMs:performance.now()-runStarted});
+   control.close();control=null;await handle.close();handle=null;continue;
+  }
+  assert.equal(result.state,'finished');
   const expected=mode==='consistent'?'candidate-consistent-not-authorized':mode==='accounts-challenge'?'session-challenged':mode==='shared-deadline'?'request-timeout':'document-changed';assert.equal(result.reason,expected);
   assert.equal(result.samePrincipal,mode==='consistent');assert.equal(requests.length,mode==='consistent'?3:2);assert.equal(result.identityEnabled,false);assert(!JSON.stringify(result).includes('fixture-private'));assert(!JSON.stringify(result).includes('PRIVATE_SENTINEL'));
   const expectedRequests=requests.length;

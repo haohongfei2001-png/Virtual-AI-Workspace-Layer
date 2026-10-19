@@ -15,7 +15,15 @@ button.addEventListener('click',async()=>{
   }
   phase='receiver';
   const ready=await chrome.tabs.sendMessage(tab.id,{type:PROBE_PREFIX+'_READY'},{frameId:0});
-  if(ready?.ready!==true||ready.spent!==false||typeof ready.documentKey!=='string'){show({state:'not-ready-no-request'});return;}
+  if(ready?.ready!==true||ready.spent!==false||typeof ready.documentKey!=='string'){
+   let legacyReceiverPresent=false;
+   if(ready==null&&PROBE_PREFIX==='VAIWL_ME_CANDIDATE'){
+    // Compatibility diagnosis only. Never invoke the consumed legacy probe.
+    try{const legacy=await chrome.tabs.sendMessage(tab.id,{type:'VAIWL_ME_PROBE_READY'},{frameId:0});legacyReceiverPresent=typeof legacy?.documentKey==='string'&&typeof legacy?.ready==='boolean'&&typeof legacy?.spent==='boolean';}catch{}
+   }
+   if(legacyReceiverPresent){show({state:'legacy-receiver-reload-required-no-request',help:'Chrome 仍在运行旧版接收器。请重新加载 VAIWL 扩展后在新标签打开 ChatGPT 首页；本次未发请求，旧许可不会重用。'});return;}
+   show({state:'not-ready-no-request',receiverPresent:ready!==null&&typeof ready==='object',documentReady:ready?.ready===true,unspent:ready?.spent===false,documentKeyPresent:typeof ready?.documentKey==='string',legacyReceiverPresent});return;
+  }
   phase='recheck-home';
   const current=await chrome.tabs.get(tab.id);
   if(current.url!=='https://chatgpt.com/'){show({state:'target-changed-no-request'});return;}

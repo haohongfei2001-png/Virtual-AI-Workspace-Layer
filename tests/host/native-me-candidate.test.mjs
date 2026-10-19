@@ -86,3 +86,22 @@ test('new chain permission preserves old marker and serializes one chain across 
  }
  assert.equal(page().run.disabled,false);page();await Promise.all(handlers.map(fn=>fn()));assert.equal(messages.filter(x=>x.endsWith('_ONCE')).length,1);assert.equal(page().run.disabled,true);assert.equal(storage.get(old),'consumed');assert.equal(storage.size,2);
 });
+
+for(const mode of ['legacy','legacy-unavailable','candidate-invalidated','consumed'])test(`popup version preflight stays read-only: ${mode}`,async()=>{
+ const old='vaiwl-native-me-probe-20261019-consumed',key='vaiwl-native-me-candidate-20261019-consumed';
+ const storage=new Map([[old,'consumed']]);if(mode==='consumed')storage.set(key,'consumed');
+ const before=[...storage],messages=[],handlers={},elements={run:{addEventListener:(_k,fn)=>handlers.run=fn},read:{addEventListener:(_k,fn)=>handlers.read=fn},result:{textContent:''}};
+ vm.runInNewContext(readFileSync(new URL('../../tools/native-me-probe/popup.mjs',import.meta.url),'utf8').replace(/^import[^\n]+\n/,''),{
+  TARGET_TAB_ID:123,PROBE_KEY:key,PROBE_PREFIX:'VAIWL_ME_CANDIDATE',document:{getElementById:k=>elements[k]},localStorage:{getItem:k=>storage.get(k)??null,setItem:()=>assert.fail('preflight must not consume')},navigator:{locks:{request:async(_k,fn)=>fn()}},
+  chrome:{tabs:{query:async()=>[{id:123,url:'https://chatgpt.com/'}],get:async()=>assert.fail('not ready'),sendMessage:async(_id,m)=>{
+   messages.push(m.type);assert(m.type.endsWith('_READY'));
+   if(m.type==='VAIWL_ME_CANDIDATE_READY')return mode==='candidate-invalidated'?{ready:false,spent:false,documentKey:'PRIVATE_DOCUMENT',privateField:'PRIVATE_SENTINEL'}:undefined;
+   assert.equal(m.type,'VAIWL_ME_PROBE_READY');if(mode==='legacy-unavailable')throw Error('PRIVATE_SENTINEL');
+   return {ready:true,spent:true,documentKey:'PRIVATE_DOCUMENT',privateField:'PRIVATE_SENTINEL'};
+  }}}
+ });
+ await handlers.run();assert.deepEqual([...storage],before);assert(!elements.result.textContent.includes('PRIVATE'));
+ assert.deepEqual(messages,mode==='consumed'?[]:mode==='candidate-invalidated'?['VAIWL_ME_CANDIDATE_READY']:['VAIWL_ME_CANDIDATE_READY','VAIWL_ME_PROBE_READY']);
+ assert.equal(JSON.parse(elements.result.textContent).state,mode==='legacy'?'legacy-receiver-reload-required-no-request':mode==='consumed'?'already-consumed-no-retry':'not-ready-no-request');
+ assert.equal(elements.run.disabled,mode==='consumed');
+});
