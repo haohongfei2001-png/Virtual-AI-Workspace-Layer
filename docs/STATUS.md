@@ -1,5 +1,7 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **同源码CI与J4诊断边界更新**（2026-10-19）：fba7038的CI39257029241四个原job均SUCCESS；J4原JSON仍23步PARTIAL_J4_NOT_ACCEPTED，新原生导航恢复本次成立，无新context的peer自动恢复仍NOT_ESTABLISHED。39253912974正式FAIL不改判、未证明根因已修。进一步审查确认旧receiptPresent仅说明对象存在，不证明epoch/route/TTL有效；现仅增强原失败后只读闭包检查，输出匹配布尔/年龄/TTL及关联bridge等待状态，不调用应用方法/请求、不改生产行为。getter不可读保持null，不能误报不存在；独审纠正该三值问题，376定向通过。新检查尚未实际Chrome失败触发，只有真实V8/CDP合同证据；原页面url缺失测试失败保留。生产源码不变，不为该诊断重跑整套或J4挑绿；原真实身份/成员/活动/完整恢复/安装关口、10k/100k DEFERRED与NOT_RELEASE_READY保持。证据沿原observationRetryDeadline20261019.finalCI/j4ReceiptInspection。
+
 - **重试总期限的实际缺陷已修**（2026-10-19）：原代码在5.9秒收到稍后重试后仍给下一RPC完整6秒，并接受原总时限后的ACK。现共享私有elapsed截止时间、发送前/返回后再次检查；过期回复不生成本地body proof或近期提示，不自动重放，合法持久事实不回滚。277定向及84插桩兼容检查通过；初次完整回归9099通过/13失败均为旧源码hook，已按新预算语义修正并保留失败。同源隔离MV3无插桩与背压/未送达分片→唯一返回两旅程通过，均800ticks/6400变化、19977ms；当前首见上界169ms（旧172ms），缺片恢复625.897ms（旧536.477ms），不宣称提速/p95或完整SYS05，迟到ACK精确边界目前仅L证据。最终同源完整9112项Node回归通过、零失败/跳过；未更新真实安装、未发真实请求。
 - **当前J4关口仍失败**：3c576f7的CI39253912974：node/contracts、journeys、durability三job成功；J4正式旅程在peer原生换路后超出原15秒。原生GET200/current body正确、worker receipt存在，content却已清空且无workspace frame；context-selection-pending是历史标签，不能当作当前无凭据。正式原日志/JSON保留；另次插桩诊断成功不改判。最小真实owner harness的HELLO/REFRESH/mount/FOCUS旧回复迟到未复现，READY→PENDING还可能是合法撤权，故未加猜测修补/延时/挑绿重跑。下一最小证据是同次失败的receipt与通知顺序、handshake阶段及回复generation。原真实身份/context、正向成员/本人活动、无新context的peer恢复及实机完整验收继续开放；10k/100k **DEFERRED**，**NOT_RELEASE_READY**。同源码哈希、时序和失败见原证据observationRetryDeadline20261019。
 

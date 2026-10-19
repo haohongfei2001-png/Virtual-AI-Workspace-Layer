@@ -40,3 +40,8 @@ test('total per-context deadline closes transport and cleanup rejection cannot h
  h.options.context.newCDPSession=async()=>{const s=await acquire(),index=acquired++;if(index===1){const send=s.send;s.send=async(...args)=>{firstCalls++;await new Promise(r=>setTimeout(r,8));return send(...args);};s.detach=async()=>{s.detached++;throw Error('detach unavailable');};}return s;};
  const r=await inspectJ3Failure(h.options);assert.equal(r.pageContexts[0].inspection.error,'context-inspection-unavailable');assert.equal(r.pageContexts[1].inspection.error,undefined);assert.equal(r.page.error,'isolated-context-unavailable');assert(h.sessions.every(s=>s.detached===1));const atEnd=firstCalls;await new Promise(r=>setTimeout(r,30));assert.equal(firstCalls,atEnd,'timed out collector cannot continue sending');assert(h.parent.detached);
 });
+for(const mode of ['loopback','unavailable','remote'])test('failure route projection is bounded and never exported: '+mode,async()=>{
+ const h=harness(),url=mode==='remote'?'https://chatgpt.com/c/PRIVATE':'http://127.0.0.1:3210/c/PRIVATE';
+ h.options.page.url=()=>{if(mode==='unavailable')throw Error('PRIVATE');return url;};
+ const result=await inspectJ3Failure(h.options);assert.equal(result.currentRouteAvailable,mode==='loopback');assert.equal(result.page.error,undefined);assert.equal(result.worker.error,undefined);assert(!JSON.stringify(result).includes('PRIVATE'));assert(h.page.detached&&h.parent.detached);
+});

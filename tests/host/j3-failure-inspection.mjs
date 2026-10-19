@@ -5,6 +5,8 @@ const acquire=async(factory,ms)=>{const task=Promise.resolve().then(factory);try
 export async function inspectJ3Failure({context,page,browser,extensionId,timeoutMs=1500}={}){
  const report={kind:'POST_FAILURE_FORMAL_PACKAGE_INSPECTION'};
  if(typeof extensionId!=='string'||!/^[a-p]{32}$/.test(extensionId)||!Number.isInteger(timeoutMs)||timeoutMs<1||timeoutMs>3000)return {...report,error:'invalid-inspection-options'};
+ let expectedURL=null;try{const value=page.url(),url=new URL(value);if(url.protocol==='http:'&&url.hostname==='127.0.0.1'&&url.port&&!url.username&&!url.password&&value.length<=2048)expectedURL=value;}catch{}
+ report.currentRouteAvailable=expectedURL!==null;
  const origin='chrome-extension://'+extensionId;let pageSession,workerSession,pageDelegated=false,workerDelegated=false;
  const contexts=[];const created=({context:value})=>{if(contexts.length<64)contexts.push(value);};
  try{
@@ -30,13 +32,13 @@ export async function inspectJ3Failure({context,page,browser,extensionId,timeout
      try{
       isolated=await acquire(()=>context.newCDPSession(page),timeoutMs);
       const session={send:(method,params)=>closed?Promise.reject(Error('inspection-closed')):isolated.send(method,params),detach};
-      row.inspection=await bounded(collectJ3FailureClosures(session,{executionContextId:value.id,timeoutMs}),Math.min(6000,timeoutMs*4));
+      row.inspection=await bounded(collectJ3FailureClosures(session,{executionContextId:value.id,timeoutMs,expectedURL}),Math.min(6000,timeoutMs*4));
      }catch{row.inspection={error:'context-inspection-unavailable'};}
      finally{await detach();}
     }
    }
   }
-  else{pageDelegated=true;report.page=await collectJ3FailureClosures(pageSession,{executionContextId:selected[0].id,timeoutMs});}
+  else{pageDelegated=true;report.page=await collectJ3FailureClosures(pageSession,{executionContextId:selected[0].id,timeoutMs,expectedURL});}
  }catch{report.page={error:'page-inspection-unavailable'};}
  finally{if(pageSession&&!pageDelegated){pageSession.off('Runtime.executionContextCreated',created);try{await bounded(pageSession.detach(),timeoutMs);}catch{}}}
  try{
@@ -47,7 +49,7 @@ export async function inspectJ3Failure({context,page,browser,extensionId,timeout
   else{
    const attached=await bounded(workerSession.send('Target.attachToTarget',{targetId:matching[0].targetId,flatten:false}),timeoutMs);
    const nested=createNestedInspectionSession(workerSession,attached.sessionId,{timeoutMs});workerDelegated=true;
-   report.worker=await collectJ3FailureClosures(nested,{timeoutMs});
+   report.worker=await collectJ3FailureClosures(nested,{timeoutMs,expectedURL});
   }
  }catch{report.worker={error:'worker-inspection-unavailable'};}
  finally{if(workerSession&&!workerDelegated)try{await bounded(workerSession.detach(),timeoutMs);}catch{}}

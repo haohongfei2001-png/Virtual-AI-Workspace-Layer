@@ -14015,6 +14015,66 @@
         "sha256": "11cf98a4660b972b1f47e0d1ee828831ee29eb59d415e32466757363370bd281",
         "uncompressedSha256": "3b18780778b079f78dbc260fa7b2b611abed104ec0123ddce918b42660773fa5"
       }
+    },
+    "finalCI": {
+      "run": 39257029241,
+      "head": "fba7038af071c03c65eea14779eb4a88b40720f3",
+      "jobs": {
+        "node-contracts": "success",
+        "offline-j4-lifecycle": "success",
+        "offline-journeys": "success",
+        "offline-durability-compat": "success"
+      },
+      "J4": "PARTIAL_J4_NOT_ACCEPTED",
+      "steps": 23,
+      "nativeNavigationRecovery": "PASS_THIS_RUN_ONLY",
+      "automaticForegroundRecovery": "NOT_ESTABLISHED",
+      "prior39253912974": "FAIL_UNCHANGED_ROOT_CAUSE_NOT_ESTABLISHED"
+    },
+    "j4ReceiptInspection": {
+      "baseHead": "fba7038af071c03c65eea14779eb4a88b40720f3",
+      "problem": "Prior post-failure projection exposed only receiptPresent; existence alone cannot establish current epoch, route, context or expiry. It also omitted the association bridge state.",
+      "change": "Only after original journey failure: read existing closure metadata, output nullable equality flags and clock ages/context TTL, plus active/pending association flags. No application function, network or recovery call. Never interprets fields as isCurrent or new authority.",
+      "reviewFix": "Accessor/non-object receipt and unreadable actualURL remain null, not false. Own data descriptors avoid invoking getters. Real V8 fixture proves getters and owner methods are never invoked.",
+      "targeted": {
+        "pass": 376,
+        "fail": 0,
+        "skip": 0,
+        "durationMs": 1496.274625
+      },
+      "initialFailure": "page.url missing in 8 fake Page cases; missing/throwing/non-loopback route now reports unavailable and preserves remaining inspection",
+      "realBrowserNewInspection": "NOT_RUN; real V8 plus CDP transport contracts only. Formal unmodified J4 report was from prior fba7038 and does not include new fields.",
+      "productSourceChanged": false,
+      "sourceHashes": {
+        "tests/host/j3-failure-closures.mjs": "4539ea9046c721a290fafb3a5af405f8f31f3afacf9dc9fe0e1ddcc02ae87ef8",
+        "tests/host/j3-failure-inspection.mjs": "2ce082675733ca81f782759243b4829d5b674647a82e56a50ff3ed022c840e55",
+        "tests/host/j3-failure-closures.test.mjs": "d3604d12fa7ea52ba479090ed6669c4496664a4e52535d905b15b897e15c274e",
+        "tests/host/j3-failure-inspection.test.mjs": "1bb30c7e6147dbe4c64f7d6d0075658f7bad5c25a7207ee559bddfe0ac1c772f"
+      },
+      "next": "Use this passive inspection at the next naturally failing original journey to distinguish stale receipt/association failure/notification loss; no blind rerun or speculative production patch.",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "artifacts": {
+        "j4-receipt-inspection-initial.tap.gz": {
+          "sha256": "961f5295bbc791c01ac9b6a366d48a1e6f56455e5be957d6bcb7da548a6ec9ab",
+          "uncompressedSha256": "db7223497815755833900dca4dabbb577b372a5fdf690e079d7d5bbc0cabecb1"
+        },
+        "j4-receipt-inspection-final.tap.gz": {
+          "sha256": "424ee670d66f125d94ed1eb1e2b7651d25888b8ed5ad0490916be40a03a5c23a",
+          "uncompressedSha256": "a4e6f424d89c3e9a479c7c217cfa5c420b79a73c3e3329cf98e467711ccbaffa"
+        },
+        "ci39257029241-jobs.json.gz": {
+          "sha256": "c32f3c572fff152c4abba5091931d28342625a4c945051843c5175825ed6911b",
+          "uncompressedSha256": "a2afa48b84b47c48d7e8c10ac4746cd3e38a806884ea8ca2649e9afa3c77b344"
+        },
+        "ci39257029241-j4-original.log.gz": {
+          "sha256": "6d0af730ed7265ecbfccca9a2bb5f3c65cfd3d46813fe46f81f7d91fa26d1931",
+          "uncompressedSha256": "2876f43133dc7aa2548d46313ff5cb4cae0ff132c46dbd9185a9f15627df7c5b"
+        },
+        "ci39257029241-j4-formal.json.gz": {
+          "sha256": "153beb29039f448ae320622a699b33973c07ae322357d62c8d9347718659a638",
+          "uncompressedSha256": "35200c1fbb7946b741170c7b7047b00a8530e5cd922caa19516dfbdb8cfc44d9"
+        }
+      }
     }
   }
 }
