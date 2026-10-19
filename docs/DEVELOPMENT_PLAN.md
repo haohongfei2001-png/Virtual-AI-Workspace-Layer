@@ -31,7 +31,9 @@
 
 ## 当前执行优先级调整（用户决定，2026-10-19）
 
-2026-10-19当前动作：用户已批准一次包内隔离固定`/backend-api/me` GET，仅状态/ID格式、6秒、256KiB、无重试，不批准生产新身份源。独立诊断overlay已备份后写入原安装路径，新增权限为零；正常产品认证链不改。发送前保守消耗标记与文档关联已落实；实机尚未执行，因工具禁止`chrome://extensions`访问及绕过，用户已确认在指定Profile重载；随后固定测试标签的浏览器控制仍超时，当前未执行诊断请求。成功也只证明cookie通道与结构，仍需主体语义/旧ID命名空间、roster关联、expiry/撤权与当前context证据；不把准备或离线检查写成真实恢复。结果与源码hash只记原STATUS和`nativeMeCandidate20261019`。
+2026-10-19当前动作：用户授权的一次包内隔离`/backend-api/me` GET已由真实专用Profile诊断返回200/JSON、无挑战且根ID格式有效，许可已消耗，禁止重发。身份路线从“通道是否可用”推进到“新来源合同与主体/roster/current-context/失效核验”；正常产品仍未启用该来源或旧库。旧session403、完整身份与Free未通过状态保留。诊断入口的过时tab及未消费按钮故障已修，截图前置失败不算HTTP失败；私人截图/ID不入库。具体源码及窄证据沿用STATUS与`nativeMeCandidate20261019.liveResult20261019`。
+
+待用户批准的同路线最小合同调整（不是已采用）：把`/backend-api/me`列为候选固定主体来源，服务器expiry明确未知，另设本地proof freshness字段（最多原60秒，并受原C2 receipt/文档/授权epoch撤回限制），绝不把本地时间填作现有服务器expiresAt。先仅做一次最多三请求的包内隔离诊断：`me → accounts/check/v4-2023-04-27 → me`，共用原6秒、无重试/跳转/Authorization复制，me各256KiB、accounts沿用1MiB；任一拒绝/挑战/超量/结构失败立即停止。仅RAM比较主体并解析roster，返回布尔与计数，不保留原ID/账户列表/正文。浏览器正常credentials及第一方service-worker属于原信任边界；不声称线上最终请求必然没有宿主添加的认证头。前后同主体只是一致性检查，不能独立排除A→B→A；整段仍绑定并检查document/selection/authority代际。诊断不发scope、不接旧库；旧session.user.id命名空间/主体语义及合法当前C2未成立前继续关闭，原hash算法与Pro资产不改。此许可差额包含新来源合同开发和另一次有界主动读取，不由已消耗的单次许可推导。批准前仅保留此可审阅提案，生产不接线。
 
 身份来源候选判定（2026-10-19，B1.F，不启用生产）：已还原旧 `nativeMe` 诊断为固定 `/backend-api/me` 的响应根 `id` 字符串检查；旧记录200/JSON，方法、非空语义、与session.user.id一致性及expiry未留证。CDP取得JSON不等于普通MV3可取得：现有webRequest只提供状态/头/请求关联，隔离世界不共享网页fetch响应，MAIN转交的正文不能冒充认证。**结论B：有具体候选，现合同下不能直接被动接线。** 不增加debugger/cookies权限或MAIN身份桥；现有isolated-session-owner固定chatgpt-session-v1并要求有效expiresAt，诊断结果不能拼成identity送入该授权链。用户现已批准的最小实机步骤仅为包内隔离世界向该固定地址一次GET（浏览器正常credentials、无手工Authorization、6秒总期限/256KiB/不重试）；只回报结构布尔值，不授scope、不读旧库、不调用session/accounts。该主动读取已获单独具体许可；若通过，再验证principal命名空间、同空间A→B迟到响应、roster关联、当前选择与登出/到期/重启，不自造expiresAt或改变原hash。一次成功也不等于合法生产身份或完整Free。原证据 `nativeMeCandidate20261019`；当前工具事件读取超时，未取得新响应，不要求刷新重登。
 

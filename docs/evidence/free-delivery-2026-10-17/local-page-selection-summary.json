@@ -11000,7 +11000,7 @@
       "existingOwner": "Pinned chatgpt-session-v1 and future expiresAt required; diagnostic root ID must never be submitted as identity."
     },
     "minimalNextProbe": {
-      "status": "AUTHORIZED_PREPARED_NOT_EXECUTED",
+      "status": "EXECUTED_ONCE_TRANSPORT_AND_ID_SHAPE_PASS",
       "world": "packaged ISOLATED top frame in authorized dedicated profile",
       "method": "GET",
       "endpoint": "https://chatgpt.com/backend-api/me",
@@ -11018,7 +11018,7 @@
       "accountsRequest": false,
       "stopOn": "failure, challenge, redirect, invalid schema, deadline or document change; no fallback or retry",
       "approvalBoundary": "User explicitly approved this one fixed isolated GET on 2026-10-19. Does not authorize production identity adoption, further attempts, new endpoints or permissions.",
-      "attemptsConsumed": 0
+      "attemptsConsumed": 1
     },
     "browserAttempt": {
       "fixedProfileConfirmed": true,
@@ -11088,6 +11088,82 @@
         "trackingOnlyBehind": 0,
         "noForceOrConfigChange": true
       }
+    },
+    "liveResult20261019": {
+      "evidence": "User-supplied screenshot of the installed diagnostic popup; screenshot time is NOT exact network event time",
+      "observation": {
+        "state": "finished",
+        "status": 200,
+        "jsonMime": true,
+        "redirected": false,
+        "challenge": false,
+        "idValid": true,
+        "reason": "CROPPED_NOT_TRANSCRIBED"
+      },
+      "rawIdRetained": false,
+      "privateScreenshotCopiedToRepo": false,
+      "requestAuthorizationConsumed": true,
+      "requestRetried": false,
+      "qualification": "LIVE_COOKIE_TRANSPORT_AND_ROOT_ID_SHAPE_ONLY",
+      "notProven": [
+        "session endpoint recovered",
+        "stable access over time",
+        "principal semantics and old ID namespace equality",
+        "accounts cookie transport and current workspace",
+        "expiry/revocation contract",
+        "production scope or full Free acceptance"
+      ],
+      "preflightFailureScreenshot": {
+        "state": "connection-failed-no-request",
+        "requestIssued": false,
+        "exactFailedPhase": "NOT_ESTABLISHED_FROM_OLD_GENERIC_ERROR"
+      },
+      "preflightFix": {
+        "problem": "Build-time tab ID can become stale; absent receiver and lookup failure were merged, and unspent failure left the execution button disabled.",
+        "change": "Use the single active root homepage in the current extension Profile; separate selection/receiver errors; recheck homepage after READY; re-enable only before durable consumption. Keep old marker and lock.",
+        "draftProtection": "Suggest a new empty homepage, not reloading an existing draft.",
+        "installedRuntimeDelta": [
+          "native-me-probe-popup.mjs"
+        ],
+        "manifestContentAndPermissionsUnchanged": true,
+        "sourceHashes": {
+          "tools/native-me-probe/popup.mjs": "da97414142c35a200884dea48893bf0e1a74cb2def6acd94c8011e9cccc52169",
+          "tests/host/native-me-probe.test.mjs": "2a1a2893782221237625aba32d2b01d49c4498cf31561936115600a7da3704cc"
+        },
+        "regression": {
+          "oldSource": "FAIL: generic connection-failed-no-request instead of actionable preflight",
+          "after": "PASS",
+          "command": "node --test tests/host/native-me-probe.test.mjs",
+          "count": 22,
+          "durationMs": 513.132292,
+          "coverage": "Includes READY-time navigation, no-request preflight, concurrent consumption and legacy marker. No performance comparison."
+        }
+      },
+      "productionEnabled": false,
+      "releaseStatus": "NOT_RELEASE_READY"
+    },
+    "nextContractProposal": {
+      "status": "PENDING_USER_APPROVAL_NOT_IMPLEMENTED",
+      "requestSequenceMaximum": [
+        "GET /backend-api/me",
+        "GET /backend-api/accounts/check/v4-2023-04-27",
+        "GET /backend-api/me"
+      ],
+      "sharedDeadlineMs": 6000,
+      "maxBodyBytes": [
+        262144,
+        1048576,
+        262144
+      ],
+      "retries": 0,
+      "stopOnFirstFailure": true,
+      "output": "status/structure/count/equality only, no raw IDs or roster retained",
+      "freshness": "Separate unknown source expiry from local proof freshness <= existing 60000ms and existing context receipt bounds; never forge expiresAt",
+      "guard": "Document/selection/authority epochs; equality alone does not exclude unobserved A-B-A",
+      "scopeEnabled": false,
+      "oldDatabaseEnabled": false,
+      "namespaceAndSubjectSemantics": "NOT_ESTABLISHED",
+      "firstPartyServiceWorker": "Existing trust boundary; no claim that final wire headers lack site-managed Authorization"
     }
   }
 }
