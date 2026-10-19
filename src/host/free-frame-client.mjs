@@ -31,14 +31,14 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  const locatedMigrations=new Map();
  const migration=createFrameCandidateMigration({now,reveal:({projectId,focus})=>navigation?.revealNativeProject?.({projectId,focus:focus&&doc.hasFocus?.()===true})===true,restoreCandidates:p=>{candidateRestore={...p,migrationId:candidateMigrationId};if(candidateOffset!==p.offset)void refreshCandidates(p.offset);else{candidates?.restorePosition?.(p);candidateRestore=null;}}});
  const interruptMigration=event=>{if(event.isTrusted===true){candidateRestore=null;migration.interrupt();}};
- let bootstrapping=false,resumeTimer=null,resumeQueued=null,resumeWriting=false,resumeLast=null,resumeQuery=null;
+ let bootstrapping=false,resumeTimer=null,resumeQueued=null,resumeWriting=false,resumeLast=null,resumeDesired=null,resumeQuery=null;
  let panelReturnCancel=null;
  let recovery=null,recoveryRoot=null,backup=null,backupRoot=null,autoChange=null,snippets=null,snippetsRoot=null,currentRef=null,searchSnippetIds=new Map(),snippetLocatePending=false;
  function clearAutoNotice(){autoChange=null;navigation?.clearTimePolicyNotice?.();}
  const recoverable=reason=>isFreeRecoveryReason(reason)||['corrupt-record','invalid-partition-manifest','invalid-partition-piece'].includes(reason);
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){panelReturnCancel?.();readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function clear(){panelReturnCancel?.();readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeDesired=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function ensureCandidates(){
   if(!candidates){candidateRoot=doc.createElement('div');candidateRoot.setAttribute('data-vaiwl-candidate-root','');if(typeof root?.before==='function')root.before(candidateRoot);else privateRoot.append(candidateRoot);candidates=createFreeFrameCandidates({document:doc,container:candidateRoot,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
     const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
@@ -84,7 +84,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   readEpoch++;serial++;dispatchEpoch++;activeRead?.abort();activeRead=null;activeLocation=null;dirty=false;queuedDispatchView=null;budget.complete();
   clearCandidates();migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();
   plans.clear();projectPlans.clear();searchSnippetIds.clear();currentNativeURL='';currentRef=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;
-  cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeQuery=null;clearAutoNotice();navigation?.invalidate?.('read-stopped');
+  cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeDesired=null;resumeQuery=null;clearAutoNotice();navigation?.invalidate?.('read-stopped');
   readTerminal={retryToken,grantId:grant.id,mountId:grant.mountId,scopeGrantId:grant.scopeGrantId};
   if(!readErrorPanel){readErrorRoot=doc.createElement('div');readErrorRoot.setAttribute('data-vaiwl-read-error-container','');privateRoot.append(readErrorRoot);
    readErrorPanel=readErrorFactory({document:doc,container:readErrorRoot,onExit:()=>lifecycle.exit(),onRetry:({restoreFocus=false}={})=>{
@@ -178,7 +178,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    // so its predecessor's late acknowledgement cannot restore the old view.
    if(JSON.stringify(query)!==JSON.stringify(requested))dispatchEpoch++;
    queuedDispatchView={value:requested,location};return null;
-  }if(JSON.stringify(query)!==JSON.stringify(requested)){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;}if(!location)query=requested;const ticket=++serial;activeRead?.abort();const controller=new AbortController();activeRead=controller;activeLocation=location;navigation?.setNativeNavigationPending?.(true);
+  }if(JSON.stringify(query)!==JSON.stringify(requested)){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeDesired=null;}if(!location)query=requested;const ticket=++serial;activeRead?.abort();const controller=new AbortController();activeRead=controller;activeLocation=location;navigation?.setNativeNavigationPending?.(true);
   if(budget.remaining()===Infinity)splits=0;
   if(!location&&!budget.begin()){fail('read-budget-exhausted');return null;}
   let effective={...requested},polls=0;
@@ -364,11 +364,11 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  function saveResumeView(value){if(readTerminal)return;
   if(closed||bootstrapping||!grantCurrent()||!resumeQuery||JSON.stringify(resumeQuery)!==JSON.stringify(query))return;
-  try{const {freeSession,...layout}=value,view=validateFrameResumeView(layout),expectedQuery=validateResumeQuery(resumeQuery),key=JSON.stringify([expectedQuery,view]);if(key===resumeLast)return;resumeQueued={view,key,expectedQuery};if(resumeTimer===null&&!resumeWriting)resumeTimer=schedule(flushResume,100);}catch{}
+  try{const {freeSession,...layout}=value,view=validateFrameResumeView(layout),expectedQuery=validateResumeQuery(resumeQuery),key=JSON.stringify([expectedQuery,view]);if(key===resumeDesired?.key)return;resumeDesired={view,key,expectedQuery};if(key===resumeLast&&!resumeWriting){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;return;}resumeQueued=resumeDesired;if(resumeTimer===null&&!resumeWriting)resumeTimer=schedule(flushResume,100);}catch{}
  }
  function flushResume(){
   resumeTimer=null;if(!resumeQueued||closed||!grantCurrent())return;
-  const item=resumeQueued;resumeQueued=null;if(JSON.stringify(item.expectedQuery)!==JSON.stringify(query))return;const current=grant,renderer=navigation,attempt={};resumeWriting=attempt;
+  const item=resumeQueued;resumeQueued=null;if(JSON.stringify(item.expectedQuery)!==JSON.stringify(query))return;const current=grant,renderer=navigation,attempt={};resumeWriting=attempt;resumeLast=null;
   attempt.done=(async()=>{try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_SAVE_VIEW',grantId:current.id,mountId:current.mountId,expectedQuery:item.expectedQuery,view:item.view}),{now:elapsedNow,schedule,cancel});if(!closed&&grant?.id===current.id&&navigation===renderer&&JSON.stringify(query)===JSON.stringify(item.expectedQuery)&&result?.ok===true){resumeLast=item.key;return true;}return false;}catch{return false;}
   finally{if(resumeWriting===attempt){resumeWriting=false;if(!closed&&navigation===renderer&&resumeQueued&&resumeTimer===null)resumeTimer=schedule(flushResume,100);}}})();return attempt.done;
  }
@@ -400,6 +400,9 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    // destroy this frame. Save and dispatch share the original six-second limit.
    if(resumeWriting&&await resumeWriting.done!==true&&!resumeQueued)return {ok:false};
    if(!valid())return {ok:false};
+   // A completed failed background save must not disappear from the navigation
+   // barrier. Only this explicit action retries the latest bounded layout.
+   if(!resumeQueued&&resumeDesired&&resumeDesired.key!==resumeLast&&JSON.stringify(resumeDesired.expectedQuery)===dispatchQuery)resumeQueued=resumeDesired;
    while(resumeQueued){if(!valid())return {ok:false};cancel(resumeTimer);resumeTimer=null;if(await flushResume()!==true)return {ok:false};}
    if(!valid())return {ok:false};
    return runtime.sendMessage({v:1,type:issued.plan.mode==='native-control'?'HOST_UI_DISPATCH_NATIVE':'HOST_UI_DISPATCH_CURRENT',grantId:current.id,mountId:current.mountId,actionId:command.actionId,planRevision:command.planRevision,targetKey:command.targetKey});},{now:elapsedNow,schedule,cancel});

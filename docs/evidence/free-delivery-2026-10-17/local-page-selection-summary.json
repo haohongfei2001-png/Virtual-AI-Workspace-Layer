@@ -16755,5 +16755,42 @@
       },
       "scope": "No identity source, old receipt, native writes or request budget changes; J1/J4 stay PARTIAL; scales DEFERRED"
     }
+  },
+  "settledResumeSave20261020": {
+    "baseHead": "b6b6c7b35b5ca7d77ea8214866bd54111b7601cb",
+    "status": "PASS_SCOPED_OFFLINE",
+    "defect": "settled failed SAVE_VIEW vanished before explicit navigation; prior ACK could suppress A after an unknown committed B",
+    "fix": "one bounded current-query desired layout retained in RAM; explicit navigation saves it before native dispatch; any started save invalidates prior ACK; unstarted B cancelled when returning to acknowledged A",
+    "validation": {
+      "targetedUnit": 343,
+      "boundaryAndBuild": 397,
+      "actualPackagedNavigation": "PASS; settled-save failure blocks native dispatch, no repaint retry, later explicit success continues original feedback/return journey",
+      "J1": "9 original steps PASS, PARTIAL_J1_NOT_ACCEPTED; final source unchanged",
+      "independentReview": "no blocking finding"
+    },
+    "limits": [
+      "realChatGPT NOT_RUN",
+      "no new scope or old receipt restoration",
+      "original shared 6-second save+dispatch deadline retained",
+      "J4 not rerun for this slice",
+      "10k/100k DEFERRED"
+    ],
+    "artifacts": {
+      "vaiwl-settled-save-before.log": {
+        "rawHash": "917a7a0638e48732df228c325a4db4fbe132bbc98d4e4eace96a01ab78ef5bd1",
+        "savedHash": "367401e21eb6069dc939154f4535893a46e4a1a31e61e0d72cffec8d0c45d9e4"
+      },
+      "vaiwl-settled-save-final-unit.log": {
+        "rawHash": "47c29af07aa34a31635c7529758fd2b726f8cd472dd2f849c82ff3a8a3882b95",
+        "savedHash": "47c29af07aa34a31635c7529758fd2b726f8cd472dd2f849c82ff3a8a3882b95"
+      },
+      "vaiwl-settled-save-boundary.log": {
+        "rawHash": "54e877c080632a048387406c6f669f26c54ba7a0d594f1ee5377d213ed50bc17",
+        "savedHash": "54e877c080632a048387406c6f669f26c54ba7a0d594f1ee5377d213ed50bc17"
+      },
+      "vaiwl-settled-save-j1-summary.json": "PARTIAL_J1_NOT_ACCEPTED",
+      "vaiwl-settled-save-mv3-summary.json": "PASS"
+    },
+    "logNormalization": "trailing whitespace only; raw hashes retained"
   }
 }

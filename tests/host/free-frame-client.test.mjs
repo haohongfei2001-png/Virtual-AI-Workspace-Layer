@@ -441,3 +441,28 @@ for(const kind of ['backup','recovery','snippets'])test(kind+' return focuses on
   f.client.stop();
  }
 });
+
+for(const failure of ['denied','throw'])test('settled failed resume save is retried only by explicit navigation: '+failure,async t=>{
+ const f=await currentDispatchFixture();t.after(()=>f.client.stop());const send=f.runtime.sendMessage,packets=[];let saveOK=false;
+ f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_SAVE_VIEW'){packets.push(m);if(failure==='throw'&&!saveOK)return Promise.reject(Error('storage-unavailable'));return Promise.resolve({ok:saveOK});}if(m.type==='HOST_UI_DISPATCH_CURRENT'){packets.push(m);return Promise.resolve({ok:true,state:'already-current'});}return send(m);};
+ f.nav.onViewChange({...resumeLayout(),segment:0,scroll:566});await f.advance(100);await f.advance(500);
+ f.nav.onViewChange({...resumeLayout(),segment:0,scroll:566});await f.advance(100);assert.equal(packets.length,1,'settled failure and identical repaint must not automatically retry');
+ assert.equal((await f.nav.onDispatch(sameCurrentCommand())).state,'blocked');assert.deepEqual(packets.map(m=>m.type),['HOST_UI_SAVE_VIEW','HOST_UI_SAVE_VIEW']);
+ saveOK=true;assert.equal((await f.nav.onDispatch({...sameCurrentCommand(),actionId:'later-action'})).state,'already-current');
+ assert.deepEqual(packets.map(m=>m.type),['HOST_UI_SAVE_VIEW','HOST_UI_SAVE_VIEW','HOST_UI_SAVE_VIEW','HOST_UI_DISPATCH_CURRENT']);assert.equal(packets[2].view.scroll,566);
+});
+test('returning to last saved layout cancels obsolete queued save but supersedes an in-flight save',async t=>{
+ const f=await currentDispatchFixture();t.after(()=>f.client.stop());const send=f.runtime.sendMessage,packets=[];let hold=null;
+ f.runtime.sendMessage=m=>m.type==='HOST_UI_SAVE_VIEW'?(packets.push(m),hold?.promise??Promise.resolve({ok:true})):send(m);
+ const original={...resumeLayout(),segment:0,scroll:10},other={...original,scroll:50};f.nav.onViewChange(original);await f.advance(100);
+ f.nav.onViewChange(other);f.nav.onViewChange(original);await f.advance(100);assert.deepEqual(packets.map(m=>m.view.scroll),[10]);
+ hold=deferred();f.nav.onViewChange(other);await f.advance(100);f.nav.onViewChange(original);const pending=hold;hold=null;pending.resolve({ok:true});await drain();await f.advance(100);
+ assert.deepEqual(packets.map(m=>m.view.scroll),[10,50,10]);
+});
+
+test('lost save acknowledgement invalidates old deduplication even when user returns to prior layout',async t=>{
+ const f=await currentDispatchFixture();t.after(()=>f.client.stop());const send=f.runtime.sendMessage,saves=[];let ownerScroll=null;
+ f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_SAVE_VIEW'){ownerScroll=m.view.scroll;saves.push(ownerScroll);return ownerScroll===50?Promise.reject(Error('ack-lost-after-write')):Promise.resolve({ok:true});}if(m.type==='HOST_UI_DISPATCH_CURRENT'){assert.equal(ownerScroll,10);return Promise.resolve({ok:true,state:'already-current'});}return send(m);};
+ const original={...resumeLayout(),segment:0,scroll:10};f.nav.onViewChange(original);await f.advance(100);f.nav.onViewChange({...original,scroll:50});await f.advance(100);
+ assert.equal(ownerScroll,50);f.nav.onViewChange(original);assert.equal((await f.nav.onDispatch(sameCurrentCommand())).state,'already-current');assert.deepEqual(saves,[10,50,10]);
+});

@@ -29,6 +29,7 @@ try{
    globalThis.originalEditor=document.querySelector('textarea');globalThis.nativeClicks=[];
    document.addEventListener('click',event=>{const a=event.target.closest?.('aside a[href]');if(a)nativeClicks.push({href:a.href,isTrusted:event.isTrusted});},true);
   },{once:true});}
+  if(location.protocol==='chrome-extension:'&&globalThis.chrome?.runtime?.sendMessage){const send=chrome.runtime.sendMessage.bind(chrome.runtime);globalThis.resumeSaveFault={enabled:false,count:0};chrome.runtime.sendMessage=function(...args){if(resumeSaveFault.enabled&&args[0]?.type==='HOST_UI_SAVE_VIEW'){resumeSaveFault.count++;return Promise.resolve({ok:false,reason:'view-resume-unavailable'});}return send(...args);};}
   if(location.protocol==='chrome-extension:'&&globalThis.chrome?.runtime?.sendMessage){const send=chrome.runtime.sendMessage.bind(chrome.runtime);chrome.runtime.sendMessage=function(...args){const m=args[0],tracked=['HOST_UI_VIEW','HOST_UI_DISPATCH_CURRENT','HOST_UI_DISPATCH_NATIVE'].includes(m?.type);if(tracked&&m.type!=='HOST_UI_VIEW')globalThis.recordNavigationObservation({phase:'request',message:m});const pending=send(...args);if(tracked&&pending?.then)pending.then(reply=>globalThis.recordNavigationObservation({phase:'reply',message:m,reply:m.type==='HOST_UI_VIEW'?{state:reply?.state,navigation:reply?.navigation}:reply}),()=>{});return pending;};}
  },{origin:server.origin});
  const cdp=await context.browser().newBrowserCDPSession();({id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked}));
@@ -42,6 +43,19 @@ try{
  async function nativeState(){const observed=await page.evaluate(()=>({clicks:nativeClicks,editorSame:originalEditor===document.querySelector('textarea'),draft:originalEditor.value}));const attempts=await contentCDP.send('Runtime.evaluate',{contextId:contentWorld.id,returnByValue:true,expression:'globalThis.injectedClickAttempts'});return {attempts:attempts.result.value,...observed};}
  const link=frame.getByRole('link',{name:'Ordinary conversation',exact:true}).first();await link.waitFor({timeout:15000});
  await poll(()=>report.trace.some(x=>x.phase==='reply'&&x.message.type==='HOST_UI_VIEW'&&x.reply.navigation?.some(r=>r.refId===conversation&&r.plan.mode==='native-control')));
+ if(role==='sidebar'){
+  await settle(frame);await frame.evaluate(()=>{resumeSaveFault.enabled=true;});
+  await frame.locator('.theme-toggle').first().click();
+  await frame.waitForFunction(()=>resumeSaveFault.count>0,null,{timeout:15000});await settle(frame);
+  const saves=await frame.evaluate(()=>resumeSaveFault.count),beforeDispatch=report.trace.filter(x=>x.phase==='request'&&x.message.type==='HOST_UI_DISPATCH_NATIVE').length;
+  await link.click();const blocked=frame.locator('.navigation-feedback');await blocked.waitFor({state:'visible',timeout:10000});assert((await blocked.innerText()).includes('暂时无法打开'));
+  assert.equal(await frame.evaluate(()=>resumeSaveFault.count),saves+1);
+  assert.equal(report.trace.filter(x=>x.phase==='request'&&x.message.type==='HOST_UI_DISPATCH_NATIVE').length,beforeDispatch);
+  assert.equal((await nativeState()).attempts,0);assert.equal(page.url(),server.origin+'/');
+  await settle(frame);assert.equal(await frame.evaluate(()=>resumeSaveFault.count),saves+1,'blocked feedback repaint cannot retry failed save');
+  await frame.evaluate(()=>{resumeSaveFault.enabled=false;});
+  report.results.push({name:'settled-failed-layout-save-blocks-native-dispatch-with-explicit-feedback-and-no-background-retry',status:'PASS',fault:'FRAME_RPC_FAILURE_BEFORE_OWNER_SAVE_NOT_HOST_BEHAVIOR'});
+ }
  assert(await page.evaluate(()=>originalEditor===document.querySelector('textarea')&&originalEditor.value===''));
  const before=count(),pagesBefore=context.pages().length,start=report.trace.length;let opened=0;const onPage=()=>opened++;context.on('page',onPage);
  await settle(frame);await link.click();
