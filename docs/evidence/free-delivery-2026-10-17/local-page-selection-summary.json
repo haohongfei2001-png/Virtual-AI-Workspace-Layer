@@ -10951,5 +10951,130 @@
       "scaleAcceptance": "DEFERRED",
       "newCacheOrArtifactUpload": false
     }
+  },
+  "nativeMeCandidate20261019": {
+    "sourceHead": "000fae962dc3bbe965d14f583a5dc15f41bc75ba",
+    "decision": "B_CONCRETE_ENDPOINT_REQUIRES_PROVIDER_CONTRACT_AND_LIVE_VALIDATION",
+    "historicalEvidence": "dedicatedProfileNativeRead20261018",
+    "historicalScripts": [
+      {
+        "file": "native-me-historical-vaiwl-native-account-structure.py.gz",
+        "sha256": "02865e85ef3a58375e460795668d4a548528e38929d3b15a7900b952c44f5080",
+        "executedThisTurn": false
+      },
+      {
+        "file": "native-me-historical-vaiwl-native-account-status-guarded.py.gz",
+        "sha256": "831c79bfc708475acd2ddc02a9f2479809b84f4a47d79dead1155a3d0a9392aa",
+        "executedThisTurn": false
+      }
+    ],
+    "endpoint": "https://chatgpt.com/backend-api/me",
+    "observedMethod": "NOT_RECORDED",
+    "observedField": "JSON root id; diagnostic checked only isinstance(value,str)",
+    "observedResult": {
+      "status": 200,
+      "mime": "application/json",
+      "rootIdWasString": true
+    },
+    "notEstablished": [
+      "nonempty ID grammar and subject semantics",
+      "equality with session.user.id namespace",
+      "session expiry or bounded alternative freshness contract",
+      "cookie-only same-origin access without page Authorization",
+      "principal/roster atomic association across same-workspace user switch",
+      "current document and selection-epoch binding",
+      "logout and response-delay invalidation"
+    ],
+    "productionTransport": {
+      "currentPermissions": [
+        "webNavigation",
+        "webRequest"
+      ],
+      "webRequestResponseBodyAvailable": false,
+      "isolatedWorldCanSeePageFetchResponse": false,
+      "mainForwardedBodyIsIdentityProof": false,
+      "cdpDiagnosticIsProductionReceipt": false,
+      "debuggerPermissionAdded": false,
+      "cookiePermissionAdded": false,
+      "mainIdentityBridgeAdded": false,
+      "existingOwner": "Pinned chatgpt-session-v1 and future expiresAt required; diagnostic root ID must never be submitted as identity."
+    },
+    "minimalNextProbe": {
+      "status": "AUTHORIZED_PREPARED_NOT_EXECUTED",
+      "world": "packaged ISOLATED top frame in authorized dedicated profile",
+      "method": "GET",
+      "endpoint": "https://chatgpt.com/backend-api/me",
+      "credentials": "include",
+      "authorizationHeader": "NOT_READ_OR_SET",
+      "cache": "no-store",
+      "redirect": "error",
+      "deadlineMs": 6000,
+      "maxBodyBytes": 262144,
+      "attempts": 1,
+      "output": "status/MIME/redirect/challenge classification and own root-id validity boolean only; no raw ID, body, token or cookie output or persistence",
+      "identityGrant": false,
+      "databaseAccess": false,
+      "sessionRequest": false,
+      "accountsRequest": false,
+      "stopOn": "failure, challenge, redirect, invalid schema, deadline or document change; no fallback or retry",
+      "approvalBoundary": "User explicitly approved this one fixed isolated GET on 2026-10-19. Does not authorize production identity adoption, further attempts, new endpoints or permissions.",
+      "attemptsConsumed": 0
+    },
+    "browserAttempt": {
+      "fixedProfileConfirmed": true,
+      "cdpNetworkEnable": "OBSERVATION_TIMEOUT_OUTCOME_UNCONFIRMED",
+      "cdpReadEvents": "TIMEOUT_BEFORE_ANY_EVENTS_RETURNED",
+      "nativeWindow": "changed to another profile before action; invalid element rejected",
+      "newResponseBodyReceived": false,
+      "scopeEnabled": false
+    },
+    "references": [
+      "https://developer.chrome.com/docs/extensions/reference/api/webRequest",
+      "https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts",
+      "https://developer.chrome.com/docs/extensions/develop/concepts/network-requests"
+    ],
+    "releaseStatus": "NOT_RELEASE_READY",
+    "scaleAcceptance": "DEFERRED",
+    "preparedDiagnostic20261019": {
+      "status": "USER_REPORTED_RELOADED_CONTROL_STILL_UNAVAILABLE",
+      "productSourceHead": "bce071e3806026ea79eb3dc6692c631b1e2d1b51",
+      "sourceHashes": {
+        "tools/native-me-probe/reader.mjs": "996a0fa19860a90018f1a5d8f1e85189119a43f93a21aec5fa90ad03ac5f1c77",
+        "tools/native-me-probe/content.mjs": "bad83cbd43d88da225ac7e6224d4e644ce6452dc00712b2af5848fc7a43c3aa3",
+        "tools/native-me-probe/popup.mjs": "36018773666e791b9e1ad61ec655b6519804beadb2f71508542b6bd08bcc6908",
+        "tools/native-me-probe/build.mjs": "ccd74f0f62dc04396663a771e257b471b1401531e56d6036e7c142147f56d904",
+        "tests/host/native-me-probe.test.mjs": "827e69275233fcd649e0aa96d49f84bd2bbdb2761dda6ffced1551f84117e098"
+      },
+      "productionSourcesChanged": false,
+      "installedExtensionId": "dhhmohfnbnkojmahbmkhbdejocgohkcc",
+      "basePackageVerified": true,
+      "overlayFilesVerified": 187,
+      "sameInstallDirectory": true,
+      "previousPackageFullyBackedUp": true,
+      "newPermissions": [],
+      "activation": "Private diagnostic popup; explicit click only; packaged isolated receiver; target tab and fresh document key; no automatic request on install/reload. Temporary navigation remains linked.",
+      "singleAttempt": "Extension-private localStorage marker + Web Lock before dispatch; per-document latch; lost result does not reset marker. No private fields persisted. Never reset marker or reinstall to retry.",
+      "tests": {
+        "command": "node --test tests/host/native-me-probe.test.mjs",
+        "result": "PASS",
+        "count": 21,
+        "durationMs": 1199.164125,
+        "coverage": "Fixed request options, ID-only output, challenge/401/403/MIME/redirect/size rejection, streaming bound, deadline, document invalidation, concurrency, compiled isolated receiver and package permissions, cross-popup consumption before delivery",
+        "level": "Node and bundled VM; not actual MV3 or live verification",
+        "initialFailure": "VM test lacked TextEncoder global; 19 PASS / 1 FAIL. Supplied browser-standard fixture global; no product or threshold change."
+      },
+      "independentReview": "native_me_source_review: no code-level blocker after document key and route checks; Profile identity must still be verified externally.",
+      "live": {
+        "requestExecuted": false,
+        "attemptsConsumed": 0,
+        "result": "NOT_RUN",
+        "extensionReload": "USER_CONFIRMED_DONE",
+        "toolBlock": "Authorized-profile browser read timed out. Explicit chrome://extensions navigation rejected by browser URL policy (HTTP/HTTPS only; no alternate-surface workaround). Native foreground read also rejected because another profile contains unrelated private data.",
+        "nextAction": "Obtain authorized diagnostic popup control or user executes its explicit one-shot button and returns metadata-only result; do not re-send if consumed or uncertain.",
+        "homeReload": "TOOL_TIMEOUT_OUTCOME_UNCONFIRMED",
+        "nativeControl": "Still selected other profile; no further action on that window"
+      },
+      "releaseStatus": "NOT_RELEASE_READY"
+    }
   }
 }

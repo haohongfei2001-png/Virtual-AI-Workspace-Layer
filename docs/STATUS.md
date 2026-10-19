@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **一次 `/me` 验证已获批并备妥，尚未执行**：诊断仅在显式隔离包中使用原6秒/256KiB解析边界，固定GET、无Authorization复制、无重试；私有持久消耗标记在发送前落下，跨popup并发/丢回执也不再发。只返回状态与ID有效性，不接身份、scope或旧库。原安装目录已备份并更新187文件校验一致，未新增权限；正常产品源码与构建入口未改，临时导航保留。定向Node/打包VM验证成立，初始VM缺TextEncoder失败保留；不是实机通过。浏览器工具拒绝`chrome://extensions`且禁止替代通道绕过，另一路前台窗口是未授权资料页；已停该读取。用户已确认指定hongfei hao Profile重载；之后固定测试首页重载工具仍超时，原生控制仍落在另一Profile，未操作它。当前缺可控的指定诊断popup，继续唯一一次请求前必须确认接收器；许可未消耗、真实结果NOT_RUN，不能宣称403恢复。具体源码hash/检查/拒绝沿用原`nativeMeCandidate20261019.preparedDiagnostic20261019`；完整Free仍NOT_RELEASE_READY，规模DEFERRED。
+
+- **身份候选已具体化，不能直接接线（结论B）**：找回旧诊断源码，`nativeMe`对应`/backend-api/me`、JSON根`id`仅字符串检查；旧200不是空证据，但请求方法、主体命名空间/expiry与生产取得方式均未验证。普通MV3的webRequest无响应体，隔离世界不能旁听页面fetch正文，CDP记录不可贴成扩展授权；未启MAIN身份桥或debugger/cookies权限。最小后续是用户已另行明确批准的一次包内隔离固定GET，仅核验cookie正常访问及根ID结构，不发scope、不读旧库、不重试；原账户/当前空间/成员/活动完整目标保持。此次指定Profile被动事件读取也在返回前超时，原生窗口切换导致动作拒绝，没有新响应或403恢复结论。旧诊断源码已按hash归档且未执行；未跑无关回归。见原计划及 `nativeMeCandidate20261019`，完整Free仍NOT_RELEASE_READY、规模DEFERRED。
+
 - **同步已恢复，新启动候选Linux单项通过（8ebba91 / CI39208346430）**：bce071e产品修复及8ebba91检查点已正常快进推送原Free分支，ahead0/behind0，2258数字副本与3stash保全。仅一次既有临时Project诊断：显示两条→搜索→原生打开/返回→失效清空/重新读取全部成立，身份/详情请求零、DB为空、草稿保持；Linux旅程1458.930ms，runner含安装清理34秒，182产品及6测试hash与本地完全相同。其他三job有意SKIPPED，不计完整CI，不将本次PASS追溯解释39193142624或称提速。原网络失败保留为历史；真实固定标签AX仍15秒超时，原生窗口为另一正在使用的Profile，未操作它，更新后真实闭环仍NOT_VERIFIED。可信身份/空间、正向成员/本人活动、恢复及G/U仍开放，10k/100k DEFERRED，NOT_RELEASE_READY。原证据 `temporaryBootstrap20261019.linuxCandidate20261019`。
 
 - **历史：本地检查点当时未同步（2026-10-19，现已恢复，见上项）**：产品提交 `bce071e3806026ea79eb3dc6692c631b1e2d1b51` 已保存，tracked tree在提交后干净，2258数字副本与3stash保留。正常push在连接github.com:443阶段75秒超时，独立8秒只读连通检查同样失败；未改远端/代理/DNS/凭据，未强推或改写提交。此前fetch成功且与远端ce8ffb3一致；本次新增代码尚未到PR16，也没有该候选Linux CI结果。恢复连接后正常推送当前分支即可，不重做修复或验收。
