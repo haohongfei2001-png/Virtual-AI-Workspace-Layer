@@ -35,6 +35,16 @@ test('shared elapsed budget is not restarted for accounts or final me',async()=>
  let time=0;const {probe,calls}=fixture({clock:()=>time,alter(n){time+=n===1?3500:2500;}});
  const r=await probe.run();assert.equal(r.reason,'request-timeout');assert.equal(calls.length,2);assert.equal(r.samePrincipal,false);
 });
+test('malformed roster reports a fixed branch, not zero contexts, and never dispatches final me',async()=>{
+ const {probe,calls}=fixture({alter(n,next){if(n===2)next.body={accounts:{default:{account:{account_id:'PRIVATE_ID',structure:'personal'}}}};}});
+ const r=await probe.run();assert.equal(r.reason,'invalid-accounts-schema');assert.equal(r.schemaIssue,'default-canonical-missing');
+ assert.equal(r.contextCount,null);assert.equal(r.unknownKindCount,null);assert.equal(r.rosterValid,false);assert.equal(r.identityEnabled,false);assert.equal(calls.length,2);
+ assert(!JSON.stringify(r).includes('PRIVATE'));assert.deepEqual(await probe.run(),{state:'already-consumed'});assert.equal(calls.length,2);
+});
+test('valid empty roster reports actual zero without enabling identity',async()=>{
+ const {probe}=fixture({alter(n,next){if(n===2)next.body={accounts:{}};}});const r=await probe.run();
+ assert.equal(r.rosterValid,true);assert.equal(r.contextCount,0);assert.equal(r.unknownKindCount,0);assert.equal(r.schemaIssue,null);assert.equal(r.identityEnabled,false);
+});
 test('principal change rejects candidate without exposing either ID',async()=>{
  const {probe}=fixture({alter(n,next){if(n===3)next.body={id:'different-private'};}});const r=await probe.run();assert.equal(r.reason,'principal-changed');assert.equal(r.samePrincipal,false);assert(!JSON.stringify(r).includes('private'));
 });

@@ -11143,7 +11143,7 @@
       "releaseStatus": "NOT_RELEASE_READY"
     },
     "nextContractProposal": {
-      "status": "USER_APPROVED_CANDIDATE_IMPLEMENTED_LIVE_NOT_RUN",
+      "status": "APPROVED_CHAIN_CONSUMED_STOPPED_AT_ACCOUNTS_SCHEMA",
       "requestSequenceMaximum": [
         "GET /backend-api/me",
         "GET /backend-api/accounts/check/v4-2023-04-27",
@@ -11167,8 +11167,8 @@
     },
     "candidateChain20261019": {
       "authorization": "Explicit user reply approving candidate development and one bounded me/accounts/me verification; separate from consumed single-me permission",
-      "status": "OFFLINE_MV3_VERIFIED_LIVE_RESULT_UNCONFIRMED",
-      "attemptsConsumed": 0,
+      "status": "LIVE_TWO_READS_200_ACCOUNTS_SCHEMA_REJECTED",
+      "attemptsConsumed": 1,
       "tests": {
         "kind": "NODE_AND_BUNDLED_VM_NOT_REAL_MV3",
         "passed": 45,
@@ -11213,7 +11213,7 @@
         "sha256": "4abf2fac32078a7feadfe948d8a7e1f29131b394ce1a55976db17771fdd28be7"
       },
       "agentIssuedLiveRequests": 0,
-      "liveExecution": "Latest observed preflight returned not-ready-no-request before consumption. Final lifecycle package prepared; user asked to reload and execute once. Re-read current result before any subsequent action; do not infer future consumption from this snapshot.",
+      "liveExecution": "User completed final reload and one approved execution. Popup result read via native Chrome accessibility; execute disabled. Two reads, stop at accounts schema; no final me and no retries. Existing original body discarded by design.",
       "packagedMV3": {
         "status": "PASS_PACKAGED_OFFLINE_CANDIDATE",
         "browserVersion": "155.0.8059.80",
@@ -11963,6 +11963,86 @@
         "independentPRHeadConfirmed": true,
         "baseUnchanged": true,
         "priorFetchLowSpeedFailureRetained": true
+      },
+      "previousLiveCheckpoint582d7a0": {
+        "status": "OFFLINE_MV3_VERIFIED_LIVE_RESULT_UNCONFIRMED",
+        "attemptsConsumed": 0,
+        "agentIssuedLiveRequests": 0,
+        "liveExecution": "Latest observed preflight returned not-ready-no-request before consumption. Final lifecycle package prepared; user asked to reload and execute once. Re-read current result before any subsequent action; do not infer future consumption from this snapshot."
+      },
+      "liveRequests": 2,
+      "liveResult20261019": {
+        "sourceCheckpoint": "582d7a045bc90099556151f049d972749d374f7d",
+        "source": "Live native Chrome accessibility of existing diagnostic popup after user completed final reload and once execution",
+        "result": {
+          "state": "finished",
+          "stage": "accounts",
+          "requests": 2,
+          "status": 200,
+          "jsonMime": true,
+          "redirected": false,
+          "challenge": false,
+          "firstIdValid": true,
+          "lastIdValid": false,
+          "samePrincipal": false,
+          "rosterValid": false,
+          "contextCount": 0,
+          "unknownKindCount": 0,
+          "sourceExpiryKnown": false,
+          "localFreshnessMaxMs": 60000,
+          "identityEnabled": false,
+          "reason": "invalid-accounts-schema"
+        },
+        "executeButtonDisabled": true,
+        "permissionConsumed": true,
+        "requestsTriggeredBy": "user approved once button",
+        "agentRepeatedRequests": 0,
+        "thirdRequestSent": false,
+        "interpretation": "First me ID grammar passed; accounts response HTTP200 JSON/no redirect/no challenge, strict roster parser rejected. Old summary default count0 is NOT observed empty roster. Final principal comparison NOT_RUN. Exact failed branch not retained; cannot reconstruct private body.",
+        "normalSession403": "NOT_RETESTED_OR_CLOSED",
+        "productionIdentityEnabled": false,
+        "oldDatabaseEnabled": false,
+        "retainedPrivateData": false
+      },
+      "rosterDiagnostics20261019": {
+        "baseHead": "582d7a045bc90099556151f049d972749d374f7d",
+        "issue": "All roster rejection branches shared one generic error; old default count0 obscured unparsed vs empty. Current real failure cannot be localized from existing summary.",
+        "change": "Retain original parser acceptance/rejection and error message. WeakMap attaches only fixed branch enum to actual parser Error; no input retained. Candidate copies enum only. Unparsed counts null, valid empty roster0. No new live requests or marker changes.",
+        "liveRootCause": "NOT_ESTABLISHED",
+        "historicalEvidenceChecked": "modernNativeCompatibility20261018 already supports observed canonical/default aliases; no basis to blame this real failure on aliases or any specific field.",
+        "tests": {
+          "passed": 169,
+          "failed": 0,
+          "skipped": 0,
+          "durationMs": 541.367459,
+          "kind": "NODE_AND_BUNDLED_VM; NOT_NEW_REAL_MV3",
+          "command": "node --test tests/host/session-roster-diagnostic.test.mjs tests/host/session-roster-alias.test.mjs tests/host/session-provider.test.mjs tests/host/isolated-session-reader.test.mjs tests/host/native-me-candidate.test.mjs tests/host/native-me-probe.test.mjs"
+        },
+        "review": "Independent read-only review no blocker; rejection set unchanged, no private data in enum or forged diagnostics.",
+        "installedPackageChanged": false,
+        "newLiveRequests": 0,
+        "artifacts": {
+          "native-accounts-schema-diagnostic-red.tap.gz": "951e22393a5c6b3e76e6941613decbaf915a0ca70545a9eb66ad26097df4db04",
+          "native-accounts-schema-diagnostic-targeted.tap.gz": "130cfda2437baa4bec7802aca4a27baf6762ffe2b12ab5f28c71b2583adac02b"
+        },
+        "sourceHashes": {
+          "src/host/session-identity.mjs": "dfe7c841807924a550f01611c7aeb991830781e0cd983792513e3ea10051e87d",
+          "tools/native-me-probe/candidate.mjs": "3bafd41de1014851b6cb902af261a47453d0dc16550e4a096f47164ec4dc0d66",
+          "tests/host/session-roster-diagnostic.test.mjs": "5ea8965140e139eb95d257512293867e47b1aeb1ed6530483aa1def6da8e0fff",
+          "tests/host/native-me-candidate.test.mjs": "a00bde2205ed6257491014d6ab014ba96cd4a7f3dcfb4135683bf5d9116eca61"
+        }
+      },
+      "nextStructuralReadProposal": {
+        "authorization": "PENDING_NEW_EXPLICIT_PERMISSION",
+        "endpoint": "GET https://chatgpt.com/backend-api/accounts/check/v4-2023-04-27",
+        "maxRequests": 1,
+        "deadlineMs": 6000,
+        "maxBodyBytes": 1048576,
+        "retries": 0,
+        "output": "Fixed schema branch code only; no IDs/names/list/credential values",
+        "meOrSessionRequests": 0,
+        "identityOrDatabaseEnabled": false,
+        "executed": false
       }
     }
   }

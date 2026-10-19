@@ -1,4 +1,4 @@
-import {readSessionJSON,sessionContexts} from '../../src/host/session-identity.mjs';
+import {readSessionJSON,sessionContexts,sessionContextSchemaIssue} from '../../src/host/session-identity.mjs';
 import {withRequestDeadline} from '../../src/data/request-deadline.mjs';
 
 const me='https://chatgpt.com/backend-api/me';
@@ -15,7 +15,7 @@ export function createNativeMeCandidate({fetch=globalThis.fetch,now=()=>performa
   spent=true;
   const controller=new AbortController(),combined=signal?AbortSignal.any([signal,controller.signal]):controller.signal;
   const started=now();let last=started,onAbort,firstId=null,contexts=null;
-  const summary={state:'finished',stage:'before-me',requests:0,status:null,jsonMime:false,redirected:false,challenge:false,firstIdValid:false,lastIdValid:false,samePrincipal:false,rosterValid:false,contextCount:0,unknownKindCount:0,sourceExpiryKnown:false,localFreshnessMaxMs:60000,identityEnabled:false,reason:'transport-failed'};
+  const summary={state:'finished',stage:'before-me',requests:0,status:null,jsonMime:false,redirected:false,challenge:false,firstIdValid:false,lastIdValid:false,samePrincipal:false,rosterValid:false,contextCount:null,unknownKindCount:null,schemaIssue:null,sourceExpiryKnown:false,localFreshnessMaxMs:60000,identityEnabled:false,reason:'transport-failed'};
   const check=()=>{
    const time=now();if(!Number.isFinite(started)||!Number.isFinite(time)||time<last||time-started>=6000)throw Error('request-timeout');last=time;
    if(combined.aborted||!isCurrent())throw Error('document-changed');
@@ -39,7 +39,7 @@ export function createNativeMeCandidate({fetch=globalThis.fetch,now=()=>performa
     if(lastId!==firstId)throw Error('principal-changed');
     summary.samePrincipal=true;summary.reason='candidate-consistent-not-authorized';
    })()]),{timeoutMs:6000,now});check();
-  }catch(error){summary.samePrincipal=false;summary.reason=reasons.has(error?.message)?error.message:'transport-failed';}
+  }catch(error){summary.samePrincipal=false;summary.reason=reasons.has(error?.message)?error.message:'transport-failed';summary.schemaIssue=sessionContextSchemaIssue(error);}
   finally{firstId=null;contexts=null;combined.removeEventListener('abort',onAbort);controller.abort();}
   // Snapshot prevents a late uncancellable transport mutating the visible result.
   result=Object.freeze({...summary});return result;
