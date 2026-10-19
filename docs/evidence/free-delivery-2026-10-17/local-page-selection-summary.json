@@ -5944,7 +5944,8 @@
       },
       "installed-provider-call": {
         "failure": "evaluation-exception"
-      }
+      },
+      "atMeaning": "Diagnostic script initialization UTC; approximate correlation window, not exact request/response event UTC."
     },
     "currentInstalledProviderRequest": {
       "kind": "SAME_WORKER_REQUEST_COMPARE",
@@ -6003,7 +6004,8 @@
           "accept": "application/json",
           "signalAborted": false
         }
-      }
+      },
+      "atMeaning": "Diagnostic script initialization UTC; approximate correlation window, not exact request/response event UTC."
     },
     "comparison": {
       "equal": [
@@ -6040,7 +6042,8 @@
         "2026-10-18T19:33:26.836Z",
         "2026-10-18T19:34:11.733Z"
       ],
-      "safeAttachments": "Only these sanitized statuses, options, version and Ray IDs; no HAR/cookies/tokens/body/private titles or IDs."
+      "safeAttachments": "Only these sanitized statuses, options, version and Ray IDs; no HAR/cookies/tokens/body/private titles or IDs.",
+      "utcTimesMeaning": "Diagnostic script starts only. Original scripts did not retain network event UTC; correlate approximately using the corresponding CF-Ray."
     },
     "proposalAwaitingApproval": {
       "name": "Temporary document-only read-only native navigation",
@@ -6139,6 +6142,15 @@
           "apiConfirmedRemoteHead": "b1155a037b67bea0335d54ea72b88c8ae6ea23d5",
           "action": "Do not replay that commit; continue only with the newly authorized follow-up receipt checkpoint."
         }
+      },
+      "diagnosticTimestampCorrection20261019": {
+        "sourceComment": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6257720693",
+        "verification": "Archived original scripts inspected without executing them. Both initialize report.at with new Date().toISOString() at line 3, before browser/worker connection; line 12 records request/response metadata without timestamps. Uncompressed source hashes match the existing evidence entries.",
+        "meaning": "2026-10-18T19:33:26.836Z and 2026-10-18T19:34:11.733Z are diagnostic script start times / approximate correlation windows. Exact network request and response UTC were not retained and have not been recovered.",
+        "unchanged": "Original timestamps, Ray IDs, challenge results and archived scripts remain unmodified. No new browser access or session request.",
+        "externalStatus": "SENT_VERIFIED_IN_SAME_SUPPORT_THREAD",
+        "scope": "Factual qualification of the already sent minimal diagnosis; no new private data, interface conclusion or product acceptance.",
+        "externalReceipt": "Explicit approval received for the complete correction text; sent once in the existing thread and independently read back with SENT. No new private data or native request; not a technical resolution."
       }
     },
     "requestChain20261019": {
@@ -10050,5 +10062,55 @@
         }
       }
     }
+  },
+  "focusReturn20261019": {
+    "baseCommit": "54fc6b873bf5b255ed2ee10832bc1aeec49dc93a",
+    "problem": "Closing search or working set at the 30-day oldest boundary tried to focus a disabled history button; a retained history key could likewise become disabled. The fallback workspace also lacked a stable focus key across subsequent same-scope repaints.",
+    "fix": "Preserve original enabled key first; skip disabled nodes and confirm real ShadowRoot.activeElement before stopping. Fall back to the current horizon control or workspace; give workspace a stable presentation-only key. Existing document focus and scope/root invalidation guards remain.",
+    "originalRed": {
+      "browser": "156.0.8078.4",
+      "cases": 5,
+      "failed": 4,
+      "passed": 1,
+      "elapsedMs": 1345.406916,
+      "scope": "Real headless iframe/shadow DOM with synthetic DTO, not MV3."
+    },
+    "validation": {
+      "mechanism": {
+        "cases": 5,
+        "pass": 5,
+        "elapsedMs": 938.984458,
+        "closeThenFreshProjection": true,
+        "enabledFocusRetained": true,
+        "parentNativeFocusAndDraftRetained": true
+      },
+      "targeted": {
+        "pass": 416,
+        "fail": 0,
+        "skip": 0,
+        "durationMs": 4445.4565
+      },
+      "packaged": {
+        "status": "PASS",
+        "kind": "ACTUAL_MV3_OFFLINE_VISIBLE_ACTIONS",
+        "elapsedBeforeCleanupMs": 7793.497458,
+        "journey": "Settings/snippets/backup/recovery at desktop/narrow light/dark; sidebar search → actual known result → Enter close → current connected workspace focus. Native document/editor/draft/File unchanged.",
+        "workerNetworkBlocked": true,
+        "sourceStable": true,
+        "testStable": true,
+        "manifestStable": true,
+        "sourceFiles": 181,
+        "actualWorkspaceDocumentAndParentFocus": true
+      }
+    },
+    "intermediateFailures": "Initial sandbox launch SIGABRT before tests. Three later MV3 return checks failed; bounded focus events showed actual workspace focus while the locator callback reported no active element. Oracle now resolves unique current root and active element in one browser task. Original failed runs remain FAIL; no claim that every earlier failure was solely observer-related.",
+    "review": "Independent read-only final review found no blocker. Oracle atomically resolves the unique current connected root; release run also requires document.hasFocus and the exact parent workspace iframe, not merely a retained shadow focus.",
+    "timing": "Original failed mechanism 1.345s did not complete the required behavior; final mechanism and MV3 journeys are different scopes. No product performance improvement claim or comparable successful old full journey.",
+    "boundaries": "No real Profile install/read, new identity source, permissions or production budgets changed. Not full v2.7/IME/G/U/J4. 10k/100k DEFERRED; complete Free NOT_RELEASE_READY.",
+    "evidence": {
+      "path": "docs/evidence/free-delivery-2026-10-17/focus-return-20261019.json.gz",
+      "sha256": "b4c6e15a8d8944085832b209ca2b8237c7b5e6e80f3d596ec9248e0f153b7afb"
+    },
+    "ci": "New focus mechanism added to existing non-MV3 layout step; packaged keyboard return joins existing MV3 visible-actions journey. No new runner, cache or upload. New candidate Linux outcome pending."
   }
 }

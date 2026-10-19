@@ -345,7 +345,19 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       const outside=e=>{if(!e.composedPath().includes(popup)&&!e.composedPath().includes(trigger))closeMenu(false);};menu={n:popup,trigger,outside};trigger.setAttribute('aria-expanded','true');head.append(popup);doc.addEventListener('pointerdown',outside,true);popup.querySelector('button')?.focus();
     },'','square card-actions'),'more');trigger.dataset.focusKey='actions:'+g.id;trigger.setAttribute('aria-haspopup','menu');trigger.setAttribute('aria-expanded','false');head.append(trigger);}
   function focusState(){if(framed&&doc.hasFocus?.()===false)return null;for(const root of [roots?.sidebar,roots?.workspace]){const n=root?.shadow?.activeElement;if(n?.dataset.focusKey)return {root,key:n.dataset.focusKey,start:n.selectionStart,end:n.selectionEnd};}return null;}
-  function restoreOwnedFocus(f){if(!f||framed&&doc.hasFocus?.()===false)return;const key=f.key==='关闭设置'&&!settingsOpen?'workspace-settings':f.key;const n=[...f.root.shadow.querySelectorAll('[data-focus-key]')].find(n=>n.dataset.focusKey===key);if(n){n.focus({preventScroll:true});if(n.setSelectionRange&&typeof f.start==='number')n.setSelectionRange(f.start,f.end);}else{(f.root.shadow.querySelector('[aria-label="较早的30日"]')??f.root.shadow.querySelector('.workspace'))?.focus({preventScroll:true});}}
+  function restoreOwnedFocus(f){
+    if(!f||framed&&doc.hasFocus?.()===false)return;
+    const key=f.key==='关闭设置'&&!settingsOpen?'workspace-settings':f.key,shadow=f.root.shadow;
+    const n=[...shadow.querySelectorAll('[data-focus-key]')].find(n=>n.dataset.focusKey===key);
+    // A retained key (or the history fallback) may now be disabled. Browser
+    // focus() silently ignores that element, so confirm focus before returning.
+    for(const target of [n,shadow.querySelector('[aria-label="较早的'+span()+'日"]'),shadow.querySelector('.workspace')]){
+      if(!target||target.disabled)continue;
+      target.focus({preventScroll:true});if(shadow.activeElement!==target)continue;
+      if(target===n&&n.setSelectionRange&&typeof f.start==='number')n.setSelectionRange(f.start,f.end);
+      return;
+    }
+  }
   function render(){if(!roots||!view)return;const focused=focusState();view.sidebarScroll=roots.sidebar?.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;closeMenu(false);
     const selected=current().selected;
     if(selected&&lastSelected!==adapter.currentURL()){view.sidebarOpen.add(selected.id);lastSelected=adapter.currentURL();selectionPending=true;}
@@ -363,7 +375,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const independent=current().independent;if(independent&&!frameProjection){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}if(free()){appendFreeList(list,'noProject',0,true);appendFreeList(list,'unknown',0,true);}if(frameProjection)appendCurrentContext(list);panel.append(list);side.append(panel);list.scrollTop=view.sidebarScroll??0;list.addEventListener('scroll',()=>{if(view){view.sidebarScroll=list.scrollTop;emitView();}},{passive:true});sidebarKey=nextSidebarKey;sidebarDirty=false;locateCurrent();
     }
     if(!roots.workspace){restoreOwnedFocus(focused);emitView();return;}
-    const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-segment':String(view.segment)});roots.workspace.scroller=page;page.addEventListener('scroll',()=>{if(roots?.workspace?.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){view.scroll=page.scrollTop;emitView();}},{passive:true});
+    const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-focus-key':'workspace','data-segment':String(view.segment)});roots.workspace.scroller=page;page.addEventListener('scroll',()=>{if(roots?.workspace?.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){view.scroll=page.scrollTop;emitView();}},{passive:true});
     renderNavigationFeedback(page);
     const currentSlot=frameProjection&&searchQuery===null&&!view.worksetOpen?node(doc,'div',{}):null;if(currentSlot)page.append(currentSlot);
     if(frameProjection&&surface.role==='workspace'){

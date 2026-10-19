@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **关闭查找/工作集后的键盘焦点已修复**：30日末段的禁用历史按钮曾吞掉焦点返回；历史按钮自身变禁用也有同错。现确认实际聚焦成功后才结束恢复，并给workspace稳定键承接后续同scope重绘，原生失焦/scope护栏保留。旧真实headless 5场景4FAIL/1PASS；修复后关闭→刷新及历史边界通过。实际MV3合批完成设置/片段/备份/恢复（明暗/窄屏）→侧栏查找结果→Enter关闭返回当前workspace，7.793s含启动/旅程、不含清理，原文档/草稿/File保持，source/test/manifest稳定。416受影响导航/包/隐私/CI回归通过；最终独审无阻断；实际文档与准确父iframe焦点也列为必要断言。联调原FAIL与沙箱启动失败完整保留；观察器改为同任务读取当前root与activeElement，避免拿被重绘替换的节点判失败，不追溯改判。仅关闭这一交互缺陷，不是完整v2.7/真实IME/宿主恢复；Linux新候选待CI，10k/100k DEFERRED。原证据`focusReturn20261019`。
+
+- **支持诊断时间字段已纠正**：核对dot6257720693及原归档脚本，两组UTC均在连接浏览器前初始化，含义为“诊断脚本开始／近似关联窗口”，不是精确请求或响应UTC；原监听未保存网络事件时间，不能由elapsed倒推。原Ray、403结果、脚本与历史数值保留；没有重新请求session。仓库已补字段限定；用户追加许可后更正已发原工单并独立核验SENT，未新增私人数据或请求，人工技术结论仍未收到。原证据`real403RequestComparison20261019.supportContact20261019.diagnosticTimestampCorrection20261019`。
+
 - **支持建议的替代能力已核对，尚不能替换宿主接入**：官方[SIWC quickstart](https://developers.openai.com/siwc/quickstart)明确identity与Responses API scope均不授予既有ChatGPT聊天访问权；[OSS说明](https://developers.openai.com/siwc/token-sharing-open-source)的workspace是注册时选择的空间。工程判断：这些凭据本身不证明当前ChatGPT文档的账户/空间，不能直接贴入现有ScopeAuthority，也不能把推理API当原生Project/成员读取。未新增登录、token存储、权限或付费调用。用户追加许可后，两个具体问题（当前网页身份/context见证、既有Project/聊天元数据接口）已回复同一官方支持线程并核对SENT；随后AI自动回执称已转支持专员、预计数日回复，尚无人工技术结论或可用合同。无新增私人数据。临时导航与全部Free目标保留。原证据`real403RequestComparison20261019.supportContact20261019.publicCapabilityCheck20261019`。本次窄查手动历史/UNKNOWN/备份恢复入口未发现新的未接线点，不增加相同测试或运行规模门禁。
 
 - **403最小诊断已送达官方支持并收到AI辅助回复**：按用户明确授权，仅发送固定session GET的403/HTML/challenge、页面可用且手动刷新无挑战，以及既有两组UTC/Ray；无HAR、凭据、私人标题/ID或正文。回复称该session入口不是面向第三方扩展的受支持接口，但未核对Ray或给出具体阻断规则，也未提供现有ChatGPT Project/聊天/current-workspace的替代读取接口。不是人工工程结论或403修复；工单/邮件标识仅留用户私有记录。Work本地浏览器工具仍返回disabled，未绕限制；邮件通道已完成本次发送，无需用户再刷新/重登。下一外部关口是网站方确认受支持的身份/current-context来源；未自行启用新来源、付费API或修改产品目标。

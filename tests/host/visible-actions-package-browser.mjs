@@ -68,6 +68,23 @@ try{
  for(const [width,colorScheme]of [[1440,'dark'],[420,'dark'],[420,'light']]){
   await page.setViewportSize({width,height:1000});await page.emulateMedia({colorScheme});frames=await workspace();const toggle=frames.workspace.getByRole('button',{name:'工作空间设置',exact:true});if(await toggle.getAttribute('aria-expanded')!=='true')await toggle.click();await frames.workspace.getByRole('region',{name:'工作空间设置',exact:true}).waitFor();await checkSettings();await screenshot(`${width}-${colorScheme}-settings`);await panels(`${width}-${colorScheme}`);
  }
+ // Exercise the actual cross-frame search request and keyboard return. At this
+ // fixture's history boundary the older control exists but cannot take focus.
+ frames=await workspace();
+ await frames.sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
+ const search=frames.workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true});await search.fill('Ordinary conversation');
+ await frames.workspace.locator('.search-results [data-ref-id]').first().waitFor();
+ const closeSearch=frames.workspace.getByRole('button',{name:'关闭派生查找',exact:true});await closeSearch.focus();
+ await frames.workspace.evaluate(()=>{globalThis.focusReturnTrace=[];for(const type of ['focusin','focusout'])document.addEventListener(type,e=>{if(focusReturnTrace.length<24){const n=e.composedPath()[0];focusReturnTrace.push({type,at:performance.now(),tag:n.tagName,label:n.getAttribute?.('aria-label'),key:n.dataset?.focusKey,documentFocused:document.hasFocus()});}},true);});
+ await closeSearch.press('Enter');
+ await frames.workspace.locator('.arrows').waitFor();
+ assert.equal(await frames.workspace.getByRole('button',{name:'较早的30日',exact:true}).isDisabled(),true);
+ // Resolve the current root and active element in one browser task. A locator
+ // handle can refer to a removed workspace after an intervening owner repaint.
+ const focusState=await frames.workspace.evaluate(()=>{const roots=[...document.querySelectorAll('[data-vaiwl-owned]')].filter(n=>n.shadowRoot?.querySelector('.workspace'));if(roots.length!==1)return {focusReturned:false,roots:roots.length};const shadow=roots[0].shadowRoot,n=shadow.querySelector('.workspace'),active=shadow.activeElement;return {focusReturned:active===n&&n.isConnected,documentFocused:document.hasFocus(),documentActive:document.activeElement?.tagName,shadowActive:active?{tag:active.tagName,label:active.getAttribute('aria-label'),key:active.dataset.focusKey}:null,trace:globalThis.focusReturnTrace};});report.focusReturn=focusState;
+ report.parentFocus=await page.evaluate(expected=>({tag:document.activeElement?.tagName,workspaceActive:document.activeElement?.tagName==='IFRAME'&&document.activeElement.src===expected}),frames.workspace.url());
+ const {focusReturned}=focusState;assert(focusReturned&&focusState.documentFocused&&report.parentFocus.workspaceActive,'search keyboard return must land in the focused current workspace frame');
+ report.steps.push({journey:'sidebar-search-known-chat-keyboard-return',focusReturned,olderDisabled:true});
  await continuity();assert.deepEqual(report.errors,[]);assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');report.browserVersion=context.browser().version();report.status='PASS';
 }catch(error){report.status='FAIL';report.error=error.stack;process.exitCode=1;}
 finally{
