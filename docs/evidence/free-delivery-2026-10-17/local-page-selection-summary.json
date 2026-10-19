@@ -16917,5 +16917,55 @@
     "elapsedTime": "NOT_RECORDED_BY_ORIGINAL_RUNNER",
     "remoteHeadConfirmed": "9ae9d531a02897cb00cc2f26e6b2421ab2005952",
     "push": "FAILED_LOW_SPEED_15_SECONDS_NO_FORCE_NO_RETRY_LOOP"
+  },
+  "hiddenDirtyObserver20261020": {
+    "baseCommit": "9d32d92099c223a714e3f908ba8dd5e00f1c67a4",
+    "ciRun": 39341557720,
+    "ciSource": "b7185ae0c750d1bda09ede10d8d4abc4a84c2f2f",
+    "ciFailure": "183 frame polls: hidden dirty hint, no running read/save; worker readiness never checked",
+    "rootCause": "Test-only prerequisite treated deferred hidden invalidation as scheduled work",
+    "change": "Expose pure backgroundRefreshAllowed; deferred dirty accepted only when false; all active work flags and final worker CHECK/RELEASE remain",
+    "targetedTests": {
+      "pass": 186,
+      "fail": 0,
+      "skip": 0
+    },
+    "fullNodeBeforeObserverChange": {
+      "tests": 9395,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 90012.282416
+    },
+    "normal": "PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY",
+    "mutant": "EXPECTED_FAIL_J4_PEER_CURRENT_SCOPE_TIMEOUT",
+    "sourceMatched": true,
+    "browserLimitation": "Local normal and mutant did not encounter dirty=true; actual-client tests reproduce both surfaces. Linux candidate not yet verified.",
+    "realChatGPT": "NOT_RUN",
+    "files": {
+      "ci-normal": {
+        "file": "20261020-hidden-dirty-ci-normal.json.gz",
+        "sha256": "008b96a9f744362476c2f982391c470510ac13723b71bb5bd02e041fb5a858eb"
+      },
+      "before": {
+        "file": "20261020-hidden-dirty-before.log.gz",
+        "sha256": "f86e8f314d0a638c11b849bbca8b382baa84ba5511ec46c4d4bc4c2f04e94437"
+      },
+      "after": {
+        "file": "20261020-hidden-dirty-after.log.gz",
+        "sha256": "ee40d35ca0f6ba8a2ceb097c7c2b391868a74b7770b08c688acf1084d1d884df"
+      },
+      "normal": {
+        "file": "20261020-hidden-dirty-normal.json.gz",
+        "sha256": "71968ab19faa26ee052214ea01603c5c91b76196326a15fd0c5514e5d1888925"
+      },
+      "mutant": {
+        "file": "20261020-hidden-dirty-mutant.json.gz",
+        "sha256": "f587a3b9bd858b55815e38631f5424a2b39c4d950affc7b230d7c19e096340f0"
+      },
+      "full-node": {
+        "file": "20261020-hidden-dirty-full-node.log.gz",
+        "sha256": "e6c23df8c27784a22cd5493773af626815072c1962fa95d7213544a33ea1592d"
+      }
+    }
   }
 }

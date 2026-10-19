@@ -21,8 +21,20 @@ test('actual frame timer, queue and in-flight save remain non-idle without mutat
  f.client.stop();assert.equal(framePendingWorkIsIdle(read(),'workspace'),false,'cleared/stopped is not a ready frame');
 });
 test('missing, wrong-role, extra-field and any pending flag cannot prove readiness',()=>{
- const state={role:'workspace',closed:false,bootstrapping:false,read:false,dirty:false,resumeTimer:false,resumeQueued:false,resumeWriting:false,dispatch:false,calibration:false,horizon:false,snippetLocate:false,panel:false,readTerminal:false};
+ const state={role:'workspace',closed:false,bootstrapping:false,read:false,dirty:false,refreshAllowed:true,resumeTimer:false,resumeQueued:false,resumeWriting:false,dispatch:false,calibration:false,horizon:false,snippetLocate:false,panel:false,readTerminal:false};
  assert(framePendingWorkIsIdle(state,'workspace'));
- for(const value of [null,{},Object.create(state),{...state,role:'sidebar'},{...state,extra:false},...Object.keys(state).filter(k=>k!=='role').map(k=>({...state,[k]:true}))])assert.equal(framePendingWorkIsIdle(value,'workspace'),false);
+ assert(framePendingWorkIsIdle({...state,dirty:true,refreshAllowed:false},'workspace'));
+ for(const refreshAllowed of [null,undefined,0,'false'])assert.equal(framePendingWorkIsIdle({...state,refreshAllowed},'workspace'),false);
+ for(const value of [null,{},Object.create(state),{...state,role:'sidebar'},{...state,extra:false},...Object.keys(state).filter(k=>!['role','refreshAllowed'].includes(k)).map(k=>({...state,[k]:true}))])assert.equal(framePendingWorkIsIdle(value,'workspace'),false);
  assert.throws(()=>instrumentFramePendingWork(''),/anchor/);
+});
+for(const role of ['workspace','sidebar'])test(role+': hidden dirty hint is deferred, but reopening starts real non-idle work',async t=>{
+ const f=fixture(role,createFreeFrameClient);t.after(()=>{f.client.stop();delete globalThis.__vaiwlFixtureFramePendingWork;});await f.client.start();await drain();
+ f.emit({type:'VAIWL_UI_SURFACE_STATE',revision:1,visible:false});
+ const before=f.views;f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();
+ const state=globalThis.__vaiwlFixtureFramePendingWork();assert.equal(state.dirty,true);assert.equal(state.read,false);assert.equal(f.views,before);
+ assert.equal(framePendingWorkIsIdle(state,role),true,'a deferred hidden hint must not block the existing worker CHECK');
+ let resolve;f.setView(()=>new Promise(r=>resolve=r));f.emit({type:'VAIWL_UI_SURFACE_STATE',revision:2,visible:true});await drain();
+ assert.equal(f.views,before+1);assert.equal(framePendingWorkIsIdle(globalThis.__vaiwlFixtureFramePendingWork(),role),false);
+ resolve({ok:true,state:'ready',page:f.page(),navigation:[]});await drain();assert(framePendingWorkIsIdle(globalThis.__vaiwlFixtureFramePendingWork(),role));
 });
