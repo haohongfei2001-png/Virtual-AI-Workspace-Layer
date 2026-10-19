@@ -142,10 +142,14 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   if(!live(s))throw Error('stale-content-session');
   if(!sameProducer(binding,s.binding))throw Error('stale-adapter-producer');
   return rpc(s,message);
- },emit:async p=>{
+ },emit:async (p,{deadlineAt=elapsedNow()+6000}={})=>{
   if(!live(s))throw Error('stale-content-session');
   if(!sameProducer(binding,s.binding))throw Error('stale-adapter-producer');
-  const result=await rpc(s,p);
+  // Local adapter budget only; never add elapsed deadlines to the wire proposal.
+  const started=elapsedNow(),left=deadlineAt-started;
+  const checkBudget=()=>{const at=elapsedNow();if(!Number.isFinite(at)||at<started||at>=deadlineAt)throw Error('request-timeout');};
+  if(!Number.isFinite(left)||left<=0||left>6000)throw Error('request-timeout');
+  const result=await rpc(s,p,left,null,deadlineAt);checkBudget();
   if(!live(s)||!sameProducer(binding,s.binding))return result;
   rememberRecent(s,p,result);if(['accepted','duplicate'].includes(result?.state)&&['surface-delta','current-observation'].includes(p.kind))for(const row of (p.kind==='current-observation'?p.payload.surface:p.payload).candidates)if(row.entity==='project'&&row.target?.kind==='resolved'&&row.evidence?.fieldPaths?.includes('current-project-route'))s.ackProjects.add(row.target.nativeId);return result;
  }};}
@@ -197,11 +201,13 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  // Classify only transport rejection. Binding/scope validation remains outside
  // this wrapper, and a dormant handshake keeps its original elapsed budget.
  function handshake(s,message,timeoutMs=6000){return rpc(s,message,timeoutMs).catch(()=>{throw Error('context-handshake-transport-unavailable');});}
- function rpc(s,message,timeoutMs=6000,owner=null){return track(()=>rpcInner(s,message,timeoutMs,owner),owner);}
- async function rpcInner(s,message,timeoutMs,owner){
+ function rpc(s,message,timeoutMs=6000,owner=null,proposalDeadline=null){return track(()=>rpcInner(s,message,timeoutMs,owner,proposalDeadline),owner);}
+ async function rpcInner(s,message,timeoutMs,owner,proposalDeadline){
+  const started=elapsedNow(),checkProposal=()=>{if(proposalDeadline===null)return;const at=elapsedNow();if(!Number.isFinite(at)||at<started||at>=proposalDeadline)throw Error('request-timeout');};
+  if(proposalDeadline!==null){checkProposal();timeoutMs=Math.min(timeoutMs,proposalDeadline-started);}
   if(!live(s))throw Error('stale-content-session');let abort;
   const cancelled=new Promise((_,reject)=>{abort=()=>reject(Error('stale-content-session'));s.abort.signal.addEventListener('abort',abort,{once:true});});
-  try{const result=await withRequestDeadline(()=>Promise.race([Promise.resolve().then(()=>{if(!live(s))throw Error('stale-content-session');return send(message,owner);}),cancelled]),{timeoutMs,now:elapsedNow,schedule,cancel});if(!live(s))throw Error('stale-content-session');return result;}
+  try{const result=await withRequestDeadline(()=>Promise.race([Promise.resolve().then(()=>{checkProposal();if(!live(s))throw Error('stale-content-session');return send(message,owner);}),cancelled]),{timeoutMs,now:elapsedNow,schedule,cancel});checkProposal();if(!live(s))throw Error('stale-content-session');return result;}
   finally{s.abort.signal.removeEventListener('abort',abort);}
  }
  function clearMigration(s){const prior=s.migration;s.migration=null;if(prior?.leaseOwner)try{s.adapter?.releaseLoadedHandles?.(prior.leaseOwner);}catch{}for(const type of ['pointerdown','keydown','wheel','focusin'])doc.removeEventListener?.(type,s.migrationInterrupt,true);}

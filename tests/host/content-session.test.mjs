@@ -321,3 +321,40 @@ test('exact document invalidation clears retained observer without starting iden
  listener({type:'HOST_DOCUMENT_INVALIDATED'},{id:'other'});listener({type:'HOST_DOCUMENT_INVALIDATED',extra:true},{id:'extension'});assert.equal(stops,0);
  listener({type:'HOST_DOCUMENT_INVALIDATED'},{id:'extension'});assert.equal(stops,1);assert.equal(f.calls.length,2);client.stop();
 });
+
+function observationBudgetFixture(options={}){
+ const f=fixture(options);f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified',scopeKey:'scope-budget'}:{ok:true,grants:[]});return f;
+}
+test('observation retry uses remaining proposal budget and cannot remember a late body',async t=>{
+ const f=observationBudgetFixture();t.after(()=>f.client.stop());await f.client.start();let release,outcome='pending';
+ f.setResponse(()=>new Promise(resolve=>release=resolve));
+ const pending=f.context.emit({kind:'current-object',localSeq:1,payload:{association:'explicit-body-id',conversationId:'C'}},{deadlineAt:1100}).then(()=>{outcome='accepted';},error=>{outcome=error.message;});
+ await drain();await f.advance(100);
+ assert.equal(outcome,'request-timeout','retry must not get a new six-second transport window');
+ release({state:'accepted',localSeq:1,bodyProofId:'late-proof'});await pending;await drain();
+ assert.equal(f.adapterOptions.priorityConversationId(),null);
+});
+
+for(const offset of [99,100,101])test('delayed observation timer checks original deadline at reply '+offset,async t=>{
+ let clock=1000;const f=observationBudgetFixture({elapsedNow:()=>clock});t.after(()=>f.client.stop());await f.client.start();let release;
+ f.setResponse(()=>new Promise(resolve=>release=resolve));
+ const pending=f.context.emit({kind:'current-object',localSeq:1,payload:{association:'explicit-body-id',conversationId:'C'}},{deadlineAt:1100});
+ const result=offset>=100?assert.rejects(pending,/request-timeout/):pending;await drain();clock+=offset;
+ release({state:'accepted',localSeq:1,bodyProofId:'proof'});await result;
+ assert.equal(f.adapterOptions.priorityConversationId(),offset<100?'C':null,'no late recent-hint side effect');
+});
+for(const deadlineAt of [NaN,Infinity,1000,999,7001])test('invalid or enlarged local observation budget is rejected before transport '+deadlineAt,async t=>{
+ const f=observationBudgetFixture();t.after(()=>f.client.stop());await f.client.start();const before=f.calls.length;
+ await assert.rejects(f.context.emit({kind:'current-object'},{deadlineAt}),/request-timeout/);assert.equal(f.calls.length,before);
+});
+test('microtask-delayed observation dispatch rechecks original deadline before sending',async t=>{
+ let clock=1000;const f=observationBudgetFixture({elapsedNow:()=>clock});t.after(()=>f.client.stop());await f.client.start();const before=f.calls.length;
+ const pending=f.context.emit({kind:'current-object'},{deadlineAt:1100});const rejected=assert.rejects(pending,/request-timeout/);clock=1100;await rejected;
+ assert.equal(f.calls.length,before,'expired proposal must not leave content');
+});
+for(const clockAfter of [999,NaN,Infinity])test('observation reply with invalid elapsed clock cannot update recent '+clockAfter,async t=>{
+ let clock=1000;const f=observationBudgetFixture({elapsedNow:()=>clock});t.after(()=>f.client.stop());await f.client.start();let release;
+ f.setResponse(()=>new Promise(resolve=>release=resolve));const proposal={kind:'current-object',localSeq:1,payload:{association:'explicit-body-id',conversationId:'C'}};
+ const pending=f.context.emit(proposal,{deadlineAt:1100}),rejected=assert.rejects(pending,/request-timeout/);await drain();assert.deepEqual(f.calls.at(-1),proposal,'local budget cannot be serialized into proposal');
+ clock=clockAfter;release({state:'accepted',localSeq:1,bodyProofId:'proof'});await rejected;assert.equal(f.adapterOptions.priorityConversationId(),null);
+});

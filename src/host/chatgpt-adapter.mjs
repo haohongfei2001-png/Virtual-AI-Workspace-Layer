@@ -211,19 +211,21 @@ if(!p){notifyIdle();return;}}catch(error){
    }else{finishPass('cancel');if(surfaceWanted)schedule();}
    return;
   }
-  busy=true;const started=elapsedNow(),proofExpiry=binding.expiresAt;let attempts=0;
+  busy=true;const started=elapsedNow(),proofExpiry=binding.expiresAt,budget=Object.freeze({deadlineAt:started+6000});let attempts=0,lastElapsed=0;
+  const remaining=()=>{const elapsed=elapsedNow()-started;if(!Number.isFinite(elapsed)||elapsed<lastElapsed)return 0;lastElapsed=elapsed;return 6000-elapsed;};
   const finish=reason=>{if(run!==generation)return;if(reason){finishPass('cancel',true);failedKey.set(p.kind==='current-observation'?'current-object':p.kind,key);if(p.kind==='surface-delta'){surfaceParts=[];surfaceFailed.set(surfacePageKey,key);}dirty=true;issue(reason);}busy=false;if(dirty)schedule();};
   const send=async()=>{
    retryTimer=null;if(run!==generation||!live())return finish('stale-host-binding');
    try{syncRoute();if(p.kind==='send-candidate'&&!intentCurrent(intentItem))return finish('stale-send-intent');}catch{return;}
-   if(elapsedNow()-started>=6000||attempts>=120)return finish('host-observation-retry-budget');attempts++;
-   let ack;try{ack=await track(()=>emit(p));}catch{return finish('host-observation-ack-unknown');}
+   if(remaining()<=0||attempts>=120)return finish('host-observation-retry-budget');attempts++;
+   let ack;try{ack=await track(()=>emit(p,budget));}catch{return finish(remaining()<=0?'host-observation-retry-budget':'host-observation-ack-unknown');}
    if(run!==generation)return;if(!live())return finish('stale-host-binding');
+   if(remaining()<=0)return finish('host-observation-retry-budget');
    if(ack?.localSeq!==p.localSeq)return finish('host-observation-ack-unknown');
    if(ack.state==='accepted'||ack.state==='duplicate'){if(p.kind==='current-object'||p.kind==='current-observation'){const body=p.kind==='current-observation'?p.payload.body:p.payload;acceptedBody=body.association==='explicit-body-id'&&typeof ack.bodyProofId==='string'?{proofId:ack.bodyProofId,bodyEpoch:ack.bodyEpoch,fingerprint:JSON.stringify(body),validUntil:proofExpiry}:null;}if(p.kind==='surface-delta'){surfaceParts.shift();if(!surfaceParts.length&&!surfaceScanning&&surfaceEpoch===surfaceSnapshotEpoch)finishPass('end');if(!surfaceParts.length){surfaceAccepted.set(surfacePageKey,key);surfaceFailed.delete(surfacePageKey);}}if(p.kind!=='surface-delta'||!surfaceParts.length)last.set(p.kind==='current-observation'?'current-object':p.kind,key);failedKey.delete(p.kind==='current-observation'?'current-object':p.kind);dirty=true;return finish();}
    if(ack.state==='retry-after'&&Number.isFinite(ack.delayMs)&&ack.delayMs>=0){
-    const delay=Math.max(50,ack.delayMs),remaining=6000-(elapsedNow()-started);
-    if(delay>=remaining||attempts>=120)return finish('host-observation-retry-budget');
+    const delay=Math.max(50,ack.delayMs),left=remaining();
+    if(delay>=left||attempts>=120)return finish('host-observation-retry-budget');
     retryTimer=scheduleRetry(send,delay);return;
    }
    finish(ack.state==='rejected'?'host-observation-rejected':'host-observation-ack-unknown');

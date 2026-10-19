@@ -583,3 +583,25 @@ test('preauth cursor does not retain or read an unobserved raw heading fingerpri
  f.selectors.set(LEGACY_SURFACE_PROFILE.currentConversationHeader,[hidden]);
  await f.start(undefined,{phase:'observation'});await tick();assert.equal(f.adapter.observationStatus().candidates,1);assert.equal(f.adapter.observationStatus().messageIds,1);f.adapter.stop();
 });
+
+for(const state of ['accepted','duplicate'])test('retry round trip cannot accept '+state+' beyond the original six-second window',async t=>{
+ let elapsed=0,retry,release,snippet;const issues=[],calls=[];
+ const f=bodyFixture({snippetsFactory:c=>(snippet=c,{stop(){}}),elapsedNow:()=>elapsed,scheduleRetry:fn=>(retry=fn,1),cancelRetry:()=>{},onObservationIssue:value=>issues.push(value)});t.after(()=>f.adapter.stop());
+ await f.start((p,budget)=>{calls.push({p,budget});if(calls.length===1){elapsed=5900;return Promise.resolve({state:'retry-after',localSeq:p.localSeq,delayMs:50});}return new Promise(resolve=>release=()=>resolve({...bodyAck(p),state}));});await settle();
+ elapsed=5950;const pending=retry();await settle();assert.equal(calls.length,2);assert.equal(calls[0].p,calls[1].p);
+ elapsed=6050;release();await pending;await settle();
+ assert.equal(issues.at(-1)?.reason,'host-observation-retry-budget');
+ assert.equal(calls.filter(c=>c.p.kind==='current-observation').length,2,'late body ACK cannot replay the proposal');
+ assert.equal(snippet.proof(),null,'late response cannot establish body authority');
+ assert.equal(calls[1].budget.deadlineAt,6000,'retry retains original absolute deadline');
+});
+
+for(const mode of ['clock-regressed-before-retry','nonfinite-clock-after-reply'])test('observation shared deadline fails closed for '+mode,async t=>{
+ let elapsed=0,retry,release,snippet;const calls=[],issues=[];
+ const f=bodyFixture({snippetsFactory:c=>(snippet=c,{stop(){}}),elapsedNow:()=>elapsed,scheduleRetry:fn=>(retry=fn,1),cancelRetry:()=>{},onObservationIssue:value=>issues.push(value)});t.after(()=>f.adapter.stop());
+ await f.start((p,budget)=>{calls.push({p,budget});if(calls.length===1){elapsed=5900;return Promise.resolve({state:'retry-after',localSeq:p.localSeq,delayMs:50});}return new Promise(resolve=>release=()=>resolve(bodyAck(p)));});await settle();
+ elapsed=mode==='clock-regressed-before-retry'?5800:5950;const pending=retry();await settle();
+ if(mode==='nonfinite-clock-after-reply'){elapsed=NaN;release();}await pending;await settle();
+ assert.equal(calls.filter(c=>c.p.kind==='current-observation').length,mode==='clock-regressed-before-retry'?1:2);
+ assert.equal(issues[0]?.reason,'host-observation-retry-budget');assert.equal(snippet.proof(),null);
+});
