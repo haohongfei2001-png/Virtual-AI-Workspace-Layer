@@ -12384,10 +12384,10 @@
       },
       "accountsStructure20261019": {
         "baseHead": "88a70de9d93443bb34cf8a7179880833607ca6a4",
-        "status": "PREPARED_WAITING_SAME_EXTENSION_RELOAD",
+        "status": "EXECUTED_CONTEXT_ID_UNAVAILABLE_NOT_AUTHORIZED",
         "authorization": "Explicit user approval: one fixed accounts GET,6s,1MiB,no retries; fixed types/identifier categories/key equality/default/structure/access flags and aggregate counts; no raw IDs/names/dynamic field names/roster/credentials.",
-        "attemptsConsumed": 0,
-        "realRequests": 0,
+        "attemptsConsumed": 1,
+        "realRequests": 1,
         "marker": "vaiwl-accounts-structure-20261019-consumed",
         "receiverVersion": 4,
         "oldThreeMarkersPreserved": true,
@@ -12790,6 +12790,97 @@
           "native-accounts-structure-targeted.tap.gz": "85d5a0a7a6bcc63091c6a0d2991ffaff7cb655f4c3d47185926cdaae498db8c4",
           "native-accounts-structure-clock-fixture-fail.tap.gz": "5a778e55f30f6cf15e0866b3aeb9acbcf6ad68af42d9d842eae0996778368aef",
           "native-accounts-structure-mv3.json.gz": "737fcc0d7cb26fed8d582d46da97aa857dd159a87898f1743cb505995949a361"
+        },
+        "preparationStatusHistorical": "PREPARED_WAITING_SAME_EXTENSION_RELOAD",
+        "liveResult20261019": {
+          "sourceCommit": "51c7c80b76d5ee25e4f62b27f103615fa5fbf28f",
+          "recordedAt": "2026-10-19T11:03:23Z",
+          "recordedAtMeaning": "post-result recording time, not exact network event time",
+          "entry": "User confirmed same-extension reload; agent opened dedicated new home, opened version4 diagnostic and clicked ONCE once.",
+          "state": "finished",
+          "reason": "accounts-schema:account-id",
+          "executionDisabledAfterResult": true,
+          "requestCount": 1,
+          "meOrSessionRequests": 0,
+          "retries": 0,
+          "permissionConsumed": true,
+          "observation": "Native accessibility result text truncated after the following fields; no raw response, complete result tail or screenshot saved.",
+          "observedFields": {
+            "rootType": "object",
+            "accountsType": "object",
+            "entryCount": 1,
+            "overLimit": false,
+            "defaultEntries": 1,
+            "keyFormat": {
+              "valid-string": 1
+            },
+            "entryType": {
+              "object": 1
+            },
+            "accountType": {
+              "object": 1
+            },
+            "account_id": {
+              "null": 1
+            },
+            "id": {
+              "missing": 1
+            },
+            "keyEqualsAccountId": {
+              "incomparable": 1
+            },
+            "keyEqualsId": {
+              "incomparable": 1
+            },
+            "fieldsEqual": {
+              "incomparable": 1
+            },
+            "structure": {
+              "personal": 1
+            },
+            "isDeactivated": {
+              "false": 1
+            },
+            "sessionAccess": {
+              "true": 1
+            }
+          },
+          "conclusion": "Only default entry has explicit null account_id and no id. No stable context can be authorized; not an id rename, empty roster, signed-out proof or confirmed personal context.",
+          "requestDifference": "Candidate uses credentials:include and Accept only. Production worker and isolated provider accounts reads additionally use session-derived Bearer. Historical successful account scripts passively observed native responses; they did not reproduce this cookie-only extension request. Difference established by source, causality and authentication semantics not established.",
+          "identityEnabled": false,
+          "oldDatabaseOpened": false,
+          "session403": "NOT_RETESTED",
+          "fullFree": "NOT_RELEASE_READY",
+          "scale": "DEFERRED",
+          "nextGate": "Authenticated principal plus stable accessible context IDs and independently current-context proof; do not keep probing this consumed cookie-only shape or substitute default/me ID."
+        },
+        "nullDefaultRecognition20261019": {
+          "baseHead": "51c7c80b76d5ee25e4f62b27f103615fa5fbf28f",
+          "change": "Fixed default-null-context-id diagnostic for exact observed shape; generic public error/rejection unchanged. No accepted-roster change, request, scope or DB enablement. Not reinstalled or re-executed on real profile.",
+          "review": "Independent readonly review: no blocking issue; independent navigation review found no new reproducible defect.",
+          "tests": {
+            "passed": 135,
+            "failed": 0,
+            "skipped": 0,
+            "durationMs": 489.362792,
+            "kind": "NODE_AND_BUNDLED_VM",
+            "command": "node --test tests/host/session-roster-diagnostic.test.mjs tests/host/session-roster-alias.test.mjs tests/host/session-provider.test.mjs tests/host/native-me-candidate.test.mjs tests/host/native-accounts-structure.test.mjs tests/host/native-accounts-probe.test.mjs",
+            "artifact": "native-null-default-targeted.tap.gz",
+            "artifactSha256": "cfb35110541ef0187a02eaa16d01150cf46f803967e94623d3bed3982d2f5620"
+          },
+          "sourceHashes": {
+            "src/host/session-identity.mjs": "019f0f9da61cd0fa911dda747dd52a6b328876582e4a70a7ddf1c3daaade347d",
+            "tests/host/session-roster-diagnostic.test.mjs": "67f0b072b6a4e8e6528f50807aa2cbcaf72be9a6e32cca29f0071404abe8795c",
+            "tests/host/native-me-candidate.test.mjs": "1465c16f8f6284ad9448ed672a9b5680a6f053b24e8b703369cb883abd292e35"
+          },
+          "precommitSync": {
+            "fetch": "FAIL_HTTP_LOW_SPEED_15S_EXIT_128",
+            "independentPRHead": "51c7c80b76d5ee25e4f62b27f103615fa5fbf28f",
+            "base": "docs/vaiwl-v28-core-mechanisms-20261012",
+            "draft": true,
+            "existingUntrackedCopiesPreserved": 2258,
+            "stashesPreserved": 3
+          }
         }
       }
     }

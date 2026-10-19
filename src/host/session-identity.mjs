@@ -29,13 +29,20 @@ export function sessionCredentials(session,time){
 export function sessionContexts(accounts,structures){
  if(!record(accounts))throw invalidContexts('root-object');
  if(!record(accounts.accounts))throw invalidContexts('accounts-object');
- if(Object.keys(accounts.accounts).length>1000)throw invalidContexts('accounts-limit');
+ const entryCount=Object.keys(accounts.accounts).length;
+ if(entryCount>1000)throw invalidContexts('accounts-limit');
  const contexts=[],seen=new Set();for(const [key,value]of Object.entries(accounts.accounts)){
   const account=value?.account;
   if(!identifier(key))throw invalidContexts('entry-key');
   if(!record(value))throw invalidContexts('entry-object');
   if(!record(account))throw invalidContexts('account-object');
-  if(!identifier(account.account_id))throw invalidContexts('account-id');
+  if(!identifier(account.account_id)){
+   // Observed cookie-only response: a personal-looking default entry without
+   // an identity. Recognize the shape for diagnostics, never as an empty roster,
+   // signed-out proof, canonical context or substitute for a principal ID.
+   const unresolvedDefault=entryCount===1&&key==='default'&&Object.hasOwn(account,'account_id')&&account.account_id===null&&!Object.hasOwn(account,'id')&&account.structure==='personal'&&account.is_deactivated===false&&value.can_access_with_session===true;
+   throw invalidContexts(unresolvedDefault?'default-null-context-id':'account-id');
+  }
   if(typeof account.structure!=='string'||account.structure.length>128)throw invalidContexts('account-structure');
   if(Object.hasOwn(account,'is_deactivated')&&typeof account.is_deactivated!=='boolean')throw invalidContexts('deactivated-flag');
   if(Object.hasOwn(value,'can_access_with_session')&&typeof value.can_access_with_session!=='boolean')throw invalidContexts('session-access-flag');

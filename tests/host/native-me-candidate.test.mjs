@@ -45,6 +45,14 @@ test('valid empty roster reports actual zero without enabling identity',async()=
  const {probe}=fixture({alter(n,next){if(n===2)next.body={accounts:{}};}});const r=await probe.run();
  assert.equal(r.rosterValid,true);assert.equal(r.contextCount,0);assert.equal(r.unknownKindCount,0);assert.equal(r.schemaIssue,null);assert.equal(r.identityEnabled,false);
 });
+test('observed null default cannot reuse the valid me ID or complete the identity sandwich',async()=>{
+ const {probe,calls}=fixture({alter(n,next){if(n===2)next.body={accounts:{default:{account:{account_id:null,structure:'personal',is_deactivated:false},can_access_with_session:true}}};}});
+ const r=await probe.run();
+ assert.equal(r.firstIdValid,true);assert.equal(r.reason,'invalid-accounts-schema');assert.equal(r.schemaIssue,'default-null-context-id');
+ assert.equal(r.contextCount,null);assert.equal(r.rosterValid,false);assert.equal(r.samePrincipal,false);assert.equal(r.identityEnabled,false);
+ assert.deepEqual(calls.map(c=>c.url),[me,accounts]);assert(!JSON.stringify(r).includes('private'));
+ assert.deepEqual(await probe.run(),{state:'already-consumed'});assert.equal(calls.length,2);
+});
 test('principal change rejects candidate without exposing either ID',async()=>{
  const {probe}=fixture({alter(n,next){if(n===3)next.body={id:'different-private'};}});const r=await probe.run();assert.equal(r.reason,'principal-changed');assert.equal(r.samePrincipal,false);assert(!JSON.stringify(r).includes('private'));
 });
