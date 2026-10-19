@@ -1,5 +1,19 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 当前数据接入裁决（2026-10-20，源码 df3f6c34）
+
+**当前完整 Free：NO-GO / 未证明可交付；有限只读预览：已有真实导航子链，新冻结包未实机验收。** 本轮核对既有证据与当前调用链，没有新增真实请求、离线测试或规模门禁。完整目标保留；下一步不以测试数量或反复重载推进。
+
+- **身份瓶颈已定位到证据链缺口**：`preauthorizationObservation20261019.contextChain20261019.realProfile` 已记录原生非缓存GET200、当前文档/body关联 MATCHED、真实READY进入认证，随后 session 403、accounts未请求。不能再把这一整链写成全离线，也不能把C2局部成功写成scope通过。`modernNativeCompatibility20261018` 历史真实roster有canonical2/default alias1，但为原生响应/CDP观察，不是当前生产授权。
+- **候选请求不等价**：`nativeMeCandidate20261019` 的 `/me`200仅证ID形状；其 `candidateChain20261019.accountsStructure20261019.liveResult20261019` 证cookie-only列表唯一default且account_id:null。正常 `src/runtime/session-provider.mjs` 的accounts请求使用同次session派生认证材料；诊断不含该路径，故没有证据把null归因成parser缺陷、无账户或空roster。C2仍缺可靠主体/有效空间集合；C3默认语义未证实，生产开关保持关闭。无新来源前停止重复这些诊断。
+- **真实可用范围**：`selectedProfileReinstall20261019` 与 `temporaryReadOnlyNavigation20261019.currentProjectList20261019.real` 分别记录真实可见聊天搜索/原生打开/返回、当前Project两条可见聊天及原文档保护；Project正向成员/可靠卡片、NONE、本人发送、跨设备新增收敛均未通过。全量数据库/搜索/恢复/视觉机制的离线证据不能补这些宿主来源。当前无新context的C2安全等待仍是正确边界。
+- **外部依赖**：`temporaryBootstrap20261019.humanSupportReply` 的人工答复未提供受支持的当前网页身份/空间及既有项目会话API，也未确认Ray对应规则或修复；公开SIWC不授予既有会话读取。原403比较 `real403RequestComparison20261019` 未发现可复现的客户端请求参数修复。结论是当前来源未闭合，不是宣布所有方案永久不可能。
+- **唯一下一项独立最小验证**：尚未消费的原获授权同一个Project的一次自然列表响应，先确认对象未变，再仅被动接收、RAM提取ID/标题/关联字段、固定类别/数量输出；不主动GET/重放/重试。它只补成员来源，不补身份。身份下一次验证先须有可说明的新通道/合同/语义依据，再沿原6秒及代际撤回边界验证主体+canonical roster+C2；不从旧缓存或成功截图发scope。
+- **已冻结预览产物**：复用原 `packageHost`，显式 observedChatGPTContext+temporaryReadOnly；`/private/tmp/vaiwl-readonly-preview-df3f6c3-20261020/extension` 与同目录 `vaiwl-free-host-development.zip`，SHA256 `d6e550020ddd05cc344d8d503f6389f29d4dc7001ec5d609382a23e35736ffe8`。包校验183文件通过，182个构建来源hash逐项匹配df3f6c34，且不含单次身份诊断文件；`TEMPORARY_DOCUMENT_NAVIGATION_NO_SCOPE`、`HOST_IMPLEMENTATION_UNVERIFIED`、`NOT_RELEASE_READY`、`realChatGPT:NOT_RUN`。未覆盖原安装、未新增权限/身份源，原源码/数字副本/stash保留。该包不是单次诊断包；弹窗内存导航可安装候选，不宣称此新版已在真实Profile运行。完整v2.7工作区保留在工程内，预览并未启用其全部功能。
+- **本轮检查点**：起点本地/远端均df3f6c34，tracked干净；自然检查点已读dot至PR评论6274300074，其自动休眠建议不改变本次数据来源结论，无需为此追加重试或测试。10k/100k保持DEFERRED；完整身份、成员/本人活动/跨设备、无新证据恢复边界及最终安装/GU仍未关闭。
+
+上述键均位于原 [脱敏证据 JSON](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)，历史失败不删除、不追溯改判。最先不可替代的证据是生产可验证的稳定主体/合法空间集合与当前上下文关联；没有它，完整Free不能启旧库或称通过。执行顺序与停止重复验证条件已同步原 DEVELOPMENT_PLAN。
+
 - **休眠前置修正在Linux原单项通过**（446955c / CI39299317432）：实际prepared/entered均true，原租约自然等待19.416秒、唯一原生GET、foreground新grant/VIEW及草稿保持；182产品/16fixture hash逐项匹配。此次Linux采样时双frame已自然排空，不能声称该次触发旧竞态；原CI重叠日志和本地双frame queued→settled见证共同保留。手动入口只跑原正例，变异同源本地已验证，其他job未选。仅关闭本测试前置缺口，生产自动休眠竞争机会、历史J1因果、完整J4/真实身份/GU不改判；原证据frameSaveIdlePrecondition20261020。
 
 - **d69caa4同源CI39298103253四job成功，非完整Free验收**：原J1为9步PARTIAL、J4为23步PARTIAL，二者各182产品hash匹配提交；无新context的peer自动恢复仍NOT_ESTABLISHED。此次旧transport前置恰未触发busy，不改判原CI39289329767已证明的SAVE_VIEW竞态；J1历史失败因果仍不追认。新前置446955c随后通过既有Linux transport-expiry单项CI39299317432，详见顶部；无缓存/上传或新job。原日志、JSON见dormantRouteOrdering20261020.followingCI。
