@@ -8,6 +8,29 @@
 
 搜索与当前工作集的分页等待态丢焦点也已关闭：只保留本查询不可操作的分页控件，旧结果不显示；原同步焦点恢复支持Enter连续翻页，等待期间Enter/Space不重复请求，用户转移焦点不抢回。266项定向/构建及实际无界面DOM通过，独审无阻断；证据 `frameListPagerFocus20261020` 仅WEB_MECHANISM_ONLY，不冒充MV3/实机验收。
 
+## 原生全目录来源裁决（2026-10-20，源码21a28e6f；PR16架构风险）
+
+**完整历史自动发现：NOT_ESTABLISHED。** 已暴露对象覆盖率与账户历史覆盖率是不同分母；当前未找到同时具备正常授权、生产扩展可获取、服务器分页语义及持续增量证明的完整目录来源。此结论不等于证明网站不存在内部目录，也不改变完整Free目标。身份即使闭合，也不能补目录缺口。依赖就绪的导航/恢复/安装工程继续；不以新离线测试数量推进此关口。
+
+| 来源 | 能发现此前本地未知ID吗 | 覆盖证明与缺口 |
+|---|---|---|
+| 当前页面DOM/原生href | 能，前提是该链接实际进入可见页面 | `chatgpt-observed-profile.mjs`为candidate、liveVerified=false；`surface-batch.mjs`固定inventory partial。旧实机仅证明可见聊天搜索/打开/返回及当前Project两条可见聊天，不证明历史尾页、全成员或归档。侧栏到底不是全历史到底。 |
+| 网页正常列表响应 | 理论可带尚未渲染ID；当前未证明生产可获取与完整性 | 历史当前Project列表HTTP200并不证明已读payload；原一次响应许可记录仍未消费。`project-metadata.mjs`只导出候选parser，src/extension无生产调用；page cursor/terminal仅observed-only，无snapshot revision，未授予PROJECT/NONE。不能把CDP诊断或MAIN消息升级为生产来源、身份/context。 |
+| 本地索引/continuation/UI分页 | 不能发现源端从未输入的ID | `host-view-service.mjs`消费本地owner/index；`host-continuation-owner.mjs`续接已持久化的pending-evidence，不是服务器next-page crawler。本地10k完整性只能证明已摄取集合。 |
+| 官方搜索/归档UI | 支持找到部分旧记录和归档；查询结果可暴露新ID | 官方说明搜索可匹配旧/归档聊天，但按词匹配、过滤及权限，不给无关键词全目录枚举、稳定游标/快照终点或跨设备增量保证。保留原生入口有可达价值，不等于自动发现全部历史。 |
+| 官方导出 | 可提供导出时的历史副本 | 需要用户请求、可能等待数日且包含敏感正文；不提供实时增量、成员/空间语义证明，部分组织不支持自助导出。未请求/下载；周期导出不满足原产品合同。 |
+| Conversations API / Sign in with ChatGPT | 未提供既有网页聊天目录的证明 | API文档为Responses创建/管理自己的conversation对象；SIWC明确身份scope和plan usage不授予ChatGPT conversations访问。没有把这两者接成网页历史目录的依据。 |
+
+**五个未闭合域**：历史分页缺独立终点/一致快照或可证明收敛规则；无Project缺完整全局目录及正向NONE语义；Project成员缺每项目列表与成员语义/项目枚举覆盖；归档缺独立过滤域与完备终点；跨设备新增缺未知ID发现通道及上游可见→本地摄取延迟证据。删除/无权/临时聊天的范围须由来源合同区分，未见一律不能作否定事实。
+
+**覆盖成立所需证据**：按主体/context及域记录来源、过滤/排序、前后游标连续性、缺口和明确结束语义；受控正常样本中的历史/NONE/Project/归档/异端新增由独立预先样本核对，至少命中一个原本既不在DOM也不在本地库的ID。样本命中只证明发现能力；账户complete仍需源端完整性契约或可验证快照/收敛机制。Host §4.4已有约束：无一致快照的终点最多是exhausted-observed-scan/non-atomic；现有project-metadata测试也明确空页/null cursor不提升coverage，本次仅检查原断言，未重复跑规模或新增测试。
+
+**最小必要实施差额（按原计划，不另建引擎）**：先保留上述NOT_ESTABLISHED并保持原生搜索/目录入口；不得把本地total、DOM空页、candidate terminal接为account complete。来源被证明后，才在现有Host profile/source admission接只读目录适配器，沿原Native/Evidence CAS+continuation记录每域游标/过滤/版本/gap，复用预算、撤权和增量投影；必要字段进入现有codec/hash/迁移，不能另建库。新增可信source合同必须明确普通历史、归档、Project成员及新增发现边界；先证明目录再独立验证身份/context与本人活动，不由MAIN承载消息自证授权。
+
+**下一项最小验证与停止条件**：先取得正常目录通道的具体请求/响应语义或网站方支持说明。若采用实机被动样本，新增集中许可须覆盖专用Profile中普通历史、归档、同一Project自然列表与既有异端新增的元数据响应；原单Project一次许可不覆盖其他域，已消费诊断不复用。候选批次最多8个自然响应（每域最多2个，含连续页），10分钟观察墙钟、单响应最多1MiB且解码累计4MiB，无主动API请求/自动滚动遍历/重放/重试/原生写入；仅RAM比较ID、项目关联、归档标志、游标/结束/版本/删除标记，预览立即丢弃，不输出原ID/标题/游标/正文/凭据，最终仅固定类别、计数与缺口。无现成异端新增样本则该域NOT_RUN，不为凑样本发消息。此次没有启动该批次、没有扩大平台权限；若工具无法合法只读截取，则不用其他通道绕过。挑战/拒绝、scope切换、来源不明、字节/次数上限立即停止；缺稳定终点、完整性语义或生产可取得性时结束为未成立，不持续抓取尝试证明全量。该批次至多筛选候选，不能用一次成功冒充稳定支持。当前无新增来源依据，不启动身份或本人活动实验。
+
+公开依据（本次已打开核对）：[搜索与归档](https://help.openai.com/en/articles/10056348-finding-your-chats-projects-and-files-in-chatgpt)、[数据导出](https://help.openai.com/en/articles/7260999-exporting-your-chatgpt-history-and-data)、[Conversations API用途](https://developers.openai.com/api/docs/guides/conversation-state)、[SIWC权限边界](https://developers.openai.com/siwc/quickstart)。历史实机依据沿原JSON的 `temporaryReadOnlyNavigation20261019.currentProjectList20261019.real`、`selectedProfileReinstall20261019`，不新增实机通过声明。本次只修改原STATUS/PR入口；原目标、原计划及既有代码不变。
+
 ## 当前数据接入裁决（2026-10-20，源码 df3f6c34）
 
 **当前完整 Free：NO-GO / 未证明可交付；有限只读预览：已有真实导航子链，新冻结包未实机验收。** 本轮核对既有证据与当前调用链，没有新增真实请求、离线测试或规模门禁。完整目标保留；下一步不以测试数量或反复重载推进。
