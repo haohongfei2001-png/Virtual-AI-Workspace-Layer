@@ -1,5 +1,7 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+C2/C5本次收口：待识别项目的键盘分页、失败重试及边界焦点恢复接入原renderer，当前文档失焦/清空不恢复旧控制；原请求/权限/页容量不变。以实际隔离MV3的加载→重试→尾页→项目打开/返回/草稿闭环验收，局部通过不替代真实身份接入或完整Free。原始反例、同源码与耗时沿STATUS原证据 `candidatePagingFocus20261019`。下一真实关口仍为有效principal/current-context，10k/100k保持DEFERRED，不重放已消费诊断。
+
 J4排障顺序收敛（2026-10-19）：最新fba7038四job成功仍不关闭原正式FAIL或完整J4；已有receipt对象不代表当前可授权。先用原失败后只读检查区分epoch/route/TTL失效、association等待与通知衔接，再决定生产修复；字段不可读保持未知，不调用验证方法生成新证据、不延长等待或重跑挑绿。该诊断随原runner使用，生产行为/完整Free目标不变，当前真实身份与成员/本人活动、恢复及完整安装仍按原顺序推进。
 
 B1/C2可靠性增量（2026-10-19）：观察提案的retry-after与随后RPC现共用原6秒总期限；过期/倒退时钟及迟到ACK不得推进本地body proof、近期提示或分片进度，未知结果不自动重发，已合法持久化事实保留。规模诊断插桩只同步新调用签名与超时语义，不运行DEFERRED的10k/100k。3c576f7的CI39253912974三job成功、J4原生换路恢复失败：已有Team GET200及worker receipt但content仍等待，无frame；历史reason不能当作当前无receipt。正式失败保留，成功诊断不替代，下一步需在同一次失败关联receipt/通知/handshake代际，不能放宽15秒或猜测自动恢复。真实身份/context→成员/本人活动→恢复/完整安装顺序及完整Free目标保持。实际证据沿STATUS及原observationRetryDeadline20261019入口。

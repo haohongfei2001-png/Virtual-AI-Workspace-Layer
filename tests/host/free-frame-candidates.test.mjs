@@ -13,7 +13,7 @@ test('only confirmed dispatch states report success, never transport ok alone',a
 
 const rows=(offset,count)=>Array.from({length:count},(_,i)=>item(String(offset+i)));
 test('33, 65 and 256 candidates page forward and back without invoking native actions',async()=>{for(const total of [33,65,256,604,1000]){const requests=[],f=fixture(async offset=>{requests.push(offset);f.ui.update(rows(offset,Math.min(32,total-offset)),{offset,total,nextOffset:offset+32<total?offset+32:null});return {ok:true};});f.ui.update(rows(0,32),{offset:0,total,nextOffset:32});assert(f.pageButtons()[0].disabled);let offset=0;while(offset+32<total){await f.pageButtons()[1].handlers.click({isTrusted:true});offset+=32;assert.equal(f.buttons().length,Math.min(32,total-offset));assert(f.text().includes(` / ${total}`));}assert(f.pageButtons()[1].disabled);await f.pageButtons()[0].handlers.click({isTrusted:true});assert.equal(requests.at(-1),offset-32);assert.equal(f.calls.length,0);}});
-test('paging is trusted singleflight and old callbacks cannot update replacement controls',async()=>{let finish;const calls=[],f=fixture(offset=>{calls.push(offset);return new Promise(r=>finish=r);});f.ui.update(rows(0,32),{offset:0,total:65,nextOffset:32});const next=f.pageButtons()[1];await next.handlers.click({isTrusted:false});assert.equal(calls.length,0);void next.handlers.click({isTrusted:true});void next.handlers.click({isTrusted:true});assert.deepEqual(calls,[32]);assert(next.disabled);await f.buttons()[0].handlers.click({isTrusted:true});assert.equal(f.calls.length,0);f.ui.update(rows(32,32),{offset:32,total:65,nextOffset:64});const before=f.text();finish({ok:false});await drain();assert.equal(f.text(),before);assert.equal(f.pageButtons()[1].disabled,false);await next.handlers.click({isTrusted:true});assert.equal(calls.length,1);});
+test('paging is trusted singleflight and old callbacks cannot update replacement controls',async()=>{let finish;const calls=[],f=fixture(offset=>{calls.push(offset);return new Promise(r=>finish=r);});f.ui.update(rows(0,32),{offset:0,total:65,nextOffset:32});const next=f.pageButtons()[1];await next.handlers.click({isTrusted:false});assert.equal(calls.length,0);void next.handlers.click({isTrusted:true});void next.handlers.click({isTrusted:true});assert.deepEqual(calls,[32]);assert.equal(next.disabled,false);assert.equal(next.attrs['aria-disabled'],'true');await f.buttons()[0].handlers.click({isTrusted:true});assert.equal(f.calls.length,0);f.ui.update(rows(32,32),{offset:32,total:65,nextOffset:64});const before=f.text();finish({ok:false});await drain();assert.equal(f.text(),before);assert.equal(f.pageButtons()[1].disabled,false);await next.handlers.click({isTrusted:true});assert.equal(calls.length,1);});
 test('empty and shrunken inventories clear old page controls; stop rejects old pagination',async()=>{const calls=[],f=fixture(o=>calls.push(o));f.ui.update(rows(32,1),{offset:32,total:33,nextOffset:null});const old=f.pageButtons()[0];f.ui.update([]);assert.equal(f.root.children.length,0);await old.handlers.click({isTrusted:true});assert.equal(calls.length,0);f.ui.update(rows(0,2),{offset:0,total:2,nextOffset:null});assert.equal(f.pageButtons().length,0);f.ui.stop();await old.handlers.click({isTrusted:true});assert.equal(calls.length,0);});
 test('page metadata must describe an exact bounded contiguous page',()=>{for(const page of [{offset:1,total:33,nextOffset:33},{offset:0,total:Number.MAX_SAFE_INTEGER+1,nextOffset:32},{offset:0,total:33,nextOffset:null},{offset:0,total:32,nextOffset:32},{offset:32,total:32,nextOffset:null},{offset:0,total:33,nextOffset:64},{offset:0,total:32,nextOffset:null,scope:'fake'},{offset:256,total:256,nextOffset:null}]){const f=fixture();assert.throws(()=>f.ui.update(rows(0,32),page),/invalid-frame-candidate-page/);assert.equal(f.root.children.length,0);}const f=fixture();assert.throws(()=>f.ui.update(rows(0,1),{offset:0,total:33,nextOffset:1}),/invalid-frame-candidate-page/);});
 
@@ -32,7 +32,7 @@ test('error replaces candidates and invalidates their native activation handlers
 test('error retry requires trusted click, preserves requested offset and serializes attempts',async()=>{
  const requests=[];let finish;const f=fixture(offset=>{requests.push(offset);return new Promise(resolve=>finish=resolve);});f.ui.showError(608);const retry=f.pageButtons()[0];
  for(const event of [{isTrusted:false},{}, {isTrusted:1}])await retry.handlers.click(event);
- assert.deepEqual(requests,[]);const pending=retry.handlers.click({isTrusted:true});await retry.handlers.click({isTrusted:true});assert.deepEqual(requests,[608]);assert.equal(retry.disabled,true);assert(f.text().includes('正在加载'));
+ assert.deepEqual(requests,[]);const pending=retry.handlers.click({isTrusted:true});await retry.handlers.click({isTrusted:true});assert.deepEqual(requests,[608]);assert.equal(retry.disabled,false);assert.equal(retry.attrs['aria-disabled'],'true');assert(f.text().includes('正在加载'));
  finish({ok:false});await pending;assert.equal(retry.disabled,false);assert(f.text().includes('加载未完成'));
  const second=retry.handlers.click({isTrusted:true});assert.deepEqual(requests,[608,608]);finish({ok:false});await second;assert.deepEqual(f.calls,[]);
 });
@@ -53,4 +53,33 @@ test('successful retry may render updated page without its old finally overwriti
 });
 test('error offset validation leaves existing content untouched',()=>{
  const f=fixture();f.ui.update([item()]);const before=f.text();for(const offset of [-32,1,NaN,Infinity,Number.MAX_SAFE_INTEGER+1,'32',null,undefined]){assert.throws(()=>f.ui.showError(offset),/invalid-candidate-offset/);assert.equal(f.text(),before);}
+});
+
+test('focused candidate pager survives same-page observation and successful forward/back paging',async()=>{
+ const f=fixture(async offset=>{f.ui.update(rows(offset,Math.min(32,65-offset)),{offset,total:65,nextOffset:offset+32<65?offset+32:null});return {ok:true};});
+ f.ui.update(rows(0,32),{offset:0,total:65,nextOffset:32});f.pageButtons()[1].focus();
+ f.ui.update(rows(0,32),{offset:0,total:65,nextOffset:32});assert.equal(f.shadow().activeElement,f.pageButtons()[1]);
+ await f.pageButtons()[1].handlers.click({isTrusted:true});assert.equal(f.shadow().activeElement,f.pageButtons()[1]);
+ await f.pageButtons()[1].handlers.click({isTrusted:true});assert.equal(f.shadow().activeElement,f.buttons()[0],'last page focuses usable content instead of disabled next');
+ f.pageButtons()[0].focus();await f.pageButtons()[0].handlers.click({isTrusted:true});assert.equal(f.shadow().activeElement,f.pageButtons()[0]);
+ await f.pageButtons()[0].handlers.click({isTrusted:true});assert.equal(f.shadow().activeElement,f.buttons()[0],'first page focuses content instead of disabled previous');
+ assert.equal(f.calls.length,0);
+});
+test('failed focused page request transfers to retry and successful retry restores content',async()=>{
+ let fail=true;const f=fixture(async offset=>{if(fail)f.ui.showError(offset);else f.ui.update(rows(offset,1),{offset,total:33,nextOffset:null});return {ok:!fail};});
+ f.ui.update(rows(0,32),{offset:0,total:33,nextOffset:32});f.pageButtons()[1].focus();await f.pageButtons()[1].handlers.click({isTrusted:true});
+ assert.equal(f.shadow().activeElement,f.pageButtons()[0]);fail=false;await f.pageButtons()[0].handlers.click({isTrusted:true});assert.equal(f.shadow().activeElement,f.buttons()[0]);assert.equal(f.calls.length,0);
+});
+for(const destination of ['native','sibling','clear'])test('pending candidate page never reclaims focus after '+destination,async()=>{
+ let finish;const f=fixture(()=>new Promise(r=>finish=r));f.ui.update(rows(0,32),{offset:0,total:33,nextOffset:32});f.pageButtons()[1].focus();const request=f.pageButtons()[1].handlers.click({isTrusted:true});
+ if(destination==='native')f.doc.activeElement={tag:'native-input'};else if(destination==='sibling')f.doc.hasFocus=()=>false;else f.ui.clear();
+ f.ui.update(rows(32,1),{offset:32,total:33,nextOffset:null});finish({ok:true});await request;assert.equal(f.shadow().activeElement,undefined);assert.equal(f.calls.length,0);
+});
+test('retry failure preserves retry focus; disabled-only page focuses its heading',async()=>{
+ let failed=true;const f=fixture(async offset=>{if(failed)f.ui.showError(offset);else f.ui.update([{...item('last'),available:false}],{offset:32,total:33,nextOffset:null});});
+ f.ui.showError(32);f.pageButtons()[0].focus();await f.pageButtons()[0].handlers.click({isTrusted:true});assert.equal(f.shadow().activeElement,f.pageButtons()[0]);
+ failed=false;await f.pageButtons()[0].handlers.click({isTrusted:true});assert.equal(f.shadow().activeElement.tag,'h2');assert.equal(f.shadow().activeElement.tabIndex,-1);assert.equal(f.calls.length,0);
+});
+test('error panel cannot accept a saved list scroll or reclaim external focus',()=>{
+ const f=fixture();f.ui.showError(32);f.pageButtons()[0].focus();f.doc.activeElement={tag:'native-input'};f.ui.showError(32);assert.equal(f.shadow().activeElement,undefined);assert.equal(f.ui.restorePosition({offset:32,scrollTop:8}),false);
 });
