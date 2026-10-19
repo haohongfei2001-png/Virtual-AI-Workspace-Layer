@@ -242,3 +242,49 @@ for(const kind of ['search','workingSet'])test(kind+' paging keeps keyboard posi
  pending.shift()(reply(calls[1]));await tick();assert.equal(f.pane().activeElement,f.button(label),'second page restores the same usable direction');assert.notEqual(f.button(label).getAttribute('aria-disabled'),'true');f.button(label).click();assert.equal(calls[2][kind].offset,48);
  const back=kind==='search'?'关闭派生查找':'返回主题视图';f.button(back).focus();pending.shift()(reply(calls[2]));await tick();assert.equal(f.pane().activeElement,f.button(back),'completion respects an intervening focus move');f.nav.stop();
 });
+function sidebarFixture(extra={}){let url='';const f=fixture('sidebar',()=>null,null,null,{currentURL:()=>url},extra);f.setRouteURL=value=>{url=value;};return f;}
+function sidebarRoute(f,id,scope='scopeA',ref=id+'_0'){
+ const dto=projection('sidebar');dto.scope=scope;dto.current={nativeUrl:'https://chatgpt.com/c/'+ref,refId:ref,projectId:id};f.setRouteURL(dto.current.nativeUrl);f.nav.updateFrameProjection(dto);
+}
+test('sidebar follows current project without accumulating automatic expansions',()=>{
+ const f=sidebarFixture();sidebarRoute(f,'P1');sidebarRoute(f,'P2');
+ assert.equal(f.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'false');assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'true');
+ sidebarRoute(f,null,'scopeA','unknown');assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'false');f.nav.stop();
+});
+test('sidebar manual open and closed choices survive refresh, current changes and frame return',async()=>{
+ let saved;const f=sidebarFixture({onViewChange:v=>{saved=v;}});sidebarRoute(f,'P1');
+ f.button('侧栏主题 Original P2').click();await tick();sidebarRoute(f,'P2');assert.equal(f.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'false');
+ f.button('侧栏主题 Original P2').click();await tick();sidebarRoute(f,'P1');sidebarRoute(f,'P2','scopeA','P2_other');
+ assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'false');
+ const resumed=sidebarFixture();const {freeSession,...layout}=saved;resumed.nav.restoreFrameView(layout);sidebarRoute(resumed,'P2');assert.equal(resumed.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'false');
+ sidebarRoute(f,'P2','scopeB');assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'true','manual preference must not cross scopes');f.nav.stop();resumed.nav.stop();
+});
+test('sidebar explicitly open choice survives project changes, automatic open does not survive return to another project',async()=>{
+ let saved;const f=sidebarFixture({onViewChange:v=>{saved=v;}});sidebarRoute(f,'P1');
+ const automatic=saved;const returned=sidebarFixture();const {freeSession,...layout}=automatic;returned.nav.restoreFrameView(layout);sidebarRoute(returned,'P2');
+ assert.equal(returned.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'false');
+ f.button('侧栏主题 Original P2').click();await tick();sidebarRoute(f,'P1','scopeA','anotherP1');
+ assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'true');sidebarRoute(f,null,'scopeA','unknown');assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'true');
+ f.nav.stop();returned.nav.stop();
+});
+test('full sidebar choice admission preserves the last valid saved layout and offers explicit reset',()=>{
+ let saved;const f=sidebarFixture({onViewChange:v=>{saved=v;}}),layout={segment:0,oldOpen:[],sidebarOpen:[],sidebarChoices:Array.from({length:256},(_,i)=>['closed'+i,false]),capacities:[],scroll:0,sidebarScroll:0,sidebarVisible:true};
+ f.nav.restoreFrameView(layout);sidebarRoute(f,'P1');f.button('侧栏主题 Original P1').click();
+ assert.equal(f.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'true','over-capacity choice is not silently applied');assert.deepEqual(saved.sidebarChoices,layout.sidebarChoices);assert.equal(saved.sidebarOpen.length,1);assert(f.button('重置本次侧栏开合'));
+ f.button('重置本次侧栏开合').click();assert.deepEqual(saved.sidebarChoices,[]);assert.equal(f.button('重置本次侧栏开合'),undefined);f.button('侧栏主题 Original P1').click();assert.deepEqual(saved.sidebarChoices,[['P1',false]]);f.nav.stop();
+});
+test('legacy full and near-byte-limit sidebar layouts survive metadata migration without eviction or invalid SAVE',()=>{
+ for(const length of [8,110]){let saved;const f=sidebarFixture({onViewChange:v=>{saved=v;}}),ids=Array.from({length:256},(_,i)=>'legacy'+i+'x'.repeat(length));const layout={segment:0,oldOpen:[],sidebarOpen:ids,capacities:[],scroll:0,sidebarScroll:0,sidebarVisible:true};
+ f.nav.restoreFrameView(layout);sidebarRoute(f,'P1');assert.deepEqual(saved.sidebarOpen,ids);assert(f.button('重置本次侧栏开合'));const {freeSession,...returned}=saved;assert.equal(f.nav.restoreFrameView(returned),true,'emitted fallback is still valid');if(length===110)assert.equal(Object.hasOwn(saved,'sidebarChoices'),false);f.nav.stop();}
+});
+test('new-format byte overflow on scrolling never silently discards explicit closed choices',()=>{
+ let saved;const f=sidebarFixture({onViewChange:v=>{saved=v;}}),layout={segment:0,oldOpen:[],sidebarOpen:[],sidebarChoices:[['P1',false]],capacities:[],scroll:0,sidebarScroll:0,sidebarVisible:true};
+ for(let i=0;i<64;i++)layout.oldOpen.push(String(i)+'x'.repeat(498));
+ const spare=32766-new TextEncoder().encode(JSON.stringify(layout)).length;
+ layout.oldOpen.push('y'.repeat(spare-3));
+ assert.equal(new TextEncoder().encode(JSON.stringify(layout)).length,32766);
+ assert.equal(f.nav.restoreFrameView(layout),true);sidebarRoute(f,'P1');const before=saved;
+ const list=f.pane().querySelector('.themes');list.scrollTop=100000000;for(const listener of list.events.scroll??[])listener({});
+ assert.equal(saved,before,'oversized new-format save must not replace the prior valid layout');assert.deepEqual(saved.sidebarChoices,[['P1',false]]);assert(f.button('重置本次侧栏开合'));
+ const returned=sidebarFixture();const {freeSession,...restore}=saved;assert.equal(returned.nav.restoreFrameView(restore),true);sidebarRoute(returned,'P1');assert.equal(returned.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'false');f.nav.stop();returned.nav.stop();
+});

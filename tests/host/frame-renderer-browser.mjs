@@ -89,5 +89,20 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   await page.waitForFunction(()=>pagerCase.nav.roots().workspace.shadow.querySelector('[data-ref-id="ref48"]'));
   assert.equal(await page.getByRole('button',{name:back,exact:true}).evaluate(n=>n.getRootNode().activeElement===n),true);await page.evaluate(()=>pagerCase.nav.stop());
  }
+ // Current project expansion is derived; explicit choices survive frame return.
+ await page.evaluate(async()=>{
+  const {createNavigation}=await import('/src/navigation/navigation.mjs');
+  const empty=()=>({items:[],total:0,offset:0,limit:5,hasMore:false});let url='',saved;
+  const make=()=>createNavigation({document,surface:{role:'sidebar',root:document.querySelector('#mount')},adapter:{currentURL:()=>url,isCurrent:()=>false,status(){}},onViewChange:v=>{saved=v;},onProjectionRequest:()=>null});
+  let nav=make();const route=id=>{url='https://chatgpt.com/c/'+id;nav.updateFrameProjection({protocol:'vaiwl-free-frame/1',role:'sidebar',scope:'A',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:false,maxSegment:0},groups:{...empty(),items:['P1','P2'].map(id=>({id,name:id,nativeName:id,lists:{current:empty(),old:empty(),unknown:empty()}})),total:2},entries:{noProject:{...empty(),inventoryTotal:0},unknown:{...empty(),inventoryTotal:0}},selection:null,current:{nativeUrl:url,refId:id,projectId:id}});};
+  window.sidebarCase={route,remount(){const {freeSession,...layout}=saved;nav.stop();nav=make();nav.restoreFrameView(layout);route('P2');},stop:()=>nav.stop()};route('P1');route('P2');
+ });
+ assert.equal(await page.getByRole('button',{name:'侧栏主题 P1',exact:true}).getAttribute('aria-expanded'),'false');
+ assert.equal(await page.getByRole('button',{name:'侧栏主题 P2',exact:true}).getAttribute('aria-expanded'),'true');
+ await page.getByRole('button',{name:'侧栏主题 P2',exact:true}).click();
+ assert.equal(await page.getByRole('button',{name:'侧栏主题 P2',exact:true}).getAttribute('aria-expanded'),'false');
+ await page.evaluate(()=>sidebarCase.remount());
+ assert.equal(await page.getByRole('button',{name:'侧栏主题 P2',exact:true}).getAttribute('aria-expanded'),'false');
+ await page.evaluate(()=>sidebarCase.stop());
  assert.deepEqual(errors,[]);
 });

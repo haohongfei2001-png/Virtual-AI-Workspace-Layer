@@ -56,6 +56,15 @@ test('same document and scope restores historical query/layout under new grants 
  assert.deepEqual(Object.keys(r.resume).sort(),['query','view']);assert.equal(r.resume.session,undefined);
  const restored=await ready(h,'workspace',r.resume.query);assert.equal(restored.state,'ready',JSON.stringify(restored));assert.deepEqual(restored.page.viewSession,first.page.viewSession);
 });
+test('sidebar explicit disclosure choices survive new grants and are discarded on scope change',async t=>{
+ const h=await boot(t);await ready(h,'sidebar',{segment:3});
+ const view={...layout,sidebarOpen:['p1'],sidebarChoices:[['p1',true],['p2',false]]};
+ assert.equal((await save(h,view,'sidebar')).ok,true);
+ await h.bind();await h.mount();assert.deepEqual((await resume(h,'sidebar')).resume.view,view);
+ assert.deepEqual(await resume(h,'workspace'),{ok:true,resume:null});
+ h.switchPrincipal('other-account');await h.bind();await h.mount();
+ assert.deepEqual(await resume(h,'sidebar'),{ok:true,resume:null});
+});
 test('new scope drops prior account resume and cannot retrieve it by switching back',async t=>{
  const h=await boot(t);await ready(h,'workspace',{segment:3});assert.equal((await save(h)).ok,true);
  h.switchPrincipal('other-account');await h.bind();await h.mount();assert.deepEqual(await resume(h),{ok:true,resume:null});

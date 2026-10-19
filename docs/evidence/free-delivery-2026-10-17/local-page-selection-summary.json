@@ -16967,5 +16967,44 @@
         "sha256": "e6c23df8c27784a22cd5493773af626815072c1962fa95d7213544a33ea1592d"
       }
     }
+  },
+  "sidebarDisclosureChoices20261020": {
+    "status": "OFFLINE_ENGINEERING_ONLY",
+    "baseHead": "fae3b15f02b53d55d5bb4e3902cc3adb9a500e02",
+    "problem": "Current project auto expansion accumulated; manual closed choice was not distinct on frame resume.",
+    "fix": "Separate derived current expansion from explicit per-scope choices. Optional RAM resume metadata, bounded admission, visible reset. Legacy-only fallback; new-format overflow retains prior valid saved layout, not latest overflowing scroll.",
+    "sourceHashes": {
+      "src/navigation/navigation.mjs": "aa0bbcfb641e770a24ad078230e718702de44133b0ef1159829b9dee16daa39f",
+      "src/host/frame-resume-state.mjs": "60976e1f4a1e73c93d8d6ac6d4211b138936b2ff282c60e9293ad0e5305a58fb",
+      "tests/host/frame-renderer-browser.mjs": "1ddf5a95d98567fe0e9e3e8cd54060a9fd486763ce77da9dd00c1214eef727b5"
+    },
+    "validation": {
+      "targeted": 413,
+      "unframedNavigation": 98,
+      "actualDOM": "PASS WEB_MECHANISM_ONLY",
+      "build": "HOST_IMPLEMENTATION_UNVERIFIED NOT_RELEASE_READY",
+      "independentReview": "Two capacity blockers fixed; final no blocking finding"
+    },
+    "files": {
+      "targeted": "docs/evidence/free-delivery-2026-10-17/sidebar-disclosure-20261020-targeted.gz",
+      "browser": "docs/evidence/free-delivery-2026-10-17/sidebar-disclosure-20261020-browser.gz",
+      "navigation": "docs/evidence/free-delivery-2026-10-17/sidebar-disclosure-20261020-navigation.gz",
+      "build": "docs/evidence/free-delivery-2026-10-17/sidebar-disclosure-20261020-build.gz",
+      "before": "docs/evidence/free-delivery-2026-10-17/sidebar-disclosure-20261020-before.gz",
+      "ci": "docs/evidence/free-delivery-2026-10-17/sidebar-disclosure-20261020-ci.gz"
+    },
+    "followingCI": {
+      "id": 39342849267,
+      "head": "fae3b15f",
+      "result": "FAIL",
+      "normalTransportExpiry": "PASS",
+      "remainingFailures": [
+        "transport mutation stopped before foreground at wall-clock expiry precondition; not killed",
+        "snippet initial dual-popover 15s wait; initialization cause unestablished"
+      ]
+    },
+    "liveChatGPT": "NOT_RUN",
+    "fullHistory": "NOT_ESTABLISHED",
+    "scale": "DEFERRED unchanged"
   }
 }
