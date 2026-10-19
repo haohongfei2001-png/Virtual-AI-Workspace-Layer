@@ -1,5 +1,7 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+B2/C2验收收口（2026-10-20）：原SYS05同文档目录背压→唯一真实发送优先→ACK/最新标题/300条目录在原6秒内收敛已获隔离MV3证据；不改生产预算，不以测试触发失败推断产品缺陷。原Linux到期恢复单项通过但未复现历史busy，继续保留原FAIL与未关闭根因。具体失败、同源和计时沿原STATUS/证据入口；真实身份→正向成员/本人活动→完整恢复/安装优先级及规模DEFERRED不变。
+
 C2/J4排障增量（2026-10-19）：采用dot的失败后历史policy取证，保持原collector范围、getter未知、固定白名单及L/D/S边界；route相同不证明document或generation，历史SCOPE_VERIFIED不提供当前授权。原workflow可选择一次transport-expiry Linux窄诊断以查原busy竞争，不重跑无关矩阵；原push覆盖与所有门槛不变。具体结果沿STATUS/recoveryPolicyHistory20261019，未据诊断宣布根因修复或Free完成。
 
 C2恢复排障（2026-10-19）：worker空闲快照不构成后续关闭许可；最新CI的CHECK忙碌仍须定位当时实际任务。原runner仅补有界白名单任务/owner计数及决策后快照，不重复关闭、延长窗口或改变生产。实际owner最小反例和一次本地无新GET的到期恢复分别记录，后者不关闭Linux失败。后续按原完整Free顺序持续推进，30分钟巡检复用当前线程与唯一写入者；10k/100k DEFERRED及所有退出标准保持，结果见STATUS/idleWorkTrace20261019。

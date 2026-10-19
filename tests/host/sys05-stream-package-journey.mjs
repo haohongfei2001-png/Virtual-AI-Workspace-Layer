@@ -8,7 +8,7 @@ import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {createSys05StreamServer} from './fixtures/sys05-stream-server.mjs';
 import {attachSys05Observer} from './sys05-stream-observer.mjs';
 import {createSys05StartupDeadline,waitForSys05Worker} from './sys05-startup-precondition.mjs';
-import {SYS05_LIMITS,counterDelta,assertTokenOnlyWork,assertStreamOutcome,assertBackpressureOutcome,assertDirectoryGapPrecondition,assertDirectoryGapOutcome} from './sys05-stream-oracle.mjs';
+import {SYS05_LIMITS,counterDelta,assertTokenOnlyWork,assertStreamOutcome,assertBackpressureOutcome,assertDirectoryGapPrecondition,assertDirectoryGapOutcome,assertDirectoryPriorityOutcome} from './sys05-stream-oracle.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const sha=v=>createHash('sha256').update(v).digest('hex'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const C='44444444-4444-4444-8444-444444444444',PEER='33333333-3333-4333-8333-333333333333';
@@ -16,17 +16,19 @@ const scope=context=>({verified:true,provider:'chatgpt',accountId:'principal_'+s
 const scopeKey=s=>JSON.stringify([s.provider,s.accountId,s.organizationId]);
 const fixtureFiles=['sys05-stream-package-journey.mjs','sys05-startup-precondition.mjs','sys05-stream-oracle.mjs','sys05-stream-observer.mjs','fixtures/sys05-stream-server.mjs','fixtures/sys05-native-stream.mjs','fixtures/sys05-native-peer-rename.mjs','fixtures/sys05-native-directory.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/ui10-conversation-title.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','expected/modern.mjs'];
 async function poll(read,label,timeout=6000){const end=Date.now()+timeout;let result;while(Date.now()<end){result=await read();if(result&&Date.now()<end)return result;await sleep(50);}throw Error('sys05-timeout:'+label);}
-export async function runSys05(output,{execute=false,observeWork=false,backpressure=false,directoryGap=false,lostAck=false}={}){
+export async function runSys05(output,{execute=false,observeWork=false,backpressure=false,directoryGap=false,lostAck=false,directoryPriority=false}={}){
+ if(directoryPriority&&(backpressure||directoryGap||lostAck))throw Error('sys05-priority-isolated-scenario');
+ if(directoryPriority){backpressure=true;directoryGap=true;}
  if(lostAck)directoryGap=true;
  if(backpressure||directoryGap)observeWork=true;
- const report={status:'NOT_RUN',requirement:'VA-HOST/1.1 SYS-05 narrow candidate',S:'NOT_RUN',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',fullSYS05:'NOT_ESTABLISHED',sourceCommit:process.env.FREE_SOURCE_COMMIT??null,workInstrumentation:observeWork,backpressureRequested:backpressure,directoryGapRequested:directoryGap,lostAckRequested:lostAck,limits:SYS05_LIMITS,steps:[],errors:[],uncovered:['Forced backpressure/gap and queue overflow','Full supported-profile matrix','Full admitted inventory and large-scale token storms','Uninstrumented latency/p95 and physical-device performance','Actual ChatGPT G/U and PAIA']};
+ const report={status:'NOT_RUN',requirement:'VA-HOST/1.1 SYS-05 narrow candidate',S:'NOT_RUN',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',fullSYS05:'NOT_ESTABLISHED',sourceCommit:process.env.FREE_SOURCE_COMMIT??null,workInstrumentation:observeWork,backpressureRequested:backpressure&&!directoryPriority,directoryGapRequested:directoryGap&&!directoryPriority,lostAckRequested:lostAck,directoryPriorityRequested:directoryPriority,limits:SYS05_LIMITS,steps:[],errors:[],uncovered:['Forced backpressure/gap and queue overflow','Full supported-profile matrix','Full admitted inventory and large-scale token storms','Uninstrumented latency/p95 and physical-device performance','Actual ChatGPT G/U and PAIA']};
  if(!execute){await writeFile(output,JSON.stringify(report,null,2)+'\n');return report;}
  let server,handle,activeObserver,peerObserver,built,manifest,activePage;
  const dir=await mkdtemp(join(tmpdir(),'vaiwl-sys05-'));
  report.fixtureHashes=Object.fromEntries(await Promise.all(fixtureFiles.map(async path=>['tests/host/'+path,sha(await readFile(new URL(path,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
-  server=await createSys05StreamServer({backpressure,directoryGap});
+  server=await createSys05StreamServer({backpressure,directoryGap,holdPeerRead:directoryPriority});
   built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineContext:true,offlineExistingSend:true,offlineHistory:true});
   manifest=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));report.sourceHashes=manifest.sourceHashes;report.packageSha256=built.archiveSha256;report.buildManifestHash=sha(await readFile(join(built.unpacked,'build-manifest.json')));
   const permissions=JSON.parse(await readFile(join(built.unpacked,'manifest.json')));assert.deepEqual(permissions.host_permissions,['http://127.0.0.1/*']);assert.deepEqual(permissions.permissions,['webNavigation','webRequest']);assert.equal(permissions.content_security_policy.extension_pages,`script-src 'self'; object-src 'none'; connect-src ${server.origin}`);report.workerNetworkPolicy='PACKAGED_EXACT_ORIGIN_CONNECT_SRC';
@@ -43,6 +45,15 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   const personal=scope('account-host-personal'),team=scope('account-host-team');
   const b=await startup.run(()=>context.newPage(),'initial-peer-page');b.on('pageerror',e=>report.errors.push(e.message));await startup.run(()=>b.goto(server.origin+'/c/'+PEER,{timeout:startup.remaining('initial-native-navigation')}),'initial-native-navigation');await ready(b,team,PEER,startup);
   report.browserPrecondition.startup.elapsedMs=startup.elapsedMs();
+  // Fixed-label setup evidence only; no handlers or requests are replaced.
+  if(directoryPriority)await context.addInitScript(()=>{
+   const rows=[];globalThis.__sys05NativeSetupTrace=rows;
+   for(const capture of [true,false])for(const type of ['pointerdown','pointerup','click','submit'])document.addEventListener(type,event=>{
+    const node=event.target,dialog=document.querySelector('#native-dialog');
+    const kind=node?.id==='account-button'?'ACCOUNT':node?.textContent==='Switch to Personal'?'PERSONAL':node?.textContent==='Switch to Team'?'TEAM':dialog?.contains(node)?'DIALOG':'OTHER';
+    if(rows.length<32)rows.push({type,kind,capture,at:Date.now(),trusted:event.isTrusted,defaultPrevented:event.defaultPrevented,dialogOpen:dialog?.open===true});
+   },capture);
+  });
   const a=activePage=await context.newPage();a.on('pageerror',e=>report.errors.push(e.message));await a.goto(server.origin+'/c/'+C);await ready(a,team,C);
   await a.locator('#account-button').click();const navigation=a.waitForNavigation();await a.getByRole('button',{name:'Switch to Personal',exact:true}).click();await navigation;await ready(a,personal,C);
   assert(server.snapshot().nativeRequests.some(r=>r.path==='/backend-api/conversation/'+C&&r.context==='account-host-personal'));
@@ -59,7 +70,7 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   // No new budget or retry is created by the test. Wait out only an existing
   // depleted window, as the original J4 journey does, before the measured phase.
   if(report.before.personal.budget?.requests>=12){const wait=Math.max(0,report.before.personal.budget.startedAt+30001-Date.now());report.budgetWaitMs=wait;await sleep(wait);}
-  if(observeWork){activeObserver=await attachSys05Observer(context,a,id,{directoryGap,lostAck});peerObserver=await attachSys05Observer(context,b,id);report.instrumentation=activeObserver.instrumentation;}else report.instrumentation={kind:'NONE',packageModified:false};
+  if(observeWork){activeObserver=await attachSys05Observer(context,a,id,{directoryGap:directoryGap&&!directoryPriority,lostAck});peerObserver=await attachSys05Observer(context,b,id);report.instrumentation=activeObserver.instrumentation;}else report.instrumentation={kind:'NONE',packageModified:false};
   report.loadedDirectoryNodes=await a.evaluate(()=>[...document.querySelectorAll('aside section[aria-label="Projects"],aside nav[aria-label="Chat history"]')].reduce((n,root)=>n+root.querySelectorAll('*').length,0));
   await a.locator('#sys05-start').click();await poll(()=>a.evaluate(()=>sys05NativeStream.snapshot().ticks>=8),'stream-start');
   const prefixReads=server.snapshot().sys05Reads.filter(r=>r.authenticated&&r.path.startsWith('/backend-api/conversation/')).length;
@@ -69,13 +80,26 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   report.tokenOnly.authenticatedDetailReads=server.snapshot().sys05Reads.filter(r=>r.authenticated&&r.path.startsWith('/backend-api/conversation/')).length-prefixReads;assert.equal(report.tokenOnly.authenticatedDetailReads,0,'token-only-authenticated-read-work');report.steps.push('finite-real-descendant-token-prefix');
   assert((await a.evaluate(()=>sys05NativeStream.snapshot())).realDescendant,'real-recursive-DOM-contains');
   await a.locator('#j4-rename-on-send').check();await a.locator('#prompt-textarea').fill('SYS05 offline native send');
-  if(backpressure){report.peerBefore={personal:await facts(personal,PEER),team:await facts(team,PEER)};server.holdNextRead();}
+  if(backpressure&&!directoryPriority){report.peerBefore={personal:await facts(personal,PEER),team:await facts(team,PEER)};server.holdNextRead();}
   const faultDeadline=backpressure?createSys05StartupDeadline({timeoutMs:SYS05_LIMITS.rpcMs}):null;
+  if(directoryPriority){
+   report.directoryPriority={before:report.before.personal,peerTrigger:'NATIVE_RENAME_AND_ASSISTANT_APPEND'};server.holdNextRead();
+   await faultDeadline.run(()=>b.locator('#sys05-peer-rename').click({timeout:faultDeadline.remaining('priority-peer-rename')}),'priority-peer-rename');
+   await faultDeadline.poll(()=>server.snapshot().backpressure?.heldAt,'priority-real-peer-read-held');
+   await faultDeadline.run(()=>a.locator('#sys05-load-directory').click({timeout:faultDeadline.remaining('priority-native-directory')}),'priority-native-directory');
+   await faultDeadline.poll(async()=>await a.locator('#sys05-load-directory').getAttribute('data-applied')==='true','priority-native-directory-applied');
+   report.directoryPriority.expected=server.snapshot().sys05Directory;assert.equal(report.directoryPriority.expected.length,300);
+   report.directoryPriority.retry=await faultDeadline.poll(async()=>{const w=await activeObserver.snapshot();return w.packets.find(p=>p.directoryIds.length&&p.state==='retry-after'&&p.payloadSha256);},'priority-real-directory-retry');
+  }
   const actionAt=Date.now(),send=()=>a.getByRole('button',{name:'Send',exact:true}).click({timeout:faultDeadline?.remaining('native-send')??15000});
   if(faultDeadline)await faultDeadline.run(send,'native-send');else await send();
   const readAcceptance=()=>{const state=server.snapshot().interruption;return state.accepts===1?state:null;};
   const accepted=await(faultDeadline?faultDeadline.poll(readAcceptance,'real-native-POST'):poll(readAcceptance,'real-native-POST'));
-  if(backpressure){
+  if(directoryPriority){
+   report.directoryPriority.intent=await faultDeadline.poll(async()=>{const w=await activeObserver.snapshot();return w.packets.find(p=>p.kind==='send-candidate'&&p.at>=actionAt);},'priority-intent-before-directory-retry');
+   faultDeadline.remaining('priority-release-peer');server.releaseRead();
+  }
+  if(backpressure&&!directoryPriority){
    const within=faultDeadline.poll;
    await within(()=>server.snapshot().backpressure?.heldAt,'authenticated-read-held');
    await faultDeadline.run(()=>b.locator('#sys05-peer-rename').click({timeout:faultDeadline.remaining('peer-native-rename')}),'peer-native-rename');
@@ -85,7 +109,14 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
    report.backpressure=server.snapshot().backpressure;
    report.steps.push('held-authenticated-read-real-peer-retry-and-same-proposal-acceptance');
   }
-  report.steps.push('one-real-native-POST-and-same-task-title');const sent=accepted.rows.at(-1),durable=await poll(async()=>{const v=await facts(personal);return v.ref?.nativeTitle===accepted.title&&v.hints.filter(h=>h.messageId===sent.id).length===1&&v.activity?.basis==='provisional'&&v.activity.reason==='observed-self-send'&&v.activity.segment===0?v:null;},'original-ACK-and-title');
+  report.steps.push('one-real-native-POST-and-same-task-title');const sent=accepted.rows.at(-1),readDurable=async()=>{const v=await facts(personal);return v.ref?.nativeTitle===accepted.title&&v.hints.filter(h=>h.messageId===sent.id).length===1&&v.activity?.basis==='provisional'&&v.activity.reason==='observed-self-send'&&v.activity.segment===0?v:null;},durable=await(directoryPriority?faultDeadline.poll(readDurable,'original-ACK-and-title'):poll(readDurable,'original-ACK-and-title'));
+  if(directoryPriority){
+   const priority=report.directoryPriority;
+   priority.peerAssistantUpdated=await faultDeadline.run(()=>b.locator('#sys05-peer-rename').getAttribute('data-assistant-updated'),'priority-peer-assistant-evidence')==='true';
+   priority.after=await faultDeadline.poll(async()=>{const v=await facts(personal);return priority.expected.length===300&&priority.expected.every(e=>v.refTitles[e.id]===e.title)?v:null;},'priority-original-directory-converges');
+   priority.hold=server.snapshot().backpressure;priority.actions=server.snapshot().actions;priority.sent=accepted.rows.at(-1);priority.work=await faultDeadline.run(()=>activeObserver.snapshot(),'priority-work-evidence');priority.peer=await faultDeadline.run(()=>facts(team),'priority-peer-isolation');priority.completedAt=Date.now();priority.elapsedMs=faultDeadline.elapsedMs();
+   Object.assign(report,assertDirectoryPriorityOutcome(report));report.steps.push('same-document-paused-directory-native-send-ACK-and-directory-convergence');
+  }
   report.steps.push('original-durable-ACK-provisional-recent-projection');const durableAt=Date.now(),during=await a.evaluate(()=>sys05NativeStream.snapshot());assert(during.running);await poll(()=>a.evaluate(tokens=>sys05NativeStream.snapshot().mutations>tokens,during.jointToken),'tokens-after-durable');
   const tokensAtDurable=(await a.evaluate(()=>sys05NativeStream.snapshot())).mutations;
   const titleWaitAt=Date.now();await a.getByRole('button',{name:'返回工作空间',exact:true}).click();
@@ -97,7 +128,7 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   const visibleTick=(await a.evaluate(()=>sys05NativeStream.snapshot())).ticks;
   await poll(async()=>{assert(await presented(),'sys05-token-update-closed-workspace');const ticks=(await a.evaluate(()=>sys05NativeStream.snapshot())).ticks-visibleTick;report.presentation.tokenTicks=ticks;return ticks>=8;},'workspace-retained-through-token-updates');
   report.ui={exactTitle:title,currentRef:C,activityPlacement:'RECENT_LIST_ABSENT_TO_VISIBLE_NOT_CURRENT_CONTEXT',activityFromHint:true,qualifiedAdmissionAt:durable.hints.find(h=>h.messageId===sent.id).firstObservedAt,durableFirstSeenAt:durableAt,visibleFirstSeenAt:titleAt,timingBasis:'CONSERVATIVE_PRECOMMIT_AUTHENTICATED_ADMISSION_TO_VISIBLE_UI_UPPER_BOUND; includes automation and readonly polling; not exact commit timing or p95',ackLatencyMs:durableAt-actionAt,titleLatencyMs:titleAt-titleWaitAt,acceptanceToVisibleTitleMs:titleAt-Date.parse(sent.at),sendToQualifiedEvidenceMs:Date.parse(durable.hints.find(h=>h.messageId===sent.id).firstObservedAt)-actionAt,evidenceToVisibleTitleMs:titleAt-Date.parse(durable.hints.find(h=>h.messageId===sent.id).firstObservedAt)};
-  if(directoryGap){
+  if(directoryGap&&!directoryPriority){
    const phase=createSys05StartupDeadline({timeoutMs:6000}),gap={kind:lostAck?'ONE_ACCEPTED_REPLY_NOT_DELIVERED':'ONE_PROPOSAL_NOT_DELIVERED_BEFORE_FORWARD'};report.directoryGap=gap;
    gap.before=await phase.run(()=>facts(personal),'gap-before');
    await phase.run(()=>a.getByRole('button',{name:'返回原生阅读',exact:true}).click({timeout:phase.remaining('prepare-native-reading')}),'prepare-native-reading');
@@ -136,14 +167,16 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   report.sendReadback=server.snapshot().sys05Reads.filter(r=>r.authenticated&&r.path==='/backend-api/conversation/'+C&&r.at>=actionAt&&r.finishedAt!==null);assert(report.sendReadback.length>0,'real-authenticated-send-readback-required');
   report.work=observeWork?{active:await activeObserver.snapshot(),peer:await peerObserver.snapshot()}:{status:'NOT_RUN'};
   Object.assign(report,assertStreamOutcome(report));
-  if(backpressure){report.peerAfter={personal:await facts(personal,PEER),team:await facts(team,PEER)};report.backpressure=server.snapshot().backpressure;report.backpressureNativeActions=server.snapshot().actions;report.peerRenameAt=server.snapshot().sys05PeerRenameAt;report.peerRenameApplied=await b.locator('#sys05-peer-rename').getAttribute('data-applied')==='true';Object.assign(report,assertBackpressureOutcome(report));report.uncovered[0]='Queue overflow, persistent gap and rescan recovery';}
-  if(directoryGap){Object.assign(report,assertDirectoryGapOutcome(report));report.uncovered[0]=lostAck?'General queue overflow; existing undelivered-fragment evidence is separate':'General queue overflow and committed-but-lost ACK recovery';}
+  if(backpressure&&!directoryPriority){report.peerAfter={personal:await facts(personal,PEER),team:await facts(team,PEER)};report.backpressure=server.snapshot().backpressure;report.backpressureNativeActions=server.snapshot().actions;report.peerRenameAt=server.snapshot().sys05PeerRenameAt;report.peerRenameApplied=await b.locator('#sys05-peer-rename').getAttribute('data-applied')==='true';Object.assign(report,assertBackpressureOutcome(report));report.uncovered[0]='Queue overflow, persistent gap and rescan recovery';}
+  if(directoryPriority)report.uncovered[0]='General queue overflow; prior separate gap recovery evidence is not this scenario';
+  if(directoryGap&&!directoryPriority){Object.assign(report,assertDirectoryGapOutcome(report));report.uncovered[0]=lostAck?'General queue overflow; existing undelivered-fragment evidence is separate':'General queue overflow and committed-but-lost ACK recovery';}
 assert.deepEqual(report.errors,[]);report.S=observeWork?'NARROW_INSTRUMENTED_BROWSER_OBSERVED':'NARROW_UNINSTRUMENTED_BROWSER_OBSERVED';report.browserVersion=browser.version();
  }catch(error){report.status=handle?'FAIL':'NOT_RUN_BROWSER_STARTUP';report.error=error.stack;}
  finally{
   const capture=async(stage,fn)=>{try{await fn();}catch(error){(report.cleanupErrors??=[]).push({stage,error:error.message});}};
   await capture('final-server-snapshot',()=>{if(server){const s=server.snapshot();report.native??=s.interruption;report.requests=s.requests;report.fixedReads=s.sys05Reads;report.readTraceDropped=s.readTraceDropped;report.nativeActions=s.actions;if(backpressure)report.backpressure=s.backpressure;if(s.readTraceDropped)throw Error('fixed-read-trace-truncated');}});
   await capture('final-passive-work-snapshot',async()=>{if(observeWork&&activeObserver&&peerObserver)report.work={active:await activeObserver.snapshot(),peer:await peerObserver.snapshot()};});
+  if(directoryPriority&&activePage)await capture('native-setup-diagnostic',async()=>{report.nativeSetupDiagnostic=await activePage.evaluate(()=>({events:globalThis.__sys05NativeSetupTrace??[],dialogOpen:document.querySelector('#native-dialog')?.open===true,personalButtons:[...document.querySelectorAll('#native-dialog button')].filter(n=>n.textContent==='Switch to Personal').length}));});
   await capture('final-native-stream-state',async()=>{if(activePage&&!report.stream)report.stream=await activePage.evaluate(()=>globalThis.sys05NativeStream?.snapshot()??null);});
   await capture('final-presentation-state',async()=>{if(activePage)report.finalPresentation=await activePage.evaluate(()=>Array.from(document.querySelectorAll('section[data-va-owned][popover]'),node=>({role:node.id.endsWith('_workspace')?'workspace':'sidebar',open:node.matches(':popover-open'),visibility:getComputedStyle(node).visibility})));});
   await capture('active-observer-close',()=>activeObserver?.close());await capture('peer-observer-close',()=>peerObserver?.close());
@@ -155,6 +188,6 @@ assert.deepEqual(report.errors,[]);report.S=observeWork?'NARROW_INSTRUMENTED_BRO
  return report;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
- const report=await runSys05(process.argv[2]??join(tmpdir(),'sys05-stream-not-run.json'),{execute:process.argv.includes('--execute-browser'),observeWork:process.argv.includes('--observe-work'),backpressure:process.argv.includes('--backpressure'),directoryGap:process.argv.includes('--gap-recovery'),lostAck:process.argv.includes('--lost-ack-recovery')});
+ const report=await runSys05(process.argv[2]??join(tmpdir(),'sys05-stream-not-run.json'),{execute:process.argv.includes('--execute-browser'),observeWork:process.argv.includes('--observe-work'),backpressure:process.argv.includes('--backpressure'),directoryGap:process.argv.includes('--gap-recovery'),lostAck:process.argv.includes('--lost-ack-recovery'),directoryPriority:process.argv.includes('--directory-priority')});
  console.log(JSON.stringify({status:report.status,S:report.S,fullSYS05:report.fullSYS05}));if(report.status.startsWith('FAIL')||report.status==='NOT_RUN_BROWSER_STARTUP')process.exitCode=1;
 }

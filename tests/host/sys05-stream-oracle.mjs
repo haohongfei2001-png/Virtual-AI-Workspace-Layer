@@ -29,6 +29,34 @@ export function assertBackpressureOutcome(value){
  assert.equal(value.peerAfter.personal.ref.nativeTitle,value.peerBefore.personal.ref.nativeTitle,'peer-title-cross-scope');
  return {backpressureVerdict:'PASS_NARROW_REAL_OWNER_CONTENTION',backpressureAndGapFault:'PARTIAL_BACKPRESSURE_ONLY',queueOverflow:'NOT_RUN',gapRecovery:'NOT_RUN',fullSYS05:'NOT_ESTABLISHED'};
 }
+export function assertDirectoryPriorityOutcome(value){
+ const p=value.directoryPriority,C='44444444-4444-4444-8444-444444444444';
+ assert(value.directoryPriorityRequested&&value.workInstrumentation&&p,'priority-browser-evidence-required');
+ assert.equal(p.peerTrigger,'NATIVE_RENAME_AND_ASSISTANT_APPEND');assert.equal(p.peerAssistantUpdated,true);
+ const {hold,retry,intent,after,expected,work,sent}=p;
+ assert.equal(hold.hits,1);assert.equal(hold.closedEarly,false);
+ assert.equal(hold.request.path,'/backend-api/conversation/33333333-3333-4333-8333-333333333333');
+ assert.equal(hold.request.context,'account-host-team');assert.equal(hold.request.authenticated,true);assert.equal(hold.request.status,200);
+ assert(hold.request.receivedAt>=hold.request.peerRenameAt&&hold.heldAt>=hold.request.receivedAt);
+ assert.equal(retry.state,'retry-after');assert(retry.directoryIds.length>0&&retry.replySeq===retry.localSeq&&/^[a-f0-9]{64}$/.test(retry.payloadSha256));
+ assert(retry.at>=hold.heldAt&&retry.finishedAt<=Date.parse(sent.at),'directory-paused-before-native-send');
+ assert.equal(intent.kind,'send-candidate');assert.equal(intent.producer,retry.producer);
+ assert(intent.at>=retry.finishedAt&&intent.at<=hold.releasedAt,'intent-emitted-while-directory-paused');
+ assert(hold.releasedAt>=hold.heldAt&&p.completedAt>=hold.releasedAt&&p.elapsedMs<SYS05_LIMITS.rpcMs,'original-six-second-priority-window');
+ const resumed=work.packets.filter(row=>row.directoryIds.length&&row.state==='accepted'&&row.at>=retry.finishedAt);
+ assert(resumed.length>0&&resumed.every(row=>row.producer===retry.producer&&row.at>=intent.at&&row.replySeq===row.localSeq),'same-producer-send-priority-before-directory');
+ assert(work.packets.some(row=>row.kind==='send-candidate'&&row.producer===intent.producer&&row.localSeq===intent.localSeq&&row.replySeq===row.localSeq&&['accepted','duplicate'].includes(row.state)),'actual-prioritized-intent-acceptance-required');
+ assert.equal(work.counters.traceDropped,0);assert.equal(work.counters.observerErrors,0);assert.equal(work.gap.dropped,0);
+ assert(!work.renewals.some(row=>row.at<=p.completedAt&&(row.finishedAt===null||row.finishedAt>=hold.armedAt)),'renewal-cannot-substitute-for-priority');
+ assert.equal(expected.length,300);const ids=expected.map(e=>e.id);assert.equal(new Set(ids).size,300);
+ assert.deepEqual(after.refIds,[...p.before.refIds,...ids].sort());for(const e of expected)assert.equal(after.refTitles[e.id],e.title);
+ for(const id of p.before.refIds)if(id!==C)assert.equal(after.refTitles[id],p.before.refTitles[id]);
+ assert.equal(after.refTitles[C],'J4 native jointly renamed conversation');
+ const hints=after.hints.filter(h=>h.messageId===sent.id);assert.equal(hints.length,1);assert(hints[0].hasAckWitness&&!hints[0].hasSentAt);
+ assert(p.peer.refIds.every(id=>!ids.includes(id)));assert.equal(p.peer.hints.filter(h=>h.messageId===sent.id).length,0);
+ assert.equal(p.actions['sys05-peer-rename'],1);assert.equal(p.actions['sys05-load-directory'],1);assert.equal(p.actions['send-intent'],1);
+ return {directoryPriorityVerdict:'PASS_NARROW_SAME_DOCUMENT_SEND_PRIORITY',queueOverflow:'NOT_RUN',fullSYS05:'NOT_ESTABLISHED'};
+}
 export function assertDirectoryGapPrecondition(value){
  const g=value.directoryGap;assert(g&&value.workInstrumentation&&value.directoryGapRequested,'directory-gap-evidence-required');
  const lost=value.lostAckRequested===true;assert.equal(g.kind,lost?'ONE_ACCEPTED_REPLY_NOT_DELIVERED':'ONE_PROPOSAL_NOT_DELIVERED_BEFORE_FORWARD');
@@ -94,6 +122,7 @@ export function assertStreamOutcome(value){
  if(!value.workInstrumentation)assert(ui.evidenceToVisibleTitleMs>=0&&ui.evidenceToVisibleTitleMs<SYS05_LIMITS.evidenceToUiMs,'original-F1-evidence-to-UI-1000ms');
  assert(personal.refIds.length>0&&personal.projectIds.length>0,'unsupported-profile-is-not-a-pass');
  for(const budget of [personal.budget,team.budget]){assert(budget,'real-persistent-read-budget-required');assert(budget.checksumValid);assert(budget.requests<=SYS05_LIMITS.requestsPerWindow);assert(budget.attemptCounts.every(n=>n<=SYS05_LIMITS.attempts));}
+ if(value.directoryPriorityRequested){assert.equal(value.directoryGapRequested,false);assertDirectoryPriorityOutcome(value);}
  if(value.directoryGapRequested)assertDirectoryGapOutcome(value);
  if(value.workInstrumentation){for(const page of [work.active,work.peer]){const c=page.counters;assert.equal(c.traceDropped,0,'packet-counter-truncated');assert.equal(c.observerErrors,0,'observer-error');assert.equal(c.unknown,value.directoryGapRequested&&page===work.active?1:0,'unresolved-observation-result');assert(c.maxBytes<=SYS05_LIMITS.packetBytes);assert(c.maxCandidates<=SYS05_LIMITS.candidatesPerPacket);assert(c.maxMessageIds<=SYS05_LIMITS.messageIdsPerPacket);assert(page.packets.every(p=>p.state!=='pending'),'unfinished-observation');}
  assert(work.active.counters.accepted>0,'real-owner-acceptance-required');

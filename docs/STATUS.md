@@ -1,6 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-- **恢复失败后的历史原因可观察，尚非根因修复**（2026-10-19）：吸收dot6270147505，原collector只读实际recovery闭包的有界slot；可区分未见证据、身份失败、原6秒到期、历史已验证和失效，不调用会改变状态的inspect/peek。真实V8与实际owner证明历史SCOPE_VERIFIED可在当前授权已失效时残留，输出明确historyOnly/NOT_ESTABLISHED，document/generation未知，不按相同URL选owner。初次53/1旧源码锚失败及最终55定向通过保留。原workflow增加单项transport-expiry手动选择，复用同一命令/原门槛、仅一个免费公有runner；push矩阵不减、缓存/上传不开。一次Linux诊断待执行，原CI39272071082与完整J4仍未关闭，真实/规模/发布状态不变。证据recoveryPolicyHistory20261019。
+- **同文档目录背压下的发送优先已在实际隔离 MV3 证实**（2026-10-20）：同一原 SYS05 runner 的可选场景通过：另一页合法 assistant 更新的认证读取暂持→当前页300条目录真实 retry-after→唯一原生发送优先→放行后同 producer 的 ACK/最新标题/完整目录收敛，子链467.963ms，仍共用原6秒；原流式19978ms/6400变化及可见呈现保持。生产源码未再改。纠正纯改名不触发读取、root替换导致观察撤回、原生异步目录过早快照及模式标志混淆等测试问题，五份原FAIL全保留；其中一次账户切换未发POST的启动失败原因仍未关闭。154定向、独审及182产品/17fixture同源核对通过；不借旧场景冒充本次草稿/尾搜索，也不宣称完整SYS05或提速。原证据sameDocumentBrowser20261020。
+- **Linux 单项诊断已完成，旧恢复竞态仍开放**：4695600 / CI39278809998 原 transport-expiry 步骤通过，Ubuntu24/Chromium156、约22秒，只有原一次关闭和一个原生GET。trace显示两次frame SAVE_VIEW先完成，最后一次距CHECK仅2ms；本次所有guard安静，没有复现旧busy，不能把CI39272071082改判修复。此前399秒是不同覆盖的完整journeys job，不作等口径提速。真实身份/current-context、成员/本人活动、完整J4/GU仍开放，10k/100k DEFERRED，NOT_RELEASE_READY。
+
+- **恢复失败后的历史原因可观察，尚非根因修复**（2026-10-19）：吸收dot6270147505，原collector只读实际recovery闭包的有界slot；可区分未见证据、身份失败、原6秒到期、历史已验证和失效，不调用会改变状态的inspect/peek。真实V8与实际owner证明历史SCOPE_VERIFIED可在当前授权已失效时残留，输出明确historyOnly/NOT_ESTABLISHED，document/generation未知，不按相同URL选owner。初次53/1旧源码锚失败及最终55定向通过保留。原workflow增加单项transport-expiry手动选择，复用同一命令/原门槛、仅一个免费公有runner；push矩阵不减、缓存/上传不开。一次Linux诊断已完成（见顶部），原CI39272071082与完整J4仍未关闭，真实/规模/发布状态不变。证据recoveryPolicyHistory20261019。
 
 - **恢复竞态的诊断缺口已补，原CI失败未关闭**（2026-10-19）：实际service/UI owner对照复现“空闲快照→新UI任务→CHECK安全拒绝”，原grant继续可用；原runner测试包新增有界固定类型/计数日志，不改生产、原期限或一次关闭机会。独审补CONFIRM/RENEW/STATUS分类，受影响回归通过。一次隔离无界面旅程完成原C2下文档租约到期→foreground新grant/VIEW→阅读/草稿保持，无新原生GET；本机未触发Linux竞态，不据此改判CI39272071082。浏览器运行第一版诊断，最后分类及决策后快照仅Node/语法审查，不冒充最终同源完整矩阵。证据沿idleWorkTrace20261019；完整身份/J4/GU与10k/100k原状态保持。30分钟当前线程巡检已启用，唯一写入者/原PR16不变。
 

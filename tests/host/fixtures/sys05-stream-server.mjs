@@ -27,11 +27,26 @@ export function sys05UpstreamURL(requestPath,fixedOrigin){
  if(base.protocol!=='http:'||base.hostname!=='127.0.0.1'||base.origin!==fixedOrigin||typeof requestPath!=='string'||!requestPath.startsWith('/')||requestPath.startsWith('//')||/[\\\x00-\x20]/.test(requestPath))throw Error('sys05-fixed-fixture-path-required');
  const target=new URL(requestPath,base);if(target.origin!==base.origin)throw Error('sys05-fixed-fixture-origin-required');return target;
 }
-export async function createSys05StreamServer({backpressure=false,directoryGap=false}={}){
+// Native fixture adds an assistant update to the existing reading root. No
+// self-send, acceptance or new authority is created; existing nodes stay intact.
+export function addSys05PeerAssistant(source){
+ const marker="  button.dataset.applied='true';";
+ if(source.split(marker).length!==2)throw Error('sys05-peer-assistant-boundary-changed');
+ return source.replace(marker,"  const article=document.createElement('article');article.dataset.messageId='sys05-peer-assistant';article.dataset.messageAuthorRole='assistant';article.textContent='Offline peer assistant update';document.querySelector('#reading').append(article);button.dataset.assistantUpdated='true';\n"+marker);
+}
+export function sys05PeerAssistantMetadata(value){
+ if(value?.conversation_id!=='33333333-3333-4333-8333-333333333333'||!value.mapping?.[value.current_node])throw Error('sys05-peer-metadata-profile-drift');
+ const copy=structuredClone(value),parent=copy.current_node;
+ copy.mapping['sys05-peer-assistant']={id:'sys05-peer-assistant',parent,children:[],message:{id:'sys05-peer-assistant',author:{role:'assistant'},content:{parts:['Offline peer assistant update']}}};
+ copy.mapping[parent].children=[...(copy.mapping[parent].children??[]),'sys05-peer-assistant'];copy.current_node='sys05-peer-assistant';return copy;
+}
+export async function createSys05StreamServer({backpressure=false,directoryGap=false,holdPeerRead=false}={}){
+ if(holdPeerRead&&!backpressure)throw Error('sys05-peer-hold-requires-backpressure');
  const upstream=await createVariantHostFixtureServer({profile:'MODERN',journey:'J4',interruption:true,sys05Backpressure:backpressure,sys05DirectoryGap:directoryGap});
  const stream=await readFile(new URL('./sys05-native-stream.mjs',import.meta.url));
  const directoryScript=directoryGap?await readFile(new URL('./sys05-native-directory.mjs',import.meta.url)):null;
- const peerScript=backpressure?await readFile(new URL('./sys05-native-peer-rename.mjs',import.meta.url)):null;
+ const peerSource=backpressure?await readFile(new URL('./sys05-native-peer-rename.mjs',import.meta.url),'utf8'):null;
+ const peerScript=holdPeerRead?addSys05PeerAssistant(peerSource):peerSource;
  const reads=[];let dropped=0,holdState=null,releaseHeld=null;
  // Test-owned response barrier. Never creates a request, reply, grant or ACK.
  const holdNextRead=()=>{if(!backpressure||holdState)throw Error('sys05-hold-once-only');holdState={armedAt:Date.now(),heldAt:null,releasedAt:null,closedEarly:false,hits:0};};
@@ -53,9 +68,21 @@ export async function createSys05StreamServer({backpressure=false,directoryGap=f
   const postSendAtRequest=acceptedAtRequest.accepts===1?Date.parse(acceptedAtRequest.rows.at(-1).at):null;
   const forwarded=http.request(target,{method:req.method,headers:{...req.headers,host:new URL(upstream.origin).host}},response=>{
    if(row){row.status=response.statusCode;res.once('finish',()=>row.finishedAt=Date.now());}
-   if(req.method==='GET'&&path==='/backend-api/conversation/44444444-4444-4444-8444-444444444444'&&response.statusCode===200){
+   const peerRenameAt=upstream.snapshot().sys05PeerRenameAt;
+   if(holdPeerRead&&holdState&&holdState.heldAt===null&&req.method==='GET'&&path==='/backend-api/conversation/33333333-3333-4333-8333-333333333333'&&response.statusCode===200&&row?.authenticated&&row.context==='account-host-team'&&peerRenameAt!==null&&row.at>=peerRenameAt){
+    // This optional native profile owns the new assistant row on both surfaces;
+    // the existing authenticated response and authority fields remain unchanged.
+    const chunks=[];response.on('data',c=>chunks.push(c));response.on('end',()=>{
+     holdState.heldAt=Date.now();holdState.hits++;holdState.request={receivedAt:row.at,peerRenameAt,path:row.path,context:row.context,authenticated:row.authenticated,status:row.status};
+     const body=JSON.stringify(sys05PeerAssistantMetadata(JSON.parse(Buffer.concat(chunks).toString())));
+     releaseHeld=()=>{res.writeHead(response.statusCode,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(body);};
+     res.once('close',()=>{if(holdState.releasedAt===null){holdState.closedEarly=true;releaseHeld=null;}});
+    });
+   }else if(holdPeerRead&&peerRenameAt!==null&&req.method==='GET'&&path==='/backend-api/conversation/33333333-3333-4333-8333-333333333333'&&response.statusCode===200){
+    const chunks=[];response.on('data',c=>chunks.push(c));response.on('end',()=>{const body=JSON.stringify(sys05PeerAssistantMetadata(JSON.parse(Buffer.concat(chunks).toString())));res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(body);});
+   }else if(req.method==='GET'&&path==='/backend-api/conversation/44444444-4444-4444-8444-444444444444'&&response.statusCode===200){
     const chunks=[];response.on('data',c=>chunks.push(c));response.on('end',()=>{try{const body=JSON.stringify(sys05AckOnlyMetadata(JSON.parse(Buffer.concat(chunks).toString())));const send=()=>{res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(body);};
-     if(holdState&&holdState.heldAt===null&&row?.authenticated&&row.context==='account-host-personal'&&postSendAtRequest!==null&&row.at>=postSendAtRequest){
+     if(!holdPeerRead&&holdState&&holdState.heldAt===null&&row?.authenticated&&row.context==='account-host-personal'&&postSendAtRequest!==null&&row.at>=postSendAtRequest){
       holdState.heldAt=Date.now();holdState.hits++;holdState.request={receivedAt:row.at,acceptedAt:postSendAtRequest,path:row.path,context:row.context,authenticated:row.authenticated,status:row.status};releaseHeld=send;res.once('close',()=>{if(holdState.releasedAt===null){holdState.closedEarly=true;releaseHeld=null;}});
      }else send();}catch{res.writeHead(500);res.end('fixture-metadata-transform-failed');}});
    }else if(req.method==='GET'&&path==='/native.mjs'){
