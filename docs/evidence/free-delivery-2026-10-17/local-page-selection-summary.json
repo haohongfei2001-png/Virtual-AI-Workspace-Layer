@@ -16792,5 +16792,42 @@
       "vaiwl-settled-save-mv3-summary.json": "PASS"
     },
     "logNormalization": "trailing whitespace only; raw hashes retained"
+  },
+  "frameListPagerFocus20261020": {
+    "baseHead": "f22a88d",
+    "status": "PASS_SCOPED_WEB_MECHANISM_ONLY",
+    "defect": "search and working-set waiting removed paging control, losing keyboard position after response",
+    "fix": "keep same-query paging controls focusable but aria-disabled and handler-guarded while replacing rows; existing synchronous focus restoration only",
+    "validation": {
+      "targetedAndBuild": 266,
+      "actualBrowser": "Enter traverses three search and working-set pages; Enter/Space during waiting cannot repeat read; user focus moved to close/back is preserved",
+      "sourceHashes": {
+        "src/navigation/navigation.mjs": "8dea0d71a50e16fbdac9ed53ee773cf1490f33410e458bce145fc2d465840752",
+        "src/navigation/styles.mjs": "d766ca15bfb19f604b33334e5b443a5859b278ef793dce8fa7707c67168e02d4",
+        "tests/host/frame-projection-renderer.test.mjs": "d35fbc2b3aa18a76888b9c8c91180bfeb0a37edd77af5269de170a4370d0bc4d",
+        "tests/host/frame-renderer-browser.mjs": "58c6fb67f32fb666125338c068b8add73fbc5c8902526db4ba405a5e1f958479"
+      },
+      "independentReview": "no blocking finding"
+    },
+    "artifacts": {
+      "vaiwl-pager-focus-before.log": {
+        "rawHash": "bdfda38334ff9ffbc851a878ca2ed6ce3ea998f47646ded21d8b55325d517154",
+        "savedHash": "5bb20534764b5b21a06a96acc146d6db4012ff091db354fa74f86cabf649cfbf"
+      },
+      "vaiwl-pager-focus-final-unit.log": {
+        "rawHash": "b2471884e0e3437b9883bc6c09a6175ddadaad9fc8690bdc584291d5249b28dd",
+        "savedHash": "b2471884e0e3437b9883bc6c09a6175ddadaad9fc8690bdc584291d5249b28dd"
+      },
+      "vaiwl-pager-focus-final-browser.log": {
+        "rawHash": "b60b4303e437515b1b8510d753101bf60ea911fcdf71cb2ae7b6eb7d9bf4cfe3",
+        "savedHash": "b60b4303e437515b1b8510d753101bf60ea911fcdf71cb2ae7b6eb7d9bf4cfe3"
+      }
+    },
+    "limits": [
+      "not MV3 acceptance",
+      "realChatGPT NOT_RUN",
+      "no request or authorization budget changes",
+      "10k/100k DEFERRED"
+    ]
   }
 }

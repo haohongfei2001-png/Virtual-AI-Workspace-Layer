@@ -233,3 +233,12 @@ test('sidebar project create is a sibling of disclosure and does not toggle its 
  toggle.click();assert.equal(f.button('侧栏主题 Original P2').getAttribute('aria-expanded'),'true');assert.equal(calls.length,1);assert.equal(calls[0].groupId,'P2');
  assert(f.pane().querySelector('[aria-label="打开项目以新建聊天 Original P2"]'));f.nav.stop();
 });
+
+for(const kind of ['search','workingSet'])test(kind+' paging keeps keyboard position across waiting without duplicate requests',async()=>{
+ const calls=[],pending=[],f=fixture('workspace',q=>{calls.push(q);return new Promise(r=>pending.push(r));}),label=kind==='search'?'显示更多查找结果':'显示更多工作集窗口';
+ const reply=q=>kind==='search'?searchReply(q.search,Array.from({length:Math.min(24,50-q.search.offset)},(_,i)=>row('ref'+(q.search.offset+i))),50):workReply(Array.from({length:Math.min(24,50-q.workingSet.offset)},(_,i)=>row('ref'+(q.workingSet.offset+i))),50,q.workingSet.offset);
+ f.nav.updateFrameProjection(projection());f.nav.present({kind:kind==='search'?'search-known':'show-working-set'});pending.shift()(reply(calls[0]));await tick();
+ f.button(label).focus();f.button(label).click();assert.equal(calls.length,2);assert.equal(f.pane().activeElement?.getAttribute('aria-label'),label,'waiting keeps the pager focus');assert.equal(f.button(label).getAttribute('aria-disabled'),'true');f.button(label).click();assert.equal(calls.length,2,'waiting control cannot issue a second page read');
+ pending.shift()(reply(calls[1]));await tick();assert.equal(f.pane().activeElement,f.button(label),'second page restores the same usable direction');assert.notEqual(f.button(label).getAttribute('aria-disabled'),'true');f.button(label).click();assert.equal(calls[2][kind].offset,48);
+ const back=kind==='search'?'关闭派生查找':'返回主题视图';f.button(back).focus();pending.shift()(reply(calls[2]));await tick();assert.equal(f.pane().activeElement,f.button(back),'completion respects an intervening focus move');f.nav.stop();
+});

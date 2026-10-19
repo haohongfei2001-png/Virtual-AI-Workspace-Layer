@@ -69,4 +69,25 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   return checks;
  });
  assert.equal(result.length,21);assert.deepEqual(errors,[]);
+ // Exercise actual Enter/Space activation through delayed pages, not .click().
+ for(const kind of ['search','workingSet']){
+  await page.evaluate(async kind=>{
+   const {createNavigation}=await import('/src/navigation/navigation.mjs');
+   const empty=()=>({items:[],total:0,offset:0,limit:24,hasMore:false});
+   const dto={protocol:'vaiwl-free-frame/1',role:'workspace',scope:'scopeA',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:false,maxSegment:0},groups:empty(),entries:{noProject:{...empty(),inventoryTotal:0},unknown:{...empty(),inventoryTotal:0}},selection:null};
+   const pending=[],calls=[];const nav=createNavigation({document,surface:{role:'workspace',root:document.querySelector('#mount')},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){}},onProjectionRequest:q=>{calls.push(q);return new Promise(r=>pending.push(r));}});
+   const complete=()=>{const q=calls.at(-1)[kind],items=Array.from({length:Math.min(24,50-q.offset)},(_,i)=>({id:'ref'+(q.offset+i),nativeTitle:'Item '+(q.offset+i),displayTitle:'Item '+(q.offset+i),nativeUrl:'https://chatgpt.com/c/ref'+(q.offset+i),membership:'NONE',projectId:null,segment:0}));pending.shift()({...dto,[kind]:{...q,items,total:50,hasMore:q.offset+items.length<50,...(kind==='workingSet'?{currentRefId:null}:{})}});};
+   nav.updateFrameProjection(dto);nav.present({kind:kind==='search'?'search-known':'show-working-set'});window.pagerCase={nav,complete,calls};complete();
+  },kind);
+  const label=kind==='search'?'显示更多查找结果':'显示更多工作集窗口',pager=page.getByRole('button',{name:label,exact:true});
+  await pager.waitFor();await pager.focus();await page.keyboard.press('Enter');
+  assert.equal(await pager.getAttribute('aria-disabled'),'true');assert.equal(await pager.evaluate(n=>n.getRootNode().activeElement===n),true);
+  await page.keyboard.press('Enter');await page.keyboard.press('Space');assert.equal(await page.evaluate(()=>pagerCase.calls.length),2);
+  await page.evaluate(()=>pagerCase.complete());await page.waitForFunction(label=>{const s=pagerCase.nav.roots().workspace.shadow,n=s.querySelector('[aria-label="'+label+'"]');return n&&n.getAttribute('aria-disabled')!=='true'&&s.activeElement===n;},label);
+  await page.keyboard.press('Enter');assert.equal(await page.evaluate(kind=>pagerCase.calls.at(-1)[kind].offset,kind),48);
+  const back=kind==='search'?'关闭派生查找':'返回主题视图';await page.getByRole('button',{name:back,exact:true}).focus();await page.evaluate(()=>pagerCase.complete());
+  await page.waitForFunction(()=>pagerCase.nav.roots().workspace.shadow.querySelector('[data-ref-id="ref48"]'));
+  assert.equal(await page.getByRole('button',{name:back,exact:true}).evaluate(n=>n.getRootNode().activeElement===n),true);await page.evaluate(()=>pagerCase.nav.stop());
+ }
+ assert.deepEqual(errors,[]);
 });

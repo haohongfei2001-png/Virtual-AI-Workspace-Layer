@@ -288,6 +288,19 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const section=node(doc,'section',{class:'current-context','aria-label':'当前聊天','data-current-membership':ref.membership});
     section.append(node(doc,'h2',{},'当前聊天'),row(ref,'current-context'));parent.append(section);
   }
+  // Retain the same focusable paging controls while rows are being replaced.
+  // aria-disabled plus the handler guard prevents repeat requests without the
+  // browser dropping keyboard focus as it does for a disabled/removed button.
+  function frameListPager(parent,kind,found,waiting=false){
+    if(!found)return;
+    const search=kind==='search',label=search?'查找结果':'工作集窗口';
+    const add=(previous)=>{const control=button((previous?'返回前页':'显示更多')+label,()=>{
+      if(waiting||(search?frameSearchWaiting:frameWorkingSetWaiting))return;
+      const offset=previous?Math.max(0,found.offset-found.limit):found.offset+found.limit;
+      if(search)requestFrameSearch(offset);else requestFrameWorkingSet(offset);render();
+    },previous?'上一页':'显示更多','more');if(waiting)control.setAttribute('aria-disabled','true');parent.append(control);};
+    if(found.hasMore)add(false);if(found.offset>0)add(true);
+  }
   function requestFrameSearch(offset=0){frameSearchOffset=offset;frameSearchWaiting=true;requestFrame({search:{query:searchQuery,projectId:searchTheme,offset,limit:24}});}
   function closeFrameSearch(){searchQuery=null;searchTheme=null;frameSearchWaiting=false;projectionRequest++;render();requestFrame();onPresentationRequest({kind:'show-workspace'});}
   function requestFrameWorkingSet(offset=0){frameWorkingSetOffset=offset;frameWorkingSetWaiting=true;requestFrame({workingSet:{offset,limit:24}});}
@@ -411,7 +424,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       const input=node(doc,'input',{'aria-label':'已知聊天查找输入',placeholder:'输入项目、聊天名称或已保存片段','data-focus-key':'search-input',type:'search',maxlength:'200'});input.value=searchQuery;
       const results=node(doc,'div',{class:'search-results'});
       const display=()=>{results.replaceChildren();const found=frameProjection.search;
-        if(frameSearchWaiting||!found||found.query!==searchQuery||found.projectId!==searchTheme||found.offset!==frameSearchOffset){results.append(node(doc,'p',{role:'status'},'正在查找已知记录…'));return;}
+        if(frameSearchWaiting||!found||found.query!==searchQuery||found.projectId!==searchTheme||found.offset!==frameSearchOffset){results.append(node(doc,'p',{role:'status'},'正在查找已知记录…'));if(found?.query===searchQuery&&found.projectId===searchTheme)frameListPager(results,'search',found,true);return;}
         for(const ref of found.items){
           if(ref.kind==='project'){results.append(projectSearchRow(ref));continue;}
           results.append(row(ref,'search'));
@@ -428,20 +441,18 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
           }
         }
         if(!found.total)results.append(node(doc,'p',{role:'status'},'未找到已知记录。可以继续使用原生搜索。'));
-        if(found.hasMore)results.append(button('显示更多查找结果',()=>{requestFrameSearch(found.offset+found.limit);render();},'显示更多','more'));
-        if(found.offset>0)results.append(button('返回前页查找结果',()=>{requestFrameSearch(Math.max(0,found.offset-found.limit));render();},'上一页','more'));
+        frameListPager(results,'search',found);
       };
       input.oninput=()=>{advanceNavigationIntent();searchQuery=input.value.slice(0,200);input.value=searchQuery;requestFrameSearch();display();};
       section.append(input,node(doc,'p',{},'查找已知项目、聊天与已保存片段。原生搜索独立保留。'),results);display();page.append(section);
     }else if(frameProjection&&view.worksetOpen){
       const section=node(doc,'section',{class:'search working-set','aria-label':'当前工作集'}),found=frameProjection.workingSet;
       section.append(node(doc,'strong',{},'当前工作集'),button('返回主题视图',closeFrameWorkingSet,'返回主题','more'),node(doc,'p',{},'按已保存的人工顺序显示窗口引用。草稿由原生页面保留。'));
-      if(frameWorkingSetWaiting||!found||found.offset!==frameWorkingSetOffset)section.append(node(doc,'p',{role:'status'},'正在读取当前工作集…'));
+      if(frameWorkingSetWaiting||!found||found.offset!==frameWorkingSetOffset){section.append(node(doc,'p',{role:'status'},'正在读取当前工作集…'));frameListPager(section,'workingSet',found,true);}
       else{
         for(const ref of found.items){const link=row(ref,'workset');if(ref.id===found.currentRefId)(link.querySelector('a')??link).setAttribute('data-working-set-current','true');section.append(link);}
         if(!found.total)section.append(node(doc,'p',{role:'status'},'当前工作集尚未保存窗口。'));
-        if(found.hasMore)section.append(button('显示更多工作集窗口',()=>{requestFrameWorkingSet(found.offset+found.limit);render();},'显示更多','more'));
-        if(found.offset>0)section.append(button('返回前页工作集窗口',()=>{requestFrameWorkingSet(Math.max(0,found.offset-found.limit));render();},'上一页','more'));
+        frameListPager(section,'workingSet',found);
       }page.append(section);
     }else if(searchQuery!==null){
       const search=node(doc,'section',{class:'search'}),top=node(doc,'div',{class:'search-top'}),theme=groups.find(g=>g.id===searchTheme);
