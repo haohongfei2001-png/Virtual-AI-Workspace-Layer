@@ -9871,6 +9871,84 @@
           "numericCopiesPreserved": 2258,
           "stashesPreserved": 3,
           "linuxNewCandidate": "NOT_RUN"
+        },
+        "linuxCI20261019": {
+          "sourceCommit": "a30c8c8a0ac2a1fee93ae3b804c3610e464ff050",
+          "runId": 39182137924,
+          "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39182137924",
+          "status": "ALL_FOUR_EXISTING_JOBS_SUCCESS_NOT_FREE_ACCEPTED",
+          "jobs": {
+            "node-contracts": 117836949300,
+            "offline-journeys": 117836949450,
+            "offline-durability-compat": 117836949172,
+            "offline-j4-lifecycle": 117836949446
+          },
+          "sourceFilesRechecked": 181,
+          "sourceMismatches": [],
+          "project": {
+            "status": "PASS",
+            "durationMs": 20984.903669,
+            "checks": {
+              "wrong-project-rejects": true,
+              "hidden-association-rejects": true,
+              "oldDocumentCannotBindReplacement": true,
+              "noScopeFromProjectRouteOrFixtureAttribute": true,
+              "unlistedAccountCannotMount": true,
+              "correctScopeNoProjectOrMembershipUpgrade": true,
+              "nativeRegionsProtected": true,
+              "searchAndSafeNativeOpen": true,
+              "nativeReadingInputAndUniqueReturn": true,
+              "scrollSuspendsAndExplicitReturnRecovers": true,
+              "workerLossRevokesFramesAndRestoresNative": true,
+              "noAutomaticConversationBodyRead": true
+            },
+            "membership": "UNKNOWN",
+            "recoveryQualification": "C2_WAIT_WITHOUT_NEW_CONTEXT_NOT_J4"
+          },
+          "temporaryProject": {
+            "status": "PASS_TEMPORARY_PROJECT_MV3",
+            "elapsedMs": 1018.4885689999999,
+            "sourceStable": true,
+            "testSourcesStable": true
+          },
+          "j4": {
+            "status": "PARTIAL_J4_NOT_ACCEPTED",
+            "automaticForegroundRecovery": "NOT_ESTABLISHED",
+            "nativeGETRecoveryNotSubstitute": true,
+            "errors": []
+          },
+          "scale": "DEFERRED_NOT_RUN",
+          "realProfile": "NO_NEW_ACCESS",
+          "speedupClaim": false,
+          "archive": {
+            "path": "docs/evidence/free-delivery-2026-10-17/project-package-ci39182137924.json.gz",
+            "sha256": "2ac0c67d937112633c2ab67442f3ed671c7db5baaf4f324615646ad3c74aba18",
+            "uncompressedSha256": "4aeb4bd76da24fa5b08b57742627d851954fcc3c533ef77e25721ec0bd155348"
+          }
+        },
+        "syncConfirmed20261019": {
+          "head": "a30c8c8a0ac2a1fee93ae3b804c3610e464ff050",
+          "confirmedBy": [
+            "GitHub PR16 head_sha",
+            "GitHub git/ref API",
+            "local remote-tracking reflog update by push"
+          ],
+          "ahead": 0,
+          "behind": 0,
+          "oldTransportFailuresRetained": true,
+          "newReadOnlyTransportProbe": {
+            "command": "ls-remote --heads origin original-Free-branch",
+            "exit": 128,
+            "elapsedMs": 15333,
+            "lastConfirmedPhase": "TCP_TLS_READY_NO_HTTP_RESPONSE_OBSERVED",
+            "lowSpeedLimit": 1024,
+            "lowSpeedTime": 15,
+            "source": "command-only",
+            "rawTraceSaved": false,
+            "authFailureProven": false
+          },
+          "numericCopies": 2258,
+          "stashes": 3
         }
       }
     }

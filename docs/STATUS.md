@@ -1,8 +1,10 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **同步与 Linux 候选已核实（a30c8c8 / CI39182137924）**：GitHub PR/ref及本地tracking均为a30c8c8，ahead0/behind0，原8提交已到原分支；此前超时记录保留。本次四个既有job全部SUCCESS，新增Project实际MV3闭环20.985s、临时Project回归1.018s，三份关键JSON的181个产品源码hash逐一与本地相同。J4原报告仍PARTIAL，peer无新context自动恢复NOT_ESTABLISHED，不能用新GET替代；10k/100k仍DEFERRED，真实Profile未新访问/重装，完整Free仍NOT_RELEASE_READY。没有同环境成功基线，不宣称提速。原证据`projectLayout20261019.packagedDataClosure20261019.linuxCI20261019`。
+
 - **Project 正常界面的两处数据接线故障已修，实际 MV3 离线闭环通过**：同一聊天的普通/容器原生URL被误当冲突，连带整页不摄取；挂载后自身workspace mask又使列表标题和句柄判空。现仅页内同ID/原名/同identity的等价别名保留首个真实href，原冲突护栏不变；复用同步受保护的原生阅读探测，实际点击仍在恢复展示后核验，原生hidden/CSS/aria、根替换及probe失败继续拒绝。原1d最小反例和实际包FAIL保留；独审无阻断。
 - **本次真实工程结果**：新增严格loopback构建组合，把原Project布局接过实际worker/content/存储/双frame；fixture身份仅送context bridge，不给adapter成员语义。合法第二空间→2条UNKNOWN聊天→搜索/原生安全打开→阅读/输入/唯一返回→滚动挂起恢复→worker丢失撤回成立；错误Project、隐藏关联、旧文档及非roster账户拒绝。全旅程21.882s含3次原期限拒绝等待及清理；旧25.638s失败未完成，无同口径提速结论。原聊天和临时Project MV3同source hash回归通过，限定检查与10个遮罩反例、37个布局机制场景通过；不是完整81项/J4/G/U。
-- **真实接入与交付边界**：未访问或重装真实Profile，既有97bc77e临时聊天闭环保留；当前Project单次响应许可仍未消耗。403主体/roster、生产Project context、正向成员/NONE及本人活动仍未完成。C2 worker丢失后安全等待新证据，不冒充无新GET的peer恢复。10k/100k仍DEFERRED、完整Free仍NOT_RELEASE_READY。原证据`projectLayout20261019.packagedDataClosure20261019`；产品已保存为`cb39c9a`，tracked tree在产品提交后干净、2258数字副本/3stash保留；正常fetch在25秒内未完成，本次push未执行，API再核对远端仍ebbde49，无遗留Git子进程/配置更改。新候选Linux CI NOT_RUN，同步待网络条件变化。
+- **真实接入与交付边界**：未访问或重装真实Profile，既有97bc77e临时聊天闭环保留；当前Project单次响应许可仍未消耗。403主体/roster、生产Project context、正向成员/NONE及本人活动仍未完成。C2 worker丢失后安全等待新证据，不冒充无新GET的peer恢复。10k/100k仍DEFERRED、完整Free仍NOT_RELEASE_READY。原证据`projectLayout20261019.packagedDataClosure20261019`；产品已保存为`cb39c9a`，tracked tree在产品提交后干净、2258数字副本/3stash保留；正常fetch在25秒内未完成，本次push未执行，API再核对远端仍ebbde49，无遗留Git子进程/配置更改。此为当时失败记录；随后同步及同源Linux结果见上项。
 
 - **挑战提示的状态码遗漏已修，真实身份仍受阻**：采纳dot6256852770的可复现项；旧解析器只在403识别`cf-mitigated=challenge`，200/401标记被误报为格式/登录类错误。现先核对固定目标与无重定向，再按精确marker拒绝；不读challenge正文、不调用accounts或备用通道、不产生scope。原源码同fixture23项12FAIL/11PASS保留，修复后受影响provider/隔离读取/authority/撤权/包回归通过；同源码实际MV3三个独立文档（403/200/401）均显示验证受阻，原生草稿保持，每文档session一次、accounts零、状态快照不重试。2.236s含隔离启动/三文档，不是提速对照；独审无阻断。仅离线分类与安全退出通过，没有重放真实403或重装专用Profile，原临时Project聊天闭环继续可用。新的原生context或另一文档可能启动新核验，“无重试”不泛化为永久禁止刷新。原证据`challengeFaultStatus20261019.markerFollowup20261019`。
 

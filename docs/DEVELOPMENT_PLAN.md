@@ -25,6 +25,8 @@
 
 ## 当前执行优先级调整（用户决定，2026-10-19）
 
+同源检查点a30c8c8已确认同步原PR16，CI39182137924四个既有job成功；新增Project打包闭环和临时模式回归通过，J4原结果仍PARTIAL，10k/100k DEFERRED。下一真实关口仍为网站支持的合法principal/context及实际响应关联语义；新增离线候选接口不视为真实可用性进展。原规格/产品目标/权限均不变，当前源码及失败记录见STATUS原入口。
+
 本批Project闭环：实际打包MV3补出了别名冲突整页拒收与自身显示mask阻断标题/句柄两处接线缺陷，已在原发现/导航层修复；复用原同步原生阅读探测，不放宽宿主隐藏或派发检查。严格loopback fixture只用于完整worker/content/数据库/现有UI旅程，生产Project context仍关闭。离线搜索、原生打开/返回、滚动恢复及worker失权撤回通过，正常数据仍UNKNOWN；不把fixture文档关联当真实身份或成员来源。继续上述真实principal→当前context→正向成员/活动→恢复/安装顺序；真实临时包保留、一次列表响应许可未消耗、规模仍DEFERRED。原失败与同源码结果见STATUS及原`projectLayout20261019.packagedDataClosure20261019`，不新增计划或改判历史成绩。
 
 当前按用户新指令优先修复真实页面观察与导航：落实 Host Spec §3.1 的 HELLO→adapter 有界 RAM 观察→独立身份/context→原 BIND/数据库/UI 顺序。已确认 content-session 实现曾在 verified 后才创建 adapter，身份失败同时阻断独立观察；本批修复此差额。授权前不发 observation/ingestion RPC、不读旧库、不建发送/片段/操作能力；候选仅当前 document/route、有界 RAM，原 document binding 到期或撤权即清理。verified 后丢弃候选并新鲜重扫，不把旧候选贴到新账户。
