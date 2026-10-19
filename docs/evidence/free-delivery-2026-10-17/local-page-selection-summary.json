@@ -16415,6 +16415,15 @@
       "popup-root-scrollbar-verified.tap.gz": {
         "sha256": "d1726d9746289d6938ed99280d9a0e260fd2524255ad9d3851727948a4f1e863"
       }
+    },
+    "finalLocalCandidate": {
+      "status": "PASS_TEMPORARY_MV3_POPUP",
+      "elapsedMs": 4208.2490419999995,
+      "sourceStable": true,
+      "testSourcesStable": true,
+      "windowPrecondition": "Same explicit owned-window activation as Linux-verified Project runner before every popup open",
+      "artifact": "popup-root-scrollbar-candidate.json.gz",
+      "sha256": "331a1e28efa285df3113cba17f36b72f6a75698659759d2d82f4508926952e27"
     }
   }
 }
