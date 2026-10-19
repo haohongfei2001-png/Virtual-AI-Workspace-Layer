@@ -10848,7 +10848,9 @@
       "temporary-bootstrap-targeted.tap.gz",
       "temporary-bootstrap-project.json.gz",
       "temporary-bootstrap-preliminary-sandbox-fail.json.gz",
-      "temporary-document-filter-rejected-red.tap.gz"
+      "temporary-document-filter-rejected-red.tap.gz",
+      "temporary-bootstrap-ci39208346430.log.gz",
+      "temporary-bootstrap-ci39208346430-project.json.gz"
     ],
     "rejectedCandidate": {
       "change": "Ignore INVALIDATED when sender.documentId differs from the displayed document.",
@@ -10864,7 +10866,14 @@
       "reloadButtonActivated": true,
       "freshDocumentReadback": "NOT_VERIFIED",
       "reason": "Native focus moved to a different Chrome window; fixed dedicated-tab AX read timed out and reset the tool session. No challenge was solved; no new 403 network observation.",
-      "durableInstallationAccepted": false
+      "durableInstallationAccepted": false,
+      "followupReadback20261019": {
+        "approvedBrowserMetadata": "AVAILABLE",
+        "fixedTestTabAX": "TIMEOUT_15000MS_KERNEL_RESET",
+        "nativeWindow": "OTHER_PROFILE_IN_ACTIVE_USE_NO_ACTION_TAKEN",
+        "freshDocumentReadback": "NOT_VERIFIED",
+        "repeatedRefreshOrLogin": false
+      }
     },
     "realProjectNavigation": {
       "nativeNameControl": "disclosure-only",
@@ -10895,6 +10904,52 @@
       "numericSuffixCopiesPreserved": 2258,
       "stashesPreserved": 3,
       "remoteOrNetworkConfigurationChanged": false
+    },
+    "synchronization20261019": {
+      "head": "8ebba913a620dce1174ffaa538b03205a1dc9a70",
+      "status": "PUSHED_NORMAL_FAST_FORWARD",
+      "ahead": 0,
+      "behind": 0,
+      "numericSuffixCopiesPreserved": 2258,
+      "stashesPreserved": 3,
+      "priorPushFailureRetained": true,
+      "remoteOrNetworkConfigurationChanged": false
+    },
+    "linuxCandidate20261019": {
+      "runId": 39208346430,
+      "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39208346430",
+      "head": "8ebba913a620dce1174ffaa538b03205a1dc9a70",
+      "status": "SUCCESS_TARGETED_DIAGNOSTIC_ONLY",
+      "diagnostic": "temporary-project-startup",
+      "jobId": 117915991895,
+      "jobStartedUtc": "2026-10-19T06:10:06Z",
+      "jobCompletedUtc": "2026-10-19T06:10:40Z",
+      "jobWallSeconds": 34,
+      "elapsedMs": 1458.930483,
+      "timingBoundary": "browser setup through final journey assertions, before cleanup",
+      "checks": {
+        "projectOnlyChatVisible": true,
+        "currentListSearch": true,
+        "openReturnFreshList": true,
+        "listRemovalClearsPopup": true,
+        "sidebarStillReachable": true,
+        "noAuthenticationOrDetailRequestsDuringJourney": true,
+        "databaseEmpty": true,
+        "draftPreserved": true
+      },
+      "productSourceHashesCompared": 182,
+      "testSourceHashesCompared": 6,
+      "mismatches": [],
+      "sourceStable": true,
+      "testSourcesStable": true,
+      "otherJobs": "INTENTIONALLY_SKIPPED_DIAGNOSTIC_DISPATCH",
+      "fullCI": false,
+      "realChatGPT": "NOT_RUN",
+      "historicalFailuresReclassified": false,
+      "sameEnvironmentBaseline": "NONE_FOR_NEW_CANDIDATE",
+      "speedupClaim": false,
+      "scaleAcceptance": "DEFERRED",
+      "newCacheOrArtifactUpload": false
     }
   }
 }
