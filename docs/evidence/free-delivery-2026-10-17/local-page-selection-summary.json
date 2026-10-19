@@ -7519,6 +7519,76 @@
       "dataSourceFollowup": {
         "currentRoot": "No data attribute matching native Project ID along title/list ancestor chains; drop-target attribute is empty, not ID. No response-body read or network request.",
         "paiaReadOnlyReview": "Existing source-structure is route plus matching Project-home link, not a Project response parser. Reuse bounded scan, conflict refusal and generation invalidation only; do not import route-to-membership or route-to-NONE assumptions. No PAIA changes."
+      },
+      "ci39193142624": {
+        "sourceCommit": "93680cccbb0b072ae657ef582f8b06da97a3b325",
+        "status": "FAIL",
+        "phase": "observe-and-search",
+        "error": "temporary-project-popup-timeout",
+        "sourceHashesMatched": 181,
+        "testHashesMatched": 6,
+        "sourceAndTestStable": true,
+        "requests": "Only the exact synthetic Project main-frame GET; search/open not reached.",
+        "rootCause": "NOT_ESTABLISHED: original result lacks popup root/rows/read status; no attribution to production timeout, load readiness or visibility from current evidence.",
+        "change": "Only the existing wait evaluation now records up to 32 state changes (document readiness, root present, row count, fixed popup status and refresh disabled). Same page load, single first read, 1s production budget and 6s assertion remain; no source or native action changes.",
+        "localDiagnostic": {
+          "status": "PASS_TEMPORARY_PROJECT_MV3",
+          "elapsedMs": 2036.6604579999998,
+          "popupStates": [
+            {
+              "phase": "observe-and-search",
+              "elapsedMs": 1781.9056249999999,
+              "state": {
+                "readyState": "complete",
+                "root": true,
+                "rows": 0,
+                "notice": "正在读取当前页…",
+                "refreshDisabled": true
+              }
+            },
+            {
+              "phase": "observe-and-search",
+              "elapsedMs": 1808.67675,
+              "state": {
+                "readyState": "complete",
+                "root": true,
+                "rows": 2,
+                "notice": "本次读取 2 条原生链接；不代表完整历史。",
+                "refreshDisabled": false
+              }
+            },
+            {
+              "phase": "invalidate-project-list",
+              "elapsedMs": 1972.129042,
+              "state": {
+                "readyState": "complete",
+                "root": true,
+                "rows": 0,
+                "notice": "原生导航已变化，旧列表已清除。可重新读取当前页。",
+                "refreshDisabled": false
+              }
+            },
+            {
+              "phase": "invalidate-project-list",
+              "elapsedMs": 2012.395333,
+              "state": {
+                "readyState": "complete",
+                "root": true,
+                "rows": 1,
+                "notice": "本次读取 1 条原生链接；不代表完整历史。",
+                "refreshDisabled": false
+              }
+            }
+          ],
+          "sourceStable": true,
+          "testSourcesStable": true
+        },
+        "validationLimit": "One local pass does not close original Linux failure. No repeated same-source run or full matrix rerun; diagnostic joins next substantive candidate.",
+        "evidence": {
+          "path": "docs/evidence/free-delivery-2026-10-17/status-linux-39193142624.json.gz",
+          "sha256": "3cbede74d18abe55ca6e8b427a190d313aed9808743786c3e1933eeea8e55e78"
+        },
+        "review": "Independent read-only review: same Runtime.evaluate call, no added requests/retries, original 6s wait and 25ms polling unchanged, max 32 states of extension-owned status only. document_idle dynamic import readiness is an unresolved timing boundary, not an established cause."
       }
     }
   },
@@ -10182,7 +10252,53 @@
         "skip": 0,
         "durationMs": 108.550208
       },
-      "review": "Read-only review retained original startup gate; moved passive worker listener before unpack load, capped errors, and bounded post-failure snapshot to a separate 1s diagnostic deadline. No worker warmup or production changes."
+      "review": "Read-only review retained original startup gate; moved passive worker listener before unpack load, capped errors, and bounded post-failure snapshot to a separate 1s diagnostic deadline. No worker warmup or production changes.",
+      "linuxCI39193142624": {
+        "sourceCommit": "93680cccbb0b072ae657ef582f8b06da97a3b325",
+        "overall": "FAILURE",
+        "jobs": {
+          "node-contracts": "SUCCESS",
+          "offline-durability-compat": "SUCCESS",
+          "offline-j4-lifecycle": "SUCCESS",
+          "offline-journeys": "FAILURE"
+        },
+        "localStatus": {
+          "status": "PASS_OFFLINE_MV3_LOCAL_STATUS",
+          "elapsedMs": 1610.718107,
+          "workerObservedMs": 423.927591,
+          "pageLoadedMs": 555.365389,
+          "sourceHashesMatched": 181,
+          "runnerHashMatched": true,
+          "sessionRequests": 1,
+          "accountsRequests": 1
+        },
+        "priorFailure": "CI39191841171 remains FAIL and root cause NOT_ESTABLISHED; this one green sample does not retrospectively explain or close it.",
+        "visibleActions": {
+          "status": "PASS",
+          "elapsedBeforeCleanupMs": 8625.759439,
+          "sourceHashesMatched": 181,
+          "testHashesMatched": true,
+          "actualDocumentAndParentWorkspaceFocus": true,
+          "sourceTestManifestStable": true
+        },
+        "j4": {
+          "status": "PARTIAL_J4_NOT_ACCEPTED",
+          "steps": 23,
+          "sourceHashesMatched": 181,
+          "automaticForegroundRecovery": "NOT_ESTABLISHED"
+        },
+        "node": {
+          "pass": 8930,
+          "fail": 0,
+          "skip": 0,
+          "durationMs": 135463.467889
+        },
+        "failure": "Temporary Project popup first-list wait: original 6s timeout before search/open. See temporaryReadOnlyNavigation20261019.currentProjectList20261019.ci39193142624.",
+        "evidence": {
+          "path": "docs/evidence/free-delivery-2026-10-17/status-linux-39193142624.json.gz",
+          "sha256": "3cbede74d18abe55ca6e8b427a190d313aed9808743786c3e1933eeea8e55e78"
+        }
+      }
     }
   }
 }
