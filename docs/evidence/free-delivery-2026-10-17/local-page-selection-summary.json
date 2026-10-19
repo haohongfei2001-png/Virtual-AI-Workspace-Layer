@@ -10111,6 +10111,78 @@
       "path": "docs/evidence/free-delivery-2026-10-17/focus-return-20261019.json.gz",
       "sha256": "b4c6e15a8d8944085832b209ca2b8237c7b5e6e80f3d596ec9248e0f153b7afb"
     },
-    "ci": "New focus mechanism added to existing non-MV3 layout step; packaged keyboard return joins existing MV3 visible-actions journey. No new runner, cache or upload. New candidate Linux outcome pending."
+    "ci": "CI39191841171 completed with one unresolved initial local-status failure; focus return passed. See linuxCI20261019. No rerun of this SHA.",
+    "linuxCI20261019": {
+      "run": 39191841171,
+      "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39191841171",
+      "sourceCommit": "a1c21811307e19540bfa0758b878fe941d4e5ccd",
+      "jobs": {
+        "node-contracts": "SUCCESS",
+        "offline-durability-compat": "SUCCESS",
+        "offline-j4-lifecycle": "SUCCESS",
+        "offline-journeys": "FAILURE"
+      },
+      "mechanism": {
+        "status": "PASS_WEB_MECHANISM_ONLY",
+        "elapsedMs": 833.080808,
+        "sourceHashesMatched": 13
+      },
+      "packagedVisibleActions": {
+        "status": "PASS",
+        "elapsedBeforeCleanupMs": 8641.939518,
+        "evidenceLimit": "Original CI saved only the command summary, not its detailed JSON in text logs; assertion success is recorded but no independently archived 181-hash/focus snapshot for this sample. Output list corrected for subsequent runs."
+      },
+      "node": {
+        "pass": 8930,
+        "fail": 0,
+        "skip": 0,
+        "durationMs": 212761.11501,
+        "guardMutationsKilled": 12
+      },
+      "j4": {
+        "status": "PARTIAL_J4_NOT_ACCEPTED",
+        "steps": 23,
+        "sourceHashesMatched": 181,
+        "automaticForegroundRecovery": "NOT_ESTABLISHED",
+        "foregroundFailure": "J4-peer-current-scope-timeout"
+      },
+      "failure": {
+        "step": "Passive local extension status (isolated MV3)",
+        "stage": "initial two popovers before status query",
+        "deadlineMs": 15000,
+        "rootCause": "NOT_ESTABLISHED",
+        "originalEvidence": "Timeout only; no original surface/worker/request snapshot. Local passing run does not close Linux failure."
+      },
+      "scale": "DEFERRED",
+      "release": "NOT_RELEASE_READY",
+      "evidence": {
+        "path": "docs/evidence/free-delivery-2026-10-17/focus-return-linux-39191841171.json.gz",
+        "sha256": "c57e89485cdac12ff5d883c99feb202167c139587faa049a3abb1c76debde21c"
+      }
+    },
+    "statusDiagnostic20261019": {
+      "change": "Keep immediate page load, original two-popover assertion and 15s deadline. Add bounded worker timing, post-failure surface/focus, fixture request counts, source/runner integrity and guard worker external network. Preserve complete JSON in existing text log output; no new job/cache/upload. Production unchanged.",
+      "observerCounterexample": "Protected native focus deterministically yields 0 open popovers, 2 frames, 1 return and times out with the old assertion. Archived separate reproducer; not attributed to original Linux failure and not used to relax its assertion.",
+      "local": {
+        "status": "PASS_OFFLINE_MV3_LOCAL_STATUS",
+        "elapsedMs": 1007.4152080000001,
+        "sourceStable": true,
+        "runnerStable": true,
+        "results": {
+          "ready": "ready",
+          "draft": true,
+          "frameRejected": true,
+          "unavailable": "unavailable"
+        }
+      },
+      "next": "Obtain original failure state on Linux with added diagnostics; do not relabel CI39191841171 or declare root-cause repair from a later green run.",
+      "targeted": {
+        "pass": 91,
+        "fail": 0,
+        "skip": 0,
+        "durationMs": 108.550208
+      },
+      "review": "Read-only review retained original startup gate; moved passive worker listener before unpack load, capped errors, and bounded post-failure snapshot to a separate 1s diagnostic deadline. No worker warmup or production changes."
+    }
   }
 }

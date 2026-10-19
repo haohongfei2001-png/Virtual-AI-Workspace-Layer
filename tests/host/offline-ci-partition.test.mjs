@@ -77,7 +77,7 @@ test('actual combined workflow gate rejects missing CPU, clock, source, cleanup 
  }
 });
 
-test('snippet journey runs in existing isolated job and publishes only its text result',()=>{assert.match(jobs['offline-journeys'],/node tests\/host\/snippets-package-mv3-browser\.mjs "\$RUNNER_TEMP\/snippets-package\.json"/);assert.match(jobs['offline-journeys'],/ui10-matrix observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package; do/);});
+test('snippet journey runs in existing isolated job and publishes only its text result',()=>{assert.match(jobs['offline-journeys'],/node tests\/host\/snippets-package-mv3-browser\.mjs "\$RUNNER_TEMP\/snippets-package\.json"/);assert.match(jobs['offline-journeys'],/ui10-matrix visible-actions frame-focus-return local-status observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package; do/);});
 test('temporary Project journey shares existing runner and text evidence without uploads',()=>{assert.match(jobs['offline-journeys'],/node tests\/host\/temporary-project-mv3-browser\.mjs "\$RUNNER_TEMP\/temporary-project-navigation\.json"/);assert.match(jobs['offline-journeys'],/node tests\/host\/temporary-project-list-browser\.mjs/);assert.doesNotMatch(workflow,/actions\/(?:upload-artifact|cache)/);});
 
 test("preauthorization observation shares existing challenge job without new profile sharing or uploads",()=>{assert.match(jobs["offline-journeys"],/node tests\/host\/preauthorization-package-browser\.mjs "\$RUNNER_TEMP\/preauthorization\.json"/);assert.match(jobs["offline-journeys"],/challenge-status preauthorization snippets-package; do/);});
