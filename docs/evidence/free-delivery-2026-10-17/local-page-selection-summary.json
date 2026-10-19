@@ -16861,5 +16861,61 @@
       "full Free not accepted",
       "10k/100k DEFERRED"
     ]
+  },
+  "modernJ1Integrated20261020": {
+    "sourceCommit": "0d82624a0e20bfca19ad5fec3beddc13df7e3f8c",
+    "report": "20261020-modern-j1-0d82624a.json.gz",
+    "reportSha256": "51f77f67e3561659441969af92bc4e3511336c3a7177b769cc0f72d5fdafdd90",
+    "status": "PARTIAL_J1_NOT_ACCEPTED",
+    "steps": [
+      {
+        "name": "cold-cache-authenticated-scope-and-native-same-name-canonical-plus-IDless-project",
+        "status": "PASS"
+      },
+      {
+        "name": "ordinary-positive-NONE-from-native-move-menu-and-UNKNOWN-remain-separately-reachable",
+        "status": "PASS"
+      },
+      {
+        "name": "canonical-project-native-card-pagination-forward-and-back",
+        "status": "PASS"
+      },
+      {
+        "name": "nonzero-candidate-page-and-scroll-restored-canonical-project-focus-after-trusted-return",
+        "status": "PASS"
+      },
+      {
+        "name": "exact-IDless-original-button-upgrades-P2-once-with-same-name-separate-card-and-member",
+        "status": "PASS"
+      },
+      {
+        "name": "canonical-nonzero-page-and-workspace-scroll-survive-native-C-and-unique-return",
+        "status": "PASS"
+      },
+      {
+        "name": "P2-to-C2-reading-single-grid-return-and-native-back-preserve-continuous-document-and-origin-project",
+        "status": "PASS"
+      },
+      {
+        "name": "canonical-P1-native-target-and-C1-member-navigation-with-unique-return",
+        "status": "PASS"
+      },
+      {
+        "name": "independent-oracle-J1-canonical-projects-four-conversations-all-native-targets-and-memberships",
+        "status": "PASS"
+      }
+    ],
+    "sourceHashesVerifiedAgainstCurrentTree": true,
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "scriptChangedDuringRun": false,
+    "buildManifestUnchanged": true,
+    "errors": [],
+    "realChatGPT": "NOT_RUN",
+    "limitations": "This report remains scoped to MODERN offline reconstruction; complete profile matrix, 81-case and G/U acceptance are not established.",
+    "scope": "Continuous MODERN J1 including distinct nonzero candidate and canonical-card pagination, actual workspace scroll origin, native C/Back route and promoted-card focus. Other profiles, full v2.7, G/U and release acceptance are not certified.",
+    "elapsedTime": "NOT_RECORDED_BY_ORIGINAL_RUNNER",
+    "remoteHeadConfirmed": "9ae9d531a02897cb00cc2f26e6b2421ab2005952",
+    "push": "FAILED_LOW_SPEED_15_SECONDS_NO_FORCE_NO_RETRY_LOOP"
   }
 }
