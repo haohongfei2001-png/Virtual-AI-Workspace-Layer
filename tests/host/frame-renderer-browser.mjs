@@ -11,7 +11,7 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
  const server=http.createServer(async(req,res)=>{try{
   const path=new URL(req.url,'http://127.0.0.1').pathname;
   if(path==='/frame'){res.writeHead(200,{'Content-Type':'text/html'});res.end('<!doctype html><html><body style="margin:0;height:800px"><div id="mount" style="height:100%"></div></body></html>');return;}
-  if(!/^\/src\/(navigation|data|b1)\/[a-z0-9-]+\.mjs$/.test(path))throw Error('not-found');
+  if(!/^\/src\/(navigation|data|b1|host)\/[a-z0-9-]+\.mjs$/.test(path))throw Error('not-found');
   res.writeHead(200,{'Content-Type':'text/javascript'});res.end(await readFile(resolve(root,'.'+path)));
  }catch{res.writeHead(404);res.end();}});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -37,14 +37,16 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   let shadow=nav.roots().workspace.shadow,link=shadow.querySelector('[data-ref-id]');
   check(!link.hasAttribute('href')&&link.getAttribute('aria-disabled')==='true','no-plan-no-raw-url-fallback');
   check(!link.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0}))&&dispatches.length===0,'missing-plan-explicitly-blocked');
-  check(shadow.querySelector('[data-navigation-reason="native-create-plan-unavailable"]').disabled,'native-create-explicit-blocked-hook');
+  const unavailableCreate=shadow.querySelector('[data-navigation-reason="native-create-plan-unavailable"]');
+  check(unavailableCreate.getAttribute('aria-disabled')==='true'&&!!unavailableCreate.getAttribute('aria-description')&&!unavailableCreate.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0}))&&dispatches.length===0&&events.length===0,'native-create-explains-unavailable-without-dispatch');
   const target={kind:'resolved',entity:'conversation',nativeId:refs[0].id,navigationURL:hostURL,liveHandle:null};
   currentPlan={plan:{mode:'native-control',target,control:{id:'control'},planRevision:8},targetKey:'owner-plan',uiGrantId:'grant',mountId:'mount'};
   nav.update(raw,'2026-10-13T12:00:00Z','UTC');shadow=nav.roots().workspace.shadow;link=shadow.querySelector(`[data-ref-id="${refs[0].id}"]`);
   check(!link.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0})),'delegated-click-cancelled-synchronously');
   check(dispatches.length===1&&dispatches[0].targetKey==='owner-plan'&&dispatches[0].planRevision===8,'single-owner-plan-dto');
-  check(events.at(-1).kind==='enter-reading','reading-request-external-controller');
-  await new Promise(resolve=>setTimeout(resolve,0));check(dispatches.length===1,'lost-ack-no-retry');
+  check(events.length===0,'dispatch-does-not-prematurely-enter-reading');
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  check(dispatches.length===1&&events.length===0&&shadow.querySelector('.navigation-feedback')?.textContent.includes('打开结果未确认'),'lost-ack-visible-without-retry-or-reading');
   // Observe defaultAllowed before the test-only outer listener suppresses navigation.
   let defaultAllowed=null;link.addEventListener('click',event=>{defaultAllowed=!event.defaultPrevented;event.preventDefault();},{once:true});
   link.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,ctrlKey:true,button:0}));

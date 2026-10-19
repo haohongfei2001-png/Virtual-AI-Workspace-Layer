@@ -32,12 +32,13 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  const migration=createFrameCandidateMigration({now,reveal:({projectId,focus})=>navigation?.revealNativeProject?.({projectId,focus:focus&&doc.hasFocus?.()===true})===true,restoreCandidates:p=>{candidateRestore={...p,migrationId:candidateMigrationId};if(candidateOffset!==p.offset)void refreshCandidates(p.offset);else{candidates?.restorePosition?.(p);candidateRestore=null;}}});
  const interruptMigration=event=>{if(event.isTrusted===true){candidateRestore=null;migration.interrupt();}};
  let bootstrapping=false,resumeTimer=null,resumeQueued=null,resumeWriting=false,resumeLast=null,resumeQuery=null;
+ let panelReturnCancel=null;
  let recovery=null,recoveryRoot=null,backup=null,backupRoot=null,autoChange=null,snippets=null,snippetsRoot=null,currentRef=null,searchSnippetIds=new Map(),snippetLocatePending=false;
  function clearAutoNotice(){autoChange=null;navigation?.clearTimePolicyNotice?.();}
  const recoverable=reason=>isFreeRecoveryReason(reason)||['corrupt-record','invalid-partition-manifest','invalid-partition-piece'].includes(reason);
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function clear(){panelReturnCancel?.();readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function ensureCandidates(){
   if(!candidates){candidateRoot=doc.createElement('div');candidateRoot.setAttribute('data-vaiwl-candidate-root','');if(typeof root?.before==='function')root.before(candidateRoot);else privateRoot.append(candidateRoot);candidates=createFreeFrameCandidates({document:doc,container:candidateRoot,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
     const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
@@ -95,6 +96,15 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   readErrorPanel.show({retryable:true});state({state:'read-stopped',reason});
  }
  function fail(reason){if(closed)return;if(recoverable(reason)&&grantCurrent()&&Date.parse(grant?.expiresAt)>now()){openRecovery(true);return;}state({state:'failed',reason});lifecycle.stop(reason);}
+ async function resumePanelView(restoreFocus=false){
+  panelReturnCancel?.();const current=grant,renderer=navigation;let pending=restoreFocus===true;
+  const interrupt=()=>{pending=false;},events=['pointerdown','keydown','focusin','visibilitychange'];
+  const cleanup=()=>{for(const type of events)doc.removeEventListener?.(type,interrupt,true);doc.defaultView?.removeEventListener?.('blur',interrupt,true);if(panelReturnCancel===cancelReturn)panelReturnCancel=null;};
+  const cancelReturn=()=>{pending=false;cleanup();};panelReturnCancel=cancelReturn;
+  if(pending){for(const type of events)doc.addEventListener?.(type,interrupt,true);doc.defaultView?.addEventListener?.('blur',interrupt,true);}
+  try{const page=await read(query,true);if(page&&pending&&!closed&&grant===current&&navigation===renderer&&grantCurrent()&&Date.parse(grant.expiresAt)>now())renderer?.focusSurface?.();}
+  finally{cleanup();}
+ }
  function openRecovery(fromFailure=false){if(readTerminal)return;dispatchEpoch++;
   if(recovery||backup||snippets||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending&&!fromFailure)return;
   clearCandidates();clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-recovery');
@@ -105,7 +115,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(recovery!==panel||!valid())throw Error('recovery-unavailable');
    const response=await withRequestDeadline(()=>runtime.sendMessage({...message,grantId:current.id,mountId:current.mountId}),{now:elapsedNow,schedule,cancel});
    if(recovery!==panel||!valid())throw Error('recovery-unavailable');return response;
-  },onResume:()=>{if(recovery!==panel||!valid())return;panel.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;budget.reset();void read(query,true);}});
+  },onResume:({restoreFocus=false}={})=>{if(recovery!==panel||!valid())return;panel.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;budget.reset();void resumePanelView(restoreFocus);}});
   recovery=panel;state({state:'recovery'});void panel.open();
  }
  function openBackup(){if(readTerminal)return;dispatchEpoch++;
@@ -123,7 +133,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    let response;try{response=await withRequestDeadline(()=>pending,{now:elapsedNow,schedule,cancel});}catch(error){abandoned=true;pending.then(cleanup,()=>{});throw error;}
    if(backup!==panel||!valid()){cleanup(response);throw Error('backup-unavailable');}
    return response;
-  },onResume:()=>{if(backup!==panel||!valid())return;panel.stop();backup=null;backupRoot?.remove();backupRoot=null;budget.reset();void read(query,true);}});
+  },onResume:({restoreFocus=false}={})=>{if(backup!==panel||!valid())return;panel.stop();backup=null;backupRoot?.remove();backupRoot=null;budget.reset();void resumePanelView(restoreFocus);}});
   backup=panel;state({state:'backup'});void panel.open();
  }
  function openSnippets(){if(readTerminal)return;dispatchEpoch++;
@@ -138,7 +148,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(message.type==='HOST_UI_SNIPPET_LIST'){budget.reset();const ready=await read(query,false);if(!ready||snippets!==panel||!valid())throw Error('snippet-unavailable');}
    const result=await withRequestDeadline(()=>runtime.sendMessage({...message,v:1,grantId:current.id,mountId:current.mountId}),{now:elapsedNow,schedule,cancel});
    if(snippets!==panel||!valid())throw Error('snippet-unavailable');return result;
-  },onClose:()=>{if(snippets!==panel||!valid())return;panel.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;budget.reset();void read(query,true);}});
+  },onClose:({restoreFocus=false}={})=>{if(snippets!==panel||!valid())return;panel.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;budget.reset();void resumePanelView(restoreFocus);}});
   snippets=panel;void panel.open();
  }
  function live(ticket){return !closed&&ticket===serial&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();}

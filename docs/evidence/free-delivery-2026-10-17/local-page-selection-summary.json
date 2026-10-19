@@ -16652,5 +16652,55 @@
       "workerStopped": false,
       "originalBudgetsAndGuardUnchanged": true
     }
+  },
+  "localPanelFocus20261020": {
+    "status": "PASS_SCOPED_OFFLINE",
+    "baseHead": "fc524780291cbb8b9779f00ad1f217aa59b7bd56",
+    "realChatGPT": "NOT_RUN",
+    "release": "NOT_RELEASE_READY",
+    "defects": [
+      "async recovery and snippet rerender lost focused action",
+      "download invalidation hid focused link before capture",
+      "panel return removed focused node without focus in fresh view"
+    ],
+    "fix": "local foreground-only focus with stable action identity; fresh-view return tied to exact grant and renderer, cancelled by user intent or lifecycle stop",
+    "validation": {
+      "targetedUnits": 450,
+      "realDOMAssertions": 16,
+      "frameRenderer": "PASS; stale fixture import whitelist and unavailable/lost-ack expectations corrected to existing product contract",
+      "packagedMV3": [
+        "backup",
+        "recovery",
+        "snippets"
+      ],
+      "sourceHashes": "see final MV3 reports; unchanged during each run"
+    },
+    "limits": [
+      "not full J1/J4",
+      "10k/100k DEFERRED",
+      "identity and real installation acceptance unchanged"
+    ],
+    "artifacts": {
+      "vaiwl-recovery-focus-before-browser.log": "1523649f9632ab0e7c82c19ca7380179b898caba0ccdea43cbd8d04e9072b377",
+      "vaiwl-snippet-focus-before.log": "1ac3156f81d1479dc8d9636c81d346d1d63a31c634fd114e917658d937b992b4",
+      "vaiwl-panel-focus-download.log": "e6071bb575133461ad37d0068b86fdf334b57bed8527e9ffbba341ff29460337",
+      "vaiwl-panel-focus-final-dom.log": "86892f324bb5d47e4ccd95699cc96b2aa11ecf399f9ad99f8099752fab0a834f",
+      "vaiwl-frame-renderer-after-fixture.log": "f1be783e9873cc253e532b47063979a95ef68c1bfa5110e8d6d648a258399de7",
+      "vaiwl-frame-renderer-final.log": "4b0d6d62e4eaa1b0fb1e80e72b4371431eb27e15f919c54895ac2e17fb35106d",
+      "vaiwl-panel-regression.log": "31c75180be5928e8563dba6c32f6a8c1e79dafef47f9ee83b73a3e0615bfb0d5",
+      "vaiwl-panel-backup-final.json": "8955775e4d6f9e2f899247dd20de560caf117330cc9a7e2da8fd43db4b460577",
+      "vaiwl-panel-recovery-final.json": "576ba1efe3f929c0ec1892a420cca6d4c38248aaf8caab44771a465a53359573",
+      "vaiwl-panel-snippets-final.json": "d98182654a697572cf3e6971639d5ab942926c65c1dcb54aa26d8a7b05ae771d"
+    },
+    "rawLogHashes": {
+      "vaiwl-recovery-focus-before-browser.log": "ea448e74d18d228c275dca7aef4274c696d419b4cb75f851b38b03d0e2d356eb",
+      "vaiwl-snippet-focus-before.log": "0e4ec124404de988515a822c55ded7fcdb395a9e2941f4a63797e407fbe96f38",
+      "vaiwl-panel-focus-download.log": "040df0812ce73a20a5e786b205b0655fb79454c02fe8d4ef80339ca931769605",
+      "vaiwl-panel-focus-final-dom.log": "86892f324bb5d47e4ccd95699cc96b2aa11ecf399f9ad99f8099752fab0a834f",
+      "vaiwl-frame-renderer-after-fixture.log": "f1be783e9873cc253e532b47063979a95ef68c1bfa5110e8d6d648a258399de7",
+      "vaiwl-frame-renderer-final.log": "4b0d6d62e4eaa1b0fb1e80e72b4371431eb27e15f919c54895ac2e17fb35106d",
+      "vaiwl-panel-regression.log": "31c75180be5928e8563dba6c32f6a8c1e79dafef47f9ee83b73a3e0615bfb0d5"
+    },
+    "logNormalization": "trailing whitespace only; original hashes retained, raw logs in /private/tmp"
   }
 }

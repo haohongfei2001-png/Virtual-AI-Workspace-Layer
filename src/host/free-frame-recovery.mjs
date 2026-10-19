@@ -1,3 +1,4 @@
+import {localPanelActiveElement,localPanelOwnsFocus,focusLocalPanel} from './local-panel-focus.mjs';
 import {exactHostRecord} from './contract.mjs';
 const kinds=['workspace','native','evidence'];
 const labels={workspace:'工作集与个人设置',native:'项目与聊天索引',evidence:'活跃度记录'};
@@ -13,11 +14,11 @@ export function createFreeFrameRecovery({document:doc,container,request,onResume
  const element=(tag,text='',attrs={})=>{const n=doc.createElement(tag);n.textContent=text;for(const [key,value]of Object.entries(attrs))n.setAttribute(key,value);return n;};
  const active=run=>!stopped&&panel!==null&&generation===run;
  function remove(){generation++;panel?.remove();panel=null;plans=null;busy=false;dirty=false;}
- function resume(){if(stopped||!panel||resumed)return;resumed=true;remove();try{Promise.resolve(onResume()).catch(()=>{});}catch{}}
- function button(label,callback,disabled=false){const n=element('button',label,{type:'button'});n.disabled=disabled;const run=generation;n.addEventListener('click',()=>{if(active(run)&&!n.disabled)callback();});return n;}
- function render(){if(stopped||!panel)return;panel.replaceChildren();panel.append(element('h2','恢复本地工作空间'),element('p','原生聊天仍可使用。修复仅在你点击后执行；未经核验的记录保持原样。'),element('p',status,{role:error?'alert':'status','aria-live':'polite'}));
+ function resume(){if(stopped||!panel||resumed)return;resumed=true;const restoreFocus=localPanelOwnsFocus(panel);remove();try{Promise.resolve(onResume({restoreFocus})).catch(()=>{});}catch{}}
+ function button(label,callback,disabled=false){const n=element('button',label,{type:'button','data-panel-action':label});n.disabled=disabled;const run=generation;n.addEventListener('click',()=>{if(active(run)&&!n.disabled)callback();});return n;}
+ function render(){if(stopped||!panel)return;const focused=localPanelOwnsFocus(panel),key=localPanelActiveElement(panel)?.getAttribute?.('data-panel-action');panel.replaceChildren();const heading=element('h2','恢复本地工作空间',{tabindex:'-1'});panel.append(heading,element('p','原生聊天仍可使用。修复仅在你点击后执行；未经核验的记录保持原样。'),element('p',status,{role:error?'alert':'status','aria-live':'polite'}));
   if(plans)for(const kind of kinds){const p=plans[kind],section=element('section','',{'aria-label':labels[kind]});section.append(element('h3',labels[kind]),element('p',descriptions[kind]),element('p',p.corrupt?(p.recoverable?'发现可用于恢复的本地记录。':'暂时无法安全修复，原记录已保留。'):'未发现损坏。'));if(p.corrupt&&p.recoverable)section.append(button('修复'+labels[kind],()=>{void repair(kind,p.planId);},busy));panel.append(section);}
-  if(error)panel.append(button('重新检查',()=>{if(!busy)void inspect();},busy));panel.append(button('返回工作空间',resume));panel.setAttribute('aria-busy',String(busy));
+  if(error)panel.append(button('重新检查',()=>{if(!busy)void inspect();},busy));panel.append(button('返回工作空间',resume));panel.setAttribute('aria-busy',String(busy));if(focused){const target=[...panel.querySelectorAll('[data-panel-action]')].find(n=>n.getAttribute('data-panel-action')===key&&!n.disabled);focusLocalPanel(panel,target??heading);}
  }
  async function inspect(followup=false){
   if(stopped||!panel||busy)return;const run=++generation;busy=true;dirty=false;error=false;plans=null;status='正在检查可恢复状态…';render();
@@ -27,7 +28,7 @@ export function createFreeFrameRecovery({document:doc,container,request,onResume
  }
  async function repair(kind,planId){if(stopped||!panel||busy||plans?.[kind]?.planId!==planId||!plans[kind].recoverable)return;const run=++generation;busy=true;dirty=false;error=false;status='正在修复'+labels[kind]+'…';render();try{const operationId=(doc.defaultView?.crypto??globalThis.crypto).randomUUID(),reply=await request({v:1,type:'HOST_UI_RECOVER',kind,planId,operationId});if(!active(run))return;if(!exactHostRecord(reply,['ok','kind'])||reply.ok!==true||reply.kind!==kind)throw Error('recovery-failed');resume();}catch{if(active(run)){error=true;status='修复结果未确认，请重新检查后重试。原生聊天仍可使用。';plans=null;}}finally{if(active(run)){busy=false;if(dirty){dirty=false;void inspect(true);}else render();}}}
  function invalidate(){if(stopped||!panel)return;plans=null;error=false;if(busy){dirty=true;render();}else void inspect();}
- function open(){if(stopped||panel)return;resumed=false;panel=element('section','',{'aria-label':'本地数据恢复'});container.append(panel);return inspect();}
+ function open(){if(stopped||panel)return;resumed=false;panel=element('section','',{'aria-label':'本地数据恢复'});container.append(panel);const work=inspect();focusLocalPanel(panel,panel.querySelector?.('h2'));return work;}
  function stop(){if(stopped)return;stopped=true;remove();}
  return Object.freeze({open,stop,invalidate});
 }

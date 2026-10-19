@@ -36,7 +36,7 @@ const outcome=await runSnippetsLifecycle({report,output,integrityChecks,execute:
  }
  const draft=async()=>assert.equal(await page.evaluate(()=>document.querySelector('textarea')===snippetOriginalInput&&snippetOriginalInput.value==='UNSENT_SNIPPET_NATIVE_DRAFT'),true);
  const select=()=>page.evaluate(()=>{const body=document.querySelector('#reading .message-body'),text=body.firstChild,selected='uniquely selected fixture words',start=text.nodeValue.indexOf(selected),range=document.createRange();range.setStart(text,start);range.setEnd(text,start+selected.length);const selection=getSelection();selection.removeAllRanges();selection.addRange(range);return selection.toString()===selected;});
- assert.equal(await select(),true);await sidebar.getByRole('button',{name:'已保存片段',exact:true}).click();const panel=sidebar.getByRole('region',{name:'片段管理',exact:true});await panel.getByText('暂无已保存片段。',{exact:true}).waitFor({timeout:10000});
+ assert.equal(await select(),true);await sidebar.getByRole('button',{name:'已保存片段',exact:true}).click();const panel=sidebar.getByRole('region',{name:'片段管理',exact:true});await panel.getByText('暂无已保存片段。',{exact:true}).waitFor({timeout:10000});assert.equal(await panel.getByRole('heading',{name:'已保存片段',exact:true}).evaluate(n=>n.getRootNode().activeElement===n),true);
  // Capture remains strict and instantaneous: iframe focus is not replaced with
  // a stored Range. Reselect native text before the explicit save click.
  assert.equal(await select(),true);await panel.getByRole('button',{name:'保存当前选区',exact:true}).click();await panel.getByText('共 1 个片段',{exact:true}).waitFor({timeout:10000});await panel.getByText('uniquely selected fixture words',{exact:true}).waitFor();await draft();report.results.push({name:'actual-native-selection-explicit-sidebar-save-and-legacy-list',status:'PASS'});
@@ -44,7 +44,7 @@ const outcome=await runSnippetsLifecycle({report,output,integrityChecks,execute:
  // Search the saved text, which is absent from the native conversation title.
  // This must come from the authorized snippetMatches projection, not a local
  // scan of this frame's partial conversation page.
- await panel.getByRole('button',{name:'返回工作空间',exact:true}).click();
+ await panel.getByRole('button',{name:'返回工作空间',exact:true}).click();await sidebar.getByRole('button',{name:'已保存片段',exact:true}).waitFor();assert.equal(await sidebar.getByRole('button',{name:'已保存片段',exact:true}).evaluate(n=>n.getRootNode().activeElement===n),true);
  await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
  const search=workspace.getByRole('searchbox',{name:'已知聊天查找输入'});
  await search.waitFor({timeout:10000});await search.fill('uniquely selected fixture words');
