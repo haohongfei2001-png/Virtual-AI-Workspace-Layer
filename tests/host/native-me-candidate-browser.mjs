@@ -12,7 +12,7 @@ import {createHostFixtureServer} from './fixtures/server.mjs';
 import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
 import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
 const output=process.argv[2]??join(tmpdir(),'vaiwl-native-me-candidate-browser.json');
-const modes=process.argv[3]==='legacy-receiver'?['legacy-receiver']:['consistent','accounts-challenge','shared-deadline','route-changed'];
+const modes=process.argv[3]==='legacy-receiver'?['legacy-receiver']:process.argv[3]==='lifecycle'?['foreground-start','hidden-inflight']:['consistent','accounts-challenge','shared-deadline','route-changed'];
 const started=performance.now(),directory=await mkdtemp(join(tmpdir(),'vaiwl-me-chain-mv3-'));
 const hash=v=>createHash('sha256').update(v).digest('hex');
 const report={kind:'PACKAGED_HEADLESS_MV3_SYNTHETIC_HTTPS_RESPONSES',realProfile:'NOT_RUN',livePermissionConsumed:false,release:'NOT_RELEASE_READY',results:[],status:'RUNNING',runnerHash:hash(await readFile(new URL(import.meta.url)))};
@@ -39,7 +39,7 @@ try{
    if(u.pathname.endsWith('/me'))return route.fulfill({contentType:'application/json',body:JSON.stringify({id:'fixture-private-subject',email:'PRIVATE_SENTINEL'})});
    accountSeen();
    if(mode==='accounts-challenge')return route.fulfill({status:403,headers:{'content-type':'text/html','cf-mitigated':'challenge'},body:'offline challenge fixture'});
-   if(mode==='shared-deadline'||mode==='route-changed')await new Promise(r=>releaseAccounts=r);
+   if(mode==='shared-deadline'||mode==='route-changed'||mode==='hidden-inflight')await new Promise(r=>releaseAccounts=r);
    try{await route.fulfill({contentType:'application/json',body:JSON.stringify({accounts:{'fixture-private-space':{account:{account_id:'fixture-private-space',structure:'personal'}}}})});}catch{ /* Aborted synthetic request after deadline/navigation. */ }
   });
   const loadedBundle=mode==='legacy-receiver'?join(directory,'legacy'):bundle;
@@ -49,16 +49,24 @@ try{
   // Popup files update while Chrome retains the registered content-script source.
   if(mode==='legacy-receiver')await cp(bundle,loadedBundle,{recursive:true});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto('https://chatgpt.com/');
+  let other;
   const worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`))??await context.waitForEvent('serviceworker');
   control=protocol(handle.debugEndpoint);await control.ready;let session,target;
   async function open(){await worker.evaluate(()=>chrome.action.openPopup());const matches=(await cdp.send('Target.getTargets')).targetInfos.filter(t=>t.url===`chrome-extension://${id}/native-me-probe.html`);assert.equal(matches.length,1);target=matches[0].targetId;session=(await control.send('Target.attachToTarget',{targetId:target,flatten:true})).sessionId;}
   async function evaluate(expression){const r=await control.send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},session);if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description??'popup-evaluate');return r.result.value;}
   async function click(selector){const box=await evaluate(`(()=>{const r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);await control.send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...box},session);await control.send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...box},session);}
-  async function waitResult(){const deadline=performance.now()+8000;while(performance.now()<deadline){const text=await evaluate('document.querySelector("#result").textContent');try{const r=JSON.parse(text);if(r.state==='finished'||r.state.endsWith('-no-request'))return r;}catch{}await new Promise(r=>setTimeout(r,25));}throw Error('candidate-result-observation-timeout');}
+  async function waitResult(readPending=false){const deadline=performance.now()+8000;while(performance.now()<deadline){const text=await evaluate('document.querySelector("#result").textContent');try{const r=JSON.parse(text);if(r.state==='finished'||r.state.endsWith('-no-request'))return r;if(readPending&&r.state==='no-result')await click('#read');}catch{}await new Promise(r=>setTimeout(r,25));}throw Error('candidate-result-observation-timeout');}
   await open();await evaluate("localStorage.setItem('vaiwl-native-me-probe-20261019-consumed','consumed')");assert.equal(requests.length,0);
+  if(mode==='foreground-start'||mode==='hidden-inflight'){
+   const ready=await evaluate("(async()=>{const [t]=await chrome.tabs.query({active:true,currentWindow:true});return chrome.tabs.sendMessage(t.id,{type:'VAIWL_ME_CANDIDATE_READY'},{frameId:0});})()");assert.equal(ready.ready,true);assert.equal(ready.spent,false);
+   await control.send('Target.closeTarget',{targetId:target});
+   other=await context.newPage();await other.bringToFront();await page.waitForFunction(()=>document.visibilityState==='hidden');
+   await page.bringToFront();await page.waitForFunction(()=>document.visibilityState==='visible');await open();
+  }
   await click('#run');
   if(mode==='route-changed'){await withRequestDeadline(()=>observedAccounts,{timeoutMs:8000});await page.evaluate(()=>{history.pushState({},'', '/c/11111111-1111-4111-8111-111111111111');dispatchEvent(new PopStateEvent('popstate'));});}
-  const result=await waitResult();releaseAccounts?.();
+  if(mode==='hidden-inflight'){await withRequestDeadline(()=>observedAccounts,{timeoutMs:8000});await other.bringToFront();await page.waitForFunction(()=>document.visibilityState==='hidden');await page.bringToFront();await open();await click('#read');}
+  const result=await waitResult(mode==='hidden-inflight');releaseAccounts?.();
   if(mode==='legacy-receiver'){
    assert.equal(result.state,'legacy-receiver-reload-required-no-request');assert.equal(requests.length,0);
    assert.equal(await evaluate("localStorage.getItem('vaiwl-native-me-candidate-20261019-consumed')"),null);
@@ -70,8 +78,9 @@ try{
    control.close();control=null;await handle.close();handle=null;continue;
   }
   assert.equal(result.state,'finished');
-  const expected=mode==='consistent'?'candidate-consistent-not-authorized':mode==='accounts-challenge'?'session-challenged':mode==='shared-deadline'?'request-timeout':'document-changed';assert.equal(result.reason,expected);
-  assert.equal(result.samePrincipal,mode==='consistent');assert.equal(requests.length,mode==='consistent'?3:2);assert.equal(result.identityEnabled,false);assert(!JSON.stringify(result).includes('fixture-private'));assert(!JSON.stringify(result).includes('PRIVATE_SENTINEL'));
+  const consistent=mode==='consistent'||mode==='foreground-start';
+  const expected=consistent?'candidate-consistent-not-authorized':mode==='accounts-challenge'?'session-challenged':mode==='shared-deadline'?'request-timeout':'document-changed';assert.equal(result.reason,expected);
+  assert.equal(result.samePrincipal,consistent);assert.equal(requests.length,consistent?3:2);assert.equal(result.identityEnabled,false);assert(!JSON.stringify(result).includes('fixture-private'));assert(!JSON.stringify(result).includes('PRIVATE_SENTINEL'));
   const expectedRequests=requests.length;
   assert.equal(await evaluate("localStorage.getItem('vaiwl-native-me-probe-20261019-consumed')"),'consumed');assert.equal(await evaluate('document.querySelector("#run").disabled'),true);
   const databases=await worker.evaluate(async()=> (await indexedDB.databases()).length);assert.equal(databases,0);
