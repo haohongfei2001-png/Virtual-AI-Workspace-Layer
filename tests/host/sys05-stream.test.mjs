@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile,mkdtemp} from 'node:fs/promises';
-import {tmpdir} from 'node:os';import {join} from 'node:path';import vm from 'node:vm';
+import {tmpdir} from 'node:os';import {join} from 'node:path';import vm from 'node:vm';import {webcrypto} from 'node:crypto';
 import {createSys05StreamServer,addSys05NativeStream,sys05AckOnlyMetadata,sys05UpstreamURL} from './fixtures/sys05-stream-server.mjs';
 import {parseConversationMetadata} from '../../src/host/conversation-metadata.mjs';
 import {extractConversationAcceptance} from '../../src/host/conversation-acceptance.mjs';
@@ -12,7 +12,7 @@ import {createFreeViewSession} from '../../src/data/free-time-policy.mjs';
 import {OFFLINE_HISTORY_PROFILE,extractHistoricalSends} from '../../src/runtime/historical-send-profile.mjs';
 import {digest} from '../../src/data/hash.mjs';
 import {installSys05Observer} from './sys05-stream-observer.mjs';
-import {assertTokenOnlyWork,assertStreamOutcome,SYS05_LIMITS} from './sys05-stream-oracle.mjs';
+import {assertTokenOnlyWork,assertStreamOutcome,assertBackpressureOutcome,SYS05_LIMITS} from './sys05-stream-oracle.mjs';
 import {runSys05} from './sys05-stream-package-journey.mjs';
 const C='44444444-4444-4444-8444-444444444444';
 test('candidate defaults to NOT_RUN and never imports or launches browser',async()=>{
@@ -76,7 +76,7 @@ test('isolated-world wrappers preserve return objects, this, arguments and throw
  class Document{createTreeWalker(...args){calls.push(['create',this,args]);return new TreeWalker();}}
  class Element{querySelectorAll(...args){calls.push(['query',this,args]);return nodes;}}
  let promise=Promise.resolve({state:'accepted'});const runtime={sendMessage(...args){calls.push(['send',this,args]);if(args[0]==='throw')throw Error('native-original');return promise;}};
- const sandbox={Document,TreeWalker,Element,chrome:{runtime},TextEncoder,Date};const context=vm.createContext(sandbox),original=Object.getOwnPropertyDescriptor(Document.prototype,'createTreeWalker');
+ const sandbox={Document,TreeWalker,Element,chrome:{runtime},crypto:webcrypto,TextEncoder,Date};const context=vm.createContext(sandbox),original=Object.getOwnPropertyDescriptor(Document.prototype,'createTreeWalker');
  const result=vm.runInContext(`(${installSys05Observer.toString()})()`,context);assert.equal(result.packageModified,false);
  const doc=new Document(),walker=doc.createTreeWalker(root,1);assert(walker instanceof TreeWalker);assert.equal(walker.nextNode(),node);
  const element=new Element();element.id='reading';assert.equal(element.querySelectorAll('[data-message-id]'),nodes);
@@ -132,4 +132,46 @@ test('actual production projection keeps exact old event provisional without cov
  const source={id:'source',generation:'generation',sourceRevision:1,observedAt:now,validUntil:'2026-10-15T12:01:00.000Z',channel:'host-evidence',codecVersion:2,revoked:false},row={...event,id:'old',sourceId:'source',generation:'generation',sourceRevision:1,observedAt:now,actorVerified:true,actorScopeKey:scopeKey,revoked:false},evidence={scopeKey,sources:{source},events:{old:row},hints:{},coverage:{}};
  const projected=projectFreeActivity({scope:scopeKey,refs:[{id:C,scope:scopeKey}],projects:[],unknown:[{id:C}],noProject:[]},evidence,createFreeViewSession({now,timeZone:'UTC',H:30}),now).refs[0].activityDecision;
  assert.equal(projected.basis,'provisional');assert.equal(projected.reason,'historical-anchor-incomplete');assert.equal(projected.segment,3);assert.equal(projected.candidateTime,old);assert.deepEqual(evidence.coverage,{});
+});
+
+function backpressureOutcome(){
+ const v=outcome(),hash='a'.repeat(64);v.native.rows[0].at=new Date(1000).toISOString();
+ v.backpressure={armedAt:1000,heldAt:1050,releasedAt:1200,hits:1,closedEarly:false,request:{receivedAt:1020,acceptedAt:1000,path:'/backend-api/conversation/'+C,context:'account-host-personal',authenticated:true,status:200}};
+ v.work.peer.packets=[{producer:1,localSeq:4,replySeq:4,payloadSha256:hash,at:1100,finishedAt:1150,state:'retry-after'},{producer:1,localSeq:4,replySeq:4,payloadSha256:hash,at:1210,finishedAt:1300,state:'accepted'}];
+ v.peerRenameAt=1075;v.peerRenameApplied=true;v.work.peer.packets.forEach(p=>{p.peerRenameTitle=true;p.kind='surface-delta';});
+ v.backpressureNativeActions={'sys05-peer-rename':1};v.peerBefore={team:{ref:{nativeTitle:'Ordinary conversation'}},personal:{ref:{nativeTitle:'Ordinary conversation'}}};
+ v.peerAfter={team:{ref:{nativeTitle:'SYS05 peer native renamed conversation'}},personal:{ref:{nativeTitle:'Ordinary conversation'}}};return v;
+}
+test('real backpressure slice cannot claim overflow/gap or full SYS05',()=>{const result=assertBackpressureOutcome(backpressureOutcome());assert.equal(result.gapRecovery,'NOT_RUN');assert.equal(result.queueOverflow,'NOT_RUN');assert.equal(result.fullSYS05,'NOT_ESTABLISHED');});
+for(const [name,mutate]of Object.entries({
+ 'pre-send request':v=>v.backpressure.request.receivedAt=999,'unauthenticated request':v=>v.backpressure.request.authenticated=false,'wrong context':v=>v.backpressure.request.context='account-host-team',
+ 'no hold':v=>v.backpressure=null,'double hold':v=>v.backpressure.hits=2,'early close':v=>v.backpressure.closedEarly=true,
+ 'wrong producer':v=>v.work.peer.packets[1].producer=2,'different payload':v=>v.work.peer.packets[1].payloadSha256='b'.repeat(64),
+ 'changed sequence':v=>v.work.peer.packets[1].localSeq=5,'wrong reply sequence':v=>v.work.peer.packets[0].replySeq=99,
+ 'release before retry':v=>v.backpressure.releasedAt=1120,'fake acceptance':v=>v.work.peer.packets[1].state='retry-after',
+ 'late acceptance':v=>v.work.peer.packets[1].finishedAt=7000,'wrong object':v=>v.peerAfter.team.ref.nativeTitle='Membership not loaded',
+ 'cross scope':v=>v.peerAfter.personal.ref.nativeTitle='SYS05 peer native renamed conversation',
+ 'unrelated recovery then new title':v=>{v.work.peer.packets.forEach(p=>p.peerRenameTitle=false);v.work.peer.packets.push({...v.work.peer.packets[1],localSeq:5,replySeq:5,peerRenameTitle:true});},
+ 'rename after retry':v=>v.peerRenameAt=1190,'different kind':v=>v.work.peer.packets[1].kind='current-object',
+ 'duplicate native rename':v=>v.backpressureNativeActions['sys05-peer-rename']=2,
+}))test('backpressure rejects '+name,()=>{const value=backpressureOutcome();mutate(value);assert.throws(()=>assertBackpressureOutcome(value));});
+test('controlled barrier holds only one authenticated post-send response and preserves native model',async()=>{
+ const server=await createSys05StreamServer({backpressure:true});
+ try{
+  assert.equal((await fetch(server.origin+'/native/sys05/rename-peer',{method:'POST'})).status,401);
+  const page=await fetch(server.origin+'/c/'+C),cookie=page.headers.get('set-cookie').split(';')[0];
+  const session=await(await fetch(server.origin+'/api/auth/session',{headers:{cookie}})).json();
+  const headers={cookie,authorization:'Bearer '+session.accessToken,'chatgpt-account-id':'account-host-personal'};
+  server.holdNextRead();assert.throws(()=>server.holdNextRead(),/once-only/);
+  await fetch(server.origin+'/backend-api/conversation/'+C,{headers});assert.equal(server.snapshot().backpressure.hits,0);
+  await fetch(server.origin+'/native/j4/send',{method:'POST',headers:{cookie,'content-type':'application/json'},body:JSON.stringify({text:'fixture send',rename:true})});
+  const pending=fetch(server.origin+'/backend-api/conversation/'+C,{headers});
+  const end=Date.now()+1000;while(!server.snapshot().backpressure.heldAt&&Date.now()<end)await new Promise(r=>setTimeout(r,5));
+  assert.equal(server.snapshot().backpressure.hits,1);
+  const rename=await fetch(server.origin+'/native/sys05/rename-peer',{method:'POST',headers:{cookie}});assert.equal(rename.status,200);const renamed=await rename.json();
+  const peer=await(await fetch(server.origin+'/backend-api/conversation/'+renamed.id,{headers})).json();assert.equal(peer.title,renamed.title);
+  server.releaseRead();assert.equal((await pending).status,200);assert.throws(()=>server.releaseRead(),/no-held/);
+  assert.equal((await fetch(server.origin+'/native/sys05/rename-peer',{method:'POST',headers:{cookie}})).status,409);
+  await fetch(server.origin+'/backend-api/conversation/'+C,{headers});assert.equal(server.snapshot().backpressure.hits,1);assert.equal(server.snapshot().backpressure.closedEarly,false);
+ }finally{await server.close();}
 });

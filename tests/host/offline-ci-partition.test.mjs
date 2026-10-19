@@ -108,3 +108,11 @@ test('diagnostic rejects unknown input, private repositories, other repos and ot
  const event={...allowedEvent,event_name:'workflow_dispatch'},input={diagnostic:'temporary-project-startup'};
  for(const [e,i]of [[event,{}],[event,{diagnostic:'arbitrary-command'}],[{...event,event:{repository:{private:true}}},input],[{...event,repository:'other/repo'},input],[{...event,ref:'refs/heads/main'},input]])assert.equal(Object.keys(jobs).filter(name=>jobAllowed(name,e,i)).length,0);
 });
+
+test('existing SYS05 diagnostic requires actual peer backpressure without claiming gap coverage',()=>{
+ const body=jobs['offline-durability-compat'];assert.match(body,/sys05-work.json" --execute-browser --observe-work --backpressure/);
+ const script=workflow.match(/^          node -e "(const r=require\(process\.env\.RUNNER_TEMP\+'\/sys05-work\.json'\);[^\n]+)"$/m)?.[1];assert(script);
+ const rejected=Symbol('rejected'),run=new Function('require','process',script),check=value=>run(()=>value,{env:{GITHUB_SHA:'expected'},exit:()=>{throw rejected;}});
+ const valid={status:'PASS_NARROW_DIAGNOSTIC_SYS05_SLICE',S:'NARROW_INSTRUMENTED_BROWSER_OBSERVED',sourceCommit:'expected',fullSYS05:'NOT_ESTABLISHED',workInstrumentation:true,F1:'DIAGNOSTIC_ONLY_NOT_ACCEPTED',backpressureRequested:true,backpressureVerdict:'PASS_NARROW_REAL_OWNER_CONTENTION',gapRecovery:'NOT_RUN',queueOverflow:'NOT_RUN'};check(valid);
+ for(const key of Object.keys(valid)){const value={...valid};delete value[key];assert.throws(()=>check(value),e=>e===rejected);}
+});

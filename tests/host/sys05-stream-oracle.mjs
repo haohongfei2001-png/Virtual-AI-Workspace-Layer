@@ -9,6 +9,26 @@ export function assertTokenOnlyWork({active,peer}){
  assert.equal(peer.directoryWalkers,0,'unrelated-page-directory-walker');
  assert.equal(peer.bodyQueries,0,'unrelated-page-body-work');
 }
+export function assertBackpressureOutcome(value){
+ assert.equal(value.workInstrumentation,true,'backpressure-observer-required');
+ const hold=value.backpressure,sent=value.native.rows.at(-1),packets=value.work.peer.packets;
+ assert(hold&&hold.heldAt>=Date.parse(sent.at)&&hold.releasedAt>hold.heldAt&&!hold.closedEarly,'actual-held-authenticated-response-required');
+ assert(hold.releasedAt-hold.armedAt<SYS05_LIMITS.rpcMs,'original-total-read-deadline');
+ assert.equal(hold.hits,1,'exactly-one-held-read');
+ assert(hold.request?.receivedAt>=Date.parse(sent.at)&&hold.request.acceptedAt===Date.parse(sent.at),'held-request-started-after-native-send');
+ assert.equal(hold.request.path,'/backend-api/conversation/44444444-4444-4444-8444-444444444444');
+ assert.equal(hold.request.context,'account-host-personal');assert.equal(hold.request.authenticated,true);assert.equal(hold.request.status,200);
+ assert.equal(value.peerRenameApplied,true,'native-peer-control-applied');
+ assert(value.peerRenameAt>=hold.heldAt&&value.peerRenameAt<hold.releasedAt,'native-peer-rename-inside-hold');
+ const retries=packets.filter(p=>p.peerRenameTitle&&p.at>=value.peerRenameAt&&p.state==='retry-after'&&p.at>=hold.heldAt&&p.finishedAt<=hold.releasedAt);
+ assert(retries.length>0,'actual-peer-backpressure-before-release-required');
+ assert(retries.some(r=>r.producer&&/^[a-f0-9]{64}$/.test(r.payloadSha256)&&r.replySeq===r.localSeq&&packets.some(p=>p.peerRenameTitle&&p.kind===r.kind&&p.state==='accepted'&&p.at>=hold.releasedAt&&p.producer===r.producer&&p.localSeq===r.localSeq&&p.replySeq===p.localSeq&&p.payloadSha256===r.payloadSha256&&p.finishedAt-hold.armedAt<SYS05_LIMITS.rpcMs)),'same-producer-sequence-payload-recovery-required');
+ assert.equal(value.backpressureNativeActions['sys05-peer-rename'],1,'one-native-peer-rename-required');
+ assert.equal(value.peerBefore.team.ref.nativeTitle,'Ordinary conversation');
+ assert.equal(value.peerAfter.team.ref.nativeTitle,'SYS05 peer native renamed conversation');
+ assert.equal(value.peerAfter.personal.ref.nativeTitle,value.peerBefore.personal.ref.nativeTitle,'peer-title-cross-scope');
+ return {backpressureVerdict:'PASS_NARROW_REAL_OWNER_CONTENTION',backpressureAndGapFault:'PARTIAL_BACKPRESSURE_ONLY',queueOverflow:'NOT_RUN',gapRecovery:'NOT_RUN',fullSYS05:'NOT_ESTABLISHED'};
+}
 export function assertStreamOutcome(value){
  const {native,stream,personal,team,ui,work}=value,sent=native.rows.at(-1);
  assert.equal(native.accepts,1,'one-native-send-only');

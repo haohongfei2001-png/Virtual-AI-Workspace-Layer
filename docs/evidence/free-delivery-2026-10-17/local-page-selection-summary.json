@@ -13201,6 +13201,124 @@
       "fail": 0.0,
       "skipped": 0.0,
       "duration_ms": 79272.589
+    },
+    "ci": {
+      "head": "30713f91f1c8c54ea72315e378225bcefd3c5128",
+      "run": 39248266944,
+      "url": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39248266944",
+      "conclusion": "success",
+      "jobs": {
+        "node-contracts": "success",
+        "offline-journeys": "success",
+        "offline-durability-compat": "success",
+        "offline-j4-lifecycle": "success"
+      },
+      "boundary": "Original four slice jobs; not complete J4, live host or scale acceptance. This is preceding production HEAD, not the newly changed SYS05 runner."
+    }
+  },
+  "sys05Backpressure20261019": {
+    "baseHead": "30713f91f1c8c54ea72315e378225bcefd3c5128",
+    "task": "SYS-05 actual native stream, joint ACK/title and independent peer title under real owner backpressure",
+    "productChanges": false,
+    "finding": "No production loss reproduced in the designated short contention. The original runner did not force or prove backpressure; this closes only that verification gap.",
+    "implementation": "Reuse existing MODERN/J4 fixture and normal native POST. Hold exactly one authenticated Personal conversation response initiated after send acceptance; native peer rename in Team must receive retry-after before release, then exact producer/kind/seq/payload and reply sequence must be accepted within the shared original 6 seconds. Original scope isolation, unique ACK and nonrenewed firstObservedAt remain asserted.",
+    "independentReview": "Three initial oracle gaps corrected: unrelated peer packet could qualify, pre-send request could be held after send, and CDP read could outlive polling deadline. Final independent review found no remaining blocker.",
+    "initialEvidenceBoundary": "Initial browser PASS retained for audit only; it predates stricter target/request/deadline assertions and is not final acceptance.",
+    "targeted": {
+      "pass": 224,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 539.90175
+    },
+    "ciContracts": {
+      "initial": "One failed step-name inventory assertion after unnecessary rename; original name restored rather than weakening inventory. Full initial output retained.",
+      "finalPass": 33,
+      "finalFail": 0,
+      "finalSkip": 0,
+      "durationMs": 44.861
+    },
+    "browser": {
+      "status": "PASS_NARROW_DIAGNOSTIC_SYS05_SLICE",
+      "backpressureVerdict": "PASS_NARROW_REAL_OWNER_CONTENTION",
+      "heldResponse": {
+        "armedAt": 1792411887270,
+        "heldAt": 1792411887319,
+        "releasedAt": 1792411887416,
+        "closedEarly": false,
+        "hits": 1,
+        "request": {
+          "receivedAt": 1792411887319,
+          "acceptedAt": 1792411887311,
+          "path": "/backend-api/conversation/44444444-4444-4444-8444-444444444444",
+          "context": "account-host-personal",
+          "authenticated": true,
+          "status": 200
+        }
+      },
+      "peerRenameAt": 1792411887363,
+      "peerRenameApplied": true,
+      "streamTicks": 800,
+      "streamMutations": 6400,
+      "sourceChangedDuringRun": false,
+      "cleanupErrors": null,
+      "fixedReadTraceDropped": 0,
+      "fullSYS05": "NOT_ESTABLISHED",
+      "queueOverflow": "NOT_RUN",
+      "gapRecovery": "NOT_RUN"
+    },
+    "uninstrumented": {
+      "status": "PASS_NARROW_OFFLINE_SYS05_CORRECTNESS",
+      "F1": "PASS_CONSERVATIVE_SINGLE_SAMPLE_NOT_P95",
+      "sourceChangedDuringRun": false,
+      "cleanupErrors": null,
+      "evidenceToUIUpperBoundMs": 169
+    },
+    "timing": {
+      "plainFiniteStreamMs": 19978,
+      "faultFiniteStreamMs": 19977,
+      "heldResponseMs": 97,
+      "faultEvidenceToUIUpperBoundMs": 256,
+      "meaning": "Fixed 800-tick stream phase excludes startup. Instrumented fault and plain correctness are different scenarios, not before/after performance optimization. Plain evidence-to-visible upper bound includes automation and read-only polling; not exact commit latency or p95."
+    },
+    "scheduling": "Add --backpressure and strict verdict gate to the existing instrumented SYS05 step; retain exactly two original stream commands, original job/3-minute step timeout, no new profile sharing/cache/upload. No additional 20-second stream or scale rerun.",
+    "realHost": "NOT_RUN; consumed one-shot diagnostic unchanged, no real install/reload/request performed.",
+    "next": "Queue overflow/gap marking and rescan remain unestablished; valid principal/current-context, positive membership/self activity, full J4/GU/install still open. 10k/100k DEFERRED, NOT_RELEASE_READY.",
+    "artifacts": {
+      "sys05-backpressure-initial.json.gz": {
+        "sha256": "8fad4fd6bf4cbabf39783aa44c55a1883b8b3119ea02f251e6047e5258ba3d4a",
+        "uncompressedSha256": "7c16ea587525eff4e758f25c3226f5d4a223da85cb9bd25ef8ee735a1700fd61",
+        "bytes": 14875
+      },
+      "sys05-backpressure-final.json.gz": {
+        "sha256": "b0d921fe038c43a65f97c9f5094e57957c4f39a1bba8b3637bafc25aedd7f68c",
+        "uncompressedSha256": "1aaf4c9c3a657a7a08c1580de65a10e7d72428ead3197b912c5e6d4a111c2249",
+        "bytes": 14927
+      },
+      "sys05-normal-final.json.gz": {
+        "sha256": "215dbd52c48032a1c4ce9f5a2d57ed9f9a875994318e0ebc2a94aa5c55e7b2cd",
+        "uncompressedSha256": "38dafdb9490afce7a482cb46f2890aedd33cec919c5626a4bdc44c56b0c42241",
+        "bytes": 13382
+      },
+      "sys05-backpressure-targeted.tap.gz": {
+        "sha256": "43c3d43deff8ce9a576b1ee0ce1858b47a21bd3af933ef71d1b56524f6737446",
+        "uncompressedSha256": "bc9167f962c1fb577e27275abae485dd4c52896a2809640b5c6ec721e842f302",
+        "bytes": 6829
+      },
+      "sys05-backpressure-ci-before.tap.gz": {
+        "sha256": "d602aff5187d90662ebc1fee0c20f5172f01bec352c6d64531fca7741c7c6703",
+        "uncompressedSha256": "fe94afd72daf37dd1a69609894f1885d81383e05f0d3afbf10c6a484faa4f8c0",
+        "bytes": 2960
+      },
+      "sys05-backpressure-ci-final.tap.gz": {
+        "sha256": "d58eadb747e2be9497d942c39925497ac1a7e4cba503da93293a633330e098de",
+        "uncompressedSha256": "3579e8ec785b546799de232a50fcfc037b709bf8da7a1f00d34aa2ae71a682db",
+        "bytes": 1662
+      }
+    },
+    "sameSourceComparison": {
+      "productFiles": 182,
+      "fixtureFiles": 16,
+      "equalAcrossPlainAndFault": true
     }
   }
 }

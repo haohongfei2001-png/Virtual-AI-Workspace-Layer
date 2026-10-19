@@ -4,6 +4,7 @@
 export function installSys05Observer(){
  if(globalThis.__sys05Observer)throw Error('sys05-observer-already-installed');
  const counters={directoryWalkers:0,directoryVisits:0,bodyQueries:0,bodySelected:0,packets:0,accepted:0,duplicate:0,retryAfter:0,rejected:0,unknown:0,maxBytes:0,maxCandidates:0,maxMessageIds:0,traceDropped:0,observerErrors:0};
+ const producers=new Map();
  const packets=[],walkers=new WeakSet(),restore=[];
  const patch=(object,key,make)=>{const descriptor=Object.getOwnPropertyDescriptor(object,key),original=object[key];object[key]=make(original);if(object[key]===original)throw Error('sys05-observer-install-failed:'+key);restore.push(()=>{if(descriptor)Object.defineProperty(object,key,descriptor);else delete object[key];});};
  try{
@@ -13,9 +14,11 @@ export function installSys05Observer(){
   patch(chrome.runtime,'sendMessage',original=>function(...args){
    const message=args[0],observation=['vaiwl-host-observation/1','vaiwl-host-observation/2'].includes(message?.protocol),result=Reflect.apply(original,this,args);
    if(observation)try{const surface=message.kind==='current-observation'?message.payload?.surface:message.kind==='surface-delta'?message.payload:null,body=message.kind==='current-observation'?message.payload?.body:message.kind==='current-object'?message.payload:null;
-    const row={at:Date.now(),kind:message.kind,localSeq:message.localSeq,bytes:new TextEncoder().encode(JSON.stringify(message)).length,candidates:surface?.candidates?.length??0,messageIds:body?.messageIds?.length??0,jointTitle:surface?.candidates?.some(c=>c.entity==='conversation'&&c.target?.nativeId==='44444444-4444-4444-8444-444444444444'&&c.nativeTitle==='J4 native jointly renamed conversation')??false,state:'pending',finishedAt:null};counters.packets++;counters.maxBytes=Math.max(counters.maxBytes,row.bytes);counters.maxCandidates=Math.max(counters.maxCandidates,row.candidates);counters.maxMessageIds=Math.max(counters.maxMessageIds,row.messageIds);
+    if(!producers.has(message.producerToken)&&producers.size<256)producers.set(message.producerToken,producers.size+1);
+    const row={producer:producers.get(message.producerToken)??null,payloadSha256:null,replySeq:null,at:Date.now(),kind:message.kind,localSeq:message.localSeq,bytes:new TextEncoder().encode(JSON.stringify(message)).length,candidates:surface?.candidates?.length??0,messageIds:body?.messageIds?.length??0,peerRenameTitle:surface?.candidates?.some(c=>c.entity==='conversation'&&c.target?.nativeId==='33333333-3333-4333-8333-333333333333'&&c.nativeTitle==='SYS05 peer native renamed conversation')??false,jointTitle:surface?.candidates?.some(c=>c.entity==='conversation'&&c.target?.nativeId==='44444444-4444-4444-8444-444444444444'&&c.nativeTitle==='J4 native jointly renamed conversation')??false,state:'pending',finishedAt:null};counters.packets++;counters.maxBytes=Math.max(counters.maxBytes,row.bytes);counters.maxCandidates=Math.max(counters.maxCandidates,row.candidates);counters.maxMessageIds=Math.max(counters.maxMessageIds,row.messageIds);
+    crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(message.payload))).then(buffer=>{row.payloadSha256=Array.from(new Uint8Array(buffer),n=>n.toString(16).padStart(2,'0')).join('');},()=>{counters.observerErrors++;});
     if(packets.length<256)packets.push(row);else counters.traceDropped++;
-    if(result?.then)result.then(reply=>{row.finishedAt=Date.now();row.state=['accepted','duplicate','retry-after','rejected'].includes(reply?.state)?reply.state:'unknown';counters[row.state==='retry-after'?'retryAfter':row.state]++;},()=>{row.finishedAt=Date.now();row.state='unknown';counters.unknown++;});
+    if(result?.then)result.then(reply=>{row.finishedAt=Date.now();row.replySeq=reply?.localSeq??null;row.state=['accepted','duplicate','retry-after','rejected'].includes(reply?.state)?reply.state:'unknown';counters[row.state==='retry-after'?'retryAfter':row.state]++;},()=>{row.finishedAt=Date.now();row.state='unknown';counters.unknown++;});
     else{row.state='unknown';counters.unknown++;}
    }catch{counters.observerErrors++;}return result;
   });
