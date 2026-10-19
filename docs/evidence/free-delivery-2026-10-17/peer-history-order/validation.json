@@ -1,0 +1,89 @@
+{
+  "kind": "L_DIAGNOSTIC_CONTRACT_VALIDATION_NOT_ACCEPTANCE",
+  "baseCommit": "f29443acfa8157fd5b314367cec41952ba96f261",
+  "investigatedFailedCommit": "e1b0bfd6ae76a5aa5e6948edc71b0487a1a371af",
+  "generatedAt": "2026-10-18T01:22:02.311Z",
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "commands": [
+    {
+      "command": "node tests/host/peer-c2-history-order-diagnostic.mjs",
+      "result": "matrix.json",
+      "cases": 6,
+      "ownerSourceSha256": "314525a55616261333e5cc98535ba5205a6f161f44d798f91226da112623d066"
+    },
+    {
+      "command": "node --test --test-reporter=tap tests/host/peer-c2-history-order.test.mjs tests/host/j3-failure-closures.test.mjs tests/host/j3-failure-inspection.test.mjs tests/host/j4-failure-inspection.test.mjs tests/host/browser-request-context.test.mjs tests/host/browser-request-context-pending-epoch.test.mjs tests/host/browser-context-pending-selection.test.mjs tests/host/browser-context-stale-request.test.mjs tests/host/browser-context-renewal.test.mjs tests/host/content-worker-retained-history.test.mjs tests/host/j4-content-lifecycle-collector.test.mjs",
+      "result": "affected.tap.gz",
+      "tests": 178,
+      "pass": 178,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "durationMs": 841.704209,
+      "tapSha256": "5cffe101ebbd41f6cd8d6e924a7d5c768e33f628f4d5b4eb4872ab3cb9367c76"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff -- src extension .github",
+      "result": "EMPTY"
+    }
+  ],
+  "independentReview": {
+    "result": "NO_REMAINING_BLOCKERS_WITHIN_DOCUMENTED_ORDINARY_OWNER_RECORD_SCOPE",
+    "reportedTests": 54,
+    "reportedPass": 54,
+    "reportedSkipped": 0,
+    "reportedCancelled": 0,
+    "fixesVerified": [
+      "nearest lexical binding wins even when null",
+      "execution context overflow prevents unique identity correlation",
+      "unsupported history-first fault injection rejected"
+    ],
+    "limitation": "Inspector projection is not a sanitizer for injected Proxy records; ordinary owner records only."
+  },
+  "upstreamConflictCheck": {
+    "freeHead": "f29443acfa8157fd5b314367cec41952ba96f261",
+    "existingTouchedHelpersChangedSinceFailedCommit": false,
+    "browserRequestContextOwnerChangedSinceFailedCommit": false,
+    "latestPublicPR16Status": "Snippet body-observation/runner changes; peer recovery still open.",
+    "privateLocalChanges": "NOT_OBSERVED"
+  },
+  "inputSha256": {
+    "src/runtime/browser-request-context.mjs": "314525a55616261333e5cc98535ba5205a6f161f44d798f91226da112623d066",
+    "tests/host/peer-c2-history-order-diagnostic.mjs": "d0ef76d5aa1f26bc216ab48bce36e88d303e8c7898b2987f546e197c3daa3164",
+    "tests/host/j3-failure-closures.mjs": "2b35e38b8065243fb992f39d5202e719b44d3fda0e027e7d6e418cef37bd300b",
+    "tests/host/j3-failure-inspection.mjs": "03dd2371e401266641edde05829cfb72b0ea857da0f3ea108122cfcd0f1b89f0",
+    "tests/host/peer-c2-history-order.test.mjs": "4c9af366dca2fb20269dd6b9b19cde555915d6f1670dc756a4dbb6a1dc5cabb0",
+    "tests/host/j3-failure-closures.test.mjs": "f6891e0571fc805e8b04855d47075f5f8bad7b6c00ba513e594d000a7402d1b7",
+    "tests/host/j3-failure-inspection.test.mjs": "401cfd47576bac099d63d0c744e12bc1982f84e643785a66300d0b30d9e48119",
+    "tests/host/j4-failure-inspection.test.mjs": "85288fc69f07ccfd6cf9e20aba2d6f4cfeee68f40f7d55b6ae19079022ec2c93",
+    "tests/host/browser-request-context.test.mjs": "08d3fe5ed9e9a9a34cda80224795723c2ee3dd437977c5482fc4e58a78a0d51b",
+    "tests/host/browser-request-context-pending-epoch.test.mjs": "68ae6c50e2dd286e4680384d7425c0ebe8786c6a7f7d5af643532eb5a1e2f413",
+    "tests/host/browser-context-pending-selection.test.mjs": "1ab0326de24a1bb46358848f921d24194c7a98626ffa99bea4b0d970cc5dbcc5",
+    "tests/host/browser-context-stale-request.test.mjs": "9dbcb16a624e5bb168642ff2b72288ed875a9adcd1cf64b4d58d7ab6e45ba8d3",
+    "tests/host/browser-context-renewal.test.mjs": "a0241760fd54424ccd48b2acea7c1d2ae604bc287bc572cafdeb834102865130",
+    "tests/host/content-worker-retained-history.test.mjs": "4db06a3df75f124d3532c0d75d1724c71b8c24f2e134c052c173f086f3a9224a",
+    "tests/host/j4-content-lifecycle-collector.test.mjs": "d3a47ebf27f6487120fb686083ae76bf703004118fe826fbb265790277236081"
+  },
+  "matrixSha256": "fad340408085e9b1eb4842e1e63541f600fde7e4979833cbbe78ab0a38e97520",
+  "boundaries": {
+    "productionChanged": false,
+    "workflowChanged": false,
+    "deadlineChanged": false,
+    "acceptanceAssertionsChanged": false,
+    "browserRun": "NOT_RUN",
+    "ciRun": "NOT_RUN",
+    "fullNodeSuite": "NOT_RUN",
+    "ciCause": "NOT_ESTABLISHED",
+    "peerRecoveryFix": "NOT_ESTABLISHED",
+    "freeAcceptance": "NOT_ESTABLISHED"
+  }
+}

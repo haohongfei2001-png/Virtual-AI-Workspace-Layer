@@ -5,13 +5,13 @@ const acquire=async(factory,ms)=>{const task=Promise.resolve().then(factory);try
 export async function inspectJ3Failure({context,page,browser,extensionId,timeoutMs=1500}={}){
  const report={kind:'POST_FAILURE_FORMAL_PACKAGE_INSPECTION'};
  if(typeof extensionId!=='string'||!/^[a-p]{32}$/.test(extensionId)||!Number.isInteger(timeoutMs)||timeoutMs<1||timeoutMs>3000)return {...report,error:'invalid-inspection-options'};
- const origin='chrome-extension://'+extensionId;let pageSession,workerSession,pageDelegated=false,workerDelegated=false;
- const contexts=[];const created=({context:value})=>{if(contexts.length<64)contexts.push(value);};
+ const origin='chrome-extension://'+extensionId;let pageSession,workerSession,pageDelegated=false,workerDelegated=false,targetDocumentId=null;
+ const contexts=[];let contextsTruncated=false;const created=({context:value})=>{if(contexts.length<64)contexts.push(value);else contextsTruncated=true;};
  try{
   pageSession=await acquire(()=>context.newCDPSession(page),timeoutMs);pageSession.on('Runtime.executionContextCreated',created);
   await bounded(pageSession.send('Runtime.enable'),timeoutMs);
   const selected=contexts.filter(c=>c.auxData?.isDefault===false&&(c.origin===origin||c.name===origin));
-  report.isolatedContextCount=selected.length;
+  report.isolatedContextCount=selected.length;report.contextsTruncated=contextsTruncated;
   const token=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(value)?value:null;
   report.matchingContexts=selected.map(c=>({id:Number.isSafeInteger(c.id)?c.id:null,name:typeof c.name==='string'?c.name.slice(0,160):null,origin:typeof c.origin==='string'?c.origin.slice(0,160):null,frameId:token(c.auxData?.frameId),type:['isolated','default','worker'].includes(c.auxData?.type)?c.auxData.type:null}));
   try{const tree=await bounded(pageSession.send('Page.getFrameTree'),timeoutMs);report.topFrameId=token(tree.frameTree?.frame?.id);}catch{report.topFrameId=null;}
@@ -36,9 +36,12 @@ export async function inspectJ3Failure({context,page,browser,extensionId,timeout
     }
    }
   }
-  else{pageDelegated=true;report.page=await collectJ3FailureClosures(pageSession,{executionContextId:selected[0].id,timeoutMs});}
+  else{pageDelegated=true;report.page=await collectJ3FailureClosures(pageSession,{executionContextId:selected[0].id,timeoutMs,...(!report.contextsTruncated&&report.topFrameMatchingContextCount===1&&report.matchingContexts[0].frameId===report.topFrameId?{onDocumentIdentity:value=>{targetDocumentId=value;}}:{})});}
  }catch{report.page={error:'page-inspection-unavailable'};}
  finally{if(pageSession&&!pageDelegated){pageSession.off('Runtime.executionContextCreated',created);try{await bounded(pageSession.detach(),timeoutMs);}catch{}}}
+ // Document IDs stay in this diagnostic invocation only. Same URL, CDP frame
+ // IDs, learned/cached identity, and arbitrary realm selection are not fallbacks.
+ report.documentCorrelation={basis:targetDocumentId===null?'UNAVAILABLE':'EXACT_CONTENT_BINDING_DOCUMENT_ID',currentness:'NOT_ESTABLISHED',reason:targetDocumentId!==null?null:report.contextsTruncated?'CONTEXT_LIST_TRUNCATED':report.isolatedContextCount>1?'AMBIGUOUS_REALMS':'MISSING_OR_INCOMPLETE_CURRENT_BINDING'};
  try{
   workerSession=await acquire(()=>browser.newBrowserCDPSession(),timeoutMs);
   const targets=await bounded(workerSession.send('Target.getTargets'),timeoutMs);
@@ -47,10 +50,11 @@ export async function inspectJ3Failure({context,page,browser,extensionId,timeout
   else{
    const attached=await bounded(workerSession.send('Target.attachToTarget',{targetId:matching[0].targetId,flatten:false}),timeoutMs);
    const nested=createNestedInspectionSession(workerSession,attached.sessionId,{timeoutMs});workerDelegated=true;
-   report.worker=await collectJ3FailureClosures(nested,{timeoutMs});
+   report.worker=await collectJ3FailureClosures(nested,{timeoutMs,targetDocumentId});
   }
  }catch{report.worker={error:'worker-inspection-unavailable'};}
  finally{if(workerSession&&!workerDelegated)try{await bounded(workerSession.detach(),timeoutMs);}catch{}}
+ targetDocumentId=null;
  return report;
 }
 /** Narrow nested CDP transport; no fallback to other targets or browser access. */
