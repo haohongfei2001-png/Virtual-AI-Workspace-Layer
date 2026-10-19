@@ -35,7 +35,26 @@ try{
  for(const scheme of ['light','dark']){
   await control.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:scheme}]},popupSession);
   await evaluate("return Promise.all([...root.querySelectorAll('*')].flatMap(n=>n.getAnimations()).map(a=>a.finished.catch(()=>{}))).then(()=>true);");
-  const snapshot=await evaluate('return ('+readTemporaryAppearance.toString()+')();');report.appearance.push({scheme,...snapshot});assert.equal(snapshot.dark,scheme==='dark');assertTemporaryAppearance(snapshot);
+  const snapshot=await evaluate('return ('+readTemporaryAppearance.toString()+')();');report.appearance.push({scheme,...snapshot});assert.equal(snapshot.dark,scheme==='dark');
+  try{assertTemporaryAppearance(snapshot);}catch(error){
+   // Failure-only A/B/A on the isolated extension document. Keep the original
+   // failed assertion; mutated geometry never counts as acceptance evidence.
+   report.geometryFailureProbe={qualification:'DIAGNOSTIC_ONLY_ORIGINAL_ASSERTION_STILL_FAILS',originalFailure:error.message,samples:[]};
+   let original;
+   try{
+    original=await evaluate("return document.documentElement.style.cssText;");
+    for(const [variant,cssText]of [['root-overflow-hidden',original+';overflow:hidden'],['restored',original]]){
+     await evaluate(`document.documentElement.style.cssText=${JSON.stringify(cssText)};return true;`);
+     for(let i=0;i<3;i++){
+      if(i)await new Promise(resolve=>setTimeout(resolve,100));
+      const value=await evaluate('return ('+readTemporaryAppearance.toString()+')();');
+      report.geometryFailureProbe.samples.push({variant,sample:i,viewport:value.viewport,layout:value.layout});
+     }
+    }
+   }catch(diagnosticError){report.geometryFailureProbe.diagnosticError=String(diagnosticError.message).slice(0,200);}
+   finally{if(original!==undefined)try{await evaluate(`document.documentElement.style.cssText=${JSON.stringify(original)};return true;`);}catch(restoreError){report.geometryFailureProbe.restoreError=String(restoreError.message).slice(0,200);}}
+   throw error;
+  }
   await evaluate("const n=root.querySelector('input');n.value='Research';n.dispatchEvent(new Event('input',{bubbles:true}));return true;");
   assert.deepEqual(await evaluate("return [...root.querySelectorAll('a.row')].map(n=>n.textContent);"),['Research']);
   const search=await evaluate('return ('+readTemporaryAppearance.toString()+')();');report.appearance.push({scheme,stage:'search',...search});assertTemporaryAppearance(search);

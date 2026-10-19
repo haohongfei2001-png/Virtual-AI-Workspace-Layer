@@ -127,3 +127,12 @@ test('existing SYS05 diagnostic requires actual peer backpressure and undelivere
  const valid={status:'PASS_NARROW_DIAGNOSTIC_SYS05_SLICE',S:'NARROW_INSTRUMENTED_BROWSER_OBSERVED',sourceCommit:'expected',fullSYS05:'NOT_ESTABLISHED',workInstrumentation:true,F1:'DIAGNOSTIC_ONLY_NOT_ACCEPTED',backpressureRequested:true,backpressureVerdict:'PASS_NARROW_REAL_OWNER_CONTENTION',directoryGapRequested:true,gapRecovery:'PASS_NARROW_UNDELIVERED_FRAGMENT_RETURN_RESCAN',queueOverflow:'NOT_RUN'};check(valid);
  for(const key of Object.keys(valid)){const value={...valid};delete value[key];assert.throws(()=>check(value),e=>e===rejected);}
 });
+
+test('manual popup geometry diagnostic selects only the existing native navigation journey',()=>{
+ const event={...allowedEvent,event_name:'workflow_dispatch'},input={diagnostic:'temporary-navigation-appearance'};
+ assert.deepEqual(Object.keys(jobs).filter(name=>jobAllowed(name,event,input)),['offline-journeys']);
+ const selected=journeySteps.filter(s=>!s.expression||condition(s.expression,event,input));
+ assert.deepEqual(selected.flatMap(s=>[...s.body.matchAll(/node tests\/host\/([^\s]+\.mjs)/g)].map(m=>m[1])),['temporary-navigation-package-browser.mjs']);
+ for(const e of [{...event,event:{repository:{private:true}}},{...event,repository:'other/repo'},{...event,ref:'refs/heads/main'}])assert.equal(Object.keys(jobs).filter(name=>jobAllowed(name,e,input)).length,0);
+ assert(selected.some(s=>s.name==='Publish bounded text evidence to logs only'));
+});

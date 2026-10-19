@@ -13,7 +13,7 @@ export function readTemporaryAppearance(){
  }
  const input=root.querySelector('input'),placeholder=getComputedStyle(input,'::placeholder');samples.push({selector:'input::placeholder',foreground:rgba(placeholder.color).slice(0,3),background:background(input),opacity:Number(placeholder.opacity)});
  const rect=n=>{const b=n.getBoundingClientRect();return {left:b.left,top:b.top,right:b.right,bottom:b.bottom,width:b.width,height:b.height};};
- const main=root.querySelector('main'),layout={main:rect(main),scrollWidth:main.scrollWidth,clientWidth:main.clientWidth,documentScrollTop:document.documentElement.scrollTop};
+ const main=root.querySelector('main'),layout={main:rect(main),scrollWidth:main.scrollWidth,clientWidth:main.clientWidth,documentScrollTop:document.documentElement.scrollTop,root:{clientWidth:document.documentElement.clientWidth,clientHeight:document.documentElement.clientHeight,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,overflow:getComputedStyle(document.documentElement).overflow},body:{...rect(document.body),scrollHeight:document.body.scrollHeight,overflow:getComputedStyle(document.body).overflow}};
  const active=root.activeElement,focus=active?{tag:active.tagName,rect:rect(active),visible:active.matches(':focus-visible'),width:parseFloat(getComputedStyle(active).outlineWidth),style:getComputedStyle(active).outlineStyle,foreground:rgba(getComputedStyle(active).outlineColor).slice(0,3),background:background(active.parentElement)}:null;
  return {viewport:{width:innerWidth,height:innerHeight},layout,dark:matchMedia('(prefers-color-scheme: dark)').matches,forced:matchMedia('(forced-colors: active)').matches,samples,focus};
 }

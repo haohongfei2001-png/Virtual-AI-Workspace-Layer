@@ -16315,6 +16315,39 @@
       "popup-layout-probe.json.gz": {
         "sha256": "ac3e9a7603e7e9f3cdd7d90faf2d9c03c485743831d038f90480127a720c0f53"
       }
+    },
+    "linux": {
+      "runId": 39293564606,
+      "head": "e32e75f414e22904a2aea9fa1749efbfbfbfc631",
+      "status": "PASS_TEMPORARY_PROJECT_MV3",
+      "elapsedMs": 1525.410057,
+      "sourceAndTestHashesVerifiedAgainstCommit": true,
+      "allThreeOpensOwnedFocusedWindow": true,
+      "scope": "Single original Project journey; other three jobs intentionally not selected. Not full CI; old failure retained.",
+      "artifacts": {
+        "ci39293564606-project.log.gz": {
+          "sha256": "c7b696634c86eef42881832f5b904a5eef7c2ef3ff8b4618a28610ca65650252"
+        },
+        "ci39293564606-project.json.gz": {
+          "sha256": "5b3a27d8cf317229604510a2ab9b00ae91edb3d8e5efb984beb1403394da5041"
+        },
+        "popup-geometry-observer-local.json.gz": {
+          "sha256": "207d7463290cea7279f3e2773bbd7ea5e9f53c02670288d3c1ffd045eb0b74e6"
+        },
+        "popup-geometry-ci-partition.tap.gz": {
+          "sha256": "3efdcc55b5d1712e9db0ce6cec0cfe0749c6ce225bc7703dbc2c11af039ed477"
+        }
+      }
     }
+  },
+  "popupGeometryDiagnostic20261020": {
+    "status": "LINUX_PENDING",
+    "change": "Existing runner failure-only bounded root-overflow-hidden/restored geometry probe; always retains original failed assertion, including diagnostic/restore errors. Production unmodified.",
+    "local": "Normal Mac popup full journey passes; no Linux585 reproduction. Local browser preceded final error-preservation-only review fix; not claimed as final diagnostic branch execution.",
+    "ciPartition": {
+      "pass": 26,
+      "fail": 0
+    },
+    "workflow": "One existing isolated job and original native-navigation command; no caches, uploads, extra jobs or changed push matrix."
   }
 }
