@@ -12042,15 +12042,15 @@
         "output": "Fixed schema branch code only; no IDs/names/list/credential values",
         "meOrSessionRequests": 0,
         "identityOrDatabaseEnabled": false,
-        "executed": false,
-        "status": "PREPARED_INSTALLED_RELOAD_REQUIRED_NOT_EXECUTED"
+        "executed": true,
+        "status": "EXECUTED_ONCE_ACCOUNT_ID_SCHEMA_REJECTED"
       },
       "accountsOnly20261019": {
         "baseHead": "4c2b2d41da0394976de2cf3ac9e44888dd49bdeb",
         "permission": "Explicit user approval of one accounts GET only,6s,1MiB,no retries,only fixed reason; no me/session,identity or old DB.",
-        "status": "PREPARED_WAITING_SAME_EXTENSION_RELOAD",
-        "attemptsConsumed": 0,
-        "realRequests": 0,
+        "status": "LIVE_EXECUTED_ONCE_ACCOUNT_ID_SCHEMA_REJECTED",
+        "attemptsConsumed": 1,
+        "realRequests": 1,
         "outputFields": [
           "state",
           "reason"
@@ -12329,8 +12329,9 @@
           ],
           "filesMatched": 188,
           "requestsIssued": 0,
-          "reloadRequired": true,
-          "permissionConsumed": false
+          "reloadRequired": false,
+          "permissionConsumed": false,
+          "reloadConfirmedByUser": true
         },
         "diagnosticSourceHashesMatch": true,
         "diagnosticSourceHashes": {
@@ -12343,10 +12344,41 @@
         },
         "installedNormalBase": "Preserved existing verified temporary package from before original me diagnostic; only five diagnostic overlay files changed. Do not claim new production deployment.",
         "review": "Independent read-only no blocker. Actual accounts-only MV3 covers valid/invalid schemas and one-shot/read/privacy; actual hidden lifecycle remains prior shared candidate evidence, not rerun accounts coverage.",
-        "toolBoundary": "Earlier automatic approval rejected chrome:// management and alternative-channel bypass. Existing popup still showed consumed older chain. User asked only to reload same extension; no new fetch performed.",
+        "toolBoundary": "User performed required reload. Native UI control then successfully opened fresh homepage and accounts-only popup and clicked exactly once; no current user operation pending. Historical management-page restriction not bypassed.",
         "artifacts": {
           "native-accounts-only-targeted.tap.gz": "33c3ed83c51e31f46a5ee7598423c39454c754a85bbf2ed321711471a4bd0498",
           "native-accounts-only-mv3.json.gz": "285eb140a3f43397ef7809e6e3fd702e1c07c204e9df7c528e13c27d76012c2d"
+        },
+        "priorInstallationState": "PREPARED_WAITING_SAME_EXTENSION_RELOAD",
+        "liveResult20261019": {
+          "sourceHead": "cfd584b7ad019b2040ace30582ea49599eacac5b",
+          "entry": "Same authorized hongfei hao Chrome, original extension ID; user confirmed reload. Agent opened one new homepage, verified accounts-only title, clicked execute once.",
+          "result": {
+            "state": "finished",
+            "reason": "accounts-schema:account-id"
+          },
+          "executeDisabled": true,
+          "readChannel": "Native Chrome accessibility of diagnostic popup",
+          "meRequests": 0,
+          "sessionRequests": 0,
+          "retries": 0,
+          "productionIdentityEnabled": false,
+          "oldDatabaseEnabled": false,
+          "privateValuesRetained": false,
+          "limit": "First rejected entry has account object but account.account_id fails existing identifier predicate. Field absence/null/type/empty/length/whitespace/reserved distinctions not reported. No raw response retained; do not infer which one or promote a different field."
+        },
+        "nextConcentratedStructureProposal": {
+          "authorization": "PENDING_NEW_EXPLICIT_PERMISSION",
+          "requestsMaximum": 1,
+          "endpoint": "GET https://chatgpt.com/backend-api/accounts/check/v4-2023-04-27",
+          "deadlineMs": 6000,
+          "bodyBytesMaximum": 1048576,
+          "entriesMaximum": 1000,
+          "retries": 0,
+          "fields": "Fixed allowlist: account_id/id presence-type-identifier category; each compared in RAM with map key and each other; literal default canonical/deep equality; structure category and access flag types. Aggregate by fixed default/nondefault groups.",
+          "output": "Fixed categories, boolean relationships and aggregate counts only. No raw values or dynamic field names.",
+          "productionEnabled": false,
+          "executed": false
         }
       }
     }
