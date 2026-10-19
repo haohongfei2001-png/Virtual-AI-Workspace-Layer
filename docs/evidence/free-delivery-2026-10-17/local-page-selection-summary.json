@@ -6098,7 +6098,39 @@
       "replyQualification": "AI-assisted support, not a human investigation or a Ray-correlated rule finding.",
       "replySummary": "Session is a web-app endpoint, not a documented/supported third-party-extension integration surface; extension requests may trigger a challenge while the interactive page works. Suggested API or applicable Sign in with ChatGPT, but supplied no existing ChatGPT Project/Conversation/current-workspace read interface.",
       "externalCondition": "Provider-confirmed supported principal/current-context and existing native-data integration; no supported replacement has been verified.",
-      "engineeringBoundary": "Do not treat reply as a product fix, a confirmed specific server rule, or permission for new identity sources/paid API. No new real Profile request or reinstall."
+      "engineeringBoundary": "Do not treat reply as a product fix, a confirmed specific server rule, or permission for new identity sources/paid API. No new real Profile request or reinstall.",
+      "publicCapabilityCheck20261019": {
+        "checkedAt": "2026-10-19",
+        "status": "NOT_A_DROP_IN_HOST_IDENTITY_OR_NATIVE_DATA_REPLACEMENT",
+        "sources": [
+          {
+            "url": "https://developers.openai.com/siwc/quickstart",
+            "facts": "Identity scopes can provide stable application sign-in identity. Neither identity scopes nor optional Responses API scopes grant access to existing ChatGPT conversations."
+          },
+          {
+            "url": "https://developers.openai.com/siwc/token-sharing-open-source",
+            "facts": "OSS client registration is bound to its authenticated user and selected workspace. Plan usage does not grant conversation or other account-context access."
+          }
+        ],
+        "engineeringInference": "A separate application sign-in and registration-time workspace do not alone establish which principal/context owns the current ChatGPT browser document; the existing owner association/roster contract cannot be replaced just by changing token type.",
+        "notClaimed": "No assertion that every possible future or separately delegated native-data interface is impossible; no Chrome MV3 OAuth compatibility or actual sign-in acceptance tested.",
+        "externalQuestions": [
+          "Supported proof of the existing ChatGPT tab principal and current workspace, distinct from separate app sign-in.",
+          "Supported user-authorized read-only IDs/titles/membership metadata for existing ChatGPT Projects/conversations; explicit limitation if none."
+        ],
+        "followup": "Concrete same-ticket human-review reply prepared; new message awaits explicit user approval. No additional support message sent in this checkpoint.",
+        "scope": "No production source, install, authentication, permission, paid service or real Profile access changed. No repeated tests or scale runs.",
+        "independentJourneyReview": {
+          "result": "No new unconnected action found in this narrow inspection; not a complete acceptance audit.",
+          "pointers": [
+            "src/host/free-frame-client.mjs:393",
+            "tests/host/visible-actions-package-browser.mjs",
+            "tests/host/host-view-row-windows.test.mjs",
+            "tests/host/frame-row-window-integration.test.mjs",
+            "preauthorizationObservation20261019.projectLayout20261019.packagedDataClosure20261019.linuxCI20261019"
+          ]
+        }
+      }
     },
     "requestChain20261019": {
       "status": "FINITE_CHAIN_NO_DUPLICATE_AUTH_REPRODUCED",
