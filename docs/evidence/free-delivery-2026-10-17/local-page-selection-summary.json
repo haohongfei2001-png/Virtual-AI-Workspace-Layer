@@ -12884,5 +12884,109 @@
         }
       }
     }
+  },
+  "sidebarProjectCreate20261019": {
+    "baseHead": "19cc35537d9ee4c392f2ae777da0da837dca21b9",
+    "task": "C2 / INTERACTION_SPEC section4 project-card and sidebar plus entry",
+    "problem": "Existing projectCreateEntry was called only in workspace cards; the sidebar exposed only disclosure, despite having the same issued Project plans.",
+    "change": "Framed Free sidebar renders existing exact Project-plan entry as sibling of disclosure; shrinkable title and fixed-size action. No new native create/send implementation, account source, scope, storage, grant or budget.",
+    "baseline": {
+      "kind": "existing-renderer DOM double",
+      "passed": 65,
+      "failed": 4,
+      "tests": 69,
+      "durationMs": 103.762291,
+      "meaning": "New sidebar behavior assertions fail against original production source; workspace safeguards remain."
+    },
+    "validation": {
+      "kind": "NODE_RENDERER_CLIENT_PLANS_AND_RUNNER_CONTRACT",
+      "passed": 226,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 109.17825,
+      "command": "node --test tests/host/frame-projection-renderer.test.mjs tests/host/free-frame-client.test.mjs tests/host/resolved-native-frame.test.mjs tests/host/resolved-native-plan.test.mjs tests/host/resolved-navigation-profile.test.mjs"
+    },
+    "packagedMV3": [
+      {
+        "profile": "LEGACY",
+        "status": "PASS",
+        "startupMode": "LEGACY_UNCHANGED",
+        "browserVersion": "155.0.8059.80",
+        "elapsedBeforeCleanupMs": 4999.764166,
+        "sidebarCreateGeometry": {
+          "left": 191,
+          "right": 225,
+          "top": 246.5,
+          "bottom": 280.5,
+          "width": 34,
+          "height": 34,
+          "viewportWidth": 228,
+          "viewportHeight": 593,
+          "toggleRight": 189,
+          "nested": false
+        },
+        "modernTeamScope": null,
+        "sourceChangedDuringRun": false,
+        "fixtureChangedDuringRun": false,
+        "scriptChangedDuringRun": false,
+        "workerNetworkBlocked": true
+      },
+      {
+        "profile": "MODERN",
+        "status": "PASS",
+        "startupMode": "WORKER_READY_PRECONDITION_NOT_COLD_ACCEPTANCE",
+        "browserVersion": "155.0.8059.80",
+        "elapsedBeforeCleanupMs": 5341.234416,
+        "sidebarCreateGeometry": {
+          "left": 191,
+          "right": 225,
+          "top": 47.5,
+          "bottom": 81.5,
+          "width": 34,
+          "height": 34,
+          "viewportWidth": 228,
+          "viewportHeight": 86,
+          "toggleRight": 189,
+          "nested": false
+        },
+        "modernTeamScope": {
+          "status": "PASS",
+          "readyViews": 50,
+          "scope": "[\"chatgpt\",\"principal_b5251fa0aba8e6d9cc5c14d0fb61db814d07c01eea39d1174341557cff7a5dd3\",\"context_c0f0405eaff152760a78ad3d6d6ce3118aa3e4b7fa7961ec9ceca6ece1a1cfee\"]",
+          "rosterSelection": "INDEPENDENT_ORACLE_NONFIRST_CONTEXT"
+        },
+        "sourceChangedDuringRun": false,
+        "fixtureChangedDuringRun": false,
+        "scriptChangedDuringRun": false,
+        "workerNetworkBlocked": true
+      }
+    ],
+    "review": "Independent review found replay observer used workspace after sidebar dispatch; fixed to reacquire sidebar after unique workspace return, reviewed closed. Initial report retained but superseded for same-sender replay evidence.",
+    "intermediateFixtureFailure": "A newly parameterized sidebar test initially asserted a member row before expanding the collapsed group; observer setup corrected. Product disclosure behavior not weakened.",
+    "assertions": [
+      "plus and disclosure are siblings, not nested interactive elements",
+      "disclosure alone sends no native navigation; plus does not toggle the list",
+      "original native project anchor clicked once; same document/editor; no extra page",
+      "unique workspace return then old action replay from same sidebar sender rejected",
+      "wrong ID/entity/URL/disposition and unavailable plan never become usable links",
+      "modifier/default link behavior and native draft preserved through existing controls",
+      "MODERN exact expected nonfirst roster context remains required"
+    ],
+    "timing": "Final LEGACY/MODERN elapsed values cover browser launch, complete existing navigation plus added sidebar checks, before cleanup. Original source lacked sidebar journey; no comparable speedup claim.",
+    "boundaries": "Actual offline packaged MV3, not real ChatGPT installation or full v2.7/200percent/IME acceptance. Installed dedicated Profile unchanged; no real requests. Identity, positive membership/self-send, full J4/GU and release open;10k/100k DEFERRED.",
+    "sourceHashes": {
+      "src/navigation/navigation.mjs": "ebec5326b401e065188143784088ecd9e2438b5c5fa52d4a923baec284439d24",
+      "src/navigation/styles.mjs": "be040fff4e0f768da9c708a2ace2a52c86039dd47363ecb5f5dda1da848a1107",
+      "tests/host/frame-projection-renderer.test.mjs": "199de7cf2c98dada0095bde5fb3a65213952f478a7fcad672a441e88189b2b4e",
+      "tests/host/resolved-navigation-package-browser.mjs": "60ad29d25d967c6f2757bcfab13b850adfe0d6c6d35a1fcc560201f472f855a7",
+      "tests/host/resolved-navigation-profile.test.mjs": "c0e3177ce0ee52dd10f983b0b5f3790e4dbd66b9dccb2b7d27564ca4ecdbcd4d"
+    },
+    "artifacts": {
+      "sidebar-project-create-before.tap.gz": "996950a28990ec685a536b1e1bf3ae8b0541d69c9de473312efbcb221c18cb1f",
+      "sidebar-project-create-targeted.tap.gz": "e140dbfdf4da89df4f420a2aeb73ef510c0de5190f84d52b0d309750cd88086c",
+      "sidebar-project-create-initial-observer.json.gz": "46fba7474007e998a322f4264505ad819f8e6800140fbdbe2557f564b23faa05",
+      "sidebar-project-create-legacy.json.gz": "2f57de97f052367d825fd5b529f48168ad3fa2e6215a55bfba11a2038671d94d",
+      "sidebar-project-create-modern.json.gz": "99921135943015bbdb9b23c1ca154b8aadd6356b0455f523e7660fb82c625ca5"
+    }
   }
 }
