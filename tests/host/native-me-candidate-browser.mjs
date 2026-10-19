@@ -12,7 +12,8 @@ import {createHostFixtureServer} from './fixtures/server.mjs';
 import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
 import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
 const output=process.argv[2]??join(tmpdir(),'vaiwl-native-me-candidate-browser.json');
-const modes=process.argv[3]==='legacy-receiver'?['legacy-receiver']:process.argv[3]==='lifecycle'?['foreground-start','hidden-inflight']:['consistent','accounts-challenge','shared-deadline','route-changed'];
+const accountsSchema=process.argv[3]==='accounts-schema';
+const modes=accountsSchema?['schema-invalid','schema-valid']:process.argv[3]==='legacy-receiver'?['legacy-receiver']:process.argv[3]==='lifecycle'?['foreground-start','hidden-inflight']:['consistent','accounts-challenge','shared-deadline','route-changed'];
 const started=performance.now(),directory=await mkdtemp(join(tmpdir(),'vaiwl-me-chain-mv3-'));
 const hash=v=>createHash('sha256').update(v).digest('hex');
 const report={kind:'PACKAGED_HEADLESS_MV3_SYNTHETIC_HTTPS_RESPONSES',realProfile:'NOT_RUN',livePermissionConsumed:false,release:'NOT_RELEASE_READY',results:[],status:'RUNNING',runnerHash:hash(await readFile(new URL(import.meta.url)))};
@@ -24,7 +25,7 @@ function protocol(endpoint){
 }
 try{
  server=await createHostFixtureServer();guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
- const base=join(directory,'base');bundle=join(directory,'candidate');buildHost(base,{observedChatGPTContext:true,temporaryReadOnly:true});receipt=buildProbe(base,bundle,0,{candidateChain:true});const baseInfo=JSON.parse(await readFile(join(base,'build-manifest.json')));report.sourceHashes={...baseInfo.sourceHashes,...receipt.sourceHashes};report.baseReceiptSha256=receipt.baseReceiptSha256;report.overlayReceiptSha256=hash(await readFile(join(bundle,'native-me-probe-manifest.json')));
+ const base=join(directory,'base');bundle=join(directory,'candidate');buildHost(base,{observedChatGPTContext:true,temporaryReadOnly:true});receipt=buildProbe(base,bundle,0,{candidateChain:!accountsSchema,accountsSchema});const baseInfo=JSON.parse(await readFile(join(base,'build-manifest.json')));report.sourceHashes={...baseInfo.sourceHashes,...receipt.sourceHashes};report.baseReceiptSha256=receipt.baseReceiptSha256;report.overlayReceiptSha256=hash(await readFile(join(bundle,'native-me-probe-manifest.json')));
  for(const mode of modes){
   report.mode=mode;const runStarted=performance.now(),requests=[],unexpected=[],errors=[];let releaseAccounts,accountSeen;
   const observedAccounts=new Promise(r=>accountSeen=r);
@@ -40,7 +41,7 @@ try{
    accountSeen();
    if(mode==='accounts-challenge')return route.fulfill({status:403,headers:{'content-type':'text/html','cf-mitigated':'challenge'},body:'offline challenge fixture'});
    if(mode==='shared-deadline'||mode==='route-changed'||mode==='hidden-inflight')await new Promise(r=>releaseAccounts=r);
-   try{await route.fulfill({contentType:'application/json',body:JSON.stringify({accounts:{'fixture-private-space':{account:{account_id:'fixture-private-space',structure:'personal'}}}})});}catch{ /* Aborted synthetic request after deadline/navigation. */ }
+   try{await route.fulfill({contentType:'application/json',body:JSON.stringify({accounts:{[mode==='schema-invalid'?'default':'fixture-private-space']:{account:{account_id:'fixture-private-space',structure:'personal'}}}})});}catch{ /* Aborted synthetic request after deadline/navigation. */ }
   });
   const loadedBundle=mode==='legacy-receiver'?join(directory,'legacy'):bundle;
   if(mode==='legacy-receiver')buildProbe(base,loadedBundle,0);
@@ -57,6 +58,7 @@ try{
   async function click(selector){const box=await evaluate(`(()=>{const r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);await control.send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...box},session);await control.send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...box},session);}
   async function waitResult(readPending=false){const deadline=performance.now()+8000;while(performance.now()<deadline){const text=await evaluate('document.querySelector("#result").textContent');try{const r=JSON.parse(text);if(r.state==='finished'||r.state.endsWith('-no-request'))return r;if(readPending&&r.state==='no-result')await click('#read');}catch{}await new Promise(r=>setTimeout(r,25));}throw Error('candidate-result-observation-timeout');}
   await open();await evaluate("localStorage.setItem('vaiwl-native-me-probe-20261019-consumed','consumed')");assert.equal(requests.length,0);
+  if(accountsSchema)await evaluate("localStorage.setItem('vaiwl-native-me-candidate-20261019-consumed','consumed')");
   if(mode==='foreground-start'||mode==='hidden-inflight'){
    const ready=await evaluate("(async()=>{const [t]=await chrome.tabs.query({active:true,currentWindow:true});return chrome.tabs.sendMessage(t.id,{type:'VAIWL_ME_CANDIDATE_READY'},{frameId:0});})()");assert.equal(ready.ready,true);assert.equal(ready.spent,false);
    await control.send('Target.closeTarget',{targetId:target});
@@ -79,8 +81,8 @@ try{
   }
   assert.equal(result.state,'finished');
   const consistent=mode==='consistent'||mode==='foreground-start';
-  const expected=consistent?'candidate-consistent-not-authorized':mode==='accounts-challenge'?'session-challenged':mode==='shared-deadline'?'request-timeout':'document-changed';assert.equal(result.reason,expected);
-  assert.equal(result.samePrincipal,consistent);assert.equal(requests.length,consistent?3:2);assert.equal(result.identityEnabled,false);assert(!JSON.stringify(result).includes('fixture-private'));assert(!JSON.stringify(result).includes('PRIVATE_SENTINEL'));
+  const expected=accountsSchema?(mode==='schema-valid'?'accounts-schema-valid-not-authorized':'accounts-schema:default-canonical-missing'):consistent?'candidate-consistent-not-authorized':mode==='accounts-challenge'?'session-challenged':mode==='shared-deadline'?'request-timeout':'document-changed';assert.equal(result.reason,expected);
+  if(accountsSchema){assert.deepEqual(Object.keys(result).sort(),['reason','state']);assert.deepEqual(requests,['/backend-api/accounts/check/v4-2023-04-27']);assert.equal(await evaluate("localStorage.getItem('vaiwl-native-me-candidate-20261019-consumed')"),'consumed');}else{assert.equal(result.samePrincipal,consistent);assert.equal(requests.length,consistent?3:2);assert.equal(result.identityEnabled,false);}assert(!JSON.stringify(result).includes('fixture-private'));assert(!JSON.stringify(result).includes('PRIVATE_SENTINEL'));
   const expectedRequests=requests.length;
   assert.equal(await evaluate("localStorage.getItem('vaiwl-native-me-probe-20261019-consumed')"),'consumed');assert.equal(await evaluate('document.querySelector("#run").disabled'),true);
   const databases=await worker.evaluate(async()=> (await indexedDB.databases()).length);assert.equal(databases,0);

@@ -15,7 +15,8 @@ button.addEventListener('click',async()=>{
   }
   phase='receiver';
   const ready=await chrome.tabs.sendMessage(tab.id,{type:PROBE_PREFIX+'_READY'},{frameId:0});
-  if(PROBE_PREFIX==='VAIWL_ME_CANDIDATE'&&ready!=null&&ready.receiverVersion!==2){show({state:'receiver-version-reload-required-no-request',help:'诊断页面与已加载接收器版本不同；请重新加载同一个 VAIWL 扩展后打开新的 ChatGPT 首页。本次未发请求。'});return;}
+  const requiredVersion=PROBE_PREFIX==='VAIWL_ACCOUNTS_SCHEMA'?3:PROBE_PREFIX==='VAIWL_ME_CANDIDATE'?2:null;
+  if(requiredVersion!==null&&ready!=null&&ready.receiverVersion!==requiredVersion){show({state:'receiver-version-reload-required-no-request',help:'诊断页面与已加载接收器版本不同；请重新加载同一个 VAIWL 扩展后打开新的 ChatGPT 首页。本次未发请求。'});return;}
   if(ready?.ready!==true||ready.spent!==false||typeof ready.documentKey!=='string'){
    let legacyReceiverPresent=false;
    if(ready==null&&PROBE_PREFIX==='VAIWL_ME_CANDIDATE'){
