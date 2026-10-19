@@ -16532,5 +16532,76 @@
         "sha256": "72a902620d1f9097a8952f84ae05046780830fa9aeac527dda0252c936835949"
       }
     }
+  },
+  "frameSaveIdlePrecondition20261020": {
+    "status": "LOCAL_ORIGINAL_JOURNEY_PASS_LINUX_PENDING",
+    "kind": "TEST_OBSERVER_PRECONDITION_CORRECTION_NOT_PRODUCTION_GUARD_CHANGE",
+    "baseline": "d69caa4898e41d18c1959f1b633d4ae48c37601e",
+    "rootEvidence": {
+      "run": 39289329767,
+      "workerSampleIdleAt": 1792428891317,
+      "frameSaveStartedAt": 1792428891319,
+      "parentCheckStartedAt": 1792428891319,
+      "guardRefusedAt": 1792428891320,
+      "uiActiveWork": 3,
+      "reason": "ui-release-busy"
+    },
+    "cause": "Worker idle and content prepareIdle cannot see a frame delayed 100ms SAVE_VIEW not yet sent. Original single CHECK races the queued save; guard correctly refuses.",
+    "fix": "Only transport-expiry test package exposes actual frame boolean pending states; runner observes both exact live role frames before worker sample and one close. No flush/cancel/freeze/retry. Original shared15s observation and production6s/check/release unchanged.",
+    "isolation": "Transport-expiry now also uses existing isolated Chrome reject proxy, including worker.",
+    "unit": {
+      "minimalRed": "new queued-frame test fails: attempted close returns prepared true/entered false rather than precondition null",
+      "finalPass": 200,
+      "fail": 0,
+      "actualFrameWitness": "Real frame module retains queued save at99ms, starts at100ms, remains non-idle while reply pending; repeated probe reads emit no RPC/flush; closed/missing/wrong-role rejected"
+    },
+    "browser": {
+      "positive": "PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY",
+      "mutant": "FAIL",
+      "mutantReason": "J4-peer-current-scope-timeout",
+      "mutantPhase": "await-fresh-foreground-grant-and-VIEW",
+      "bothPreparedAndEntered": true,
+      "sameProductAndFixtureHashes": true,
+      "nativeGETsEach": 1,
+      "workerStopped": false,
+      "draftAndSelectionPreserved": true,
+      "positiveFreshSameTeamGrantAndVIEW": true,
+      "framePreconditionSamples": 2,
+      "frameObservationSpanMs": 84,
+      "originalBindingWaitMs": 19579,
+      "timingInterpretation": "84ms is observed prerequisite span, not added sleep/budget. Prior failed snapshot missed queued save after2ms. No throughput/speedup claim."
+    },
+    "review": "Independent read-only review approves exact live-frame pending observation; final atomic guards remain authoritative.",
+    "limitations": [
+      "Linux revised precondition not yet verified",
+      "Snapshot is not an atomic reservation; later new work must still fail the single close",
+      "Only ordinary fixture frame known pending covered, not all possible future layout/renewal/migration work",
+      "Production automatic dormancy opportunity may be consumed on a race refusal; not declared fixed",
+      "J4 no-new-context worker-memory-loss recovery NOT_ESTABLISHED; live identity and G/U incomplete",
+      "10k/100k DEFERRED; historical FAIL preserved"
+    ],
+    "artifacts": {
+      "ci39289329767-transport.json.gz": {
+        "sha256": "4247028b9a8b6ec6a71005ec89c201896b52d7c64bcb362a9f32921b705c294a"
+      },
+      "frame-save-precondition-red.tap.gz": {
+        "sha256": "5450e8e585291bdbfd5be6f2d3a5506afb2855ad73814f5a02773dd69109507e"
+      },
+      "frame-save-precondition-targeted.tap.gz": {
+        "sha256": "bb38f6d1d45744975404929b6974bc0f0650a5e9e8849daa4ceccdf5a7ca34a1"
+      },
+      "frame-save-precondition-all.tap.gz": {
+        "sha256": "a1740adf362434fa6d67852983db4f72b6cb6c4e8daf5ec9e0188a500c0ae563"
+      },
+      "frame-save-precondition-final.tap.gz": {
+        "sha256": "ecf9ce5e984975ec5d56a947227c1795678d58fc7801ecf80708939e00798a64"
+      },
+      "frame-save-precondition-browser.json.gz": {
+        "sha256": "6bae2cfbd51f998ac9e880270d21eb2ef26a45d664febb10c4e3629606ff09b4"
+      },
+      "frame-save-precondition-mutant.json.gz": {
+        "sha256": "99125bb191be83f4550e91577709302aacb05db6af5cd0ce16950d56f6a9c419"
+      }
+    }
   }
 }

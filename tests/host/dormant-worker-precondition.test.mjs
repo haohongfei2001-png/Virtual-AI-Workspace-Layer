@@ -52,3 +52,17 @@ test('real j2Poll continues null readiness observations then preserves false as 
  assert.equal(result,false);assert.equal(observations,3);assert.equal(reads,3);assert.equal(attempts,2);
  assert.equal(await probe(),false);assert.equal(attempts,2);
 });
+
+test('pending frame presentation save prevents the sole close even while worker is idle',async()=>{
+ let queued=true,frameReads=0,workerReads=0,attempts=0;
+ const probe=createWorkerPreparedDormancyProbe({framesIdle:()=>{frameReads++;return !queued;},workerIdle:()=>{workerReads++;return true;},attempt:()=>{attempts++;return {prepared:true,entered:!queued};}});
+ assert.equal(await probe(),null);assert.equal(workerReads,0);assert.equal(attempts,0);
+ queued=false;assert.deepEqual(await probe(),{prepared:true,entered:true});assert.equal(frameReads,2);assert.equal(workerReads,1);assert.equal(attempts,1);
+ assert.deepEqual(await probe(),{prepared:true,entered:true});assert.equal(frameReads,2);
+});
+test('frame observation failure remains terminal and never consumes the close',async()=>{
+ const error=Error('frame unavailable');let frameReads=0,workerReads=0,attempts=0;
+ const probe=createWorkerPreparedDormancyProbe({framesIdle:()=>{frameReads++;throw error;},workerIdle:()=>{workerReads++;return true;},attempt:()=>{attempts++;return true;}});
+ await assert.rejects(observeWorkerPreparedDormancy(fn=>fn(),probe),e=>e===error);await assert.rejects(probe(),e=>e===error);
+ assert.equal(frameReads,1);assert.equal(workerReads,0);assert.equal(attempts,0);
+});

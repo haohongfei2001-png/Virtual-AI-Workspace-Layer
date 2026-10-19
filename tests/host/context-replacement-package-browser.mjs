@@ -1,6 +1,7 @@
 import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
 import {createPreparedDormancyProbe,createWorkerPreparedDormancyProbe,observeWorkerPreparedDormancy} from './prepared-dormancy-probe.mjs';
 import {instrumentIdleWorkSource} from './idle-work-trace.mjs';
+import {instrumentFramePendingWork,framePendingWorkIsIdle} from './frame-pending-work-probe.mjs';
 /** Narrow same-route C2 replacement; no silent-expiry/J2 or live-account claim. */
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
@@ -25,6 +26,7 @@ const hash=v=>createHash('sha256').update(v).digest('hex');
 const paths=['tests/host/prepared-dormancy-probe.mjs','tests/host/context-replacement-package-browser.mjs','tests/host/fixtures/variants-server.mjs','tests/host/fixtures/variants-native.mjs','tests/host/fixtures/native-current-refresh.mjs','tests/host/fixtures/native.mjs','tests/host/expected/modern.mjs','tests/host/j2-journey-profile.mjs','tests/host/j2-runner-bounds.mjs','tests/host/isolated-browser-cleanup.mjs',...((transportExpiry||regionReplacement)?['tests/host/j4-grant-observer.mjs','tests/host/j4-joint-interruption.mjs','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs']:[])];
 const fixtureHashes=Object.fromEntries(await Promise.all(paths.map(async p=>[p,hash(await readFile(p))])));
 if(idleProbe)fixtureHashes['tests/host/idle-work-trace.mjs']=hash(await readFile('tests/host/idle-work-trace.mjs'));
+if(transportExpiry)fixtureHashes['tests/host/frame-pending-work-probe.mjs']=hash(await readFile('tests/host/frame-pending-work-probe.mjs'));
 const server=await createVariantHostFixtureServer({profile:'MODERN',nativeCurrentRefresh:true}),dir=await mkdtemp(join(tmpdir(),'vaiwl-context-replacement-')),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineContext:true}),manifest=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));
 let instrumentedEntry,mutantSession;
 // Passive isolated-world tracing only. It returns the original Promise and
@@ -65,6 +67,7 @@ if(frameLossMutant){
 // Test-package-only, read-only worker readiness. Never supplied by content,
 // never closes/releases a mount, and never changes a production owner or clock.
 const workerReadinessHashes={};
+if(transportExpiry){const path='src/host/free-frame-client.mjs',source=instrumentFramePendingWork(await readFile(join(built.unpacked,path),'utf8'));await writeFile(join(built.unpacked,path),source);workerReadinessHashes[path]=hash(source);}
 if(idleProbe){
  for(const [path,kind] of [['src/runtime/host-binding-service.mjs','service'],['src/runtime/host-ui-owner.mjs','ui']]){
   const source=instrumentIdleWorkSource(await readFile(join(built.unpacked,path),'utf8'),kind);await writeFile(join(built.unpacked,path),source);workerReadinessHashes[path]=hash(source);
@@ -86,7 +89,7 @@ const frame=()=>page.frames().find(f=>f.url()===`chrome-extension://${id}/worksp
 const step=(name,detail={})=>report.results.push({name,status:'PASS',...detail});
 async function continuity(){assert.deepEqual(await page.evaluate(()=>({sameDocument:document===replacementDocument,sameEditor:document.querySelector('textarea')===replacementEditor,draft:replacementEditor.value,start:replacementEditor.selectionStart,end:replacementEditor.selectionEnd,pagehides:replacementPagehides})),{sameDocument:true,sameEditor:true,draft:'UNSENT_CONTEXT_REPLACEMENT',start:3,end:8,pagehides:0});assert.equal(page.url(),server.origin+'/c/'+C);}
 try{
- if(regionReplacement)networkGuard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
+ if(transportExpiry||regionReplacement)networkGuard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
  if(transportExpiry||regionReplacement){browserHandle=await launchNativeVisibilityBrowser({chromium,profileDir:join(dir,'profile'),headed:false,...(networkGuard?{historicalNetworkGuard:networkGuard.config}:{}),executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});context=browserHandle.context;report.browserPrecondition=browserHandle.diagnostic;}
  else context=await chromium.launchPersistentContext(join(dir,'profile'),{timeout:25000,headless:true,viewport:{width:1440,height:1000},executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
  context.setDefaultTimeout(15000);context.setDefaultNavigationTimeout(15000);
@@ -116,7 +119,17 @@ try{
   const isolated=await poll(async()=>{for(const world of worlds.filter(w=>w.auxData?.isDefault===false)){try{if(await evaluate(`window===window.top&&chrome.runtime.id===${JSON.stringify(id)}&&typeof __vaiwlIdleProbeSession==='object'&&Array.isArray(__vaiwlTransportExpiryTrace)`,world.id))return world.id;}catch{}}return null;});
   assert.equal(await page.evaluate(()=>typeof globalThis.__vaiwlIdleProbeSession),'undefined');assert.equal(await page.evaluate(()=>typeof globalThis.__vaiwlTransportExpiryTrace),'undefined');
   readTransportExpiryTrace=()=>evaluate('globalThis.__vaiwlTransportExpiryTrace.slice(-128)',isolated);
-  const preparedProbe=createWorkerPreparedDormancyProbe({workerIdle:async()=>{const ready=await worker.evaluate(()=>globalThis.__vaiwlFixtureWorkerIdle());report.workerReadiness.totalSamples++;if(report.workerReadiness.samples.length<32)report.workerReadiness.samples.push({at:Date.now(),idle:ready});return ready;},attempt:()=>evaluate('__vaiwlIdleProbeSession.attempt()',isolated)});
+  // Worker idle cannot see a frame's queued 100ms presentation save. Observe
+  // both actual frame owners first, without draining/cancelling their work.
+  // This is a prerequisite only: the single original CHECK/RELEASE still rules.
+  report.frameReadiness={totalSamples:0,samples:[]};let sampledFrames=null;
+  const currentPair=()=>['workspace','sidebar'].map(role=>page.frames().filter(f=>f.url()===`chrome-extension://${id}/${role}.html`));
+  const framesIdle=async()=>{report.frameReadiness.totalSamples++;sampledFrames=null;const pair=currentPair();if(pair.some(items=>items.length!==1))return false;
+   const frames=pair.map(items=>items[0]),states=await Promise.all(frames.map(f=>within('frame-pending-work',()=>f.evaluate(()=>globalThis.__vaiwlFixtureFramePendingWork?.()??null))));
+   const latest=currentPair(),same=latest.every((items,i)=>items.length===1&&items[0]===frames[i]&&!frames[i].isDetached()),ready=same&&states.every((state,i)=>framePendingWorkIsIdle(state,['workspace','sidebar'][i]));
+   if(report.frameReadiness.samples.length<32)report.frameReadiness.samples.push({at:Date.now(),ready,states});if(ready)sampledFrames=frames;return ready;
+  };
+  const preparedProbe=createWorkerPreparedDormancyProbe({framesIdle,workerIdle:async()=>{const ready=await worker.evaluate(()=>globalThis.__vaiwlFixtureWorkerIdle());report.workerReadiness.totalSamples++;if(report.workerReadiness.samples.length<32)report.workerReadiness.samples.push({at:Date.now(),idle:ready});return ready;},attempt:()=>{const pair=currentPair();return sampledFrames&&pair.every((items,i)=>items.length===1&&items[0]===sampledFrames[i]&&!items[0].isDetached())?evaluate('__vaiwlIdleProbeSession.attempt()',isolated):null;}});
   report.idlePrecondition=await observeWorkerPreparedDormancy(poll,preparedProbe);
   try{report.idlePreconditionWorkTrace=await readIdleWorkTrace();}catch{report.idlePreconditionWorkTraceUnavailable=true;}
   assert.deepEqual(report.idlePrecondition,{prepared:true,entered:true});await continuity();

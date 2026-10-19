@@ -13,14 +13,14 @@ export function createPreparedDormancyProbe(session){
  };
 }
 
-/** Worker readiness is a passive prerequisite, never a substitute for CHECK.
+/** Frame pending work and worker readiness are passive prerequisites, never a substitute for CHECK.
  * All observations and the one existing attempt share the caller's deadline.
  */
-export function createWorkerPreparedDormancyProbe({workerIdle,attempt}){
+export function createWorkerPreparedDormancyProbe({workerIdle,attempt,framesIdle=()=>true}){
  let pending=null,terminal=null;
  return function probe(){
   if(terminal)return terminal;if(pending)return pending;
-  const current=Promise.resolve().then(workerIdle).then(ready=>ready===true?attempt():null);pending=current;
+  const current=Promise.resolve().then(framesIdle).then(ready=>ready===true?workerIdle():false).then(ready=>ready===true?attempt():null);pending=current;
   current.then(result=>{if(result!==null)terminal=current;if(pending===current)pending=null;},()=>{terminal=current;if(pending===current)pending=null;});
   return current;
  };
