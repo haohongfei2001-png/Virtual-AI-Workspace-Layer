@@ -108,6 +108,17 @@ test('diagnostic rejects unknown input, private repositories, other repos and ot
  const event={...allowedEvent,event_name:'workflow_dispatch'},input={diagnostic:'temporary-project-startup'};
  for(const [e,i]of [[event,{}],[event,{diagnostic:'arbitrary-command'}],[{...event,event:{repository:{private:true}}},input],[{...event,repository:'other/repo'},input],[{...event,ref:'refs/heads/main'},input]])assert.equal(Object.keys(jobs).filter(name=>jobAllowed(name,e,i)).length,0);
 });
+test('manual transport diagnostic runs the unchanged expiry command and gate without unrelated matrix work',()=>{
+ const event={...allowedEvent,event_name:'workflow_dispatch'},input={diagnostic:'transport-expiry'};
+ assert.deepEqual(Object.keys(jobs).filter(name=>jobAllowed(name,event,input)),['offline-journeys']);
+ const selected=journeySteps.filter(s=>!s.expression||condition(s.expression,event,input));
+ const commands=selected.flatMap(s=>[...s.body.matchAll(/node tests\/host\/([^\n]+)/g)].map(m=>m[1]));
+ assert.deepEqual(commands,['context-replacement-package-browser.mjs "$RUNNER_TEMP/context-transport-expiry.json" transport-expiry']);
+ assert(selected.some(s=>s.name==='Publish bounded text evidence to logs only'));
+ const expiry=selected.find(s=>s.name==='Foreground expired document transport with genuine live C2 receipt');
+ for(const marker of ["r.status!=='PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY'",'r.nativeRequestStarts.length!==1',"r.foregroundRecovery?.sameWorker!==true",'r.sourceChangedDuringRun!==false'])assert(expiry.body.includes(marker));
+ for(const e of [{...event,event:{repository:{private:true}}},{...event,repository:'other/repo'},{...event,ref:'refs/heads/main'}])assert.equal(Object.keys(jobs).filter(name=>jobAllowed(name,e,input)).length,0);
+});
 
 test('existing SYS05 diagnostic requires actual peer backpressure and undelivered-fragment recovery without claiming overflow',()=>{
  const body=jobs['offline-durability-compat'];assert.match(body,/sys05-work.json" --execute-browser --observe-work --backpressure --gap-recovery/);

@@ -14682,5 +14682,52 @@
     ],
     "scale": "10k/100k DEFERRED; thresholds and historical failures unchanged",
     "releaseStatus": "NOT_RELEASE_READY"
+  },
+  "recoveryPolicyHistory20261019": {
+    "status": "POST_FAILURE_DIAGNOSTIC_ONLY",
+    "base": "470be436f25bb3b91a6e8a7cb9e78346aef1f306",
+    "dotComment": 6270147505,
+    "finding": "Completed association pending=null cannot distinguish absent evidence from expired recovery. Actual recovery slots retain last policy after the original deadline.",
+    "implementation": "Existing bounded failure-only collector selects actual run closure; own data descriptors only; fixed enums/counts/nullability; no owner calls. Historical policy never authenticates current document/generation/scope.",
+    "validation": {
+      "kind": "L_ACTUAL_OWNER_AND_REAL_V8_CDP",
+      "states": [
+        "WAITING_NATIVE/current-context-unproven",
+        "BLOCKED/scope-provider-unavailable",
+        "CANCELLED/context-recovery-deadline",
+        "SCOPE_VERIFIED historical with live authority absent",
+        "CANCELLED/context-recovery-invalidated"
+      ],
+      "ownerCallsDuringInspection": 0,
+      "privateOutput": false,
+      "getterCalls": 0,
+      "maxRows": 128,
+      "finalTests": 55,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 488.035209,
+      "initialFailure": "53 passed/1 stale adjacent cleanup source assertion after prior passive trace; changed to enforce end-observation -> trace-read -> owned-cleanup and explicit unavailable handling"
+    },
+    "ciScheduling": "Existing workflow manual transport-expiry selects only original expiry command/gate and logs; push coverage, free public runner, read-only permission, no cache/upload unchanged. One Linux diagnostic pending dispatch; not full matrix.",
+    "sourceHashes": {
+      "tests/host/j3-failure-closures.mjs": "42ff7197e0f9970d03745b42589d45335ac5b8d4ba9ebfbfbe3a6121de14f939",
+      "tests/host/j3-recovery-policy-inspection.test.mjs": "e97cdad784784c48e6a29eea8c9167f3d18675ab1d73fd9c223a12ee31317481",
+      "tests/host/context-transport-expiry-contract.test.mjs": "f9aea8aeb7a43ef1b9765690595f40ebf39ae2e3ee7bde2177ea65b082141faf",
+      "tests/host/offline-ci-partition.test.mjs": "1e739f1508a2684c5daa417d340264c738e9e2235a360c1814a6f192c0ac8c98",
+      ".github/workflows/free-offline-host.yml": "4794a7797bc121e41a57ef3defd501758809370f0ffd18cd36293b5b95d72aa1"
+    },
+    "artifacts": {
+      "recovery-diagnostics-targeted-red-20261019.log": {
+        "path": "docs/evidence/free-delivery-2026-10-17/recovery-diagnostics-targeted-red-20261019.log.gz",
+        "sha256": "91bfd1ff949f89ba9f9f2cf562034b421a4d21d3d2ce0d5e6cfcf3d846354040"
+      },
+      "recovery-diagnostics-targeted-final-20261019.log": {
+        "path": "docs/evidence/free-delivery-2026-10-17/recovery-diagnostics-targeted-final-20261019.log.gz",
+        "sha256": "b89567af256ed54b26271f7876255fbf7af0d01e394014110bb1307804e5319b"
+      }
+    },
+    "remaining": "Actual CI busy competitor and full J4 not proven; real identity/current-context/membership/self-send/GU remain open; scale DEFERRED",
+    "releaseStatus": "NOT_RELEASE_READY",
+    "review": "Independent read-only review passed; fixed conservative truncation disclosure at original eight-function cap, without expanding scan."
   }
 }

@@ -30,7 +30,11 @@ test('transport mutation removes only its exact branch and CI rejects any early 
 
 test('transport owner observation ends before owned browser cleanup rather than recording cleanup as a lost owner',()=>{
  assert(candidate.includes("worker.on('close',closed)"));assert(candidate.includes("worker.off('close',closed);report.transportOwner.observationEndedAt=Date.now()"));
- assert(candidate.includes('finally{endTransportOwnerObservation?.();const clean=await cleanupOwnedResources(report,'));
+ const cleanup=candidate.slice(candidate.lastIndexOf('finally{endTransportOwnerObservation?.();'));
+ assert(cleanup.startsWith('finally{endTransportOwnerObservation?.();'));
+ assert(cleanup.indexOf('endTransportOwnerObservation?.();')<cleanup.indexOf('await readIdleWorkTrace()'));
+ assert(cleanup.indexOf('await readIdleWorkTrace()')<cleanup.indexOf('const clean=await cleanupOwnedResources(report,'));
+ assert(cleanup.includes('catch{report.idleWorkTraceUnavailable=true;}'));
 });
 
 test('real foreground transport modes use noDefaults native visibility and own both browser and profile cleanup',async()=>{
