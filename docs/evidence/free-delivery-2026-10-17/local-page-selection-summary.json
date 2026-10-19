@@ -7180,6 +7180,10 @@
         "temporary-project-20261019-identity-shape.json.gz": {
           "sha256": "97cf4c754c3a4e39ae9530e6550db05e2abe0b8cf897a0d37e8637569eaee9bb",
           "bytes": 305
+        },
+        "temporary-project-20261019-root-identity-shape.json.gz": {
+          "sha256": "2e16ea941af66126de49480cdb4e1e6f1b7cbb69faf43a2556af81ce0274a97b",
+          "bytes": 189
         }
       },
       "validation": {
@@ -7239,7 +7243,23 @@
         "J4, real IME/PAIA/cross-environment/full installation acceptance open; 10k/100k DEFERRED.",
         "New Linux CI NOT_RUN until normal push."
       ],
-      "externalResearch": "PR16 issuecomment-6256687836 requests public source verification of Project ID/name/member response semantics; no new source enabled."
+      "externalResearch": "PR16 issuecomment-6256687836 requests public source verification of Project ID/name/member response semantics; no new source enabled.",
+      "productHead": "97bc77e4e8abf5227cacf3dfdbcbbf3df3ecf16f",
+      "gitSync": {
+        "fetch": "SUCCESS",
+        "divergenceBeforePush": {
+          "ahead": 3,
+          "behind": 0
+        },
+        "push": "FAIL_HTTPS_LOW_SPEED",
+        "remoteHeadVerifiedAfterPush": "ebbde49194d2fe53c8e1c2e0bda434f9f91730b7",
+        "force": false,
+        "remoteOrCredentialsChanged": false
+      },
+      "dataSourceFollowup": {
+        "currentRoot": "No data attribute matching native Project ID along title/list ancestor chains; drop-target attribute is empty, not ID. No response-body read or network request.",
+        "paiaReadOnlyReview": "Existing source-structure is route plus matching Project-home link, not a Project response parser. Reuse bounded scan, conflict refusal and generation invalidation only; do not import route-to-membership or route-to-NONE assumptions. No PAIA changes."
+      }
     }
   },
   "ciPrerequisiteActivation20261019": {
