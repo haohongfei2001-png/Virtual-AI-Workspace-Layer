@@ -5303,6 +5303,51 @@
         "result": "NO_CONFIRMED_DUPLICATE_OWNER_RECEIPT_DEFECT",
         "scope": "Read-only owner/content/authority review and finite mock403 event sequence. Owner duplicate completion emits one READY; a genuinely newer receipt may start a new refresh. Direct manual contextReady is not evidence of duplicate native owner emission. No product change for this hypothesis.",
         "notCovered": "Combined challenged multi-document, pending invalidation and late completion journey; no full no-retry or recovery certification."
+      },
+      "gitSync": {
+        "http2": {
+          "head": "4cb550218bfd0e4e66ea777f928cd24c6e74126f",
+          "exit": 128,
+          "elapsedMs": 20717,
+          "events": [
+            "TCP_CONNECTED",
+            "TLS_READY",
+            "HTTP2_SELECTED",
+            "PUSH_PROTOCOL",
+            "PUSH_PROTOCOL",
+            "PUSH_PROTOCOL",
+            "HTTP_401",
+            "PUSH_PROTOCOL",
+            "PUSH_PROTOCOL",
+            "PUSH_PROTOCOL",
+            "LOW_SPEED",
+            "LOW_SPEED"
+          ],
+          "truncated": false,
+          "rawTraceSaved": false,
+          "force": false
+        },
+        "http11": {
+          "head": "9b52bf980dcf5b76e8218db16529a85efd63d08c",
+          "exit": 128,
+          "elapsedMs": 20357,
+          "events": [
+            "TCP_CONNECTED",
+            "TLS_READY",
+            "HTTP11_SELECTED",
+            "PUSH_PROTOCOL",
+            "LOW_SPEED",
+            "LOW_SPEED"
+          ],
+          "truncated": false,
+          "rawTraceSaved": false,
+          "force": false,
+          "protocolDiagnostic": "HTTP/1.1 per-command only"
+        },
+        "remoteAPIConfirmed": "ebbde49194d2fe53c8e1c2e0bda434f9f91730b7",
+        "result": "NOT_PUSHED_NETWORK_RESPONSE_TIMEOUT",
+        "inferenceLimit": "Both protocols stalled; no confirmed HTTP2-specific or invalid-credential root cause. No force, ref API writes, credential, global Git or system network changes.",
+        "linuxCandidateCI": "NOT_RUN"
       }
     }
   },
@@ -9186,6 +9231,80 @@
         "issuedHTTPRequests": 0,
         "rawBodySaved": false,
         "privateValuesSaved": false
+      },
+      "publicTemplate20261019": {
+        "baseCommit": "9b52bf980dcf5b76e8218db16529a85efd63d08c",
+        "status": "OFFLINE_METADATA_TEMPLATE_ONLY_NOT_PRODUCTION",
+        "reason": "No existing Project JSON decoder; same-record ID/name avoids a new SPA route being joined to an old DOM title. Actual current response wrapper and semantics remain unverified.",
+        "sources": [
+          "https://github.com/pionxzh/chatgpt-exporter/blob/8404ad9c6fbee732b2c37759550fd3f02d1543f7/src/api.ts#L337-L382",
+          "https://github.com/pionxzh/chatgpt-exporter/blob/8404ad9c6fbee732b2c37759550fd3f02d1543f7/src/api.ts#L624-L657",
+          "https://github.com/Octo-Lex/ChatGPT-Web2API/blob/497527dceabfa3f95961e23c291e618c5570f1ac/docs/protocol-reference.md#L68-L97"
+        ],
+        "scope": "Three pure RAM functions for explicit sidebar/detail/conversation-list wrappers; reuse exactHostRecord, URLPolicy and candidate title fields; no source, navigation plan, scope, receipt, proposal, database, observer, tap or request.",
+        "bounds": {
+          "inputUTF8Bytes": 1048576,
+          "inspectedItems": 256,
+          "candidateUTF8Bytes": 49152,
+          "titleCodeUnits": 200,
+          "cursorCodeUnits": 2048
+        },
+        "semantics": "Positive same-record snorlax type and strict Project grammar required. Missing/long title remains null with a gap. Conflicting duplicate items are removed and tombstoned. Conversation query/gizmo_id never creates PROJECT/NONE. Missing, invalid or repeated cursor never terminal; explicit null records one query-page terminal only; coverage always observed-only. No page accumulator or automatic continuation.",
+        "knownLimits": [
+          "Public sidebar TypeScript does not declare gizmo_type; template rejects absent type pending actual sample, not a live-support claim.",
+          "Standard JSON.parse duplicate-key semantics retained; conflict rejection covers distinct items, not duplicate raw object keys.",
+          "No epoch admission implemented here: a future caller must establish current document, valid scope and response freshness through the existing owner.",
+          "No trusted host response was read; current Project one-response permit remains unused."
+        ],
+        "verification": {
+          "targeted": {
+            "pass": 69,
+            "fail": 0,
+            "skip": 0,
+            "elapsedMs": 133.271125
+          },
+          "package": {
+            "status": "PASS",
+            "kind": "BUILD_DEPENDENCY_GRAPH_UNCHANGED",
+            "newParserNotPackaged": true,
+            "sourceHashesEqualPriorChallengeMV3": true,
+            "priorRunnerHash": "e47f483eb524b54611e9a1d75c0ca28a663dacf3ce56af96637415e9356b67f4",
+            "sourceHash": "41708cb6caf2d86edbde95e8b5f043fc277aa5050db227af40b0bcc9c598c1f2"
+          },
+          "real": "NOT_RUN",
+          "fullMatrix": "NOT_RUN_NO_PRODUCTION_GRAPH_CHANGE"
+        },
+        "failureAccounting": [
+          "Initial title/cursor missing-field fixtures accidentally supplied default values; corrected fixtures, original failures retained.",
+          "Contradictory duplicate type/project left earlier candidate standing; reproduced and fixed with shared tombstones."
+        ],
+        "review": "Independent read-only review found no blocking issue; replaced ineffective object-literal proto test with raw JSON and verified actual build dependency graph instead of claiming transitive isolation from direct-import checks.",
+        "sourceHashes": {
+          "src/host/project-metadata.mjs": "41708cb6caf2d86edbde95e8b5f043fc277aa5050db227af40b0bcc9c598c1f2",
+          "tests/host/project-metadata.test.mjs": "c13c138e4b158c2c585e883db89fa0f0c0570f860bf666919e8e4e4511554042"
+        },
+        "files": {
+          "initial.txt": {
+            "path": "docs/evidence/free-delivery-2026-10-17/project-metadata-20261019-initial.txt.gz",
+            "rawSHA256": "24f550224d7be7a212940aeafa567d6e8712a9b34453cc72ef380d0b5d8ae317",
+            "archiveSHA256": "cdf7399fd0e86c0f618f792dac28a8da4c2e7fcca35777f0ed351d16dc6a46f4"
+          },
+          "conflict.txt": {
+            "path": "docs/evidence/free-delivery-2026-10-17/project-metadata-20261019-conflict.txt.gz",
+            "rawSHA256": "f4578a4a42e1dea3aaa9bac9f5d43184af6c8015d4652db00b1f0e587434f0d4",
+            "archiveSHA256": "257c83a6d8e399f21fc1f256e50e296849a3f5b824daee50919f7545319b1925"
+          },
+          "final.txt": {
+            "path": "docs/evidence/free-delivery-2026-10-17/project-metadata-20261019-final.txt.gz",
+            "rawSHA256": "63623750c19fe55451e2d706eb5b4799c7294da1a5dc037154350ab4d768e947",
+            "archiveSHA256": "c91a2e8000b9b997595b7d57dd5cd8fee63e1e45f626b83b68896f6c1b5343b0"
+          },
+          "package.json": {
+            "path": "docs/evidence/free-delivery-2026-10-17/project-metadata-20261019-package.json.gz",
+            "rawSHA256": "868f8ae984de92655f746f50e66ca7e1339367871a762ed0255adc20ad7f8115",
+            "archiveSHA256": "1071b8afa96b4a189c9b6b286e6452c25e884893d8287c4f0e1c257f30fbcf1f"
+          }
+        }
       }
     },
     "projectLayout20261019": {
