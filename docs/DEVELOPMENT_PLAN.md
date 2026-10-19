@@ -1,7 +1,7 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
 
-2026-10-20 C5验证差额：原transport-expiry busy已由原CI trace定位到frame延迟SAVE_VIEW与CHECK竞争，生产安全拒绝保持；只补真实双frame待办的被动前置，不改变唯一关闭、15秒观察或6秒产品预算。冻结本地原旅程及变异成立，Linux仍按同源码单项验证后更新STATUS，不借本地通过关闭其他恢复条件。生产自动休眠竞争后的机会及无新context恢复不因此宣称完成。
+2026-10-20 C5验证差额：原transport-expiry busy已由原CI trace定位到frame延迟SAVE_VIEW与CHECK竞争，生产安全拒绝保持；只补真实双frame待办的被动前置，不改变唯一关闭、15秒观察或6秒产品预算。冻结本地原旅程及变异成立；446955c在CI39299317432原Linux正例通过，产品/fixture hash匹配，未选择Linux变异和其他job；不据此关闭其他恢复条件。生产自动休眠竞争后的机会及无新context恢复不因此宣称完成。
 
 
 2026-10-20 C2/C5恢复检查点：关闭休眠控制器先见原生URL变化而取消adapter路由扫描的缺陷；仅实际换URL走原fresh握手，同地址失效仍安全等待。隔离MV3正例/删除修复变异及内容/owner定向回归同源，保留浏览器晚到导航撤权并核验最终认证/双frame使用最新binding。原J1及transport-expiry失败因果仍待定位，不以此窄场景代替。临时导航Linux最终单项已在3950481f实测原570宽和滚动两端，历史585失败保留。下一依赖仍为可信真实身份/current-context、正向成员/本人活动、完整恢复及安装；原顺序/Free范围与10k/100k DEFERRED保持。具体失败/源码证据仅维护STATUS原入口，不新增计划。

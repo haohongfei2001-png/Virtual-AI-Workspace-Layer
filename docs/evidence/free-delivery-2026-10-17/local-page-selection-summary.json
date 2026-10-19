@@ -16531,10 +16531,35 @@
       "dormant-route-browser-reviewed-mutant.json.gz": {
         "sha256": "72a902620d1f9097a8952f84ae05046780830fa9aeac527dda0252c936835949"
       }
+    },
+    "followingCI": {
+      "run": 39298103253,
+      "head": "d69caa4898e41d18c1959f1b633d4ae48c37601e",
+      "jobs": "FOUR_SUCCESS",
+      "j1": "PARTIAL_J1_NOT_ACCEPTED",
+      "j1Steps": 9,
+      "j4": "PARTIAL_J4_NOT_ACCEPTED",
+      "j4Steps": 23,
+      "hashVerification": "Both J1/J4 182 production hashes exactly match this commit",
+      "interpretation": "Original unmodified transport precondition happened to pass this run; does not undo its proven prior race. J1 local fix cannot be asserted as historical Linux cause. No-new-context automatic peer recovery remains NOT_ESTABLISHED.",
+      "artifacts": {
+        "ci39298103253-j1.json.gz": {
+          "sha256": "a5eb4f6d90075319bb0e08cc653d6c2492d74cf7c78b4107e31959d10857c1b4"
+        },
+        "ci39298103253-j4.json.gz": {
+          "sha256": "568499f8f03a71d51c9f13c179b5798a68b3172ac7932961520094b757db6833"
+        },
+        "ci39298103253-journeys.log.gz": {
+          "sha256": "020aea2d7be6df39a064d99c6160d86698bd5093142adb77db9c8a9b78090afa"
+        },
+        "ci39298103253-j4.log.gz": {
+          "sha256": "fd76a4c5968bfe05bb7de15bac2a8f593ec3cf24714bd8fdbea27c007ed504f8"
+        }
+      }
     }
   },
   "frameSaveIdlePrecondition20261020": {
-    "status": "LOCAL_ORIGINAL_JOURNEY_PASS_LINUX_PENDING",
+    "status": "LOCAL_PAIR_AND_LINUX_ORIGINAL_JOURNEY_PASS_NOT_FULL_ACCEPTANCE",
     "kind": "TEST_OBSERVER_PRECONDITION_CORRECTION_NOT_PRODUCTION_GUARD_CHANGE",
     "baseline": "d69caa4898e41d18c1959f1b633d4ae48c37601e",
     "rootEvidence": {
@@ -16573,7 +16598,6 @@
     },
     "review": "Independent read-only review approves exact live-frame pending observation; final atomic guards remain authoritative.",
     "limitations": [
-      "Linux revised precondition not yet verified",
       "Snapshot is not an atomic reservation; later new work must still fail the single close",
       "Only ordinary fixture frame known pending covered, not all possible future layout/renewal/migration work",
       "Production automatic dormancy opportunity may be consumed on a race refusal; not declared fixed",
@@ -16601,7 +16625,32 @@
       },
       "frame-save-precondition-mutant.json.gz": {
         "sha256": "99125bb191be83f4550e91577709302aacb05db6af5cd0ce16950d56f6a9c419"
+      },
+      "ci39299317432-transport.json.gz": {
+        "sha256": "52ede00439240f594d2bf201c509f78ad2eb261c54f339038c70ea998617f348"
+      },
+      "ci39299317432-journeys.log.gz": {
+        "sha256": "87f0b3b049b617cdca2280b62bf18f32eda2f364fbaae7b6996dcd55376a855f"
       }
+    },
+    "linux": {
+      "run": 39299317432,
+      "job": 118220019073,
+      "head": "446955cef6018e6ad29e9200e75d11915c03b47f",
+      "status": "PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY",
+      "sourceHashesMatched": 182,
+      "fixtureHashesMatched": 16,
+      "mismatches": 0,
+      "frameSamples": 1,
+      "queuedSaveObservedThisRun": false,
+      "scope": "Existing original positive transport-expiry command only; mutant verified locally on same source, not selected in Linux manual diagnostic",
+      "waitedMs": 19416,
+      "requests": 1,
+      "prepared": true,
+      "entered": true,
+      "freshSameTeamGrantAndVIEW": true,
+      "workerStopped": false,
+      "originalBudgetsAndGuardUnchanged": true
     }
   }
 }

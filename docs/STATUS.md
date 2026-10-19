@@ -1,6 +1,10 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-- **休眠进入失败已定位为测试静默前置缺失，本地原旅程通过**（2026-10-20）：CI39289329767原日志明确worker采样空闲后2ms，frame的HOST_UI_SAVE_VIEW与parent CHECK同到，ui activeWork=3，正确返回busy。原测试漏看frame内100ms待发保存。现仅测试包被动读双role/存活同一frame的待办，先排空已排队保存再执行原唯一关闭；不flush/cancel/freeze，不延长15s/6s、不改guard、不重试关闭。实际模块99/100ms与在途回复反例、200定向及独审通过；冻结隔离MV3原transport-expiry通过，删除原foreground恢复分支的同源变异准确在到期后恢复失败。实际前置两次采样相隔84ms，租约仍自然等19.579秒，非提速；单GET/同Team/草稿保持，worker外网拒绝代理覆盖。Linux新前置尚待验证；不声称生产自动休眠必达或无新context内存丢失恢复。原失败/同源证据 `frameSaveIdlePrecondition20261020`。
+- **休眠前置修正在Linux原单项通过**（446955c / CI39299317432）：实际prepared/entered均true，原租约自然等待19.416秒、唯一原生GET、foreground新grant/VIEW及草稿保持；182产品/16fixture hash逐项匹配。此次Linux采样时双frame已自然排空，不能声称该次触发旧竞态；原CI重叠日志和本地双frame queued→settled见证共同保留。手动入口只跑原正例，变异同源本地已验证，其他job未选。仅关闭本测试前置缺口，生产自动休眠竞争机会、历史J1因果、完整J4/真实身份/GU不改判；原证据frameSaveIdlePrecondition20261020。
+
+- **d69caa4同源CI39298103253四job成功，非完整Free验收**：原J1为9步PARTIAL、J4为23步PARTIAL，二者各182产品hash匹配提交；无新context的peer自动恢复仍NOT_ESTABLISHED。此次旧transport前置恰未触发busy，不改判原CI39289329767已证明的SAVE_VIEW竞态；J1历史失败因果仍不追认。新前置446955c随后通过既有Linux transport-expiry单项CI39299317432，详见顶部；无缓存/上传或新job。原日志、JSON见dormantRouteOrdering20261020.followingCI。
+
+- **休眠进入失败已定位为测试静默前置缺失，本地原旅程通过**（2026-10-20）：CI39289329767原日志明确worker采样空闲后2ms，frame的HOST_UI_SAVE_VIEW与parent CHECK同到，ui activeWork=3，正确返回busy。原测试漏看frame内100ms待发保存。现仅测试包被动读双role/存活同一frame的待办，先排空已排队保存再执行原唯一关闭；不flush/cancel/freeze，不延长15s/6s、不改guard、不重试关闭。实际模块99/100ms与在途回复反例、200定向及独审通过；冻结隔离MV3原transport-expiry通过，删除原foreground恢复分支的同源变异准确在到期后恢复失败。实际前置两次采样相隔84ms，租约仍自然等19.579秒，非提速；单GET/同Team/草稿保持，worker外网拒绝代理覆盖。当时Linux新前置待验证，后续结果见顶部；不声称生产自动休眠必达或无新context内存丢失恢复。原失败/同源证据 `frameSaveIdlePrecondition20261020`。
 
 - **休眠后原生导航丢失接入已修**（2026-10-20）：真实content/controller复现几何先看到新URL→停止adapter并取消路由扫描→错误进入同地址等待。现仅该实际换URL情形走原fresh握手/阅读模式；同地址失效仍等待，未知scope、停止和旧回调不复活。冻结隔离MV3完成双ACK/释放→原生切聊天→新认证/唯一返回/草稿选区保持→工作区；删除修复的同源变异在目标route/body到达后准确失去恢复。子链2.034秒含包/启动、不含清理，非性能提速；178内容与79 owner/controller回归、独审通过。初版观察器误限总HELLO为2：实测浏览器独立导航撤权晚到，需第三次握手；最终严格关联仅新binding的REFRESH及双frame，没有压制撤权或放宽生产预算。原失败保留于 `dormantRouteOrdering20261020`。只证明独立竞态，不关闭历史J1、transport-expiry、完整J4或真实身份；10k/100k DEFERRED。
 
