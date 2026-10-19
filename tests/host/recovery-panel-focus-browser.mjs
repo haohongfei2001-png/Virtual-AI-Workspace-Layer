@@ -56,4 +56,17 @@ test('recovery and backup keep keyboard focus within an explicit local operation
  assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute('role')),'status','a new conflict keeps focus in its replacement feedback');
  await page.locator('#outside').focus();await page.evaluate(()=>readError.show());
  assert.equal(await page.evaluate(()=>document.activeElement.id),'outside');
+ await page.evaluate(async()=>{
+  readError.stop();const {createFreeFrameSnippets}=await import('/src/host/free-frame-snippets.mjs');
+  let rows=Array.from({length:13},(_,i)=>({id:'s'+i,refId:'11111111-1111-4111-8111-111111111111',title:'Saved '+i,preview:'Synthetic selected text '+i,nativeUrl:'https://chatgpt.com/c/11111111-1111-4111-8111-111111111111'})),revision=0;
+  globalThis.pageSnippetCalls=[];globalThis.pageSnippet=createFreeFrameSnippets({document,container:document.querySelector('#panel'),parentOrigin:'https://chatgpt.com',currentRef:null,onClose(){},request:async m=>{
+   pageSnippetCalls.push(m);if(m.type==='HOST_UI_SNIPPET_LIST')return {ok:true,workspaceRevision:revision,snippets:{total:rows.length,offset:m.offset,limit:12,items:rows.slice(m.offset,m.offset+12)}};
+   if(m.action!=='remove'||m.expectedRevision!==revision)throw Error('unexpected-mutation');rows=rows.filter(r=>r.id!==m.id);revision++;pageSnippet.invalidate();return {ok:true};
+  }});await pageSnippet.open();
+ });
+ await page.getByRole('button',{name:'下一页',exact:true}).click();await page.getByRole('heading',{name:'Saved 12',exact:true}).waitFor();
+ await page.getByRole('button',{name:'删除片段',exact:true}).click();await page.getByRole('heading',{name:'Saved 0',exact:true}).waitFor();
+ assert.equal(await page.locator('[data-snippet-row]').count(),12);assert.equal(await page.getByRole('button',{name:'上一页',exact:true}).isDisabled(),true);
+ assert.deepEqual(await page.evaluate(()=>pageSnippetCalls.map(m=>m.type==='HOST_UI_SNIPPET_LIST'?m.offset:m.action)),[0,12,'remove',0]);
+ assert.equal(await page.locator('#outside').inputValue(),'KEEP DRAFT');await page.evaluate(()=>pageSnippet.stop());
 });

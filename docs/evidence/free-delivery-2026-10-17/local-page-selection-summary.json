@@ -16829,5 +16829,37 @@
       "no request or authorization budget changes",
       "10k/100k DEFERRED"
     ]
+  },
+  "snippetLastPage20261020": {
+    "baseHead": "9ae9d531a02897cb00cc2f26e6b2421ab2005952",
+    "status": "PASS_SCOPED_OFFLINE",
+    "rootCause": "own successful remove notification clears page before reply, losing last-item return-page decision",
+    "fix": "capture bounded return offset before mutation; only successful current response reads it; notifications still erase stale data; unconfirmed remove is not replayed",
+    "validation": {
+      "targetedAndBuild": 391,
+      "realDOM": "13 items -> second page -> remove with notification before response -> 12 items on first page; original input unchanged",
+      "packagedMV3": "original six save/search/locate/delete steps PASS; no source drift; this original journey has one snippet, not the 13-item race",
+      "independentReview": "no blocking finding"
+    },
+    "artifacts": {
+      "vaiwl-snippet-last-page-before.log": {
+        "rawHash": "6c1c234901e4eaf3689fe0d50f8784b4a5cb9c0f7ce3421cf7167b5a9bda5a27",
+        "savedHash": "5904dc848e96c1024bdc70ba20bb3afa953e860bc8d4cb5245de45afb38b0d0d"
+      },
+      "vaiwl-snippet-last-page-final.log": {
+        "rawHash": "bafeee0030755a98d71153b7cc656594dd5ae48fceb47eb4f02e5c3cad6b989b",
+        "savedHash": "bafeee0030755a98d71153b7cc656594dd5ae48fceb47eb4f02e5c3cad6b989b"
+      },
+      "vaiwl-snippet-last-page-browser.log": {
+        "rawHash": "391c64f09caa4e7fec5ebb579c46f9426dddde7cd0b057016797ba326ca18e24",
+        "savedHash": "391c64f09caa4e7fec5ebb579c46f9426dddde7cd0b057016797ba326ca18e24"
+      }
+    },
+    "mv3Report": "vaiwl-snippet-last-page-mv3-summary.json",
+    "limits": [
+      "realChatGPT NOT_RUN",
+      "full Free not accepted",
+      "10k/100k DEFERRED"
+    ]
   }
 }

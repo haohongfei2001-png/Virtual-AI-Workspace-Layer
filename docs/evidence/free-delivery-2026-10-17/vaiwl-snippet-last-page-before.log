@@ -1,0 +1,43 @@
+✔ open only lists; explicit save emits UUID and current ref, then reloads (3.168833ms)
+✔ current locate and delete are siblings; cross conversation uses safe native link (0.304959ms)
+✔ no current conversation disables saving; unsafe URL and malformed preview refuse (0.155333ms)
+✔ pagination sends bounded offset and preserves current list on error (0.534709ms)
+✔ pending mutations ignore repeated clicks; own notification reloads only after reply (0.249875ms)
+✔ stop and close reject late replies and stale controls (0.18925ms)
+✔ invalidated in-flight LIST never exposes stale preview and coalesces notifications into one fresh LIST (0.243166ms)
+✔ successful SAVE followed by invalidated LIST displays stored item with exactly one SAVE (0.470208ms)
+✔ second invalidated LIST stops automatic rereads and exposes manual reload without stale preview (0.227416ms)
+✔ stop during dirty initial LIST prevents further requests and late rendering (0.150916ms)
+✔ stop during dirty retry LIST prevents further requests and late rendering (0.096084ms)
+✔ failed SAVE warning survives successful idle invalidation LIST until an explicit new SAVE succeeds (0.458541ms)
+✔ successful locate of an existing snippet cannot clear an unrelated failed SAVE warning (0.342625ms)
+✔ successful remove of an existing snippet cannot clear an unrelated failed SAVE warning (0.237625ms)
+✖ deleting the last item on a later page retains return offset across its own invalidation (1.019ms)
+✔ unconfirmed last-page removal never automatically repeats the mutation or changes page (0.396375ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 15
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 55.6635
+
+✖ failing tests:
+
+test at tests/host/free-frame-snippets.test.mjs:79:1
+✖ deleting the last item on a later page retains return offset across its own invalidation (1.019ms)
+  AssertionError [ERR_ASSERTION]: successful removal returns to the preceding nonempty page
+
+  12 !== 0
+
+      at TestContext.<anonymous> (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/free-frame-snippets.test.mjs:84:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 12,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

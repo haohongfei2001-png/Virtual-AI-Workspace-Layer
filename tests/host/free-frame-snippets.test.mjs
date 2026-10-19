@@ -75,3 +75,15 @@ for(const action of ['locate','remove'])test('successful '+action+' of an existi
  assert.deepEqual(f.calls.filter(message=>message.type==='HOST_UI_SNIPPET').map(message=>({action:message.action,id:message.id})),[{action:'save',id:C},{action,id:'s'}]);
  assert.equal(f.calls.filter(message=>message.action==='save').length,1,'other action does not replay save');
 });
+
+test('deleting the last item on a later page retains return offset across its own invalidation',async()=>{
+ const f=fixture(),first=Array.from({length:12},(_,i)=>item('s'+i));f.set(()=>reply(first,13));await f.ui.open();
+ f.set(()=>reply([item('last')],13,12));f.button('下一页').click();await tick();let finish;
+ f.set(m=>m.type==='HOST_UI_SNIPPET'?new Promise(r=>finish=r):reply(first,12,m.offset));
+ f.button('删除片段').click();f.ui.invalidate();f.ui.invalidate();finish({ok:true});await tick();
+ assert.equal(f.calls.at(-1).offset,0,'successful removal returns to the preceding nonempty page');
+ assert.equal(f.calls.filter(m=>m.action==='remove').length,1);assert.equal(f.calls.filter(m=>m.type==='HOST_UI_SNIPPET_LIST').length,3);assert(f.text().includes('共 12 个片段'));assert.equal(f.button('上一页').disabled,true);assert.equal(f.button('下一页').disabled,true);assert.equal(f.container.all().filter(n=>n.attrs['data-snippet-row']!==undefined).length,12);
+});
+test('unconfirmed last-page removal never automatically repeats the mutation or changes page',async()=>{
+ const f=fixture();f.set(()=>reply(Array.from({length:12},(_,i)=>item('s'+i)),13));await f.ui.open();f.set(()=>reply([item('last')],13,12));f.button('下一页').click();await tick();let finish;f.set(()=>new Promise(r=>finish=r));f.button('删除片段').click();f.ui.invalidate();finish({ok:false});await tick();assert.equal(f.calls.length,3);assert(f.text().includes('操作结果未确认'));f.set(m=>reply([item('last')],13,m.offset));f.button('重新加载').click();await tick();assert.equal(f.calls.at(-1).offset,12);assert.equal(f.calls.filter(m=>m.action==='remove').length,1);
+});
