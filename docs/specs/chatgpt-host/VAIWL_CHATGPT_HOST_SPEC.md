@@ -578,3 +578,10 @@ TypeScript 5.8.3下`--strict --noEmit --target ES2022 --lib ES2022,DOM`通过；
 
 交付ZIP仅包含本包四个现行文件，不混入原版、临时probe、私人数据、产品实现或另一份计划。
 
+
+
+### 2026-10-19 已批准的 `/me` 身份候选开发边界
+
+用户批准候选来源开发及一次包内隔离 `me → accounts/check/v4-2023-04-27 → me` 验证；共用原6秒，正文上限256KiB/1MiB/256KiB，无重试，任一失败即停止。当前显式诊断仅在RAM比较ID、复用原roster解析，输出布尔/数量/固定结果码，不产生SessionIdentity、scope或数据库入口。旧单次`/me`许可已用尽，新链独立标记不得清除旧标记。
+
+来源服务器到期未知，未来生产合同必须分别表达`source expiry unknown`与本地核验最多60秒，并受原C2、document、selection及authority epoch撤回；不得构造服务器expiresAt。当前诊断只接文档/路由/隐藏撤回，生产代际绑定与当前C2尚未建立；首尾ID相等不是原子主体/roster绑定，也不能排除未观察到的A→B→A。主体语义、旧session.user.id命名空间及合法当前空间成立前，保持生产来源关闭、旧hash和Pro资产不变。实际结果与剩余条件以原DEVELOPMENT_PLAN、STATUS及nativeMeCandidate20261019为准，本附注不声称真实身份验收通过。

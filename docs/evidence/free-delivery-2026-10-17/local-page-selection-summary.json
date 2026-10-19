@@ -11143,7 +11143,7 @@
       "releaseStatus": "NOT_RELEASE_READY"
     },
     "nextContractProposal": {
-      "status": "PENDING_USER_APPROVAL_NOT_IMPLEMENTED",
+      "status": "USER_APPROVED_CANDIDATE_IMPLEMENTED_LIVE_NOT_RUN",
       "requestSequenceMaximum": [
         "GET /backend-api/me",
         "GET /backend-api/accounts/check/v4-2023-04-27",
@@ -11159,11 +11159,59 @@
       "stopOnFirstFailure": true,
       "output": "status/structure/count/equality only, no raw IDs or roster retained",
       "freshness": "Separate unknown source expiry from local proof freshness <= existing 60000ms and existing context receipt bounds; never forge expiresAt",
-      "guard": "Document/selection/authority epochs; equality alone does not exclude unobserved A-B-A",
+      "guard": "Diagnostic document/route/visibility invalidation implemented; production selection/authority epochs and current C2 NOT_ESTABLISHED. Equality alone does not exclude unobserved A-B-A; no scope issued.",
       "scopeEnabled": false,
       "oldDatabaseEnabled": false,
       "namespaceAndSubjectSemantics": "NOT_ESTABLISHED",
       "firstPartyServiceWorker": "Existing trust boundary; no claim that final wire headers lack site-managed Authorization"
+    },
+    "candidateChain20261019": {
+      "authorization": "Explicit user reply approving candidate development and one bounded me/accounts/me verification; separate from consumed single-me permission",
+      "status": "INSTALLED_FILES_AWAITING_USER_RELOAD_AND_ONCE",
+      "attemptsConsumed": 0,
+      "tests": {
+        "kind": "NODE_AND_BUNDLED_VM_NOT_REAL_MV3",
+        "passed": 45,
+        "failed": 0,
+        "durationMs": 599.924375,
+        "command": "node --test tests/host/native-me-candidate.test.mjs tests/host/native-me-probe.test.mjs"
+      },
+      "review": "Independent read-only review: no blocker to limited diagnostic; production authority/selection epoch not implemented; sandwich equality not atomic binding",
+      "productionIdentityEnabled": false,
+      "oldDatabaseEnabled": false,
+      "sourceExpiryKnown": false,
+      "localFreshnessMaxMs": 60000,
+      "remoteCheckpoint": "d2b444c normal push succeeded after bounded HTTP1.1 fetch; original network failures retained",
+      "installation": {
+        "status": "FILES_UPDATED_RELOAD_REQUIRED_NO_NETWORK_EXECUTED",
+        "backup": "/private/tmp/vaiwl-before-native-me-candidate-d2b444c",
+        "installed": "/private/tmp/vaiwl-free-hongfeihao-2214c8e",
+        "stage": "/private/tmp/vaiwl-native-me-candidate-d2b444c",
+        "changed": [
+          "native-me-probe-config.mjs",
+          "native-me-probe-popup.mjs",
+          "native-me-probe.js",
+          "native-me-probe.html",
+          "native-me-probe-manifest.json"
+        ],
+        "fileCount": 188,
+        "permissionsAdded": [],
+        "oldBrowserMarkerUntouched": true
+      },
+      "sourceHashes": {
+        "tools/native-me-probe/reader.mjs": "996a0fa19860a90018f1a5d8f1e85189119a43f93a21aec5fa90ad03ac5f1c77",
+        "tools/native-me-probe/candidate.mjs": "8c33f3ce06ff66385725e314911999c3e92de9d9c59501263ada4796dea5e5c3",
+        "tools/native-me-probe/content.mjs": "fc86ed1d19faff99b6d403564f011933cb24a0fc0632f18e252ca1a7472854ca",
+        "tools/native-me-probe/popup.mjs": "0a3746d06d00acd918d31939c35f5b72d796775fda8d0bf0d9301dcd99a97893",
+        "tools/native-me-probe/build.mjs": "9d830258449948025da88f562c0491136e3e8bc527d1d9c1c515bf79dda6762a",
+        "tests/host/native-me-candidate.test.mjs": "ac76b20c583837e9c1cd78491c5998b5e2af748330b054fd335cc809bd54d2df",
+        "tests/host/native-me-probe.test.mjs": "50c373159beb389425c22f590b096e258d480de226221f5b3d2077557cb9e020"
+      },
+      "browserControl": "Selected existing authorized extensionInstanceId; metadata succeeded; exact dedicated homepage claim/read timed out at12s. No candidate GET sent by agent. Prior management URL gate forbids automation/alternate-channel workaround. User asked for one reload/new-home/explicit-click sequence; no new authorization requested.",
+      "testLog": {
+        "file": "native-me-candidate-targeted.tap.gz",
+        "sha256": "4abf2fac32078a7feadfe948d8a7e1f29131b394ce1a55976db17771fdd28be7"
+      }
     }
   }
 }
