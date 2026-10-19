@@ -17,7 +17,7 @@ const reply=title=>({v:1,mode:'temporary-native-navigation',route,partial:false,
 function fixture(){
  let at=0,next=0;const timers=new Map(),calls=[],events=new Map(),nodes=[];
  class Element {constructor(tag){this.tag=tag;this.children=[];this.style={};this.events={};this.textContent='';this.value='';this.disabled=false;nodes.push(this);}append(...children){this.children.push(...children);}replaceChildren(...children){this.children=children;}attachShadow(){return this.shadow=new Element('shadow');}setAttribute(k,v){this[k]=v;}addEventListener(k,f){this.events[k]=f;}click(){if(!this.disabled)this.events.click?.();}}
- const document={createElement:tag=>new Element(tag),body:new Element('body')};
+ const document={createElement:tag=>new Element(tag),body:new Element('body'),documentElement:new Element('html')};
  const event=name=>({addListener:f=>events.set(name,f),removeListener:f=>{if(events.get(name)===f)events.delete(name);}});
  const call=(kind,args)=>{const d=deferred();calls.push({kind,args,...d});return d.promise;};
  const chrome={tabs:{query:args=>call('query',args),sendMessage:(...args)=>call('send',args)},webNavigation:{getFrame:args=>call('frame',args),onCommitted:event('commit'),onHistoryStateUpdated:event('history')},runtime:{id:'extension',onMessage:event('message')}};

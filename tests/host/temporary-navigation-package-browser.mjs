@@ -18,7 +18,7 @@ try{
  server=await createHostFixtureServer();directory=await mkdtemp(join(tmpdir(),'vaiwl-temporary-mv3-'));const built=packageHost(join(directory,'package'),{offlineOrigin:server.origin,temporaryReadOnly:true});verifyHost(built.unpacked);info=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));report.sourceHashes=info.sourceHashes;
  networkGuard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});browserLaunchAttempted=true;browserHandle=await launchNativeVisibilityBrowser({chromium,profileDir:join(directory,'profile'),headed:false,historicalNetworkGuard:networkGuard.config,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});context=browserHandle.context;context.setDefaultTimeout(6000);
  await context.route('**/*',r=>r.request().url().startsWith(server.origin)||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());
- const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});const page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));await page.goto(server.url);await page.locator('textarea').fill('TEMPORARY_DRAFT_MUST_STAY');await page.evaluate(()=>{globalThis.originalEditor=document.querySelector('textarea');globalThis.originalDocument=document;const n=document.createElement('nav');n.innerHTML='<a href="/c/99999999-9999-4999-8999-999999999999">READING_LINK_MUST_NOT_BE_READ</a>';document.querySelector('main').append(n);});
+ const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});const page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));await page.goto(server.url);await page.locator('textarea').fill('TEMPORARY_DRAFT_MUST_STAY');await page.evaluate(()=>{globalThis.originalEditor=document.querySelector('textarea');globalThis.originalDocument=document;const n=document.createElement('nav');n.innerHTML='<a href="/c/99999999-9999-4999-8999-999999999999">READING_LINK_MUST_NOT_BE_READ</a>';document.querySelector('main').append(n);const history=document.querySelector('aside nav[aria-label="Chat history"]');for(let i=0;i<20;i++){const a=document.createElement('a');a.href='/c/aaaaaaaa-aaaa-4aaa-8aaa-'+String(i).padStart(12,'0');a.textContent='Scrollable fixture '+i;history.append(a);}});
  const worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`))??await context.waitForEvent('serviceworker');
  // Native action popup targets are not emitted as Playwright pages in this noDefaults connection.
  let popupSession,popupTarget;const closedListeners=new Set();report.inputProtocol=[];
@@ -79,6 +79,19 @@ try{
  }
  await control.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'dark'},{name:'forced-colors',value:'none'}]},popupSession);
  const screenshot=await control.send('Page.captureScreenshot',{format:'png'},popupSession);await writeFile(output+'.png',Buffer.from(screenshot.data,'base64'));report.appearanceScreenshot=output+'.png';
+ report.phase='inner-scrollport';
+ const scrollport=await evaluate("const main=root.querySelector('main'),r=main.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,height:main.clientHeight,contentHeight:main.scrollHeight,scrollbarWidth:getComputedStyle(main).scrollbarWidth,rootScrollbarWidth:getComputedStyle(document.documentElement).scrollbarWidth};");
+ assert(scrollport.contentHeight>scrollport.height,'fixture must exercise real overflowing content');assert.equal(scrollport.scrollbarWidth,'thin');assert.equal(scrollport.rootScrollbarWidth,'none');
+ await control.send('Input.dispatchMouseEvent',{type:'mouseWheel',x:scrollport.x,y:scrollport.y,deltaY:250,deltaX:0},popupSession);
+ await wait("return root.querySelector('main').scrollTop>0;");
+ report.innerScrollport=await evaluate("return {scrollTop:root.querySelector('main').scrollTop,rootScrollTop:document.documentElement.scrollTop,scrollbarWidth:getComputedStyle(root.querySelector('main')).scrollbarWidth};");assert.equal(report.innerScrollport.rootScrollTop,0);
+ report.scrollEdges=[];
+ for(const edge of ['bottom','top']){
+  await evaluate(`const main=root.querySelector('main');main.scrollTop=${edge==='bottom'?'main.scrollHeight':'0'};return true;`);
+  await control.send('Input.dispatchMouseEvent',{type:'mouseWheel',x:scrollport.x,y:scrollport.y,deltaY:edge==='bottom'?250:-250,deltaX:0},popupSession);
+  await new Promise(resolve=>setTimeout(resolve,100));
+  const state=await evaluate("const main=root.querySelector('main');return {top:main.scrollTop,max:main.scrollHeight-main.clientHeight,outerTop:document.documentElement.scrollTop};");report.scrollEdges.push({edge,...state});assert.equal(state.outerTop,0);assert.equal(state.top,edge==='bottom'?state.max:0);
+ }
  report.phase='whole-read-deadline';const readFaultStarted=performance.now();
  await evaluate("globalThis.__query=chrome.tabs.query.bind(chrome.tabs);globalThis.__frame=chrome.webNavigation.getFrame.bind(chrome.webNavigation);globalThis.__send=chrome.tabs.sendMessage.bind(chrome.tabs);globalThis.__downstream=0;chrome.webNavigation.getFrame=(...args)=>{__downstream++;return __frame(...args);};chrome.tabs.sendMessage=(...args)=>{__downstream++;return __send(...args);};chrome.tabs.query=()=>new Promise(resolve=>{globalThis.__lateQuery=resolve;});return true;");
  await click('button');await wait("return !!root&&root.textContent.includes('当前页面未提供可读取的导航列表。')&&!root.querySelector('button').disabled;");

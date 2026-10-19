@@ -16341,13 +16341,80 @@
     }
   },
   "popupGeometryDiagnostic20261020": {
-    "status": "LINUX_PENDING",
+    "status": "FAIL_REPRODUCED_39294152391",
     "change": "Existing runner failure-only bounded root-overflow-hidden/restored geometry probe; always retains original failed assertion, including diagnostic/restore errors. Production unmodified.",
     "local": "Normal Mac popup full journey passes; no Linux585 reproduction. Local browser preceded final error-preservation-only review fix; not claimed as final diagnostic branch execution.",
     "ciPartition": {
       "pass": 26,
       "fail": 0
     },
-    "workflow": "One existing isolated job and original native-navigation command; no caches, uploads, extra jobs or changed push matrix."
+    "workflow": "One existing isolated job and original native-navigation command; no caches, uploads, extra jobs or changed push matrix.",
+    "linux": {
+      "runId": 39294152391,
+      "head": "a1ad2a38b52adef2006b08bcc1a64e5cf9398bfa",
+      "viewport": {
+        "width": 585,
+        "height": 510
+      },
+      "root": {
+        "clientWidth": 570,
+        "clientHeight": 510,
+        "scrollWidth": 570,
+        "scrollHeight": 550,
+        "overflow": "visible"
+      },
+      "overflowHiddenDoesNotRemoveWidth": true,
+      "originalAssertionPreserved": true,
+      "sourceAndTestHashesVerified": true
+    }
+  },
+  "popupRootScrollbar20261020": {
+    "status": "LOCAL_PASS_LINUX_PENDING",
+    "rootCause": "Chrome156 autosize adds hypothetical vertical scrollbar thickness when preferred height550 exceeds available510, overrides overflow mode. Overlay Mac does not add15. CSS overflow alone cannot fix.",
+    "primarySourceVersion": "156.0.8078.4",
+    "primarySources": [
+      "https://github.com/chromium/chromium/blob/156.0.8078.4/third_party/blink/renderer/core/frame/frame_view_auto_size_info.cc#L130",
+      "https://github.com/chromium/chromium/blob/156.0.8078.4/third_party/blink/renderer/core/paint/paint_layer_scrollable_area.cc#L1649"
+    ],
+    "fix": "Only empty outer document scrollbar-width:none; keep intrinsic570x550, real inner thin scrollbar and original gates. Inner overscroll-behavior:contain prevents proven52px outer scroll chaining.",
+    "localResult": {
+      "status": "PASS_TEMPORARY_MV3_POPUP",
+      "elapsedMs": 3632.910584,
+      "scrollMiddle": 250,
+      "scrollBottom": 720,
+      "bothEdgeOuterScrollTop": 0,
+      "sourceStable": true,
+      "testSourcesStable": true,
+      "targetedPass": 56,
+      "targetedFail": 0
+    },
+    "limitations": [
+      "Linux fixed candidate not yet run",
+      "No live Profile/install or identity verification",
+      "Historical failures retained; not full Free acceptance"
+    ],
+    "artifacts": {
+      "ci39294152391-geometry.log.gz": {
+        "sha256": "99a9f5673e38e5e82311cd26883cceaf91d90169788aabde48967b96a3f43d9b"
+      },
+      "ci39294152391-geometry.json.gz": {
+        "sha256": "0fd3441190e394be3145594682f411b161c0701db445ad6afce9f07a1ea01787"
+      },
+      "popup-root-scrollbar-targeted-red.tap.gz": {
+        "sha256": "7567653d21f9b5a219f22fadef346f0dc40215c369bc4d48a3e5a218a7403aa1"
+      },
+      "popup-root-scrollbar-short-fixture.json.gz": {
+        "sha256": "85a81cf88fca670689d445dd2ff527385776746fa6572a9e0c051d263a842086"
+      },
+      "popup-root-scrollbar-chain-red.json.gz": {
+        "sha256": "6846b3b02acba0371b3e65db52f524f54cd9eeaa2180166d15a4ee842d0fe291"
+      },
+      "popup-root-scrollbar-final.json.gz": {
+        "sha256": "797c76be06a4c742edc03cf1947b73cb05d9a922b556ce3dcdcabd07df143762"
+      },
+      "popup-root-scrollbar-verified.tap.gz": {
+        "sha256": "d1726d9746289d6938ed99280d9a0e260fd2524255ad9d3851727948a4f1e863"
+      }
+    }
   }
 }

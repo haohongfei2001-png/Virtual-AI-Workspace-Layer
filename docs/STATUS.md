@@ -1,5 +1,7 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **Linux弹窗加宽根因已定位，修正候选本地通过**（2026-10-20）：a1ad2a38 / CI39294152391原门槛稳定复现585×510，root可用570、scrollHeight550；overflow A/B仍585，原FAIL保留。对应Chromium156源码确认自动定尺寸为超高文档强制增加15px滚动条预留。现仅取消空外层滚动条，保留原570×550与真实内部thin滚动条；长列表实测另发现到底后外层移52px，已用内部overscroll contain关闭。56定向、独审及冻结本地实际MV3的深浅/强制色、键盘/滚动两端、导航/返回/草稿闭环通过，3.633秒含原1秒故障等待、不含清理。修正后的Linux尚待单项验证，不宣称完整UI/实机/Free通过；原证据 `popupRootScrollbar20261020`。
+
 - **Project重开窗口修正获Linux实测**（2026-10-20）：e32e75f4 / CI39293564606原单项旅程通过，三次打开均确认自有fixture窗口active/focused，原搜索、原生打开/返回、列表失效重开、草稿/空DB/无认证请求断言保持；1.525秒含启动、不含清理。产品/测试hash逐项对提交核对，历史FAIL保留，不称全矩阵通过。Linux585尺寸仍未定位：现仅为原失败添加有界root overflow A/B/A与原始几何，始终保留首个FAIL；手动选择复用原runner，无缓存/上传，下一次Linux单项取证。J1、transport-expiry、完整身份/J4/GU仍开放。
 
 - **临时Project验收窗口前置已修，Linux待验证**（2026-10-20）：原CI在关闭popup后再次open时缺活动窗口；runner现仅激活自身隔离fixture页，核验唯一active tab及focused normal window，向唯一一次open传明确windowId。生产代码、权限、6秒等待及全部原断言不变。冻结本地实际MV3完成列表→搜索→打开/返回→列表失效/重开、草稿和空DB/无认证请求，1.495秒含启动、不含清理；28定向通过、独审通过。Linux原FAIL不追溯关闭。Mac尺寸A/B探针未复现585宽，尺寸根因仍开放；证据沿原 `popupOwnedWindow20261020`。30分钟当前线程巡检保持ACTIVE，不新增任务/写入者。
