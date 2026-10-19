@@ -183,6 +183,34 @@ test('route resume read never extends TTL',async t=>{
  elapsed++;assert.deepEqual(await resume(h),{ok:true,resume:null});
 });
 
+for(const kind of ['search','workingSet'])test(`${kind} query transitions preserve acknowledged layout before the delayed SAVE across native routes`,async t=>{
+ const h=await boot(t),ordinary={segment:0,offset:0,limit:24},origin={...layout,segment:0,oldOpen:['p1'],capacities:[['p1:current',17]],scroll:521};
+ await ready(h,'workspace',ordinary);assert.equal((await save(h,origin)).ok,true);
+ const queries=kind==='search'?[{search:{query:'Native'}},{search:{query:'conversation',offset:1}},ordinary]:[{workingSet:{}},{workingSet:{offset:1}},ordinary];
+ for(const [index,query]of queries.entries()){
+  assert.equal((await ready(h,'workspace',query)).state,'ready');
+  // Deliberately no SAVE or timer drain: routing wins the renderer's 100ms coalescing window.
+  h.switchRoute(`https://chatgpt.com/c/route${index}`);await h.bind();await h.mount();
+  assert.deepEqual(await resume(h),{ok:true,resume:{query,view:origin}});
+  assert.equal((await ready(h,'workspace',query)).state,'ready');
+ }
+});
+for(const change of [{offset:24},{limit:8},{segment:1}])test(`special query cannot inherit layout across workspace pagination ${JSON.stringify(change)}`,async t=>{
+ const h=await boot(t);await ready(h,'workspace',{});assert.equal((await save(h,{...layout,segment:0})).ok,true);
+ await ready(h,'workspace',{search:{query:'Native'},...change});assert.equal((await resume(h)).resume.view,null);
+});
+test('special query does not revive unacknowledged layout or accept delayed old-query SAVE',async t=>{
+ const h=await boot(t),query={search:{query:'Native'}};await ready(h,'workspace',{});await ready(h,'workspace',query);
+ assert.equal((await resume(h)).resume.view,null);
+ assert.equal((await h.service.handle({v:1,type:'HOST_UI_SAVE_VIEW',grantId:h.grants.workspace.id,mountId:h.mountId,view:{...layout,segment:0},expectedQuery:{}},h.children.workspace)).ok,false);
+ assert.equal((await resume(h)).resume.view,null);
+});
+for(const sameQuery of [false,true])test(`changed time-policy session drops acknowledged layout even with ${sameQuery?'identical':'special'} query`,async t=>{
+ const h=await boot(t),first=await ready(h,'workspace',{});assert.equal((await save(h,{...layout,segment:0})).ok,true);
+ const changed=await h.horizon('workspace',{expectedRevision:first.page.workspaceRevision,H:first.page.viewSession.H===14?7:14});assert.equal(changed.ok,true,JSON.stringify(changed));
+ assert.equal((await ready(h,'workspace',sameQuery?{}:{search:{query:'Native'}})).state,'ready');assert.equal((await resume(h)).resume.view,null);
+});
+
 test('document replacement cannot resume old document display',async t=>{
  const h=await boot(t);await ready(h,'workspace',{segment:3});await save(h);
  h.service.invalidate({tabId:1,documentId:'document'});h.sender.documentId='replacement-document';await h.bind();await h.mount();

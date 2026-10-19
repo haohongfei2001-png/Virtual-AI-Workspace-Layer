@@ -13068,5 +13068,139 @@
       "No real installation update or identity/context recovery; 10k/100k remain DEFERRED; NOT_RELEASE_READY."
     ],
     "review": "Independent read-only review confirmed production entry wiring, retained ordinary path, scope fences and existing single-flight; caught different-target draft precondition before final browser run."
+  },
+  "rapidRouteReturn20261019": {
+    "baseHead": "1768e9addbca3e5955873ac1e9e153376097f914",
+    "task": "C2/C3 original reading return: fast search, native different-target route, new frame, original capacities and drafts",
+    "rootCauses": [
+      "New query replaces resume before renderer coalesced SAVE; first layout may never have an ACK before native route destroys the frame.",
+      "Even while first SAVE is in flight, user scrolling can enqueue newer layout; dispatch must wait for that ACK under the same original deadline."
+    ],
+    "fix": "Same document/role/scope/session/workspace-page special transitions retain only acknowledged layout; late SAVE exact query check remains. Native dispatch drains current presentation in the existing total six-second deadline with current epoch/query/grant/renderer checks. Ordinary scroll coalescing stays; no new native request/retry or authority.",
+    "red": {
+      "tests": 24,
+      "pass": 22,
+      "fail": 2,
+      "browser": "Unacknowledged-first-layout failure retained, not relabelled."
+    },
+    "targeted": {
+      "tests": 324,
+      "pass": 324,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 1694.497792
+    },
+    "actualBrowser": {
+      "status": "PASS_OFFLINE_MV3_WINDOW_RETENTION",
+      "acceptance": "PARTIAL_S_NOT_FREE_ACCEPTED",
+      "realChatGPT": "NOT_RUN",
+      "journey": {
+        "projectRows": 17,
+        "unknownRows": 17,
+        "readingReturn": true,
+        "originalDocumentEditorDraft": true,
+        "elapsedMs": 2486.0567920000003
+      },
+      "differentTargetReturn": {
+        "nativeTargetOnce": true,
+        "uniqueReturn": true,
+        "projectRows": 17,
+        "unknownRows": 17,
+        "newFrame": true,
+        "oldFrameDetached": true,
+        "originalDocumentsEditorsDrafts": true
+      },
+      "sourceChangedDuringRun": false,
+      "fixtureChangedDuringRun": false,
+      "manifestChangedDuringRun": false,
+      "temporaryDirectoryRemoved": true,
+      "traceDropped": 0
+    },
+    "snippetJourney": {
+      "status": "PASS",
+      "results": [
+        {
+          "name": "actual-native-selection-explicit-sidebar-save-and-legacy-list",
+          "status": "PASS"
+        },
+        {
+          "name": "saved-snippet-text-search-preserves-native-title-and-exact-preview",
+          "status": "PASS"
+        },
+        {
+          "name": "current-conversation-search-snippet-locates-native-reading-with-draft-preserved",
+          "status": "PASS"
+        },
+        {
+          "name": "locate-verified-anchor-in-native-reading-with-draft-preserved",
+          "status": "PASS"
+        },
+        {
+          "name": "edited-native-body-rejects-old-hash-and-offers-native-search",
+          "status": "PASS"
+        },
+        {
+          "name": "remove-only-manual-snippet-preserves-native-input",
+          "status": "PASS"
+        }
+      ],
+      "sourceChangedDuringRun": false,
+      "buildManifestUnchanged": true,
+      "cleanupErrors": null,
+      "lifecycleErrors": null
+    },
+    "timing": {
+      "normalSequenceBaselineMs": 2214.381834,
+      "finalFunctionalChainMs": 2486.056792,
+      "boundary": "Both exclude initial ingestion; includes current-target and different-target page setup. Prior success did not close the rapid race. Not a performance improvement or scale acceptance."
+    },
+    "previousCI": {
+      "runId": 39245926668,
+      "head": "1768e9addbca3e5955873ac1e9e153376097f914",
+      "conclusion": "failure",
+      "nodeContracts": "9031/9032; stale reveal-native-project expectation retains search after sole return",
+      "offlineJourneys": "snippet runner waited for removed close-search button after sole return",
+      "otherJobs": "offline-durability-compat/offline-j4-lifecycle success; only existing slices",
+      "evidenceBoundary": "Complete node job log, exact failed snippet step excerpt, complete printed snippet JSON parsed after removing log timestamps. Metadata records URLs and extraction boundary; partial journey copy not used."
+    },
+    "observerFix": "Require search closed and normal member visible after sole return, then run original snippet save/search/locate/stale-hash rejection/removal; all thresholds retained. Empty body.innerText does not inspect shadow-root contents.",
+    "review": "Independent readonly reviewer found queued layout during first SAVE; fixed and deterministic regression added, final review no new issue. Independent CI reader classified both stale return observers from original logs.",
+    "artifacts": {
+      "rapid-return-before.tap.gz": "378b16cd458720fc4b4658df8aba54579cfbae5598828074091e06a76ab129bb",
+      "rapid-return-targeted.tap.gz": "a9a6ff5ee02075151e1173f07e421c10ef0dd36d735d4e3b03de97e0bd335978",
+      "rapid-return-normal-baseline.json.gz": "1d0b60cf5775e8b8a62117eb5b435b085cd75c02c648dc28a051f3443328e239",
+      "rapid-return-unacknowledged-failure.json.gz": "b72205f6b70d9dcfcabe34c7f4a41d1b987307bf1468f1295b31c5d623a91aee",
+      "rapid-return-first-drain.json.gz": "11acc9558ba99440d1e15329fed854fde06e044577b3e5e5d1db4dd0687174ef",
+      "rapid-return-mv3.json.gz": "795692d393c203a031b627c20eeb055b680a871d22d6fb5f1ddcc0fa9d359458",
+      "return-observer-before.tap.gz": "9ef3145dd965e8b4b36af9addffcbbc875cb5a985d224bbef86b9a8bee5794b7",
+      "return-observer-after.tap.gz": "fae256a16618b229165b3e21cda5531c273c786656fad684d50596e0a6341788",
+      "return-snippets-mv3.json.gz": "776d8b2aa2752c842d72865adc7a11eb9e0c7f3bb3158a9f3fb71d75105c0268",
+      "rapid-return-node-initial.tap.gz": "b0e3b52fe2fbdbcea760c90e1e1a014897592374722d53eaf0002b72cbaee483",
+      "return-runner-integrity.tap.gz": "85d2abbf517e2cc18cc06b1fcf4c47877f2dc3082ba4eadbd6b91b2c61687943",
+      "ci39245926668-node-contracts.log.gz": "891736e9257710fc64e6bdbf47297121f1476c4dd42f87153714872b56a30434",
+      "ci39245926668-snippets-step.log.gz": "3c98275befa99abbed44c65835717549b45601a75d14fa8ae4016ca08d2da84a",
+      "ci39245926668-snippets.json.gz": "81bb253280431c84a4d623049c351b64257a17a82cb2fcd7f2b0b904967d8caf",
+      "ci39245926668-evidence-metadata.json.gz": "d545a21f6fb68fc901c87b02da1741d5bccac5441b9ed45a9537430508fe9041",
+      "rapid-return-node-final.tap.gz": "b4e9e158987d69bd06118c62eb5a7d5486f58dd4cc4487c97db2575157c6b5b2"
+    },
+    "limits": [
+      "No real Profile accessed or installed package updated; valid current-context still missing.",
+      "1k functional fixture only; 10k/100k DEFERRED and all original thresholds/history preserved.",
+      "Not full J4, identity/member/activity/IME/PAIA/cross-device acceptance or RELEASE_READY."
+    ],
+    "nodeInitial": {
+      "tests": 9046,
+      "pass": 9045,
+      "fail": 1,
+      "durationMs": 78567.264417,
+      "reason": "Historical snippet runner byte-identity check still includes obsolete close-search click; fixed with one exact reviewed substitution while retaining original SHA256 and all other journey assertions."
+    },
+    "nodeFinal": {
+      "tests": 9046.0,
+      "pass": 9046.0,
+      "fail": 0.0,
+      "skipped": 0.0,
+      "duration_ms": 79272.589
+    }
   }
 }

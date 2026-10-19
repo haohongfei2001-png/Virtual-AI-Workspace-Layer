@@ -52,14 +52,18 @@ test('a report-write failure after a successful journey is nonzero with a fallba
 });
 
 const runner=await readFile(new URL('./snippets-package-mv3-browser.mjs',import.meta.url),'utf8');
-test('the complete six-case browser journey and all its original assertions remain byte-identical',()=>{
+test('six-case browser journey retains original assertions with only the explicit sole-return observer correction',()=>{
  const probeStart=' await page.evaluate(installSnippetsPresentationProbe);\n try{\n';
  const probeEnd=" }finally{\n  try{report.presentationDiagnostic=await page.evaluate(()=>globalThis.__vaiwlSnippetPresentationProbe.finish());}\n  catch{report.presentationDiagnostic={kind:'PASSIVE_PRESENTATION_DIAGNOSTIC_NOT_ACCEPTANCE',status:'UNAVAILABLE'};}\n }\n";
  assert.equal(runner.split(probeStart).length,2);assert.equal(runner.split(probeEnd).length,2);
- // Strip only the exact passive diagnostic envelope. The original clicks,
- // waits, timeouts and six assertions must still match the original checksum.
+ // Preserve the historical checksum of the whole journey. Permit exactly the
+ // reviewed replacement of the obsolete close-search click, requiring its new
+ // closed-search, visible-member and draft assertions verbatim.
+ const correctedReturn=' // The sole reading return now restores the workspace and closes search itself.\n // Prove that transition instead of waiting for a removed search-only control.\n await workspace.locator(`a[data-ref-id="${C}"]`).first().waitFor({state:\'visible\',timeout:10000});\n assert.equal(await workspace.getByRole(\'searchbox\',{name:\'已知聊天查找输入\'}).count(),0);\n assert.equal(await workspace.getByRole(\'button\',{name:\'关闭派生查找\',exact:true}).count(),0);await draft();';
+ assert.equal(runner.split(correctedReturn).length,2);
  const core=runner.slice(runner.indexOf(' page=await context.newPage()'),runner.indexOf('},inspectFailure:')).replace(probeStart,'').replace(probeEnd,'');
- assert.equal(createHash('sha256').update(core).digest('hex'),'35ae69a5d220476893f79f0ef215295eae2ffc36f228bf69fe58eecf612aaa0b');
+ const historical=core.replace(correctedReturn," await workspace.getByRole('button',{name:'关闭派生查找',exact:true}).click();");
+ assert.equal(createHash('sha256').update(historical).digest('hex'),'35ae69a5d220476893f79f0ef215295eae2ffc36f228bf69fe58eecf612aaa0b');
  assert.equal((core.match(/report\.results\.push\(/g)??[]).length,6);
 });
 

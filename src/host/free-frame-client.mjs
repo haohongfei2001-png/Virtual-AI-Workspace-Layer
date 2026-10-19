@@ -354,11 +354,11 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   if(closed||bootstrapping||!grantCurrent()||!resumeQuery||JSON.stringify(resumeQuery)!==JSON.stringify(query))return;
   try{const {freeSession,...layout}=value,view=validateFrameResumeView(layout),expectedQuery=validateResumeQuery(resumeQuery),key=JSON.stringify([expectedQuery,view]);if(key===resumeLast)return;resumeQueued={view,key,expectedQuery};if(resumeTimer===null&&!resumeWriting)resumeTimer=schedule(flushResume,100);}catch{}
  }
- async function flushResume(){
+ function flushResume(){
   resumeTimer=null;if(!resumeQueued||closed||!grantCurrent())return;
   const item=resumeQueued;resumeQueued=null;if(JSON.stringify(item.expectedQuery)!==JSON.stringify(query))return;const current=grant,renderer=navigation,attempt={};resumeWriting=attempt;
-  try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_SAVE_VIEW',grantId:current.id,mountId:current.mountId,expectedQuery:item.expectedQuery,view:item.view}),{now:elapsedNow,schedule,cancel});if(!closed&&grant?.id===current.id&&navigation===renderer&&JSON.stringify(query)===JSON.stringify(item.expectedQuery)&&result?.ok===true)resumeLast=item.key;}catch{}
-  finally{if(resumeWriting===attempt){resumeWriting=false;if(!closed&&navigation===renderer&&resumeQueued&&resumeTimer===null)resumeTimer=schedule(flushResume,100);}}
+  attempt.done=(async()=>{try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_SAVE_VIEW',grantId:current.id,mountId:current.mountId,expectedQuery:item.expectedQuery,view:item.view}),{now:elapsedNow,schedule,cancel});if(!closed&&grant?.id===current.id&&navigation===renderer&&JSON.stringify(query)===JSON.stringify(item.expectedQuery)&&result?.ok===true){resumeLast=item.key;return true;}return false;}catch{return false;}
+  finally{if(resumeWriting===attempt){resumeWriting=false;if(!closed&&navigation===renderer&&resumeQueued&&resumeTimer===null)resumeTimer=schedule(flushResume,100);}}})();return attempt.done;
  }
  async function bootstrapResume(){
   const attempt={};bootstrapping=attempt;const current=grant,renderer=navigation,ticket=serial;
@@ -381,11 +381,20 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   // Old rendered controls cannot activate while their replacement VIEW is pending.
   if(!issued||activeRead||dispatchPending||horizonPending)return {state:'blocked'};
   const pending={};dispatchPending=pending;navigation?.setNativeNavigationPending?.(true);
-  try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:issued.plan.mode==='native-control'?'HOST_UI_DISPATCH_NATIVE':'HOST_UI_DISPATCH_CURRENT',grantId:current.id,mountId:current.mountId,actionId:command.actionId,planRevision:command.planRevision,targetKey:command.targetKey}),{now:elapsedNow,schedule,cancel});
+  let active=true;const started=elapsedNow(),dispatchQuery=JSON.stringify(query);
+  const valid=()=>active&&elapsedNow()-started>=0&&elapsedNow()-started<6000&&!closed&&grantCurrent()&&grant?.id===current.id&&navigation===renderer&&dispatchEpoch===attempt&&!backup&&!recovery&&!snippets&&JSON.stringify(query)===dispatchQuery;
+  try{const result=await withRequestDeadline(async()=>{
+   // Persist the latest bounded presentation before native SPA navigation can
+   // destroy this frame. Save and dispatch share the original six-second limit.
+   if(resumeWriting&&await resumeWriting.done!==true&&!resumeQueued)return {ok:false};
+   if(!valid())return {ok:false};
+   while(resumeQueued){if(!valid())return {ok:false};cancel(resumeTimer);resumeTimer=null;if(await flushResume()!==true)return {ok:false};}
+   if(!valid())return {ok:false};
+   return runtime.sendMessage({v:1,type:issued.plan.mode==='native-control'?'HOST_UI_DISPATCH_NATIVE':'HOST_UI_DISPATCH_CURRENT',grantId:current.id,mountId:current.mountId,actionId:command.actionId,planRevision:command.planRevision,targetKey:command.targetKey});},{now:elapsedNow,schedule,cancel});
    if(closed||!grantCurrent()||grant?.id!==current.id||navigation!==renderer||dispatchEpoch!==attempt||backup||recovery||snippets||![...plans.values(),...projectPlans.values()].includes(issued)||result?.ok!==true)return {state:'blocked'};
    if(issued.plan.mode==='native-control'&&result.state==='unconfirmed')return {state:'unconfirmed'};
    return result.state===(issued.plan.mode==='native-control'?'dispatched':'already-current')?{state:result.state}:{state:'blocked'};
-  }catch{return {state:'unconfirmed'};}finally{if(dispatchPending===pending){dispatchPending=null;const queued=queuedDispatchView;queuedDispatchView=null;if(!closed&&grantCurrent()&&grant?.id===current.id&&navigation===renderer){if(queued){dirty=false;void read(queued.value,true,queued.location);}else if(dirty){dirty=false;invalidate();}navigation?.setNativeNavigationPending?.(!!activeRead);}}}
+  }catch{return {state:'unconfirmed'};}finally{active=false;if(dispatchPending===pending){dispatchPending=null;const queued=queuedDispatchView;queuedDispatchView=null;if(!closed&&grantCurrent()&&grant?.id===current.id&&navigation===renderer){if(queued){dirty=false;void read(queued.value,true,queued.location);}else if(dirty){dirty=false;invalidate();}navigation?.setNativeNavigationPending?.(!!activeRead);}}}
  }
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;void refreshSurfaceState();

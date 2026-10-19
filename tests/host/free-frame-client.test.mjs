@@ -309,6 +309,26 @@ const sameCurrentURL=`https://chatgpt.com/c/${sameCurrentId}`;
 const sameCurrentPlan=()=>({mode:'same-target',bodyProofId:'current-body-proof',planRevision:4,target:{kind:'resolved',entity:'conversation',nativeId:sameCurrentId,navigationURL:sameCurrentURL,liveHandle:null}});
 const sameCurrentCommand=()=>({actionId:'current-action',uiGrantId:'grant',mountId:'mount',planRevision:4,targetKey:'current-key'});
 async function currentDispatchFixture(){const f=fixture();f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),current:{nativeUrl:sameCurrentURL,refId:sameCurrentId,projectId:null}},navigation:[{refId:sameCurrentId,plan:sameCurrentPlan(),targetKey:'current-key'}]}));await f.client.start();await drain();return f;}
+for(const outcome of ['saved','rejected','timeout','revoked','inflight'])test(`native dispatch drains presentation under the same deadline: ${outcome}`,async()=>{
+ const f=await currentDispatchFixture(),send=f.runtime.sendMessage,held=deferred(),packets=[];
+ f.runtime.sendMessage=m=>{if(['HOST_UI_SAVE_VIEW','HOST_UI_DISPATCH_CURRENT'].includes(m.type)){packets.push(m);return m.type==='HOST_UI_SAVE_VIEW'?held.promise:Promise.resolve({ok:true,state:'already-current'});}return send(m);};
+ f.nav.onViewChange({...resumeLayout(),segment:0,capacities:[['expanded',17]]});
+ if(outcome==='inflight')await f.advance(100);
+ const pending=f.nav.onDispatch(sameCurrentCommand());await drain();assert.deepEqual(packets.map(m=>m.type),['HOST_UI_SAVE_VIEW']);
+ if(outcome==='timeout')await f.advance(6000);
+ if(outcome==='revoked')f.disconnect();
+ held.resolve({ok:outcome!=='rejected'});const result=await pending;await drain();
+ const success=['saved','inflight'].includes(outcome);assert.equal(result.state,success?'already-current':outcome==='timeout'?'unconfirmed':'blocked');
+ assert.equal(packets.filter(m=>m.type==='HOST_UI_DISPATCH_CURRENT').length,success?1:0);f.client.stop();
+});
+test('layout changes during the first save must be acknowledged before native dispatch',async()=>{
+ const f=await currentDispatchFixture(),send=f.runtime.sendMessage,held=[deferred(),deferred()],packets=[];let saves=0;
+ f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_SAVE_VIEW'){packets.push(m);return held[saves++].promise;}if(m.type==='HOST_UI_DISPATCH_CURRENT'){packets.push(m);return Promise.resolve({ok:true,state:'already-current'});}return send(m);};
+ f.nav.onViewChange({...resumeLayout(),segment:0,scroll:10});const pending=f.nav.onDispatch(sameCurrentCommand());await drain();
+ f.nav.onViewChange({...resumeLayout(),segment:0,scroll:20});held[0].resolve({ok:true});await drain();
+ assert.deepEqual(packets.map(m=>m.type),['HOST_UI_SAVE_VIEW','HOST_UI_SAVE_VIEW']);assert.equal(packets[1].view.scroll,20);
+ held[1].resolve({ok:true});assert.equal((await pending).state,'already-current');assert.equal(packets.at(-1).type,'HOST_UI_DISPATCH_CURRENT');f.client.stop();
+});
 test('same-target current plan is issued with frame grant and dispatch uses only owner tuple',async()=>{
  const f=await currentDispatchFixture(),issued=f.nav.adapter.navigationPlan({id:sameCurrentId});assert.deepEqual(issued,{plan:sameCurrentPlan(),targetKey:'current-key',uiGrantId:'grant',mountId:'mount'});
  const send=f.runtime.sendMessage,packets=[];f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_CURRENT'?(packets.push(m),Promise.resolve({ok:true,state:'already-current'})):send(m);

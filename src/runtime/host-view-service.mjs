@@ -50,7 +50,15 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  function rememberResume(context,query,session,view){
   const key=resumeKey(context),prior=resumeFor(context),validatedQuery=validateResumeQuery(query);
   if(!context.isCurrent())return;
-  const record={tabId:context.parentFrame.tabId,documentId:context.parentFrame.documentId,scopeKey:context.scope.key,at:elapsedNow(),query:validatedQuery,session:structuredClone(session),view:view??(prior&&JSON.stringify(prior.query)===JSON.stringify(validatedQuery)?prior.view:null)??null};
+  // Search/working-set queries share the workspace layout. A native route can
+  // replace the frame before its coalesced SAVE arrives; retain only the last
+  // acknowledged presentation, never rows or grants. Late SAVE still requires
+  // the exact new query below, and ordinary pagination remains independent.
+  const sameSession=prior&&['H','T','Z','policyRevision'].every(k=>prior.session[k]===session[k]);
+  const specialTransition=prior&&(prior.query.search||prior.query.workingSet||validatedQuery.search||validatedQuery.workingSet)&&
+   [['segment',0],['offset',0],['limit',24]].every(([k,fallback])=>(prior.query[k]??fallback)===(validatedQuery[k]??fallback));
+  const retain=sameSession&&(JSON.stringify(prior.query)===JSON.stringify(validatedQuery)||specialTransition);
+  const record={tabId:context.parentFrame.tabId,documentId:context.parentFrame.documentId,scopeKey:context.scope.key,at:elapsedNow(),query:validatedQuery,session:structuredClone(session),view:view??(retain?prior.view:null)??null};
   resumes.delete(key);resumes.set(key,record);while(resumes.size>32)resumes.delete(resumes.keys().next().value);
  }
  async function resume(input,sender){
