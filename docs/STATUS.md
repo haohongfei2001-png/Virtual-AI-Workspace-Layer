@@ -1,5 +1,7 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **恢复竞态的诊断缺口已补，原CI失败未关闭**（2026-10-19）：实际service/UI owner对照复现“空闲快照→新UI任务→CHECK安全拒绝”，原grant继续可用；原runner测试包新增有界固定类型/计数日志，不改生产、原期限或一次关闭机会。独审补CONFIRM/RENEW/STATUS分类，受影响回归通过。一次隔离无界面旅程完成原C2下文档租约到期→foreground新grant/VIEW→阅读/草稿保持，无新原生GET；本机未触发Linux竞态，不据此改判CI39272071082。浏览器运行第一版诊断，最后分类及决策后快照仅Node/语法审查，不冒充最终同源完整矩阵。证据沿idleWorkTrace20261019；完整身份/J4/GU与10k/100k原状态保持。30分钟当前线程巡检已启用，唯一写入者/原PR16不变。
+
 - **当前聊天/项目的晚到选择器漏监听已合批修复**（2026-10-19）：吸收dot6270063833并独立复现：observed当前聊天节点后补selection marker，scanner已可识别但association监听不重扫；同根因legacy根id、Project列表aria-label/祖先id也漏掉。现只为三个既有精确selector补固定属性依赖，保留100ms合并、原6秒、唯一waiter和全部身份/route/可见性核验，不启用真实Project来源。旧正例FAIL与legacy三FAIL保留；502定向/包检查及独审通过，冻结实际无界面浏览器14场景通过（9.558秒，含原6秒到期），正文读取零、草稿/监听清理保持，仅WEB_MECHANISM_ONLY，非实机/MV3身份验收。原证据selectionMarker20261019。真实Profile URL元信息可读，但最小DOM读取仍超时；无新账户请求/安装/刷新，已消费诊断不重放。
 - **3b1e9ed同源CI39272071082仍FAIL**：Node、耐久、J4三个job成功；journeys的transport-expiry在到期前准备休眠时失败：worker空闲快照true，随后HOST_UI_IDLE_CHECK明确ui-release-busy，prepared:true/entered:false，尚未进入foreground恢复。安全拒绝本身正确，哪个任务在快照后到达尚无证据，不能靠第二次关闭/延长超时修饰通过，也不能归因本次selector修复。J4原JSON仍PARTIAL、无新context自动恢复未建立；正常新GET恢复不代替。原日志保留，未重跑挑绿。3b远端HEAD已独立核对（本地push客户端最终SSL超时不等于远端未收到）。本次窄改合批定向和浏览器验证，不再重复完整矩阵，下一完整候选继续原CI。身份/current-context、正向成员/本人活动、完整恢复与G/U安装仍开放，10k/100k DEFERRED，NOT_RELEASE_READY。
 

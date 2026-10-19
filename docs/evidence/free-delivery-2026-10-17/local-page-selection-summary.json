@@ -14636,5 +14636,51 @@
       "gzipSha256": "a4bc00c1d0d68b52bed3287cbb1f96999b456679f2f535e7dea51690488fff3f",
       "rerun": false
     }
+  },
+  "idleWorkTrace20261019": {
+    "status": "DIAGNOSTIC_ONLY_CI_RACE_UNRESOLVED",
+    "productionSourceBase": "ac1c8ecaced46aa710530ee22068c73eaeabc83f",
+    "priorFailure": {
+      "run": 39272071082,
+      "stage": "transport-expiry pre-dormancy CHECK",
+      "status": "FAIL_PRESERVED",
+      "cause": "Concurrent work after idle snapshot is possible; actual CI work source remains unrecorded"
+    },
+    "change": "Test-package-only bounded fixed-label work/owner/close-guard trace; production behavior, single close attempt and deadlines unchanged",
+    "integration": {
+      "status": "PASS",
+      "scope": "Actual service/UI owner and MockIDB, uninstrumented/instrumented comparison",
+      "assertions": [
+        "idle snapshot then held UI scope causes CHECK busy",
+        "original grant remains usable",
+        "trace captures activeWork=2/inFlight=1/pending=0",
+        "ring <=256 and no private labels/payloads",
+        "CONFIRM/RENEW/STATUS fixed classification"
+      ]
+    },
+    "targeted": {
+      "passed": 60,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 89.186708
+    },
+    "browser": {
+      "status": "PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY",
+      "raw": "docs/evidence/free-delivery-2026-10-17/idle-work-trace-transport-20261019.json.gz",
+      "rawSha256": "292d8caa97a3b73eb50c0fe036a1dfa5110d6951a25dcc3690c5bc9520f95cfd",
+      "sourceChangedDuringRun": false,
+      "scope": "Isolated headless Chrome; original C2, same worker, no new native GET, draft/reading preserved",
+      "boundary": "Run used first trace revision; final fixed-type additions and immediate post-decision snapshot have Node/syntax review only. It does not reproduce or close Linux failure."
+    },
+    "review": "Independent read-only review; added missing CONFIRM/RENEW/STATUS labels; no changed owner call count/short circuit/Promise/close attempts",
+    "remaining": [
+      "CI actual busy competitor",
+      "full J4 without new context",
+      "real principal/current context",
+      "positive membership/self-send",
+      "G/U install acceptance"
+    ],
+    "scale": "10k/100k DEFERRED; thresholds and historical failures unchanged",
+    "releaseStatus": "NOT_RELEASE_READY"
   }
 }
