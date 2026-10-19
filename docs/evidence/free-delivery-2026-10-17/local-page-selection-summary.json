@@ -14541,5 +14541,100 @@
         }
       }
     }
+  },
+  "selectionMarker20261019": {
+    "baseCommit": "3b1e9ed516dd0b1d752ab3fdbbb4a0404e578ac5",
+    "review": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6270063833",
+    "rootCause": "association observer omitted the supported root selector attribute; independently discovered current body did not wake pending challenge",
+    "repair": "fixed exact selector dependencies for observed selection root and existing legacy conversation/project roots; all association and authority checks unchanged",
+    "before": {
+      "observedMarker": "FAIL: no reply after marker-only change",
+      "legacySelectorDependencies": "3 FAIL: no scan after id/aria-label only change"
+    },
+    "targeted": {
+      "passed": 502,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 3125.750625
+    },
+    "browser": {
+      "kind": "WEB_MECHANISM_ONLY",
+      "status": "PASS",
+      "checks": 14,
+      "elapsedMs": 9557.750834,
+      "sourceHashes": {
+        "src/host/context-association.mjs": "e589ecda593fb2ae08d0e0a28e9f002e31b90c754bfa2e2de65cb403ab885ff0",
+        "src/host/project-context-association.mjs": "46c098890d73b560ca5b7666eb48eb057f8390184e8d5d73ba70871e10029577",
+        "src/host/current-body-discovery.mjs": "b6c78564eb4470b85cf316e5d737182b854aad2b2e4e1d56a24750c91c503fe0",
+        "src/host/url-policy.mjs": "fddfafcca2276161e6fd3c908ac896d0dab656fce6cf06aee64f1f442f7ac7e9",
+        "src/host/contract.mjs": "35129aacf2a7e1fe1812c846379563d60ad74a66b689ad41bc38d76484a97716",
+        "src/b1/identity.mjs": "6d7ca616701826733d4936d8a139395ccf1a3111e025ec6b1035d78c1dc05e99",
+        "src/host/surface-discovery.mjs": "cc3e6947b242b3a205f6d61d2e4d50a032fb946ed3ad4607b3d35bf52ed61af4",
+        "src/host/native-surface-boundary.mjs": "da860ef75e1fbb560cd7155589576cdc5283df21fef366fb3e6ef33984daaa6a",
+        "src/host/bounded-handle-registry.mjs": "ea3a48ed3760741b8d845b4116830cffc611571b6fd01bb9561bd8a63efdee5c"
+      },
+      "scriptHash": "46d1009e8506b0cb7d2d695908550971b04f782f56e974e47b7f74d68585ebcb",
+      "sourceStable": true,
+      "scriptStable": true,
+      "timing": "whole isolated browser mechanism batch incl original 6s expiry; no equivalent successful old journey; not product speedup"
+    },
+    "reviewResult": "independent read-only review passed; scanner call is diagnostic comparison, fixed scenario expectations and owner/scope assertions are oracle",
+    "boundaries": [
+      "not session403 resolution",
+      "not historical J4 root cause",
+      "not production Project source activation",
+      "not live identity or MV3 acceptance",
+      "10k/100k DEFERRED"
+    ],
+    "artifacts": {
+      "selection-marker-before.tap": {
+        "path": "docs/evidence/free-delivery-2026-10-17/selection-marker-before.tap.gz",
+        "rawSha256": "c5f31226553bb5ee59bf2b48a368108e7ee7d596732a27307dff7c6bdd2b7014",
+        "gzipSha256": "df08d413caf3b27e79bfd64d89a960157ccd918c83f9a0f2d9198cefe56dbe28"
+      },
+      "selector-dependencies-before.tap": {
+        "path": "docs/evidence/free-delivery-2026-10-17/selector-dependencies-before.tap.gz",
+        "rawSha256": "862f6ba28821549a119913570e43a6aa54f3980e7a866628c757effdd6b89085",
+        "gzipSha256": "0ad0ee7164fd8def93beb968b48ecb0e65be7b690b365785a8fedcbb5a0a7b83"
+      },
+      "selection-marker-targeted.tap": {
+        "path": "docs/evidence/free-delivery-2026-10-17/selection-marker-targeted.tap.gz",
+        "rawSha256": "5aa51e55627933fb3e7232d2c6cd9608bbf04dc5ae674825738d6771aadb7ccb",
+        "gzipSha256": "5918bf38c5806464446392ba88cda5d53c32d85d66e7f4eaacb6aaa0860bbdbf"
+      },
+      "selection-marker-browser.json": {
+        "path": "docs/evidence/free-delivery-2026-10-17/selection-marker-browser.json.gz",
+        "rawSha256": "f8ec4cbea457666b994488f80edc85b1bf572ffe8013a1966a0b7834fe601490",
+        "gzipSha256": "c1df0f33e59ba03ff582139970a9bbdd62fc077a756b25179b24175a28e7f003"
+      },
+      "selector-dependencies-review.json": {
+        "path": "docs/evidence/free-delivery-2026-10-17/selector-dependencies-review.json.gz",
+        "rawSha256": "3bd7dc91130cd4743e955b70f315b9b4506bc07890445c48b1ffb5cb465c18a3",
+        "gzipSha256": "674cd5490555c3db367d6be0dd706698579befad4e2dbd73f00d1c001ac7585f"
+      },
+      "ci39272071082-j4.log": {
+        "path": "docs/evidence/free-delivery-2026-10-17/ci39272071082-j4.log.gz",
+        "rawSha256": "a36ca8403da96b6685a5f989fd7b25984bf1c88104b958df582514823adcbf3d",
+        "gzipSha256": "7709e119116498bf66d4405cb6c3ab8f408b900dec8653bb88d11226ca5da7de"
+      }
+    },
+    "priorCandidateCI": {
+      "head": "3b1e9ed516dd0b1d752ab3fdbbb4a0404e578ac5",
+      "run": 39272071082,
+      "status": "FAIL",
+      "jobs": {
+        "node-contracts": "success",
+        "offline-journeys": "failure",
+        "offline-durability-compat": "success",
+        "offline-j4-lifecycle": "success"
+      },
+      "failedStage": "transport-expiry: before expiry, worker idle snapshot true then HOST_UI_IDLE_CHECK rejects ui-release-busy; prepared true entered false",
+      "rootCause": "NOT_ESTABLISHED; safe rejection observed, pending work source not captured; not resolved by selector fix",
+      "j4": "PARTIAL_J4_NOT_ACCEPTED; no-new-context peer automatic recovery NOT_ESTABLISHED; fresh native hop passes",
+      "logs": "docs/evidence/free-delivery-2026-10-17/ci39272071082-journeys.log.gz",
+      "rawSha256": "bb3065e320ff186afef24ecbe465633d6e8e405e1286e4cbeef3b66f8d0f9aba",
+      "gzipSha256": "a4bc00c1d0d68b52bed3287cbb1f96999b456679f2f535e7dea51690488fff3f",
+      "rerun": false
+    }
   }
 }

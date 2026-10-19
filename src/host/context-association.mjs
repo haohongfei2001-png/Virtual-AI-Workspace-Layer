@@ -1,8 +1,15 @@
 import {createProjectContextAssociation} from './project-context-association.mjs';
-import {createCurrentBodyDiscovery} from './current-body-discovery.mjs';
+import {createCurrentBodyDiscovery,CHATGPT_SELECTION_CURRENT_BODY,CHATGPT_SELECTION_ROOT_ATTRIBUTE} from './current-body-discovery.mjs';
 import {createURLPolicy} from './url-policy.mjs';
 import {exactHostRecord} from './contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
+// Exact packaged selector grammars only. These attributes wake a fresh scan;
+// they never supply identity, select a workspace, or enable a new profile.
+const selectorAttributes=new Map([
+ [CHATGPT_SELECTION_CURRENT_BODY.rootSelector,[CHATGPT_SELECTION_ROOT_ATTRIBUTE]],
+ ['main > #reading',['id']],
+ ['main #reading nav[aria-label="Project conversations"]',['id','aria-label']],
+]);
 /** Isolated fixed-profile metadata only. A bounded DOM wait never creates a
  * receipt, reads credentials or starts a new authentication/network request. */
 export function createContextAssociationBridge({document,runtime,origin,profile,isOwnedMask=()=>false,onPending=()=>{},onReady=()=>{},now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
@@ -43,7 +50,10 @@ export function createContextAssociationBridge({document,runtime,origin,profile,
     if(!valid(state)){finish(state);return;}if(state.scanTimer!==null)return;
     state.scanTimer=schedule(()=>{state.scanTimer=null;scan(state);},Math.min(100,state.until-now(),state.budget-(elapsedNow()-state.started)));
    });
-   state.observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:[isProject?profile.memberProjectIdAttribute:profile.currentBody.conversationIdAttribute,...(!isProject?[profile.currentBody.messageIdAttribute]:[]),'hidden','aria-hidden','class','style']});
+   // The supported native root can become selected after it is mounted. Listen
+   // only to this fixed grammar dependency; the scan still proves association.
+   const selectionRoot=selectorAttributes.get(isProject?profile.regions.members:profile.currentBody.rootSelector)??[];
+   state.observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:[isProject?profile.memberProjectIdAttribute:profile.currentBody.conversationIdAttribute,...(!isProject?[profile.currentBody.messageIdAttribute]:[]),...selectionRoot,'hidden','aria-hidden','class','style']});
    for(const event of ['popstate','hashchange','pagehide'])win.addEventListener?.(event,state.leave);
    state.timer=schedule(()=>finish(state),Math.min(state.until-now(),state.budget-(elapsedNow()-state.started)));
    // Recheck after observer installation, including an elapsed deadline.
