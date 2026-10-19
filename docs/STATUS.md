@@ -1,5 +1,7 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **原生阅读区域替换后的假就绪状态已修**（2026-10-20）：同URL换reading root或几何失效时，controller已停止adapter/移除界面，content却仍ready，后续单独READY被忽略。现进入既有contextPending，撤回旧能力、不自动请求身份；新真实READY再走HELLO→有界观察→REFRESH→新producer/mount。原最小13通过/4失败保留；633相关回归与实际content/controller联合验证通过。冻结隔离MV3完成根替换→私有状态waiting→一个正常原生GET→新frame/唯一返回/原文档、编辑器、选区和草稿保持，360.589ms（不含启动，含状态观察，非提速/p95），worker外网阻断。删除修复的变异包在同一状态断言失败；只看最终导航的旧观察器会漏检，原存活结果与其他失败全保留，最终后台状态页不切换焦点。具体同源码证据 `nativeRegionRecovery20261020`。仅关闭假就绪/新READY接线缺陷，不声称等待期间独立RAM观察、无新context自动恢复或历史J4竞态已解决；真实身份/成员/本人活动/安装仍开放，10k/100k DEFERRED、NOT_RELEASE_READY。专用Profile标签可读但本轮最小DOM读取仍超时，未重放诊断或更新实机。
+
 - **同文档目录背压下的发送优先已在实际隔离 MV3 证实**（2026-10-20）：同一原 SYS05 runner 的可选场景通过：另一页合法 assistant 更新的认证读取暂持→当前页300条目录真实 retry-after→唯一原生发送优先→放行后同 producer 的 ACK/最新标题/完整目录收敛，子链467.963ms，仍共用原6秒；原流式19978ms/6400变化及可见呈现保持。生产源码未再改。纠正纯改名不触发读取、root替换导致观察撤回、原生异步目录过早快照及模式标志混淆等测试问题，五份原FAIL全保留；其中一次账户切换未发POST的启动失败原因仍未关闭。154定向、独审及182产品/17fixture同源核对通过；不借旧场景冒充本次草稿/尾搜索，也不宣称完整SYS05或提速。原证据sameDocumentBrowser20261020。
 - **Linux 单项诊断已完成，旧恢复竞态仍开放**：4695600 / CI39278809998 原 transport-expiry 步骤通过，Ubuntu24/Chromium156、约22秒，只有原一次关闭和一个原生GET。trace显示两次frame SAVE_VIEW先完成，最后一次距CHECK仅2ms；本次所有guard安静，没有复现旧busy，不能把CI39272071082改判修复。此前399秒是不同覆盖的完整journeys job，不作等口径提速。真实身份/current-context、成员/本人活动、完整J4/GU仍开放，10k/100k DEFERRED，NOT_RELEASE_READY。
 

@@ -14,12 +14,14 @@ import {j2JourneyProfile} from './j2-journey-profile.mjs';
 import {j2Within,j2Poll,j2ExternalProbe} from './j2-runner-bounds.mjs';
 import {cleanupOwnedResources} from './isolated-browser-cleanup.mjs';
 import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
+import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
 import {installJ4GrantObserver} from './j4-grant-observer.mjs';
 import {currentJ4Grant,waitJ4PeerScope} from './j4-joint-interruption.mjs';
+const regionMutant=process.argv[3]==='region-replacement-mutant',regionReplacement=regionMutant||process.argv[3]==='region-replacement';
 const dormantMutant=process.argv[3]==='dormant-recovery-mutant',dormantRecovery=dormantMutant||process.argv[3]==='dormant-recovery';
 const transportMutant=process.argv[3]==='transport-expiry-mutant',transportExpiry=transportMutant||process.argv[3]==='transport-expiry',idleProbe=dormantRecovery||transportExpiry;
 const hash=v=>createHash('sha256').update(v).digest('hex');
-const paths=['tests/host/prepared-dormancy-probe.mjs','tests/host/context-replacement-package-browser.mjs','tests/host/fixtures/variants-server.mjs','tests/host/fixtures/variants-native.mjs','tests/host/fixtures/native-current-refresh.mjs','tests/host/fixtures/native.mjs','tests/host/expected/modern.mjs','tests/host/j2-journey-profile.mjs','tests/host/j2-runner-bounds.mjs','tests/host/isolated-browser-cleanup.mjs',...(transportExpiry?['tests/host/j4-grant-observer.mjs','tests/host/j4-joint-interruption.mjs','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs']:[])];
+const paths=['tests/host/prepared-dormancy-probe.mjs','tests/host/context-replacement-package-browser.mjs','tests/host/fixtures/variants-server.mjs','tests/host/fixtures/variants-native.mjs','tests/host/fixtures/native-current-refresh.mjs','tests/host/fixtures/native.mjs','tests/host/expected/modern.mjs','tests/host/j2-journey-profile.mjs','tests/host/j2-runner-bounds.mjs','tests/host/isolated-browser-cleanup.mjs',...((transportExpiry||regionReplacement)?['tests/host/j4-grant-observer.mjs','tests/host/j4-joint-interruption.mjs','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs']:[])];
 const fixtureHashes=Object.fromEntries(await Promise.all(paths.map(async p=>[p,hash(await readFile(p))])));
 if(idleProbe)fixtureHashes['tests/host/idle-work-trace.mjs']=hash(await readFile('tests/host/idle-work-trace.mjs'));
 const server=await createVariantHostFixtureServer({profile:'MODERN',nativeCurrentRefresh:true}),dir=await mkdtemp(join(tmpdir(),'vaiwl-context-replacement-')),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineContext:true}),manifest=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));
@@ -50,6 +52,11 @@ if(transportMutant){
  const anchor="    if(exactHostRecord(result,['ok','reason'])&&result.ok===false&&result.reason==='invalid-host-document'&&recoverTransport())return;\n";
  assert.equal(original.split(anchor).length,2,'transport recovery mutation must remove exactly its production branch');mutantSession=original.replace(anchor,'');await writeFile(path,mutantSession);
 }
+if(regionMutant){
+ const path=join(built.unpacked,'src/host/content-session.mjs'),original=await readFile(path,'utf8');
+ const anchor="    if(current===s&&['native-region-changed','native-geometry-changed'].includes(reason)){contextPending();return;}\n";
+ assert.equal(original.split(anchor).length,2);mutantSession=original.replace(anchor,'');await writeFile(path,mutantSession);
+}
 // Test-package-only, read-only worker readiness. Never supplied by content,
 // never closes/releases a mount, and never changes a production owner or clock.
 const workerReadinessHashes={};
@@ -63,16 +70,18 @@ if(idleProbe){
  for(const [path,source]of [['extension/worker.mjs',compiled.entry],['extension/classic-runtime.js',compiled.runtime]]){await writeFile(join(built.unpacked,path),source);workerReadinessHashes[path]=hash(source);}
 }
 const C='33333333-3333-4333-8333-333333333333',scope=j2JourneyProfile('MODERN').scope,scopeKey=JSON.stringify([scope.provider,scope.accountId,scope.organizationId]);
-const report={status:'NOT_RUN',evidence:'OFFLINE_C2_RECEIPT_REPLACEMENT_NARROW',startupMode:'WORKER_READY_PRECONDITION_NOT_COLD_ACCEPTANCE',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',sourceHashes:manifest.sourceHashes,fixtureHashes,fixture:server.manifest,results:[],requests:[],errors:[]};let context,page,id,browserHandle,readTransportExpiryTrace,endTransportOwnerObservation,readIdleWorkTrace;
+const report={status:'NOT_RUN',evidence:'OFFLINE_C2_RECEIPT_REPLACEMENT_NARROW',startupMode:'WORKER_READY_PRECONDITION_NOT_COLD_ACCEPTANCE',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',sourceHashes:manifest.sourceHashes,fixtureHashes,fixture:server.manifest,results:[],requests:[],errors:[]};let context,page,id,browserHandle,readTransportExpiryTrace,endTransportOwnerObservation,readIdleWorkTrace,networkGuard;
+if(regionReplacement){report.evidence='OFFLINE_NATIVE_REGION_REPLACEMENT_FRESH_CONTEXT';report.mutation=regionMutant?'REMOVE_NATIVE_REGION_CONTEXT_WAIT':null;}
 if(dormantRecovery){report.evidence='OFFLINE_C2_INSTRUMENTED_DORMANT_SCOPE_RECOVERY';report.instrumentation={path:'extension/content-entry.mjs',after:hash(instrumentedEntry),exposes:['attempt']};report.mutation=dormantMutant?'RESTORE_PERMANENT_STOP_AFTER_DENIED_WAKE':null;report.forcedWorkerStop=true;report.naturalWorkerSleep='NOT_ESTABLISHED';report.workerReadiness={kind:'PASSIVE_TEST_PACKAGE_IS_IDLE_ONLY',hashes:workerReadinessHashes,samples:[],totalSamples:0};}
 if(transportExpiry){report.evidence='OFFLINE_C2_DORMANT_TRANSPORT_EXPIRY_FOREGROUND_RECOVERY';report.instrumentation={path:'extension/content-entry.mjs',after:hash(instrumentedEntry),exposes:['attempt'],passiveContentTransport:true,passiveFrameGrantAndView:true};report.mutation=transportMutant?'REMOVE_EXACT_FOREGROUND_INVALID_DOCUMENT_RECOVERY':null;report.workerReadiness={kind:'PASSIVE_TEST_PACKAGE_IS_IDLE_ONLY',hashes:workerReadinessHashes,samples:[],totalSamples:0};report.forcedWorkerStop=false;report.naturalWorkerSleep='NOT_TESTED';report.nativeRequestStarts=[];report.transportOwner={workerClosed:false,focusedAt:null};}
-async function verifyPackage(){if(!idleProbe){assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');return;}for(const [path,expected] of Object.entries(manifest.files))assert.equal(hash(await readFile(join(built.unpacked,path))),path==='extension/content-entry.mjs'?hash(instrumentedEntry):(dormantMutant||transportMutant)&&path==='src/host/content-session.mjs'?hash(mutantSession):(workerReadinessHashes[path]??expected));}
+async function verifyPackage(){if(!idleProbe&&!regionMutant){assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');return;}for(const [path,expected] of Object.entries(manifest.files))assert.equal(hash(await readFile(join(built.unpacked,path))),idleProbe&&path==='extension/content-entry.mjs'?hash(instrumentedEntry):(dormantMutant||transportMutant||regionMutant)&&path==='src/host/content-session.mjs'?hash(mutantSession):(workerReadinessHashes[path]??expected));}
 const poll=fn=>j2Poll(fn,15000),within=(name,fn,ms=5000)=>j2Within(name,fn,ms);
 const frame=()=>page.frames().find(f=>f.url()===`chrome-extension://${id}/workspace.html`);
 const step=(name,detail={})=>report.results.push({name,status:'PASS',...detail});
 async function continuity(){assert.deepEqual(await page.evaluate(()=>({sameDocument:document===replacementDocument,sameEditor:document.querySelector('textarea')===replacementEditor,draft:replacementEditor.value,start:replacementEditor.selectionStart,end:replacementEditor.selectionEnd,pagehides:replacementPagehides})),{sameDocument:true,sameEditor:true,draft:'UNSENT_CONTEXT_REPLACEMENT',start:3,end:8,pagehides:0});assert.equal(page.url(),server.origin+'/c/'+C);}
 try{
- if(transportExpiry){browserHandle=await launchNativeVisibilityBrowser({chromium,profileDir:join(dir,'profile'),headed:false,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});context=browserHandle.context;report.browserPrecondition=browserHandle.diagnostic;}
+ if(regionReplacement)networkGuard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
+ if(transportExpiry||regionReplacement){browserHandle=await launchNativeVisibilityBrowser({chromium,profileDir:join(dir,'profile'),headed:false,...(networkGuard?{historicalNetworkGuard:networkGuard.config}:{}),executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});context=browserHandle.context;report.browserPrecondition=browserHandle.diagnostic;}
  else context=await chromium.launchPersistentContext(join(dir,'profile'),{timeout:25000,headless:true,viewport:{width:1440,height:1000},executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
  context.setDefaultTimeout(15000);context.setDefaultNavigationTimeout(15000);
  await context.route('**/*',r=>r.request().url().startsWith(server.origin+'/')||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());
@@ -120,6 +129,30 @@ try{
   assert(focus);assert.equal(focus.ok,false);assert.equal(focus.reason,'invalid-host-document');assert(hello&&refresh,'real fresh HELLO and verified REFRESH required after stale transport');assert.equal(trace.filter(row=>row.type==='HOST_HELLO'&&row.requestedAt>focusedAt).length,1,'one foreground recovery only');
   assert.equal(report.transportOwner.workerClosed,false);assert.equal(report.requests.length,1);assert.equal(report.nativeRequestStarts.length,1);assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);await continuity();
   report.transport=trace;report.foregroundRecovery={focusedAt,newGrant:true,actualPostFocusVIEW:true,scopeKey,sameWorker:true,nativeGETCount:1};step('foreground-expired-transport-fresh-same-Team-grant-and-VIEW-reading-preserved',report.foregroundRecovery);report.phase='foreground-recovered';await session.detach();readTransportExpiryTrace=null;await peer.close();
+ }else if(regionReplacement){
+  report.phase='replace-reading-region';const started=performance.now();
+  await page.evaluate(()=>{const old=document.querySelector('#reading');globalThis.replacedReading=old;old.replaceWith(old.cloneNode(true));});
+  await poll(()=>oldFrame.isDetached());assert.equal(await page.locator('[data-va-owned]').count(),0);
+  await continuity();assert.equal(report.requests.length,before,'DOM replacement is not a native metadata request');
+  // Read the shipped private status channel. A later native GET can emit an
+  // independent invalidation and hide the stale-ready bug; check the waiting
+  // boundary before that GET, not just eventual successful navigation.
+  const focusedBeforeStatus=await page.evaluate(()=>document.hasFocus());
+  const statusReady=context.waitForEvent('page');await cdp.send('Target.createTarget',{url:`chrome-extension://${id}/status.html`,background:true});const statusPage=await statusReady;await statusPage.waitForLoadState('domcontentloaded');
+  report.regionStatusFocus={before:focusedBeforeStatus,after:await page.evaluate(()=>document.hasFocus())};
+  assert.deepEqual(report.regionStatusFocus,{before:true,after:true},'status observation must not cause a foreground recovery');
+  report.regionWaitingStatus=await statusPage.evaluate(async()=>{const {readActiveLocalStatus}=await import(chrome.runtime.getURL('src/host/local-status.mjs'));return readActiveLocalStatus({tabs:chrome.tabs});});
+  assert.equal(report.regionWaitingStatus,'waiting','retired surface must enter the context wait before any new native GET');
+  await statusPage.close();
+  step('same-document-region-replacement-withdraws-old-surface');
+  // Only the existing native refresh control supplies new C2 evidence.
+  await page.getByRole('button',{name:'Refresh current conversation',exact:true}).click();
+  await poll(()=>report.requests.length===before+1);assert.equal(report.requests.at(-1).status,200);
+  report.phase='await-region-fresh-frame';await poll(()=>frame()&&frame()!==oldFrame);renewed=frame();
+  await page.getByRole('button',{name:'返回工作空间',exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);
+  await continuity();assert.equal(await page.evaluate(()=>document.querySelector('#reading')!==replacedReading&&!replacedReading.isConnected),true);
+  report.regionRecoveryMs=performance.now()-started;step('fresh-native-context-rebuilds-reading-return-after-region-replacement',{elapsedMs:report.regionRecoveryMs});
  }else if(dormantRecovery){
   const session=await context.newCDPSession(page),worlds=[],versions=[];session.on('Runtime.executionContextCreated',e=>worlds.push(e.context));session.on('ServiceWorker.workerVersionUpdated',e=>versions.push(...e.versions));await session.send('Runtime.enable');await session.send('ServiceWorker.enable');
   const evaluate=async(expression,contextId)=>{const r=await session.send('Runtime.evaluate',{expression,contextId,returnByValue:true,awaitPromise:true});assert.equal(r.exceptionDetails,undefined);return r.result.value;};
@@ -152,7 +185,7 @@ try{
  }
  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);await renewed.getByText('Ordinary conversation',{exact:true}).waitFor();
  const scopes=await within('scope-oracle',()=>renewed.evaluate(async()=>{const {ScopeRepository}=await import(chrome.runtime.getURL('src/b1/scope-repository.mjs')),base=new ScopeRepository({indexedDB});try{const db=await base.open();return await new Promise((resolve,reject)=>{const tx=db.transaction('native_states'),q=tx.objectStore('native_states').getAll();tx.oncomplete=()=>resolve(q.result.filter(r=>r.key===r.payload?.scopeKey).map(r=>r.key));tx.onabort=()=>reject(tx.error);});}finally{base.close();}}));assert.deepEqual(scopes,[scopeKey]);await continuity();step('new-projection-same-nonfirst-team-no-personal-writes');
- if(transportExpiry)assert.equal(report.requests.length,1);else assert.equal(report.requests.length,2);assert.deepEqual(report.errors,[]);await verifyPackage();report.status=transportExpiry?'PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY':dormantRecovery?'PASS_NARROW_OFFLINE_DORMANT_RECOVERY':'PASS_NARROW_OFFLINE_REPLACEMENT';report.browserVersion=context.browser().version();
+ if(transportExpiry)assert.equal(report.requests.length,1);else assert.equal(report.requests.length,2);assert.deepEqual(report.errors,[]);await verifyPackage();report.status=regionReplacement?'PASS_NARROW_OFFLINE_REGION_REPLACEMENT':transportExpiry?'PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY':dormantRecovery?'PASS_NARROW_OFFLINE_DORMANT_RECOVERY':'PASS_NARROW_OFFLINE_REPLACEMENT';report.browserVersion=context.browser().version();
 }catch(error){if(readTransportExpiryTrace)try{report.transport=await readTransportExpiryTrace();}catch{}report.status=context?'FAIL':'NOT_RUN_BROWSER_STARTUP';report.error=error.stack;process.exitCode=1;try{report.failure=await within('failure-dom',()=>page?.evaluate(()=>({state:document.documentElement.dataset.vaiwlState,reason:document.documentElement.dataset.vaiwlReason,frames:document.querySelectorAll('[data-va-owned]').length,open:document.querySelectorAll('[data-va-owned]:popover-open').length,returns:document.querySelectorAll('[aria-label="返回工作空间"]').length})));}catch(error){report.diagnosticError=String(error);}}
-finally{endTransportOwnerObservation?.();if(readIdleWorkTrace)try{report.idleWorkTrace=await readIdleWorkTrace();}catch{report.idleWorkTraceUnavailable=true;}const clean=await cleanupOwnedResources(report,[['package-integrity',verifyPackage],['context-close',()=>within('context-close',()=>browserHandle?browserHandle.close():context?.close(),10000)],['server-close',()=>within('server-close',()=>server.close())],['source-integrity',async()=>{report.sourceChangedDuringRun=(await Promise.all(Object.entries({...manifest.sourceHashes,...fixtureHashes}).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);assert.equal(report.sourceChangedDuringRun,false);}]]);if(!clean)process.exitCode=1;await writeFile(process.argv[2]??join(dir,'report.json'),JSON.stringify(report,null,2)+'\n');}
+finally{endTransportOwnerObservation?.();if(readIdleWorkTrace)try{report.idleWorkTrace=await readIdleWorkTrace();}catch{report.idleWorkTraceUnavailable=true;}const clean=await cleanupOwnedResources(report,[['package-integrity',verifyPackage],['context-close',()=>within('context-close',()=>browserHandle?browserHandle.close():context?.close(),10000)],['server-close',()=>within('server-close',()=>server.close())],['network-guard',async()=>{if(networkGuard){report.networkGuard=networkGuard.snapshot();await networkGuard.close();}}],['source-integrity',async()=>{report.sourceChangedDuringRun=(await Promise.all(Object.entries({...manifest.sourceHashes,...fixtureHashes}).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);assert.equal(report.sourceChangedDuringRun,false);}]]);if(!clean)process.exitCode=1;await writeFile(process.argv[2]??join(dir,'report.json'),JSON.stringify(report,null,2)+'\n');}
 console.log(JSON.stringify({status:report.status,error:report.error,results:report.results,requests:report.requests}));

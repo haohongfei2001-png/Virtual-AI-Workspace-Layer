@@ -1,5 +1,7 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+当前增量（2026-10-20）：关闭同URL原生reading区域替换后content遗留ready=true、吞掉新READY的C2/C5生命周期缺陷。旧界面/producer已终止时进入既有安全context等待，只有新证据触发完整新握手；不靠几何变化自动重试、不续旧grant、不扩大预算。实际隔离MV3与旧版变异对照确认安全等待→一个新原生GET→新frame/唯一返回/草稿保持；具体同源证据见STATUS与原 `nativeRegionRecovery20261020`。完整无新context恢复、真实身份和安装验收仍未成立，规模仍DEFERRED。下一独立可用性问题为临时导航深色CanvasText与白色fallback背景冲突（仅源码审查，尚待渲染复现），身份路线及完整Free目标不变。
+
 B2/C2验收收口（2026-10-20）：原SYS05同文档目录背压→唯一真实发送优先→ACK/最新标题/300条目录在原6秒内收敛已获隔离MV3证据；不改生产预算，不以测试触发失败推断产品缺陷。原Linux到期恢复单项通过但未复现历史busy，继续保留原FAIL与未关闭根因。具体失败、同源和计时沿原STATUS/证据入口；真实身份→正向成员/本人活动→完整恢复/安装优先级及规模DEFERRED不变。
 
 C2/J4排障增量（2026-10-19）：采用dot的失败后历史policy取证，保持原collector范围、getter未知、固定白名单及L/D/S边界；route相同不证明document或generation，历史SCOPE_VERIFIED不提供当前授权。原workflow可选择一次transport-expiry Linux窄诊断以查原busy竞争，不重跑无关矩阵；原push覆盖与所有门槛不变。具体结果沿STATUS/recoveryPolicyHistory20261019，未据诊断宣布根因修复或Free完成。

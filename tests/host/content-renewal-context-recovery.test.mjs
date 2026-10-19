@@ -4,15 +4,15 @@ import {createHostContentSession} from '../../src/host/content-session.mjs';
 const drain=async()=>{for(let i=0;i<80;i++)await Promise.resolve();};
 // Real content session; private controller lifecycle and worker are isolated doubles.
 // ready() is the exact callback wired to HOST_CONTEXT_READY by content-entry.
-function fixture(t){
+function fixture(t,contextRecovery=true){
  const calls=[],controllers=[],listeners=new Set(),timers=new Map();let wall=1000,serial=0,hello=0,answer={state:'verified',scopeKey:'scope'},expired=false,holdNext=false,releaseRefresh=null;
  const events=new Map(),document={location:{origin:'https://chatgpt.com',href:'https://chatgpt.com/'},draft:'UNSENT',defaultView:{addEventListener:(k,f)=>events.set(k,f),removeEventListener:(k,f)=>{if(events.get(k)===f)events.delete(k);}}};
  const binding=()=>({documentToken:'document'+hello,producerToken:'producer'+hello,browserDocumentId:'browser',routeEpoch:hello,origin:document.location.origin,expiresAt:new Date(expired?wall-1:wall+20000).toISOString()});
  const runtime={id:'extension',getURL:p=>'chrome-extension://extension/'+p,onMessage:{addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f)},async sendMessage(m){calls.push(m);if(m.type==='HOST_HELLO'){hello++;return {binding:binding()};}if(m.type==='HOST_DOCUMENT_RENEW')return {ok:true,binding:binding()};if(m.type==='HOST_REFRESH'){if(holdNext){holdNext=false;return new Promise(resolve=>{releaseRefresh=resolve;});}return {...answer};}return {ok:true};}};
- const session=createHostContentSession({document,runtime,contextRecovery:true,automaticDormancy:false,now:()=>wall,elapsedNow:()=>wall,makeId:()=> 'client',schedule:(fn,ms)=>{const id=++serial;timers.set(id,{fn,at:wall+ms});return id;},cancel:id=>timers.delete(id),adapterFactory:()=>({start:async()=>({}),inspect:()=>({ok:true}),stop(){},risk:()=>({state:'unknown'})}),surfaceFactory:()=>({}),plansFactory:()=>({}),controllerFactory:options=>{
-  const c={options,active:false,binding:null,async start(context){c.binding=context.binding;await options.bridge.registerMount({handle:{id:'mount'+hello,regionEpoch:1}});c.active=true;return {id:'mount'+hello};},stop(){c.active=false;},showWorkspace:()=>c.active,presentationMode:()=> 'reading',terminate(){c.active=false;options.onTerminated('session-renew-failed',{mode:'reading'});}};controllers.push(c);return c;
+ const session=createHostContentSession({document,runtime,contextRecovery,automaticDormancy:false,now:()=>wall,elapsedNow:()=>wall,makeId:()=> 'client',schedule:(fn,ms)=>{const id=++serial;timers.set(id,{fn,at:wall+ms});return id;},cancel:id=>timers.delete(id),adapterFactory:()=>({start:async()=>({}),inspect:()=>({ok:true}),stop(){},risk:()=>({state:'unknown'})}),surfaceFactory:()=>({}),plansFactory:()=>({}),controllerFactory:options=>{
+  const c={options,active:false,binding:null,async start(context){c.binding=context.binding;await options.bridge.registerMount({handle:{id:'mount'+hello,regionEpoch:1}});c.active=true;return {id:'mount'+hello};},stop(){c.active=false;},showWorkspace:()=>c.active,presentationMode:()=> 'reading',terminate(reason='session-renew-failed'){c.active=false;options.onTerminated(reason,{mode:'reading'});}};controllers.push(c);return c;
  }});t.after(()=>session.stop());
- return {session,calls,controllers,document,listeners,ready:()=>session.contextReady(),hellos:()=>calls.filter(m=>m.type==='HOST_HELLO').length,setAnswer:value=>{answer=value;},expire:()=>{expired=true;},holdRefresh:()=>{holdNext=true;},releaseRefresh:value=>releaseRefresh(value),async advance(ms){wall+=ms;for(const[id,timer]of [...timers])if(timer.at<=wall){timers.delete(id);timer.fn();}await drain();}};
+ return {session,calls,controllers,document,listeners,pagehide:()=>events.get('pagehide')?.({persisted:false}),ready:()=>session.contextReady(),hellos:()=>calls.filter(m=>m.type==='HOST_HELLO').length,setAnswer:value=>{answer=value;},expire:()=>{expired=true;},holdRefresh:()=>{holdNext=true;},releaseRefresh:value=>releaseRefresh(value),async advance(ms){wall+=ms;for(const[id,timer]of [...timers])if(timer.at<=wall){timers.delete(id);timer.fn();}await drain();}};
 }
 async function denied(f,answer={state:'unknown'}){
  await f.session.start();assert.equal(f.session.showWorkspace(),true);const old=f.controllers[0];f.setAnswer(answer);
@@ -52,4 +52,35 @@ test('successful renewal consumes early READY without replay or extra handshake'
  assert.equal(f.hellos(),1);assert.equal(f.session.showWorkspace(),true);
  // A later denial without a new signal cannot reuse the old READY.
  f.setAnswer({state:'unknown'});await assert.rejects(old.options.bridge.renewSession({handle:{id:'mount1'},binding:old.binding}),/scope-not-verified/);old.terminate();await drain();assert.equal(f.hellos(),1);assert.equal(f.session.showWorkspace(),false);
+});
+
+// A controller can withdraw a mount without an authority failure when native
+// React replaces a region at the same URL. A stopped producer is never ready.
+for(const reason of ['native-region-changed','native-geometry-changed']){
+ test(reason+' waits without requests, then fresh context rebuilds the producer',async t=>{
+  const f=fixture(t);await f.session.start();const old=f.controllers[0];old.terminate(reason);await drain();
+  assert.equal(f.session.localStatus(),'waiting');assert.equal(f.session.showWorkspace(),false);
+  const count=f.calls.length;old.terminate(reason);await f.advance(30000);assert.equal(f.calls.length,count,'geometry is not permission to retry identity');
+  f.setAnswer({state:'verified',scopeKey:'new-scope'});await f.ready();await drain();
+  assert.equal(f.hellos(),2);assert.equal(f.controllers.length,2);assert.equal(f.session.showWorkspace(),true);
+  assert.notEqual(f.controllers[1].binding.producerToken,old.binding.producerToken);
+  assert.deepEqual(f.calls.filter(m=>m.type==='HOST_REFRESH').map(m=>m.documentToken),['document1','document2']);
+  old.terminate(reason);await f.ready();await drain();assert.equal(f.hellos(),2,'old termination and duplicate READY cannot restart live replacement');
+  assert.equal(f.document.draft,'UNSENT');
+ });
+ test(reason+' does not restore unverified scope or retry without another READY',async t=>{
+  const f=fixture(t);await f.session.start();f.controllers[0].terminate(reason);f.setAnswer({state:'unknown'});
+  await f.ready();await drain();assert.equal(f.hellos(),2);assert.equal(f.controllers.length,1);assert.equal(f.session.showWorkspace(),false);
+  await f.advance(60000);assert.equal(f.hellos(),2);
+ });
+ for(const action of ['stop','pagehide'])test(reason+' '+action+' fences later context and old callbacks',async t=>{
+  const f=fixture(t);await f.session.start();const old=f.controllers[0];old.terminate(reason);
+  if(action==='stop')f.session.stop();else f.pagehide();
+  await f.ready();old.terminate(reason);await f.advance(30000);assert.equal(f.hellos(),1);assert.equal(f.session.showWorkspace(),false);
+ });
+}
+
+for(const reason of ['native-region-changed','native-geometry-changed'])test(reason+' without context recovery remains stopped',async t=>{
+ const f=fixture(t,false);await f.session.start();f.controllers[0].terminate(reason);await f.ready();await f.advance(30000);
+ assert.equal(f.session.localStatus(),'unavailable');assert.equal(f.session.showWorkspace(),false);assert.equal(f.hellos(),1);assert.equal(f.listeners.size,0);
 });

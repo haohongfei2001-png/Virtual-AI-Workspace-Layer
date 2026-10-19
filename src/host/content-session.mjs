@@ -468,6 +468,10 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onWake:()=>wake(s),onTerminated:(reason,presentation)=>{
     // Intentional exit ends this document session, including late recovery callbacks.
     if(current===s&&reason==='ui-user-exit'){stop();return;}
+    // A replaced native region destroys the controller and its producer even
+    // at the same URL. Drop ready/capabilities so a later genuine C2 READY can
+    // start a fresh handshake; geometry itself never retries authorization.
+    if(current===s&&['native-region-changed','native-geometry-changed'].includes(reason)){contextPending();return;}
     // The controller has withdrawn the old mount. Do not leave ready=true
     // swallowing future C2 READY signals; wait without retrying denied scope.
     if(current===s&&reason==='session-renew-failed'&&s.recoveryDenied){contextPending();return;}
