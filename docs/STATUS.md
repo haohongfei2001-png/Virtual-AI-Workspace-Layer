@@ -1,5 +1,8 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **已知但未摄取成员的项目现可搜索并打开**（2026-10-20）：原搜索只返回项目成员，已知零成员记录按原名也返回0；原HEAD最小失败保留。现增加独立项目结果，原聊天/片段顺序保持、统一24条分页，项目/聊天同ID分开，复用原生项目计划；不把未观察成员当空项目或NONE。283定向回归与独审通过；同源码隔离MV3的LEGACY/MODERN各完成搜索→原生打开/旧action拒绝→草稿新标签保护→唯一返回及原修饰键链，分别7.115/7.439秒（含启动/固定等待、不含清理，不称提速）。无成员前置仅LEGACY实测，MODERN不借用。初版观察器与沙箱失败全部保留。未更新真实安装/身份来源；证据沿原 `knownProjectSearch20261020`，完整Free与10k/100k状态不变。
+- **5c99e63同源CI39289329767旅程组FAIL，不能写全矩阵通过**：Node、持久化兼容、J4三个job成功；J4原JSON仍23步PARTIAL。旅程组实际失败为transport-expiry休眠进入、J1阅读返回、Linux临时弹窗宽585超原570、Project重开popup缺活动窗口；预期mutant失败另列。后者是测试窗口前置状态问题，尺寸无横向溢出但根因尚未闭合；原阈值/日志保留，不重跑挑绿。本搜索候选仅做受影响回归，下一合批处理这些关口后再跑完整矩阵。
+
 - **休眠界面丢失后的新上下文恢复已修**（2026-10-20）：实际content+controller复现双ACK/释放后frame断开或contentWindow替换，旧controller停止但content遗留ready，吞新READY；原3通过/2失败保留。现仅对dormant-document-changed进入既有安全等待，不自动请求/续旧grant。冻结隔离MV3完成休眠→丢真实frame→waiting→唯一新原生GET→新frame/唯一返回/草稿选区与同Team库保持，旧版变异在新GET前准确失败；子链249.355ms含休眠准备/状态查询，不称提速。880相关回归及独审通过，busy旧续约晚返回不影响新会话；测试基线误包含正常新SURFACE_STATE的失败保留。真实Profile最小DOM连接仍超时，未重发诊断或更新安装。证据沿原nativeRegionRecovery20261020.dormantFrameLoss20261020；完整身份/J4/GU与规模DEFERRED保持。
 - **33833b0同源CI结果已归入**：CI39285104774四job成功，但原J4仍23步PARTIAL_J4_NOT_ACCEPTED，无新context的peer自动恢复NOT_ESTABLISHED。原日志/JSON及预期变异失败保留，不能套用为当前新源码全矩阵通过；此前busy/J4失败不追溯改判。
 

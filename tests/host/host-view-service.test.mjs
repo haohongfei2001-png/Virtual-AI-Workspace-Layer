@@ -785,3 +785,8 @@ test('MOCK_IDB released view late completion cannot retire a fresh registration 
  clock.advance(100);await h.mount();assert.equal((await h.view()).state,'preparing');for(let i=0;i<20;i++)await drain();assert(clock.timers.some(timer=>timer.at===30100));
  release();const result=await ready(h);assert.equal(result.state,'ready');assert.equal(result.page.groups.items[0].nativeName,'Native Project');assert.equal((await h.view('sidebar')).state,'ready');
 });
+
+test('MOCK_IDB known project search includes no-member projects outside the current card page',async t=>{
+ const calls=[],h=await fixture(t,{documentURL:'https://chatgpt.com/c/c1',prepareNavigation:async x=>{calls.push(x);return x.targets.map(hrefPlan);}});await h.bind();await h.observe();await h.mount();await ready(h);
+ const result=await h.view('workspace',{segment:10,search:{query:'Native Project',offset:0,limit:24}});assert.equal(result.state,'ready',JSON.stringify(result));assert.equal(result.page.groups.items.length,0);assert.deepEqual(result.page.search.items.map(r=>[r.kind,r.id]),[['project','p1']]);assert(calls.at(-1).targets.some(r=>r.projectId==='p1'));assert(!calls.at(-1).targets.some(r=>r.refId==='p1'));assert(result.navigation.some(r=>r.projectId==='p1'));assert.equal(result.page.currentRef.membership,'UNKNOWN');
+});

@@ -172,12 +172,13 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
     const rows=new Map();for(const group of page.groups.items)for(const list of Object.values(group.lists))for(const row of list.items)rows.set(row.id,row);
     for(const list of Object.values(page.entries))for(const row of list.items)rows.set(row.id,row);
     for(const row of page.selection?.items??[])rows.set(row.id,row);
-    for(const row of page.search?.items??[])rows.set(row.id,row);
+    for(const row of page.search?.items??[])if(row.kind!=='project')rows.set(row.id,row);
     for(const row of page.workingSet?.items??[])rows.set(row.id,row);
     if(page.currentRef)rows.set(page.currentRef.id,page.currentRef);
     const projects=new Map(page.groups.items.map(group=>[group.id,group]));
+    for(const row of page.search?.items??[])if(row.kind==='project')projects.set(row.id,row);
     const targets=[...rows.values()].filter(row=>row.available!==false&&typeof row.nativeUrl==='string').map(row=>({refId:row.id,navigationURL:row.nativeUrl}));
-    for(const group of projects.values())if(typeof group.nativeUrl==='string')targets.push({projectId:group.id,navigationURL:group.nativeUrl});
+    for(const group of projects.values())if(group.available!==false&&typeof group.nativeUrl==='string')targets.push({projectId:group.id,navigationURL:group.nativeUrl});
     if(targets.length>200)throw Error('free-frame-page-too-large');
     navigation=await prepareNavigation({parentFrame:context.parentFrame,binding:context.binding,targets});check();
     if(!Array.isArray(navigation)||navigation.length>200)throw Error('invalid-native-plans');

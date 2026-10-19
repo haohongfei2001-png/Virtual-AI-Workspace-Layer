@@ -1,6 +1,6 @@
 import {assertPreparedFreeSnapshot} from '../navigation/free-view.mjs';
 import {tokenOK} from '../b1/identity.mjs';
-import {knownMatches} from '../navigation/search.mjs';
+import {knownMatches,knownProjectMatches} from '../navigation/search.mjs';
 /** Owner-only known-object search, over the complete existing prepared replica.
  * Query length is measured in JavaScript UTF-16 code units, capped at 200.
  * Saved snippet matches expose only bounded manual previews and opaque asset IDs.
@@ -23,6 +23,14 @@ export function projectFreeSearch(current,request){
  for(const row of matches){
   if(seen.has(row.id))continue;seen.add(row.id);
   if(total>=offset&&items.length<limit)items.push({id:row.id,nativeTitle:row.nativeTitle??null,displayTitle:row.nativeTitle??'名称暂不可用',nativeUrl:row.nativeUrl??null,membership:row.membership,projectId:row.projectId??null,freshness:row.freshness??'unknown',...(snippetMatches.has(row.id)?{snippetMatches:snippetMatches.get(row.id)}:{})});
+  total++;
+ }
+ // Preserve the existing conversation/snippet order, followed by matching
+ // projects in owner order. Both kinds share one bounded pagination window.
+ const projectSeen=new Set();
+ for(const project of knownProjectMatches(snapshot,query,projectId)){
+  if(projectSeen.has(project.id))continue;projectSeen.add(project.id);
+  if(total>=offset&&items.length<limit)items.push({kind:'project',id:project.id,nativeName:project.nativeName??null,nativeUrl:project.nativeUrl??null,freshness:project.freshness??'unknown',available:project.available!==false});
   total++;
  }
  const result={query,projectId,items,total,offset,limit,hasMore:offset+items.length<total};

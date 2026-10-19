@@ -421,3 +421,13 @@ for(const revoke of [false,true])test('actual native authorization survives queu
  const result=await f.nav.onDispatch({actionId:'one-action',uiGrantId:'grant',mountId:'mount',planRevision:issued.plan.planRevision,targetKey:issued.targetKey});await drain();
  assert.equal(authorizations,2);assert.equal(clicks,revoke?0:1);assert.equal(result.state,revoke?'blocked':'dispatched');assert.equal(f.views,before+(revoke?0:1));f.client.stop();owner.stop();
 });
+
+test('search-only project receives its own native plan outside the current card page',async()=>{
+ const f=fixture(),{id,nativeUrl,item}=projectPlanFixture(),project={kind:'project',id,nativeName:'Known project',nativeUrl,available:true,freshness:'unknown'};
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),groups:{items:[]},search:{items:[project]}},navigation:[item]}));await f.client.start();await drain();assert.equal(f.pages.length,1);const adapter=f.nav.adapter;assert.equal(adapter.projectNavigationPlan({id}).targetKey,'project-plan');assert.equal(adapter.navigationPlan({id}),undefined);f.disconnect();assert.equal(adapter.projectNavigationPlan({id}),undefined);
+});
+for(const invalid of ['snippets','membership','duplicate','conflict','foreign-url','wrong-id'])test('search project rejects '+invalid,async()=>{
+ const f=fixture(),{id,nativeUrl,item}=projectPlanFixture(),project={kind:'project',id,nativeName:'Known project',nativeUrl,available:true,freshness:'unknown'},groups=[];let items=[project];
+ if(invalid==='snippets')project.snippetMatches=[{id:'secret',preview:'text'}];if(invalid==='membership')project.membership='NONE';if(invalid==='duplicate')items.push({...project});if(invalid==='conflict')groups.push({id,nativeName:'Other title',nativeUrl});if(invalid==='foreign-url'){project.nativeUrl='https://evil.test/g/'+id+'/project';item.plan.target.navigationURL=project.nativeUrl;}if(invalid==='wrong-id')item.plan.target.nativeId='other';
+ f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),groups:{items:groups},search:{items}},navigation:[item]}));await f.client.start();await drain();assert.equal(f.pages.length,0);assert.equal(f.stops,1);
+});

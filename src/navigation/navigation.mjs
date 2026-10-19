@@ -3,7 +3,7 @@ import {isResolvedControlNavigationPlan} from '../host/current-navigation-plan.m
 import {validateFrameResumeView} from '../host/frame-resume-state.mjs';
 import { freeNavigationSnapshot, freeListRows, assertPreparedFreeSnapshot } from './free-view.mjs';
 import { currentIndex } from './current-index.mjs';
-import { knownMatches } from './search.mjs';
+import { knownMatches,knownProjectMatches,searchProjectMap } from './search.mjs';
 import { defaultIcon, iconPaths, svgIcon } from './icons.mjs';
 import { project, initialView } from './projection.mjs';
 const gridIcon='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1.3"/><rect x="14" y="3" width="7" height="7" rx="1.3"/><rect x="3" y="14" width="7" height="7" rx="1.3"/><rect x="14" y="14" width="7" height="7" rx="1.3"/></svg>';
@@ -181,7 +181,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const resolvedOK=plan?.target?.kind==='resolved'&&plan.target.entity===entity&&plan.target.nativeId===ref.id&&safeHref;
     const delegation=['native-control','same-target'].includes(plan?.mode)&&typeof onDispatch==='function'&&['targetKey','uiGrantId','mountId'].every(key=>typeof issued?.[key]==='string'&&issued[key])&&Number.isSafeInteger(plan.planRevision);
     const valid=ref.available!==false&&!ref.anchor&&((plan?.mode==='href'&&resolvedOK&&['same-tab','new-tab-preserve-current'].includes(plan.disposition))||(delegation&&(resolvedOK||plan.target?.kind==='live-control')));
-    if(!valid){a.dataset.navigationReason=ref.anchor?'snippet-frame-controller-unavailable':'native-plan-unavailable';explainUnavailable(a,ref.anchor?'该片段暂不能直接定位，请返回原生页面使用搜索。':'当前无法确认聊天入口，请返回原生页面继续。',{label:true});return;}
+    if(!valid){a.dataset.navigationReason=ref.anchor?'snippet-frame-controller-unavailable':'native-plan-unavailable';explainUnavailable(a,ref.anchor?'该片段暂不能直接定位，请返回原生页面使用搜索。':(entity==='project'?'当前无法确认项目入口，请返回原生页面继续。':'当前无法确认聊天入口，请返回原生页面继续。'),{label:true});return;}
     if(delegation){a.setAttribute('data-native-plan-control','');if(nativeNavigationPending)a.setAttribute('aria-disabled','true');}
     if(safeHref){a.href=safeHref;a.target=plan.mode==='href'&&plan.disposition==='same-tab'?'_top':'_blank';a.rel='noopener noreferrer';}
     else{a.setAttribute('role','button');a.tabIndex=0;}
@@ -210,6 +210,13 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   const windowGlyph=node(doc,'span',{class:'window-glyph','aria-hidden':'true'});windowGlyph.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.65"><path d="M4 5h16v12H9l-5 4z"/></svg>';
   function appendFreshness(parent,value){if(value.freshness==='last-known'||value.membershipFreshness==='last-known')parent.append(node(doc,'small',{class:'freshness-label','data-freshness':'last-known',title:'上次确认的信息',style:'flex:none;font-weight:400;color:var(--muted,#646464);margin-left:4px'},'上次确认'));}
   function row(ref,context=''){const a=node(doc,'a',{class:'row','data-ref-id':ref.id,title:ref.displayTitle});const text=node(doc,'span',{class:'window-title'},ref.displayTitle??ref.nativeTitle);a.append(windowGlyph.cloneNode(true),text);appendFreshness(a,ref);a.dataset.focusKey='ref:'+context+':'+ref.id;if(frameProjection?frameProjection.current?.refId===ref.id:(index?.matches(ref.nativeUrl,adapter.currentURL())??adapter.isCurrent(ref.nativeUrl)))a.setAttribute('aria-current','page');if(ref.available===false)a.setAttribute('aria-disabled','true');if(framed)bindPlannedLink(a,ref);else{const href=adapter.nativeHref?.(ref.nativeUrl);if(href)a.setAttribute('href',href);else a.setAttribute('aria-disabled','true');a.addEventListener('click',e=>{if(!href){e.preventDefault();return;}openRef(ref,e);});}return workingSetRow(a,ref,context);}
+  function projectSearchRow(project){
+    const title=project.nativeName??'名称暂不可用',a=node(doc,'a',{class:'row','data-project-id':project.id,title});
+    a.dataset.focusKey='project:search:'+project.id;a.append(themeGlyph({name:title}),node(doc,'span',{class:'window-title'},title),node(doc,'small',{},'项目'));appendFreshness(a,project);
+    if(framed)bindPlannedLink(a,project,'project');
+    else{const href=project.available!==false?adapter.nativeHref?.(project.nativeUrl):null;if(href){a.href=href;a.addEventListener('click',e=>openRef(project,e));}else explainUnavailable(a,'当前无法确认项目入口，请返回原生页面继续。');}
+    return a;
+  }
   function workingSetRow(link,ref,context){
     if(!frameProjection||surface.role!=='workspace'||typeof onWorkingSetRequest!=='function')return link;
     const saved=context==='workset';if(!saved&&(ref.available===false||typeof ref.nativeUrl!=='string'||!ref.nativeUrl))return link;
@@ -406,6 +413,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       const display=()=>{results.replaceChildren();const found=frameProjection.search;
         if(frameSearchWaiting||!found||found.query!==searchQuery||found.projectId!==searchTheme||found.offset!==frameSearchOffset){results.append(node(doc,'p',{role:'status'},'正在查找已知记录…'));return;}
         for(const ref of found.items){
+          if(ref.kind==='project'){results.append(projectSearchRow(ref));continue;}
           results.append(row(ref,'search'));
           for(const snippet of ref.snippetMatches??[]){
             const detail=node(doc,'section',{'data-snippet-id':snippet.id,class:'snippet-match'}),feedback=node(doc,'span',{role:'status'});detail.append(node(doc,'p',{},snippet.preview));
@@ -441,8 +449,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       const input=node(doc,'input',{'aria-label':free()?'已知聊天查找输入':'派生查找输入',placeholder:'输入主题或窗口名称','data-focus-key':'search-input',type:'search'});input.value=searchQuery;
       search.append(input,node(doc,'p',{},'仅查找已知主题与窗口，包含时间尚未确认的记录。原生搜索独立保留。'));
       const results=node(doc,'div',{class:'search-results'});
-      const update=()=>{searchQuery=input.value;results.replaceChildren();const found=knownMatches(snapshot,searchQuery,searchTheme);
-        for(const r of found.slice(0,searchCapacity)){const link=row(r,r.anchor?'snippet:'+r.anchor.id:'search');if(r.anchor){link.dataset.snippetId=r.anchor.id;link.setAttribute('aria-label','定位片段 '+r.displayTitle);link.append(node(doc,'span',{class:'snippet-preview'},r.anchor.text));}results.append(link);}
+      const update=()=>{searchQuery=input.value;results.replaceChildren();const found=[...knownMatches(snapshot,searchQuery,searchTheme),...knownProjectMatches(snapshot,searchQuery,searchTheme).map(g=>({...g,kind:'project'}))];
+        for(const r of found.slice(0,searchCapacity)){if(r.kind==='project'){results.append(projectSearchRow(r));continue;}const link=row(r,r.anchor?'snippet:'+r.anchor.id:'search');if(r.anchor){link.dataset.snippetId=r.anchor.id;link.setAttribute('aria-label','定位片段 '+r.displayTitle);link.append(node(doc,'span',{class:'snippet-preview'},r.anchor.text));}results.append(link);}
         if(!found.length)results.append(node(doc,'div',{class:'no-results',role:'status'},'未找到已知记录。可以继续使用原生搜索。'));
         if(found.length>searchCapacity)results.append(button('显示更多查找结果',()=>{searchCapacity+=24;update();},'显示更多','more'));
       };input.oninput=()=>{searchCapacity=24;update();};update();search.append(results);page.append(search);
@@ -488,7 +496,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const pageOK=p=>p&&Array.isArray(p.items)&&Number.isSafeInteger(p.total)&&Number.isSafeInteger(p.offset)&&Number.isSafeInteger(p.limit)&&p.total>=0&&p.offset>=0&&p.limit>0&&p.limit<=200&&p.items.length<=p.limit&&(!Object.hasOwn(p,'paged')||p.paged===true)&&typeof p.hasMore==='boolean'&&p.hasMore===(p.offset+p.items.length<p.total);
     if(!Number.isSafeInteger(dto.navigation.maxSegment)||dto.navigation.maxSegment<0||dto.navigation.hasNewer!==(dto.segment>0)||dto.navigation.hasOlder!==(dto.segment<dto.navigation.maxSegment)||!pageOK(dto.groups)||dto.groups.limit>24||!['noProject','unknown'].every(k=>pageOK(dto.entries?.[k]))||dto.groups.items.some(g=>!['current','old','unknown'].every(k=>pageOK(g.lists?.[k])))||dto.selection&&!pageOK(dto.selection)||new TextEncoder().encode(JSON.stringify(dto)).length>65536)throw Error('invalid-frame-projection');
     if(dto.search!==undefined&&(!pageOK(dto.search)||dto.search.limit>24||typeof dto.search.query!=='string'||dto.search.query.length>200||!(dto.search.projectId===null||typeof dto.search.projectId==='string'&&dto.search.projectId.length>0&&dto.search.projectId.length<=128)))throw Error('invalid-frame-search');
-    if(dto.search){let count=0;const ids=new Set();for(const ref of dto.search.items){if(ref.snippetMatches===undefined)continue;if(!Array.isArray(ref.snippetMatches)||ref.snippetMatches.length<1||ref.snippetMatches.length>100)throw Error('invalid-frame-snippets');for(const value of ref.snippetMatches){if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).sort().join(',')!=='id,preview'||typeof value.id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(value.id)||['__proto__','constructor','prototype'].includes(value.id)||ids.has(value.id)||typeof value.preview!=='string'||value.preview.length>160||++count>100)throw Error('invalid-frame-snippets');ids.add(value.id);}}}
+    if(dto.search){searchProjectMap(dto.search.items,dto.groups.items);let count=0;const ids=new Set();for(const ref of dto.search.items){if(ref.kind==='project')continue;if(ref.snippetMatches===undefined)continue;if(!Array.isArray(ref.snippetMatches)||ref.snippetMatches.length<1||ref.snippetMatches.length>100)throw Error('invalid-frame-snippets');for(const value of ref.snippetMatches){if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).sort().join(',')!=='id,preview'||typeof value.id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(value.id)||['__proto__','constructor','prototype'].includes(value.id)||ids.has(value.id)||typeof value.preview!=='string'||value.preview.length>160||++count>100)throw Error('invalid-frame-snippets');ids.add(value.id);}}}
     if(dto.workingSet!==undefined&&(!pageOK(dto.workingSet)||dto.workingSet.limit>24||!(dto.workingSet.currentRefId===null||typeof dto.workingSet.currentRefId==='string'&&dto.workingSet.currentRefId.length>0&&dto.workingSet.currentRefId.length<=128)))throw Error('invalid-frame-working-set');
     if(dto.search!==undefined&&dto.workingSet!==undefined)throw Error('conflicting-frame-lists');
     if(snapshot?.scope===dto.scope&&dto.workingSet&&(!view.worksetOpen||searchQuery!==null||dto.workingSet.offset!==frameWorkingSetOffset))return;
