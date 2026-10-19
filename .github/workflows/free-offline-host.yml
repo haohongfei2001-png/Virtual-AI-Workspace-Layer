@@ -1,6 +1,13 @@
 name: Free offline Host slices (not release acceptance)
 
 on:
+  workflow_dispatch:
+    inputs:
+      diagnostic:
+        description: 'One isolated diagnostic, not full CI or acceptance'
+        required: true
+        type: choice
+        options: [temporary-project-startup]
   push:
     branches: [codex/vaiwl-free-first-20261013]
 
@@ -13,14 +20,14 @@ env:
   FREE_SCALE_ACCEPTANCE: DEFERRED
 
 concurrency:
-  group: free-offline-host-${{ github.ref }}
+  group: free-offline-host-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   node-contracts:
     # Public repository + standard GitHub-hosted runner only. No paid runner,
     # artifact/cache upload, credentials, deployment or private host access.
-    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -40,7 +47,7 @@ jobs:
   offline-journeys:
     # Public repository + standard GitHub-hosted runner only. No paid runner,
     # artifact/cache upload, credentials, deployment or private host access.
-    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.ref == 'refs/heads/codex/vaiwl-free-first-20261013' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.diagnostic == 'temporary-project-startup'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -59,24 +66,24 @@ jobs:
           tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
           node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
       - name: Actual packaged C2 conversation slice
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |
           node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-package.json"
           node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-container.json" container
       - name: C2 immediate-load cold-start regression (separate result)
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold.json" cold
       - name: C2 cold passive diagnostic copy (not package acceptance)
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold-trace.json" cold-trace
       - name: Separate cold safety boundary and genuine native navigation recovery
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold-recovery.json" cold-recovery
       - name: C2 dormant scope denial and fresh native GET recovery
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-dormant.json" dormant-recovery
       - name: Reject permanent-stop dormant recovery mutation
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |
           set +e
           node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-dormant-mutant.json" dormant-recovery-mutant
@@ -85,12 +92,12 @@ jobs:
           test "$result" -eq 1
           node -e "const r=require(process.env.RUNNER_TEMP+'/context-dormant-mutant.json'); if(r.status!=='FAIL'||r.mutation!=='RESTORE_PERMANENT_STOP_AFTER_DENIED_WAKE'||r.requests.length!==2||!r.requests.every(q=>q.method==='GET'&&q.status===200)||r.errors.length!==0||r.phase!=='await-fresh-frame-after-native-GET'||r.results.at(-1)?.name!=='denied-wake-withdraws-old-projection-preserves-native-draft'||r.sourceChangedDuringRun!==false||r.cleanupErrors?.length||!r.error?.includes('J2-observation-timeout')) process.exit(1);"
       - name: Foreground expired document transport with genuine live C2 receipt
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |
           node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-transport-expiry.json" transport-expiry
           node -e "const r=require(process.env.RUNNER_TEMP+'/context-transport-expiry.json'); if(r.status!=='PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY'||r.browserPrecondition?.noDefaults!==true||r.browserPrecondition?.focusEmulation!=='NOT_ENABLED_BY_PLAYWRIGHT'||r.foregroundFocusIsolation?.nativeHeadingClicked!==true||r.foregroundFocusIsolation?.composerFocused!==false||r.sourceChangedDuringRun!==false||r.cleanupErrors?.length||r.errors.length||r.requests.length!==1||r.requests[0].method!=='GET'||r.requests[0].status!==200||r.nativeRequestStarts.length!==1||r.forcedWorkerStop!==false||r.foregroundRecovery?.newGrant!==true||r.foregroundRecovery?.actualPostFocusVIEW!==true||r.foregroundRecovery?.sameWorker!==true||r.results.at(-1)?.name!=='new-projection-same-nonfirst-team-no-personal-writes') process.exit(1);"
       - name: Reject stale foreground transport without a fresh handshake
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |
           set +e
           node tests/host/context-replacement-package-browser.mjs "$RUNNER_TEMP/context-transport-expiry-mutant.json" transport-expiry-mutant
@@ -99,7 +106,7 @@ jobs:
           test "$result" -eq 1
           node -e "const a=require(process.env.RUNNER_TEMP+'/context-transport-expiry.json'),r=require(process.env.RUNNER_TEMP+'/context-transport-expiry-mutant.json'); if(r.status!=='FAIL'||r.mutation!=='REMOVE_EXACT_FOREGROUND_INVALID_DOCUMENT_RECOVERY'||r.browserPrecondition?.noDefaults!==true||r.browserPrecondition?.focusEmulation!=='NOT_ENABLED_BY_PLAYWRIGHT'||r.foregroundFocusIsolation?.nativeHeadingClicked!==true||r.foregroundFocusIsolation?.composerFocused!==false||r.phase!=='await-fresh-foreground-grant-and-VIEW'||!r.error?.includes('J4-peer-current-scope-timeout')||r.results.at(-1)?.name!=='real-dormant-document-lease-expires-with-live-C2-no-renewal-or-native-GET'||r.transportOwner?.workerClosed!==false||!Number.isFinite(r.transportOwner?.focusedAt)||!Number.isFinite(r.transportOwner?.observationEndedAt)||r.transportOwner.observationEndedAt<=r.transportOwner.focusedAt||!r.transport?.some(t=>t.type==='HOST_FOCUS'&&t.requestedAt>r.transportOwner.focusedAt&&t.ok===false&&t.reason==='invalid-host-document')||r.transport?.some(t=>t.type==='HOST_HELLO'&&t.requestedAt>r.transportOwner.focusedAt)||r.sourceChangedDuringRun!==false||r.cleanupErrors?.length||r.errors.length||r.requests.length!==1||r.requests[0].method!=='GET'||r.requests[0].status!==200||r.nativeRequestStarts.length!==1||r.forcedWorkerStop!==false) process.exit(1); for(const k of ['sourceHashes','fixtureHashes']) if(JSON.stringify(a[k])!==JSON.stringify(r[k])) process.exit(1);"
       - name: C2 stale native failure preserves newer receipt with exact guard mutation
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |
           node tests/host/context-stale-request-package-browser.mjs "$RUNNER_TEMP/context-stale.json"
           set +e
@@ -109,7 +116,7 @@ jobs:
           test "$result" -eq 1
           node -e "const a=require(process.env.RUNNER_TEMP+'/context-stale.json'),b=require(process.env.RUNNER_TEMP+'/context-stale-mutant.json'); if(a.status!=='PASS_NARROW_OFFLINE_STALE_NATIVE_TERMINAL'||b.status!=='FAIL'||b.mutation!=='RESTORE_OLD_TERMINAL_GUARD'||b.phase!=='new-projection-survives-old-503'||!b.error?.includes('new-projection-revoked-by-stale-terminal')) process.exit(1); for(const r of [a,b]) if(r.sourceChangedDuringRun!==false||r.cleanupErrors?.length||r.errors.length||JSON.stringify(r.requests.map(q=>[q.method,q.status]))!==JSON.stringify([['GET',200],['GET',200],['GET',503]])) process.exit(1); for(const k of ['sourceHashes','fixtureHashes','nativeOrder']) if(JSON.stringify(a[k])!==JSON.stringify(b[k])) process.exit(1);"
       - name: Continuous J1 candidate journey (partial coverage only)
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |
           set +e
           node tests/host/j1-package-journey.mjs "$RUNNER_TEMP/j1.json"
@@ -118,7 +125,7 @@ jobs:
           test "$result" -eq 2
           node -e "const r=require(process.env.RUNNER_TEMP+'/j1.json'); if(r.status!=='PARTIAL_J1_NOT_ACCEPTED') process.exit(1); console.log(r.status)"
       - name: Continuous J3 explicit historical activity slice
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |
           set +e
           node tests/host/j3-package-journey.mjs "$RUNNER_TEMP/j3.json"
@@ -127,39 +134,40 @@ jobs:
           test "$result" -eq 0 -o "$result" -eq 2
           node -e "const r=require(process.env.RUNNER_TEMP+'/j3.json'); if(!['PASS','PARTIAL_NOT_J3_ACCEPTED'].includes(r.status)) process.exit(1); console.log(r.status)"
       - name: Actual packaged homepage first-send causal slice
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: node tests/host/first-send-package-browser.mjs "$RUNNER_TEMP/first-send.json"
       - name: Continuous J2 authenticated ACK and original-time journey
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: node tests/host/j2-package-journey.mjs "$RUNNER_TEMP/j2-journey.json"
       - name: Existing conversation immediate retry after native failure
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: J2_TERMINAL_MODE=failure node tests/host/j2-fast-retry-package.mjs "$RUNNER_TEMP/j2-fast-failure.json"
       - name: Existing conversation immediate retry after native cancellation
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: J2_TERMINAL_MODE=cancelled node tests/host/j2-fast-retry-package.mjs "$RUNNER_TEMP/j2-fast-cancelled.json"
       - name: Packaged profile layout theme and viewport subcontracts
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |
           node tests/host/ui10-package-matrix-browser.mjs "$RUNNER_TEMP/ui10-matrix.json"
           node tests/host/observed-project-mv3-browser.mjs "$RUNNER_TEMP/observed-project-layout.json"
           node tests/host/visible-actions-package-browser.mjs "$RUNNER_TEMP/visible-actions.json"
           FREE_WINDOW_RETENTION_RUN=1 node tests/host/frame-window-retention-package-browser.mjs "$RUNNER_TEMP/frame-window-retention.json"
       - name: Passive local extension status (isolated MV3)
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: node tests/host/local-status-package-browser.mjs "$RUNNER_TEMP/local-status.json"
       - name: Temporary native navigation (isolated MV3, no authentication)
-        if: ${{ !cancelled() }}
-        run: |
-          node tests/host/temporary-navigation-package-browser.mjs "$RUNNER_TEMP/temporary-navigation.json"
-          node tests/host/temporary-project-mv3-browser.mjs "$RUNNER_TEMP/temporary-project-navigation.json"
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        run: node tests/host/temporary-navigation-package-browser.mjs "$RUNNER_TEMP/temporary-navigation.json"
+      - name: Temporary Project navigation (isolated MV3, no authentication)
+        if: ${{ !cancelled() && (github.event_name == 'push' || inputs.diagnostic == 'temporary-project-startup') }}
+        run: node tests/host/temporary-project-mv3-browser.mjs "$RUNNER_TEMP/temporary-project-navigation.json"
       - name: Challenge status remains fail closed (isolated MV3)
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |
           node tests/host/challenge-status-package-browser.mjs "$RUNNER_TEMP/challenge-status.json"
           node tests/host/preauthorization-package-browser.mjs "$RUNNER_TEMP/preauthorization.json"
       - name: Layout mechanism regressions (not MV3 acceptance)
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |
           node tests/host/frame-focus-return-browser.mjs "$RUNNER_TEMP/frame-focus-return.json"
           node tests/host/reading-viewport-browser.mjs
@@ -174,12 +182,13 @@ jobs:
           node tests/host/observed-project-masked-browser.mjs
           node tests/host/temporary-project-list-browser.mjs
       - name: Packaged native snippet save search locate and removal
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: node tests/host/snippets-package-mv3-browser.mjs "$RUNNER_TEMP/snippets-package.json"
       - name: Publish bounded text evidence to logs only
         if: ${{ !cancelled() }}
         run: |
           echo "Source commit: $GITHUB_SHA"
+          echo "Event: $GITHUB_EVENT_NAME (workflow_dispatch is diagnostic only, never full CI)"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
           for name in context-package context-container context-cold context-cold-trace context-cold-recovery context-dormant context-dormant-mutant context-transport-expiry context-transport-expiry-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix visible-actions frame-focus-return local-status observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
@@ -187,7 +196,7 @@ jobs:
   offline-durability-compat:
     # Public repository + standard GitHub-hosted runner only. No paid runner,
     # artifact/cache upload, credentials, deployment or private host access.
-    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -285,7 +294,7 @@ jobs:
   offline-j4-lifecycle:
     # Public repository + standard GitHub-hosted runner only. No paid runner,
     # artifact/cache upload, credentials, deployment or private host access.
-    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

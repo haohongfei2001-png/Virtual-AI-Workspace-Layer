@@ -1,5 +1,7 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+- **临时Project Linux定位改为现有runner单项诊断（待运行）**：原workflow增加只允许当前Free分支/public仓库的手动`temporary-project-startup`入口；复用现有journeys job和原命令，正常push仍选择四job及全部原旅程。按事件分离concurrency，不取消正常push；无新runner、权限、缓存或上传。配置选择合同已核对，初始精确step名单因拆出既有Project命令失配后修正，原失败保留。诊断不计完整CI或验收，不放宽1秒读取/6秒观察；入口实际触发及Linux状态尚待核实。原证据 `currentProjectList20261019.ci39193142624.targetedLinuxDiagnostic`。
+
 - **CI39193142624整体FAIL保留，已取得同源详细焦点/状态记录（93680cc）**：本次local-status原立即加载/15秒条件通过，1.611s、session/accounts各1；不关闭39191841171的未定位启动失败。实际MV3焦点返回8.626s、当前文档与准确父iframe焦点成立，181产品hash与测试hash均核对，源码/包稳定。Node/耐久/J4 jobs成功，J4仍23步PARTIAL、peer无新context NOT_ESTABLISHED。唯一失败转为临时Project首次列表等待6秒超时，尚未搜索/打开；原JSON缺popup状态，不能猜测原因。现只在原观察任务附带最多32条状态变化，保留原读取/启动/期限；一次本地诊断2.037s通过不改判Linux。新日志随下一实质候选合批，不为此重跑整矩阵；原FAIL完整归档。真实403及浏览器工具disabled未解除，10k/100k DEFERRED、完整Free未通过。证据在原 `focusReturn20261019.statusDiagnostic20261019.linuxCI39193142624` 与临时模式 `currentProjectList20261019.ci39193142624`。
 
 - **焦点候选Linux已核对，状态启动失败仍开放（CI39191841171 / a1c2181）**：焦点机制0.833s及实际MV3可见入口/键盘返回8.642s通过；后者原CI只输出PASS摘要，未保存详细JSON日志，不能补造独立hash快照。Node/耐久/J4 job成功，但J4原文仍PARTIAL、无新context的peer恢复NOT_ESTABLISHED。journeys在“本地状态”查询前等待双popover15秒失败，原日志无状态，根因未确定。本地原条件通过不关闭此FAIL；独立原生焦点反例虽能产生0popover/2frame/1返回的同型超时，也不能追溯归因。现只补有界失败surface/焦点/worker/请求及源码校验、worker外网拒绝和原日志清单，保持立即加载、原断言/期限，不预热、不改生产。初次日志清单合同失配已修并保留。下一步取Linux同条件状态定位；不反复重跑旧SHA挑绿。10k/100k DEFERRED，真实403/身份、正向成员/NONE/本人活动与G/U仍开放。原证据 `focusReturn20261019.linuxCI20261019` / `statusDiagnostic20261019`。
