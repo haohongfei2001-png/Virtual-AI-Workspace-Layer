@@ -16701,6 +16701,59 @@
       "vaiwl-frame-renderer-final.log": "4b0d6d62e4eaa1b0fb1e80e72b4371431eb27e15f919c54895ac2e17fb35106d",
       "vaiwl-panel-regression.log": "31c75180be5928e8563dba6c32f6a8c1e79dafef47f9ee83b73a3e0615bfb0d5"
     },
-    "logNormalization": "trailing whitespace only; original hashes retained, raw logs in /private/tmp"
+    "logNormalization": "trailing whitespace only; original hashes retained, raw logs in /private/tmp",
+    "retryClosure": {
+      "baseHead": "fda26d565b39226cafd0edc55f41fcd3e05bd464",
+      "status": "PASS_SCOPED_OFFLINE",
+      "fix": "explicit read retry retains status focus until a fresh current view; repeated conflict preserves owned focus without stealing outside focus; single token and cancellation retained",
+      "finalUnitRegression": 390,
+      "logNormalization": "trailing whitespace only, raw hashes retained",
+      "artifacts": {
+        "vaiwl-read-retry-focus-before.log": {
+          "rawHash": "7b7b886e0f44f6574b80b8b13062edfc7a0dde23f9a8bcea270e8d46e85a1ec5",
+          "savedHash": "06b5c4ff100318664c6dcc7edd84c58f2ccd73722297f49993e95c7ef7e0d8c6"
+        },
+        "vaiwl-read-repeat-focus-before.log": {
+          "rawHash": "1d4957abf30a2f635262d7392afe4d709926c867dd61df6e6dc63096e7e18288",
+          "savedHash": "0eface4cfb61e2ab2b685120d330ab1b75fe870dff3bb1709c6e3b78c1cd5dbb"
+        },
+        "vaiwl-read-retry-final-unit.log": {
+          "rawHash": "fb690ed203dd7a4810e92d164ea234f9caf3071f152e931896c5f97de6581635",
+          "savedHash": "fb690ed203dd7a4810e92d164ea234f9caf3071f152e931896c5f97de6581635"
+        },
+        "vaiwl-read-retry-final-dom.log": {
+          "rawHash": "3c60f0bfd7a60cec4b7a52b0c35213d8733c56e3543dc2ae4599899aec4888ea",
+          "savedHash": "3c60f0bfd7a60cec4b7a52b0c35213d8733c56e3543dc2ae4599899aec4888ea"
+        },
+        "vaiwl-read-retry-ci-contract.log": {
+          "rawHash": "862dfc6a17503e1c3ac1858f988bf1212771972518390495168e0abc10e9e867",
+          "savedHash": "862dfc6a17503e1c3ac1858f988bf1212771972518390495168e0abc10e9e867"
+        },
+        "vaiwl-ci39337052680-targeted-fix.log": {
+          "rawHash": "9e61b335568f9476ee7c9be6a174989a15f3c36f8aa4a2c0f1f05d60234b2859",
+          "savedHash": "9e61b335568f9476ee7c9be6a174989a15f3c36f8aa4a2c0f1f05d60234b2859"
+        }
+      },
+      "reports": {
+        "vaiwl-read-retry-final-mv3-summary.json": "PASS_DIAGNOSTIC_ONLY",
+        "vaiwl-recovery-batch-j1-summary.json": "PARTIAL_J1_NOT_ACCEPTED",
+        "vaiwl-recovery-batch-j4-summary.json": "PARTIAL_J4_NOT_ACCEPTED"
+      },
+      "journeySourceBoundary": "J1/J4 sampled frozen candidate before final two-line repeated-error focus restoration; exact sourceHashes retained per report. Final affected read-error MV3 and DOM were rerun; do not claim J1/J4 final-source replay.",
+      "ci": {
+        "run": 39337052680,
+        "source": "fda26d565b39226cafd0edc55f41fcd3e05bd464",
+        "browserJobs": "3 SUCCESS",
+        "nodeJob": "FAIL preserved",
+        "rootCauses": [
+          "existing row-window fixture extractor re-exported already exported fixture from 446955ce",
+          "snippet historical checksum guard did not account for two added focus assertions"
+        ],
+        "repair": "keep exported fixture once; require exactly both new assertions then compare unchanged original historical journey hash",
+        "targeted": "PASS",
+        "finalCI": "PENDING"
+      },
+      "scope": "No identity source, old receipt, native writes or request budget changes; J1/J4 stay PARTIAL; scales DEFERRED"
+    }
   }
 }

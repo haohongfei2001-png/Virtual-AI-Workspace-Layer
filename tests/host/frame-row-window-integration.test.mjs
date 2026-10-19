@@ -5,7 +5,7 @@ import {freeNavigationSnapshot} from '../../src/navigation/free-view.mjs';
 import {projectFreeFrame} from '../../src/runtime/free-frame-projection.mjs';
 const url=new URL('./free-frame-client.test.mjs',import.meta.url),text=await readFile(url,'utf8'),boundary="test('actual lifecycle composition";
 assert.equal(text.split(boundary).length,2);
-const source=(text.slice(0,text.indexOf(boundary))+'\nexport {fixture,drain,deferred};').replace(/from '(\.\.?\/[^']+)'/g,(_,path)=>"from '"+new URL(path,url).href+"'");
+const source=(text.slice(0,text.indexOf(boundary))+'\nexport {drain,deferred};').replace(/from '(\.\.?\/[^']+)'/g,(_,path)=>"from '"+new URL(path,url).href+"'");
 const {fixture,drain,deferred}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 const windows=()=>[{groupId:'p',list:'current',rowOffset:0,rowLimit:17},{groupId:'p',list:'old',rowOffset:0,rowLimit:5},{groupId:'q',list:'current',rowOffset:0,rowLimit:17}];
 function current(stamp){const refs=[],projects=['p','q','hidden'].map(id=>{const members=Array.from({length:35},(_,i)=>({id:id+'_'+i,scope:'scope',nativeTitle:stamp+' '+id+' '+i,nativeUrl:'https://chatgpt.com/c/'+id+'_'+i,membership:'PROJECT',projectId:id,activityDecision:{segment:i<30?0:2}}));refs.push(...members);return {id,scope:'scope',nativeName:id,members,activityDecision:{segment:0}};});return {snapshot:freeNavigationSnapshot({scope:'scope',viewMode:'free',revision:1,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},projects,refs})};}

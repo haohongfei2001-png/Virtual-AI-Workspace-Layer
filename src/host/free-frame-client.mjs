@@ -87,22 +87,22 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeQuery=null;clearAutoNotice();navigation?.invalidate?.('read-stopped');
   readTerminal={retryToken,grantId:grant.id,mountId:grant.mountId,scopeGrantId:grant.scopeGrantId};
   if(!readErrorPanel){readErrorRoot=doc.createElement('div');readErrorRoot.setAttribute('data-vaiwl-read-error-container','');privateRoot.append(readErrorRoot);
-   readErrorPanel=readErrorFactory({document:doc,container:readErrorRoot,onExit:()=>lifecycle.exit(),onRetry:()=>{
+   readErrorPanel=readErrorFactory({document:doc,container:readErrorRoot,onExit:()=>lifecycle.exit(),onRetry:({restoreFocus=false}={})=>{
     const stopped=readTerminal;
     if(!stopped||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||grant.id!==stopped.grantId||grant.mountId!==stopped.mountId||grant.scopeGrantId!==stopped.scopeGrantId)return;
-    readTerminal=null;void read(query,true,null,stopped.retryToken);
+    readTerminal=null;void resumePanelView(restoreFocus,stopped.retryToken);
    }});
   }
   readErrorPanel.show({retryable:true});state({state:'read-stopped',reason});
  }
  function fail(reason){if(closed)return;if(recoverable(reason)&&grantCurrent()&&Date.parse(grant?.expiresAt)>now()){openRecovery(true);return;}state({state:'failed',reason});lifecycle.stop(reason);}
- async function resumePanelView(restoreFocus=false){
+ async function resumePanelView(restoreFocus=false,retryToken=null){
   panelReturnCancel?.();const current=grant,renderer=navigation;let pending=restoreFocus===true;
   const interrupt=()=>{pending=false;},events=['pointerdown','keydown','focusin','visibilitychange'];
   const cleanup=()=>{for(const type of events)doc.removeEventListener?.(type,interrupt,true);doc.defaultView?.removeEventListener?.('blur',interrupt,true);if(panelReturnCancel===cancelReturn)panelReturnCancel=null;};
   const cancelReturn=()=>{pending=false;cleanup();};panelReturnCancel=cancelReturn;
   if(pending){for(const type of events)doc.addEventListener?.(type,interrupt,true);doc.defaultView?.addEventListener?.('blur',interrupt,true);}
-  try{const page=await read(query,true);if(page&&pending&&!closed&&grant===current&&navigation===renderer&&grantCurrent()&&Date.parse(grant.expiresAt)>now())renderer?.focusSurface?.();}
+  try{const page=await read(query,true,null,retryToken);if(page&&pending&&!closed&&grant===current&&navigation===renderer&&grantCurrent()&&Date.parse(grant.expiresAt)>now())renderer?.focusSurface?.();}
   finally{cleanup();}
  }
  function openRecovery(fromFailure=false){if(readTerminal)return;dispatchEpoch++;

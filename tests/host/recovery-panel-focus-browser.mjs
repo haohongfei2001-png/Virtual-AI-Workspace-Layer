@@ -46,4 +46,14 @@ test('recovery and backup keep keyboard focus within an explicit local operation
   check('draft-unchanged',document.querySelector('#outside').value==='KEEP DRAFT');return checks;
  });
  console.log(JSON.stringify(results));assert.deepEqual(results.filter(r=>!r.pass),[]);
+ await page.evaluate(async()=>{
+  const {createFreeFrameReadError}=await import('/src/host/free-frame-read-error.mjs');
+  globalThis.retryCalls=[];globalThis.readError=createFreeFrameReadError({document,container:document.querySelector('#panel'),onRetry:value=>retryCalls.push({value,focusedStatus:document.activeElement?.getAttribute('role')==='status'}),onExit(){}});readError.show();
+ });
+ await page.getByRole('button',{name:'重新读取',exact:true}).click();
+ assert.deepEqual(await page.evaluate(()=>retryCalls),[{value:{restoreFocus:true},focusedStatus:true}]);
+ await page.evaluate(()=>readError.show());
+ assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute('role')),'status','a new conflict keeps focus in its replacement feedback');
+ await page.locator('#outside').focus();await page.evaluate(()=>readError.show());
+ assert.equal(await page.evaluate(()=>document.activeElement.id),'outside');
 });

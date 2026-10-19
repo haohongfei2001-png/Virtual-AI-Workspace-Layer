@@ -170,6 +170,7 @@ jobs:
         if: ${{ !cancelled() && github.event_name == 'push' }}
         run: |
           node tests/host/frame-focus-return-browser.mjs "$RUNNER_TEMP/frame-focus-return.json"
+          node --test tests/host/recovery-panel-focus-browser.mjs tests/host/frame-renderer-browser.mjs
           node tests/host/reading-viewport-browser.mjs
           node tests/host/return-slot-browser.mjs
           node tests/host/return-gap-browser.mjs
