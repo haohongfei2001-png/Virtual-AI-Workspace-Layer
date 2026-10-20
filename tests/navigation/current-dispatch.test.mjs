@@ -139,3 +139,10 @@ test('retired href link cannot cancel a fresh current-target acknowledgement',as
  assert.equal(f.nav.view().mode,'reading');assert.equal(f.commands.length,1);
  }finally{f.nav.stop();}
 });
+
+for(const label of ['工作空间设置','关闭设置'])test('retired settings callback cannot cancel a fresh navigation ACK: '+label,async()=>{
+ const f=setupCurrent();try{f.button('工作空间设置').click();const retired=f.button(label);f.nav.updateFrameProjection(projection());
+ f.pane().querySelector('[data-ref-id="P2_0"]').click();assert.equal(f.commands.length,1);retired.click();f.reply({state:'already-current'});await tick();
+ assert.equal(f.nav.view().mode,'reading');assert.equal(f.commands.length,1);
+ }finally{f.nav.stop();}
+});

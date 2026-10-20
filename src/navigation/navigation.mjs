@@ -429,8 +429,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     renderNavigationFeedback(page);
     const currentSlot=frameProjection&&searchQuery===null&&!view.worksetOpen?node(doc,'div',{}):null;if(currentSlot)page.append(currentSlot);
     if(frameProjection&&surface.role==='workspace'){
-      const settingsScope=frameProjection.scope,settingsLive=()=>!stopped&&frameProjection?.scope===settingsScope;
-      const trigger=graphic(button('工作空间设置',()=>{if(!settingsLive())return;settingsOpen=!settingsOpen;requestRender();}),'more');trigger.setAttribute('aria-expanded',String(settingsOpen));trigger.dataset.focusKey='workspace-settings';page.append(trigger);
+      const settingsScope=frameProjection.scope,settingsView=view,settingsLive=()=>!stopped&&frameProjection?.scope===settingsScope;
+      // Reject retired controls before they can advance the navigation intent.
+      const settingsButton=(label,fn,text='',cls='square')=>{const control=button(label,fn,text,cls,()=>settingsLive()&&roots?.workspace?.scroller===page&&currentProjectControl(control,settingsView,'workspace'));return control;};
+      const trigger=graphic(settingsButton('工作空间设置',()=>{if(!settingsLive())return;settingsOpen=!settingsOpen;requestRender();}),'more');trigger.setAttribute('aria-expanded',String(settingsOpen));trigger.dataset.focusKey='workspace-settings';page.append(trigger);
       if(settingsOpen){
         const settings=node(doc,'section',{'aria-label':'工作空间设置',class:'toolbar'});settings.append(node(doc,'strong',{},'工作空间设置'));
         if(typeof onHorizonRequest==='function'){
@@ -445,10 +447,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
           select.onchange=()=>{if(horizonPending){select.value=committed;return;}if(settingsLive()&&settingsOpen&&roots?.workspace?.scroller===page){advanceNavigationIntent();void requestHorizon(select.value);}};label.append(select);settings.append(label,node(doc,'span',{},'当前范围：'+String(frameProjection.viewSession.H)+'天'));
           if(horizonPending||horizonError)settings.append(node(doc,'span',{role:'status'},horizonPending?'正在更新时间范围…':horizonError));
         }
-        if(typeof onSnippetsRequest==='function')settings.append(button('已保存片段',()=>{if(settingsLive()&&settingsOpen)onSnippetsRequest();},'已保存片段','more'));
-        if(typeof onBackupRequest==='function')settings.append(button('备份与导入',()=>{if(settingsLive()&&settingsOpen)onBackupRequest();},'备份与导入','more'));
-        if(typeof onRecoveryRequest==='function')settings.append(button('本地数据恢复',()=>{if(settingsLive()&&settingsOpen)onRecoveryRequest();},'本地数据恢复','more'));
-        settings.append(button('关闭设置',()=>{if(!settingsLive())return;settingsOpen=false;requestRender();},'关闭设置','more'));page.append(settings);
+        if(typeof onSnippetsRequest==='function')settings.append(settingsButton('已保存片段',()=>{if(settingsLive()&&settingsOpen)onSnippetsRequest();},'已保存片段','more'));
+        if(typeof onBackupRequest==='function')settings.append(settingsButton('备份与导入',()=>{if(settingsLive()&&settingsOpen)onBackupRequest();},'备份与导入','more'));
+        if(typeof onRecoveryRequest==='function')settings.append(settingsButton('本地数据恢复',()=>{if(settingsLive()&&settingsOpen)onRecoveryRequest();},'本地数据恢复','more'));
+        settings.append(settingsButton('关闭设置',()=>{if(!settingsLive())return;settingsOpen=false;requestRender();},'关闭设置','more'));page.append(settings);
       }
     }
     if(timePolicyNotice&&Date.now()<timePolicyNotice.expires&&view.mode==='workspace'){const notice=timePolicyNotice,section=node(doc,'div',{class:'toolbar',role:'status','aria-label':'自动时间范围调整'});section.append(node(doc,'span',{},notice.error?'撤销结果未确认，可在设置中手动选择范围。':'已根据已核验项目调整时间范围。'));if(!notice.error){const undo=button('撤销自动时间范围调整',()=>void undoTimePolicy(notice),'撤销');undo.disabled=notice.busy;undo.dataset.focusKey='undo-time-policy';section.append(undo);}page.append(section);}

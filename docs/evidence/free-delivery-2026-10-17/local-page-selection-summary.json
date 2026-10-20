@@ -1,4 +1,101 @@
 {
+  "retiredSettingsControls20261021": {
+    "baseline": "504d2eaf63bec21f0595dba0979573fc5db8924a",
+    "cause": "Retired settings callbacks survived same-scope redraw or close/reopen; generic button advanced navigation intent before callback guards, canceling newer navigation ACK.",
+    "fix": "Settings trigger, close and three panel entries check scope/view/current page and current pane membership before advancing intent. Existing select guard retained.",
+    "red": {
+      "tests": 177,
+      "pass": 171,
+      "fail": 6
+    },
+    "focused": {
+      "tests": 232,
+      "fail": 0,
+      "skipped": 0
+    },
+    "browser": {
+      "status": "PASS",
+      "kind": "WEB_MECHANISM_ONLY_REAL_SHADOW_DOM_SYNTHETIC_PROJECTION",
+      "combinations": 6,
+      "sourceStable": true,
+      "firstFailure": "Fixture omitted frame-row-windows.mjs from exact host module allowlist. Added that dependency and its hash; original layout/action/close assertions retained.",
+      "MV3": "NOT_RUN",
+      "realChatGPT": "NOT_RUN"
+    },
+    "review": "Independent read-only scope A-B-A and close/reopen callbacks plus precise fixture allowlist review: no blocker.",
+    "sourceHashes": {
+      "src/navigation/navigation.mjs": "1146a1b374538b59694d965bc8782aea4f0c386117f03a539280782cf51dbcb7",
+      "tests/host/frame-projection-renderer.test.mjs": "4ea6b218b569bc0f886d523d11a2cc216e285d0c60800be19319570ff1988be2",
+      "tests/navigation/current-dispatch.test.mjs": "0e947238f3e6ea793c09ffb1f99c2ce8077a4b3e940d9f1523483947e65e88e7",
+      "tests/host/settings-layout-browser.mjs": "8fbd0740c64caefbe86ccc6bbd5cbba1f13f8ee4ec3ae8490528cc9f34060574"
+    },
+    "package": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 184,
+      "unpacked": "/private/tmp/vaiwl-settings-package/extension",
+      "archive": "/private/tmp/vaiwl-settings-package/vaiwl-free-host-development.zip",
+      "archiveSha256": "d6b94833728c1d2b6e18c9be8e5fe08e3f12d5a3311498918155c22584319601"
+    },
+    "priorCI": {
+      "run": 39497754647,
+      "head": "504d2eaf63bec21f0595dba0979573fc5db8924a",
+      "allFourJobs": "success",
+      "node": {
+        "tests": 9673,
+        "pass": 9673,
+        "fail": 0,
+        "durationMs": 141814.791415
+      },
+      "limits": "Prior tree only; green J4 job is not complete J4 acceptance or proof of historic race causes."
+    },
+    "limits": [
+      "Retired node invocation is deterministic renderer callback evidence, not a real browser stale event schedule.",
+      "Real identity/full directory/J1-J4/IME/PAIA/installation remain unestablished; 10k/100k DEFERRED."
+    ],
+    "files": [
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-settings-red.tap.gz",
+        "rawBytes": 22432,
+        "rawSha256": "78173be17b8858a0f93046c54eecde3847e81b8d458088d3994b72b4ae59e051"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-settings-focused.tap.gz",
+        "rawBytes": 52532,
+        "rawSha256": "c9cc934b7c80ddddb26a8fb8e421bac8aa674aeccaaec400a6826304dd86861d"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-settings-browser.json.gz",
+        "rawBytes": 2066,
+        "rawSha256": "88dc7722149d87f8a595b788b8d0cfd97cdd57c0ba02b57f36a9f968d46270bb"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-settings-browser-fixed.json.gz",
+        "rawBytes": 16540,
+        "rawSha256": "a6dbf5bb37636dcec4b2de8e08ef64b4bd69cc82bd3329a33aad91293342a6c9"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-settings-build.json.gz",
+        "rawBytes": 339,
+        "rawSha256": "9ddb887b10ee88985713fc7215e4616448e864a78879f58e2c732f1552410b65"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-settings-verify.json.gz",
+        "rawBytes": 105,
+        "rawSha256": "c27fd849e03c560f5dce3aa757d2e31e6da605b3b2c2c28771bd4cb6f1a0644c"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-settings-prior-ci.json.gz",
+        "rawBytes": 15394,
+        "rawSha256": "b1090c278248680bc03766f51e29b3fbd1a145d1456c877b194e117050f700d3"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-settings-prior-ci-node.log.gz",
+        "rawBytes": 1987525,
+        "rawSha256": "36294f898f8a0e1c6e8d746b5815eadbf5b0607118461922b272db499c8589a3"
+      }
+    ]
+  },
   "frameSnapshotCompatibility20261021": {
     "baseline": "01ad7bd3",
     "regressionIntroducedBy": "385b643d",

@@ -357,3 +357,28 @@ for(const role of ['workspace','sidebar'])for(const boundary of ['same-scope-ref
  retired.click();assert.equal(state(owner),before);if(current)assert.equal(state(current),currentBefore);assert.equal(calls.length,queries);assert.equal(saves.length,saveCount);
  if(boundary==='same-scope-refresh'||boundary==='scope-replacement'){positive('P1');assert.equal(saves.at(-1).scope,boundary==='scope-replacement'?'scopeB':'scopeA');}
 });
+
+for(const boundary of ['refresh','scope','reopen','invalidate','stop'])test('retired settings entries cannot open panels after '+boundary,()=>{
+ const calls=[],f=fixture('workspace',()=>null,null,null,{}, {onSnippetsRequest:()=>calls.push('snippets'),onBackupRequest:()=>calls.push('backup'),onRecoveryRequest:()=>calls.push('recovery')});
+ try{
+ f.nav.updateFrameProjection(projection());f.button('工作空间设置').click();
+ const labels=['已保存片段','备份与导入','本地数据恢复'],retired=labels.map(label=>f.button(label));
+ for(const control of retired)control.click();assert.deepEqual(calls,['snippets','backup','recovery']);calls.length=0;
+ if(boundary==='refresh')f.nav.updateFrameProjection(projection());
+ if(boundary==='scope')f.nav.updateFrameProjection({...projection(),scope:'scopeB'});
+ if(boundary==='reopen'){f.button('关闭设置').click();f.button('工作空间设置').click();}
+ if(boundary==='invalidate'||boundary==='stop')f.nav[boundary]();
+ for(const control of retired)control.click();assert.deepEqual(calls,[]);
+ if(boundary==='refresh'||boundary==='scope'||boundary==='reopen'){
+ if(!f.button(labels[0]))f.button('工作空间设置').click();
+ for(const label of labels){assert(!retired.includes(f.button(label)));f.button(label).click();}
+ assert.deepEqual(calls,['snippets','backup','recovery']);
+ }
+ }finally{f.nav.stop();}
+});
+for(const label of ['工作空间设置','关闭设置'])test('retired settings toggle cannot change the current panel: '+label,()=>{
+ const f=fixture();try{f.nav.updateFrameProjection(projection());f.button('工作空间设置').click();const retired=f.button(label);f.nav.updateFrameProjection(projection());
+ assert(f.button('关闭设置'));retired.click();assert(f.button('关闭设置'));
+ f.button('关闭设置').click();assert.equal(f.button('关闭设置'),undefined);f.button('工作空间设置').click();assert(f.button('关闭设置'));
+ }finally{f.nav.stop();}
+});
