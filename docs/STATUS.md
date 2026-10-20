@@ -9,6 +9,9 @@
 
 上一504d2eaf的CI39497754647四job终态SUCCESS，Node9673/9673、141814.791415ms；只归属上一树，不代替本批完整矩阵，也不改判历史J1/J4/peer竞态。可信真实身份/current-space、服务器完整目录/成员/本人活动、完整J1/J4、IME/PAIA及安装发布仍开放；10k/100k DEFERRED。继续原计划依赖就绪工程，无新增账户诊断。
 
+本批本地源码提交dc1d7d8a3787e094e094341ee0132b9e7e77bce6已保全；正常push在75002ms后443连接超时，进程已终态。随后PR API确认远端仍504d2eaf，Draft/base不变，尚未同步；不循环重试或强推。后继优先正常同步本地检查点，当前2258数字副本及3stash保持。
+
+
 ## 修复链接隔离引入的原快照兼容回归（2026-10-21，基线01ad7bd3）
 
 CI39495882298的frame-renderer-browser原single-owner-plan-dto失败已本地原脚本复现。根因是本地385b643d的退休链接guard误要求frameProjection，现有raw snapshot frame路径因此被拒；现要求两种路径共有的有效snapshot，保留原view、当前pane节点成员、stop和invalidate保护。随后原测试的modifier正控仍跨反馈重绘持有已退休link；保留这次FAIL，并新增退休节点拒绝断言，再取得当前连接link验证原默认导航/零重复RPC，不删除原断言。
