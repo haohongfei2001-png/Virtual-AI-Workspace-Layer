@@ -3875,3 +3875,5 @@ Round332 final integration: **6421/6421 Node PASS**, zero skips, terminal exit0.
 ## 重新启用验收观察器闭合（2026-10-20，产品源码863fff04）
 
 已确认并修复UI-13观察器的两处漏判：原先只按当前URL查frame，旧frame换URL可逃过私有投影检查；原生输入后才记录cleanLayout且未断言，可能漏掉尚未释放的遮罩。现在保留原frame身份并去重检查，未detach但不可读仍失败；任何输入前先断言reading/history的visibility、interactivity、HTML inert及popover关闭，原草稿、document/editor和新授权检查保留。原RED为2通过/3失败，13项最终定向通过，独立只读审查无阻断。一次MODERN非首Team实际headless安装包停用→重启用→原生目标文档三步通过，旧私有frame脱离、输入前自然清理成立、新grant拒绝旧授权，源码/fixture无漂移。证据 `reenableLifecycleOracle20261020`；这是观察器修复及局部S，不是产品缺陷已复现、完整UI-13/J4或真实安装验收。产品源码未改，不重复全量/规模；原CI39353010626继续运行，真实身份/目录与10k/100k DEFERRED保持。
+
+停用五状态观察器存在相同URL漏检与布局只记录的问题，已合批修正：每个case保留原两个Frame身份，在任何生成停止/编辑器输入前检查reading/history的自然可见与交互，并强制断言事后cleanLayout。原RED为1通过/2失败，23项合批定向通过、独审无阻断；一次MODERN实际headless五状态全部通过，含双开/单开/双关与明确标记的离线synthetic generation，原生生成继续且原停止按钮仅触发一次。私有frame脱离、草稿/原document/editor保持，源码/fixture无漂移。证据 `disableLifecycleOracle20261020`。未改产品、预算或权限；生成夹具不是实际ChatGPT G，完整UI-12/13/J4及真实来源不升级。原863fff04的CI Node与J4 job已完成成功，其余在途；job绿色不能冒充完整J4。

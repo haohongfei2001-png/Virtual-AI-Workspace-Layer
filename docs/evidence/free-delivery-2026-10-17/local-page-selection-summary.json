@@ -1,4 +1,47 @@
 {
+"disableLifecycleOracle20261020": {
+  "baseline": "cb87e5aa6fe5b4e39242b71d73429732c8163b72",
+  "productionSource": "863fff0440822e4b99e49222b091af8b92a5408e",
+  "kind": "TEST_OBSERVER_FIX_ONLY",
+  "red": {
+    "pass": 1,
+    "fail": 2
+  },
+  "targeted": {
+    "pass": 23,
+    "fail": 0,
+    "skip": 0
+  },
+  "browser": {
+    "profile": "MODERN",
+    "status": "PASS",
+    "states": 5,
+    "realChatGPT": "NOT_RUN",
+    "fullJ4": "NOT_ACCEPTED"
+  },
+  "files": {
+    "disable-oracle-red.log": {
+      "path": "local-disable-oracle-red.log.gz",
+      "sha256": "78f52162757802e3e39b8dbfeea71f81bc36a2933fedf66bfb51cf80342ed0d9"
+    },
+    "disable-oracle-green.log": {
+      "path": "local-disable-oracle-green.log.gz",
+      "sha256": "cb1f1138c9b2189d164ecfe41c1e46bc56b6a0cc33eff77a9e973107dd6fb25e"
+    },
+    "disable-modern-final.json": {
+      "path": "local-disable-modern-final.json.gz",
+      "sha256": "f5085321eb9c0231861fff99f169d58395c8fdd301f6db518958a762ae04e29a"
+    },
+    "disable-modern-final.log": {
+      "path": "local-disable-modern-final.log.gz",
+      "sha256": "d8777d890e045ae4cbae887ed87a668b7ef6669dbeb204011212101736edeb65"
+    }
+  },
+  "sourceHashes": {
+    "tests/host/disable-states-package-mv3-browser.mjs": "df9882a22c83e269a7b1c18d366c2c8aa4392037c66d75781856f9b4a9d79765",
+    "tests/host/disable-lifecycle-oracle.test.mjs": "591de578862d141cd8a7df55c6cc53e714d4ce3c381f74560b26b4de87c68222"
+  }
+},
 "reenableLifecycleOracle20261020": {
   "baseline": "863fff0440822e4b99e49222b091af8b92a5408e",
   "kind": "TEST_OBSERVER_FIX_ONLY",

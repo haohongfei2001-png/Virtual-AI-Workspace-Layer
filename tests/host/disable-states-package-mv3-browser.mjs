@@ -28,11 +28,17 @@ try{
  await writeFile(join(controllerDir,'controller.js'),`const target=${JSON.stringify(id)};globalThis.targetState=async()=>{const v=await chrome.management.get(target);return {id:v.id,enabled:v.enabled};};globalThis.setTargetEnabled=async enabled=>{if(typeof enabled!=='boolean')throw Error('invalid-state');await chrome.management.setEnabled(target,enabled);return targetState();};`);
  const {id:controllerId}=await cdp.send('Extensions.loadUnpacked',{path:controllerDir}),controller=await context.newPage();await controller.goto(`chrome-extension://${controllerId}/controller.html`);
  const frameURLs=['workspace','sidebar'].map(role=>`chrome-extension://${id}/${role}.html`);
- async function absence(page){
+ async function absence(page,oldFrames){
   const frames=page.frames().filter(f=>frameURLs.includes(f.url())),states=[];
   const connected=await page.locator('iframe').evaluateAll((nodes,urls)=>nodes.filter(n=>urls.includes(n.src)).length,frameURLs);assert(connected<=frames.length,'connected private frame cannot go unchecked');
-  for(const frame of frames)try{states.push(await frame.evaluate(()=>{let present=false;const walk=root=>{for(const n of root.querySelectorAll('*')){if(n.shadowRoot)walk(n.shadowRoot);for(const c of n.childNodes)if(c.nodeType===Node.TEXT_NODE&&['Research','Ordinary conversation','Membership not loaded'].some(s=>(c.textContent??'').includes(s)))present=true;}};walk(document);return {reachable:true,privatePresent:present};}));}catch(e){if(!frame.isDetached())throw Error('connected-private-frame-unreadable:'+e.message);states.push({detached:true,privatePresent:false});}
+  for(const frame of new Set([...oldFrames,...frames])){if(frame.isDetached()){states.push({detached:true,privatePresent:false});continue;}try{states.push(await frame.evaluate(()=>{let present=false;const walk=root=>{for(const n of root.querySelectorAll('*')){if(n.shadowRoot)walk(n.shadowRoot);for(const c of n.childNodes)if(c.nodeType===Node.TEXT_NODE&&['Research','Ordinary conversation','Membership not loaded'].some(s=>(c.textContent??'').includes(s)))present=true;}};walk(document);return {reachable:true,privatePresent:present};}));}catch(e){if(!frame.isDetached())throw Error('connected-private-frame-unreadable:'+e.message);states.push({detached:true,privatePresent:false});}}
   return {privateProjectionAbsent:states.every(s=>!s.privatePresent),frames:states};
+ }
+ async function naturalState(page){
+  const state=await page.evaluate(()=>{const style=n=>({visibility:getComputedStyle(n).visibility,interactivity:getComputedStyle(n).interactivity,htmlInert:n.hasAttribute('inert')});return {openOwned:document.querySelectorAll('[data-va-owned]:popover-open').length,reading:style(document.querySelector('#reading')),history:style(document.querySelector('nav[aria-label="Chat history"]'))};});
+  assert.equal(state.openOwned,0,'disable itself must close surfaces');
+  for(const area of [state.reading,state.history]){assert.equal(area.visibility,'visible');assert.notEqual(area.interactivity,'inert');assert.equal(area.htmlInert,false);}
+  return state;
  }
  async function surfaceState(page){return page.evaluate(()=>Object.fromEntries(['workspace','sidebar'].map(role=>[role,!!document.querySelector('[data-va-owned][id$="_'+role+'"]')?.matches(':popover-open')])));}
  for(const mode of ['both-open','workspace-only','sidebar-only','both-closed','synthetic-generation']){
@@ -41,7 +47,8 @@ try{
   const page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));await page.goto(selected.modern?server.origin+selected.entryPath:server.url);
   await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned] iframe').length===2,{},{timeout:15000});await page.frameLocator('iframe[title="工作空间"]').getByText('Ordinary conversation',{exact:true}).waitFor({state:'attached',timeout:15000});if(await page.locator('[data-va-owned]:popover-open').count()!==2)await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2);
   if(selected.modern){const workspace=page.frames().find(f=>f.url()===frameURLs[0]);assert(workspace);assert.equal(await workspace.evaluate(()=>globalThis.disableStatesScope),selected.scopeKey,'MODERN UI must use independently selected nonfirst Team');const native=server.snapshot().nativeRequests.slice(nativeRequestStart);assert(native.some(r=>r.path==='/backend-api/conversation/'+selected.conversationId&&r.context===selected.contextId),'native account-bound current-conversation request required');}
-  assert.equal((await absence(page)).privateProjectionAbsent,false,'shadow-private detection positive control');
+  const oldFrames=page.frames().filter(f=>frameURLs.includes(f.url()));assert.equal(oldFrames.length,2);
+  assert.equal((await absence(page,oldFrames)).privateProjectionAbsent,false,'shadow-private detection positive control');
   const worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`));assert(worker);assert.equal(await worker.evaluate(async()=>{try{await fetch('https://example.com/');return false;}catch{return true;}}),true);
   await page.locator('textarea').fill('DISABLE_STATES_DRAFT');await page.evaluate(()=>{globalThis.statesEditor=document.querySelector('textarea');globalThis.statesDocument=document;globalThis.statesPageHides=0;addEventListener('pagehide',()=>statesPageHides++);});
   if(mode==='synthetic-generation'){
@@ -56,7 +63,8 @@ try{
   await page.waitForTimeout(100);const before=await surfaceState(page);assert.deepEqual(before,expected,'requested combination must be declaratively reachable');
   const ticksBefore=mode==='synthetic-generation'?await page.evaluate(()=>syntheticGeneration.ticks):null;
   assert.deepEqual(await controller.evaluate(()=>setTargetEnabled(false)),{id,enabled:false});
-  let privateState;for(let i=0;i<50;i++){privateState=await absence(page);if(privateState.privateProjectionAbsent)break;await page.waitForTimeout(100);}assert.equal(privateState.privateProjectionAbsent,true);
+  let privateState;for(let i=0;i<50;i++){privateState=await absence(page,oldFrames);if(privateState.privateProjectionAbsent)break;await page.waitForTimeout(100);}assert.equal(privateState.privateProjectionAbsent,true);
+  const natural=await naturalState(page);
   let generation=null;
   if(mode==='synthetic-generation'){
    const ticksAfterDisable=await page.evaluate(()=>syntheticGeneration.ticks);await page.waitForFunction(before=>syntheticGeneration.ticks>before+2,ticksAfterDisable);
@@ -66,8 +74,8 @@ try{
   }
   await page.locator('textarea').press('End');await page.locator('textarea').pressSequentially('_AFTER_DISABLE');
   const native=await page.evaluate(()=>({nativeOperable:document.activeElement===statesEditor&&document.querySelector('textarea')===statesEditor,draft:statesEditor.value,sameDocument:document===statesDocument,pageHides:statesPageHides,cleanLayout:document.querySelectorAll('[data-va-owned]:popover-open').length===0&&getComputedStyle(document.querySelector('#reading')).visibility==='visible'}));
-  assert.equal(native.nativeOperable,true);assert.equal(native.draft,'DISABLE_STATES_DRAFT_AFTER_DISABLE');assert.equal(native.sameDocument,true);assert.equal(native.pageHides,0);
-  report.results.push({name:mode,status:'PASS',disableConfirmed:true,workerExternalNetworkBlocked:true,privateDetectorPositiveControl:true,before,...native,...privateState,...(generation?{generation}:{})});await page.close();
+  assert.equal(native.cleanLayout,true);assert.equal(native.nativeOperable,true);assert.equal(native.draft,'DISABLE_STATES_DRAFT_AFTER_DISABLE');assert.equal(native.sameDocument,true);assert.equal(native.pageHides,0);
+  report.results.push({name:mode,status:'PASS',disableConfirmed:true,workerExternalNetworkBlocked:true,privateDetectorPositiveControl:true,before,natural,...native,...privateState,...(generation?{generation}:{})});await page.close();
  }
  assert.deepEqual(report.errors,[]);assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');report.browser=context.browser().version();report.status='PASS';
 }catch(error){report.status='FAIL';report.error=error.stack;try{report.diagnostic=await context.pages().at(-1).evaluate(()=>({url:location.href,dataset:{...document.documentElement.dataset},owned:[...document.querySelectorAll('[data-va-owned]')].map(n=>({tag:n.tagName,id:n.id,open:n.matches(':popover-open')})),frames:[...document.querySelectorAll('iframe')].map(n=>n.src),body:document.body.innerText.slice(0,2000)}));report.fixtureRequests=server.snapshot();report.workers=context.serviceWorkers().map(w=>w.url());report.frames=await Promise.all(context.pages().at(-1).frames().map(async f=>({url:f.url(),detached:f.isDetached(),state:await f.evaluate(()=>({dataset:{...document.documentElement.dataset},readyState:document.readyState})).catch(e=>({error:e.message}))}))); }catch{}process.exitCode=1;}finally{await context?.close();await server.close();report.fixtureChangedDuringRun=(await Promise.all(Object.entries(fixtureSourceHashes).map(async([p,h])=>hash(await readFile(new URL(p,import.meta.url)))!==h))).some(Boolean);report.sourceChangedDuringRun=(await Promise.all(Object.entries(info.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean)||hash(await readFile(script))!==scriptHash;if(report.sourceChangedDuringRun||report.fixtureChangedDuringRun){report.status='FAIL';process.exitCode=1;}await writeFile(output,JSON.stringify(report,null,2)+'\n');}console.log(JSON.stringify({status:report.status,error:report.error,results:report.results}));
