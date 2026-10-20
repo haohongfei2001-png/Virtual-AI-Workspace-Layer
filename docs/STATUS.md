@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## Linux J1 原失败定位（2026-10-20，CI39361840230）
+
+91a34d2a的CI已终态：Node、耐久兼容、J4局部job通过，journeys仅J1候选滚动断言失败。正式项目晋升/定位/焦点已到达；原迁移DTO携带563，但失败日志缺DOM前后值，根因仍NOT_ESTABLISHED，不认定已修。补原runner被动有界候选布局/滚动采样与点击前、点击时、返回后值，断言/期限不改；本地隔离连续旅程563→563→563、源码/runner无漂移，仅PARTIAL，不能改判Linux失败。原FAIL及同源本地记录见j1LinuxScrollObservation20261020；没有新增真实请求、扩大规模或推测生产补丁。c3972d75生命周期接线成果保留，2258副本/3stash未动；完整Free仍未交付。
+
 ## 同步与生命周期接线（2026-10-20，91a34d2a）
 
 原分支已正常推送并由PR16 API确认91a34d2a；历史网络阻塞记录不追溯改写。新补实际binding composition验证（未改产品）：恢复STATUS计划/备份UPLOAD缓冲先使service.isIdle=false，经port断连、父文档失效、mount释放、tab关闭均恢复idle，45项通过，证据 bindingRetirementIntegration20261020。此为明确browser/IDB doubles的集成证明，不冒充真实浏览器自然休眠。CI39361840230耐久兼容已通过，其他任务尚在途，未写全绿；独立复审和原真实数据/完整Free验收缺口保留。

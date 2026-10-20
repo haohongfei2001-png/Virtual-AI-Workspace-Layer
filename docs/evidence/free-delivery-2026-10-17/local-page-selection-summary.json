@@ -1,4 +1,32 @@
 {
+"j1LinuxScrollObservation20261020": {
+  "baseline": "c3972d75",
+  "ciHead": "91a34d2a61d94ffc8fa8e4b867371f43e2bd8d3d",
+  "run": "39361840230",
+  "ciStatus": "FAIL",
+  "failedStage": "J1 candidate scroll after canonical focus",
+  "otherJobs": [
+    "node-contracts PASS",
+    "offline-durability-compat PASS",
+    "offline-j4-lifecycle PASS partial only"
+  ],
+  "diagnosis": "Migration response carries 563; original failure omitted before/after DOM values. Exact cause NOT_ESTABLISHED. Local continuous journey 563 before/click/return does not close Linux failure.",
+  "change": "Passive bounded owned-list layout/scroll observations plus pre-click/click/return values retained before assertion; original assertions and deadlines unchanged.",
+  "localStatus": "PARTIAL_J1_NOT_ACCEPTED",
+  "localSourceAndScriptUnchanged": true,
+  "productionChanged": false,
+  "files": [
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/ci39361840230-j1-failure.json.gz",
+      "uncompressedSha256": "acaa4827ba088f708c973f4e79a0589649d83b1ad37d8ef96c9046f3e856065c"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/j1-scroll-observation-local.json.gz",
+      "uncompressedSha256": "82ac4933f9a13f41229bca0e38ebd735fbc66cca0c0888204a3b7ba5757a69e6"
+    }
+  ],
+  "remaining": "Linux original failure; full J1/J4, real directory/identity and G/U; 10k/100k DEFERRED"
+},
 "bindingRetirementIntegration20261020": {
   "baseline": "91a34d2a",
   "state": "OFFLINE_BINDING_INTEGRATION_PASS",
