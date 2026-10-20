@@ -17220,5 +17220,34 @@
     "Real identity and directory coverage"
   ],
   "review": "Independent read-only review: no blocker"
+},
+  "sendOverflowOwnerRecovery20261020": {
+  "base": "11709ab10027e63519f2fae0aeec69677a21c2c6",
+  "status": "OWNER_RECOVERY_FIX_NOT_SYS05_ACCEPTED",
+  "cause": "Owner completion flag suppressed later same-proof baseline observation after correlator overflow invalidation.",
+  "fix": "Synchronize baseline validity only; retain read attempts, cooldown, proof and independent pending ACKs.",
+  "tests": {
+    "targetedAndBuild": 242,
+    "finalOwnerIncludingBudget": 59,
+    "fail": 0,
+    "skip": 0
+  },
+  "logs": {
+    "red": "send-overflow-owner-red-20261020.log.gz",
+    "green": "send-overflow-owner-green-20261020.log.gz",
+    "budget": "send-overflow-owner-budget-20261020.log.gz"
+  },
+  "sourceHashes": {
+    "src/host/send-correlator.mjs": "251d50175833fb24dd945da770aafa40e34db3850da0eaa67b9944bb5798d408",
+    "src/runtime/host-send-candidates.mjs": "f0105dfdb4e4d12e68e8247512e27d247d0ee819f8627479399c59b68507572e",
+    "tests/host/host-send-candidates.test.mjs": "005b3914f7cd708400b129b69ad8972c525e11a39822047c4217c4439932df85"
+  },
+  "review": "Independent read-only review no blocker",
+  "priorCI": {
+    "run": 39349881172,
+    "head": "95dee54a537004df699a0edde6ba780d7ddfd435",
+    "conclusion": "success",
+    "scope": "Four jobs only; not current changes or complete Free acceptance"
+  }
 }
 }

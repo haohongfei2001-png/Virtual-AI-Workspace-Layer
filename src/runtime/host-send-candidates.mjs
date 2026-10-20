@@ -73,7 +73,12 @@ export function createHostSendCandidates({observations,reader,enabled=false,now=
   // Only join a read that already existed when the intent arrived. Never fetch
   // a retroactive baseline, and re-enter withCurrent after the wait.
   const reading=inflight.get(proofId);if(reading)await reading;active();
-  let usedEntry=null,intentGeneration=null;return observations.withCurrent(proofId,current=>{const entry=entryFor(current);usedEntry=entry;intentGeneration=entry.generation;check(current);if(!entry.baseline||entry.proof!==proofId)return null;const candidate=entry.correlator.intent(input);check(current);return candidate;}).then(candidate=>{active();if(observations.isCurrentProof(proofId)!==true)throw Error('stale-send-proof');return candidate;}).catch(error=>{if(usedEntry&&usedEntry.generation===intentGeneration){retire(usedEntry);}throw error;});
+  let usedEntry=null,intentGeneration=null;return observations.withCurrent(proofId,current=>{const entry=entryFor(current);usedEntry=entry;intentGeneration=entry.generation;check(current);if(!entry.baseline||entry.proof!==proofId)return null;const candidate=entry.correlator.intent(input);
+   // Capacity loss retires the correlator baseline. Do not let the owner's
+   // same-proof completion cache suppress a later budgeted observation.
+   // Keep read accounting and independently pending ACK readbacks intact.
+   if(!entry.correlator.hasBaseline())entry.baseline=false;
+   check(current);return candidate;}).then(candidate=>{active();if(observations.isCurrentProof(proofId)!==true)throw Error('stale-send-proof');return candidate;}).catch(error=>{if(usedEntry&&usedEntry.generation===intentGeneration){retire(usedEntry);}throw error;});
  }
  function stop(){if(stopped)return;stopped=true;for(const entry of entries.values()){clearRetry(entry);entry.correlator.stop();}entries.clear();inflight.clear();}
  // The terminal owner guard must run after withCurrent async revalidation and

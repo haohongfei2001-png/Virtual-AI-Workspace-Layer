@@ -120,3 +120,30 @@ test('idle access bookkeeping releases after owner throws or rejects',async()=>{
   await assert.rejects(call,/owner-failed/);assert.equal(f.service.isIdle(),true);f.service.stop();
  }
 });
+
+test('overflow retires owner completion and permits only budgeted fresh baseline observation',async()=>{
+ const f=fixture();await f.service.observe('p1');
+ for(let i=0;i<32;i++)assert(await f.service.intent('p1',{...send,intentId:'i'+i}));
+ assert.equal(await f.service.intent('p1',{...send,intentId:'overflow'}),null);
+ assert.equal(f.calls,1,'overflow must not start a read');
+ await f.service.observe('p1');assert.equal(f.calls,1,'original cooldown remains');
+ f.tick(1000);assert.deepEqual(await f.service.observe('p1'),[]);
+ assert.equal(f.calls,2,'a later observation must not mistake retired baseline for completion');
+ assert.equal(await f.service.intent('p1',{...send,intentId:'overflow'}),null);
+ assert.equal((await f.service.intent('p1',{...send,intentId:'fresh'}))?.stage,'intent');
+ const rows=await f.service.observe(f.next());assert.equal(rows.length,1);assert.equal(rows[0].intentId,'fresh');
+ assert.equal(rows[0].ackWitness,undefined);assert.equal(rows[0].sentAt,undefined);f.service.stop();
+});
+
+test('repeated overflow cannot reset the same-proof read budget',async()=>{
+ const f=fixture();await f.service.observe('p1');
+ for(let round=0;round<3;round++){
+  for(let i=0;i<32;i++)assert(await f.service.intent('p1',{...send,intentId:'r'+round+'i'+i}));
+  assert.equal(await f.service.intent('p1',{...send,intentId:'overflow'+round}),null);
+  f.tick(1000);assert.deepEqual(await f.service.observe('p1'),[]);
+  assert.equal(f.calls,Math.min(round+2,3));
+ }
+ f.tick(30000);await f.service.observe('p1');assert.equal(f.calls,3);
+ assert.equal(await f.service.intent('p1',{...send,intentId:'not-recovered'}),null);
+ assert.equal(f.outputs.length,0);f.service.stop();
+});
