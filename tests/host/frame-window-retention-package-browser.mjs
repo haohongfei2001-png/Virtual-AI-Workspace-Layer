@@ -1,3 +1,4 @@
+import {probeNavigationCancellation} from './navigation-cancel-browser-probe.mjs';
 import {observeWindowScroll} from './window-scroll-observer.mjs';
 /** Opt-in S: actual MV3 buttons, application-owned offline world, no DB seeds. */
 import assert from 'node:assert/strict';
@@ -18,7 +19,7 @@ if(process.env.FREE_WINDOW_RETENTION_RUN!=='1'){await writeFile(output,JSON.stri
 else{
  let server,context,browserHandle,networkGuard,directory,manifest,manifestPath,manifestHash,page,extensionId,browserLaunchAttempted=false;
  const hash=x=>createHash('sha256').update(x).digest('hex');
- const sources=['window-scroll-observer.mjs','frame-window-retention-package-browser.mjs','fixtures/host-scale-server.mjs','fixtures/host-scale-world.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-cleanup.mjs','native-visibility-browser.mjs','historical-network-guard.mjs'];
+ const sources=['navigation-cancel-browser-probe.mjs','window-scroll-observer.mjs','frame-window-retention-package-browser.mjs','fixtures/host-scale-server.mjs','fixtures/host-scale-world.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-cleanup.mjs','native-visibility-browser.mjs','historical-network-guard.mjs'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sources.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -46,8 +47,8 @@ else{
     setTimeout(()=>{void globalThis.observeWindowReturn({...entry,defaultPrevented:event.defaultPrevented}).catch(()=>{});},0);
    },true);
    const send=chrome.runtime.sendMessage.bind(chrome.runtime);
-   chrome.runtime.sendMessage=function(...args){const m=args[0],tracked=['HOST_UI_VIEW','HOST_UI_RESUME','HOST_UI_SAVE_VIEW','HOST_UI_DISPATCH_CURRENT','HOST_UI_DISPATCH_NATIVE','HOST_UI_PRESENT'].includes(m?.type),pending=send(...args);
-    if(tracked&&pending?.then)pending.then(r=>{const p=r?.page;globalThis.observeWindowReturn({type:m.type,query:m.query,expectedQuery:m.expectedQuery,capacities:m.view?.capacities,scroll:m.view?.scroll,ok:r?.ok,state:r?.state,reason:r?.reason,presentation:p?.presentation??r?.presentation,resume:r?.resume,counts:p?{search:!!p.search,workingSet:!!p.workingSet,groups:p.groups?.items.map(g=>({id:g.id,unknown:g.lists.unknown.items.length})),unknown:p.entries?.unknown.items.length,selection:p.selection?{groupId:p.selection.groupId,list:p.selection.list,limit:p.selection.limit}:null}:null});},()=>{});
+   chrome.runtime.sendMessage=function(...args){const m=args[0],tracked=['HOST_UI_VIEW','HOST_UI_RESUME','HOST_UI_SAVE_VIEW','HOST_UI_DISPATCH_CURRENT','HOST_UI_DISPATCH_NATIVE','HOST_UI_CANCEL_NAVIGATION','HOST_UI_PRESENT'].includes(m?.type),pending=send(...args);
+    if(tracked&&pending?.then)pending.then(r=>{const p=r?.page;globalThis.observeWindowReturn({type:m.type,actionId:m.actionId,targetKey:m.targetKey,query:m.query,expectedQuery:m.expectedQuery,capacities:m.view?.capacities,scroll:m.view?.scroll,ok:r?.ok,state:r?.state,reason:r?.reason,presentation:p?.presentation??r?.presentation,resume:r?.resume,counts:p?{search:!!p.search,workingSet:!!p.workingSet,groups:p.groups?.items.map(g=>({id:g.id,unknown:g.lists.unknown.items.length})),unknown:p.entries?.unknown.items.length,selection:p.selection?{groupId:p.selection.groupId,list:p.selection.list,limit:p.selection.limit}:null}:null});},()=>{});
     return pending;
    };
   });
@@ -91,6 +92,10 @@ else{
   await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
   await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(title);
   const result=workspace.locator(`.search-results a[data-ref-id="${first[0]}"]`);await result.waitFor();
+  if(process.env.FREE_NAVIGATION_CANCEL_RUN==='1'){
+   report.cancellation=await probeNavigationCancellation({context,page,workspace,result,extensionId,trace:report.trace,title});
+   await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(title);await result.waitFor();
+  }
   const target=await result.getAttribute('href');assert.equal(target,page.url());const pageCount=context.pages().length;
   // Same URL alone does not establish a same-target plan. Record the issued
   // control without waiting for a different plan or repeating the gesture.

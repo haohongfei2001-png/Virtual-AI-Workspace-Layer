@@ -151,7 +151,7 @@ jobs:
           node tests/host/ui10-package-matrix-browser.mjs "$RUNNER_TEMP/ui10-matrix.json"
           node tests/host/observed-project-mv3-browser.mjs "$RUNNER_TEMP/observed-project-layout.json"
           node tests/host/visible-actions-package-browser.mjs "$RUNNER_TEMP/visible-actions.json"
-          FREE_WINDOW_RETENTION_RUN=1 node tests/host/frame-window-retention-package-browser.mjs "$RUNNER_TEMP/frame-window-retention.json"
+          FREE_WINDOW_RETENTION_RUN=1 FREE_NAVIGATION_CANCEL_RUN=1 node tests/host/frame-window-retention-package-browser.mjs "$RUNNER_TEMP/frame-window-retention.json"
       - name: Passive local extension status (isolated MV3)
         if: ${{ !cancelled() && github.event_name == 'push' }}
         run: node tests/host/local-status-package-browser.mjs "$RUNNER_TEMP/local-status.json"

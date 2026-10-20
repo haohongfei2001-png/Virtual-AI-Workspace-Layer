@@ -427,6 +427,6 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   // Same-grant renewal is a background refresh, not a new user read intent.
   if(!backup)invalidate(true);
  }
- const lifecycle=createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant,onAppearance:()=>navigation?.layout?.(),onClear:clear,onInvalidate:()=>invalidate(true),onSurfaceState:applySurfaceState,onWorkspaceEntry:()=>{dispatchEpoch++;workspaceEntered=true;workspaceModePending=navigation?.workspaceEntered?.()!==true;void enterCurrent();void calibrateEntry({kind:'foreground'});applyCandidateMigration();if(migrationListening)void refreshCandidates();},privateRoot,now,elapsedNow,schedule,cancel,...(makeNonce?{makeNonce}:{})});
+ const lifecycle=createUiFrameClient({document:doc,runtime,role,parentOrigin,onGrant,onAppearance:()=>navigation?.layout?.(),onClear:clear,onInvalidate:()=>invalidate(true),onSurfaceState:applySurfaceState,onWorkspaceEntry:()=>{dispatchEpoch++;cancelPendingNavigation();workspaceEntered=true;workspaceModePending=navigation?.workspaceEntered?.()!==true;void enterCurrent();void calibrateEntry({kind:'foreground'});applyCandidateMigration();if(migrationListening)void refreshCandidates();},privateRoot,now,elapsedNow,schedule,cancel,...(makeNonce?{makeNonce}:{})});
  return Object.freeze({start:()=>lifecycle.start(),stop:()=>lifecycle.stop('frame-view-stopped')});
 }

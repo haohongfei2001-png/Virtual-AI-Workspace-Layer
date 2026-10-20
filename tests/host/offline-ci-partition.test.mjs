@@ -138,3 +138,5 @@ test('manual popup geometry diagnostic selects only the existing native navigati
 });
 
 test('startup trace cannot turn the original snippet failure green and is bounded',()=>{assert.match(jobs['offline-journeys'],/original_result=\$\?/);assert.match(jobs['offline-journeys'],/timeout 60s node tests\/host\/snippets-package-mv3-browser.mjs/);assert.match(jobs['offline-journeys'],/exit "\$original_result"/);});
+
+test('existing window journey includes real cancellation subchain without a duplicate runner',()=>{assert.equal((workflow.match(/FREE_WINDOW_RETENTION_RUN=1 FREE_NAVIGATION_CANCEL_RUN=1 node tests\/host\/frame-window-retention-package-browser\.mjs/g)??[]).length,1);});

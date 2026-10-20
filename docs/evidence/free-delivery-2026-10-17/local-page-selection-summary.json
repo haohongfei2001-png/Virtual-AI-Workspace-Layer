@@ -1,4 +1,35 @@
 {
+"nativeCancellationMV320261020": {
+  "baseline": "726c7a82",
+  "cancellationBrowser": {
+    "status": "PASS_OFFLINE_MV3_SAME_TARGET_SUBCHAIN_ONLY",
+    "elapsedMs": 81,
+    "journeyElapsedMs": 3036.78275,
+    "realAuthorizationHeld": true,
+    "exactActionMatch": true,
+    "oneCancellation": true,
+    "latestSearchVisible": true,
+    "draftPreserved": true,
+    "sourceChanged": false,
+    "fixtureChanged": false
+  },
+  "returnIntentFix": {
+    "red": "4 return cases fail with native click or reading side effect",
+    "repair": "onWorkspaceEntry invokes existing cancellation before current-entry/calibration",
+    "targeted": 454,
+    "fail": 0,
+    "browserCoverage": "new single-line return wiring NOT_RUN; browser evidence preceding this line retains own hashes"
+  },
+  "files": {
+    "local-vaiwl-cancel-live-chain.json.gz": "487cb5b92ff191ff6723fd4854e13250587f307081d25e924fdcecb3caeabba8",
+    "local-vaiwl-cancel-live-chain-matched.json.gz": "ec1d48408fda0be572ab6d4370156020cd0fa374dc57ce276cdaf6712667c715",
+    "local-vaiwl-cancel-live-chain-final.json.gz": "680274ff9f151eb8f19ad761ad182cb4303daaea2c5a6e0d04d05ef271e44166",
+    "local-vaiwl-cancel-live-chain-final.log.gz": "dd753a278e0c1cce3fed784aa3d59211a512022e0f3a6e506bd65d0f3a67418e",
+    "local-vaiwl-cancel-ci-contract.log.gz": "5e19ddd7e516d2577b954371912d9c7a51d1892bac4eb768bca467e984ac3782",
+    "local-vaiwl-cancel-return-red.log.gz": "425c39654b406d34c5c69f782d13cc65b6fe92a898dee106c0949576b740c83a",
+    "local-vaiwl-cancel-return-green.log.gz": "934af876e9be6c0f5bc852ffe425d41bfe3cf5549c4bfdde5e33f89f4196c6e9"
+  }
+},
 "nativeNavigationCancellation20261020": {
   "baseline": "dbc73fb726462e6066af64796ceb4c21c399e3da",
   "rootCause": "new query cancelled local acknowledgement but not pending native action; actual four-owner RED clicks=1",

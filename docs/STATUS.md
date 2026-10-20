@@ -3897,3 +3897,10 @@ CI39354354919终结FAIL：Node/持久化/J4 job成功，journeys在搜索当前�
 实际四owner反例证明：派发进入content后用户换页，frame只丢弃旧ACK，原生入口仍被点击一次。已增加同grant/mount/action/plan的纯取消：worker有界消费记录防乱序/重放，原文档收到固定binding取消后同步使native计划失效，防第二次授权已算true但迟到的回复继续click。新查询仍合并，不丢用户输入；显式展示和面板操作同样撤销待派发动作。取消不授scope、不读取数据、不切展示、不重发；6秒/容量原约束保持，超时迟到不得写记录。不能回滚取消前已完成的原生阅读准备。独立审查发现的第二授权回程竞态与迟到取消已补齐；same/native×首/第二授权四反例、422项组合/构建及234项传输/adapter回归通过。正常打包导航子链3283.905ms通过、运行源码/fixture无漂移，不宣称提速；真实浏览器取消消息链尚NOT_RUN，完整J1/J4/CI旧返回超时未关闭。原RED、夹具current DTO缺失的中间失败、点击取证microtask过早记录及最终证据均保存于 `nativeNavigationCancellation20261020`。实际点击取证现在在事件任务结束后读取preventDefault，文档已销毁时可能缺记录，不以缺记录判未点击。
 
 本轮有界HTTP1.1正常push仍低速超时；先前提交仍安全保存在原本地分支，未强推或循环重试。完整目录/身份、真实安装及10k/100k DEFERRED不变。
+
+
+## 取消消息链局部MV3与用户返回（2026-10-20，基线726c7a82）
+
+真实隔离headless扩展已证same-target取消子链：暂持同action的第二个真实成功授权回复，用户修改搜索，收到原worker→content取消确认后释放原回复；一个派发/一个取消、action和plan一致，旧阅读未开启，最新搜索实际可见，URL/文档/editor/草稿/页面数保持。整个取消观察81ms且强制原6秒绝对总窗；随后原当前/不同目标返回及17条分页旅程3036.783ms完成，源码/fixture/包无漂移。这是本地离线S子链及明确隔离世界回复延迟注入，不是真实ChatGPT来源/完整J1/J4；前两版取证不足的候选结果保留，最终以各自hash为准。新子链并入既有CI窗口runner一次执行，不新增job/缓存/上传。
+
+随后同类检查实际复现用户“返回工作空间”只改本地epoch、未撤销旧动作：四owner的4个return反例均失败。onWorkspaceEntry现复用同一取消链路，先撤销再执行原当前项/校准；query/return×same/native×首/第二授权共8种时序及454项定向/构建通过。此单行晚于上述浏览器报告，实际return取消消息链仍待S，不借旧hash升级。原RED、各版报告和边界见 `nativeCancellationMV320261020`。目录/身份、旧Linux返回超时、完整Free及规模DEFERRED保持。
