@@ -34,6 +34,28 @@ function projection(role='workspace'){
 }
 function fixture(role='workspace',callback=()=>null,onHorizonRequest=null,onWorkingSetRequest=null,adapterOverride={},extra={}){const doc=dom(),intents=[];const nav=createNavigation({document:doc,surface:{role,root:doc.body},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){},...adapterOverride},onHorizonRequest,onWorkingSetRequest,...extra,onProjectionRequest:callback,onPresentationRequest:v=>intents.push(v)});const pane=()=>nav.roots()[role].shadow;return {doc,nav,pane,intents,button:label=>pane().querySelectorAll('button').find(n=>n.getAttribute('aria-label')===label)};}
 const tick=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
+for(const boundary of ['same-scope-refresh','scope-replacement'])test('retired sidebar scroll cannot overwrite or save the current view: '+boundary,t=>{
+ const saves=[],f=fixture('sidebar',()=>null,null,null,{}, {onViewChange:(value,scope)=>saves.push({value,scope})});t.after(()=>f.nav.stop());
+ f.nav.updateFrameProjection(projection('sidebar'));const retired=f.pane().querySelector('.themes'),priorView=f.nav.view();
+ const scroll=(list,value)=>{list.scrollTop=value;for(const handler of list.events.scroll)handler();};
+ let before=saves.length;scroll(retired,173);assert.equal(priorView.sidebarScroll,173);assert.equal(saves.length,before+1);assert.equal(saves.at(-1).scope,'scopeA');assert.equal(saves.at(-1).value.sidebarScroll,173);
+ const next=projection('sidebar');if(boundary==='scope-replacement')next.scope='scopeB';f.nav.updateFrameProjection(next);
+ const current=f.pane().querySelector('.themes');assert.notEqual(current,retired);
+ before=saves.length;scroll(current,89);assert.equal(f.nav.view().sidebarScroll,89);assert.equal(saves.length,before+1);assert.equal(saves.at(-1).scope,next.scope);assert.equal(saves.at(-1).value.sidebarScroll,89);
+ // Invoke the retired listener deterministically. This models the event path,
+ // not a claim that an actual browser scheduled this interleaving.
+ before=saves.length;scroll(retired,0);assert.equal(current.scrollTop,89);assert.equal(f.nav.view().sidebarScroll,89);assert.equal(saves.length,before);
+ assert.equal(priorView.sidebarScroll,boundary==='same-scope-refresh'?89:173);
+ scroll(current,117);assert.equal(f.nav.view().sidebarScroll,117);assert.equal(saves.length,before+1);assert.equal(saves.at(-1).scope,next.scope);assert.equal(saves.at(-1).value.sidebarScroll,117);
+});
+for(const boundary of ['invalidate','stop'])test('retired sidebar scroll cannot mutate a detached view: '+boundary,t=>{
+ const saves=[],f=fixture('sidebar',()=>null,null,null,{}, {onViewChange:(value,scope)=>saves.push({value,scope})});t.after(()=>f.nav.stop());
+ f.nav.updateFrameProjection(projection('sidebar'));const retired=f.pane().querySelector('.themes'),priorView=f.nav.view();
+ retired.scrollTop=173;for(const handler of retired.events.scroll)handler();assert.equal(priorView.sidebarScroll,173);
+ f.nav[boundary]();assert.equal(f.nav.roots(),null);const before=saves.length;
+ retired.scrollTop=0;for(const handler of retired.events.scroll)handler();
+ assert.equal(priorView.sidebarScroll,173);assert.equal(saves.length,before);
+});
 test('bounded DTO uses original names/order and always renders NONE/UNKNOWN entries',()=>{const f=fixture();f.nav.updateFrameProjection(projection());assert.deepEqual(f.pane().querySelectorAll('[data-theme-id]').map(n=>n.getAttribute('data-theme-id')),['P2','P1']);assert.ok(f.pane().querySelectorAll('.theme-name').some(n=>n.textContent==='Original P2'));assert.deepEqual(f.pane().querySelectorAll('[data-free-list]').map(n=>n.getAttribute('data-free-list')),['noProject','unknown']);assert.ok(f.button('显示更多近期窗口'));assert.ok(f.button('显示更多项目'));assert.equal(f.button('较早的30日').disabled,false);});
 test('more/old/history issue bounded owner queries instead of treating preview as complete',async()=>{
  const calls=[],f=fixture('workspace',q=>{calls.push(q);return null;});f.nav.updateFrameProjection(projection());f.button('显示更多近期窗口').click();assert.deepEqual(calls[0],{role:'workspace',segment:0,offset:0,limit:24,groupId:'P2',list:'current',rowOffset:0,rowLimit:17});f.button('展开旧窗口 Original P2').click();assert.equal(calls[1].list,'old');f.button('显示更多项目').click();assert.equal(calls[2].offset,24);f.button('较早的30日').click();assert.equal(calls[3].segment,1);assert.equal(calls[3].offset,0);f.nav.stop();

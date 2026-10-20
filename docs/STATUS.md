@@ -1,5 +1,16 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 退休侧栏滚动回调隔离与云端继续（2026-10-20，基线 ecbc8565）
+
+用户最新要求不赶交回时间，先完成适合云端的原计划工程；上一批“最终收口/交回准备”不再代表现在切换 writer。云端继续唯一写入，本地 Codex 与自动续接仍暂停，正式交回另行明确。
+
+按原 C3/C5 与 Host §7.2/7.3，独立审查已复现退休侧栏节点的 scroll 回调覆盖当前 sidebarScroll 并按当前 scope 保存：同 scope 刷新及换 scope 两项 RED 均把当前 89 改成 0。现仅当前 sidebar `.themes` 节点、有效 view 且未 stop 时才能更新/保存；不改滚动值、持久合同或期限。四项新增测试在修复前全 FAIL，覆盖刷新、换 scope、invalidate、stop；保留当前节点的保存次数/目标 scope 正控。175 定向通过，独审原两项及新增四项通过，去 ownership/停全部写入变异分别被 3/4 与 4/4 用例捕获。完整 Node **9633/9633，200790.959ms，零跳过**；184 文件默认包构建/校验通过。证据 retiredSidebarScroll20261020。此为合成 renderer 回调路径，不声称实测浏览器调度，更不认定原 Linux scroll 0!=150 的历史原因。
+
+上一批已普通发布为 **ecbc85657ec5b662145501e0bf0ba55154b80660**，精确 tree b20de6f85c0a6061d2479f774d50ec8529e10d49 与保留的本地 db4a671b 相同；原 880d4ecf/db4a671b 检查点不覆盖。CI **39387431857 终态 FAILURE**：Node 9629/9629 与十二 guard 变异通过，durability/J4 job 成功，片段 MV3 六步通过；journeys 仅未插桩 C2 cold-start 挂载 20 秒超时、零旅程结果。原包源码稳定、post-failure worker document/request 集合为空；没有同次入口轨迹，原因仍未闭合。独立插桩 cold trace/recovery 通过不改判。四份原日志沿 cloudPublishedProfilerSnippetCI20261020 保留。
+
+真实身份/完整服务器目录、完整 J1/J4、物理 IME/PAIA 与安装发布仍开放；J4 job 允许 PARTIAL，CI 绿色不能代替 Free 验收。10k/100k DEFERRED，旧冷启动/webRequest/布局失败不猜测关闭。
+
+
 ## 云端最终合批：片段六秒生命期与交回准备（2026-10-20，基线881fe290）
 
 按用户最新要求，本轮收敛为Profiler诊断测试及已复现的片段生命期缺陷，独立相邻审查未发现需扩展本批的阻断。原wall-only票据在时钟停滞超过6秒时仍可读，已观察到的回拨高于capture起点时也未退休；原2项独立RED及新增测试30/42原FAIL保留。现接入content已有elapsedNow，保留原wall期限并固定两种时钟的捕获起点；每次观察更新高水位，回拨/非有限值/任一到期永久失效。adapter、binding、epoch及makeId之后重新验时，read/consume不续期，不改变6秒、权限、schema或持久数据。
