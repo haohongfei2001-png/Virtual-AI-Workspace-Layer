@@ -38,3 +38,11 @@ test('J1 port diagnostics preserve connection and callbacks and bound notificati
  for(let i=0;i<150;i++)for(const listener of listeners)listener({type:'VAIWL_UI_WORKSPACE_ENTERED',private:'NEVER_RECORD'});
  assert.equal(delivered,150);assert.equal(logs.length,128);assert(logs.every(r=>r.phase==='port-message'&&r.type==='VAIWL_UI_WORKSPACE_ENTERED'));assert(!JSON.stringify(logs).includes('NEVER_RECORD'));
 });
+
+for(const failure of ['construct','observe','callback'])test('optional candidate diagnostic '+failure+' failure cannot prevent original RPC',async()=>{
+ let callback,calls=0;const result=Promise.resolve({ok:true});
+ const world={location:{protocol:'chrome-extension:',href:'chrome-extension://fixture/workspace.html'},chrome:{runtime:{sendMessage(){calls++;return result;}}},crypto:{randomUUID:()=> 'frame'},console:{log(){}},document:{addEventListener(){}},MutationObserver:class{constructor(fn){if(failure==='construct')throw Error('observer unavailable');callback=fn;}observe(){if(failure==='observe')throw Error('detached document');}}};
+ assert.doesNotThrow(()=>vm.runInNewContext('('+source.slice(start,end)+')',world)());
+ if(failure==='callback')assert.doesNotThrow(()=>callback([{get addedNodes(){throw Error('stale record');}}]));
+ assert.equal(world.chrome.runtime.sendMessage({type:'HOST_UI_VIEW'}),result);assert.equal(calls,1);await result;
+});

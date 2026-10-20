@@ -31,12 +31,14 @@ try{
   const emit=value=>{try{console.log('J1_RETURN_TRACE '+JSON.stringify({frameInstance,url:location.href,time:Date.now(),...value}));}catch{}};
   // Passive, bounded samples of owned candidate DOM; no readiness waits or writes.
   const observedLists=new WeakSet();let candidateSamples=0;
-  const sampleCandidates=reason=>{if(candidateSamples>=128)return;const host=document.querySelector('[data-vaiwl-candidates]'),list=host?.shadowRoot?.querySelector('ul');if(!list)return;
+  const sampleCandidates=reason=>{try{if(candidateSamples>=128)return;const host=document.querySelector('[data-vaiwl-candidates]'),list=host?.shadowRoot?.querySelector('ul');if(!list)return;
     if(!observedLists.has(list)){observedLists.add(list);list.addEventListener('scroll',()=>{if(list.isConnected)sampleCandidates('scroll');},{passive:true});}
     candidateSamples++;emit({phase:'candidate-layout',reason,scrollTop:list.scrollTop,scrollHeight:list.scrollHeight,clientHeight:list.clientHeight,laidOut:list.getClientRects().length>0});
-  };
-  const candidateObserver=new MutationObserver(records=>{if(records.some(r=>[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&(n.matches?.('[data-vaiwl-candidates]')||n.querySelector?.('[data-vaiwl-candidates]')))))sampleCandidates('replace');});
+  }catch{}};
+  if(typeof document!=='undefined'&&typeof MutationObserver==='function')try{
+  const candidateObserver=new MutationObserver(records=>{try{if(records.some(r=>[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&(n.matches?.('[data-vaiwl-candidates]')||n.querySelector?.('[data-vaiwl-candidates]')))))sampleCandidates('replace');}catch{}});
   candidateObserver.observe(document,{childList:true,subtree:true});
+  }catch{}
   const migrationDTO=value=>value&&typeof value==='object'?{id:scalar(value.id),projectId:scalar(value.projectId),ready:typeof value.ready==='boolean'?value.ready:null,focusAllowed:typeof value.focusAllowed==='boolean'?value.focusAllowed:null,presentation:value.presentation?{offset:revision(value.presentation.offset),scrollTop:Number.isFinite(value.presentation.scrollTop)&&value.presentation.scrollTop>=0&&value.presentation.scrollTop<=1e7?value.presentation.scrollTop:null,focused:typeof value.presentation.focused==='boolean'?value.presentation.focused:null}:null}:null;
   const connect=chrome.runtime.connect?.bind(chrome.runtime);let portSequence=0,portTraceCount=0;
   if(connect)chrome.runtime.connect=function(...args){

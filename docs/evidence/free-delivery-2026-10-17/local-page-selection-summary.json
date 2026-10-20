@@ -1,4 +1,37 @@
 {
+"peerReenableCheckpoint20261020": {
+  "baseline": "589616828bd9a294fea6616d080c5250fade4fb2",
+  "status": "PARTIAL_J4_NOT_ACCEPTED",
+  "scope": "Existing continuous isolated MV3 journey; two additional unrefreshed-peer checkpoints. No product or authorization change. Not full J4 or real account evidence.",
+  "targeted": {
+    "pass": 29,
+    "fail": 0
+  },
+  "ci39364723756": {
+    "node-contracts": "FAIL: optional MutationObserver unavailable in Node VM; fixed and targeted verified",
+    "offline-journeys": "PASS",
+    "offline-durability-compat": "PASS",
+    "offline-j4-lifecycle": "PASS (partial J4)"
+  },
+  "files": {
+    "j4-peer-continuous": {
+      "path": "docs/evidence/free-delivery-2026-10-17/j4-peer-continuous-20261020.gz",
+      "sha256": "72434fa99311c08fe9ed63864e8fd9b216336c4b75c3b742d49a42f4b7baff12"
+    },
+    "j4-peer-startup-notrun": {
+      "path": "docs/evidence/free-delivery-2026-10-17/j4-peer-startup-notrun-20261020.gz",
+      "sha256": "c44ac1dd36b80c67ae8efece8fddaba61019ebac7e96663032bfe6e702a3dfa7"
+    },
+    "j4-peer-targeted": {
+      "path": "docs/evidence/free-delivery-2026-10-17/j4-peer-targeted-20261020.gz",
+      "sha256": "79d49df2d107199c14635d3ea0250cd8616bda536b80ffad269188f3931a3fd6"
+    },
+    "ci39364723756-node-failure": {
+      "path": "docs/evidence/free-delivery-2026-10-17/ci39364723756-node-failure-20261020.gz",
+      "sha256": "d474247cae48367381e31c732632162cc4379121c5ab874c7b89b5b78852cdd2"
+    }
+  }
+},
 "snippetPaginationFocus20261020": {
   "baseline": "aa1d9aa2",
   "rootCause": "Pending pagination disabled/replaced focused button and moved focus to heading, losing keyboard continuity.",

@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 双标签再启用检查点（2026-10-20，基线58961682）
+
+原隔离MV3连续J4新增两处实测：未刷新的peer在再启用后及主标签新grant后保持原文档/编辑器/草稿、无私有投影、原生区域可用；未新增认证或重放动作，仍PARTIAL_J4_NOT_ACCEPTED。原启动环境缺Chrome路径的NOT_RUN保留，显式原Chrome路径后完成。CI39364723756三个浏览器job通过，Node六失败来自可选诊断无条件创建MutationObserver；已隔离诊断故障，不影响原RPC，29定向通过。原Linux滚动FAIL不追溯改判；证据peerReenableCheckpoint20261020。58961682已正常推送，旧网络阻塞为历史；真实身份/全量目录、完整J4及Free仍开放，规模DEFERRED。
+
 ## 片段分页键盘闭环（2026-10-20，基线aa1d9aa2）
 
 真实DOM已复现等待翻页时disabled+重绘把焦点移到标题，现仅busy分页用aria-disabled并以pending/generation拒绝激活，真实页边界仍disabled。实际DOM验证外部删除回剩余页、等待/完成焦点连续、重复Enter不多读、用户移焦不抢回及关闭；26定向、构建和独立审查通过。属于WEB_MECHANISM_ONLY，不替代MV3/真实身份；新夹具首轮错误ID超时和修正后产品RED均保留，构建初次既有输出路径被拒后改用新子目录。证据snippetPaginationFocus20261020。Linux原FAIL、完整目录/身份/G-U和完整Free仍未闭合，10k/100k DEFERRED。
