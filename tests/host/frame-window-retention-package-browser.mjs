@@ -104,6 +104,8 @@ else{
   await page.getByRole('button',{name:'返回工作空间',exact:true}).waitFor();
   assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await waitHostScaleSurfaces(page,{extensionId});
+  assert.equal(await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).inputValue(),title,'same-document return retains the search route');
+  await result.waitFor();await workspace.getByRole('button',{name:'关闭派生查找',exact:true}).click();
   await waitRows(`.card[data-theme-id="${project}"] .members`,17);await waitRows('section[data-free-list="unknown"]',17);
   assert.deepEqual(await ids(projectList),first);assert.deepEqual(await ids(unknown),second);
   assert.equal(context.pages().length,pageCount);assert(await originalPage.evaluate(()=>document===paginationDocument&&document.querySelector('textarea')===paginationEditor&&paginationEditor.value==='preserved pagination draft'));
@@ -136,6 +138,8 @@ else{
   await otherResult.click();await page.waitForURL(otherTarget);
   await page.getByRole('button',{name:'返回工作空间',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();[workspace]=await waitHostScaleSurfaces(page,{extensionId});
+  assert.equal(await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).inputValue(),otherTitle,'new binding return retains the saved search route');
+  await workspace.locator(`.search-results a[data-ref-id="${first[1]}"]`).waitFor();await workspace.getByRole('button',{name:'关闭派生查找',exact:true}).click();
   projectList=workspace.locator(`.card[data-theme-id="${project}"] .members`);unknown=workspace.locator('section[data-free-list="unknown"]');
   await waitRows(`.card[data-theme-id="${project}"] .members`,17);await waitRows('section[data-free-list="unknown"]',17);
   assert.deepEqual(await ids(projectList),first);assert.deepEqual(await ids(unknown),second);assert.equal(context.pages().length,pagesBefore);assert.equal(server.snapshot().actions.navigate,nativeBefore+1);

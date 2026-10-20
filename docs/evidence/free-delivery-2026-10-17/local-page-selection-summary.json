@@ -1,4 +1,37 @@
 {
+"searchReturnCompletion20261020": {
+  "baseline": "4df71495",
+  "status": "PASS_OFFLINE_MV3_WINDOW_RETENTION",
+  "scope": "search -> native reading -> return retains search -> explicit close search restores main list; both same-target and fresh-binding paths. No historical Linux reclassification or root-cause claim.",
+  "scrollBefore": 150,
+  "scrollAfter": 150,
+  "elapsedMs": 2918.9538749999992,
+  "contractsPass": 31,
+  "files": {
+    "ci-fail": {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-return-ci-fail-20261020.gz",
+      "sha256": "8acdb2807ba8c68b318b9670791ec288eabe014cc95a36e5f00eec1bda2dc67a"
+    },
+    "same-route-transition-fail": {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-return-same-route-transition-fail-20261020.gz",
+      "sha256": "659ae10094879909cd41fe47a37e7f84a6215f9e055848ecd12597f1b6649be1"
+    },
+    "new-binding-transition-fail": {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-return-new-binding-transition-fail-20261020.gz",
+      "sha256": "c5b524d865fd68b39276acaa976fb4c5be9b99d3b058f7f1c5f13f84654d2798"
+    },
+    "complete": {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-return-complete-20261020.gz",
+      "sha256": "b4bbb565776f6e4e61ac67bb5986d89d9f256a22e2f0d710cb727b2984ebac67"
+    },
+    "contracts": {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-return-contracts-20261020.gz",
+      "sha256": "c79a716b8b9a385a887585171b2ec2357f8851ed9504a3eb08dfff08d353d3c9"
+    }
+  },
+  "review": "no blocker; all original assertions/deadlines retained",
+  "push": "4df71495 push reported RPC connection failure after75049ms; last API head6aaa643a, no success inferred from Everything up-to-date"
+},
 "workspaceReturnRoute20261020": {
   "baseline": "f2d3a143",
   "status": "SCOPED_PRODUCT_FIX_PASS_NOT_FULL_FREE",
