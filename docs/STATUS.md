@@ -1,6 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
 
+## 导航按钮生命周期统一收口（2026-10-21，基线3991c91f）
+
+进一步实证旧侧栏工具跨scope折叠/退出新界面、旧搜索关闭覆盖新工作集、旧分页请求旧group并取消新ACK。通用button入口现在先核对未stop、有snapshot及当前pane成员，原生持久四格返回按当前roots.back精确放行，不绑定旧view；专用guard保留。八反例先FAIL，310直接相关定向通过，独审无阻断。
+
+原visible-actions隔离MV3完整通过：面板、深浅/窄屏、侧栏搜索/键盘返回与原生draft/File保持，worker外网阻断、source/test/manifest稳定，注册worker前置不冒充cold-start。非frame原safe-update初次HF未初始化，定位simulator精确白名单漏现有frame-row-windows；HTTP先2/3后3/3，补一个依赖路径不改CSP。原浏览器链及新增同一个四格返回跨scope正控通过；独审发现新增scope正控改变最后pending-update前提，已恢复原scope并加连接节点/未更新标题断言，最终链重新通过。原失败与中间结果均保留。
+
+冻结完整Node9690/9690、93740.464958ms、零跳过，1220输入hash前后一致。其后只改上述浏览器前提断言，产品源码未变；最终浏览器结果单列，不伪称该最后测试调整也重跑全Node。184文件默认包构建校验通过，证据ownedNavigationButtons20261021；10k/100k DEFERRED。完整身份/目录/成员/本人活动、完整J1/J4、IME/PAIA及安装发布未成立，不以本批代替历史竞态根因。
+
+同步状态：本轮普通push有界90秒超时，随后API确认远端已到dc1d7d8a（此前settings产品提交），尚未包含3991c91f及本批；不推断由哪个同步进程送达，不改写前次超时记录。保留原分支/PR16/Draft/base及副本/stash，最终提交后正常同步并核对实际HEAD。
+
+
 ## 设置面板旧按钮隔离（2026-10-21，基线504d2eaf）
 
 已复现设置重绘/关闭后重开，旧片段、备份、恢复入口仍调用；旧设置开关还会提前推进intent，取消新导航ACK。现五个设置按钮统一在派发前检查scope、view、当前页面和pane节点归属；原时间范围select护栏保留。六项反例先FAIL，232受影响定向通过，独审scope A→B→A与重新打开正反例无阻断。

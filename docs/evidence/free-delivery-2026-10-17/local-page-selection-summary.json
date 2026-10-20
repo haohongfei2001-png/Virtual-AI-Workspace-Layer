@@ -1,4 +1,137 @@
 {
+  "ownedNavigationButtons20261021": {
+    "baseline": "3991c91f183847c8997995c0385b24960ecb33bb",
+    "cause": "Retired sidebar, search-close and pager callbacks could mutate a replacement scope/view, request prior scope groups or cancel a fresh navigation ACK.",
+    "fix": "Common button entry rejects stopped/missing snapshots and controls outside current pane roots before navigation intent. Persistent native return root is explicitly allowed without capturing one view. Existing specialized guards retained.",
+    "red": {
+      "tests": 185,
+      "pass": 177,
+      "fail": 8
+    },
+    "affected": {
+      "tests": 310,
+      "fail": 0,
+      "skipped": 0
+    },
+    "fixtureHTTP": {
+      "red": "2/3",
+      "green": "3/3",
+      "fix": "Simulator omitted existing frame-row-windows import from precise allowlist; only add that dependency, retain CSP and unrelated-path refusal."
+    },
+    "actualMV3": {
+      "status": "PASS",
+      "sourceStable": true,
+      "testStable": true,
+      "manifestStable": true,
+      "workerNetworkBlocked": true,
+      "startup": "REGISTERED_WORKER_PRECONDITION_NOT_COLD_START",
+      "elapsedBeforeCleanupMs": 7063.653042,
+      "scope": "Original visible-actions journey, settings/panels, light/dark/narrow, sidebar search and keyboard return; native draft/File preserved."
+    },
+    "legacyBrowser": {
+      "initialFailure": "HF bootstrap timed out before renderer assertions because simulator denied existing dependency.",
+      "status": "PASS",
+      "checks": 7,
+      "reviewCorrection": "New cross-scope return positive initially changed original final pending-update precondition. Final test restores original scope and asserts connected prior target with unchanged text before invalidation.",
+      "physicalIME": "NOT_RUN"
+    },
+    "fullNode": {
+      "tests": 9690,
+      "pass": 9690,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 93740.464958,
+      "inputFiles": 1220,
+      "sourceStable": true,
+      "finalDifference": [
+        "tests/free/safe-update-browser.mjs"
+      ],
+      "limits": "Only final legacy-browser precondition correction postdates full Node; actual product source unchanged, final changed browser journey passed separately."
+    },
+    "review": "Independent read-only review: common ownership guard and final legacy pending-update correction have no blockers.",
+    "package": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 184,
+      "unpacked": "/private/tmp/vaiwl-owned-buttons-package/extension",
+      "archive": "/private/tmp/vaiwl-owned-buttons-package/vaiwl-free-host-development.zip",
+      "archiveSha256": "70402e88446c396e8dfa364809bb8d1a547d73819ded6ae3d13c1dade84c0b67"
+    },
+    "sourceHashes": {
+      "src/navigation/navigation.mjs": "e649670133ee56ead5f04a7fba545befbc2cb970cd0ac5259fcde46c53f22397",
+      "simulator/server.mjs": "8321f7b44b5d843d9340d928453d43ba25aa871c417c9ab51965d3181a81f910",
+      "tests/free/safe-update-browser.mjs": "2ff091e5740b2858039d80f5bead868413d354fae796bcd703290fe130545f50",
+      "tests/hf/build-server.test.mjs": "40d9f041770bf867ff4a456faba490f595f972f941c9d80a722987a11b3bb23c",
+      "tests/host/frame-projection-renderer.test.mjs": "c3786595dd1331b5a341b174bade8d380715196dbcff86d9dcb5f3855269c4a1",
+      "tests/navigation/current-dispatch.test.mjs": "1d28c74d4a261fb2ec74c39e8bf7013909df96e18cf272bae653712d67742c18"
+    },
+    "limits": [
+      "Retired callback order is deterministic test evidence, not proof of historical Linux browser delivery races.",
+      "Synthetic host scopes/grants do not establish real ChatGPT identity, directory or complete Free; 10k/100k DEFERRED."
+    ],
+    "files": [
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-owned-buttons-red.tap.gz",
+        "rawBytes": 49258,
+        "rawSha256": "2533c91893d9901e3d86b6858adc1a8220e31ff22d4859f0309887c62a6f3621"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-owned-buttons-all-navigation.tap.gz",
+        "rawBytes": 69671,
+        "rawSha256": "e9d72072f80ae3a3b675fe7fb0a86c0111f63bb94db795d5393c89b8038cc9f2"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-owned-buttons-server-red.tap.gz",
+        "rawBytes": 1392,
+        "rawSha256": "72eac20e04c0fd2b3b74e918341eb698bea1bbe725b09e1a8d0116da9b3f1f61"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-owned-buttons-server-green.tap.gz",
+        "rawBytes": 706,
+        "rawSha256": "cf16f477fe04f1c2b727fcd383d4cf049ed6def4eaad1d48aa261b52fac80546"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-owned-buttons-mv3.json.gz",
+        "rawBytes": 89152,
+        "rawSha256": "574c2d2859521c9c73625ca40cfcdf095e476701444be76bf76e01897b87286a"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-owned-buttons-legacy.log.gz",
+        "rawBytes": 277,
+        "rawSha256": "374104e7659dbd41e61a97169b9e80cfff978bf725a7f78da4e32050ee8daa6a"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-owned-buttons-legacy-fixed.log.gz",
+        "rawBytes": 469,
+        "rawSha256": "851929fa825aec200bbd03e1f544033f3338e4697bcd0534b0e227be6d3bc0fd"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-owned-buttons-legacy-final.log.gz",
+        "rawBytes": 469,
+        "rawSha256": "851929fa825aec200bbd03e1f544033f3338e4697bcd0534b0e227be6d3bc0fd"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-owned-buttons-final-node.tap.gz",
+        "rawBytes": 873643,
+        "rawSha256": "53f9845ff8fa7545b832dd71f75be769df1d6365f7ec35e1683be8507127a249"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-owned-buttons-final-node-integrity.json.gz",
+        "rawBytes": 280969,
+        "rawSha256": "939f54e0e8774e21a29437ee4086398d79d4a0450b26bbfdaca12288fab20a9c"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-owned-buttons-build.json.gz",
+        "rawBytes": 349,
+        "rawSha256": "9d94be9e677db8924f8578ffe50eaf4b95584b355bdc1268b33bef31f4d6afed"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-owned-buttons-verify.json.gz",
+        "rawBytes": 105,
+        "rawSha256": "c27fd849e03c560f5dce3aa757d2e31e6da605b3b2c2c28771bd4cb6f1a0644c"
+      }
+    ]
+  },
   "retiredSettingsControls20261021": {
     "baseline": "504d2eaf63bec21f0595dba0979573fc5db8924a",
     "cause": "Retired settings callbacks survived same-scope redraw or close/reopen; generic button advanced navigation intent before callback guards, canceling newer navigation ACK.",

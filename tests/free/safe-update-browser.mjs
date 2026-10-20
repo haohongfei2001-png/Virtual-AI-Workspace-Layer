@@ -36,6 +36,15 @@ try{
  const initialEntries=await page.evaluate(()=>safeUpdate.entries.length);await page.evaluate(()=>safeUpdate.update('纯后台更新'));await page.waitForTimeout(30);assert.equal(await page.evaluate(()=>safeUpdate.entries.length),initialEntries);
  await page.getByRole('button',{name:'较早的30日',exact:true}).click();assert.deepEqual(await page.evaluate(()=>safeUpdate.entries.at(-1)),{kind:'history',objectIds:['T300']});
  await page.getByRole('button',{name:'较近的30日',exact:true}).click();assert.deepEqual(await page.evaluate(()=>safeUpdate.entries.at(-1)),{kind:'foreground',objectIds:['inventory']});checks.push('only-user-workspace-and-history-entry-trigger-calibration');
- await target().evaluate(n=>{n.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,composed:true,pointerId:43}));safeUpdate.update('绝不能显示的旧scope');safeUpdate.navigation.invalidate('scope-changed');document.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,composed:true,pointerId:43}));});await page.waitForTimeout(30);assert.equal(await page.evaluate(()=>safeUpdate.navigation.roots()),null);checks.push('invalidation-discards-pending-old-scope');
+ // The single native return control survives a renderer scope replacement.
+ await page.evaluate(()=>{
+  const {navigation,snapshot,refs}=safeUpdate;globalThis.persistentReturn=navigation.roots().back;
+  const scope='replacement_scope',nextRefs=refs.map(ref=>({...ref,scope}));
+  navigation.update({...snapshot,scope,refs:nextRefs,noProject:nextRefs},'2026-10-11T04:00:00Z','Asia/Shanghai');navigation.enterReading();
+ });
+ assert.equal(await page.evaluate(()=>safeUpdate.navigation.roots().back===persistentReturn&&persistentReturn.isConnected),true);
+ await page.getByRole('button',{name:'返回工作区',exact:true}).click();assert.equal(await page.evaluate(()=>safeUpdate.navigation.view().mode),'workspace');checks.push('same-native-return-works-across-scope-replacement');
+ await page.evaluate(()=>safeUpdate.navigation.update(safeUpdate.snapshot,'2026-10-11T04:00:00Z','Asia/Shanghai'));
+ await target().evaluate(n=>{const prior=n.textContent;n.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,composed:true,pointerId:43}));safeUpdate.update('绝不能显示的旧scope');if(!n.isConnected||n.textContent!==prior)throw Error('same-scope-pointer-update-not-pending');safeUpdate.navigation.invalidate('scope-changed');document.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,composed:true,pointerId:43}));});await page.waitForTimeout(30);assert.equal(await page.evaluate(()=>safeUpdate.navigation.roots()),null);checks.push('invalidation-discards-pending-old-scope');
  const report={evidence:'REAL_BROWSER_SYNTHETIC_SAFE_UPDATE',physicalIME:'NOT_RUN',browser:browser.version(),checks,fail:0};await writeFile('/private/tmp/free-safe-update.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

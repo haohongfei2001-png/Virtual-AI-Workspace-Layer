@@ -114,7 +114,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   if(!framed)doc.addEventListener('focusin',trackFocus);
   const captureFocus=()=>{const n=doc.activeElement;if(n===lastNativeFocus?.node){lastNativeFocus.start=n.selectionStart;lastNativeFocus.end=n.selectionEnd;}};
   const restoreFocus=()=>{const f=lastNativeFocus;if(f?.node.isConnected){f.node.focus({preventScroll:true});if(typeof f.start==='number'&&f.node.setSelectionRange)f.node.setSelectionRange(f.start,f.end);}};
-  const button=(label,fn,text='',cls='square',isCurrent=null)=>{const b=node(doc,'button',{type:'button','aria-label':label,title:label,class:cls},text);b.dataset.focusKey=label;b.addEventListener('click',event=>{if(isCurrent&&!isCurrent())return;advanceNavigationIntent();fn(event);});return b;};
+  // Root membership applies to every action, including menus and pagination.
+  // The native return button is persistent across views; do not bind it to one view.
+  const ownsButton=control=>!stopped&&!!snapshot&&(control===roots?.back&&control.isConnected!==false||[roots?.sidebar,roots?.workspace].some(pane=>pane?.n.isConnected!==false&&[...(pane?.shadow.querySelectorAll('button')??[])].includes(control)));
+  const button=(label,fn,text='',cls='square',isCurrent=null)=>{const b=node(doc,'button',{type:'button','aria-label':label,title:label,class:cls},text);b.dataset.focusKey=label;b.addEventListener('click',event=>{if(!ownsButton(b)||isCurrent&&!isCurrent())return;advanceNavigationIntent();fn(event);});return b;};
   const currentProjectControl=(control,ownerView,role)=>!stopped&&view===ownerView&&[...(roots?.[role]?.shadow.querySelectorAll('button')??[])].includes(control);
   function own(tag='div'){const n=node(doc,tag,{'data-vaiwl-owned':token});const shadow=n.attachShadow({mode:'open'});shadow.append(node(doc,'style',{},css));return {n,shadow};}
   function restoreMask(){if(!mask)return;for(const[name,prior,expected]of mask.attrs){if(mask.node.getAttribute(name)===expected){if(prior===null)mask.node.removeAttribute(name);else mask.node.setAttribute(name,prior);}}mask=null;}

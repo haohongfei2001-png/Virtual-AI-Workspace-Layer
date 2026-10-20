@@ -146,3 +146,9 @@ for(const label of ['工作空间设置','关闭设置'])test('retired settings 
  assert.equal(f.nav.view().mode,'reading');assert.equal(f.commands.length,1);
  }finally{f.nav.stop();}
 });
+
+test('retired pager cannot cancel a fresh current-target acknowledgement',async()=>{
+ const f=setupCurrent();try{const retired=f.button('显示更多近期窗口');assert(retired);f.nav.updateFrameProjection(projection());
+ f.pane().querySelector('[data-ref-id="P2_0"]').click();assert.equal(f.commands.length,1);retired.click();f.reply({state:'already-current'});await tick();assert.equal(f.nav.view().mode,'reading');assert.equal(f.commands.length,1);
+ }finally{f.nav.stop();}
+});
