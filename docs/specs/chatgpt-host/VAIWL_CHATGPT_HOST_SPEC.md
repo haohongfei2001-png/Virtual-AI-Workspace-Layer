@@ -363,6 +363,8 @@ UI可执行既有人工显示命令和owner-issued目标计划，不能发任意
 - 同一actionId重复rpc只返回已派发状态，不再click；ACK丢失/超时返回unconfirmed，不自动href补跳。观察route/body确认实际结果，用户可以随后显式重试。
 - 没有native anchor且存在或无法排除未发草稿、待提交附件、上传/语音/生成、Canvas未保存时，只显示明确的“保留当前内容，在新标签打开”真链接。风险在计划后变化时撤销旧same-tab计划，当前次激活不自动换新页，需要用户看到新方式后明确点击。
 
+实施补充（2026-10-20，取消在途导航）：明确的新查询或面板/展示意图可发送一次 `HOST_UI_CANCEL_NAVIGATION`，必须复用原 grant/mount/actionId/targetKey/planRevision，按原 UI sender/scope 栅栏核验。仅撤销：worker 保留有界消费记录，并将固定 binding 的 `HOST_NATIVE_CANCEL_PLAN` 送往原文档，同步使内容侧待派发计划失效，防止已批准但迟到的授权回复触发旧点击。两层未确认时不得声称取消完成；已发生的点击不撤回、不补跳、不重发，也不清消费记录。取消沿原6秒上限，无数据读取/身份授予/展示切换；新查询继续合并到原读取通道，不禁用或丢弃用户输入。
+
 route相同不必然body相同；只在两者匹配时直接恢复原生阅读。已缓存URL失效返回404/加载错不会触发删除或重新创建。native Back/Forward不被VAIWL添加历史entry或改history.state；这里只保存自己的视图状态。
 
 ### 7.6 原生新建、焦点与片段

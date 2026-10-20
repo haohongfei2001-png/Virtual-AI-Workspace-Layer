@@ -37,6 +37,14 @@ else{
   await context.exposeBinding('observeWindowReturn',({frame},entry)=>{if(report.trace.length<400)report.trace.push({phase:report.phase,frame:frame.url(),...entry});else report.traceDropped++;});
   await context.addInitScript(()=>{
    if(location.protocol!=='chrome-extension:'||!globalThis.chrome?.runtime?.sendMessage)return;
+   // Capture the actual composed click path: the earlier locator snapshot may
+   // have been replaced before activation. Observe only, never cancel/replay.
+   document.addEventListener('click',event=>{
+    const node=event.composedPath().find(value=>value?.matches?.('.search-results a[data-ref-id]'));
+    if(!node)return;
+    const entry={type:'SEARCH_LINK_CLICK',delegated:node.hasAttribute('data-native-plan-control'),ariaDisabled:node.getAttribute('aria-disabled'),target:node.getAttribute('target'),connected:node.isConnected,button:event.button,modified:event.metaKey||event.ctrlKey||event.shiftKey||event.altKey};
+    setTimeout(()=>{void globalThis.observeWindowReturn({...entry,defaultPrevented:event.defaultPrevented}).catch(()=>{});},0);
+   },true);
    const send=chrome.runtime.sendMessage.bind(chrome.runtime);
    chrome.runtime.sendMessage=function(...args){const m=args[0],tracked=['HOST_UI_VIEW','HOST_UI_RESUME','HOST_UI_SAVE_VIEW','HOST_UI_DISPATCH_CURRENT','HOST_UI_DISPATCH_NATIVE','HOST_UI_PRESENT'].includes(m?.type),pending=send(...args);
     if(tracked&&pending?.then)pending.then(r=>{const p=r?.page;globalThis.observeWindowReturn({type:m.type,query:m.query,expectedQuery:m.expectedQuery,capacities:m.view?.capacities,scroll:m.view?.scroll,ok:r?.ok,state:r?.state,reason:r?.reason,presentation:p?.presentation??r?.presentation,resume:r?.resume,counts:p?{search:!!p.search,workingSet:!!p.workingSet,groups:p.groups?.items.map(g=>({id:g.id,unknown:g.lists.unknown.items.length})),unknown:p.entries?.unknown.items.length,selection:p.selection?{groupId:p.selection.groupId,list:p.selection.list,limit:p.selection.limit}:null}:null});},()=>{});

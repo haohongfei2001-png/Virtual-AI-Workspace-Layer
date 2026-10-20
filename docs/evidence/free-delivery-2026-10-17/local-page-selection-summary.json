@@ -1,4 +1,44 @@
 {
+"nativeNavigationCancellation20261020": {
+  "baseline": "dbc73fb726462e6066af64796ceb4c21c399e3da",
+  "rootCause": "new query cancelled local acknowledgement but not pending native action; actual four-owner RED clicks=1",
+  "repair": "one owner-verified cancellation tuple; bounded worker tombstone plus content/native-plan invalidation; no replay, scope grant or presentation",
+  "validation": {
+    "ownerIntegration": 422,
+    "transportAdapter": 234,
+    "fail": 0,
+    "browser": "PASS_OFFLINE_MV3_WINDOW_RETENTION",
+    "browserScope": "normal navigation regression only; actual cancellation message chain NOT_RUN",
+    "elapsedMs": 3283.905417,
+    "review": "no blocking findings; does not roll back prior native-reading preparation"
+  },
+  "history": "same-target added test first lacked current DTO and failed setup; corrected fixture, failure retained. Initial click microtask sample preceded handler prevention; terminal task observation corrected, not product failure.",
+  "files": {
+    "local-vaiwl-native-query-cancel-red.log.gz": "8e04516d2da600a2c38e004e4d748948672e141cc4ca1460a72eb58e3e1df74c",
+    "local-vaiwl-native-query-cancel-green.log.gz": "fddac41c940c689e3296320e22aa467b4aec9133bd5dd1b8aad57842d26558c3",
+    "local-vaiwl-native-query-cancel-integrated.log.gz": "90ee1f4f2a38868aef5cc8d3354a8b3fab2eff1118c48cffc9af1b287b493dc6",
+    "local-vaiwl-native-query-cancel-final.log.gz": "69338e751e3b927a7d7c3ba48ebf6a00050e260db42f82a10294cec16413f5a1",
+    "local-vaiwl-native-query-cancel-final2.log.gz": "4c04caae3d76c4a2da8039c8fc3020e1a179f3b0f3d7d0ea9815cdea588e04ab",
+    "local-vaiwl-native-query-cancel-transport.log.gz": "f52a12c6cc4ee2325257f5493fdf9739690ebdd6ece24bf3411904a3ca74b76c",
+    "local-vaiwl-window-click-trace.json.gz": "24d7ff13bca1c0176bef4bb24b521c79a2f07e4fbe13dfb196f54ad7c15e9b69",
+    "local-vaiwl-window-click-terminal.json.gz": "ee18365bfc81b07c05e5a587b0a7f76cc2bf15c3f9ef6dea0b7a1107364a8aaa",
+    "local-vaiwl-navigation-cancel-package.json.gz": "6902b709b5498c606b1698891cc25df99a53073ad7a31122d999365faba5fe7f",
+    "local-vaiwl-navigation-cancel-package.log.gz": "25a3983dc2d18f4e3dd972bf716e90070bb3846bcebce669cb646750ee09c02a"
+  },
+  "sourceHashes": {
+    "src/host/chatgpt-adapter.mjs": "af7337e437239764f52316b6d99710cf0e192f0eb6aa1115e0fc662b273029a4",
+    "src/host/content-session.mjs": "1dbf84137d01717acd10e552c38b343c1a137a8a913f5a3ed1149cb285d60627",
+    "src/host/frame-native-plans.mjs": "3678d30c1749468cf6c39a48e59790cb0d6422efa59e05078cb2c5517503ab44",
+    "src/host/free-frame-client.mjs": "0ea0bdfef2d01c07744562ba92df2f974c58340d5341142f879762a08f9aad2e",
+    "src/host/native-actions.mjs": "33827b4ef137df1f2284e4940e1a5fa1f7e778add695c817b1b155e978c33586",
+    "src/runtime/host-binding-service.mjs": "536098a669fcfd9aacd73025a8102dc944d8566e30a42ce84a3c58e2417e1456",
+    "src/runtime/host-current-navigation.mjs": "445864f7a77a8dc85479ff399c8c826cb53512f9fb52be240d1098ba03ddce7f",
+    "src/runtime/host-worker-runtime.mjs": "86d509b0aecc31cb15f66be8d6e5981737717e383227eb1352038f5c746e218c",
+    "tests/host/free-frame-client.test.mjs": "e0d85579f18d8f7afcd0265af9efc0a45331bae03da59db49e8185911a845985",
+    "tests/host/host-current-navigation.test.mjs": "f545c1794f576c4f9712ffe77f5f3ec2c9350e4c7782a72b3b8251109ee7f9fb",
+    "tests/host/frame-window-retention-package-browser.mjs": "cbc005933162c95e1cadd314610493db2e250cb7c40285de1e54716b2d23e7d4"
+  }
+},
 "windowRetentionObserver20261020": {
   "baseline": "c7ed1795",
   "ci": {

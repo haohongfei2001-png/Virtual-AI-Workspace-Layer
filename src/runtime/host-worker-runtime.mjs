@@ -62,7 +62,7 @@ export function createHostWorkerRuntime({chrome,indexedDB,origin='https://chatgp
   },
   dispatchCurrent:({context,command,mode,guard,remainingMs})=>{
    if(!guard()||!context.isCurrent()||!Number.isFinite(remainingMs)||remainingMs<=0||remainingMs>6000)return {state:'blocked'};
-   return chrome.tabs.sendMessage(context.parentFrame.tabId,{type:mode==='native-control'?'HOST_NATIVE_DISPATCH_PLAN':'HOST_NATIVE_DISPATCH_CURRENT',...context.binding,command,expiresAt:new Date(Date.now()+remainingMs).toISOString()},{documentId:context.parentFrame.documentId});
+   return chrome.tabs.sendMessage(context.parentFrame.tabId,{type:mode==='cancel'?'HOST_NATIVE_CANCEL_PLAN':mode==='native-control'?'HOST_NATIVE_DISPATCH_PLAN':'HOST_NATIVE_DISPATCH_CURRENT',...context.binding,command,expiresAt:new Date(Date.now()+remainingMs).toISOString()},{documentId:context.parentFrame.documentId});
   },
   prepareNavigation:({parentFrame,binding,targets})=>chrome.tabs.sendMessage(parentFrame.tabId,{type:'HOST_NATIVE_PLAN',...binding,targets},{documentId:parentFrame.documentId})});
  oldSendObserver=offlineOldSendTerminal?createBrowserOldSendTerminal({webRequest:chrome.webRequest,origin,onTerminal:event=>service.oldSendTerminal?.terminal(event)}):null;

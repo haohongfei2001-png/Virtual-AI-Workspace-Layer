@@ -27,7 +27,15 @@ export function createFrameNativePlans({adapter,bindingCurrent,showReading=()=>f
    return ['blocked','unconfirmed'].includes(result?.state)?{state:result.state}:failed;
   },{timeoutMs:remaining,now:elapsedNow,schedule,cancel});}catch{return {state:'unconfirmed'};}finally{active=false;if(pending.get(command.actionId)===attempt)pending.delete(command.actionId);}
  }
- return Object.freeze({authorize,activate,beforeDispatch,plan(input){
+ function cancelAction({command,expiresAt}={}){
+  const remaining=Date.parse(expiresAt)-now(),entry=issuedCurrent.get(command?.targetKey);
+  if(!validCommand(command)||!entry||entry.plan.planRevision!==command.planRevision||bindingCurrent()!==entry.binding||adapter.currentURL()!==entry.url||!Number.isFinite(remaining)||remaining<=0||remaining>6000||typeof adapter.cancelPlan!=='function')return {state:'blocked'};
+  // Invalidate the native plan too: an already-approved authorization reply
+  // may still be in flight when the cancellation reaches this document.
+  if(adapter.cancelPlan(command)!==true)return {state:'blocked'};
+  issuedCurrent.delete(command.targetKey);return {state:'cancelled'};
+ }
+ return Object.freeze({authorize,activate,cancelAction,beforeDispatch,plan(input){
   if(!exactHostRecord(input,['targets'])||!Array.isArray(input.targets)||input.targets.length>200)throw Error('invalid-frame-native-targets');
   const targets=[],seen=new Map();
   for(const item of input.targets){

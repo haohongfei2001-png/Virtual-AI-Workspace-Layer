@@ -3890,3 +3890,10 @@ Round332 final integration: **6421/6421 Node PASS**, zero skips, terminal exit0.
 ## 窗口保留旅程观察器修复（2026-10-20，基线c7ed1795）
 
 CI39354354919终结FAIL：Node/持久化/J4 job成功，journeys在搜索当前聊天后原6秒返回入口等待超时，根因仍NOT_ESTABLISHED。该step原先未发布窗口JSON，现只加入既有有界日志列表，不开缓存/产物上传。一次本地原旅程先发现独立观察器缺陷：重绘后读旧节点，且locator传输期间也可能先detach；固定为frame内同步找当前workspace，单次滚动和原两帧等待不变，必须仍保持同一位置。原始失败、诊断失败与初稿失败均保留。最终31项定向通过，1k夹具功能旅程2846.784ms通过，项目/UNKNOWN各17项、当前/另一原生聊天唯一打开返回、原document/editor/草稿与滚动保持，源码/夹具未漂移；不称性能提速或规模通过。之后只增加点击前委托计划/disabled/target/页面数及失败页面数取证，未再次运行浏览器；S证据以报告内hash为准。相同URL不保证same-target，缺proof可合法新标签，须按trace区分安全拒绝/未派发/已经返回后状态变化，不能宣布CI根因已修。证据 `windowRetentionObserver20261020`。真实目录/身份、完整J1/J4及10k/100k DEFERRED不变。
+
+
+## 新查询撤销在途原生导航（2026-10-20，基线dbc73fb7）
+
+实际四owner反例证明：派发进入content后用户换页，frame只丢弃旧ACK，原生入口仍被点击一次。已增加同grant/mount/action/plan的纯取消：worker有界消费记录防乱序/重放，原文档收到固定binding取消后同步使native计划失效，防第二次授权已算true但迟到的回复继续click。新查询仍合并，不丢用户输入；显式展示和面板操作同样撤销待派发动作。取消不授scope、不读取数据、不切展示、不重发；6秒/容量原约束保持，超时迟到不得写记录。不能回滚取消前已完成的原生阅读准备。独立审查发现的第二授权回程竞态与迟到取消已补齐；same/native×首/第二授权四反例、422项组合/构建及234项传输/adapter回归通过。正常打包导航子链3283.905ms通过、运行源码/fixture无漂移，不宣称提速；真实浏览器取消消息链尚NOT_RUN，完整J1/J4/CI旧返回超时未关闭。原RED、夹具current DTO缺失的中间失败、点击取证microtask过早记录及最终证据均保存于 `nativeNavigationCancellation20261020`。实际点击取证现在在事件任务结束后读取preventDefault，文档已销毁时可能缺记录，不以缺记录判未点击。
+
+本轮有界HTTP1.1正常push仍低速超时；先前提交仍安全保存在原本地分支，未强推或循环重试。完整目录/身份、真实安装及10k/100k DEFERRED不变。

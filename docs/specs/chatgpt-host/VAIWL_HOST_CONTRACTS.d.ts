@@ -432,6 +432,8 @@ export interface HostAdapter {
   nativeHref(url: string): string | null;
   planNavigation(target: NativeTarget, risk: InputRisk): NavigationPlan;
   dispatchNative(command: NavigationCommandDTO): Promise<NavigationResult>;
+  /** Owner-verified cancellation only; invalidates the issued plan, never dispatches. */
+  cancelPlan(command: NavigationCommandDTO): boolean;
   activateNative(action: NativeAction, command: NavigationCommandDTO): Promise<ActionResult>;
   readLoaded(target: NativeTarget | CoverageDomain, signal: AbortSignal): Promise<ObservationProposal[]>;
   selectedSnippet(ref: NativeRef): SnippetCandidate | null;

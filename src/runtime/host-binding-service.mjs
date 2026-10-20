@@ -114,6 +114,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
    if(!handshake.matchesFrame(message,sender,actual)||!await handshake.verify(message,sender))return {ok:false};
    const frame=asFrame({tabId:sender.tab.id,documentId:actual.documentId,url:actual.url},sender);return {ok:candidates?.authorize(message.command,frame)===true||currentNavigation?.authorize(message.command,frame)===true};
   }
+  if(message?.type==='HOST_UI_CANCEL_NAVIGATION')return currentNavigation?currentNavigation.cancelAction(message,sender):{ok:false,state:'blocked'};
   if(['HOST_UI_DISPATCH_CURRENT','HOST_UI_DISPATCH_NATIVE'].includes(message?.type))return currentNavigation?currentNavigation.handle(message,sender):{ok:false,state:'blocked'};
   if(['HOST_UI_CANDIDATES','HOST_UI_ACTIVATE_CANDIDATE'].includes(message?.type))return candidates?candidates.handle(message,sender):{ok:false,state:'blocked'};
   if(['HOST_UI_SNIPPET','HOST_UI_SNIPPET_LIST'].includes(message?.type))return snippets?snippets.handle(message,sender):{ok:false,reason:'snippet-unavailable'};

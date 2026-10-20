@@ -66,5 +66,9 @@ export function createNativeActions({discovery,urlPolicy,currentURL,bodyProof=()
    entry.node.click();clicked=true;return {state:'dispatched',actionId:dto.actionId};
   }catch{return {state:'unconfirmed',reason:'native-dispatch-unconfirmed'};}finally{if(dispatchEvent&&!clicked)try{const result=onNativeDispatchCancelled(dispatchEvent);if(result&&typeof result.then==='function')Promise.resolve(result).catch(()=>{});}catch{}}
  }
- return Object.freeze({planNavigation,planKey,dispatchNative});
+ function cancelPlan(command){
+  const entry=plans.get(command?.targetKey);if(!entry||entry.plan.planRevision!==command?.planRevision)return false;
+  plans.delete(entry.targetKey);discovery.releaseHandles?.(entry.targetKey);return true;
+ }
+ return Object.freeze({planNavigation,planKey,dispatchNative,cancelPlan});
 }

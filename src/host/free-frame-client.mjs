@@ -106,7 +106,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   try{const page=await read(query,true,null,retryToken);if(page&&pending&&!closed&&grant===current&&navigation===renderer&&grantCurrent()&&Date.parse(grant.expiresAt)>now())renderer?.focusSurface?.();}
   finally{cleanup();}
  }
- function openRecovery(fromFailure=false){if(readTerminal)return;dispatchEpoch++;
+ function openRecovery(fromFailure=false){if(readTerminal)return;dispatchEpoch++;cancelPendingNavigation();
   if(recovery||backup||snippets||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending&&!fromFailure)return;
   clearCandidates();clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-recovery');
   recoveryRoot=doc.createElement('div');recoveryRoot.setAttribute('data-vaiwl-frame-recovery','');privateRoot.append(recoveryRoot);
@@ -119,7 +119,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   },onResume:({restoreFocus=false}={})=>{if(recovery!==panel||!valid())return;panel.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;budget.reset();void resumePanelView(restoreFocus);}});
   recovery=panel;state({state:'recovery'});void panel.open();
  }
- function openBackup(){if(readTerminal)return;dispatchEpoch++;
+ function openBackup(){if(readTerminal)return;dispatchEpoch++;cancelPendingNavigation();
   if(backup||recovery||snippets||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending)return;
   clearCandidates();clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-backup');
   backupRoot=doc.createElement('div');backupRoot.setAttribute('data-vaiwl-frame-backup','');privateRoot.append(backupRoot);
@@ -137,7 +137,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   },onResume:({restoreFocus=false}={})=>{if(backup!==panel||!valid())return;panel.stop();backup=null;backupRoot?.remove();backupRoot=null;budget.reset();void resumePanelView(restoreFocus);}});
   backup=panel;state({state:'backup'});void panel.open();
  }
- function openSnippets(){if(readTerminal)return;dispatchEpoch++;
+ function openSnippets(){if(readTerminal)return;dispatchEpoch++;cancelPendingNavigation();
   if(snippets||backup||recovery||closed||horizonPending||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;
   clearCandidates();clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();navigation?.invalidate?.('saved-snippets');
   snippetsRoot=doc.createElement('div');snippetsRoot.setAttribute('data-vaiwl-frame-snippets','');privateRoot.append(snippetsRoot);
@@ -177,7 +177,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   if(dispatchPending){
    // Coalesce transport only. A different query is a new user intent now,
    // so its predecessor's late acknowledgement cannot restore the old view.
-   if(JSON.stringify(query)!==JSON.stringify(requested))dispatchEpoch++;
+   if(JSON.stringify(query)!==JSON.stringify(requested)){dispatchEpoch++;cancelPendingNavigation();}
    queuedDispatchView={value:requested,location};return null;
   }if(JSON.stringify(query)!==JSON.stringify(requested)){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeDesired=null;}if(!location)query=requested;const ticket=++serial;activeRead?.abort();const controller=new AbortController();activeRead=controller;activeLocation=location;navigation?.setNativeNavigationPending?.(true);
   if(budget.remaining()===Infinity)splits=0;
@@ -267,7 +267,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   if(value.intent.kind!=='search-known'&&query.search!==undefined){const {search,...rest}=query;query=rest;dirty=true;}
   const key=JSON.stringify(value.intent);if(key===presentationIntent)return;presentationIntent=key;navigation.present(value.intent);
  }
- async function presentIntent(intent){if(readTerminal)return;dispatchEpoch++;
+ async function presentIntent(intent){if(readTerminal)return;dispatchEpoch++;cancelPendingNavigation();
   if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;
   if(intent.kind!=='show-working-set'&&query.workingSet!==undefined){const {workingSet,...rest}=query;query=rest;}
   if(intent.kind!=='search-known'&&query.search!==undefined){const {search,...rest}=query;query=rest;}
@@ -388,12 +388,18 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   // single-flight and deadline budget; returning does not enter a new segment.
   if(!closed&&!backup&&grantCurrent()&&Date.parse(grant?.expiresAt)>now()){invalidate();void calibrateEntry({kind:'foreground'});}
  }
+ function cancelPendingNavigation(){
+  const pending=dispatchPending;if(!pending||pending.cancelSent)return;
+  pending.cancelSent=true;
+  // Revocation only: no presentation, data read, retry or replacement dispatch.
+  try{void withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_CANCEL_NAVIGATION',...pending.command}),{now:elapsedNow,schedule,cancel}).catch(()=>{});}catch{}
+ }
  async function dispatchCurrent(command){
   if(!exactHostRecord(command,['actionId','uiGrantId','mountId','planRevision','targetKey'])||closed||!grantCurrent()||backup||recovery||snippets||command.uiGrantId!==grant?.id||command.mountId!==grant?.mountId)return {state:'blocked'};
   const attempt=dispatchEpoch,current=grant,renderer=navigation,issued=[...plans.values(),...projectPlans.values()].find(item=>item.targetKey===command.targetKey&&item.plan.planRevision===command.planRevision&&(isCurrentNavigationPlan(item.plan)||isResolvedControlNavigationPlan(item.plan)));
   // Old rendered controls cannot activate while their replacement VIEW is pending.
   if(!issued||activeRead||dispatchPending||horizonPending)return {state:'blocked'};
-  const pending={};dispatchPending=pending;navigation?.setNativeNavigationPending?.(true);
+  const pending={command:{grantId:current.id,mountId:current.mountId,actionId:command.actionId,planRevision:command.planRevision,targetKey:command.targetKey},cancelSent:false};dispatchPending=pending;navigation?.setNativeNavigationPending?.(true);
   let active=true;const started=elapsedNow(),dispatchQuery=JSON.stringify(query);
   const valid=()=>active&&elapsedNow()-started>=0&&elapsedNow()-started<6000&&!closed&&grantCurrent()&&grant?.id===current.id&&navigation===renderer&&dispatchEpoch===attempt&&!backup&&!recovery&&!snippets&&JSON.stringify(query)===dispatchQuery;
   try{const result=await withRequestDeadline(async()=>{

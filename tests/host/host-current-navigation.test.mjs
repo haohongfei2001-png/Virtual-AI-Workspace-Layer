@@ -7,7 +7,7 @@ function fixture(){
  const context={scope:{key:'scope'},scopeGrantId:'scope_grant',role:'workspace',binding:{documentToken:'doc',producerToken:'producer',routeEpoch:1},parentFrame:{tabId:1,frameId:0,documentId:'browser_doc',actualURL:url},isCurrent:()=>live};
  const proof={scope:{key:'scope'},...context.binding,conversationId:id,bodyEpoch:1,guard:()=>proofLive};
  const row={refId:id,targetKey:'target',plan:{mode:'same-target',target:{kind:'resolved',entity:'conversation',nativeId:id,navigationURL:url,liveHandle:null},bodyProofId:'proof',planRevision:1}};
- const service=createHostCurrentNavigation({ui:{withScope:async(args,fn)=>{if(args.grantId!=='grant'||args.mountId!=='mount'||args.sender!=='owned')throw Error('denied');return fn(context);}},observations:{withCurrent:async(proofId,fn)=>{proofCalls++;assert.equal(proofId,'proof');if(!proofLive)throw Error('stale');const result=await fn(proof);if(!proofLive)throw Error('stale');return result;}},bridge:async args=>{bridgeCalls++;return bridge(args);},elapsedNow:()=>time});
+ const service=createHostCurrentNavigation({ui:{withScope:async(args,fn)=>{if(args.grantId!=='grant'||args.mountId!=='mount'||args.sender!=='owned')throw Error('denied');return fn(context);}},observations:{withCurrent:async(proofId,fn)=>{proofCalls++;assert.equal(proofId,'proof');if(!proofLive)throw Error('stale');const result=await fn(proof);if(!proofLive)throw Error('stale');return result;}},bridge:async args=>{if(args.mode==='cancel')return {state:'cancelled'};bridgeCalls++;return bridge(args);},elapsedNow:()=>time});
  const register=(navigation=[row],overrides={})=>service.register({context,grantId:'grant',mountId:'mount',navigation,...overrides});
  const message=(patch={})=>({v:1,type:'HOST_UI_DISPATCH_CURRENT',grantId:'grant',mountId:'mount',actionId:'action',planRevision:1,targetKey:'target',...patch});
  const handle=(patch={},sender='owned')=>service.handle(message(patch),sender);
@@ -49,3 +49,16 @@ test('only already-current blocked unconfirmed are accepted, never dispatched or
 test('sixty-four live registry groups are bounded; expired entries can be reclaimed',()=>{
  const f=fixture();for(let i=0;i<64;i++)f.register([f.row],{grantId:'grant_'+i});assert.throws(()=>f.register([f.row],{grantId:'overflow'}),/capacity/);f.setTime(30100);assert.equal(f.register(),true);
 });
+
+const cancelMessage=f=>f.message({type:'HOST_UI_CANCEL_NAVIGATION'});
+test('cancellation consumes action before delivery without bridging or proof reads',async()=>{
+ const f=fixture();f.register();assert.equal((await f.service.cancelAction(cancelMessage(f),'owned')).ok,true);assert.equal((await f.handle()).ok,false);assert.deepEqual(f.counts(),{bridgeCalls:0,proofCalls:0});assert.equal((await f.service.cancelAction(cancelMessage(f),'owned')).ok,true);
+});
+test('cancellation revokes pending guard and cannot authorize a replacement action',async()=>{
+ const f=fixture();f.register();f.setBridge(async({command,context,guard})=>{assert.equal(guard(),true);assert.equal((await f.service.cancelAction(cancelMessage(f),'owned')).ok,true);assert.equal(guard(),false);assert.equal(f.service.authorize(command,context.parentFrame),false);return {state:'already-current'};});assert.equal((await f.handle()).ok,false);assert.equal((await f.handle()).ok,false);assert.equal(f.counts().bridgeCalls,1);
+});
+test('forged cancellation leaves the independently authorized action usable',async()=>{
+ for(const patch of [{grantId:'other'},{mountId:'other'},{targetKey:'other'},{planRevision:2},{extra:true}]){const f=fixture();f.register();assert.equal((await f.service.cancelAction({...cancelMessage(f),...patch},'owned')).ok,false);assert.equal((await f.handle()).state,'already-current');}
+ const f=fixture();f.register();assert.equal((await f.service.cancelAction(cancelMessage(f),'forged')).ok,false);assert.equal((await f.handle()).state,'already-current');
+});
+test('cancellation after completion cannot replay native action',async()=>{const f=fixture();f.register();assert.equal((await f.handle()).state,'already-current');assert.equal((await f.service.cancelAction(cancelMessage(f),'owned')).ok,true);assert.equal((await f.handle()).ok,false);assert.equal(f.counts().bridgeCalls,1);});
