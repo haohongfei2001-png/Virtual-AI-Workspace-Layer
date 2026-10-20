@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 同步与生命周期接线（2026-10-20，91a34d2a）
+
+原分支已正常推送并由PR16 API确认91a34d2a；历史网络阻塞记录不追溯改写。新补实际binding composition验证（未改产品）：恢复STATUS计划/备份UPLOAD缓冲先使service.isIdle=false，经port断连、父文档失效、mount释放、tab关闭均恢复idle，45项通过，证据 bindingRetirementIntegration20261020。此为明确browser/IDB doubles的集成证明，不冒充真实浏览器自然休眠。CI39361840230耐久兼容已通过，其他任务尚在途，未写全绿；独立复审和原真实数据/完整Free验收缺口保留。
+
 ## 合批接线检查点（2026-10-20，源码9699d763）
 
 冻结全Node9520项为9518通过/2失败/0跳过，129745.886ms。两失败均为集成文本过期：CI正则缺新增面板标记，C3原完整patch上下文仍const backup。已同步原预期与文档上下文，严格前向/反向patch校验不删，相关132项通过；产品源码未变，不将定向补验说成新全套绿色。原FAIL保留见 retirementBatchIntegration20261020。正常fetch恢复，确认本地领先远端12提交、无远端分叉；2258副本/3stash保留，后续普通推送结果以实际回执为准。独立复审额度限制、真实目录/身份和完整Free门槛仍保留。

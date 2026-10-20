@@ -1,4 +1,22 @@
 {
+"bindingRetirementIntegration20261020": {
+  "baseline": "91a34d2a",
+  "state": "OFFLINE_BINDING_INTEGRATION_PASS",
+  "scope": "actual binding/ui/recovery/backup composition; browser and IDB boundaries explicit doubles",
+  "paths": [
+    "port disconnect",
+    "parent document invalidation",
+    "mount release",
+    "tab closed"
+  ],
+  "assertions": "both allocated recovery plan and upload buffer first block actual service.isIdle, then lifecycle retirement restores idle",
+  "pass": 45,
+  "fail": 0,
+  "skip": 0,
+  "report": "vaiwl-binding-retirement-integration.log.gz",
+  "sha256": "a010674a032eafcecf5e3cae24144f285830c79415a9d31eedc666d1d88b6d40",
+  "realChatGPT": "NOT_RUN"
+},
 "retirementBatchIntegration20261020": {
   "baseline": "9699d763bf0280d75ce7990ec0e30b516714b987",
   "fullNode": {
