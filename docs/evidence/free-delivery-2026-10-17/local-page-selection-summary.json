@@ -17105,5 +17105,37 @@
       "10k/100k DEFERRED",
       "CI39346016577 J1 failure remains open; Node changed-query fixture corrected"
     ]
+  },
+  "hiddenCandidateReturn20261020": {
+    "baseline": "c279fa047e7a22f33513919869ff785e93ce011e",
+    "result": "PARTIAL_J1_NOT_ACCEPTED",
+    "rootCause": "Hidden candidate panel restoration acknowledged before layout; independently reproduced, not proven as historical Linux failure root cause",
+    "validation": "209 targeted including build; real DOM hidden-to-visible plus original 9-step headless MV3 J1, no source drift",
+    "evidence": {
+      "vaiwl-ci39346016577-j1.json": {
+        "file": "vaiwl-ci39346016577-j1.json-20261020.gz",
+        "sha256": "e9a0812e6c839eb3c71b366d0e367495b7f0b82b533f2afa7fdc44950754beac"
+      },
+      "vaiwl-j1-candidate-current.json": {
+        "file": "vaiwl-j1-candidate-current.json-20261020.gz",
+        "sha256": "3f9937553b89cfe9594f7eb39949e407a74e56af3a6f0ec3f390c565c433dbaf"
+      },
+      "vaiwl-candidate-hidden-red.log": {
+        "file": "vaiwl-candidate-hidden-red.log-20261020.gz",
+        "sha256": "2b64503b25dc5cd8983db3e3fdb8c44911cb62e44d21b18c257322de2cb4b534"
+      },
+      "vaiwl-candidate-hidden-final-unit.log": {
+        "file": "vaiwl-candidate-hidden-final-unit.log-20261020.gz",
+        "sha256": "7df88b95e4ecfc38df26671eb078f56f5445e31bf706487d508832be029ac25c"
+      },
+      "vaiwl-candidate-hidden-final-dom.log": {
+        "file": "vaiwl-candidate-hidden-final-dom.log-20261020.gz",
+        "sha256": "775e03647cca8d590872ee3810b597240d5bf73394bbc7e1460e6eeec3bae7d5"
+      },
+      "vaiwl-j1-candidate-final.json": {
+        "file": "vaiwl-j1-candidate-final.json-20261020.gz",
+        "sha256": "37be3f3c95200028dcba41a97899c9c76966f8fc6106c2da543d51d863720458"
+      }
+    }
   }
 }

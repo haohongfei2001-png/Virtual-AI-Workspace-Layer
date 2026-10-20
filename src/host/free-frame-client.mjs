@@ -29,7 +29,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  let wasHidden=false,visibilityAttached=false,candidates=null,candidateRoot=null,candidateRun=0,candidateOffset=0;
  let candidateRestore=null,candidateMigrationId=null,candidateMigrationProject=null,migrationListening=false,workspaceEntered=false,workspaceModePending=false;
  const locatedMigrations=new Map();
- const migration=createFrameCandidateMigration({now,reveal:({projectId,focus})=>navigation?.revealNativeProject?.({projectId,focus:focus&&doc.hasFocus?.()===true})===true,restoreCandidates:p=>{candidateRestore={...p,migrationId:candidateMigrationId};if(candidateOffset!==p.offset)void refreshCandidates(p.offset);else{candidates?.restorePosition?.(p);candidateRestore=null;}}});
+ const migration=createFrameCandidateMigration({now,reveal:({projectId,focus})=>navigation?.revealNativeProject?.({projectId,focus:focus&&doc.hasFocus?.()===true})===true,restoreCandidates:p=>{candidateRestore={...p,migrationId:candidateMigrationId};if(candidateOffset!==p.offset){void refreshCandidates(p.offset);return false;}const restored=candidates?.restorePosition?.(p)===true;if(restored)candidateRestore=null;return restored;}});
  const interruptMigration=event=>{if(event.isTrusted===true){candidateRestore=null;migration.interrupt();}};
  let bootstrapping=false,resumeTimer=null,resumeQueued=null,resumeWriting=false,resumeLast=null,resumeDesired=null,resumeQuery=null;
  let panelReturnCancel=null;
@@ -59,7 +59,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   try{
    const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_CANDIDATES',grantId:current.id,mountId:current.mountId,offset}),{now:elapsedNow,schedule,cancel});
    if(!valid())return {ok:false};if(result?.ok!==true)return candidateReadFailed(offset);
-   ensureCandidates();candidates.update(result.items,result.page);candidateOffset=result.page?.offset??0;if(result.migration){if(migration.offer(result.migration)){candidateMigrationId=result.migration.id;candidateMigrationProject=result.migration.projectId;}if(candidateRestore?.migrationId!==candidateMigrationId)candidateRestore=null;}else{migration.revoke();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;}if(candidateRestore){candidates.restorePosition?.(candidateRestore);candidateRestore=null;}applyCandidateMigration();return {ok:true};
+   ensureCandidates();candidates.update(result.items,result.page);candidateOffset=result.page?.offset??0;if(result.migration){if(migration.offer(result.migration)){candidateMigrationId=result.migration.id;candidateMigrationProject=result.migration.projectId;}if(candidateRestore?.migrationId!==candidateMigrationId)candidateRestore=null;}else{migration.revoke();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;}applyCandidateMigration();return {ok:true};
   }catch{if(valid())return candidateReadFailed(offset);return {ok:false};}
  }
  function applyCandidateMigration(){

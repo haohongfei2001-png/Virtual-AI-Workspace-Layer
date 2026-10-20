@@ -19,7 +19,7 @@ export function createFrameCandidateMigration({reveal,restoreCandidates,now=Date
   if(consumed.size>=32)return false;const started=now();if(!Number.isFinite(started))return false;pending={dto,started,lastTime:started,restored:false};return true;
  }
  function apply(){const entry=pending;if(!entry||applying)return false;if(interrupted){finish(entry);return false;}if(expired(entry)){finish(entry);return false;}if(!entry.dto.ready)return false;applying=true;
-  try{if(!entry.restored){entry.restored=true;restoreCandidates(entry.dto.presentation);}if(pending!==entry||expired(entry)||!entry.dto.ready)return false;
+  try{if(!entry.restored){entry.restored=true;if(restoreCandidates(entry.dto.presentation)===false){entry.restored=false;return false;}}if(pending!==entry||expired(entry)||!entry.dto.ready)return false;
    const result=reveal({projectId:entry.dto.projectId,focus:entry.dto.presentation.focused&&entry.dto.focusAllowed&&!interrupted});
    if(pending!==entry)return false;if(result!==true)return false;finish(entry);return true;
   }catch{return false;}finally{applying=false;}

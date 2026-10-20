@@ -122,6 +122,19 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   nav.present({kind:'search-known'});await paint();if(nav.roots().workspace.scroller.scrollTop!==0)throw Error('fixture search not short');
   holdMain=true;nav.enterReading();nav.showWorkspace();await paint();if(nav.view().scroll!==original)throw Error('pending main VIEW overwrote saved scroll');releaseMain();await paint();if(nav.roots().workspace.scroller.scrollTop!==original)throw Error('special view lost main workspace scroll: '+nav.roots().workspace.scroller.scrollTop+' expected '+original);nav.stop();
  });
+ // Hidden candidate panels must not acknowledge a clamped scroll restoration.
+ await page.evaluate(async()=>{
+  const {createFreeFrameCandidates}=await import('/src/host/free-frame-candidates.mjs');
+  const {createFrameCandidateMigration}=await import('/src/host/frame-candidate-migration.mjs');
+  const container=document.createElement('div');document.body.append(container);container.style.display='none';
+  const ui=createFreeFrameCandidates({document,container,onActivate:()=>{throw Error('unexpected activation');}});
+  ui.update(Array.from({length:32},(_,i)=>({renderKey:'candidate:c'+i,nativeTitle:'Candidate '+i,titleState:'exact',available:true,reason:null})),{offset:32,total:64,nextOffset:null});
+  let revealed=0;const migration=createFrameCandidateMigration({restoreCandidates:p=>ui.restorePosition(p),reveal:()=>{revealed++;return true;}});
+  migration.offer({id:'migration-hidden',projectId:'project-1',presentation:{offset:32,scrollTop:137,focused:false},ready:true,focusAllowed:false});
+  if(migration.apply()!==false||revealed!==0)throw Error('hidden restoration acknowledged before layout');
+  container.style.display='block';if(migration.apply()!==true||revealed!==1)throw Error('visible restoration did not complete');
+  const list=container.firstElementChild.shadowRoot.querySelector('ul');if(list.scrollTop!==137)throw Error('candidate position lost');ui.stop();container.remove();
+ });
  // Current project expansion is derived; explicit choices survive frame return.
  await page.evaluate(async()=>{
   const {createNavigation}=await import('/src/navigation/navigation.mjs');
