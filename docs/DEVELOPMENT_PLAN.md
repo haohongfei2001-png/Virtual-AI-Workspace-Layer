@@ -2,6 +2,8 @@
 
 ## 当前执行：继续依赖已满足的产品工程（2026-10-20）
 
+B5恢复撤权增量：pending修复收到所属文档撤权时取消原事务owner，保持RELEASE与在途计数语义；实际证据及未覆盖边界沿STATUS/recoveryRetirement20261020，既定产品目标与预算不变。
+
 B5备份恢复增量：采纳原PR16异步审查后关闭transfer退休未abort其恢复owner的提交前窗口；文档撤权/CLOSE/过期回收统一取消，已提交数据不伪称回滚，在途计数保留到settle。原失败与真实IDB/原MV3证据沿STATUS/backupRestoreRetirement20261020；不改变产品目标、权限或六秒预算。
 
 B5/J4恢复提交边界增量：原真实MV3/IDB旅程现覆盖修复排队时父标签关闭→旧事务撤回→全库/Pro保持→新文档仍显式修复，沿STATUS/recoveryParentWithdrawal20261020；仅关闭首读前排队子场景，不替代完整J4/实机验收，生产预算/产品目标不变。

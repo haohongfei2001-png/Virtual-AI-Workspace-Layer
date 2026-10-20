@@ -55,7 +55,7 @@ export function createHostRecoveryService({ui,readService,workspaceRepository,on
    return await plan.pending;
   })),{timeoutMs:6000,now:elapsedNow,schedule,cancel});attempt.delivered=result?.ok===true;return result;}catch{return failure();}finally{if(!attempt.delivered)for(const id of attempt.created)plans.delete(id);attempt.active=false;attempt.abort.abort();attempts.delete(attempt);for(const [id,plan]of plans)if(plan.attempt===attempt)plans.delete(id);}
  }
- function revokeDocument(id){for(const [key,plan]of plans)if(!plan.pending&&(plan.uiDocumentId===id||plan.parentDocumentId===id))plans.delete(key);}
+ function revokeDocument(id){for(const [key,plan]of plans)if(plan.uiDocumentId===id||plan.parentDocumentId===id){plans.delete(key);plan.attempt?.abort.abort();}}
  // Local quietness only; retained user work blocks even after its TTL.
  function isIdle(){return !stopped&&scopeWork===0&&attempts.size===0&&plans.size===0;}
  return Object.freeze({handle,stop,isIdle,revokeDocument});

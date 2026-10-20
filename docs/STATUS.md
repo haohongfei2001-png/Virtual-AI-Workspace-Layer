@@ -1,5 +1,10 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 修复恢复事务撤权窗口（2026-10-20，基线89b13775）
+
+已复现native/evidence恢复在最后guard后撤权仍提交：pending plan未取消其attempt。现匹配UI/父文档撤权退休plan并abort原owner，保留在途计数；RELEASE仍不取消正在执行的修复，无关文档不受影响，已commit数据不回滚。95定向与原打包MV3恢复旅程通过，源码/包稳定，独审无阻断。最后写入边界为实际Repository+MockIDB；浏览器证明首读前排队撤回，不扩大为最后写入边界或workspace同边界通过。原失败及结果见recoveryRetirement20261020。完整Free、真实身份/全量目录与完整安装仍开放，规模DEFERRED保持。
+
+
 ## 备份恢复撤权提交窗口修复（2026-10-20，基线a9da0045）
 
 已吸收dot评论6283102584并复现三项RED：UI/父文档撤权或CLOSE在最后同步guard后只删transfer，未abort恢复owner，实际revision仍0→1。现统一retire仅取消该transfer拥有的restore attempt，覆盖撤权/CLOSE/过期清理，不提前减在途计数。94定向、原完整备份MV3、真实扩展IDB上的生产owner提交边界验证通过；UI/parent/CLOSE提交前均revision0，正常及已commit后撤权均保留revision1，旧授权无私有成功/自动重放。两并行restore关闭A仅取消A、B正常提交。独审无阻断，源码/包稳定，证据backupRestoreRetirement20261020。

@@ -7,7 +7,7 @@ import {normalizedScope} from '../../src/b1/identity.mjs';
 const scope=normalizedScope({verified:true,provider:'chatgpt',accountId:'A',organizationId:'P'}),healthy={corrupt:false,recoverable:false,damagedHash:null};
 function fixture(options={}){let time=0,n=0,allowed=true,scopeGrantId='scope_grant',scopeValue=scope;const calls=[],recovered=[],timers=new Map(),bad={corrupt:true,recoverable:true,damagedHash:'a'.repeat(64),reason:'PRIVATE_ERROR_AND_HASH'};let hold=null;
  const check=o=>{if(o.signal.aborted||!o.guard())throw Error('stale-binding');};
- const ui={async withScope(args,work){if(args.sender?.documentId!=='ui'||args.grantId!=='grant'||args.mountId!=='mount'||!allowed)throw Error('PRIVATE_SCOPE_ERROR');const captured=scopeGrantId,capturedScope=scopeValue;const context={scope:capturedScope,scopeGrantId:captured,isCurrent:()=>allowed&&captured===scopeGrantId&&capturedScope===scopeValue};const result=await work(context);if(!context.isCurrent())throw Error('revoked');return result;}};
+ const ui={async withScope(args,work){if(args.sender?.documentId!=='ui'||args.grantId!=='grant'||args.mountId!=='mount'||!allowed)throw Error('PRIVATE_SCOPE_ERROR');const captured=scopeGrantId,capturedScope=scopeValue;const context={parentFrame:{documentId:'parent'},scope:capturedScope,scopeGrantId:captured,isCurrent:()=>allowed&&captured===scopeGrantId&&capturedScope===scopeValue};const result=await work(context);if(!context.isCurrent())throw Error('revoked');return result;}};
  const repair=async(kind,s,r,o)=>{calls.push({kind,request:r});if(hold)await hold;check(o);calls.push({write:kind});return {ok:true,revision:2};};
  const workspace={async read(s,o){check(o);throw Error('corrupt-private-root');},async recoveryStatus(s,o){check(o);return bad;},recover:(s,r,o)=>repair('workspace',s,r,o)};
  const readService={async freeRecoveryStatus(s,o){check(o);return {native:bad,evidence:healthy};},freeRecover:(s,r,o)=>repair(r.kind,s,r,o)};
@@ -53,4 +53,17 @@ test('release is idempotent and does not interrupt an in-flight repair or delete
  const h=fixture(),r=await h.status(),done=h.hold(),pending=h.repair(r.plans.native.planId);await Promise.resolve();
  assert.equal((await releasePlans(h,[r.plans.native.planId])).ok,true);assert.equal(h.service.isIdle(),false);done();assert.equal((await pending).ok,true);assert.equal(h.service.isIdle(),false,'workspace comparison still retained');
  assert.equal((await releasePlans(h,[r.plans.workspace.planId])).ok,true);assert.equal(h.service.isIdle(),true);assert.equal((await releasePlans(h,[r.plans.workspace.planId])).ok,true);assert.equal(h.calls.filter(c=>c.write).length,1);
+});
+
+for(const kind of ['native','evidence'])for(const action of ['ui','parent','unrelated','stop','committed'])test('actual '+kind+' final-write retirement: '+action,async t=>{
+ const f=await actualFixture(t),key=kind==='native'?scope.key:freeEvidenceKey(scope.key);await damage(f.base,key,'0'.repeat(64));
+ const status=await f.h.status(),before=await allStores(f.base),db=await f.base.open(),original=db.transaction.bind(db);let reached=0,idleDuring;
+ const retire=()=>{reached++;if(action==='stop')f.h.service.stop();else f.h.service.revokeDocument(action==='committed'?'ui':action);idleDuring=f.h.service.isIdle();};
+ db.transaction=(stores,mode)=>{const tx=original(stores,mode);if(mode==='readwrite'&&Array.from(stores).includes('native_operations')){
+  if(action==='committed'){let complete;Object.defineProperty(tx,'oncomplete',{get:()=>complete,set:fn=>{complete=e=>{retire();fn(e);};},configurable:true});}
+  else{const objectStore=tx.objectStore.bind(tx);tx.objectStore=name=>{const store=objectStore(name),put=store.put.bind(store);if(name==='native_operations')store.put=value=>{const request=put(value);if(value.payload?.kind===(kind==='native'?'RECOVER_NATIVE':'RECOVER_FREE_EVIDENCE'))queueMicrotask(retire);return request;};return store;};}
+ }return tx;};
+ const result=await f.h.repair(status.plans[kind].planId,kind);db.transaction=original;
+ assert.equal(reached,1);assert.equal(idleDuring,false,'persistence still tracked');assert.equal(result.ok,action==='unrelated');
+ if(action==='committed'||action==='unrelated')assert.notEqual(await allStores(f.base),before,'already committed recovery retained');else assert.equal(await allStores(f.base),before,'all stores unchanged on precommit retirement');
 });
