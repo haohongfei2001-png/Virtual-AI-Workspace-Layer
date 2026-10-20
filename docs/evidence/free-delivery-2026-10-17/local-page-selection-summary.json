@@ -17174,5 +17174,17 @@
       "new CI pending",
       "full directory and full Free remain unaccepted"
     ]
+  },
+  "integratedNodeCheckpoint20261020": {
+    "sourceCommit": "c2dd71d42fb6d631d054adf8793b328e828ef9b7",
+    "status": "PASS_NODE_CONTRACTS_ONLY",
+    "fileCount": 598,
+    "matchesOriginalCIFileSet": true,
+    "concurrency": 2,
+    "elapsedSeconds": 241.136,
+    "file": "vaiwl-c2dd71d-full-node.log-20261020.gz",
+    "sha256": "65ffa063897a2752be5b4ddb9d43a278b77b04afe7d532bb5bfa45b958194179",
+    "sourceDrift": false,
+    "browserOrRealAccountAcceptance": false
   }
 }
