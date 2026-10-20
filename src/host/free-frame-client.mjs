@@ -103,13 +103,13 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   const cleanup=()=>{for(const type of events)doc.removeEventListener?.(type,interrupt,true);doc.defaultView?.removeEventListener?.('blur',interrupt,true);if(panelReturnCancel===cancelReturn)panelReturnCancel=null;};
   const cancelReturn=()=>{pending=false;cleanup();};panelReturnCancel=cancelReturn;
   if(pending){for(const type of events)doc.addEventListener?.(type,interrupt,true);doc.defaultView?.addEventListener?.('blur',interrupt,true);}
-  const currentAuthority=()=>!closed&&navigation===renderer&&grant?.id===current?.id&&grant?.mountId===current?.mountId&&grant?.scopeGrantId===current?.scopeGrantId&&grantCurrent()&&Date.parse(grant.expiresAt)>now();
+  const currentAuthority=()=>panelReturnCancel===cancelReturn&&!closed&&navigation===renderer&&grant?.id===current?.id&&grant?.mountId===current?.mountId&&grant?.scopeGrantId===current?.scopeGrantId&&grantCurrent()&&Date.parse(grant.expiresAt)>now();
   try{await waitForPanelDispatch();if(!currentAuthority())return;const page=await read(query,true,null,retryToken);if(page&&pending&&currentAuthority())renderer?.focusSurface?.();}
   finally{cleanup();}
  }
  function openRecovery(fromFailure=false){if(readTerminal)return;dispatchEpoch++;cancelPendingNavigation();
   if(recovery||backup||snippets||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending&&!fromFailure)return;
-  clearCandidates();clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-recovery');
+  panelReturnCancel?.();clearCandidates();clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-recovery');
   recoveryRoot=doc.createElement('div');recoveryRoot.setAttribute('data-vaiwl-frame-recovery','');privateRoot.append(recoveryRoot);
   const current=grant;
   const valid=()=>!closed&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
@@ -122,7 +122,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  function openBackup(){if(readTerminal)return;dispatchEpoch++;cancelPendingNavigation();
   if(backup||recovery||snippets||closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||horizonPending)return;
-  clearCandidates();clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-backup');
+  panelReturnCancel?.();clearCandidates();clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();workspaceRevision=null;currentNativeURL='';navigation?.invalidate?.('local-backup');
   backupRoot=doc.createElement('div');backupRoot.setAttribute('data-vaiwl-frame-backup','');privateRoot.append(backupRoot);
   const current=grant,valid=()=>!closed&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
   const panel=backupFactory({document:doc,container:backupRoot,request:async message=>{
@@ -140,7 +140,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  function openSnippets(){if(readTerminal)return;dispatchEpoch++;cancelPendingNavigation();
   if(snippets||backup||recovery||closed||horizonPending||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;
-  clearCandidates();clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();navigation?.invalidate?.('saved-snippets');
+  panelReturnCancel?.();clearCandidates();clearAutoNotice();serial++;activeRead?.abort();activeRead=null;dirty=false;budget.reset();plans.clear();projectPlans.clear();navigation?.invalidate?.('saved-snippets');
   snippetsRoot=doc.createElement('div');snippetsRoot.setAttribute('data-vaiwl-frame-snippets','');privateRoot.append(snippetsRoot);
   const current=grant,selectedRef=currentRef?{...currentRef}:null,valid=()=>!closed&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
   const panel=snippetsFactory({document:doc,container:snippetsRoot,parentOrigin,currentRef:selectedRef,request:async message=>{

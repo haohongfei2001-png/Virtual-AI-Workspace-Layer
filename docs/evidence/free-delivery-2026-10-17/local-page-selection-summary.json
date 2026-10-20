@@ -1,4 +1,37 @@
 {
+"supersededPanelReturn20261020": {
+  "baseline": "3d1c9867",
+  "state": "TARGETED_OFFLINE_PASS",
+  "rootCause": "obsolete panel return waited through replacement and issued a competing VIEW",
+  "fix": "return ownership token and cancel only on accepted new panel entry",
+  "regression": {
+    "passed": 198,
+    "failed": 0,
+    "skipped": 0
+  },
+  "build": {
+    "passed": 196,
+    "failed": 0,
+    "skipped": 0
+  },
+  "review": "no blocker",
+  "browser": "NOT_RERUN_THIS_NARROW_CHANGE",
+  "realChatGPT": "NOT_RUN",
+  "logs": [
+    {
+      "file": "vaiwl-superseded-panel-red.log.gz",
+      "sha256": "7685e8054ec1ef55cbb017874a2ee8c730be0fc89c8595d95425b08d27b6282b"
+    },
+    {
+      "file": "vaiwl-superseded-panel-green.log.gz",
+      "sha256": "78e44603527e0ce3685c164d2f66e3a72e8cb5f9899e71362e5161019270d24c"
+    },
+    {
+      "file": "vaiwl-superseded-panel-build.log.gz",
+      "sha256": "6fa3f8ff2c3ef095907241297aad11516d0ddbd7949f88f1d3587f61051f4719"
+    }
+  ]
+},
 "pendingPanelReturn20261020": {
   "baseline": "e056e2fd",
   "status": "PARTIAL_OFFLINE_ONLY",

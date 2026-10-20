@@ -515,3 +515,16 @@ for(const changed of [false,true])test('panel fresh read fences scope changes bu
  f.runtime.sendMessage=m=>m.type==='HOST_UI_RENEW'&&changed?Promise.resolve({ok:true,grant:{...f.grant(),scopeGrantId:'other'}}):send(m);
  f.backup.onResume({restoreFocus:true});await drain();await f.advance(1000);held.resolve({ok:true,state:'ready',page:f.page(),navigation:[]});await drain();assert.equal(f.panelFocuses,changed?0:1);f.client.stop();
 });
+
+for(const next of ['backup','recovery','snippets'])test('superseded panel return does not compete with '+next,async()=>{
+ const f=await currentDispatchFixture(),held=deferred(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_CURRENT'?held.promise:send(m);
+ const pending=f.nav.onDispatch(sameCurrentCommand());await drain();f.nav.onBackupRequest();f.backup.onResume({restoreFocus:true});await drain();
+ f.nav[next==='backup'?'onBackupRequest':next==='recovery'?'onRecoveryRequest':'onSnippetsRequest']();const before=f.views;
+ f[next][next==='snippets'?'onClose':'onResume']({restoreFocus:true});await drain();held.resolve({ok:false});await pending;await drain();assert.equal(f.views,before+1);assert.equal(f.panelFocuses,1);f.client.stop();
+});
+
+test('opening a newer snippet panel retires the older pending return read',async()=>{
+ const f=await currentDispatchFixture(),held=deferred(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_CURRENT'?held.promise:send(m);
+ const pending=f.nav.onDispatch(sameCurrentCommand());await drain();f.nav.onBackupRequest();f.backup.onResume({restoreFocus:true});await drain();f.nav.onSnippetsRequest();const before=f.views;held.resolve({ok:false});await pending;await drain();assert.equal(f.views,before);assert.equal(f.panelFocuses,0);
+ await f.snippets.request({type:'HOST_UI_SNIPPET_LIST'});assert.equal(f.views,before+1);f.snippets.onClose({restoreFocus:true});await drain();assert.equal(f.panelFocuses,1);f.client.stop();
+});
