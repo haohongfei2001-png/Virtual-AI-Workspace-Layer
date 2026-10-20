@@ -1,4 +1,48 @@
 {
+"hiddenCandidateRefresh20261020": {
+  "baseline": "2b6680a6",
+  "sourceHashes": {
+    "src/host/free-frame-candidates.mjs": "97ad6ddaa1c9ee09efecee36e476c26b1629e9dd49b22e4665932156e4c6368e",
+    "tests/host/free-frame-candidates.test.mjs": "e2970d561e63b10889b90ec94418fa7ea5fc41590d9db22514706a717010fb32",
+    "tests/host/frame-renderer-browser.mjs": "ef5d73eb6e1cfbea3fd4434e81f15a63999f64d566a2e4586be7ddc96a4cd67c",
+    "tests/host/j1-package-journey.mjs": "de197eaabcfeaa4af6b71e17b6789c9818bb76e9b4fe786cbfce2f3b6e4f0de1"
+  },
+  "rootCause": "Hidden same-page refresh reads zero scroll from unlaid-out list and discards confirmed position. Visible re-refresh before layout callback also reads unrestored zero. Both reproduced in actual DOM.",
+  "fix": "Retain measured position for exact mounted page; one owned ResizeObserver applies once laid out; pending re-render retains saved value; explicit restore/user input/clear/stop/page change cancel stale callback. No polling or authority change.",
+  "targeted": {
+    "tests": 133,
+    "pass": 133,
+    "fail": 0
+  },
+  "realDOM": "RED for both interleavings; final PASS",
+  "packagedJ1": "PARTIAL_J1_NOT_ACCEPTED, 9 continuous steps, 563 before/click/return, hashes unchanged",
+  "independentReview": "No remaining blocker after reproduced reviewer finding fixed",
+  "linuxFailure": "CI39361840230 root cause still NOT_ESTABLISHED; local fix not retroactive PASS",
+  "files": [
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/hidden-candidate-refresh-red.log.gz",
+      "uncompressedSha256": "d03e0811dff994e92ce652294fd8d6441f80d5452233285a2df85b01dfc37ded"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/hidden-candidate-refresh-race-red.log.gz",
+      "uncompressedSha256": "9644a9cf1f24fb045dab6b2c5d980c1e60d6f54294fd146cb2233dd5368c87b3"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/hidden-candidate-refresh-green.log.gz",
+      "uncompressedSha256": "e3e860b3bd9c5f5639b4ab04617c01219ac0bc7ba0211e35772904fe41f85161"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/hidden-candidate-refresh-unit.log.gz",
+      "uncompressedSha256": "42691337bbfa9432a67517db5f5854bb896165b1bf7b62bff5c4d591f61052bc"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/hidden-candidate-refresh-j1.json.gz",
+      "uncompressedSha256": "fadba189a1da3bb8a284b16c5ec8d2a449cb5df9464325dd9643af36ac8fcc54"
+    }
+  ],
+  "git": "Prior normal push timed out; no force or repeat loop",
+  "fullFree": "NOT_ACCEPTED; directory identity gaps unchanged; 10k/100k DEFERRED"
+},
 "j1LinuxScrollObservation20261020": {
   "baseline": "c3972d75",
   "ciHead": "91a34d2a61d94ffc8fa8e4b867371f43e2bd8d3d",

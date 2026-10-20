@@ -144,7 +144,15 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   migration.offer({id:'migration-hidden',projectId:'project-1',presentation:{offset:32,scrollTop:137,focused:false},ready:true,focusAllowed:false});
   if(migration.apply()!==false||revealed!==0)throw Error('hidden restoration acknowledged before layout');
   container.style.display='block';if(migration.apply()!==true||revealed!==1)throw Error('visible restoration did not complete');
-  const list=container.firstElementChild.shadowRoot.querySelector('ul');if(list.scrollTop!==137)throw Error('candidate position lost');ui.stop();container.remove();
+  const list=container.firstElementChild.shadowRoot.querySelector('ul');if(list.scrollTop!==137)throw Error('candidate position lost');
+  // An ordinary data refresh can arrive while the owned panel has no layout.
+  container.style.display='none';
+  ui.update(Array.from({length:32},(_,i)=>({renderKey:'candidate:c'+i,nativeTitle:'Updated '+i,titleState:'exact',available:true,reason:null})),{offset:32,total:64,nextOffset:null});
+  container.style.display='block';
+  ui.update(Array.from({length:32},(_,i)=>({renderKey:'candidate:c'+i,nativeTitle:'Updated again '+i,titleState:'exact',available:true,reason:null})),{offset:32,total:64,nextOffset:null});
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  if(container.firstElementChild.shadowRoot.querySelector('ul').scrollTop!==137)throw Error('hidden same-page refresh discarded confirmed scroll');
+  ui.stop();container.remove();
  });
  // Current project expansion is derived; explicit choices survive frame return.
  await page.evaluate(async()=>{

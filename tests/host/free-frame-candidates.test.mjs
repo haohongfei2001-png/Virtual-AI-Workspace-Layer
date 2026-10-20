@@ -85,3 +85,30 @@ test('error panel cannot accept a saved list scroll or reclaim external focus',(
 });
 
 test('an explicitly empty page needs no scroll restoration but clear and error cannot acknowledge it',()=>{const f=fixture();assert.equal(f.ui.restorePosition({offset:0,scrollTop:13}),false);f.ui.update([]);assert.equal(f.ui.restorePosition({offset:0,scrollTop:13}),true);assert.equal(f.ui.restorePosition({offset:32,scrollTop:13}),false);assert.equal(f.ui.restorePosition({offset:0,scrollTop:NaN}),false);f.ui.clear();assert.equal(f.ui.restorePosition({offset:0,scrollTop:13}),false);f.ui.update([]);f.ui.showError(0);assert.equal(f.ui.restorePosition({offset:0,scrollTop:13}),false);});
+
+test('hidden same-page replacements retain measured position until layout, without polling',()=>{
+ const f=fixture(),observers=[];let visible=true;const create=f.doc.createElement;
+ f.doc.createElement=tag=>{const n=create(tag);if(tag==='ul'){let scroll=0;n.getClientRects=()=>visible?[{}]:[];Object.defineProperty(n,'scrollTop',{get:()=>visible?scroll:0,set:v=>{if(visible)scroll=v;}});}return n;};
+ f.doc.defaultView={ResizeObserver:class{constructor(fn){this.fn=fn;observers.push(this);}observe(){}disconnect(){this.disconnected=true;}}};
+ f.ui.update([item(),item('two')]);f.list().scrollTop=87;f.list().handlers.scroll();visible=false;
+ f.ui.update([item('two'),item()]);const first=observers.at(-1);f.ui.update([item(),item('two')]);assert(first.disconnected);first.fn();assert.equal(f.list().scrollTop,0);
+ visible=true;observers.at(-1).fn();assert.equal(f.list().scrollTop,87);assert(observers.at(-1).disconnected);
+ f.list().scrollTop=19;f.list().handlers.scroll();f.ui.update([item(),item('two')]);assert.equal(f.list().scrollTop,19);
+});
+for(const exit of ['clear','stop','page'])test('late hidden layout callback cannot restore retired candidate page after '+exit,()=>{
+ const f=fixture(),observers=[];let visible=true;const create=f.doc.createElement;
+ f.doc.createElement=tag=>{const n=create(tag);if(tag==='ul')n.getClientRects=()=>visible?[{}]:[];return n;};
+ f.doc.defaultView={ResizeObserver:class{constructor(fn){this.fn=fn;observers.push(this);}observe(){}disconnect(){this.disconnected=true;}}};
+ f.ui.update(rows(0,32),{offset:0,total:33,nextOffset:32});f.ui.restorePosition({offset:0,scrollTop:41});visible=false;
+ f.ui.update(rows(0,32),{offset:0,total:33,nextOffset:32});const old=f.list(),observer=observers.at(-1);old.scrollTop=0;
+ if(exit==='page'){visible=true;f.ui.update(rows(32,1),{offset:32,total:33,nextOffset:null});}else f.ui[exit]();
+ visible=true;observer.fn();assert(observer.disconnected);assert.equal(old.scrollTop,0);if(exit==='page')assert.equal(f.list().scrollTop,0);
+});
+
+for(const event of ['pointerdown','wheel','keydown'])test('user input cancels pending hidden layout restoration: '+event,()=>{
+ const f=fixture(),observers=[];let visible=true;const create=f.doc.createElement;
+ f.doc.createElement=tag=>{const n=create(tag);if(tag==='ul')n.getClientRects=()=>visible?[{}]:[];return n;};
+ f.doc.defaultView={ResizeObserver:class{constructor(fn){this.fn=fn;observers.push(this);}observe(){}disconnect(){this.disconnected=true;}}};
+ f.ui.update([item()]);f.ui.restorePosition({offset:0,scrollTop:41});visible=false;f.ui.update([item()]);visible=true;const list=f.list(),observer=observers.at(-1);list.scrollTop=9;
+ list.handlers[event]({isTrusted:true});observer.fn();assert.equal(list.scrollTop,9);assert(observer.disconnected);f.ui.update([item()]);assert.equal(f.list().scrollTop,9);
+});
