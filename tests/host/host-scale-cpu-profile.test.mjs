@@ -208,13 +208,43 @@ test('late discovery response after bounded setup and owner close cannot attach 
  f.transport.close();release();await new Promise(resolve=>setImmediate(resolve));assert.equal(f.discovery(),false);assert(!f.calls.some(c=>['Target.getTargets','Target.attachToTarget','Target.sendMessageToTarget'].includes(c.method)));assert.equal(r.status,'UNAVAILABLE');
 });
 
-for(const phase of ['Target.setDiscoverTargets','Target.getTargets','Target.attachToTarget','Target.getTargetInfo','Profiler.enable','Profiler.setSamplingInterval','Profiler.start'])test('setup diagnostics identify bounded failure without retaining raw transport error '+phase,async()=>{
+// Unit diagnostics must reach the injected command before expiring it. Real
+// scheduler contention can consume the separate 3-command setup budget first.
+// Control both clocks here; the real-timer timeout/cleanup cases above remain.
+function setupClock(t){
+ let elapsed=0;t.mock.method(performance,'now',()=>elapsed);t.mock.timers.enable({apis:['setTimeout']});
+ return {advance:ms=>{elapsed+=ms;t.mock.timers.tick(ms);},elapseWithoutTimers:ms=>{elapsed+=ms;}};
+}
+for(const phase of ['Target.setDiscoverTargets','Target.getTargets','Target.attachToTarget','Target.getTargetInfo','Profiler.enable','Profiler.setSamplingInterval','Profiler.start'])test('setup diagnostics identify bounded failure without retaining raw transport error '+phase,async(t)=>{
+ const clock=setupClock(t);
  for(const mode of ['hang','fail']){
-  const f=pageFixture({[mode]:phase}),h=await startHostScalePageCPUProfile(f.options),r=await h.finished;
+  const f=pageFixture({[mode]:phase}),pending=startHostScalePageCPUProfile(f.options);
+  if(mode==='hang'){
+   // One real event-loop turn drains setup microtasks without advancing the
+   // controlled command timer. Prove the hung command was actually dispatched.
+   await new Promise(resolve=>setImmediate(resolve));assert.equal(methods(f).at(-1),phase);
+   clock.advance(f.options.commandTimeoutMs);
+  }
+  const h=await pending,r=await h.finished;
   assert.equal(r.status,'UNAVAILABLE');assert.equal(r.reason,'setup-unavailable');assert.equal(r.setupFailureStage,phase);
   assert.equal(r.setupFailureKind,mode==='hang'?'command-timeout':phase.startsWith('Profiler.')?'profiler-command-failed':'setup-rejected');
+  assert(methods(f).includes(phase));
   assert.equal(r.profile,undefined);assert(!JSON.stringify(r).includes('failure'));pageCleaned(f);
  }
+});
+for(const elapsed of [29,30,31])test('aggregate setup boundary precedes an undispatched diagnostic command at '+elapsed+'ms',async(t)=>{
+ const clock=setupClock(t),f=pageFixture({fail:'Profiler.setSamplingInterval'}),send=f.transport.send;
+ f.transport.send=async(method,params)=>{
+  // Model elapsed time consumed while the event loop cannot deliver timers.
+  if(method==='Target.sendMessageToTarget'&&JSON.parse(params.message).method==='Profiler.enable')clock.elapseWithoutTimers(elapsed);
+  return send(method,params);
+ };
+ const h=await startHostScalePageCPUProfile(f.options),r=await h.finished,expired=elapsed>=f.options.commandTimeoutMs*3;
+ assert.equal(r.status,'UNAVAILABLE');assert.equal(r.reason,expired?'setup-deadline':'setup-unavailable');
+ assert.equal(r.setupFailureStage,'Profiler.setSamplingInterval');assert.equal(r.setupFailureKind,expired?'setup-rejected':'profiler-command-failed');
+ assert.equal(methods(f).includes('Profiler.setSamplingInterval'),!expired);
+ assert(!methods(f).includes('Profiler.start'));assert.equal(methods(f).filter(method=>method==='Target.detachFromTarget').length,1);
+ assert.equal(r.profile,undefined);pageCleaned(f);
 });
 test('successful capture has no invented setup failure',async()=>{
  const f=pageFixture(),h=await startHostScalePageCPUProfile(f.options),r=await h.finish();

@@ -1,5 +1,23 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 云端最终合批：片段六秒生命期与交回准备（2026-10-20，基线881fe290）
+
+按用户最新要求，本轮收敛为Profiler诊断测试及已复现的片段生命期缺陷，独立相邻审查未发现需扩展本批的阻断。原wall-only票据在时钟停滞超过6秒时仍可读，已观察到的回拨高于capture起点时也未退休；原2项独立RED及新增测试30/42原FAIL保留。现接入content已有elapsedNow，保留原wall期限并固定两种时钟的捕获起点；每次观察更新高水位，回拨/非有限值/任一到期永久失效。adapter、binding、epoch及makeId之后重新验时，read/consume不续期，不改变6秒、权限、schema或持久数据。
+
+最终产品源码199定向全部通过；独立审查46项及18项补充边界通过、源码稳定。另行完整Node **9629/9629通过，200938.686ms，零跳过**；之前9612/9612仅属Profiler冻结树，不能移作本产品修复证明。184文件生产默认fail-closed包构建/只读校验通过，仍HOST_IMPLEMENTATION_UNVERIFIED/NOT_RELEASE_READY。原隔离片段MV3在云端Chromium启动前因process_singleton socket()权限被拒，零旅程步骤，原FAIL、源码/包未变证据保留；没有改权限/flags或以单元测试充浏览器通过，待发布精确HEAD的CI独立给出结果。证据沿原入口cloudSnippetLifetime20261020。
+
+**交接边界**：本批源码冻结，提交发布后云端writer暂停，只继续核对该HEAD的CI；本地Codex及原自动续接在最终切换前仍暂停。后继先核对PR16实际HEAD/tree与本批回执，再沿唯一DEVELOPMENT_PLAN恢复单writer。连接器可能生成与保留的本地检查点不同的commit SHA，但必须验证完全相同tree，映射和CI终态在原PR16交接记录；不覆盖本地成果/2258副本/3stash。真实主体/完整服务器目录、完整J1/J4、物理IME/PAIA/安装发布仍开放；四个CI job绿色不代表Free，J4允许PARTIAL退出。原Linux scroll 0!=150、冷启动缺receipt、webRequest原因不猜测关闭；10k/100k仍DEFERRED。
+
+
+## 云端接续与Profiler诊断时钟隔离（2026-10-20，基线881fe290）
+
+按用户最新交接要求，dot在云端继续原Free分支及Draft PR16，原Mac不作为本批执行环境；旧2258数字副本与3stash未访问或修改。接手时分支与PR实际HEAD均为881fe29055b12e34cdb704ff65e6fa3427c90877，原本地自动续接保持暂停。本批只改诊断测试与本状态/原证据入口，不改变产品代码、认证来源、权限或任何期限。
+
+Profiler原诊断测试把10ms单命令失败与30ms聚合setup期限混为唯一结果。受控30ms反例复现原断言：尚未派发setSamplingInterval，setup期限已先正确拒绝；原历史日志不足以认定具体调度中断，9608/9609原FAIL及原件保留。现只在命令诊断单元中同步控制elapsed时钟和timer，先确认目标命令确已派发；另验29/30/31ms聚合边界，原真实timer/清理用例保留。75定向通过，删除聚合期限guard的变异在30/31ms准确失败，独立审查无阻断。
+
+首次云端全Node为9599/9609、10失败，均因浅克隆缺历史commit，原日志保留。补齐与原CI fetch-depth:0相同的完整历史后，同一冻结代码完整9612/9612通过，192480.446ms、零跳过；不修改历史oracle、不挑选子集充全套。十二原guard变异结果及源码hash沿原证据入口cloudProfilerSetup20261020记录。该结果不是浏览器/实机、完整J1/J4或Free交付证明。真实主体/目录、物理IME/PAIA、安装发布与10k/100k DEFERRED边界保持。
+
+
 ## 当前交接：本地停止开发，后续由dot接手（2026-10-20）
 
 用户要求完成收尾后移交dot。沿用原目录、Free分支及Draft PR16；不新建路线、不修改产品目标。Codex只完成本检查点提交/推送/交接，之后不继续写入。30分钟续接vaiwl-free已核实PAUSED；2258未跟踪数字副本与3stash原样保留。无部署、合并main、强推或真实账户新诊断。

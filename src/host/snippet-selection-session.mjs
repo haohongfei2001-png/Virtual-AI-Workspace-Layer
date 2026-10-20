@@ -11,26 +11,30 @@ function anchor(value){
 /** One short-lived, content-owned selection. The injected binding fingerprint
  * must include document, producer, route epoch and verified scopeGrantId.
  * This helper cannot obtain that authority from DOM attributes or an iframe. */
-export function createSnippetSelectionSession({adapter,currentBinding=()=>null,currentSelectionEpoch=()=>null,now=Date.now,makeId=()=>crypto.randomUUID()}={}){
- if(typeof adapter?.selectedSnippet!=='function'||typeof currentBinding!=='function'||typeof currentSelectionEpoch!=='function'||typeof now!=='function'||typeof makeId!=='function')throw Error('invalid-snippet-selection-session');
+export function createSnippetSelectionSession({adapter,currentBinding=()=>null,currentSelectionEpoch=()=>null,now=Date.now,elapsedNow=()=>performance.now(),makeId=()=>crypto.randomUUID()}={}){
+ if(typeof adapter?.selectedSnippet!=='function'||typeof currentBinding!=='function'||typeof currentSelectionEpoch!=='function'||typeof now!=='function'||typeof elapsedNow!=='function'||typeof makeId!=='function')throw Error('invalid-snippet-selection-session');
  let ticket=null,stopped=false;
  const clear=()=>{ticket=null;return null;};
  const binding=()=>{const value=currentBinding();return typeof value==='string'&&value.length>0?value:null;};
  const epoch=()=>{const value=currentSelectionEpoch();return typeof value==='string'&&value.length>0?value:null;};
- const clock=()=>{const n=now();return typeof n==='number'&&Number.isFinite(n)?n:null;};
+ const clock=()=>{const time=now(),elapsed=elapsedNow();return Number.isFinite(time)&&Number.isFinite(elapsed)?{time,elapsed}:null;};
+ // Neither repeated validation nor a slow/rolled-back wall clock extends the
+ // original six-second selection window. Observed rollback retires the ticket.
+ const fresh=value=>{const at=clock();if(!at||at.time<value.lastTime||at.elapsed<value.lastElapsed||at.time-value.at>=6000||at.elapsed-value.elapsedAt>=6000)return false;value.lastTime=at.time;value.lastElapsed=at.elapsed;return true;};
  const refKey=ref=>ref&&token(ref.id)&&typeof ref.nativeUrl==='string'&&ref.nativeUrl.length>0?JSON.stringify([ref.id,ref.nativeUrl]):null;
  function live(id){
   if(stopped||!ticket||id!==ticket.id)return false;
-  const at=clock();if(at===null||at<ticket.at||at-ticket.at>=6000||binding()!==ticket.binding||epoch()!==ticket.epoch){clear();return false;}return true;
+  if(!fresh(ticket)||binding()!==ticket.binding||epoch()!==ticket.epoch||!fresh(ticket)){clear();return false;}return true;
  }
  return Object.freeze({
   capture(ref){
    clear();if(stopped)return null;
    try{const bound=binding(),selectedEpoch=epoch(),at=clock(),key=refKey(ref);if(!bound||!selectedEpoch||at===null||!key)return null;
+    const lifetime={at:at.time,elapsedAt:at.elapsed,lastTime:at.time,lastElapsed:at.elapsed};
     const selected=anchor(adapter.selectedSnippet(ref));if(!selected||selected.refId!==ref.id||binding()!==bound||epoch()!==selectedEpoch||refKey(ref)!==key)return null;
-    const after=clock();if(after===null||after<at||after-at>=6000)return null;
-    const id=makeId();if(!token(id)||binding()!==bound||epoch()!==selectedEpoch)return null;
-    ticket={id,at,binding:bound,epoch:selectedEpoch,key,selected};return id;
+    if(!fresh(lifetime))return null;
+    const id=makeId();if(!token(id)||binding()!==bound||epoch()!==selectedEpoch||!fresh(lifetime))return null;
+    ticket={id,...lifetime,binding:bound,epoch:selectedEpoch,key,selected};return id;
    }catch{return clear();}
   },
   read(selectionId,ref){

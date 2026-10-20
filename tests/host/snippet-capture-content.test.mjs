@@ -58,3 +58,14 @@ test('validate and release retain their original no-expiresAt contracts',async()
  f.send(released,{...command,phase:'release'});assert.deepEqual(released,[{ok:true}]);
  f.send(after,{...command,phase:'validate'});assert.deepEqual(after,[{ok:false}]);f.client.stop();
 });
+
+test('content composition expires a captured ticket at six elapsed seconds even with a stalled wall clock',async()=>{
+ const f=captureFixture();await f.client.start();f.setReady(true);f.send();assert.equal(f.replies[0].ok,true);
+ const command={...f.message,selectionId:f.replies[0].selectionId};delete command.expiresAt;
+ const before=[],expired=[],released=[],after=[];
+ f.setElapsed(6999);f.send(before,{...command,phase:'validate'});assert.deepEqual(before,[{ok:true,anchor:f.anchor}]);
+ f.setElapsed(7000);f.send(expired,{...command,phase:'validate'});assert.deepEqual(expired,[{ok:false}]);
+ assert.equal(f.selected,3,'expired validation cannot reread selected text');
+ f.send(released,{...command,phase:'release'});assert.deepEqual(released,[{ok:false}]);
+ f.setElapsed(1000);f.send(after,{...command,phase:'validate'});assert.deepEqual(after,[{ok:false}]);f.client.stop();
+});
