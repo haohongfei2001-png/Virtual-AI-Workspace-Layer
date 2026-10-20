@@ -1,5 +1,7 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+C2/J1实际队列修复（2026-10-21）：已去重扫描的no-packet路径补消化await期间排队的dirty，消除必须等后续续期才可准备休眠的缺陷；最小RED、原worker丢失/新证据恢复链及边界沿STATUS/deduplicatedPassIdleDrain20261021。保留CHECK忙碌拒绝、单次关闭和原预算；不将局部链当完整J1/J4，完整真实Free目标与规模DEFERRED保持。
+
 C3/C5观察器收口（2026-10-21）：原窗口返回末端读取改为同步当前节点采样，确定性旧handle反例及原旅程沿STATUS/currentWindowScrollObservation20261021；原阈值与历史FAIL保持，不冒充生产修复。下一原C2/J1关口为CI39500699078的prepared:true/entered:false，继续最小复现；完整Free目标/真实来源及规模DEFERRED不变。
 
 ## 当前执行：本地恢复唯一writer，继续依赖已满足的产品工程（2026-10-21）

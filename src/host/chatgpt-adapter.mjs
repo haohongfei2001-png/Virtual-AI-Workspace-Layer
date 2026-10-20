@@ -219,7 +219,10 @@ if(!p){
     // A fresh finite scan may be wholly covered by accepted pages. Its old
     // refused payload is obsolete; never leave its expired budget on new work.
     if(pausedSurface?.invalidated&&!surfaceParts.length&&!surfaceScanning&&!surfaceWanted)discardPausedSurface();
-    notifyIdle();return;}}catch(error){
+    // A pass-start await can receive another local observation even when all
+    // directory pages are already accepted. There is no send/finish callback
+    // on this path to drain it; do not strand dirty until the next renewal.
+    if(dirty)schedule();else notifyIdle();return;}}catch(error){
    if(run!==generation)return;
    const restart=error?.message==='stale-surface-cursor'&&cursorRestarts<1&&live()&&document.location.href===url;
    surfaceParts=[];surfaceSequence=null;surfaceScanning=false;surfaceCursor=null;

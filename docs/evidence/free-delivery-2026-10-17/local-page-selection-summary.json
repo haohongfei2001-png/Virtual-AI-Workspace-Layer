@@ -1,4 +1,72 @@
 {
+  "deduplicatedPassIdleDrain20261021": {
+    "sourceBase": "6a4ee4b335906a55d54c58a2ed9013e2734be25b",
+    "status": "PRODUCT_DIRTY_DRAIN_FIXED_NOT_FULL_RECOVERY_ACCEPTED",
+    "rootCause": "During awaited ingestion pass start, focus observation sets dirty while busy. If all pages are already accepted, the no-packet branch returns without the send/finish drain. dirty remains true and prevents local idle readiness until an unrelated binding renewal schedules another pump.",
+    "change": "Only the no-packet branch schedules an already-dirty local observation; otherwise original idle notification. Reuses existing single-flight scheduling, deduplication, pass and deadline contracts. No auth, schema, retry count or guard changes.",
+    "evidence": {
+      "originalCI": "39500699078 first idle CHECK at 10176ms overlapped frame renewal; activeWork 2 and ui-release-busy were correct refusal. Historical failure preserved.",
+      "localBefore": "Passive test-package diagnostic: adapter busy:false, dirty:true, queued:false after201ms until renewal about10064ms. CHECK at10070ms and RELEASE10071ms. Diagnostic passed, does not reclassify CI.",
+      "red": "New deterministic focusout during second deduplicated pass-start: no duplicate emissions, both passes ended, old token revoked, but readiness missing. Original test FAIL preserved.",
+      "after": "Original unmodified dormant-recovery runner PASS six checkpoints: CHECK278ms, RELEASE281ms after first native response; confirmed worker stop -> denied wake with no receipt replay -> one fresh native GET -> same nonfirst-Team projection and drafts. Production/fixture stable.",
+      "timingLimit": "Separate local runs; pre-fix has added passive instrumentation. Wall-clock stage offsets explain eliminated renewal dependency, not a controlled benchmark or 10k acceptance.",
+      "regression": "70 first targeted; 15 affected files372 tests, zero skips,1605.477625ms. No redundant full Node; normal CI owns next full matrix.",
+      "build": "Default package build/verify HOST_IMPLEMENTATION_UNVERIFIED, NOT_RELEASE_READY; archive sha256 6df8974cf6af48850cd1db285d44a10e37a0d23878f6c388e26378f4f1d10bbc",
+      "review": "Readonly independent review no blockers, checked no-spin and pending terminal/hidden/stopped boundaries."
+    },
+    "open": [
+      "Future worker/peer work may still race a close; busy refusal remains terminal, no retry-to-green",
+      "Full J1/J4, no-new-context peer recovery, real principal/current-space, full directory/member/self-send, IME/PAIA/install/release unestablished",
+      "10k/100k DEFERRED original thresholds/history preserved"
+    ],
+    "artifacts": [
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/idle-dirty-ci395006-original.json.gz",
+        "rawBytes": 65182,
+        "rawSha256": "bec65ac3bcb6f4f41f2576b508fc8b9d6e944896646b5e81ceeedadb9fc6a098"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/idle-dirty-before-diagnostic.mjs.gz",
+        "rawBytes": 38261,
+        "rawSha256": "e9448e838cf1ae801a6aeba5c3ef0766618e4fd0a794d7a803ab6ba612d22491"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/idle-dirty-before-diagnostic.json.gz",
+        "rawBytes": 143095,
+        "rawSha256": "dc1b55ac0dc866ddd26141ad66d3444aa36f00a0e7e05c81932c1273b729f0c5"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/idle-dirty-red.log.gz",
+        "rawBytes": 3350,
+        "rawSha256": "9799fdfc569d027efc0a6a504cb3e9a1afeecd3a91a56ea89d171931c8733c77"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/idle-dirty-targeted.log.gz",
+        "rawBytes": 6025,
+        "rawSha256": "a7f93fa6fbf3c54d0b10093a7ebc398a267a6d71552c6a0c814fc3b74d57d02e"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/idle-dirty-regression.log.gz",
+        "rawBytes": 34305,
+        "rawSha256": "0e64862a2b43445e1a1ffc7254efbbe8ca7ff87ce601e910093794fc5141773b"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/idle-dirty-original-dormant.json.gz",
+        "rawBytes": 55796,
+        "rawSha256": "0f5413fc7384e51e3ecb994830d9dec0e5e40207b37d72c397fe458df5cc24a3"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/idle-dirty-build.json.gz",
+        "rawBytes": 343,
+        "rawSha256": "7209f7d47d0c9971e006bea7901140689754670f8b9508a6eb71d43aff570d27"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/idle-dirty-verify.json.gz",
+        "rawBytes": 105,
+        "rawSha256": "c27fd849e03c560f5dce3aa757d2e31e6da605b3b2c2c28771bd4cb6f1a0644c"
+      }
+    ]
+  },
   "currentWindowScrollObservation20261021": {
     "sourceBase": "410a2d3dfca03861e6aeeb432ee4bb7517a97d34",
     "productSourceChanged": false,

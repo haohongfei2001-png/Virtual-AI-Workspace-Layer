@@ -1,6 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
 
+## 无新条目扫描遗漏队列处理已修复（2026-10-21，基线6a4ee4b3）
+
+沿CI39500699078原日志定位：唯一CHECK在首响应后10176ms与frame续期重叠，activeWork=2而ui-release-busy，安全拒绝正确。没有增加关闭重试或放宽guard。一次本地原链的被动准备状态诊断进一步发现实际产品缺陷：第二次已去重目录pass-start等待期间focusout排队，后续没有新packet，no-p分支漏掉send/finish原有的dirty消化；busy=false、dirty=true、queued=false从201ms一直遗留到约10064ms续期。
+
+已用实际adapter的最小反例稳定RED：两pass均end、零重复元数据、旧准备token已撤销，但新准备一直不可用。现no-p分支仅在dirty时调用既有合并调度，否则原notifyIdle；不清空待办、不新增扫描引擎、不放宽请求/授权/期限。70定向后合批15文件372项通过、零跳过；独审无阻断，隐藏/停止/终止通知在途保护保持。
+
+修复后原未改dormant-recovery隔离headless包旅程六检查点通过：首次原生响应后CHECK278ms、RELEASE281ms，worker实际停止→无receipt重放的拒绝→一次新原生GET→同非首项Team投影与草稿保持。修复前本地诊断CHECK10070ms/RELEASE10071ms；前者含被动插桩，故只是去除续期依赖的阶段证据，不是严格性能基准，不能改判原LinuxFAIL。源码/fixture稳定，默认184文件包构建校验通过；原件沿deduplicatedPassIdleDrain20261021。
+
+后续独立frame renew/CHECK竞争仍可能产生正确拒绝，本修复不声称任何忙碌都会自动恢复。完整J1/J4、无新context的peer恢复、真实主体/当前空间/服务器目录/成员/本人发送、物理IME/PAIA及安装发布仍开放，10k/100k DEFERRED；NOT_RELEASE_READY。保留上一6a4ee4b3正在运行的原CI，未重复全Node或规模矩阵。
+
+
 ## 窗口返回滚动观察器竞态收口（2026-10-21，基线410a2d3d）
 
 原CI39499209283记录150→0，17/17仍完整；本地临时setter诊断同样FAIL。进一步被动读取捕获旧节点connected=false/height0/top0，紧接当前节点仍150；真实DOM固定“取得handle→原renderer重绘→读取旧handle”复现同一差异。普通搜索/关闭、短DTO与flex布局最小对照未复现，未据此误改生产滚动算法。

@@ -40,6 +40,20 @@ test('a new scan permanently revokes a token even when its unchanged work drains
  f.trigger();assert.equal(token.isCurrent(),false);assert.equal(f.adapter.prepareIdle(),null);await settle();
  const next=f.adapter.prepareIdle();assert.ok(next);assert.equal(next.isCurrent(),true);assert.equal(token.isCurrent(),false);assert.equal(f.observer(),observer);assert.notEqual(observer.closed,true);
 });
+test('focus observation during a deduplicated pass start drains without waiting for binding renewal',async t=>{
+ const start=deferred(),phases=[];let held=false;
+ const f=fixture();t.after(()=>f.adapter.stop());
+ await f.start(undefined,{ingestionPass:message=>{phases.push(message.phase);return message.phase==='start'&&held?start.promise:Promise.resolve({ok:true});}});await settle();
+ const initial=f.adapter.prepareIdle();assert(initial?.isCurrent());const emitted=f.emitted.length;
+ held=true;f.trigger();await settle();assert.equal(f.adapter.prepareIdle(),null);
+ // Focus observation queues local work while the existing start RPC is pending.
+ // The unchanged directory is already accepted, so this pass emits no packet.
+ f.documentListeners.get('focusout')();start.resolve({ok:true});await settle();
+ assert.equal(f.emitted.length,emitted,'no duplicate metadata publication');
+ assert.deepEqual(phases,['start','end','start','end']);
+ assert.equal(initial.isCurrent(),false,'an old readiness token never revives');
+ assert.equal(f.adapter.prepareIdle()?.isCurrent(),true,'queued observation must drain before a future renewal');
+});
 test('renewal revokes old preparation without stopping native observation',async t=>{
  const f=fixture();t.after(()=>f.adapter.stop());await f.start();await settle();const token=f.adapter.prepareIdle();assert.ok(token);
  assert.equal(f.adapter.updateBinding({...f.binding,expiresAt:new Date(20000).toISOString()}),true);assert.equal(token.isCurrent(),false);await settle();assert.ok(f.adapter.prepareIdle());assert.equal(token.isCurrent(),false);
