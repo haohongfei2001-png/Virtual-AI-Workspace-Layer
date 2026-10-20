@@ -1,4 +1,25 @@
 {
+"closedReenable20261020": {
+  "baseline": "9813d7c1956d790f03a3befe301aabcf9392b55e",
+  "scope": "MODERN both-closed actual disable / re-enable / native navigation, isolated headless MV3; hidden private content positive control at disable boundary; not complete J4 or real ChatGPT",
+  "status": "PASS",
+  "contracts": 13,
+  "files": {
+    "closed-modern": {
+      "path": "docs/evidence/free-delivery-2026-10-17/reenable-closed-modern-20261020.gz",
+      "sha256": "5d4132ce7780ef4c79fd93cb8a47892f4e072966e22636f09da39e3b68bc84b9"
+    },
+    "closed-contracts": {
+      "path": "docs/evidence/free-delivery-2026-10-17/reenable-closed-contracts-20261020.gz",
+      "sha256": "a0437ef678649d8b3b260f0e217884e2f459c307d5780cce0922d24be209f13a"
+    }
+  },
+  "baselineCI": {
+    "run": 39365510935,
+    "allFourJobs": "success",
+    "fullFreeAccepted": false
+  }
+},
 "peerReenableCheckpoint20261020": {
   "baseline": "589616828bd9a294fea6616d080c5250fade4fb2",
   "status": "PARTIAL_J4_NOT_ACCEPTED",

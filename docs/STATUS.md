@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 双关再启用与CI收口（2026-10-20，基线9813d7c1）
+
+CI39365510935四个原job均成功，关闭上一批Node诊断合同失败；J4仍PARTIAL，原历史FAIL保留。原再启用runner新增MODERN双关起点：原生按钮关闭两面板后确认两个隐藏frame仍含私有内容，再实际disable/re-enable，原草稿/文档不变、私有内容不复活，后续原生导航新grant可用且旧grant拒绝。13定向及最终隔离MV3通过，源码/fixture无漂移；独审指出正控应在双关后，已补并重验，不宣称完整矩阵。证据closedReenable20261020；真实身份/完整目录、完整J4及Free仍未闭合，规模DEFERRED。
+
 ## 双标签再启用检查点（2026-10-20，基线58961682）
 
 原隔离MV3连续J4新增两处实测：未刷新的peer在再启用后及主标签新grant后保持原文档/编辑器/草稿、无私有投影、原生区域可用；未新增认证或重放动作，仍PARTIAL_J4_NOT_ACCEPTED。原启动环境缺Chrome路径的NOT_RUN保留，显式原Chrome路径后完成。CI39364723756三个浏览器job通过，Node六失败来自可选诊断无条件创建MutationObserver；已隔离诊断故障，不影响原RPC，29定向通过。原Linux滚动FAIL不追溯改判；证据peerReenableCheckpoint20261020。58961682已正常推送，旧网络阻塞为历史；真实身份/全量目录、完整J4及Free仍开放，规模DEFERRED。
