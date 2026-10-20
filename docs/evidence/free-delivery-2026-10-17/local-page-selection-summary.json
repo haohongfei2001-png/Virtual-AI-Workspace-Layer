@@ -1,4 +1,54 @@
 {
+"reenableSurfaceBatch20261020": {
+  "baseline": "40755d5797455ef7d2986d504e63ddba18cf4b52",
+  "status": "SIX_SCOPED_COMBINATIONS_PASS_NOT_FULL_J4",
+  "sourceChanges": "runner state selector and exact role precondition only; production unchanged",
+  "files": [
+    {
+      "profile": "LEGACY",
+      "surface": "workspace-only",
+      "path": "docs/evidence/free-delivery-2026-10-17/reenable-legacy-workspace-only-20261020.gz",
+      "sha256": "e7f19ef34f97aafe01269da1b437bfe280840c93b53695484a297e0fc7f88e16"
+    },
+    {
+      "profile": "LEGACY",
+      "surface": "sidebar-only",
+      "path": "docs/evidence/free-delivery-2026-10-17/reenable-legacy-sidebar-only-20261020.gz",
+      "sha256": "45c8e2f4f45c92566b95093c03a2082eb4daf5d10161e77bd1ecf6284949156a"
+    },
+    {
+      "profile": "LEGACY",
+      "surface": "both-closed",
+      "path": "docs/evidence/free-delivery-2026-10-17/reenable-legacy-both-closed-20261020.gz",
+      "sha256": "11c98529717aa86df169f0946e4e664382b2eb92094e68273c4f872e64f66250"
+    },
+    {
+      "profile": "MODERN",
+      "surface": "workspace-only",
+      "path": "docs/evidence/free-delivery-2026-10-17/reenable-modern-workspace-only-20261020.gz",
+      "sha256": "c218ca28ee90f3d61176100fdacae8fc4b8781465315c6d4b751834526efe17e"
+    },
+    {
+      "profile": "MODERN",
+      "surface": "sidebar-only",
+      "path": "docs/evidence/free-delivery-2026-10-17/reenable-modern-sidebar-only-20261020.gz",
+      "sha256": "b41f6d6771a50d62fb6601516ee58b002e60911498c0e0d68965c309cbfcb0bb"
+    },
+    {
+      "profile": "MODERN",
+      "surface": "both-closed",
+      "path": "docs/evidence/free-delivery-2026-10-17/reenable-modern-both-closed-20261020.gz",
+      "sha256": "2e8776ddfb601c153902cdc4f267cb9ab78e389f89a4fb63d19447557ebf9697"
+    }
+  ],
+  "contracts": {
+    "pass": 13,
+    "path": "docs/evidence/free-delivery-2026-10-17/reenable-surfaces-contracts-20261020.gz",
+    "sha256": "335a0a1f05cc1a13c4d00bb3ad44fda6c62b5749d9ca6c013693ee519681f45c"
+  },
+  "review": "no blocking issues; old both-open evidence not relabelled current matrix",
+  "push": "40755d57 push failed after 75038ms TCP connection timeout; remote last confirmed9813d7c1"
+},
 "closedReenable20261020": {
   "baseline": "9813d7c1956d790f03a3befe301aabcf9392b55e",
   "scope": "MODERN both-closed actual disable / re-enable / native navigation, isolated headless MV3; hidden private content positive control at disable boundary; not complete J4 or real ChatGPT",

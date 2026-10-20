@@ -9,7 +9,7 @@ import {createVariantHostFixtureServer} from './fixtures/variants-server.mjs';
 import {disableStatesProfile} from './disable-states-profile.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 const initialSurface=process.env.FREE_REENABLE_SURFACE??'both-open';
-if(!['both-open','both-closed'].includes(initialSurface))throw Error('invalid-reenable-surface');
+if(!['both-open','both-closed','workspace-only','sidebar-only'].includes(initialSurface))throw Error('invalid-reenable-surface');
 const selected=disableStatesProfile(process.env.FREE_REENABLE_PROFILE??'LEGACY');
 const server=selected.modern?await createVariantHostFixtureServer({profile:'MODERN'}):await createHostFixtureServer();
 const dir=await mkdtemp('/private/tmp/vaiwl-reenable-package-'),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,...selected.packageOptions}),info=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8')),script='tests/host/reenable-package-mv3-browser.mjs',hash=b=>createHash('sha256').update(b).digest('hex'),scriptHash=hash(await readFile(script)),output=process.argv[2]??'/private/tmp/free-reenable-package-mv3.json';
@@ -37,8 +37,10 @@ try{
  const oldFrames=await pair(),oldGrants=await Promise.all(oldFrames.map(grant));await blockedNetwork();report.workerExternalNetworkBlockedBefore=true;
  await page.locator('textarea').fill('REENABLE_NATIVE_DRAFT');await page.evaluate(()=>{globalThis.reenableEditor=document.querySelector('textarea');globalThis.reenableDocument=document;globalThis.reenablePageHides=0;addEventListener('pagehide',()=>reenablePageHides++);});await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await pair();
  const privatePositive=await privateAbsent();assert.equal(privatePositive.privateProjectionAbsent,false,'detector must find actual private shadow-rendered text before disable');assert.equal(privatePositive.frames.length,2);report.privateProjectionDetectorPositiveControl=true;
- if(initialSurface==='both-closed'){await page.getByRole('button',{name:'显示原生列表',exact:true}).click();await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();}
- const beforeDisable=await page.locator('[data-va-owned]:popover-open').count();assert.equal(beforeDisable,initialSurface==='both-closed'?0:2,'requested initial surfaces must be reached by native controls');report.beforeDisableOpenSurfaces=beforeDisable;
+ if(initialSurface==='both-closed'||initialSurface==='workspace-only')await page.getByRole('button',{name:'显示原生列表',exact:true}).click();
+ if(initialSurface==='both-closed'||initialSurface==='sidebar-only')await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
+ const beforeDisable=await page.locator('[data-va-owned]:popover-open').count();assert.equal(beforeDisable,initialSurface==='both-closed'?0:initialSurface==='both-open'?2:1,'requested initial surfaces must be reached by native controls');report.beforeDisableOpenSurfaces=beforeDisable;
+ const beforeDisableRoles=await page.evaluate(()=>Object.fromEntries(['workspace','sidebar'].map(role=>[role,!!document.querySelector('[data-va-owned][id$="_'+role+'"]')?.matches(':popover-open')])));assert.deepEqual(beforeDisableRoles,{workspace:initialSurface==='both-open'||initialSurface==='workspace-only',sidebar:initialSurface==='both-open'||initialSurface==='sidebar-only'});report.beforeDisableRoles=beforeDisableRoles;
  const hiddenPrivatePositive=await privateAbsent();assert.equal(hiddenPrivatePositive.privateProjectionAbsent,false,'private content must still exist at the selected disable boundary');assert.equal(hiddenPrivatePositive.frames.length,2);report.privateProjectionPresentAtDisableBoundary=true;
  const originalURL=page.url();assert.deepEqual(await controller.evaluate(()=>setTargetEnabled(false)),{id,enabled:false});report.disableConfirmed=true;
  async function privateAbsent(){
