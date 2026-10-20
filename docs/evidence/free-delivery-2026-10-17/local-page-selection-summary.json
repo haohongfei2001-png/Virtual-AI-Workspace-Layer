@@ -1,4 +1,329 @@
 {
+  "recoveryTTLAbort20261021": {
+    "baseline": "303f9ba950bbafb557ca9b104c73e2f76d26294b",
+    "defect": "Existing transfer/repair TTL can expire before the restore RPC deadline; postcheck rejects but pending persistence was not actively cancelled.",
+    "fix": "Arm one remaining-TTL abort timer on the persistence owner only; cancel on settle, preserve pending accounting and committed data.",
+    "red": {
+      "tests": 69,
+      "pass": 66,
+      "fail": 3
+    },
+    "targeted": {
+      "tests": 128,
+      "pass": 128,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 1619.0775
+    },
+    "browser": {
+      "backup": {
+        "status": "PASS",
+        "sourceChangedDuringRun": false,
+        "buildManifestUnchanged": true,
+        "retirementBoundary": {
+          "evidence": "PRODUCTION_OWNER_REAL_IDB_SYNTHETIC_UI_AUTHORITY",
+          "results": [
+            {
+              "action": "normal",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": true,
+              "revision": 1,
+              "committed": true,
+              "retirementWitnessed": false,
+              "pendingAccountingRetained": false
+            },
+            {
+              "action": "ui",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": false,
+              "revision": 0,
+              "committed": false,
+              "retirementWitnessed": true,
+              "pendingAccountingRetained": true
+            },
+            {
+              "action": "parent",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": false,
+              "revision": 0,
+              "committed": false,
+              "retirementWitnessed": true,
+              "pendingAccountingRetained": true
+            },
+            {
+              "action": "close",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": false,
+              "revision": 0,
+              "committed": false,
+              "retirementWitnessed": true,
+              "pendingAccountingRetained": true
+            },
+            {
+              "action": "committed",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": false,
+              "revision": 1,
+              "committed": true,
+              "retirementWitnessed": true,
+              "pendingAccountingRetained": true
+            },
+            {
+              "action": "ttl",
+              "clockEvidence": "CONTROLLED_ELAPSED_AND_DUE_TIMER_DELIVERY",
+              "ownerOK": false,
+              "revision": 0,
+              "committed": false,
+              "retirementWitnessed": true,
+              "pendingAccountingRetained": true
+            },
+            {
+              "action": "ttl-committed",
+              "clockEvidence": "CONTROLLED_ELAPSED_AND_DUE_TIMER_DELIVERY",
+              "ownerOK": false,
+              "revision": 1,
+              "committed": true,
+              "retirementWitnessed": true,
+              "pendingAccountingRetained": true
+            }
+          ]
+        }
+      },
+      "recovery": {
+        "status": "PASS",
+        "sourceChangedDuringRun": false,
+        "buildManifestUnchanged": true,
+        "retirementBoundary": {
+          "evidence": "PRODUCTION_RECOVERY_OWNER_REAL_IDB_SYNTHETIC_UI_AUTHORITY",
+          "results": [
+            {
+              "kind": "workspace",
+              "action": "normal",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": true,
+              "committed": true,
+              "storesUnchanged": false,
+              "retirementWitnessed": false
+            },
+            {
+              "kind": "workspace",
+              "action": "ui",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": false,
+              "committed": false,
+              "storesUnchanged": true,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "workspace",
+              "action": "parent",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": false,
+              "committed": false,
+              "storesUnchanged": true,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "workspace",
+              "action": "committed",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": false,
+              "committed": true,
+              "storesUnchanged": false,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "workspace",
+              "action": "ttl",
+              "clockEvidence": "CONTROLLED_ELAPSED_AND_DUE_TIMER_DELIVERY",
+              "ownerOK": false,
+              "committed": false,
+              "storesUnchanged": true,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "workspace",
+              "action": "ttl-committed",
+              "clockEvidence": "CONTROLLED_ELAPSED_AND_DUE_TIMER_DELIVERY",
+              "ownerOK": false,
+              "committed": true,
+              "storesUnchanged": false,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "native",
+              "action": "normal",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": true,
+              "committed": true,
+              "storesUnchanged": false,
+              "retirementWitnessed": false
+            },
+            {
+              "kind": "native",
+              "action": "ui",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": false,
+              "committed": false,
+              "storesUnchanged": true,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "native",
+              "action": "parent",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": false,
+              "committed": false,
+              "storesUnchanged": true,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "native",
+              "action": "committed",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": false,
+              "committed": true,
+              "storesUnchanged": false,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "native",
+              "action": "ttl",
+              "clockEvidence": "CONTROLLED_ELAPSED_AND_DUE_TIMER_DELIVERY",
+              "ownerOK": false,
+              "committed": false,
+              "storesUnchanged": true,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "native",
+              "action": "ttl-committed",
+              "clockEvidence": "CONTROLLED_ELAPSED_AND_DUE_TIMER_DELIVERY",
+              "ownerOK": false,
+              "committed": true,
+              "storesUnchanged": false,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "evidence",
+              "action": "normal",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": true,
+              "committed": true,
+              "storesUnchanged": false,
+              "retirementWitnessed": false
+            },
+            {
+              "kind": "evidence",
+              "action": "ui",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": false,
+              "committed": false,
+              "storesUnchanged": true,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "evidence",
+              "action": "parent",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": false,
+              "committed": false,
+              "storesUnchanged": true,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "evidence",
+              "action": "committed",
+              "clockEvidence": "REAL_ELAPSED",
+              "ownerOK": false,
+              "committed": true,
+              "storesUnchanged": false,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "evidence",
+              "action": "ttl",
+              "clockEvidence": "CONTROLLED_ELAPSED_AND_DUE_TIMER_DELIVERY",
+              "ownerOK": false,
+              "committed": false,
+              "storesUnchanged": true,
+              "retirementWitnessed": true
+            },
+            {
+              "kind": "evidence",
+              "action": "ttl-committed",
+              "clockEvidence": "CONTROLLED_ELAPSED_AND_DUE_TIMER_DELIVERY",
+              "ownerOK": false,
+              "committed": true,
+              "storesUnchanged": false,
+              "retirementWitnessed": true
+            }
+          ]
+        }
+      }
+    },
+    "independentReview": "No blocking finding; duplicate pending branches do not own a second timer; active transaction accounting and postcommit preservation retained.",
+    "limits": [
+      "TTL boundary explicitly controls elapsed clock and due timer delivery before transaction commit; delayed undelivered timer window is not proved closed.",
+      "Synthetic UI authority, real extension IndexedDB; not real ChatGPT authentication or complete J1/J4.",
+      "10k/100k DEFERRED; real source, directory, physical IME/PAIA and complete installation/release gates remain open."
+    ],
+    "package": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 184,
+      "unpacked": "/private/tmp/vaiwl-ttl-recovery-package/extension",
+      "archive": "/private/tmp/vaiwl-ttl-recovery-package/vaiwl-free-host-development.zip",
+      "archiveSha256": "e0f5388d5c08ab58dd99825253f90147f80dbc8bcbf0f30c54e0312699112318"
+    },
+    "files": [
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-ttl-recovery-red.tap.gz",
+        "rawBytes": 95008,
+        "rawSha256": "56547524c3eeab5fb01f90680e88d71b91b48e2323777c4658da4343535e487c"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-ttl-recovery-green.tap.gz",
+        "rawBytes": 8654,
+        "rawSha256": "f5def4db5cf1a0e89f9a963d75cc337b38acd8da71ae0a5fdadb7d38d9d38f63"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-ttl-recovery-regression.tap.gz",
+        "rawBytes": 10720,
+        "rawSha256": "90fecd1eebb60b7d8a390a6af510fcb7c0d4c9e068609ef4e003a732a73ed6ea"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-ttl-backup-browser.json.gz",
+        "rawBytes": 23327,
+        "rawSha256": "29bd579b11d2505e6b5fc3575644f4d25668e33ce424281e0396bbc62e6d1b0b"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-ttl-backup-browser.log.gz",
+        "rawBytes": 451,
+        "rawSha256": "5a9f6362da9ee24a04b2f46ecba6125fd9c0d7fceef457cd156edc0ffa1f3c55"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-ttl-recovery-browser.json.gz",
+        "rawBytes": 27033,
+        "rawSha256": "96c4e794941e501a0508a3754f936663cd7c00ff4a995b98d4e0b2e23f9b89be"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-ttl-recovery-browser.log.gz",
+        "rawBytes": 1135,
+        "rawSha256": "fc40ef54128e860aba06f55c2aa863efce0a4f0c6f3560d7e483d880f32544b2"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-ttl-recovery-build.json.gz",
+        "rawBytes": 347,
+        "rawSha256": "88b3275769f731c7ad8a20e5d35ccce0854f068c5166268f7ad57a0f8dcb4f9e"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-ttl-recovery-verify.json.gz",
+        "rawBytes": 105,
+        "rawSha256": "c27fd849e03c560f5dce3aa757d2e31e6da605b3b2c2c28771bd4cb6f1a0644c"
+      }
+    ]
+  },
   "controlledColdRecovery20261021": {
     "base": "385b643dff872c6a6931ad5f97372fe84abe937c",
     "scope": "C2 controlled initial native 503 -> safe wait -> explicit next native GET 200 -> new grant/current VIEW -> unique reading/workspace return",

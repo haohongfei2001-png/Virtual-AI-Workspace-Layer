@@ -1,5 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 恢复计划到期时取消在途事务（2026-10-21，基线303f9ba9）
+
+已复现真实产品缺陷：备份transfer或修复计划临近到期时启动恢复，原RPC六秒尚未到期，计划过期仅在提交后拒绝结果；备份revision与原生/活动目录实际已被修改。现恢复owner按原计划剩余有效期主动abort未提交事务，重复pending调用不创建第二个owner；完成时清理timer，在途计数保持到settle。已提交结果不伪称回滚，未延长期限、未改授权或数据库schema。
+
+原69项中的3项到期反例先FAIL；修复后128受影响定向通过。真实隔离headless打包备份及恢复旅程通过，含工作集/原生/活动/备份在提交前到期全库不变、提交后到期保留提交及人工资产，源码/包稳定。184文件默认包构建校验通过，独审无阻断。时序为受控elapsed及明确送达的到期timer，不能证明计时器尚未送达的延迟窗口；合成UI authority不等于实机身份。原失败、原旅程及边界证据沿recoveryTTLAbort20261021保存，不重复全Node或规模验收。
+
+前两本地提交已正常同步至303f9ba9，旧推送失败记录保留。该HEAD的CI39494518008当前J4/持久化job成功，Node/旅程仍运行，未将其记全绿。真实主体/current-context、服务器完整历史目录、成员/本人活动、完整J1/J4、物理IME/PAIA及安装发布仍开放；10k/100k DEFERRED，NOT_RELEASE_READY。
+
+
 ## 冷启动安全等待的确定性恢复子链（2026-10-21，基线385b643d）
 
 原cold-recovery只在首次挂载偶发超时后走恢复，成功初挂则恢复分支NOT_COVERED。本次沿原runner增加显式cold-unavailable-recovery离线模式：固定初始聊天503（重复仍503），另一原生聊天200；原cold和cold-recovery行为不变。原20秒内无私人surface、原生reading/composer可用；一次用户原生导航后fresh grant+实际VIEW、正确当前项、同document/editor/draft、唯一阅读返回和工作区再展开成立。最终同次有界响应记录严格503→200，恢复238.857ms，源码不漂移、worker外网拒绝。没有修改生产身份或预算，不靠重复GET转绿。

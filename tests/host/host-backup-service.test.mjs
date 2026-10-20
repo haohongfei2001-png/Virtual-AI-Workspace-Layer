@@ -53,3 +53,17 @@ test('closing one restore transfer aborts only its owner while another remains p
  assert.equal((await f.request('CLOSE',{transferId:a.transferId})).ok,true);assert.equal(signals.get('owner_a').aborted,true);assert.equal(signals.get('owner_b').aborted,false);assert.equal(f.service.isIdle(),false);
  release();assert.equal((await ra).ok,false);assert.equal((await rb).ok,true);assert.deepEqual(f.writes.map(r=>r.operationId),['owner_b']);assert.equal(f.service.isIdle(),true);
 });
+
+for(const boundary of ['before-expiry','expiry','committed'])test('backup remaining TTL cancels only an uncommitted restore: '+boundary,async t=>{
+ const factory=new MockIDBFactory(),base=new ScopeRepository({indexedDB:factory,databaseName:'ttl-target-'+boundary}),sourceBase=new ScopeRepository({indexedDB:factory,databaseName:'ttl-source-'+boundary});t.after(()=>{base.close();sourceBase.close();});
+ const repo=new WorkspaceRepository({baseRepository:base}),source=new WorkspaceRepository({baseRepository:sourceBase});assert((await source.command(scope,{operationId:'seed',expectedRevision:0,command:{type:'CREATE_WORKSPACE',id:'imported',name:'Keep human asset'}})).ok);
+ let time=0,sequence=0;const timers=new Map(),f=fixture({workspaceRepository:repo,elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++sequence;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id)});
+ const info=await upload(f,await source.exportBackup(scope)),plan=await f.request('PREVIEW',{transferId:info.transferId});time=119998;
+ const db=await base.open(),original=db.transaction.bind(db);let reached=0;
+ const expire=()=>{reached++;time=boundary==='before-expiry'?119999:120000;for(const [id,timer]of [...timers])if(timer.at<=time){timers.delete(id);timer.fn();}assert.equal(f.service.isIdle(),false);};
+ db.transaction=(stores,mode)=>{const tx=original(stores,mode);if(mode==='readwrite'&&Array.from(stores).includes('b23_operations')){
+ if(boundary==='committed'){let complete;Object.defineProperty(tx,'oncomplete',{get:()=>complete,set:fn=>{complete=e=>{expire();fn(e);};},configurable:true});}
+ else{const objectStore=tx.objectStore.bind(tx);tx.objectStore=name=>{const store=objectStore(name),put=store.put.bind(store);if(name==='b23_operations')store.put=value=>{const q=put(value);if(value.payload?.type==='RESTORE_BACKUP')queueMicrotask(expire);return q;};return store;};}}return tx;};
+ const result=await f.request('RESTORE',{transferId:info.transferId,planId:plan.planId,operationId:'ttl-restore'});db.transaction=original;
+ assert.equal(reached,1);assert.equal(result.ok,boundary==='before-expiry');const after=(await repo.read(scope)).state;assert.equal(after.revision,boundary==='expiry'?0:1);assert.equal(!!after.workspaces.imported,boundary!=='expiry');assert.equal(timers.size,0);assert.equal(f.service.isIdle(),true);
+});

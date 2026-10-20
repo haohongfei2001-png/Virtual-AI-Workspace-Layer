@@ -15,7 +15,7 @@ export function createHostRecoveryService({ui,readService,workspaceRepository,on
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-recovery-request'};}
   const status=message?.type==='HOST_UI_RECOVERY_STATUS',release=message?.type==='HOST_UI_RECOVERY_RELEASE',keys=['v','type','grantId','mountId'];
   if(!exactHostRecord(message,status?keys:release?[...keys,'planIds']:[...keys,'kind','planId','operationId'])||message.v!==1||!tokenOK(message.grantId)||!tokenOK(message.mountId)||release&&(!Array.isArray(message.planIds)||message.planIds.length<1||message.planIds.length>3||!message.planIds.every(tokenOK)||new Set(message.planIds).size!==message.planIds.length)||!status&&!release&&(message.type!=='HOST_UI_RECOVER'||!kinds.includes(message.kind)||!tokenOK(message.planId)||!tokenOK(message.operationId)))return {ok:false,reason:'invalid-recovery-request'};
-  const attempt={created:[],delivered:false,active:true,abort:new AbortController(),started:elapsedNow()};attempts.add(attempt);
+  const attempt={created:[],delivered:false,active:true,abort:new AbortController(),started:elapsedNow(),expiryTimer:null};attempts.add(attempt);
   const live=()=>!stopped&&attempt.active&&!attempt.abort.signal.aborted&&elapsedNow()>=attempt.started&&elapsedNow()-attempt.started<6000;
   try{const result=await withRequestDeadline(()=>trackScope(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    const guard=()=>live()&&context.isCurrent(),check=()=>{if(!guard())throw Error('recovery-authority-expired');};check();
@@ -44,6 +44,8 @@ export function createHostRecoveryService({ui,readService,workspaceRepository,on
    const plan=plans.get(message.planId);if(!plan||!matches(plan)||plan.kind!==message.kind||elapsedNow()<plan.createdAt||elapsedNow()>=plan.until)throw Error('invalid-recovery-plan');
    if(plan.pending){if(plan.operationId!==message.operationId)throw Error('recovery-plan-conflict');const result=await plan.pending;check();return result;}
    plan.operationId=message.operationId;plan.attempt=attempt;
+   // A near-expired comparison must cancel pending persistence at its own TTL.
+   attempt.expiryTimer=schedule(()=>attempt.abort.abort(),Math.max(0,plan.until-elapsedNow()));
    const repairGuard=()=>guard()&&plans.get(message.planId)===plan&&elapsedNow()<plan.until;
    const request={operationId:message.operationId,damagedHash:plan.damagedHash},repairOptions={guard:repairGuard,signal:attempt.abort.signal};
    plan.pending=(async()=>{try{
@@ -53,7 +55,7 @@ export function createHostRecoveryService({ui,readService,workspaceRepository,on
     plans.delete(message.planId);try{await onRecovered?.(context.scope.key);}catch{}check();return {ok:true,kind:plan.kind};
    }catch(error){plans.delete(message.planId);throw error;}})();
    return await plan.pending;
-  })),{timeoutMs:6000,now:elapsedNow,schedule,cancel});attempt.delivered=result?.ok===true;return result;}catch{return failure();}finally{if(!attempt.delivered)for(const id of attempt.created)plans.delete(id);attempt.active=false;attempt.abort.abort();attempts.delete(attempt);for(const [id,plan]of plans)if(plan.attempt===attempt)plans.delete(id);}
+  })),{timeoutMs:6000,now:elapsedNow,schedule,cancel});attempt.delivered=result?.ok===true;return result;}catch{return failure();}finally{if(attempt.expiryTimer!==null)cancel(attempt.expiryTimer);if(!attempt.delivered)for(const id of attempt.created)plans.delete(id);attempt.active=false;attempt.abort.abort();attempts.delete(attempt);for(const [id,plan]of plans)if(plan.attempt===attempt)plans.delete(id);}
  }
  function revokeDocument(id){for(const [key,plan]of plans)if(plan.uiDocumentId===id||plan.parentDocumentId===id){plans.delete(key);plan.attempt?.abort.abort();}}
  // Local quietness only; retained user work blocks even after its TTL.
