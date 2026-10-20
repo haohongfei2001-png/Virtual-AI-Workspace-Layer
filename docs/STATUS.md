@@ -1,5 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 本地接续与退休导航链接隔离（2026-10-21，基线003c4abe）
+
+已核对原PR16正文VAIWL_HANDOFF_READY、精确HEAD/tree及CI39490341455终态；云端停止写入，用户已明确交回，本地Codex恢复唯一writer。接手本地已为003c4abe，881fe290为其祖先，tracked干净；2258未跟踪副本、3stash保持。以下历史“本地暂停/云端唯一writer”只记录当时安排，不覆盖本次用户授权。CI四job绿不关闭历史cold/scroll/webRequest、disabled search click原因或完整J1/J4。
+
+沿原C3/C5发现并先复现5项失败：退休聊天计划链接仍可派发；退休href回调会推进intent、压掉新链接成功ACK的阅读展示。现点击先检查未stop、有效projection、原view及当前pane成员，拒绝旧节点且不推进intent；当前链接、修饰键和pending安全拒绝保持。209定向通过；真实隔离headless原窗口旅程通过，150→150滚动、17/17项、同目标/异目标唯一返回和原草稿保持，源码/fixture/包无漂移。旧回调反例为合成renderer事件，不宣称实测浏览器送达旧节点或原Linux根因已闭合。
+
+首次沙箱浏览器启动超时/FAIL_CLEANUP保留；经正常授权启动同一隔离headless环境后原旅程通过，没有加等待或重试导航。184文件默认包构建及校验通过；首次校验路径误用unpacked，按构建返回的extension目录修正。未重复全Node/规模矩阵。证据retiredNavigationLinks20261021。下一关口继续导航/恢复的未闭合时序；真实主体/context、服务器完整目录、成员/本人发送、完整J1/J4、IME/PAIA及安装发布未成立，10k/100k仍DEFERRED，NOT_RELEASE_READY。
+
+
 ## 退休展开按钮隔离与被动诊断重建（2026-10-20，基线029175be）
 
 原云端候选b7f6b238/tree6769694c及其37文件未发布；恢复任务时旧工作区、临时日志和清单已不可读，不能称为原件恢复或复用旧9649结果。现从GitHub核实的029175be/tree1ee262d8完整历史重新检出，只重建同一C3/C5缺陷修复及诊断，无新功能/第二writer。原CI39389465140失败JSON已从原job重新取得，100219字节和原SHA256完全一致；旧本地日志不伪造。新证据沿原汇总projectDisclosureReconstructed20261020。

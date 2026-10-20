@@ -200,6 +200,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   // Frame plans are supplied synchronously before activation. Never fetch a plan in a click handler.
   function bindPlannedLink(a,ref,entity='conversation'){
+    const ownerView=view;
     let issued;try{issued=structuredClone(entity==='project'?adapter.projectNavigationPlan?.(ref):adapter.navigationPlan?.(ref));}catch{}
     const plan=issued?.plan;
     const safeHref=plan?.target?.kind==='resolved'?adapter.nativeHref?.(plan.target.navigationURL):null;
@@ -211,6 +212,8 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(safeHref){a.href=safeHref;a.target=plan.mode==='href'&&plan.disposition==='same-tab'?'_top':'_blank';a.rel='noopener noreferrer';}
     else{a.setAttribute('role','button');a.tabIndex=0;}
     a.addEventListener('click',event=>{
+      // Detached callbacks must not dispatch or cancel a newer navigation intent.
+      if(stopped||!frameProjection||view!==ownerView||![roots?.workspace,roots?.sidebar].some(pane=>[...(pane?.shadow.querySelectorAll('a')??[])].includes(a))){event.preventDefault();return;}
       if(delegation&&nativeNavigationPending){event.preventDefault();return;}
       if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;
       const dispatchIntent=advanceNavigationIntent(),dispatchProjection=frameProjection,dispatchScope=snapshot?.scope,dispatchURL=adapter.currentURL();

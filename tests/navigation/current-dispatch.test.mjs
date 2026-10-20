@@ -123,3 +123,19 @@ for(const mode of ['same-target','native-control'])test('pending VIEW disables o
 test('retired old-window disclosure cannot cancel a newer current-target acknowledgement',async()=>{
  const f=setupCurrent();try{const retired=f.button('展开旧窗口 Original P2');f.nav.updateFrameProjection(projection());const fresh=f.pane().querySelector('[data-ref-id="P2_0"]');fresh.click();assert.equal(f.commands.length,1);retired.click();f.reply({state:'already-current'});await tick();assert.equal(f.nav.view().mode,'reading');assert.equal(f.commands.length,1);assert(!f.nav.view().oldOpen.has('home:P2'));}finally{f.nav.stop();}
 });
+
+for(const lifecycle of ['refresh','scope','invalidate','stop'])test('retired delegated link cannot dispatch after '+lifecycle,()=>{
+ const f=setupCurrent();try{
+ if(lifecycle==='refresh')f.nav.updateFrameProjection(projection());
+ if(lifecycle==='scope'){const next=projection();next.scope='scopeB';f.nav.updateFrameProjection(next);}
+ if(lifecycle==='invalidate')f.nav.invalidate();if(lifecycle==='stop')f.nav.stop();
+ assert.equal(f.link.click().defaultPrevented,true);assert.equal(f.commands.length,0);
+ }finally{f.nav.stop();}
+});
+test('retired href link cannot cancel a fresh current-target acknowledgement',async()=>{
+ const f=setupCurrent();try{const retired=f.pane().querySelector('[data-ref-id="P1_0"]');f.nav.updateFrameProjection(projection());
+ const fresh=f.pane().querySelector('[data-ref-id="P2_0"]');fresh.click();assert.equal(f.commands.length,1);
+ assert.equal(retired.click().defaultPrevented,true);f.reply({state:'already-current'});await tick();
+ assert.equal(f.nav.view().mode,'reading');assert.equal(f.commands.length,1);
+ }finally{f.nav.stop();}
+});
