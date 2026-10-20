@@ -77,10 +77,10 @@ test('actual combined workflow gate rejects missing CPU, clock, source, cleanup 
  }
 });
 
-test('snippet journey runs in existing isolated job and publishes only its text result',()=>{assert.match(jobs['offline-journeys'],/node tests\/host\/snippets-package-mv3-browser\.mjs "\$RUNNER_TEMP\/snippets-package\.json"/);assert.match(jobs['offline-journeys'],/ui10-matrix visible-actions frame-focus-return local-status observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package; do/);});
+test('snippet journey runs in existing isolated job and publishes only its text result',()=>{assert.match(jobs['offline-journeys'],/node tests\/host\/snippets-package-mv3-browser\.mjs "\$RUNNER_TEMP\/snippets-package\.json"/);assert.match(jobs['offline-journeys'],/ui10-matrix visible-actions frame-focus-return local-status observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package snippets-startup-trace; do/);});
 test('temporary Project journey shares existing runner and text evidence without uploads',()=>{assert.match(jobs['offline-journeys'],/node tests\/host\/temporary-project-mv3-browser\.mjs "\$RUNNER_TEMP\/temporary-project-navigation\.json"/);assert.match(jobs['offline-journeys'],/node tests\/host\/temporary-project-list-browser\.mjs/);assert.doesNotMatch(workflow,/actions\/(?:upload-artifact|cache)/);});
 
-test("preauthorization observation shares existing challenge job without new profile sharing or uploads",()=>{assert.match(jobs["offline-journeys"],/node tests\/host\/preauthorization-package-browser\.mjs "\$RUNNER_TEMP\/preauthorization\.json"/);assert.match(jobs["offline-journeys"],/challenge-status preauthorization snippets-package; do/);});
+test("preauthorization observation shares existing challenge job without new profile sharing or uploads",()=>{assert.match(jobs["offline-journeys"],/node tests\/host\/preauthorization-package-browser\.mjs "\$RUNNER_TEMP\/preauthorization\.json"/);assert.match(jobs["offline-journeys"],/challenge-status preauthorization snippets-package snippets-startup-trace; do/);});
 
 test('observed Project actual package and masked-data checks share existing isolated runner',()=>{assert.match(jobs['offline-journeys'],/node tests\/host\/observed-project-mv3-browser\.mjs "\$RUNNER_TEMP\/observed-project-layout\.json"/);assert.match(jobs['offline-journeys'],/node tests\/host\/observed-project-masked-browser\.mjs/);assert.doesNotMatch(workflow,/actions\/(?:upload-artifact|cache)/);});
 
@@ -136,3 +136,5 @@ test('manual popup geometry diagnostic selects only the existing native navigati
  for(const e of [{...event,event:{repository:{private:true}}},{...event,repository:'other/repo'},{...event,ref:'refs/heads/main'}])assert.equal(Object.keys(jobs).filter(name=>jobAllowed(name,e,input)).length,0);
  assert(selected.some(s=>s.name==='Publish bounded text evidence to logs only'));
 });
+
+test('startup trace cannot turn the original snippet failure green and is bounded',()=>{assert.match(jobs['offline-journeys'],/original_result=\$\?/);assert.match(jobs['offline-journeys'],/timeout 60s node tests\/host\/snippets-package-mv3-browser.mjs/);assert.match(jobs['offline-journeys'],/exit "\$original_result"/);});

@@ -17006,5 +17006,25 @@
     "liveChatGPT": "NOT_RUN",
     "fullHistory": "NOT_ESTABLISHED",
     "scale": "DEFERRED unchanged"
+  },
+  "startupObservers20261020": {
+    "baseHead": "8291bac2ac8171af6c057e5a8027435993ebad0b",
+    "status": "OFFLINE_OBSERVER_FIX",
+    "expiry": "A single timer wake did not establish Date.now()>expiry. Reobserve under original20001ms maximum,64 samples,clock rollback rejection,remaining original15s within60s C2. No product change.",
+    "validation": {
+      "targeted": 85,
+      "normal": "PASS original CI oracle",
+      "mutant": "original15s J4-peer-current-scope-timeout; original CI oracle PASS",
+      "earlyTimerInterleaving": "deterministic unit only; actual browser wakes were after expiry",
+      "snippet": "instrumented local six-step PASS; Linux startup failure NOT_REPRODUCED, not resolved",
+      "finalDifference": "Following snippet browser trace, only added1500ms bounded trace read and runner hash inclusion; targeted85 passed, browser not rerun for this diagnostic-only addition"
+    },
+    "ci": "Original snippet failure preserved; one optional trace copy capped60s, no uploads/cache or product thresholds changed",
+    "files": {
+      "normal": "docs/evidence/free-delivery-2026-10-17/startup-observers-20261020-normal.gz",
+      "mutant": "docs/evidence/free-delivery-2026-10-17/startup-observers-20261020-mutant.gz",
+      "tests": "docs/evidence/free-delivery-2026-10-17/startup-observers-20261020-tests.gz",
+      "snippetTrace": "docs/evidence/free-delivery-2026-10-17/startup-observers-20261020-snippetTrace.gz"
+    }
   }
 }

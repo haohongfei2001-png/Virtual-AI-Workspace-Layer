@@ -184,14 +184,21 @@ jobs:
           node tests/host/temporary-project-list-browser.mjs
       - name: Packaged native snippet save search locate and removal
         if: ${{ !cancelled() && github.event_name == 'push' }}
-        run: node tests/host/snippets-package-mv3-browser.mjs "$RUNNER_TEMP/snippets-package.json"
+        run: |
+          if node tests/host/snippets-package-mv3-browser.mjs "$RUNNER_TEMP/snippets-package.json"; then
+            exit 0
+          else
+            original_result=$?
+            timeout 60s node tests/host/snippets-package-mv3-browser.mjs "$RUNNER_TEMP/snippets-startup-trace.json" startup-trace || true
+            exit "$original_result"
+          fi
       - name: Publish bounded text evidence to logs only
         if: ${{ !cancelled() }}
         run: |
           echo "Source commit: $GITHUB_SHA"
           echo "Event: $GITHUB_EVENT_NAME (workflow_dispatch is diagnostic only, never full CI)"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
-          for name in context-package context-container context-cold context-cold-trace context-cold-recovery context-dormant context-dormant-mutant context-transport-expiry context-transport-expiry-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix visible-actions frame-focus-return local-status observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package; do
+          for name in context-package context-container context-cold context-cold-trace context-cold-recovery context-dormant context-dormant-mutant context-transport-expiry context-transport-expiry-mutant context-stale context-stale-mutant j1 j3 first-send j2-journey j2-fast-failure j2-fast-cancelled ui10-matrix visible-actions frame-focus-return local-status observed-project-layout temporary-navigation temporary-project-navigation challenge-status preauthorization snippets-package snippets-startup-trace; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done
   offline-durability-compat:

@@ -1,3 +1,4 @@
+import {observeLeaseExpiry} from './observe-lease-expiry.mjs';
 import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';
 import {createPreparedDormancyProbe,createWorkerPreparedDormancyProbe,observeWorkerPreparedDormancy} from './prepared-dormancy-probe.mjs';
 import {instrumentIdleWorkSource} from './idle-work-trace.mjs';
@@ -26,7 +27,7 @@ const hash=v=>createHash('sha256').update(v).digest('hex');
 const paths=['tests/host/prepared-dormancy-probe.mjs','tests/host/context-replacement-package-browser.mjs','tests/host/fixtures/variants-server.mjs','tests/host/fixtures/variants-native.mjs','tests/host/fixtures/native-current-refresh.mjs','tests/host/fixtures/native.mjs','tests/host/expected/modern.mjs','tests/host/j2-journey-profile.mjs','tests/host/j2-runner-bounds.mjs','tests/host/isolated-browser-cleanup.mjs',...((transportExpiry||regionReplacement)?['tests/host/j4-grant-observer.mjs','tests/host/j4-joint-interruption.mjs','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs']:[])];
 const fixtureHashes=Object.fromEntries(await Promise.all(paths.map(async p=>[p,hash(await readFile(p))])));
 if(idleProbe)fixtureHashes['tests/host/idle-work-trace.mjs']=hash(await readFile('tests/host/idle-work-trace.mjs'));
-if(transportExpiry)fixtureHashes['tests/host/frame-pending-work-probe.mjs']=hash(await readFile('tests/host/frame-pending-work-probe.mjs'));
+if(transportExpiry)for(const path of ['tests/host/frame-pending-work-probe.mjs','tests/host/observe-lease-expiry.mjs'])fixtureHashes[path]=hash(await readFile(path));
 const server=await createVariantHostFixtureServer({profile:'MODERN',nativeCurrentRefresh:true}),dir=await mkdtemp(join(tmpdir(),'vaiwl-context-replacement-')),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineContext:true}),manifest=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));
 let instrumentedEntry,mutantSession;
 // Passive isolated-world tracing only. It returns the original Promise and
@@ -138,7 +139,7 @@ try{
   const waitMs=Math.max(1,binding.bindingExpiresAt+1-Date.now());assert(waitMs<=20001,'document lease cannot be extended by driver');assert(Date.now()+waitMs+15000<receiptStartedAt+60000,'original C2 must remain valid for original recovery observation window');
   assert.equal(oldFrame.isDetached(),false);assert.equal(await page.locator('[data-va-owned]:popover-open').count(),0);assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);
   const peer=await context.newPage();await peer.bringToFront();assert.equal(await page.evaluate(()=>document.hasFocus()),false,'genuine browser foreground edge required');
-  const waitedAt=Date.now();await new Promise(resolve=>setTimeout(resolve,Math.max(1,binding.bindingExpiresAt+1-Date.now())));assert(Date.now()>binding.bindingExpiresAt);assert(Date.now()<receiptStartedAt+60000);assert.equal(report.transportOwner.workerClosed,false,'transport expiry scenario must retain its original C2 owner');
+  const waitedAt=Date.now();report.leaseExpiryObservations=[];await observeLeaseExpiry(binding.bindingExpiresAt,{trace:report.leaseExpiryObservations});assert(Date.now()>binding.bindingExpiresAt);assert(Date.now()+15000<receiptStartedAt+60000,'original recovery window must still fit live C2');assert.equal(report.transportOwner.workerClosed,false,'transport expiry scenario must retain its original C2 owner');
   const beforeFocus=await readTransportExpiryTrace();assert.deepEqual(beforeFocus,priorTrace,'dormant wait must not renew or refetch authority');assert.equal(report.requests.length,1);assert.equal(report.nativeRequestStarts.length,1);await continuity();
   step('real-dormant-document-lease-expires-with-live-C2-no-renewal-or-native-GET',{bindingExpiresAt:binding.bindingExpiresAt,waitedMs:Date.now()-waitedAt,receiptAgeMs:Date.now()-receiptStartedAt});
   const focusedAt=report.transportOwner.focusedAt=Date.now();await new Promise(resolve=>setTimeout(resolve,2));await page.bringToFront();
