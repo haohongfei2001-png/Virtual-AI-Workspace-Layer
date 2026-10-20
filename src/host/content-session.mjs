@@ -513,6 +513,9 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   }
  }
  function contextPending(preserveObservation=false){
+  // A late invalidation may arrive after an active document entered BFCache.
+  // Preserve suspension when converting its scheduled restoration to a wait.
+  if(restoreArmed)contextWaitSuspended=true;
   clearRecent();
   const keepObservation=preserveObservation===true&&!!observation&&observation.owner===current&&!current?.ready&&live(current)&&Date.parse(current.binding.expiresAt)>now();
   if(!keepObservation&&(contextRecovery!==true||!contextResumeAllowed)){stop();return;}

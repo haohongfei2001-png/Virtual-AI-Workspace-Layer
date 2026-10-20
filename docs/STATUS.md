@@ -1,5 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 冻结期间迟到失效通知（2026-10-20，基线23529a68）
+
+已RED复现已连接C2→persisted pagehide→迟到contextPending清restoreArmed→READY在pageshow前握手。现将冻结状态转存到等待资格，155定向通过；真实BFCache HIT下合成通知交错验证无提前握手、返回后新READY恢复、草稿保持，非真实宿主消息时序证明。另CI39370447003唯一Node失败为snippets-runner-lifecycle仍检查自动关闭搜索的旧源码段；现要求保留查询/结果后显式关闭，原旅程其余历史checksum不变，30项通过。原layout scroll0!=150失败保留，未猜测修复。见suspendedPendingRecovery20261020。
+
+23529a68已普通推送并API确认；同HEAD CI39373049125当前Node失败、持久化与生命周期job成功、journeys仍运行，不以部分绿色关闭完整J4。真实身份/完整目录/完整Free未通过，规模DEFERRED不变。
+
+
 ## 修复等待状态的返回缓存恢复（2026-10-20，基线3ebb8eb2）
 
 已RED复现：C2等待时persisted pagehide误调用stop，清除未来READY资格，BFCache返回不重跑内容脚本而永久无法恢复。现隐藏清RAM/旧能力并暂停资格，persisted pageshow仅解除暂停，不发认证；新外部READY才重新HELLO/REFRESH。stop与非persisted离开不复活，冻结期间READY拒绝。152内容/关联定向、21构建合同通过；原真实A→B→Back runner的waiting及已连接两模式均BFCache HIT、草稿/原节点保留、源码稳定。浏览器transport/authority为明确合成，不冒充MV3真实认证或原Linux冷启动根因。证据waitingBFCacheResume20261020；完整Free/真实来源与规模DEFERRED不变。

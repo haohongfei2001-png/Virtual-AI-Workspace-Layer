@@ -57,9 +57,9 @@ test('six-case browser journey retains original assertions plus explicit return 
  const probeEnd=" }finally{\n  try{report.presentationDiagnostic=await page.evaluate(()=>globalThis.__vaiwlSnippetPresentationProbe.finish());}\n  catch{report.presentationDiagnostic={kind:'PASSIVE_PRESENTATION_DIAGNOSTIC_NOT_ACCEPTANCE',status:'UNAVAILABLE'};}\n }\n";
  assert.equal(runner.split(probeStart).length,2);assert.equal(runner.split(probeEnd).length,2);
  // Preserve the historical checksum of the whole journey. Permit exactly the
- // reviewed replacement of the obsolete close-search click, requiring its new
- // closed-search, visible-member and draft assertions verbatim.
- const correctedReturn=' // The sole reading return now restores the workspace and closes search itself.\n // Prove that transition instead of waiting for a removed search-only control.\n await workspace.locator(`a[data-ref-id="${C}"]`).first().waitFor({state:\'visible\',timeout:10000});\n assert.equal(await workspace.getByRole(\'searchbox\',{name:\'已知聊天查找输入\'}).count(),0);\n assert.equal(await workspace.getByRole(\'button\',{name:\'关闭派生查找\',exact:true}).count(),0);await draft();';
+ // reviewed return-search transition, requiring retained query/result followed
+ // by explicit close, visible-member and draft assertions verbatim.
+ const correctedReturn=" // The sole return retains the originating search; explicit close restores\n // the main list before continuing the independent saved-panel journey.\n await search.waitFor({state:'visible',timeout:10000});\n assert.equal(await search.inputValue(),'uniquely selected fixture words');\n await match.getByText('uniquely selected fixture words',{exact:true}).waitFor({timeout:10000});\n await workspace.getByRole('button',{name:'关闭派生查找',exact:true}).click();\n await workspace.locator(`a[data-ref-id=\"${C}\"]`).first().waitFor({state:'visible',timeout:10000});\n assert.equal(await search.count(),0);await draft();";
  assert.equal(runner.split(correctedReturn).length,2);
  const core=runner.slice(runner.indexOf(' page=await context.newPage()'),runner.indexOf('},inspectFailure:')).replace(probeStart,'').replace(probeEnd,'');
  const focusChecks=["assert.equal(await panel.getByRole('heading',{name:'已保存片段',exact:true}).evaluate(n=>n.getRootNode().activeElement===n),true);","await sidebar.getByRole('button',{name:'已保存片段',exact:true}).waitFor();assert.equal(await sidebar.getByRole('button',{name:'已保存片段',exact:true}).evaluate(n=>n.getRootNode().activeElement===n),true);"];

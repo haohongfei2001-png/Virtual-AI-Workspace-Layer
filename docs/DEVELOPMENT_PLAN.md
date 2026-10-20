@@ -2,6 +2,8 @@
 
 ## 当前执行：继续依赖已满足的产品工程（2026-10-20）
 
+C2/J4冻结交错增量：迟到失效将已连接恢复转换为等待时保留冻结状态，pageshow前不握手；相邻真实BFCache与CI观察器差异见STATUS/suspendedPendingRecovery20261020，原Linux布局失败继续定位。
+
 C2/J4等待恢复增量：BFCache清除旧能力后保留对未来合法READY的等待资格，pageshow不认证、不复用旧scope；真实返回缓存与构建证据沿STATUS/waitingBFCacheResume20261020，不替代完整宿主验收。
 
 B5提交边界收口：三类恢复已补真实IDB最后写入/提交前后oracle及原浏览器恢复旅程，范围与限制沿STATUS/recoveryRealCommitBoundary20261020；不替代完整J4或真实身份/目录验收。

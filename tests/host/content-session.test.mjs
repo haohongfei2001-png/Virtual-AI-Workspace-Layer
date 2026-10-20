@@ -372,3 +372,11 @@ for(const exit of ['restore','stop','leave'])test('C2 waiting BFCache restores o
  else{assert.equal(f.calls.length,before);assert.equal(f.client.showWorkspace(),false);}
  f.client.stop();
 });
+
+for(const exit of ['restore','stop','leave'])test('C2 pending notification during BFCache cannot wake before pageshow: '+exit,async()=>{
+ const f=fixture({contextRecovery:true});await f.client.start();f.events.get('pagehide')({persisted:true});const before=f.calls.length;
+ f.client.contextPending();await f.client.contextReady();assert.equal(f.calls.length,before,'late pending cannot erase document suspension');
+ if(exit==='stop')f.client.stop();else if(exit==='leave')f.events.get('pagehide')?.({persisted:false});
+ f.events.get('pageshow')?.({persisted:true});await drain();assert.equal(f.calls.length,before,'pending context still needs new READY after return');
+ await f.client.contextReady();assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,exit==='restore'?2:1);f.client.stop();
+});
