@@ -358,3 +358,17 @@ for(const clockAfter of [999,NaN,Infinity])test('observation reply with invalid 
  const pending=f.context.emit(proposal,{deadlineAt:1100}),rejected=assert.rejects(pending,/request-timeout/);await drain();assert.deepEqual(f.calls.at(-1),proposal,'local budget cannot be serialized into proposal');
  clock=clockAfter;release({state:'accepted',localSeq:1,bodyProofId:'proof'});await rejected;assert.equal(f.adapterOptions.priorityConversationId(),null);
 });
+
+for(const exit of ['restore','stop','leave'])test('C2 waiting BFCache restores only fresh READY eligibility: '+exit,async()=>{
+ const f=fixture({contextRecovery:true});f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:{state:'ambiguous'});
+ await f.client.start();assert.equal(f.client.localStatus(),'waiting');const before=f.calls.length;
+ f.events.get('pagehide')({persisted:true});assert.equal(f.listeners.size,0,'retained observer and old capabilities cleared');
+ f.setResponse(m=>m.type==='HOST_HELLO'?{binding:{...f.binding(),documentToken:'fresh-doc',producerToken:'fresh-producer'}}:m.type==='HOST_REFRESH'?{state:'verified'}:{ok:true});
+ await f.client.contextReady();assert.equal(f.calls.length,before,'READY while suspended cannot authenticate');
+ if(exit==='stop')f.client.stop();else if(exit==='leave')f.events.get('pagehide')?.({persisted:false});
+ f.events.get('pageshow')?.({persisted:true});await drain();assert.equal(f.calls.length,before,'pageshow alone never authenticates a waiting document');
+ await f.client.contextReady();
+ if(exit==='restore'){assert.deepEqual(f.calls.slice(before).map(m=>m.type),['HOST_HELLO','HOST_REFRESH','HOST_UI_MOUNT']);assert.equal(f.context.binding.documentToken,'fresh-doc');assert.equal(f.client.showWorkspace(),true);}
+ else{assert.equal(f.calls.length,before);assert.equal(f.client.showWorkspace(),false);}
+ f.client.stop();
+});

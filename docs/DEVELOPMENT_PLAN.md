@@ -2,6 +2,8 @@
 
 ## 当前执行：继续依赖已满足的产品工程（2026-10-20）
 
+C2/J4等待恢复增量：BFCache清除旧能力后保留对未来合法READY的等待资格，pageshow不认证、不复用旧scope；真实返回缓存与构建证据沿STATUS/waitingBFCacheResume20261020，不替代完整宿主验收。
+
 B5提交边界收口：三类恢复已补真实IDB最后写入/提交前后oracle及原浏览器恢复旅程，范围与限制沿STATUS/recoveryRealCommitBoundary20261020；不替代完整J4或真实身份/目录验收。
 
 B5恢复撤权增量：pending修复收到所属文档撤权时取消原事务owner，保持RELEASE与在途计数语义；实际证据及未覆盖边界沿STATUS/recoveryRetirement20261020，既定产品目标与预算不变。

@@ -1,5 +1,10 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 修复等待状态的返回缓存恢复（2026-10-20，基线3ebb8eb2）
+
+已RED复现：C2等待时persisted pagehide误调用stop，清除未来READY资格，BFCache返回不重跑内容脚本而永久无法恢复。现隐藏清RAM/旧能力并暂停资格，persisted pageshow仅解除暂停，不发认证；新外部READY才重新HELLO/REFRESH。stop与非persisted离开不复活，冻结期间READY拒绝。152内容/关联定向、21构建合同通过；原真实A→B→Back runner的waiting及已连接两模式均BFCache HIT、草稿/原节点保留、源码稳定。浏览器transport/authority为明确合成，不冒充MV3真实认证或原Linux冷启动根因。证据waitingBFCacheResume20261020；完整Free/真实来源与规模DEFERRED不变。
+
+
 ## 真实IDB恢复提交边界收口（2026-10-20，基线809dd442）
 
 原恢复打包旅程增加生产owner/repository+真实扩展IDB的workspace/native/evidence最后写入边界：各自正常、UI/parent撤权、已commit后撤权均通过。提交前全store不变；正常/已commit目标可读、revision/精确恢复receipt对应、来源撤销、原事实及人工工作集保留。首版与增强oracle版证据均保存；增强版源码/包稳定、独审无阻断，15秒只限测试整链，不改生产6秒。边界时序使用合成UI authority及受控撤权调用，不冒充浏览器实际撤权投递；原旅程的真实父标签关闭首读前撤回仍通过。见recoveryRealCommitBoundary20261020。

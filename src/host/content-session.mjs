@@ -69,7 +69,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  };
  const upgradeRoute=()=>{if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();};
  const clientId=makeId();if(!tokenOK(clientId))throw Error('invalid-content-client');
- let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0,contextResumeAllowed=false,contextResumeMode='workspace',contextResumeURL=null,verificationWaitURL=null;
+ let seq=0,epoch=0,current=null,enabled=false,rebindQueued=false,rebindRun=0,restoreArmed=false,recoveryRemaining=0,contextResumeAllowed=false,contextWaitSuspended=false,contextResumeMode='workspace',contextResumeURL=null,verificationWaitURL=null;
  let activeWork=0,rawIPC=0,workRevision=0,observation=null;
  function stopObservation(){const prior=observation;observation=null;if(!prior)return;cancel(prior.timer);runtime.onMessage.removeListener(prior.invalidate);prior.adapter.stop();}
  async function startObservation(s){
@@ -215,15 +215,21 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
  function retainMigration(s,handle){const m=liveMigration(s);if(!m)return false;try{if(typeof s.adapter?.retainLoadedHandles==='function'&&s.adapter.retainLoadedHandles(m.leaseOwner,[handle],m.elapsedDeadline)!==true){clearMigration(s);return false;}}catch{clearMigration(s);return false;}m.handle=handle;return true;}
  function dispose(s,keepObservation=false){if(!s)return;clearMigration(s);doc.removeEventListener?.('visibilitychange',s.visibility);doc.defaultView.removeEventListener('focus',s.focus);doc.defaultView.removeEventListener('blur',s.blur);s.restorePending?.();s.capturePending?.cancel();s.snippets?.stop();s.candidates?.stop();try{s.controller?.stop();}catch{}s.abort.abort();try{runtime.onMessage.removeListener(s.listener);}catch{}doc.defaultView.removeEventListener('pagehide',s.pagehide);try{if(!keepObservation||observation?.adapter!==s.adapter)s.adapter?.stop();}catch{}}
  function reset(keepObservation=false){if(!keepObservation)stopObservation();epoch++;const s=current;current=null;dispose(s,keepObservation);}
- function stop(){verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
+ function stop(){contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;contextResumeMode='workspace';contextResumeURL=null;clearLearned();clearRecent();clearUpgrade();for(const type of ['pointerdown','keydown'])doc.removeEventListener?.(type,interruptUpgrade,true);enabled=false;restoreArmed=false;rebindQueued=false;rebindRun++;reset();doc.defaultView.removeEventListener('pagehide',pagehide);doc.defaultView.removeEventListener('pageshow',pageshow);}
  function pagehide(event){
   stopObservation();
-  if(!enabled&&contextResumeAllowed){stop();return;}
-  if(event?.persisted!==true){stop();return;}if(!enabled)return;
+  if(event?.persisted!==true){stop();return;}
+  if(!enabled&&contextResumeAllowed){
+   // BFCache retains the bridge, but never its old observation or authority.
+   // Returning only restores eligibility for a future external READY.
+   clearLearned();clearRecent();clearUpgrade();contextWaitSuspended=true;
+   restoreArmed=false;rebindQueued=false;rebindRun++;reset();return;
+  }
+  if(!enabled)return;
   clearLearned();clearRecent();clearUpgrade();restoreArmed=true;rebindQueued=false;rebindRun++;reset();
   doc.defaultView.addEventListener('pagehide',pagehide);
  }
- function pageshow(event){if(event?.persisted!==true||!enabled||!restoreArmed)return;restoreArmed=false;void begin();}
+ function pageshow(event){if(event?.persisted===true&&contextWaitSuspended){contextWaitSuspended=false;return;}if(event?.persisted!==true||!enabled||!restoreArmed)return;restoreArmed=false;void begin();}
  function rebind(s,initialMode=null,expectedScope=null){
   if(!enabled||current!==s||rebindQueued||s.busyClose===true&&doc.location.href===s.url)return;
   if(initialMode===null)initialMode=s.controller?.presentationMode?.()==='workspace'?'workspace':'reading';
@@ -233,7 +239,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   // subsequent attempt; failures never schedule their own recovery loop.
   queueMicrotask(()=>{if(!enabled||run!==rebindRun)return;rebindQueued=false;void begin(true,initialMode,expectedScope);});
  }
- async function start(){verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
+ async function start(){contextWaitSuspended=false;verificationWaitURL=null;contextResumeMode='workspace';contextResumeURL=null;contextResumeAllowed=contextRecovery===true;clearLearned();clearRecent();clearUpgrade();recoveryRemaining=1;enabled=true;restoreArmed=false;rebindQueued=false;rebindRun++;doc.defaultView.addEventListener('pageshow',pageshow);return begin();}
  async function begin(rebinding=false,initialMode='workspace',expectedScope=null){
   reset();const s={run:epoch,initialMode,url:doc.location.href,abort:new AbortController(),binding:null,controller:null,adapter:null,listener:()=>{},pagehide,plans:null,rebinding,ready:false,recoveryDenied:false,snippets:null,snippetRef:null,snippetScopeGrant:null,identityChallenges:new Map(),identityPending:false,identityAuthority:0};current=s;doc.defaultView.addEventListener('pagehide',s.pagehide);
   let foregroundArmed=doc.visibilityState==='hidden',foregroundPending=false;
@@ -529,7 +535,7 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
   if(readyPending){const run=rebindRun;queueMicrotask(()=>{if(run===rebindRun)void contextReady();});}
  }
  function contextReady(){
-  if(contextRecovery!==true||!contextResumeAllowed)return Promise.resolve(null);
+  if(contextRecovery!==true||!contextResumeAllowed||contextWaitSuspended)return Promise.resolve(null);
   if(enabled){if(current&&(current.renewContextPending===true||!current.ready&&(!current.scopeKey||current.wakePending)))current.contextReadyPending=true;return Promise.resolve(null);}
   if(contextResumeURL!==null&&doc.location.href!==contextResumeURL){contextResumeMode='reading';if(!upgrade.navigate({url:doc.location.href}))clearUpgrade();}
   contextResumeURL=doc.location.href;
