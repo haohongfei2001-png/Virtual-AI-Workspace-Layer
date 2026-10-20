@@ -1,4 +1,36 @@
 {
+"retirementBatchIntegration20261020": {
+  "baseline": "9699d763bf0280d75ce7990ec0e30b516714b987",
+  "fullNode": {
+    "tests": 9520,
+    "pass": 9518,
+    "fail": 2,
+    "skip": 0,
+    "durationMs": 129745.885959
+  },
+  "failures": [
+    "CI command literal omitted new panel flag",
+    "exact C3 wiring diff context still declared const backup"
+  ],
+  "fix": "update expected CI command and patch context; retain strict forward/reverse patch checks; no production change",
+  "targetedAfterFix": {
+    "tests": 132,
+    "pass": 132,
+    "fail": 0,
+    "skip": 0
+  },
+  "fullRerunAfterTextFix": "NOT_RUN",
+  "logs": [
+    {
+      "file": "vaiwl-retirement-batch-node.log.gz",
+      "sha256": "f51a32e9f26cf6fd05b9c1aa34c87fb7a25e86893500657944684b3e32bb4725"
+    },
+    {
+      "file": "vaiwl-retirement-integration-green.log.gz",
+      "sha256": "d0fc5a2837c615aec7d6b674573f18a56e430a343db1bd2dc053e2678bae3cab"
+    }
+  ]
+},
 "backupTransferRetirement20261020": {
   "baseline": "69671b71",
   "state": "PARTIAL_OFFLINE_PASS",
