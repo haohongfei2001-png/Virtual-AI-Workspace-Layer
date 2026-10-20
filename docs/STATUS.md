@@ -3879,3 +3879,7 @@ Round332 final integration: **6421/6421 Node PASS**, zero skips, terminal exit0.
 停用五状态观察器存在相同URL漏检与布局只记录的问题，已合批修正：每个case保留原两个Frame身份，在任何生成停止/编辑器输入前检查reading/history的自然可见与交互，并强制断言事后cleanLayout。原RED为1通过/2失败，23项合批定向通过、独审无阻断；一次MODERN实际headless五状态全部通过，含双开/单开/双关与明确标记的离线synthetic generation，原生生成继续且原停止按钮仅触发一次。私有frame脱离、草稿/原document/editor保持，源码/fixture无漂移。证据 `disableLifecycleOracle20261020`。未改产品、预算或权限；生成夹具不是实际ChatGPT G，完整UI-12/13/J4及真实来源不升级。原863fff04的CI Node与J4 job已完成成功，其余在途；job绿色不能冒充完整J4。
 
 863fff04同源CI39353010626现已终结：四job成功，Node9444通过/零失败，实测171.198秒（不作性能提速声明）。J1/J4仍PARTIAL；J4无新context自动foreground恢复NOT_ESTABLISHED，184产品hash逐项匹配当前本地代码、构建未漂移。日志中的既定guard变异失败由原workflow精确oracle接受，不改判历史正式失败。原Node/旅程/J4/持久化日志及J4 JSON已归入 `ci39353010626`。本地cb87e5aa/1f2cada0仅修观察器，有各自定向与MODERN局部S证据，不能借此CI称其已覆盖；完整Free/真实来源/规模状态不变。
+
+## F3安装包校验入口（2026-10-20，基线8a9ef9a0）
+
+修复打包CLI误解释参数的真实问题：原先把--verify当新输出目录并忽略其后目标，可能构建新包而未校验目标。现原入口提供严格 `--verify <已有解压目录>` 只读校验与--help，未知/多余/缺失参数先拒绝，单路径构建及verifyHost函数保持。原README已有函数调用校验方法，不能说此前完全无法校验；现在包内安装说明与仓库命令一致。真实子进程反例原RED两失败，187项定向打包/权限回归通过，覆盖含空格路径、帮助/错误参数不建目录、完整包只读、缺失/篡改不修补及旧构建兼容。证据 `packageVerifyCLI20261020`。校验不认证来源、不代表功能/发布就绪，未改浏览器权限、身份源或真实Profile；不为工具入口重跑全浏览器和规模验收。

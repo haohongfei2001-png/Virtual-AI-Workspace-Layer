@@ -43,4 +43,10 @@ export function verifyHost(unpacked){
 export function packageHost(output,options={}){
  const out=resolve(output);if(existsSync(out))throw Error('output-must-be-new');mkdirSync(out,{recursive:true});const unpacked=join(out,'extension');buildHost(unpacked,options);const verified=verifyHost(unpacked),archive=join(out,'vaiwl-free-host-development.zip');writeFileSync(archive,zip(files(unpacked).map(name=>({name,data:readFileSync(join(unpacked,name))}))));const archiveSha256=sha(readFileSync(archive));writeFileSync(join(out,'SHA256SUMS'),archiveSha256+'  vaiwl-free-host-development.zip\n');return {...verified,unpacked,archive,archiveSha256};
 }
-if(process.argv[1]===fileURLToPath(import.meta.url)){if(!process.argv[2])throw Error('Pass a NEW package output directory');console.log(JSON.stringify(packageHost(process.argv[2]),null,2));}
+if(process.argv[1]===fileURLToPath(import.meta.url)){
+ const args=process.argv.slice(2),path=value=>typeof value==='string'&&value.trim().length>0&&!value.startsWith('-');
+ if(args.length===1&&args[0]==='--help')console.log('Usage: node extension/package.mjs <NEW-output-directory>\n       node extension/package.mjs --verify <existing-unpacked-directory>\nVerification is read-only and does not establish Free acceptance or release readiness.');
+ else if(args.length===2&&args[0]==='--verify'&&path(args[1]))console.log(JSON.stringify(verifyHost(args[1]),null,2));
+ else if(args.length===1&&path(args[0]))console.log(JSON.stringify(packageHost(args[0]),null,2));
+ else throw Error('invalid-host-package-arguments: use --help');
+}

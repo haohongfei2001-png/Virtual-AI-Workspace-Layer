@@ -27,14 +27,14 @@ Free运行时正在原目录和 `codex/vaiwl-free-first-20261013` 分支持续�
 npm ci --ignore-scripts --no-audit --no-fund --prefix extension/tooling
 node extension/build.mjs /private/tmp/vaiwl-host-unpacked
 node extension/package.mjs /private/tmp/vaiwl-host-package
-node --input-type=module -e "import {verifyHost} from './extension/package.mjs'; console.log(verifyHost('/private/tmp/vaiwl-host-package/extension'));"
+node extension/package.mjs --verify /private/tmp/vaiwl-host-package/extension
 ```
 
 构建工具通过 `extension/tooling/package-lock.json` 固定 esbuild 版本；构建过程不会自行联网安装依赖。worker 先执行小型 classic bootstrap 注册现有监听，再加载私有 runtime bundle。
 
 每个 Host 包随附按构建类别标注的中文 `README.txt`，覆盖安装、权限与隐私、同 ID 升级、兼容性回退、备份范围和停用卸载。源文见 [Host 包使用说明](extension/README.txt)；这不是发布验收或扩大真实账户授权。
 
-`build.mjs` 生成可加载目录；`package.mjs` 另生成 `extension/`、开发ZIP及 `SHA256SUMS`。`verifyHost` 检查文件哈希、权限与打包边界，并从包内源码重新编译核对 worker 字节，不代表功能或发布验收通过。CLI只接收新输出目录，不支持 `--offline` 或 `--verify` 参数。
+`build.mjs` 生成可加载目录；`package.mjs` 另生成 `extension/`、开发ZIP及 `SHA256SUMS`。`verifyHost` 检查文件哈希、权限与打包边界，并从包内源码重新编译核对 worker 字节，不代表功能或发布验收通过。CLI 的单路径参数用于新建包，`--verify <已有解压目录>` 只读校验，`--help` 显示用法；未知或多余参数会拒绝，不隐式创建目录。不支持 `--offline` 参数，原 `verifyHost` 函数接口继续保留。
 
 离线构建由测试脚本调用 `packageHost(output, {offlineOrigin})`，仅接受明确的 `http://127.0.0.1:端口` origin；片段重建配置 `offlineSnippets: true` 也仅允许离线包。实际包测试入口包括 [Host MV3旅程](tests/host/package-mv3-browser.mjs)；应使用独立headless测试环境，不加载到用户日常浏览器配置。
 

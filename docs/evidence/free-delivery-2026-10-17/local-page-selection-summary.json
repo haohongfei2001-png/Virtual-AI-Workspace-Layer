@@ -1,4 +1,33 @@
 {
+"packageVerifyCLI20261020": {
+  "baseline": "8a9ef9a01dc331c7230c68d00d9f8c535224f7fb",
+  "kind": "F3_PACKAGE_TOOL_ARGUMENT_SAFETY",
+  "red": {
+    "fail": 2
+  },
+  "targeted": {
+    "pass": 187,
+    "fail": 0,
+    "skip": 0
+  },
+  "files": {
+    "red": {
+      "path": "local-package-cli-red.log.gz",
+      "sha256": "2710a98113f581c3515ece5df54d356c82ec9ce4f9586614a20e1fab98f9b085"
+    },
+    "green": {
+      "path": "local-package-cli-green.log.gz",
+      "sha256": "6877c9767bee12d38ad36e368b4f8b8907257f4f4fe985df53140cab4a197f49"
+    }
+  },
+  "sourceHashes": {
+    "extension/package.mjs": "621fbc0b6bfb293833cf50713970a2d3790755eee007891cf81b7ce25bec70de",
+    "extension/README.txt": "2c89521a58ac4b2d93df2fac5e9b748ce2682a11dfc6bfa62f463ddd0acfc41c",
+    "README.md": "304712d503a6830a748ada96aa76096184d1e880b001ac54322d30197beda194",
+    "tests/host/package-cli.test.mjs": "17475a3c6331f9887eb73cbfa49caf9b868624fcbeb5f0331416407ddaabbbcb"
+  },
+  "limits": "Verifier checks package integrity and existing boundaries, not provenance, live installation or full Free acceptance"
+},
 "ci39353010626": {
   "sourceCommit": "863fff0440822e4b99e49222b091af8b92a5408e",
   "run": 39353010626,
