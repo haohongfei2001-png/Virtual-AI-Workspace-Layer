@@ -1,4 +1,29 @@
 {
+"workspaceReturnRoute20261020": {
+  "baseline": "f2d3a143",
+  "status": "SCOPED_PRODUCT_FIX_PASS_NOT_FULL_FREE",
+  "rootCause": "workspaceEntered invoked showWorkspace and erased working-set/search route; now only restore workspace mode/layout without replacing DOM. Explicit showWorkspace retains reset semantics.",
+  "verification": "43 targeted;286 integration; original six-step isolated packaged MV3 journey passes without changing assertions/deadlines, source/package stable; independent review no blocker",
+  "files": {
+    "mv3": {
+      "path": "docs/evidence/free-delivery-2026-10-17/workset-return-mv3-20261020.gz",
+      "sha256": "ed79c3c884587f8f0478132999808a52eeaa6c7a2819f06593a41cc794eaee53"
+    },
+    "integration": {
+      "path": "docs/evidence/free-delivery-2026-10-17/workset-return-integration-20261020.gz",
+      "sha256": "93c41a3c2d58554fe845cb1864ea457072e4787168a7a8f075e9af22495b255f"
+    },
+    "targeted": {
+      "path": "docs/evidence/free-delivery-2026-10-17/workset-return-targeted-20261020.gz",
+      "sha256": "749cee7fb0cc211bd2f10a2b35e68cacf1141a01a370d1cfee57fb1db1cefd49"
+    },
+    "intermediate-node-fail": {
+      "path": "docs/evidence/free-delivery-2026-10-17/workset-return-intermediate-node-fail-20261020.gz",
+      "sha256": "d8a79f36d26f87cc4104e93467e8027b9e2efe23c8378f60bce06ae7545ab12e"
+    }
+  },
+  "remainingCI": "39366472683 at6aaa643a layout theme viewport step failed; other three jobs passed, raw log retrieval in flight; not claimed fixed"
+},
 "retiredWorkingSetControl20261020": {
   "baseline": "6aaa643a",
   "status": "TARGETED_FIX_BROWSER_RETURN_FAIL_OPEN",

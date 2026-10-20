@@ -56,3 +56,5 @@ for(const mode of ['repaint','scope'])test(`retired working-set controls cannot 
  old.click();await tick();assert.deepEqual(calls,[]);
  const current=f.pane().querySelectorAll('button').find(n=>n.getAttribute('data-working-set-action')==='remove');assert(current);current.click();await tick();assert.deepEqual(calls,[{action:'remove',refId:'one'}]);f.nav.stop();
 });
+
+test('workspace entry after native reading retains working-set route and order',()=>{const f=fixture('workspace',()=>null,null,async()=>({ok:true}));f.nav.updateFrameProjection(projection());f.nav.present({kind:'show-working-set'});const dto=projection();dto.workingSet={...page([row('two'),row('one')],2,0,24),currentRefId:'two'};f.nav.updateFrameProjection(dto);f.nav.enterReading(false);assert.equal(f.nav.workspaceEntered(),true);assert.equal(f.nav.view().worksetOpen,true);assert.deepEqual(f.pane().querySelectorAll('[data-ref-id]').map(n=>n.getAttribute('data-ref-id')),['two','one']);f.nav.stop();});
