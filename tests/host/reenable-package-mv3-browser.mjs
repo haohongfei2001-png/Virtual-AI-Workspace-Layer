@@ -40,14 +40,19 @@ try{
   const states=[],currentFrames=page.frames().filter(f=>frameURLs.includes(f.url()));
   const connectedTargets=await page.locator('iframe').evaluateAll((nodes,urls)=>nodes.filter(n=>urls.includes(n.src)).length,frameURLs);
   assert.ok(connectedTargets<=currentFrames.length,'connected private frame without inspectable frame identity is not absent');
-  for(const frame of currentFrames)try{states.push(await frame.evaluate(()=>{
+  for(const frame of new Set([...oldFrames,...currentFrames])){if(frame.isDetached()){states.push({reachable:false,detached:true,privatePresent:false});continue;}try{states.push(await frame.evaluate(()=>{
    let privatePresent=false;const visit=root=>{for(const node of root.querySelectorAll('*')){if(node.shadowRoot)visit(node.shadowRoot);for(const child of node.childNodes)if(child.nodeType===Node.TEXT_NODE&&['Ordinary conversation','Research','Membership not loaded'].some(s=>(child.textContent??'').includes(s)))privatePresent=true;}};visit(document);
    return {reachable:true,privatePresent};
-  }));}catch(error){if(!frame.isDetached())throw Error('connected-private-frame-unreadable:'+error.message);states.push({reachable:false,detached:true,privatePresent:false});}
+  }));}catch(error){if(!frame.isDetached())throw Error('connected-private-frame-unreadable:'+error.message);states.push({reachable:false,detached:true,privatePresent:false});}}
   return {privateProjectionAbsent:states.every(s=>!s.privatePresent),frames:states};
  }
  let absence;for(let i=0;i<50;i++){absence=await privateAbsent();if(absence.privateProjectionAbsent)break;await page.waitForTimeout(100);}assert.equal(absence.privateProjectionAbsent,true);
- async function nativeState(suffix){await page.locator('textarea').press('End');await page.locator('textarea').pressSequentially(suffix);const state=await page.evaluate(()=>({nativeOperable:document.activeElement===reenableEditor&&document.querySelector('textarea')===reenableEditor,draft:reenableEditor.value,sameDocument:document===reenableDocument,pageHides:reenablePageHides,cleanLayout:document.querySelectorAll('[data-va-owned]:popover-open').length===0&&getComputedStyle(document.querySelector('#reading')).visibility==='visible'}));assert.equal(state.nativeOperable,true);assert.equal(state.sameDocument,true);assert.equal(state.pageHides,0);assert.equal(page.url(),originalURL);return state;}
+ async function nativeState(suffix){
+  // Inspect automatic cleanup before any native input could conceal a failure.
+  const natural=await page.evaluate(()=>{const style=n=>({visibility:getComputedStyle(n).visibility,interactivity:getComputedStyle(n).interactivity,htmlInert:n.hasAttribute('inert')});return {openOwned:document.querySelectorAll('[data-va-owned]:popover-open').length,reading:style(document.querySelector('#reading')),history:style(document.querySelector('nav[aria-label="Chat history"]'))};});
+  assert.equal(natural.openOwned,0,'lifecycle itself must close surfaces');
+  for(const area of [natural.reading,natural.history]){assert.equal(area.visibility,'visible');assert.notEqual(area.interactivity,'inert');assert.equal(area.htmlInert,false);}
+  await page.locator('textarea').press('End');await page.locator('textarea').pressSequentially(suffix);const state=await page.evaluate(()=>({nativeOperable:document.activeElement===reenableEditor&&document.querySelector('textarea')===reenableEditor,draft:reenableEditor.value,sameDocument:document===reenableDocument,pageHides:reenablePageHides,cleanLayout:document.querySelectorAll('[data-va-owned]:popover-open').length===0&&getComputedStyle(document.querySelector('#reading')).visibility==='visible'}));assert.equal(state.cleanLayout,true,'disable/reenable must release native masks');assert.equal(state.nativeOperable,true);assert.equal(state.sameDocument,true);assert.equal(state.pageHides,0);assert.equal(page.url(),originalURL);return {...state,natural};}
  const disabledNative=await nativeState('_DISABLED');assert.equal(disabledNative.draft,'REENABLE_NATIVE_DRAFT_DISABLED');report.results.push({name:'actual-disable-keeps-native-editor-operable-and-removes-private-projection',status:'PASS',...disabledNative,...absence});
  assert.deepEqual(await controller.evaluate(()=>setTargetEnabled(true)),{id,enabled:true});report.reenableConfirmed=true;await page.waitForTimeout(500);
  absence=await privateAbsent();assert.equal(absence.privateProjectionAbsent,true,'old page must not resurrect private projection without a fresh owner grant');

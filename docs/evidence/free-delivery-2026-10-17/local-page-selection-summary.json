@@ -1,4 +1,48 @@
 {
+"reenableLifecycleOracle20261020": {
+  "baseline": "863fff0440822e4b99e49222b091af8b92a5408e",
+  "kind": "TEST_OBSERVER_FIX_ONLY",
+  "red": {
+    "pass": 2,
+    "fail": 3
+  },
+  "targeted": {
+    "pass": 13,
+    "fail": 0,
+    "skip": 0
+  },
+  "browser": {
+    "profile": "MODERN",
+    "status": "PASS",
+    "productionChanged": false,
+    "sourceChangedDuringRun": false,
+    "fixtureChangedDuringRun": false,
+    "realChatGPT": "NOT_RUN",
+    "fullJ4": "NOT_ACCEPTED"
+  },
+  "files": {
+    "reenable-oracle-red.log": {
+      "path": "local-reenable-oracle-red.log.gz",
+      "sha256": "17c17257fe4f125b0a221a27cbd8ff7c509dea764fe3c653a5d0625738c8979a"
+    },
+    "reenable-oracle-green.log": {
+      "path": "local-reenable-oracle-green.log.gz",
+      "sha256": "fc9c787248e4ec9c6e3f9929bd1f5801c2bc9ea90151fc84b96c436a436c9b85"
+    },
+    "reenable-modern-final.json": {
+      "path": "local-reenable-modern-final.json.gz",
+      "sha256": "7dae890f00e2920752089575c999f52ef54582c1d08451f638f3a3fa48bd7d79"
+    },
+    "reenable-modern-final.log": {
+      "path": "local-reenable-modern-final.log.gz",
+      "sha256": "579844b0d3653ea162d19f8ce433b98262f48e149748daa5ec316585916d9f5a"
+    }
+  },
+  "sourceHashes": {
+    "tests/host/reenable-package-mv3-browser.mjs": "f04521382c0a5198aa6d33fd01a1bdaf851aefccd2e718d56110346d8aaa3138",
+    "tests/host/reenable-lifecycle-oracle.test.mjs": "20a4ffd0db034c325f3d91d8ae0ce7c4582905fe2090e81834a01f6502da4f3a"
+  }
+},
   "baseCommit": "f3af526bec213caf4df9edc4e4b60af7920ac5fe",
   "candidateIdentity": "Exact production hashes in browser and A/B JSON; all frozen test inputs in integrity JSON",
   "rootCause": "Offset page rebuilt and serialized the entire ordered manifest for every page. New selector still reads and verifies every bucket and ordinal, but builds only requested IDs and computes the exact full manifest JSON length; numeric object-key ordering falls back to legacy materialization.",

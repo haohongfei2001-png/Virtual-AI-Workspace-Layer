@@ -3871,3 +3871,7 @@ Round332 final integration: **6421/6421 Node PASS**, zero skips, terminal exit0.
 ## 发送缺口重放与合批回归（2026-10-20，基线9917b15）
 
 最小RED发现同序号gap更换bodyProofId仍会返回duplicate；现只给gap语义指纹增加原proof，合法重传保持，跨proof拒绝；哈希算法、schema与其他包不变。迟到gap回复不能解锁新producer自身正文确认前的发送。129项定向、162项adapter回归通过，独审无阻断。冻结后原CI完整598个Node测试文件9444通过、零失败/跳过，实测143.062秒；不将环境耗时差异宣称性能提升。证据 `sendGapProofReplay20261020`。此为Node合批检查点，非完整MV3/真实来源/Free验收；目录、身份、完整J1/J4及既有DEFERRED保持。
+
+## 重新启用验收观察器闭合（2026-10-20，产品源码863fff04）
+
+已确认并修复UI-13观察器的两处漏判：原先只按当前URL查frame，旧frame换URL可逃过私有投影检查；原生输入后才记录cleanLayout且未断言，可能漏掉尚未释放的遮罩。现在保留原frame身份并去重检查，未detach但不可读仍失败；任何输入前先断言reading/history的visibility、interactivity、HTML inert及popover关闭，原草稿、document/editor和新授权检查保留。原RED为2通过/3失败，13项最终定向通过，独立只读审查无阻断。一次MODERN非首Team实际headless安装包停用→重启用→原生目标文档三步通过，旧私有frame脱离、输入前自然清理成立、新grant拒绝旧授权，源码/fixture无漂移。证据 `reenableLifecycleOracle20261020`；这是观察器修复及局部S，不是产品缺陷已复现、完整UI-13/J4或真实安装验收。产品源码未改，不重复全量/规模；原CI39353010626继续运行，真实身份/目录与10k/100k DEFERRED保持。
