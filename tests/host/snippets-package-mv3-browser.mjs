@@ -65,11 +65,14 @@ const outcome=await runSnippetsLifecycle({report,output,integrityChecks,execute:
  // Restore the original panel journey, including its independent stale-hash
  // rejection and targeted removal assertions.
  await page.getByRole('button',{name:'返回工作空间',exact:true}).click();
- // The sole reading return now restores the workspace and closes search itself.
- // Prove that transition instead of waiting for a removed search-only control.
+ // The sole return retains the originating search; explicit close restores
+ // the main list before continuing the independent saved-panel journey.
+ await search.waitFor({state:'visible',timeout:10000});
+ assert.equal(await search.inputValue(),'uniquely selected fixture words');
+ await match.getByText('uniquely selected fixture words',{exact:true}).waitFor({timeout:10000});
+ await workspace.getByRole('button',{name:'关闭派生查找',exact:true}).click();
  await workspace.locator(`a[data-ref-id="${C}"]`).first().waitFor({state:'visible',timeout:10000});
- assert.equal(await workspace.getByRole('searchbox',{name:'已知聊天查找输入'}).count(),0);
- assert.equal(await workspace.getByRole('button',{name:'关闭派生查找',exact:true}).count(),0);await draft();
+ assert.equal(await search.count(),0);await draft();
  await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
  await sidebar.getByRole('button',{name:'已保存片段',exact:true}).click();
  await panel.getByText('共 1 个片段',{exact:true}).waitFor({timeout:10000});

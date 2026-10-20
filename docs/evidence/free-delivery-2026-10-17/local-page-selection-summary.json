@@ -1,4 +1,108 @@
 {
+  "searchReadingIntent20261020": {
+  "baseline": "37a81c17cba4760869d3c83a8a368a7a752b608a",
+  "status": "PASS_TARGETED_AND_LOCAL_MV3_NOT_FREE_ACCEPTED",
+  "rootCause": "Framed enterReading cleared searchQuery/theme; background normal projection repainted without originating search. workspaceEntered preservation alone was insufficient.",
+  "change": "Retain framed search intent through reading; explicit close resets, scope replacement still clears. Align original windows/snippets runners to verify retained route then explicit exit.",
+  "validation": {
+    "targeted": 299,
+    "fullNode": {
+      "passed": 9583,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 215551.986833,
+      "scope": "product and Node tests frozen; snippets browser-runner alignment completed during Node run and separately validated in MV3"
+    },
+    "mv3": [
+      "original window retention PASS with source/fixture stable",
+      "original six-step snippets PASS with source stable"
+    ],
+    "review": "independent read-only review no blocking findings",
+    "backgroundInterleaving": "renderer reproduction and fresh DTO acceptance; browser run does not claim it hit this interleaving"
+  },
+  "ci39367589369": {
+    "node": "five original stale return expectation failures preserved; renderer change and explicit close now local green",
+    "durability": "PASS",
+    "j4": "job PASS; partial journey remains partial",
+    "journeys": "FAIL cold / temporary Project observer / snippets; original failures preserved",
+    "cold": "post-failure worker documents/requests/closedRequests empty; content waiting, native usable. Exact initial event loss cause NOT_ESTABLISHED, no fabricated receipt/retry.",
+    "temporaryProject": "webRequest undefined at observer install; root cause NOT_ESTABLISHED; not product access evidence"
+  },
+  "remaining": [
+    "cold immediate support",
+    "temporary Project network observer failure",
+    "real principal/context and full server directory sources",
+    "complete J4 and real installation acceptance"
+  ],
+  "scale": "10k/100k DEFERRED original thresholds",
+  "files": [
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-reading-ci39367589369-node-raw.log.gz",
+      "sha256": "17d2a5d029f387d2ef693246b9ae2bef3a02a1e9c8d9843feb3ab2fd15c44c5f",
+      "bytes": 1172025
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-reading-ci39367589369-cold.json.gz",
+      "sha256": "480503a34e99583b8d8f46fbe3d826c7b91e525ad321cf9b53f1005f29a9d6d0",
+      "bytes": 26233
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-reading-ci39367589369-layout.json.gz",
+      "sha256": "21fc5f66cd50241dff8b93d36a31a66c44f0b61713a1995c1d11623eeffa3f17",
+      "bytes": 497
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-reading-ci39367589369-snippets.json.gz",
+      "sha256": "e11cc719fd5b40067d4266c8292ad45126219b8679f1ae4a3c8c61acaec69994",
+      "bytes": 1634
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-reading-ci39367589369-final-status.json.gz",
+      "sha256": "bebc1f0e0bf97379db6a4e2265393a9c876d49da0b8ac23326f996606609235d",
+      "bytes": 15394
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-reading-return-windows-red.tap.gz",
+      "sha256": "78e6b1ebd3e9bbaa83315f53913f4fd5fbc31a343433ab0b1e1c1ee1e7838f07",
+      "bytes": 4749
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-reading-return-search-background-red.tap.gz",
+      "sha256": "35afe70cea6c6118415ecacea55e1ac6f392fb8e72257dd9645d03df66d2ba86",
+      "bytes": 2221
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-reading-return-search-background-targeted.tap.gz",
+      "sha256": "a9a1175969ab7802f6e3f93296346cb2941aeb8accde637a802dbe43964ef641",
+      "bytes": 5342
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-reading-return-search-final.tap.gz",
+      "sha256": "af4d3a5b6549c0edc1c628f89aa228540a271474366ff7f8822a90060bd60405",
+      "bytes": 26809
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-reading-return-search-final-mv3.json.gz",
+      "sha256": "8580e15afc243622950ead53b2c7c183a05bad0f83f8d4535d5db25a1412d844",
+      "bytes": 98
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-reading-return-search-final-active-mv3.json.gz",
+      "sha256": "ae1085152c666a6c50bcc60a19d57b08c2a8540a689b0b9e476733a8521f1753",
+      "bytes": 133633
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-reading-search-snippets-return.json.gz",
+      "sha256": "bca1be3f25b60ebd8f2dd26fdbda624f4a18885e144d4ae6d476e91d921e4382",
+      "bytes": 47231
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/search-reading-search-return-node-all.tap.gz",
+      "sha256": "bb34278746336bcc49f0a6f31dec383ef1690b75fd52ac987414cefad5f7ca20",
+      "bytes": 865288
+    }
+  ]
+},
 "searchReturnCompletion20261020": {
   "baseline": "4df71495",
   "status": "PASS_OFFLINE_MV3_WINDOW_RETENTION",
