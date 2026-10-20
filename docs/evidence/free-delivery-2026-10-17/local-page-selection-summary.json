@@ -1,4 +1,42 @@
 {
+  "controlledColdRecovery20261021": {
+    "base": "385b643dff872c6a6931ad5f97372fe84abe937c",
+    "scope": "C2 controlled initial native 503 -> safe wait -> explicit next native GET 200 -> new grant/current VIEW -> unique reading/workspace return",
+    "productionChanged": false,
+    "targeted": {
+      "pass": 57,
+      "fail": 0
+    },
+    "browser": "PASS; PARTIAL_S_NOT_FREE_ACCEPTED",
+    "initialWaitMs": 20000,
+    "recoveryElapsedMs": 238.85712500000227,
+    "sourceChangedDuringRun": false,
+    "review": "Read-only recovery_gap_review found no blocker; requested same-run bounded response codes, incorporated and final journey verified 503 then 200.",
+    "limits": [
+      "Not historical cold race reproduction",
+      "Not worker memory loss peer recovery without new GET",
+      "Not real ChatGPT identity or full J1/J4",
+      "10k/100k remain DEFERRED"
+    ],
+    "evidence": {
+      "vaiwl-controlled-cold-targeted.tap": {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-controlled-cold-targeted.tap.gz",
+        "sha256": "372449dde43072b1cef71ab73a5ab379d0e0bde070a37524aa69b320215ca0a2"
+      },
+      "vaiwl-controlled-cold-browser.json": {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-controlled-cold-browser.json.gz",
+        "sha256": "b48b72c6163e937c34bf632b9b7118130ec64067a81282cfd27b7877ed458ae3"
+      },
+      "vaiwl-controlled-cold-targeted-final.tap": {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-controlled-cold-targeted-final.tap.gz",
+        "sha256": "c82c49f4c112e7f8119bac27e3c4fa4d86561eb06c17adbed8ca4709a3b84d99"
+      },
+      "vaiwl-controlled-cold-browser-final.json": {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-controlled-cold-browser-final.json.gz",
+        "sha256": "2c85be97513681aef53daf2f635a5ea9b5385cb0dc4fe234f7795185c9396da9"
+      }
+    }
+  },
   "retiredNavigationLinks20261021": {
     "base": "003c4abe5286c919d5dd2db17c43b88a948f73c9",
     "owner": "local Codex sole writer, cloud stopped per PR body VAIWL_HANDOFF_READY",

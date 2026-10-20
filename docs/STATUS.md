@@ -1,5 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 冷启动安全等待的确定性恢复子链（2026-10-21，基线385b643d）
+
+原cold-recovery只在首次挂载偶发超时后走恢复，成功初挂则恢复分支NOT_COVERED。本次沿原runner增加显式cold-unavailable-recovery离线模式：固定初始聊天503（重复仍503），另一原生聊天200；原cold和cold-recovery行为不变。原20秒内无私人surface、原生reading/composer可用；一次用户原生导航后fresh grant+实际VIEW、正确当前项、同document/editor/draft、唯一阅读返回和工作区再展开成立。最终同次有界响应记录严格503→200，恢复238.857ms，源码不漂移、worker外网拒绝。没有修改生产身份或预算，不靠重复GET转绿。
+
+57定向通过；独审无阻断，采纳同次响应码建议后冻结原旅程通过。首次与增强版原证据均保留在controlledColdRecovery20261021。该受控负例关闭安全等待→新证据恢复这一离线子链缺口，不解释历史cold/scroll/webRequest竞态，不证明无新GET的worker/peer恢复，也不等于完整J1/J4或真实Free。真实主体/context、全目录/成员/本人发送、物理IME/PAIA与发布仍开放；10k/100k DEFERRED。385b643d尚未推送，前一正常Git连接超时与bundle保全记录保留。
+
+
 ## 本地接续与退休导航链接隔离（2026-10-21，基线003c4abe）
 
 已核对原PR16正文VAIWL_HANDOFF_READY、精确HEAD/tree及CI39490341455终态；云端停止写入，用户已明确交回，本地Codex恢复唯一writer。接手本地已为003c4abe，881fe290为其祖先，tracked干净；2258未跟踪副本、3stash保持。以下历史“本地暂停/云端唯一writer”只记录当时安排，不覆盖本次用户授权。CI四job绿不关闭历史cold/scroll/webRequest、disabled search click原因或完整J1/J4。

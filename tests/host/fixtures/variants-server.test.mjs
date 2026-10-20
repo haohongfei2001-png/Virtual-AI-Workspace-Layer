@@ -60,3 +60,16 @@ test('unsupported profiles and faults fail before binding a server',async()=>{
  await assert.rejects(createHostFixtureServer({profile:'UNRECOGNIZED'}),/not-implemented/);
  await assert.rejects(createHostFixtureServer({profile:'FAULT',fault:'invented'}),/not-implemented/);
 });
+
+// The controlled negative must stay unavailable on repetition; it is not a retry-to-green fixture.
+test('cold recovery fixture refuses only original conversation and leaves next native GET usable',async t=>{
+ const {createVariantHostFixtureServer}=await import('./variants-server.mjs');
+ const s=await createVariantHostFixtureServer({profile:'MODERN',coldInitialUnavailable:true});t.after(()=>s.close());
+ const response=await fetch(s.url),cookie=response.headers.get('set-cookie').split(';')[0];
+ const get=id=>fetch(s.origin+'/backend-api/conversation/'+id,{headers:{cookie,'Chatgpt-Account-Id':'account-host-team'}});
+ for(let i=0;i<2;i++)assert.equal((await get('33333333-3333-4333-8333-333333333333')).status,503);
+ assert.equal((await get('44444444-4444-4444-8444-444444444444')).status,200);
+ assert.equal(s.manifest.coldInitialUnavailable,true);assert.equal(s.snapshot().nativeRequests.length,3);
+ await assert.rejects(createVariantHostFixtureServer({profile:'PARTIAL',coldInitialUnavailable:true}),/invalid-cold/);
+ await assert.rejects(createVariantHostFixtureServer({profile:'MODERN',journey:'J4',coldInitialUnavailable:true}),/invalid-cold/);
+});
