@@ -1,4 +1,45 @@
 {
+"frozenPanelReturn20261020": {
+  "sourceBaseline": "2b81aa95",
+  "state": "PASS_OFFLINE_MV3_WINDOW_RETENTION",
+  "scope": "PARTIAL_OFFLINE_FUNCTIONAL_NOT_FREE_ACCEPTED",
+  "report": "vaiwl-frozen-panel-return-chain.json.gz",
+  "sha256": "aad5fc3f4c20bdf0f6fff7b4cd0d53b5c30f7119457ba151c87bc3f7438618d4",
+  "cancellation": {
+    "state": "PASS",
+    "realAuthorizationHeld": true,
+    "cancelAcknowledged": true,
+    "lateReplyDidNotEnterReading": true,
+    "originalDocumentEditorDraft": true,
+    "oneDispatch": true,
+    "oneCancellation": true,
+    "elapsedMs": 637,
+    "scope": "OFFLINE_MV3_PENDING_PANEL_RETURN_SUBCHAIN_ONLY"
+  },
+  "returnCancellation": {
+    "state": "PASS",
+    "realAuthorizationHeld": true,
+    "cancelAcknowledged": true,
+    "lateReplyDidNotEnterReading": true,
+    "originalDocumentEditorDraft": true,
+    "oneDispatch": true,
+    "oneCancellation": true,
+    "elapsedMs": 223,
+    "scope": "OFFLINE_MV3_NATIVE_RETURN_SUBCHAIN_ONLY"
+  },
+  "journey": {
+    "projectRows": 17,
+    "unknownRows": 17,
+    "readingReturn": true,
+    "originalDocumentEditorDraft": true,
+    "elapsedMs": 5962.982375
+  },
+  "sourceChangedDuringRun": false,
+  "fixtureChangedDuringRun": false,
+  "manifestChangedDuringRun": false,
+  "ci": "existing window-retention runner now includes panel return; no new job/cache/upload",
+  "realChatGPT": "NOT_RUN"
+},
 "supersededPanelReturn20261020": {
   "baseline": "3d1c9867",
   "state": "TARGETED_OFFLINE_PASS",
