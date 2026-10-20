@@ -1,5 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 真实IDB恢复提交边界收口（2026-10-20，基线809dd442）
+
+原恢复打包旅程增加生产owner/repository+真实扩展IDB的workspace/native/evidence最后写入边界：各自正常、UI/parent撤权、已commit后撤权均通过。提交前全store不变；正常/已commit目标可读、revision/精确恢复receipt对应、来源撤销、原事实及人工工作集保留。首版与增强oracle版证据均保存；增强版源码/包稳定、独审无阻断，15秒只限测试整链，不改生产6秒。边界时序使用合成UI authority及受控撤权调用，不冒充浏览器实际撤权投递；原旅程的真实父标签关闭首读前撤回仍通过。见recoveryRealCommitBoundary20261020。
+
+本地Chrome156.0.8078.4原临时Project导航通过，故版本差异不足以解释Linux原FAIL，仍开放。冷启动原现场没有同次事件入口/拒绝原因/worker代际，不能猜测修授权；安全等待保持。809dd442单次HTTP1.1推送Empty reply from server，本地提交保全，不循环重试。真实身份/全量目录/完整安装及Free仍未成立，10k/100k DEFERRED。
+
+
 ## 恢复人工资产边界与启动观察器（2026-10-20，基线45fb7b84）
 
 workspace恢复最后add后撤权的四个反例已通过实际Repository+MockIDB：UI/parent撤权不写、无关文档不中断、已commit人工资产保留；35定向通过，不代替真实IDB同边界。临时Project runner的事件等待现精确选择本包worker，并在安装请求观察器前记录runtime/manifest/API/浏览器版本；缺API仍失败，不增加等待或生产权限。本地原旅程通过且源码稳定；Playwright本已等待workerScriptLoaded，故不能把Linux原FAIL归因启动太早，CI39367589369保持开放。证据recoveryWorkspaceAndWorkerPrerequisite20261020。45fb7b84推送HTTP2 framing失败，API远端已a9da0045；本地成果保全。真实身份/全量目录、完整安装与Free验收未关闭。
