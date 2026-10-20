@@ -1,3 +1,4 @@
+import {observeWindowScroll} from './window-scroll-observer.mjs';
 /** Opt-in S: actual MV3 buttons, application-owned offline world, no DB seeds. */
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
@@ -17,7 +18,7 @@ if(process.env.FREE_WINDOW_RETENTION_RUN!=='1'){await writeFile(output,JSON.stri
 else{
  let server,context,browserHandle,networkGuard,directory,manifest,manifestPath,manifestHash,page,extensionId,browserLaunchAttempted=false;
  const hash=x=>createHash('sha256').update(x).digest('hex');
- const sources=['frame-window-retention-package-browser.mjs','fixtures/host-scale-server.mjs','fixtures/host-scale-world.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-cleanup.mjs','native-visibility-browser.mjs','historical-network-guard.mjs'];
+ const sources=['window-scroll-observer.mjs','frame-window-retention-package-browser.mjs','fixtures/host-scale-server.mjs','fixtures/host-scale-world.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-cleanup.mjs','native-visibility-browser.mjs','historical-network-guard.mjs'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sources.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -38,7 +39,7 @@ else{
    if(location.protocol!=='chrome-extension:'||!globalThis.chrome?.runtime?.sendMessage)return;
    const send=chrome.runtime.sendMessage.bind(chrome.runtime);
    chrome.runtime.sendMessage=function(...args){const m=args[0],tracked=['HOST_UI_VIEW','HOST_UI_RESUME','HOST_UI_SAVE_VIEW','HOST_UI_DISPATCH_CURRENT','HOST_UI_DISPATCH_NATIVE','HOST_UI_PRESENT'].includes(m?.type),pending=send(...args);
-    if(tracked&&pending?.then)pending.then(r=>{const p=r?.page;globalThis.observeWindowReturn({type:m.type,query:m.query,expectedQuery:m.expectedQuery,capacities:m.view?.capacities,scroll:m.view?.scroll,ok:r?.ok,state:r?.state,presentation:p?.presentation??r?.presentation,resume:r?.resume,counts:p?{search:!!p.search,workingSet:!!p.workingSet,groups:p.groups?.items.map(g=>({id:g.id,unknown:g.lists.unknown.items.length})),unknown:p.entries?.unknown.items.length,selection:p.selection?{groupId:p.selection.groupId,list:p.selection.list,limit:p.selection.limit}:null}:null});},()=>{});
+    if(tracked&&pending?.then)pending.then(r=>{const p=r?.page;globalThis.observeWindowReturn({type:m.type,query:m.query,expectedQuery:m.expectedQuery,capacities:m.view?.capacities,scroll:m.view?.scroll,ok:r?.ok,state:r?.state,reason:r?.reason,presentation:p?.presentation??r?.presentation,resume:r?.resume,counts:p?{search:!!p.search,workingSet:!!p.workingSet,groups:p.groups?.items.map(g=>({id:g.id,unknown:g.lists.unknown.items.length})),unknown:p.entries?.unknown.items.length,selection:p.selection?{groupId:p.selection.groupId,list:p.selection.list,limit:p.selection.limit}:null}:null});},()=>{});
     return pending;
    };
   });
@@ -77,12 +78,16 @@ else{
   await projectList.getByRole('button',{name:'显示更多待核对窗口',exact:true}).click();await waitRows(`.card[data-theme-id="${project}"] .members`,17);
   await unknown.getByRole('button',{name:'显示更多归属待核对',exact:true}).click();await waitRows('section[data-free-list="unknown"]',17);
   const title=await projectList.locator('a[data-ref-id]').first().locator('.window-title').innerText();
-  const mainScroll=await workspace.locator('.workspace').evaluate(async n=>{n.scrollTop=150;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return n.scrollTop;});assert(mainScroll>0,'actual main workspace must be scrollable');report.mainScrollBeforeSearch=mainScroll;
+  const scrollProbe=await workspace.evaluate(observeWindowScroll);report.scrollProbe=scrollProbe;const mainScroll=scrollProbe.after?.top;assert(scrollProbe.after?.connected&&mainScroll>0,'actual main workspace must be scrollable');assert.equal(mainScroll,scrollProbe.assigned.top,'current viewport must preserve the single scroll gesture');report.mainScrollBeforeSearch=mainScroll;
   const sidebar=page.frames().find(f=>f.url()===`chrome-extension://${extensionId}/sidebar.html`);assert(sidebar);
   await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
   await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(title);
   const result=workspace.locator(`.search-results a[data-ref-id="${first[0]}"]`);await result.waitFor();
-  const target=await result.getAttribute('href');assert.equal(target,page.url());const pageCount=context.pages().length;await result.click();
+  const target=await result.getAttribute('href');assert.equal(target,page.url());const pageCount=context.pages().length;
+  // Same URL alone does not establish a same-target plan. Record the issued
+  // control without waiting for a different plan or repeating the gesture.
+  report.searchClick={pageCount,control:await result.evaluate(node=>({delegated:node.hasAttribute('data-native-plan-control'),planControl:node.getAttribute('data-native-plan-control'),ariaDisabled:node.getAttribute('aria-disabled'),target:node.getAttribute('target')}))};
+  await result.click();
   await page.getByRole('button',{name:'返回工作空间',exact:true}).waitFor();
   assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),1);
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await waitHostScaleSurfaces(page,{extensionId});
@@ -121,7 +126,7 @@ else{
   report.differentTargetReturn={nativeTargetOnce:true,uniqueReturn:true,projectRows:17,unknownRows:17,newFrame:workspace!==previousFrame,oldFrameDetached:previousFrame.isDetached(),originalDocumentsEditorsDrafts:true};
   report.status='PASS_OFFLINE_MV3_WINDOW_RETENTION';report.acceptance='PARTIAL_S_NOT_FREE_ACCEPTED';report.journey={projectRows:first.length,unknownRows:second.length,readingReturn:true,originalDocumentEditorDraft:true,elapsedMs:performance.now()-started};report.scaleAcceptance='NOT_RUN_1K_FIXTURE_FUNCTIONAL_SUBCHAIN_ONLY';
 
- }catch(error){report.status=context?'FAIL':'NOT_RUN_STARTUP';report.error=error.stack;report.failure=await hostScaleFailureFacts(page).catch(e=>({error:e.message}));process.exitCode=1;}
+ }catch(error){report.status=context?'FAIL':'NOT_RUN_STARTUP';report.error=error.stack;report.pagesAtFailure=context?.pages().length??null;report.failure=await hostScaleFailureFacts(page).catch(e=>({error:e.message}));process.exitCode=1;}
  finally{
   const clean=await cleanupHostScaleRun({report,context,browserHandle,browserLaunchAttempted,networkGuard,server,directory,verify:async()=>{
    report.sourceChangedDuringRun=manifest?(await Promise.all(Object.entries(manifest.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean):null;

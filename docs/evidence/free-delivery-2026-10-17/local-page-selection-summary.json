@@ -1,4 +1,36 @@
 {
+"windowRetentionObserver20261020": {
+  "baseline": "c7ed1795",
+  "ci": {
+    "run": 39354354919,
+    "status": "FAIL",
+    "failure": "same-target return button original 6000ms timeout",
+    "cause": "NOT_ESTABLISHED"
+  },
+  "local": {
+    "status": "PASS_OFFLINE_MV3_WINDOW_RETENTION",
+    "elapsedMs": 2846.784167,
+    "scope": "1k fixture functional subchain only; not scale/full Free acceptance",
+    "rootCause": "detached viewport reference before or during evaluate; current node resolved synchronously inside frame; single scroll and original two RAF preserved",
+    "targeted": {
+      "pass": 31,
+      "fail": 0
+    },
+    "finalDifference": "after browser pass, passive click plan/page-count diagnostics added only; browser evidence applies to recorded fixture hashes"
+  },
+  "files": {
+    "local-vaiwl-window-return-repro.json.gz": "2035a1bd93f04d7d2bffeecf428798d88f2e746c58829a9bfd88c912dce5da4a",
+    "local-vaiwl-window-return-repro.log.gz": "b2196c08a070a1e791fb85858fcb867eb4f0b632dd9c08ddf315687be104c809",
+    "local-vaiwl-window-return-scroll-probe.json.gz": "85537b556ab417b4305c8efd22b3c7310b97e843ad0245a4411eac5aedab0ad4",
+    "local-vaiwl-window-return-scroll-probe.log.gz": "5e1e1e54510f528c6dcd0e2de4b150a4a1dc3f6bf01fff259aeab3abc8c95cef",
+    "local-vaiwl-window-return-fixed.json.gz": "c9412dbd6a38412ebb53ddc7018e511c717b92483fcbed95a54e6a4d37ff7ade",
+    "local-vaiwl-window-return-fixed.log.gz": "8c39632158f0e51af225494434a74eca48025d870ffafb04ab68169b10ed5257",
+    "local-vaiwl-window-return-current-node.json.gz": "53f72b8f75d5b1c29ff2f5d9abcb904f4384b32c4d0c6a3babcddfde25fd6c94",
+    "local-vaiwl-window-return-current-node.log.gz": "a93f24db52c481477d0887b53dfdae2df07a6d4487961ae7c0969b74ac84932e",
+    "local-vaiwl-ci39354354919-journeys.log.gz": "38afaeeeadae394c0caac243cee00353090d612406a0a03bcb418e7a91a05a69",
+    "local-vaiwl-window-observer-final.log.gz": "41643bf2289651878f0e3bc8f45863d0b161d012c7a6ca0a855101979fadb1e9"
+  }
+},
 "buildCLIArguments20261020": {
   "baseline": "b5e72064ddbce0aaa463e3298286af612014631d",
   "red": {
