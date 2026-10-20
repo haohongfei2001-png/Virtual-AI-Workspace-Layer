@@ -1,5 +1,14 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 当前来源失败位置与待授权对照（2026-10-21，源码40deda14）
+
+重新核对实际调用：生产session-provider/isolated-session-reader先取固定session；历史真实挑战由readSessionJSON在读取JSON/主体前拒绝，尚未执行该轮认证accounts。候选candidate.mjs使用无手工Authorization的cookie-only请求，首次me有效后进入sessionContexts；唯一default的account_id:null/id缺失在identifier校验处抛invalid-accounts-schema（现细码default-null-context-id），第三次me不执行，因此samePrincipal:false是未建立，不是观察到主体变更。直接原因是来源数据不满足现有canonical ID合同；是否因缺session-derived认证造成默认响应，尚无对照证据，不能断言是服务器故障或parser应放宽。
+
+唯一计划已准备最多4请求的include/omit凭据依赖对照，并明确敏感响应瞬时接收、权限、预算、结果分支和停止条件；等待用户对这一新批次明确授权，未实现执行器、未发真实请求、不复用旧许可。不把对照成功当C2/C3授权成立，不为此追加无关离线修复。实际源码/分工不变。
+
+推送连接另行只读定位：前次DNS完成但github.com TCP连接超时；本次github.com与api.github.com均HTTP200/TLS成立，允许接续正常同步，未修改代理/DNS/凭据/远端。检查开始HEAD40deda14，tracked干净、3stash保留；原source-priority-checkpoint.bundle验证通过（依赖6a4ee4b3），本次新文档提交及推送结果另按实际记录。
+
+
 ## 分工确认：转入真实身份/当前空间来源关口（2026-10-21）
 
 本次实际读取 [PR16评论6301668458](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6301668458)，并对照Host§5.2/5.3、session-provider、isolated-session-reader、session-identity及ScopeAuthority。Codex唯一写产品代码/集成/验证，dot仅独立研究与审查。当前产品源码86937be6、tracked tree在检查开始时干净；远端API仍6a4ee4b3，Draft/base不变，2258未跟踪副本及3stash保留；未把未推送源码称已同步。
