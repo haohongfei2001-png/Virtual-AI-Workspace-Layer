@@ -1,4 +1,53 @@
 {
+  "recoveryParentWithdrawal20261020": {
+  "baseline": "9b06b7d0b78b3e3b5dcea4d9ea47405a91d5db4d",
+  "status": "PASS_OFFLINE_REAL_IDB_PRE_READ_PARENT_WITHDRAWAL_NOT_FULL_J4",
+  "implementation": "Extended original recovery package journey with test-only readonly transaction barrier and matching operation-ID transaction observer; no production change needed.",
+  "oracle": [
+    "actual worker repair transaction receipt read queued",
+    "native parent tab close and browser removal event",
+    "transaction abort without commit",
+    "all persisted rows and Pro unchanged",
+    "new document retains explicit repair, no replay",
+    "original post-commit close and stale request denial retained"
+  ],
+  "bounds": {
+    "observationMs": 4000,
+    "productionMsUnchanged": 6000,
+    "setupAndCleanupMsEach": 1500,
+    "finalSubchainIncludingStoreAuditMs": 337.61195899999984
+  },
+  "validation": {
+    "targetedPassed": 68,
+    "finalMV3": "PASS",
+    "sourceAndPackageStable": true,
+    "review": "no blockers after cleanup/deadline tightening"
+  },
+  "limits": [
+    "test instrumentation, not uninstrumented timing or full J4",
+    "does not cover last-put-to-commit race",
+    "real identity, full directory and installation still open",
+    "temporary Project original local run passed once; Linux observer failure not reclassified"
+  ],
+  "files": [
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/recovery-inflight-first.json.gz",
+      "sha256": "d129d4cfcca3ffe36b0da351fcecc313fd875d9214d0150d11cc15e4e56396ee"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/recovery-inflight-final.json.gz",
+      "sha256": "7572407bf5c8bdb0316da9183689dd57630c2c6255435c90d3fdcb9187025016"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/recovery-inflight-targeted.tap.gz",
+      "sha256": "c52a7d93608f78725a88cc03051b666d9dcb82567016e40a71c0bf932a6add52"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/temporary-project-observer-repro.json.gz",
+      "sha256": "d889182b531fd435dcc77f51cb3d0aaf09ea8900b91b206a9ed4116c9895ae27"
+    }
+  ]
+},
   "searchReadingIntent20261020": {
   "baseline": "37a81c17cba4760869d3c83a8a368a7a752b608a",
   "status": "PASS_TARGETED_AND_LOCAL_MV3_NOT_FREE_ACCEPTED",
