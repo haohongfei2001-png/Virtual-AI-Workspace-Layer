@@ -17249,5 +17249,43 @@
     "conclusion": "success",
     "scope": "Four jobs only; not current changes or complete Free acceptance"
   }
+},
+  "sendGapBarrier20261020": {
+  "base": "2f9c297bb8d1d55fc8d2edbc38f2b5609627862e",
+  "status": "L_D_GAP_BARRIER_IMPLEMENTED_NOT_SYS05_ACCEPTED",
+  "mechanism": "Original sequenced observation channel carries fixed send-gap after overflow; discard unsent ambiguous intents, block body/send until accepted; owner retires causality without replacing proof/epoch/read budget or independently pending ACKs.",
+  "failure": "Rejected or unknown gap blocks producer send/body without retry or scope refresh. Not recovery success.",
+  "tests": {
+    "regressionAndBuild": 308,
+    "finalCompositionAndBuild": 346,
+    "finalAdapterBoundary": 161,
+    "skip": 0
+  },
+  "logs": {
+    "initial": "send-gap-initial-20261020.log.gz",
+    "second": "send-gap-second-20261020.log.gz",
+    "owner": "send-gap-owner-20261020.log.gz",
+    "regression": "send-gap-regression-20261020.log.gz",
+    "adapter": "send-gap-adapter-20261020.log.gz",
+    "final": "send-gap-final-20261020.log.gz",
+    "boundary": "send-gap-boundary-20261020.log.gz"
+  },
+  "sourceHashes": {
+    "src/host/chatgpt-adapter.mjs": "571165d06562ac092b2bac8b23114b98ca74e64c6953a9741f67eef5c7531956",
+    "src/host/send-intent-claim.mjs": "c4c748740cb6c691e03565f346fd31a83761a585c9ff2f28d94fec4db5053b23",
+    "src/runtime/host-binding-service.mjs": "63f792d8adfa5a1444b64178bd1334268d0501ffab3fcdd1c87f9be91ca0d474",
+    "src/runtime/host-observation-owner.mjs": "5354e0e982d674a2f1d7f0ccdef0923c8575f05d60ac5ba5a3d3fb2bc18cb01e",
+    "src/runtime/host-send-candidates.mjs": "454bb4ab52dbac6fafe3a5f70c9d7e8acfcce6f4011c2a70646616ca96dafac4",
+    "docs/specs/chatgpt-host/VAIWL_HOST_CONTRACTS.d.ts": "89513471dbc9f26e6fb62999a3eb6cc3d41baf08c589f19e451fc23b8af38462"
+  },
+  "review": "Independent review caught proof replacement resetting per-proof budgets; replaced with causalGeneration, no remaining blocker.",
+  "limits": "32 intents retained; 33rd produces loss barrier. Existing 6s RPC, read cooldown and attempts unchanged.",
+  "remaining": [
+    "Actual MV3 overflow journey",
+    "Complete SYS05",
+    "Real identity/directory",
+    "10k/100k DEFERRED"
+  ],
+  "push": "Previous 75-second bounded push failed to connect; commits preserved locally."
 }
 }

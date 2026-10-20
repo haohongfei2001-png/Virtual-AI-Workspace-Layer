@@ -23,7 +23,7 @@ export function createHostSendCandidates({observations,reader,enabled=false,now=
  const active=()=>{if(stopped)throw Error('host-send-candidates-stopped');if(!enabled)throw Error('host-send-candidates-disabled');};
  function binding(context){const b={scopeKey:context.scope?.key,documentToken:context.documentToken,producerToken:context.producerToken,routeEpoch:context.routeEpoch,bodyEpoch:context.bodyEpoch,conversationId:context.conversationId};if(typeof b.scopeKey!=='string'||!b.scopeKey||!['documentToken','producerToken','conversationId'].every(k=>tokenOK(b[k]))||!['routeEpoch','bodyEpoch'].every(k=>Number.isSafeInteger(b[k])&&b[k]>=0)||typeof context.guard!=='function'||!context.signal)throw Error('invalid-send-context');return b;}
  function check(context){active();if(context.signal.aborted||context.guard()!==true)throw Error('stale-send-context');}
- function entryFor(context){check(context);const b=binding(context),key=b.producerToken,signature=JSON.stringify(b);let entry=entries.get(key);if(entry?.signature!==signature){if(entry){clearRetry(entry);entry.correlator.stop();entries.delete(key);}for(const [otherKey,other]of entries)if(otherKey!==key&&observations.isCurrentProducer(otherKey)!==true){clearRetry(other);other.correlator.stop();entries.delete(otherKey);}if(entries.size>=maxBindings)throw Error('host-send-capacity');const correlator=createSendCorrelator({now});correlator.bind(b);entry={signature,correlator,baseline:false,sealed:false,proof:null,generation:0,readProof:null,readAttempts:0,lastReadAt:null,pendingAcks:new Map(),retry:null};entries.set(key,entry);}if(!entry.sealed&&!entry.correlator.isBound())retire(entry);return entry;}
+ function entryFor(context){check(context);const b=binding(context),key=b.producerToken,signature=JSON.stringify(b);let entry=entries.get(key);if(entry?.signature!==signature){if(entry){clearRetry(entry);entry.correlator.stop();entries.delete(key);}for(const [otherKey,other]of entries)if(otherKey!==key&&observations.isCurrentProducer(otherKey)!==true){clearRetry(other);other.correlator.stop();entries.delete(otherKey);}if(entries.size>=maxBindings)throw Error('host-send-capacity');const correlator=createSendCorrelator({now});correlator.bind(b);entry={signature,correlator,baseline:false,sealed:false,proof:null,generation:0,causalGeneration:0,readProof:null,readAttempts:0,lastReadAt:null,pendingAcks:new Map(),retry:null};entries.set(key,entry);}if(!entry.sealed&&!entry.correlator.isBound())retire(entry);return entry;}
  // Failed reads retire causality, not their bounded per-proof accounting.
  function retire(entry){clearRetry(entry);entry.pendingAcks.clear();entry.baseline=false;entry.proof=null;entry.sealed=entry.correlator.invalidateBaseline()!==true;}
  function publish(candidates){if(onCandidate)for(const candidate of candidates){try{onCandidate(candidate);}catch{/* A diagnostic consumer cannot authorize retries. */}}return candidates;}
@@ -42,12 +42,14 @@ export function createHostSendCandidates({observations,reader,enabled=false,now=
    if(entry.readProof===proofId){if(entry.readAttempts>=3||at-entry.lastReadAt<1000)return [];}
    else{entry.readProof=proofId;entry.readAttempts=0;}
    entry.readAttempts++;entry.lastReadAt=at;
-   generation=++entry.generation;
+   generation=++entry.generation;const causalGeneration=entry.causalGeneration;
    const value=await reader.read(proofId);check(current);
    if(entries.get(current.producerToken)!==entry||entry.generation!==generation)throw Error('stale-send-observation');
    if(!value||value.conversationId!==current.conversationId||value.bodyEpoch!==current.bodyEpoch||value.state!==value.metadata?.state)throw Error('invalid-send-metadata');
-   const candidates=entry.correlator.observe(value.metadata);entry.baseline=value.metadata.state==='candidate'&&value.metadata.gaps?.length===0;
-   if(!entry.baseline)entry.pendingAcks.clear();
+   const causalCurrent=causalGeneration===entry.causalGeneration;
+   const candidates=causalCurrent?entry.correlator.observe(value.metadata):[];
+   entry.baseline=causalCurrent&&value.metadata.state==='candidate'&&value.metadata.gaps?.length===0;
+   if(value.metadata.state!=='candidate'||value.metadata.gaps?.length)entry.pendingAcks.clear();
    if(onAcknowledged){
     for(const candidate of candidates){if(entry.pendingAcks.size>=32)throw Error('send-ack-capacity');const message=value.metadata.messages.find(m=>m.messageId===candidate.messageId);entry.pendingAcks.set(candidate.messageId,{candidate,semantic:digest(message),dependencies:value.metadata.messages.map(m=>[m.messageId,digest(m)]),attempts:0,wakeups:0,lastAttempt:null});}
     for(const [key,pendingAck]of entry.pendingAcks){
@@ -80,6 +82,17 @@ export function createHostSendCandidates({observations,reader,enabled=false,now=
    if(!entry.correlator.hasBaseline())entry.baseline=false;
    check(current);return candidate;}).then(candidate=>{active();if(observations.isCurrentProof(proofId)!==true)throw Error('stale-send-proof');return candidate;}).catch(error=>{if(usedEntry&&usedEntry.generation===intentGeneration){retire(usedEntry);}throw error;});
  }
+ async function gap(proofId){
+  active();if(!tokenOK(proofId))return false;
+  return observations.withCurrent(proofId,current=>{
+   check(current);const entry=entries.get(current.producerToken);
+   if(!entry||entry.signature!==JSON.stringify(binding(current)))return true;
+   // Supersede in-flight correlation, retaining its consumed read budget and
+   // independent ACK candidates. No read, scope refresh or timer is started.
+   entry.causalGeneration++;entry.correlator.invalidateBaseline();entry.baseline=false;
+   return true;
+  });
+ }
  function stop(){if(stopped)return;stopped=true;for(const entry of entries.values()){clearRetry(entry);entry.correlator.stop();}entries.clear();inflight.clear();}
  // The terminal owner guard must run after withCurrent async revalidation and
  // immediately before the synchronous correlator mutation; a post-check cannot
@@ -94,5 +107,5 @@ export function createHostSendCandidates({observations,reader,enabled=false,now=
   for(const entry of entries.values()){if(entry.sealed)continue;const idle=entry.correlator.isIdle();if(!entry.correlator.isBound()){retire(entry);continue;}if(entry.retry!==null||entry.pendingAcks.size||idle!==true)return false;}
   return true;
  }
- return Object.freeze({isIdle,observe,intent:(proofId,value)=>access(()=>intentWork(proofId,value)),pendingIntent:(proofId,intentId)=>access(()=>terminalAccess(proofId,intentId)),settle:(proofId,{intentId,stage}={},terminalGuard)=>['failed','cancelled'].includes(stage)?access(()=>terminalAccess(proofId,intentId,stage,terminalGuard)):Promise.resolve(null),stop});
+ return Object.freeze({isIdle,observe,gap:proofId=>access(()=>gap(proofId)),intent:(proofId,value)=>access(()=>intentWork(proofId,value)),pendingIntent:(proofId,intentId)=>access(()=>terminalAccess(proofId,intentId)),settle:(proofId,{intentId,stage}={},terminalGuard)=>['failed','cancelled'].includes(stage)?access(()=>terminalAccess(proofId,intentId,stage,terminalGuard)):Promise.resolve(null),stop});
 }

@@ -24,3 +24,19 @@ test('producer sequence cannot be reused across body, send, and surface kinds',a
 test('forged and other producer body proofs are rejected without database writes',async t=>{const h=await fixture(t),proof=await baseline(h),before=await dump(h);const forged=intent(h,'forged-proof');assert.equal((await h.service.handle(forged,sender)).state,'rejected');const wrong=intent(h,proof);wrong.producerToken='other-producer';assert.equal((await h.service.handle(wrong,sender)).state,'rejected');assert.deepEqual(await dump(h),before);});
 test('expired binding or replaced body proof cannot accept a stale intent',async t=>{for(const mode of ['expiry','replace']){const h=await fixture(t),proof=await baseline(h),before=await dump(h);if(mode==='expiry')h.advance(20001);else {const ack=await accept(h,body(h.binding,2,2));await h.service.sendCandidates.observe(ack.bodyProofId);}assert.equal((await h.service.handle(intent(h,proof,3),sender)).state,'rejected');assert.deepEqual(await dump(h),before);}});
 test('page cannot upgrade intent to ACK, attach message identity, or mint a receipt witness',async t=>{for(const patch of [{stage:'native-ack'},{messageId:'m3'},{operationId:'native-op'},{ackWitness:{accepted:true}}]){const h=await fixture(t),proof=await baseline(h),before=await dump(h),p=intent(h,proof);Object.assign(p.payload,patch);assert.equal((await h.service.handle(p,sender)).state,'rejected',JSON.stringify(patch));assert.deepEqual(await dump(h),before);}});
+
+test('sequenced send gap retires causality without replacing proof without storage mutation',async t=>{
+ const h=await fixture(t),proof=await baseline(h),before=await dump(h);
+ const gap={...intent(h,proof,2),kind:'send-gap',payload:{reason:'send-intent-capacity'}};
+ assert.equal((await h.service.handle(gap,sender)).state,'accepted');
+ assert.equal(h.service.observations.isCurrentProof(proof),true);
+ assert.equal((await h.service.handle(gap,sender)).state,'duplicate');
+ assert.equal(await h.service.sendCandidates.pendingIntent(proof,'intent-2'),null);
+ const next=await accept(h,body(h.binding,3));assert.equal(next.bodyProofId,proof);assert.equal(next.bodyEpoch,1);
+ assert.deepEqual(await dump(h),before);
+});
+for(const patch of [{bodyProofId:'forged'},{producerToken:'forged'},{payload:{reason:'other'}},{payload:{reason:'send-intent-capacity',sentAt:'forged'}}])test('send gap rejects invalid authority or shape '+JSON.stringify(patch),async t=>{
+ const h=await fixture(t),proof=await baseline(h);
+ const gap={...intent(h,proof,2),kind:'send-gap',payload:{reason:'send-intent-capacity'},...patch};
+ assert.equal((await h.service.handle(gap,sender)).state,'rejected');assert.equal(h.service.observations.isCurrentProof(proof),true);
+});

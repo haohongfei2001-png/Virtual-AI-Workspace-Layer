@@ -147,3 +147,31 @@ test('repeated overflow cannot reset the same-proof read budget',async()=>{
  assert.equal(await f.service.intent('p1',{...send,intentId:'not-recovered'}),null);
  assert.equal(f.outputs.length,0);f.service.stop();
 });
+
+test('send gap during a read cannot adopt its late baseline or reset read accounting',async()=>{
+ const f=fixture();await f.service.observe('p1');await f.service.intent('p1',send);
+ const proof=f.next(),release=f.hold(),reading=f.service.observe(proof);
+ for(let i=0;i<20;i++)await Promise.resolve();assert.equal(f.calls,2);
+ assert.equal(await f.service.gap(proof),true);assert.equal(f.calls,2);
+ release();assert.deepEqual(await reading,[]);
+ assert.equal(await f.service.intent(proof,{...send,intentId:'too-early'}),null);
+ f.tick(1000);await f.service.observe(proof);assert.equal(f.calls,3);
+ assert.equal((await f.service.intent(proof,{...send,intentId:'fresh'})).stage,'intent');
+ for(let i=0;i<3;i++){assert.equal(await f.service.gap(proof),true);f.tick(1000);await f.service.observe(proof);}
+ assert.equal(f.calls,4,'three reads for p2 including in-flight pre-gap read, one for p1');
+ assert.equal(await f.service.intent(proof,{...send,intentId:'exhausted'}),null);assert.equal(f.outputs.length,0);f.service.stop();
+});
+
+test('gap during read preserves independently pending ACK within its original attempts',async()=>{
+ let available=false,acks=0,attempts=0;
+ const f=ackFixture(()=>acks++,()=>{attempts++;return available;});
+ await f.service.observe('p1');await f.service.intent('p1',send);const proof=f.next();
+ await f.service.observe(proof);assert.equal(attempts,1);assert.equal(acks,0);
+ f.tick(1000);const release=f.hold(),reading=f.service.observe(proof);
+ for(let i=0;i<20;i++)await Promise.resolve();assert.equal(f.calls,3);
+ assert.equal(await f.service.gap(proof),true);available=true;release();
+ assert.deepEqual(await reading,[]);assert.equal(acks,1);assert.equal(attempts,2);
+ assert.equal(await f.service.intent(proof,{...send,intentId:'no-baseline'}),null);
+ f.tick(1000);await f.service.observe(proof);assert.equal(acks,1);assert.equal(attempts,2);
+ f.service.stop();
+});

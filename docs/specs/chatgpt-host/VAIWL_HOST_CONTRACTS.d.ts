@@ -192,6 +192,8 @@ export type ObservationProposal = ProposalEnvelope & (
   | { kind: 'current-object'; payload: CurrentBodyClaim }
   | { kind: 'message-metadata'; payload: MessageMetadataBatch }
   | { kind: 'send-candidate'; payload: SendCandidate }
+  // Sequenced loss barrier; retires send causality, never admits activity.
+  | { kind: 'send-gap'; payload: { reason: 'send-intent-capacity' } }
   | { kind: 'recency-change'; payload: RecencyObservation }
   | { kind: 'capability-change'; payload: Partial<Record<Capability, CapabilityState>> }
 );

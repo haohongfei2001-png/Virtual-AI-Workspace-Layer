@@ -2,13 +2,13 @@ import {nativeWitnessActive} from '../data/native-facts.mjs';
 import {nativeSourceIncarnation} from './native-source-incarnation.mjs';
 import {splitCurrentObservation,validateCurrentSurfaceRelation,CURRENT_OBSERVATION_PROTOCOL} from '../host/current-observation-batch.mjs';
 import {continuationSemanticFingerprint} from '../data/native-observation-continuation.mjs';
-import {validateSendIntentProposal} from '../host/send-intent-claim.mjs';
+import {validateSendIntentProposal,validateSendGapProposal} from '../host/send-intent-claim.mjs';
 import {validateCurrentBodyProposal} from '../host/current-body-claim.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {surfaceBatch} from '../host/surface-batch.mjs';
 import {digest} from '../data/hash.mjs';
 /** Privileged owner; the gate recognizes request object identity, never serialized labels. */
-export function createHostObservationOwner({handshake,authority,getFrame,profiles,onAccepted=null,foregroundReadPending=()=>false,onSendIntent=null,onNativeDelta=null,ackAdmission=null,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
+export function createHostObservationOwner({handshake,authority,getFrame,profiles,onAccepted=null,foregroundReadPending=()=>false,onSendIntent=null,onSendGap=null,onNativeDelta=null,ackAdmission=null,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(!handshake?.verify||!handshake?.isBound||!handshake?.matchesFrame||!authority?.peek||!authority?.scopeFor||typeof getFrame!=='function'||!(profiles instanceof Map))throw Error('invalid-host-observation-owner');
  const admissions=new WeakMap(),producers=new Map(),failedBatches=new Map(),bodies=new Map(),reads=new Set();let busy=null,stopped=false,joint=null,runs=0;
  async function track(work){runs++;try{return await work();}finally{runs--;}}
@@ -44,13 +44,14 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    // Validate the complete shape before any storage read; revision and timestamps are owner values.
    const observedAt=new Date(time).toISOString(),validUntil=new Date(Math.min(time+60000,Date.parse(grant.expiresAt))).toISOString();
    const combined=proposal.protocol===CURRENT_OBSERVATION_PROTOCOL?splitCurrentObservation(proposal):null;
-   const isBody=proposal.kind==='current-object'||!!combined,isSend=proposal.kind==='send-candidate';
+   const isBody=proposal.kind==='current-object'||!!combined,isSend=proposal.kind==='send-candidate',isGap=proposal.kind==='send-gap';
+   if(isGap)validateSendGapProposal(proposal,{profile});
    const current=bodies.get(proposal.producerToken);
    const intent=isSend?validateSendIntentProposal(proposal,{profile,actualURL:actual.url,current:current?.current()?{proofId:current.proofId,conversationId:current.claim.conversationId,regionEpoch:current.claim.regionEpoch}:null}):null;
    const body=isBody?validateCurrentBodyProposal(combined?.body??proposal,{profile,actualURL:actual.url}):null;
-   let batch=(!combined&&isBody)||isSend?null:surfaceBatch(combined?.surface??proposal,{scope,binding:proposal,profile,urlPolicy:profile.urlPolicy,sourceRevision:1,observedAt,validUntil});
+   let batch=(!combined&&isBody)||isSend||isGap?null:surfaceBatch(combined?.surface??proposal,{scope,binding:proposal,profile,urlPolicy:profile.urlPolicy,sourceRevision:1,observedAt,validUntil});
    if(combined)validateCurrentSurfaceRelation(combined);
-   const semanticFingerprint=digest({... (isBody||isSend?{kind:proposal.kind}:{}),profileId:profile.id,profileVersion:profile.revision,payload:proposal.payload});
+   const semanticFingerprint=digest({... (isBody||isSend||isGap?{kind:proposal.kind}:{}),profileId:profile.id,profileVersion:profile.revision,payload:proposal.payload});
    const recorded=producers.get(proposal.producerToken);
    if(recorded&&(recorded.scopeKey!==scope.key||recorded.grantId!==grant.id||recorded.scopeEpoch!==grant.scopeEpoch))return rejected('host-producer-scope-changed');
    const previous=recorded;
@@ -59,6 +60,15 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    if(combined&&!failedBatches.has(proposal.producerToken)&&failedBatches.size>=maxProducers)return rejected('host-batch-capacity');
    if(previous&&proposal.localSeq<=previous.seq)return previous.seq===proposal.localSeq&&previous.fingerprint===semanticFingerprint?{state:'duplicate',localSeq:proposal.localSeq,receiptId:previous.receiptId,...(previous.bodyProofId?{bodyProofId:previous.bodyProofId,bodyEpoch:previous.bodyEpoch}:{})}:rejected('replayed-host-proposal');
    if(!guard())return rejected('stale-host-scope');
+   if(isGap){
+    if(!current?.current()||current.proofId!==proposal.bodyProofId||!await handshake.verify(proposal,sender)||!guard())return rejected('stale-send-gap');
+    // Retire only causal candidates. Keep the body proof/epoch and read budget;
+    // a loss marker must not manufacture a fresh authorization or read window.
+    if(!onSendGap||await onSendGap(current.proofId)!==true||!current.current()||!guard())return rejected('stale-send-gap');
+    const receiptId='gap_'+digest([grant.id,proposal.producerToken,proposal.localSeq,semanticFingerprint]).slice(0,48);
+    producers.set(proposal.producerToken,{isBound:producerCurrent,scopeKey:scope.key,grantId:grant.id,scopeEpoch:grant.scopeEpoch,seq:proposal.localSeq,fingerprint:semanticFingerprint,receiptId,bodyEpoch:previous?.bodyEpoch??current.bodyEpoch,bodyRegionEpoch:current.claim.regionEpoch,until:Math.min(Date.parse(grant.expiresAt),time+20000)});
+    return {state:'accepted',localSeq:proposal.localSeq,receiptId};
+   }
    if(isSend){
     if(!current?.current()||!await handshake.verify(proposal,sender)||!guard())return rejected('stale-host-document');
     // Acceptance consumes a candidate only. A page cannot request an ACK or activity write.

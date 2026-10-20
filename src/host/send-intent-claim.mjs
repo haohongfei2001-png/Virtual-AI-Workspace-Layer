@@ -20,3 +20,11 @@ export function validateSendIntentProposal(proposal,{profile,actualURL,current}=
  requireValue(new TextEncoder().encode(JSON.stringify(proposal)).length<=65536);
  return Object.freeze({intentId:p.intentId,kind:'send',isComposing:false});
 }
+
+/** A loss marker only retires current send causality. It cannot admit facts. */
+export function validateSendGapProposal(proposal,{profile}={}){
+ requireValue(!!profile?.sendIntent&&typeof profile.urlPolicy?.parse==='function');
+ requireValue(exactHostRecord(proposal,['protocol','documentToken','producerToken','localSeq','routeEpoch','profileId','profileVersion','bodyProofId','kind','payload']));
+ requireValue(proposal.protocol==='vaiwl-host-observation/1'&&proposal.kind==='send-gap'&&safeId(proposal.bodyProofId)&&safeId(proposal.documentToken)&&safeId(proposal.producerToken)&&Number.isSafeInteger(proposal.localSeq)&&proposal.localSeq>0&&Number.isSafeInteger(proposal.routeEpoch)&&proposal.routeEpoch>=0&&proposal.profileId===profile.id&&proposal.profileVersion===profile.revision);
+ requireValue(exactHostRecord(proposal.payload,['reason'])&&proposal.payload.reason==='send-intent-capacity');
+}
