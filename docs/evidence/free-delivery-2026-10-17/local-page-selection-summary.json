@@ -19618,7 +19618,7 @@
       "popupTitleVerified": true,
       "admissionResult": "receiver-not-loaded-no-request",
       "scopeOrDatabaseEnabled": false,
-      "blocker": "Browser tab observation timed out; native popup returned receiver-not-loaded-no-request. Native action then changed windows. User approved window/tab-title location, but automatic approval review rejected the full AX read because it also includes page body. One-time transient visible-text permission requested; pending. No further request dispatch."
+      "blocker": "Browser tab observation timed out; native popup returned receiver-not-loaded-no-request. Native action then changed windows. User approved window/tab-title location, but automatic approval review rejected the full AX read because it also includes page body. User then approved one transient visible-text read; that call timed out and reset the tool without a usable window state. No repeat of that read or diagnostic dispatch."
     },
     "limits": {
       "maxRequests": 4,
