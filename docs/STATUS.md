@@ -3863,3 +3863,7 @@ Round332 final integration: **6421/6421 Node PASS**, zero skips, terminal exit0.
 ## 适配器发送缺口接线（2026-10-20，基线2f9c297）
 
 原adapter溢出仅发无人消费的诊断，现在通过同一有序观察通道发送固定send-gap。32个候选正常保留；第33个溢出清除未投递的歧义候选，gap确认前不再发布发送/正文观察，确认后由新观察重建因果基线。仅撤销因果关联，保持原body proof/epoch、读取预算和独立pending ACK；并发旧读不能重建基线，仍可完成先前合法ACK核验。独审指出初稿换proof会重置预算，已修正为独立causalGeneration。拒绝/未知确认仅安全阻断，不重发、不刷新scope，不能算恢复成功。原合同补充固定loss marker，未扩大身份/来源权限。308项受影响回归、346项最终组合/构建、161项最终adapter边界均通过，含32/33边界、未知结果、旧读与独立ACK、重复gap不增加预算。原中间失败与最终日志见 `sendGapBarrier20261020`。仅L/D实现，实际MV3溢出旅程及完整SYS05未完成；真实来源和10k/100k状态不变。正常推送75秒内连接GitHub失败，本地提交保留，未改远端/凭据/分支。
+
+## 发送缺口隔离MV3闭环（2026-10-20，生产源码3469584）
+
+已完成局部实际浏览器闭环：持有一次真实surface提交后的回复，33次真实点击触发原32候选队列溢出；单次gap按原通道接受，旧候选未重放、proof/epoch保持。原冷却后新点击实际进入owner.pendingIntent，后续fixture新消息只关联该新意图，未产生ACK/sentAt。回复持有66ms，仅为持有阶段，不冒充adapter全程计时；原6秒逻辑未修改。临时Profile清理、外网阻断及本轮记录源码hash核对通过。旧runner重复observe漏结果与当前项正文标题优先导致前置无差异的失败均保留；改为被动候选tap（明确记录临时包插桩hash）及独立已见条目差异，不用传输accepted冒充因果恢复。证据 `sendGapMV320261020`。这是test-only composition的局部真实MV3证据，不是生产安装包/完整SYS05/真实账户通过；原目录与身份阻塞、10k/100k DEFERRED不变。

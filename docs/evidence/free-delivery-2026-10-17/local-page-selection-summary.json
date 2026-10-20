@@ -17287,5 +17287,61 @@
     "10k/100k DEFERRED"
   ],
   "push": "Previous 75-second bounded push failed to connect; commits preserved locally."
+},
+  "sendGapMV320261020": {
+  "base": "3469584c72219b1a21d917a0e6727565b352c30b",
+  "status": "ISOLATED_TEST_COMPOSITION_OVERFLOW_PASS_NOT_COMPLETE_SYS05",
+  "reports": {
+    "first": {
+      "file": "send-gap-mv3-first-20261020.json.gz",
+      "status": "FAIL",
+      "error": "Error: candidate-condition-timeout\n    at wait (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/send-candidate-mv3-browser.mjs:27:154)\n    at async file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/send-candidate-mv3-browser.mjs:41:2",
+      "sourceChangedDuringRun": false
+    },
+    "second": {
+      "file": "send-gap-mv3-second-20261020.json.gz",
+      "status": "FAIL",
+      "error": "Error: candidate-condition-timeout\n    at wait (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/send-candidate-mv3-browser.mjs:34:154)\n    at async file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/send-candidate-mv3-browser.mjs:55:2",
+      "sourceChangedDuringRun": false
+    },
+    "third": {
+      "file": "send-gap-mv3-third-20261020.json.gz",
+      "status": "FAIL",
+      "error": "Error: candidate-condition-timeout\n    at wait (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/send-candidate-mv3-browser.mjs:34:154)\n    at async file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/send-candidate-mv3-browser.mjs:55:2",
+      "sourceChangedDuringRun": false
+    },
+    "diagnostic": {
+      "file": "send-gap-mv3-diagnostic-20261020.json.gz",
+      "status": "FAIL",
+      "error": "Error: candidate-condition-timeout\n    at wait (file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/send-candidate-mv3-browser.mjs:34:154)\n    at async file:///Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/tests/host/send-candidate-mv3-browser.mjs:55:2",
+      "sourceChangedDuringRun": false
+    },
+    "fixed": {
+      "file": "send-gap-mv3-fixed-20261020.json.gz",
+      "status": "PASS",
+      "error": null,
+      "sourceChangedDuringRun": false
+    },
+    "final": {
+      "file": "send-gap-mv3-final-20261020.json.gz",
+      "status": "PASS",
+      "error": null,
+      "sourceChangedDuringRun": false
+    }
+  },
+  "observerFixes": [
+    "Observe current-observation body packets",
+    "Passive candidate tap instead of duplicate observe (runtime instrumented hash recorded)",
+    "Change distinct history entry; current item uses header title",
+    "Reply hold duration is not total adapter elapsed",
+    "Require admitted fresh intent and subsequent matching correlation, not merely accepted envelope"
+  ],
+  "boundary": "Local reconstruction, real headless MV3/trusted clicks/IndexedDB; test-only composition, not production package or native ACK/real account verification.",
+  "remaining": [
+    "Production-package full SYS05",
+    "Real identity/current-space/full-directory",
+    "J1/J4 full acceptance",
+    "10k/100k DEFERRED"
+  ]
 }
 }
