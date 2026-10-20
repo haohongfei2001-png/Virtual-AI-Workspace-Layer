@@ -18,16 +18,16 @@ export function createHostBackupService({ui,workspaceRepository,onRestored=null,
   const kind=BACKUP_TYPES.indexOf(m?.type),base=['v','type','grantId','mountId'];if(kind<0||!exactHostRecord(m,[...base,...extras[kind]])||m.v!==1||!tokenOK(m.grantId)||!tokenOK(m.mountId)||extras[kind].includes('transferId')&&!tokenOK(m.transferId)||kind===2&&!backupByteLengthOK(m.byteLength)||[1,3].includes(kind)&&(!Number.isSafeInteger(m.index)||m.index<0)||kind===5&&(!tokenOK(m.planId)||!tokenOK(m.operationId)))return failure();
   const a={active:true,abort:new AbortController(),started:elapsedNow(),created:null};attempts.add(a);
   const active=()=>!stopped&&a.active&&!a.abort.signal.aborted&&Number.isFinite(elapsedNow())&&elapsedNow()>=a.started&&elapsedNow()-a.started<6000;
-  try{return await withRequestDeadline(()=>trackScope(()=>ui.withScope({sender,grantId:m.grantId,mountId:m.mountId},async c=>{
+  try{const result=await withRequestDeadline(()=>trackScope(()=>ui.withScope({sender,grantId:m.grantId,mountId:m.mountId},async c=>{
    const guard=()=>active()&&c.isCurrent()===true,check=()=>{if(!guard())throw Error('backup-expired');};check();
    for(const [id,t]of transfers)if(!liveTransfer(t))transfers.delete(id);
    const matches=t=>t.scopeKey===c.scope.key&&t.scopeGrantId===c.scopeGrantId&&t.grantId===m.grantId&&t.mountId===m.mountId;
    let t;
    if(kind===0||kind===2){
     if(transfers.size>=BACKUP_MAX_TRANSFERS)throw Error('capacity');const id=makeId();if(!tokenOK(id)||transfers.has(id))throw Error('invalid-id');const created=elapsedNow();
-    t={id,scopeKey:c.scope.key,scopeGrantId:c.scopeGrantId,grantId:m.grantId,mountId:m.mountId,isCurrent:c.isCurrent,created,until:created+BACKUP_TRANSFER_TTL,direction:kind===0?'export':'upload',length:kind===2?m.byteLength:0,bytes:null,next:0,plan:null,pending:null};transfers.set(id,t);a.created=t;
+    t={id,uiDocumentId:sender.documentId,parentDocumentId:c.parentFrame?.documentId,scopeKey:c.scope.key,scopeGrantId:c.scopeGrantId,grantId:m.grantId,mountId:m.mountId,isCurrent:c.isCurrent,created,until:created+BACKUP_TRANSFER_TTL,direction:kind===0?'export':'upload',length:kind===2?m.byteLength:0,bytes:null,next:0,plan:null,pending:null};transfers.set(id,t);a.created=t;
     if(kind===0){const bundle=await workspaceRepository.exportBackup(c.scope,{guard:()=>guard()&&liveTransfer(t),signal:a.abort.signal});check();if(!liveTransfer(t))throw Error('transfer-expired');const text=JSON.stringify(bundle);if(typeof text!=='string'||text.length>BACKUP_MAX_BYTES)throw Error('oversize');t.bytes=new TextEncoder().encode(text);if(!backupByteLengthOK(t.bytes.length))throw Error('oversize');t.length=t.bytes.length;}else t.bytes=new Uint8Array(t.length);
-    check();a.created=null;return info(t);
+    check();return info(t);
    }
    t=transfers.get(m.transferId);if(!t||!matches(t)||!liveTransfer(t))throw Error('invalid-transfer');
    const transferGuard=()=>guard()&&liveTransfer(t),fence=()=>{if(!transferGuard())throw Error('transfer-expired');};
@@ -44,9 +44,10 @@ export function createHostBackupService({ui,workspaceRepository,onRestored=null,
    if(t.pending){if(t.operationId!==m.operationId||!(t.pending instanceof Promise))throw Error('restore-conflict');const result=await t.pending;check();return result;}
    t.operationId=m.operationId;const plan=t.plan;t.restoreAttempt=a;
    t.pending=(async()=>{try{const result=await workspaceRepository.restoreBackup(c.scope,{operationId:m.operationId,expectedRevision:plan.expectedRevision,bundle:plan.bundle,planHash:plan.planHash},{guard:transferGuard,signal:a.abort.signal});fence();if(result?.ok!==true)throw Error('restore-failed');transfers.delete(t.id);try{await onRestored?.(c.scope.key);}catch{}check();return {ok:true};}catch(error){transfers.delete(t.id);throw error;}})();return await t.pending;
-  })),{timeoutMs:6000,now:elapsedNow,schedule,cancel});}catch{return failure();}finally{a.active=false;a.abort.abort();attempts.delete(a);if(a.created)transfers.delete(a.created.id);for(const [id,t]of transfers)if(t.restoreAttempt===a)transfers.delete(id);}
+  })),{timeoutMs:6000,now:elapsedNow,schedule,cancel});a.created=null;return result;}catch{return failure();}finally{a.active=false;a.abort.abort();attempts.delete(a);if(a.created)transfers.delete(a.created.id);for(const [id,t]of transfers)if(t.restoreAttempt===a)transfers.delete(id);}
  }
+ function revokeDocument(id){for(const [key,t]of transfers)if(t.uiDocumentId===id||t.parentDocumentId===id)transfers.delete(key);}
  // Local quietness only; retained user work blocks even after its TTL.
  function isIdle(){return !stopped&&scopeWork===0&&attempts.size===0&&transfers.size===0;}
- return Object.freeze({handle,stop,isIdle});
+ return Object.freeze({handle,stop,isIdle,revokeDocument});
 }

@@ -56,8 +56,8 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const asFrame=(doc,sender)=>({tabId:doc.tabId,frameId:0,documentId:doc.documentId,parentDocumentId:null,actualURL:doc.url,documentLifecycle:'active',incognito:sender.tab?.incognito===true});
 
  const ingestionPasses=surfaceProfiles?createHostIngestionPassOwner({handshake,authority,getFrame,profiles:surfaceProfiles,now,elapsedNow,schedule,cancel}):null;
- let recovery=null;
- const ui=uiURL||uiURLs?createHostUiOwner({extensionId,uiURL,uiURLs,getFrame,getContexts,handshake,authority,onRevokeMount:id=>views?.revokeMount(id),onRevokeDocument:id=>recovery?.revokeDocument(id),now,makeId,elapsedNow,schedule,cancel}):null;
+ let recovery=null,backup=null;
+ const ui=uiURL||uiURLs?createHostUiOwner({extensionId,uiURL,uiURLs,getFrame,getContexts,handshake,authority,onRevokeMount:id=>views?.revokeMount(id),onRevokeDocument:id=>{recovery?.revokeDocument(id);backup?.revokeDocument(id);},now,makeId,elapsedNow,schedule,cancel}):null;
  const historyProfile=historicalSendProfile===null?null:validateHistoricalSendProfile(historicalSendProfile);
  if(historyProfile&&(!currentMetadataReadEnabled||!sendCandidatesEnabled||!freeEvidenceRepository||surfaceProfiles?.has(historyProfile.id)))throw Error('invalid-historical-composition');
  const ackProfile=sendAckProfile===null?null:validateSendAckProfile(sendAckProfile);
@@ -83,7 +83,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const candidates=ui&&candidateBridge?createHostCandidateService({ui,bridge:candidateBridge,elapsedNow,schedule,cancel,makeId}):null;
  const snippets=ui&&views&&selectionBridge?createHostSnippetService({ui,workspaceRepository,resolveView:views.resolveSnippetView,selectionBridge,onChanged:scopeKey=>{views.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
  recovery=ui&&readService?createHostRecoveryService({ui,readService,workspaceRepository,onRecovered:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel}):null;
- const backup=ui&&['exportBackup','previewRestore','restoreBackup'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostBackupService({ui,workspaceRepository,onRestored:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
+ backup=ui&&['exportBackup','previewRestore','restoreBackup'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostBackupService({ui,workspaceRepository,onRestored:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
  const commands={};if(readService)for(const name of ['snapshot','command','undo','history','saveView','exportBackup','previewRestore','restoreBackup','recoveryStatus','recover'])if(typeof workspaceRepository[name]==='function')commands[name]=workspaceRepository[name].bind(workspaceRepository);
  const broker=createDocumentBindingBroker({extensionId,getFrame,allowedURL,repository,workspaceRepository:readService?{...readService,...commands}:workspaceRepository,freeRuntime,now,makeId,hostHandshake:handshake,resolveScope:({currentFrame,sender})=>authority.scopeFor(asFrame(currentFrame,sender))});
  // Claims last only through concurrent service delivery, not the grant lifetime.

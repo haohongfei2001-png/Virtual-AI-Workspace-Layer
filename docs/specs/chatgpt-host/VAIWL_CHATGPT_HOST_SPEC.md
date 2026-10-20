@@ -421,6 +421,8 @@ continuation放现有native_operations命名空间，建议单条≤64KiB、每s
 
 恢复面板的未执行RAM比较计划须显式退休：`HOST_UI_RECOVERY_RELEASE`沿原UI sender/grant/mount/scope验证，planIds为1–3个唯一token，只释放本owner匹配且非pending计划，不写数据库、不重放修复。关闭、失效及迟到状态响应释放本面板计划；状态请求仅在完整授权调用成功交付后保留新计划，失败/超时清理。UI文档撤权、断连及实际过期淘汰同步退休对应未执行计划；pending持久化仍由原guard/期限和in-flight计数跟踪。isIdle保持纯读取，不能按TTL剪掉待确认用户工作。
 
+备份传输同样在完整授权调用交付后才保留分配；文档退休删除其RAM传输，撤权后的原transfer guard拒绝迟到写入。正在执行的repository工作持续计入非空闲直到实际结束，不能以删除Map记录冒充事务完成。
+
 ## 9. 逐文件最低集成面
 
 | 现有位置 | 必要集成 | 不得重复/破坏 |

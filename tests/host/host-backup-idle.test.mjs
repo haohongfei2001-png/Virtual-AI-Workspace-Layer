@@ -21,3 +21,14 @@ for(const stage of ['scope','export','restore'])for(const settlement of ['resolv
  if(settlement==='resolve')g.resolve({ok:true});else g.reject(Error('late failure'));
  await new Promise(resolve=>setImmediate(resolve));assert.equal(f.service.isIdle(),true);
 });
+
+for(const action of ['EXPORT','UPLOAD'])for(const outcome of ['denied','deadline'])test('undelivered '+action+' allocation is retired after final validation '+outcome,async()=>{
+ const f=fixture(),gate=deferred(),original=f.ui.withScope;let allocated=false;
+ f.ui.withScope=async(args,work)=>{const result=await original(args,work);allocated=true;await gate.promise;if(outcome==='denied')throw Error('revoked');return result;};
+ const pending=f.request(action,action==='UPLOAD'?{byteLength:2}:{});for(let i=0;i<30&&!allocated;i++)await Promise.resolve();assert(allocated);
+ if(outcome==='deadline'){f.expire();assert.equal((await pending).ok,false);assert.equal(f.service.isIdle(),false);}gate.resolve();assert.equal((await pending).ok,false);await new Promise(resolve=>setImmediate(resolve));assert.equal(f.service.isIdle(),true);
+});
+test('document retirement frees backup buffers without claiming active work finished',async()=>{
+ const f=fixture(),t=await uploaded(f);f.service.revokeDocument('other');assert.equal(f.service.isIdle(),false);f.service.revokeDocument('ui');assert.equal(f.service.isIdle(),true);assert.equal((await f.request('PREVIEW',{transferId:t.transferId})).ok,false);
+ const next=await uploaded(f),plan=await f.request('PREVIEW',{transferId:next.transferId}),gate=deferred();f.repository.restoreBackup=()=>gate.promise;const pending=f.request('RESTORE',{transferId:next.transferId,planId:plan.planId,operationId:'restore'});for(let i=0;i<20;i++)await Promise.resolve();f.service.revokeDocument('ui');assert.equal(f.service.isIdle(),false);gate.resolve({ok:true});assert.equal((await pending).ok,false);assert.equal(f.service.isIdle(),true);
+});

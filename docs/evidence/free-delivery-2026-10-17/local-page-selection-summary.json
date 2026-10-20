@@ -1,4 +1,32 @@
 {
+"backupTransferRetirement20261020": {
+  "baseline": "69671b71",
+  "state": "PARTIAL_OFFLINE_PASS",
+  "rootCause": "backup allocation retained before final authorization returned; revoked documents retain transfer RAM",
+  "fix": "retain attempt ownership until complete withScope delivery; retire document-bound transfers through existing UI callback; active repository work remains tracked",
+  "regression": {
+    "pass": 393,
+    "fail": 0,
+    "skip": 0
+  },
+  "browser": "existing isolated MV3 backup/IDB journey PASS, source unchanged; new lifecycle branches covered by targeted tests",
+  "independentReview": "NOT_RUN_USAGE_LIMIT",
+  "realChatGPT": "NOT_RUN",
+  "logs": [
+    {
+      "file": "vaiwl-backup-retirement-red.log.gz",
+      "sha256": "18f2e320e5d5376547f35b4dde978c6365c507eab54c43579084ac7497bece54"
+    },
+    {
+      "file": "vaiwl-backup-retirement-green.log.gz",
+      "sha256": "fbc1aaa3ce65e0e6ff8e2ab4772de1b82cc2d5506c5ab16349c28d44253bc363"
+    },
+    {
+      "file": "vaiwl-backup-retirement-mv3.json.gz",
+      "sha256": "9157ca2c820442d021e31269b65cdf660259eb397a4d645d50991275dadc33ce"
+    }
+  ]
+},
 "recoveryPlanRetirement20261020": {
   "baseline": "c5fe6ffa",
   "status": "PARTIAL_OFFLINE_NOT_FREE_ACCEPTED",
