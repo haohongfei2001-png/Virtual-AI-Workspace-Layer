@@ -6,11 +6,11 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=code=>Error('loaded-worker-'+code);
 // Inspect an existing isolated worker only. Debugger source is loaded-code
 // evidence, not proof that all module evaluation or application startup finished.
-export async function verifyLoadedWorkerBytes({debugEndpoint,extensionId,packagePath},{Socket,budgetMs=10000}={}){
+export async function verifyLoadedWorkerBytes({debugEndpoint,extensionId,packagePath},{Socket,budgetMs=10000,now=Date.now,sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
  if(!/^[a-p]{32}$/.test(extensionId)||typeof packagePath!=='string'||!Number.isSafeInteger(budgetMs)||budgetMs<10||budgetMs>19000)throw fail('invalid-input');
- const deadline=Date.now()+budgetMs,targetUrl=`chrome-extension://${extensionId}/extension/worker.mjs`;
+ const deadline=now()+budgetMs,targetUrl=`chrome-extension://${extensionId}/extension/worker.mjs`;
  let cdp,sessionId,targetId,timer,revision=0,broken=false,wakeScripts=null;const pending=new Map(),scripts=new Map();let sequence=0;
- const bounded=promise=>{const remaining=deadline-Date.now();return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(fail('deadline')),Math.max(0,remaining));})]).finally(()=>clearTimeout(timer));};
+ const bounded=promise=>{const remaining=deadline-now();return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(fail('deadline')),Math.max(0,remaining));})]).finally(()=>clearTimeout(timer));};
  const rejectPending=()=>{broken=true;wakeScripts?.();for(const request of pending.values())request.reject(fail('target-unavailable'));pending.clear();};
  const receive=e=>{
   if(e.sessionId!==sessionId)return;
@@ -30,15 +30,16 @@ export async function verifyLoadedWorkerBytes({debugEndpoint,extensionId,package
   const paths=manifest.background.type==='module'?['extension/worker.mjs','src/data/schema.mjs','src/b1/scope-repository.mjs']:['extension/worker.mjs','extension/classic-runtime.js'];
   const expected=await bounded(Promise.all(paths.map(async path=>{const url=`chrome-extension://${extensionId}/${path}`;scripts.set(url,[]);return {url,sha256:hash(await readFile(join(packagePath,path)))};})));
   // Reserve transport lifetime for detach after the verification deadline.
-  cdp=await connectJ4Debugger(debugEndpoint,{...(Socket?{Socket}:{}),budgetMs:Math.min(20000,Math.max(1,deadline-Date.now()+500))});
+  cdp=await connectJ4Debugger(debugEndpoint,{...(Socket?{Socket}:{}),budgetMs:Math.min(20000,Math.max(1,deadline-now()+500))});
   const select=async()=>{const {targetInfos}=await cdp.send('Target.getTargets');const matches=targetInfos.filter(row=>row.type==='service_worker'&&row.url===targetUrl);if(matches.length>1)throw fail('multiple-targets');return matches[0]?.targetId??null;};
   // Reload is owned by the caller. Only discover its already-starting worker;
   // no startWorker, evaluation, fetch, or fresh deadline for a retry.
   while(targetId==null){
-   if(Date.now()>=deadline)throw fail('target-absent-deadline');
+   if(now()>=deadline)throw fail('target-absent-deadline');
    targetId=await bounded(select());
-   if(targetId==null)await new Promise(resolve=>setTimeout(resolve,Math.min(50,Math.max(0,deadline-Date.now()))));
+   if(targetId==null)await sleep(Math.min(50,Math.max(0,deadline-now())));
   }
+  if(now()>=deadline)throw fail('deadline');
   ({sessionId}=await bounded(cdp.send('Target.attachToTarget',{targetId,flatten:true})));if(typeof sessionId!=='string'||!sessionId)throw fail('invalid-session');
   cdp.on('Target.receivedMessageFromTarget',receive);cdp.on('Target.detachedFromTarget',detach);cdp.on('Target.targetDestroyed',destroy);cdp.on('transportClosed',rejectPending);
   await bounded(send('Debugger.enable'));
@@ -49,8 +50,8 @@ export async function verifyLoadedWorkerBytes({debugEndpoint,extensionId,package
    const counts=Array.from(scripts.values(),rows=>rows.length);
    if(counts.some(count=>count>1))throw fail('unique-script-required');
    if(counts.every(count=>count===1))break;
-   if(Date.now()>=deadline)throw fail('script-absent-deadline');
-   await new Promise(resolve=>{let waitTimer;const done=()=>{clearTimeout(waitTimer);wakeScripts=null;resolve();};wakeScripts=done;waitTimer=setTimeout(done,Math.min(50,Math.max(0,deadline-Date.now())));});
+   if(now()>=deadline)throw fail('script-absent-deadline');
+   await new Promise(resolve=>{let waitTimer;const done=()=>{clearTimeout(waitTimer);wakeScripts=null;resolve();};wakeScripts=done;waitTimer=setTimeout(done,Math.min(50,Math.max(0,deadline-now())));});
   }
   const snapshot=revision,report=[];
   for(const {url,sha256}of expected){

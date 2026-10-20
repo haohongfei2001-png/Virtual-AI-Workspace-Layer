@@ -288,3 +288,16 @@ test('new-format byte overflow on scrolling never silently discards explicit clo
  assert.equal(saved,before,'oversized new-format save must not replace the prior valid layout');assert.deepEqual(saved.sidebarChoices,[['P1',false]]);assert(f.button('重置本次侧栏开合'));
  const returned=sidebarFixture();const {freeSession,...restore}=saved;assert.equal(returned.nav.restoreFrameView(restore),true);sidebarRoute(returned,'P1');assert.equal(returned.button('侧栏主题 Original P1').getAttribute('aria-expanded'),'false');f.nav.stop();returned.nav.stop();
 });
+test('search preserves IME preedit and queries only committed text once',()=>{
+ const calls=[],f=fixture('workspace',q=>{calls.push(q);return null;});f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});
+ const input=f.pane().querySelector('input'),before=calls.length,preedit='a'.repeat(199)+'中文';
+ input.oncompositionstart?.();input.value=preedit;input.oninput({isComposing:true});
+ assert.equal(input.value,preedit,'preedit must not be truncated by the application');assert.equal(calls.length,before,'preedit is not a committed search query');
+ input.oncompositionend?.();assert.equal(input.value.length,200);assert.equal(calls.length,before+1);assert.equal(calls.at(-1).search.query,preedit.slice(0,200));
+ input.oninput({isComposing:false});assert.equal(calls.length,before+1,'post-composition input cannot duplicate the request');f.nav.stop();
+});
+test('detached search input cannot commit after closing search or switching scope',()=>{
+ for(const action of ['close','scope','stop']){const calls=[],f=fixture('workspace',q=>{calls.push(q);return null;});f.nav.updateFrameProjection(projection());f.nav.present({kind:'search-known'});const old=f.pane().querySelector('input');old.oncompositionstart?.();
+ if(action==='close')f.button('关闭派生查找').click();else if(action==='scope')f.nav.updateFrameProjection({...projection(),scope:'other'});else f.nav.stop();
+ const count=calls.length;old.value='stale';old.oncompositionend?.();old.oninput({isComposing:false});assert.equal(calls.length,count,action);f.nav.stop();}
+});

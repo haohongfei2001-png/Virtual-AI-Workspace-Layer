@@ -17026,5 +17026,39 @@
       "tests": "docs/evidence/free-delivery-2026-10-17/startup-observers-20261020-tests.gz",
       "snippetTrace": "docs/evidence/free-delivery-2026-10-17/startup-observers-20261020-snippetTrace.gz"
     }
+  },
+  "searchComposition20261020": {
+    "baseHead": "96fef922d2d85594bb41952c68a6730502fa8127",
+    "status": "OFFLINE_ENGINEERING",
+    "productFix": "Free search leaves composing text intact, commits bounded query once, and ignores detached/closed/replaced input callbacks. Deferred old query cannot overwrite new composition commit.",
+    "validation": {
+      "targeted": 341,
+      "actualDOM": "PASS synthetic CompositionEvent/InputEvent through real capture/bubble handlers, not physical IME",
+      "build": "PASS HOST_IMPLEMENTATION_UNVERIFIED",
+      "independentReview": "no blocker",
+      "physicalIME": "NOT_RUN"
+    },
+    "testObserverFix": "CI read-count assertion assumes realtime160ms permits2..4 reads. Actual count absent from log. Inject clock/sleep (defaults unchanged), prove exact160ms ordinary4/early5/delayed1 reads. Late target cannot initiate attach past deadline.39 targeted pass.",
+    "priorCI": {
+      "id": 39345152393,
+      "head": "96fef922",
+      "result": "FAIL Node only loaded-worker count; other3 jobs PASS",
+      "snippetPriorFailure": "not reproduced; latest PASS does not establish prior cause",
+      "J1J4": "PARTIAL unchanged"
+    },
+    "hashes": {
+      "src/navigation/navigation.mjs": "621b3b7b1d359f09b1ba1a181336f4125b55ec0b018c51e9ba6069e801450daa",
+      "tests/host/frame-renderer-browser.mjs": "7079b1442193453f3ed8d7efa884dd0d03763f6d0035879e26be4a689485af24",
+      "tests/host/loaded-worker-bytes.mjs": "63c9302e3667628366f96d1858deb1d1c979082f45fe59008957e7226c8a6630",
+      "tests/host/loaded-worker-bytes.test.mjs": "95e7d366dd685a1bb503b5d5952e2a960314fe9195af9924daf3df58014e9fcd"
+    },
+    "files": {
+      "before": "docs/evidence/free-delivery-2026-10-17/search-ime-20261020-before.gz",
+      "targeted": "docs/evidence/free-delivery-2026-10-17/search-ime-20261020-targeted.gz",
+      "dom": "docs/evidence/free-delivery-2026-10-17/search-ime-20261020-dom.gz",
+      "build": "docs/evidence/free-delivery-2026-10-17/search-ime-20261020-build.gz",
+      "clock": "docs/evidence/free-delivery-2026-10-17/search-ime-20261020-clock.gz",
+      "ciFailure": "docs/evidence/free-delivery-2026-10-17/search-ime-20261020-ciFailure.gz"
+    }
   }
 }

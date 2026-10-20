@@ -458,7 +458,16 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         if(!found.total)results.append(node(doc,'p',{role:'status'},'未找到已知记录。可以继续使用原生搜索。'));
         frameListPager(results,'search',found);
       };
-      input.oninput=()=>{advanceNavigationIntent();searchQuery=input.value.slice(0,200);input.value=searchQuery;requestFrameSearch();display();};
+      let inputComposing=false;
+      const commitSearch=()=>{
+        if(stopped||roots?.workspace?.scroller!==page||view.mode!=='workspace'||searchQuery===null)return;
+        const query=input.value.slice(0,200);if(input.value!==query)input.value=query;
+        if(query===searchQuery&&frameSearchOffset===0)return;
+        advanceNavigationIntent();searchQuery=query;requestFrameSearch();display();
+      };
+      input.oncompositionstart=()=>{inputComposing=true;};
+      input.oncompositionend=()=>{inputComposing=false;commitSearch();};
+      input.oninput=event=>{if(inputComposing||event?.isComposing||composing)return;commitSearch();};
       section.append(input,node(doc,'p',{},'查找已知项目、聊天与已保存片段。原生搜索独立保留。'),results);display();page.append(section);
     }else if(frameProjection&&view.worksetOpen){
       const section=node(doc,'section',{class:'search working-set','aria-label':'当前工作集'}),found=frameProjection.workingSet;

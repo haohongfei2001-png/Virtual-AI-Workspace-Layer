@@ -89,6 +89,27 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   await page.waitForFunction(()=>pagerCase.nav.roots().workspace.shadow.querySelector('[data-ref-id="ref48"]'));
   assert.equal(await page.getByRole('button',{name:back,exact:true}).evaluate(n=>n.getRootNode().activeElement===n),true);await page.evaluate(()=>pagerCase.nav.stop());
  }
+ // Synthetic composition events exercise actual DOM handlers, not a physical IME claim.
+ await page.evaluate(async()=>{
+  const {createNavigation}=await import('/src/navigation/navigation.mjs'),calls=[];
+  const empty=()=>({items:[],total:0,offset:0,limit:24,hasMore:false});
+  const dto={protocol:'vaiwl-free-frame/1',role:'workspace',scope:'IME',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:false,maxSegment:0},groups:empty(),entries:{noProject:{...empty(),inventoryTotal:0},unknown:{...empty(),inventoryTotal:0}},selection:null};
+  const nav=createNavigation({document,surface:{role:'workspace',root:document.querySelector('#mount')},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){}},onProjectionRequest:q=>{calls.push(q);return null;}});
+  nav.updateFrameProjection(dto);nav.present({kind:'search-known'});
+  const input=nav.roots().workspace.shadow.querySelector('input'),preedit='a'.repeat(199)+'中文';input.focus();
+  input.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true,composed:true}));input.value=preedit;
+  input.dispatchEvent(new InputEvent('input',{bubbles:true,composed:true,isComposing:true,data:'中文'}));
+  if(input.value!==preedit||calls.length!==1)throw Error('IME preedit changed or queried');
+  nav.updateFrameProjection({...dto,search:{...empty(),query:'',projectId:null}});if(nav.roots().workspace.shadow.querySelector('input')!==input)throw Error('IME input replaced');
+  input.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,composed:true,data:'中文'}));
+  input.dispatchEvent(new InputEvent('input',{bubbles:true,composed:true,isComposing:false}));
+  if(calls.length!==2||calls.at(-1).search.query!==preedit.slice(0,200))throw Error('IME committed query missing or duplicated');
+  await new Promise(resolve=>setTimeout(resolve,0));
+  if(nav.roots().workspace.shadow.querySelector('input')?.value!==preedit.slice(0,200)||calls.length!==2)throw Error('old deferred query replaced committed IME');
+  nav.present({kind:'show-workspace'});const count=calls.length;
+  input.value='old input';input.dispatchEvent(new InputEvent('input',{bubbles:true,composed:true}));input.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,composed:true}));
+  if(calls.length!==count)throw Error('detached IME input queried');nav.stop();
+ });
  // Current project expansion is derived; explicit choices survive frame return.
  await page.evaluate(async()=>{
   const {createNavigation}=await import('/src/navigation/navigation.mjs');

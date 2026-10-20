@@ -5,7 +5,7 @@ import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {verifyLoadedWorkerBytes} from './loaded-worker-bytes.mjs';
 const extensionId='a'.repeat(32),prefix=`chrome-extension://${extensionId}/`,debugEndpoint='ws://127.0.0.1:43210/devtools/browser/isolated';
-async function fixture(t,{module=false,mode='ok'}={}){
+async function fixture(t,{module=false,mode='ok',onTargetRead=()=>{}}={}){
  const packagePath=await mkdtemp(join(tmpdir(),'loaded-worker-bytes-'));t.after(()=>rm(packagePath,{recursive:true,force:true}));
  const sources=new Map((module?['extension/worker.mjs','src/data/schema.mjs','src/b1/scope-repository.mjs']:['extension/worker.mjs','extension/classic-runtime.js']).map((path,index)=>[prefix+path,`// PRIVATE_SOURCE_${index}\nvoid ${index};\n`]));
  await writeFile(join(packagePath,'manifest.json'),JSON.stringify({background:{service_worker:'extension/worker.mjs',...(module?{type:'module'}:{})}}));
@@ -16,7 +16,7 @@ async function fixture(t,{module=false,mode='ok'}={}){
   receive(value){this.dispatchEvent(new MessageEvent('message',{data:JSON.stringify(value)}));}
   send(text){const m=JSON.parse(text);calls.push(m);queueMicrotask(()=>{
    const reply=result=>this.receive({id:m.id,...m.sessionId?{sessionId:m.sessionId}:{},result});
-   if(m.method==='Target.getTargets'){targets++;const target={type:'service_worker',targetId:mode==='replace'&&targets>1?'new':'worker',url:prefix+'extension/worker.mjs'};reply({targetInfos:mode==='absent'||mode==='appear'&&targets===1||mode==='disappear'&&targets>1?[]:mode==='wrong-target'?[{...target,url:prefix+'other.mjs'}]:mode==='duplicate-target'?[target,{...target,targetId:'other'}]:[target]});}
+   if(m.method==='Target.getTargets'){targets++;onTargetRead();const target={type:'service_worker',targetId:mode==='replace'&&targets>1?'new':'worker',url:prefix+'extension/worker.mjs'};reply({targetInfos:mode==='absent'||mode==='appear'&&targets===1||mode==='disappear'&&targets>1?[]:mode==='wrong-target'?[{...target,url:prefix+'other.mjs'}]:mode==='duplicate-target'?[target,{...target,targetId:'other'}]:[target]});}
    else if(m.method==='Target.attachToTarget'){if(mode==='attach-error')this.receive({id:m.id,error:{message:'PRIVATE_ATTACH'}});else reply({sessionId:'session'});}
    else if(m.method==='Debugger.enable'){
     if(mode==='silent')return;
@@ -43,7 +43,7 @@ async function fixture(t,{module=false,mode='ok'}={}){
   });}
   close(){this.closed=true;this.dispatchEvent(new Event('close'));}
  }
- return {run:()=>verifyLoadedWorkerBytes({debugEndpoint,extensionId,packagePath},{Socket,budgetMs:mode==='silent'?20:['wrong-target','absent','missing','foreign-session'].includes(mode)?160:1000}),calls,get socket(){return socket;},sources};
+ return {run:(timing={})=>verifyLoadedWorkerBytes({debugEndpoint,extensionId,packagePath},{Socket,budgetMs:mode==='silent'?20:['wrong-target','absent','missing','foreign-session'].includes(mode)?160:1000,...timing}),calls,get socket(){return socket;},sources};
 }
 for(const module of [false,true])test('verifies exact loaded '+(module?'ESM':'classic')+' bytes and detaches without source in report',async t=>{
  const f=await fixture(t,{module}),result=await f.run();assert.equal(result.targetUrl,prefix+'extension/worker.mjs');assert.equal(result.scripts.length,module?3:2);for(const row of result.scripts){assert.deepEqual(Object.keys(row),['url','expectedSha256','loadedSha256']);assert.equal(row.expectedSha256,row.loadedSha256);assert.match(row.loadedSha256,/^[a-f0-9]{64}$/);}assert(!JSON.stringify(result).includes('PRIVATE'));assert.equal(f.calls.filter(c=>c.method==='Target.detachFromTarget').length,1);assert(f.socket.closed);assert(f.calls.find(c=>c.method==='Target.attachToTarget').params.flatten);assert(!f.calls.some(c=>/evaluate|fetch|resume|startWorker/i.test(c.method)));
@@ -60,7 +60,7 @@ test('initial absent worker appears on read-only retry within original deadline'
  const f=await fixture(t,{mode:'appear'});await f.run();assert.equal(f.calls.filter(c=>c.method==='Target.getTargets').length,3);assert.equal(f.calls.filter(c=>c.method==='Target.attachToTarget').length,1);assert(f.socket.closed);assert(!f.calls.some(c=>/evaluate|fetch|startWorker/i.test(c.method)));
 });
 test('persistently absent worker reaches original deadline without attachment',async t=>{
- const f=await fixture(t,{mode:'absent'}),start=Date.now();await assert.rejects(f.run(),/target-absent-deadline/);assert(Date.now()-start<700);const reads=f.calls.filter(c=>c.method==='Target.getTargets').length;assert(reads>=2&&reads<=4);assert(!f.calls.some(c=>c.method==='Target.attachToTarget'));assert(f.socket.closed);
+ let now=0;const waits=[],f=await fixture(t,{mode:'absent'});await assert.rejects(f.run({now:()=>now,sleep:async ms=>{waits.push(ms);now+=ms;}}),/target-absent-deadline/);assert.equal(now,160);assert.deepEqual(waits,[50,50,50,10]);assert.equal(f.calls.filter(c=>c.method==='Target.getTargets').length,4);assert(!f.calls.some(c=>c.method==='Target.attachToTarget'));assert(f.socket.closed);
 });
 test('multiple targets fail on first discovery without retry',async t=>{
  const f=await fixture(t,{mode:'duplicate-target'});await assert.rejects(f.run(),/multiple-targets/);assert.equal(f.calls.filter(c=>c.method==='Target.getTargets').length,1);assert(f.socket.closed);
@@ -77,4 +77,20 @@ test('missing script reports bounded fixed path counts at original deadline',asy
 });
 for(const mode of ['delayed-duplicate','delayed-detach'])test(mode+' rejects while waiting without reading source',async t=>{
  const f=await fixture(t,{mode});await assert.rejects(f.run(),mode==='delayed-duplicate'?/unique-script-required/:/target-unavailable/);assert(!f.calls.some(c=>c.method==='Debugger.getScriptSource'));assert(f.socket.closed);assert.equal(f.calls.filter(c=>c.method==='Target.detachFromTarget').length,1);
+});
+
+test('discovery delayed to original deadline cannot demand another observation or attach',async t=>{
+ let now=0;const waits=[],f=await fixture(t,{mode:'absent',onTargetRead:()=>{now=160;}});
+ await assert.rejects(f.run({now:()=>now,sleep:async ms=>{waits.push(ms);now+=ms;}}),/target-absent-deadline/);
+ assert.equal(now,160);assert.deepEqual(waits,[0]);assert.equal(f.calls.filter(c=>c.method==='Target.getTargets').length,1);assert(!f.calls.some(c=>c.method==='Target.attachToTarget'));assert(f.socket.closed);
+});
+test('early final timer wake can observe again without extending the same deadline',async t=>{
+ let now=0;const waits=[],f=await fixture(t,{mode:'absent'});
+ await assert.rejects(f.run({now:()=>now,sleep:async ms=>{waits.push(ms);now+=ms===10?9:ms;}}),/target-absent-deadline/);
+ assert.equal(now,160);assert.deepEqual(waits,[50,50,50,10,1]);assert.equal(f.calls.filter(c=>c.method==='Target.getTargets').length,5);assert(!f.calls.some(c=>c.method==='Target.attachToTarget'));assert(f.socket.closed);
+});
+test('target arriving at the deadline is not attached after budget consumption',async t=>{
+ let now=0;const f=await fixture(t,{onTargetRead:()=>{now=160;}});
+ await assert.rejects(f.run({budgetMs:160,now:()=>now}),/loaded-worker-deadline/);
+ assert.equal(f.calls.filter(c=>c.method==='Target.getTargets').length,1);assert(!f.calls.some(c=>c.method==='Target.attachToTarget'));assert(f.socket.closed);
 });
