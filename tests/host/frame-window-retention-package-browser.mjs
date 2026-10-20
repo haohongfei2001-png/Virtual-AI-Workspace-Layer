@@ -38,7 +38,7 @@ else{
    if(location.protocol!=='chrome-extension:'||!globalThis.chrome?.runtime?.sendMessage)return;
    const send=chrome.runtime.sendMessage.bind(chrome.runtime);
    chrome.runtime.sendMessage=function(...args){const m=args[0],tracked=['HOST_UI_VIEW','HOST_UI_RESUME','HOST_UI_SAVE_VIEW','HOST_UI_DISPATCH_CURRENT','HOST_UI_DISPATCH_NATIVE','HOST_UI_PRESENT'].includes(m?.type),pending=send(...args);
-    if(tracked&&pending?.then)pending.then(r=>{const p=r?.page;globalThis.observeWindowReturn({type:m.type,query:m.query,expectedQuery:m.expectedQuery,capacities:m.view?.capacities,ok:r?.ok,state:r?.state,presentation:p?.presentation??r?.presentation,resume:r?.resume,counts:p?{search:!!p.search,workingSet:!!p.workingSet,groups:p.groups?.items.map(g=>({id:g.id,unknown:g.lists.unknown.items.length})),unknown:p.entries?.unknown.items.length,selection:p.selection?{groupId:p.selection.groupId,list:p.selection.list,limit:p.selection.limit}:null}:null});},()=>{});
+    if(tracked&&pending?.then)pending.then(r=>{const p=r?.page;globalThis.observeWindowReturn({type:m.type,query:m.query,expectedQuery:m.expectedQuery,capacities:m.view?.capacities,scroll:m.view?.scroll,ok:r?.ok,state:r?.state,presentation:p?.presentation??r?.presentation,resume:r?.resume,counts:p?{search:!!p.search,workingSet:!!p.workingSet,groups:p.groups?.items.map(g=>({id:g.id,unknown:g.lists.unknown.items.length})),unknown:p.entries?.unknown.items.length,selection:p.selection?{groupId:p.selection.groupId,list:p.selection.list,limit:p.selection.limit}:null}:null});},()=>{});
     return pending;
    };
   });
@@ -77,6 +77,7 @@ else{
   await projectList.getByRole('button',{name:'显示更多待核对窗口',exact:true}).click();await waitRows(`.card[data-theme-id="${project}"] .members`,17);
   await unknown.getByRole('button',{name:'显示更多归属待核对',exact:true}).click();await waitRows('section[data-free-list="unknown"]',17);
   const title=await projectList.locator('a[data-ref-id]').first().locator('.window-title').innerText();
+  const mainScroll=await workspace.locator('.workspace').evaluate(async n=>{n.scrollTop=150;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return n.scrollTop;});assert(mainScroll>0,'actual main workspace must be scrollable');report.mainScrollBeforeSearch=mainScroll;
   const sidebar=page.frames().find(f=>f.url()===`chrome-extension://${extensionId}/sidebar.html`);assert(sidebar);
   await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
   await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(title);
@@ -88,6 +89,7 @@ else{
   await waitRows(`.card[data-theme-id="${project}"] .members`,17);await waitRows('section[data-free-list="unknown"]',17);
   assert.deepEqual(await ids(projectList),first);assert.deepEqual(await ids(unknown),second);
   assert.equal(context.pages().length,pageCount);assert(await originalPage.evaluate(()=>document===paginationDocument&&document.querySelector('textarea')===paginationEditor&&paginationEditor.value==='preserved pagination draft'));
+  report.mainScrollAfterSearch=await workspace.locator('.workspace').evaluate(n=>n.scrollTop);assert.equal(report.mainScrollAfterSearch,mainScroll,'search/read/return retains main scroll');
   report.searchReturn={alreadyCurrentOriginalTarget:true,uniqueReturn:true,projectRows:17,unknownRows:17,originalProjectDraftPreserved:true};
   assert(await page.evaluate(()=>document===paginationDocument&&document.querySelector('textarea')===paginationEditor&&paginationEditor.value==='preserved search draft'));assert.equal(page.url(),target);assert.deepEqual(report.errors,[]);
   // Different-target native SPA navigation must also retain the same bounded

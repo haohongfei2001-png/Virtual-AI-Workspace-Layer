@@ -110,6 +110,18 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   input.value='old input';input.dispatchEvent(new InputEvent('input',{bubbles:true,composed:true}));input.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,composed:true}));
   if(calls.length!==count)throw Error('detached IME input queried');nav.stop();
  });
+ // Returning from a short special view must retain the main workspace position.
+ await page.evaluate(async()=>{
+  const {createNavigation}=await import('/src/navigation/navigation.mjs');
+  const empty=()=>({items:[],total:0,offset:0,limit:5,hasMore:false});
+  const groups=Array.from({length:12},(_,g)=>({id:'G'+g,name:'Group '+g,nativeName:'Group '+g,lists:{current:{...empty(),items:Array.from({length:17},(_,i)=>({id:'R'+g+'_'+i,nativeTitle:'Row '+i,displayTitle:'Row '+i,nativeUrl:'https://chatgpt.com/c/R'+g+'_'+i,membership:'PROJECT',projectId:'G'+g,segment:0})),total:17,limit:17},old:empty(),unknown:empty()}}));
+  const dto={protocol:'vaiwl-free-frame/1',role:'workspace',scope:'scroll',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:false,maxSegment:0},groups:{...empty(),items:groups,total:12,limit:24},entries:{noProject:{...empty(),inventoryTotal:0},unknown:{...empty(),inventoryTotal:0}},selection:null};
+  let releaseMain,holdMain=false;const nav=createNavigation({document,surface:{role:'workspace',root:document.querySelector('#mount')},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){}},onProjectionRequest:q=>q.search?{...dto,groups:{...dto.groups,items:[],total:0},search:{...q.search,items:[],total:0,hasMore:false}}:holdMain?new Promise(resolve=>{releaseMain=()=>resolve(dto);}):dto});
+  const paint=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  nav.updateFrameProjection(dto);nav.showWorkspace();await paint();let scroller=nav.roots().workspace.scroller;scroller.scrollTop=900;await paint();const original=scroller.scrollTop;if(original<500)throw Error('fixture workspace not scrollable');
+  nav.present({kind:'search-known'});await paint();if(nav.roots().workspace.scroller.scrollTop!==0)throw Error('fixture search not short');
+  holdMain=true;nav.enterReading();nav.showWorkspace();await paint();if(nav.view().scroll!==original)throw Error('pending main VIEW overwrote saved scroll');releaseMain();await paint();if(nav.roots().workspace.scroller.scrollTop!==original)throw Error('special view lost main workspace scroll: '+nav.roots().workspace.scroller.scrollTop+' expected '+original);nav.stop();
+ });
  // Current project expansion is derived; explicit choices survive frame return.
  await page.evaluate(async()=>{
   const {createNavigation}=await import('/src/navigation/navigation.mjs');

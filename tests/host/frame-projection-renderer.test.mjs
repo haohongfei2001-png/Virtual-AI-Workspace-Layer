@@ -301,3 +301,19 @@ test('detached search input cannot commit after closing search or switching scop
  if(action==='close')f.button('关闭派生查找').click();else if(action==='scope')f.nav.updateFrameProjection({...projection(),scope:'other'});else f.nav.stop();
  const count=calls.length;old.value='stale';old.oncompositionend?.();old.oninput({isComposing:false});assert.equal(calls.length,count,action);f.nav.stop();}
 });
+for(const kind of ['search','workingSet'])test(kind+' scrolling cannot overwrite main return layout and transient position survives refresh',()=>{
+ let saved;const f=fixture('workspace',()=>null,null,null,{}, {onViewChange:v=>{saved=v;}});f.nav.updateFrameProjection(projection());f.nav.showWorkspace();f.nav.roots().workspace.scroller.scrollTop=900;
+ f.nav.present({kind:kind==='search'?'search-known':'show-working-set'});let page=f.nav.roots().workspace.scroller;assert.equal(page.scrollTop,0);page.scrollTop=75;for(const fn of page.events.scroll??[])fn({});assert.equal(saved.scroll,900);
+ const dto=kind==='search'?searchReply({query:'',projectId:null,offset:0,limit:24},[],0):{...projection(),workingSet:{items:[],offset:0,limit:24,total:0,hasMore:false,currentRefId:null}};
+ f.nav.updateFrameProjection(dto);assert.equal(f.nav.roots().workspace.scroller.scrollTop,75);assert.equal(saved.scroll,900);
+ const {freeSession,...layout}=saved;f.nav.enterReading();f.nav.showWorkspace();assert.equal(f.nav.roots().workspace.scroller.scrollTop,900);
+ const restored=fixture();restored.nav.restoreFrameView(layout);restored.nav.updateFrameProjection(projection());restored.nav.showWorkspace();assert.equal(restored.nav.roots().workspace.scroller.scrollTop,900);
+ f.nav.updateFrameProjection({...projection(),scope:'other'});assert.equal(f.nav.roots().workspace.scroller.scrollTop,0);f.nav.stop();restored.nav.stop();
+});
+for(const kind of ['main','search','workingSet'])test('new frame initializes visible-mode bookkeeping without discarding '+kind+' query',()=>{
+ const calls=[],f=fixture('workspace',q=>{calls.push(q);return null;});
+ const dto=kind==='search'?searchReply({query:'kept',projectId:null,offset:0,limit:24},[],0):kind==='workingSet'?{...projection(),workingSet:{items:[],offset:0,limit:24,total:0,hasMore:false,currentRefId:null}}:projection();
+ f.nav.updateFrameProjection(dto);assert.equal(f.nav.view().mode,'workspace');assert.deepEqual(calls,[]);assert.deepEqual(f.intents,[]);
+ if(kind==='search')assert.equal(f.pane().querySelector('input').value,'kept');if(kind==='workingSet')assert.equal(f.nav.view().worksetOpen,true);
+ f.nav.enterReading(false);f.nav.updateFrameProjection(dto);assert.equal(f.nav.view().mode,'reading');f.nav.stop();
+});

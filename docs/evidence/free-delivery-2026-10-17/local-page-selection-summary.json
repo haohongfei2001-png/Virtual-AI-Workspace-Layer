@@ -17060,5 +17060,50 @@
       "clock": "docs/evidence/free-delivery-2026-10-17/search-ime-20261020-clock.gz",
       "ciFailure": "docs/evidence/free-delivery-2026-10-17/search-ime-20261020-ciFailure.gz"
     }
+  },
+  "workspaceScrollReturn20261020": {
+    "baseline": "4c6ec717",
+    "result": "OFFLINE_MV3_WINDOW_RETENTION_PASS_NOT_FREE_ACCEPTED",
+    "fixes": [
+      "separate transient special scroll from main layout",
+      "ignore main placeholder clamp while owner projection pending",
+      "initialize new framed scope in workspace mode without replaying presentation or resetting restored special query"
+    ],
+    "evidence": {
+      "vaiwl-special-scroll-before.log": {
+        "file": "vaiwl-special-scroll-before.log-20261020.gz",
+        "sha256": "f43c452509a35accf68ec87cb0839e296a18c57419ee82615e3e7ea48a1dacf2"
+      },
+      "vaiwl-scroll-fix-mv3.json": {
+        "file": "vaiwl-scroll-fix-mv3.json-20261020.gz",
+        "sha256": "61b8337fa9a3fd2c33c476236676b5c5e9990f25c4c7028bb08221cdab0d4319"
+      },
+      "vaiwl-scroll-initial-mv3.json": {
+        "file": "vaiwl-scroll-initial-mv3.json-20261020.gz",
+        "sha256": "6fd093dce9a766f04f9c76f0557f5cbdf5fe71778b239cf672e6b0c990b1e677"
+      },
+      "vaiwl-scroll-final-mv3.json": {
+        "file": "vaiwl-scroll-final-mv3.json-20261020.gz",
+        "sha256": "be23fe042765659d743d9cffe190f750b49faaeb95927317a217c8b3747b8cff"
+      },
+      "vaiwl-scroll-final-dom.log": {
+        "file": "vaiwl-scroll-final-dom.log-20261020.gz",
+        "sha256": "50fd41dab321759eb2237b996eae4cdd9b725315f5f75505280b9605ad06aa7b"
+      },
+      "vaiwl-scroll-final2-regression.log": {
+        "file": "vaiwl-scroll-final2-regression.log-20261020.gz",
+        "sha256": "fb54cefc4299ba3d38dc2df1462448c9341ecca534bccd7989efef0fba6dfa3f"
+      },
+      "vaiwl-scroll-initial-final-unit.log": {
+        "file": "vaiwl-scroll-initial-final-unit.log-20261020.gz",
+        "sha256": "d4e19f3c5fbd2ffcef38adae7696671b15f0456e97142c95752f7cebd004a69c"
+      }
+    },
+    "limits": [
+      "real identity and full native directory unproved",
+      "physical IME NOT_RUN",
+      "10k/100k DEFERRED",
+      "CI39346016577 J1 failure remains open; Node changed-query fixture corrected"
+    ]
   }
 }

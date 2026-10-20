@@ -174,7 +174,17 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     container.style.position='relative';container.style.display='block';container.style.height=Math.max(...tops)+'px';scroller.scrollTop=scroll;
   }
   function emitView(){const metadata=framed&&view?sidebarChoiceMetadata():{};if(metadata===null){const notify=!sidebarLimited.has(view);sidebarLimited.add(view);if(notify)render();return;}if(view&&snapshot)onViewChange({segment:view.segment,oldOpen:[...view.oldOpen],sidebarOpen:[...view.sidebarOpen],...metadata,capacities:[...view.capacities],scroll:view.scroll,sidebarScroll:view.sidebarScroll??0,sidebarVisible:view.sidebarVisible,...(free()&&snapshot.viewSession?{freeSession:snapshot.viewSession}:{})},snapshot.scope,...(framed?[{role:surface.role}]:[]));}
-  function remember(){if(view&&roots)view.sidebarScroll=roots.sidebar?.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;if(view?.mode==='workspace'&&roots?.workspace?.scroller&&roots.workspace.n.style.display!=='none')view.scroll=roots.workspace.scroller.scrollTop;}
+  // Main-list return layout must not be overwritten by a short search/workset.
+  // Special scrolling is bounded to one transient presentation per scoped view.
+  const workspacePages=new WeakMap(),specialScroll=new WeakMap();
+  function rememberWorkspaceScroll(page){
+    const state=workspacePages.get(page);if(state&&state.view!==view)return;
+    if(state&&state.specialKey!==null)specialScroll.set(view,{key:state.specialKey,scroll:page.scrollTop});
+    // A returning main page still contains the short special DTO until its
+    // owner VIEW arrives. Browser clamping here is not a user scroll choice.
+    else if(view&&!(frameProjection&&frameWindowsSuspended))view.scroll=page.scrollTop;
+  }
+  function remember(){if(view&&roots)view.sidebarScroll=roots.sidebar?.shadow.querySelector('.themes')?.scrollTop??view.sidebarScroll??0;if(view?.mode==='workspace'&&roots?.workspace?.scroller&&roots.workspace.n.style.display!=='none')rememberWorkspaceScroll(roots.workspace.scroller);}
   function calibrationEntry(){if(!free()||!roots)return;const objectIds=view.segment===0?['inventory']:[...new Set([...(roots.workspace?.shadow.querySelectorAll('[data-ref-id]')??[])].map(n=>n.dataset.refId))].slice(0,64);onCalibrationEntry({kind:view.segment===0?'foreground':'history',objectIds:objectIds.length?objectIds:['inventory']});}
   function showWorkspace(notify=true){if(!view)return;advanceNavigationIntent(true);if(!framed)captureFocus();remember();const resetFrame=frameProjection&&(view.worksetOpen||searchQuery!==null||frameWindowsSuspended);view.mode='workspace';view.worksetOpen=false;searchQuery=null;searchTheme=null;if(resetFrame){projectionRequest++;requestFrame();}render();layout();queueMicrotask(()=>roots?.workspace?.shadow.querySelector('.workspace')?.focus({preventScroll:true}));if(view.segment===0)onCurrentWorkspaceEntry();calibrationEntry();if(framed&&notify)onPresentationRequest({kind:'show-workspace'});}
   function enterReading(notify=true){if(!view)return;advanceNavigationIntent();remember();clearTimePolicyNotice();view.mode='reading';searchQuery=null;searchTheme=null;layout();if(framed&&notify)onPresentationRequest({kind:'enter-reading'});}
@@ -410,7 +420,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const independent=current().independent;if(independent&&!frameProjection){const context=node(doc,'div',{class:'current-context'});context.append(row(independent));list.append(context);}if(free()){appendFreeList(list,'noProject',0,true);appendFreeList(list,'unknown',0,true);}if(frameProjection)appendCurrentContext(list);panel.append(list);side.append(panel);list.scrollTop=view.sidebarScroll??0;list.addEventListener('scroll',()=>{if(view){view.sidebarScroll=list.scrollTop;emitView();}},{passive:true});sidebarKey=nextSidebarKey;sidebarDirty=false;locateCurrent();
     }
     if(!roots.workspace){restoreOwnedFocus(focused);emitView();return;}
-    const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-focus-key':'workspace','data-segment':String(view.segment)});roots.workspace.scroller=page;page.addEventListener('scroll',()=>{if(roots?.workspace?.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){view.scroll=page.scrollTop;emitView();}},{passive:true});
+    const shadow=roots.workspace.shadow;const prior=shadow.querySelector('.workspace');if(prior)prior.remove();const page=node(doc,'div',{class:'workspace',tabindex:'-1','aria-label':'主题工作区','data-focus-key':'workspace','data-segment':String(view.segment)});roots.workspace.scroller=page;const specialKey=frameProjection?(searchQuery!==null?JSON.stringify(['search',searchQuery,searchTheme,frameSearchOffset]):view.worksetOpen?JSON.stringify(['workingSet',frameWorkingSetOffset]):null):null;workspacePages.set(page,{view,specialKey});page.addEventListener('scroll',()=>{if(roots?.workspace?.scroller===page&&view.mode==='workspace'&&roots.workspace.n.style.display!=='none'){rememberWorkspaceScroll(page);emitView();}},{passive:true});
     renderNavigationFeedback(page);
     const currentSlot=frameProjection&&searchQuery===null&&!view.worksetOpen?node(doc,'div',{}):null;if(currentSlot)page.append(currentSlot);
     if(frameProjection&&surface.role==='workspace'){
@@ -503,7 +513,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
       if(!frameProjection&&!cards.children.length&&(!free()||!freeListRows(snapshot,'noProject',view.segment).length&&!freeListRows(snapshot,'unknown',view.segment).length)){const empty=node(doc,'div',{class:'empty'});empty.innerHTML=gridIcon;empty.append(node(doc,'strong',{},'这里还没有活跃主题'),node(doc,'p',{},'可切换区间，或查找已有窗口。'),button('查找已知主题与窗口',()=>findKnown(),'查找窗口','more'));cards.append(empty);}page.append(cards);if(frameProjection){if(frameProjection.groups.offset>0)page.append(button('返回前页项目',()=>requestFrame({offset:Math.max(0,frameProjection.groups.offset-frameProjection.groups.limit)}),'上一页项目','more'));if(frameProjection.groups.hasMore)page.append(button('显示更多项目',()=>requestFrame({offset:frameProjection.groups.offset+frameProjection.groups.limit}),'显示更多项目','more'));}if(free()){appendFreeList(page,'noProject',view.segment);appendFreeList(page,'unknown',view.segment);}
     }
     if(currentSlot){const ref=current().ref;if(ref&&!Array.from(page.querySelectorAll('[data-ref-id]')).some(n=>n.getAttribute('data-ref-id')===ref.id))appendCurrentContext(currentSlot);else currentSlot.remove();}
-    shadow.append(page);layoutCards();page.scrollTop=view.scroll;restoreOwnedFocus(focused);emitView();
+    shadow.append(page);layoutCards();page.scrollTop=specialKey===null?view.scroll:specialScroll.get(view)?.key===specialKey?specialScroll.get(view).scroll:0;restoreOwnedFocus(focused);emitView();
   }
   function applyUpdate(value,now,timeZone,preparedIndex=null,alreadyPrepared=false){
     if(stopped)return;
@@ -549,7 +559,11 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     // Presentation-only metadata. This intentionally has no complete refs/index
     // and never enters the prepared Free snapshot or full-snapshot update path.
     snapshot={scope:copy.scope,viewMode:'free',viewSession:copy.viewSession,preferences:{}};
-    if(!views.has(copy.scope))views.set(copy.scope,initialView());view=views.get(copy.scope);if(resumeLayout&&resumeLayout.segment===copy.segment){Object.assign(view,{...resumeLayout,oldOpen:new Set(resumeLayout.oldOpen),sidebarOpen:new Set(resumeLayout.sidebarOpen),capacities:new Map(resumeLayout.capacities)});sidebarChoices.set(view,new Map(resumeLayout.sidebarChoices??resumeLayout.sidebarOpen.map(id=>[id,true])));if(!Object.hasOwn(resumeLayout,'sidebarChoices'))sidebarLegacy.add(view);else sidebarLegacy.delete(view);}resumeLayout=null;view.segment=copy.segment;if(scopeChanged){view.worksetOpen=!!copy.workingSet;if(copy.workingSet)frameWorkingSetOffset=copy.workingSet.offset;if(copy.search){searchQuery=copy.search.query;searchTheme=copy.search.projectId;frameSearchOffset=copy.search.offset;}}
+    // A mounted frame is the workspace presentation; the owner controls its visibility.
+    // Initialize its mode without replaying revision-zero show-workspace, which
+    // would discard an owner-restored search or working-set query.
+    if(!views.has(copy.scope))views.set(copy.scope,{...initialView(),mode:'workspace'});view=views.get(copy.scope);if(resumeLayout&&resumeLayout.segment===copy.segment){Object.assign(view,{...resumeLayout,oldOpen:new Set(resumeLayout.oldOpen),sidebarOpen:new Set(resumeLayout.sidebarOpen),capacities:new Map(resumeLayout.capacities)});sidebarChoices.set(view,new Map(resumeLayout.sidebarChoices??resumeLayout.sidebarOpen.map(id=>[id,true])));if(!Object.hasOwn(resumeLayout,'sidebarChoices'))sidebarLegacy.add(view);else sidebarLegacy.delete(view);}resumeLayout=null;view.segment=copy.segment;if(scopeChanged){view.worksetOpen=!!copy.workingSet;if(copy.workingSet)frameWorkingSetOffset=copy.workingSet.offset;if(copy.search){searchQuery=copy.search.query;searchTheme=copy.search.projectId;frameSearchOffset=copy.search.offset;}}
+    if(windowContextChanged)specialScroll.delete(view);
     if(windowContextChanged)for(const key of [...view.capacities.keys()])if(key.startsWith(windowPrefix))view.capacities.delete(key);
     // Special-page DTOs omit expanded card rows. Their background reading
     // refresh must not turn those defaults into a new user capacity choice.
