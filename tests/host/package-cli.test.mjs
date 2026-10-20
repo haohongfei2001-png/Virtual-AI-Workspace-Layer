@@ -21,3 +21,14 @@ test('original build and explicit verify support spaces; verify is read-only and
  const missing=join(dir,'missing');assert.notEqual(run(dir,['--verify',missing]).status,0);assert.equal(existsSync(missing),false);
  const target=join(info.unpacked,'README.txt');writeFileSync(target,readFileSync(target,'utf8')+'tampered');const damaged=snapshot(output);const rejected=run(dir,['--verify',info.unpacked]);assert.notEqual(rejected.status,0);assert.match(rejected.stderr,/host-package-hash-mismatch/);assert.deepEqual(snapshot(output),damaged);
 });
+const buildCLI=fileURLToPath(new URL('../../extension/build.mjs',import.meta.url));
+const buildRun=(cwd,args)=>spawnSync(process.execPath,[buildCLI,...args],{cwd,encoding:'utf8',timeout:30000});
+test('unpacked builder help and invalid arguments cannot silently build',t=>{
+ const dir=root(t),help=buildRun(dir,['--help']);assert.equal(help.status,0);assert.match(help.stdout,/NEW/);assert.deepEqual(readdirSync(dir),[]);
+ for(const args of [[],['--offline'],['--verify','missing'],['--help','extra'],['out','extra'],[' ']]){assert.notEqual(buildRun(dir,args).status,0,JSON.stringify(args));assert.deepEqual(readdirSync(dir),[]);}
+});
+test('unpacked single-path builder preserves safe defaults and existing-directory refusal',t=>{
+ const dir=root(t),out=join(dir,'unpacked with spaces'),result=buildRun(dir,[out]);assert.equal(result.status,0,result.stderr);assert.equal(JSON.parse(result.stdout).contextSelection,'UNVERIFIED_FAIL_CLOSED');const before=snapshot(out);
+ const verified=run(dir,['--verify',out]);assert.equal(verified.status,0,verified.stderr);assert.equal(JSON.parse(verified.stdout).releaseStatus,'NOT_RELEASE_READY');assert.deepEqual(snapshot(out),before);
+ assert.notEqual(buildRun(dir,[out]).status,0);assert.deepEqual(snapshot(out),before);
+});

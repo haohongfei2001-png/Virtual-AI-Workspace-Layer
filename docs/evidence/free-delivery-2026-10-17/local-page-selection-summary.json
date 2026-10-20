@@ -1,4 +1,31 @@
 {
+"buildCLIArguments20261020": {
+  "baseline": "b5e72064ddbce0aaa463e3298286af612014631d",
+  "red": {
+    "pass": 3,
+    "fail": 1
+  },
+  "targeted": {
+    "pass": 200,
+    "fail": 0,
+    "skip": 0
+  },
+  "files": {
+    "red": {
+      "path": "local-build-cli-red.log.gz",
+      "sha256": "44ad20bbda5144cd794d9679fe2b3406cca1c421ad406db10083cc5428adbb82"
+    },
+    "green": {
+      "path": "local-build-cli-green.log.gz",
+      "sha256": "f6760e9614b0f61ba6d1dbaec227eed4d68a6cc649f0d189eda9ebc4888f9776"
+    }
+  },
+  "sourceHashes": {
+    "extension/build.mjs": "5d9baf6ddf3dc3771882d116c4888db67abf7a418c747052048fd0630c924949",
+    "README.md": "243258cac791752cb54c51c72da184441c4073bc04e64fd0e45bab3844210fd9",
+    "tests/host/package-cli.test.mjs": "6c9503f6d91989a23a17f99dc011a3ce28ef9510d11cb908212593fdb95b77ad"
+  }
+},
 "packageVerifyCLI20261020": {
   "baseline": "8a9ef9a01dc331c7230c68d00d9f8c535224f7fb",
   "kind": "F3_PACKAGE_TOOL_ARGUMENT_SAFETY",

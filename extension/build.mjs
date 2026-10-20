@@ -46,4 +46,9 @@ export function buildHost(output,{offlineOrigin=null,offlineSnippets=false,offli
  const info={schema:'vaiwl-host-build-v1',status:offlineOrigin===null?'HOST_IMPLEMENTATION_UNVERIFIED':'OFFLINE_HOST_RECONSTRUCTION',releaseStatus:'NOT_RELEASE_READY',realChatGPT:'NOT_RUN',origin,...(temporaryReadOnly?{temporaryReadOnly:true}:{}),...(observedChatGPTContext?{observedChatGPTContext:true}:{}),...(offlineOldSendTerminal?{offlineOldSendTerminal:true}:{}),...(offlineExistingSend?{offlineExistingSend:true}:{}),...(offlineHistory?{offlineHistory:true}:{}),...(offlineFirstSend?{offlineFirstSend:true}:{}),...(offlineContext?{offlineContext:true}:{}),...(offlineProjectContext?{offlineProjectContext:true}:{}),...(offlineObservedProjectLayout?{offlineObservedProjectLayout:true}:{}),...(offlineSnippets?{offlineSnippets:true}:{}),contextSelection:temporaryReadOnly?'TEMPORARY_DOCUMENT_NAVIGATION_NO_SCOPE':observedChatGPTContext?'OBSERVED_C2_CANDIDATE_NOT_VERIFIED':offlineProjectContext?'EXPLICIT_OFFLINE_C2_PROJECT_CONVERSATION':offlineContext?'EXPLICIT_OFFLINE_C2_CONVERSATION':offlineOrigin===null?'UNVERIFIED_FAIL_CLOSED':'EXPLICIT_OFFLINE_C3',sourceHashes:Object.fromEntries([...sources].map(([path,source])=>[path,hash(source)])),files:Object.fromEntries([...files].map(([path,source])=>[path,hash(source)]))};
  writeFileSync(resolve(out,'build-manifest.json'),json(info));return info;
 }
-if(process.argv[1]===fileURLToPath(import.meta.url)){if(!process.argv[2])throw Error('Pass a NEW dedicated output directory');console.log(json(buildHost(process.argv[2])));}
+if(process.argv[1]===fileURLToPath(import.meta.url)){
+ const args=process.argv.slice(2);
+ if(args.length===1&&args[0]==='--help')console.log('Usage: node extension/build.mjs <NEW-output-directory>\nTo verify an existing directory, use node extension/package.mjs --verify <directory>.');
+ else if(args.length===1&&args[0].trim().length>0&&!args[0].startsWith('-'))console.log(json(buildHost(args[0])));
+ else throw Error('invalid-host-build-arguments: use --help');
+}
