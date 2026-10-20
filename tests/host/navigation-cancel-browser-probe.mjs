@@ -14,7 +14,7 @@ export async function probeNavigationCancellation({context,page,workspace,result
   await result.click({timeout:remaining()});await wait(()=>evaluate('cancelProbe.held'));
   assert.equal(await evaluate('cancelProbe.replyOK'),true,'hold a successful real authorization, not a synthetic reply');
   const search=workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true});
-  if(intent==='return')await page.getByRole('button',{name:'返回工作空间',exact:true}).click({timeout:remaining()});else await search.fill(title+' cancellation',{timeout:remaining()});
+  if(intent==='return')await page.getByRole('button',{name:'返回工作空间',exact:true}).click({timeout:remaining()});else {await search.fill(title+' cancellation',{timeout:remaining()});if(intent==='panel'){await workspace.getByRole('button',{name:'工作空间设置',exact:true}).click({timeout:remaining()});await workspace.getByRole('button',{name:'备份与导入',exact:true}).click({timeout:remaining()});await workspace.getByRole('button',{name:'返回工作空间',exact:true}).click({timeout:remaining()});}}
   await wait(()=>trace.slice(start).some(e=>e.type==='HOST_UI_CANCEL_NAVIGATION'&&e.ok===true&&e.state==='cancelled'));
   await evaluate('cancelProbe.release()');
   await wait(()=>trace.slice(start).some(e=>e.type===dispatchType));
@@ -22,9 +22,9 @@ export async function probeNavigationCancellation({context,page,workspace,result
   const cancellations=trace.slice(start).filter(e=>e.type==='HOST_UI_CANCEL_NAVIGATION');assert.equal(cancellations.length,1);
   const held=await evaluate('({actionId:cancelProbe.actionId,targetKey:cancelProbe.targetKey})');assert.equal(typeof held.actionId,'string');assert.equal(typeof held.targetKey,'string');for(const entry of [dispatch[0],cancellations[0]]){assert.equal(entry.actionId,held.actionId);assert.equal(entry.targetKey,held.targetKey);}
   assert.equal(page.url(),url);assert.equal(context.pages().length,pages);assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),0);
-  if(intent==='query'){assert.equal(await search.inputValue({timeout:remaining()}),title+' cancellation');assert.equal(await search.isVisible(),true,'latest workspace search stays visibly available');}else assert.equal(await workspace.locator('.workspace').isVisible(),true,'returned workspace stays visible');
+  if(intent!=='return'){assert.equal(await search.inputValue({timeout:remaining()}),title+' cancellation');assert.equal(await search.isVisible(),true,'latest workspace search stays visibly available');if(intent==='panel')await wait(()=>workspace.locator('.workspace').evaluate(node=>node.getRootNode().activeElement===node));}else assert.equal(await workspace.locator('.workspace').isVisible(),true,'returned workspace stays visible');
   assert(await page.evaluate(value=>document===paginationDocument&&document.querySelector('textarea')===paginationEditor&&paginationEditor.value===value,draft));
   assert(Date.now()<until,'complete cancellation observation must fit original six seconds');
-  return {state:'PASS',realAuthorizationHeld:true,cancelAcknowledged:true,lateReplyDidNotEnterReading:true,originalDocumentEditorDraft:true,oneDispatch:true,oneCancellation:true,elapsedMs:6000-(until-Date.now()),scope:intent==='return'?'OFFLINE_MV3_NATIVE_RETURN_SUBCHAIN_ONLY':'OFFLINE_MV3_SAME_TARGET_SUBCHAIN_ONLY'};
+  return {state:'PASS',realAuthorizationHeld:true,cancelAcknowledged:true,lateReplyDidNotEnterReading:true,originalDocumentEditorDraft:true,oneDispatch:true,oneCancellation:true,elapsedMs:6000-(until-Date.now()),scope:intent==='return'?'OFFLINE_MV3_NATIVE_RETURN_SUBCHAIN_ONLY':intent==='panel'?'OFFLINE_MV3_PENDING_PANEL_RETURN_SUBCHAIN_ONLY':'OFFLINE_MV3_SAME_TARGET_SUBCHAIN_ONLY'};
  }finally{await evaluate('cancelProbe.held&&!cancelProbe.released&&cancelProbe.release()').catch(()=>{});await cdp.detach();}
 }

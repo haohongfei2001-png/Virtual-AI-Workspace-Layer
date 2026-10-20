@@ -103,7 +103,8 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   const cleanup=()=>{for(const type of events)doc.removeEventListener?.(type,interrupt,true);doc.defaultView?.removeEventListener?.('blur',interrupt,true);if(panelReturnCancel===cancelReturn)panelReturnCancel=null;};
   const cancelReturn=()=>{pending=false;cleanup();};panelReturnCancel=cancelReturn;
   if(pending){for(const type of events)doc.addEventListener?.(type,interrupt,true);doc.defaultView?.addEventListener?.('blur',interrupt,true);}
-  try{const page=await read(query,true,null,retryToken);if(page&&pending&&!closed&&grant===current&&navigation===renderer&&grantCurrent()&&Date.parse(grant.expiresAt)>now())renderer?.focusSurface?.();}
+  const currentAuthority=()=>!closed&&navigation===renderer&&grant?.id===current?.id&&grant?.mountId===current?.mountId&&grant?.scopeGrantId===current?.scopeGrantId&&grantCurrent()&&Date.parse(grant.expiresAt)>now();
+  try{await waitForPanelDispatch();if(!currentAuthority())return;const page=await read(query,true,null,retryToken);if(page&&pending&&currentAuthority())renderer?.focusSurface?.();}
   finally{cleanup();}
  }
  function openRecovery(fromFailure=false){if(readTerminal)return;dispatchEpoch++;cancelPendingNavigation();
@@ -146,7 +147,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(snippets!==panel||!valid())throw Error('snippet-unavailable');
    // Reuse the view owner's bounded preparation before reading a list after a
    // human preference commit. No second replica or unbounded retry is created.
-   if(message.type==='HOST_UI_SNIPPET_LIST'){budget.reset();const ready=await read(query,false);if(!ready||snippets!==panel||!valid())throw Error('snippet-unavailable');}
+   if(message.type==='HOST_UI_SNIPPET_LIST'){await waitForPanelDispatch();if(snippets!==panel||!valid())throw Error('snippet-unavailable');budget.reset();const ready=await read(query,false);if(!ready||snippets!==panel||!valid())throw Error('snippet-unavailable');}
    const result=await withRequestDeadline(()=>runtime.sendMessage({...message,v:1,grantId:current.id,mountId:current.mountId}),{now:elapsedNow,schedule,cancel});
    if(snippets!==panel||!valid())throw Error('snippet-unavailable');return result;
   },onClose:({restoreFocus=false}={})=>{if(snippets!==panel||!valid())return;panel.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;budget.reset();void resumePanelView(restoreFocus);}});
@@ -177,7 +178,8 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   if(dispatchPending){
    // Coalesce transport only. A different query is a new user intent now,
    // so its predecessor's late acknowledgement cannot restore the old view.
-   if(JSON.stringify(query)!==JSON.stringify(requested)){dispatchEpoch++;cancelPendingNavigation();}
+   if(JSON.stringify(query)!==JSON.stringify(requested)){dispatchEpoch++;cancelPendingNavigation();cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeDesired=null;}
+   if(!location)query=requested;
    queuedDispatchView={value:requested,location};return null;
   }if(JSON.stringify(query)!==JSON.stringify(requested)){cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeDesired=null;}if(!location)query=requested;const ticket=++serial;activeRead?.abort();const controller=new AbortController();activeRead=controller;activeLocation=location;navigation?.setNativeNavigationPending?.(true);
   if(budget.remaining()===Infinity)splits=0;
@@ -388,6 +390,12 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   // single-flight and deadline budget; returning does not enter a new segment.
   if(!closed&&!backup&&grantCurrent()&&Date.parse(grant?.expiresAt)>now()){invalidate();void calibrateEntry({kind:'foreground'});}
  }
+ async function waitForPanelDispatch(){
+  const pending=dispatchPending;if(!pending)return;
+  // These callers need the actual fresh page, not the queue admission result.
+  // The original dispatch deadline remains the only wait; no extra RPC/retry.
+  pending.panelRead=true;await pending.done;
+ }
  function cancelPendingNavigation(){
   const pending=dispatchPending;if(!pending||pending.cancelSent)return;
   pending.cancelSent=true;
@@ -399,7 +407,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   const attempt=dispatchEpoch,current=grant,renderer=navigation,issued=[...plans.values(),...projectPlans.values()].find(item=>item.targetKey===command.targetKey&&item.plan.planRevision===command.planRevision&&(isCurrentNavigationPlan(item.plan)||isResolvedControlNavigationPlan(item.plan)));
   // Old rendered controls cannot activate while their replacement VIEW is pending.
   if(!issued||activeRead||dispatchPending||horizonPending)return {state:'blocked'};
-  const pending={command:{grantId:current.id,mountId:current.mountId,actionId:command.actionId,planRevision:command.planRevision,targetKey:command.targetKey},cancelSent:false};dispatchPending=pending;navigation?.setNativeNavigationPending?.(true);
+  const pending={command:{grantId:current.id,mountId:current.mountId,actionId:command.actionId,planRevision:command.planRevision,targetKey:command.targetKey},cancelSent:false,panelRead:false};pending.done=new Promise(resolve=>{pending.finish=resolve;});dispatchPending=pending;navigation?.setNativeNavigationPending?.(true);
   let active=true;const started=elapsedNow(),dispatchQuery=JSON.stringify(query);
   const valid=()=>active&&elapsedNow()-started>=0&&elapsedNow()-started<6000&&!closed&&grantCurrent()&&grant?.id===current.id&&navigation===renderer&&dispatchEpoch===attempt&&!backup&&!recovery&&!snippets&&JSON.stringify(query)===dispatchQuery;
   try{const result=await withRequestDeadline(async()=>{
@@ -416,7 +424,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(closed||!grantCurrent()||grant?.id!==current.id||navigation!==renderer||dispatchEpoch!==attempt||backup||recovery||snippets||![...plans.values(),...projectPlans.values()].includes(issued)||result?.ok!==true)return {state:'blocked'};
    if(issued.plan.mode==='native-control'&&result.state==='unconfirmed')return {state:'unconfirmed'};
    return result.state===(issued.plan.mode==='native-control'?'dispatched':'already-current')?{state:result.state}:{state:'blocked'};
-  }catch{return {state:'unconfirmed'};}finally{active=false;if(dispatchPending===pending){dispatchPending=null;const queued=queuedDispatchView;queuedDispatchView=null;if(!closed&&grantCurrent()&&grant?.id===current.id&&navigation===renderer){if(queued){dirty=false;void read(queued.value,true,queued.location);}else if(dirty){dirty=false;invalidate();}navigation?.setNativeNavigationPending?.(!!activeRead);}}}
+  }catch{return {state:'unconfirmed'};}finally{active=false;if(dispatchPending===pending){dispatchPending=null;const queued=queuedDispatchView;queuedDispatchView=null;if(!closed&&grantCurrent()&&grant?.id===current.id&&navigation===renderer){if(pending.panelRead){dirty=false;}else if(queued){dirty=false;void read(queued.value,true,queued.location);}else if(dirty){dirty=false;invalidate();}navigation?.setNativeNavigationPending?.(!!activeRead);}}pending.finish();}
  }
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;void refreshSurfaceState();

@@ -92,8 +92,8 @@ else{
   await sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
   await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(title);
   const result=workspace.locator(`.search-results a[data-ref-id="${first[0]}"]`);await result.waitFor();
-  if(process.env.FREE_NAVIGATION_CANCEL_RUN==='1'){
-   report.cancellation=await probeNavigationCancellation({context,page,workspace,result,extensionId,trace:report.trace,title});
+  if(process.env.FREE_NAVIGATION_CANCEL_RUN==='1'||process.env.FREE_PANEL_CANCEL_RUN==='1'){
+   report.cancellation=await probeNavigationCancellation({context,page,workspace,result,extensionId,trace:report.trace,title,intent:process.env.FREE_PANEL_CANCEL_RUN==='1'?'panel':'query'});
    await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(title);await result.waitFor();
   }
   const target=await result.getAttribute('href');assert.equal(target,page.url());const pageCount=context.pages().length;

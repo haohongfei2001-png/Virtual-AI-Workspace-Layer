@@ -1,4 +1,56 @@
 {
+"pendingPanelReturn20261020": {
+  "baseline": "e056e2fd",
+  "status": "PARTIAL_OFFLINE_ONLY",
+  "productFixes": [
+    "preserve latest queued query across panel",
+    "wait for original dispatch completion before snippet preparation or panel return",
+    "retain focus intent across pending dispatch",
+    "permit stable-authority renewal while fencing scope change"
+  ],
+  "regression": {
+    "passed": 312,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 208.575833
+  },
+  "browser": {
+    "state": "PASS_OFFLINE_MV3_WINDOW_RETENTION",
+    "panelCancellationMs": 374,
+    "functionalJourneyMs": 4640.484417,
+    "realChatGPT": "NOT_RUN",
+    "scaleAcceptance": "DEFERRED"
+  },
+  "failuresPreserved": [
+    "original product RED",
+    "renewal product RED",
+    "browser observer wrongly expected search focus instead of workspace surface"
+  ],
+  "review": "no remaining blocker",
+  "logs": [
+    {
+      "file": "vaiwl-panel-pending-red.log.gz",
+      "sha256": "bc9904eacfd2c3ead8a857fd9b9afb663020eebd1eba08131526e942d40eae47"
+    },
+    {
+      "file": "vaiwl-panel-renewal-red.log.gz",
+      "sha256": "2fa3e4065f184407ccdbf9db582282c3a80748fbc155dd8c333c35f3d5d83fbd"
+    },
+    {
+      "file": "vaiwl-panel-integrated-final.log.gz",
+      "sha256": "4d39b4a17fdd7cdb61a9d9dbd7a3765b394813ebe16c264de7f619748c5c809d"
+    },
+    {
+      "file": "vaiwl-pending-panel-chain.json.gz",
+      "sha256": "97ebd2973806b62ec63ad416e499585280521a1ab96b2830800e47c638c973bf"
+    },
+    {
+      "file": "vaiwl-pending-panel-chain-fixed.json.gz",
+      "sha256": "a9289ba9e06a449e526ea8108434a12a880ab1dd0e47fabe7dc133df1754bd4f"
+    }
+  ],
+  "productSha256": "34eea23aa305635ee76b56887071946c13658530d761739e029837695c694952"
+},
 "cancellationBatchNode20261020": {
   "head": "bbddaabb318dbc06f5038d2b75661594a814ce78",
   "fileCount": 602,

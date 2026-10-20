@@ -480,3 +480,38 @@ for(const intent of ['query','return'])for(const same of [false,true])for(const 
  const pending=f.nav.onDispatch({actionId:'one-action',uiGrantId:'grant',mountId:'mount',planRevision:issued.plan.planRevision,targetKey:issued.targetKey});await drain();assert.equal(authorizations,stage);if(intent==='query')await f.nav.onProjectionRequest({segment:0,offset:16});else f.emit({type:'VAIWL_UI_WORKSPACE_ENTERED'});assert.equal(f.views,before);await drain();gate.resolve();const result=await pending;await drain();
  assert.equal(clicks,0,'superseded action must not click native control');assert.equal(shows,!same&&stage===2?1:0,'only the native preparation preceding the second authorization may have occurred');assert.equal(result.state,'blocked');if(intent==='query')assert.equal(f.calls.filter(m=>m.type==='HOST_UI_VIEW').at(-1).query.offset,16);f.client.stop();owner.stop();
 });
+
+for(const kind of ['backup','recovery'])test('latest queued query survives '+kind+' while native dispatch settles',async()=>{
+ const f=await currentDispatchFixture(),held=deferred(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_CURRENT'?held.promise:send(m);
+ const pending=f.nav.onDispatch(sameCurrentCommand());await drain();const latest={segment:0,offset:16,limit:8};await f.nav.onProjectionRequest(latest);f.nav[kind==='backup'?'onBackupRequest':'onRecoveryRequest']();held.resolve({ok:false});await pending;await drain();f[kind].onResume();await drain();assert.deepEqual(f.calls.filter(m=>m.type==='HOST_UI_VIEW').at(-1).query,latest);f.client.stop();
+});
+test('snippet list opened during native dispatch waits for its real preparation',async()=>{
+ const f=await currentDispatchFixture(),held=deferred(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_CURRENT'?held.promise:send(m);
+ const pending=f.nav.onDispatch(sameCurrentCommand());await drain();const before=f.views;f.nav.onSnippetsRequest();let outcome='pending';const listing=f.snippets.request({type:'HOST_UI_SNIPPET_LIST'}).then(()=>outcome='ready',()=>outcome='failed');await drain();assert.equal(outcome,'pending');held.resolve({ok:false});await pending;await listing;assert.equal(outcome,'ready');assert.equal(f.views,before+1);assert.equal(f.calls.filter(m=>m.type==='HOST_UI_SNIPPET_LIST').length,1);f.client.stop();
+});
+for(const kind of ['backup','recovery','snippets'])test(kind+' return keeps focus restoration until pending native dispatch completes',async()=>{
+ const f=await currentDispatchFixture(),held=deferred(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_CURRENT'?held.promise:send(m);
+ const pending=f.nav.onDispatch(sameCurrentCommand());await drain();f.nav[kind==='backup'?'onBackupRequest':kind==='snippets'?'onSnippetsRequest':'onRecoveryRequest']();f[kind][kind==='snippets'?'onClose':'onResume']({restoreFocus:true});await drain();assert.equal(f.panelFocuses,0);held.resolve({ok:false});await pending;await drain();assert.equal(f.panelFocuses,1);f.client.stop();
+});
+
+for(const interruption of ['focusin','disconnect','deadline'])test('pending panel return respects '+interruption,async()=>{
+ const f=await currentDispatchFixture(),held=deferred(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_CURRENT'?held.promise:send(m);
+ const pending=f.nav.onDispatch(sameCurrentCommand());await drain();const before=f.views;f.nav.onBackupRequest();f.backup.onResume({restoreFocus:true});await drain();
+ if(interruption==='focusin')f.focusEvents.dispatchEvent(new Event('focusin'));if(interruption==='disconnect')f.disconnect();if(interruption==='deadline')await f.advance(6000);
+ held.resolve({ok:false});await pending;await drain();assert.equal(f.panelFocuses,interruption==='deadline'?1:0);assert.equal(f.views,before+(interruption==='disconnect'?0:1));f.client.stop();
+});
+test('closing snippets during the dispatch wait cannot issue a stale list request',async()=>{
+ const f=await currentDispatchFixture(),held=deferred(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_CURRENT'?held.promise:send(m);
+ const pending=f.nav.onDispatch(sameCurrentCommand());await drain();f.nav.onSnippetsRequest();const listing=f.snippets.request({type:'HOST_UI_SNIPPET_LIST'});const rejected=assert.rejects(listing,/snippet-unavailable/);f.snippets.onClose();held.resolve({ok:false});await pending;await rejected;await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_UI_SNIPPET_LIST').length,0);f.client.stop();
+});
+
+test('panel return survives same-authority renewal while dispatch settles',async()=>{
+ const f=await currentDispatchFixture(),held=deferred(),send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_DISPATCH_CURRENT'?held.promise:send(m);f.jump(9000);
+ const pending=f.nav.onDispatch(sameCurrentCommand());await drain();const before=f.views;f.nav.onBackupRequest();f.backup.onResume({restoreFocus:true});await f.advance(1000);held.resolve({ok:false});await pending;await drain();assert.equal(f.views,before+1);assert.equal(f.panelFocuses,1);f.client.stop();
+});
+
+for(const changed of [false,true])test('panel fresh read fences scope changes but permits renewal '+changed,async()=>{
+ const f=await currentDispatchFixture(),held=deferred(),send=f.runtime.sendMessage;f.jump(9000);f.nav.onBackupRequest();f.setView(()=>held.promise);
+ f.runtime.sendMessage=m=>m.type==='HOST_UI_RENEW'&&changed?Promise.resolve({ok:true,grant:{...f.grant(),scopeGrantId:'other'}}):send(m);
+ f.backup.onResume({restoreFocus:true});await drain();await f.advance(1000);held.resolve({ok:true,state:'ready',page:f.page(),navigation:[]});await drain();assert.equal(f.panelFocuses,changed?0:1);f.client.stop();
+});
