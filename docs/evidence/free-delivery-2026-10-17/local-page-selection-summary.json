@@ -1,4 +1,87 @@
 {
+  "frameSnapshotCompatibility20261021": {
+    "baseline": "01ad7bd3",
+    "regressionIntroducedBy": "385b643d",
+    "sourceCI": {
+      "run": 39495882298,
+      "head": "d74fd0e7fc8a7c32fae549f857664a7fbe83528e",
+      "job": 118881218624,
+      "assertion": "single-owner-plan-dto"
+    },
+    "cause": "bindPlannedLink required frameProjection, incorrectly refusing existing raw-snapshot frame renderer.",
+    "fix": "Require the live snapshot shared by both rendering paths, keeping view ownership, current node membership and stopped checks.",
+    "secondObserverFailure": "After feedback repaint, browser test kept the retired link for modifier-click positive. Preserve the failure, assert that retired callback is blocked, then verify the actual current connected link with the original modifier/no-RPC oracle.",
+    "focused": {
+      "hostRenderer": 119,
+      "navigation": 104,
+      "fail": 0,
+      "skipped": 0
+    },
+    "browser": {
+      "status": "PASS",
+      "kind": "WEB_MECHANISM_ONLY_REAL_DOM",
+      "tests": 1,
+      "checks": 23,
+      "originalKeyboardPagination": "retained",
+      "firstFailure": "single-owner-plan-dto",
+      "intermediateFailure": "modified-click-no-rpc",
+      "thresholds": "unchanged"
+    },
+    "review": "Independent read-only review found no weakening of scope/invalidate/stop or retired callbacks.",
+    "sourceHashes": {
+      "src/navigation/navigation.mjs": "8282c1e4666f7db002fe352d8b6dd057d39e3f8880c35adcdf0bd2dadec500bb",
+      "tests/host/frame-renderer-browser.mjs": "20ec22c11f092ec7ecc553debe593652b8228b9258807bfb7c1f8196e27693b4"
+    },
+    "package": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 184,
+      "unpacked": "/private/tmp/vaiwl-frame-owner-package/extension",
+      "archive": "/private/tmp/vaiwl-frame-owner-package/vaiwl-free-host-development.zip",
+      "archiveSha256": "81cc256a63b308ee85015e8c85f0be2e6e49b5f16a4e31aa0f64c85c3978fa13"
+    },
+    "limits": [
+      "Full Node9673 is the preceding 01ad7bd3 tree, not this final navigation change; final tree has affected regressions and browser/build checks only.",
+      "Real ChatGPT, full history source and complete Free acceptance remain unestablished; 10k/100k DEFERRED."
+    ],
+    "files": [
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-frame-owner-red.log.gz",
+        "rawBytes": 718,
+        "rawSha256": "fe8753f322ab35d0b9efdb879c933c46837a79ae51a2924f26f248d28049391d"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-frame-owner-green-browser.log.gz",
+        "rawBytes": 715,
+        "rawSha256": "643159c859895d05d02692a27a45206cafb1d65a9901b148c2262f296eddc102"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-frame-owner-final-browser.log.gz",
+        "rawBytes": 205,
+        "rawSha256": "af1654496326f854a940f3d0a35b0c3a7ced6163fab1e3dce786213182eaae2f"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-frame-owner-green.tap.gz",
+        "rawBytes": 12067,
+        "rawSha256": "4793b01766a2c0ee2d5af8928046dde751215fa609c8336f5bb6ee794513dd22"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-frame-owner-navigation.tap.gz",
+        "rawBytes": 9392,
+        "rawSha256": "4d6566ebdf3cab48eb8d23ed24b3404ac57bcf4efef0c2a97af31d0ba35be4c0"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-frame-owner-build.json.gz",
+        "rawBytes": 345,
+        "rawSha256": "92fd16d74116b835d4e79410478d6b32addd9c35309d02a44bb47768d5189e86"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-frame-owner-verify.json.gz",
+        "rawBytes": 105,
+        "rawSha256": "c27fd849e03c560f5dce3aa757d2e31e6da605b3b2c2c28771bd4cb6f1a0644c"
+      }
+    ]
+  },
   "bfcachePresentation20261021": {
     "baseline": "d74fd0e7fc8a7c32fae549f857664a7fbe83528e",
     "defect": "Active BFCache pagehide reset discarded reading mode; pageshow begin() default reopened workspace.",

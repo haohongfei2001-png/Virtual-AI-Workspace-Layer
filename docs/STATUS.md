@@ -1,5 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 修复链接隔离引入的原快照兼容回归（2026-10-21，基线01ad7bd3）
+
+CI39495882298的frame-renderer-browser原single-owner-plan-dto失败已本地原脚本复现。根因是本地385b643d的退休链接guard误要求frameProjection，现有raw snapshot frame路径因此被拒；现要求两种路径共有的有效snapshot，保留原view、当前pane节点成员、stop和invalidate保护。随后原测试的modifier正控仍跨反馈重绘持有已退休link；保留这次FAIL，并新增退休节点拒绝断言，再取得当前连接link验证原默认导航/零重复RPC，不删除原断言。
+
+最终223定向（119 renderer相关、104 navigation含退休链接原反例）、原真实DOM浏览器完整旅程、184文件默认包构建校验通过，独审无阻断，打包源码无漂移。上一01ad7bd3完整Node9673/9673不移作此最后一行导航差异的全套证明；最终源码按必要定向/浏览器验证，下一CI独立确认。原CI/RED/中间FAIL及最终证据见frameSnapshotCompatibility20261021；不将本次兼容原因当历史冷启动/worker竞态根因，完整Free及真实来源/目录/安装未成立，10k/100k DEFERRED。
+
+
 ## 阅读页后退缓存返回保持展示意图（2026-10-21，基线d74fd0e7）
 
 独审发现已连接页面正在reading时进入BFCache，返回默认begin()重新打开workspace。现pagehide清能力前仅保留本document的展示意图，pageshow仍完整新HELLO/REFRESH；恢复时认证失败转waiting后等新READY也保留reading，stop/真正离开不复活。原3项reading反例先FAIL，494内容/生命周期定向通过；独审重复hide/show、恢复中再次冻结及stop后显式start边界无阻断。
