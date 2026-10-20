@@ -3907,3 +3907,6 @@ CI39354354919终结FAIL：Node/持久化/J4 job成功，journeys在搜索当前�
 
 
 用户返回取消的实际S子链已补齐（生产源码6ef42ef）：同一原窗口旅程合批查询取消67ms、native-control准备阅读后点击真实返回按钮取消166ms。各自暂持同action第二个真实成功授权，先收worker/content取消确认再释放原回复；返回后原生navigate计数未增加、workspace保持可见，URL/原document/editor/草稿保持，新显式导航仍可正常打开与返回。完整窗口子链3073.85ms、原6秒绝对观察窗、源码/fixture/包无漂移；仅局部离线MV3，不升级完整J1/J4或真实ChatGPT。报告/源码hash见 `nativeReturnCancellationMV320261020`。6ef42ef普通push再次低速超时，本地成果保持，不循环重试。
+
+
+取消修复批次冻结于bbddaabb318dbc06f5038d2b75661594a814ce78后，原完整Node入口602文件、9493项通过，零失败/跳过，104.609秒，terminal exit0；执行前后tracked干净且HEAD相同。证据 `cancellationBatchNode20261020`。这是一次合批Node回归，不作为性能提升、完整MV3/真实Free通过。Git同步进一步只读定位为地址族差异：IPv4 TCP超时，IPv6可完成TLS并取得HTTP200；当前无代理环境/配置，未改系统网络、凭据或远端，使用Git原生IPv6进行一次正常同步，结果以实际远端核对为准。

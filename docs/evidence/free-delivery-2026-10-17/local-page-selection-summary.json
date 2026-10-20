@@ -1,4 +1,18 @@
 {
+"cancellationBatchNode20261020": {
+  "head": "bbddaabb318dbc06f5038d2b75661594a814ce78",
+  "fileCount": 602,
+  "tests": 9493,
+  "pass": 9493,
+  "fail": 0,
+  "skip": 0,
+  "exitCode": 0,
+  "durationMs": 104608.989958,
+  "concurrency": 2,
+  "scope": "local full Node regression, not full browser/live Free acceptance",
+  "log": "local-cancel-batch-full-node.log.gz",
+  "sha256": "00eb624a5c0dadb06592a7e137d09b4f4695828ed42363cda63722e5d18f891e"
+},
 "nativeReturnCancellationMV320261020": {
   "baseline": "6ef42ef",
   "status": "PASS_OFFLINE_MV3_WINDOW_RETENTION",
