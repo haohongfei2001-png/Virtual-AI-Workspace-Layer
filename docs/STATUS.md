@@ -1,5 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 分工确认：转入真实身份/当前空间来源关口（2026-10-21）
+
+本次实际读取 [PR16评论6301668458](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6301668458)，并对照Host§5.2/5.3、session-provider、isolated-session-reader、session-identity及ScopeAuthority。Codex唯一写产品代码/集成/验证，dot仅独立研究与审查。当前产品源码86937be6、tracked tree在检查开始时干净；远端API仍6a4ee4b3，Draft/base不变，2258未跟踪副本及3stash保留；未把未推送源码称已同步。
+
+明确缺口：
+- C2的真实原生GET/页面关联已有局部证据，但production provider仍从固定session取得主体与短期凭证，再取得认证roster。历史session挑战阻断这一步，不能用旧receipt或cookie-only列表替代。当前没有网站方已解除挑战/支持替代来源的新证据。
+- `/me`仅已证实200/JSON/ID格式；主体语义、与原session ID命名空间的关系、当前空间及同代际绑定未证实。首尾ID相等不能排除中途切换；服务器到期未知不填成虚构expiresAt。
+- C3允许经证明的个人默认语义，不普遍要求服务器account_id。但现有default/null样本不足以证明唯一有效个人空间和当前文档绑定；生产singlePersonalDefault不得直接开启。若采用principal-derived personal，须显式独立来源/namespace且不把派生键发作ChatGPT-Account-ID或开启不匹配旧库。
+
+下一步是让dot针对上述三项给出可核验来源/字段语义和反例依据，Codex据此冻结单次实机验证；不是再重跑原me/accounts链。该验证必须由包内隔离provider实际取得来源，绑定当前document/selection/authority代际，拒绝切换/晚到/挑战，维持原6秒总预算、无自动重试及最小RAM结果；生产启用还须对应切换/撤回证据。本轮无新真实请求、不消耗许可、不跑重复离线测试。新入口或敏感响应需要逐项列清后集中确认；当前缺的是来源语义与可取得证据，不是让用户重复刷新、重载或截图。原Project一次列表许可只解决成员候选，已在唯一计划后置。真实来源NOT_ESTABLISHED、完整Free NOT_RELEASE_READY及规模DEFERRED保持。
+
+
 
 ## 无新条目扫描遗漏队列处理已修复（2026-10-21，基线6a4ee4b3）
 
