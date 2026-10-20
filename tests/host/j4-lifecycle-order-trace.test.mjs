@@ -44,10 +44,10 @@ test('actual content session preserves rebind generations and pending-ready tran
 });
 
 test('stop diagnostic retains challenge hint clearing and rejects absent or duplicate exact anchor',async()=>{
- const path=J4_ORDER_PATHS[3],source=await readFile(path,'utf8'),anchor='function stop(){verificationWaitURL=null;contextResumeAllowed=false;';
+ const path=J4_ORDER_PATHS[3],source=await readFile(path,'utf8'),anchor='function stop(){contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;';
  assert.equal(source.split(anchor).length,2);
  const modified=instrumentJ4LifecycleOrderSource(path,source);
- assert(modified.includes("function stop(){__j4State('stop');verificationWaitURL=null;contextResumeAllowed=false;"),'passive stop trace precedes original clearing operations');
+ assert(modified.includes("function stop(){__j4State('stop');contextWaitSuspended=false;verificationWaitURL=null;contextResumeAllowed=false;"),'passive stop trace precedes original clearing operations');
  assert.throws(()=>instrumentJ4LifecycleOrderSource(path,source.replace(anchor,'function stop(){contextResumeAllowed=false;')),/j4-order-anchor-mismatch/);
  assert.throws(()=>instrumentJ4LifecycleOrderSource(path,source+'\n'+anchor),/j4-order-anchor-mismatch/);
 });

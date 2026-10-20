@@ -2,6 +2,8 @@
 
 ## 当前执行：继续依赖已满足的产品工程（2026-10-20）
 
+执行权交接（2026-10-20）：按用户最新要求，Codex完成收尾检查点后停止写入，由dot沿本原计划继续。任务范围与验收不变，实际成果、完整Node唯一失败、真实来源及规模未关闭项见STATUS顶部与dotHandoff20261020；不再由本线程自动启动开发。
+
 C2/J4冻结交错增量：迟到失效将已连接恢复转换为等待时保留冻结状态，pageshow前不握手；相邻真实BFCache与CI观察器差异见STATUS/suspendedPendingRecovery20261020，原Linux布局失败继续定位。
 
 C2/J4等待恢复增量：BFCache清除旧能力后保留对未来合法READY的等待资格，pageshow不认证、不复用旧scope；真实返回缓存与构建证据沿STATUS/waitingBFCacheResume20261020，不替代完整宿主验收。

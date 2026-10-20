@@ -1,5 +1,16 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 当前交接：本地停止开发，后续由dot接手（2026-10-20）
+
+用户要求完成收尾后移交dot。沿用原目录、Free分支及Draft PR16；不新建路线、不修改产品目标。Codex只完成本检查点提交/推送/交接，之后不继续写入。30分钟续接vaiwl-free已核实PAUSED；2258未跟踪数字副本与3stash原样保留。无部署、合并main、强推或真实账户新诊断。
+
+**本批实际成果**：恢复owner撤权取消尚未提交事务，三类恢复真实扩展IDB提交前后边界保留数据/事实/人工资产；等待页面BFCache返回恢复未来合法READY资格，冻结期迟到pending不得提前握手。原STATUS各证据范围保持。最新J4被动诊断锚点同步contextWaitSuspended清理，严格缺失/重复拒绝及原清理顺序保留，42定向通过。
+
+**最终验证不是全绿**：完整Node9609项，9608通过/1失败，304.803秒。唯一失败`tests/host/host-scale-cpu-profile.test.mjs:211`的Profiler.setSamplingInterval初始化诊断期望setup-unavailable，实际setup-deadline；保留完整原日志，不放宽期限、不重跑挑绿，具体根因未闭合。23529a68的CI39373049125三个浏览器job成功，Node因旧snippets源码段及四个J4 stop锚点失败；本地定向已修，这不追溯改判原CI。证据dotHandoff20261020。
+
+**dot直接续接**：先核对PR16实际HEAD及本地成果，禁止重合并Pro/覆盖副本；优先定位上述诊断测试的期限与观察器差异，按实际改动定向验证。此前Linux冷启动无receipt、临时Project缺webRequest及布局scroll0!=150失败原件保留；后续同版通过不证明历史根因。真正影响完整Free交付的来源关口仍为合法主体/当前空间、可靠服务器完整历史目录（分页/归档/无项目/项目成员/跨设备变化）、成员与本人活动语义；不能拿DOM、MAIN消息或旧receipt当认证。完整真实J1/J4、物理IME/PAIA共存/安装卸载及发布验收尚未全部成立。10k/100k仍DEFERRED、原门槛保留；临时只读导航不是最终产品。未完成项不得标FREE-ACCEPTED/RELEASE-READY。
+
+
 ## 冻结期间迟到失效通知（2026-10-20，基线23529a68）
 
 已RED复现已连接C2→persisted pagehide→迟到contextPending清restoreArmed→READY在pageshow前握手。现将冻结状态转存到等待资格，155定向通过；真实BFCache HIT下合成通知交错验证无提前握手、返回后新READY恢复、草稿保持，非真实宿主消息时序证明。另CI39370447003唯一Node失败为snippets-runner-lifecycle仍检查自动关闭搜索的旧源码段；现要求保留查询/结果后显式关闭，原旅程其余历史checksum不变，30项通过。原layout scroll0!=150失败保留，未猜测修复。见suspendedPendingRecovery20261020。
