@@ -1,5 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 阅读页后退缓存返回保持展示意图（2026-10-21，基线d74fd0e7）
+
+独审发现已连接页面正在reading时进入BFCache，返回默认begin()重新打开workspace。现pagehide清能力前仅保留本document的展示意图，pageshow仍完整新HELLO/REFRESH；恢复时认证失败转waiting后等新READY也保留reading，stop/真正离开不复活。原3项reading反例先FAIL，494内容/生命周期定向通过；独审重复hide/show、恢复中再次冻结及stop后显式start边界无阻断。
+
+原真实A→B→Back浏览器旅程阅读与工作空间两模式均BFCache HIT，恢复模式分别reading/workspace，原textarea及草稿保留，源码稳定；controller/authority为合成替身，不声称完整视觉或真实账户验收。184文件默认包构建校验通过；证据沿bfcachePresentation20261021。冻结候选完整Node9673/9673，193192.112041ms、零跳过，1197输入hash前后相同（本地Node26.8.2，LinuxCI为24.22.0）；10k/100k DEFERRED、真实身份/完整目录/完整J1/J4/IME/PAIA与安装发布关口保持。
+
+
+## 冷启动观察器合同同步（2026-10-21，基线d74fd0e7）
+
+CI39494518008的303f9ba9完整Node结果为9655/9656，唯一FAIL是cold-context-trace仍按旧三个cold模式匹配源码，未包含新增显式cold-unavailable-recovery。已本地复现原3/4，再同步该精确列表；保留立即冷启动、原20秒、禁止reload/waitForTimeout等全部检查，生产代码/runner动作不变。31受影响定向通过，原CI日志与RED/GREEN沿coldModeContract20261021保存。d74fd0e7的CI39495882298随后完整Node9664/9665，唯一仍为同一旧模式列表断言，原日志保留；J4/持久化job成功，旅程终态FAIL为frame-renderer-browser的single-owner-plan-dto；原脚本本地同样复现，已定位385b643d要求frameProjection误拒绝原snapshot路径，本检查点暂未修，下一窄批继续。303f9ba9的旅程后被工作流既有cancel-in-progress取消，不能补记通过。测试观察器修正不当作产品故障修复或历史竞态根因，完整Free仍未成立。
+
+
 ## 恢复计划到期时取消在途事务（2026-10-21，基线303f9ba9）
 
 已复现真实产品缺陷：备份transfer或修复计划临近到期时启动恢复，原RPC六秒尚未到期，计划过期仅在提交后拒绝结果；备份revision与原生/活动目录实际已被修改。现恢复owner按原计划剩余有效期主动abort未提交事务，重复pending调用不创建第二个owner；完成时清理timer，在途计数保持到settle。已提交结果不伪称回滚，未延长期限、未改授权或数据库schema。

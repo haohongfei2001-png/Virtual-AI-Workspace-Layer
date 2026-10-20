@@ -45,7 +45,7 @@ test('cold diagnostic copy keeps original verified; patches only named files and
 });
 test('runner preserves immediate cold navigation and collects existing worker only after failure',async()=>{
  const s=await readFile(new URL('./context-package-mv3-browser.mjs',import.meta.url),'utf8');
- assert(s.includes("if(!['cold','cold-trace','cold-recovery'].includes(process.argv[3]))"));assert(s.includes("const trace=process.argv[3]==='cold-trace'?"));assert(s.includes('{timeout:20000}'));assert(s.includes('worker??=context.serviceWorkers().find'));assert(!s.includes('reload('));assert(!s.includes('waitForTimeout'));
+ assert(s.includes("if(!['cold','cold-trace','cold-recovery','cold-unavailable-recovery'].includes(process.argv[3]))"));assert(s.includes("const trace=process.argv[3]==='cold-trace'?"));assert(s.includes('{timeout:20000}'));assert(s.includes('worker??=context.serviceWorkers().find'));assert(!s.includes('reload('));assert(!s.includes('waitForTimeout'));
 });
 
 test('classic trace rebuild follows instrumented source and rejects stale or forged generated files',async()=>{

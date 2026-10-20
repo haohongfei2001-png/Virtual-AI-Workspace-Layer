@@ -226,10 +226,13 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    restoreArmed=false;rebindQueued=false;rebindRun++;reset();return;
   }
   if(!enabled)return;
+  // BFCache restores the same document, but every capability is replaced.
+  // Retain only presentation intent so reading does not reopen the workspace.
+  if(current){contextResumeMode=doc.location.href!==current.url?'reading':(current.controller?.presentationMode?.()??current.initialMode)==='reading'?'reading':'workspace';contextResumeURL=doc.location.href;}
   clearLearned();clearRecent();clearUpgrade();restoreArmed=true;rebindQueued=false;rebindRun++;reset();
   doc.defaultView.addEventListener('pagehide',pagehide);
  }
- function pageshow(event){if(event?.persisted===true&&contextWaitSuspended){contextWaitSuspended=false;return;}if(event?.persisted!==true||!enabled||!restoreArmed)return;restoreArmed=false;void begin();}
+ function pageshow(event){if(event?.persisted===true&&contextWaitSuspended){contextWaitSuspended=false;return;}if(event?.persisted!==true||!enabled||!restoreArmed)return;restoreArmed=false;void begin(false,contextResumeMode);}
  function rebind(s,initialMode=null,expectedScope=null){
   if(!enabled||current!==s||rebindQueued||s.busyClose===true&&doc.location.href===s.url)return;
   if(initialMode===null)initialMode=s.controller?.presentationMode?.()==='workspace'?'workspace':'reading';

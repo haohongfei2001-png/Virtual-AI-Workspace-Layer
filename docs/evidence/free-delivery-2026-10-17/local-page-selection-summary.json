@@ -1,4 +1,271 @@
 {
+  "bfcachePresentation20261021": {
+    "baseline": "d74fd0e7fc8a7c32fae549f857664a7fbe83528e",
+    "defect": "Active BFCache pagehide reset discarded reading mode; pageshow begin() default reopened workspace.",
+    "fix": "Retain only document-local presentation intent before clearing capabilities; resume with fresh HELLO/REFRESH and that mode. No previous scope or grant retained.",
+    "red": {
+      "tests": 108,
+      "pass": 105,
+      "fail": 3
+    },
+    "targeted": {
+      "tests": 494,
+      "pass": 494,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 712.195375
+    },
+    "browser": {
+      "reading": {
+        "kind": "REAL_BFCACHE_NAVIGATION_SYNTHETIC_AUTHORITY",
+        "actualBFCacheResidency": "HIT",
+        "sourceBefore": "4f6334705470699bed5bbb76d43c95a5904a241918299aafaa656aa4aaa1bf5b",
+        "sourceAfter": "4f6334705470699bed5bbb76d43c95a5904a241918299aafaa656aa4aaa1bf5b",
+        "sourceStable": true,
+        "ok": true,
+        "result": {
+          "suspended": {
+            "adapterStops": 2,
+            "listeners": 0,
+            "canShow": false
+          },
+          "resumed": {
+            "mode": "reading",
+            "initialModes": [
+              "workspace",
+              "reading"
+            ],
+            "mounts": 2,
+            "hellos": 2,
+            "refreshes": 2,
+            "canShow": true
+          },
+          "finalHellos": 2,
+          "draftPreserved": true,
+          "events": [
+            {
+              "kind": "hide",
+              "persisted": true,
+              "adapterStops": 2,
+              "listeners": 0,
+              "canShow": false
+            },
+            {
+              "kind": "show",
+              "persisted": true
+            },
+            {
+              "kind": "show",
+              "persisted": true
+            }
+          ]
+        }
+      },
+      "workspace": {
+        "kind": "REAL_BFCACHE_NAVIGATION_SYNTHETIC_AUTHORITY",
+        "actualBFCacheResidency": "HIT",
+        "sourceBefore": "4f6334705470699bed5bbb76d43c95a5904a241918299aafaa656aa4aaa1bf5b",
+        "sourceAfter": "4f6334705470699bed5bbb76d43c95a5904a241918299aafaa656aa4aaa1bf5b",
+        "sourceStable": true,
+        "ok": true,
+        "result": {
+          "suspended": {
+            "adapterStops": 2,
+            "listeners": 0,
+            "canShow": false
+          },
+          "resumed": {
+            "mode": "workspace",
+            "initialModes": [
+              "workspace",
+              "workspace"
+            ],
+            "mounts": 2,
+            "hellos": 2,
+            "refreshes": 2,
+            "canShow": true
+          },
+          "finalHellos": 2,
+          "draftPreserved": true,
+          "events": [
+            {
+              "kind": "hide",
+              "persisted": true,
+              "adapterStops": 2,
+              "listeners": 0,
+              "canShow": false
+            },
+            {
+              "kind": "show",
+              "persisted": true
+            },
+            {
+              "kind": "show",
+              "persisted": true
+            }
+          ]
+        }
+      }
+    },
+    "independentReview": "No blockers; extra in-memory duplicate hide/show, refreeze during pending resume and explicit stop/start boundaries pass.",
+    "package": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 184,
+      "unpacked": "/private/tmp/vaiwl-bfcache-mode-package/extension",
+      "archive": "/private/tmp/vaiwl-bfcache-mode-package/vaiwl-free-host-development.zip",
+      "archiveSha256": "65ddfebd1f4b6dd7cda5a2a72c58faaabea378546d2cf1c041ef9165fafa30b5"
+    },
+    "limits": [
+      "Real BFCache HIT with synthetic adapter/controller/authority; not actual private Free surfaces or real ChatGPT authentication.",
+      "Original cold/Linux/worker-memory loss causes remain open; no new real requests.",
+      "10k/100k DEFERRED, Free NOT_RELEASE_READY."
+    ],
+    "files": [
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-bfcache-mode-red.tap.gz",
+        "rawBytes": 11744,
+        "rawSha256": "587af571fc40d43db25084a03de44e98aa7d153eeef8a824c4dbf2927bd14ec9"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-bfcache-mode-green.tap.gz",
+        "rawBytes": 13206,
+        "rawSha256": "d35523556437a6c03407e14295f083e9dc8e9c1b8cc0b0cfb787ea3f872eae73"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-bfcache-mode-regression.tap.gz",
+        "rawBytes": 45297,
+        "rawSha256": "74fe0f161a69b0c3e8fcfe62f183d407ee63a88f8d7d8167f549d76fb5b744d3"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-bfcache-observers.tap.gz",
+        "rawBytes": 3860,
+        "rawSha256": "cc33267fb172308ba67db1008394df731f598ecfb64eb525755b995bbab0881a"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-bfcache-reading-browser.json.gz",
+        "rawBytes": 1068,
+        "rawSha256": "0c2ee13cb24a0c400b6a536c1a196957e8236fd55a5fc249cf21846bf3d0c56c"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-bfcache-reading-browser.log.gz",
+        "rawBytes": 1069,
+        "rawSha256": "3dce67a6de3fde717bff8e0e0bfca49961974af86121e1f712a48bce07f0565c"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-bfcache-workspace-browser.json.gz",
+        "rawBytes": 1073,
+        "rawSha256": "56271e1dd5bea242916dcdbd83ef6af6465bede802f964e34de88636f5963ae1"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-bfcache-workspace-browser.log.gz",
+        "rawBytes": 1074,
+        "rawSha256": "e8e30129ac14bf10404ff85dcc0c558cddb9ad67bcb394f4efca2b1354778544"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-bfcache-mode-build.json.gz",
+        "rawBytes": 347,
+        "rawSha256": "b56e883b58f2645a0ad06422ce15bc6ca52f6c5580b2e22cc3ebe1d7babcae66"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-bfcache-mode-verify.json.gz",
+        "rawBytes": 105,
+        "rawSha256": "c27fd849e03c560f5dce3aa757d2e31e6da605b3b2c2c28771bd4cb6f1a0644c"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-bfcache-final-node.tap.gz",
+        "rawBytes": 872797,
+        "rawSha256": "95238be0531f00a435ffa4af972500ce7e8a5405dad0a21535fc221c0bcaa93d"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-bfcache-final-node-integrity.json.gz",
+        "rawBytes": 276494,
+        "rawSha256": "2adb7eccb313f02f7246a20bde42f772c2c461b530a00b31bd689f28a124a06a"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-ci39495882298-journeys.log.gz",
+        "rawBytes": 5209823,
+        "rawSha256": "6b00653d7c867f95e5065949461e29a38cf5a128f2c5b14794a0936df4311c15"
+      }
+    ],
+    "fullNode": {
+      "tests": 9673,
+      "pass": 9673,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 193192.112041,
+      "inputFiles": 1197,
+      "sourceStable": true,
+      "environment": "darwin arm64 Node26.8.2; CI Linux Node24.22.0 is separate evidence"
+    },
+    "precedingCI": {
+      "run": 39495882298,
+      "head": "d74fd0e7fc8a7c32fae549f857664a7fbe83528e",
+      "status": "FAILURE",
+      "node": "9664/9665; old cold mode source contract",
+      "journeys": "frame-renderer-browser single-owner-plan-dto; reproduced locally, legacy snapshot compatibility regression from 385b643d guard remains to fix",
+      "j4": "job success, not full J4 accepted",
+      "durability": "job success"
+    }
+  },
+  "coldModeContract20261021": {
+    "baseline": "d74fd0e7fc8a7c32fae549f857664a7fbe83528e",
+    "ci": {
+      "run": 39494518008,
+      "head": "303f9ba950bbafb557ca9b104c73e2f76d26294b",
+      "nodeJob": 118875956186,
+      "tests": 9656,
+      "pass": 9655,
+      "fail": 1,
+      "skipped": 0,
+      "durationMs": 220017.199137
+    },
+    "cause": "cold-context-trace source contract still expected only three cold modes after explicit cold-unavailable-recovery was added; no runtime behavior changed.",
+    "localRed": {
+      "tests": 4,
+      "pass": 3,
+      "fail": 1
+    },
+    "fix": "Update original exact cold-mode source assertion to include the explicit fourth mode; original immediate startup/no reload/no waitForTimeout/20s checks retained.",
+    "targeted": {
+      "tests": 31,
+      "pass": 31,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 3947.181625
+    },
+    "limits": "Observer contract correction only, not product bug or full CI/browser acceptance. Historical failures retained.",
+    "files": [
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-ci39494518008-node.log.gz",
+        "rawBytes": 1176934,
+        "rawSha256": "ba4b51844856c230a77915c645a290efd3465a83d5376faf1eb0ec23b5f3b060"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-cold-mode-contract-red.tap.gz",
+        "rawBytes": 1366,
+        "rawSha256": "81b689370429ef6b171ace77ed2efeae8d38d1a5d0d301844b23893908347d52"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-cold-mode-contract-green.tap.gz",
+        "rawBytes": 2377,
+        "rawSha256": "8f811b498ee75137971488e5cda9ddbc6e293caa4e1d74929f3b55d694ec38f5"
+      }
+    ],
+    "nextHeadCI": {
+      "run": 39495882298,
+      "head": "d74fd0e7fc8a7c32fae549f857664a7fbe83528e",
+      "nodeJob": 118881218087,
+      "tests": 9665,
+      "pass": 9664,
+      "fail": 1,
+      "durationMs": 176380.956349,
+      "sameFailure": "cold-context-trace old source mode list",
+      "path": "docs/evidence/free-delivery-2026-10-17/vaiwl-ci39495882298-node.log.gz",
+      "rawBytes": 1177661,
+      "rawSha256": "f2d38434e5cc8fee77fc1fa2d1cda37c691faa1d21b5644422e99150a94d35ff"
+    }
+  },
   "recoveryTTLAbort20261021": {
     "baseline": "303f9ba950bbafb557ca9b104c73e2f76d26294b",
     "defect": "Existing transfer/repair TTL can expire before the restore RPC deadline; postcheck rejects but pending persistence was not actively cancelled.",

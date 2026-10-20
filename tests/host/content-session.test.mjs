@@ -185,6 +185,24 @@ function c2PresentationFixture(){
  }});
  return {...f,modes};
 }
+for(const mode of ['reading','workspace'])for(const transition of ['restore','pending','denied','stop'])test('active BFCache retains '+mode+' through '+transition,async()=>{
+ const f=c2PresentationFixture();try{
+  await f.client.start();if(mode==='reading')assert.equal(f.client.showReading(),true);
+  f.events.get('pagehide')({persisted:true});assert.equal(f.client.showWorkspace(),false);assert.equal(f.listeners.size,0);
+  const before=f.calls.length;
+  if(transition==='pending'){f.client.contextPending();await f.client.contextReady();assert.equal(f.calls.length,before);}
+  if(transition==='stop')f.client.stop();
+  if(transition==='denied')f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'ambiguous'}:{ok:true});
+  f.events.get('pageshow')?.({persisted:true});await drain();
+  if(transition==='stop'){await f.client.contextReady();assert.equal(f.calls.length,before);assert.deepEqual(f.modes,['workspace']);return;}
+  if(transition==='pending'||transition==='denied'){
+   assert.equal(f.client.showWorkspace(),false);assert.deepEqual(f.modes,['workspace']);const waiting=f.calls.length;await f.advance(1000);assert.equal(f.calls.length,waiting,'no autonomous authentication retry');
+   f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified'}:{ok:true});await f.client.contextReady();
+  }
+  assert.deepEqual(f.modes,['workspace',mode]);
+  const count=transition==='denied'?3:2;assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,count);assert.equal(f.calls.filter(m=>m.type==='HOST_REFRESH').length,count);
+ }finally{f.client.stop();}
+});
 test('C2 changed route restores reading only after fresh HELLO REFRESH and mount',async()=>{
  const f=c2PresentationFixture();try{
   await f.client.start();const before=f.calls.length;f.document.location.href+='c/next';f.client.contextPending();assert.equal(f.client.showReading(),false);assert.equal(f.listeners.size,0);
