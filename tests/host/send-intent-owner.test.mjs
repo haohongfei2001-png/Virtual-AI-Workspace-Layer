@@ -40,3 +40,12 @@ for(const patch of [{bodyProofId:'forged'},{producerToken:'forged'},{payload:{re
  const gap={...intent(h,proof,2),kind:'send-gap',payload:{reason:'send-intent-capacity'},...patch};
  assert.equal((await h.service.handle(gap,sender)).state,'rejected');assert.equal(h.service.observations.isCurrentProof(proof),true);
 });
+
+test('gap duplicate receipt cannot acknowledge a different body proof',async t=>{
+ const h=await fixture(t),proof=await baseline(h);
+ const gap={...intent(h,proof,2),kind:'send-gap',payload:{reason:'send-intent-capacity'}};
+ assert.equal((await h.service.handle(gap,sender)).state,'accepted');
+ assert.equal((await h.service.handle({...gap,bodyProofId:'different-proof'},sender)).state,'rejected');
+ assert.equal((await h.service.handle(gap,sender)).state,'duplicate');
+ assert.equal(h.service.observations.isCurrentProof(proof),true);
+});

@@ -17343,5 +17343,35 @@
     "J1/J4 full acceptance",
     "10k/100k DEFERRED"
   ]
+},
+  "sendGapProofReplay20261020": {
+  "base": "9917b15824a0af0583162ff4e9d6e53ecff5fb02",
+  "fix": "Gap idempotency fingerprint includes original bodyProofId; same-sequence different proof rejects without changing hash algorithm or other proposal fingerprints.",
+  "red": "Different body proof was returned duplicate.",
+  "lifecycle": "Late gap acknowledgement cannot authorize replacement producer before its own body acknowledgement.",
+  "tests": {
+    "targeted": 129,
+    "adapter": 162,
+    "fullNode": {
+      "files": 598,
+      "pass": 9444,
+      "fail": 0,
+      "skip": 0,
+      "elapsedSeconds": 143.062
+    }
+  },
+  "logs": {
+    "red": "send-gap-proof-red-20261020.log.gz",
+    "targeted": "send-gap-proof-targeted-20261020.log.gz",
+    "generation": "send-gap-proof-generation-20261020.log.gz",
+    "full": "send-gap-proof-full-20261020.log.gz"
+  },
+  "sourceHashes": {
+    "src/runtime/host-observation-owner.mjs": "8aa43be51a8b8179f5ca2dd0aac099ff91a3999f80d337d1267b8c2d37fc93f9",
+    "tests/host/chatgpt-adapter.test.mjs": "e2843a897accc7f640dacf024c38cd7adb5150726b318b92e71aa110b21f2a46",
+    "tests/host/send-intent-owner.test.mjs": "033aaeb12ca0a7f9d62af05ed102c25fc2df0d88a0fd1dcb03708b9a61c6b288"
+  },
+  "review": "Independent read-only review no blocker.",
+  "scope": "Original full Node CI file set only; not full Free, real source or complete MV3 acceptance."
 }
 }

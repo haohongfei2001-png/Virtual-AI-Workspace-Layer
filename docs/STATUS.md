@@ -3867,3 +3867,7 @@ Round332 final integration: **6421/6421 Node PASS**, zero skips, terminal exit0.
 ## 发送缺口隔离MV3闭环（2026-10-20，生产源码3469584）
 
 已完成局部实际浏览器闭环：持有一次真实surface提交后的回复，33次真实点击触发原32候选队列溢出；单次gap按原通道接受，旧候选未重放、proof/epoch保持。原冷却后新点击实际进入owner.pendingIntent，后续fixture新消息只关联该新意图，未产生ACK/sentAt。回复持有66ms，仅为持有阶段，不冒充adapter全程计时；原6秒逻辑未修改。临时Profile清理、外网阻断及本轮记录源码hash核对通过。旧runner重复observe漏结果与当前项正文标题优先导致前置无差异的失败均保留；改为被动候选tap（明确记录临时包插桩hash）及独立已见条目差异，不用传输accepted冒充因果恢复。证据 `sendGapMV320261020`。这是test-only composition的局部真实MV3证据，不是生产安装包/完整SYS05/真实账户通过；原目录与身份阻塞、10k/100k DEFERRED不变。
+
+## 发送缺口重放与合批回归（2026-10-20，基线9917b15）
+
+最小RED发现同序号gap更换bodyProofId仍会返回duplicate；现只给gap语义指纹增加原proof，合法重传保持，跨proof拒绝；哈希算法、schema与其他包不变。迟到gap回复不能解锁新producer自身正文确认前的发送。129项定向、162项adapter回归通过，独审无阻断。冻结后原CI完整598个Node测试文件9444通过、零失败/跳过，实测143.062秒；不将环境耗时差异宣称性能提升。证据 `sendGapProofReplay20261020`。此为Node合批检查点，非完整MV3/真实来源/Free验收；目录、身份、完整J1/J4及既有DEFERRED保持。

@@ -51,7 +51,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    const body=isBody?validateCurrentBodyProposal(combined?.body??proposal,{profile,actualURL:actual.url}):null;
    let batch=(!combined&&isBody)||isSend||isGap?null:surfaceBatch(combined?.surface??proposal,{scope,binding:proposal,profile,urlPolicy:profile.urlPolicy,sourceRevision:1,observedAt,validUntil});
    if(combined)validateCurrentSurfaceRelation(combined);
-   const semanticFingerprint=digest({... (isBody||isSend||isGap?{kind:proposal.kind}:{}),profileId:profile.id,profileVersion:profile.revision,payload:proposal.payload});
+   const semanticFingerprint=digest({... (isBody||isSend||isGap?{kind:proposal.kind}:{}),profileId:profile.id,profileVersion:profile.revision,...(isGap?{bodyProofId:proposal.bodyProofId}:{}),payload:proposal.payload});
    const recorded=producers.get(proposal.producerToken);
    if(recorded&&(recorded.scopeKey!==scope.key||recorded.grantId!==grant.id||recorded.scopeEpoch!==grant.scopeEpoch))return rejected('host-producer-scope-changed');
    const previous=recorded;

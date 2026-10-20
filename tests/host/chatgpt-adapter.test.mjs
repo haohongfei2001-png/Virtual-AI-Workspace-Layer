@@ -684,3 +684,13 @@ test('full but not overflowing send queue retains all 32 intents in order',async
  assert.equal(new Set(sends.map(p=>p.payload.intentId)).size,32);
  assert.equal(f.emitted.filter(p=>p.kind==='send-gap').length,0);f.adapter.stop();
 });
+
+test('late gap acknowledgement cannot unlock a replacement producer before its own body acknowledgement',async()=>{
+ const f=sendFixture();let releaseSurface,releaseGap,releaseBody;const next=[];
+ await f.start(p=>{f.emitted.push(p);if(p.kind==='surface-delta')return new Promise(r=>releaseSurface=()=>r(bodyAck(p)));if(p.kind==='send-gap')return new Promise(r=>releaseGap=()=>r(bodyAck(p)));return Promise.resolve(bodyAck(p));});
+ await settle();for(let i=0;i<33;i++)f.click();releaseSurface();await settle();assert.equal(typeof releaseGap,'function');
+ await f.start(p=>{next.push(p);if(p.kind==='current-observation')return new Promise(r=>releaseBody=()=>r(bodyAck(p)));return Promise.resolve(bodyAck(p));},{binding:{...f.binding,producerToken:'replacement',routeEpoch:5}});
+ await settle();releaseGap();await settle();f.click();await settle();assert.deepEqual(next.map(p=>p.kind),['current-observation']);
+ releaseBody();await settle();f.click();await settle();assert.equal(next.filter(p=>p.kind==='send-candidate').length,1);
+ assert(next.every(p=>p.producerToken==='replacement'&&p.routeEpoch===5));f.adapter.stop();
+});
