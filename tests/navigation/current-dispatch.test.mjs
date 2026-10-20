@@ -119,3 +119,7 @@ for(const phase of ['pending','settled'])test(`actual time-range onchange cancel
 });
 
 for(const mode of ['same-target','native-control'])test('pending VIEW disables old delegated link and newly rendered link: '+mode,async()=>{const f=setupCurrent({mode});try{f.nav.setNativeNavigationPending(true);assert.equal(f.link.getAttribute('aria-disabled'),'true');assert.equal(f.link.click().defaultPrevented,true);assert.equal(f.commands.length,0);f.nav.updateFrameProjection(projection());const link=f.pane().querySelectorAll('a').find(n=>n.getAttribute('data-ref-id')==='P2_0');assert.equal(link.getAttribute('aria-disabled'),'true');link.click();assert.equal(f.commands.length,0);f.nav.setNativeNavigationPending(false);assert.equal(link.getAttribute('aria-disabled'),null);link.click();assert.equal(f.commands.length,1);f.reply({state:'unconfirmed'});await tick();}finally{f.nav.stop();}});
+
+test('retired old-window disclosure cannot cancel a newer current-target acknowledgement',async()=>{
+ const f=setupCurrent();try{const retired=f.button('展开旧窗口 Original P2');f.nav.updateFrameProjection(projection());const fresh=f.pane().querySelector('[data-ref-id="P2_0"]');fresh.click();assert.equal(f.commands.length,1);retired.click();f.reply({state:'already-current'});await tick();assert.equal(f.nav.view().mode,'reading');assert.equal(f.commands.length,1);assert(!f.nav.view().oldOpen.has('home:P2'));}finally{f.nav.stop();}
+});

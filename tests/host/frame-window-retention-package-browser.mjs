@@ -1,3 +1,4 @@
+import {installWindowNavigationObserver,createWindowNavigationTraceRecorder} from './window-navigation-observer.mjs';
 import {probeNavigationCancellation} from './navigation-cancel-browser-probe.mjs';
 import {observeWindowScroll} from './window-scroll-observer.mjs';
 /** Opt-in S: actual MV3 buttons, application-owned offline world, no DB seeds. */
@@ -19,7 +20,7 @@ if(process.env.FREE_WINDOW_RETENTION_RUN!=='1'){await writeFile(output,JSON.stri
 else{
  let server,context,browserHandle,networkGuard,directory,manifest,manifestPath,manifestHash,page,extensionId,browserLaunchAttempted=false;
  const hash=x=>createHash('sha256').update(x).digest('hex');
- const sources=['navigation-cancel-browser-probe.mjs','window-scroll-observer.mjs','frame-window-retention-package-browser.mjs','fixtures/host-scale-server.mjs','fixtures/host-scale-world.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-cleanup.mjs','native-visibility-browser.mjs','historical-network-guard.mjs'];
+ const sources=['window-navigation-observer.mjs','navigation-cancel-browser-probe.mjs','window-scroll-observer.mjs','frame-window-retention-package-browser.mjs','fixtures/host-scale-server.mjs','fixtures/host-scale-world.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','fixtures/host-scale-surfaces.mjs','fixtures/host-scale-member-progress.mjs','fixtures/host-scale-cleanup.mjs','native-visibility-browser.mjs','historical-network-guard.mjs'];
  report.fixtureSourceHashes=Object.fromEntries(await Promise.all(sources.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
  try{
   const {chromium}=await import('../b1/tooling/node_modules/playwright/index.mjs');
@@ -32,26 +33,11 @@ else{
   browserHandle=await launchNativeVisibilityBrowser({chromium,profileDir:join(directory,'profile'),headed:false,historicalNetworkGuard:networkGuard.config,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
   context=browserHandle.context;context.setDefaultTimeout(6000);report.browserPrecondition=browserHandle.diagnostic;
   await context.route('**/*',route=>{const u=new URL(route.request().url());return u.origin===server.origin||u.protocol==='chrome-extension:'?route.continue():route.abort();});
-  // Bounded transport observation of this synthetic fixture only; no payload
-  // rewriting, private profile, native response body or timing changes.
+  // Bounded passive chronology of the synthetic fixture only; no payload
+  // rewriting, private profile, native response body, waits or action replay.
   report.trace=[];report.traceDropped=0;
-  await context.exposeBinding('observeWindowReturn',({frame},entry)=>{if(report.trace.length<400)report.trace.push({phase:report.phase,frame:frame.url(),...entry});else report.traceDropped++;});
-  await context.addInitScript(()=>{
-   if(location.protocol!=='chrome-extension:'||!globalThis.chrome?.runtime?.sendMessage)return;
-   // Capture the actual composed click path: the earlier locator snapshot may
-   // have been replaced before activation. Observe only, never cancel/replay.
-   document.addEventListener('click',event=>{
-    const node=event.composedPath().find(value=>value?.matches?.('.search-results a[data-ref-id]'));
-    if(!node)return;
-    const entry={type:'SEARCH_LINK_CLICK',delegated:node.hasAttribute('data-native-plan-control'),ariaDisabled:node.getAttribute('aria-disabled'),target:node.getAttribute('target'),connected:node.isConnected,button:event.button,modified:event.metaKey||event.ctrlKey||event.shiftKey||event.altKey};
-    setTimeout(()=>{void globalThis.observeWindowReturn({...entry,defaultPrevented:event.defaultPrevented}).catch(()=>{});},0);
-   },true);
-   const send=chrome.runtime.sendMessage.bind(chrome.runtime);
-   chrome.runtime.sendMessage=function(...args){const m=args[0],tracked=['HOST_UI_VIEW','HOST_UI_RESUME','HOST_UI_SAVE_VIEW','HOST_UI_DISPATCH_CURRENT','HOST_UI_DISPATCH_NATIVE','HOST_UI_CANCEL_NAVIGATION','HOST_UI_PRESENT'].includes(m?.type),pending=send(...args);
-    if(tracked&&pending?.then)pending.then(r=>{const p=r?.page;globalThis.observeWindowReturn({type:m.type,actionId:m.actionId,targetKey:m.targetKey,query:m.query,expectedQuery:m.expectedQuery,capacities:m.view?.capacities,scroll:m.view?.scroll,ok:r?.ok,state:r?.state,reason:r?.reason,presentation:p?.presentation??r?.presentation,resume:r?.resume,counts:p?{search:!!p.search,workingSet:!!p.workingSet,groups:p.groups?.items.map(g=>({id:g.id,unknown:g.lists.unknown.items.length})),unknown:p.entries?.unknown.items.length,selection:p.selection?{groupId:p.selection.groupId,list:p.selection.list,limit:p.selection.limit}:null}:null});},()=>{});
-    return pending;
-   };
-  });
+  await context.exposeBinding('observeWindowReturn',createWindowNavigationTraceRecorder(report));
+  await context.addInitScript(installWindowNavigationObserver);
   const cdp=await context.browser().newBrowserCDPSession();extensionId=(await cdp.send('Extensions.loadUnpacked',{path:built.unpacked})).id;
   page=await context.newPage();await page.setViewportSize({width:1440,height:900});page.on('pageerror',e=>report.errors.push(e.message));
   report.phase='initial';await page.goto(server.url);await waitHostScaleSurfaces(page,{extensionId});

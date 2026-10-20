@@ -344,3 +344,16 @@ test('pending horizon retains focusable select but blocks native mutation and de
  let prevented=0;pending.onpointerdown({preventDefault(){prevented++;}});for(const key of ['ArrowDown','Enter',' ','Home'])pending.onkeydown({key,preventDefault(){prevented++;}});for(const key of ['Tab','Escape'])pending.onkeydown({key,preventDefault(){throw Error('exit blocked');}});for(const event of [{key:'f',metaKey:true},{key:'f',ctrlKey:true},{key:'F6'},{key:'f',altKey:true}])pending.onkeydown({...event,preventDefault(){throw Error('native shortcut blocked');}});assert.equal(prevented,5);
  pending.value='90';pending.onchange();assert.equal(pending.value,'30');assert.equal(calls.length,1);settle({ok:false});await tick();old.value='60';old.onchange();pending.value='7';pending.onchange();assert.equal(calls.length,1);assert.equal(f.pane().querySelector('select').getAttribute('aria-disabled'),'false');f.nav.stop();
 });
+
+for(const role of ['workspace','sidebar'])for(const boundary of ['same-scope-refresh','scope-replacement','invalidate','stop'])test(`retired project disclosure cannot mutate/save/query a replacement view: ${role} ${boundary}`,t=>{
+ const calls=[],saves=[],f=fixture(role,q=>{calls.push(q);return null;},null,null,{}, {onViewChange:(value,scope)=>saves.push({value,scope})});t.after(()=>f.nav.stop());
+ const label=id=>(role==='sidebar'?'侧栏主题 ':'展开旧窗口 ')+'Original '+id,key=id=>role==='sidebar'?id:'home:'+id,open=()=>role==='sidebar'?f.nav.view().sidebarOpen:f.nav.view().oldOpen;
+ const positive=id=>{const count=calls.length;f.button(label(id)).click();assert(open().has(key(id)));assert.equal(calls.length,count+1);assert.deepEqual(calls.at(-1),{role,segment:0,offset:0,limit:24,groupId:id,list:role==='sidebar'?'current':'old',rowOffset:0,rowLimit:5});f.button(label(id)).click();assert(!open().has(key(id)));assert.equal(calls.length,count+1);};
+ f.nav.updateFrameProjection(projection(role));positive('P2');const retired=f.button(label('P2')),owner=f.nav.view();
+ if(boundary==='invalidate'||boundary==='stop')f.nav[boundary]();else{const next=projection(role);next.groups=page(next.groups.items.filter(g=>g.id==='P1'),1,0,24);if(boundary==='scope-replacement')next.scope='scopeB';f.nav.updateFrameProjection(next);}
+ const state=v=>JSON.stringify({oldOpen:[...v.oldOpen],sidebarOpen:[...v.sidebarOpen]}),before=state(owner),current=f.nav.view(),currentBefore=current?state(current):null,queries=calls.length,saveCount=saves.length;
+ // Retained callback invocation is deterministic renderer-path evidence, not
+ // a claim that the browser delivered an event after replacement or stop.
+ retired.click();assert.equal(state(owner),before);if(current)assert.equal(state(current),currentBefore);assert.equal(calls.length,queries);assert.equal(saves.length,saveCount);
+ if(boundary==='same-scope-refresh'||boundary==='scope-replacement'){positive('P1');assert.equal(saves.at(-1).scope,boundary==='scope-replacement'?'scopeB':'scopeA');}
+});

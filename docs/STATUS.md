@@ -1,5 +1,16 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 退休展开按钮隔离与被动诊断重建（2026-10-20，基线029175be）
+
+原云端候选b7f6b238/tree6769694c及其37文件未发布；恢复任务时旧工作区、临时日志和清单已不可读，不能称为原件恢复或复用旧9649结果。现从GitHub核实的029175be/tree1ee262d8完整历史重新检出，只重建同一C3/C5缺陷修复及诊断，无新功能/第二writer。原CI39389465140失败JSON已从原job重新取得，100219字节和原SHA256完全一致；旧本地日志不伪造。新证据沿原汇总projectDisclosureReconstructed20261020。
+
+退休侧栏项目及frame旧窗口按钮现先检查未stop、原view和当前pane按钮成员，再推进导航intent/修改/保存/请求；同scope刷新、换scope、invalidate、stop及新ACK被旧按钮取消共9项先全部RED。163定向通过；独审194项和5额外边界通过，去guard/禁全部控件变异分别捕获3/4例，当前按钮/指针保持正控未削弱。这是合成回调路径，不认定真实浏览器事件调度。
+
+原浏览器失败仍开放：取消链333ms通过后，实际search click见aria-disabled=true并preventDefault，无第二派发，原6秒返回等待超时；mainScroll150在两RAF保持，但后续返回保留断言未执行。未插桩cold-start本次通过，recovery分支未覆盖，不关闭历史cold/scroll/webRequest原因。已拒绝selector-readiness候选，不保留helper或伪原子浏览器模型。仅提取原合成spy并加VIEW开始/完成及pointerdown/click单文档单调时间、documentId和接收端frameId，保留400条、原locator/动作/期限/安全pending guard，无新等待或重试。74定向及74独审通过，不作为浏览器修复/验收。
+
+新冻结完整Node **9650/9650，468131.326885ms，零失败/跳过**；1207输入hash前后相同。12原guard变异全部捕获；184文件默认包构建/只读校验通过，仍HOST_IMPLEMENTATION_UNVERIFIED/NOT_RELEASE_READY。首次依赖安装默认npm缓存不可用，改用工作区正常缓存后成功，原错误日志保留；本重建批未运行本地浏览器，待精确发布HEAD的CI独立给证。真实主体/current-context、完整目录/成员/本人发送、完整J1/J4、物理IME/PAIA和安装发布仍开放；10k/100kDEFERRED。完成同PR发布后冻结产品，只核对精确HEAD的CI并交接。
+
+
 ## 退休侧栏滚动回调隔离与云端继续（2026-10-20，基线 ecbc8565）
 
 用户最新要求不赶交回时间，先完成适合云端的原计划工程；上一批“最终收口/交回准备”不再代表现在切换 writer。云端继续唯一写入，本地 Codex 与自动续接仍暂停，正式交回另行明确。
