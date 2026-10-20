@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 /** Offline fixture only: hold one already-completed authorization response. */
-export async function probeNavigationCancellation({context,page,workspace,result,extensionId,trace,title}){
+export async function probeNavigationCancellation({context,page,workspace,result,extensionId,trace,title,intent='query',draft='preserved search draft',dispatchType='HOST_UI_DISPATCH_CURRENT'}){
  const cdp=await context.newCDPSession(page),worlds=[];
  cdp.on('Runtime.executionContextCreated',event=>worlds.push(event.context));await cdp.send('Runtime.enable');
  const {frameTree}=await cdp.send('Page.getFrameTree');const matches=worlds.filter(w=>w.origin==='chrome-extension://'+extensionId&&w.auxData?.frameId===frameTree.frame.id&&w.auxData?.isDefault===false);assert.equal(matches.length,1);
@@ -13,16 +13,18 @@ export async function probeNavigationCancellation({context,page,workspace,result
  try{
   await result.click({timeout:remaining()});await wait(()=>evaluate('cancelProbe.held'));
   assert.equal(await evaluate('cancelProbe.replyOK'),true,'hold a successful real authorization, not a synthetic reply');
-  const search=workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true});await search.fill(title+' cancellation',{timeout:remaining()});
+  const search=workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true});
+  if(intent==='return')await page.getByRole('button',{name:'返回工作空间',exact:true}).click({timeout:remaining()});else await search.fill(title+' cancellation',{timeout:remaining()});
   await wait(()=>trace.slice(start).some(e=>e.type==='HOST_UI_CANCEL_NAVIGATION'&&e.ok===true&&e.state==='cancelled'));
   await evaluate('cancelProbe.release()');
-  await wait(()=>trace.slice(start).some(e=>e.type==='HOST_UI_DISPATCH_CURRENT'));
-  const dispatch=trace.slice(start).filter(e=>e.type==='HOST_UI_DISPATCH_CURRENT');assert.equal(dispatch.length,1);assert.notEqual(dispatch[0].state,'already-current');
+  await wait(()=>trace.slice(start).some(e=>e.type===dispatchType));
+  const dispatch=trace.slice(start).filter(e=>e.type===dispatchType);assert.equal(dispatch.length,1);assert.notEqual(dispatch[0].state,dispatchType==='HOST_UI_DISPATCH_CURRENT'?'already-current':'dispatched');
   const cancellations=trace.slice(start).filter(e=>e.type==='HOST_UI_CANCEL_NAVIGATION');assert.equal(cancellations.length,1);
   const held=await evaluate('({actionId:cancelProbe.actionId,targetKey:cancelProbe.targetKey})');assert.equal(typeof held.actionId,'string');assert.equal(typeof held.targetKey,'string');for(const entry of [dispatch[0],cancellations[0]]){assert.equal(entry.actionId,held.actionId);assert.equal(entry.targetKey,held.targetKey);}
   assert.equal(page.url(),url);assert.equal(context.pages().length,pages);assert.equal(await page.getByRole('button',{name:'返回工作空间',exact:true}).count(),0);
-  assert.equal(await search.inputValue({timeout:remaining()}),title+' cancellation');assert.equal(await search.isVisible(),true,'latest workspace search stays visibly available');assert(await page.evaluate(()=>document===paginationDocument&&document.querySelector('textarea')===paginationEditor&&paginationEditor.value==='preserved search draft'));
+  if(intent==='query'){assert.equal(await search.inputValue({timeout:remaining()}),title+' cancellation');assert.equal(await search.isVisible(),true,'latest workspace search stays visibly available');}else assert.equal(await workspace.locator('.workspace').isVisible(),true,'returned workspace stays visible');
+  assert(await page.evaluate(value=>document===paginationDocument&&document.querySelector('textarea')===paginationEditor&&paginationEditor.value===value,draft));
   assert(Date.now()<until,'complete cancellation observation must fit original six seconds');
-  return {state:'PASS',realAuthorizationHeld:true,cancelAcknowledged:true,lateReplyDidNotEnterReading:true,originalDocumentEditorDraft:true,oneDispatch:true,oneCancellation:true,elapsedMs:6000-(until-Date.now()),scope:'OFFLINE_MV3_SAME_TARGET_SUBCHAIN_ONLY'};
+  return {state:'PASS',realAuthorizationHeld:true,cancelAcknowledged:true,lateReplyDidNotEnterReading:true,originalDocumentEditorDraft:true,oneDispatch:true,oneCancellation:true,elapsedMs:6000-(until-Date.now()),scope:intent==='return'?'OFFLINE_MV3_NATIVE_RETURN_SUBCHAIN_ONLY':'OFFLINE_MV3_SAME_TARGET_SUBCHAIN_ONLY'};
  }finally{await evaluate('cancelProbe.held&&!cancelProbe.released&&cancelProbe.release()').catch(()=>{});await cdp.detach();}
 }

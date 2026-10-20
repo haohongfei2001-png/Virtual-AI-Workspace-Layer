@@ -3904,3 +3904,6 @@ CI39354354919终结FAIL：Node/持久化/J4 job成功，journeys在搜索当前�
 真实隔离headless扩展已证same-target取消子链：暂持同action的第二个真实成功授权回复，用户修改搜索，收到原worker→content取消确认后释放原回复；一个派发/一个取消、action和plan一致，旧阅读未开启，最新搜索实际可见，URL/文档/editor/草稿/页面数保持。整个取消观察81ms且强制原6秒绝对总窗；随后原当前/不同目标返回及17条分页旅程3036.783ms完成，源码/fixture/包无漂移。这是本地离线S子链及明确隔离世界回复延迟注入，不是真实ChatGPT来源/完整J1/J4；前两版取证不足的候选结果保留，最终以各自hash为准。新子链并入既有CI窗口runner一次执行，不新增job/缓存/上传。
 
 随后同类检查实际复现用户“返回工作空间”只改本地epoch、未撤销旧动作：四owner的4个return反例均失败。onWorkspaceEntry现复用同一取消链路，先撤销再执行原当前项/校准；query/return×same/native×首/第二授权共8种时序及454项定向/构建通过。此单行晚于上述浏览器报告，实际return取消消息链仍待S，不借旧hash升级。原RED、各版报告和边界见 `nativeCancellationMV320261020`。目录/身份、旧Linux返回超时、完整Free及规模DEFERRED保持。
+
+
+用户返回取消的实际S子链已补齐（生产源码6ef42ef）：同一原窗口旅程合批查询取消67ms、native-control准备阅读后点击真实返回按钮取消166ms。各自暂持同action第二个真实成功授权，先收worker/content取消确认再释放原回复；返回后原生navigate计数未增加、workspace保持可见，URL/原document/editor/草稿保持，新显式导航仍可正常打开与返回。完整窗口子链3073.85ms、原6秒绝对观察窗、源码/fixture/包无漂移；仅局部离线MV3，不升级完整J1/J4或真实ChatGPT。报告/源码hash见 `nativeReturnCancellationMV320261020`。6ef42ef普通push再次低速超时，本地成果保持，不循环重试。

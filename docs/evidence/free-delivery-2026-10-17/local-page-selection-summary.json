@@ -1,4 +1,17 @@
 {
+"nativeReturnCancellationMV320261020": {
+  "baseline": "6ef42ef",
+  "status": "PASS_OFFLINE_MV3_WINDOW_RETENTION",
+  "queryCancellationMs": 67,
+  "nativeReturnCancellationMs": 166,
+  "wholeJourneyMs": 3073.85,
+  "scope": "two offline cancellation subchains plus original window retention; not full J1/J4 or live ChatGPT",
+  "oracle": "real successful second authorization held by exact tuple; actual UI intent; original owner/content cancellation ack; release unchanged response; one action and cancellation; native server navigate count unchanged on return; original doc/editor/draft and visible workspace; later new navigation succeeds",
+  "files": {
+    "local-vaiwl-cancel-query-return-chain.json.gz": "eecbab12bc4c8a7cb47a1b44e297a998c410d78b70e755e6ffba85eae7d1fd68",
+    "local-vaiwl-cancel-query-return-chain.log.gz": "0a9ca645be6060aabf6af885615259c286dd058f0c765f5c8cbfba5b09d5ebc2"
+  }
+},
 "nativeCancellationMV320261020": {
   "baseline": "726c7a82",
   "cancellationBrowser": {

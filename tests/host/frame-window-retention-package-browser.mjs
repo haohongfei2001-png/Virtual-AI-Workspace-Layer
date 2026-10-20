@@ -124,6 +124,13 @@ else{
   await otherSidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
   await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(otherTitle);
   const otherResult=workspace.locator(`.search-results a[data-ref-id="${first[1]}"]`);await otherResult.waitFor();
+  if(process.env.FREE_NAVIGATION_CANCEL_RUN==='1'){
+   const beforeCancelNavigate=server.snapshot().actions.navigate??0;
+   report.returnCancellation=await probeNavigationCancellation({context,page,workspace,result:otherResult,extensionId,trace:report.trace,title:otherTitle,intent:'return',draft:'',dispatchType:'HOST_UI_DISPATCH_NATIVE'});
+   assert.equal(server.snapshot().actions.navigate??0,beforeCancelNavigate,'return cancellation must prevent the original native click');
+   await otherSidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
+   await workspace.getByRole('searchbox',{name:'已知聊天查找输入',exact:true}).fill(otherTitle);await otherResult.waitFor();
+  }
   const otherTarget=await otherResult.getAttribute('href');assert(otherTarget);assert.notEqual(otherTarget,page.url());
   const nativeBefore=server.snapshot().actions.navigate??0,pagesBefore=context.pages().length,previousFrame=workspace;
   await otherResult.click();await page.waitForURL(otherTarget);
