@@ -12,8 +12,9 @@ import {createHostFixtureServer} from './fixtures/server.mjs';
 import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
 import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
 const output=process.argv[2]??join(tmpdir(),'vaiwl-native-me-candidate-browser.json');
+const credentialControl=process.argv[3]==='credential-control';
 const accountsSchema=process.argv[3]==='accounts-schema',accountsStructure=process.argv[3]==='accounts-structure';
-const modes=accountsStructure?['structure-mixed']:accountsSchema?['schema-invalid','schema-valid']:process.argv[3]==='legacy-receiver'?['legacy-receiver']:process.argv[3]==='lifecycle'?['foreground-start','hidden-inflight']:['consistent','accounts-challenge','shared-deadline','route-changed'];
+const modes=credentialControl?['credential-control']:accountsStructure?['structure-mixed']:accountsSchema?['schema-invalid','schema-valid']:process.argv[3]==='legacy-receiver'?['legacy-receiver']:process.argv[3]==='lifecycle'?['foreground-start','hidden-inflight']:['consistent','accounts-challenge','shared-deadline','route-changed'];
 const started=performance.now(),directory=await mkdtemp(join(tmpdir(),'vaiwl-me-chain-mv3-'));
 const hash=v=>createHash('sha256').update(v).digest('hex');
 const report={kind:'PACKAGED_HEADLESS_MV3_SYNTHETIC_HTTPS_RESPONSES',realProfile:'NOT_RUN',livePermissionConsumed:false,release:'NOT_RELEASE_READY',results:[],status:'RUNNING',runnerHash:hash(await readFile(new URL(import.meta.url)))};
@@ -25,18 +26,24 @@ function protocol(endpoint){
 }
 try{
  server=await createHostFixtureServer();guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
- const base=join(directory,'base');bundle=join(directory,'candidate');buildHost(base,{observedChatGPTContext:true,temporaryReadOnly:true});receipt=buildProbe(base,bundle,0,{candidateChain:!accountsSchema&&!accountsStructure,accountsSchema,accountsStructure});const baseInfo=JSON.parse(await readFile(join(base,'build-manifest.json')));report.sourceHashes={...baseInfo.sourceHashes,...receipt.sourceHashes};report.baseReceiptSha256=receipt.baseReceiptSha256;report.overlayReceiptSha256=hash(await readFile(join(bundle,'native-me-probe-manifest.json')));
+ const base=join(directory,'base');bundle=join(directory,'candidate');buildHost(base,{observedChatGPTContext:true,temporaryReadOnly:true});receipt=buildProbe(base,bundle,0,{candidateChain:!credentialControl&&!accountsSchema&&!accountsStructure,accountsSchema,accountsStructure,credentialControl});const baseInfo=JSON.parse(await readFile(join(base,'build-manifest.json')));report.sourceHashes={...baseInfo.sourceHashes,...receipt.sourceHashes};report.baseReceiptSha256=receipt.baseReceiptSha256;report.overlayReceiptSha256=hash(await readFile(join(bundle,'native-me-probe-manifest.json')));
  for(const mode of modes){
-  report.mode=mode;const runStarted=performance.now(),requests=[],unexpected=[],errors=[];let releaseAccounts,accountSeen;
+  report.mode=mode;const runStarted=performance.now(),requests=[],credentialFlags=[],unexpected=[],errors=[];let releaseAccounts,accountSeen;
   const observedAccounts=new Promise(r=>accountSeen=r);
   handle=await launchNativeVisibilityBrowser({chromium,profileDir:join(directory,'profile-'+mode),headed:false,historicalNetworkGuard:guard.config,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
   const {context,browser}=handle;report.browserVersion=browser.version();context.setDefaultTimeout(8000);
+  if(credentialControl)await context.addCookies([{name:'vaiwl_control_fixture',value:'synthetic',domain:'chatgpt.com',path:'/',secure:true}]);
   await context.route('**/*',async route=>{
    const u=new URL(route.request().url());
    if(u.protocol==='chrome-extension:')return route.continue();
    if(u.href==='https://chatgpt.com/')return route.fulfill({contentType:'text/html',body:'<!doctype html><title>Offline candidate fixture</title><aside><nav aria-label="Chat history"></nav></aside><main><textarea id="prompt-textarea">UNSENT_FIXTURE_DRAFT</textarea></main>'});
    if(u.origin!=='https://chatgpt.com'||!['/backend-api/me','/backend-api/accounts/check/v4-2023-04-27'].includes(u.pathname)){unexpected.push(u.pathname);return route.abort();}
    requests.push(u.pathname);assert.equal(route.request().method(),'GET');
+   if(credentialControl){
+    const present=(await route.request().headerValue('cookie')??'').includes('vaiwl_control_fixture=synthetic');credentialFlags.push(present);
+    if(u.pathname.endsWith('/me'))return route.fulfill({status:present?200:401,contentType:'application/json',body:JSON.stringify(present?{id:'fixture-private-subject',email:'PRIVATE_SENTINEL'}:{error:'PRIVATE_SENTINEL'})});
+    return route.fulfill({contentType:'application/json',body:JSON.stringify(present?{accounts:{'fixture-private-space':{account:{account_id:'fixture-private-space',structure:'personal'}}}}:{accounts:{default:{account:{account_id:null,structure:'personal',is_deactivated:false},can_access_with_session:true}}})});
+   }
    if(u.pathname.endsWith('/me'))return route.fulfill({contentType:'application/json',body:JSON.stringify({id:'fixture-private-subject',email:'PRIVATE_SENTINEL'})});
    accountSeen();
    if(mode==='accounts-challenge')return route.fulfill({status:403,headers:{'content-type':'text/html','cf-mitigated':'challenge'},body:'offline challenge fixture'});
@@ -56,9 +63,10 @@ try{
   control=protocol(handle.debugEndpoint);await control.ready;let session,target;
   async function open(){await worker.evaluate(()=>chrome.action.openPopup());const matches=(await cdp.send('Target.getTargets')).targetInfos.filter(t=>t.url===`chrome-extension://${id}/native-me-probe.html`);assert.equal(matches.length,1);target=matches[0].targetId;session=(await control.send('Target.attachToTarget',{targetId:target,flatten:true})).sessionId;}
   async function evaluate(expression){const r=await control.send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},session);if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description??'popup-evaluate');return r.result.value;}
-  async function click(selector){const box=await evaluate(`(()=>{const r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);await control.send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...box},session);await control.send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...box},session);}
-  async function waitResult(readPending=false){const deadline=performance.now()+8000;while(performance.now()<deadline){const text=await evaluate('document.querySelector("#result").textContent');try{const r=JSON.parse(text);if(r.state==='finished'||r.state.endsWith('-no-request'))return r;if(readPending&&r.state==='no-result')await click('#read');}catch{}await new Promise(r=>setTimeout(r,25));}throw Error('candidate-result-observation-timeout');}
+  async function click(selector){const box=await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)}),r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);if(credentialControl){const geometry=await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)}),r=e.getBoundingClientRect();return {disabled:e.disabled,width:innerWidth,height:innerHeight,rect:{x:r.x,y:r.y,width:r.width,height:r.height},hit:document.elementFromPoint(${box.x},${box.y})?.id??null};})()`);report.popupGeometry=geometry;assert.equal(geometry.hit,selector.slice(1));assert.equal(geometry.disabled,false);assert(geometry.width>=440);}await control.send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...box},session);await control.send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...box},session);}
+  async function waitResult(readPending=false){const deadline=performance.now()+8000;while(performance.now()<deadline){const text=await evaluate('document.querySelector("#result").textContent');if(credentialControl){report.lastPopupObservation=text.slice(0,400);report.controlRequestCount=requests.length;}try{const r=JSON.parse(text);if(r.state==='finished'||r.state.endsWith('-no-request'))return r;if(readPending&&r.state==='no-result')await click('#read');}catch{}await new Promise(r=>setTimeout(r,25));}throw Error('candidate-result-observation-timeout');}
   await open();await evaluate("localStorage.setItem('vaiwl-native-me-probe-20261019-consumed','consumed')");assert.equal(requests.length,0);
+  if(credentialControl){for(const marker of ['vaiwl-native-me-candidate-20261019-consumed','vaiwl-accounts-schema-20261019-consumed','vaiwl-accounts-structure-20261019-consumed'])await evaluate(`localStorage.setItem(${JSON.stringify(marker)},'consumed')`);}
   if(accountsSchema||accountsStructure)await evaluate("localStorage.setItem('vaiwl-native-me-candidate-20261019-consumed','consumed')");
   if(accountsStructure)await evaluate("localStorage.setItem('vaiwl-accounts-schema-20261019-consumed','consumed')");
   if(mode==='foreground-start'||mode==='hidden-inflight'){
@@ -83,8 +91,9 @@ try{
   }
   assert.equal(result.state,'finished');
   const consistent=mode==='consistent'||mode==='foreground-start';
-  const expected=accountsStructure?'accounts-schema:account-id':accountsSchema?(mode==='schema-valid'?'accounts-schema-valid-not-authorized':'accounts-schema:default-canonical-missing'):consistent?'candidate-consistent-not-authorized':mode==='accounts-challenge'?'session-challenged':mode==='shared-deadline'?'request-timeout':'document-changed';assert.equal(result.reason,expected);
-  if(accountsSchema||accountsStructure){assert.deepEqual(Object.keys(result).sort(),accountsStructure?['reason','state','structure']:['reason','state']);assert.deepEqual(requests,['/backend-api/accounts/check/v4-2023-04-27']);assert.equal(await evaluate("localStorage.getItem('vaiwl-native-me-candidate-20261019-consumed')"),'consumed');}else{assert.equal(result.samePrincipal,consistent);assert.equal(requests.length,consistent?3:2);assert.equal(result.identityEnabled,false);}assert(!JSON.stringify(result).includes('fixture-private'));assert(!JSON.stringify(result).includes('PRIVATE_SENTINEL'));
+  const expected=credentialControl?'control-complete-not-authorized':accountsStructure?'accounts-schema:account-id':accountsSchema?(mode==='schema-valid'?'accounts-schema-valid-not-authorized':'accounts-schema:default-canonical-missing'):consistent?'candidate-consistent-not-authorized':mode==='accounts-challenge'?'session-challenged':mode==='shared-deadline'?'request-timeout':'document-changed';assert.equal(result.reason,expected);
+  if(credentialControl){assert.deepEqual(credentialFlags,[true,false,true,false]);assert.equal(result.credentialDependence,'include-id-omit-denied');assert.equal(result.accountsInclude.selectedFieldSchemaValid,true);assert.equal(result.accountsOmit.schemaIssue,'default-null-context-id');assert.equal(result.identityEnabled,false);for(const marker of ['vaiwl-native-me-candidate-20261019-consumed','vaiwl-accounts-schema-20261019-consumed','vaiwl-accounts-structure-20261019-consumed'])assert.equal(await evaluate(`localStorage.getItem(${JSON.stringify(marker)})`),'consumed');}
+  else if(accountsSchema||accountsStructure){assert.deepEqual(Object.keys(result).sort(),accountsStructure?['reason','state','structure']:['reason','state']);assert.deepEqual(requests,['/backend-api/accounts/check/v4-2023-04-27']);assert.equal(await evaluate("localStorage.getItem('vaiwl-native-me-candidate-20261019-consumed')"),'consumed');}else{assert.equal(result.samePrincipal,consistent);assert.equal(requests.length,consistent?3:2);assert.equal(result.identityEnabled,false);}assert(!JSON.stringify(result).includes('fixture-private'));assert(!JSON.stringify(result).includes('PRIVATE_SENTINEL'));
   if(accountsStructure){assert.equal(result.structure.entryCount,3);assert.deepEqual(result.structure.groups.ordinary.account_id,{missing:1,null:1});assert.deepEqual(result.structure.groups.ordinary.id,{'valid-string':1,missing:1});assert.equal(result.structure.defaultAlias.id.wholeEntryEqual,'equal');assert.equal(await evaluate("localStorage.getItem('vaiwl-accounts-schema-20261019-consumed')"),'consumed');}
   const expectedRequests=requests.length;
   assert.equal(await evaluate("localStorage.getItem('vaiwl-native-me-probe-20261019-consumed')"),'consumed');assert.equal(await evaluate('document.querySelector("#run").disabled'),true);
@@ -92,7 +101,7 @@ try{
   await control.send('Target.closeTarget',{targetId:target});await open();assert.equal(await evaluate('document.querySelector("#run").disabled'),true);
   await click('#read');assert.deepEqual(await waitResult(),result);assert.equal(requests.length,expectedRequests);
   assert.equal(await page.locator('textarea').inputValue(),'UNSENT_FIXTURE_DRAFT');assert.deepEqual(unexpected,[]);assert.deepEqual(errors,[]);
-  report.results.push({mode,result,requestCount:requests.length,oldMarkerPreserved:true,reopenDisabled:true,readDidNotRequest:true,databaseCount:databases,draftPreserved:true,elapsedMs:performance.now()-runStarted});
+  report.results.push({mode,result,requestCount:requests.length,...(credentialControl?{credentialFlags}:{}),oldMarkerPreserved:true,reopenDisabled:true,readDidNotRequest:true,databaseCount:databases,draftPreserved:true,elapsedMs:performance.now()-runStarted});
   control.close();control=null;await handle.close();handle=null;
  }
  report.status='PASS_PACKAGED_OFFLINE_CANDIDATE';

@@ -19607,5 +19607,102 @@
   },
   "review": "Independent read-only review no blocker.",
   "scope": "Original full Node CI file set only; not full Free, real source or complete MV3 acceptance."
-}
+},
+  "credentialControl20261021": {
+    "baseline": "5042db99",
+    "status": "IMPLEMENTED_OFFLINE_VERIFIED_LIVE_NOT_RUN",
+    "authorization": "Explicit user approval for one bounded include/omit control batch; prior one-shot permits remain consumed.",
+    "live": {
+      "requestsDispatched": 0,
+      "permissionConsumed": false,
+      "popupTitleVerified": true,
+      "admissionResult": "receiver-not-loaded-no-request",
+      "scopeOrDatabaseEnabled": false,
+      "blocker": "Browser tab observation timed out; native popup returned receiver-not-loaded-no-request. Native action then changed windows. User approved window/tab-title location, but automatic approval review rejected the full AX read because it also includes page body. One-time transient visible-text permission requested; pending. No further request dispatch."
+    },
+    "limits": {
+      "maxRequests": 4,
+      "elapsedMs": 6000,
+      "meBytesEach": 262144,
+      "accountsBytesEach": 1048576,
+      "retries": 0
+    },
+    "implementation": [
+      "Fixed ordered endpoints and credential modes; shared bounded reader/deadline; independent durable one-shot key and unchanged prior keys.",
+      "Selected account fields projected before schema/alias comparisons; non-target identity metadata discarded. selectedFieldSchemaValid is not a complete authenticated-roster assertion.",
+      "HTML/challenge, rate limit, timeout, document/observed interaction changes stop; no old database, scope, production switch or credential extraction."
+    ],
+    "popupRootCause": "Circular max-width:100vw in an intrinsic popup yielded width105 and run button below its viewport. Explicit html min-width440 repairs native click access; original failure retained.",
+    "targeted": {
+      "passed": 96,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 761.938292
+    },
+    "isolatedMV3": {
+      "status": "PASS_PACKAGED_OFFLINE_CANDIDATE",
+      "syntheticOnly": true,
+      "requests": 4,
+      "credentialFlags": [
+        true,
+        false,
+        true,
+        false
+      ],
+      "oldMarkersPreserved": true,
+      "readDidNotRequest": true,
+      "reopenDisabled": true,
+      "databaseCount": 0,
+      "draftPreserved": true,
+      "caseElapsedMs": 1163.895291,
+      "totalElapsedMs": 1469.111709,
+      "sourceStable": true,
+      "packageStable": true,
+      "runnerStable": true
+    },
+    "realPackage": {
+      "oldPackageBackedUp": true,
+      "ordinaryBasePreserved": true,
+      "manifestUnchanged": true,
+      "diagnosticFilesUpdated": 5,
+      "filesVerified": 187,
+      "overlayReceiptSha256": "9c142e023fdc3f8e8e47e6456438b89e79bdc3727c58d64d9b96b93d1117e8ba"
+    },
+    "review": "Independent read-only review: blocking findings corrected; selected-field projection and result naming reviewed without remaining blocker.",
+    "artifacts": {
+      "vaiwl-credential-control-release-targeted-v2.log": {
+        "path": "vaiwl-credential-control-release-targeted-v2.log.gz",
+        "sha256": "c7e387b0734809630138b80cd59d8e08dc085e157e01b395f00b7c30efb3d2f8"
+      },
+      "vaiwl-credential-control-mv3.json": {
+        "path": "vaiwl-credential-control-mv3.json.gz",
+        "sha256": "56b40755859bd6f195d330d46da6017715d8554238cd102c50e3adaa46254551"
+      },
+      "vaiwl-credential-control-mv3-isolated.json": {
+        "path": "vaiwl-credential-control-mv3-isolated.json.gz",
+        "sha256": "3a557c23219e23ab938f75fb99fa22a86bfcde326868842c922bd92c53f9b456"
+      },
+      "vaiwl-credential-control-mv3-observed.json": {
+        "path": "vaiwl-credential-control-mv3-observed.json.gz",
+        "sha256": "2583caf2fb89b449b8f46b858d7f7a079bb46c703f49438b551fa5745a4c87ba"
+      },
+      "vaiwl-credential-control-mv3-click-diagnostic.json": {
+        "path": "vaiwl-credential-control-mv3-click-diagnostic.json.gz",
+        "sha256": "de89d4f2588e3b9dadbeee779ec832dfbd9fa94bd211c42b112ad455b0b9e9d4"
+      },
+      "vaiwl-credential-control-mv3-final.json": {
+        "path": "vaiwl-credential-control-mv3-final.json.gz",
+        "sha256": "aac69762bab20f9f8d3df063d19d463ae3adc2ca00937504e48ecb5f562a282b"
+      },
+      "vaiwl-credential-control-mv3-release.json": {
+        "path": "vaiwl-credential-control-mv3-release.json.gz",
+        "sha256": "ce882181a8ae0fd26ded8213244fb7df2fad879e39a9ba7bff45ab0befe9d4c5"
+      }
+    },
+    "limitations": [
+      "No real credential-dependence result yet.",
+      "No C2/C3 principal/context authorization, complete native directory, full Free or release acceptance.",
+      "10k/100k remain DEFERRED with original thresholds."
+    ]
+  }
 }

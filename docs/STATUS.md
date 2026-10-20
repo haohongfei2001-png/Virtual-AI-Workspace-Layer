@@ -1,12 +1,16 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 当前来源失败位置与待授权对照（2026-10-21，源码40deda14）
+## 当前来源失败位置与已授权对照（2026-10-21，基线5042db99）
 
 重新核对实际调用：生产session-provider/isolated-session-reader先取固定session；历史真实挑战由readSessionJSON在读取JSON/主体前拒绝，尚未执行该轮认证accounts。候选candidate.mjs使用无手工Authorization的cookie-only请求，首次me有效后进入sessionContexts；唯一default的account_id:null/id缺失在identifier校验处抛invalid-accounts-schema（现细码default-null-context-id），第三次me不执行，因此samePrincipal:false是未建立，不是观察到主体变更。直接原因是来源数据不满足现有canonical ID合同；是否因缺session-derived认证造成默认响应，尚无对照证据，不能断言是服务器故障或parser应放宽。
 
-唯一计划已准备最多4请求的include/omit凭据依赖对照，并明确敏感响应瞬时接收、权限、预算、结果分支和停止条件；等待用户对这一新批次明确授权，未实现执行器、未发真实请求、不复用旧许可。不把对照成功当C2/C3授权成立，不为此追加无关离线修复。实际源码/分工不变。
+用户已明确批准最多4请求的include/omit对照，现已实现固定序列、共用6秒、独立持久单次标记、接收器版本/文档检查、有限JSON读取和白名单字段投影；不碰旧标记、凭据、旧库或scope。只输出固定结构、数量和比较结果，selectedFieldSchemaValid不等于完整认证roster。独审指出的HTML 403、跨响应比较和非目标字段比较问题已修正。
 
-推送连接另行只读定位：前次DNS完成但github.com TCP连接超时；本次github.com与api.github.com均HTTP200/TLS成立，允许接续正常同步，未修改代理/DNS/凭据/远端。检查开始HEAD40deda14，tracked干净、3stash保留；原source-priority-checkpoint.bundle验证通过（依赖6a4ee4b3），本次新文档提交及推送结果另按实际记录。
+真实原安装包已备份并原位更新5个诊断文件，manifest/普通产品文件保持，187文件校验通过；用户已重载。当前确认新版弹窗并点击一次，返回receiver-not-loaded-no-request，尚未发请求或消费许可。浏览器页面读取超时、后续原生窗口切换使定位不可靠；用户追加允许窗口/标签标题定位；但工具只能读取包含当前页面正文的完整AX，自动审批再次拒绝，已集中申请一次临时可见文字读取，等待结果。不将该工具阻塞冒充服务器失败，也不要求再次重载。
+
+同时修复了诊断弹窗自身的真实可用性问题：原max-width:100vw形成内在尺寸循环，隔离Chrome弹窗仅105px宽，执行按钮在可视区外；显式440px最小宽度后可实际点击。96项受影响定向与打包隔离MV3通过，实际include/omit携带行为、旧许可保留、零数据库和草稿保持已验证；这些全部为合成响应，不计真实身份通过。原失败和冻结源码证据沿credentialControl20261021，未重复规模验收。
+
+推送连接另行只读定位：前次DNS完成但github.com TCP连接超时；本次github.com与api.github.com均HTTP200/TLS成立，允许接续正常同步，未修改代理/DNS/凭据/远端。检查开始HEAD40deda14，tracked干净、3stash保留；原source-priority-checkpoint.bundle验证通过（依赖6a4ee4b3），5042db99已正常推送原Free分支，未强推；本次诊断工程另合批提交。
 
 
 ## 分工确认：转入真实身份/当前空间来源关口（2026-10-21）

@@ -1,14 +1,16 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
-## 当前待授权最小来源验证：凭据依赖对照（2026-10-21）
+## 当前已授权最小来源验证：凭据依赖对照（2026-10-21）
 
-本项接续40deda14，只准备可审核的真实诊断范围，尚未获批或执行，不新增产品路线或放宽parser。原一次许可全部保持已消费。目的不是再证明HTTP可读，而是区分候选`/me`及cookie-only accounts是否区分携带浏览器凭据与不携带凭据的请求；它不能单独证明用户身份命名空间、全roster、C3当前默认语义或同代际授权。
+本项接续40deda14/5042db99；用户已明确批准此新批次，隔离执行器、一次性入口及打包验证已完成。真实弹窗已确认新版，但READY返回receiver-not-loaded-no-request，真实请求仍0；当前停在浏览器窗口定位边界，不新增产品路线或放宽parser。原一次许可全部保持已消费。目的不是再证明HTTP可读，而是区分候选`/me`及cookie-only accounts是否区分携带浏览器凭据与不携带凭据的请求；它不能单独证明用户身份命名空间、全roster、C3当前默认语义或同代际授权。
 
-申请同一已授权hongfei hao专用Profile、同一当前顶层ChatGPT文档的一批最多4个固定GET：依次`/backend-api/me` include、同端点 omit、`/backend-api/accounts/check/v4-2023-04-27` include、同端点 omit。include只让浏览器正常附带凭据，omit是fetch选项，不登出、不清Cookie；不读、复制或手工设置Cookie/Authorization/token。不调用session、不改变headers来模拟原生认证、不注入MAIN。所有请求共用6秒、无重试；每个me最多256KiB、每个accounts最多1MiB，累计最多2.5MiB。me include失败或omit仍返回同一有效ID则提前停止；任一challenge/429/redirect/超限/超时/文档或已可观察选择变化立即停止，不换通道补测。普通对照401只记录固定状态码，不解析其响应正文。
+已批准同一已授权hongfei hao专用Profile、同一当前顶层ChatGPT文档的一批最多4个固定GET：依次`/backend-api/me` include、同端点 omit、`/backend-api/accounts/check/v4-2023-04-27` include、同端点 omit。include只让浏览器正常附带凭据，omit是fetch选项，不登出、不清Cookie；不读、复制或手工设置Cookie/Authorization/token。不调用session、不改变headers来模拟原生认证、不注入MAIN。所有请求共用6秒、无重试；每个me最多256KiB、每个accounts最多1MiB，累计最多2.5MiB。me include失败或omit仍返回同一有效ID则提前停止；任一challenge/429/redirect/超限/超时/文档或已可观察选择变化立即停止，不换通道补测。omit的JSON 401/403只记录固定状态码，不解析其响应正文；HTML或挑战403立即停。
 
-读取范围仅根id及accounts现有解析字段（条目键、account_id/id、structure、is_deactivated、can_access_with_session与default别名关系）；这些响应可能含姓名/邮箱/套餐等其他账户元数据，允许接收与解析须另获明确许可，非目标字段立即丢弃，所有目标原值只在RAM用于比较。输出仅固定状态/原因、类型、计数、相等布尔；不保存原响应、私人ID、动态键、标题、凭据，不上传私人数据。沿已有隔离世界固定读取边界，使用独立单次标记，不清旧标记；不增加cookies/debugger权限、不发scope、不读旧库、不启生产开关。第一方service worker可能影响同源fetch，omit不能被夸大为真正已登出账户；无法区分的结果记INCONCLUSIVE。
+读取范围仅根id及accounts现有解析字段（条目键、account_id/id、structure、is_deactivated、can_access_with_session与default别名关系）；这些响应可能含姓名/邮箱/套餐等其他账户元数据，本批接收与解析已获明确许可，非目标字段立即丢弃，所有目标原值只在RAM用于比较。输出仅固定状态/原因、类型、计数、相等布尔；不保存原响应、私人ID、动态键、标题、凭据，不上传私人数据。沿已有隔离世界固定读取边界，使用独立单次标记，不清旧标记；不增加cookies/debugger权限、不发scope、不读旧库、不启生产开关。第一方service worker可能影响同源fetch，omit不能被夸大为真正已登出账户；无法区分的结果记INCONCLUSIVE。
 
 通过标准分层：诊断有效需文档未变、原预算及一次性界限成立、固定结果可解释；候选主体的进一步研究条件是include有效ID而omit明确无有效主体，仍仅证明该环境的凭据依赖，不是完整身份认证。账户列表只有include产生有效canonical集合才进入后续来源合同审查；两侧仍default/null则当前cookie-only路线仍不可用于C2，不改parser或开启C3。生产验收另需独立证明主体语义、与当前C2 receipt或已证C3默认语义的绑定及切换撤回；本批通过不解锁旧库、完整Free或发布。若工具不能保证单次/字段最小化或平台禁止该读取，停止为NOT_RUN，不绕限制，也不要求用户反复刷新重载。
+
+工程结果与下一步：见STATUS/credentialControl20261021；下一动作仅为在原VAIWL已加载的新首页执行此未消耗批次。用户已允许窗口/标签标题定位，但完整AX还含页面正文而被自动审批再次拒绝；已集中申请一次临时可见文字读取用于定位，等待结果；不再要求重载，不用新离线工程替代来源关口。`selectedFieldSchemaValid`只检验已授权字段，不证明完整认证roster；omit可能受第一方SW影响的限制保持。
 
 ## 当前检查点分工与首要关口（2026-10-21）
 

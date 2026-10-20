@@ -15,7 +15,7 @@ button.addEventListener('click',async()=>{
   }
   phase='receiver';
   const ready=await chrome.tabs.sendMessage(tab.id,{type:PROBE_PREFIX+'_READY'},{frameId:0});
-  const requiredVersion=PROBE_PREFIX==='VAIWL_ACCOUNTS_STRUCTURE'?4:PROBE_PREFIX==='VAIWL_ACCOUNTS_SCHEMA'?3:PROBE_PREFIX==='VAIWL_ME_CANDIDATE'?2:null;
+  const requiredVersion=PROBE_PREFIX==='VAIWL_CREDENTIAL_CONTROL'?5:PROBE_PREFIX==='VAIWL_ACCOUNTS_STRUCTURE'?4:PROBE_PREFIX==='VAIWL_ACCOUNTS_SCHEMA'?3:PROBE_PREFIX==='VAIWL_ME_CANDIDATE'?2:null;
   if(requiredVersion!==null&&ready!=null&&ready.receiverVersion!==requiredVersion){show({state:'receiver-version-reload-required-no-request',help:'诊断页面与已加载接收器版本不同；请重新加载同一个 VAIWL 扩展后打开新的 ChatGPT 首页。本次未发请求。'});return;}
   if(ready?.ready!==true||ready.spent!==false||typeof ready.documentKey!=='string'){
    let legacyReceiverPresent=false;
@@ -24,7 +24,7 @@ button.addEventListener('click',async()=>{
     try{const legacy=await chrome.tabs.sendMessage(tab.id,{type:'VAIWL_ME_PROBE_READY'},{frameId:0});legacyReceiverPresent=typeof legacy?.documentKey==='string'&&typeof legacy?.ready==='boolean'&&typeof legacy?.spent==='boolean';}catch{}
    }
    if(legacyReceiverPresent){show({state:'legacy-receiver-reload-required-no-request',help:'Chrome 仍在运行旧版接收器。请重新加载 VAIWL 扩展后在新标签打开 ChatGPT 首页；本次未发请求，旧许可不会重用。'});return;}
-   const reason=['pagehide','route-event','route-changed','document-hidden','hidden-at-start','hidden-during-attempt','ready'].includes(ready?.reason)?ready.reason:'unknown';
+   const reason=['pagehide','route-event','route-changed','document-hidden','hidden-at-start','hidden-during-attempt','interaction-during-attempt','ready'].includes(ready?.reason)?ready.reason:'unknown';
    show({state:'not-ready-no-request',receiverPresent:ready!==null&&typeof ready==='object',documentReady:ready?.ready===true,unspent:ready?.spent===false,documentKeyPresent:typeof ready?.documentKey==='string',legacyReceiverPresent,reason});return;
   }
   phase='recheck-home';
