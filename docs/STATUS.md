@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 片段分页键盘闭环（2026-10-20，基线aa1d9aa2）
+
+真实DOM已复现等待翻页时disabled+重绘把焦点移到标题，现仅busy分页用aria-disabled并以pending/generation拒绝激活，真实页边界仍disabled。实际DOM验证外部删除回剩余页、等待/完成焦点连续、重复Enter不多读、用户移焦不抢回及关闭；26定向、构建和独立审查通过。属于WEB_MECHANISM_ONLY，不替代MV3/真实身份；新夹具首轮错误ID超时和修正后产品RED均保留，构建初次既有输出路径被拒后改用新子目录。证据snippetPaginationFocus20261020。Linux原FAIL、完整目录/身份/G-U和完整Free仍未闭合，10k/100k DEFERRED。
+
 ## 片段末页收敛（2026-10-20，基线8b70ff81）
 
 已RED复现并修复外部删除后片段末页空白：仅使用已校验的新total定位剩余页，与通知刷新共享原一次补读，不重放保存/删除。独审指出定位失败会回显旧片段及旧revision，另以RED复现后修正为先清失效页/版本；持续收缩耗尽原次数时仅显式重试。152定向通过，原六步打包MV3/IDB片段旅程通过且源码/包无漂移；新增收缩分支由frame测试证明，不冒充已在浏览器复现。原失败和证据见snippetPageConvergence20261020。

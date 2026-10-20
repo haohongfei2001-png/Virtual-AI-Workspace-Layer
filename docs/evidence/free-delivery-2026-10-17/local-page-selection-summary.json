@@ -1,4 +1,42 @@
 {
+"snippetPaginationFocus20261020": {
+  "baseline": "aa1d9aa2",
+  "rootCause": "Pending pagination disabled/replaced focused button and moved focus to heading, losing keyboard continuity.",
+  "fix": "Only pagination busy state uses aria-disabled with pending and generation activation guards. Actual page boundaries remain disabled; focus ownership check prevents stealing external focus.",
+  "realDOM": "WEB_MECHANISM_ONLY: external shrink returns remaining page; pending/settled focus retained; Enter causes no duplicate read; external focus retained; return closes panel",
+  "targetedPass": 26,
+  "independentReview": "No blockers",
+  "failureHistory": "First new DOM fixture used non-UUID conversation ID and timed out; corrected fixture then reproduced product focus failure. Both retained. Initial build invocation rejected pre-existing output directory; rerun used new child directory.",
+  "build": "HOST_IMPLEMENTATION_UNVERIFIED, not live acceptance",
+  "files": [
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/snippet-focus-fixture-failure.log.gz",
+      "uncompressedSha256": "1dadfca1d64c6fd9513594dac557fa5e88f3569bc7edcf3411a84cab9a77b358"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/snippet-focus-dom-red.log.gz",
+      "uncompressedSha256": "b70aa4fcd8ade241b4902d10f1140ebb8f4f57b6a24fbe36779b7ea53f2e6a92"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/snippet-focus-dom-green.log.gz",
+      "uncompressedSha256": "922249fd7e7c6dfe7f5c9c1daae52a244a22ff5ba8d8ea03889d4415bfd998f8"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/snippet-focus-unit-green.log.gz",
+      "uncompressedSha256": "9144bbdb4d43df7dc56344ed44619a62deeb44dd48d512fb09a5100926ded7fd"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/snippet-focus-build.json.gz",
+      "uncompressedSha256": "b435f4fe276213fad9d8c47d017fe5d9d6a7199b013149a7baf8ccd16d84269a"
+    }
+  ],
+  "sourceHashes": {
+    "src/host/free-frame-snippets.mjs": "33856791be021ba262f2f6d0d7bf18a3a2bdfaaee89f2346f03f5e2f6f877eda",
+    "tests/host/frame-renderer-browser.mjs": "a0daffd62376a83ef6ea19cbb5f37063ed8c28d283309cc71bc813505418bef3",
+    "tests/host/free-frame-snippets.test.mjs": "04677ac6b3d642b77e0a927203ae51c8ddcc11393c93ad8ec389acd7d5867b50"
+  },
+  "remaining": "Linux J1 original failure, real identity/full directory/G-U and complete Free; scales DEFERRED"
+},
 "snippetPageConvergence20261020": {
   "baseline": "8b70ff81",
   "rootCause": "Snippet LIST accepted an empty out-of-range page after external deletion and left remaining snippets offscreen; failed relocation could re-enable obsolete previous page/revision.",

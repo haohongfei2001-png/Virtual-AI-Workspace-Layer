@@ -115,3 +115,9 @@ test('paging discovers shrink then failed relocation cannot revive obsolete rows
  f.set(m=>m.offset===24?reply([],1,24):{ok:false});f.button('下一页').click();await tick();
  assert(!f.button('定位片段'));assert(!f.button('删除片段'));assert(f.button('保存当前选区').disabled);assert(f.button('重新加载'));
 });
+
+test('pending pagination retains an aria-disabled control but cannot issue duplicate or stale reads',async()=>{
+ const f=fixture(),rows=Array.from({length:12},(_,i)=>item('s'+i));f.set(()=>reply(rows,25));await f.ui.open();let settle;f.set(()=>new Promise(r=>settle=r));
+ f.button('下一页').click();const pending=f.button('下一页');assert.equal(pending.disabled,false);assert.equal(pending.attrs['aria-disabled'],'true');pending.click();assert.equal(f.calls.length,2);
+ settle(reply(rows,25,12));await tick();pending.click();assert.equal(f.calls.length,2);assert.notEqual(f.button('下一页').attrs['aria-disabled'],'true');
+});

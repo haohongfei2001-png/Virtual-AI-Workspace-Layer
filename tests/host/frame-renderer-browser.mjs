@@ -154,6 +154,41 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   if(container.firstElementChild.shadowRoot.querySelector('ul').scrollTop!==137)throw Error('hidden same-page refresh discarded confirmed scroll');
   ui.stop();container.remove();
  });
+ // Real owned-panel DOM: shrinking pages and keyboard continuity share the same flow.
+ await page.evaluate(async()=>{
+  const {createFreeFrameSnippets}=await import('/src/host/free-frame-snippets.mjs');
+  const root=document.createElement('div');document.body.append(root);let total=25,hold=false,settle=null;const calls=[];
+  const row=i=>({id:'snippet'+i,refId:'11111111-1111-4111-8111-111111111111',preview:'Preview '+i,title:'Chat',nativeUrl:location.origin+'/c/11111111-1111-4111-8111-111111111111'});
+  const result=offset=>({ok:true,workspaceRevision:1,snippets:{offset,limit:12,total,items:Array.from({length:Math.min(12,Math.max(0,total-offset))},(_,i)=>row(offset+i))}});
+  const ui=createFreeFrameSnippets({document,container:root,parentOrigin:location.origin,currentRef:{id:'11111111-1111-4111-8111-111111111111',nativeUrl:location.origin+'/c/11111111-1111-4111-8111-111111111111'},request:async m=>{calls.push(m);if(m.type!=='HOST_UI_SNIPPET_LIST')throw Error('unexpected mutation');return hold?new Promise(r=>settle=()=>r(result(m.offset))):result(m.offset);},onClose(){}});
+  globalThis.snippetPanelProbe={root,ui,calls,setTotal:n=>total=n,hold:()=>hold=true,release:()=>{hold=false;settle();}};await ui.open();
+ });
+ const snippetPanel=page.locator('[data-vaiwl-snippets]');
+ await snippetPanel.getByRole('button',{name:'下一页',exact:true}).click();
+ await snippetPanel.getByText('Preview 12',{exact:true}).waitFor();
+ await page.evaluate(()=>{snippetPanelProbe.setTotal(1);snippetPanelProbe.ui.invalidate();});
+ await snippetPanel.getByText('Preview 0',{exact:true}).waitFor();
+ assert.equal(await snippetPanel.getByRole('button',{name:'上一页',exact:true}).isDisabled(),true);
+ await page.evaluate(()=>{snippetPanelProbe.setTotal(25);snippetPanelProbe.ui.invalidate();});
+ await snippetPanel.getByText('共 25 个片段',{exact:true}).waitFor();
+ await page.evaluate(()=>snippetPanelProbe.hold());
+ await snippetPanel.getByRole('button',{name:'下一页',exact:true}).click();
+ assert.equal(await snippetPanel.getByRole('button',{name:'下一页',exact:true}).evaluate(n=>document.activeElement===n),true,'pending snippet pagination must preserve keyboard focus');
+ const pendingSnippetCalls=await page.evaluate(()=>snippetPanelProbe.calls.length);
+ await page.keyboard.press('Enter');
+ assert.equal(await page.evaluate(()=>snippetPanelProbe.calls.length),pendingSnippetCalls,'pending keyboard activation must not issue another read');
+ await page.evaluate(()=>snippetPanelProbe.release());
+ await snippetPanel.getByText('Preview 12',{exact:true}).waitFor();
+ assert.equal(await snippetPanel.getByRole('button',{name:'下一页',exact:true}).evaluate(n=>document.activeElement===n),true,'completed snippet pagination must preserve keyboard focus');
+ await page.evaluate(()=>snippetPanelProbe.hold());
+ await snippetPanel.getByRole('button',{name:'下一页',exact:true}).click();
+ await page.evaluate(()=>{const outside=document.createElement('button');outside.id='snippet-external-focus';document.body.append(outside);outside.focus();snippetPanelProbe.release();});
+ await snippetPanel.getByText('Preview 24',{exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>document.activeElement.id),'snippet-external-focus','page reply must not steal external focus');
+ await page.evaluate(()=>document.getElementById('snippet-external-focus').remove());
+ await snippetPanel.getByRole('button',{name:'返回工作空间',exact:true}).click();
+ assert.equal(await snippetPanel.count(),0);
+ await page.evaluate(()=>{if(snippetPanelProbe.calls.some(m=>m.type!=='HOST_UI_SNIPPET_LIST'))throw Error('paging wrote assets');snippetPanelProbe.ui.stop();snippetPanelProbe.root.remove();delete globalThis.snippetPanelProbe;});
  // Current project expansion is derived; explicit choices survive frame return.
  await page.evaluate(async()=>{
   const {createNavigation}=await import('/src/navigation/navigation.mjs');
