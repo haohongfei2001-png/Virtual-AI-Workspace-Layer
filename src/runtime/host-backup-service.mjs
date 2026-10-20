@@ -11,6 +11,8 @@ export function createHostBackupService({ui,workspaceRepository,onRestored=null,
  async function trackScope(work){scopeWork++;try{return await work();}finally{scopeWork--;}}
  const failure=()=>({ok:false,reason:'backup-unavailable'});
  function liveTransfer(t){const now=elapsedNow();try{return !stopped&&transfers.get(t.id)===t&&Number.isFinite(now)&&now>=t.created&&now<t.until&&t.isCurrent()===true;}catch{return false;}}
+ // Retire only this transfer's restore owner; keep in-flight accounting until settle.
+ function retire(t){if(transfers.get(t.id)!==t)return;transfers.delete(t.id);t.restoreAttempt?.abort.abort();}
  function info(t){return {ok:true,transferId:t.id,byteLength:t.length,chunkBytes:BACKUP_CHUNK_BYTES,chunkCount:Math.ceil(t.length/BACKUP_CHUNK_BYTES)};}
  function stop(){stopped=true;transfers.clear();for(const a of attempts){a.active=false;a.abort.abort();}attempts.clear();}
  async function handle(input,sender){
@@ -20,7 +22,7 @@ export function createHostBackupService({ui,workspaceRepository,onRestored=null,
   const active=()=>!stopped&&a.active&&!a.abort.signal.aborted&&Number.isFinite(elapsedNow())&&elapsedNow()>=a.started&&elapsedNow()-a.started<6000;
   try{const result=await withRequestDeadline(()=>trackScope(()=>ui.withScope({sender,grantId:m.grantId,mountId:m.mountId},async c=>{
    const guard=()=>active()&&c.isCurrent()===true,check=()=>{if(!guard())throw Error('backup-expired');};check();
-   for(const [id,t]of transfers)if(!liveTransfer(t))transfers.delete(id);
+   for(const t of transfers.values())if(!liveTransfer(t))retire(t);
    const matches=t=>t.scopeKey===c.scope.key&&t.scopeGrantId===c.scopeGrantId&&t.grantId===m.grantId&&t.mountId===m.mountId;
    let t;
    if(kind===0||kind===2){
@@ -31,7 +33,7 @@ export function createHostBackupService({ui,workspaceRepository,onRestored=null,
    }
    t=transfers.get(m.transferId);if(!t||!matches(t)||!liveTransfer(t))throw Error('invalid-transfer');
    const transferGuard=()=>guard()&&liveTransfer(t),fence=()=>{if(!transferGuard())throw Error('transfer-expired');};
-   if(kind===6){transfers.delete(t.id);return {ok:true};}
+   if(kind===6){retire(t);return {ok:true};}
    if(kind===1){if(t.direction!=='export'||!t.bytes||m.index>=Math.ceil(t.length/BACKUP_CHUNK_BYTES))throw Error('invalid-chunk');return {ok:true,transferId:t.id,index:m.index,data:encodeBackupChunk(t.bytes.subarray(m.index*BACKUP_CHUNK_BYTES,Math.min(t.length,(m.index+1)*BACKUP_CHUNK_BYTES)))};}
    if(kind===3){if(t.direction!=='upload'||m.index>t.next||m.index>=Math.ceil(t.length/BACKUP_CHUNK_BYTES))throw Error('invalid-chunk');const chunk=decodeBackupChunk(m.data),offset=m.index*BACKUP_CHUNK_BYTES,expected=Math.min(BACKUP_CHUNK_BYTES,t.length-offset);if(chunk.length!==expected)throw Error('invalid-chunk');if(m.index<t.next){for(let i=0;i<chunk.length;i++)if(t.bytes[offset+i]!==chunk[i])throw Error('chunk-conflict');}else{if(t.plan||t.pending)throw Error('transfer-busy');t.bytes.set(chunk,offset);t.next++;}return {ok:true,transferId:t.id,index:m.index};}
    if(t.direction!=='upload'||t.next!==Math.ceil(t.length/BACKUP_CHUNK_BYTES))throw Error('incomplete-upload');
@@ -46,7 +48,7 @@ export function createHostBackupService({ui,workspaceRepository,onRestored=null,
    t.pending=(async()=>{try{const result=await workspaceRepository.restoreBackup(c.scope,{operationId:m.operationId,expectedRevision:plan.expectedRevision,bundle:plan.bundle,planHash:plan.planHash},{guard:transferGuard,signal:a.abort.signal});fence();if(result?.ok!==true)throw Error('restore-failed');transfers.delete(t.id);try{await onRestored?.(c.scope.key);}catch{}check();return {ok:true};}catch(error){transfers.delete(t.id);throw error;}})();return await t.pending;
   })),{timeoutMs:6000,now:elapsedNow,schedule,cancel});a.created=null;return result;}catch{return failure();}finally{a.active=false;a.abort.abort();attempts.delete(a);if(a.created)transfers.delete(a.created.id);for(const [id,t]of transfers)if(t.restoreAttempt===a)transfers.delete(id);}
  }
- function revokeDocument(id){for(const [key,t]of transfers)if(t.uiDocumentId===id||t.parentDocumentId===id)transfers.delete(key);}
+ function revokeDocument(id){for(const t of transfers.values())if(t.uiDocumentId===id||t.parentDocumentId===id)retire(t);}
  // Local quietness only; retained user work blocks even after its TTL.
  function isIdle(){return !stopped&&scopeWork===0&&attempts.size===0&&transfers.size===0;}
  return Object.freeze({handle,stop,isIdle,revokeDocument});

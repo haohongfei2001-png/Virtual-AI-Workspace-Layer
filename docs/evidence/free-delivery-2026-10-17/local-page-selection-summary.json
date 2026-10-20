@@ -1,4 +1,38 @@
 {
+  "backupRestoreRetirement20261020": {
+  "baseline": "a9da0045",
+  "reviewInput": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6283102584",
+  "status": "FIXED_PRECOMMIT_RESTORE_RETIREMENT_NOT_FULL_FREE",
+  "rootCause": "revokeDocument/CLOSE removed transfer but never aborted its owned restore attempt. After final synchronous repository guard, queued writes could still commit.",
+  "reproduction": "actual production owner/repository plus MockIDB: UI/parent/CLOSE each failed because revision became 1 instead of 0; stop and already-committed controls passed",
+  "change": "retire helper removes exact transfer and aborts only its restoreAttempt; used by document retirement, explicit CLOSE and expired transfer sweep. In-flight counters remain until settle.",
+  "validation": {
+    "targeted": 94,
+    "realIDB": "production owner + real extension-origin IDB + synthetic UI authority; normal commit, UI/parent/CLOSE precommit abort, postcommit retention all proven",
+    "originalMV3BackupJourney": "PASS with source stable and package unchanged",
+    "parallelOwner": "two actual pending restore owners; closing A aborts A only, B commits, quietness remains false until settle",
+    "review": "independent review no blockers"
+  },
+  "limits": [
+    "realIDB boundary uses controlled test scheduling and synthetic UI authority, not browser notification delivery",
+    "postcommit result remains durable; old authorization receives no private success and no automatic replay",
+    "complete J4, real sources and installation remain open"
+  ],
+  "files": [
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/backup-retirement-red.tap.gz",
+      "sha256": "2c3afc8f18f09a503a5a102ea92890307f362b29cdb18493e7e15261e427550c"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/backup-retirement-final-targeted.tap.gz",
+      "sha256": "22f58a23c833fa2ddb5dc4a2486fc6134a5400286c45b2afc57e18e7b0c9011b"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/backup-retirement-final.json.gz",
+      "sha256": "e45fdfab3571b58929f1819626344132ee0354773ca11f072255c30900d6e74e"
+    }
+  ]
+},
   "recoveryParentWithdrawal20261020": {
   "baseline": "9b06b7d0b78b3e3b5dcea4d9ea47405a91d5db4d",
   "status": "PASS_OFFLINE_REAL_IDB_PRE_READ_PARENT_WITHDRAWAL_NOT_FULL_J4",

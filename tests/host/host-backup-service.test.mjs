@@ -4,7 +4,7 @@ import {BACKUP_CHUNK_BYTES,BACKUP_MAX_BYTES,encodeBackupChunk,decodeBackupChunk}
 import {ScopeRepository} from '../../src/b1/scope-repository.mjs';import {WorkspaceRepository} from '../../src/data/repository.mjs';import {MockIDBFactory} from '../b23/mock-idb.mjs';import {normalizedScope} from '../../src/b1/identity.mjs';
 const scope=normalizedScope({verified:true,provider:'chatgpt',accountId:'A',organizationId:'P'});
 function fixture(options={}){let time=0,allowed=true,n=0,scopeKey=scope.key,scopeGrant='sg';const timers=new Map(),writes=[],restored=[],calls=[];let hold=null;const check=o=>{if(!o.guard()||o.signal.aborted)throw Error('PRIVATE_REVOKED');};const repository={async exportBackup(s,o){calls.push('export');if(hold)await hold;check(o);return {manual:'asset'};},async previewRestore(s,b,o){calls.push('preview');check(o);return {summary:{added:1,updated:0,keptHuman:0,keptNewer:0},planHash:'a'.repeat(64),expectedRevision:0,evidenceImported:false};},async restoreBackup(s,r,o){calls.push('restore');if(hold)await hold;check(o);writes.push(r);return {ok:true};}};
- const ui={async withScope({sender,grantId,mountId},work){if(!allowed||sender?.documentId!=='ui'||grantId!=='grant'||mountId!=='mount')throw Error('PRIVATE_AUTH');const key=scopeKey,sg=scopeGrant,isCurrent=()=>allowed&&scopeKey===key&&scopeGrant===sg;const value=await work({scope:{...scope,key},scopeGrantId:sg,isCurrent});if(!isCurrent())throw Error('PRIVATE_STALE');return value;}};
+ const ui={async withScope({sender,grantId,mountId},work){if(!allowed||sender?.documentId!=='ui'||grantId!=='grant'||mountId!=='mount')throw Error('PRIVATE_AUTH');const key=scopeKey,sg=scopeGrant,isCurrent=()=>allowed&&scopeKey===key&&scopeGrant===sg;const value=await work({scope:{...scope,key},scopeGrantId:sg,isCurrent,parentFrame:{documentId:"parent"}});if(!isCurrent())throw Error('PRIVATE_STALE');return value;}};
  const service=createHostBackupService({ui,workspaceRepository:repository,onRestored:s=>restored.push(s),elapsedNow:()=>time,schedule:(fn,ms)=>{const id=++n;timers.set(id,{fn,ms});return id;},cancel:id=>timers.delete(id),makeId:()=>`transfer_${++n}`,...options});
  return {service,repository,calls,writes,restored,request:(action,extra={},sender={documentId:'ui'})=>service.handle({v:1,type:'HOST_UI_BACKUP_'+action,grantId:'grant',mountId:'mount',...extra},sender),advance:ms=>time+=ms,revoke:()=>allowed=false,changeScope:()=>scopeKey='different',changeGrant:()=>scopeGrant='new',fire(){for(const [id,v]of timers)if(v.ms<=time){timers.delete(id);v.fn();}},hold(){let release;hold=new Promise(r=>release=r);return release;}};}
 async function upload(f,bundle={manual:'asset'}){const bytes=new TextEncoder().encode(JSON.stringify(bundle)),info=await f.request('UPLOAD',{byteLength:bytes.length});assert.equal(info.ok,true);for(let index=0;index<info.chunkCount;index++)assert.equal((await f.request('CHUNK',{transferId:info.transferId,index,data:encodeBackupChunk(bytes.subarray(index*BACKUP_CHUNK_BYTES,(index+1)*BACKUP_CHUNK_BYTES))})).ok,true);return info;}
@@ -27,4 +27,29 @@ test('close while restore waits invalidates its guarded write',async()=>{const f
 test('document retirement prevents a guarded pending restore write and preserves unrelated transfers',async()=>{
  const f=fixture(),info=await upload(f),plan=await f.request('PREVIEW',{transferId:info.transferId}),release=f.hold();
  const pending=f.request('RESTORE',{transferId:info.transferId,planId:plan.planId,operationId:'retired'});await Promise.resolve();f.service.revokeDocument('other');assert.equal(f.service.isIdle(),false);f.service.revokeDocument('ui');assert.equal(f.service.isIdle(),false);release();assert.equal((await pending).ok,false);assert.deepEqual(f.writes,[]);assert.deepEqual(f.restored,[]);assert.equal(f.service.isIdle(),true);
+});
+
+for(const action of ['ui','parent','close','stop','committed'])test('real repository queued restore boundary: '+action,async t=>{
+ const factory=new MockIDBFactory(),base=new ScopeRepository({indexedDB:factory,databaseName:'backup-queued-'+action}),sourceBase=new ScopeRepository({indexedDB:factory,databaseName:'backup-source-'+action});t.after(()=>{base.close();sourceBase.close();});
+ const repo=new WorkspaceRepository({baseRepository:base}),source=new WorkspaceRepository({baseRepository:sourceBase});
+ assert((await source.command(scope,{operationId:'seed',expectedRevision:0,command:{type:'CREATE_WORKSPACE',id:'imported',name:'Imported human asset'}})).ok);
+ const f=fixture({workspaceRepository:repo}),info=await upload(f,await source.exportBackup(scope)),plan=await f.request('PREVIEW',{transferId:info.transferId});assert(plan.ok);
+ const db=await base.open(),original=db.transaction.bind(db);let reached=0,idleDuring=null,closeResult;
+ const revoke=()=>{if(action==='close')closeResult=f.request('CLOSE',{transferId:info.transferId});else if(action==='stop')f.service.stop();else f.service.revokeDocument(action==='parent'?'parent':'ui');idleDuring=f.service.isIdle();};
+ db.transaction=(stores,mode)=>{const tx=original(stores,mode);if(mode==='readwrite'&&Array.from(stores).includes('b23_operations')){
+  if(action==='committed'){let complete;Object.defineProperty(tx,'oncomplete',{get:()=>complete,set:fn=>{complete=event=>{reached++;revoke();fn(event);};},configurable:true});}
+  else{const objectStore=tx.objectStore.bind(tx);tx.objectStore=name=>{const store=objectStore(name),put=store.put.bind(store);if(name==='b23_operations')store.put=value=>{const request=put(value);if(value.payload?.type==='RESTORE_BACKUP'){reached++;queueMicrotask(revoke);}return request;};return store;};}
+ }return tx;};
+ const result=await f.request('RESTORE',{transferId:info.transferId,planId:plan.planId,operationId:'queued-restore'});if(closeResult)assert.equal((await closeResult).ok,true);
+ assert.equal(reached,1,'last write queued before retirement');assert.equal(idleDuring,false,'retain pending accounting until persistence settles');assert.equal(result.ok,false);assert.deepEqual(f.restored,[]);
+ const state=(await repo.read(scope)).state;assert.equal(state.revision,action==='committed'?1:0);assert.equal(!!state.workspaces.imported,action==='committed','retirement cannot roll back an already committed transaction');
+});
+
+test('closing one restore transfer aborts only its owner while another remains pending',async()=>{
+ const f=fixture(),a=await upload(f),b=await upload(f),pa=await f.request('PREVIEW',{transferId:a.transferId}),pb=await f.request('PREVIEW',{transferId:b.transferId});
+ const original=f.repository.restoreBackup,signals=new Map();f.repository.restoreBackup=(scope,request,options)=>{signals.set(request.operationId,options.signal);return original(scope,request,options);};
+ const release=f.hold(),ra=f.request('RESTORE',{transferId:a.transferId,planId:pa.planId,operationId:'owner_a'}),rb=f.request('RESTORE',{transferId:b.transferId,planId:pb.planId,operationId:'owner_b'});
+ await Promise.resolve();assert.equal(signals.size,2);f.service.revokeDocument('unrelated');assert([...signals.values()].every(s=>!s.aborted));
+ assert.equal((await f.request('CLOSE',{transferId:a.transferId})).ok,true);assert.equal(signals.get('owner_a').aborted,true);assert.equal(signals.get('owner_b').aborted,false);assert.equal(f.service.isIdle(),false);
+ release();assert.equal((await ra).ok,false);assert.equal((await rb).ok,true);assert.deepEqual(f.writes.map(r=>r.operationId),['owner_b']);assert.equal(f.service.isIdle(),true);
 });

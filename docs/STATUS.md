@@ -1,5 +1,12 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 备份恢复撤权提交窗口修复（2026-10-20，基线a9da0045）
+
+已吸收dot评论6283102584并复现三项RED：UI/父文档撤权或CLOSE在最后同步guard后只删transfer，未abort恢复owner，实际revision仍0→1。现统一retire仅取消该transfer拥有的restore attempt，覆盖撤权/CLOSE/过期清理，不提前减在途计数。94定向、原完整备份MV3、真实扩展IDB上的生产owner提交边界验证通过；UI/parent/CLOSE提交前均revision0，正常及已commit后撤权均保留revision1，旧授权无私有成功/自动重放。两并行restore关闭A仅取消A、B正常提交。独审无阻断，源码/包稳定，证据backupRestoreRetirement20261020。
+
+真实IDB边界使用受控时序和合成UI authority，不冒充浏览器撤权事件送达；此前原生关闭父标签的排队撤回另有recoveryParentWithdrawal20261020证据。a9da0045合批推送Empty reply from server，本地成果保全，不循环网络重试。完整Free、真实身份/目录、冷启动、临时Project Linux观察器及完整安装仍未通过，10k/100k DEFERRED。
+
+
 ## 修复在途父页面撤回（2026-10-20，基线9b06b7d0）
 
 原MV3恢复旅程补实际IDB排队边界：只读测试屏障下精确operationId确认worker恢复事务已创建，原生关闭父标签并收到浏览器移除事件后释放；事务abort、无commit、全store摘要及Pro不变，新文档仍需显式修复且不自动重放。原提交完成后关闭/拒绝旧包路径保留。观察段共用4秒且await后核时，原生产6秒不变；最终子链含存储审计337.612ms，68定向、最终打包旅程及独审通过，源码/包稳定。原生产逻辑未发现本边界缺陷，不加推测补丁；测试插桩证据不扩称最后put→commit竞态或完整J4。见recoveryParentWithdrawal20261020。
