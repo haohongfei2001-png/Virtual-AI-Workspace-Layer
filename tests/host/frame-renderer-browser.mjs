@@ -122,6 +122,17 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   nav.present({kind:'search-known'});await paint();if(nav.roots().workspace.scroller.scrollTop!==0)throw Error('fixture search not short');
   holdMain=true;nav.enterReading();nav.showWorkspace();await paint();if(nav.view().scroll!==original)throw Error('pending main VIEW overwrote saved scroll');releaseMain();await paint();if(nav.roots().workspace.scroller.scrollTop!==original)throw Error('special view lost main workspace scroll: '+nav.roots().workspace.scroller.scrollTop+' expected '+original);nav.stop();
  });
+ // Horizon changes keep keyboard focus without replaying a pending choice.
+ await page.evaluate(async()=>{
+  const {createNavigation}=await import('/src/navigation/navigation.mjs');const empty=()=>({items:[],total:0,offset:0,limit:5,hasMore:false});let settle,calls=0;
+  const nav=createNavigation({document,surface:{role:'workspace',root:document.querySelector('#mount')},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){}},onHorizonRequest:()=>{calls++;return new Promise(r=>settle=r);},onProjectionRequest:()=>null});
+  nav.updateFrameProjection({protocol:'vaiwl-free-frame/1',role:'workspace',scope:'horizon-focus',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:false,maxSegment:0},groups:empty(),entries:{noProject:{...empty(),inventoryTotal:0},unknown:{...empty(),inventoryTotal:0}},selection:null});
+  const shadow=nav.roots().workspace.shadow;shadow.querySelector('[aria-label="工作空间设置"]').click();let select=shadow.querySelector('select');select.focus();select.value='14';select.dispatchEvent(new Event('change',{bubbles:true}));
+  if(shadow.activeElement!==shadow.querySelector('select'))throw Error('pending horizon lost keyboard focus');
+  select=shadow.querySelector('select');select.value='60';select.dispatchEvent(new Event('change',{bubbles:true}));if(calls!==1||select.value!=='30')throw Error('pending horizon accepted another choice');
+  settle({ok:false});await Promise.resolve();await Promise.resolve();if(shadow.activeElement!==shadow.querySelector('select'))throw Error('settled horizon lost keyboard focus');
+  select=shadow.querySelector('select');select.value='7';select.dispatchEvent(new Event('change',{bubbles:true}));const outside=document.createElement('button');document.body.append(outside);outside.focus();settle({ok:false});await Promise.resolve();await Promise.resolve();if(document.activeElement!==outside)throw Error('horizon stole user focus');outside.remove();nav.stop();
+ });
  // Hidden candidate panels must not acknowledge a clamped scroll restoration.
  await page.evaluate(async()=>{
   const {createFreeFrameCandidates}=await import('/src/host/free-frame-candidates.mjs');

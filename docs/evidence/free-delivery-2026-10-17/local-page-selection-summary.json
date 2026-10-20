@@ -17137,5 +17137,42 @@
         "sha256": "37be3f3c95200028dcba41a97899c9c76966f8fc6106c2da543d51d863720458"
       }
     }
+  },
+  "horizonAndCandidateConvergence20261020": {
+    "baseline": "f6c1ed80ddcc0d9598007b93c89da9ad3909ab00",
+    "result": "TARGETED_AND_DOM_PASS_PARTIAL_J1_NOT_ACCEPTED",
+    "fixes": [
+      "horizon select preserves focus with pending change guard and native shortcuts",
+      "confirmed empty candidate page does not prevent canonical reveal",
+      "candidate page shrink uses validated owner total and same last-page rule"
+    ],
+    "evidence": {
+      "vaiwl-horizon-focus-red.log": {
+        "file": "vaiwl-horizon-focus-red.log-20261020.gz",
+        "sha256": "beeffcfbfab401c4b8c564ca9195384fdd3ef690e33ab6c337d8315dfaf05f6c"
+      },
+      "vaiwl-ci39348178042-node.log": {
+        "file": "vaiwl-ci39348178042-node.log-20261020.gz",
+        "sha256": "0d400d86a08eeec33fb236a24324f5394ba610a6c0a2ccaa82968dd15c4de4d1"
+      },
+      "vaiwl-batch-final2-unit.log": {
+        "file": "vaiwl-batch-final2-unit.log-20261020.gz",
+        "sha256": "ecb034a23c40fd0c62aaa89b9df44198297969b3f3e29c1577850d239840178d"
+      },
+      "vaiwl-batch-final-dom.log": {
+        "file": "vaiwl-batch-final-dom.log-20261020.gz",
+        "sha256": "a1fc1e686c1a3992d5746ed1eabcffe10395684aa60af2dd73005a8d2dd6d4b8"
+      },
+      "vaiwl-batch-final-j1.json": {
+        "file": "vaiwl-batch-final-j1.json-20261020.gz",
+        "sha256": "90fb2d553cc176b69472006958eff158655c1f9276c3638b152a65f17f58a35c"
+      }
+    },
+    "review": "read-only independent review, no remaining blocker",
+    "limits": [
+      "physical IME and real account not verified",
+      "new CI pending",
+      "full directory and full Free remain unaccepted"
+    ]
   }
 }

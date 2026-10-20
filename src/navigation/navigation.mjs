@@ -432,7 +432,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
           const label=node(doc,'label',{},'时间范围 '),select=node(doc,'select',{'aria-label':'工作空间时间范围','data-focus-key':'free-horizon'}),policy=frameProjection.timePolicy;
           select.append(node(doc,'option',{value:'auto'},'自动'));
           for(const H of [7,14,30,60,90])select.append(node(doc,'option',{value:String(H)},H+'天'));
-          select.value=policy?.mode==='auto'?'auto':String(policy?.H??frameProjection.viewSession.H);select.disabled=!!horizonPending;select.onchange=()=>{if(settingsLive()&&settingsOpen){advanceNavigationIntent();void requestHorizon(select.value);}};label.append(select);settings.append(label,node(doc,'span',{},'当前范围：'+String(frameProjection.viewSession.H)+'天'));
+          const committed=policy?.mode==='auto'?'auto':String(policy?.H??frameProjection.viewSession.H);select.value=committed;select.disabled=false;select.setAttribute('aria-disabled',String(!!horizonPending));
+          // Keep the keyboard focus target during the single pending write.
+          // Native option changes are blocked; only the owner DTO commits H.
+          select.onpointerdown=event=>{if(horizonPending)event.preventDefault();};
+          select.onkeydown=event=>{if(horizonPending&&!event.metaKey&&!event.ctrlKey&&(['ArrowDown','ArrowUp','ArrowLeft','ArrowRight','Home','End','PageDown','PageUp',' ','Enter'].includes(event.key)||event.key?.length===1&&!event.altKey))event.preventDefault();};
+          select.onchange=()=>{if(horizonPending){select.value=committed;return;}if(settingsLive()&&settingsOpen&&roots?.workspace?.scroller===page){advanceNavigationIntent();void requestHorizon(select.value);}};label.append(select);settings.append(label,node(doc,'span',{},'当前范围：'+String(frameProjection.viewSession.H)+'天'));
           if(horizonPending||horizonError)settings.append(node(doc,'span',{role:'status'},horizonPending?'正在更新时间范围…':horizonError));
         }
         if(typeof onSnippetsRequest==='function')settings.append(button('已保存片段',()=>{if(settingsLive()&&settingsOpen)onSnippetsRequest();},'已保存片段','more'));

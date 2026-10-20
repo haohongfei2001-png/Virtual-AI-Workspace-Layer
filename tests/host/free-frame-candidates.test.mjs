@@ -83,3 +83,5 @@ test('retry failure preserves retry focus; disabled-only page focuses its headin
 test('error panel cannot accept a saved list scroll or reclaim external focus',()=>{
  const f=fixture();f.ui.showError(32);f.pageButtons()[0].focus();f.doc.activeElement={tag:'native-input'};f.ui.showError(32);assert.equal(f.shadow().activeElement,undefined);assert.equal(f.ui.restorePosition({offset:32,scrollTop:8}),false);
 });
+
+test('an explicitly empty page needs no scroll restoration but clear and error cannot acknowledge it',()=>{const f=fixture();assert.equal(f.ui.restorePosition({offset:0,scrollTop:13}),false);f.ui.update([]);assert.equal(f.ui.restorePosition({offset:0,scrollTop:13}),true);assert.equal(f.ui.restorePosition({offset:32,scrollTop:13}),false);assert.equal(f.ui.restorePosition({offset:0,scrollTop:NaN}),false);f.ui.clear();assert.equal(f.ui.restorePosition({offset:0,scrollTop:13}),false);f.ui.update([]);f.ui.showError(0);assert.equal(f.ui.restorePosition({offset:0,scrollTop:13}),false);});
