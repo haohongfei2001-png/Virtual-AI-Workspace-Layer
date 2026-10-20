@@ -243,11 +243,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function workingSetRow(link,ref,context){
     if(!frameProjection||surface.role!=='workspace'||typeof onWorkingSetRequest!=='function')return link;
+    const ownerScope=frameProjection.scope;
     const saved=context==='workset';if(!saved&&(ref.available===false||typeof ref.nativeUrl!=='string'||!ref.nativeUrl))return link;
     const wrap=node(doc,'div',{class:'working-set-row',role:'group','aria-label':ref.displayTitle??ref.nativeTitle??'已保存的聊天',style:'display:flex;align-items:center;flex-wrap:wrap;gap:4px'});link.style.flex='1 1 140px';link.style.minWidth='0';wrap.append(link);
     for(const action of saved?['remove','move-up']:['add']){
       const label=action==='add'?'加入工作集':action==='remove'?'从工作集移除':'在工作集中前移';
-      const control=button(label,()=>{void requestWorkingSet(action,ref.id);},label,'more');control.setAttribute('data-working-set-action',action);control.setAttribute('data-working-set-ref',ref.id);control.dataset.focusKey='workset:'+context+':'+action+':'+ref.id;
+      const control=button(label,()=>{if(control.disabled||frameProjection?.scope!==ownerScope||![...(roots?.workspace?.scroller?.querySelectorAll('[data-working-set-action]')??[])].includes(control))return;void requestWorkingSet(action,ref.id);},label,'more');control.setAttribute('data-working-set-action',action);control.setAttribute('data-working-set-ref',ref.id);control.dataset.focusKey='workset:'+context+':'+action+':'+ref.id;
       const first=action==='move-up'&&frameProjection.workingSet?.offset===0&&frameProjection.workingSet.items[0]?.id===ref.id;control.disabled=!!workingSetPending||first;wrap.append(control);
     }return wrap;
   }

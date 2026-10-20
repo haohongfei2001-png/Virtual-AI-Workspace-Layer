@@ -1,4 +1,25 @@
 {
+"retiredWorkingSetControl20261020": {
+  "baseline": "6aaa643a",
+  "status": "TARGETED_FIX_BROWSER_RETURN_FAIL_OPEN",
+  "fix": "retired working-set controls rejected by captured scope and current rendered-control membership",
+  "targetedPass": 27,
+  "browser": "add/move/new-tab persistence passed; native input -> return loses working-set subview; no timeout change or rerun",
+  "files": {
+    "red": {
+      "path": "docs/evidence/free-delivery-2026-10-17/retired-workset-red-20261020.gz",
+      "sha256": "ec4026cd6e03b331ae6d17164183f5cb31b0d33f65a4f6dc5f52e2eee4166214"
+    },
+    "targeted": {
+      "path": "docs/evidence/free-delivery-2026-10-17/retired-workset-targeted-20261020.gz",
+      "sha256": "fae6a9862e67a54798d4965a2198cca9176e2d496e270830ce902abe97166772"
+    },
+    "mv3-fail": {
+      "path": "docs/evidence/free-delivery-2026-10-17/retired-workset-mv3-fail-20261020.gz",
+      "sha256": "42cd342ab1b375c8ed0f6a67c8ec6a74ac9346cbe7074444e86abf9861649bb5"
+    }
+  }
+},
 "reenableSurfaceBatch20261020": {
   "baseline": "40755d5797455ef7d2986d504e63ddba18cf4b52",
   "status": "SIX_SCOPED_COMBINATIONS_PASS_NOT_FULL_J4",
