@@ -1,6 +1,6 @@
 import {installWindowNavigationObserver,createWindowNavigationTraceRecorder} from './window-navigation-observer.mjs';
 import {probeNavigationCancellation} from './navigation-cancel-browser-probe.mjs';
-import {observeWindowScroll} from './window-scroll-observer.mjs';
+import {observeWindowScroll,readCurrentWindowScroll} from './window-scroll-observer.mjs';
 /** Opt-in S: actual MV3 buttons, application-owned offline world, no DB seeds. */
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
@@ -95,7 +95,12 @@ else{
   await waitRows(`.card[data-theme-id="${project}"] .members`,17);await waitRows('section[data-free-list="unknown"]',17);
   assert.deepEqual(await ids(projectList),first);assert.deepEqual(await ids(unknown),second);
   assert.equal(context.pages().length,pageCount);assert(await originalPage.evaluate(()=>document===paginationDocument&&document.querySelector('textarea')===paginationEditor&&paginationEditor.value==='preserved pagination draft'));
-  report.mainScrollAfterSearch=await workspace.locator('.workspace').evaluate(n=>n.scrollTop);assert.equal(report.mainScrollAfterSearch,mainScroll,'search/read/return retains main scroll');
+  // Locator resolution and element evaluation are separate browser operations;
+  // an intervening owner refresh may retire that node. Sample the unique current
+  // viewport in one synchronous frame evaluation, without waiting or scrolling.
+  report.returnScrollProbe=await workspace.evaluate(readCurrentWindowScroll);
+  assert(report.returnScrollProbe?.connected&&report.returnScrollProbe.height>0,'returned current viewport must remain connected and laid out');
+  report.mainScrollAfterSearch=report.returnScrollProbe.top;assert.equal(report.mainScrollAfterSearch,mainScroll,'search/read/return retains main scroll');
   report.searchReturn={alreadyCurrentOriginalTarget:true,uniqueReturn:true,projectRows:17,unknownRows:17,originalProjectDraftPreserved:true};
   assert(await page.evaluate(()=>document===paginationDocument&&document.querySelector('textarea')===paginationEditor&&paginationEditor.value==='preserved search draft'));assert.equal(page.url(),target);assert.deepEqual(report.errors,[]);
   // Different-target native SPA navigation must also retain the same bounded

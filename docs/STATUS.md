@@ -1,6 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
 
+## 窗口返回滚动观察器竞态收口（2026-10-21，基线410a2d3d）
+
+原CI39499209283记录150→0，17/17仍完整；本地临时setter诊断同样FAIL。进一步被动读取捕获旧节点connected=false/height0/top0，紧接当前节点仍150；真实DOM固定“取得handle→原renderer重绘→读取旧handle”复现同一差异。普通搜索/关闭、短DTO与flex布局最小对照未复现，未据此误改生产滚动算法。
+
+根因已确认在观察器：locator解析与element evaluate分开，重绘可使其读取退休节点。现最终断言改为一次同步frame evaluate内查唯一当前节点并读几何；不等待、不重试、不写scroll，缺失/重复/零高仍失败，真实current=0也仍失败。原150、17/17、六秒门槛保持。8定向、原焦点真实DOM链与新旧节点/真实零反例、原完整隔离MV3窗口链通过；两条取消135ms/139ms，草稿/原目标/唯一返回保持，源码/fixture/manifest稳定，独审无阻断。生产代码未改，不重复全Node/大规模验收。
+
+原Linux现场未记录连接性，故只能确认观察器缺陷及与历史现象一致，不能将全部历史FAIL追溯改判。原失败、两次诊断、未复现对照与最终原件沿currentWindowScrollObservation20261021。410a2d3d的CI39500699078现终态FAIL：Node/持久化/J4 job成功，journeys在context-replacement:197出现prepared:true/entered:false；下一项按原C2/J1定位，不以新测试掩盖。真实身份/current-space、服务器完整目录/成员/本人发送、完整J1/J4、IME/PAIA与安装发布仍开放，10k/100k DEFERRED。
+
+同步核对：本地与远端实际410a2d3d一致，003c4abe为祖先；2258副本、3stash保留。此前推送超时条目保留为历史，后续正常同步事实不覆盖原记录。
+
+
 ## 导航按钮生命周期统一收口（2026-10-21，基线3991c91f）
 
 进一步实证旧侧栏工具跨scope折叠/退出新界面、旧搜索关闭覆盖新工作集、旧分页请求旧group并取消新ACK。通用button入口现在先核对未stop、有snapshot及当前pane成员，原生持久四格返回按当前roots.back精确放行，不绑定旧view；专用guard保留。八反例先FAIL，310直接相关定向通过，独审无阻断。

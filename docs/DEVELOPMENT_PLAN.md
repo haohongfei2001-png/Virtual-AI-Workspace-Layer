@@ -1,5 +1,7 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+C3/C5观察器收口（2026-10-21）：原窗口返回末端读取改为同步当前节点采样，确定性旧handle反例及原旅程沿STATUS/currentWindowScrollObservation20261021；原阈值与历史FAIL保持，不冒充生产修复。下一原C2/J1关口为CI39500699078的prepared:true/entered:false，继续最小复现；完整Free目标/真实来源及规模DEFERRED不变。
+
 ## 当前执行：本地恢复唯一writer，继续依赖已满足的产品工程（2026-10-21）
 
 用户已将003c4abe及PR16正式交回本地Codex；已核对VAIWL_HANDOFF_READY并保全原副本/stash/提交历史。下列云端owner和暂停安排为历史记录，以本段为当前执行权。沿原C3/C5补齐退休计划链接隔离，定向与原隔离导航旅程及局限见STATUS/retiredNavigationLinks20261021；不把CI绿或本地子链改判为历史竞态根因、真实来源或完整Free通过。继续原恢复/导航关口，完整产品目标及10k/100k DEFERRED保持。

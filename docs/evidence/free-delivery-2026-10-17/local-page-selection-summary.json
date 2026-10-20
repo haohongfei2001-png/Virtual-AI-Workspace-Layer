@@ -1,4 +1,87 @@
 {
+  "currentWindowScrollObservation20261021": {
+    "sourceBase": "410a2d3dfca03861e6aeeb432ee4bb7517a97d34",
+    "productSourceChanged": false,
+    "status": "OBSERVER_RACE_FIXED_OFFLINE_NOT_FREE_ACCEPTED",
+    "rootCause": "Locator resolves an Element before evaluating it. A subsequent renderer replacement retires that handle; Chromium returns scrollTop 0/height 0 for it while the current viewport remains at 150. Confirmed by actual diagnostic and controlled browser ordering. Original Linux failure lacks connectivity sampling, so causality for every historical occurrence remains unproven.",
+    "change": "Read a unique connected current workspace and its geometry in one synchronous frame evaluation, no waits, retries, scrolling or threshold changes. Missing/ambiguous/zero-height and actual top 0 remain failures.",
+    "validation": {
+      "node": "8/8, no skips",
+      "browser": "Original focus journey plus retired/current handle and actual-zero negative; 794.236583ms, source and helper stable",
+      "mv3": "Original window journey PASS, 150 -> 150, 17/17, same/different native targets, drafts preserved, cancellation 135ms/139ms; source/fixture/manifest stable, worker external network blocked",
+      "minimal": "Ordinary search/close with flex layout, short DTO and anchor auto/none did NOT reproduce; not evidence of product correctness across races",
+      "review": "Independent readonly review: no blockers; do not reclassify all Linux failures",
+      "ci39500699078": "410a2d3d FAILURE, node/durability/J4 jobs success, journeys context-replacement line197 prepared:true entered:false. Separate unresolved failure; not rerun."
+    },
+    "limits": [
+      "No production code change; no full Node rerun necessary for test-only observer change",
+      "No new real account reads or identity/scope evidence",
+      "Full J1/J4 and original cold/webRequest failures remain open",
+      "10k/100k DEFERRED; NOT_RELEASE_READY"
+    ],
+    "artifacts": [
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/scroll-ci394992-original-window.json.gz",
+        "rawBytes": 141630,
+        "rawSha256": "575122168526a1c540da21c63d3577392f438395edc35d499aafb3bb7917fe4b"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/scroll-ci394992-original-job.log.gz",
+        "rawBytes": 8700917,
+        "rawSha256": "1bff30a1bdc3cce34ee2d2c7a2f11b66ea178c3db0cc91f8e873ea7b3d1bb7da"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/scroll-setter-diagnostic.json.gz",
+        "rawBytes": 248167,
+        "rawSha256": "bb951024b066c4ee27e747bf32e73abe44c3e9dfc2358ee6186685f7ae88da97"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/scroll-setter-diagnostic.mjs.gz",
+        "rawBytes": 20128,
+        "rawSha256": "16d95a473568d81d4a8eb19711d91a5bb223e3e15f0f484048fa643fe9acc3db"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/scroll-focus-diagnostic.json.gz",
+        "rawBytes": 387617,
+        "rawSha256": "2f7e9366ed683ab0a05746614a8d3d42b3174104767aad2a6ac3b51c6986d2bb"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/scroll-focus-diagnostic.mjs.gz",
+        "rawBytes": 21307,
+        "rawSha256": "48a1c88e2f2e65a6a04e64d81c93abd198952c7682e6c4decc9fa0b1fc9345ed"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/scroll-minimal-nonreproduction.json.gz",
+        "rawBytes": 2460,
+        "rawSha256": "176ea3df29b8ca4b2b947bad5066883845fe815681dd474ba97e83c06886a24c"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/scroll-minimal-nonreproduction.mjs.gz",
+        "rawBytes": 4305,
+        "rawSha256": "c8c4993168a8fe18cf43c3570a8daa1bd0ff6c02abdcd08e2471ceb2423c36bb"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/scroll-current-node.log.gz",
+        "rawBytes": 760,
+        "rawSha256": "74d26af7699ed878a33da6fe82b6225346cf771b363458a20c4dc7c62d7f3d0a"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/scroll-current-dom.json.gz",
+        "rawBytes": 3875,
+        "rawSha256": "7ab003b9ef81031ac095226ddf381d42f998d7281ac87967d7a4458836c5caeb"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/scroll-current-mv3.json.gz",
+        "rawBytes": 235029,
+        "rawSha256": "8315bf3778034e6c4491c3395302144dc001b4292ccd5c375d56e0a73a0e12ad"
+      },
+      {
+        "path": "docs/evidence/free-delivery-2026-10-17/scroll-ci395006-original-failure.log.gz",
+        "rawBytes": 2055,
+        "rawSha256": "8633525f18ba8f99e45bbea1aa8207bcf6d4f458695a83ed6d837555be278234"
+      }
+    ]
+  },
   "ownedNavigationButtons20261021": {
     "baseline": "3991c91f183847c8997995c0385b24960ecb33bb",
     "cause": "Retired sidebar, search-close and pager callbacks could mutate a replacement scope/view, request prior scope groups or cancel a fresh navigation ACK.",

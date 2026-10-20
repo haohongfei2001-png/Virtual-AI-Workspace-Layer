@@ -4,12 +4,14 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
+import {readCurrentWindowScroll} from './window-scroll-observer.mjs';
 
 // Browser focusability is the oracle: a DOM double that permits disabled.focus()
 // would hide this regression. Projections are synthetic; this is not MV3/G/U.
 const out=process.argv[2];assert(out,'output-json-required');
 const report={kind:'WEB_MECHANISM_ONLY',realChatGPT:'NOT_RUN',MV3:'NOT_RUN',checks:[],errors:[],sourceHashes:{}};
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+report.observerHash=hash(await readFile(new URL('./window-scroll-observer.mjs',import.meta.url)));
 const started=performance.now();let browser;
 const server=http.createServer(async(req,res)=>{try{
  const path=new URL(req.url,'http://127.0.0.1').pathname;
@@ -51,12 +53,33 @@ try{
  const retained=await frame.evaluate(()=>focusResult());assert.equal(retained.label,'较早的30日');assert.equal(retained.disabled,false);
  await page.locator('#native').focus();await frame.evaluate(()=>nav.updateFrameProjection(dto));assert.equal(await page.locator('#native').evaluate(n=>document.activeElement===n&&n.value==='UNSENT LOCAL FIXTURE'),true);
  report.enabledFocusRetained=true;report.nativeFocusAndDraftRetained=true;assert.deepEqual(report.errors,[]);
+ // Reproduce the observer's two-operation race in a controlled order: resolve
+ // the old element, let the actual renderer replace it, then evaluate the old
+ // handle. A disconnected element's zero is not the current viewport's scroll.
+ await frame.evaluate(async()=>{
+  setup();
+  const items=Array.from({length:40},(_,i)=>({id:'unknown_'+i,scope:'scopeA',nativeTitle:'Native '+i,displayTitle:'Native '+i,nativeUrl:'https://chatgpt.com/c/unknown_'+i,available:true,membership:'UNKNOWN',projectId:null,segment:null}));
+  dto.entries.unknown={items,total:40,offset:0,limit:40,hasMore:false,inventoryTotal:40};nav.updateFrameProjection(dto);
+  nav.roots().workspace.scroller.scrollTop=150;
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+ });
+ const before=await frame.evaluate(readCurrentWindowScroll);assert.equal(before.top,150);
+ const retired=await frame.locator('.workspace').elementHandle();assert(retired);
+ await frame.evaluate(()=>nav.updateFrameProjection(dto));
+ const stale=await retired.evaluate(n=>({top:n.scrollTop,connected:n.isConnected,height:n.clientHeight}));
+ assert.deepEqual(stale,{top:0,connected:false,height:0});
+ const current=await frame.evaluate(readCurrentWindowScroll);assert.equal(current.top,150);assert(current.connected&&current.height>0);
+ await frame.evaluate(()=>{nav.roots().workspace.scroller.scrollTop=0;});
+ const lost=await frame.evaluate(readCurrentWindowScroll);assert.equal(lost.top,0);assert.notEqual(lost.top,before.top,'actual loss must remain a failure of the original equality');
+ report.scrollObserver={before,stale,current,realLoss:lost,scope:'CONTROLLED_ELEMENT_RESOLUTION_RENDER_EVALUATION_ORDER_ONLY'};
+ await retired.dispose();
  report.ok=report.checks.length===5&&report.checks.every(c=>c.workspace&&!c.disabled&&c.connected&&(!c.afterRefresh||c.afterRefresh.workspace));if(!report.ok)process.exitCode=1;
 }catch(e){report.ok=false;report.error=e.stack;process.exitCode=1;}
 finally{
  await browser?.close();if(server.listening)await new Promise(r=>server.close(r));
  report.sourceStable=true;for(const [path,digest]of Object.entries(report.sourceHashes))if(hash(await readFile(path))!==digest)report.sourceStable=false;
  report.testHash=hash(await readFile('tests/host/frame-focus-return-browser.mjs'));if(!report.sourceStable){report.ok=false;process.exitCode=1;}
+ report.observerStable=report.observerHash===hash(await readFile(new URL('./window-scroll-observer.mjs',import.meta.url)));if(!report.observerStable){report.ok=false;process.exitCode=1;}
  report.elapsedMs=performance.now()-started;await writeFile(out,JSON.stringify(report,null,2)+'\n');
 }
 console.log(JSON.stringify(report));

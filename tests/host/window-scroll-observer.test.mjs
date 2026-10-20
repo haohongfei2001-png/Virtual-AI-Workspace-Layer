@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';
-import {observeWindowScroll} from './window-scroll-observer.mjs';
+import {observeWindowScroll,readCurrentWindowScroll} from './window-scroll-observer.mjs';
 for(const replace of [false,true])test('scroll observation follows current viewport without repeating gesture '+replace,async()=>{
  let writes=0,frames=0;const root={querySelector:()=>current,querySelectorAll:()=>[]};let top=30;
  const node={getRootNode:()=>root,get scrollTop(){return this.isConnected?top:0;},set scrollTop(v){writes++;top=v;},clientHeight:100,scrollHeight:1000,isConnected:true};let current=node;
@@ -12,4 +12,16 @@ test('missing replacement is not treated as scroll success',async()=>{
 });
 test('missing viewport performs no synthetic scroll',async()=>{
  const result=await vm.runInNewContext('('+observeWindowScroll.toString()+')()',{document:{querySelector:()=>null,querySelectorAll:()=>[]}});assert.equal(result.before,null);assert.equal(result.after,null);
+});
+for(const top of [150,0])test('current scroll read preserves the actual value without waits or writes '+top,()=>{
+ const current={scrollTop:top,clientHeight:100,scrollHeight:1000,isConnected:true};
+ const shadow={querySelectorAll:s=>s==='.workspace'?[current]:[]};
+ const document={querySelectorAll:s=>s==='.workspace'?[]:[{shadowRoot:shadow}]};
+ const value=vm.runInNewContext('('+readCurrentWindowScroll.toString()+')()',{document});
+ assert.equal(value.top,top);assert.equal(value.connected,true);assert.equal(value.height,100);
+});
+for(const count of [0,2])test('missing or ambiguous current viewport is not accepted '+count,()=>{
+ const nodes=Array.from({length:count},()=>({isConnected:true,scrollTop:150,clientHeight:100,scrollHeight:1000}));
+ const document={querySelectorAll:s=>s==='.workspace'?nodes:[]};
+ assert.equal(vm.runInNewContext('('+readCurrentWindowScroll.toString()+')()',{document}),null);
 });
