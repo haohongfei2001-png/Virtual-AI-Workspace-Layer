@@ -1,4 +1,48 @@
 {
+"ci39353010626": {
+  "sourceCommit": "863fff0440822e4b99e49222b091af8b92a5408e",
+  "run": 39353010626,
+  "jobs": "ALL_FOUR_SUCCESS",
+  "node": {
+    "pass": 9444,
+    "fail": 0,
+    "durationMs": 171197.602211
+  },
+  "j4": {
+    "status": "PARTIAL_J4_NOT_ACCEPTED",
+    "automaticForegroundRecovery": "NOT_ESTABLISHED",
+    "productHashesMatchedCurrent": 184
+  },
+  "j1": "PARTIAL_J1_NOT_ACCEPTED",
+  "scale": "DEFERRED",
+  "files": {
+    "status.json": {
+      "path": "local-ci39353010626-status.json.gz",
+      "sha256": "a427311043ab2b76ac4ddfd5b63665e9e09aeef0e404bd9d5431db50afea3750"
+    },
+    "node.log": {
+      "path": "local-ci39353010626-node.log.gz",
+      "sha256": "c0520cb8df5aa8fe594683621a9a974baa2326b1582629cf1f440b8f8107b701"
+    },
+    "journeys.log": {
+      "path": "local-ci39353010626-journeys.log.gz",
+      "sha256": "cbc85517f3f4d39a8ea53756b9a5c6dbd9b6e28de7000e3733dd54cdeecfe219"
+    },
+    "j4.log": {
+      "path": "local-ci39353010626-j4.log.gz",
+      "sha256": "efdac9abfff42cbcf66521b7147df96e2d54d31204c1a2ba6f7615b52b4e7b6d"
+    },
+    "j4.json": {
+      "path": "local-ci39353010626-j4.json.gz",
+      "sha256": "8c42f5fefaf333eb82375f5b8f5440ad07a13b6c54cc3a63bc7fd7ab10f01526"
+    },
+    "durability.log": {
+      "path": "local-ci39353010626-durability.log.gz",
+      "sha256": "e31ed508e11e34f9f7555ccb5258326febccd262113f352718e46a3a996db31e"
+    }
+  },
+  "scope": "Existing workflow gates only; local lifecycle oracle commits not included"
+},
 "disableLifecycleOracle20261020": {
   "baseline": "cb87e5aa6fe5b4e39242b71d73429732c8163b72",
   "productionSource": "863fff0440822e4b99e49222b091af8b92a5408e",
