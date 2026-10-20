@@ -23,7 +23,13 @@ export function createSendCorrelator({now=Date.now,windowMs=30000,maxPending=32}
   if(!value||Object.keys(value).length!==3||!tokenOK(value.intentId)||value.kind!=='send'||value.isComposing!==false)return null;
   if(used.has(value.intentId))return null;
   // Bounded replay ledger; reaching capacity requires an explicit new binding.
-  if(used.size>=256||pending.size>=maxPending)return null;
+  if(used.size>=256){invalidateBaseline();return null;}
+  if(pending.size>=maxPending){
+   // The omitted gesture is still causal ambiguity. Retire this baseline so
+   // settling older intents cannot manufacture a unique surviving candidate.
+   // Remember the omitted ID without evicting the bounded replay ledger.
+   used.add(value.intentId);invalidateBaseline();return null;
+  }
   const row={id:value.intentId,at:t};pending.set(row.id,row);used.add(row.id);return candidate(row,'intent');
  }
  function observe(batch){

@@ -14,7 +14,7 @@ test('two concurrent intents or two new user messages are ambiguous and consumed
 test('exact correlation window expiry and clock rollback cannot move observation anchor',()=>{const h=fixture();h.intent();h.advance(30000);assert.deepEqual(h.c.observe(metadata({a:node('a'),b:node('b','a')})),[]);h.advance(-1);assert.throws(()=>h.intent('i2'),/send-clock-invalid/);assert.equal(h.intent('i3'),null);});
 for(const field of Object.keys(binding))test('changed binding invalidates old intent: '+field,()=>{const h=fixture();h.intent();h.c.bind({...binding,[field]:typeof binding[field]==='number'?2:'different'});assert.equal(h.intent('i2'),null);assert.deepEqual(h.c.observe(metadata({a:node('a'),b:node('b','a')})),[]);});
 test('failure/cancel remove candidate; ACK stage forbidden; stop permanent',()=>{for(const stage of ['failed','cancelled']){const h=fixture();h.intent();assert.equal(h.c.settle({intentId:'i1',stage:'native-ack'}),null);assert.equal(h.c.settle({intentId:'i1',stage}).stage,stage);assert.deepEqual(h.c.observe(metadata({a:node('a'),b:node('b','a')})),[]);h.c.stop();assert.throws(()=>h.c.bind(binding),/stopped/);assert.equal(h.intent('i2'),null);}});
-test('pending and replay capacities are bounded without evicting replay protection',()=>{const h=fixture();for(let i=0;i<32;i++)assert(h.intent('i'+i));assert.equal(h.intent('overflow'),null);for(let i=0;i<32;i++)h.c.settle({intentId:'i'+i,stage:'cancelled'});for(let i=32;i<256;i++){assert(h.intent('i'+i));h.c.settle({intentId:'i'+i,stage:'cancelled'});}assert.equal(h.intent('new'),null);assert.equal(h.intent('i0'),null);});
+test('pending and replay capacities are bounded without evicting replay protection',()=>{const h=fixture();for(let i=0;i<32;i++)assert(h.intent('i'+i));assert.equal(h.intent('overflow'),null);for(let i=0;i<32;i++)h.c.settle({intentId:'i'+i,stage:'cancelled'});h.c.observe(metadata({a:node('a')}));for(let i=32;i<255;i++){assert(h.intent('i'+i));h.c.settle({intentId:'i'+i,stage:'cancelled'});}assert.equal(h.intent('new'),null);assert.equal(h.intent('i0'),null);});
 
 test('new-ID sibling edit/branch is not an append send candidate',()=>{const h=fixture();h.intent();assert.deepEqual(h.c.observe(metadata({a:node('a'),b:node('b')})),[]);});
 test('metadata edit consumes old intent before a later append',()=>{const h=fixture();h.intent();h.c.observe(metadata({a:node('a',null,{create_time:2})}));assert.deepEqual(h.c.observe(metadata({a:node('a',null,{create_time:2}),b:node('b','a')})),[]);});
@@ -26,3 +26,14 @@ test('real flat-list parser retires pending legacy intent and cannot authorize a
  assert.deepEqual(h.c.observe(metadata({a:node('a'),b:node('b','a')})),[]);
  assert.equal(h.c.pendingIntent('i1'),null);assert.equal(h.intent('i1'),null);
 });
+
+ test('overflow cannot turn a surviving old intent into an unambiguous send',()=>{
+ const h=fixture();for(let i=0;i<32;i++)assert(h.intent('i'+i));
+ assert.equal(h.intent('overflow'),null);
+ for(let i=0;i<31;i++)h.c.settle({intentId:'i'+i,stage:'cancelled'});
+ assert.deepEqual(h.c.observe(metadata({a:node('a'),b:node('b','a')})),[]);
+ assert.equal(h.c.pendingIntent('i31'),null);
+ assert.equal(h.intent('overflow'),null);
+ assert(h.intent('fresh'));
+ assert.equal(h.c.observe(metadata({a:node('a'),b:node('b','a'),c:node('c','b')}))[0]?.intentId,'fresh');
+ });

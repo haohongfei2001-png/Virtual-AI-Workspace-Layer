@@ -17186,5 +17186,39 @@
     "sha256": "65ffa063897a2752be5b4ddb9d43a278b77b04afe7d532bb5bfa45b958194179",
     "sourceDrift": false,
     "browserOrRealAccountAcceptance": false
-  }
+  },
+  "sendCorrelationOverflow20261020": {
+  "base": "95dee54a537004df699a0edde6ba780d7ddfd435",
+  "status": "CORRELATOR_FIX_ONLY_NOT_SYS05_ACCEPTED",
+  "cause": "Rejected overflow intent was omitted from ambiguity; settling 31 of 32 prior intents allowed a false unique correlation.",
+  "fix": "Retire baseline and pending intents on capacity loss; retain overflow ID in bounded replay ledger. New qualified observation establishes baseline only.",
+  "limitsUnchanged": {
+    "pending": 32,
+    "replay": 256
+  },
+  "evidence": {
+    "red": "send-overflow-red-20261020.log.gz",
+    "green": "send-overflow-green-20261020.log.gz",
+    "integration": "send-overflow-integration-20261020.log.gz"
+  },
+  "targeted": {
+    "passed": 271,
+    "elapsedMs": 1499.591125
+  },
+  "integrationAndBuild": {
+    "passed": 222,
+    "elapsedMs": 5106.5295
+  },
+  "sourceHashes": {
+    "src/host/send-correlator.mjs": "59f0aa96947a8a0c272e3d849804ad789922952198cbea113cdf8fe5877fb721",
+    "tests/host/send-correlator.test.mjs": "0ae0161acc5538c86c129ec7430be7dd8347344052955b4e3e8e8d4a65da6448"
+  },
+  "remaining": [
+    "Adapter overflow gap wiring",
+    "Real Host recovery after overflow",
+    "Complete SYS05",
+    "Real identity and directory coverage"
+  ],
+  "review": "Independent read-only review: no blocker"
+}
 }

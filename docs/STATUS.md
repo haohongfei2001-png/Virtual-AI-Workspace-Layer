@@ -3853,3 +3853,7 @@ Round330 final-version formal MODERN J3 again FAILS initial15s/0 of16 with stabl
 J2 now writes stage/failure evidence instead of hanging: MODERN passes first3 steps but loses C2 grant around60s before worker stop; original8-step journey remains FAIL. No TTL or fake periodic native refresh workaround. Two unchanged-production MODERN J3 samples pass16/16; earlier startup failures remain unresolved. New independently validated later native requests now replace old same-context receipts through revocation and full reauthorization, preserving parallel order and original clocks.123 focused contracts pass; first integration6406/6407 has a J2 finally-extraction test failure under repair. See [Round331](evidence/round331/README.md) and [Round332](evidence/round332/README.md). FullFree/100k/live gates remain NOT_RELEASE_READY.
 
 Round332 final integration: **6421/6421 Node PASS**, zero skips, terminal exit0. J2 extraction failure corrected; original failed run retained. New production receipt replacement has no new actual Chrome acceptance claim. Remaining Free gates unchanged.
+
+## 发送候选溢出安全修复（2026-10-20，基线95dee54a）
+
+最小反例已证明：32个待定意图后第33个被忽略，取消前31个会把新消息误关联给幸存旧意图。现在溢出使原基线/待定因果失效，并在原256项重放表记录被拒ID；新合格观察仅重建基线，新意图才可关联。原32/256上限、确认发送权限及请求预算不变，不重放原生发送。271项定向与222项受影响集成/构建通过，独立只读审查无阻断；RED与最终日志及源码hash见原证据 `sendCorrelationOverflow20261020`。只证明关联器层恢复，不冒充真实Host自动恢复：adapter溢出gap接线、完整SYS05/实机来源仍未关闭；10k/100k仍DEFERRED。
