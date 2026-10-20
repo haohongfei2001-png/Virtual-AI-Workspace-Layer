@@ -87,3 +87,31 @@ test('deleting the last item on a later page retains return offset across its ow
 test('unconfirmed last-page removal never automatically repeats the mutation or changes page',async()=>{
  const f=fixture();f.set(()=>reply(Array.from({length:12},(_,i)=>item('s'+i)),13));await f.ui.open();f.set(()=>reply([item('last')],13,12));f.button('下一页').click();await tick();let finish;f.set(()=>new Promise(r=>finish=r));f.button('删除片段').click();f.ui.invalidate();finish({ok:false});await tick();assert.equal(f.calls.length,3);assert(f.text().includes('操作结果未确认'));f.set(m=>reply([item('last')],13,m.offset));f.button('重新加载').click();await tick();assert.equal(f.calls.at(-1).offset,12);assert.equal(f.calls.filter(m=>m.action==='remove').length,1);
 });
+
+test('external deletion on a later snippet page locates the remaining page without mutating assets',async()=>{
+ const f=fixture(),first=Array.from({length:12},(_,i)=>item('s'+i));f.set(()=>reply(first,13));await f.ui.open();
+ f.set(()=>reply([item('tail')],13,12));f.button('下一页').click();await tick();
+ f.set(m=>m.offset===12?reply([],1,12):reply([item('remaining')],1,0));f.ui.invalidate();await tick();
+ assert.equal(f.calls.at(-1).offset,0);assert(f.button('定位片段'));assert(f.button('上一页').disabled);assert.equal(f.calls.filter(m=>m.type==='HOST_UI_SNIPPET').length,0);
+});
+for(const count of [0,12])test('shrunk snippet page uses exact fresh total '+count,async()=>{
+ const f=fixture(),first=Array.from({length:12},(_,i)=>item('s'+i));f.set(()=>reply(first,13));await f.ui.open();f.set(()=>reply([item('tail')],13,12));f.button('下一页').click();await tick();
+ const before=f.calls.length;f.set(m=>reply(m.offset===0?first.slice(0,count):[],count,m.offset));f.ui.invalidate();await tick();
+ assert.deepEqual(f.calls.slice(before).map(m=>m.offset),[12,0]);assert(f.button('上一页').disabled);assert(f.text().includes(count?'共 12 个片段':'暂无已保存片段'));
+});
+test('concurrent shrinking shares the original bounded follow-up and requires explicit retry',async()=>{
+ const f=fixture(),rows=Array.from({length:12},(_,i)=>item('s'+i));f.set(m=>reply(m.offset===24?[item('tail')]:rows,25,m.offset));await f.ui.open();f.button('下一页').click();await tick();f.button('下一页').click();await tick();
+ const before=f.calls.length;f.set(m=>reply([],m.offset===24?13:1,m.offset));f.ui.invalidate();await tick();
+ assert.deepEqual(f.calls.slice(before).map(m=>m.offset),[24,12]);assert(f.button('重新加载'));assert(!f.button('定位片段'));assert(f.button('保存当前选区').disabled);
+});
+for(const exit of ['stop','close'])test('late clamped snippet page cannot reopen after '+exit,async()=>{
+ const f=fixture(),rows=Array.from({length:12},(_,i)=>item('s'+i));f.set(()=>reply(rows,13));await f.ui.open();f.set(()=>reply([item('tail')],13,12));f.button('下一页').click();await tick();
+ let settle;f.set(m=>m.offset===12?reply([],1,12):new Promise(r=>settle=r));f.ui.invalidate();await tick();assert(settle);
+ if(exit==='stop')f.ui.stop();else f.button('返回工作空间').click();settle(reply());await tick();assert.equal(f.container.children.length,0);
+});
+
+test('paging discovers shrink then failed relocation cannot revive obsolete rows or revision',async()=>{
+ const f=fixture(),rows=Array.from({length:12},(_,i)=>item('s'+i));f.set(m=>reply(rows,25,m.offset));await f.ui.open();f.button('下一页').click();await tick();
+ f.set(m=>m.offset===24?reply([],1,24):{ok:false});f.button('下一页').click();await tick();
+ assert(!f.button('定位片段'));assert(!f.button('删除片段'));assert(f.button('保存当前选区').disabled);assert(f.button('重新加载'));
+});

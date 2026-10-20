@@ -1,4 +1,44 @@
 {
+"snippetPageConvergence20261020": {
+  "baseline": "8b70ff81",
+  "rootCause": "Snippet LIST accepted an empty out-of-range page after external deletion and left remaining snippets offscreen; failed relocation could re-enable obsolete previous page/revision.",
+  "fix": "Use only validated fresh total to relocate; share original single follow-up with invalidation. Clear obsolete page/revision before relocation. Exhausted allowance requires explicit retry; no mutation replay.",
+  "tests": {
+    "targetedPass": 152,
+    "targetedFail": 0,
+    "minimalRedCases": 2,
+    "browser": "Existing six-step packaged MV3/IDB snippets journey PASS, source/package unchanged; new shrink branches established by controlled frame tests, not claimed browser-covered"
+  },
+  "modernJ1": {
+    "source": "8b70ff81 before snippet edit",
+    "status": "PARTIAL_J1_NOT_ACCEPTED",
+    "steps": 9,
+    "sourceAndFixtureUnchanged": true
+  },
+  "files": [
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/snippet-page-shrink-red.log.gz",
+      "uncompressedSha256": "00f25bed9ff5443be27f871c9116c2845637d07a0e5539ffa524dd55048c26a3"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/snippet-page-stale-red.log.gz",
+      "uncompressedSha256": "e4471619d4e0a65064f51fe83eac5472b29d85dc33cf2cb86049ab25c7a9122b"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/snippet-page-final-targeted.log.gz",
+      "uncompressedSha256": "e41d5b5a1e9b20729be31f62719bee1addeb60d0d4f6787677f394a23a138c1e"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/snippet-page-final-browser.json.gz",
+      "uncompressedSha256": "02fefc9d3613d4cbfa79f06e2f472c31db4642e9063dbd38f396cc7828739046"
+    },
+    {
+      "path": "docs/evidence/free-delivery-2026-10-17/modern-j1-hidden-refresh.json.gz",
+      "uncompressedSha256": "f4bea9ef94abca2b4420e846526a2745c6275540ac4543073ab65bd7030d123d"
+    }
+  ],
+  "remaining": "Linux J1 failure not closed; identity/full-directory/G-U pending; 10k/100k DEFERRED"
+},
 "hiddenCandidateRefresh20261020": {
   "baseline": "2b6680a6",
   "sourceHashes": {
