@@ -21,3 +21,19 @@ for(const stage of ['scope','status','native','workspace'])for(const settlement 
  if(settlement==='resolve')g.resolve({ok:true});else g.reject(Error('late failure'));
  await new Promise(resolve=>setImmediate(resolve));assert.equal(f.service.isIdle(),true);
 });
+
+test('explicit dismissal releases owned unused repair plans and restores idle',async()=>{
+ const f=fixture();f.reader.freeRecoveryStatus=async()=>({native:damaged,evidence:healthy});const status=await f.status();assert.equal(f.service.isIdle(),false);
+ const reply=await f.service.handle({v:1,type:'HOST_UI_RECOVERY_RELEASE',grantId:'grant',mountId:'mount',planIds:[status.plans.native.planId]},{documentId:'ui'});
+ assert.equal(reply.ok,true);assert.equal(f.service.isIdle(),true);assert.equal((await f.repair(status.plans.native.planId)).ok,false);
+});
+
+for(const outcome of ['denied','deadline'])test('undelivered status retires created plans after final scope validation '+outcome,async()=>{
+ const f=fixture(),held=deferred(),original=f.ui.withScope;let created=false;f.reader.freeRecoveryStatus=async()=>({native:damaged,evidence:healthy});f.ui.withScope=async(args,fn)=>{const result=await original(args,fn);created=true;await held.promise;if(outcome==='denied')throw Error('revoked');return result;};
+ const pending=f.status();for(let i=0;i<30&&!created;i++)await Promise.resolve();assert(created);assert.equal(f.service.isIdle(),false);
+ if(outcome==='deadline'){f.expire();assert.equal((await pending).ok,false);assert.equal(f.service.isIdle(),false,'underlying validation is still pending');}held.resolve();assert.equal((await pending).ok,false);await new Promise(resolve=>setImmediate(resolve));assert.equal(f.service.isIdle(),true);
+});
+test('document revocation retires unused plans but preserves in-flight persistence tracking',async()=>{
+ const f=fixture();f.reader.freeRecoveryStatus=async()=>({native:damaged,evidence:healthy});await f.status();f.service.revokeDocument('unrelated');assert.equal(f.service.isIdle(),false);f.service.revokeDocument('ui');assert.equal(f.service.isIdle(),true);
+ const r=await f.status(),held=deferred();f.reader.freeRecover=()=>held.promise;const pending=f.repair(r.plans.native.planId);for(let i=0;i<20;i++)await Promise.resolve();f.service.revokeDocument('ui');assert.equal(f.service.isIdle(),false);held.resolve({ok:true});await pending;assert.equal(f.service.isIdle(),true);
+});

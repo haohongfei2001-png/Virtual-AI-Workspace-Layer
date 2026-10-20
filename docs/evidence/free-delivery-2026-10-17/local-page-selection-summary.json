@@ -1,4 +1,39 @@
 {
+"recoveryPlanRetirement20261020": {
+  "baseline": "c5fe6ffa",
+  "status": "PARTIAL_OFFLINE_NOT_FREE_ACCEPTED",
+  "rootCause": "unused recovery plans survive dismissal, failed delivery and UI revocation, blocking cooperative idle",
+  "fix": "bounded authenticated release; failed-delivery cleanup; document retirement callback including expired remember pruning; pending persistence remains tracked",
+  "regression": {
+    "pass": 398,
+    "fail": 0,
+    "skip": 0
+  },
+  "browser": {
+    "state": "PASS",
+    "scope": "existing recovery MV3/IDB journey, five cases; new release and retirement branches proved by targeted owner/client tests",
+    "realChatGPT": "NOT_RUN"
+  },
+  "review": "independent review found expired remember omission; fixed with RED/GREEN; final independent rereview unavailable due reviewer usage limit",
+  "logs": [
+    {
+      "file": "vaiwl-recovery-release-red.log.gz",
+      "sha256": "b97fbf7c0eb9f03cc478b1ac917a08906e353928fa8bdd592b7a6320b1ef8458"
+    },
+    {
+      "file": "vaiwl-recovery-prune-red.log.gz",
+      "sha256": "559ea741963423180fbbba3301654b2233866407ea5bcef551d76d214b5d89da"
+    },
+    {
+      "file": "vaiwl-recovery-release-final.log.gz",
+      "sha256": "97bc9744a4ebf5030d8521ba6ee7ff514d36c1d1797e06311c34841cc17dea02"
+    },
+    {
+      "file": "vaiwl-recovery-release-mv3.json.gz",
+      "sha256": "c6381ae33babe0ed75d6b785937032eb27141f37b5c9b975ac064b5c8d407172"
+    }
+  ]
+},
 "frozenPanelReturn20261020": {
   "sourceBaseline": "2b81aa95",
   "state": "PASS_OFFLINE_MV3_WINDOW_RETENTION",

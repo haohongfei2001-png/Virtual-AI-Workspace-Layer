@@ -473,3 +473,13 @@ export type TemporaryNativeListResponse =
       items: Array<{ kind: 'project' | 'conversation'; title: string; href: string }> };
 // Exact private status.html sender, topframe, current document/route and URL checks
 // remain runtime requirements. No scope/receipt/membership, body or persistence.
+
+/** Private frame cleanup only; runtime validates 1..3 unique token IDs and current scope. */
+export interface HostRecoveryReleaseRequest {
+  v: 1;
+  type: 'HOST_UI_RECOVERY_RELEASE';
+  grantId: string;
+  mountId: string;
+  planIds: string[];
+}
+// Releases matching unused RAM comparisons only; never cancels pending persistence.

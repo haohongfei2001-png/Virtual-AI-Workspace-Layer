@@ -3,8 +3,8 @@ import {createUiGrants} from '../host/ui-grants.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 /** UI transport is separate from the unchanged top-frame repository broker. */
-export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,getContexts=null,handshake,authority,onRevokeMount=()=>{},now=Date.now,makeId=()=>crypto.randomUUID(),maxPending=128,maxPorts=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
- if(typeof onRevokeMount!=='function')throw Error('invalid-mount-revocation');
+export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,getContexts=null,handshake,authority,onRevokeMount=()=>{},onRevokeDocument=()=>{},now=Date.now,makeId=()=>crypto.randomUUID(),maxPending=128,maxPorts=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+ if(typeof onRevokeMount!=='function'||typeof onRevokeDocument!=='function')throw Error('invalid-mount-revocation');
  const grants=createUiGrants({extensionId,uiURL,uiURLs,getFrame,getContexts,peekScope:frame=>authority.peek(frame),now,makeId});
  let revocationEpoch=0,activeWork=0;
  async function track(work){activeWork++;try{return await work();}finally{activeWork--;}}
@@ -42,7 +42,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
  }
  function remember(sender,grant){
   const mount=registrations.get(grant.mountId);if(!mount||mount.tabId!==sender.tab.id||mount.documentId!==grant.parentDocumentId)throw Error('ui-mount-revoked');
-  for(const [id,entry]of uiDocuments)if(Date.parse(entry.grant.expiresAt)<=now())uiDocuments.delete(id);
+  for(const [id,entry]of uiDocuments)if(Date.parse(entry.grant.expiresAt)<=now()){uiDocuments.delete(id);try{onRevokeDocument(id);}catch{}}
   if(!uiDocuments.has(sender.documentId)&&uiDocuments.size>=maxPorts)throw Error('ui-document-capacity');
   const record={sender:structuredClone(sender),grant};uiDocuments.set(sender.documentId,record);
   for(const entry of ports.values())if(sameSender(entry.sender,sender))entry.binding=record;
@@ -193,6 +193,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   invalidateAttempts(attempt=>attempt.sender?.documentId===id||attempt.mount?.documentId===id);grants.revokeDocument(id);
   for(const [key,entry]of registrations)if(entry.documentId===id)registrations.delete(key);
   const documents=new Set([id]);for(const [key,entry]of uiDocuments)if(key===id||entry.grant.parentDocumentId===id){documents.add(key);uiDocuments.delete(key);}
+  for(const documentId of documents)try{onRevokeDocument(documentId);}catch{}
   for(const [port,entry]of [...ports])if(documents.has(entry.sender.documentId)||entry.binding?.grant.parentDocumentId===id){grants.revokeDocument(entry.sender.documentId);disconnectPort(port);}
  }
  function revokeTab(tabId){
@@ -201,7 +202,7 @@ export function createHostUiOwner({extensionId,uiURL=null,uiURLs=null,getFrame,g
   // too, so a late parent confirmation cannot resurrect it after this request.
   for(const attempt of inFlight)if(attempt.sender?.tab?.id===tabId)grants.revokeDocument(attempt.sender.documentId);
   for(const entry of [...registrations.values()])if(entry.tabId===tabId)revokeDocument(entry.documentId);for(const [id,entry]of [...uiDocuments])if(entry.sender.tab.id===tabId)revokeDocument(id);for(const [port,entry]of [...ports])if(entry.sender.tab.id===tabId)disconnectPort(port);}
- function revokeAll(){for(const entry of backgroundHints.values())cancel(entry.timer);backgroundHints.clear();revocationEpoch++;invalidateAttempts(()=>true);grants.revokeAll();registrations.clear();uiDocuments.clear();for(const port of [...ports.keys()])disconnectPort(port);for(const key of [...pending.keys()])deliver(key,null);}
+ function revokeAll(){for(const id of uiDocuments.keys())try{onRevokeDocument(id);}catch{}for(const entry of backgroundHints.values())cancel(entry.timer);backgroundHints.clear();revocationEpoch++;invalidateAttempts(()=>true);grants.revokeAll();registrations.clear();uiDocuments.clear();for(const port of [...ports.keys()])disconnectPort(port);for(const key of [...pending.keys()])deliver(key,null);}
  function notify(scopeKey,mountId,type){
   if(typeof scopeKey!=='string'||!scopeKey)return 0;
   let delivered=0;

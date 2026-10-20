@@ -6,7 +6,7 @@ const tick=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
 function port(sender){
  const listeners=new Set();return {name:'vaiwl-ui',sender,onDisconnect:{addListener:fn=>listeners.add(fn),removeListener:fn=>listeners.delete(fn)},disconnect(){for(const fn of [...listeners])fn();},drop(){for(const fn of [...listeners])fn();},postMessage(){}};
 }
-async function fixture(t,{setup=true,maxPending=128,maxPorts=128}={}){
+async function fixture(t,{setup=true,maxPending=128,maxPorts=128,onRevokeDocument=()=>{}}={}){
  let time=0,sequence=0,timerSequence=0;
  const frames=new Map(),bindings=new Map(),parents=new Map(),children=new Map(),grants=new Map(),proofs=new Map(),bound=new Set(),gates=[],timers=new Map();
  for(const tabId of [1,2]){
@@ -16,7 +16,7 @@ async function fixture(t,{setup=true,maxPending=128,maxPorts=128}={}){
   for(const [index,role]of ['workspace','sidebar'].entries()){const child={...parent,frameId:index+1,documentId:'ui_'+tabId+'_'+role,url:'chrome-extension://ext/'+role+'.html'};children.set(tabId+':'+role,child);frames.set(tabId+':'+child.frameId,{documentId:child.documentId,url:child.url,documentLifecycle:'active',parentFrameId:0});}
  }
  const isBound=(binding,sender)=>{const expected=bindings.get(sender.tab.id),parent=parents.get(sender.tab.id);return bound.has(sender.tab.id)&&sender.documentId===parent?.documentId&&sender.url===parent.url&&Object.keys(expected).every(key=>binding[key]===expected[key]);};
- const owner=createHostUiOwner({extensionId:'ext',uiURLs:{workspace:'chrome-extension://ext/workspace.html',sidebar:'chrome-extension://ext/sidebar.html'},now:()=>time,elapsedNow:()=>time,makeId:()=>`grant_${++sequence}`,maxPending,maxPorts,schedule:(fn,ms)=>{const id=++timerSequence;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id),getFrame:async({tabId,frameId})=>{const gate=gates.find(g=>!g.hit&&g.tabId===tabId&&g.frameId===frameId);if(gate&&--gate.nth===0){gate.hit=true;gate.arrive();await gate.held;}return frames.get(tabId+':'+frameId);},handshake:{isBound,verify:async(...args)=>isBound(...args),matchesFrame:(binding,sender,actual)=>isBound(binding,sender)&&actual?.documentId===sender.documentId&&actual.url===sender.url},authority:{peek:frame=>proofs.get(frame.tabId),scopeFor:frame=>({key:proofs.get(frame.tabId)?.grant?.scopeKey})}});
+ const owner=createHostUiOwner({onRevokeDocument,extensionId:'ext',uiURLs:{workspace:'chrome-extension://ext/workspace.html',sidebar:'chrome-extension://ext/sidebar.html'},now:()=>time,elapsedNow:()=>time,makeId:()=>`grant_${++sequence}`,maxPending,maxPorts,schedule:(fn,ms)=>{const id=++timerSequence;timers.set(id,{fn,at:time+ms});return id;},cancel:id=>timers.delete(id),getFrame:async({tabId,frameId})=>{const gate=gates.find(g=>!g.hit&&g.tabId===tabId&&g.frameId===frameId);if(gate&&--gate.nth===0){gate.hit=true;gate.arrive();await gate.held;}return frames.get(tabId+':'+frameId);},handshake:{isBound,verify:async(...args)=>isBound(...args),matchesFrame:(binding,sender,actual)=>isBound(binding,sender)&&actual?.documentId===sender.documentId&&actual.url===sender.url},authority:{peek:frame=>proofs.get(frame.tabId),scopeFor:frame=>({key:proofs.get(frame.tabId)?.grant?.scopeKey})}});
  t.after(()=>{for(const gate of gates)gate.release();owner.revokeAll();});
  const message=(type,tab=1,extra={})=>({v:1,type,...bindings.get(tab),mountId:'mount_'+tab,...extra});
  const mount=(tab=1,id='mount_'+tab)=>owner.handle(message('HOST_UI_MOUNT',tab,{mountId:id,regionEpoch:1}),parents.get(tab));
@@ -100,4 +100,8 @@ test('L late revoked renewal cannot revoke a fresh same-document role grant',asy
 });
 test('L timed-out old renewal cannot revoke a newer same-document role JOIN',async t=>{
  const h=await fixture(t),gate=h.hold(1,0,3),pending=h.renew();await gate.arrived;await h.pair(1,'workspace');await h.advance(6000);assert.equal((await pending).ok,false);gate.release();await tick();assert.equal((await h.status()).ok,true);
+});
+
+test('expired sibling document retirement notifies recovery before later mount cleanup',async t=>{
+ const retired=[],h=await fixture(t,{onRevokeDocument:id=>retired.push(id)});await h.advance(10000);assert((await h.renew(2)).ok);retired.length=0;await h.advance(10001);await h.owner.validate(h.args(2));assert(retired.includes('ui_1_workspace'));assert(!retired.includes('ui_2_workspace'));h.owner.revokeMount('mount_1');
 });

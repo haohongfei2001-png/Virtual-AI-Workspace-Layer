@@ -115,8 +115,12 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   const valid=()=>!closed&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
   const panel=recoveryFactory({document:doc,container:recoveryRoot,request:async message=>{
    if(recovery!==panel||!valid())throw Error('recovery-unavailable');
-   const response=await withRequestDeadline(()=>runtime.sendMessage({...message,grantId:current.id,mountId:current.mountId}),{now:elapsedNow,schedule,cancel});
-   if(recovery!==panel||!valid())throw Error('recovery-unavailable');return response;
+   let abandoned=false,cleaned=false;
+   const cleanup=response=>{if(cleaned||message.type!=='HOST_UI_RECOVERY_STATUS'||!valid()||response?.ok!==true)return;const planIds=[...new Set(['workspace','native','evidence'].map(kind=>response.plans?.[kind]?.planId).filter(id=>typeof id==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(id)))];if(!planIds.length)return;cleaned=true;Promise.resolve().then(()=>runtime.sendMessage({v:1,type:'HOST_UI_RECOVERY_RELEASE',planIds,grantId:current.id,mountId:current.mountId})).catch(()=>{});};
+   const work=Promise.resolve().then(()=>runtime.sendMessage({...message,grantId:current.id,mountId:current.mountId}));
+   work.then(response=>{if(abandoned||recovery!==panel||!valid())cleanup(response);},()=>{});
+   let response;try{response=await withRequestDeadline(()=>work,{now:elapsedNow,schedule,cancel});}catch(error){abandoned=true;work.then(cleanup,()=>{});throw error;}
+   if(recovery!==panel||!valid()){cleanup(response);throw Error('recovery-unavailable');}return response;
   },onResume:({restoreFocus=false}={})=>{if(recovery!==panel||!valid())return;panel.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;budget.reset();void resumePanelView(restoreFocus);}});
   recovery=panel;state({state:'recovery'});void panel.open();
  }

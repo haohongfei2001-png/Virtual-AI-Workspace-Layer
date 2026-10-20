@@ -528,3 +528,10 @@ test('opening a newer snippet panel retires the older pending return read',async
  const pending=f.nav.onDispatch(sameCurrentCommand());await drain();f.nav.onBackupRequest();f.backup.onResume({restoreFocus:true});await drain();f.nav.onSnippetsRequest();const before=f.views;held.resolve({ok:false});await pending;await drain();assert.equal(f.views,before);assert.equal(f.panelFocuses,0);
  await f.snippets.request({type:'HOST_UI_SNIPPET_LIST'});assert.equal(f.views,before+1);f.snippets.onClose({restoreFocus:true});await drain();assert.equal(f.panelFocuses,1);f.client.stop();
 });
+
+for(const ending of ['return','timeout','disconnect'])test('late recovery status releases unused plans only under current authority '+ending,async()=>{
+ const f=fixture(),held=deferred(),send=f.runtime.sendMessage,releases=[];f.runtime.sendMessage=m=>m.type==='HOST_UI_RECOVERY_STATUS'?held.promise:m.type==='HOST_UI_RECOVERY_RELEASE'?(releases.push(m),Promise.resolve({ok:true})):send(m);
+ await f.client.start();await drain();f.nav.onRecoveryRequest();const pending=f.recovery.request({v:1,type:'HOST_UI_RECOVERY_STATUS'});const rejection=assert.rejects(pending);await drain();
+ if(ending==='return')f.recovery.onResume();else if(ending==='timeout')await f.advance(6000);else f.disconnect();
+ held.resolve({ok:true,plans:{workspace:{planId:'work_plan'},native:{planId:'native_plan'},evidence:{planId:null}}});await rejection;await drain();assert.equal(releases.length,ending==='disconnect'?0:1);if(releases.length)assert.deepEqual(releases[0],{v:1,type:'HOST_UI_RECOVERY_RELEASE',planIds:['work_plan','native_plan'],grantId:'grant',mountId:'mount'});f.client.stop();
+});

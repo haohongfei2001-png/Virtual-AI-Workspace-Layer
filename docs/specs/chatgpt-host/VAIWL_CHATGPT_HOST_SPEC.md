@@ -419,6 +419,8 @@ continuation放现有native_operations命名空间，建议单条≤64KiB、每s
 
 同DB schema、旧reader拒写、CAS/inverse、人工patch、备份和已验证fresh-byte checks保留。Free↔Pro保持旧人工资产字节和ID；native观察不执行虚拟MOVE/SET_TITLE，也不改原生Project/聊天标题。
 
+恢复面板的未执行RAM比较计划须显式退休：`HOST_UI_RECOVERY_RELEASE`沿原UI sender/grant/mount/scope验证，planIds为1–3个唯一token，只释放本owner匹配且非pending计划，不写数据库、不重放修复。关闭、失效及迟到状态响应释放本面板计划；状态请求仅在完整授权调用成功交付后保留新计划，失败/超时清理。UI文档撤权、断连及实际过期淘汰同步退休对应未执行计划；pending持久化仍由原guard/期限和in-flight计数跟踪。isIdle保持纯读取，不能按TTL剪掉待确认用户工作。
+
 ## 9. 逐文件最低集成面
 
 | 现有位置 | 必要集成 | 不得重复/破坏 |

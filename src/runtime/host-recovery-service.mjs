@@ -13,14 +13,22 @@ export function createHostRecoveryService({ui,readService,workspaceRepository,on
  async function handle(input,sender){
   if(stopped)return failure();
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-recovery-request'};}
-  const status=message?.type==='HOST_UI_RECOVERY_STATUS',keys=['v','type','grantId','mountId'];
-  if(!exactHostRecord(message,status?keys:[...keys,'kind','planId','operationId'])||message.v!==1||!tokenOK(message.grantId)||!tokenOK(message.mountId)||!status&&(message.type!=='HOST_UI_RECOVER'||!kinds.includes(message.kind)||!tokenOK(message.planId)||!tokenOK(message.operationId)))return {ok:false,reason:'invalid-recovery-request'};
-  const attempt={active:true,abort:new AbortController(),started:elapsedNow()};attempts.add(attempt);
+  const status=message?.type==='HOST_UI_RECOVERY_STATUS',release=message?.type==='HOST_UI_RECOVERY_RELEASE',keys=['v','type','grantId','mountId'];
+  if(!exactHostRecord(message,status?keys:release?[...keys,'planIds']:[...keys,'kind','planId','operationId'])||message.v!==1||!tokenOK(message.grantId)||!tokenOK(message.mountId)||release&&(!Array.isArray(message.planIds)||message.planIds.length<1||message.planIds.length>3||!message.planIds.every(tokenOK)||new Set(message.planIds).size!==message.planIds.length)||!status&&!release&&(message.type!=='HOST_UI_RECOVER'||!kinds.includes(message.kind)||!tokenOK(message.planId)||!tokenOK(message.operationId)))return {ok:false,reason:'invalid-recovery-request'};
+  const attempt={created:[],delivered:false,active:true,abort:new AbortController(),started:elapsedNow()};attempts.add(attempt);
   const live=()=>!stopped&&attempt.active&&!attempt.abort.signal.aborted&&elapsedNow()>=attempt.started&&elapsedNow()-attempt.started<6000;
-  try{return await withRequestDeadline(()=>trackScope(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+  try{const result=await withRequestDeadline(()=>trackScope(()=>ui.withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
    const guard=()=>live()&&context.isCurrent(),check=()=>{if(!guard())throw Error('recovery-authority-expired');};check();
    const options={guard,signal:attempt.abort.signal};
    const matches=p=>p.scopeKey===context.scope.key&&p.scopeGrantId===context.scopeGrantId&&p.grantId===message.grantId&&p.mountId===message.mountId;
+   if(release){
+    const selected=message.planIds.map(id=>plans.get(id)).filter(Boolean);
+    if(selected.some(plan=>!matches(plan)))throw Error('invalid-recovery-plan');
+    // Dismissal retires unused comparisons only. In-flight persistence remains
+    // tracked until its original guarded operation actually settles.
+    for(const id of message.planIds)if(!plans.get(id)?.pending)plans.delete(id);
+    return {ok:true};
+   }
    const time=elapsedNow();for(const [id,plan]of plans)if(!plan.pending&&plan.until<=time)plans.delete(id);
    if(status){
     let workspace;try{await workspaceRepository.read(context.scope,options);workspace={corrupt:false,recoverable:false};}catch{check();workspace=await workspaceRepository.recoveryStatus(context.scope,options);}check();
@@ -28,7 +36,7 @@ export function createHostRecoveryService({ui,readService,workspaceRepository,on
     const source={workspace,native:free?.native,evidence:free?.evidence},output={},created=[];
     try{for(const kind of kinds){const value=source[kind];if(!value||typeof value.corrupt!=='boolean'||value.corrupt&&typeof value.recoverable!=='boolean')throw Error('invalid-recovery-status');
      let planId=null;const recoverable=value.corrupt===true&&value.recoverable===true;
-     if(recoverable){if(typeof value.damagedHash!=='string'||!/^[0-9a-f]{64}$/.test(value.damagedHash)||plans.size>=maxPlans)throw Error('recovery-plan-capacity');planId=makeId();if(!tokenOK(planId)||plans.has(planId))throw Error('invalid-recovery-plan');plans.set(planId,{scopeKey:context.scope.key,scopeGrantId:context.scopeGrantId,grantId:message.grantId,mountId:message.mountId,kind,damagedHash:value.damagedHash,createdAt:elapsedNow(),until:elapsedNow()+planTTL,pending:null,operationId:null});created.push(planId);}
+     if(recoverable){if(typeof value.damagedHash!=='string'||!/^[0-9a-f]{64}$/.test(value.damagedHash)||plans.size>=maxPlans)throw Error('recovery-plan-capacity');planId=makeId();if(!tokenOK(planId)||plans.has(planId))throw Error('invalid-recovery-plan');plans.set(planId,{uiDocumentId:sender.documentId,parentDocumentId:context.parentFrame?.documentId,scopeKey:context.scope.key,scopeGrantId:context.scopeGrantId,grantId:message.grantId,mountId:message.mountId,kind,damagedHash:value.damagedHash,createdAt:elapsedNow(),until:elapsedNow()+planTTL,pending:null,operationId:null});created.push(planId);attempt.created.push(planId);}
      output[kind]={corrupt:value.corrupt,recoverable,planId};}
      check();return {ok:true,plans:output};
     }catch(error){for(const id of created)plans.delete(id);throw error;}
@@ -45,9 +53,10 @@ export function createHostRecoveryService({ui,readService,workspaceRepository,on
     plans.delete(message.planId);try{await onRecovered?.(context.scope.key);}catch{}check();return {ok:true,kind:plan.kind};
    }catch(error){plans.delete(message.planId);throw error;}})();
    return await plan.pending;
-  })),{timeoutMs:6000,now:elapsedNow,schedule,cancel});}catch{return failure();}finally{attempt.active=false;attempt.abort.abort();attempts.delete(attempt);for(const [id,plan]of plans)if(plan.attempt===attempt)plans.delete(id);}
+  })),{timeoutMs:6000,now:elapsedNow,schedule,cancel});attempt.delivered=result?.ok===true;return result;}catch{return failure();}finally{if(!attempt.delivered)for(const id of attempt.created)plans.delete(id);attempt.active=false;attempt.abort.abort();attempts.delete(attempt);for(const [id,plan]of plans)if(plan.attempt===attempt)plans.delete(id);}
  }
+ function revokeDocument(id){for(const [key,plan]of plans)if(!plan.pending&&(plan.uiDocumentId===id||plan.parentDocumentId===id))plans.delete(key);}
  // Local quietness only; retained user work blocks even after its TTL.
  function isIdle(){return !stopped&&scopeWork===0&&attempts.size===0&&plans.size===0;}
- return Object.freeze({handle,stop,isIdle});
+ return Object.freeze({handle,stop,isIdle,revokeDocument});
 }
