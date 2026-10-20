@@ -67,3 +67,17 @@ for(const kind of ['native','evidence'])for(const action of ['ui','parent','unre
  assert.equal(reached,1);assert.equal(idleDuring,false,'persistence still tracked');assert.equal(result.ok,action==='unrelated');
  if(action==='committed'||action==='unrelated')assert.notEqual(await allStores(f.base),before,'already committed recovery retained');else assert.equal(await allStores(f.base),before,'all stores unchanged on precommit retirement');
 });
+
+for(const action of ['ui','parent','unrelated','committed'])test('actual workspace final-write retirement: '+action,async t=>{
+ const f=await actualFixture(t);assert((await f.workspace.command(scope,{operationId:'second_human',expectedRevision:1,command:{type:'CREATE_WORKSPACE',id:'second',name:'Preserved'}})).ok);
+ const db=await f.base.open();await new Promise((resolve,reject)=>{const tx=db.transaction('b23_states','readwrite'),store=tx.objectStore('b23_states'),q=store.get(scope.key);q.onsuccess=()=>store.put({...q.result,checksum:'0'.repeat(64)});tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+ const status=await f.h.status();assert.equal(status.plans.workspace.recoverable,true);const before=await allStores(f.base),original=db.transaction.bind(db);let reached=0,idleDuring;
+ const retire=()=>{reached++;f.h.service.revokeDocument(action==='committed'?'ui':action);idleDuring=f.h.service.isIdle();};
+ db.transaction=(stores,mode)=>{const tx=original(stores,mode);if(mode==='readwrite'&&Array.from(stores).includes('b23_operations')){
+  if(action==='committed'){let complete;Object.defineProperty(tx,'oncomplete',{get:()=>complete,set:fn=>{complete=e=>{retire();fn(e);};},configurable:true});}
+  else{const objectStore=tx.objectStore.bind(tx);tx.objectStore=name=>{const store=objectStore(name),add=store.add.bind(store);if(name==='b23_operations')store.add=value=>{const request=add(value);if(value.payload?.type==='RECOVER')queueMicrotask(retire);return request;};return store;};}
+ }return tx;};
+ const result=await f.h.repair(status.plans.workspace.planId,'workspace');db.transaction=original;
+ assert.equal(reached,1);assert.equal(idleDuring,false);assert.equal(result.ok,action==='unrelated');
+ if(action==='committed'||action==='unrelated'){const after=(await f.workspace.read(scope)).state;assert.equal(after.workspaces.human_theme.name,'Only human Pro title');assert.equal(after.workspaces.second.name,'Preserved');}else assert.equal(await allStores(f.base),before);
+});

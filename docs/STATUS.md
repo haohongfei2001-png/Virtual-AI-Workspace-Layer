@@ -1,5 +1,10 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 恢复人工资产边界与启动观察器（2026-10-20，基线45fb7b84）
+
+workspace恢复最后add后撤权的四个反例已通过实际Repository+MockIDB：UI/parent撤权不写、无关文档不中断、已commit人工资产保留；35定向通过，不代替真实IDB同边界。临时Project runner的事件等待现精确选择本包worker，并在安装请求观察器前记录runtime/manifest/API/浏览器版本；缺API仍失败，不增加等待或生产权限。本地原旅程通过且源码稳定；Playwright本已等待workerScriptLoaded，故不能把Linux原FAIL归因启动太早，CI39367589369保持开放。证据recoveryWorkspaceAndWorkerPrerequisite20261020。45fb7b84推送HTTP2 framing失败，API远端已a9da0045；本地成果保全。真实身份/全量目录、完整安装与Free验收未关闭。
+
+
 ## 修复恢复事务撤权窗口（2026-10-20，基线89b13775）
 
 已复现native/evidence恢复在最后guard后撤权仍提交：pending plan未取消其attempt。现匹配UI/父文档撤权退休plan并abort原owner，保留在途计数；RELEASE仍不取消正在执行的修复，无关文档不受影响，已commit数据不回滚。95定向与原打包MV3恢复旅程通过，源码/包稳定，独审无阻断。最后写入边界为实际Repository+MockIDB；浏览器证明首读前排队撤回，不扩大为最后写入边界或workspace同边界通过。原失败及结果见recoveryRetirement20261020。完整Free、真实身份/全量目录与完整安装仍开放，规模DEFERRED保持。

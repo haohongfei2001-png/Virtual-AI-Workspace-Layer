@@ -26,7 +26,21 @@ try{
   if(request.url()===origin+'/c/'+other)return r.fulfill({contentType:'text/html',body:observedDesktopHTML(other)});return r.abort();
  });
  const cdp=await context.browser().newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
- const worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'))??await context.waitForEvent('serviceworker');
+ const expectedWorkerURL='chrome-extension://'+id+'/extension/worker.mjs';
+ const worker=context.serviceWorkers().find(w=>w.url()===expectedWorkerURL)??await context.waitForEvent('serviceworker',{predicate:w=>w.url()===expectedWorkerURL});
+ // Record the actual failing boundary, without waiting for an absent API or
+ // changing extension permissions. A target event alone is not an API receipt.
+ report.workerPrerequisite={browserVersion:await context.browser().version(),targetMatches:worker.url()===expectedWorkerURL,...await worker.evaluate(expectedId=>({
+  runtimeMatches:globalThis.chrome?.runtime?.id===expectedId,
+  locationMatches:globalThis.location?.href==='chrome-extension://'+expectedId+'/extension/worker.mjs',
+  webRequestAPI:typeof globalThis.chrome?.webRequest?.onBeforeRequest?.addListener==='function',
+  manifestHasWebRequest:globalThis.chrome?.runtime?.getManifest?.().permissions?.includes('webRequest')===true,
+  manifestVersion:globalThis.chrome?.runtime?.getManifest?.().manifest_version??null,
+ }),id)};
+ assert.equal(report.workerPrerequisite.runtimeMatches,true,'extension-worker-runtime-mismatch');
+ assert.equal(report.workerPrerequisite.locationMatches,true,'extension-worker-location-mismatch');
+ assert.equal(report.workerPrerequisite.manifestHasWebRequest,true,'extension-worker-manifest-permission-missing');
+ assert.equal(report.workerPrerequisite.webRequestAPI,true,'extension-worker-webRequest-unavailable');
  await worker.evaluate(()=>{globalThis.temporaryRequestAttempts=[];chrome.webRequest.onBeforeRequest.addListener(d=>{if(temporaryRequestAttempts.length<100)temporaryRequestAttempts.push({path:new URL(d.url).pathname,method:d.method,type:d.type});},{urls:['https://chatgpt.com/*']});});
  const page=await context.newPage();await page.goto(url);await page.evaluate(()=>{globalThis.originalDocument=document;globalThis.originalEditor=document.querySelector('textarea');});
  ws=new WebSocket(browser.debugEndpoint);await new Promise((resolve,reject)=>{ws.addEventListener('open',resolve,{once:true});ws.addEventListener('error',reject,{once:true});});let serial=0;
