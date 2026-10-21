@@ -20251,5 +20251,52 @@
       "Platform forbids extension-page automation and alternate-channel workaround; not solved by this code.",
       "Live installed package left unchanged to preserve its pending unconsumed batch."
     ]
+  },
+  "browserControlDenialScope20261022": {
+    "basis": "Recovered original call and result from this task transcript, not a retry or inference from support reply.",
+    "sourceHeadBeforeDocumentation": "6b734543d6d9c6b705d199b4c6a2ee37fde89567",
+    "callId": "call_7590e4709caf425f8837ebf0d3b4a873",
+    "tool": "mcp__cua_repl.js",
+    "method": "cua.createBrowserTab",
+    "target": "chrome-extension://<existing-vaiwl-extension-id>/native-me-probe.html",
+    "redaction": "Only the installed extension ID is omitted from this public target. The exact original call and result are retained locally.",
+    "purpose": "Open original diagnostic page to read one-use status; do not execute a diagnostic request.",
+    "toolOutputRecordedAtUtc": "2026-10-21T15:20:36.559Z",
+    "toolOutputRecordedAtShanghai": "2026-10-21T23:20:36.559+08:00",
+    "errorCode": "navigation_url_policy_blocked",
+    "rawToolError": "Browser Use rejected this action due to browser security policy. Reason: The browser URL policy blocks this action. Browser use could not acquire authority to trigger network egress. The URL policy gate did not grant access. The requested URL protocol is not allowed. Allowed protocols: \"http:\", \"https:\". The agent must not attempt to achieve the same outcome via workaround, indirect execution, raw CDP or browser commands, alternate browser surfaces, or policy circumvention. Proceed only with a materially safer alternative that does not require this blocked browser action; if none exists, stop and request user input.",
+    "rawToolErrorSha256": "6daae458d476f27d35710cce6c69f23c653fa29cd8c2ee17913ea3deba793851",
+    "originalRecordSha256": {
+      "165205": "4ab9efaaddd56ac104146dc03f409d2bc9d5d5fe1727e9c270e8845896f5e66e",
+      "165207": "92b98953c1cfb64b18ec8a2c813e0bb71899624b323fd2795936e69508bee924",
+      "165208": "cdc2100ed848a37ab748a99e1d60b5e4af6791f9586f52914dd8bee51ee61de9"
+    },
+    "established": [
+      "This specific diagnostic-page URL navigation was rejected by Browser Use URL policy, not merely a chrome://extensions management-page rejection.",
+      "The same result explicitly prohibits achieving the same outcome through alternate surfaces, raw commands or indirect execution.",
+      "This navigation did not yield a status read or execute the approved diagnostic."
+    ],
+    "notEstablished": [
+      "A permanent global prohibition on all extension operations.",
+      "A new failure of native accessibility or every possible extension control surface.",
+      "Website 403, identity-source failure, or consumption of the pending diagnostic allowance."
+    ],
+    "historicalNativeSuccess": [
+      {
+        "sourceHead": "cfd584b7ad019b2040ace30582ea49599eacac5b",
+        "evidencePath": "nativeMeCandidate20261019.candidateChain20261019.accountsOnly20261019.liveResult20261019",
+        "fact": "After user reload, agent opened the native diagnostic popup and executed once; native accessibility result was recorded."
+      },
+      {
+        "sourceHead": "51c7c80b76d5ee25e4f62b27f103615fa5fbf28f",
+        "evidencePath": "nativeMeCandidate20261019.candidateChain20261019.accountsStructure20261019.liveResult20261019",
+        "fact": "Agent opened version4 popup and executed once after user reload. recordedAt is post-result recording time, not network time."
+      }
+    ],
+    "correction": "Prior broad descriptions of platform prohibition must be limited to this exact call and its explicit same-outcome restriction. Historical native popup success remains valid; neither history nor AI support advice authorizes bypassing this current refusal.",
+    "newBrowserCalls": 0,
+    "newDiagnosticRequests": 0,
+    "newPermissions": 0,
+    "liveAcceptance": "UNCHANGED_NOT_ESTABLISHED"
   }
 }
