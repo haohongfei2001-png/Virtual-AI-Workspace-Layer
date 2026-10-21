@@ -2,13 +2,17 @@
 
 ## 同源码安装兼容确认与两项CI失败定位（2026-10-22，产品fa86479f）
 
-后续定点执行准备：原cloud-journey-matrix已增加显式`j4-codec-after-evidence`手动选择，仅公开原仓库/Free分支可用；push原12项不变，其余job不启动，不增加runner、缓存或上传。53项调度/相邻回归及YAML解析通过，独审无阻断。将带原单击/30秒和新被动观察在Linux执行一次；本段尚未记录运行结果，不属于完整CI或原失败关闭。
+后续单项Linux已执行一次：[CI39677687157](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39677687157)，源码766ebb9b、产品字节仍fa864。原J4 after-evidence codec旅程28步完成，包括人工资产导入、实际旧包拒绝/当前包恢复、证据与索引修复、实际禁用/卸载；185产品及38 runner hash逐项核对。首次账户切换仅一POST/200，旧文档记录明确缺失，不解释旧Linux失败。peer恢复用了显式原生账户切换；未刷新peer通过的是安全不复活，均非自动foreground恢复。辅助worker轨迹丢40条/截断，不冒充完整时序。原总状态仍PARTIAL_J4_NOT_ACCEPTED，不再次重跑本case。
 
-[CI39673488147](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39673488147)已自然结束：39项成功、2项失败，Node11114通过、零失败/跳过。最终合批源码的F3同schema实际安装包8008→fa864→8008→fa864通过；四阶段实际owner模块/worker字节及12个runner hash核对成立，旧包八次精确拒绝后八store不变，两个scope的人工资产保留。populated原64次活动准入及8组局部界面检查通过，185产品路径逐项匹配fa864；截图未在本批独立视觉复审，不扩大为完整视觉或Free验收。
+原cloud-journey-matrix新增精确手动选择，公开原仓库/Free分支限定、push原12项和全部job保持；没有新runner、缓存或上传。53项定向、YAML解析及独审通过。实测本次单项墙钟241秒/1实际job累计236秒；前批全矩阵998秒/41job累计4975秒，覆盖不同，仅说明定位调度开销减少，不是产品提速或同覆盖替代。新增结果沿`j4SingleLinuxAndVisualReview20261022`。
+
+同批fa864的8张离线MV3截图已逐张实际复核，SHA/尺寸核验，7张与faac同字节；唯一变化的窄屏列表末尾未新增输入区遮挡。既有160px窄工作区、标题重度省略及原生文件名右边界裁切仍限制完整视觉认证，不算真实Profile或物理验收。
+
+[CI39673488147](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39673488147)已自然结束：39项成功、2项失败，Node11114通过、零失败/跳过。最终合批源码的F3同schema实际安装包8008→fa864→8008→fa864通过；四阶段实际owner模块/worker字节及12个runner hash核对成立，旧包八次精确拒绝后八store不变，两个scope的人工资产保留。populated原64次活动准入及8组局部界面检查通过，185产品路径逐项匹配fa864；截图后续有限复审见本节，不扩大为完整视觉或Free验收。
 
 unknown正式目标仅第3请求仍为200但正文RESOURCE_CONTENT_UNAVAILABLE／ERR_ABORTED，独立trace仍INCOMPLETE。两个浏览器版本各四固定条件的最小反证实验均完整读到50字节，不能将“EOF后abort”直接定为原因；它未覆盖完整provider/校准取消或Linux，不改正式abort/oracle，不重复同条件重跑。两个实验设置失败原件保留；已在PR16评论6326406910请dot限定只读查证精确交错。
 
-J4-codec-after-evidence实际失败在首次原生账户切换的30秒导航等待，尚未进入恢复或codec；没有成功切换计数不能推断没有POST。现补原fixture的有限被动点击/请求/响应观察，单击、30秒及原FAIL不变。一次隔离headless Chromium156前置切片观察到单POST/200及成功切换，42项定向回归通过；只证明观察器可用，不是历史原因或完整J4通过。DOM与网络分别有序、旧文档消失明确缺失；迟到安装依赖最终浏览器关闭清理。新观察器Linux验证待下一实质候选，不为本次取证改动重复41项矩阵。
+J4-codec-after-evidence实际失败在首次原生账户切换的30秒导航等待，尚未进入恢复或codec；没有成功切换计数不能推断没有POST。现补原fixture的有限被动点击/请求/响应观察，单击、30秒及原FAIL不变。一次隔离headless Chromium156前置切片观察到单POST/200及成功切换，42项定向回归通过；只证明观察器可用，不是历史原因或完整J4通过。DOM与网络分别有序、旧文档消失明确缺失；迟到安装依赖最终浏览器关闭清理。该前置切片不认证Linux；随后仅运行本节所列一次Linux原旅程，没有重复41项矩阵。
 
 证据沿原summary的`exactCandidateCIAndContextObservation20261022`及同目录压缩原件。当前产品字节保持fa864，下一项为上述两处失败的精确阶段证据，不以增加trace层或放宽阈值补通过。真实4GET已消费；可信主体/default-null当前空间、完整服务器目录、正向成员/NONE、本人活动与自然恢复、INV-09生产来源及实机IME/PAIA/安装仍开放；10k/100k DEFERRED，完整Free与发布未通过。
 

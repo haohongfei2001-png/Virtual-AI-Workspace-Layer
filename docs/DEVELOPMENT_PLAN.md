@@ -2,7 +2,7 @@
 
 ## 夜间接续：真实对照已消费，来源审查与依赖就绪工程并行（2026-10-22）
 
-C5/UI-15的PRESENT失败刷新与本地重绘点击保留已合批为fa864；同源码CI自然结束39成功/2失败，F3旧安装包同schema回退及人工资产保全成立。两处未闭合失败分别为unknown目标正文不可读、J4首次账户切换导航超时（尚未进入codec恢复）。保留原失败/预算/oracle；有界反证未支持直接修改EOF abort，J4只补单击至POST/响应的被动阶段记录并验证一次前置slice，不作完整J4通过、不重复全矩阵。后续只按精确交错实施根因修复，新观察器使用原job显式单项dispatch核验一次Linux，push覆盖不变；详见STATUS/`exactCandidateCIAndContextObservation20261022`。dot有限INV09来源核定仍无可消费完成合同；主体/当前空间及完整目录仍为真实来源关口，已消费4GET不重发，不改完整Free目标。
+C5/UI-15的PRESENT失败刷新与本地重绘点击保留已合批为fa864；同源码CI自然结束39成功/2失败，F3旧安装包同schema回退及人工资产保全成立。两处未闭合失败分别为unknown目标正文不可读、J4首次账户切换导航超时（尚未进入codec恢复）。保留原失败/预算/oracle；有界反证未支持直接修改EOF abort，J4只补单击至POST/响应的被动阶段记录并验证一次前置slice，不作完整J4通过、不重复全矩阵。后续只按精确交错实施根因修复，新观察器已通过原job一次单项Linux执行，原J4仅PARTIAL、旧失败原因未定，push覆盖不变，不反复重跑；peer显式切换与自动恢复仍分开；详见STATUS/`exactCandidateCIAndContextObservation20261022`。dot有限INV09来源核定仍无可消费完成合同；主体/当前空间及完整目录仍为真实来源关口，已消费4GET不重发，不改完整Free目标。
 
 C5本批收口取消实验的错误进入时机：788 Linux原click发生在既有VIEW pending，零dispatch、尚无取消操作；现在原六秒内证明当前唯一委派入口ready后只点一次，后继竞态保留失败、不重放。原窗口／搜索／两类取消与草稿离线子旅程通过，生产pending守卫不改。启动退回则仅补有界被动时序，原15秒／立即加载／谓词保持，历史原因未唯一成立；不因本地或788本次通过改判00c8。证据与阶段hash见STATUS/`startupObservationAndCancelReadiness20261022`。下一项读取同源码CI的真实阶段差额，来源审查保持独立，不重发已消费4GET或把离线取消实验当完整Free。
 

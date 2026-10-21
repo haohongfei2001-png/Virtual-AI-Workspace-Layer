@@ -24302,5 +24302,114 @@
         "pr16-unknown-mechanism-question.txt"
       ]
     }
+  },
+  "j4SingleLinuxAndVisualReview20261022": {
+    "sourceCommit": "766ebb9b80a4a8c283a29611e0dd756e92278e99",
+    "productSourceCommit": "fa86479ff4862fcb99f4744c3d7bb48b5a47ef87",
+    "ciRun": 39677687157,
+    "ciJob": 119491713763,
+    "event": "workflow_dispatch",
+    "scope": "ONE_EXISTING_J4_CASE_NOT_FULL_CI",
+    "result": {
+      "sourceCommit": "766ebb9b80a4a8c283a29611e0dd756e92278e99",
+      "productSourcePaths": 185,
+      "productIdenticalTo": "fa86479ff4862fcb99f4744c3d7bb48b5a47ef87",
+      "runnerPaths": 38,
+      "steps": 28,
+      "status": "PARTIAL_J4_NOT_ACCEPTED",
+      "sourceUnchanged": true,
+      "buildManifestUnchanged": true,
+      "nativeActions": {
+        "account": 5,
+        "context-switch": 5,
+        "model": 11,
+        "navigate": 8,
+        "send-intent": 3,
+        "search": 4
+      },
+      "contextSwitchObservation": {
+        "kind": "PASSIVE_NATIVE_CONTEXT_SWITCH_NOT_ACCEPTANCE",
+        "setup": "INSTALLED",
+        "document": {
+          "state": "DOCUMENT_REPLACED_OR_PROBE_MISSING"
+        },
+        "network": {
+          "events": [
+            {
+              "type": "request",
+              "request": 1,
+              "method": "POST"
+            },
+            {
+              "type": "response",
+              "request": 1,
+              "status": 200
+            }
+          ],
+          "dropped": 0
+        },
+        "server": {
+          "requests": 1,
+          "successfulSwitches": 1
+        },
+        "originalActionRepeated": false
+      },
+      "timing": {
+        "diagnosticRunWallSeconds": 241.0,
+        "diagnosticActualJobs": 1,
+        "diagnosticSummedJobSeconds": 236.0,
+        "previousMatrixWallSeconds": 998.0,
+        "previousMatrixActualJobs": 41,
+        "previousMatrixSummedJobSeconds": 4975.0,
+        "comparison": "Scheduling scope differs; no product speedup or equal-coverage acceptance claim."
+      },
+      "historicalSwitchCause": "NOT_ESTABLISHED",
+      "noSecondRun": true
+    },
+    "change": "Allow one explicit dispatch to existing cloud-journey-matrix only on the original public repo/Free branch. Normal push retains 12 journey cases/all jobs. No extra re-enable trace, new runner, cache or upload.",
+    "directedTests": 53,
+    "yamlParse": "PASS",
+    "originalFormalStatus": "PARTIAL_J4_NOT_ACCEPTED",
+    "sameScopeRecoveryLimits": [
+      "Codec peer recovery uses explicit native account switch and fresh grant, not automatic foreground recovery",
+      "Unrefreshed peer correctly retains native document and no private projection",
+      "Auxiliary worker lifecycle trace dropped40/truncated, not complete causal timeline",
+      "Historical initial account switch failure not reproduced or explained"
+    ],
+    "independentReview": "No blocking issue; hashes, scopes, statuses and original single action verified",
+    "visual": {
+      "sourceCommit": "fa86479ff4862fcb99f4744c3d7bb48b5a47ef87",
+      "actualImagesReviewed": 8,
+      "sameBytesAsFaac": 7,
+      "changedImage": "mv3-narrow-dark-long-list-end",
+      "hashAndDimensionsVerified": true,
+      "scope": "LIMITED_OFFLINE_VISUAL_REVIEW_NO_NEW_BLOCKER",
+      "limitations": [
+        "160px narrow workspace; heavy title ellipsis/vertical controls",
+        "Native filename clipped near right420px edge already in prior images",
+        "Not full v2.7, physical or real Profile tool visibility acceptance"
+      ],
+      "rawImageSourceArchive": "docs/evidence/free-delivery-2026-10-17/local-exact-ci-context-observation-20261022.tar.gz",
+      "rawImageSourceMember": "fa864-populated-native.log"
+    },
+    "realRequestBudget": "NO_NEW_REQUESTS; prior4GETconsumed",
+    "scale": "10k/100k DEFERRED original gates",
+    "release": "NOT_RELEASE_READY",
+    "evidence": {
+      "path": "docs/evidence/free-delivery-2026-10-17/local-j4-single-linux-20261022.tar.gz",
+      "sha256": "380b6b6556cb0caf579135fcbdde9e258b177b4d311f91c2d555d04a8fda81ad",
+      "bytes": 120149,
+      "members": [
+        "j4-dispatch.log",
+        "j4-dispatch-report-0.json",
+        "j4-dispatch-source-verification.json",
+        "j4-dispatch-jobs.json",
+        "j4-dispatch-run.json",
+        "j4-dispatch-targeted.tap",
+        "j4-dispatch-independent-review.txt",
+        "fa864-visual/index.json",
+        "fa864-visual/review.txt"
+      ]
+    }
   }
 }
