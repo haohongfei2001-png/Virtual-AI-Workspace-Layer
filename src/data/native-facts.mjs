@@ -1,3 +1,4 @@
+import {hasNativeLifecycle, nativeLifecycleKinds, validateNativeLifecycleRow} from './native-lifecycle.mjs';
 import { normalizedScope, isRecord, tokenOK, urlOK } from '../b1/identity.mjs';
 import { instant } from '../navigation/projection.mjs';
 
@@ -70,14 +71,15 @@ export function emptyNativeFacts(scope) {
 }
 
 function validateNativeFactsStructure(facts, scope) {
-  shape(facts, ['format', 'scopeKey', 'revision', 'projects', 'refs', 'membership', 'sources']);
-  if (!['vaiwl-native-facts-v1', 'vaiwl-native-facts-v2'].includes(facts.format) || facts.scopeKey !== scopeKey(scope) ||
+  shape(facts, ['format', 'scopeKey', 'revision', 'projects', 'refs', 'membership', 'sources', ...(hasNativeLifecycle(facts) ? nativeLifecycleKinds : [])]);
+  if (!['vaiwl-native-facts-v1', 'vaiwl-native-facts-v2', 'vaiwl-native-facts-v3'].includes(facts.format) || facts.scopeKey !== scopeKey(scope) ||
       !Number.isSafeInteger(facts.revision) || facts.revision < 0) throw Error('invalid-native-facts');
-  for (const table of ['projects', 'refs', 'membership', 'sources']) {
-    if (!isRecord(facts[table]) || Object.keys(facts[table]).length > (facts.format === 'vaiwl-native-facts-v2' && table !== 'sources' ? 100000 : 20000)) throw Error('native-facts-capacity');
+  for (const table of ['projects', 'refs', 'membership', 'sources', ...(hasNativeLifecycle(facts) ? nativeLifecycleKinds : [])]) {
+    if (!isRecord(facts[table]) || Object.keys(facts[table]).length > (facts.format !== 'vaiwl-native-facts-v1' && table !== 'sources' ? 100000 : 20000)) throw Error('native-facts-capacity');
     for (const [key, row] of Object.entries(facts[table])) {
       identifier(key);
       if (!isRecord(row) || row.id !== key) throw Error('invalid-native-row');
+      if (nativeLifecycleKinds.includes(table)) { validateNativeLifecycleRow(row, facts.revision); continue; }
       if (table === 'sources') {
         shape(row, ['id', 'generation', 'sourceRevision', 'observedAt', 'validUntil', 'revoked', 'channel', 'inventory'], ['admission']);
         witness({...row, sourceId: key});
@@ -106,7 +108,7 @@ function validateNativeFactsStructure(facts, scope) {
 
 export function validateNativeFacts(facts, scope) {
   validateNativeFactsStructure(facts,scope);
-  if (JSON.stringify(facts).length > (facts.format === 'vaiwl-native-facts-v2' ? 128 : 16) * 1024 * 1024) throw Error('native-facts-too-large');
+  if (JSON.stringify(facts).length > (facts.format !== 'vaiwl-native-facts-v1' ? 128 : 16) * 1024 * 1024) throw Error('native-facts-too-large');
   return facts;
 }
 
@@ -116,9 +118,9 @@ export function validateNativeFacts(facts, scope) {
  */
 export function validateAndMeasureNativeFacts(facts,scope){
   validateNativeFactsStructure(facts,scope);
-  let jsonLength=JSON.stringify({...facts,projects:{},refs:{},membership:{},sources:{}}).length;
-  const tables={},limit=(facts.format==='vaiwl-native-facts-v2'?128:16)*1024*1024;
-  for(const table of ['projects','refs','membership','sources']){
+  let jsonLength=JSON.stringify({...facts,projects:{},refs:{},membership:{},sources:{},...(hasNativeLifecycle(facts)?{projectLifecycle:{},refLifecycle:{}}:{})}).length;
+  const tables={},limit=(facts.format!=='vaiwl-native-facts-v1'?128:16)*1024*1024;
+  for(const table of ['projects','refs','membership','sources',...(hasNativeLifecycle(facts)?nativeLifecycleKinds:[])]){
     const units=JSON.stringify(facts[table]).length-2,count=Object.keys(facts[table]).length;
     jsonLength+=units;if(jsonLength>limit)throw Error('native-facts-too-large');
     tables[table]=Object.freeze({count,units});

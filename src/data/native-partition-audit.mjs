@@ -1,3 +1,4 @@
+import {nativeKinds} from './native-lifecycle.mjs';
 import {prefetchExactAuditRecords} from './audit-record-prefetch.mjs';
 import {loadNativePieces,nativeHeader,validateNativeManifest,nativePartitionKey} from './native-partitions.mjs';
 
@@ -7,7 +8,7 @@ import {loadNativePieces,nativeHeader,validateNativeManifest,nativePartitionKey}
  * would permit IDB to commit before the owner publishes its root and receipt.
  */
 export function auditNativePartitions(store,manifest,scope,fence,done,fail){
- const counts={projects:0,refs:0,membership:0};
+ const tables=nativeKinds(manifest),counts=Object.fromEntries([...tables,'membership'].map(kind=>[kind,0]));
  let size=0,phase=0,offset=0,keys=[],failed=false,finished=false;
  const reject=error=>{if(!failed&&!finished){failed=true;fail(error);}};
  const measure=(table,validation)=>{
@@ -22,17 +23,17 @@ export function auditNativePartitions(store,manifest,scope,fence,done,fail){
   try{
    fence();
    if(offset===keys.length){
-    if(phase===0){phase=1;offset=0;keys=Object.keys(manifest.refs).sort();}
+    if(phase<tables.length-1){phase++;offset=0;keys=Object.keys(manifest[tables[phase]]).sort();}
     else{
      done({factsJSONLength:size,projectCount:counts.projects,refCount:counts.refs,membershipCount:counts.membership});
      finished=true;
      return;
     }
    }
-   const table=phase===0?'projects':'refs',selected=keys.slice(offset,offset+5000);
+   const table=tables[phase],selected=keys.slice(offset,offset+5000);
    offset+=selected.length;
    prefetchExactAuditRecords(store,selected.map(id=>nativePartitionKey(manifest.scopeKey,table,id,manifest[table][id])),fence,prefetched=>{
-   loadNativePieces(store,manifest,scope,{projects:table==='projects'?selected:[],refs:table==='refs'?selected:[]},(facts,storage)=>{
+   loadNativePieces(store,manifest,scope,{projects:[],refs:[],[table]:selected},(facts,storage)=>{
     if(failed||finished)return;
     try{
      fence();measure(table,storage.validation);

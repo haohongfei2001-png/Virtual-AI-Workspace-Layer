@@ -1,3 +1,4 @@
+import {NATIVE_LIFECYCLE_PARTITIONS} from '../data/native-lifecycle.mjs';
 import {localDay} from '../navigation/projection.mjs';
 import {NATIVE_PARTITION_FORMAT} from '../data/native-partitions.mjs';
 import {headerState} from '../data/partitioned.mjs';
@@ -66,7 +67,7 @@ export function createFreeReadService({repository,workspaces,native,evidence,clo
   async function ensureNative(scope,options,origin,staged=false){
     let root=await native.header(scope,options);
     if(!root.revision&&bootstrapNative){const result=await bootstrapNative(scope,origin,options);if(!result.ok&&result.reason!=='revision-conflict')throw Error(result.reason);if(staged)return preparing(scope,'native-bootstrap');root=await native.header(scope,options);}
-    if(root.storageFormat===NATIVE_PARTITION_FORMAT){
+    if([NATIVE_PARTITION_FORMAT,NATIVE_LIFECYCLE_PARTITIONS].includes(root.storageFormat)){
       if(staged&&typeof native.prepareVersionIndex==='function'){
         const preparation=await native.prepareVersionIndex(scope,{expectedRevision:root.revision},options);
         if(!preparation.ok)throw Error(preparation.reason==='revision-conflict'?'snapshot-revision-changed':preparation.reason);
@@ -132,8 +133,10 @@ export function createFreeReadService({repository,workspaces,native,evidence,clo
         const activeSources=Object.values(root.manifest?.sources??{}).filter(source=>!source.revoked&&Date.parse(source.validUntil)>Date.parse(now));
         const refs={};for(const key of Object.keys(context.refVersions??state.refs))refs[key]=0;
         for(const [key,version] of Object.entries(root.manifest?.refs??{}))refs[key]=version;
+        for(const key of Object.keys(refs))refs[key]=Math.max(refs[key],root.manifest?.refLifecycle?.[key]??0);
+        const projectVersions=Object.fromEntries(Object.entries(root.manifest?.projects??{}).map(([key,version])=>[key,Math.max(version,root.manifest?.projectLifecycle?.[key]??0)]));
         const session=viewSession??(view?.value?.segment>0?view.value.freeSession:null)??createFreeViewSession({now,timeZone,H:policy?.H??30,policyRevision:policy?.revision??0});
-        return {calibrationDeadlines:deadlines(root.manifest?.sources,state.sources,stored.sources),scope:state.scopeKey,revision:root.revision,membershipWitnessRevision:digest(Object.values(root.manifest?.sources??{}).map(({id,sourceRevision})=>({id,sourceRevision}))),visibilityRevision:digest(Object.values(root.manifest?.sources??{}).map(({id,revoked,generation,channel,validUntil})=>({id,revoked,generation,channel,validUntil}))),evaluatedAt:now,inventoryComplete:activeSources.length>0&&activeSources.every(source=>source.inventory.projects==='complete'&&source.inventory.conversations==='complete'),activitySourceRevision:activitySourceRevision(state,stored),manifest:{projectVersions:root.manifest?.projects??{},refVersions:refs,activityVersions:activityVersions(context,stored)},
+        return {calibrationDeadlines:deadlines(root.manifest?.sources,state.sources,stored.sources),scope:state.scopeKey,revision:root.revision,membershipWitnessRevision:digest(Object.values(root.manifest?.sources??{}).map(({id,sourceRevision})=>({id,sourceRevision}))),visibilityRevision:digest(Object.values(root.manifest?.sources??{}).map(({id,revoked,generation,channel,validUntil})=>({id,revoked,generation,channel,validUntil}))),evaluatedAt:now,inventoryComplete:activeSources.length>0&&activeSources.every(source=>source.inventory.projects==='complete'&&source.inventory.conversations==='complete'),activitySourceRevision:activitySourceRevision(state,stored),manifest:{projectVersions,refVersions:refs,activityVersions:activityVersions(context,stored)},
           preferences:state.preferences,view:view?.value??null,viewRevision:view?.revision??0,workspaceRevision:state.revision,diagnostics,viewSession:session,evidenceRevision:`${state.revision}:${stored.revision}`};
       },
       freePage:async(scope,query,options)=>{

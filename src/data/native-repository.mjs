@@ -1,10 +1,11 @@
+import {allNativeKeys, nativeLifecycleSemantic, hasNativeLifecycle, lifecycleKind, applyNativeLifecycle, validateNativeLifecycleChange, nativeLifecycleMarker, verifyNativeLifecycleMarker} from './native-lifecycle.mjs';
 import {continuationAckSourceFailure,continuationEvidenceSources} from './continuation-evidence-reader.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 import {freeEvidenceKey} from './free-evidence-partitions.mjs';
 import {createNativeContinuation,validateNativeContinuation,continuationDirectoryKey,emptyContinuationDirectory,validateContinuationDirectory,updateContinuationDirectory,finishNativeContinuation,deferNativeContinuation,transitionContinuationDirectory,continuationEvidenceFingerprint} from './native-observation-continuation.mjs';
 import {migrateNativeVersionIndex,prepareNativeVersionIndex} from './native-index-migration.mjs';
 import {saveIndexedNativePieces} from './native-index-writer.mjs';
-import {NATIVE_INDEX_FORMAT,validateNativeIndexRoot,createNativeIndexRootRecordReader} from './native-version-index.mjs';
+import {isNativeVersionIndexed,validateNativeIndexRoot,createNativeIndexRootRecordReader} from './native-version-index.mjs';
 import {createNativeIndexReader} from './native-index-reader.mjs';
 import {VerifiedRecordCache} from './verified-record-cache.mjs';
 import { isNativePartitioned, validateNativeManifest, loadNativePieces, saveNativePieces, nativeHeader, nativeRecoveryKey, nativeCheckpointKey, nativeRecord } from './native-partitions.mjs';
@@ -35,7 +36,7 @@ function fence({guard = () => true, signal} = {}) {
 /** Full root-envelope validation; marker and storage-key checks belong to the caller. */
 export function validateNativeRootRecord(record,scope){
  const payload=unpack(record);
- if(payload?.format===NATIVE_INDEX_FORMAT)validateNativeIndexRoot(payload,scope);
+ if(isNativeVersionIndexed(payload))validateNativeIndexRoot(payload,scope);
  else if(isNativePartitioned(payload))validateNativeManifest(payload,scope);
  else validateNativeFacts(payload,scope);
  return payload;
@@ -50,7 +51,7 @@ export class NativeRepository {
     return JSON.stringify([scope.key,row.checksum]);
   }
   verifiedRoot(row,scope){
-    if(row?.payload?.format===NATIVE_INDEX_FORMAT)return this.#readIndexRoot(row,scope);
+    if(isNativeVersionIndexed(row?.payload))return this.#readIndexRoot(row,scope);
     return this.#rootCache.read(row,this.#rootContext(row,scope),(payload,record)=>this.#validateRoot(payload,record,scope));
   }
   #rootWithCounts(row,scope){return this.#rootCache.readWithCounts(row,this.#rootContext(row,scope),(payload,record)=>this.#validateRoot(payload,record,scope),['projects','refs']);}
@@ -61,13 +62,14 @@ export class NativeRepository {
     return this.verifiedRoot({...row,key:scope.key},scope);
   }
 
-  constructor({baseRepository, workspaceRepository = null, observationGate = null, hostObservationGate = null, prepareInitialHostIndex = false, clock = () => new Date().toISOString()}) {
+  constructor({baseRepository, workspaceRepository = null, observationGate = null, hostObservationGate = null, lifecycleGate = null, prepareInitialHostIndex = false, clock = () => new Date().toISOString()}) {
     if (!baseRepository?.open || !baseRepository?.scopeOrThrow) throw Error('b1-repository-required');
     this.base = baseRepository;
     if(workspaceRepository&&workspaceRepository.base!==baseRepository)throw Error('shared-native-database-required');
     this.shared=workspaceRepository;
     this.observationGate = observationGate;
     this.hostObservationGate = hostObservationGate;
+    this.lifecycleGate = lifecycleGate;
     this.prepareInitialHostIndex = prepareInitialHostIndex === true;
     this.clock = clock;
   }
@@ -82,13 +84,13 @@ export class NativeRepository {
       request.onsuccess = () => {
         try {
           const payload = request.result ? this.verifiedRoot(request.result, normalized) : null;
-          if(payload?.format===NATIVE_INDEX_FORMAT){
+          if(isNativeVersionIndexed(payload)){
             facts=nativeHeader(payload,normalized);const fail=failure=>{error=failure;transaction.abort();};
-            createNativeIndexReader(transaction.objectStore('native_states'),payload,normalized,fail).all(manifest=>loadNativePieces(transaction.objectStore('native_states'),manifest,normalized,{projects:Object.keys(manifest.projects),refs:Object.keys(manifest.refs)},value=>{facts=value;},fail));
+            createNativeIndexReader(transaction.objectStore('native_states'),payload,normalized,fail).all(manifest=>loadNativePieces(transaction.objectStore('native_states'),manifest,normalized,allNativeKeys(manifest),value=>{facts=value;},fail));
           } else if (isNativePartitioned(payload)) {
             const manifest = payload;
             loadNativePieces(transaction.objectStore('native_states'), manifest, normalized,
-              {projects: Object.keys(manifest.projects), refs: Object.keys(manifest.refs)}, value => { facts = value; },
+              allNativeKeys(manifest), value => { facts = value; },
               failure => { error = failure; transaction.abort(); });
             facts = nativeHeader(manifest, normalized);
           } else facts = payload ?? emptyNativeFacts(normalized);
@@ -97,6 +99,7 @@ export class NativeRepository {
             try {
               if (!request.result && marker.result) throw Error('missing-native-root');
               if (facts.revision && !marker.result) throw Error('missing-native-marker');
+              verifyNativeLifecycleMarker(marker.result ? unpack(marker.result) : null, payload, request.result?.checksum);
               if (marker.result && unpack(marker.result).revision !== facts.revision) throw Error('native-root-revision-conflict');
             } catch (failure) { error = failure; transaction.abort(); }
           };
@@ -119,13 +122,13 @@ export class NativeRepository {
         try {
           if (request.result) {
             const value = this.verifiedRoot(request.result, normalized);storageFormat=value.format??null;
-            if(value?.format===NATIVE_INDEX_FORMAT)createNativeIndexReader(tx.objectStore('native_states'),value,normalized,failure=>{error=failure;tx.abort();}).all(value=>{manifest=value;});
+            if(isNativeVersionIndexed(value))createNativeIndexReader(tx.objectStore('native_states'),value,normalized,failure=>{error=failure;tx.abort();}).all(value=>{manifest=value;});
             else if (isNativePartitioned(value)) manifest = value;
             revision = (manifest ?? value).revision;
           }
           const marker = tx.objectStore('native_operations').get(normalized.key);
           marker.onsuccess = () => {
-            try { if (marker.result ? unpack(marker.result).revision !== revision : revision !== 0) throw Error('native-root-revision-conflict'); }
+            try { verifyNativeLifecycleMarker(marker.result?unpack(marker.result):null,request.result?.payload,request.result?.checksum); if (marker.result ? unpack(marker.result).revision !== revision : revision !== 0) throw Error('native-root-revision-conflict'); }
             catch (failure) {error = failure;tx.abort();}
           };
         } catch (failure) {error = failure;tx.abort();}
@@ -141,7 +144,7 @@ export class NativeRepository {
     const normalized=this.base.scopeOrThrow(scope),db=await this.base.open();fence(options);
     return new Promise((resolve,reject)=>{
       const tx=db.transaction(['native_states','native_operations']),root=tx.objectStore('native_states').get(normalized.key),marker=tx.objectStore('native_operations').get(normalized.key);let revision=0,error;
-      marker.onsuccess=()=>{try{fence(options);const value=root.result?this.verifiedRoot(root.result,normalized):null;revision=value?.revision??0;if(!value&&marker.result)throw Error('missing-native-root');if(marker.result?unpack(marker.result).revision!==revision:revision!==0)throw Error('native-root-revision-conflict');}catch(failure){error=failure;tx.abort();}};
+      marker.onsuccess=()=>{try{fence(options);const value=root.result?this.verifiedRoot(root.result,normalized):null;revision=value?.revision??0;verifyNativeLifecycleMarker(marker.result?unpack(marker.result):null,value,root.result?.checksum);if(!value&&marker.result)throw Error('missing-native-root');if(marker.result?unpack(marker.result).revision!==revision:revision!==0)throw Error('native-root-revision-conflict');}catch(failure){error=failure;tx.abort();}};
       tx.oncomplete=()=>{try{fence(options);resolve(revision);}catch(failure){reject(failure);}};
       tx.onabort=()=>reject(error??tx.error??Error('native-read-aborted'));
     });
@@ -162,13 +165,13 @@ export class NativeRepository {
       const request = store.get(normalized.key);
       request.onsuccess = () => {
         try {
-          const counted=ids&&request.result&&request.result.payload?.format!==NATIVE_INDEX_FORMAT?this.#rootWithCounts(request.result,normalized):null;
+          const counted=ids&&request.result&&!isNativeVersionIndexed(request.result.payload)?this.#rootWithCounts(request.result,normalized):null;
           const payload = counted?.payload ?? (request.result ? this.verifiedRoot(request.result, normalized) : emptyNativeFacts(normalized));
-          if(payload?.format===NATIVE_INDEX_FORMAT){
+          if(isNativeVersionIndexed(payload)){
             if(revision!==null&&revision!==payload.revision)throw Error('snapshot-revision-changed');
             const total=['projects','refs'].reduce((sum,kind)=>sum+Object.values(payload[kind]).reduce((n,p)=>n+p.count,0),0);
             const reader=createNativeIndexReader(store,payload,normalized,fail),marker=tx.objectStore('native_operations').get(normalized.key);
-            marker.onsuccess=()=>{try{if(unpack(marker.result).revision!==payload.revision)throw Error('native-root-revision-conflict');}catch(failure){fail(failure);}};
+            marker.onsuccess=()=>{try{verifyNativeLifecycleMarker(unpack(marker.result),payload,request.result?.checksum);if(unpack(marker.result).revision!==payload.revision)throw Error('native-root-revision-conflict');}catch(failure){fail(failure);}};
             const load=(manifest,selectedProjects,selectedRefs,lookup=null)=>loadNativePieces(store,manifest,normalized,{projects:selectedProjects,refs:selectedRefs},facts=>{
               result={revision:payload.revision,offset,total,nextOffset:Math.min(total,offset+limit),facts,selectedProjects,selectedRefs};
               if(JSON.stringify(result).length>16*1024*1024)fail(Error('native-page-too-large'));
@@ -183,12 +186,13 @@ export class NativeRepository {
             const projects = ids?null:Object.keys(all.projects), refs = ids?null:Object.keys(all.refs), total = counted?counted.counts.projects+counted.counts.refs:(projects?.length??0)+(refs?.length??0);
             const selectedProjects = ids?.projects ?? projects.slice(offset, offset + limit);
             const selectedRefs = ids?.refs ?? refs.slice(Math.max(0, offset-projects.length), Math.max(0, offset+limit-projects.length));
-            const facts = {...emptyNativeFacts(normalized),revision:all.revision,sources:all.sources};
+            const facts = {...emptyNativeFacts(normalized),format:all.format,...(hasNativeLifecycle(all)?{projectLifecycle:{},refLifecycle:{}}:{}),revision:all.revision,sources:all.sources};
             for (const key of selectedRefs) if (all.refs[key]) {facts.refs[key]=all.refs[key];if(all.membership[key])facts.membership[key]=all.membership[key];}
+            if(hasNativeLifecycle(all))for(const key of selectedRefs)if(all.refLifecycle[key])facts.refLifecycle[key]=all.refLifecycle[key];
             const dependencies = Object.values(facts.membership).filter(row=>row.state==='PROJECT').map(row=>row.projectId);
-            for (const key of [...selectedProjects,...dependencies]) if (all.projects[key]) facts.projects[key]=all.projects[key];
+            for (const key of [...selectedProjects,...dependencies]) {if (all.projects[key]) facts.projects[key]=all.projects[key];if(hasNativeLifecycle(all)&&all.projectLifecycle[key])facts.projectLifecycle[key]=all.projectLifecycle[key];}
             const marker = tx.objectStore('native_operations').get(normalized.key);
-            marker.onsuccess = () => {try {if(marker.result ? unpack(marker.result).revision!==all.revision||!request.result : all.revision!==0)throw Error('native-root-revision-conflict');}catch(failure){fail(failure);}};
+            marker.onsuccess = () => {try {verifyNativeLifecycleMarker(marker.result?unpack(marker.result):null,all,request.result?.checksum);if(marker.result ? unpack(marker.result).revision!==all.revision||!request.result : all.revision!==0)throw Error('native-root-revision-conflict');}catch(failure){fail(failure);}};
             result={revision:all.revision,offset,total,nextOffset:Math.min(total,offset+limit),facts,selectedProjects,selectedRefs};
             return;
           }
@@ -199,7 +203,7 @@ export class NativeRepository {
           const refSlice = ids?.refs ?? refs.slice(Math.max(0, offset - projects.length), Math.max(0, offset + limit - projects.length));
           const marker = tx.objectStore('native_operations').get(normalized.key);
           marker.onsuccess = () => {
-            try { if (unpack(marker.result).revision !== manifest.revision) throw Error('native-root-revision-conflict'); }
+            try { verifyNativeLifecycleMarker(unpack(marker.result),manifest,request.result?.checksum); if (unpack(marker.result).revision !== manifest.revision) throw Error('native-root-revision-conflict'); }
             catch (failure) { fail(failure); }
           };
           loadNativePieces(store, manifest, normalized, {projects: projectSlice, refs: refSlice}, facts => {
@@ -241,17 +245,18 @@ export class NativeRepository {
           }
           if (digest(root.result ?? null) !== damagedHash) throw Error('recovery-conflict');
           let intact = false;
-          try {const value=unpack(root.result);if(value?.format===NATIVE_INDEX_FORMAT)validateNativeIndexRoot(value,normalized);else validateNativeManifest(value,normalized);intact=true;} catch {}
+          try {const value=unpack(root.result);if(isNativeVersionIndexed(value))validateNativeIndexRoot(value,normalized);else validateNativeManifest(value,normalized);intact=true;} catch {}
           if (intact) throw Error('intact-state-not-replaced');
-          const shadowPayload=unpack(shadow.result),indexed=shadowPayload?.format===NATIVE_INDEX_FORMAT;
+          const shadowPayload=unpack(shadow.result),indexed=isNativeVersionIndexed(shadowPayload);
+          verifyNativeLifecycleMarker(unpack(marker.result),shadowPayload,shadow.result?.checksum);
           const recoveryRoot=indexed?validateNativeIndexRoot(shadowPayload,normalized):validateNativeManifest(shadowPayload,normalized);
           // A damaged indexed root must not authorize a legacy shadow merely
           // because its revision matches. This narrows recovery, never grants it.
-          if(root.result?.payload?.format===NATIVE_INDEX_FORMAT&&!indexed)throw Error('native-index-recovery-format-conflict');
+          if(isNativeVersionIndexed(root.result?.payload)&&!indexed)throw Error('native-index-recovery-format-conflict');
           const verifyAndRecover=manifest=>{
           if (unpack(marker.result).revision !== manifest.revision) throw Error('native-root-revision-conflict');
           // Verify every referenced piece before publishing a recovered manifest.
-          loadNativePieces(store, manifest, normalized, {projects: Object.keys(manifest.projects), refs: Object.keys(manifest.refs)}, () => {
+          loadNativePieces(store, manifest, normalized, allNativeKeys(manifest), () => {
             try {
               fence(options);
               const next = structuredClone(recoveryRoot); next.revision++;
@@ -259,7 +264,7 @@ export class NativeRepository {
               next.changes = [];
               if(indexed)validateNativeIndexRoot(next,normalized);else validateNativeManifest(next, normalized);
               store.put(nativeRecord(normalized.key, next)); store.put(nativeRecord(nativeRecoveryKey(normalized.key), next));
-              ops.put(record(normalized.key, {...unpack(marker.result),revision: next.revision}));
+              ops.put(record(normalized.key, {...unpack(marker.result),revision: next.revision,...nativeLifecycleMarker(next,digest(next))}));
               const receiptWrite = ops.put(record(key, {kind: 'RECOVER_NATIVE', fingerprint: damagedHash, revision: next.revision, operationId}));
               receiptWrite.onsuccess = () => { try { fence(options); } catch (failure) { abort(failure.message); } };
               fence(options);
@@ -373,7 +378,7 @@ export class NativeRepository {
       const root=states.get(normalized.key),marker=ops.get(normalized.key),directoryRow=ops.get(continuationDirectoryKey(normalized.key)),queueMarker=ops.get(continuationMarkerKey(normalized.key)),operationKey=JSON.stringify([normalized.key,request.operationId]),receipt=ops.get(operationKey);
       receipt.onsuccess=()=>{try{
         check();const facts=this.verifiedRoot(root.result,normalized),nativeMarker=unpack(marker.result);
-        if(nativeMarker.revision!==facts.revision)throw Error('native-root-revision-conflict');
+        verifyNativeLifecycleMarker(nativeMarker,facts,root.result?.checksum);if(nativeMarker.revision!==facts.revision)throw Error('native-root-revision-conflict');
         const directory=continuationDirectory(directoryRow.result,queueMarker.result,normalized,marker.result);
         if(!directory)throw Error('missing-native-continuation-directory');
         const prior=unpack(receipt.result),pending=validateNativeContinuation(prior.continuation,normalized);
@@ -418,6 +423,16 @@ export class NativeRepository {
     });
   }
 
+  async applyLifecycle(scope, request, options = {}) {
+    const normalized = this.base.scopeOrThrow(scope), admission = this.lifecycleGate?.(normalized, request);
+    if (admission?.purpose !== 'native-lifecycle' || typeof admission.guard !== 'function' || admission.guard() !== true) throw Error('untrusted-native-lifecycle');
+    const captured = structuredClone(request), change = validateNativeLifecycleChange(captured.change);
+    const original = options;
+    options = {...original, guard: () => admission.guard() === true && (original.guard?.() ?? true) === true};
+    return this.mutate(normalized, captured, {kind:'OBSERVE_NATIVE_LIFECYCLE',lifecycle:change},
+      current => validateNativeFacts(applyNativeLifecycle(current,change),normalized), options);
+  }
+
   async invalidate(scope, request, options = {}) {
     id(request.sourceId);
     return this.mutate(scope, request, {kind: 'INVALIDATE_NATIVE_SOURCE', sourceId: request.sourceId},
@@ -429,7 +444,7 @@ export class NativeRepository {
     id(operationId);
     if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0) throw Error('invalid-revision');
     command=structuredClone(command);
-    const fingerprint = digest({command, expectedRevision}), db = await this.base.open();
+    const fingerprint = command.kind==='OBSERVE_NATIVE_LIFECYCLE'?nativeLifecycleSemantic(command.lifecycle):digest({command, expectedRevision}), db = await this.base.open();
     fence(options);
     return new Promise(resolve => {
       const transaction = db.transaction(['native_states', 'native_operations', ...(this.shared?['b23_states','b23_operations','b23_checkpoints','refs']:[])], 'readwrite');
@@ -445,7 +460,7 @@ export class NativeRepository {
         try {
           check();
           const payload = request.result ? this.verifiedRoot(request.result, normalized) : null;
-          const indexReader=payload?.format===NATIVE_INDEX_FORMAT?createNativeIndexReader(states,payload,normalized,failure=>abort(failure.message)):null;
+          const indexReader=isNativeVersionIndexed(payload)?createNativeIndexReader(states,payload,normalized,failure=>abort(failure.message)):null;
           const manifest = indexReader?.manifest ?? (isNativePartitioned(payload) ? payload : null);
           const current = manifest ? nativeHeader(manifest, normalized) : payload ?? emptyNativeFacts(normalized);
           const marker = operations.get(normalized.key);
@@ -453,6 +468,7 @@ export class NativeRepository {
             try {
               check();
               if (!request.result && marker.result) throw Error('missing-native-root');
+              verifyNativeLifecycleMarker(marker.result?unpack(marker.result):null,payload,request.result?.checksum);
               if (marker.result && unpack(marker.result).revision !== current.revision) throw Error('native-root-revision-conflict');
               if (current.revision && !marker.result) throw Error('missing-native-marker');
               const receipt = operations.get(operationKey);
@@ -471,14 +487,15 @@ export class NativeRepository {
                       check();
                       const next = reduce(partial);
                       check();
+                      if(next === partial){result={ok:true,replayed:true,revision:partial.revision,operationId};return;}
                       const publishNow=(directory=null)=>{
-                        try {check();if(indexReader)saveIndexedNativePieces(states,normalized,next,storage,command,indexReader,row=>this.#verifyCheckpoint(row,normalized),check,failure=>abort(failure.message));
-                          else saveNativePieces(states, normalized, partial, next, storage, command,row=>this.#verifyCheckpoint(row,normalized),check,failure=>abort(failure.message));
+                        try {check();const savedRoot=indexReader?saveIndexedNativePieces(states,normalized,next,storage,command,indexReader,row=>this.#verifyCheckpoint(row,normalized),check,failure=>abort(failure.message)):
+                          saveNativePieces(states, normalized, partial, next, storage, command,row=>this.#verifyCheckpoint(row,normalized),check,failure=>abort(failure.message));
                           // This exact envelope was verified above in the same CAS transaction.
                           // The reducer clones its input; only rekey the unchanged prior payload.
                           // saveNativePieces queued the older checkpoint GC read before this put.
                           if(payload?.revision)states.put({...request.result,key:nativeCheckpointKey(normalized.key)});
-                          operations.put(record(normalized.key, {...(marker.result?unpack(marker.result):{}),revision: next.revision,...(directory?{continuations:{revision:directory.revision,directoryDigest:digest(directory)}}:{})}));
+                          operations.put(record(normalized.key, {...(marker.result?unpack(marker.result):{}),revision: next.revision,...nativeLifecycleMarker(savedRoot,digest(savedRoot)),...(directory?{continuations:{revision:directory.revision,directoryDigest:digest(directory)}}:{})}));
                           operations.put(record(operationKey, {fingerprint, revision: next.revision, operationId,...(command.channel==='host-dom'?{admission:structuredClone(command.admission)}:{}),...(command.continuation?{continuation:structuredClone(command.continuation)}:{})}));
                           if(directory){operations.put(record(continuationDirectoryKey(normalized.key),directory));operations.put(record(continuationMarkerKey(normalized.key),{revision:directory.revision,directoryDigest:digest(directory)}));}
                           check();result = {ok: true, replayed: false, revision: next.revision, operationId};
@@ -499,7 +516,8 @@ export class NativeRepository {
                     const projects = new Set((command.batch?.projects ?? []).map(row => row.id));
                     for (const row of command.batch?.membership ?? []) if (row.state === 'PROJECT') projects.add(row.projectId);
                     const refs = new Set([...(command.batch?.refs ?? []).map(row => row.id), ...(command.batch?.membership ?? []).map(row => row.id)]);
-                    loadNativePieces(states, manifest, normalized, {projects, refs}, save, failure => abort(failure.message),indexReader?.lookup??null);
+                    const wanted={projects,refs};if(command.lifecycle){const table=lifecycleKind(command.lifecycle.kind);wanted[table]=[command.lifecycle.id];}
+                    loadNativePieces(states, manifest, normalized, wanted, save, failure => abort(failure.message),indexReader?.lookup??null);
                   } else save(current);
                 } catch (failure) { abort(failure.message); }
               };

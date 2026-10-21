@@ -69,7 +69,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const currentMetadata=observations?createCurrentMetadataReader({observations,provider,enabled:currentMetadataReadEnabled,now,onHistorical:historyOwner?async input=>{await historyOwner.consume(input);input.guard();ui?.notifyScope(input.context.scope.key);}:null}):null;
 
  const entryCalibration=ui&&historyOwner&&currentMetadata?createHostEntryCalibration({ui,observations,reader:currentMetadata,elapsedNow,schedule,cancel}):null;
- const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:observations.gate,prepareInitialHostIndex:true,clock:()=>new Date(now()).toISOString()}):null;
+ const nativeRepository=observations?new NativeRepository({baseRepository:repository,workspaceRepository,hostObservationGate:observations.gate,lifecycleGate:observations.lifecycleGate,prepareInitialHostIndex:true,clock:()=>new Date(now()).toISOString()}):null;
  const continuations=nativeRepository&&typeof freeEvidenceRepository?.applyContinuation==='function'?createHostContinuationOwner({nativeRepository,evidenceRepository:freeEvidenceRepository,profileFor:continuationProfileFor}):null;
  if(ackProfile&&nativeRepository&&continuations)ackOwner=createHostSendAckOwner({evidenceRepository:()=>freeEvidenceRepository,profileFor:continuationProfileFor,commitNative:input=>observations.commitAcknowledged(input),drain:input=>continuations.drain(input),now});
  sendCandidates=currentMetadata?createHostSendCandidates({observations,reader:currentMetadata,enabled:sendCandidatesEnabled,now,schedule,cancel,onAcknowledged:ackOwner?async input=>{

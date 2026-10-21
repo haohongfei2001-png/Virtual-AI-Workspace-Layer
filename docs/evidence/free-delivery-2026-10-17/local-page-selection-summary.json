@@ -21151,5 +21151,151 @@
       "10k/100k DEFERRED original thresholds retained",
       "full Free and release not accepted"
     ]
+  },
+  "nativeLifecycleConsumer20261022": {
+    "baseline": "8008cf74e7981e518c479d29c82029c7cc0586df",
+    "status": "OFFLINE_CONSUMER_IMPLEMENTED_NOT_INV09_ACCEPTED",
+    "sourceHashes": {
+      "simulator/build.mjs": "53a5b299d3fc791ace3468da8146c839e4e773a586b607501da5a5753bdafbe6",
+      "src/data/continuation-evidence-reader.mjs": "c28d338063eb500ef98c4fec88938d63b5adc501bdbfe44185fbc2fe781d7fbe",
+      "src/data/free-projection.mjs": "c2fba60e8ddca931d629633f59df50f8daa5f115adcccb15e5ef8b2d7fb9f2cc",
+      "src/data/free-recovery-status.mjs": "7c87501d48823af05818e94f48304fbebbc29828d92802e6629c80232fd7a7c2",
+      "src/data/native-facts.mjs": "f2cabe6f2e196906f1d051f50893f193de11842dcaec339ffd93cda426ba85f3",
+      "src/data/native-index-migration.mjs": "fa88d1b18c1594649b5bd1e84025dc1310c3241ee51f123a498ea49fc20a30e9",
+      "src/data/native-index-reader.mjs": "6bdbf029cca3490520a24d8d9faad171d8f604b85817847239f5cceb2f3f556a",
+      "src/data/native-index-writer.mjs": "b9e24103156b3a9511e6284001992bba23d56b09fbe5360db545e7d3116d3fb2",
+      "src/data/native-lifecycle.mjs": "62d46f572dadbcc247d3d144ec4e85539ef82e6e08ccb6d9f1e8857914ecd965",
+      "src/data/native-partition-audit.mjs": "b63440b53cda12d5bdf148914db5f88c21d868bf4186db0b339f8ffe50890a18",
+      "src/data/native-partitions.mjs": "fd5fae8cbe9e64bcd9ed8b276f46714b00beea7fd8989e21fbd9e0fa9bada782",
+      "src/data/native-repository.mjs": "36e97810e4a2d4080817d8760b9e3dc2a84dfe3870ce19a7944edde87013466f",
+      "src/data/native-version-index.mjs": "943a4d05a7e0d44fa587acd1b1d9a5828988b30c74ba9903a3243b07159ad5cb",
+      "src/runtime/free-read-service.mjs": "97ece1f3327f070b86c7fb089bdb4e99ab1a696595aefd40dae77be323e81fe2",
+      "src/runtime/host-binding-service.mjs": "25547f6cde90a213e73d659061c06038df1e39f0c0fd376d5d8ad5fb1bc066eb",
+      "src/runtime/host-observation-owner.mjs": "4334f64292a2d3d572189c3257c176eb4480b2e0e26eccc051ce1e96fd997220",
+      "tests/free/native-lifecycle-browser.mjs": "47cb1df6da16db145356ca4484275f9cbb46d5ecbcf97efa4ee73f114ce600a6",
+      "tests/free/native-lifecycle-codec.test.mjs": "3135effad9d1f64b6d2c906998d894bcbac2629d11796ef9748f3fa3b6512e41",
+      "tests/free/native-lifecycle-contracts.mjs": "f6f8d1651c83f53354c9ce91fe91a1e1eb58f20e41ac8922102713a4b9d3c181",
+      "tests/free/native-lifecycle.test.mjs": "88927eb176521a331f012980169c1d22a3318af43935357addd617a223c84226",
+      "tests/host/native-lifecycle-owner.test.mjs": "7cda677371e09918a8b9770ccfc45897c7a9cb1e4d8d9bedeaef1d4fe942522a"
+    },
+    "implementation": [
+      "private worker-only lifecycle provider gate; no registered production source or RPC",
+      "same CAS lifecycle facts preserved across partial reads, migration, indexed updates, shared fallback, replica and recovery",
+      "stable semantic replay check plus per-object retained fingerprints; 64 limit rejects rather than forgets",
+      "exact-root recovery marker; no old same-revision fallback",
+      "project deletion leaves conversations UNKNOWN; preserves Pro assets; no native cascade or writes",
+      "post-commit deadline preserves known committed fact while failing closed"
+    ],
+    "validation": {
+      "targetedRegression": {
+        "passed": 673,
+        "failed": 0,
+        "skipped": 0,
+        "elapsedMs": 7374.656791
+      },
+      "realIDB": {
+        "status": "PASS_REAL_IDB_CONSUMER_ONLY",
+        "evidence": "ISOLATED_HEADLESS_REAL_IDB_NOT_MV3_OR_LIVE_SOURCE",
+        "browser": "156.0.8078.4",
+        "elapsedMs": 1254.242291,
+        "blockedExternalRequests": 0,
+        "results": [
+          {
+            "name": "delete-before-first-observation survives available, reopen, index migration and shared fallback",
+            "status": "PASS"
+          },
+          {
+            "name": "existing index upgrades atomically and publishes deletion to an existing UI replica",
+            "status": "PASS"
+          },
+          {
+            "name": "project deletion preserves conversations as UNKNOWN, human assets and activity",
+            "status": "PASS"
+          },
+          {
+            "name": "shared-only deletion invalidates a cached fallback without inventing a native row",
+            "status": "PASS"
+          },
+          {
+            "name": "same result is idempotent and D1 R1 D2 rejects delayed R1 and ordinary reappearance",
+            "status": "PASS"
+          },
+          {
+            "name": "owner admission is object-specific, scope-specific and revoked without mutation",
+            "status": "PASS"
+          },
+          {
+            "name": "partition same-revision old shadow cannot erase lifecycle; exact shadow repairs with fences",
+            "status": "PASS"
+          },
+          {
+            "name": "indexed same-revision old shadow cannot erase lifecycle; exact shadow repairs with fences",
+            "status": "PASS"
+          },
+          {
+            "name": "same-codec mismatched shadow, missing lifecycle piece and forged old codec fail closed",
+            "status": "PASS"
+          },
+          {
+            "name": "consumed results survive generic receipt removal, source revocation and repeated piece GC",
+            "status": "PASS"
+          },
+          {
+            "name": "manual backup restore cannot revive deleted shared references",
+            "status": "PASS"
+          }
+        ]
+      },
+      "defaultPackage": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 185,
+        "unpacked": "/private/tmp/vaiwl-ci39638853187/lifecycle-default-package-final/extension",
+        "archive": "/private/tmp/vaiwl-ci39638853187/lifecycle-default-package-final/vaiwl-free-host-development.zip",
+        "archiveSha256": "424966e458e502a9531f606501dbc58605923104763ab21420f8427c7d1df3ce"
+      },
+      "oldCodecCheck": "exact 8008 strict codecs reject new formats; NOT a complete legacy installation/writer journey",
+      "review": "two readonly reviews; replay and deadline findings fixed; no remaining blocking finding"
+    },
+    "retainedEvidence": {
+      "/private/tmp/vaiwl-ci39638853187/lifecycle-first-contracts.log": "ff28bc7a95a6e6ece7865073f021643ccd0512f8fe4996ba634267afc5037775",
+      "/private/tmp/vaiwl-ci39638853187/lifecycle-legacy-regression.log": "0cded09fcf9dfa3b7a1fb8c8adcfba35622ff45042188a8907fdd4b6406fbffe",
+      "/private/tmp/vaiwl-ci39638853187/lifecycle-new-first.log": "14e980834657cce05d6da0d00b8a966f232e84002e4e323495d9f3bf505847c0",
+      "/private/tmp/vaiwl-ci39638853187/lifecycle-new-second.log": "6af7cda87253e9a3abf33f3b9dd3ea437c68461aa9dcd7a93c625ee14472a15e",
+      "/private/tmp/vaiwl-ci39638853187/lifecycle-real-idb.log": "b5361fe5bb0c9b8504f93015a5680cd3b664b78a911d98984deb6814e042c558",
+      "/private/tmp/vaiwl-ci39638853187/lifecycle-real-idb.json": "23c25a780356b25938a07e68f9e7e77a184895906bd08b2b45f9ebee53504dab",
+      "/private/tmp/vaiwl-ci39638853187/lifecycle-frozen-regression-final.log": "c4ac0f413792b7940cc22e1bfb863b976f967d56859a7bcf76f3ffbcf0f3dd3c",
+      "/private/tmp/vaiwl-ci39638853187/lifecycle-known-commit-deadline-before.log": "5fb5b774bc6989f55026c04de557f3a27cee9b57baecb3d94f9571e95814ee58",
+      "/private/tmp/vaiwl-ci39638853187/lifecycle-deadline-package-after.log": "64b864bc825d87523e8ea7daecc0df7ac37cfbbc2ef835dcda7743df5aaeb4e2",
+      "/private/tmp/vaiwl-ci39638853187/lifecycle-frozen-regression-verified.log": "20115c17174822a959c02f830b2c23424de6b12feecebe2fa24e33f8986c7839",
+      "/private/tmp/vaiwl-ci39638853187/lifecycle-real-idb-final.json": "e936b589aa024eefb58bf5deafc0504012952a8a209abb591bbf640063170fd1",
+      "/private/tmp/vaiwl-ci39638853187/lifecycle-default-package-final.json": "885aa2ab7227a683232ea18e0a9c3b5fcc0e918a9179cd99ec8b1b641f12d20d",
+      "/private/tmp/vaiwl-ci39638853187/lifecycle-old-codec-rejection.json": "bffe3da5849c69cef7e84572bfcf63847c13d951e49fa51720694f9af8a7458f",
+      "/private/tmp/vaiwl-ci39638853187/8008-ci-live.json": "96ec06edc0a69854c213473c5b18bb0277c1410a52825898326cfd2d1f982308",
+      "/private/tmp/vaiwl-ci39638853187/8008-offline-journeys-119402946340.raw.log": "3f2bed14770911f213aa289c250b4e1cbdbe9dafbdd4fa2daed78c4457e3fb46",
+      "/private/tmp/vaiwl-ci39638853187/8008-j4-after-evidence-119402946633.raw.log": "296f7b3908a14f99121a8e38dae215d4202748ceb6b764c05b1c4e0c7cdf1eff"
+    },
+    "priorCI": {
+      "run": 39652144683,
+      "head": "8008cf74e7981e518c479d29c82029c7cc0586df",
+      "terminal": "failure",
+      "jobs": {
+        "success": 38,
+        "failure": 3
+      },
+      "failures": [
+        "native-entry: click capture already pending; no native dispatch",
+        "offline search step21: VIEW24 in flight; no second authorization hold/cancel reached",
+        "J4 after-evidence: initial native account switch failed before recovery stage"
+      ]
+    },
+    "boundaries": [
+      "L/D consumer only; lifecycle S real MV3 NOT_RUN, G production source semantics NOT_ESTABLISHED",
+      "no new private account read, real native delete/restore, permission, source registration or scope",
+      "4GET credential control consumed; no repeat",
+      "64 results per object fail closed; no automatic compaction claim",
+      "10k/100k DEFERRED original thresholds",
+      "LIVE_VERIFIED/FREE_ACCEPTED/RELEASE_READY not established"
+    ]
   }
 }

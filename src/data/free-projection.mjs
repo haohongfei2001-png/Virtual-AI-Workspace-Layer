@@ -1,3 +1,4 @@
+import {nativeDeleted} from './native-lifecycle.mjs';
 import { validateNativeFacts, nativeWitnessActive } from './native-facts.mjs';
 
 // Host admission is validated by the native codec. TTL controls freshness,
@@ -18,7 +19,7 @@ export function freeProjection(facts, {scope, now, knownState = null}) {
   const projects = [], refs = [], noProject = [], unknown = [];
   const byProject = new Map();
   for (const project of Object.values(facts.projects)) {
-    if (!readableWitness(project, facts, now) || project.availability !== 'available') continue;
+    if (nativeDeleted(facts,'projects',project.id) || !readableWitness(project, facts, now) || project.availability !== 'available') continue;
     const card = {id: project.id, key: JSON.stringify([facts.scopeKey, project.id]),
       scope: facts.scopeKey, freshness: activeWitness(project, facts, now) ? 'current' : 'last-known', nativeName: project.nativeName, nativeAliases: project.nativeAliases ?? [], membershipWitness: {sourceId:project.sourceId,generation:project.generation,sourceRevision:project.sourceRevision}, membershipWitnessCurrent: activeWitness(project, facts, now) && project.sourceRevision === facts.sources[project.sourceId].sourceRevision, memberCount: project.memberCount ?? null, membershipComplete: false,
       name: project.nativeName ?? '名称暂不可用', nativeUrl: project.nativeUrl, members: []};
@@ -27,7 +28,7 @@ export function freeProjection(facts, {scope, now, knownState = null}) {
   }
   for (const ref of Object.values(facts.refs)) {
     const active = activeWitness(ref, facts, now);
-    if (facts.sources[ref.sourceId].revoked || ref.availability === 'unavailable') continue;
+    if (nativeDeleted(facts,'refs',ref.id) || facts.sources[ref.sourceId].revoked || ref.availability === 'unavailable') continue;
     const observed = facts.membership[ref.id];
     const readable = (active || lastKnownWitness(ref, facts, now)) && ref.availability === 'available';
     const confirmed = observed && readableWitness(observed, facts, now) && readable;
@@ -42,6 +43,7 @@ export function freeProjection(facts, {scope, now, knownState = null}) {
     else unknown.push(row);
   }
   for (const ref of Object.values(knownState?.refs ?? {})) {
+    if(nativeDeleted(facts,'refs',ref.id))continue;
     const native = facts.refs[ref.id];
     // Revoked metadata cannot publish titles or membership, but a separately
     // retained shared reference still has its original route. Keep explicit

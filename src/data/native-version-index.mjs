@@ -1,3 +1,4 @@
+import {hasNativeLifecycle, NATIVE_LIFECYCLE_PARTITIONS, NATIVE_LIFECYCLE_INDEX, nativeKinds, nativeLifecycleKinds, emptyNativeMaps} from './native-lifecycle.mjs';
 import {VerifiedRecordCache} from './verified-record-cache.mjs';
 import {captureJSONSnapshot} from './capture-json-snapshot.mjs';
 import {normalizedScope} from '../b1/identity.mjs';
@@ -7,7 +8,9 @@ import {id,exact} from './state.mjs';
 import {validateNativeManifest,NATIVE_PARTITION_FORMAT,nativeRecord,nativeUnpack} from './native-partitions.mjs';
 
 export const NATIVE_INDEX_FORMAT='vaiwl-native-version-index-v1';
-const kinds=['projects','refs'],maxCount=100000;
+const kinds=['projects','refs',...nativeLifecycleKinds],maxCount=100000;
+export const isNativeVersionIndexed = value => [NATIVE_INDEX_FORMAT, NATIVE_LIFECYCLE_INDEX].includes(value?.format);
+const partitionFormat = value => hasNativeLifecycle(value) ? NATIVE_LIFECYCLE_PARTITIONS : NATIVE_PARTITION_FORMAT;
 const rootSnapshots=new WeakMap();
 const rootScope=scope=>{const normalized=normalizedScope(scope);if(!normalized)throw Error('unverified-scope');return normalized;};
 function freezeRoot(root,scope){
@@ -56,10 +59,10 @@ export function createNativeIndexRootRecordReader(){
  };
 }
 function checkNativeIndexRoot(root,scope){
- exact(root,['format','scopeKey','revision','sources','projects','refs','units','changes']);
- if(root.format!==NATIVE_INDEX_FORMAT)throw Error('invalid-native-index-format');
- for(const kind of kinds)directory(root[kind],root.revision);
- validateNativeManifest({...root,format:NATIVE_PARTITION_FORMAT,projects:{},refs:{}},scope);
+ exact(root,['format','scopeKey','revision','sources','projects','refs','units','changes',...(hasNativeLifecycle(root)?nativeLifecycleKinds:[])]);
+ if(!isNativeVersionIndexed(root))throw Error('invalid-native-index-format');
+ for(const kind of nativeKinds(root))directory(root[kind],root.revision);
+ validateNativeManifest({...root,format:partitionFormat(root),...emptyNativeMaps(root)},scope);
 }
 // Bounded byte-validation cache only: each newly read payload is fully encoded
 // and compared. Scope, physical identity and directory count remain contextual.
@@ -116,8 +119,8 @@ function makeIndexBucket(root,kind,bucket,versions,ordinals){
 }
 /** Pure migration builder. The owner must publish all pieces and root atomically. */
 export function buildNativeVersionIndex(manifest,scope){
- validateNativeManifest(manifest,scope);const root={...manifest,format:NATIVE_INDEX_FORMAT,projects:{},refs:{}},records=[];
- for(const kind of kinds){const groups=new Map();let ordinal=0;for(const key of Object.keys(manifest[kind])){const bucket=nativeIndexBucket(key);if(!groups.has(bucket))groups.set(bucket,{versions:{},ordinals:{}});groups.get(bucket).versions[key]=manifest[kind][key];groups.get(bucket).ordinals[key]=ordinal++;}
+ validateNativeManifest(manifest,scope);const root={...manifest,format:hasNativeLifecycle(manifest)?NATIVE_LIFECYCLE_INDEX:NATIVE_INDEX_FORMAT,...emptyNativeMaps(manifest)},records=[];
+ for(const kind of nativeKinds(manifest)){const groups=new Map();let ordinal=0;for(const key of Object.keys(manifest[kind])){const bucket=nativeIndexBucket(key);if(!groups.has(bucket))groups.set(bucket,{versions:{},ordinals:{}});groups.get(bucket).versions[key]=manifest[kind][key];groups.get(bucket).ordinals[key]=ordinal++;}
   for(const [bucket,{versions,ordinals}] of groups)records.push(makeIndexBucket(root,kind,bucket,versions,ordinals));
  }
  validateNativeIndexRoot(root,scope);return {root,records};
@@ -127,8 +130,8 @@ export function buildNativeVersionIndex(manifest,scope){
  */
 export function materializeNativeVersionIndex(root,scope,records){
  validateNativeIndexRoot(root,scope);const byKey=new Map();for(const record of records){if(byKey.has(record.key))throw Error('duplicate-native-index-record');byKey.set(record.key,record);}
- const manifest={...root,format:NATIVE_PARTITION_FORMAT,projects:{},refs:{}};let expected=0;
- for(const kind of kinds){
+ const manifest={...root,format:partitionFormat(root),...emptyNativeMaps(root)};let expected=0;
+ for(const kind of nativeKinds(root)){
  const buckets=Object.keys(root[kind]),count=buckets.reduce((sum,b)=>sum+root[kind][b].count,0),keys=new Array(count),versions=new Array(count);let orderError=false;
  for(const bucket of buckets){expected++;const pointer=root[kind][bucket],physicalKey=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision),piece=verifyNativeIndexPiece(byKey.get(physicalKey),root,kind,bucket);
  const names=Object.keys(piece.versions);for(let i=0;i<names.length;i++){const ordinal=piece.ordinals[i];if(ordinal>=count||keys[ordinal]!==undefined){orderError=true;continue;}keys[ordinal]=names[i];versions[ordinal]=piece.versions[names[i]];}}
@@ -147,11 +150,11 @@ export function selectNativeVersionIndexPage(root,scope,records,offset,limit){
  const selected={projects:[],refs:[]};let expected=0,base=0,numeric=false;
  // Empty maps retain the exact remaining manifest fields. All valid versions
  // are positive safe integers, so their JSON representation is String(version).
- let length=JSON.stringify({...root,format:NATIVE_PARTITION_FORMAT,projects:{},refs:{}}).length;
- for(const kind of kinds){
+ let length=JSON.stringify({...root,format:partitionFormat(root),...emptyNativeMaps(root)}).length;
+ for(const kind of nativeKinds(root)){
   const buckets=Object.keys(root[kind]),count=buckets.reduce((sum,b)=>sum+root[kind][b].count,0),seen=new Uint8Array(count);
-  const start=Math.min(count,Math.max(0,offset-base)),end=Math.min(count,Math.max(0,offset+limit-base));
-  selected[kind]=new Array(Math.max(0,end-start));length+=Math.max(0,count-1);
+  const visible=!nativeLifecycleKinds.includes(kind),start=visible?Math.min(count,Math.max(0,offset-base)):0,end=visible?Math.min(count,Math.max(0,offset+limit-base)):0;
+  if(visible)selected[kind]=new Array(Math.max(0,end-start));length+=Math.max(0,count-1);
   for(const bucket of buckets){
    expected++;const pointer=root[kind][bucket],physicalKey=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision);
    const piece=verifyNativeIndexPiece(byKey.get(physicalKey),root,kind,bucket),names=Object.keys(piece.versions);
@@ -160,10 +163,10 @@ export function selectNativeVersionIndexPage(root,scope,records,offset,limit){
     if(ordinal>=count||seen[ordinal])throw Error('invalid-native-index-order');seen[ordinal]=1;
     const n=Number(key);if(Number.isInteger(n)&&n>=0&&n<4294967295&&String(n)===key)numeric=true;
     length+=JSON.stringify(key).length+1+String(piece.versions[key]).length;
-    if(ordinal>=start&&ordinal<end)selected[kind][ordinal-start]=key;
+    if(visible&&ordinal>=start&&ordinal<end)selected[kind][ordinal-start]=key;
    }
   }
-  if(seen.some(value=>value!==1))throw Error('invalid-native-index-order');base+=count;
+  if(seen.some(value=>value!==1))throw Error('invalid-native-index-order');if(visible)base+=count;
  }
  if(byKey.size!==expected)throw Error('unexpected-native-index-record');
  if(length>16*1024*1024)throw Error('native-manifest-too-large');
@@ -190,16 +193,18 @@ export function buildNativeIndexUpdateRecord(root,scope,revision,updates,records
 }
 function updateIndexPieces(root,scope,revision,updates,records){
  validateNativeIndexRoot(root,scope);version(revision,Number.MAX_SAFE_INTEGER);if(revision!==root.revision+1)throw Error('native-index-revision-conflict');
- exact(updates,['projects','refs']);const next={...root,revision,projects:{...root.projects},refs:{...root.refs}},byKey=new Map(),written=[];
+ exact(updates,['projects','refs',...((hasNativeLifecycle(root)||Object.hasOwn(updates,'projectLifecycle')||Object.hasOwn(updates,'refLifecycle'))?nativeLifecycleKinds:[])]);
+ const upgraded=hasNativeLifecycle(root)||Object.hasOwn(updates,'projectLifecycle');
+ const next={...root,revision,...(upgraded?{format:NATIVE_LIFECYCLE_INDEX}:{}),...Object.fromEntries((upgraded?kinds:nativeKinds(root)).map(kind=>[kind,{...root[kind]}]))},byKey=new Map(),written=[];
  for(const record of records){if(byKey.has(record.key))throw Error('duplicate-native-index-record');byKey.set(record.key,record);}
  const consumed=new Set();
- for(const kind of kinds){
+ for(const kind of nativeKinds(next)){
   const rows=updates[kind];if(!rows||typeof rows!=='object'||Array.isArray(rows)||Object.keys(rows).length>10000)throw Error('invalid-native-index-updates');
-  const groups=new Map();let nextOrdinal=directory(root[kind],root.revision);
+  const groups=new Map();let nextOrdinal=directory(root[kind]??{},root.revision);
   for(const key of Object.keys(rows)){
    if(rows[key]!==revision)throw Error('invalid-native-index-update-version');const bucket=nativeIndexBucket(key);
    if(!groups.has(bucket)){
-    const pointer=root[kind][bucket];let versions={},ordinals={};
+    const pointer=root[kind]?.[bucket];let versions={},ordinals={};
     // Consume only the exact getter-free snapshot that passed byte validation.
     if(pointer){const physicalKey=nativeIndexKey(root.scopeKey,kind,bucket,pointer.revision),piece=updateIndexPiece(byKey.get(physicalKey),root,kind,bucket);versions={...piece.versions};ordinals=Object.fromEntries(Object.keys(piece.versions).map((key,i)=>[key,piece.ordinals[i]]));consumed.add(physicalKey);}
     groups.set(bucket,{versions,ordinals});

@@ -1,10 +1,11 @@
+import {verifyNativeLifecycleMarker} from './native-lifecycle.mjs';
 import {freeEvidenceKey,isEvidencePartitioned,validateEvidenceManifest} from './free-evidence-partitions.mjs';
 import {validateFreeEvidence} from './free-evidence.mjs';
 import {EVIDENCE_DIRECTORY_FORMAT,validateEvidenceDirectoryRoot} from './evidence-ref-directory.mjs';
 import {validateNativeContinuation,validateContinuationDirectory,continuationDirectoryKey} from './native-observation-continuation.mjs';
 import {validateNativeFacts} from './native-facts.mjs';
 import {isNativePartitioned,validateNativeManifest} from './native-partitions.mjs';
-import {NATIVE_INDEX_FORMAT,validateNativeIndexRoot} from './native-version-index.mjs';
+import {isNativeVersionIndexed,validateNativeIndexRoot} from './native-version-index.mjs';
 import {digest} from './hash.mjs';
 function unpack(row){if(!row||row.checksum!==digest(row.payload))throw Error('corrupt-native-continuation-record');return row.payload;}
 /** Reads all origin witnesses inside the evidence writer's existing transaction. */
@@ -21,9 +22,9 @@ export function readContinuationForEvidence(tx,scope,request,authority,check,don
   const a=pending.admission;
   for(const field of ['scopeKey','sourceId','generation','profileId','profileVersion'])if(a[field]!==authority[field])throw Error('native-continuation-authority-conflict');
   const facts=unpack(root.result);
-  if(facts.format===NATIVE_INDEX_FORMAT)validateNativeIndexRoot(facts,scope);else if(isNativePartitioned(facts))validateNativeManifest(facts,scope);else validateNativeFacts(facts,scope);
+  if(isNativeVersionIndexed(facts))validateNativeIndexRoot(facts,scope);else if(isNativePartitioned(facts))validateNativeManifest(facts,scope);else validateNativeFacts(facts,scope);
   if(pending.nativeRevision>facts.revision)throw Error('native-continuation-origin-conflict');
-  const nativeMarker=unpack(marker.result);if(nativeMarker.revision!==facts.revision)throw Error('native-root-revision-conflict');
+  const nativeMarker=unpack(marker.result);verifyNativeLifecycleMarker(nativeMarker,facts,root.result?.checksum);if(nativeMarker.revision!==facts.revision)throw Error('native-root-revision-conflict');
   const dir=validateContinuationDirectory(unpack(directory.result),scope),qm=unpack(queueMarker.result),witness={revision:dir.revision,directoryDigest:digest(dir)};
   if(digest(qm)!==digest(witness)||digest(nativeMarker.continuations??null)!==digest(witness))throw Error('native-continuation-directory-conflict');
   if(pending.state==='pending-evidence'?dir.entries[pending.operationId]!==new TextEncoder().encode(JSON.stringify(pending)).length:Object.hasOwn(dir.entries,pending.operationId))throw Error('native-continuation-directory-conflict');

@@ -7,13 +7,64 @@ import {validateCurrentBodyProposal} from '../host/current-body-claim.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {surfaceBatch} from '../host/surface-batch.mjs';
 import {digest} from '../data/hash.mjs';
+import {lifecycleKind,validateNativeLifecycleChange} from '../data/native-lifecycle.mjs';
 /** Privileged owner; the gate recognizes request object identity, never serialized labels. */
 export function createHostObservationOwner({handshake,authority,getFrame,profiles,onAccepted=null,foregroundReadPending=()=>false,onSendIntent=null,onSendGap=null,onNativeDelta=null,ackAdmission=null,now=Date.now,maxProducers=128,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
  if(!handshake?.verify||!handshake?.isBound||!handshake?.matchesFrame||!authority?.peek||!authority?.scopeFor||typeof getFrame!=='function'||!(profiles instanceof Map))throw Error('invalid-host-observation-owner');
- const admissions=new WeakMap(),producers=new Map(),failedBatches=new Map(),bodies=new Map(),reads=new Set();let busy=null,stopped=false,joint=null,runs=0;
+ const admissions=new WeakMap(),lifecycleAdmissions=new WeakMap(),producers=new Map(),failedBatches=new Map(),bodies=new Map(),reads=new Set();let busy=null,stopped=false,joint=null,runs=0;
  async function track(work){runs++;try{return await work();}finally{runs--;}}
  function discardBody(key){const entry=bodies.get(key);if(!entry)return;bodies.delete(key);for(const read of reads)if(read.entry===entry){read.active=false;read.abort.abort();}}
  function gate(scope,request){const entry=admissions.get(request);return entry&&entry.scopeKey===scope.key&&entry.guard()?entry:null;}
+ function lifecycleGate(scope,request){const entry=lifecycleAdmissions.get(request);return entry&&entry.scopeKey===scope.key&&entry.guard()?entry:null;}
+ // Worker-only entry. No transport handler dispatches this method. A profile
+ // must first register a result provider with separately established semantics;
+ // existing production profiles have no such provider. DOM absence, context
+ // receipts and send ACKs never enter this admission map.
+ async function observeLifecycle(binding,sender,repository,target){
+  if(stopped)return {ok:false,reason:'host-observation-stopped'};
+  if(busy)return {ok:false,reason:'host-observation-busy'};
+  const attempt={active:true,abort:new AbortController(),started:elapsedNow()};busy=attempt;let request,knownCommitted=false;
+  try{return await withRequestDeadline(()=>track(async()=>{
+   binding=structuredClone(binding);sender=structuredClone(sender);target=structuredClone(target);
+   if(!target||Object.keys(target).sort().join(',')!=='id,kind,operationId,state'||!lifecycleKind(target.kind)||!['deletion-confirmed','existence-confirmed'].includes(target.state)||typeof target.operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(target.operationId))throw Error('invalid-native-lifecycle-target');
+   if(!await handshake.verify(binding,sender))throw Error('invalid-host-document');
+   const actual=await getFrame({tabId:sender.tab.id,frameId:0});
+   if(!handshake.matchesFrame(binding,sender,actual))throw Error('host-frame-conflict');
+   const frame={tabId:sender.tab.id,frameId:0,documentId:actual.documentId,parentDocumentId:null,actualURL:actual.url,documentLifecycle:actual.documentLifecycle,incognito:sender.tab.incognito===true};
+   attempt.frame=frame;
+   const resolution=authority.peek(frame),scope=authority.scopeFor(frame),profile=profiles.get(binding.profileId),provider=profile?.lifecycleProvider;
+   if(resolution.state!=='verified'||!scope)throw Error('unverified-host-scope');
+   if(!profile||profile.revision!==binding.profileVersion||typeof provider?.read!=='function'||typeof provider?.lifecycleFor!=='function')throw Error('native-lifecycle-source-unregistered');
+   const grant=resolution.grant,source=authority.sourceFor?.(frame);
+   const guard=()=>!stopped&&attempt.active&&!attempt.abort.signal.aborted&&elapsedNow()>=attempt.started&&elapsedNow()-attempt.started<6000&&profiles.get(profile.id)===profile&&profile.lifecycleProvider===provider&&handshake.isBound(binding,sender)&&authority.peek(frame).grant?.id===grant.id&&authority.peek(frame).grant?.scopeEpoch===grant.scopeEpoch&&authority.scopeFor(frame)?.key===scope.key&&authority.sourceFor?.(frame)===source;
+   const check=()=>{if(!guard())throw Error('stale-host-scope');};check();
+   const page=await repository.page(scope,{ids:{projects:target.kind==='projects'?[target.id]:[],refs:target.kind==='refs'?[target.id]:[]}}, {guard,signal:attempt.abort.signal});check();
+   const previous=page.facts[lifecycleKind(target.kind)]?.[target.id];
+   if(target.state==='existence-confirmed'&&previous?.state!=='deletion-confirmed')throw Error('native-lifecycle-fence-conflict');
+   // Capture the exact fence BEFORE starting the existence read. A result may
+   // not be retroactively attached to a later deletion after an await.
+   const context=Object.freeze({scopeKey:scope.key,scopeGrantId:grant.id,scopeEpoch:grant.scopeEpoch,principalSource:source,
+    browserDocumentId:frame.documentId,documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,
+    actualURL:frame.actualURL,profileId:profile.id,profileVersion:profile.revision,target:Object.freeze({...target}),
+    expectedVersion:previous?.version??0,fenceId:target.state==='existence-confirmed'?previous.fenceId:null,fenceVersion:target.state==='existence-confirmed'?previous.fenceVersion:null});
+   const result=await provider.read(context,{guard,signal:attempt.abort.signal});check();
+   const proof=provider.lifecycleFor(result);
+   if(!proof||proof.context!==context)throw Error('untrusted-native-lifecycle-result');
+   const change=validateNativeLifecycleChange(structuredClone(proof.change));
+   if(change.kind!==target.kind||change.id!==target.id||change.state!==target.state||change.expectedVersion!==context.expectedVersion||change.fenceId!==context.fenceId||change.fenceVersion!==context.fenceVersion||change.profileId!==profile.id||change.profileVersion!==profile.revision)throw Error('native-lifecycle-result-conflict');
+   if(!await handshake.verify(binding,sender))throw Error('stale-host-document');check();
+   request={operationId:'lifecycle_'+digest([scope.key,change.profileId,change.profileVersion,target.kind,target.id,target.operationId,change.resultFingerprint]),expectedRevision:page.revision,change};
+   lifecycleAdmissions.set(request,Object.freeze({purpose:'native-lifecycle',scopeKey:scope.key,guard}));
+   attempt.nativeWriteScope=scope.key;attempt.nativeWriteGuard=guard;
+   const committed=await repository.applyLifecycle(scope,request,{guard,signal:attempt.abort.signal});
+   knownCommitted=committed.committed===true||(committed.ok===true&&!committed.replayed);
+   if(!guard())return committed.committed?committed:committed.ok?{ok:false,reason:'stale-after-commit',committed:true}:committed;
+   if(committed.ok&&!committed.replayed)try{onAccepted?.(scope,{background:false});}catch{}
+   return committed;
+  }),{now:elapsedNow,schedule,cancel});}
+  catch(error){return {ok:false,...(knownCommitted?{committed:true}:{}),reason:['native-lifecycle-source-unregistered','native-lifecycle-fence-conflict','native-lifecycle-result-conflict','untrusted-native-lifecycle-result','stale-host-scope','stale-host-document','unverified-host-scope','invalid-native-lifecycle-target'].includes(error?.message)?error.message:'native-lifecycle-observation-failed'};}
+  finally{if(request)lifecycleAdmissions.delete(request);attempt.active=false;attempt.abort.abort();if(busy===attempt)busy=null;}
+ }
  async function ingest(proposal,sender,repository){
   const rejected=reason=>({state:'rejected',localSeq:Number.isSafeInteger(proposal?.localSeq)?proposal.localSeq:0,reason});
   if(stopped)return rejected('host-observation-stopped');
@@ -210,8 +261,8 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    if(!await handshake.verify(entry.proposal,entry.sender))throw Error('stale-body-proof');check();return result;
   }),{now:elapsedNow,schedule,cancel});}finally{attempt.active=false;attempt.abort.abort();reads.delete(attempt);}
  }
- function invalidateDocument(documentId){for(const [key,entry]of bodies)if(entry.frame.documentId===documentId)discardBody(key);}
- function invalidateTab(tabId){for(const [key,entry]of bodies)if(entry.frame.tabId===tabId)discardBody(key);}
+ function invalidateDocument(documentId){if(busy?.frame?.documentId===documentId){busy.active=false;busy.abort.abort();}for(const [key,entry]of bodies)if(entry.frame.documentId===documentId)discardBody(key);}
+ function invalidateTab(tabId){if(busy?.frame?.tabId===tabId){busy.active=false;busy.abort.abort();}for(const [key,entry]of bodies)if(entry.frame.tabId===tabId)discardBody(key);}
  function stop(){stopped=true;busy&&(busy.active=false,busy.abort.abort());bodies.clear();producers.clear();failedBatches.clear();for(const attempt of reads){attempt.active=false;attempt.abort.abort();}reads.clear();}
- return Object.freeze({isIdle:()=>!stopped&&runs===0&&busy===null&&reads.size===0,isNativeWritePending(scopeKey){try{return typeof scopeKey==='string'&&scopeKey.length>0&&!stopped&&busy?.active===true&&busy.nativeWriteScope===scopeKey&&busy.nativeWriteGuard?.()===true;}catch{return false;}},commitAcknowledged,isCurrentProof:proofId=>[...bodies.values()].some(entry=>entry.proofId===proofId&&entry.current()),isCurrentProducer:producerToken=>bodies.get(producerToken)?.current()===true,gate,ingest,withCurrent,currentProofForParent,invalidateDocument,invalidateTab,stop});
+ return Object.freeze({isIdle:()=>!stopped&&runs===0&&busy===null&&reads.size===0,isNativeWritePending(scopeKey){try{return typeof scopeKey==='string'&&scopeKey.length>0&&!stopped&&busy?.active===true&&busy.nativeWriteScope===scopeKey&&busy.nativeWriteGuard?.()===true;}catch{return false;}},commitAcknowledged,isCurrentProof:proofId=>[...bodies.values()].some(entry=>entry.proofId===proofId&&entry.current()),isCurrentProducer:producerToken=>bodies.get(producerToken)?.current()===true,gate,lifecycleGate,observeLifecycle,ingest,withCurrent,currentProofForParent,invalidateDocument,invalidateTab,stop});
 }

@@ -1,3 +1,4 @@
+import {hasNativeLifecycle, NATIVE_LIFECYCLE_FACTS, NATIVE_LIFECYCLE_PARTITIONS, nativeKinds, nativeLifecycleKinds, lifecycleKind, nativeCommandKeys, allNativeKeys} from './native-lifecycle.mjs';
 import { emptyNativeFacts, validateNativeFacts, validateAndMeasureNativeFacts } from './native-facts.mjs';
 import { digest, stable, sha256 } from './hash.mjs';
 import { id, exact } from './state.mjs';
@@ -15,17 +16,17 @@ export function nativeUnpack(row) {
   if (!row || row.checksum !== digest(row.payload)) throw Error('corrupt-native-record');
   return row.payload;
 }
-export const isNativePartitioned = value => value?.format === NATIVE_PARTITION_FORMAT;
+export const isNativePartitioned = value => [NATIVE_PARTITION_FORMAT, NATIVE_LIFECYCLE_PARTITIONS].includes(value?.format);
 export function nativeHeader(manifest, scope) {
-  return {...emptyNativeFacts(scope), format: 'vaiwl-native-facts-v2', revision: manifest.revision, sources: manifest.sources};
+  return {...emptyNativeFacts(scope), format: hasNativeLifecycle(manifest) ? NATIVE_LIFECYCLE_FACTS : 'vaiwl-native-facts-v2', ...(hasNativeLifecycle(manifest) ? {projectLifecycle:{},refLifecycle:{}} : {}), revision: manifest.revision, sources: manifest.sources};
 }
 function checkNativeManifestStructure(m, scope) {
-  exact(m, ['format', 'scopeKey', 'revision', 'sources', 'projects', 'refs', 'units', 'changes']);
-  if (m.format !== NATIVE_PARTITION_FORMAT || m.scopeKey !== emptyNativeFacts(scope).scopeKey ||
+  exact(m, ['format', 'scopeKey', 'revision', 'sources', 'projects', 'refs', 'units', 'changes', ...(hasNativeLifecycle(m) ? nativeLifecycleKinds : [])]);
+  if (!isNativePartitioned(m) || m.scopeKey !== emptyNativeFacts(scope).scopeKey ||
       !Number.isSafeInteger(m.revision) || m.revision < 1 || !Number.isSafeInteger(m.units) ||
       m.units < 0 || m.units > 128 * 1024 * 1024) throw Error('invalid-native-manifest');
   validateNativeFacts(nativeHeader(m, scope), scope);
-  for (const table of ['projects', 'refs']) {
+  for (const table of nativeKinds(m)) {
     const rows=m[table];
     if (!rows || typeof rows!=='object' || Array.isArray(rows)) throw Error('native-partition-capacity');
     const keys=Object.keys(rows);
@@ -37,9 +38,9 @@ function checkNativeManifestStructure(m, scope) {
   }
   if (!Array.isArray(m.changes) || m.changes.length > 64) throw Error('invalid-native-changes');
   for (const change of m.changes) {
-    exact(change, ['revision', 'projects', 'refs']);
+    exact(change, ['revision', ...nativeKinds(m)]);
     if (!Number.isSafeInteger(change.revision) || change.revision < 1 || change.revision > m.revision) throw Error('invalid-native-changes');
-    for (const table of ['projects', 'refs']) {
+    for (const table of nativeKinds(m)) {
       if (!Array.isArray(change[table]) || change[table].length > 10000) throw Error('invalid-native-changes');
       change[table].forEach(id);
     }
@@ -87,9 +88,11 @@ export function loadNativePieces(store, manifest, scope, wanted, done, fail, loo
     }
   };
   const load = (kind, key) => {
+    if (!nativeKinds(manifest).includes(kind)) return;
     const identity = JSON.stringify([kind, key]);
     if (requested.has(identity)) return;
     requested.add(identity); waiting++;
+    if (lifecycleKind(kind)) load(lifecycleKind(kind), key);
     const read = version => {
     if(failed)return;
     if(version===undefined){waiting--;finish();return;}
@@ -98,7 +101,7 @@ export function loadNativePieces(store, manifest, scope, wanted, done, fail, loo
       if (failed) return;
       try {
         const piece = nativeUnpack(record);
-        exact(piece, kind === 'projects' ? ['scopeKey', 'kind', 'id', 'revision', 'row'] : ['scopeKey', 'kind', 'id', 'revision', 'row', 'membership']);
+        exact(piece, ['scopeKey', 'kind', 'id', 'revision', 'row', ...(kind === 'refs' ? ['membership'] : [])]);
         if (piece.scopeKey !== manifest.scopeKey || piece.kind !== kind || piece.id !== key ||
             piece.revision !== version || piece.row?.id !== key) throw Error('invalid-native-piece');
         pieces.set(identity, piece); facts[kind][key] = piece.row;
@@ -115,19 +118,18 @@ export function loadNativePieces(store, manifest, scope, wanted, done, fail, loo
     };
     if(lookup)lookup(kind,key,read);else read(Object.hasOwn(manifest[kind],key)?manifest[kind][key]:undefined);
   };
-  for (const kind of ['projects', 'refs']) for (const key of (order??wanted)[kind]) load(kind, key);
+  for (const kind of nativeKinds(manifest)) for (const key of (wanted[kind] ?? [])) load(kind, key);
   launching = false; finish();
 }
 
 export function saveNativePieces(store, scope, current, next, storage, command, verifyCheckpoint = null, check = () => {}, fail = error => { throw error; }) {
   const prior = storage?.manifest;
-  const projectIds = prior ? (command.batch?.projects ?? []).map(row => row.id) : Object.keys(next.projects);
-  const refIds = prior ? [...new Set([...(command.batch?.refs ?? []).map(row => row.id),
-    ...(command.batch?.membership ?? []).map(row => row.id)])] : Object.keys(next.refs);
-  const manifest = {format: NATIVE_PARTITION_FORMAT, scopeKey: next.scopeKey, revision: next.revision,
-    sources: next.sources, projects: {...prior?.projects}, refs: {...prior?.refs}, units: prior?.units ?? 0,
-    changes: [{revision: next.revision, projects: projectIds.slice(0, 10000), refs: refIds.slice(0, 10000)}]};
-  for (const [kind, keys] of [['projects', projectIds], ['refs', refIds]]) for (const key of keys) {
+  const changed = prior ? nativeCommandKeys(command, next) : allNativeKeys(next);
+  const manifest = {format: hasNativeLifecycle(next) ? NATIVE_LIFECYCLE_PARTITIONS : NATIVE_PARTITION_FORMAT,
+    scopeKey: next.scopeKey, revision: next.revision, sources: next.sources,
+    ...Object.fromEntries(nativeKinds(next).map(kind => [kind, {...prior?.[kind]}])), units: prior?.units ?? 0,
+    changes: [{revision: next.revision, ...Object.fromEntries(nativeKinds(next).map(kind => [kind, changed[kind].slice(0, 10000)]))}]};
+  for (const kind of nativeKinds(next)) for (const key of changed[kind]) {
     const old = storage?.pieces.get(JSON.stringify([kind, key]));
     if (old) manifest.units -= JSON.stringify(old).length;
     const piece = {scopeKey: next.scopeKey, kind, id: key, revision: next.revision, row: next[kind][key],
@@ -156,7 +158,7 @@ export function saveNativePieces(store, scope, current, next, storage, command, 
       // Missing or ambiguous current work lists require full reconciliation.
       // Recovery deliberately clears history; old formats can repeat rows.
       try {
-        for (const kind of ['projects', 'refs']) for (const key of changed?.[kind] ?? Object.keys(old[kind])) {
+        for (const kind of nativeKinds(old)) for (const key of changed?.[kind] ?? Object.keys(old[kind])) {
           const version = old[kind][key];
           if (version && version !== prior[kind][key] && version !== manifest[kind][key]) {
             check();

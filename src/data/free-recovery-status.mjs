@@ -1,7 +1,8 @@
+import {allNativeKeys,verifyNativeLifecycleMarker} from './native-lifecycle.mjs';
 import {auditEvidencePartitions} from './evidence-partition-audit.mjs';
 import {EVIDENCE_DIRECTORY_FORMAT,validateEvidenceDirectoryRoot} from './evidence-ref-directory.mjs';
 import {createEvidenceDirectoryReader} from './evidence-directory-reader.mjs';
-import {NATIVE_INDEX_FORMAT,validateNativeIndexRoot} from './native-version-index.mjs';
+import {isNativeVersionIndexed,validateNativeIndexRoot} from './native-version-index.mjs';
 import {createNativeIndexReader} from './native-index-reader.mjs';
 import {digest} from './hash.mjs';
 import {nativeRecoveryKey,validateNativeManifest,loadNativePieces} from './native-partitions.mjs';
@@ -20,17 +21,17 @@ export async function freeRecoveryStatus(repository,scope,kind,options={}) {
    const fail=e=>{if(result)result.recoveryReason=e.message;else error=e;};
    marker.onsuccess=()=>{try{
     check();result={corrupt:true,recoverable:false,damagedHash:digest(root.result??null),reason:failure.message};
-    const validate=(value,scope)=>native?(value?.format===NATIVE_INDEX_FORMAT?validateNativeIndexRoot(value,scope):validateNativeManifest(value,scope)):(value?.format===EVIDENCE_DIRECTORY_FORMAT?validateEvidenceDirectoryRoot(value,scope):validateEvidenceManifest(value,scope));
+    const validate=(value,scope)=>native?(isNativeVersionIndexed(value)?validateNativeIndexRoot(value,scope):validateNativeManifest(value,scope)):(value?.format===EVIDENCE_DIRECTORY_FORMAT?validateEvidenceDirectoryRoot(value,scope):validateEvidenceManifest(value,scope));
     // Repair supports corrupt roots only. Missing/corrupt pieces or markers remain fail-closed.
     let intact=false;try{validate(unpack(root.result),normalized);intact=true;}catch{}
     if(intact)throw Error('intact-state-not-replaced');
-    const manifest=validate(unpack(shadow.result),normalized);if(unpack(marker.result).revision!==manifest.revision)throw Error('recovery-revision-conflict');
-    if(native&&root.result?.payload?.format===NATIVE_INDEX_FORMAT&&manifest.format!==NATIVE_INDEX_FORMAT)throw Error('native-index-recovery-format-conflict');
+    const manifest=validate(unpack(shadow.result),normalized);if(native)verifyNativeLifecycleMarker(unpack(marker.result),manifest,shadow.result?.checksum);if(unpack(marker.result).revision!==manifest.revision)throw Error('recovery-revision-conflict');
+    if(native&&isNativeVersionIndexed(root.result?.payload)&&!isNativeVersionIndexed(manifest))throw Error('native-index-recovery-format-conflict');
     if(!native&&root.result?.payload?.format===EVIDENCE_DIRECTORY_FORMAT&&manifest.format!==EVIDENCE_DIRECTORY_FORMAT)throw Error('evidence-directory-recovery-format-conflict');
     const done=()=>{if(!result.recoveryReason)result.recoverable=true;};
-    const verify=complete=>{if(native)loadNativePieces(store,complete,normalized,{projects:Object.keys(complete.projects),refs:Object.keys(complete.refs)},done,fail);
+    const verify=complete=>{if(native)loadNativePieces(store,complete,normalized,allNativeKeys(complete),done,fail);
      else loadEvidenceIndexes(store,complete,normalized,Object.keys(complete.indexVersions),indexes=>auditEvidencePartitions(store,complete,normalized,check,done,fail,indexes),fail);};
-    if(native&&manifest.format===NATIVE_INDEX_FORMAT)createNativeIndexReader(store,manifest,normalized,fail).all(verify);
+    if(native&&isNativeVersionIndexed(manifest))createNativeIndexReader(store,manifest,normalized,fail).all(verify);
     else if(!native&&manifest.format===EVIDENCE_DIRECTORY_FORMAT)createEvidenceDirectoryReader(store,manifest,normalized,fail).all(verify);
     else verify(manifest);
    }catch(e){fail(e);}};

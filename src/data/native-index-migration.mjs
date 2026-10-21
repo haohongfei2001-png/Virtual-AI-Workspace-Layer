@@ -1,4 +1,5 @@
-import {buildNativeVersionIndex,NATIVE_INDEX_FORMAT} from './native-version-index.mjs';
+import {nativeKinds,nativeLifecycleMarker,verifyNativeLifecycleMarker} from './native-lifecycle.mjs';
+import {buildNativeVersionIndex,isNativeVersionIndexed} from './native-version-index.mjs';
 import {isNativePartitioned,nativeRecord,nativeUnpack,nativeRecoveryKey,nativeCheckpointKey,nativePartitionKey} from './native-partitions.mjs';
 import {auditNativePartitions} from './native-partition-audit.mjs';
 import {digest} from './hash.mjs';
@@ -8,7 +9,7 @@ import {id} from './state.mjs';
 // in the final RW transaction. Preserve key order too: it determines ordinals.
 // No caller can supply or mutate the candidate.
 const preparedBuilds=new WeakMap();
-function buildFor(payload,scope){return buildNativeVersionIndex({...payload,revision:payload.revision+1,changes:[{revision:payload.revision+1,projects:[],refs:[]}]},scope);}
+function buildFor(payload,scope){return buildNativeVersionIndex({...payload,revision:payload.revision+1,changes:[{revision:payload.revision+1,...Object.fromEntries(nativeKinds(payload).map(kind=>[kind,[]]))}]},scope);}
 export async function prepareNativeVersionIndex(owner,scope,{expectedRevision},{guard=()=>true,signal=null}={}){
  const normalized=owner.base.scopeOrThrow(scope);
  if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)throw Error('invalid-revision');
@@ -19,9 +20,9 @@ export async function prepareNativeVersionIndex(owner,scope,{expectedRevision},{
   marker.onsuccess=()=>{try{
    fence();const payload=root.result?owner.verifiedRoot(root.result,normalized):null;
    if(!payload)throw Error('missing-native-root');
-   if(nativeUnpack(marker.result).revision!==payload.revision)throw Error('native-root-revision-conflict');
+   verifyNativeLifecycleMarker(nativeUnpack(marker.result),payload,root.result.checksum);if(nativeUnpack(marker.result).revision!==payload.revision)throw Error('native-root-revision-conflict');
    if(payload.revision!==expectedRevision)throw Error('revision-conflict');
-   if(payload.format===NATIVE_INDEX_FORMAT){result={ok:true,prepared:false,alreadyIndexed:true};return;}
+   if(isNativeVersionIndexed(payload)){result={ok:true,prepared:false,alreadyIndexed:true};return;}
    if(!isNativePartitioned(payload))throw Error('native-index-migration-requires-partitioned-root');
    const encoded=JSON.stringify(payload),prior=preparedBuilds.get(owner);
    if(prior?.encoded===encoded){result={ok:true,prepared:false};return;}
@@ -41,10 +42,10 @@ export async function migrateNativeVersionIndex(owner,scope,{operationId,expecte
   const root=store.get(normalized.key),marker=ops.get(normalized.key),checkpoint=store.get(nativeCheckpointKey(normalized.key)),receipt=ops.get(operationKey);
   receipt.onsuccess=()=>{try{
    fence();const payload=root.result?owner.verifiedRoot(root.result,normalized):null;
-   if(!payload)throw Error('missing-native-root');if(nativeUnpack(marker.result).revision!==payload.revision)throw Error('native-root-revision-conflict');
+   if(!payload)throw Error('missing-native-root');verifyNativeLifecycleMarker(nativeUnpack(marker.result),payload,root.result.checksum);if(nativeUnpack(marker.result).revision!==payload.revision)throw Error('native-root-revision-conflict');
    if(receipt.result){const prior=nativeUnpack(receipt.result);result=prior.kind==='MIGRATE_NATIVE_VERSION_INDEX'&&prior.fingerprint===fingerprint?{ok:true,replayed:true,revision:prior.revision,operationId}:{ok:false,reason:'operation-replay-conflict'};return;}
    if(payload.revision!==expectedRevision)throw Error('revision-conflict');
-   if(payload.format===NATIVE_INDEX_FORMAT){result={ok:true,alreadyIndexed:true,revision:payload.revision,operationId};return;}
+   if(isNativeVersionIndexed(payload)){result={ok:true,alreadyIndexed:true,revision:payload.revision,operationId};return;}
    if(!isNativePartitioned(payload))throw Error('native-index-migration-requires-partitioned-root');
    auditNativePartitions(store,payload,normalized,fence,()=>{try{
     // Structural migration changes no native piece versions. Record that fact
@@ -56,9 +57,9 @@ export async function migrateNativeVersionIndex(owner,scope,{operationId,expecte
     // Retire only native versions referenced by the superseded old checkpoint.
     // Its corrupt bytes must never authorize deletion; retain them for diagnosis.
     let old=null;try{if(checkpoint.result?.key===nativeCheckpointKey(normalized.key))old=owner.verifiedRoot({...checkpoint.result,key:normalized.key},normalized);}catch{}
-    if(isNativePartitioned(old))for(const kind of ['projects','refs'])for(const [key,version] of Object.entries(old[kind]))if(version!==payload[kind][key]){fence();store.delete(nativePartitionKey(normalized.key,kind,key,version));}
+    if(isNativePartitioned(old))for(const kind of nativeKinds(old))for(const [key,version] of Object.entries(old[kind]))if(version!==payload[kind][key]){fence();store.delete(nativePartitionKey(normalized.key,kind,key,version));}
     store.put({...root.result,key:nativeCheckpointKey(normalized.key)});store.put(rootRecord);store.put({...rootRecord,key:nativeRecoveryKey(normalized.key)});
-    ops.put(nativeRecord(normalized.key,{...nativeUnpack(marker.result),revision:built.root.revision}));ops.put(nativeRecord(operationKey,{kind:'MIGRATE_NATIVE_VERSION_INDEX',fingerprint,revision:built.root.revision,operationId}));fence();result={ok:true,revision:built.root.revision,operationId};
+    ops.put(nativeRecord(normalized.key,{...nativeUnpack(marker.result),revision:built.root.revision,...nativeLifecycleMarker(built.root,rootRecord.checksum)}));ops.put(nativeRecord(operationKey,{kind:'MIGRATE_NATIVE_VERSION_INDEX',fingerprint,revision:built.root.revision,operationId}));fence();result={ok:true,revision:built.root.revision,operationId};
    }catch(error){abort(error.message);}},error=>abort(error.message));
   }catch(error){abort(error.message);}};
   tx.oncomplete=()=>{signal?.removeEventListener('abort',onRevoke);if(consumedBuild&&preparedBuilds.get(owner)===consumedBuild)preparedBuilds.delete(owner);try{fence();resolve(result);}catch{resolve({ok:false,reason:'stale-after-commit',committed:true});}};
