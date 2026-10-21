@@ -1,5 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 当前检查点：云端成果已接回原 Mac 工作树（2026-10-21）
+
+用户明确交接后，Codex恢复为唯一集成writer；dot本轮云端写入已停止。实际HEAD与正常fetch的远端均为`efaf76c98cbd1653fe8c9d4b6162aee515e19eb0`，tree为`63772be4556411a4285bfc9736b3d7f8a7565d5a`，无需合并或快进。检查开始tracked干净；2258个未跟踪文件均为原数字副本，3个stash及原本地提交历史保留。原Free分支、Draft PR16/base、目录与远端不变。下列云端owner/未交接描述均为历史记录。
+
+已读回[最终CI39618167978](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39618167978)的API终态及原始job日志：exact head匹配、41/41 job成功；Node10828/10828、零失败/跳过；native实际64次访问、64 admitted events、8项PASS_POPULATED_SUBCONTRACT。native结果的184个打包源码及17个测试路径hash均与本地对应文件一致，前后hash相同；其他job的不同证据范围不混作新产品进度。unknown trace仍INCOMPLETE，J4额外trace仍DIAGNOSTIC_ONLY；此次成功不追溯解释旧竞态，不升级真实账户、完整视觉/81项子场景或Free发布验收。云端62图审阅沿原交接记录，本次未重新看图或冒称新增视觉通过。本轮未重跑完整矩阵或10k/100k。
+
+INV-09差额已直接核对源码：surface delta只会失效handle，不接删除事实；现有`unavailable`不等于确证删除，普通较新本地revision仍可能覆盖它。已在原Host规格§8.3.1细化owner私有结果准入、持久防回填、旧writer/快照恢复、人工资产保留及Project不无证据级联的同批实施合同。尚无已确证的生产删除结果来源，consumer/codec栅栏也尚未实现；不新增永远拒绝的占位API，不标INV-09通过。缺口不是“只能在Mac做”：合同、后续同批codec/consumer及反例可离线推进，实际成功语义与S子场景需独立证明。
+
+真实来源关口：本次浏览器工具识别到已授权hongfei hao，但拒绝访问原扩展诊断页，明确仅允许http/https且禁止其他通道绕行；未读取私人页面或执行真实GET。用户随后从原弹窗回传`{"state":"no-request-issued"}`，这是用户读回的一次状态，不是工具读取或诊断结果。已将下一步集中为原弹窗一次执行并回传固定JSON，尚未收到执行结果；不推定已经消费，也不代发。旧一次临时可见正文读取仍不可重用。此阻塞属于控制工具，不能冒称403复发或来源不可行。完整主体/当前空间、完整目录及成员/NONE/本人活动仍NOT_ESTABLISHED；10k/100k DEFERRED，完整Free NOT_RELEASE_READY。
+
 ## 第十三批：真实就绪前置、正常销毁清理与布局取证（2026-10-21，基线2bca80cd）
 
 第十二run39613595691实际执行38成功/3失败，Node10777全过；API汇总滞后另存。两入口原导航成功却被新增诊断清理已毁frame误报；J2取消后重试ACK正确但首次candidate未建立，历史持久事件不等于当前live就绪。候选严格确认detached+父页正常才视frame已清理，首次fill后/首次submit前只读校验当前owner→adapter→body，cancel→retry仍连续无等待。初始截图先等真实尺寸并前后核同几何/IDs，修复窄图metadata旧桌面值，不改产品。1155合批定向与独审通过，实际浏览器待验。见[第十三批证据](evidence/cloud-live-preconditions-20261021/README.md)。历史未归因记录不改PASS，仍ACTIVE，不merge/deploy。
@@ -50,7 +60,7 @@ CI39530853596终态21成功/13失败/1取消，Node10244全过；完整原旅程
 
 首批exact-head CI39524930473终态13任务成功/6失败；Node9874、12guard、52项真实浏览器IDB恢复、SYS05溢出、五个J4矩阵及原旅程通过。六失败归为返回图标/菜单选择器/J2缺真实唤醒/PARTIAL未重新进入已退让工作区四类runner前提，均保留原目标作修正，不改生产安全边界。下一批同时补自然分页、两种有限休眠观察、隐私/FAULT、严格pending-repair预算调度、真实原生历史UI及批准原型配对截图。390项合批定向通过；本地完整复测会话无终态而中断，明确NOT_COMPLETED，1264输入稳定，最终全量由新exact-head CI验证。见[第二批证据](evidence/cloud-free-next-gates-20261021/README.md)。仍ACTIVE，不宣称完整云端/Free验收结束。
 
-## 当前执行权：云端主开发与依赖就绪 Free 收口（2026-10-21）
+## 历史执行权：云端主开发与依赖就绪 Free 收口（2026-10-21，已交接）
 
 Owner 于 2026-10-20 22:53:33 UTC 明确要求 dot 接手主开发，并行完成当前正式计划中不依赖本机和真实账户的全部可推进任务，再交回 Codex。Owner 尚未回复或恢复已停止的 Codex；基线为原 Free 分支 / Draft PR #16 的 64b926e3ce2d07ad1f6f3bcd16a36f006746f3a4，base 不变。dot 为本轮唯一集成 writer，模块独立、统一集成；下文旧 Codex writer 与仅来源审查安排保留为历史，不代表当前执行权。
 

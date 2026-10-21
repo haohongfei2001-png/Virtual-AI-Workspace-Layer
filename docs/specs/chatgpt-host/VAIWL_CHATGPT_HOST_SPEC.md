@@ -397,6 +397,20 @@ ScopeGrant过期/切换即停止该scope显示和写入；对象事实的新鲜�
 
 新codec把live grant、source revocation、row freshness及历史事件有效性分离；旧codec按原语义读取，不通过改一个synthetic字符串来提升。last-known标题可显示“上次确认”，可靠原链接可达；过期成员关系不得被当最新确认、不能用它作严格历史否定。出现真实冲突才切UNKNOWN；不会每20秒lease到期就删除Project、失去全部姓名或清空历史。
 
+### 8.3.1 INV-09：删除结果确认与持久防回填合同
+
+2026-10-21交接差额：本节细化原INV-09及DATA_MODEL §3.4，不声明已有删除来源或consumer。当前`SurfaceDelta.detachedHandles`仅使控件失效；当前`unavailable`不等于`deletion-confirmed`，不得重解释旧行或用列表缺席补证。
+
+确认入口属于现有HostObservationOwner的私有准入链，不新增页面/RPC的`confirmed:true`入口。生产profile只有在**结果来源的成功语义、目标关联及失败/取消反例已确证**时才能注册issuer；无此语义时不注册。必要的owner内输入绑定为：当前scope/grant及authority/selection代际、browser document与route代际、对象类型和exact nativeId、来源profile/语义版本、唯一操作结果见证。来源必须证明已完成删除，不能只有点击、弹窗关闭、请求发出或HTTP成功。普通GET context receipt只证明请求关联，不兼任删除结果凭据；MAIN消息、序列化字符串或持久旧receipt不能铸造确认能力。实际准入沿现有WeakMap对象身份及提交前后guard，不以TypeScript品牌代替运行时核验。此链只观察结果，不发送或重放原生删除。
+
+一次有效确认须沿现有NativeRepository CAS、分片及operation幂等机制，同事务提交对象的独立`deletion-confirmed`失效事实和防回填栅栏。持久部分仅保留恢复所需的最小结果语义/指纹与对象关联，不保存可再授权的RAM能力、凭据或原始响应。重放同一结果不重复推进版本；取消、失败、结果未知、错scope/对象、旧代际和超期结果不写入。旧DOM、分页、较晚receivedAt、较大本地sourceRevision、换producer/source incarnation或worker重启均不能解除栅栏。上游因果版本只有已证同域可比时才有作用；不能编造服务器版本。
+
+兼容实现必须作为同一批次闭合：facts codec与旧writer拒写、partition/version index及增量writer、现有恢复root/checkpoint、Free投影/replica与shared-ref fallback。旧数据没有删除栅栏只表示未记录，不表示对象仍存在；恢复更旧快照不能静默丢弃已知栅栏。人工备份继续只恢复人工资产/必要引用，不恢复来源授权或把引用显示成已核验可用。栅栏按对象有界保存，不建立无界日志，也不得因普通TTL/源撤权或retention整理自动忘记删除。不能通过清库、删引用或删除Pro人工资产实现失效。
+
+恢复/重新出现必须有另行已定义且可核验的当前对象存在语义，才可沿相同owner准入及CAS显式解除；普通available观察不够。解除凭据须绑定欲解除的确切删除栅栏身份/版本，提交时仍匹配该栅栏；删除前已开始的存在读取或较早恢复见证不能解除后来的删除，必须覆盖`D1→R1→D2→R1迟到`反例。该语义未建立时保持失效并保留人工引用，不自动恢复。Project删除仅确认该Project，不能无证据级联删除Conversation、归为NONE或改写本人活动；级联、归档、隐藏、撤权、undo与异步删除的区别须由来源profile分别证明。
+
+最小离线验收须同时覆盖：取消/点击/缺席/卸载/TTL/单次404均不删；错误及伪造结果拒绝；同结果幂等与CAS冲突；确认前已在途available及跨tab晚到不能回填；代际切换与提交前后撤权；worker重启、分片迁移、旧writer和旧快照恢复不遗失栅栏；人工资产保留及Project不无证据级联；独立确证恢复的正反例。离线fixture只能证明这条消费与恢复链，不能创造真实来源语义。上述源码及S子场景尚未落地时，INV-09保持NOT_ESTABLISHED；只新增本节或一个永远拒绝的占位API不能标记实施完成。
+
 ### 8.4 两仓库提交：复用事务和最小continuation
 
 Native和Evidence是独立提交，保留“native成功先可达、activity仍pending”的语义。新增加的只是**观察提交continuation**，不是第二个事务引擎或原生动作账本：
