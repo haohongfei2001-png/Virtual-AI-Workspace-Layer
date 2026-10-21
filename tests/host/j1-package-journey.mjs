@@ -48,11 +48,19 @@ try{
     return port;
   };
   const dispatch=t=>t==='HOST_UI_DISPATCH_NATIVE'||t==='HOST_UI_DISPATCH_CURRENT';
+  // A microtask from capture can run before target handlers for trusted clicks.
+  // Record capture separately; only an observed bubble is after the target.
+  // Stopped propagation/unloaded documents keep an unknown post-target outcome.
+  const clicked=new WeakMap();let clickCount=0;
   if(typeof document!=='undefined')document.addEventListener('click',event=>{try{
+    if(clickCount>=128)return;
     const link=event.composedPath().find(n=>n?.tagName==='A'&&n.dataset?.focusKey);if(!link)return;
-    const facts={trusted:event.isTrusted,button:event.button,ctrl:event.ctrlKey,meta:event.metaKey,shift:event.shiftKey,alt:event.altKey,href:nativePath(link.getAttribute('href')),target:['_blank','_top','_self'].includes(link.getAttribute('target'))?link.getAttribute('target'):null,disabled:link.getAttribute('aria-disabled')==='true',focusKey:scalar(link.dataset.focusKey),projectId:scalar(link.closest('[data-theme-id]')?.getAttribute('data-theme-id'))};
-    queueMicrotask(()=>{try{emit({phase:'click',...facts,defaultPrevented:event.defaultPrevented,connected:link.isConnected});}catch{}});
+    const facts={clickId:++clickCount,trusted:event.isTrusted,button:event.button,ctrl:event.ctrlKey,meta:event.metaKey,shift:event.shiftKey,alt:event.altKey,href:nativePath(link.getAttribute('href')),target:['_blank','_top','_self'].includes(link.getAttribute('target'))?link.getAttribute('target'):null,disabled:link.getAttribute('aria-disabled')==='true',focusKey:scalar(link.dataset.focusKey),projectId:scalar(link.closest('[data-theme-id]')?.getAttribute('data-theme-id'))};
+    clicked.set(event,{facts,link});emit({phase:'click',dispatchStage:'CAPTURE',...facts,defaultPrevented:event.defaultPrevented,connected:link.isConnected});
   }catch{}},true);
+  if(typeof document!=='undefined')document.addEventListener('click',event=>{try{
+    const row=clicked.get(event);if(!row)return;clicked.delete(event);emit({phase:'click-bubble',dispatchStage:'AFTER_TARGET',...row.facts,defaultPrevented:event.defaultPrevented,connected:row.link.isConnected});
+  }catch{}});
   chrome.runtime.sendMessage=function(...args){
     const m=args[0],seq=++sequence;
     try{if(dispatch(m?.type))emit({phase:'request',seq,type:m.type,actionId:scalar(m.actionId),planRevision:revision(m.planRevision),targetKey:scalar(m.targetKey)});

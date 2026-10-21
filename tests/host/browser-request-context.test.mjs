@@ -54,6 +54,34 @@ test('trusted same-document history keeps only the genuine new-route first-prepa
  assert.equal(f.owner.isCurrent(frame,old),false);assert.equal(await f.owner.verify({...frame,actualURL:origin+'/c/'+D}),null);
  await f.finish(next);const current=await f.owner.verify({...frame,actualURL:origin+'/c/'+D});assert.equal(current?.conversationId,D);assert.equal(current?.contextId,'team');assert.notEqual(current,old);
 });
+for(const pendingLookup of [false,true])test('cold owner retains genuine pending GET across its first exact history event; lookup pending='+pendingLookup,async t=>{
+ let release;const actualURL=origin+'/c/'+D,actual={...browserFrame,url:actualURL};
+ const f=fixture(t,pendingLookup?{getFrame:()=>new Promise(resolve=>{release=()=>resolve(actual);})}:{});f.current=actual;
+ const next=f.details({requestId:'cold',url:origin+'/backend-api/conversation/'+D});f.webRequest.onSendHeaders.emit(next);if(pendingLookup)await flush();
+ f.owner.invalidateHistory({tabId:7,frameId:0,documentId:'doc',documentLifecycle:'active',frameType:'outermost_frame',url:actualURL});
+ assert.equal(await f.owner.verify({...frame,actualURL}),null);assert.equal(f.ready.length,0);
+ if(pendingLookup){release();await flush();f.webRequest.onCompleted.emit({...next,statusCode:200,fromCache:false});await flush();release();await flush();const verified=f.owner.verify({...frame,actualURL});await flush();release();assert.equal((await verified)?.conversationId,D);}
+ else {await f.finish(next);assert.equal((await f.owner.verify({...frame,actualURL}))?.conversationId,D);}
+ assert.equal(f.ready.length,1);assert.equal(f.associated.length,1);
+});
+test('cold history cannot invent a prior route to reprepare a mismatched first lookup',async t=>{
+ const f=fixture(t),next=f.details({requestId:'cold',url:origin+'/backend-api/conversation/'+D});f.webRequest.onSendHeaders.emit(next);await flush();
+ const actualURL=origin+'/c/'+D;f.current={...browserFrame,url:actualURL};f.owner.invalidateHistory({tabId:7,frameId:0,documentId:'doc',documentLifecycle:'active',frameType:'outermost_frame',url:actualURL});await f.finish(next);
+ assert.equal(await f.owner.verify({...frame,actualURL}),null);assert.equal(f.ready.length,0);assert.equal(f.associated.length,0);
+});
+for(const mode of ['no-request','second-history','accepted','conflict','committed','expired','clock-rollback','stopped','failed','cached','bad-body','wrong-document','wrong-route','wrong-tab','revoked-epoch'])test('cold history keeps safe rejection: '+mode,async t=>{
+ const f=fixture(t),actualURL=origin+'/c/'+D;f.current={...browserFrame,url:actualURL};const next=f.details({requestId:'cold',url:origin+'/backend-api/conversation/'+D});
+ if(mode!=='no-request')f.webRequest.onSendHeaders.emit(next);
+ if(mode==='accepted')await flush();if(mode==='conflict')f.webRequest.onSendHeaders.emit({...next,requestId:'other-context',requestHeaders:[{name:'Chatgpt-Account-Id',value:'other'}]});
+ if(mode==='revoked-epoch')f.owner.invalidateTab(7);
+ const history={tabId:7,frameId:0,documentId:'doc',documentLifecycle:'active',frameType:'outermost_frame',url:actualURL,...(mode==='wrong-document'?{documentId:'other'}:{}),...(mode==='wrong-route'?{url:frame.actualURL}:{}),...(mode==='wrong-tab'?{tabId:8}:{})};
+ f.owner.invalidateHistory(history);
+ if(mode==='second-history')f.owner.invalidateHistory(history);if(mode==='committed')f.owner.invalidateTab(7);if(mode==='expired')f.advance(6000);if(mode==='clock-rollback')f.rollback();if(mode==='stopped')f.owner.stop();if(mode==='failed')f.webRequest.onErrorOccurred.emit(next);
+ if(mode==='bad-body')f.answer={challenge:'wrong',actualURL,conversationId:C,association:'explicit-body-id'};
+ if(mode==='cached'){f.webRequest.onCompleted.emit({...next,statusCode:200,fromCache:true});await flush();}else await f.finish(next);
+ if(mode==='wrong-tab'){assert.equal((await f.owner.verify({...frame,actualURL}))?.conversationId,D,'unrelated tab notification does not revoke this tab');return;}
+ assert.equal(await f.owner.verify({...frame,actualURL}),null);if(mode!=='bad-body')assert.equal(f.ready.length,0);
+});
 for(const [name,change]of Object.entries({missingDocument:{documentId:undefined},otherDocument:{documentId:'other'},inactive:{documentLifecycle:'prerender'},subframe:{frameId:1},wrongFrame:{frameType:'sub_frame'},otherRoute:{url:origin+'/c/'+C},foreign:{url:'https://evil.test/c/'+D},query:{url:origin+'/c/'+D+'?x=1'}}))test('history preservation rejects '+name,async t=>{
  const f=fixture(t);await f.finish(await f.send());f.current={...browserFrame,url:origin+'/c/'+D};const next=f.details({requestId:'next',url:origin+'/backend-api/conversation/'+D});f.webRequest.onSendHeaders.emit(next);
  f.owner.invalidateHistory({tabId:7,frameId:0,documentId:'doc',documentLifecycle:'active',frameType:'outermost_frame',url:origin+'/c/'+D,...change});await f.finish(next);assert.equal(await f.owner.verify({...frame,actualURL:origin+'/c/'+D}),null);

@@ -2,6 +2,8 @@
 
 ## 夜间接续：真实对照已消费，来源审查与依赖就绪工程并行（2026-10-22）
 
+C2本批新增已复现的冷worker顺序修复：仅保留首次精确history到达时尚待首次frame读取的真实新目标GET；从未建立选择／未撤回／未accepted／同document及原6秒限定，后续响应/frame/tab/body/roster照常核验，无旧route猜测或receipt复活。原before-native隔离旅程25步完成但仍仅部分J4，自动foreground无新证据仍安全等待。a302 CI38成功／3失败及本批精确源码证据沿STATUS/`coldHistoryAndBodyObservation20261022`；历史Linux因果未追溯关闭。J1只纠正capture与bubble观察，unknown单次旁路未复现且stream不完整；不重复盲跑或修改原oracle。下一项按原C2/C5闭合点击就绪与失败peer接纳证据，来源审查继续独立推进，10k/100k不前置。
+
 C2/B4/B5本批已收口导航pending误吞修饰键、生命周期同对象语义版本漂移和活动策略对同revision错root的漏检；J4打包符号碰撞属于观察器，已以真实原提交前中断切片核验，但自动peer foreground／完整J4仍未成立。28c2 CI37成功／4失败及各阶段精确证据沿STATUS/`navigationLifecycleReviewAndJ4Binding20261022`，历史失败不追溯改判。unknown正文与populated第6访问准入仍待根因，停止猜测生产取消或重复诊断；继续原来源审查与依赖就绪的生命周期／安装差额，不新开计划或来源、不扩大授权／预算。
 
 原INV-09当前差额：私有owner结果→同库CAS→有界持久删除／恢复栅栏→分片／索引／共享回退／UI增量／恢复已完成离线消费实现，原格式兼容与64结果／对象满后拒绝的边界见STATUS/`nativeLifecycleConsumer20261022`。未注册生产生命周期来源、未接RPC；S实际MV3来源旅程NOT_RUN、G成功语义NOT_ESTABLISHED，不能标完整INV-09完成或替代真实来源。8008 CI已自然结束38成功／3失败，当时下一项导航modifier误吞已由上述批次修复；普通点击就绪取证继续保留，J4初始原生切换失败单独保留，不追溯改判。身份与全目录仍沿原来源审查，不重发已消费诊断；原Free目标和10k/100k边界不变。

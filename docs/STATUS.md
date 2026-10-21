@@ -1,5 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 冷worker新原生请求与history顺序修复（2026-10-22，基线a302d828）
+
+本批关闭一个独立复现的C2恢复缺陷：冷worker尚无receipt时，真实新目标GET先进入、同文档history随后到达、首次frame读取仍待完成，原实现会删掉该请求，200完成后也不能产生READY。现在仅保留从未建立选择、未撤回、未accepted、同文档／精确目标且原六秒内的首次pending请求；仍需成功响应、当前frame/tab/body及认证roster。冷路径不生成旧route、不增加reprepare、不复活旧receipt。两条产品反例先红后绿，独立7项顺序对照转绿，撤回／冲突／到期反例保持；不宣称已锁定历史Linux失败的实际事件顺序。
+
+修复后原隔离headless MV3 before-native旅程单次完成25步，矩阵原入口仅收为PASS_SCOPED_CONTINUOUS_CASE，原报告仍PARTIAL_J4_NOT_ACCEPTED／exit2。peer以两个新原生GET恢复当前范围，草稿／原document／editor及Pro资产保持；没有新上下文证据的自动foreground仍NOT_ESTABLISHED，不能用后续GET替代。后续证据／索引修复、实际disable/uninstall均完成；185产品和37旅程／夹具hash稳定，辅助worker观察丢1条，不冒充完整生命周期轨迹。258项受影响回归、16项相邻插桩回归及默认185文件包校验通过，未运行规模门禁。
+
+[CI39659961681](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39659961681)在a302自然结束38成功／3失败：unknown正文RESOURCE_CONTENT_UNAVAILABLE并伴ERR_ABORTED；J4已越过提交断点、失败在peer新GET200后无frame；J1普通Project点击恰逢VIEW pending，零派发。历史失败不改判。本批另修J1观察器将capture微任务误作派发后结果的问题：现在capture与实际bubble按同clickId分列，缺bubble保持未知，无新等待／补点或门槛变化。独立readonly复审后88项观察器／CI边界回归通过。
+
+unknown只做了一次新的隔离旁路实验：独立Network session比较精确同requestId的stream/readback，不增加HTTP、不改包／响应头／原Playwright oracle。此次原body可读；旁路两个GET均FINISHED且readback各50字节，但stream不可用，captureComplete=false、DIAGNOSTIC_ONLY，未复现Linux失败或证明生产EOF。198项相关定向回归通过；未增加CI自动重跑。原证据沿`coldHistoryAndBodyObservation20261022`及同目录压缩原件保存，未重跑已消费真实4GET。
+
+下一差额：J1真实点击就绪／派发、Linux peer接纳链与unknown正文失败仍需对应证据；真实可信主体／当前空间（default/null语义）、完整目录、INV-09生产成功语义和实机G/U仍未闭合。10k/100k继续DEFERRED，完整Free及发布未通过。
+
 ## 导航点击、生命周期语义栅栏与J4观察器收口（2026-10-22，基线28c2aa0a）
 
 已修三处产品缺陷：原生导航等待期间，当前有效链接的修饰键仍交给浏览器，普通委托及失效链接保持拒绝；生命周期操作全程固定profile ID/版本与provider方法，异步期间原地变化不能沿旧binding提交；时间策略写入在原事务内核验删除栅栏与root checksum，同revision合法旧副本也不能作为写入依据。dot的两条版本race与四条跨store反例均先失败后修复，拒绝后全store保持，精确root恢复后同请求正常成功，保留Pro资产。

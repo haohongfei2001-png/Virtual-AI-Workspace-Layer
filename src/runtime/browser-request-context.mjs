@@ -48,7 +48,14 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
  function invalidateHistory(details){
   const nextTarget=target(details?.url),valid=details?.frameId===0&&details?.frameType==='outermost_frame'&&details?.documentLifecycle==='active'&&tokenOK(details?.documentId)&&nextTarget;
   const keep=new Set();
-  if(valid)for(const r of requests.values())if(r.tabId===details.tabId&&r.documentId===details.documentId&&targetOf(r)===nextTarget&&!r.accepted&&r.actualURL===null&&!r.conflicted&&!r.historyRetained&&r.document.receipt&&r.document.receipt.actualURL!==details.url&&r.epoch===r.document.epoch&&clockOK(r,6000)){keep.add(r);r.historyPriorURL=r.document.receipt.actualURL;}
+  if(valid)for(const r of requests.values()){
+   const prior=r.document.receipt;
+   // A newly started worker has no prior selection to retain. The new browser
+   // GET can still survive its first matching history event while its first
+   // frame lookup is pending. No old selection or prior-route retry is minted.
+   const cold=!prior&&r.document.contextId===null&&r.document.reason===undefined;
+   if(r.tabId===details.tabId&&r.documentId===details.documentId&&targetOf(r)===nextTarget&&!r.accepted&&r.actualURL===null&&!r.conflicted&&!r.historyRetained&&(prior?prior.actualURL!==details.url:cold)&&r.epoch===r.document.epoch&&clockOK(r,6000)){keep.add(r);if(prior)r.historyPriorURL=prior.actualURL;}
+  }
   // History delivery may follow the real new-route GET. Revoke every old grant
   // now, but do not erase that still-unprepared, independently verified request.
   // Its original six-second clock and later frame/tab/body checks are unchanged.
