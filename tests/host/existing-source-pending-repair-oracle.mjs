@@ -3,17 +3,18 @@
  */
 import assert from 'node:assert/strict';
 export const PENDING_REPAIR_LIMITS=Object.freeze({rpcMs:6000,readWindowMs:30000,maxGETs:12,maxReadAttempts:3,debuggerMs:20000,observationMs:15000});
-export const PENDING_REPAIR_STAGES=Object.freeze(['SETUP','INITIAL_CONTEXT_AND_ASSETS','INITIAL_NATIVE_CONTEXT_SWITCH','FIRST_SEND_AND_ACK','FIRST_SEND_BUDGET','FIRST_SEND_NATIVE_INPUT','FIRST_SEND_ACK_READ','PRE_SECOND_BUDGET','PRE_SECOND_WORKSPACE_AUTHORITY','SECOND_NATIVE_INPUT','WORKER_LIFECYCLE','DEBUGGER_INSTALL','DEBUGGER_CONTROL','SECOND_SEND_AND_PENDING_CUT','CORRUPT_REBIND','UI_REPAIR','REPAIR_DRAIN','REPEATED_REBIND','FINAL_ACCEPTANCE']);
-export const PENDING_REPAIR_ASSERTIONS=Object.freeze(['PENDING_REPAIR_SINGLE_CONTEXT_SWITCH','PENDING_REPAIR_BUDGET_CHECKSUM','PENDING_REPAIR_BUDGET_TIMESTAMPS','PENDING_REPAIR_BUDGET_REQUESTS','PENDING_REPAIR_BUDGET_ATTEMPTS','PENDING_REPAIR_PRIOR_AUTHORITY_REQUIRED','PENDING_REPAIR_WORKER_TARGET_REQUIRED','PENDING_REPAIR_FINAL_GRANT_FRESH','PENDING_REPAIR_REPEAT_GRANT_FRESH','J4-classic-package-root-required','J4-classic-entry-build-mismatch','J4-classic-runtime-build-mismatch','J4-classic-background-required','J4-unique-worker-target-required','J4-worker-lifecycle-target-mismatch','J4-production-drain-script-required','J4-production-drain-source-mismatch','J4-production-drain-breakpoint-unresolved','J4-production-drain-breakpoint-moved','J4-evidence-repository-script-required','J4-evidence-repository-source-mismatch','J4-evidence-repository-entry-required','J4-evidence-repository-entry-unresolved','J4-evidence-repository-breakpoint-moved']);
+export const PENDING_REPAIR_STAGES=Object.freeze(['SETUP','INITIAL_CONTEXT_AND_ASSETS','INITIAL_NATIVE_CONTEXT_SWITCH','FIRST_SEND_AND_ACK','FIRST_SEND_BUDGET','FIRST_SEND_NATIVE_INPUT','FIRST_SEND_ACK_READ','PRE_SECOND_BUDGET','PRE_SECOND_WORKSPACE_AUTHORITY','SECOND_NATIVE_INPUT','WORKER_LIFECYCLE','DEBUGGER_INSTALL','DEBUGGER_CONTROL','SECOND_SEND_AND_PENDING_CUT','CORRUPT_REBIND','UI_REPAIR','REPAIR_DRAIN','REPAIR_DRAIN_ORACLE','REPEATED_REBIND','FINAL_ACCEPTANCE']);
+export const PENDING_REPAIR_ASSERTIONS=Object.freeze(['PENDING_REPAIR_PEER_EVIDENCE','PENDING_REPAIR_PEER_ASSETS','PENDING_REPAIR_NATIVE_GENERATION','PENDING_REPAIR_NATIVE_REVISION','PENDING_REPAIR_NATIVE_PROFILE','PENDING_REPAIR_NATIVE_PROFILE_VERSION','PENDING_REPAIR_NATIVE_FINGERPRINT','PENDING_REPAIR_NATIVE_PRESENT','PENDING_REPAIR_NATIVE_UNREVOKED','PENDING_REPAIR_NATIVE_CHANNEL','PENDING_REPAIR_RETIRED_EVIDENCE_READ','PENDING_REPAIR_RETIRED_OLD_SOURCES','PENDING_REPAIR_RETIRED_OLD_ROWS','PENDING_REPAIR_RETIRED_NO_ACK_REPLAY','PENDING_REPAIR_RETIRED_UNIQUE_OPERATION','PENDING_REPAIR_RETIRED_STATE','PENDING_REPAIR_RETIRED_REASON','PENDING_REPAIR_RETIRED_IDENTITY','PENDING_REPAIR_RETIRED_EVIDENCE_OPERATION','PENDING_REPAIR_RETIRED_TARGETS','PENDING_REPAIR_RETIRED_PAYLOAD_REMOVED','PENDING_REPAIR_RETIRED_CHECKSUMS','PENDING_REPAIR_RETIRED_ASSETS','PENDING_REPAIR_SINGLE_CONTEXT_SWITCH','PENDING_REPAIR_BUDGET_CHECKSUM','PENDING_REPAIR_BUDGET_TIMESTAMPS','PENDING_REPAIR_BUDGET_REQUESTS','PENDING_REPAIR_BUDGET_ATTEMPTS','PENDING_REPAIR_PRIOR_AUTHORITY_REQUIRED','PENDING_REPAIR_WORKER_TARGET_REQUIRED','PENDING_REPAIR_FINAL_GRANT_FRESH','PENDING_REPAIR_REPEAT_GRANT_FRESH','J4-classic-package-root-required','J4-classic-entry-build-mismatch','J4-classic-runtime-build-mismatch','J4-classic-background-required','J4-unique-worker-target-required','J4-worker-lifecycle-target-mismatch','J4-production-drain-script-required','J4-production-drain-source-mismatch','J4-production-drain-breakpoint-unresolved','J4-production-drain-breakpoint-moved','J4-evidence-repository-script-required','J4-evidence-repository-source-mismatch','J4-evidence-repository-entry-required','J4-evidence-repository-entry-unresolved','J4-evidence-repository-breakpoint-moved']);
 export function setPendingRepairStage(report,stage){if(!PENDING_REPAIR_STAGES.includes(stage))throw Error('invalid-pending-repair-stage');report.stage=stage;}
 const values=table=>Object.values(table??{});
 const hintFor=(state,messageId)=>values(state.evidence?.hints).filter(h=>h.messageId===messageId);
+const nativeLabels=Object.freeze({generation:'PENDING_REPAIR_NATIVE_GENERATION',sourceRevision:'PENDING_REPAIR_NATIVE_REVISION',profileId:'PENDING_REPAIR_NATIVE_PROFILE',profileVersion:'PENDING_REPAIR_NATIVE_PROFILE_VERSION',semanticFingerprint:'PENDING_REPAIR_NATIVE_FINGERPRINT'});
 export function assertOriginalNativeSource(state,pending){
  const witness=pending.nativeWitness,source=state.native.sources[witness.sourceId];
- assert(source,'pending native source must exist');assert.equal(source.revoked,false);
- for(const field of ['generation','sourceRevision'])assert.equal(source[field],witness[field],'native source changed: '+field);
- for(const field of ['profileId','profileVersion','semanticFingerprint'])assert.equal(source.admission?.[field],witness[field],'native admission changed: '+field);
- assert.equal(source.channel,'host-dom');
+ assert(source,'PENDING_REPAIR_NATIVE_PRESENT');assert.equal(source.revoked,false,'PENDING_REPAIR_NATIVE_UNREVOKED');
+ for(const field of ['generation','sourceRevision'])assert.equal(source[field],witness[field],nativeLabels[field]);
+ for(const field of ['profileId','profileVersion','semanticFingerprint'])assert.equal(source.admission?.[field],witness[field],nativeLabels[field]);
+ assert.equal(source.channel,'host-dom','PENDING_REPAIR_NATIVE_CHANNEL');
 }
 export function assertExistingSourcePending({baseline,paused,messageId,firstMessageId,conversationId,title}){
  assert.equal(baseline.evidenceError,null);assert.equal(paused.evidenceError,null);
@@ -39,16 +40,16 @@ export function assertCorruptPending({state,pending,faultedStorageDigest}){
  assertOriginalNativeSource(state,pending);
 }
 export function assertRetiredPending({before,state,pending,messageId,conversationId}){
- assert.equal(state.evidenceError,null);assertOriginalNativeSource(state,pending);
- for(const [id,source]of Object.entries(before.evidence.sources))assert.deepEqual(state.evidence.sources[id],{...source,revoked:true},'old source must remain stored and revoked');
- for(const table of ['events','hints','coverage'])for(const [id,row]of Object.entries(before.evidence[table]))assert.deepEqual(state.evidence[table][id],row,'repair must preserve old witness bytes');
- assert.equal(hintFor(state,messageId).length,0,'retired pending must not replay its ACK, even under a successor');
- const rows=state.continuations.filter(p=>p.operationId===pending.operationId);assert.equal(rows.length,1);const summary=rows[0];
- assert.equal(summary.state,'needs-revalidation');assert.equal(summary.reason,'source-revoked','native source-changed must not substitute for ACK retirement');
- for(const field of ['format','scopeKey','operationId','nativeRevision','payloadDigest','admission','nativeWitness'])assert.deepEqual(summary[field],pending[field],field+' must be retained');
- assert.equal(summary.evidenceOperationId,pending.evidence.operationId);assert.deepEqual(summary.targets,[conversationId]);assert.equal(Object.hasOwn(summary,'evidence'),false);
- assert(state.continuationChecksumsValid,'real continuation records must retain their checksums');
- assert.deepEqual(state.assets,before.assets);return summary;
+ assert.equal(state.evidenceError,null,'PENDING_REPAIR_RETIRED_EVIDENCE_READ');assertOriginalNativeSource(state,pending);
+ for(const [id,source]of Object.entries(before.evidence.sources))assert.deepEqual(state.evidence.sources[id],{...source,revoked:true},'PENDING_REPAIR_RETIRED_OLD_SOURCES');
+ for(const table of ['events','hints','coverage'])for(const [id,row]of Object.entries(before.evidence[table]))assert.deepEqual(state.evidence[table][id],row,'PENDING_REPAIR_RETIRED_OLD_ROWS');
+ assert.equal(hintFor(state,messageId).length,0,'PENDING_REPAIR_RETIRED_NO_ACK_REPLAY');
+ const rows=state.continuations.filter(p=>p.operationId===pending.operationId);assert.equal(rows.length,1,'PENDING_REPAIR_RETIRED_UNIQUE_OPERATION');const summary=rows[0];
+ assert.equal(summary.state,'needs-revalidation','PENDING_REPAIR_RETIRED_STATE');assert.equal(summary.reason,'source-revoked','PENDING_REPAIR_RETIRED_REASON');
+ for(const field of ['format','scopeKey','operationId','nativeRevision','payloadDigest','admission','nativeWitness'])assert.deepEqual(summary[field],pending[field],'PENDING_REPAIR_RETIRED_IDENTITY');
+ assert.equal(summary.evidenceOperationId,pending.evidence.operationId,'PENDING_REPAIR_RETIRED_EVIDENCE_OPERATION');assert.deepEqual(summary.targets,[conversationId],'PENDING_REPAIR_RETIRED_TARGETS');assert.equal(Object.hasOwn(summary,'evidence'),false,'PENDING_REPAIR_RETIRED_PAYLOAD_REMOVED');
+ assert(state.continuationChecksumsValid,'PENDING_REPAIR_RETIRED_CHECKSUMS');
+ assert.deepEqual(state.assets,before.assets,'PENDING_REPAIR_RETIRED_ASSETS');return summary;
 }
 export function assertPendingRepairBudget(value){
  assert(value?.checksumValid,'PENDING_REPAIR_BUDGET_CHECKSUM');assert(Number.isSafeInteger(value.startedAt)&&Number.isSafeInteger(value.lastAt)&&value.lastAt>=value.startedAt,'PENDING_REPAIR_BUDGET_TIMESTAMPS');

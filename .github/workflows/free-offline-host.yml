@@ -464,7 +464,7 @@ jobs:
       fail-fast: false
       max-parallel: 3
       matrix:
-        gate: [fault-auth-failure, fault-unsafe-reading, fault-forged-scope, fault-csp, fault-iframe-destroy, fault-stale-response, fault-rate-limit, fault-corrupt, fault-unknown-protocol, privacy-main, privacy-isolated, idle-draft-active, idle-safe-empty-reading, populated-native, visual-components, existing-source-repair]
+        gate: [fault-auth-failure, fault-unsafe-reading, fault-forged-scope, fault-csp, fault-iframe-destroy, fault-stale-response, fault-rate-limit, fault-corrupt, fault-unknown-protocol, privacy-main, privacy-isolated, idle-draft-active, idle-safe-empty-reading, populated-native, visual-components, existing-source-repair, native-entry-safety, page-command-native-fetch, non-atomic-terminal, mixed-role, mixed-role-alt, membership-after-message]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -491,6 +491,10 @@ jobs:
             populated-native) node tests/host/ui10-populated-package-browser.mjs "$report" ;;
             visual-components) node tests/host/ui10-visual-paired-browser.mjs "$report" ;;
             existing-source-repair) FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/existing-source-pending-repair-journey.mjs "$report" --execute-browser ;;
+            native-entry-safety) node tests/host/native-entry-safety-package-browser.mjs "$report" ;;
+            page-command-native-fetch) node tests/host/page-command-native-fetch-package-browser.mjs "$report" ;;
+            non-atomic-terminal) node tests/host/non-atomic-terminal-idb-browser.mjs "$report" ;;
+            mixed-role|mixed-role-alt|membership-after-message) FREE_EVIDENCE_SCENARIO="$SELECTED_GATE" node tests/host/evidence-order-package-browser.mjs "$report" ;;
             idle-*)
               set +e
               node tests/host/natural-worker-idle-probe.mjs "$report" "${SELECTED_GATE#idle-}"
@@ -501,6 +505,7 @@ jobs:
               ;;
             *) exit 1 ;;
           esac
+          node -e "const expected={'native-entry-safety':'PASS_LEGACY_SUBSCENARIOS_ONLY','page-command-native-fetch':'PASS_NARROW_PACKAGED_PAGE_COMMAND_AND_NO_TAP_CONTINUITY','non-atomic-terminal':'PASS_D_SCOPED','mixed-role':'PASS_SCOPED_OFFLINE_D_S','mixed-role-alt':'PASS_SCOPED_OFFLINE_D_S','membership-after-message':'PASS_SCOPED_OFFLINE_D_S'}[process.env.SELECTED_GATE];if(expected){const r=require(process.env.RUNNER_TEMP+'/supplementary.json');if(r.status!==expected||r.sourceCommit!==process.env.GITHUB_SHA)process.exit(1)}"
       - name: Preserve exact supplementary result in job log
         if: ${{ always() }}
         run: test ! -f "$RUNNER_TEMP/supplementary.json" || cat "$RUNNER_TEMP/supplementary.json"

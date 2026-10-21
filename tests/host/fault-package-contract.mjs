@@ -1,3 +1,4 @@
+import {validUnknownCalibrationCohort,unknownCalibrationCohort} from './fault-metadata-response.mjs';
 /** Fixed observation gates. Passing these gates is narrower than FAULT acceptance. */
 import assert from 'node:assert/strict';
 import {assertCanonicalCspObservation} from './fault-csp-contract.mjs';
@@ -21,7 +22,7 @@ export function assertFaultObservation(c){
    assert(c.workerMetadataResponses<=3);assert.equal(c.workerRequestsStableAfterTerminal,true);
    if(c.fault==='rate-limit')assert.equal(c.metadataStatus,429);
    if(c.fault==='corrupt')assert.equal(c.invalidJSON,true);
-   if(c.fault==='unknown-protocol')assert.equal(c.unknownSchema,true);
+   if(c.fault==='unknown-protocol'){assert.equal(c.unknownSchema,true);assert.equal(validUnknownCalibrationCohort(c.metadataResponseObservations,c.calibrationRequestBoundary,c.calibrationTerminalBoundary),true);assert.deepEqual(c.targetWorkerRequestStarts,unknownCalibrationCohort(c.metadataResponseObservations,c.calibrationRequestBoundary,c.calibrationTerminalBoundary).map(r=>r.requestStart));assert.equal(c.workerMetadataRequests,c.metadataResponseObservations.filter(r=>r.worker).length);assert(c.workerMetadataRequests>0&&c.workerMetadataRequests<=3);}
  }
  return true;
 }

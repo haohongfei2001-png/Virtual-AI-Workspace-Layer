@@ -1,3 +1,4 @@
+import {projectPendingRepairNative} from './pending-repair-native-projection.mjs';
 import {waitForBudgetExpiry} from './fixtures/budget-expiry-wait.mjs';
 /** Existing-source pending repair S candidate. TEST ONLY; browser execution is
  * opt-in. Two genuine fixture sends, unchanged product package and budgets.
@@ -25,7 +26,7 @@ import {PENDING_REPAIR_LIMITS,setPendingRepairStage,assertExistingSourcePending,
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex'),sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const key=scope=>JSON.stringify([scope.provider,scope.accountId,scope.organizationId]);
-const files=['fixtures/budget-expiry-wait.mjs','existing-source-pending-repair-journey.mjs','existing-source-pending-repair-oracle.mjs','existing-source-pending-repair-browser-read.mjs','j4-package-journey.mjs','j4-debugger-transport.mjs','j4-joint-interruption.mjs','j4-evidence-recovery.mjs','j4-evidence-interruption.mjs','j4-report-cleanup.mjs','cold-context-trace.mjs','native-visibility-browser.mjs','isolated-browser-cleanup.mjs','historical-network-guard.mjs','sys05-startup-precondition.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/j4-assets.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','fixtures/ui10-conversation-title.mjs','expected/modern.mjs'];
+const files=['pending-repair-native-projection.mjs','fixtures/budget-expiry-wait.mjs','existing-source-pending-repair-journey.mjs','existing-source-pending-repair-oracle.mjs','existing-source-pending-repair-browser-read.mjs','j4-package-journey.mjs','j4-debugger-transport.mjs','j4-joint-interruption.mjs','j4-evidence-recovery.mjs','j4-evidence-interruption.mjs','j4-report-cleanup.mjs','cold-context-trace.mjs','native-visibility-browser.mjs','isolated-browser-cleanup.mjs','historical-network-guard.mjs','sys05-startup-precondition.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/j4-assets.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','fixtures/ui10-conversation-title.mjs','expected/modern.mjs'];
 export function pendingRepairPlan(){return {status:'NOT_RUN',S:'NOT_RUN',scopeFeasibility:'NOT_ESTABLISHED_NORMAL_SURFACE_CAN_INVALIDATE_NATIVE_WITNESS',specRevision:'VA-HOST/1.1 FINAL',requirement:'SYS-02 / SYS-01 / J4 existing-source pending repair S slice',profile:'MODERN_C2_CONVERSATION_GET_OFFLINE',sourceCommit:process.env.FREE_SOURCE_COMMIT??null,dirtyPatchHash:process.env.FREE_DIRTY_PATCH_HASH??null,workingTreePatch:'NOT_MEASURED_BY_RUNNER',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',fullSYS02:'NOT_ESTABLISHED',fullJ4:'NOT_ESTABLISHED',limits:PENDING_REPAIR_LIMITS,steps:[],errors:[],limitations:['One existing persisted ACK source, one pending-before-Evidence-apply cut only','Missing initial ACK source, post-Evidence/pre-completion cut, capacity/quota/GC stress NOT_RUN','Full supported-profile matrix, full J4 and other SYS02 subcases NOT_RUN','Fresh post-repair send/successor ACK, unloaded branches, physical crash/disk quota NOT_RUN','G/U, physical devices, PAIA and performance/p95 NOT_RUN'],instrumentation:'PASSIVE_UI_REPLY_OBSERVER_AND_REAL_DEBUGGER_FAULT_CONTROL; NOT_PERFORMANCE_EVIDENCE'};}
 /** Test scheduling only: inspect existing reservations; never reserve/reset them.
  * One current read needs session + accounts + conversation GETs and one attempt.
@@ -117,6 +118,7 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   diagnosticRead=()=>{if(!probe||probe.isClosed())throw Error('failure-inspector-unavailable');return probe.evaluate(readPendingRepairState,{scope:personal,origin:server.origin});};
   async function native(){await a.bringToFront();await a.locator('#model-button').click();await a.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();}
   async function workspace(){await a.bringToFront();await poll(async()=>{if(await a.locator('[data-va-owned]:popover-open').count()===2)return true;const back=a.getByRole('button',{name:'返回工作空间',exact:true});if(await back.isVisible()){await back.click();return true;}return false;},'workspace-return');return frame(a);}
+  function nativeProjection(state,pending,phase){report.nativeProjections??=[];if(report.nativeProjections.length<3)report.nativeProjections.push(projectPendingRepairNative(state,pending,phase));}
   const budgetObservations=[];report.budgetObservations=budgetObservations;
   async function budgetWindow(){const budget=assertPendingRepairBudget((await inspect()).budget);budgetObservations.push(budget);const waitMs=await waitPendingRepairFreshWindow(budget);return {waitMs,budget};}
   async function readCapacity(){const value=await waitPendingRepairReadCapacity({read:async()=>(await inspect()).budget});budgetObservations.push(...value.observations);report.readCapacityChecks??=[];report.readCapacityChecks.push({stage:report.stage,waitMs:value.waitMs,observations:value.observations});}
@@ -156,6 +158,7 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   const cut=await faultThenStopPending({pause,inspect,assertPaused:paused=>{
    const value=server.snapshot().interruption;assert.equal(value.accepts,2);assert.equal(value.title,J4_MIXED_TITLE);sent=value.rows.at(-1);assert.notEqual(sent.id,first.id);
    diagnosticPending=paused.continuations.find(row=>row.state==='pending-evidence'&&row.evidence?.batch.hints.some(hint=>hint.messageId===sent.id));
+   nativeProjection(paused,diagnosticPending,'CUT');
    return assertExistingSourcePending({baseline,paused,messageId:sent.id,firstMessageId:first.id,conversationId:J4_SEND_C,title:J4_MIXED_TITLE});
   },fault:before=>probe.evaluate(faultJ4EvidenceRoot,{scope:personal,expectedRevision:before.evidence.revision}),stop:()=>{stopSequence=lifecycleTrace.seen;return lifecycle.send('ServiceWorker.stopWorker',{versionId:running.versionId});},confirmStopped:()=>poll(()=>versions.some(version=>version.sequence>stopSequence&&version.versionId===running.versionId&&version.runningStatus==='stopped'),'actual-worker-stopped')});
   await pause.close();pause=null;debuggerCDP.close();debuggerCDP=null;
@@ -171,6 +174,7 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   f=frame(a);await f.getByRole('button',{name:'修复活跃度记录',exact:true}).waitFor();await draft();assert.deepEqual((await inspect()).assets,preserved);
   stage('UI_REPAIR');await a.bringToFront();await f.getByRole('button',{name:'修复活跃度记录',exact:true}).click();
   const repaired=await poll(async()=>{const value=await inspect();return value.evidence&&value.evidence.sources[pending.admission.sourceId]?.revoked===true?value:null;},'production-UI-repair-revokes-existing-ACK-source');
+  nativeProjection(repaired,pending,'REPAIRED');
   assertOriginalNativeSource(repaired,pending);assert.equal(Object.values(repaired.evidence.hints).filter(row=>row.messageId===sent.id).length,0);assert.deepEqual(repaired.assets,preserved);await draft();
   record('fresh-grant-corrupt-root-keeps-pending-and-real-UI-repair-revokes-old-source',{freshGrant:true,nativeSourceUnchanged:true,assetDigest:preserved.hash,draftSameNode:true});
   // Repair notifies views but does not drain. A normal same-URL reload creates a
@@ -178,8 +182,9 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   stage('REPAIR_DRAIN');await readCapacity();await a.bringToFront();await a.locator('textarea').fill('');await a.reload();await a.locator('[data-message-id="'+sent.id+'"]').first().waitFor();
   const finalGrant=await ready(a,personal,J4_SEND_C);assert(finalGrant.grant!==fresh.grant,'PENDING_REPAIR_FINAL_GRANT_FRESH');
   const retired=await poll(async()=>{const value=await inspect();return value.continuations.find(row=>row.operationId===pending.operationId)?.state==='needs-revalidation'?value:null;},'same-operation-needs-revalidation');
-  const summary=assertRetiredPending({before:cut.before,state:retired,pending,messageId:sent.id,conversationId:J4_SEND_C});
-  assert.deepEqual((await inspect(team)).evidence,teamBefore.evidence);assert.deepEqual((await inspect(team)).assets,teamBefore.assets);
+  nativeProjection(retired,pending,'DRAIN');
+  stage('REPAIR_DRAIN_ORACLE');const summary=assertRetiredPending({before:cut.before,state:retired,pending,messageId:sent.id,conversationId:J4_SEND_C});
+  assert.deepEqual((await inspect(team)).evidence,teamBefore.evidence,'PENDING_REPAIR_PEER_EVIDENCE');assert.deepEqual((await inspect(team)).assets,teamBefore.assets,'PENDING_REPAIR_PEER_ASSETS');
   record('same-operation-retires-only-for-ACK-source-revocation',{operationId:summary.operationId,payloadDigest:summary.payloadDigest,reason:summary.reason,targets:summary.targets,oldACKReplayed:false});
   stage('REPEATED_REBIND');await readCapacity();await a.bringToFront();await a.reload();await a.locator('[data-message-id="'+sent.id+'"]').first().waitFor();const repeatedGrant=await ready(a,personal,J4_SEND_C);assert(repeatedGrant.grant!==finalGrant.grant,'PENDING_REPAIR_REPEAT_GRANT_FRESH');
   const repeated=await inspect();assertRetiredPending({before:cut.before,state:repeated,pending,messageId:sent.id,conversationId:J4_SEND_C});assert.deepEqual(repeated.continuations,retired.continuations);

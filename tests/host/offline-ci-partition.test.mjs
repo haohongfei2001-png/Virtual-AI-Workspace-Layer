@@ -166,3 +166,14 @@ test('only populated-native gets the evidence-backed longer finite job window',(
  const gates=body.match(/gate: \[([^\]]+)\]/)[1].split(',').map(v=>v.trim());assert.equal(gates.filter(g=>g===match[1]).length,1);
  for(const gate of [...gates,'populated-native-extra','other'])assert.equal(gate===match[1]?Number(match[2]):Number(match[3]),gate==='populated-native'?25:15);
 });
+
+test('six bounded evidence-reconciliation gates require exact source and narrow statuses',()=>{
+ const body=workflow.split('  cloud-supplementary-gates:')[1];
+ for(const name of ['native-entry-safety','page-command-native-fetch','non-atomic-terminal','mixed-role','mixed-role-alt','membership-after-message'])assert(body.includes(name));
+ for(const entry of ['native-entry-safety-package-browser.mjs','page-command-native-fetch-package-browser.mjs','non-atomic-terminal-idb-browser.mjs','evidence-order-package-browser.mjs'])assert(body.includes(entry));
+ for(const status of ['PASS_LEGACY_SUBSCENARIOS_ONLY','PASS_NARROW_PACKAGED_PAGE_COMMAND_AND_NO_TAP_CONTINUITY','PASS_D_SCOPED','PASS_SCOPED_OFFLINE_D_S'])assert(body.includes(status));
+ assert(body.includes('r.status!==expected||r.sourceCommit!==process.env.GITHUB_SHA'));
+ assert(body.includes('FREE_EVIDENCE_SCENARIO="$SELECTED_GATE"'));
+ assert.match(body,/timeout-minutes: \$\{\{ matrix\.gate == 'populated-native' && 25 \|\| 15 \}\}/);
+ assert.doesNotMatch(body,/continue-on-error|upload-artifact|actions\/cache|secrets\./);
+});

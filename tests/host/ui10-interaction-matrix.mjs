@@ -1,3 +1,4 @@
+import {waitForUi10Snippets} from './ui10-capture-preparation.mjs';
 import {selectUi10Horizon} from './ui10-horizon-commit.mjs';
 import {readUi10Geometry,inspectUi10Search} from './ui10-interaction-readiness.mjs';
 import {assertUi10ReadingReturn} from './ui10-dom-contract.mjs';
@@ -18,7 +19,7 @@ export async function exerciseUi10Interactions({page,frames,workspace,continuity
  for(const value of UI10_H_POLICIES){await selectUi10Horizon(frames.workspace,select,value,r.hPolicies);r.hPolicies.push(value);await continuity();}
  await record('H-settings',{geometry:await geometry(frames.workspace.getByRole('region',{name:'工作空间设置',exact:true}))});await selectUi10Horizon(frames.workspace,select,'30',r.hPolicies);await button('关闭设置').click();
  await frames.sidebar.getByRole('button',{name:'当前工作集',exact:true}).click();const working=frames.workspace.getByRole('region',{name:'当前工作集',exact:true});await frames.workspace.getByText('当前工作集尚未保存窗口。',{exact:true}).waitFor();await record('working-set',{geometry:await geometry(working)});await working.getByRole('button',{name:'返回主题视图',exact:true}).click();
- if(await button('工作空间设置').getAttribute('aria-expanded')!=='true')await button('工作空间设置').click();await button('已保存片段').click();const snippets=frames.workspace.getByRole('region',{name:'片段管理',exact:true});await record('snippets',{geometry:await geometry(snippets)});await snippets.getByRole('button',{name:'返回工作空间',exact:true}).click();frames=await workspace();if(await button('工作空间设置').getAttribute('aria-expanded')==='true')await button('关闭设置').click();
+ if(await button('工作空间设置').getAttribute('aria-expanded')!=='true')await button('工作空间设置').click();await button('已保存片段').click();const snippets=frames.workspace.getByRole('region',{name:'片段管理',exact:true});const snippetsState=await waitForUi10Snippets(frames.workspace);assert.equal(snippetsState.total,0,'this matrix fixture has no saved snippets');await record('snippets',{geometry:await geometry(snippets),snippetsState});await snippets.getByRole('button',{name:'返回工作空间',exact:true}).click();frames=await workspace();if(await button('工作空间设置').getAttribute('aria-expanded')==='true')await button('关闭设置').click();
  await frames.sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();
  // Opening search starts its own initial owner read. Do not type into the
  // pre-commit input that the initial projection is still allowed to replace.

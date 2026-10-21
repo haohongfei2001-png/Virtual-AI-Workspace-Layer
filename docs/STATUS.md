@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 第七批：精确归因与剩余原计划补证（2026-10-21，基线b6849abe）
+
+CI39558290962终态33成功/2失败，Node10481全过；native64访/8cells、全部UI、PARTIAL、原旅程和J4通过。safe idle未强制销毁后的恢复/输入通过，原因不升级自然睡眠认证。62实际图已逐张审，仍有加载/scroll裁切/旧段起点证据需重拍；候选只补真实capture准备不改样式/数据。unknown按request-start隔离目标校准并保初始abort失败；pending原witness未换，新增三点bounded TTL/语义hash诊断查明revision变化，严格门不改。新增六个既定Free窄补证入口（MAP/UI原生安全、SEC/no-tap、non-atomic真实IDB、两mixed-role、消息先于成员确认），实际D/S仍NOT_RUN；INV09需规范原生删除语义与consumer，不能用fake删除造PASS。322项合批定向通过，详见[第七批证据](evidence/cloud-ci-coverage-20261021/README.md)。继续ACTIVE，非完整Free验收。
+
 ## 第六批：真实视图保全与状态契约（2026-10-21，基线37ab6254）
 
 CI39554906760终态28成功/7失败，Node10438/10439未全过；UI三profile、CSP/corrupt/rate/stale及J4矩阵通过。native首次完成64访及精确准入940842ms，首视觉cell因漏计工作集wrapper失败，候选严格兼容真实单层包装但不放宽行数。safe idle观测未强制worker销毁及freshgrant/VIEW，恢复工作态按钮应0而非阅读态1；旧运行未到最终usability不补PASS。其余修静态依赖顺序、unknown逐响应诊断、PARTIAL搜索真实返回、pending原生账户可见性、mutant被动frame准备。11视图复用原截图并有界保全，每单profile16/native8，仍NOT_REVIEWED；默认多profile保原测试不混批emit。198项合批定向通过，详见[第六批证据](evidence/cloud-ci-visual-retention-20261021/README.md)。继续ACTIVE，不将局部或候选结果称完整验收。
