@@ -2,6 +2,8 @@
 
 ## 夜间接续：真实对照已消费，来源审查与依赖就绪工程并行（2026-10-22）
 
+INV-09原消费任务本批补上合成MV3来源→私有owner→CAS→自动界面及失忆持久恢复旅程；生产源码/issuer不变。独立服务器成功语义、请求起点授权代际、对应删除的恢复见证与取消/错误拒绝分别核验；停止证明采用真实stopped→running、新测试实例与旧RAM消失，修正target必须销毁的观察器错误，原期限和失败保留。仅S_SYNTHETIC_LIFECYCLE_CONSUMER_ONLY，不是生产来源G、自动peer恢复、非空人工资产或完整INV-09；详见STATUS/`nativeLifecycleMV3Consumer20261022`。dot新增合成取消脚本未给正式msg-self失败的新因果前提，不重复诊断或改oracle。当前来源关口、原完整Free目标及已消费4GET/规模DEFERRED边界不变。
+
 C5/UI-15的PRESENT失败刷新与本地重绘点击保留已合批为fa864；同源码CI自然结束39成功/2失败，F3旧安装包同schema回退及人工资产保全成立。两处未闭合失败分别为unknown目标正文不可读、J4首次账户切换导航超时（尚未进入codec恢复）。保留原失败/预算/oracle；有界反证未支持直接修改EOF abort，J4只补单击至POST/响应的被动阶段记录并验证一次前置slice，不作完整J4通过、不重复全矩阵。后续只按精确交错实施根因修复，新观察器已通过原job一次单项Linux执行，原J4仅PARTIAL、旧失败原因未定，push覆盖不变，不反复重跑；peer显式切换与自动恢复仍分开；详见STATUS/`exactCandidateCIAndContextObservation20261022`。dot有限INV09来源核定仍无可消费完成合同；主体/当前空间及完整目录仍为真实来源关口，已消费4GET不重发，不改完整Free目标。
 
 C5本批收口取消实验的错误进入时机：788 Linux原click发生在既有VIEW pending，零dispatch、尚无取消操作；现在原六秒内证明当前唯一委派入口ready后只点一次，后继竞态保留失败、不重放。原窗口／搜索／两类取消与草稿离线子旅程通过，生产pending守卫不改。启动退回则仅补有界被动时序，原15秒／立即加载／谓词保持，历史原因未唯一成立；不因本地或788本次通过改判00c8。证据与阶段hash见STATUS/`startupObservationAndCancelReadiness20261022`。下一项读取同源码CI的真实阶段差额，来源审查保持独立，不重发已消费4GET或把离线取消实验当完整Free。
@@ -12,7 +14,7 @@ C2本批新增已复现的冷worker顺序修复：仅保留首次精确history�
 
 C2/B4/B5本批已收口导航pending误吞修饰键、生命周期同对象语义版本漂移和活动策略对同revision错root的漏检；J4打包符号碰撞属于观察器，已以真实原提交前中断切片核验，但自动peer foreground／完整J4仍未成立。28c2 CI37成功／4失败及各阶段精确证据沿STATUS/`navigationLifecycleReviewAndJ4Binding20261022`，历史失败不追溯改判。unknown正文与populated第6访问准入仍待根因，停止猜测生产取消或重复诊断；继续原来源审查与依赖就绪的生命周期／安装差额，不新开计划或来源、不扩大授权／预算。
 
-原INV-09当前差额：私有owner结果→同库CAS→有界持久删除／恢复栅栏→分片／索引／共享回退／UI增量／恢复已完成离线消费实现，原格式兼容与64结果／对象满后拒绝的边界见STATUS/`nativeLifecycleConsumer20261022`。未注册生产生命周期来源、未接RPC；S实际MV3来源旅程NOT_RUN、G成功语义NOT_ESTABLISHED，不能标完整INV-09完成或替代真实来源。8008 CI已自然结束38成功／3失败，当时下一项导航modifier误吞已由上述批次修复；普通点击就绪取证继续保留，J4初始原生切换失败单独保留，不追溯改判。身份与全目录仍沿原来源审查，不重发已消费诊断；原Free目标和10k/100k边界不变。
+原INV-09当前差额：私有owner结果→同库CAS→有界持久删除／恢复栅栏→分片／索引／共享回退／UI增量／恢复已完成离线消费实现，原格式兼容与64结果／对象满后拒绝的边界见STATUS/`nativeLifecycleConsumer20261022`。后续合成MV3消费旅程见本节首段，生产来源旅程及G成功语义仍NOT_ESTABLISHED；未注册生产生命周期来源、未接RPC，不能标完整INV-09完成或替代真实来源。8008 CI已自然结束38成功／3失败，当时下一项导航modifier误吞已由上述批次修复；普通点击就绪取证继续保留，J4初始原生切换失败单独保留，不追溯改判。身份与全目录仍沿原来源审查，不重发已消费诊断；原Free目标和10k/100k边界不变。
 
 C4/C5时间范围写入与后台刷新归属已修：旧VIEW不得在修改结算前启动dirty后继并淘汰成功回复；原CAS、6秒及新意图保持。8321 CI的PARTIAL原失败原因未唯一确证，单次原Mac子矩阵通过不追溯归因；同CI旧规模插桩锚已同步，10k/100k仍未运行。详情见STATUS/`horizonReadOwnershipAndTraceAnchors20261022`；后继推送等在途CI自然结束，不取消旧证据。继续原INV-09完整持久/消费差额，来源研究不重用已消费批次。
 

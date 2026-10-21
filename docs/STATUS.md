@@ -1,5 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## INV-09合成MV3消费闭环与真实失忆核验（2026-10-22，产品仍fa864）
+
+补齐原生命周期消费链缺少的S旅程：独立loopback服务器确认结果→原私有owner→同库CAS→实际Free界面通知。取消、仅HTTP成功和错目标均不删除；确证删除后，即使迟到原生标题实际入库，条目仍隐藏；强制停止worker后，经显式原生reload取得新C2，持久栅栏仍在；独立恢复结果必须指向原删除记录，才自动恢复显示。请求开始时固定document/grant/source，授权换代、失败/缓存POST和旧恢复覆盖新删除均拒绝。没有改生产来源或新增真实请求。
+
+首次新增的停止判据误要求DevTools target销毁，实际超时；Chromium/Playwright可在同target/同Worker对象重建执行上下文。现按同version的stopped→running、测试实例ID改变、旧成功结果RAM消失三项核验，原30秒保持。最终Chromium156实测这三项成立，事件无丢失；8步链通过，删除271ms／恢复245ms均含原生动作至自动界面更新，非规模性能指标。前期读取器空值、操作键覆盖、把原始行保留误判为未删等测试错误及原失败全部保留，不追溯为产品故障或PASS。
+
+最终53项定向回归、包构建与独审通过。185产品文件保持原字节，15旅程/夹具hash稳定，动作前后实际加载worker字节一致。此旅程只在临时测试包重编classic-runtime接入明确虚构的生命周期provider；正常发行包未注册该来源。人工资产初始为空，本项不代替此前F3非空资产验收；强制stop＋显式新原生请求也不证明自动peer恢复。仅记PASS_SYNTHETIC_MV3_LIFECYCLE_CONSUMER，完整INV-09、真实G及Free仍NOT_ESTABLISHED。证据沿原summary的`nativeLifecycleMV3Consumer20261022`。
+
+自然检查点读取dot评论6327132171：完整合成脚本展示新增messageId会正确撤销旧proof，但正式fixture固定msg-self，没有该变化证据；不修改abort/oracle，不再同条件重跑。原SYS-05有界溢出恢复也已有同产品CI证据，本轮未重复。下一不可替代关口仍是可信主体/default-null当前空间、完整服务器目录及生命周期完成来源；已消费4GET不重发。原10k/100k DEFERRED、真实IME/PAIA/自然恢复/安装和历史未归因FAIL保留，不宣称完整交付。
+
 ## 同源码安装兼容确认与两项CI失败定位（2026-10-22，产品fa86479f）
 
 后续单项Linux已执行一次：[CI39677687157](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39677687157)，源码766ebb9b、产品字节仍fa864。原J4 after-evidence codec旅程28步完成，包括人工资产导入、实际旧包拒绝/当前包恢复、证据与索引修复、实际禁用/卸载；185产品及38 runner hash逐项核对。首次账户切换仅一POST/200，旧文档记录明确缺失，不解释旧Linux失败。peer恢复用了显式原生账户切换；未刷新peer通过的是安全不复活，均非自动foreground恢复。辅助worker轨迹丢40条/截断，不冒充完整时序。原总状态仍PARTIAL_J4_NOT_ACCEPTED，不再次重跑本case。

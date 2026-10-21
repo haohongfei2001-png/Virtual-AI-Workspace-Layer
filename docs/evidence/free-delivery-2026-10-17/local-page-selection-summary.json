@@ -24411,5 +24411,281 @@
         "fa864-visual/review.txt"
       ]
     }
+  },
+  "nativeLifecycleMV3Consumer20261022": {
+    "sourceBaseline": "d91cf955a9122f62f593b64d70419aadd0ee9fe1",
+    "unchangedProductSource": "fa86479ff4862fcb99f4744c3d7bb48b5a47ef87",
+    "newTestFileHashes": {
+      "tests/host/fixtures/lifecycle-result-service.mjs": "18ed58821bd0dd424e965af53227357059df3afa964197977f31335bfdcf470a",
+      "tests/host/fixtures/lifecycle-result-server.mjs": "1a9d03d2b6eb1ecdef8e7e9fb6986715f0d6eb5f84a5eae553e4cf5fd629554e",
+      "tests/host/fixtures/lifecycle-native.mjs": "01f22263e711d8ce208aed77634be2166cd7a50345d8242ed6743f4fc7d0e89a",
+      "tests/host/native-lifecycle-package-journey.mjs": "548285ba6787dcc5b04e4edc03ec53b37cfce6b3b784ca6c55fb130ef1090d87",
+      "tests/host/native-lifecycle-package.test.mjs": "dbacea1c38042b0ce53455192ce5f2925d327d53d473575d4ac949ff006453a0"
+    },
+    "status": "PASS_SYNTHETIC_MV3_LIFECYCLE_CONSUMER",
+    "evidenceLevel": "S_SYNTHETIC_LIFECYCLE_CONSUMER_ONLY",
+    "scope": "Original INV-09 missing synthetic S private consumer chain; no production source registration or product source change",
+    "browserVersion": "156.0.8078.4",
+    "steps": [
+      {
+        "name": "real-C2-document-and-initial-native-projection",
+        "elapsedMs": 397.505541
+      },
+      {
+        "name": "cancel-does-not-delete",
+        "owner": {
+          "ok": false,
+          "reason": "untrusted-native-lifecycle-result",
+          "consumerOperationId": null,
+          "operationId": "cancel",
+          "elapsedMs": 6.200000047683716
+        },
+        "elapsedMs": 285.63804100000016
+      },
+      {
+        "name": "http-only-does-not-delete",
+        "owner": {
+          "ok": false,
+          "reason": "untrusted-native-lifecycle-result",
+          "consumerOperationId": null,
+          "operationId": "http-only",
+          "elapsedMs": 5.800000071525574
+        },
+        "elapsedMs": 163.56008299999985
+      },
+      {
+        "name": "wrong-target-does-not-delete",
+        "owner": {
+          "ok": false,
+          "reason": "untrusted-native-lifecycle-result",
+          "consumerOperationId": null,
+          "operationId": "wrong-target",
+          "elapsedMs": 5.399999976158142
+        },
+        "elapsedMs": 167.50104199999987
+      },
+      {
+        "name": "server-delete-private-admission-CAS-automatic-UI-removal",
+        "owner": {
+          "ok": true,
+          "replayed": false,
+          "revision": 4,
+          "operationId": "delete",
+          "consumerOperationId": "lifecycle_b028f44ab9a3fc84349ef7a2d456f5e9066757272ed52f92b082b0abb9558993",
+          "elapsedMs": 47.5
+        },
+        "elapsedMs": 271.4192499999999
+      },
+      {
+        "name": "late-native-available-cannot-refill"
+      },
+      {
+        "name": "actual-worker-stop-fresh-C2-retains-deletion-fence",
+        "actualStoppedThenRunning": true,
+        "freshRealm": true,
+        "freshResultRAMEmpty": true,
+        "targetReused": true,
+        "playwrightWrapperReused": true
+      },
+      {
+        "name": "independent-server-existence-bound-to-exact-deletion-restores-projection",
+        "owner": {
+          "ok": true,
+          "replayed": false,
+          "revision": 7,
+          "operationId": "restore",
+          "consumerOperationId": "lifecycle_7029f4d94279af9cfa604d340c6add0626b640902d0277846573c8e77f3ab904",
+          "elapsedMs": 49.10000002384186
+        },
+        "elapsedMs": 244.88258399999995
+      }
+    ],
+    "workerLifecycle": {
+      "events": [
+        {
+          "versionId": "2",
+          "runningStatus": "running",
+          "targetId": "67765A010E903BB596BDE7E713B1678B"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "stopping",
+          "targetId": "67765A010E903BB596BDE7E713B1678B"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "stopped",
+          "targetId": null
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "starting",
+          "targetId": null
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "starting",
+          "targetId": "67765A010E903BB596BDE7E713B1678B"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "starting",
+          "targetId": "67765A010E903BB596BDE7E713B1678B"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "starting",
+          "targetId": "67765A010E903BB596BDE7E713B1678B"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "starting",
+          "targetId": "67765A010E903BB596BDE7E713B1678B"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "running",
+          "targetId": "67765A010E903BB596BDE7E713B1678B"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "running",
+          "targetId": "67765A010E903BB596BDE7E713B1678B"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "running",
+          "targetId": "67765A010E903BB596BDE7E713B1678B"
+        }
+      ],
+      "dropped": 0,
+      "stopIndex": 1
+    },
+    "testComposition": {
+      "file": "extension/classic-runtime.js",
+      "originalHash": "fa614a1385d42b1eb4476a188e1c69be7b99928eb703ce34861302eb410b3e73",
+      "testHash": "47ff1e3334a755e4f61a94bd0a7563b2b1febfda254cb7160f3c633667f061ca",
+      "defaultPackage": false,
+      "productionIssuerRegistered": false
+    },
+    "loadedWorkerBefore": {
+      "targetUrl": "chrome-extension://kojpabomkmppcchamchffafihdimdelc/extension/worker.mjs",
+      "scripts": [
+        {
+          "url": "chrome-extension://kojpabomkmppcchamchffafihdimdelc/extension/worker.mjs",
+          "expectedSha256": "6d5e3008c9d8a390a9a20a49b3eb8ce13ad053e94627e1c5a156be679fc00403",
+          "loadedSha256": "6d5e3008c9d8a390a9a20a49b3eb8ce13ad053e94627e1c5a156be679fc00403"
+        },
+        {
+          "url": "chrome-extension://kojpabomkmppcchamchffafihdimdelc/extension/classic-runtime.js",
+          "expectedSha256": "47ff1e3334a755e4f61a94bd0a7563b2b1febfda254cb7160f3c633667f061ca",
+          "loadedSha256": "47ff1e3334a755e4f61a94bd0a7563b2b1febfda254cb7160f3c633667f061ca"
+        }
+      ]
+    },
+    "loadedWorkerAfter": {
+      "targetUrl": "chrome-extension://kojpabomkmppcchamchffafihdimdelc/extension/worker.mjs",
+      "scripts": [
+        {
+          "url": "chrome-extension://kojpabomkmppcchamchffafihdimdelc/extension/worker.mjs",
+          "expectedSha256": "6d5e3008c9d8a390a9a20a49b3eb8ce13ad053e94627e1c5a156be679fc00403",
+          "loadedSha256": "6d5e3008c9d8a390a9a20a49b3eb8ce13ad053e94627e1c5a156be679fc00403"
+        },
+        {
+          "url": "chrome-extension://kojpabomkmppcchamchffafihdimdelc/extension/classic-runtime.js",
+          "expectedSha256": "47ff1e3334a755e4f61a94bd0a7563b2b1febfda254cb7160f3c633667f061ca",
+          "loadedSha256": "47ff1e3334a755e4f61a94bd0a7563b2b1febfda254cb7160f3c633667f061ca"
+        }
+      ]
+    },
+    "sourceVerification": {
+      "productPaths": 185,
+      "fixturePaths": 15,
+      "allMatchCurrent": true,
+      "allProductMatchFa864": true,
+      "changedPackageFiles": [
+        "extension/classic-runtime.js"
+      ]
+    },
+    "negativeBoundaries": [
+      "cancelled, HTTP-only, wrong target do not remove projection",
+      "captured request cannot transfer to a new grant",
+      "failed/cached POST cannot consume prior result",
+      "restoration must independently cover exact deletion",
+      "late available admitted to raw facts cannot undo deletion"
+    ],
+    "targetedRegression": {
+      "tests": 53,
+      "fail": 0,
+      "skip": 0,
+      "file": "lifecycle-targeted-current.tap"
+    },
+    "failuresRetained": {
+      "lifecycle-mv3-first.json": "Sandbox browser startup timeout, no journey entered",
+      "lifecycle-mv3-local.json": "Test fact reader omitted absent refLifecycle guard",
+      "lifecycle-mv3-candidate.json": "Test trace overwrote native operation key with consumer operation key",
+      "lifecycle-mv3-correlated.json": "Test oracle incorrectly required raw native row removal; contract retains raw facts behind fence",
+      "lifecycle-mv3-final.json": "Observer wrongly required DevTools target disappearance; no lifecycle sequence in that run, not regraded"
+    },
+    "priorPartialPass": "lifecycle-mv3-fence.json passed prior assertions but did not establish actual memory loss; final current-source proof only lifecycle-mv3-realm.json",
+    "independentReview": "No remaining blocker; actual raw report/hash and corrected oracle verified read-only",
+    "dotInput": {
+      "comment": 6327132171,
+      "outcome": "Synthetic changed-message premise absent from formal fixture; no product change or repeat browser diagnosis justified"
+    },
+    "limits": [
+      "Fictional loopback result semantics only",
+      "Forced worker stop plus explicit fresh native reload, not automatic peer recovery",
+      "Existing manual asset subset initially empty; nonempty assets covered separately",
+      "Not the full INV-09 matrix or real G"
+    ],
+    "INV09": "NOT_ESTABLISHED",
+    "realChatGPT": "NOT_RUN",
+    "realRequestBudget": "Prior4GETconsumed; zero new requests",
+    "scale": "10k/100k DEFERRED unchanged",
+    "release": "NOT_RELEASE_READY",
+    "cleanup": [
+      "fulfilled",
+      "fulfilled",
+      "fulfilled"
+    ],
+    "guardClosed": true,
+    "preservation": {
+      "originalUntrackedFiles": 2258,
+      "allOriginalBytesVerified": true,
+      "stashesUnchanged": [
+        "42c887720b672c53c2a29232685d848d2a0bc319",
+        "f4270c6e164ebba73a8152103142d62a41c4fbe0",
+        "899e72282be76bb5d7700e17d91e2e836401d744"
+      ]
+    },
+    "evidence": {
+      "path": "docs/evidence/free-delivery-2026-10-17/local-lifecycle-mv3-consumer-20261022.tar.gz",
+      "sha256": "926be5a891a136d54c5127fe2c1b8693a0bbf4caf8e419594dccb42fa3c294d1",
+      "bytes": 36363,
+      "members": {
+        "lifecycle-mv3-first.json": "e2992a01d40759c6b4cfd555bda0634d52ef01280803402bf0d0563b33a84866",
+        "lifecycle-mv3-first.log": "ec6427adab05411e46b526391f49c3ad34c0315ccee5bcf12b91cab4dddae41a",
+        "lifecycle-mv3-local.json": "77ab850df8be1b63fe98f7dcc99cf54d097fa7c01bbb715236edf0af28b03065",
+        "lifecycle-mv3-local.log": "50eaecce9e6a4d5532397cf2af7cfd936ce748e047902a191ef78e7471af7c86",
+        "lifecycle-mv3-candidate.json": "51ef026b210b629502919b75b9a8a06293f2a1fb32ec6c17bc8a19b5fe20b83a",
+        "lifecycle-mv3-candidate.log": "689888c5551d5dd37b732000d43f701844010413633e69e79b594e7c9f3f81f9",
+        "lifecycle-mv3-correlated.json": "9ab42cea438405a665732aa822783097e49ee94470f4e4bcd7a76ce9f260e077",
+        "lifecycle-mv3-correlated.log": "0b6d2babd6f5db182de64ab74851f3b3229ad493f4cd54a1d8bb7f0a130bc62e",
+        "lifecycle-mv3-fence.json": "c286c4417fb2319cd75be14cf8196391f925d6f68ff8660177b7c572070d5f03",
+        "lifecycle-mv3-fence.log": "977233ec9c15e964e115c5d9b5ba2d65e4fc56e2e2e1ac0d121fa2aade28b4cb",
+        "lifecycle-mv3-final.json": "596cee6056252de94efc586933fb1b6345a3ec00a1fe8fc8006666d5ddd51a8a",
+        "lifecycle-mv3-final.log": "ddd734652d5fe7a2e5c80972ebfbfaa0dc5880c615a3faefa64f7798b9903e36",
+        "lifecycle-mv3-realm.json": "30d9189a852f0402f73efcd691bb1e5b192b84b47450be3eaaacb361331b93a4",
+        "lifecycle-mv3-realm.log": "db1c7f313ba6ecf794033b905f59ff62b64c7833a51263432955606a4309ac49",
+        "lifecycle-mv3-independent-review.txt": "82d612b7397d641c408a5c2384bc77de3c6fd0cf7276518e598fea006e4aa961",
+        "lifecycle-targeted.tap": "21331380fed4259b39aef622d6141af59cb1c678384494d479372a1aaba5b1c4",
+        "lifecycle-targeted-final.tap": "e337f068a002efceab68becf9c17f18068861e91e100c9bb0588ea309bdba7a2",
+        "lifecycle-targeted-freeze.tap": "2a1b128121ef1e56d0dc2d72e782d8ecec775d056d3c36d86787a35f31fac6b9",
+        "lifecycle-targeted-realm.tap": "d84c236d6e196b90ebe5c041c56fc2c4460da223146a2c21afa6277b9447faf8",
+        "lifecycle-targeted-current.tap": "e14bcc2edf3dab7b82a2830c8527cf9647967685416b5df39a7032a30fe8582a",
+        "lifecycle-new-pr-comments.json": "2498a7d23854db5c78d02be3968aad548463b5ad493760877ef280f356cc9163"
+      }
+    }
   }
 }
