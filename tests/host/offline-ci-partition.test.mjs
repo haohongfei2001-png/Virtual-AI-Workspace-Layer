@@ -190,3 +190,19 @@ test('supplementary scheduling prioritizes causal feedback and the longest case 
  for(const mutant of [gates.slice(1),[...gates,gates[0]],wrongPriority,wrongRemainder])assert.throws(()=>check(mutant));
  assert.match(body,/fail-fast: false/);assert.match(body,/max-parallel: 3/);
 });
+
+
+test('J4 diagnostic preserves formal command and executes only its independent case after failure or success',()=>{
+ const body=workflow.split('  cloud-journey-matrix:')[1].split('  cloud-ui-controls:')[0];
+ const original=['j1-legacy','j1-modern','j2-legacy','j2-modern','j3-legacy','j3-modern','partial-reachability','j4-before-evidence-reenable','j4-before-native','j4-after-evidence','j4-codec-before-evidence','j4-codec-after-evidence'];
+ const cases=body.match(/case: \[([^\]]+)\]/)[1].split(',').map(v=>v.trim());assert.deepEqual(cases,['j4-before-native',...original.filter(c=>c!=='j4-before-native')]);assert.equal(new Set(cases).size,12);
+ assert(body.includes('run: FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j1-j4-offline-matrix.mjs "$RUNNER_TEMP/cloud-matrix" --execute-browser --cases=${{ matrix.case }}'));
+ const step=body.split('      - name: Independent first re-enable owner trace')[1].split('      - name: Preserve exact scoped result')[0];
+ assert(step.includes("if: ${{ !cancelled() && matrix.case == 'j4-before-native' }}"));
+ const run=(cancelled,value)=>!cancelled&&value==='j4-before-native';
+ for(const value of original){assert.equal(run(false,value),value==='j4-before-native');assert.equal(run(true,value),false);}
+ assert(step.includes('FREE_J4_REENABLE_OWNER_TRACE=1 timeout 180s xvfb-run -a node tests/host/j4-package-journey.mjs "$RUNNER_TEMP/j4-reenable-owner-trace.json"'));
+ assert(step.includes('test "$result" -eq 2'));assert(step.includes('node tests/host/j4-reenable-trace-outcome.mjs "$RUNNER_TEMP/j4-reenable-owner-trace.json" "$result" "$GITHUB_SHA"'));
+ assert.doesNotMatch(step,/cloud-matrix|continue-on-error|success\(\)|rerun/);assert.match(body,/if: \$\{\{ always\(\) \}\}/);
+ assert(body.includes('test ! -f "$RUNNER_TEMP/j4-reenable-owner-trace.json" || cat "$RUNNER_TEMP/j4-reenable-owner-trace.json"'));
+});

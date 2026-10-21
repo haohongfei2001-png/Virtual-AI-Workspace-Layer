@@ -1,3 +1,4 @@
+import {instrumentJ4ReenableOwner,J4_REENABLE_TRACE_KIND} from './j4-reenable-owner-trace.mjs';
 import {cp,readFile,writeFile} from 'node:fs/promises';import {join} from 'node:path';import {createHash} from 'node:crypto';
 import {compileClassicWorker} from '../../extension/classic-worker-build.mjs';import {verifyHost} from '../../extension/package.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -38,14 +39,15 @@ export function instrumentJ4LifecycleOrderSource(path,source){
  }else throw Error('j4-order-path');
  return (J4_ORDER_PATHS.indexOf(path)>=2?contentRecorder:recorder)+out;
 }
-export async function createJ4LifecycleOrderTracePackage(source,destination,{ramOnly=false}={}){
+export async function createJ4LifecycleOrderTracePackage(source,destination,{ramOnly=false,reenableOwner=false}={}){
  if(verifyHost(source).status!=='OFFLINE_HOST_RECONSTRUCTION')throw Error('j4-lifecycle-order-trace-offline-only');await cp(source,destination,{recursive:true,force:false,errorOnExist:true});const changes=[];
- for(const path of J4_ORDER_PATHS){const original=await readFile(join(source,path),'utf8'),modified=instrumentJ4LifecycleOrderSource(path,original,{ramOnly});await writeFile(join(destination,path),modified);changes.push({path,originalSha256:hash(original),instrumentedSha256:hash(modified)});}
+ for(const path of (reenableOwner?J4_ORDER_PATHS.slice(0,2):J4_ORDER_PATHS)){const original=await readFile(join(source,path),'utf8'),modified=reenableOwner?instrumentJ4ReenableOwner(path,original):instrumentJ4LifecycleOrderSource(path,original,{ramOnly});await writeFile(join(destination,path),modified);changes.push({path,originalSha256:hash(original),instrumentedSha256:hash(modified)});}
  const compiled=compileClassicWorker(destination);for(const [path,modified]of [['extension/worker.mjs',compiled.entry],['extension/classic-runtime.js',compiled.runtime]]){const original=await readFile(join(source,path),'utf8');await writeFile(join(destination,path),modified);changes.push({path,originalSha256:hash(original),instrumentedSha256:hash(modified)});}
- const receipt={kind:'DIAGNOSTIC_ONLY_J4_LIFECYCLE_ORDER',unpacked:destination,ramOnly,changes};await verifyJ4LifecycleOrderTracePackage(receipt);return receipt;
+ const receipt={kind:reenableOwner?J4_REENABLE_TRACE_KIND:'DIAGNOSTIC_ONLY_J4_LIFECYCLE_ORDER',unpacked:destination,ramOnly,changes};await verifyJ4LifecycleOrderTracePackage(receipt);return receipt;
 }
 export async function verifyJ4LifecycleOrderTracePackage(receipt){
- const info=JSON.parse(await readFile(join(receipt.unpacked,'build-manifest.json'),'utf8'));if(info.status!=='OFFLINE_HOST_RECONSTRUCTION'||receipt.kind!=='DIAGNOSTIC_ONLY_J4_LIFECYCLE_ORDER')throw Error('j4-lifecycle-order-trace-invalid-package');
+ if(receipt.kind===J4_REENABLE_TRACE_KIND){const paths=['src/runtime/browser-request-context.mjs','src/runtime/host-browser-bootstrap.mjs','extension/worker.mjs','extension/classic-runtime.js'];if(receipt.changes?.length!==4||new Set(receipt.changes.map(c=>c.path)).size!==4||receipt.changes.some(c=>!paths.includes(c.path)))throw Error('j4-owner-trace-changed-paths');}
+ const info=JSON.parse(await readFile(join(receipt.unpacked,'build-manifest.json'),'utf8'));if(info.status!=='OFFLINE_HOST_RECONSTRUCTION'||!['DIAGNOSTIC_ONLY_J4_LIFECYCLE_ORDER',J4_REENABLE_TRACE_KIND].includes(receipt.kind))throw Error('j4-lifecycle-order-trace-invalid-package');
  for(const [path,expected]of Object.entries(info.files)){const changed=receipt.changes.find(change=>change.path===path);if(changed&&changed.originalSha256!==expected)throw Error('j4-lifecycle-order-trace-original-hash');if(hash(await readFile(join(receipt.unpacked,path)))!==(changed?.instrumentedSha256??expected))throw Error('j4-lifecycle-order-trace-package-changed');}
  const compiled=compileClassicWorker(receipt.unpacked);if(await readFile(join(receipt.unpacked,'extension/worker.mjs'),'utf8')!==compiled.entry||await readFile(join(receipt.unpacked,'extension/classic-runtime.js'),'utf8')!==compiled.runtime)throw Error('j4-lifecycle-order-trace-classic-mismatch');return true;
 }

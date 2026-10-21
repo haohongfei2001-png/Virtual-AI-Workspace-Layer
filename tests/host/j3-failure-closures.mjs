@@ -19,7 +19,8 @@ function summarizeRecoverySlots(expectedURL){
 }
 export async function collectJ3FailureClosures(session,{executionContextId,timeoutMs=1500,maxFunctions=20000,expectedURL=null}={}){
  const objectGroup='j3-failure-closures';const report={kind:'POST_FAILURE_READ_ONLY_CLOSURES',functions:[],truncated:false};
- const send=async(method,params={})=>{let timer;try{return await Promise.race([session.send(method,params),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('closure-inspection-timeout')),timeoutMs);})]);}finally{clearTimeout(timer);}};
+ let failedOperation=null;
+ const send=async(method,params={})=>{let timer;try{return await Promise.race([session.send(method,params),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('closure-inspection-timeout')),timeoutMs);})]);}catch(error){failedOperation??=method;throw error;}finally{clearTimeout(timer);}};
  const properties=objectId=>send('Runtime.getProperties',{objectId,ownProperties:true,generatePreview:false});
  try{
   if(expectedURL!==null){const url=new URL(expectedURL);if(url.origin!=='http://127.0.0.1:'+url.port||!url.port||url.username||url.password||expectedURL.length>2048)throw Error('invalid-inspection-route');}
@@ -60,7 +61,7 @@ export async function collectJ3FailureClosures(session,{executionContextId,timeo
    }
    report.functions.push(row);
   }
- }catch(error){report.error=error?.message==='closure-inspection-timeout'?'timeout':'inspection-unavailable';}
+ }catch(error){report.error=error?.message==='closure-inspection-timeout'?'timeout':'inspection-unavailable';report.failureOperation=failedOperation;report.failureReason=['closure-inspection-timeout','missing-function-prototype','invalid-inspection-route','invalid-function-limit','nested-inspection-timeout','nested-inspection-unavailable','inspection-closed'].includes(error?.message)?error.message:'unclassified-inspection-error';}
  finally{try{await send('Runtime.releaseObjectGroup',{objectGroup});}catch{}try{let timer;await Promise.race([session.detach(),new Promise(resolve=>{timer=setTimeout(resolve,timeoutMs);})]).finally(()=>clearTimeout(timer));}catch{}}
  return report;
 }

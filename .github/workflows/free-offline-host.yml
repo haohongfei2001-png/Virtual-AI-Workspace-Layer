@@ -395,7 +395,7 @@ jobs:
       fail-fast: false
       max-parallel: 3
       matrix:
-        case: [j1-legacy, j1-modern, j2-legacy, j2-modern, j3-legacy, j3-modern, partial-reachability, j4-before-evidence-reenable, j4-before-native, j4-after-evidence, j4-codec-before-evidence, j4-codec-after-evidence]
+        case: [j4-before-native, j1-legacy, j1-modern, j2-legacy, j2-modern, j3-legacy, j3-modern, partial-reachability, j4-before-evidence-reenable, j4-after-evidence, j4-codec-before-evidence, j4-codec-after-evidence]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -412,11 +412,21 @@ jobs:
           node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
       - name: Execute one continuous supported-profile case
         run: FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j1-j4-offline-matrix.mjs "$RUNNER_TEMP/cloud-matrix" --execute-browser --cases=${{ matrix.case }}
+      - name: Independent first re-enable owner trace (diagnostic only, never formal S)
+        if: ${{ !cancelled() && matrix.case == 'j4-before-native' }}
+        run: |
+          set +e
+          FREE_CHROME_HEADED=1 FREE_J4_REENABLE_OWNER_TRACE=1 timeout 180s xvfb-run -a node tests/host/j4-package-journey.mjs "$RUNNER_TEMP/j4-reenable-owner-trace.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node tests/host/j4-reenable-trace-outcome.mjs "$RUNNER_TEMP/j4-reenable-owner-trace.json" "$result" "$GITHUB_SHA"
       - name: Preserve exact scoped result in job log
         if: ${{ always() }}
         run: |
           for f in "$RUNNER_TEMP"/cloud-matrix/*.json; do [ ! -f "$f" ] || cat "$f"; done
           for f in "$RUNNER_TEMP"/cloud-matrix/*.log; do [ ! -f "$f" ] || tail -150 "$f"; done
+          test ! -f "$RUNNER_TEMP/j4-reenable-owner-trace.json" || cat "$RUNNER_TEMP/j4-reenable-owner-trace.json"
 
   cloud-ui-controls:
     if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.event_name == 'push'
