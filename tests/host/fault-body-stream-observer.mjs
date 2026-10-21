@@ -25,7 +25,7 @@ export async function observeFaultBodyStream(parent,{extensionId,origin}){
  if(matching.length!==1)throw Error('body-stream-unique-worker-required');
  const targetId=matching[0].targetId,attach=parent.send('Target.attachToTarget',{targetId,flatten:false});let sessionId;
  try{({sessionId}=await bounded(attach));}catch(error){void attach.then(result=>bounded(parent.send('Target.detachFromTarget',{sessionId:result.sessionId}))).catch(()=>{});throw error;}
- const requests=new Map(),pending=new Map(),tasks=new Set(),events=[];let serial=0,ordinal=0,dropped=0,closed=false,ready=false,terminalReason=null,closeTask,snapshot;
+ const requests=new Map(),pending=new Map(),tasks=new Set(),events=[];let serial=0,ordinal=0,dropped=0,closed=false,ready=false,terminalReason=null,closeTask,finishTask,snapshot;
  const fail=reason=>{terminalReason??=reason;void close();};
  const emit=(row,stage,extra={})=>{if(closed)return;if(events.length===EVENT_LIMIT){dropped++;fail('EVENT_LIMIT');return;}events.push({order:events.length+1,request:row?.ordinal??null,stage,...extra});};
  const send=(method,params={})=>{
@@ -51,6 +51,7 @@ export async function observeFaultBodyStream(parent,{extensionId,origin}){
   if(m.id){const p=pending.get(m.id);if(!p)return;pending.delete(m.id);clearTimeout(p.timer);m.error?p.reject(Error(m.error.message??'unavailable')):p.resolve(m.result);return;}
   const p=m.params??{};
   if(m.method==='Inspector.detached'){fail('TARGET_DETACHED');return;}
+  if(m.method==='Inspector.targetCrashed'){fail('TARGET_CRASHED');return;}
   if(m.method==='Network.requestWillBeSent'){
    if(requests.has(p.requestId)){requests.get(p.requestId).streamError='REDIRECT_OR_REUSED_REQUEST';fail('REDIRECT_OR_REUSED_REQUEST');return;}
    if(p.request?.url!==origin+PATH||p.request?.method!=='GET')return;
@@ -60,6 +61,7 @@ export async function observeFaultBodyStream(parent,{extensionId,origin}){
    const row={id:p.requestId,ordinal,bytes:0,dataLength:0,chunks:[],buffered:null,streamError:null,terminal:null,readback:null};requests.set(p.requestId,row);emit(row,'request');return;
   }
   const row=requests.get(p.requestId);if(!row)return;
+  if(row.terminal&&['Network.responseReceived','Network.dataReceived'].includes(m.method)){row.streamError='EVENT_AFTER_TERMINAL';fail(row.streamError);return;}
   if(m.method==='Network.responseReceived'){
    if(row.response){row.streamError='DUPLICATE_RESPONSE';fail(row.streamError);return;}row.response=true;row.status=Number.isInteger(p.response?.status)?p.response.status:null;
    if(p.response?.url!==origin+PATH||row.status!==200){row.streamError='UNEXPECTED_RESPONSE';fail(row.streamError);return;}
@@ -73,11 +75,12 @@ export async function observeFaultBodyStream(parent,{extensionId,origin}){
  parent.on('Target.receivedMessageFromTarget',receive);
  const detached=event=>{if(event.sessionId===sessionId)fail('TARGET_DETACHED');};
  const destroyed=event=>{if(event.targetId===targetId)fail('TARGET_DESTROYED');};
- parent.on('Target.detachedFromTarget',detached);parent.on('Target.targetDestroyed',destroyed);
+ const crashed=event=>{if(event.targetId===targetId)fail('TARGET_CRASHED');};
+ parent.on('Target.detachedFromTarget',detached);parent.on('Target.targetDestroyed',destroyed);parent.on('Target.targetCrashed',crashed);
  const deadline=setTimeout(()=>fail('OBSERVER_DEADLINE'),15000);
  function close(){
   if(closed)return closeTask;closed=true;clearTimeout(deadline);
-  parent.off('Target.receivedMessageFromTarget',receive);parent.off('Target.detachedFromTarget',detached);parent.off('Target.targetDestroyed',destroyed);
+  parent.off('Target.receivedMessageFromTarget',receive);parent.off('Target.detachedFromTarget',detached);parent.off('Target.targetDestroyed',destroyed);parent.off('Target.targetCrashed',crashed);
   for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('body-stream-closed'));}pending.clear();
   const rows=[...requests.values()].map(row=>{const body=row.buffered&&!row.streamError?Buffer.concat([row.buffered,...row.chunks]):null,complete=ready&&!terminalReason&&!!body&&row.terminal==='FINISHED'&&body.length===row.dataLength;
    const streamSummary=body?classify(body):null,result={request:row.ordinal,status:row.status??null,terminal:row.terminal??'NOT_OBSERVED',failure:row.failure??null,streamError:row.streamError,receivedDataBytes:row.dataLength,stream:streamSummary,networkBodyComplete:complete,readback:row.readback??{state:'NOT_OBSERVED'},sameBody:complete&&row.readback?.state==='AVAILABLE'?streamSummary.sha256===row.readback.sha256:null};body?.fill(0);row.buffered?.fill(0);for(const data of row.chunks)data.fill(0);row.chunks=[];row.buffered=null;return result;});requests.clear();
@@ -85,5 +88,18 @@ export async function observeFaultBodyStream(parent,{extensionId,origin}){
   closeTask=bounded(parent.send('Target.detachFromTarget',{sessionId})).catch(()=>{snapshot.terminalReason??='DETACH_FAILED';for(const row of snapshot.rows)row.networkBodyComplete=false;});return closeTask;
  }
  try{await send('Network.enable');if(closed)throw Error('body-stream-closed');ready=true;}catch(error){await close();throw error;}
- return {async finish(){try{await bounded(Promise.all([...tasks]));}catch{terminalReason??='SETTLE_TIMEOUT';}await close();return structuredClone({...snapshot,captureComplete:!snapshot.terminalReason&&snapshot.dropped===0&&snapshot.rows.length>0&&snapshot.rows.every(row=>row.networkBodyComplete)});}};
+ return {async finish(){
+  if(!finishTask)finishTask=(async()=>{
+   // loadingFinished can add a readback while a stream response is pending.
+   // Drain successive task sets under ONE original 1500ms settling deadline.
+   try{await bounded((async()=>{
+    while(!closed&&tasks.size)await Promise.all([...tasks]);
+    // Empty-to-closed is synchronous. Otherwise a terminal event could append
+    // a readback between this last check and the outer await continuation.
+    void close();
+   })());}catch{terminalReason??='SETTLE_TIMEOUT';}
+   await close();return {...snapshot,captureComplete:!snapshot.terminalReason&&snapshot.dropped===0&&snapshot.rows.length>0&&snapshot.rows.every(row=>row.networkBodyComplete)};
+  })();
+  return structuredClone(await finishTask);
+ }};
 }

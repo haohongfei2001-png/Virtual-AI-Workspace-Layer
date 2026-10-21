@@ -1,5 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 就绪入口按下后的后台刷新竞态（2026-10-22，基线00c8c371）
+
+已修复一个确定的点击丢失路径：当前原生入口已就绪、用户按下后，后台DATA_CHANGED原会立即启动VIEW并禁用计划，随后同一次点击被拒绝。现仅对真实普通主指针、当前委托控件暂缓尚未发出的后台VIEW；固定一秒、不可续期，点击开始唯一派发后、取消／失焦／隐藏／退出或到期释放。已在途VIEW、显式查询、撤权和原六秒预算不延后；无补点／重发。独审纠正了pointerup零延迟释放可能早于下一任务click的问题，两侧固定起点清理也覆盖无click残留。a302缺pointerdown顺序，不宣称它就是历史Linux失败的唯一根因。
+
+实际client＋renderer＋真实鼠标的隔离headless验证确认：按下后20次后台通知仍不启动VIEW，松开只派发一次，结算后只补一次刷新；已在途VIEW仍拒绝且恢复ready不重放点击。原MODERN MV3 J1命令随后单次完成九步，包括IDless原生Project提升、非零页／滚动、Project→聊天→唯一返回及原生Back；草稿／原文档保持，185产品和15夹具hash稳定、trace无丢弃。原报告仍PARTIAL_J1_NOT_ACCEPTED／exit2，矩阵仅PASS_SCOPED_CONTINUOUS_CASE，未放宽15秒或修改driver。核心、相邻、投影三组定向回归分别通过300／143／247项（非去重累计），默认185文件包通过且仍NOT_RELEASE_READY。
+
+自然检查点吸收dot评论6325047096／6325101762：旁路正文观察器曾接纳FINISHED后的response/data、忽略精确worker崩溃，并在finish任务快照漏掉新增readback。反例先红后修，固定1500ms内排空新增任务、空队列到关闭原子完成；崩溃／乱序明确失效，迟到回复不改快照。最终21项及222项调用侧回归通过；未再开浏览器诊断、不改正式正文oracle、不把原Linux失败归因于这些模拟反例。
+
+[CI39663421561](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39663421561)在00c8自然结束40成功／1失败。J1/J4相关job及unknown本次成功不追溯解决历史竞态；唯一offline-journeys在local-status初始双surface原15秒超时，尚未调用status，终态0 popover／2 frame／1返回入口。缺open/close与原生区域变化顺序，根因未成立；不改谓词、预热或点返回过门。下一差额是保留原加载／期限，补被动有限时序定位安全退回原因。证据沿`nativePointerAndObserver20261022`及原目录压缩原件。
+
+真实4GET已消费且未重发；default/null主体与当前空间、全目录、INV-09生产语义和实机G/U仍未成立。10k/100k继续DEFERRED，完整Free与发布均未通过。
+
 ## 冷worker新原生请求与history顺序修复（2026-10-22，基线a302d828）
 
 本批关闭一个独立复现的C2恢复缺陷：冷worker尚无receipt时，真实新目标GET先进入、同文档history随后到达、首次frame读取仍待完成，原实现会删掉该请求，200完成后也不能产生READY。现在仅保留从未建立选择、未撤回、未accepted、同文档／精确目标且原六秒内的首次pending请求；仍需成功响应、当前frame/tab/body及认证roster。冷路径不生成旧route、不增加reprepare、不复活旧receipt。两条产品反例先红后绿，独立7项顺序对照转绿，撤回／冲突／到期反例保持；不宣称已锁定历史Linux失败的实际事件顺序。

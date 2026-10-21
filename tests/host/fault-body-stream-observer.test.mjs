@@ -7,7 +7,7 @@ const extensionId='a'.repeat(32),origin='http://127.0.0.1:12345',path='/backend-
 const body=JSON.stringify({protocol:'future-99',payload:{opaque:true}}),base64=s=>Buffer.from(s).toString('base64');
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 class Transport extends EventEmitter {
- calls=[];commands=[];streamReply=null;readbackError=null;attach=null;
+ calls=[];commands=[];streamReply=null;readbackError=null;attach=null;holdReadback=false;readbackReply=null;
  async send(method,params={}) {
   this.calls.push({method,params});
   if(method==='Target.getTargets')return {targetInfos:[{type:'service_worker',url:`chrome-extension://${extensionId}/extension/worker.mjs`,targetId:'worker'}]};
@@ -17,7 +17,7 @@ class Transport extends EventEmitter {
   const command=JSON.parse(params.message);this.commands.push(command);
   if(command.method==='Network.enable')this.reply(command,{});
   else if(command.method==='Network.streamResourceContent')this.streamReply=()=>this.reply(command,{bufferedData:base64(this.prefix??body)});
-  else if(command.method==='Network.getResponseBody')this.reply(command,this.readbackError?null:{body,base64Encoded:false},this.readbackError);
+  else if(command.method==='Network.getResponseBody'){this.readbackReply=()=>this.reply(command,this.readbackError?null:{body,base64Encoded:false},this.readbackError);if(!this.holdReadback)this.readbackReply();}
   else assert.fail('unexpected Network command');
   return {};
  }
@@ -45,6 +45,41 @@ test('queued increments follow buffered prefix even when terminal precedes strea
 test('stream completion and getResponseBody cache failure remain separate observations',async t=>{
  const {transport:p,observer}=await collector(t);p.readbackError='No data found for resource with given identifier';p.start();p.response();p.data(body,'r',false);p.streamReply();p.end();
  const report=await observer.finish();assert.equal(report.rows[0].networkBodyComplete,true);assert.equal(report.rows[0].readback.state,'FAILED');assert.equal(report.rows[0].readback.reason,'RESOURCE_CONTENT_UNAVAILABLE');assert.equal(report.rows[0].sameBody,null);assert.equal(report.acceptance,'NOT_ESTABLISHED');
+});
+
+for(const late of ['data','response-and-data'])test('events after FINISHED invalidate capture: '+late,async t=>{
+ const {transport:p,observer}=await collector(t);p.start();
+ if(late==='data'){p.response();p.prefix='';p.streamReply();await tick();}
+ p.end();if(late==='response-and-data'){p.prefix='';p.response();p.streamReply?.();await tick();}
+ p.data(body);const r=await observer.finish();assert.equal(r.captureComplete,false);assert.equal(r.terminalReason,'EVENT_AFTER_TERMINAL');
+});
+for(const event of ['Inspector.targetCrashed','Target.targetCrashed'])test('exact worker crash invalidates capture: '+event,async t=>{
+ const {transport:p,observer}=await collector(t);p.start();p.response();p.data(body,'r',false);p.streamReply();p.end();await tick();
+ if(event.startsWith('Inspector.'))p.event(event,{});else p.emit(event,{targetId:'worker'});
+ const r=await observer.finish();assert.equal(r.captureComplete,false);assert.equal(r.terminalReason,'TARGET_CRASHED');assert.equal(p.listenerCount('Target.targetCrashed'),0);
+});
+test('unrelated target and session crashes do not revoke the exact observer',async t=>{
+ const {transport:p,observer}=await collector(t);p.start();p.response();p.data(body,'r',false);p.streamReply();p.end();
+ p.event('Inspector.targetCrashed',{},'other-session');p.emit('Target.targetCrashed',{targetId:'other-worker'});
+ assert.equal((await observer.finish()).captureComplete,true);
+});
+test('finish drains readback added while its first stream task is settling',async t=>{
+ const {transport:p,observer}=await collector(t);p.holdReadback=true;p.start();p.response();p.data(body,'r',false);
+ let finished=false;const closing=observer.finish().then(r=>{finished=true;return r;});
+ p.end();p.streamReply();await tick();assert.equal(typeof p.readbackReply,'function');assert.equal(finished,false,'new readback belongs to the same bounded finish');
+ p.readbackReply();const r=await closing;assert.equal(r.captureComplete,true);assert.equal(r.rows[0].readback.state,'AVAILABLE');assert.equal(r.rows[0].sameBody,true);
+});
+test('finish never extends its fixed settling window for a new pending readback',async t=>{
+ const {transport:p,observer}=await collector(t);p.holdReadback=true;p.start();p.response();p.data(body,'r',false);
+ const closing=observer.finish();p.end();p.streamReply();const r=await closing;
+ assert.equal(r.captureComplete,false);assert.equal(r.terminalReason,'SETTLE_TIMEOUT');assert.equal(p.calls.filter(c=>c.method==='Target.detachFromTarget').length,1);
+ p.readbackReply?.();assert.deepEqual(await observer.finish(),r);
+});
+test('finish closes an empty task set atomically before a later terminal can append readback',async t=>{
+ const {transport:p,observer}=await collector(t);p.holdReadback=true;p.start();p.response();p.data(body,'r',false);p.streamReply();await tick();
+ const closing=observer.finish();p.end();const r=await closing;
+ assert.equal(r.captureComplete,false);assert.equal(r.rows[0].terminal,'NOT_OBSERVED');assert.equal(r.rows[0].readback.state,'NOT_OBSERVED');
+ assert.equal(p.commands.filter(c=>c.method==='Network.getResponseBody').length,0);assert.equal(p.calls.filter(c=>c.method==='Target.detachFromTarget').length,1);
 });
 
 test('a failed network terminal never becomes complete even when both captures contain valid JSON',async t=>{

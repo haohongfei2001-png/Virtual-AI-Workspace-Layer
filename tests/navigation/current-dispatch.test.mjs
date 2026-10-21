@@ -36,12 +36,12 @@ function projection(role='workspace'){
 function fixture(role='workspace',callback=()=>null,onHorizonRequest=null,onWorkingSetRequest=null,adapterOverride={},extra={}){const doc=dom(),intents=[];const nav=createNavigation({document:doc,surface:{role,root:doc.body},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){},...adapterOverride},onHorizonRequest,onWorkingSetRequest,...extra,onProjectionRequest:callback,onPresentationRequest:v=>intents.push(v)});const pane=()=>nav.roots()[role].shadow;return {doc,nav,pane,intents,button:label=>pane().querySelectorAll('button').find(n=>n.getAttribute('aria-label')===label)};}
 const tick=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
 
-function setupCurrent({mode='same-target',failure=null,safe=true,onHorizonRequest=null}={}){
+function setupCurrent({mode='same-target',failure=null,safe=true,onHorizonRequest=null,onNativeInteractionStart=null}={}){
  let resolve,reject,currentURL='https://chatgpt.com/';const commands=[];
  const issued={targetKey:'current_plan',uiGrantId:'grant',mountId:'mount',plan:{mode:'same-target',planRevision:1,bodyProofId:'proof',target:{kind:'resolved',entity:'conversation',nativeId:'P2_0',navigationURL:'https://chatgpt.com/c/P2_0',liveHandle:null}}};
  if(mode==='native-control'){delete issued.plan.bodyProofId;issued.plan.mode=mode;issued.plan.control={id:'handle',documentToken:'doc',routeEpoch:1,regionEpoch:1,controlKind:'conversation'};issued.plan.target.liveHandle=issued.plan.control;}
  if(!safe){issued.plan.mode='native-control';issued.plan.target={kind:'live-control',control:{id:'handle',documentToken:'doc',routeEpoch:1,regionEpoch:1,controlKind:'conversation'},navigationURL:null};}
- const f=fixture('workspace',()=>null,onHorizonRequest,null,{currentURL:()=>currentURL,nativeHref:value=>safe?value:null,navigationPlan:ref=>ref.id==='P2_0'?issued:{...issued,plan:{mode:'href',planRevision:2,disposition:'new-tab-preserve-current',target:{kind:'resolved',entity:'conversation',nativeId:ref.id,navigationURL:ref.nativeUrl,liveHandle:null}}}},{onDispatch:command=>{commands.push(command);if(failure==='throw')throw Error('private failure text');return new Promise((r,j)=>{resolve=r;reject=j;});}});
+ const f=fixture('workspace',()=>null,onHorizonRequest,null,{currentURL:()=>currentURL,nativeHref:value=>safe?value:null,navigationPlan:ref=>ref.id==='P2_0'?issued:{...issued,plan:{mode:'href',planRevision:2,disposition:'new-tab-preserve-current',target:{kind:'resolved',entity:'conversation',nativeId:ref.id,navigationURL:ref.nativeUrl,liveHandle:null}}}},{onNativeInteractionStart,onDispatch:command=>{commands.push(command);if(failure==='throw')throw Error('private failure text');return new Promise((r,j)=>{resolve=r;reject=j;});}});
  f.nav.updateFrameProjection(projection());f.nav.showWorkspace();
  const link=f.pane().querySelectorAll('a').find(n=>n.getAttribute('data-ref-id')==='P2_0');assert(link,'actual renderer link exists');
  return {...f,link,commands,reply:value=>resolve(value),reject:error=>reject(error),setURL:value=>currentURL=value};
@@ -66,6 +66,57 @@ test('later different href navigation cancels pending same-target presentation w
 const feedback=f=>f.nav.roots()?.workspace?.shadow?.querySelector('.navigation-feedback')??null;
 const textTree=n=>n?String(n.textContent??'')+(n.children??[]).map(textTree).join(''):'';
 const attr=(n,key)=>n.getAttribute(key)??n[key];
+function pointerDown(f,patch={},link=f.link){
+ const event={pointerId:7,isTrusted:true,isPrimary:true,button:0,composedPath:()=>[link,f.nav.roots().workspace.n],...patch};
+ f.doc.handlers.get('pointerdown')(event);for(const fn of link.events.pointerdown??[])fn(event);return event;
+}
+test('ready delegated pointer releases only after the one target click starts dispatch',async()=>{
+ let starts=0,releases=0,commandsAtRelease;const f=setupCurrent({onNativeInteractionStart:()=>{starts++;return ()=>{releases++;commandsAtRelease=f.commands.length;};}});
+ try{
+  pointerDown(f);assert.equal(starts,1);pointerDown(f);assert.equal(starts,1,'repeat down does not renew ownership');
+  f.doc.handlers.get('pointerup')({pointerId:7});assert.equal(releases,0,'capture must not start refresh before click target');
+  f.link.click({isTrusted:true});assert.equal(releases,1);assert.equal(commandsAtRelease,1);assert.equal(f.commands.length,1);
+  f.reply({state:'already-current'});await tick();assert.equal(f.nav.view().mode,'reading');
+ }finally{f.nav.stop();}
+});
+for(const event of ['pointerup','lostpointercapture'])test('native pointer ownership spans the task after '+event,async()=>{
+ let releases=0;const f=setupCurrent({onNativeInteractionStart:()=>()=>{releases++;}});try{
+  pointerDown(f);f.doc.handlers.get(event)({pointerId:7});await new Promise(r=>setTimeout(r,5));
+  assert.equal(releases,0,'up/capture loss does not predict that click was cancelled');
+  f.link.click({isTrusted:true});assert.equal(releases,1);assert.equal(f.commands.length,1);
+  f.reply({state:'already-current'});await tick();
+ }finally{f.nav.stop();}
+});
+test('no-click renderer gesture expires once at its original ceiling',()=>{
+ let releases=0;const f=setupCurrent({onNativeInteractionStart:()=>()=>{releases++;}}),timers=new Map();let id=0;
+ f.doc.defaultView.setTimeout=(fn,ms)=>{timers.set(++id,{fn,ms});return id;};f.doc.defaultView.clearTimeout=id=>timers.delete(id);
+ try{
+  pointerDown(f);f.doc.handlers.get('pointerup')({pointerId:7});assert.equal(timers.size,1);const [key,timer]=[...timers][0];assert.equal(timer.ms,1000);
+  timers.delete(key);timer.fn();assert.equal(releases,1);assert.equal(f.commands.length,0);
+  pointerDown(f);assert.equal(timers.size,1,'a later gesture can begin after no-click expiry');
+ }finally{f.nav.stop();}assert.equal(releases,2);
+});
+for(const patch of [{isTrusted:false},{isPrimary:false},{button:1},{ctrlKey:true},{metaKey:true},{shiftKey:true},{altKey:true}])test('non-ordinary pointer cannot hold background reads '+JSON.stringify(patch),()=>{
+ let starts=0;const f=setupCurrent({onNativeInteractionStart:()=>{starts++;return ()=>{};}});try{pointerDown(f,patch);assert.equal(starts,0);assert.equal(f.commands.length,0);}finally{f.nav.stop();}
+});
+for(const end of ['cancel','hidden','scope','stop'])test('native pointer ownership is released without replay on '+end,async()=>{
+ let releases=0;const f=setupCurrent({onNativeInteractionStart:()=>()=>{releases++;}});try{
+  pointerDown(f);
+  if(end==='cancel')f.doc.handlers.get('pointercancel')({pointerId:7});
+  if(end==='hidden'){f.doc.visibilityState='hidden';f.doc.handlers.get('visibilitychange')();}
+  if(end==='scope')f.nav.updateFrameProjection({...projection(),scope:'B'});
+  if(end==='stop')f.nav.stop();
+  await new Promise(r=>setTimeout(r,5));assert.equal(releases,1);assert.equal(f.commands.length,0);
+ }finally{f.nav.stop();}
+});
+for(const unavailable of ['pending','href','retired'])test('unavailable pointer has no interaction ownership: '+unavailable,()=>{
+ let starts=0;const f=setupCurrent({onNativeInteractionStart:()=>{starts++;return ()=>{};}});try{
+  if(unavailable==='pending')f.nav.setNativeNavigationPending(true);
+  const link=unavailable==='href'?f.pane().querySelector('[data-ref-id="P1_0"]'):f.link;
+  if(unavailable==='retired')f.nav.updateFrameProjection(projection());
+  pointerDown(f,{},link);assert.equal(starts,0);assert.equal(f.commands.length,0);
+ }finally{f.nav.stop();}
+});
 const blockedText='暂时无法打开，请使用原生入口继续。';
 const unknownText='打开结果未确认，请先查看原生页面。';
 for(const mode of ['same-target','native-control'])for(const state of ['blocked','unconfirmed','unknown',null])test(`${mode} ${state} result has accessible feedback and no automatic fallback`,async()=>{

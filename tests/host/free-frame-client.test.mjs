@@ -355,6 +355,59 @@ const sameCurrentURL=`https://chatgpt.com/c/${sameCurrentId}`;
 const sameCurrentPlan=()=>({mode:'same-target',bodyProofId:'current-body-proof',planRevision:4,target:{kind:'resolved',entity:'conversation',nativeId:sameCurrentId,navigationURL:sameCurrentURL,liveHandle:null}});
 const sameCurrentCommand=()=>({actionId:'current-action',uiGrantId:'grant',mountId:'mount',planRevision:4,targetKey:'current-key'});
 async function currentDispatchFixture(){const f=fixture();f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),current:{nativeUrl:sameCurrentURL,refId:sameCurrentId,projectId:null}},navigation:[{refId:sameCurrentId,plan:sameCurrentPlan(),targetKey:'current-key'}]}));await f.client.start();await drain();return f;}
+test('ready native pointer interaction owns background hints until its single dispatch settles',async()=>{
+ const f=await currentDispatchFixture(),before=f.views,send=f.runtime.sendMessage,held=deferred();
+ try{
+  const release=f.nav.onNativeInteractionStart?.();
+  for(let i=0;i<100;i++)f.emit({type:'VAIWL_UI_DATA_CHANGED'});
+  await drain();assert.equal(f.views,before,'background VIEW must not replace the plan after pointerdown');
+  assert.equal(typeof release,'function');assert.equal(f.nativePending.at(-1),false);
+  let dispatches=0;f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_DISPATCH_CURRENT'){dispatches++;return held.promise;}return send(m);};
+  const action=f.nav.onDispatch(sameCurrentCommand());release();await drain();
+  assert.equal(dispatches,1);assert.equal(f.views,before);assert.equal(f.nativePending.at(-1),true);
+  held.resolve({ok:true,state:'already-current'});assert.deepEqual(await action,{state:'already-current'});await drain();
+  assert.equal(f.views,before+1);assert.equal(dispatches,1);assert.equal(f.nativePending.at(-1),false);
+ }finally{held.resolve({ok:false});f.client.stop();}
+});
+test('a VIEW already in flight cannot be reserved or bypassed by pointerdown',async()=>{
+ const f=await currentDispatchFixture(),held=deferred();try{
+  f.setView(()=>held.promise);f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();
+  assert.equal(f.nav.onNativeInteractionStart(),null);
+  assert.deepEqual(await f.nav.onDispatch(sameCurrentCommand()),{state:'blocked'});
+  assert.equal(f.calls.filter(m=>m.type==='HOST_UI_DISPATCH_CURRENT').length,0);
+  held.resolve({ok:true,state:'ready',page:f.page(),navigation:[]});await drain();
+ }finally{held.resolve({ok:false});f.client.stop();}
+});
+test('native pointer hold has a fixed one-second ceiling and never extends a VIEW deadline',async()=>{
+ const f=await currentDispatchFixture(),held=deferred();try{
+  const before=f.views,release=f.nav.onNativeInteractionStart();f.emit({type:'VAIWL_UI_DATA_CHANGED'});
+  await f.advance(999);assert.equal(f.views,before);assert.equal(f.nav.onNativeInteractionStart(),null);
+  f.setView(()=>held.promise);await f.advance(1);assert.equal(f.views,before+1);assert.equal(f.nativePending.at(-1),true);
+  release();assert.equal(f.views,before+1);
+  await f.advance(5999);assert.equal(f.stops,0);await f.advance(1);assert.equal(f.stops,1);
+ }finally{held.resolve({ok:false});f.client.stop();}
+});
+for(const end of ['release','explicit-query','hidden','disconnect','exit'])test('native pointer ownership ends safely on '+end,async()=>{
+ const f=await currentDispatchFixture();try{
+  const before=f.views,release=f.nav.onNativeInteractionStart();f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();assert.equal(f.views,before);
+  if(end==='release')release();
+  if(end==='explicit-query')await f.nav.onProjectionRequest({segment:0,offset:8,limit:8});
+  if(end==='hidden'){f.nav.document.visibilityState='hidden';f.focusEvents.dispatchEvent(new Event('visibilitychange'));}
+  if(end==='disconnect')f.disconnect();if(end==='exit')f.nav.onExit();
+  await drain();const requests=f.calls.length;release();await f.advance(1000);
+  assert.equal(f.calls.length,requests,'old release and timer do not start another read');
+  assert.equal(f.views,before+(end==='explicit-query'?2:end==='release'?1:0),'explicit read retains the existing dirty follow-up');
+  if(end==='hidden'){f.nav.document.visibilityState='visible';f.focusEvents.dispatchEvent(new Event('visibilitychange'));await drain();assert.equal(f.views,before+1);}
+ }finally{f.client.stop();}
+});
+test('old pointer release cannot release a later interaction in the same renderer',async()=>{
+ const f=await currentDispatchFixture();try{
+  const old=f.nav.onNativeInteractionStart();old();
+  const release=f.nav.onNativeInteractionStart(),before=f.views;
+  f.emit({type:'VAIWL_UI_DATA_CHANGED'});old();await drain();assert.equal(f.views,before);
+  release();await drain();assert.equal(f.views,before+1);
+ }finally{f.client.stop();}
+});
 for(const outcome of ['saved','rejected','timeout','revoked','inflight'])test(`native dispatch drains presentation under the same deadline: ${outcome}`,async()=>{
  const f=await currentDispatchFixture(),send=f.runtime.sendMessage,held=deferred(),packets=[];
  f.runtime.sendMessage=m=>{if(['HOST_UI_SAVE_VIEW','HOST_UI_DISPATCH_CURRENT'].includes(m.type)){packets.push(m);return m.type==='HOST_UI_SAVE_VIEW'?held.promise:Promise.resolve({ok:true,state:'already-current'});}return send(m);};

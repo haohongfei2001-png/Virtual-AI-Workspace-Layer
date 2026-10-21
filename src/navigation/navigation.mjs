@@ -10,7 +10,7 @@ const gridIcon='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stro
 import { css } from './styles.mjs';
 function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);n.textContent=text;return n;}
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
-export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onProjectionRequest=null,onHorizonRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null,onBackupRequest=null,onSnippetsRequest=null,onSnippetLocateRequest=null,onUndoTimePolicyRequest=null}) {
+export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onNativeInteractionStart=null,onProjectionRequest=null,onHorizonRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null,onBackupRequest=null,onSnippetsRequest=null,onSnippetLocateRequest=null,onUndoTimePolicyRequest=null}) {
   const framed=surface!==null;
   // Keep explicit choices separate from the current project's derived expansion.
   // Legacy restored open rows remain explicit; do not guess away user layout.
@@ -44,6 +44,12 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   // completes. Coalesce updates instead of extending a debounce on each change.
   const pointers=new Set(),keys=new Set(),win=doc.defaultView??globalThis;
   let composing=false,dragging=false,pendingUpdate=null,pendingRender=false,updateTimer=null,pendingPresentation=null;
+  let nativeInteraction=null;
+  function endNativeInteraction(expected=nativeInteraction){
+    if(!expected||nativeInteraction!==expected)return;
+    nativeInteraction=null;if(expected.timer!==null)win.clearTimeout(expected.timer);
+    expected.release();
+  }
   const owned=e=>e.composedPath().some(n=>n?.getAttribute?.('data-vaiwl-owned')===token);
   const interacting=()=>pointers.size>0||keys.size>0||composing||dragging;
   const clearUpdateTimer=()=>{if(updateTimer!==null){win.clearTimeout(updateTimer);updateTimer=null;}};
@@ -81,11 +87,11 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     catch{if(timePolicyNotice===notice&&!stopped){notice.error=true;notice.busy=false;requestRender();}}
   }
   function finishInteraction(){if(!interacting()&&(pendingUpdate||pendingRender||pendingPresentation)&&updateTimer===null)updateTimer=win.setTimeout(flushUpdate,0);}
-  function resetInteraction(discard=false){pointers.clear();keys.clear();composing=false;dragging=false;if(discard){pendingUpdate=null;pendingRender=false;pendingPresentation=null;clearUpdateTimer();}else finishInteraction();}
+  function resetInteraction(discard=false){endNativeInteraction();pointers.clear();keys.clear();composing=false;dragging=false;if(discard){pendingUpdate=null;pendingRender=false;pendingPresentation=null;clearUpdateTimer();}else finishInteraction();}
   const interactionHandlers={
     pointerdown:e=>{if(owned(e))pointers.add(e.pointerId);},
     pointerup:e=>{pointers.delete(e.pointerId);finishInteraction();},
-    pointercancel:e=>{pointers.delete(e.pointerId);finishInteraction();},
+    pointercancel:e=>{pointers.delete(e.pointerId);if(nativeInteraction?.pointerId===e.pointerId)endNativeInteraction();finishInteraction();},
     lostpointercapture:e=>{pointers.delete(e.pointerId);finishInteraction();},
     keydown:e=>{if(owned(e)&&[' ','Enter'].includes(e.key))keys.add(e.key);},
     keyup:e=>{keys.delete(e.key);finishInteraction();},
@@ -214,9 +220,19 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(delegation){a.setAttribute('data-native-plan-control','');if(nativeNavigationPending)a.setAttribute('aria-disabled','true');}
     if(safeHref){a.href=safeHref;a.target=plan.mode==='href'&&plan.disposition==='same-tab'?'_top':'_blank';a.rel='noopener noreferrer';}
     else{a.setAttribute('role','button');a.tabIndex=0;}
-    a.addEventListener('click',event=>{
+    const currentLink=()=>!stopped&&!!snapshot&&view===ownerView&&a.isConnected!==false&&[roots?.workspace,roots?.sidebar].some(pane=>[...(pane?.shadow.querySelectorAll('a')??[])].includes(a));
+    if(delegation&&typeof onNativeInteractionStart==='function')a.addEventListener('pointerdown',event=>{
+      if(nativeInteraction||nativeNavigationPending||!currentLink()||event.isTrusted!==true||event.isPrimary!==true||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+      const release=onNativeInteractionStart();if(typeof release==='function'){
+        const held={control:a,pointerId:event.pointerId,release,timer:null};nativeInteraction=held;
+        // pointerup and implicit lost-capture may precede click by a task.
+        // Keep the same fixed ceiling as the client, including no-click gestures.
+        held.timer=win.setTimeout(()=>endNativeInteraction(held),1000);
+      }
+    });
+    a.addEventListener('click',event=>{try{
       // Detached callbacks must not dispatch or cancel a newer navigation intent.
-      if(stopped||!snapshot||view!==ownerView||![roots?.workspace,roots?.sidebar].some(pane=>[...(pane?.shadow.querySelectorAll('a')??[])].includes(a))){event.preventDefault();return;}
+      if(!currentLink()){event.preventDefault();return;}
       // A pending native RPC blocks only delegation, not the browser's
       // verified-href modifier behavior. Retired plans were rejected above.
       if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0){if(!resolvedOK)event.preventDefault();return;}
@@ -230,7 +246,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
         navigationFeedback={scope:dispatchScope,url:dispatchURL,intent:dispatchIntent,state:result?.state==='blocked'?'blocked':'unconfirmed',href:safeHref??null};sidebarDirty=true;requestRender();
       };
       try{Promise.resolve(onDispatch(dto)).then(showResult,()=>showResult({state:'unconfirmed'}));}catch{showResult({state:'unconfirmed'});} // Only an explicit later link click navigates; never retry here.
-    });
+    }finally{if(nativeInteraction?.control===a)endNativeInteraction();}});
     if(!safeHref)a.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();a.click();}});
   }
   function projectCreateEntry(group){

@@ -23,6 +23,22 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,onPresentationRequest=()=>{},onState=()=>{},privateRoot=doc?.body,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeNonce,navigationFactory=createNavigation,recoveryFactory=createFreeFrameRecovery,backupFactory=createFreeFrameBackup,snippetsFactory=createFreeFrameSnippets,readErrorFactory=createFreeFrameReadError}={}){
  const policy=createURLPolicy({origin:parentOrigin});
  let dispatchEpoch=0,dispatchPending=null,queuedDispatchView=null,calibrationPending=null;
+ let nativeInteraction=null;
+ // Reserve only the gap between a ready control's pointerdown and its click.
+ // Unsent background VIEWs wait; authorization and request deadlines do not.
+ function clearNativeInteraction(){const held=nativeInteraction;nativeInteraction=null;if(held)cancel(held.timer);}
+ function nativeInteractionActive(){
+  const held=nativeInteraction;if(!held)return false;
+  const elapsed=elapsedNow()-held.started;
+  if(!closed&&grantCurrent()&&grant===held.grant&&navigation===held.renderer&&Date.parse(grant.expiresAt)>now()&&Number.isFinite(elapsed)&&elapsed>=0&&elapsed<1000)return true;
+  clearNativeInteraction();return false;
+ }
+ function beginNativeInteraction(){
+  if(nativeInteractionActive()||closed||readTerminal||bootstrapping||activeRead||dispatchPending||horizonPending||backup||recovery||snippets||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||doc.visibilityState==='hidden'||surfaceVisible===false)return null;
+  const held={grant,renderer:navigation,started:elapsedNow(),timer:null};nativeInteraction=held;
+  const release=()=>{if(nativeInteraction!==held)return;clearNativeInteraction();if(dirty)invalidate(true);};
+  held.timer=schedule(release,1000);return release;
+ }
  let navigation=null,root=null,plans=new Map(),projectPlans=new Map(),grant=null,grantCurrent=()=>false,serial=0,activeRead=null,activeLocation=null,query={segment:0,offset:0,limit:8},closed=true,splits=0,dirty=false,currentNativeURL='',presentationRevision=0,presentationIntent='',workspaceRevision=null,viewSession=null,projectionScope=null,projectionVersion=null,horizonPending=false;
  let readEpoch=0,readTerminal=null,readErrorPanel=null,readErrorRoot=null;
  let surfaceVisible=null,surfaceRevision=0;
@@ -38,7 +54,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  const recoverable=reason=>isFreeRecoveryReason(reason)||['corrupt-record','invalid-partition-manifest','invalid-partition-piece'].includes(reason);
  const budget=createReadRecoveryBudget({now:elapsedNow,schedule,cancel,onExpire:()=>fail('read-budget-exhausted')});
  function state(value){try{onState(value);}catch{}}
- function clear(){panelReturnCancel?.();readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidatePageTotal=null;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeDesired=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
+ function clear(){clearNativeInteraction();panelReturnCancel?.();readEpoch++;readTerminal=null;readErrorPanel?.stop();readErrorPanel=null;readErrorRoot?.remove();readErrorRoot=null;surfaceVisible=null;surfaceRevision=0;calibrationPending=null;dispatchPending=null;queuedDispatchView=null;dispatchEpoch++;migration.clear();candidateRestore=null;candidateMigrationId=null;candidateMigrationProject=null;locatedMigrations.clear();workspaceEntered=false;workspaceModePending=false;for(const type of ['pointerdown','keydown','wheel'])doc.removeEventListener?.(type,interruptMigration,true);migrationListening=false;candidateOffset=0;candidatePageTotal=null;candidateRun++;candidates?.stop();candidates=null;candidateRoot?.remove();candidateRoot=null;if(visibilityAttached)doc.removeEventListener?.('visibilitychange',foreground);visibilityAttached=false;wasHidden=false;bootstrapping=false;cancel(resumeTimer);resumeTimer=null;resumeQueued=null;resumeWriting=false;resumeLast=null;resumeDesired=null;resumeQuery=null;searchSnippetIds.clear();snippetLocatePending=false;snippets?.stop();snippets=null;snippetsRoot?.remove();snippetsRoot=null;currentRef=null;clearAutoNotice();backup?.stop();backup=null;backupRoot?.remove();backupRoot=null;recovery?.stop();recovery=null;recoveryRoot?.remove();recoveryRoot=null;workspaceRevision=null;viewSession=null;projectionScope=null;projectionVersion=null;horizonPending=false;presentationRevision=0;presentationIntent='';currentNativeURL='';closed=true;dirty=false;serial++;activeRead?.abort();activeRead=null;activeLocation=null;budget.reset();grant=null;query={segment:0,offset:0,limit:8};plans.clear();projectPlans.clear();navigation?.stop();navigation=null;root?.remove();root=null;}
  function ensureCandidates(){
   if(!candidates){candidateRoot=doc.createElement('div');candidateRoot.setAttribute('data-vaiwl-candidate-root','');if(typeof root?.before==='function')root.before(candidateRoot);else privateRoot.append(candidateRoot);candidates=createFreeFrameCandidates({document:doc,container:candidateRoot,onPageRequest:next=>refreshCandidates(next),onActivate:async(renderKey,presentation)=>{
     const active=grant;if(closed||!grantCurrent()||backup||recovery||snippets)return {ok:false};
@@ -170,6 +186,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  async function read(value,publish,location=null,retryToken=null){
   if(readTerminal||recovery||backup||location&&!locationCurrent(location))return null;
+  clearNativeInteraction();
   // A ready VIEW replaces this role's issued native plans. Do not replace them
   // between the two native authorizations; keep only the latest requested read.
   const requested=boundedQuery(value);
@@ -254,10 +271,10 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  // Ordinary data hints need no new projection in a hidden UI document. Keep a
  // single dirty bit; foreground uses the same guarded fresh-read path. Initial
  // bootstrap, explicit actions and special-panel invalidation remain immediate.
- function backgroundRefreshAllowed(){return doc.visibilityState!=='hidden'&&surfaceVisible!==false;}
+ function backgroundRefreshAllowed(){return doc.visibilityState!=='hidden'&&surfaceVisible!==false&&!nativeInteractionActive();}
  function applySurfaceState(value){
   if(closed||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||!exactHostRecord(value,['revision','visible'])||!Number.isSafeInteger(value.revision)||value.revision<=surfaceRevision||!(value.visible===null||typeof value.visible==='boolean'))return;
-  const wasClosed=surfaceVisible===false;surfaceRevision=value.revision;surfaceVisible=value.visible;
+  const wasClosed=surfaceVisible===false;surfaceRevision=value.revision;surfaceVisible=value.visible;if(value.visible===false)clearNativeInteraction();
   // Reappearance refreshes data, never presentation, focus or send calibration.
   if(wasClosed&&backgroundRefreshAllowed()&&!backup)invalidate();
  }
@@ -397,7 +414,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   }catch{}finally{if(bootstrapping===attempt){bootstrapping=false;if(!closed&&navigation===renderer)invalidate();}}
  }
  function foreground(){
-  if(doc.visibilityState==='hidden'){wasHidden=true;return;}
+  if(doc.visibilityState==='hidden'){clearNativeInteraction();wasHidden=true;return;}
   if(doc.visibilityState!=='visible'||!wasHidden)return;
   wasHidden=false;
   // Keep a chosen backup file/preview intact. Other reads reuse the existing
@@ -411,6 +428,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   pending.panelRead=true;await pending.done;
  }
  function cancelPendingNavigation(){
+  clearNativeInteraction();
   const pending=dispatchPending;if(!pending||pending.cancelSent)return;
   pending.cancelSent=true;
   // Revocation only: no presentation, data read, retry or replacement dispatch.
@@ -443,7 +461,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;void refreshSurfaceState();
   if(!navigation){wasHidden=doc.visibilityState==='hidden';doc.addEventListener?.('visibilitychange',foreground);visibilityAttached=true;root=doc.createElement('div');root.setAttribute('data-vaiwl-frame-root','');privateRoot.append(root);
-   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),projectNavigationPlan:group=>projectPlans.get(group.id),status(){}},onExit:()=>lifecycle.exit(),onDispatch:dispatchCurrent,onViewChange:saveResumeView,onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onCurrentWorkspaceEntry:enterCurrent,onCalibrationEntry:calibrateEntry,onUndoTimePolicyRequest:undoAutoHorizon,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup,onSnippetsRequest:openSnippets,onSnippetLocateRequest:locateSearchSnippet});
+   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),projectNavigationPlan:group=>projectPlans.get(group.id),status(){}},onExit:()=>lifecycle.exit(),onDispatch:dispatchCurrent,onNativeInteractionStart:beginNativeInteraction,onViewChange:saveResumeView,onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onCurrentWorkspaceEntry:enterCurrent,onCalibrationEntry:calibrateEntry,onUndoTimePolicyRequest:undoAutoHorizon,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup,onSnippetsRequest:openSnippets,onSnippetLocateRequest:locateSearchSnippet});
    void bootstrapResume();return;
   }
   // Same-grant renewal is a background refresh, not a new user read intent.
