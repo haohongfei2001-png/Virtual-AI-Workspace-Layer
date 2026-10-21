@@ -1,5 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 同源码安装兼容确认与两项CI失败定位（2026-10-22，产品fa86479f）
+
+[CI39673488147](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39673488147)已自然结束：39项成功、2项失败，Node11114通过、零失败/跳过。最终合批源码的F3同schema实际安装包8008→fa864→8008→fa864通过；四阶段实际owner模块/worker字节及12个runner hash核对成立，旧包八次精确拒绝后八store不变，两个scope的人工资产保留。populated原64次活动准入及8组局部界面检查通过，185产品路径逐项匹配fa864；截图未在本批独立视觉复审，不扩大为完整视觉或Free验收。
+
+unknown正式目标仅第3请求仍为200但正文RESOURCE_CONTENT_UNAVAILABLE／ERR_ABORTED，独立trace仍INCOMPLETE。两个浏览器版本各四固定条件的最小反证实验均完整读到50字节，不能将“EOF后abort”直接定为原因；它未覆盖完整provider/校准取消或Linux，不改正式abort/oracle，不重复同条件重跑。两个实验设置失败原件保留；已在PR16评论6326406910请dot限定只读查证精确交错。
+
+J4-codec-after-evidence实际失败在首次原生账户切换的30秒导航等待，尚未进入恢复或codec；没有成功切换计数不能推断没有POST。现补原fixture的有限被动点击/请求/响应观察，单击、30秒及原FAIL不变。一次隔离headless Chromium156前置切片观察到单POST/200及成功切换，42项定向回归通过；只证明观察器可用，不是历史原因或完整J4通过。DOM与网络分别有序、旧文档消失明确缺失；迟到安装依赖最终浏览器关闭清理。新观察器Linux验证待下一实质候选，不为本次取证改动重复41项矩阵。
+
+证据沿原summary的`exactCandidateCIAndContextObservation20261022`及同目录压缩原件。当前产品字节保持fa864，下一项为上述两处失败的精确阶段证据，不以增加trace层或放宽阈值补通过。真实4GET已消费；可信主体/default-null当前空间、完整服务器目录、正向成员/NONE、本人活动与自然恢复、INV-09生产来源及实机IME/PAIA/安装仍开放；10k/100k DEFERRED，完整Free与发布未通过。
+
 ## 面板失败刷新、点击目标保留与同版本安装回退（2026-10-22，基线faacdaaf）
 
 吸收dot评论6325498674／6325533360／6325487177并独立复现两处产品差额：PRESENT取消旧pointer timer后，失败或抛错原会遗留dirty直到续期；现仅在原失败代际内经现有invalidate(true)继续处理，隐藏、授权、在途读／写和新hold门不变。renderer原只检查按键／指针，漏掉pointerup后已有的nativeInteraction，提示到期重绘可在下一任务click前替换目标；现将原hold纳入重绘等待，释放后处理待刷内容，固定一秒不可续期、不重放点击。显式presentation仍可能等原hold结束，不宣称所有动作立即清理。

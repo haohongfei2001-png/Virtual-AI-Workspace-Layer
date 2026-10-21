@@ -2,7 +2,7 @@
 
 ## 夜间接续：真实对照已消费，来源审查与依赖就绪工程并行（2026-10-22）
 
-C5/UI-15本批修复PRESENT失败后dirty残留，以及原生pointerup到click间本地重绘替换目标；沿原刷新门和固定一秒hold，不放宽pending／授权／预算。F3补完整旧schema4安装包对新生命周期codec的拒写与原库保全，复用现有历史包runner／CI job；两个scope和八store核验，合成gate不作生产来源。faac CI已自然41成功，仅对faac；本批最终合批源码待新CI。精确反例、浏览器范围与历史设置失败见STATUS/`installedCodecAndPresentation20261022`。dot有限INV09来源核定仍无可消费完成合同，关闭重复检索；下一真实关口保持主体/当前空间及完整目录，不重发已消费4GET，不改完整Free目标。
+C5/UI-15的PRESENT失败刷新与本地重绘点击保留已合批为fa864；同源码CI自然结束39成功/2失败，F3旧安装包同schema回退及人工资产保全成立。两处未闭合失败分别为unknown目标正文不可读、J4首次账户切换导航超时（尚未进入codec恢复）。保留原失败/预算/oracle；有界反证未支持直接修改EOF abort，J4只补单击至POST/响应的被动阶段记录并验证一次前置slice，不作完整J4通过、不重复全矩阵。后续只按精确交错实施根因修复，新观察器随下一实质候选核验Linux；详见STATUS/`exactCandidateCIAndContextObservation20261022`。dot有限INV09来源核定仍无可消费完成合同；主体/当前空间及完整目录仍为真实来源关口，已消费4GET不重发，不改完整Free目标。
 
 C5本批收口取消实验的错误进入时机：788 Linux原click发生在既有VIEW pending，零dispatch、尚无取消操作；现在原六秒内证明当前唯一委派入口ready后只点一次，后继竞态保留失败、不重放。原窗口／搜索／两类取消与草稿离线子旅程通过，生产pending守卫不改。启动退回则仅补有界被动时序，原15秒／立即加载／谓词保持，历史原因未唯一成立；不因本地或788本次通过改判00c8。证据与阶段hash见STATUS/`startupObservationAndCancelReadiness20261022`。下一项读取同源码CI的真实阶段差额，来源审查保持独立，不重发已消费4GET或把离线取消实验当完整Free。
 

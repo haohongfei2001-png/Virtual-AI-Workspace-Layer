@@ -24138,5 +24138,169 @@
         "pr16-after-codec-review-comments.json"
       ]
     }
+  },
+  "exactCandidateCIAndContextObservation20261022": {
+    "productSourceCommit": "fa86479ff4862fcb99f4744c3d7bb48b5a47ef87",
+    "files": {
+      "tests/host/j4-context-switch-observer.mjs": "6cc66a20fd9ac719417a1ad43894035f66da9a48d6e267f07f07d7f1ee7382df",
+      "tests/host/j4-context-switch-observer.test.mjs": "de87b618fddb1f2c3abdd3171d67dd5b1d78439f2e9855528bdd16e5f43f0cb4",
+      "tests/host/j4-package-journey.mjs": "aaa80c286c07ce0abbd42754d5483ac8a5c2be5e19660e0bc778c00b5b276ff9"
+    },
+    "ci": {
+      "run": 39673488147,
+      "status": "completed",
+      "conclusion": "failure",
+      "jobsPassed": 39,
+      "jobsTotal": 41,
+      "nodePassed": 11114,
+      "nodeFailed": 0,
+      "nodeSkipped": 0,
+      "failures": [
+        {
+          "id": 119477181465,
+          "name": "cloud-journey-matrix (j4-codec-after-evidence)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 119477181587,
+          "name": "cloud-supplementary-gates (fault-unknown-protocol)",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    "installedCodec": {
+      "sourceCommit": "fa86479ff4862fcb99f4744c3d7bb48b5a47ef87",
+      "verifiedStages": [
+        {
+          "stage": "loadedInitialOwners",
+          "source": "8008cf74e7981e518c479d29c82029c7cc0586df",
+          "ownerPaths": 6,
+          "loadedWorkerScripts": 2
+        },
+        {
+          "stage": "loadedUpgradeOwners",
+          "source": "fa86479ff4862fcb99f4744c3d7bb48b5a47ef87",
+          "ownerPaths": 7,
+          "loadedWorkerScripts": 2
+        },
+        {
+          "stage": "loadedDowngradeOwners",
+          "source": "8008cf74e7981e518c479d29c82029c7cc0586df",
+          "ownerPaths": 6,
+          "loadedWorkerScripts": 2
+        },
+        {
+          "stage": "loadedRestoredOwners",
+          "source": "fa86479ff4862fcb99f4744c3d7bb48b5a47ef87",
+          "ownerPaths": 7,
+          "loadedWorkerScripts": 2
+        }
+      ],
+      "verifiedRunnerPaths": 12,
+      "steps": 11,
+      "allStepsPass": true,
+      "guardClosed": true,
+      "status": "PASS_SAME_SCHEMA_INSTALLED_HOST_CODEC_ROLLBACK"
+    },
+    "populated": {
+      "sourceCommit": "fa86479ff4862fcb99f4744c3d7bb48b5a47ef87",
+      "productPaths": 185,
+      "admittedEvents": 64,
+      "checkStatuses": [
+        "PASS_POPULATED_SUBCONTRACT",
+        "PASS_POPULATED_SUBCONTRACT",
+        "PASS_POPULATED_SUBCONTRACT",
+        "PASS_POPULATED_SUBCONTRACT",
+        "PASS_POPULATED_SUBCONTRACT",
+        "PASS_POPULATED_SUBCONTRACT",
+        "PASS_POPULATED_SUBCONTRACT",
+        "PASS_POPULATED_SUBCONTRACT"
+      ],
+      "productSourceStable": true,
+      "status": "PASS_PACKAGED_POPULATED_SUBCONTRACT_ONLY",
+      "visual": "EMITTED_NOT_VISUALLY_REVIEWED"
+    },
+    "unknown": {
+      "formalResult": "FAIL",
+      "targetRequestStart": 3,
+      "targetCohort": [
+        2,
+        3
+      ],
+      "status": 200,
+      "bodyRead": "RESOURCE_CONTENT_UNAVAILABLE",
+      "requestFailure": "net::ERR_ABORTED",
+      "independentTrace": "INCOMPLETE_NOT_FORMAL_ACCEPTANCE",
+      "minimalMechanism": "Four fixed EOF-abort/no-abort x immediate/after-EOF observer cases per browser, Chrome155 and Chromium156.0.8078.4, all complete 50 bytes. Temporary export of original readSessionJSON only; not full provider, Linux, body-proof or calibration cancellation. No causal production fix justified.",
+      "setupFailuresRetained": [
+        "ServiceWorker dynamic import unsupported",
+        "Actual reader was in classic runtime, not wrapper"
+      ],
+      "formalAbortAndOracleUnchanged": true,
+      "outerReviewComment": 6326406910
+    },
+    "j4": {
+      "formalFailureStage": "Initial native account-menu context switch waitForNavigation, before backup/interruption/codec",
+      "failureMeaning": "Only account successful action count known; zero successful context switch does not establish zero POST.",
+      "implemented": "Bounded passive fixture DOM capture/bubble and exact main-frame /native/context request/response/failure association; report unavailable/replaced capture explicitly.",
+      "originalSingleClickAnd30SecondsUnchanged": true,
+      "localPrefix": "PASS_PREFIX_ONLY_NOT_HISTORICAL_FAILURE_EXPLANATION",
+      "browser": "156.0.8078.4",
+      "postRequests": 1,
+      "responseStatus": 200,
+      "successfulSwitches": 1,
+      "observerNetworkDropped": 0,
+      "oldDocument": "DOCUMENT_REPLACED_OR_PROBE_MISSING",
+      "limits": [
+        "Not full J4 or Linux historical cause proof",
+        "DOM/network separately ordered; no cross-channel causal ordering claimed",
+        "Late evaluate after install timeout relies on final browser close for cleanup"
+      ],
+      "targetedPassed": 42,
+      "independentReview": "No blocking issue",
+      "newObserverLinuxValidation": "NOT_RUN; next substantive candidate, no repeated full matrix for instrumentation-only checkpoint",
+      "dotReviewComment": 6326464647
+    },
+    "realPermission": {
+      "fourGetBatch": "CONSUMED_NO_REPEAT",
+      "identityEnabled": false,
+      "oldDatabaseOpened": false
+    },
+    "release": "NOT_RELEASE_READY",
+    "scale": "10k/100k DEFERRED; original gates unchanged",
+    "evidence": {
+      "path": "docs/evidence/free-delivery-2026-10-17/local-exact-ci-context-observation-20261022.tar.gz",
+      "sha256": "eb65cfe30cc249b5274a680e0f7133b2cacba2e1b1bbd46fba262693b7172543",
+      "bytes": 1764341,
+      "members": [
+        "fa864-ci-run.json",
+        "fa864-ci-jobs.json",
+        "fa864-node.log",
+        "fa864-durability.log",
+        "fa864-installed-codec-report.json",
+        "fa864-codec-source-verification.json",
+        "fa864-populated-native.log",
+        "fa864-populated-native-report.json",
+        "fa864-populated-source-verification.json",
+        "fa864-unknown.log",
+        "fa864-j4-codec-after.log",
+        "metadata-eof-abort-repro.mjs",
+        "metadata-eof-abort-repro.json",
+        "metadata-eof-abort-repro.log",
+        "metadata-eof-abort-repro-cft.json",
+        "metadata-eof-abort-repro-cft.log",
+        "metadata-eof-abort-repro-setup-failure.json",
+        "metadata-eof-abort-repro-setup-failure.log",
+        "metadata-eof-abort-repro-classic-setup-failure.json",
+        "metadata-eof-abort-repro-classic-setup-failure.log",
+        "j4-context-switch-browser-slice.mjs",
+        "j4-context-switch-browser-slice.json",
+        "j4-context-switch-browser-slice.log",
+        "j4-context-observer-targeted.tap",
+        "context-and-unknown-independent-review.txt",
+        "pr16-before-context-checkpoint-comments.json",
+        "pr16-unknown-mechanism-question.txt"
+      ]
+    }
   }
 }
