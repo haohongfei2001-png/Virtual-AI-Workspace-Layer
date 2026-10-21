@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 第十三批：真实就绪前置、正常销毁清理与布局取证（2026-10-21，基线2bca80cd）
+
+第十二run39613595691实际执行38成功/3失败，Node10777全过；API汇总滞后另存。两入口原导航成功却被新增诊断清理已毁frame误报；J2取消后重试ACK正确但首次candidate未建立，历史持久事件不等于当前live就绪。候选严格确认detached+父页正常才视frame已清理，首次fill后/首次submit前只读校验当前owner→adapter→body，cancel→retry仍连续无等待。初始截图先等真实尺寸并前后核同几何/IDs，修复窄图metadata旧桌面值，不改产品。1155合批定向与独审通过，实际浏览器待验。见[第十三批证据](evidence/cloud-live-preconditions-20261021/README.md)。历史未归因记录不改PASS，仍ACTIVE，不merge/deploy。
+
 ## 第十二批：补齐浏览器取证，保留间歇失败（2026-10-21，基线82ac8e8e）
 
 CI39609760189 run已completed/FAILURE，Node10730全过，native64访/8cells通过；native-entry及unknown失败。最后codec汇总索引滞后，但专用steps全部completed/success，原始状态分开保留。J4本次formal通过，copy owner12事件正常但lifecycle ENABLE_ERROR使诊断不完整，不解释旧失败。候选修正专属page-CDP订阅，保全native真实shadow点击/分支失败证据，并追加严格独立unknown消费copy诊断；目标请求强关联仍INCOMPLETE，不替代formal body门。1015项合批定向与独审通过，无生产改动。见[第十二批证据](evidence/cloud-browser-trace-completion-20261021/README.md)。仍ACTIVE，未归因失败不标修复，不交接或merge/deploy。

@@ -8,6 +8,7 @@ import vm from 'node:vm';
 import {buildHost} from '../../extension/build.mjs';
 import {verifyHost} from '../../extension/package.mjs';
 import {digest} from '../../src/data/hash.mjs';
+import {parseConversationMetadata} from '../../src/host/conversation-metadata.mjs';
 import {createFaultUnknownTracePackage,verifyFaultUnknownTracePackage,captureFaultUnknownTrace,instrumentFaultUnknownSource,FAULT_UNKNOWN_TRACE_RECORDER,FAULT_UNKNOWN_TRACE_PATHS,FAULT_UNKNOWN_TRACE_KIND,summarizeFaultUnknownTrace} from './fault-unknown-trace.mjs';
 async function setup(t){const dir=await mkdtemp(join(tmpdir(),'fault-unknown-trace-'));t.after(()=>rm(dir,{recursive:true,force:true}));const source=join(dir,'formal');buildHost(source,{offlineOrigin:'http://127.0.0.1:1234',offlineHistory:true});const trace=await createFaultUnknownTracePackage(source,join(dir,'copy'));return {source,trace};}
 test('verified offline copy retains exact original manifest, seven hash receipts and classic build closure',async t=>{
@@ -53,4 +54,33 @@ for(const abortEarly of [false,true])test('original and instrumented provider pr
  }
  assert.deepEqual(runs[0],runs[1]);assert.equal(runs[0].requests.length,3);assert.equal(runs[0].error,abortEarly?'session-aborted':'invalid-conversation-metadata');const events=globalThis.__vaiwlFaultUnknownTrace.events;
  if(abortEarly){assert(!events.some(e=>e.stage==='body-eof'));assert(!events.some(e=>e.stage==='protocol'||e.stage==='parser-reject'));assert(events.some(e=>e.stage==='signal-abort'&&e.source==='attempt'));}else assert(events.some(e=>e.stage==='parser-reject'));
+});
+// Synthetic replay of the two-operation shape only. No CI rows, real IDs,
+// timestamps, body payloads or credentials are copied into the trace fixture.
+function twoOperationReplay(){
+ const prior=structuredClone(events),current=events.map(event=>({...event,seq:event.seq+10,...event.entry?{entry:2}:{},...event.call?{call:2}:{},...event.detail?{detail:2}:{}}));
+ return {before:snapshot(prior),after:snapshot([...prior,...current]),rows:[{worker:true,method:'GET',requestStart:1,bodyRead:'COMPLETE'},{worker:true,method:'GET',requestStart:2,bodyRead:'FAILED'}],start:1,end:2};
+}
+test('same cleanup sequence with complete prior body and failed target capture is only a candidate, never inevitable causality',()=>{
+ const input=twoOperationReplay(),failed=summarizeFaultUnknownTrace(input);
+ assert.equal(failed.candidate.call,2);assert.equal(failed.candidate.requestStart,2);assert.equal(failed.candidate.firstAbortSource,'provider');assert.equal(failed.candidate.observation,'CANDIDATE_EOF_PARSE_REJECTION_BEFORE_CLEANUP');assert.equal(failed.candidate.browserBodyRead,'FAILED');
+ // Keep worker EOF/parser/cleanup identical and vary only the external capture
+ // outcome. Neither observation licenses strong identity or a causal verdict.
+ const captured=structuredClone(input);captured.rows[1].bodyRead='COMPLETE';const complete=summarizeFaultUnknownTrace(captured);
+ assert.equal(complete.candidate.browserBodyRead,'COMPLETE');assert.equal(complete.candidate.observation,failed.candidate.observation);assert.equal(complete.candidate.firstAbortSource,failed.candidate.firstAbortSource);
+ for(const result of [failed,complete]){assert.equal(result.status,'INCOMPLETE');assert.equal(result.acceptance,'NOT_ESTABLISHED');assert.equal(result.correlationComplete,false);assert.equal(result.correlation,'UNIQUE_ACTION_ORDER_CANDIDATE_NOT_STRONG_IDENTITY');assert.equal(result.reason,'no-cross-process-request-identity');}
+});
+test('prior EOF and parser rejection cannot replace a new action that aborts before EOF',()=>{
+ const input=twoOperationReplay();input.after.events=[...input.before.events,{seq:11,stage:'entry-start',entry:2},{seq:12,stage:'detail-dispatch',entry:2,call:2,detail:2},{seq:13,stage:'signal-abort',call:2,source:'attempt'},{seq:14,stage:'execute-cleanup',call:2}];
+ const result=summarizeFaultUnknownTrace(input);assert.equal(result.status,'INCOMPLETE');assert.equal(result.correlationComplete,false);assert.equal(result.candidate.call,2);assert.equal(result.candidate.requestStart,2);assert.equal(result.candidate.observation,'CANDIDATE_ABORT_BEFORE_EOF');assert.equal(result.candidate.bodyEOF,false);assert.equal(result.candidate.bodyBytes,null);assert.equal(result.candidate.protocolClass,null);assert.equal(result.candidate.parserReason,null);
+});
+test('real parser distinguishes missing conversation identity from unknown structure with a valid identity',()=>{
+ const conversationId='synthetic-conversation',parse=payload=>parseConversationMetadata({conversationId,principalId:null,payload:JSON.stringify(payload)});
+ for(const protocol of [undefined,'future-99']){
+  const marker=protocol===undefined?{}:{protocol};
+  assert.throws(()=>parse({...marker,payload:{opaque:true}}),{message:'conversation-identity-conflict'});
+  assert.throws(()=>parse({...marker,conversation_id:conversationId,payload:{opaque:true}}),{message:'invalid-conversation-mapping'});
+ }
+ // The marker alone is not the production rejection reason: both malformed
+ // structural shapes fail closed with or without that optional marker.
 });
