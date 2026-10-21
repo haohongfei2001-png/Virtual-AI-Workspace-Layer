@@ -1,4 +1,4 @@
-import {enterPartialNativeHistory} from './partial-native-surface.mjs';
+import {enterPartialNativeHistory,preparePartialHistoryUnmount} from './partial-native-surface.mjs';
 /** Actual packaged MV3 against PARTIAL reconstruction, never live ChatGPT. */
 import assert from 'node:assert/strict';
 import {tmpdir,platform} from 'node:os';
@@ -49,6 +49,9 @@ try{
   const row={nativeEntry,offset,limit:Number(new URL(request.url()).searchParams.get('limit')),method:request.method(),status:response.status(),context:(await request.allHeaders())['chatgpt-account-id'],windowed:data.windowed,nativeIds,observed:await waitObserved(offset)};report.paging.pages.push(row);
   report.results.push({name:offset===25?'native-scroll-25-overlap-window-replacement-preserves-observed-union':'native-scroll-50-window-replacement-preserves-scoped-unique-union',status:'PASS'});
  }
+ report.paging.unmountPreparation=await preparePartialHistoryUnmount(page);
+ assert.deepEqual(report.paging.requestOffsets,[25,50]);assert.deepEqual(server.snapshot().partialPageRequests,[25,50]);
+ await page.getByRole('button',{name:'返回工作空间',exact:true}).click();frame=await workspace();
  // DOM virtualization probe only: remove exposed native history rows, without
  // changing accounts, backing facts, current route, or adapter-owned UI.
  await page.locator('aside nav[aria-label="Chat history"]').evaluate(nav=>{nav.querySelectorAll('a').forEach(a=>a.remove());});

@@ -93,5 +93,19 @@ export async function observeAuthenticatedCsp({page,context,worker,extensionId,u
  const privateMarkers=raw.flatMap(v=>[v.grant.id,v.grant.scopeGrantId,v.scope]);
  const rescan=()=>scanCspPage({page,extensionId,privateMarkers});
  const proof={foreignProbePreservedNativeFocus:focusBefore===true&&focusAfter===true,branch:'ISOLATED_AUTHENTICATED',status:'PASS_NARROW_CSP_ISOLATED_AUTHENTICATED_SURFACES',frames,distinctRoleGrants:raw[0].grant.id!==raw[1].grant.id,distinctUIDocuments:raw[0].grant.uiDocumentId!==raw[1].grant.uiDocumentId,sameActualParent:raw[0].grant.parentDocumentId===raw[1].grant.parentDocumentId,sameMount:raw[0].grant.mountId===raw[1].grant.mountId,foreignSenderDenied:exactBlockedCandidatesReply(foreign),foreignSenderReturnedPrivateFields:!exactBlockedCandidatesReply(foreign),...await rescan()};
- return {proof,rescan};
+ const recheck=async()=>{for(let i=0;i<actualFrames.length;i++){if(actualFrames[i].isDetached())return false;const valid=await actualFrames[i].evaluate(async grant=>__faultCspRuntime.grant?.id===grant.id&&(await chrome.runtime.sendMessage({v:1,type:'HOST_UI_CANDIDATES',grantId:grant.id,mountId:grant.mountId,offset:0}))?.ok===true,raw[i].grant);if(!valid)return false;}return true;};
+ return {proof,rescan,recheck};
+}
+
+/** Native input deliberately surrenders overlays. Re-enter only through the real user control. */
+export async function prepareCspNativeClose(page){
+ const close=page.getByRole('button',{name:'返回原生阅读',exact:true});
+ const before={workspaceCloseVisible:await close.isVisible(),nativeReadingVisible:await page.locator('#reading').isVisible(),nativeComposerVisible:await page.locator('textarea').isVisible()};
+ let returnedThroughNativeControl=false;
+ if(!before.workspaceCloseVisible){
+  assert.equal(before.nativeReadingVisible,true,'closed workspace must already preserve native reading');assert.equal(before.nativeComposerVisible,true);
+  const back=page.getByRole('button',{name:'返回工作空间',exact:true});await back.waitFor({state:'visible'});await back.click();returnedThroughNativeControl=true;
+ }
+ await close.waitFor({state:'visible'});await page.getByRole('button',{name:'显示原生列表',exact:true}).waitFor({state:'visible'});
+ return {before,returnedThroughNativeControl,bothCloseControlsVisible:true};
 }

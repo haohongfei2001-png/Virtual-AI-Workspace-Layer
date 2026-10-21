@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 第五批：以实际推进证据收口（2026-10-21，基线f3877cfd）
+
+CI39551617583终态25成功/10失败，Node10354全过；全部J4、durability、UI LEGACY/MODERN与stale通过。实际六component图确认14px rail已关闭且按钮像素位置保持；idle草稿60004ms为有效NOT_OBSERVED而非自然睡眠PASS。native825000ms期限前完成56/64访且在正常预算等待，有完整计数，故仅此job调整25min/runner22min，其余15min和原预算/64访/8视觉cell不变。第五批修H提交回显、PARTIAL卸载触额外页、FAULT入口丢参数/CSP真实重入、idle真实返回bootstrap、pending首发预算边界及严格cold-trace诊断分类；旧inspection失败仍不追溯改绿。468项新合批定向通过，详见[第五批证据](evidence/cloud-ci-frontier-20261021/README.md)。继续ACTIVE，尚非完整云端/Free验收。
+
 ## 第四批：实际边界失败修正（2026-10-21，基线ebd35576）
 
 CI39530853596终态21成功/13失败/1取消，Node10244全过；完整原旅程、五J4、双J2与真实early-input通过。六component图确认顶部/标题栏修正，但desktop1168/1182暴露14px溢出，已按rail负margin作最小平衡修正，仍需实测。PARTIAL补真实原生surrender；pending debugger漏packageRoot为确定性runner错误已修；idle仍停初始化，新增失败诊断不得当自然观察。CSP按canonical条件语义改为严格双分支安全证据，不拿MAIN探针当extension阻断。native64场景近15分钟取消无进度证据，新增有界阶段报告/watchdog而非盲加时间。357项新合批定向通过；见[第四批证据](evidence/cloud-ci-boundaries-20261021/README.md)。继续ACTIVE，未完成Free/真实验收。

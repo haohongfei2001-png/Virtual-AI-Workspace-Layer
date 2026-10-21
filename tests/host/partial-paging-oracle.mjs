@@ -38,6 +38,7 @@ export function assertPartialPaging(paging){
  for(const p of paging.pages){assert.deepEqual(p.nativeEntry,{kind:'GENUINE_NATIVE_COMPOSER_SURRENDER',openOwnedSurfaces:0,nativeHistoryVisible:true});assert.equal(p.method,'GET');assert.equal(p.status,200);assert.equal(p.limit,25);assert.equal(p.context,world.contextId);assert.equal(p.windowed,true);assert.deepEqual(p.nativeIds,partialPageIds(p.offset));assertPartialObserved(p.observed,p.offset);}
  assert.deepEqual(paging.requestOffsets,[25,50],'no hidden full-history fetch');
  assert.deepEqual(paging.serverRequestOffsets,[25,50],'worker or native must not scan unseen pages');
+ assert.deepEqual(paging.unmountPreparation,{kind:'GENUINE_NATIVE_WHEEL_TO_TOP',scrollTop:0,scrollInputDrained:true},'unmount must not manufacture another native bottom-scroll');
  assert.deepEqual(paging.unmountTransition,{surfacesClosed:true,returnControlVisible:true,renamedAdmitted:true,workspaceReentered:true},'native history mutation must surrender, admit rename and explicitly return');
  assert.equal(paging.afterUnmount.titles[world.conversations[999].id],'Archive conversation 1000 refreshed');
  assertPartialObserved(paging.afterUnmount,50);assertPartialObserved(paging.afterSearch,50,{searched:true});

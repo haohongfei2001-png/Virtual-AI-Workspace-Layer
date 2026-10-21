@@ -1,3 +1,4 @@
+import {waitForBudgetExpiry} from './fixtures/budget-expiry-wait.mjs';
 /** Existing-source pending repair S candidate. TEST ONLY; browser execution is
  * opt-in. Two genuine fixture sends, unchanged product package and budgets.
  * This runner does not replace the continuous J4 journey or any SYS02 case.
@@ -24,7 +25,7 @@ import {PENDING_REPAIR_LIMITS,setPendingRepairStage,assertExistingSourcePending,
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex'),sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const key=scope=>JSON.stringify([scope.provider,scope.accountId,scope.organizationId]);
-const files=['existing-source-pending-repair-journey.mjs','existing-source-pending-repair-oracle.mjs','existing-source-pending-repair-browser-read.mjs','j4-package-journey.mjs','j4-debugger-transport.mjs','j4-joint-interruption.mjs','j4-evidence-recovery.mjs','j4-evidence-interruption.mjs','j4-report-cleanup.mjs','cold-context-trace.mjs','native-visibility-browser.mjs','isolated-browser-cleanup.mjs','historical-network-guard.mjs','sys05-startup-precondition.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/j4-assets.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','fixtures/ui10-conversation-title.mjs','expected/modern.mjs'];
+const files=['fixtures/budget-expiry-wait.mjs','existing-source-pending-repair-journey.mjs','existing-source-pending-repair-oracle.mjs','existing-source-pending-repair-browser-read.mjs','j4-package-journey.mjs','j4-debugger-transport.mjs','j4-joint-interruption.mjs','j4-evidence-recovery.mjs','j4-evidence-interruption.mjs','j4-report-cleanup.mjs','cold-context-trace.mjs','native-visibility-browser.mjs','isolated-browser-cleanup.mjs','historical-network-guard.mjs','sys05-startup-precondition.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/j4-assets.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','fixtures/ui10-conversation-title.mjs','expected/modern.mjs'];
 export function pendingRepairPlan(){return {status:'NOT_RUN',S:'NOT_RUN',scopeFeasibility:'NOT_ESTABLISHED_NORMAL_SURFACE_CAN_INVALIDATE_NATIVE_WITNESS',specRevision:'VA-HOST/1.1 FINAL',requirement:'SYS-02 / SYS-01 / J4 existing-source pending repair S slice',profile:'MODERN_C2_CONVERSATION_GET_OFFLINE',sourceCommit:process.env.FREE_SOURCE_COMMIT??null,dirtyPatchHash:process.env.FREE_DIRTY_PATCH_HASH??null,workingTreePatch:'NOT_MEASURED_BY_RUNNER',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',fullSYS02:'NOT_ESTABLISHED',fullJ4:'NOT_ESTABLISHED',limits:PENDING_REPAIR_LIMITS,steps:[],errors:[],limitations:['One existing persisted ACK source, one pending-before-Evidence-apply cut only','Missing initial ACK source, post-Evidence/pre-completion cut, capacity/quota/GC stress NOT_RUN','Full supported-profile matrix, full J4 and other SYS02 subcases NOT_RUN','Fresh post-repair send/successor ACK, unloaded branches, physical crash/disk quota NOT_RUN','G/U, physical devices, PAIA and performance/p95 NOT_RUN'],instrumentation:'PASSIVE_UI_REPLY_OBSERVER_AND_REAL_DEBUGGER_FAULT_CONTROL; NOT_PERFORMANCE_EVIDENCE'};}
 /** Test scheduling only: inspect existing reservations; never reserve/reset them.
  * One current read needs session + accounts + conversation GETs and one attempt.
@@ -50,6 +51,10 @@ export function pendingRepairPresentationSnapshot(){
  const buttons=[...document.querySelectorAll('button[aria-label="返回工作空间"]')].slice(0,8);
  const visible=node=>{const box=node.getBoundingClientRect(),style=getComputedStyle(node);return node.isConnected&&box.width>0&&box.height>0&&style.display!=='none'&&style.visibility!=='hidden';};
  return {documentVisible:document.visibilityState==='visible',documentFocused:document.hasFocus(),ownedOpen:count('[data-va-owned]:popover-open'),ownedFrames:count('iframe[data-va-owned]'),returnControls:count('button[aria-label="返回工作空间"]'),returnVisible:buttons.filter(visible).length,returnDisabled:buttons.filter(node=>node.disabled).length,nativeDialogOpen:!!document.querySelector('#native-dialog[open]'),nativeModalCount:count('dialog:modal'),nativePopoverCount:Math.min(64,[...document.querySelectorAll(':popover-open')].filter(node=>!node.hasAttribute('data-va-owned')).length)};
+}
+export async function waitPendingRepairFreshWindow(budget,options){
+ assertPendingRepairBudget(budget);
+ return waitForBudgetExpiry(budget.startedAt,options);
 }
 export async function preparePendingRepairPackage(directory,origin){
  const built=packageHost(directory,{offlineOrigin:origin,offlineContext:true,offlineExistingSend:true,offlineHistory:true});
@@ -111,8 +116,8 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   diagnosticRead=()=>{if(!probe||probe.isClosed())throw Error('failure-inspector-unavailable');return probe.evaluate(readPendingRepairState,{scope:personal,origin:server.origin});};
   async function native(){await a.bringToFront();await a.locator('#model-button').click();await a.locator('#native-dialog').getByRole('button',{name:'Close',exact:true}).click();}
   async function workspace(){await a.bringToFront();await poll(async()=>{if(await a.locator('[data-va-owned]:popover-open').count()===2)return true;const back=a.getByRole('button',{name:'返回工作空间',exact:true});if(await back.isVisible()){await back.click();return true;}return false;},'workspace-return');return frame(a);}
-  const budgetObservations=[];
-  async function budgetWindow(){const budget=assertPendingRepairBudget((await inspect()).budget);budgetObservations.push(budget);const waitMs=Math.max(0,budget.startedAt+30001-Date.now());if(waitMs)await sleep(waitMs);assert(Date.now()>budget.startedAt+30000);return {waitMs,budget};}
+  const budgetObservations=[];report.budgetObservations=budgetObservations;
+  async function budgetWindow(){const budget=assertPendingRepairBudget((await inspect()).budget);budgetObservations.push(budget);const waitMs=await waitPendingRepairFreshWindow(budget);return {waitMs,budget};}
   async function readCapacity(){const value=await waitPendingRepairReadCapacity({read:async()=>(await inspect()).budget});budgetObservations.push(...value.observations);report.readCapacityChecks??=[];report.readCapacityChecks.push({stage:report.stage,waitMs:value.waitMs,observations:value.observations});}
   stage('INITIAL_CONTEXT_AND_ASSETS');
   b=await startup.run(()=>context.newPage(),'initial-peer-page');b.on('pageerror',error=>appendPendingDiagnostic(report,'errors',error,'peer-pageerror'));await startup.run(()=>b.goto(server.origin+'/c/'+J4_REF,{timeout:startup.remaining('initial-native-navigation')}),'initial-native-navigation');await ready(b,team,J4_REF,startup);report.startup.elapsedMs=startup.elapsedMs();
@@ -127,8 +132,8 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   // The first send leaves the native title unchanged. Release only the fixture's
   // pre-existing response hold; no restart occurs until its ACK source exists.
   stage('FIRST_SEND_AND_ACK');
-  await budgetWindow();await native();await a.locator('#j4-rename-on-send').uncheck();await a.locator('textarea').fill('Existing source before pending repair');await a.locator('button[type="submit"]').click();
-  const first=await poll(()=>{const value=server.snapshot().interruption;return value.accepts===1?value.rows.at(-1):null;},'first-real-native-send');server.releaseInterruption();
+  stage('FIRST_SEND_BUDGET');await budgetWindow();stage('FIRST_SEND_NATIVE_INPUT');await native();await a.locator('#j4-rename-on-send').uncheck();await a.locator('textarea').fill('Existing source before pending repair');await a.locator('button[type="submit"]').click();
+  stage('FIRST_SEND_ACK_READ');const first=await poll(()=>{const value=server.snapshot().interruption;return value.accepts===1?value.rows.at(-1):null;},'first-real-native-send');server.releaseInterruption();
   const baseline=await poll(async()=>{const value=await inspect();return Object.values(value.evidence.hints).filter(h=>h.messageId===first.id).length===1?value:null;},'persisted-first-ACK-source');
   assert.equal(baseline.native.refs[J4_SEND_C].nativeTitle,'Membership not loaded');assert.equal(baseline.continuations.filter(row=>row.state==='pending-evidence').length,0);assert.deepEqual(baseline.assets,preserved);
   record('first-real-send-persists-existing-ACK-source-before-second-send',{messageId:first.id,ACKs:1,nativeSends:1});

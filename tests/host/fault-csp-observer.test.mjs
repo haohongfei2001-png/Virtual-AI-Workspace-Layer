@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';
-import {installCspObservation,cspObservationScript,installCspMountObservation,copyCspMessage,exactBlockedCandidatesReply,scanCspPage,cspDomStrings,cspLeaks,exactCspControlMessage} from './fault-csp-observer.mjs';
+import {installCspObservation,cspObservationScript,installCspMountObservation,copyCspMessage,exactBlockedCandidatesReply,scanCspPage,prepareCspNativeClose,cspDomStrings,cspLeaks,exactCspControlMessage} from './fault-csp-observer.mjs';
 test('extension observer preserves original Promise, request and reply without authority fabrication',async()=>{
  const replies=[],events=[],calls=[];const sandbox={location:{protocol:'chrome-extension:',pathname:'/workspace.html'},chrome:{runtime:{sendMessage(...args){calls.push(args);return replies.shift();}}},__faultCspRecord:event=>{events.push(event);return Promise.resolve();}};
  vm.runInNewContext('('+installCspObservation.toString()+')()',sandbox);
@@ -53,3 +53,12 @@ test('historical capture includes page-readable script/style and removed owned s
  observers[0]([{type:'childList',target:shadowTarget,addedNodes:[],removedNodes:[text('shadow-transient-title')]}]);
  assert(sandbox.__faultCspPage.dom.includes('private-SCRIPT'));assert(sandbox.__faultCspPage.dom.includes('private-STYLE'));assert(sandbox.__faultCspPage.shell.includes('shadow-transient-title'));
 });
+
+function nativeClosePage({open=false,native=true,returnWorks=true,returnAvailable=true}={}){
+ const clicks=[];return {clicks,getByRole(_,{name}){return {isVisible:async()=>open,waitFor:async()=>{if(name==='返回工作空间'&&!returnAvailable)throw Error('return-control-missing');if(name!=='返回工作空间'&&!open)throw Error('surface-not-open');},click:async()=>{clicks.push(name);if(name==='返回工作空间'&&returnWorks)open=true;}};},locator(){return {isVisible:async()=>native};}};
+}
+test('native-input-surrender uses real return control before both close controls',async()=>{const page=nativeClosePage();const r=await prepareCspNativeClose(page);assert.equal(r.returnedThroughNativeControl,true);assert.deepEqual(page.clicks,['返回工作空间']);assert.equal(r.bothCloseControlsVisible,true);});
+test('already open surfaces need no simulated native return',async()=>{const page=nativeClosePage({open:true});const r=await prepareCspNativeClose(page);assert.equal(r.returnedThroughNativeControl,false);assert.deepEqual(page.clicks,[]);});
+test('missing native fallback or failed return never skips close gate',async()=>{await assert.rejects(()=>prepareCspNativeClose(nativeClosePage({native:false})));await assert.rejects(()=>prepareCspNativeClose(nativeClosePage({returnWorks:false})));});
+
+test('missing genuine return button fails instead of forcing popover',async()=>{const page=nativeClosePage({returnAvailable:false});await assert.rejects(()=>prepareCspNativeClose(page),/return-control-missing/);assert.deepEqual(page.clicks,[]);});

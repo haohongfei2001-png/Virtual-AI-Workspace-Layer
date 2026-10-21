@@ -1,3 +1,4 @@
+import {assertColdTraceMissingReceipt,coldTraceNotObserved} from './context-cold-trace-outcome.mjs';
 import assert from 'node:assert/strict';
 import {inspectJ3Failure} from './j3-failure-inspection.mjs';
 import {installJ4GrantObserver} from './j4-grant-observer.mjs';
@@ -17,7 +18,7 @@ const forcedColdRecovery=process.argv[3]==='cold-unavailable-recovery';
 const containerConversation=process.argv[3]==='container',C='33333333-3333-4333-8333-333333333333',containerPath='/g/g-p-11111111111111111111111111111111/c/'+C,server=await createVariantHostFixtureServer({profile:'MODERN',containerConversation,coldInitialUnavailable:forcedColdRecovery}),dir=await mkdtemp(join(tmpdir(),'vaiwl-c2-package-')),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineContext:true});
 const info=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8')),hash=v=>createHash('sha256').update(v).digest('hex');
 const script=new URL(import.meta.url),scriptHash=hash(await readFile(script)),boundaryHelper=new URL('./context-cold-boundary.mjs',import.meta.url),boundaryHelperHash=hash(await readFile(boundaryHelper)),projectionOracle=new URL('./expected/modern.mjs',import.meta.url),projectionOracleHash=hash(await readFile(projectionOracle));
-const inspectionFiles=['j3-failure-inspection.mjs','j3-failure-closures.mjs','j4-grant-observer.mjs','j4-joint-interruption.mjs','context-cold-recovery-oracle.mjs'];
+const inspectionFiles=['context-cold-trace-outcome.mjs','j3-failure-inspection.mjs','j3-failure-closures.mjs','j4-grant-observer.mjs','j4-joint-interruption.mjs','context-cold-recovery-oracle.mjs'];
 const inspectionHashes=Object.fromEntries(await Promise.all(inspectionFiles.map(async name=>[name,hash(await readFile(new URL(name,import.meta.url)))])));
 const report={containerConversation,inspectionHashes,scriptHash,boundaryHelperHash,projectionOracleHash,startupMode:['cold','cold-trace','cold-recovery','cold-unavailable-recovery'].includes(process.argv[3])?'COLD_IMMEDIATE_AFTER_LOAD_UNPACKED':'WORKER_READY_PRECONDITION',evidence:'REAL_HEADLESS_PACKAGED_MV3_OFFLINE_C2',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',profileScope:'CONVERSATION_GET_ONLY_NOT_FULL_MODERN_ACCEPTANCE',package:built,fixture:server.manifest,sourceHashes:info.sourceHashes,results:[],errors:[]};let context,page,worker,extensionId;
 try{
@@ -63,8 +64,8 @@ try{
  report.results.push({name:'C2-native-request-authenticated-roster-second-context-to-native-Free-UI',status:'PASS',scopeCount:scopes.length});
  assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');assert.deepEqual(report.errors,[]);report.browserVersion=context.browser().version();report.status='PASS';
  }catch(error){
- report.status=context?'FAIL':'NOT_RUN_BROWSER_STARTUP';report.error=error.stack;process.exitCode=1;report.diagnosticErrors=[];
- try{report.failure=await page?.evaluate(()=>({url:location.href,state:document.documentElement.dataset.vaiwlState,reason:document.documentElement.dataset.vaiwlReason,owned:document.querySelectorAll('[data-va-owned]').length,open:document.querySelectorAll('[data-va-owned]:popover-open').length,returns:document.querySelectorAll('button[data-va-owned][aria-label="返回工作空间"]').length,body:document.querySelector('#reading')?.outerHTML}));}catch(e){report.diagnosticErrors.push({stage:'page',error:String(e)});}
+ report.status=context?'FAIL':'NOT_RUN_BROWSER_STARTUP';report.error=error.stack;report.errorName=error.name;process.exitCode=1;report.diagnosticErrors=[];
+ try{report.failure=await page?.evaluate(()=>({url:location.href,state:document.documentElement.dataset.vaiwlState,reason:document.documentElement.dataset.vaiwlReason,owned:document.querySelectorAll('[data-va-owned]').length,open:document.querySelectorAll('[data-va-owned]:popover-open').length,returns:document.querySelectorAll('button[data-va-owned][aria-label="返回工作空间"]').length,nativeReading:!!document.querySelector('#reading'),nativeComposer:!!document.querySelector('#prompt-textarea'),body:document.querySelector('#reading')?.outerHTML}));}catch(e){report.diagnosticErrors.push({stage:'page',error:String(e)});}
  try{report.native=server.snapshot();}catch(e){report.diagnosticErrors.push({stage:'native',error:String(e)});}
  // Attach only after the original failure. Never warm the cold worker or create a world.
  if(context&&page&&extensionId)try{report.failureInspection=await inspectJ3Failure({context,page,browser:context.browser(),extensionId});}catch{report.failureInspection={error:'failure-inspection-unavailable'};}
@@ -77,6 +78,7 @@ try{
   report.inspectionChangedDuringRun=(await Promise.all(Object.entries(inspectionHashes).map(async([name,value])=>hash(await readFile(new URL(name,import.meta.url)))!==value))).some(Boolean);
   if(report.sourceChangedDuringRun||report.scriptChangedDuringRun||report.inspectionChangedDuringRun)throw Error('C2-source-integrity-changed');
  }]]);if(!clean)process.exitCode=1;
+ if(clean&&process.argv[3]==='cold-trace'&&report.status==='FAIL'){try{report.diagnosticOutcome=assertColdTraceMissingReceipt(report);report.originalFailureStatus=report.status;report.status=coldTraceNotObserved;process.exitCode=2;}catch{/* Unproven failures retain original FAIL and exit 1. */}}
  await writeFile(process.argv[2]??join(dir,'report.json'),JSON.stringify(report,null,2)+'\n');
 }
 console.log(JSON.stringify(report));

@@ -153,8 +153,16 @@ test('new overflow slice cannot replace the original diagnostic or manufacture f
 });
 
 test('supplementary gates stay finite and do not promote idle non-observation to acceptance',()=>{
- const body=workflow.split('  cloud-supplementary-gates:')[1];assert(body);assert.match(body,/github.event.repository.private == false/);assert.match(body,/github.event_name == 'push'/);assert.match(body,/max-parallel: 3/);assert.match(body,/timeout-minutes: 15/);assert.match(body,/persist-credentials: false/);assert.doesNotMatch(body,/continue-on-error|upload-artifact|actions\/cache|secrets\./);
+ const body=workflow.split('  cloud-supplementary-gates:')[1];assert(body);assert.match(body,/github.event.repository.private == false/);assert.match(body,/github.event_name == 'push'/);assert.match(body,/max-parallel: 3/);assert.match(body,/timeout-minutes: \$\{\{ matrix\.gate == 'populated-native' && 25 \|\| 15 \}\}/);assert.match(body,/persist-credentials: false/);assert.doesNotMatch(body,/continue-on-error|upload-artifact|actions\/cache|secrets\./);
  for(const gate of ['privacy-main','privacy-isolated','idle-draft-active','idle-safe-empty-reading','populated-native','existing-source-repair'])assert(body.includes(gate));
  assert.match(body,/NATURAL_IDLE_NOT_OBSERVED/);assert.match(body,/naturalWorkerSleep==='PASS'/);assert.match(body,/Number.isFinite\(r.observation\?\.elapsedMs\)/);assert.match(body,/Finite observation only/);
  assert.match(body,/existing-source-pending-repair-journey.mjs.*--execute-browser/);assert.match(body,/fault-package-matrix-browser.mjs/);
+});
+
+test('only populated-native gets the evidence-backed longer finite job window',()=>{
+ const body=workflow.split('  cloud-supplementary-gates:')[1];
+ const match=body.match(/timeout-minutes: \$\{\{ matrix\.gate == '([^']+)' && (\d+) \|\| (\d+) \}\}/);
+ assert(match);assert.equal(match[1],'populated-native');assert.equal(Number(match[2]),25);assert.equal(Number(match[3]),15);
+ const gates=body.match(/gate: \[([^\]]+)\]/)[1].split(',').map(v=>v.trim());assert.equal(gates.filter(g=>g===match[1]).length,1);
+ for(const gate of [...gates,'populated-native-extra','other'])assert.equal(gate===match[1]?Number(match[2]):Number(match[3]),gate==='populated-native'?25:15);
 });

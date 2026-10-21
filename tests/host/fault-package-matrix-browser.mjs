@@ -5,12 +5,12 @@ import {tmpdir,platform} from 'node:os';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
-import {createHostFixtureServer} from './fixtures/server.mjs';
+import {createVariantHostFixtureServer as createHostFixtureServer} from './fixtures/variants-server.mjs';
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
 import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
 import {faultCases,assertFaultObservation,assertFaultPackageReport} from './fault-package-contract.mjs';
-import {cspObservationScript,installCspMountObservation,observeAuthenticatedCsp,scanCspPage} from './fault-csp-observer.mjs';
+import {cspObservationScript,installCspMountObservation,observeAuthenticatedCsp,scanCspPage,prepareCspNativeClose} from './fault-csp-observer.mjs';
 import {runCspPositiveControl} from './fault-csp-control-browser.mjs';
 const requestedCases=process.argv[3]?process.argv[3].split(','):faultCases;
 assert(requestedCases.length&&new Set(requestedCases).size===requestedCases.length&&requestedCases.every(f=>faultCases.includes(f)),'unknown or repeated fault');
@@ -24,10 +24,10 @@ async function until(check,ms=15000){const end=Date.now()+ms;while(Date.now()<en
 async function database(worker){return worker.evaluate(async()=>{const output={persistedNativeStates:0,forgedScopePersisted:false};for(const row of await indexedDB.databases()){const db=await new Promise((resolve,reject)=>{const q=indexedDB.open(row.name);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});try{if(!db.objectStoreNames.contains('native_states'))continue;const records=await new Promise((resolve,reject)=>{const tx=db.transaction('native_states'),q=tx.objectStore('native_states').getAll();tx.oncomplete=()=>resolve(q.result);tx.onabort=()=>reject(tx.error);});output.persistedNativeStates+=records.length;output.forgedScopePersisted ||= records.some(row=>JSON.stringify(row).includes('attacker-chosen-scope'));}finally{db.close();}}return output;});}
 for(const fault of requestedCases){
  const result={fault,status:'NOT_RUN',packagedMV3:false,triggerObserved:false};report.results.push(result);
- let server,guard,handle,dir,build,built,page,cspRescan,cspMountsBefore,phase='setup';
+ let server,guard,handle,dir,build,built,page,cspRescan,cspRecheck,cspMountsBefore,phase='setup';
  try{
   server=await createHostFixtureServer({profile:'FAULT',fault,...(['rate-limit','corrupt','unknown-protocol'].includes(fault)?{faultNativeBody:true}:{})});guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});dir=await mkdtemp(join(tmpdir(),'vaiwl-fault-'+fault+'-'));
-  built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,...(['rate-limit','corrupt','unknown-protocol'].includes(fault)?{offlineHistory:true}:{})});build=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));result.sourceHashes=build.sourceHashes;result.metadataReadEnabled=build.offlineHistory===true;result.fixture=server.manifest;
+  built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,...(['rate-limit','corrupt','unknown-protocol'].includes(fault)?{offlineHistory:true}:{})});build=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));result.sourceHashes=build.sourceHashes;result.metadataReadEnabled=build.offlineHistory===true;result.fixture=server.manifest;if(['rate-limit','corrupt','unknown-protocol'].includes(fault))assert.equal(result.fixture.faultNativeBody,true,'independent native body fixture must be enabled at actual server entry');
   phase='launch';handle=await launchNativeVisibilityBrowser({chromium,executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium'),profileDir:join(dir,'profile'),headed:false,historicalNetworkGuard:guard.config});
   const {context,browser}=handle;context.setDefaultTimeout(15000);context.setDefaultNavigationTimeout(15000);
   const responses=[],responseTasks=[];context.on('response',response=>{const request=response.request(),url=new URL(response.url());if(url.origin!==server.origin)return;const row={path:url.pathname,status:response.status(),worker:!!request.serviceWorker()};responses.push(row);if(url.pathname==='/backend-api/conversation/'+C&&['corrupt','unknown-protocol'].includes(fault))responseTasks.push(response.json().then(body=>{row.invalidJSON=false;row.unknownSchema=body.protocol==='future-99'&&!body.mapping;},error=>{row.invalidJSON=error?.name==='SyntaxError';row.unknownSchema=false;}));});
@@ -89,7 +89,7 @@ for(const fault of requestedCases){
     const control=await runCspPositiveControl({chromium,sourceHashes:build.sourceHashes,until});result.cspNoPolicyControl=control;
     cspRescan=()=>scanCspPage({page,extensionId:id,privateMarkers:[...cspMarkers]});
     result.cspProof={branch:'PACKAGE_BLOCKED',status:'PASS_NARROW_CSP_BLOCKED_NATIVE_PRESERVED',noCspPositiveControl:control.status==='PASS_AUTHENTICATED_NO_CSP_CONTROL'&&control.sameSource&&control.cleanupOK,successfulPrivateViews:cspRuntimeCounts.privateViews,nativeRetainedBeforeCorrectiveToggle:await page.locator('textarea').isVisible(),...await cspRescan()};
-   }else{const observed=await observeAuthenticatedCsp({page,context,worker,extensionId:id,until});result.cspProof=observed.proof;cspRescan=observed.rescan;}
+   }else{const observed=await observeAuthenticatedCsp({page,context,worker,extensionId:id,until});result.cspProof=observed.proof;cspRescan=observed.rescan;cspRecheck=observed.recheck;}
    cspMountsBefore=await page.evaluate(()=>({...__faultCspMounts}));
 
 
@@ -104,6 +104,7 @@ for(const fault of requestedCases){
   }
   phase='native-continuity';
   // Return to the native reading surface when a healthy pair is open.
+  if(fault==='csp'&&result.cspProof.branch==='ISOLATED_AUTHENTICATED'){result.cspProof.nativeClosePreparation=await prepareCspNativeClose(page);result.cspProof.sameAuthenticatedGrantsBeforeClose=await cspRecheck();assert.equal(result.cspProof.sameAuthenticatedGrantsBeforeClose,true);}
   const nativeReading=page.getByRole('button',{name:'返回原生阅读',exact:true});if(fault==='csp'&&result.cspProof.branch==='ISOLATED_AUTHENTICATED'){await nativeReading.waitFor({state:'visible'});await nativeReading.click();result.cspProof.workspaceNativeCloseExercised=true;}else if(fault!=='unsafe-reading'&&await nativeReading.isVisible())await nativeReading.click();
   if(fault==='csp'){const nativeList=page.getByRole('button',{name:'显示原生列表',exact:true});if(result.cspProof.branch==='ISOLATED_AUTHENTICATED'){await nativeList.waitFor({state:'visible'});await nativeList.click();result.cspProof.bothNativeCloseControlsExercised=result.cspProof.workspaceNativeCloseExercised===true;}else result.cspProof.bothNativeCloseControlsExercised='NOT_APPLICABLE_BLOCKED';}
   if(fault!=='csp')await page.locator('textarea').fill('FAULT_OFFLINE_UNSENT_DRAFT');await page.evaluate(()=>{globalThis.faultEditor=document.querySelector('textarea');});

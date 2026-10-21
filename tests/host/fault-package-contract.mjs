@@ -17,7 +17,7 @@ export function assertFaultObservation(c){
   case 'iframe-destroy':assert(c.removedOwnedFrames>0);assert.equal(c.privateFrames,0);assert.equal(c.staleGrantRevocation,'NOT_ESTABLISHED_NO_PRIOR_JOIN');break;
   case 'stale-response':assert.equal(c.heldNativeRoute,true);assert.equal(c.freshRouteBeforeRelease,true);assert.equal(c.releasedResponses,1);assert.equal(c.lateNativeRouteReplacedCurrent,true);assert.equal(c.projectionMatchesActualNativeRoute,true);assert.equal(c.oldWorkerEpochRejection,'NOT_ESTABLISHED_NATIVE_ROUTE_FIXTURE');break;
   default:
-   assert.deepEqual(c.nativeMessageIds,['msg-self']);assert.equal(c.metadataReadEnabled,true);assert(c.nativeMetadataResponses>0);assert(c.workerMetadataResponses>0);assert.equal(c.calibrationTerminal,'unavailable');
+   assert.equal(c.fixture?.faultNativeBody,true);assert.deepEqual(c.nativeMessageIds,['msg-self']);assert.equal(c.metadataReadEnabled,true);assert(c.nativeMetadataResponses>0);assert(c.workerMetadataResponses>0);assert.equal(c.calibrationTerminal,'unavailable');
    assert(c.workerMetadataResponses<=3);assert.equal(c.workerRequestsStableAfterTerminal,true);
    if(c.fault==='rate-limit')assert.equal(c.metadataStatus,429);
    if(c.fault==='corrupt')assert.equal(c.invalidJSON,true);

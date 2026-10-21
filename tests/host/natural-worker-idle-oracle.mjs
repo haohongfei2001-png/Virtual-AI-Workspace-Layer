@@ -98,3 +98,15 @@ export async function finishIdleObservationDeadline(started,windowMs,{now,sleep}
  }
  return current;
 }
+
+/** Mount completion is distinct from presentation: normal native surrender may
+ * leave authorized frames in reading mode with the production return control. */
+export function idleBootstrapAction(facts,prefix){
+ if(facts?.readyState!=='complete'||facts.visibility!=='visible')return 'WAIT';
+ assert(Number.isSafeInteger(facts.returnCount)&&facts.returnCount>=0&&facts.returnCount<=1,'duplicate bootstrap return');
+ const frames=facts.frames;
+ if(!Array.isArray(frames)||frames.length!==2||!frames.every(frame=>frame.connected===true)||new Set(frames.map(f=>f.src)).size!==2||!['workspace','sidebar'].every(role=>frames.some(f=>f.src===prefix+role+'.html')))return 'WAIT';
+ if(facts.open===2)return 'READY';
+ if(facts.open===0&&facts.returnCount===1&&facts.returnVisible===true)return 'NATIVE_RETURN_ONCE';
+ return 'WAIT';
+}

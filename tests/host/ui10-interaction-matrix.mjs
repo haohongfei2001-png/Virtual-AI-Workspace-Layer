@@ -1,3 +1,4 @@
+import {selectUi10Horizon} from './ui10-horizon-commit.mjs';
 import {readUi10Geometry,inspectUi10Search} from './ui10-interaction-readiness.mjs';
 import {assertUi10ReadingReturn} from './ui10-dom-contract.mjs';
 /** Actual controls only. Reconstructed from task-visible history; not full v2.7. */
@@ -14,9 +15,8 @@ export async function exerciseUi10Interactions({page,frames,workspace,continuity
  for(const [view,visible]of [['sidebar-closed',false],['sidebar-open',true]]){await frames.sidebar.getByRole('button',{name:'折叠主题导航',exact:true}).click();assert.equal(await frames.sidebar.locator('.themes').isVisible(),visible);await record(view);}
  if(await button('工作空间设置').getAttribute('aria-expanded')!=='true')await button('工作空间设置').click();
  const select=()=>frames.workspace.getByRole('combobox',{name:'工作空间时间范围',exact:true});assert.deepEqual(await select().locator('option').evaluateAll(ns=>ns.map(n=>n.value)),['auto','7','14','30','60','90']);
- async function committed(value){await frames.workspace.waitForFunction(value=>{const root=[...document.querySelectorAll('[data-vaiwl-owned]')].find(n=>n.shadowRoot?.querySelector('.workspace'))?.shadowRoot,n=root?.querySelector('select[aria-label="工作空间时间范围"]');return n?.value===value&&n.getAttribute('aria-disabled')==='false'&&!root.textContent.includes('时间范围更新失败');},value,{timeout:6000});}
- for(const value of UI10_H_POLICIES){await select().selectOption(value);await committed(value);r.hPolicies.push(value);await continuity();}
- await record('H-settings',{geometry:await geometry(frames.workspace.getByRole('region',{name:'工作空间设置',exact:true}))});await select().selectOption('30');await committed('30');await button('关闭设置').click();
+ for(const value of UI10_H_POLICIES){await selectUi10Horizon(frames.workspace,select,value,r.hPolicies);r.hPolicies.push(value);await continuity();}
+ await record('H-settings',{geometry:await geometry(frames.workspace.getByRole('region',{name:'工作空间设置',exact:true}))});await selectUi10Horizon(frames.workspace,select,'30',r.hPolicies);await button('关闭设置').click();
  await frames.sidebar.getByRole('button',{name:'当前工作集',exact:true}).click();const working=frames.workspace.getByRole('region',{name:'当前工作集',exact:true});await frames.workspace.getByText('当前工作集尚未保存窗口。',{exact:true}).waitFor();await record('working-set',{geometry:await geometry(working)});await working.getByRole('button',{name:'返回主题视图',exact:true}).click();
  if(await button('工作空间设置').getAttribute('aria-expanded')!=='true')await button('工作空间设置').click();await button('已保存片段').click();const snippets=frames.workspace.getByRole('region',{name:'片段管理',exact:true});await record('snippets',{geometry:await geometry(snippets)});await snippets.getByRole('button',{name:'返回工作空间',exact:true}).click();frames=await workspace();if(await button('工作空间设置').getAttribute('aria-expanded')==='true')await button('关闭设置').click();
  await frames.sidebar.getByRole('button',{name:'查找已知项目与聊天',exact:true}).click();

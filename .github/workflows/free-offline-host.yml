@@ -75,7 +75,12 @@ jobs:
         run: node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold.json" cold
       - name: C2 cold passive diagnostic copy (not package acceptance)
         if: ${{ !cancelled() && github.event_name == 'push' }}
-        run: node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold-trace.json" cold-trace
+        run: |
+          set +e
+          node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold-trace.json" cold-trace
+          result=$?
+          set -e
+          node tests/host/context-cold-trace-outcome.mjs "$RUNNER_TEMP/context-cold-trace.json" "$result"
       - name: Separate cold safety boundary and genuine native navigation recovery
         if: ${{ !cancelled() && github.event_name == 'push' }}
         run: node tests/host/context-package-mv3-browser.mjs "$RUNNER_TEMP/context-cold-recovery.json" cold-recovery
@@ -454,7 +459,7 @@ jobs:
     # Finite explicit offline cases, synthetic fixtures only. No artifacts or live credentials.
     if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.event_name == 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: ${{ matrix.gate == 'populated-native' && 25 || 15 }}
     strategy:
       fail-fast: false
       max-parallel: 3

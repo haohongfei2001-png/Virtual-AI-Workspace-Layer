@@ -1,7 +1,11 @@
 import {writeFileSync,renameSync} from 'node:fs';
+// Hosted run 39551617583 completed 56/64 visits in 820248ms.
+// 22 minutes covers the ~16-minute ingestion projection plus 8 visual cells.
+// Only its CI job gets 25 minutes; cleanup hard-stop remains 15 seconds.
+export const UI10_NATIVE_DEADLINE_MS=22*60*1000;
 /** Synthetic harness metadata only; no DOM, account, query, or response bodies. */
-export function createUi10NativeProgress({report,output,now=Date.now,schedule=setTimeout,cancel=clearTimeout,log=console.log,onTimeout=()=>{},sample=()=>({}),deadlineMs=825000}){
- if(!(deadlineMs>0&&deadlineMs<=840000))throw Error('invalid-ui10-overall-deadline');
+export function createUi10NativeProgress({report,output,now=Date.now,schedule=setTimeout,cancel=clearTimeout,log=console.log,onTimeout=()=>{},sample=()=>({}),deadlineMs=UI10_NATIVE_DEADLINE_MS}){
+ if(!(deadlineMs>0&&deadlineMs<=UI10_NATIVE_DEADLINE_MS))throw Error('invalid-ui10-overall-deadline');
  const started=now();let timedOut=false,finished=false;report.finalized=false;
  function persist(){const temporary=output+'.checkpoint';writeFileSync(temporary,JSON.stringify(report,null,2));renameSync(temporary,output);}
  function checkpoint(phase,{index=null,requests=null,remaining=null,waitMs=null}={}){

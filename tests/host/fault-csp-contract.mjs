@@ -15,7 +15,7 @@ export function assertCanonicalCspObservation(r){
  }else{
   assert.equal(r.branch,'ISOLATED_AUTHENTICATED');assert.equal(r.status,'PASS_NARROW_CSP_ISOLATED_AUTHENTICATED_SURFACES');
   assert.equal(r.loadedPrivateFrames,2);assert.equal(r.packageFramePolicyViolations,0);
-  assert.equal(r.bothNativeCloseControlsExercised,true);assertAuthenticatedCspProof(r);
+  assert.equal(r.bothNativeCloseControlsExercised,true);assert.equal(r.sameAuthenticatedGrantsBeforeClose,true);assertAuthenticatedCspProof(r);
  }
  return true;
 }

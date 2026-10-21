@@ -5,7 +5,7 @@ import {mkdtemp,mkdir,readFile,writeFile,access} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {installJ4GrantObserver} from './j4-grant-observer.mjs';
-import {assessIdleObservation,assessIdleRecovery,assessIdleScenario,IDLE_EVIDENCE_DEPENDENCIES,idleEvidenceCommit,validateIdleEvidence,finishIdleObservationDeadline} from './natural-worker-idle-oracle.mjs';
+import {assessIdleObservation,assessIdleRecovery,assessIdleScenario,IDLE_EVIDENCE_DEPENDENCIES,idleEvidenceCommit,validateIdleEvidence,finishIdleObservationDeadline,idleBootstrapAction} from './natural-worker-idle-oracle.mjs';
 import {createHash} from 'node:crypto';
 import {createHostFixtureServer} from './fixtures/server.mjs';
 import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
@@ -38,12 +38,12 @@ async function observeFrames(frames){
   return {...frame,sessionId};
  }));
 }
-async function frameEvidence(frame,after=0){
+async function frameEvidence(frame,after=0,timeoutMs=30000){
  return poll(async()=>{
   const raw=await evaluate(frame.sessionId,'({freshness:globalThis.j4Freshness,scope:globalThis.j4LastScope,currentRef:globalThis.j4LastCurrentRef,now:Date.now()})'),f=raw?.freshness;
   if(!f?.grantId||f.viewGrantId!==f.grantId||!raw.scope||!(f.expiresAt>raw.now)||!(f.viewRequestedAt>=after)||!(f.viewRequestedAt>=f.grantReceivedAt))return null;
   return {role:frame.role,targetId:frame.targetId,grantDigest:hash(f.grantId),viewGrantDigest:hash(f.viewGrantId),grantRequestedAt:f.grantRequestedAt,grantReceivedAt:f.grantReceivedAt,viewRequestedAt:f.viewRequestedAt,viewReceivedAt:f.viewReceivedAt,expiresAt:f.expiresAt,scope:raw.scope,currentRef:raw.currentRef??null};
- },'actual-current-grant-and-VIEW-'+frame.role,30000);
+ },'actual-current-grant-and-VIEW-'+frame.role,timeoutMs);
 }
 async function detachFrames(frames){for(const frame of frames)await command('Target.detachFromTarget',{sessionId:frame.sessionId});}
 async function nativeClick(sessionId,selector){
@@ -75,11 +75,18 @@ try{
  // does not itself make a headless target visible; hidden discovery is deferred.
  const {targetId}=await command('Target.createTarget',{url:'about:blank',background:false});let {sessionId}=await command('Target.attachToTarget',{targetId,flatten:true});
  await command('Target.activateTarget',{targetId});await command('Page.bringToFront',{},sessionId);
- const bootstrapFacts=()=>evaluate(sessionId,`({url:location.href,readyState:document.readyState,visibility:document.visibilityState,focused:document.hasFocus(),state:document.documentElement.dataset.vaiwlState??null,reason:document.documentElement.dataset.vaiwlReason??null,open:document.querySelectorAll('[data-va-owned]:popover-open').length,owned:document.querySelectorAll('[data-va-owned]').length,frames:[...document.querySelectorAll('[data-va-owned] iframe')].map(f=>({src:f.src,connected:f.isConnected})),editorCount:document.querySelectorAll('#prompt-textarea').length,readingCount:document.querySelectorAll('#reading').length})`);
+ const bootstrapFacts=()=>evaluate(sessionId,`({url:location.href,readyState:document.readyState,visibility:document.visibilityState,focused:document.hasFocus(),state:document.documentElement.dataset.vaiwlState??null,reason:document.documentElement.dataset.vaiwlReason??null,open:document.querySelectorAll('[data-va-owned]:popover-open').length,owned:document.querySelectorAll('[data-va-owned]').length,frames:[...document.querySelectorAll('[data-va-owned] iframe')].map(f=>({src:f.src,connected:f.isConnected})),editorCount:document.querySelectorAll('#prompt-textarea').length,readingCount:document.querySelectorAll('#reading').length,activeElement:{tag:document.activeElement?.tagName??null,id:document.activeElement?.id??null,owned:!!document.activeElement?.closest?.('[data-va-owned]')},returnCount:document.querySelectorAll('[aria-label=\"返回工作空间\"]').length,returnVisible:(()=>{const node=document.querySelector('[aria-label=\"返回工作空间\"]');if(!node)return false;const rect=node.getBoundingClientRect();return rect.width>0&&rect.height>0&&getComputedStyle(node).visibility==='visible';})()})`);
  const bootstrapDeadline=performance.now()+15000;
  try{
   const navigation=await command('Page.navigate',{url:server.url},sessionId);assert(!navigation.errorText,'fixture-navigation-failed:'+navigation.errorText);
   await poll(async()=>{report.bootstrap=await bootstrapFacts();return report.bootstrap.url===server.url&&report.bootstrap.readyState==='complete'&&report.bootstrap.visibility==='visible';},'visible-native-fixture',Math.max(1,bootstrapDeadline-performance.now()));
+  const bootstrapAction=await poll(async()=>{report.bootstrap=await bootstrapFacts();const action=idleBootstrapAction(report.bootstrap,prefix);return action==='WAIT'?null:action;},'authorized-mount-or-open-surfaces',Math.max(1,bootstrapDeadline-performance.now()));
+  report.bootstrapEntry={action:bootstrapAction,returnAttempts:0,before:report.bootstrap,automaticOpenAcceptance:'NOT_ESTABLISHED'};
+  if(bootstrapAction==='NATIVE_RETURN_ONCE'){
+   // A legitimate reading-mode mount is not an initialization failure. Use its
+   // unique real return exactly once, never force presentation or fake a grant.
+   report.bootstrapEntry.returnAttempts=1;report.bootstrapEntry.returnAt=await nativeReturn(sessionId);
+  }
   await poll(async()=>{report.bootstrap=await bootstrapFacts();return report.bootstrap.open===2;},'dual-surfaces',Math.max(1,bootstrapDeadline-performance.now()));
  }catch(error){
   try{report.bootstrap=await bootstrapFacts();}catch(diagnosticError){report.bootstrapDiagnosticError=String(diagnosticError);}
@@ -102,8 +109,8 @@ try{
   report.bootstrapFixtureRequests=server.snapshot().requests;report.bootstrapFixtureActions=server.snapshot().actions;throw error;
  }
  report.initialSurfaces=await evaluate(sessionId,"({open:document.querySelectorAll('[data-va-owned]:popover-open').length,frames:[...document.querySelectorAll('[data-va-owned] iframe')].map(n=>n.src)})");assert.equal(report.initialSurfaces.frames.length,2);
- const initialFrameSessions=await observeFrames(await poll(()=>discoverFrames(prefix),'initial-exact-UI-frames'));
- report.initialFrames=await Promise.all(initialFrameSessions.map(frame=>frameEvidence(frame)));await detachFrames(initialFrameSessions);
+ const initialFrameSessions=await observeFrames(await poll(()=>discoverFrames(prefix),'initial-exact-UI-frames',Math.max(1,bootstrapDeadline-performance.now())));
+ report.initialFrames=await Promise.all(initialFrameSessions.map(frame=>frameEvidence(frame,0,Math.max(1,bootstrapDeadline-performance.now()))));assert(performance.now()<=bootstrapDeadline,'initial-grant-VIEW-bootstrap-deadline');await detachFrames(initialFrameSessions);
  report.passiveObserver='FRAME_RPC_RESPONSES_ONLY_NO_REQUESTS_OR_WORKER_ATTACHMENT';
  report.externalRejected=await evaluate(sessionId,"fetch('https://example.com/').then(()=>false,()=>true)");assert(report.externalRejected);assert(guard.snapshot().denied>0);
  await evaluate(sessionId,"globalThis.idleOriginal={document,editor:document.querySelector('textarea'),frames:[...document.querySelectorAll('[data-va-owned] iframe')]};true");
