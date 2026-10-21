@@ -41,5 +41,6 @@ export function assertPartialPaging(paging){
  assert.deepEqual(paging.unmountPreparation,{kind:'GENUINE_NATIVE_WHEEL_TO_TOP',scrollTop:0,scrollInputDrained:true},'unmount must not manufacture another native bottom-scroll');
  assert.deepEqual(paging.unmountTransition,{surfacesClosed:true,returnControlVisible:true,renamedAdmitted:true,workspaceReentered:true},'native history mutation must surrender, admit rename and explicitly return');
  assert.equal(paging.afterUnmount.titles[world.conversations[999].id],'Archive conversation 1000 refreshed');
+ assert.deepEqual(paging.searchTransition,{newCurrentAdmitted:true,nativeReturnClicked:true,workspaceReentered:true},'native search resumes reading; explicit workspace return required');
  assertPartialObserved(paging.afterUnmount,50);assertPartialObserved(paging.afterSearch,50,{searched:true});
 }

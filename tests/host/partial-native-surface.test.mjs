@@ -24,3 +24,10 @@ test('native window shrink at bottom really fetches page 75; draining top scroll
  assert.deepEqual(await scenario(false),[25,50,75]);assert.deepEqual(await scenario(true),[25,50]);
  const runner=await readFile(new URL('./partial-package-mv3-browser.mjs',import.meta.url),'utf8');assert(runner.indexOf('await preparePartialHistoryUnmount(page)')<runner.indexOf("nav.querySelectorAll('a').forEach(a=>a.remove())"));
 });
+
+test('native search requires new current identity then real return, never waits for hidden frame visibility',async()=>{
+ const {returnPartialSearchWorkspace}=await import('./partial-native-surface.mjs'),calls=[],old={url:()=> 'extension/workspace'},fresh={url:()=> 'extension/workspace',locator:selector=>({waitFor:async options=>calls.push(['current',selector,options])})};
+ const page={frames:()=>[old,fresh],getByRole:(role,options)=>({click:async timing=>calls.push(['return',role,options,timing])})};
+ assert.deepEqual(await returnPartialSearchWorkspace(page,{workspaceURL:'extension/workspace',conversationId:'999',oldFrames:[old]}),{newCurrentAdmitted:true,nativeReturnClicked:true});assert.equal(calls[0][2].state,'attached');assert(calls[0][2].timeout>0&&calls[0][2].timeout<=15000);assert.equal(calls[1][2].name,'返回工作空间');assert(calls[1][3].timeout>0&&calls[1][3].timeout<=calls[0][2].timeout);
+ fresh.locator=()=>({waitFor:async()=>{throw Error('new-current-not-admitted');}});calls.length=0;await assert.rejects(()=>returnPartialSearchWorkspace(page,{workspaceURL:'extension/workspace',conversationId:'999',oldFrames:[old]}),/not-admitted/);assert.equal(calls.length,0,'no return before current admission');
+});

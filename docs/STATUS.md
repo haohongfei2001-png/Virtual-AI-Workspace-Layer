@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 第六批：真实视图保全与状态契约（2026-10-21，基线37ab6254）
+
+CI39554906760终态28成功/7失败，Node10438/10439未全过；UI三profile、CSP/corrupt/rate/stale及J4矩阵通过。native首次完成64访及精确准入940842ms，首视觉cell因漏计工作集wrapper失败，候选严格兼容真实单层包装但不放宽行数。safe idle观测未强制worker销毁及freshgrant/VIEW，恢复工作态按钮应0而非阅读态1；旧运行未到最终usability不补PASS。其余修静态依赖顺序、unknown逐响应诊断、PARTIAL搜索真实返回、pending原生账户可见性、mutant被动frame准备。11视图复用原截图并有界保全，每单profile16/native8，仍NOT_REVIEWED；默认多profile保原测试不混批emit。198项合批定向通过，详见[第六批证据](evidence/cloud-ci-visual-retention-20261021/README.md)。继续ACTIVE，不将局部或候选结果称完整验收。
+
 ## 第五批：以实际推进证据收口（2026-10-21，基线f3877cfd）
 
 CI39551617583终态25成功/10失败，Node10354全过；全部J4、durability、UI LEGACY/MODERN与stale通过。实际六component图确认14px rail已关闭且按钮像素位置保持；idle草稿60004ms为有效NOT_OBSERVED而非自然睡眠PASS。native825000ms期限前完成56/64访且在正常预算等待，有完整计数，故仅此job调整25min/runner22min，其余15min和原预算/64访/8视觉cell不变。第五批修H提交回显、PARTIAL卸载触额外页、FAULT入口丢参数/CSP真实重入、idle真实返回bootstrap、pending首发预算边界及严格cold-trace诊断分类；旧inspection失败仍不追溯改绿。468项新合批定向通过，详见[第五批证据](evidence/cloud-ci-frontier-20261021/README.md)。继续ACTIVE，尚非完整云端/Free验收。

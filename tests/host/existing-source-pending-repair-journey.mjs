@@ -50,7 +50,8 @@ export function pendingRepairPresentationSnapshot(){
  const count=selector=>Math.min(64,document.querySelectorAll(selector).length);
  const buttons=[...document.querySelectorAll('button[aria-label="返回工作空间"]')].slice(0,8);
  const visible=node=>{const box=node.getBoundingClientRect(),style=getComputedStyle(node);return node.isConnected&&box.width>0&&box.height>0&&style.display!=='none'&&style.visibility!=='hidden';};
- return {documentVisible:document.visibilityState==='visible',documentFocused:document.hasFocus(),ownedOpen:count('[data-va-owned]:popover-open'),ownedFrames:count('iframe[data-va-owned]'),returnControls:count('button[aria-label="返回工作空间"]'),returnVisible:buttons.filter(visible).length,returnDisabled:buttons.filter(node=>node.disabled).length,nativeDialogOpen:!!document.querySelector('#native-dialog[open]'),nativeModalCount:count('dialog:modal'),nativePopoverCount:Math.min(64,[...document.querySelectorAll(':popover-open')].filter(node=>!node.hasAttribute('data-va-owned')).length)};
+ const account=document.querySelector('#account-button'),model=document.querySelector('#model-button');
+ return {accountPresent:!!account,accountVisible:!!account&&visible(account),modelPresent:!!model,modelVisible:!!model&&visible(model),documentVisible:document.visibilityState==='visible',documentFocused:document.hasFocus(),ownedOpen:count('[data-va-owned]:popover-open'),ownedFrames:count('iframe[data-va-owned]'),returnControls:count('button[aria-label="返回工作空间"]'),returnVisible:buttons.filter(visible).length,returnDisabled:buttons.filter(node=>node.disabled).length,nativeDialogOpen:!!document.querySelector('#native-dialog[open]'),nativeModalCount:count('dialog:modal'),nativePopoverCount:Math.min(64,[...document.querySelectorAll(':popover-open')].filter(node=>!node.hasAttribute('data-va-owned')).length)};
 }
 export async function waitPendingRepairFreshWindow(budget,options){
  assertPendingRepairBudget(budget);
@@ -122,7 +123,9 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   stage('INITIAL_CONTEXT_AND_ASSETS');
   b=await startup.run(()=>context.newPage(),'initial-peer-page');b.on('pageerror',error=>appendPendingDiagnostic(report,'errors',error,'peer-pageerror'));await startup.run(()=>b.goto(server.origin+'/c/'+J4_REF,{timeout:startup.remaining('initial-native-navigation')}),'initial-native-navigation');await ready(b,team,J4_REF,startup);report.startup.elapsedMs=startup.elapsedMs();
   a=await context.newPage();a.on('pageerror',error=>appendPendingDiagnostic(report,'errors',error,'active-pageerror'));await a.goto(server.origin+'/c/'+J4_SEND_C);await ready(a,team,J4_SEND_C);
-  await a.locator('#account-button').click();const switched=a.waitForNavigation();await a.getByRole('button',{name:'Switch to Personal',exact:true}).click();await switched;await ready(a,personal,J4_SEND_C);
+  stage('INITIAL_NATIVE_CONTEXT_SWITCH');await native();await a.locator('#account-button').click();const switched=a.waitForNavigation();await a.locator('#native-dialog').getByRole('button',{name:'Switch to Personal',exact:true}).click();await switched;await ready(a,personal,J4_SEND_C);await ready(b,team,J4_REF);
+  assert.equal(server.snapshot().actions['context-switch'],1,'PENDING_REPAIR_SINGLE_CONTEXT_SWITCH');
+  stage('INITIAL_CONTEXT_AND_ASSETS');
   assert(server.snapshot().nativeRequests.some(row=>row.path==='/backend-api/conversation/'+J4_SEND_C&&row.context==='account-host-personal'));
   let f=frame(a);await f.getByRole('button',{name:'工作空间设置',exact:true}).click();await f.getByRole('button',{name:'备份与导入',exact:true}).click();
   const beforeAssets=(await inspect()).assets;assert.equal(beforeAssets.counts.identities,0);await a.bringToFront();await f.getByLabel('选择备份 JSON 文件',{exact:true}).setInputFiles({name:'pending-repair-human-assets.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(j4AssetBackup(personal,server.origin)))});

@@ -48,7 +48,7 @@ export function assessIdleRecovery({scenario='draft-active',privateFramesCleared
   assert(frame.viewReceivedAt>=frame.viewRequestedAt&&frame.viewReceivedAt<=checkedAt&&frame.expiresAt>checkedAt,'stale/expired VIEW');
  }
  for(const key of ['sameDocument','sameEditor','editorConnected','editorEnabled'])assert.equal(native[key],true,key);
- assert.equal(native.draft,scenario==='draft-active'?'NATURAL_IDLE_LOCAL_DRAFT':'');assert.equal(native.returnCount,1);assert.equal(native.open,2);
+ assert.equal(native.draft,scenario==='draft-active'?'NATURAL_IDLE_LOCAL_DRAFT':'');assert.equal(native.open,2,'recovery must reopen both workspace surfaces');assert.equal(native.returnCount,0,'workspace presentation removes the reading-only return control');
  if(scenario==='draft-active')assert.deepEqual(native.originalFramesConnected,[false,false],'old private frame survived recovery');
  else assert(native.originalFramesConnected.length===2&&native.originalFramesConnected.every(value=>typeof value==='boolean'));
  return {status:'UNFORCED_TARGET_DESTRUCTION_RECOVERY_PASS',naturalWorkerSleep:'NOT_ESTABLISHED',cause:observation.cause,actualFreshViews:2,nativePreserved:true};

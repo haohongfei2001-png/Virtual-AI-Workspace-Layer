@@ -21,3 +21,14 @@ export async function preparePartialHistoryUnmount(page){
  if(scrollTop!==0)throw Error('partial-unmount-requires-native-top');
  return {kind:'GENUINE_NATIVE_WHEEL_TO_TOP',scrollTop,scrollInputDrained:true};
 }
+
+/** A native SPA search changes route in reading mode. Observe the NEW frame's
+ * current identity while hidden, then use the real return control once. */
+export async function returnPartialSearchWorkspace(page,{workspaceURL,conversationId,oldFrames,deadlineAt=Date.now()+15000}){
+ const remaining=()=>{const ms=deadlineAt-Date.now();if(ms<=0)throw Error('partial-search-return-deadline');return ms;};
+ const isNew=frame=>frame.url()===workspaceURL&&!oldFrames.includes(frame);
+ const frame=page.frames().find(isNew)??await page.waitForEvent('framenavigated',{predicate:isNew,timeout:remaining()});
+ await frame.locator(`[data-ref-id="${conversationId}"][aria-current="page"]`).waitFor({state:'attached',timeout:remaining()});
+ await page.getByRole('button',{name:'返回工作空间',exact:true}).click({timeout:remaining()});
+ return {newCurrentAdmitted:true,nativeReturnClicked:true};
+}

@@ -1,3 +1,4 @@
+import {finalizeUi10ControlVisualEvidence,inspectSyntheticPng,ui10ControlCaptureId} from './ui10-visual-png-log.mjs';
 import {exerciseUi10Interactions} from './ui10-interaction-matrix.mjs';
 import {waitForVisibleUi10Title} from './ui10-visible-title.mjs';
 /** Opt-in isolated Chrome MV3 UI-10 layout subcontracts. NOT full v2.7 acceptance.
@@ -21,10 +22,11 @@ const runInteractions=process.env.FREE_UI10_INTERACTIONS==='1';
 const profiles=process.argv[3]?[process.argv[3]]:[...UI10_PROFILES];
 assert(profiles.every(p=>UI10_PROFILES.includes(p)),'unsupported-ui10-profile');
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const testFiles=['ui10-horizon-commit.mjs','ui10-visible-title.mjs','ui10-interaction-matrix.mjs','ui10-dom-contract.mjs','ui10-interaction-readiness.mjs','ui10-package-matrix-browser.mjs','ui10-package-sequence.mjs','ui10-matrix-contract.mjs','fixtures/variants-server.mjs','fixtures/ui10-conversation-title.mjs'];
+const testFiles=['ui10-visual-png-log.mjs','ui10-horizon-commit.mjs','ui10-visible-title.mjs','ui10-interaction-matrix.mjs','ui10-dom-contract.mjs','ui10-interaction-readiness.mjs','ui10-package-matrix-browser.mjs','ui10-package-sequence.mjs','ui10-matrix-contract.mjs','fixtures/variants-server.mjs','fixtures/ui10-conversation-title.mjs'];
 const testHashes=async()=>Object.fromEntries(await Promise.all(testFiles.map(async name=>[name,hash(await readFile(new URL(name,import.meta.url)))])));
 const report={...ui10PreparationReport(),kind:'PACKAGED_MV3_UI10_LAYOUT_SUBCONTRACT_CANDIDATE',status:'NOT_RUN',profiles:[],testHashesBefore:await testHashes()};
 
+const visualCaptures=[];
 async function runProfile(profile,titleMode='all'){
  const result={profile,titleMode,status:'NOT_RUN',steps:[],errors:[],fullV27Acceptance:'NOT_ESTABLISHED',physicalKeyboard:'NOT_RUN',physicalIME:'NOT_RUN'};
  report.profiles.push(result);
@@ -86,7 +88,7 @@ async function runProfile(profile,titleMode='all'){
    }
    assert.equal(await page.evaluate(expected=>matchMedia(`(prefers-color-scheme: ${expected})`).matches,cell.colorScheme),true);
    const screenshot=join(dir,`${cell.id.replaceAll('/','-')}-${phase}.png`);await page.screenshot({path:screenshot});
-   const interactions=runInteractions&&phase!=='restored'?await exerciseUi10Interactions({page,frames,workspace,continuity,nativeActions:()=>server.snapshot().actions,capture:async view=>{const path=join(dir,`${cell.id.replaceAll('/','-')}-${phase}-${view}.png`);await page.screenshot({path});return path;}}):null;
+   const interactions=runInteractions&&phase!=='restored'?await exerciseUi10Interactions({page,frames,workspace,continuity,nativeActions:()=>server.snapshot().actions,capture:async view=>{const path=join(dir,`${cell.id.replaceAll('/','-')}-${phase}-${view}.png`);const bytes=await page.screenshot({path,animations:'disabled'});const imageId=ui10ControlCaptureId({...cell,phase,view});if(imageId&&profiles.length===1){const png=inspectSyntheticPng(bytes),metadata={lane:'ACTUAL_MV3_OFFLINE',synthetic:true,profile,scene:view,viewport:cell.viewport,theme:cell.colorScheme,zoom:1,dpr:await page.evaluate(()=>devicePixelRatio),comparisonBasis:'Approved v2.7 visual tokens/layout; current INTERACTION_SPEC sections 3/6 behavior for controls absent from prototype.',browserVersion:context.browser().version(),buildManifestHash:manifestHash,sourceSetSha256:hash(JSON.stringify(info.sourceHashes)),fixtureSetSha256:hash(JSON.stringify(report.testHashesBefore)),limits:['Synthetic fixture only; no approved visual verdict.','Working set and snippets are empty; search is a no-result query.','Not populated asset experience, physical IME, or real ChatGPT.']};visualCaptures.push({capture:{id:imageId,bytes,metadata},owner:result});(result.visualCaptures??=[]).push({id:imageId,...png,metadata});}return path;}}):null;
    result.steps.push({id:cell.id,phase,status:'PASS_LAYOUT_SUBCONTRACT',measurements,titleObservation,screenshot,interactions});
    const entry=report.cells.find(c=>c.id===cell.id);entry.nativeEvidence='PASS_LAYOUT_SUBCONTRACT_ONLY';
   }
@@ -112,5 +114,6 @@ const expectedInteractionIds=report.cells.filter(c=>profiles.includes(c.profile)
 const interactionCoverageComplete=runInteractions&&JSON.stringify(interactionCells.map(c=>c.id).sort())===JSON.stringify(expectedInteractionIds);
 report.interactionMatrix={status:runInteractions?(report.status==='FAIL'||!interactionCoverageComplete?'FAIL_OR_BLOCKED':'PASS_CONTROL_SUBMATRIX_ONLY'):'NOT_RUN',cells:interactionCells,expectedCells:expectedInteractionIds.length,coverageComplete:interactionCoverageComplete,fullV27Acceptance:'NOT_ESTABLISHED'};
 if(runInteractions&&!interactionCoverageComplete){report.status='FAIL';process.exitCode=1;}
+if(!finalizeUi10ControlVisualEvidence({report,ownedCaptures:visualCaptures,expected:runInteractions?profiles.length*16:0,singleProfile:profiles.length===1}))process.exitCode=1;
 await writeFile(output,JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({status:report.status,profiles:report.profiles.map(p=>({profile:p.profile,titleMode:p.titleMode,status:p.status,error:p.error})),fullV27Acceptance:report.fullV27Acceptance}));

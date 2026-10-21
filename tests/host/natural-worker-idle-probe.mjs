@@ -153,11 +153,12 @@ try{
    privateFramesCleared=Object.fromEntries(await Promise.all(observed.map(async frame=>[frame.role,await evaluate(frame.sessionId,"document.querySelector('main')?.childNodes.length===0")])));
    assert.deepEqual(privateFramesCleared,{workspace:true,sidebar:true});report.privateFramesCleared=privateFramesCleared;
   }
-  const reentryAt=await nativeReturn(sessionId);
+  const reentryAt=await nativeReturn(sessionId);report.recoveryReentry={reentryAt,returnAttempts:1,before:report.native};
   if(!observed)observed=await observeFrames(await poll(()=>discoverFrames(prefix,report.initialFrames.map(f=>f.targetId)),'replacement-UI-frames',30000));
   await poll(()=>evaluate(sessionId,"document.querySelectorAll('[data-va-owned]:popover-open').length===2"),'native-return-opens-dual-surfaces');
   report.recoveredFrames=await Promise.all(observed.map(frame=>frameEvidence(frame,reentryAt)));
   const newWorker=await poll(async()=>{const matches=(await command('Target.getTargets')).targetInfos.filter(t=>t.type==='service_worker'&&t.url===prefix+'extension/worker.mjs');assert(matches.length<=1);return matches[0]?.targetId!==worker.targetId?matches[0]:null;},'replacement-worker');
+  report.recoveryWorker={targetId:newWorker.targetId,type:newWorker.type,url:newWorker.url,attached:newWorker.attached};
   report.nativeAfterRecovery=await evaluate(sessionId,nativeExpression);
   report.recovery=assessIdleRecovery({scenario,privateFramesCleared,observation,initialWorkerId:worker.targetId,newWorker,prefix,initialFrames:report.initialFrames,recoveredFrames:report.recoveredFrames,reentryAt,checkedAt:Date.now(),native:report.nativeAfterRecovery});
   report.recovery.newWorkerId=newWorker.targetId;report.recovery.reentryAt=reentryAt;report.status=report.recovery.status;report.results.push({name:'unforced-target-destruction-fresh-grant-actual-view-native-draft-preserved',status:'PASS'});process.exitCode=0;await detachFrames(observed);

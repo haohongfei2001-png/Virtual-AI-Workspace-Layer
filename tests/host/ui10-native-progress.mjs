@@ -1,3 +1,4 @@
+import {UI10_NATIVE_CAPTURE_IDS} from './ui10-visual-png-log.mjs';
 import {writeFileSync,renameSync} from 'node:fs';
 // Hosted run 39551617583 completed 56/64 visits in 820248ms.
 // 22 minutes covers the ~16-minute ingestion projection plus 8 visual cells.
@@ -24,11 +25,11 @@ export function createUi10NativeProgress({report,output,now=Date.now,schedule=se
 }
 /** Final evidence gate is shared with tests, so an emitter exception cannot yield PASS. */
 export function finalizeUi10NativeVisualEvidence({report,captures,emit,timedOut=false}){
- if(report.fixtureStable&&report.productSourceStable&&captures.length===2){
+ if(report.fixtureStable&&report.productSourceStable&&captures.length>0){
   try{emit(captures);report.initialVisualLogStatus='EMITTED_NOT_VISUALLY_REVIEWED';}
   catch(e){report.initialVisualLogStatus='FAILED';report.initialVisualLogError=String(e);report.status='FAIL_VISUAL_LOG';}
  }else report.initialVisualLogStatus='NOT_EMITTED_INCOMPLETE_OR_UNSTABLE';
  if(timedOut)report.status='FAIL_OVERALL_DEADLINE';
- else if(report.status==='PENDING_FINAL_VERIFICATION')report.status=report.initialVisualLogStatus==='EMITTED_NOT_VISUALLY_REVIEWED'?'PASS_PACKAGED_POPULATED_SUBCONTRACT_ONLY':'FAIL_VISUAL_LOG';
+ else if(report.status==='PENDING_FINAL_VERIFICATION')report.status=report.initialVisualLogStatus==='EMITTED_NOT_VISUALLY_REVIEWED'&&captures.length===UI10_NATIVE_CAPTURE_IDS.length&&UI10_NATIVE_CAPTURE_IDS.every(id=>captures.some(c=>c.id===id))?'PASS_PACKAGED_POPULATED_SUBCONTRACT_ONLY':'FAIL_VISUAL_LOG';
  return report.status==='PASS_PACKAGED_POPULATED_SUBCONTRACT_ONLY';
 }

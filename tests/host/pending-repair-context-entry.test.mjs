@@ -1,0 +1,11 @@
+import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import {readFile} from 'node:fs/promises';
+const source=await readFile(new URL('./existing-source-pending-repair-journey.mjs',import.meta.url),'utf8');
+const native=source.slice(source.indexOf('  async function native(){'),source.indexOf('  async function workspace(){'));
+const start=source.indexOf("  stage('INITIAL_NATIVE_CONTEXT_SWITCH');"),end=source.indexOf("  stage('INITIAL_CONTEXT_AND_ASSETS');",start),block=source.slice(start,end);
+async function run(text){const events=[];let masked=true,navigation=false;const a={bringToFront:async()=>events.push('foreground'),locator:selector=>({click:async()=>{if(selector==='#model-button'){events.push('model');masked=false;}else{assert.equal(selector,'#account-button');assert(!masked,'sidebar still masked');events.push('account');}},getByRole:(_role,{name})=>({click:async()=>{assert.equal(selector,'#native-dialog');events.push(name);if(name==='Switch to Personal')navigation=true;}})}),waitForNavigation:()=>{events.push('navigation-listener');return Promise.resolve().then(()=>assert(navigation));}};
+ const ctx={a,b:{},team:'team',personal:'personal',J4_SEND_C:'current',J4_REF:'peer',assert,stage:x=>events.push(x),ready:async(_page,scope)=>events.push('ready-'+scope),server:{snapshot:()=>({actions:{'context-switch':1}})}};
+ await vm.runInNewContext('(async()=>{'+native+text+'})()',ctx);return events;
+}
+test('actual initial switch surrenders via trusted native model control before masked account entry',async()=>{const events=await run(block);assert.deepEqual(events,['INITIAL_NATIVE_CONTEXT_SWITCH','foreground','model','Close','account','navigation-listener','Switch to Personal','ready-personal','ready-team']);});
+test('old direct-account entry cannot proceed while sidebar presentation masks it',async()=>{await assert.rejects(run(block.replace('await native();','')),/sidebar still masked/);});
+test('context entry contains no force click, injected scope or skipped peer proof',()=>{assert(!block.includes('force:'));assert(!block.includes('evaluate('));assert(block.includes('await ready(b,team,J4_REF)'));assert(source.includes('if(a&&!a.isClosed())try{report.presentationFailure='));});
