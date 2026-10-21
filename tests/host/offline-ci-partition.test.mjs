@@ -142,7 +142,7 @@ test('startup trace cannot turn the original snippet failure green and is bounde
 test('existing window journey includes real cancellation subchain without a duplicate runner',()=>{assert.equal((workflow.match(/FREE_WINDOW_RETENTION_RUN=1 FREE_NAVIGATION_CANCEL_RUN=1 FREE_PANEL_CANCEL_RUN=1 node tests\/host\/frame-window-retention-package-browser\.mjs/g)??[]).length,1);});
 
 
-test('new cloud profile matrices retain private-repo and manual-dispatch denial plus bounded concurrency',()=>{
+test('cloud profile matrices retain private-repo denial and bounded concurrency',()=>{
  const all=Object.fromEntries([...workflow.matchAll(/^  ([\w-]+):\n([\s\S]*?)(?=^  [\w-]+:\n|$(?![\s\S]))/gm)].map(m=>[m[1],m[2]]));
  for(const name of ['cloud-journey-matrix','cloud-ui-controls']){const body=all[name];assert(body);assert.match(body,/github\.event\.repository\.private == false/);assert.match(body,/github\.event_name == 'push'/);assert.match(body,/max-parallel: 3/);assert.match(body,/timeout-minutes: 15/);assert.match(body,/persist-credentials: false/);assert.doesNotMatch(body,/continue-on-error|upload-artifact|actions\/cache|secrets\./);}
  assert.match(all['cloud-journey-matrix'],/FREE_CHROME_HEADED=1 xvfb-run -a node tests\/host\/j1-j4-offline-matrix\.mjs/);
@@ -195,7 +195,7 @@ test('supplementary scheduling prioritizes causal feedback and the longest case 
 test('J4 diagnostic preserves formal command and executes only its independent case after failure or success',()=>{
  const body=workflow.split('  cloud-journey-matrix:')[1].split('  cloud-ui-controls:')[0];
  const original=['j1-legacy','j1-modern','j2-legacy','j2-modern','j3-legacy','j3-modern','partial-reachability','j4-before-evidence-reenable','j4-before-native','j4-after-evidence','j4-codec-before-evidence','j4-codec-after-evidence'];
- const cases=body.match(/case: \[([^\]]+)\]/)[1].split(',').map(v=>v.trim());assert.deepEqual(cases,['j4-before-native',...original.filter(c=>c!=='j4-before-native')]);assert.equal(new Set(cases).size,12);
+ const expression=body.match(/^        case: \$\{\{ (.+) \}\}$/m)[1],cases=new Function('github','fromJSON','return '+expression)(allowedEvent,JSON.parse);assert.deepEqual(cases,['j4-before-native',...original.filter(c=>c!=='j4-before-native')]);assert.equal(new Set(cases).size,12);
  assert(body.includes('run: FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/j1-j4-offline-matrix.mjs "$RUNNER_TEMP/cloud-matrix" --execute-browser --cases=${{ matrix.case }}'));
  const step=body.split('      - name: Independent first re-enable owner trace')[1].split('      - name: Preserve exact scoped result')[0];
  assert(step.includes("if: ${{ !cancelled() && matrix.case == 'j4-before-native' }}"));
@@ -205,6 +205,21 @@ test('J4 diagnostic preserves formal command and executes only its independent c
  assert(step.includes('test "$result" -eq 2'));assert(step.includes('node tests/host/j4-reenable-trace-outcome.mjs "$RUNNER_TEMP/j4-reenable-owner-trace.json" "$result" "$GITHUB_SHA"'));
  assert.doesNotMatch(step,/cloud-matrix|continue-on-error|success\(\)|rerun/);assert.match(body,/if: \$\{\{ always\(\) \}\}/);
  assert(body.includes('test ! -f "$RUNNER_TEMP/j4-reenable-owner-trace.json" || cat "$RUNNER_TEMP/j4-reenable-owner-trace.json"'));
+});
+
+test('explicit J4 dispatch schedules one existing case without other runners or extra trace replay',()=>{
+ const all=Object.fromEntries([...workflow.matchAll(/^  ([\w-]+):\n([\s\S]*?)(?=^  [\w-]+:\n|$(?![\s\S]))/gm)].filter(m=>/^    runs-on:/m.test(m[2])).map(m=>[m[1],m[2]]));
+ const event={...allowedEvent,event_name:'workflow_dispatch'},input={diagnostic:'j4-codec-after-evidence'};
+ const selected=(github,inputs)=>Object.keys(all).filter(name=>condition(all[name].match(/^    if: (.+)$/m)[1],github,inputs));
+ assert.deepEqual(selected(event,input),['cloud-journey-matrix']);
+ for(const [github,inputs] of [[event,{}],[event,{diagnostic:'j4-before-native'}],[event,{diagnostic:'arbitrary-command'}],[{...event,event:{repository:{private:true}}},input],[{...event,repository:'other/repo'},input],[{...event,ref:'refs/heads/main'},input],[{...event,event_name:'pull_request'},input]])assert.deepEqual(selected(github,inputs),[]);
+ const body=all['cloud-journey-matrix'],expression=body.match(/^        case: \$\{\{ (.+) \}\}$/m)[1];
+ const cases=new Function('github','fromJSON','return '+expression)(event,JSON.parse);assert.deepEqual(cases,['j4-codec-after-evidence']);assert(!expression.includes('inputs.'));
+ const trace=body.split('      - name: Independent first re-enable owner trace')[1].split('      - name: Preserve exact scoped result')[0];
+ const traceCondition=trace.match(/^        if: (.+)$/m)[1].replace(/^\$\{\{\s*|\s*\}\}$/g,'');
+ assert.equal(new Function('matrix','cancelled','return '+traceCondition)({case:cases[0]},()=>false),false);
+ assert(body.includes('--execute-browser --cases=${{ matrix.case }}'));assert(body.includes('workflow_dispatch is one scoped diagnostic, never full CI'));
+ assert.doesNotMatch(body,/continue-on-error|upload-artifact|actions\/cache|secrets\./);
 });
 
 

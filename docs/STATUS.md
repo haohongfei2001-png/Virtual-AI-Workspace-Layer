@@ -2,6 +2,8 @@
 
 ## 同源码安装兼容确认与两项CI失败定位（2026-10-22，产品fa86479f）
 
+后续定点执行准备：原cloud-journey-matrix已增加显式`j4-codec-after-evidence`手动选择，仅公开原仓库/Free分支可用；push原12项不变，其余job不启动，不增加runner、缓存或上传。53项调度/相邻回归及YAML解析通过，独审无阻断。将带原单击/30秒和新被动观察在Linux执行一次；本段尚未记录运行结果，不属于完整CI或原失败关闭。
+
 [CI39673488147](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39673488147)已自然结束：39项成功、2项失败，Node11114通过、零失败/跳过。最终合批源码的F3同schema实际安装包8008→fa864→8008→fa864通过；四阶段实际owner模块/worker字节及12个runner hash核对成立，旧包八次精确拒绝后八store不变，两个scope的人工资产保留。populated原64次活动准入及8组局部界面检查通过，185产品路径逐项匹配fa864；截图未在本批独立视觉复审，不扩大为完整视觉或Free验收。
 
 unknown正式目标仅第3请求仍为200但正文RESOURCE_CONTENT_UNAVAILABLE／ERR_ABORTED，独立trace仍INCOMPLETE。两个浏览器版本各四固定条件的最小反证实验均完整读到50字节，不能将“EOF后abort”直接定为原因；它未覆盖完整provider/校准取消或Linux，不改正式abort/oracle，不重复同条件重跑。两个实验设置失败原件保留；已在PR16评论6326406910请dot限定只读查证精确交错。
