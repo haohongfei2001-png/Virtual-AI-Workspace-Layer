@@ -9,17 +9,16 @@ import {createHostFixtureServer} from './fixtures/server.mjs';import {legacyExpe
 import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';import {cleanupOwnedResources} from './isolated-browser-cleanup.mjs';
 import {exampleTargets,assertExamplesExcluded,assertCancelUnchanged,assertNativeScope,restoreNativeEntrySurfaces} from './native-entry-safety-oracle.mjs';
+import {inspectColdNativeCache,readNativeEntryFacts} from './native-entry-facts-inspection.mjs';
 const output=process.argv[2];assert(output,'output-json-path-required');
 const hash=b=>createHash('sha256').update(b).digest('hex');
-const files=['native-entry-safety-package-browser.mjs','native-entry-safety-oracle.mjs','native-visibility-browser.mjs','historical-network-guard.mjs','isolated-browser-cleanup.mjs','fixtures/server.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','expected/legacy.mjs'];
+const files=['native-entry-safety-package-browser.mjs','native-entry-safety-oracle.mjs','native-entry-facts-inspection.mjs','native-visibility-browser.mjs','historical-network-guard.mjs','isolated-browser-cleanup.mjs','fixtures/server.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','expected/legacy.mjs'];
 const testHashes=async()=>Object.fromEntries(await Promise.all(files.map(async p=>[p,hash(await readFile(new URL(p,import.meta.url)))])));
 const report={sourceCommit:process.env.FREE_SOURCE_COMMIT??process.env.GITHUB_SHA??null,status:'NOT_RUN',evidence:'PACKAGED_MV3_OFFLINE_LEGACY_SUBSCENARIOS',profile:'LEGACY',realChatGPT:'NOT_RUN',physicalUser:'NOT_RUN',fullCaseAcceptance:'NOT_ESTABLISHED',startup:'Fresh isolated profile, empty native cache; worker-ready precondition, not worker-cold race',INV09:{status:'NOT_ESTABLISHED',reason:'Existing surface-delta reducer emits available rows only. A normative native deletion-result semantic and actual production consumer must be established before a synthetic delete fixture can certify this case.'},results:[],errors:[],testHashesBefore:await testHashes()};
 let server,running,guard,info,built,page,worker,id;const nativeRequests=[];
 const poll=async(fn)=>{const end=Date.now()+15000;do{const v=await fn();if(v)return v;await new Promise(r=>setTimeout(r,50));}while(Date.now()<end);throw Error('native-entry-observation-timeout');};
-async function facts(){return worker.evaluate(async()=>{
- const {ScopeRepository}=await import(chrome.runtime.getURL('src/b1/scope-repository.mjs')),{NativeRepository}=await import(chrome.runtime.getURL('src/data/native-repository.mjs'));const base=new ScopeRepository({indexedDB});
- try{const db=await base.open(),rows=await new Promise((resolve,reject)=>{const tx=db.transaction('native_states'),q=tx.objectStore('native_states').getAll();tx.oncomplete=()=>resolve(q.result);tx.onabort=()=>reject(tx.error);});const roots=rows.filter(r=>r.key===r.payload?.scopeKey&&Object.values(r.payload?.sources??{}).some(s=>s.channel==='host-dom'));if(!roots.length)return null;if(roots.length!==1)throw Error('unexpected-scope-count');const [provider,accountId,organizationId]=JSON.parse(roots[0].key);return await new NativeRepository({baseRepository:base}).read({verified:true,provider,accountId,organizationId});}finally{base.close();}
- });}
+const nativePages=[];
+async function facts(){return readNativeEntryFacts({pages:nativePages,extensionId:id,fixtureOrigin:server.origin});}
 async function workspace(p=page){
  await p.waitForFunction(()=>document.querySelectorAll('[data-va-owned]:popover-open').length===2||[...document.querySelectorAll('button')].some(n=>n.getAttribute('aria-label')==='返回工作空间'),null,{timeout:15000});
  const back=p.getByRole('button',{name:'返回工作空间',exact:true});if(await back.isVisible())await back.click();
@@ -33,8 +32,9 @@ try{
  await context.route('**/*',r=>r.request().url().startsWith(server.origin+'/')||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());
  context.on('request',r=>{if(r.url()===server.origin+'/native/action'&&r.method()==='POST')nativeRequests.push(r.postDataJSON());});
  const cdp=await browser.newBrowserCDPSession();({id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked}));worker=context.serviceWorkers().find(w=>w.url().startsWith(`chrome-extension://${id}/`))??await context.waitForEvent('serviceworker');
- report.initialFacts=await facts();assert.equal(report.initialFacts,null,'fresh profile must have no native scope cache');
- page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));await page.goto(server.origin+'/c/'+expected.conversations[2].id);
+ report.initialCache=await worker.evaluate(inspectColdNativeCache);assert.equal(report.initialCache.nativeRows,0,'fresh profile must have no native scope cache');
+ report.factsInspection='Existing exact-origin owned workspace frame; no added inspector page or focus change';
+ page=await context.newPage();nativePages.push(page);page.on('pageerror',e=>report.errors.push(e.message));await page.goto(server.origin+'/c/'+expected.conversations[2].id);
  await workspace();const initial=await poll(facts);await native();
  const initialNative=server.snapshot();await page.locator('#new-project').click();await page.locator('#project-dialog[open]').waitFor();await page.locator('#project-dialog input').fill('CANCELLED_SYNTHETIC_PROJECT');
  assert.equal(server.snapshot().actions['create-project']??0,0);assert.deepEqual(Object.keys((await facts()).projects).sort(),Object.keys(initial.projects).sort());
@@ -61,7 +61,7 @@ try{
  report.results.push({id:'UI-05',subcase:'confirmed-native-project-only-then-card',status:'PASS',createdId});
  // Reuse the existing external-P fallback: opening P must not auto-create C.
  const projectId=expected.projects[0].id,projectURL=server.origin+`/g/${projectId}/project`,link=createdFrame.getByRole('link',{name:'打开项目以新建聊天 Research',exact:true}).and(createdFrame.locator(`a[href="${projectURL}"]`));await link.waitFor();assert.equal(await link.getAttribute('target'),'_blank');const beforeOpen=server.snapshot().actions['new-project-chat']??0;
- const opened=context.waitForEvent('page');await link.click();const projectPage=await opened;projectPage.on('pageerror',e=>report.errors.push(e.message));await projectPage.waitForURL(projectURL);await workspace(projectPage);assert.equal(server.snapshot().actions['new-project-chat']??0,beforeOpen);await native(projectPage);
+ const opened=context.waitForEvent('page');await link.click();const projectPage=await opened;nativePages.push(projectPage);projectPage.on('pageerror',e=>report.errors.push(e.message));await projectPage.waitForURL(projectURL);await workspace(projectPage);assert.equal(server.snapshot().actions['new-project-chat']??0,beforeOpen);await native(projectPage);
  await projectPage.getByRole('button',{name:'New chat in project',exact:true}).click();await projectPage.waitForURL('**/c/*');const projectPath=new URL(projectPage.url()).pathname;await workspace(projectPage);const createdBefore=server.snapshot().conversationCount;
  await projectPage.locator('a[data-testid="create-new-chat-button"]').click();await projectPage.waitForURL(server.origin+'/');await poll(()=>nativeRequests.some(r=>r.kind==='new-chat'));const projectCalls=nativeRequests.filter(r=>r.kind==='new-project-chat'),globalCalls=nativeRequests.filter(r=>r.kind==='new-chat');assert.equal(projectCalls.length,1);assert.equal(globalCalls.length,1);
  assertNativeScope({projectId,projectRequest:projectCalls[0],globalRequest:globalCalls[0],projectPath,globalPath:new URL(projectPage.url()).pathname,createdBefore,createdAfter:server.snapshot().conversationCount});

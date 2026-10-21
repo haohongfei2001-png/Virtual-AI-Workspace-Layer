@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 第八批：保留严格门，修复真实可观察前提（2026-10-21，基线7a19c436）
+
+CI39562203517终态41项35成功/6失败，Node10614全过。unknown与两mixed-role窄D/S、non-atomic D通过；48control图capture缺口关闭，不升级完整视觉/G/U。native64访完成，首visual-cell截图阶段实际oldRows5≠17，保留FAIL/3图partial。候选修正J1当前live DOM采样、三项realm/readiness前提、旧段截图时序，以及pending创建前真实预算/lease余量；不改生产、不放宽原oracle、不替换pending witness。380项合批定向通过且独审clear，实际浏览器仍待新exact-head验证。详见[第八批证据](evidence/cloud-precondition-closure-20261021/README.md)。继续ACTIVE，未完成Free验收，未merge/deploy。
+
 ## 第七批：精确归因与剩余原计划补证（2026-10-21，基线b6849abe）
 
 CI39558290962终态33成功/2失败，Node10481全过；native64访/8cells、全部UI、PARTIAL、原旅程和J4通过。safe idle未强制销毁后的恢复/输入通过，原因不升级自然睡眠认证。62实际图已逐张审，仍有加载/scroll裁切/旧段起点证据需重拍；候选只补真实capture准备不改样式/数据。unknown按request-start隔离目标校准并保初始abort失败；pending原witness未换，新增三点bounded TTL/语义hash诊断查明revision变化，严格门不改。新增六个既定Free窄补证入口（MAP/UI原生安全、SEC/no-tap、non-atomic真实IDB、两mixed-role、消息先于成员确认），实际D/S仍NOT_RUN；INV09需规范原生删除语义与consumer，不能用fake删除造PASS。322项合批定向通过，详见[第七批证据](evidence/cloud-ci-coverage-20261021/README.md)。继续ACTIVE，非完整Free验收。

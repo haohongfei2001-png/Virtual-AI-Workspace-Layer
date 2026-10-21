@@ -1,3 +1,4 @@
+import {preparePendingRepairLease,checkPendingRepairRead,waitPendingRepairBoundary} from './pending-repair-lease-plan.mjs';
 import {projectPendingRepairNative} from './pending-repair-native-projection.mjs';
 import {waitForBudgetExpiry} from './fixtures/budget-expiry-wait.mjs';
 /** Existing-source pending repair S candidate. TEST ONLY; browser execution is
@@ -26,7 +27,7 @@ import {PENDING_REPAIR_LIMITS,setPendingRepairStage,assertExistingSourcePending,
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex'),sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const key=scope=>JSON.stringify([scope.provider,scope.accountId,scope.organizationId]);
-const files=['pending-repair-native-projection.mjs','fixtures/budget-expiry-wait.mjs','existing-source-pending-repair-journey.mjs','existing-source-pending-repair-oracle.mjs','existing-source-pending-repair-browser-read.mjs','j4-package-journey.mjs','j4-debugger-transport.mjs','j4-joint-interruption.mjs','j4-evidence-recovery.mjs','j4-evidence-interruption.mjs','j4-report-cleanup.mjs','cold-context-trace.mjs','native-visibility-browser.mjs','isolated-browser-cleanup.mjs','historical-network-guard.mjs','sys05-startup-precondition.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/j4-assets.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','fixtures/ui10-conversation-title.mjs','expected/modern.mjs'];
+const files=['pending-repair-lease-plan.mjs','pending-repair-native-projection.mjs','fixtures/budget-expiry-wait.mjs','existing-source-pending-repair-journey.mjs','existing-source-pending-repair-oracle.mjs','existing-source-pending-repair-browser-read.mjs','j4-package-journey.mjs','j4-debugger-transport.mjs','j4-joint-interruption.mjs','j4-evidence-recovery.mjs','j4-evidence-interruption.mjs','j4-report-cleanup.mjs','cold-context-trace.mjs','native-visibility-browser.mjs','isolated-browser-cleanup.mjs','historical-network-guard.mjs','sys05-startup-precondition.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/j4-assets.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','fixtures/ui10-conversation-title.mjs','expected/modern.mjs'];
 export function pendingRepairPlan(){return {status:'NOT_RUN',S:'NOT_RUN',scopeFeasibility:'NOT_ESTABLISHED_NORMAL_SURFACE_CAN_INVALIDATE_NATIVE_WITNESS',specRevision:'VA-HOST/1.1 FINAL',requirement:'SYS-02 / SYS-01 / J4 existing-source pending repair S slice',profile:'MODERN_C2_CONVERSATION_GET_OFFLINE',sourceCommit:process.env.FREE_SOURCE_COMMIT??null,dirtyPatchHash:process.env.FREE_DIRTY_PATCH_HASH??null,workingTreePatch:'NOT_MEASURED_BY_RUNNER',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',fullSYS02:'NOT_ESTABLISHED',fullJ4:'NOT_ESTABLISHED',limits:PENDING_REPAIR_LIMITS,steps:[],errors:[],limitations:['One existing persisted ACK source, one pending-before-Evidence-apply cut only','Missing initial ACK source, post-Evidence/pre-completion cut, capacity/quota/GC stress NOT_RUN','Full supported-profile matrix, full J4 and other SYS02 subcases NOT_RUN','Fresh post-repair send/successor ACK, unloaded branches, physical crash/disk quota NOT_RUN','G/U, physical devices, PAIA and performance/p95 NOT_RUN'],instrumentation:'PASSIVE_UI_REPLY_OBSERVER_AND_REAL_DEBUGGER_FAULT_CONTROL; NOT_PERFORMANCE_EVIDENCE'};}
 /** Test scheduling only: inspect existing reservations; never reserve/reset them.
  * One current read needs session + accounts + conversation GETs and one attempt.
@@ -121,7 +122,8 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   function nativeProjection(state,pending,phase){report.nativeProjections??=[];if(report.nativeProjections.length<3)report.nativeProjections.push(projectPendingRepairNative(state,pending,phase));}
   const budgetObservations=[];report.budgetObservations=budgetObservations;
   async function budgetWindow(){const budget=assertPendingRepairBudget((await inspect()).budget);budgetObservations.push(budget);const waitMs=await waitPendingRepairFreshWindow(budget);return {waitMs,budget};}
-  async function readCapacity(){const value=await waitPendingRepairReadCapacity({read:async()=>(await inspect()).budget});budgetObservations.push(...value.observations);report.readCapacityChecks??=[];report.readCapacityChecks.push({stage:report.stage,waitMs:value.waitMs,observations:value.observations});}
+  let leasePlan;
+  async function readCapacity(){const phase={PRE_SECOND_BUDGET:'SECOND',REPAIR_DRAIN:'DRAIN',REPEATED_REBIND:'REPEAT'}[report.stage],state=await inspect();const budget=checkPendingRepairRead(leasePlan,state,phase,Date.now());budgetObservations.push(budget);report.readCapacityChecks??=[];report.readCapacityChecks.push({stage:report.stage,waitMs:0,observations:[budget]});}
   stage('INITIAL_CONTEXT_AND_ASSETS');
   b=await startup.run(()=>context.newPage(),'initial-peer-page');b.on('pageerror',error=>appendPendingDiagnostic(report,'errors',error,'peer-pageerror'));await startup.run(()=>b.goto(server.origin+'/c/'+J4_REF,{timeout:startup.remaining('initial-native-navigation')}),'initial-native-navigation');await ready(b,team,J4_REF,startup);report.startup.elapsedMs=startup.elapsedMs();
   a=await context.newPage();a.on('pageerror',error=>appendPendingDiagnostic(report,'errors',error,'active-pageerror'));await a.goto(server.origin+'/c/'+J4_SEND_C);await ready(a,team,J4_SEND_C);
@@ -137,7 +139,9 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   // The first send leaves the native title unchanged. Release only the fixture's
   // pre-existing response hold; no restart occurs until its ACK source exists.
   stage('FIRST_SEND_AND_ACK');
-  stage('FIRST_SEND_BUDGET');await budgetWindow();stage('FIRST_SEND_NATIVE_INPUT');await native();await a.locator('#j4-rename-on-send').uncheck();await a.locator('textarea').fill('Existing source before pending repair');await a.locator('button[type="submit"]').click();
+  stage('FIRST_SEND_BUDGET');const preparation=await preparePendingRepairLease({read:()=>inspect(),reload:async()=>{await a.bringToFront();await a.reload();await ready(a,personal,J4_SEND_C);await ready(b,team,J4_REF);}});leasePlan=preparation.plan;report.leasePreparation=preparation;
+  const prepared=await inspect();checkPendingRepairRead(leasePlan,prepared,'FIRST',Date.now());assert.deepEqual(prepared.assets,preserved);
+  stage('FIRST_SEND_NATIVE_INPUT');await native();await a.locator('#j4-rename-on-send').uncheck();await a.locator('textarea').fill('Existing source before pending repair');await a.locator('button[type="submit"]').click();
   stage('FIRST_SEND_ACK_READ');const first=await poll(()=>{const value=server.snapshot().interruption;return value.accepts===1?value.rows.at(-1):null;},'first-real-native-send');server.releaseInterruption();
   const baseline=await poll(async()=>{const value=await inspect();return Object.values(value.evidence.hints).filter(h=>h.messageId===first.id).length===1?value:null;},'persisted-first-ACK-source');
   assert.equal(baseline.native.refs[J4_SEND_C].nativeTitle,'Membership not loaded');assert.equal(baseline.continuations.filter(row=>row.state==='pending-evidence').length,0);assert.deepEqual(baseline.assets,preserved);
@@ -153,11 +157,12 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   const running=await poll(()=>{const value=versions.filter(version=>version.scriptURL===`chrome-extension://${id}/extension/worker.mjs`).at(-1);return value?.runningStatus==='running'?value:null;},'worker-before-joint-cut');assert(Boolean(running.targetId),'PENDING_REPAIR_WORKER_TARGET_REQUIRED');
   stage('DEBUGGER_INSTALL');debuggerCDP=await connectJ4Debugger(handle.debugEndpoint);pause=await pauseJointDrain(debuggerCDP,id,{packageRoot:built.unpacked,expectedTargetId:running.targetId});stage('DEBUGGER_CONTROL');await pause.verifyControl();
   // Start the native click before waiting for its actual production breakpoint.
-  stage('SECOND_SEND_AND_PENDING_CUT');await a.locator('button[type="submit"]').click();
+  stage('SECOND_SEND_AND_PENDING_CUT');checkPendingRepairRead(leasePlan,await inspect(),'SECOND',Date.now());await a.locator('button[type="submit"]').click();
   let sent,stopSequence;
   const cut=await faultThenStopPending({pause,inspect,assertPaused:paused=>{
    const value=server.snapshot().interruption;assert.equal(value.accepts,2);assert.equal(value.title,J4_MIXED_TITLE);sent=value.rows.at(-1);assert.notEqual(sent.id,first.id);
    diagnosticPending=paused.continuations.find(row=>row.state==='pending-evidence'&&row.evidence?.batch.hints.some(hint=>hint.messageId===sent.id));
+   checkPendingRepairRead(leasePlan,paused,'CUT',Date.now());
    nativeProjection(paused,diagnosticPending,'CUT');
    return assertExistingSourcePending({baseline,paused,messageId:sent.id,firstMessageId:first.id,conversationId:J4_SEND_C,title:J4_MIXED_TITLE});
   },fault:before=>probe.evaluate(faultJ4EvidenceRoot,{scope:personal,expectedRevision:before.evidence.revision}),stop:()=>{stopSequence=lifecycleTrace.seen;return lifecycle.send('ServiceWorker.stopWorker',{versionId:running.versionId});},confirmStopped:()=>poll(()=>versions.some(version=>version.sequence>stopSequence&&version.versionId===running.versionId&&version.runningStatus==='stopped'),'actual-worker-stopped')});
@@ -165,7 +170,10 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   const {pending}=cut;report.pendingIdentity={operationId:pending.operationId,payloadDigest:pending.payloadDigest,sourceId:pending.admission.sourceId,nativeWitness:pending.nativeWitness,messageId:sent.id};
   record('same-transaction-native-delta-and-existing-source-pending-cut-before-evidence',{...report.pendingIdentity,breakpointBoundary:cut.hit.boundary,fault:cut.injected,workerStopConfirmed:true});
   assertCorruptPending({state:await inspect(),pending,faultedStorageDigest:cut.damaged.evidenceStorageDigest});
-  stage('CORRUPT_REBIND');await a.bringToFront();await a.reload();await a.locator('[data-message-id="'+sent.id+'"]').first().waitFor();await workspace();
+  stage('CORRUPT_REBIND');const beforeCorrupt=await inspect();checkPendingRepairRead(leasePlan,beforeCorrupt,'CORRUPT',Date.now());
+  await waitPendingRepairBoundary(leasePlan.windowEndsAt);
+  const afterCapacityWait=await inspect();checkPendingRepairRead(leasePlan,afterCapacityWait,'CORRUPT',Date.now());assertCorruptPending({state:afterCapacityWait,pending,faultedStorageDigest:cut.damaged.evidenceStorageDigest});
+  await a.bringToFront();await a.reload();await a.locator('[data-message-id="'+sent.id+'"]').first().waitFor();await workspace();
   const fresh=await poll(async()=>{const value=await replies(a);return value?.grant&&value.grant!==oldGrant&&value.scopeGrant!==oldAuthority.scopeGrant&&value.recovery?.corrupt&&value.recovery?.recoverable?value:null;},'fresh-grant-real-recovery-status-while-corrupt');
   assertCorruptPending({state:await inspect(),pending,faultedStorageDigest:cut.damaged.evidenceStorageDigest});
   const teamBefore=await inspect(team);assert(!Object.values(teamBefore.evidence.hints).some(row=>[first.id,sent.id].includes(row.messageId)));
@@ -187,14 +195,14 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   assert.deepEqual((await inspect(team)).evidence,teamBefore.evidence,'PENDING_REPAIR_PEER_EVIDENCE');assert.deepEqual((await inspect(team)).assets,teamBefore.assets,'PENDING_REPAIR_PEER_ASSETS');
   record('same-operation-retires-only-for-ACK-source-revocation',{operationId:summary.operationId,payloadDigest:summary.payloadDigest,reason:summary.reason,targets:summary.targets,oldACKReplayed:false});
   stage('REPEATED_REBIND');await readCapacity();await a.bringToFront();await a.reload();await a.locator('[data-message-id="'+sent.id+'"]').first().waitFor();const repeatedGrant=await ready(a,personal,J4_SEND_C);assert(repeatedGrant.grant!==finalGrant.grant,'PENDING_REPAIR_REPEAT_GRANT_FRESH');
-  const repeated=await inspect();assertRetiredPending({before:cut.before,state:repeated,pending,messageId:sent.id,conversationId:J4_SEND_C});assert.deepEqual(repeated.continuations,retired.continuations);
+  const repeated=await inspect();checkPendingRepairRead(leasePlan,repeated,'FINAL',Date.now());assertRetiredPending({before:cut.before,state:repeated,pending,messageId:sent.id,conversationId:J4_SEND_C});assert.deepEqual(repeated.continuations,retired.continuations);
   const peer=await inspect(team);assert.deepEqual(peer.evidence,teamBefore.evidence);assert.deepEqual(peer.assets,teamBefore.assets);budgetObservations.push(assertPendingRepairBudget(repeated.budget));
   stage('FINAL_ACCEPTANCE');const actual=server.snapshot();assert.equal(actual.interruption.accepts,2);assert.equal(actual.actions['send-intent'],2);assert.equal(actual.actions['create-project']??0,0);assert.deepEqual(report.errors,[]);
   report.budgetObservations=budgetObservations;report.nativeSends=2;report.originalACK=Object.values(cut.before.evidence.hints).find(row=>row.messageId===first.id);report.finalSummary=summary;
   record('second-real-rebind-is-idempotent-and-Team-isolated',{nativeSends:2,retiredWitnessBytesPreserved:true,summaryByteIdentity:true,peerUnchanged:true,legitimateFreshHistory:'ALLOWED_NOT_AN_OLD_ACK_REPLAY'});
   report.status='PASS_NARROW_EXISTING_SOURCE_PENDING_REPAIR';report.S='REAL_PACKAGED_MV3_EXISTING_SOURCE_PENDING_REPAIR_ONLY';report.browserVersion=handle.browser.version();
  }catch(error){
-  report.status=handle?'FAIL':'NOT_RUN_BROWSER_STARTUP';report.S=handle?'EXECUTED_FAILED':'NOT_RUN';report.error=pendingDiagnosticError(error);
+  report.status=handle?'FAIL':'NOT_RUN_BROWSER_STARTUP';report.S=handle?'EXECUTED_FAILED':'NOT_RUN';report.error=pendingDiagnosticError(error);if(typeof error?.message==='string'&&error.message.startsWith('PENDING_REPAIR_PRECONDITION_NOT_ESTABLISHED:')){report.status='FAIL_PRECONDITION_NOT_ESTABLISHED';report.scopeFeasibility='PRECONDITION_NOT_ESTABLISHED';}
   await capturePendingRepairFailure(report,diagnosticRead,diagnosticPending);
   if(a&&!a.isClosed())try{report.presentationFailure=await pendingDiagnosticDeadline(()=>a.evaluate(pendingRepairPresentationSnapshot),{timeoutMs:1000});}catch{report.presentationFailure={status:'READ_ONLY_DIAGNOSTIC_UNAVAILABLE'};}
  }finally{
