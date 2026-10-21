@@ -23570,5 +23570,435 @@
     },
     "next": "Retain original local-status immediate15s and dual-surface predicate; gather bounded passive open/close/native region/protected input/route response order before attributing safe withdrawal. Continue source semantics review without new real requests.",
     "review": "Independent readonly review: no blocking findings after next-task click and atomic finish fixes; independent repro logs preserved."
+  },
+  "startupObservationAndCancelReadiness20261022": {
+    "baseline": "788de9607c33de8ae4ecb822a98ff2e0eee730e5",
+    "productSourceChanged": false,
+    "files": {
+      "tests/host/startup-surface-observer.mjs": "ae58b01ae3aa095c76a24533704832112c37ba4a74ff972a2c6eec6032917fce",
+      "tests/host/startup-surface-observer.test.mjs": "629fd95818e4dbbd5d29e8ad68672a39a9e4abfb400795d688da8f5d1c4ffd79",
+      "tests/host/local-status-package-browser.mjs": "ec6dbf25b1e8ab97ed70ae4bf0917d281c33559ab2a39a1f26b77d77b1e349e3",
+      "tests/host/navigation-cancel-browser-probe.mjs": "4640a3c2b6b5b0c133feddabdce26c74581fdb1a9eb304fb5a2c60e2b8559ba0",
+      "tests/host/navigation-cancel-browser-probe.test.mjs": "24cc37e288aa1958bc67d2a70dd3444770b9ce0d1da1e7802f87dbed4d18fe5f",
+      "tests/host/frame-window-retention-package-browser.mjs": "6bd6adc260fc089284bb53704d287703aec36afac064cda3f63ab357ea53fce9"
+    },
+    "ci": {
+      "run": 39666489999,
+      "head": "788de9607c33de8ae4ecb822a98ff2e0eee730e5",
+      "status": "completed",
+      "conclusion": "failure",
+      "successJobs": 40,
+      "failedJobs": [
+        {
+          "name": "offline-journeys",
+          "id": 119452804795
+        }
+      ],
+      "historicalFailuresRetained": true
+    },
+    "cancellationEntry": {
+      "ciStage": "After single click, before second HOST_NATIVE_AUTHORIZE reply hold; no query change, cancellation ACK or late-response assertion yet.",
+      "ciTrace": {
+        "dropped": 0,
+        "view22StartedAt": 2743.1,
+        "pointerdownAt": 2768.6,
+        "clickAt": 2769.6,
+        "ariaDisabled": true,
+        "dispatches": 0,
+        "cancellations": 0
+      },
+      "cause": "Cancellation driver clicked while prior VIEW already pending; product correctly rejected it. Not a cancellation implementation failure or the already-fixed ready-pointer race.",
+      "fix": "Within original shared six seconds, resolve unique current connected delegated nonpending control, then click once. A later race still fails with no replay; no authority or product changes.",
+      "diagnostics": "Fixed phase and cleanup-before-release probe counts/booleans; phase single-click alone does not prove delivery.",
+      "unitRegression": {
+        "initialPass": 158,
+        "finalPass": 159,
+        "fail": 0,
+        "skip": 0,
+        "notCumulative": true
+      },
+      "boundary": "Never ready => zero gestures; ready then pending => one gesture and failure; ready first observed after deadline => zero gestures."
+    },
+    "windowJourney": {
+      "status": "PASS_OFFLINE_MV3_WINDOW_RETENTION",
+      "acceptance": "PARTIAL_S_NOT_FREE_ACCEPTED",
+      "realChatGPT": "NOT_RUN",
+      "cancellation": {
+        "state": "PASS",
+        "realAuthorizationHeld": true,
+        "cancelAcknowledged": true,
+        "lateReplyDidNotEnterReading": true,
+        "originalDocumentEditorDraft": true,
+        "oneDispatch": true,
+        "oneCancellation": true,
+        "elapsedMs": 119,
+        "scope": "OFFLINE_MV3_PENDING_PANEL_RETURN_SUBCHAIN_ONLY"
+      },
+      "returnCancellation": {
+        "state": "PASS",
+        "realAuthorizationHeld": true,
+        "cancelAcknowledged": true,
+        "lateReplyDidNotEnterReading": true,
+        "originalDocumentEditorDraft": true,
+        "oneDispatch": true,
+        "oneCancellation": true,
+        "elapsedMs": 133,
+        "scope": "OFFLINE_MV3_NATIVE_RETURN_SUBCHAIN_ONLY"
+      },
+      "cancellationDiagnostics": {
+        "phase": "complete",
+        "probe": {
+          "count": 2,
+          "held": true,
+          "released": true,
+          "replyOK": true
+        }
+      },
+      "returnCancellationDiagnostics": {
+        "phase": "complete",
+        "probe": {
+          "count": 2,
+          "held": true,
+          "released": true,
+          "replyOK": true
+        }
+      },
+      "journey": {
+        "projectRows": 17,
+        "unknownRows": 17,
+        "readingReturn": true,
+        "originalDocumentEditorDraft": true,
+        "elapsedMs": 2563.3859589999997
+      },
+      "searchReturn": {
+        "alreadyCurrentOriginalTarget": true,
+        "uniqueReturn": true,
+        "projectRows": 17,
+        "unknownRows": 17,
+        "originalProjectDraftPreserved": true
+      },
+      "differentTargetReturn": {
+        "nativeTargetOnce": true,
+        "uniqueReturn": true,
+        "projectRows": 17,
+        "unknownRows": 17,
+        "newFrame": true,
+        "oldFrameDetached": true,
+        "originalDocumentsEditorsDrafts": true
+      },
+      "scaleAcceptance": "NOT_RUN_1K_FIXTURE_FUNCTIONAL_SUBCHAIN_ONLY",
+      "sourceChangedDuringRun": false,
+      "fixtureChangedDuringRun": false,
+      "manifestChangedDuringRun": false,
+      "temporaryDirectoryRemoved": true,
+      "traceDropped": 0,
+      "networkGuard": {
+        "mode": "DISPOSABLE_CHROME_REJECT_PROXY",
+        "closed": true,
+        "denied": 44,
+        "counts": {
+          "GET clients2.google.com": 1,
+          "CONNECT www.google.com": 24,
+          "CONNECT www.gstatic.com": 1,
+          "CONNECT accounts.google.com": 2,
+          "CONNECT update.googleapis.com": 1,
+          "CONNECT content-autofill.googleapis.com": 14,
+          "CONNECT android.clients.google.com": 1
+        }
+      }
+    },
+    "startup": {
+      "originalFailure": "00c8 CI39663421561 double-popover original15s timeout remains causally unresolved; do not rewrite as PASS.",
+      "instrumentation": "Passive loopback-only top-document init observer, cap256, fixed regions and input categories, synchronous popover edges, existing native-route resource times. No bodies, new requests, product function wrappers, actions, retries, prewarm or deadline/predicate change.",
+      "observationTimeMeaning": "Mutation times are callback/drain times, not exact DOM operation times; resource entries have their own document-performance timing.",
+      "localStatus": "PASS_OFFLINE_MV3_LOCAL_STATUS",
+      "elapsedMs": 1005.6988329999999,
+      "trace": {
+        "kind": "OFFLINE_STARTUP_PASSIVE_DIAGNOSTIC",
+        "status": "COMPLETE_PASSIVE_TRACE",
+        "clock": "document-performance",
+        "limit": 256,
+        "dropped": 0,
+        "issues": [],
+        "events": [
+          {
+            "sequence": 1,
+            "at": 8.399999976158142,
+            "type": "installed",
+            "regions": {
+              "history": {
+                "count": 0,
+                "generation": null,
+                "connected": false
+              },
+              "header": {
+                "count": 0,
+                "generation": null,
+                "connected": false
+              },
+              "reading": {
+                "count": 0,
+                "generation": null,
+                "connected": false
+              },
+              "composer": {
+                "count": 0,
+                "generation": null,
+                "connected": false
+              },
+              "slot": {
+                "count": 0,
+                "generation": null,
+                "connected": false
+              }
+            },
+            "surfaces": {
+              "workspace": 0,
+              "sidebar": 0,
+              "other": 0
+            }
+          },
+          {
+            "sequence": 2,
+            "at": 9.599999904632568,
+            "type": "regions",
+            "phase": "callback",
+            "changes": [
+              {
+                "region": "history",
+                "replaced": true,
+                "childLists": 10,
+                "added": 10,
+                "removed": 0,
+                "attributes": []
+              },
+              {
+                "region": "header",
+                "replaced": true,
+                "childLists": 11,
+                "added": 11,
+                "removed": 0,
+                "attributes": []
+              },
+              {
+                "region": "reading",
+                "replaced": true,
+                "childLists": 6,
+                "added": 6,
+                "removed": 0,
+                "attributes": []
+              },
+              {
+                "region": "composer",
+                "replaced": true,
+                "childLists": 14,
+                "added": 14,
+                "removed": 0,
+                "attributes": []
+              },
+              {
+                "region": "slot",
+                "replaced": true,
+                "childLists": 5,
+                "added": 5,
+                "removed": 0,
+                "attributes": []
+              }
+            ],
+            "regions": {
+              "history": {
+                "count": 1,
+                "generation": 1,
+                "connected": true
+              },
+              "header": {
+                "count": 1,
+                "generation": 2,
+                "connected": true
+              },
+              "reading": {
+                "count": 1,
+                "generation": 3,
+                "connected": true
+              },
+              "composer": {
+                "count": 1,
+                "generation": 4,
+                "connected": true
+              },
+              "slot": {
+                "count": 1,
+                "generation": 5,
+                "connected": true
+              }
+            },
+            "surfaces": {
+              "workspace": 0,
+              "sidebar": 0,
+              "other": 0
+            }
+          },
+          {
+            "sequence": 3,
+            "at": 37.699999928474426,
+            "type": "regions",
+            "phase": "callback",
+            "changes": [
+              {
+                "region": "header",
+                "replaced": false,
+                "childLists": 1,
+                "added": 1,
+                "removed": 1,
+                "attributes": []
+              },
+              {
+                "region": "reading",
+                "replaced": false,
+                "childLists": 2,
+                "added": 1,
+                "removed": 1,
+                "attributes": []
+              }
+            ],
+            "regions": {
+              "history": {
+                "count": 1,
+                "generation": 1,
+                "connected": true
+              },
+              "header": {
+                "count": 1,
+                "generation": 2,
+                "connected": true
+              },
+              "reading": {
+                "count": 1,
+                "generation": 3,
+                "connected": true
+              },
+              "composer": {
+                "count": 1,
+                "generation": 4,
+                "connected": true
+              },
+              "slot": {
+                "count": 1,
+                "generation": 5,
+                "connected": true
+              }
+            },
+            "surfaces": {
+              "workspace": 0,
+              "sidebar": 0,
+              "other": 0
+            }
+          },
+          {
+            "sequence": 4,
+            "at": 37.699999928474426,
+            "type": "native-route-resource",
+            "timing": {
+              "startTime": 20.399999976158142,
+              "responseStart": 22.299999952316284,
+              "responseEnd": 22.5,
+              "duration": 2.100000023841858
+            }
+          },
+          {
+            "sequence": 5,
+            "at": 183.89999997615814,
+            "type": "beforetoggle",
+            "role": "workspace",
+            "oldState": "closed",
+            "newState": "open",
+            "trusted": true,
+            "surfaces": {
+              "workspace": 0,
+              "sidebar": 0,
+              "other": 0
+            }
+          },
+          {
+            "sequence": 6,
+            "at": 184.09999990463257,
+            "type": "beforetoggle",
+            "role": "sidebar",
+            "oldState": "closed",
+            "newState": "open",
+            "trusted": true,
+            "surfaces": {
+              "workspace": 1,
+              "sidebar": 0,
+              "other": 0
+            }
+          },
+          {
+            "sequence": 7,
+            "at": 184.79999995231628,
+            "type": "toggle",
+            "role": "workspace",
+            "oldState": "closed",
+            "newState": "open",
+            "trusted": true,
+            "surfaces": {
+              "workspace": 1,
+              "sidebar": 1,
+              "other": 0
+            }
+          },
+          {
+            "sequence": 8,
+            "at": 185,
+            "type": "toggle",
+            "role": "sidebar",
+            "oldState": "closed",
+            "newState": "open",
+            "trusted": true,
+            "surfaces": {
+              "workspace": 1,
+              "sidebar": 1,
+              "other": 0
+            }
+          }
+        ]
+      },
+      "sourceStable": true,
+      "runnerStable": true,
+      "browserObserverHash": "53722768bdc66eb833c0306f4398739bac04e610bdaff1c8a607c9b9b2b2620c",
+      "finalObserverHash": "ae58b01ae3aa095c76a24533704832112c37ba4a74ff972a2c6eec6032917fce",
+      "stageDifference": "Browser was run once before focus-baseline review correction; its trace has no focus events. Preserve old hash/source, no final-observer browser PASS claim. Final correction covered by unit and independent reproduction only.",
+      "independentConditionRepro": "Actual body-discovery and mount modules with Node DOM double: initial home reading update after open surrenders both surfaces; same update before open does not. Not Linux CI causation.",
+      "unitPass": 87,
+      "ciThisHeadLocalStatus": "PASS; historical00c8 failure not cleared"
+    },
+    "independentReview": "Read-only review, focus-baseline flaw reproduced red and fixed. Cancellation readiness and late-deadline reviewed without blockers. Sole root writer.",
+    "remaining": [
+      "00c8 startup timeout cause not uniquely established",
+      "Real credential batch consumed; trusted principal/current context, default-null semantics and complete server directory remain unestablished",
+      "Natural peer recovery, real self-activity, physical IME/PAIA/install remain open",
+      "10k/100k DEFERRED with original thresholds; no complete Free or release acceptance"
+    ],
+    "archive": {
+      "path": "docs/evidence/free-delivery-2026-10-17/local-startup-cancel-readiness-20261022.tar.gz",
+      "sha256": "80af19fc21314732e5af5627d2c5056e6ae0fa57826c40ea8f30bf1765ede282",
+      "bytes": 889871
+    },
+    "rawHashes": {
+      "788-ci-checkpoint-full.json": "cbadd22b2df58aef6812dc934a3b91d9bd5ade696bb3ee906845ae302072f809",
+      "788-job-119452804795.log": "e9010c517731c18b0429b9430ea8833319f275e14bbf7a5a65d5c4f0183ab28d",
+      "788-frame-window-retention.json": "ac5be68075821a437e6c6648d1237b3f4c2c44d6ec2a724679f203abbec3485a",
+      "local-status-startup-trace.json": "dc7dc721bec92224e1df9e3d3443741f32f4d6ed444da68d61afde65391d8ba2",
+      "local-status-startup-trace.log": "5c57fce340cbaad56c049db152cf63df6bc019f23220e0058e72ed16c75f3618",
+      "startup-surface-observer-browser-version.mjs": "53722768bdc66eb833c0306f4398739bac04e610bdaff1c8a607c9b9b2b2620c",
+      "startup-observer-review-red.tap": "212c0efb2bd2691a66acac32c24551ea58e2f57536b0669d693869c428a0bf00",
+      "startup-observer-final.tap": "1f56c8122ad9127454f39b48a17d0f9f29f3cc3b8cd05e3ac3501b6d65e087cb",
+      "cancel-precondition-regression.tap": "cf1bf7b1c58adbd1c42b897e95ff133792cb1988fbecaf642b037bdf2ef9c876",
+      "cancel-precondition-final.tap": "c61790f4f485abca8d442ef63052587ee6454f10a344a2a3cb6ef1c2e88646a3",
+      "cancel-ready-window-journey.json": "2bc7de0a0794a07caaae04c8674a59dbe5802b2d7397019802c7d42d42abe17f",
+      "cancel-ready-window-journey.log": "6d22fe94277d23ccf1ddf71525ad30159670d762aa3cf3a915c953f5fb19235b",
+      "pr16-startup-new-comments.json": "20717f031de6ec6dbcab264373f5d3524bd5020f904cc0e17362b9618f3aa91c"
+    },
+    "release": "NOT_RELEASE_READY"
   }
 }
