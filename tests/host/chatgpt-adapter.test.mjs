@@ -2,6 +2,7 @@ import {installTreeWalkerDouble} from './tree-walker-double.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createChatGPTAdapter} from '../../src/host/chatgpt-adapter.mjs';
+import {createHostIngestionPassOwner} from '../../src/runtime/host-ingestion-pass-owner.mjs';
 import {LEGACY_SURFACE_PROFILE} from '../../src/host/surface-discovery.mjs';
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 const C='33333333-3333-4333-8333-333333333333';
@@ -442,6 +443,52 @@ test('real directory restart retains old scheduling pass while successor start i
  const f=fixture(),d=sys05Directory(f,1000),events=[];t.after(()=>f.adapter.stop());let firstAck,nextStart,active=null;
  await f.start(p=>{f.emitted.push(p);if(f.emitted.length===1)return new Promise(resolve=>firstAck=()=>resolve(bodyAck(p)));return Promise.resolve(bodyAck(p));},{ingestionPass:m=>{events.push(m);if(m.phase==='start'&&m.passSeq===2)return new Promise(resolve=>nextStart=()=>{active=2;resolve({ok:true});});active=m.phase==='start'?m.passSeq:null;return Promise.resolve({ok:true});}});await settle();assert.equal(active,1);
  d.nodes[0].textContent='Changed midpass';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[0],parentElement:d.nodes[0]}}]);firstAck();await settle();assert(nextStart);assert.deepEqual(events.map(m=>m.phase),['start','start']);assert.equal(active,1,'old validated pass bridges the async successor validation gap');assert.equal(f.emitted.length,1);nextStart();for(let i=0;i<100;i++)await tick();assert.equal(active,null);assert.deepEqual(events.map(m=>m.phase),['start','start','end']);assert.equal(events.at(-1).passSeq,2);assert(f.emitted.some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Changed midpass')));
+});
+// Real scheduling owner; only DOM, browser frame and authority are offline doubles.
+function adapterPassOwner(f){
+ let holdFrame=false,releaseFrame;const events=[],sender={id:'extension',tab:{id:1,incognito:false},frameId:0,documentId:'browser-doc',documentLifecycle:'active',url:f.document.location.href};
+ const frame={documentId:sender.documentId,url:sender.url,documentLifecycle:'active'},grant={id:'grant',scopeEpoch:1},scope={key:'offline-scope'};
+ const bound=m=>m.documentToken===f.binding.documentToken&&m.producerToken===f.binding.producerToken&&m.routeEpoch===f.binding.routeEpoch;
+ const owner=createHostIngestionPassOwner({profiles:new Map([[LEGACY_SURFACE_PROFILE.id,LEGACY_SURFACE_PROFILE]]),handshake:{verify:async m=>bound(m),isBound:bound,matchesFrame:(m,s,actual)=>bound(m)&&actual===frame},authority:{peek:()=>({state:'verified',grant}),scopeFor:()=>scope},getFrame:async()=>{if(holdFrame){holdFrame=false;return new Promise(resolve=>releaseFrame=()=>resolve(frame));}return frame;},now:()=>0,elapsedNow:()=>0});
+ const send=m=>owner.handle({v:1,type:'HOST_INGESTION_PASS',documentToken:f.binding.documentToken,producerToken:f.binding.producerToken,routeEpoch:f.binding.routeEpoch,...m},sender);
+ return {owner,events,send,holdNextFrame:()=>holdFrame=true,get releaseFrame(){return releaseFrame;},ingestionPass:m=>{events.push(m);return send(m);}};
+}
+async function interruptedDirectoryBody(t){
+ const f=bodyFixture(),directory=sys05Directory(f,1000),h=adapterPassOwner(f);let surfaceAck,bodyAckRelease,nextSurfaceHold=false,nextSurfaceAck;
+ const emit=p=>{f.emitted.push(p);if(p.kind==='surface-delta'&&nextSurfaceHold){nextSurfaceHold=false;return new Promise(resolve=>nextSurfaceAck=()=>resolve(bodyAck(p)));}if(p.kind==='surface-delta'&&!surfaceAck)return new Promise(resolve=>surfaceAck=()=>resolve(bodyAck(p)));if(p.kind==='current-observation'&&p.payload.body.messageIds.includes('M2'))return new Promise(resolve=>bodyAckRelease=state=>resolve({...bodyAck(p),state:state??'accepted'}));return Promise.resolve(bodyAck(p));};
+ t.after(async()=>{surfaceAck?.();bodyAckRelease?.();nextSurfaceAck?.();await f.adapter.stop();h.owner.stop();});
+ await f.start(emit,{ingestionPass:h.ingestionPass});await settle();assert(surfaceAck);assert(h.owner.isPending('offline-scope'));
+ directory.nodes[0].textContent='Changed during active pass';f.reading.children.push(f.makeMessage('M2'));
+ f.observer().cb([{type:'characterData',target:{nodeType:3,parentElement:directory.nodes[0],parentNode:directory.nodes[0]}},{type:'childList',target:f.reading,addedNodes:[f.reading.children.at(-1)],removedNodes:[]}]);surfaceAck();await settle();
+ assert(bodyAckRelease);assert.deepEqual(h.events.map(m=>[m.phase,m.passSeq]),[['start',1]],'current body must precede successor registration');assert(h.owner.isPending('offline-scope'));
+ return {f,h,release:bodyAckRelease,holdNextSurface:()=>nextSurfaceHold=true,get nextSurfaceAck(){return nextSurfaceAck;}};
+}
+for(const late of ['accepted','rejected'])test('real pass owner releases immediately when stopped before successor registration; late body '+late,async t=>{
+ const {f,h,release}=await interruptedDirectoryBody(t),count=f.emitted.length;
+ assert.equal(await f.adapter.stop(),true);assert.equal(h.owner.isPending('offline-scope'),false);assert.equal(h.owner.isIdle(),true);
+ assert.deepEqual(h.events.map(m=>[m.phase,m.passSeq]),[['start',1],['cancel',1]]);
+ release(late);await settle();assert.equal(h.owner.isIdle(),true);assert.equal(f.emitted.length,count);assert.equal(h.events.length,2);
+});
+for(const state of ['rejected','unknown'])test('real pass remains pending when priority body fails before directory replacement: '+state,async t=>{
+ const suspended=await interruptedDirectoryBody(t),{f,h,release}=suspended;suspended.holdNextSurface();release(state);for(let i=0;i<100;i++)await tick();assert(suspended.nextSurfaceAck);
+ assert.deepEqual(h.events.map(m=>[m.phase,m.passSeq]),[['start',1],['start',2]],'unrelated failed body must not create a false directory drain gap');assert(h.owner.isPending('offline-scope'));
+ assert.equal(await f.adapter.stop(),true);assert.equal(h.owner.isPending('offline-scope'),false);assert.equal(h.events.at(-1).phase,'cancel');assert.equal(h.events.at(-1).passSeq,2);suspended.nextSurfaceAck();await settle();assert.equal(h.owner.isIdle(),true);
+});
+test('real pass successor replaces old scheduling ownership without a cancel/start gap',async t=>{
+ const {f,h,release}=await interruptedDirectoryBody(t);
+ h.holdNextFrame();release();await settle();assert(h.releaseFrame);assert(h.owner.isPending('offline-scope'),'old pass remains pending until successor validates');assert.deepEqual(h.events.map(m=>[m.phase,m.passSeq]),[['start',1],['start',2]]);h.releaseFrame();for(let i=0;i<180;i++)await tick();
+ assert.deepEqual(h.events.map(m=>[m.phase,m.passSeq]),[['start',1],['start',2],['end',2]]);assert.equal(h.owner.isIdle(),true);
+ const next={...h.events[1],passSeq:3};assert.equal((await h.send(next)).ok,true);assert(h.owner.isPending('offline-scope'));
+ assert.equal((await h.send({...h.events[0],phase:'cancel'})).ok,false);assert(h.owner.isPending('offline-scope'),'old terminal cannot cancel a newer validated pass');
+ await h.send({...next,phase:'cancel'});assert.equal(h.owner.isIdle(),true);
+});
+for(const restart of [false,true])test('real pass owner fences late successor registration after stop; new generation '+restart,async t=>{
+ const {f,h,release}=await interruptedDirectoryBody(t);h.holdNextFrame();release();await settle();assert(h.releaseFrame);assert(h.owner.isPending('offline-scope'));
+ assert.equal(await f.adapter.stop(),true);assert.equal(h.owner.isPending('offline-scope'),false);assert.deepEqual(h.events.map(m=>[m.phase,m.passSeq]),[['start',1],['start',2],['cancel',2]]);
+ let newSurfaceAck;if(restart){await f.start(p=>p.kind==='surface-delta'&&!newSurfaceAck?new Promise(resolve=>newSurfaceAck=()=>resolve(bodyAck(p))):Promise.resolve(bodyAck(p)),{ingestionPass:h.ingestionPass});await settle();assert(newSurfaceAck);assert(h.owner.isPending('offline-scope'));}
+ h.releaseFrame();await settle();assert.equal(h.owner.isPending('offline-scope'),restart);
+ if(restart){assert.equal(h.events.at(-1).passSeq,3);newSurfaceAck();for(let i=0;i<180;i++)await tick();}
+ assert.equal(h.owner.isIdle(),true);assert.equal(h.events.filter(m=>m.phase==='cancel'&&m.passSeq===3).length,0,'old continuation cannot cancel the new generation');
 });
 for(const initialUnproven of [false,true])test('current visible body reaches owner before a successor directory registration can hide it: '+initialUnproven,async t=>{
  let masked=false,release;const events=[];

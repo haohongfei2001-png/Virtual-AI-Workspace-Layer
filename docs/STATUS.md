@@ -1,5 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 目录取消归属修复与有界准入取证（2026-10-22，基线fb54d6ec）
+
+已落实[dot复现6322455884](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6322455884)：目录失效后先发当前body、其ACK挂起时，旧pass被置空导致stop无法取消，真实pass owner仍等待到原30秒。现保留待替换句柄；successor发起前stop取消旧seq，发起后取消新seq。独立body/send失败不会把仍待遍历的目录误报排空；目录自身失败、迟到ACK、旧代取消及原预算保持。两条停止反例及复审发现的两条失败ACK反例先失败后修复；真实pass owner与DOM/授权double的七个新场景、225项定向及165项相邻回归通过。独立复审无阻断；这是产品取消缺陷，不宣称Linux admission唯一根因或自然休眠通过。
+
+新增仅隔离复制包的前五访问诊断：旁观原ingest/proof、calibration拒绝和metadata进入/错误码，固定fixture ID与私有proof序号关联，512事件上限，原包和复制字节均核验。不发额外请求，不改正式64/6秒/共享预算。CI仅同SHA、清理完成且前五条明确admission失败后启动一次，最多180秒，独立输出/非零exit2，复核原正式报告hash；晚失败、源码变化或成功不重跑。冻结候选headless实际5访问/10详情，62502ms，170事件零丢失，清理/源码/包稳定，结果仅DIAGNOSTIC_ONLY、BOUND_REACHED；不是64条、视觉或真实验收。首次候选记录与复审修正均保留，未挑绿。
+
+前一[CI39646181514](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39646181514)已自然结束：40成功/1失败。fb54原native64访问、64 admitted events、8组检查、128详情用949571ms完成；这次通过不能关闭历史第5条间歇失败，也不是本批新源码完整CI。唯一失败仍是unknown-protocol正式观察的BrowserBodyEvicted；独立trace这次正文完整、关联到同一合成响应但未复现失败，因果继续INCOMPLETE。不更改正文oracle或生产abort。
+
+默认184文件包构建校验通过；诊断合同/CI边界和异常完整性回归通过，证据沿原summary的`passCancellationAndAdmissionTrace20261022`。真实四请求许可已消费、default/null身份空间及全目录无新证明；INV-09完整生命周期、自然恢复/真实IME/PAIA/安装与10k/100k原关口不变，完整Free和发布未通过。下一项是读取后继CI实际差额及dot来源证据，不无条件重跑诊断或要求用户再次操作。
+
 ## 恢复副本格式拒退与新CI差额（2026-10-22，基线b5746a7c）
 
 实际关闭B5恢复缺陷：在损坏indexed root与有效但错配的同revision旧partition shadow反例中，原实现允许修复并丢掉后来新增的聊天。诊断与实际recover现在一致拒绝格式回退，拒绝前后全库/receipt/Pro资产保持；正常indexed与真正legacy修复、来源撤回和幂等保持。两条反例先失败，94项受影响回归及真实headless IDB原reader旅程通过，184文件默认包校验通过。此为注入不一致副本的完整性反例，未证明正常原子写会自然产生；不防同格式错配，未实现INV-09删除栅栏/consumer，不标其完成。独立审查无阻断。

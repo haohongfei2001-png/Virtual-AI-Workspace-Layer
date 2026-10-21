@@ -71,6 +71,7 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  function finishPass(phase,retain=false){
   const entry=pass;if(!entry)return;
   if(!retain)pass=null;
+  entry.invalidated=false;
   if(entry.terminal)return;entry.terminal=true;
   // Keep terminal transport observable to stop(), including repeated stops.
   // Ordinary callers may ignore this fulfilled promise without rejection leaks.
@@ -78,8 +79,8 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
   terminalWork.add(pending);void pending.then(()=>terminalWork.delete(pending));
  }
  async function beginPass(){
-  if(!ingestionPass||pass)return;
-  const run=generation,entry={seq:++passSequence,notify:ingestionPass,terminal:false};pass=entry;
+  if(!ingestionPass||pass&&!pass.invalidated)return;
+  const run=generation,entry={seq:++passSequence,notify:ingestionPass,terminal:false,invalidated:false};pass=entry;
   try{const reply=await track(()=>entry.notify(passMessage(entry,'start')));if(run!==generation||!live()||pass!==entry||entry.terminal)return;if(reply?.ok!==true){finishPass('cancel',true);issue('host-ingestion-pass-unavailable');}}
   catch{if(pass===entry){finishPass('cancel',true);issue('host-ingestion-pass-unavailable');}}
  }
@@ -187,14 +188,16 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  function issue(reason){try{onObservationIssue({reason});}catch{/* Diagnostics cannot authorize a retry. */}}
  function discardPausedSurface(){const prior=pausedSurface;pausedSurface=null;if(prior?.timer!==null&&prior?.timer!==undefined)cancelRetry(prior.timer);}
  async function pump(){
-  queued=false;if(observationOnly){dirty=false;observeCurrent();return;}if(!live()||busy)return;if(surfaceRetryWanted){surfaceFailed.clear();surfaceRetryWanted=false;}if(surfaceEpoch!==surfaceSnapshotEpoch){if(pausedSurface)pausedSurface.invalidated=true;pass=null;surfaceParts=[];surfaceScanning=false;surfaceCursor=null;surfaceSnapshotEpoch=surfaceEpoch;}dirty=false;const run=generation;let p,key,intentItem=null;
+  queued=false;if(observationOnly){dirty=false;observeCurrent();return;}if(!live()||busy)return;if(surfaceRetryWanted){surfaceFailed.clear();surfaceRetryWanted=false;}if(surfaceEpoch!==surfaceSnapshotEpoch){if(pausedSurface)pausedSurface.invalidated=true;if(pass)pass.invalidated=true;surfaceParts=[];surfaceScanning=false;surfaceCursor=null;surfaceSnapshotEpoch=surfaceEpoch;}dirty=false;const run=generation;let p,key,intentItem=null;
   try{if(sendGap){p={protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:sendGap,kind:'send-gap',payload:{reason:'send-intent-capacity'}};sendGap=null;key=JSON.stringify([p.routeEpoch,p.payload]);}
    while(intents.length&&!p){intentItem=intents.shift();if(!intentCurrent(intentItem))continue;p=intentProposal(intentItem);key=JSON.stringify([p.routeEpoch,p.payload]);}for(const candidate of p?[]:[...(bodyDiscovery&&!sendGapBlocked?[bodyProposal()]:[])]){if(!candidate)continue;if(!bounded(candidate)){issue('host-proposal-too-large');continue;}const fingerprint=JSON.stringify([candidate.routeEpoch,candidate.payload]);if(fingerprint===last.get(candidate.kind)||fingerprint===failedKey.get(candidate.kind))continue;try{p=currentObservation(candidate,currentSurfaceSlice(discovery.scan(),candidate.payload.conversationId));}catch{failedKey.set(candidate.kind,fingerprint);issue('host-proposal-too-large');continue;}key=fingerprint;break;}
    // Current visible identity and captured send intents are independent of a
    // successor directory pass. Publish them before its registration await:
    // returning to the workspace during that wait may mask the native reading.
    // No cached hidden body is introduced; the existing owner still admits it.
-   if(!p&&ingestionPass&&!pass&&(surfaceScanning||surfaceWanted)){
+   // Until the successor takes ownership, stop must still cancel the old pass.
+   // A current-body ACK may remain pending before registration begins.
+   if(!p&&ingestionPass&&(!pass||pass.invalidated)&&(surfaceScanning||surfaceWanted)){
     busy=true;await beginPass();if(run!==generation)return;busy=false;
     // Reobserve after the await instead of using a pre-registration snapshot.
     if(live())schedule();return;
@@ -237,14 +240,14 @@ if(!p){
    if(restart){
     // Replace the pending pass atomically; a cancel/start gap would falsely
     // advertise a drained directory. Never reuse the rejected cursor.
-    cursorRestarts++;pass=null;surfaceWanted=true;schedule();
+    cursorRestarts++;if(pass)pass.invalidated=true;surfaceWanted=true;schedule();
    }else{finishPass('cancel');if(surfaceWanted)schedule();}
    return;
   }
   if(p.kind==='surface-delta'&&pausedSurface){const prior=pausedSurface;pausedSurface=null;busy=true;await prior.resume(prior.superseded,{proposal:p,key});return;}
   busy=true;const started=elapsedNow(),proofExpiry=binding.expiresAt,budget=Object.freeze({deadlineAt:started+6000});let attempts=0,lastElapsed=0;
   const remaining=()=>{const elapsed=elapsedNow()-started;if(!Number.isFinite(elapsed)||elapsed<lastElapsed)return 0;lastElapsed=elapsed;return 6000-elapsed;};
-  const finish=reason=>{if(run!==generation)return;if(reason){finishPass('cancel',true);failedKey.set(p.kind==='current-observation'?'current-object':p.kind,key);if(p.kind==='surface-delta'){surfaceParts=[];surfaceFailed.set(surfacePageKey,key);}dirty=true;issue(reason);}busy=false;if(dirty)schedule();};
+  const finish=reason=>{if(run!==generation)return;if(reason){if(!pass?.invalidated||p.kind==='surface-delta')finishPass('cancel',true);failedKey.set(p.kind==='current-observation'?'current-object':p.kind,key);if(p.kind==='surface-delta'){surfaceParts=[];surfaceFailed.set(surfacePageKey,key);}dirty=true;issue(reason);}busy=false;if(dirty)schedule();};
   const send=async()=>{
    retryTimer=null;if(run!==generation||!live())return finish('stale-host-binding');
    try{syncRoute();if(p.kind==='send-candidate'&&!intentCurrent(intentItem))return finish('stale-send-intent');}catch{return;}

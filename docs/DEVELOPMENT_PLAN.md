@@ -2,7 +2,7 @@
 
 ## 夜间接续：真实对照已消费，来源审查与依赖就绪工程并行（2026-10-22）
 
-B5同revision旧shadow降级恢复已补诊断与执行一致拒绝，正常恢复/Pro保留见STATUS/`nativeRecoveryFormatAndCIFactory20261022`；不替代完整INV-09生命周期链。最新Linux第5访问仍失败且与本地源码一致，下一项仅做原前5访问的独立阶段取证以定位未发详情原因，正式64/6秒/生产预算保持；已修factory测试环境漏参，不重跑已消费真实诊断。
+B5同revision旧shadow降级恢复已补诊断与执行一致拒绝，正常恢复/Pro保留见STATUS/`nativeRecoveryFormatAndCIFactory20261022`；不替代完整INV-09生命周期链。dot发现的目录失效→当前body ACK挂起→stop取消句柄遗失已修，successor接管/失败ACK/旧代隔离用真实pass owner回归。历史Linux第5访问仍未归因；fb54的CI39646181514本次64条通过不追溯关闭它。前五访问的独立复制包阶段取证现已实现，只在同源码正式早期admission失败后有界执行一次，诊断始终非验收且保留原失败，正式64/6秒/生产预算不变。unknown正式正文丢失仍开放，独立trace未复现不代替根因。下一自然CI读取实际差额，详情见STATUS/`passCancellationAndAdmissionTrace20261022`；不重跑已消费真实诊断。
 
 当前C2/C3修复把已可见当前body/send放在后继目录注册等待之前，消除快速返回遮罩造成的观察遗失；首次注册、owner准入与隐藏/权限边界不变。原64条MV3导航及8组界面检查已在同一产品源码完成；启动观察器null-root修复、自然休眠未观察及Linux未知协议正文失败分别保留，详见STATUS/`currentBodyPriorityAndCIEvidence20261022`。下一自然CI使用原独立trace的合成响应标记定位同一响应，不改变正式oracle或生产取消。继续原依赖就绪任务；INV-09持久栅栏/消费链与真实来源仍待闭合，不以新增离线次数代替这些关口。
 

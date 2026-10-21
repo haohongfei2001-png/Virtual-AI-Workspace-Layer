@@ -20895,5 +20895,151 @@
       "new-job-119374443962.raw.log": "0ff5a5d967ed73d466a04082cb176823148cf33a4f143bf96d60d7a497fe4c4a",
       "new-job-119374447079.raw.log": "0476bf95e126328550037ae53573fce2c907a7ee60f158925b1a1e7b43fcdca9"
     }
+  },
+  "passCancellationAndAdmissionTrace20261022": {
+    "status": "IMPLEMENTED_TARGETED_OFFLINE_VERIFIED_NOT_FULL_FREE",
+    "baseHead": "fb54d6ecf8aa3d841a8ce6311465e11c2be3d6db",
+    "writer": "Codex sole writer; dot and subagents read-only",
+    "productFix": {
+      "task": "C2/C3/C5 directory cancellation ownership",
+      "cause": "Directory invalidation discarded old pass handle before successor registration; stop during current-body ACK lost cancellation ownership.",
+      "change": "Retain invalidated pass; successor takes ownership synchronously at start; independent priority failures preserve pending directory; terminal paths and same-owner cancellation stay guarded.",
+      "redCases": 4,
+      "newRealOwnerCases": 7,
+      "targeted": {
+        "pass": 225,
+        "fail": 0
+      },
+      "adjacent": {
+        "pass": 165,
+        "fail": 0
+      },
+      "review": "No remaining blocking findings after failed-body ordering correction.",
+      "limitations": [
+        "DOM, browser frame and authority are doubles; scheduling owner is real.",
+        "Not attribution for Linux fifth-visit failure or real natural idle."
+      ]
+    },
+    "diagnostic": {
+      "kind": "DIAGNOSTIC_ONLY_UI10_ADMISSION",
+      "status": "DIAGNOSTIC_ONLY",
+      "outcome": "BOUND_REACHED",
+      "exitCode": 2,
+      "elapsedMs": 62502,
+      "visits": 5,
+      "detailRequests": 10,
+      "events": 170,
+      "dropped": 0,
+      "proofOverflow": false,
+      "sourceStable": true,
+      "fixtureStable": true,
+      "tracePackageVerified": true,
+      "cleanupOK": true,
+      "traceReceipt": {
+        "kind": "DIAGNOSTIC_ONLY_UI10_ADMISSION",
+        "unpacked": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-ui10-native-ecf8Oo/trace",
+        "source": "/var/folders/6f/fl5l5wdx1f1brqkw39j31wf80000gn/T/vaiwl-ui10-native-ecf8Oo/package/extension",
+        "origin": "http://127.0.0.1:62646",
+        "manifestSha256": "dfbfe67abffc87f254534a51abc8bba1bab9e4333815c1e4613389006210ce57",
+        "limit": 512,
+        "changes": [
+          {
+            "path": "src/runtime/host-binding-service.mjs",
+            "originalSha256": "cd23d97adf54a5ed95e769fed216cac46eebfbd6a6bcb0a521a959430a6a2258",
+            "instrumentedSha256": "69d7deb4636694227c4d0fb2913efdb219c367168982c7c02fc90d6a6ec50d89"
+          },
+          {
+            "path": "src/runtime/host-entry-calibration.mjs",
+            "originalSha256": "25e59ade903d92af3bd70f8e7d205c8ac2d054ca6cabcaad5da41a7def1393c6",
+            "instrumentedSha256": "39d45eb8168c523d543afc7b39107fc4c5e57a8b33de94a87e185641b342b643"
+          },
+          {
+            "path": "src/runtime/current-metadata-reader.mjs",
+            "originalSha256": "1cdba18251ba98ae0b8aa159170bfd77675fce1cbfaa8ff0429c5d623050726c",
+            "instrumentedSha256": "b48ab89cc84833581329fe7a9adfa07948c3509c47b31a0c5dd3eeb902d7d764"
+          },
+          {
+            "path": "extension/worker.mjs",
+            "originalSha256": "14062e1a3231d107aa118a3d0d228a685265ec46fef50682d8a4d3677c25b1c5",
+            "instrumentedSha256": "14062e1a3231d107aa118a3d0d228a685265ec46fef50682d8a4d3677c25b1c5"
+          },
+          {
+            "path": "extension/classic-runtime.js",
+            "originalSha256": "128684ccb4d8bc8c540117023e19aa8a7eaab623caaa429b00754b06a09d399a",
+            "instrumentedSha256": "50df4fc1cd53700a65a64f362a927e907dead716573f38e2417c8495560423c0"
+          }
+        ]
+      },
+      "formal64AndSixSecondBudget": "UNCHANGED",
+      "CITrigger": "Once only after same-SHA finalized stable early admission failure; independent output, original-report hash bound, 180-second outer timeout; no retries, cache, upload or new job.",
+      "acceptance": "NOT_ESTABLISHED",
+      "limitations": [
+        "Copy-only instrumentation may perturb timing.",
+        "No cause or absent-event inference from dropped/restarted trace.",
+        "First candidate also reached five; final source changed only after review of error logging and cleanup."
+      ]
+    },
+    "previousCI": {
+      "id": 39646181514,
+      "head": "fb54d6ecf8aa3d841a8ce6311465e11c2be3d6db",
+      "status": "completed",
+      "conclusion": "failure",
+      "jobs": 41,
+      "success": 40,
+      "failure": 1,
+      "native": {
+        "status": "PASS_PACKAGED_POPULATED_SUBCONTRACT_ONLY",
+        "visits": 64,
+        "admittedEvents": 64,
+        "checks": 8,
+        "elapsedMs": 949571,
+        "sourceStable": true,
+        "fixtureStable": true
+      },
+      "unknown": "Formal BrowserBodyEvicted; independent trace same synthetic response complete, no reproduction; causal status INCOMPLETE.",
+      "limits": "Previous head only, not full matrix for this candidate. Native pass does not retrospectively resolve earlier intermittent failure."
+    },
+    "sourceHashes": {
+      "src/host/chatgpt-adapter.mjs": "43d6527c235c99b54669ca726e6a0a7d6e8c04d138389152ee45cf88ffc9db7a",
+      "tests/host/chatgpt-adapter.test.mjs": "096ca57885d740d2d825f526609bff2cef140951935aedae895900d8b1572653",
+      "tests/host/ui10-admission-trace.mjs": "fcdb7e2ccb8e348c99440bbc6472b3c6e0fa9d9555a32c3d1271fbc9db6b0bfa",
+      "tests/host/ui10-admission-trace-outcome.mjs": "28de84379829d77c906d8bb6dca2a72addd7c5b4a9ea23c258e1ce3a38b1818c",
+      "tests/host/ui10-admission-trace.test.mjs": "5366b7d607e48dad2f03afe7986700d13679b2c7c082f8f7c9aad2a2d3b1716a",
+      "tests/host/ui10-populated-package-browser.mjs": "4a46c0375f1a0b4861d4e0cba1b9158cefd5894bc50bebb3ccf672fdfb42c3f3",
+      ".github/workflows/free-offline-host.yml": "aa1cf1401363f0a7a0f828fe712c46e4adb452ffdd681d7c19f128154859ff93"
+    },
+    "evidenceRoot": "/private/tmp/vaiwl-ci39638853187",
+    "evidenceHashes": {
+      "pass-retention-red.log": "2cbd934ab98f9d557877993874a7c10d3c8836af3c376fd1bbb28501cf1115c4",
+      "pass-retention-review-red.log": "f4dcbadc88ae148b9f5d06ec5bf0298ad0a86df26dda46801bd73073dadb2e87",
+      "pass-retention-regression.log": "894693eaa3ea50f784d650822df776aa5bb7d6725170a51af07793a18bb28d23",
+      "pass-and-trace-adjacent.log": "8f99f5ba1a845b771916ad5b2bb14d592c316618476773790de8cfabef80d1ca",
+      "admission-affected-tests.log": "a657728ca99ef50862feaa9f0fc73dfece68918faf9c234f01598ebf2e4ee6fb",
+      "admission-trace-final-tests.log": "7cd5048888a2840734fe595c261a2389b47a55e8844ca0098708af75450e6ad2",
+      "admission-trace-outcome-tests.log": "465c138e27a9a558721b91008546daddf7cb173aea57dd3276947c44977624ce",
+      "admission-trace-candidate.json": "6db9476472cb237307d86f1988552269c696e313644c8c47f15f3e5e8f83f85b",
+      "admission-trace-final.json": "1c2a35d3004bd40d2ee542993bd85ab6a51b81a1198e8a513414501df3b3c998",
+      "pass-retention-package.json": "c363769154e51adb433b02629cfbe972c07014c72ac80feed474452e692fe50c",
+      "fb54-ci-final.json": "1b3e73e0e086bb87bfaf9e6381af575b538fa0d0e01531b178f202d62d908419",
+      "fb54-unknown-job.raw.log": "ade6fe1a4416ef9d3c18764c80cb0fd3f6c307d1c26d6af435255a9ba2fe354a",
+      "fb54-populated-job.raw.log": "006c48a1b856a1b92a0af89b760cf882ce3299eef84d85d45582796a6f44fa12"
+    },
+    "defaultPackage": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 184,
+      "unpacked": "/private/tmp/vaiwl-ci39638853187/pass-retention-default-package/extension",
+      "archive": "/private/tmp/vaiwl-ci39638853187/pass-retention-default-package/vaiwl-free-host-development.zip",
+      "archiveSha256": "e2a1d159ad9a2b39203eda826ee1d65c6f99ff4651c3bfdd32145ecbedacff44"
+    },
+    "remaining": [
+      "Real trusted principal/current context default-null semantics",
+      "Complete native directory / positive membership / self activity sources",
+      "INV09 complete lifecycle fence and consumer",
+      "Natural recovery and real IME/PAIA/install acceptance",
+      "10k/100k DEFERRED original thresholds unchanged"
+    ],
+    "realDiagnostic": "Prior four requests consumed; no new real requests or privileges."
   }
+
 }

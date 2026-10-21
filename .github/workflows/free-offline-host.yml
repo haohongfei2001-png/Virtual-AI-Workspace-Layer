@@ -491,6 +491,7 @@ jobs:
           tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
           node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
       - name: Execute one bounded supplementary case
+        id: formal_supplementary
         env:
           SELECTED_GATE: ${{ matrix.gate }}
         run: |
@@ -517,6 +518,26 @@ jobs:
             *) exit 1 ;;
           esac
           node -e "const expected={'native-entry-safety':'PASS_LEGACY_SUBSCENARIOS_ONLY','page-command-native-fetch':'PASS_NARROW_PACKAGED_PAGE_COMMAND_AND_NO_TAP_CONTINUITY','non-atomic-terminal':'PASS_D_SCOPED','mixed-role':'PASS_SCOPED_OFFLINE_D_S','mixed-role-alt':'PASS_SCOPED_OFFLINE_D_S','membership-after-message':'PASS_SCOPED_OFFLINE_D_S'}[process.env.SELECTED_GATE];if(expected){const r=require(process.env.RUNNER_TEMP+'/supplementary.json');if(r.status!==expected||r.sourceCommit!==process.env.GITHUB_SHA)process.exit(1)}"
+      - name: First-five admission trace after eligible early failure (diagnostic only)
+        if: ${{ !cancelled() && matrix.gate == 'populated-native' && steps.formal_supplementary.outcome == 'failure' }}
+        run: |
+          formal="$RUNNER_TEMP/supplementary.json"
+          if test ! -f "$formal"; then
+            echo "No formal report; no diagnostic started."
+            exit 0
+          fi
+          set +e
+          node tests/host/ui10-admission-trace-outcome.mjs eligible "$formal" "$GITHUB_SHA" "$formal.trace-binding"
+          eligibility=$?
+          set -e
+          if test "$eligibility" -eq 3; then exit 0; fi
+          test "$eligibility" -eq 0
+          set +e
+          FREE_UI10_ADMISSION_TRACE=1 timeout 180s node tests/host/ui10-populated-package-browser.mjs "$RUNNER_TEMP/ui10-admission-trace.json"
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node tests/host/ui10-admission-trace-outcome.mjs verify "$RUNNER_TEMP/ui10-admission-trace.json" "$GITHUB_SHA" "$formal" "$result"
       - name: Independent unknown-protocol consumption trace (diagnostic only)
         if: ${{ !cancelled() && matrix.gate == 'fault-unknown-protocol' }}
         run: |
@@ -531,3 +552,4 @@ jobs:
         run: |
           test ! -f "$RUNNER_TEMP/supplementary.json" || cat "$RUNNER_TEMP/supplementary.json"
           test ! -f "$RUNNER_TEMP/fault-unknown-trace.json" || cat "$RUNNER_TEMP/fault-unknown-trace.json"
+          test ! -f "$RUNNER_TEMP/ui10-admission-trace.json" || cat "$RUNNER_TEMP/ui10-admission-trace.json"
