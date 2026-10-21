@@ -475,7 +475,7 @@ jobs:
       max-parallel: 3
       matrix:
         # Prioritize the remaining causal gate and longest case; coverage and limits stay unchanged.
-        gate: [membership-after-message, populated-native, existing-source-repair, native-entry-safety, fault-auth-failure, fault-unsafe-reading, fault-forged-scope, fault-csp, fault-iframe-destroy, fault-stale-response, fault-rate-limit, fault-corrupt, fault-unknown-protocol, privacy-main, privacy-isolated, idle-draft-active, idle-safe-empty-reading, visual-components, page-command-native-fetch, non-atomic-terminal, mixed-role, mixed-role-alt]
+        gate: [fault-unknown-protocol, native-entry-safety, populated-native, existing-source-repair, membership-after-message, fault-auth-failure, fault-unsafe-reading, fault-forged-scope, fault-csp, fault-iframe-destroy, fault-stale-response, fault-rate-limit, fault-corrupt, privacy-main, privacy-isolated, idle-draft-active, idle-safe-empty-reading, visual-components, page-command-native-fetch, non-atomic-terminal, mixed-role, mixed-role-alt]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -517,6 +517,17 @@ jobs:
             *) exit 1 ;;
           esac
           node -e "const expected={'native-entry-safety':'PASS_LEGACY_SUBSCENARIOS_ONLY','page-command-native-fetch':'PASS_NARROW_PACKAGED_PAGE_COMMAND_AND_NO_TAP_CONTINUITY','non-atomic-terminal':'PASS_D_SCOPED','mixed-role':'PASS_SCOPED_OFFLINE_D_S','mixed-role-alt':'PASS_SCOPED_OFFLINE_D_S','membership-after-message':'PASS_SCOPED_OFFLINE_D_S'}[process.env.SELECTED_GATE];if(expected){const r=require(process.env.RUNNER_TEMP+'/supplementary.json');if(r.status!==expected||r.sourceCommit!==process.env.GITHUB_SHA)process.exit(1)}"
+      - name: Independent unknown-protocol consumption trace (diagnostic only)
+        if: ${{ !cancelled() && matrix.gate == 'fault-unknown-protocol' }}
+        run: |
+          set +e
+          FREE_FAULT_UNKNOWN_TRACE=1 timeout 180s node tests/host/fault-package-matrix-browser.mjs "$RUNNER_TEMP/fault-unknown-trace.json" unknown-protocol
+          result=$?
+          set -e
+          test "$result" -eq 2
+          node tests/host/fault-unknown-trace-outcome.mjs "$RUNNER_TEMP/fault-unknown-trace.json" "$result" "$GITHUB_SHA"
       - name: Preserve exact supplementary result in job log
         if: ${{ always() }}
-        run: test ! -f "$RUNNER_TEMP/supplementary.json" || cat "$RUNNER_TEMP/supplementary.json"
+        run: |
+          test ! -f "$RUNNER_TEMP/supplementary.json" || cat "$RUNNER_TEMP/supplementary.json"
+          test ! -f "$RUNNER_TEMP/fault-unknown-trace.json" || cat "$RUNNER_TEMP/fault-unknown-trace.json"

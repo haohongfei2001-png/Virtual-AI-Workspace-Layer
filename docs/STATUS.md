@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 第十二批：补齐浏览器取证，保留间歇失败（2026-10-21，基线82ac8e8e）
+
+CI39609760189 run已completed/FAILURE，Node10730全过，native64访/8cells通过；native-entry及unknown失败。最后codec汇总索引滞后，但专用steps全部completed/success，原始状态分开保留。J4本次formal通过，copy owner12事件正常但lifecycle ENABLE_ERROR使诊断不完整，不解释旧失败。候选修正专属page-CDP订阅，保全native真实shadow点击/分支失败证据，并追加严格独立unknown消费copy诊断；目标请求强关联仍INCOMPLETE，不替代formal body门。1015项合批定向与独审通过，无生产改动。见[第十二批证据](evidence/cloud-browser-trace-completion-20261021/README.md)。仍ACTIVE，未归因失败不标修复，不交接或merge/deploy。
+
 ## 第十一批：保留重启失败，补独立来源诊断（2026-10-21，基线1f200234）
 
 CI39606386839终态40成功/1失败，Node10691全过；membership、strict pending、native entry及native64访/8cells实际通过。新J4 before-native在指定中断前的首次disable→enable→reload后fresh grant原15s失败；页面正常、budget9/12，owner是否收到/后来撤销receipt尚无证据，不能先定产品bug或用后续绿重写失败。候选只加被动生命周期记录与独立copy-only首reenable owner trace，原包/原15s/单reload/正式FAIL不变，诊断不计S。873项合批定向与独审通过。见[第十一批证据](evidence/cloud-reenable-diagnostic-20261021/README.md)。仍ACTIVE，根因未闭合，不交接或merge/deploy。

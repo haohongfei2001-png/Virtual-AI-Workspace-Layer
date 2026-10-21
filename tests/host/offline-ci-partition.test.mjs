@@ -182,11 +182,11 @@ test('six bounded evidence-reconciliation gates require exact source and narrow 
 test('supplementary scheduling prioritizes causal feedback and the longest case without changing coverage',()=>{
  const body=workflow.split('  cloud-supplementary-gates:')[1],gates=body.match(/gate: \[([^\]]+)\]/)[1].split(',').map(v=>v.trim());
  const original=['fault-auth-failure','fault-unsafe-reading','fault-forged-scope','fault-csp','fault-iframe-destroy','fault-stale-response','fault-rate-limit','fault-corrupt','fault-unknown-protocol','privacy-main','privacy-isolated','idle-draft-active','idle-safe-empty-reading','populated-native','visual-components','existing-source-repair','native-entry-safety','page-command-native-fetch','non-atomic-terminal','mixed-role','mixed-role-alt','membership-after-message'];
- const priority=['membership-after-message','populated-native','existing-source-repair','native-entry-safety'];
+ const priority=['fault-unknown-protocol','native-entry-safety','populated-native','existing-source-repair','membership-after-message'];
  const expected=priority.concat(original.filter(g=>!priority.includes(g)));
  const check=value=>{assert.deepEqual(value,expected);assert.deepEqual([...value].sort(),[...original].sort());assert.equal(new Set(value).size,22);};check(gates);
  const wrongPriority=[...gates];[wrongPriority[0],wrongPriority[1]]=[wrongPriority[1],wrongPriority[0]];
- const wrongRemainder=[...gates];[wrongRemainder[4],wrongRemainder[5]]=[wrongRemainder[5],wrongRemainder[4]];
+ const wrongRemainder=[...gates];[wrongRemainder[5],wrongRemainder[6]]=[wrongRemainder[6],wrongRemainder[5]];
  for(const mutant of [gates.slice(1),[...gates,gates[0]],wrongPriority,wrongRemainder])assert.throws(()=>check(mutant));
  assert.match(body,/fail-fast: false/);assert.match(body,/max-parallel: 3/);
 });
@@ -205,4 +205,16 @@ test('J4 diagnostic preserves formal command and executes only its independent c
  assert(step.includes('test "$result" -eq 2'));assert(step.includes('node tests/host/j4-reenable-trace-outcome.mjs "$RUNNER_TEMP/j4-reenable-owner-trace.json" "$result" "$GITHUB_SHA"'));
  assert.doesNotMatch(step,/cloud-matrix|continue-on-error|success\(\)|rerun/);assert.match(body,/if: \$\{\{ always\(\) \}\}/);
  assert(body.includes('test ! -f "$RUNNER_TEMP/j4-reenable-owner-trace.json" || cat "$RUNNER_TEMP/j4-reenable-owner-trace.json"'));
+});
+
+
+test('unknown-protocol copy diagnostic never replaces the formal fault report',()=>{
+ const body=workflow.split('  cloud-supplementary-gates:')[1];
+ const step=body.split('      - name: Independent unknown-protocol consumption trace')[1].split('      - name: Preserve exact supplementary result')[0];
+ assert(step.includes("if: ${{ !cancelled() && matrix.gate == 'fault-unknown-protocol' }}"));
+ assert(step.includes('FREE_FAULT_UNKNOWN_TRACE=1 timeout 180s node tests/host/fault-package-matrix-browser.mjs "$RUNNER_TEMP/fault-unknown-trace.json" unknown-protocol'));
+ assert(step.includes('test "$result" -eq 2'));assert(step.includes('node tests/host/fault-unknown-trace-outcome.mjs "$RUNNER_TEMP/fault-unknown-trace.json" "$result" "$GITHUB_SHA"'));
+ assert.doesNotMatch(step,/supplementary.json|continue-on-error|success\(\)|rerun/);
+ assert(body.includes('fault-*) node tests/host/fault-package-matrix-browser.mjs "$report" "${SELECTED_GATE#fault-}" ;;'));
+ assert(body.includes('test ! -f "$RUNNER_TEMP/fault-unknown-trace.json" || cat "$RUNNER_TEMP/fault-unknown-trace.json"'));
 });

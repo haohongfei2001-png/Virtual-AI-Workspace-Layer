@@ -43,7 +43,7 @@ try{
   report.result={conversationId:native.conversationId,messageId:native.messageId,before,after,beforeLinkVisible:true,afterLinkVisible:true,returnedConversation:page.url()===server.origin+'/c/'+native.conversationId,nativeAccepts:server.snapshot().firstSends.length,nativeSubmits:server.snapshot().actions['send-intent']??0};assertMembershipOrder(report.result);report.steps.push('confirmed-native-project-membership-reprojects-existing-ACK-and-keeps-C-reachable');
  }
  assert.deepEqual(report.errors,[]);report.status='PASS_SCOPED_OFFLINE_D_S';
-}catch(error){report.failedStage=report.lastStage??'setup-or-mixed-role';report.status=context?'FAIL':'NOT_RUN_ENVIRONMENT_OR_SETUP';report.error=error.stack;process.exitCode=1;}finally{
+}catch(error){report.failedStage=report.lastStage??'setup-or-mixed-role';report.status=context?'FAIL':'NOT_RUN_ENVIRONMENT_OR_SETUP';report.error=error.stack;if(error.nativeProjectEntryDiagnostic)report.nativeProjectEntryDiagnostic=error.nativeProjectEntryDiagnostic;process.exitCode=1;}finally{
  if(server)report.nativeRequests=server.snapshot().requests;report.nativeActions=nativeActions;
  try{await context?.close();}catch(e){report.cleanupError=e.message;report.status='FAIL_CLEANUP';process.exitCode=1;}
  try{await server?.close();}catch(e){report.serverCleanupError=e.message;report.status='FAIL_CLEANUP';process.exitCode=1;}

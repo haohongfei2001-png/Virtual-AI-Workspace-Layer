@@ -74,7 +74,7 @@ try{
  assert.equal(await projectPage.locator(`nav[aria-label="Project conversations"] a[href="${projectPath}"]`).count(),1);
  assert.equal(server.snapshot().actions['send-intent']??0,0);assert.equal(server.snapshot().actions['create-project'],1);assert.deepEqual(report.errors,[]);
  report.results.push({id:'UI-05',subcase:'outside-project-entry-native-project-chat-versus-global-new-chat',status:'PASS',automaticCreationOnProjectOpen:0,projectActions:1,globalActions:1,confirmedProjectMember:createdConversationId});report.nativeActions=server.snapshot().actions;report.status='PASS_LEGACY_SUBSCENARIOS_ONLY';
-}catch(error){report.status='FAIL';report.error=error.stack;process.exitCode=1;}
+}catch(error){report.status='FAIL';report.error=error.stack;if(error.nativeProjectEntryDiagnostic)report.nativeProjectEntryDiagnostic=error.nativeProjectEntryDiagnostic;process.exitCode=1;}
 finally{
  const clean=await cleanupOwnedResources(report,[['browser',async()=>running?.close()],['fixture',async()=>server?.close()],['guard',async()=>{report.networkGuard=guard?.snapshot();await guard?.close();}],['source-stability',async()=>{report.testHashesAfter=await testHashes();assert.deepEqual(report.testHashesAfter,report.testHashesBefore);if(info){report.sourceChangedDuringRun=(await Promise.all(Object.entries(info.sourceHashes).map(async([p,h])=>hash(await readFile(p))!==h))).some(Boolean);assert(!report.sourceChangedDuringRun);assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');}}]]);if(!clean)process.exitCode=1;await writeFile(output,JSON.stringify(report,null,2)+'\n');
 }
