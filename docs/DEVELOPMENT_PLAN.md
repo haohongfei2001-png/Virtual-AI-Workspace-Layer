@@ -2,7 +2,7 @@
 
 ## 夜间接续：真实对照已消费，来源审查与依赖就绪工程并行（2026-10-22）
 
-INV-09原消费任务本批补上合成MV3来源→私有owner→CAS→自动界面及失忆持久恢复旅程；生产源码/issuer不变。独立服务器成功语义、请求起点授权代际、对应删除的恢复见证与取消/错误拒绝分别核验；停止证明采用真实stopped→running、新测试实例与旧RAM消失，修正target必须销毁的观察器错误，原期限和失败保留。仅S_SYNTHETIC_LIFECYCLE_CONSUMER_ONLY，不是生产来源G、自动peer恢复、非空人工资产或完整INV-09；详见STATUS/`nativeLifecycleMV3Consumer20261022`。dot新增合成取消脚本未给正式msg-self失败的新因果前提，不重复诊断或改oracle。当前来源关口、原完整Free目标及已消费4GET/规模DEFERRED边界不变。
+INV-09原消费任务本批补上合成MV3来源→私有owner→CAS→自动界面及失忆持久恢复旅程；生产源码/issuer不变。独立服务器成功语义、请求起点授权代际、对应删除的恢复见证与取消/错误拒绝分别核验；停止证明采用真实stopped→running、新测试实例与旧RAM消失，修正target必须销毁的观察器错误，原期限和失败保留。仅S_SYNTHETIC_LIFECYCLE_CONSUMER_ONLY，不是生产来源G、自动peer恢复、非空人工资产或完整INV-09；详见STATUS/`nativeLifecycleMV3Consumer20261022`。后续按dot6327691504补齐三个负例返回后及删除响应释放前的唯一可见目标检查，原六秒内一次MV3通过；仅关闭观察缺口，不将84c旧证据追溯补齐或认定新产品故障，见`nativeLifecycleUIRetention20261022`。dot新增合成取消脚本未给正式msg-self失败的新因果前提，不重复诊断或改oracle。当前来源关口、原完整Free目标及已消费4GET/规模DEFERRED边界不变。
 
 C5/UI-15的PRESENT失败刷新与本地重绘点击保留已合批为fa864；同源码CI自然结束39成功/2失败，F3旧安装包同schema回退及人工资产保全成立。两处未闭合失败分别为unknown目标正文不可读、J4首次账户切换导航超时（尚未进入codec恢复）。保留原失败/预算/oracle；有界反证未支持直接修改EOF abort，J4只补单击至POST/响应的被动阶段记录并验证一次前置slice，不作完整J4通过、不重复全矩阵。后续只按精确交错实施根因修复，新观察器已通过原job一次单项Linux执行，原J4仅PARTIAL、旧失败原因未定，push覆盖不变，不反复重跑；peer显式切换与自动恢复仍分开；详见STATUS/`exactCandidateCIAndContextObservation20261022`。dot有限INV09来源核定仍无可消费完成合同；主体/当前空间及完整目录仍为真实来源关口，已消费4GET不重发，不改完整Free目标。
 

@@ -48,3 +48,12 @@ test('restart oracle needs actual stopped/running and a fresh realm, not a new D
  assert.equal(assertLifecycleWorkerRestart(proof).freshRealm,true);
  for(const invalid of [{...proof,stopIndex:2},{...proof,events:proof.events.slice(0,2)},{...proof,versionId:'other'},{...proof,dropped:1},{...proof,after:{...proof.after,instanceId:'old'}},{...proof,after:{...proof.after,rows:proof.before.rows}},{...proof,after:{...proof.after,pending:1}}])assert.throws(()=>assertLifecycleWorkerRestart(invalid));
 });
+
+test('lifecycle projection oracle rejects premature hiding even when raw facts survive',async()=>{
+ const {assertLifecycleProjectionVisible}=await import('./native-lifecycle-package-journey.mjs');
+ const visible={openSurfaces:2,frameVisible:true,targetCount:1,targetVisible:true};
+ assert.deepEqual(assertLifecycleProjectionVisible(visible),visible);
+ for(const [name,change]of Object.entries({removed:{targetCount:0,targetVisible:false},duplicate:{targetCount:2},hiddenRow:{targetVisible:false},hiddenFrame:{frameVisible:false},closedSurface:{openSurfaces:1}})){
+  assert.throws(()=>assertLifecycleProjectionVisible({...visible,...change}),{name:'AssertionError'},name+' must fail instead of making later removal vacuous');
+ }
+});

@@ -24687,5 +24687,288 @@
         "lifecycle-new-pr-comments.json": "2498a7d23854db5c78d02be3968aad548463b5ad493760877ef280f356cc9163"
       }
     }
+  },
+  "nativeLifecycleUIRetention20261022": {
+    "sourceBaseline": "84c83145614de8c3d0d8d265975d96eb7823d3f6",
+    "unchangedProductSource": "fa86479ff4862fcb99f4744c3d7bb48b5a47ef87",
+    "changedTestHashes": {
+      "tests/host/native-lifecycle-package-journey.mjs": "2d7819704191d481b9b4031e1339f36de5e32a94fe864c831546b51b9d6d8572",
+      "tests/host/native-lifecycle-package.test.mjs": "2dc4fbe0f6d0eb34251b47c037dce96315dfc35437d3256e08f0da66aae60687"
+    },
+    "dotInput": 6327691504,
+    "classification": "Oracle gap; no new product defect established",
+    "status": "PASS_SYNTHETIC_MV3_LIFECYCLE_CONSUMER",
+    "evidenceLevel": "S_SYNTHETIC_LIFECYCLE_CONSUMER_ONLY",
+    "browserVersion": "156.0.8078.4",
+    "steps": [
+      {
+        "name": "real-C2-document-and-initial-native-projection",
+        "projection": {
+          "openSurfaces": 2,
+          "frameVisible": true,
+          "targetCount": 1,
+          "targetVisible": true
+        },
+        "elapsedMs": 489.858917
+      },
+      {
+        "name": "cancel-does-not-delete",
+        "owner": {
+          "ok": false,
+          "reason": "untrusted-native-lifecycle-result",
+          "consumerOperationId": null,
+          "operationId": "cancel",
+          "elapsedMs": 4.599999904632568
+        },
+        "projection": {
+          "openSurfaces": 2,
+          "frameVisible": true,
+          "targetCount": 1,
+          "targetVisible": true
+        },
+        "elapsedMs": 229.70458299999996
+      },
+      {
+        "name": "http-only-does-not-delete",
+        "owner": {
+          "ok": false,
+          "reason": "untrusted-native-lifecycle-result",
+          "consumerOperationId": null,
+          "operationId": "http-only",
+          "elapsedMs": 6.800000071525574
+        },
+        "projection": {
+          "openSurfaces": 2,
+          "frameVisible": true,
+          "targetCount": 1,
+          "targetVisible": true
+        },
+        "elapsedMs": 176.35183299999994
+      },
+      {
+        "name": "wrong-target-does-not-delete",
+        "owner": {
+          "ok": false,
+          "reason": "untrusted-native-lifecycle-result",
+          "consumerOperationId": null,
+          "operationId": "wrong-target",
+          "elapsedMs": 5.600000023841858
+        },
+        "projection": {
+          "openSurfaces": 2,
+          "frameVisible": true,
+          "targetCount": 1,
+          "targetVisible": true
+        },
+        "elapsedMs": 169.82279199999994
+      },
+      {
+        "name": "server-delete-private-admission-CAS-automatic-UI-removal",
+        "owner": {
+          "ok": true,
+          "replayed": false,
+          "revision": 4,
+          "operationId": "delete",
+          "consumerOperationId": "lifecycle_38d52fa6787c8e55dc7e99c6581d40efe4cd7033ad7590e566a0ec0e430d5242",
+          "elapsedMs": 57.10000002384186
+        },
+        "beforeRelease": {
+          "responseHeld": true,
+          "resultUnread": true,
+          "ownerResultAbsent": true,
+          "projection": {
+            "openSurfaces": 2,
+            "frameVisible": true,
+            "targetCount": 1,
+            "targetVisible": true
+          }
+        },
+        "elapsedMs": 268.75475000000006
+      },
+      {
+        "name": "late-native-available-cannot-refill"
+      },
+      {
+        "name": "actual-worker-stop-fresh-C2-retains-deletion-fence",
+        "actualStoppedThenRunning": true,
+        "freshRealm": true,
+        "freshResultRAMEmpty": true,
+        "targetReused": true,
+        "playwrightWrapperReused": true
+      },
+      {
+        "name": "independent-server-existence-bound-to-exact-deletion-restores-projection",
+        "owner": {
+          "ok": true,
+          "replayed": false,
+          "revision": 7,
+          "operationId": "restore",
+          "consumerOperationId": "lifecycle_d5ded665c5ac5b92f14f674aadbc3bb35eb80c355f16767134cc610a5b725f89",
+          "elapsedMs": 46.5
+        },
+        "elapsedMs": 230.1339579999999
+      }
+    ],
+    "workerLifecycle": {
+      "events": [
+        {
+          "versionId": "2",
+          "runningStatus": "running",
+          "targetId": "6E4EA4F888791D544E66DB54F85258E9"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "stopping",
+          "targetId": "6E4EA4F888791D544E66DB54F85258E9"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "stopping",
+          "targetId": null
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "stopped",
+          "targetId": null
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "starting",
+          "targetId": null
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "starting",
+          "targetId": "6E4EA4F888791D544E66DB54F85258E9"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "starting",
+          "targetId": "6E4EA4F888791D544E66DB54F85258E9"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "starting",
+          "targetId": "6E4EA4F888791D544E66DB54F85258E9"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "running",
+          "targetId": "6E4EA4F888791D544E66DB54F85258E9"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "running",
+          "targetId": "6E4EA4F888791D544E66DB54F85258E9"
+        },
+        {
+          "versionId": "2",
+          "runningStatus": "running",
+          "targetId": "6E4EA4F888791D544E66DB54F85258E9"
+        }
+      ],
+      "dropped": 0,
+      "stopIndex": 1
+    },
+    "previousEvidenceLimit": "84c negative checks proved retained raw facts and server state, not actual UI retention. Prior artifact is preserved and not retrospectively upgraded.",
+    "visibleChecks": "Startup, immediately after each of three negative returns, and before held delete response release; unique visible row and visible iframe with both parent surfaces open. No claim of continuous visibility.",
+    "budget": "Original 6s per action, no retry or extra native action; one isolated headless execution",
+    "sourceVerification": {
+      "productPaths": 185,
+      "fixturePaths": 15,
+      "allMatchCurrent": true,
+      "allProductMatchFa864": true
+    },
+    "testComposition": {
+      "file": "extension/classic-runtime.js",
+      "originalHash": "f6d5003a593daf1838e5d083b01bc9493ac3bb48745787b71c0af6452906aa97",
+      "testHash": "1bd0cf060c1f93ed443c1d723871c1e0d72251e63de7ed871293a86a7bbf10fb",
+      "defaultPackage": false,
+      "productionIssuerRegistered": false
+    },
+    "loadedWorkerBefore": {
+      "targetUrl": "chrome-extension://jbfhndlkfdliihkealfcjapcghlebioi/extension/worker.mjs",
+      "scripts": [
+        {
+          "url": "chrome-extension://jbfhndlkfdliihkealfcjapcghlebioi/extension/worker.mjs",
+          "expectedSha256": "8f5f71b71beaa4347a641b0e0bf75d581f0e2372d8c27780f496e562781175dd",
+          "loadedSha256": "8f5f71b71beaa4347a641b0e0bf75d581f0e2372d8c27780f496e562781175dd"
+        },
+        {
+          "url": "chrome-extension://jbfhndlkfdliihkealfcjapcghlebioi/extension/classic-runtime.js",
+          "expectedSha256": "1bd0cf060c1f93ed443c1d723871c1e0d72251e63de7ed871293a86a7bbf10fb",
+          "loadedSha256": "1bd0cf060c1f93ed443c1d723871c1e0d72251e63de7ed871293a86a7bbf10fb"
+        }
+      ]
+    },
+    "loadedWorkerAfter": {
+      "targetUrl": "chrome-extension://jbfhndlkfdliihkealfcjapcghlebioi/extension/worker.mjs",
+      "scripts": [
+        {
+          "url": "chrome-extension://jbfhndlkfdliihkealfcjapcghlebioi/extension/worker.mjs",
+          "expectedSha256": "8f5f71b71beaa4347a641b0e0bf75d581f0e2372d8c27780f496e562781175dd",
+          "loadedSha256": "8f5f71b71beaa4347a641b0e0bf75d581f0e2372d8c27780f496e562781175dd"
+        },
+        {
+          "url": "chrome-extension://jbfhndlkfdliihkealfcjapcghlebioi/extension/classic-runtime.js",
+          "expectedSha256": "1bd0cf060c1f93ed443c1d723871c1e0d72251e63de7ed871293a86a7bbf10fb",
+          "loadedSha256": "1bd0cf060c1f93ed443c1d723871c1e0d72251e63de7ed871293a86a7bbf10fb"
+        }
+      ]
+    },
+    "targetedRegression": {
+      "tests": 54,
+      "fail": 0,
+      "skip": 0,
+      "file": "lifecycle-ui-retention-targeted.tap",
+      "counterexamples": [
+        "removed row",
+        "duplicate row",
+        "hidden row",
+        "hidden iframe",
+        "closed surface"
+      ]
+    },
+    "fullCI": "NOT_RUN for this test-only delta; targeted regression, build and one synthetic MV3 journey only",
+    "independentReview": "No blocking finding; checkpoint-only visible semantics and original deadline verified",
+    "limits": [
+      "Fictional loopback result semantics only",
+      "Forced worker stop plus explicit fresh native reload, not automatic peer recovery",
+      "Existing manual asset subset initially empty; nonempty assets covered separately",
+      "Not the full INV-09 matrix or real G"
+    ],
+    "INV09": "NOT_ESTABLISHED",
+    "realChatGPT": "NOT_RUN",
+    "realRequests": 0,
+    "prior4GET": "Consumed; not repeated",
+    "scale": "10k/100k DEFERRED unchanged",
+    "release": "NOT_RELEASE_READY",
+    "cleanup": [
+      "fulfilled",
+      "fulfilled",
+      "fulfilled"
+    ],
+    "guardClosed": true,
+    "preservation": {
+      "originalUntrackedFiles": 2258,
+      "allOriginalBytesVerified": true,
+      "stashesUnchanged": [
+        "42c887720b672c53c2a29232685d848d2a0bc319",
+        "f4270c6e164ebba73a8152103142d62a41c4fbe0",
+        "899e72282be76bb5d7700e17d91e2e836401d744"
+      ]
+    },
+    "evidence": {
+      "path": "docs/evidence/free-delivery-2026-10-17/local-lifecycle-ui-retention-20261022.tar.gz",
+      "sha256": "68a4e340652d0977de6959a0aea7004562b63719af08894a46891525a6d7baa0",
+      "bytes": 16794,
+      "members": {
+        "lifecycle-ui-retention.json": "65bc775a9f4913f006ad8c992b8855e7c274f2449d10dfcef46277aea0fee3b9",
+        "lifecycle-ui-retention.log": "48c64b929212c4825f557c2a71b0554683af27f5aea6a782ef9c3fdf4d6bf748",
+        "lifecycle-ui-retention-targeted.tap": "c6016c191a9dea21bea49db001dc7e50363ebbebc5457de8040f2d6dafa9588d",
+        "lifecycle-ui-retention-review.txt": "c4c3cef2c1b7792265cdb676f316050c93921806c94d66a2ea8a5ed90807a399",
+        "lifecycle-ui-retention-dot-comment.json": "0907c6e1778d517e8d82787bc6be0dbb209a0c93c62f8775afc686258db17755"
+      }
+    }
   }
 }

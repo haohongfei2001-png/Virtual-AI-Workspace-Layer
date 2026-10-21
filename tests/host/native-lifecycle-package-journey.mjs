@@ -15,6 +15,15 @@ const root=fileURLToPath(new URL('../../',import.meta.url)),sha=v=>createHash('s
 const C='33333333-3333-4333-8333-333333333333',CURRENT='44444444-4444-4444-8444-444444444444';
 const scope={verified:true,provider:'chatgpt',accountId:'principal_'+sha(JSON.stringify(['chatgpt-principal-v1','user-host-fixture'])),organizationId:'context_'+sha(JSON.stringify(['chatgpt-context-v1','user-host-fixture','account-host-team']))};
 const fixtureFiles=['tests/host/native-lifecycle-package-journey.mjs','tests/host/fixtures/lifecycle-result-service.mjs','tests/host/fixtures/lifecycle-result-server.mjs','tests/host/fixtures/lifecycle-native.mjs','tests/host/fixtures/variants-server.mjs','tests/host/fixtures/variants-native.mjs','tests/host/fixtures/native.mjs','tests/host/fixtures/native.css','tests/host/fixtures/legacy.html','tests/host/fixtures/sys05-stream-server.mjs','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs','tests/host/sys05-startup-precondition.mjs','tests/host/loaded-worker-bytes.mjs','tests/host/j4-debugger-transport.mjs'];
+// Retained raw facts do not prove retained UI: deletion itself retains facts.
+// Read the current projection once; do not wait for an erroneous hide to heal.
+export function assertLifecycleProjectionVisible(value){
+ assert.equal(value.openSurfaces,2,'workspace-surfaces-must-be-open');
+ assert.equal(value.frameVisible,true,'workspace-frame-must-be-visible');
+ assert.equal(value.targetCount,1,'exactly-one-target-row-required');
+ assert.equal(value.targetVisible,true,'target-row-must-be-visible');
+ return value;
+}
 // Chromium may preserve its DevTools target across a stopped worker restart.
 // A target ID or Playwright wrapper is not a JavaScript realm identity.
 export function assertLifecycleWorkerRestart({before,after,events,stopIndex,versionId,dropped}){
@@ -54,9 +63,18 @@ export async function runNativeLifecycle(output,{execute=false}={}){
   assert(await worker.evaluate(async()=>{try{await fetch('https://example.invalid/',{signal:AbortSignal.timeout(1000)});return false;}catch{return true;}}));
   const snapshot=()=>worker.evaluate(()=>globalThis.__lifecycleFixtureSnapshot());
   const frame=()=>page.frames().find(f=>!f.isDetached()&&f.url()===`chrome-extension://${id}/workspace.html`);
+  const visibleProjection=async()=>{
+   const currentFrame=frame();assert(currentFrame,'workspace-frame-required');
+   const element=await currentFrame.frameElement();
+   try{
+    const target=currentFrame.locator(`a[data-ref-id="${C}"]`),targetCount=await target.count();
+    return assertLifecycleProjectionVisible({openSurfaces:await page.locator('[data-va-owned]:popover-open').count(),frameVisible:await element.isVisible(),targetCount,targetVisible:targetCount===1&&await target.isVisible()});
+   }finally{await element.dispose();}
+  };
   page=await startup.run(()=>context.newPage(),'page');page.on('pageerror',e=>report.errors.push(e.message));
   await startup.run(()=>page.goto(server.origin+'/c/'+CURRENT,{timeout:startup.remaining()}),'native-navigation');
-  await startup.poll(async()=>frame()&&await frame().locator(`a[data-ref-id="${C}"]`).count()>0,'initial-projection');record('real-C2-document-and-initial-native-projection',{elapsedMs:startup.elapsedMs()});
+  await startup.poll(async()=>frame()&&await frame().locator(`a[data-ref-id="${C}"]`).count()>0,'initial-projection');
+  const initialProjection=await startup.run(visibleProjection,'initial-visible-projection');record('real-C2-document-and-initial-native-projection',{projection:initialProjection,elapsedMs:startup.elapsedMs()});
   report.loadedWorkerBefore=await verifyLoadedWorkerBytes({debugEndpoint:handle.debugEndpoint,extensionId:id,packagePath:built.unpacked});
   const facts=()=>frame().evaluate(async({scope,C})=>{
    const {ScopeRepository}=await import(chrome.runtime.getURL('src/b1/scope-repository.mjs')),{NativeRepository}=await import(chrome.runtime.getURL('src/data/native-repository.mjs')),{WorkspaceRepository}=await import(chrome.runtime.getURL('src/data/repository.mjs')),{FreeEvidenceRepository}=await import(chrome.runtime.getURL('src/data/free-evidence-repository.mjs')),{digest}=await import(chrome.runtime.getURL('src/data/hash.mjs'));
@@ -76,19 +94,31 @@ export async function runNativeLifecycle(output,{execute=false}={}){
    if(operation==='cancel'||operation==='delete')await phase.run(()=>page.getByRole('button',{name:'Delete conversation',exact:true}).click({timeout:phase.remaining()}),'native-delete-confirmation');
    await phase.run(()=>page.getByRole('button',{name:label,exact:true}).click({timeout:phase.remaining()}),'one-native-operation');
    await phase.poll(()=>server.snapshot().ledger[operation],'server-result-recorded');
-   if(hold){await returnWorkspace(phase);server.release(operation);}
+   let beforeRelease=null;
+   if(hold){
+    await returnWorkspace(phase);
+    if(operation==='delete')beforeRelease=await phase.run(async()=>{
+     assert(server.snapshot().held.includes(operation),'native-delete-response-must-still-be-held');
+     assert(!server.snapshot().reads.includes(operation),'delete-result-must-not-have-been-read');
+     assert(!(await snapshot()).rows.some(r=>r.operationId===operation),'owner-must-not-have-delete-result');
+     return {responseHeld:true,resultUnread:true,ownerResultAbsent:true,projection:await visibleProjection()};
+    },'projection-retained-before-delete-result');
+    server.release(operation);
+   }
    const value=await phase.poll(async()=>{const value=await snapshot();return value.rows.find(r=>r.operationId===operation);},'private-owner-result');
-   await returnWorkspace(phase);return {value,phase};
+   await returnWorkspace(phase);return {value,phase,beforeRelease};
   };
   const before=await facts();assert(before.ref&&!before.fence);
   for(const [operation,label]of [['cancel','Cancel deletion'],['http-only','HTTP-only result'],['wrong-target','Wrong target result']]){
-   const {value,phase}=await act(operation,label);assert.equal(value.ok,false);const after=await phase.run(facts,'negative-facts');assert.equal(after.fence,null);assert.equal(after.ref.id,before.ref.id);assert.equal(server.snapshot().exists,true);record(operation+'-does-not-delete',{owner:value,elapsedMs:phase.elapsedMs()});
+   const {value,phase}=await act(operation,label);assert.equal(value.ok,false);
+   const projection=await phase.run(visibleProjection,'negative-projection-retained');
+   const after=await phase.run(facts,'negative-facts');assert.equal(after.fence,null);assert.equal(after.ref.id,before.ref.id);assert.equal(server.snapshot().exists,true);record(operation+'-does-not-delete',{owner:value,projection,elapsedMs:phase.elapsedMs()});
   }
   const deleted=await act('delete','Confirm deletion',{hold:true});assert.equal(deleted.value.ok,true);
   const deletion=await deleted.phase.poll(async()=>{const value=await facts();return value.fence?.state==='deletion-confirmed'?value:null;},'durable-deletion');
   await deleted.phase.poll(async()=>await frame().locator(`a[data-ref-id="${C}"]`).count()===0,'automatic-projection-removal');
   assert.equal(server.snapshot().exists,false);assert.equal(deletion.manualHash,before.manualHash);assert.equal(deletion.evidenceHash,before.evidenceHash);assert.deepEqual(deletion.projectIds,before.projectIds);
-  record('server-delete-private-admission-CAS-automatic-UI-removal',{owner:deleted.value,elapsedMs:deleted.phase.elapsedMs()});
+  record('server-delete-private-admission-CAS-automatic-UI-removal',{owner:deleted.value,beforeRelease:deleted.beforeRelease,elapsedMs:deleted.phase.elapsedMs()});
   const stale=createSys05StartupDeadline({timeoutMs:6000});await page.locator('#model-button').click();await page.getByRole('button',{name:'Observe stale title',exact:true}).click();await returnWorkspace(stale);
   const late=await stale.poll(async()=>{const value=await facts();return value.ref?.nativeTitle==='Stale retained native title'?value:null;},'fresh-stale-available-admitted');assert.deepEqual(late.fence,deletion.fence);assert.equal(await frame().locator(`a[data-ref-id="${C}"]`).count(),0);record('late-native-available-cannot-refill');
   // Actual worker termination. Reload creates fresh native context/handshake;
