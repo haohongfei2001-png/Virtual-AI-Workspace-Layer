@@ -581,3 +581,24 @@ for(const ending of ['return','timeout','disconnect'])test('late recovery status
  if(ending==='return')f.recovery.onResume();else if(ending==='timeout')await f.advance(6000);else f.disconnect();
  held.resolve({ok:true,plans:{workspace:{planId:'work_plan'},native:{planId:'native_plan'},evidence:{planId:null}}});await rejection;await drain();assert.equal(releases.length,ending==='disconnect'?0:1);if(releases.length)assert.deepEqual(releases[0],{v:1,type:'HOST_UI_RECOVERY_RELEASE',planIds:['work_plan','native_plan'],grantId:'grant',mountId:'mount'});f.client.stop();
 });
+
+for(const outcome of ['success','denied','timeout'])test(`in-flight read keeps a queued refresh behind the horizon owner: ${outcome}`,async()=>{
+ const f=fixture(),old={H:30,T:20740,Z:'UTC',policyRevision:0},prior=deferred(),mutation=deferred();let revision=5,session=old,reads=0,writes=0;
+ const ready=()=>({ok:true,state:'ready',page:{...f.page(),workspaceRevision:revision,viewSession:session},navigation:[]});
+ f.setView(async()=>{reads++;return ready();});await f.client.start();await drain();
+ f.setView(async()=>{reads++;return prior.promise;});f.emit({type:'VAIWL_UI_DATA_CHANGED'});await drain();
+ const send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_SET_HORIZON'?(writes++,mutation.promise):send(m);
+ const job=f.nav.onHorizonRequest({H:7,segment:0,anchorRefId:null});await drain();
+ f.emit({type:'VAIWL_UI_DATA_CHANGED'});const before=reads,oldPage=ready();
+ f.setView(async()=>{reads++;return ready();});prior.resolve(oldPage);await drain();
+ assert.equal(reads,before,'a background read may not start a successor while a preference mutation owns the view');
+ if(outcome==='success'){revision=6;session={...old,H:7,policyRevision:1};mutation.resolve({ok:true,segment:0,viewSession:session,workspaceRevision:revision});}
+ else if(outcome==='denied')mutation.resolve({ok:false,reason:'revision-conflict'});
+ else await f.advance(6000);
+ const result=await job;await drain();assert.equal(writes,1);assert.equal(result.ok,outcome==='success');
+ if(outcome==='denied')assert.equal(result.reason,'revision-conflict');
+ assert.equal(reads,before+1,'success refresh or preserved dirty hint settles in one fresh read');
+ assert.equal(f.pages.at(-1).viewSession.H,outcome==='success'?7:30);
+ if(outcome==='timeout'){const settledReads=reads,settledPages=f.pages.length;mutation.resolve({ok:true,segment:0,viewSession:{...old,H:7,policyRevision:1},workspaceRevision:6});await drain();assert.equal(reads,settledReads);assert.equal(f.pages.length,settledPages);assert.equal(writes,1);}
+ f.client.stop();
+});

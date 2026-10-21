@@ -2,6 +2,8 @@
 
 ## 夜间接续：真实对照已消费，来源审查与依赖就绪工程并行（2026-10-22）
 
+C4/C5时间范围写入与后台刷新归属已修：旧VIEW不得在修改结算前启动dirty后继并淘汰成功回复；原CAS、6秒及新意图保持。8321 CI的PARTIAL原失败原因未唯一确证，单次原Mac子矩阵通过不追溯归因；同CI旧规模插桩锚已同步，10k/100k仍未运行。详情见STATUS/`horizonReadOwnershipAndTraceAnchors20261022`；后继推送等在途CI自然结束，不取消旧证据。继续原INV-09完整持久/消费差额，来源研究不重用已消费批次。
+
 B5同revision旧shadow降级恢复已补诊断与执行一致拒绝，正常恢复/Pro保留见STATUS/`nativeRecoveryFormatAndCIFactory20261022`；不替代完整INV-09生命周期链。dot发现的目录失效→当前body ACK挂起→stop取消句柄遗失已修，successor接管/失败ACK/旧代隔离用真实pass owner回归。历史Linux第5访问仍未归因；fb54的CI39646181514本次64条通过不追溯关闭它。前五访问的独立复制包阶段取证现已实现，只在同源码正式早期admission失败后有界执行一次，诊断始终非验收且保留原失败，正式64/6秒/生产预算不变。unknown正式正文丢失仍开放，独立trace未复现不代替根因。下一自然CI读取实际差额，详情见STATUS/`passCancellationAndAdmissionTrace20261022`；不重跑已消费真实诊断。
 
 当前C2/C3修复把已可见当前body/send放在后继目录注册等待之前，消除快速返回遮罩造成的观察遗失；首次注册、owner准入与隐藏/权限边界不变。原64条MV3导航及8组界面检查已在同一产品源码完成；启动观察器null-root修复、自然休眠未观察及Linux未知协议正文失败分别保留，详见STATUS/`currentBodyPriorityAndCIEvidence20261022`。下一自然CI使用原独立trace的合成响应标记定位同一响应，不改变正式oracle或生产取消。继续原依赖就绪任务；INV-09持久栅栏/消费链与真实来源仍待闭合，不以新增离线次数代替这些关口。

@@ -21040,6 +21040,116 @@
       "10k/100k DEFERRED original thresholds unchanged"
     ],
     "realDiagnostic": "Prior four requests consumed; no new real requests or privileges."
+  },
+  "horizonReadOwnershipAndTraceAnchors20261022": {
+    "baseline": "8321d30c92f6cb91fa3c1f2341a0feddec85ffc6",
+    "status": "TARGETED_FIXES_VERIFIED_NOT_FREE_ACCEPTANCE",
+    "ciFailures": {
+      "run": 39649468139,
+      "partialJob": 119393676082,
+      "nodeJob": 119393676895,
+      "partial": {
+        "cell": "PARTIAL/420/light/long-Chinese/520",
+        "phase": "restore horizon 30 after H-settings capture",
+        "changeEvents": 1,
+        "controlReplaced": true,
+        "failureRendered": true,
+        "pending": false,
+        "cause": "NOT_UNIQUELY_ESTABLISHED_ORIGINAL_LOG_HAS_NO_REPLY_REASON"
+      },
+      "node": {
+        "tests": 10932,
+        "passed": 10919,
+        "failed": 13,
+        "cause": "exact scale diagnostic source anchors retained old pass=null and terminal:false entry shape; tests never reached trace assertions"
+      },
+      "rawLogSha256": {
+        "/private/tmp/vaiwl-ci39649468139-partial-119393676082.log": "f2e07405d5cddc596b65aa19fa031f9e85b494729d0e43f2c9b07180a4736bed",
+        "/private/tmp/vaiwl-ci39649468139-node-contracts-job119393676895.log": "56ff0dcc768095db7e6fee44bcb21a711215e10102f3fd783d80d07460825611"
+      }
+    },
+    "productFix": {
+      "mechanism": "A VIEW already in flight before a horizon mutation could drain a dirty hint into another VIEW, advancing serial before the successful mutation reply. Keep the hint with the mutation owner until its settlement.",
+      "redCases": 2,
+      "regressionCases": [
+        "successful mutation",
+        "CAS rejection",
+        "six-second timeout and late success ignored"
+      ],
+      "unchanged": [
+        "CAS rejection",
+        "request deadline",
+        "explicit newer view intent",
+        "grant/scope checks",
+        "no write replay"
+      ]
+    },
+    "traceFix": {
+      "mechanism": "Synchronize only two exact copy-instrumentation anchors; preserve the actual pass handle and invalidated state. VM checks retained identity and cleared cursor.",
+      "scaleRun": "NOT_RUN_DEFERRED"
+    },
+    "regression": {
+      "tests": 416,
+      "passed": 416,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 1669.17425,
+      "logSha256": "1db538108c2bd83124efc1177d528c0a794255588d8ef4bb5e2bb2cb3e70a89e"
+    },
+    "browser": {
+      "kind": "ACTUAL_MV3_OFFLINE_HEADLESS_PARTIAL_CONTROL_SUBMATRIX",
+      "status": "PASS_CONTROL_SUBMATRIX_ONLY",
+      "cells": 16,
+      "coverageComplete": true,
+      "testSourcesStable": true,
+      "profiles": [
+        {
+          "titleMode": "ordinary",
+          "status": "PASS_LAYOUT_SUBCONTRACT_ONLY",
+          "sourceChangedDuringRun": false,
+          "buildManifestUnchanged": true,
+          "externalNetworkBlocked": true,
+          "browserVersion": "156.0.8078.4"
+        },
+        {
+          "titleMode": "long-Chinese",
+          "status": "PASS_LAYOUT_SUBCONTRACT_ONLY",
+          "sourceChangedDuringRun": false,
+          "buildManifestUnchanged": true,
+          "externalNetworkBlocked": true,
+          "browserVersion": "156.0.8078.4"
+        }
+      ],
+      "reportSha256": "bdee4f5987e2a61593a873ee2d760e3a60ba6d6cb990c1caeb5fb382f9c57642",
+      "limits": [
+        "one original PARTIAL command, no retry selection",
+        "Mac synthetic fixture, not Linux original causal proof",
+        "physical IME and real account NOT_RUN",
+        "only two affected narrow light captures actually inspected; no full visual verdict"
+      ]
+    },
+    "defaultPackage": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 184,
+      "unpacked": "/private/tmp/vaiwl-ci39638853187/horizon-default-package/extension",
+      "archive": "/private/tmp/vaiwl-ci39638853187/horizon-default-package/vaiwl-free-host-development.zip",
+      "archiveSha256": "bc207f0b4037ae58bbeb315504202d4dc0e612f49e1e2ed311add237b321a7dd"
+    },
+    "sourceHashes": {
+      "src/host/free-frame-client.mjs": "7f71bdd7df78b2c6ba13db0bb4994179006145fff6b1b35b77b5c0c880def905",
+      "tests/host/free-frame-client.test.mjs": "bae7eb19fe78ad2bd088b25e58f6386903ffbbc010181228c82c363189ac0123",
+      "tests/host/host-scale-trace.mjs": "6a5ca374797dbe54e305c5878becd46ee3c7b43a3b8d03ad627c32bf95d51e78",
+      "tests/host/host-scale-trace.test.mjs": "e893cf36cf16ebf89d1566cbefc5b9847d9c590aabe7eb82e25173fda1a9e09f"
+    },
+    "review": "two independent read-only reviews found no blocker; requested timeout case added",
+    "remaining": [
+      "real principal/current context and full directory NOT_ESTABLISHED",
+      "consumed four-GET diagnostic not repeated",
+      "INV09 persistent lifecycle chain NOT_ESTABLISHED",
+      "natural lifecycle, physical input, PAIA and installation limits retained",
+      "10k/100k DEFERRED original thresholds retained",
+      "full Free and release not accepted"
+    ]
   }
-
 }
