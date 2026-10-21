@@ -152,3 +152,16 @@ test('retired pager cannot cancel a fresh current-target acknowledgement',async(
  f.pane().querySelector('[data-ref-id="P2_0"]').click();assert.equal(f.commands.length,1);retired.click();f.reply({state:'already-current'});await tick();assert.equal(f.nav.view().mode,'reading');assert.equal(f.commands.length,1);
  }finally{f.nav.stop();}
 });
+
+for(const mode of ['same-target','native-control'])for(const patch of [{ctrlKey:true},{metaKey:true},{shiftKey:true},{altKey:true},{button:1}])test(`${mode} pending preserves verified href modifier ${JSON.stringify(patch)}`,()=>{
+ const f=setupCurrent({mode});try{f.nav.setNativeNavigationPending(true);assert.equal(f.link.getAttribute('aria-disabled'),'true');assert.equal(f.link.click(patch).defaultPrevented,false);assert.equal(f.commands.length,0);assert.equal(f.nav.view().mode,'workspace');}finally{f.nav.stop();}
+});
+for(const safe of [true,false])test('pending ordinary native action remains blocked; safe href '+safe,()=>{
+ const f=setupCurrent({safe});try{f.nav.setNativeNavigationPending(true);assert.equal(f.link.click().defaultPrevented,true);assert.equal(f.commands.length,0);}finally{f.nav.stop();}
+});
+for(const pending of [false,true])test('modifier on a no-href native button never dispatches or enables default; pending '+pending,()=>{
+ const f=setupCurrent({safe:false});try{f.nav.setNativeNavigationPending(pending);assert.equal(attr(f.link,'href'),undefined);assert.equal(f.link.click({metaKey:true}).defaultPrevented,true);assert.equal(f.commands.length,0);}finally{f.nav.stop();}
+});
+for(const retire of ['scope','projection','invalidate','stop'])test('pending modifier cannot reopen retired plan: '+retire,()=>{
+ const f=setupCurrent();try{f.nav.setNativeNavigationPending(true);if(retire==='scope')f.nav.updateFrameProjection({...projection(),scope:'B'});if(retire==='projection')f.nav.updateFrameProjection(projection());if(retire==='invalidate')f.nav.invalidate();if(retire==='stop')f.nav.stop();assert.equal(f.link.click({metaKey:true}).defaultPrevented,true);assert.equal(f.commands.length,0);}finally{f.nav.stop();}
+});

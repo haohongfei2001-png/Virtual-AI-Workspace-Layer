@@ -21297,5 +21297,219 @@
       "10k/100k DEFERRED original thresholds",
       "LIVE_VERIFIED/FREE_ACCEPTED/RELEASE_READY not established"
     ]
+  },
+  "navigationLifecycleReviewAndJ4Binding20261022": {
+    "baseCommit": "28c2aa0a565b494aaec37eb3cd9c4e69dad8e610",
+    "sourceHashes": {
+      "src/data/activity-version-fence.mjs": "165775d2e4e9aa5acbd56af9d9e97a6bd4707e7d9c27f5b1669a215529bd1e74",
+      "src/navigation/navigation.mjs": "245b95a6c108ce800a794e13710bc57becdcadd393d09573a63a887867567ca6",
+      "src/runtime/host-observation-owner.mjs": "c0dda36ea5b9cbd8fa5039c74bbd0cf0dd1ea4674a0b686ee2b4ed43a1433960",
+      "tests/free/native-lifecycle-contracts.mjs": "6017eac894ee1fae834b7137f37442632f4702c9d6d6116f50978a4da9e4b523",
+      "tests/host/fault-metadata-response.mjs": "82470e0484b0fbe621e13a66139269480707349ab60ce7b2850fe60677dffac6",
+      "tests/host/fault-metadata-response.test.mjs": "9f1fd996854181772e9abc1bdb7e82d7858a74db9479da8a2a261af532e5f03c",
+      "tests/host/frame-renderer-browser.mjs": "11821716f973643a3a4af3b8b4561937e785fc0394875a23c6f3264059a2b176",
+      "tests/host/host-scale-trace.mjs": "d7ae79c9a04317ee7b61fb327bb5647d59c8cfbdda7c3f02635b5a696c1606b7",
+      "tests/host/host-scale-trace.test.mjs": "183aa0d4e26d00eb0aacd978555f592c84aa1a2eb5e7e5a897faf2cce60b01c4",
+      "tests/host/j4-before-native-commit.mjs": "ecfc22ba3cfcc70f4d1c53ec65f2d02373ec9d8c7cb0b476f0c504a480c2e169",
+      "tests/host/j4-before-native-commit.test.mjs": "76f8b901d3121358e36179a3e872a42dcafc8b5bce6b71cef777bb27d837318a",
+      "tests/host/native-lifecycle-owner.test.mjs": "2dc9707adf23db3fbb2d8cb1236774465b1dc2a155f10daf0bc11236f793f143",
+      "tests/navigation/current-dispatch.test.mjs": "634aaffa65f6e8a282656403dc2d3d55846ec9ace1c047fd067cc80a23d9a1ba"
+    },
+    "productChanges": [
+      "Pending native delegation no longer swallows safe current href modifier/default clicks; retired/scope invalidated plans and no-href actions still fail closed.",
+      "Private lifecycle owner pins binding profile ID/version, provider identity and both method references through async reads/admission/commit.",
+      "Activity policy commit validates the native lifecycle marker/root checksum inside the existing transaction; mismatched same-revision root cannot authorize a new policy write."
+    ],
+    "observerChanges": [
+      "Scale trace matches unique current native index predicate and ordinary proposal frame guard; v1/v2 classification aligned. No scale journey run.",
+      "J4 verified generated mutate/receipt declarations bind both CDP fact expressions to the actual digest identifier; no hardcoded fingerprint2 or recomputation; ambiguous compiler shapes reject.",
+      "Fixed body-read categories distinguish resource ID missing, content unavailable, actual inspector eviction; ERR_ABORTED remains separate, failed body never certifies unknown schema."
+    ],
+    "priorCI": {
+      "run": 39656567960,
+      "head": "28c2aa0a565b494aaec37eb3cd9c4e69dad8e610",
+      "status": "completed",
+      "conclusion": "failure",
+      "jobs": {
+        "success": 37,
+        "failure": 4
+      },
+      "failures": [
+        "12 node failures: two obsolete scale trace anchors/classifier; corrected and targeted regression passed.",
+        "J4 before-native observer read outer fingerprint function instead of generated local digest; real packaged breakpoint repaired.",
+        "unknown-protocol formal body unavailable; auxiliary trace cannot close causality; still open.",
+        "populated-native visit index5/sixth visit actor admission missing; first5 complete and details unchanged, no first5 diagnostic rerun; still open."
+      ]
+    },
+    "validation": {
+      "navigation": {
+        "red": {
+          "tests": 92,
+          "pass": 81,
+          "fail": 11
+        },
+        "targetedPass": 451,
+        "realDOM": "PASS; pending modifier default decision only, not actual pending-window navigation",
+        "packaged": {
+          "status": "PASS",
+          "profile": "LEGACY",
+          "elapsedBeforeCleanupMs": 7239.747417,
+          "browserVersion": "156.0.8078.4",
+          "workerNetworkBlocked": true,
+          "sourceChangedDuringRun": false,
+          "fixtureChangedDuringRun": false,
+          "scriptChangedDuringRun": false
+        },
+        "packagedLimit": "12 original LEGACY checks; actual meta/shift/middle targets each once, no duplicate RPC/native action. Before subsequent lifecycle-only guard fixes; report source hashes retained."
+      },
+      "nodeMilestone": {
+        "pass": 10995,
+        "fail": 0,
+        "skip": 0,
+        "elapsedMs": 89597.023,
+        "boundary": "Navigation/source frozen then; before final J4 observer fix and lifecycle review delta. Not claimed exact final commit full regression."
+      },
+      "j4BindingTargeted": {
+        "pass": 45,
+        "fail": 0,
+        "elapsedMs": 1117.887
+      },
+      "j4Packaged": {
+        "status": "PARTIAL_J4_NOT_ACCEPTED",
+        "matrixAdmission": "PASS_SCOPED_CONTINUOUS_CASE",
+        "exitCode": 2,
+        "steps": 25,
+        "errors": [],
+        "sourceChangedDuringRun": false,
+        "buildManifestUnchanged": true,
+        "sourceCommit": null,
+        "boundary": "Actual queued-before-native stop; exact transaction entry to stop eight stores unchanged, fresh grant reobserves original title/event without aborted receipt/ACK. C2 peer automatic foreground NOT_ESTABLISHED; subsequent fresh native GET is distinct. Before later lifecycle-only guard changes, bound to original hashes. Auxiliary worker lifecycle trace dropped 1, not a complete trace."
+      },
+      "lifecycleReview": {
+        "red": {
+          "tests": 39,
+          "pass": 33,
+          "fail": 6
+        },
+        "finalTargeted": {
+          "pass": 328,
+          "fail": 0,
+          "skip": 0,
+          "elapsedMs": 2825.254958
+        },
+        "realIDB": {
+          "status": "PASS_REAL_IDB_CONSUMER_ONLY",
+          "evidence": "ISOLATED_HEADLESS_REAL_IDB_NOT_MV3_OR_LIVE_SOURCE",
+          "browser": "156.0.8078.4",
+          "elapsedMs": 1533.307583,
+          "blockedExternalRequests": 0,
+          "results": [
+            {
+              "name": "partition activity policy rejects old-codec lifecycle root replacement without writes",
+              "status": "PASS"
+            },
+            {
+              "name": "partition activity policy rejects same-codec lifecycle root replacement without writes",
+              "status": "PASS"
+            },
+            {
+              "name": "indexed activity policy rejects old-codec lifecycle root replacement without writes",
+              "status": "PASS"
+            },
+            {
+              "name": "indexed activity policy rejects same-codec lifecycle root replacement without writes",
+              "status": "PASS"
+            },
+            {
+              "name": "delete-before-first-observation survives available, reopen, index migration and shared fallback",
+              "status": "PASS"
+            },
+            {
+              "name": "existing index upgrades atomically and publishes deletion to an existing UI replica",
+              "status": "PASS"
+            },
+            {
+              "name": "project deletion preserves conversations as UNKNOWN, human assets and activity",
+              "status": "PASS"
+            },
+            {
+              "name": "shared-only deletion invalidates a cached fallback without inventing a native row",
+              "status": "PASS"
+            },
+            {
+              "name": "same result is idempotent and D1 R1 D2 rejects delayed R1 and ordinary reappearance",
+              "status": "PASS"
+            },
+            {
+              "name": "owner admission is object-specific, scope-specific and revoked without mutation",
+              "status": "PASS"
+            },
+            {
+              "name": "partition same-revision old shadow cannot erase lifecycle; exact shadow repairs with fences",
+              "status": "PASS"
+            },
+            {
+              "name": "indexed same-revision old shadow cannot erase lifecycle; exact shadow repairs with fences",
+              "status": "PASS"
+            },
+            {
+              "name": "same-codec mismatched shadow, missing lifecycle piece and forged old codec fail closed",
+              "status": "PASS"
+            },
+            {
+              "name": "consumed results survive generic receipt removal, source revocation and repeated piece GC",
+              "status": "PASS"
+            },
+            {
+              "name": "manual backup restore cannot revive deleted shared references",
+              "status": "PASS"
+            }
+          ]
+        },
+        "sourceBoundary": "All final behavior covered; one subsequent activity-version-fence top comment changed revision-only wording to consistency. Original report hashes retained; not claimed byte-identical final commit run."
+      },
+      "defaultPackage": {
+        "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+        "releaseStatus": "NOT_RELEASE_READY",
+        "files": 185,
+        "unpacked": "/private/tmp/vaiwl-ci39638853187/navigation-lifecycle-review-package/extension",
+        "archive": "/private/tmp/vaiwl-ci39638853187/navigation-lifecycle-review-package/vaiwl-free-host-development.zip",
+        "archiveSha256": "8356d51838d31686c6263b75c2166beca21cbfd347d915d0df9a66aad192f07c"
+      },
+      "independentReview": "Readonly review confirmed modifier isolation, generated binding, lifecycle pinned semantics and activity fence. No remaining blocking finding in this delta."
+    },
+    "retainedEvidence": {
+      "archive": "docs/evidence/free-delivery-2026-10-17/local-navigation-lifecycle-review-20261022.tar.gz",
+      "sha256": "465598a6d5dac123c0a0688ff927050d3e9d2a6ef7b02b81efc41026ab23c1f3",
+      "files": {
+        "modifier-pending-before.log": "f488e7541edcbc9b22e48a72418a51ee3a1b2004453ec50867a67e9f7d789cea",
+        "modifier-pending-after.log": "5db45c688bdabc1b4dd435ecb16aa48c6e196cce829dadcdc86b98d9caadb255",
+        "modifier-pending-real-dom.log": "1041824607ead39fc3d9eda7a3449a9969ebd13a20d98bb62c481b5b44d1c40c",
+        "modifier-resolved-mv3.json": "15a60dd101620f33ead882007437ba7ccba62dbb7f954e33c2f2fd5006d706b8",
+        "navigation-lifecycle-all-node.log": "e5742a7b639799ac156468d789c69fae1d0b710c452c12e0b18501ad19a6f7e4",
+        "fault-body-classification-before.log": "87e6f6e89ff8aca86922075c28701e0b9c4fb8d9a4d36c16c14ec830de391bbd",
+        "fault-body-classification-after.log": "4252190196da75202e8478423716a6c0960f66e740176c691625d0587e8d2bae",
+        "lifecycle-trace-anchor-after.log": "43d0ada1ac71ad5a373e5f49640ac689173bf2c7658de1db1e5d3e7f8f413be1",
+        "j4-packaged-binding-before.log": "949e59715c15884c0f80f0b4d051de4e95be33888752b50115fbbee09377923d",
+        "j4-packaged-binding-after.log": "6130d7915d0e69e877451210a0ab0464a84e1a1cbe42c9b611aac3c2590436de",
+        "j4-packaged-binding-browser.json": "134ba25da95a8f54a4dd51cab35c10725e685d619fdfaf371a90dfebfb4b6db6",
+        "j4-packaged-binding-admission.json": "7bdb17e134ce1c0e0eddbd9d71652973bd46e843f7f8d6d11564c707df326cc8",
+        "lifecycle-review-gaps-before.log": "b3fda162c063317b774c6e326ec97b07bd42accd9d7feb6f84f6d27068fdce36",
+        "lifecycle-review-frozen-regression.log": "e406b5123b72d47f3ba58d731aaef251f4501ff58b2ea0db5b5537ea00fcd1ef",
+        "lifecycle-review-real-idb.json": "f4428fbd59569d246714b697d0466c5baa9eda278c6d048c3b662aafa28d13e1",
+        "navigation-lifecycle-review-package.json": "d5b8c7ca1ede757b5413677be01755504918080757b3663fbb8eda52d41ef2c9",
+        "28c2-ci-terminal.json": "d17bd500211bfe2d2f2f4100ed1a30e1162625d0ab9490d893ca631b2eecc131",
+        "28c2-job-119418307697.log": "aa83e86f839a469dd0c86de127557517aae37e85fee1d7cb2c8b8cb0eb2d1b74",
+        "28c2-job-119418308431.log": "965bd0ce406887b06e182788f91e06407139952b33a26390a744b6d49f65484e",
+        "28c2-job-119418308897.log": "3894dfeb9e131837116124a00cc9d12119ffd906ca1c4dad3ded5d16b60849d6",
+        "28c2-job-119418309387.log": "e886f79f0243851ff15b9bde0c91a1d9b527689b4b1c58acd346a5a2b03a846c"
+      }
+    },
+    "boundaries": [
+      "No real profile action/request; prior four GET permission consumed. default/null current-space source and full directory remain NOT_ESTABLISHED.",
+      "Lifecycle S registered-source MV3 journey NOT_RUN and G production success semantics NOT_ESTABLISHED; no endpoint/provider registration.",
+      "Full J4, natural idle/foreground recovery, physical IME, PAIA coexistence and actual installation acceptance remain open.",
+      "10k/100k DEFERRED, thresholds unchanged; LIVE_VERIFIED/FREE_ACCEPTED/RELEASE_READY not established."
+    ]
   }
 }

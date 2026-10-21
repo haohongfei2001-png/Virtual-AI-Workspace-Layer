@@ -32,11 +32,11 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    if(!handshake.matchesFrame(binding,sender,actual))throw Error('host-frame-conflict');
    const frame={tabId:sender.tab.id,frameId:0,documentId:actual.documentId,parentDocumentId:null,actualURL:actual.url,documentLifecycle:actual.documentLifecycle,incognito:sender.tab.incognito===true};
    attempt.frame=frame;
-   const resolution=authority.peek(frame),scope=authority.scopeFor(frame),profile=profiles.get(binding.profileId),provider=profile?.lifecycleProvider;
+   const resolution=authority.peek(frame),scope=authority.scopeFor(frame),profile=profiles.get(binding.profileId),provider=profile?.lifecycleProvider,providerRead=provider?.read,proofFor=provider?.lifecycleFor;
    if(resolution.state!=='verified'||!scope)throw Error('unverified-host-scope');
-   if(!profile||profile.revision!==binding.profileVersion||typeof provider?.read!=='function'||typeof provider?.lifecycleFor!=='function')throw Error('native-lifecycle-source-unregistered');
+   if(!profile||profile.id!==binding.profileId||profile.revision!==binding.profileVersion||typeof providerRead!=='function'||typeof proofFor!=='function')throw Error('native-lifecycle-source-unregistered');
    const grant=resolution.grant,source=authority.sourceFor?.(frame);
-   const guard=()=>!stopped&&attempt.active&&!attempt.abort.signal.aborted&&elapsedNow()>=attempt.started&&elapsedNow()-attempt.started<6000&&profiles.get(profile.id)===profile&&profile.lifecycleProvider===provider&&handshake.isBound(binding,sender)&&authority.peek(frame).grant?.id===grant.id&&authority.peek(frame).grant?.scopeEpoch===grant.scopeEpoch&&authority.scopeFor(frame)?.key===scope.key&&authority.sourceFor?.(frame)===source;
+   const guard=()=>!stopped&&attempt.active&&!attempt.abort.signal.aborted&&elapsedNow()>=attempt.started&&elapsedNow()-attempt.started<6000&&profiles.get(binding.profileId)===profile&&profile.id===binding.profileId&&profile.revision===binding.profileVersion&&profile.lifecycleProvider===provider&&provider.read===providerRead&&provider.lifecycleFor===proofFor&&handshake.isBound(binding,sender)&&authority.peek(frame).grant?.id===grant.id&&authority.peek(frame).grant?.scopeEpoch===grant.scopeEpoch&&authority.scopeFor(frame)?.key===scope.key&&authority.sourceFor?.(frame)===source;
    const check=()=>{if(!guard())throw Error('stale-host-scope');};check();
    const page=await repository.page(scope,{ids:{projects:target.kind==='projects'?[target.id]:[],refs:target.kind==='refs'?[target.id]:[]}}, {guard,signal:attempt.abort.signal});check();
    const previous=page.facts[lifecycleKind(target.kind)]?.[target.id];
@@ -45,13 +45,13 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    // not be retroactively attached to a later deletion after an await.
    const context=Object.freeze({scopeKey:scope.key,scopeGrantId:grant.id,scopeEpoch:grant.scopeEpoch,principalSource:source,
     browserDocumentId:frame.documentId,documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,
-    actualURL:frame.actualURL,profileId:profile.id,profileVersion:profile.revision,target:Object.freeze({...target}),
+    actualURL:frame.actualURL,profileId:binding.profileId,profileVersion:binding.profileVersion,target:Object.freeze({...target}),
     expectedVersion:previous?.version??0,fenceId:target.state==='existence-confirmed'?previous.fenceId:null,fenceVersion:target.state==='existence-confirmed'?previous.fenceVersion:null});
-   const result=await provider.read(context,{guard,signal:attempt.abort.signal});check();
-   const proof=provider.lifecycleFor(result);
+   const result=await providerRead.call(provider,context,{guard,signal:attempt.abort.signal});check();
+   const proof=proofFor.call(provider,result);
    if(!proof||proof.context!==context)throw Error('untrusted-native-lifecycle-result');
    const change=validateNativeLifecycleChange(structuredClone(proof.change));
-   if(change.kind!==target.kind||change.id!==target.id||change.state!==target.state||change.expectedVersion!==context.expectedVersion||change.fenceId!==context.fenceId||change.fenceVersion!==context.fenceVersion||change.profileId!==profile.id||change.profileVersion!==profile.revision)throw Error('native-lifecycle-result-conflict');
+   if(change.kind!==target.kind||change.id!==target.id||change.state!==target.state||change.expectedVersion!==context.expectedVersion||change.fenceId!==context.fenceId||change.fenceVersion!==context.fenceVersion||change.profileId!==context.profileId||change.profileVersion!==context.profileVersion)throw Error('native-lifecycle-result-conflict');
    if(!await handshake.verify(binding,sender))throw Error('stale-host-document');check();
    request={operationId:'lifecycle_'+digest([scope.key,change.profileId,change.profileVersion,target.kind,target.id,target.operationId,change.resultFingerprint]),expectedRevision:page.revision,change};
    lifecycleAdmissions.set(request,Object.freeze({purpose:'native-lifecycle',scopeKey:scope.key,guard}));

@@ -33,6 +33,22 @@ export function assertJ4NativeEntryFacts(f){
  assert.equal(f.continuationOperationId,f.operationId);assert(Number.isSafeInteger(f.expectedRevision)&&f.expectedRevision>=0);assert.equal(f.nativeRevision,f.expectedRevision+1);return f;
 }
 export const J4_NATIVE_PAUSE_EXPRESSION='({operationId,expectedRevision,scopeKey:normalized.key,fingerprint,payloadDigest:command.continuation?.payloadDigest,mode:transaction.mode,stores:Array.from(transaction.objectStoreNames),channel:command.channel,hasAdmission:!!command.admission,hasContinuation:!!command.continuation,continuationOperationId:command.continuation?.operationId,evidenceOperationId:command.continuation?.evidence?.operationId,state:command.continuation?.state,nativeRevision:command.continuation?.nativeRevision})';
+/** Resolve the local identifier from the verified generated mutate/receipt pair.
+ * Bundler renaming is expected; arbitrary expressions and ambiguity are not.
+ * This recognizes only the two known compiled declaration shapes, not JS in
+ * general. A future compiler shape must fail closed and be reviewed explicitly. */
+export function j4NativeFactExpressions(source){
+ const queued=locateJ4BeforeNativeCommit(source),entry=locateJ4NativeTransactionEntry(source),lines=source.split('\n');
+ const start=lines.slice(0,entry.lineNumber).map((line,index)=>({line,index})).filter(x=>x.line.includes('async mutate(scope, { operationId, expectedRevision }, command, reduce, options)')).at(-1)?.index;
+ assert(Number.isInteger(start),'J4-native-fingerprint-owner-required');
+ const before=lines.slice(start,entry.lineNumber).join('\n'),body=lines.slice(start,queued.lineNumber+1).join('\n');
+ const declarations=[...before.matchAll(/const ([$A-Z_a-z][$\w]*) = (?:command\.kind === "OBSERVE_NATIVE_LIFECYCLE" \? nativeLifecycleSemantic\(command\.lifecycle\) : )?digest\(\{ command, expectedRevision \}\), db = await this\.base\.open\(\);/g)];
+ const receipts=[...body.matchAll(/operations\.put\(record\(operationKey, \{ fingerprint(?:: ([$A-Z_a-z][$\w]*))?, revision: next\.revision, operationId[ ,]/g)];
+ assert.equal(declarations.length,1,'J4-native-fingerprint-declaration-required');assert.equal(receipts.length,1,'J4-native-fingerprint-receipt-required');
+ const binding=declarations[0][1];assert.equal(receipts[0][1]??'fingerprint',binding,'J4-native-fingerprint-binding-conflict');
+ const bind=expression=>expression.replace(',fingerprint,',',fingerprint:'+binding+',');
+ return Object.freeze({binding,entry:bind(J4_NATIVE_ENTRY_EXPRESSION),queued:bind(J4_NATIVE_PAUSE_EXPRESSION)});
+}
 export function assertJ4NativePauseFacts(f){
  assertJ4NativeEntryFacts(f);assert.equal(f.mode,'readwrite');assert.equal(f.channel,'host-dom');assert.equal(f.hasAdmission,true);assert.equal(f.hasContinuation,true);assert.equal(f.state,'pending-evidence');
  for(const key of ['operationId','scopeKey','evidenceOperationId'])assert.equal(typeof f[key],'string',key);
@@ -45,7 +61,7 @@ export async function pauseJ4BeforeNativeCommit(cdp,id,{packageRoot,expectedTarg
  const compiled=compileClassicWorker(packageRoot),source=await readFile(join(packageRoot,'extension/classic-runtime.js'),'utf8');
  assert.equal(source,compiled.runtime,'J4-native-build-mismatch');assert.equal(await readFile(join(packageRoot,'extension/worker.mjs'),'utf8'),compiled.entry,'J4-native-entry-mismatch');
  assert.deepEqual(JSON.parse(await readFile(join(packageRoot,'manifest.json'),'utf8')).background,{service_worker:'extension/worker.mjs'});
- const deadline=Date.now()+20000,entryAt=locateJ4NativeTransactionEntry(source),at=locateJ4BeforeNativeCommit(source),{targetInfos}=await cdp.send('Target.getTargets'),targets=targetInfos.filter(t=>t.type==='service_worker'&&t.url===`chrome-extension://${id}/extension/worker.mjs`);
+ const expressions=j4NativeFactExpressions(source),deadline=Date.now()+20000,entryAt=locateJ4NativeTransactionEntry(source),at=locateJ4BeforeNativeCommit(source),{targetInfos}=await cdp.send('Target.getTargets'),targets=targetInfos.filter(t=>t.type==='service_worker'&&t.url===`chrome-extension://${id}/extension/worker.mjs`);
  assert.equal(targets.length,1,'J4-native-unique-worker-required');const targetId=targets[0].targetId;if(expectedTargetId!==null)assert.equal(targetId,expectedTargetId);
  const {sessionId}=await cdp.send('Target.attachToTarget',{targetId,flatten:false});let serial=0,paused=null,failure=null,closed=false,installed,location,entryInstalled,entryLocation,entryFacts,resumedCount=0,entryResumed=false;const requests=new Map(),scripts=[];
  const receive=e=>{if(e.sessionId!==sessionId)return;const m=JSON.parse(e.message);if(m.id){const p=requests.get(m.id);if(p){requests.delete(m.id);m.error?p.reject(Error(m.error.message)):p.resolve(m.result);}}else if(m.method==='Debugger.scriptParsed')scripts.push(m.params);else if(m.method==='Debugger.paused')paused=m.params;else if(m.method==='Debugger.resumed'){resumedCount++;paused=null;}else if(m.method==='Inspector.detached')fail('J4-native-inspector-detached');};
@@ -69,12 +85,12 @@ export async function pauseJ4BeforeNativeCommit(cdp,id,{packageRoot,expectedTarg
  return {targetId,close,diagnostics:()=>({targetId,location,entryLocation,entryObserved:!!entryFacts,entryResumed,resumedCount,failure,paused:!!paused,pauseLocation:paused?.callFrames?.[0]?.location??null,hitBreakpoints:paused?.hitBreakpoints??[],boundary:'QUEUED_NATIVE_WRITES_BEFORE_CALLBACK_RETURN'}),
   async verifyControl(){await send('Debugger.pause');await poll(()=>paused!==null);assert.equal(paused.hitBreakpoints?.length??0,0);await send('Debugger.resume');await poll(()=>paused===null);},
   async waitEntry(){assert(!entryFacts,'J4-native-entry-already-read');await poll(()=>paused!==null);assert(paused.hitBreakpoints?.includes(entryInstalled.breakpointId),'J4-native-entry-unrelated-pause');assert.deepEqual(paused.callFrames?.[0]?.location,entryLocation,'J4-native-entry-wrong-callsite');
-   const result=await send('Debugger.evaluateOnCallFrame',{callFrameId:paused.callFrames[0].callFrameId,expression:J4_NATIVE_ENTRY_EXPRESSION,returnByValue:true,throwOnSideEffect:true,silent:true});assert(!result.exceptionDetails,'J4-native-entry-facts-failed');entryFacts=assertJ4NativeEntryFacts(result.result?.value);return structuredClone(entryFacts);
+   const result=await send('Debugger.evaluateOnCallFrame',{callFrameId:paused.callFrames[0].callFrameId,expression:expressions.entry,returnByValue:true,throwOnSideEffect:true,silent:true});assert(!result.exceptionDetails,'J4-native-entry-facts-failed');entryFacts=assertJ4NativeEntryFacts(result.result?.value);return structuredClone(entryFacts);
   },
   remainingMs(){return Math.max(0,deadline-Date.now());},
   async resumeEntry(){assert(entryFacts&&paused?.hitBreakpoints?.includes(entryInstalled.breakpointId),'J4-native-entry-not-paused');await send('Debugger.removeBreakpoint',{breakpointId:entryInstalled.breakpointId});const priorResumed=resumedCount;await send('Debugger.resume');await poll(()=>resumedCount>priorResumed);entryResumed=true;},
   async wait(){assert(entryFacts,'J4-native-entry-baseline-required');assert(entryResumed,'J4-native-entry-not-resumed');await poll(()=>paused!==null);assert(paused.hitBreakpoints?.includes(installed.breakpointId),'J4-native-unrelated-pause');assert.deepEqual(paused.callFrames?.[0]?.location,location,'J4-native-wrong-callsite');
-   const result=await send('Debugger.evaluateOnCallFrame',{callFrameId:paused.callFrames[0].callFrameId,expression:J4_NATIVE_PAUSE_EXPRESSION,returnByValue:true,throwOnSideEffect:true,silent:true});
+   const result=await send('Debugger.evaluateOnCallFrame',{callFrameId:paused.callFrames[0].callFrameId,expression:expressions.queued,returnByValue:true,throwOnSideEffect:true,silent:true});
    assert(!result.exceptionDetails,'J4-native-readonly-facts-failed');const facts=assertJ4NativePauseFacts(result.result?.value);for(const key of Object.keys(entryFacts))assert.deepEqual(facts[key],entryFacts[key],'J4-native-entry-operation-changed:'+key);return {boundary:'QUEUED_NATIVE_WRITES_BEFORE_CALLBACK_RETURN',facts};
   }};
 }

@@ -51,11 +51,14 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   // modifier-key contract below applies to the current connected link.
   const retired=link;link=shadow.querySelector(`[data-ref-id="${refs[0].id}"]`);
   check(link!==retired&&link.isConnected&&!retired.isConnected,'feedback-replaces-link');
+  nav.setNativeNavigationPending(true);
   check(!retired.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,ctrlKey:true,button:0}))&&dispatches.length===1,'retired-modifier-blocked-without-rpc');
   // Observe defaultAllowed before the test-only outer listener suppresses navigation.
   let defaultAllowed=null;link.addEventListener('click',event=>{defaultAllowed=!event.defaultPrevented;event.preventDefault();},{once:true});
   link.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,ctrlKey:true,button:0}));
-  check(defaultAllowed&&dispatches.length===1,'modified-click-no-rpc');
+  check(defaultAllowed&&dispatches.length===1,'pending-modified-click-no-rpc');
+  check(!link.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0}))&&dispatches.length===1,'pending-primary-click-still-blocked');
+  nav.setNativeNavigationPending(false);
   currentPlan={plan:{mode:'href',target,disposition:'new-tab-preserve-current',planRevision:9}};
   nav.update(raw,'2026-10-13T12:00:00Z','UTC');link=nav.roots().workspace.shadow.querySelector(`[data-ref-id="${refs[0].id}"]`);
   check(link.target==='_blank'&&link.rel.includes('noopener'),'draft-preserving-default-target');
@@ -73,7 +76,7 @@ test('single-role frame renderer reuses navigation without host DOM access',{tim
   nav.invalidate();check(root.children.length===0,'invalidation-clears-frame-private-dom');nav.stop();
   return checks;
  });
- assert.equal(result.length,23);assert.deepEqual(errors,[]);
+ assert.equal(result.length,24);assert.deepEqual(errors,[]);
  // Exercise actual Enter/Space activation through delayed pages, not .click().
  for(const kind of ['search','workingSet']){
   await page.evaluate(async kind=>{

@@ -313,3 +313,16 @@ test('CPU phase worker timeout is bounded and late result cannot mutate the comp
  const f=phaseFixture();let resolve;f.existing.evaluate=()=>new Promise(r=>{resolve=r;});const s=await collectScaleCPUPhaseTrace({...f,timeout:5});assert.equal(s.status,'UNAVAILABLE');assert(s.snapshotClock.completed);const before=JSON.stringify(s);resolve({status:'RAM_SNAPSHOT',events:[phaseRow('worker',130)],dropped:0,producers:1});await new Promise(r=>setImmediate(r));assert.equal(JSON.stringify(s),before);
 });
 for(const timeout of [0,-1,1001,Infinity,NaN,'1000',null])test('CPU phase rejects invalid timeout '+timeout,async()=>{const f=phaseFixture();await assert.rejects(collectScaleCPUPhaseTrace({...f,timeout}),/invalid-cpu-phase-trace-timeout/);assert.equal(f.reads(),0);});
+
+test('observation trace leaves the independent lifecycle owner untouched',async()=>{
+ const source=await readFile(join(root,TRACE_PATHS[5]),'utf8'),out=instrumentScaleSource(TRACE_PATHS[5],source),part=s=>s.slice(s.indexOf(' async function observeLifecycle('),s.indexOf(' async function ingest('));
+ assert(part(source).includes('await getFrame('));assert.equal(part(out),part(source));assert.equal(out.split('__scaleOwnerPhases.ownerFrameMs=__scaleDelta(__scaleOwnerStart);').length,2);
+});
+test('native-root trace recognizes both legacy and lifecycle index formats',async()=>{
+ const {isNativeVersionIndexed}=await import('../../src/data/native-version-index.mjs'),out=await actual(0),start=out.indexOf('__scaleStages.rootMs='),end=out.indexOf('\n          const indexReader=',start);assert(start>0&&end>start);const hook=out.slice(start,end);
+ for(const format of ['vaiwl-native-version-index-v1','vaiwl-native-version-index-v2']){
+  const c=vm.createContext({TextEncoder,Date,performance,isNativeVersionIndexed,isNativePartitioned:()=>false,payload:{format,revision:2},__scaleStages:{},__scaleMono:0,__scaleProducer:1,__scaleFormat:'ABSENT'});
+  vm.runInContext(recorder+hook,c);assert.equal(c.__vaiwlScaleTrace.events[0].format,'VERSION_INDEX');
+ }
+ assert.equal(out.split('const indexReader=isNativeVersionIndexed(payload)?createNativeIndexReader(').length,2);
+});

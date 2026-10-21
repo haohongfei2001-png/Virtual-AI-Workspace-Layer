@@ -104,3 +104,22 @@ test('an immediate new unrelated pause after resumed still fails the exact break
 test('transport failure while awaiting actual resumed event rejects without a new wait budget',async()=>{
  const f=fixture({holdEntryResume:true}),p=await pauseJ4BeforeNativeCommit(f.cdp,'ext',{packageRoot});try{f.entry();await p.waitEntry();const resumed=p.resumeEntry();await new Promise(r=>setImmediate(r));f.cdp.emit('transportClosed',{reason:'original-transport-deadline'});await assert.rejects(resumed,/original-transport-deadline/);assert.equal(p.diagnostics().entryResumed,false);}finally{await p.close();}
 });
+
+test('entry and queued expressions read the actual packaged receipt binding despite outer name collision',async()=>{
+ const {runInNewContext}=await import('node:vm'),f=fixture(),p=await pauseJ4BeforeNativeCommit(f.cdp,'ext',{packageRoot});
+ try{f.entry();await p.waitEntry();await p.resumeEntry();f.hit();await p.wait();
+  const at=locateJ4BeforeNativeCommit(source),receipt=source.split('\n').slice(at.lineNumber-15,at.lineNumber).join('\n').match(/operations\.put\(record\(operationKey, \{ fingerprint: ([$A-Z_a-z][$\w]*), revision: next\.revision/);assert(receipt,'actual renamed receipt required for collision regression');
+  const value=facts(),env={operationId:value.operationId,expectedRevision:value.expectedRevision,normalized:{key:value.scopeKey},fingerprint:()=>false,[receipt[1]]:value.fingerprint,command:{channel:value.channel,admission:{},continuation:{payloadDigest:value.payloadDigest,operationId:value.operationId,evidence:{operationId:value.evidenceOperationId},state:value.state,nativeRevision:value.nativeRevision}},transaction:{mode:'readwrite',objectStoreNames:value.stores}};
+  const calls=f.calls.filter(x=>x.method==='Target.sendMessageToTarget').map(x=>JSON.parse(x.params.message)).filter(x=>x.method==='Debugger.evaluateOnCallFrame');assert.equal(calls.length,2);
+  for(const call of calls){const read=runInNewContext(call.params.expression,env);assert.equal(read.fingerprint,value.fingerprint);assert.equal(read.payloadDigest,value.payloadDigest);}
+ }finally{await p.close();}
+});
+
+test('packaged fingerprint binding accepts renamed identifiers and refuses missing, ambiguous or computed bindings',async()=>{
+ const {j4NativeFactExpressions}=await import('./j4-before-native-commit.mjs'),actual=j4NativeFactExpressions(source);assert(actual.binding!=='fingerprint');
+ const renamed=source.replaceAll(actual.binding,'otherLocalDigest');assert.equal(j4NativeFactExpressions(renamed).binding,'otherLocalDigest');
+ const declaration=source.split('\n').find(line=>line.includes('const '+actual.binding+' = command.kind === "OBSERVE_NATIVE_LIFECYCLE"'));
+ const receipt=source.split('\n').find(line=>line.includes('operations.put(record(operationKey, { fingerprint: '+actual.binding+', revision: next.revision'));
+ assert(declaration&&receipt);
+ for(const invalid of [source.replace(declaration,''),source.replace(declaration,declaration+'\n'+declaration),source.replace(receipt,receipt+'\n'+receipt),source.replace(receipt,receipt.replace('fingerprint: '+actual.binding,'fingerprint: outerValue')),source.replace(receipt,receipt.replace('fingerprint: '+actual.binding,'fingerprint: '+actual.binding+'()'))])assert.throws(()=>j4NativeFactExpressions(invalid),/J4-native-fingerprint/);
+});

@@ -7,16 +7,16 @@ import {createURLPolicy} from '../../src/host/url-policy.mjs';
 import {digest} from '../../src/data/hash.mjs';
 const url='https://chatgpt.com/',sender={id:'ext',tab:{id:1},frameId:0,documentId:'doc',documentLifecycle:'active',url};
 const frame={tabId:1,frameId:0,documentId:'doc',parentDocumentId:null,actualURL:url,documentLifecycle:'active',incognito:false};
-async function setup(t,{registered=true,mode='completed',delay=null,manualDeadline=false}={}){
+async function setup(t,{registered=true,mode='completed',delay=null,manualDeadline=false,mutableProvider=false}={}){
  let seq=0,n=0,calls=0,principal='A',elapsed=0,timerId=0;const timers=new Map();const timerOptions=manualDeadline?{elapsedNow:()=>elapsed,schedule:(fn,ms)=>{const id=++timerId;timers.set(id,{fn,ms});return id;},cancel:id=>timers.delete(id)}:{};const time=Date.parse('2026-10-14T00:00:00Z');
  const base=new ScopeRepository({indexedDB:new MockIDBFactory(),databaseName:'lifecycle-owner-'+crypto.randomUUID()}),proofs=new WeakMap(),seen=[];
  // A worker-owned synthetic result source. This is not a ChatGPT endpoint or
  // production profile: only this fixture defines completed/cancelled semantics.
- const lifecycleProvider=Object.freeze({async read(context,options){calls++;seen.push({context,options});if(delay)await delay(context,options);
+ const lifecycleProvider={async read(context,options){calls++;seen.push({context,options});if(delay)await delay(context,options);
    const result=Object.freeze({state:mode});
    if(mode==='completed'||mode==='wrong-target'||mode==='clone')proofs.set(result,Object.freeze({context,change:{kind:context.target.kind,id:mode==='wrong-target'?'OTHER':context.target.id,state:context.target.state,expectedVersion:context.expectedVersion,fenceId:context.fenceId,fenceVersion:context.fenceVersion,resultFingerprint:digest([context.target.operationId,context.target.kind,context.target.id,context.target.state]),profileId:context.profileId,profileVersion:context.profileVersion}}));
    return mode==='clone'?structuredClone(result):result;
-  },lifecycleFor:result=>proofs.get(result)??null});
+  },lifecycleFor:result=>proofs.get(result)??null};if(!mutableProvider)Object.freeze(lifecycleProvider);
  const profile={id:'lifecycle-fixture',revision:1,urlPolicy:createURLPolicy({profile:{conversationId:s=>s,projectId:({container})=>container}}),...(registered?{lifecycleProvider}:{})},profiles=new Map([[profile.id,profile]]);
  const service=createHostBindingService({extensionId:'ext',getFrame:async()=>({documentId:'doc',url,documentLifecycle:'active'}),allowedURL:u=>u===url,repository:base,provider:{read:async()=>({principalId:principal,expiresAt:new Date(time+60000).toISOString(),contexts:[{id:'personal',kind:'personal'}],providerProfile:'session',transport:'worker-fixed-fetch'})},profile:{id:'personal',singlePersonalDefault:true},surfaceProfiles:profiles,now:()=>time,makeId:()=>`id_${++n}`,...timerOptions});
  t.after(()=>{service.stop();base.close();});
@@ -73,6 +73,20 @@ test('original six-second deadline retires a hanging source and rejects its late
 test('revocation immediately before the storage admission writes nothing',async t=>{
  const h=await setup(t),apply=h.native.applyLifecycle.bind(h.native);h.native.applyLifecycle=async(...args)=>{h.switchScope();return apply(...args);};
  assert.equal((await h.observe()).ok,false);assert.equal(await h.native.version(h.scope),0);
+});
+
+for(const phase of ['page','source','admission'])test('in-place lifecycle profile revision change at '+phase+' cannot commit',async t=>{
+ let h;h=await setup(t,{delay:phase==='source'?async()=>{h.profile.revision=2;}:null});
+ if(phase==='page'){const page=h.native.page.bind(h.native);h.native.page=async(...args)=>{const result=await page(...args);h.profile.revision=2;return result;};}
+ if(phase==='admission'){const apply=h.native.applyLifecycle.bind(h.native);h.native.applyLifecycle=async(...args)=>{h.profile.revision=2;return apply(...args);};}
+ const db=await h.base.open(),dump=()=>structuredClone([...db.meta.stores].map(([name,store])=>[name,[...store.rows]])),before=dump();
+ assert.equal((await h.observe()).ok,false);assert.equal(h.calls,phase==='page'?0:1);assert.equal(await h.native.version(h.scope),0);assert.deepEqual(dump(),before);
+});
+
+for(const mutation of ['profile-id','read','lifecycleFor'])test('lifecycle owner pins '+mutation+' across its first await',async t=>{
+ const h=await setup(t,{mutableProvider:true}),page=h.native.page.bind(h.native);let replacementCalls=0;
+ h.native.page=async(...args)=>{const result=await page(...args);if(mutation==='profile-id')h.profile.id='renamed-profile';else h.profile.lifecycleProvider[mutation]=()=>{replacementCalls++;return null;};return result;};
+ assert.equal((await h.observe()).ok,false);assert.equal(h.calls,0);assert.equal(replacementCalls,0);assert.equal(await h.native.version(h.scope),0);
 });
 
 test('delayed deadline after known commit retains only the committed fact',async t=>{

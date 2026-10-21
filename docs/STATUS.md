@@ -1,5 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 导航点击、生命周期语义栅栏与J4观察器收口（2026-10-22，基线28c2aa0a）
+
+已修三处产品缺陷：原生导航等待期间，当前有效链接的修饰键仍交给浏览器，普通委托及失效链接保持拒绝；生命周期操作全程固定profile ID/版本与provider方法，异步期间原地变化不能沿旧binding提交；时间策略写入在原事务内核验删除栅栏与root checksum，同revision合法旧副本也不能作为写入依据。dot的两条版本race与四条跨store反例均先失败后修复，拒绝后全store保持，精确root恢复后同请求正常成功，保留Pro资产。
+
+[CI39656567960](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39656567960)在28c2自然结束37成功／4失败。12个Node失败来自两处过时插桩锚与格式分类，已同步且未运行规模测试。J4失败已确证为观察器读取打包后外层同名函数，而非真实事务digest；现在按已验证生成源码的声明／receipt配对定位局部binding，拒绝歧义，不硬编码名字、不重算替代值。修正后原隔离MV3提交前中断切片25步完成，矩阵仅收为PASS_SCOPED_CONTINUOUS_CASE，报告仍PARTIAL_J4_NOT_ACCEPTED／exit2。确切事务入口至worker停止后八store不变，新grant重观察成功；peer自动foreground仍NOT_ESTABLISHED，后续新原生GET不作替代。unknown正文不可读与populated第6访问准入失败仍开放；前者仅纠正错误分类，不宣称已查明取消／缓存原因。
+
+导航原LEGACY打包旅程12检查通过；pending修饰键另以真实DOM检查default决定，不冒充实际pending弹窗。此前同批完整Node10995通过发生于最终J4观察器／生命周期review补丁之前，不套为最终head全回归；review后328项定向通过、真实headless IDB15子场景通过，1533ms、零外网，最终185文件包构建验证通过。各阶段源码hash和原失败沿`navigationLifecycleReviewAndJ4Binding20261022`及同目录压缩原证据保存；最后仅activity fence注释文字变化单独注明。没有重跑已耗尽真实诊断或要求本人操作。
+
+下一关口仍是可信主体／当前空间与全目录来源、INV-09生产成功语义及对应MV3来源旅程、自然恢复与真实IME／PAIA／安装。C2无新可信receipt应安全等待，不能靠旧receipt复活。原4GET已消费；10k/100k继续DEFERRED，原阈值／完整Free目标不变，未达到LIVE_VERIFIED、FREE-ACCEPTED或RELEASE-READY。
+
 ## 原生删除／恢复消费链与持久防重放（2026-10-22，基线8008cf74）
 
 原B1/B4/B5的INV-09已落地离线可实施部分：worker私有结果准入接入现有CAS仓库，独立持久删除栅栏贯通普通读取、分片／索引迁移、共享引用回退、UI增量与恢复。删除早于首次观察、较新普通available、旧来源撤回、旧副本及人工备份都不能复活原生投影；Project删除仅使相关成员归属UNKNOWN，不级联删除聊天或Pro人工资产。恢复必须匹配读取前的确切删除栅栏；旧删除／恢复结果不可改装重放。每对象最多保留64条已消费结果摘要，满后拒绝新生命周期操作，不淘汰旧摘要或声称无限循环／自动压缩。

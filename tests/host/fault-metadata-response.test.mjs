@@ -15,3 +15,13 @@ test('request started before action but response arriving later stays outside ca
 for(const [name,mutation] of Object.entries({aborted:r=>{r.bodyRead='FAILED';r.requestFailure='net::ERR_ABORTED';},missingBody:r=>r.bodyRead='NO_RESPONSE',knownSchema:r=>r.protocolClass='OTHER_PROTOCOL',noStart:r=>delete r.requestStart,notGET:r=>r.method='OPTIONS'}))test('target calibration cohort rejects '+name,()=>{const row={...good(),requestStart:2};mutation(row);assert.equal(validUnknownCalibrationCohort([row],1,2),false);});
 test('no target or solely prior known/aborted evidence cannot certify a calibration',()=>{assert.equal(validUnknownCalibrationCohort([{...good(),requestStart:1}],1,2),false);assert.equal(validUnknownCalibrationCohort([],0,0),false);});
 test('one successful target cannot conceal another current target abort or missing body',()=>{assert.equal(validUnknownCalibrationCohort([{...good(),requestStart:2},{...good(),requestStart:3,bodyRead:'FAILED'}],1,3),false);});
+
+for(const [message,expected] of [
+ ['Protocol error (Network.getResponseBody): No resource with given identifier found','RESOURCE_ID_MISSING'],
+ ['Protocol error (Network.getResponseBody): No data found for resource with given identifier','RESOURCE_CONTENT_UNAVAILABLE'],
+ ['Protocol error (Network.getResponseBody): Request content was evicted from inspector cache','INSPECTOR_CACHE_EVICTED'],
+ ['private unknown transport error','ResponseBodyUnavailable']
+])test('body error classification distinguishes '+expected+' without inferring abort cause',async()=>{
+ const row={worker:true,status:200,requestStart:1},r=response('',{error:Error(message)});r.request=()=>({method:()=> 'GET',failure:()=>({errorText:'net::ERR_ABORTED'})});
+ await observeFaultMetadataResponse(r,row);assert.equal(row.bodyReadError,expected);assert.equal(row.requestFailure,'net::ERR_ABORTED');assert.equal(row.bodyRead,'FAILED');assert.equal(row.jsonParse,'NOT_RUN');assert.equal(row.unknownSchema,false);assert.equal(validUnknownCalibrationCohort([row],0,1),false);assert(!JSON.stringify(row).includes(message));
+});

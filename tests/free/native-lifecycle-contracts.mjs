@@ -9,6 +9,7 @@ import {createFreeReadService} from '../../src/runtime/free-read-service.mjs';
 import {FreeEvidenceRepository} from '../../src/data/free-evidence-repository.mjs';
 import {planFreeReplica,assembleFreeReplica,freeReplicaRequests} from '../../src/data/free-replica.mjs';
 import {digest} from '../../src/data/hash.mjs';
+import {initialFreeTimePolicy} from '../../src/data/free-time-policy.mjs';
 const now='2026-10-13T00:00:00Z',key=emptyNativeFacts(A).scopeKey;
 const assert=(value,message='assertion-failed')=>{if(!value)throw Error(message);};
 const eq=(a,b,message)=>assert(JSON.stringify(a)===JSON.stringify(b),message??`expected ${JSON.stringify(b)} got ${JSON.stringify(a)}`);
@@ -20,6 +21,7 @@ export async function lifecycleHarness(factory){
  const readRow=(name,k)=>new Promise((resolve,reject)=>{const tx=db.transaction(name),q=tx.objectStore(name).get(k);tx.oncomplete=()=>resolve(q.result);tx.onabort=()=>reject(tx.error);});
  const put=(name,...rows)=>new Promise((resolve,reject)=>{const tx=db.transaction(name,'readwrite');for(const row of rows)tx.objectStore(name).put(row);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
  const deleteRow=(name,k)=>new Promise((resolve,reject)=>{const tx=db.transaction(name,'readwrite');tx.objectStore(name).delete(k);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+ const dump=()=>new Promise((resolve,reject)=>{const names=[...db.objectStoreNames],tx=db.transaction(names),out={};for(const name of names){out[name]=[];const q=tx.objectStore(name).openCursor();q.onsuccess=()=>{if(q.result){out[name].push([q.result.key,digest(q.result.value)]);q.result.continue();}};}tx.oncomplete=()=>resolve(out);tx.onabort=()=>reject(tx.error);});
  async function change(state='deletion-confirmed',id='T0',kind='refs',options={}){
   const facts=await native.read(A),prior=facts[lifecycleKind(kind)]?.[id],operationId=options.operationId??`${state}_${kind}_${id}_${facts.revision}`;
   const request={operationId,expectedRevision:facts.revision,change:{kind,id,state,expectedVersion:prior?.version??0,fenceId:state==='existence-confirmed'?prior?.fenceId:null,fenceVersion:state==='existence-confirmed'?prior?.fenceVersion:null,resultFingerprint:digest(operationId),profileId:'fixture-lifecycle-v1',profileVersion:1,...options.change}};
@@ -29,9 +31,21 @@ export async function lifecycleHarness(factory){
  async function observe(revision,ids=['T0'],project=false){return native.apply(A,{operationId:'observe_'+revision,expectedRevision:revision,batch:{scopeKey:key,sourceRevision:revision+1,observedAt:now,validUntil:'2026-10-14T00:00:00Z',projects:project?[{id:'P',nativeName:'Project',nativeUrl:'https://fixture.test/p/P',availability:'available'}]:[],refs:ids.map(id=>({id,nativeTitle:'Chat '+id,nativeUrl:'https://fixture.test/c/'+id,availability:'available'})),membership:ids.map(id=>({id,state:project?'PROJECT':'NONE',projectId:project?'P':null})),inventory:{projects:'partial',conversations:'partial',cursor:null}}});}
  const readService=createFreeReadService({repository:h.base,workspaces:h.repo,native,evidence:new FreeEvidenceRepository({baseRepository:h.base}),clock:()=>now});
  async function replica(prior=null){const header=await readService.freeHeader(A,{},now),plan=planFreeReplica(prior,header),pages=[];for(const request of freeReplicaRequests(plan))pages.push(await readService.freePage(A,{ids:request,revision:header.revision,limit:1000,now,viewSession:header.viewSession},{}));return {replica:assembleFreeReplica(prior,header,pages,plan),plan,pages};}
- return {...h,native,readService,readRow,put,deleteRow,change,observe,replica,revoke:()=>{active=false;},admissions};
+ return {...h,native,readService,readRow,put,deleteRow,dump,change,observe,replica,revoke:()=>{active=false;},admissions};
 }
 export const lifecycleCases=[
+ ...[false,true].flatMap(indexed=>['old-codec','same-codec'].map(codec=>[(indexed?'indexed':'partition')+' activity policy rejects '+codec+' lifecycle root replacement without writes',async h=>{
+  assert((await h.observe(0)).ok);if(indexed)assert((await h.native.migrateVersionIndex(A,{operationId:'index-policy',expectedRevision:1})).ok);
+  const oldRoot=await h.readRow('native_states',key);assert((await h.change()).result.ok);const oldLifecycle=await h.readRow('native_states',key);
+  assert((await h.change('existence-confirmed')).result.ok);assert((await h.change()).result.ok);
+  const exact=await h.readRow('native_states',key),prior=(await h.repo.read(A)).state;
+  await h.put('native_states',nativeRecord(key,{...(codec==='old-codec'?oldRoot:oldLifecycle).payload,revision:exact.payload.revision}));
+  await rejects(()=>h.native.version(A));
+  const request={operationId:'policy-lifecycle',expectedRevision:prior.revision,command:{type:'SET_PREFERENCE',id:'freeTimePolicy',value:initialFreeTimePolicy()}},options={expectedActivityVersions:{nativeRevision:exact.payload.revision,evidenceRevision:0}},before=await h.dump();
+  eq((await h.repo.command(A,request,options)).reason,'native-lifecycle-root-conflict');eq(await h.dump(),before,'rejected policy must preserve every store');
+  await h.put('native_states',exact);assert((await h.repo.command(A,request,options)).ok);const after=(await h.repo.read(A)).state;
+  for(const table of ['workspaces','identities','placements','refs'])eq(after[table],prior[table]);eq(after.preferences.freeTimePolicy.value,initialFreeTimePolicy());
+ }])),
  ['delete-before-first-observation survives available, reopen, index migration and shared fallback',async h=>{
   const before=(await h.repo.read(A)).state;
   assert((await h.change()).result.ok);eq((await h.native.header(A)).storageFormat,NATIVE_LIFECYCLE_PARTITIONS);

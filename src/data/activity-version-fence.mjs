@@ -2,7 +2,8 @@ import {validateNativeRootRecord} from './native-repository.mjs';
 import {validateFreeEvidenceRootRecord} from './free-evidence-repository.mjs';
 import {freeEvidenceKey} from './free-evidence-partitions.mjs';
 import {digest} from './hash.mjs';
-/** Only a commit-time root/marker revision fence. This does not certify inventory,
+import {verifyNativeLifecycleMarker} from './native-lifecycle.mjs';
+/** Commit-time root/marker consistency and revision fence. This does not certify inventory,
  * piece integrity, membership coverage or time-dependent source freshness. */
 export function activityVersionPrecondition(value){
  if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).length!==2)throw Error('invalid-activity-version-precondition');
@@ -30,6 +31,7 @@ export function checkActivityVersionFence(tx,scope,expected,check,ready,fail){
   try{
    if(!check())return;
    const native=inspect(reads[0].result,reads[1].result,key,validateNativeRootRecord,'native');
+   verifyNativeLifecycleMarker(reads[1].result?.payload,reads[0].result?.payload,reads[0].result?.checksum);
    const evidence=inspect(reads[2].result,reads[3].result,evidenceKey,validateFreeEvidenceRootRecord,'free-evidence');
    if(native!==expected.nativeRevision||evidence!==expected.evidenceRevision)throw Error('activity-revision-conflict');
    if(check())ready();
