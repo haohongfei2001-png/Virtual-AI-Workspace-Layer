@@ -10,10 +10,12 @@ import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
 import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
 import {faultCases,assertFaultObservation,assertFaultPackageReport} from './fault-package-contract.mjs';
+import {cspObservationScript,installCspMountObservation,observeAuthenticatedCsp,scanCspPage} from './fault-csp-observer.mjs';
+import {runCspPositiveControl} from './fault-csp-control-browser.mjs';
 const requestedCases=process.argv[3]?process.argv[3].split(','):faultCases;
 assert(requestedCases.length&&new Set(requestedCases).size===requestedCases.length&&requestedCases.every(f=>faultCases.includes(f)),'unknown or repeated fault');
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const paths=['tests/host/fault-package-matrix-browser.mjs','tests/host/fault-package-contract.mjs','tests/host/expected/fault.mjs','tests/host/fixtures/server.mjs','tests/host/fixtures/variants-server.mjs','tests/host/fixtures/variants-native.mjs','tests/host/fixtures/native.mjs','tests/host/fixtures/native.css','tests/host/fixtures/legacy.html','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs','tests/host/isolated-browser-cleanup.mjs'];
+const paths=['tests/host/fault-package-matrix-browser.mjs','tests/host/fault-csp-observer.mjs','tests/host/fault-csp-contract.mjs','tests/host/fault-csp-control-browser.mjs','tests/host/disable-states-profile.mjs','tests/host/fault-package-contract.mjs','tests/host/expected/fault.mjs','tests/host/fixtures/server.mjs','tests/host/fixtures/variants-server.mjs','tests/host/fixtures/variants-native.mjs','tests/host/fixtures/native.mjs','tests/host/fixtures/native.css','tests/host/fixtures/legacy.html','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs','tests/host/isolated-browser-cleanup.mjs'];
 const evidenceHashes=Object.fromEntries(await Promise.all(paths.map(async p=>[p,hash(await readFile(p))])));
 const report={status:'NOT_RUN',evidence:'ACTUAL_PACKAGED_MV3_DESIGNATED_FAULT_OBSERVATIONS',sourceCommit:process.env.GITHUB_SHA??null,realChatGPT:'NOT_RUN',fullFAULT:'NOT_ESTABLISHED',requestedCases,evidenceHashes,limits:['Finite terminal observation is not infinite-time retry proof.','iframe-destroy removes frames before prior JOIN; already-issued grant revocation is a separate gate.','stale-response delays native navigation, which changes route when released; old worker epoch rejection is a separate context-stale-request-package-browser gate.'],results:[]};
 const C='33333333-3333-4333-8333-333333333333',U='44444444-4444-4444-8444-444444444444';
@@ -22,14 +24,15 @@ async function until(check,ms=15000){const end=Date.now()+ms;while(Date.now()<en
 async function database(worker){return worker.evaluate(async()=>{const output={persistedNativeStates:0,forgedScopePersisted:false};for(const row of await indexedDB.databases()){const db=await new Promise((resolve,reject)=>{const q=indexedDB.open(row.name);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});try{if(!db.objectStoreNames.contains('native_states'))continue;const records=await new Promise((resolve,reject)=>{const tx=db.transaction('native_states'),q=tx.objectStore('native_states').getAll();tx.oncomplete=()=>resolve(q.result);tx.onabort=()=>reject(tx.error);});output.persistedNativeStates+=records.length;output.forgedScopePersisted ||= records.some(row=>JSON.stringify(row).includes('attacker-chosen-scope'));}finally{db.close();}}return output;});}
 for(const fault of requestedCases){
  const result={fault,status:'NOT_RUN',packagedMV3:false,triggerObserved:false};report.results.push(result);
- let server,guard,handle,dir,build,built,page,phase='setup';
+ let server,guard,handle,dir,build,built,page,cspRescan,cspMountsBefore,phase='setup';
  try{
-  server=await createHostFixtureServer({profile:'FAULT',fault});guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});dir=await mkdtemp(join(tmpdir(),'vaiwl-fault-'+fault+'-'));
+  server=await createHostFixtureServer({profile:'FAULT',fault,...(['rate-limit','corrupt','unknown-protocol'].includes(fault)?{faultNativeBody:true}:{})});guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});dir=await mkdtemp(join(tmpdir(),'vaiwl-fault-'+fault+'-'));
   built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,...(['rate-limit','corrupt','unknown-protocol'].includes(fault)?{offlineHistory:true}:{})});build=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));result.sourceHashes=build.sourceHashes;result.metadataReadEnabled=build.offlineHistory===true;result.fixture=server.manifest;
   phase='launch';handle=await launchNativeVisibilityBrowser({chromium,executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium'),profileDir:join(dir,'profile'),headed:false,historicalNetworkGuard:guard.config});
   const {context,browser}=handle;context.setDefaultTimeout(15000);context.setDefaultNavigationTimeout(15000);
   const responses=[],responseTasks=[];context.on('response',response=>{const request=response.request(),url=new URL(response.url());if(url.origin!==server.origin)return;const row={path:url.pathname,status:response.status(),worker:!!request.serviceWorker()};responses.push(row);if(url.pathname==='/backend-api/conversation/'+C&&['corrupt','unknown-protocol'].includes(fault))responseTasks.push(response.json().then(body=>{row.invalidJSON=false;row.unknownSchema=body.protocol==='future-99'&&!body.mapping;},error=>{row.invalidJSON=error?.name==='SyntaxError';row.unknownSchema=false;}));});
   await context.route('**/*',route=>route.request().url().startsWith(server.origin+'/')||route.request().url().startsWith('chrome-extension://')?route.continue():route.abort());
+  let cspExtensionId;const cspMarkers=new Set(),cspRuntimeCounts={privateViews:0,invalid:0};if(fault==='csp'){await context.exposeBinding('__faultCspRecord',(source,event)=>{if(!cspExtensionId||source.frame.url()!==`chrome-extension://${cspExtensionId}${event?.role}`||!['/workspace.html','/sidebar.html'].includes(event?.role)){cspRuntimeCounts.invalid++;return;}if(event.kind==='private-view')cspRuntimeCounts.privateViews++;else if(event.kind==='private-grant'&&Array.isArray(event.markers)&&event.markers.length===2&&event.markers.every(v=>typeof v==='string'&&v.length>0)){for(const v of event.markers)cspMarkers.add(v);}else cspRuntimeCounts.invalid++;});await context.addInitScript({content:cspObservationScript()});}
   await context.addInitScript(()=>{
    globalThis.faultWitness={forgedMessages:0,framePolicyViolations:0,removedOwnedFrames:0,packageFramePolicyViolations:0,mainProbePolicyViolations:0,extensionPageMessageCount:0,extensionPageMessageSchemaViolations:0};
    addEventListener('message',e=>{if(e.source===window&&e.origin===location.origin&&e.data?.type==='HOST_SCOPE'&&e.data.scopeKey==='attacker-chosen-scope')faultWitness.forgedMessages++;});
@@ -38,28 +41,31 @@ for(const fault of requestedCases){
    new MutationObserver(records=>{for(const record of records)for(const n of record.removedNodes)if(n.nodeType===1)faultWitness.removedOwnedFrames+=(n.matches('iframe[title="工作空间"],iframe[title="侧边栏"]')?1:0)+n.querySelectorAll('iframe[title="工作空间"],iframe[title="侧边栏"]').length;}).observe(document,{subtree:true,childList:true});
   });
   const cdp=await browser.newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
+  if(fault==='csp'){cspExtensionId=id;await context.addInitScript(installCspMountObservation,{extensionId:id});}
   const worker=context.serviceWorkers().find(w=>w.url().startsWith('chrome-extension://'+id+'/'))??await context.waitForEvent('serviceworker',{predicate:w=>w.url().startsWith('chrome-extension://'+id+'/'),timeout:15000});
   result.packagedMV3=await worker.evaluate(()=>typeof chrome.runtime.id==='string');
   // The disposable reject proxy has no forwarder, including for service workers.
   result.workerNetworkBlocked=await worker.evaluate(async()=>{try{await fetch('https://example.invalid/',{signal:AbortSignal.timeout(1500)});return false;}catch{return true;}});
   page=await context.newPage();phase='native-navigation';await page.goto(server.origin+(fault==='stale-response'?'/':'/c/'+C));
+  if(fault==='csp'){await page.locator('textarea').fill('FAULT_OFFLINE_UNSENT_DRAFT');await page.locator('textarea').evaluate(n=>{globalThis.cspNativeEditor=n;n.setSelectionRange(2,7);});}
   const frame=()=>page.frames().find(f=>f.url()==='chrome-extension://'+id+'/workspace.html');
   if(fault==='stale-response'){
    await until(()=>frame());await frame().getByRole('link',{name:'Ordinary conversation',exact:true}).first().waitFor();
    for(const name of ['返回原生阅读','显示原生列表']){const close=page.getByRole('button',{name,exact:true});if(await close.isVisible())await close.click();}
    await page.locator('aside').getByRole('link',{name:'Ordinary conversation',exact:true}).click();await until(()=>server.snapshot().pendingResponses===1);result.heldNativeRoute=true;
-   await page.locator('aside').getByRole('link',{name:'Membership not loaded',exact:true}).click();await page.waitForURL('**/c/'+U);await until(()=>frame());await frame().getByRole('link',{name:'Membership not loaded',exact:true}).waitFor({state:'attached'});result.freshRouteBeforeRelease=true;
+   await page.locator('aside').getByRole('link',{name:'Membership not loaded',exact:true}).click();await page.waitForURL('**/c/'+U);await until(async()=>{const f=frame();try{return !!f&&!f.isDetached()&&await f.locator('[aria-current="page"]').filter({hasText:'Membership not loaded'}).count()>0;}catch{return false;}});result.freshRouteBeforeRelease=true;
    result.releasedResponses=server.releaseStaleResponses();await page.waitForURL('**/c/'+C);await page.waitForFunction(()=>document.querySelector('h1')?.textContent==='Ordinary conversation');result.lateNativeRouteReplacedCurrent=true;
-   await until(()=>frame());await frame().locator('[aria-current="page"]').filter({hasText:'Ordinary conversation'}).first().waitFor({state:'attached'});result.projectionMatchesActualNativeRoute=true;result.oldWorkerEpochRejection='NOT_ESTABLISHED_NATIVE_ROUTE_FIXTURE';result.triggerObserved=true;
+   await until(async()=>{const f=frame();try{return !!f&&!f.isDetached()&&await f.locator('[aria-current="page"]').filter({hasText:'Ordinary conversation'}).count()>0;}catch{return false;}});result.projectionMatchesActualNativeRoute=true;result.oldWorkerEpochRejection='NOT_ESTABLISHED_NATIVE_ROUTE_FIXTURE';result.triggerObserved=true;
   }
   phase='fault-terminal';
   if(['forged-scope','rate-limit','corrupt','unknown-protocol'].includes(fault)){
    await until(()=>frame());await frame().getByRole('link',{name:'Ordinary conversation',exact:true}).first().waitFor();
   }
   if(['rate-limit','corrupt','unknown-protocol'].includes(fault)){
+   result.nativeMessageIds=await page.locator('#reading [data-message-id]').evaluateAll(nodes=>[...new Set(nodes.map(n=>n.getAttribute('data-message-id')))]);assert.deepEqual(result.nativeMessageIds,['msg-self']);
    const workspace=frame();await workspace.evaluate(()=>{globalThis.faultCalibration=[];const send=chrome.runtime.sendMessage.bind(chrome.runtime);chrome.runtime.sendMessage=function(...args){const result=send(...args);if(args[0]?.type==='HOST_UI_CALIBRATION_ENTRY'&&result?.then)result.then(r=>faultCalibration.push({ok:r?.ok,state:r?.state}),()=>faultCalibration.push({rejected:true}));return result;};});
    const close=page.getByRole('button',{name:'返回原生阅读',exact:true});if(await close.isVisible())await close.click();
-   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await workspace.waitForFunction(()=>faultCalibration.length===1);const terminal=await workspace.evaluate(()=>faultCalibration[0]);assert.equal(terminal.ok,false);result.calibrationTerminal=terminal.state;
+   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();await workspace.waitForFunction(()=>faultCalibration.length===1);const terminal=await workspace.evaluate(()=>faultCalibration[0]);result.calibrationObservation=terminal;assert.equal(terminal.ok,false);result.calibrationTerminal=terminal.state;
    const metadata=responses.filter(r=>r.path==='/backend-api/conversation/'+C);result.nativeMetadataResponses=metadata.filter(r=>!r.worker).length;result.workerMetadataResponses=metadata.filter(r=>r.worker).length;
    result.metadataStatus=fault==='rate-limit'?429:200;assert(metadata.every(r=>r.status===result.metadataStatus));
    // Classify observed responses only; do not issue another metadata request.
@@ -77,6 +83,16 @@ for(const fault of requestedCases){
    await until(async()=>await page.evaluate(()=>faultWitness.mainProbePolicyViolations>0));
    result.mainProbeRequests=server.snapshot().requests['/fault-csp-probe']??0;assert.equal(result.mainProbeRequests,0);
    await page.locator('#fault-csp-main-probe').evaluate(n=>n.remove());result.triggerObserved=true;
+   result.cspHeader=response.headers()['content-security-policy'];
+   const mounts=await page.evaluate(()=>({...__faultCspMounts}));
+   if(mounts.violations>0){
+    const control=await runCspPositiveControl({chromium,sourceHashes:build.sourceHashes,until});result.cspNoPolicyControl=control;
+    cspRescan=()=>scanCspPage({page,extensionId:id,privateMarkers:[...cspMarkers]});
+    result.cspProof={branch:'PACKAGE_BLOCKED',status:'PASS_NARROW_CSP_BLOCKED_NATIVE_PRESERVED',noCspPositiveControl:control.status==='PASS_AUTHENTICATED_NO_CSP_CONTROL'&&control.sameSource&&control.cleanupOK,successfulPrivateViews:cspRuntimeCounts.privateViews,nativeRetainedBeforeCorrectiveToggle:await page.locator('textarea').isVisible(),...await cspRescan()};
+   }else{const observed=await observeAuthenticatedCsp({page,context,worker,extensionId:id,until});result.cspProof=observed.proof;cspRescan=observed.rescan;}
+   cspMountsBefore=await page.evaluate(()=>({...__faultCspMounts}));
+
+
   }
   if(fault==='iframe-destroy'){await until(async()=>await page.evaluate(()=>faultWitness.removedOwnedFrames>0));result.staleGrantRevocation='NOT_ESTABLISHED_NO_PRIOR_JOIN';result.triggerObserved=true;}
   if(fault==='forged-scope'){await until(async()=>await page.evaluate(()=>faultWitness.forgedMessages>0));result.legitimateProjection=true;result.triggerObserved=true;}
@@ -88,8 +104,9 @@ for(const fault of requestedCases){
   }
   phase='native-continuity';
   // Return to the native reading surface when a healthy pair is open.
-  const nativeReading=page.getByRole('button',{name:'返回原生阅读',exact:true});if(fault!=='unsafe-reading'&&await nativeReading.isVisible())await nativeReading.click();
-  await page.locator('textarea').fill('FAULT_OFFLINE_UNSENT_DRAFT');await page.evaluate(()=>{globalThis.faultEditor=document.querySelector('textarea');});
+  const nativeReading=page.getByRole('button',{name:'返回原生阅读',exact:true});if(fault==='csp'&&result.cspProof.branch==='ISOLATED_AUTHENTICATED'){await nativeReading.waitFor({state:'visible'});await nativeReading.click();result.cspProof.workspaceNativeCloseExercised=true;}else if(fault!=='unsafe-reading'&&await nativeReading.isVisible())await nativeReading.click();
+  if(fault==='csp'){const nativeList=page.getByRole('button',{name:'显示原生列表',exact:true});if(result.cspProof.branch==='ISOLATED_AUTHENTICATED'){await nativeList.waitFor({state:'visible'});await nativeList.click();result.cspProof.bothNativeCloseControlsExercised=result.cspProof.workspaceNativeCloseExercised===true;}else result.cspProof.bothNativeCloseControlsExercised='NOT_APPLICABLE_BLOCKED';}
+  if(fault!=='csp')await page.locator('textarea').fill('FAULT_OFFLINE_UNSENT_DRAFT');await page.evaluate(()=>{globalThis.faultEditor=document.querySelector('textarea');});
   await page.getByRole('button',{name:'Send',exact:true}).click();await page.locator('#composer output').filter({hasText:'message not sent'}).waitFor();result.nativeSendRetained=true;
   const before=responses.filter(r=>r.worker&&r.path==='/backend-api/conversation/'+C).length,start=Date.now();
   // A bounded post-terminal window, explicitly not an infinite-time guarantee.
@@ -99,7 +116,8 @@ for(const fault of requestedCases){
   result.workspaceOpen=await page.locator('[data-va-owned]:popover-open').count()>0;
   result.pageFallbackProjection=await page.evaluate(()=>!!document.querySelector('main [data-free-list],aside [data-free-list]'));
   Object.assign(result,await page.evaluate(()=>faultWitness),await database(worker));
-  if(fault==='csp')result.cspPackagePolicy=result.packageFramePolicyViolations>0&&result.privateFrames===0?'PACKAGE_FRAME_BLOCK_OBSERVED':'NOT_ESTABLISHED_EXTENSION_WORLD_POLICY_DIFFERENCE';
+  if(fault==='csp')result.cspPackagePolicy=result.cspProof?.branch;
+  if(fault==='csp'){const policyResponse=await page.request.get(server.origin+'/');result.pagePolicyUnchanged=policyResponse.headers()['content-security-policy']===result.cspHeader;result.cspProof.successfulPrivateViews=cspRuntimeCounts.privateViews;const finalScan=await cspRescan();for(const key of ['pageProjectionLeaks','pageMessageLeaks','captureDropped','captureUnsupported'])finalScan[key]=Math.max(finalScan[key],result.cspProof[key]);Object.assign(result.cspProof,finalScan,{finalScanPerformed:true});result.cspProof.captureUnsupported+=cspRuntimeCounts.invalid;const native=await page.locator('textarea').evaluate(n=>({same:n===cspNativeEditor,draft:n.value==='FAULT_OFFLINE_UNSENT_DRAFT',selection:n.selectionStart===2&&n.selectionEnd===7}));Object.assign(result.cspProof,{nativeEditorSame:native.same,nativeDraftSame:native.draft,nativeSelectionSame:native.selection,nativeActionWorked:result.nativeSendRetained});const mounts=await page.evaluate(()=>({...__faultCspMounts}));Object.assign(result.cspProof,{packageFrameAttempts:mounts.attempts,packageFramePolicyViolations:mounts.violations,packageFrameAttemptsBeforeContinuation:cspMountsBefore.attempts,packageFrameAttemptsAfterContinuation:mounts.attempts,boundedRetryStable:mounts.attempts===cspMountsBefore.attempts});result.packageFramePolicyViolations=mounts.violations;}
   result.packageVerified=verifyHost(built.unpacked).status==='OFFLINE_HOST_RECONSTRUCTION';result.status='OBSERVED';
  }catch(error){result.status='FAIL';result.phase=phase;result.error=String(error?.message??error);process.exitCode=1;}
  finally{

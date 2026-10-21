@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 export const PENDING_REPAIR_LIMITS=Object.freeze({rpcMs:6000,readWindowMs:30000,maxGETs:12,maxReadAttempts:3,debuggerMs:20000,observationMs:15000});
 export const PENDING_REPAIR_STAGES=Object.freeze(['SETUP','INITIAL_CONTEXT_AND_ASSETS','FIRST_SEND_AND_ACK','PRE_SECOND_BUDGET','PRE_SECOND_WORKSPACE_AUTHORITY','SECOND_NATIVE_INPUT','WORKER_LIFECYCLE','DEBUGGER_INSTALL','DEBUGGER_CONTROL','SECOND_SEND_AND_PENDING_CUT','CORRUPT_REBIND','UI_REPAIR','REPAIR_DRAIN','REPEATED_REBIND','FINAL_ACCEPTANCE']);
-export const PENDING_REPAIR_ASSERTIONS=Object.freeze(['PENDING_REPAIR_PRIOR_AUTHORITY_REQUIRED','PENDING_REPAIR_WORKER_TARGET_REQUIRED','PENDING_REPAIR_FINAL_GRANT_FRESH','PENDING_REPAIR_REPEAT_GRANT_FRESH']);
+export const PENDING_REPAIR_ASSERTIONS=Object.freeze(['PENDING_REPAIR_PRIOR_AUTHORITY_REQUIRED','PENDING_REPAIR_WORKER_TARGET_REQUIRED','PENDING_REPAIR_FINAL_GRANT_FRESH','PENDING_REPAIR_REPEAT_GRANT_FRESH','J4-classic-package-root-required','J4-classic-entry-build-mismatch','J4-classic-runtime-build-mismatch','J4-classic-background-required','J4-unique-worker-target-required','J4-worker-lifecycle-target-mismatch','J4-production-drain-script-required','J4-production-drain-source-mismatch','J4-production-drain-breakpoint-unresolved','J4-production-drain-breakpoint-moved','J4-evidence-repository-script-required','J4-evidence-repository-source-mismatch','J4-evidence-repository-entry-required','J4-evidence-repository-entry-unresolved','J4-evidence-repository-breakpoint-moved']);
 export function setPendingRepairStage(report,stage){if(!PENDING_REPAIR_STAGES.includes(stage))throw Error('invalid-pending-repair-stage');report.stage=stage;}
 const values=table=>Object.values(table??{});
 const hintFor=(state,messageId)=>values(state.evidence?.hints).filter(h=>h.messageId===messageId);
@@ -95,7 +95,7 @@ export function pendingDiagnosticText(value,maxBytes=512){
  return {text,truncated:text.length!==value.length};
 }
 export function pendingDiagnosticError(error){
- if(safeGet(error,'name')==='AssertionError'||safeGet(error,'code')==='ERR_ASSERTION'){const label=safeGet(error,'message');return {name:'AssertionError',message:'pending-repair-assertion-failed',stack:null,truncated:true,omitted:'assertion-diff',...(PENDING_REPAIR_ASSERTIONS.includes(label)?{assertionLabel:label}:{})};}
+ if(safeGet(error,'name')==='AssertionError'||safeGet(error,'code')==='ERR_ASSERTION'){const raw=safeGet(error,'message'),head=typeof raw==='string'?raw.slice(0,160):null,label=head?.split('\n',1)[0];return {name:'AssertionError',message:'pending-repair-assertion-failed',stack:null,truncated:true,omitted:'assertion-diff',...(PENDING_REPAIR_ASSERTIONS.includes(label)?{assertionLabel:label}:{})};}
  const message=pendingDiagnosticText(safeGet(error,'message')),stack=pendingDiagnosticText(safeGet(error,'stack'),1024);
  const name=safeGet(error,'name');return {name:['Error','TypeError','RangeError','SyntaxError','TimeoutError','AssertionError','AggregateError'].includes(name)?name:'Error',message:message.text??'unreadable-error',stack:stack.text,truncated:message.truncated||stack.truncated};
 }

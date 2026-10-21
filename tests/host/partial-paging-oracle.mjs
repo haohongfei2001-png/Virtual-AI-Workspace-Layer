@@ -30,12 +30,12 @@ export function assertPartialObserved(snapshot,offset,{searched=false}={}){
  assert.deepEqual(Object.keys(snapshot.projectedMemberships).sort(),snapshot.ids,'every observed ref must be projected exactly once');
  assert(Object.values(snapshot.projectedMemberships).every(state=>state==='UNKNOWN'),'history alone must not project NONE or PROJECT');
  assert(snapshot.inventories.length>0&&snapshot.inventories.every(s=>s==='partial'||s==='unknown'),'no full inventory claim');
- assert.equal(snapshot.draftPreserved,true);
+ assert.equal(snapshot.draftPreserved,true);assert.equal(snapshot.filePreserved,true);
 }
 export function assertPartialPaging(paging){
  assert.equal(paging.worldSize,1000);assert.equal(paging.coverage,'non-atomic-observed-scan');
  assert.deepEqual(paging.pages.map(p=>p.offset),[25,50]);
- for(const p of paging.pages){assert.equal(p.method,'GET');assert.equal(p.status,200);assert.equal(p.limit,25);assert.equal(p.context,world.contextId);assert.equal(p.windowed,true);assert.deepEqual(p.nativeIds,partialPageIds(p.offset));assertPartialObserved(p.observed,p.offset);}
+ for(const p of paging.pages){assert.deepEqual(p.nativeEntry,{kind:'GENUINE_NATIVE_COMPOSER_SURRENDER',openOwnedSurfaces:0,nativeHistoryVisible:true});assert.equal(p.method,'GET');assert.equal(p.status,200);assert.equal(p.limit,25);assert.equal(p.context,world.contextId);assert.equal(p.windowed,true);assert.deepEqual(p.nativeIds,partialPageIds(p.offset));assertPartialObserved(p.observed,p.offset);}
  assert.deepEqual(paging.requestOffsets,[25,50],'no hidden full-history fetch');
  assert.deepEqual(paging.serverRequestOffsets,[25,50],'worker or native must not scan unseen pages');
  assert.deepEqual(paging.unmountTransition,{surfacesClosed:true,returnControlVisible:true,renamedAdmitted:true,workspaceReentered:true},'native history mutation must surrender, admit rename and explicitly return');

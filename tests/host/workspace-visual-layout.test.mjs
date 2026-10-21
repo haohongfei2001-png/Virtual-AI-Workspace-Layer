@@ -52,12 +52,23 @@ test('CSS limits project-create sizing to card heads and preserves coarse target
  assert(css.includes('.arrows button{width:32px;height:32px}'));
  const narrow=css.slice(css.indexOf('@media(max-width:240px)'));assert(narrow.includes('.arrows{float:none;display:flex;position:sticky;flex-wrap:wrap;'));assert(!/display\s*:\s*none|visibility\s*:\s*hidden/.test(narrow));
 });
-test('reserved rail width is unchanged for desktop/narrow, tiny frames wrap rather than overlap cards',()=>{
- // Arithmetic contract, NOT browser hit/visual proof. Existing rail width32,
- // gaps6; adding a third control changes height only (3*32+2*6=108).
- for(const {frame,padding,negativeMargin} of [{frame:1168,padding:70,negativeMargin:46},{frame:344,padding:46,negativeMargin:32}]){
-  const cardRight=frame-padding,railLeft=cardRight+negativeMargin-32;
-  assert(railLeft>=cardRight);assert(railLeft+32<=frame);assert.equal(3*32+2*6,108);
+test('pager float has nonnegative margin-box at each breakpoint with stable button position',()=>{
+ // Browser evidence 39530853596: desktop client1168/scroll1182 (+14),
+ // narrow344/344. A 32px float with -46px margin had a negative14px box.
+ // These are sizing contracts; next hosted strict geometry must verify layout.
+ assert(css.includes('.arrows{width:46px;justify-items:end;margin-right:-46px;'));
+ assert(css.includes('@media(max-width:760px){.workspace{padding:15px 46px 24px 9px}.arrows{width:32px;margin-right:-32px}'));
+ for(const frame of [241,344,420,700,760,761,1168,1440]){
+  const narrow=frame<=760,padding=narrow?46:70,negativeMargin=narrow?32:46,railWidth=negativeMargin,buttonWidth=32;
+  const cardRight=frame-padding,railLeft=cardRight+negativeMargin-railWidth;
+  const newButtonLeft=railLeft+railWidth-buttonWidth,oldButtonLeft=cardRight+negativeMargin-buttonWidth;
+  assert.equal(railWidth-negativeMargin,0,'float margin-box cannot be negative');assert.equal(newButtonLeft,oldButtonLeft,'preserve actual button pixels');assert(railLeft>=cardRight);assert(newButtonLeft+buttonWidth<=frame);
+  for(const count of [1,2,3])for(const height of [32,40]){
+   const rects=Array.from({length:count},(_,i)=>({left:newButtonLeft,top:i*(height+6),right:newButtonLeft+buttonWidth,bottom:i*(height+6)+height}));
+   for(let i=1;i<count;i++)assert(rects[i].top>rects[i-1].bottom,'navigation/settings remain distinct rows');
+   assert(rects.every(r=>r.right<=frame&&r.left>=cardRight));
+  }
  }
- assert(css.includes('max-width:100%;margin:0 0 8px auto;gap:4px'));assert(css.includes('.arrows{float:none;display:flex;position:sticky;flex-wrap:wrap;'));
+ const tiny=css.slice(css.indexOf('@media(max-width:240px)'));assert(tiny.includes('.arrows{float:none;display:flex;position:sticky;flex-wrap:wrap;width:max-content;max-width:100%;margin:0 0 8px auto;gap:4px}'));
+ assert(!/overflow(?:-x)?\s*:\s*(?:hidden|clip)/.test(tiny));
 });

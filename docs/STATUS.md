@@ -1,5 +1,10 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 第四批：实际边界失败修正（2026-10-21，基线ebd35576）
+
+CI39530853596终态21成功/13失败/1取消，Node10244全过；完整原旅程、五J4、双J2与真实early-input通过。六component图确认顶部/标题栏修正，但desktop1168/1182暴露14px溢出，已按rail负margin作最小平衡修正，仍需实测。PARTIAL补真实原生surrender；pending debugger漏packageRoot为确定性runner错误已修；idle仍停初始化，新增失败诊断不得当自然观察。CSP按canonical条件语义改为严格双分支安全证据，不拿MAIN探针当extension阻断。native64场景近15分钟取消无进度证据，新增有界阶段报告/watchdog而非盲加时间。357项新合批定向通过；见[第四批证据](evidence/cloud-ci-boundaries-20261021/README.md)。继续ACTIVE，未完成Free/真实验收。
+
+
 ## 第三批：实际 CI 纠错与视觉复核（2026-10-21，基线23ea71a6）
 
 第二批 exact-head CI39528592980 已终态：35任务中22成功/13失败，Node10194/10194，五个J4矩阵、持久化、两种privacy与J2矩阵均通过；独立原旅程J2另有复验预算时序失败，不能用矩阵成功覆盖。失败日志保留，不重跑挑绿。当前批修正分页UNKNOWN缺省存储误判、原生面板可见性、只读预算调度、有限idle前提与计时、FAULT夹具及搜索就绪；早输入另建单次真实输入回归，不以ready-only等待替代。CSP缺真实package阻断证据仍FAIL，MAIN探针不能代替。六张实际component截图已完整性验证并逐图查看，发现默认设置按钮占行与项目新建控件撑高标题栏；实施最小保功能修正后还须重拍。未取得native populated截图。见[第三批记录](evidence/cloud-ci-repairs-20261021/README.md)。本批浏览器结果尚未验证，继续ACTIVE，非完整Free验收。

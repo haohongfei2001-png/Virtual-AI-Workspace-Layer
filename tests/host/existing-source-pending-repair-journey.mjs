@@ -141,7 +141,7 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   stage('WORKER_LIFECYCLE');
   const lifecycle=await context.newCDPSession(a),versions=lifecycleTrace.events;lifecycle.on('ServiceWorker.workerVersionUpdated',event=>observePendingWorkerVersions(lifecycleTrace,event));await lifecycle.send('ServiceWorker.enable');
   const running=await poll(()=>{const value=versions.filter(version=>version.scriptURL===`chrome-extension://${id}/extension/worker.mjs`).at(-1);return value?.runningStatus==='running'?value:null;},'worker-before-joint-cut');assert(Boolean(running.targetId),'PENDING_REPAIR_WORKER_TARGET_REQUIRED');
-  stage('DEBUGGER_INSTALL');debuggerCDP=await connectJ4Debugger(handle.debugEndpoint);pause=await pauseJointDrain(debuggerCDP,id,{expectedTargetId:running.targetId});stage('DEBUGGER_CONTROL');await pause.verifyControl();
+  stage('DEBUGGER_INSTALL');debuggerCDP=await connectJ4Debugger(handle.debugEndpoint);pause=await pauseJointDrain(debuggerCDP,id,{packageRoot:built.unpacked,expectedTargetId:running.targetId});stage('DEBUGGER_CONTROL');await pause.verifyControl();
   // Start the native click before waiting for its actual production breakpoint.
   stage('SECOND_SEND_AND_PENDING_CUT');await a.locator('button[type="submit"]').click();
   let sent,stopSequence;

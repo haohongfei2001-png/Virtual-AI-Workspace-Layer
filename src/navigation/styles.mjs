@@ -26,9 +26,11 @@ export const css=`
 .card .row{overflow:visible;position:relative;font-size:calc(14px * var(--vaiwl-font-scale,1));line-height:calc(22px * var(--vaiwl-font-scale,1));min-height:36px;padding:7px 6px 7px 9px;gap:8px}.card .row::before{content:"";position:absolute;left:-10px;top:18px;width:7px;border-top:1px solid var(--line,#d8d8d8);pointer-events:none}
 .card-head > .project-create{width:28px;height:28px;flex:none}
 .card-actions{width:28px;height:28px;opacity:0}.card:hover .card-actions,.card:focus-within .card-actions{opacity:1}.card .old{width:30px;height:30px;margin:3px 0 0 2px}.card .old-list{margin:3px 0 0 -9px;padding:6px 0 0 9px;border-top:1px solid var(--line,#e5e5e5);border-left:0}.card .more{padding:5px 9px}
-.arrows{margin-right:-46px;background:transparent;border:0;box-shadow:none;padding:0;border-radius:0;top:0}.arrows button{width:32px;height:32px}
+/* Match the reserved rail to its negative margin: a narrower leading float
+   creates negative inline extent and 14px desktop scroll overflow. */
+.arrows{width:46px;justify-items:end;margin-right:-46px;background:transparent;border:0;box-shadow:none;padding:0;border-radius:0;top:0}.arrows button{width:32px;height:32px}
 .themes{max-height:340px}.theme-toggle{font-size:calc(14px * var(--vaiwl-font-scale,1));min-height:39px;padding:8px}.theme-glyph{width:calc(17px * var(--vaiwl-font-scale,1));min-height:calc(17px * var(--vaiwl-font-scale,1))}.theme-name{flex:1}.theme-disclosure{margin-left:auto}.theme-disclosure svg{width:12px;height:12px}.theme-toggle[aria-expanded=true] .theme-disclosure svg{transform:rotate(90deg)}.children .row{font-size:calc(13px * var(--vaiwl-font-scale,1));min-height:34px;padding:5px;gap:6px}.children .window-glyph svg{width:12px;height:12px}
-@media(max-width:760px){.workspace{padding:15px 46px 24px 9px}.arrows{margin-right:-32px}.card-head{padding-left:11px}.card h2{gap:8px}.card-actions{opacity:1}.card{border-radius:13px}}
+@media(max-width:760px){.workspace{padding:15px 46px 24px 9px}.arrows{width:32px;margin-right:-32px}.card-head{padding-left:11px}.card h2{gap:8px}.card-actions{opacity:1}.card{border-radius:13px}}
 @media(pointer:coarse){.card-head > .project-create{min-width:34px;min-height:34px}.card-actions{opacity:1}.card .row{min-height:44px}.old,.arrows button{min-height:40px}}
 .snippet-preview{display:block;font-size:calc(12px * var(--vaiwl-font-scale,1));color:var(--muted,#646464);white-space:normal;max-height:3em;overflow:hidden;margin-left:8px;flex:1}.anchor-feedback{font-size:calc(12px * var(--vaiwl-font-scale,1));color:var(--muted,#646464);padding:8px}.working-set .row{margin:3px 0}.toolbar .square{width:30px;height:32px}
 

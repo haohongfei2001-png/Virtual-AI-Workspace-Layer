@@ -1,3 +1,4 @@
+import {enterPartialNativeHistory} from './partial-native-surface.mjs';
 /** Actual packaged MV3 against PARTIAL reconstruction, never live ChatGPT. */
 import assert from 'node:assert/strict';
 import {tmpdir,platform} from 'node:os';
@@ -12,7 +13,7 @@ import {packageHost,verifyHost} from '../../extension/package.mjs';
 const server=await createVariantHostFixtureServer({profile:'PARTIAL',variant:'conflict',partialWindowed:true}),dir=await mkdtemp(join(tmpdir(),'vaiwl-partial-package-')),built=packageHost(join(dir,'package'),{offlineOrigin:server.origin});
 const info=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8'));
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex'),scriptHash=hash(await readFile(new URL(import.meta.url))),manifestHash=hash(await readFile(join(built.unpacked,'build-manifest.json')));
-const fixtureFiles=['partial-paging-oracle.mjs','expected/partial.mjs','j2-runner-bounds.mjs','fixtures/server.mjs','fixtures/native.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/native.css','fixtures/legacy.html'];
+const fixtureFiles=['partial-native-surface.mjs','partial-paging-oracle.mjs','expected/partial.mjs','j2-runner-bounds.mjs','fixtures/server.mjs','fixtures/native.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/native.css','fixtures/legacy.html'];
 const fixtureHashes=Object.fromEntries(await Promise.all(fixtureFiles.map(async file=>[file,hash(await readFile(new URL(file,import.meta.url)))])));
 const ids=['77777777-7777-4777-8777-000000001000','77777777-7777-4777-8777-000000000999'];
 const report={evidence:'REAL_HEADLESS_PACKAGED_MV3_PARTIAL_RECONSTRUCTION',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',package:built,sourceHashes:info.sourceHashes,scriptHash,fixtureHashes,buildManifestHash:manifestHash,paging:{worldSize:1000,coverage:'non-atomic-observed-scan',pages:[],requestOffsets:[]},results:[],errors:[],transport:[]};let context,page;
@@ -25,17 +26,17 @@ try{
  let frame=await workspace();for(const ui of page.frames().filter(f=>f.url().startsWith('chrome-extension://'+id)))await traceFrame(ui);assert.equal(await page.locator('aside nav[aria-label="Chat history"] a').count(),25);assert.equal(await page.locator(`aside nav[aria-label="Chat history"] a[href="/c/${ids[0]}"]`).count(),0);
  let current=frame.locator('[data-free-list="unknown"]').getByRole('link',{name:'Archive conversation 1000',exact:true});await current.waitFor({timeout:15000});assert.equal(await current.getAttribute('aria-current'),'page');assert.equal(await frame.locator('[data-free-list="noProject"]').getByRole('link',{name:'Archive conversation 1000',exact:true}).count(),0);
  report.results.push({name:'deep-link-outside-initial-25-uses-native-title-UNKNOWN-and-current',status:'PASS'});
- await page.locator('textarea').fill('PARTIAL_NATIVE_UNSENT_DRAFT');await page.evaluate(()=>{globalThis.partialOriginalEditor=document.querySelector('textarea');});await page.getByRole('button',{name:'返回工作空间',exact:true}).click();frame=await workspace();
+ await page.locator('textarea').fill('PARTIAL_NATIVE_UNSENT_DRAFT');await page.locator('#composer input[type=file]').setInputFiles({name:'partial-draft.txt',mimeType:'text/plain',buffer:Buffer.from('PARTIAL native unsent attachment')});await page.evaluate(()=>{globalThis.partialOriginalEditor=document.querySelector('textarea');globalThis.partialOriginalFileInput=document.querySelector('#composer input[type=file]');globalThis.partialOriginalFile=partialOriginalFileInput.files[0];globalThis.partialOriginalDocument=document;});await page.getByRole('button',{name:'返回工作空间',exact:true}).click();frame=await workspace();
  // Read-only diagnostics use independently derived fixture keys, never grant or write authority.
  const scope=partialScope;
  const observed=async()=>{
   const value=await frame.evaluate(async scope=>{const {ScopeRepository}=await import(chrome.runtime.getURL('src/b1/scope-repository.mjs')),{NativeRepository}=await import(chrome.runtime.getURL('src/data/native-repository.mjs')),{freeProjection}=await import(chrome.runtime.getURL('src/data/free-projection.mjs'));const base=new ScopeRepository({indexedDB});try{const repo=new NativeRepository({baseRepository:base}),facts=await repo.read(scope),foreign=await repo.read({...scope,organizationId:'context_unobserved_partial_peer'});return {ids:Object.keys(facts.refs).sort(),titles:Object.fromEntries(Object.entries(facts.refs).map(([id,r])=>[id,r.nativeTitle])),scopeKey:facts.scopeKey,foreignIds:Object.keys(foreign.refs),rawMemberships:Object.fromEntries(Object.entries(facts.membership).map(([id,m])=>[id,m.state])),projectedMemberships:Object.fromEntries(freeProjection(facts,{scope:base.scopeOrThrow(scope),now:new Date().toISOString()}).refs.map(r=>[r.id,r.membership])),inventories:Object.values(facts.sources).map(s=>s.inventory.conversations)};}finally{base.close();}},scope);
-  return {...value,draftPreserved:await page.evaluate(()=>document.querySelector('textarea')===partialOriginalEditor&&partialOriginalEditor.value==='PARTIAL_NATIVE_UNSENT_DRAFT')};
+  return {...value,filePreserved:await page.evaluate(()=>document===partialOriginalDocument&&document.querySelector('#composer input[type=file]')===partialOriginalFileInput&&partialOriginalFileInput.files.length===1&&partialOriginalFileInput.files[0]===partialOriginalFile),draftPreserved:await page.evaluate(()=>document.querySelector('textarea')===partialOriginalEditor&&partialOriginalEditor.value==='PARTIAL_NATIVE_UNSENT_DRAFT')};
  };
  const waitObserved=async(offset,options={})=>{const end=Date.now()+15000;let value;do{value=await observed();report.paging.lastObserved=value;if(JSON.stringify(value.ids)===JSON.stringify(partialUnion(offset,options))&&(!options.refreshed||value.titles[ids[0]]==='Archive conversation 1000 refreshed')){assertPartialObserved(value,offset,options);return value;}await page.waitForTimeout(50);}while(Date.now()<end);assertPartialObserved(value,offset,options);throw Error('partial-observed-admission-timeout');};
  await waitObserved(0);
  for(const offset of [25,50]){
-  await page.getByRole('button',{name:'返回原生阅读',exact:true}).click();
+  const nativeEntry=await enterPartialNativeHistory(page);
   const nav=page.locator('aside nav[aria-label="Chat history"]');await nav.hover();
   // Real wheel input drives the native scroll handler, its ordinary GET and replacement.
   // Reset to top first because replacement can retain the old bottom position.
@@ -45,7 +46,7 @@ try{
   await page.waitForFunction(expected=>JSON.stringify([...document.querySelectorAll('aside nav[aria-label="Chat history"] a')].map(a=>a.pathname.slice(3)))===JSON.stringify(expected),partialPageIds(offset));
   const nativeIds=await nav.locator('a').evaluateAll(nodes=>nodes.map(a=>new URL(a.href).pathname.slice(3)));
   await page.getByRole('button',{name:'返回工作空间',exact:true}).click();frame=await workspace();
-  const row={offset,limit:Number(new URL(request.url()).searchParams.get('limit')),method:request.method(),status:response.status(),context:(await request.allHeaders())['chatgpt-account-id'],windowed:data.windowed,nativeIds,observed:await waitObserved(offset)};report.paging.pages.push(row);
+  const row={nativeEntry,offset,limit:Number(new URL(request.url()).searchParams.get('limit')),method:request.method(),status:response.status(),context:(await request.allHeaders())['chatgpt-account-id'],windowed:data.windowed,nativeIds,observed:await waitObserved(offset)};report.paging.pages.push(row);
   report.results.push({name:offset===25?'native-scroll-25-overlap-window-replacement-preserves-observed-union':'native-scroll-50-window-replacement-preserves-scoped-unique-union',status:'PASS'});
  }
  // DOM virtualization probe only: remove exposed native history rows, without
