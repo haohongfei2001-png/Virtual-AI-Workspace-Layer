@@ -28,3 +28,15 @@ export async function waitEvidenceWorkspace({sample,clickReturn,now=()=>performa
  }
  throw failure('workspace-readiness-deadline');
 }
+/** Observe native source identity while the workspace may correctly mask it.
+ * This does not establish visual reachability; the runner separately clicks C in the real frame. */
+export async function readEvidenceNativeMember({page,projectId,conversationId,title}){
+ const selector=`#reading nav[aria-label="Project conversations"][data-project-id="${projectId}"] > a[href="/c/${conversationId}"]`,row=page.locator(selector);
+ await row.waitFor({state:'attached',timeout:25000});assert.equal(await row.count(),1,'native member source must be unique');
+ const evidence=await row.evaluate((node,{projectId,conversationId,title})=>{
+  const doc=node.ownerDocument,reading=doc.querySelector('#reading'),nav=node.closest('nav'),style=doc.defaultView.getComputedStyle(node);
+  return {connected:node.isConnected,insideNativeReading:!!reading?.contains(node),nativeProjectMatches:nav?.getAttribute('data-project-id')===projectId,nativeConversationMatches:node.getAttribute('href')==='/c/'+conversationId,titleMatches:node.textContent===title,bothSurfacesOpen:doc.querySelectorAll('[data-va-owned]:popover-open').length===2,readingHasWorkspaceMask:!!reading?.closest('[data-va-mask-workspace]'),sourceCssVisible:style.visibility==='visible'&&style.display!=='none',evidenceKind:'ATTACHED_NATIVE_SOURCE_IDENTITY_NOT_VISUAL_REACHABILITY'};
+ },{projectId,conversationId,title});
+ for(const key of ['connected','insideNativeReading','nativeProjectMatches','nativeConversationMatches','titleMatches'])assert.equal(evidence[key],true,key);
+ return evidence;
+}

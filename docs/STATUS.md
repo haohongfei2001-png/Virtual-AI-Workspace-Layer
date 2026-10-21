@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 第十批：成员来源附着观察与反馈时序（2026-10-21，基线c0ede009）
+
+CI39601884407终态40成功/1失败，Node10683全过；native64访/8cells、原生入口四子例与严格existing-source pending repair窄门均实际通过。唯一membership失败来自工作态隐藏原生区后role查询排除隐藏节点，不能据此断言成员已生成或缺失。候选改为exact原生附着身份观察，明确非视觉证明，后续PROJECT/ACK/真实C点击可达门不变。22项supplementary仅重排，优先唯一失败和最长case，保全41jobs/并发/时限。452项合批定向与独审通过，等待新exact-head actual。见[第十批证据](evidence/cloud-membership-source-closure-20261021/README.md)。仍ACTIVE，未merge/deploy或完整Free验收。
+
 ## 第九批：原生派发与观察动作校正（2026-10-21，基线f0779260）
 
 CI39597954445终态38成功/3失败，Node10668全过；J1 LEGACY、transport及native64访/8cells窄合同通过，原生8图完整提取，逐图视觉审查独立记录。48control与6component已逐图审，不声明完整视觉/G/U。剩余两项原生入口错误等popup，以及pending两send间为采样新增workspace返回触发正常校准，均为已定位harness前提；候选保留真实原生派发/成员/ACK/strict witness，不改生产。444项合批定向与独审通过，等待新exact-head CI。见[第九批证据](evidence/cloud-native-dispatch-closure-20261021/README.md)。仍ACTIVE，不merge/deploy。

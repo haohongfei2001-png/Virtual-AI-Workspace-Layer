@@ -177,3 +177,16 @@ test('six bounded evidence-reconciliation gates require exact source and narrow 
  assert.match(body,/timeout-minutes: \$\{\{ matrix\.gate == 'populated-native' && 25 \|\| 15 \}\}/);
  assert.doesNotMatch(body,/continue-on-error|upload-artifact|actions\/cache|secrets\./);
 });
+
+
+test('supplementary scheduling prioritizes causal feedback and the longest case without changing coverage',()=>{
+ const body=workflow.split('  cloud-supplementary-gates:')[1],gates=body.match(/gate: \[([^\]]+)\]/)[1].split(',').map(v=>v.trim());
+ const original=['fault-auth-failure','fault-unsafe-reading','fault-forged-scope','fault-csp','fault-iframe-destroy','fault-stale-response','fault-rate-limit','fault-corrupt','fault-unknown-protocol','privacy-main','privacy-isolated','idle-draft-active','idle-safe-empty-reading','populated-native','visual-components','existing-source-repair','native-entry-safety','page-command-native-fetch','non-atomic-terminal','mixed-role','mixed-role-alt','membership-after-message'];
+ const priority=['membership-after-message','populated-native','existing-source-repair','native-entry-safety'];
+ const expected=priority.concat(original.filter(g=>!priority.includes(g)));
+ const check=value=>{assert.deepEqual(value,expected);assert.deepEqual([...value].sort(),[...original].sort());assert.equal(new Set(value).size,22);};check(gates);
+ const wrongPriority=[...gates];[wrongPriority[0],wrongPriority[1]]=[wrongPriority[1],wrongPriority[0]];
+ const wrongRemainder=[...gates];[wrongRemainder[4],wrongRemainder[5]]=[wrongRemainder[5],wrongRemainder[4]];
+ for(const mutant of [gates.slice(1),[...gates,gates[0]],wrongPriority,wrongRemainder])assert.throws(()=>check(mutant));
+ assert.match(body,/fail-fast: false/);assert.match(body,/max-parallel: 3/);
+});

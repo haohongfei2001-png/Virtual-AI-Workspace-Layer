@@ -464,7 +464,8 @@ jobs:
       fail-fast: false
       max-parallel: 3
       matrix:
-        gate: [fault-auth-failure, fault-unsafe-reading, fault-forged-scope, fault-csp, fault-iframe-destroy, fault-stale-response, fault-rate-limit, fault-corrupt, fault-unknown-protocol, privacy-main, privacy-isolated, idle-draft-active, idle-safe-empty-reading, populated-native, visual-components, existing-source-repair, native-entry-safety, page-command-native-fetch, non-atomic-terminal, mixed-role, mixed-role-alt, membership-after-message]
+        # Prioritize the remaining causal gate and longest case; coverage and limits stay unchanged.
+        gate: [membership-after-message, populated-native, existing-source-repair, native-entry-safety, fault-auth-failure, fault-unsafe-reading, fault-forged-scope, fault-csp, fault-iframe-destroy, fault-stale-response, fault-rate-limit, fault-corrupt, fault-unknown-protocol, privacy-main, privacy-isolated, idle-draft-active, idle-safe-empty-reading, visual-components, page-command-native-fetch, non-atomic-terminal, mixed-role, mixed-role-alt]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
