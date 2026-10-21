@@ -26,6 +26,23 @@ const hash=bytes=>createHash('sha256').update(bytes).digest('hex'),sleep=ms=>new
 const key=scope=>JSON.stringify([scope.provider,scope.accountId,scope.organizationId]);
 const files=['existing-source-pending-repair-journey.mjs','existing-source-pending-repair-oracle.mjs','existing-source-pending-repair-browser-read.mjs','j4-package-journey.mjs','j4-debugger-transport.mjs','j4-joint-interruption.mjs','j4-evidence-recovery.mjs','j4-evidence-interruption.mjs','j4-report-cleanup.mjs','cold-context-trace.mjs','native-visibility-browser.mjs','isolated-browser-cleanup.mjs','historical-network-guard.mjs','sys05-startup-precondition.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/j4-assets.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','fixtures/ui10-conversation-title.mjs','expected/modern.mjs'];
 export function pendingRepairPlan(){return {status:'NOT_RUN',S:'NOT_RUN',scopeFeasibility:'NOT_ESTABLISHED_NORMAL_SURFACE_CAN_INVALIDATE_NATIVE_WITNESS',specRevision:'VA-HOST/1.1 FINAL',requirement:'SYS-02 / SYS-01 / J4 existing-source pending repair S slice',profile:'MODERN_C2_CONVERSATION_GET_OFFLINE',sourceCommit:process.env.FREE_SOURCE_COMMIT??null,dirtyPatchHash:process.env.FREE_DIRTY_PATCH_HASH??null,workingTreePatch:'NOT_MEASURED_BY_RUNNER',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',fullSYS02:'NOT_ESTABLISHED',fullJ4:'NOT_ESTABLISHED',limits:PENDING_REPAIR_LIMITS,steps:[],errors:[],limitations:['One existing persisted ACK source, one pending-before-Evidence-apply cut only','Missing initial ACK source, post-Evidence/pre-completion cut, capacity/quota/GC stress NOT_RUN','Full supported-profile matrix, full J4 and other SYS02 subcases NOT_RUN','Fresh post-repair send/successor ACK, unloaded branches, physical crash/disk quota NOT_RUN','G/U, physical devices, PAIA and performance/p95 NOT_RUN'],instrumentation:'PASSIVE_UI_REPLY_OBSERVER_AND_REAL_DEBUGGER_FAULT_CONTROL; NOT_PERFORMANCE_EVIDENCE'};}
+/** Test scheduling only: inspect existing reservations; never reserve/reset them.
+ * One current read needs session + accounts + conversation GETs and one attempt.
+ * Counts omit attempt identities, so an exhausted OTHER attempt conservatively
+ * waits too. This is not authority or a guarantee against concurrent consumers.
+ */
+export async function waitPendingRepairReadCapacity({read,wait=sleep,now=Date.now}){
+ const observations=[];
+ const inspect=async()=>{const budget=assertPendingRepairBudget(await read()),at=now();assert(Number.isSafeInteger(at)&&at>=budget.lastAt,'pending-repair-budget-clock');observations.push(budget);return {budget,at};};
+ const available=({budget,at})=>at-budget.startedAt>=PENDING_REPAIR_LIMITS.readWindowMs||(budget.requests+3<=PENDING_REPAIR_LIMITS.maxGETs&&budget.attemptCounts.every(count=>count+1<=PENDING_REPAIR_LIMITS.maxReadAttempts)&&budget.startedAt+PENDING_REPAIR_LIMITS.readWindowMs-at>=PENDING_REPAIR_LIMITS.rpcMs);
+ const first=await inspect();if(available(first))return {waitMs:0,observations};
+ const waitMs=Math.max(0,first.budget.startedAt+PENDING_REPAIR_LIMITS.readWindowMs+1-first.at);
+ await wait(waitMs);
+ // A competing real reader may have opened and consumed another window. Do not
+ // loop, reset its budget, retry a failed native action, or manufacture capacity.
+ assert(available(await inspect()),'pending-repair-read-capacity-unavailable');
+ return {waitMs,observations};
+}
 export async function preparePendingRepairPackage(directory,origin){
  const built=packageHost(directory,{offlineOrigin:origin,offlineContext:true,offlineExistingSend:true,offlineHistory:true});
  const permissions=JSON.parse(await readFile(join(built.unpacked,'manifest.json')));
@@ -88,6 +105,7 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   async function workspace(){await a.bringToFront();await poll(async()=>{if(await a.locator('[data-va-owned]:popover-open').count()===2)return true;const back=a.getByRole('button',{name:'返回工作空间',exact:true});if(await back.isVisible()){await back.click();return true;}return false;},'workspace-return');return frame(a);}
   const budgetObservations=[];
   async function budgetWindow(){const budget=assertPendingRepairBudget((await inspect()).budget);budgetObservations.push(budget);const waitMs=Math.max(0,budget.startedAt+30001-Date.now());if(waitMs)await sleep(waitMs);assert(Date.now()>budget.startedAt+30000);return {waitMs,budget};}
+  async function readCapacity(){const value=await waitPendingRepairReadCapacity({read:async()=>(await inspect()).budget});budgetObservations.push(...value.observations);report.readCapacityChecks??=[];report.readCapacityChecks.push({stage:report.stage,waitMs:value.waitMs,observations:value.observations});}
   stage('INITIAL_CONTEXT_AND_ASSETS');
   b=await startup.run(()=>context.newPage(),'initial-peer-page');b.on('pageerror',error=>appendPendingDiagnostic(report,'errors',error,'peer-pageerror'));await startup.run(()=>b.goto(server.origin+'/c/'+J4_REF,{timeout:startup.remaining('initial-native-navigation')}),'initial-native-navigation');await ready(b,team,J4_REF,startup);report.startup.elapsedMs=startup.elapsedMs();
   a=await context.newPage();a.on('pageerror',error=>appendPendingDiagnostic(report,'errors',error,'active-pageerror'));await a.goto(server.origin+'/c/'+J4_SEND_C);await ready(a,team,J4_SEND_C);
@@ -141,13 +159,13 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   record('fresh-grant-corrupt-root-keeps-pending-and-real-UI-repair-revokes-old-source',{freshGrant:true,nativeSourceUnchanged:true,assetDigest:preserved.hash,draftSameNode:true});
   // Repair notifies views but does not drain. A normal same-URL reload creates a
   // new grant and runs the existing HOST_REFRESH drain; no business RPC is sent.
-  stage('REPAIR_DRAIN');await budgetWindow();await a.bringToFront();await a.locator('textarea').fill('');await a.reload();await a.locator('[data-message-id="'+sent.id+'"]').first().waitFor();
+  stage('REPAIR_DRAIN');await readCapacity();await a.bringToFront();await a.locator('textarea').fill('');await a.reload();await a.locator('[data-message-id="'+sent.id+'"]').first().waitFor();
   const finalGrant=await ready(a,personal,J4_SEND_C);assert(finalGrant.grant!==fresh.grant,'PENDING_REPAIR_FINAL_GRANT_FRESH');
   const retired=await poll(async()=>{const value=await inspect();return value.continuations.find(row=>row.operationId===pending.operationId)?.state==='needs-revalidation'?value:null;},'same-operation-needs-revalidation');
   const summary=assertRetiredPending({before:cut.before,state:retired,pending,messageId:sent.id,conversationId:J4_SEND_C});
   assert.deepEqual((await inspect(team)).evidence,teamBefore.evidence);assert.deepEqual((await inspect(team)).assets,teamBefore.assets);
   record('same-operation-retires-only-for-ACK-source-revocation',{operationId:summary.operationId,payloadDigest:summary.payloadDigest,reason:summary.reason,targets:summary.targets,oldACKReplayed:false});
-  stage('REPEATED_REBIND');await budgetWindow();await a.bringToFront();await a.reload();await a.locator('[data-message-id="'+sent.id+'"]').first().waitFor();const repeatedGrant=await ready(a,personal,J4_SEND_C);assert(repeatedGrant.grant!==finalGrant.grant,'PENDING_REPAIR_REPEAT_GRANT_FRESH');
+  stage('REPEATED_REBIND');await readCapacity();await a.bringToFront();await a.reload();await a.locator('[data-message-id="'+sent.id+'"]').first().waitFor();const repeatedGrant=await ready(a,personal,J4_SEND_C);assert(repeatedGrant.grant!==finalGrant.grant,'PENDING_REPAIR_REPEAT_GRANT_FRESH');
   const repeated=await inspect();assertRetiredPending({before:cut.before,state:repeated,pending,messageId:sent.id,conversationId:J4_SEND_C});assert.deepEqual(repeated.continuations,retired.continuations);
   const peer=await inspect(team);assert.deepEqual(peer.evidence,teamBefore.evidence);assert.deepEqual(peer.assets,teamBefore.assets);budgetObservations.push(assertPendingRepairBudget(repeated.budget));
   stage('FINAL_ACCEPTANCE');const actual=server.snapshot();assert.equal(actual.interruption.accepts,2);assert.equal(actual.actions['send-intent'],2);assert.equal(actual.actions['create-project']??0,0);assert.deepEqual(report.errors,[]);

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
+import {tmpdir,platform} from 'node:os';
+import {assertPrivacyReport} from './privacy-report-contract.mjs';
 import {createHash} from 'node:crypto';
 import {createServer} from 'node:http';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
@@ -9,14 +11,14 @@ import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
 import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
 import {createPrivacyScanner} from './privacy-scan.mjs';
-const evidencePaths=['tests/host/privacy-package-browser.mjs','tests/host/privacy-scan.mjs','tests/host/fixtures/server.mjs'];
+const evidencePaths=['tests/host/privacy-package-browser.mjs','tests/host/privacy-report-contract.mjs','tests/host/privacy-scan.mjs','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs','tests/host/isolated-browser-cleanup.mjs','tests/host/fixtures/server.mjs'];
 const evidenceHashes=Object.fromEntries(await Promise.all(evidencePaths.map(async p=>[p,createHash('sha256').update(await readFile(p)).digest('hex')])));
-const server=await createHostFixtureServer({journey:'J3'}),dir=await mkdtemp('/private/tmp/vaiwl-privacy-');
+const server=await createHostFixtureServer({journey:'J3'}),dir=await mkdtemp(join(tmpdir(),'vaiwl-privacy-'));
 const built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,offlineHistory:true});
 const manifest=JSON.parse(await readFile(join(built.unpacked,'manifest.json'),'utf8'));
 const build=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8'));
 const sentinels={...server.privacySentinels(),draft:'PRIVACY_NATIVE_DRAFT_63892'};
-const report={evidence:'REAL_HEADLESS_PRODUCTION_PACKAGE_OFFLINE_PRIVACY',status:'NOT_RUN',realAccount:'NOT_RUN',fallbackAuth:'NOT_EXERCISED_BY_THIS_JOURNEY',sys07:'PARTIAL_MAIN_AUTH_METADATA_FAILURE',sourceHashes:build.sourceHashes,evidenceHashes,observationScope:'Post-initial-mount authenticated metadata failure; continuous content world, worker and existing UI frames only',checks:{}};
+const report={sourceCommit:process.env.GITHUB_SHA??null,fullSYS07:'NOT_ESTABLISHED',credentialUse:'Fixture token used only in restricted authentication RAM; fallback accounts verification may use an isolated-world short-lived closure, never MAIN or UI.',evidence:'REAL_HEADLESS_PRODUCTION_PACKAGE_OFFLINE_PRIVACY',status:'NOT_RUN',realAccount:'NOT_RUN',fallbackAuth:'NOT_EXERCISED_BY_THIS_JOURNEY',sys07:'PARTIAL_MAIN_AUTH_METADATA_FAILURE',sourceHashes:build.sourceHashes,evidenceHashes,observationScope:'Post-initial-mount authenticated metadata failure; continuous content world, worker and existing UI frames only',checks:{}};
 const guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
 let handle,phase='launch',probeHits=0;
 const probe=createServer((_req,res)=>{probeHits++;res.end('loopback-probe');});
@@ -36,7 +38,7 @@ const installer=`(${installObserver.toString()})((${createPrivacyScanner.toStrin
 function evaluateRealm(realm,callback,args){const expression=callback.toString().replace('(0,eval)(`(${source})`)',`(${createPrivacyScanner.toString()})`);return realm.evaluate(`(${expression})(${JSON.stringify(args)})`);}
 const clean=result=>{assert(result&&result.values>0);assert.equal(result.unsupported,0);assert.deepEqual(result.hits,{token:0,cookie:0,body:0,draft:0});};
 try{
- handle=await launchNativeVisibilityBrowser({chromium,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',profileDir:join(dir,'profile'),headed:false,historicalNetworkGuard:guard.config});
+ handle=await launchNativeVisibilityBrowser({chromium,executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium'),profileDir:join(dir,'profile'),headed:false,historicalNetworkGuard:guard.config});
  const {context,browser}=handle;
  await context.route('**/*',route=>route.request().url().startsWith(server.origin+'/')||route.request().url().startsWith('chrome-extension://')?route.continue():route.abort());
  // Only extension frames, never the native page, are message/log sinks.
@@ -107,6 +109,6 @@ finally{
  const cleanup=await Promise.allSettled([handle?.close(),server.close(),guard.close(),new Promise(r=>probe.close(r))]);report.cleanup=cleanup.map(item=>item.status);if(cleanup.some(item=>item.status==='rejected')){report.status='FAIL';report.failedPhase='cleanup';process.exitCode=1;}
  report.sourceChangedDuringRun=(await Promise.all(Object.entries({...build.sourceHashes,...evidenceHashes}).map(async([path,digest])=>createHash('sha256').update(await readFile(path)).digest('hex')!==digest))).some(Boolean);
  if(report.sourceChangedDuringRun){report.originalFailedPhase=report.failedPhase??null;report.status='FAIL';report.failedPhase='source-changed';process.exitCode=1;}
- report.networkGuard=guard.snapshot();await writeFile(process.argv[2]??'/private/tmp/free-privacy-package.json',JSON.stringify(report,null,2)+'\n');
+ report.networkGuard=guard.snapshot();if(report.status==='PASS'){try{assertPrivacyReport(report);}catch{report.status='FAIL';report.failedPhase='report-contract';process.exitCode=1;}}await writeFile(process.argv[2]??join(tmpdir(),'free-privacy-package.json'),JSON.stringify(report,null,2)+'\n');
 }
 console.log(JSON.stringify({status:report.status,failedPhase:report.failedPhase,sys07:report.sys07}));

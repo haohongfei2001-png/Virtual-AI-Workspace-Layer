@@ -443,3 +443,53 @@ jobs:
       - name: Preserve exact UI result in job log
         if: ${{ always() }}
         run: test ! -f "$RUNNER_TEMP/cloud-ui-controls.json" || cat "$RUNNER_TEMP/cloud-ui-controls.json"
+
+  cloud-supplementary-gates:
+    # Finite explicit offline cases, synthetic fixtures only. No artifacts or live credentials.
+    if: github.repository == 'haohongfei2001-png/Virtual-AI-Workspace-Layer' && github.event.repository.private == false && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        gate: [fault-auth-failure, fault-unsafe-reading, fault-forged-scope, fault-csp, fault-iframe-destroy, fault-stale-response, fault-rate-limit, fault-corrupt, fault-unknown-protocol, privacy-main, privacy-isolated, idle-draft-active, idle-safe-empty-reading, populated-native, visual-components, existing-source-repair]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Install locked build and isolated browser tools
+        run: |
+          npm ci --prefix extension/tooling --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tests/b1/tooling --ignore-scripts
+          tests/b1/tooling/node_modules/.bin/playwright install --with-deps chromium
+          node --input-type=module -e "import {chromium} from './tests/b1/tooling/node_modules/playwright/index.mjs'; console.log('FREE_CHROME_EXECUTABLE='+chromium.executablePath())" >> "$GITHUB_ENV"
+      - name: Execute one bounded supplementary case
+        env:
+          SELECTED_GATE: ${{ matrix.gate }}
+        run: |
+          report="$RUNNER_TEMP/supplementary.json"
+          case "$SELECTED_GATE" in
+            fault-*) node tests/host/fault-package-matrix-browser.mjs "$report" "${SELECTED_GATE#fault-}" ;;
+            privacy-main) node tests/host/privacy-package-browser.mjs "$report" ;;
+            privacy-isolated) node tests/host/isolated-auth-privacy-browser.mjs "$report" ;;
+            populated-native) node tests/host/ui10-populated-package-browser.mjs "$report" ;;
+            visual-components) node tests/host/ui10-visual-paired-browser.mjs "$report" ;;
+            existing-source-repair) FREE_CHROME_HEADED=1 xvfb-run -a node tests/host/existing-source-pending-repair-journey.mjs "$report" --execute-browser ;;
+            idle-*)
+              set +e
+              node tests/host/natural-worker-idle-probe.mjs "$report" "${SELECTED_GATE#idle-}"
+              result=$?
+              set -e
+              test "$result" -eq 0 -o "$result" -eq 2
+              node -e "const r=require(process.env.RUNNER_TEMP+'/supplementary.json'); if(!['NATURAL_IDLE_NOT_OBSERVED','UNFORCED_TARGET_DESTRUCTION_RECOVERY_PASS'].includes(r.status)||r.naturalWorkerSleep==='PASS'||r.forcedWorkerStop!==false||r.workerDebuggerAttached!==false||r.productionTimersModified!==false||!Number.isFinite(r.observation?.elapsedMs)||r.observation.elapsedMs<60000||r.observation.elapsedMs>90000||r.sourceChangedDuringRun!==false||r.buildManifestUnchanged!==true||r.runnerChangedDuringRun!==false||r.sourceCommit!==process.env.GITHUB_SHA||r.evidenceBinding?.dependenciesUnchanged!==true||r.evidenceBinding?.cleanupVerified!==true||r.evidenceBinding?.sourceCommitBound!==true||r.scenario!==process.env.SELECTED_GATE.slice(5)||r.cleanupErrors?.length) process.exit(1); console.log('Finite observation only; NOT_OBSERVED is not natural-idle acceptance')"
+              ;;
+            *) exit 1 ;;
+          esac
+      - name: Preserve exact supplementary result in job log
+        if: ${{ always() }}
+        run: test ! -f "$RUNNER_TEMP/supplementary.json" || cat "$RUNNER_TEMP/supplementary.json"

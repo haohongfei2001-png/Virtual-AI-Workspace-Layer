@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
+import {tmpdir,platform} from 'node:os';
+import {assertPrivacyReport} from './privacy-report-contract.mjs';
 import {createHash} from 'node:crypto';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {createHostFixtureServer} from './fixtures/server.mjs';
@@ -8,13 +10,13 @@ import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {launchNativeVisibilityBrowser} from './native-visibility-browser.mjs';
 import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
 import {createPrivacyScanner} from './privacy-scan.mjs';
-const evidencePaths=['tests/host/isolated-auth-privacy-browser.mjs','tests/host/privacy-scan.mjs','tests/host/fixtures/server.mjs'];
+const evidencePaths=['tests/host/isolated-auth-privacy-browser.mjs','tests/host/privacy-report-contract.mjs','tests/host/privacy-scan.mjs','tests/host/native-visibility-browser.mjs','tests/host/historical-network-guard.mjs','tests/host/isolated-browser-cleanup.mjs','tests/host/fixtures/server.mjs'];
 const hashes=async paths=>Object.fromEntries(await Promise.all(paths.map(async p=>[p,createHash('sha256').update(await readFile(p)).digest('hex')])));
-const evidenceHashes=await hashes(evidencePaths),server=await createHostFixtureServer({journey:'J3'}),dir=await mkdtemp('/private/tmp/vaiwl-isolated-auth-privacy-');
+const evidenceHashes=await hashes(evidencePaths),server=await createHostFixtureServer({journey:'J3'}),dir=await mkdtemp(join(tmpdir(),'vaiwl-isolated-auth-privacy-'));
 const built=packageHost(join(dir,'package'),{offlineOrigin:server.origin}),build=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json'),'utf8'));
 const guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});
 const secrets={...server.privacySentinels(),draft:'ISOLATED_PRIVACY_NATIVE_DRAFT_286'};
-const report={status:'NOT_RUN',evidence:'REAL_HEADLESS_PACKAGED_MV3_OFFLINE_ISOLATED_AUTH_PRIVACY',sourceHashes:build.sourceHashes,evidenceHashes,realAccount:'NOT_RUN',firstPartyServiceWorker:'NOT_VERIFIED',G:'NOT_VERIFIED',coverage:'Worker passive inbound runtime messages, outgoing tabs messages/replies and console from before either navigation; page console from before navigation; extension DOM and all raw IDB after terminal outcomes. Does not claim complete UI reply or content-world console history.',cases:[]};
+const report={sourceCommit:process.env.GITHUB_SHA??null,fullSYS07:'NOT_ESTABLISHED',credentialUse:'Fixture token used only in restricted authentication RAM; fallback accounts verification may use an isolated-world short-lived closure, never MAIN or UI.',status:'NOT_RUN',evidence:'REAL_HEADLESS_PACKAGED_MV3_OFFLINE_ISOLATED_AUTH_PRIVACY',sourceHashes:build.sourceHashes,evidenceHashes,realAccount:'NOT_RUN',firstPartyServiceWorker:'NOT_VERIFIED',G:'NOT_VERIFIED',coverage:'Worker passive inbound runtime messages, outgoing tabs messages/replies and console from before either navigation; page console from before navigation; extension DOM and all raw IDB after terminal outcomes. Does not claim complete UI reply or content-world console history.',cases:[]};
 let handle,phase='launch',activeCase=null;
 function install(factory,secrets){
  const messages=factory(secrets),logs=factory(secrets),counts={received:0,identitySuccess:0,identityFailure:0,identityMalformedFailure:0,dispatch:0,dispatchReplies:0,console:0,errors:0};
@@ -30,7 +32,7 @@ function realm(realm,fn,args){return realm.evaluate(`(${fn.toString()})(${JSON.s
 async function scanDatabase(worker){return realm(worker,async(secrets,factory)=>{const scanner=factory(secrets),databases=[];for(const item of await indexedDB.databases()){const db=await new Promise((resolve,reject)=>{const request=indexedDB.open(item.name);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(Error('database-open'));});try{const stores=[...db.objectStoreNames],counts={};await new Promise((resolve,reject)=>{const tx=db.transaction(stores,'readonly');for(const name of stores){counts[name]=0;const request=tx.objectStore(name).openCursor();request.onsuccess=()=>{const cursor=request.result;if(cursor){counts[name]++;scanner.scan({key:cursor.key,value:cursor.value});cursor.continue();}};}tx.oncomplete=resolve;tx.onabort=tx.onerror=()=>reject(Error('database-scan'));});databases.push({stores,counts});}finally{db.close();}}return {databases,scan:scanner.snapshot()};},secrets);}
 async function until(check){const deadline=Date.now()+20000;while(Date.now()<deadline){if(await check())return;await new Promise(resolve=>setTimeout(resolve,30));}throw Error('terminal-observation-timeout');}
 try{
- handle=await launchNativeVisibilityBrowser({chromium,executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',profileDir:join(dir,'profile'),headed:false,historicalNetworkGuard:guard.config});
+ handle=await launchNativeVisibilityBrowser({chromium,executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium'),profileDir:join(dir,'profile'),headed:false,historicalNetworkGuard:guard.config});
  const {context,browser}=handle;
  await context.route('**/*',async route=>{const request=route.request(),url=request.url();
   if(url===server.origin+'/api/auth/session'){if(request.serviceWorker()){if(activeCase)activeCase.workerAuthAborted++;return route.abort('failed');}if(activeCase)activeCase.isolatedSession++;}
@@ -70,6 +72,7 @@ try{
   await Promise.all(tasks);assert.equal(logIncomplete,false);activeCase.pageConsole=logs.snapshot();clean(activeCase.pageConsole);
   const after=await worker.evaluate(observe);clean(after.messages,true);clean(after.logs);assert.equal(after.counts.identityMalformedFailure,0);activeCase.workerObserved=after;activeCase.delta=Object.fromEntries(Object.entries(after.counts).map(([key,value])=>[key,value-before.counts[key]]));
   assert.equal(mode==='success'?activeCase.delta.identitySuccess:activeCase.delta.identityFailure,1);
+  assert.equal(mode==='success'?activeCase.delta.identityFailure:activeCase.delta.identitySuccess,0);
   await page.close();activeCase=null;
  }
  assert.equal(verifyHost(built.unpacked).status,'OFFLINE_HOST_RECONSTRUCTION');report.status='PASS';
@@ -78,6 +81,6 @@ finally{
  report.cleanup=(await Promise.allSettled([handle?.close(),server.close(),guard.close()])).map(item=>item.status);
  report.sourceChangedDuringRun=(await Promise.all(Object.entries({...build.sourceHashes,...evidenceHashes}).map(async([path,digest])=>createHash('sha256').update(await readFile(path)).digest('hex')!==digest))).some(Boolean);
  if(report.sourceChangedDuringRun||report.cleanup.includes('rejected')){report.originalFailedPhase=report.failedPhase??null;report.status='FAIL';report.failedPhase='source-or-cleanup';process.exitCode=1;}
- report.networkGuard=guard.snapshot();await writeFile(process.argv[2]??'/private/tmp/free-isolated-auth-privacy.json',JSON.stringify(report,null,2)+'\n');
+ report.networkGuard=guard.snapshot();if(report.status==='PASS'){try{assertPrivacyReport(report);}catch{report.status='FAIL';report.failedPhase='report-contract';process.exitCode=1;}}await writeFile(process.argv[2]??join(tmpdir(),'free-isolated-auth-privacy.json'),JSON.stringify(report,null,2)+'\n');
 }
 console.log(JSON.stringify({status:report.status,phase:report.failedPhase}));

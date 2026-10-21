@@ -151,3 +151,10 @@ test('new cloud profile matrices retain private-repo and manual-dispatch denial 
 test('new overflow slice cannot replace the original diagnostic or manufacture full acceptance',()=>{
  const body=jobs['offline-durability-compat'];assert.equal((body.match(/--queue-overflow/g)??[]).length,1);assert.match(body,/PASS_BOUNDED_SEND_INTENT_OVERFLOW_AND_FRESH_ACK/);assert.match(body,/r.results.length!==52/);assert.match(body,/recoverydeadline-browser.mjs/);assert.match(body,/r.sourcesStable!==true/);
 });
+
+test('supplementary gates stay finite and do not promote idle non-observation to acceptance',()=>{
+ const body=workflow.split('  cloud-supplementary-gates:')[1];assert(body);assert.match(body,/github.event.repository.private == false/);assert.match(body,/github.event_name == 'push'/);assert.match(body,/max-parallel: 3/);assert.match(body,/timeout-minutes: 15/);assert.match(body,/persist-credentials: false/);assert.doesNotMatch(body,/continue-on-error|upload-artifact|actions\/cache|secrets\./);
+ for(const gate of ['privacy-main','privacy-isolated','idle-draft-active','idle-safe-empty-reading','populated-native','existing-source-repair'])assert(body.includes(gate));
+ assert.match(body,/NATURAL_IDLE_NOT_OBSERVED/);assert.match(body,/naturalWorkerSleep==='PASS'/);assert.match(body,/Number.isFinite\(r.observation\?\.elapsedMs\)/);assert.match(body,/Finite observation only/);
+ assert.match(body,/existing-source-pending-repair-journey.mjs.*--execute-browser/);assert.match(body,/fault-package-matrix-browser.mjs/);
+});

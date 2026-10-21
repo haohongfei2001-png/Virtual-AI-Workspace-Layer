@@ -1,3 +1,4 @@
+import {partialCheckpoints,assertPartialPaging} from './partial-paging-oracle.mjs';
 /** Bounded actual offline journeys. Scoped results never establish full J1-J4/81/G/U acceptance. */
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
@@ -104,7 +105,7 @@ export function admitMatrixReport(scenario,report,exitCode){
  }else if(scenario.journey==='J3'){
   assert.equal(report.evidence,'SINGLE_CONTINUOUS_REAL_HEADLESS_PACKAGED_MV3_OFFLINE_JOURNEY');assert.equal(report.steps.length,16);assert.equal(report.fixtureChangedDuringRun,false);assert.equal(report.scriptChangedDuringRun,false);assert.equal(report.ui06HelperChangedDuringRun,false);assert.equal(report.physicalIME,'NOT_RUN');
  }else if(scenario.journey==='PARTIAL'){
-  assert.equal(report.evidence,'REAL_HEADLESS_PACKAGED_MV3_PARTIAL_RECONSTRUCTION');assert.equal(report.results.length,3);assert.equal(report.workerExternalNetwork,'BLOCKED');assert.equal(report.fixtureChangedDuringRun,false);assert.equal(report.scriptChangedDuringRun,false);assert.equal(report.release,'NOT_RELEASE_READY');
+  assert.equal(report.evidence,'REAL_HEADLESS_PACKAGED_MV3_PARTIAL_RECONSTRUCTION');assert.deepEqual(report.results.map(r=>r.name),partialCheckpoints);assertPartialPaging(report.paging);assert.equal(report.workerExternalNetwork,'BLOCKED');assert.equal(report.fixtureChangedDuringRun,false);assert.equal(report.scriptChangedDuringRun,false);assert.equal(report.release,'NOT_RELEASE_READY');
  }else{
   assert.equal(report.evidence,'S_CONTINUOUS_REAL_PACKAGED_MV3_J4_SEGMENT');assert.equal(report.release,'NOT_RELEASE_READY');
   assert.equal(report.jointInterruptionBoundary,scenario.boundary);assert.equal(report.codecScenario,scenario.codec);assertJ4Checkpoints(scenario,report.steps);
@@ -117,7 +118,7 @@ export function summarizeJourneyMatrix(rows,{selected=journeyMatrixCases.map(c=>
  const sameSet=rows.length===selected.length&&new Set(rows.map(r=>r.id)).size===rows.length&&selected.every(id=>rows.some(r=>r.id===id));
  const hashes=rows.filter(r=>r.status==='PASS_SCOPED_CONTINUOUS_CASE').map(r=>JSON.stringify(Object.entries(r.sourceHashes).sort(([a],[b])=>a.localeCompare(b))));
  const consistent=hashes.length>0&&new Set(hashes).size===1;
- return {status:sameSet&&consistent&&rows.every(r=>r.status==='PASS_SCOPED_CONTINUOUS_CASE')?'PASS_SCOPED_OFFLINE_MATRIX':'INCOMPLETE_OR_FAILED',selected,sourceConsistent:consistent,fullPlannedMatrix:selected.length===journeyMatrixCases.length,fullJ1:'NOT_ESTABLISHED',fullJ2:'NOT_ESTABLISHED',fullJ3:'NOT_ESTABLISHED',fullJ4:'NOT_ESTABLISHED',full81:'NOT_ESTABLISHED',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',rows,limitations:['LEGACY/MODERN J1-J3 and MODERN C2 J4 are represented. PARTIAL is only a three-step reachability slice, never full J1-J4 acceptance.','Each row is one actually executed continuous journey; rows do not combine into a fictional cross-profile execution.','Unobservable account switching, real source semantics, physical IME/PAIA and other G/U acceptance remain separate.','Declared interruption/codec/lifecycle combinations only; no exhaustive cross-product or stress claim.']};
+ return {status:sameSet&&consistent&&rows.every(r=>r.status==='PASS_SCOPED_CONTINUOUS_CASE')?'PASS_SCOPED_OFFLINE_MATRIX':'INCOMPLETE_OR_FAILED',selected,sourceConsistent:consistent,fullPlannedMatrix:selected.length===journeyMatrixCases.length,fullJ1:'NOT_ESTABLISHED',fullJ2:'NOT_ESTABLISHED',fullJ3:'NOT_ESTABLISHED',fullJ4:'NOT_ESTABLISHED',full81:'NOT_ESTABLISHED',realChatGPT:'NOT_RUN',release:'NOT_RELEASE_READY',rows,limitations:['LEGACY/MODERN J1-J3 and MODERN C2 J4 are represented. PARTIAL is only a bounded five-step paging/reachability slice, never full J1-J4 acceptance.','Each row is one actually executed continuous journey; rows do not combine into a fictional cross-profile execution.','Unobservable account switching, real source semantics, physical IME/PAIA and other G/U acceptance remain separate.','Declared interruption/codec/lifecycle combinations only; no exhaustive cross-product or stress claim.']};
 }
 async function execute(scenario,directory){
  const reportPath=join(directory,scenario.id+'.json'),logPath=join(directory,scenario.id+'.log'),log=await open(logPath,'w');let timer,killer;

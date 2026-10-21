@@ -1,0 +1,24 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {partialCheckpoints,partialPageIds,partialUnion,assertPartialObserved,assertPartialPaging} from './partial-paging-oracle.mjs';
+import {createVariantHostFixtureServer} from './fixtures/variants-server.mjs';
+import {samplePartialPaging} from './partial-paging-sample.mjs';
+test('independent PARTIAL overlap oracle preserves missing 50 and deduplicates 25',()=>{assert.equal(partialPageIds(25).length,25);assert.equal(partialUnion(25).length,50);assert.equal(partialUnion(50).length,75);assert.equal(partialUnion(50,{searched:true}).length,76);assert(!partialUnion(50).some(id=>id.endsWith('000000000050')));assertPartialPaging(samplePartialPaging());});
+for(const [name,mutate] of Object.entries({hiddenFrame:r=>r.unmountTransition.workspaceReentered=false,unacceptedRename:r=>r.afterUnmount.titles[partialUnion(50).at(-1)]='Archive conversation 1000',title:r=>r.pages[0].observed.titles[r.pages[0].observed.ids[0]]='Wrong identity title',workerFetch:r=>r.serverRequestOffsets.push(75),duplicate:r=>r.pages[0].observed.ids.push(r.pages[0].observed.ids[0]),lostOld:r=>r.pages[1].observed.ids.shift(),unexposed:r=>r.afterSearch.ids.push('unseen'),scope:r=>r.afterUnmount.scopeKey='wrong',crossScope:r=>r.afterUnmount.foreignIds=['leak'],none:r=>r.afterUnmount.memberships[0]='NONE',complete:r=>r.afterUnmount.inventories=['complete'],draft:r=>r.afterSearch.draftPreserved=false,offset:r=>r.pages[1].offset=75,limit:r=>r.pages[0].limit=1000,window:r=>r.pages[0].windowed=false,context:r=>r.pages[0].context='other',method:r=>r.pages[0].method='POST',hiddenFetch:r=>r.requestOffsets.push(75),missingPage:r=>r.pages.pop()}))test('PARTIAL evidence rejects '+name,()=>{const r=samplePartialPaging();mutate(r);assert.throws(()=>assertPartialPaging(r));});
+test('runner uses actual wheel and native response, keeps all original checkpoints',async()=>{const s=await readFile(new URL('./partial-package-mv3-browser.mjs',import.meta.url),'utf8');for(const n of partialCheckpoints)assert(s.includes(n));assert(s.includes('page.mouse.wheel'));assert(s.includes('page.waitForResponse'));assert(!s.includes("dispatchEvent(new Event('scroll'))"));assert(!s.includes('repo.apply('));});
+test('PARTIAL window option is restricted and default fixture still appends',async()=>{
+ await assert.rejects(()=>createVariantHostFixtureServer({profile:'MODERN',partialWindowed:true}),/invalid-partial-windowed/);
+ for(const partialWindowed of [false,true]){const server=await createVariantHostFixtureServer({profile:'PARTIAL',variant:'conflict',partialWindowed});try{
+  const home=await fetch(server.url),cookie=home.headers.get('set-cookie').split(';')[0];
+  for(const offset of [25,50]){const response=await fetch(`${server.origin}/backend-api/conversations?offset=${offset}&limit=25`,{headers:{cookie,'Chatgpt-Account-Id':'account-host-personal'}}),data=await response.json();assert.equal(response.status,200);assert.equal(data.windowed,partialWindowed);assert.equal(data.total,1000);assert.equal(data.next_offset,offset+25);assert.deepEqual(data.items.map(x=>x.id),partialPageIds(offset));assert(data.items.every(x=>!('project'in x)));}
+  const search=await fetch(`${server.origin}/backend-api/conversations?query=Archive%20conversation%20999`,{headers:{cookie}});assert.equal((await search.json()).windowed,false);
+ }finally{await server.close();}}
+});
+
+test('PARTIAL unmount regression requires surrender and title admission before real return and exact UI assertion',async()=>{
+ const source=await readFile(new URL('./partial-package-mv3-browser.mjs',import.meta.url),'utf8'),remove=source.indexOf("nav.querySelectorAll('a').forEach(a=>a.remove())"),closed=source.indexOf("document.querySelectorAll('[data-va-owned]:popover-open').length===0",remove),rename=source.indexOf("node.textContent='Archive conversation 1000 refreshed'",closed),admit=source.indexOf('await waitObserved(50,{refreshed:true})',rename),back=source.indexOf('await nativeReturn.click();frame=await workspace()',admit),ui=source.indexOf("name:'Archive conversation 1000 refreshed',exact:true",back);
+ assert(remove>=0&&closed>remove&&rename>closed&&admit>rename&&back>admit&&ui>back);
+ const mount=await readFile(new URL('../../src/navigation/mount-surface.mjs',import.meta.url),'utf8');assert(mount.includes('surrenderChanged(records)'));assert(mount.includes('if(affected){surrender(m);changed=true;}'));
+ const discovery=await readFile(new URL('../../src/host/surface-discovery.mjs',import.meta.url),'utf8');assert(discovery.includes("reading.getAttribute(profile.currentConversationIdAttribute)===route.conversationId"));assert(discovery.includes("evidence('current-conversation-route','current-conversation-header','current-conversation-reading-id')"));
+});

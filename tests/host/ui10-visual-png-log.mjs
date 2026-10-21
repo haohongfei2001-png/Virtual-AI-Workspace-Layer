@@ -1,0 +1,21 @@
+/** Buffer-only allowlisted synthetic PNG transport. Never reads paths/profiles. */
+import {createHash} from 'node:crypto';
+import {inflateSync} from 'node:zlib';
+function crc32(bytes){let c=0xffffffff;for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c>>>1)^((c&1)?0xedb88320:0);}return (c^0xffffffff)>>>0;}
+export const VISUAL_PNG_IDS=Object.freeze(['approved-desktop-initial','renderer-desktop-initial','approved-desktop-old-open','renderer-desktop-old-open','approved-narrow-dark','renderer-narrow-dark','mv3-desktop-initial','mv3-narrow-dark-initial']);
+export const PNG_LIMITS=Object.freeze({perImage:192*1024,total:1536*1024,chunk:4096,records:8,maxWidth:1440,maxHeight:1000});
+const signature=Buffer.from([137,80,78,71,13,10,26,10]);
+export function inspectSyntheticPng(bytes){
+ if(!Buffer.isBuffer(bytes)||bytes.length>PNG_LIMITS.perImage)throw Error('CAPTURE_TOO_LARGE_OR_NOT_BUFFER');
+ if(bytes.length<45||!bytes.subarray(0,8).equals(signature))throw Error('invalid-png-signature');
+ let offset=8,ihdr=false,idat=false,iend=false,width,height,channels;const compressed=[];
+ while(offset<bytes.length){if(offset+12>bytes.length)throw Error('truncated-png');const n=bytes.readUInt32BE(offset),type=bytes.toString('ascii',offset+4,offset+8);if(n>bytes.length-offset-12)throw Error('truncated-png-chunk');if(crc32(bytes.subarray(offset+4,offset+8+n))!==bytes.readUInt32BE(offset+8+n))throw Error('invalid-png-crc');if(!ihdr&&type!=='IHDR')throw Error('missing-ihdr');if(type==='IHDR'){if(ihdr||n!==13)throw Error('invalid-ihdr');width=bytes.readUInt32BE(offset+8);height=bytes.readUInt32BE(offset+12);if(!width||!height||width>PNG_LIMITS.maxWidth||height>PNG_LIMITS.maxHeight)throw Error('invalid-png-dimensions');const depth=bytes[offset+16],color=bytes[offset+17];if(depth!==8||![2,6].includes(color)||bytes[offset+18]!==0||bytes[offset+19]!==0||bytes[offset+20]!==0)throw Error('unsupported-screenshot-png');channels=color===6?4:3;ihdr=true;}if(type==='IDAT'){idat=true;compressed.push(bytes.subarray(offset+8,offset+8+n));}offset+=n+12;if(type==='IEND'){if(n!==0||offset!==bytes.length)throw Error('invalid-iend');iend=true;break;}}
+ if(!ihdr||!idat||!iend)throw Error('incomplete-png');const rowBytes=width*channels+1,decoded=inflateSync(Buffer.concat(compressed),{maxOutputLength:rowBytes*height});if(decoded.length!==rowBytes*height)throw Error('invalid-png-pixels');for(let y=0;y<height;y++)if(decoded[y*rowBytes]>4)throw Error('invalid-png-filter');return {width,height,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};
+}
+export function syntheticPngLogRecords(captures){
+ if(!Array.isArray(captures)||!captures.length||captures.length>PNG_LIMITS.records)throw Error('invalid-capture-count');const seen=new Set(),validated=[];let total=0;
+ for(const c of captures){if(!VISUAL_PNG_IDS.includes(c.id)||seen.has(c.id))throw Error('unallowlisted-or-duplicate-image');seen.add(c.id);const png=inspectSyntheticPng(c.bytes);total+=png.bytes;if(total>PNG_LIMITS.total)throw Error('CAPTURE_TOO_LARGE');const lane=c.id.startsWith('mv3-')?'ACTUAL_MV3_OFFLINE':'WEB_MECHANISM_ONLY';if(c.metadata?.lane!==lane||c.metadata?.synthetic!==true)throw Error('invalid-synthetic-lane');if(c.metadata.viewport?.width!==png.width||c.metadata.viewport?.height!==png.height)throw Error('viewport-png-mismatch');const metadata=JSON.stringify(c.metadata);if(metadata.length>16384||/[\r\n]/.test(metadata))throw Error('metadata-too-large');const b64=c.bytes.toString('base64');validated.push({id:c.id,png,metadata:c.metadata,b64,chunks:Math.ceil(b64.length/PNG_LIMITS.chunk)});}
+ const lines=['VAIWL_PNG_MANIFEST '+JSON.stringify({protocol:'synthetic-png-log/1',visualVerdict:'NOT_REVIEWED',totalBytes:total,images:validated.map(({id,png,metadata,chunks})=>({id,...png,metadata,chunks}))})];
+ for(const v of validated){lines.push(`VAIWL_PNG_BEGIN ${v.id} ${v.chunks}`);for(let i=0;i<v.chunks;i++)lines.push(`VAIWL_PNG_CHUNK ${v.id} ${i+1}/${v.chunks} ${v.b64.slice(i*PNG_LIMITS.chunk,(i+1)*PNG_LIMITS.chunk)}`);lines.push(`VAIWL_PNG_END ${v.id} ${v.png.sha256}`);}if(lines.length>600)throw Error('too-many-log-lines');return lines;
+}
+export function emitSyntheticPngs(captures,write=line=>process.stdout.write(line+'\n')){for(const line of syntheticPngLogRecords(captures))write(line);}

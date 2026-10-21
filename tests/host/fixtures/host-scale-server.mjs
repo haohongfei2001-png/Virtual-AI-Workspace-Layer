@@ -1,3 +1,4 @@
+import {ui10NativeRows,ui10NativeHistory,ui10NativeMessages} from './ui10-populated-native.mjs';
 /** Native application-owned scale world. Never writes an extension DB or grant. */
 import http from 'node:http';
 import {readFile} from 'node:fs/promises';
@@ -5,7 +6,9 @@ import {randomBytes} from 'node:crypto';
 import {hostScaleScenario,hostScaleRows} from './host-scale-world.mjs';
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export async function createHostScaleServer(input={}){
- const scenario=hostScaleScenario(input),rows=[...hostScaleRows(scenario)],byId=new Map(rows.map(row=>[row.id,row])),projects=new Map();
+ if(input.ui10History!==undefined&&input.ui10History!==true)throw Error('invalid-ui10-history-mode');
+ const ui10History=input.ui10History===true,historyNow=Date.now();
+ const scenario=hostScaleScenario(input),rows=ui10History?ui10NativeRows():[...hostScaleRows(scenario)],byId=new Map(rows.map(row=>[row.id,row])),projects=new Map();
  for(const row of rows)if(row.project&&!projects.has(row.project))projects.set(row.project,{id:row.project,name:'原生项目 '+projects.size});
  const projectHref=id=>'/g/'+id+'/project',firstProject=projects.values().next().value;
  const source=await readFile(new URL('legacy.html',import.meta.url),'utf8');
@@ -21,7 +24,7 @@ export async function createHostScaleServer(input={}){
   const project=/^\/g\/([^/]+)\/project$/.exec(path),p=project&&projects.get(project[1]);
   if(p)return {title:p.name,project:p,conversations:rows.filter(row=>row.project===p.id).map(({id,title})=>({id,title,href:'/c/'+id}))};
   const match=/^\/c\/([a-f0-9-]+)$/.exec(path),row=match&&byId.get(match[1]);
-  return row?{title:row.title,conversationId:row.id,text:'Offline scale conversation.'}:null;
+  return row?{title:row.title,conversationId:row.id,text:'Offline scale conversation.',...(ui10History?{messages:ui10NativeMessages(row)}:{})}:null;
  };
  const server=http.createServer(async(req,res)=>{try{
   const url=new URL(req.url,'http://127.0.0.1');
@@ -43,7 +46,7 @@ export async function createHostScaleServer(input={}){
   }
   if(req.method==='GET'&&/^\/backend-api\/conversation\//.test(url.pathname)){
    if(req.headers.authorization!==`Bearer ${token}`)return json(res,401,{error:'unauthenticated'});
-   const row=byId.get(url.pathname.split('/').at(-1));return json(res,row?200:404,row?{conversation_id:row.id,mapping:{}}:{error:'not-found'});
+   const row=byId.get(url.pathname.split('/').at(-1));return json(res,row?200:404,row?(ui10History?ui10NativeHistory(row,principal,historyNow):{conversation_id:row.id,mapping:{}}):{error:'not-found'});
   }
   if(req.method==='POST'&&url.pathname==='/native/action'){
    let body='';for await(const chunk of req){body+=chunk;if(body.length>4096)return json(res,413,{error:'too-large'});}
@@ -55,5 +58,5 @@ export async function createHostScaleServer(input={}){
  }catch{if(!res.headersSent)json(res,400,{error:'invalid-request'});else res.end();}});
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
  const origin='http://127.0.0.1:'+server.address().port;
- return {origin,url:origin+'/',scenario,snapshot:()=>structuredClone({nativeConversations:rows.length,nativeProjects:projects.size,requests,actions}),close:()=>new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();})};
+ return {origin,url:origin+'/',scenario,...(ui10History?{ui10History:{kind:'NATIVE_SERVICE_RECONSTRUCTION',rows:structuredClone(rows),historyNow,coverage:'NONE',profile:'offline-original-send-v1'}}:{}),snapshot:()=>structuredClone({nativeConversations:rows.length,nativeProjects:projects.size,requests,actions}),close:()=>new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();})};
 }
