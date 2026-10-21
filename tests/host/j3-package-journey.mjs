@@ -6,7 +6,7 @@ import {createJ3ContextTracePackage,verifyJ3ContextTracePackage} from './j3-cont
 import assert from 'node:assert/strict';
 import {runUI06KeyboardAX} from './ui06-keyboard-ax.mjs';
 import {waitForHistoryControl} from './j3-control-wait.mjs';
-import {tmpdir} from 'node:os';
+import {tmpdir,platform} from 'node:os';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -72,7 +72,7 @@ async function nativeReading(){const close=page.getByRole('button',{name:'返回
 const selectNative=()=>page.evaluate(()=>{const body=document.querySelector('#reading .message-body'),text=body?.firstChild,selected='uniquely selected fixture words';if(text?.nodeType!==Node.TEXT_NODE)throw Error('missing-native-rendered-message');const start=text.nodeValue.indexOf(selected);if(start<0)throw Error('missing-selection-text');const range=document.createRange();range.setStart(text,start);range.setEnd(text,start+selected.length);const selection=getSelection();selection.removeAllRanges();selection.addRange(range);return selection.toString();});
 
 try{
- context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,viewport:{width:1440,height:1000},executablePath:process.env.FREE_CHROME_EXECUTABLE??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
+ context=await chromium.launchPersistentContext(join(dir,'profile'),{headless:true,viewport:{width:1440,height:1000},executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium'),ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
  await context.route('**/*',r=>r.request().url().startsWith(server.origin+'/')||r.request().url().startsWith('chrome-extension://')?r.continue():r.abort());
  const cdp=await context.browser().newBrowserCDPSession();({id:extensionId}=await cdp.send('Extensions.loadUnpacked',{path:contextTrace?.unpacked??built.unpacked}));
  if(startupMode==='registered-worker'){startupDeadline=createSys05StartupDeadline({timeoutMs:15000});report.startup.budgetMs=15000;report.startup.worker=await waitForSys05Worker(context,extensionId,startupDeadline);}

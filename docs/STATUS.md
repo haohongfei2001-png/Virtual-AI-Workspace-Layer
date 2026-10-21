@@ -1,5 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 当前执行权：云端主开发与依赖就绪 Free 收口（2026-10-21）
+
+Owner 于 2026-10-20 22:53:33 UTC 明确要求 dot 接手主开发，并行完成当前正式计划中不依赖本机和真实账户的全部可推进任务，再交回 Codex。Owner 尚未回复或恢复已停止的 Codex；基线为原 Free 分支 / Draft PR #16 的 64b926e3ce2d07ad1f6f3bcd16a36f006746f3a4，base 不变。dot 为本轮唯一集成 writer，模块独立、统一集成；下文旧 Codex writer 与仅来源审查安排保留为历史，不代表当前执行权。
+
+此前本地候选 f033d62c 未发布到分支，运行额度中断后的临时环境替换导致其代码和原始日志未完整保留。只有 CI 配置 blob f432d43e61769427118258d1cedbebe72483505a 和先前持久保存的 ABA 补丁可精确恢复，其余按修改记录重建并重新验证。不得沿用旧测试次数作为重建版本证据，也不得称重建 tree 等同遗失 tree。
+
+本轮仍 ACTIVE。现有 Free 目标与原安全/权限不变；真实来源语义、真实账户诊断、本机/IME/PAIA、发布与 merge 独立受限，10k/100k DEFERRED、Pro 后置。Owner 已明确批准原49文件候选及必要CI修正发布到原分支和公共CI；不含真实账户数据、不merge、不部署。新增独立功能批次发布仍需确认范围。所有代码及证据按阶段持久保存，最终以远端exact-head及新CI结果为准。
+
+## 重建候选的新验证（2026-10-21）
+
+原f033未发布且临时原件遗失，当前不复用其旧通过记录。重建后完整工作树Node9881/9881，零FAIL/skip/cancel，1241输入前后一致；该工作树含尚未发布的下一批原生UI测试。恢复期限52反例原基线20FAIL、修复后全PASS；独审重新通过。12原guard变异全部击中，默认184文件包通过。真实Chromium本地启动前受环境socket限制而0用例，等待远端exact-head CI。见[本轮新证据](evidence/cloud-free-reconstruction-20261021/README.md)。仍ACTIVE，不宣称完整Free/完整云端任务已完成。
+
 ## 当前来源失败位置与已授权对照（2026-10-21，基线5042db99）
 
 重新核对实际调用：生产session-provider/isolated-session-reader先取固定session；历史真实挑战由readSessionJSON在读取JSON/主体前拒绝，尚未执行该轮认证accounts。候选candidate.mjs使用无手工Authorization的cookie-only请求，首次me有效后进入sessionContexts；唯一default的account_id:null/id缺失在identifier校验处抛invalid-accounts-schema（现细码default-null-context-id），第三次me不执行，因此samePrincipal:false是未建立，不是观察到主体变更。直接原因是来源数据不满足现有canonical ID合同；是否因缺session-derived认证造成默认响应，尚无对照证据，不能断言是服务器故障或parser应放宽。

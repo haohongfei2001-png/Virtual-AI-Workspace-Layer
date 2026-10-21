@@ -126,7 +126,8 @@ export class FreeEvidenceRepository {
               if(indexed)validateEvidenceDirectoryRoot(next,normalized);else validateEvidenceManifest(next, normalized);
               store.put(evidenceRecord(freeEvidenceKey(normalized.key), next)); store.put(evidenceRecord(evidenceRecoveryKey(normalized.key), next));
               ops.put(record(freeEvidenceKey(normalized.key), {revision: next.revision}));
-              ops.put(record(key, {kind: 'RECOVER_FREE_EVIDENCE', fingerprint: damagedHash, revision: next.revision, operationId}));
+              const receiptWrite = ops.put(record(key, {kind: 'RECOVER_FREE_EVIDENCE', fingerprint: damagedHash, revision: next.revision, operationId}));
+              receiptWrite.onsuccess = () => { try { fence(options); } catch (failure) { abort(failure.message); } };
               fence(options);
               result = {ok: true, revision: next.revision, operationId, evidenceInvalidated: true};
             } catch (failure) { abort(failure.message); }
@@ -135,7 +136,7 @@ export class FreeEvidenceRepository {
         } catch (failure) { abort(failure.message); }
       };
       tx.oncomplete = () => { options.signal?.removeEventListener('abort', revoked); try { fence(options); resolve(result); } catch { resolve({ok: false, reason: 'stale-after-commit', committed: true}); } };
-      tx.onabort = () => { options.signal?.removeEventListener('abort', revoked); resolve(result ?? {ok: false, reason: tx.error?.name ?? 'free-evidence-recovery-aborted'}); };
+      tx.onabort = () => { options.signal?.removeEventListener('abort', revoked); resolve(result?.ok === false ? result : {ok: false, reason: tx.error?.name ?? 'free-evidence-recovery-aborted'}); };
     });
   }
 

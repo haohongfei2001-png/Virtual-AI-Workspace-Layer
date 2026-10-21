@@ -1,0 +1,6 @@
+/** Renderer-only synthetic world, never authority. */
+import {freeNavigationSnapshot} from '../../src/navigation/free-view.mjs';
+import {projectFreeFrame} from '../../src/runtime/free-frame-projection.mjs';
+export const UI10_POPULATED_TITLE='长期研究项目与知识管理中文标题'.repeat(8);
+export function ui10PopulatedWorld(){const scope='synthetic-ui10-renderer',refs=[],projects=[];const row=(id,segment,projectId=null)=>({id,scope,nativeTitle:`原生窗口 ${id} 保留完整中文标题`,nativeUrl:`https://chatgpt.com/c/${id}`,membership:projectId?'PROJECT':'NONE',projectId,activityDecision:{segment}});for(let p=0;p<3;p++){const id=`project-${p}`,members=[];for(let i=0;i<(p===0?34:5);i++){const r=row(`${id}-${i}`,p===0&&i>=17?2:0,id);refs.push(r);members.push(r.id);}projects.push({id,scope,nativeName:p===0?UI10_POPULATED_TITLE:`原生项目 ${p}`,members,activityDecision:{segment:0}});}for(let i=0;i<29;i++)refs.push(row(`none-${i}`,0));refs.push(row('history-at-segment-two',2));return {snapshot:freeNavigationSnapshot({scope,viewMode:'free',revision:1,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},projects,refs})};}
+export function ui10PopulatedProjection(query={role:'workspace'}){return projectFreeFrame(ui10PopulatedWorld(),query);}

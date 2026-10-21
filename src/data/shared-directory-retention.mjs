@@ -10,6 +10,9 @@ const readCheckpointRoot=createSharedDirectoryRootRecordReader();
 export function prepareSharedDirectoryRetention(tx,scope,prior,check,fail){
  const previous=snapshotSharedDirectoryRoot(prior,scope),store=tx.objectStore('b23_states');
  let old=null,ready=false,next=null,started=false;
+ // Deletions may be queued after the owner's receipt. Fence their active
+ // success events too, before a deferred expiry timer can arrive too late.
+ const remove=key=>{const request=store.delete(key);request.onsuccess=()=>{try{check();}catch(error){fail(error);}};};
  const start=()=>{
   if(!ready||!next||!old||started)return;started=true;
   try{
@@ -33,8 +36,8 @@ export function prepareSharedDirectoryRetention(tx,scope,prior,check,fail){
      // without rerouting and regrouping the same refs twice.
      const versionAt=(value,ref)=>value&&Object.hasOwn(value.versions,ref)?value.versions[ref]:undefined;
      const finish=(before,after)=>{try{
-      check();for(const ref of refs){const version=piece.versions[ref];if(version!==versionAt(before,ref)&&version!==versionAt(after,ref)){check();store.delete(manifest_partitionKey(old.scopeKey,ref,version,old.generation));}}
-      check();store.delete(sharedRefDirectoryKey(old.scopeKey,old.generation,bucket,pointer.revision));
+      check();for(const ref of refs){const version=piece.versions[ref];if(version!==versionAt(before,ref)&&version!==versionAt(after,ref)){check();remove(manifest_partitionKey(old.scopeKey,ref,version,old.generation));}}
+      check();remove(sharedRefDirectoryKey(old.scopeKey,old.generation,bucket,pointer.revision));
      }catch(error){fail(error);}};
      // Private roots and this callback belong to the same transaction. Reuse
      // only identical physical and validation contexts, as before.

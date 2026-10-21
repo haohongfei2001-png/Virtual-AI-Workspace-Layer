@@ -123,7 +123,7 @@ export class WorkspaceRepository {
                     rr.onsuccess=()=>{
                       try{if(!check())return;const old=rr.result;
                         if(old&&(old.nativeUrl!==ref.nativeUrl||old.projectId!==ref.projectId))throw Error('native-reference-conflict');
-                        if(!old)tx.objectStore('refs').put({key,scopeKey:s.key,conversationId:ref.id,nativeUrl:ref.nativeUrl,projectId:ref.projectId,revision:1});
+                        if(!old){const refWrite=tx.objectStore('refs').put({key,scopeKey:s.key,conversationId:ref.id,nativeUrl:ref.nativeUrl,projectId:ref.projectId,revision:1});if(type==='RESTORE_BACKUP')refWrite.onsuccess=()=>{check();};}
                       }catch(e){abort(e.message);}
                     };
                   }
@@ -131,7 +131,7 @@ export class WorkspaceRepository {
                   if(storage){if(isSharedDirectory(storage.manifest))retire(this.partitioned.saveSharedMutation(tx,storage,s,current,next,patch,actor));else this.partitioned.saveMutation(tx,storage,current,next,patch,actor);}
                   else{if(current.revision)tx.objectStore('b23_checkpoints').put(record(s.key,current));states.put(record(s.key,next));}
                   if(!check())return;
-                  ops.put(record(opKey,log));
+                  const receiptWrite=ops.put(record(opKey,log));if(type==='RESTORE_BACKUP')receiptWrite.onsuccess=()=>{check();};
                   if(prior){prior.undoneBy=operationId;ops.put(record(JSON.stringify([s.key,targetOperationId]),prior));}
                   if(!check())return;
                   outcome={ok:true,replayed:false,revision:next.revision,operationId,...(initialization?{initialized:true}:{})};
@@ -296,7 +296,7 @@ export class WorkspaceRepository {
               const log={id:operationId,scopeKey:s.key,type:'RECOVER',actor:'human',fingerprint:damagedHash,
                 baseRevision:highWater,resultRevision:state.revision,recordedAt:this.clock(),patch:[],changedObjects:0,undoneBy:null,
                 checkpointRevision,restoredHumanChanges:recovered.restoredHumanChanges,evidenceInvalidated:true};
-              ops.add(record(opKey,log));check();
+              const receiptWrite=ops.add(record(opKey,log));receiptWrite.onsuccess=()=>{try{check();}catch(e){abort(e.message);}};check();
               outcome={ok:true,replayed:false,revision:state.revision,operationId,checkpointRevision,restoredHumanChanges:recovered.restoredHumanChanges,evidenceInvalidated:true};
             }catch(e){abort(e.message);}};
           }catch(e){abort(e.message);}};

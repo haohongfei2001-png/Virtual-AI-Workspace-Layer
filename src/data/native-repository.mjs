@@ -257,7 +257,8 @@ export class NativeRepository {
               if(indexed)validateNativeIndexRoot(next,normalized);else validateNativeManifest(next, normalized);
               store.put(nativeRecord(normalized.key, next)); store.put(nativeRecord(nativeRecoveryKey(normalized.key), next));
               ops.put(record(normalized.key, {...unpack(marker.result),revision: next.revision}));
-              ops.put(record(key, {kind: 'RECOVER_NATIVE', fingerprint: damagedHash, revision: next.revision, operationId}));
+              const receiptWrite = ops.put(record(key, {kind: 'RECOVER_NATIVE', fingerprint: damagedHash, revision: next.revision, operationId}));
+              receiptWrite.onsuccess = () => { try { fence(options); } catch (failure) { abort(failure.message); } };
               fence(options);
               result = {ok: true, revision: next.revision, operationId, evidenceInvalidated: true};
             } catch (failure) { abort(failure.message); }
@@ -267,7 +268,7 @@ export class NativeRepository {
         } catch (failure) { abort(failure.message); }
       };
       tx.oncomplete = () => { options.signal?.removeEventListener('abort', revoked); try { fence(options); resolve(result); } catch { resolve({ok: false, reason: 'stale-after-commit', committed: true}); } };
-      tx.onabort = () => { options.signal?.removeEventListener('abort', revoked); resolve(result ?? {ok: false, reason: tx.error?.name ?? 'native-recovery-aborted'}); };
+      tx.onabort = () => { options.signal?.removeEventListener('abort', revoked); resolve(result?.ok === false ? result : {ok: false, reason: tx.error?.name ?? 'native-recovery-aborted'}); };
     });
   }
 

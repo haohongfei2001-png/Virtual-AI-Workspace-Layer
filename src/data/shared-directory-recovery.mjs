@@ -34,7 +34,7 @@ export async function recoverSharedDirectory(owner,scope,{operationId=null,damag
      const built=buildSharedRefDirectory(next,s);for(const row of built.records){fence();store.put(row);}const root=manifest_partitionRecord(s.key,built.root);store.put(root);tx.objectStore('b23_checkpoints').put(root);store.delete(knownAnchorCursorKey(s.key));
      for(const row of logs)ops.put(manifest_partitionRecord(row.key,{...row.log,invalidatedBy:operationId}));
      const log={id:operationId,scopeKey:s.key,type:'RECOVER',actor:'human',fingerprint:damagedHash,baseRevision:plan.highWater,resultRevision:plan.state.revision,recordedAt:owner.clock(),patch:[],changedObjects:0,undoneBy:null,checkpointRevision:checkpoint.revision,restoredHumanChanges:plan.restoredHumanChanges,evidenceInvalidated:true};
-     ops.add(manifest_partitionRecord(JSON.stringify([s.key,operationId]),log));fence();result={ok:true,replayed:false,revision:plan.state.revision,operationId,checkpointRevision:checkpoint.revision,restoredHumanChanges:plan.restoredHumanChanges,evidenceInvalidated:true};
+     const receiptWrite=ops.add(manifest_partitionRecord(JSON.stringify([s.key,operationId]),log));receiptWrite.onsuccess=()=>{try{fence();}catch(e){fail(e);}};fence();result={ok:true,replayed:false,revision:plan.state.revision,operationId,checkpointRevision:checkpoint.revision,restoredHumanChanges:plan.restoredHumanChanges,evidenceInvalidated:true};
     }catch(e){fail(e);}},fail);
    },fail),fail);
   }catch(e){fail(e);}};

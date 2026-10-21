@@ -130,3 +130,39 @@ export function assertStreamOutcome(value){
  }
  return {status:value.workInstrumentation?'PASS_NARROW_DIAGNOSTIC_SYS05_SLICE':'PASS_NARROW_OFFLINE_SYS05_CORRECTNESS',F1:value.workInstrumentation?'DIAGNOSTIC_ONLY_NOT_ACCEPTED':'PASS_CONSERVATIVE_SINGLE_SAMPLE_NOT_P95',localDirty:value.workInstrumentation?'TOKEN_ONLY_WINDOW_OBSERVED':'NOT_RUN',affectedPageWork:value.workInstrumentation?'TOKEN_ONLY_WINDOW_OBSERVED':'NOT_RUN',fullSYS05:'NOT_ESTABLISHED',membership:'OBSERVED_ONLY',p95:'NOT_RUN',backpressureAndGapFault:'NOT_RUN'};
 }
+
+// Instrumented fixture evidence only: the barrier delays a genuine accepted
+// reply, never invents an owner result or changes production queue capacity.
+export function assertQueueOverflowOutcome(value){
+ const q=value.queueOverflowEvidence,C='44444444-4444-4444-8444-444444444444';
+ assert(value.queueOverflowRequested&&value.workInstrumentation&&q,'overflow-browser-evidence-required');
+ assert.equal(q.buttonEnabled,true);assert.equal(q.gestureCount,33);assert.equal(q.acceptsBeforeRelease,0);
+ const w=q.work,h=w.overflow;
+ assert(h.enabled&&h.armedAt>=q.startedAt&&h.heldAt>=h.armedAt&&h.releasedAt>h.heldAt&&!h.closedEarly,'genuine-reply-barrier-required');
+ assert(q.completedAt>=h.releasedAt&&q.elapsedMs<SYS05_LIMITS.rpcMs&&q.completedAt-q.startedAt<SYS05_LIMITS.rpcMs,'original-six-second-overflow-budget');
+ assert(w.packets.some(p=>p.directoryIds.length&&p.producer===h.producer&&p.localSeq===h.localSeq&&p.replySeq===p.localSeq&&p.state==='accepted'&&p.finishedAt>=h.releasedAt),'held-real-directory-acceptance-required');
+ const gaps=w.packets.filter(p=>p.kind==='send-gap');assert.equal(gaps.length,1,'one-real-gap-required');const gap=gaps[0];
+ assert.equal(gap.state,'accepted');assert.equal(gap.producer,h.producer);assert.equal(gap.replySeq,gap.localSeq);assert(gap.at>=h.releasedAt);
+ assert(w.packets.some(p=>p.kind==='current-observation'&&p.state==='accepted'&&p.producer===gap.producer&&p.replySeq===p.localSeq&&p.at>=gap.finishedAt),'fresh-current-observation-after-gap-required');
+ assert(!w.packets.some(p=>p.kind==='send-candidate'&&p.at>=h.heldAt&&p.at<=q.completedAt),'overflowed-intent-must-not-escape');
+ for(const field of ['traceDropped','observerErrors','unknown'])assert.equal(w.counters[field],0);
+ assert.equal(w.gap.dropped,0);assert(w.packets.every(p=>!['pending','unknown','rejected'].includes(p.state)));
+ assert(!w.renewals.some(r=>r.at<=q.completedAt&&(r.finishedAt===null||r.finishedAt>=q.startedAt)),'renewal-cannot-substitute-for-overflow-rescan');
+ assert.equal(q.expected.length,300);const ids=q.expected.map(e=>e.id);assert.equal(new Set(ids).size,300);
+ assert.deepEqual(q.afterGap.refIds,[...q.before.refIds,...ids].sort());
+ for(const item of q.expected)assert.equal(q.afterGap.refTitles[item.id],item.title);
+ for(const id of q.before.refIds)assert.equal(q.afterGap.refTitles[id],q.before.refTitles[id],'preexisting-title-damaged');
+ assert.deepEqual(q.afterGap.projectIds,q.before.projectIds);assert.deepEqual(q.afterGap.hints,q.before.hints,'prior-ACK-identity-or-time-changed');
+ assert(q.peer.refIds.every(id=>!ids.includes(id)),'directory-cross-scope');
+ assert.equal(value.native.accepts,1);const sent=value.native.rows.at(-1);
+ assert.equal((value.nativeActions??value.queueOverflowActions)['send-intent'],34,'no-automatic-native-resend');
+ assert.equal((value.nativeActions??value.queueOverflowActions)['sys05-load-directory'],1);
+ assert.deepEqual(value.personal.refIds,q.afterGap.refIds);assert.deepEqual(value.personal.projectIds,q.before.projectIds);
+ for(const item of q.expected)assert.equal(value.personal.refTitles[item.id],item.title,'final-directory-title-damaged');
+ for(const id of q.before.refIds)if(id!==C)assert.equal(value.personal.refTitles[id],q.before.refTitles[id],'final-existing-title-damaged');
+ assert.equal(value.personal.refTitles[C],'J4 native jointly renamed conversation');
+ assert.deepEqual(value.personal.hints.filter(hint=>hint.messageId!==sent.id),q.before.hints,'final-prior-ACK-set-changed');
+ const hints=value.personal.hints.filter(hint=>hint.messageId===sent.id);assert.equal(hints.length,1);assert(hints[0].hasAckWitness&&!hints[0].hasSentAt&&hints[0].firstObservedAt);
+ assert.equal(value.team.hints.filter(hint=>hint.messageId===sent.id).length,0);
+ return {queueOverflow:'PASS_BOUNDED_SEND_INTENT_OVERFLOW_AND_FRESH_ACK',fullSYS05:'NOT_ESTABLISHED'};
+}

@@ -8,7 +8,7 @@ import {packageHost,verifyHost} from '../../extension/package.mjs';
 import {createSys05StreamServer} from './fixtures/sys05-stream-server.mjs';
 import {attachSys05Observer} from './sys05-stream-observer.mjs';
 import {createSys05StartupDeadline,waitForSys05Worker} from './sys05-startup-precondition.mjs';
-import {SYS05_LIMITS,counterDelta,assertTokenOnlyWork,assertStreamOutcome,assertBackpressureOutcome,assertDirectoryGapPrecondition,assertDirectoryGapOutcome,assertDirectoryPriorityOutcome} from './sys05-stream-oracle.mjs';
+import {SYS05_LIMITS,counterDelta,assertTokenOnlyWork,assertStreamOutcome,assertBackpressureOutcome,assertDirectoryGapPrecondition,assertDirectoryGapOutcome,assertDirectoryPriorityOutcome,assertQueueOverflowOutcome} from './sys05-stream-oracle.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const sha=v=>createHash('sha256').update(v).digest('hex'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const C='44444444-4444-4444-8444-444444444444',PEER='33333333-3333-4333-8333-333333333333';
@@ -16,12 +16,14 @@ const scope=context=>({verified:true,provider:'chatgpt',accountId:'principal_'+s
 const scopeKey=s=>JSON.stringify([s.provider,s.accountId,s.organizationId]);
 const fixtureFiles=['sys05-stream-package-journey.mjs','sys05-startup-precondition.mjs','sys05-stream-oracle.mjs','sys05-stream-observer.mjs','fixtures/sys05-stream-server.mjs','fixtures/sys05-native-stream.mjs','fixtures/sys05-native-peer-rename.mjs','fixtures/sys05-native-directory.mjs','fixtures/variants-server.mjs','fixtures/variants-native.mjs','fixtures/j4-native-context.mjs','fixtures/j4-interruption.mjs','fixtures/ui10-conversation-title.mjs','fixtures/native.mjs','fixtures/native.css','fixtures/legacy.html','expected/modern.mjs'];
 async function poll(read,label,timeout=6000){const end=Date.now()+timeout;let result;while(Date.now()<end){result=await read();if(result&&Date.now()<end)return result;await sleep(50);}throw Error('sys05-timeout:'+label);}
-export async function runSys05(output,{execute=false,observeWork=false,backpressure=false,directoryGap=false,lostAck=false,directoryPriority=false}={}){
+export async function runSys05(output,{execute=false,observeWork=false,backpressure=false,directoryGap=false,lostAck=false,directoryPriority=false,queueOverflow=false}={}){
+ if(queueOverflow&&(backpressure||directoryGap||lostAck||directoryPriority))throw Error('sys05-overflow-isolated-scenario');
+ if(queueOverflow){directoryGap=true;observeWork=true;}
  if(directoryPriority&&(backpressure||directoryGap||lostAck))throw Error('sys05-priority-isolated-scenario');
  if(directoryPriority){backpressure=true;directoryGap=true;}
  if(lostAck)directoryGap=true;
  if(backpressure||directoryGap)observeWork=true;
- const report={status:'NOT_RUN',requirement:'VA-HOST/1.1 SYS-05 narrow candidate',S:'NOT_RUN',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',fullSYS05:'NOT_ESTABLISHED',sourceCommit:process.env.FREE_SOURCE_COMMIT??null,workInstrumentation:observeWork,backpressureRequested:backpressure&&!directoryPriority,directoryGapRequested:directoryGap&&!directoryPriority,lostAckRequested:lostAck,directoryPriorityRequested:directoryPriority,limits:SYS05_LIMITS,steps:[],errors:[],uncovered:['Forced backpressure/gap and queue overflow','Full supported-profile matrix','Full admitted inventory and large-scale token storms','Uninstrumented latency/p95 and physical-device performance','Actual ChatGPT G/U and PAIA']};
+ const report={status:'NOT_RUN',requirement:'VA-HOST/1.1 SYS-05 narrow candidate',S:'NOT_RUN',realChatGPT:'NOT_RUN',releaseStatus:'NOT_RELEASE_READY',fullSYS05:'NOT_ESTABLISHED',sourceCommit:process.env.FREE_SOURCE_COMMIT??null,workInstrumentation:observeWork,backpressureRequested:backpressure&&!directoryPriority,directoryGapRequested:directoryGap&&!directoryPriority&&!queueOverflow,queueOverflowRequested:queueOverflow,lostAckRequested:lostAck,directoryPriorityRequested:directoryPriority,limits:SYS05_LIMITS,steps:[],errors:[],uncovered:['Forced backpressure/gap and queue overflow','Full supported-profile matrix','Full admitted inventory and large-scale token storms','Uninstrumented latency/p95 and physical-device performance','Actual ChatGPT G/U and PAIA']};
  if(!execute){await writeFile(output,JSON.stringify(report,null,2)+'\n');return report;}
  let server,handle,activeObserver,peerObserver,built,manifest,activePage;
  const dir=await mkdtemp(join(tmpdir(),'vaiwl-sys05-'));
@@ -70,7 +72,7 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   // No new budget or retry is created by the test. Wait out only an existing
   // depleted window, as the original J4 journey does, before the measured phase.
   if(report.before.personal.budget?.requests>=12){const wait=Math.max(0,report.before.personal.budget.startedAt+30001-Date.now());report.budgetWaitMs=wait;await sleep(wait);}
-  if(observeWork){activeObserver=await attachSys05Observer(context,a,id,{directoryGap:directoryGap&&!directoryPriority,lostAck});peerObserver=await attachSys05Observer(context,b,id);report.instrumentation=activeObserver.instrumentation;}else report.instrumentation={kind:'NONE',packageModified:false};
+  if(observeWork){activeObserver=await attachSys05Observer(context,a,id,{directoryGap:directoryGap&&!directoryPriority&&!queueOverflow,lostAck,queueOverflow});peerObserver=await attachSys05Observer(context,b,id);report.instrumentation=activeObserver.instrumentation;}else report.instrumentation={kind:'NONE',packageModified:false};
   report.loadedDirectoryNodes=await a.evaluate(()=>[...document.querySelectorAll('aside section[aria-label="Projects"],aside nav[aria-label="Chat history"]')].reduce((n,root)=>n+root.querySelectorAll('*').length,0));
   await a.locator('#sys05-start').click();await poll(()=>a.evaluate(()=>sys05NativeStream.snapshot().ticks>=8),'stream-start');
   const prefixReads=server.snapshot().sys05Reads.filter(r=>r.authenticated&&r.path.startsWith('/backend-api/conversation/')).length;
@@ -79,6 +81,25 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   const activeEnd=await activeObserver?.snapshot(),peerEnd=await peerObserver?.snapshot();report.tokenOnly=observeWork?{active:counterDelta(activeStart,activeEnd),peer:counterDelta(peerStart,peerEnd)}:{status:'WORK_COUNTERS_NOT_RUN'};if(observeWork)assertTokenOnlyWork(report.tokenOnly);
   report.tokenOnly.authenticatedDetailReads=server.snapshot().sys05Reads.filter(r=>r.authenticated&&r.path.startsWith('/backend-api/conversation/')).length-prefixReads;assert.equal(report.tokenOnly.authenticatedDetailReads,0,'token-only-authenticated-read-work');report.steps.push('finite-real-descendant-token-prefix');
   assert((await a.evaluate(()=>sys05NativeStream.snapshot())).realDescendant,'real-recursive-DOM-contains');
+  if(queueOverflow){
+   const phase=createSys05StartupDeadline({timeoutMs:SYS05_LIMITS.rpcMs}),q={before:await facts(personal),startedAt:Date.now()};report.queueOverflowEvidence=q;
+   await phase.run(()=>a.locator('#prompt-textarea').fill(''),'empty-native-editor');
+   const button=a.getByRole('button',{name:'Send',exact:true});q.buttonEnabled=await button.isEnabled();assert(q.buttonEnabled,'native-empty-send-must-be-enabled');
+   await phase.run(()=>activeObserver.armQueueOverflow(),'arm-accepted-reply-barrier');
+   await phase.run(()=>a.locator('#sys05-load-directory').click({timeout:phase.remaining('load-directory')}),'load-directory');
+   await phase.poll(async()=>await a.locator('#sys05-load-directory').getAttribute('data-applied')==='true','overflow-native-directory-applied');
+   q.expected=server.snapshot().sys05Directory;
+   await phase.poll(async()=>{const w=await activeObserver.snapshot();return w.overflow.heldAt?w:null;},'genuine-accepted-reply-held');
+   const box=await button.boundingBox();assert(box,'native-send-bounds');q.gestureCount=0;
+   for(let i=0;i<33;i++){await phase.run(()=>a.mouse.click(box.x+box.width/2,box.y+box.height/2),'native-empty-send');q.gestureCount++;}
+   await phase.poll(()=>server.snapshot().actions['send-intent']===33,'33-native-attempts');
+   q.acceptsBeforeRelease=server.snapshot().interruption.accepts;assert.equal(q.acceptsBeforeRelease,0);
+   await phase.run(()=>activeObserver.releaseQueueOverflow(),'release-unchanged-owner-reply');
+   q.work=await phase.poll(async()=>{const w=await activeObserver.snapshot(),g=w.packets.find(p=>p.kind==='send-gap'&&p.state==='accepted');return g&&w.packets.some(p=>p.kind==='current-observation'&&p.state==='accepted'&&p.at>=g.finishedAt)?w:null;},'actual-overflow-gap-and-fresh-observation');
+   q.afterGap=await phase.poll(async()=>{const v=await facts(personal);return q.expected.length===300&&q.expected.every(e=>v.refTitles[e.id]===e.title)?v:null;},'overflow-directory-convergence');
+   q.peer=await phase.run(()=>facts(team),'overflow-peer-isolation');q.work=await activeObserver.snapshot();q.completedAt=Date.now();q.elapsedMs=phase.elapsedMs();
+   await sleep(1000);report.steps.push('33-native-rejected-attempts-real-send-gap-and-directory-convergence');
+  }
   await a.locator('#j4-rename-on-send').check();await a.locator('#prompt-textarea').fill('SYS05 offline native send');
   if(backpressure&&!directoryPriority){report.peerBefore={personal:await facts(personal,PEER),team:await facts(team,PEER)};server.holdNextRead();}
   const faultDeadline=backpressure?createSys05StartupDeadline({timeoutMs:SYS05_LIMITS.rpcMs}):null;
@@ -128,7 +149,7 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   const visibleTick=(await a.evaluate(()=>sys05NativeStream.snapshot())).ticks;
   await poll(async()=>{assert(await presented(),'sys05-token-update-closed-workspace');const ticks=(await a.evaluate(()=>sys05NativeStream.snapshot())).ticks-visibleTick;report.presentation.tokenTicks=ticks;return ticks>=8;},'workspace-retained-through-token-updates');
   report.ui={exactTitle:title,currentRef:C,activityPlacement:'RECENT_LIST_ABSENT_TO_VISIBLE_NOT_CURRENT_CONTEXT',activityFromHint:true,qualifiedAdmissionAt:durable.hints.find(h=>h.messageId===sent.id).firstObservedAt,durableFirstSeenAt:durableAt,visibleFirstSeenAt:titleAt,timingBasis:'CONSERVATIVE_PRECOMMIT_AUTHENTICATED_ADMISSION_TO_VISIBLE_UI_UPPER_BOUND; includes automation and readonly polling; not exact commit timing or p95',ackLatencyMs:durableAt-actionAt,titleLatencyMs:titleAt-titleWaitAt,acceptanceToVisibleTitleMs:titleAt-Date.parse(sent.at),sendToQualifiedEvidenceMs:Date.parse(durable.hints.find(h=>h.messageId===sent.id).firstObservedAt)-actionAt,evidenceToVisibleTitleMs:titleAt-Date.parse(durable.hints.find(h=>h.messageId===sent.id).firstObservedAt)};
-  if(directoryGap&&!directoryPriority){
+  if(directoryGap&&!directoryPriority&&!queueOverflow){
    const phase=createSys05StartupDeadline({timeoutMs:6000}),gap={kind:lostAck?'ONE_ACCEPTED_REPLY_NOT_DELIVERED':'ONE_PROPOSAL_NOT_DELIVERED_BEFORE_FORWARD'};report.directoryGap=gap;
    gap.before=await phase.run(()=>facts(personal),'gap-before');
    await phase.run(()=>a.getByRole('button',{name:'返回原生阅读',exact:true}).click({timeout:phase.remaining('prepare-native-reading')}),'prepare-native-reading');
@@ -167,9 +188,10 @@ export async function runSys05(output,{execute=false,observeWork=false,backpress
   report.sendReadback=server.snapshot().sys05Reads.filter(r=>r.authenticated&&r.path==='/backend-api/conversation/'+C&&r.at>=actionAt&&r.finishedAt!==null);assert(report.sendReadback.length>0,'real-authenticated-send-readback-required');
   report.work=observeWork?{active:await activeObserver.snapshot(),peer:await peerObserver.snapshot()}:{status:'NOT_RUN'};
   Object.assign(report,assertStreamOutcome(report));
+  if(queueOverflow){report.queueOverflowActions=server.snapshot().actions;Object.assign(report,assertQueueOverflowOutcome(report));report.uncovered[0]='Full queue/storm matrix and uninstrumented performance remain unestablished';}
   if(backpressure&&!directoryPriority){report.peerAfter={personal:await facts(personal,PEER),team:await facts(team,PEER)};report.backpressure=server.snapshot().backpressure;report.backpressureNativeActions=server.snapshot().actions;report.peerRenameAt=server.snapshot().sys05PeerRenameAt;report.peerRenameApplied=await b.locator('#sys05-peer-rename').getAttribute('data-applied')==='true';Object.assign(report,assertBackpressureOutcome(report));report.uncovered[0]='Queue overflow, persistent gap and rescan recovery';}
   if(directoryPriority)report.uncovered[0]='General queue overflow; prior separate gap recovery evidence is not this scenario';
-  if(directoryGap&&!directoryPriority){Object.assign(report,assertDirectoryGapOutcome(report));report.uncovered[0]=lostAck?'General queue overflow; existing undelivered-fragment evidence is separate':'General queue overflow and committed-but-lost ACK recovery';}
+  if(directoryGap&&!directoryPriority&&!queueOverflow){Object.assign(report,assertDirectoryGapOutcome(report));report.uncovered[0]=lostAck?'General queue overflow; existing undelivered-fragment evidence is separate':'General queue overflow and committed-but-lost ACK recovery';}
 assert.deepEqual(report.errors,[]);report.S=observeWork?'NARROW_INSTRUMENTED_BROWSER_OBSERVED':'NARROW_UNINSTRUMENTED_BROWSER_OBSERVED';report.browserVersion=browser.version();
  }catch(error){report.status=handle?'FAIL':'NOT_RUN_BROWSER_STARTUP';report.error=error.stack;}
  finally{
@@ -188,6 +210,6 @@ assert.deepEqual(report.errors,[]);report.S=observeWork?'NARROW_INSTRUMENTED_BRO
  return report;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
- const report=await runSys05(process.argv[2]??join(tmpdir(),'sys05-stream-not-run.json'),{execute:process.argv.includes('--execute-browser'),observeWork:process.argv.includes('--observe-work'),backpressure:process.argv.includes('--backpressure'),directoryGap:process.argv.includes('--gap-recovery'),lostAck:process.argv.includes('--lost-ack-recovery'),directoryPriority:process.argv.includes('--directory-priority')});
+ const report=await runSys05(process.argv[2]??join(tmpdir(),'sys05-stream-not-run.json'),{execute:process.argv.includes('--execute-browser'),observeWork:process.argv.includes('--observe-work'),backpressure:process.argv.includes('--backpressure'),directoryGap:process.argv.includes('--gap-recovery'),lostAck:process.argv.includes('--lost-ack-recovery'),directoryPriority:process.argv.includes('--directory-priority'),queueOverflow:process.argv.includes('--queue-overflow')});
  console.log(JSON.stringify({status:report.status,S:report.S,fullSYS05:report.fullSYS05}));if(report.status.startsWith('FAIL')||report.status==='NOT_RUN_BROWSER_STARTUP')process.exitCode=1;
 }

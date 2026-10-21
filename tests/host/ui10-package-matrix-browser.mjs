@@ -1,3 +1,4 @@
+import {exerciseUi10Interactions} from './ui10-interaction-matrix.mjs';
 import {waitForVisibleUi10Title} from './ui10-visible-title.mjs';
 /** Opt-in isolated Chrome MV3 UI-10 layout subcontracts. NOT full v2.7 acceptance.
  * Usage: node tests/host/ui10-package-matrix-browser.mjs output.json [LEGACY|MODERN|PARTIAL]
@@ -16,10 +17,11 @@ import {UI10_PROFILES,UI10_LONG_CHINESE,configureUi10Environment,observeUi10Shel
 import {ui10PackageOptions,ui10Entry,ui10Sequence} from './ui10-package-sequence.mjs';
 
 const output=process.argv[2];assert(output,'output-json-path-required');
+const runInteractions=process.env.FREE_UI10_INTERACTIONS==='1';
 const profiles=process.argv[3]?[process.argv[3]]:[...UI10_PROFILES];
 assert(profiles.every(p=>UI10_PROFILES.includes(p)),'unsupported-ui10-profile');
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const testFiles=['ui10-visible-title.mjs','ui10-package-matrix-browser.mjs','ui10-package-sequence.mjs','ui10-matrix-contract.mjs','fixtures/variants-server.mjs','fixtures/ui10-conversation-title.mjs'];
+const testFiles=['ui10-visible-title.mjs','ui10-interaction-matrix.mjs','ui10-package-matrix-browser.mjs','ui10-package-sequence.mjs','ui10-matrix-contract.mjs','fixtures/variants-server.mjs','fixtures/ui10-conversation-title.mjs'];
 const testHashes=async()=>Object.fromEntries(await Promise.all(testFiles.map(async name=>[name,hash(await readFile(new URL(name,import.meta.url)))])));
 const report={...ui10PreparationReport(),kind:'PACKAGED_MV3_UI10_LAYOUT_SUBCONTRACT_CANDIDATE',status:'NOT_RUN',profiles:[],testHashesBefore:await testHashes()};
 
@@ -84,7 +86,8 @@ async function runProfile(profile,titleMode='all'){
    }
    assert.equal(await page.evaluate(expected=>matchMedia(`(prefers-color-scheme: ${expected})`).matches,cell.colorScheme),true);
    const screenshot=join(dir,`${cell.id.replaceAll('/','-')}-${phase}.png`);await page.screenshot({path:screenshot});
-   result.steps.push({id:cell.id,phase,status:'PASS_LAYOUT_SUBCONTRACT',measurements,titleObservation,screenshot});
+   const interactions=runInteractions&&phase!=='restored'?await exerciseUi10Interactions({page,frames,workspace,continuity,nativeActions:()=>server.snapshot().actions,capture:async view=>{const path=join(dir,`${cell.id.replaceAll('/','-')}-${phase}-${view}.png`);await page.screenshot({path});return path;}}):null;
+   result.steps.push({id:cell.id,phase,status:'PASS_LAYOUT_SUBCONTRACT',measurements,titleObservation,screenshot,interactions});
    const entry=report.cells.find(c=>c.id===cell.id);entry.nativeEvidence='PASS_LAYOUT_SUBCONTRACT_ONLY';
   }
   await continuity();assert.deepEqual(result.errors,[]);assert.equal(server.snapshot().actions['create-project']??0,profile==='LEGACY'?1:0);
@@ -104,5 +107,10 @@ report.status=report.profiles.every(p=>p.status==='PASS_LAYOUT_SUBCONTRACT_ONLY'
 if(report.status==='FAIL')process.exitCode=1;
 if(!report.testSourcesStable)for(const cell of report.cells)if(cell.nativeEvidence==='PASS_LAYOUT_SUBCONTRACT_ONLY')cell.nativeEvidence='OBSERVED_LAYOUT_NOT_ACCEPTED_TEST_SOURCE_UNVERIFIED';
 report.nativeMatrix=report.status==='FAIL'?'FAIL_LAYOUT_SUBCONTRACT_NOT_UI10_ACCEPTANCE':'PARTIAL_LAYOUT_SUBCONTRACT_NOT_UI10_ACCEPTANCE';
+const interactionCells=report.profiles.flatMap(p=>p.steps).filter(s=>s.interactions).map(s=>({id:s.id,views:s.interactions.views}));
+const expectedInteractionIds=report.cells.filter(c=>profiles.includes(c.profile)).map(c=>c.id).sort();
+const interactionCoverageComplete=runInteractions&&JSON.stringify(interactionCells.map(c=>c.id).sort())===JSON.stringify(expectedInteractionIds);
+report.interactionMatrix={status:runInteractions?(report.status==='FAIL'||!interactionCoverageComplete?'FAIL_OR_BLOCKED':'PASS_CONTROL_SUBMATRIX_ONLY'):'NOT_RUN',cells:interactionCells,expectedCells:expectedInteractionIds.length,coverageComplete:interactionCoverageComplete,fullV27Acceptance:'NOT_ESTABLISHED'};
+if(runInteractions&&!interactionCoverageComplete){report.status='FAIL';process.exitCode=1;}
 await writeFile(output,JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({status:report.status,profiles:report.profiles.map(p=>({profile:p.profile,titleMode:p.titleMode,status:p.status,error:p.error})),fullV27Acceptance:report.fullV27Acceptance}));

@@ -11,14 +11,14 @@ function fixture({same=false,missingPointer=null,lowerCeiling=false}={}){
  if(same){next.root.refDirectory[bucket]={...prior.root.refDirectory[bucket]};next.records=[];}
  if(lowerCeiling){prior.root.nextOrdinal=2;prior.records[0]=manifest_partitionRecord(prior.records[0].key,{...prior.records[0].payload,ordinals:[1]});next.root.nextOrdinal=1;}
  if(missingPointer){const f=missingPointer==='prior'?prior:next;delete f.root.refDirectory[bucket];f.records=[];}
- const rows=new Map([...old.records,...prior.records,...next.records].map(r=>[r.key,r])),requests=[],deleted=[],failed=[];let denied=false;
- const store={get(key){const request={key};requests.push(request);return request;},delete(key){deleted.push(key);}};
+ const rows=new Map([...old.records,...prior.records,...next.records].map(r=>[r.key,r])),requests=[],deleteRequests=[],deleted=[],failed=[];let denied=false;
+ const store={get(key){const request={key};requests.push(request);return request;},delete(key){deleted.push(key);const request={key};deleteRequests.push(request);return request;}};
  const tx={objectStore(name){return name==='b23_checkpoints'?{get(key){const request={key,checkpoint:true};requests.push(request);return request;}}:store;}};
  prepareSharedDirectoryRetention(tx,scope,prior.root,()=>{if(denied)throw Error('guard-denied');},e=>failed.push(e))(next.root);
  const answer=(q,{corrupt=false,missing=false,error=false}={})=>{assert(q,'request exists');if(error){q.error=Error('read-failed');q.onerror();return;}q.result=missing?undefined:structuredClone(q.checkpoint?manifest_partitionRecord(scope.key,old.root):rows.get(q.key));if(corrupt)q.result.checksum='0'.repeat(64);q.onsuccess();};
  const key=value=>{const root=value.root??value,p=root.refDirectory[bucket];return p?sharedRefDirectoryKey(scope.key,'g',bucket,p.revision):null;};
  const requestFor=root=>requests.findLast(q=>!q.checkpoint&&q.key===key(root));
- return {old,prior,next,requests,deleted,failed,answer,requestFor,key,deny:()=>{denied=true;},expectedDeletes:[manifest_partitionKey(scope.key,'R',1,'g'),old.records[0].key]};
+ return {old,prior,next,requests,deleteRequests,deleted,failed,answer,requestFor,key,deny:()=>{denied=true;},expectedDeletes:[manifest_partitionKey(scope.key,'R',1,'g'),old.records[0].key]};
 }
 function open(h){assert.equal(h.requests.length,1);h.answer(h.requests[0]);assert.equal(h.requests.length,2);assert.deepEqual(h.deleted,[]);h.answer(h.requests[1]);}
 for(const order of ['prior-first','current-first'])test('independent retained/current reads queue together, delete only after both: '+order,()=>{
@@ -37,3 +37,11 @@ for(const order of ['prior-first','current-first'])test('guard loss between vali
 test('identical retained pointer uses one verified read',()=>{const h=fixture({same:true});open(h);assert.equal(h.requests.length,3);h.answer(h.requestFor(h.prior));assert.deepEqual(h.failed,[]);assert.deepEqual(h.deleted,h.expectedDeletes);assert.equal(h.requests.length,3);});
 test('same physical bucket with a lower current ordinal ceiling is separately validated',()=>{const h=fixture({same:true,lowerCeiling:true});open(h);assert.equal(h.requests.length,4);assert.equal(h.requests[2].key,h.requests[3].key);h.answer(h.requests[2]);assert.deepEqual(h.deleted,[]);h.answer(h.requests[3]);assert(h.failed.some(e=>e.message==='invalid-shared-directory-order'));assert.deepEqual(h.deleted,[]);});
 for(const missingPointer of ['prior','next'])test('missing '+missingPointer+' pointer is a completed null result, not an unread result',()=>{const h=fixture({missingPointer});open(h);assert.equal(h.requests.length,3);assert.deepEqual(h.deleted,[]);h.answer(h.requests[2]);assert.deepEqual(h.failed,[]);assert.deepEqual(h.deleted,h.expectedDeletes);});
+
+for(const index of [0,1])test('guard loss at deletion success rejects owner write: '+index,()=>{
+ const h=fixture();open(h);h.answer(h.requestFor(h.prior));h.answer(h.requestFor(h.next));assert.deepEqual(h.failed,[]);assert.deepEqual(h.deleted,h.expectedDeletes);assert.equal(h.deleteRequests.length,2);
+ h.deny();h.deleteRequests[index].onsuccess();assert.deepEqual(h.failed.map(e=>e.message),['guard-denied']);
+});
+test('valid deletion success preserves successful retention',()=>{
+ const h=fixture();open(h);h.answer(h.requestFor(h.prior));h.answer(h.requestFor(h.next));for(const request of h.deleteRequests)request.onsuccess();assert.deepEqual(h.failed,[]);assert.deepEqual(h.deleted,h.expectedDeletes);
+});
