@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 第九批：原生派发与观察动作校正（2026-10-21，基线f0779260）
+
+CI39597954445终态38成功/3失败，Node10668全过；J1 LEGACY、transport及native64访/8cells窄合同通过，原生8图完整提取，逐图视觉审查独立记录。48control与6component已逐图审，不声明完整视觉/G/U。剩余两项原生入口错误等popup，以及pending两send间为采样新增workspace返回触发正常校准，均为已定位harness前提；候选保留真实原生派发/成员/ACK/strict witness，不改生产。444项合批定向与独审通过，等待新exact-head CI。见[第九批证据](evidence/cloud-native-dispatch-closure-20261021/README.md)。仍ACTIVE，不merge/deploy。
+
 ## 第八批：保留严格门，修复真实可观察前提（2026-10-21，基线7a19c436）
 
 CI39562203517终态41项35成功/6失败，Node10614全过。unknown与两mixed-role窄D/S、non-atomic D通过；48control图capture缺口关闭，不升级完整视觉/G/U。native64访完成，首visual-cell截图阶段实际oldRows5≠17，保留FAIL/3图partial。候选修正J1当前live DOM采样、三项realm/readiness前提、旧段截图时序，以及pending创建前真实预算/lease余量；不改生产、不放宽原oracle、不替换pending witness。380项合批定向通过且独审clear，实际浏览器仍待新exact-head验证。详见[第八批证据](evidence/cloud-precondition-closure-20261021/README.md)。继续ACTIVE，未完成Free验收，未merge/deploy。

@@ -1,3 +1,4 @@
+import {assertPendingRepairAuthority} from './pending-repair-read-diagnostic.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -110,18 +111,19 @@ test('failure summary validates each revoked accessor once before including a sc
 
 // Executes the actual runner declarations and pre-second-send statements. The
 // override permits the exact same regression to be run against a frozen runner.
-test('actual pre-second-send sequence captures current workspace authority before native surrender',async()=>{
+test('actual inter-send sequence reads original authority without workspace reentry',async()=>{
  const source=await readFile(process.env.PENDING_REPAIR_PRESECOND_SOURCE??new URL('./existing-source-pending-repair-journey.mjs',import.meta.url),'utf8');
  const declarations=source.slice(source.indexOf('  const frame=page=>'),source.indexOf('  async function inspect('));
  const marker="  record('first-real-send-persists-existing-ACK-source-before-second-send'",start=source.indexOf('\n',source.indexOf(marker))+1;
  let end=source.indexOf("  stage('DEBUGGER_INSTALL');",start);if(end<0)end=source.indexOf('  debuggerCDP=await',start);assert(end>start);
+ const capture=source.slice(source.indexOf('  const oldAuthority=await ready'),source.indexOf("  stage('FIRST_SEND_NATIVE_INPUT');"));
  const block=source.slice(start,end),events=[],report={},trace={events:[],seen:0,dropped:0,truncated:false},personal={provider:'chatgpt',accountId:'a',organizationId:'b'};
- let attached=true,handler;const proof={grant:'PRIVATE_PRE_CUT_GRANT',scopeGrant:'PRIVATE_PRE_CUT_SCOPE_GRANT',scope:JSON.stringify(['chatgpt','a','b']),currentRef:conversationId};
+ let attached=true,handler;const proof={grant:'PRIVATE_PRE_CUT_GRANT',scopeGrant:'PRIVATE_PRE_CUT_SCOPE_GRANT',grantExpiresAt:Date.now()+20000,scope:JSON.stringify(['chatgpt','a','b']),currentRef:conversationId};
  const currentFrame={isDetached:()=>!attached,url:()=> 'chrome-extension://ext/workspace.html',evaluate:async()=>{events.push('read-current-proof');return structuredClone(proof);},getByRole:()=>({count:async()=>1})};
- const a={frames:()=>attached?[currentFrame]:[],locator:selector=>({check:async()=>events.push('rename-on'),fill:async()=>events.push('fill-native')})};
- const ctx=vm.createContext({assert,report,a,personal,id:'ext',J4_SEND_C:conversationId,lifecycleTrace:trace,observePendingWorkerVersions,key:value=>JSON.stringify([value.provider,value.accountId,value.organizationId]),poll:async read=>{const value=await read();if(!value)throw Error('readiness-not-established');return value;},stage:value=>setPendingRepairStage(report,value),budgetWindow:async()=>events.push('budget'),readCapacity:async()=>events.push('capacity'),workspace:async()=>{events.push('workspace');attached=true;},native:async()=>{events.push('native-surrender');attached=false;},context:{newCDPSession:async()=>({on:(_name,callback)=>handler=callback,send:async()=>handler({versions:[{versionId:'2',scriptURL:'chrome-extension://ext/extension/worker.mjs',runningStatus:'running',targetId:'target'}]})})}});
- const result=await vm.runInContext('(async()=>{'+declarations+block+';return {oldGrant,oldAuthority};})()',ctx);
- assert.equal(events[0],'capacity');assert.equal(events.includes('budget'),false);assert.equal(result.oldGrant,proof.grant);assert.equal(result.oldAuthority.scopeGrant,proof.scopeGrant);assert(events.indexOf('workspace')<events.indexOf('read-current-proof'));assert(events.indexOf('read-current-proof')<events.indexOf('native-surrender'));assert.equal(attached,false);assert.equal(events.filter(v=>v==='native-surrender').length,1);assert(!JSON.stringify(report).includes('PRIVATE_'));assert.equal(report.stage,'WORKER_LIFECYCLE');
+ const a={evaluateHandle:async()=>({evaluate:async()=>true}),frames:()=>attached?[currentFrame]:[],locator:selector=>({check:async()=>events.push('rename-on'),fill:async()=>events.push('fill-native')})};
+ const ctx=vm.createContext({assert,assertPendingRepairAuthority,report,a,personal,id:'ext',J4_SEND_C:conversationId,lifecycleTrace:trace,observePendingWorkerVersions,key:value=>JSON.stringify([value.provider,value.accountId,value.organizationId]),poll:async read=>{const value=await read();if(!value)throw Error('readiness-not-established');return value;},stage:value=>setPendingRepairStage(report,value),budgetWindow:async()=>events.push('budget'),readCapacity:async()=>events.push('capacity'),workspace:async()=>{events.push('workspace');attached=true;},native:async()=>{events.push('native-surrender');},context:{newCDPSession:async()=>({on:(_name,callback)=>handler=callback,send:async()=>handler({versions:[{versionId:'2',scriptURL:'chrome-extension://ext/extension/worker.mjs',runningStatus:'running',targetId:'target'}]})})}});
+ const result=await vm.runInContext('(async()=>{'+declarations+capture+block+';return {oldGrant,oldAuthority};})()',ctx);
+ assert.equal(events[0],'read-current-proof');assert.equal(events.includes('workspace'),false);assert.equal(events.includes('budget'),false);assert.equal(result.oldGrant,proof.grant);assert.equal(result.oldAuthority.scopeGrant,proof.scopeGrant);assert(events.indexOf('read-current-proof')<events.indexOf('native-surrender'));assert.equal(attached,true);assert.equal(events.filter(v=>v==='native-surrender').length,1);assert(!JSON.stringify(report).includes('PRIVATE_'));assert.equal(report.stage,'WORKER_LIFECYCLE');
 });
 test('stage and assertion diagnostics accept only exact fixed enums, never arbitrary labels',()=>{
  const report={};for(const stage of PENDING_REPAIR_STAGES){setPendingRepairStage(report,stage);assert.equal(report.stage,stage);}const before=report.stage;

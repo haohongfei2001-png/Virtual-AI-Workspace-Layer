@@ -1,9 +1,14 @@
 import assert from 'node:assert/strict';
-/** Follow the production target, never retarget the anchor or synthesize a goto. */
-export async function openEvidenceProjectPage({context,sourcePage,link,projectURL,onPageError}){
- assert.equal(await link.getAttribute('target'),'_blank');assert.equal(await link.getAttribute('href'),projectURL);
- const sourceURL=sourcePage.url();const [opened]=await Promise.all([context.waitForEvent('page'),link.click()]);
- assert.notEqual(opened,sourcePage);opened.on('pageerror',onPageError);await opened.waitForURL(projectURL);assert.equal(sourcePage.url(),sourceURL,'external project action must not replace original conversation');return opened;
+import {openNativeProjectEntry} from './native-entry-project-navigation.mjs';
+/** This journey has an emptied native composer and an existing native handle.
+ * The frame href/target describes fallback, not the selected native-control plan. */
+export async function openEvidenceProjectPage({context,sourcePage,link,projectURL,readActions,navigate=openNativeProjectEntry}){
+ assert.equal(await link.getAttribute('href'),projectURL);
+ const preconditions=await sourcePage.evaluate(()=>{const editors=document.querySelectorAll('#prompt-textarea'),editor=editors[0],files=[...document.querySelectorAll('#composer input[type="file"]')];return {exactEditor:editors.length===1,plainEditor:editor?.tagName==='TEXTAREA',draftEmpty:editor?.value==='',filesEmpty:files.every(n=>(n.files?.length??0)===0)};});
+ assert.deepEqual(preconditions,{exactEditor:true,plainEditor:true,draftEmpty:true,filesEmpty:true},'membership entry requires clear genuine native composer');
+ const navigation=await navigate({page:sourcePage,context,link,projectURL,readActions});
+ assert.equal(navigation.mode,'SAME_PAGE_NATIVE_CONTROL');
+ return {page:sourcePage,preconditions,navigation};
 }
 export async function verifyEvidencePackage({verify,readManifest,initialManifestHash,hash}){
  const result=await verify();assert.equal(result.status,'OFFLINE_HOST_RECONSTRUCTION');const finalHash=hash(await readManifest());assert.equal(finalHash,initialManifestHash,'built manifest changed');return {status:result.status,buildManifestHash:finalHash,buildManifestUnchanged:true};

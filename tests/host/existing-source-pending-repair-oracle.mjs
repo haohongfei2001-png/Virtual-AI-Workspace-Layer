@@ -73,6 +73,7 @@ export function observePendingRepairReplies(){
    if(reply?.ok===true&&token(id)&&token(scopeGrant)){
     if(state.grant!==id){state.scope=null;state.currentRef=null;state.recovery=null;state.views=[];}
     state.grant=id;state.scopeGrant=scopeGrant;
+    const expiry=Date.parse(grant.expiresAt);state.grantExpiresAt=Number.isSafeInteger(expiry)?expiry:null;
    }
    if(args[0]?.type==='HOST_UI_RECOVERY_STATUS'&&reply?.ok===true)state.recovery={corrupt:reply.plans?.evidence?.corrupt===true,recoverable:reply.plans?.evidence?.recoverable===true};
    if(args[0]?.type==='HOST_UI_VIEW'&&reply?.ok===true&&reply.state==='ready'){
