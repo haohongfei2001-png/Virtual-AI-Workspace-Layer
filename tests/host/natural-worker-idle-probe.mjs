@@ -5,6 +5,7 @@ import {mkdtemp,mkdir,readFile,writeFile,access} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {installJ4GrantObserver} from './j4-grant-observer.mjs';
+import {readIdleBootstrapFacts,idleEvaluationFailure} from './natural-worker-idle-bootstrap.mjs';
 import {assessIdleObservation,assessIdleRecovery,assessIdleScenario,IDLE_EVIDENCE_DEPENDENCIES,idleEvidenceCommit,validateIdleEvidence,finishIdleObservationDeadline,idleBootstrapAction} from './natural-worker-idle-oracle.mjs';
 import {createHash} from 'node:crypto';
 import {createHostFixtureServer} from './fixtures/server.mjs';
@@ -22,7 +23,7 @@ function command(method,params={},sessionId){
  if(!ready)return Promise.reject(Error('CDP-not-ready'));
  const id=++seq;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{pending.delete(id);reject(Error('CDP-command-deadline:'+method));},6000);pending.set(id,{resolve,reject,timer});socket.send(JSON.stringify({id,method,params,...sessionId?{sessionId}:{}}));});
 }
-const evaluate=async(sessionId,expression)=>{const r=await command('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},sessionId);if(r.exceptionDetails)throw Error('page-evaluation-failed');return r.result.value;};
+const evaluate=async(sessionId,expression)=>{const r=await command('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},sessionId);if(r.exceptionDetails)throw idleEvaluationFailure(r.exceptionDetails);return r.result.value;};
 async function poll(read,label,ms=15000){const deadline=performance.now()+ms;while(performance.now()<deadline){const value=await read();if(value&&performance.now()<deadline)return value;await sleep(50);}throw Error('probe-timeout:'+label);}
 const nativeExpression=`({editorFocused:document.activeElement===idleOriginal.editor,interactiveFocused:!!document.activeElement?.closest?.('input,textarea,select,button,[contenteditable],[role=\"textbox\"]'),openModalCount:document.querySelectorAll('dialog[open],[aria-modal=\"true\"]').length,fileCount:document.querySelector('main > form#composer input[type=file]')?.files?.length,editorCount:document.querySelectorAll('main > form#composer textarea,main > form#composer [contenteditable]').length,activeRiskCount:document.querySelectorAll('main [data-native-upload=active],main [data-native-generation=active],main [data-native-voice=active],main [data-native-canvas=active]').length,sameDocument:document===idleOriginal.document,sameEditor:document.querySelector('textarea')===idleOriginal.editor,editorConnected:idleOriginal.editor.isConnected,editorEnabled:!idleOriginal.editor.disabled&&!idleOriginal.editor.readOnly,draft:idleOriginal.editor.value,originalFramesConnected:idleOriginal.frames.map(f=>f.isConnected),open:document.querySelectorAll('[data-va-owned]:popover-open').length,returnCount:document.querySelectorAll('[aria-label="返回工作空间"]').length})`;
 async function discoverFrames(prefix,excluded=[]){
@@ -75,7 +76,7 @@ try{
  // does not itself make a headless target visible; hidden discovery is deferred.
  const {targetId}=await command('Target.createTarget',{url:'about:blank',background:false});let {sessionId}=await command('Target.attachToTarget',{targetId,flatten:true});
  await command('Target.activateTarget',{targetId});await command('Page.bringToFront',{},sessionId);
- const bootstrapFacts=()=>evaluate(sessionId,`({url:location.href,readyState:document.readyState,visibility:document.visibilityState,focused:document.hasFocus(),state:document.documentElement.dataset.vaiwlState??null,reason:document.documentElement.dataset.vaiwlReason??null,open:document.querySelectorAll('[data-va-owned]:popover-open').length,owned:document.querySelectorAll('[data-va-owned]').length,frames:[...document.querySelectorAll('[data-va-owned] iframe')].map(f=>({src:f.src,connected:f.isConnected})),editorCount:document.querySelectorAll('#prompt-textarea').length,readingCount:document.querySelectorAll('#reading').length,activeElement:{tag:document.activeElement?.tagName??null,id:document.activeElement?.id??null,owned:!!document.activeElement?.closest?.('[data-va-owned]')},returnCount:document.querySelectorAll('[aria-label=\"返回工作空间\"]').length,returnVisible:(()=>{const node=document.querySelector('[aria-label=\"返回工作空间\"]');if(!node)return false;const rect=node.getBoundingClientRect();return rect.width>0&&rect.height>0&&getComputedStyle(node).visibility==='visible';})()})`);
+ const bootstrapFacts=()=>evaluate(sessionId,`(${readIdleBootstrapFacts.toString()})()`);
  const bootstrapDeadline=performance.now()+15000;
  try{
   const navigation=await command('Page.navigate',{url:server.url},sessionId);assert(!navigation.errorText,'fixture-navigation-failed:'+navigation.errorText);

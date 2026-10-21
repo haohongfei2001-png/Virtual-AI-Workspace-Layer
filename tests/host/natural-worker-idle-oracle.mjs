@@ -65,7 +65,7 @@ export function assessIdleScenario(scenario,value){
 }
 
 export const IDLE_EVIDENCE_DEPENDENCIES=Object.freeze([
- 'natural-worker-idle-probe.mjs','natural-worker-idle-oracle.mjs','j4-grant-observer.mjs',
+ 'natural-worker-idle-probe.mjs','natural-worker-idle-oracle.mjs','natural-worker-idle-bootstrap.mjs','j4-grant-observer.mjs',
  'historical-network-guard.mjs','native-visibility-browser.mjs','isolated-browser-cleanup.mjs',
  'fixtures/server.mjs','fixtures/legacy.html','fixtures/native.mjs','fixtures/native.css','expected/legacy.mjs',
  'fixtures/j2-send.mjs','fixtures/first-send.mjs','fixtures/j1-candidate-page.mjs','fixtures/variants-server.mjs',
@@ -102,7 +102,7 @@ export async function finishIdleObservationDeadline(started,windowMs,{now,sleep}
 /** Mount completion is distinct from presentation: normal native surrender may
  * leave authorized frames in reading mode with the production return control. */
 export function idleBootstrapAction(facts,prefix){
- if(facts?.readyState!=='complete'||facts.visibility!=='visible')return 'WAIT';
+ if(facts?.rootPresent===false||facts?.readyState!=='complete'||facts.visibility!=='visible')return 'WAIT';
  assert(Number.isSafeInteger(facts.returnCount)&&facts.returnCount>=0&&facts.returnCount<=1,'duplicate bootstrap return');
  const frames=facts.frames;
  if(!Array.isArray(frames)||frames.length!==2||!frames.every(frame=>frame.connected===true)||new Set(frames.map(f=>f.src)).size!==2||!['workspace','sidebar'].every(role=>frames.some(f=>f.src===prefix+role+'.html')))return 'WAIT';

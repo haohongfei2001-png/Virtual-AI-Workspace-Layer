@@ -188,9 +188,17 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  function discardPausedSurface(){const prior=pausedSurface;pausedSurface=null;if(prior?.timer!==null&&prior?.timer!==undefined)cancelRetry(prior.timer);}
  async function pump(){
   queued=false;if(observationOnly){dirty=false;observeCurrent();return;}if(!live()||busy)return;if(surfaceRetryWanted){surfaceFailed.clear();surfaceRetryWanted=false;}if(surfaceEpoch!==surfaceSnapshotEpoch){if(pausedSurface)pausedSurface.invalidated=true;pass=null;surfaceParts=[];surfaceScanning=false;surfaceCursor=null;surfaceSnapshotEpoch=surfaceEpoch;}dirty=false;const run=generation;let p,key,intentItem=null;
-  if(ingestionPass&&!pass&&(surfaceScanning||surfaceWanted)){busy=true;await beginPass();if(run!==generation)return;busy=false;if(!live())return;if(surfaceEpoch!==surfaceSnapshotEpoch){schedule();return;}}
   try{if(sendGap){p={protocol:'vaiwl-host-observation/1',documentToken:binding.documentToken,producerToken:binding.producerToken,localSeq:++seq,routeEpoch:epoch,profileId:profile.id,profileVersion:profile.revision,bodyProofId:sendGap,kind:'send-gap',payload:{reason:'send-intent-capacity'}};sendGap=null;key=JSON.stringify([p.routeEpoch,p.payload]);}
    while(intents.length&&!p){intentItem=intents.shift();if(!intentCurrent(intentItem))continue;p=intentProposal(intentItem);key=JSON.stringify([p.routeEpoch,p.payload]);}for(const candidate of p?[]:[...(bodyDiscovery&&!sendGapBlocked?[bodyProposal()]:[])]){if(!candidate)continue;if(!bounded(candidate)){issue('host-proposal-too-large');continue;}const fingerprint=JSON.stringify([candidate.routeEpoch,candidate.payload]);if(fingerprint===last.get(candidate.kind)||fingerprint===failedKey.get(candidate.kind))continue;try{p=currentObservation(candidate,currentSurfaceSlice(discovery.scan(),candidate.payload.conversationId));}catch{failedKey.set(candidate.kind,fingerprint);issue('host-proposal-too-large');continue;}key=fingerprint;break;}
+   // Current visible identity and captured send intents are independent of a
+   // successor directory pass. Publish them before its registration await:
+   // returning to the workspace during that wait may mask the native reading.
+   // No cached hidden body is introduced; the existing owner still admits it.
+   if(!p&&ingestionPass&&!pass&&(surfaceScanning||surfaceWanted)){
+    busy=true;await beginPass();if(run!==generation)return;busy=false;
+    // Reobserve after the await instead of using a pre-registration snapshot.
+    if(live())schedule();return;
+   }
    if(p&&pausedSurface)pausedSurface.superseded=true;
    if(!p&&pausedSurface){
     // No request is in flight: only an explicit retry-after can park a packet.

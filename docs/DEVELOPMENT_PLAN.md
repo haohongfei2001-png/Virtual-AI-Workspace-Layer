@@ -2,6 +2,8 @@
 
 ## 夜间接续：真实对照已消费，来源审查与依赖就绪工程并行（2026-10-22）
 
+当前C2/C3修复把已可见当前body/send放在后继目录注册等待之前，消除快速返回遮罩造成的观察遗失；首次注册、owner准入与隐藏/权限边界不变。原64条MV3导航及8组界面检查已在同一产品源码完成；启动观察器null-root修复、自然休眠未观察及Linux未知协议正文失败分别保留，详见STATUS/`currentBodyPriorityAndCIEvidence20261022`。下一自然CI使用原独立trace的合成响应标记定位同一响应，不改变正式oracle或生产取消。继续原依赖就绪任务；INV-09持久栅栏/消费链与真实来源仍待闭合，不以新增离线次数代替这些关口。
+
 用户要求无人持续开发，原30分钟续接恢复ACTIVE；Codex保持唯一集成writer，dot/Pro及子代理只读研究审查。当前批次实际修复C3/C5跨会话写锁、F3必要资产/公开模块闭包校验，以及诊断器未消费路由事件导致永久不就绪；原反例、受影响回归、两条隔离MV3与构建见STATUS/`nightRecoveryAndPackage20261022`。沿原任务推进，不新建计划或重复已过模块；原安装不因离线构建自动更新。
 
 原4GET对照现已由用户执行并回传固定结果，许可已消费：me/accounts include=200、omit=401，无challenge，账户列表仍default/null，`identityEnabled=false`。仅确证本批凭据依赖观察，不打开旧库、不把default/null升级canonical空间或自动开启C3；结果来源明确为用户回传，见`credentialControl20261022UserResult`。PR16原来源审查评论已更新，请dot/Pro只对主体/当前默认空间语义与完整服务器目录给出新证据；没有新依据不重跑本诊断。真实来源仅阻塞对应验收，继续无依赖产品工程；完整Free目标、81项要求及10k/100k DEFERRED不变。

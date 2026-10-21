@@ -443,6 +443,29 @@ test('real directory restart retains old scheduling pass while successor start i
  await f.start(p=>{f.emitted.push(p);if(f.emitted.length===1)return new Promise(resolve=>firstAck=()=>resolve(bodyAck(p)));return Promise.resolve(bodyAck(p));},{ingestionPass:m=>{events.push(m);if(m.phase==='start'&&m.passSeq===2)return new Promise(resolve=>nextStart=()=>{active=2;resolve({ok:true});});active=m.phase==='start'?m.passSeq:null;return Promise.resolve({ok:true});}});await settle();assert.equal(active,1);
  d.nodes[0].textContent='Changed midpass';f.observer().cb([{type:'characterData',target:{nodeType:3,parentNode:d.nodes[0],parentElement:d.nodes[0]}}]);firstAck();await settle();assert(nextStart);assert.deepEqual(events.map(m=>m.phase),['start','start']);assert.equal(active,1,'old validated pass bridges the async successor validation gap');assert.equal(f.emitted.length,1);nextStart();for(let i=0;i<100;i++)await tick();assert.equal(active,null);assert.deepEqual(events.map(m=>m.phase),['start','start','end']);assert.equal(events.at(-1).passSeq,2);assert(f.emitted.some(p=>p.payload.candidates.some(c=>c.nativeTitle==='Changed midpass')));
 });
+for(const initialUnproven of [false,true])test('current visible body reaches owner before a successor directory registration can hide it: '+initialUnproven,async t=>{
+ let masked=false,release;const events=[];
+ const f=bodyFixture({isOwnedMask:n=>masked&&n===f.reading});t.after(()=>f.adapter.stop());
+ if(initialUnproven){delete f.reading.attrs['data-conversation-id'];f.reading.children=[];}
+ await f.start(p=>{f.emitted.push(p);events.push(p.kind==='current-observation'?p.payload.body.messageIds.join(','):p.kind);return Promise.resolve(bodyAck(p));},{ingestionPass:m=>{
+  events.push(m.phase+':'+m.passSeq);
+  if(m.phase==='start'&&m.passSeq===2)return new Promise(resolve=>release=()=>resolve({ok:true}));
+  return Promise.resolve({ok:true});
+ }});await settle();
+ const old=f.reading.children[0],next=f.makeMessage('M2');f.reading.attrs['data-conversation-id']=C;f.reading.children=[next];
+ f.observer().cb([{type:'childList',target:f.reading,addedNodes:[next],removedNodes:old?[old]:[]}]);
+ f.documentListeners.get('toggle')({target:{},oldState:'closed',newState:'open'});
+ await settle();assert.equal(typeof release,'function');
+ // The user returns while registration is still waiting. Never scan hidden
+ // content or reuse an old proof to fill the missing current observation.
+ masked=true;f.reading.style.visibility=next.style.visibility='hidden';release();await settle();
+ const bodies=f.emitted.filter(p=>p.kind==='current-observation').map(p=>p.payload.body.messageIds);
+ assert.deepEqual(bodies,[initialUnproven?[]:['M1'],['M2']]);
+ assert(events.indexOf('M2')<events.indexOf('start:2'));
+ for(let i=0;i<10;i++){f.trigger();await settle();}
+ assert.equal(f.emitted.filter(p=>p.kind==='current-observation').length,2,'mask cannot refresh or duplicate the admitted body');
+ assert(f.emitted.every((p,i)=>!i||p.localSeq>f.emitted[i-1].localSeq));
+});
 test('same producer renewal retains the finite pass and a reused adapter starts without cancellation gap',async t=>{
  const f=fixture(),d=sys05Directory(f,1000),events=[];t.after(()=>f.adapter.stop());let packets=0;
  const ingestionPass=async m=>{events.push(m);return {ok:true};};await f.start(p=>{f.emitted.push(p);if(++packets===2){f.setTime(10000);f.adapter.updateBinding({...f.binding,expiresAt:new Date(30000).toISOString()});}return Promise.resolve(bodyAck(p));},{ingestionPass});for(let i=0;i<100;i++)await tick();assert.deepEqual(events.map(m=>m.phase),['start','end']);assert.equal(new Set(f.emitted.flatMap(p=>p.payload.candidates.map(c=>c.renderKey))).size,1000);

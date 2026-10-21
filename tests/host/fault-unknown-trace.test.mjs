@@ -9,6 +9,7 @@ import {buildHost} from '../../extension/build.mjs';
 import {verifyHost} from '../../extension/package.mjs';
 import {digest} from '../../src/data/hash.mjs';
 import {parseConversationMetadata} from '../../src/host/conversation-metadata.mjs';
+import {matchFaultUnknownResponse} from './fault-unknown-trace.mjs';
 import {createFaultUnknownTracePackage,verifyFaultUnknownTracePackage,captureFaultUnknownTrace,instrumentFaultUnknownSource,FAULT_UNKNOWN_TRACE_RECORDER,FAULT_UNKNOWN_TRACE_PATHS,FAULT_UNKNOWN_TRACE_KIND,summarizeFaultUnknownTrace} from './fault-unknown-trace.mjs';
 async function setup(t){const dir=await mkdtemp(join(tmpdir(),'fault-unknown-trace-'));t.after(()=>rm(dir,{recursive:true,force:true}));const source=join(dir,'formal');buildHost(source,{offlineOrigin:'http://127.0.0.1:1234',offlineHistory:true});const trace=await createFaultUnknownTracePackage(source,join(dir,'copy'));return {source,trace};}
 test('verified offline copy retains exact original manifest, seven hash receipts and classic build closure',async t=>{
@@ -24,10 +25,11 @@ test('recorder drops overflow, only allows fixed schema and keeps associations p
 test('actual instrumented provider consumes EOF, records real parser rejection, then cleanup abort without extra fetch',async t=>{
  const {trace}=await setup(t);delete globalThis.__vaiwlFaultUnknownTrace;t.after(()=>delete globalThis.__vaiwlFaultUnknownTrace);
  const {createSessionProvider}=await import(pathToFileURL(join(trace.unpacked,'src/runtime/session-provider.mjs')));const calls=[];
- const provider=createSessionProvider({origin:'http://127.0.0.1:1234',profile:{currentConversationReadEnabled:true},fetch:async(url,options)=>{calls.push(url);let payload=url.endsWith('/api/auth/session')?{user:{id:'fixture-user'},accessToken:'NEVER_RECORD_CREDENTIAL',expires:'2099-01-01T00:00:00.000Z'}:url.includes('/accounts/check/')?{accounts:{personal:{account:{account_id:'personal',structure:'personal'}}}}:{protocol:'future-99',payload:{opaque:true}};const response=new Response(JSON.stringify(payload),{status:200,headers:{'Content-Type':'application/json'}});Object.defineProperty(response,'url',{value:url});return response;}});
+ const provider=createSessionProvider({origin:'http://127.0.0.1:1234',profile:{currentConversationReadEnabled:true},fetch:async(url,options)=>{calls.push(url);let payload=url.endsWith('/api/auth/session')?{user:{id:'fixture-user'},accessToken:'NEVER_RECORD_CREDENTIAL',expires:'2099-01-01T00:00:00.000Z'}:url.includes('/accounts/check/')?{accounts:{personal:{account:{account_id:'personal',structure:'personal'}}}}:{protocol:'future-99',payload:{opaque:true}};const response=new Response(JSON.stringify(payload),{status:200,headers:{'Content-Type':'application/json',...(url.includes('/backend-api/conversation/')?{'X-Vaiwl-Offline-Response':responseTag}:{})}});Object.defineProperty(response,'url',{value:url});return response;}});
  await assert.rejects(provider.readCurrentConversation({conversationId:'33333333-3333-4333-8333-333333333333',expectedPrincipalKey:'principal_'+digest(['chatgpt-principal-v1','fixture-user']),expectedContextKey:'context_'+digest(['chatgpt-context-v1','fixture-user','personal'])}),/invalid-conversation-metadata/);
  assert.equal(calls.length,3);const traceJSON=JSON.parse(JSON.stringify(globalThis.__vaiwlFaultUnknownTrace)),events=traceJSON.events;for(const secret of ['NEVER_RECORD_CREDENTIAL','fixture-user','33333333','opaque','http://'])assert(!JSON.stringify(traceJSON).includes(secret));
  const eof=events.find(e=>e.stage==='body-eof'),protocol=events.find(e=>e.stage==='protocol'),reject=events.find(e=>e.stage==='parser-reject'),cleanup=events.find(e=>e.stage==='execute-cleanup'),abort=events.find(e=>e.stage==='signal-abort');assert.equal(eof.bytes,50);assert.equal(protocol.protocolClass,'EXPECTED_UNKNOWN_PROTOCOL');assert.equal(reject.reason,'conversation-identity-conflict');assert(eof.seq<protocol.seq&&protocol.seq<reject.seq&&reject.seq<cleanup.seq&&cleanup.seq<abort.seq);assert.equal(abort.source,'provider');
+ for(const stage of ['detail-response','body-eof','protocol','parser-reject','execute-cleanup'])assert.equal(events.find(e=>e.stage===stage).responseTag,responseTag,stage);
 });
 const snapshot=events=>({kind:FAULT_UNKNOWN_TRACE_KIND,timeOrigin:10,dropped:0,events});
 const events=[{seq:1,stage:'entry-start',entry:1},{seq:2,stage:'detail-dispatch',entry:1,call:1,detail:1},{seq:3,stage:'body-eof',call:1,bytes:50},{seq:4,stage:'protocol',call:1,protocolClass:'EXPECTED_UNKNOWN_PROTOCOL'},{seq:5,stage:'parser-reject',call:1,reason:'conversation-identity-conflict'},{seq:6,stage:'execute-cleanup',call:1},{seq:7,stage:'signal-abort',call:1,source:'provider'}];
@@ -83,4 +85,46 @@ test('real parser distinguishes missing conversation identity from unknown struc
  }
  // The marker alone is not the production rejection reason: both malformed
  // structural shapes fail closed with or without that optional marker.
+});
+
+const responseTag='fxu-'+ 'a'.repeat(32)+'-1';
+function linkedResponse(){
+ const input=args();input.rows[0].status=200;input.rows[0].expectedWorker=true;input.rows[0].responseTag=responseTag;input.fixtureResponseTrace={runToken:'a'.repeat(32),responseCount:1};
+ for(const e of input.after.events.slice(2))e.seq++;input.after.events.splice(2,0,{seq:3,stage:'detail-response',call:1,detail:1,status:200,responseTag});
+ return input;
+}
+test('unique synthetic response tag links worker consumption to the exact browser Request without accepting its missing body',()=>{
+ const input=linkedResponse(),result=summarizeFaultUnknownTrace(input);
+ assert.equal(result.responseIdentity.state,'MATCHED_SYNTHETIC_RESPONSE');
+ assert.equal(result.responseIdentity.requestStart,1);assert.equal(result.responseIdentity.formalBodyEvidence,'UNCHANGED');
+ assert.equal(result.candidate.browserBodyRead,'FAILED');assert.equal(result.status,'INCOMPLETE');
+ assert.equal(result.acceptance,'NOT_ESTABLISHED');assert.equal(result.correlationComplete,false);
+ assert.equal(result.reason,'response-linked-causality-unproven');
+});
+for(const [name,change]of Object.entries({
+ missingBrowser:a=>delete a.rows[0].responseTag,
+ malformed:a=>a.rows[0].responseTag='secret',
+ wrongTag:a=>a.rows[0].responseTag='fxu-'+'b'.repeat(32)+'-1',
+ duplicateBrowser:a=>a.rows.push({...a.rows[0],worker:false,requestStart:9}),
+ duplicateWorker:a=>a.after.events.push({...a.after.events[2],seq:9,call:2}),
+ wrongDetail:a=>a.after.events[2].detail=2,
+ badStatus:a=>a.after.events[2].status=401,
+ inconsistentEvent:a=>a.after.events[3].responseTag='fxu-'+'b'.repeat(32)+'-2',
+ pageOnly:a=>a.rows[0].worker=false,
+ otherWorker:a=>a.rows[0].expectedWorker=false,
+ crossRun:a=>a.fixtureResponseTrace.runToken='b'.repeat(32),
+ outsideCohort:a=>a.start=1,
+ countOverflow:a=>a.fixtureResponseTrace.responseCount=257,
+ unknownResponse:a=>a.fixtureResponseTrace.responseCount=0,
+ responseBeforeDispatch:a=>a.after.events[2].seq=1,
+}))test('response-tag identity refuses '+name,()=>{
+ const a=linkedResponse();change(a);
+ const result=matchFaultUnknownResponse({events:a.after.events,rows:a.rows,call:a.after.events[1],target:a.rows[0],start:a.start,end:a.end,fixture:a.fixtureResponseTrace});
+ assert.equal(result.state,'INCOMPLETE');
+});
+test('recorder only retains bounded synthetic response tags, never arbitrary response headers',()=>{
+ const context=vm.createContext({performance:{now:()=>1,timeOrigin:100}});
+ vm.runInContext(FAULT_UNKNOWN_TRACE_RECORDER+`;for(const responseTag of ${JSON.stringify([responseTag,'secret-token','fxu-'+'a'.repeat(32)+'-257'])})__fu.emit('detail-response',{responseTag});`,context);
+ const rows=JSON.parse(JSON.stringify(context.__vaiwlFaultUnknownTrace)).events;
+ assert.equal(rows[0].responseTag,responseTag);assert.equal(rows[1].responseTag,undefined);assert.equal(rows[2].responseTag,undefined);
 });

@@ -20510,5 +20510,281 @@
     ],
     "fullMatrix": "NOT_RERUN_FOR_THIS_BATCH",
     "release": "NOT_RELEASE_READY"
+  },
+  "currentBodyPriorityAndCIEvidence20261022": {
+    "baseline": "f0223ff615b653f2a636c2480d2a62cce8afe5ad",
+    "sourceHashes": {
+      "src/host/chatgpt-adapter.mjs": "629d0ba7e3d26ba6021222fc1ee737c9ccf56aa2cc69c3ac9f8a4b3ad70c83ef",
+      "tests/host/chatgpt-adapter.test.mjs": "0d00a6c25c3bbe451f55143b92a32cee3be7aaab770ba4eecc0950976b9a2e55",
+      "tests/host/natural-worker-idle-bootstrap.mjs": "c4b4b516bf730783beab545adb8ab8fa070fd26ac6df62139df7636e24740f0b",
+      "tests/host/natural-worker-idle-bootstrap.test.mjs": "9bb8c34bc962246f075516603c2a1a856e3c8e1a8e80db5c4911cff9efc110d3",
+      "tests/host/natural-worker-idle-oracle.mjs": "15c269ba831a249e080595f6ee27f0f22bf7e5a8275f0d18b4d9cb53e8566edd",
+      "tests/host/natural-worker-idle-probe.mjs": "619c01987a5a629fad539c1b09d2bc077b1226d04a53fc73bbf5a157c8690b9e",
+      "tests/host/fault-unknown-trace.mjs": "a8f1e985ede4e57c5490a29335acbcc61df8fe537b791081f696d7a4d4f85200",
+      "tests/host/fault-unknown-trace.test.mjs": "3975b7fc1d5d1eee8a1075fade3755bd20c47e261b9ec9e596751e4a802e0576",
+      "tests/host/fault-package-matrix-browser.mjs": "aeaac9f2500a5e935ab061f84aef88f0440f9617500efe66103e429ff160c55e",
+      "tests/host/fixtures/variants-server.mjs": "84cf3a89024a7dd47afe2654d046be020f1b41c447200a3d5d38dc58fbe14ab2",
+      "tests/host/fixtures/variants-server.test.mjs": "704316b4a3df09d1c11554e08305c17ba281feb3522181fcd525a9039f5db980"
+    },
+    "originalCI": {
+      "run": 39638853187,
+      "status": "completed",
+      "conclusion": "failure",
+      "successJobs": 38,
+      "failedJobs": [
+        {
+          "id": 119356772955,
+          "name": "cloud-supplementary-gates (populated-native)"
+        },
+        {
+          "id": 119356772961,
+          "name": "cloud-supplementary-gates (fault-unknown-protocol)"
+        },
+        {
+          "id": 119356775713,
+          "name": "cloud-supplementary-gates (idle-draft-active)"
+        }
+      ],
+      "historicalFailuresRetained": true
+    },
+    "currentBodyPriority": {
+      "reproduction": "Visible native body update plus delayed successor pass registration plus workspace mask strands the new body, both with an old proof and initially unproven body. No-mask controls observe it; unmask recovers it.",
+      "fix": "Current body/send use their original owner before successor directory registration; initial registration is unchanged. No hidden body snapshot, authority bypass, new request or budget change.",
+      "redCases": 2,
+      "affectedRegression": {
+        "pass": 539,
+        "fail": 0,
+        "skip": 0
+      },
+      "ciSpecificCause": "NOT_UNIQUELY_ESTABLISHED: original CI omitted body/mask/ACK state"
+    },
+    "idleBootstrap": {
+      "reproduction": "A parsing document with null documentElement throws in the old observer; no recovery window was reached in original CI.",
+      "fix": "Missing root remains WAIT; other evaluation errors preserve bounded original exception details. Original 15-second bootstrap and 60-second observation unchanged.",
+      "ciSpecificCause": "NOT_UNIQUELY_ESTABLISHED: original CI discarded the underlying exception",
+      "status": "NATURAL_IDLE_NOT_OBSERVED",
+      "observation": {
+        "elapsedMs": 60002.69149999999,
+        "validation": "VALID",
+        "hostSessionDetached": true,
+        "targetEvents": [
+          {
+            "at": 4814.897625,
+            "method": "Target.targetDestroyed",
+            "targetId": "794FD6B62A309F3206050AE07E01B9FF",
+            "type": null
+          },
+          {
+            "at": 20020.684708,
+            "method": "Target.targetDestroyed",
+            "targetId": "D92C2F8A64EB52537C36F1D7AF46F239",
+            "type": null
+          }
+        ],
+        "initialWorkerDestroyed": false,
+        "crashSignal": false,
+        "naturalWorkerSleep": "NOT_OBSERVED",
+        "cause": "NO_TARGET_DESTRUCTION",
+        "status": "NATURAL_IDLE_NOT_OBSERVED"
+      },
+      "evidenceBinding": {
+        "dependenciesUnchanged": true,
+        "cleanupVerified": true,
+        "sourceCommitBound": true
+      },
+      "cleanup": {
+        "completed": true,
+        "errors": [],
+        "pendingCommands": 0,
+        "browserStopped": true,
+        "networkGuardClosed": true,
+        "profileRemoved": true
+      },
+      "sourceChangedDuringRun": false,
+      "naturalSleepAcceptance": "NOT_ESTABLISHED"
+    },
+    "unknownResponse": {
+      "formalCIFailure": "200 GET followed by BrowserBodyEvicted/net::ERR_ABORTED; formal body check failed.",
+      "localMinimalComparison": {
+        "cases": 20,
+        "platform": "macOS Chrome 155 and 156",
+        "result": "All actual bodies COMPLETE; did not reproduce Linux loss",
+        "limits": "No production cancellation or formal oracle change; streamResourceContent was itself too late and was not adopted"
+      },
+      "traceRegression": {
+        "pass": 132,
+        "fail": 0,
+        "skip": 0
+      },
+      "traceStatus": "INCOMPLETE",
+      "responseIdentity": {
+        "state": "MATCHED_SYNTHETIC_RESPONSE",
+        "basis": "UNIQUE_FIXTURE_RESPONSE_HEADER",
+        "responseTag": "fxu-e4ca5f1b242d62f450d8f04dd8293fe5-3",
+        "call": 26,
+        "detail": 2,
+        "requestStart": 3,
+        "causality": "NOT_ESTABLISHED",
+        "formalBodyEvidence": "UNCHANGED"
+      },
+      "causalTrace": {
+        "call": 26,
+        "detail": 2,
+        "entry": 22,
+        "requestStart": 3,
+        "observation": "CANDIDATE_EOF_PARSE_REJECTION_BEFORE_CLEANUP",
+        "bodyEOF": true,
+        "bodyBytes": 50,
+        "protocolClass": "EXPECTED_UNKNOWN_PROTOCOL",
+        "parserReason": "conversation-identity-conflict",
+        "firstAbortSource": "provider",
+        "browserBodyRead": "COMPLETE",
+        "browserEvents": [
+          {
+            "stage": "request-start",
+            "requestStart": 3,
+            "worker": true,
+            "at": 1547.386459
+          },
+          {
+            "stage": "body-read-start",
+            "requestStart": 3,
+            "worker": true,
+            "at": 1549.315542
+          },
+          {
+            "stage": "requestfinished",
+            "requestStart": 3,
+            "worker": true,
+            "at": 1549.922917
+          },
+          {
+            "stage": "body-read-terminal",
+            "requestStart": 3,
+            "worker": true,
+            "at": 1550.095792
+          }
+        ]
+      },
+      "integrity": {
+        "originalPackageVerified": true,
+        "tracePackageVerified": true,
+        "sourceUnchanged": true,
+        "cleanupOK": true
+      },
+      "limits": "Only opt-in synthetic fault response headers carry a unique per-run/per-response tag. Exact worker, cohort, current token/count and both-side uniqueness required. Response headers and synchronous probes perturb diagnostics. Formal FAIL and INCOMPLETE/exit2 remain; no CDP requestId claim."
+    },
+    "nativeJourney": {
+      "status": "PASS_PACKAGED_POPULATED_SUBCONTRACT_ONLY",
+      "visits": 64,
+      "checks": [
+        {
+          "width": 1440,
+          "height": 1000,
+          "colorScheme": "light",
+          "status": "PASS_POPULATED_SUBCONTRACT"
+        },
+        {
+          "width": 1440,
+          "height": 1000,
+          "colorScheme": "dark",
+          "status": "PASS_POPULATED_SUBCONTRACT"
+        },
+        {
+          "width": 1440,
+          "height": 520,
+          "colorScheme": "light",
+          "status": "PASS_POPULATED_SUBCONTRACT"
+        },
+        {
+          "width": 1440,
+          "height": 520,
+          "colorScheme": "dark",
+          "status": "PASS_POPULATED_SUBCONTRACT"
+        },
+        {
+          "width": 420,
+          "height": 1000,
+          "colorScheme": "light",
+          "status": "PASS_POPULATED_SUBCONTRACT"
+        },
+        {
+          "width": 420,
+          "height": 1000,
+          "colorScheme": "dark",
+          "status": "PASS_POPULATED_SUBCONTRACT"
+        },
+        {
+          "width": 420,
+          "height": 520,
+          "colorScheme": "light",
+          "status": "PASS_POPULATED_SUBCONTRACT"
+        },
+        {
+          "width": 420,
+          "height": 520,
+          "colorScheme": "dark",
+          "status": "PASS_POPULATED_SUBCONTRACT"
+        }
+      ],
+      "progress": {
+        "phase": "cleanup",
+        "index": null,
+        "requests": null,
+        "remaining": null,
+        "waitMs": null,
+        "network": {
+          "session": 194,
+          "accounts": 194,
+          "currentDetail": 128,
+          "nativeRoute": 66,
+          "nativeMove": 30
+        },
+        "elapsedMs": 942969,
+        "deadlineMs": 1320000,
+        "timedOut": false
+      },
+      "productSourceStable": true,
+      "fixtureStable": true,
+      "error": null,
+      "visualReview": "NOT_RUN_FOR_THIS_BATCH",
+      "realChatGPT": "NOT_RUN"
+    },
+    "defaultPackage": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 184,
+      "unpacked": "/private/tmp/vaiwl-ci39638853187/default-package/extension",
+      "archive": "/private/tmp/vaiwl-ci39638853187/default-package/vaiwl-free-host-development.zip",
+      "archiveSha256": "b3c508262b00ebf3090d81f481c6d1ad4b7438b47743e7f3e2e2bcb7bb739ae4"
+    },
+    "rawEvidence": {
+      "run-final.json": "f26522ccccd4443b8874481e5fdeff4c5f1a7e666f1a8fdb2e24498a035d5645",
+      "job-119356772955.log": "f913710663dccc0ad06476a55dca3895bd501ddb392d13369e75a99fdb9eccbb",
+      "job-119356772961.log": "8bd9bbe876b936b77d68b577c6bc613290dcedc4797453a7a3fc79c0f4ce6ddc",
+      "job-119356775713.log": "80c467a8372de39fc56b3161eb9f016306ed0a9ff17fabf5dc82c8a10e7048e8",
+      "populated-native-candidate.json": "6ec54024825fcec06e916693710027997e4319f2ee6bee1f7e04cc81eb7911d7",
+      "idle-draft-active-final.json": "b86b2fd9c1f784626540c22ada55bc71b5a323dc9059b60c5b211bdff61c0f49",
+      "unknown-response-link-candidate.json": "7c490df079d28a1ef02b3b501e3827eb55becf484714f6617ea1ef1456c4d895",
+      "affected-regression.log": "c8b0d5bdc051fa6a2f2efeeb2324ecb5052380d5ef1061f233c0ae50537e8201",
+      "trace-regression-final.log": "1fdaa69fc23557bee12aa9ffc2ddcdf404dbe946c4b9af4c763cb843e9491a50",
+      "current-body-priority-red.log": "9ea94854abd0930b1d28bf6d8a7f4076614b8ddd914c8dbf5abc57c65b64e78e",
+      "idle-bootstrap-red.log": "8c44ed5c975c59a34f26a4c2ab4b32ab0417211e7f9bcccd78a6be4bbb13668e"
+    },
+    "evidenceDirectory": "/private/tmp/vaiwl-ci39638853187",
+    "sourceReviewComments": [
+      6321600533,
+      6321633074
+    ],
+    "sourceReviewOutcome": "No new reliable full personal-account directory or default/null current-context semantics; no repeated real diagnosis, no scope or old DB access. New identity sources require provider/authority/owner/content handshake alignment and separation of local context key from host routing headers.",
+    "independentReview": "Read-only adapter/bootstrap and trace review; no blocking findings; root sole writer.",
+    "remaining": [
+      "Linux unknown-protocol body loss cause unresolved",
+      "Current CI failure causes not retroactively closed by local tests",
+      "Trusted principal/current context and full server directory not established",
+      "INV-09 lifecycle consumer/source and real recovery/IME/PAIA/install remain open",
+      "10k/100k DEFERRED, original thresholds retained"
+    ],
+    "release": "NOT_RELEASE_READY"
   }
 }

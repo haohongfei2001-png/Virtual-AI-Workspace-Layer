@@ -1,5 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 当前聊天优先与CI失败收口（2026-10-22，基线f0223ff6）
+
+[CI39638853187](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39638853187)终态38成功/3失败，原日志保留。populated-native在第5条访问缺活动准入且未发详情请求；idle-draft-active在首次页面求值失败、尚未进入休眠观察；unknown-protocol为HTTP200但浏览器正文读取`BrowserBodyEvicted/net::ERR_ABORTED`。后续本地通过不追溯改判这些历史原因。
+
+已修一个确定性产品竞态：可见原生body更新后，后继目录pass注册的await允许工作空间遮罩先打开，当前body因此一直遗漏；已有proof与初始unproven两种反例均先失败。当前body/send现先走原owner，随后才注册后继目录pass，首次注册顺序不变；await后重新观察，无隐藏body缓存、旧proof复活或新网络预算。另修启动观察器对尚无HTML root的文档解引用异常，保留原异常详情，原15秒启动与60秒观察不变。它们是已证缺陷；原CI缺body/mask/ACK及原始求值异常，尚不能宣称唯一归因。
+
+同一产品源码的原隔离headless MV3旅程完成64次原生访问、128次详情请求和8组界面检查，草稿/文件/原节点保持，耗时942969ms；源码、包与夹具hash稳定。539项受影响回归通过，默认184文件包构建校验通过；这批截图未独立视觉复审，不升级完整视觉。最终依赖的60秒无强制观察完成、清理通过，但worker未退出，明确`NATURAL_IDLE_NOT_OBSERVED`，不是自然休眠或完整恢复PASS。
+
+unknown失败的Mac最小对照未复现Linux正文丢失，未修改生产abort或正式正文oracle。独立trace现仅在指定合成fault开启随机本轮/每响应标记，通过确切worker、原cohort、当前token/计数及双侧唯一性，关联消费者Response与浏览器Request；实际隔离验证取得同一50B响应，132项定向通过。响应头与同步探针会扰动诊断，整体保持DIAGNOSTIC_ONLY/INCOMPLETE/exit2；没有CDP requestId或根因已解决的声明。下一自然CI沿已有独立trace采集Linux同响应证据，不新增job、缓存或上传。
+
+已读[dot目录审查6321600533](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6321600533)及[身份审查6321633074](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6321633074)：无新增可信全历史目录或default/null空间语义；不重发已消费真实批次，不启scope/旧库。后继新来源需同步provider/authority/owner/content合同，并区分本地context标识与宿主路由header；不预先猜填来源。独立只读审查无阻断，唯一writer不变。原证据入口`currentBodyPriorityAndCIEvidence20261022`记录hash、原失败及局限；INV-09、真实身份/目录/本人活动、完整J1/J4与IME/PAIA/安装仍开放，10k/100k DEFERRED，完整Free与发布未通过。
+
 ## 夜间工程检查点与真实对照结果（2026-10-22，基线657da944）
 
 用户已在新建的ChatGPT空白首页执行原批准的include/omit批次并回传固定JSON：4请求完成，`me`与accounts均include=200、omit=401，本批无challenge；accounts仍只有default/personal，account_id=null、id缺失，解析原因`default-null-context-id`。这是用户回传结果，未由代理独立读取原弹窗；许可现已消费，不再重发。凭据依赖成立的局部观察不等于主体语义、命名空间、当前空间/C3或认证canonical roster成立；未开scope/旧库。之前两次预检停止均零请求，历史记录保留。脱敏结果及解释见原summary的`credentialControl20261022UserResult`，已更新[PR16来源审查评论](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6321134010)，尚未取得新的来源语义依据。

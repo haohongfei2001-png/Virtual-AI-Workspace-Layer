@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHostFixtureServer} from './server.mjs';
+import {createVariantHostFixtureServer} from './variants-server.mjs';
 import {modernExpectedWorld as modern} from '../expected/modern.mjs';
 import {partialExpectedWorld as partial} from '../expected/partial.mjs';
 import {faultExpectedWorld as faultWorld} from '../expected/fault.mjs';
@@ -59,6 +60,26 @@ for(const fault of Object.keys(faultWorld.cases))test(`FAULT ${fault} has fixed 
 test('unsupported profiles and faults fail before binding a server',async()=>{
  await assert.rejects(createHostFixtureServer({profile:'UNRECOGNIZED'}),/not-implemented/);
  await assert.rejects(createHostFixtureServer({profile:'FAULT',fault:'invented'}),/not-implemented/);
+});
+test('unknown response tags are diagnostic-only, unique per response and separate fixture run',async t=>{
+ const tags=[];
+ for(const enabled of [false,true,true]){
+  const s=await createVariantHostFixtureServer({profile:'FAULT',fault:'unknown-protocol',faultUnknownTrace:enabled});t.after(()=>s.close());
+  const home=await fetch(s.url),cookie=home.headers.get('set-cookie').split(';')[0];await home.text();
+  const responses=await Promise.all([0,1].map(()=>fetch(s.origin+'/backend-api/conversation/'+modern.conversations[2].id,{headers:{cookie}})));
+  for(const response of responses){
+   assert.equal(response.status,200);assert.deepEqual(await response.json(),{protocol:'future-99',payload:{opaque:true}});
+   const tag=response.headers.get('x-vaiwl-offline-response');
+   if(enabled){assert.match(tag,/^fxu-[a-f0-9]{32}-[12]$/);tags.push(tag);}else assert.equal(tag,null);
+  }
+  assert.equal(s.manifest.faultUnknownTrace,enabled?true:undefined);
+ }
+ assert.equal(new Set(tags).size,4);
+ assert.notEqual(tags[0].split('-')[1],tags[2].split('-')[1]);
+});
+test('response-tag mode is rejected outside the designated offline fault before server startup',async()=>{
+ for(const options of [{profile:'MODERN',fault:'unknown-protocol'},{profile:'FAULT',fault:'corrupt'},{profile:'FAULT',fault:'unknown-protocol',journey:'J4'},{profile:'FAULT',fault:'unknown-protocol',faultUnknownTrace:'yes'}])
+  await assert.rejects(createVariantHostFixtureServer({faultUnknownTrace:true,...options}),/invalid-fault-unknown-trace/);
 });
 
 // The controlled negative must stay unavailable on repetition; it is not a retry-to-green fixture.
