@@ -48,10 +48,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   function endNativeInteraction(expected=nativeInteraction){
     if(!expected||nativeInteraction!==expected)return;
     nativeInteraction=null;if(expected.timer!==null)win.clearTimeout(expected.timer);
-    expected.release();
+    try{expected.release();}finally{finishInteraction();}
   }
   const owned=e=>e.composedPath().some(n=>n?.getAttribute?.('data-vaiwl-owned')===token);
-  const interacting=()=>pointers.size>0||keys.size>0||composing||dragging;
+  const interacting=()=>nativeInteraction!==null||pointers.size>0||keys.size>0||composing||dragging;
   const clearUpdateTimer=()=>{if(updateTimer!==null){win.clearTimeout(updateTimer);updateTimer=null;}};
   function flushUpdate(){
     clearUpdateTimer();if(interacting()||stopped)return;

@@ -130,3 +130,24 @@ for(const interruption of ['none','pointerdown','keydown','focusin','visibilityc
  if(interruption==='disconnect')f.disconnect();else if(interruption==='stop')f.client.stop();else if(interruption==='renew')await f.advance(10000);else if(interruption!=='none')f.events.dispatchEvent(new Event(interruption));
  held.resolve(ready(f));await drain();assert.equal(f.focuses,interruption==='none'?1:0);
 });
+
+for(const kind of ['show-working-set','search-known'])for(const outcome of ['deny','throw'])test(`failed ${kind} presentation drains only the retained pointer dirty hint: ${outcome}`,async()=>{
+ const f=fixture('sidebar');try{await f.client.start();await drain();const before=f.views,release=f.nav.onNativeInteractionStart();hint(f);await drain();assert.equal(f.views,before);
+ const send=f.runtime.sendMessage;f.runtime.sendMessage=m=>{if(m.type==='HOST_UI_PRESENT'){if(outcome==='throw')throw Error('transport');return Promise.resolve({ok:false});}return send(m);};
+ await f.nav.onPresentationRequest({kind});await drain();assert.equal(f.views,before+1);
+ release();await f.advance(1000);assert.equal(f.views,before+1,'old release/timer cannot cause a second refresh');
+ }finally{f.client.stop();}
+});
+for(const condition of ['clean','hidden','inflight','new-hold','restart'])test('late failed presentation respects '+condition+' read ownership',async()=>{
+ const f=fixture('sidebar'),held=deferred(),readHeld=deferred();try{await f.client.start();await drain();const send=f.runtime.sendMessage;f.runtime.sendMessage=m=>m.type==='HOST_UI_PRESENT'?held.promise:send(m);
+ const before=f.views;if(condition!=='clean'){f.nav.onNativeInteractionStart();hint(f);}const present=f.nav.onPresentationRequest({kind:'show-working-set'});await drain();
+ let release;if(condition==='hidden')f.visibility('hidden');
+ if(condition==='inflight'){f.setView(()=>readHeld.promise);hint(f);await drain();assert.equal(f.views,before+1);hint(f);await drain();}
+ if(condition==='new-hold')release=f.nav.onNativeInteractionStart();
+ if(condition==='restart'){f.client.stop();await f.client.start();await drain();release=f.nav.onNativeInteractionStart();hint(f);}
+ const atFailure=f.views;held.resolve({ok:false});await present;await drain();assert.equal(f.views,atFailure);
+ if(condition==='hidden'){f.visibility('visible');await drain();assert.equal(f.views,before+1);}
+ if(condition==='inflight'){f.setView(async()=>ready(f));readHeld.resolve(ready(f));await drain();assert.equal(f.views,before+2);}
+ if(release){release();await drain();assert.equal(f.views,atFailure+1);}
+ }finally{held.resolve({ok:false});readHeld.resolve({ok:false});f.client.stop();}
+});

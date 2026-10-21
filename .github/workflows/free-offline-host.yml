@@ -267,6 +267,9 @@ jobs:
       - name: Actual archived Host to current Host asset update
         if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
         run: FREE_CHROME_HEADED=1 FREE_SOURCE_COMMIT="$GITHUB_SHA" xvfb-run -a node tests/host/historical-host-upgrade.mjs "$RUNNER_TEMP/historical-host.json"
+      - name: Same-schema installed Host lifecycle codec rollback
+        if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
+        run: FREE_HISTORICAL_CODEC=1 FREE_CHROME_HEADED=1 FREE_SOURCE_COMMIT="$GITHUB_SHA" xvfb-run -a node tests/host/historical-host-upgrade.mjs "$RUNNER_TEMP/historical-codec.json"
       - name: Actual historical Pro schema compatibility with isolated network guard
         if: ${{ !cancelled() && steps.native_visibility.outcome == 'success' }}
         run: FREE_CHROME_HEADED=1 FREE_SOURCE_COMMIT="$GITHUB_SHA" xvfb-run -a node tests/host/historical-pro-upgrade.mjs "$RUNNER_TEMP/historical-pro.json"
@@ -319,7 +322,7 @@ jobs:
           echo "Source commit: $GITHUB_SHA"
           echo 'This job is slice evidence, not 81-case/J1-J4/real ChatGPT acceptance.'
           echo 'Scale acceptance: DEFERRED by user priority; skipped 10k/100k is not PASS or release readiness. Original thresholds and failures retained.'
-          for name in native-visibility guard-browser joint-observation joint-observation-mutant existing-source-pending-repair sys02-pending-idb historical-host historical-pro sys05-stream sys05-work host-scale-10k-project host-scale-10k-cpu-diagnostic visibility-probe; do
+          for name in native-visibility guard-browser joint-observation joint-observation-mutant existing-source-pending-repair sys02-pending-idb historical-host historical-codec historical-pro sys05-stream sys05-work host-scale-10k-project host-scale-10k-cpu-diagnostic visibility-probe; do
             if [ -f "$RUNNER_TEMP/$name.json" ]; then cat "$RUNNER_TEMP/$name.json"; fi
           done
 

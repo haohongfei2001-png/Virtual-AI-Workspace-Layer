@@ -41,12 +41,12 @@ test('ready native Project click retains its plan across a background hint',{tim
   document.addEventListener('pointerdown',e=>f.events.push({type:'down',trusted:e.isTrusted}),true);
   document.addEventListener('click',e=>f.events.push({type:'click',trusted:e.isTrusted,prevented:e.defaultPrevented}),false);
  });
- await page.waitForFunction(()=>pointerFixture.ready>0);await page.evaluate(()=>pointerFixture.nav.showWorkspace());
+ await page.waitForFunction(()=>pointerFixture.ready>0);await page.evaluate(()=>{pointerFixture.nav.showWorkspace();if(pointerFixture.nav.showTimePolicyNotice({id:'paint-during-pointer',expiresAt:new Date(Date.now()+5000).toISOString()})!==true)throw Error('local-paint-notice-not-created');});
  const link=()=>page.getByRole('link',{name:'打开项目以新建聊天 Native Project',exact:true});
  await link().waitFor();await link().scrollIntoViewIfNeeded();const box=await link().boundingBox();assert(box);
  const before=await page.evaluate(()=>pointerFixture.views);
  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
- await page.evaluate(()=>{for(let i=0;i<20;i++)pointerFixture.hint();});
+ await page.evaluate(()=>{pointerFixture.nav.clearTimePolicyNotice();for(let i=0;i<20;i++)pointerFixture.hint();});
  assert.deepEqual(await page.evaluate(()=>({views:pointerFixture.views,dispatches:pointerFixture.dispatches})),{views:before,dispatches:0});
  await page.mouse.up();await page.waitForFunction(()=>pointerFixture.dispatches===1);
  assert.equal(await page.evaluate(()=>pointerFixture.views),before);

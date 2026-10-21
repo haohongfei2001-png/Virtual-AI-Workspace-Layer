@@ -302,7 +302,12 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   try{const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_PRESENT',grantId:current.id,mountId:current.mountId,intent}),{now:elapsedNow,schedule,cancel});
    if(readTerminal||readEpoch!==epoch||closed||navigation!==renderer||grant?.id!==current.id||!grantCurrent())return;
    if(result?.ok!==true)throw Error('presentation-unavailable');applyPresentation(result.presentation);invalidate();
-  }catch{if(!readTerminal&&readEpoch===epoch&&!closed&&navigation===renderer)state({state:'ready',reason:'presentation-unavailable'});}
+  }catch{if(!readTerminal&&readEpoch===epoch&&!closed&&navigation===renderer){
+   state({state:'ready',reason:'presentation-unavailable'});
+   // PRESENT retired the pointer reservation; retain the ordinary visibility,
+   // mutation and active-read gates while draining its queued background hint.
+   if(dirty)invalidate(true);
+  }}
  }
  async function calibrateEntry({kind}={}){
   if(readTerminal||role!=='workspace'||!['foreground','history'].includes(kind)||closed||calibrationPending||backup||recovery||snippets||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return;

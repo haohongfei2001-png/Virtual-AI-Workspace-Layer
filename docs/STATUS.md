@@ -1,5 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 面板失败刷新、点击目标保留与同版本安装回退（2026-10-22，基线faacdaaf）
+
+吸收dot评论6325498674／6325533360／6325487177并独立复现两处产品差额：PRESENT取消旧pointer timer后，失败或抛错原会遗留dirty直到续期；现仅在原失败代际内经现有invalidate(true)继续处理，隐藏、授权、在途读／写和新hold门不变。renderer原只检查按键／指针，漏掉pointerup后已有的nativeInteraction，提示到期重绘可在下一任务click前替换目标；现将原hold纳入重绘等待，释放后处理待刷内容，固定一秒不可续期、不重放点击。显式presentation仍可能等原hold结束，不宣称所有动作立即清理。
+
+最小产品反例先红后绿，272项合批定向通过；最终隔离headless真实鼠标＋actual client/renderer验证按下期间本地提示重绘及20次数据通知仍仅一次派发，已有pending仍拒绝且不重放。提示创建已断言；精确timer先于click的因果由Node排序反例证明，不冒称历史Linux同因。185文件默认包构建校验通过，仍NOT_RELEASE_READY。初版测试夹具漏第二dirty hint和adapter默认方法的问题已修，失败原件保留。
+
+F3另补实际旧安装包同schema回退：固定8008完整源码→当前→旧包→当前，同slot/扩展ID/原数据库，四阶段实际模块和worker字节核对。旧包先正常写入并保留人工资产，当前合成栅栏写入后，旧包read/header/apply/invalidate对partition和index均精确拒绝；每次拒绝八store原始行不变，恢复当前后删除投影仍排除、幸存条目及人工资产保留。11步浏览器检查、78项相关回归通过；两个scope的六个非native store同时核验。该浏览器包使用本批UI改动前的faac产品字节，最终合批候选由新增原durability步骤核验，不套作最终UI包浏览器结果。旧编译依赖缺失及fixture复用撤回source两次设置失败保留，均非产品缺陷。仅补同schema安装兼容，不注册生产删除来源、不替代INV-09来源S/G。
+
+[faac CI39669184791](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39669184791)自然终态41成功，Node11096全过；原取消链457ms／259ms，启动被动trace完整且零丢弃，populated八项本次通过。三个原始报告185产品路径逐项对该commit一致。它不认证本批新源码，也不追溯关闭00c8启动、旧unknown／peer等未唯一归因失败。
+
+证据沿原summary的`installedCodecAndPresentation20261022`及同目录压缩原件。dot评论6325936829的有限来源核定仍缺可消费完成见证，暂不反复研究或注册issuer。真实4GET已消费；主体/default-null空间、全服务器目录、成员/NONE、本人活动、自然恢复及真实IME/PAIA/安装仍开放；10k/100k DEFERRED，完整Free与发布未通过。下一项检查本批同源码CI的真实差额，不将绿色CI代替这些来源与实机条件。
+
 ## 取消实验进入条件与启动退回取证（2026-10-22，基线788de960）
 
 已定位本次Linux取消旅程失败的实际阶段：VIEW22在2743.1ms已开始，2768.6ms按下／2769.6ms点击时原生委派控件仍aria-disabled，正确拒绝且没有dispatch。探针随后等待第二次真实授权回复超时，尚未进入查询修改、面板返回或取消ACK；不能报为取消实现失败。现仅在原六秒总窗口内先观察当前唯一、连接且非pending的委派控件，再发一次原手势；采样后再竞态仍失败、不补点击，不变更产品守卫。失败阶段和原清理前固定状态可读回。独立反例确认一直pending零点击、采样后pending只点一次、6050ms才ready仍零点击。

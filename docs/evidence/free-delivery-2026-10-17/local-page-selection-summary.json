@@ -24000,5 +24000,143 @@
       "pr16-startup-new-comments.json": "20717f031de6ec6dbcab264373f5d3524bd5020f904cc0e17362b9618f3aa91c"
     },
     "release": "NOT_RELEASE_READY"
+  },
+  "installedCodecAndPresentation20261022": {
+    "baseline": "faacdaaf8cf724e371ab02d290a4f2fddce2aef9",
+    "productChanges": [
+      "src/host/free-frame-client.mjs",
+      "src/navigation/navigation.mjs"
+    ],
+    "files": {
+      ".github/workflows/free-offline-host.yml": "5a7bb003c9d1ac0d4894e69640aee9331c6b1f752045d570075fdb618e958980",
+      "src/host/free-frame-client.mjs": "76b194b3a4d21bbc86752ff13029aeea1d5d114e7ff764a7c1b4fe15c55f2c22",
+      "src/navigation/navigation.mjs": "38c383c4b6910240fd7c2cdcaa0b569f186a3e77648c2743d349e9b583caed25",
+      "tests/host/frame-native-pointer-browser.mjs": "559872b8d75ac5fdf6c0f1e8fc1d339725a44f53eea09600622abd1eb20f65ac",
+      "tests/host/free-frame-surface-refresh.test.mjs": "6bd639d4dee1fab914a9a51ecba2b2cb211b6423ac16bb5f02e868b8dbf6ac7c",
+      "tests/host/historical-host-upgrade.mjs": "efe368b97c7272ff1dc1d819b739b1430cc151ec6fbc2fe143688bc6dc0c7dfc",
+      "tests/host/historical-package.mjs": "71a6ba0b137ead2a2ad513bba1279e3d3d014833f3b45caf22d79e077d2f89f6",
+      "tests/host/historical-package.test.mjs": "b2ced8c999d043cefb2bb10989da39248e5532f28b5da7afd004ef908c65a472",
+      "tests/host/offline-ci-partition.test.mjs": "1e2805684b8ca5f54bc999486bd0f5a156072291c2f11a461dfc8de692175eaa",
+      "tests/host/presentation-pointer-race.test.mjs": "a1f7599fadc6aa98a278dcba0bdc70eadbc9d8acbd6160161b94b285819aec12",
+      "tests/host/historical-codec-rollback.mjs": "89915dbf0e2de916485d0603b93b42bfdf8ab755be63c0564a48845097ddee93",
+      "tests/host/historical-codec-rollback.test.mjs": "bf8f28e34c9e3af680a587d3b0475085089505b2da2b402eb8d13493e64215ea"
+    },
+    "ciPriorExactHead": {
+      "run": 39669184791,
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": 41,
+      "node": {
+        "passed": 11096,
+        "failed": 0,
+        "skipped": 0
+      },
+      "productPathsVerifiedAgainstCommit": 185,
+      "cancelMs": [
+        457,
+        259
+      ],
+      "startupTrace": "COMPLETE_PASSIVE_TRACE; dropped=0",
+      "historicalFailureCausesNotRetrospectivelyClosed": true,
+      "doesNotCertifyCurrentUncommittedChanges": true
+    },
+    "product": {
+      "presentationFailure": "PRESENT cancels the pointer timer; deny/throw now drains dirty via invalidate(true) under the original failure fence. Visibility, grant, active read, mutation and newer hold gates remain.",
+      "localPaint": "Renderer now includes the existing native interaction reservation in interacting(), then drains on release. Same fixed nonrenewable 1000ms, no click replay or pending bypass.",
+      "redEvidence": [
+        "present-paint-red.tap",
+        "local-paint-precise-red.tap"
+      ],
+      "targetedPassed": 272,
+      "browser": "present-paint-browser-final.tap; isolated headless real mouse plus actual client/renderer and synthetic runtime; notice creation asserted; not MV3 identity or historical Linux cause proof"
+    },
+    "installedCodec": {
+      "status": "PASS_SAME_SCHEMA_INSTALLED_HOST_CODEC_ROLLBACK",
+      "oldCommit": "8008cf74e7981e518c479d29c82029c7cc0586df",
+      "schema": "4->4->4->4",
+      "steps": 11,
+      "sameSlotAndExtensionId": true,
+      "actualModuleAndWorkerBytesChecked": true,
+      "roots": [
+        "partitions-v2",
+        "version-index-v2"
+      ],
+      "oldPositiveWrites": true,
+      "oldRejectedCalls": [
+        "read",
+        "header",
+        "apply",
+        "invalidate"
+      ],
+      "rawOracle": "All eight stores identical after each refusal and current reupgrade; six nonnative stores identical before/after synthetic fences across both scopes.",
+      "proAssetsPreserved": true,
+      "targetedPassed": 78,
+      "browserVersion": "155.0.8059.85",
+      "runnerFixtureHashesStable": 12,
+      "lifecycleSource": "SYNTHETIC_TEST_GATE_NOT_PRODUCTION",
+      "timingOfEvidence": "Browser package built from faac product bytes before the separate UI changes; final combined candidate will receive the same new CI step. Not claimed as final UI package browser acceptance.",
+      "historicalSetupFailures": [
+        "Archived build missing esbuild before browser startup; fixed exact-lock local dependency reuse without network.",
+        "Fixture tried to reuse a revoked source; production correctly rejected. Changed fixture to a new synthetic source ID, with Node preflight before final browser."
+      ],
+      "notEstablished": [
+        "INV09 native completion semantics",
+        "production lifecycle source",
+        "real profile or physical installation"
+      ]
+    },
+    "verification": {
+      "buildFiles": 185,
+      "archiveSha256": "32088ed79159444e74ad6190641818c7a941485dca03e80ad976a2846d6099b9",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "independentReview": "No blocking issue; observer preconditions and both scopes corrected before final checks."
+    },
+    "outerResearch": {
+      "comment": 6325936829,
+      "result": "No consumable lifecycle completion contract established; bounded review closed pending new precise evidence. No producer registered or real request issued."
+    },
+    "remaining": [
+      "trusted principal and current default/null space semantics",
+      "complete server directory and membership/NONE",
+      "self activity and natural recovery",
+      "full J1/J4 and real IME/PAIA/install use",
+      "10k/100k DEFERRED with original gates"
+    ],
+    "evidence": {
+      "path": "docs/evidence/free-delivery-2026-10-17/local-installed-codec-and-presentation-20261022.tar.gz",
+      "sha256": "08f0944f65a73905b0a795979312835b1a0a6879d1e367f8e4be37fc28f9c7f9",
+      "bytes": 2692882,
+      "members": [
+        "codec-install-first.json",
+        "codec-install-first.log",
+        "codec-install-reviewed.json",
+        "codec-install-reviewed.log",
+        "codec-fixture-logic.tap",
+        "codec-fixture-logic-fixed.tap",
+        "codec-install-final.json",
+        "codec-install-final.log",
+        "codec-final-targeted.tap",
+        "codec-final-targeted-fixed.tap",
+        "codec-install-targeted.tap",
+        "codec-install-reviewed.tap",
+        "present-paint-red.tap",
+        "local-paint-precise-red.tap",
+        "present-paint-green.tap",
+        "present-paint-green-fixed.tap",
+        "present-paint-final.tap",
+        "present-paint-browser.tap",
+        "present-paint-browser-final.tap",
+        "present-paint-build.json",
+        "codec-ui-source-hashes.json",
+        "codec-ui-independent-review.txt",
+        "faac-ci-live.json",
+        "faac-exact-selected-reports.json",
+        "faac-exact-source-verification.json",
+        "faac-node.log",
+        "faac-offline-journeys.log",
+        "faac-populated-native.log",
+        "pr16-after-codec-review-comments.json"
+      ]
+    }
   }
 }

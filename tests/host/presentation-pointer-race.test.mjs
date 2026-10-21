@@ -33,7 +33,7 @@ function projection(role='workspace'){
  const group=id=>({id,name:`Original ${id}`,nativeName:`Original ${id}`,segment:0,nativeUrl:null,lists:{current:page([row(`${id}_0`)],1000),old:page([row(`${id}_old`)],30),unknown:page()}});
  return {protocol:'vaiwl-free-frame/1',role,scope:'scopeA',completeSnapshot:false,segment:0,viewSession:{H:30,T:20000,Z:'UTC',policyRevision:0},navigation:{hasNewer:false,hasOlder:true,maxSegment:8},groups:page([group('P2'),group('P1')],100,0,24),entries:{noProject:{...page(),inventoryTotal:10},unknown:{...page([row('unknown')]),inventoryTotal:1}},selection:null};
 }
-function fixture(role='workspace',callback=()=>null,onHorizonRequest=null,onWorkingSetRequest=null){const doc=dom(),intents=[];const nav=createNavigation({document:doc,surface:{role,root:doc.body},adapter:{currentURL:()=>'',isCurrent:()=>false,status(){}},onHorizonRequest,onWorkingSetRequest,onProjectionRequest:callback,onPresentationRequest:v=>intents.push(v)});const pane=()=>nav.roots()[role].shadow;return {doc,nav,pane,intents,button:label=>pane().querySelectorAll('button').find(n=>n.getAttribute('aria-label')===label)};}
+function fixture(role='workspace',callback=()=>null,onHorizonRequest=null,onWorkingSetRequest=null,options={}){const doc=dom(),intents=[];const nav=createNavigation({document:doc,surface:{role,root:doc.body},...options,adapter:{currentURL:()=>'',isCurrent:()=>false,status(){},...options.adapter},onHorizonRequest,onWorkingSetRequest,onProjectionRequest:callback,onPresentationRequest:v=>intents.push(v)});const pane=()=>nav.roots()[role].shadow;return {doc,nav,pane,intents,button:label=>pane().querySelectorAll('button').find(n=>n.getAttribute('aria-label')===label)};}
 const tick=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
 
 
@@ -67,5 +67,29 @@ test('queued DTO applies before final presentation and search focuses the final 
  const queries=[],f=fixture('workspace',q=>{queries.push(q);return null;});try{f.nav.updateFrameProjection(projection());f.nav.showWorkspace();const {event}=held(f);
  const dto=projection();dto.segment=2;dto.navigation.hasNewer=true;dto.groups.offset=24;f.nav.updateFrameProjection(dto);f.nav.present({kind:'show-working-set'});f.nav.present({kind:'search-known',themeId:'P1'});
  assert.equal(f.nav.view().segment,0);f.doc.emit('pointerup',event);await task();assert.equal(f.nav.view().segment,2);assert.equal(queries.length,1);assert.equal(queries[0].segment,2);assert.equal(queries[0].offset,24);assert.deepEqual(queries[0].search,{query:'',projectId:'P1',offset:0,limit:24});assert.equal(f.pane().activeElement,f.pane().querySelector('input'));
+ }finally{f.nav.stop();}
+});
+
+// Controlled task ordering exercises the local renderer race. It does not
+// claim that a real browser or the historical Linux failure used this order.
+for(const finish of ['click','deadline','cancel','hidden','stop','scope'])test('deferred local paint respects native pointer reservation through '+finish,()=>{
+ let dispatches=0,releases=0,serial=0;const timers=new Map();
+ const f=fixture('workspace',()=>null,null,null,{adapter:{currentURL:()=>'',nativeHref:u=>u,navigationPlan:r=>({targetKey:'target',uiGrantId:'grant',mountId:'mount',plan:{mode:'native-control',planRevision:1,target:{kind:'resolved',entity:'conversation',nativeId:r.id,navigationURL:r.nativeUrl}}})},onDispatch:()=>{dispatches++;return new Promise(()=>{});},onUndoTimePolicyRequest:async()=>({ok:true}),onNativeInteractionStart:()=>()=>{releases++;}});
+ f.doc.defaultView.setTimeout=(fn,ms)=>{const id=++serial;timers.set(id,{fn,ms});return id;};f.doc.defaultView.clearTimeout=id=>timers.delete(id);
+ const fire=predicate=>{const entry=[...timers].find(([,v])=>predicate(v.ms));assert(entry);timers.delete(entry[0]);entry[1].fn();};
+ const flush=()=>{for(const [id,timer]of [...timers])if(timer.ms===0&&timers.has(id)){timers.delete(id);timer.fn();}};
+ try{
+ f.nav.updateFrameProjection(projection());f.nav.showWorkspace();f.nav.showTimePolicyNotice({id:'local-paint',expiresAt:new Date(Date.now()+500).toISOString()});
+ const a=f.pane().querySelector('[data-ref-id]'),event={isTrusted:true,isPrimary:true,button:0,pointerId:11,composedPath:()=>[a,f.nav.roots().workspace.n]};
+ f.doc.emit('pointerdown',event);for(const fn of a.events.pointerdown)fn(event);
+ fire(ms=>ms>0&&ms<1000);f.doc.emit('pointerup',event);f.doc.emit('lostpointercapture',event);flush();
+ assert.ok(f.pane().querySelector('[data-ref-id]')===a,'pointerup/lost capture must not repaint before a later click task');
+ if(finish==='click'){a.click();assert.equal(dispatches,1);flush();}
+ if(finish==='deadline'){fire(ms=>ms===1000);flush();assert.notEqual(f.pane().querySelector('[data-ref-id]'),a);a.click();}
+ if(finish==='cancel'){f.doc.emit('pointercancel',event);flush();a.click();}
+ if(finish==='hidden'){f.doc.visibilityState='hidden';f.doc.emit('visibilitychange',{});}
+ if(finish==='stop'){f.nav.stop();a.click();}
+ if(finish==='scope'){f.nav.updateFrameProjection({...projection(),scope:'other'});a.click();}
+ assert.equal(releases,1);assert.equal(dispatches,finish==='click'?1:0);assert.equal([...timers.values()].filter(t=>t.ms===1000).length,0);
  }finally{f.nav.stop();}
 });

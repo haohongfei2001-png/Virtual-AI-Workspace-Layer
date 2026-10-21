@@ -2,6 +2,8 @@
 
 ## 夜间接续：真实对照已消费，来源审查与依赖就绪工程并行（2026-10-22）
 
+C5/UI-15本批修复PRESENT失败后dirty残留，以及原生pointerup到click间本地重绘替换目标；沿原刷新门和固定一秒hold，不放宽pending／授权／预算。F3补完整旧schema4安装包对新生命周期codec的拒写与原库保全，复用现有历史包runner／CI job；两个scope和八store核验，合成gate不作生产来源。faac CI已自然41成功，仅对faac；本批最终合批源码待新CI。精确反例、浏览器范围与历史设置失败见STATUS/`installedCodecAndPresentation20261022`。dot有限INV09来源核定仍无可消费完成合同，关闭重复检索；下一真实关口保持主体/当前空间及完整目录，不重发已消费4GET，不改完整Free目标。
+
 C5本批收口取消实验的错误进入时机：788 Linux原click发生在既有VIEW pending，零dispatch、尚无取消操作；现在原六秒内证明当前唯一委派入口ready后只点一次，后继竞态保留失败、不重放。原窗口／搜索／两类取消与草稿离线子旅程通过，生产pending守卫不改。启动退回则仅补有界被动时序，原15秒／立即加载／谓词保持，历史原因未唯一成立；不因本地或788本次通过改判00c8。证据与阶段hash见STATUS/`startupObservationAndCancelReadiness20261022`。下一项读取同源码CI的真实阶段差额，来源审查保持独立，不重发已消费4GET或把离线取消实验当完整Free。
 
 C2/C5已完成就绪原生入口pointerdown→click期间后台VIEW抢占修复：仅延后未发送的数据刷新、固定一秒不可续期，既有在途VIEW／scope核验／六秒／一次派发保持。原MODERN J1九步及真实DOM调度验证通过，仍只限原部分离线范围；dot指出的旁路观察器乱序、崩溃和收尾漏任务也已按固定期限关闭。00c8 CI自然终态40成功／1失败；下一项聚焦local-status启动双surface15秒失败的被动事件顺序，不改门槛或以重跑归因。详情见STATUS/`nativePointerAndObserver20261022`。真实来源、完整目录及G/U保持独立缺口；不重发已消费批次、不前置规模门禁。
