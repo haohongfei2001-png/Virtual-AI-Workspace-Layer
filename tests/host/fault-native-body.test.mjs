@@ -19,11 +19,13 @@ test('runner actual imported factory and call expression enable only the three m
  const imported=/import \{(\w+) as createHostFixtureServer\} from '([^']+)'/.exec(source);assert(imported);
  const factory=(await import(new URL(imported[2],import.meta.url)))[imported[1]];assert.equal(typeof factory,'function');
  const call=/server=await createHostFixtureServer\((.*?)\);guard=/.exec(source);assert(call);
- const optionsFor=Function('fault','return ('+call[1]+');');
+ const optionsFor=Function('fault','unknownTraceEnabled','return ('+call[1]+');');
  for(const fault of ['rate-limit','corrupt','unknown-protocol','csp','auth-failure','forged-scope']){
-  const server=await factory(optionsFor(fault));t.after(()=>server.close());
+  const server=await factory(optionsFor(fault,false));t.after(()=>server.close());
   const initial=await fetch(server.url),cookie=initial.headers.get('set-cookie').split(';')[0];
   const route=await(await fetch(server.origin+'/native/route?path=%2Fc%2F33333333-3333-4333-8333-333333333333',{headers:{cookie}})).json();
-  const enabled=['rate-limit','corrupt','unknown-protocol'].includes(fault);assert.equal(server.manifest.faultNativeBody,enabled?true:undefined);assert.equal(route.messages?.[0]?.messageId,enabled?'msg-self':undefined);
+  const enabled=['rate-limit','corrupt','unknown-protocol'].includes(fault);assert.equal(server.manifest.faultNativeBody,enabled?true:undefined);assert.equal(route.messages?.[0]?.messageId,enabled?'msg-self':undefined);assert.equal(server.manifest.faultUnknownTrace,undefined);
  }
+ const trace=await factory(optionsFor('unknown-protocol',true));t.after(()=>trace.close());assert.equal(trace.manifest.faultUnknownTrace,true);assert.equal(trace.manifest.faultNativeBody,true);
+ for(const fault of ['rate-limit','corrupt','csp','auth-failure','forged-scope'])await assert.rejects(factory(optionsFor(fault,true)),/invalid-fault-unknown-trace/);
 });

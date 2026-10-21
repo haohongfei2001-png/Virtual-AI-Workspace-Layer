@@ -20786,5 +20786,114 @@
       "10k/100k DEFERRED, original thresholds retained"
     ],
     "release": "NOT_RELEASE_READY"
+  },
+  "nativeRecoveryFormatAndCIFactory20261022": {
+    "baselineCommit": "b5746a7c077e107048919d2aa606d34c9de790cf",
+    "scope": "B5 native recovery downgrade rejection; CI factory test environment correction",
+    "sourceHashes": {
+      "src/data/native-repository.mjs": "b6ca95cbb9140678d624b0e181a0c9e4edd6d08d8472ebef9f67b9150f6169bf",
+      "src/data/free-recovery-status.mjs": "23241a2084c95eb895f133a1f665b716b0b36cd0f399810417d90740727bbaf2",
+      "tests/free/native-recovery-format.test.mjs": "e829f40e9bb9c818b83fa2935816749d7d9bf06d70f0b04a4b5fcc725b8444a3",
+      "tests/free/native-index-reader-browser.mjs": "efe167255701bbab1f4cdfebe75dc442311d3f5e31cae93f2148527ede099d32",
+      "tests/host/fault-native-body.test.mjs": "31e87d807c848de7f3116668d938b49a5a9fbe571c872dae091fc3aad923fe26"
+    },
+    "recovery": {
+      "reproduction": "Normal seed R, migrate index, add N; injected damaged root plus valid legacy same-revision shadow allowed downgrade and lost N. Not evidence of naturally occurring atomic-write corruption.",
+      "before": {
+        "regressionPass": 2,
+        "regressionFail": 2
+      },
+      "after": {
+        "affectedTests": 94,
+        "failures": 0,
+        "skipped": 0,
+        "realHeadlessIDB": {
+          "evidence": "REAL_IDB_INDEX_READER_NOT_RUNTIME_MIGRATION",
+          "browser": "156.0.8078.4",
+          "sourceHashes": {
+            "tests/free/native-index-reader-browser.mjs": "efe167255701bbab1f4cdfebe75dc442311d3f5e31cae93f2148527ede099d32",
+            "src/data/free-recovery-status.mjs": "23241a2084c95eb895f133a1f665b716b0b36cd0f399810417d90740727bbaf2",
+            "src/data/native-index-reader.mjs": "f04cbd728a930d9b6c780ee9a59642fab3f28420de0e02a9aec5c769f420fc64",
+            "src/data/native-version-index.mjs": "e6d79fd5ff6c1091469c6a50f2981efa8a82dbf3e6b1b29eaccaa667b31a87d1",
+            "src/data/native-partitions.mjs": "47ed02c63eff94900b0b4de16844df020488ff7b4675a433ff31faa5b6e89510",
+            "src/data/native-repository.mjs": "b6ca95cbb9140678d624b0e181a0c9e4edd6d08d8472ebef9f67b9150f6169bf",
+            "src/data/native-index-writer.mjs": "8997d4b49ec05252e462ee91e36f3e76ec7433283eff2e725024d28d00e1a74d"
+          },
+          "result": {
+            "checks": [
+              "repository-read-header-page-indexed-format",
+              "stale-write-no-format-downgrade",
+              "intact-index-no-old-shadow-replay",
+              "real-idb-damaged-index-rejects-same-revision-legacy-shadow",
+              "same-transaction-ref-project-dependency",
+              "full-read-equivalence",
+              "missing-index-aborts-transaction"
+            ],
+            "indexReads": 2,
+            "totalReads": 4
+          }
+        },
+        "independentReview": "no blocking issue"
+      },
+      "limits": [
+        "Recognizable indexed root to legacy shadow rejection only",
+        "Does not detect same-format same-revision shadow mismatch",
+        "INV-09 lifecycle codec and consumer remain NOT_ESTABLISHED",
+        "No new identity authority or live browser access"
+      ]
+    },
+    "ci": {
+      "runId": 39643936684,
+      "sourceCommit": "b5746a7c077e107048919d2aa606d34c9de790cf",
+      "snapshot": "completed/failure:39-success-2-failure",
+      "node": {
+        "passed": 10910,
+        "failed": 1,
+        "cause": "Extracted factory argument expression references unknownTraceEnabled, missing from test Function parameters",
+        "repair": "Bind explicit false in original six fault cases; true only unknown-protocol, other true flags rejected",
+        "targetedTests": 70,
+        "failures": 0,
+        "skipped": 0
+      },
+      "populated": {
+        "status": "FAIL",
+        "completedVisits": 4,
+        "fifthVisit": "admission deadline; identity 15/15, detail 8 unchanged",
+        "sameHashesAsLocalPass": {
+          "product": 184,
+          "fixtureAndRunner": 17
+        },
+        "remaining": "Need bounded diagnostic-only first-five-visit stage capture; do not change formal 64, original six-second assertion or budgets"
+      },
+      "unknownProtocol": {
+        "formal": "PASS_THIS_RUN_ONLY",
+        "historicalFailure": "OPEN",
+        "trace": "INCOMPLETE_DIAGNOSTIC_ONLY",
+        "responseIdentity": "MATCHED_SYNTHETIC_RESPONSE",
+        "causality": "NOT_ESTABLISHED"
+      },
+      "idleDraft": {
+        "job": "success",
+        "actualOutcome": "NATURAL_IDLE_NOT_OBSERVED"
+      }
+    },
+    "package": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 184,
+      "unpacked": "/private/tmp/vaiwl-ci39638853187/recovery-format-package/extension",
+      "archive": "/private/tmp/vaiwl-ci39638853187/recovery-format-package/vaiwl-free-host-development.zip",
+      "archiveSha256": "515c04fc3cd2f37eb587835a8fae7b5bc58ef064389a178a85cb83d80cad3853"
+    },
+    "evidenceHashes": {
+      "native-recovery-format-red.log": "3d921b99acdb5763bf76fb777969c206684c45a07c74ece0875529daf7c68d52",
+      "native-recovery-format-green.log": "7bf97ce61ad2f9ac0fc9043237b5f357bbdb8c61b08479c006ea12aec5da823c",
+      "native-recovery-format-browser.json": "91f3ed498d3290821de09d23488bc75a59cdb35c5a378c2ae0270c856ea7c671",
+      "fault-factory-regression.log": "ac73e6633e5ec7fed6dcc325917ae51f592d1f5c46474578be06ab91be5316b0",
+      "new-job-119374443930.raw.log": "005b955d2db9fd358debe9422eed5054bec6fcd8b3b634c8aa6601997b408f6b",
+      "new-job-119374444084.raw.log": "330f651e6353060017f134ed2111109608573b6793061f73a49b3f511079dc36",
+      "new-job-119374443962.raw.log": "0ff5a5d967ed73d466a04082cb176823148cf33a4f143bf96d60d7a497fe4c4a",
+      "new-job-119374447079.raw.log": "0476bf95e126328550037ae53573fce2c907a7ee60f158925b1a1e7b43fcdca9"
+    }
   }
 }

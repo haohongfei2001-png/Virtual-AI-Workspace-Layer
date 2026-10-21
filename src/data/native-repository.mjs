@@ -245,6 +245,9 @@ export class NativeRepository {
           if (intact) throw Error('intact-state-not-replaced');
           const shadowPayload=unpack(shadow.result),indexed=shadowPayload?.format===NATIVE_INDEX_FORMAT;
           const recoveryRoot=indexed?validateNativeIndexRoot(shadowPayload,normalized):validateNativeManifest(shadowPayload,normalized);
+          // A damaged indexed root must not authorize a legacy shadow merely
+          // because its revision matches. This narrows recovery, never grants it.
+          if(root.result?.payload?.format===NATIVE_INDEX_FORMAT&&!indexed)throw Error('native-index-recovery-format-conflict');
           const verifyAndRecover=manifest=>{
           if (unpack(marker.result).revision !== manifest.revision) throw Error('native-root-revision-conflict');
           // Verify every referenced piece before publishing a recovered manifest.

@@ -1,5 +1,13 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 恢复副本格式拒退与新CI差额（2026-10-22，基线b5746a7c）
+
+实际关闭B5恢复缺陷：在损坏indexed root与有效但错配的同revision旧partition shadow反例中，原实现允许修复并丢掉后来新增的聊天。诊断与实际recover现在一致拒绝格式回退，拒绝前后全库/receipt/Pro资产保持；正常indexed与真正legacy修复、来源撤回和幂等保持。两条反例先失败，94项受影响回归及真实headless IDB原reader旅程通过，184文件默认包校验通过。此为注入不一致副本的完整性反例，未证明正常原子写会自然产生；不防同格式错配，未实现INV-09删除栅栏/consumer，不标其完成。独立审查无阻断。
+
+[CI39643936684](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39643936684)终态39成功/2失败，J4 codec-after-evidence正常结束；未为新检查点取消它。Node10910过/1败：测试提取的真实factory参数引用新增unknownTraceEnabled，但Function环境漏传；已显式传参，保持六fault原allowlist并核验trace只对unknown启用，70项定向通过。populated-native仍第5条admission失败：与本地通过的184产品/17测试夹具hash完全相同，只有身份请求新增、详情仍8；前一产品修复不足以关闭Linux问题。下一最小单位是原前5访问的独立DIAGNOSTIC_ONLY阶段取证，保留正式64、6秒和生产预算，不再盲跑全程或猜测放宽。unknown正式目标本次可读且通过，独立trace取得同响应关联但仍INCOMPLETE/因果未证；旧BrowserBodyEvicted不追溯消除。idle-draft job成功只表示观察有效，实际仍NATURAL_IDLE_NOT_OBSERVED。
+
+证据沿原summary的`nativeRecoveryFormatAndCIFactory20261022`；真实批次已消费、scope/旧库未启、完整Free/实机及10k/100k边界不变。
+
 ## 当前聊天优先与CI失败收口（2026-10-22，基线f0223ff6）
 
 [CI39638853187](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/actions/runs/39638853187)终态38成功/3失败，原日志保留。populated-native在第5条访问缺活动准入且未发详情请求；idle-draft-active在首次页面求值失败、尚未进入休眠观察；unknown-protocol为HTTP200但浏览器正文读取`BrowserBodyEvicted/net::ERR_ABORTED`。后续本地通过不追溯改判这些历史原因。

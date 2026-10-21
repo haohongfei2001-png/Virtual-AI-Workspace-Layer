@@ -25,6 +25,7 @@ export async function freeRecoveryStatus(repository,scope,kind,options={}) {
     let intact=false;try{validate(unpack(root.result),normalized);intact=true;}catch{}
     if(intact)throw Error('intact-state-not-replaced');
     const manifest=validate(unpack(shadow.result),normalized);if(unpack(marker.result).revision!==manifest.revision)throw Error('recovery-revision-conflict');
+    if(native&&root.result?.payload?.format===NATIVE_INDEX_FORMAT&&manifest.format!==NATIVE_INDEX_FORMAT)throw Error('native-index-recovery-format-conflict');
     if(!native&&root.result?.payload?.format===EVIDENCE_DIRECTORY_FORMAT&&manifest.format!==EVIDENCE_DIRECTORY_FORMAT)throw Error('evidence-directory-recovery-format-conflict');
     const done=()=>{if(!result.recoveryReason)result.recoverable=true;};
     const verify=complete=>{if(native)loadNativePieces(store,complete,normalized,{projects:Object.keys(complete.projects),refs:Object.keys(complete.refs)},done,fail);
