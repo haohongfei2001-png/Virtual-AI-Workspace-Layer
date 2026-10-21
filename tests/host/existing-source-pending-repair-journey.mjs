@@ -43,6 +43,14 @@ export async function waitPendingRepairReadCapacity({read,wait=sleep,now=Date.no
  assert(available(await inspect()),'pending-repair-read-capacity-unavailable');
  return {waitMs,observations};
 }
+/** Read-only parent presentation diagnostics. Never capture text, URLs, drafts,
+ * opaque grants, DOM markup or private runtime objects. No recovery action. */
+export function pendingRepairPresentationSnapshot(){
+ const count=selector=>Math.min(64,document.querySelectorAll(selector).length);
+ const buttons=[...document.querySelectorAll('button[aria-label="返回工作空间"]')].slice(0,8);
+ const visible=node=>{const box=node.getBoundingClientRect(),style=getComputedStyle(node);return node.isConnected&&box.width>0&&box.height>0&&style.display!=='none'&&style.visibility!=='hidden';};
+ return {documentVisible:document.visibilityState==='visible',documentFocused:document.hasFocus(),ownedOpen:count('[data-va-owned]:popover-open'),ownedFrames:count('iframe[data-va-owned]'),returnControls:count('button[aria-label="返回工作空间"]'),returnVisible:buttons.filter(visible).length,returnDisabled:buttons.filter(node=>node.disabled).length,nativeDialogOpen:!!document.querySelector('#native-dialog[open]'),nativeModalCount:count('dialog:modal'),nativePopoverCount:Math.min(64,[...document.querySelectorAll(':popover-open')].filter(node=>!node.hasAttribute('data-va-owned')).length)};
+}
 export async function preparePendingRepairPackage(directory,origin){
  const built=packageHost(directory,{offlineOrigin:origin,offlineContext:true,offlineExistingSend:true,offlineHistory:true});
  const permissions=JSON.parse(await readFile(join(built.unpacked,'manifest.json')));
@@ -124,7 +132,7 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
   const baseline=await poll(async()=>{const value=await inspect();return Object.values(value.evidence.hints).filter(h=>h.messageId===first.id).length===1?value:null;},'persisted-first-ACK-source');
   assert.equal(baseline.native.refs[J4_SEND_C].nativeTitle,'Membership not loaded');assert.equal(baseline.continuations.filter(row=>row.state==='pending-evidence').length,0);assert.deepEqual(baseline.assets,preserved);
   record('first-real-send-persists-existing-ACK-source-before-second-send',{messageId:first.id,ACKs:1,nativeSends:1});
-  stage('PRE_SECOND_BUDGET');await budgetWindow();
+  stage('PRE_SECOND_BUDGET');await readCapacity();
   // Capture genuine current-frame proof before yielding to native controls.
   // It is comparison evidence only; it never authorizes later production work.
   stage('PRE_SECOND_WORKSPACE_AUTHORITY');await workspace();
@@ -175,6 +183,7 @@ export async function runExistingSourcePendingRepair(output,{execute=false}={},t
  }catch(error){
   report.status=handle?'FAIL':'NOT_RUN_BROWSER_STARTUP';report.S=handle?'EXECUTED_FAILED':'NOT_RUN';report.error=pendingDiagnosticError(error);
   await capturePendingRepairFailure(report,diagnosticRead,diagnosticPending);
+  if(a&&!a.isClosed())try{report.presentationFailure=await pendingDiagnosticDeadline(()=>a.evaluate(pendingRepairPresentationSnapshot),{timeoutMs:1000});}catch{report.presentationFailure={status:'READ_ONLY_DIAGNOSTIC_UNAVAILABLE'};}
  }finally{
   await finalizePendingRepairReport(report,[
    ['debugger-detach',()=>pause?.close()],['debugger-close',()=>debuggerCDP?.close()],

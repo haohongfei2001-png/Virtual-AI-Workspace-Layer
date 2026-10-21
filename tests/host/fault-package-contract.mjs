@@ -12,11 +12,11 @@ export function assertFaultObservation(c){
   case 'auth-failure':assert(c.session401>0);assert.equal(c.privateFrames,0);assert.equal(c.persistedNativeStates,0);break;
   case 'unsafe-reading':assert.equal(c.composerInsideReading,true);assert.equal(c.unsafeWorkspaceMountedBeforeToggle,false);assert.equal(c.unsafeWorkspaceOpenBeforeToggle,false);assert.equal(c.workspaceOpen,false);break;
   case 'forged-scope':assert(c.forgedMessages>0);assert.equal(c.forgedScopePersisted,false);assert.equal(c.legitimateProjection,true);break;
-  case 'csp':assert.equal(c.frameSourceNone,true);assert(c.framePolicyViolations>0);assert.equal(c.privateFrames,0);break;
+  case 'csp':assert.equal(c.frameSourceNone,true);assert(c.mainProbePolicyViolations>0);assert.equal(c.mainProbeRequests,0);assert.equal(c.extensionPageMessageSchemaViolations,0);assert(c.packageFramePolicyViolations>0,'MAIN probe cannot substitute for package CSP evidence');assert.equal(c.privateFrames,0);assert.equal(c.cspPackagePolicy,'PACKAGE_FRAME_BLOCK_OBSERVED');break;
   case 'iframe-destroy':assert(c.removedOwnedFrames>0);assert.equal(c.privateFrames,0);assert.equal(c.staleGrantRevocation,'NOT_ESTABLISHED_NO_PRIOR_JOIN');break;
   case 'stale-response':assert.equal(c.heldNativeRoute,true);assert.equal(c.freshRouteBeforeRelease,true);assert.equal(c.releasedResponses,1);assert.equal(c.lateNativeRouteReplacedCurrent,true);assert.equal(c.projectionMatchesActualNativeRoute,true);assert.equal(c.oldWorkerEpochRejection,'NOT_ESTABLISHED_NATIVE_ROUTE_FIXTURE');break;
   default:
-   assert(c.nativeMetadataResponses>0);assert(c.workerMetadataResponses>0);assert.equal(c.calibrationTerminal,'unavailable');
+   assert.equal(c.metadataReadEnabled,true);assert(c.nativeMetadataResponses>0);assert(c.workerMetadataResponses>0);assert.equal(c.calibrationTerminal,'unavailable');
    assert(c.workerMetadataResponses<=3);assert.equal(c.workerRequestsStableAfterTerminal,true);
    if(c.fault==='rate-limit')assert.equal(c.metadataStatus,429);
    if(c.fault==='corrupt')assert.equal(c.invalidJSON,true);

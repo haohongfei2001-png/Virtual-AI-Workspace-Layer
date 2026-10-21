@@ -24,18 +24,19 @@ export const css=`
 .card h2{gap:11px;font-size:calc(15px * var(--vaiwl-font-scale,1));line-height:calc(22px * var(--vaiwl-font-scale,1));letter-spacing:0}.card h2 .theme-glyph{width:calc(25px * var(--vaiwl-font-scale,1));height:calc(25px * var(--vaiwl-font-scale,1));border-radius:7px;background:color-mix(in srgb,var(--bubble,#f4f4f4) 88%,var(--ink,#171717) 12%);color:inherit}.card .members{margin:8px 10px 9px 28px;padding-left:9px;border-color:var(--line,#d8d8d8)}
 .row{display:flex;align-items:center;gap:8px;min-width:0}.window-glyph{display:inline-flex;flex:none;color:var(--muted,#646464)}.window-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .card .row{overflow:visible;position:relative;font-size:calc(14px * var(--vaiwl-font-scale,1));line-height:calc(22px * var(--vaiwl-font-scale,1));min-height:36px;padding:7px 6px 7px 9px;gap:8px}.card .row::before{content:"";position:absolute;left:-10px;top:18px;width:7px;border-top:1px solid var(--line,#d8d8d8);pointer-events:none}
+.card-head > .project-create{width:28px;height:28px;flex:none}
 .card-actions{width:28px;height:28px;opacity:0}.card:hover .card-actions,.card:focus-within .card-actions{opacity:1}.card .old{width:30px;height:30px;margin:3px 0 0 2px}.card .old-list{margin:3px 0 0 -9px;padding:6px 0 0 9px;border-top:1px solid var(--line,#e5e5e5);border-left:0}.card .more{padding:5px 9px}
 .arrows{margin-right:-46px;background:transparent;border:0;box-shadow:none;padding:0;border-radius:0;top:0}.arrows button{width:32px;height:32px}
 .themes{max-height:340px}.theme-toggle{font-size:calc(14px * var(--vaiwl-font-scale,1));min-height:39px;padding:8px}.theme-glyph{width:calc(17px * var(--vaiwl-font-scale,1));min-height:calc(17px * var(--vaiwl-font-scale,1))}.theme-name{flex:1}.theme-disclosure{margin-left:auto}.theme-disclosure svg{width:12px;height:12px}.theme-toggle[aria-expanded=true] .theme-disclosure svg{transform:rotate(90deg)}.children .row{font-size:calc(13px * var(--vaiwl-font-scale,1));min-height:34px;padding:5px;gap:6px}.children .window-glyph svg{width:12px;height:12px}
 @media(max-width:760px){.workspace{padding:15px 46px 24px 9px}.arrows{margin-right:-32px}.card-head{padding-left:11px}.card h2{gap:8px}.card-actions{opacity:1}.card{border-radius:13px}}
-@media(pointer:coarse){.card-actions{opacity:1}.card .row{min-height:44px}.old,.arrows button{min-height:40px}}
+@media(pointer:coarse){.card-head > .project-create{min-width:34px;min-height:34px}.card-actions{opacity:1}.card .row{min-height:44px}.old,.arrows button{min-height:40px}}
 .snippet-preview{display:block;font-size:calc(12px * var(--vaiwl-font-scale,1));color:var(--muted,#646464);white-space:normal;max-height:3em;overflow:hidden;margin-left:8px;flex:1}.anchor-feedback{font-size:calc(12px * var(--vaiwl-font-scale,1));color:var(--muted,#646464);padding:8px}.working-set .row{margin:3px 0}.toolbar .square{width:30px;height:32px}
 
 /* The host may retain its native rail at a narrow viewport. Reflow only our
    owned controls so required titles and actions still get usable inline space. */
 @media(max-width:240px){
  .workspace{padding:8px}
- .arrows{float:none;display:flex;position:sticky;width:max-content;max-width:100%;margin:0 0 8px auto;gap:4px}
+ .arrows{float:none;display:flex;position:sticky;flex-wrap:wrap;width:max-content;max-width:100%;margin:0 0 8px auto;gap:4px}
  .card-head{flex-wrap:wrap;padding:8px;gap:6px}
  .card h2{flex:1 0 100%;width:100%;gap:6px}
  .card-actions{margin-left:auto;opacity:1}

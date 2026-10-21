@@ -440,9 +440,15 @@ jobs:
         run: |
           FREE_UI10_INTERACTIONS=1 node tests/host/ui10-package-matrix-browser.mjs "$RUNNER_TEMP/cloud-ui-controls.json" ${{ matrix.profile }}
           node -e "const r=require(process.env.RUNNER_TEMP+'/cloud-ui-controls.json'); if(r.interactionMatrix?.status!=='PASS_CONTROL_SUBMATRIX_ONLY'||!r.interactionMatrix.cells.length||r.fullV27Acceptance!=='NOT_ESTABLISHED') process.exit(1)"
+      - name: Early search input before owner result (web mechanism only)
+        if: ${{ !cancelled() && matrix.profile == 'LEGACY' }}
+        run: node tests/host/ui10-search-early-input-browser.mjs "$RUNNER_TEMP/cloud-ui-early-input.json"
       - name: Preserve exact UI result in job log
         if: ${{ always() }}
-        run: test ! -f "$RUNNER_TEMP/cloud-ui-controls.json" || cat "$RUNNER_TEMP/cloud-ui-controls.json"
+        run: |
+          for name in cloud-ui-controls cloud-ui-early-input; do
+            test ! -f "$RUNNER_TEMP/$name.json" || cat "$RUNNER_TEMP/$name.json"
+          done
 
   cloud-supplementary-gates:
     # Finite explicit offline cases, synthetic fixtures only. No artifacts or live credentials.

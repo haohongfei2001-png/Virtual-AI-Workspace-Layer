@@ -23,7 +23,12 @@ export function assertPartialObserved(snapshot,offset,{searched=false}={}){
  for(const id of snapshot.ids){const title=world.conversations.find(r=>r.id===id).title;assert(snapshot.titles[id]===title||id===world.conversations[999].id&&snapshot.titles[id]===title+' refreshed','title must come from the same observed native identity');}
  assert.equal(snapshot.scopeKey,partialScopeKey);
  assert.deepEqual(snapshot.foreignIds,[],'unobserved context must not inherit refs');
- assert(snapshot.memberships.length===snapshot.ids.length&&snapshot.memberships.every(s=>s==='UNKNOWN'),'history alone must not claim NONE');
+ // UNKNOWN proposals deliberately do not create persistent membership facts.
+ // Check raw positive claims separately from the complete production projection.
+ assert(snapshot.rawMemberships&&typeof snapshot.rawMemberships==='object'&&!Array.isArray(snapshot.rawMemberships),'missing raw membership diagnostics');
+ for(const [id,state] of Object.entries(snapshot.rawMemberships)){assert(snapshot.ids.includes(id),'orphan raw membership');assert.equal(state,'UNKNOWN','history alone must not persist NONE or PROJECT');}
+ assert.deepEqual(Object.keys(snapshot.projectedMemberships).sort(),snapshot.ids,'every observed ref must be projected exactly once');
+ assert(Object.values(snapshot.projectedMemberships).every(state=>state==='UNKNOWN'),'history alone must not project NONE or PROJECT');
  assert(snapshot.inventories.length>0&&snapshot.inventories.every(s=>s==='partial'||s==='unknown'),'no full inventory claim');
  assert.equal(snapshot.draftPreserved,true);
 }

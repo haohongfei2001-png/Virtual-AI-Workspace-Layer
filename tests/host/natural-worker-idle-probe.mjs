@@ -5,7 +5,7 @@ import {mkdtemp,mkdir,readFile,writeFile,access} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {installJ4GrantObserver} from './j4-grant-observer.mjs';
-import {assessIdleObservation,assessIdleRecovery,assessIdleScenario,IDLE_EVIDENCE_DEPENDENCIES,idleEvidenceCommit,validateIdleEvidence} from './natural-worker-idle-oracle.mjs';
+import {assessIdleObservation,assessIdleRecovery,assessIdleScenario,IDLE_EVIDENCE_DEPENDENCIES,idleEvidenceCommit,validateIdleEvidence,finishIdleObservationDeadline} from './natural-worker-idle-oracle.mjs';
 import {createHash} from 'node:crypto';
 import {createHostFixtureServer} from './fixtures/server.mjs';
 import {createHistoricalNetworkGuard} from './historical-network-guard.mjs';
@@ -71,8 +71,20 @@ try{
  await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('CDP-connect-deadline')),6000);socket.addEventListener('open',()=>{clearTimeout(timer);ready=true;resolve();},{once:true});socket.addEventListener('error',()=>{clearTimeout(timer);reject(Error('CDP-connect-error'));},{once:true});});
  report.browser=await command('Browser.getVersion');await command('Target.setDiscoverTargets',{discover:true});const {id}=await command('Extensions.loadUnpacked',{path:built.unpacked}),prefix='chrome-extension://'+id+'/';report.extensionId=id;
  const worker=await poll(async()=>{const matches=(await command('Target.getTargets')).targetInfos.filter(t=>t.type==='service_worker'&&t.url===prefix+'extension/worker.mjs');assert(matches.length<=1);return matches[0];},'exact-worker');assert.equal(worker.attached,false);report.initialWorker={targetId:worker.targetId,attached:worker.attached};
- const {targetId}=await command('Target.createTarget',{url:server.url});let {sessionId}=await command('Target.attachToTarget',{targetId,flatten:true});
- await poll(()=>evaluate(sessionId,"document.querySelectorAll('[data-va-owned]:popover-open').length===2"),'dual-surfaces');
+ // Activate the new native tab before fixture navigation. Attaching a debugger
+ // does not itself make a headless target visible; hidden discovery is deferred.
+ const {targetId}=await command('Target.createTarget',{url:'about:blank',background:false});let {sessionId}=await command('Target.attachToTarget',{targetId,flatten:true});
+ await command('Target.activateTarget',{targetId});await command('Page.bringToFront',{},sessionId);
+ const bootstrapFacts=()=>evaluate(sessionId,`({url:location.href,readyState:document.readyState,visibility:document.visibilityState,focused:document.hasFocus(),state:document.documentElement.dataset.vaiwlState??null,reason:document.documentElement.dataset.vaiwlReason??null,open:document.querySelectorAll('[data-va-owned]:popover-open').length,owned:document.querySelectorAll('[data-va-owned]').length,frames:[...document.querySelectorAll('[data-va-owned] iframe')].map(f=>({src:f.src,connected:f.isConnected})),editorCount:document.querySelectorAll('#prompt-textarea').length,readingCount:document.querySelectorAll('#reading').length})`);
+ const bootstrapDeadline=performance.now()+15000;
+ try{
+  const navigation=await command('Page.navigate',{url:server.url},sessionId);assert(!navigation.errorText,'fixture-navigation-failed:'+navigation.errorText);
+  await poll(async()=>{report.bootstrap=await bootstrapFacts();return report.bootstrap.url===server.url&&report.bootstrap.readyState==='complete'&&report.bootstrap.visibility==='visible';},'visible-native-fixture',Math.max(1,bootstrapDeadline-performance.now()));
+  await poll(async()=>{report.bootstrap=await bootstrapFacts();return report.bootstrap.open===2;},'dual-surfaces',Math.max(1,bootstrapDeadline-performance.now()));
+ }catch(error){
+  try{report.bootstrap=await bootstrapFacts();}catch(diagnosticError){report.bootstrapDiagnosticError=String(diagnosticError);}
+  report.bootstrapFixtureRequests=server.snapshot().requests;report.bootstrapFixtureActions=server.snapshot().actions;throw error;
+ }
  report.initialSurfaces=await evaluate(sessionId,"({open:document.querySelectorAll('[data-va-owned]:popover-open').length,frames:[...document.querySelectorAll('[data-va-owned] iframe')].map(n=>n.src)})");assert.equal(report.initialSurfaces.frames.length,2);
  const initialFrameSessions=await observeFrames(await poll(()=>discoverFrames(prefix),'initial-exact-UI-frames'));
  report.initialFrames=await Promise.all(initialFrameSessions.map(frame=>frameEvidence(frame)));await detachFrames(initialFrameSessions);
@@ -94,13 +106,19 @@ try{
  for(const t of initialTargets)assert.equal(t.attached,false);
  report.initialExtensionTargets=initialTargets;
  const started=performance.now(),startEvent=events.length;
+ report.observationTiming={startedMonotonicMs:started,startedWallTime:Date.now(),deadlineMonotonicMs:started+report.windowMs};
  // Discovery events only during this window: no target polling, debugger or page commands.
  await sleep(report.windowMs);
- const elapsedMs=performance.now()-started,windowEvents=events.slice(startEvent);report.observationCompleted=true;
+ report.observationTiming.firstWakeMonotonicMs=performance.now();report.observationTiming.firstWakeElapsedMs=report.observationTiming.firstWakeMonotonicMs-started;
+ const ended=await finishIdleObservationDeadline(started,report.windowMs,{now:()=>performance.now(),sleep});
+ const elapsedMs=ended-started,windowEvents=events.slice(startEvent);
+ Object.assign(report.observationTiming,{endedMonotonicMs:ended,endedWallTime:Date.now(),elapsedMs});
+ // Persist raw duration and event evidence before the independent oracle can fail.
+ report.observation={elapsedMs,validation:'PENDING',hostSessionDetached:true,targetEvents:windowEvents.map(e=>({at:e.at-started,method:e.method,targetId:e.params.targetId??e.params.targetInfo?.targetId,type:e.params.targetInfo?.type??null}))};
  assert.equal(eventOverflow,false,'bounded event log overflow invalidates observation');
  assert(!windowEvents.some(e=>e.params.targetInfo?.url?.startsWith(prefix)&&e.params.targetInfo.attached),'extension target attached during observation');
  const observation=assessIdleObservation({windowMs:report.windowMs,elapsedMs,initialWorkerId:worker.targetId,prefix,initialTargets,events:windowEvents.map(e=>({...e,at:e.at-started})),eventOverflow,hostSessionDetached:true,forcedWorkerStop:report.forcedWorkerStop,workerDebuggerAttached:report.workerDebuggerAttached,productionTimersModified:report.productionTimersModified,pageFrozen:report.pageFrozen});
- report.observation={...observation,elapsedMs,hostSessionDetached:true,targetEvents:windowEvents.map(e=>({at:e.at-started,method:e.method,targetId:e.params.targetId??e.params.targetInfo?.targetId,type:e.params.targetInfo?.type??null}))};
+ report.observation={...report.observation,...observation,validation:'VALID'};report.observationCompleted=true;
  ({sessionId}=await command('Target.attachToTarget',{targetId,flatten:true}));report.native=await evaluate(sessionId,nativeExpression);assert.equal(report.native.sameDocument,true);assert.equal(report.native.sameEditor,true);assert.equal(report.native.draft,expectedDraft);assert.equal(report.native.open,0);assert.equal(report.native.returnCount,1);
  report.status=observation.status;report.naturalWorkerSleep=observation.naturalWorkerSleep;process.exitCode=2;
  if(observation.initialWorkerDestroyed){

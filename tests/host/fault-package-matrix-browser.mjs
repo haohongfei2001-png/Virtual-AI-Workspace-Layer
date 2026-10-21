@@ -25,15 +25,16 @@ for(const fault of requestedCases){
  let server,guard,handle,dir,build,built,page,phase='setup';
  try{
   server=await createHostFixtureServer({profile:'FAULT',fault});guard=await createHistoricalNetworkGuard({fixtureOrigin:server.origin});dir=await mkdtemp(join(tmpdir(),'vaiwl-fault-'+fault+'-'));
-  built=packageHost(join(dir,'package'),{offlineOrigin:server.origin});build=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));result.sourceHashes=build.sourceHashes;result.fixture=server.manifest;
+  built=packageHost(join(dir,'package'),{offlineOrigin:server.origin,...(['rate-limit','corrupt','unknown-protocol'].includes(fault)?{offlineHistory:true}:{})});build=JSON.parse(await readFile(join(built.unpacked,'build-manifest.json')));result.sourceHashes=build.sourceHashes;result.metadataReadEnabled=build.offlineHistory===true;result.fixture=server.manifest;
   phase='launch';handle=await launchNativeVisibilityBrowser({chromium,executablePath:process.env.FREE_CHROME_EXECUTABLE??(platform()==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'/usr/bin/chromium'),profileDir:join(dir,'profile'),headed:false,historicalNetworkGuard:guard.config});
   const {context,browser}=handle;context.setDefaultTimeout(15000);context.setDefaultNavigationTimeout(15000);
   const responses=[],responseTasks=[];context.on('response',response=>{const request=response.request(),url=new URL(response.url());if(url.origin!==server.origin)return;const row={path:url.pathname,status:response.status(),worker:!!request.serviceWorker()};responses.push(row);if(url.pathname==='/backend-api/conversation/'+C&&['corrupt','unknown-protocol'].includes(fault))responseTasks.push(response.json().then(body=>{row.invalidJSON=false;row.unknownSchema=body.protocol==='future-99'&&!body.mapping;},error=>{row.invalidJSON=error?.name==='SyntaxError';row.unknownSchema=false;}));});
   await context.route('**/*',route=>route.request().url().startsWith(server.origin+'/')||route.request().url().startsWith('chrome-extension://')?route.continue():route.abort());
   await context.addInitScript(()=>{
-   globalThis.faultWitness={forgedMessages:0,framePolicyViolations:0,removedOwnedFrames:0};
+   globalThis.faultWitness={forgedMessages:0,framePolicyViolations:0,removedOwnedFrames:0,packageFramePolicyViolations:0,mainProbePolicyViolations:0,extensionPageMessageCount:0,extensionPageMessageSchemaViolations:0};
    addEventListener('message',e=>{if(e.source===window&&e.origin===location.origin&&e.data?.type==='HOST_SCOPE'&&e.data.scopeKey==='attacker-chosen-scope')faultWitness.forgedMessages++;});
-   addEventListener('securitypolicyviolation',e=>{if(e.effectiveDirective==='frame-src')faultWitness.framePolicyViolations++;});
+   addEventListener('securitypolicyviolation',e=>{if(e.effectiveDirective==='frame-src'){faultWitness.framePolicyViolations++;if(e.blockedURI.startsWith('chrome-extension://'))faultWitness.packageFramePolicyViolations++;if(e.blockedURI.includes('/fault-csp-probe'))faultWitness.mainProbePolicyViolations++;}});
+   addEventListener('message',e=>{if(!e.origin.startsWith('chrome-extension://'))return;faultWitness.extensionPageMessageCount++;const allowed={VAIWL_UI_JOIN:['type','role','nonce'],VAIWL_UI_IDLE_ACK:['type','role','requestId'],VAIWL_UI_EXIT:['type','role'],VAIWL_UI_SUSPEND:['type','role']}[e.data?.type];if(!allowed||Object.keys(e.data).some(k=>!allowed.includes(k)))faultWitness.extensionPageMessageSchemaViolations++;});
    new MutationObserver(records=>{for(const record of records)for(const n of record.removedNodes)if(n.nodeType===1)faultWitness.removedOwnedFrames+=(n.matches('iframe[title="工作空间"],iframe[title="侧边栏"]')?1:0)+n.querySelectorAll('iframe[title="工作空间"],iframe[title="侧边栏"]').length;}).observe(document,{subtree:true,childList:true});
   });
   const cdp=await browser.newBrowserCDPSession(),{id}=await cdp.send('Extensions.loadUnpacked',{path:built.unpacked});
@@ -45,11 +46,11 @@ for(const fault of requestedCases){
   const frame=()=>page.frames().find(f=>f.url()==='chrome-extension://'+id+'/workspace.html');
   if(fault==='stale-response'){
    await until(()=>frame());await frame().getByRole('link',{name:'Ordinary conversation',exact:true}).first().waitFor();
-   const close=page.getByRole('button',{name:'返回原生阅读',exact:true});if(await close.isVisible())await close.click();
+   for(const name of ['返回原生阅读','显示原生列表']){const close=page.getByRole('button',{name,exact:true});if(await close.isVisible())await close.click();}
    await page.locator('aside').getByRole('link',{name:'Ordinary conversation',exact:true}).click();await until(()=>server.snapshot().pendingResponses===1);result.heldNativeRoute=true;
-   await page.locator('aside').getByRole('link',{name:'Membership not loaded',exact:true}).click();await page.waitForURL('**/c/'+U);await until(()=>frame());await frame().getByRole('link',{name:'Membership not loaded',exact:true}).waitFor();result.freshRouteBeforeRelease=true;
+   await page.locator('aside').getByRole('link',{name:'Membership not loaded',exact:true}).click();await page.waitForURL('**/c/'+U);await until(()=>frame());await frame().getByRole('link',{name:'Membership not loaded',exact:true}).waitFor({state:'attached'});result.freshRouteBeforeRelease=true;
    result.releasedResponses=server.releaseStaleResponses();await page.waitForURL('**/c/'+C);await page.waitForFunction(()=>document.querySelector('h1')?.textContent==='Ordinary conversation');result.lateNativeRouteReplacedCurrent=true;
-   await until(()=>frame());await frame().locator('[aria-current="page"]').filter({hasText:'Ordinary conversation'}).first().waitFor();result.projectionMatchesActualNativeRoute=true;result.oldWorkerEpochRejection='NOT_ESTABLISHED_NATIVE_ROUTE_FIXTURE';result.triggerObserved=true;
+   await until(()=>frame());await frame().locator('[aria-current="page"]').filter({hasText:'Ordinary conversation'}).first().waitFor({state:'attached'});result.projectionMatchesActualNativeRoute=true;result.oldWorkerEpochRejection='NOT_ESTABLISHED_NATIVE_ROUTE_FIXTURE';result.triggerObserved=true;
   }
   phase='fault-terminal';
   if(['forged-scope','rate-limit','corrupt','unknown-protocol'].includes(fault)){
@@ -69,7 +70,14 @@ for(const fault of requestedCases){
   }
   if(fault==='auth-failure'){await until(()=>responses.some(r=>r.path==='/api/auth/session'&&r.status===401));result.session401=responses.filter(r=>r.path==='/api/auth/session'&&r.status===401).length;result.triggerObserved=true;}
   if(fault==='unsafe-reading'){result.composerInsideReading=await page.locator('#reading #composer').count()===1;result.triggerObserved=result.composerInsideReading;}
-  if(fault==='csp'){const response=await page.request.get(server.origin+'/');result.frameSourceNone=(response.headers()['content-security-policy']??'').includes("frame-src 'none'");await until(async()=>await page.evaluate(()=>faultWitness.framePolicyViolations>0));result.triggerObserved=true;}
+  if(fault==='csp'){
+   const response=await page.request.get(server.origin+'/');result.frameSourceNone=(response.headers()['content-security-policy']??'').includes("frame-src 'none'");
+   // MAIN probe proves only that the page policy is active, never package fallback.
+   await page.evaluate(()=>{const probe=document.createElement('iframe');probe.id='fault-csp-main-probe';probe.src='/fault-csp-probe';document.body.append(probe);});
+   await until(async()=>await page.evaluate(()=>faultWitness.mainProbePolicyViolations>0));
+   result.mainProbeRequests=server.snapshot().requests['/fault-csp-probe']??0;assert.equal(result.mainProbeRequests,0);
+   await page.locator('#fault-csp-main-probe').evaluate(n=>n.remove());result.triggerObserved=true;
+  }
   if(fault==='iframe-destroy'){await until(async()=>await page.evaluate(()=>faultWitness.removedOwnedFrames>0));result.staleGrantRevocation='NOT_ESTABLISHED_NO_PRIOR_JOIN';result.triggerObserved=true;}
   if(fault==='forged-scope'){await until(async()=>await page.evaluate(()=>faultWitness.forgedMessages>0));result.legitimateProjection=true;result.triggerObserved=true;}
   // Unsafe reading must never be rescued by the harness closing a bad mount.
@@ -91,6 +99,7 @@ for(const fault of requestedCases){
   result.workspaceOpen=await page.locator('[data-va-owned]:popover-open').count()>0;
   result.pageFallbackProjection=await page.evaluate(()=>!!document.querySelector('main [data-free-list],aside [data-free-list]'));
   Object.assign(result,await page.evaluate(()=>faultWitness),await database(worker));
+  if(fault==='csp')result.cspPackagePolicy=result.packageFramePolicyViolations>0&&result.privateFrames===0?'PACKAGE_FRAME_BLOCK_OBSERVED':'NOT_ESTABLISHED_EXTENSION_WORLD_POLICY_DIFFERENCE';
   result.packageVerified=verifyHost(built.unpacked).status==='OFFLINE_HOST_RECONSTRUCTION';result.status='OBSERVED';
  }catch(error){result.status='FAIL';result.phase=phase;result.error=String(error?.message??error);process.exitCode=1;}
  finally{

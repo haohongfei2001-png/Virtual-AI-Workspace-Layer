@@ -85,3 +85,16 @@ export function validateIdleEvidence({before,after,sourceCommit,cleanup}){
  assert.equal(cleanup.pendingCommands,0);assert.equal(cleanup.browserStopped,true);assert.equal(cleanup.networkGuardClosed,true);assert.equal(cleanup.profileRemoved,true);
  return {dependenciesUnchanged:true,cleanupVerified:true,sourceCommitBound:sourceCommit!==null};
 }
+
+/** Finish the same observation window if a coarse timer wakes fractionally early.
+ * Never inspects worker state and never starts another observation interval. */
+export async function finishIdleObservationDeadline(started,windowMs,{now,sleep}){
+ assert(Number.isFinite(started));assert.equal(windowMs,60000);
+ const deadline=started+windowMs;let current=now();
+ assert(Number.isFinite(current)&&current>=started,'invalid observation clock');
+ while(current<deadline){
+  await sleep(Math.max(1,Math.ceil(deadline-current)));
+  const next=now();assert(Number.isFinite(next)&&next>=current,'observation clock regressed');current=next;
+ }
+ return current;
+}
