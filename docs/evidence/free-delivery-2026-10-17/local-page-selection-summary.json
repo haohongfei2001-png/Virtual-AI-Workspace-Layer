@@ -19704,5 +19704,552 @@
       "No C2/C3 principal/context authorization, complete native directory, full Free or release acceptance.",
       "10k/100k remain DEFERRED with original thresholds."
     ]
+  },
+  "diagnosticReliability20261021": {
+    "baseline": "c6db4e349ddedd33d86dfa5b53d436305afb2454",
+    "status": "DIAGNOSTIC_RELIABILITY_OFFLINE_VERIFIED",
+    "realProfile": "NOT_RUN",
+    "liveRequests": 0,
+    "installedPackageModified": false,
+    "platformRestrictionRemoved": false,
+    "httpOrPageBridgeAdded": false,
+    "identityEnabled": false,
+    "sourceHashes": {
+      "tools/native-me-probe/popup.mjs": "934213698d018190742a46138b33248398d8137b1a75e638c38850fd83ac8e5e",
+      "tools/native-me-probe/content.mjs": "77073139e415eb53278f427bdc184afc5faeed28f0d2659c72fbf69960d2a4aa",
+      "tools/native-me-probe/build.mjs": "c51ae09345e539a98391e6635f1aa22b6f559816f7389d0717c956a08317a364",
+      "tools/native-me-probe/credential-control.mjs": "fe9ac587fff393117f3312930d40cb94782444664e7d3695c753a13dce14d803",
+      "tests/host/native-probe-popup-recovery.test.mjs": "4524c8525e2f5c21ccf6da48cacd7ec7e58a0a84fbd481f56719c7a85361816e",
+      "tests/host/native-me-candidate-browser.mjs": "8b259ad96f49ef28b8c93cba0a7f576378fa6afed0fdfb07bebb7f959006c859",
+      "tests/host/native-me-probe.test.mjs": "2b86c6d7bb5dbbd0886fb85585fb5749f6bf82bcaf3dceb9917cfbe16610dcf6",
+      "tests/host/native-me-candidate.test.mjs": "14a0739ff56508eb382f8902d67b5bcab7012e267dfcd0bf040546ef438b3e46",
+      "tests/host/native-credential-control.test.mjs": "cedc867ad1e75c6b088d6af6999c5a3ccb2663a069ac33d41a395d1683acd958",
+      "tests/host/native-accounts-probe.test.mjs": "7040cda4dd343855b721aa9c1f1b238711358c0d3a8aa205d4fa4ec20de084a1",
+      "tests/host/native-accounts-structure.test.mjs": "8ecc5dff4ca234b84263a3b9bff25f777814eff0105ab8a9248286788c989c19"
+    },
+    "initialReproduction": {
+      "tests": 8,
+      "failed": 8,
+      "cancelled": 0,
+      "scope": "popup result loss, unbounded messages, unbound document status, private reply rejection and storage/lock failure"
+    },
+    "focused": {
+      "tests": 111,
+      "passed": 111,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "six affected Node files"
+    },
+    "historyFailures": [
+      "Old VM mocks lacked browser timer/AbortController APIs and the options argument for Web Locks; updated fixtures without dropping original assertions.",
+      "Initial headless launch in sandbox failed before any test with isolated-chrome-debug-startup-timeout; authorized isolated headless execution succeeded."
+    ],
+    "finalBrowsers": {
+      "control": {
+        "status": "PASS_PACKAGED_OFFLINE_CANDIDATE",
+        "elapsedMs": 1313.158458,
+        "sourceStable": true,
+        "packageStable": true,
+        "runnerStable": true,
+        "results": [
+          {
+            "mode": "credential-control",
+            "result": {
+              "state": "finished",
+              "stage": "accountsOmit",
+              "requests": 4,
+              "meInclude": {
+                "status": 200,
+                "jsonMime": true,
+                "challenge": false,
+                "redirected": false,
+                "idValid": true
+              },
+              "meOmit": {
+                "status": 401,
+                "jsonMime": true,
+                "challenge": false,
+                "redirected": false,
+                "denied": true,
+                "idValid": false
+              },
+              "meRelation": "not-comparable",
+              "accountsInclude": {
+                "status": 200,
+                "jsonMime": true,
+                "challenge": false,
+                "redirected": false,
+                "structure": {
+                  "rootType": "object",
+                  "accountsType": "object",
+                  "entryCount": 1,
+                  "overLimit": false,
+                  "groups": {
+                    "default": {
+                      "entries": 0,
+                      "keyFormat": {},
+                      "entryType": {},
+                      "accountType": {},
+                      "account_id": {},
+                      "id": {},
+                      "keyEqualsAccountId": {},
+                      "keyEqualsId": {},
+                      "fieldsEqual": {},
+                      "structure": {},
+                      "isDeactivated": {},
+                      "sessionAccess": {},
+                      "duplicateAccountIds": 0,
+                      "duplicateIds": 0
+                    },
+                    "ordinary": {
+                      "entries": 1,
+                      "keyFormat": {
+                        "valid-string": 1
+                      },
+                      "entryType": {
+                        "object": 1
+                      },
+                      "accountType": {
+                        "object": 1
+                      },
+                      "account_id": {
+                        "valid-string": 1
+                      },
+                      "id": {
+                        "missing": 1
+                      },
+                      "keyEqualsAccountId": {
+                        "equal": 1
+                      },
+                      "keyEqualsId": {
+                        "incomparable": 1
+                      },
+                      "fieldsEqual": {
+                        "incomparable": 1
+                      },
+                      "structure": {
+                        "personal": 1
+                      },
+                      "isDeactivated": {
+                        "missing": 1
+                      },
+                      "sessionAccess": {
+                        "missing": 1
+                      },
+                      "duplicateAccountIds": 0,
+                      "duplicateIds": 0
+                    }
+                  },
+                  "defaultAlias": null
+                },
+                "selectedFieldSchemaValid": true,
+                "contextCount": 1,
+                "unknownKindCount": 0
+              },
+              "accountsOmit": {
+                "status": 200,
+                "jsonMime": true,
+                "challenge": false,
+                "redirected": false,
+                "structure": {
+                  "rootType": "object",
+                  "accountsType": "object",
+                  "entryCount": 1,
+                  "overLimit": false,
+                  "groups": {
+                    "default": {
+                      "entries": 1,
+                      "keyFormat": {
+                        "valid-string": 1
+                      },
+                      "entryType": {
+                        "object": 1
+                      },
+                      "accountType": {
+                        "object": 1
+                      },
+                      "account_id": {
+                        "null": 1
+                      },
+                      "id": {
+                        "missing": 1
+                      },
+                      "keyEqualsAccountId": {
+                        "incomparable": 1
+                      },
+                      "keyEqualsId": {
+                        "incomparable": 1
+                      },
+                      "fieldsEqual": {
+                        "incomparable": 1
+                      },
+                      "structure": {
+                        "personal": 1
+                      },
+                      "isDeactivated": {
+                        "false": 1
+                      },
+                      "sessionAccess": {
+                        "true": 1
+                      },
+                      "duplicateAccountIds": 0,
+                      "duplicateIds": 0
+                    },
+                    "ordinary": {
+                      "entries": 0,
+                      "keyFormat": {},
+                      "entryType": {},
+                      "accountType": {},
+                      "account_id": {},
+                      "id": {},
+                      "keyEqualsAccountId": {},
+                      "keyEqualsId": {},
+                      "fieldsEqual": {},
+                      "structure": {},
+                      "isDeactivated": {},
+                      "sessionAccess": {},
+                      "duplicateAccountIds": 0,
+                      "duplicateIds": 0
+                    }
+                  },
+                  "defaultAlias": {
+                    "account_id": {
+                      "relation": "incomparable"
+                    },
+                    "id": {
+                      "relation": "incomparable"
+                    }
+                  }
+                },
+                "selectedFieldSchemaValid": false,
+                "schemaIssue": "default-null-context-id"
+              },
+              "accountsRelation": "different",
+              "credentialDependence": "include-id-omit-denied",
+              "identityEnabled": false,
+              "reason": "control-complete-not-authorized"
+            },
+            "requestCount": 4,
+            "credentialFlags": [
+              true,
+              false,
+              true,
+              false
+            ],
+            "closedDocumentReadback": true,
+            "oldMarkerPreserved": true,
+            "reopenDisabled": true,
+            "readDidNotRequest": true,
+            "databaseCount": 0,
+            "draftPreserved": true,
+            "elapsedMs": 1013.5752090000001
+          }
+        ]
+      },
+      "chain": {
+        "status": "PASS_PACKAGED_OFFLINE_CANDIDATE",
+        "elapsedMs": 10109.896958000001,
+        "sourceStable": true,
+        "packageStable": true,
+        "runnerStable": true,
+        "results": [
+          {
+            "mode": "consistent",
+            "result": {
+              "state": "finished",
+              "stage": "after-me",
+              "requests": 3,
+              "status": 200,
+              "jsonMime": true,
+              "redirected": false,
+              "challenge": false,
+              "firstIdValid": true,
+              "lastIdValid": true,
+              "samePrincipal": true,
+              "rosterValid": true,
+              "contextCount": 1,
+              "unknownKindCount": 0,
+              "schemaIssue": null,
+              "sourceExpiryKnown": false,
+              "localFreshnessMaxMs": 60000,
+              "identityEnabled": false,
+              "reason": "candidate-consistent-not-authorized"
+            },
+            "requestCount": 3,
+            "oldMarkerPreserved": true,
+            "reopenDisabled": true,
+            "readDidNotRequest": true,
+            "databaseCount": 0,
+            "draftPreserved": true,
+            "elapsedMs": 983.098334
+          },
+          {
+            "mode": "accounts-challenge",
+            "result": {
+              "state": "finished",
+              "stage": "accounts",
+              "requests": 2,
+              "status": 403,
+              "jsonMime": false,
+              "redirected": false,
+              "challenge": true,
+              "firstIdValid": true,
+              "lastIdValid": false,
+              "samePrincipal": false,
+              "rosterValid": false,
+              "contextCount": null,
+              "unknownKindCount": null,
+              "schemaIssue": null,
+              "sourceExpiryKnown": false,
+              "localFreshnessMaxMs": 60000,
+              "identityEnabled": false,
+              "reason": "session-challenged"
+            },
+            "requestCount": 2,
+            "oldMarkerPreserved": true,
+            "reopenDisabled": true,
+            "readDidNotRequest": true,
+            "databaseCount": 0,
+            "draftPreserved": true,
+            "elapsedMs": 925.1385829999997
+          },
+          {
+            "mode": "shared-deadline",
+            "result": {
+              "state": "finished",
+              "stage": "accounts",
+              "requests": 2,
+              "status": null,
+              "jsonMime": false,
+              "redirected": false,
+              "challenge": false,
+              "firstIdValid": true,
+              "lastIdValid": false,
+              "samePrincipal": false,
+              "rosterValid": false,
+              "contextCount": null,
+              "unknownKindCount": null,
+              "schemaIssue": null,
+              "sourceExpiryKnown": false,
+              "localFreshnessMaxMs": 60000,
+              "identityEnabled": false,
+              "reason": "request-timeout"
+            },
+            "requestCount": 2,
+            "oldMarkerPreserved": true,
+            "reopenDisabled": true,
+            "readDidNotRequest": true,
+            "databaseCount": 0,
+            "draftPreserved": true,
+            "elapsedMs": 6944.8507500000005
+          },
+          {
+            "mode": "route-changed",
+            "result": {
+              "state": "finished",
+              "stage": "accounts",
+              "requests": 2,
+              "status": null,
+              "jsonMime": false,
+              "redirected": false,
+              "challenge": false,
+              "firstIdValid": true,
+              "lastIdValid": false,
+              "samePrincipal": false,
+              "rosterValid": false,
+              "contextCount": null,
+              "unknownKindCount": null,
+              "schemaIssue": null,
+              "sourceExpiryKnown": false,
+              "localFreshnessMaxMs": 60000,
+              "identityEnabled": false,
+              "reason": "document-changed"
+            },
+            "requestCount": 2,
+            "oldMarkerPreserved": true,
+            "reopenDisabled": true,
+            "readDidNotRequest": true,
+            "databaseCount": 0,
+            "draftPreserved": true,
+            "elapsedMs": 894.6542079999999
+          }
+        ]
+      },
+      "structure": {
+        "status": "PASS_PACKAGED_OFFLINE_CANDIDATE",
+        "elapsedMs": 1349.287875,
+        "sourceStable": true,
+        "packageStable": true,
+        "runnerStable": true,
+        "results": [
+          {
+            "mode": "structure-mixed",
+            "result": {
+              "state": "finished",
+              "reason": "accounts-schema:account-id",
+              "structure": {
+                "rootType": "object",
+                "accountsType": "object",
+                "entryCount": 3,
+                "overLimit": false,
+                "groups": {
+                  "default": {
+                    "entries": 1,
+                    "keyFormat": {
+                      "valid-string": 1
+                    },
+                    "entryType": {
+                      "object": 1
+                    },
+                    "accountType": {
+                      "object": 1
+                    },
+                    "account_id": {
+                      "missing": 1
+                    },
+                    "id": {
+                      "valid-string": 1
+                    },
+                    "keyEqualsAccountId": {
+                      "incomparable": 1
+                    },
+                    "keyEqualsId": {
+                      "different": 1
+                    },
+                    "fieldsEqual": {
+                      "incomparable": 1
+                    },
+                    "structure": {
+                      "personal": 1
+                    },
+                    "isDeactivated": {
+                      "missing": 1
+                    },
+                    "sessionAccess": {
+                      "true": 1
+                    },
+                    "duplicateAccountIds": 0,
+                    "duplicateIds": 0
+                  },
+                  "ordinary": {
+                    "entries": 2,
+                    "keyFormat": {
+                      "valid-string": 2
+                    },
+                    "entryType": {
+                      "object": 2
+                    },
+                    "accountType": {
+                      "object": 2
+                    },
+                    "account_id": {
+                      "missing": 1,
+                      "null": 1
+                    },
+                    "id": {
+                      "valid-string": 1,
+                      "missing": 1
+                    },
+                    "keyEqualsAccountId": {
+                      "incomparable": 2
+                    },
+                    "keyEqualsId": {
+                      "equal": 1,
+                      "incomparable": 1
+                    },
+                    "fieldsEqual": {
+                      "incomparable": 2
+                    },
+                    "structure": {
+                      "personal": 1,
+                      "workspace": 1
+                    },
+                    "isDeactivated": {
+                      "missing": 1,
+                      "true": 1
+                    },
+                    "sessionAccess": {
+                      "true": 1,
+                      "false": 1
+                    },
+                    "duplicateAccountIds": 0,
+                    "duplicateIds": 0
+                  }
+                },
+                "defaultAlias": {
+                  "account_id": {
+                    "relation": "incomparable"
+                  },
+                  "id": {
+                    "relation": "canonical-present",
+                    "canonicalType": "object",
+                    "sameKey": false,
+                    "wholeEntryEqual": "equal"
+                  }
+                }
+              }
+            },
+            "requestCount": 1,
+            "oldMarkerPreserved": true,
+            "reopenDisabled": true,
+            "readDidNotRequest": true,
+            "databaseCount": 0,
+            "draftPreserved": true,
+            "elapsedMs": 1067.182166
+          }
+        ]
+      }
+    },
+    "review": "Independent read-only review found missing status protocol capability preflight; fixed and reviewed clear.",
+    "artifact": {
+      "directory": "/private/tmp/vaiwl-probe-recovery-ready-AjPtuc",
+      "overlay": "/private/tmp/vaiwl-probe-recovery-ready-AjPtuc/diagnostic",
+      "kind": "AUTHORIZED_CREDENTIAL_CONTROL_NOT_PRODUCT",
+      "permissionsAdded": [],
+      "identityEnabled": false,
+      "sourceHashes": {
+        "tools/native-me-probe/credential-control.mjs": "fe9ac587fff393117f3312930d40cb94782444664e7d3695c753a13dce14d803",
+        "tools/native-me-probe/reader.mjs": "996a0fa19860a90018f1a5d8f1e85189119a43f93a21aec5fa90ad03ac5f1c77",
+        "tools/native-me-probe/accounts.mjs": "86643143b5547ffbb914eab40504ee6aa4477675845068a603f3b2206a689f48",
+        "tools/native-me-probe/accounts-structure.mjs": "57ee7881f258d07095c74544d5bc620236f7c011aec3c4ece83d7f824e3960f9",
+        "tools/native-me-probe/candidate.mjs": "3bafd41de1014851b6cb902af261a47453d0dc16550e4a096f47164ec4dc0d66",
+        "tools/native-me-probe/content.mjs": "77073139e415eb53278f427bdc184afc5faeed28f0d2659c72fbf69960d2a4aa",
+        "tools/native-me-probe/popup.mjs": "934213698d018190742a46138b33248398d8137b1a75e638c38850fd83ac8e5e",
+        "tools/native-me-probe/build.mjs": "c51ae09345e539a98391e6635f1aa22b6f559816f7389d0717c956a08317a364"
+      }
+    },
+    "rawEvidence": {
+      "/private/tmp/vaiwl-probe-recovery-red.log": {
+        "sha256": "26a032764a786771ec766b25ec1db2b92ff5d33af96134ae74ad93875d791e12"
+      },
+      "/private/tmp/vaiwl-probe-existing.log": {
+        "sha256": "43a071606209931927b964a747bd2732429555d8231cb985ef51d0ca219ed4e6"
+      },
+      "/private/tmp/vaiwl-probe-focused.log": {
+        "sha256": "35b6ff5438fe82ce7d541be8ab6f8b1fab9ec623e157322b481371319fd05d36"
+      },
+      "/private/tmp/vaiwl-probe-recovery-browser.json": {
+        "sha256": "f6bd497e532ab2ebbf6d4fcf7cb731f9c58b6f2ee6b8e1b4183c0b1e1a2dfbe7"
+      },
+      "/private/tmp/vaiwl-probe-recovery-browser-authorized.json": {
+        "sha256": "b6d871a0a82df28af0fe42b02ca3ddc9f319aebaef282387bf7feda5236671c2"
+      },
+      "/private/tmp/vaiwl-probe-recovery-final-control.json": {
+        "sha256": "6d6d2a31a6b7b621bd618e00e22f8c7c2ce596bf17702b5335c5470740cb67d2"
+      },
+      "/private/tmp/vaiwl-probe-recovery-final-chain.json": {
+        "sha256": "66b9e0c5a05f2212896d71305100526f48c1f582f9c8503b229b55fa0a2fc5ca"
+      },
+      "/private/tmp/vaiwl-probe-recovery-final-structure.json": {
+        "sha256": "42757546456c8bb774e1f571f62cd4aee61ac3a676a553ddc02a1645dc85396c"
+      }
+    },
+    "limits": [
+      "No change to original maximum four GET requests, shared six-second deadline, no retry or zero database promise.",
+      "Saved terminal result is fixed categories/counts only in the same consumed key; no response, identity or credential values.",
+      "Closing popup before reply and losing original document still yields unknown/no-retry; no guarantee to recover a result that was never received.",
+      "Platform forbids extension-page automation and alternate-channel workaround; not solved by this code.",
+      "Live installed package left unchanged to preserve its pending unconsumed batch."
+    ]
   }
 }

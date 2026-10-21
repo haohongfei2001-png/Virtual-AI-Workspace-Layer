@@ -22,8 +22,10 @@ if(window===window.top&&location.origin==='https://chatgpt.com'){
  if(control)for(const type of ['pointerdown','keydown','input','change'])document.addEventListener(type,event=>{if(started&&event.isTrusted)invalidate('interaction-during-attempt');},{capture:true});
  chrome.runtime.onMessage.addListener((message,sender,reply)=>{
   if(sender.id!==chrome.runtime.id||sender.url!==chrome.runtime.getURL('native-me-probe.html')||sender.tab||!message)return;
-  if(message.type===prefix+'_READY'&&Object.keys(message).length===1){reply({documentKey,receiverVersion:control?5:structural?4:accountsOnly?3:chain?2:1,ready:!controller.signal.aborted&&location.href===initialURL&&visible(),spent:started,reason:invalidationReason??(location.href!==initialURL?'route-changed':!visible()?'document-hidden':'ready')});return;}
-  if(message.type===prefix+'_STATUS'&&Object.keys(message).length===1){reply(probe.peek()??{state:'no-result'});return;}
+  if(message.type===prefix+'_READY'&&Object.keys(message).length===1){reply({documentKey,receiverVersion:control?5:structural?4:accountsOnly?3:chain?2:1,statusDocumentBound:true,ready:!controller.signal.aborted&&location.href===initialURL&&visible(),spent:started,reason:invalidationReason??(location.href!==initialURL?'route-changed':!visible()?'document-hidden':'ready')});return;}
+  if(message.type===prefix+'_STATUS'&&Object.keys(message).length===2&&typeof message.documentKey==='string'){
+   reply(message.documentKey===documentKey?(probe.peek()??{state:'no-result'}):{state:'document-changed-no-retry'});return;
+  }
   if(message.type!==prefix+'_ONCE'||Object.keys(message).length!==2||message.documentKey!==documentKey)return;
   started=true;
   if(location.href!==initialURL)invalidate('route-changed');

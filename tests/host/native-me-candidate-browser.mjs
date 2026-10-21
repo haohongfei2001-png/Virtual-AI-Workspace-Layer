@@ -101,7 +101,14 @@ try{
   await control.send('Target.closeTarget',{targetId:target});await open();assert.equal(await evaluate('document.querySelector("#run").disabled'),true);
   await click('#read');assert.deepEqual(await waitResult(),result);assert.equal(requests.length,expectedRequests);
   assert.equal(await page.locator('textarea').inputValue(),'UNSENT_FIXTURE_DRAFT');assert.deepEqual(unexpected,[]);assert.deepEqual(errors,[]);
-  report.results.push({mode,result,requestCount:requests.length,...(credentialControl?{credentialFlags}:{}),oldMarkerPreserved:true,reopenDisabled:true,readDidNotRequest:true,databaseCount:databases,draftPreserved:true,elapsedMs:performance.now()-runStarted});
+  let closedDocumentReadback=false;
+  if(credentialControl){
+   // Disappearance of the original document must not lose a result which the
+   // private UI already received, or require another privileged request.
+   await control.send('Target.closeTarget',{targetId:target});await page.close();await open();await click('#read');
+   assert.deepEqual(await waitResult(),result);assert.equal(requests.length,expectedRequests);closedDocumentReadback=true;
+  }
+  report.results.push({mode,result,requestCount:requests.length,...(credentialControl?{credentialFlags,closedDocumentReadback}:{}),oldMarkerPreserved:true,reopenDisabled:true,readDidNotRequest:true,databaseCount:databases,draftPreserved:true,elapsedMs:performance.now()-runStarted});
   control.close();control=null;await handle.close();handle=null;
  }
  report.status='PASS_PACKAGED_OFFLINE_CANDIDATE';

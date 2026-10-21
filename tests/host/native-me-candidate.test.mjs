@@ -103,9 +103,9 @@ test('packaged chain is explicit, old permission cannot invoke it, visibility lo
 });
 test('new chain permission preserves old marker and serializes one chain across popup pages',async()=>{
  const old='vaiwl-native-me-probe-20261019-consumed',key='vaiwl-native-me-candidate-20261019-consumed',storage=new Map([[old,'consumed']]),handlers=[],messages=[];let lock=Promise.resolve();
- const locks={request:(k,fn)=>{assert.equal(k,key);const p=lock.then(fn);lock=p.catch(()=>{});return p;}};
+ const locks={request:(k,_options,fn)=>{assert.equal(k,key);const p=lock.then(fn);lock=p.catch(()=>{});return p;}};
  function page(){const elements={run:{addEventListener:(_k,fn)=>handlers.push(fn)},read:{addEventListener(){}},result:{textContent:''}};
-  vm.runInNewContext(readFileSync(new URL('../../tools/native-me-probe/popup.mjs',import.meta.url),'utf8').replace(/^import[^\n]+\n/,''),{TARGET_TAB_ID:123,PROBE_KEY:key,PROBE_PREFIX:'VAIWL_ME_CANDIDATE',document:{getElementById:k=>elements[k]},localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},navigator:{locks},chrome:{tabs:{query:async()=>[{id:123,url:'https://chatgpt.com/'}],get:async()=>({url:'https://chatgpt.com/'}),sendMessage:async(_id,m)=>{messages.push(m.type);if(m.type.endsWith('_READY'))return {receiverVersion:2,ready:true,spent:false,documentKey:'fresh'};assert(storage.has(key));throw Error('lost');}}}});return elements;
+  vm.runInNewContext(readFileSync(new URL('../../tools/native-me-probe/popup.mjs',import.meta.url),'utf8').replace(/^import[^\n]+\n/,''),{AbortController,performance,setTimeout,clearTimeout,TARGET_TAB_ID:123,PROBE_KEY:key,PROBE_PREFIX:'VAIWL_ME_CANDIDATE',document:{getElementById:k=>elements[k]},localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},navigator:{locks},chrome:{tabs:{query:async()=>[{id:123,url:'https://chatgpt.com/'}],get:async()=>({url:'https://chatgpt.com/'}),sendMessage:async(_id,m)=>{messages.push(m.type);if(m.type.endsWith('_READY'))return {receiverVersion:2,ready:true,spent:false,statusDocumentBound:true,documentKey:'fresh'};assert(storage.has(key));throw Error('lost');}}}});return elements;
  }
  assert.equal(page().run.disabled,false);page();await Promise.all(handlers.map(fn=>fn()));assert.equal(messages.filter(x=>x.endsWith('_ONCE')).length,1);assert.equal(page().run.disabled,true);assert.equal(storage.get(old),'consumed');assert.equal(storage.size,2);
 });
@@ -115,10 +115,10 @@ for(const mode of ['legacy','legacy-unavailable','candidate-invalidated','candid
  const storage=new Map([[old,'consumed']]);if(mode==='consumed')storage.set(key,'consumed');
  const before=[...storage],messages=[],handlers={},elements={run:{addEventListener:(_k,fn)=>handlers.run=fn},read:{addEventListener:(_k,fn)=>handlers.read=fn},result:{textContent:''}};
  vm.runInNewContext(readFileSync(new URL('../../tools/native-me-probe/popup.mjs',import.meta.url),'utf8').replace(/^import[^\n]+\n/,''),{
-  TARGET_TAB_ID:123,PROBE_KEY:key,PROBE_PREFIX:'VAIWL_ME_CANDIDATE',document:{getElementById:k=>elements[k]},localStorage:{getItem:k=>storage.get(k)??null,setItem:()=>assert.fail('preflight must not consume')},navigator:{locks:{request:async(_k,fn)=>fn()}},
+  AbortController,performance,setTimeout,clearTimeout,TARGET_TAB_ID:123,PROBE_KEY:key,PROBE_PREFIX:'VAIWL_ME_CANDIDATE',document:{getElementById:k=>elements[k]},localStorage:{getItem:k=>storage.get(k)??null,setItem:()=>assert.fail('preflight must not consume')},navigator:{locks:{request:async(_k,_options,fn)=>fn()}},
   chrome:{tabs:{query:async()=>[{id:123,url:'https://chatgpt.com/'}],get:async()=>assert.fail('not ready'),sendMessage:async(_id,m)=>{
    messages.push(m.type);assert(m.type.endsWith('_READY'));
-   if(m.type==='VAIWL_ME_CANDIDATE_READY')return mode==='candidate-invalidated'?{receiverVersion:2,ready:false,spent:false,documentKey:'PRIVATE_DOCUMENT',privateField:'PRIVATE_SENTINEL'}:mode==='candidate-old-version'?{ready:true,spent:false,documentKey:'PRIVATE_DOCUMENT'}:undefined;
+   if(m.type==='VAIWL_ME_CANDIDATE_READY')return mode==='candidate-invalidated'?{receiverVersion:2,ready:false,spent:false,documentKey:'PRIVATE_DOCUMENT',privateField:'PRIVATE_SENTINEL'}:mode==='candidate-old-version'?{ready:true,spent:false,statusDocumentBound:true,documentKey:'PRIVATE_DOCUMENT'}:undefined;
    assert.equal(m.type,'VAIWL_ME_PROBE_READY');if(mode==='legacy-unavailable')throw Error('PRIVATE_SENTINEL');
    return {ready:true,spent:true,documentKey:'PRIVATE_DOCUMENT',privateField:'PRIVATE_SENTINEL'};
   }}}
