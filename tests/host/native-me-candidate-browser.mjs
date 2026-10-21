@@ -75,6 +75,13 @@ try{
    other=await context.newPage();await other.bringToFront();await page.waitForFunction(()=>document.visibilityState==='hidden');
    await page.bringToFront();await page.waitForFunction(()=>document.visibilityState==='visible');await open();
   }
+  if(credentialControl){
+   const ready=()=>evaluate("(async()=>{const [t]=await chrome.tabs.query({active:true,currentWindow:true});return chrome.tabs.sendMessage(t.id,{type:'VAIWL_CREDENTIAL_CONTROL_READY'},{frameId:0});})()");
+   const before=await ready();assert.equal(before.ready,true);assert.equal(before.spent,false);
+   await page.evaluate(()=>dispatchEvent(new PopStateEvent('popstate')));
+   const after=await ready();assert.equal(after.ready,true);assert.equal(after.spent,false);assert.notEqual(after.documentKey,before.documentKey);
+   assert.equal(requests.length,0);report.preflightRoute={keyRotated:true,ready:true,requests:0};
+  }
   await click('#run');
   if(mode==='route-changed'){await withRequestDeadline(()=>observedAccounts,{timeoutMs:8000});await page.evaluate(()=>{history.pushState({},'', '/c/11111111-1111-4111-8111-111111111111');dispatchEvent(new PopStateEvent('popstate'));});}
   if(mode==='hidden-inflight'){await withRequestDeadline(()=>observedAccounts,{timeoutMs:8000});await other.bringToFront();await page.waitForFunction(()=>document.visibilityState==='hidden');await page.bringToFront();await open();await click('#read');}

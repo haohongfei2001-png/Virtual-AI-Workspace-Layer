@@ -101,6 +101,31 @@ const mutations=[
   ['private worker stream suffix','extension/worker.mjs:stream'],
  ].map(([name,path])=>[name,m=>{m.web_accessible_resources[0].resources.push(path);}]),
 ];
+
+for(const resource of ['all','workspace.html','sidebar.html','extension/content-entry.mjs','src/host/free-frame-client.mjs'])test('package rejects missing public dependency coverage: '+resource,t=>{
+ const f=fixture(t),m=structuredClone(f.manifest);
+ assert(m.web_accessible_resources[0].resources.includes(resource)||resource==='all');
+ m.web_accessible_resources[0].resources=resource==='all'?[]:m.web_accessible_resources[0].resources.filter(name=>name!==resource);
+ f.rewrite(m);assert.throws(()=>verifyHost(f.out),/missing-host-package-public-resource/);
+});
+for(const name of ['content.js','workspace.html','sidebar.html','extension/frame-shell.css'])test('package rejects a missing required asset even with a matching file manifest: '+name,t=>{
+ const f=fixture(t),path=join(f.out,'build-manifest.json'),info=readJson(path);
+ rmSync(join(f.out,name));delete info.files[name];writeFileSync(path,JSON.stringify(info));
+ assert.throws(()=>verifyHost(f.out),/missing-host-package-entry/);
+});
+test('public resource declaration must resolve to an actual package file',t=>{
+ const f=fixture(t),m=structuredClone(f.manifest);m.web_accessible_resources[0].resources.push('/extension/%6dissing.mjs');
+ f.rewrite(m);assert.throws(()=>verifyHost(f.out),/missing-host-package-public-file/);
+});
+test('public closure is taken from supplied package imports, not repository sources',t=>{
+ const f=fixture(t),name='extension/content-entry.mjs',target='extension/new-public-dependency.mjs',path=join(f.out,'build-manifest.json'),info=readJson(path);
+ const source=readFileSync(join(f.out,name),'utf8')+"\nimport './new-public-dependency.mjs';\n",dependency='export const example=1;\n';
+ writeFileSync(join(f.out,name),source);writeFileSync(join(f.out,target),dependency);info.files[name]=sha(source);info.files[target]=sha(dependency);writeFileSync(path,JSON.stringify(info));
+ assert.throws(()=>verifyHost(f.out),/missing-host-package-public-resource/);
+ const manifest=readJson(join(f.out,'manifest.json'));manifest.web_accessible_resources[0].resources.push(target);
+ const text=JSON.stringify(manifest);writeFileSync(join(f.out,'manifest.json'),text);info.files['manifest.json']=sha(text);writeFileSync(path,JSON.stringify(info));
+ assert.equal(verifyHost(f.out).releaseStatus,'NOT_RELEASE_READY');
+});
 for(const [profile,options]of [['formal',{}],['offline',{offlineOrigin:'http://127.0.0.1:43210'}]]){
  test('rehashed '+profile+' manifests preserve the supported package boundary',async t=>{
   const f=fixture(t,options);assert.equal(verifyHost(f.out).releaseStatus,'NOT_RELEASE_READY');

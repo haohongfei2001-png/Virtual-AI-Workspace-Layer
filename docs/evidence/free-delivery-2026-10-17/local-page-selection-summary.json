@@ -20298,5 +20298,217 @@
     "newDiagnosticRequests": 0,
     "newPermissions": 0,
     "liveAcceptance": "UNCHANGED_NOT_ESTABLISHED"
+  },
+  "credentialControl20261022UserResult": {
+    "evidence": "USER_REPORTED_FIXED_JSON_NOT_INDEPENDENT_TOOL_READ",
+    "source": "User pasted the original diagnostic terminal result after opening a new blank ChatGPT home; no raw response, ID, title or credential retained.",
+    "priorPreflight": [
+      "select-chatgpt-home-no-request",
+      "not-ready-no-request:route-event"
+    ],
+    "permissionConsumed": true,
+    "requestsReported": 4,
+    "state": "finished",
+    "stage": "accountsOmit",
+    "meInclude": {
+      "status": 200,
+      "jsonMime": true,
+      "challenge": false,
+      "redirected": false,
+      "idValid": true
+    },
+    "meOmit": {
+      "status": 401,
+      "denied": true,
+      "idValid": false
+    },
+    "accountsInclude": {
+      "status": 200,
+      "jsonMime": true,
+      "challenge": false,
+      "redirected": false,
+      "entryCount": 1,
+      "ordinaryEntries": 0,
+      "defaultEntries": 1,
+      "accountIdType": "null",
+      "idType": "missing",
+      "structure": "personal",
+      "isDeactivated": false,
+      "sessionAccess": true,
+      "selectedFieldSchemaValid": false,
+      "schemaIssue": "default-null-context-id"
+    },
+    "accountsOmit": {
+      "status": 401,
+      "denied": true
+    },
+    "credentialDependence": "include-id-omit-denied",
+    "identityEnabled": false,
+    "reason": "control-complete-not-authorized",
+    "limitsUnchanged": {
+      "maxRequests": 4,
+      "elapsedMs": 6000,
+      "meBytesEach": 262144,
+      "accountsBytesEach": 1048576,
+      "retries": 0
+    },
+    "interpretation": "Reported include/omit contrast supports credential dependence in this document. No challenge in this batch. It does not establish principal semantics, namespace, active-space/C3 binding or a complete authenticated roster.",
+    "nextDependency": "Externally verifiable principal/default-context semantics and current-document/selection invalidation, followed by a separately scoped experiment only if new evidence warrants it. No repeat of this batch.",
+    "privateDatabaseOrScopeEnabled": false,
+    "realInstallUpdated": false,
+    "fullFreeAcceptance": "NOT_ESTABLISHED",
+    "reviewComment": "https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6321134010"
+  },
+  "nightRecoveryAndPackage20261022": {
+    "baseline": "657da944d24a22c50ee27b0e935ed06574f0d369",
+    "status": "TARGETED_ENGINEERING_VERIFIED_NOT_FULL_FREE",
+    "sourceHashes": {
+      "src/host/free-frame-client.mjs": "2c54da289f96ff7fbd28ab74cb7a7d3808b18f37fa279351183e065ffbc7bc80",
+      "extension/package.mjs": "6bf1847fa0dcb365613e46b5cbe4058ebe455cb0de20ee6c546f0d8a01f9fd9a",
+      "extension/package-manifest-boundary.mjs": "3fa08be91516dad70c5f01b33852fda172f288f7e259ed4a81c37e2e3d5e03eb",
+      "tools/native-me-probe/content.mjs": "ea10322ed54dd5e71840d4b7e086fe35d0065acdec2ee937f0cc38071639d971",
+      "tests/host/free-frame-client.test.mjs": "4671de6d614430b4c5208f80f5aa2ca18d250808f008d3c1ec8d59a99ccfe6c5",
+      "tests/host/package-manifest-boundary.test.mjs": "c918ca7cce76245073922577ecf144a007c53b60905a4787269698358bf43cea",
+      "tests/host/native-me-preflight.test.mjs": "bf5b5b2ed5713756a8f1d81c6a8e5e5ec7734ee4e495064953a603764fb35873",
+      "tests/host/native-me-candidate-browser.mjs": "924c8e2d19f505c98806eabaea4aa6a51d90675cdd4c8098abf31c7fb5d2ce21"
+    },
+    "localEvidence": {
+      "frame-mutex-red.tap": {
+        "path": "/private/tmp/vaiwl-night-20261022/frame-mutex-red.tap",
+        "sha256": "ec02ea9341c883387b57dd9a2205dad15617fc08defb14f83c02f767d8deb3f6"
+      },
+      "frame-mutex-green.tap": {
+        "path": "/private/tmp/vaiwl-night-20261022/frame-mutex-green.tap",
+        "sha256": "001b145ab50ccc3b129d2e55afd56bde726283add754a07e067cb0312c31609f"
+      },
+      "package-completeness-red.tap": {
+        "path": "/private/tmp/vaiwl-night-20261022/package-completeness-red.tap",
+        "sha256": "5c5a98417d3968dddc1af1ce1049295487a83c68b11f7f3a366b19e0722ae4b1"
+      },
+      "package-completeness-green.tap": {
+        "path": "/private/tmp/vaiwl-night-20261022/package-completeness-green.tap",
+        "sha256": "1db68ae5b39cb38ab44f9ec7a2d5fa2cc0fb8ddb1b8f9bf775bc389e2e9ddd4c"
+      },
+      "affected-regression.tap": {
+        "path": "/private/tmp/vaiwl-night-20261022/affected-regression.tap",
+        "sha256": "78071669d9c124cc5a9ce3ebd6b9fad569c227bda3966355d6c8de36d82ee25d"
+      },
+      "preflight-red.tap": {
+        "path": "/private/tmp/vaiwl-night-20261022/preflight-red.tap",
+        "sha256": "a1472d30e19952ad13354b2f2694f8b33708cc3f91959c53fae41e996eac5c98"
+      },
+      "diagnostic-regression.tap": {
+        "path": "/private/tmp/vaiwl-night-20261022/diagnostic-regression.tap",
+        "sha256": "86f07142da71707ce3ffdbc3cff48d1713f5faf08b0372bc58a3aa19979e0954"
+      },
+      "working-set-browser.json": {
+        "path": "/private/tmp/vaiwl-night-20261022/working-set-browser.json",
+        "sha256": "9abf9261fc537a0570ea50e7fc511fc0facd62cc07a6100d4e17038ab976b0f9"
+      },
+      "diagnostic-browser.json": {
+        "path": "/private/tmp/vaiwl-night-20261022/diagnostic-browser.json",
+        "sha256": "7c5fc67a6c9043b1776dd727a9a22088d8f80faf7645d42bb346288f4df3c656"
+      },
+      "default-package.json": {
+        "path": "/private/tmp/vaiwl-night-20261022/default-package.json",
+        "sha256": "b4852fb9fdf2e8cc678ff6aa55b5c04cca8e32c61e1ebef02a158bbc4591fe87"
+      }
+    },
+    "mutationLock": {
+      "rootCause": "Retired mutation finally cleared a shared boolean after stop/start, releasing the replacement session lock and consuming its dirty invalidation.",
+      "fix": "Four mutation entry points own distinct attempt objects; cleanup requires identity equality.",
+      "before": {
+        "failed": 12,
+        "passed": 0
+      },
+      "after": {
+        "testFilePassed": 178,
+        "failed": 0,
+        "skipped": 0,
+        "durationMs": 227.0555
+      }
+    },
+    "packageCompleteness": {
+      "rootCause": "Rehashed file inventory and safe individual WAR entries did not establish required frame assets or public dependency coverage.",
+      "fix": "Require existing package format assets, resolve public static module closure from supplied package, reject dangling WAR targets, preserve alias/private boundaries.",
+      "before": {
+        "failed": 11,
+        "passed": 0
+      },
+      "after": {
+        "passed": 215,
+        "failed": 0,
+        "skipped": 0,
+        "durationMs": 10177.379542
+      },
+      "limit": "Not a general HTML/CSS/JavaScript dependency analyzer or signed-package proof."
+    },
+    "affectedRegression": {
+      "passed": 120,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 2302.93325
+    },
+    "diagnosticPreflight": {
+      "rootCause": "First pre-execution popstate permanently aborted the injected receiver; once listener also prevented observing later route events.",
+      "fix": "Unspent live document may rotate its preflight key; stale keys are rejected. Same probe/controller retained; pagehide and post-start invalidation stay terminal.",
+      "before": {
+        "failed": 2,
+        "passed": 5
+      },
+      "after": {
+        "passed": 103,
+        "failed": 0,
+        "skipped": 0,
+        "durationMs": 1432.171417
+      },
+      "installedProfileChanged": false,
+      "realRequests": 0
+    },
+    "workingSetJourney": {
+      "status": "PASS",
+      "kind": "PACKAGED_HEADLESS_MV3_OFFLINE",
+      "checks": [
+        "add",
+        "reorder",
+        "new-tab-persistence",
+        "native-input-return",
+        "native-link-draft-preserved",
+        "remove-last"
+      ],
+      "sourceStable": true,
+      "packageStable": true,
+      "realChatGPT": "NOT_RUN"
+    },
+    "diagnosticJourney": {
+      "status": "PASS_PACKAGED_OFFLINE_CANDIDATE",
+      "preflightRoute": {
+        "keyRotated": true,
+        "ready": true,
+        "requests": 0
+      },
+      "sourceStable": true,
+      "packageStable": true,
+      "runnerStable": true,
+      "elapsedMs": 2139.9322909999996
+    },
+    "defaultPackage": {
+      "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+      "releaseStatus": "NOT_RELEASE_READY",
+      "files": 184,
+      "unpacked": "/private/tmp/vaiwl-night-20261022/default-package/extension",
+      "archive": "/private/tmp/vaiwl-night-20261022/default-package/vaiwl-free-host-development.zip",
+      "archiveSha256": "e21c8da492d5fb7cbc358d07b4be6208f0d0803491bce73be6cd684fa99e9450"
+    },
+    "independentReview": "Read-only agents reviewed mutation ownership, package closure/private aliases, and preflight lifecycle; no blocking findings. Root sole writer.",
+    "remaining": [
+      "Trusted principal/current-context not established",
+      "Full server directory and positive membership/NONE sources not established",
+      "Self-send semantics and real recovery/physical IME/PAIA/install acceptance open",
+      "INV-09 consumer/source open",
+      "10k/100k DEFERRED with original thresholds"
+    ],
+    "fullMatrix": "NOT_RERUN_FOR_THIS_BATCH",
+    "release": "NOT_RELEASE_READY"
   }
 }

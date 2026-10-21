@@ -292,7 +292,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  }
  async function enterCurrent(){if(readTerminal)return;
   if(role!=='workspace'||closed||horizonPending||recovery||backup||!grantCurrent()||!viewSession||!Number.isSafeInteger(workspaceRevision)||(query.segment??0)!==0||query.search||query.workingSet)return {ok:false,reason:'current-entry-unavailable'};
-  horizonPending=true;const current=grant,renderer=navigation,expectedRevision=workspaceRevision,old=viewSession,ticket=serial,entryQuery=structuredClone(query);
+  const attempt={};horizonPending=attempt;const current=grant,renderer=navigation,expectedRevision=workspaceRevision,old=viewSession,ticket=serial,entryQuery=structuredClone(query);
   const valid=()=>!closed&&navigation===renderer&&grant?.id===current.id&&grantCurrent()&&serial===ticket&&JSON.stringify(query)===JSON.stringify(entryQuery)&&(query.segment??0)===0&&!query.search&&!query.workingSet;
   try{
    const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_CURRENT_ENTRY',grantId:current.id,mountId:current.mountId,expectedRevision,viewSession:old}),{now:elapsedNow,schedule,cancel});
@@ -313,12 +313,12 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(page&&change&&!closed&&navigation===renderer&&grant?.id===current.id&&grantCurrent()&&workspaceRevision===change.workspaceRevision&&(query.segment??0)===0&&!query.search&&!query.workingSet){clearAutoNotice();autoChange=change;renderer.showTimePolicyNotice?.({id:change.id,expiresAt:change.expiresAt});}
    return page?result:{ok:false,reason:'current-entry-refresh-unavailable'};
   }catch{return {ok:false,reason:'current-entry-unavailable'};}
-  finally{horizonPending=false;if(dirty&&!closed){dirty=false;invalidate();}else applyCandidateMigration();}
+  finally{finishMutation(attempt,true);}
  }
  async function undoAutoHorizon(value){if(readTerminal)return;
   const decision=autoChange;
   if(!decision||value?.id!==decision.id||role!=='workspace'||closed||horizonPending||recovery||backup||!grantCurrent()||Date.parse(decision.expiresAt)<=now()||workspaceRevision!==decision.workspaceRevision||(query.segment??0)!==0||query.search||query.workingSet)return {ok:false,reason:'auto-undo-unavailable'};
-  horizonPending=true;const current=grant,renderer=navigation,ticket=serial;
+  const attempt={};horizonPending=attempt;const current=grant,renderer=navigation,ticket=serial;
   try{
    const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_UNDO_AUTO_HORIZON',grantId:current.id,mountId:current.mountId,operationId:globalThis.crypto.randomUUID(),expectedRevision:decision.workspaceRevision,id:decision.id}),{now:elapsedNow,schedule,cancel});
    if(closed||navigation!==renderer||grant?.id!==current.id||!grantCurrent()||autoChange!==decision||serial!==ticket||(query.segment??0)!==0||query.search||query.workingSet)return {ok:false,reason:'auto-undo-unavailable'};
@@ -326,12 +326,12 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(result.segment!==0||result.workspaceRevision!==decision.workspaceRevision+1||result.viewSession?.H!==decision.previousH||result.viewSession.policyRevision!==decision.policyRevision+1||result.viewSession.T!==viewSession.T||result.viewSession.Z!==viewSession.Z)throw Error('invalid-auto-undo-response');
    clearAutoNotice();workspaceRevision=result.workspaceRevision;viewSession=result.viewSession;query={segment:0,offset:0,limit:8};dirty=false;await read(query,true);return result;
   }catch{return {ok:false,reason:'auto-undo-unavailable'};}
-  finally{horizonPending=false;if(dirty&&!closed){dirty=false;invalidate();}}
+  finally{finishMutation(attempt);}
  }
  async function setHorizon(value){if(readTerminal)return;
   if(closed||horizonPending||!grantCurrent()||!Number.isSafeInteger(workspaceRevision)||(value?.H!=='auto'&&!FREE_HORIZONS.includes(value?.H)))return {ok:false,reason:'horizon-change-unavailable'};
   const expectedH=value.H==='auto'?viewSession?.H:value.H;if(!FREE_HORIZONS.includes(expectedH))return {ok:false,reason:'horizon-change-unavailable'};
-  clearAutoNotice();horizonPending=true;const current=grant,renderer=navigation,ticket=serial;
+  clearAutoNotice();const attempt={};horizonPending=attempt;const current=grant,renderer=navigation,ticket=serial;
   const operationId=globalThis.crypto.randomUUID();
   try{
    const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_SET_HORIZON',grantId:current.id,mountId:current.mountId,operationId,expectedRevision:workspaceRevision,H:value.H,segment:value.segment,anchorRefId:value.anchorRefId}),{now:elapsedNow,schedule,cancel});
@@ -342,12 +342,12 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    query={segment:result.segment,offset:0,limit:8,...(query.search?{search:query.search}:{}),...(query.workingSet?{workingSet:query.workingSet}:{})};
    dirty=false;await read(query,true);return result;
   }catch{return {ok:false,reason:'horizon-change-unavailable'};}
-  finally{horizonPending=false;if(dirty&&!closed){dirty=false;invalidate();}}
+  finally{finishMutation(attempt);}
  }
  async function changeWorkingSet(value){if(readTerminal)return;
   if(!value||Object.getPrototypeOf(value)!==Object.prototype||Object.keys(value).sort().join(',')!=='action,refId'||!['add','remove','move-up'].includes(value.action)||typeof value.refId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(value.refId))return {ok:false,reason:'invalid-working-set-request'};
   if(closed||horizonPending||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||!Number.isSafeInteger(workspaceRevision))return {ok:false,reason:'working-set-change-unavailable'};
-  horizonPending=true;const current=grant,renderer=navigation,expectedRevision=workspaceRevision,epoch=readEpoch;
+  const attempt={};horizonPending=attempt;const current=grant,renderer=navigation,expectedRevision=workspaceRevision,epoch=readEpoch;
   const valid=()=>!readTerminal&&readEpoch===epoch&&!closed&&navigation===renderer&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
   try{
    const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_WORKING_SET',grantId:current.id,mountId:current.mountId,operationId:globalThis.crypto.randomUUID(),expectedRevision,action:value.action,refId:value.refId}),{now:elapsedNow,schedule,cancel});
@@ -360,7 +360,14 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
    if(!valid()||!page||!Number.isSafeInteger(page.workspaceRevision)||page.workspaceRevision<result.workspaceRevision)return {ok:false,reason:'working-set-refresh-unavailable'};
    return result;
   }catch{return {ok:false,reason:'working-set-change-unavailable'};}
-  finally{horizonPending=false;if(dirty&&!closed){dirty=false;invalidate();}}
+  finally{finishMutation(attempt);}
+ }
+ function finishMutation(attempt,applyMigration=false){
+  // stop/restart may already have admitted a new session's mutation. A retired
+  // reply or timeout owns neither its lock nor its pending view invalidation.
+  if(horizonPending!==attempt)return;
+  horizonPending=false;
+  if(dirty&&!closed){dirty=false;invalidate();}else if(applyMigration)applyCandidateMigration();
  }
  async function locateSearchSnippet(value){if(readTerminal)return;
   if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).join(',')!=='id'||closed||snippets||backup||recovery||snippetLocatePending||!query.search||!currentRef||searchSnippetIds.get(value?.id)!==currentRef.id||!Number.isSafeInteger(workspaceRevision)||!grantCurrent()||Date.parse(grant?.expiresAt)<=now())return {ok:false};

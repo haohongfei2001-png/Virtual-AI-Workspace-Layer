@@ -1,10 +1,10 @@
 import {compileClassicWorker,compileTemporaryContent} from './classic-worker-build.mjs';
-import {assertHostManifestBoundary} from './package-manifest-boundary.mjs';
+import {assertHostManifestBoundary,hostPublicResourceTarget} from './package-manifest-boundary.mjs';
 import {OFFLINE_HISTORY_PROFILE} from '../src/runtime/historical-send-profile.mjs';
 import {buildHost} from './build.mjs';
 import {zip} from '../simulator/package.mjs';
 import {readFileSync,writeFileSync,readdirSync,lstatSync,existsSync,mkdirSync} from 'node:fs';
-import {resolve,join,dirname} from 'node:path';
+import {resolve,join,dirname,relative,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 const sha=value=>createHash('sha256').update(value).digest('hex');
@@ -19,6 +19,7 @@ export function verifyHost(unpacked){
  const expected=Object.keys(info.files).sort();if(JSON.stringify(files(root).filter(name=>name!=='build-manifest.json'))!==JSON.stringify(expected))throw Error('unexpected-host-package-files');
  for(const name of expected){if(name.startsWith('/')||name.split('/').includes('..')||name.includes('\\')||!name)throw Error('invalid-host-package-path');if(sha(readFileSync(join(root,name)))!==info.files[name])throw Error('host-package-hash-mismatch:'+name);}
  if(!['status.html','extension/status.mjs','extension/status.css'].every(name=>expected.includes(name)))throw Error('missing-host-status-entry');
+ if(!['content.js','workspace.html','sidebar.html','extension/frame-shell.css'].every(name=>expected.includes(name)))throw Error('missing-host-package-entry');
  const offline=info.status==='OFFLINE_HOST_RECONSTRUCTION',origin=new URL(info.origin);
  if(offline?(origin.origin!==info.origin||origin.protocol!=='http:'||origin.hostname!=='127.0.0.1'):info.origin!=='https://chatgpt.com')throw Error('invalid-host-package-origin');
  if(Object.hasOwn(info,'offlineOldSendTerminal')&&(info.offlineOldSendTerminal!==true||!offline||!(info.offlineFirstSend||info.offlineExistingSend)))throw Error('invalid-old-send-terminal-profile');
@@ -34,7 +35,28 @@ export function verifyHost(unpacked){
  if(Object.hasOwn(info,'offlineSnippets')&&(info.offlineSnippets!==true||info.status!=='OFFLINE_HOST_RECONSTRUCTION'))throw Error('invalid-host-snippet-profile');
  if(info.contextSelection!==contextSelection||readFileSync(join(root,'extension/config.mjs'),'utf8')!=='export const HOST_CONFIG=Object.freeze('+JSON.stringify({origin:info.origin,scopeProfile,...(info.temporaryReadOnly?{temporaryReadOnly:true}:{}),...(info.observedChatGPTContext?{surfaceProfile:'chatgpt-zh-desktop-observed-20261018',sessionProfile:{structures:{personal:'personal',workspace:'organization'},conversationRequestContext:'conversation-detail-plural-v1',conversationMetadataFormat:'message-list-v1'}}:{}),...(info.offlineObservedProjectLayout?{offlineObservedProjectLayout:true,surfaceProfile:'chatgpt-zh-desktop-observed-20261018'}:{}),...(info.offlineOldSendTerminal?{offlineOldSendTerminal:true}:{}),...(info.offlineFirstSend?{offlineFirstSend:true,currentMetadataReadEnabled:true,sendCandidatesEnabled:true,sendAckProfile:{id:'loopback-first-send-ack',revision:1,providerProfile:'chatgpt-session-v1',ack:{kind:'authenticated-message-readback',acceptedStates:['fixture-accepted']}}}:{}),...(info.offlineExistingSend?{currentMetadataReadEnabled:true,sendCandidatesEnabled:true,sendAckProfile:{id:'loopback-existing-send-ack',revision:1,providerProfile:'chatgpt-session-v1',ack:{kind:'authenticated-message-readback',acceptedStates:['fixture-accepted']}}}:{}),...(info.offlineContext?{sessionProfile:{structures:{personal:'personal',workspace:'organization'},currentConversationContextHeader:true,currentConversationRosterContext:true}}:{}),...(info.offlineSnippets?{offlineSnippets:true}:{}),...(info.offlineHistory?{offlineHistory:true,currentMetadataReadEnabled:true,sendCandidatesEnabled:true,historicalSendProfile:OFFLINE_HISTORY_PROFILE}:{})})+');\n')throw Error('invalid-host-package-context');
  if(manifest.content_security_policy?.extension_pages!==`script-src 'self'; object-src 'none'; connect-src ${info.origin}`||manifest.web_accessible_resources?.length!==1||JSON.stringify(manifest.web_accessible_resources[0].matches)!==JSON.stringify([match]))throw Error('invalid-host-package-public-boundary');
- for(const name of expected.filter(name=>name.endsWith('.mjs'))){const source=readFileSync(join(root,name),'utf8');for(const match of [...source.matchAll(/\b(?:import|export)\s+(?:\{[^}]*\}|\*\s*(?:as\s+\w+)?|[\w$]+)\s+from\s*['"]([^'"]+)['"]/g),...source.matchAll(/\bimport\s*['"]([^'"]+)['"]/g)]){if(!match[1].startsWith('.'))throw Error('nonlocal-host-package-import');const target=resolve(root,dirname(name),match[1]);if(!target.startsWith(root+'/')||!existsSync(target))throw Error('missing-host-package-import');}}
+ const dependencies=new Map();
+ for(const name of expected.filter(name=>name.endsWith('.mjs'))){
+  const source=readFileSync(join(root,name),'utf8'),targets=[];
+  for(const match of [...source.matchAll(/\b(?:import|export)\s+(?:\{[^}]*\}|\*\s*(?:as\s+\w+)?|[\w$]+)\s+from\s*['"]([^'"]+)['"]/g),...source.matchAll(/\bimport\s*['"]([^'"]+)['"]/g)]){
+   if(!match[1].startsWith('.'))throw Error('nonlocal-host-package-import');
+   const target=resolve(root,dirname(name),match[1]);
+   if(!target.startsWith(root+sep)||!existsSync(target))throw Error('missing-host-package-import');
+   targets.push(relative(root,target).split(sep).join('/'));
+  }
+  dependencies.set(name,targets);
+ }
+ // Check the supplied package, not the checkout's dependency graph or a
+ // rehashed inventory. Private frame styles must exist, but need no WAR entry.
+ const publicFiles=new Set(manifest.web_accessible_resources[0].resources.map(hostPublicResourceTarget));
+ for(const name of publicFiles)if(!expected.includes(name))throw Error('missing-host-package-public-file');
+ const visited=new Set();
+ function requirePublic(name){
+  if(visited.has(name))return;visited.add(name);
+  if(!publicFiles.has(name))throw Error('missing-host-package-public-resource:'+name);
+  for(const target of dependencies.get(name)??[])requirePublic(target);
+ }
+ for(const name of ['workspace.html','sidebar.html','extension/content-entry.mjs','extension/workspace.mjs','extension/sidebar.mjs'])requirePublic(name);
  if(info.temporaryReadOnly&&readFileSync(join(root,'content.js'),'utf8')!==compileTemporaryContent(root))throw Error('host-package-temporary-content-build-mismatch');
  const compiled=compileClassicWorker(root);
  if(readFileSync(join(root,'extension/worker.mjs'),'utf8')!==compiled.entry||readFileSync(join(root,'extension/classic-runtime.js'),'utf8')!==compiled.runtime)throw Error('host-package-worker-build-mismatch');

@@ -1,5 +1,19 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 夜间工程检查点与真实对照结果（2026-10-22，基线657da944）
+
+用户已在新建的ChatGPT空白首页执行原批准的include/omit批次并回传固定JSON：4请求完成，`me`与accounts均include=200、omit=401，本批无challenge；accounts仍只有default/personal，account_id=null、id缺失，解析原因`default-null-context-id`。这是用户回传结果，未由代理独立读取原弹窗；许可现已消费，不再重发。凭据依赖成立的局部观察不等于主体语义、命名空间、当前空间/C3或认证canonical roster成立；未开scope/旧库。之前两次预检停止均零请求，历史记录保留。脱敏结果及解释见原summary的`credentialControl20261022UserResult`，已更新[PR16来源审查评论](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6321134010)，尚未取得新的来源语义依据。
+
+Codex沿原分支唯一写入，已实施三个有实际反例的修复：
+
+- C3/C5恢复后的写操作：旧会话的finally曾清除新会话写锁，允许多发工作集修改。四入口改为独立操作归属检查，旧回复/失败/六秒超时均不能释放新锁或消化新dirty。12反例先失败，修复后整文件通过；当前操作成功刷新、解锁及后续修改保持。
+- F3安装检查：缺workspace/sidebar HTML、共用CSS或WAR深层模块的重算hash坏包曾获通过。现校验现有包格式的必要资产、实际待验包公开静态模块闭包及WAR目标存在；保留编码别名和私有模块禁公开，CSS不新增公开权限。11反例先失败后通过；不是任意HTML/CSS/JS通用分析器。
+- 诊断器预检：执行前首次popstate曾永久毒化接收器，造成`route-event`零请求但不就绪。现在未消费时轮换预检键并拒绝旧键；开始后路由/隐藏/交互和pagehide仍取消，不重建probe、不续预算、不清消费标记。只修后续构建，原真实安装未改，已完成批次不重做。
+
+合批验证：178界面客户端、215包检查、120相邻回归、103诊断定向均通过，零失败/跳过。原隔离headless MV3工作集六阶段走通（添加/排序/跨标签持久读取/原生输入返回/打开聊天保草稿/移除末项）；隔离合成诊断验证执行前路由键轮换、一次批次及关闭原页后读取已收结果。两个浏览器运行均源码/包稳定；默认184文件包构建校验通过。独立只读审查无阻断，失败原件、当前源码hash和局限沿`nightRecoveryAndPackage20261022`；未重复完整矩阵或规模验收，不套用旧CI。
+
+既有30分钟续接已恢复ACTIVE，夜间只推进有依据且依赖就绪的原任务；来源审查与工程并行，不再要求用户重复本批操作。下一来源关口是可核验主体/个人默认空间语义及当前文档选择/撤回证据；完整服务器目录、成员/NONE、本人活动、INV-09、完整J1/J4和真实IME/PAIA/安装仍开放。10k/100k保持DEFERRED，完整Free及发布未通过。
+
 ## 工具拒绝范围纠正与原始凭据（2026-10-22）
 
 已从本对话原始工具记录找回`call_7590e4709caf425f8837ebf0d3b4a873`：工具输出记录时间为北京时间2026-10-21 23:20:36.559，`mcp__cua_repl.js`调用`cua.createBrowserTab`打开原扩展的`chrome-extension://…/native-me-probe.html`，目的是只读单次状态；结果为`navigation_url_policy_blocked`。它是本次诊断页直达拒绝，不只是旧`chrome://extensions`管理页拒绝；完整返回明确限制http/https，并禁止通过替代surface/间接执行取得同一结果。完整原文、调用ID、时间、精确目标的脱敏版本及原始记录hash已补至原[summary的browserControlDenialScope20261022](evidence/free-delivery-2026-10-17/local-page-selection-summary.json)；精确未脱敏调用仅保留本地。

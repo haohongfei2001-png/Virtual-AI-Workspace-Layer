@@ -194,6 +194,52 @@ async function currentEntryFixture(role='workspace'){
  f.setView(async()=>({ok:true,state:'ready',page:{...f.page(),workspaceRevision:revision,viewSession:{...session}},navigation:[]}));
  f.setSession=value=>{session=value;};f.setWorkspaceRevision=value=>{revision=value;};await f.client.start();await drain();return f;
 }
+
+for(const kind of ['current','horizon','undo','working-set'])for(const settlement of ['reply','reject','deadline'])test(`retired ${kind} ${settlement} cannot release the replacement session mutation`,async()=>{
+ const f=await currentEntryFixture(),send=f.runtime.sendMessage;
+ if(kind==='undo'){
+  const next={H:14,T:20740,Z:'UTC',policyRevision:3};
+  f.runtime.sendMessage=m=>{
+   if(m.type!=='HOST_UI_CURRENT_ENTRY')return send(m);
+   f.setSession(next);f.setWorkspaceRevision(6);
+   return Promise.resolve({ok:true,segment:0,workspaceRevision:6,viewSession:next,policyCommit:{policyRevision:3,workspaceRevision:6},autoChange:{id:'change',expiresAt:new Date(16000).toISOString(),previousH:30,H:14,policyRevision:3,workspaceRevision:6}});
+  };
+  assert.equal((await f.nav.onCurrentWorkspaceEntry()).ok,true);
+ }
+ let rejectOld;const old=deferred(),retired=new Promise((resolve,reject)=>{old.promise.then(resolve);rejectOld=reject;}),current=deferred();
+ const types={current:'HOST_UI_CURRENT_ENTRY',horizon:'HOST_UI_SET_HORIZON',undo:'HOST_UI_UNDO_AUTO_HORIZON','working-set':'HOST_UI_WORKING_SET'};
+ let oldDispatched=false,currentWrites=0,restarted=false;
+ f.runtime.sendMessage=m=>{
+  if(!restarted&&m.type===types[kind]){oldDispatched=true;return retired;}
+  if(restarted&&m.type==='HOST_UI_WORKING_SET'){currentWrites++;return currentWrites===1?current.promise:Promise.resolve({ok:false,reason:'revision-conflict'});}
+  return send(m);
+ };
+ const operations={current:()=>f.nav.onCurrentWorkspaceEntry(),horizon:()=>f.nav.onHorizonRequest({H:7,segment:0,anchorRefId:null}),undo:()=>f.nav.onUndoTimePolicyRequest({id:'change'}),'working-set':()=>f.nav.onWorkingSetRequest({action:'add',refId:'old'})};
+ const first=operations[kind]();await drain();assert.equal(oldDispatched,true);
+ // Keep the retired deadline one second ahead of the new operation. The new
+ // client deliberately receives identical grant IDs, so renderer ownership is
+ // required even when transport identifiers happen to be reused.
+ f.jump(1000);f.client.stop();restarted=true;await f.client.start();await drain();
+ const second=f.nav.onWorkingSetRequest({action:'add',refId:'new'});await drain();
+ f.emit({type:'VAIWL_UI_DATA_CHANGED'});const views=f.views,pages=f.pages.length;
+ try{
+  if(settlement==='reply')old.resolve({ok:true,workspaceRevision:99,segment:0,viewSession:{H:7,T:20740,Z:'UTC',policyRevision:4},workingSet:{total:1,currentRefId:'old'}});
+  if(settlement==='reject')rejectOld(Error('retired-transport'));
+  if(settlement==='deadline')await f.advance(5000);
+  assert.equal((await first).ok,false);await drain();
+  assert.equal((await f.nav.onWorkingSetRequest({action:'add',refId:'extra'})).ok,false);
+  assert.equal(currentWrites,1,'only the replacement operation may own the write lock');
+  assert.equal(f.views,views,'retired cleanup must not drain the replacement dirty view');
+  assert.equal(f.pages.length,pages,'retired reply must not paint');
+  const revision=kind==='undo'?7:6;f.setWorkspaceRevision(revision);
+  current.resolve({ok:true,workspaceRevision:revision,workingSet:{total:1,currentRefId:'new'}});
+  assert.equal((await second).ok,true);await drain();
+  assert.equal(f.pages.at(-1).workspaceRevision,revision);
+  await f.nav.onWorkingSetRequest({action:'remove',refId:'new'});
+  assert.equal(currentWrites,2,'current cleanup must release its own lock');
+  const finalViews=f.views;old.resolve({ok:true,workspaceRevision:100});await drain();assert.equal(f.views,finalViews);
+ }finally{old.resolve({ok:false});current.resolve({ok:false});f.client.stop();await drain();}
+});
 test('safe current entry alone sends frozen authority and adopts returned session before a current-page read',async()=>{
  const f=await currentEntryFixture(),other=await currentEntryFixture(),send=f.runtime.sendMessage,writes=[],next={H:14,T:20741,Z:'Asia/Shanghai',policyRevision:3};
  await f.advance(10000);assert.equal(f.calls.some(m=>m.type==='HOST_UI_CURRENT_ENTRY'),false);

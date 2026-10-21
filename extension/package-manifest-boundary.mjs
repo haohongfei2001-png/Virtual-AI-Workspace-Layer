@@ -9,13 +9,15 @@ const metadataKeys=['description','short_name','version_name','author','homepage
 const record=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&Object.getPrototypeOf(value)===Object.prototype;
 const shape=(value,required,optional=[])=>record(value)&&required.every(key=>Object.hasOwn(value,key))&&Object.keys(value).every(key=>required.includes(key)||optional.includes(key));
 
-function publicResource(path){
- if(typeof path!=='string'||path.length===0)return false;
- let target;
+export function hostPublicResourceTarget(path){
+ if(typeof path!=='string'||path.length===0)return null;
  // WAR accepts leading slashes and percent-encoded paths. Check a conservative
  // decoded resource target, not only the declaration's literal spelling. This
  // is not a reimplementation of Chromium URLPattern's NORMAL unescape rules.
- try{target=decodeURIComponent(path).replace(/^\/+/, '');}catch{return false;}
+ try{return decodeURIComponent(path).replace(/^\/+/, '');}catch{return null;}
+}
+function publicResource(path){
+ const target=hostPublicResourceTarget(path);if(target===null)return false;
  // Only unambiguous package-relative paths are supported. Do not let URL or
  // filesystem normalization turn a harmless-looking declaration into a private
  // resource; a remaining percent sign would require another decoding pass.
