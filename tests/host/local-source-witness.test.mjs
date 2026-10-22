@@ -69,7 +69,7 @@ test('developer overlay preserves normal navigation, adds only storage, private 
  assert.equal(verifyLocalWitness(output).realChatGPT,'NOT_RUN');assert.deepEqual(manifest.permissions,['webNavigation','webRequest','storage']);assert.deepEqual(manifest.host_permissions,['https://chatgpt.com/*']);assert.equal(manifest.action.default_popup,'status.html');
  assert.match(readFileSync(join(output,'source-witness-entry.mjs'),'utf8'),/extension\/temporary-navigation.mjs/);assert.match(readFileSync(join(output,'status.html'),'utf8'),/source-witness-entry.mjs/);
  assert(manifest.web_accessible_resources.every(r=>r.resources.every(p=>!p.includes('witness'))));
- assert.equal(info.mode,'PASSIVE_C2_ONLY');assert.equal(info.batchId,PASSIVE_BATCH);assert.equal(info.previousBatchId,BATCH);
+ assert.equal(info.mode,'PASSIVE_C2_ONLY');assert.equal(info.batchId,PASSIVE_BATCH);assert.equal(info.previousBatchId,BATCH);assert.equal(info.previousPassiveBatchId,PREVIOUS_PASSIVE_BATCH);
  assert.equal(info.maxGETs,0);assert.equal(info.retries,0);assert.equal(info.maxBytes,0);assert.equal(info.maxConcurrent,0);assert.equal(info.realChatGPT,'NOT_RUN');
  assert.equal(info.maxPreparationMs,120000);assert.equal(info.maxChainMs,6000);assert.equal(info.maxElapsedMs,126000);
  assert.throws(()=>buildLocalWitness(output),/output-must-be-new/);
@@ -79,12 +79,12 @@ test('developer overlay preserves normal navigation, adds only storage, private 
  assert.throws(()=>verifyLocalWitness(output),/witness-overlay-mismatch/);
 });
 
-import {installWitnessWorker,PASSIVE_BATCH} from '../../tools/native-source-witness/worker.mjs';
+import {installWitnessWorker,PASSIVE_BATCH,PREVIOUS_PASSIVE_BATCH} from '../../tools/native-source-witness/worker.mjs';
 import {BATCH} from '../../tools/native-source-witness/runner.mjs';
 function mockChrome(stored={},options={passiveOnly:false}){
  const event=()=>{const listeners=new Set();return {listeners,addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f),emit:x=>{for(const f of listeners)f(x);}};};
  const runtime={id:'test-extension',getURL:p=>'chrome-extension://test-extension/'+p,getManifest:()=>({version:'0.3.0'}),onMessage:event()};
- const chrome={runtime,storage:{local:{get:async key=>({[key]:stored[key]}),set:async value=>Object.assign(stored,value)}},tabs:{get:async id=>({id,url:'https://chatgpt.com/',incognito:false}),sendMessage:async()=>({ready:true}),onRemoved:event()},webNavigation:{getFrame:async()=>({documentId:'doc-one',url:'https://chatgpt.com/',documentLifecycle:'active',frameType:'outermost_frame'}),onCommitted:event(),onHistoryStateUpdated:event()},webRequest:Object.fromEntries(['onSendHeaders','onCompleted','onErrorOccurred','onBeforeRedirect'].map(k=>[k,event()]))};
+ const chrome={runtime,storage:{local:{get:async key=>Object.fromEntries((Array.isArray(key)?key:[key]).map(k=>[k,stored[k]])),set:async value=>Object.assign(stored,value)}},tabs:{get:async id=>({id,url:'https://chatgpt.com/',incognito:false}),sendMessage:async()=>({ready:true}),onRemoved:event()},webNavigation:{getFrame:async()=>({documentId:'doc-one',url:'https://chatgpt.com/',documentLifecycle:'active',frameType:'outermost_frame'}),onCommitted:event(),onHistoryStateUpdated:event()},webRequest:Object.fromEntries(['onSendHeaders','onCompleted','onErrorOccurred','onBeforeRedirect'].map(k=>[k,event()]))};
  installWitnessWorker(chrome,options);
  const sender={id:runtime.id,url:runtime.getURL('source-witness.html')+'#1'};
  const message=(value,source=sender)=>new Promise(resolve=>{let accepted=false;for(const fn of runtime.onMessage.listeners)if(fn(value,source,resolve)===true)accepted=true;if(!accepted)resolve('ignored');});
@@ -119,38 +119,59 @@ test('legacy consumed timeout is read unchanged, never reconstructed from new di
 });
 const passiveArm={type:'SOURCE_WITNESS_ARM',tabId:1,batch:PASSIVE_BATCH};
 const oldConsumed=()=>({state:'finished',result:{schema:BATCH,state:'BLOCKED',reason:'no-native-context-observed',requests:0,unspent:false}});
+const oldPassiveConsumed=()=>({state:'finished',result:{schema:PREVIOUS_PASSIVE_BATCH,state:'BLOCKED',reason:'no-native-context-observed',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:0}}});
+const passiveRead={type:'SOURCE_WITNESS_READ',batch:PASSIVE_BATCH},passiveReturn={type:'SOURCE_WITNESS_RETURN',batch:PASSIVE_BATCH};
+const priorLedgers=(active=oldConsumed())=>({[BATCH]:active,[PREVIOUS_PASSIVE_BATCH]:oldPassiveConsumed()});
+test('v2 requires both finished prior batches and never consumes or repairs a missing or uncertain v1',async()=>{
+ for(const prior of [undefined,{state:'reserved',result:null},{...oldPassiveConsumed(),result:{...oldPassiveConsumed().result,unspent:true}}]){
+  const records={[BATCH]:oldConsumed(),...(prior?{[PREVIOUS_PASSIVE_BATCH]:prior}:{})},before=structuredClone(records),h=mockChrome(records,{});
+  h.chrome.tabs.get=async()=>assert.fail('invalid prior batch must stop before tab access');
+  assert.equal((await h.message(passiveArm)).reason,'previous-consumed-passive-result-required');
+  assert.deepEqual(records,before);assert.equal(records[PASSIVE_BATCH],undefined);
+  for(const e of Object.values(h.chrome.webRequest))assert.equal(e.listeners.size,0);
+ }
+});
+test('old passive page messages cannot read, arm or return the v2 operation',async t=>{
+ const h=mockChrome(priorLedgers(),{});t.after(()=>h.chrome.tabs.onRemoved.emit(1));
+ assert.equal((await h.message(passiveArm)).state,'WAITING_NATIVE');const before=JSON.stringify(h.stored);
+ h.chrome.tabs.update=async()=>assert.fail('old page cannot focus the new observation');
+ for(const type of ['SOURCE_WITNESS_ARM','SOURCE_WITNESS_READ','SOURCE_WITNESS_RETURN']){
+  for(const batch of [undefined,PREVIOUS_PASSIVE_BATCH,BATCH])assert.equal(await h.message({type,...(type==='SOURCE_WITNESS_ARM'?{tabId:1}:{}),...(batch?{batch}:{})}),'ignored');
+ }
+ assert.equal((await h.message(passiveRead)).state,'WAITING_NATIVE');assert.equal(JSON.stringify(h.stored),before);
+});
 test('return control selects the owner bound tab, never another result page hash or a new navigation',async t=>{
  t.mock.method(globalThis,'fetch',()=>assert.fail('return control must not fetch'));
- const h=mockChrome({[BATCH]:oldConsumed()},{}),actions=[];
+ const h=mockChrome(priorLedgers(),{}),actions=[];
  h.chrome.tabs.get=async id=>({id,windowId:4,url:'https://chatgpt.com/',incognito:false,discarded:false});
  h.chrome.tabs.update=async(id,options)=>{actions.push(['tab',id,options]);return {id,windowId:4};};
  h.chrome.windows={update:async(id,options)=>actions.push(['window',id,options])};
- assert.equal((await h.message({type:'SOURCE_WITNESS_RETURN'})).state,'UNAVAILABLE');
+ assert.equal((await h.message(passiveReturn)).state,'UNAVAILABLE');
  await h.message(passiveArm);const before=JSON.stringify(h.stored);
  const sender={id:h.chrome.runtime.id,url:h.chrome.runtime.getURL('source-witness.html')+'#99'};
- assert.equal(await h.message({type:'SOURCE_WITNESS_RETURN',tabId:99},sender),'ignored');
- assert.equal((await h.message({type:'SOURCE_WITNESS_RETURN'},sender)).state,'TARGET_SHOWN');
+ assert.equal(await h.message({...passiveReturn,tabId:99},sender),'ignored');
+ assert.equal((await h.message(passiveReturn,sender)).state,'TARGET_SHOWN');
  assert.deepEqual(actions,[['tab',1,{active:true}],['window',4,{focused:true}]]);
  assert.equal(JSON.stringify(h.stored),before);
  let finishFocus;h.chrome.windows.update=async(id,options)=>{actions.push(['window',id,options]);return new Promise(resolve=>{finishFocus=resolve;});};
- const lateReturn=h.message({type:'SOURCE_WITNESS_RETURN'},sender);await new Promise(r=>setImmediate(r));assert(finishFocus);
+ const lateReturn=h.message(passiveReturn,sender);await new Promise(r=>setImmediate(r));assert(finishFocus);
  h.chrome.tabs.onRemoved.emit(1);await new Promise(r=>setImmediate(r));
  finishFocus();assert.equal((await lateReturn).state,'UNAVAILABLE');
  const final=JSON.stringify(h.stored);
- assert.equal((await h.message({type:'SOURCE_WITNESS_RETURN'},sender)).state,'UNAVAILABLE');
+ assert.equal((await h.message(passiveReturn,sender)).state,'UNAVAILABLE');
  assert.equal(actions.length,4);assert.equal(JSON.stringify(h.stored),final);
 });
 test('return control refuses discarded targets, elapsed deadlines and retirement during lookup',async t=>{
  let elapsed=0;t.mock.method(performance,'now',()=>elapsed);
- const h=mockChrome({[BATCH]:oldConsumed()},{});await h.message(passiveArm);
+ const h=mockChrome(priorLedgers(),{});await h.message(passiveArm);
  h.chrome.tabs.update=async()=>assert.fail('must not activate or reload a rejected target');
  h.chrome.windows={update:async()=>assert.fail('must not focus a rejected target')};
  h.chrome.tabs.get=async id=>({id,windowId:4,url:'https://chatgpt.com/',incognito:false,discarded:true});
- assert.equal((await h.message({type:'SOURCE_WITNESS_RETURN'})).state,'UNAVAILABLE');
+ assert.equal((await h.message(passiveReturn)).state,'UNAVAILABLE');
  elapsed=120000;
- assert.equal((await h.message({type:'SOURCE_WITNESS_RETURN'})).state,'UNAVAILABLE');
+ assert.equal((await h.message(passiveReturn)).state,'UNAVAILABLE');
  elapsed=0;let finishLookup;h.chrome.tabs.get=()=>new Promise(resolve=>{finishLookup=resolve;});
- const pending=h.message({type:'SOURCE_WITNESS_RETURN'});assert(finishLookup);
+ const pending=h.message(passiveReturn);assert(finishLookup);
  h.chrome.tabs.onRemoved.emit(1);
  finishLookup({id:1,windowId:4,url:'https://chatgpt.com/',incognito:false,discarded:false});
  assert.equal((await pending).state,'UNAVAILABLE');
@@ -159,21 +180,21 @@ test('passive default requires the original consumed installation and a home tar
  const absent=mockChrome({},{});
  assert.equal((await absent.message(passiveArm)).reason,'previous-consumed-context-result-required');
  assert.equal(absent.stored[PASSIVE_BATCH],undefined);
- const previous=oldConsumed(),h=mockChrome({[BATCH]:previous},{});
- assert.deepEqual(await h.message({type:'SOURCE_WITNESS_PREVIOUS'}),previous.result);
+ const previous=oldConsumed(),h=mockChrome(priorLedgers(previous),{});
+ assert.deepEqual(await h.message({type:'SOURCE_WITNESS_PREVIOUS'}),{active:previous.result,passive:oldPassiveConsumed().result});
  assert.equal(await h.message({type:'SOURCE_WITNESS_ARM',tabId:1}),'ignored');
  assert.equal(await h.message({...passiveArm,batch:BATCH}),'ignored');
  assert.equal(await h.message({type:'SOURCE_WITNESS_ARM',tabId:1,passiveOnly:false}),'ignored');
  const oldWorker=mockChrome();assert.equal(await oldWorker.message(passiveArm),'ignored');assert.deepEqual(oldWorker.stored,{});
  h.chrome.tabs.get=async id=>({id,url:frame.actualURL,incognito:false});
  assert.equal((await h.message(passiveArm)).reason,'select-chatgpt-home-no-request');
- assert.equal(h.stored[PASSIVE_BATCH],undefined);assert.deepEqual(h.stored[BATCH],previous);
+ assert.equal(h.stored[PASSIVE_BATCH],undefined);assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());
  for(const event of Object.values(h.chrome.webRequest))assert.equal(event.listeners.size,0);
 });
 test('passive association success or mismatch never enters identity, preserves the prior ledger, and consumes only the new batch',async t=>{
  const fetch=t.mock.method(globalThis,'fetch',()=>{assert.fail('the approved passive batch must never perform any GET');});
  for(const matching of [true,false]){
-  const previous=oldConsumed(),h=mockChrome({[BATCH]:structuredClone(previous)},{});
+  const previous=oldConsumed(),h=mockChrome(priorLedgers(structuredClone(previous)),{});
   t.after(()=>h.chrome.tabs.onRemoved.emit(1));
   assert.equal((await h.message(passiveArm)).state,'WAITING_NATIVE');
   const current={documentId:'doc-one',url:frame.actualURL,documentLifecycle:'active',frameType:'outermost_frame'};
@@ -183,14 +204,14 @@ test('passive association success or mismatch never enters identity, preserves t
   const details={tabId:1,frameId:0,documentId:'doc-one',documentLifecycle:'active',initiator:'https://chatgpt.com',type:'xmlhttprequest',method:'GET',requestId:'PRIVATE_REQUEST',url:'https://chatgpt.com/backend-api/conversations/'+c,requestHeaders:[{name:'Chatgpt-Account-Id',value:'PRIVATE_CONTEXT'},{name:'Cookie',value:'PRIVATE_COOKIE'}]};
   h.chrome.webRequest.onSendHeaders.emit(details);await new Promise(r=>setImmediate(r));
   h.chrome.webRequest.onCompleted.emit({...details,statusCode:200,fromCache:false,requestHeaders:undefined});await new Promise(r=>setImmediate(r));
-  const result=await h.message({type:'SOURCE_WITNESS_READ'});
+  const result=await h.message(passiveRead);
   assert.equal(result.schema,PASSIVE_BATCH);assert.equal(result.mode,'PASSIVE_C2_ONLY');assert.equal(result.requests,0);assert.equal(result.decodedBytes,0);assert.equal(result.unspent,false);
   assert.equal(result.state,matching?'PARTIAL':'BLOCKED');assert.equal(result.stages.nativeAssociation.state,matching?'PASS':'BLOCKED');
   assert.equal(result.nativeObservation.counts['receipt-created'],1);assert.equal(result.nativeObservation.counts[matching?'association-passed':'association-rejected'],1);
   for(const name of ['identity','currentSpace','ordinary','archived','projects','members','finalIdentity'])assert.equal(result.stages[name].state,'NOT_RUN');
   assert.equal(result.productionEnabled,false);assert.equal(result.decision,'BLOCKED');
   assert(!/PRIVATE|12345678|doc-one|worker-fixed-fetch/.test(JSON.stringify(result)));
-  assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(await h.message({type:'SOURCE_WITNESS_PREVIOUS'}),previous.result);
+  assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());assert.deepEqual(await h.message({type:'SOURCE_WITNESS_PREVIOUS'}),{active:previous.result,passive:oldPassiveConsumed().result});
   assert.deepEqual(await h.message(passiveArm),result);
   assert.deepEqual(await mockChrome(h.stored,{}).message(passiveArm),result);
   for(const event of Object.values(h.chrome.webRequest))assert.equal(event.listeners.size,0);
@@ -199,7 +220,7 @@ test('passive association success or mismatch never enters identity, preserves t
 });
 test('a late DOM answer after native document replacement cannot pass or mutate either ledger',async t=>{
  const fetch=t.mock.method(globalThis,'fetch',()=>{assert.fail('passive observation must never fetch');});
- const previous=oldConsumed(),h=mockChrome({[BATCH]:structuredClone(previous)},{});t.after(()=>h.chrome.tabs.onRemoved.emit(1));
+ const previous=oldConsumed(),h=mockChrome(priorLedgers(structuredClone(previous)),{});t.after(()=>h.chrome.tabs.onRemoved.emit(1));
  await h.message(passiveArm);
  const current={documentId:'doc-one',url:frame.actualURL,documentLifecycle:'active',frameType:'outermost_frame'};
  h.chrome.tabs.get=async id=>({id,url:current.url,incognito:false});h.chrome.webNavigation.getFrame=async()=>current;
@@ -210,28 +231,28 @@ test('a late DOM answer after native document replacement cannot pass or mutate 
  h.chrome.webRequest.onSendHeaders.emit(details);await new Promise(r=>setImmediate(r));
  h.chrome.webRequest.onCompleted.emit({...details,statusCode:200,fromCache:false});await new Promise(r=>setImmediate(r));assert(release,'DOM association should be pending');
  h.chrome.webNavigation.onCommitted.emit({tabId:1,frameId:0,...current,documentId:'doc-two'});await new Promise(r=>setImmediate(r));
- const result=await h.message({type:'SOURCE_WITNESS_READ'});assert.equal(result.state,'BLOCKED');assert.equal(result.stages.nativeAssociation.state,'BLOCKED');assert.equal(result.requests,0);
+ const result=await h.message(passiveRead);assert.equal(result.state,'BLOCKED');assert.equal(result.stages.nativeAssociation.state,'BLOCKED');assert.equal(result.requests,0);
  const saved=JSON.stringify(h.stored);release();h.chrome.webRequest.onCompleted.emit({...details,statusCode:200,fromCache:false});await new Promise(r=>setImmediate(r));
- assert.equal(JSON.stringify(h.stored),saved);assert.deepEqual(h.stored[BATCH],previous);assert.equal(fetch.mock.callCount(),0);
+ assert.equal(JSON.stringify(h.stored),saved);assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());assert.equal(fetch.mock.callCount(),0);
 });
 test('late native events cannot extend passive preparation when the timer is delayed',async t=>{
  t.mock.timers.enable({apis:['setTimeout']});let elapsed=0;t.mock.method(performance,'now',()=>elapsed);
  t.mock.method(globalThis,'fetch',()=>{assert.fail('passive timeout must never fetch');});
- const previous=oldConsumed(),h=mockChrome({[BATCH]:structuredClone(previous)},{});
+ const previous=oldConsumed(),h=mockChrome(priorLedgers(structuredClone(previous)),{});
  await h.message(passiveArm);elapsed=120000;
  // No timer tick: the event callback must enforce the same elapsed deadline.
  h.chrome.webRequest.onSendHeaders.emit({tabId:1});
- const result=await h.message({type:'SOURCE_WITNESS_READ'});
+ const result=await h.message(passiveRead);
  assert.equal(result.reason,'no-native-context-observed');assert.equal(result.requests,0);assert.equal(result.unspent,false);
  assert.equal(result.nativeObservation.events,0);assert.equal(result.nativeObservation.preparationMs,120000);
- assert.deepEqual(h.stored[BATCH],previous);assert(h.stored[PASSIVE_BATCH]);
+ assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());assert(h.stored[PASSIVE_BATCH]);
 });
 test('passive worker loss cannot retry; only passive association outcome is unknown, active requests remain zero',async()=>{
- const previous=oldConsumed(),h=mockChrome({[BATCH]:previous,[PASSIVE_BATCH]:{state:'reserved',result:null}},{});
- const result=await h.message({type:'SOURCE_WITNESS_READ'});
+ const previous=oldConsumed(),h=mockChrome({...priorLedgers(previous),[PASSIVE_BATCH]:{state:'reserved',result:null}},{});
+ const result=await h.message(passiveRead);
  assert.equal(result.requests,0);assert.equal(result.requestUpperBound,0);assert.equal(result.requestCountKnown,true);assert.equal(result.unspent,false);
  assert.equal(result.stages.nativeAssociation.state,'PARTIAL');assert.equal(result.stages.identity.state,'NOT_RUN');
- assert.deepEqual(await h.message(passiveArm),result);assert.deepEqual(h.stored[BATCH],previous);
+ assert.deepEqual(await h.message(passiveArm),result);assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());
 });
 test('content scripts and other extension pages cannot arm; single-tab listener filters before processing',async()=>{
  const {chrome,message,stored}=mockChrome();assert.equal(await message({type:'SOURCE_WITNESS_ARM',tabId:1},{id:chrome.runtime.id,url:'https://chatgpt.com/',tab:{id:1}}),'ignored');assert.equal(await message({type:'SOURCE_WITNESS_ARM',tabId:1},{id:chrome.runtime.id,url:chrome.runtime.getURL('status.html')}),'ignored');
@@ -269,11 +290,11 @@ test('result page serializes reads and a late ARM response cannot replace a fina
  assert.deepEqual(JSON.parse(elements.get('result').textContent),final);assert.equal(intervals.size,0);assert.equal(elements.get('download').disabled,false);
 });
 test('new page refuses an old worker and does not label its old report as the new batch',async()=>{
- for(const oldResult of [{state:'NOT_RUN',unspent:true},oldConsumed().result]){
+ for(const oldResult of [{state:'NOT_RUN',unspent:true},oldConsumed().result,oldPassiveConsumed().result]){
  const elements=new Map(),sent=[];
  for(const id of ['result','run','confirm','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:()=>assert.fail('no polling before preparation'),clearInterval(){},chrome:{runtime:{sendMessage:async message=>{
-  sent.push(message);return message.type==='SOURCE_WITNESS_PREVIEW'?{state:'READY'}:oldResult;
+  sent.push(message);return message.type==='SOURCE_WITNESS_PREVIEW'?{state:'READY',mode:'PASSIVE_C2_ONLY',batch:oldResult.schema,route:'home'}:oldResult;
  }}}};
  await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
  assert.equal(elements.get('confirm').disabled,true);await elements.get('run').handlers.click({isTrusted:true});
@@ -286,7 +307,7 @@ test('worker version change after passive preparation stops polling without clai
  for(const id of ['result','run','confirm','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:fn=>{polls.add(fn);return fn;},clearInterval:fn=>polls.delete(fn),chrome:{runtime:{sendMessage:async message=>{
   if(message.type==='SOURCE_WITNESS_PREVIEW')return {state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH,route:'home'};
-  assert.equal(message.type,'SOURCE_WITNESS_READ');return ++reads===1?{state:'WAITING_NATIVE',unspent:false}:oldConsumed().result;
+  assert.equal(message.type,'SOURCE_WITNESS_READ');assert.equal(message.batch,PASSIVE_BATCH);return ++reads===1?{state:'WAITING_NATIVE',unspent:false}:oldConsumed().result;
  }}}};
  await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
  assert.equal(polls.size,1);await elements.get('read').handlers.click();assert.equal(polls.size,0);

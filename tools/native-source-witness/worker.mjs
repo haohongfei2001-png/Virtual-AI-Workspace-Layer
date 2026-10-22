@@ -3,7 +3,8 @@ import {withRequestDeadline} from '../../src/data/request-deadline.mjs';
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 import {BATCH,emptyReport,runWitness} from './runner.mjs';
 
-export const PASSIVE_BATCH='vaiwl-local-context-observation-20261022-v1';
+export const PREVIOUS_PASSIVE_BATCH='vaiwl-local-context-observation-20261022-v1';
+export const PASSIVE_BATCH='vaiwl-local-context-observation-20261022-v2';
 // Loaded only by the explicit development overlay, never the normal product build.
 // The shipped entry is passive. The original mode remains only for its existing
 // offline tests; neither the page nor a runtime message can select that mode.
@@ -17,6 +18,7 @@ export function installWitnessWorker(chrome,{passiveOnly=true}={}){
  const unbound=(reason,elapsedMs=0)=>{const result=emptyReport(reason);result.state='BLOCKED';result.unspent=false;result.elapsedMs=elapsedMs;result.stages[passiveOnly?'nativeAssociation':'currentSpace']={state:'BLOCKED',reason};return result;};
  const get=async()=> (await chrome.storage.local.get(batch))[batch]??null;
  const save=value=>chrome.storage.local.set({[batch]:value});
+ const previousRecords=()=>chrome.storage.local.get([BATCH,PREVIOUS_PASSIVE_BATCH]);
  const target=async id=>{const tab=await chrome.tabs.get(id);if(tab.incognito!==false||!['home','conversation','project'].includes(policy.parse(tab.url).kind))throw Error('invalid-target');return tab;};
  const frameFor=async id=>{const [f,t]=await Promise.all([chrome.webNavigation.getFrame({tabId:id,frameId:0}),target(id)]);return {tabId:id,frameId:0,documentId:f.documentId,actualURL:f.url,documentLifecycle:f.documentLifecycle,incognito:t.incognito};};
  async function read(){const stored=await get();if(!stored)return {state:'NOT_RUN',reason:'not-started',unspent:true};if(operation)return {state:operation.phase,reason:operation.phase==='WAITING_NATIVE'?'open-one-existing-chat-in-selected-tab':'bounded-check-running',unspent:false};if(reserving&&stored.state==='reserved')return {state:'PREPARING',reason:'reservation-being-installed',unspent:false};return stored.result??interrupted();}
@@ -42,8 +44,12 @@ export function installWitnessWorker(chrome,{passiveOnly=true}={}){
   try{
    if(await get())return await read();
    if(passiveOnly){
-    const previousRecord=(await chrome.storage.local.get(BATCH))[BATCH],previous=previousRecord?.result;
-    if(previousRecord?.state!=='finished'||previous?.schema!==BATCH||previous.state!=='BLOCKED'||previous.reason!=='no-native-context-observed'||previous.requests!==0)return {state:'NOT_RUN',reason:'previous-consumed-context-result-required',requests:0,unspent:true};
+    // This separately approved batch follows the two consumed zero-request
+    // results. Never migrate, reconstruct or overwrite either prior record.
+    const records=await previousRecords(),previousRecord=records[BATCH],previous=previousRecord?.result;
+    if(previousRecord?.state!=='finished'||previous?.schema!==BATCH||previous.state!=='BLOCKED'||previous.reason!=='no-native-context-observed'||previous.requests!==0||previous.unspent!==false)return {state:'NOT_RUN',reason:'previous-consumed-context-result-required',requests:0,unspent:true};
+    const passiveRecord=records[PREVIOUS_PASSIVE_BATCH],passive=passiveRecord?.result;
+    if(passiveRecord?.state!=='finished'||passive?.schema!==PREVIOUS_PASSIVE_BATCH||passive.state!=='BLOCKED'||passive.reason!=='no-native-context-observed'||passive.unspent!==false||passive.mode!=='PASSIVE_C2_ONLY'||passive.requests!==0||passive.nativeObservation?.events!==0||passive.nativeObservation?.navigations!==0)return {state:'NOT_RUN',reason:'previous-consumed-passive-result-required',requests:0,unspent:true};
    }
    const selected=await withRequestDeadline(()=>target(id),{timeoutMs:3000});
    if(passiveOnly&&policy.parse(selected.url).kind!=='home')return {state:'NOT_RUN',reason:'select-chatgpt-home-no-request',requests:0,unspent:true};
@@ -113,9 +119,9 @@ export function installWitnessWorker(chrome,{passiveOnly=true}={}){
  chrome.runtime.onMessage.addListener((m,sender,reply)=>{
   if(!allowed(sender)||!m||Object.getPrototypeOf(m)!==Object.prototype)return;
   let task;
-  if(m.type==='SOURCE_WITNESS_READ'&&Object.keys(m).length===1)task=read();
-  else if(passiveOnly&&m.type==='SOURCE_WITNESS_RETURN'&&Object.keys(m).length===1)task=returnToObservedTab();
-  else if(passiveOnly&&m.type==='SOURCE_WITNESS_PREVIOUS'&&Object.keys(m).length===1)task=chrome.storage.local.get(BATCH).then(value=>value[BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'});
+  if(m.type==='SOURCE_WITNESS_READ'&&(passiveOnly?Object.keys(m).length===2&&m.batch===PASSIVE_BATCH:Object.keys(m).length===1))task=read();
+  else if(passiveOnly&&m.type==='SOURCE_WITNESS_RETURN'&&Object.keys(m).length===2&&m.batch===PASSIVE_BATCH)task=returnToObservedTab();
+  else if(passiveOnly&&m.type==='SOURCE_WITNESS_PREVIOUS'&&Object.keys(m).length===1)task=previousRecords().then(value=>({active:value[BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'},passive:value[PREVIOUS_PASSIVE_BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'}}));
   else if(m.type==='SOURCE_WITNESS_PREVIEW'&&Object.keys(m).length===2&&Number.isSafeInteger(m.tabId))task=target(m.tabId).then(t=>({state:'READY',origin:'https://chatgpt.com',route:policy.parse(t.url).kind,incognito:false,version:chrome.runtime.getManifest().version,profile:'current-Chrome-profile-user-confirmation-required',...(passiveOnly?{mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH}:{})}));
   // The explicit batch is incompatible with the old two-key active ARM. A new
   // page served from disk must never arm a still-running old worker.

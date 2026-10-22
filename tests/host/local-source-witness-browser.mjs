@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {buildLocalWitness,verifyLocalWitness} from '../../tools/native-source-witness/build.mjs';
 import {BATCH} from '../../tools/native-source-witness/runner.mjs';
-import {PASSIVE_BATCH} from '../../tools/native-source-witness/worker.mjs';
+import {PASSIVE_BATCH,PREVIOUS_PASSIVE_BATCH} from '../../tools/native-source-witness/worker.mjs';
 const dir=await mkdtemp(join(tmpdir(),'vaiwl-witness-headless-')),out=join(dir,'extension');
 const report={kind:'ISOLATED_HEADLESS_MV3_ENTRY_ONLY',realChatGPT:'NOT_RUN',accountNavigationPerformed:false,offlineBeforeTestPages:true,checks:[],errors:[]};let context;
 try{
@@ -28,7 +28,9 @@ try{
  // Non-ChatGPT active tab cannot be silently replaced or diagnosed.
  await button.click();await page.getByRole('button',{name:'请在已授权 Profile 的 ChatGPT 标签中打开此入口',exact:true}).waitFor();report.checks.push('wrong-target-stops-before-preparation');
  const previous={state:'finished',result:{schema:BATCH,state:'BLOCKED',reason:'no-native-context-observed',requests:0,unspent:false}};
- await worker.evaluate(async({key,previous})=>chrome.storage.local.set({[key]:previous}),{key:BATCH,previous});
+ const previousPassive={state:'finished',result:{schema:PREVIOUS_PASSIVE_BATCH,state:'BLOCKED',reason:'no-native-context-observed',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:0}}};
+ const oldRecords={[BATCH]:previous,[PREVIOUS_PASSIVE_BATCH]:previousPassive};
+ await worker.evaluate(async records=>chrome.storage.local.set(records),oldRecords);
  const original=await context.newPage();await original.goto('https://chatgpt.com/');
  const other=await context.newPage();await other.goto(fixtureRoute);
  const ids=await worker.evaluate(async()=>{
@@ -71,13 +73,13 @@ try{
  await page.waitForFunction(()=>document.getElementById('result').textContent.includes('interrupted-no-retry'));
  const value=JSON.parse(await page.locator('#result').innerText());assert.equal(value.schema,PASSIVE_BATCH);assert.equal(value.requests,0);assert.equal(value.unspent,false);assert.equal(value.requestCountKnown,true);assert.equal(value.stages.identity.state,'NOT_RUN');assert(await page.locator('#run').isDisabled());
  await page.waitForFunction(()=>document.getElementById('previous-result').textContent.includes('no-native-context-observed'));
- await page.getByText('上一批已消费结果（只读保留）',{exact:true}).click();
+ await page.getByText('前两批已消费结果（只读保留）',{exact:true}).click();
  assert(await page.locator('#previous-result').isVisible());
- assert.deepEqual(JSON.parse(await page.locator('#previous-result').innerText()),previous.result);
+ assert.deepEqual(JSON.parse(await page.locator('#previous-result').innerText()),{active:previous.result,passive:previousPassive.result});
  await page.close();const reopened=await context.newPage();await reopened.goto(`chrome-extension://${id}/source-witness.html#999999`);await reopened.waitForFunction(()=>document.getElementById('result').textContent.includes('interrupted-no-retry'));
  assert.equal(JSON.parse(await reopened.locator('#result').innerText()).requests,0);assert(await reopened.getByRole('button',{name:'保存脱敏报告'}).isEnabled());
- assert.deepEqual(await worker.evaluate(async key=>(await chrome.storage.local.get(key))[key],BATCH),previous);
- report.checks.push('passive-spent-ledger-survives-page-reopen-with-no-active-requests','prior-consumed-result-preserved-and-readable');
+ assert.deepEqual(await worker.evaluate(async keys=>await chrome.storage.local.get(keys),Object.keys(oldRecords)),oldRecords);
+ report.checks.push('passive-spent-ledger-survives-page-reopen-with-no-active-requests','both-prior-consumed-results-preserved-and-readable');
  assert.deepEqual(report.errors,[]);report.status='PASS';
 }catch(e){report.status='FAIL';report.error=String(e.stack);process.exitCode=1;}finally{await context?.close();await rm(dir,{recursive:true,force:true});await writeFile(process.argv[2]??'/private/tmp/vaiwl-local-witness-headless.json',JSON.stringify(report,null,2)+'\n');}
 console.log(JSON.stringify(report));

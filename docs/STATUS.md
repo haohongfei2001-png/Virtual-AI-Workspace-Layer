@@ -1,5 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 已批准并准备精确返回的被动 v2；真实执行 NOT_RUN（2026-10-22）
+
+用户明确批准前一检查点提出的新一次限定被动观察。本次仅复用同一授权Profile、原安装目录和原监听范围：准备≤120秒、DOM关联≤6秒、0主动GET、0响应正文、不调用session/accounts/目录、不启生产身份或旧库、不自动重试。独立批次为 `vaiwl-local-context-observation-20261022-v2`，不是重置旧许可；旧active批和passive v1均保留原键/原报告，只读展示。准备前确认两份旧记录已结束且已消费，并匹配已知零请求/零事件的前态；缺失或不确定则拒绝，不补造旧结果。
+
+实际差额仅在原开发入口：v2页面/worker/构建回执同步，ARM、READ、RETURN均精确匹配批次，旧页面不能控制新worker的运行态；使用6b09b2ec的明确就绪提示和worker精确返回按钮。普通生产代码、过滤器、权限和C2安全校验不变。34项定向回归、一次断网隔离headless MV3入口检查、构建及重建校验通过，独立只读审查通过；覆盖双旧结果保全、错版本拒绝、精确返回、实际合成同页导航计数及中断后不可重跑，不代表真实宿主C2已成立。
+
+原目录 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension` 已完整备份后更新6个文件，manifest不变，更新后与候选逐文件相同。未操控真实Chrome、未重载、未读写浏览器存储、未启动本次观察；真实状态仍NOT_RUN。源码与保全/测试/安装回执在 `.git/vaiwl-checkpoints/20261022-passive-c2-v2/`；2258份副本、3个stash保留。下节是此前已消费v1的历史结果，不能用它代填v2。
+
+本机一次流程：同一Profile重载原VAIWL一次→新标签打开ChatGPT空白首页→原蓝色“本机一次性来源验证”→确认标题“一次原生关联观察 · 精确返回批次”并准备一次→等待“观察已就绪”→点“回到本次绑定的 ChatGPT 标签”→原生侧栏打开一条已有聊天→回到同一结果页保存报告。不自行猜测同名标签、不另开聊天目标、不重复启动；若仍全零保留阻塞，不扩大范围。唯一下一来源条件是这次实际报告，身份/当前空间/近期成员及个人J1–J4仍未通过。
+
 ## 被动 C2 已执行：目标标签事件全零，批次已消费（2026-10-22）
 
 用户回传 `vaiwl-local-context-observation-20261022-v1` 报告：`BLOCKED/no-native-context-observed/unspent:false`，准备实际120006ms、匹配请求events=0、顶层导航navigations=0、全部阶段计数0。主动GET/解码字节为0；elapsedMs=0仅表示未进入后续关联窗口，不是没有等待。nativeAssociation阻塞，身份/当前空间/目录均NOT_RUN。本批已消费，旧批保留；不重跑、不改消费键、不清存储、不扩监听端点。本次结果来自用户提交；分析基线为c80280ed，报告不含包hash，不宣称真实运行精确绑定该SHA。

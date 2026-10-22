@@ -1,5 +1,5 @@
 const send=m=>chrome.runtime.sendMessage(m),target=Number(location.hash.slice(1));
-const batch='vaiwl-local-context-observation-20261022-v1';
+const batch='vaiwl-local-context-observation-20261022-v2';
 const output=document.getElementById('result'),button=document.getElementById('run'),confirm=document.getElementById('confirm'),download=document.getElementById('download');
 const nextStep=document.getElementById('next-step'),returnTarget=document.getElementById('return-target');
 let pending=false,report=null,spent=false,poll=null,readPending=false,compatible=false,legacyReport=null,homeReady=false,waiting=false,returnPending=false;
@@ -14,7 +14,7 @@ const guide=value=>{
 };
 const show=value=>{
  if(report&&value?.schema!==batch)return;
- if(value?.schema==='vaiwl-local-source-witness-20261022-v1'){
+ if(value?.schema&&value.schema!==batch){
   legacyReport=value;compatible=false;confirm.disabled=true;button.disabled=true;
   if(poll!==null){clearInterval(poll);poll=null;}
   guide({state:'BLOCKED',unspent:!spent});
@@ -28,7 +28,7 @@ const show=value=>{
  if(running&&poll===null)poll=setInterval(read,1000);
  else if(!running&&poll!==null){clearInterval(poll);poll=null;}
 };
-async function read(){if(readPending)return;readPending=true;try{show(await send({type:'SOURCE_WITNESS_READ'}));}catch{show({state:'BLOCKED',reason:'extension-connection-lost-do-not-repeat'});}finally{readPending=false;}}
+async function read(){if(readPending)return;readPending=true;try{show(await send({type:'SOURCE_WITNESS_READ',batch}));}catch{show({state:'BLOCKED',reason:'extension-connection-lost-do-not-repeat'});}finally{readPending=false;}}
 try{if(!location.hash||!Number.isSafeInteger(target))throw Error('target');const env=await send({type:'SOURCE_WITNESS_PREVIEW',tabId:target});compatible=env.state==='READY'&&env.mode==='PASSIVE_C2_ONLY'&&env.batch===batch;homeReady=compatible&&env.route==='home';document.getElementById('environment').textContent=compatible?`入口绑定的 Chrome 标签（浏览器不提供 Profile 名称）；ChatGPT ${env.route} 页面；非隐身；扩展 ${env.version}，被动批次已匹配。请核对这是已授权测试账户。`:env.state==='READY'?'原扩展尚未加载被动观察版本；本页不会执行。请仅重载原扩展，不要卸载。':'未找到原 ChatGPT 标签；不会发请求。';if(!homeReady)confirm.disabled=true;}catch{confirm.disabled=true;}
 await read();
 const previous=document.getElementById('previous-result');
@@ -40,7 +40,7 @@ button.addEventListener('click',async event=>{
 });
 returnTarget.addEventListener('click',async event=>{
  if(!event.isTrusted||!waiting||returnPending)return;returnPending=true;returnTarget.disabled=true;
- try{const result=await send({type:'SOURCE_WITNESS_RETURN'});if(result?.state!=='TARGET_SHOWN'){await read();if(waiting)nextStep.textContent='无法定位本次绑定标签。请保留结果，不要另开标签或重新准备。';}}
+ try{const result=await send({type:'SOURCE_WITNESS_RETURN',batch});if(result?.state!=='TARGET_SHOWN'){await read();if(waiting)nextStep.textContent='无法定位本次绑定标签。请保留结果，不要另开标签或重新准备。';}}
  catch{nextStep.textContent='标签定位结果不确定，请保留当前观察，不要重新准备。';}
  finally{returnPending=false;returnTarget.disabled=!waiting;}
 });
