@@ -92,6 +92,29 @@ test('worker loss preserves spent ledger and reports unknown count, never zero o
  const {message}=mockChrome({[BATCH]:{state:'reserved',result:null}});const report=await message({type:'SOURCE_WITNESS_READ'});assert.equal(report.requests,null);assert.equal(report.requestCountKnown,false);assert.equal(report.unspent,false);assert.equal(report.stages.identity.state,'PARTIAL');
  const repeat=await message({type:'SOURCE_WITNESS_ARM',tabId:1});assert.deepEqual(repeat,report);
 });
+test('preparation timeout retains bounded rejection evidence and its spent state without any active GET',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});let elapsed=0;t.mock.method(performance,'now',()=>elapsed);
+ t.mock.method(globalThis,'fetch',()=>{assert.fail('preparation must never request identity or directories');});
+ const {chrome,message,stored}=mockChrome();await message({type:'SOURCE_WITNESS_ARM',tabId:1});
+ const d={tabId:1,frameId:0,documentId:'doc-one',documentLifecycle:'active',initiator:'https://chatgpt.com',type:'xmlhttprequest',method:'GET',requestId:'PRIVATE_REQUEST',url:'https://chatgpt.com/backend-api/conversations/'+c,requestHeaders:[{name:'Authorization',value:'PRIVATE_TOKEN'}]};
+ chrome.webRequest.onSendHeaders.emit(d);chrome.webRequest.onCompleted.emit({...d,statusCode:200,fromCache:true});
+ elapsed=120000;t.mock.timers.tick(120000);const result=await message({type:'SOURCE_WITNESS_READ'});
+ assert.equal(result.reason,'no-native-context-observed');assert.equal(result.requests,0);assert.equal(result.unspent,false);
+ assert.equal(result.nativeObservation.preparationMs,120000);assert.equal(result.nativeObservation.events,2);
+ assert.equal(result.nativeObservation.counts['context-header-missing'],1);assert.equal(result.nativeObservation.counts['completion-cached'],1);
+ assert.equal(result.nativeObservation.counts['receipt-created'],0);assert.equal(result.nativeObservation.counts['association-started'],0);
+ assert.equal(result.nativeObservation.memoryCache,'NOT_DETERMINABLE');assert.equal(result.nativeObservation.unmatchedTraffic,'NOT_OBSERVED');
+ assert(!/PRIVATE|12345678|documentId|requestId|requestHeaders/.test(JSON.stringify(result)));
+ const frozen=JSON.stringify(stored[BATCH]);chrome.webRequest.onSendHeaders.emit(d);
+ assert.deepEqual(await message({type:'SOURCE_WITNESS_ARM',tabId:1}),result);assert.equal(JSON.stringify(stored[BATCH]),frozen);
+ // A worker reinstalled against this same ledger can only read the final data.
+ const reopened=mockChrome(stored);assert.deepEqual(await reopened.message({type:'SOURCE_WITNESS_ARM',tabId:1}),result);
+});
+test('legacy consumed timeout is read unchanged, never reconstructed from new diagnostic code',async()=>{
+ const result={schema:BATCH,state:'BLOCKED',reason:'no-native-context-observed',requests:0,unspent:false};
+ const {message,stored}=mockChrome({[BATCH]:{state:'finished',result}});assert.deepEqual(await message({type:'SOURCE_WITNESS_READ'}),result);
+ assert.deepEqual(await message({type:'SOURCE_WITNESS_ARM',tabId:1}),result);assert.equal(stored[BATCH].result.nativeObservation,undefined);
+});
 test('content scripts and other extension pages cannot arm; single-tab listener filters before processing',async()=>{
  const {chrome,message,stored}=mockChrome();assert.equal(await message({type:'SOURCE_WITNESS_ARM',tabId:1},{id:chrome.runtime.id,url:'https://chatgpt.com/',tab:{id:1}}),'ignored');assert.equal(await message({type:'SOURCE_WITNESS_ARM',tabId:1},{id:chrome.runtime.id,url:chrome.runtime.getURL('status.html')}),'ignored');
  assert.equal((await message({type:'SOURCE_WITNESS_ARM',tabId:1})).state,'WAITING_NATIVE');assert(stored[BATCH]);

@@ -1,4 +1,4 @@
-import {createBrowserRequestContext} from '../../src/runtime/browser-request-context.mjs';
+import {createBrowserRequestContext,BROWSER_CONTEXT_DIAGNOSTICS} from '../../src/runtime/browser-request-context.mjs';
 import {withRequestDeadline} from '../../src/data/request-deadline.mjs';
 import {createURLPolicy} from '../../src/host/url-policy.mjs';
 import {BATCH,emptyReport,runWitness} from './runner.mjs';
@@ -9,7 +9,7 @@ export function installWitnessWorker(chrome){
  let operation=null,locked=false,reserving=false;
  const allowed=sender=>sender?.id===chrome.runtime.id&&typeof sender.url==='string'&&sender.url.split('#')[0]===page;
  const interrupted=()=>({...emptyReport('interrupted-no-retry'),state:'BLOCKED',unspent:false,requestCountKnown:false,requests:null,requestUpperBound:12,decodedBytes:null,elapsedMs:null,stages:Object.fromEntries(['identity','currentSpace','ordinary','archived','projects','members','finalIdentity'].map(k=>[k,{state:'PARTIAL',reason:'execution-outcome-unknown'}]))});
- const unbound=(reason,elapsedMs=0)=>{const result=emptyReport(reason);result.state='BLOCKED';result.elapsedMs=elapsedMs;result.stages.currentSpace={state:'BLOCKED',reason};return result;};
+ const unbound=(reason,elapsedMs=0)=>{const result=emptyReport(reason);result.state='BLOCKED';result.unspent=false;result.elapsedMs=elapsedMs;result.stages.currentSpace={state:'BLOCKED',reason};return result;};
  const get=async()=> (await chrome.storage.local.get(BATCH))[BATCH]??null;
  const save=value=>chrome.storage.local.set({[BATCH]:value});
  const target=async id=>{const tab=await chrome.tabs.get(id);if(tab.incognito!==false||!['home','conversation','project'].includes(policy.parse(tab.url).kind))throw Error('invalid-target');return tab;};
@@ -24,8 +24,15 @@ export function installWitnessWorker(chrome){
    if(ready?.ready!==true)return {state:'NOT_RUN',reason:'new-chatgpt-tab-required-no-request',requests:0,unspent:true,help:'安装后新开 ChatGPT 首页，再从该标签的 VAIWL 入口打开验证页；无需刷新或重登。'};
    // Reserve durably before listeners/network. Worker loss never restarts this batch.
    reserving=true;await save({state:'reserved',result:null});
-   const op={tabId:id,phase:'WAITING_NATIVE',abort:new AbortController(),observer:null,events:0,started:false,closed:false,navigation:null,listeners:[],timer:null};operation=op;reserving=false;
-   const finish=async result=>{if(op.closed)return;op.closed=true;op.abort.abort();clearTimeout(op.timer);op.observer?.stop();for(const [event,fn]of op.listeners)event.removeListener(fn);try{await save({state:'finished',result});}finally{if(operation===op)operation=null;}};
+   const op={tabId:id,phase:'WAITING_NATIVE',abort:new AbortController(),observer:null,events:0,started:false,closed:false,navigation:null,navigations:0,listeners:[],timer:null,preparedAt:performance.now(),preparationMs:null,counts:Object.fromEntries(BROWSER_CONTEXT_DIAGNOSTICS.map(k=>[k,0])),countsCapped:false};operation=op;reserving=false;
+   const record=code=>{if(op.closed||!Object.hasOwn(op.counts,code))return;if(op.counts[code]<1000)op.counts[code]++;else op.countsCapped=true;};
+   const finish=async result=>{
+    if(op.closed)return;
+    // Freeze diagnostics before stopping the observer; no late callback can
+    // modify the saved result. These counters are not evidence or receipts.
+    result={...result,unspent:false,nativeObservation:{schema:'bounded-c2-observation-v1',scope:'selected-tab-plural-detail-filter-only',events:Math.min(op.events,1000),countsCapped:op.countsCapped||op.events>1000,navigations:op.navigations,preparationMs:op.preparationMs??Math.max(0,Math.round(performance.now()-op.preparedAt)),counts:{...op.counts},unmatchedTraffic:'NOT_OBSERVED',memoryCache:'NOT_DETERMINABLE'}};
+    op.closed=true;op.abort.abort();clearTimeout(op.timer);op.observer?.stop();for(const [event,fn]of op.listeners)event.removeListener(fn);try{await save({state:'finished',result});}finally{if(operation===op)operation=null;}
+   };
    const stop=reason=>{if(op.started){op.abort.abort();return;}void finish(unbound(reason));};
    const webRequest=Object.fromEntries(['onSendHeaders','onCompleted','onErrorOccurred','onBeforeRedirect'].map(name=>{
     const map=new Map(),event=chrome.webRequest[name];
@@ -34,13 +41,13 @@ export function installWitnessWorker(chrome){
      if(++op.events>1000){stop('native-event-limit');return;}
      if(details.frameId===0&&details.initiator==='https://chatgpt.com'&&details.method==='GET'&&details.type==='xmlhttprequest'&&
        (name==='onErrorOccurred'||name==='onBeforeRedirect'||name==='onCompleted'&&details.statusCode!==200)){
-      stop('native-request-refused-or-failed');return;
+      record(name==='onErrorOccurred'?'native-request-failed':name==='onBeforeRedirect'?'native-request-redirected':'completion-http-rejected');stop('native-request-refused-or-failed');return;
      }
      fn(details);
     };map.set(fn,wrapper);extra?event.addListener(wrapper,filter,extra):event.addListener(wrapper,filter);},removeListener(fn){const wrapper=map.get(fn);if(wrapper)event.removeListener(wrapper);map.delete(fn);}}];
    }));
    const run=async()=>{
-    if(op.started||op.closed)return;op.started=true;op.phase='RUNNING';clearTimeout(op.timer);
+    if(op.started||op.closed)return;op.preparationMs=Math.max(0,Math.round(performance.now()-op.preparedAt));op.started=true;op.phase='RUNNING';clearTimeout(op.timer);
     let enteredRunner=false,preflightReason='frame-unavailable-no-request';const startedAt=performance.now();
     try{
      const frame=await withRequestDeadline(async()=>{const f=await frameFor(id);if(op.closed||op.abort.signal.aborted)throw Error('preparation-retired');preflightReason='current-body-association-unproven-no-request';const receipt=await op.observer.verify(f,{signal:op.abort.signal});if(!receipt||op.closed||op.abort.signal.aborted)throw Error('binding-unavailable');return f;},{timeoutMs:6000});
@@ -50,10 +57,11 @@ export function installWitnessWorker(chrome){
    };
    op.observer=createBrowserRequestContext({webRequest,getTab:n=>chrome.tabs.get(n),getFrame:q=>chrome.webNavigation.getFrame(q),origin:'https://chatgpt.com',conversationRequestContext:'conversation-detail-plural-v1',maxDocuments:2,maxRequests:8,
     associatePage:({tabId,documentId,...query})=>chrome.tabs.sendMessage(tabId,{type:'HOST_CONTEXT_ASSOCIATE',...query},{documentId}),
-    onReady:()=>{void run();},onInvalidate:()=>{if(op.started)op.abort.abort();}});
+    onReady:()=>{void run();},onInvalidate:()=>{if(op.started)op.abort.abort();},onDiagnostic:record});
    const listen=(event,fn)=>{event.addListener(fn);op.listeners.push([event,fn]);};
    const navigate=(d,replacement)=>{
     if(d.tabId!==id||d.frameId!==0)return;
+    if(op.navigations<1000)op.navigations++;else op.countsCapped=true;
     const next={documentId:d.documentId,url:d.url};
     if(op.started){op.abort.abort();return;}
     if(policy.parse(d.url).kind!=='conversation'||op.navigation&&(op.navigation.documentId!==next.documentId||op.navigation.url!==next.url)){stop('single-navigation-boundary');return;}

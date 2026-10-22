@@ -1,5 +1,19 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 本机见证实际停止于 C2 receipt 前；修复阶段信息丢失（2026-10-22）
+
+用户回传的脱敏结果字段为 `BLOCKED / no-native-context-observed / requests:0 / unspent:false`，currentSpace=BLOCKED，identity/ordinary/projects/members=NOT_RUN，并确认已自然打开一条已有聊天。以本地及远端 `4f35c12b` 核对：该 reason 只由准备阶段两分钟计时器产生；成功生成浏览器 receipt 后会取消它，之后才进入 DOM body 关联及身份请求。因此**这次卡在 receipt 生成前，DOM 关联尚未执行；0 是扩展主动 GET 数，不能认定原生网页没有请求，更不能判服务器 API 不可行**。本批已消费，不重跑、不清单次标记、不更换 Profile 或通道。
+
+原报告没有保存已匹配事件数、过滤/缓存/文档拒绝分支，无法事后区分：没有符合过滤器的事件、请求在准备前已完成、内存缓存、未支持端点/参数、缺少有效 context header、文档/route 不匹配或六秒内未形成 receipt。被当前 wrapper 识别的 HTTP 非200/错误/重定向会产生另一个终态，不能据此排除过滤器外的失败。DOM body 不成立应产生 `current-body-association-unproven-no-request`，不是本次 reason。
+
+离线最小顺序对照确认：history→send→200 可形成 receipt；send→首次 frame 仍为首页→history→200，以及 send→frame 已为新聊天→延迟 history→200，均在现安全规则下拒绝。前者缺可信 prior route 可重核对条件，后者已 prepared 的请求被 history 撤销。这是可复现的顺序敏感性，**不是本次真实失败已归因，也没有放宽既有负例或从旧请求恢复授权**。
+
+本批实际修改原 `browser-request-context` 和开发见证 worker：只补包内固定阶段码及匿名有界计数，记录监听范围、准备耗时、header/缓存/frame/history/期限分支、receipt 和 DOM 阶段。无 URL、ID、header 值、正文或凭据；计数不是证据或授权。缓存计数只表示看到了该标志，未匹配事件始终不能判“无原生请求”。终态先复制计数再停止监听，旧已消费报告原样读回；BATCH key、权限、过滤、请求/时间预算和生产身份均不变。真实安装目录/浏览器存储未改，本轮真实请求为0。
+
+唯一必要的新实测范围（**待新授权，尚未执行/启用新批次**）：复用同一本机入口，做一次仅被动 C2 观察，选择同一授权 Profile/标签，从首页自然打开一条现有聊天；准备最多两分钟、关联最多六秒。只观察原有 plural-detail 过滤范围的浏览器元数据、既有 context header 分类、文档关联和当前 DOM ID 一致性；**0 主动 GET，不调用 session/accounts/目录，不读响应正文、不增加监听端点或权限**，结果只含固定码/计数/一致性。若仍无匹配事件，结论保持“无可观察来源”，不自动扩大范围或重复。不可替代的原因是旧运行未记录这些分支，离线顺序对照不能证明真实 Chrome 发生了哪一种；通过标准是定位真实停止分支，或取得新 receipt+DOM 一致性，均不冒领身份/日用验收。旧单次结果必须保留，不能靠清标记再用旧许可。
+
+本批受影响的C2/单次状态定向回归通过；隔离、先断网的headless MV3核验既有导航入口、错误目标拒绝及持久已消费状态读回；普通包与见证开发包重建校验通过，独立只读审查未发现阻断缺陷。没有新增规模/无关矩阵或真实账户动作。私有原始输出与保全快照位于 `.git/vaiwl-checkpoints/20261022-context-preflight/`。下面检查点保留形成时状态，原“唯一等待未执行本机结果”的表述已被本节替代。个人日用目标和既有产品工程保留，真实接入仍 BLOCKED。
+
 ## 个人日用裁决落地与可信最近活动窄接线（2026-10-22）
 
 用户已采纳[PR16体验裁决6335005042](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6335005042)。唯一计划、四份Host原件、FR及直接冲突Canonical已最小同步：本人Mac Chrome主用Workspace的真实近期P/C、正确归属、自然更新、可信最近活动、原生搜索/输入/返回、普通恢复、隔离和成熟v2.7仍必需；全账户严格历史完整性及逐消息作者/ACK/原始时间完整审计取消为默认产品前提，不转成发布欠账。81个ID逐项①②③④与裁决附表一致，历史FAIL/NOT_RUN不改PASS；原J1–J4保留并明确同编号个人连续切片。10k/100k原阈值与DEFERRED保持，全库密度自动H后置，默认30/手动切换保留。

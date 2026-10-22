@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createBrowserRequestContext} from '../../src/runtime/browser-request-context.mjs';
+import {createBrowserRequestContext,BROWSER_CONTEXT_DIAGNOSTICS} from '../../src/runtime/browser-request-context.mjs';
 import {createScopeAuthority} from '../../src/runtime/scope-authority.mjs';
 import {digest} from '../../src/data/hash.mjs';
 const origin='https://chatgpt.com',C='11111111-1111-4111-8111-111111111111',D='22222222-2222-4222-8222-222222222222';
@@ -19,6 +19,39 @@ function fixture(t,options={}){
 }
 test('private receipt needs actual successful native request and matching current body; minimal listener permissions',async t=>{
  const f=fixture(t);assert.equal(await f.owner.verify(frame),null);const d=await f.send();assert.equal(await f.owner.verify(frame),null);await f.finish(d);const r=await f.owner.verify(frame);assert(r);assert.equal(r.contextId,'team');assert(f.owner.isCurrent(frame,r));assert.equal(f.owner.isCurrent(frame,structuredClone(r)),false);assert.equal(f.owner.isCurrent({...frame,incognito:true},r),false);assert(!JSON.stringify(r).includes('DO_NOT_RETAIN'));assert.equal(f.invalidated.length,1);assert.equal(f.ready.length,1);assert.deepEqual(f.webRequest.onSendHeaders.listeners[0].args,[{urls:[origin+'/backend-api/conversation/*'],types:['xmlhttprequest']},['requestHeaders']]);for(const k of ['onCompleted','onErrorOccurred','onBeforeRedirect'])assert.equal(f.webRequest[k].listeners[0].args.length,1);
+});
+test('fixed diagnostics distinguish pre-receipt failures without exposing metadata or admitting rejected traffic',async t=>{
+ const cases=[
+  ['missing-header','context-header-missing',{requestHeaders:[]}],
+  ['query','endpoint-or-query-rejected',{url:origin+'/backend-api/conversations/'+C+'?private=value'}],
+  ['document','request-metadata-rejected',{documentId:undefined}],
+  ['cached','completion-cached',{}],['frame','initial-frame-mismatch',{}],['expired','request-expired',{}],
+ ];
+ for(const [mode,expected,patch]of cases){
+  const trace=[],f=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1',onDiagnostic:code=>trace.push(code)});
+  if(mode==='frame')f.current={...browserFrame,documentId:'PRIVATE_OTHER_DOCUMENT'};
+  const d=await f.send({url:origin+'/backend-api/conversations/'+C,...patch});if(mode==='expired')f.advance(6000);
+  f.webRequest.onCompleted.emit({...d,statusCode:200,fromCache:mode==='cached'});await flush();
+  assert(trace.includes(expected),mode+': '+trace.join(','));assert.equal(f.ready.length,0);assert.equal(f.associated.length,0);
+  assert(trace.every(code=>BROWSER_CONTEXT_DIAGNOSTICS.includes(code)));assert(!/DO_NOT_RETAIN|PRIVATE|11111111|team|private=value/.test(JSON.stringify(trace)));
+ }
+});
+test('diagnostics identify both cold navigation order rejections and preserve the lawful ordered path',async t=>{
+ for(const order of ['history-first','home-lookup-first','prepared-before-history']){
+  const trace=[],f=fixture(t,{onDiagnostic:code=>trace.push(code)}),history={...browserFrame,tabId:7,frameId:0};
+  let d;
+  if(order==='history-first'){f.owner.invalidateHistory(history);d=await f.send();}
+  else {if(order==='home-lookup-first')f.current={...browserFrame,url:origin+'/'};d=await f.send();f.current={...browserFrame};f.owner.invalidateHistory(history);}
+  await f.finish(d);
+  if(order==='history-first'){assert(trace.includes('receipt-created'));assert(await f.owner.verify(frame));assert(trace.includes('association-passed'));}
+  else {assert.equal(f.ready.length,0);assert.equal(f.associated.length,0);assert(trace.includes(order==='home-lookup-first'?'initial-frame-mismatch':'history-dropped-pending'));assert(trace.includes(order==='home-lookup-first'?'completion-unprepared':'completion-untracked'));}
+ }
+});
+test('body mismatch is observable only after receipt creation; diagnostic callback failure does not affect authority',async t=>{
+ const trace=[],f=fixture(t,{onDiagnostic:code=>{trace.push(code);throw Error('private diagnostic consumer failure');}});
+ await f.finish(await f.send());f.answer={challenge:'wrong'};assert.equal(await f.owner.verify(frame),null);
+ assert(trace.indexOf('receipt-created')<trace.indexOf('association-started'));assert(trace.includes('association-rejected'));
+ f.answer=null;assert(await f.owner.verify(frame));assert(trace.includes('association-passed'));
 });
 for(const [label,patch] of Object.entries({subframe:{frameId:1},worker:{tabId:-1,initiator:'chrome-extension://ext'},extension:{initiator:'chrome-extension://ext'},prerender:{documentLifecycle:'prerender'},missingDocument:{documentId:undefined},post:{method:'POST'},list:{url:origin+'/backend-api/conversations'},query:{url:origin+'/backend-api/conversation/'+C+'?a=1'},foreign:{url:'https://evil.test/backend-api/conversation/'+C},prefetch:{requestHeaders:[{name:'Chatgpt-Account-Id',value:'team'},{name:'Sec-Purpose',value:'prefetch'}]},duplicateHeader:{requestHeaders:[{name:'Chatgpt-Account-Id',value:'team'},{name:'chatgpt-account-id',value:'other'}]},missingHeader:{requestHeaders:[]},invalidHeader:{requestHeaders:[{name:'Chatgpt-Account-Id',value:'team\r\n'}]},neighborObject:{url:origin+'/backend-api/conversation/'+D}}))test('no receipt from '+label,async t=>{const f=fixture(t),d=await f.send(patch);await f.finish(d);assert.equal(await f.owner.verify(frame),null);assert.equal(f.ready.length,0);});
 for(const [label,patch]of Object.entries({failed:{statusCode:500},cached:{fromCache:true},wrongDocument:{documentId:'other'},wrongUrl:{url:origin+'/backend-api/conversation/'+D}}))test('completion rejects '+label,async t=>{const f=fixture(t),d=await f.send();f.webRequest.onCompleted.emit({...d,statusCode:200,fromCache:false,...patch});await flush();assert.equal(await f.owner.verify(frame),null);});
