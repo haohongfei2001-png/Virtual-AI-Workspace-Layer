@@ -1,5 +1,21 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 数据接入裁决已实施：普通/归档服务器目录纯解析层（2026-10-22）
+
+自然检查点 fetch 后，本地与远端均为 `6479bd31613986e64bb2d71c0f1f3ac91c53df9c`，tracked 干净；既有 2258 份未跟踪副本和 3 个 stash 已逐文件哈希/对象记录保全。已读并消费 [PR16 裁决 6333439460](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6333439460)，没有新增 writer、工作树、计划或真实账户请求。
+
+实际源码差额：`conversation-directory-metadata.mjs` 新增普通/归档两个纯解析入口，由原 `conversation-metadata.mjs` 导出；`metadata-candidates.mjs` 抽取原 Project 的 ID/原始标题和候选字节边界，`project-metadata.mjs` 复用并显式记录原覆盖域。普通和归档使用不同 recent-list filter，Project 成员独立。保留 offset/limit/total/cursor 的字段状态、服务器原始行数、相邻页摘要、来源版本及停止原因；重复/重叠、错域/断链、total 变化、矛盾终点与预算截断均 partial。数值 total 边界仅为候选终点，空页/短页/缺字段不充明确结束；整体始终 observed-only，不生成 scope/receipt/成员/NONE/本人时间/删除。
+
+解析资源边界为原始 JSON 1MiB、最多 256 行、候选行 48KiB、opaque cursor 最多 2048 字符，新增完整候选信封 64KiB 上限。缺口时不输出可用续行或 terminal；原字段中的终点标记仍保留用于解释。相邻摘要不等于完整扫描状态，不能识别任意长周期循环/非相邻重叠；请求中的 sort/starred 只是候选域描述，未证实服务器过滤语义。没有新 fetcher、producer、identity/C3 开关、数据库迁移或扫描器，现有详情消息 parser API 保留。
+
+本批同源码定向回归通过：`node --test tests/host/{conversation-directory-metadata,project-metadata,conversation-metadata,send-correlator,current-metadata-reader,package,package-manifest-boundary}.test.mjs`，327/327；包含本次分页/隐私/截断差额及受影响消息消费、包边界。正常包构建和只读 verify 通过，187 文件，ZIP SHA256 `983ff9e6df13fef4181385a4bdd7aa0924c1a62084259c15fdc0830703ee3465`；产物仍报告 HOST_IMPLEMENTATION_UNVERIFIED / NOT_RELEASE_READY。独立只读审查未发现阻断缺陷。没有运行 10k/100k 或无关完整矩阵，也没有安装/真实账号/物理浏览器验收。
+
+保留本批失败：新增信封边界测试首次使用缺前页输入，先被断链规则关闭续行，未达到预期字节上限；改成有效首个 cursor 页后验证超限与显式截断，未改门槛。另一次手工 verify 误写 `unpacked` 子目录而报 ENOENT，按构建实际返回的 `extension` 路径核验通过，未重构建挑绿。私有原始日志、构建和保全清单在 `.git/vaiwl-checkpoints/20261022-directory-parser/`，不含真实账户数据。
+
+下一关口仍分别为生产可信主体/canonical roster、首页/Project/worker 恢复的 C2、各目录域的真实覆盖/更新与访问条件；CDP 会话拒绝单独等待正式处理。本次没有新来源见证，故不启动新的真实批次。独立短审查未确认其他可立即修复的导航/恢复/生命周期缺陷；历史 J4 初次切换超时、UNKNOWN 正文不可读保留未归因，不能把后续通过当作根因已修。源码完成、离线窄批通过与生产来源、LIVE_VERIFIED、FREE-ACCEPTED、RELEASE-READY 分开；后四者均未成立，完整 Free 目标不变。
+
+本解析窄批提交使用 `[skip ci]`，避免重新触发无关完整旅程矩阵；上述结果是本地定向证据，不是新一轮完整 CI。提交前普通 fetch 连接超时，已通过 GitHub API 再次核对远端仍为同一 `6479bd31`；正常推送结果另在本批 PR16 入口记录，不把 API 读取当作已推送。
+
 ## 真实来源优先：已定位当前会话CDP拒绝，正式撤销入口未找到（2026-10-22）
 
 本轮只读定位取得具体根因：按当前执行器的任务ID精确核对其`browser/sessions/<current-task>.toml`，唯一`full_cdp.denied`命中原`http://127.0.0.1:51204`；全局`browser/config.toml`的CDP总开关为true，且没有该目标deny。当前任务原始工具回执在03:21:40.261Z先返回`user_declined`，该会话文件修改时间为03:21:40.104527Z；此后同目标的`CDP approval`返回`persisted_user_denied`。只证明工具如此分类并持久保存，不证明本人实际点击拒绝。安装版本26.1013.40934的browser/chrome runtime源码相同，明确先检查会话deny再采用global allow；因此11:50修改全局允许没有解除这条会话拒绝。已定位后续重复拒绝的具体规则，不再将它笼统归因于未知MDM或网站403。

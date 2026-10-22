@@ -1,5 +1,6 @@
 import {digest} from '../data/hash.mjs';
 import {tokenOK} from '../b1/identity.mjs';
+export {parseConversationDirectoryMetadata,parseArchivedConversationDirectoryMetadata} from './conversation-directory-metadata.mjs';
 const LIMITS=Object.freeze({bytes:8*1024*1024,depth:32,messages:256,nodes:10000});
 const encoder=new TextEncoder(),plain=v=>v!==null&&typeof v==='object'&&!Array.isArray(v)&&[Object.prototype,null].includes(Object.getPrototypeOf(v));
 const own=(v,k)=>{if(!plain(v))return undefined;const d=Object.getOwnPropertyDescriptor(v,k);if(!d)return undefined;if(!Object.hasOwn(d,'value'))throw Error('metadata-accessor');return d.value;};

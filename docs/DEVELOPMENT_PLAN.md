@@ -1,6 +1,23 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
-## 当前首要动作：原生账户来源与诊断路径的最小对照（2026-10-22）
+## 当前执行：消费数据接入裁决，来源无关解析与生产来源分别收口（2026-10-22）
+
+用户已正式采纳 [PR16 裁决 6333439460](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6333439460)。Codex 为原工作树唯一工程 writer，dot/子代理只读研究与审查。保持原 A–G、81 项及全部子场景、完整 Free、v2.7 和性能指标；10k/100k 仍 DEFERRED。下面旧首要动作保留为历史，不再把诊断工具恢复作为全部工程的前置条件。
+
+| 独立关口 | 当前缺口与通过条件 |
+|---|---|
+| 诊断工具 | 当前会话原 localhost 的 Full CDP 拒绝仍待平台提供正式撤销/重新审批入口；不删记录、不换端口/任务/通道。它只阻塞对应诊断，不是生产产品必须依赖的工具。 |
+| 生产身份 | 主路线仍为固定 `session → 认证 canonical roster`；必须由普通发行 MV3 真实取得有效主体和 canonical 空间集合。已消费四 GET 的 include=200/omit=401 只证明凭据依赖，default/null 不成为 scope。 |
+| 当前空间 | 同代际 C2 文档/请求/body 绑定必须实际成立；首页无会话上下文、Project 页面切换后原 C2 失效、worker 内存丢失后 peer 缺新证据三处仍未闭合。旧 receipt/页面名称/roster 第一项不能补证。`/me + 派生个人域 + C3` 仅保留条件性备选，不启开关、不改旧键。 |
+| 服务器目录 | 需先有可核验的网站允许条件，再证明普通/归档/Project 成员各域真实过滤、分页、终止和更新语义，以及普通 MV3 的可信取得；公开代码只提供候选模板。身份通过不等于服务器库存完整。 |
+
+本批已实施的有限代码差额是普通/归档目录**纯 parser**：复用 Project 的 ID/原名归约与有界候选，沿 `recent-list` 的不同 filter/sort 和独立 `project-members` domain 输出候选页。保留 offset/cursor/total 的 missing/null/invalid、原始行数、pageOrdinal、来源版本、相邻页摘要和固定缺口；声明 total 的边界与显式 cursor:null 分开。任何异常、重复/重叠、预算截断都保留 partial，不生成 authenticated CoverageClaim/InventoryCoverage 完整性、NONE、本人时间或删除。它不读取服务器，不是完整历史扫描器；长周期 cursor 循环/非相邻页重叠、真实过滤和最终收敛仍需后续 owner 与来源证明。
+
+生产 producer 尚不接通。只有身份、C2、访问条件及对应目录域见证成立后，才沿现有 session-provider、host-observation-owner、NativeRepository/CAS/continuation、FreeRuntimeService 和共享预算接线，不重建库/UI/搜索/恢复。跨设备**未知 ID 的发现**与本人 ACK/时间是两个验收关口；目录 update_time 只可成为后续待核验的 dirty 输入，不确认本人活动，gizmo_id:null 不确认 NONE，列表缺席不删除。
+
+纯 parser 窄批完成后结束本专项的来源无关工作。继续原任务中有具体失败/反例且依赖满足的导航、恢复、生命周期或 UI 差额；没有根因时不改生产、不重跑矩阵挑绿。本次独立只读审查未确认额外可直接修复的缺陷，J4/UNKNOWN 历史失败继续保留。只有出现足以改变决策的新来源依据，才准备裁决中的一个集中最小见证批次并另行取得明确授权；本次没有新增真实账户/CDP/原生写入许可，不重复已消费诊断，也不要求用户再刷新、重登或截图。
+
+## 历史首要动作：原生账户来源与诊断路径的最小对照（2026-10-22，后续执行以上节为准）
 
 最新可执行边界已收窄：只读核对当前任务的独立Browser Use会话权限，已发现原localhost目标的唯一`full_cdp.denied`；原始03:21:40回执为`user_declined`，后续为`persisted_user_denied`。运行时会话deny优先于global allow，现有全局网站权限修改不清除它，故不再以重复改开关/重启/重载作为解决方案。最初审批由谁作出仍未知；独立只读配置进程无requirements不等于当前Work无云端限制。下一项是取得平台支持的**当前会话、该origin撤销拒绝方式**及原审批来源；已检查的公开工具/界面尚未找到该入口，不改文件、不调用内部处理器、不换会话绕行。解除后才安排新的有界无账户事件完整性对照和新的账户响应批次；既有额度不复用。后续仍按roster来源→生产可信取得/C2或C3绑定→完整服务器目录执行；本次只定位工具阻塞，不升级身份或Free验收。详见STATUS与原summary的`effectivePolicyReadOnlyTrace20261022`；下文保留之前各检查点历史。
 
