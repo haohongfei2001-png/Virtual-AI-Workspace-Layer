@@ -6,6 +6,8 @@ import {BATCH,emptyReport,runWitness} from './runner.mjs';
 export const PREVIOUS_PASSIVE_BATCH='vaiwl-local-context-observation-20261022-v1';
 export const PREVIOUS_PASSIVE_V2_BATCH='vaiwl-local-context-observation-20261022-v2';
 export const PASSIVE_BATCH='vaiwl-local-context-observation-20261022-v3';
+const navigationKinds=new Set(['home','projects-index','shared-view','temporary','conversation','project-candidate','project','unsupported']);
+const navigationPolicyReasons=new Set(['invalid-native-url','invalid-native-scheme','foreign-native-origin','native-port-not-allowed','ambiguous-native-encoding','invalid-native-encoding','ambiguous-native-path','unsupported-native-fragment','unsupported-native-query','conflicting-conversation-grammar','unknown-conversation-grammar','conflicting-project-grammar','invalid-project-grammar-result','unsupported-native-route']);
 // Loaded only by the explicit development overlay, never the normal product build.
 // The shipped entry is passive. The original mode remains only for its existing
 // offline tests; neither the page nor a runtime message can select that mode.
@@ -70,13 +72,13 @@ export function installWitnessWorker(chrome,{passiveOnly=true}={}){
    if(ready?.ready!==true)return {state:'NOT_RUN',reason:'new-chatgpt-tab-required-no-request',requests:0,unspent:true,help:'安装后新开 ChatGPT 首页，再从该标签的 VAIWL 入口打开验证页；无需刷新或重登。'};
    // Reserve durably before listeners/network. Worker loss never restarts this batch.
    reserving=true;await save({state:'reserved',result:null});
-   const op={tabId:id,phase:'WAITING_NATIVE',abort:new AbortController(),observer:null,events:0,started:false,closed:false,navigation:null,navigations:0,listeners:[],timer:null,preparedAt:performance.now(),preparationMs:null,counts:Object.fromEntries(BROWSER_CONTEXT_DIAGNOSTICS.map(k=>[k,0])),countsCapped:false};operation=op;reserving=false;
+   const op={tabId:id,phase:'WAITING_NATIVE',abort:new AbortController(),observer:null,events:0,started:false,closed:false,navigation:null,navigationStop:null,navigations:0,listeners:[],timer:null,preparedAt:performance.now(),preparationMs:null,counts:Object.fromEntries(BROWSER_CONTEXT_DIAGNOSTICS.map(k=>[k,0])),countsCapped:false};operation=op;reserving=false;
    const record=code=>{if(op.closed||!Object.hasOwn(op.counts,code))return;if(op.counts[code]<1000)op.counts[code]++;else op.countsCapped=true;};
    const finish=async result=>{
     if(op.closed)return;
     // Freeze diagnostics before stopping the observer; no late callback can
     // modify the saved result. These counters are not evidence or receipts.
-    result={...result,schema:batch,unspent:false,...(passiveOnly?passiveFields:{}),nativeObservation:{schema:'bounded-c2-observation-v1',scope:'selected-tab-plural-detail-filter-only',events:Math.min(op.events,1000),countsCapped:op.countsCapped||op.events>1000,navigations:op.navigations,preparationMs:op.preparationMs??Math.max(0,Math.round(performance.now()-op.preparedAt)),counts:{...op.counts},unmatchedTraffic:'NOT_OBSERVED',memoryCache:'NOT_DETERMINABLE'}};
+    result={...result,schema:batch,unspent:false,...(passiveOnly?passiveFields:{}),nativeObservation:{schema:'bounded-c2-observation-v1',scope:'selected-tab-plural-detail-filter-only',events:Math.min(op.events,1000),countsCapped:op.countsCapped||op.events>1000,navigations:op.navigations,preparationMs:op.preparationMs??Math.max(0,Math.round(performance.now()-op.preparedAt)),counts:{...op.counts},...(op.navigationStop?{navigationStop:{...op.navigationStop}}:{}),unmatchedTraffic:'NOT_OBSERVED',memoryCache:'NOT_DETERMINABLE'}};
     op.closed=true;op.abort.abort();clearTimeout(op.timer);op.observer?.stop();for(const [event,fn]of op.listeners)event.removeListener(fn);try{await save({state:'finished',result});}finally{if(operation===op)operation=null;}
    };
    const stop=reason=>{if(op.started){op.abort.abort();return;}void finish(unbound(reason));};
@@ -118,7 +120,14 @@ export function installWitnessWorker(chrome,{passiveOnly=true}={}){
     if(op.navigations<1000)op.navigations++;else op.countsCapped=true;
     const next={documentId:d.documentId,url:d.url};
     if(op.started){op.abort.abort();return;}
-    if(policy.parse(d.url).kind!=='conversation'||op.navigation&&(op.navigation.documentId!==next.documentId||op.navigation.url!==next.url)){stop('single-navigation-boundary');return;}
+    const route=policy.parse(d.url);
+    if(route.kind!=='conversation'||op.navigation&&(op.navigation.documentId!==next.documentId||op.navigation.url!==next.url)){
+     // Retain only the first stop's fixed categories. Never persist the URL,
+     // parser result (which contains IDs), document ID or navigation details.
+     // This adds no permission and does not relax any navigation boundary.
+     op.navigationStop={eventKind:replacement?'commit':'history',routeKind:navigationKinds.has(route.kind)?route.kind:'unknown',policyReason:route.kind==='unsupported'?(navigationPolicyReasons.has(route.reason)?route.reason:'other-policy-rejection'):null,hadTarget:op.navigation!==null,boundary:route.kind!=='conversation'?'non-conversation':op.navigation.documentId!==next.documentId?'different-document':'different-url'};
+     stop('single-navigation-boundary');return;
+    }
     op.navigation=next;
     if(replacement)op.observer.invalidateCommitted(d);else op.observer.invalidateHistory(d);
    };

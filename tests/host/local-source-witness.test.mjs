@@ -123,6 +123,14 @@ const oldPassiveConsumed=()=>({state:'finished',result:{schema:PREVIOUS_PASSIVE_
 const oldPassiveV2Consumed=()=>({state:'finished',result:{schema:PREVIOUS_PASSIVE_V2_BATCH,state:'BLOCKED',reason:'no-native-context-observed',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:2,navigations:2,counts:{'request-prepared':1,'history-dropped-pending':1,'completion-untracked':1}}}});
 const passiveRead={type:'SOURCE_WITNESS_READ',batch:PASSIVE_BATCH},passiveReturn={type:'SOURCE_WITNESS_RETURN',batch:PASSIVE_BATCH};
 const priorLedgers=(active=oldConsumed())=>({[BATCH]:active,[PREVIOUS_PASSIVE_BATCH]:oldPassiveConsumed(),[PREVIOUS_PASSIVE_V2_BATCH]:oldPassiveV2Consumed()});
+test('spent v3 navigation result is read unchanged without backfilling new classifications',async()=>{
+ const result={schema:PASSIVE_BATCH,state:'BLOCKED',reason:'single-navigation-boundary',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:1,preparationMs:3190}};
+ const h=mockChrome({...priorLedgers(),[PASSIVE_BATCH]:{state:'finished',result}},{}),before=structuredClone(h.stored);
+ h.chrome.tabs.get=async()=>assert.fail('spent result must not access the account tab');
+ for(const message of [passiveRead,passiveArm,passiveRead])assert.deepEqual(await h.message(message),result);
+ assert.equal(result.nativeObservation.navigationStop,undefined);assert.deepEqual(h.stored,before);
+ for(const event of Object.values(h.chrome.webRequest))assert.equal(event.listeners.size,0);
+});
 test('v3 accepts the finished 4f35c12b legacy active result without rewriting its missing unspent field',async t=>{
  // 90a006ac/4f35c12b unbound() saved this terminal record without unspent.
  // The outer finished marker was durable before read-back; absence is not true.
@@ -311,6 +319,33 @@ test('preparation permits one conversation navigation, not arbitrary scope/page 
  const detail={tabId:1,frameId:0,documentId:'doc-one',documentLifecycle:'active',frameType:'outermost_frame',url:frame.actualURL};
  chrome.webNavigation.onHistoryStateUpdated.emit(detail);chrome.webNavigation.onHistoryStateUpdated.emit(detail);assert.equal((await message({type:'SOURCE_WITNESS_READ'})).state,'WAITING_NATIVE');
  chrome.webNavigation.onHistoryStateUpdated.emit({...detail,url:'https://chatgpt.com/c/'+d});await new Promise(r=>setTimeout(r,0));assert.equal((await message({type:'SOURCE_WITNESS_READ'})).reason,'single-navigation-boundary');
+});
+test('navigation boundary retains only fixed stop categories, not URLs or identifiers',async t=>{
+ t.mock.method(globalThis,'fetch',()=>assert.fail('navigation diagnostics must never fetch'));
+ const cases=[
+  ['onHistoryStateUpdated','https://chatgpt.com/','home',null,false,'non-conversation'],
+  ['onCommitted','https://chatgpt.com/','home',null,false,'non-conversation'],
+  ['onHistoryStateUpdated','https://chatgpt.com/g/'+p+'/project','project-candidate',null,false,'non-conversation'],
+  ['onHistoryStateUpdated',frame.actualURL+'?PRIVATE_QUERY=PRIVATE_VALUE','unsupported','unsupported-native-query',false,'non-conversation'],
+  ['onHistoryStateUpdated','https://chatgpt.com/c/'+d,'conversation',null,true,'different-url'],
+  ['onCommitted',frame.actualURL,'conversation',null,true,'different-document']
+ ];
+ for(const [event,url,routeKind,policyReason,hadTarget,boundary]of cases){
+  const h=mockChrome(priorLedgers(),{}),old=structuredClone(h.stored);
+  await h.message(passiveArm);
+  const detail={tabId:1,frameId:0,documentId:'PRIVATE_DOCUMENT',documentLifecycle:'active',frameType:'outermost_frame',url:frame.actualURL};
+  if(hadTarget)h.chrome.webNavigation.onHistoryStateUpdated.emit(detail);
+  h.chrome.webNavigation[event].emit({...detail,url,...(boundary==='different-document'?{documentId:'PRIVATE_OTHER_DOCUMENT'}:{})});
+  const result=await h.message(passiveRead);
+  assert.equal(result.reason,'single-navigation-boundary');assert.equal(result.unspent,false);assert.equal(result.requests,0);
+  assert.equal(result.nativeObservation.navigations,hadTarget?2:1);assert.equal(result.nativeObservation.events,0);
+  assert(Object.values(result.nativeObservation.counts).every(n=>n===0));
+  assert.deepEqual(result.nativeObservation.navigationStop,{eventKind:event==='onCommitted'?'commit':'history',routeKind,policyReason,hadTarget,boundary});
+  assert(!/PRIVATE|https:|12345678|22345678|g-p-/.test(JSON.stringify(result)));
+  for(const key of Object.keys(old))assert.deepEqual(h.stored[key],old[key]);
+  const frozen=JSON.stringify(h.stored);h.chrome.webNavigation.onHistoryStateUpdated.emit({...detail,url:'https://chatgpt.com/PRIVATE_LATE'});
+  assert.deepEqual(await h.message(passiveArm),result);assert.equal(JSON.stringify(h.stored),frozen);
+ }
 });
 test('missing packaged receiver does not consume authorization or issue network requests',async()=>{
  const {chrome,message,stored}=mockChrome();chrome.tabs.sendMessage=async()=>null;const r=await message({type:'SOURCE_WITNESS_ARM',tabId:1});assert.equal(r.unspent,true);assert.equal(stored[BATCH],undefined);

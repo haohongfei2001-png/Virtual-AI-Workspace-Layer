@@ -1,5 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## v3已消费：首个导航被判为非聊天路由；修复停止原因不可区分的诊断缺口（2026-10-22）
+
+用户v3终态为`BLOCKED/single-navigation-boundary/unspent:false`，准备3190ms、navigations=1、events=0，全部请求/关联阶段码0，0主动GET/解码字节；身份、当前空间与目录NOT_RUN。基于30d5feb1的原分支可确定：首次顶层导航的URL解析结果不是conversation，尚未有先前目标，不是第二目标或document冲突；停止发生在调用C2 history/commit处理之前，未进入bcc44493的prepared修复分支。不是HTTP/身份失败，也不是服务器API不可行证据。报告未含包hash，不能仅凭schema证明现场精确SHA。
+
+真实第一事件的history/commit类别、home/Project/unsupported路由及解析原因未保存；用户对“已经点聊天或还没点”的回忆也不确定，不能据此认定首页replaceState是根因。events=0只表示停止前未收到原过滤范围的回调，不能判断网络缓存、其他请求或后续请求。现URL策略已支持合法`/g/<token>/c/<UUID>`，不能归因所有Project内聊天都不支持。
+
+本次只修一个可确认的诊断缺陷：原`single-navigation-boundary`将不同拒绝分支合并，无法决定下一修复。开发worker现在只在停止点保存一次`navigationStop`：固定history/commit、路由类别、安全解析原因码、是否已有目标、non-conversation/different-document/different-url；不存URL/ID/标题/原始事件。原停止逻辑、C2验证、过滤、120秒/6秒、v3键与无重试全部不变，不猜测放行首页或未知路由。旧v3原样返回，不能补造缺失分类；active/v1/v2/v3四份已消费记录不改。修前缺分类失败、定向回归、候选构建重建及独立只读审查通过，具体证据在`.git/vaiwl-checkpoints/20261022-v3-navigation-stop/`。未重复跑无关矩阵，未操作真实Chrome、更新安装目录或新建可执行批次；2258份副本、3个stash保全。
+
+当前仍为`BLOCKED / OBSERVER_NAVIGATION_GATE`，真实路由类别未知；生产身份/当前空间/近期成员仍未建立。唯一下一项外部条件是另获一次同范围、带上述分类的被动观察许可，才能在同一Profile/绑定标签记录首次停止类别：一次首页→已有聊天，准备≤120秒、DOM≤6秒、0主动GET/0响应正文，原详情过滤和匿名类别/计数，无自动重试，不调用session/accounts/目录、不启scope/旧库。届时复用原入口，保留四旧批；本轮未把修复当作新许可，不要求立即重载或重试。下节NOT_RUN为交付时历史，已由本节实际消费结果取代。
+
 ## 已批准的时序修复被动复验v3已准备并原位更新；真实执行NOT_RUN（2026-10-22）
 
 用户明确批准bcc44493修复后的一次限定被动复验。复用原入口，独立批次为`vaiwl-local-context-observation-20261022-v3`；同一授权Profile/绑定标签，一次首页→已有聊天自然导航，准备≤120秒、DOM关联≤6秒、0主动GET/0响应正文、原详情过滤、固定匿名阶段码，无自动重试。旧active/v1/v2三批键和报告只读保留，v3只写自己的消费状态；准备前核对v2确为正确schema、finished、已消费、零主动请求的no-native-context-observed终态，不以精确事件计数作为授权条件。页面/worker的PREVIEW、ARM、READ、RETURN均匹配固定批次，旧页面不能误启动新批。身份、目录、生产scope和数据库仍未启用。
