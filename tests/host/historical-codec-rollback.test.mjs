@@ -32,3 +32,17 @@ test('compatibility fixture revokes the old incarnation, then legitimately seeds
   assert.equal(fenced.header.storageFormat,indexed?'vaiwl-native-version-index-v2':'vaiwl-native-partitions-v2');assert.deepEqual(restored.fence,fenced.fence);assert(!restored.projectedIds.includes(J4_REF));assert(restored.projectedIds.includes('codec-survivor'));
  }}finally{if(priorChrome===undefined)delete globalThis.chrome;else globalThis.chrome=priorChrome;if(priorIDB===undefined)delete globalThis.indexedDB;else globalThis.indexedDB=priorIDB;}
 });
+
+
+test('directory compatibility fixture persists candidates without membership in both root layouts',async()=>{
+ const priorChrome=globalThis.chrome,priorIDB=globalThis.indexedDB;
+ globalThis.chrome={runtime:{getURL:path=>new URL('../../'+path,import.meta.url).href}};globalThis.indexedDB=new MockIDBFactory();
+ try{for(const indexed of [false,true]){
+  const scope={verified:true,provider:'hf_synthetic_only',accountId:'directory-codec-test',organizationId:indexed?'index':'partition'},origin='http://127.0.0.1:48173',args={scope,origin,indexed};
+  await codecFixtureOperation({...args,action:'seed',bundle:j4AssetBackup(scope,origin)});
+  const first=await codecFixtureOperation({...args,action:'directory'}),state=await codecFixtureOperation({...args,action:'directory-restored'});
+  assert.equal(first.header.storageFormat,indexed?'vaiwl-native-version-index-v1':'vaiwl-native-partitions-v1');assert.equal(state.directorySource.channel,'host-metadata');assert.equal(state.membership,null);assert(state.unknown&&state.survivor);
+  assert.deepEqual(await codecFixtureOperation({...args,action:'attempt',method:'recover'}),{version:4,outcome:'returned',value:{ok:false,reason:'intact-state-not-replaced'}});
+  await codecFixtureOperation({...args,action:'directory'});assert.equal((await codecFixtureOperation({...args,action:'directory-restored'})).header.revision,first.header.revision+1);
+ }}finally{if(priorChrome===undefined)delete globalThis.chrome;else globalThis.chrome=priorChrome;if(priorIDB===undefined)delete globalThis.indexedDB;else globalThis.indexedDB=priorIDB;}
+});

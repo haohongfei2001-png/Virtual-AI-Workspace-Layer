@@ -12,9 +12,11 @@ export async function codecFixtureOperation({action,scope,origin,bundle,indexed=
   import(chrome.runtime.getURL('src/data/hash.mjs')),
  ]);
  const base=new ScopeRepository({indexedDB}),workspaces=new WorkspaceRepository({baseRepository:base}),admissions=new WeakMap();
+ const hostAdmissions=new WeakMap();
  const now='2026-10-22T00:00:00Z',ref='33333333-3333-4333-8333-333333333333';let sourceId='codec-fixture-current';
  const native=new NativeRepository({baseRepository:base,workspaceRepository:workspaces,clock:()=>now,
   observationGate:()=>({channel:'synthetic',sourceId,generation:'codec-one'}),
+  hostObservationGate:(normalized,request)=>hostAdmissions.get(request)?.scopeKey===normalized.key?hostAdmissions.get(request):null,
   lifecycleGate:(normalized,request)=>admissions.get(request)?.scopeKey===normalized.key?admissions.get(request):null});
  const batch=next=>({scopeKey:base.scopeOrThrow(scope).key,sourceRevision:next+1,observedAt:now,validUntil:'2026-10-23T00:00:00Z',projects:[],
   refs:[ref,'codec-survivor'].map(id=>({id,nativeTitle:'Synthetic codec fixture',nativeUrl:origin+'/c/'+id,availability:'available'})),
@@ -35,6 +37,19 @@ export async function codecFixtureOperation({action,scope,origin,bundle,indexed=
    need(await native.apply(scope,{operationId:'codec-old-valid-apply',expectedRevision:initial+1,batch:batch(initial+1)}));
    return {version,header:await native.header(scope)};
   }
+  if(action==='directory'){
+   const {directoryBatch}=await import(chrome.runtime.getURL('src/host/directory-batch.mjs')),{createURLPolicy}=await import(chrome.runtime.getURL('src/host/url-policy.mjs'));
+   const facts=await native.read(scope),id='44444444-4444-4444-8444-444444444444';
+   const reduced=directoryBatch(JSON.stringify({items:[{id,title:'Retained directory title'}],offset:0,limit:100,total:1}),{target:{kind:'ordinary',projectId:null},scope,urlPolicy:createURLPolicy({origin}),sourceRevision:facts.revision+1,observedAt:now,validUntil:'2026-10-23T00:00:00Z'});
+   const request={operationId:'codec-directory-'+facts.revision,expectedRevision:facts.revision,batch:reduced.batch};
+   hostAdmissions.set(request,{scopeKey:base.scopeOrThrow(scope).key,channel:'host-metadata',sourceId:'codec-directory',generation:'codec-directory-one',guard:()=>true,admission:{profileId:'codec-directory-fixture',profileVersion:1,evidenceClass:'directory-candidates',semanticFingerprint:digest(reduced),acceptedAt:now,coverage:reduced.coverage}});
+   need(await native.apply(scope,request));return {version,header:await native.header(scope)};
+  }
+  if(action==='directory-restored'){
+   const facts=await native.read(scope),state=(await workspaces.read(scope)).state,projection=await native.snapshot(scope,{knownState:state});
+   const id='44444444-4444-4444-8444-444444444444';
+   return {version,header:await native.header(scope),directorySource:facts.sources['codec-directory'],directoryRef:facts.refs[id],membership:facts.membership[id]??null,unknown:projection.unknown.some(row=>row.id===id),survivor:!!facts.refs['codec-survivor']};
+  }
   if(action==='fence'){
    const facts=await native.read(scope),request={operationId:'codec-delete',expectedRevision:facts.revision,change:{kind:'refs',id:ref,state:'deletion-confirmed',expectedVersion:0,fenceId:null,fenceVersion:null,resultFingerprint:digest('codec-fixture-delete'),profileId:'fixture-codec-only',profileVersion:1}};
    admissions.set(request,{scopeKey:base.scopeOrThrow(scope).key,purpose:'native-lifecycle',guard:()=>true});
@@ -44,7 +59,8 @@ export async function codecFixtureOperation({action,scope,origin,bundle,indexed=
   if(action==='attempt'){
    const run={read:()=>native.read(scope),header:()=>native.header(scope),
     apply:()=>native.apply(scope,{operationId:'codec-rejected-apply',expectedRevision:revision,batch:batch(revision)}),
-    invalidate:()=>native.invalidate(scope,{operationId:'codec-rejected-invalidate',expectedRevision:revision,sourceId},{guard:()=>true})}[method];
+    invalidate:()=>native.invalidate(scope,{operationId:'codec-rejected-invalidate',expectedRevision:revision,sourceId},{guard:()=>true}),
+    recover:async()=>{const db=await base.open(),row=await new Promise((resolve,reject)=>{const tx=db.transaction('native_states','readonly'),q=tx.objectStore('native_states').get(base.scopeOrThrow(scope).key);tx.oncomplete=()=>resolve(q.result);tx.onabort=()=>reject(tx.error);});return native.recover(scope,{operationId:'codec-rejected-recover',damagedHash:digest(row)});}}[method];
    if(!run)throw Error('unknown-codec-attempt');
    try{return {version,outcome:'returned',value:await run()};}
    catch(error){return {version,outcome:'threw',name:error.name,reason:error.message};}
@@ -103,4 +119,38 @@ export async function runHistoricalCodecRollback({report,old,current,origin,scop
  assert.deepEqual(await rawSnapshot(),protectedRows);
  report.steps.push({name:'current-reupgrade-retains-exact-fences-projection-and-human-assets',status:'PASS',rowsHash:rowsHash(protectedRows),assets});
  await closeProbe();
+}
+
+/** The new channel uses the existing schema. Old owners must fail closed;
+ * the explicitly pinned compatible reader must preserve and update its rows.
+ * This verifies installed storage compatibility, never a production source. */
+export async function runDirectoryCodecRollback({report,old,current,compatible,origin,scope,indexScope,openProbe,closeProbe,evaluate,rawSnapshot,inspect,verifyLoadedOwners,replaceAndLoad,hash}){
+ const cases=[{name:'partition',scope,indexed:false},{name:'index',scope:indexScope,indexed:true}],paths=['src/data/native-facts.mjs','src/data/native-partitions.mjs','src/data/native-version-index.mjs'];
+ const call=(item,action,extra={})=>evaluate(codecFixtureOperation,{action,scope:item.scope,origin,indexed:item.indexed,...extra});
+ const rowsHash=value=>hash(JSON.stringify(value.rows));
+ const verify=async(pkg,build)=>{const owners=await verifyLoadedOwners(pkg.unpacked,4,paths);const manifest=await evaluate(async()=>await(await fetch(chrome.runtime.getURL('build-manifest.json'))).text());assert.equal(hash(manifest),build.manifest);return owners;};
+ const valid=value=>{assert.equal(value.version,4);assert.equal(value.directorySource.channel,'host-metadata');assert.equal(value.directorySource.admission.evidenceClass,'directory-candidates');assert.equal(value.directoryRef.nativeTitle,'Retained directory title');assert.equal(value.membership,null);assert(value.unknown&&value.survivor);};
+ await openProbe();report.loadedInitialOwners=await verify(old,report.oldBuild);
+ for(const item of cases)await call(item,'seed',{bundle:j4AssetBackup(item.scope,origin)});
+ const readAssets=()=>Promise.all(cases.map(item=>inspect(item.scope)));
+ const assets=await readAssets(),before=await rawSnapshot();for(const asset of assets){assert.equal(asset.version,4);for(const key of ['identities','snippets','workspaces','placements','workingSet','humanRefs'])assert.equal(asset[key],1);}
+ assert.deepEqual(before.stores,['b23_checkpoints','b23_operations','b23_states','b23_views','native_operations','native_states','operations','refs']);
+ report.steps.push({name:'old-package-positive-writes-and-human-assets',status:'PASS',assets,rowsHash:rowsHash(before)});
+ await closeProbe();report.upgradeRuntime=await replaceAndLoad(current.unpacked);await openProbe();report.loadedUpgradeOwners=await verify(current,report.currentBuild);assert.deepEqual(await rawSnapshot(),before);
+ for(const item of cases){item.added=await call(item,'directory');assert.equal(item.added.header.storageFormat,item.indexed?'vaiwl-native-version-index-v1':'vaiwl-native-partitions-v1');item.snapshot=await call(item,'directory-restored');valid(item.snapshot);}
+ assert.deepEqual(await readAssets(),assets);let protectedRows=await rawSnapshot();
+ report.steps.push({name:'current-directory-channel-in-both-original-root-formats',status:'PASS',rowsHash:rowsHash(protectedRows)});
+ await closeProbe();report.downgradeRuntime=await replaceAndLoad(old.unpacked);await openProbe();report.loadedDowngradeOwners=await verify(old,report.oldBuild);assert.deepEqual(await rawSnapshot(),protectedRows);
+ for(const item of cases)for(const method of ['read','header','apply','invalidate','recover']){
+  const result=await call(item,'attempt',{method,revision:item.added.header.revision});
+  assert.deepEqual(result,method==='read'||method==='header'?{version:4,outcome:'threw',name:'Error',reason:'untrusted-native-source'}:{version:4,outcome:'returned',value:{ok:false,reason:'untrusted-native-source'}});
+  assert.deepEqual(await rawSnapshot(),protectedRows);assert.deepEqual(await readAssets(),assets);
+  report.steps.push({name:`pre-directory-package-${item.name}-${method}-refuses-without-mutation`,status:'PASS',result,rowsHash:rowsHash(protectedRows)});
+ }
+ await closeProbe();report.compatibleRuntime=await replaceAndLoad(compatible.unpacked);await openProbe();report.loadedCompatibleOwners=await verify(compatible,report.compatibleBuild);assert.deepEqual(await rawSnapshot(),protectedRows);
+ for(const item of cases){assert.deepEqual(await call(item,'directory-restored'),item.snapshot);const expected=item.snapshot.header.revision+1,write=await call(item,'directory');assert.equal(write.header.revision,expected);item.snapshot=await call(item,'directory-restored');assert.equal(item.snapshot.header.revision,expected);assert.equal(item.snapshot.directorySource.sourceRevision,expected);valid(item.snapshot);}
+ assert.deepEqual(await readAssets(),assets);protectedRows=await rawSnapshot();report.steps.push({name:'pinned-compatible-package-reads-and-updates-directory-with-human-assets',status:'PASS',revisions:cases.map(item=>({layout:item.name,revision:item.snapshot.header.revision,sourceRevision:item.snapshot.directorySource.sourceRevision})),rowsHash:rowsHash(protectedRows)});
+ await closeProbe();report.restoreRuntime=await replaceAndLoad(current.unpacked);await openProbe();report.loadedRestoredOwners=await verify(current,report.currentBuild);assert.deepEqual(await rawSnapshot(),protectedRows);assert.deepEqual(await readAssets(),assets);
+ for(const item of cases)assert.deepEqual(await call(item,'directory-restored'),item.snapshot);
+ assert.deepEqual(await rawSnapshot(),protectedRows);report.steps.push({name:'current-reupgrade-preserves-compatible-writes-and-unknown-membership',status:'PASS',rowsHash:rowsHash(protectedRows),assets});await closeProbe();
 }

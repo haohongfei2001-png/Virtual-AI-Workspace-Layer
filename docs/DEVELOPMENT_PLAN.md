@@ -16,7 +16,7 @@
 
 **最新实际结果覆盖下方历史：source-v3已消费，CONDITIONAL GO。** 用户附件实际10GET全部200 JSON、167329解码字节、主动4880ms/准备6484ms；同文档身份、认证roster、C2与收尾同主体/空间PASS，普通24/归档1个候选可读但缺库存状态字段，Project1/成员接口2个候选可读及cursor:null。只证明本次有限来源，不代表排序/活动、正向成员/NONE、首页或恢复成立。普通/归档partial不丢合法候选，不以严格全历史证明再阻塞个人版；详情见STATUS最新节。
 
-原B2.F1本轮补受信结果消费：`directory-batch`复用既有parser，现owner私有`observeDirectory`绑定固定首屏请求与scope/document/provider/期限，沿同NativeRepository/CAS/UI通知接纳正向ID/原名及独立coverage域/缺口。生产provider仍未登记，无新增网络/RPC、无持续扫描；成员不推断PROJECT/NONE、活动不伪造、未见不删除。缺原名保留旧行/旧时效，参数冲突拒绝，pending ACK优先，目录不能创建或续认ACK continuation。新增host-metadata持久枚举的最低读取/回退包必须在真实生产启用前明确，旧F3回退证据不自动继承；数据库键/hash/恢复架构不变。
+原B2.F1本轮补受信结果消费：`directory-batch`复用既有parser，现owner私有`observeDirectory`绑定固定首屏请求与scope/document/provider/期限，沿同NativeRepository/CAS/UI通知接纳正向ID/原名及独立coverage域/缺口。生产provider仍未登记，无新增网络/RPC、无持续扫描；成员不推断PROJECT/NONE、活动不伪造、未见不删除。缺原名保留旧行/旧时效，参数冲突拒绝，pending ACK优先，目录不能创建或续认ACK continuation。新增host-metadata持久枚举的回退基线现已通过同ID实际安装验证：190b旧包对两根布局的read/header/apply/invalidate/recover拒绝且八store不变，980764eb兼容包可读写，再升级保持目录及双scope人工资产。只认证该窄B4/B5/F3存储切片，不继承其他旧F3或真实J4结果；具体包hash见STATUS本批回执。数据库键/hash/恢复架构不变。
 
 后继代码差额已完成：原session-provider现有默认关闭的固定首屏directoryProvider，私有context与原owner直连，session→roster→目录→新session→新roster各链5GET/6秒/无重试，每个GET扣原持久共享预算，较短新认证期限贯穿CAS；实际隔离HTTP/IDB及定向回归见STATUS首节。没有新增生产注册、扫描器或真实读取，不把本机合成结果代替source-v3或日用验收。
 

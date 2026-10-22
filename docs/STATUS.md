@@ -1,5 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 新目录持久来源的同ID升级/回退兼容已验证（2026-10-22）
+
+承接8ad704f5，关闭原B4/B5/F3中新增`host-metadata`的具体兼容证据缺口。本轮复用既有historical-host-upgrade及原八store、同schema4、同扩展安装slot，在全新隔离headless Chrome完成：190b698f旧包实际正向写入人工资产/原生数据 → 当前包写目录候选 → 190b旧包拒绝 → 980764eb兼容包读写 → 当前包再升级。没有修改产品源码、旧库键/格式或真实安装，也没有为了兼容把来源冒充host-dom。
+
+两种根布局（partition/index）的旧包read/header/apply/invalidate/**recover**分别明确拒绝`untrusted-native-source`，不是VersionError或泛化超时；每次拒绝后全部八store逐行完全相等。兼容包980764eb逐根读回目录原名、coverage及UNKNOWN，再实际写入且各自revision/sourceRevision增加；当前包再升级与兼容包最终行完全一致。两个scope各自的identities/workspaces/placements/workingSet/snippets/humanRefs哈希保持，目录无归属项仍UNKNOWN。各阶段实际module/worker字节及构建manifest核对，三包构建校验通过。
+
+最终14步实际安装存储检查通过，相关19项runner/fixture回归通过。补强两scope资产与逐根写入断言后才记录最终证据；早期较窄结果不累加。浏览器外网尝试由隔离拒绝代理拦截，未访问真实账号。此为S安装存储兼容切片，私有测试gate调用实际仓库，不是生产来源、真实身份或完整个人J4旅程。980764eb是本次**实际验证的兼容回退基线**；190b及其他未验证包不能被当作可用回退包。无数据清除、旧授权恢复或消费批次重置。
+
+证据：[本批回执](engineering/free-directory-storage-compatibility-20261022.json)，完整日志/包hash/原始报告位于`.git/vaiwl-checkpoints/20261022-directory-storage-compatibility/`。2258份原副本和3个stash保全；七批真实来源结果未重跑。生产profile/持续读取允许条件、正向成员/NONE、可信活动与首页/Project/休眠恢复仍是后续实际缺口，不借此次通过启用生产或宣称个人Free已交付。
+
 ## 固定首屏目录的认证读取器与原owner接通；生产仍关闭（2026-10-22）
 
 承接980764eb的受信目录消费层，已补原B2.F1下一代码差额：原`session-provider`增加默认关闭的包内`directoryProvider`，复用既有固定请求、session/canonical roster解析和持久共享预算，不新建认证/存储/调度系统。每次只读一个固定首屏，session→roster→目录→新session→新roster共5GET，串行、总6秒、无自动重试；每个GET先扣原scope/origin的30秒12请求预算，首session单独计directory:path attempt，收尾不重复算重试。单次字节上限合计3.5MiB。未结束的底层请求即使忽略abort，也继续占用目录串行锁，迟到结果不能形成私有证明或启动后继请求。
