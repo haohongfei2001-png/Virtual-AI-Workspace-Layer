@@ -25,7 +25,9 @@ export function createIsolatedSessionReader({origin,fetch=globalThis.fetch,now=D
   let token=null,onAbort,last=elapsedNow();const started=last;
   const check=()=>{const elapsed=elapsedNow();if(!Number.isFinite(started)||!Number.isFinite(elapsed)||elapsed<last||elapsed-started>=timeoutMs)throw Error('request-timeout');last=elapsed;if(combined.aborted)throw Error('session-aborted');};
   const cancelled=new Promise((_,reject)=>{onAbort=()=>reject(Error('session-aborted'));combined.addEventListener('abort',onAbort,{once:true});if(combined.aborted)onAbort();});
-  const json=async(path,limit)=>{check();const target=origin+path,response=await fetch(target,{method:'GET',credentials:'include',cache:'no-store',redirect:'error',signal:combined,headers:{Accept:'application/json',...(token?{Authorization:'Bearer '+token}:{})}});check();return readSessionJSON(response,{target,limit,check});};
+  // The decoder checks the deadline/abort before parsing and drains a rejected
+  // response, so a late fetch cannot escape rawReads before body disposal.
+  const json=async(path,limit)=>{check();const target=origin+path,response=await fetch(target,{method:'GET',credentials:'include',cache:'no-store',redirect:'error',signal:combined,headers:{Accept:'application/json',...(token?{Authorization:'Bearer '+token}:{})}});return readSessionJSON(response,{target,limit,check});};
   try{
    const result=await withRequestDeadline(()=>Promise.race([cancelled,trackRaw(async()=>{
     check();const session=await json('/api/auth/session',256*1024);check();

@@ -1,0 +1,52 @@
+{
+  "schema": "vaiwl-rejected-body-cleanup-evidence-v1",
+  "baseHead": "4cf53aa51b2ee382826e84b0780510e4a068ed43",
+  "task": "C6/F3 rejected session response disposal",
+  "sourceHashes": {
+    "src/host/session-identity.mjs": "ff71fb796ab2c81ef07a5fae274a3de2c4317e05af48a590c952bb0c51b31281",
+    "src/host/isolated-session-reader.mjs": "49b5726c6b1317f1879a5c5b263a88bdb8e0b886a31a012d156c9b42a84118e1",
+    "tests/host/session-identity.test.mjs": "2bfc7a4f55c090176c78dea4a6e43b1b866c1d229ede9526b90278237115a22a"
+  },
+  "finding": "Shared decoder rejected pre-reader checks without cancelling unread bodies. Isolated reader post-fetch check bypassed decoder cleanup on late abort. Four direct regressions failed before repair.",
+  "fix": "Drain unread response on pre-reader rejection, preserve original error; isolated post-fetch check now runs inside shared decoder before any decoding. Existing raw work accounting includes disposal, caller deadline unchanged.",
+  "validation": {
+    "before": {
+      "passed": 7,
+      "failed": 4,
+      "log": "before.log"
+    },
+    "regression": {
+      "passed": 168,
+      "failed": 0,
+      "skipped": 0,
+      "log": "regression.log"
+    },
+    "builds": [
+      {
+        "name": "default",
+        "result": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        }
+      },
+      {
+        "name": "observed",
+        "result": {
+          "status": "HOST_IMPLEMENTATION_UNVERIFIED",
+          "releaseStatus": "NOT_RELEASE_READY",
+          "files": 191
+        }
+      }
+    ],
+    "review": "Primary writer source review only; no independent runtime review."
+  },
+  "boundaries": {
+    "realAccountRequests": 0,
+    "productionEnabled": false,
+    "newWitnessBatch": false,
+    "installedPackageUpdated": false,
+    "realDailyAcceptance": "NOT_RUN"
+  },
+  "checkpoint": ".git/vaiwl-checkpoints/20261023-rejected-body-cleanup"
+}

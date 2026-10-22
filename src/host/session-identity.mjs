@@ -10,6 +10,7 @@ const invalidContexts=issue=>{const error=Error('invalid-accounts-schema');conte
 export const sessionContextSchemaIssue=error=>contextSchemaIssues.get(error)??null;
 /** Shared fixed-provider decoding. No URLs, proofs or credentials come from DOM. */
 export async function readSessionJSON(response,{target,limit,raw=false,check}={}){
+ try{
  check();
  if(response.redirected||response.url!==target)throw Error('invalid-session-response');
  if(response.headers?.get?.('cf-mitigated')==='challenge')throw Error('session-challenged');
@@ -18,6 +19,12 @@ export async function readSessionJSON(response,{target,limit,raw=false,check}={}
  if(!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')??''))throw Error('invalid-session-mime');
  const length=response.headers.get('content-length');if(length!==null&&(!/^\d+$/.test(length)||Number(length)>limit))throw Error('session-response-too-large');
  if(!response.body?.getReader)throw Error('missing-session-body');
+ }catch(error){
+  // Rejected headers or a late response still own an unread transport body.
+  // Do not decode it; retain actual work until disposal settles, even on error.
+  try{await response?.body?.cancel();}catch{}
+  throw error;
+ }
  const reader=response.body.getReader(),decoder=new TextDecoder('utf-8',{fatal:true});let bytes=0,text='';
  const decode=(value,options)=>{try{return decoder.decode(value,options);}catch{throw Error('invalid-session-body');}};
  try{while(true){check();const chunk=await reader.read();check();if(chunk.done)break;if(!(chunk.value instanceof Uint8Array))throw Error('invalid-session-body');bytes+=chunk.value.byteLength;if(bytes>limit)throw Error('session-response-too-large');text+=decode(chunk.value,{stream:true});}text+=decode();if(raw)return text;try{return JSON.parse(text);}catch{throw Error('invalid-session-json');}}finally{try{await reader.cancel();}catch{}reader.releaseLock();}
