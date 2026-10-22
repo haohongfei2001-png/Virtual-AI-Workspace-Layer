@@ -1,10 +1,12 @@
 # VAIWL：权威、权限与文档职责
 
+2026-10-22用户采纳[PR16体验裁决](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6335005042)：本人Mac Chrome主用连续体验为个人交付标准。原计划及81项原表按①个人必需/②发布完善/③后续优化/④取消简化分层；历史结果不改PASS，取消的全历史与逐消息完整审计不转为发布欠账。安全、权限、正确归属、资产、完整v2.7不削弱。
+
 ## 1. 已批准产品与正式Host规格
 
-Free-first / Pro-later已经批准。Free使用真实ChatGPT Project稳定ID/原名与Conversation，确认NONE与UNKNOWN分开，原生历史/搜索/新建/输入/消息/工具保持；活跃和历史、完整H策略、工作集/片段、持久恢复属于Free。Pro保留虚拟组织/派生标题/Series/拆合/人工约束及端云模型目标，旧人工作品受保护，不提前开发Pro AI或收费。
+Free-first / Pro-later已经批准。Free使用真实ChatGPT Project稳定ID/原名与Conversation，确认NONE与UNKNOWN分开，原生历史/搜索/新建/输入/消息/工具保持；活跃和渐进历史、默认30/手动H、工作集/片段、持久恢复属于Free；全库密度auto H后置③。Pro保留虚拟组织/派生标题/Series/拆合/人工约束及端云模型目标，旧人工作品受保护，不提前开发Pro AI或收费。
 
-用户已正式批准将 **VA-HOST/1.1 FINAL** 四份完整文件固化到 `docs/specs/chatgpt-host/`，并整合进现有开发体系：主规格、类型合同、81项验收、Codex交接全部为正式技术附件，16项问题修订与81项子场景不删减。唯一执行路线仍为[DEVELOPMENT_PLAN](DEVELOPMENT_PLAN.md)原A–G，不建立第二套Host计划，不改变批准v2.7。
+用户已正式批准将 **VA-HOST/1.1 FINAL** 四份完整文件固化到 `docs/specs/chatgpt-host/`，并整合进现有开发体系：主规格、类型合同、81项验收、Codex交接全部为正式技术附件，16项安全修订保持，81项编号/历史不删；当前产品适用性以本页首段裁决为准。唯一执行路线仍为[DEVELOPMENT_PLAN](DEVELOPMENT_PLAN.md)原A–G，不建立第二套Host计划，不改变批准v2.7。
 
 附件内日期/审查head/“本轮未提交”等文字属于其原形成记录，不是当前状态和权限；本次采纳后Codex直接从仓库读取，不再要求用户下载、上传或重述。当前HEAD/本地未提交成果优先于附件历史基线，不得回退或重复开发后续已完成的模块。
 
@@ -32,7 +34,7 @@ Codex原已获准的Free持续工程在原目录 `/Users/hhf/Documents/GitHub/Vi
 
 Free原生ID必须确证，IDless真实控件只用临时句柄并通过用户自然激活提升；不持久造假ID，不按名字合并。NONE需明确语义，unknown不等于null无项目；原生未完整发现历史仍可访问。body旧route新时不误关联消息，shared role=user不自动是本人。
 
-原始UserSendEvent、短期hint、durable本地ACK观察锚、无日期recency和ActivityDecision分别处理。观察锚始终provisional且无sentAt/serverTime，校准due不删除已ACK活动，误配可撤销；重复不续起点。grant、freshness、revocation、库存/成员/时间覆盖不混用。
+原始UserSendEvent、短期hint、durable本地ACK观察锚、原生最近活动和ActivityDecision分别处理。合格的同域原生近期顺序可供无日期排序；经核验语义/单位的对象更新时间可供provisional最近活动。二者不写本人sentAt、actorVerified或成功ACK；首次观察只建baseline，重复打开/轮询/置顶/筛选/虚拟滚动不续活动起点。严格UserSendEvent与ACK锚原义保留，UNKNOWN不作NONE，未见不删除，原生搜索始终可达。观察锚始终provisional且无sentAt/serverTime，校准due不删除已ACK活动，误配可撤销；重复不续起点。grant、freshness、revocation、库存/成员/时间覆盖不混用。
 
 原生操作只委托真实入口，预计划并一次派发，未知结果不自动补跳或重发；无原生入口且有未保存风险/风险未知时不整页卸载。原生消息/composer/model/tool/file/菜单/运行态不复制，草稿不持久化。manual双surface仅可对独立reading/纯history施加浏览器开闭驱动的限定CSS，禁止HTML inert/hidden/display和原生handler改写；唯一阅读四格返回和完整v2.7保持。
 

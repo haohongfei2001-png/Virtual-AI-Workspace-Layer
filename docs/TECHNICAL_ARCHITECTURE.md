@@ -1,5 +1,7 @@
 # 技术架构：Free原生事实投影与生产HostAdapter
 
+2026-10-22用户采纳[PR16体验裁决](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6335005042)：本人Mac Chrome主用连续体验为个人交付标准。原计划及81项原表按①个人必需/②发布完善/③后续优化/④取消简化分层；历史结果不改PASS，取消的全历史与逐消息完整审计不转为发布欠账。安全、权限、正确归属、资产、完整v2.7不削弱。
+
 本Canonical已正式采用[VA-HOST/1.1 FINAL完整工程规格](specs/chatgpt-host/VAIWL_CHATGPT_HOST_SPEC.md)、[类型合同](specs/chatgpt-host/VAIWL_HOST_CONTRACTS.d.ts)、[81项验收附件](specs/chatgpt-host/VAIWL_OFFLINE_ACCEPTANCE.md)和[Codex交接](specs/chatgpt-host/VAIWL_CODEX_HANDOFF.md)。唯一执行路线是[DEVELOPMENT_PLAN](DEVELOPMENT_PLAN.md)原A–G；本文件与附件不是另一份开发计划。四份原件保留其历史审查日期/基线/证据说明，当前实施必须继承最新Free分支代码，不回退到附件基线。
 
 本次文档整合不修改运行时、STATUS或工程证据，不把设计采用、原合成成绩或Web机制probe当作生产接入完成。Free/Pro范围、批准v2.7和安全权限继续按现行Canonical执行。
@@ -72,11 +74,11 @@ route只证明导航请求，当前消息需要body proof；多ID块分别关联
 
 本地确证ACK但没有原始时间时，使用新版本evidence codec中的durable `observed-self-send` LocalSendAnchor：firstObservedAt、本机有界区间、ACK witness、clockBasis和calibrationDueAt。始终provisional，禁止sentAt/serverTime；校准期限不删除已ACK活动，重开不续起点，随H自然变老，误配/失败/撤权可撤销。旧短TTL hint保留原语义，不批量升级。本机时钟异常不能伪造日期。
 
-事件语义键基于scope/C/message，不含这次observedAt或current branch leaf。重复打开复用原immutable event，lastSeen/witness另存；谱系固定到该消息，parent缺失/循环为partial，同消息时间冲突隔离，不挑最大值。RecencyObservation只有baseline/order/newID dirty，无日期，不把首次发现或改名/置顶当新发送。
+事件语义键基于scope/C/message，不含这次observedAt或current branch leaf。重复打开复用原immutable event，lastSeen/witness另存；谱系固定到该消息，parent缺失/循环为partial，同消息时间冲突隔离，不挑最大值。合格的同域原生近期顺序可供无日期排序；经核验语义/单位的对象更新时间可供provisional最近活动。二者不写本人sentAt、actorVerified或成功ACK；首次观察只建baseline，重复打开/轮询/置顶/筛选/虚拟滚动不续活动起点。严格UserSendEvent与ACK锚原义保留，UNKNOWN不作NONE，未见不删除，原生搜索始终可达。
 
 复用FreeRuntimeService/FreeCalibration：6秒请求、30秒轮次、12请求、最多2重试，同scope/source预算跨lease/重启/多tab不归零。真实发送和当前项优先，源不支持即有限结束；已知旧锚可逆下沉，无日期仍可达，不无限spinner。原生SPA/列表/当前对象/前台变化触发校准；其他设备活动只有桌面native自然可见后才吸收，上游延迟和本地1秒投影目标分别记录，不伪装VAIWL同步。
 
-H∈{7,14,30,60,90}、T/Z/ViewSession、自动密度选择/驻留/冷却/撤销与人工锁按核心规范完整保留，Free无AI依赖；不回投今天lastSend伪造历史密度，不复制五份100k集合。
+H∈{7,14,30,60,90}、T/Z/ViewSession、人工锁照常；自动密度选择/驻留/冷却/撤销实现保留③、个人首版不以前述完整密度为前置，Free无AI依赖；不回投今天lastSend伪造历史密度，不复制五份100k集合。
 
 ## 7. 完整v2.7挂载、原生导航和退出
 
@@ -110,8 +112,8 @@ Free↔Pro、升级/降级、备份/恢复保持人工title/aliases/placement/lo
 
 ## 9. 验收、发布边界和既有目标
 
-原81项、16项修订和J1–J4均已纳入唯一计划原任务；逐项FR/任务映射见FREE_PRO_ACCEPTANCE。正常支持族必须满足主体/context、P/C/NONE、本人活动、原生导航/新建/搜索、完整v2.7及退出；故障族预先规定降级，不得实现后改oracle迎合全部拒绝。
+原81项、16项修订和J1–J4均已纳入唯一计划原任务；逐项FR/任务映射见FREE_PRO_ACCEPTANCE。正常支持族必须满足主体/context、P/C/NONE、可信最近活动、原生导航/新建/搜索、完整v2.7及退出；故障族预先规定降级，不得实现后改oracle迎合全部拒绝。
 
-L/D/S/G/U严格分账；独立oracle、关键变异、真实Chrome MV3/IDB/父子frame/网络计数与旧回归共同验收。真实current-context、时间/作者/ACK、IDless→exact、NONE、旧样本/跨端、CSP/原生功能、PAIA/物理IME仍按主规格§11最小G/U清单定向确认，不再全面研究或重构产品。
+L/D/S/G/U严格分账；独立oracle、关键变异、真实Chrome MV3/IDB/父子frame/网络计数与旧回归共同验收。真实current-context、时间/作者/ACK、IDless→exact、NONE、旧样本/跨端、CSP/原生功能、PAIA/物理IME仍保留在主规格§11清单；本人只以①及主用连续路径为前提，其他按②/③，不要求逐消息审计才能排序，不再全面研究或重构产品。
 
 F1性能目标和历史失败保留，但不能继续无限前置于B1.F+B2.F1+C2。F3/F4包、隐私、长期漂移和用户收益不因文档通过自动达标；来源权限/平台资格独立核对，不以第三方扩展或用户同意替代。D/Pro、E代理原生动作、F2同步及G高级集成按原目标后置，不成为完整Free工程的误依赖。

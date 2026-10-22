@@ -177,6 +177,26 @@ export interface RecencyObservation {
   observedAt: ISOInstant;
   carriesSendTime: false;
 }
+/** Package-owned semantics only; absent by default. These records are not page RPCs. */
+export interface NativeActivityProfile {
+  id: ProfileId;
+  revision: number;
+  providerProfile: string;
+  semantics: 'native-object-update';
+  timeUnit: 'second' | 'millisecond' | 'iso' | null;
+  orderDomain: string | null; // One verified unpinned/filter-specific domain.
+}
+/** Existing private provider holds proof; serialized values confer no authority.
+ * codec3 stores a latest per-C native time/order snapshot in the same evidence CAS.
+ * ActivityDecision remains provisional/undated; strict UserSendEvent is unchanged.
+ * Source revocation/profile admission/current ScopeGrant still gate all consumption. */
+export interface NativeActivityObservation {
+  profileId: ProfileId;
+  profileVersion: number;
+  scopeKey: string;
+  observedAt: ISOInstant; // Observation only, never activity time.
+  items: { conversationId: NativeId; updateTime?: number | ISOInstant | null }[]; // Max256.
+}
 interface ProposalEnvelope {
   protocol: 'vaiwl-host-observation/1';
   documentToken: DocumentToken;

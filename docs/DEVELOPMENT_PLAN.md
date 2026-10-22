@@ -1,5 +1,17 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+## 当前执行：采纳本人日用体验裁决（2026-10-22）
+
+2026-10-22用户正式采纳[PR16体验裁决](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6335005042)：本人Mac Chrome主用Workspace的近期真实P/C、正确归属、自然新聊天更新、可信最近活动、原生搜索/输入/返回、普通刷新休眠恢复、隔离和成熟v2.7均为个人交付必需。全账户严格历史完整性、逐消息本人作者/ACK/原始时间完整审计取消为默认产品前提，不转为发布欠账。81个ID、子场景和历史结果保留；①个人必需、②发布前完善、③后续优化、④取消/简化的逐ID适用范围见原离线验收§4，延期不改PASS。10k/100k及全库密度自动H为③/DEFERRED，原阈值不变；保留默认30天和已有手动切换。个人切片不冒领旧完整旅程、FREE-ACCEPTED或RELEASE-READY。
+
+合格的同域原生近期顺序可供无日期排序；经核验语义/单位的对象更新时间可供provisional最近活动。二者不写本人sentAt、actorVerified或成功ACK；首次观察只建baseline，重复打开/轮询/置顶/筛选/虚拟滚动不续活动起点。严格UserSendEvent与ACK锚原义保留，UNKNOWN不作NONE，未见不删除，原生搜索始终可达。
+
+继续原B2.F2/F3、C6/F3/F4：先交付私有来源→现evidence/CAS→ActivityDecision窄接线，生产profile缺实证时关闭；接续90a006ac本机单次见证，不重建诊断、不重发已消费批次、不等Work/CDP。主用身份/当前空间先通过，近期与正确成员来源可独立判读；归档/全历史域未通过不否定已经依法核实的主用能力，身份链失败仍立即停止。此裁决不增加真实请求或原生写入许可。
+
+当前差额已接入包内私有native activity owner、同库codec3最新快照、ActivityDecision及缓存失效；显式来源profile默认未启用，strict事件原义不变。源码/离线检查与真实主用来源分账，实际结果及唯一下一条件见STATUS首节。
+
+独立关口为：诊断工具（非生产依赖）、主用生产身份、首页/聊天/Project/普通恢复的当前空间、近期目录及正向成员/NONE。完整服务器库存证明不再是第四关口的默认要求。自然跨设备未知ID发现与严格本人发送审计分开。来源成立后完成原J1–J4个人连续切片、产出可安装日用候选，再在原F4修补实际问题；旧完整旅程结果不改判。
+
 ## 当前执行：本机开发版一次性来源见证（2026-10-22）
 
 用户在 `89b1aaf1` 后明确改变执行方法：由现有 MV3 开发版在本人已登录的同一 Chrome Profile 内启动，不依赖 Work、CDP、远程控制或额外 Profile。原临时导航保留，开发专用 `tools/native-source-witness/` 复用现有身份/C2/parser；不修改普通生产构建、不自动启用身份或目录 producer。安装、入口、精确构建与验证状态见 STATUS 首节；本机包已准备，真实来源仍 NOT_RUN。
@@ -18,7 +30,7 @@
 
 只等待一个执行条件：**同一获授权 Profile 的正式非 CDP MV3 执行入口可用**。条件改变后先核对本批和单次状态，由唯一 writer 冻结包内见证并续接原许可，不重新研究或重做 parser；若身份或 C2 失败则在目录之前停止，挑战/拒绝不换路线重试。当前结论不要求改产品范围或切 C3，不因预检 BLOCKED 推断所有普通 MV3 路线不可行。没有新的可验证独立工程缺陷时不追加离线案例，本轮真实状态见 STATUS。
 
-## 当前执行：消费数据接入裁决，来源无关解析与生产来源分别收口（2026-10-22）
+## 历史执行：消费数据接入裁决，来源无关解析与生产来源分别收口（2026-10-22）
 
 用户已正式采纳 [PR16 裁决 6333439460](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6333439460)。Codex 为原工作树唯一工程 writer，dot/子代理只读研究与审查。保持原 A–G、81 项及全部子场景、完整 Free、v2.7 和性能指标；10k/100k 仍 DEFERRED。下面旧首要动作保留为历史，不再把诊断工具恢复作为全部工程的前置条件。
 
@@ -31,7 +43,7 @@
 
 本批已实施的有限代码差额是普通/归档目录**纯 parser**：复用 Project 的 ID/原名归约与有界候选，沿 `recent-list` 的不同 filter/sort 和独立 `project-members` domain 输出候选页。保留 offset/cursor/total 的 missing/null/invalid、原始行数、pageOrdinal、来源版本、相邻页摘要和固定缺口；声明 total 的边界与显式 cursor:null 分开。任何异常、重复/重叠、预算截断都保留 partial，不生成 authenticated CoverageClaim/InventoryCoverage 完整性、NONE、本人时间或删除。它不读取服务器，不是完整历史扫描器；长周期 cursor 循环/非相邻页重叠、真实过滤和最终收敛仍需后续 owner 与来源证明。
 
-生产 producer 尚不接通。只有身份、C2、访问条件及对应目录域见证成立后，才沿现有 session-provider、host-observation-owner、NativeRepository/CAS/continuation、FreeRuntimeService 和共享预算接线，不重建库/UI/搜索/恢复。跨设备**未知 ID 的发现**与本人 ACK/时间是两个验收关口；目录 update_time 只可成为后续待核验的 dirty 输入，不确认本人活动，gizmo_id:null 不确认 NONE，列表缺席不删除。
+生产 producer 尚不接通。只有身份、C2、访问条件及对应目录域见证成立后，才沿现有 session-provider、host-observation-owner、NativeRepository/CAS/continuation、FreeRuntimeService 和共享预算接线，不重建库/UI/搜索/恢复。跨设备**未知 ID 的发现**与本人 ACK/时间是两个验收关口；目录 update_time 未核验时只作dirty；核验后可作provisional最近活动，不确认本人发送，gizmo_id:null 不确认 NONE，列表缺席不删除。
 
 纯 parser 窄批完成后结束本专项的来源无关工作。继续原任务中有具体失败/反例且依赖满足的导航、恢复、生命周期或 UI 差额；没有根因时不改生产、不重跑矩阵挑绿。本次独立只读审查未确认额外可直接修复的缺陷，J4/UNKNOWN 历史失败继续保留。只有出现足以改变决策的新来源依据，才准备裁决中的一个集中最小见证批次并另行取得明确授权；本次没有新增真实账户/CDP/原生写入许可，不重复已消费诊断，也不要求用户再刷新、重登或截图。
 
@@ -413,9 +425,9 @@ B2.F2取消重发按“浏览器未确认终态→有界认证operation读回→
 |---|---|---|---|
 | FREE-CONTRACT | B1.F、B2.F1、B3.F、B5.F、C1.F1、C2 | 公共合同、无环握手、生产zero-seed组装、IDless可操作句柄；复用已有模型与UI；C2早期S退出反例 | 旧调用/资产兼容，正常IDless可收敛；不把仅类型检查当运行完成 |
 | FREE-DATA | R0-00/01/02/03、B1.F、B2.F1、C2 | 先离线写完固定主体/context/目录/成员provider和正反闭环，再按独立许可执行固定G核验 | 有可持续、可复验且不需手工补文件的来源；G未运行不能标此真实关口完成 |
-| FREE-ACTIVITY | B2.F2/F3、B4.F、C1.F2、C3 | 本人ACK关联、strict event、durable观察锚、近期dirty、自然跨端再发现与有界校准 | 新活动及时；60天旧项可逆下沉；校准期限不抹已ACK活动；无伪时间/无限等待 |
-| FREE-EXPERIENCE | C1.F3、C2、C3、C4、C5 | 完整v2.7双surface、原生导航/搜索/新建/输入、原工作集/片段/跨度和来路 | J1–J3完整离线旅程；不是安全但残缺小弹板；不复制原生聊天 |
-| FREE-ACCEPTED | C6、B4/B5回归、F1.F、R0-04/05/06、G1兼容 | 完成81项适用子场景/J1–J4，再完成指定G/U来源、跨端、原生全链、PAIA与恢复 | FR-01–15对应证据通过；严重漏列/误属/原生丢失/跨scope曝光为失败；核心能力不得“不适用” |
+| FREE-ACTIVITY | B2.F2/F3、B4.F、C1.F2、C3 | 可信同域原生顺序/更新时间接线，保留ACK/strict原义、自然更新和有界校准 | 新活动及时；旧项按可信时间自然下沉，特定60天真值样本②；校准期限不抹已ACK活动；无伪时间/无限等待 |
+| FREE-EXPERIENCE | C1.F3、C2、C3、C4、C5 | 完整v2.7双surface、原生导航/搜索/新建/输入、原工作集/片段/跨度和来路 | J1–J3个人适用连续路径须真实成立；不是安全但残缺小弹板；不复制原生聊天 |
+| FREE-ACCEPTED | C6、B4/B5回归、F1.F、R0-04/05/06、G1兼容 | 按81适用层分账；本人先完成真实主用J1–J4个人连续切片，发布补②，③后置，④不复活 | FR-01–15对应证据通过；严重漏列/误属/原生丢失/跨scope曝光为失败；核心能力不得“不适用” |
 | RELEASE-READY | F3.F、F4.F | 最小权限、同源码可复现包、升级回退说明、实际日常/跨日记录 | 源码与全部证据对应；merge/商店提交/发布仍需独立授权 |
 | PRO-ENABLED | B3.P/B4.P/B5.P、D1–D5、C.P、F.P及可选E/G | 完整Free后按后续授权推进原Pro目标 | 不为开发Pro忽略Free；不因商店等待重做Free；不擅自启用费用/模型 |
 
@@ -433,10 +445,10 @@ B2.F2取消重发按“浏览器未确认终态→有界认证operation读回→
 | B2.F1、B4.F、B5.F | `src/runtime/host-observation-gateway.mjs`/reducer；既有native-facts/repository/目录codec | 依赖身份/观察合同；native codec和CAS由同一owner集成 | 所有producer进入一个canonical source但逐字段保留witness；局部版本/核验epoch收敛；不last-arrival-wins、不凭未见删除 |
 | C2、C3、C5、F3 | `src/navigation/mount-surface.mjs`、现有navigation renderer分离；extension-origin workspace/sidebar frame、UiDocumentGrant | 公共surface合同后与parser并行；UI不重复持有全量索引；实际disable/uninstall尽早做 | manual双surface+限定声明式CSS mask；禁止HTML inert；原生弹层优先、无JS可关、私有残留不通过、唯一阅读四格返回 |
 | C2、C3、C4 | 预计算NavigationPlan/dispatchNative、原create/search入口；现有focus/片段与来路调用 | 依赖真实目标handle、mount与scope；现有UI共享文件唯一owner | 同步决定default，actionId一次派发；无ACK不自动补跳；修饰键/Back/Forward及未发草稿保护；旧snippet格式不改 |
-| B2.F2、C1.F2 | loaded-metadata/send-correlator；free-evidence及其codec、free-activity | 依赖身份/消息/body/ACK合同，纯parser可提前；evidence codec唯一owner | strict事件语义去重；observed-self-send无sentAt且始终provisional；due只校准、重开不重复；他人/失败发送不记本人 |
+| B2.F2、C1.F2 | loaded-metadata/send-correlator；free-evidence及其codec、free-activity | 依赖身份/当前空间及对应来源语义；strict消息/ACK为独立增强合同，纯parser可提前；evidence codec唯一owner | 可信原生更新provisional、同域顺序无日期并持久去重；strict事件语义去重；observed-self-send无sentAt且始终provisional；due只校准、重开不重复；他人/失败发送不记本人 |
 | B2.F3、B4.F、C3 | sourceFor/reducer inbox接既有FreeRuntimeService/FreeCalibration；SPA/列表dirty与跨端自然数据触发 | 依赖B2.F1/F2；复用同scope foreground、elapsed deadline和invalidation | 6秒/30秒/12次/2重试保持；预算跨lease/重启/多tab；上游变化与本地投影延迟分报，无隐藏聊天扫描 |
 | B4.F、B5.F | NativeRepository同CAS写continuation/admission到native_operations；EvidenceRepository幂等完成；现有迁移/恢复/retention和staged loader | 依赖观察与evidence codec；共享仓库/迁移文件串行集成；不新建WAL或loader | 各中断点可恢复；不丢已ACK活动、不重放原生send/create/旧授权；Pro/humanRefs/工作集/片段保持 |
-| C6、R0-04/06、F1/F3/F4 | `tests/host/`独立oracle/profile/正反/变异/真实MV3旅程；现有测试与构建入口 | fixture可与实现并行；先固定预期，后执行；G/U有许可后定向验证 | 81项及子场景逐项分账，J1–J4完整；正常profile不能全降级；实际源码/包/hash与证据绑定 |
+| C6、R0-04/06、F1/F3/F4 | `tests/host/`独立oracle/profile/正反/变异/真实MV3旅程；现有测试与构建入口 | fixture可与实现并行；先固定预期，后执行；G/U有许可后定向验证 | 81项及子场景逐项按适用层分账，个人J1–J4须真实连续；正常profile不能全降级；实际源码/包/hash与证据绑定 |
 
 ### 3.2 并行、最小同步与优先级
 
@@ -466,7 +478,7 @@ Codex在原工作区正常fetch并吸收本次文档提交；如其本地尚有�
 |---|---|---|---|
 | B1.F Scope/引用 | 原B1；VA-HOST文档/身份合同 | 按§3.1实现HOST_HELLO、principal/context、peek/refresh、receipt gate与独立UiGrant；保留现有scope/CAS/lease/epoch，生产授权不由页面提供 | SEC-01–12、相关MAP/SYS、原B1回归；G由R0-01证明 |
 | B2.F1 获取/原生更新 | B1.F合同；R0-03 profile | 复用NativeRepository/FreeProjector，追加生产P/C渐进发现、可操作无ID句柄、成员三态、统一reducer、局部witness/coverage和撤销/可达状态；不是重做Free模型 | MAP-01–15、INV-01–09；FR-01–04与对应G |
-| B2.F2 时间与决策 | B2.F1、B1.F、R0-02合同；不是性能F1 | strict事件原始语义、本人ACK、semantic去重、durable LocalSendAnchor、无日期RecencyObservation；复用ActivityDecision、项目max本人、NONE自身分段和完整H | ACT-01–17/19/20及SYS-01/03，FR-05–10；真实语义G独立 |
+| B2.F2 时间与决策 | B2.F1、B1.F、R0-02合同；不是性能F1 | 可信原生同域顺序/更新时间的私有准入、持久去重和ActivityDecision，项目聚合可靠成员活动，默认30/手动H；strict事件与ACK锚保留原义，不作每条排序前置 | ACT-01–17/19/20及SYS-01/03，FR-05–10；真实语义G独立 |
 | B2.F3 有界校准 | B2.F2及受支持source；不是同步F2 | 复用sourceFor/FreeRuntimeService/FreeCalibration、跨scope边界/同scope跨tab优先；自然SPA/列表/前台/跨端dirty触发，预算跨lease保持，不要求用户文件维护 | ACT-15–20、INV/SEC相关反例，FR-07/08；无源不伪updated |
 | B3.F 用户显示偏好 | B1/B2及现有偏好/renderer | 固定/开合/范围、工作集/片段及旧格式保持；Free只用原名，不从Pro identities/placements推成员，拖动不虚拟改原生 | FR-04/10/13/15、UI-17、SYS-03及原人工资产回归 |
 | B3.P 虚拟组织/命名 | FREE-ACCEPTED、D1/D2、后续许可 | 保留Workspace/Placement/DisplayIdentity/Series、人工include/exclude/lock、单窗口/空虚拟主题/拆合/redirect；不得向原生写回 | PR-01–07及旧N28/T28相应目标 |
@@ -481,14 +493,14 @@ Codex在原工作区正常fetch并吸收本次文档提交；如其本地尚有�
 
 | 原ID | Free交付内容、依赖和代码面 | Pro后续保留 | 退出条件 |
 |---|---|---|---|
-| C1 | 复用现有Free卡片/原名/NONE/UNKNOWN；B2.F1接真实来源，B2.F2接活动与旧窗口，B3.F接固定和H7/14/30/60/90自动/手动；不重建UI | 虚拟主题/派生名/拆合交互后置 | FR-01–10/14、UI-08/10；三列/5行+12/主页不折叠/左侧旧项/当前无向上全部保留 |
+| C1 | 复用现有Free卡片/原名/NONE/UNKNOWN；B2.F1接真实来源，B2.F2接活动与旧窗口，B3.F接固定和H7/14/30/60/90手动（全库密度auto③）；不重建UI | 虚拟主题/派生名/拆合交互后置 | FR-01–10/14、UI-08/10；三列/5行+12/主页不折叠/左侧旧项/当前无向上全部保留 |
 | C2 | 优先与B1.F/B2.F1做纵向切片；manual双surface/UiGrant/声明式view mask、真实P/C导航与原生新建/搜索；提前实际S退出 | 明确虚拟主题启动与独立E授权动作后置 | UI-01–16、MAP-06、SEC-09；唯一阅读四格返回，原生消息/composer/tool/menu不复制、不受损 |
 | C3 | 现有工作集/现场/H/T/Z和来路；原生Back/Forward、同目标body proof、输入焦点；不保存宿主草稿/运行态 | 多虚拟Placement来路、Series工作集 | FR-10/11/15、UI-02/04/06/15/17；历史视图不被新策略重解释 |
 | C4 | 已知原始名称/别名、工作集/片段/未知库存搜索；保留原生完整搜索/目录和末尾可达；沿用旧snippet格式 | 虚拟名/语义/跨主题查找与redirect | FR-03/04/07/14/15、MAP/INV可达、UI-16/17；本地索引不冒充全历史 |
 | C5 | 深浅/窄屏/200%/keyboard/物理IME、iframe字体token、双sidebar/rail/虚拟列表/原生portal及生命周期故障 | AI/会员额外交互后置 | UI-06–17、原生五格、S/G/U分开；安全但残缺不算v2.7完成 |
-| C6 | 81适用子场景与J1–J4离线完整旅程，继而固定G主体/context/ID/NONE/本人时间/旧样本/跨端/真实全链/PAIA/日常 | Pro质量和语义闭环叠加 | FR-01–15和FREE-ACCEPTED；正常profile不可全UNKNOWN/NATIVE_ONLY，缺G不得宣称完整Free |
+| C6 | 按81适用层继承证据，先完成主用身份/context、近期ID/成员/NONE、可信最近活动、Mac宿主与原J1–J4个人真实连续路径；②发布补齐，③后置，④取消不复活 | Pro质量和语义闭环叠加 | FR-01–15和FREE-ACCEPTED；正常profile不可全UNKNOWN/NATIVE_ONLY，缺G不得宣称完整Free |
 
-H自动选择是原Free非AI共享功能，完整保留核心§4的统计、手工锁/冷却/驻留/撤销等规则，不移Pro、不等待全账户精确时间才允许手选与导航。原生输入、模型、工具、文件、弹层、快捷键、运行状态和未知新入口继续由ChatGPT持有。限定CSS mask的允许范围见TECHNICAL_ARCHITECTURE及主规格§7，不等于重新绘制聊天或永久禁用原生。
+H自动选择保留为Free非AI③后续优化；本人首版默认30及手动切换，核心§4统计/冷却/驻留/撤销实现保留但不前置，不移Pro、不等待全账户精确时间才允许手选与导航。原生输入、模型、工具、文件、弹层、快捷键、运行状态和未知新入口继续由ChatGPT持有。限定CSS mask的允许范围见TECHNICAL_ARCHITECTURE及主规格§7，不等于重新绘制聊天或永久禁用原生。
 
 ## 7. D / E：AI后置与独立原生操作
 
@@ -511,9 +523,9 @@ H自动选择是原Free非AI共享功能，完整保留核心§4的统计、手�
 |---|---|---|
 | F1 | 保留1k/10k/100k、长中文、none-heavy/mixed/单大Project、原名/成员/活动增量、多tab/4x及实际弱设备；复用最新目录/foreground/elapsed deadline。既有失败保留，优先级在生产首个闭环之后，不无限前置 | Pro启用后测模型/虚拟图/5H/拆合；不得使Free依赖D |
 | F2 | 非Free发布必要条件；本地备份/跨标签一致仍属B；ChatGPT另一客户端活动再发现属B2.F3/R0-02，不是VAIWL同步 | 同步服务/加密/密钥/tombstone/设备撤权/离线冲突按独立授权保留 |
-| F3 | 构建/最小权限/静态依赖闭包/真实MV3生命周期前置准备；最终退出依赖C6.F+F1.F+来源/权限确认，交付可安装包、隐私/升级/回退/商店材料 | Pro会员/价格/结算/供应商后续批准；不以ChatGPT订阅决定VAIWL权益；发布仍另批 |
+| F3 | 构建/最小权限/静态依赖闭包/真实MV3生命周期前置准备；本人安装候选仍须来源/权限确认、C6个人切片和实际规模流畅；不依赖全量F1.F，公开发布补②，交付可安装包、隐私/升级/回退/商店材料 | Pro会员/价格/结算/供应商后续批准；不以ChatGPT订阅决定VAIWL权益；发布仍另批 |
 | F4 | C6/F3候选后的真实日常、低维护、误放/误藏/纠正延迟、跨日/设备；保留找回改善与纠错成本目标 | Pro额外收益/模型漂移再按D5测 |
-| G1 | 实际PAIA共存仍为R0-05/C6兼容门槛；不实施数据接口也需验证 | 最小数据协议/双方许可/版本白名单后续可选，不共享私有DB、可写owner或品牌视觉 |
+| G1 | 本人已启用PAIA时窄共存为R0-05/C6个人①；其他兼容矩阵②、数据协议③，不将未启用PAIA作为本人交付前置 | 最小数据协议/双方许可/版本白名单后续可选，不共享私有DB、可写owner或品牌视觉 |
 | G2 | 已用宿主/分发资格在R0-00/F3定向核对，不重开全面研究 | 官方身份/用量/商业能力研究保留；缺高级集成不挡Free独立工程 |
 
 ## 9. 执行、验收对应与安全提交
@@ -528,7 +540,7 @@ H自动选择是原Free非AI共享功能，完整保留核心§4的统计、手�
 
 继续使用READY、IN_PROGRESS、IMPLEMENTED_SYNTHETIC、LIVE_VERIFIED、BLOCKED、DEFERRED_PRO。旧证据只认证原源码/环境/能力范围，新增Host不得借其直接DONE。L/D/S/G/U与WEB_MECHANISM_ONLY分开；没有实际运行的标NOT_RUN。类型声明编译、文档写完、原100k通过不等于Host完成。
 
-每项完成即由实施者记录自己的源码/测试/失败/下一原任务并继续。缺具体S/G/U条件只拦相关验收；继续全部无依赖Free工程，不反复重建模拟器、重跑全R0、请求用户周期性补文件或提前转Pro。正常支持样本必须完整成功；严重身份、NONE、本人活动或安全v2.7缺口不得以大面积降级掩盖。
+每项完成即由实施者记录自己的源码/测试/失败/下一原任务并继续。缺具体S/G/U条件只拦相关验收；继续全部无依赖Free工程，不反复重建模拟器、重跑全R0、请求用户周期性补文件或提前转Pro。正常支持样本必须完整成功；严重身份、NONE、可信最近活动或安全v2.7缺口不得以大面积降级掩盖。
 
 本次文档固化不改STATUS/测试结果/产品源码/既有工程证据，不声称Codex本地已自动同步。实施者继续维护原状态与证据入口。本计划与附件的采用不意味着允许真实账户测试或发布；固定G/U动作仍按AUTHORITY单独许可。
 
@@ -544,4 +556,4 @@ FREE-ACCEPTED要求FR真实证据完整、数据能力范围明确、无未处�
 
 历史评估E1–E10与工程E阶段同名但不是同一对象：E1数据渠道、E2范围、E3原生、E4兼容、E7稳定、E9性能、E10恢复属于Free/共享；E5命名98%精确/90%接受和至少1k合格语料归Pro；E8安全原生改名归可选E；E6找回改善30%、周纠错≤2分钟由Free C6/F4先测，Pro D5另测。10k导航p95<150ms、搜索首屏<300ms及100k压力目标保留，报告环境和首次/增量/最坏值，不用旧快照或单次快样本代表新版全部达标。
 
-T1日历窗口扩展5H；T2时区/DST/会话；T3可信原始证据与显示估计分层；T4原生Project唯一段/无项目按自身分段；T5卡片/父子/原生成员；T6未知/旧/固定/current不失联；T7跨度/返回不改原生history；T8原生五格/PAIA继续。旧自由主题的T4/T5作为Pro附加测试保留。所有数值仍为相应阶段待验证目标，不因本次正式文档采纳变成已测成绩。
+T1日历窗口扩展5H；T2时区/DST/会话；T3可信原始证据与显示估计分层；T4原生Project唯一段/无项目按自身分段；T5卡片/父子/原生成员；T6未知/旧/固定/current不失联；T7跨度/返回不改原生history；T8原生五格/PAIA继续。旧自由主题的T4/T5作为Pro附加测试保留。本人实际规模流畅①，10k/100k/4x及全库密度auto H③/DEFERRED，找回收益量化③；所有数值仍为相应范围待验证目标，不因本次正式文档采纳变成已测成绩。

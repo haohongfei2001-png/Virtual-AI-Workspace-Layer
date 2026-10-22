@@ -1,3 +1,5 @@
+import {createHostNativeActivityOwner} from './host-native-activity-owner.mjs';
+import {validateNativeActivityProfile} from './native-activity-profile.mjs';
 import {createNoReceiptContextRecovery} from './context-recovery/no-receipt-recovery.mjs';
 import {createIsolatedSessionOwner} from './isolated-session-owner.mjs';
 import {createHostEntryCalibration} from './host-entry-calibration.mjs';
@@ -32,7 +34,7 @@ import {createScopeAuthority} from './scope-authority.mjs';
 import {exactHostRecord} from '../host/contract.mjs';
 import {tokenOK} from '../b1/identity.mjs';
 /** Zero-seed identity composition. Existing repository/broker owners remain unchanged. */
-export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,contextObserver=null,isolatedIdentityDispatch=null,identityOrigin=null,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,firstSendOrigin=null,oldSendTerminalOrigin=null,readBudget=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,navigationURLPolicy=null,candidateBridge=null,dispatchCurrent=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
+export function createHostBindingService({extensionId,getFrame,getContexts=null,allowedURL,provider,profile,contextObserver=null,isolatedIdentityDispatch=null,identityOrigin=null,repository,surfaceProfiles=null,currentMetadataReadEnabled=false,sendCandidatesEnabled=false,sendAckProfile=null,historicalSendProfile=null,nativeActivityProfile=null,firstSendOrigin=null,oldSendTerminalOrigin=null,readBudget=null,uiURL=null,uiURLs=null,workspaceRepository=null,freeEvidenceRepository=null,prepareNavigation=null,navigationURLPolicy=null,candidateBridge=null,dispatchCurrent=null,presentSurface=null,selectionBridge=null,freeRuntime=null,now=Date.now,makeId=()=>crypto.randomUUID(),elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  const activity={requests:0,background:0};
  async function track(kind,work){activity[kind]++;try{return await work();}finally{activity[kind]--;}}
  const handshake=createHostDocumentHandshake({extensionId,getFrame,allowedURL,now,makeId,elapsedNow,schedule,cancel});
@@ -58,6 +60,10 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  const ingestionPasses=surfaceProfiles?createHostIngestionPassOwner({handshake,authority,getFrame,profiles:surfaceProfiles,now,elapsedNow,schedule,cancel}):null;
  let recovery=null,backup=null;
  const ui=uiURL||uiURLs?createHostUiOwner({extensionId,uiURL,uiURLs,getFrame,getContexts,handshake,authority,onRevokeMount:id=>views?.revokeMount(id),onRevokeDocument:id=>{recovery?.revokeDocument(id);backup?.revokeDocument(id);},now,makeId,elapsedNow,schedule,cancel}):null;
+ const nativeActivityAttempts=new Set();
+ const activityProfile=nativeActivityProfile===null?null:validateNativeActivityProfile(nativeActivityProfile);
+ if(activityProfile&&(!freeEvidenceRepository||typeof provider.withNativeActivity!=='function'||surfaceProfiles?.has(activityProfile.id)))throw Error('invalid-native-activity-composition');
+ const nativeActivity=activityProfile?createHostNativeActivityOwner({evidenceRepository:()=>freeEvidenceRepository,profileFor:id=>id===activityProfile.id?activityProfile:null,now,elapsedNow,schedule,cancel}):null;
  const historyProfile=historicalSendProfile===null?null:validateHistoricalSendProfile(historicalSendProfile);
  if(historyProfile&&(!currentMetadataReadEnabled||!sendCandidatesEnabled||!freeEvidenceRepository||surfaceProfiles?.has(historyProfile.id)))throw Error('invalid-historical-composition');
  const ackProfile=sendAckProfile===null?null:validateSendAckProfile(sendAckProfile);
@@ -77,7 +83,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  }:null}):null;
  const oldSendTerminal=oldSendTerminalOrigin&&sendCandidates?createHostOldSendTerminal({origin:oldSendTerminalOrigin,handshake,observations,sendCandidates,readBudget,readOperation:createOldSendTerminalReadback({origin:oldSendTerminalOrigin,elapsedNow}),now,elapsedNow,schedule,cancel}):null;
  const firstSend=firstSendOrigin&&ackOwner?createHostFirstSend({origin:firstSendOrigin,readBudget,handshake,authority,getFrame,observations,reader:currentMetadata,readOperation:createFirstSendReadback({origin:firstSendOrigin,elapsedNow}),onAcknowledged:async input=>{await ackOwner.consume(input);input.guard();ui?.notifyScope(input.context.scope.key);},now,elapsedNow}):null;
- const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({admitActivitySource:createHostActivitySourceAdmission({sendAckProfile:ackProfile,historicalSendProfile:historyProfile}),initializeTimePolicy:true,repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
+ const readService=workspaceRepository&&freeEvidenceRepository&&nativeRepository?createFreeReadService({admitActivitySource:createHostActivitySourceAdmission({sendAckProfile:ackProfile,historicalSendProfile:historyProfile,nativeActivityProfile:activityProfile}),initializeTimePolicy:true,repository,workspaces:workspaceRepository,native:nativeRepository,evidence:freeEvidenceRepository,clock:()=>new Date(now()).toISOString()}):null;
  const currentNavigation=ui&&observations&&dispatchCurrent?createHostCurrentNavigation({ui,observations,bridge:dispatchCurrent,urlPolicy:navigationURLPolicy,elapsedNow,schedule,cancel}):null;
  const views=ui&&readService?createHostViewService({ui,readService,workspaceRepository,nativeWritePending:scopeKey=>observations?.isNativeWritePending(scopeKey)===true,prepareNavigation,registerCurrentNavigation:currentNavigation?input=>currentNavigation.register(input):null,nativeCandidatesEnabled:!!candidateBridge,presentSurface,clock:()=>new Date(now()).toISOString(),elapsedNow,schedule,cancel}):null;
  const candidates=ui&&candidateBridge?createHostCandidateService({ui,bridge:candidateBridge,elapsedNow,schedule,cancel,makeId}):null;
@@ -208,8 +214,28 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
  }
  function invalidate({tabId,frameId=0,documentId,firstSendNavigation=null,preserveViewDocumentId=null}={}){contextRecovery?.invalidate({tabId,documentId});oldSendTerminal?.invalidateTab(tabId);if(firstSendNavigation)firstSend?.navigate({tabId,...firstSendNavigation});else firstSend?.invalidateTab(tabId);broker.invalidate({tabId,frameId});if(documentId){ingestionPasses?.invalidateDocument(documentId);observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{ingestionPasses?.invalidateTab(tabId);observations?.invalidateTab(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId,{preserveDocumentId:preserveViewDocumentId});}}
  function tabClosed(tabId){contextRecovery?.forgetTab(tabId);ingestionPasses?.invalidateTab(tabId);oldSendTerminal?.invalidateTab(tabId);firstSend?.invalidateTab(tabId);observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
- function stop(){if(!serviceActive)return;serviceActive=false;contextRecovery?.stop();identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
+ function stop(){if(!serviceActive)return;serviceActive=false;contextRecovery?.stop();identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();nativeActivity?.stop();for(const attempt of nativeActivityAttempts)attempt.abort.abort();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
  // Internal worker composition only; no page RPC exposes metadata or accepts proof IDs.
+ const consumeNativeActivity=(proof,frame)=>track('background',async()=>{
+  const started=elapsedNow(),abort=new AbortController();let active=true,used=false;
+  const attempt={abort};nativeActivityAttempts.add(attempt);
+  let rejectAbort;const aborted=new Promise((_,reject)=>{rejectAbort=()=>reject(Error('native-activity-unverified'));abort.signal.addEventListener('abort',rejectAbort,{once:true});});
+  try{return await withRequestDeadline(()=>Promise.race([aborted,(async()=>{
+  if(!nativeActivity)throw Error('native-activity-disabled');
+  const resolution=authority.peek(frame),source=authority.sourceFor(frame),scope=authority.scopeFor(frame);
+  if(resolution.state!=='verified'||!source||!scope||resolution.grant.principal.providerProfile!==activityProfile.providerProfile)throw Error('native-activity-unverified');
+  const actual=await getFrame({tabId:frame.tabId,frameId:0});
+  if(actual?.documentId!==frame.documentId||actual.url!==frame.actualURL||actual.documentLifecycle!=='active')throw Error('native-activity-unverified');
+  const guard=()=>serviceActive&&active&&!abort.signal.aborted&&elapsedNow()-started>=0&&elapsedNow()-started<6000&&authority.peek(frame).grant===resolution.grant&&authority.sourceFor(frame)===source;
+  if(!guard())throw Error('native-activity-unverified');
+  return provider.withNativeActivity(proof,async({observation,signal,isCurrent})=>{
+   if(used||typeof isCurrent!=='function'||!signal)throw Error('native-activity-unverified');
+   used=true;const current=()=>guard()&&isCurrent()===true&&!signal.aborted;
+   const result=await nativeActivity.consume({observation,context:{scope,providerProfile:activityProfile.providerProfile,signal:abort.signal},guard:current});
+   if(!current())throw Error('native-activity-unverified');ui?.notifyScope(scope.key);return result;
+  });
+  })()]),{now:elapsedNow,schedule,cancel});}finally{active=false;abort.abort();abort.signal.removeEventListener('abort',rejectAbort);nativeActivityAttempts.delete(attempt);}
+ });
  const readCurrentMetadata=proofId=>track('requests',()=>currentMetadata?currentMetadata.read(proofId):Promise.reject(Error('current-metadata-unavailable')));
  const handle=(message,sender)=>track('requests',()=>handleWork(message,sender));
  // A conservative local snapshot only; not a document close/admission permit.
@@ -223,7 +249,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   return quiet()&&ownersIdle(true)&&quiet();
  }
  function ownersIdle(excludeUi=false){
-  return [authority,contextRecovery,continuations,...(excludeUi?[]:[ui]),observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
+  return [authority,contextRecovery,continuations,nativeActivity,...(excludeUi?[]:[ui]),observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
  }
- return Object.freeze({isIdle,oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
+ return Object.freeze({isIdle,consumeNativeActivity,activityAdmission:(scope,request)=>nativeActivity?.gate(scope,request)??null,oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
 }

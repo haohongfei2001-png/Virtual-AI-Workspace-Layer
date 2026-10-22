@@ -1,5 +1,7 @@
 # Codex 最终实施交接：VAIWL ChatGPT HostAdapter
 
+2026-10-22用户正式采纳[PR16体验裁决](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6335005042)：本人Mac Chrome主用Workspace的近期真实P/C、正确归属、自然新聊天更新、可信最近活动、原生搜索/输入/返回、普通刷新休眠恢复、隔离和成熟v2.7均为个人交付必需。全账户严格历史完整性、逐消息本人作者/ACK/原始时间完整审计取消为默认产品前提，不转为发布欠账。81个ID、子场景和历史结果保留；①个人必需、②发布前完善、③后续优化、④取消/简化的逐ID适用范围见原离线验收§4，延期不改PASS。10k/100k及全库密度自动H为③/DEFERRED，原阈值不变；保留默认30天和已有手动切换。个人切片不冒领旧完整旅程、FREE-ACCEPTED或RELEASE-READY。
+
 **VA-HOST/1 · 修订 1.1 FINAL · 2026-10-13。** 本文替换原交接，配套同目录 `VAIWL_CHATGPT_HOST_SPEC.md`、`VAIWL_OFFLINE_ACCEPTANCE.md`、`VAIWL_HOST_CONTRACTS.d.ts`。这是原A–G任务的实施细化，不是新计划或另一个产品。
 
 2026-10-19用户批准的临时只读导航例外见同目录Host规格新增节：单独记录私有popup、可见导航读取、搜索、新标签打开/返回、失效与隐私边界证据；不替代本文件正常完整Host要求，原81项/J1–J4/真实账户及人工验收不因此改判。默认包、403安全拒绝和完整Free目标保持。
@@ -82,7 +84,7 @@ strict UserSendEvent要求本人、持久message身份、branch/固定到该消�
 
 eventKey基于scope/C/message，不含本次observedAt或current branch leaf。重开同消息复用immutable event，lastSeen/receipt独立。相同message时间冲突隔离，不max掩盖；多ID块不把assistant时间赋user，parent缺失/循环不标allbranch complete。
 
-recent列表只生成无日期dirty/baseline，不把首次25条或顺序变化记成新发送。保持旧锚可逆下沉、完整H/固定/NONE独立活动/UNKNOWN可达。跨端证据在桌面native自然到达后自动吸收，分别计上游延迟与本地投影延迟。
+合格的同域原生近期顺序可供无日期排序；经核验语义/单位的对象更新时间可供provisional最近活动。二者不写本人sentAt、actorVerified或成功ACK；首次观察只建baseline，重复打开/轮询/置顶/筛选/虚拟滚动不续活动起点。严格UserSendEvent与ACK锚原义保留，UNKNOWN不作NONE，未见不删除，原生搜索始终可达。保持旧锚可逆下沉、默认30日/手动H（自动密度③）/固定/NONE独立活动/UNKNOWN可达。跨端证据在桌面native自然到达后自动吸收，分别计上游延迟与本地投影延迟。
 
 沿用6秒request/30秒cycle/12请求/最多2重试，同scope/source预算和去重跨lease/worker重连/多tab保留。没有来源有限终止，不无限spinner，不每次renew重新抓12次，不隐藏开页。
 
@@ -112,7 +114,7 @@ native model/menu/dialog/权限/Canvas优先：自己的surface/mask一起suspen
 
 UiGrant采用一次性双通道配对：worker实际parent/ui document/frame + content保存的iframe.contentWindow/mount + scope grant；key不是认证。WAR只有静态资源、parent postMessage不含私人数据，UI不能发任意URL/JS/raw写入。CSP失败不可改宿主CSP或用page ShadowDOM泄露cache兜底。
 
-v2.7必须完整：三列适配、5/+12、主页不折叠、连续侧栏可折叠、左侧旧项箭头、当前无向上、完整H/固定/工作集/片段/搜索，以及**阅读区左上唯一四格返回**。删除“header不足改sidebar/rail返回”备选。位置不足应定向修profile几何，不挤native或加重复入口。字体/主题token传入frame，不能假设iframe继承宿主字体。以批准截图/交互为基准，不用新实现自造golden。
+v2.7必须完整：三列适配、5/+12、主页不折叠、连续侧栏可折叠、左侧旧项箭头、当前无向上、默认30日/手动H（自动密度③）/固定/工作集/片段/搜索，以及**阅读区左上唯一四格返回**。删除“header不足改sidebar/rail返回”备选。位置不足应定向修profile几何，不挤native或加重复入口。字体/主题token传入frame，不能假设iframe继承宿主字体。以批准截图/交互为基准，不用新实现自造golden。
 
 输入焦点支持input/textarea/contenteditable；仅RAM保存原节点/Range，原节点失效不回写旧草稿；不持久化草稿。片段格式和旧Pro人工作品不破坏。
 
@@ -126,12 +128,12 @@ v2.7必须完整：三列适配、5/+12、主页不折叠、连续侧栏可折�
 
 落实原81个ID的修订矩阵，不增加数量代替质量。LEGACY/MODERN/PARTIAL正向完整闭包，FAULT故障族安全退让；独立oracle，不读hf seed、不让认证fixture直接给verified答案。参数化两个adapter，测试真实S/IDB/iframe/原生事件，v2.7截图+节点/焦点/状态断言。关键guards变异必须使预定case失败。全部UNKNOWN/NATIVE_ONLY不能过测。
 
-完成四个完整旅程：空缓存映射；旧C发送/ACK/重启/校准；完整v2.7与native工具/草稿/返回；多tab/scope/两库退出/迁移/禁用。物理IME/实际PAIA/跨端/真实ChatGPT缺条件标G/U NOT_RUN，不把合成改label。
+原完整旅程及历史结果保留；本人交付先完成OFFLINE_ACCEPTANCE §6同编号个人连续切片，不要求全部下列扩展：空缓存映射；旧C发送/ACK/重启/校准；完整v2.7与native工具/草稿/返回；多tab/scope/两库退出/迁移/禁用。物理IME/实际PAIA/跨端/真实ChatGPT缺条件标G/U NOT_RUN，不把合成改label。
 
 测试记录specRevision/sourceCommit/dirty hash/build/fixture/oracle hash、环境、正向分母、PASS/FAIL/NOT_RUN、证据等级和失败原件；不写真实ID/token/正文。编译类型合同还必须检验实际legacy调用形状，不是只跑d.ts自身。
 
 合同稳定后可并行纯parser/send/模型测试、DOM/actions/mount和独立fixture/oracle；共享broker/service/client/navigation/schema由唯一owner整合。每项完成继续下一个原任务；遇到具体S/G/U阻塞保留准确条件，继续所有无依赖工程，不重新研究产品、不重跑全R0、不提前转Pro。
 
-离线完成条件：生产adapter真正接线，P0/P1无未解决FAIL，81适用子场景/完整旅程和原回归有实际L/D/S证据，完整Free功能未削减，旧Pro资产保持，构建可重跑。随后只剩主规格§11固定的G/U验证；身份、NONE、本人活动或安全v2.7任一核心缺口不能以大量降级充成功。
+本人日用条件：真实主用adapter接线，①安全/归属/近期活动/普通恢复/v2.7与原J1–J4个人连续路径成立，同源码构建可重跑、资产保全。81全矩阵和后续②/③独立分账，④取消不成为发布欠账；未运行实际来源不能由离线通过替代。
 
 本修订结论为CONDITIONAL GO进入工程，不等于允许真实账户测试或发布。最终正常提交同步原PR16，交付实际变更、当前source/包hash、已跑结果、具体未通过事项和下一原任务编号。不宣称LIVE_VERIFIED/FREE-ACCEPTED/RELEASE-READY，不merge/deploy，不另交一套方案。

@@ -45,7 +45,7 @@ export function createFreeReadService({repository,workspaces,native,evidence,clo
     return stored;
   }
   function activitySourceRevision(state,stored){
-    return digest(Object.entries({...state.sources,...stored.sources}).map(([id,s])=>({id,revoked:s.revoked,generation:s.generation??null,channel:s.channel,validUntil:s.validUntil??null,trustLevel:s.trustLevel??null})));
+    return digest(Object.entries({...state.sources,...stored.sources}).map(([id,s])=>({id,revoked:s.revoked,generation:s.generation??null,channel:s.channel,validUntil:s.validUntil??null,trustLevel:s.trustLevel??null,...(s.codecVersion===3?{orderDomain:s.orderDomain,orderBatch:s.orderBatch}:{})})));
   }
   async function workspaceContext(scope,options,ids=null,staged=false){
     if(ids!==null){

@@ -1,5 +1,7 @@
 # 数据模型：共享原生事实、Free投影、Pro资产
 
+2026-10-22用户采纳[PR16体验裁决](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6335005042)：本人Mac Chrome主用连续体验为个人交付标准。原计划及81项原表按①个人必需/②发布完善/③后续优化/④取消简化分层；历史结果不改PASS，取消的全历史与逐消息完整审计不转为发布欠账。安全、权限、正确归属、资产、完整v2.7不削弱。
+
 本Canonical正式采用[VA-HOST/1.1 FINAL工程规格](specs/chatgpt-host/VAIWL_CHATGPT_HOST_SPEC.md)与[完整类型合同](specs/chatgpt-host/VAIWL_HOST_CONTRACTS.d.ts)。任务仅归[唯一DEVELOPMENT_PLAN](DEVELOPMENT_PLAN.md)的B1–B5/C/F；全部验收见[FREE_PRO_ACCEPTANCE](research/FREE_PRO_ACCEPTANCE.md)及其81项附件。本文是应实施的数据合同，不是已执行迁移、当前STATUS或测试结果。
 
 四份设计原件保留Round60形成时的历史基线；实施使用最新PR #16及原工作区，不按旧文档重新创建已完成的数据系统。
@@ -86,7 +88,8 @@ InventoryCoverage以CoverageDomain区分projects-index/recent-list/project-membe
 | TimeCoverage | C、from/through、completeness、observed/all branches、gaps、来源和版本 | current_node只指当前可见分支；parent缺失/循环不标all完整；打开时间不是completeThrough |
 | ObservationHint | 原有eventKey/hintType/observedAt/validUntil/candidateInterval及witness | 保留短期提示语义，重复不续TTL；不能批量转换为持久发送证据 |
 | LocalSendAnchor | `kind=observed-self-send`；scope/C/message eventKey、ackReceipt、firstObservedAt、本机有界interval、clockBasis/quality、calibrationDueAt、revoked | 新codec的持久本地确证ACK观察，永远provisional，没有sentAt/serverTime；校准due不删除已确认活动，原起点不随重开/轮询变 |
-| RecencyObservation | 同domain nativeOrder、baseline/newID/order/title change、前后digest、observedAt、carriesSendTime=false | 只触发发现/校准或无日期稳定次序；首次25条、置顶、改名不制造发送或日期 |
+| RecencyObservation | 同domain nativeOrder、baseline/newID/order/title change、前后digest、observedAt、carriesSendTime=false | 可直接支持同域无日期稳定排序及发现/校准；首次25条、置顶、改名不制造发送或日期 |
+| NativeActivityObservation | 私有provider proof下的scope/profile、原生C ID及可选updateTime；单位和排序域由包内profile明确 | codec3同库CAS：每来源/C/种类一个最新快照；更新时间provisional，同域同批rank无日期；新grant/准入前不可读，撤权不复活；无新生产profile默认关闭 |
 | ActivityDecision | objectKey、evidenceRevision、exact/interval/provisional/undated、candidateTime/day/segment、reason、nextCheck | 纯可重算投影，不写回sentAt/membership；依据缺失不制造确定旧日期 |
 | FreeViewPreferences/ViewSession | H∈7/14/30/60/90、T/Z/policyRevision、人工锁/auto、旧项/容量/侧栏、anchor/scroll | 同一偏好owner；历史会话固定H/T/Z，其他tab更新不误解释原k |
 
@@ -94,7 +97,7 @@ UserSendEvent的语义fingerprint不包含本次observedAt、source读取时间�
 
 LocalSendAnchor只在本人原生intent与message/operation、独立确证ACK关联成功后建立；optimistic气泡、HTTP200、整个流complete、失败/停止/IME/上传均不足。没有原始时间可用本机观察区间支持暂定recent，但不得伪原始sentAt；时钟无法约束则无日期/当前可达并校准。due到期只请求复核，原锚自然随H老化；误配/失败/撤权可撤销。旧短TTL hint不能因迁移被升级成持久锚。
 
-Free聚合已确证P成员中最近有效本人活动；普通NONE按自身分段，UNKNOWN不随意贡献给P。一条可靠近期发送无需全历史扫描；60天旧锚在覆盖partial时可逆暂定下沉，不永远置顶。完全无时间有限校准后稳定可达，不无限spinner或伪月份。6秒请求/30秒轮次/12请求/2重试预算按scope/source跨lease/重启/多tab保持；手机变化上游可见延迟与本地投影延迟分别报告。
+Free聚合已确证P成员中最近有效可信活动，保留严格或provisional依据；普通NONE按自身分段，UNKNOWN不随意贡献给P。一条可靠近期发送无需全历史扫描；60天旧锚在覆盖partial时可逆暂定下沉，不永远置顶。完全无时间有限校准后稳定可达，不无限spinner或伪月份。6秒请求/30秒轮次/12请求/2重试预算按scope/source跨lease/重启/多tab保持；手机变化上游可见延迟与本地投影延迟分别报告。
 
 ## 5. Free投影、原生导航与Pro资产
 
@@ -150,4 +153,4 @@ E若以后获准，ExecutionIntent、审阅planHash、scope/准确原生目标�
 
 已派发但结果未知先只读核对，不自动重试；取消不删除已建Project，本地Placement撤销不执行原生删除/移动。不同安装/设备无共享账本时不承诺全局exactly-once；恢复不能通过换目录/Profile重置已派发总预算。模型建议不得声明actor=human越过人工锁。
 
-本模型的生产新字段依B1/B2/B4/B5实施，并经81项对应任务/FR及J1–J4验证。主体/context、NONE、本人/原始时间/ACK、旧历史/跨端、实际CSP/原生功能/PAIA/IME由固定G/U确认。原模型/合成测试不自动继承新生产能力结论；不因来源暂缺而重建数据库或发明全历史前置。
+本模型的生产新字段依B1/B2/B4/B5实施，并经81项对应任务/FR及J1–J4验证。主体/context、NONE、本人/原始时间/ACK、旧历史/跨端、实际CSP/原生功能/PAIA/IME由实际G/U分账确认，按81适用层①/②/③执行；本人以主用个人J1–J4为出口，不要求逐消息审计或特定旧样本才可使用。原模型/合成测试不自动继承新生产能力结论；不因来源暂缺而重建数据库或发明全历史前置。

@@ -5,8 +5,8 @@ const fail=()=>{throw Error('evidence-source-incarnation-conflict');};
 /** Persistence identity only, never authority. Inspect the entire reserved family
  * in one scoped, repository-validated source snapshot before choosing a member. */
 export function evidenceSourceFamily(sources,profile,codecVersion){
- if(!isRecord(sources)||!tokenOK(profile?.id)||!Number.isSafeInteger(profile.revision)||profile.revision<1||![1,2].includes(codecVersion))fail();
- const entries=Object.entries(sources),base=(codecVersion===1?'host_ack_':'host_history_')+digest(profile.id).slice(0,32),generation='profile_'+profile.revision;
+ if(!isRecord(sources)||!tokenOK(profile?.id)||!Number.isSafeInteger(profile.revision)||profile.revision<1||![1,2,3].includes(codecVersion))fail();
+ const entries=Object.entries(sources),base=(codecVersion===1?'host_ack_':codecVersion===2?'host_history_':'host_activity_')+digest(profile.id).slice(0,32),generation='profile_'+profile.revision;
  if(entries.length>CAPACITY)throw Error('free-evidence-capacity');
  const family=new Map();
  for(const [key,row] of entries){

@@ -1,5 +1,7 @@
 # 隐私、安全与恢复：Free/Pro共享合同
 
+2026-10-22用户采纳[PR16体验裁决](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6335005042)：本人Mac Chrome主用连续体验为个人交付标准。原计划及81项原表按①个人必需/②发布完善/③后续优化/④取消简化分层；历史结果不改PASS，取消的全历史与逐消息完整审计不转为发布欠账。安全、权限、正确归属、资产、完整v2.7不削弱。
+
 本文件按用户正式采用的[VA-HOST/1.1 FINAL](specs/chatgpt-host/VAIWL_CHATGPT_HOST_SPEC.md)统一生产宿主边界；[类型合同](specs/chatgpt-host/VAIWL_HOST_CONTRACTS.d.ts)和[81项验收](specs/chatgpt-host/VAIWL_OFFLINE_ACCEPTANCE.md)为完整附件，任务只在[唯一DEVELOPMENT_PLAN](DEVELOPMENT_PLAN.md)。本次文档固化不改变任何实际状态、测试成绩或产品代码，不自动授权真实账号/费用/原生writer/发布。
 
 ## 1. 账户、workspace、文档与UI隔离
@@ -43,7 +45,7 @@ ObservationProposal不带scope/verified/actorVerified/channel/canonical revision
 
 strict UserSendEvent只有本人、持久消息身份、确证new-send/ACK、原始时间语义/精度和body/scope关联成立才入库；role=user、会话归我、共享项目创作者、气泡新增、HTTP200或整个流complete不充分。编辑/复制/分支/重生成、访问、改名、文件/AI回复不能冒充本人新发送。
 
-原始时间未证实但本地本人ACK确证时使用durable observed-self-send观察锚，只支持provisional、本机有界区间，无sentAt/serverTime。校准due不删除已ACK活动，重复轮询/重开不续起点；错误关联、实际失败或撤销可撤锚；旧短TTL hint不批量升级。事件语义键独立于本次observedAt/current leaf，避免重复入账和不可变冲突。RecencyObservation仅dirty无日期。
+原始时间未证实但本地本人ACK确证时使用durable observed-self-send观察锚，只支持provisional、本机有界区间，无sentAt/serverTime。校准due不删除已ACK活动，重复轮询/重开不续起点；错误关联、实际失败或撤销可撤锚；旧短TTL hint不批量升级。事件语义键独立于本次observedAt/current leaf，避免重复入账和不可变冲突。合格同域RecencyObservation可直接供无日期排序，已核验原生对象更新时间可供provisional活动；不写sentAt/actorVerified/ACK，未知语义仅dirty。
 
 NativeAction的新Project、全站新聊和P内新聊目的地明确。NavigationPlan在点击前生成，委托同步preventDefault、actionId至多派发一次；异步RPC不转移浏览器user activation。未知ACK不自动补href/再click，取消不建假卡。无native anchor且有或无法排除未保存草稿/附件/上传/运行状态时，只提供明确新标签安全链接，不整页卸载、不复制草稿。原生Back/Forward/history.state不改义。
 
@@ -81,4 +83,4 @@ frame外同树声明式关闭button能在UI/内容脚本失效时释放对应CSS
 
 离线研发只用独立本地native-shaped/认证fixture与阻断外网的新Profile，不读日常账号/凭证。固定G/U清单和任何真实创建/发送/移动、实际PAIA、费用、merge/发布均按AUTHORITY另行许可，使用任务级预算。法律/平台分发资格和技术可用性分开，不由第三方扩展存在或只读措辞推定允许。
 
-原81项/全部子场景、J1–J4、独立oracle、关键变异与既有回归必须按L/D/S/G/U分账；Web机制probe、类型编译和旧synthetic成绩不代替生产验证。正常支持族须完整P/C/NONE/本人活动/原生目标/v2.7成功，FAULT族才可按预定结果降级。核心数据大面积长期unknown、实际跨端无源、原生损坏或敏感残留不得标FREE-ACCEPTED。发布还需F3/F4的源码对应包、权限/隐私/回退和实际日常质量；本次采纳不是发布许可或新通过结果。
+原81项/全部子场景、J1–J4、独立oracle、关键变异与既有回归必须按L/D/S/G/U分账；Web机制probe、类型编译和旧synthetic成绩不代替生产验证。正常支持族须按当前适用层完成P/C/NONE/可信最近活动/原生目标/v2.7闭环，FAULT族才可按预定结果降级。核心数据大面积长期unknown、实际跨端无源、原生损坏或敏感残留不得标FREE-ACCEPTED。发布还需F3/F4的源码对应包、权限/隐私/回退和实际日常质量；本次采纳不是发布许可或新通过结果。

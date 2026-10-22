@@ -1,6 +1,8 @@
 # VAIWL 核心机制：Free原生工作区与Pro语义覆盖层
 
-本文件仍是机制Canonical，Free-first/Pro-later和批准v2.7不变，执行只遵循[唯一计划](DEVELOPMENT_PLAN.md)。已正式采用[VA-HOST/1.1 FINAL](specs/chatgpt-host/VAIWL_CHATGPT_HOST_SPEC.md)作为生产宿主的具体机制附件；本次只同步已批准的IDless目标、持久观察锚、身份与声明式挂载修订，不重设产品目标、时间策略或历史测试结果。历史设计/测试见[基线表](research/V28_BASELINE_AND_ACCEPTANCE.md)。
+2026-10-22用户正式采纳[PR16体验裁决](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6335005042)：本人Mac Chrome主用Workspace的近期真实P/C、正确归属、自然新聊天更新、可信最近活动、原生搜索/输入/返回、普通刷新休眠恢复、隔离和成熟v2.7均为个人交付必需。全账户严格历史完整性、逐消息本人作者/ACK/原始时间完整审计取消为默认产品前提，不转为发布欠账。81个ID、子场景和历史结果保留；①个人必需、②发布前完善、③后续优化、④取消/简化的逐ID适用范围见原离线验收§4，延期不改PASS。10k/100k及全库密度自动H为③/DEFERRED，原阈值不变；保留默认30天和已有手动切换。个人切片不冒领旧完整旅程、FREE-ACCEPTED或RELEASE-READY。
+
+本文件仍是机制Canonical，Free-first/Pro-later和批准v2.7不变，执行只遵循[唯一计划](DEVELOPMENT_PLAN.md)。已正式采用[VA-HOST/1.1 FINAL](specs/chatgpt-host/VAIWL_CHATGPT_HOST_SPEC.md)作为生产宿主的具体机制附件；本次只同步已批准的IDless目标、持久观察锚、身份与声明式挂载修订，产品语义和时间策略按本页首段用户最新裁决修订，历史测试结果不改。历史设计/测试见[基线表](research/V28_BASELINE_AND_ACCEPTANCE.md)。
 
 ## 1. 三类对象不混淆
 
@@ -30,7 +32,7 @@ Free项目“＋”进入已核验原生Project的新聊天入口；新Project�
 
 ObservationHint保留原有来源提示与短期有效期。新增的LocalSendAnchor属于同evidence体系中的`observed-self-send`持久观察锚：只有本地本人intent、确切message/operation和独立确证ACK关联后才能建立，保存首次本机有界观察区间/ACK witness/clockBasis/calibrationDueAt，始终只支持provisional，没有sentAt/serverTime。它不是放松UserSendEvent，也不能由旧短TTL hint批量升级。
 
-点击、打开、改名、改文件、AI回复、updated_at、HTTP Date、导入、首次发现均不自动算新发送。RecencyObservation只记录同域baseline/新ID/顺序变化用于发现与校准，不携带发送日期。某种字段用作弱提示也需验证负面语义；没有合格ACK、只有optimistic气泡或整个流complete不得形成持久观察锚。
+点击、打开、改名、改文件、AI回复、updated_at、HTTP Date、导入、首次发现均不自动算新发送。合格的同域原生近期顺序可供无日期排序；经核验语义/单位的对象更新时间可供provisional最近活动。二者不写本人sentAt、actorVerified或成功ACK；首次观察只建baseline，重复打开/轮询/置顶/筛选/虚拟滚动不续活动起点。严格UserSendEvent与ACK锚原义保留，UNKNOWN不作NONE，未见不删除，原生搜索始终可达。某种字段用作弱提示也需验证负面语义；没有合格ACK、只有optimistic气泡或整个流complete不得形成持久观察锚。
 
 同scope/C/message语义事件只记录一次，重复打开不修改immutable事件的observedAt，lastSeen/witness另行更新；event key不得依赖current branch leaf，谱系固定到该消息。相同message原始时间冲突隔离，不取较晚值。InventoryCoverage、成员完整性和TimeCoverage分别保存：已读一些对象不等于全账户；一条可信今天发送可证明近期，却不能证明历史无更晚输入。NONE按各自活动计算，不把整份普通聊天列表造为一个Project。
 
@@ -56,7 +58,7 @@ ActivityDecision包含对象ID、exact/interval/provisional/undated依据、可�
 
 ### 3.3 项目、子窗口与排序
 
-项目决策聚合实际成员最近有效本人活动，一个近期成员足以使项目近期。P有未知成员时不宣称完整历史，但已有旧锚可支持可逆下沉。P在一个显示段出现一次，子窗口跟随父项目；旧窗口在该P内展开，不按自身旧日期另造卡片。成员集合版本是P局部版本，无关Q更新不得使全部P成员失效。
+项目决策聚合实际成员最近有效可信活动（严格发送或provisional原生更新时间；相对顺序无日期），一个近期成员足以使项目近期。P有未知成员时不宣称完整历史，但已有旧锚可支持可逆下沉。P在一个显示段出现一次，子窗口跟随父项目；旧窗口在该P内展开，不按自身旧日期另造卡片。成员集合版本是P局部版本，无关Q更新不得使全部P成员失效。
 
 NONE按自身活动分段；UNKNOWN独立可达，不假装Project。普通按有效活动排序，同值用原生稳定顺序/稳定ID；人工固定仅快捷可达，不把访问当活动。点选/拖动/composition时保持原目标、焦点和当前项，在安全更新点重排，不无限不刷新。历史ViewSession不会因另一个tab新策略改变而被重新解释。
 
@@ -64,17 +66,17 @@ NONE按自身活动分段；UNKNOWN独立可达，不假装Project。普通按�
 
 优先级：确证本机新发送/账户变化/当前项→最近P/NONE新项→临界过期/弱证据→历史深层。继续既有FreeRuntimeService/FreeCalibration和同scope跨tab foreground优先，不建第二调度器。单请求6秒、轮次30秒/12请求、最多2次重试，取消/去重/预算跨lease、worker重连和多tab保持；权限peek不联网，refresh单飞。无源立即有限结束，不每次续lease重新发12次请求。
 
-前台恢复、打开工作区、原生SPA/列表/当前数据修订和来源撤销触发必要校准；不后台大规模开页，不要求每日导出/补ZIP/维护日期。上游手机新活动先在desktop native实际可见才能自动吸收；仅updated_at只dirty，不能伪本人时间。
+前台恢复、打开工作区、原生SPA/列表/当前数据修订和来源撤销触发必要校准；不后台大规模开页，不要求每日导出/补ZIP/维护日期。上游手机新活动先在desktop native实际可见才能自动吸收；语义已核验的updated_at可作暂定活动，未核验字段仍只dirty，不能伪本人时间。
 
 以下为工程目标而非已测成绩：缓存投影满足原F1导航p95；本地合格新发送证据到达后1秒内更新可达显示，受支持源返回可信变化后1秒投影；前台30秒内完成首轮或明确降级。另行报告用户发送→合格ACK/时间证据、远端→桌面可见与本地处理延迟，不能将昂贵核验藏出统计。大历史发现分批更慢但要说明范围/结束条件。
 
-F/R0必须在有明确真值的干净数据集测60天旧项与另一原生客户端新活动；未知例外可有限降级，典型主流程持续错分、漏列或不收敛不能宣布完整Free。81项/J1–J4及固定G/U见FR矩阵。
+F/R0本人日用先验原J1–J4个人连续路径；真实60天旧样本和另一客户端完整组合保留②/③，不是本人安装前置；未知例外可有限降级，典型主流程持续错分、漏列或不收敛不能宣布完整Free。81项/J1–J4及固定G/U见FR矩阵。
 
 ## 4. Free的时间范围与自适应
 
 H∈{7,14,30,60,90}，默认30。当地日期T、IANA时区Z固定为ViewSession；W(k)=[T+1−H(k+1), T+1−Hk)。按当地日期而非H×24小时，历史上下连续、默认无向上，不暗跳空段。H/T/Z/policyRevision覆盖卡片、子行、未归Project列表和缓存。
 
-人工固定优先；自适应属于Free非AI能力，而非Pro门槛。先实现固定与手动，再在有充分库存/活动证据的已知Project总体上选择H。统计不同真实Project ID，不统计窗口、虚拟主题、快捷固定或临时新聊。无Project占主体且项目计数不足以代表拥挤程度时，不用“项目很少”自动拉长；维持当前H，普通聊天仍按H显示。后续可研究独立列表密度但不得凭空把聊天聚成Free主题。
+人工固定优先；自适应属于Free非AI能力，而非Pro门槛。本人首版默认30和手动；以下自动H算法保留后续③，不以渐进目录或provisional伪造完整密度。统计不同真实Project ID，不统计窗口、虚拟主题、快捷固定或临时新聊。无Project占主体且项目计数不足以代表拥挤程度时，不用“项目很少”自动拉长；维持当前H，普通聊天仍按H显示。后续可研究独立列表密度但不得凭空把聊天聚成Free主题。
 
 保留P28-A为可调整的工程初始策略：舒适带5–10，loss(n)=2·max(0,n−10)+max(0,5−n)，比较实际N(H)而非月活线性乘算。取最小loss的候选，平局先保留当前H，否则取与当前H的abs(log(H/Hcurrent))最近者，再平局取接近30者。正常变更需要oldLoss−newLoss至少为max(2,0.25×oldLoss)；当前为空而候选带回至少一项时门槛为1。所有候选同样稀疏/拥挤则保留H，不强制只显示10张卡。缺失范围可能改变最优结果时保持当前H；手动选择不受此门槛阻止。
 
@@ -90,6 +92,6 @@ Free工程验收后按后续范围推进：对确认NONE的对话生成VirtualTo
 
 ## 6. 完成界线
 
-本规范确定应实施的规则，实际状态只由当前代码和原工程证据决定。本次正式采用1.1不是新运行成果。Free完整交付需原生P/NONE发现、实际本人活动、完整原生保留、安全退出、恢复和受支持跨端再发现有对应真实验收，见[FR矩阵](research/FREE_PRO_ACCEPTANCE.md)。合成或局部Web机制测试不自动升级；已批准的16项修订/81项离线合同通过也不替代固定G/U。
+本规范确定应实施的规则，实际状态只由当前代码和原工程证据决定。本次正式采用1.1不是新运行成果。Free完整交付需原生P/NONE发现、可信最近活动、完整原生保留、安全退出、恢复和受支持跨端再发现有对应真实验收，见[FR矩阵](research/FREE_PRO_ACCEPTANCE.md)。合成或局部Web机制测试不自动升级；已批准的16项修订/81项离线合同通过也不替代按本页首段范围分层的实际G/U。
 
 下一实施优先B1.F+B2.F1+C2纵向闭环，不再让100k合成优化无限前置；不重做已完成目录/loader/调度/恢复。既有自动创建Project复杂计划留独立E/Pro储备，不恢复为Free默认流程。只有唯一DEVELOPMENT_PLAN定义任务依赖和连续执行，附件与本Canonical不构成平行计划。

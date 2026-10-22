@@ -1,3 +1,4 @@
+import {validateNativeActivityProfile} from './native-activity-profile.mjs';
 import {normalizedScope} from '../b1/identity.mjs';
 import {evidenceSourceFamily} from './evidence-source-incarnation.mjs';
 import {validateSendAckProfile} from './send-ack-admission.mjs';
@@ -6,10 +7,11 @@ import {validateHistoricalSendProfile} from './historical-send-profile.mjs';
  * repository. A stored channel label, checksum or DOM profile never enables it.
  * Only explicitly configured owner profiles are admitted; default is deny-all.
  * Freshness, event validity and coverage remain the existing projector's job. */
-export function createHostActivitySourceAdmission({sendAckProfile=null,historicalSendProfile=null}={}){
+export function createHostActivitySourceAdmission({sendAckProfile=null,historicalSendProfile=null,nativeActivityProfile=null}={}){
  const owners=[];
  if(sendAckProfile){const p=validateSendAckProfile(sendAckProfile);owners.push({profile:p,codecVersion:1});}
  if(historicalSendProfile){const p=validateHistoricalSendProfile(historicalSendProfile);owners.push({profile:p,codecVersion:2});}
+ if(nativeActivityProfile){const p=validateNativeActivityProfile(nativeActivityProfile);owners.push({profile:p,codecVersion:3});}
  // Per-composition snapshot preparation keeps chain validation O(sources), not
  // O(sources²). The closure is local to this synchronous read, never cached.
  function forSources(scope,origin){

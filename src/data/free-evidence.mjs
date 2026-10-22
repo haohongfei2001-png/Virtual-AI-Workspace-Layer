@@ -18,15 +18,16 @@ function witness(row,state){
 }
 function span(value){shape(value,['from','through']);if(time(value.from)>time(value.through))throw Error('invalid-free-evidence-interval');}
 function source(row){
- shape(row,['id','generation','sourceRevision','observedAt','validUntil','channel','revoked'],row.channel==='host-evidence'?['codecVersion','profileId','profileVersion']:[]);id(row.id);id(row.generation);revision(row.sourceRevision);
+ shape(row,['id','generation','sourceRevision','observedAt','validUntil','channel','revoked'],row.channel==='host-evidence'?['codecVersion','profileId','profileVersion',...(row.codecVersion===3?['orderDomain','orderBatch']:[])]:[]);id(row.id);id(row.generation);revision(row.sourceRevision);
  if(!['synthetic','host-evidence'].includes(row.channel)||typeof row.revoked!=='boolean')throw Error('untrusted-free-evidence-source');
- if(row.channel==='host-evidence'){if(![1,2].includes(row.codecVersion))throw Error('unsupported-host-evidence-codec');id(row.profileId);revision(row.profileVersion);}
+ if(row.channel==='host-evidence'){if(![1,2,3].includes(row.codecVersion))throw Error('unsupported-host-evidence-codec');id(row.profileId);revision(row.profileVersion);}
+ if(row.codecVersion===3){if(row.orderDomain!==null)id(row.orderDomain);if(row.orderBatch!==null)id(row.orderBatch);if((row.orderDomain===null)!==(row.orderBatch===null))throw Error('invalid-native-order-source');}
  if(time(row.validUntil)<=time(row.observedAt))throw Error('invalid-free-evidence-expiry');
 }
 function validateRow(table,row,state){
  if(table==='sources'){source(row);return;}
  witness(row,state);id(row.conversationId);
- if(state.sources[row.sourceId].channel==='host-evidence'&&(state.sources[row.sourceId].codecVersion===2?table!=='events':table!=='hints'||row.hintType!=='observed-self-send'))throw Error('unsupported-host-evidence-kind');
+ if(state.sources[row.sourceId].channel==='host-evidence'&&(state.sources[row.sourceId].codecVersion===2?table!=='events':state.sources[row.sourceId].codecVersion===3?table!=='hints'||!['native-activity','native-order'].includes(row.hintType):table!=='hints'||row.hintType!=='observed-self-send'))throw Error('unsupported-host-evidence-kind');
  if(table==='events'){
   shape(row,[...witnessFields,'conversationId','messageId','branchId','actorVerified','actorScopeKey','role','kind','sendState','sentAt','precision'],['sentInterval']);
   id(row.messageId);id(row.branchId);
@@ -38,6 +39,10 @@ function validateRow(table,row,state){
    if(time(row.sentInterval.through)>time(row.observedAt))throw Error('future-free-send-interval');
   }else throw Error('unknown-free-send-time');
  }else if(table==='hints'){
+  if(row.hintType==='native-order'){
+   shape(row,[...witnessFields,'conversationId','eventKey','hintType','validUntil','orderDomain','orderBatch','rank']);id(row.eventKey);id(row.orderDomain);id(row.orderBatch);
+   if(state.sources[row.sourceId].codecVersion!==3||!Number.isSafeInteger(row.rank)||row.rank<0||row.rank>=256||time(row.validUntil)<=time(row.observedAt))throw Error('invalid-native-order');return;
+  }
   if(row.hintType==='observed-self-send'){validateObservedSendAnchor(row,state);return;}
   shape(row,[...witnessFields,'conversationId','eventKey','hintType','validUntil','candidateInterval'],['actorVerified','actorScopeKey','semanticsVerified']);id(row.eventKey);
   if(time(row.validUntil)<=time(row.observedAt))throw Error('invalid-free-hint-expiry');
@@ -107,7 +112,7 @@ export function applyFreeEvidence(state,command,{scope,now,channel,historical=fa
   }
   const hints=[];for(const input of command.batch.hints){
    if(Object.hasOwn(input,'revoked'))throw Error('free-evidence-revocation-replay');
-   const row={...input,revoked:false};if(channel==='host-evidence'&&row.hintType!=='observed-self-send')throw Error('unsupported-host-evidence-kind');validateRow('hints',row,historical?{...next,sources:historicalSources}:next);const src=historical?historicalSources[row.sourceId]:next.sources[row.sourceId];
+   const row={...input,revoked:false};if(channel==='host-evidence'&&!['observed-self-send','native-activity','native-order'].includes(row.hintType))throw Error('unsupported-host-evidence-kind');validateRow('hints',row,historical?{...next,sources:historicalSources}:next);const src=historical?historicalSources[row.sourceId]:next.sources[row.sourceId];
    if(src.revoked||time(src.validUntil)<=clock)throw Error('inactive-free-evidence-source');
    if(src.channel!==channel)throw Error('free-evidence-channel-mismatch');
    if(row.hintType!=='observed-self-send'&&time(row.validUntil)>time(src.validUntil))throw Error('hint-exceeds-source-expiry');hints.push(row);
@@ -116,6 +121,14 @@ export function applyFreeEvidence(state,command,{scope,now,channel,historical=fa
   const byMessage=new Map(Object.values(next.hints).filter(h=>h.hintType==='observed-self-send').map(h=>[JSON.stringify([h.conversationId,h.messageId]),h]));
   for(const h of hints)if(h.hintType==='observed-self-send'){const key=JSON.stringify([h.conversationId,h.messageId]),old=byMessage.get(key);if(old&&(old.sourceId!==h.sourceId||old.eventKey!==h.eventKey))throw Error('duplicate-free-anchor-message');byMessage.set(key,old??h);}
   for(const h of hints){const key=JSON.stringify([h.sourceId,h.eventKey]),old=byEvent.get(key);if(old&&(old.conversationId!==h.conversationId||old.hintType!==h.hintType))throw Error('free-hint-event-conflict');if(old&&h.hintType==='observed-self-send'&&['messageId','actorScopeKey','clockBasis','anchorVersion','ackWitness'].some(k=>!equal(old[k],h[k])))throw Error('immutable-free-anchor-conflict');byEvent.set(key,old??h);}
+  // Codec3 stores one latest native fact per source/conversation/kind, not
+  // an append-only observation log. Strict events and ACK anchors stay immutable.
+  for(const h of hints){const old=next.hints[h.id];if(!old||next.sources[h.sourceId]?.codecVersion!==3)continue;
+   if(old.revoked||old.sourceId!==h.sourceId||old.generation!==h.generation||old.conversationId!==h.conversationId||old.hintType!==h.hintType||old.eventKey!==h.eventKey)throw Error('native-activity-replacement-conflict');
+   if(equal(old,h))continue;
+   if(time(h.observedAt)<=time(old.observedAt)||h.sourceRevision<=old.sourceRevision)throw Error('stale-native-activity-replacement');
+   next.hints[h.id]=structuredClone(h);
+  }
   const merged=mergeFreeObservationHints(next.hints,hints);
   if(jointContinuation)for(const h of hints){const old=byEvent.get(JSON.stringify([h.sourceId,h.eventKey]));if(old&&old!==h&&h.hintType==='observed-self-send'&&time(h.firstObservedAt)<time(old.firstObservedAt)){if(old.revoked||old.id!==h.id)throw Error('immutable-free-anchor-conflict');merged[old.id]=structuredClone(h);}}
   next.hints=merged;

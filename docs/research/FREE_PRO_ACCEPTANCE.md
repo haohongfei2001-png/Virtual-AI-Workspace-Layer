@@ -1,5 +1,7 @@
 # Free与Pro验收矩阵：同一计划的退出条件
 
+2026-10-22用户正式采纳[PR16体验裁决](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6335005042)：本人Mac Chrome主用Workspace的近期真实P/C、正确归属、自然新聊天更新、可信最近活动、原生搜索/输入/返回、普通刷新休眠恢复、隔离和成熟v2.7均为个人交付必需。全账户严格历史完整性、逐消息本人作者/ACK/原始时间完整审计取消为默认产品前提，不转为发布欠账。81个ID、子场景和历史结果保留；①个人必需、②发布前完善、③后续优化、④取消/简化的逐ID适用范围见原离线验收§4，延期不改PASS。10k/100k及全库密度自动H为③/DEFERRED，原阈值不变；保留默认30天和已有手动切换。个人切片不冒领旧完整旅程、FREE-ACCEPTED或RELEASE-READY。
+
 本文件正式采用[VA-HOST/1.1 FINAL完整工程规格](../specs/chatgpt-host/VAIWL_CHATGPT_HOST_SPEC.md)、[类型合同](../specs/chatgpt-host/VAIWL_HOST_CONTRACTS.d.ts)和[81项完整离线验收](../specs/chatgpt-host/VAIWL_OFFLINE_ACCEPTANCE.md)。原FR-01–15、PR-01–07与81个Host case ID均保留。唯一执行路线仍为[DEVELOPMENT_PLAN](../DEVELOPMENT_PLAN.md)；本页定义退出与逐项任务映射，附件保存全部场景、预期、失败判据和自动化细则，不建立第二套测试要求或开发路线。
 
 这是验收要求的正式整合，不是一次测试运行，不修改任何既有STATUS或结果。附件内的日期、Round60/1125等历史记录只属于其原审查基线；最新运行由实际源码/工程证据决定，不据本次采纳增加PASS或重新评定旧成果。
@@ -8,11 +10,11 @@
 
 L=纯逻辑/严格schema；D=真实IndexedDB事务；S=真实Chrome MV3及本地synthetic/native-shaped宿主；G=实际获准ChatGPT；U=真人/物理IME/实际PAIA/日常旅程。普通Chromium set_content的Web机制probe仅为WEB_MECHANISM_ONLY，不计S，不升级G。已有结果继续按原源码、构建和环境归档，不把多次定向运行数量相加为一次全套。
 
-P0失败阻断首个生产接入切片，P1失败阻断完整离线候选，P2须在所属F1/F3退出前解决或保留明确未达标状态。case及全部子场景逐项PASS/FAIL/NOT_RUN；不能让一个子场景PASS覆盖同ID其他失败，缺环境不得以mock补绿。
+P0/P1/P2保留技术严重度；本人退出按81①适用子行为和原J1–J4个人连续路径，②发布完善、③后置、④不复活。case及全部子场景逐项PASS/FAIL/NOT_RUN；不能让一个子场景PASS覆盖同ID其他失败，缺环境不得以mock补绿。
 
 正常profile的正向分母由独立oracle事先固定：该旅程实际暴露且在支持范围内、有充分可取得证据的对象/成员/动作。页面只加载25/1000项，分母为25且必须全部可达，不伪称已发现1000；未加载余项仍保留原生搜索/目录通路。IDless初态允许可点击候选，取得exactID后终态必须提升；带合格身份/NONE/消息元数据的样本不能一律拒绝或undated。
 
-完整Free profile必须闭合principal/context、P/C身份、普通NONE、本人活动、原生导航/新建/搜索、完整v2.7与无损退出。FAULT故障族可以按预定规则降级；不得在实现后把正常LEGACY/MODERN/PARTIAL族改成unsupported迎合结果。大面积UNKNOWN/NATIVE_ONLY、核心来源缺失、持续误放或用户周期性手工补文件不能成为完整Free的“合法不适用”。
+完整Free profile必须闭合principal/context、P/C身份、普通NONE、可信最近活动、原生导航/新建/搜索、完整v2.7与无损退出。FAULT故障族可以按预定规则降级；不得在实现后把正常LEGACY/MODERN/PARTIAL族改成unsupported迎合结果。大面积UNKNOWN/NATIVE_ONLY、核心来源缺失、持续误放或用户周期性手工补文件不能成为完整Free的“合法不适用”。
 
 ## 2. Free的15组验收
 
@@ -22,17 +24,17 @@ P0失败阻断首个生产接入切片，P1失败阻断完整离线候选，P2�
 | FR-02 | B2.F1、C1.F1、R0-03 | PROJECT/NONE/UNKNOWN；普通C、customGPT、P内customGPT、移入移出/同名/改名；已知不漏列/重属，missing与未解释null不推NONE；正常NONE通路必须成功 | L/D/S+G |
 | FR-03 | R0-02、B2.F1、C4 | 未打开/部分发现/未知归属仍有正常原始入口；原生搜索不被局部索引替代；权限不明不得泄露旧scope；虚拟卸载不删已知 | S+G |
 | FR-04 | B3.F、C1/C4、B5.F | 库中存在Pro title/placement/旧缓存时Free仍只用原名；未知名不借Pro补；显示省略不伪完整原名；回Pro人工资产、工作集/片段不丢 | L/D/S |
-| FR-05 | B2.F2、C1.F2 | 本人真实新发送及时recent；失败/optimistic/空composer/访问/AI/他人/IME不伪造；严格原始time与确证ACK观察锚分开；durable锚始终provisional、无sentAt | L/D/S+G |
-| FR-06 | B2.F2、C1.F2 | 60天旧样本H30可逆下沉；有覆盖才confirmed，无覆盖provisional；完全无日期不因超时硬判old；新确证ACK不因校准due退回数月前 | L/S+G旧样本 |
+| FR-05 | B2.F2、C1.F2 | 真实新增聊天与可信最近活动及时可见；失败/optimistic/空composer/访问/AI/他人/IME不伪造；严格原始time与确证ACK观察锚分开；durable锚始终provisional、无sentAt | L/D/S+G |
+| FR-06 | B2.F2、C1.F2 | 60天旧样本H30可逆下沉；有覆盖才confirmed，无覆盖provisional；完全无日期不因超时硬判old；新确证ACK不因校准due退回数月前 | L/S；本人自然老化G，特定60天旧样本② |
 | FR-07 | B2.F3、B4.F、B5.F | 重复轮询不刷新hint/观察锚起点；断网/缺字段/乱序/迟到有界结束；同scope跨lease/重启/多tab预算不归零，已知和当前操作不丢 | L/D/S+G |
-| FR-08 | R0-02、B2.F3、C6 | 手机/另一获准原生客户端向旧P及NONE聊天发送后，桌面native正常可见的新证据自动纠正；updated_at仅dirty；上游可见和本地投影延迟分报，无真实源不能通过 | G，相关机制L/S |
+| FR-08 | R0-02、B2.F3、C6 | 本人①：桌面native正常获得的新聊天/新活动自动消费；手机/另一获准客户端的完整真实组合②；语义已核验的updated_at可供provisional活动；未核验时仅dirty；上游可见和本地投影延迟分报，无真实源不能通过 | G，相关机制L/S |
 | FR-09 | B2.F2、隐私合同 | updated_at/文件/标题/HTTP Date/访问/导入/旧编辑/重生成不算原始新发；message语义键不随observedAt/current leaf变，多ID块/作者/时间冲突/复制分支分别验证 | L/D/S+G语义 |
-| FR-10 | B2.F2、C1.F3、C3、B3.F | H7/14/30/60/90、月末/闰年/DST、P子行一致、NONE自身分段；手工锁、auto证据不足/驻留/冷却/撤销、同值不抖、旧k不误用；原事实不变 | L/D/S+G可用性 |
+| FR-10 | B2.F2、C1.F3、C3、B3.F | H7/14/30/60/90、月末/闰年/DST、P子行一致、NONE自身分段；手工锁①；auto证据不足/驻留/冷却/撤销③、同值不抖、旧k不误用；原事实不变 | L/D/S+G可用性 |
 | FR-11 | B4.F、C2/C3/C5、R0-04、F3 | 原生新建/返回/Back/Forward、20秒lease/worker重启、多tab、实际disable/uninstall/re-enable/freeze；manual双surface、限定声明式CSS、原生输入/焦点/草稿/弹层保持；nativeOperable/privateProjectionAbsent/cleanLayout分开，敏感残留不可用可关闭掩盖 | S+G；物理IME另U |
 | FR-12 | B5.F、B4.F | 同库v2历史与当前v3/下一codec、Pro资产、root/log/桶损坏、配额、撤权前中后、版本混用；native+continuation/admission同CAS与evidence幂等续写；不清库、不复活source/grant/native动作 | L/D/S |
 | FR-13 | R0-03、C2、B1.F | P内＋、全站新聊、新Project原生入口目的地正确；无ID控件可操作/提升；同步计划与一次dispatch；点击≠创建成功，取消不造卡，不自动补跳/发消息/同名重试/虚拟移动 | S+G |
-| FR-14 | F1.F、C1/C4、B4/B5 | 保留120/604与1k/10k/100k、多NONE/mixed/单大P/长中文/多tab/4x/实际弱设备；末尾可达、原名/成员/活动增量不阻塞原生输入；复用staged loader/elapsed deadline/foreground，不两frame复制100k | S；真实环境性能另G/U |
-| FR-15 | C6、F3/F4、G1兼容 | 零AI/无会员依赖完整日常；v2.7三列/5+12/连续侧栏/左旧项/唯一阅读返回/原名、历史/校正、工作集/片段/恢复、真实PAIA；Free↔Pro资产保持，不用残缺安全弹板代替 | G/U，包复现与对应L/D/S |
+| FR-14 | F1.F、C1/C4、B4/B5 | 本人实际数据规模输入/搜索/展开/返回流畅①；保留120/604和1k/10k/100k、多NONE/mixed/单大P/长中文/多tab/4x/弱设备原指标，其中规模压力③/DEFERRED；末尾可达、原名/成员/活动增量不阻塞原生输入；复用staged loader/elapsed deadline/foreground，不两frame复制100k | S；真实环境性能另G/U |
+| FR-15 | C6、F3/F4、G1兼容 | 零AI/无会员依赖完整日常；v2.7三列/5+12/连续侧栏/左旧项/唯一阅读返回/原名、历史/校正、工作集/片段/恢复、本人已启用PAIA共存①（完整扩展矩阵②/③）；Free↔Pro资产保持，不用残缺安全弹板代替 | G/U，包复现与对应L/D/S |
 
 旧50/50、100k和历史MV3数字不直接填入本表的新Host能力。G旧样本不足先验证算法，但离线改时钟不能冒充真实60天；缺另一原生客户端不能把本机重发算跨端。物理IME/实际PAIA不得用占位或假事件升级。
 
@@ -152,15 +154,15 @@ workspace/sidebar共享索引、现有目录/staged HEADER、同scope foreground
 
 报告至少含specRevision、sourceCommit、dirtyPatchHash、build/fixture/oracle hash、Chrome/OS、networkPolicy、实际provider/profile、正向分母/正确数、动作重复数、每个case/subcase优先级/结果、证据等级和limitations。不得记录真实ID/token/完整正文/草稿；历史记录和当前运行分开，源码变化不能沿用旧包hash。
 
-找回改善30%、周纠错≤2分钟及至少一轮实际日常/跨日恢复旅程保留为C6/F4待验证目标，不能由81项绿或文档采用推出用户收益。
+本人日常连续旅程①、跨日质量②；找回改善30%、周纠错≤2分钟收益量化保留③目标，不能由81项绿或文档采用推出用户收益。
 
 ## 6. 固定G/U退出与分级结论
 
-最终仅执行主规格§11的定向清单，不重新开展全面产品研究：principal主备读取及A/B切换；个人/组织/context同URL与多tab关联；同名/IDless→exact及改名；普通/P/customGPT/共享的NONE语义；本人ACK/失败/重开/编辑/branch/time精度；真实60天旧样本和另一原生客户端一次活动自然再发现；实际CSP、原生功能与v2.7、PAIA、物理IME。
+本人日用执行原J1–J4个人切片；以下主规格§11全量清单按81适用层分为①/②/③，不全作为本人前置、不重新开展全面研究：principal主备读取及A/B切换；个人/组织/context同URL与多tab关联；同名/IDless→exact及改名；普通/P/customGPT/共享的NONE语义；本人ACK/失败/重开/编辑/branch/time精度；真实60天旧样本和另一原生客户端一次活动自然再发现；实际CSP、原生功能与v2.7、PAIA、物理IME。
 
 真实账号/原生创建/发送/移动按AUTHORITY分别授权，使用任务级总预算，不换目录/Profile重置。没有实际条件逐项NOT_RUN；只读失败不扩大到认证材料抓取或全历史隐藏接口。G不通过只定向修对应provider/parser/mount和回归，不再生成第三套架构；核心能力无法满足则相应完整profile不得发布，原生访问和人工资产保持。
 
-IMPLEMENTED_SYNTHETIC仅表示对应L/D/S成立；Host完整离线候选要求81适用子场景/J1–J4、P0/P1无未解决FAIL、原回归和支持闭包成立。LIVE_VERIFIED只认证实际指定G路径。FREE-ACCEPTED要求FR-01–15完整适用矩阵及核心真实来源/活动/原生/跨端条件成立；RELEASE-READY另加F3/F4；PUBLISHED仅由另行批准的实际发布证明。本次正式文档采用不产生上述任何新运行状态。
+IMPLEMENTED_SYNTHETIC仅表示对应L/D/S成立；Host原完整离线矩阵继续分账；个人候选按①和真实个人J1–J4出口，不等全81矩阵。LIVE_VERIFIED只认证实际指定G路径。FREE-ACCEPTED要求当前产品范围内FR-01–15适用矩阵及实际承诺的来源/活动/原生条件成立；个人切片不得冒充所有发布环境通过，④取消的要求不复活；RELEASE-READY另加F3/F4；PUBLISHED仅由另行批准的实际发布证明。本次正式文档采用不产生上述任何新运行状态。
 
 ## 7. Pro未来7组验收完整保留
 
