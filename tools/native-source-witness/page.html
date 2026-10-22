@@ -4,7 +4,9 @@
 <p>不会发送、创建、移动、删除或归档内容，不读取或复制Cookie/token。仅保存固定阶段码、数量和一致性结果，不保存URL、ID、标题、请求头值或正文。未观察到匹配事件不能证明没有原生请求或缓存。</p>
 <label><input type="checkbox" id="confirm">我确认这是同一授权Chrome Profile，并允许这一次新的、仅被动的原生请求及当前DOM ID关联观察。</label>
 <p><button id="run" disabled>授权并准备一次观察</button></p>
-<p><strong>请从ChatGPT空白首页打开此入口。点击后，在两分钟内回到原标签，用原生侧栏打开一条现有聊天，不发送内容。</strong>只导航一次，不刷新或重登。随后返回本页查看或保存报告。关联成功只证明请求与页面相符，不代表身份或当前空间已通过。</p>
+<p id="next-step" role="status" aria-live="polite">尚未开始。请先核对环境，再准备观察。</p>
+<button id="return-target" hidden disabled>回到本次绑定的 ChatGPT 标签</button>
+<p><strong>请从ChatGPT空白首页打开此入口。准备后先等待“观察已就绪”，再点击上方返回按钮，回到精确绑定的标签；在两分钟内用原生侧栏打开一条现有聊天，不发送内容。</strong>不要另开标签或使用临时导航的新标签链接。只导航一次，不刷新或重登。随后回到本观察页读取结果，不重新打开观察入口。关联成功只证明请求与页面相符，不代表身份或当前空间已通过。</p>
 <p>关闭或重开结果页不重发；worker重启或不确定结果不自动续跑。不要卸载、删除存储或换安装目录重置本次机会。</p>
 <button id="read">读取已有结果（不发网络请求）</button> <button id="download" disabled>保存脱敏报告</button>
 <pre id="result" role="status" aria-live="polite">尚未执行</pre>

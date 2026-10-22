@@ -20,6 +20,23 @@ export function installWitnessWorker(chrome,{passiveOnly=true}={}){
  const target=async id=>{const tab=await chrome.tabs.get(id);if(tab.incognito!==false||!['home','conversation','project'].includes(policy.parse(tab.url).kind))throw Error('invalid-target');return tab;};
  const frameFor=async id=>{const [f,t]=await Promise.all([chrome.webNavigation.getFrame({tabId:id,frameId:0}),target(id)]);return {tabId:id,frameId:0,documentId:f.documentId,actualURL:f.url,documentLifecycle:f.documentLifecycle,incognito:t.incognito};};
  async function read(){const stored=await get();if(!stored)return {state:'NOT_RUN',reason:'not-started',unspent:true};if(operation)return {state:operation.phase,reason:operation.phase==='WAITING_NATIVE'?'open-one-existing-chat-in-selected-tab':'bounded-check-running',unspent:false};if(reserving&&stored.state==='reserved')return {state:'PREPARING',reason:'reservation-being-installed',unspent:false};return stored.result??interrupted();}
+ async function returnToObservedTab(){
+  // A reopened result page can carry another tab's hash. Only the live owner
+  // knows the bound tab; never let a page select a different observation target.
+  const op=operation,current=()=>op&&operation===op&&!op.closed&&op.phase==='WAITING_NATIVE'&&performance.now()-op.preparedAt<120000;
+  const unavailable={state:'UNAVAILABLE',reason:'observation-not-waiting-no-navigation'};
+  if(!current())return unavailable;
+  try{
+   const selected=await withRequestDeadline(()=>target(op.tabId),{timeoutMs:3000});
+   // Activating a discarded tab can reload it. This control only selects a
+   // still-loaded tab; it never repairs the document or generates a new load.
+   if(!current()||selected.discarded===true)return unavailable;
+   const tab=await chrome.tabs.update(op.tabId,{active:true});
+   if(!current()||tab.id!==op.tabId||tab.windowId!==selected.windowId)return unavailable;
+   await chrome.windows.update(selected.windowId,{focused:true});
+   return current()?{state:'TARGET_SHOWN'}:unavailable;
+  }catch{return {state:'UNAVAILABLE',reason:'bound-tab-unavailable-no-retry'};}
+ }
  async function arm(id){
   if(locked)return {state:'BLOCKED',reason:'busy-no-retry'};locked=true;
   try{
@@ -97,6 +114,7 @@ export function installWitnessWorker(chrome,{passiveOnly=true}={}){
   if(!allowed(sender)||!m||Object.getPrototypeOf(m)!==Object.prototype)return;
   let task;
   if(m.type==='SOURCE_WITNESS_READ'&&Object.keys(m).length===1)task=read();
+  else if(passiveOnly&&m.type==='SOURCE_WITNESS_RETURN'&&Object.keys(m).length===1)task=returnToObservedTab();
   else if(passiveOnly&&m.type==='SOURCE_WITNESS_PREVIOUS'&&Object.keys(m).length===1)task=chrome.storage.local.get(BATCH).then(value=>value[BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'});
   else if(m.type==='SOURCE_WITNESS_PREVIEW'&&Object.keys(m).length===2&&Number.isSafeInteger(m.tabId))task=target(m.tabId).then(t=>({state:'READY',origin:'https://chatgpt.com',route:policy.parse(t.url).kind,incognito:false,version:chrome.runtime.getManifest().version,profile:'current-Chrome-profile-user-confirmation-required',...(passiveOnly?{mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH}:{})}));
   // The explicit batch is incompatible with the old two-key active ARM. A new

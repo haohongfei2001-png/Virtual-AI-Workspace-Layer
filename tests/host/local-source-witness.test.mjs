@@ -119,6 +119,42 @@ test('legacy consumed timeout is read unchanged, never reconstructed from new di
 });
 const passiveArm={type:'SOURCE_WITNESS_ARM',tabId:1,batch:PASSIVE_BATCH};
 const oldConsumed=()=>({state:'finished',result:{schema:BATCH,state:'BLOCKED',reason:'no-native-context-observed',requests:0,unspent:false}});
+test('return control selects the owner bound tab, never another result page hash or a new navigation',async t=>{
+ t.mock.method(globalThis,'fetch',()=>assert.fail('return control must not fetch'));
+ const h=mockChrome({[BATCH]:oldConsumed()},{}),actions=[];
+ h.chrome.tabs.get=async id=>({id,windowId:4,url:'https://chatgpt.com/',incognito:false,discarded:false});
+ h.chrome.tabs.update=async(id,options)=>{actions.push(['tab',id,options]);return {id,windowId:4};};
+ h.chrome.windows={update:async(id,options)=>actions.push(['window',id,options])};
+ assert.equal((await h.message({type:'SOURCE_WITNESS_RETURN'})).state,'UNAVAILABLE');
+ await h.message(passiveArm);const before=JSON.stringify(h.stored);
+ const sender={id:h.chrome.runtime.id,url:h.chrome.runtime.getURL('source-witness.html')+'#99'};
+ assert.equal(await h.message({type:'SOURCE_WITNESS_RETURN',tabId:99},sender),'ignored');
+ assert.equal((await h.message({type:'SOURCE_WITNESS_RETURN'},sender)).state,'TARGET_SHOWN');
+ assert.deepEqual(actions,[['tab',1,{active:true}],['window',4,{focused:true}]]);
+ assert.equal(JSON.stringify(h.stored),before);
+ let finishFocus;h.chrome.windows.update=async(id,options)=>{actions.push(['window',id,options]);return new Promise(resolve=>{finishFocus=resolve;});};
+ const lateReturn=h.message({type:'SOURCE_WITNESS_RETURN'},sender);await new Promise(r=>setImmediate(r));assert(finishFocus);
+ h.chrome.tabs.onRemoved.emit(1);await new Promise(r=>setImmediate(r));
+ finishFocus();assert.equal((await lateReturn).state,'UNAVAILABLE');
+ const final=JSON.stringify(h.stored);
+ assert.equal((await h.message({type:'SOURCE_WITNESS_RETURN'},sender)).state,'UNAVAILABLE');
+ assert.equal(actions.length,4);assert.equal(JSON.stringify(h.stored),final);
+});
+test('return control refuses discarded targets, elapsed deadlines and retirement during lookup',async t=>{
+ let elapsed=0;t.mock.method(performance,'now',()=>elapsed);
+ const h=mockChrome({[BATCH]:oldConsumed()},{});await h.message(passiveArm);
+ h.chrome.tabs.update=async()=>assert.fail('must not activate or reload a rejected target');
+ h.chrome.windows={update:async()=>assert.fail('must not focus a rejected target')};
+ h.chrome.tabs.get=async id=>({id,windowId:4,url:'https://chatgpt.com/',incognito:false,discarded:true});
+ assert.equal((await h.message({type:'SOURCE_WITNESS_RETURN'})).state,'UNAVAILABLE');
+ elapsed=120000;
+ assert.equal((await h.message({type:'SOURCE_WITNESS_RETURN'})).state,'UNAVAILABLE');
+ elapsed=0;let finishLookup;h.chrome.tabs.get=()=>new Promise(resolve=>{finishLookup=resolve;});
+ const pending=h.message({type:'SOURCE_WITNESS_RETURN'});assert(finishLookup);
+ h.chrome.tabs.onRemoved.emit(1);
+ finishLookup({id:1,windowId:4,url:'https://chatgpt.com/',incognito:false,discarded:false});
+ assert.equal((await pending).state,'UNAVAILABLE');
+});
 test('passive default requires the original consumed installation and a home target; RPC cannot select active mode',async()=>{
  const absent=mockChrome({},{});
  assert.equal((await absent.message(passiveArm)).reason,'previous-consumed-context-result-required');
@@ -220,9 +256,9 @@ test('native refusal during preparation stops immediately instead of waiting for
 });
 test('result page serializes reads and a late ARM response cannot replace a final result',async()=>{
  const elements=new Map(),intervals=new Set();let completeArm,completeRead,reads=0;
- for(const id of ['result','run','confirm','download','environment','read'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+ for(const id of ['result','run','confirm','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:fn=>{intervals.add(fn);return fn;},clearInterval:fn=>intervals.delete(fn),chrome:{runtime:{sendMessage:message=>{
-  if(message.type==='SOURCE_WITNESS_PREVIEW')return Promise.resolve({state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH});
+  if(message.type==='SOURCE_WITNESS_PREVIEW')return Promise.resolve({state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH,route:'home'});
   if(message.type==='SOURCE_WITNESS_ARM'){assert.equal(message.batch,PASSIVE_BATCH);return new Promise(resolve=>{completeArm=resolve;});}
   if(++reads===1)return Promise.resolve({state:'NOT_RUN',unspent:true});
   return new Promise(resolve=>{completeRead=resolve;});
@@ -235,7 +271,7 @@ test('result page serializes reads and a late ARM response cannot replace a fina
 test('new page refuses an old worker and does not label its old report as the new batch',async()=>{
  for(const oldResult of [{state:'NOT_RUN',unspent:true},oldConsumed().result]){
  const elements=new Map(),sent=[];
- for(const id of ['result','run','confirm','download','environment','read'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+ for(const id of ['result','run','confirm','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:()=>assert.fail('no polling before preparation'),clearInterval(){},chrome:{runtime:{sendMessage:async message=>{
   sent.push(message);return message.type==='SOURCE_WITNESS_PREVIEW'?{state:'READY'}:oldResult;
  }}}};
@@ -247,9 +283,9 @@ test('new page refuses an old worker and does not label its old report as the ne
 });
 test('worker version change after passive preparation stops polling without claiming the batch unspent',async()=>{
  const elements=new Map(),polls=new Set();let reads=0;
- for(const id of ['result','run','confirm','download','environment','read'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+ for(const id of ['result','run','confirm','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:fn=>{polls.add(fn);return fn;},clearInterval:fn=>polls.delete(fn),chrome:{runtime:{sendMessage:async message=>{
-  if(message.type==='SOURCE_WITNESS_PREVIEW')return {state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH};
+  if(message.type==='SOURCE_WITNESS_PREVIEW')return {state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH,route:'home'};
   assert.equal(message.type,'SOURCE_WITNESS_READ');return ++reads===1?{state:'WAITING_NATIVE',unspent:false}:oldConsumed().result;
  }}}};
  await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
