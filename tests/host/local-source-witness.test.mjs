@@ -133,7 +133,10 @@ test('v2 requires both finished prior batches and never consumes or repairs a mi
 });
 test('old passive page messages cannot read, arm or return the v2 operation',async t=>{
  const h=mockChrome(priorLedgers(),{});t.after(()=>h.chrome.tabs.onRemoved.emit(1));
- assert.equal((await h.message(passiveArm)).state,'WAITING_NATIVE');const before=JSON.stringify(h.stored);
+ const fresh=await h.message(passiveArm);assert.equal(fresh.state,'WAITING_NATIVE');assert.equal(fresh.startedHere,true);const before=JSON.stringify(h.stored);
+ const anotherPage={id:h.chrome.runtime.id,url:h.chrome.runtime.getURL('source-witness.html')+'#99'};
+ assert.equal((await h.message({...passiveArm,tabId:99},anotherPage)).startedHere,undefined);
+ assert.equal((await h.message(passiveRead)).startedHere,undefined);assert(!before.includes('startedHere'));
  h.chrome.tabs.update=async()=>assert.fail('old page cannot focus the new observation');
  for(const type of ['SOURCE_WITNESS_ARM','SOURCE_WITNESS_READ','SOURCE_WITNESS_RETURN']){
   for(const batch of [undefined,PREVIOUS_PASSIVE_BATCH,BATCH])assert.equal(await h.message({type,...(type==='SOURCE_WITNESS_ARM'?{tabId:1}:{}),...(batch?{batch}:{})}),'ignored');
@@ -277,7 +280,7 @@ test('native refusal during preparation stops immediately instead of waiting for
 });
 test('result page serializes reads and a late ARM response cannot replace a final result',async()=>{
  const elements=new Map(),intervals=new Set();let completeArm,completeRead,reads=0;
- for(const id of ['result','run','confirm','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+ for(const id of ['result','run','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:fn=>{intervals.add(fn);return fn;},clearInterval:fn=>intervals.delete(fn),chrome:{runtime:{sendMessage:message=>{
   if(message.type==='SOURCE_WITNESS_PREVIEW')return Promise.resolve({state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH,route:'home'});
   if(message.type==='SOURCE_WITNESS_ARM'){assert.equal(message.batch,PASSIVE_BATCH);return new Promise(resolve=>{completeArm=resolve;});}
@@ -292,19 +295,19 @@ test('result page serializes reads and a late ARM response cannot replace a fina
 test('new page refuses an old worker and does not label its old report as the new batch',async()=>{
  for(const oldResult of [{state:'NOT_RUN',unspent:true},oldConsumed().result,oldPassiveConsumed().result]){
  const elements=new Map(),sent=[];
- for(const id of ['result','run','confirm','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+ for(const id of ['result','run','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:()=>assert.fail('no polling before preparation'),clearInterval(){},chrome:{runtime:{sendMessage:async message=>{
   sent.push(message);return message.type==='SOURCE_WITNESS_PREVIEW'?{state:'READY',mode:'PASSIVE_C2_ONLY',batch:oldResult.schema,route:'home'}:oldResult;
  }}}};
  await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
- assert.equal(elements.get('confirm').disabled,true);await elements.get('run').handlers.click({isTrusted:true});
+ assert.equal(elements.get('run').disabled,true);await elements.get('run').handlers.click({isTrusted:true});
  assert.equal(sent.some(m=>m.type==='SOURCE_WITNESS_ARM'),false);assert.match(elements.get('environment').textContent,/尚未加载被动观察版本/);
  assert.equal(JSON.parse(elements.get('result').textContent).state,'NOT_RUN');
  }
 });
 test('worker version change after passive preparation stops polling without claiming the batch unspent',async()=>{
  const elements=new Map(),polls=new Set();let reads=0;
- for(const id of ['result','run','confirm','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+ for(const id of ['result','run','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:fn=>{polls.add(fn);return fn;},clearInterval:fn=>polls.delete(fn),chrome:{runtime:{sendMessage:async message=>{
   if(message.type==='SOURCE_WITNESS_PREVIEW')return {state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH,route:'home'};
   assert.equal(message.type,'SOURCE_WITNESS_READ');assert.equal(message.batch,PASSIVE_BATCH);return ++reads===1?{state:'WAITING_NATIVE',unspent:false}:oldConsumed().result;
@@ -312,6 +315,49 @@ test('worker version change after passive preparation stops polling without clai
  await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
  assert.equal(polls.size,1);await elements.get('read').handlers.click();assert.equal(polls.size,0);
  const result=JSON.parse(elements.get('result').textContent);assert.equal(result.state,'BLOCKED');assert.equal(result.unspent,false);assert.equal(result.reason,'passive-worker-version-changed-no-retry');
+});
+async function pageFlow({initial={state:'NOT_RUN',unspent:true},active={id:1,windowId:4},focused=true,startedHere=true,own=()=>({id:10,windowId:4})}={}){
+ const elements=new Map(),sent=[],updates=[],events={},polls=new Set();let current=initial;
+ for(const id of ['result','run','download','environment','read','next-step','return-target'])elements.set(id,{disabled:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+ const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener:(name,fn)=>{events[name]=fn;}},setInterval:fn=>{polls.add(fn);return fn;},clearInterval:fn=>polls.delete(fn),chrome:{windows:{getCurrent:async()=>({id:4,focused})},tabs:{getCurrent:own,query:async()=>[active],update:async(id,changes)=>{updates.push({id,...changes});}},runtime:{sendMessage:async message=>{
+  sent.push(message);
+  if(message.type==='SOURCE_WITNESS_PREVIEW')return {state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH,route:'home'};
+  if(message.type==='SOURCE_WITNESS_ARM'){current={state:'WAITING_NATIVE',unspent:false};return {...current,...(startedHere?{startedHere:true}:{})};}
+  if(message.type==='SOURCE_WITNESS_RETURN'){assert.equal(current.state,'WAITING_NATIVE');return {state:'TARGET_SHOWN'};}
+  if(message.type==='SOURCE_WITNESS_READ')return current;
+  assert.fail('unexpected message');
+ }}}};
+ await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
+ return {elements,sent,updates,events,polls,setResult:value=>{current=value;},click:(id,isTrusted=true)=>elements.get(id).handlers.click({isTrusted})};
+}
+const pageFinal={schema:PASSIVE_BATCH,state:'BLOCKED',reason:'no-native-context-observed',unspent:false};
+test('one trusted start prepares then returns once; final result is automatic without re-arming',async()=>{
+ const h=await pageFlow();assert.equal(h.elements.get('run').disabled,false);assert.deepEqual(h.sent.map(m=>m.type),['SOURCE_WITNESS_PREVIEW','SOURCE_WITNESS_READ']);
+ await h.click('run',false);assert.equal(h.sent.length,2);
+ const start=h.click('run');await h.click('run');await start;
+ assert.deepEqual(h.sent.slice(2).map(m=>m.type),['SOURCE_WITNESS_ARM','SOURCE_WITNESS_RETURN']);
+ assert.equal(h.elements.get('run').disabled,true);assert.equal(h.polls.size,1);
+ h.setResult(pageFinal);await [...h.polls][0]();await new Promise(r=>setImmediate(r));
+ assert.deepEqual(h.updates,[{id:10,active:true}]);assert.equal(h.polls.size,0);
+ await h.click('read');await h.click('run');await new Promise(r=>setImmediate(r));
+ assert.equal(h.updates.length,1);assert.equal(h.sent.filter(m=>m.type==='SOURCE_WITNESS_ARM').length,1);
+ assert.deepEqual(JSON.parse(h.elements.get('result').textContent),pageFinal);
+});
+test('automatic result display does not steal another tab/window or run on reopening a spent result',async()=>{
+ for(const options of [{active:{id:99,windowId:4}},{active:{id:1,windowId:8}},{focused:false}]){
+  const h=await pageFlow(options);await h.click('run');h.setResult(pageFinal);await h.click('read');await new Promise(r=>setImmediate(r));
+  assert.deepEqual(h.updates,[]);assert.equal(h.elements.get('download').disabled,false);
+ }
+ const contender=await pageFlow({startedHere:false});await contender.click('run');contender.setResult(pageFinal);await contender.click('read');await new Promise(r=>setImmediate(r));
+ assert.deepEqual(contender.updates,[]);assert.equal(contender.sent.some(m=>m.type==='SOURCE_WITNESS_RETURN'),false);
+ const reopened=await pageFlow({initial:pageFinal});await reopened.click('run');await reopened.click('read');await new Promise(r=>setImmediate(r));
+ assert.deepEqual(reopened.updates,[]);assert.equal(reopened.sent.some(m=>['SOURCE_WITNESS_ARM','SOURCE_WITNESS_RETURN'].includes(m.type)),false);
+});
+test('uncertain initial result cannot start and unloading suppresses a late completion focus',async()=>{
+ const unknown=await pageFlow({initial:{state:'BLOCKED',reason:'extension-connection-lost-do-not-repeat'}});await unknown.click('run');assert.equal(unknown.elements.get('run').disabled,true);assert.equal(unknown.sent.some(m=>m.type==='SOURCE_WITNESS_ARM'),false);
+ let resolveOwn;
+ const h=await pageFlow({own:()=>new Promise(resolve=>{resolveOwn=resolve;})});await h.click('run');h.setResult(pageFinal);await h.click('read');
+ h.events.pagehide();resolveOwn({id:10,windowId:4});await new Promise(r=>setImmediate(r));assert.deepEqual(h.updates,[]);
 });
 test('content bridge stays ready across BFCache and removes liveness on final unload',()=>{
  const listeners=new Set(),events={};let stopped=0;const window={addEventListener:(name,fn)=>events[name]=fn};window.top=window;

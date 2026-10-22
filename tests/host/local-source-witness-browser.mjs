@@ -38,16 +38,19 @@ try{
   return {home:tabs.find(t=>t.url==='https://chatgpt.com/').id,other:tabs.find(t=>t.url!=='https://chatgpt.com/').id};
  });
  await page.goto(`chrome-extension://${id}/source-witness.html#${ids.other}`);
- await page.waitForFunction(()=>document.getElementById('confirm').disabled);
+ await page.waitForFunction(()=>document.getElementById('environment').textContent.includes('conversation'));
+ await page.waitForFunction(()=>document.getElementById('result').textContent.includes('NOT_RUN'));
  assert(await page.locator('#run').isDisabled());assert.match(await page.locator('#next-step').innerText(),/空白首页/);
  report.checks.push('conversation-entry-cannot-arm');
  // Hash-only navigation must not retarget an already initialized observer page.
  // The real entry creates a new document; mirror that, not a hash substitution.
  await page.goto('about:blank');
  await page.goto(`chrome-extension://${id}/source-witness.html#${ids.home}`);
- await page.locator('#confirm').check();await page.locator('#run').click();
+ await page.locator('#run').click();
  await page.waitForFunction(()=>document.getElementById('result').textContent.includes('WAITING_NATIVE'));
  assert.match(await page.locator('#next-step').innerText(),/观察已就绪/);
+ await page.waitForFunction(async()=>{const tabs=await chrome.tabs.query({active:true,currentWindow:true});return tabs.length===1&&tabs[0].id===Number(location.hash.slice(1));});
+ report.checks.push('single-explicit-start-automatically-selects-exact-original-tab');
  const reopenedDuringObservation=await context.newPage();
  await reopenedDuringObservation.goto(`chrome-extension://${id}/source-witness.html#${ids.other}`);
  await reopenedDuringObservation.locator('#return-target').click();

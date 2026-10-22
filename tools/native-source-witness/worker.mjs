@@ -113,7 +113,9 @@ export function installWitnessWorker(chrome,{passiveOnly=true}={}){
    listen(chrome.webNavigation.onHistoryStateUpdated,d=>navigate(d,false));
    listen(chrome.tabs.onRemoved,tabId=>{if(tabId===id)stop('target-closed');});
    op.timer=setTimeout(()=>stop('no-native-context-observed'),120000);
-   return {state:'WAITING_NATIVE',reason:'open-one-existing-chat-in-selected-tab',unspent:false};
+   // UI-only acknowledgment to the call that installed these listeners. Never
+   // store it or return it from READ / another page's subsequent ARM.
+   return {state:'WAITING_NATIVE',reason:'open-one-existing-chat-in-selected-tab',unspent:false,...(passiveOnly?{startedHere:true}:{})};
   }catch{if(operation){operation.abort.abort();operation.observer?.stop();for(const [e,f]of operation.listeners)e.removeListener(f);clearTimeout(operation.timer);operation=null;}return {state:'BLOCKED',reason:'preparation-failed-read-existing-result'};}finally{locked=false;reserving=false;}
  }
  chrome.runtime.onMessage.addListener((m,sender,reply)=>{
