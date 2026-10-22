@@ -1,5 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 已批准的集中只读来源见证v2已准备；真实身份与目录执行NOT_RUN（2026-10-22）
+
+用户明确批准一次新的集中只读见证，原开发入口现接到独立键`vaiwl-local-source-witness-20261022-v2`与固定模式`BOUNDED_SOURCE_WITNESS`。复用现有runner/provider/ScopeAuthority/parser，不新增生产producer、权限或身份开关。旧active和passive v1–v4五批原键/原报告只读保留；v4关联PASS只作已消费历史，新批仍须同一Profile/绑定首页一次自然打开已有聊天，重新取得fresh浏览器请求与当前DOM关联。原生关联最后有效性检查现由主动/被动模式共用，失效时不进入主动链。
+
+先session→认证canonical roster及C2匹配，失败立即停止；仅通过后重新认证并读取普通聊天≤2页、归档1页、Project索引1页、索引内一个Project成员≤2页，最后强制身份/空间收尾。准备≤120秒；≤12GET/30秒/并发1/无重试，首次链（含DOM）、整个目录闭包、收尾各≤6秒；session≤256KiB、其他≤1MiB、总≤4MiB。token仅worker RAM用于本批固定认证，不读Cookie存储，不保存响应正文或身份/标题/凭据，不启生产scope或旧库。新旧页面/worker固定批次与模式不匹配时拒绝启动；执行中断后的请求数为未知null/上限12，不能报零或续跑。确认未进入主动链的准备失败才报告0。
+
+实际验证为50项受影响定向回归、一次新隔离断网headless MV3入口/精确返回/合成同页导航/终态重开/五旧记录保全、候选及原位包重建校验，独立只读审查无阻塞项。首轮新增夹具遗漏is_deactivated而得到account-id原因码，补齐与已知实际形状相符的夹具后通过；失败日志保留，非产品回归或真实诊断。测试只证明这次开发入口与原有安全链接线，不代表真实session/roster/空间或目录成立。
+
+原安装目录`.git/vaiwl-artifacts/local-source-witness-20261022/extension`先完整备份，再更新6文件；manifest/权限与文件集合不变，197文件与候选一致。代码、检查、独审、备份和安装回执在`.git/vaiwl-checkpoints/20261022-source-witness-v2/`。2258份未跟踪副本与3个stash保全；本轮未操作真实Chrome、重载扩展、访问浏览器存储或发账户请求。当前新批真实状态**NOT_RUN**，不把磁盘更新说成已加载，也不把v4结果转成身份通过。
+
+唯一下一来源条件是同一原安装加载新版后执行已批准批次：重载原VAIWL一次，在新的ChatGPT空白首页打开原“本机一次性来源验证”，确认标题“一次集中只读来源验证 · v2”，点“确认此 Profile，开始只读验证”；自动返回后在原生侧栏点一次已有聊天，结果自动显示。无需再授权、重登、重装或清存储。若结束或状态不明，只保留/读取现有结果，不重复开始。按结果优先闭合主用身份、当前空间和近期成员来源；网站允许条件、语义、个人J1–J4仍需各自证据，不以归档或全历史域缺口自动否定已合法核实的主用能力。个人日用目标、旧工程成果及10k/100k DEFERRED保持。
+
 ## v4真实原生请求与当前DOM关联PASS；身份/空间与目录尚未执行（2026-10-22）
 
 用户回传`vaiwl-local-context-observation-20261022-v4`终态为`PARTIAL`、decision=`BLOCKED`、reason=`native-association-observed-identity-not-run`、unspent=false。准备4832ms、关联阶段214ms；events=2、navigations=2，send/admitted/prepared/completion/receipt-created/association-started/association-passed/history-retained-pending各1，其他阶段码0。主动GET、解码字节、HTTP列表均0。nativeAssociation明确PASS；currentSpace为NOT_RUN/authenticated-roster-not-requested，身份与目录NOT_RUN。整体BLOCKED来自被动批次的权限/执行边界，不是本次关联再次失败。

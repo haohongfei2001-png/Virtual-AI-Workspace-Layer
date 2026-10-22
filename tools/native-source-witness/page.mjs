@@ -1,10 +1,10 @@
 const send=m=>chrome.runtime.sendMessage(m),target=Number(location.hash.slice(1));
-const batch='vaiwl-local-context-observation-20261022-v4';
+const batch='vaiwl-local-source-witness-20261022-v2';
 const output=document.getElementById('result'),button=document.getElementById('run'),download=document.getElementById('download');
 const nextStep=document.getElementById('next-step'),returnTarget=document.getElementById('return-target');
 let pending=false,report=null,spent=false,poll=null,readPending=false,compatible=false,legacyReport=null,homeReady=false,waiting=false,returnPending=false,canStart=false,showCompletion=false,closed=false;
 const syncRun=()=>{button.disabled=pending||spent||!!report||!compatible||!homeReady||!canStart;};
-const priorBlocked=value=>['previous-consumed-context-result-required','previous-consumed-passive-result-required','previous-consumed-v2-result-required','previous-consumed-v3-result-required'].includes(value?.reason);
+const priorBlocked=value=>['previous-consumed-context-result-required','previous-consumed-passive-result-required','previous-consumed-v2-result-required','previous-consumed-v3-result-required','previous-consumed-v4-result-required'].includes(value?.reason);
 async function showCompletedPage(){
  // Only this page's explicit start can request a return. Reading an old result
  // or reopening this page never activates a tab. Do not focus another window.
@@ -23,9 +23,9 @@ const guide=value=>{
  nextStep.textContent=priorBlocked(value)?'尚未开始：旧批次记录不匹配，本次许可未消费。请保留下面已展开的旧结果；无需打开聊天、刷新、重登或反复点开始。':
   waiting?'观察已就绪，正在计时。请在原生侧栏点一次已有聊天。开始按钮会自动返回原标签；若重开了本结果页，可用下方按钮定位原标签。':
   value?.state==='PREPARING'?'正在安装观察器，请暂时停留本页。准备完成后自动返回原标签。':
-  value?.state==='RUNNING'?'正在核对本次关联，请勿再次导航或启动。':
+  value?.state==='RUNNING'?'正在核对身份、当前空间及限定目录，请勿再次导航或启动。':
   value?.unspent===false||value?.schema?'本批已结束或状态不确定，不能重跑。请读取或保存现有结果。':
-  homeReady?'尚未开始。核对环境后点一次“确认此 Profile，开始观察”，随后只需在原生侧栏点一次已有聊天。':'本页未就绪。请从已授权 ChatGPT 空白首页打开入口；不会启动观察。';
+  homeReady?'尚未开始。核对环境后点一次“确认此 Profile，开始只读验证”，随后只需在原生侧栏点一次已有聊天。':'本页未就绪。请从已授权 ChatGPT 空白首页打开入口；不会启动观察。';
 };
 const show=value=>{
  if(report&&value?.schema!==batch)return;
@@ -36,7 +36,7 @@ const show=value=>{
   legacyReport=value;compatible=false;canStart=false;showCompletion=false;syncRun();
   if(poll!==null){clearInterval(poll);poll=null;}
   guide({state:'BLOCKED',unspent:!spent});
-  output.textContent=JSON.stringify(spent?{state:'BLOCKED',reason:'passive-worker-version-changed-no-retry',unspent:false}:{state:'NOT_RUN',reason:'passive-worker-not-loaded-no-request'});return;
+  output.textContent=JSON.stringify(spent?{state:'BLOCKED',reason:'source-worker-version-changed-no-retry',unspent:false}:{state:'NOT_RUN',reason:'source-worker-not-loaded-no-request'});return;
  }
  output.textContent=JSON.stringify(value,null,2);
  guide(value);
@@ -50,7 +50,7 @@ const show=value=>{
  else if(!running&&poll!==null){clearInterval(poll);poll=null;}
 };
 async function read(){if(readPending)return;readPending=true;try{show(await send({type:'SOURCE_WITNESS_READ',batch}));}catch{show({state:'BLOCKED',reason:'extension-connection-lost-do-not-repeat'});}finally{readPending=false;}}
-try{if(!location.hash||!Number.isSafeInteger(target))throw Error('target');const env=await send({type:'SOURCE_WITNESS_PREVIEW',tabId:target});compatible=env.state==='READY'&&env.mode==='PASSIVE_C2_ONLY'&&env.batch===batch;homeReady=compatible&&env.route==='home';document.getElementById('environment').textContent=compatible?`入口绑定的 Chrome 标签（浏览器不提供 Profile 名称）；ChatGPT ${env.route} 页面；非隐身；扩展 ${env.version}，被动批次已匹配。请核对这是已授权测试账户。`:env.state==='READY'?'原扩展尚未加载被动观察版本；本页不会执行。请仅重载原扩展，不要卸载。':'未找到原 ChatGPT 标签；不会发请求。';}catch{compatible=false;}
+try{if(!location.hash||!Number.isSafeInteger(target))throw Error('target');const env=await send({type:'SOURCE_WITNESS_PREVIEW',tabId:target});compatible=env.state==='READY'&&env.mode==='BOUNDED_SOURCE_WITNESS'&&env.batch===batch;homeReady=compatible&&env.route==='home';document.getElementById('environment').textContent=compatible?`入口绑定的 Chrome 标签（浏览器不提供 Profile 名称）；ChatGPT ${env.route} 页面；非隐身；扩展 ${env.version}，集中只读批次已匹配。请核对这是已授权测试账户。`:env.state==='READY'?'原扩展尚未加载集中只读验证版本；本页不会执行。请仅重载原扩展，不要卸载。':'未找到原 ChatGPT 标签；不会发请求。';}catch{compatible=false;}
 await read();
 const previous=document.getElementById('previous-result');
 if(previous)try{previous.textContent=JSON.stringify(legacyReport??await send({type:'SOURCE_WITNESS_PREVIOUS'}),null,2);}catch{previous.textContent='旧结果读取失败；不会重发或清除旧批次。';}

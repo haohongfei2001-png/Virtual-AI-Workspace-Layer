@@ -69,9 +69,9 @@ test('developer overlay preserves normal navigation, adds only storage, private 
  assert.equal(verifyLocalWitness(output).realChatGPT,'NOT_RUN');assert.deepEqual(manifest.permissions,['webNavigation','webRequest','storage']);assert.deepEqual(manifest.host_permissions,['https://chatgpt.com/*']);assert.equal(manifest.action.default_popup,'status.html');
  assert.match(readFileSync(join(output,'source-witness-entry.mjs'),'utf8'),/extension\/temporary-navigation.mjs/);assert.match(readFileSync(join(output,'status.html'),'utf8'),/source-witness-entry.mjs/);
  assert(manifest.web_accessible_resources.every(r=>r.resources.every(p=>!p.includes('witness'))));
- assert.equal(info.mode,'PASSIVE_C2_ONLY');assert.equal(info.batchId,PASSIVE_BATCH);assert.equal(info.previousBatchId,BATCH);assert.equal(info.previousPassiveBatchId,PREVIOUS_PASSIVE_BATCH);assert.equal(info.previousPassiveV2BatchId,PREVIOUS_PASSIVE_V2_BATCH);assert.equal(info.previousPassiveV3BatchId,PREVIOUS_PASSIVE_V3_BATCH);
- assert.equal(info.maxGETs,0);assert.equal(info.retries,0);assert.equal(info.maxBytes,0);assert.equal(info.maxConcurrent,0);assert.equal(info.realChatGPT,'NOT_RUN');
- assert.equal(info.maxPreparationMs,120000);assert.equal(info.maxChainMs,6000);assert.equal(info.maxElapsedMs,126000);
+ assert.equal(info.mode,SOURCE_MODE);assert.equal(info.batchId,SOURCE_BATCH);assert.equal(info.previousBatchId,BATCH);assert.equal(info.previousPassiveBatchId,PREVIOUS_PASSIVE_BATCH);assert.equal(info.previousPassiveV2BatchId,PREVIOUS_PASSIVE_V2_BATCH);assert.equal(info.previousPassiveV3BatchId,PREVIOUS_PASSIVE_V3_BATCH);
+ assert.equal(info.previousPassiveV4BatchId,PASSIVE_BATCH);assert.equal(info.maxGETs,12);assert.equal(info.retries,0);assert.equal(info.maxBytes,4194304);assert.equal(info.maxConcurrent,1);assert.equal(info.maxSessionBytes,262144);assert.equal(info.maxResponseBytes,1048576);assert.equal(info.realChatGPT,'NOT_RUN');
+ assert.equal(info.maxPreparationMs,120000);assert.equal(info.maxChainMs,6000);assert.equal(info.maxElapsedMs,150000);assert.equal(info.maxActiveMs,30000);
  assert.throws(()=>buildLocalWitness(output),/output-must-be-new/);
  // A modified permission plus a recomputed self-reported hash is not proof.
  manifest.permissions.push('debugger');const bytes=JSON.stringify(manifest,null,2)+'\n';writeFileSync(join(output,'manifest.json'),bytes);
@@ -79,7 +79,7 @@ test('developer overlay preserves normal navigation, adds only storage, private 
  assert.throws(()=>verifyLocalWitness(output),/witness-overlay-mismatch/);
 });
 
-import {installWitnessWorker,PASSIVE_BATCH,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH,PREVIOUS_PASSIVE_V3_BATCH} from '../../tools/native-source-witness/worker.mjs';
+import {installWitnessWorker,SOURCE_BATCH,SOURCE_MODE,PASSIVE_BATCH,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH,PREVIOUS_PASSIVE_V3_BATCH} from '../../tools/native-source-witness/worker.mjs';
 import {BATCH} from '../../tools/native-source-witness/runner.mjs';
 function mockChrome(stored={},options={passiveOnly:false}){
  const event=()=>{const listeners=new Set();return {listeners,addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f),emit:x=>{for(const f of listeners)f(x);}};};
@@ -124,6 +124,73 @@ const oldPassiveV2Consumed=()=>({state:'finished',result:{schema:PREVIOUS_PASSIV
 const oldPassiveV3Consumed=()=>({state:'finished',result:{schema:PREVIOUS_PASSIVE_V3_BATCH,state:'BLOCKED',reason:'single-navigation-boundary',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:1,preparationMs:3190}}});
 const passiveRead={type:'SOURCE_WITNESS_READ',batch:PASSIVE_BATCH},passiveReturn={type:'SOURCE_WITNESS_RETURN',batch:PASSIVE_BATCH};
 const priorLedgers=(active=oldConsumed())=>({[BATCH]:active,[PREVIOUS_PASSIVE_BATCH]:oldPassiveConsumed(),[PREVIOUS_PASSIVE_V2_BATCH]:oldPassiveV2Consumed(),[PREVIOUS_PASSIVE_V3_BATCH]:oldPassiveV3Consumed()});
+const oldPassiveV4Consumed=()=>({state:'finished',result:{schema:PASSIVE_BATCH,state:'PARTIAL',reason:'native-association-observed-identity-not-run',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,stages:{nativeAssociation:{state:'PASS',reason:'fresh-request-and-current-dom-associated-only'}}}});
+const sourceOptions={passiveOnly:false,sourceWitness:true},sourceArm={type:'SOURCE_WITNESS_ARM',tabId:1,batch:SOURCE_BATCH},sourceRead={type:'SOURCE_WITNESS_READ',batch:SOURCE_BATCH};
+const sourceLedgers=()=>({...priorLedgers(),[PASSIVE_BATCH]:oldPassiveV4Consumed()});
+test('source batch requires consumed associated v4 without reconstructing or overwriting any old record',async()=>{
+ const valid=oldPassiveV4Consumed();
+ const cases=[undefined,{state:'reserved',result:valid.result},...[
+  {schema:PREVIOUS_PASSIVE_V3_BATCH},{state:'BLOCKED'},{reason:'no-native-context-observed'},{unspent:true},{mode:SOURCE_MODE},{requests:null},{requests:1},{stages:{nativeAssociation:{state:'NOT_RUN'}}}
+ ].map(patch=>({state:'finished',result:{...valid.result,...patch}}))];
+ for(const record of cases){
+  const h=mockChrome({...sourceLedgers(),[PASSIVE_BATCH]:record},sourceOptions),before=structuredClone(h.stored);
+  h.chrome.tabs.get=async()=>assert.fail('no account tab lookup with incompatible prior result');
+  for(const message of [sourceRead,sourceArm]){const r=await h.message(message);assert.equal(r.reason,'previous-consumed-v4-result-required');assert.equal(r.requests,0);assert.equal(r.unspent,true);}
+  assert.deepEqual(h.stored,before);assert.equal(h.stored[SOURCE_BATCH],undefined);
+ }
+});
+test('fixed source handshake rejects older or message-selected modes and spent worker loss keeps unknown request count',async()=>{
+ const old=sourceLedgers(),h=mockChrome({...old,[SOURCE_BATCH]:{state:'reserved',result:null}},sourceOptions);
+ const env=await h.message({type:'SOURCE_WITNESS_PREVIEW',tabId:1});assert.equal(env.batch,SOURCE_BATCH);assert.equal(env.mode,SOURCE_MODE);
+ for(const message of [passiveArm,passiveRead,{type:'SOURCE_WITNESS_ARM',tabId:1},{...sourceArm,sourceWitness:true}])assert.equal(await h.message(message),'ignored');
+ const r=await h.message(sourceRead);assert.equal(r.schema,SOURCE_BATCH);assert.equal(r.mode,SOURCE_MODE);assert.equal(r.requests,null);assert.equal(r.requestCountKnown,false);assert.equal(r.requestUpperBound,12);assert.equal(r.unspent,false);assert.equal(r.stages.identity.state,'PARTIAL');
+ h.chrome.tabs.get=async()=>assert.fail('spent batch cannot access a tab');assert.deepEqual(await h.message(sourceArm),r);
+ const previous=await h.message({type:'SOURCE_WITNESS_PREVIOUS'});assert.deepEqual(Object.values(previous),Object.values(old).map(x=>x.result));
+ for(const key of Object.keys(old))assert.deepEqual(h.stored[key],old[key]);
+ assert.equal(await mockChrome(sourceLedgers(),{}).message(sourceArm),'ignored');
+ assert.throws(()=>installWitnessWorker({}, {sourceWitness:true}),/conflicting-witness-modes/);
+});
+async function supplySourceNative(h,{matching=true}={}){
+ assert.equal((await h.message(sourceArm)).state,'WAITING_NATIVE');
+ const current={documentId:'doc-one',url:frame.actualURL,documentLifecycle:'active',frameType:'outermost_frame'};
+ h.chrome.tabs.get=async id=>({id,url:current.url,incognito:false});h.chrome.webNavigation.getFrame=async()=>current;
+ h.chrome.tabs.sendMessage=async(_id,query)=>({challenge:query.challenge,actualURL:query.actualURL,conversationId:matching?query.conversationId:d,association:'explicit-body-id'});
+ h.chrome.webNavigation.onHistoryStateUpdated.emit({tabId:1,frameId:0,...current});
+ const detail={tabId:1,frameId:0,documentId:'doc-one',documentLifecycle:'active',initiator:'https://chatgpt.com',type:'xmlhttprequest',method:'GET',requestId:'PRIVATE_REQUEST',url:'https://chatgpt.com/backend-api/conversations/'+c,requestHeaders:[{name:'Chatgpt-Account-Id',value:'SECRET_CONTEXT'}]};
+ h.chrome.webRequest.onSendHeaders.emit(detail);await new Promise(r=>setImmediate(r));h.chrome.webRequest.onCompleted.emit({...detail,statusCode:200,fromCache:false});
+ return current;
+}
+async function sourceFinished(h){
+ for(let i=0;i<300;i++){if(h.stored[SOURCE_BATCH]?.state==='finished')return h.stored[SOURCE_BATCH].result;await new Promise(r=>setImmediate(r));}
+ assert.fail('source fixture did not finish');
+}
+test('new source composition uses fresh C2, runs bounded runner once and preserves all five old results',async t=>{
+ const values=harness().values,calls=[],old=sourceLedgers(),h=mockChrome(structuredClone(old),sourceOptions);t.after(()=>h.chrome.tabs.onRemoved.emit(1));
+ t.mock.method(globalThis,'fetch',async(url,options)=>{calls.push({url,options});const response=new Response(JSON.stringify(values[calls.length-1]),{headers:{'content-type':'application/json'}});Object.defineProperty(response,'url',{value:url});return response;});
+ assert.equal((await h.message(sourceRead)).reason,'not-started');assert.equal(calls.length,0);
+ await supplySourceNative(h);const r=await sourceFinished(h);
+ assert.equal(r.state,'PARTIAL',JSON.stringify(r));assert.equal(r.requests,12);assert.equal(calls.length,12);assert.equal(r.requestUpperBound,12);assert.equal(r.requestCountKnown,true);assert.equal(r.schema,SOURCE_BATCH);assert.equal(r.mode,SOURCE_MODE);assert.equal(r.stages.nativeAssociation.state,'PASS');assert.equal(r.stages.finalIdentity.state,'PASS');assert.equal(r.productionEnabled,false);
+ assert(!/SECRET|PRIVATE|doc-one|12345678|next-private/.test(JSON.stringify(r)));
+ for(const key of Object.keys(old))assert.deepEqual(h.stored[key],old[key]);
+ const frozen=JSON.stringify(h.stored);assert.deepEqual(await h.message(sourceArm),r);assert.deepEqual(await mockChrome(h.stored,sourceOptions).message(sourceArm),r);assert.equal(calls.length,12);assert.equal(JSON.stringify(h.stored),frozen);
+});
+test('source native-association failure makes no active request; identity challenge or invalid roster cannot enter directories',async t=>{
+ for(const mode of ['association','challenge','roster']){
+  const old=sourceLedgers(),h=mockChrome(structuredClone(old),sourceOptions);t.after(()=>h.chrome.tabs.onRemoved.emit(1));let calls=0;
+  const mock=t.mock.method(globalThis,'fetch',async url=>{calls++;const value=calls===1?session():{accounts:{default:{account:{account_id:null,structure:'personal',is_deactivated:false},can_access_with_session:true}}};const response=new Response(JSON.stringify(value),{status:mode==='challenge'?403:200,headers:mode==='challenge'?{'content-type':'text/html','cf-mitigated':'challenge'}:{'content-type':'application/json'}});Object.defineProperty(response,'url',{value:url});return response;});
+  await supplySourceNative(h,{matching:mode!=='association'});const r=await sourceFinished(h);
+  assert.equal(r.state,'BLOCKED');assert.equal(r.requests,mode==='association'?0:mode==='challenge'?1:2);assert.equal(calls,r.requests);assert.equal(r.stages.ordinary.state,'NOT_RUN');assert.equal(r.stages.nativeAssociation.state,mode==='association'?'BLOCKED':'PASS');assert.equal(r.requestCountKnown,true);
+  if(mode==='roster')assert.equal(r.schemaIssue,'default-null-context-id');
+  for(const key of Object.keys(old))assert.deepEqual(h.stored[key],old[key]);mock.mock.restore();
+ }
+});
+test('source cancellation during identity aborts once and cannot advance on a late response',async t=>{
+ const h=mockChrome(sourceLedgers(),sourceOptions);t.after(()=>h.chrome.tabs.onRemoved.emit(1));let release,calls=0;
+ t.mock.method(globalThis,'fetch',url=>{calls++;return new Promise(resolve=>{release=()=>{const response=new Response(JSON.stringify(session()),{headers:{'content-type':'application/json'}});Object.defineProperty(response,'url',{value:url});resolve(response);};});});
+ await supplySourceNative(h);for(let i=0;i<300&&!release;i++)await new Promise(r=>setImmediate(r));assert(release);
+ h.chrome.tabs.onRemoved.emit(1);const r=await sourceFinished(h),frozen=JSON.stringify(h.stored);
+ assert.equal(r.state,'BLOCKED');assert.equal(r.requests,1);assert.equal(r.stages.ordinary.state,'NOT_RUN');release();await new Promise(r=>setImmediate(r));assert.equal(calls,1);assert.equal(JSON.stringify(h.stored),frozen);
+});
 test('spent current navigation result is read unchanged without backfilling new classifications',async()=>{
  const result={schema:PASSIVE_BATCH,state:'BLOCKED',reason:'single-navigation-boundary',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:1,preparationMs:3190}};
  const h=mockChrome({...priorLedgers(),[PASSIVE_BATCH]:{state:'finished',result}},{}),before=structuredClone(h.stored);
@@ -375,46 +442,46 @@ test('result page serializes reads and a late ARM response cannot replace a fina
  const elements=new Map(),intervals=new Set();let completeArm,completeRead,reads=0;
  for(const id of ['result','run','download','environment','read','next-step','return-target','previous-batches'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:fn=>{intervals.add(fn);return fn;},clearInterval:fn=>intervals.delete(fn),chrome:{runtime:{sendMessage:message=>{
-  if(message.type==='SOURCE_WITNESS_PREVIEW')return Promise.resolve({state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH,route:'home'});
-  if(message.type==='SOURCE_WITNESS_ARM'){assert.equal(message.batch,PASSIVE_BATCH);return new Promise(resolve=>{completeArm=resolve;});}
+  if(message.type==='SOURCE_WITNESS_PREVIEW')return Promise.resolve({state:'READY',mode:SOURCE_MODE,batch:SOURCE_BATCH,route:'home'});
+  if(message.type==='SOURCE_WITNESS_ARM'){assert.equal(message.batch,SOURCE_BATCH);return new Promise(resolve=>{completeArm=resolve;});}
   if(++reads===1)return Promise.resolve({state:'NOT_RUN',unspent:true});
   return new Promise(resolve=>{completeRead=resolve;});
  }}}};
  await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
  const arm=elements.get('run').handlers.click({isTrusted:true}),read=elements.get('read').handlers.click();await elements.get('read').handlers.click();assert.equal(reads,2);
- const final={schema:PASSIVE_BATCH,state:'PARTIAL',reason:'native-association-observed-identity-not-run'};completeRead(final);await read;completeArm({state:'RUNNING',unspent:false});await arm;
+ const final={schema:SOURCE_BATCH,state:'PARTIAL',reason:'native-association-observed-identity-not-run'};completeRead(final);await read;completeArm({state:'RUNNING',unspent:false});await arm;
  assert.deepEqual(JSON.parse(elements.get('result').textContent),final);assert.equal(intervals.size,0);assert.equal(elements.get('download').disabled,false);
 });
 test('new page refuses an old worker and does not label its old report as the new batch',async()=>{
- for(const oldResult of [{state:'NOT_RUN',unspent:true},oldConsumed().result,oldPassiveConsumed().result,oldPassiveV2Consumed().result,oldPassiveV3Consumed().result]){
+ for(const oldResult of [{state:'NOT_RUN',unspent:true},oldConsumed().result,oldPassiveConsumed().result,oldPassiveV2Consumed().result,oldPassiveV3Consumed().result,oldPassiveV4Consumed().result]){
  const elements=new Map(),sent=[];
  for(const id of ['result','run','download','environment','read','next-step','return-target','previous-batches'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:()=>assert.fail('no polling before preparation'),clearInterval(){},chrome:{runtime:{sendMessage:async message=>{
-  sent.push(message);return message.type==='SOURCE_WITNESS_PREVIEW'?{state:'READY',mode:'PASSIVE_C2_ONLY',batch:oldResult.schema,route:'home'}:oldResult;
+  sent.push(message);return message.type==='SOURCE_WITNESS_PREVIEW'?{state:'READY',mode:SOURCE_MODE,batch:oldResult.schema,route:'home'}:oldResult;
  }}}};
  await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
  assert.equal(elements.get('run').disabled,true);await elements.get('run').handlers.click({isTrusted:true});
- assert.equal(sent.some(m=>m.type==='SOURCE_WITNESS_ARM'),false);assert.match(elements.get('environment').textContent,/尚未加载被动观察版本/);
+ assert.equal(sent.some(m=>m.type==='SOURCE_WITNESS_ARM'),false);assert.match(elements.get('environment').textContent,/尚未加载集中只读验证版本/);
  assert.equal(JSON.parse(elements.get('result').textContent).state,'NOT_RUN');
  }
 });
-test('worker version change after passive preparation stops polling without claiming the batch unspent',async()=>{
+test('worker version change after source preparation stops polling without claiming the batch unspent',async()=>{
  const elements=new Map(),polls=new Set();let reads=0;
  for(const id of ['result','run','download','environment','read','next-step','return-target','previous-batches'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:fn=>{polls.add(fn);return fn;},clearInterval:fn=>polls.delete(fn),chrome:{runtime:{sendMessage:async message=>{
-  if(message.type==='SOURCE_WITNESS_PREVIEW')return {state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH,route:'home'};
-  assert.equal(message.type,'SOURCE_WITNESS_READ');assert.equal(message.batch,PASSIVE_BATCH);return ++reads===1?{state:'WAITING_NATIVE',unspent:false}:oldConsumed().result;
+  if(message.type==='SOURCE_WITNESS_PREVIEW')return {state:'READY',mode:SOURCE_MODE,batch:SOURCE_BATCH,route:'home'};
+  assert.equal(message.type,'SOURCE_WITNESS_READ');assert.equal(message.batch,SOURCE_BATCH);return ++reads===1?{state:'WAITING_NATIVE',unspent:false}:oldConsumed().result;
  }}}};
  await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
  assert.equal(polls.size,1);await elements.get('read').handlers.click();assert.equal(polls.size,0);
- const result=JSON.parse(elements.get('result').textContent);assert.equal(result.state,'BLOCKED');assert.equal(result.unspent,false);assert.equal(result.reason,'passive-worker-version-changed-no-retry');
+ const result=JSON.parse(elements.get('result').textContent);assert.equal(result.state,'BLOCKED');assert.equal(result.unspent,false);assert.equal(result.reason,'source-worker-version-changed-no-retry');
 });
 async function pageFlow({initial={state:'NOT_RUN',unspent:true},active={id:1,windowId:4},focused=true,startedHere=true,own=()=>({id:10,windowId:4}),readResult=value=>value}={}){
  const elements=new Map(),sent=[],updates=[],events={},polls=new Set();let current=initial;
  for(const id of ['result','run','download','environment','read','next-step','return-target','previous-batches'])elements.set(id,{disabled:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener:(name,fn)=>{events[name]=fn;}},setInterval:fn=>{polls.add(fn);return fn;},clearInterval:fn=>polls.delete(fn),chrome:{windows:{getCurrent:async()=>({id:4,focused})},tabs:{getCurrent:own,query:async()=>[active],update:async(id,changes)=>{updates.push({id,...changes});}},runtime:{sendMessage:async message=>{
   sent.push(message);
-  if(message.type==='SOURCE_WITNESS_PREVIEW')return {state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH,route:'home'};
+  if(message.type==='SOURCE_WITNESS_PREVIEW')return {state:'READY',mode:SOURCE_MODE,batch:SOURCE_BATCH,route:'home'};
   if(message.type==='SOURCE_WITNESS_ARM'){current={state:'WAITING_NATIVE',unspent:false};return {...current,...(startedHere?{startedHere:true}:{})};}
   if(message.type==='SOURCE_WITNESS_RETURN'){assert.equal(current.state,'WAITING_NATIVE');return {state:'TARGET_SHOWN'};}
   if(message.type==='SOURCE_WITNESS_READ')return readResult(current);
@@ -423,7 +490,7 @@ async function pageFlow({initial={state:'NOT_RUN',unspent:true},active={id:1,win
  await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
  return {elements,sent,updates,events,polls,setResult:value=>{current=value;},click:(id,isTrusted=true)=>elements.get(id).handlers.click({isTrusted})};
 }
-const pageFinal={schema:PASSIVE_BATCH,state:'BLOCKED',reason:'no-native-context-observed',unspent:false};
+const pageFinal={schema:SOURCE_BATCH,state:'BLOCKED',reason:'no-native-context-observed',unspent:false};
 test('one trusted start prepares then returns once; final result is automatic without re-arming',async()=>{
  const h=await pageFlow();assert.equal(h.elements.get('run').disabled,false);assert.deepEqual(h.sent.map(m=>m.type),['SOURCE_WITNESS_PREVIEW','SOURCE_WITNESS_READ']);
  await h.click('run',false);assert.equal(h.sent.length,2);
@@ -453,7 +520,7 @@ test('uncertain initial result cannot start and unloading suppresses a late comp
  h.events.pagehide();resolveOwn({id:10,windowId:4});await new Promise(r=>setImmediate(r));assert.deepEqual(h.updates,[]);
 });
 test('incompatible prior history is explained before clicking and cannot invite repeated starts',async()=>{
- for(const reason of ['previous-consumed-context-result-required','previous-consumed-passive-result-required','previous-consumed-v2-result-required','previous-consumed-v3-result-required']){
+ for(const reason of ['previous-consumed-context-result-required','previous-consumed-passive-result-required','previous-consumed-v2-result-required','previous-consumed-v3-result-required','previous-consumed-v4-result-required']){
   const h=await pageFlow({initial:{state:'NOT_RUN',reason,requests:0,unspent:true}});
   assert.equal(h.elements.get('run').disabled,true);assert.equal(h.elements.get('previous-batches').open,true);
   assert.match(h.elements.get('next-step').textContent,/旧批次记录不匹配/);assert.match(h.elements.get('next-step').textContent,/无需打开聊天/);

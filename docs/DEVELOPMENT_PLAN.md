@@ -16,11 +16,11 @@
 
 **最新实际结果：v4已消费，nativeAssociation PASS。** 用户报告PARTIAL/native-association-observed-identity-not-run，准备4832ms、关联214ms、events=2/navigations=2，原生请求、receipt、DOM关联及一次history保留均有正向计数。扩展主动GET/正文读取0，身份与认证roster未请求，currentSpace和目录NOT_RUN。整体decision BLOCKED不是关联失败。聚合结果不证明特定prepared/history顺序，也不消除旧失败未知原因；报告无安装hash，不将分析HEAD当现场精确SHA。原finish已撤观察并清RAM receipt，不可从已保存报告恢复授权；active/v1/v2/v3/v4均已消费，只读保留。结束重复被动定位，下一关口是普通MV3认证roster与同批fresh C2匹配。
 
-**待一次集中批准的下一见证（尚未执行/未启新批）：** 复用现有`runWitness`，不新建身份/目录框架。本人同一授权Profile/绑定首页，一次自然打开已有聊天；准备≤120秒，0主动请求。取得同批fresh receipt及DOM关联后，先原`session→accounts`两GET与C2共同受六秒期限；无法取得合法主体/有效到期/canonical roster或匹配当前context时立即停止，目录不运行。不采用/me、default/null、C3或其他transport。
+**已获用户明确批准、原入口已准备的集中见证（真实执行NOT_RUN）：** 复用现有`runWitness`，不新建身份/目录框架。本人同一授权Profile/绑定首页，一次自然打开已有聊天；准备≤120秒，0主动请求。取得同批fresh receipt及DOM关联后，先原`session→accounts`两GET与C2共同受六秒期限；无法取得合法主体/有效到期/canonical roster或匹配当前context时立即停止，目录不运行。不采用/me、default/null、C3或其他transport。
 
 仅身份+C2通过时，沿现有独立闭包重新session→accounts两GET，再按原方案读取普通目录最多2页、归档1页、Project索引1页和该索引一个Project成员最多2页；认证及目录闭包共用六秒，未证明适用的参数域记NOT_RUN，不试探变体，第二页仅用本次合法continuation。最后session→accounts两GET强制收尾，核同主体/context/receipt/authority代际；缓存peek不算收尾。总≤12GET/30秒、并发1、零自动重试，每链≤6秒、session单次≤256KiB、其他≤1MiB、总≤4MiB。挑战、拒绝、429、超时、超限、导航/身份/context变化立即止，不换通道补测。只核当前C2所绑定的空间，不访问roster其他空间。
 
-许可须明确包括session的user.id/expires/accessToken及roster canonical/default/访问字段；token仅在包内worker RAM用于同链固定accounts或已通过空间的目录Authorization，结束清除，不读取浏览器Cookie存储、请求Cookie/token或让用户复制凭据。列表ID/标题/成员/分页及附带非目标资料仅短暂RAM解析后丢弃，最终仅匿名数量、同一性布尔、固定原因码与预算；不持久化完整响应、凭据或正文。新批只写独立单次标记与脱敏报告，保留五旧批，不开启生产scope/数据库/producer、不原生写入。不以页可读代替网站允许条件、来源语义、成员/NONE或个人日用验收。实现已存在；明确批准后只做原入口的新批接线及必要检查，不重复既有parser或无关矩阵。以下v3及v4准备文字均为历史，不再是当前可重用许可。
+本次批准包括session的user.id/expires/accessToken及roster canonical/default/访问字段；token仅在包内worker RAM用于同链固定accounts或已通过空间的目录Authorization，结束清除，不读取浏览器Cookie存储、请求Cookie/token或让用户复制凭据。列表ID/标题/成员/分页及附带非目标资料仅短暂RAM解析后丢弃，最终仅匿名数量、同一性布尔、固定原因码与预算；不持久化完整响应、凭据或正文。新批只写独立单次标记与脱敏报告，保留五旧批，不开启生产scope/数据库/producer、不原生写入。不以页可读代替网站允许条件、来源语义、成员/NONE或个人日用验收。原入口已接入独立`vaiwl-local-source-witness-20261022-v2`/`BOUNDED_SOURCE_WITNESS`，新批次与五旧记录隔离、页面/worker固定模式握手、未知请求计数null及不自动续跑均通过定向检查；保留原runner，不重复既有parser或无关矩阵。原目录已完整备份原位更新，manifest不变；真实执行/加载尚未发生。下一步仅同一Profile加载新版后一次开始→自动返回→原生侧栏点一条已有聊天→结果自动显示。具体源码/测试/安装/保全见STATUS首节。以下v3及v4准备文字均为历史，不再是当前可重用许可。
 
 最新v3已消费：用户回传`BLOCKED/single-navigation-boundary`，准备3190ms、navigations=1/events=0、请求阶段码全部0、0主动GET。按30d5feb1代码，本次是首个导航被解析为非conversation，早于C2 history/commit处理、request receipt、DOM与身份链。具体是home状态通知、Project或不支持路由未记录；点击时机回忆不确定，不推断根因，不修改准入。62522e16已在原开发worker补一次停止事件的固定匿名分类（事件/路由类别、白名单解析原因、是否已有目标及边界分支），保留停止逻辑与预算，旧v3不补写；当时未新建批次或更新真实安装，后续准备以下段当前授权为准。
 
@@ -36,7 +36,7 @@
 
 首批历史结果：用户回传 `BLOCKED/no-native-context-observed/requests:0/unspent:false`，已在原生页面打开已有聊天。源码确认停于 C2 浏览器 receipt 生成前，DOM body/身份/目录未执行；0主动GET不等于原生无请求或服务器不可行。旧报告缺少分支记录，只能定位层级，不能追溯分辨无匹配事件、缓存、header/过滤、文档时序或期限。先修原owner与见证器的固定匿名阶段记录，保留全部安全拒绝和已消费结果；离线复现的冷首页导航顺序敏感性不能直接认作真实根因。
 
-用户已在 `0f1cb74a` 后明确批准一次新的被动观察：同一Profile/标签一次自然首页→已有聊天，原过滤范围浏览器元数据及当前DOM ID关联，准备≤2分钟/关联≤6秒、0主动GET、无响应正文、无新权限/端点，无自动重试；不调用session/accounts/目录。复用原入口的被动批次已实现和原位打包，旧消费键/报告只读保留，新批独立消费且不能选择主动模式；现已收到本批真实报告：准备120006ms，events/navigations/全部阶段计数均0，BLOCKED且已消费；身份/当前空间/目录未执行。内部header/DOM拒绝不是本次已发生分支，零导航也不能由详情路径过滤解释；未确定目标、准备时机或浏览器事件交付中的实际原因。已修入口准备状态与精确返回绑定标签的歧义，不改生产校验/监听范围/消费键；无新真实请求。只有另获一次明确许可，才以同预算、同范围和精确返回做一次新被动见证；否则不重跑。本次仅定位真实receipt阻塞层，不把离线接线通过提升身份/当前空间。具体范围、停止条件和同源码验证见STATUS首节；不再等待Work/CDP，不重发旧许可。下段保留原已消费入口的机制，当前开发包不会继续该12请求链，不能据此扩大本批许可。
+用户已在 `0f1cb74a` 后明确批准一次新的被动观察：同一Profile/标签一次自然首页→已有聊天，原过滤范围浏览器元数据及当前DOM ID关联，准备≤2分钟/关联≤6秒、0主动GET、无响应正文、无新权限/端点，无自动重试；不调用session/accounts/目录。复用原入口的被动批次已实现和原位打包，旧消费键/报告只读保留，新批独立消费且不能选择主动模式；现已收到本批真实报告：准备120006ms，events/navigations/全部阶段计数均0，BLOCKED且已消费；身份/当前空间/目录未执行。内部header/DOM拒绝不是本次已发生分支，零导航也不能由详情路径过滤解释；未确定目标、准备时机或浏览器事件交付中的实际原因。已修入口准备状态与精确返回绑定标签的歧义，不改生产校验/监听范围/消费键；无新真实请求。只有另获一次明确许可，才以同预算、同范围和精确返回做一次新被动见证；否则不重跑。本次仅定位真实receipt阻塞层，不把离线接线通过提升身份/当前空间。具体范围、停止条件和同源码验证见STATUS首节；不再等待Work/CDP，不重发旧许可。下段保留原已消费入口的机制；当时的被动包不会继续该12请求链，不能据此扩大那一批许可。当前新批以本节上方用户新批准范围为准。
 
 用户在 `89b1aaf1` 后明确改变执行方法：由现有 MV3 开发版在本人已登录的同一 Chrome Profile 内启动，不依赖 Work、CDP、远程控制或额外 Profile。原临时导航保留，开发专用 `tools/native-source-witness/` 复用现有身份/C2/parser；不修改普通生产构建、不自动启用身份或目录 producer。安装、入口、精确构建与验证状态见 STATUS 首节；本机包已准备，真实来源仍 NOT_RUN。
 
