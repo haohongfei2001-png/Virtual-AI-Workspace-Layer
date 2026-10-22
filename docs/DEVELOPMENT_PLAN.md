@@ -14,6 +14,14 @@
 
 ## 当前执行：本机开发版一次性来源见证（2026-10-22）
 
+**最新实际结果：v4已消费，nativeAssociation PASS。** 用户报告PARTIAL/native-association-observed-identity-not-run，准备4832ms、关联214ms、events=2/navigations=2，原生请求、receipt、DOM关联及一次history保留均有正向计数。扩展主动GET/正文读取0，身份与认证roster未请求，currentSpace和目录NOT_RUN。整体decision BLOCKED不是关联失败。聚合结果不证明特定prepared/history顺序，也不消除旧失败未知原因；报告无安装hash，不将分析HEAD当现场精确SHA。原finish已撤观察并清RAM receipt，不可从已保存报告恢复授权；active/v1/v2/v3/v4均已消费，只读保留。结束重复被动定位，下一关口是普通MV3认证roster与同批fresh C2匹配。
+
+**待一次集中批准的下一见证（尚未执行/未启新批）：** 复用现有`runWitness`，不新建身份/目录框架。本人同一授权Profile/绑定首页，一次自然打开已有聊天；准备≤120秒，0主动请求。取得同批fresh receipt及DOM关联后，先原`session→accounts`两GET与C2共同受六秒期限；无法取得合法主体/有效到期/canonical roster或匹配当前context时立即停止，目录不运行。不采用/me、default/null、C3或其他transport。
+
+仅身份+C2通过时，沿现有独立闭包重新session→accounts两GET，再按原方案读取普通目录最多2页、归档1页、Project索引1页和该索引一个Project成员最多2页；认证及目录闭包共用六秒，未证明适用的参数域记NOT_RUN，不试探变体，第二页仅用本次合法continuation。最后session→accounts两GET强制收尾，核同主体/context/receipt/authority代际；缓存peek不算收尾。总≤12GET/30秒、并发1、零自动重试，每链≤6秒、session单次≤256KiB、其他≤1MiB、总≤4MiB。挑战、拒绝、429、超时、超限、导航/身份/context变化立即止，不换通道补测。只核当前C2所绑定的空间，不访问roster其他空间。
+
+许可须明确包括session的user.id/expires/accessToken及roster canonical/default/访问字段；token仅在包内worker RAM用于同链固定accounts或已通过空间的目录Authorization，结束清除，不读取浏览器Cookie存储、请求Cookie/token或让用户复制凭据。列表ID/标题/成员/分页及附带非目标资料仅短暂RAM解析后丢弃，最终仅匿名数量、同一性布尔、固定原因码与预算；不持久化完整响应、凭据或正文。新批只写独立单次标记与脱敏报告，保留五旧批，不开启生产scope/数据库/producer、不原生写入。不以页可读代替网站允许条件、来源语义、成员/NONE或个人日用验收。实现已存在；明确批准后只做原入口的新批接线及必要检查，不重复既有parser或无关矩阵。以下v3及v4准备文字均为历史，不再是当前可重用许可。
+
 最新v3已消费：用户回传`BLOCKED/single-navigation-boundary`，准备3190ms、navigations=1/events=0、请求阶段码全部0、0主动GET。按30d5feb1代码，本次是首个导航被解析为非conversation，早于C2 history/commit处理、request receipt、DOM与身份链。具体是home状态通知、Project或不支持路由未记录；点击时机回忆不确定，不推断根因，不修改准入。62522e16已在原开发worker补一次停止事件的固定匿名分类（事件/路由类别、白名单解析原因、是否已有目标及边界分支），保留停止逻辑与预算，旧v3不补写；当时未新建批次或更新真实安装，后续准备以下段当前授权为准。
 
 用户现已明确批准上述同范围被动分类观察，原入口已准备独立v4：原Profile/绑定标签、一次首页→已有聊天、120秒准备/6秒关联、0主动GET/正文、原详情过滤；仅固定分类/计数，不存URL/ID/标题/header值，无自动重试、不调用身份/目录、不启scope/旧库。旧active/v1/v2/v3四批保持原键和原结果；v3仅以明确消费终态核前置，不要求补造当时未记录的分类或精确计数。原目录已备份原位更新，固定批次握手、四报告读回、定向回归、隔离headless入口及构建/独立审查通过，真实执行NOT_RUN。唯一下一来源条件为同一扩展加载v4后，用户一次开始→自动返回→原生侧栏点一次已有聊天→自动显示结果；无需重复申请已批准许可。先依据实际首个导航类别决定是否存在应修的home通知处理或具体route适配，不以加大矩阵或猜测放宽替代。以下v2修复与v3准备保留为历史，不再代表可用的未消费机会。

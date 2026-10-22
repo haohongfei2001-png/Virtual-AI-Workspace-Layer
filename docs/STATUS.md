@@ -1,5 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## v4真实原生请求与当前DOM关联PASS；身份/空间与目录尚未执行（2026-10-22）
+
+用户回传`vaiwl-local-context-observation-20261022-v4`终态为`PARTIAL`、decision=`BLOCKED`、reason=`native-association-observed-identity-not-run`、unspent=false。准备4832ms、关联阶段214ms；events=2、navigations=2，send/admitted/prepared/completion/receipt-created/association-started/association-passed/history-retained-pending各1，其他阶段码0。主动GET、解码字节、HTTP列表均0。nativeAssociation明确PASS；currentSpace为NOT_RUN/authenticated-roster-not-requested，身份与目录NOT_RUN。整体BLOCKED来自被动批次的权限/执行边界，不是本次关联再次失败。
+
+对照de3facba现有代码，本次支持一条真实链路：浏览器匹配原生详情请求→合格完成元信息→新receipt→当前文档、路由、DOM聊天ID及最终frame关联通过。history保留机制实际使用，但聚合计数不能还原prepared/history先后，不能断言必然命中bcc44493新增子分支或追溯解释旧失败。completion未被显式缓存标志拒绝不等于所有内存缓存路径已证明；memoryCache仍NOT_DETERMINABLE。报告没有安装包hash，源码分析基线不冒充现场精确SHA。也不能用此一次成功证明首页/Project/休眠恢复、身份稳定性、空间授权、成员/NONE或活动语义。
+
+本批已消费，五份旧记录（active及v1–v4）保留，不再次做同类被动复验。finish会停止owner并清除RAM receipt；报告是证据，不能恢复授权或续接旧receipt。唯一下一关口变为普通MV3的fresh session→认证canonical roster与同批新C2匹配，仍禁止default/null、roster第一项或/me替代当前空间。现有runner与生产provider/ScopeAuthority已具备固定链，本轮没有需要凭空新增的生产修复，不重复测试或重建诊断器。
+
+为减少再次分批人工操作，已在唯一DEVELOPMENT_PLAN冻结下一项集中授权提案：复用现有12GET见证，先2GET认证+C2，失败立即止；仅通过后才重新认证2GET并顺序读取既定最多6目录页，最后2GET强制收尾。总≤12GET/30秒/并发1/零重试，每链≤6秒，session≤256KiB、其他≤1MiB、总≤4MiB；本机同Profile一次自然导航的准备≤120秒。需要明确批准session响应内短期token在worker RAM用于固定accounts/目录Authorization；不读取Cookie存储、不向页面/日志/数据库导出凭据。目录只有有依据的参数和合法continuation才执行；不能从本次v4许可推导此主动读取许可。生产来源/网站允许条件/个人J1–J4仍未建立，不自动启scope、DB或产品来源。
+
+原始用户脱敏报告、出处与只读分析位于`.git/vaiwl-checkpoints/20261022-v4-associated/`。本轮未操作Chrome、账户或浏览器存储，未重载/更新原安装、未新建可执行批次，2258份副本与3个stash保全。后续批准后只复用同一入口，保留旧单次记录；真实动作尚未开始。下节NOT_RUN及旧导航阻塞是历史状态，已由本次实际关联PASS取代，但旧失败原因不改判。
+
 ## 已批准的导航分类被动观察v4已准备并原位更新；真实执行NOT_RUN（2026-10-22）
 
 用户明确批准一次同范围被动观察以补取v3缺失的导航类别。原开发入口使用独立批次`vaiwl-local-context-observation-20261022-v4`：同一授权Profile/绑定标签，一次首页→已有聊天，准备≤120秒、DOM关联≤6秒、0主动GET/0响应正文、原详情过滤，无自动重试。仅在原停止点增加固定history/commit、路由类别、安全解析原因和目标变化类别；不改变停止条件、C2准入、请求过滤或身份边界，不调用session/accounts/目录、不启scope或数据库。
