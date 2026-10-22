@@ -59,3 +59,18 @@ test('binding service sees fixed-provider transport after revoked refresh has re
  assert.equal(prematurelyIdle,false);assert.equal(service.isIdle(),true);
  assert.equal(service.authority.scopeFor(frame),null);assert.equal(calls,1);
 });
+
+for(const end of ['abort','deadline'])test(`${end} identity drains a late response body before becoming idle`,async()=>{
+ const fetchGate=deferred(),cancelGate=deferred(),timers=new Map();let calls=0,cancels=0,elapsed=0;
+ const provider=createSessionProvider({now:()=>now,elapsedNow:()=>elapsed,fetch:()=>{calls++;return fetchGate.promise;}});
+ const authority=createScopeAuthority({provider,profile:{id:'fixture',singlePersonalDefault:true},now:()=>now,elapsedNow:()=>elapsed,schedule:fn=>{const key=Symbol();timers.set(key,fn);return key;},cancel:key=>timers.delete(key)});
+ const pending=authority.refresh(frame,'bind');await flush();assert.equal(calls,1);
+ if(end==='abort')authority.invalidateAll();else{elapsed=6000;for(const fn of timers.values())fn();}
+ assert.equal((await pending).state,'unverified');assert.equal(authority.isIdle(),false);
+ const body=new ReadableStream({start(controller){controller.enqueue(new TextEncoder().encode('unread fixture bytes'));},cancel(){cancels++;return cancelGate.promise;}});
+ fetchGate.resolve(new Response(body));await flush();
+ const beforeCleanup={cancels,idle:authority.isIdle()};
+ if(end==='abort')cancelGate.resolve();else cancelGate.reject(Error('fixture cleanup failure'));await flush();
+ assert.deepEqual(beforeCleanup,{cancels:1,idle:false},'late response must enter tracked cleanup');
+ assert.equal(authority.isIdle(),true);assert.equal(calls,1);assert.equal(authority.scopeFor(frame),null);
+});

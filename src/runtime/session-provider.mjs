@@ -40,7 +40,10 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
   let budgetWindow=current?.budgetWindow??null,requestOrdinal=0;
   const json=async(path,token,{raw=false,contextId=null}={})=>{
    check();if(current&&readBudget){const reservation=await readBudget.reserve({principalKey:current.expectedPrincipalKey,contextKey:current.expectedContextKey,sourceDomain:origin,attemptKey:current.directory?(requestOrdinal===0?'directory:'+current.directory.path:null):path==='/api/auth/session'?'conversation:'+current.conversationId:null,windowStartedAt:budgetWindow,signal:combined});budgetWindow=reservation.windowStartedAt;check();}
-   requestOrdinal++;const target=origin+path,response=await fetch(target,{method:'GET',credentials:'include',cache:'no-store',redirect:'error',signal:combined,headers:{Accept:'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(contextId&&contextHeader?{'ChatGPT-Account-ID':contextId}:{})}});check();
+   requestOrdinal++;const target=origin+path,response=await fetch(target,{method:'GET',credentials:'include',cache:'no-store',redirect:'error',signal:combined,headers:{Accept:'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(contextId&&contextHeader?{'ChatGPT-Account-ID':contextId}:{})}});
+   // A transport can resolve after cancellation. Reject its data but retain
+   // actual work until its unread body has completed cancellation as well.
+   try{check();}catch(error){try{await response?.body?.cancel();}catch{}throw error;}
    return readSessionJSON(response,{target,raw,limit:raw&&!current?.directory?8*1024*1024:path==='/api/auth/session'?256*1024:1024*1024,check});
   };
   let onAbort;const cancelled=new Promise((_,reject)=>{onAbort=()=>reject(Error('session-aborted'));combined.addEventListener('abort',onAbort,{once:true});if(combined.aborted)onAbort();});

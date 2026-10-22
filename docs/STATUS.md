@@ -1,6 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
 
+## 迟到响应流清理纳入实际工作；恢复两个旧取证入口（2026-10-23）
+
+接续0ff3dd81，dot独立源码审查指出：fetch忽略abort、取消后才返回Response时，原post-fetch check直接抛错，尚未进入readSessionJSON，未读body无显式cancel，实际chain随之排空。主writer以取消/期限两种最小反例确认：修前cancel未调用且提前idle。现仅在该check失败分支等待body取消、保留原错误；清理迟到成功或失败后才排空，调用方仍有界返回，迟到数据不解析、不续发、不恢复授权。此为既有边界遗漏，不把它认作已发生真实串scope或上轮新引入回归。
+
+同轮检查原unknown故障/J4预算取证器，确认旧唯一源码锚点随目录计数/错误保留/实际chain包装漂移，分别4项/2项在行为前失败。现同步原精确锚点，保留requestOrdinal、schema私有原因原分支、parser抛错和原实际work包装；不改生产oracle、trace容量或历史INCOMPLETE结论。不重跑历史Linux故障或整套旅程。
+
+最终合批181项相关检查通过；随后将迟到body反例加强为实际Response/ReadableStream且cancel promise受控，5项相关检查通过（不相加）。默认/观察候选各191文件构建校验通过。根因来自dot源码窄审，最终补丁仅主writer复核，未称独立运行通过。修前日志及中间取证代码拼接错误均保留；证据见[本批回执](engineering/free-late-response-cleanup-20261023.json)和`.git/vaiwl-checkpoints/20261023-source-trace-compat/`。
+
+无新增真实请求、批次或本人安装更新；七批已消费结果、2258份原副本及3个stash保留。生产仍关闭，来源下一条件仍是主用profile的网站允许条件与持续读取范围；正向成员/NONE、可信活动及真实日用恢复不靠本批补齐。无需用户操作，不宣称个人Free或发布完成。
+
+
 ## 固定认证/当前对象读取取消后，实际请求与清理完成前保持nonidle（2026-10-23）
 
 接续22eb4c8d，只读核对原附件SHA256仍为c01a3890…、source-v3/CONDITIONAL GO/10GET/已消费；不是新批结果，没有重测。原C6/F3继续定位确认：SessionProvider外层取消race先返回，ScopeAuthority/CurrentMetadataReader的计数也随之结束，但底层忽略abort的fetch或reader.cancel仍未完成，service可提前报idle。两项实际provider组合最小反例修前均失败；首次测试草稿使用错误refresh reason的失败另存，纠正后才形成行为证据，不混计产品失败。

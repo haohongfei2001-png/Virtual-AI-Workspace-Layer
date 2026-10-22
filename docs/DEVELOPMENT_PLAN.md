@@ -68,6 +68,8 @@
 
 本轮C6/F3接续22eb4c8d：实际固定认证/当前对象provider取消race会早于底层fetch/reader清理结束，已用组合反例确认并补私有实际chain计数，由原authority/currentMetadata空闲判定消费。原有界返回、迟到拒绝、预算及凭据边界不变；没有新生产来源、真实请求或安装更新。定向验证/构建及源码证据见STATUS和`engineering/free-session-idle-drain-20261023.json`。这项恢复修复不补齐网站允许条件、持续只读范围或真实主用J1–J4；source-v3原附件已消费，不重跑。
 
+本轮C6/F3在0ff3dd81之后吸收dot具体源码反例：取消/期限后迟到Response必须取消未读body并等待清理完成，才可排空实际work；已最小复现并补齐。原unknown/J4预算取证器只同步失效的唯一源码锚点，不增加观测框架或改变历史验收。实际差异、日志和构建见STATUS及`engineering/free-late-response-cleanup-20261023.json`；无新增真实读取、授权或安装更新。
+
 ## 历史来源预检：执行环境前置 BLOCKED（2026-10-22，执行方式以上节为准）
 
 用户在 `54aef69e` 后明确批准一次新的有界只读见证，解除下节“尚未授权新批次”的限制，其他边界不变。采用裁决 6333439460 的固定主 transport：先 fresh session→canonical roster 与同文档 C2；成立后才允许固定目录闭包及收尾。全批最多 12 GET/30 秒、并发 1、零重试，每链/目录闭包最多 6 秒，session≤256KiB、其他响应≤1MiB、总计≤4MiB；仅匿名结构/数量/同一性/结果码，不存原 ID、标题、游标、正文或凭据，不原生写入、不自动启生产来源。
