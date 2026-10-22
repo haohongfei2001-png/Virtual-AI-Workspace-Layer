@@ -1,8 +1,8 @@
-<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>VAIWL 一次集中只读来源验证 · v2</title><link rel="stylesheet" href="extension/status.css"><link rel="stylesheet" href="source-witness.css"><body>
-<h1>VAIWL 一次集中只读来源验证 · v2</h1><p>新批准的独立批次 · 保留前五批结果 · 不启用生产身份或数据库</p><p id="environment">正在核对所选标签…</p>
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>VAIWL 一次集中只读来源验证 · v3</title><link rel="stylesheet" href="extension/status.css"><link rel="stylesheet" href="source-witness.css"><body>
+<h1>VAIWL 一次集中只读来源验证 · v3</h1><p>本次点击单独确认 · 保留前六批结果 · 不启用生产身份或数据库</p><p id="environment">正在核对所选标签…</p>
 <p>先观察一次原生请求与当前页面的关联，再通过固定 session → accounts 核对身份、账户列表和当前空间。失败立即停止。仅通过后重新认证，读取普通聊天最多2页、归档1页、Project索引1页、索引中一个Project的成员最多2页，最后重新认证核对。</p>
 <p>准备最多2分钟；主动读取最多12个GET、30秒、并发1、无重试。首次身份链（含DOM关联）、整个目录闭包及收尾认证分别最多6秒；session每次最多256KiB，其他响应每次最多1MiB，累计最多4MiB。遇挑战、拒绝、超限或身份/页面变化立即停止。</p>
-<p>session返回的token仅在扩展worker内存用于本批固定认证，不读取Cookie存储，不保存凭据。响应中的ID、标题、分页字段及附带资料仅在内存解析后丢弃，只保存匿名数量、一致性、状态及固定原因码；不读取聊天正文接口，不保存响应正文，不自动上传。不会发送、创建、移动、删除或归档内容。</p>
+<p>session返回的token仅在扩展worker内存用于本批固定认证，不读取Cookie存储，不保存凭据。响应中的ID、标题、分页字段及附带资料仅在内存解析后丢弃，只保存匿名数量、一致性、状态及固定原因码；不读取聊天正文接口，不保存响应正文，不自动上传。原生停止仅附带状态码、缓存标志及固定分类，不读取其响应正文。不会发送、创建、移动、删除或归档内容。</p>
 <p>点击下方按钮即确认这是同一已授权 Chrome Profile，并允许上述一次集中只读验证。不会自动打开聊天；准备成功后自动返回原标签，由你选择一条已有聊天。</p>
 <p><button id="run" disabled>确认此 Profile，开始只读验证</button></p>
 <p id="next-step" role="status" aria-live="polite">尚未开始。请先核对环境，再准备观察。</p>
@@ -11,5 +11,5 @@
 <p>关闭或重开结果页不重发；worker重启或不确定结果不自动续跑。不要卸载、删除存储或换安装目录重置本次机会。</p>
 <button id="read">读取已有结果（不发网络请求）</button> <button id="download" disabled>保存脱敏报告</button>
 <pre id="result" role="status" aria-live="polite">尚未执行</pre>
-<details id="previous-batches"><summary>前五批旧结果（只读保留，不补造）</summary><pre id="previous-result">正在读取本地结果…</pre></details>
+<details id="previous-batches"><summary>前六批旧结果（只读保留，不补造）</summary><pre id="previous-result">正在读取本地结果…</pre></details>
 <script type="module" src="source-witness-page.mjs"></script></body></html>

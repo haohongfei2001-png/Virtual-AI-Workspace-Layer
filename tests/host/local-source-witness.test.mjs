@@ -70,7 +70,7 @@ test('developer overlay preserves normal navigation, adds only storage, private 
  assert.match(readFileSync(join(output,'source-witness-entry.mjs'),'utf8'),/extension\/temporary-navigation.mjs/);assert.match(readFileSync(join(output,'status.html'),'utf8'),/source-witness-entry.mjs/);
  assert(manifest.web_accessible_resources.every(r=>r.resources.every(p=>!p.includes('witness'))));
  assert.equal(info.mode,SOURCE_MODE);assert.equal(info.batchId,SOURCE_BATCH);assert.equal(info.previousBatchId,BATCH);assert.equal(info.previousPassiveBatchId,PREVIOUS_PASSIVE_BATCH);assert.equal(info.previousPassiveV2BatchId,PREVIOUS_PASSIVE_V2_BATCH);assert.equal(info.previousPassiveV3BatchId,PREVIOUS_PASSIVE_V3_BATCH);
- assert.equal(info.previousPassiveV4BatchId,PASSIVE_BATCH);assert.equal(info.maxGETs,12);assert.equal(info.retries,0);assert.equal(info.maxBytes,4194304);assert.equal(info.maxConcurrent,1);assert.equal(info.maxSessionBytes,262144);assert.equal(info.maxResponseBytes,1048576);assert.equal(info.realChatGPT,'NOT_RUN');
+ assert.equal(info.previousPassiveV4BatchId,PASSIVE_BATCH);assert.equal(info.previousSourceBatchId,PREVIOUS_SOURCE_BATCH);assert.equal(info.maxGETs,12);assert.equal(info.retries,0);assert.equal(info.maxBytes,4194304);assert.equal(info.maxConcurrent,1);assert.equal(info.maxSessionBytes,262144);assert.equal(info.maxResponseBytes,1048576);assert.equal(info.realChatGPT,'NOT_RUN');
  assert.equal(info.maxPreparationMs,120000);assert.equal(info.maxChainMs,6000);assert.equal(info.maxElapsedMs,150000);assert.equal(info.maxActiveMs,30000);
  assert.throws(()=>buildLocalWitness(output),/output-must-be-new/);
  // A modified permission plus a recomputed self-reported hash is not proof.
@@ -79,7 +79,7 @@ test('developer overlay preserves normal navigation, adds only storage, private 
  assert.throws(()=>verifyLocalWitness(output),/witness-overlay-mismatch/);
 });
 
-import {installWitnessWorker,SOURCE_BATCH,SOURCE_MODE,PASSIVE_BATCH,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH,PREVIOUS_PASSIVE_V3_BATCH} from '../../tools/native-source-witness/worker.mjs';
+import {installWitnessWorker,SOURCE_BATCH,PREVIOUS_SOURCE_BATCH,SOURCE_MODE,PASSIVE_BATCH,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH,PREVIOUS_PASSIVE_V3_BATCH} from '../../tools/native-source-witness/worker.mjs';
 import {BATCH} from '../../tools/native-source-witness/runner.mjs';
 function mockChrome(stored={},options={passiveOnly:false}){
  const event=()=>{const listeners=new Set();return {listeners,addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f),emit:x=>{for(const f of listeners)f(x);}};};
@@ -126,7 +126,8 @@ const passiveRead={type:'SOURCE_WITNESS_READ',batch:PASSIVE_BATCH},passiveReturn
 const priorLedgers=(active=oldConsumed())=>({[BATCH]:active,[PREVIOUS_PASSIVE_BATCH]:oldPassiveConsumed(),[PREVIOUS_PASSIVE_V2_BATCH]:oldPassiveV2Consumed(),[PREVIOUS_PASSIVE_V3_BATCH]:oldPassiveV3Consumed()});
 const oldPassiveV4Consumed=()=>({state:'finished',result:{schema:PASSIVE_BATCH,state:'PARTIAL',reason:'native-association-observed-identity-not-run',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,stages:{nativeAssociation:{state:'PASS',reason:'fresh-request-and-current-dom-associated-only'}}}});
 const sourceOptions={passiveOnly:false,sourceWitness:true},sourceArm={type:'SOURCE_WITNESS_ARM',tabId:1,batch:SOURCE_BATCH},sourceRead={type:'SOURCE_WITNESS_READ',batch:SOURCE_BATCH};
-const sourceLedgers=()=>({...priorLedgers(),[PASSIVE_BATCH]:oldPassiveV4Consumed()});
+const oldSourceV2Consumed=()=>({state:'finished',result:{schema:PREVIOUS_SOURCE_BATCH,mode:SOURCE_MODE,state:'BLOCKED',reason:'native-request-refused-or-failed',unspent:false,requests:0,stages:{nativeAssociation:{state:'BLOCKED',reason:'native-request-refused-or-failed'}}}});
+const sourceLedgers=()=>({...priorLedgers(),[PASSIVE_BATCH]:oldPassiveV4Consumed(),[PREVIOUS_SOURCE_BATCH]:oldSourceV2Consumed()});
 test('source batch requires consumed associated v4 without reconstructing or overwriting any old record',async()=>{
  const valid=oldPassiveV4Consumed();
  const cases=[undefined,{state:'reserved',result:valid.result},...[
@@ -139,10 +140,23 @@ test('source batch requires consumed associated v4 without reconstructing or ove
   assert.deepEqual(h.stored,before);assert.equal(h.stored[SOURCE_BATCH],undefined);
  }
 });
+test('new source batch requires consumed source-v2 without inventing its missing HTTP diagnostics',async t=>{
+ const valid=oldSourceV2Consumed();
+ for(const record of [undefined,{state:'reserved',result:null},...[{schema:SOURCE_BATCH},{state:'PARTIAL'},{reason:'other'},{mode:'PASSIVE_C2_ONLY'},{unspent:true},{requests:null},{requests:1},{stages:{nativeAssociation:{state:'PASS'}}}].map(patch=>({state:'finished',result:{...valid.result,...patch}}))]){
+  const h=mockChrome({...sourceLedgers(),[PREVIOUS_SOURCE_BATCH]:record},sourceOptions),before=structuredClone(h.stored);
+  h.chrome.tabs.get=async()=>assert.fail('invalid prior source record must stop before live target access');
+  for(const message of [sourceRead,sourceArm]){const r=await h.message(message);assert.equal(r.reason,'previous-consumed-source-v2-result-required');assert.equal(r.unspent,true);assert.equal(r.requests,0);}
+  assert.deepEqual(h.stored,before);assert.equal(h.stored[SOURCE_BATCH],undefined);
+ }
+ const old=sourceLedgers(),h=mockChrome(structuredClone(old),sourceOptions);t.after(()=>h.chrome.tabs.onRemoved.emit(1));
+ assert.equal((await h.message(sourceRead)).reason,'not-started');assert.equal((await h.message(sourceArm)).state,'WAITING_NATIVE');
+ for(const key of Object.keys(old))assert.deepEqual(h.stored[key],old[key]);
+ assert.equal((await h.message({type:'SOURCE_WITNESS_PREVIOUS'})).sourceV2.nativeObservation,undefined);
+});
 test('fixed source handshake rejects older or message-selected modes and spent worker loss keeps unknown request count',async()=>{
  const old=sourceLedgers(),h=mockChrome({...old,[SOURCE_BATCH]:{state:'reserved',result:null}},sourceOptions);
  const env=await h.message({type:'SOURCE_WITNESS_PREVIEW',tabId:1});assert.equal(env.batch,SOURCE_BATCH);assert.equal(env.mode,SOURCE_MODE);
- for(const message of [passiveArm,passiveRead,{type:'SOURCE_WITNESS_ARM',tabId:1},{...sourceArm,sourceWitness:true}])assert.equal(await h.message(message),'ignored');
+ for(const message of [passiveArm,passiveRead,{...sourceArm,batch:PREVIOUS_SOURCE_BATCH},{...sourceRead,batch:PREVIOUS_SOURCE_BATCH},{type:'SOURCE_WITNESS_ARM',tabId:1},{...sourceArm,sourceWitness:true}])assert.equal(await h.message(message),'ignored');
  const r=await h.message(sourceRead);assert.equal(r.schema,SOURCE_BATCH);assert.equal(r.mode,SOURCE_MODE);assert.equal(r.requests,null);assert.equal(r.requestCountKnown,false);assert.equal(r.requestUpperBound,12);assert.equal(r.unspent,false);assert.equal(r.stages.identity.state,'PARTIAL');
  h.chrome.tabs.get=async()=>assert.fail('spent batch cannot access a tab');assert.deepEqual(await h.message(sourceArm),r);
  const previous=await h.message({type:'SOURCE_WITNESS_PREVIOUS'});assert.deepEqual(Object.values(previous),Object.values(old).map(x=>x.result));
@@ -223,7 +237,7 @@ test('redirect and network error stop diagnostics contain no dynamic error/heade
   assert.deepEqual(r.nativeObservation.requestStop,{eventKind,statusCode:statusCode??null,fromCache:'unknown',requestMatch:'NOT_VERIFIED',challenge:'NOT_OBSERVED'});assert.equal(r.requests,0);assert(!/PRIVATE|12345678/.test(JSON.stringify(r)));
  }
 });
-test('consumed source-v2 refusal remains unchanged with absent requestStop and cannot be re-armed',async()=>{
+test('consumed current source refusal remains unchanged with absent requestStop and cannot be re-armed',async()=>{
  const result={schema:SOURCE_BATCH,mode:SOURCE_MODE,state:'BLOCKED',reason:'native-request-refused-or-failed',unspent:false,requests:0,nativeObservation:{counts:{'completion-http-rejected':1,'completion-observed':0},events:2,navigations:2,preparationMs:2554}};
  const h=mockChrome({...sourceLedgers(),[SOURCE_BATCH]:{state:'finished',result}},sourceOptions),before=structuredClone(h.stored);
  h.chrome.tabs.get=async()=>assert.fail('spent record must not read a live target');
@@ -560,7 +574,7 @@ test('uncertain initial result cannot start and unloading suppresses a late comp
  h.events.pagehide();resolveOwn({id:10,windowId:4});await new Promise(r=>setImmediate(r));assert.deepEqual(h.updates,[]);
 });
 test('incompatible prior history is explained before clicking and cannot invite repeated starts',async()=>{
- for(const reason of ['previous-consumed-context-result-required','previous-consumed-passive-result-required','previous-consumed-v2-result-required','previous-consumed-v3-result-required','previous-consumed-v4-result-required']){
+ for(const reason of ['previous-consumed-context-result-required','previous-consumed-passive-result-required','previous-consumed-v2-result-required','previous-consumed-v3-result-required','previous-consumed-v4-result-required','previous-consumed-source-v2-result-required']){
   const h=await pageFlow({initial:{state:'NOT_RUN',reason,requests:0,unspent:true}});
   assert.equal(h.elements.get('run').disabled,true);assert.equal(h.elements.get('previous-batches').open,true);
   assert.match(h.elements.get('next-step').textContent,/旧批次记录不匹配/);assert.match(h.elements.get('next-step').textContent,/无需打开聊天/);

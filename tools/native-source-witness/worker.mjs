@@ -7,7 +7,8 @@ export const PREVIOUS_PASSIVE_BATCH='vaiwl-local-context-observation-20261022-v1
 export const PREVIOUS_PASSIVE_V2_BATCH='vaiwl-local-context-observation-20261022-v2';
 export const PREVIOUS_PASSIVE_V3_BATCH='vaiwl-local-context-observation-20261022-v3';
 export const PASSIVE_BATCH='vaiwl-local-context-observation-20261022-v4';
-export const SOURCE_BATCH='vaiwl-local-source-witness-20261022-v2';
+export const PREVIOUS_SOURCE_BATCH='vaiwl-local-source-witness-20261022-v2';
+export const SOURCE_BATCH='vaiwl-local-source-witness-20261022-v3';
 export const SOURCE_MODE='BOUNDED_SOURCE_WITNESS';
 const navigationKinds=new Set(['home','projects-index','shared-view','temporary','conversation','project-candidate','project','unsupported']);
 const navigationPolicyReasons=new Set(['invalid-native-url','invalid-native-scheme','foreign-native-origin','native-port-not-allowed','ambiguous-native-encoding','invalid-native-encoding','ambiguous-native-path','unsupported-native-fragment','unsupported-native-query','conflicting-conversation-grammar','unknown-conversation-grammar','conflicting-project-grammar','invalid-project-grammar-result','unsupported-native-route']);
@@ -25,7 +26,7 @@ export function installWitnessWorker(chrome,{passiveOnly=true,sourceWitness=fals
  const unbound=(reason,elapsedMs=0)=>{const result=emptyReport(reason);result.state='BLOCKED';result.unspent=false;result.elapsedMs=elapsedMs;result.stages[boundMode?'nativeAssociation':'currentSpace']={state:'BLOCKED',reason};return result;};
  const get=async()=> (await chrome.storage.local.get(batch))[batch]??null;
  const save=value=>chrome.storage.local.set({[batch]:value});
- const previousRecords=()=>chrome.storage.local.get([BATCH,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH,PREVIOUS_PASSIVE_V3_BATCH,...(sourceWitness?[PASSIVE_BATCH]:[])]);
+ const previousRecords=()=>chrome.storage.local.get([BATCH,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH,PREVIOUS_PASSIVE_V3_BATCH,...(sourceWitness?[PASSIVE_BATCH,PREVIOUS_SOURCE_BATCH]:[])]);
  const notStarted=reason=>({state:'NOT_RUN',reason,requests:0,unspent:true});
  async function priorIssue(){
   const records=await previousRecords(),activeRecord=records[BATCH],active=activeRecord?.result;
@@ -48,6 +49,10 @@ export function installWitnessWorker(chrome,{passiveOnly=true,sourceWitness=fals
    // A consumed PASS is history only. The new batch must acquire its own fresh
    // browser receipt and DOM association; it cannot deserialize the old proof.
    if(v4Record?.state!=='finished'||v4?.schema!==PASSIVE_BATCH||v4.state!=='PARTIAL'||v4.reason!=='native-association-observed-identity-not-run'||v4.unspent!==false||v4.mode!=='PASSIVE_C2_ONLY'||v4.requests!==0||v4.stages?.nativeAssociation?.state!=='PASS')return 'previous-consumed-v4-result-required';
+   const sourceRecord=records[PREVIOUS_SOURCE_BATCH],source=sourceRecord?.result;
+   // Preserve the actual zero-active-request v2 terminal record. Its absent
+   // HTTP/cache fields cannot be reconstructed or required for this new run.
+   if(sourceRecord?.state!=='finished'||source?.schema!==PREVIOUS_SOURCE_BATCH||source.state!=='BLOCKED'||source.reason!=='native-request-refused-or-failed'||source.unspent!==false||source.mode!==SOURCE_MODE||source.requests!==0||source.stages?.nativeAssociation?.state!=='BLOCKED')return 'previous-consumed-source-v2-result-required';
   }
   return null;
  }
@@ -163,7 +168,7 @@ export function installWitnessWorker(chrome,{passiveOnly=true,sourceWitness=fals
   let task;
   if(m.type==='SOURCE_WITNESS_READ'&&(boundMode?Object.keys(m).length===2&&m.batch===batch:Object.keys(m).length===1))task=read();
   else if(boundMode&&m.type==='SOURCE_WITNESS_RETURN'&&Object.keys(m).length===2&&m.batch===batch)task=returnToObservedTab();
-  else if(boundMode&&m.type==='SOURCE_WITNESS_PREVIOUS'&&Object.keys(m).length===1)task=previousRecords().then(value=>({active:value[BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'},passive:value[PREVIOUS_PASSIVE_BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'},passiveV2:value[PREVIOUS_PASSIVE_V2_BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'},passiveV3:value[PREVIOUS_PASSIVE_V3_BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'},...(sourceWitness?{passiveV4:value[PASSIVE_BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'}}:{})}));
+  else if(boundMode&&m.type==='SOURCE_WITNESS_PREVIOUS'&&Object.keys(m).length===1)task=previousRecords().then(value=>({active:value[BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'},passive:value[PREVIOUS_PASSIVE_BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'},passiveV2:value[PREVIOUS_PASSIVE_V2_BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'},passiveV3:value[PREVIOUS_PASSIVE_V3_BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'},...(sourceWitness?{passiveV4:value[PASSIVE_BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'},sourceV2:value[PREVIOUS_SOURCE_BATCH]?.result??{state:'NOT_RUN',reason:'previous-result-not-available'}}:{})}));
   else if(m.type==='SOURCE_WITNESS_PREVIEW'&&Object.keys(m).length===2&&Number.isSafeInteger(m.tabId))task=target(m.tabId).then(t=>({state:'READY',origin:'https://chatgpt.com',route:policy.parse(t.url).kind,incognito:false,version:chrome.runtime.getManifest().version,profile:'current-Chrome-profile-user-confirmation-required',...(boundMode?{mode:sourceWitness?SOURCE_MODE:'PASSIVE_C2_ONLY',batch}:{})}));
   // The explicit batch is incompatible with the old two-key active ARM. A new
   // page served from disk must never arm a still-running old worker.

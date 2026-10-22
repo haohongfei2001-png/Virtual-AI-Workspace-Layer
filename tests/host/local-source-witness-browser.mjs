@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {buildLocalWitness,verifyLocalWitness} from '../../tools/native-source-witness/build.mjs';
 import {BATCH} from '../../tools/native-source-witness/runner.mjs';
-import {SOURCE_BATCH,SOURCE_MODE,PASSIVE_BATCH,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH,PREVIOUS_PASSIVE_V3_BATCH} from '../../tools/native-source-witness/worker.mjs';
+import {SOURCE_BATCH,PREVIOUS_SOURCE_BATCH,SOURCE_MODE,PASSIVE_BATCH,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH,PREVIOUS_PASSIVE_V3_BATCH} from '../../tools/native-source-witness/worker.mjs';
 const dir=await mkdtemp(join(tmpdir(),'vaiwl-witness-headless-')),out=join(dir,'extension');
 const report={kind:'ISOLATED_HEADLESS_MV3_ENTRY_ONLY',realChatGPT:'NOT_RUN',accountNavigationPerformed:false,offlineBeforeTestPages:true,checks:[],errors:[]};let context;
 try{
@@ -32,7 +32,8 @@ try{
  const previousPassiveV2={state:'finished',result:{schema:PREVIOUS_PASSIVE_V2_BATCH,state:'BLOCKED',reason:'no-native-context-observed',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:2,navigations:2,counts:{'request-prepared':1,'history-dropped-pending':1}}}};
  const previousPassiveV3={state:'finished',result:{schema:PREVIOUS_PASSIVE_V3_BATCH,state:'BLOCKED',reason:'single-navigation-boundary',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:1,preparationMs:3190}}};
  const previousPassiveV4={state:'finished',result:{schema:PASSIVE_BATCH,state:'PARTIAL',reason:'native-association-observed-identity-not-run',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,stages:{nativeAssociation:{state:'PASS',reason:'fresh-request-and-current-dom-associated-only'}}}};
- const oldRecords={[BATCH]:previous,[PREVIOUS_PASSIVE_BATCH]:previousPassive,[PREVIOUS_PASSIVE_V2_BATCH]:previousPassiveV2,[PREVIOUS_PASSIVE_V3_BATCH]:previousPassiveV3,[PASSIVE_BATCH]:previousPassiveV4};
+ const previousSourceV2={state:'finished',result:{schema:PREVIOUS_SOURCE_BATCH,mode:SOURCE_MODE,state:'BLOCKED',reason:'native-request-refused-or-failed',unspent:false,requests:0,stages:{nativeAssociation:{state:'BLOCKED',reason:'native-request-refused-or-failed'}}}};
+ const oldRecords={[BATCH]:previous,[PREVIOUS_PASSIVE_BATCH]:previousPassive,[PREVIOUS_PASSIVE_V2_BATCH]:previousPassiveV2,[PREVIOUS_PASSIVE_V3_BATCH]:previousPassiveV3,[PASSIVE_BATCH]:previousPassiveV4,[PREVIOUS_SOURCE_BATCH]:previousSourceV2};
  await worker.evaluate(async records=>chrome.storage.local.set(records),oldRecords);
  const original=await context.newPage();await original.goto('https://chatgpt.com/');
  const other=await context.newPage();await other.goto(fixtureRoute);
@@ -79,13 +80,13 @@ try{
  await page.waitForFunction(()=>document.getElementById('result').textContent.includes('interrupted-no-retry'));
  const value=JSON.parse(await page.locator('#result').innerText());assert.equal(value.schema,SOURCE_BATCH);assert.equal(value.mode,SOURCE_MODE);assert.equal(value.requests,null);assert.equal(value.requestUpperBound,12);assert.equal(value.unspent,false);assert.equal(value.requestCountKnown,false);assert.equal(value.stages.identity.state,'PARTIAL');assert(await page.locator('#run').isDisabled());
  await page.waitForFunction(()=>document.getElementById('previous-result').textContent.includes('no-native-context-observed'));
- await page.getByText('前五批旧结果（只读保留，不补造）',{exact:true}).click();
+ await page.getByText('前六批旧结果（只读保留，不补造）',{exact:true}).click();
  assert(await page.locator('#previous-result').isVisible());
- assert.deepEqual(JSON.parse(await page.locator('#previous-result').innerText()),{active:previous.result,passive:previousPassive.result,passiveV2:previousPassiveV2.result,passiveV3:previousPassiveV3.result,passiveV4:previousPassiveV4.result});
+ assert.deepEqual(JSON.parse(await page.locator('#previous-result').innerText()),{active:previous.result,passive:previousPassive.result,passiveV2:previousPassiveV2.result,passiveV3:previousPassiveV3.result,passiveV4:previousPassiveV4.result,sourceV2:previousSourceV2.result});
  await page.close();const reopened=await context.newPage();await reopened.goto(`chrome-extension://${id}/source-witness.html#999999`);await reopened.waitForFunction(()=>document.getElementById('result').textContent.includes('interrupted-no-retry'));
  assert.equal(JSON.parse(await reopened.locator('#result').innerText()).requests,null);assert(await reopened.getByRole('button',{name:'保存脱敏报告'}).isEnabled());
  assert.deepEqual(await worker.evaluate(async keys=>await chrome.storage.local.get(keys),Object.keys(oldRecords)),oldRecords);
- report.checks.push('source-spent-ledger-survives-page-reopen-with-unknown-request-count','all-five-prior-consumed-results-preserved-and-readable');
+ report.checks.push('source-spent-ledger-survives-page-reopen-with-unknown-request-count','all-six-prior-consumed-results-preserved-and-readable');
  assert.deepEqual(report.errors,[]);report.status='PASS';
 }catch(e){report.status='FAIL';report.error=String(e.stack);process.exitCode=1;}finally{await context?.close();await rm(dir,{recursive:true,force:true});await writeFile(process.argv[2]??'/private/tmp/vaiwl-local-witness-headless.json',JSON.stringify(report,null,2)+'\n');}
 console.log(JSON.stringify(report));

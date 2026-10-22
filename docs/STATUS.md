@@ -1,5 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 睡前操作合并为原入口一次确认；集中来源v3已准备，真实执行NOT_RUN（2026-10-22）
+
+用户要求一次完成当前所需本人操作，避免临睡前继续分阶段测试。本轮将723f3aee的停止元数据修复随原入口准备为`vaiwl-local-source-witness-20261022-v3`，固定范围与上一集中提案相同；这是准备交付，不将用户睡前要求解释为无限重试或其他账户/原生写入许可。实际执行仍需本机页面明示的固定范围及“确认此 Profile，开始只读验证”一次真实点击，当前NOT_RUN。没有由代理操作真实Chrome、读存储或发账户请求。
+
+沿同一Profile、同一入口与现有runner：准备≤120秒，新的原生请求与当前DOM关联成立后，自动核身份、canonical roster、当前空间，再核限定目录并强制收尾。最多12GET/30秒/并发1/无重试；首次链含DOM、目录闭包、收尾各6秒，session256KiB、其他1MiB、总4MiB。原生非200仍立即止并保留新增匿名停止分类，不读原生响应正文、不降级放行。token只在worker RAM用于固定认证，匿名报告，无生产身份/数据库或原生写入。旧active/passive v1–v4/source-v2六批只读保留；source-v2只核已知消费终态，不要求其缺失的HTTP字段或精确计数，不复制旧receipt为本次证明。
+
+这次差额仅是独立批次、六旧记录读回/前置检查、页面worker握手和明示范围。54项受影响检查、一次新隔离断网headless MV3入口/精确返回/终态重开/六旧记录保全、候选重建及独立复核通过；没有重跑无关矩阵。原安装目录完整备份后原位更新，manifest/权限不变；安装回执、测试、候选与旧包在`.git/vaiwl-checkpoints/20261022-source-witness-v3/`。2258份未跟踪副本与3个stash保全；磁盘准备不等于Chrome已加载或来源验证通过。
+
+本人操作集中一次：重载原VAIWL → 同Profile新ChatGPT空白首页打开原“本机一次性来源验证” → 确认标题“一次集中只读来源验证 · v3”及范围，点一次开始 → 自动返回后原生侧栏点一次已有聊天 → 等终态，一次保存/回传脱敏报告。各阶段不再单独操作或申请；拒绝即停，保留结果，不在本轮继续逐字段补测。用户回传后按实际原因修复或提出明确外部条件，不凭空承诺一轮消除网站拒绝。来源成功后的生产接线、本人J1–J4输入/刷新休眠/隔离及日用候选尚未具备，不能现在要求用户预先完成，也不由此批替代。以下待许可及旧准备表述为历史；新批仍必须由本机显式点击启动，旧批不可重跑。
+
 ## 集中来源v2已消费：原生非200完成即停，身份与目录未请求；补齐停止诊断（2026-10-22）
 
 用户回传`vaiwl-local-source-witness-20261022-v2`为`BLOCKED/native-request-refused-or-failed/unspent:false`，准备2554ms、events=2、navigations=2。send/admitted/prepared/history-retained-pending各1、completion-http-rejected=1；completion-observed、receipt及全部association计数为0。主动GET/解码字节/HTTP列表为0，身份、当前空间及目录均NOT_RUN。`elapsedMs:0`仅指未进入主动链，不是没有准备等待。本批已消费，连同旧active和passive v1–v4共六批只读保留，不复用零请求额度。
