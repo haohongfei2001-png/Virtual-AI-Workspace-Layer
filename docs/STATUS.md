@@ -1,5 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 固定首屏目录的认证读取器与原owner接通；生产仍关闭（2026-10-22）
+
+承接980764eb的受信目录消费层，已补原B2.F1下一代码差额：原`session-provider`增加默认关闭的包内`directoryProvider`，复用既有固定请求、session/canonical roster解析和持久共享预算，不新建认证/存储/调度系统。每次只读一个固定首屏，session→roster→目录→新session→新roster共5GET，串行、总6秒、无自动重试；每个GET先扣原scope/origin的30秒12请求预算，首session单独计directory:path attempt，收尾不重复算重试。单次字节上限合计3.5MiB。未结束的底层请求即使忽略abort，也继续占用目录串行锁，迟到结果不能形成私有证明或启动后继请求。
+
+owner提供已验证scope的principal/context键及认证providerProfile，固定目标/path/1MiB不接受网页替换；初始和收尾均匹配同主体、canonical空间及空间种类。结果只返回不可序列化复制的WeakMap关联，token仅原worker闭包RAM，正文不进入公开result或数据库。目录响应仍仅提取原有正向ID/原名；不增加成员、NONE、活动或ACK语义。新认证更早到期时，私有proof、row validUntil及后续CAS guard一起采用最短期限，不能借旧grant延长。
+
+实际验证：274项受影响合批回归通过；最终逐阶段credentialExpiry收紧后，93项相关子集通过（含20个新provider场景，不相加为新增覆盖）。新隔离headless浏览器完成本机真实HTTP认证→固定目录→原owner/CAS→真实IndexedDB重开，替换provider及重开库后预算仍保留；第三链在12GET上限停止且不产生半提交，外网请求0。这是本机合成HTTP/真实IDB，不是MV3或真实C2验收。默认/观察包各191文件构建重建校验通过，独立只读审查无遗留阻塞。证据见[本批记录](engineering/free-directory-authenticated-provider-20261022.json)与`.git/vaiwl-checkpoints/20261022-directory-authenticated-provider/`。
+
+生产profile/RPC/扫描器未登记，原安装未更新，未读取真实账号或重跑七批已消费见证。2258份原副本、3个stash保持。本轮补的是可独立实施的读取器，不借用source-v3真实结果认证新代码。下一关口仍是具体生产profile的网站允许条件与持续读取范围；其后沿原调度接线，闭合正向成员/NONE、可信最近活动、首页/Project/刷新休眠及个人J1–J4。新增持久channel的兼容读取/回退包仍需启用前验证。今晚无额外用户操作，不宣称个人日用或完整Free已交付。
+
 ## 集中来源v3真实通过身份/C2和限定目录可读性：CONDITIONAL GO；正向目录消费接线（2026-10-22）
 
 用户提供`vaiwl-source-witness-redacted.json`：`vaiwl-local-source-witness-20261022-v3`、PARTIAL / CONDITIONAL GO / bounded-source-sample-only / unspent:false。实际10GET全部200 JSON、challenge:false，解码167329字节，主动阶段4880ms，准备阶段另计6484ms。新鲜原生请求/当前DOM关联、session主体、认证canonical roster（1个context）、C2当前空间及强制收尾同主体/同空间均PASS。这是**同一真实文档、同批**的来源证据，不能扩为首页、Project页面、切换账号、刷新或worker恢复均已通过；roster只有1项不是默认空间依据。三次association是同批复核，不是三个聊天。

@@ -23,7 +23,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
  async function observeDirectory(binding,sender,repository,target){
   if(stopped)return {ok:false,reason:'host-observation-stopped'};
   if(busy)return {ok:false,reason:'host-observation-busy'};
-  const attempt={active:true,abort:new AbortController(),started:elapsedNow()};busy=attempt;let request,knownCommitted=false;
+  const attempt={active:true,abort:new AbortController(),started:elapsedNow()};busy=attempt;let request,knownCommitted=false,directoryExpiry=null;
   try{return await withRequestDeadline(()=>track(async()=>{
    binding=structuredClone(binding);sender=structuredClone(sender);target=directoryTarget(structuredClone(target));
    if(!await handshake.verify(binding,sender))throw Error('invalid-host-document');
@@ -34,7 +34,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
    if(resolution.state!=='verified'||!scope)throw Error('unverified-host-scope');
    if(!profile||profile.id!==binding.profileId||profile.revision!==binding.profileVersion||typeof read!=='function'||typeof proofFor!=='function')throw Error('directory-source-unregistered');
    const grant=resolution.grant,source=authority.sourceFor?.(frame);
-   const guard=()=>!stopped&&attempt.active&&!attempt.abort.signal.aborted&&elapsedNow()>=attempt.started&&elapsedNow()-attempt.started<6000&&profiles.get(binding.profileId)===profile&&profile.id===binding.profileId&&profile.revision===binding.profileVersion&&profile.directoryProvider===provider&&provider.read===read&&provider.directoryFor===proofFor&&handshake.isBound(binding,sender)&&authority.peek(frame).grant?.id===grant.id&&authority.peek(frame).grant?.scopeEpoch===grant.scopeEpoch&&authority.scopeFor(frame)?.key===scope.key&&authority.sourceFor?.(frame)===source;
+   const guard=()=>!stopped&&attempt.active&&!attempt.abort.signal.aborted&&(directoryExpiry===null||Number.isFinite(now())&&now()<directoryExpiry)&&elapsedNow()>=attempt.started&&elapsedNow()-attempt.started<6000&&profiles.get(binding.profileId)===profile&&profile.id===binding.profileId&&profile.revision===binding.profileVersion&&profile.directoryProvider===provider&&provider.read===read&&provider.directoryFor===proofFor&&handshake.isBound(binding,sender)&&authority.peek(frame).grant?.id===grant.id&&authority.peek(frame).grant?.scopeEpoch===grant.scopeEpoch&&authority.scopeFor(frame)?.key===scope.key&&authority.sourceFor?.(frame)===source;
    const check=()=>{if(!guard())throw Error('stale-host-scope');};check();
    if(foregroundReadPending(scope.key)===true)return {ok:false,reason:'foreground-read-pending'};
    if(target.kind==='members'){
@@ -42,11 +42,12 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
     const project=known.facts.projects[target.projectId],projectSource=known.facts.sources[project?.sourceId];
     if(!project||!hostNativeChannel(projectSource?.channel)||projectSource.admission?.profileId!==profile.id||projectSource.admission?.profileVersion!==profile.revision||project.availability!=='available'||known.facts.projectLifecycle?.[target.projectId]?.state==='deletion-confirmed'||!nativeWitnessActive(project,known.facts,new Date(now()).toISOString()))return {ok:false,reason:'directory-project-unverified'};
    }
-   const context=Object.freeze({scopeKey:scope.key,scopeGrantId:grant.id,scopeEpoch:grant.scopeEpoch,principalSource:source,browserDocumentId:frame.documentId,documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,actualURL:frame.actualURL,profileId:binding.profileId,profileVersion:binding.profileVersion,target,request:directoryRequest(target)});
+   const context=Object.freeze({scopeKey:scope.key,scopeGrantId:grant.id,scopeEpoch:grant.scopeEpoch,principalSource:source,principalKey:scope.accountId,contextKey:scope.organizationId,providerProfile:grant.principal.providerProfile,browserDocumentId:frame.documentId,documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,actualURL:frame.actualURL,profileId:binding.profileId,profileVersion:binding.profileVersion,target,request:directoryRequest(target)});
    const result=await read.call(provider,context,{guard,signal:attempt.abort.signal});check();
    const proof=proofFor.call(provider,result);check();
-   if(!proof||proof.context!==context||typeof proof.payload!=='string')throw Error('untrusted-directory-result');
-   const time=now(),observedAt=new Date(time).toISOString(),validUntil=new Date(Math.min(time+60000,Date.parse(grant.expiresAt))).toISOString();
+   if(!proof||proof.context!==context||typeof proof.payload!=='string'||typeof proof.expiresAt!=='string'||!Number.isFinite(Date.parse(proof.expiresAt)))throw Error('untrusted-directory-result');
+   directoryExpiry=Date.parse(proof.expiresAt);check();
+   const time=now(),observedAt=new Date(time).toISOString(),validUntil=new Date(Math.min(time+60000,Date.parse(grant.expiresAt),directoryExpiry)).toISOString();
    const reduced=directoryBatch(proof.payload,{target,scope,urlPolicy:profile.urlPolicy,sourceRevision:1,observedAt,validUntil});check();
    const page=await repository.page(scope,{ids:{projects:reduced.batch.projects.map(p=>p.id),refs:reduced.batch.refs.map(r=>r.id)},limit:512},{guard,signal:attempt.abort.signal});check();
    // Native recovery has priority. The following CAS also rejects a pending
