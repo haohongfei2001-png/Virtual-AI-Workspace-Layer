@@ -191,6 +191,46 @@ test('source cancellation during identity aborts once and cannot advance on a la
  h.chrome.tabs.onRemoved.emit(1);const r=await sourceFinished(h),frozen=JSON.stringify(h.stored);
  assert.equal(r.state,'BLOCKED');assert.equal(r.requests,1);assert.equal(r.stages.ordinary.state,'NOT_RUN');release();await new Promise(r=>setImmediate(r));assert.equal(calls,1);assert.equal(JSON.stringify(h.stored),frozen);
 });
+test('native completion stop retains bounded HTTP and cache metadata without granting C2 or entering active reads',async t=>{
+ const fetch=t.mock.method(globalThis,'fetch',()=>assert.fail('native completion refusal must stop before identity'));
+ for(const [statusCode,fromCache]of [[304,true],[401,false],[403,undefined],[429,false],[503,false],[204,false],[undefined,'PRIVATE_CACHE'],['PRIVATE_STATUS',null],[999,false]]){
+  const old=sourceLedgers(),h=mockChrome(structuredClone(old),sourceOptions);t.after(()=>h.chrome.tabs.onRemoved.emit(1));
+  await h.message(sourceArm);
+  const current={documentId:'doc-one',url:frame.actualURL,documentLifecycle:'active',frameType:'outermost_frame'};
+  h.chrome.tabs.get=async id=>({id,url:current.url,incognito:false});h.chrome.webNavigation.getFrame=async()=>current;
+  const detail={tabId:1,frameId:0,documentId:'doc-one',documentLifecycle:'active',initiator:'https://chatgpt.com',type:'xmlhttprequest',method:'GET',requestId:'PRIVATE_REQUEST',url:'https://chatgpt.com/backend-api/conversations/'+c,requestHeaders:[{name:'Chatgpt-Account-Id',value:'SECRET_CONTEXT'}]};
+  h.chrome.webRequest.onSendHeaders.emit(detail);await new Promise(r=>setImmediate(r));
+  h.chrome.webNavigation.onHistoryStateUpdated.emit({tabId:1,frameId:0,...current});
+  // Completion can be for another filtered request. Outer safety stop must
+  // neither ignore it nor claim it matches the prepared request.
+  h.chrome.webRequest.onCompleted.emit({...detail,requestId:'PRIVATE_OTHER_REQUEST',statusCode,fromCache});
+  const r=await sourceFinished(h),observation=r.nativeObservation;
+  assert.equal(r.reason,'native-request-refused-or-failed');assert.equal(r.requests,0);assert.equal(r.stages.identity.state,'NOT_RUN');assert.equal(r.stages.nativeAssociation.state,'BLOCKED');
+  assert.equal(observation.counts['request-prepared'],1);assert.equal(observation.counts['history-retained-pending'],1);assert.equal(observation.counts['completion-http-rejected'],1);assert.equal(observation.counts['completion-observed'],0);assert.equal(observation.counts['receipt-created'],0);
+  assert.deepEqual(observation.requestStop,{eventKind:'completion',statusCode:Number.isInteger(statusCode)&&statusCode>=100&&statusCode<=599?statusCode:null,fromCache:typeof fromCache==='boolean'?fromCache:'unknown',requestMatch:'NOT_VERIFIED',challenge:'NOT_OBSERVED'});
+  assert.equal(observation.memoryCache,'NOT_DETERMINABLE');assert(!/PRIVATE|SECRET|12345678|doc-one/.test(JSON.stringify(r)));
+  const frozen=JSON.stringify(h.stored);h.chrome.webRequest.onCompleted.emit({...detail,statusCode:200,fromCache:false});assert.deepEqual(await h.message(sourceArm),r);assert.equal(JSON.stringify(h.stored),frozen);
+  for(const key of Object.keys(old))assert.deepEqual(h.stored[key],old[key]);
+ }
+ assert.equal(fetch.mock.callCount(),0);
+});
+test('redirect and network error stop diagnostics contain no dynamic error/header/URL data',async t=>{
+ t.mock.method(globalThis,'fetch',()=>assert.fail('no active reads'));
+ for(const [event,eventKind,statusCode]of [['onBeforeRedirect','redirect',302],['onErrorOccurred','error',undefined]]){
+  const h=mockChrome(sourceLedgers(),sourceOptions);t.after(()=>h.chrome.tabs.onRemoved.emit(1));await h.message(sourceArm);
+  const detail={tabId:1,frameId:0,initiator:'https://chatgpt.com',type:'xmlhttprequest',method:'GET',statusCode,requestId:'PRIVATE_REQUEST',url:'https://chatgpt.com/backend-api/conversations/'+c,redirectUrl:'https://PRIVATE.example/',error:'PRIVATE_ERROR',responseHeaders:[{name:'PRIVATE_HEADER',value:'PRIVATE_VALUE'}]};
+  h.chrome.webRequest[event].emit(detail);const r=await sourceFinished(h);
+  assert.deepEqual(r.nativeObservation.requestStop,{eventKind,statusCode:statusCode??null,fromCache:'unknown',requestMatch:'NOT_VERIFIED',challenge:'NOT_OBSERVED'});assert.equal(r.requests,0);assert(!/PRIVATE|12345678/.test(JSON.stringify(r)));
+ }
+});
+test('consumed source-v2 refusal remains unchanged with absent requestStop and cannot be re-armed',async()=>{
+ const result={schema:SOURCE_BATCH,mode:SOURCE_MODE,state:'BLOCKED',reason:'native-request-refused-or-failed',unspent:false,requests:0,nativeObservation:{counts:{'completion-http-rejected':1,'completion-observed':0},events:2,navigations:2,preparationMs:2554}};
+ const h=mockChrome({...sourceLedgers(),[SOURCE_BATCH]:{state:'finished',result}},sourceOptions),before=structuredClone(h.stored);
+ h.chrome.tabs.get=async()=>assert.fail('spent record must not read a live target');
+ for(const m of [sourceRead,sourceArm,sourceRead])assert.deepEqual(await h.message(m),result);
+ assert.equal(result.nativeObservation.requestStop,undefined);assert.deepEqual(h.stored,before);
+ for(const e of Object.values(h.chrome.webRequest))assert.equal(e.listeners.size,0);
+});
 test('spent current navigation result is read unchanged without backfilling new classifications',async()=>{
  const result={schema:PASSIVE_BATCH,state:'BLOCKED',reason:'single-navigation-boundary',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:1,preparationMs:3190}};
  const h=mockChrome({...priorLedgers(),[PASSIVE_BATCH]:{state:'finished',result}},{}),before=structuredClone(h.stored);

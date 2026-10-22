@@ -1,5 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 集中来源v2已消费：原生非200完成即停，身份与目录未请求；补齐停止诊断（2026-10-22）
+
+用户回传`vaiwl-local-source-witness-20261022-v2`为`BLOCKED/native-request-refused-or-failed/unspent:false`，准备2554ms、events=2、navigations=2。send/admitted/prepared/history-retained-pending各1、completion-http-rejected=1；completion-observed、receipt及全部association计数为0。主动GET/解码字节/HTTP列表为0，身份、当前空间及目录均NOT_RUN。`elapsedMs:0`仅指未进入主动链，不是没有准备等待。本批已消费，连同旧active和passive v1–v4共六批只读保留，不复用零请求额度。
+
+对照a1bf5ed7源码，停止发生在开发worker的外层webRequest回调：选中标签、顶层ChatGPT发起的GET/XHR完成状态不等于200，即记录completion-http-rejected并停止，尚未调用owner的精确请求/文档匹配及completion处理。因此completion-observed为0符合此分支，不能据此判监听丢事件；汇总计数也不能证明该完成事件就是已prepared的请求。报告没有保存实际状态码或fromCache，不能区分304、认证/访问拒绝、限流、服务错误或其他状态，更不能认定Cloudflare挑战。无响应正文证据，不能判服务器API不可行或身份来源解析失败。现场无包hash，分析HEAD不冒充现场精确SHA；旧v4关联PASS仍保留历史原义。
+
+本次已修确定的诊断缺口：只在原停止点保存首次`requestStop`，字段限固定事件类别、合法100–599整数状态或null、浏览器fromCache布尔或unknown，并明确requestMatch=NOT_VERIFIED、challenge=NOT_OBSERVED。不存URL、ID、header/error原文或正文；原非200/跳转/网络错误停止条件、C2准入、预算、批次及权限不变，304也不放行。旧已消费报告直接原样读回，不补造当时缺失的字段。本次53项定向检查、候选构建重建校验和独立只读复核通过；覆盖不同requestId仍保守停止、状态/缓存缺失、后续事件不改终态、脱敏及旧消费不可再启。没有重复UI/规模矩阵，也不把离线状态码例子用于解释真实失败。
+
+报告、出处、检查和候选位于`.git/vaiwl-checkpoints/20261022-source-v2-native-stop/`。原安装仍为上一检查点包，本轮未更新安装目录、重载Chrome、读取浏览器存储、创建新批次或发真实请求。先前dot转述的扩展URL工具拒绝另存出处，未在本轮重试或换通道；它不覆盖用户随后实际执行得到的终态。2258份未跟踪副本与3个stash保全。本轮有限原任务差额核对未发现新的、已有证据且可独立实施的未完代码缺陷；这不是全部工程/个人J1–J4已通过，不制造无来源功能或测试量。
+
+唯一下一来源条件是另获一次**同范围集中见证**许可，沿原入口取得新C2后同批推进身份、空间、限定目录和强制收尾；保留六旧批。只补上述原生停止元数据，原12GET/30秒/串行/无重试、准备120秒、各链6秒和体积上限不变。旧批已消费，缺失状态无法离线追溯，故不能自动再跑；不再拆成一轮被动成功后另求主动许可。具体待批准范围在唯一DEVELOPMENT_PLAN当前节。来源、网站条件与个人J1–J4仍未成立，个人日用目标及10k/100k DEFERRED不变。以下“已准备/NOT_RUN”和执行提示为历史，不能作为当前重跑许可。
+
 ## 已批准的集中只读来源见证v2已准备；真实身份与目录执行NOT_RUN（2026-10-22）
 
 用户明确批准一次新的集中只读见证，原开发入口现接到独立键`vaiwl-local-source-witness-20261022-v2`与固定模式`BOUNDED_SOURCE_WITNESS`。复用现有runner/provider/ScopeAuthority/parser，不新增生产producer、权限或身份开关。旧active和passive v1–v4五批原键/原报告只读保留；v4关联PASS只作已消费历史，新批仍须同一Profile/绑定首页一次自然打开已有聊天，重新取得fresh浏览器请求与当前DOM关联。原生关联最后有效性检查现由主动/被动模式共用，失效时不进入主动链。

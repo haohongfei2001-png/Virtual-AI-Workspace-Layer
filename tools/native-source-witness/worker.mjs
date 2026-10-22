@@ -85,13 +85,13 @@ export function installWitnessWorker(chrome,{passiveOnly=true,sourceWitness=fals
    if(ready?.ready!==true)return {state:'NOT_RUN',reason:'new-chatgpt-tab-required-no-request',requests:0,unspent:true,help:'安装后新开 ChatGPT 首页，再从该标签的 VAIWL 入口打开验证页；无需刷新或重登。'};
    // Reserve durably before listeners/network. Worker loss never restarts this batch.
    reserving=true;await save({state:'reserved',result:null});
-   const op={tabId:id,phase:'WAITING_NATIVE',abort:new AbortController(),observer:null,events:0,started:false,closed:false,navigation:null,navigationStop:null,navigations:0,listeners:[],timer:null,preparedAt:performance.now(),preparationMs:null,counts:Object.fromEntries(BROWSER_CONTEXT_DIAGNOSTICS.map(k=>[k,0])),countsCapped:false};operation=op;reserving=false;
+   const op={tabId:id,phase:'WAITING_NATIVE',abort:new AbortController(),observer:null,events:0,started:false,closed:false,navigation:null,navigationStop:null,requestStop:null,navigations:0,listeners:[],timer:null,preparedAt:performance.now(),preparationMs:null,counts:Object.fromEntries(BROWSER_CONTEXT_DIAGNOSTICS.map(k=>[k,0])),countsCapped:false};operation=op;reserving=false;
    const record=code=>{if(op.closed||!Object.hasOwn(op.counts,code))return;if(op.counts[code]<1000)op.counts[code]++;else op.countsCapped=true;};
    const finish=async result=>{
     if(op.closed)return;
     // Freeze diagnostics before stopping the observer; no late callback can
     // modify the saved result. These counters are not evidence or receipts.
-    result={...result,schema:batch,unspent:false,...(passiveOnly?passiveFields:sourceWitness?{mode:SOURCE_MODE,previousBatchPreserved:true,requestCountKnown:result.requestCountKnown??Number.isInteger(result.requests),requestUpperBound:Number.isInteger(result.requests)?result.requests:12}:{}),nativeObservation:{schema:'bounded-c2-observation-v1',scope:'selected-tab-plural-detail-filter-only',events:Math.min(op.events,1000),countsCapped:op.countsCapped||op.events>1000,navigations:op.navigations,preparationMs:op.preparationMs??Math.max(0,Math.round(performance.now()-op.preparedAt)),counts:{...op.counts},...(op.navigationStop?{navigationStop:{...op.navigationStop}}:{}),unmatchedTraffic:'NOT_OBSERVED',memoryCache:'NOT_DETERMINABLE'}};
+    result={...result,schema:batch,unspent:false,...(passiveOnly?passiveFields:sourceWitness?{mode:SOURCE_MODE,previousBatchPreserved:true,requestCountKnown:result.requestCountKnown??Number.isInteger(result.requests),requestUpperBound:Number.isInteger(result.requests)?result.requests:12}:{}),nativeObservation:{schema:'bounded-c2-observation-v1',scope:'selected-tab-plural-detail-filter-only',events:Math.min(op.events,1000),countsCapped:op.countsCapped||op.events>1000,navigations:op.navigations,preparationMs:op.preparationMs??Math.max(0,Math.round(performance.now()-op.preparedAt)),counts:{...op.counts},...(op.navigationStop?{navigationStop:{...op.navigationStop}}:{}),...(op.requestStop?{requestStop:{...op.requestStop}}:{}),unmatchedTraffic:'NOT_OBSERVED',memoryCache:'NOT_DETERMINABLE'}};
     op.closed=true;op.abort.abort();clearTimeout(op.timer);op.observer?.stop();for(const [event,fn]of op.listeners)event.removeListener(fn);try{await save({state:'finished',result});}finally{if(operation===op)operation=null;}
    };
    const stop=reason=>{if(op.started){op.abort.abort();return;}void finish(unbound(reason));};
@@ -103,6 +103,10 @@ export function installWitnessWorker(chrome,{passiveOnly=true,sourceWitness=fals
      if(++op.events>1000){stop('native-event-limit');return;}
      if(details.frameId===0&&details.initiator==='https://chatgpt.com'&&details.method==='GET'&&details.type==='xmlhttprequest'&&
        (name==='onErrorOccurred'||name==='onBeforeRedirect'||name==='onCompleted'&&details.statusCode!==200)){
+      // This outer safety stop precedes the owner's exact request/document
+      // matching. Retain only bounded diagnostics, never imply the rejected
+      // callback is the admitted request or that an HTTP code proves a challenge.
+      op.requestStop??={eventKind:name==='onErrorOccurred'?'error':name==='onBeforeRedirect'?'redirect':'completion',statusCode:Number.isInteger(details.statusCode)&&details.statusCode>=100&&details.statusCode<=599?details.statusCode:null,fromCache:typeof details.fromCache==='boolean'?details.fromCache:'unknown',requestMatch:'NOT_VERIFIED',challenge:'NOT_OBSERVED'};
       record(name==='onErrorOccurred'?'native-request-failed':name==='onBeforeRedirect'?'native-request-redirected':'completion-http-rejected');stop('native-request-refused-or-failed');return;
      }
      fn(details);
