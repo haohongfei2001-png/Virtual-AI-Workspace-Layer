@@ -1,5 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 最小真实来源见证：BLOCKED / EXECUTION_ENVIRONMENT（2026-10-22）
+
+用户本轮已明确批准一次新见证，最多 12 GET / 30 秒 / 并发 1 / 零重试，沿裁决 6333439460 的每链 6 秒、session 256KiB、其他响应 1MiB、累计 4MiB 和数据最小化规则；这不是旧四 GET 或旧被动观察许可的复用。本地及 GitHub API 远端 HEAD 均核对为 `54aef69e891897e4265ab392c3fae8ea317039b5`，tracked 干净，2258 份既有副本和 3 个 stash 不变。
+
+正式工具的当次环境枚举仅列出一个未确认为既有授权专用 Profile 的 Chrome 连接；原已知诊断包安装目录已不存在。这不证明 VAIWL 在所有目录均未安装，也不证明该账户已退出。仅选择浏览器读取能力文档/列表，没有 claim 私人标签或读页面：浏览器能力仅 viewport，未建立可在授权 Profile 中执行包内见证的非 CDP 入口。没有改用另一账户、内置浏览器或后台通道代跑，没有调用受拒 CDP，也没有安装/重载/修改任何现有浏览器配置。
+
+因此本批在请求前停止：**主动 GET=0、账户导航=0、响应正文读取=0、CDP=0、原生写入=0**，30 秒主动窗口未启动，新的一次验证许可未消费。当前账户是否登录、主体、canonical roster、C2、四类目录访问/分页均 **NOT_RUN**，不是身份失败、目录 403、账户为空或技术不可实现。完整历史接入仍 NOT_ESTABLISHED，不能用本次工具预检证明或否定生产路线。私有匿名预算/预检记录为 `.git/vaiwl-checkpoints/20261022-live-source-witness/preflight-result.json`。
+
+**唯一下一项外部条件：同一获授权专用 Profile 内，受支持且不依赖受拒 CDP 的 MV3 扩展执行入口恢复可用。** 该条件成立后由 Codex 准备/冻结包内见证、核对本批单次状态，再续接相同预算；不重新索取已授范围，不复用旧诊断，不以改全局设置、重复重登/截图或换 Profile 代替。当前不要求调整产品目标或改走 C3；保留 `session → 认证 canonical roster → C2 → 服务器目录` 主线，未取得见证前不接生产 producer。本轮未重做 parser、追加模拟测试或制造其他代码差额；源码仍为 54aef69e，完整 Free/真实验收/发布均未完成。
+
 ## 数据接入裁决已实施：普通/归档服务器目录纯解析层（2026-10-22）
 
 自然检查点 fetch 后，本地与远端均为 `6479bd31613986e64bb2d71c0f1f3ac91c53df9c`，tracked 干净；既有 2258 份未跟踪副本和 3 个 stash 已逐文件哈希/对象记录保全。已读并消费 [PR16 裁决 6333439460](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6333439460)，没有新增 writer、工作树、计划或真实账户请求。
