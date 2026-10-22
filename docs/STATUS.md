@@ -1,6 +1,20 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 最小真实来源见证：BLOCKED / EXECUTION_ENVIRONMENT（2026-10-22）
+## 本机一次性来源验证入口已准备，真实执行 NOT_RUN（2026-10-22）
+
+本批从 `89b1aaf1` 继续，原工作树/Free 分支/PR16 不变。用户已改为在自己已登录的 Chrome Profile 内手动启动开发版，**不再等待 Work/CDP 入口**；旧预检 BLOCKED 作为历史保留。`tools/native-source-witness/` 复用现有临时导航、session-provider、ScopeAuthority、浏览器 C2 owner、当前 body 关联和目录 parser；普通产品构建、数据库/Pro 人工资产、生产来源开关均未改动。开发叠加包仅在原导航中增加“本机一次性来源验证”，新权限只有 `storage`，用于匿名结果与持久单次标记；未加 debugger/cookies/scripting/management 或其他网站权限。
+
+用户在开发入口核对选定 ChatGPT 标签/非隐身环境并明确授权，之后只在原标签从首页自然打开一条已有聊天。准备等待最多两分钟，不主动请求；浏览器新 receipt 和当前 DOM 关联成立后才自动开始固定 worker 验证。初次身份+C2共用六秒（包含 frame/body 准备），独立目录闭包重新认证后最多六页，最后强制重新认证；全批 `2+(2+最多6)+2 ≤ 12 GET`、30秒、并发1、无重试，各闭包六秒，session≤256KiB、其他≤1MiB、累计解码≤4MiB。原生导航的正常网络与扩展主动 GET 分开记录，不把前者写成零网络。任一挑战/拒绝/换代/超限停止；UNKNOWN/null/目录缺席不产生 NONE、删除或本人时间。
+
+已修复本入口实际缺陷：原导航初始化覆盖按钮；缺接收器的 reject 被误报通用错误；BFCache 返回后关联桥已停而仍报告就绪；迟到进度覆盖最终结果；持久预留与 RAM 安装间的读回竞态。worker 丢失时计数明确为 unknown 而非0，不自动续跑；读回/页面重开不消费新请求。匿名报告分别给出 PASS/PARTIAL/BLOCKED/NOT_RUN，页可读只代表候选，**完整历史、网站支持条件、受控样本覆盖、跨设备和本人活动仍未建立**，不会自动接通 producer 或旧库。
+
+验证：受影响的定向回归通过；隔离 headless Chrome MV3 已核验原导航/搜索入口保留、错误目标拒绝、单次状态持久读回，测试页加载前已离线，未访问 ChatGPT。开发包校验从当前源码重建全部文件，拒绝篡改权限后重算自报 hash 的伪校验。真实账户请求、真实安装、来源与完整 Free 验收均 **NOT_RUN**；不复跑10k/100k或无关矩阵。私有日志及精确包清单在 `.git/vaiwl-checkpoints/20261022-local-witness/`，可复现命令为 `node --test tests/host/local-source-witness.test.mjs`、`node tests/host/local-source-witness-browser.mjs <结果JSON>`、`node tools/native-source-witness/build.mjs <新目录>` 与其 `--verify`。
+
+本机可加载目录为 `/Users/hhf/Documents/GitHub/Virtual-AI-Workspace-Layer/.git/vaiwl-artifacts/local-source-witness-20261022/extension`。在获授权的同一 Chrome Profile 打开 `chrome://extensions` → 开发者模式 → 加载已解压的扩展程序；选择上述目录（文件选择框可用 Cmd+Shift+G 输入）。如有旧 VAIWL，先停用而不卸载，保留其安装/数据；不通过卸载或删除存储重置单次状态。安装后**新开** `https://chatgpt.com/` 首页 → VAIWL → 本机一次性来源验证 → 核对并点击“授权并准备一次验证” → 回原标签打开一条已有聊天。随后结果页自动汇总，可保存脱敏 JSON，无需开发者工具、复制凭据、刷新或重登。没有真实结果之前不声称通过；必要下一条件就是这一次本机执行的结果。
+
+原 J1/J4、历史 UNKNOWN 失败与生产身份/当前空间/完整目录关口仍保留。有限独立审查没有确认额外可直接修复的产品缺陷，不制造重复 parser 或合成测试任务；后续只按新结果推进有依据的生产差额，完整 Free、81项、v2.7、10k/100k DEFERRED 及其原阈值不变。
+
+## 历史预检：BLOCKED / EXECUTION_ENVIRONMENT（2026-10-22，本机入口已由上节替代）
 
 用户本轮已明确批准一次新见证，最多 12 GET / 30 秒 / 并发 1 / 零重试，沿裁决 6333439460 的每链 6 秒、session 256KiB、其他响应 1MiB、累计 4MiB 和数据最小化规则；这不是旧四 GET 或旧被动观察许可的复用。本地及 GitHub API 远端 HEAD 均核对为 `54aef69e891897e4265ab392c3fae8ea317039b5`，tracked 干净，2258 份既有副本和 3 个 stash 不变。
 

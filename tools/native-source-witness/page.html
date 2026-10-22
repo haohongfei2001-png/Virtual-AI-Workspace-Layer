@@ -1,0 +1,10 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>VAIWL 本机一次性来源验证</title><link rel="stylesheet" href="extension/status.css"><link rel="stylesheet" href="source-witness.css"><body>
+<h1>VAIWL 本机一次性来源验证</h1><p>开发版本 · 不启用生产身份、数据库或目录扫描器</p><p id="environment">正在核对所选标签…</p>
+<p>固定 worker 通道：session → canonical roster → 当前聊天 C2；成立后才读取普通最多2页、归档1页、Project索引1页及一个Project成员最多2页，最后重新核验身份。最多12个主动GET、30秒、串行、无重试；每链6秒，总解码4MiB。挑战、拒绝或绑定变化立即停止。</p>
+<p>不会发送、创建、移动、删除或归档内容，不复制Cookie。会话token只在私有RAM短期使用。仅保存匿名状态、数量与判定，不保存原始ID、标题、游标、凭据或正文。</p>
+<label><input type="checkbox" id="confirm">我确认所选标签属于本次授权的Chrome Profile，并允许这一次限定只读验证及当前聊天DOM ID关联。</label>
+<p><button id="run" disabled>授权并准备一次验证</button></p>
+<p><strong>点击后，在两分钟内回到原 ChatGPT 标签，用原生侧栏打开一条现有聊天（应从首页出发；若当前是聊天，选择另一条已有聊天，不发送内容）。</strong>只做一次自然导航，不刷新或重登。观察到新请求后验证自动进行，返回本页查看结果。准备阶段不发主动GET；当前正文没有明确ID或没有原生请求时会如实BLOCKED。</p>
+<p>关闭或重开结果页不重发；worker重启或不确定结果不自动续跑。不要卸载、删除存储或换安装目录重置本次机会。</p>
+<button id="read">读取已有结果（不发网络请求）</button> <button id="download" disabled>保存脱敏报告</button>
+<pre id="result" role="status" aria-live="polite">尚未执行</pre><script type="module" src="source-witness-page.mjs"></script></body></html>
