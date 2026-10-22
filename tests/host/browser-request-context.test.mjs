@@ -36,15 +36,15 @@ test('fixed diagnostics distinguish pre-receipt failures without exposing metada
   assert(trace.every(code=>BROWSER_CONTEXT_DIAGNOSTICS.includes(code)));assert(!/DO_NOT_RETAIN|PRIVATE|11111111|team|private=value/.test(JSON.stringify(trace)));
  }
 });
-test('diagnostics identify both cold navigation order rejections and preserve the lawful ordered path',async t=>{
+test('diagnostics preserve prepared current-route GET across delayed history but reject a home lookup',async t=>{
  for(const order of ['history-first','home-lookup-first','prepared-before-history']){
   const trace=[],f=fixture(t,{onDiagnostic:code=>trace.push(code)}),history={...browserFrame,tabId:7,frameId:0};
   let d;
   if(order==='history-first'){f.owner.invalidateHistory(history);d=await f.send();}
   else {if(order==='home-lookup-first')f.current={...browserFrame,url:origin+'/'};d=await f.send();f.current={...browserFrame};f.owner.invalidateHistory(history);}
   await f.finish(d);
-  if(order==='history-first'){assert(trace.includes('receipt-created'));assert(await f.owner.verify(frame));assert(trace.includes('association-passed'));}
-  else {assert.equal(f.ready.length,0);assert.equal(f.associated.length,0);assert(trace.includes(order==='home-lookup-first'?'initial-frame-mismatch':'history-dropped-pending'));assert(trace.includes(order==='home-lookup-first'?'completion-unprepared':'completion-untracked'));}
+  if(order!=='home-lookup-first'){assert(trace.includes('receipt-created'),trace.join(','));assert(await f.owner.verify(frame));assert(trace.includes('association-passed'));if(order==='prepared-before-history')assert(trace.includes('history-retained-pending'));}
+  else {assert.equal(f.ready.length,0);assert.equal(f.associated.length,0);assert(trace.includes('initial-frame-mismatch'));assert(trace.includes('completion-unprepared'));}
  }
 });
 test('body mismatch is observable only after receipt creation; diagnostic callback failure does not affect authority',async t=>{
@@ -52,6 +52,35 @@ test('body mismatch is observable only after receipt creation; diagnostic callba
  await f.finish(await f.send());f.answer={challenge:'wrong'};assert.equal(await f.owner.verify(frame),null);
  assert(trace.indexOf('receipt-created')<trace.indexOf('association-started'));assert(trace.includes('association-rejected'));
  f.answer=null;assert(await f.owner.verify(frame));assert(trace.includes('association-passed'));
+});
+test('plural prepared GET survives one delayed exact history event, without borrowing its deadline or old receipt',async t=>{
+ const trace=[],f=fixture(t,{conversationRequestContext:'conversation-detail-plural-v1',onDiagnostic:code=>trace.push(code)});
+ await f.finish(await f.send({url:origin+'/backend-api/conversations/'+C}));const old=await f.owner.verify(frame);assert(old);f.advance(100);
+ const actualURL=origin+'/c/'+D,history={...browserFrame,tabId:7,frameId:0,url:actualURL};f.current={...browserFrame,url:actualURL};
+ const next=await f.send({requestId:'next',url:origin+'/backend-api/conversations/'+D+'?num_turns=10&include_has_versions=true'});
+ assert.equal(f.owner.isCurrent(frame,old),false,'preparation revoked the old receipt');f.advance(100);f.owner.invalidateHistory(history);
+ assert.equal(await f.owner.verify({...frame,actualURL}),null,'pending retention is not a receipt');assert.equal(f.ready.length,1);
+ await f.finish(next);const receipt=await f.owner.verify({...frame,actualURL});assert.equal(receipt?.conversationId,D);assert.notEqual(receipt,old);
+ assert.equal(receipt.wall,1100);assert.equal(receipt.elapsed,1100);assert(trace.includes('history-retained-pending'));
+ f.owner.invalidateHistory(history);assert.equal(await f.owner.verify({...frame,actualURL}),null,'completed receipts still revoke on history');
+});
+for(const mode of ['second-history','away-and-back','wrong-document','same-id-other-container','context-conflict','failure','sibling-failure','commit-before-history','cached','original-deadline','elapsed-deadline','rollback','old-receipt','wrong-final-frame','wrong-body'])test('prepared history retention remains fail-closed: '+mode,async t=>{
+ const f=fixture(t),history={...browserFrame,tabId:7,frameId:0};
+ if(mode==='old-receipt')await f.finish(await f.send({requestId:'seed'}));
+ const next=await f.send({requestId:'pending'});
+ if(mode==='sibling-failure')f.webRequest.onErrorOccurred.emit(await f.send({requestId:'sibling'}));
+ if(mode==='commit-before-history')f.owner.invalidateCommitted(history);
+ f.owner.invalidateHistory(mode==='same-id-other-container'?{...history,url:origin+'/g/g-p-'+'a'.repeat(32)+'/c/'+C}:history);
+ if(mode==='second-history')f.owner.invalidateHistory(history);
+ if(mode==='away-and-back'){f.owner.invalidateHistory({...history,url:origin+'/c/'+D});f.owner.invalidateHistory(history);}
+ if(mode==='wrong-document')f.owner.invalidateHistory({...history,documentId:'other'});
+ if(mode==='context-conflict')await f.send({requestId:'conflicting',requestHeaders:[{name:'Chatgpt-Account-Id',value:'personal'}]});
+ if(mode==='failure')f.webRequest.onErrorOccurred.emit(next);
+ if(mode==='original-deadline')f.advance(6000);if(mode==='elapsed-deadline')f.elapsed(6000);if(mode==='rollback')f.rollback();
+ if(mode==='wrong-final-frame')f.current={...browserFrame,documentId:'other'};
+ if(mode==='wrong-body')f.answer={challenge:'wrong'};
+ if(mode==='cached'){f.webRequest.onCompleted.emit({...next,statusCode:200,fromCache:true});await flush();}else await f.finish(next);
+ assert.equal(await f.owner.verify(frame),null,mode);
 });
 for(const [label,patch] of Object.entries({subframe:{frameId:1},worker:{tabId:-1,initiator:'chrome-extension://ext'},extension:{initiator:'chrome-extension://ext'},prerender:{documentLifecycle:'prerender'},missingDocument:{documentId:undefined},post:{method:'POST'},list:{url:origin+'/backend-api/conversations'},query:{url:origin+'/backend-api/conversation/'+C+'?a=1'},foreign:{url:'https://evil.test/backend-api/conversation/'+C},prefetch:{requestHeaders:[{name:'Chatgpt-Account-Id',value:'team'},{name:'Sec-Purpose',value:'prefetch'}]},duplicateHeader:{requestHeaders:[{name:'Chatgpt-Account-Id',value:'team'},{name:'chatgpt-account-id',value:'other'}]},missingHeader:{requestHeaders:[]},invalidHeader:{requestHeaders:[{name:'Chatgpt-Account-Id',value:'team\r\n'}]},neighborObject:{url:origin+'/backend-api/conversation/'+D}}))test('no receipt from '+label,async t=>{const f=fixture(t),d=await f.send(patch);await f.finish(d);assert.equal(await f.owner.verify(frame),null);assert.equal(f.ready.length,0);});
 for(const [label,patch]of Object.entries({failed:{statusCode:500},cached:{fromCache:true},wrongDocument:{documentId:'other'},wrongUrl:{url:origin+'/backend-api/conversation/'+D}}))test('completion rejects '+label,async t=>{const f=fixture(t),d=await f.send();f.webRequest.onCompleted.emit({...d,statusCode:200,fromCache:false,...patch});await flush();assert.equal(await f.owner.verify(frame),null);});
@@ -102,10 +131,10 @@ test('cold history cannot invent a prior route to reprepare a mismatched first l
  const actualURL=origin+'/c/'+D;f.current={...browserFrame,url:actualURL};f.owner.invalidateHistory({tabId:7,frameId:0,documentId:'doc',documentLifecycle:'active',frameType:'outermost_frame',url:actualURL});await f.finish(next);
  assert.equal(await f.owner.verify({...frame,actualURL}),null);assert.equal(f.ready.length,0);assert.equal(f.associated.length,0);
 });
-for(const mode of ['no-request','second-history','accepted','conflict','committed','expired','clock-rollback','stopped','failed','cached','bad-body','wrong-document','wrong-route','wrong-tab','revoked-epoch'])test('cold history keeps safe rejection: '+mode,async t=>{
+for(const mode of ['no-request','second-history','conflict','committed','expired','clock-rollback','stopped','failed','cached','bad-body','wrong-document','wrong-route','wrong-tab','revoked-epoch'])test('cold history keeps safe rejection: '+mode,async t=>{
  const f=fixture(t),actualURL=origin+'/c/'+D;f.current={...browserFrame,url:actualURL};const next=f.details({requestId:'cold',url:origin+'/backend-api/conversation/'+D});
  if(mode!=='no-request')f.webRequest.onSendHeaders.emit(next);
- if(mode==='accepted')await flush();if(mode==='conflict')f.webRequest.onSendHeaders.emit({...next,requestId:'other-context',requestHeaders:[{name:'Chatgpt-Account-Id',value:'other'}]});
+ if(mode==='conflict')f.webRequest.onSendHeaders.emit({...next,requestId:'other-context',requestHeaders:[{name:'Chatgpt-Account-Id',value:'other'}]});
  if(mode==='revoked-epoch')f.owner.invalidateTab(7);
  const history={tabId:7,frameId:0,documentId:'doc',documentLifecycle:'active',frameType:'outermost_frame',url:actualURL,...(mode==='wrong-document'?{documentId:'other'}:{}),...(mode==='wrong-route'?{url:frame.actualURL}:{}),...(mode==='wrong-tab'?{tabId:8}:{})};
  f.owner.invalidateHistory(history);
@@ -122,9 +151,9 @@ for(const [name,change]of Object.entries({missingDocument:{documentId:undefined}
 test('preserved request keeps its deadline and cannot survive a second history invalidation',async t=>{
  for(const mode of ['expiry','second-history','committed']){const f=fixture(t);await f.finish(await f.send());f.current={...browserFrame,url:origin+'/c/'+D};const next=f.details({requestId:'next',url:origin+'/backend-api/conversation/'+D});f.webRequest.onSendHeaders.emit(next);const history={tabId:7,frameId:0,documentId:'doc',documentLifecycle:'active',frameType:'outermost_frame',url:origin+'/c/'+D};f.owner.invalidateHistory(history);if(mode==='expiry')f.advance(6000);else if(mode==='second-history')f.owner.invalidateHistory(history);else f.owner.invalidateTab(7);await f.finish(next);assert.equal(await f.owner.verify({...frame,actualURL:origin+'/c/'+D}),null);}
 });
-test('history cannot revive accepted or conflicted work, rolled-back clocks, or stopped owners',async t=>{
- for(const mode of ['accepted','conflict','rollback','stop','wrong-final-route']){const f=fixture(t);await f.finish(await f.send());f.current={...browserFrame,url:origin+'/c/'+D};const next=f.details({requestId:'next',url:origin+'/backend-api/conversation/'+D});f.webRequest.onSendHeaders.emit(next);
- if(mode==='accepted')await flush();if(mode==='conflict')f.webRequest.onSendHeaders.emit({...next,requestId:'conflicting',requestHeaders:[{name:'Chatgpt-Account-Id',value:'personal'}]});if(mode==='rollback')f.rollback();
+test('history cannot revive conflicted work, rolled-back clocks, or stopped owners',async t=>{
+ for(const mode of ['conflict','rollback','stop','wrong-final-route']){const f=fixture(t);await f.finish(await f.send());f.current={...browserFrame,url:origin+'/c/'+D};const next=f.details({requestId:'next',url:origin+'/backend-api/conversation/'+D});f.webRequest.onSendHeaders.emit(next);
+ if(mode==='conflict')f.webRequest.onSendHeaders.emit({...next,requestId:'conflicting',requestHeaders:[{name:'Chatgpt-Account-Id',value:'personal'}]});if(mode==='rollback')f.rollback();
  f.owner.invalidateHistory({tabId:7,frameId:0,documentId:'doc',documentLifecycle:'active',frameType:'outermost_frame',url:origin+'/c/'+D});if(mode==='stop')f.owner.stop();if(mode==='wrong-final-route')f.current={...browserFrame};await f.finish(next);assert.equal(await f.owner.verify({...frame,actualURL:origin+'/c/'+D}),null,mode);}
 });
 

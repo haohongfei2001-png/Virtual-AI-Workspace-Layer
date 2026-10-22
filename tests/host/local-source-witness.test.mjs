@@ -219,7 +219,7 @@ test('passive default requires the original consumed installation and a home tar
 });
 test('passive association success or mismatch never enters identity, preserves the prior ledger, and consumes only the new batch',async t=>{
  const fetch=t.mock.method(globalThis,'fetch',()=>{assert.fail('the approved passive batch must never perform any GET');});
- for(const matching of [true,false]){
+ for(const [matching,lateHistory]of [[true,false],[false,false],[true,true],[false,true]]){
   const previous=oldConsumed(),h=mockChrome(priorLedgers(structuredClone(previous)),{});
   t.after(()=>h.chrome.tabs.onRemoved.emit(1));
   assert.equal((await h.message(passiveArm)).state,'WAITING_NATIVE');
@@ -229,11 +229,15 @@ test('passive association success or mismatch never enters identity, preserves t
   h.chrome.webNavigation.onHistoryStateUpdated.emit({tabId:1,frameId:0,...current});
   const details={tabId:1,frameId:0,documentId:'doc-one',documentLifecycle:'active',initiator:'https://chatgpt.com',type:'xmlhttprequest',method:'GET',requestId:'PRIVATE_REQUEST',url:'https://chatgpt.com/backend-api/conversations/'+c,requestHeaders:[{name:'Chatgpt-Account-Id',value:'PRIVATE_CONTEXT'},{name:'Cookie',value:'PRIVATE_COOKIE'}]};
   h.chrome.webRequest.onSendHeaders.emit(details);await new Promise(r=>setImmediate(r));
+  // Real report reached preparation before losing its pending request on
+  // history. Exercise that order through the unchanged worker, not a new batch.
+  if(lateHistory)h.chrome.webNavigation.onHistoryStateUpdated.emit({tabId:1,frameId:0,...current});
   h.chrome.webRequest.onCompleted.emit({...details,statusCode:200,fromCache:false,requestHeaders:undefined});await new Promise(r=>setImmediate(r));
   const result=await h.message(passiveRead);
   assert.equal(result.schema,PASSIVE_BATCH);assert.equal(result.mode,'PASSIVE_C2_ONLY');assert.equal(result.requests,0);assert.equal(result.decodedBytes,0);assert.equal(result.unspent,false);
   assert.equal(result.state,matching?'PARTIAL':'BLOCKED');assert.equal(result.stages.nativeAssociation.state,matching?'PASS':'BLOCKED');
   assert.equal(result.nativeObservation.counts['receipt-created'],1);assert.equal(result.nativeObservation.counts[matching?'association-passed':'association-rejected'],1);
+  assert.equal(result.nativeObservation.counts['history-retained-pending'],lateHistory?1:0);assert.equal(result.nativeObservation.counts['completion-untracked'],0);
   for(const name of ['identity','currentSpace','ordinary','archived','projects','members','finalIdentity'])assert.equal(result.stages[name].state,'NOT_RUN');
   assert.equal(result.productionEnabled,false);assert.equal(result.decision,'BLOCKED');
   assert(!/PRIVATE|12345678|doc-one|worker-fixed-fetch/.test(JSON.stringify(result)));

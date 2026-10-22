@@ -69,10 +69,15 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
    // GET can still survive its first matching history event while its first
    // frame lookup is pending. No old selection or prior-route retry is minted.
    const cold=!prior&&r.document.contextId===null&&r.document.reason===undefined;
-   if(r.tabId===details.tabId&&r.documentId===details.documentId&&targetOf(r)===nextTarget&&!r.accepted&&r.actualURL===null&&!r.conflicted&&!r.historyRetained&&(prior?prior.actualURL!==details.url:cold)&&r.epoch===r.document.epoch&&clockOK(r,6000)){keep.add(r);if(prior)r.historyPriorURL=prior.actualURL;}
+   const unprepared=!r.accepted&&r.actualURL===null&&(prior?prior.actualURL!==details.url:cold);
+   // getFrame may already have confirmed the new route before its history
+   // notification arrives. Keep only that unfinished, exact selection once;
+   // a receipt, prior retention or unrelated revocation cannot cross this path.
+   const prepared=r.accepted&&r.actualURL===details.url&&!prior&&!r.commitRetained&&r.document.contextId===r.contextId&&r.document.reason==='context-selection-pending';
+   if(r.tabId===details.tabId&&r.documentId===details.documentId&&targetOf(r)===nextTarget&&(unprepared||prepared)&&!r.conflicted&&!r.historyRetained&&documents.get(key(r))===r.document&&r.epoch===r.document.epoch&&clockOK(r,6000)){keep.add(r);if(prior)r.historyPriorURL=prior.actualURL;}
   }
   // History delivery may follow the real new-route GET. Revoke every old grant
-  // now, but do not erase that still-unprepared, independently verified request.
+  // now, but do not erase that still-pending, independently verified request.
   // Its original six-second clock and later frame/tab/body checks are unchanged.
   for(const [k,d]of documents)if(d.tabId===details?.tabId){drop(d,'navigation');if(![...keep].some(r=>r.document===d))documents.delete(k);}
   for(const [id,r]of requests)if(r.tabId===details?.tabId){if(keep.has(r)){r.historyRetained=true;r.historyTargetURL=details.url;r.epoch=r.document.epoch;diagnostic('history-retained-pending');}else{requests.delete(id);diagnostic('history-dropped-pending');}}

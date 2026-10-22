@@ -1,5 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 被动v2实测定位到prepared请求被导航丢弃；已修窄时序缺陷（2026-10-22）
+
+用户提交v2终态为`BLOCKED/no-native-context-observed/unspent:false`；准备120008ms，events=2、navigations=2。`send-observed/request-admitted/request-prepared/history-dropped-pending/completion-observed/completion-untracked`各1，其余阶段码0。原生详情请求已通过过滤、header格式与首次浏览器frame/tab核验；随后pending请求被history移除，另观察到一个无法关联的completion。汇总报告不含事件顺序或请求ID，不能断言两次导航各自时机或completion一定对应该请求；也不能证明HTTP成功、无缓存或DOM关联成功。0是扩展主动GET；身份、当前空间、目录均未运行，不能判服务器不可行。本批现已消费，原active/v1/v2全部保留，不自动再测。报告没有包hash，分析基线6588d1d3不冒充已证实的现场精确SHA。
+
+已确认代码缺陷：`browser-request-context.mjs`原history分支只保留尚未prepared的请求，已通过当前页面检查但仍等待响应的请求一律删除；最小复现产生与报告一致的六个阶段码。现在仅允许首次迟到history保留同tab/document/目标/完整URL、无receipt、context一致、当前epoch/所属document有效、无冲突且未跨history/commit保留的prepared请求；仍先撤旧授权，不延长原六秒、不重做首次核验、不跳过成功非缓存completion、最终frame及独立DOM关联。不同完整URL、二次导航、已安装receipt、兄弟请求失败、冲突、过期/回拨等继续拒绝。未修改provider、生产身份开关、过滤范围、权限、请求预算或单次批次。
+
+验证：修前失败保留；定向owner/worker及既有C2绑定回归通过。原worker两导航的一种受控顺序现可完成被动关联，0主动GET，身份/目录仍NOT_RUN；这不是重建现场事件顺序。一次新隔离、外网阻断的headless MV3检查完成原生请求→认证fixture roster非首context→现有Free UI，构建重建校验及独立只读复核通过。均为离线证据，不升级真实来源、个人J1–J4或FREE-ACCEPTED。2258份副本与3个stash保全；复现、用户报告摘要、回归及候选包在`.git/vaiwl-checkpoints/20261022-prepared-history/`。本轮未操作真实Chrome/账户/存储，未更新原安装目录，候选仍使用已消费v2键，不能据此重新启动。
+
+唯一下一来源条件是**另获一次修复后同范围的被动复验许可**：同一授权Profile/绑定标签、一次首页→已有聊天自然导航，准备≤120秒/DOM关联≤6秒、0主动GET/0响应正文、原详情过滤和固定脱敏阶段码；不调用session/accounts/目录、不授scope、不启旧库，无自动重试。原三批保持只读；不借此次源码修复续用旧许可。只有关联实际成立后，才按另行明确授权推进主体/roster/当前空间与近期成员来源。以下前置截图及NOT_RUN记载为历史，不能覆盖本次已消费结果。
+
 ## v2前置拒绝：修复旧主动批次的消费格式兼容（2026-10-22）
 
 用户20:10/20:11截图显示`NOT_RUN/previous-consumed-context-result-required/requests:0/unspent:true`。此分支位于目标读取、READY、预留及监听之前，v2尚未消费；不是新一次C2超时，不证明请求过滤、缓存或服务器失败。未读取真实Chrome存储，不能断言现场旧记录的具体字段或Profile问题。
