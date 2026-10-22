@@ -2,6 +2,14 @@
 
 ## 真实来源优先：下一次验证已限定，未再次读取账户（2026-10-22）
 
+最新续接结果：正式浏览器会话重置后，以相同扩展实例/profile找回原准备标签；Network.enable已成功，没有新准备加载。用户批准的受观察加载已于03:16:58.717Z执行一次，969ms内因readEvents报告truncated停止，目标响应读取0，未调用getResponseBody。该批为INCOMPLETE_EVENTS，不再是未执行；一次观察许可不自动续用。没有获得新的账户结构、身份或空间证据。真实页面自然请求未取证，不声称全浏览器零HTTP。
+
+来源无关的最小对照：公开example.com相同调用顺序，起始cursor18/count0/hasMore=false，reload503ms后cursor64/count13/truncated=false；不能把真实失败归为必然的跨加载游标重置。真实preflight未保存hasMore，是否起始积压、reload期间事件淘汰或工具内部状态问题仍未知；1MiB响应体缓存不等于事件环容量，不扩大缓存或重跑账户。本机256图片的事件突发复现随后被工具拒绝原localhost CDP权限，未取得该复现结果；已停止并关闭两个代理测试标签及本地服务。工具拒绝明确限定该目标，不能泛化为全部CDP或网站403；不换渠道执行相同被拒动作。源码未改，原失败保留，窄证据见原summary `nativeRosterObservation20261022`。
+
+用户明确批准后，本机原地址对照仍被拒绝：`A saved user permission setting blocks this action ... A saved permission or managed policy denies access.` 当次仅准备页加载1次，受观察加载0次；没有在受拒后换端口/浏览器/CLI继续。原页面及服务再次关闭，旧四GET、此次真实单次观察均不重跑。当前需要的是平台解除该目标已有规则，不是再发一条相同聊天授权；该系统关口与身份来源仍分别未关闭。
+
+以下为16527558时的准备检查点，已由上述实际执行结果续接：
+
 基线3e8c3a36，产品仍fa864。本轮核对原请求代码、历史脱敏结果及dot来源意见，确认最近失败是 `sessionContexts` 拒绝唯一default/account_id:null；不是缺少HTTP200，也不能据此判账户为空。10-18原生网页曾提供canonical空间，而最近四GET使用另一条cookie-only读取路径；认证材料是否导致该差异尚未实证。四GET许可已消费，本轮未重发。
 
 用户已批准原计划首节的一次被动账户响应读取，无需新增授权或本人重载。获授权hongfei hao Profile已连接，并完成一次准备首页加载；domcontentloaded及readyState=complete实际成立。正式CDP监听准备返回 `Raw CDP is unavailable while Browser Use is resolving a paused document response.`；经原API确认加载完成后一次复查仍同错，按停止条件收口。只读取工具能力/页面路径与就绪状态；工具列出的能力只有pageAssets和cdp，无另一正式响应读取入口。

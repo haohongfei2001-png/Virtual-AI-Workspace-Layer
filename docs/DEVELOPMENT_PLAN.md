@@ -4,13 +4,17 @@
 
 接续用户最新指令，当前批次只推进真实主体／当前空间，再推进完整历史目录；不追加相邻离线修复或规模验证。已有四GET已消费。源码已确定解析失败在 `sessionContexts` 的 `account.account_id` 校验：唯一default项的ID为null，不能构成现有C2所需canonical roster。历史原生网页响应曾有2个canonical条目和1个相等default别名，而最近cookie-only读取只有default/null；正常provider的accounts请求使用同轮session派生认证，两条transport不同，尚未证明具体差异的因果。
 
-**下一批冻结为一次被动原生accounts响应观察，用户已批准，当前NOT_RUN**：仅hongfei hao专用Profile、代理新建ChatGPT首页。通过当前浏览器工具的原生HTTPS标签诊断能力建立观察；若工具要求先同源连接，最多一次准备加载，再一次受观察的正常首页加载，不改用户已有标签、不要求本人重载扩展。不主动请求、重放或修改accounts/me/session，不读取或复制请求Cookie/Authorization/token，不加扩展权限，不取聊天正文。旧扩展诊断页的限制保持，不经该页面或间接通道取回旧诊断结果。
+**本批为一次被动原生accounts响应观察，用户已批准，现已执行并停止为INCOMPLETE**：仅hongfei hao专用Profile、代理新建ChatGPT首页。通过当前浏览器工具的原生HTTPS标签诊断能力建立观察；若工具要求先同源连接，最多一次准备加载，再一次受观察的正常首页加载，不改用户已有标签、不要求本人重载扩展。不主动请求、重放或修改accounts/me/session，不读取或复制请求Cookie/Authorization/token，不加扩展权限，不取聊天正文。旧扩展诊断页的限制保持，不经该页面或间接通道取回旧诊断结果。
 
 观察窗口从受观察加载起共6秒、无重试；只接收精确 `GET https://chatgpt.com/backend-api/accounts/check/v4-2023-04-27` 的第一个响应，最多1MiB／1000条。只在RAM解析既有白名单字段（条目键、account_id/id、structure、is_deactivated、can_access_with_session及default别名相等关系），非目标账户资料立即丢弃。只输出状态/MIME/缓存类别、固定结构类别、数量、相等布尔和原schema原因；不输出原值、动态键、账户名或凭据，不存HAR/原响应。不得用已知压缩长度冒充解码上限；若工具不能保证读取界限或最小化，则先停止NOT_RUN。无自然请求、端点变体、挑战/429、缓存来源不明、超限、超时、文档变化或事件缺失均停止，不能扩大模板或补发请求。
 
 结果只裁定来源：有效canonical集合→当前网页原生路径有roster，cookie-only路径不足；仍default/null→当前两条路径均未给所需集合；未观察→未知，不能认定账户无空间。三者都不授scope、不打开旧库、不直接把工具/CDP或MAIN正文接成生产身份。成功后必须先确认普通生产扩展的可信取得方式及同代际C2关联；如走C3，另须默认个人域绑定/切换撤回语义。新的主体命名空间可以与旧session ID不同，但不能自动映射旧库；本批不新增/me读取或伪造expiresAt。只有来源/绑定成立后才进入服务器历史分页、无Project、Project成员、归档与跨端新增的完整目录验证；DOM扫描游标不算服务器游标，原完整Free目标与10k/100k DEFERRED不变。
 
 授权后实际准备：同一专用Profile已完成一次准备首页加载。正式 `cdp.send('Network.enable', {maxTotalBufferSize:1048576,maxResourceBufferSize:1048576,maxPostDataSize:0})` 返回 `Raw CDP is unavailable while Browser Use is resolving a paused document response.`；按正式troubleshooting文档经原API确认domcontentloaded、readyState=complete后的一次准备复查仍同错，停止。工具仅列pageAssets/cdp，没有另一正式响应读取接口；未换通道、未受观察加载、未读取目标响应，未开始6秒观察窗口。主页自然网络不被记为零请求或新API证据。此次是工具运行时不可用，不是网站403、扩展全域禁令或缺用户许可；保留同一标签/已用准备次数，工具恢复后才能继续剩余的一次观察，不能新开批次重置预算。
+
+后续03:10Z续接时，浏览器会话绑定已重置；按相同extensionInstance/profile重新取得原准备标签，无额外准备加载，正式监听恢复可用。03:16:58.717Z执行唯一一次受观察加载，969ms内事件接口返回truncated，立即按原停止条件结束；目标响应读取0、主动API请求0，不把缺失事件当账户来源失败或成功。该批观察机会已使用，不再自动复用许可。公开无账户静态页的同顺序对照cursor18→64、13条事件完整，未复现通用游标重置；真实preflight的hasMore未保存、等待reload再排空时是否发生事件淘汰亦未证实。下一步先解决观察器的前置游标／事件保留完整性，保留原6秒与一次性边界，不以再次真实加载试错。本机256图片突发复现的CDP调用被当前工具明确拒绝，范围仅该localhost目标；已关闭页面及本地服务，不换surface/CLI继续同一被拒实验。具体窄结果沿STATUS及`nativeRosterObservation20261022`，生产来源、身份、目录仍未成立。
+
+用户随后明确批准同一本机无账户对照（最多两次加载，每次6秒）。原工具在一次准备加载后仍拒绝Network.enable，现明确原因为saved permission or managed policy，未进入观察加载。页面/服务已关闭，不能通过换端口、浏览器、CLI或重复聊天确认绕过该拒绝。当前系统缺口是浏览器控制平台解除该目标已有拒绝规则并使原接口可用；没有新真实账户动作许可，也没有据此放宽完整性或来源证明。保持原失败，平台恢复前不循环重试。
 
 ## 夜间接续：真实对照已消费，来源审查与依赖就绪工程并行（2026-10-22）
 

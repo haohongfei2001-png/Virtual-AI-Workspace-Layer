@@ -24970,5 +24970,91 @@
         "lifecycle-ui-retention-dot-comment.json": "0907c6e1778d517e8d82787bc6be0dbb209a0c93c62f8775afc686258db17755"
       }
     }
+  },
+  "nativeRosterObservation20261022": {
+    "sourceHead": "16527558620ea6f498fd02c1e7032adce4fcced3",
+    "productHead": "fa86479ff4862fcb99f4744c3d7bb48b5a47ef87",
+    "authorization": "User approved one passive native accounts response observation; max one preparation load and one observed load, 6 seconds, 1MiB, 1000 entries, no retries. Prior credential control remains consumed.",
+    "connectionRecovery": {
+      "sameExtensionInstanceAndProfile": true,
+      "originalPreparedTabReused": true,
+      "additionalPreparationLoads": 0,
+      "networkEnableSucceeded": true
+    },
+    "result": {
+      "state": "finished",
+      "preparedLoads": 1,
+      "observedLoads": 1,
+      "responseBodiesRead": 0,
+      "activeApiRequests": 0,
+      "identityEnabled": false,
+      "startedAt": "2026-10-22T03:16:58.717Z",
+      "elapsedMs": 969,
+      "reason": "events-incomplete",
+      "acceptance": "INCOMPLETE_EVENTS",
+      "observationAllowanceUsed": true
+    },
+    "limits": {
+      "deadlineMs": 6000,
+      "maxBodyBytes": 1048576,
+      "maxEntries": 1000,
+      "endpoint": "https://chatgpt.com/backend-api/accounts/check/v4-2023-04-27",
+      "responseBodyRequested": false,
+      "rawResponseSaved": false,
+      "credentialsReadOrCopied": false,
+      "databaseOpened": false,
+      "nativePageHttpCount": "NOT_OBSERVED"
+    },
+    "publicCursorControl": {
+      "source": "https://example.com/",
+      "elapsedMs": 503,
+      "before": {
+        "cursor": 18,
+        "count": 0,
+        "truncated": false,
+        "hasMore": false
+      },
+      "after": {
+        "cursor": 64,
+        "count": 13,
+        "truncated": false,
+        "hasMore": false
+      },
+      "interpretation": "General cross-load cursor reset not reproduced; this does not explain live event truncation."
+    },
+    "unresolved": [
+      "Live preflight hasMore was not retained.",
+      "Event eviction during awaited reload versus other tool state has not been distinguished.",
+      "Network response buffer byte settings do not establish event retention capacity."
+    ],
+    "localBurstAttempt": {
+      "fixtureImages": 256,
+      "origin": "http://127.0.0.1:51204",
+      "outcome": "CDP_APPROVAL_NOT_GRANTED",
+      "exactToolReason": "Browser Use rejected this action due to browser security policy. Reason: The user declined permission for this action. Browser use could not acquire authority to use raw CDP. The CDP approval gate did not grant access for http://127.0.0.1:51204. The user declined approval. The agent must not attempt to achieve the same outcome via workaround, indirect execution, raw CDP or browser commands, alternate browser surfaces, or policy circumvention. Proceed only with a materially safer alternative that does not require this blocked browser action; if none exists, stop and request user input.",
+      "experimentNotCompleted": true,
+      "alternateChannelUsed": false,
+      "afterExplicitUserApproval": {
+        "permission": "User approved at most two loads, each bounded to six seconds, same localhost fixture only.",
+        "preparedLoads": 1,
+        "observedLoads": 0,
+        "result": "SAVED_PERMISSION_OR_MANAGED_POLICY_DENIED",
+        "exactToolReason": "Browser Use rejected this action due to browser security policy. Reason: A saved user permission setting blocks this action. Browser use could not acquire authority to use raw CDP. The CDP approval gate did not grant access for http://127.0.0.1:51204. A saved permission or managed policy denies access. The agent must not attempt to achieve the same outcome via workaround, indirect execution, raw CDP or browser commands, alternate browser surfaces, or policy circumvention. Proceed only with a materially safer alternative that does not require this blocked browser action; if none exists, stop and request user input.",
+        "alternateChannelUsed": false,
+        "tabClosed": true,
+        "serverStopped": true
+      }
+    },
+    "cleanup": {
+      "accountObservationTabClosed": true,
+      "publicAndLocalFixtureTabClosed": true,
+      "localServerStopped": true
+    },
+    "releaseStatus": {
+      "identityAndCurrentContext": "NOT_ESTABLISHED",
+      "completeHistoryDiscovery": "NOT_ESTABLISHED",
+      "freeAccepted": false,
+      "releaseReady": false
+    }
   }
 }
