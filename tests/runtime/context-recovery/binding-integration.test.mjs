@@ -433,3 +433,27 @@ for(let hops=0;hops<16;hops++)test('outer service delivery deadline microtask '+
   assert.equal(h.identity.reads,1,'failed final outer delivery must not mark producer as verified and bypass B');
  }else t.diagnostic('deadline occurred after completed service delivery');
 });
+
+
+test('L context association deadline returns while service stays nonidle until browser work settles',async t=>{
+ const h=await fixture(t);await h.native();await h.hello();
+ const held=deferred();h.associationReader=()=>held.promise;
+ const pending=h.refresh();await flush();assert.equal(h.associationCalls,1);
+ await h.clock.advance(6001);const result=await pending;
+ assert.notEqual(result.state,'verified');assert.equal(h.identity.reads,0);
+ assert.equal(h.service.isIdle(),false,'caller deadline does not finish the browser association');
+ held.resolve(null);await flush();
+ assert.equal(h.service.isIdle(),true);assert.equal(h.identity.reads,0);
+ assert.equal(h.service.authority.scopeFor(h.frameFor()),null);
+});
+
+test('L passive context lookup keeps service nonidle through revocation without minting a receipt',async t=>{
+ const h=await fixture(t),held=deferred(),detail=h.details();
+ h.frameReader=()=>held.promise;
+ h.webRequest.onSendHeaders.emit(detail);await flush();
+ h.observer.invalidateTab(1);h.service.invalidate({tabId:1});await flush();
+ assert.equal(h.service.isIdle(),false,'invalidating the request does not settle its browser lookup');
+ held.resolve(h.browserFrame({tabId:1}));await flush();
+ assert.equal(h.service.isIdle(),true);
+ assert.equal(await h.observer.verify(h.frameFor()),null);assert.equal(h.identity.reads,0);
+});

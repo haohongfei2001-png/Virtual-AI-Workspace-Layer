@@ -29,7 +29,15 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
  const conversationPattern=new RegExp('^/backend-api/'+conversationEndpoint+'/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$','i');
  const projects=projectRequestContext==='loopback-project-v1';
  if(projectRequestContext!==null&&(!projects||base.protocol!=='http:'||base.hostname!=='127.0.0.1'))throw Error('invalid-project-context-profile');
- const documents=new Map(),requests=new Map(),closedRequests=new Map(),clocks=new WeakMap(),expired=new WeakSet();let active=true,epoch=0;
+ const documents=new Map(),requests=new Map(),closedRequests=new Map(),clocks=new WeakMap(),expired=new WeakSet();let active=true,epoch=0,work=0;
+ // A bounded caller can finish before Chrome settles its outstanding lookup.
+ // Count the actual operations as well as their chains: Promise.all may reject
+ // while its sibling is still pending. Revocation never clears this counter.
+ const track=async run=>{work++;try{return await run();}finally{work--;}};
+ const readFrame=query=>track(()=>getFrame(query));
+ const readTab=tabId=>track(()=>getTab(tabId));
+ const associate=query=>track(()=>associatePage(query));
+ const isIdle=()=>active&&work===0;
  const key=d=>`${d.tabId}:${d.documentId}`;
  const notify=(fn,value)=>{try{Promise.resolve(fn(value)).catch(()=>{});}catch{}};
  const diagnostic=code=>{if(active&&typeof onDiagnostic==='function')notify(onDiagnostic,code);};
@@ -109,7 +117,7 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
   if(overlap.length){request.conflicted=true;for(const r of overlap)r.conflicted=true;drop(document,'concurrent-context-conflict');}
   requests.set(request.requestId,request);
   diagnostic('request-admitted');
-  request.prepare=()=>Promise.resolve().then(()=>Promise.all([getFrame({tabId:request.tabId,frameId:0}),getTab(request.tabId)])).then(([frame,tab])=>{
+  request.prepare=()=>track(()=>Promise.resolve().then(()=>Promise.all([readFrame({tabId:request.tabId,frameId:0}),readTab(request.tabId)])).then(([frame,tab])=>{
    // Delayed browser lookups cannot adopt an epoch revoked while they awaited.
    // Authorized navigation retention updates the pending epoch explicitly.
    if(request.conflicted||request.epoch!==document.epoch||tab?.id!==request.tabId||tab.incognito!==false||!active||requests.get(request.requestId)!==request||documents.get(key(request))!==document||!clockOK(request,6000)){diagnostic('initial-state-rejected');return false;}
@@ -126,7 +134,7 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
    const preparedSelection=!document.receipt&&[...requests.values()].some(r=>r!==request&&r.document===document&&r.epoch===document.epoch&&r.accepted&&!r.conflicted&&r.contextId===contextId&&r.actualURL===request.actualURL&&targetOf(r)===targetOf(request)&&clockOK(r,6000));
    if(document.contextId!==contextId||(document.receipt?.actualURL!==request.actualURL&&!preparedSelection)){drop(document,'context-selection-pending');document.contextId=contextId;}
    request.epoch=document.epoch;request.accepted=true;diagnostic('request-prepared');return true;
-  }).catch(()=>{diagnostic('initial-frame-unavailable');return false;});
+  }).catch(()=>{diagnostic('initial-frame-unavailable');return false;}));
   request.prepared=request.prepare();
  }
  // Protect only an installed receipt from a newer successful native request.
@@ -141,7 +149,7 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
   if(!validDetails(details)||details.url!==r.url||details.documentId!==r.documentId||details.tabId!==r.tabId){diagnostic('completion-metadata-rejected');fail(details);return;}
   if(details.statusCode!==200){diagnostic('completion-http-rejected');fail(details);return;}
   if(details.fromCache===true){fail(details);return;}
-  void (async()=>{try{
+  void track(async()=>{try{
    let prepared=await r.prepared;
    // The trusted history event retained this still-unprepared request. Only a
    // first browser lookup of that exact prior route may be rechecked once at
@@ -151,7 +159,7 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
    }
    if(!prepared){diagnostic('completion-unprepared');return;}
    if(r.conflicted||!active||requests.get(r.requestId)!==r||documents.get(key(r))!==r.document||r.epoch!==r.document.epoch||!clockOK(r,6000)){diagnostic('completion-stale');return;}
-   const [frame,tab]=await Promise.all([getFrame({tabId:r.tabId,frameId:0}),getTab(r.tabId)]);
+   const [frame,tab]=await Promise.all([readFrame({tabId:r.tabId,frameId:0}),readTab(r.tabId)]);
    if(r.conflicted||tab?.id!==r.tabId||tab.incognito!==false||!active||requests.get(r.requestId)!==r||r.epoch!==r.document.epoch||!clockOK(r,6000)||!frameMatches(frame,r)){diagnostic('final-frame-rejected');return;}
    const prior=r.document.receipt;
    if(prior&&prior.contextId===r.contextId&&prior.actualURL===r.actualURL){
@@ -169,7 +177,7 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
    r.document.receipt=receipt;r.document.wall=r.wall;r.document.elapsed=r.elapsed;
    diagnostic('receipt-created');
    notify(onReady,{tabId:r.tabId,documentId:r.documentId});
-  }finally{if(requests.get(r.requestId)===r){requests.delete(r.requestId);closedRequests.set(r.requestId,r);}}})().catch(()=>{diagnostic('completion-lookup-failed');});
+  }finally{if(requests.get(r.requestId)===r){requests.delete(r.requestId);closedRequests.set(r.requestId,r);}}}).catch(()=>{diagnostic('completion-lookup-failed');});
  }
  function isCurrent(frame,receipt){
   if(!active||!receipt||frame?.frameId!==0||frame.incognito!==false||frame.documentLifecycle!=='active'||frame.actualURL!==receipt.actualURL||frame.tabId!==receipt.tabId||frame.documentId!==receipt.documentId)return false;
@@ -181,16 +189,16 @@ export function createBrowserRequestContext({webRequest,getFrame,getTab,associat
   let onAbort,finished=false;const aborted=new Promise(resolve=>{onAbort=()=>resolve(null);signal?.addEventListener('abort',onAbort,{once:true});});
   const current=()=>!finished&&!signal?.aborted&&isCurrent(frame,receipt);
   diagnostic('association-started');
-  try{return await withRequestDeadline(()=>Promise.race([aborted,(async()=>{
-   const answer=await associatePage({tabId:frame.tabId,documentId:frame.documentId,actualURL:receipt.actualURL,...(receipt.projectId?{projectId:receipt.projectId}:{conversationId:receipt.conversationId}),challenge,expiresAt:new Date(now()+6000).toISOString()});
+  try{return await withRequestDeadline(()=>Promise.race([aborted,track(async()=>{
+   const answer=await associate({tabId:frame.tabId,documentId:frame.documentId,actualURL:receipt.actualURL,...(receipt.projectId?{projectId:receipt.projectId}:{conversationId:receipt.conversationId}),challenge,expiresAt:new Date(now()+6000).toISOString()});
    if(!current()||answer?.challenge!==challenge||answer.actualURL!==receipt.actualURL||(receipt.projectId?answer.projectId!==receipt.projectId||answer.association!=='explicit-project-id':answer.conversationId!==receipt.conversationId||answer.association!=='explicit-body-id')){diagnostic('association-rejected');return null;}
-   const [actual,tab]=await Promise.all([getFrame({tabId:frame.tabId,frameId:0}),getTab(frame.tabId)]);const matched=current()&&tab?.id===frame.tabId&&tab.incognito===false&&frameMatches(actual,receipt);diagnostic(matched?'association-passed':'association-final-frame-rejected');return matched?receipt:null;
-  })()]),{timeoutMs:6000,now:elapsedNow});}catch{diagnostic('association-failed-or-timeout');return null;}finally{finished=true;signal?.removeEventListener('abort',onAbort);}
+   const [actual,tab]=await Promise.all([readFrame({tabId:frame.tabId,frameId:0}),readTab(frame.tabId)]);const matched=current()&&tab?.id===frame.tabId&&tab.incognito===false&&frameMatches(actual,receipt);diagnostic(matched?'association-passed':'association-final-frame-rejected');return matched?receipt:null;
+  })]),{timeoutMs:6000,now:elapsedNow});}catch{diagnostic('association-failed-or-timeout');return null;}finally{finished=true;signal?.removeEventListener('abort',onAbort);}
  }
 
  const filter={urls:[origin+'/backend-api/'+conversationEndpoint+'/*',...(projects?[origin+'/backend-api/projects/*']:[])],types:['xmlhttprequest']};
  const listeners=[[webRequest.onSendHeaders,send,['requestHeaders']],[webRequest.onCompleted,complete],[webRequest.onErrorOccurred,d=>{diagnostic('native-request-failed');fail(d);}],[webRequest.onBeforeRedirect,d=>{diagnostic('native-request-redirected');fail(d);}]];
  for(const [event,listener,extra]of listeners)extra?event.addListener(listener,filter,extra):event.addListener(listener,filter);
  function stop(){if(!active)return;active=false;for(const [event,listener]of listeners)event.removeListener(listener);requests.clear();closedRequests.clear();documents.clear();}
- return Object.freeze({verify,isCurrent,invalidateTab,invalidateCommitted,invalidateHistory,stop});
+ return Object.freeze({isIdle,verify,isCurrent,invalidateTab,invalidateCommitted,invalidateHistory,stop});
 }
