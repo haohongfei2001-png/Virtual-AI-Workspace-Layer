@@ -14,6 +14,23 @@
 
 ## 当前执行：本机开发版一次性来源见证（2026-10-22）
 
+### 2026-10-23：消费已有结果，停止重复身份测试
+
+本轮按用户“先核清已有证据能解决什么”的要求复核 source-v3 原报告及实际 runner/parser。该一次性技术可行性见证已经完成；不因后续生产差额要求重新测身份、重载、重登或截图。“一次来源见证”不应承诺覆盖全部个人 J1–J4；后者仍属产品实际使用验收，但必须等可用候选，不分散要求本人操作。
+
+| 原任务 | 现有证据可以关闭什么 | 不能从当前报告补出的信息及下一动作 |
+|---|---|---|
+| B1.F / C2 | source-v3 同一文档的 session 主体、canonical roster、C2 和收尾一致性已 PASS；保留窄真实证据，不复测同一链 | 首页/Project 冷启动、刷新/自然休眠没有同类实测；原恢复实现保持，不把已消费 receipt 恢复为授权。候选可用后合入原 J4。 |
+| B2.F1 | 普通24、归档1、Project1、成员接口2个候选的有限可读性；现有固定 provider 与 Native/CAS 消费可复用 | Project 成员 parser 接受匹配、missing 或 null 的 gizmo_id 为候选，报告没记录这些类别，故无 gap/两条候选不是正向成员证明。NONE 也未观察；旧原始响应已丢弃，离线不能补造。仅待允许的来源语义见证，不重做目录可读性实验。 |
+| B2.F2 / B2.F3 | 原 ActivityDecision、私有活动 owner、持久去重与预算已有实现 | runner 普通目录 sort=unspecified，候选 parser 不保留 update_time；24不是“最近24”。既有报告不能证明更新时间单位或顺序域，也不证明自然新增。以后仅核这些缺失语义，不恢复逐消息 ACK 审计前置。 |
+| C5 / C6 / F3 / F4 | 已有导航、安装兼容、恢复和窄菜单证据保留 | 本人窗口、物理 IME、已启用 PAIA 与自然连续恢复合入可用候选的一次日用过程；隔离结果不冒充本人验收，也不为本次核对重跑矩阵。 |
+
+**生产准入字段不是网站拒绝回执。** `tools/native-source-witness/runner.mjs` 在空报告中固定设置 `websiteSupport:NOT_ESTABLISHED`、`productionEnabled:false` 和 `productionAdmission:BLOCKED_PENDING_SOURCE_SEMANTICS_AND_WEBSITE_CONDITIONS`；成功结尾只将技术决策改为 CONDITIONAL GO。不能据这些预设字段声称网站本次拒绝；实际10GET全部200，亦不能由200推断持续读取获准。
+
+**网站条件的具体依据及负责人。** 原[独立裁决6333439460](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6333439460)§2D已提出该条件，并非最新身份见证后新加。2026-10-23重新打开官方[个人使用条款](https://openai.com/policies/row-terms-of-use/)“Using our Services”，确有自动/程序化提取数据或输出的限制；[SIWC quickstart](https://developers.openai.com/siwc/quickstart)也明确其 identity/Responses scopes 不授予既有 ChatGPT conversations 访问。前者是持续自动读取需要澄清的具体依据，后者只证明 SIWC 不是替代数据入口；均不能凭空认定本账号适用何种协议、所有扩展违法或所有本地界面功能被禁。原支持回复“无公开支持接口”也不能单独等同于明确禁止本固定方式。
+
+唯一下一外部澄清：网站方对**本人选定空间、包内固定认证与限定目录元数据读取**的适用允许方式/条件，或能返回同等既有数据的受支持通道。由 Codex 准备最小询问，不让用户自行研究条款或再次测试；已有对外发送许可只覆盖先前具体故障文本，新文本未发，需单独明确发送授权。得到可核验条件后，再一次明确实际主用的持续只读范围并按上述缺失语义准备合并验证；这两类许可不能互相替代。当前不建新批、不启生产，不恢复严格全历史完整性前置、不改产品目标。
+
 **最新实际结果覆盖下方历史：source-v3已消费，CONDITIONAL GO。** 用户附件实际10GET全部200 JSON、167329解码字节、主动4880ms/准备6484ms；同文档身份、认证roster、C2与收尾同主体/空间PASS，普通24/归档1个候选可读但缺库存状态字段，Project1/成员接口2个候选可读及cursor:null。只证明本次有限来源，不代表排序/活动、正向成员/NONE、首页或恢复成立。普通/归档partial不丢合法候选，不以严格全历史证明再阻塞个人版；详情见STATUS最新节。
 
 原B2.F1本轮补受信结果消费：`directory-batch`复用既有parser，现owner私有`observeDirectory`绑定固定首屏请求与scope/document/provider/期限，沿同NativeRepository/CAS/UI通知接纳正向ID/原名及独立coverage域/缺口。生产provider仍未登记，无新增网络/RPC、无持续扫描；成员不推断PROJECT/NONE、活动不伪造、未见不删除。缺原名保留旧行/旧时效，参数冲突拒绝，pending ACK优先，目录不能创建或续认ACK continuation。新增host-metadata持久枚举的回退基线现已通过同ID实际安装验证：190b旧包对两根布局的read/header/apply/invalidate/recover拒绝且八store不变，980764eb兼容包可读写，再升级保持目录及双scope人工资产。只认证该窄B4/B5/F3存储切片，不继承其他旧F3或真实J4结果；具体包hash见STATUS本批回执。数据库键/hash/恢复架构不变。
