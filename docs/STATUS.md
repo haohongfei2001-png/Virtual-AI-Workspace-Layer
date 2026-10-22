@@ -1,6 +1,17 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
 
+## 固定认证/当前对象读取取消后，实际请求与清理完成前保持nonidle（2026-10-23）
+
+接续22eb4c8d，只读核对原附件SHA256仍为c01a3890…、source-v3/CONDITIONAL GO/10GET/已消费；不是新批结果，没有重测。原C6/F3继续定位确认：SessionProvider外层取消race先返回，ScopeAuthority/CurrentMetadataReader的计数也随之结束，但底层忽略abort的fetch或reader.cancel仍未完成，service可提前报idle。两项实际provider组合最小反例修前均失败；首次测试草稿使用错误refresh reason的失败另存，纠正后才形成行为证据，不混计产品失败。
+
+原SessionProvider增加纯本地实际chain计数，两个既有owner接入其可选isIdle能力；请求及响应清理真正结束后才排空。服务继续通过原authority/currentMetadata接线消费，不新增owner/RPC/调度器。调用方原有界返回、撤权与迟到拒绝、token RAM生命周期、目录锁和预算保持；不是延长请求期限或恢复旧授权。
+
+3个直接回归覆盖认证fetch忽略abort、当前对象响应清理迟到失败、实际binding service撤权后的空闲状态。合批192项相关检查通过，默认/观察候选各191文件构建校验通过；此为L组合及构建证据，没有重跑浏览器矩阵，不升级前轮MV3结果为本批实际运行。仅主writer差异审查。证据：[本批回执](engineering/free-session-idle-drain-20261023.json)，修前/修后日志及构建在`.git/vaiwl-checkpoints/20261023-session-idle-drain/`。
+
+生产仍关闭、原安装未更新、七批真实许可不重用；网站允许条件及持续只读范围、正向成员/NONE/可信活动和真实首页/刷新休眠空间延续仍未闭合。没有要求用户新操作。原2258份副本/3个stash保留，个人日用与完整Free未宣称交付。
+
+
 ## 当前idle修复后的隔离MV3租约到期恢复通过；修复旧观察器锚点（2026-10-23）
 
 接续296e36b3，按原C6/F3补实际浏览器恢复集成证据。运行前确认原idle-work-trace仍硬编码不含nativeActivity/contextObserver的旧owner列表，直接相关检查出现idle-trace-anchor:service失败；未进入浏览器验收。这是测试观察器随源码漂移，不能归为产品恢复失败。现仅同步原观察器的精确锚点和匿名owner名称位置，保留闭包原判定、短路顺序、期限、一次CHECK/RELEASE及ring上限。一个新增对照确认context忙时带/不带trace的CHECK、RELEASE和grant可用性一致；210项直接依赖检查通过，不是新产品功能数。

@@ -7,7 +7,8 @@ export function createScopeAuthority({provider,profile,readIdentity=null,context
  const states=new Map();let epoch=0,identityRuns=0;
  // Count the actual identity/context chain, not its abort/deadline race.
  function identityWork(work){identityRuns++;return Promise.resolve().then(work).finally(()=>{identityRuns--;});}
- const isIdle=()=>identityRuns===0&&![...states.values()].some(entry=>entry.pending||entry.rechecking);
+ const providerIdle=typeof provider.isIdle==='function'?provider.isIdle.bind(provider):()=>true;
+ const isIdle=()=>identityRuns===0&&providerIdle()===true&&![...states.values()].some(entry=>entry.pending||entry.rechecking);
  const valid=f=>f&&Number.isSafeInteger(f.tabId)&&f.tabId>=0&&f.frameId===0&&tokenOK(f.documentId)&&f.documentLifecycle==='active'&&f.incognito===false&&typeof f.actualURL==='string'&&allowedURL(f.actualURL);
  const key=f=>`${f.tabId}:${f.documentId}`;
  const unverified=reason=>({state:'unverified',reason});

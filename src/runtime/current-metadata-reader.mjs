@@ -30,12 +30,13 @@ export function createCurrentMetadataReader({observations,provider,enabled=false
  if(onHistorical!==null&&typeof onHistorical!=='function')throw Error('invalid-history-consumer');
  const historyFor=enabled&&typeof provider.historyFor==='function'?provider.historyFor.bind(provider):null;
  const readCurrent=enabled?provider.readCurrentConversation.bind(provider):null;
+ const providerIdle=enabled&&typeof provider.isIdle==='function'?provider.isIdle.bind(provider):()=>true;
  const acceptanceFor=enabled&&typeof provider.acceptanceFor==='function'?provider.acceptanceFor.bind(provider):null,readbacks=new WeakMap();
  let stopped=false,busy=null,activeWork=0;
  async function track(work){activeWork++;try{return await work();}finally{activeWork--;}}
  // Owner cancellation and provider abort races can settle before their work.
  function withCurrent(proofId,work){return track(()=>observations.withCurrent(proofId,context=>track(()=>work(context))));}
- const isIdle=()=>!stopped&&busy===null&&activeWork===0;
+ const isIdle=()=>!stopped&&busy===null&&activeWork===0&&providerIdle()===true;
  function read(proofId,options={}){return startRead(proofId,options,null);}
  function readCalibration(proofId,{isCurrent,signal}={}){
   if(typeof isCurrent!=='function'||!(signal instanceof AbortSignal))return Promise.reject(Error('invalid-calibration-reader'));

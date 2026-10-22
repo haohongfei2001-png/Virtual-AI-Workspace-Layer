@@ -23,6 +23,11 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
  const parseMetadata=messageList?parseConversationMessageListMetadata:parseConversationMetadata;
  const currentEnabled=profile.currentConversationReadEnabled===true,contextHeader=profile.currentConversationContextHeader===true,rosterContext=profile.currentConversationRosterContext===true;
  const directoryEnabled=profile.directoryReadEnabled===true,directories=new WeakMap();let directoryBusy=false,directoryWork=0;
+ let activeWork=0;
+ // Caller deadlines bound waiting, not fetch/body cleanup that ignores abort.
+ // This local capability covers every fixed read on this provider instance.
+ async function track(work){activeWork++;try{return await work();}finally{activeWork--;}}
+ const isIdle=()=>activeWork===0;
  if(profile.directoryReadEnabled!==undefined&&typeof profile.directoryReadEnabled!=='boolean'||directoryEnabled&&(!contextHeader||!rosterContext||typeof readBudget?.reserve!=='function'))throw Error('invalid-directory-source-profile');
  const historicalProfile=profile.historicalSendProfile===undefined?null:validateHistoricalSendProfile(profile.historicalSendProfile),histories=new WeakMap();
  if(historicalProfile&&(!currentEnabled||historicalProfile.providerProfile!==providerProfile||!loopback))throw Error('invalid-session-history-profile');
@@ -42,7 +47,7 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
   // Keep the actual chain in the caller's work accounting even when its
   // bounded response wins the race. Abort does not prove transport completion.
   const runWork=current?.directory?current.trackWork:work=>work();
-  try{return await withRequestDeadline(()=>Promise.race([cancelled,runWork(async()=>{
+  try{return await withRequestDeadline(()=>Promise.race([cancelled,runWork(()=>track(async()=>{
    const session=await json('/api/auth/session');
    const credentials=sessionCredentials(session,now()),{principalId,expiresAt}=credentials;let token=credentials.token;credentials.token=null;if(current?.directory)credentialExpiry=instant(expiresAt);
    try{
@@ -80,7 +85,7 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
    }
    return {principalId,expiresAt,contexts,providerProfile,transport:'worker-fixed-fetch'};
    }finally{token=null;}
-  }).finally(()=>{if(current?.directory)directoryWork--;})]),{timeoutMs:6000,now:elapsedNow});}catch(error){const code=error?.message;
+  })).finally(()=>{if(current?.directory)directoryWork--;})]),{timeoutMs:6000,now:elapsedNow});}catch(error){const code=error?.message;
    // Only the parser's private WeakMap can attest this fixed, data-free reason.
    // Preserve it for local diagnostics; transport errors still get normalized.
    if(code==='invalid-accounts-schema'&&sessionContextSchemaIssue(error))throw error;
@@ -113,5 +118,5 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
    const result=Object.freeze({state:'candidate'});directories.set(result,{context,payload:proof.payload,expiresAt:proof.expiresAt,current});return result;
   }finally{directoryBusy=false;}
  },directoryFor(result){const proof=directories.get(result);if(!proof)return null;const at=now();if(!proof.current()||!Number.isFinite(at)||instant(proof.expiresAt)<=at){directories.delete(result);return null;}return Object.freeze({context:proof.context,payload:proof.payload,expiresAt:proof.expiresAt});}});
- return Object.freeze({read,readCurrentConversation,acceptanceFor,historyFor,directoryProvider});
+ return Object.freeze({isIdle,read,readCurrentConversation,acceptanceFor,historyFor,directoryProvider});
 }
