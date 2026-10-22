@@ -16,9 +16,9 @@
 
 最新v2已执行并消费：用户报告prepared/admitted/send各1、history-dropped-pending=1、completion-observed/untracked各1，events=2/navigations=2；准备120008ms，0主动GET，无receipt/DOM关联，身份/当前空间/目录NOT_RUN。汇总不能还原两个navigation或请求ID对应关系；不是服务器API不可行。三批active/v1/v2全部只读保留，不清记录、不自动再测。
 
-本轮按原B1.F/C2修已确认时序缺陷：初始frame/tab核验完成后才到达的精确history通知，原实现会误删pending请求。仅补同一文档/完整URL/context、无receipt、当前epoch、无冲突、未跨history/commit保留且原六秒有效的prepared分支；仍同步撤旧grant，并保留completion/final frame/DOM与认证roster各自关口。修前最小失败、窄回归、原worker接线、隔离headless MV3及构建/独立审查见STATUS首节；不重建诊断器或启生产来源。候选未替换真实安装，原单次键不变。
+本轮按原B1.F/C2修已确认时序缺陷：初始frame/tab核验完成后才到达的精确history通知，原实现会误删pending请求。仅补同一文档/完整URL/context、无receipt、当前epoch、无冲突、未跨history/commit保留且原六秒有效的prepared分支；仍同步撤旧grant，并保留completion/final frame/DOM与认证roster各自关口。修前最小失败、窄回归、原worker接线、隔离headless MV3及构建/独立审查见STATUS；不重建诊断器或启生产来源。bcc44493修复现已随下述新批准v3包备份后原位更新，未替换或清除任何旧消费键。
 
-唯一下一来源条件：新一次明确许可后，修复版沿同Profile/原绑定标签、原过滤、120秒准备/6秒关联、0主动GET/0响应正文、一次自然打开已有聊天，验证该缺陷修复能否产生receipt及独立DOM关联。旧批不重发；不调用身份/目录、不授scope，无自动重试，不以此次离线修复代替主用真实验收。未经该新许可，本来源专项不追加同类真实实验。后续身份/roster/当前空间与近期成员仍按各自证据及授权闭合。
+用户已明确批准修复后同范围的一次被动复验，原入口已准备独立v3批次：同Profile/原绑定标签、原过滤、120秒准备/6秒关联、0主动GET/0响应正文、一次自然打开已有聊天。三旧批只读保留，v2前态只核消费终态与零主动请求，不凭精确计数猜造现场时序；新旧页面/worker批次错配拒绝。原安装目录已备份更新，定向回归、隔离headless入口及构建校验通过；真实执行仍NOT_RUN。唯一下一来源条件为同一扩展加载更新后由用户本机执行一次开始→自动返回→原生侧栏点一次已有聊天→自动显示结果，不再重复申请该许可。旧批不重发；不调用身份/目录、不授scope，无自动重试，不以离线修复代替主用真实验收。后续身份/roster/当前空间与近期成员仍按各自证据及授权闭合。
 
 历史前置修复已继承：6588d1d3兼容90a006ac/4f35c12b已finished但缺unspent的旧主动结果，原v2一次确认、监听就绪后精确返回和终态自动显示不变；本轮只读消费实际报告，不复活当时未消费的授权。
 

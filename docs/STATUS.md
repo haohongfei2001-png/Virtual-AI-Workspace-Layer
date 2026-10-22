@@ -1,5 +1,13 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 已批准的时序修复被动复验v3已准备并原位更新；真实执行NOT_RUN（2026-10-22）
+
+用户明确批准bcc44493修复后的一次限定被动复验。复用原入口，独立批次为`vaiwl-local-context-observation-20261022-v3`；同一授权Profile/绑定标签，一次首页→已有聊天自然导航，准备≤120秒、DOM关联≤6秒、0主动GET/0响应正文、原详情过滤、固定匿名阶段码，无自动重试。旧active/v1/v2三批键和报告只读保留，v3只写自己的消费状态；准备前核对v2确为正确schema、finished、已消费、零主动请求的no-native-context-observed终态，不以精确事件计数作为授权条件。页面/worker的PREVIEW、ARM、READ、RETURN均匹配固定批次，旧页面不能误启动新批。身份、目录、生产scope和数据库仍未启用。
+
+原目录`.git/vaiwl-artifacts/local-source-witness-20261022/extension`完整备份后更新10个文件，包含bcc44493的prepared/history修复；manifest与权限不变，全部197个文件与候选一致，构建重建校验通过。定向单次状态/混版/三旧记录保全回归与断网隔离headless MV3入口检查通过，独立只读审查未发现新安全阻塞。首轮headless失败来自旧断言只期望两份历史报告，已保留失败并补第三份断言后通过，不归因为产品故障。证据、旧包和更新回执在`.git/vaiwl-checkpoints/20261022-passive-c2-v3/`；2258份未跟踪副本和3个stash保留。
+
+本轮没有操控真实Chrome、重载扩展、读写浏览器存储或启动观察；新批真实状态仍NOT_RUN，不标来源或个人日用通过。唯一下一步是让同一已安装扩展加载这次更新：重载原VAIWL一次，在新ChatGPT空白首页打开原入口，确认标题“时序修复复验v3”，点一次开始；自动返回后在原生侧栏点一次已有聊天，结果自动显示。无需新授权、重登、重装或重复执行；旧已消费批次不能重跑。下节待许可措辞为前一检查点历史，已由本节明确授权与准备结果取代。
+
 ## 被动v2实测定位到prepared请求被导航丢弃；已修窄时序缺陷（2026-10-22）
 
 用户提交v2终态为`BLOCKED/no-native-context-observed/unspent:false`；准备120008ms，events=2、navigations=2。`send-observed/request-admitted/request-prepared/history-dropped-pending/completion-observed/completion-untracked`各1，其余阶段码0。原生详情请求已通过过滤、header格式与首次浏览器frame/tab核验；随后pending请求被history移除，另观察到一个无法关联的completion。汇总报告不含事件顺序或请求ID，不能断言两次导航各自时机或completion一定对应该请求；也不能证明HTTP成功、无缓存或DOM关联成功。0是扩展主动GET；身份、当前空间、目录均未运行，不能判服务器不可行。本批现已消费，原active/v1/v2全部保留，不自动再测。报告没有包hash，分析基线6588d1d3不冒充已证实的现场精确SHA。

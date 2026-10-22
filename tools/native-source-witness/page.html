@@ -1,5 +1,5 @@
-<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>VAIWL 一次原生关联观察 · 精确返回批次</title><link rel="stylesheet" href="extension/status.css"><link rel="stylesheet" href="source-witness.css"><body>
-<h1>VAIWL 一次原生关联观察 · 精确返回批次</h1><p>新批准的被动批次 v2 · 保留前两批结果 · 不启用生产身份或数据库</p><p id="environment">正在核对所选标签…</p>
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>VAIWL 一次原生关联观察 · 时序修复复验 v3</title><link rel="stylesheet" href="extension/status.css"><link rel="stylesheet" href="source-witness.css"><body>
+<h1>VAIWL 一次原生关联观察 · 时序修复复验 v3</h1><p>新批准的被动批次 v3 · 保留前三批结果 · 不启用生产身份或数据库</p><p id="environment">正在核对所选标签…</p>
 <p>本次扩展主动GET为0：不调用session、accounts或任何目录接口，不读网络响应正文。只在选定标签原有详情请求过滤范围内观察必要浏览器元数据与context关联，并检查当前页面DOM ID的一致性。准备最多2分钟，DOM关联最多6秒；拒绝或绑定变化立即停止，无自动重试。</p>
 <p>不会发送、创建、移动、删除或归档内容，不读取或复制Cookie/token。仅保存固定阶段码、数量和一致性结果，不保存URL、ID、标题、请求头值或正文。未观察到匹配事件不能证明没有原生请求或缓存。</p>
 <p>点击下方按钮即确认这是同一已授权 Chrome Profile，并允许本次仅被动的原生请求及当前 DOM ID 关联观察。不会自动打开聊天；准备成功后自动返回原标签，由你选择一条已有聊天。</p>
@@ -10,5 +10,5 @@
 <p>关闭或重开结果页不重发；worker重启或不确定结果不自动续跑。不要卸载、删除存储或换安装目录重置本次机会。</p>
 <button id="read">读取已有结果（不发网络请求）</button> <button id="download" disabled>保存脱敏报告</button>
 <pre id="result" role="status" aria-live="polite">尚未执行</pre>
-<details id="previous-batches"><summary>前两批旧结果（只读保留，不补造）</summary><pre id="previous-result">正在读取本地结果…</pre></details>
+<details id="previous-batches"><summary>前三批旧结果（只读保留，不补造）</summary><pre id="previous-result">正在读取本地结果…</pre></details>
 <script type="module" src="source-witness-page.mjs"></script></body></html>
