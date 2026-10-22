@@ -25111,6 +25111,69 @@
             "https://learn.chatgpt.com/docs/config-file/config-reference",
             "https://learn.chatgpt.com/docs/enterprise/managed-configuration"
           ]
+        },
+        "effectivePolicyReadOnlyTrace20261022": {
+          "sourceHead": "60d3826c28fdbccafebce5d62ec099a0324f29e5",
+          "status": "REPEATED_DENIAL_CAUSE_IDENTIFIED_NOT_RESOLVED",
+          "origin": "http://127.0.0.1:51204",
+          "currentTaskSelection": "Exact executing task ID; only its session permission file inspected; private identifier omitted.",
+          "currentSession": {
+            "topLevelKeys": [
+              "full_cdp"
+            ],
+            "denyCount": 1,
+            "allowCount": 0,
+            "exactTargetDenied": true,
+            "modifiedAtUtc": "2026-10-22T03:21:40.104527Z"
+          },
+          "global": {
+            "fullCdpAccessEnabled": true,
+            "exactTargetDenied": false,
+            "exactTargetAllowed": false
+          },
+          "firstToolResult": {
+            "timestampUtc": "2026-10-22T03:21:40.261Z",
+            "gate": "fullCdpApproval",
+            "reason": "user_declined",
+            "humanClickedDeclineEstablished": false
+          },
+          "laterToolResult": {
+            "gate": "fullCdpApproval",
+            "reason": "persisted_user_denied"
+          },
+          "runtimeStaticEvidence": {
+            "version": "26.1013.40934",
+            "browserAndChromeServiceSha256": "c470cdc7f98be2724ef1c85f6b9d3757d80de022b065ca14d922d7a1a85ffc9a",
+            "sessionDenyPrecedesGlobalAllow": true,
+            "noMatchIsNotDeny": true,
+            "globalSettingsUIWritesSessionDeny": false,
+            "permissionReadCacheMaxMs": 300000,
+            "cacheCauseEstablished": false
+          },
+          "formalConfigRead": {
+            "instance": "Separate read-only stdio app server, not original Work runtime",
+            "browserUse": null,
+            "requirements": null,
+            "runningDaemonControlAvailable": false,
+            "currentWorkCloudPolicyEstablished": false
+          },
+          "excludedConclusions": [
+            "Not proof that the human clicked decline",
+            "Not proof of enterprise policy denial",
+            "Not proof all other authority gates allow",
+            "No source or complete Free acceptance"
+          ],
+          "resetSurface": "No supported session-specific withdrawal interface found in checked public tools and installed UI handlers; not a claim that none exists anywhere.",
+          "mutations": {
+            "permissionFiles": 0,
+            "privateIPC": 0,
+            "appRestarts": 0,
+            "newBrowserSessions": 0,
+            "cdpRetries": 0,
+            "accountDiagnosticRequests": 0,
+            "newSupportMessages": 0
+          },
+          "nextCondition": "Platform-supported withdrawal of this current-session exact-origin deny and attribution of the initial approval decision. Do not delete the deny, switch session, or reuse consumed diagnostic grants."
         }
       }
     },

@@ -2,6 +2,8 @@
 
 ## 当前首要动作：原生账户来源与诊断路径的最小对照（2026-10-22）
 
+最新可执行边界已收窄：只读核对当前任务的独立Browser Use会话权限，已发现原localhost目标的唯一`full_cdp.denied`；原始03:21:40回执为`user_declined`，后续为`persisted_user_denied`。运行时会话deny优先于global allow，现有全局网站权限修改不清除它，故不再以重复改开关/重启/重载作为解决方案。最初审批由谁作出仍未知；独立只读配置进程无requirements不等于当前Work无云端限制。下一项是取得平台支持的**当前会话、该origin撤销拒绝方式**及原审批来源；已检查的公开工具/界面尚未找到该入口，不改文件、不调用内部处理器、不换会话绕行。解除后才安排新的有界无账户事件完整性对照和新的账户响应批次；既有额度不复用。后续仍按roster来源→生产可信取得/C2或C3绑定→完整服务器目录执行；本次只定位工具阻塞，不升级身份或Free验收。详见STATUS与原summary的`effectivePolicyReadOnlyTrace20261022`；下文保留之前各检查点历史。
+
 接续用户最新指令，当前批次只推进真实主体／当前空间，再推进完整历史目录；不追加相邻离线修复或规模验证。已有四GET已消费。源码已确定解析失败在 `sessionContexts` 的 `account.account_id` 校验：唯一default项的ID为null，不能构成现有C2所需canonical roster。历史原生网页响应曾有2个canonical条目和1个相等default别名，而最近cookie-only读取只有default/null；正常provider的accounts请求使用同轮session派生认证，两条transport不同，尚未证明具体差异的因果。
 
 **本批为一次被动原生accounts响应观察，用户已批准，现已执行并停止为INCOMPLETE**：仅hongfei hao专用Profile、代理新建ChatGPT首页。通过当前浏览器工具的原生HTTPS标签诊断能力建立观察；若工具要求先同源连接，最多一次准备加载，再一次受观察的正常首页加载，不改用户已有标签、不要求本人重载扩展。不主动请求、重放或修改accounts/me/session，不读取或复制请求Cookie/Authorization/token，不加扩展权限，不取聊天正文。旧扩展诊断页的限制保持，不经该页面或间接通道取回旧诊断结果。

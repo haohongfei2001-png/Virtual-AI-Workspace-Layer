@@ -1,6 +1,10 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
-## 真实来源优先：观察许可已消费，工具策略差异已追加原支持会话（2026-10-22）
+## 真实来源优先：已定位当前会话CDP拒绝，正式撤销入口未找到（2026-10-22）
+
+本轮只读定位取得具体根因：按当前执行器的任务ID精确核对其`browser/sessions/<current-task>.toml`，唯一`full_cdp.denied`命中原`http://127.0.0.1:51204`；全局`browser/config.toml`的CDP总开关为true，且没有该目标deny。当前任务原始工具回执在03:21:40.261Z先返回`user_declined`，该会话文件修改时间为03:21:40.104527Z；此后同目标的`CDP approval`返回`persisted_user_denied`。只证明工具如此分类并持久保存，不证明本人实际点击拒绝。安装版本26.1013.40934的browser/chrome runtime源码相同，明确先检查会话deny再采用global allow；因此11:50修改全局允许没有解除这条会话拒绝。已定位后续重复拒绝的具体规则，不再将它笼统归因于未知MDM或网站403。
+
+正式配置读取仅在独立只读检查进程完成：`config/read`的browser_use为null、`configRequirements/read`的requirements为null；当前应用没有可连接的正式daemon控制入口，不能把新检查进程当成原Work会话的有效云端策略。其他gate是否也会拒绝仍未证明。静态追踪中，现有网站权限增删/总开关/云设置同步只修改global文件，未找到管理当前会话deny的正式UI/公开API；内部审批处理器不是获准的重置接口。本轮没有修改权限文件、调用内部IPC、重启/新建会话、换surface、重跑CDP或新增账户请求。具体下一条件是平台提供或修复**当前会话、该origin的正式撤销拒绝入口**；不再让用户改全局开关、重载或重登。原单次许可仍已消费；解除后先限定新的无账户事件完整性对照，再经新的有界账户响应许可继续roster→生产可信取得→C2/C3→完整服务器目录。细项沿原summary的`effectivePolicyReadOnlyTrace20261022`，私人任务ID、原权限文件和原始日志不上传。
 
 用户批准的最小追加诊断已在原Help Center工具故障会话发送一次，已核对原文显示、输入框清空及AI辅助回复，未新建工单或附私人数据。先前Chrome入口要求MFA；从本任务原始记录找回原内置浏览器会话后直接续接，无需用户再登录。回复建议核对管理/设备策略，但没有给出命中规则、策略来源或修复确认，也不授权执行其删除策略/替代通道建议。有限只读检查中，已检查的系统/用户managed TOML及两个标准managed plist文件均不存在；现有用户config无browser_use段，app preferences无两个官方MDM payload键。这不排除云端策略、其他有效配置或运行时缓存，仍不能归因为MDM或“设置未打开”。未改权限、重启应用或再跑CDP/账户请求；只解决了向原支持会话送达诊断，不记新产品功能或来源通过。细项沿原summary `settingsRechecks20261022.supportFollowup`。
 
