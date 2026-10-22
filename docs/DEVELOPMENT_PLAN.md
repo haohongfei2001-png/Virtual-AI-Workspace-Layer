@@ -1,5 +1,17 @@
 # VAIWL 唯一开发计划：Free 完整交付 → Pro 智能增强
 
+## 当前首要动作：原生账户来源与诊断路径的最小对照（2026-10-22）
+
+接续用户最新指令，当前批次只推进真实主体／当前空间，再推进完整历史目录；不追加相邻离线修复或规模验证。已有四GET已消费。源码已确定解析失败在 `sessionContexts` 的 `account.account_id` 校验：唯一default项的ID为null，不能构成现有C2所需canonical roster。历史原生网页响应曾有2个canonical条目和1个相等default别名，而最近cookie-only读取只有default/null；正常provider的accounts请求使用同轮session派生认证，两条transport不同，尚未证明具体差异的因果。
+
+**下一批冻结为一次被动原生accounts响应观察，用户已批准，当前NOT_RUN**：仅hongfei hao专用Profile、代理新建ChatGPT首页。通过当前浏览器工具的原生HTTPS标签诊断能力建立观察；若工具要求先同源连接，最多一次准备加载，再一次受观察的正常首页加载，不改用户已有标签、不要求本人重载扩展。不主动请求、重放或修改accounts/me/session，不读取或复制请求Cookie/Authorization/token，不加扩展权限，不取聊天正文。旧扩展诊断页的限制保持，不经该页面或间接通道取回旧诊断结果。
+
+观察窗口从受观察加载起共6秒、无重试；只接收精确 `GET https://chatgpt.com/backend-api/accounts/check/v4-2023-04-27` 的第一个响应，最多1MiB／1000条。只在RAM解析既有白名单字段（条目键、account_id/id、structure、is_deactivated、can_access_with_session及default别名相等关系），非目标账户资料立即丢弃。只输出状态/MIME/缓存类别、固定结构类别、数量、相等布尔和原schema原因；不输出原值、动态键、账户名或凭据，不存HAR/原响应。不得用已知压缩长度冒充解码上限；若工具不能保证读取界限或最小化，则先停止NOT_RUN。无自然请求、端点变体、挑战/429、缓存来源不明、超限、超时、文档变化或事件缺失均停止，不能扩大模板或补发请求。
+
+结果只裁定来源：有效canonical集合→当前网页原生路径有roster，cookie-only路径不足；仍default/null→当前两条路径均未给所需集合；未观察→未知，不能认定账户无空间。三者都不授scope、不打开旧库、不直接把工具/CDP或MAIN正文接成生产身份。成功后必须先确认普通生产扩展的可信取得方式及同代际C2关联；如走C3，另须默认个人域绑定/切换撤回语义。新的主体命名空间可以与旧session ID不同，但不能自动映射旧库；本批不新增/me读取或伪造expiresAt。只有来源/绑定成立后才进入服务器历史分页、无Project、Project成员、归档与跨端新增的完整目录验证；DOM扫描游标不算服务器游标，原完整Free目标与10k/100k DEFERRED不变。
+
+授权后实际准备：同一专用Profile已完成一次准备首页加载。正式 `cdp.send('Network.enable', {maxTotalBufferSize:1048576,maxResourceBufferSize:1048576,maxPostDataSize:0})` 返回 `Raw CDP is unavailable while Browser Use is resolving a paused document response.`；按正式troubleshooting文档经原API确认domcontentloaded、readyState=complete后的一次准备复查仍同错，停止。工具仅列pageAssets/cdp，没有另一正式响应读取接口；未换通道、未受观察加载、未读取目标响应，未开始6秒观察窗口。主页自然网络不被记为零请求或新API证据。此次是工具运行时不可用，不是网站403、扩展全域禁令或缺用户许可；保留同一标签/已用准备次数，工具恢复后才能继续剩余的一次观察，不能新开批次重置预算。
+
 ## 夜间接续：真实对照已消费，来源审查与依赖就绪工程并行（2026-10-22）
 
 INV-09原消费任务本批补上合成MV3来源→私有owner→CAS→自动界面及失忆持久恢复旅程；生产源码/issuer不变。独立服务器成功语义、请求起点授权代际、对应删除的恢复见证与取消/错误拒绝分别核验；停止证明采用真实stopped→running、新测试实例与旧RAM消失，修正target必须销毁的观察器错误，原期限和失败保留。仅S_SYNTHETIC_LIFECYCLE_CONSUMER_ONLY，不是生产来源G、自动peer恢复、非空人工资产或完整INV-09；详见STATUS/`nativeLifecycleMV3Consumer20261022`。后续按dot6327691504补齐三个负例返回后及删除响应释放前的唯一可见目标检查，原六秒内一次MV3通过；仅关闭观察缺口，不将84c旧证据追溯补齐或认定新产品故障，见`nativeLifecycleUIRetention20261022`。dot新增合成取消脚本未给正式msg-self失败的新因果前提，不重复诊断或改oracle。当前来源关口、原完整Free目标及已消费4GET/规模DEFERRED边界不变。
