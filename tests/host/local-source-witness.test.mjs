@@ -69,7 +69,9 @@ test('developer overlay preserves normal navigation, adds only storage, private 
  assert.equal(verifyLocalWitness(output).realChatGPT,'NOT_RUN');assert.deepEqual(manifest.permissions,['webNavigation','webRequest','storage']);assert.deepEqual(manifest.host_permissions,['https://chatgpt.com/*']);assert.equal(manifest.action.default_popup,'status.html');
  assert.match(readFileSync(join(output,'source-witness-entry.mjs'),'utf8'),/extension\/temporary-navigation.mjs/);assert.match(readFileSync(join(output,'status.html'),'utf8'),/source-witness-entry.mjs/);
  assert(manifest.web_accessible_resources.every(r=>r.resources.every(p=>!p.includes('witness'))));
- assert.equal(info.maxGETs,12);assert.equal(info.retries,0);assert.equal(info.maxBytes,4194304);assert.equal(info.realChatGPT,'NOT_RUN');
+ assert.equal(info.mode,'PASSIVE_C2_ONLY');assert.equal(info.batchId,PASSIVE_BATCH);assert.equal(info.previousBatchId,BATCH);
+ assert.equal(info.maxGETs,0);assert.equal(info.retries,0);assert.equal(info.maxBytes,0);assert.equal(info.maxConcurrent,0);assert.equal(info.realChatGPT,'NOT_RUN');
+ assert.equal(info.maxPreparationMs,120000);assert.equal(info.maxChainMs,6000);assert.equal(info.maxElapsedMs,126000);
  assert.throws(()=>buildLocalWitness(output),/output-must-be-new/);
  // A modified permission plus a recomputed self-reported hash is not proof.
  manifest.permissions.push('debugger');const bytes=JSON.stringify(manifest,null,2)+'\n';writeFileSync(join(output,'manifest.json'),bytes);
@@ -77,13 +79,13 @@ test('developer overlay preserves normal navigation, adds only storage, private 
  assert.throws(()=>verifyLocalWitness(output),/witness-overlay-mismatch/);
 });
 
-import {installWitnessWorker} from '../../tools/native-source-witness/worker.mjs';
+import {installWitnessWorker,PASSIVE_BATCH} from '../../tools/native-source-witness/worker.mjs';
 import {BATCH} from '../../tools/native-source-witness/runner.mjs';
-function mockChrome(stored={}){
+function mockChrome(stored={},options={passiveOnly:false}){
  const event=()=>{const listeners=new Set();return {listeners,addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f),emit:x=>{for(const f of listeners)f(x);}};};
  const runtime={id:'test-extension',getURL:p=>'chrome-extension://test-extension/'+p,getManifest:()=>({version:'0.3.0'}),onMessage:event()};
  const chrome={runtime,storage:{local:{get:async key=>({[key]:stored[key]}),set:async value=>Object.assign(stored,value)}},tabs:{get:async id=>({id,url:'https://chatgpt.com/',incognito:false}),sendMessage:async()=>({ready:true}),onRemoved:event()},webNavigation:{getFrame:async()=>({documentId:'doc-one',url:'https://chatgpt.com/',documentLifecycle:'active',frameType:'outermost_frame'}),onCommitted:event(),onHistoryStateUpdated:event()},webRequest:Object.fromEntries(['onSendHeaders','onCompleted','onErrorOccurred','onBeforeRedirect'].map(k=>[k,event()]))};
- installWitnessWorker(chrome);
+ installWitnessWorker(chrome,options);
  const sender={id:runtime.id,url:runtime.getURL('source-witness.html')+'#1'};
  const message=(value,source=sender)=>new Promise(resolve=>{let accepted=false;for(const fn of runtime.onMessage.listeners)if(fn(value,source,resolve)===true)accepted=true;if(!accepted)resolve('ignored');});
  return {chrome,message,stored};
@@ -115,6 +117,86 @@ test('legacy consumed timeout is read unchanged, never reconstructed from new di
  const {message,stored}=mockChrome({[BATCH]:{state:'finished',result}});assert.deepEqual(await message({type:'SOURCE_WITNESS_READ'}),result);
  assert.deepEqual(await message({type:'SOURCE_WITNESS_ARM',tabId:1}),result);assert.equal(stored[BATCH].result.nativeObservation,undefined);
 });
+const passiveArm={type:'SOURCE_WITNESS_ARM',tabId:1,batch:PASSIVE_BATCH};
+const oldConsumed=()=>({state:'finished',result:{schema:BATCH,state:'BLOCKED',reason:'no-native-context-observed',requests:0,unspent:false}});
+test('passive default requires the original consumed installation and a home target; RPC cannot select active mode',async()=>{
+ const absent=mockChrome({},{});
+ assert.equal((await absent.message(passiveArm)).reason,'previous-consumed-context-result-required');
+ assert.equal(absent.stored[PASSIVE_BATCH],undefined);
+ const previous=oldConsumed(),h=mockChrome({[BATCH]:previous},{});
+ assert.deepEqual(await h.message({type:'SOURCE_WITNESS_PREVIOUS'}),previous.result);
+ assert.equal(await h.message({type:'SOURCE_WITNESS_ARM',tabId:1}),'ignored');
+ assert.equal(await h.message({...passiveArm,batch:BATCH}),'ignored');
+ assert.equal(await h.message({type:'SOURCE_WITNESS_ARM',tabId:1,passiveOnly:false}),'ignored');
+ const oldWorker=mockChrome();assert.equal(await oldWorker.message(passiveArm),'ignored');assert.deepEqual(oldWorker.stored,{});
+ h.chrome.tabs.get=async id=>({id,url:frame.actualURL,incognito:false});
+ assert.equal((await h.message(passiveArm)).reason,'select-chatgpt-home-no-request');
+ assert.equal(h.stored[PASSIVE_BATCH],undefined);assert.deepEqual(h.stored[BATCH],previous);
+ for(const event of Object.values(h.chrome.webRequest))assert.equal(event.listeners.size,0);
+});
+test('passive association success or mismatch never enters identity, preserves the prior ledger, and consumes only the new batch',async t=>{
+ const fetch=t.mock.method(globalThis,'fetch',()=>{assert.fail('the approved passive batch must never perform any GET');});
+ for(const matching of [true,false]){
+  const previous=oldConsumed(),h=mockChrome({[BATCH]:structuredClone(previous)},{});
+  t.after(()=>h.chrome.tabs.onRemoved.emit(1));
+  assert.equal((await h.message(passiveArm)).state,'WAITING_NATIVE');
+  const current={documentId:'doc-one',url:frame.actualURL,documentLifecycle:'active',frameType:'outermost_frame'};
+  h.chrome.tabs.get=async id=>({id,url:current.url,incognito:false});h.chrome.webNavigation.getFrame=async()=>current;
+  h.chrome.tabs.sendMessage=async(_id,query)=>({challenge:query.challenge,actualURL:query.actualURL,conversationId:matching?query.conversationId:d,association:'explicit-body-id'});
+  h.chrome.webNavigation.onHistoryStateUpdated.emit({tabId:1,frameId:0,...current});
+  const details={tabId:1,frameId:0,documentId:'doc-one',documentLifecycle:'active',initiator:'https://chatgpt.com',type:'xmlhttprequest',method:'GET',requestId:'PRIVATE_REQUEST',url:'https://chatgpt.com/backend-api/conversations/'+c,requestHeaders:[{name:'Chatgpt-Account-Id',value:'PRIVATE_CONTEXT'},{name:'Cookie',value:'PRIVATE_COOKIE'}]};
+  h.chrome.webRequest.onSendHeaders.emit(details);await new Promise(r=>setImmediate(r));
+  h.chrome.webRequest.onCompleted.emit({...details,statusCode:200,fromCache:false,requestHeaders:undefined});await new Promise(r=>setImmediate(r));
+  const result=await h.message({type:'SOURCE_WITNESS_READ'});
+  assert.equal(result.schema,PASSIVE_BATCH);assert.equal(result.mode,'PASSIVE_C2_ONLY');assert.equal(result.requests,0);assert.equal(result.decodedBytes,0);assert.equal(result.unspent,false);
+  assert.equal(result.state,matching?'PARTIAL':'BLOCKED');assert.equal(result.stages.nativeAssociation.state,matching?'PASS':'BLOCKED');
+  assert.equal(result.nativeObservation.counts['receipt-created'],1);assert.equal(result.nativeObservation.counts[matching?'association-passed':'association-rejected'],1);
+  for(const name of ['identity','currentSpace','ordinary','archived','projects','members','finalIdentity'])assert.equal(result.stages[name].state,'NOT_RUN');
+  assert.equal(result.productionEnabled,false);assert.equal(result.decision,'BLOCKED');
+  assert(!/PRIVATE|12345678|doc-one|worker-fixed-fetch/.test(JSON.stringify(result)));
+  assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(await h.message({type:'SOURCE_WITNESS_PREVIOUS'}),previous.result);
+  assert.deepEqual(await h.message(passiveArm),result);
+  assert.deepEqual(await mockChrome(h.stored,{}).message(passiveArm),result);
+  for(const event of Object.values(h.chrome.webRequest))assert.equal(event.listeners.size,0);
+ }
+ assert.equal(fetch.mock.callCount(),0);
+});
+test('a late DOM answer after native document replacement cannot pass or mutate either ledger',async t=>{
+ const fetch=t.mock.method(globalThis,'fetch',()=>{assert.fail('passive observation must never fetch');});
+ const previous=oldConsumed(),h=mockChrome({[BATCH]:structuredClone(previous)},{});t.after(()=>h.chrome.tabs.onRemoved.emit(1));
+ await h.message(passiveArm);
+ const current={documentId:'doc-one',url:frame.actualURL,documentLifecycle:'active',frameType:'outermost_frame'};
+ h.chrome.tabs.get=async id=>({id,url:current.url,incognito:false});h.chrome.webNavigation.getFrame=async()=>current;
+ let release;
+ h.chrome.tabs.sendMessage=async(_id,query)=>new Promise(resolve=>{release=()=>resolve({challenge:query.challenge,actualURL:query.actualURL,conversationId:query.conversationId,association:'explicit-body-id'});});
+ h.chrome.webNavigation.onHistoryStateUpdated.emit({tabId:1,frameId:0,...current});
+ const details={tabId:1,frameId:0,documentId:'doc-one',documentLifecycle:'active',initiator:'https://chatgpt.com',type:'xmlhttprequest',method:'GET',requestId:'private-request',url:'https://chatgpt.com/backend-api/conversations/'+c,requestHeaders:[{name:'Chatgpt-Account-Id',value:'private-context'}]};
+ h.chrome.webRequest.onSendHeaders.emit(details);await new Promise(r=>setImmediate(r));
+ h.chrome.webRequest.onCompleted.emit({...details,statusCode:200,fromCache:false});await new Promise(r=>setImmediate(r));assert(release,'DOM association should be pending');
+ h.chrome.webNavigation.onCommitted.emit({tabId:1,frameId:0,...current,documentId:'doc-two'});await new Promise(r=>setImmediate(r));
+ const result=await h.message({type:'SOURCE_WITNESS_READ'});assert.equal(result.state,'BLOCKED');assert.equal(result.stages.nativeAssociation.state,'BLOCKED');assert.equal(result.requests,0);
+ const saved=JSON.stringify(h.stored);release();h.chrome.webRequest.onCompleted.emit({...details,statusCode:200,fromCache:false});await new Promise(r=>setImmediate(r));
+ assert.equal(JSON.stringify(h.stored),saved);assert.deepEqual(h.stored[BATCH],previous);assert.equal(fetch.mock.callCount(),0);
+});
+test('late native events cannot extend passive preparation when the timer is delayed',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});let elapsed=0;t.mock.method(performance,'now',()=>elapsed);
+ t.mock.method(globalThis,'fetch',()=>{assert.fail('passive timeout must never fetch');});
+ const previous=oldConsumed(),h=mockChrome({[BATCH]:structuredClone(previous)},{});
+ await h.message(passiveArm);elapsed=120000;
+ // No timer tick: the event callback must enforce the same elapsed deadline.
+ h.chrome.webRequest.onSendHeaders.emit({tabId:1});
+ const result=await h.message({type:'SOURCE_WITNESS_READ'});
+ assert.equal(result.reason,'no-native-context-observed');assert.equal(result.requests,0);assert.equal(result.unspent,false);
+ assert.equal(result.nativeObservation.events,0);assert.equal(result.nativeObservation.preparationMs,120000);
+ assert.deepEqual(h.stored[BATCH],previous);assert(h.stored[PASSIVE_BATCH]);
+});
+test('passive worker loss cannot retry; only passive association outcome is unknown, active requests remain zero',async()=>{
+ const previous=oldConsumed(),h=mockChrome({[BATCH]:previous,[PASSIVE_BATCH]:{state:'reserved',result:null}},{});
+ const result=await h.message({type:'SOURCE_WITNESS_READ'});
+ assert.equal(result.requests,0);assert.equal(result.requestUpperBound,0);assert.equal(result.requestCountKnown,true);assert.equal(result.unspent,false);
+ assert.equal(result.stages.nativeAssociation.state,'PARTIAL');assert.equal(result.stages.identity.state,'NOT_RUN');
+ assert.deepEqual(await h.message(passiveArm),result);assert.deepEqual(h.stored[BATCH],previous);
+});
 test('content scripts and other extension pages cannot arm; single-tab listener filters before processing',async()=>{
  const {chrome,message,stored}=mockChrome();assert.equal(await message({type:'SOURCE_WITNESS_ARM',tabId:1},{id:chrome.runtime.id,url:'https://chatgpt.com/',tab:{id:1}}),'ignored');assert.equal(await message({type:'SOURCE_WITNESS_ARM',tabId:1},{id:chrome.runtime.id,url:chrome.runtime.getURL('status.html')}),'ignored');
  assert.equal((await message({type:'SOURCE_WITNESS_ARM',tabId:1})).state,'WAITING_NATIVE');assert(stored[BATCH]);
@@ -140,15 +222,39 @@ test('result page serializes reads and a late ARM response cannot replace a fina
  const elements=new Map(),intervals=new Set();let completeArm,completeRead,reads=0;
  for(const id of ['result','run','confirm','download','environment','read'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:fn=>{intervals.add(fn);return fn;},clearInterval:fn=>intervals.delete(fn),chrome:{runtime:{sendMessage:message=>{
-  if(message.type==='SOURCE_WITNESS_PREVIEW')return Promise.resolve({state:'READY'});
-  if(message.type==='SOURCE_WITNESS_ARM')return new Promise(resolve=>{completeArm=resolve;});
-  if(++reads===1)return Promise.resolve({state:'WAITING_NATIVE',unspent:false});
+  if(message.type==='SOURCE_WITNESS_PREVIEW')return Promise.resolve({state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH});
+  if(message.type==='SOURCE_WITNESS_ARM'){assert.equal(message.batch,PASSIVE_BATCH);return new Promise(resolve=>{completeArm=resolve;});}
+  if(++reads===1)return Promise.resolve({state:'NOT_RUN',unspent:true});
   return new Promise(resolve=>{completeRead=resolve;});
  }}}};
  await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
  const arm=elements.get('run').handlers.click({isTrusted:true}),read=elements.get('read').handlers.click();await elements.get('read').handlers.click();assert.equal(reads,2);
- const final={schema:BATCH,state:'PARTIAL',reason:'bounded-source-sample-only'};completeRead(final);await read;completeArm({state:'RUNNING',unspent:false});await arm;
+ const final={schema:PASSIVE_BATCH,state:'PARTIAL',reason:'native-association-observed-identity-not-run'};completeRead(final);await read;completeArm({state:'RUNNING',unspent:false});await arm;
  assert.deepEqual(JSON.parse(elements.get('result').textContent),final);assert.equal(intervals.size,0);assert.equal(elements.get('download').disabled,false);
+});
+test('new page refuses an old worker and does not label its old report as the new batch',async()=>{
+ for(const oldResult of [{state:'NOT_RUN',unspent:true},oldConsumed().result]){
+ const elements=new Map(),sent=[];
+ for(const id of ['result','run','confirm','download','environment','read'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+ const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:()=>assert.fail('no polling before preparation'),clearInterval(){},chrome:{runtime:{sendMessage:async message=>{
+  sent.push(message);return message.type==='SOURCE_WITNESS_PREVIEW'?{state:'READY'}:oldResult;
+ }}}};
+ await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
+ assert.equal(elements.get('confirm').disabled,true);await elements.get('run').handlers.click({isTrusted:true});
+ assert.equal(sent.some(m=>m.type==='SOURCE_WITNESS_ARM'),false);assert.match(elements.get('environment').textContent,/尚未加载被动观察版本/);
+ assert.equal(JSON.parse(elements.get('result').textContent).state,'NOT_RUN');
+ }
+});
+test('worker version change after passive preparation stops polling without claiming the batch unspent',async()=>{
+ const elements=new Map(),polls=new Set();let reads=0;
+ for(const id of ['result','run','confirm','download','environment','read'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+ const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:fn=>{polls.add(fn);return fn;},clearInterval:fn=>polls.delete(fn),chrome:{runtime:{sendMessage:async message=>{
+  if(message.type==='SOURCE_WITNESS_PREVIEW')return {state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH};
+  assert.equal(message.type,'SOURCE_WITNESS_READ');return ++reads===1?{state:'WAITING_NATIVE',unspent:false}:oldConsumed().result;
+ }}}};
+ await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
+ assert.equal(polls.size,1);await elements.get('read').handlers.click();assert.equal(polls.size,0);
+ const result=JSON.parse(elements.get('result').textContent);assert.equal(result.state,'BLOCKED');assert.equal(result.unspent,false);assert.equal(result.reason,'passive-worker-version-changed-no-retry');
 });
 test('content bridge stays ready across BFCache and removes liveness on final unload',()=>{
  const listeners=new Set(),events={};let stopped=0;const window={addEventListener:(name,fn)=>events[name]=fn};window.top=window;
