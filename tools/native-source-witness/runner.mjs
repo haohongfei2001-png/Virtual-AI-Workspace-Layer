@@ -44,7 +44,7 @@ export async function runWitness({frame,contextObserver,getFrame,fetch=globalThi
   try{check();return await Promise.race([work(),deadline]);}finally{clearTimeout(timer);combined.removeEventListener('abort',stop);stageAbort.abort();}
  };
  const provider=createSessionProvider({fetch:boundedFetch,now,elapsedNow,profile:{structures:{personal:'personal',workspace:'organization'}}});
- const trackedProvider={async read(options){try{const value=await provider.read(options);check();identity=value;report.stages.identity={state:'PASS',reason:'canonical-roster-parsed',contexts:value.contexts.length};return value;}catch(e){providerFailure=code(e);throw e;}}};
+ const trackedProvider={async read(options){providerFailure=null;try{const value=await provider.read(options);check();identity=value;report.stages.identity={state:'PASS',reason:'canonical-roster-parsed',contexts:value.contexts.length};return value;}catch(e){providerFailure={reason:code(e),schemaIssue:sessionContextSchemaIssue(e)};throw e;}}};
  const observer={isCurrent:contextObserver.isCurrent,async verify(f,options){const value=await contextObserver.verify(f,options);check();if(receipt&&value!==receipt)throw Error('context-changed');if(value)receipt=value;return value;}};
  authority=createScopeAuthority({provider:trackedProvider,profile:SCOPE_PROFILE,contextObserver:observer,now,elapsedNow});
  const json=async(path,token,{raw=false,contextId=null}={})=>{
@@ -56,7 +56,7 @@ export async function runWitness({frame,contextObserver,getFrame,fetch=globalThi
  const parse=(fn,input)=>{try{return fn(input);}catch{throw Error('invalid-directory-schema');}};
  try{
   const first=await stage('identity',()=>authority.refresh(frame,'focus',combined));
-  if(first.state!=='verified')throw Error(providerFailure??(first.state==='ambiguous'?'current-context-unproven':first.reason));
+  if(first.state!=='verified')throw Error(providerFailure?.reason??(first.state==='ambiguous'?'current-context-unproven':first.reason));
   report.stages.currentSpace=status('PASS','browser-request-and-current-body-and-roster');
   frozen={id:first.grant.id,epoch:first.grant.scopeEpoch,source:authority.sourceFor(frame)};
   const firstPrincipal=identity.principalId,contextId=receipt.contextId;
@@ -97,14 +97,14 @@ export async function runWitness({frame,contextObserver,getFrame,fetch=globalThi
     }else report.stages.members=status('NOT_RUN','no-gap-free-project-candidate');
    }finally{token=null;credentials=null;}
   });
-  await stage('finalIdentity',async()=>{const final=await authority.revalidate(frame,combined,{force:true});if(final.state!=='verified')throw Error(providerFailure??final.reason);await guard();});
+  await stage('finalIdentity',async()=>{const final=await authority.revalidate(frame,combined,{force:true});if(final.state!=='verified')throw Error(providerFailure?.reason??final.reason);await guard();});
   report.stages.finalIdentity=status('PASS','fresh-principal-and-context-equal');
   report.state='PARTIAL';const readable=['ordinary','archived','projects','members'].some(k=>report.stages[k].pages?.some(p=>p.state==='PASS'&&p.candidates>0));report.decision=readable?'CONDITIONAL GO':'BLOCKED';report.reason=readable?'bounded-source-sample-only':'no-usable-directory-candidate';
  }catch(e){
   report.state='BLOCKED';report.decision='BLOCKED';report.reason=code(e);
   if(report.reason==='current-context-unproven')activeStage='currentSpace';
   report.stages[activeStage]={...report.stages[activeStage],state:'BLOCKED',reason:report.reason};
-  const schema=sessionContextSchemaIssue(e);if(schema)report.schemaIssue=schema;
+  const schema=sessionContextSchemaIssue(e)??(providerFailure?.reason===report.reason?providerFailure.schemaIssue:null);if(schema)report.schemaIssue=schema;
  }finally{
   finished=true;abort.abort();authority.invalidateAll();identity=null;receipt=null;frozen=null;
   // Report observed duration, including delayed abort delivery; never clamp a

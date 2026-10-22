@@ -1,3 +1,4 @@
+import {sessionContextSchemaIssue} from '../../src/host/session-identity.mjs';
 import {digest} from '../../src/data/hash.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import {createSessionProvider} from '../../src/runtime/session-provider.mjs';
 const now=Date.parse('2026-10-14T00:00:00Z'),expiry='2026-10-14T01:00:00Z',origin='https://chatgpt.com';
@@ -122,3 +123,15 @@ test('explicit message-list reader binds scope and returns partial IDs without A
 });
 for(const patch of [{conversationRequestContext:null},{conversationMetadataFormat:'auto'},{sendAckProfile:{}},{historicalSendProfile:{}}])test('message-list configuration refuses unsupported or attribution profile '+JSON.stringify(patch),()=>{assert.throws(()=>currentFixture(()=>{},{...listProfile,...patch}),/invalid-conversation-metadata-profile/);});
 test('explicit list schema does not silently fall back to legacy mapping',async()=>{const f=currentFixture(()=>{},listProfile);await assert.rejects(f.provider.readCurrentConversation(currentOptions),/invalid-conversation-metadata/);assert.equal(f.calls.length,3);});
+
+for(const mode of ['identity','current'])test(`provider preserves only parser-owned schema category for ${mode}`,async()=>{
+ const change=(s,n)=>{if(n===2)s.body={accounts:{default:{account:{account_id:null,structure:'personal',is_deactivated:false},can_access_with_session:true}}};};
+ const f=mode==='identity'?fixture(change):currentFixture(change);
+ await assert.rejects(mode==='identity'?f.provider.read():f.provider.readCurrentConversation(currentOptions),e=>e.message==='invalid-accounts-schema'&&sessionContextSchemaIssue(e)==='default-null-context-id');
+ assert.equal(f.calls.length,2);
+});
+test('transport errors cannot forge parser-owned schema details',async()=>{
+ const fake=Object.assign(Error('invalid-accounts-schema'),{schemaIssue:'PRIVATE_RESPONSE',body:'PRIVATE_BODY'});
+ const provider=createSessionProvider({fetch:async()=>{throw fake;}});
+ await assert.rejects(provider.read(),e=>e!==fake&&e.message==='invalid-accounts-schema'&&sessionContextSchemaIssue(e)===null&&Object.keys(e).length===0);
+});

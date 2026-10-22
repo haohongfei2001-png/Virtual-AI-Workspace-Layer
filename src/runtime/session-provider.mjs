@@ -1,4 +1,4 @@
-import {readSessionJSON,sessionCredentials,sessionContexts} from '../host/session-identity.mjs';
+import {readSessionJSON,sessionCredentials,sessionContexts,sessionContextSchemaIssue} from '../host/session-identity.mjs';
 import {validateHistoricalSendProfile,extractHistoricalSends} from './historical-send-profile.mjs';
 import {digest} from '../data/hash.mjs';
 import {parseConversationMetadata,parseConversationMessageListMetadata} from '../host/conversation-metadata.mjs';
@@ -62,7 +62,11 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
    }
    return {principalId,expiresAt,contexts,providerProfile,transport:'worker-fixed-fetch'};
    }finally{token=null;}
-  })()]),{timeoutMs:6000,now:elapsedNow});}catch(error){const code=error?.message;throw Error(['read-budget-exhausted','read-budget-retries-exhausted','invalid-host-read-budget-state','conversation-principal-conflict','conversation-context-conflict','invalid-conversation-metadata','request-timeout','session-aborted','session-unauthorized','session-challenged','invalid-session-response','invalid-session-mime','session-response-too-large','missing-session-body','invalid-session-body','invalid-session-json','invalid-session-schema','invalid-accounts-schema','session-expired'].includes(code)?code:combined.aborted?'session-aborted':'session-transport-failed');}finally{combined.removeEventListener('abort',onAbort);controller.abort();}
+  })()]),{timeoutMs:6000,now:elapsedNow});}catch(error){const code=error?.message;
+   // Only the parser's private WeakMap can attest this fixed, data-free reason.
+   // Preserve it for local diagnostics; transport errors still get normalized.
+   if(code==='invalid-accounts-schema'&&sessionContextSchemaIssue(error))throw error;
+   throw Error(['read-budget-exhausted','read-budget-retries-exhausted','invalid-host-read-budget-state','conversation-principal-conflict','conversation-context-conflict','invalid-conversation-metadata','request-timeout','session-aborted','session-unauthorized','session-challenged','invalid-session-response','invalid-session-mime','session-response-too-large','missing-session-body','invalid-session-body','invalid-session-json','invalid-session-schema','invalid-accounts-schema','session-expired'].includes(code)?code:combined.aborted?'session-aborted':'session-transport-failed');}finally{combined.removeEventListener('abort',onAbort);controller.abort();}
  }
  const read=options=>execute(options);
  function readCurrentConversation(options){

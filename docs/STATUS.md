@@ -1,5 +1,9 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 本机见证保留账户结构失败原因（2026-10-22）
+
+继承90a006ac后，独立审查和最小反例确认首轮/收尾身份验证丢失`default-null-context-id`：解析器把固定原因绑定在原Error，provider与见证器两次规范化后只剩通用`invalid-accounts-schema`。现只保留解析器私有WeakMap证明的固定类别，传输错误仍规范化，见证报告按当前读取关联类别；不保存原响应、不改身份判定、不增加请求或重试。首轮、目录内再认证、收尾及伪造错误属性定向回归通过；真实执行仍NOT_RUN。原失败和日志保存于`.git/vaiwl-checkpoints/20261022-witness-schema/`。PR16体验裁决6335005042已由用户采纳，后续按原任务同步个人日用语义与必要活动接线，不继续旧UNKNOWN重复实验。
+
 ## 本机一次性来源验证入口已准备，真实执行 NOT_RUN（2026-10-22）
 
 本批从 `89b1aaf1` 继续，原工作树/Free 分支/PR16 不变。用户已改为在自己已登录的 Chrome Profile 内手动启动开发版，**不再等待 Work/CDP 入口**；旧预检 BLOCKED 作为历史保留。`tools/native-source-witness/` 复用现有临时导航、session-provider、ScopeAuthority、浏览器 C2 owner、当前 body 关联和目录 parser；普通产品构建、数据库/Pro 人工资产、生产来源开关均未改动。开发叠加包仅在原导航中增加“本机一次性来源验证”，新权限只有 `storage`，用于匿名结果与持久单次标记；未加 debugger/cookies/scripting/management 或其他网站权限。

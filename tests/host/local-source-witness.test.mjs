@@ -32,9 +32,10 @@ test('challenge stops on first GET, does not read body or switch transport',asyn
  let reads=0;const h=harness({fetch:async url=>({url,status:403,redirected:false,headers:new Headers({'content-type':'text/html','cf-mitigated':'challenge'}),get body(){reads++;return null;}})});
  const result=await h.run();assert.equal(result.requests,1);assert.equal(result.state,'BLOCKED');assert.equal(result.reason,'session-challenged');assert.equal(result.stages.ordinary.state,'NOT_RUN');assert.equal(reads,0);
 });
-test('default/null roster is rejected without manufacturing a context',async()=>{
- const h=harness();h.values[1]={accounts:{default:{account:{account_id:null,structure:'personal',is_deactivated:false},can_access_with_session:true}}};
- const r=await h.run();assert.equal(r.requests,2);assert.equal(r.reason,'invalid-accounts-schema');assert.equal(r.stages.currentSpace.state,'NOT_RUN');
+for(const [index,stage]of [[1,'identity'],[3,'ordinary'],[11,'finalIdentity']])test(`default/null roster retains fixed schema reason at ${stage} without manufacturing a context`,async()=>{
+ const h=harness();h.values[index]={accounts:{default:{account:{account_id:null,structure:'personal',is_deactivated:false,name:'PRIVATE_NAME'},can_access_with_session:true}}};
+ const r=await h.run();assert.equal(r.requests,index+1);assert.equal(r.reason,'invalid-accounts-schema');assert.equal(r.schemaIssue,'default-null-context-id');assert.equal(r.stages[stage].state,'BLOCKED');
+ assert.equal(r.stages.currentSpace.state,index===1?'NOT_RUN':'PASS');assert.equal(r.decision,'BLOCKED');assert.equal(r.productionEnabled,false);assert(!/PRIVATE|SECRET/.test(JSON.stringify(r)));
 });
 test('valid principal and roster cannot replace missing C2',async()=>{
  const h=harness();h.revoke();const r=await h.run();assert.equal(r.requests,2);assert.equal(r.stages.identity.state,'PASS');assert.equal(r.stages.currentSpace.state,'BLOCKED');assert.equal(r.stages.ordinary.state,'NOT_RUN');
