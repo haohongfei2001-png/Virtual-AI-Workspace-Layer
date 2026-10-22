@@ -1,5 +1,16 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+
+## 目录取消后的实际工作跟踪修复；吸收原恢复文档接线补丁（2026-10-23）
+
+接续0494586a，读回原source-v3附件与远端HEAD，未重复真实批次、安装回退或已完成parser。沿固定目录provider→原observation owner→binding service发现并最小复现：取消/六秒到期先结束调用方等待，底层fetch若尚未响应abort，provider内部仍busy，但owner/service已误报idle。旧guard已阻止迟到入库；本次修的是提前释放宿主壳的空闲判断，不把它描述为已发生真实跨账户写入。
+
+原owner的工作计数现通过包内trackWork回调覆盖实际认证链，直到其真正完成/失败；不因超时、文档撤权或替换profile provider漏掉旧请求。调用方仍按原期限返回，迟到请求不续发、不生成proof或写库。无新调度器、RPC、生产profile、数据库格式或允许范围。两个新增最小反例修前均失败，修后与受影响路径125项通过；默认及观察候选构建/重建校验通过，未改原安装。本轮只读审查代理遭额度错误，未重试；独立运行时复核未完成，主writer已做差异检查，不将其写成独审通过。
+
+自然检查点读到dot在PR16的6343825969/6347070799：原CONTEXT_RECOVERY_NO_RECEIPT.md内嵌wiring diff落后于native activity接线，导致恢复测试在行为断言前失败。已按单文件补丁集成，规范尾换行后SHA256与评论的b8de08b0…一致；原35项恢复集成测试实际通过，未修改产品恢复源码或oracle。这是已有测试入口恢复，不是新增真实J4证据。
+
+证据：[本轮回执](engineering/free-directory-idle-drain-20261023.json)，日志/构建/补丁与保全清单在`.git/vaiwl-checkpoints/20261023-directory-idle-drain/`。生产读取继续关闭，七批已消费结果与2258份副本/3个stash保留。来源下一外部条件仍为具体主用profile的网站允许条件及持续只读范围；正向成员/NONE、可信活动、首页/Project及刷新休眠的真实空间延续不凭本次离线修复补齐。无新本人操作或真实诊断，不宣称日用验收、完整Free或发布完成。
+
 ## 新目录持久来源的同ID升级/回退兼容已验证（2026-10-22）
 
 承接8ad704f5，关闭原B4/B5/F3中新增`host-metadata`的具体兼容证据缺口。本轮复用既有historical-host-upgrade及原八store、同schema4、同扩展安装slot，在全新隔离headless Chrome完成：190b698f旧包实际正向写入人工资产/原生数据 → 当前包写目录候选 → 190b旧包拒绝 → 980764eb兼容包读写 → 当前包再升级。没有修改产品源码、旧库键/格式或真实安装，也没有为了兼容把来源冒充host-dom。

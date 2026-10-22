@@ -39,7 +39,10 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
    return readSessionJSON(response,{target,raw,limit:raw&&!current?.directory?8*1024*1024:path==='/api/auth/session'?256*1024:1024*1024,check});
   };
   let onAbort;const cancelled=new Promise((_,reject)=>{onAbort=()=>reject(Error('session-aborted'));combined.addEventListener('abort',onAbort,{once:true});if(combined.aborted)onAbort();});
-  try{return await withRequestDeadline(()=>Promise.race([cancelled,(async()=>{
+  // Keep the actual chain in the caller's work accounting even when its
+  // bounded response wins the race. Abort does not prove transport completion.
+  const runWork=current?.directory?current.trackWork:work=>work();
+  try{return await withRequestDeadline(()=>Promise.race([cancelled,runWork(async()=>{
    const session=await json('/api/auth/session');
    const credentials=sessionCredentials(session,now()),{principalId,expiresAt}=credentials;let token=credentials.token;credentials.token=null;if(current?.directory)credentialExpiry=instant(expiresAt);
    try{
@@ -77,7 +80,7 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
    }
    return {principalId,expiresAt,contexts,providerProfile,transport:'worker-fixed-fetch'};
    }finally{token=null;}
-  })().finally(()=>{if(current?.directory)directoryWork--;})]),{timeoutMs:6000,now:elapsedNow});}catch(error){const code=error?.message;
+  }).finally(()=>{if(current?.directory)directoryWork--;})]),{timeoutMs:6000,now:elapsedNow});}catch(error){const code=error?.message;
    // Only the parser's private WeakMap can attest this fixed, data-free reason.
    // Preserve it for local diagnostics; transport errors still get normalized.
    if(code==='invalid-accounts-schema'&&sessionContextSchemaIssue(error))throw error;
@@ -96,16 +99,16 @@ export function createSessionProvider({origin='https://chatgpt.com',fetch=global
  function historyFor(result){const value=histories.get(result);if(!value)return null;const checkedAt=now();if(!Number.isFinite(checkedAt)||instant(value.expiresAt)<=checkedAt){histories.delete(result);return null;}return value;}
  // Not registered by any production profile or RPC. The privileged directory
  // owner supplies the context and keeps scope/document guards active through CAS.
- const directoryProvider=Object.freeze({async read(context,{guard,signal}={}){
+ const directoryProvider=Object.freeze({async read(context,{guard,signal,trackWork=work=>work()}={}){
   if(!directoryEnabled)throw Error('directory-read-disabled');
   if(directoryBusy||directoryWork)throw Error('directory-read-busy');
-  if(!context||typeof guard!=='function'||!(signal instanceof AbortSignal)||!/^principal_[0-9a-f]{64}$/.test(context.principalKey??'')||!/^context_[0-9a-f]{64}$/.test(context.contextKey??'')||context.scopeKey!==JSON.stringify(['chatgpt',context.principalKey,context.contextKey])||context.providerProfile!==providerProfile)throw Error('invalid-directory-read-context');
+  if(!context||typeof guard!=='function'||typeof trackWork!=='function'||!(signal instanceof AbortSignal)||!/^principal_[0-9a-f]{64}$/.test(context.principalKey??'')||!/^context_[0-9a-f]{64}$/.test(context.contextKey??'')||context.scopeKey!==JSON.stringify(['chatgpt',context.principalKey,context.contextKey])||context.providerProfile!==providerProfile)throw Error('invalid-directory-read-context');
   const target=directoryTarget(context.target),request=directoryRequest(target);
   if(!record(context.request)||Object.keys(context.request).length!==3||context.request.method!==request.method||context.request.path!==request.path||context.request.maxBytes!==request.maxBytes)throw Error('invalid-directory-read-context');
   const started=elapsedNow(),current=()=>{try{const elapsed=elapsedNow()-started;return !signal.aborted&&Number.isFinite(elapsed)&&elapsed>=0&&elapsed<6000&&guard()===true;}catch{return false;}};
   if(!current())throw Error('stale-directory-source');directoryBusy=true;directoryWork++;
   try{
-   const proof=await execute({signal},{directory:request,expectedPrincipalKey:context.principalKey,expectedContextKey:context.contextKey,guard:current});
+   const proof=await execute({signal},{directory:request,expectedPrincipalKey:context.principalKey,expectedContextKey:context.contextKey,guard:current,trackWork});
    if(!current())throw Error('stale-directory-source');
    const result=Object.freeze({state:'candidate'});directories.set(result,{context,payload:proof.payload,expiresAt:proof.expiresAt,current});return result;
   }finally{directoryBusy=false;}

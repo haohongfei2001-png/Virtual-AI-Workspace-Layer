@@ -70,3 +70,20 @@ test('fresh authentication expiring during repository work blocks CAS despite a 
 test('fresh credential expiry is checked before spending the next GET',async t=>{
  const f=fixture(t,{mutate(s,n,c){if(n===1)s.body.expires=new Date(start+1).toISOString();if(n===2)c.clock(1);}});await assert.rejects(f.read(),/session-expired/);assert.equal(f.calls.length,2);
 });
+
+for(const ending of ['invalidate','deadline'])test('directory '+ending+' retains service nonidle until ignored transport actually drains',async t=>{
+ const h=await directoryHarness(new MockIDBFactory(),{manualDeadline:true});t.after(()=>h.close());
+ let entered,release;const ready=new Promise(r=>entered=r),wait=new Promise(r=>release=r);
+ const f=fixture(t,{delay:async n=>{if(n===1){entered();await wait;if(ending==='deadline')throw Error('late-transport-failure');}}});h.profile.directoryProvider=f.provider.directoryProvider;
+ assert.equal(h.service.isIdle(),true);const pending=h.observe();await ready;
+ if(ending==='invalidate')h.service.observations.invalidateDocument('doc');else h.expire();
+ assert.equal((await pending).ok,false);await new Promise(r=>setImmediate(r));
+ try{
+  assert.equal(h.service.observations.isIdle(),false,'settled caller must not hide an unfinished authentication request');
+  assert.equal(h.service.isIdle(),false,'idle shell release must wait for actual work');
+  h.profile.directoryProvider=f.make().directoryProvider;
+  assert.equal(h.service.isIdle(),false,'replacing the profile provider cannot erase old work');
+ }finally{release();await new Promise(r=>setImmediate(r));}
+ assert.equal(h.service.observations.isIdle(),true);assert.equal(h.service.isIdle(),true);
+ assert.equal(f.calls.length,1,'late request must not continue authentication or publish');assert.equal(await h.native.version(h.scope),0);
+});

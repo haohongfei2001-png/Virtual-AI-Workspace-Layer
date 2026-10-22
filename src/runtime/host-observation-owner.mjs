@@ -43,7 +43,7 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
     if(!project||!hostNativeChannel(projectSource?.channel)||projectSource.admission?.profileId!==profile.id||projectSource.admission?.profileVersion!==profile.revision||project.availability!=='available'||known.facts.projectLifecycle?.[target.projectId]?.state==='deletion-confirmed'||!nativeWitnessActive(project,known.facts,new Date(now()).toISOString()))return {ok:false,reason:'directory-project-unverified'};
    }
    const context=Object.freeze({scopeKey:scope.key,scopeGrantId:grant.id,scopeEpoch:grant.scopeEpoch,principalSource:source,principalKey:scope.accountId,contextKey:scope.organizationId,providerProfile:grant.principal.providerProfile,browserDocumentId:frame.documentId,documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,actualURL:frame.actualURL,profileId:binding.profileId,profileVersion:binding.profileVersion,target,request:directoryRequest(target)});
-   const result=await read.call(provider,context,{guard,signal:attempt.abort.signal});check();
+   const result=await read.call(provider,context,{guard,signal:attempt.abort.signal,trackWork:track});check();
    const proof=proofFor.call(provider,result);check();
    if(!proof||proof.context!==context||typeof proof.payload!=='string'||typeof proof.expiresAt!=='string'||!Number.isFinite(Date.parse(proof.expiresAt)))throw Error('untrusted-directory-result');
    directoryExpiry=Date.parse(proof.expiresAt);check();

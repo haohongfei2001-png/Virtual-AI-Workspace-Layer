@@ -140,12 +140,14 @@ content 原 `recoveryRemaining=1` 的 transport/mount 一次恢复、原六秒�
 diff --git a/src/runtime/host-binding-service.mjs b/src/runtime/host-binding-service.mjs
 --- a/src/runtime/host-binding-service.mjs
 +++ b/src/runtime/host-binding-service.mjs
-@@ -1,3 +1,4 @@
+@@ -1,5 +1,6 @@
+ import {createHostNativeActivityOwner} from './host-native-activity-owner.mjs';
+ import {validateNativeActivityProfile} from './native-activity-profile.mjs';
 +import {createNoReceiptContextRecovery} from './context-recovery/no-receipt-recovery.mjs';
  import {createIsolatedSessionOwner} from './isolated-session-owner.mjs';
  import {createHostEntryCalibration} from './host-entry-calibration.mjs';
  import {createHostIngestionPassOwner} from './host-ingestion-pass-owner.mjs';
-@@ -51,6 +52,7 @@
+@@ -53,6 +54,7 @@
    }
   }:null;
   const authority=createScopeAuthority({provider,profile,readIdentity,contextObserver,allowedURL,now,makeId,elapsedNow,schedule,cancel});
@@ -153,7 +155,7 @@ diff --git a/src/runtime/host-binding-service.mjs b/src/runtime/host-binding-ser
   const asFrame=(doc,sender)=>({tabId:doc.tabId,frameId:0,documentId:doc.documentId,parentDocumentId:null,actualURL:doc.url,documentLifecycle:'active',incognito:sender.tab?.incognito===true});
  
   const ingestionPasses=surfaceProfiles?createHostIngestionPassOwner({handshake,authority,getFrame,profiles:surfaceProfiles,now,elapsedNow,schedule,cancel}):null;
-@@ -83,6 +85,22 @@
+@@ -90,6 +92,22 @@
   backup=ui&&['exportBackup','previewRestore','restoreBackup'].every(name=>typeof workspaceRepository?.[name]==='function')?createHostBackupService({ui,workspaceRepository,onRestored:scopeKey=>{views?.refreshScope(scopeKey);ui.notifyScope?.(scopeKey);},elapsedNow,schedule,cancel,makeId}):null;
   const commands={};if(readService)for(const name of ['snapshot','command','undo','history','saveView','exportBackup','previewRestore','restoreBackup','recoveryStatus','recover'])if(typeof workspaceRepository[name]==='function')commands[name]=workspaceRepository[name].bind(workspaceRepository);
   const broker=createDocumentBindingBroker({extensionId,getFrame,allowedURL,repository,workspaceRepository:readService?{...readService,...commands}:workspaceRepository,freeRuntime,now,makeId,hostHandshake:handshake,resolveScope:({currentFrame,sender})=>authority.scopeFor(asFrame(currentFrame,sender))});
@@ -176,7 +178,7 @@ diff --git a/src/runtime/host-binding-service.mjs b/src/runtime/host-binding-ser
   const sequences=new Map(),refreshAttempts=new Set();let serviceActive=true;
   async function handleWork(message,sender){
    if(message?.type==='HOST_OLD_SEND_OPERATION')return {ok:oldSendTerminal?await oldSendTerminal.intent(message,sender):false};
-@@ -140,11 +158,16 @@
+@@ -148,11 +166,16 @@
    // Ordinary renewals keep the existing bounded revalidation/single-flight path.
    const firstFresh=!producer.verified&&!producer.freshStarted;
    if(firstFresh){producer.freshStarted=true;ingestionPasses?.invalidateDocument(frame.documentId);observations?.invalidateDocument(frame.documentId);ui?.revokeDocument(frame.documentId);views?.revokeDocument(frame.documentId);}
@@ -195,7 +197,7 @@ diff --git a/src/runtime/host-binding-service.mjs b/src/runtime/host-binding-ser
    if(resolution.state==='verified'&&authority.peek(frame).grant===resolution.grant){const scope=authority.scopeFor(frame);if(scope)views?.confirmScope(frame,scope.key);}
    const recoveryProfiles=[...(surfaceProfiles?.size===1?[surfaceProfiles.values().next().value]:[]),...(ackProfile&&resolution.grant?.principal?.providerProfile===ackProfile.providerProfile?[ackProfile]:[])];
    if(!focus&&resolution.state==='verified'&&continuations&&recoveryProfiles.length&&elapsedNow()-attempt.started<4500){
-@@ -167,16 +190,23 @@
+@@ -175,16 +198,23 @@
     const stillVerified=await handshake.verify(message,sender);check();
     if(!stillVerified||authority.peek(frame).grant!==resolution.grant)return {ok:false,reason:'stale-host-document'};
    }
@@ -217,23 +219,23 @@ diff --git a/src/runtime/host-binding-service.mjs b/src/runtime/host-binding-ser
 - }
 - function invalidate({tabId,frameId=0,documentId,firstSendNavigation=null,preserveViewDocumentId=null}={}){oldSendTerminal?.invalidateTab(tabId);if(firstSendNavigation)firstSend?.navigate({tabId,...firstSendNavigation});else firstSend?.invalidateTab(tabId);broker.invalidate({tabId,frameId});if(documentId){ingestionPasses?.invalidateDocument(documentId);observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{ingestionPasses?.invalidateTab(tabId);observations?.invalidateTab(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId,{preserveDocumentId:preserveViewDocumentId});}}
 - function tabClosed(tabId){ingestionPasses?.invalidateTab(tabId);oldSendTerminal?.invalidateTab(tabId);firstSend?.invalidateTab(tabId);observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
-- function stop(){if(!serviceActive)return;serviceActive=false;identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
+- function stop(){if(!serviceActive)return;serviceActive=false;identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();nativeActivity?.stop();for(const attempt of nativeActivityAttempts)attempt.abort.abort();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
 +  if(focus&&!attempt.completed&&attempt.frame&&attempt.resolution?.state==='verified'&&authority.peek(attempt.frame).grant===attempt.resolution.grant)authority.invalidate(attempt.frame.documentId);releaseResolution(attempt);}
 + }
 + function invalidate({tabId,frameId=0,documentId,firstSendNavigation=null,preserveViewDocumentId=null}={}){contextRecovery?.invalidate({tabId,documentId});oldSendTerminal?.invalidateTab(tabId);if(firstSendNavigation)firstSend?.navigate({tabId,...firstSendNavigation});else firstSend?.invalidateTab(tabId);broker.invalidate({tabId,frameId});if(documentId){ingestionPasses?.invalidateDocument(documentId);observations?.invalidateDocument(documentId);authority.invalidate(documentId);ui?.revokeDocument(documentId);views?.revokeDocument(documentId);}else{ingestionPasses?.invalidateTab(tabId);observations?.invalidateTab(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId,{preserveDocumentId:preserveViewDocumentId});}}
 + function tabClosed(tabId){contextRecovery?.forgetTab(tabId);ingestionPasses?.invalidateTab(tabId);oldSendTerminal?.invalidateTab(tabId);firstSend?.invalidateTab(tabId);observations?.invalidateTab(tabId);broker.tabClosed(tabId);authority.invalidateTab(tabId);ui?.revokeTab(tabId);views?.revokeTab(tabId);}
-+ function stop(){if(!serviceActive)return;serviceActive=false;contextRecovery?.stop();identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
++ function stop(){if(!serviceActive)return;serviceActive=false;contextRecovery?.stop();identityOwner?.stop();entryCalibration?.stop();ingestionPasses?.stop();currentNavigation?.stop();candidates?.stop();views?.stop();snippets?.stop();oldSendTerminal?.stop();firstSend?.stop();sendCandidates?.stop();ackOwner?.stop();historyOwner?.stop();nativeActivity?.stop();for(const attempt of nativeActivityAttempts)attempt.abort.abort();currentMetadata?.stop();observations?.stop();recovery?.stop();backup?.stop();for(const attempt of refreshAttempts){attempt.active=false;attempt.abort.abort();}refreshAttempts.clear();authority.invalidateAll();}
   // Internal worker composition only; no page RPC exposes metadata or accepts proof IDs.
-  const readCurrentMetadata=proofId=>track('requests',()=>currentMetadata?currentMetadata.read(proofId):Promise.reject(Error('current-metadata-unavailable')));
-  const handle=(message,sender)=>track('requests',()=>handleWork(message,sender));
-@@ -191,7 +221,7 @@
+  const consumeNativeActivity=(proof,frame)=>track('background',async()=>{
+   const started=elapsedNow(),abort=new AbortController();let active=true,used=false;
+@@ -219,7 +249,7 @@
    return quiet()&&ownersIdle(true)&&quiet();
   }
   function ownersIdle(excludeUi=false){
--  return [authority,continuations,...(excludeUi?[]:[ui]),observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
-+  return [authority,contextRecovery,continuations,...(excludeUi?[]:[ui]),observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
+-  return [authority,continuations,nativeActivity,...(excludeUi?[]:[ui]),observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
++  return [authority,contextRecovery,continuations,nativeActivity,...(excludeUi?[]:[ui]),observations,ingestionPasses,currentMetadata,sendCandidates,firstSend,oldSendTerminal,backup,recovery,views].every(owner=>owner===null||owner.isIdle?.()===true);
   }
-  return Object.freeze({isIdle,oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
+  return Object.freeze({isIdle,consumeNativeActivity,activityAdmission:(scope,request)=>nativeActivity?.gate(scope,request)??null,oldSendTerminal,firstSend,ackAdmission:(scope,request)=>ackOwner?.gate(scope,request)??historyOwner?.gate(scope,request)??null,sendCandidates,readCurrentMetadata,stop,connectPort:port=>serviceActive&&(ui?.connectPort(port)??false),handle,invalidate,tabClosed,broker,handshake,authority,nativeRepository,observations,continuations,readService,ui,views});
  }
 ```
 <!-- END CONTEXT_RECOVERY_WIRING_DIFF -->
