@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {instrumentIdleWorkSource} from './idle-work-trace.mjs';
+import {createHostBindingService as plainService} from '../../src/runtime/host-binding-service.mjs';
 // Reuse the actual owner/repository integration fixture and its three original
 // control cases. Only the second run's module source has passive tracing added.
 import {fixture} from './ui-idle-preflight.test.mjs';
@@ -55,4 +56,26 @@ test('source drift and unsupported instrumentation fail closed',()=>{
  assert.throws(()=>instrumentIdleWorkSource('','service'),/idle-trace-anchor/);
  assert.throws(()=>instrumentIdleWorkSource('','ui'),/idle-trace-anchor/);
  assert.throws(()=>instrumentIdleWorkSource('','other'),/invalid-idle-trace-kind/);
+});
+
+
+test('context owner busy tracing preserves CHECK and RELEASE decisions without shifting owner names',async t=>{
+ const outcomes=[];
+ for(const createService of [plainService,createHostBindingService]){
+  let busy=false;globalThis.__vaiwlFixtureIdleWork=[];
+  const f=await fixture(t,options=>createService({...options,contextObserver:{isIdle:()=>!busy}}));
+  busy=true;assert.equal(f.service.isIdle(),false);
+  const packet=type=>({v:1,type,...f.parent.packet,mountId:'mount'});
+  const check=await f.service.handle(packet('HOST_UI_IDLE_CHECK'),f.parent.sender);
+  const release=await f.service.handle(packet('HOST_UI_IDLE_RELEASE'),f.parent.sender);
+  const retained=await f.service.ui.withScope({sender:f.ui,grantId:f.grant.id,mountId:'mount'},c=>c.isCurrent());
+  busy=false;
+  outcomes.push({check,release,retained,idle:f.service.isIdle(),final:await f.service.handle(packet('HOST_UI_IDLE_RELEASE'),f.parent.sender)});
+ }
+ assert.deepEqual(outcomes[1],outcomes[0]);
+ assert.equal(outcomes[1].check.ok,false);assert.equal(outcomes[1].release.ok,false);
+ assert.equal(outcomes[1].retained,true);assert.equal(outcomes[1].idle,true);assert.equal(outcomes[1].final.ok,true);
+ const blocked=globalThis.__vaiwlFixtureIdleWork.filter(row=>row.stage==='owner-busy');
+ assert(blocked.length>0);assert(blocked.every(row=>row.owner==='contextObserver'));
+ delete globalThis.__vaiwlFixtureIdleWork;
 });

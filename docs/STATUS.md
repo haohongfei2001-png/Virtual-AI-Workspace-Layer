@@ -1,6 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
 
+## 当前idle修复后的隔离MV3租约到期恢复通过；修复旧观察器锚点（2026-10-23）
+
+接续296e36b3，按原C6/F3补实际浏览器恢复集成证据。运行前确认原idle-work-trace仍硬编码不含nativeActivity/contextObserver的旧owner列表，直接相关检查出现idle-trace-anchor:service失败；未进入浏览器验收。这是测试观察器随源码漂移，不能归为产品恢复失败。现仅同步原观察器的精确锚点和匿名owner名称位置，保留闭包原判定、短路顺序、期限、一次CHECK/RELEASE及ring上限。一个新增对照确认context忙时带/不带trace的CHECK、RELEASE和grant可用性一致；210项直接依赖检查通过，不是新产品功能数。
+
+在全新隔离headless Chrome155运行原transport-expiry旅程一次：双frame排空实际待存工作→原单次休眠准备/进入→文档lease自然等19.630秒到期→真实前台边沿→新HELLO/认证grant和VIEW→同一非首Team投影与唯一阅读返回。旧frame退出、原native document/editor未替换、未发草稿/选区保持、个人scope未写入；原生详情GET始终1次，没有续期/refetch来延长lease。worker保留，因此**不是worker自然休眠或无receipt冷恢复证明**；实际上下文忙分支本次未出现，该反例仍属前轮L证据。所有191源码/17fixture hash与当前文件匹配，包内观察变换另记hash；页面错误0，外网尝试由隔离拒绝代理挡住，资源清理正常。
+
+结果PASS_NARROW_OFFLINE_TRANSPORT_EXPIRY，只证明当前源码这一S恢复切片，不追溯关闭旧Linux竞态或拼成完整J4。没有修改产品源码、本人安装、生产开关/允许范围，未重复七批真实来源。证据：[本批回执](engineering/free-context-idle-mv3-20261023.json)，原失败日志、定向检查及完整JSON在`.git/vaiwl-checkpoints/20261023-context-idle-mv3/`。dot同时回报对296e36b3的独立源码窄审未确认新增阻断缺陷：两侧浏览器操作独立计数，取消/stop不提前清账，迟到guard及同一observer接线保持。该审查不代表270项/本次浏览器的独立复跑，不覆盖29a86257整体或本批测试补丁；本批测试补丁仅主writer核对。原2258份副本/3个stash保留。生产来源及个人日用剩余条件不变，无需用户为这项离线检查操作。
+
+
 ## C2浏览器关联未结束时禁止提前idle（2026-10-23）
 
 接续29a86257并再次只读核对原source-v3附件，10GET/身份/C2及限定目录的CONDITIONAL GO已记入原证据，未重跑。沿原C2/C6/F3恢复路径最小复现两处提前idle：DOM关联超过调用方期限、被动frame查询尚未完成即撤权。原observer没有isIdle，service在外层恢复已返回后无法看到仍在执行的浏览器工作。两个断言修前均失败；这不是新增真实来源失败或账号数据串写证据。

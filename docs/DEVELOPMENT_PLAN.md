@@ -26,6 +26,8 @@
 
 同日继续C2/C6/F3：以两项修前失败确认浏览器关联/查询未结束时service提前idle；原observer新增实际工作计数并纳入service，保持六秒期限、撤权及无任务时可idle，不新增来源或恢复策略。与前两批目录/活动修复分别记证，相关270项及构建结果见STATUS，不将其累计为真实验收。
 
+同日C6/F3补当前候选实际S恢复切片：修正既有idle trace的过期精确源码锚后，原隔离MV3 transport-expiry一次通过，实际lease自然到期后新grant/VIEW、同Team/未发草稿/选区保持、仅一次原生GET。仅测试观察器与证据更新，不提升完整J4/自然worker休眠/真实日用；范围见STATUS。
+
 唯一下一外部决策是具体主用生产profile的**网站允许条件与持续只读范围**，不是重做已过的身份诊断。固定目录provider的离线实现已复用现session/共享预算；后续将获准profile接入既有调度，再闭合正向成员/NONE与可信活动，以及首页/Project/普通刷新休眠空间延续；真实读取仍按独立许可，现批不扩权。完成可安装候选后集中一次个人J1–J4及原F4修补，不在尚无候选时要求用户预先操作。七批消费记录全部保留，今晚无新批、无补跑。下方v2结果和v3准备说明只保留历史。
 
 **最新实际结果：集中来源v2已执行并消费，原生非200完成即止。** 用户报告BLOCKED/native-request-refused-or-failed，准备2554ms，send/admitted/prepared/history-retained-pending各1、completion-http-rejected=1，receipt/关联与主动GET均0；身份、当前空间、目录NOT_RUN。外层安全回调先于owner精确匹配停止，不能证明拒绝的完成事件就是已prepared请求。旧报告未保存状态码/fromCache，具体HTTP原因未知，不判服务器API不可行。现仅补停止点固定`requestStop`元数据，不改拒绝条件、C2、权限、预算或消费键，不更新原安装/新建批次；旧报告不补造。原active、passive v1–v4和source-v2共六批已消费，只读保留。当前代码/定向验证与证据见STATUS首节。
