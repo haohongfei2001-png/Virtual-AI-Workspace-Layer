@@ -6,7 +6,7 @@
 
 `productionAdmission:BLOCKED…`、websiteSupport未知和productionEnabled=false是runner初始报告的固定范围标记，不是本次网站拒绝；实际10GET全部200。成员候选parser容许gizmo_id missing/null/匹配三种情况，脱敏报告只存候选数，不能还原正向归属；普通目录排序未指定且update_time已被丢弃，不能称最近24或从旧报告补活动时间。这些不是继续修parser能恢复的信息。首页/Project/真实恢复则保留原J4缺口，不以当前聊天一次正例扩大认证。
 
-网站条件已找到明确出处：原PR裁决§2D及重新读取的[OpenAI个人使用条款](https://openai.com/policies/row-terms-of-use/)对自动/程序化提取数据的限制；[SIWC文档](https://developers.openai.com/siwc/quickstart)仅另证其scope不授予既有ChatGPT对话访问。没有据此判定本账号适用协议或所有扩展被禁止；“未公开支持”与“明确拒绝”分开。Codex已准备限定读取方式的最小支持询问，未发送；不把研究/账号测试交回用户。具体分工与唯一下一条件已补入原DEVELOPMENT_PLAN当前节，不建立第二计划。
+网站条件已找到明确出处：原PR裁决§2D及重新读取的[OpenAI个人使用条款](https://openai.com/policies/row-terms-of-use/)对自动/程序化提取数据的限制；[SIWC文档](https://developers.openai.com/siwc/quickstart)仅另证其scope不授予既有ChatGPT对话访问。没有据此判定本账号适用协议或所有扩展被禁止；“未公开支持”与“明确拒绝”分开。用户明确批准后，Codex已将限定读取方式的最小询问回复至原支持工单，并读回确认SENT及原线程一致；尚未取得新的允许条件答复。无新附件或账户测试；不把研究/账号测试交回用户。具体分工与唯一下一条件已补入原DEVELOPMENT_PLAN当前节，不建立第二计划。
 
 本轮仅证据与执行边界澄清，无产品源码变更、无新测试/构建/真实请求、无新增批次或安装操作。既有七批消费记录、生产关闭、原资产与stash保持。个人版取消的全历史及逐消息审计前置不恢复。下一次真实工作只针对允许条件明确后的必要差额，不承诺一次试验必然解决未来全部问题。
 
