@@ -42,6 +42,7 @@ export const css=`
  .card-head{flex-wrap:wrap;padding:8px;gap:6px}
  .card h2{flex:1 0 100%;width:100%;gap:6px}
  .card-actions{margin-left:auto;opacity:1}
+ .card-head > .menu{min-width:min(156px,calc(100% - 8px));max-width:calc(100% - 8px);overflow-wrap:anywhere}
  .search{padding:6px}
  .search-top{flex-wrap:wrap;gap:4px}
  .search-top strong{flex:1 0 100%;min-width:0;overflow-wrap:anywhere}
