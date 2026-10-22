@@ -9,7 +9,7 @@ import {isNativeVersionIndexed,validateNativeIndexRoot,createNativeIndexRootReco
 import {createNativeIndexReader} from './native-index-reader.mjs';
 import {VerifiedRecordCache} from './verified-record-cache.mjs';
 import { isNativePartitioned, validateNativeManifest, loadNativePieces, saveNativePieces, nativeHeader, nativeRecoveryKey, nativeCheckpointKey, nativeRecord } from './native-partitions.mjs';
-import { emptyNativeFacts, validateNativeFacts, applyNativeObservations, invalidateNativeSource } from './native-facts.mjs';
+import { emptyNativeFacts, validateNativeFacts, applyNativeObservations, invalidateNativeSource, hostNativeChannel } from './native-facts.mjs';
 import { freeProjection } from './free-projection.mjs';
 import { id } from './state.mjs';
 import { digest } from './hash.mjs';
@@ -295,7 +295,8 @@ export class NativeRepository {
     const authority = host ?? this.observationGate?.(normalized);
     if(Object.hasOwn(request,'continuation'))throw Error('untrusted-native-continuation');
     request=structuredClone(request);
-    if (host ? host.channel!=='host-dom'||typeof host.guard!=='function'||host.guard()!==true : authority?.channel !== 'synthetic') throw Error('untrusted-native-source');
+    if (host ? !hostNativeChannel(host.channel)||typeof host.guard!=='function'||host.guard()!==true : authority?.channel !== 'synthetic') throw Error('untrusted-native-source');
+    if(host?.channel==='host-metadata'&&host.continuation)throw Error('untrusted-native-continuation');
     const witness = {channel: authority.channel, sourceId: authority.sourceId, generation: authority.generation,...(host?{admission:structuredClone(host.admission)}:{})};
     if(host){const original=options;options={...original,guard:()=>host.guard()===true&&(original.guard?.()??true)===true};}
     id(witness.sourceId);
@@ -496,7 +497,7 @@ export class NativeRepository {
                           // saveNativePieces queued the older checkpoint GC read before this put.
                           if(payload?.revision)states.put({...request.result,key:nativeCheckpointKey(normalized.key)});
                           operations.put(record(normalized.key, {...(marker.result?unpack(marker.result):{}),revision: next.revision,...nativeLifecycleMarker(savedRoot,digest(savedRoot)),...(directory?{continuations:{revision:directory.revision,directoryDigest:digest(directory)}}:{})}));
-                          operations.put(record(operationKey, {fingerprint, revision: next.revision, operationId,...(command.channel==='host-dom'?{admission:structuredClone(command.admission)}:{}),...(command.continuation?{continuation:structuredClone(command.continuation)}:{})}));
+                          operations.put(record(operationKey, {fingerprint, revision: next.revision, operationId,...(hostNativeChannel(command.channel)?{admission:structuredClone(command.admission)}:{}),...(command.continuation?{continuation:structuredClone(command.continuation)}:{})}));
                           if(directory){operations.put(record(continuationDirectoryKey(normalized.key),directory));operations.put(record(continuationMarkerKey(normalized.key),{revision:directory.revision,directoryDigest:digest(directory)}));}
                           check();result = {ok: true, replayed: false, revision: next.revision, operationId};
                         }catch(failure){abort(failure.message);}
@@ -508,7 +509,7 @@ export class NativeRepository {
                       };
                       if(this.shared&&command.batch){
                         const refs=command.batch.refs.map(row=>({...row,projectId:next.membership[row.id]?.state==='PROJECT'?next.membership[row.id].projectId:null}));
-                        this.shared.registerNativeReferences(transaction,normalized,refs,'native_refs_'+digest(operationId),check,publish,failure=>abort(failure.message),{migrateLegacy:true,preferDirectory:command.channel==='host-dom'});
+                        this.shared.registerNativeReferences(transaction,normalized,refs,'native_refs_'+digest(operationId),check,publish,failure=>abort(failure.message),{migrateLegacy:true,preferDirectory:hostNativeChannel(command.channel)});
                       }else publish();
                     } catch (failure) { abort(failure.message); }
                   };

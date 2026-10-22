@@ -58,6 +58,10 @@ ObservationProposal包含protocol、document/producer token、localSeq、routeEp
 
 每字段只保存当前和有限冲突候选、必要来源摘要；不保存无限DOM、完整网络响应或第二份全量refs。producer重启失效其待处理提案，不使持久source generation每次变化、清空已知历史。
 
+2026-10-22目录消费窄接线：worker私有`directoryProvider`以同一context对象绑定固定首屏请求、主体来源、grant/epoch、文档及目标；页面无目录RPC。owner复用原canonical sourceId/generation和同库CAS，以`host-metadata / directory-candidates`持久接纳正向ID/原名，不能伪装`host-dom / surface`。admission.coverage仅记录**最新批次**的过滤域、缺口和本页终止；不重证旧行或聚合成完整库存。membership为空、inventory始终partial、无活动/ACK/缺席删除。缺名不覆盖或续证已知原名，明确首屏参数冲突拒绝；缺完整库存声明仍可保留合法条目。待恢复pending-evidence优先，目录暂缓或输掉原revision CAS；原ACK续接谓词不放宽。
+
+此消费入口默认没有生产provider，不能由脱敏报告复活scope或打开数据库。`host-metadata`是持久来源枚举扩展，既有原格式/键/hash不改，但旧包不能读取该新枚举；因此旧F3回退结论不覆盖未来写入这类数据后的降版。生产启用前必须指定支持新枚举的最低读取/回退包并完成对应恢复验证，不清库或把渠道改写成DOM来降版。当前未在真实库写入，无需用户迁移或重载。
+
 ### 3.2 Membership三态
 
 PROJECT包含同scope projectId及有效正向成员witness；NONE有明确无Project语义证明；UNKNOWN包含原因、局部fieldRevision和可选lastConfirmed记录，但不能把lastConfirmed展示为最新确认。UNKNOWN的projectId为空不等于NONE。

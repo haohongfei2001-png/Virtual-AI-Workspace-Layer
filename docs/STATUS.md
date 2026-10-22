@@ -1,5 +1,21 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 集中来源v3真实通过身份/C2和限定目录可读性：CONDITIONAL GO；正向目录消费接线（2026-10-22）
+
+用户提供`vaiwl-source-witness-redacted.json`：`vaiwl-local-source-witness-20261022-v3`、PARTIAL / CONDITIONAL GO / bounded-source-sample-only / unspent:false。实际10GET全部200 JSON、challenge:false，解码167329字节，主动阶段4880ms，准备阶段另计6484ms。新鲜原生请求/当前DOM关联、session主体、认证canonical roster（1个context）、C2当前空间及强制收尾同主体/同空间均PASS。这是**同一真实文档、同批**的来源证据，不能扩为首页、Project页面、切换账号、刷新或worker恢复均已通过；roster只有1项不是默认空间依据。三次association是同批复核，不是三个聊天。
+
+普通目录实际得到24个有效ID/原始标题候选，归档1个；两者唯一gap为`missing-inventory-status`，数值total边界不是明确全历史结束。现parser已保留候选，因此PARTIAL不是条目不可读，不再因缺该字段要求重复实测。Project索引1个候选、该Project成员接口2个聊天候选，均见cursor:null；它只证明这些页面及明确结束，不证明整个账户库存，members PASS也不等于PROJECT正向归属已接纳。普通请求未声明updated排序，报告无活动字段，不能称为“最近24条”或本人活动通过。
+
+本轮实际工程补在原B2.F1消费层：新增`directory-batch.mjs`复用既有四个parser，原`host-observation-owner.observeDirectory`只接受包内provider的私有结果与同一context；冻结首屏GET/path/体积描述，持续核scope/grant/epoch/document/provider/六秒期限，复用NativeRepository的canonical source、索引/CAS及原UI通知。明确`host-metadata / directory-candidates`，不伪装DOM。合法正向条目与coverage域/缺口分别保留；UNKNOWN不造NONE，成员候选不直接赋PROJECT，不写活动/发送/ACK，不删除未列出的旧行。首屏offset/limit冲突拒绝，缺名不覆盖或续证已有原名。已有pending ACK优先；并发新pending由原native revision CAS挡住，不放宽ACK恢复检查。
+
+无生产provider注册、无新fetch/RPC/扫描器，无真实库/安装目录修改，生产仍关闭。新枚举未来写入后的旧包回退尚未验收，须指定兼容读取/回退包；不继承旧F3通过，不改旧库键或清库。既有目录parser覆盖规则、strict ACK及原生命周期屏蔽保持。
+
+脱敏原报告、SHA256/用户附件出处、原HEAD190b698f、146项合批定向回归、隔离headless真实IndexedDB检查及默认/观察候选两包构建重建校验、独审记录保存在`.git/vaiwl-checkpoints/20261022-source-v3-conditional-go/`，可移交摘要见[本批证据](engineering/free-source-v3-directory-intake-20261022.json)。报告没有安装hash，分析HEAD不冒充现场精确SHA。首次新增fixture把HELLO附加字段误放入DOM提案造成2项拒绝，修正fixture后通过；不是产品放宽schema。旧失败记录保留。2258份原副本和3个stash保全；v3现已消费，与旧六批共七批只读保留，未用剩余请求额度、未创建新诊断批次。
+
+**下一项是有条件的生产接线，不再重复身份诊断。** 本次样本已支持主用当前文档的技术路线；仍需将网站允许条件及持续读取权限落实为具体生产profile，完成固定目录provider与共享预算/身份复核接线，并确认正向成员/NONE、可信活动、首页/Project/刷新休眠的空间延续。再交付可安装候选并合并一次本人J1–J4日用过程；在候选可用前不要求用户提前测试。今晚无需追加操作。严格全历史完整证明不恢复为个人前置，10k/100k继续DEFERRED；本轮不是LIVE_VERIFIED全Host、FREE-ACCEPTED或发布。
+
+以下“v3已准备/NOT_RUN”以及v2阻塞为当时历史，不是当前来源结论或重跑许可。
+
 ## 睡前操作合并为原入口一次确认；集中来源v3已准备，真实执行NOT_RUN（2026-10-22）
 
 用户要求一次完成当前所需本人操作，避免临睡前继续分阶段测试。本轮将723f3aee的停止元数据修复随原入口准备为`vaiwl-local-source-witness-20261022-v3`，固定范围与上一集中提案相同；这是准备交付，不将用户睡前要求解释为无限重试或其他账户/原生写入许可。实际执行仍需本机页面明示的固定范围及“确认此 Profile，开始只读验证”一次真实点击，当前NOT_RUN。没有由代理操作真实Chrome、读存储或发账户请求。

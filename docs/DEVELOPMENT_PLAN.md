@@ -14,6 +14,12 @@
 
 ## 当前执行：本机开发版一次性来源见证（2026-10-22）
 
+**最新实际结果覆盖下方历史：source-v3已消费，CONDITIONAL GO。** 用户附件实际10GET全部200 JSON、167329解码字节、主动4880ms/准备6484ms；同文档身份、认证roster、C2与收尾同主体/空间PASS，普通24/归档1个候选可读但缺库存状态字段，Project1/成员接口2个候选可读及cursor:null。只证明本次有限来源，不代表排序/活动、正向成员/NONE、首页或恢复成立。普通/归档partial不丢合法候选，不以严格全历史证明再阻塞个人版；详情见STATUS最新节。
+
+原B2.F1本轮补受信结果消费：`directory-batch`复用既有parser，现owner私有`observeDirectory`绑定固定首屏请求与scope/document/provider/期限，沿同NativeRepository/CAS/UI通知接纳正向ID/原名及独立coverage域/缺口。生产provider仍未登记，无新增网络/RPC、无持续扫描；成员不推断PROJECT/NONE、活动不伪造、未见不删除。缺原名保留旧行/旧时效，参数冲突拒绝，pending ACK优先，目录不能创建或续认ACK continuation。新增host-metadata持久枚举的最低读取/回退包必须在真实生产启用前明确，旧F3回退证据不自动继承；数据库键/hash/恢复架构不变。
+
+唯一下一外部决策是具体主用生产profile的**网站允许条件与持续只读范围**，不是重做已过的身份诊断。实现上的下一差额为固定目录provider复用现session/C2/共享预算，再闭合正向成员/NONE与可信活动，以及首页/Project/普通刷新休眠空间延续；真实读取仍按独立许可，现批不扩权。完成可安装候选后集中一次个人J1–J4及原F4修补，不在尚无候选时要求用户预先操作。七批消费记录全部保留，今晚无新批、无补跑。下方v2结果和v3准备说明只保留历史。
+
 **最新实际结果：集中来源v2已执行并消费，原生非200完成即止。** 用户报告BLOCKED/native-request-refused-or-failed，准备2554ms，send/admitted/prepared/history-retained-pending各1、completion-http-rejected=1，receipt/关联与主动GET均0；身份、当前空间、目录NOT_RUN。外层安全回调先于owner精确匹配停止，不能证明拒绝的完成事件就是已prepared请求。旧报告未保存状态码/fromCache，具体HTTP原因未知，不判服务器API不可行。现仅补停止点固定`requestStop`元数据，不改拒绝条件、C2、权限、预算或消费键，不更新原安装/新建批次；旧报告不补造。原active、passive v1–v4和source-v2共六批已消费，只读保留。当前代码/定向验证与证据见STATUS首节。
 
 **当前一次本机确认流程v3已准备，真实执行NOT_RUN：** 用户要求把当前所需本人操作集中一次；仅准备下述固定范围的新包，实际执行由本机页面明确显示范围并取得一次真实开始点击，不能从睡前要求扩大授权。 复用下述已实现的集中链及同一授权Profile/绑定标签，一次首页自然打开已有聊天，准备≤120秒；取得新receipt/DOM关联后session→认证canonical roster+C2，通过后独立重新认证、普通≤2页/归档1页/Project索引1页/索引中一个Project成员≤2页，最后强制身份/空间收尾。不拆成先被动、再另批主动。仍最多12GET/30秒/并发1/无重试，首次链含DOM、目录闭包和收尾各≤6秒，session≤256KiB、其他≤1MiB、累计≤4MiB。只补原生停止时的事件类别、状态码/缓存分类和明确未核实匹配/未观察挑战；不读原生响应正文，不变过滤范围或新加权限。session短期token仅worker RAM用于本批固定认证，ID/标题/分页和附带资料解析即弃，仅匿名报告；不读Cookie存储、不启生产scope/数据库、不原生写入。任何拒绝、挑战、超限或身份/页面变化立即止；保留六批原记录，新批必须另键。旧批虽0主动GET但已消费，HTTP原因也无法离线恢复，修复不授权补跑。新键为`vaiwl-local-source-witness-20261022-v3`，六批旧键原样保留，旧source-v2不要求缺失HTTP字段。原目录备份后更新，页面/worker固定握手、定向检查与隔离headless入口验证见STATUS首节。本人一次重载→同Profile新首页进入v3→确认开始→自动返回后原生侧栏点一次已有聊天→一次回传报告；各阶段自动执行，不再拆分授权/操作。拒绝即保留终态，本轮不继续逐字段补测。生产接线与真实J1–J4需要来源结果和可用候选，不能提前声称或要求全部做完。

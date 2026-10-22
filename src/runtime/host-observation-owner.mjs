@@ -1,4 +1,4 @@
-import {nativeWitnessActive} from '../data/native-facts.mjs';
+import {nativeWitnessActive,hostNativeChannel} from '../data/native-facts.mjs';
 import {nativeSourceIncarnation} from './native-source-incarnation.mjs';
 import {splitCurrentObservation,validateCurrentSurfaceRelation,CURRENT_OBSERVATION_PROTOCOL} from '../host/current-observation-batch.mjs';
 import {continuationSemanticFingerprint} from '../data/native-observation-continuation.mjs';
@@ -6,6 +6,7 @@ import {validateSendIntentProposal,validateSendGapProposal} from '../host/send-i
 import {validateCurrentBodyProposal} from '../host/current-body-claim.mjs';
 import {withRequestDeadline} from '../data/request-deadline.mjs';
 import {surfaceBatch} from '../host/surface-batch.mjs';
+import {directoryTarget,directoryRequest,directoryBatch} from '../host/directory-batch.mjs';
 import {digest} from '../data/hash.mjs';
 import {lifecycleKind,validateNativeLifecycleChange} from '../data/native-lifecycle.mjs';
 /** Privileged owner; the gate recognizes request object identity, never serialized labels. */
@@ -16,6 +17,66 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
  function discardBody(key){const entry=bodies.get(key);if(!entry)return;bodies.delete(key);for(const read of reads)if(read.entry===entry){read.active=false;read.abort.abort();}}
  function gate(scope,request){const entry=admissions.get(request);return entry&&entry.scopeKey===scope.key&&entry.guard()?entry:null;}
  function lifecycleGate(scope,request){const entry=lifecycleAdmissions.get(request);return entry&&entry.scopeKey===scope.key&&entry.guard()?entry:null;}
+ // Worker-only, first-page intake. Production profiles register no directory
+ // provider. The provider must privately attest an authenticated response for
+ // this exact context/target; serialized data or a diagnostic report cannot.
+ async function observeDirectory(binding,sender,repository,target){
+  if(stopped)return {ok:false,reason:'host-observation-stopped'};
+  if(busy)return {ok:false,reason:'host-observation-busy'};
+  const attempt={active:true,abort:new AbortController(),started:elapsedNow()};busy=attempt;let request,knownCommitted=false;
+  try{return await withRequestDeadline(()=>track(async()=>{
+   binding=structuredClone(binding);sender=structuredClone(sender);target=directoryTarget(structuredClone(target));
+   if(!await handshake.verify(binding,sender))throw Error('invalid-host-document');
+   const actual=await getFrame({tabId:sender.tab.id,frameId:0});
+   if(!handshake.matchesFrame(binding,sender,actual))throw Error('host-frame-conflict');
+   const frame={tabId:sender.tab.id,frameId:0,documentId:actual.documentId,parentDocumentId:null,actualURL:actual.url,documentLifecycle:actual.documentLifecycle,incognito:sender.tab.incognito===true};attempt.frame=frame;
+   const resolution=authority.peek(frame),scope=authority.scopeFor(frame),profile=profiles.get(binding.profileId),provider=profile?.directoryProvider,read=provider?.read,proofFor=provider?.directoryFor;
+   if(resolution.state!=='verified'||!scope)throw Error('unverified-host-scope');
+   if(!profile||profile.id!==binding.profileId||profile.revision!==binding.profileVersion||typeof read!=='function'||typeof proofFor!=='function')throw Error('directory-source-unregistered');
+   const grant=resolution.grant,source=authority.sourceFor?.(frame);
+   const guard=()=>!stopped&&attempt.active&&!attempt.abort.signal.aborted&&elapsedNow()>=attempt.started&&elapsedNow()-attempt.started<6000&&profiles.get(binding.profileId)===profile&&profile.id===binding.profileId&&profile.revision===binding.profileVersion&&profile.directoryProvider===provider&&provider.read===read&&provider.directoryFor===proofFor&&handshake.isBound(binding,sender)&&authority.peek(frame).grant?.id===grant.id&&authority.peek(frame).grant?.scopeEpoch===grant.scopeEpoch&&authority.scopeFor(frame)?.key===scope.key&&authority.sourceFor?.(frame)===source;
+   const check=()=>{if(!guard())throw Error('stale-host-scope');};check();
+   if(foregroundReadPending(scope.key)===true)return {ok:false,reason:'foreground-read-pending'};
+   if(target.kind==='members'){
+    const known=await repository.page(scope,{ids:{projects:[target.projectId],refs:[]},limit:1},{guard,signal:attempt.abort.signal});check();
+    const project=known.facts.projects[target.projectId],projectSource=known.facts.sources[project?.sourceId];
+    if(!project||!hostNativeChannel(projectSource?.channel)||projectSource.admission?.profileId!==profile.id||projectSource.admission?.profileVersion!==profile.revision||project.availability!=='available'||known.facts.projectLifecycle?.[target.projectId]?.state==='deletion-confirmed'||!nativeWitnessActive(project,known.facts,new Date(now()).toISOString()))return {ok:false,reason:'directory-project-unverified'};
+   }
+   const context=Object.freeze({scopeKey:scope.key,scopeGrantId:grant.id,scopeEpoch:grant.scopeEpoch,principalSource:source,browserDocumentId:frame.documentId,documentToken:binding.documentToken,producerToken:binding.producerToken,routeEpoch:binding.routeEpoch,actualURL:frame.actualURL,profileId:binding.profileId,profileVersion:binding.profileVersion,target,request:directoryRequest(target)});
+   const result=await read.call(provider,context,{guard,signal:attempt.abort.signal});check();
+   const proof=proofFor.call(provider,result);check();
+   if(!proof||proof.context!==context||typeof proof.payload!=='string')throw Error('untrusted-directory-result');
+   const time=now(),observedAt=new Date(time).toISOString(),validUntil=new Date(Math.min(time+60000,Date.parse(grant.expiresAt))).toISOString();
+   const reduced=directoryBatch(proof.payload,{target,scope,urlPolicy:profile.urlPolicy,sourceRevision:1,observedAt,validUntil});check();
+   const page=await repository.page(scope,{ids:{projects:reduced.batch.projects.map(p=>p.id),refs:reduced.batch.refs.map(r=>r.id)},limit:512},{guard,signal:attempt.abort.signal});check();
+   // Native recovery has priority. The following CAS also rejects a pending
+   // batch committed after this page was read; directory work never drains or
+   // downgrades an ACK's continuation to make room for metadata.
+   const continuations=await repository.listContinuations(scope,{guard,signal:attempt.abort.signal});check();
+   if(continuations.some(row=>row.state==='pending-evidence'))return {ok:false,reason:'pending-native-evidence'};
+   // Missing/over-limit names are not renames. Do not overwrite or re-witness
+   // a retained known name; a new ID without a title may still stay reachable.
+   for(const table of ['projects','refs']){
+    const field=table==='projects'?'nativeName':'nativeTitle';
+    reduced.batch[table]=reduced.batch[table].filter(row=>{const previous=page.facts[table][row.id],priorSource=page.facts.sources[previous?.sourceId];return !(row[field]===null&&previous?.[field]!=null&&priorSource&&!priorSource.revoked);});
+   }
+   const {sourceId,generation,sourceRevision}=nativeSourceIncarnation(page.facts.sources,profile);reduced.batch.sourceRevision=sourceRevision;
+   if(!await handshake.verify(binding,sender))throw Error('stale-host-document');check();
+   // Do not refresh unrelated rows or change a source on an empty observation.
+   if(!reduced.batch.projects.length&&!reduced.batch.refs.length)return {ok:true,replayed:true,revision:page.revision,coverage:reduced.coverage};
+   const semanticFingerprint=digest({profileId:profile.id,profileVersion:profile.revision,target,projects:reduced.batch.projects,refs:reduced.batch.refs,coverage:reduced.coverage});
+   const admission={profileId:profile.id,profileVersion:profile.revision,evidenceClass:'directory-candidates',semanticFingerprint,acceptedAt:observedAt,coverage:reduced.coverage};
+   request={operationId:'directory_'+digest([grant.id,binding.producerToken,sourceId,generation,sourceRevision,semanticFingerprint]),expectedRevision:page.revision,batch:reduced.batch};
+   admissions.set(request,Object.freeze({scopeKey:scope.key,channel:'host-metadata',sourceId,generation,admission,guard}));
+   attempt.nativeWriteScope=scope.key;attempt.nativeWriteGuard=guard;
+   const committed=await repository.apply(scope,request,{guard,signal:attempt.abort.signal});knownCommitted=committed.committed===true||(committed.ok===true&&!committed.replayed);
+   if(!guard())return knownCommitted?{ok:false,reason:'stale-after-commit',committed:true}:{ok:false,reason:'stale-host-scope'};
+   if(committed.ok&&!committed.replayed)try{onAccepted?.(scope,{background:true});}catch{}
+   return {...committed,coverage:reduced.coverage};
+  }),{now:elapsedNow,schedule,cancel});}
+  catch(error){return {ok:false,...(knownCommitted?{committed:true}:{}),reason:['directory-source-unregistered','invalid-directory-target','untrusted-directory-result','stale-host-scope','stale-host-document','unverified-host-scope'].includes(error?.message)?error.message:'directory-observation-failed'};}
+  finally{if(request)admissions.delete(request);attempt.active=false;attempt.abort.abort();if(busy===attempt)busy=null;}
+ }
  // Worker-only entry. No transport handler dispatches this method. A profile
  // must first register a result provider with separately established semantics;
  // existing production profiles have no such provider. DOM absence, context
@@ -264,5 +325,5 @@ export function createHostObservationOwner({handshake,authority,getFrame,profile
  function invalidateDocument(documentId){if(busy?.frame?.documentId===documentId){busy.active=false;busy.abort.abort();}for(const [key,entry]of bodies)if(entry.frame.documentId===documentId)discardBody(key);}
  function invalidateTab(tabId){if(busy?.frame?.tabId===tabId){busy.active=false;busy.abort.abort();}for(const [key,entry]of bodies)if(entry.frame.tabId===tabId)discardBody(key);}
  function stop(){stopped=true;busy&&(busy.active=false,busy.abort.abort());bodies.clear();producers.clear();failedBatches.clear();for(const attempt of reads){attempt.active=false;attempt.abort.abort();}reads.clear();}
- return Object.freeze({isIdle:()=>!stopped&&runs===0&&busy===null&&reads.size===0,isNativeWritePending(scopeKey){try{return typeof scopeKey==='string'&&scopeKey.length>0&&!stopped&&busy?.active===true&&busy.nativeWriteScope===scopeKey&&busy.nativeWriteGuard?.()===true;}catch{return false;}},commitAcknowledged,isCurrentProof:proofId=>[...bodies.values()].some(entry=>entry.proofId===proofId&&entry.current()),isCurrentProducer:producerToken=>bodies.get(producerToken)?.current()===true,gate,lifecycleGate,observeLifecycle,ingest,withCurrent,currentProofForParent,invalidateDocument,invalidateTab,stop});
+ return Object.freeze({isIdle:()=>!stopped&&runs===0&&busy===null&&reads.size===0,isNativeWritePending(scopeKey){try{return typeof scopeKey==='string'&&scopeKey.length>0&&!stopped&&busy?.active===true&&busy.nativeWriteScope===scopeKey&&busy.nativeWriteGuard?.()===true;}catch{return false;}},commitAcknowledged,isCurrentProof:proofId=>[...bodies.values()].some(entry=>entry.proofId===proofId&&entry.current()),isCurrentProducer:producerToken=>bodies.get(producerToken)?.current()===true,gate,lifecycleGate,observeLifecycle,observeDirectory,ingest,withCurrent,currentProofForParent,invalidateDocument,invalidateTab,stop});
 }

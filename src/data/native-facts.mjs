@@ -8,6 +8,7 @@ const membershipValues = ['PROJECT', 'NONE', 'UNKNOWN'];
 const rowWitnessFields=['sourceId','generation','sourceRevision','observedAt','validUntil'];
 const rowFields={projects:['id','nativeName','nativeUrl','availability',...rowWitnessFields],refs:['id','nativeTitle','nativeUrl','availability',...rowWitnessFields],membership:['id','state','projectId',...rowWitnessFields]};
 const rowOptional={projects:['nativeAliases','memberCount'],refs:['nativeAliases'],membership:[]};
+export const hostNativeChannel=value=>value==='host-dom'||value==='host-metadata';
 function identifier(value) {
   if (!tokenOK(value) || reserved.has(value)) throw Error('invalid-native-id');
   return value;
@@ -83,8 +84,8 @@ function validateNativeFactsStructure(facts, scope) {
       if (table === 'sources') {
         shape(row, ['id', 'generation', 'sourceRevision', 'observedAt', 'validUntil', 'revoked', 'channel', 'inventory'], ['admission']);
         witness({...row, sourceId: key});
-        if (!['synthetic','host-dom'].includes(row.channel) || typeof row.revoked !== 'boolean') throw Error('untrusted-native-source');
-        if(row.channel==='host-dom') validateAdmission(row.admission);
+        if (row.channel!=='synthetic'&&!hostNativeChannel(row.channel) || typeof row.revoked !== 'boolean') throw Error('untrusted-native-source');
+        if(hostNativeChannel(row.channel)) validateAdmission(row.admission,row.channel);
         else if(row.admission!==undefined)throw Error('invalid-native-admission');
         inventory(row.inventory);
         continue;
@@ -141,8 +142,8 @@ function inventory(value) {
 
 export function applyNativeObservations(current, batch, {scope, channel, sourceId, generation, now, admission}) {
   validateNativeFacts(current, scope);
-  if (!['synthetic','host-dom'].includes(channel)) throw Error('untrusted-native-source');
-  if(channel==='host-dom')validateAdmission(admission);
+  if (channel!=='synthetic'&&!hostNativeChannel(channel)) throw Error('untrusted-native-source');
+  if(hostNativeChannel(channel))validateAdmission(admission,channel);
   identifier(sourceId);
   identifier(generation);
   shape(batch, ['scopeKey', 'sourceRevision', 'observedAt', 'validUntil', 'projects', 'refs', 'membership', 'inventory']);
@@ -159,6 +160,7 @@ export function applyNativeObservations(current, batch, {scope, channel, sourceI
       timestamp(batch.observedAt) < timestamp(prior.observedAt))) throw Error('stale-native-revision');
   inventory(batch.inventory);
   for (const table of ['projects', 'refs', 'membership']) rows(batch[table]);
+  if(channel==='host-metadata'&&(batch.membership.length||batch.inventory.projects!=='partial'||batch.inventory.conversations!=='partial'||batch.inventory.cursor!==null||[...batch.projects,...batch.refs].some(row=>row.availability!=='available'||Object.hasOwn(row,'memberCount'))))throw Error('invalid-directory-native-batch');
   const next = structuredClone(current);
   for (const table of ['projects', 'refs', 'membership']) {
     for (const row of batch[table]) {
@@ -180,7 +182,7 @@ export function applyNativeObservations(current, batch, {scope, channel, sourceI
   }
   next.sources[sourceId] = {id: sourceId, generation, sourceRevision: batch.sourceRevision,
     observedAt: batch.observedAt, validUntil: batch.validUntil, revoked: false, channel,
-    inventory: structuredClone(batch.inventory),...(channel==='host-dom'?{admission:structuredClone(admission)}:{})};
+    inventory: structuredClone(batch.inventory),...(hostNativeChannel(channel)?{admission:structuredClone(admission)}:{})};
   next.revision++;
   return validateNativeFacts(next, scope);
 }
@@ -202,8 +204,16 @@ export function nativeWitnessActive(row, facts, now) {
     timestamp(row.validUntil) > clock;
 }
 
-function validateAdmission(value){
- shape(value,['profileId','profileVersion','evidenceClass','semanticFingerprint','acceptedAt']);
+function validateAdmission(value,channel){
+ shape(value,['profileId','profileVersion','evidenceClass','semanticFingerprint','acceptedAt',...(channel==='host-metadata'?['coverage']:[])]);
  identifier(value.profileId);revision(value.profileVersion);timestamp(value.acceptedAt);
- if(value.evidenceClass!=='surface'||typeof value.semanticFingerprint!=='string'||!/^[0-9a-f]{64}$/.test(value.semanticFingerprint))throw Error('invalid-native-admission');
+ if(value.evidenceClass!==(channel==='host-metadata'?'directory-candidates':'surface')||typeof value.semanticFingerprint!=='string'||!/^[0-9a-f]{64}$/.test(value.semanticFingerprint))throw Error('invalid-native-admission');
+ if(channel==='host-metadata'){
+  const c=value.coverage;shape(c,['domain','gaps','terminalObserved']);
+  if(!Array.isArray(c.gaps)||c.gaps.length>64||c.gaps.some(reason=>typeof reason!=='string'||!/^[a-z0-9-]{1,80}$/.test(reason))||typeof c.terminalObserved!=='boolean')throw Error('invalid-native-admission');
+  const d=c.domain;shape(d,['kind','filter','sort',...(d?.kind==='project-members'?['projectId']:[])]);
+  if(d.kind==='project-members'){identifier(d.projectId);if(d.filter!=='unspecified'||d.sort!=='unspecified')throw Error('invalid-native-admission');}
+  else if(d.kind==='projects-index'){if(d.filter!=='sidebar'||d.sort!=='unspecified')throw Error('invalid-native-admission');}
+  else if(d.kind!=='recent-list'||!['is_archived=unspecified;is_starred=unspecified','is_archived=true;is_starred=unspecified'].includes(d.filter)||!['unspecified','updated'].includes(d.sort))throw Error('invalid-native-admission');
+ }
 }

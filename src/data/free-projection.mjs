@@ -1,16 +1,16 @@
 import {nativeDeleted} from './native-lifecycle.mjs';
-import { validateNativeFacts, nativeWitnessActive } from './native-facts.mjs';
+import { validateNativeFacts, nativeWitnessActive, hostNativeChannel } from './native-facts.mjs';
 
 // Host admission is validated by the native codec. TTL controls freshness,
 // while explicit revocation, generation and scope still control readability.
 function lastKnownWitness(row, facts, now) {
   const source = facts.sources[row?.sourceId], clock = Date.parse(now);
-  return !!source && source.channel === 'host-dom' && !!source.admission && !source.revoked &&
+  return !!source && hostNativeChannel(source.channel) && !!source.admission && !source.revoked &&
     source.generation === row.generation && source.sourceRevision >= row.sourceRevision &&
     Date.parse(source.observedAt) <= clock && Date.parse(row.observedAt) <= clock;
 }
 const activeWitness = (row, facts, now) => nativeWitnessActive(row, facts, now) &&
-  (facts.sources[row.sourceId].channel !== 'host-dom' || Date.parse(facts.sources[row.sourceId].observedAt) <= Date.parse(now));
+  (!hostNativeChannel(facts.sources[row.sourceId].channel) || Date.parse(facts.sources[row.sourceId].observedAt) <= Date.parse(now));
 const readableWitness = (row, facts, now) => activeWitness(row, facts, now) || lastKnownWitness(row, facts, now);
 
 export function freeProjection(facts, {scope, now, knownState = null}) {
