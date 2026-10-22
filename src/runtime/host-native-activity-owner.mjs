@@ -8,7 +8,9 @@ import {digest} from '../data/hash.mjs';
  * membership mutation, send/ACK assertion, or independent persistence engine. */
 export function createHostNativeActivityOwner({evidenceRepository,profileFor,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){
  if(typeof evidenceRepository!=='function'||typeof profileFor!=='function')throw Error('invalid-native-activity-owner');
- const gates=new WeakMap(),attempts=new Set(),latest=new Map();let stopped=false,busy=0;
+ const gates=new WeakMap(),attempts=new Set(),latest=new Map();let stopped=false,busy=0,work=0;
+ // A bounded caller can settle before its repository operation. Track both.
+ async function track(run){work++;try{return await run();}finally{work--;}}
  const gate=(scope,request)=>{const g=gates.get(request);return g&&g.scopeKey===normalizedScope(scope)?.key&&g.guard()?g:null;};
  async function consume({observation,context,guard}){
   observation=structuredClone(observation);
@@ -33,7 +35,7 @@ export function createHostNativeActivityOwner({evidenceRepository,profileFor,now
    // Install rejection only once the deadline race will observe it. Admission
    // failures above must not leave an unhandled abort promise during cleanup.
    const aborted=new Promise((_,reject)=>{rejectAbort=()=>reject(Error('stale-native-activity'));abort.signal.addEventListener('abort',rejectAbort,{once:true});});
-   return await withRequestDeadline(()=>Promise.race([aborted,(async()=>{for(let attempt=0;attempt<2;attempt++){
+   return await withRequestDeadline(()=>Promise.race([aborted,track(async()=>{for(let attempt=0;attempt<2;attempt++){
    check();const repository=evidenceRepository(),page=await repository.page(scope,{ids:observation.items.map(r=>r.conversationId),limit:256},{guard:current,signal:abort.signal});check();
    const {sourceId,generation,sourceRevision}=evidenceSourceIncarnation(page.evidence.sources,profile,3),priorSource=page.evidence.sources[sourceId];
    if(priorSource&&instant(priorSource.observedAt)>instant(observedAt))throw Error('stale-native-activity-observation');
@@ -49,7 +51,7 @@ export function createHostNativeActivityOwner({evidenceRepository,profileFor,now
    gates.set(request,{scopeKey:scope.key,channel:'host-evidence',purpose:'native-activity',codecVersion:3,sourceId,generation,profileId:profile.id,profileVersion:profile.revision,guard:current});
    let result;try{result=await repository.apply(scope,request,{guard:current,signal:abort.signal});}finally{gates.delete(request);}check();
    if(result?.ok)return {...result,gaps:parsed.gaps};if(result?.reason!=='revision-conflict'||attempt===1)throw Error(result?.reason??'native-activity-persist-failed');
-  }})()]),{now:elapsedNow,schedule,cancel});}finally{active=false;abort.abort();if(rejectAbort)abort.signal.removeEventListener('abort',rejectAbort);context.signal?.removeEventListener('abort',cancelAttempt);attempts.delete(abort);busy--;}
+  }})]),{now:elapsedNow,schedule,cancel});}finally{active=false;abort.abort();if(rejectAbort)abort.signal.removeEventListener('abort',rejectAbort);context.signal?.removeEventListener('abort',cancelAttempt);attempts.delete(abort);busy--;}
  }
- return Object.freeze({consume,gate,isIdle:()=>!stopped&&busy===0,stop(){stopped=true;for(const abort of attempts)abort.abort();latest.clear();}});
+ return Object.freeze({consume,gate,isIdle:()=>!stopped&&busy===0&&work===0,stop(){stopped=true;for(const abort of attempts)abort.abort();latest.clear();}});
 }

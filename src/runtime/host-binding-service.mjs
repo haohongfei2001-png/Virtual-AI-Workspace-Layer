@@ -220,7 +220,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   const started=elapsedNow(),abort=new AbortController();let active=true,used=false;
   const attempt={abort};nativeActivityAttempts.add(attempt);
   let rejectAbort;const aborted=new Promise((_,reject)=>{rejectAbort=()=>reject(Error('native-activity-unverified'));abort.signal.addEventListener('abort',rejectAbort,{once:true});});
-  try{return await withRequestDeadline(()=>Promise.race([aborted,(async()=>{
+  try{return await withRequestDeadline(()=>Promise.race([aborted,track('background',async()=>{
   if(!nativeActivity)throw Error('native-activity-disabled');
   const resolution=authority.peek(frame),source=authority.sourceFor(frame),scope=authority.scopeFor(frame);
   if(resolution.state!=='verified'||!source||!scope||resolution.grant.principal.providerProfile!==activityProfile.providerProfile)throw Error('native-activity-unverified');
@@ -234,7 +234,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
    const result=await nativeActivity.consume({observation,context:{scope,providerProfile:activityProfile.providerProfile,signal:abort.signal},guard:current});
    if(!current())throw Error('native-activity-unverified');ui?.notifyScope(scope.key);return result;
   });
-  })()]),{now:elapsedNow,schedule,cancel});}finally{active=false;abort.abort();abort.signal.removeEventListener('abort',rejectAbort);nativeActivityAttempts.delete(attempt);}
+  })]),{now:elapsedNow,schedule,cancel});}finally{active=false;abort.abort();abort.signal.removeEventListener('abort',rejectAbort);nativeActivityAttempts.delete(attempt);}
  });
  const readCurrentMetadata=proofId=>track('requests',()=>currentMetadata?currentMetadata.read(proofId):Promise.reject(Error('current-metadata-unavailable')));
  const handle=(message,sender)=>track('requests',()=>handleWork(message,sender));

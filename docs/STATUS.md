@@ -1,6 +1,16 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
 
+## 活动来源取消/到期后的真实工作计数修复（2026-10-23）
+
+接续a218d58d，核对原B2.F2/C6/F3活动来源和空间恢复接线。发现活动owner的busy以及binding service的background只包住有界race，page/apply/provider尚未结束时会提前idle；旧native-activity测试两处还明确期待超时后idle。按原Host“实际仓库工作结束前不得冒充空闲”合同收紧断言，修前3个场景失败（另1个既有stop检查通过），不是改宽期限或修改业务oracle挑绿。
+
+本次只补实际工作计数：原活动owner单独跟踪仓库链至最终settle，原service背景计数也覆盖frame/provider链。调用方仍六秒返回或立即响应取消；撤权后的gate拒绝，迟到读不写入，迟到apply失败不会通知或重试。正在执行和已完成分开，不修改ActivityDecision、时间/顺序语义、持久格式或任何生产来源注册。
+
+75项直接相关检查通过，含原35项恢复接线测试；默认/观察候选各191文件构建校验通过。未重跑历史安装兼容、规模门或真实见证；独立reviewer的前次额度终态不重试，本批仅主writer差异复核，不称独审通过。证据：[本批回执](engineering/free-activity-idle-drain-20261023.json)，原始修前/修后日志和构建在`.git/vaiwl-checkpoints/20261023-activity-idle-drain/`。
+
+真实source-v3身份/C2/限定目录证据保持原义；生产关闭、七批许可已消费，网站条件/持续读取范围及成员/NONE、可信活动、真实空间延续仍未闭合。原2258份副本与3个stash保全，无新本人操作、真实读取、安装更新或发布。个人Free仍未交付。
+
 ## 目录取消后的实际工作跟踪修复；吸收原恢复文档接线补丁（2026-10-23）
 
 接续0494586a，读回原source-v3附件与远端HEAD，未重复真实批次、安装回退或已完成parser。沿固定目录provider→原observation owner→binding service发现并最小复现：取消/六秒到期先结束调用方等待，底层fetch若尚未响应abort，provider内部仍busy，但owner/service已误报idle。旧guard已阻止迟到入库；本次修的是提前释放宿主壳的空闲判断，不把它描述为已发生真实跨账户写入。
