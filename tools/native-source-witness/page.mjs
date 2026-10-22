@@ -1,10 +1,10 @@
 const send=m=>chrome.runtime.sendMessage(m),target=Number(location.hash.slice(1));
-const batch='vaiwl-local-context-observation-20261022-v3';
+const batch='vaiwl-local-context-observation-20261022-v4';
 const output=document.getElementById('result'),button=document.getElementById('run'),download=document.getElementById('download');
 const nextStep=document.getElementById('next-step'),returnTarget=document.getElementById('return-target');
 let pending=false,report=null,spent=false,poll=null,readPending=false,compatible=false,legacyReport=null,homeReady=false,waiting=false,returnPending=false,canStart=false,showCompletion=false,closed=false;
 const syncRun=()=>{button.disabled=pending||spent||!!report||!compatible||!homeReady||!canStart;};
-const priorBlocked=value=>['previous-consumed-context-result-required','previous-consumed-passive-result-required','previous-consumed-v2-result-required'].includes(value?.reason);
+const priorBlocked=value=>['previous-consumed-context-result-required','previous-consumed-passive-result-required','previous-consumed-v2-result-required','previous-consumed-v3-result-required'].includes(value?.reason);
 async function showCompletedPage(){
  // Only this page's explicit start can request a return. Reading an old result
  // or reopening this page never activates a tab. Do not focus another window.

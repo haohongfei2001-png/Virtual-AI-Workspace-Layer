@@ -69,7 +69,7 @@ test('developer overlay preserves normal navigation, adds only storage, private 
  assert.equal(verifyLocalWitness(output).realChatGPT,'NOT_RUN');assert.deepEqual(manifest.permissions,['webNavigation','webRequest','storage']);assert.deepEqual(manifest.host_permissions,['https://chatgpt.com/*']);assert.equal(manifest.action.default_popup,'status.html');
  assert.match(readFileSync(join(output,'source-witness-entry.mjs'),'utf8'),/extension\/temporary-navigation.mjs/);assert.match(readFileSync(join(output,'status.html'),'utf8'),/source-witness-entry.mjs/);
  assert(manifest.web_accessible_resources.every(r=>r.resources.every(p=>!p.includes('witness'))));
- assert.equal(info.mode,'PASSIVE_C2_ONLY');assert.equal(info.batchId,PASSIVE_BATCH);assert.equal(info.previousBatchId,BATCH);assert.equal(info.previousPassiveBatchId,PREVIOUS_PASSIVE_BATCH);assert.equal(info.previousPassiveV2BatchId,PREVIOUS_PASSIVE_V2_BATCH);
+ assert.equal(info.mode,'PASSIVE_C2_ONLY');assert.equal(info.batchId,PASSIVE_BATCH);assert.equal(info.previousBatchId,BATCH);assert.equal(info.previousPassiveBatchId,PREVIOUS_PASSIVE_BATCH);assert.equal(info.previousPassiveV2BatchId,PREVIOUS_PASSIVE_V2_BATCH);assert.equal(info.previousPassiveV3BatchId,PREVIOUS_PASSIVE_V3_BATCH);
  assert.equal(info.maxGETs,0);assert.equal(info.retries,0);assert.equal(info.maxBytes,0);assert.equal(info.maxConcurrent,0);assert.equal(info.realChatGPT,'NOT_RUN');
  assert.equal(info.maxPreparationMs,120000);assert.equal(info.maxChainMs,6000);assert.equal(info.maxElapsedMs,126000);
  assert.throws(()=>buildLocalWitness(output),/output-must-be-new/);
@@ -79,7 +79,7 @@ test('developer overlay preserves normal navigation, adds only storage, private 
  assert.throws(()=>verifyLocalWitness(output),/witness-overlay-mismatch/);
 });
 
-import {installWitnessWorker,PASSIVE_BATCH,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH} from '../../tools/native-source-witness/worker.mjs';
+import {installWitnessWorker,PASSIVE_BATCH,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH,PREVIOUS_PASSIVE_V3_BATCH} from '../../tools/native-source-witness/worker.mjs';
 import {BATCH} from '../../tools/native-source-witness/runner.mjs';
 function mockChrome(stored={},options={passiveOnly:false}){
  const event=()=>{const listeners=new Set();return {listeners,addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f),emit:x=>{for(const f of listeners)f(x);}};};
@@ -121,9 +121,10 @@ const passiveArm={type:'SOURCE_WITNESS_ARM',tabId:1,batch:PASSIVE_BATCH};
 const oldConsumed=()=>({state:'finished',result:{schema:BATCH,state:'BLOCKED',reason:'no-native-context-observed',requests:0,unspent:false}});
 const oldPassiveConsumed=()=>({state:'finished',result:{schema:PREVIOUS_PASSIVE_BATCH,state:'BLOCKED',reason:'no-native-context-observed',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:0}}});
 const oldPassiveV2Consumed=()=>({state:'finished',result:{schema:PREVIOUS_PASSIVE_V2_BATCH,state:'BLOCKED',reason:'no-native-context-observed',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:2,navigations:2,counts:{'request-prepared':1,'history-dropped-pending':1,'completion-untracked':1}}}});
+const oldPassiveV3Consumed=()=>({state:'finished',result:{schema:PREVIOUS_PASSIVE_V3_BATCH,state:'BLOCKED',reason:'single-navigation-boundary',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:1,preparationMs:3190}}});
 const passiveRead={type:'SOURCE_WITNESS_READ',batch:PASSIVE_BATCH},passiveReturn={type:'SOURCE_WITNESS_RETURN',batch:PASSIVE_BATCH};
-const priorLedgers=(active=oldConsumed())=>({[BATCH]:active,[PREVIOUS_PASSIVE_BATCH]:oldPassiveConsumed(),[PREVIOUS_PASSIVE_V2_BATCH]:oldPassiveV2Consumed()});
-test('spent v3 navigation result is read unchanged without backfilling new classifications',async()=>{
+const priorLedgers=(active=oldConsumed())=>({[BATCH]:active,[PREVIOUS_PASSIVE_BATCH]:oldPassiveConsumed(),[PREVIOUS_PASSIVE_V2_BATCH]:oldPassiveV2Consumed(),[PREVIOUS_PASSIVE_V3_BATCH]:oldPassiveV3Consumed()});
+test('spent current navigation result is read unchanged without backfilling new classifications',async()=>{
  const result={schema:PASSIVE_BATCH,state:'BLOCKED',reason:'single-navigation-boundary',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:1,preparationMs:3190}};
  const h=mockChrome({...priorLedgers(),[PASSIVE_BATCH]:{state:'finished',result}},{}),before=structuredClone(h.stored);
  h.chrome.tabs.get=async()=>assert.fail('spent result must not access the account tab');
@@ -131,7 +132,7 @@ test('spent v3 navigation result is read unchanged without backfilling new class
  assert.equal(result.nativeObservation.navigationStop,undefined);assert.deepEqual(h.stored,before);
  for(const event of Object.values(h.chrome.webRequest))assert.equal(event.listeners.size,0);
 });
-test('v3 accepts the finished 4f35c12b legacy active result without rewriting its missing unspent field',async t=>{
+test('v4 accepts the finished 4f35c12b legacy active result without rewriting its missing unspent field',async t=>{
  // 90a006ac/4f35c12b unbound() saved this terminal record without unspent.
  // The outer finished marker was durable before read-back; absence is not true.
  const legacy=oldConsumed();delete legacy.result.unspent;
@@ -139,7 +140,7 @@ test('v3 accepts the finished 4f35c12b legacy active result without rewriting it
  const before=JSON.stringify(h.stored);assert.equal((await h.message(passiveRead)).reason,'not-started');
  assert.equal((await h.message(passiveArm)).state,'WAITING_NATIVE');
  assert.equal(Object.hasOwn(h.stored[BATCH].result,'unspent'),false);
- assert.equal(JSON.stringify({[BATCH]:h.stored[BATCH],[PREVIOUS_PASSIVE_BATCH]:h.stored[PREVIOUS_PASSIVE_BATCH],[PREVIOUS_PASSIVE_V2_BATCH]:h.stored[PREVIOUS_PASSIVE_V2_BATCH]}),before);
+ assert.equal(JSON.stringify({[BATCH]:h.stored[BATCH],[PREVIOUS_PASSIVE_BATCH]:h.stored[PREVIOUS_PASSIVE_BATCH],[PREVIOUS_PASSIVE_V2_BATCH]:h.stored[PREVIOUS_PASSIVE_V2_BATCH],[PREVIOUS_PASSIVE_V3_BATCH]:h.stored[PREVIOUS_PASSIVE_V3_BATCH]}),before);
 });
 test('legacy compatibility rejects missing, unfinished and contradictory active records before target or reservation',async()=>{
  const legacy=oldConsumed();delete legacy.result.unspent;
@@ -154,7 +155,7 @@ test('legacy compatibility rejects missing, unfinished and contradictory active 
   for(const e of Object.values(h.chrome.webRequest))assert.equal(e.listeners.size,0);
  }
 });
-test('v3 retains the old v1 prerequisite and never consumes or repairs a missing or uncertain v1',async()=>{
+test('v4 retains the old v1 prerequisite and never consumes or repairs a missing or uncertain v1',async()=>{
  for(const prior of [undefined,{state:'reserved',result:null},{...oldPassiveConsumed(),result:{...oldPassiveConsumed().result,unspent:true}}]){
   const records={[BATCH]:oldConsumed(),...(prior?{[PREVIOUS_PASSIVE_BATCH]:prior}:{})},before=structuredClone(records),h=mockChrome(records,{});
   h.chrome.tabs.get=async()=>assert.fail('invalid prior batch must stop before tab access');
@@ -163,7 +164,7 @@ test('v3 retains the old v1 prerequisite and never consumes or repairs a missing
   for(const e of Object.values(h.chrome.webRequest))assert.equal(e.listeners.size,0);
  }
 });
-test('v3 requires a spent final v2 without rebuilding records or treating diagnostic counts as authority',async t=>{
+test('v4 requires a spent final v2 without rebuilding records or treating diagnostic counts as authority',async t=>{
  const v2=oldPassiveV2Consumed();
  for(const previous of [undefined,{state:'reserved',result:null},...['unspent','schema','requests','reason','mode'].map(field=>({state:'finished',result:{...v2.result,[field]:null}}))]){
   const h=mockChrome({...priorLedgers(),[PREVIOUS_PASSIVE_V2_BATCH]:previous},{}),before=structuredClone(h.stored);
@@ -178,7 +179,21 @@ test('v3 requires a spent final v2 without rebuilding records or treating diagno
  const h=mockChrome({...priorLedgers(),[PREVIOUS_PASSIVE_V2_BATCH]:v2},{});t.after(()=>h.chrome.tabs.onRemoved.emit(1));
  assert.equal((await h.message(passiveArm)).state,'WAITING_NATIVE');assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V2_BATCH],v2);
 });
-test('old passive page messages cannot read, arm or return the v3 operation',async t=>{
+test('v4 requires the consumed v3 terminal without requiring or reconstructing missing navigation diagnostics',async t=>{
+ const v3=oldPassiveV3Consumed();
+ for(const previous of [undefined,{state:'reserved',result:null},...['unspent','schema','requests','reason','mode'].map(field=>({state:'finished',result:{...v3.result,[field]:null}}))]){
+  const h=mockChrome({...priorLedgers(),[PREVIOUS_PASSIVE_V3_BATCH]:previous},{}),before=structuredClone(h.stored);
+  h.chrome.tabs.get=async()=>assert.fail('uncertain v3 must stop before tab access');
+  for(const message of [passiveRead,passiveArm])assert.equal((await h.message(message)).reason,'previous-consumed-v3-result-required');
+  assert.deepEqual(h.stored,before);assert.equal(h.stored[PASSIVE_BATCH],undefined);
+  for(const event of Object.values(h.chrome.webRequest))assert.equal(event.listeners.size,0);
+ }
+ delete v3.result.nativeObservation;
+ const h=mockChrome({...priorLedgers(),[PREVIOUS_PASSIVE_V3_BATCH]:v3},{});t.after(()=>h.chrome.tabs.onRemoved.emit(1));
+ assert.equal((await h.message({type:'SOURCE_WITNESS_PREVIOUS'})).passiveV3.nativeObservation,undefined);
+ assert.equal((await h.message(passiveArm)).state,'WAITING_NATIVE');assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V3_BATCH],v3);
+});
+test('old passive page messages cannot read, arm or return the v4 operation',async t=>{
  const h=mockChrome(priorLedgers(),{});t.after(()=>h.chrome.tabs.onRemoved.emit(1));
  const fresh=await h.message(passiveArm);assert.equal(fresh.state,'WAITING_NATIVE');assert.equal(fresh.startedHere,true);const before=JSON.stringify(h.stored);
  const anotherPage={id:h.chrome.runtime.id,url:h.chrome.runtime.getURL('source-witness.html')+'#99'};
@@ -186,7 +201,7 @@ test('old passive page messages cannot read, arm or return the v3 operation',asy
  assert.equal((await h.message(passiveRead)).startedHere,undefined);assert(!before.includes('startedHere'));
  h.chrome.tabs.update=async()=>assert.fail('old page cannot focus the new observation');
  for(const type of ['SOURCE_WITNESS_ARM','SOURCE_WITNESS_READ','SOURCE_WITNESS_RETURN']){
-  for(const batch of [undefined,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH,BATCH])assert.equal(await h.message({type,...(type==='SOURCE_WITNESS_ARM'?{tabId:1}:{}),...(batch?{batch}:{})}),'ignored');
+  for(const batch of [undefined,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH,PREVIOUS_PASSIVE_V3_BATCH,BATCH])assert.equal(await h.message({type,...(type==='SOURCE_WITNESS_ARM'?{tabId:1}:{}),...(batch?{batch}:{})}),'ignored');
  }
  assert.equal((await h.message(passiveRead)).state,'WAITING_NATIVE');assert.equal(JSON.stringify(h.stored),before);
 });
@@ -231,14 +246,14 @@ test('passive default requires the original consumed installation and a home tar
  assert.equal((await absent.message(passiveArm)).reason,'previous-consumed-context-result-required');
  assert.equal(absent.stored[PASSIVE_BATCH],undefined);
  const previous=oldConsumed(),h=mockChrome(priorLedgers(previous),{});
- assert.deepEqual(await h.message({type:'SOURCE_WITNESS_PREVIOUS'}),{active:previous.result,passive:oldPassiveConsumed().result,passiveV2:oldPassiveV2Consumed().result});
+ assert.deepEqual(await h.message({type:'SOURCE_WITNESS_PREVIOUS'}),{active:previous.result,passive:oldPassiveConsumed().result,passiveV2:oldPassiveV2Consumed().result,passiveV3:oldPassiveV3Consumed().result});
  assert.equal(await h.message({type:'SOURCE_WITNESS_ARM',tabId:1}),'ignored');
  assert.equal(await h.message({...passiveArm,batch:BATCH}),'ignored');
  assert.equal(await h.message({type:'SOURCE_WITNESS_ARM',tabId:1,passiveOnly:false}),'ignored');
  const oldWorker=mockChrome();assert.equal(await oldWorker.message(passiveArm),'ignored');assert.deepEqual(oldWorker.stored,{});
  h.chrome.tabs.get=async id=>({id,url:frame.actualURL,incognito:false});
  assert.equal((await h.message(passiveArm)).reason,'select-chatgpt-home-no-request');
- assert.equal(h.stored[PASSIVE_BATCH],undefined);assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V2_BATCH],oldPassiveV2Consumed());
+ assert.equal(h.stored[PASSIVE_BATCH],undefined);assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V2_BATCH],oldPassiveV2Consumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V3_BATCH],oldPassiveV3Consumed());
  for(const event of Object.values(h.chrome.webRequest))assert.equal(event.listeners.size,0);
 });
 test('passive association success or mismatch never enters identity, preserves the prior ledger, and consumes only the new batch',async t=>{
@@ -265,7 +280,7 @@ test('passive association success or mismatch never enters identity, preserves t
   for(const name of ['identity','currentSpace','ordinary','archived','projects','members','finalIdentity'])assert.equal(result.stages[name].state,'NOT_RUN');
   assert.equal(result.productionEnabled,false);assert.equal(result.decision,'BLOCKED');
   assert(!/PRIVATE|12345678|doc-one|worker-fixed-fetch/.test(JSON.stringify(result)));
-  assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V2_BATCH],oldPassiveV2Consumed());assert.deepEqual(await h.message({type:'SOURCE_WITNESS_PREVIOUS'}),{active:previous.result,passive:oldPassiveConsumed().result,passiveV2:oldPassiveV2Consumed().result});
+  assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V2_BATCH],oldPassiveV2Consumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V3_BATCH],oldPassiveV3Consumed());assert.deepEqual(await h.message({type:'SOURCE_WITNESS_PREVIOUS'}),{active:previous.result,passive:oldPassiveConsumed().result,passiveV2:oldPassiveV2Consumed().result,passiveV3:oldPassiveV3Consumed().result});
   assert.deepEqual(await h.message(passiveArm),result);
   assert.deepEqual(await mockChrome(h.stored,{}).message(passiveArm),result);
   for(const event of Object.values(h.chrome.webRequest))assert.equal(event.listeners.size,0);
@@ -287,7 +302,7 @@ test('a late DOM answer after native document replacement cannot pass or mutate 
  h.chrome.webNavigation.onCommitted.emit({tabId:1,frameId:0,...current,documentId:'doc-two'});await new Promise(r=>setImmediate(r));
  const result=await h.message(passiveRead);assert.equal(result.state,'BLOCKED');assert.equal(result.stages.nativeAssociation.state,'BLOCKED');assert.equal(result.requests,0);
  const saved=JSON.stringify(h.stored);release();h.chrome.webRequest.onCompleted.emit({...details,statusCode:200,fromCache:false});await new Promise(r=>setImmediate(r));
- assert.equal(JSON.stringify(h.stored),saved);assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V2_BATCH],oldPassiveV2Consumed());assert.equal(fetch.mock.callCount(),0);
+ assert.equal(JSON.stringify(h.stored),saved);assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V2_BATCH],oldPassiveV2Consumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V3_BATCH],oldPassiveV3Consumed());assert.equal(fetch.mock.callCount(),0);
 });
 test('late native events cannot extend passive preparation when the timer is delayed',async t=>{
  t.mock.timers.enable({apis:['setTimeout']});let elapsed=0;t.mock.method(performance,'now',()=>elapsed);
@@ -299,14 +314,14 @@ test('late native events cannot extend passive preparation when the timer is del
  const result=await h.message(passiveRead);
  assert.equal(result.reason,'no-native-context-observed');assert.equal(result.requests,0);assert.equal(result.unspent,false);
  assert.equal(result.nativeObservation.events,0);assert.equal(result.nativeObservation.preparationMs,120000);
- assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V2_BATCH],oldPassiveV2Consumed());assert(h.stored[PASSIVE_BATCH]);
+ assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V2_BATCH],oldPassiveV2Consumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V3_BATCH],oldPassiveV3Consumed());assert(h.stored[PASSIVE_BATCH]);
 });
 test('passive worker loss cannot retry; only passive association outcome is unknown, active requests remain zero',async()=>{
  const previous=oldConsumed(),h=mockChrome({...priorLedgers(previous),[PASSIVE_BATCH]:{state:'reserved',result:null}},{});
  const result=await h.message(passiveRead);
  assert.equal(result.requests,0);assert.equal(result.requestUpperBound,0);assert.equal(result.requestCountKnown,true);assert.equal(result.unspent,false);
  assert.equal(result.stages.nativeAssociation.state,'PARTIAL');assert.equal(result.stages.identity.state,'NOT_RUN');
- assert.deepEqual(await h.message(passiveArm),result);assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V2_BATCH],oldPassiveV2Consumed());
+ assert.deepEqual(await h.message(passiveArm),result);assert.deepEqual(h.stored[BATCH],previous);assert.deepEqual(h.stored[PREVIOUS_PASSIVE_BATCH],oldPassiveConsumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V2_BATCH],oldPassiveV2Consumed());assert.deepEqual(h.stored[PREVIOUS_PASSIVE_V3_BATCH],oldPassiveV3Consumed());
 });
 test('content scripts and other extension pages cannot arm; single-tab listener filters before processing',async()=>{
  const {chrome,message,stored}=mockChrome();assert.equal(await message({type:'SOURCE_WITNESS_ARM',tabId:1},{id:chrome.runtime.id,url:'https://chatgpt.com/',tab:{id:1}}),'ignored');assert.equal(await message({type:'SOURCE_WITNESS_ARM',tabId:1},{id:chrome.runtime.id,url:chrome.runtime.getURL('status.html')}),'ignored');
@@ -371,7 +386,7 @@ test('result page serializes reads and a late ARM response cannot replace a fina
  assert.deepEqual(JSON.parse(elements.get('result').textContent),final);assert.equal(intervals.size,0);assert.equal(elements.get('download').disabled,false);
 });
 test('new page refuses an old worker and does not label its old report as the new batch',async()=>{
- for(const oldResult of [{state:'NOT_RUN',unspent:true},oldConsumed().result,oldPassiveConsumed().result,oldPassiveV2Consumed().result]){
+ for(const oldResult of [{state:'NOT_RUN',unspent:true},oldConsumed().result,oldPassiveConsumed().result,oldPassiveV2Consumed().result,oldPassiveV3Consumed().result]){
  const elements=new Map(),sent=[];
  for(const id of ['result','run','download','environment','read','next-step','return-target','previous-batches'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:()=>assert.fail('no polling before preparation'),clearInterval(){},chrome:{runtime:{sendMessage:async message=>{
@@ -438,7 +453,7 @@ test('uncertain initial result cannot start and unloading suppresses a late comp
  h.events.pagehide();resolveOwn({id:10,windowId:4});await new Promise(r=>setImmediate(r));assert.deepEqual(h.updates,[]);
 });
 test('incompatible prior history is explained before clicking and cannot invite repeated starts',async()=>{
- for(const reason of ['previous-consumed-context-result-required','previous-consumed-passive-result-required','previous-consumed-v2-result-required']){
+ for(const reason of ['previous-consumed-context-result-required','previous-consumed-passive-result-required','previous-consumed-v2-result-required','previous-consumed-v3-result-required']){
   const h=await pageFlow({initial:{state:'NOT_RUN',reason,requests:0,unspent:true}});
   assert.equal(h.elements.get('run').disabled,true);assert.equal(h.elements.get('previous-batches').open,true);
   assert.match(h.elements.get('next-step').textContent,/旧批次记录不匹配/);assert.match(h.elements.get('next-step').textContent,/无需打开聊天/);

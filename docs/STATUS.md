@@ -1,5 +1,15 @@
 # VAIWL实际状态：Free持续实施，真实验收未完成
 
+## 已批准的导航分类被动观察v4已准备并原位更新；真实执行NOT_RUN（2026-10-22）
+
+用户明确批准一次同范围被动观察以补取v3缺失的导航类别。原开发入口使用独立批次`vaiwl-local-context-observation-20261022-v4`：同一授权Profile/绑定标签，一次首页→已有聊天，准备≤120秒、DOM关联≤6秒、0主动GET/0响应正文、原详情过滤，无自动重试。仅在原停止点增加固定history/commit、路由类别、安全解析原因和目标变化类别；不改变停止条件、C2准入、请求过滤或身份边界，不调用session/accounts/目录、不启scope或数据库。
+
+旧active/v1/v2/v3四批键和报告只读保留，新批只写自己的消费状态。v3前态核对正确schema、finished、BLOCKED/single-navigation-boundary、已消费和零主动请求；不要求旧报告补出navigationStop或精确计数。页面/worker的固定批次握手与四旧报告读回已同步，旧页面不能启动v4。45项定向回归、一次断网隔离headless MV3入口/精确返回/中断不可重跑检查、构建重建校验及独立只读审查通过；均非真实来源证据，未重复无关矩阵。
+
+原目录`.git/vaiwl-artifacts/local-source-witness-20261022/extension`完整备份后更新6个文件，manifest与权限不变，全部197个文件与候选一致；更新后重建校验通过。证据、旧包及安装回执位于`.git/vaiwl-checkpoints/20261022-passive-c2-v4/`，2258份未跟踪副本与3个stash保全。未操作真实Chrome、重载扩展、访问浏览器存储或启动观察；v4真实执行仍NOT_RUN，主用身份/当前空间/近期成员仍未建立。
+
+唯一下一步为在同一Profile加载更新后执行已批准的v4：重载原VAIWL一次，新ChatGPT空白首页打开原“本机一次性来源验证”，确认标题“导航分类观察v4”，点一次开始；自动返回后在原生侧栏点一次已有聊天，结果自动显示。若结果先出现或停止，保留结果，不继续点击或重跑。无需重新授权、重登、重装或清存储。下一节“待新许可”及更早NOT_RUN为历史，已由本节授权和准备状态取代；真实根因仍须依据实际分类判定，不把开发包交付当个人Free验收。
+
 ## v3已消费：首个导航被判为非聊天路由；修复停止原因不可区分的诊断缺口（2026-10-22）
 
 用户v3终态为`BLOCKED/single-navigation-boundary/unspent:false`，准备3190ms、navigations=1、events=0，全部请求/关联阶段码0，0主动GET/解码字节；身份、当前空间与目录NOT_RUN。基于30d5feb1的原分支可确定：首次顶层导航的URL解析结果不是conversation，尚未有先前目标，不是第二目标或document冲突；停止发生在调用C2 history/commit处理之前，未进入bcc44493的prepared修复分支。不是HTTP/身份失败，也不是服务器API不可行证据。报告未含包hash，不能仅凭schema证明现场精确SHA。

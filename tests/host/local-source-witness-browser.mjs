@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {chromium} from '../b1/tooling/node_modules/playwright/index.mjs';
 import {buildLocalWitness,verifyLocalWitness} from '../../tools/native-source-witness/build.mjs';
 import {BATCH} from '../../tools/native-source-witness/runner.mjs';
-import {PASSIVE_BATCH,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH} from '../../tools/native-source-witness/worker.mjs';
+import {PASSIVE_BATCH,PREVIOUS_PASSIVE_BATCH,PREVIOUS_PASSIVE_V2_BATCH,PREVIOUS_PASSIVE_V3_BATCH} from '../../tools/native-source-witness/worker.mjs';
 const dir=await mkdtemp(join(tmpdir(),'vaiwl-witness-headless-')),out=join(dir,'extension');
 const report={kind:'ISOLATED_HEADLESS_MV3_ENTRY_ONLY',realChatGPT:'NOT_RUN',accountNavigationPerformed:false,offlineBeforeTestPages:true,checks:[],errors:[]};let context;
 try{
@@ -30,7 +30,8 @@ try{
  const previous={state:'finished',result:{schema:BATCH,state:'BLOCKED',reason:'no-native-context-observed',requests:0}}; // Actual pre-0f1cb74a active writer omitted unspent.
  const previousPassive={state:'finished',result:{schema:PREVIOUS_PASSIVE_BATCH,state:'BLOCKED',reason:'no-native-context-observed',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:0}}};
  const previousPassiveV2={state:'finished',result:{schema:PREVIOUS_PASSIVE_V2_BATCH,state:'BLOCKED',reason:'no-native-context-observed',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:2,navigations:2,counts:{'request-prepared':1,'history-dropped-pending':1}}}};
- const oldRecords={[BATCH]:previous,[PREVIOUS_PASSIVE_BATCH]:previousPassive,[PREVIOUS_PASSIVE_V2_BATCH]:previousPassiveV2};
+ const previousPassiveV3={state:'finished',result:{schema:PREVIOUS_PASSIVE_V3_BATCH,state:'BLOCKED',reason:'single-navigation-boundary',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:1,preparationMs:3190}}};
+ const oldRecords={[BATCH]:previous,[PREVIOUS_PASSIVE_BATCH]:previousPassive,[PREVIOUS_PASSIVE_V2_BATCH]:previousPassiveV2,[PREVIOUS_PASSIVE_V3_BATCH]:previousPassiveV3};
  await worker.evaluate(async records=>chrome.storage.local.set(records),oldRecords);
  const original=await context.newPage();await original.goto('https://chatgpt.com/');
  const other=await context.newPage();await other.goto(fixtureRoute);
@@ -77,13 +78,13 @@ try{
  await page.waitForFunction(()=>document.getElementById('result').textContent.includes('interrupted-no-retry'));
  const value=JSON.parse(await page.locator('#result').innerText());assert.equal(value.schema,PASSIVE_BATCH);assert.equal(value.requests,0);assert.equal(value.unspent,false);assert.equal(value.requestCountKnown,true);assert.equal(value.stages.identity.state,'NOT_RUN');assert(await page.locator('#run').isDisabled());
  await page.waitForFunction(()=>document.getElementById('previous-result').textContent.includes('no-native-context-observed'));
- await page.getByText('前三批旧结果（只读保留，不补造）',{exact:true}).click();
+ await page.getByText('前四批旧结果（只读保留，不补造）',{exact:true}).click();
  assert(await page.locator('#previous-result').isVisible());
- assert.deepEqual(JSON.parse(await page.locator('#previous-result').innerText()),{active:previous.result,passive:previousPassive.result,passiveV2:previousPassiveV2.result});
+ assert.deepEqual(JSON.parse(await page.locator('#previous-result').innerText()),{active:previous.result,passive:previousPassive.result,passiveV2:previousPassiveV2.result,passiveV3:previousPassiveV3.result});
  await page.close();const reopened=await context.newPage();await reopened.goto(`chrome-extension://${id}/source-witness.html#999999`);await reopened.waitForFunction(()=>document.getElementById('result').textContent.includes('interrupted-no-retry'));
  assert.equal(JSON.parse(await reopened.locator('#result').innerText()).requests,0);assert(await reopened.getByRole('button',{name:'保存脱敏报告'}).isEnabled());
  assert.deepEqual(await worker.evaluate(async keys=>await chrome.storage.local.get(keys),Object.keys(oldRecords)),oldRecords);
- report.checks.push('passive-spent-ledger-survives-page-reopen-with-no-active-requests','all-three-prior-consumed-results-preserved-and-readable');
+ report.checks.push('passive-spent-ledger-survives-page-reopen-with-no-active-requests','all-four-prior-consumed-results-preserved-and-readable');
  assert.deepEqual(report.errors,[]);report.status='PASS';
 }catch(e){report.status='FAIL';report.error=String(e.stack);process.exitCode=1;}finally{await context?.close();await rm(dir,{recursive:true,force:true});await writeFile(process.argv[2]??'/private/tmp/vaiwl-local-witness-headless.json',JSON.stringify(report,null,2)+'\n');}
 console.log(JSON.stringify(report));
