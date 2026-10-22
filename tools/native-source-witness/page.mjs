@@ -4,6 +4,7 @@ const output=document.getElementById('result'),button=document.getElementById('r
 const nextStep=document.getElementById('next-step'),returnTarget=document.getElementById('return-target');
 let pending=false,report=null,spent=false,poll=null,readPending=false,compatible=false,legacyReport=null,homeReady=false,waiting=false,returnPending=false,canStart=false,showCompletion=false,closed=false;
 const syncRun=()=>{button.disabled=pending||spent||!!report||!compatible||!homeReady||!canStart;};
+const priorBlocked=value=>['previous-consumed-context-result-required','previous-consumed-passive-result-required'].includes(value?.reason);
 async function showCompletedPage(){
  // Only this page's explicit start can request a return. Reading an old result
  // or reopening this page never activates a tab. Do not focus another window.
@@ -19,7 +20,8 @@ async function showCompletedPage(){
 const guide=value=>{
  waiting=compatible&&value?.state==='WAITING_NATIVE';
  returnTarget.hidden=!waiting;returnTarget.disabled=!waiting||returnPending;
- nextStep.textContent=waiting?'观察已就绪，正在计时。请在原生侧栏点一次已有聊天。开始按钮会自动返回原标签；若重开了本结果页，可用下方按钮定位原标签。':
+ nextStep.textContent=priorBlocked(value)?'尚未开始：旧批次记录不匹配，本次许可未消费。请保留下面已展开的旧结果；无需打开聊天、刷新、重登或反复点开始。':
+  waiting?'观察已就绪，正在计时。请在原生侧栏点一次已有聊天。开始按钮会自动返回原标签；若重开了本结果页，可用下方按钮定位原标签。':
   value?.state==='PREPARING'?'正在安装观察器，请暂时停留本页。准备完成后自动返回原标签。':
   value?.state==='RUNNING'?'正在核对本次关联，请勿再次导航或启动。':
   value?.unspent===false||value?.schema?'本批已结束或状态不确定，不能重跑。请读取或保存现有结果。':
@@ -27,6 +29,9 @@ const guide=value=>{
 };
 const show=value=>{
  if(report&&value?.schema!==batch)return;
+ // A local read begun before ARM can finish after its durable reservation.
+ // Never let that stale preflight undo the confirmed running/spent UI state.
+ if(spent&&value?.state==='NOT_RUN'&&value?.unspent===true)return;
  if(value?.schema&&value.schema!==batch){
   legacyReport=value;compatible=false;canStart=false;showCompletion=false;syncRun();
   if(poll!==null){clearInterval(poll);poll=null;}
@@ -35,7 +40,8 @@ const show=value=>{
  }
  output.textContent=JSON.stringify(value,null,2);
  guide(value);
- canStart=value?.state==='NOT_RUN'&&value?.unspent===true;
+ canStart=value?.state==='NOT_RUN'&&value?.unspent===true&&!priorBlocked(value);
+ if(priorBlocked(value)){const prior=document.getElementById('previous-batches');if(prior)prior.open=true;}
  if(value?.schema===batch){report=value;download.disabled=false;void showCompletedPage();}
  if(value?.unspent===false||value?.schema)spent=true;
  syncRun();

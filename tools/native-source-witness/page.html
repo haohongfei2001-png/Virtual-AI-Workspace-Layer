@@ -10,5 +10,5 @@
 <p>关闭或重开结果页不重发；worker重启或不确定结果不自动续跑。不要卸载、删除存储或换安装目录重置本次机会。</p>
 <button id="read">读取已有结果（不发网络请求）</button> <button id="download" disabled>保存脱敏报告</button>
 <pre id="result" role="status" aria-live="polite">尚未执行</pre>
-<details><summary>前两批已消费结果（只读保留）</summary><pre id="previous-result">正在读取本地结果…</pre></details>
+<details id="previous-batches"><summary>前两批旧结果（只读保留，不补造）</summary><pre id="previous-result">正在读取本地结果…</pre></details>
 <script type="module" src="source-witness-page.mjs"></script></body></html>

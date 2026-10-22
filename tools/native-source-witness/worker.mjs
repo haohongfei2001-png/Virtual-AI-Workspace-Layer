@@ -19,9 +19,20 @@ export function installWitnessWorker(chrome,{passiveOnly=true}={}){
  const get=async()=> (await chrome.storage.local.get(batch))[batch]??null;
  const save=value=>chrome.storage.local.set({[batch]:value});
  const previousRecords=()=>chrome.storage.local.get([BATCH,PREVIOUS_PASSIVE_BATCH]);
+ const notStarted=reason=>({state:'NOT_RUN',reason,requests:0,unspent:true});
+ async function priorIssue(){
+  const records=await previousRecords(),activeRecord=records[BATCH],active=activeRecord?.result;
+  // 90a006ac/4f35c12b persisted finished timeout results before unspent was
+  // added. Interpret that exact terminal format read-only; never repair a
+  // missing/reserved record or contradict an explicit unspent value.
+  if(activeRecord?.state!=='finished'||active?.schema!==BATCH||active.state!=='BLOCKED'||active.reason!=='no-native-context-observed'||active.requests!==0||(Object.hasOwn(active,'unspent')&&active.unspent!==false))return 'previous-consumed-context-result-required';
+  const passiveRecord=records[PREVIOUS_PASSIVE_BATCH],passive=passiveRecord?.result;
+  if(passiveRecord?.state!=='finished'||passive?.schema!==PREVIOUS_PASSIVE_BATCH||passive.state!=='BLOCKED'||passive.reason!=='no-native-context-observed'||passive.unspent!==false||passive.mode!=='PASSIVE_C2_ONLY'||passive.requests!==0||passive.nativeObservation?.events!==0||passive.nativeObservation?.navigations!==0)return 'previous-consumed-passive-result-required';
+  return null;
+ }
  const target=async id=>{const tab=await chrome.tabs.get(id);if(tab.incognito!==false||!['home','conversation','project'].includes(policy.parse(tab.url).kind))throw Error('invalid-target');return tab;};
  const frameFor=async id=>{const [f,t]=await Promise.all([chrome.webNavigation.getFrame({tabId:id,frameId:0}),target(id)]);return {tabId:id,frameId:0,documentId:f.documentId,actualURL:f.url,documentLifecycle:f.documentLifecycle,incognito:t.incognito};};
- async function read(){const stored=await get();if(!stored)return {state:'NOT_RUN',reason:'not-started',unspent:true};if(operation)return {state:operation.phase,reason:operation.phase==='WAITING_NATIVE'?'open-one-existing-chat-in-selected-tab':'bounded-check-running',unspent:false};if(reserving&&stored.state==='reserved')return {state:'PREPARING',reason:'reservation-being-installed',unspent:false};return stored.result??interrupted();}
+ async function read(){const stored=await get();if(!stored)return notStarted(passiveOnly?(await priorIssue())??'not-started':'not-started');if(operation)return {state:operation.phase,reason:operation.phase==='WAITING_NATIVE'?'open-one-existing-chat-in-selected-tab':'bounded-check-running',unspent:false};if(reserving&&stored.state==='reserved')return {state:'PREPARING',reason:'reservation-being-installed',unspent:false};return stored.result??interrupted();}
  async function returnToObservedTab(){
   // A reopened result page can carry another tab's hash. Only the live owner
   // knows the bound tab; never let a page select a different observation target.
@@ -46,10 +57,7 @@ export function installWitnessWorker(chrome,{passiveOnly=true}={}){
    if(passiveOnly){
     // This separately approved batch follows the two consumed zero-request
     // results. Never migrate, reconstruct or overwrite either prior record.
-    const records=await previousRecords(),previousRecord=records[BATCH],previous=previousRecord?.result;
-    if(previousRecord?.state!=='finished'||previous?.schema!==BATCH||previous.state!=='BLOCKED'||previous.reason!=='no-native-context-observed'||previous.requests!==0||previous.unspent!==false)return {state:'NOT_RUN',reason:'previous-consumed-context-result-required',requests:0,unspent:true};
-    const passiveRecord=records[PREVIOUS_PASSIVE_BATCH],passive=passiveRecord?.result;
-    if(passiveRecord?.state!=='finished'||passive?.schema!==PREVIOUS_PASSIVE_BATCH||passive.state!=='BLOCKED'||passive.reason!=='no-native-context-observed'||passive.unspent!==false||passive.mode!=='PASSIVE_C2_ONLY'||passive.requests!==0||passive.nativeObservation?.events!==0||passive.nativeObservation?.navigations!==0)return {state:'NOT_RUN',reason:'previous-consumed-passive-result-required',requests:0,unspent:true};
+    const issue=await priorIssue();if(issue)return notStarted(issue);
    }
    const selected=await withRequestDeadline(()=>target(id),{timeoutMs:3000});
    if(passiveOnly&&policy.parse(selected.url).kind!=='home')return {state:'NOT_RUN',reason:'select-chatgpt-home-no-request',requests:0,unspent:true};

@@ -27,7 +27,7 @@ try{
  assert(await page.getByPlaceholder('搜索本次列表').isVisible());report.checks.push('existing-navigation-and-development-entry-visible');
  // Non-ChatGPT active tab cannot be silently replaced or diagnosed.
  await button.click();await page.getByRole('button',{name:'请在已授权 Profile 的 ChatGPT 标签中打开此入口',exact:true}).waitFor();report.checks.push('wrong-target-stops-before-preparation');
- const previous={state:'finished',result:{schema:BATCH,state:'BLOCKED',reason:'no-native-context-observed',requests:0,unspent:false}};
+ const previous={state:'finished',result:{schema:BATCH,state:'BLOCKED',reason:'no-native-context-observed',requests:0}}; // Actual pre-0f1cb74a active writer omitted unspent.
  const previousPassive={state:'finished',result:{schema:PREVIOUS_PASSIVE_BATCH,state:'BLOCKED',reason:'no-native-context-observed',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:0}}};
  const oldRecords={[BATCH]:previous,[PREVIOUS_PASSIVE_BATCH]:previousPassive};
  await worker.evaluate(async records=>chrome.storage.local.set(records),oldRecords);
@@ -76,7 +76,7 @@ try{
  await page.waitForFunction(()=>document.getElementById('result').textContent.includes('interrupted-no-retry'));
  const value=JSON.parse(await page.locator('#result').innerText());assert.equal(value.schema,PASSIVE_BATCH);assert.equal(value.requests,0);assert.equal(value.unspent,false);assert.equal(value.requestCountKnown,true);assert.equal(value.stages.identity.state,'NOT_RUN');assert(await page.locator('#run').isDisabled());
  await page.waitForFunction(()=>document.getElementById('previous-result').textContent.includes('no-native-context-observed'));
- await page.getByText('前两批已消费结果（只读保留）',{exact:true}).click();
+ await page.getByText('前两批旧结果（只读保留，不补造）',{exact:true}).click();
  assert(await page.locator('#previous-result').isVisible());
  assert.deepEqual(JSON.parse(await page.locator('#previous-result').innerText()),{active:previous.result,passive:previousPassive.result});
  await page.close();const reopened=await context.newPage();await reopened.goto(`chrome-extension://${id}/source-witness.html#999999`);await reopened.waitForFunction(()=>document.getElementById('result').textContent.includes('interrupted-no-retry'));

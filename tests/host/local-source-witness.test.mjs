@@ -122,6 +122,29 @@ const oldConsumed=()=>({state:'finished',result:{schema:BATCH,state:'BLOCKED',re
 const oldPassiveConsumed=()=>({state:'finished',result:{schema:PREVIOUS_PASSIVE_BATCH,state:'BLOCKED',reason:'no-native-context-observed',mode:'PASSIVE_C2_ONLY',requests:0,unspent:false,nativeObservation:{events:0,navigations:0}}});
 const passiveRead={type:'SOURCE_WITNESS_READ',batch:PASSIVE_BATCH},passiveReturn={type:'SOURCE_WITNESS_RETURN',batch:PASSIVE_BATCH};
 const priorLedgers=(active=oldConsumed())=>({[BATCH]:active,[PREVIOUS_PASSIVE_BATCH]:oldPassiveConsumed()});
+test('v2 accepts the finished 4f35c12b legacy active result without rewriting its missing unspent field',async t=>{
+ // 90a006ac/4f35c12b unbound() saved this terminal record without unspent.
+ // The outer finished marker was durable before read-back; absence is not true.
+ const legacy=oldConsumed();delete legacy.result.unspent;
+ const h=mockChrome(priorLedgers(legacy),{});t.after(()=>h.chrome.tabs.onRemoved.emit(1));
+ const before=JSON.stringify(h.stored);assert.equal((await h.message(passiveRead)).reason,'not-started');
+ assert.equal((await h.message(passiveArm)).state,'WAITING_NATIVE');
+ assert.equal(Object.hasOwn(h.stored[BATCH].result,'unspent'),false);
+ assert.equal(JSON.stringify({[BATCH]:h.stored[BATCH],[PREVIOUS_PASSIVE_BATCH]:h.stored[PREVIOUS_PASSIVE_BATCH]}),before);
+});
+test('legacy compatibility rejects missing, unfinished and contradictory active records before target or reservation',async()=>{
+ const legacy=oldConsumed();delete legacy.result.unspent;
+ const cases=[undefined,{state:'reserved',result:legacy.result},... [true,null,0,undefined].map(unspent=>({state:'finished',result:{...legacy.result,unspent}})),{state:'finished',result:{...legacy.result,requests:null}},{state:'finished',result:{...legacy.result,schema:PREVIOUS_PASSIVE_BATCH}}];
+ for(const active of cases){
+  const h=mockChrome({...priorLedgers(),[BATCH]:active},{}),before=structuredClone(h.stored);
+  h.chrome.tabs.get=async()=>assert.fail('incompatible history must stop before target access');
+  for(const message of [passiveRead,passiveArm,passiveRead]){
+   const result=await h.message(message);assert.equal(result.reason,'previous-consumed-context-result-required');assert.equal(result.unspent,true);assert.equal(result.requests,0);
+  }
+  assert.deepEqual(h.stored,before);assert.equal(h.stored[PASSIVE_BATCH],undefined);
+  for(const e of Object.values(h.chrome.webRequest))assert.equal(e.listeners.size,0);
+ }
+});
 test('v2 requires both finished prior batches and never consumes or repairs a missing or uncertain v1',async()=>{
  for(const prior of [undefined,{state:'reserved',result:null},{...oldPassiveConsumed(),result:{...oldPassiveConsumed().result,unspent:true}}]){
   const records={[BATCH]:oldConsumed(),...(prior?{[PREVIOUS_PASSIVE_BATCH]:prior}:{})},before=structuredClone(records),h=mockChrome(records,{});
@@ -280,7 +303,7 @@ test('native refusal during preparation stops immediately instead of waiting for
 });
 test('result page serializes reads and a late ARM response cannot replace a final result',async()=>{
  const elements=new Map(),intervals=new Set();let completeArm,completeRead,reads=0;
- for(const id of ['result','run','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+ for(const id of ['result','run','download','environment','read','next-step','return-target','previous-batches'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:fn=>{intervals.add(fn);return fn;},clearInterval:fn=>intervals.delete(fn),chrome:{runtime:{sendMessage:message=>{
   if(message.type==='SOURCE_WITNESS_PREVIEW')return Promise.resolve({state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH,route:'home'});
   if(message.type==='SOURCE_WITNESS_ARM'){assert.equal(message.batch,PASSIVE_BATCH);return new Promise(resolve=>{completeArm=resolve;});}
@@ -295,7 +318,7 @@ test('result page serializes reads and a late ARM response cannot replace a fina
 test('new page refuses an old worker and does not label its old report as the new batch',async()=>{
  for(const oldResult of [{state:'NOT_RUN',unspent:true},oldConsumed().result,oldPassiveConsumed().result]){
  const elements=new Map(),sent=[];
- for(const id of ['result','run','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+ for(const id of ['result','run','download','environment','read','next-step','return-target','previous-batches'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:()=>assert.fail('no polling before preparation'),clearInterval(){},chrome:{runtime:{sendMessage:async message=>{
   sent.push(message);return message.type==='SOURCE_WITNESS_PREVIEW'?{state:'READY',mode:'PASSIVE_C2_ONLY',batch:oldResult.schema,route:'home'}:oldResult;
  }}}};
@@ -307,7 +330,7 @@ test('new page refuses an old worker and does not label its old report as the ne
 });
 test('worker version change after passive preparation stops polling without claiming the batch unspent',async()=>{
  const elements=new Map(),polls=new Set();let reads=0;
- for(const id of ['result','run','download','environment','read','next-step','return-target'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+ for(const id of ['result','run','download','environment','read','next-step','return-target','previous-batches'])elements.set(id,{disabled:false,checked:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener(){}},setInterval:fn=>{polls.add(fn);return fn;},clearInterval:fn=>polls.delete(fn),chrome:{runtime:{sendMessage:async message=>{
   if(message.type==='SOURCE_WITNESS_PREVIEW')return {state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH,route:'home'};
   assert.equal(message.type,'SOURCE_WITNESS_READ');assert.equal(message.batch,PASSIVE_BATCH);return ++reads===1?{state:'WAITING_NATIVE',unspent:false}:oldConsumed().result;
@@ -316,15 +339,15 @@ test('worker version change after passive preparation stops polling without clai
  assert.equal(polls.size,1);await elements.get('read').handlers.click();assert.equal(polls.size,0);
  const result=JSON.parse(elements.get('result').textContent);assert.equal(result.state,'BLOCKED');assert.equal(result.unspent,false);assert.equal(result.reason,'passive-worker-version-changed-no-retry');
 });
-async function pageFlow({initial={state:'NOT_RUN',unspent:true},active={id:1,windowId:4},focused=true,startedHere=true,own=()=>({id:10,windowId:4})}={}){
+async function pageFlow({initial={state:'NOT_RUN',unspent:true},active={id:1,windowId:4},focused=true,startedHere=true,own=()=>({id:10,windowId:4}),readResult=value=>value}={}){
  const elements=new Map(),sent=[],updates=[],events={},polls=new Set();let current=initial;
- for(const id of ['result','run','download','environment','read','next-step','return-target'])elements.set(id,{disabled:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+ for(const id of ['result','run','download','environment','read','next-step','return-target','previous-batches'])elements.set(id,{disabled:true,textContent:'',handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
  const scope={location:{hash:'#1'},document:{getElementById:id=>elements.get(id)},window:{addEventListener:(name,fn)=>{events[name]=fn;}},setInterval:fn=>{polls.add(fn);return fn;},clearInterval:fn=>polls.delete(fn),chrome:{windows:{getCurrent:async()=>({id:4,focused})},tabs:{getCurrent:own,query:async()=>[active],update:async(id,changes)=>{updates.push({id,...changes});}},runtime:{sendMessage:async message=>{
   sent.push(message);
   if(message.type==='SOURCE_WITNESS_PREVIEW')return {state:'READY',mode:'PASSIVE_C2_ONLY',batch:PASSIVE_BATCH,route:'home'};
   if(message.type==='SOURCE_WITNESS_ARM'){current={state:'WAITING_NATIVE',unspent:false};return {...current,...(startedHere?{startedHere:true}:{})};}
   if(message.type==='SOURCE_WITNESS_RETURN'){assert.equal(current.state,'WAITING_NATIVE');return {state:'TARGET_SHOWN'};}
-  if(message.type==='SOURCE_WITNESS_READ')return current;
+  if(message.type==='SOURCE_WITNESS_READ')return readResult(current);
   assert.fail('unexpected message');
  }}}};
  await runInNewContext('(async()=>{'+readFileSync(new URL('../../tools/native-source-witness/page.mjs',import.meta.url),'utf8')+'})()',scope);
@@ -358,6 +381,23 @@ test('uncertain initial result cannot start and unloading suppresses a late comp
  let resolveOwn;
  const h=await pageFlow({own:()=>new Promise(resolve=>{resolveOwn=resolve;})});await h.click('run');h.setResult(pageFinal);await h.click('read');
  h.events.pagehide();resolveOwn({id:10,windowId:4});await new Promise(r=>setImmediate(r));assert.deepEqual(h.updates,[]);
+});
+test('incompatible prior history is explained before clicking and cannot invite repeated starts',async()=>{
+ for(const reason of ['previous-consumed-context-result-required','previous-consumed-passive-result-required']){
+  const h=await pageFlow({initial:{state:'NOT_RUN',reason,requests:0,unspent:true}});
+  assert.equal(h.elements.get('run').disabled,true);assert.equal(h.elements.get('previous-batches').open,true);
+  assert.match(h.elements.get('next-step').textContent,/旧批次记录不匹配/);assert.match(h.elements.get('next-step').textContent,/无需打开聊天/);
+  await h.click('run');await h.click('read');await h.click('run');assert.equal(h.sent.some(m=>m.type==='SOURCE_WITNESS_ARM'),false);assert.equal(h.elements.get('run').disabled,true);
+ }
+});
+test('a preflight read finishing after ARM cannot erase waiting state or stop automatic result reads',async()=>{
+ let reads=0,release;
+ const h=await pageFlow({readResult:value=>++reads===2?new Promise(resolve=>{release=()=>resolve(value);}):value});
+ const beforeStart=h.click('read');await h.click('run');assert.equal(h.polls.size,1);
+ release();await beforeStart;
+ assert.equal(JSON.parse(h.elements.get('result').textContent).state,'WAITING_NATIVE');assert.equal(h.polls.size,1);assert.equal(h.elements.get('run').disabled,true);
+ h.setResult(pageFinal);await [...h.polls][0]();await new Promise(r=>setImmediate(r));
+ assert.deepEqual(JSON.parse(h.elements.get('result').textContent),pageFinal);assert.equal(h.polls.size,0);
 });
 test('content bridge stays ready across BFCache and removes liveness on final unload',()=>{
  const listeners=new Set(),events={};let stopped=0;const window={addEventListener:(name,fn)=>events[name]=fn};window.top=window;
