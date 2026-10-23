@@ -12,6 +12,8 @@ export function createScopeAuthority({provider,profile,readIdentity=null,context
  const valid=f=>f&&Number.isSafeInteger(f.tabId)&&f.tabId>=0&&f.frameId===0&&tokenOK(f.documentId)&&f.documentLifecycle==='active'&&f.incognito===false&&typeof f.actualURL==='string'&&allowedURL(f.actualURL);
  const key=f=>`${f.tabId}:${f.documentId}`;
  const unverified=reason=>({state:'unverified',reason});
+ const hasContextContract=()=>profile.singlePersonalDefault===true||profile.browserRequestContext===true&&typeof contextObserver?.verify==='function'&&typeof contextObserver?.isCurrent==='function';
+ function unavailableContext(frame){invalidate(frame.documentId);return {state:'ambiguous',reason:'context-profile-unavailable'};}
  const same=(a,b)=>a.tabId===b.tabId&&a.documentId===b.documentId&&a.actualURL===b.actualURL&&b.incognito===false&&b.documentLifecycle==='active';
  function invalidate(documentId,reason='scope-invalidated'){
   for(const [k,entry]of states)if(entry.frame.documentId===documentId){entry.abort?.abort();states.delete(k);}
@@ -38,6 +40,10 @@ export function createScopeAuthority({provider,profile,readIdentity=null,context
  function refresh(frame,reason,signal){
   if(!valid(frame)||!['bind','focus','expiry','auth-change'].includes(reason))return Promise.resolve(unverified('invalid-scope-refresh'));
   if(signal?.aborted)return Promise.resolve(unverified('scope-refresh-aborted'));
+  // An unconfigured build cannot bind a scope regardless of the roster.
+  // Stop before either fixed identity transport, including after a restart.
+  // This is a necessary configuration gate, never a production permission grant.
+  if(!hasContextContract())return Promise.resolve(unavailableContext(frame));
   const cached=peek(frame);if(reason==='bind'&&cached.state==='verified')return Promise.resolve(cached);
   const k=key(frame),prior=states.get(k);
   if(prior?.pending&&same(prior.frame,frame)&&reason!=='auth-change')return prior.pending;
@@ -67,6 +73,7 @@ export function createScopeAuthority({provider,profile,readIdentity=null,context
  function revalidate(frame,signal,{force=false}={}){
   const resolution=peek(frame);
   if(resolution.state!=='verified')return Promise.resolve(unverified('scope-not-verified'));
+  if(!hasContextContract()){invalidate(frame.documentId);return Promise.resolve(unverified('context-profile-unavailable'));}
   const k=key(frame),entry=states.get(k);
   if(signal?.aborted){invalidate(frame.documentId);return Promise.resolve(unverified('scope-refresh-aborted'));}
   if(entry.rechecking)return entry.rechecking;

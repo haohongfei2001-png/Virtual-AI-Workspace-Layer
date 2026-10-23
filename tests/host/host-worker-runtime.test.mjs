@@ -5,7 +5,27 @@ import {createScopeAuthority} from '../../src/runtime/scope-authority.mjs';
 import assert from 'node:assert/strict';
 import {MockIDBFactory} from '../b23/mock-idb.mjs';
 import {createHostWorkerRuntime} from '../../src/runtime/host-worker-runtime.mjs';
+import {createHostBindingService} from '../../src/runtime/host-binding-service.mjs';
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
+test('default worker HELLO and REFRESH never fetch identity or open the database without a context contract',async t=>{
+ let fetches=0;t.mock.method(globalThis,'fetch',async()=>{fetches++;throw Error('must-not-fetch');});
+ const f=fixture(t);
+ for(const path of ['/', '/c/12345678-1234-4234-8234-123456789abc', '/g/g-p-12345678123442348234123456789abc/project']){
+  // A new service represents fresh worker authority, never inherited grants.
+  const service=createHostBindingService(f.config);t.after(()=>service.stop());
+  const url='https://chatgpt.com'+path,sender={id:'ext',tab:{id:1,incognito:false},frameId:0,documentId:'doc',documentLifecycle:'active',url};
+  f.chrome.webNavigation.getFrame=async()=>({documentId:'doc',url,documentLifecycle:'active',parentFrameId:-1});
+  const hello=await service.handle({v:1,type:'HOST_HELLO',clientId:'startup',seq:1},sender);
+  assert.equal(hello.ok,true);
+  const {documentToken,producerToken,routeEpoch}=hello.binding;
+  for(const seq of [2,3]){
+   const result=await service.handle({v:1,type:'HOST_REFRESH',clientId:'startup',seq,documentToken,producerToken,routeEpoch},sender);
+   assert.equal(result.state,'ambiguous');assert.equal(result.reason,'context-profile-unavailable');assert.equal(result.scopeKey,undefined);
+  }
+  service.stop();
+ }
+ assert.equal(fetches,0);assert.equal(f.opens(),0);assert.deepEqual(f.calls.sent,[],'no isolated identity challenge');
+});
 function event(){const listeners=new Set();return {listeners,addListener:f=>listeners.add(f),removeListener:f=>listeners.delete(f),emit(...args){return [...listeners].map(f=>f(...args));}};}
 function fixture(t,options={}){
  const calls={sent:[],invalidated:[],closed:[],handled:[],revoke:0,views:0,stop:0},events=Array.from({length:5},event);let config;

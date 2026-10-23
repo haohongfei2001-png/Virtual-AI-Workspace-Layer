@@ -1,7 +1,22 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {createScopeAuthority} from '../../src/runtime/scope-authority.mjs';
+import {HOST_CONFIG} from '../../extension/config.mjs';
 const frame={tabId:1,frameId:0,documentId:'doc',parentDocumentId:null,actualURL:'https://chatgpt.com/',documentLifecycle:'active',incognito:false};
 const identity=()=>({principalId:'userA',expiresAt:new Date(1000000).toISOString(),contexts:[{id:'personalA',kind:'personal'}],providerProfile:'session_v1',transport:'worker-fixed-fetch'});
 function setup(options={}){let time=1000,n=0,calls=0,answer=identity();const auth=createScopeAuthority({provider:{read:async()=>{calls++;return answer;}},profile:{id:'personal_v1',singlePersonalDefault:true},now:()=>time,makeId:()=>`id_${++n}`,...options});return {auth,get calls(){return calls;},set answer(v){answer=v;},advance(ms){time+=ms;}};}
+test('default startup without a context contract performs no identity read on any supported page or restart',async()=>{
+ for(const readOverride of [false,true]){
+  let reads=0;const read=async()=>{reads++;return identity();};
+  const make=()=>setup({profile:HOST_CONFIG.scopeProfile,provider:{read},...(readOverride?{readIdentity:read}:{})}).auth;
+  let auth=make();
+  for(const path of ['/', '/c/12345678-1234-4234-8234-123456789abc', '/g/g-p-12345678123442348234123456789abc/project']){
+   const current={...frame,actualURL:HOST_CONFIG.origin+path};
+   for(const reason of ['bind','focus','expiry','auth-change'])assert.equal((await auth.refresh(current,reason)).state,'ambiguous');
+   assert.equal(auth.scopeFor(current),null);assert.equal(auth.isIdle(),true);
+   auth.invalidateAll();auth=make();
+  }
+  assert.equal(reads,0,'neither worker nor isolated identity reader may run without C2/C3');
+ }
+});
 test('C3 requires fixed semantics and authentic personal roster; peek stays network-free',async()=>{const h=setup();assert.equal(h.auth.peek(frame).state,'unverified');const result=await h.auth.refresh(frame,'bind');assert.equal(result.state,'verified');for(let i=0;i<50;i++)assert.equal(h.auth.peek(frame).grant.id,result.grant.id);assert.equal(h.calls,1);assert.equal(h.auth.scopeFor(frame).key,result.grant.scopeKey);assert(!JSON.stringify(result).includes('userA'));});
 test('50 concurrent refreshes share one provider call and result',async()=>{const h=setup();const results=await Promise.all(Array.from({length:50},()=>h.auth.refresh(frame,'bind')));assert.equal(h.calls,1);assert(results.every(r=>r.grant.id===results[0].grant.id));});
 for(const [name,contexts,enabled]of [['multi',[{id:'A',kind:'personal'},{id:'B',kind:'organization'}],true],['unknown',[{id:'A',kind:'unknown'}],true],['organization',[{id:'A',kind:'organization'}],true],['unproven-profile',[{id:'A',kind:'personal'}],false]])test('does not guess context '+name,async()=>{const h=setup({profile:{id:'p',singlePersonalDefault:enabled}});h.answer={...identity(),contexts};assert.equal((await h.auth.refresh(frame,'bind')).state,'ambiguous');assert.equal(h.auth.scopeFor(frame),null);});

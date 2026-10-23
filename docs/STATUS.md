@@ -1,5 +1,37 @@
 # VAIWL实际状态：渐进积累工程已接线，真实来源逐项待准入
 
+## 真实启动收口：未配置空间合同前禁止身份读取（2026-10-23）
+
+接续本地/远端一致的 `b81d4dbe`。本轮只检查正式配置、ScopeAuthority、C2、Host 启动/撤权/恢复；未重做上一轮 Project/local-use/返回修复，未访问本人 Chrome 或新增真实请求。
+
+**确认并修复一个独立工程缺陷。** 默认 `chatgpt-context-unverified` 配置没有 C2/C3 合同，但原 `ScopeAuthority.refresh` 仍先调用身份 provider，再返回 ambiguous；所以旧“默认安全关闭”只能描述界面准入，不能据此宣称身份请求为零。现于 refresh 的缓存/网络路径之前检查可用的 C2 owner 或显式 C3 合同；缺少合同返回 `ambiguous/context-profile-unavailable` 并撤销该文档状态，不调用 worker 或隔离身份 reader。revalidate 同样先阻断已撤掉合同的续验，维持 unverified 返回语义。配置存在只是必要前提，不是平台许可；有效 C2/C3 仍走原完整认证，未改变 liveVerified、默认 scope、数据库键或生产来源开关。
+
+修前在默认配置下，三类页面与四种刷新原因的本地 stub 复现共调用身份 reader 12 次；这不是实际账户请求。修后[ScopeAuthority检查](../tests/host/scope-authority.test.mjs)以及[默认worker→真实binding service的HELLO/REFRESH检查](../tests/host/host-worker-runtime.test.mjs)证明无身份 fetch、无隔离 challenge、无数据库打开、无 scope 返回；覆盖新服务实例，不冒充实际重启 Chrome。与既有 C2 关联和身份期限定向回归合计195项通过；未重跑UI/MV3/规模矩阵。第一轮修正中 revalidate 状态兼容断言失败已保留并修正，最终0失败。日志在 `.git/vaiwl-checkpoints/20261023-startup-boundary/`，仅writer差异复核。
+
+### 启动工程与真实来源语义分别结案
+
+| 场景 | 已有实际接线／证据（本轮静态核对，不新增验收PASS） | 剩余明确依赖 |
+|---|---|---|
+| 默认构建：首页、聊天、Project | [buildHost](../extension/build.mjs)生成未配置空间的默认包；[content-entry](../extension/content-entry.mjs)→HELLO→[binding service](../src/runtime/host-binding-service.mjs)→[ScopeAuthority](../src/runtime/scope-authority.mjs)。本轮补网络前置门；未绑定不展示私人库存。 | 不能通过选择 observed 配置或翻 liveVerified 使真实来源成立。 |
+| 有效身份与聊天C2 | [browser bootstrap](../src/runtime/host-browser-bootstrap.mjs)先安装唯一owner；[browser-request-context](../src/runtime/browser-request-context.mjs)核浏览器请求/文档与body，再与认证roster匹配。source-v3的限定成功保留。 | 当前生产候选只有聊天详情 dialect；历史成功不是可持久复用的grant，也不是持续提取许可。 |
+| 首页/Project冷启动 | [no-receipt recovery](../src/runtime/context-recovery/no-receipt-recovery.mjs)缺receipt时安全等待，不轮询/不取roster首项；[Project association](../src/host/project-context-association.mjs)只关联对象，不认证Workspace。 | 首页没有已证的当前空间输入；Project的请求context和页面关联合同目前仅loopback，生产尚未成立。b81d4dbe的成员区域正向候选不能替代它。没有依据可独立实现新的生产选择规则。 |
+| 刷新/重开浏览器/Worker重启 | 新文档与新worker均新建authority；[bootstrap测试](../tests/host/host-browser-bootstrap.test.mjs)已有新owner不继承receipt的反例；[service.invalidate](../src/runtime/host-binding-service.mjs)撤grant/producer/frame。新scope验证后走原[view service](../src/runtime/host-view-service.mjs)、Native/Evidence/CAS读取已知库存及持久偏好，不要求重新扫全库。 | 新生命周期是否有获准的有效当前空间输入；缓存命中、无自然详情请求时不得复活旧receipt。不能实现成“拿旧缓存直接开UI”。 |
+| 同文档失效/普通恢复 | [content-session](../src/host/content-session.mjs)的contextPending撤界面与能力；外部READY触发新的HELLO/REFRESH。foreground、BFCache、renewal和显式退出已有[定向用例](../tests/host/content-renewal-context-recovery.test.mjs)、[content用例](../tests/host/content-session.test.mjs)及[recovery交付栅栏](../tests/runtime/context-recovery/delivery-confirmation.test.mjs)。 | 这些是接线/隔离证据，不是本人J4。receipt有效期不因恢复延期；没有新证据时继续原生UI。RAM搜索/滚动现场不承诺跨浏览器重启持久复活。 |
+
+本次范围未确认另一项可独立补齐的启动代码差额。真正待核的对象语义是：实际Project成员区域的稳定性与移动/改名事实、自然新聊天何时取得稳定ID/标题及归属、搜索到达对象的当前body关联；已实现的解析/字段合并/本地使用不重开发。不要求全历史完整或逐消息审计。
+
+### 外部条件：通道、责任与最小下一步
+
+依据已采纳[6354454631](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6354454631)及后续[渐进修正](https://github.com/haohongfei2001-png/Virtual-AI-Workspace-Layer/pull/16#issuecomment-6356448353)，不是本轮重新作许可研究：
+
+- **固定身份/内部元数据通道**：`/api/auth/session`、认证 `/backend-api/accounts/check/v4-2023-04-27` 及内部聊天/Project目录，缺适用于此实际账户/Workspace的持续程序化使用依据。此前一次实验授权及HTTP200不覆盖生产。
+- **自然页面通道**：提取已呈现DOM中的ID/标题/成员/顺序，以及观察请求context并用于C2，仍须适用的提取/处理依据；不能改称“用户点击”或“被动观察”就绕过同一条件。Chrome webRequest权限只授浏览器能力。
+- **谁能提供什么**：账户持有人可同意本地处理本人可访问资料；受组织管理的Workspace还须满足其Owner/Admin授予的访问与应用政策。这两者不替代OpenAI平台侧的允许依据。按当前采纳裁决，平台侧需OpenAI的明确适用公开支持、合同或经确认授权，或其支持的等价输入通道。没有已确认可操作的“填表/设置开关即可批准VAIWL提取”的申请流程；本轮不让用户再联系客服、改设置或安排Pro研究，也不声称所有扩展被禁。
+
+**最小外部条件**是至少一个允许的输入通道，同时能提供可信主体/当前Workspace及所需近期对象字段；无需覆盖全部接口或全历史。条件出现后才按实际允许范围补首页/Project/重启的空间来源profile、复用现owner/CAS接入，并集中做本人连续使用验收。当前不新建实验、不更新本人安装。
+
+新默认开发包已构建/校验（191文件），保存在 `/private/tmp/vaiwl-startup-boundary-20261023-b81d4dbe/extension`；ZIP SHA256 `d9d3df5085fd0ffe193e4858ae5f225bf9aa7391775faa75c5ccffa6801a59fb`。状态仍 `HOST_IMPLEMENTATION_UNVERIFIED / NOT_RELEASE_READY`，不是新的真实日用候选。原人工资产、未跟踪文件和stash保持；没有merge、部署或恢复重复巡检。
+
 ## 渐进个人候选：原生使用、Project 正向归属与返回修复（2026-10-23）
 
 接续已核本地/远端 `519c906e`，沿原 B1/B2/C2–C5 补实际源码差额。正式 v2.7 renderer、双 frame、Native/EvidenceRepository、fieldWitnesses、CAS 和恢复系统继续复用；没有打开演示、访问本人 Chrome 或重测 source-v3。
