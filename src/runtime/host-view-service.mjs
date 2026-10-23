@@ -303,6 +303,28 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
    }finally{entry.horizonPending=false;}
   }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;abort.abort();}
  }
+ async function setCompactRows(input,sender){
+  let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-compact-rows'};}
+  if(!exactHostRecord(message,['v','type','grantId','mountId','operationId','expectedRevision','compactRows'])||message.v!==1||message.type!=='HOST_UI_SET_COMPACT_ROWS'||typeof message.operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(message.operationId)||!Number.isSafeInteger(message.expectedRevision)||message.expectedRevision<0||typeof message.compactRows!=='boolean')return {ok:false,reason:'invalid-ui-compact-rows'};
+  let active=true;const started=elapsedNow(),abort=new AbortController();
+  try{return await withRequestDeadline(()=>withScope({sender,grantId:message.grantId,mountId:message.mountId},async context=>{
+   const entry=views.get(message.mountId),current=entry?.owner.current();
+   if(!workspaceRepository||!current||entry.scopeKey!==context.scope.key||entry.scopeGrantId!==context.scopeGrantId)throw Error('free-view-not-ready');
+   if(entry.currentEntryPending||entry.horizonPending||entry.workingSetPending)throw Error('preference-change-in-progress');
+   if(current.snapshot.workspaceRevision!==message.expectedRevision)throw Error('revision-conflict');
+   // Share the existing manual-preference write lock with working-set edits.
+   entry.workingSetPending=true;
+   try{
+    const valid=()=>active&&elapsedNow()-started<6000&&context.isCurrent()&&views.get(message.mountId)===entry;
+    if(!valid())throw Error('ui-compact-rows-expired');
+    const result=await workspaceRepository.command(context.scope,{operationId:message.operationId,expectedRevision:message.expectedRevision,command:{type:'SET_PREFERENCE',id:'compactRows',value:message.compactRows}},{actor:'human',guard:valid,signal:abort.signal});
+    if(!result?.ok)throw Error(result?.reason??'compact-rows-write-unavailable');
+    if(!valid())throw Error('ui-compact-rows-expired');
+    begin(entry);try{ui.notifyScope?.(context.scope.key);}catch{}
+    return {ok:true,workspaceRevision:result.revision,compactRows:message.compactRows};
+   }finally{entry.workingSetPending=false;}
+  }),{now:elapsedNow,schedule,cancel});}catch(error){return {ok:false,reason:reason(error)};}finally{active=false;abort.abort();}
+ }
  async function setWorkingSet(input,sender){
   let message;try{message=structuredClone(input);sender=structuredClone(sender);}catch{return {ok:false,reason:'invalid-ui-working-set'};}
   if(!exactHostRecord(message,['v','type','grantId','mountId','operationId','expectedRevision','action','refId'])||message.v!==1||message.type!=='HOST_UI_WORKING_SET'||typeof message.operationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(message.operationId)||!Number.isSafeInteger(message.expectedRevision)||message.expectedRevision<0||!['add','remove','move-up'].includes(message.action)||typeof message.refId!=='string'||message.refId.length<1||message.refId.length>128||['__proto__','constructor','prototype'].includes(message.refId))return {ok:false,reason:'invalid-ui-working-set'};
@@ -366,5 +388,5 @@ export function createHostViewService({ui,readService,workspaceRepository=null,p
  function confirmScope(frame,scopeKey){for(const [key,value]of resumes)if(value.tabId===frame.tabId&&value.documentId===frame.documentId&&value.scopeKey!==scopeKey)resumes.delete(key);}
  function revokeDocument(id){for(const [key,entry]of views)if(entry.parentFrame.documentId===id)remove(key);}
  function revokeTab(tabId,{preserveDocumentId=null}={}){for(const [key,value]of resumes)if(value.tabId===tabId&&(!preserveDocumentId||value.documentId!==preserveDocumentId))resumes.delete(key);for(const [key,entry]of views)if(entry.parentFrame.tabId===tabId)remove(key);}
- return Object.freeze({isIdle,handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent()&&!retryableRead(entry.error))begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){stopped=true;readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
+ return Object.freeze({isIdle,handle,resume,present,confirmScope,isForegroundReadPending:liveWindow,nativePublished(scopeKey){const window=readWindows.get(scopeKey);if(window&&!liveWindow(scopeKey)){if([...views.values()].some(entry=>entry.scopeKey===scopeKey))window.used=false;else readWindows.delete(scopeKey);}for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.pending&&entry.isCurrent())entry.deferPreparation?.();},resolveSnippetView,enterCurrent,undoAutoHorizon,setHorizon,setWorkingSet,setCompactRows,refreshScope(scopeKey){for(const entry of views.values())if(entry.scopeKey===scopeKey&&entry.isCurrent()&&!retryableRead(entry.error))begin(entry);},revokeDocument,revokeTab,revokeMount:remove,stop(){stopped=true;readWindows.clear();resumes.clear();for(const key of [...views.keys()])remove(key);}});
 }

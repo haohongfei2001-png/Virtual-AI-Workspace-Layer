@@ -129,6 +129,7 @@ export function createHostBindingService({extensionId,getFrame,getContexts=null,
   if(['HOST_UI_RECOVERY_STATUS','HOST_UI_RECOVERY_RELEASE','HOST_UI_RECOVER'].includes(message?.type))return recovery?recovery.handle(message,sender):{ok:false,reason:'recovery-unavailable'};
   if(message?.type==='HOST_DOCUMENT_RENEW')return handshake.renew(message,sender);
   if(message?.type==='HOST_UI_WORKING_SET')return views?views.setWorkingSet(message,sender):{ok:false,reason:'host-view-unavailable'};
+  if(message?.type==='HOST_UI_SET_COMPACT_ROWS')return views?views.setCompactRows(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_SET_HORIZON')return views?views.setHorizon(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_UNDO_AUTO_HORIZON')return views?views.undoAutoHorizon(message,sender):{ok:false,reason:'host-view-unavailable'};
   if(message?.type==='HOST_UI_CALIBRATION_ENTRY')return entryCalibration?entryCalibration.handle(message,sender):{ok:false,state:'unavailable'};

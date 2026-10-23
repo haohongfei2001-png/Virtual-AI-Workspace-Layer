@@ -1,5 +1,42 @@
 # VAIWL实际状态：独立Free工程恢复，生产接入与日用交付仍NO-GO
 
+## 源码剩余工程收口：B3–B5、C1–C6、F3（2026-10-23）
+
+按用户本轮要求，从实际本地/远端 `dc7756648d272791ef709d0998a61393ce596e4c` 对照唯一计划原任务、FR/UI/SYS/INV和现行Host四原件检查调用链。本节覆盖下方“未发现差额所以继续30分钟巡检”的执行结论；旧记录、失败和验收分层保留。核查采用源码、调用方、已有测试断言与原始回执；没有重跑完整矩阵或真实来源验证。**发现并修复一项原功能接线遗漏；其余已核范围未确认另一项依赖已满足的缺失功能或可复现产品缺陷。这个结论不是全项目无缺陷证明，也不是个人Free验收通过。**
+
+### 本轮实际差额与交付
+
+原 `compactRows` 人工偏好及宽松行距CSS早已存在，但正式frame投影未携带该值，renderer重建空preferences，造成已保存的 `false` 总显示为紧凑。正式设置也无入口。现沿原B3.F/C5补齐：有界DTO只传一个布尔值；设置提供“紧凑窗口”；frame client→授权owner→原WorkspaceRepository `SET_PREFERENCE`，复用CAS、inverse、6秒期限和现有偏好互斥。两个frame重新读取确认结果，跨标签保留；旧DTO缺字段默认紧凑，非法类型拒绝。没有新增数据库格式、producer或读取权限。
+
+修前两个直接反例失败；修后对应三文件136项检查通过（新差额8项，其他为同模块必要回归）。复用原实际headless MV3入口，一次离线包执行验证两处显示更新、新标签读取已存宽松设置、工作集操作及原生节点/草稿保护；默认191文件包构建和只读校验通过。此轮是writer差异审查，没有新增独立审查或完整CI认证。详见[本轮回执](engineering/free-engineering-closure-20261023.json)，失败/通过原日志与完整MV3报告存于原Git私有检查点 `.git/vaiwl-checkpoints/20261023-engineering-closure/`。本人安装未更新；没有账户请求。
+
+### 原任务逐项分类（实施、证据和验收分开）
+
+下表“已接线”只表示所列链条实际存在，并有列明范围的证据；不把其所在整个任务标成PASS。旧证据只继承原范围，不计为本轮测试，也不自动覆盖当前全部字节。
+
+| 原项／对应要求 | 真实实现与工程接线 | 测试或既有证据及其局限 | 尚缺部分／是否可立即独立实施 |
+|---|---|---|---|
+| **B3.F** FR04/10/13/15、UI17、SYS03 | [preferences](../src/data/preferences.mjs)、[owner设置/工作集命令](../src/runtime/host-view-service.mjs)、[正式frame client](../src/host/free-frame-client.mjs)及[片段服务](../src/runtime/host-snippet-service.mjs)。原工作集增删排序、片段、H设置不是仅存储API；本轮补紧凑偏好遗漏。Free名仍由原生投影提供，未把Pro标题/成员接进Free。 | [工作集实际MV3](engineering/free-round124-working-set-mv3-final.json)、[片段实际MV3](engineering/free-round123-snippets-package-mv3-final.json)；本轮紧凑CAS/撤权/过期/跨标签证据。均为隔离夹具，非本人数据。 | **局部实现缺口本轮关闭**。暂无另一处可确认的偏好接线缺失；个人可用性仍需获准scope与C6。不另造置顶/虚拟归属模型替代原工作集和范围功能。 |
+| **B4.F** SEC06/12、UI11–15、SYS01/02 | [ScopeAuthority](../src/runtime/scope-authority.mjs)、[UiGrant生命周期](../src/host/ui-frame-client.mjs)、[CAS/inverse](../src/data/repository.mjs)、[continuation owner](../src/runtime/host-continuation-owner.mjs)、[原生至多一次派发](../src/host/native-actions.mjs)。原生操作账本不由恢复重放。 | [实际离线C2 transport到期恢复](engineering/free-context-idle-mv3-20261023.json)只证同worker、新grant/view、草稿保留；该回执明确自然worker休眠/cold-start未测。owner取消与排空反例已存在，非本轮重测。 | **底座已接线，生命周期验收仍部分**。真实首页/Project/刷新/自然休眠授权延续待来源+实机；历史Linux竞态未归因，不能用一次后续绿覆盖。没有确定根因时不补猜测性重试或放宽期限。 |
+| **B5.F** SYS01–04、INV07/08、SEC10/11、FR12 | [NativeRepository](../src/data/native-repository.mjs)同CAS continuation/admission；[EvidenceRepository](../src/data/free-evidence-repository.mjs)幂等；[人工资产库](../src/data/repository.mjs)与[恢复服务](../src/runtime/host-recovery-service.mjs)；[备份面板](../src/host/free-frame-backup.mjs)实际preview→明确确认→restore，不是仅schema声明。 | [实际备份](engineering/free-round101-backup-package-mv3.json)、[实际恢复](engineering/free-round101-recovery-package-mv3.json)、[同ID目录格式升级/旧包拒写/兼容包回退](engineering/free-directory-storage-compatibility-20261022.json)。仅所列格式、故障和离线资产。 | **迁移/人工恢复链已接线，真实来源重验未闭合**。未见不删、失去授权不复活。INV09生产删除语义/consumer的启用仍取决于获准正向来源，不能把fixture删库或缺席当删除成功；不重建恢复引擎。 |
+| **C1** FR01–10/14、UI08/10 | [Free投影](../src/data/free-projection.mjs)、[时间策略](../src/data/free-time-policy.mjs)、[有界frame投影](../src/runtime/free-frame-projection.mjs)、[cards/members/appendFreeList](../src/navigation/navigation.mjs)：原名、P/NONE/UNKNOWN、三列、5/+12、旧项与当前段、手动范围均有实际出口。 | [投影测试](../tests/host/free-frame-projection.test.mjs)、[renderer测试](../tests/host/frame-projection-renderer.test.mjs)覆盖页边界与交互；既有截图/布局证据保留。本轮仅跑受紧凑DTO影响的两文件，不宣称全C1重验。 | **显示层已接线，数据事实仍部分**。正确成员/NONE、可信近期活动/自然新增未由source-v3证明；需获准语义再接现owner。全库密度自动H为③后置，不是本轮漏做。 |
+| **C2** UI01–16、MAP06、SEC09 | [mount surface](../src/navigation/mount-surface.mjs)、[surface controller](../src/host/surface-controller.mjs)、[native actions](../src/host/native-actions.mjs)及frame client：双manual surface、限定mask、UiGrant、P/C计划、原生创建/搜索与唯一阅读返回；无草稿复制或异步补跳。 | [真实隔离disable五状态](engineering/free-round202-disable.json)与[uninstall四状态](engineering/free-round202-uninstall.json)分别检查原生可用、私有投影消失、布局清理。前批[frame-commit失败](engineering/free-round185-disable-states-frame-commit-race.json)仍保留，后续成功不自动说明旧因。 | **挂载/派发已接线，Mac真实宿主兼容待验**。当前许可不允许借DOM/截流替代目录；未知profile退原生是保护，不是完整支持已通过。 |
+| **C3** FR10/11/15、UI02/04/06/15/17 | [resume codec](../src/host/frame-resume-state.mjs)、[owner resume/save](../src/runtime/host-view-service.mjs)、[client保存后导航](../src/host/free-frame-client.mjs)、[renderer来路与焦点](../src/navigation/navigation.mjs)。H偏好/工作集持久保存；query/scroll/开合恢复为同文档scope/role RAM记录（30分钟），不恢复旧grant或宿主草稿。 | [实际frame重绑定](engineering/free-round126-frame-rebind-package-mv3.json)：新grant/frame恢复同文档query/scroll、原生节点/草稿不换；本轮MV3新标签验证偏好/工作集持久。 | **普通返回链已接线；整页重载/worker重启不承诺复活RAM搜索现场**。真实刷新恢复应重建授权并读持久资产，仍须J4；历史[worker恢复失败](engineering/free-round128-worker-recovery-package-mv3-final.json)不能删或改PASS，不等同当前已确认缺失代码。 |
+| **C4** FR03/04/07/14/15、UI16/17 | [knownMatches/knownProjectMatches](../src/navigation/search.mjs)、[搜索投影](../src/runtime/free-search-projection.mjs)、[工作集投影](../src/runtime/free-working-set-projection.mjs)、navigation搜索/原生搜索入口；片段旧格式仍走唯一锚点验证。 | [原生片段/搜索实际链](engineering/free-round123-snippets-package-mv3-final.json)含body变更拒旧锚；[项目查找长标题修复](engineering/free-project-search-layout-20261023.json)和搜索投影测试。不是全账户搜索证明。 | **已知库存搜索与退路已接线**。未被合法发现的聊天仍依赖原生搜索，不建立偷偷全量扫描；主用已知近期目录供给取决于许可和来源。 |
+| **C5** UI06–17、v2.7 | [styles](../src/navigation/styles.mjs)、[frame appearance](../src/host/frame-appearance.mjs)、[client onAppearance→layout](../src/host/free-frame-client.mjs)、navigation键盘/菜单/焦点；紧凑设置本轮闭合。 | [菜单键盘修复](engineering/free-project-menu-keyboard-20261023.json)、[侧栏连续性](engineering/free-sidebar-keyboard-continuity-20261023.json)、本轮实际MV3。DOM双倍字号不冒充物理200%或中文IME。 | **已知独立UI差额已修；真实设备验收未完成**。本人主用窗口/物理中文IME、原生模型/工具/文件/弹层、已启用PAIA共存需①个人过程；其他环境排列②发布完善。无新具体缺陷则不再扩大兼容矩阵。 |
+| **C6** FR01–15、个人J1–J4 | [J1](../tests/host/j1-package-journey.mjs)、[J2](../tests/host/j2-package-journey.mjs)、[J3](../tests/host/j3-package-journey.mjs)、[J4](../tests/host/j4-evidence-recovery.mjs)与原81适用层已在原验收系统，未新建计划。 | [原J1](engineering/free-round204-j1.json)仍PARTIAL_J1_NOT_ACCEPTED；原J4/Linux/unknown trace仍按历史原判。source-v3只证一次身份/当前空间/限定目录技术可读。 | **明确未完成验收，不能等同剩余UI代码**。等待获准主用候选、正向成员/NONE与可信活动、真实连续使用；不是追加模拟样本可补。 |
+| **F3** SYS06/07、安装/退出/隐私 | [build](../extension/build.mjs)、[package/verify](../extension/package.mjs)、[安装/备份/回退说明](../extension/README.txt)：静态闭包、最小权限、源码hash、同ID升级约束、默认关闭生产；没有隐性启用新provider。 | 本轮默认包191文件通过；已有同ID新旧reader兼容、disable/uninstall实测见上。只验证隔离安装，不更新本人包。 | **工程构建与必要离线安装链已存在；日用候选尚未交付**。本人实际安装/更新/停用/资产保全随可用候选①；公开分发、完整环境矩阵和F4②另验，不自动发布。 |
+
+### 收口后的真实剩余条件
+
+- **生产准入/来源依赖（①）**：适用本人账号/Workspace和所需自动目录行为的明确平台允许依据或受支持通道；之后才核缺失的正向成员/NONE、可信近期顺序/更新时间、自然新增及首页/Project/恢复空间连续性，并沿现provider/owner/Native/Evidence接线。source-v3已通过身份与限定目录技术证据永久保留，不重测。
+- **设备/个人验收（①）**：有合法可用候选后集中完成本人Mac连续J1–J4、物理IME、原生工具/弹层与实际共存和安装。现在不要求用户重载、截图、清库或再做来源批次。隔离证据不替代这项。
+- **正式发布完善（②）**：非主用环境/故障排列、实际分发与F4质量；历史Linux竞态、unknown不完整trace和旧恢复FAIL仍开放为证据债，尚无可确认的当前产品根因；只有具体可复现差额再修，不以反复跑绿抹去原失败。
+- **后续优化（③）**：10k/100k和全库密度自动跨度保持DEFERRED及原阈值。**取消（④）**的全历史严格完整性证明、逐消息本人作者/ACK/原始时间全审计不转成发布欠账。Pro不提前启动。
+
+目前已确认且无需新来源权限的实现差额已交付；本次范围未找到另一个可立即实施的功能或缺陷。按用户要求已暂停既有`vaiwl-free` 30分钟自动巡检，保留配置，不做无变化重复检查。出现真实缺陷、新外部条件或明确范围变化时，沿本原分支/PR16直接续接。源码完成、离线通过、生产获准、个人验收和公开发布仍严格分开。未merge、部署或宣称完整Free日用完成。
+
+
 ## 继续独立工程：侧栏键盘连续性与原任务差额核对（2026-10-23）
 
 接续f9f0cf9d，在原C3/C5确认并修复侧栏焦点缺陷：最后一次“显示更多”返回后按钮被移除，既有焦点兜底只查工作区节点，侧栏焦点落到文档，Tab不能继续进入列表。同scope更新移除当前行也走同一缺失分支。现复用原焦点恢复，把侧栏导航区域设为可程序聚焦、具有稳定key的兜底；不新增Tab停靠点，下一次Tab进入列表。此兜底不宣称直接定位到第一条新增行。

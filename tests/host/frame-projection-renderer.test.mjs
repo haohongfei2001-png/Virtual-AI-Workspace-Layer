@@ -401,3 +401,11 @@ test('retired project pager cannot request a previous scope group',()=>{
  retired.click();assert.equal(calls.length,before);f.button('显示更多近期窗口').click();assert.equal(calls.length,before+1);
  }finally{f.nav.stop();}
 });
+
+test('framed density preserves saved spacious preference and defaults older DTOs to compact',t=>{for(const role of ['workspace','sidebar']){const f=fixture(role);t.after(()=>f.nav.stop());f.nav.updateFrameProjection({...projection(role),compactRows:false});assert.equal(f.nav.roots()[role].n.dataset.vaiwlCompact,'false');f.nav.updateFrameProjection({...projection(role),compactRows:true});assert.equal(f.nav.roots()[role].n.dataset.vaiwlCompact,'true');f.nav.updateFrameProjection(projection(role));assert.equal(f.nav.roots()[role].n.dataset.vaiwlCompact,'true');assert.throws(()=>f.nav.updateFrameProjection({...projection(role),compactRows:'false'}),/invalid-frame-compact/);}});
+
+test('density control waits for authoritative DTO, blocks repeat and retired clicks, and clears on scope change',async t=>{
+ let resolve;const calls=[],f=fixture('workspace',()=>null,null,null,{}, {onCompactRowsRequest:value=>{calls.push(value);return new Promise(r=>resolve=r);}});t.after(()=>f.nav.stop());f.nav.updateFrameProjection(projection());f.button('工作空间设置').click();const old=f.button('紧凑窗口');old.click();old.click();f.button('紧凑窗口').click();assert.deepEqual(calls,[false]);assert.equal(f.nav.roots().workspace.n.dataset.vaiwlCompact,'true');assert.equal(f.button('紧凑窗口').getAttribute('aria-disabled'),'true');
+ f.nav.updateFrameProjection({...projection(),compactRows:false});resolve({ok:true});await Promise.resolve();await Promise.resolve();assert.equal(f.button('紧凑窗口').getAttribute('aria-pressed'),'false');old.click();assert.equal(calls.length,1);
+ f.button('紧凑窗口').click();assert.deepEqual(calls,[false,true]);f.nav.updateFrameProjection({...projection(),scope:'next',compactRows:false});resolve({ok:false});await Promise.resolve();await Promise.resolve();assert.equal(f.button('紧凑窗口'),undefined);assert.equal(f.nav.roots().workspace.n.dataset.vaiwlCompact,'false');
+});

@@ -23,7 +23,7 @@ export function projectFreeFrame(current,query){
  let maxSegment=0;for(const rows of [snapshot.groups,snapshot.refs])for(const row of rows){const value=segmentOf(row);if(Number.isSafeInteger(value)&&value>=0)maxSegment=Math.max(maxSegment,value);}
  const v=snapshot.viewSession,policy=snapshot.preferences?.freeTimePolicy?.value;
  if(policy)validateFreeTimePolicy(policy);
- const result={protocol:'vaiwl-free-frame/1',role,scope:snapshot.scope,revision:snapshot.revision,workspaceRevision:snapshot.workspaceRevision,evidenceRevision:snapshot.evidenceRevision,viewRevision:snapshot.viewRevision,viewSession:v?{H:v.H,T:v.T,Z:v.Z,policyRevision:v.policyRevision}:null,segment,
+ const result={compactRows:snapshot.preferences?.compactRows?.value!==false,protocol:'vaiwl-free-frame/1',role,scope:snapshot.scope,revision:snapshot.revision,workspaceRevision:snapshot.workspaceRevision,evidenceRevision:snapshot.evidenceRevision,viewRevision:snapshot.viewRevision,viewSession:v?{H:v.H,T:v.T,Z:v.Z,policyRevision:v.policyRevision}:null,segment,
   timePolicy:policy?{mode:policy.mode,H:policy.H,revision:policy.revision}:{mode:'fixed',H:v?.H??30,revision:v?.policyRevision??0},
   navigation:{hasNewer:segment>0,hasOlder:segment<maxSegment,maxSegment},
   groups:{items:groups,total,offset,limit,hasMore:offset+groups.length<total},entries,selection,

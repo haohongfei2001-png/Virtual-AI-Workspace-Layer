@@ -369,6 +369,21 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
   }catch{return {ok:false,reason:'horizon-change-unavailable'};}
   finally{finishMutation(attempt);}
  }
+ async function setCompactRows(compactRows){
+  if(readTerminal||typeof compactRows!=='boolean'||closed||horizonPending||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||!Number.isSafeInteger(workspaceRevision))return {ok:false,reason:'compact-rows-change-unavailable'};
+  const attempt={};horizonPending=attempt;const current=grant,renderer=navigation,expectedRevision=workspaceRevision,epoch=readEpoch;
+  const valid=()=>!readTerminal&&readEpoch===epoch&&!closed&&navigation===renderer&&grant?.id===current.id&&grant?.mountId===current.mountId&&grantCurrent()&&Date.parse(grant?.expiresAt)>now();
+  try{
+   const result=await withRequestDeadline(()=>runtime.sendMessage({v:1,type:'HOST_UI_SET_COMPACT_ROWS',grantId:current.id,mountId:current.mountId,operationId:globalThis.crypto.randomUUID(),expectedRevision,compactRows}),{now:elapsedNow,schedule,cancel});
+   if(!valid())return {ok:false,reason:'compact-rows-change-unavailable'};
+   if(result?.ok!==true)return {ok:false,reason:result?.reason??'compact-rows-change-unavailable'};
+   if(!Number.isSafeInteger(result.workspaceRevision)||result.workspaceRevision<expectedRevision||result.compactRows!==compactRows)return {ok:false,reason:'invalid-compact-rows-response'};
+   workspaceRevision=result.workspaceRevision;dirty=false;const page=await read(query,true);
+   if(!valid()||!page||!Number.isSafeInteger(page.workspaceRevision)||page.workspaceRevision<result.workspaceRevision||page.compactRows!==compactRows)return {ok:false,reason:'compact-rows-refresh-unavailable'};
+   return result;
+  }catch{return {ok:false,reason:'compact-rows-change-unavailable'};}
+  finally{finishMutation(attempt);}
+ }
  async function changeWorkingSet(value){if(readTerminal)return;
   if(!value||Object.getPrototypeOf(value)!==Object.prototype||Object.keys(value).sort().join(',')!=='action,refId'||!['add','remove','move-up'].includes(value.action)||typeof value.refId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(value.refId))return {ok:false,reason:'invalid-working-set-request'};
   if(closed||horizonPending||!grantCurrent()||Date.parse(grant?.expiresAt)<=now()||!Number.isSafeInteger(workspaceRevision))return {ok:false,reason:'working-set-change-unavailable'};
@@ -466,7 +481,7 @@ export function createFreeFrameClient({document:doc,runtime,role,parentOrigin,on
  function onGrant(value,{isCurrent}){
   closed=false;grant=value;grantCurrent=isCurrent;void refreshSurfaceState();
   if(!navigation){wasHidden=doc.visibilityState==='hidden';doc.addEventListener?.('visibilitychange',foreground);visibilityAttached=true;root=doc.createElement('div');root.setAttribute('data-vaiwl-frame-root','');privateRoot.append(root);
-   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),projectNavigationPlan:group=>projectPlans.get(group.id),status(){}},onExit:()=>lifecycle.exit(),onDispatch:dispatchCurrent,onNativeInteractionStart:beginNativeInteraction,onViewChange:saveResumeView,onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onCurrentWorkspaceEntry:enterCurrent,onCalibrationEntry:calibrateEntry,onUndoTimePolicyRequest:undoAutoHorizon,onHorizonRequest:setHorizon,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup,onSnippetsRequest:openSnippets,onSnippetLocateRequest:locateSearchSnippet});
+   navigation=navigationFactory({document:doc,surface:{role,root},adapter:{currentURL:()=>currentNativeURL,isCurrent:value=>!!currentNativeURL&&policy.sameTarget(value,currentNativeURL),nativeHref:input=>policy.nativeHref(input),navigationPlan:ref=>plans.get(ref.id),projectNavigationPlan:group=>projectPlans.get(group.id),status(){}},onExit:()=>lifecycle.exit(),onDispatch:dispatchCurrent,onNativeInteractionStart:beginNativeInteraction,onViewChange:saveResumeView,onProjectionRequest:next=>read(next,false),onPresentationRequest:presentIntent,onCurrentWorkspaceEntry:enterCurrent,onCalibrationEntry:calibrateEntry,onUndoTimePolicyRequest:undoAutoHorizon,onHorizonRequest:setHorizon,onCompactRowsRequest:setCompactRows,onWorkingSetRequest:changeWorkingSet,onRecoveryRequest:openRecovery,onBackupRequest:openBackup,onSnippetsRequest:openSnippets,onSnippetLocateRequest:locateSearchSnippet});
    void bootstrapResume();return;
   }
   // Same-grant renewal is a background refresh, not a new user read intent.

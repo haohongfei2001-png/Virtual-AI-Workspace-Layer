@@ -10,7 +10,7 @@ const gridIcon='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stro
 import { css } from './styles.mjs';
 function node(doc,tag,attrs={},text=''){const n=doc.createElement(tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);n.textContent=text;return n;}
 /** Navigation owns only its roots and reversible view masking; never renders chat/composer. */
-export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onNativeInteractionStart=null,onProjectionRequest=null,onHorizonRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null,onBackupRequest=null,onSnippetsRequest=null,onSnippetLocateRequest=null,onUndoTimePolicyRequest=null}) {
+export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage=null, onViewChange=()=>{},onCurrentWorkspaceEntry=()=>{},onCalibrationEntry=()=>{},surface=null,onPresentationRequest=()=>{},onDispatch=null,onNativeInteractionStart=null,onProjectionRequest=null,onHorizonRequest=null,onCompactRowsRequest=null,onWorkingSetRequest=null,onRecoveryRequest=null,onBackupRequest=null,onSnippetsRequest=null,onSnippetLocateRequest=null,onUndoTimePolicyRequest=null}) {
   const framed=surface!==null;
   // Keep explicit choices separate from the current project's derived expansion.
   // Legacy restored open rows remain explicit; do not guess away user layout.
@@ -39,7 +39,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(navigationFeedback.nativeReturn){const feedback=navigationFeedback,source=frameProjection,control=node(doc,'button',{type:'button','aria-label':'返回原生页面'},'返回原生页面');control.dataset.focusKey='navigation-native-return';control.addEventListener('click',()=>{if(!stopped&&frameProjection===source&&navigationFeedback===feedback&&snapshot?.scope===feedback.scope&&adapter.currentURL()===feedback.url){enterReading(false);onPresentationRequest({kind:'show-native-page'});}});notice.append(control);}parent.append(notice);
   }
   let settingsOpen=false,timePolicyNotice=null,timePolicyNoticeTimer=null,lastTimePolicyNotice=null;
-  let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,frameRowPaging=null,frameWindowsSuspended=false,projectionRequest=0,horizonPending=null,horizonError=null,workingSetPending=null,workingSetError=null,snippetLocatePending=null,resumeLayout=null;
+  let index=null,sidebarDirty=true,sidebarKey=null,frameProjection=null,frameRowPaging=null,frameWindowsSuspended=false,projectionRequest=0,horizonPending=null,horizonError=null,compactPending=null,compactError=null,workingSetPending=null,workingSetError=null,snippetLocatePending=null,resumeLayout=null;
   // Keep the original event target alive until its click, drop, or composition
   // completes. Coalesce updates instead of extending a debounce on each change.
   const pointers=new Set(),keys=new Set(),win=doc.defaultView??globalThis;
@@ -325,6 +325,13 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const requestContext={scope,run,session:JSON.stringify(frameProjection.viewSession),segment:frameProjection.segment,query};
     try{Promise.resolve(onProjectionRequest(query)).then(dto=>{if(dto&&run===projectionRequest&&!stopped&&frameProjection?.scope===scope&&dto.scope===scope){applyFrameProjection(dto,safeCurrentEntry?{scope,run}:null,requestContext);if(Object.hasOwn(partial,'segment'))calibrationEntry();}}).catch(()=>{});}catch{}
   }
+  async function requestCompactRows(){
+    if(stopped||compactPending||!frameProjection||surface.role!=='workspace'||typeof onCompactRowsRequest!=='function')return;
+    const attempt={scope:frameProjection.scope};compactPending=attempt;compactError=null;const value=frameProjection.compactRows===false;requestRender();
+    try{const result=await onCompactRowsRequest(value);if(compactPending!==attempt||stopped||frameProjection?.scope!==attempt.scope)return;if(result?.ok!==true)throw Error('unconfirmed');}
+    catch{if(compactPending===attempt&&!stopped&&frameProjection?.scope===attempt.scope)compactError='显示设置更新未确认，请重新查看当前设置。';}
+    finally{if(compactPending===attempt){compactPending=null;if(!stopped&&frameProjection?.scope===attempt.scope)requestRender();}}
+  }
   async function requestHorizon(value){
     const H=value==='auto'?'auto':Number(value);if(!frameProjection||surface.role!=='workspace'||typeof onHorizonRequest!=='function'||horizonPending||H!=='auto'&&![7,14,30,60,90].includes(H))return;
     const attempt={scope:frameProjection.scope};horizonPending=attempt;horizonError=null;
@@ -484,6 +491,11 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
           select.onchange=()=>{if(horizonPending){select.value=committed;return;}if(settingsLive()&&settingsOpen&&roots?.workspace?.scroller===page){advanceNavigationIntent();void requestHorizon(select.value);}};label.append(select);settings.append(label,node(doc,'span',{},'当前范围：'+String(frameProjection.viewSession.H)+'天'));
           if(horizonPending||horizonError)settings.append(node(doc,'span',{role:'status'},horizonPending?'正在更新时间范围…':horizonError));
         }
+        if(typeof onCompactRowsRequest==='function'){
+          const compact=settingsButton('紧凑窗口',()=>{if(settingsLive()&&settingsOpen&&!compactPending)void requestCompactRows();},'紧凑窗口：'+(frameProjection.compactRows===false?'关':'开'),'more');
+          compact.dataset.focusKey='compact-rows';compact.setAttribute('aria-pressed',String(frameProjection.compactRows!==false));compact.setAttribute('aria-disabled',String(!!compactPending));settings.append(compact);
+          if(compactPending||compactError)settings.append(node(doc,'span',{role:'status'},compactPending?'正在保存显示设置…':compactError));
+        }
         if(typeof onSnippetsRequest==='function')settings.append(settingsButton('已保存片段',()=>{if(settingsLive()&&settingsOpen)onSnippetsRequest();},'已保存片段','more'));
         if(typeof onBackupRequest==='function')settings.append(settingsButton('备份与导入',()=>{if(settingsLive()&&settingsOpen)onBackupRequest();},'备份与导入','more'));
         if(typeof onRecoveryRequest==='function')settings.append(settingsButton('本地数据恢复',()=>{if(settingsLive()&&settingsOpen)onRecoveryRequest();},'本地数据恢复','more'));
@@ -582,6 +594,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     if(requestContext&&(requestContext.run!==projectionRequest||frameProjection?.scope!==requestContext.scope||JSON.stringify(frameProjection?.viewSession)!==requestContext.session||frameProjection?.segment!==requestContext.segment))return;
     if(currentEntry&&(currentEntry.run!==projectionRequest||frameProjection?.scope!==currentEntry.scope))return;
     if(stopped)return;if(!framed||dto?.protocol!=='vaiwl-free-frame/1'||dto.role!==surface.role||dto.completeSnapshot!==false||typeof dto.scope!=='string'||!dto.navigation||!Number.isSafeInteger(dto.segment)||dto.segment<0)throw Error('invalid-frame-projection');
+    if(dto.compactRows!==undefined&&typeof dto.compactRows!=='boolean')throw Error('invalid-frame-compact');
     const policy=dto.timePolicy;if(policy!==undefined&&(!policy||typeof policy!=='object'||Array.isArray(policy)||Object.keys(policy).sort().join(',')!=='H,mode,revision'||!['fixed','auto'].includes(policy.mode)||![7,14,30,60,90].includes(policy.H)||!Number.isSafeInteger(policy.revision)||policy.revision<0))throw Error('invalid-frame-time-policy');
     const c=dto.current;
     if(c!==undefined&&(!c||typeof c!=='object'||Array.isArray(c)||Object.keys(c).sort().join(',')!=='nativeUrl,projectId,refId'||typeof c.nativeUrl!=='string'||!c.nativeUrl.length||c.nativeUrl.length>2048||!['refId','projectId'].every(k=>c[k]===null||typeof c[k]==='string'&&c[k].length>0&&c[k].length<=128&&!/[\s\x00-\x1f]/.test(c[k]))))throw Error('invalid-frame-current');
@@ -604,10 +617,10 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
     const scopeChanged=snapshot?.scope!==dto.scope;const copy=structuredClone(dto);if(scopeChanged||navigationFeedback?.url!==adapter.currentURL())clearNavigationFeedback();resetInteraction(true);sidebarDirty=true;remember();
     if(snapshot?.scope!==copy.scope){horizonPending=null;horizonError=null;detach();searchQuery=null;searchTheme=null;projectionRequest++;}
     if(copy.segment!==0||copy.search||copy.workingSet)clearTimePolicyNotice(false);
-    if(scopeChanged){clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;workingSetPending=null;workingSetError=null;}projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
+    if(scopeChanged){clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;compactPending=null;compactError=null;workingSetPending=null;workingSetError=null;}projectionRequest++;frameProjection=copy;if(copy.search)frameSearchWaiting=false;if(copy.workingSet)frameWorkingSetWaiting=false;
     // Presentation-only metadata. This intentionally has no complete refs/index
     // and never enters the prepared Free snapshot or full-snapshot update path.
-    snapshot={scope:copy.scope,viewMode:'free',viewSession:copy.viewSession,preferences:{}};
+    snapshot={scope:copy.scope,viewMode:'free',viewSession:copy.viewSession,preferences:{compactRows:{value:copy.compactRows!==false}}};
     // A mounted frame is the workspace presentation; the owner controls its visibility.
     // Initialize its mode without replaying revision-zero show-workspace, which
     // would discard an owner-restored search or working-set query.
@@ -627,7 +640,7 @@ export function createNavigation({document:doc, adapter, onExit=()=>{}, onManage
   }
   function update(value,now,timeZone,preparedIndex=null){if(value?.protocol==='vaiwl-free-frame/1')throw Error('frame-projection-requires-explicit-consumer');return applyUpdate(value,now,timeZone,preparedIndex);}
   function updatePreparedFree(value,now,timeZone,preparedIndex=null){assertPreparedFreeSnapshot(value);return applyUpdate(value,now,timeZone,preparedIndex,true);}
-  function invalidate(reason='binding-invalidated'){advanceNavigationIntent();clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;frameRowPaging=null;frameWindowsSuspended=false;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
+  function invalidate(reason='binding-invalidated'){advanceNavigationIntent();clearTimePolicyNotice(false);lastTimePolicyNotice=null;settingsOpen=false;compactPending=null;compactError=null;workingSetPending=null;workingSetError=null;horizonPending=null;horizonError=null;resetInteraction(true);remember();snapshot=null;index=null;frameProjection=null;frameRowPaging=null;frameWindowsSuspended=false;projectionRequest++;detach();status={state:'WAITING',reason};adapter.status(status);}
   function stop(){if(stopped)return;stopped=true;invalidate('controlled-exit');doc.removeEventListener('focusin',trackFocus);for(const[type,handler]of Object.entries(interactionHandlers))doc.removeEventListener(type,handler,true);win.removeEventListener?.('blur',windowBlur);win.removeEventListener?.('resize',windowResize);if(!framed)restoreFocus();status={state:'STOPPED'};adapter.status(status);}
   function focusSurface(){
     const pane=roots?.[surface?.role],target=surface?.role==='workspace'?pane?.scroller:pane?.shadow.querySelector('[data-focus-key="已保存片段"]')??pane?.shadow.querySelector('button');
