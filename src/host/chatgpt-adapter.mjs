@@ -1,7 +1,7 @@
 import {profileElement} from './native-surface-boundary.mjs';
 import {inspectNativeProjectSurface} from './native-project-surface.mjs';
 import {nativeReturnGapRect} from './native-return-gap.mjs';
-import {nativeHistoryListOK} from './native-history-list.mjs';
+import {nativeHistoryPresentation} from './native-history-list.mjs';
 import {nativeReturnSlotRect} from './native-return-slot.mjs';
 import {currentObservation,currentSurfaceSlice} from './current-observation-batch.mjs';
 import {sha256} from '../data/hash.mjs';
@@ -25,16 +25,18 @@ export function createChatGPTAdapter({document,urlPolicy=createURLPolicy(),profi
  if(!document?.defaultView)throw Error('invalid-host-document');
  const layoutKeys=['header','reading','composer','navigationSlot'];
  const explicitLayout=Object.hasOwn(profile,'nativeLayout');
- const configuredLayout=explicitLayout?profile.nativeLayout:{header:'main > header',reading:'main > section[aria-label="Conversation"]',composer:'main > form#composer',navigationSlot:'main > header > .navigation-slot'};
- for(const key of ['readingViewport','historyList','returnPlacement','returnHitRoot','viewportFocus'])if(configuredLayout&&Object.hasOwn(configuredLayout,key))layoutKeys.push(key);
+ const homeLayout=profile.nativeHomeLayout&&urlPolicy.parse(document.location.href).kind==='home'&&document.querySelector(profile.nativeHomeLayout.reading)?profile.nativeHomeLayout:null;
+ const configuredLayout=homeLayout??(explicitLayout?profile.nativeLayout:{header:'main > header',reading:'main > section[aria-label="Conversation"]',composer:'main > form#composer',navigationSlot:'main > header > .navigation-slot'});
+ for(const key of ['readingViewport','historyList','returnPlacement','returnHitRoot','viewportFocus','headerLayout'])if(configuredLayout&&Object.hasOwn(configuredLayout,key))layoutKeys.push(key);
  if(!exactHostRecord(configuredLayout,layoutKeys)||!layoutKeys.every(k=>typeof configuredLayout[k]==='string'&&configuredLayout[k].trim().length>0&&configuredLayout[k].length<=256))throw Error('invalid-native-layout-profile');
  // Package-owned selectors choose boundaries, never grant authority or relax geometry.
  const nativeLayout=Object.freeze({...configuredLayout});
  if((nativeLayout.returnPlacement!==undefined||nativeLayout.returnHitRoot!==undefined)&&(nativeLayout.returnPlacement!=='header-gap'||!nativeLayout.returnHitRoot))throw Error('invalid-native-return-placement');
  if(nativeLayout.viewportFocus!==undefined&&(nativeLayout.viewportFocus!=='native-scroll-region'||!nativeLayout.readingViewport||nativeLayout.returnPlacement!=='header-gap'))throw Error('invalid-native-layout-profile');
+ if(nativeLayout.headerLayout!==undefined&&(nativeLayout.headerLayout!=='transparent-containers'||nativeLayout.returnPlacement!=='header-gap'))throw Error('invalid-native-layout-profile');
  let returnControl=null;
  const gapMode=nativeLayout.returnPlacement==='header-gap';
- const returnGeometry=(history,header,readingRect,composer,slot)=>gapMode?nativeReturnGapRect({document,header,slot,hitRoot:one(nativeLayout.returnHitRoot),...(nativeLayout.readingViewport?{readingRoot:one(nativeLayout.reading),readingViewport:one(nativeLayout.readingViewport),viewportFocus:nativeLayout.viewportFocus??null,isOwnedMask}:{}),button:returnControl,excluded:[history,composer],excludedRects:[readingRect]}):nativeReturnSlotRect({document,header,slot,excluded:[history,composer],excludedRects:[readingRect]});
+ const returnGeometry=(history,header,readingRect,composer,slot)=>gapMode?nativeReturnGapRect({document,header,slot,hitRoot:one(nativeLayout.returnHitRoot),headerLayout:nativeLayout.headerLayout??null,...(nativeLayout.readingViewport?{readingRoot:one(nativeLayout.reading),readingViewport:one(nativeLayout.readingViewport),viewportFocus:nativeLayout.viewportFocus??null,isOwnedMask}:{}),button:returnControl,excluded:[history,composer],excludedRects:[readingRect]}):nativeReturnSlotRect({document,header,slot,excluded:[history,composer],excludedRects:[readingRect]});
 
  inputRisk=inputRisk??createNativeInputRisk({document,profile});
  let binding=null,emit=null,discovery=null,bodyDiscovery=null,actions=null,observer=null,stopped=true,epoch=0,seq=0,url='',busy=false,dirty=false,queued=false,generation=0,last=new Map(),regionEpoch=0,priorNodes=[],failedKey=new Map(),retryTimer=null,pausedSurface=null,sendObserver=null,acceptedBody=null,snippets=null,snippetReady=()=>false,intents=[],sendGap=null,sendGapBlocked=false,surfaceParts=[],surfaceKey=null,surfaceSequence=null,surfaceWanted=true,surfaceScanning=false,surfaceCursor=null,surfacePage=0,surfacePageKey=null,surfaceEpoch=0,surfaceSnapshotEpoch=0,surfaceRetryWanted=false;const surfaceAccepted=new Map(),surfaceFailed=new Map();
@@ -339,7 +341,8 @@ if(!p){
  function historyListCurrent(history,inspection=null){
   if(!nativeLayout.historyList)return true;
   const source=one(profile.regions.history);
-  return (!inspection||source===inspection.historySource)&&nativeHistoryListOK({document,source,root:history,urlPolicy,isOwnedMask});
+  const presentation=nativeHistoryPresentation({document,source,root:history,urlPolicy,isOwnedMask});
+  return !!presentation&&(!inspection||source===inspection.historySource&&presentation.maskRoots.length===inspection.historyMaskRoots.length&&presentation.maskRoots.every((n,i)=>n===inspection.historyMaskRoots[i]));
  }
  function nativeTopologyOK(history,header,reading,composer,slot){return !explicitLayout||header!==slot&&header.contains(slot)&&![history,reading,composer].some(node=>node===slot||node.contains(slot));}
  // A scroll container is geometry only, never a mask root. This profile is
@@ -380,7 +383,8 @@ if(!p){
  function projectSurface(geometry=true){
   const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),slot=one(nativeLayout.navigationSlot);
   if(!history||!header||!slot||!historyListCurrent(history))return null;
-  return inspectNativeProjectSurface({document,profile,urlPolicy,history,header,slot,button:returnControl,isOwnedMask,geometry});
+  const historyPresentation=nativeHistoryPresentation({document,source:one(profile.regions.history),root:history,urlPolicy,isOwnedMask});
+  return inspectNativeProjectSurface({document,profile,urlPolicy,history,header,slot,button:returnControl,isOwnedMask,geometry,historyPresentation});
  }
  function currentProjectSurface(inspection,geometry=true){
   if(!inspection||document.location.href!==url)return null;
@@ -392,23 +396,29 @@ if(!p){
   if(projectLayout()){
    const found=projectSurface();if(!found)return fail(projectSurface(false)?'unsafe-native-geometry':'unsafe-native-project-layout');
    const {proofNodes,...layout}=found;if(proofNodes.length!==priorNodes.length||proofNodes.some((node,i)=>node!==priorNodes[i])){regionEpoch++;priorNodes=proofNodes;}
-   const inspection={ok:true,reason:null,profileId:profile.id,...layout,historySource:one(profile.regions.history),historyMaskRoots:[found.history],returnPlacement:'header-gap',viewMask:'declarative-css',regionEpoch};
+   const inspection={ok:true,reason:null,profileId:profile.id,...layout,historySource:one(profile.regions.history),returnPlacement:'header-gap',viewMask:'declarative-css',regionEpoch};
    projectProofs.set(inspection,proofNodes);return inspection;
   }
   const history=one(nativeLayout.historyList??profile.regions.history),header=one(nativeLayout.header),reading=one(nativeLayout.reading),composer=one(nativeLayout.composer),navigationSlot=one(nativeLayout.navigationSlot);
   if(!history||!header||!reading||!composer||!navigationSlot)return fail('missing-or-ambiguous-native-boundary');
+  if(homeLayout&&reading.querySelector('form,input,textarea,select,[contenteditable]'))return fail('unsafe-native-home-layout');
   if(!historyListCurrent(history))return fail('unsafe-native-history-list');
   const historySource=nativeLayout.historyList?one(profile.regions.history):null;
+  const historyPresentation=nativeLayout.historyList?nativeHistoryPresentation({document,source:historySource,root:history,urlPolicy,isOwnedMask}):{rect:rect(history),maskRoots:[history]};
+  if(!historyPresentation)return fail('unsafe-native-history-list');
   if(!nativeTopologyOK(history,header,reading,composer,navigationSlot))return fail('return-slot-outside-native-header');
   const readingViewport=nativeLayout.readingViewport?one(nativeLayout.readingViewport):null;
   if(nativeLayout.readingViewport&&!viewportTopologyOK(readingViewport,history,header,reading,composer))return fail('unsafe-native-reading-viewport');
   const protectedRegions=[header,composer];if(protectedRegions.some(n=>reading.contains(n)||history.contains(n))||reading.contains(history)||history.contains(reading))return fail('overlapping-native-boundary');
   if(!gapMode&&(([...navigationSlot.children].length===0&&navigationSlot.textContent.trim())||[...navigationSlot.children].some(n=>!n.hasAttribute('data-va-owned')&&!n.hasAttribute('data-vaiwl-owned'))||[...(navigationSlot.childNodes??[])].some(n=>n.nodeType===3&&n.textContent.trim())))return fail('native-content-occupies-return-slot');
-  const readingRect=readingViewport?viewportRect(readingViewport,header,composer):rect(reading),sidebarRect=rect(history),returnSlot=gapMode?returnGeometry(history,header,readingRect,composer,navigationSlot):rect(navigationSlot),protectedRects=protectedRegions.map(rect);
-  if(!readingRect||!returnSlot||explicitLayout&&!returnGeometry(history,header,readingRect,composer,navigationSlot))return fail('unsafe-native-geometry');
+  const readingRect=readingViewport?viewportRect(readingViewport,header,composer):rect(reading),sidebarRect=historyPresentation.rect,returnSlot=gapMode?returnGeometry(history,header,readingRect,composer,navigationSlot):rect(navigationSlot),protectedRects=protectedRegions.map(rect);
+  if(!readingRect||!sidebarRect||!returnSlot||explicitLayout&&!returnGeometry(history,header,readingRect,composer,navigationSlot))return fail('unsafe-native-geometry');
   if([...Object.values(readingRect),...Object.values(sidebarRect),...Object.values(returnSlot),...protectedRects.flatMap(Object.values)].some(v=>!Number.isFinite(v))||readingRect.width<=0||readingRect.height<=0||sidebarRect.width<=0||sidebarRect.height<=0||returnSlot.width<34||returnSlot.height<34||protectedRects.some(r=>overlaps(r,readingRect)||overlaps(r,sidebarRect))||overlaps(readingRect,sidebarRect))return fail('unsafe-native-geometry');
-  const nodes=[history,header,reading,composer,navigationSlot,readingViewport,historySource,gapMode?one(nativeLayout.returnHitRoot):null];if(nodes.some((n,i)=>n!==priorNodes[i])){regionEpoch++;priorNodes=nodes;}
-  return {ok:true,reason:null,profileId:profile.id,history,...(historySource?{historySource}:{}),header,reading,navigationSlot,composer,protectedRegions,...(readingViewport?{readingViewport}:{}),historyMaskRoots:[history],...(gapMode?{returnPlacement:'header-gap',returnHitRoot:one(nativeLayout.returnHitRoot)}:{}),returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch};
+  const nodes=[history,header,reading,composer,navigationSlot,readingViewport,historySource,gapMode?one(nativeLayout.returnHitRoot):null,...historyPresentation.maskRoots];if(nodes.length!==priorNodes.length||nodes.some((n,i)=>n!==priorNodes[i])){
+   if(priorNodes.length&&document.documentElement?.dataset){const roles=['history','header','reading','composer','return-slot','reading-viewport','history-source','return-hit-root'];document.documentElement.dataset.vaiwlMaskChange=JSON.stringify({before:priorNodes.slice(8).length,after:nodes.slice(8).length,retained:priorNodes.slice(8).filter(n=>nodes.slice(8).includes(n)).length});document.documentElement.dataset.vaiwlRegionChange=roles.filter((_,i)=>nodes[i]!==priorNodes[i]).concat(nodes.length!==priorNodes.length||nodes.slice(8).some((n,i)=>n!==priorNodes[i+8])?['history-mask-run']:[]).join(',');}
+   regionEpoch++;priorNodes=nodes;
+  }
+  return {ok:true,reason:null,profileId:profile.id,history,...(historySource?{historySource}:{}),header,reading,navigationSlot,composer,protectedRegions,...(readingViewport?{readingViewport}:{}),historyMaskRoots:historyPresentation.maskRoots,...(gapMode?{returnPlacement:'header-gap',returnHitRoot:one(nativeLayout.returnHitRoot)}:{}),returnSlot,readingRect,sidebarRect,viewMask:'declarative-css',regionEpoch};
  }
  const api={setReturnControl(node){returnControl=node;},getReturnControlRect(inspection){
   if(projectLayout())return currentProjectSurface(inspection)?.returnSlot??null;

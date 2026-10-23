@@ -419,3 +419,22 @@ test('already-open native link use requires current proof and mismatched produce
  f.adapter.onNativeUse(intent,{...f.binding(),producerToken:'wrong'},proof);await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_NATIVE_LOCAL_USE').length,0);
  f.adapter.onNativeUse(intent,f.binding(),proof);await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_NATIVE_LOCAL_USE').length,1);f.client.stop();
 });
+
+test('bounded layout preparation precedes HELLO and a stopped wait cannot reopen authority',async()=>{
+ const f=fixture();let complete;const prepareDocument=()=>new Promise(resolve=>{complete=resolve;});
+ const client=createHostContentSession({...f.options,prepareDocument});
+ const pending=client.start();await drain();assert.equal(f.calls.length,0);client.stop();complete(true);assert.equal(await pending,null);assert.equal(f.calls.length,0);
+ const failed=createHostContentSession({...f.options,prepareDocument:async()=>false});assert.equal(await failed.start(),null);assert.equal(f.calls.length,0);
+ const ready=createHostContentSession({...f.options,prepareDocument:async()=>true});assert.deepEqual(await ready.start(),{id:'mount'});assert.equal(f.calls[0].type,'HOST_HELLO');ready.stop();
+});
+test('local layout loss uses one fresh same-scope handshake, never a recovery loop or strict-mode retry',async()=>{
+ for(const local of [true,false]){
+  const f=fixture();let terminated;const factory=f.options.controllerFactory;
+  const client=createHostContentSession({...f.options,prepareDocument:local?async()=>true:null,controllerFactory:options=>{terminated=options.onTerminated;return factory(options);}});
+  f.setResponse(m=>m.type==='HOST_HELLO'?{binding:f.binding()}:m.type==='HOST_REFRESH'?{state:'verified',scopeKey:'local-scope'}:{ok:true,grants:[]});
+  await client.start();const first=f.calls.filter(m=>m.type==='HOST_HELLO').length;terminated('native-region-changed',{mode:'workspace'});await drain();
+  assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,first+(local?1:0));
+  if(local){terminated('native-region-changed',{mode:'workspace'});await drain();assert.equal(f.calls.filter(m=>m.type==='HOST_HELLO').length,first+1);}
+  client.stop();
+ }
+});

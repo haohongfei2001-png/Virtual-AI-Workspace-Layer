@@ -1,6 +1,32 @@
+// The list can extend below its native scrollport. Only its visible rectangle
+// may be replaced; the scroll container and neighboring native controls stay.
+export function nativeHistoryListRect({document,source,root,includeClipped=false}){
+ try{
+  if(!source?.contains(root)||!root?.isConnected||root.ownerDocument!==document)return null;
+  const win=document.defaultView,b=root.getBoundingClientRect(),s=source.getBoundingClientRect();
+  let left=Math.max(0,b.left),top=Math.max(0,b.top),right=Math.min(win.innerWidth,b.right),bottom=Math.min(win.innerHeight,b.bottom),depth=0;
+  for(let n=root.parentElement;n;n=n.parentElement){
+   if(++depth>128)return null;
+   const css=win.getComputedStyle(n);
+   if(!['none','matrix(1, 0, 0, 1, 0, 0)'].includes(css.transform)||['translate','rotate','scale'].some(k=>css[k]!=='none')||css.zoom!=='1')return null;
+   if(css.display==='contents')continue;
+   const clipX=['auto','scroll','hidden','clip'].includes(css.overflowX),clipY=['auto','scroll','hidden','clip'].includes(css.overflowY);
+   if(!clipX&&!clipY)continue;
+   const r=n.getBoundingClientRect();
+   // Client dimensions cannot describe a scaled or rotated scrollport.
+   if(Math.abs(r.width-n.offsetWidth)>1||Math.abs(r.height-n.offsetHeight)>1)return null;
+   if(clipX){left=Math.max(left,r.left+n.clientLeft);right=Math.min(right,r.left+n.clientLeft+n.clientWidth);}
+   if(clipY){top=Math.max(top,r.top+n.clientTop);bottom=Math.min(bottom,r.top+n.clientTop+n.clientHeight);}
+  }
+  if(![left,top,right,bottom].every(Number.isFinite))return null;
+  const positiveX=right>left,positiveY=bottom>top;
+  if(!includeClipped&&(!positiveX||!positiveY)||positiveX&&(left<s.left||right>s.right)||positiveY&&(top<s.top||bottom>s.bottom))return null;
+  return {x:left,y:top,width:Math.max(0,right-left),height:Math.max(0,bottom-top)};
+ }catch{return null;}
+}
 // This recognizer proves a presentation subtree only. Links still enter the
 // ordinary native discovery path; neither row markers nor labels prove membership.
-export function nativeHistoryListOK({document,source,root,urlPolicy,isOwnedMask=()=>false}){
+export function nativeHistoryListOK({document,source,root,urlPolicy,isOwnedMask=()=>false,allowClipped=false}){
  try{
   if(!source||!root||![source,root].every(n=>n.isConnected&&n.ownerDocument===document)||!source.contains(root)||root.hidden||root.inert||root.getAttribute('aria-hidden')==='true')return false;
   let ancestor=root,depth=0;
@@ -11,17 +37,15 @@ export function nativeHistoryListOK({document,source,root,urlPolicy,isOwnedMask=
    ancestor=ancestor.parentElement;
   }
   // The overlay rectangle must not cover native siblings outside the pure list.
-  const box=root.getBoundingClientRect();
-  if(![box.left,box.top,box.right,box.bottom].every(Number.isFinite)||box.width<=0||box.height<=0)return false;
-  const sourceBox=source.getBoundingClientRect(),view=document.defaultView;
-  if(box.left<Math.max(0,sourceBox.left)||box.top<Math.max(0,sourceBox.top)||box.right>Math.min(view.innerWidth,sourceBox.right)||box.bottom>Math.min(view.innerHeight,sourceBox.bottom))return false;
+  const visible=nativeHistoryListRect({document,source,root,includeClipped:allowClipped});if(!visible)return false;
+  const box={left:visible.x,top:visible.y,right:visible.x+visible.width,bottom:visible.y+visible.height};
   let sibling=source,visited=0;
   while(sibling){
    if(++visited>2048)return false;
    if(sibling!==root&&sibling.contains(root)&&[...sibling.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))return false;
    if(sibling!==root&&!sibling.contains(root)){
     const rect=sibling.getBoundingClientRect();
-    if(rect.width>0&&rect.height>0&&rect.left<box.right&&rect.right>box.left&&rect.top<box.bottom&&rect.bottom>box.top)return false;
+    if(visible.width>0&&visible.height>0&&rect.width>0&&rect.height>0&&rect.left<box.right&&rect.right>box.left&&rect.top<box.bottom&&rect.bottom>box.top)return false;
    }
    if(sibling!==root&&sibling.firstElementChild){sibling=sibling.firstElementChild;continue;}
    while(sibling!==source&&!sibling.nextElementSibling)sibling=sibling.parentElement;
@@ -65,4 +89,31 @@ export function nativeHistoryListOK({document,source,root,urlPolicy,isOwnedMask=
   }
   return rows.size>0&&[...rows.values()].every(r=>r.links===1&&r.menu<=1&&r.pin<=1);
  }catch{return false;}
+}
+
+// Some native lists contain a local unsent-chat row before their stable rows.
+// Keep that row (and loading controls) native. A single consecutive stable run
+// can use the existing sidebar; never cover gaps or infer a stable ID for it.
+export function nativeHistoryPresentation(options){
+ const {document,source,root}=options;
+ if(nativeHistoryListOK(options))return {rect:nativeHistoryListRect(options),maskRoots:[root]};
+ try{
+  if(!root||!source?.contains(root))return null;
+  const lists=root.matches('[role="list"]')?[root]:[...root.querySelectorAll('[role="list"]')];
+  if(lists.length!==1)return null;
+  const children=[...lists[0].children];if(children.length>256)return null;
+  const stable=children.filter(n=>n.hasAttribute('data-sidebar-chatgpt-conversation-key'));
+  if(!stable.length||children.indexOf(stable.at(-1))-children.indexOf(stable[0])+1!==stable.length)return null;
+  const visible=stable.map(node=>({node,rect:nativeHistoryListRect({document,source,root:node})})).filter(x=>x.rect);
+  // Mask identity follows the proved native row run, not the viewport.
+  // Scrolling only changes its clipped rectangle. Offscreen validation is
+  // presentation purity only; discovery still applies its visible-only gate.
+  if(!visible.length||stable.some(node=>!nativeHistoryListOK({...options,root:node,allowClipped:true})))return null;
+  const first=visible[0].rect,last=visible.at(-1).rect;
+  for(let i=1;i<visible.length;i++){
+   const a=visible[i-1].rect,b=visible[i].rect;
+   if(Math.abs(a.x-b.x)>0.5||Math.abs(a.width-b.width)>0.5||Math.abs(a.y+a.height-b.y)>0.5)return null;
+  }
+  return {rect:{x:first.x,y:first.y,width:first.width,height:last.y+last.height-first.y},maskRoots:stable};
+ }catch{return null;}
 }

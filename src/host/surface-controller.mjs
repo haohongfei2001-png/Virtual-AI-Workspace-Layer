@@ -9,6 +9,8 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  const origin=new URL(extensionOrigin);if(onWake!==null&&typeof onWake!=='function'||!['workspace','reading'].includes(initialMode)||origin.protocol!=='chrome-extension:'||origin.host===''||!['','/'].includes(origin.pathname)||origin.search||origin.hash||!doc?.defaultView||!adapter||!surface||typeof bridge?.registerMount!=='function'||typeof bridge.confirmParent!=='function')throw Error('invalid-surface-controller');
  const trustedOrigin=`${origin.protocol}//${origin.host}`,win=doc.defaultView;
  let epoch=0,current=null;
+ const boundaryReasons=['missing-or-ambiguous-native-boundary','unsafe-native-home-layout','unsafe-native-history-list','return-slot-outside-native-header','unsafe-native-reading-viewport','overlapping-native-boundary','native-content-occupies-return-slot','unsafe-native-geometry','unsafe-native-project-layout'];
+ const reportBoundary=inspection=>{if(doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlBoundary=boundaryReasons.includes(inspection?.reason)?inspection.reason:inspection?.ok?'region-identity-changed':'unavailable';};
  function removeReturn(state){state.button?.remove();state.button=null;state.returnStyle=null;adapter.setReturnControl?.(null);}
  function dispose(state,reason,retainMount=false){if(!state)return;state.resolveIdle?.(false);cancel(state.timer);cancel(state.renewTimer);cancel(state.appearanceTimer);state.geometryObserver?.disconnect();win.removeEventListener('resize',state.geometryChanged);win.removeEventListener('scroll',state.geometryChanged,true);win.visualViewport?.removeEventListener?.('resize',state.geometryChanged);win.visualViewport?.removeEventListener?.('scroll',state.geometryChanged);state.appearanceObserver?.disconnect();state.media?.removeEventListener?.('change',state.appearanceChanged);win.removeEventListener('resize',state.appearanceChanged);state.observer?.disconnect();win.removeEventListener('message',state.listener);win.removeEventListener('popstate',state.changed);win.removeEventListener('hashchange',state.changed);doc.removeEventListener?.('beforetoggle',state.nativeToggle,true);doc.removeEventListener?.('toggle',state.changed,true);win.removeEventListener('pagehide',state.pagehide);removeReturn(state);if(state.handle){try{surface.suspend(state.handle,reason);}catch{}try{surface.dispose(state.handle);}catch{}if(!retainMount)try{Promise.resolve(bridge.revokeMount?.({mountId:state.handle.id})).catch(()=>{});}catch{}}}
  function stop(reason='surface-stopped'){
@@ -63,7 +65,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
     if(!state.geometryPaused){state.geometryPaused=true;state.geometryRevision++;state.intentEpoch++;}
     cancel(state.renewTimer);state.renewTimer=null;state.mode='suspended';removeReturn(state);surface.suspend(state.handle,'temporary-native-geometry');return false;
    }
-   stop('native-region-changed');return false;
+   reportBoundary(adapter.inspect());stop('native-region-changed');return false;
   }
   if(state.geometryPaused){
    if(!geometryContinuity(state)){stop('native-region-changed');return false;}
@@ -75,7 +77,7 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
  function watchGeometry(state){
   if(typeof surface.refreshGeometry!=='function')return;
   state.geometryChanged=()=>{if(!reconcileGeometry(state))return;if(state.mode==='reading'||state.mode==='suspended')ensureReturn(state);};
-  win.addEventListener('resize',state.geometryChanged);if(state.inspection.readingViewport)win.addEventListener('scroll',state.geometryChanged,true);win.visualViewport?.addEventListener?.('resize',state.geometryChanged);if(state.inspection.readingViewport)win.visualViewport?.addEventListener?.('scroll',state.geometryChanged);
+  win.addEventListener('resize',state.geometryChanged);if(state.inspection.readingViewport||state.inspection.historySource)win.addEventListener('scroll',state.geometryChanged,true);win.visualViewport?.addEventListener?.('resize',state.geometryChanged);if(state.inspection.readingViewport||state.inspection.historySource)win.visualViewport?.addEventListener?.('scroll',state.geometryChanged);
   if(win.ResizeObserver){state.geometryObserver=new win.ResizeObserver(state.geometryChanged);for(const node of new Set([state.inspection.reading,...(state.inspection.readingViewport?[state.inspection.readingViewport]:[]),...state.inspection.historyMaskRoots,state.inspection.header,state.inspection.composer,...state.inspection.protectedRegions]))state.geometryObserver.observe(node);}
  }
  function authorized(state){return !state.geometryPaused&&valid(state)&&Date.parse(state.context.binding.expiresAt)>now()&&state.frames.every(({role})=>{const grant=state.grants.get(role);return grant&&Date.parse(grant.expiresAt)>now();});}
@@ -176,7 +178,10 @@ export function createSurfaceController({document:doc,adapter,surface,bridge,ext
   stop('surface-restart');const run=epoch,state={epoch:run,intentEpoch:0,url:doc.location.href,registered:false,handle:null,grants:new Map(),earlyJoins:new Map(),pending:new Set(),button:null,timer:null,renewTimer:null,renewing:false,renewalCeiling:null,observer:null,appearanceObserver:null,appearanceTimer:null,appearanceKeys:new Map(),surfaceKey:null,surfaceRevision:0,mode:'waiting',dormant:false,waking:false,geometryPaused:false,geometryRevision:0};current=state;
   try{
    state.context=await adapter.start(options);if(current!==state)return null;
-   state.inspection=adapter.inspect();if(!state.inspection?.ok||!state.inspection.navigationSlot?.isConnected)throw Error('invalid-return-slot');
+   state.inspection=adapter.inspect();if(!state.inspection?.ok||!state.inspection.navigationSlot?.isConnected){
+    reportBoundary(state.inspection);
+    throw Error('invalid-return-slot');
+   }
    state.handle=await surface.mount(state.context,state.inspection,{onSurrender:event=>nativeSurrender(state,event)});if(current!==state){dispose(state,'stale-mount');return null;}
    state.frames=surface.frames(state.handle).map(value=>({...value,window:value.frame.contentWindow}));if(state.frames.length!==2||new Set(state.frames.map(x=>x.role)).size!==2||state.frames.some(x=>!['workspace','sidebar'].includes(x.role)))throw Error('incomplete-dual-surface');
    state.listener=event=>{void receive(state,event);};win.addEventListener('message',state.listener);

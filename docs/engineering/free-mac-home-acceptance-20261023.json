@@ -1,0 +1,78 @@
+{
+  "schema": "vaiwl-mac-acceptance-home-20261023-v1",
+  "baseHead": "05cda30e5a86824bc571fa01328272279de9f703",
+  "scope": "Browser-Local visible navigation only; no source diagnostic or internal requests",
+  "actualMac": {
+    "sameIdUpgrade": "PASS_USER_RETRY_LOADED_AFTER_ORIGINAL_PATH_REPAIR",
+    "localConfirmation": "PASS_USER_CONFIRMED_AND_POPUP_ACK",
+    "homeBeforeFix": "FAIL_NO_FORMAL_UI",
+    "homeR3": "FAIL_NO_FORMAL_UI",
+    "homeR4": "FAIL_NO_STABLE_FORMAL_UI",
+    "browserQuitAndReopen": "PASS_ORIGINAL_PROFILE_RECONNECTED",
+    "newChatSend": "NOT_RUN_NO_TEST_MESSAGE_SENT",
+    "project": "NOT_RUN",
+    "searchReturn": "NOT_RUN",
+    "workerRecovery": "NOT_RUN",
+    "privateCacheIsolation": "NOT_RUN",
+    "homeR10": "FAIL_READY_THEN_NATIVE_REGION_CHANGED_HISTORY_MASK_RUN",
+    "homeR11": "NOT_RUN_NATIVE_ACCOUNT_BROWSER_CHECK_INCOMPLETE",
+    "nativeAccountPage": "BLOCKED_BROWSER_CHECK_INCOMPLETE_NO_RETRY_OR_SIGNOUT"
+  },
+  "confirmedDefects": [
+    "home has separate welcome region and centered composer, without conversation timeline/footer",
+    "history root extends below native scrollport; old geometry rejects it",
+    "native history contains an unsent local row and loading elements; stable-only mask must preserve them",
+    "startup can precede native home hydration; bounded layout readiness now precedes fresh handshake",
+    "mask selection previously depended on visible row subset: clipping a row changes region epoch; isolated before FAIL / after PASS",
+    "original unpacked load path was absent during earlier upgrade; restored at exact path; user Retry confirmed load"
+  ],
+  "offline": {
+    "observedProfileAndController": "PASS_60_TARGETED_TESTS",
+    "observedBrowser": "PASS_WEB_MECHANISM_ONLY_HOME_CONVERSATION_AND_CLIPPED_MASK_CONTINUITY",
+    "projectLayout": "PASS_WEB_MECHANISM_ONLY_EXISTING_TARGETED_REGRESSION",
+    "notEquivalentTo": "real Mac ChatGPT acceptance",
+    "retainedFailure": "one new clipping assertion wrongly assumed scrollTop could move entire list out of view; Chrome clamps scrollTop. Replaced with actual out-of-viewport geometry; no production relaxation.",
+    "finalUnits": "PASS_200_TARGETED_CONTENT_SESSION_PROFILE_CONTROLLER_PACKAGE",
+    "isolatedMV3": "PASS_FORMAL_UI_PROJECT_NATIVE_NAVIGATION_HOME_SPA_WORKER_RECOVERY_CACHE_ISOLATION_REFRESH_RESTART",
+    "retainedMV3Failure": "old fixture changed URL to home but retained conversation DOM; new readiness correctly refused it. Corrected the native fixture to observed home layout while preserving same document, draft and navigation; production guard unchanged.",
+    "logs": ".git/vaiwl-checkpoints/20261023-mac-home-final"
+  },
+  "package": {
+    "revision": "r11",
+    "files": 196,
+    "zipSha256": "da23deaaf200e848cbf159339b9f587e87ac5b02c87b5c86ec2d42ecc630eac1",
+    "state": "HOST_IMPLEMENTATION_UNVERIFIED",
+    "sameLoadPath": true,
+    "databaseModifiedByAgent": false,
+    "directory": "/Users/hhf/Downloads/VAIWL-Browser-Local-Mac-20261023-r11/extension",
+    "installedActivePathsVerified": 196,
+    "extraUnreferencedCopiesPreserved": 302,
+    "r11RuntimeActivation": "NOT_RUN_NO_BROWSER_RELOAD_AFTER_NATIVE_ACCOUNT_BLOCK"
+  },
+  "preservation": {
+    "originalAndIntermediatePackagesRetained": true,
+    "preUpgradeAndClosedChromeDataSnapshotsRetained": true,
+    "stashCount": 3,
+    "newBranches": 0,
+    "mergeDeployRelease": false
+  },
+  "sourceHashes": {
+    "extension/build.mjs": "7e072c1eda5ea00eaf10647477a050c571676ccca2c0d9ed846ce90f052ce910",
+    "extension/content-entry.mjs": "ea69be21bdd28bf7b70b98a93a4dd6fd94ea5fbb572ee58ac445f92c05c011d4",
+    "src/host/chatgpt-adapter.mjs": "d2a2ae25f5a5fc6e7ffccec90b78c1af3a9d8bafb3f15eb46a009a29db7929f1",
+    "src/host/chatgpt-observed-profile.mjs": "71004d235a50bf8919faeea88afa259874c2c2bde0192c13a734123175432ccd",
+    "src/host/content-session.mjs": "66463de120cb55a22ee20968447153c06a3abfb266c540a13b137537d138362a",
+    "src/host/native-history-list.mjs": "82a54bc146f131b32a125e0ba923325eb84cb0f478c83fae85117b54e7790bc8",
+    "src/host/native-project-surface.mjs": "91039235cf19c37aefa6f3fe76a933d8a48f52ff4ecb4586fe8bf1afb3cd83e6",
+    "src/host/surface-controller.mjs": "44f08b99add0e9ca77ba88e0d2d4724b38880582746ccf06fab1ad0b705959e4",
+    "tests/host/browser-local-mv3.mjs": "a6fa5c3302e93be16766e22113b8831e14069721f5f25a30061666938b4d1491",
+    "tests/host/content-session.test.mjs": "cae68f91c2a59d8511c5e116e9dbdb82ccf82503ed36877699e2184afd78bb76",
+    "tests/host/observed-profile-browser.mjs": "71019ebd45f404ab25e00df2b22891568a0645d75c5dd23d5a1c92023efffc1f",
+    "tests/host/observed-profile.test.mjs": "718454ad06937d60ea244398ee97a566907119c0c2dd03dd617689fd1a83e820"
+  },
+  "unresolved": [
+    "real history-mask-run invalidation identified; the scroll mechanism is reproduced offline, not yet proven the sole real cause",
+    "one earlier real hello-failed marker has no established cause",
+    "r11 actual UI and continuous Mac journey pending native account page availability; no further refresh/challenge attempts"
+  ]
+}

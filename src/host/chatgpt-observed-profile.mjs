@@ -20,9 +20,50 @@ export const CHATGPT_OBSERVED_PROFILE=Object.freeze({
   historyList:'nav:not([data-app-navigation-rail]) [data-app-action-sidebar-section] > div > div[aria-hidden]:has([data-sidebar-chatgpt-conversation-key])',
   returnPlacement:'header-gap',returnHitRoot:'[data-app-shell-main-content-layout]',
  }),
+ // The native home composer is centered, outside the welcome region. Never
+ // use the whole home main/scroll container: it also owns input and tools.
+ nativeHomeLayout:Object.freeze({
+  header:'[data-app-shell-titlebar]',navigationSlot:'[data-app-shell-main-titlebar]',
+  reading:'main [role="main"] .home-composer-anchor',
+  composer:'main form[data-chatgpt-composer][data-composer-placement="home"]',
+  historyList:'nav:not([data-app-navigation-rail]) [data-app-action-sidebar-section] > div > div[aria-hidden]:has([data-sidebar-chatgpt-conversation-key])',
+  returnPlacement:'header-gap',returnHitRoot:'[data-app-shell-main-content-layout]',
+  headerLayout:'transparent-containers',
+ }),
 });
 export function selectHostSurfaceProfile(id){
  if(id===undefined)return LEGACY_SURFACE_PROFILE;
  if(id===CHATGPT_OBSERVED_PROFILE.id)return CHATGPT_OBSERVED_PROFILE;
  throw Error('unsupported-host-surface-profile');
+}
+
+/** One bounded DOM-readiness wait before the first handshake. No account read,
+ * retry or authority reuse: a changed document/route must start independently. */
+export function waitForNativeHomeLayout({document,profile,timeoutMs=6000,signal=null}){
+ if(!profile?.nativeHomeLayout||document.location.pathname!=='/')return Promise.resolve(true);
+ const layout=profile.nativeHomeLayout,href=document.location.href,win=document.defaultView;
+ return new Promise(resolve=>{
+  let settled=false,observer,timer,stableTimer=null,prior=[];const started=win.performance.now();
+  const finish=value=>{if(settled)return;settled=true;observer?.disconnect();win.clearTimeout(timer);win.clearTimeout(stableTimer);signal?.removeEventListener('abort',leave);win.removeEventListener('pagehide',leave);win.removeEventListener('popstate',check);win.removeEventListener('hashchange',check);resolve(value);};
+  const leave=()=>finish(false);
+  const check=()=>{
+   const elapsed=win.performance.now()-started;
+   if(signal?.aborted||document.location.href!==href||!Number.isFinite(elapsed)||elapsed<0||elapsed>=timeoutMs){finish(false);return;}
+   try{
+    // Presentation readiness only. Adapter inspection still proves purity,
+    // geometry and native control protection after a fresh worker handshake.
+    const groups=['header','reading','composer','navigationSlot','historyList','returnHitRoot'].map(k=>document.querySelectorAll(layout[k]));
+    const nodes=groups.every(items=>items.length===1)?groups.map(items=>items[0]):[];
+    if(nodes.length&&nodes.length===prior.length&&nodes.every((node,i)=>node===prior[i]))return;
+    win.clearTimeout(stableTimer);stableTimer=null;prior=nodes;
+    if(nodes.length)stableTimer=win.setTimeout(()=>{
+     const elapsed=win.performance.now()-started;
+     if(!signal?.aborted&&document.location.href===href&&elapsed>=0&&elapsed<timeoutMs&&groups.every((_,i)=>{const current=document.querySelectorAll(layout[['header','reading','composer','navigationSlot','historyList','returnHitRoot'][i]]);return current.length===1&&current[0]===nodes[i];}))finish(true);else finish(false);
+    },150);
+   }catch{finish(false);}
+  };
+  if(!Number.isFinite(timeoutMs)||timeoutMs<=0||timeoutMs>6000){finish(false);return;}
+  observer=new win.MutationObserver(check);observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','role','data-composer-placement','data-chatgpt-composer','data-sidebar-chatgpt-conversation-key','aria-hidden']});
+  signal?.addEventListener('abort',leave,{once:true});win.addEventListener('pagehide',leave);win.addEventListener('popstate',check);win.addEventListener('hashchange',check);timer=win.setTimeout(()=>finish(false),timeoutMs);check();
+ });
 }

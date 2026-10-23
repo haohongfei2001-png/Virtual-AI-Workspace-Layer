@@ -42,4 +42,48 @@ try{
  },focusableViewport);
  assert(Object.values(checks).every(v=>v===true),JSON.stringify(checks));console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',checks,focusableViewport,authorization:'FIXTURE_NOT_LIVE_SCOPE'}));await page.close();
  }
+ // Home has a centered composer, not the conversation timeline. Exercise
+ // only the new native boundary; reuse the existing real mount and renderer URL.
+ const home=await browser.newPage({viewport:{width:1000,height:700}});
+ const homeHTML=observedDesktopHTML('33333333-3333-4333-8333-333333333333').replace(/<main>[\s\S]*<\/main>/,'<main><div data-app-shell-main-content-layout><div role="main"><div class="home-composer-anchor" style="position:absolute;top:52px;width:780px;height:250px"><h1>Welcome</h1></div><form data-chatgpt-composer data-composer-placement="home" style="position:absolute;top:302px;width:780px;height:70px"><textarea>home draft</textarea><button type="button">Native tools</button></form></div></div></main>');
+ await home.route('**/*',r=>r.request().url()==='https://chatgpt.com/'?r.fulfill({contentType:'text/html',body:homeHTML}):r.abort());
+ await home.goto('https://chatgpt.com/');await home.addScriptTag({content:outputFiles[0].text});
+ const homeChecks=await home.evaluate(async()=>{
+  const {createChatGPTAdapter,CHATGPT_OBSERVED_PROFILE:profile,createMountSurface}=observedModule;
+  let surface;const adapter=createChatGPTAdapter({document,profile,isOwnedMask:n=>surface?.isMasked(n)===true});
+  const binding={documentToken:'fixture',producerToken:'fixture',browserDocumentId:'home',routeEpoch:1,origin:location.origin,expiresAt:new Date(Date.now()+20000).toISOString()};
+  await adapter.start({binding,emit:async p=>({state:'accepted',localSeq:p.localSeq,receiptId:'fixture'})});
+  const inspection=adapter.inspect();if(!inspection.ok)throw Error(inspection.reason);
+  surface=createMountSurface({document,createFrameURL:({role})=>'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'+role+'.html'});
+  const handle=await surface.mount({binding},inspection);surface.showWorkspace(handle);
+  const reading=document.querySelector('.home-composer-anchor'),composer=document.querySelector('form');
+  const checks={homeBoundary:inspection.reading===reading,composerProtected:inspection.composer===composer&&!surface.isMasked(composer)&&getComputedStyle(composer).visibility==='visible',welcomeMasked:surface.isMasked(reading),geometryCurrent:adapter.inspect().ok};
+  surface.showReading(handle);checks.nativeReturnUnmasks=!surface.isMasked(reading);surface.dispose(handle);
+  const rogue=document.createElement('textarea');reading.append(rogue);checks.inputInWelcomeRefused=adapter.inspect().reason==='unsafe-native-home-layout';rogue.remove();
+  const duplicate=reading.cloneNode(true);reading.after(duplicate);checks.ambiguousHomeRefused=adapter.inspect().reason==='missing-or-ambiguous-native-boundary';duplicate.remove();
+  const nav=document.querySelector('nav'),list=document.querySelector('#list');
+  nav.style.cssText='height:400px;overflow:auto';list.style.height='700px';
+  let clipped=adapter.inspect();checks.longHistoryClipped=clipped.ok&&clipped.sidebarRect.y===152&&clipped.sidebarRect.height===300;
+  nav.scrollTop=50;clipped=adapter.inspect();checks.scrolledHistoryClipped=clipped.ok&&clipped.sidebarRect.y===102&&clipped.sidebarRect.height===350;
+  const neighbor=document.createElement('button');neighbor.textContent='Native control';neighbor.style.cssText='position:fixed;left:10px;top:200px;width:40px;height:30px';nav.append(neighbor);
+  checks.overlappingNativeControlRefused=adapter.inspect().reason==='unsafe-native-history-list';neighbor.remove();
+  nav.style.transform='rotate(180deg)';checks.transformedScrollportRefused=adapter.inspect().reason==='unsafe-native-history-list';nav.style.transform='';
+  nav.style.top='800px';checks.fullyClippedListRefused=adapter.inspect().ok===false;
+  nav.style.top='52px';nav.scrollTop=0;
+  const saved=list.firstElementChild;const group=document.createElement('div');group.setAttribute('role','list');list.append(group);group.append(saved);saved.style.height='37px';
+  const local=document.createElement('div');local.setAttribute('role','listitem');local.style.height='37px';local.innerHTML='<a href="/local/draft-fixture">Native unsent chat</a>';group.prepend(local);
+  const second=saved.cloneNode(true);second.querySelector('a').href='/c/44444444-4444-4444-8444-444444444444';group.append(second);
+  const spinner=document.createElement('span');group.append(spinner);
+  const partition=adapter.inspect();checks.localDraftRetained=partition.ok&&partition.historyMaskRoots.length===2&&partition.historyMaskRoots[0]===saved&&partition.sidebarRect.y===189&&partition.sidebarRect.height===74;
+  const partitionHandle=await surface.mount({binding},partition);surface.showWorkspace(partitionHandle);
+  checks.localDraftNotMasked=!surface.isMasked(local)&&getComputedStyle(local).visibility==='visible'&&surface.isMasked(saved)&&adapter.inspect().ok;
+  const beforeScroll=adapter.inspect();nav.style.height='180px';nav.scrollTop=180;
+  const afterScroll=adapter.inspect();checks.clippedRunKeepsMaskIdentity=afterScroll.ok&&afterScroll.regionEpoch===beforeScroll.regionEpoch&&afterScroll.historyMaskRoots.length===2&&afterScroll.historyMaskRoots.every((n,i)=>n===beforeScroll.historyMaskRoots[i]);
+  const hiddenControl=document.createElement('input');saved.append(hiddenControl);checks.clippedUnsafeRowStillRejected=adapter.inspect().reason==='unsafe-native-history-list';hiddenControl.remove();
+  surface.dispose(partitionHandle);nav.style.height='400px';nav.scrollTop=0;
+  saved.after(local);checks.interleavedLocalDraftRefused=adapter.inspect().reason==='unsafe-native-history-list';group.prepend(local);
+  second.style.marginTop='4px';checks.unknownGapRefused=adapter.inspect().reason==='unsafe-native-history-list';
+  checks.draftPreserved=composer.querySelector('textarea').value==='home draft';await adapter.stop();return checks;
+ });
+ assert(Object.values(homeChecks).every(Boolean),JSON.stringify(homeChecks));console.log(JSON.stringify({status:'PASS_WEB_MECHANISM_ONLY',homeChecks}));await home.close();
 }finally{await browser.close();}

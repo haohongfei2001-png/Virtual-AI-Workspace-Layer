@@ -1,4 +1,5 @@
 import {nativeReturnGapRect} from './native-return-gap.mjs';
+import {nativeHistoryPresentation} from './native-history-list.mjs';
 
 const box=node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
 const finite=r=>Object.values(r).every(Number.isFinite);
@@ -16,9 +17,11 @@ const insideShellClip=(node,r)=>{const b=box(node),right=b.x+b.width,bottom=b.y+
 
 // Project home has the composer ABOVE the conversation panel. This is a
 // presentation proof only; route/title/DOM never establish scope or membership.
-export function inspectNativeProjectSurface({document,profile,urlPolicy,history,header,slot,button=null,isOwnedMask=()=>false,geometry=true}){
+export function inspectNativeProjectSurface({document,profile,urlPolicy,history,header,slot,button=null,isOwnedMask=()=>false,geometry=true,historyPresentation=null}){
  try{
   if(profile.nativeProjectLayout!=='panel-after-composer')return null;
+  historyPresentation??=nativeHistoryPresentation({document,source:history.closest(profile.regions.history),root:history,urlPolicy,isOwnedMask});
+  if(!historyPresentation)return null;
   const win=document.defaultView,style=node=>win.getComputedStyle(node);
   const visible=node=>{
    if(!node?.isConnected||node.ownerDocument!==document||!node.getClientRects().length)return false;
@@ -52,7 +55,7 @@ export function inspectNativeProjectSurface({document,profile,urlPolicy,history,
   }
   if(!chain.includes(hitRoot))return null;
   const protectedRegions=[header,title,composer,...new Set([tabsBranch,tabs])];
-  const regions={history,header,reading,composer,navigationSlot:slot,readingViewport:viewport,protectedRegions,returnHitRoot:hitRoot,proofNodes:[history,header,reading,composer,slot,title,tabsBranch,tabs,composerBranch,...chain]};
+  const regions={history,header,reading,composer,navigationSlot:slot,readingViewport:viewport,protectedRegions,historyMaskRoots:historyPresentation.maskRoots,returnHitRoot:hitRoot,proofNodes:[history,header,reading,composer,slot,title,tabsBranch,tabs,composerBranch,...chain,...historyPresentation.maskRoots]};
   // Controller continuity may compare identities while a native modal blocks
   // hit testing. This result has no presentation rectangles or mount approval.
   if(!geometry)return regions;
@@ -68,7 +71,8 @@ export function inspectNativeProjectSurface({document,profile,urlPolicy,history,
   const visual=win.visualViewport;if(visual&&(visual.scale!==1||visual.offsetLeft!==0||visual.offsetTop!==0))return null;
   const x=Math.max(0,p.x,v.x+viewport.clientLeft),y=Math.max(0,p.y,v.y+viewport.clientTop,h.y+h.height);
   const right=Math.min(win.innerWidth,p.x+p.width,v.x+viewport.clientLeft+viewport.clientWidth),bottom=Math.min(win.innerHeight,v.y+viewport.clientTop+viewport.clientHeight);
-  const readingRect={x,y,width:right-x,height:bottom-y},sidebarRect=box(history);
+  const readingRect={x,y,width:right-x,height:bottom-y},sidebarRect=historyPresentation.rect;
+  if(!sidebarRect)return null;
   if(![v,p,t,c,h,readingRect,sidebarRect].every(finite)||readingRect.width<=0||readingRect.height<=0||p.y<t.y+t.height||p.y<c.y+c.height||protectedRegions.some(n=>overlap(box(n),readingRect)||overlap(box(n),sidebarRect))||overlap(readingRect,sidebarRect))return null;
   const returnSlot=nativeReturnGapRect({document,header,slot,hitRoot,button,headerLayout:'transparent-containers',excluded:[history,title,composer,tabs],excludedRects:[readingRect]});
   if(!returnSlot||clips.some(n=>!insideShellClip(n,returnSlot)))return null;

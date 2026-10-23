@@ -14,7 +14,8 @@ import {withRequestDeadline} from '../data/request-deadline.mjs';
 
 /** Isolated content composition. The entry must restrict supported hosts; this
  * module never exposes its runtime bridge or authority on the page window. */
-export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,identityReader=null,contextRecovery=false,automaticDormancy=false,surfaceFactory=createMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
+export function createHostContentSession({document:doc,runtime,origin=doc?.location?.origin,adapterFactory=createChatGPTAdapter,prepareDocument=null,identityReader=null,contextRecovery=false,automaticDormancy=false,surfaceFactory=createMountSurface,controllerFactory=createSurfaceController,plansFactory=createFrameNativePlans,now=Date.now,elapsedNow=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout,makeId=()=>crypto.randomUUID()}={}){
+ if(prepareDocument!==null&&typeof prepareDocument!=='function')throw Error('invalid-document-readiness');
  if(typeof automaticDormancy!=='boolean')throw Error('invalid-automatic-dormancy');
  if(!doc?.defaultView||new URL(origin).origin!==origin||doc.location.origin!==origin||!['http:','https:'].includes(new URL(origin).protocol)||!tokenOK(runtime?.id)||typeof runtime.sendMessage!=='function'||typeof runtime.getURL!=='function'||!runtime.onMessage?.addListener)throw Error('invalid-content-session');
  const isolatedReader=identityReader??createIsolatedSessionReader({origin,now,elapsedNow});if(typeof isolatedReader?.read!=='function')throw Error('invalid-identity-reader');
@@ -360,14 +361,20 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    try{reply(s.plans.plan({targets:m.targets}));}catch{reply(null);}
    });
   };runtime.onMessage.addListener(s.listener);
+  let startupPhase='hello';
+  const reportStartup=phase=>{if(current===s&&doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlStartup=phase;};
+  reportStartup(startupPhase);
   try{
+   if(prepareDocument){startupPhase='layout';reportStartup(startupPhase);if(await prepareDocument({signal:s.abort.signal})!==true||!live(s)||doc.location.href!==s.url)throw Error('native-layout-not-ready');startupPhase='hello';reportStartup(startupPhase);}
    // A C2 transport failure withdraws capabilities but keeps the passive
    // context listener eligible for a later genuine native READY notification.
    // This helper neither retries nor handles explicit negative responses.
    const hello=await handshake(s,{v:1,type:'HOST_HELLO',clientId,seq:++seq});if(contextRecovery===true&&exactHostRecord(hello,['ok','reason'])&&hello.ok===false&&hello.reason==='invalidated-during-check')throw Error('context-handshake-superseded');if(!bindingOK(hello?.binding))throw Error('invalid-host-binding');s.binding=Object.freeze({...hello.binding});
+   startupPhase='adapter';reportStartup(startupPhase);
    let surface;const adapter=s.adapter=adapterFactory({document:doc,onNativeUse:(intent,producer,proof)=>captureNativeUse(s,intent,producer,proof),onIdleHint:()=>requestAutomaticIdle(s),onNativePrepare:producer=>nativePrepare(s,producer),priorityConversationId:()=>recentId(s),onOldSendOperation:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding))return;void send({type:'HOST_OLD_SEND_OPERATION',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onFirstSendIntent:(intent,producer)=>{if(!live(s)||!s.ready||!sameProducer(producer,s.binding)||s.url!==origin+'/')return;void send({type:'HOST_FIRST_SEND_INTENT',documentToken:s.binding.documentToken,producerToken:s.binding.producerToken,routeEpoch:s.binding.routeEpoch,...intent}).catch(()=>{});},onSurfaceChange:records=>{if(live(s))surface?.surrenderChanged?.(records);},isOwnedSurface:node=>live(s)&&surface?.isOwnedSurface?.(node)===true,isOwnedMask:node=>live(s)&&surface?.isMasked?.(node)===true,
     withNativeReading:read=>live(s)?s.controller?.withNativeReading?.(read)??null:null,urlPolicy:createURLPolicy({origin,profile:{projectId:({container})=>/^g-p-[0-9a-f]{32}$/.test(container)?container:null}}),now,elapsedNow,authorize:async command=>{if(s.candidates?.authorize(command)!==true&&s.plans?.authorize(command)!==true)return false;const result=await rpc(s,{v:1,type:'HOST_NATIVE_AUTHORIZE',...bindingFields(s.binding),command});return result?.ok===true&&(s.candidates?.authorize(command)===true||s.plans?.authorize(command)===true);},beforeDispatch:plan=>plan?.mode==='same-target'||s.plans?.beforeDispatch?.(plan)===true?undefined:s.candidates?.beforeDispatch(),onNativeDispatch:event=>{if(event.plan.target.kind!=='live-control'||!s.scopeKey)return;const identity=s.adapter.captureCandidateIdentity?.(event.plan.control);if(!identity)return;clearUpgrade();upgradeIdentity=identity;upgradeDisplay=s.candidates?.displayFor(event.command)??null;for(const type of ['pointerdown','keydown'])doc.addEventListener?.(type,interruptUpgrade,true);for(const type of ['popstate','hashchange'])doc.defaultView.addEventListener(type,upgradeRoute);upgrade.propose({actionId:event.actionId,identity,scopeKey:s.scopeKey,documentId:s.binding.browserDocumentId,originalURL:s.url,expiresAt:now()+6000});upgradeTimer=schedule(clearUpgrade,6000);},onNativeDispatchCancelled:event=>{if(upgrade.cancel(event.actionId))clearUpgrade();},onRebindNeeded:()=>{if(observation?.adapter===s.adapter)stopObservation();rebind(s);}});
    await startObservation(s);
+   startupPhase='authorization';reportStartup(startupPhase);
    const auth=await handshake(s,{v:1,type:'HOST_REFRESH',clientId,seq:++seq,...bindingFields(s.binding)});noteScopeStatus(s,auth);if(auth?.state!=='verified')throw Error('scope-not-verified');if(expectedScope!==null&&auth.scopeKey!==expectedScope)throw Error('recovery-scope-changed');s.contextReadyPending=false;s.scopeKey=auth.scopeKey;s.ackProjects=new Set();s.upgraded=null;
    if(learnedScope!==s.scopeKey||learnedDocument!==s.binding.browserDocumentId)clearLearned();learnedScope=s.scopeKey;learnedDocument=s.binding.browserDocumentId;
    recentId(s);
@@ -491,6 +498,8 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     })
    };
    s.controller=controllerFactory({document:doc,adapter,surface,extensionOrigin:'chrome-extension://'+runtime.id,bridge,initialMode,onWake:()=>wake(s),onTerminated:(reason,presentation)=>{
+    const publicStops=['native-region-changed','native-geometry-changed','dormant-document-changed','mount-unavailable','ui-frame-suspended','ui-grant-expired','session-renew-failed','surface-stopped','ui-authority-revoked','ui-user-exit'];
+    if(current===s&&doc.documentElement?.dataset)doc.documentElement.dataset.vaiwlSurfaceStop=publicStops.includes(reason)?reason:'other';
     // Intentional exit ends this document session, including late recovery callbacks.
     if(current===s&&reason==='ui-user-exit'){stop();return;}
     // A dormant controller can notice native navigation on resize before the
@@ -502,7 +511,13 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
     // the controller and its producer even
     // at the same URL. Drop ready/capabilities so a later genuine C2 READY can
     // start a fresh handshake; geometry itself never retries authorization.
-    if(current===s&&['native-region-changed','native-geometry-changed','dormant-document-changed'].includes(reason)){contextPending();return;}
+    if(current===s&&['native-region-changed','native-geometry-changed','dormant-document-changed'].includes(reason)){
+     // Browser-local hydration may replace a just-mounted boundary. Withdraw
+     // the old surface first, then spend the existing single recovery attempt
+     // on a fresh document/scope handshake after bounded layout readiness.
+     if(prepareDocument&&reason==='native-region-changed'&&enabled&&live(s)&&doc.location.href===s.url&&!s.recoveryDenied&&!s.busyClose&&recoveryRemaining>0&&(s.ready||s.mountStarting)&&s.scopeKey){recoveryRemaining--;rebind(s,presentation?.mode==='workspace'?'workspace':'reading',s.scopeKey);return;}
+     contextPending();return;
+    }
     // The controller has withdrawn the old mount. Do not leave ready=true
     // swallowing future C2 READY signals; wait without retrying denied scope.
     if(current===s&&reason==='session-renew-failed'&&s.recoveryDenied){contextPending();return;}
@@ -514,14 +529,17 @@ export function createHostContentSession({document:doc,runtime,origin=doc?.locat
    // Owned frames may suspend while mount registration is still awaiting its
    // reply. Permit the same one-shot fresh handshake in that narrow interval;
    // dormant wake and failed scope checks never acquire this startup flag.
+   startupPhase='surface';reportStartup(startupPhase);
    s.surface=surface;s.mountStarting=true;let handle;
    try{handle=await s.controller.start(adapterOptions(s,s.binding));}finally{s.mountStarting=false;}
-   if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;
+   if(!live(s)||!handle)throw Error('surface-start-failed');s.ready=true;reportStartup('ready');
    // A real foreground transition may arrive while mount is awaiting its reply.
    // Consume the armed transition through the existing live/single-flight gate.
    s.focus();requestAutomaticIdle(s);return handle;
   }catch(error){
    if(current===s){
+    // Fixed stage only: never publish exception text, identities or RPC data.
+    reportStartup(startupPhase+'-failed');
     // A native route can change while HELLO, REFRESH or mount is pending,
     // before the adapter has installed its route listeners. The old reply
     // remains unusable; bind the new route instead of disabling the document.
